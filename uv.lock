@@ -126,6 +126,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.11.7" },
     { name = "requests", specifier = ">=2.32.4" },
 ]
+provides-extras = ["kiwoom"]
 
 [[package]]
 name = "colorama"
