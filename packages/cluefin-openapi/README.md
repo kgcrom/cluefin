@@ -1,6 +1,6 @@
 # cluefin-openapi
 
-> **cluefin-openapi**: 키움증권 투자 REST API를 위한 Python 클라이언트
+> **cluefin-openapi**: 투자 OpenAPI를 위한 Python 클라이언트
 
 ---
 
@@ -13,7 +13,7 @@
 - **시장 상황 모니터링**: 시장 지수, 거래량, 시장 동향
 - **주문 관리**: 매수/매도 주문, 주문 조회, 실시간 체결 알림
 
-## ⚡ 빠른 시작
+## ⚡ Quick Start
 
 ### 설치
 
@@ -22,9 +22,11 @@
 pip install cluefin-openapi
 
 # 키움증권 종속성 포함 설치
-pip install cluefin-openapi[kiwoom]
+pip install "cluefin-openapi[kiwoom]"
 
 # 개발 환경에서 설치
+git clone https://github.com/kgcrom/cluefin
+cd cluefin
 pip install -e .
 ```
 
@@ -52,29 +54,11 @@ print("응답 헤더:", response.headers)
 print("응답 데이터:", response.body)
 ```
 
-### 고급 사용 예제
-
-```python
-# 실시간 주식 시세 조회
-stock_info = client.domestic_stock.get_inquire_price("005930")
-print(f"현재가: {stock_info.body['output']['stck_prpr']}")
-
-# 차트 데이터 조회
-chart_data = client.domestic_chart.get_inquire_daily_itemchartprice(
-    fid_cond_mrkt_div_code="J",
-    fid_input_iscd="005930",
-    fid_period_div_code="D"
-)
-
-# 계좌 잔고 조회
-balance = client.account.get_inquire_balance()
-print("계좌 잔고:", balance.body)
-```
 
 ## 🎯 왜 cluefin-openapi인가요?
 
 ### 통합된 인터페이스
-키움증권, DART, KRX 등 여러 금융 API를 하나의 Python 인터페이스로 통합하여 제공합니다.
+키움증권, DART, KRX 등 여러 금융 OpenAPI를 하나의 Python 인터페이스로 통합하여 제공합니다.
 
 ### 개발 시간 단축
 복잡한 금융 API 통합 작업을 대신 처리하여, 투자 도구 개발에 집중할 수 있습니다.
@@ -104,22 +88,6 @@ KIWOOM_APP_KEY=your_app_key_here
 KIWOOM_SECRET_KEY=your_secret_key_here
 ```
 
-### 3. 개발 환경 설정
-
-```bash
-# 저장소 클론
-git clone https://github.com/kgcrom/cluefin.git
-cd cluefin/packages/cluefin-openapi
-
-# 가상환경 생성 및 활성화
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# 또는
-venv\Scripts\activate  # Windows
-
-# 의존성 설치
-pip install -e ".[dev]"
-```
 
 ## 📚 API 문서
 
@@ -146,18 +114,8 @@ from cluefin_openapi.kiwoom._client import Client
 client = Client(
     token=token.token,
     env="dev",
-    base_url=None  # 선택사항: 사용자 정의 base URL
 )
 ```
-
-### 주요 모듈
-
-- **`client.account`**: 계좌 관련 기능
-- **`client.domestic_stock`**: 국내 주식 정보
-- **`client.domestic_chart`**: 차트 데이터
-- **`client.domestic_order`**: 주문 관리
-- **`client.domestic_etf`**: ETF 정보
-- **`client.domestic_sector`**: 섹터/업종 정보
 
 ## 🔧 구성 옵션
 
@@ -262,12 +220,11 @@ ruff check packages/cluefin-openapi/
 
 - **이슈 및 버그 리포트**: [GitHub Issues](https://github.com/kgcrom/cluefin/issues)
 - **기능 요청**: [GitHub Discussions](https://github.com/kgcrom/cluefin/discussions)
-- **이메일**: kgcrom@hotmail.com
 
 ## 🔗 관련 링크
 
-- [키움증권 OpenAPI 포털](https://apiportal.kiwoom.com/)
-- [키움증권 OpenAPI 문서](https://apiportal.kiwoom.com/apiservice)
+- [키움증권 OpenAPI 포털](https://openapi.kiwoom.com/)
+- [한국거래서 OpenAPI 포털](http://openapi.krx.co.kr)
 - [Cluefin 메인 프로젝트](https://github.com/kgcrom/cluefin)
 
 ---
