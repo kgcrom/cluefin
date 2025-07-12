@@ -1,0 +1,32 @@
+[project]
+name = "cluefin"
+version = "0.1.0"
+description = "Clearly Looking U Entered Financial Information"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.uv.workspace]
+members = ["packages/*",]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "python-dotenv>=1.1.1",
+    "requests-mock>=1.12.1",
+    "ruff>=0.12.3",
+]
+
+[tools.uv.source]
+cluefin-openapi = { path = "packages/cluefin-openapi", workspace = true }
+
+[tool.ruff]
+line-length = 120
+fix = true
+target-version = "py311"
+
+[tool.ruff.format]
+docstring-code-format = true
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "Q", "I", "ASYNC", "T20"]
+ignore = ["F401", "E501"]
