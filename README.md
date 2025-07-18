@@ -1,4 +1,5 @@
 # Cluefin
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/2446610f214145748efdfd235f563d7a)](https://app.codacy.com/gh/kgcrom/cluefin?utm_source=github.com&utm_medium=referral&utm_content=kgcrom/cluefin&utm_campaign=Badge_Grade)
 [![License](https://img.shields.io/github/license/kgcrom/cluefin)](LICENSE)
 
 > **Cluefin: 당신의 금융 투자 도우미.**
