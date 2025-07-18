@@ -1,5 +1,3 @@
-"""Tests for the Auth class."""
-
 import pytest
 import requests_mock
 
@@ -192,7 +190,7 @@ def test_get_industry_current_price_success(client):
                 "trde_qty_n": "14",
                 "acc_trde_qty_n": "876",
                 "stex_tp": "",
-            }
+            },
         ],
         "return_code": 0,
         "return_msg": "정상적으로 처리되었습니다",

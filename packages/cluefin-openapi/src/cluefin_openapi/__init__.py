@@ -1,2 +1,1 @@
-def main() -> None:
-    print("Hello from cluefin-openapi!")
+# cluefin_openapi package initializer

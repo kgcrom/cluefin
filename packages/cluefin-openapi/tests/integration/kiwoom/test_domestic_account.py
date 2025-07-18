@@ -47,14 +47,7 @@ def auth() -> Auth:
 
 @pytest.fixture
 def client(auth: Auth) -> Client:
-    """Create a Client instance for testing.
-
-    Args:
-        auth (Auth): The authenticated Auth instance.
-
-    Returns:
-        Client: A configured Client instance.
-    """
+    time.sleep(1)
     token = auth.generate_token()
     return Client(token=token.token, env="dev")
 

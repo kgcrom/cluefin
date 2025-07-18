@@ -50,7 +50,10 @@ def test_request_sell_order(client: Client):
         )
 
         response = client.order.request_sell_order(
-            dmst_stex_tp="KRX", stk_cd="005930", ord_qty="1", trde_tp="3",
+            dmst_stex_tp="KRX",
+            stk_cd="005930",
+            ord_qty="1",
+            trde_tp="3",
         )
         assert response is not None
         assert isinstance(response.body, DomesticOrderSell)

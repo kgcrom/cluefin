@@ -1,7 +1,3 @@
-import os
-import time
-
-import dotenv
 import pytest
 import requests_mock
 

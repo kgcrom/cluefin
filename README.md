@@ -1,51 +1,51 @@
 # Cluefin
-
-![Cluefin Logo](https://raw.githubusercontent.com/kgcrom/cluefin/main/assets/logo.png) <!-- Update with your logo path -->
-
-[![Build Status](https://img.shields.io/github/actions/workflow/status/kgcrom/cluefin/ci.yml?branch=main)](https://github.com/kgcrom/cluefin/actions)
 [![License](https://img.shields.io/github/license/kgcrom/cluefin)](LICENSE)
-[![Coverage Status](https://img.shields.io/codecov/c/github/kgcrom/cluefin)](https://codecov.io/gh/kgcrom/cluefin)
 
-> **Cluefin: Your financial investment assistant.**
-> cluefin means that it is a "clue" for "fin"ancial investments, helping you navigate the complex world of finance.
-> Another meaning of "clue" is "Clearly Looking for U Entered".
-> A Python toolkit to help investors analyze, automate, and optimize financial decisions.
+> **Cluefin: 당신의 금융 투자 도우미.**
+
+## ⚠️ Disclaimer
+
+```
+이 프로젝트는 교육 및 연구 목적으로만 제공됩니다.
+실제 거래나 투자 사용을 위한 것이 아니며, 금융 자문을 구성하거나 어떤 결과를 보장하지 않습니다.
+작성자와 기여자는 이 소프트웨어를 기반으로 한 금융 손실이나 결정에 대해 책임을 지지 않습니다.
+투자 결정을 하기 전에 항상 자격을 갖춘 금융 고문과 상담하십시오. 과거 성과는 미래 결과를 나타내지 않습니다.
+
+Cluefin을 사용함으로써 귀하는 자신의 책임 하에 학습이나 실험 목적으로만 사용할 것임을 인정하고 동의합니다.
+```
+
+> "clue"의 또 다른 의미는 "Clearly Looking for U Entered"입니다.
+> 투자자가 금융 의사결정을 분석, 자동화, 최적화할 수 있도록 돕는 파이썬 툴킷입니다.
+> _"더 스마트하게 투자하세요, 어렵게 하지 말고 Cluefin과 함께."_
 
 ---
 
 ## 🚀 Quickstart
 
-```bash
-# Install using pip
-pip install cluefin
 
-# Or clone and install
-git clone https://github.com/your-org/cluefin.git
-cd cluefin
-pip install -e .
-```
+## ✨ 기능
+- 금융 데이터 및 분석을 위한 통합 API
+- 자동화된 투자 전략
+- 포트폴리오 관리 도구
+- 확장 가능한 플러그인 시스템
 
-## ✨ Features
-- Unified API for financial data and analysis
-- Automated investment strategies
-- Portfolio management tools
-- Extensible plugin system
+## 📖 Cluefin을 선택하는 이유?
+Cluefin은 모든 사람들에게 금융 투자, 포트폴리오 관리를 단순화하고 도와주는 역할을합니다.
 
-## 📖 Why Cluefin?
-Cluefin simplifies financial investing for everyone. Whether you're a beginner or a pro, it provides tools to analyze markets, automate trades, and manage portfolios efficiently.
+초보자든 전문가든 시장을 분석하고 거래를 자동화하며 포트폴리오를 효율적으로 관리할 수 있는 도구를 제공합니다.
 
 ## 🏁 Getting Started
-See [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) for detailed setup and usage instructions.
+자세한 설정 및 사용 방법은 [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)를 참조하세요.
 
 ## 🛠️ Contributing
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-## 📄 License
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+## 📄 라이선스
+이 프로젝트는 MIT 라이선스에 따라 라이선스가 부여됩니다. 자세한 내용은 [LICENSE](LICENSE)를 참조하세요.
 
-## 🧑‍💻 Support & Contact
+## 🧑‍💻 지원 및 연락처
 - Issues: [GitHub Issues](https://github.com/kgcrom/cluefin/issues)
 
 ---
 
-> _"Invest smarter, not harder—with Cluefin."_
+> _"더 스마트하게 투자하세요, 더 어렵게 하지 말고 Cluefin과 함께."_

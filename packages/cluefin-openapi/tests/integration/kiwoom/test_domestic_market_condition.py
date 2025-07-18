@@ -1,6 +1,5 @@
 import os
 import time
-from datetime import datetime
 
 import dotenv
 import pytest

@@ -1,5 +1,3 @@
-"""Integration tests for the DomesticSector class."""
-
 import os
 import time
 from datetime import datetime

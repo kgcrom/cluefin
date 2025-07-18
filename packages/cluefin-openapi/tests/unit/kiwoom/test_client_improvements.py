@@ -1,7 +1,6 @@
 """Tests for the improved Client class."""
 
 import json
-import time
 from unittest.mock import Mock, patch
 
 import pytest
@@ -10,12 +9,10 @@ import requests_mock
 
 from cluefin_openapi.kiwoom._client import Client
 from cluefin_openapi.kiwoom._exceptions import (
-    KiwoomAPIError,
     KiwoomAuthenticationError,
     KiwoomAuthorizationError,
     KiwoomNetworkError,
     KiwoomRateLimitError,
-    KiwoomServerError,
     KiwoomTimeoutError,
     KiwoomValidationError,
 )

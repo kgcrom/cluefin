@@ -21,9 +21,6 @@
 # 기본 설치
 pip install cluefin-openapi
 
-# 키움증권 종속성 포함 설치
-pip install "cluefin-openapi[kiwoom]"
-
 # 개발 환경에서 설치
 git clone https://github.com/kgcrom/cluefin
 cd cluefin
@@ -83,7 +80,9 @@ Pydantic을 활용한 강력한 타입 검증으로 런타임 에러를 방지�
 ### 2. 환경 변수 설정
 
 ```bash
-# .env 파일 생성
+$> cp .env.sample .env
+
+# .env 파일 수정
 KIWOOM_APP_KEY=your_app_key_here
 KIWOOM_SECRET_KEY=your_secret_key_here
 ```
