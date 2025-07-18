@@ -7,7 +7,9 @@ requires-python = ">=3.10"
 dependencies = []
 
 [tool.uv.workspace]
-members = ["packages/*",]
+members = [
+    "packages/*",
+]
 
 [dependency-groups]
 dev = [
