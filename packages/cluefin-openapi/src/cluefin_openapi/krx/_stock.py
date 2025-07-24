@@ -17,11 +17,6 @@ class Stock:
         self.client = client
         self.path = "/svc/apis/sto/{}"
 
-    def get_data(self, endpoint: str, params: dict = None):
-        """주식 관련 데이터를 조회합니다."""
-        path = self.path.format(endpoint)
-        return self.client._get(path, params)
-
     def get_kospi(self, base_date: str) -> KrxHttpResponse[StockKospi]:
         """KOSPI 일별매매정보 조회
 
@@ -32,7 +27,7 @@ class Stock:
             KrxHttpResponse[StockKospi]: KOSPI 일별매매정보 데이터
         """
         params = {"baseDd": base_date}
-        response = self.get_data("stk_bydd_trd.json", params=params)
+        response = self.client._get(self.path.format("stk_bydd_trd.json"), params=params)
 
         body = StockKospi.model_validate(response)
         return KrxHttpResponse(body=body)
@@ -47,7 +42,7 @@ class Stock:
             KrxHttpResponse[StockKosdaq]: KOSDAQ 일별매매정보 데이터
         """
         params = {"baseDd": base_date}
-        response = self.get_data("ksq_bydd_trd.json", params=params)
+        response = self.client._get(self.path.format("ksq_bydd_trd.json"), params=params)
 
         body = StockKosdaq.model_validate(response)
         return KrxHttpResponse(body=body)
@@ -62,7 +57,7 @@ class Stock:
             KrxHttpResponse[StockKonex]: KONEX 일별매매정보 데이터
         """
         params = {"baseDd": base_date}
-        response = self.get_data("knx_bydd_trd.json", params=params)
+        response = self.client._get(self.path.format("knx_bydd_trd.json"), params=params)
 
         body = StockKonex.model_validate(response)
         return KrxHttpResponse(body=body)
@@ -77,7 +72,7 @@ class Stock:
             KrxHttpResponse[StockWarrant]: KOSDAQ 일별매매정보 데이터
         """
         params = {"baseDd": base_date}
-        response = self.get_data("warrant_bydd_trd.json", params=params)
+        response = self.client._get(self.path.format("warrant_bydd_trd.json"), params=params)
 
         body = StockWarrant.model_validate(response)
         return KrxHttpResponse(body=body)
@@ -92,7 +87,7 @@ class Stock:
             KrxHttpResponse[StockSubscriptionWarrant]: 신주인수권증서 일별매매정보 데이터
         """
         params = {"baseDd": base_date}
-        response = self.get_data("sr_bydd_trd.json", params=params)
+        response = self.client._get(self.path.format("sr_bydd_trd.json"), params=params)
 
         body = StockSubscriptionWarrant.model_validate(response)
         return KrxHttpResponse(body=body)
@@ -107,7 +102,7 @@ class Stock:
             KrxHttpResponse[StockKospiBaseInfo]: KOSPI 기본 정보 데이터
         """
         params = {"baseDd": base_date}
-        response = self.get_data("stk_isu_base_info.json", params=params)
+        response = self.client._get(self.path.format("stk_isu_base_info.json"), params=params)
 
         body = StockKospiBaseInfo.model_validate(response)
         return KrxHttpResponse(body=body)
@@ -122,7 +117,7 @@ class Stock:
             KrxHttpResponse[StockKosdaqBaseInfo]: KOSDAQ 기본 정보 데이터
         """
         params = {"baseDd": base_date}
-        response = self.get_data("ksq_isu_base_info.json", params=params)
+        response = self.client._get(self.path.format("ksq_isu_base_info.json"), params=params)
 
         body = StockKosdaqBaseInfo.model_validate(response)
         return KrxHttpResponse(body=body)
@@ -137,7 +132,7 @@ class Stock:
             KrxHttpResponse[StockKonexBaseInfo]: KONEX 기본 정보 데이터
         """
         params = {"baseDd": base_date}
-        response = self.get_data("knx_isu_base_info.json", params=params)
+        response = self.client._get(self.path.format("knx_isu_base_info.json"), params=params)
 
         body = StockKonexBaseInfo.model_validate(response)
         return KrxHttpResponse(body=body)

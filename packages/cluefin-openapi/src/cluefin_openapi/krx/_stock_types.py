@@ -5,8 +5,8 @@ from cluefin_openapi.krx._model import KrxHttpBody
 
 class StockKospiItem(BaseModel):
     base_date: str = Field(description="기준일자 (YYYYMMDD 형식)", alias="BAS_DD")
-    stock_code: str = Field(description="종목코드", alias="ISU_CD")
-    stock_name: str = Field(description="종목명", alias="ISU_NM")
+    issued_code: str = Field(description="종목코드", alias="ISU_CD")
+    issued_name: str = Field(description="종목명", alias="ISU_NM")
     market_name: str = Field(description="시장구분", alias="MKT_NM")
     sector_type_name: str = Field(description="소속부", alias="SECT_TP_NM")
     close_price: str = Field(description="종가", alias="TDD_CLSPRC")
@@ -29,8 +29,8 @@ class StockKospi(BaseModel, KrxHttpBody):
 
 class StockKosdaqItem(BaseModel):
     base_date: str = Field(description="기준일자 (YYYYMMDD 형식)", alias="BAS_DD")
-    stock_code: str = Field(description="종목코드", alias="ISU_CD")
-    stock_name: str = Field(description="종목명", alias="ISU_NM")
+    issued_code: str = Field(description="종목코드", alias="ISU_CD")
+    issued_name: str = Field(description="종목명", alias="ISU_NM")
     market_name: str = Field(description="시장구분", alias="MKT_NM")
     sector_type_name: str = Field(description="소속부", alias="SECT_TP_NM")
     close_price: str = Field(description="종가", alias="TDD_CLSPRC")
@@ -55,8 +55,8 @@ class StockKosdaq(BaseModel, KrxHttpBody):
 
 class StockKonexItem(BaseModel):
     base_date: str = Field(description="기준일자 (YYYYMMDD 형식)", alias="BAS_DD")
-    stock_code: str = Field(description="종목코드", alias="ISU_CD")
-    stock_name: str = Field(description="종목명", alias="ISU_NM")
+    issued_code: str = Field(description="종목코드", alias="ISU_CD")
+    issued_name: str = Field(description="종목명", alias="ISU_NM")
     market_name: str = Field(description="시장구분", alias="MKT_NM")
     sector_type_name: str = Field(description="소속부", alias="SECT_TP_NM")
     close_price: str = Field(description="종가", alias="TDD_CLSPRC")
@@ -80,8 +80,8 @@ class StockKonex(BaseModel, KrxHttpBody):
 class StockWarrantItem(BaseModel):
     base_date: str = Field(description="기준일자 (YYYYMMDD 형식)", alias="BAS_DD")
     market_name: str = Field(description="시장구분", alias="MKT_NM")
-    stock_code: str = Field(description="종목코드", alias="ISU_CD")
-    stock_name: str = Field(description="종목명", alias="ISU_NM")
+    issued_code: str = Field(description="종목코드", alias="ISU_CD")
+    issued_name: str = Field(description="종목명", alias="ISU_NM")
     close_price: str = Field(description="종가", alias="TDD_CLSPRC")
     compare_prev_day_price: str = Field(description="대비", alias="CMPPREVDD_PRC")
     fluctuation_rate: str = Field(description="등락률", alias="FLUC_RT")
@@ -108,12 +108,11 @@ class StockWarrant(BaseModel, KrxHttpBody):
     )
 
 
-
 class StockSubscriptionWarrantItem(BaseModel):
     base_date: str = Field(description="기준일자 (YYYYMMDD 형식)", alias="BAS_DD")
     market_name: str = Field(description="시장구분", alias="MKT_NM")
-    stock_code: str = Field(description="종목코드", alias="ISU_CD")
-    stock_name: str = Field(description="종목명", alias="ISU_NM")
+    issued_code: str = Field(description="종목코드", alias="ISU_CD")
+    issued_name: str = Field(description="종목명", alias="ISU_NM")
     close_price: str = Field(description="종가", alias="TDD_CLSPRC")
     compare_prev_day_price: str = Field(description="대비", alias="CMPPREVDD_PRC")
     fluctuation_rate: str = Field(description="등락률", alias="FLUC_RT")
@@ -140,11 +139,11 @@ class StockSubscriptionWarrant(BaseModel, KrxHttpBody):
 
 
 class StockKospiBaseInfoItem(BaseModel):
-    stock_code: str = Field(description="표준코드", alias="ISU_CD")
-    issue_short_code: str = Field(description="단축코드", alias="ISU_SRT_CD")
-    issue_name: str = Field(description="한글 종목명", alias="ISU_NM")
-    issue_abbreviation: str = Field(description="한글 종목약명", alias="ISU_ABBRV")
-    issue_english_name: str = Field(description="영문 종목명", alias="ISU_ENG_NM")
+    issued_code: str = Field(description="표준코드", alias="ISU_CD")
+    issued_short_code: str = Field(description="단축코드", alias="ISU_SRT_CD")
+    issued_name: str = Field(description="한글 종목명", alias="ISU_NM")
+    issued_abbreviation: str = Field(description="한글 종목약명", alias="ISU_ABBRV")
+    issued_english_name: str = Field(description="영문 종목명", alias="ISU_ENG_NM")
     listing_date: str = Field(description="상장일", alias="LIST_DD")
     market_type_name: str = Field(description="시장구분", alias="MKT_TP_NM")
     security_group_name: str = Field(description="증권구분", alias="SECUGRP_NM")
@@ -163,11 +162,11 @@ class StockKospiBaseInfo(BaseModel, KrxHttpBody):
 
 
 class StockKosdaqBaseInfoItem(BaseModel):
-    stock_code: str = Field(description="표준코드", alias="ISU_CD")
-    issue_short_code: str = Field(description="단축코드", alias="ISU_SRT_CD")
-    issue_name: str = Field(description="한글 종목명", alias="ISU_NM")
-    issue_abbreviation: str = Field(description="한글 종목약명", alias="ISU_ABBRV")
-    issue_english_name: str = Field(description="영문 종목명", alias="ISU_ENG_NM")
+    issued_code: str = Field(description="표준코드", alias="ISU_CD")
+    issued_short_code: str = Field(description="단축코드", alias="ISU_SRT_CD")
+    issued_name: str = Field(description="한글 종목명", alias="ISU_NM")
+    issued_abbreviation: str = Field(description="한글 종목약명", alias="ISU_ABBRV")
+    issued_english_name: str = Field(description="영문 종목명", alias="ISU_ENG_NM")
     listing_date: str = Field(description="상장일", alias="LIST_DD")
     market_type_name: str = Field(description="시장구분", alias="MKT_TP_NM")
     security_group_name: str = Field(description="증권구분", alias="SECUGRP_NM")
@@ -186,11 +185,11 @@ class StockKosdaqBaseInfo(BaseModel, KrxHttpBody):
 
 
 class StockKonexBaseInfoItem(BaseModel):
-    stock_code: str = Field(description="표준코드", alias="ISU_CD")
-    issue_short_code: str = Field(description="단축코드", alias="ISU_SRT_CD")
-    issue_name: str = Field(description="한글 종목명", alias="ISU_NM")
-    issue_abbreviation: str = Field(description="한글 종목약명", alias="ISU_ABBRV")
-    issue_english_name: str = Field(description="영문 종목명", alias="ISU_ENG_NM")
+    issued_code: str = Field(description="표준코드", alias="ISU_CD")
+    issued_short_code: str = Field(description="단축코드", alias="ISU_SRT_CD")
+    issued_name: str = Field(description="한글 종목명", alias="ISU_NM")
+    issued_abbreviation: str = Field(description="한글 종목약명", alias="ISU_ABBRV")
+    issued_english_name: str = Field(description="영문 종목명", alias="ISU_ENG_NM")
     listing_date: str = Field(description="상장일", alias="LIST_DD")
     market_type_name: str = Field(description="시장구분", alias="MKT_TP_NM")
     security_group_name: str = Field(description="증권구분", alias="SECUGRP_NM")
