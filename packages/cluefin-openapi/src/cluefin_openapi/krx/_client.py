@@ -12,8 +12,8 @@ from ._exceptions import (
 
 
 class Client(object):
-    def __init__(self, token: str, timeout: int = 30):
-        self.token = token
+    def __init__(self, auth_key: str, timeout: int = 30):
+        self.auth_key = auth_key
         self.base_url = "http://data-dbg.krx.co.kr"
         self.timeout = timeout
 
@@ -61,7 +61,7 @@ class Client(object):
 
     def _get(self, path: str, params: Optional[Dict] = None):
         url = self.base_url + path
-        headers = {"AUTH_KEY": self.token, "Accept": "application/json"}
+        headers = {"AUTH_KEY": self.auth_key, "Accept": "application/json"}
 
         response = requests.get(url, params=params, headers=headers, timeout=self.timeout)
 

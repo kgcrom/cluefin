@@ -14,7 +14,7 @@ from cluefin_openapi.krx._index import (
 @pytest.fixture
 def client():
     return Client(
-        token="test_token",
+        auth_key="test_auth_key",
     )
 
 

@@ -12,7 +12,7 @@ from cluefin_openapi.krx._client import Client
 @pytest.fixture
 def client():
     return Client(
-        token="test_token",
+        auth_key="test_auth_key",
     )
 
 

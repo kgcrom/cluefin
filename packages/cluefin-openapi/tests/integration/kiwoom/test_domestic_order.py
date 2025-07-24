@@ -12,8 +12,8 @@ from cluefin_openapi.kiwoom._client import Client
 def auth() -> Auth:
     dotenv.load_dotenv()
     return Auth(
-        app_key=os.getenv("APP_KEY"),
-        secret_key=os.getenv("SECRET_KEY"),
+        app_key=os.getenv("KIWOOM_APP_KEY"),
+        secret_key=os.getenv("KIWOOM_SECRET_KEY"),
         env="dev",
     )
 

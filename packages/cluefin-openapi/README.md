@@ -77,22 +77,34 @@ Pydantic을 활용한 강력한 타입 검증으로 런타임 에러를 방지�
 2. API 사용 신청 및 승인 대기
 3. APP_KEY 및 SECRET_KEY 발급 받기
 
-### 2. 환경 변수 설정
+
+### 2. 한국거래소 OpenAPI 신청
+
+1. [한국거래소 OpenAPI 사이트](http://openapi.krx.co.kr/contents/OPP/MAIN/main/index.cmd)에서 계정 생성
+2. API 인증키 신청 및 승인 대기
+3. 사용할 API 마다 신청 및 승인 대기
+
+### 3. 환경 변수 설정
 
 ```bash
 $> cp .env.sample .env
 
 # .env 파일 수정
+
+# 키움증권 API 키 설정
 KIWOOM_APP_KEY=your_app_key_here
 KIWOOM_SECRET_KEY=your_secret_key_here
-```
 
+# 한국거래소 API 키 설정
+KRX_AUTH_KEY=your_krx_auth_key_here
+```
 
 ## 📚 API 문서
 
 ### 인증 (Authentication)
 
 ```python
+# 키움증권
 from cluefin_openapi.kiwoom._auth import Auth
 
 auth = Auth(
@@ -108,12 +120,17 @@ token = auth.generate_token()
 ### 클라이언트 초기화
 
 ```python
+# 키움증권
 from cluefin_openapi.kiwoom._client import Client
 
 client = Client(
     token=token.token,
     env="dev",
 )
+
+# 한국거래소
+from cluefin_openapi.krx._client import Client as KRXClient
+krx_client = KRXClient(auth_key="your_krx_auth_key", timeout=30)
 ```
 
 ## 🔧 구성 옵션
@@ -171,10 +188,9 @@ pytest --cov=cluefin_openapi --cov-report=html
 
 ## 🛠️ 개발 가이드
 
-### 코드 스타일
-
 프로젝트는 다음 도구들을 사용합니다:
 
+- **Uv**: Rust로 만들어진 Python 패키지 메니저
 - **Ruff**: 코드 포맷팅 및 린팅
 - **pytest**: 테스트 프레임워크
 - **Pydantic**: 데이터 검증
@@ -186,30 +202,6 @@ ruff format packages/cluefin-openapi/
 # 린팅 확인
 ruff check packages/cluefin-openapi/
 ```
-
-### 브랜치 전략
-
-1. `main` 브랜치에서 새 브랜치 생성
-2. 기능 개발 후 Pull Request 생성
-3. 코드 리뷰 완료 후 머지
-
-## 🤝 기여하기
-
-프로젝트에 기여하는 방법:
-
-1. **이슈 보고**: 버그나 개선사항을 [GitHub Issues](https://github.com/kgcrom/cluefin/issues)에 등록
-2. **풀 리퀘스트**: 코드 개선이나 새 기능 추가
-3. **문서 개선**: README나 코드 주석 개선
-4. **테스트 추가**: 테스트 커버리지 향상
-
-자세한 내용은 [CONTRIBUTING.md](../CONTRIBUTING.md)를 참조하세요.
-
-### 기여 가이드라인
-
-- 코드 스타일 가이드 준수
-- 적절한 테스트 코드 작성
-- 명확한 커밋 메시지 작성
-- 문서 업데이트 (필요시)
 
 ## 📝 라이선스
 
@@ -223,7 +215,7 @@ ruff check packages/cluefin-openapi/
 ## 🔗 관련 링크
 
 - [키움증권 OpenAPI 포털](https://openapi.kiwoom.com/)
-- [한국거래서 OpenAPI 포털](http://openapi.krx.co.kr)
+- [한국거래소 OpenAPI 포털](http://openapi.krx.co.kr)
 - [Cluefin 메인 프로젝트](https://github.com/kgcrom/cluefin)
 
 ---
