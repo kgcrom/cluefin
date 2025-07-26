@@ -12,6 +12,11 @@
 - **ETF, 섹터, 테마**: ETF 정보, 업종별 정보, 테마별 종목 분류
 - **시장 상황 모니터링**: 시장 지수, 거래량, 시장 동향
 - **주문 관리**: 매수/매도 주문, 주문 조회, 실시간 체결 알림
+- **KRX 시장 데이터**: KOSPI/KOSDAQ/KONEX 일별매매정보, 시장지수, 종목 기본정보
+- **채권 시장 정보**: 국고채, 일반채권, 소액채권 시장 데이터
+- **파생상품 정보**: 선물/옵션 거래정보, KOSPI/KOSDAQ 파생상품 데이터
+- **상장 상품 정보**: ETF, ETN, ELW 등 거래소 상장 상품 데이터
+- **ESG 및 원자재**: ESG 채권, 유가, 금, 배출권 시장 정보
 
 ## ⚡ Quick Start
 
@@ -130,7 +135,103 @@ client = Client(
 
 # 한국거래소
 from cluefin_openapi.krx._client import Client as KRXClient
+
+# 기본 설정
 krx_client = KRXClient(auth_key="your_krx_auth_key", timeout=30)
+
+# 커스텀 타임아웃 설정 (대용량 데이터 조회시)
+krx_client = KRXClient(auth_key="your_krx_auth_key", timeout=60)
+```
+
+## 📊 KRX API 사용 예제
+
+### 주식 시장 데이터
+
+```python
+from cluefin_openapi.krx._client import Client as KRXClient
+
+# KRX 클라이언트 초기화
+krx_client = KRXClient(auth_key="your_krx_auth_key")
+
+# KOSPI 일별매매정보 조회
+kospi_data = krx_client.stock.get_kospi("20250721")
+print("KOSPI 데이터:", kospi_data.body)
+
+# KOSDAQ 일별매매정보 조회
+kosdaq_data = krx_client.stock.get_kosdaq("20250721")
+print("KOSDAQ 데이터:", kosdaq_data.body)
+
+# KONEX 일별매매정보 조회
+konex_data = krx_client.stock.get_konex("20250721")
+print("KONEX 데이터:", konex_data.body)
+
+# 워런트 및 신주인수권증서 조회
+warrant_data = krx_client.stock.get_warrant("20250721")
+subscription_warrant_data = krx_client.stock.get_subscription_warrant("20250721")
+
+# 종목 기본정보 조회
+kospi_base_info = krx_client.stock.get_kospi_base_info("20250721")
+kosdaq_base_info = krx_client.stock.get_kosdaq_base_info("20250721")
+konex_base_info = krx_client.stock.get_konex_base_info("20250721")
+```
+
+### 시장 지수 정보
+
+```python
+# KRX 종합지수 조회
+krx_index = krx_client.index.get_krx("20250721")
+print("KRX 종합지수:", krx_index.body)
+
+# KOSPI 지수 조회
+kospi_index = krx_client.index.get_kospi("20250721")
+print("KOSPI 지수:", kospi_index.body)
+
+# KOSDAQ 지수 조회
+kosdaq_index = krx_client.index.get_kosdaq("20250721")
+print("KOSDAQ 지수:", kosdaq_index.body)
+
+# 채권 지수 조회
+bond_index = krx_client.index.get_bond("20250721")
+
+# 파생상품 지수 조회
+derivatives_index = krx_client.index.get_derivatives("20250721")
+```
+
+### 일괄 데이터 조회 예제
+
+```python
+import asyncio
+from datetime import datetime, timedelta
+
+# 특정 날짜의 주요 시장 데이터 일괄 조회
+def get_market_overview(date: str):
+    """특정 날짜의 시장 개요 데이터를 조회합니다."""
+    try:
+        # 주식 시장 데이터
+        kospi = krx_client.stock.get_kospi(date)
+        kosdaq = krx_client.stock.get_kosdaq(date)
+        
+        # 지수 데이터
+        krx_index = krx_client.index.get_krx(date)
+        
+        # ETF 데이터
+        etf = krx_client.exchange_traded_product.get_etf(date)
+        
+        return {
+            "date": date,
+            "kospi": kospi.body,
+            "kosdaq": kosdaq.body,
+            "index": krx_index.body,
+            "etf": etf.body
+        }
+    except Exception as e:
+        print(f"데이터 조회 중 오류 발생: {e}")
+        return None
+
+# 사용 예제
+market_data = get_market_overview("20250721")
+if market_data:
+    print("시장 개요 데이터 조회 완료")
 ```
 
 ## 🔧 구성 옵션
@@ -155,6 +256,8 @@ logger.add("kiwoom_api.log", level="INFO", rotation="10 MB")
 
 ## ⚠️ 에러 처리
 
+### 키움증권 API 에러 처리
+
 ```python
 from cluefin_openapi.kiwoom._exceptions import KiwoomAPIError
 
@@ -167,11 +270,18 @@ except Exception as e:
     print(f"일반 에러: {str(e)}")
 ```
 
-### 일반적인 에러 코드
+### 일반적인 에러 시나리오
 
+**키움증권 API 에러 코드:**
 - `40010000`: 잘못된 요청 형식
 - `40080000`: 토큰 만료
 - `50010000`: 서버 내부 오류
+
+**KRX API 에러 시나리오:**
+- `401`: 인증 실패 - AUTH_KEY 확인 필요
+- `403`: 접근 권한 없음 - API 사용 신청 상태 확인 필요
+- `400`: 잘못된 요청 - 날짜 형식(YYYYMMDD) 등 파라미터 확인 필요
+- `500`: 서버 오류 - 네트워크 상태 확인 및 재시도 필요
 
 ## 🧪 테스트
 
