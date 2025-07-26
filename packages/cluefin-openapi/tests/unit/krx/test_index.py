@@ -3,11 +3,11 @@ import requests_mock
 
 from cluefin_openapi.krx._client import Client
 from cluefin_openapi.krx._index import (
-    IndexBondByDate,
-    IndexDerivativesByDate,
-    IndexKosdaqByDate,
-    IndexKospiByDate,
-    IndexKrxByDate,
+    IndexBond,
+    IndexDerivatives,
+    IndexKosdaq,
+    IndexKospi,
+    IndexKrx,
 )
 
 
@@ -18,7 +18,7 @@ def client():
     )
 
 
-def test_get_krx_by_date(client: Client):
+def test_get_krx(client: Client):
     expected_data = {
         "OutBlock_1": [
             {
@@ -68,18 +68,18 @@ def test_get_krx_by_date(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/idx/krx_dd_trd.json?baseDd={base_date}",
+            f"http://data-dbg.krx.co.kr/svc/apis/idx/krx_dd_trd.json?basDd={base_date}",
             status_code=200,
             json=expected_data,
         )
 
-        response = client.index.get_krx_by_date(base_date=base_date)
+        response = client.index.get_krx(base_date=base_date)
         assert response is not None
-        assert isinstance(response.body, IndexKrxByDate)
+        assert isinstance(response.body, IndexKrx)
         assert len(response.body.data) == 3
 
 
-def test_get_kospi_by_date(client: Client):
+def test_get_kospi(client: Client):
     expected_data = {
         "OutBlock_1": [
             {
@@ -130,18 +130,18 @@ def test_get_kospi_by_date(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/idx/kospi_dd_trd.json?baseDd={base_date}",
+            f"http://data-dbg.krx.co.kr/svc/apis/idx/kospi_dd_trd.json?basDd={base_date}",
             status_code=200,
             json=expected_data,
         )
 
-        response = client.index.get_kospi_by_date(base_date=base_date)
+        response = client.index.get_kospi(base_date=base_date)
         assert response is not None
-        assert isinstance(response.body, IndexKospiByDate)
+        assert isinstance(response.body, IndexKospi)
         assert len(response.body.data) == 3
 
 
-def test_get_kosdaq_by_date(client: Client):
+def test_get_kosdaq(client: Client):
     expected_data = {
         "OutBlock_1": [
             {
@@ -192,18 +192,18 @@ def test_get_kosdaq_by_date(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/idx/kosdaq_dd_trd.json?baseDd={base_date}",
+            f"http://data-dbg.krx.co.kr/svc/apis/idx/kosdaq_dd_trd.json?basDd={base_date}",
             status_code=200,
             json=expected_data,
         )
 
-        response = client.index.get_kosdaq_by_date(base_date=base_date)
+        response = client.index.get_kosdaq(base_date=base_date)
         assert response is not None
-        assert isinstance(response.body, IndexKosdaqByDate)
+        assert isinstance(response.body, IndexKosdaq)
         assert len(response.body.data) == 3
 
 
-def test_get_bond_by_date(client: Client):
+def test_get_bond(client: Client):
     expected_data = {
         "OutBlock_1": [
             {
@@ -263,18 +263,18 @@ def test_get_bond_by_date(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/idx/bond_dd_trd.json?baseDd={base_date}",
+            f"http://data-dbg.krx.co.kr/svc/apis/idx/bon_dd_trd.json?basDd={base_date}",
             status_code=200,
             json=expected_data,
         )
 
-        response = client.index.get_bond_by_date(base_date=base_date)
+        response = client.index.get_bond(base_date=base_date)
         assert response is not None
-        assert isinstance(response.body, IndexBondByDate)
+        assert isinstance(response.body, IndexBond)
         assert len(response.body.data) == 3
 
 
-def test_get_derivatives_by_date(client: Client):
+def test_get_derivatives(client: Client):
     expected_data = {
         "OutBlock_1": [
             {
@@ -316,12 +316,12 @@ def test_get_derivatives_by_date(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/idx/derivatives_dd_trd.json?baseDd={base_date}",
+            f"http://data-dbg.krx.co.kr/svc/apis/idx/drvprod_dd_trd.json?basDd={base_date}",
             status_code=200,
             json=expected_data,
         )
 
-        response = client.index.get_derivatives_by_date(base_date=base_date)
+        response = client.index.get_derivatives(base_date=base_date)
         assert response is not None
-        assert isinstance(response.body, IndexDerivativesByDate)
+        assert isinstance(response.body, IndexDerivatives)
         assert len(response.body.data) == 3

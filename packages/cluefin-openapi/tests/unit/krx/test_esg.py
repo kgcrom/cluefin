@@ -65,7 +65,7 @@ def test_get_socially_responsible_investment_bond(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/esg/sri_bond_info.json?baseDd={base_date}",
+            f"http://data-dbg.krx.co.kr/svc/apis/esg/sri_bond_info.json?basDd={base_date}",
             status_code=200,
             json=expected_data,
         )

@@ -81,7 +81,7 @@ def test_get_kospi(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/sto/stk_bydd_trd.json?baseDd={base_date}",
+            f"http://data-dbg.krx.co.kr/svc/apis/sto/stk_bydd_trd.json?basDd={base_date}",
             json=expected_data,
             status_code=200,
         )
@@ -135,7 +135,7 @@ def test_get_kosdaq(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/sto/ksq_bydd_trd.json?baseDd={base_date}",
+            f"http://data-dbg.krx.co.kr/svc/apis/sto/ksq_bydd_trd.json?basDd={base_date}",
             json=expected_data,
             status_code=200,
         )
@@ -206,7 +206,7 @@ def test_get_konex(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/sto/knx_bydd_trd.json?baseDd={base_date}",
+            f"http://data-dbg.krx.co.kr/svc/apis/sto/knx_bydd_trd.json?basDd={base_date}",
             json=excepted_data,
             status_code=200,
         )
@@ -292,7 +292,7 @@ def test_get_warrant(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/sto/warrant_bydd_trd.json?baseDd={base_date}",
+            f"http://data-dbg.krx.co.kr/svc/apis/sto/sw_bydd_trd.json?basDd={base_date}",
             json=expected_data,
             status_code=200,
         )
@@ -375,7 +375,7 @@ def test_get_warrant_subscription(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/sto/sr_bydd_trd.json?baseDd={base_date}",
+            f"http://data-dbg.krx.co.kr/svc/apis/sto/sr_bydd_trd.json?basDd={base_date}",
             json=expected_data,
             status_code=200,
         )
@@ -437,7 +437,7 @@ def test_get_kospi_base_info(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/sto/stk_isu_base_info.json?baseDd={base_date}",
+            f"http://data-dbg.krx.co.kr/svc/apis/sto/stk_isu_base_info.json?basDd={base_date}",
             json=expected_data,
             status_code=200,
         )
@@ -500,7 +500,7 @@ def test_get_kosdaq_base_info(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/sto/ksq_isu_base_info.json?baseDd={base_date}",
+            f"http://data-dbg.krx.co.kr/svc/apis/sto/ksq_isu_base_info.json?basDd={base_date}",
             json=expected_data,
             status_code=200,
         )
@@ -562,7 +562,7 @@ def test_get_konex_base_info(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/sto/knx_isu_base_info.json?baseDd={base_date}",
+            f"http://data-dbg.krx.co.kr/svc/apis/sto/knx_isu_base_info.json?basDd={base_date}",
             json=expected_data,
             status_code=200,
         )

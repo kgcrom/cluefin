@@ -26,7 +26,7 @@ class Derivatives:
         Returns:
             KrxHttpResponse[DerivativesTradingOfFuturesExcludeStock]: 주식선물 거래정보 응답
         """
-        params = {"baseDd": base_date}
+        params = {"basDd": base_date}
 
         response = self.client._get(self.path.format("fut_bydd_trd.json"), params=params)
         body = DerivativesTradingOfFuturesExcludeStock.model_validate(response)
@@ -41,7 +41,7 @@ class Derivatives:
         Returns:
             KrxHttpResponse[DerivativesTradingOfKospiFutures]: 주식선물 거래정보 응답
         """
-        params = {"baseDd": base_date}
+        params = {"basDd": base_date}
 
         response = self.client._get(self.path.format("eqsfu_stk_bydd_trd.json"), params=params)
         body = DerivativesTradingOfKospiFutures.model_validate(response)
@@ -56,7 +56,7 @@ class Derivatives:
         Returns:
             KrxHttpResponse[DerivativesTradingOfKosdaqFutures]: 주식선물(코스닥) 거래정보 응답
         """
-        params = {"baseDd": base_date}
+        params = {"basDd": base_date}
 
         response = self.client._get(self.path.format("eqkfu_ksq_bydd_trd.json"), params=params)
         body = DerivativesTradingOfKosdaqFutures.model_validate(response)
@@ -73,7 +73,7 @@ class Derivatives:
         Returns:
             KrxHttpResponse[DerivativesTradingOfOption]: 주식옵션 거래정보 응답
         """
-        params = {"baseDd": base_date}
+        params = {"basDd": base_date}
 
         response = self.client._get(self.path.format("opt_bydd_trd.json"), params=params)
         body = DerivativesTradingOfOptionExcludeStock.model_validate(response)
@@ -88,7 +88,7 @@ class Derivatives:
         Returns:
             KrxHttpResponse[DerivativesTradingOfKospiOption]: 코스피 옵션 거래정보 응답
         """
-        params = {"baseDd": base_date}
+        params = {"basDd": base_date}
 
         response = self.client._get(self.path.format("eqsop_bydd_trd.json"), params=params)
         body = DerivativesTradingOfKospiOption.model_validate(response)
@@ -104,7 +104,7 @@ class Derivatives:
             KrxHttpResponse[DerivativesTradingOfKosdaqOption]: 주식 옵션(코스닥) 거래정보 응답
         """
 
-        params = {"baseDd": base_date}
+        params = {"basDd": base_date}
 
         response = self.client._get(self.path.format("eqkop_bydd_trd.json"), params=params)
         body = DerivativesTradingOfKosdaqOption.model_validate(response)

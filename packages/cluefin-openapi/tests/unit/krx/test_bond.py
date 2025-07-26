@@ -82,7 +82,7 @@ def test_get_korea_treasury_bond_market(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/bon/kts_bydd_trd.json?baseDd={base_date}",
+            f"http://data-dbg.krx.co.kr/svc/apis/bon/kts_bydd_trd.json?basDd={base_date}",
             json=expected_data,
             status_code=200,
         )
@@ -155,7 +155,7 @@ def test_get_general_bond_market(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/bon/bnd_bydd_trd.json?baseDd={base_date}",
+            f"http://data-dbg.krx.co.kr/svc/apis/bon/bnd_bydd_trd.json?basDd={base_date}",
             json=expected_data,
             status_code=200,
         )
@@ -228,7 +228,7 @@ def test_get_small_bond_market(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/bon/smb_bydd_trd.json?baseDd={base_date}",
+            f"http://data-dbg.krx.co.kr/svc/apis/bon/smb_bydd_trd.json?basDd={base_date}",
             json=expected_data,
             status_code=200,
         )

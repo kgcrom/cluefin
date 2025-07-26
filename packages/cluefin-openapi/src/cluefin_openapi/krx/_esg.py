@@ -21,7 +21,7 @@ class Esg:
         Returns:
             KrxHttpResponse[EsgSociallyResponsibleInvestmentBond]: 사회책임투자채권 정보
         """
-        params = {"baseDd": base_data}
+        params = {"basDd": base_data}
 
         response = self.client._get(self.path.format("sri_bond_info.json"), params=params)
         body = EsgSociallyResponsibleInvestmentBond.model_validate(response)

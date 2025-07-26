@@ -21,7 +21,7 @@ class ExchangeTradedProduct:
         Returns:
             KrxHttpResponse[ExchangeTradedETF]: ETF 일별매매정보 데이터
         """
-        params = {"baseDd": base_date}
+        params = {"basDd": base_date}
         response = self.client._get(self.path.format("etf_bydd_trd.json"), params=params)
 
         body = ExchangeTradedETF.model_validate(response)
@@ -36,7 +36,7 @@ class ExchangeTradedProduct:
         Returns:
             KrxHttpResponse[ExchangeTradedETN]: ETN 일별매매정보 데이터
         """
-        params = {"baseDd": base_date}
+        params = {"basDd": base_date}
         response = self.client._get(self.path.format("etn_bydd_trd.json"), params=params)
 
         body = ExchangeTradedETN.model_validate(response)
@@ -51,7 +51,7 @@ class ExchangeTradedProduct:
         Returns:
             KrxHttpResponse[ExchangeTradedELW]: ELW 일별매매정보 데이터
         """
-        params = {"baseDd": base_date}
+        params = {"basDd": base_date}
         response = self.client._get(self.path.format("elw_bydd_trd.json"), params=params)
 
         body = ExchangeTradedELW.model_validate(response)

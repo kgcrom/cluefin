@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from cluefin_openapi.krx._model import KrxHttpBody
 
 
-class IndexKrxByDateItem(BaseModel):
+class IndexKrxItem(BaseModel):
     """KRX 지수 일별 시세 정보"""
 
     base_date: str = Field(description="기준일자 (YYYYMMDD 형식)", alias="BAS_DD")
@@ -20,15 +20,13 @@ class IndexKrxByDateItem(BaseModel):
     market_cap: str = Field(description="상장시가총액", alias="MKTCAP")
 
 
-class IndexKrxByDate(BaseModel, KrxHttpBody):
+class IndexKrx(BaseModel, KrxHttpBody):
     """KRX 시리즈 지수의 시세정보 제공 응답"""
 
-    data: list[IndexKrxByDateItem] = Field(
-        default_factory=list, description="KRX 지수의 시세정보 목록", alias="OutBlock_1"
-    )
+    data: list[IndexKrxItem] = Field(default_factory=list, description="KRX 지수의 시세정보 목록", alias="OutBlock_1")
 
 
-class IndexKospiByDateItem(BaseModel):
+class IndexKospiItem(BaseModel):
     """KOSPI 지수 일별 시세 정보"""
 
     base_date: str = Field(description="기준일자 (YYYYMMDD 형식)", alias="BAS_DD")
@@ -45,15 +43,13 @@ class IndexKospiByDateItem(BaseModel):
     market_cap: str = Field(description="상장시가총액", alias="MKTCAP")
 
 
-class IndexKospiByDate(BaseModel, KrxHttpBody):
+class IndexKospi(BaseModel, KrxHttpBody):
     """KOSPI 시리즈 지수의 시세정보 제공 응답"""
 
-    data: list[IndexKrxByDateItem] = Field(
-        default_factory=list, description="KOSPI 지수의 시세정보 목록", alias="OutBlock_1"
-    )
+    data: list[IndexKrxItem] = Field(default_factory=list, description="KOSPI 지수의 시세정보 목록", alias="OutBlock_1")
 
 
-class IndexKosdaqByDateItem(BaseModel):
+class IndexKosdaqItem(BaseModel):
     """KOSDAQ 지수 일별 시세 정보"""
 
     base_date: str = Field(description="기준일자 (YYYYMMDD 형식)", alias="BAS_DD")
@@ -70,15 +66,15 @@ class IndexKosdaqByDateItem(BaseModel):
     market_cap: str = Field(description="상장시가총액", alias="MKTCAP")
 
 
-class IndexKosdaqByDate(BaseModel, KrxHttpBody):
+class IndexKosdaq(BaseModel, KrxHttpBody):
     """KOSDAQ 시리즈 지수의 시세정보 제공 응답"""
 
-    data: list[IndexKosdaqByDateItem] = Field(
+    data: list[IndexKosdaqItem] = Field(
         default_factory=list, description="KOSDAQ 지수의 시세정보 목록", alias="OutBlock_1"
     )
 
 
-class IndexBondByDateItem(BaseModel):
+class IndexBondItem(BaseModel):
     """채권 지수 일별 시세 정보"""
 
     base_date: str = Field(description="기준일자 (YYYYMMDD 형식)", alias="BAS_DD")
@@ -102,15 +98,13 @@ class IndexBondByDateItem(BaseModel):
     ytm: str = Field(description="YTM", alias="BND_IDX_AVG_YD")
 
 
-class IndexBondByDate(BaseModel, KrxHttpBody):
+class IndexBond(BaseModel, KrxHttpBody):
     """채권 시리즈 지수의 시세정보 제공 응답"""
 
-    data: list[IndexBondByDateItem] = Field(
-        default_factory=list, description="채권 지수의 시세정보 목록", alias="OutBlock_1"
-    )
+    data: list[IndexBondItem] = Field(default_factory=list, description="채권 지수의 시세정보 목록", alias="OutBlock_1")
 
 
-class IndexDerivativesByDateItem(BaseModel):
+class IndexDerivativesItem(BaseModel):
     """파생상품 지수 일별 시세 정보"""
 
     base_date: str = Field(description="기준일자 (YYYYMMDD 형식)", alias="BAS_DD")
@@ -124,9 +118,9 @@ class IndexDerivativesByDateItem(BaseModel):
     low_price_index: str = Field(description="저가", alias="LWPRC_IDX")
 
 
-class IndexDerivativesByDate(BaseModel, KrxHttpBody):
+class IndexDerivatives(BaseModel, KrxHttpBody):
     """파생상품 지수 일별 시세 정보 응답"""
 
-    data: list[IndexDerivativesByDateItem] = Field(
+    data: list[IndexDerivativesItem] = Field(
         default_factory=list, description="파생상품 지수의 시세정보 목록", alias="OutBlock_1"
     )

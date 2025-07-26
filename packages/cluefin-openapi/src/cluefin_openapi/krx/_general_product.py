@@ -21,7 +21,7 @@ class GeneralProduct:
         Returns:
             KrxHttpResponse[GeneralProductOilMarket]: 석유시장 일별매매정보
         """
-        params = {"baseDd": base_date}
+        params = {"basDd": base_date}
         response = self.client._get(self.path.format("oil_bydd_trd.json"), params=params)
         body = GeneralProductOilMarket.model_validate(response)
         return KrxHttpResponse(body=body)
@@ -35,7 +35,7 @@ class GeneralProduct:
         Returns:
             KrxHttpResponse[GeneralProductGoldMarket]: 금시장 일별매매정보
         """
-        params = {"baseDd": base_date}
+        params = {"basDd": base_date}
         response = self.client._get(self.path.format("gold_bydd_trd.json"), params=params)
         body = GeneralProductGoldMarket.model_validate(response)
         return KrxHttpResponse(body=body)
@@ -49,7 +49,7 @@ class GeneralProduct:
         Returns:
             KrxHttpResponse[GeneralProductEmissionsMarket]: 탄소시장 일별매매정보
         """
-        params = {"baseDd": base_date}
-        response = self.client._get(self.path.format("carbon_bydd_trd.json"), params=params)
+        params = {"basDd": base_date}
+        response = self.client._get(self.path.format("ets_bydd_trd.json"), params=params)
         body = GeneralProductEmissionsMarket.model_validate(response)
         return KrxHttpResponse(body=body)

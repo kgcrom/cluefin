@@ -21,7 +21,7 @@ class Bond:
         Returns:
             KrxHttpResponse[BondKoreaTreasuryBondMarket]: 국채전문유통시장 일별매매정보 응답
         """
-        params = {"baseDd": base_date}
+        params = {"basDd": base_date}
 
         response = self.client._get(self.path.format("kts_bydd_trd.json"), params=params)
         body = BondKoreaTreasuryBondMarket.model_validate(response)
@@ -36,7 +36,7 @@ class Bond:
         Returns:
             KrxHttpResponse[BondGeneralBondMarket]: 일반채권시장 일별매매정보 응답
         """
-        params = {"baseDd": base_date}
+        params = {"basDd": base_date}
 
         response = self.client._get(self.path.format("bnd_bydd_trd.json"), params=params)
         body = BondGeneralBondMarket.model_validate(response)
@@ -51,7 +51,7 @@ class Bond:
         Returns:
             KrxHttpResponse[BondSmallBondMarket]: 소액채권시장 일별매매정보 응답
         """
-        params = {"baseDd": base_date}
+        params = {"basDd": base_date}
 
         response = self.client._get(self.path.format("smb_bydd_trd.json"), params=params)
         body = BondSmallBondMarket.model_validate(response)

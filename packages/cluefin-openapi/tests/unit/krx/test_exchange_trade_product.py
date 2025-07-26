@@ -88,7 +88,7 @@ def test_get_etf(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/etp/etf_bydd_trd.json?baseDd={base_date}",
+            f"http://data-dbg.krx.co.kr/svc/apis/etp/etf_bydd_trd.json?basDd={base_date}",
             json=expected_data,
             status_code=200,
         )
@@ -170,7 +170,7 @@ def test_get_etn(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/etp/etn_bydd_trd.json?baseDd={base_date}",
+            f"http://data-dbg.krx.co.kr/svc/apis/etp/etn_bydd_trd.json?basDd={base_date}",
             json=expected_data,
             status_code=200,
         )
@@ -243,7 +243,7 @@ def test_get_elw(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/etp/elw_bydd_trd.json?baseDd={base_date}",
+            f"http://data-dbg.krx.co.kr/svc/apis/etp/elw_bydd_trd.json?basDd={base_date}",
             json=expected_data,
             status_code=200,
         )

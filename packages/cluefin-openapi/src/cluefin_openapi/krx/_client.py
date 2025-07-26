@@ -62,7 +62,6 @@ class Client(object):
     def _get(self, path: str, params: Optional[Dict] = None):
         url = self.base_url + path
         headers = {"AUTH_KEY": self.auth_key, "Accept": "application/json"}
-
         response = requests.get(url, params=params, headers=headers, timeout=self.timeout)
 
         # 응답 처리
