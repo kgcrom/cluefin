@@ -197,81 +197,6 @@ bond_index = krx_client.index.get_bond("20250721")
 derivatives_index = krx_client.index.get_derivatives("20250721")
 ```
 
-### 채권 시장 데이터
-
-```python
-# 국고채 시장 정보
-treasury_bond = krx_client.bond.get_korea_treasury_bond_market("20250721")
-print("국고채 시장:", treasury_bond.body)
-
-# 일반채권 시장 정보
-general_bond = krx_client.bond.get_general_bond_market("20250721")
-print("일반채권 시장:", general_bond.body)
-
-# 소액채권 시장 정보
-small_bond = krx_client.bond.get_small_bond_market("20250721")
-print("소액채권 시장:", small_bond.body)
-```
-
-### 파생상품 거래 정보
-
-```python
-# 선물 거래정보 (주식 제외)
-futures_data = krx_client.derivatives.get_trading_of_futures_exclude_stock("20250721")
-print("선물 거래정보:", futures_data.body)
-
-# KOSPI 선물 거래정보
-kospi_futures = krx_client.derivatives.get_trading_of_kospi_futures("20250721")
-
-# KOSDAQ 선물 거래정보
-kosdaq_futures = krx_client.derivatives.get_trading_of_kosdaq_futures("20250721")
-
-# 옵션 거래정보 (주식 제외)
-options_data = krx_client.derivatives.get_trading_of_option_exclude_stock("20250721")
-
-# KOSPI 옵션 거래정보
-kospi_options = krx_client.derivatives.get_trading_of_kospi_option("20250721")
-
-# KOSDAQ 옵션 거래정보
-kosdaq_options = krx_client.derivatives.get_trading_of_kosdaq_option("20250721")
-```
-
-### 상장상품 (ETF/ETN/ELW) 정보
-
-```python
-# ETF 거래정보
-etf_data = krx_client.exchange_traded_product.get_etf("20250721")
-print("ETF 데이터:", etf_data.body)
-
-# ETN 거래정보
-etn_data = krx_client.exchange_traded_product.get_etn("20250721")
-print("ETN 데이터:", etn_data.body)
-
-# ELW 거래정보
-elw_data = krx_client.exchange_traded_product.get_elw("20250721")
-print("ELW 데이터:", elw_data.body)
-```
-
-### ESG 및 원자재 시장
-
-```python
-# ESG 사회책임투자채권
-esg_bond = krx_client.esg.get_socially_responsible_investment_bond("20250721")
-print("ESG 채권:", esg_bond.body)
-
-# 유가 시장
-oil_market = krx_client.general_product.get_oil_market("20250721")
-print("유가 시장:", oil_market.body)
-
-# 금 시장
-gold_market = krx_client.general_product.get_gold_market("20250721")
-print("금 시장:", gold_market.body)
-
-# 배출권 시장
-emissions_market = krx_client.general_product.get_emissions_market("20250721")
-print("배출권 시장:", emissions_market.body)
-```
-
 ### 일괄 데이터 조회 예제
 
 ```python
@@ -343,40 +268,6 @@ except KiwoomAPIError as e:
     print(f"에러 코드: {e.error_code}")
 except Exception as e:
     print(f"일반 에러: {str(e)}")
-```
-
-### KRX API 에러 처리
-
-```python
-from cluefin_openapi.krx._exceptions import (
-    KrxAPIError,
-    KrxAuthenticationError,
-    KrxAuthorizationError,
-    KrxClientError,
-    KrxServerError,
-)
-
-try:
-    # KRX API 호출 예제
-    response = krx_client.stock.get_kospi("20250721")
-    print("KOSPI 데이터:", response.body)
-except KrxAuthenticationError as e:
-    print(f"KRX 인증 에러: {e.message}")
-    print("AUTH_KEY를 확인해주세요.")
-except KrxAuthorizationError as e:
-    print(f"KRX 권한 에러: {e.message}")
-    print("API 사용 권한을 확인해주세요.")
-except KrxClientError as e:
-    print(f"KRX 클라이언트 에러: {e.message}")
-    print(f"상태 코드: {e.status_code}")
-    print("요청 파라미터를 확인해주세요.")
-except KrxServerError as e:
-    print(f"KRX 서버 에러: {e.message}")
-    print("잠시 후 다시 시도해주세요.")
-except KrxAPIError as e:
-    print(f"KRX API 일반 에러: {e.message}")
-except Exception as e:
-    print(f"기타 에러: {str(e)}")
 ```
 
 ### 일반적인 에러 시나리오
