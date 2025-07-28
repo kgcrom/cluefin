@@ -13,6 +13,7 @@ members = [
 
 [dependency-groups]
 dev = [
+    "coverage>=7.10.1",
     "pytest>=8.4.1",
     "python-dotenv>=1.1.1",
     "requests-mock>=1.12.1",
