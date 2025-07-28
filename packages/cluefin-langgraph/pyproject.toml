@@ -1,0 +1,19 @@
+[project]
+name = "cluefin-langgraph"
+version = "0.1.0"
+description = "Cluefin Agent using LangGraph"
+readme = "README.md"
+authors = [
+    { name = "Hangoo Kang", email = "kgcrom@hotmail.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "langgraph==0.6.0",
+]
+
+[project.scripts]
+cluefin-langgraph = "cluefin_langgraph:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
