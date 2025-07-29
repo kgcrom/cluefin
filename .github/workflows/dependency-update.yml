@@ -104,3 +104,4 @@ jobs:
         if [ -n "$SLACK_WEBHOOK" ]; then
           echo "Would notify Slack about dependency updates"
         fi
+

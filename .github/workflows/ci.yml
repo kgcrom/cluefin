@@ -74,6 +74,7 @@ jobs:
     - name: Install dependencies
       run: |
         uv sync --dev
+        uv pip install -e packages/cluefin-openapi
         
     - name: Create test environment file
       run: |
@@ -81,10 +82,6 @@ jobs:
         
     - name: Run unit tests
       env:
-        # Repository secrets for API access
-        KIWOOM_API_KEY: ${{ secrets.KIWOOM_API_KEY }}
-        KIWOOM_SECRET_KEY: ${{ secrets.KIWOOM_SECRET_KEY }}
-        KRX_API_KEY: ${{ secrets.KRX_API_KEY }}
         # Environment variables
         TEST_ENVIRONMENT: ${{ vars.TEST_ENVIRONMENT || 'development' }}
         LOG_LEVEL: ${{ vars.LOG_LEVEL || 'INFO' }}

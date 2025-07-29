@@ -156,3 +156,4 @@ jobs:
         if [ -n "$SLACK_WEBHOOK" ]; then
           echo "Would notify Slack about failed release"
         fi
+
