@@ -1,0 +1,107 @@
+name: Dependency Update
+
+"on":
+  schedule:
+    # Run every Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      update_type:
+        description: 'Type of update to perform'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+        - patch
+        - minor
+        - major
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  update-dependencies:
+    name: Update Dependencies
+    runs-on: ubuntu-latest
+    environment: development
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.DEPENDENCY_UPDATE_TOKEN || github.token }}
+        
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        enable-cache: true
+        
+    - name: Update dependencies
+      run: |
+        uv lock --upgrade
+        
+    - name: Install updated dependencies
+      run: |
+        uv sync --dev
+        
+    - name: Run tests with updated dependencies
+      env:
+        TEST_ENVIRONMENT: ${{ vars.TEST_ENVIRONMENT || 'development' }}
+        LOG_LEVEL: ${{ vars.LOG_LEVEL || 'INFO' }}
+      run: |
+        uv run pytest packages/cluefin-openapi/tests/unit/ -v
+        
+    - name: Run linting with updated dependencies
+      run: |
+        uv run ruff check .
+        uv run ruff format --check .
+        
+    - name: Check for security vulnerabilities
+      run: |
+        uv add safety --dev
+        uv run safety check
+        
+    - name: Create Pull Request
+      if: success()
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.DEPENDENCY_UPDATE_TOKEN || github.token }}
+        commit-message: 'chore: update dependencies'
+        title: 'chore: automated dependency updates'
+        body: |
+          ## Automated Dependency Updates
+          
+          This PR contains automated dependency updates performed by the dependency update workflow.
+          
+          ### Changes
+          - Updated all dependencies to their latest compatible versions
+          - All tests pass with updated dependencies
+          - Linting and security checks pass
+          
+          ### Update Type
+          Update type: ${{ github.event.inputs.update_type || 'patch' }}
+          
+          ### Verification
+          - [x] Unit tests pass
+          - [x] Linting passes
+          - [x] Security scan passes
+          
+          This PR was automatically created by the dependency update workflow.
+        branch: automated/dependency-updates
+        delete-branch: true
+        
+    - name: Notify about dependency updates
+      if: success()
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      run: |
+        echo "Dependency update PR created successfully"
+        if [ -n "$SLACK_WEBHOOK" ]; then
+          echo "Would notify Slack about dependency updates"
+        fi
+

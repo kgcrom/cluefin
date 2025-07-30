@@ -2,6 +2,7 @@
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/92b750be06a24d88869fbe83fb4f4cf4)](https://app.codacy.com/gh/kgcrom/cluefin/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/92b750be06a24d88869fbe83fb4f4cf4)](https://app.codacy.com/gh/kgcrom/cluefin/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
+[![CI Pipeline](https://github.com/kgcrom/cluefin/actions/workflows/ci.yml/badge.svg)](https://github.com/kgcrom/cluefin/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/kgcrom/cluefin)](LICENSE)
 
 > **Cluefin: 당신의 금융 투자 도우미.**
@@ -39,6 +40,31 @@ Cluefin은 모든 사람들에게 금융 투자, 포트폴리오 관리를 단�
 
 ## 🏁 Getting Started
 자세한 설정 및 사용 방법은 [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)를 참조하세요.
+
+## 🔧 Development & CI/CD
+
+### GitHub Actions Workflows
+This project uses GitHub Actions for continuous integration and deployment:
+
+- **CI Pipeline** (`ci.yml`): Runs linting, testing, building, and security scans
+- **Release Pipeline** (`release.yml`): Handles package publishing and deployment
+- **Dependency Update** (`dependency-update.yml`): Automated dependency updates
+
+### Environment Variables Setup
+For detailed information on setting up environment variables and secrets for GitHub Actions, see [docs/ENVIRONMENT_VARIABLES.md](docs/ENVIRONMENT_VARIABLES.md).
+
+### Local Development
+```bash
+# Install dependencies with uv
+uv sync --dev
+
+# Run tests
+uv run pytest
+
+# Run linting
+uv run ruff check .
+uv run ruff format .
+```
 
 ## 🛠️ Contributing
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.

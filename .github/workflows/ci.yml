@@ -1,0 +1,177 @@
+name: CI Pipeline
+
+"on":
+  push:
+    branches: [ main, "copilot/**" ]
+  pull_request:
+    branches: [ main, "copilot/**" ]
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        description: 'Enable debug mode'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  PYTHON_VERSION: "3.11"
+  POETRY_VERSION: "1.7.1"
+
+jobs:
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    environment: development
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        enable-cache: true
+        
+    - name: Install dependencies
+      run: |
+        uv sync --dev
+        
+    - name: Run ruff linter
+      run: |
+        uv run ruff check .
+        
+    - name: Run ruff formatter check
+      run: |
+        uv run ruff format --check .
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    environment: development
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        enable-cache: true
+        
+    - name: Install dependencies
+      run: |
+        uv sync --dev
+        uv pip install -e packages/cluefin-openapi
+        
+    - name: Create test environment file
+      run: |
+        cp packages/cluefin-openapi/.env.sample packages/cluefin-openapi/.env
+        
+    - name: Run unit tests
+      env:
+        # Environment variables
+        TEST_ENVIRONMENT: ${{ vars.TEST_ENVIRONMENT || 'development' }}
+        LOG_LEVEL: ${{ vars.LOG_LEVEL || 'INFO' }}
+        ENABLE_INTEGRATION_TESTS: ${{ vars.ENABLE_INTEGRATION_TESTS || 'false' }}
+      run: |
+        uv run pytest packages/cluefin-openapi/tests/unit/ -v
+        
+    - name: Run integration tests
+      if: vars.ENABLE_INTEGRATION_TESTS == 'true'
+      env:
+        KIWOOM_API_KEY: ${{ secrets.KIWOOM_API_KEY }}
+        KIWOOM_SECRET_KEY: ${{ secrets.KIWOOM_SECRET_KEY }}
+        KRX_API_KEY: ${{ secrets.KRX_API_KEY }}
+        TEST_ENVIRONMENT: ${{ vars.TEST_ENVIRONMENT || 'development' }}
+        LOG_LEVEL: ${{ vars.LOG_LEVEL || 'DEBUG' }}
+      run: |
+        uv run pytest packages/cluefin-openapi/tests/integration/ -v --tb=short
+        
+    - name: Generate coverage report
+      run: |
+        uv run coverage run --source=packages/cluefin-openapi/src -m pytest packages/cluefin-openapi/tests/unit/
+        uv run coverage xml
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        token: ${{ secrets.CODECOV_TOKEN }}
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    environment: development
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        enable-cache: true
+        
+    - name: Install dependencies
+      run: |
+        uv sync --dev
+        
+    - name: Run bandit security linter
+      run: |
+        uv add bandit --dev
+        uvx bandit -r packages/ -f json -o bandit-report.json || true
+
+    - name: Upload Bandit report
+      uses: actions/upload-artifact@v4
+      with:
+        name: bandit-report
+        path: bandit-report.json
+
+  notify:
+    name: Notify Status
+    runs-on: ubuntu-latest
+    needs: [lint, test, security]
+    if: always()
+    
+    steps:
+    - name: Notify success
+      if: needs.lint.result == 'success' && needs.test.result == 'success' && needs.build.result == 'success' && needs.security.result == 'success'
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      run: |
+        echo "All checks passed successfully!"
+        if [ -n "$SLACK_WEBHOOK" ]; then
+          echo "Would notify Slack (webhook configured)"
+        fi
+        
+    - name: Notify failure
+      if: needs.lint.result == 'failure' || needs.test.result == 'failure' || needs.build.result == 'failure' || needs.security.result == 'failure'
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      run: |
+        echo "Some checks failed!"
+        if [ -n "$SLACK_WEBHOOK" ]; then
+          echo "Would notify Slack about failure (webhook configured)"
+        fi

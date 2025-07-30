@@ -63,6 +63,7 @@ def test_get_subscription_warrant(client: Client):
     assert response.body is not None
     assert isinstance(response.body, StockSubscriptionWarrant)
 
+
 def test_get_kospi_base_info(client: Client):
     time.sleep(1)
     response = client.stock.get_kospi_base_info("20250721")
@@ -70,12 +71,14 @@ def test_get_kospi_base_info(client: Client):
     assert response.body is not None
     assert isinstance(response.body, StockKospiBaseInfo)
 
+
 def test_get_kosdaq_base_info(client: Client):
     time.sleep(1)
     response = client.stock.get_kosdaq_base_info("20250721")
     assert response is not None
     assert response.body is not None
     assert isinstance(response.body, StockKosdaqBaseInfo)
+
 
 def test_get_konex_base_info(client: Client):
     time.sleep(1)
