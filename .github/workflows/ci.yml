@@ -2,9 +2,9 @@ name: CI Pipeline
 
 "on":
   push:
-    branches: [ main, develop ]
+    branches: [ main, "copilot/**" ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, "copilot/**" ]
   workflow_dispatch:
     inputs:
       debug_enabled:
