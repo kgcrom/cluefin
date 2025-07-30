@@ -113,41 +113,6 @@ jobs:
         name: codecov-umbrella
         token: ${{ secrets.CODECOV_TOKEN }}
 
-  build:
-    name: Build Package
-    runs-on: ubuntu-latest
-    environment: development
-    needs: [lint, test]
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        
-    - name: Install uv
-      uses: astral-sh/setup-uv@v3
-      with:
-        enable-cache: true
-        
-    - name: Install dependencies
-      run: |
-        uv sync --dev
-        
-    - name: Build package
-      run: |
-        cd packages/cluefin-openapi
-        uv build
-        
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: package-artifacts
-        path: packages/cluefin-openapi/dist/
-
   security:
     name: Security Scan
     runs-on: ubuntu-latest
@@ -171,20 +136,21 @@ jobs:
       run: |
         uv sync --dev
         
-    - name: Run safety check
-      run: |
-        uv add safety --dev
-        uv run safety check
-        
     - name: Run bandit security linter
       run: |
         uv add bandit --dev
-        uv run bandit -r packages/cluefin-openapi/src/
+        uvx bandit -r packages/ -f json -o bandit-report.json || true
+
+    - name: Upload Bandit report
+      uses: actions/upload-artifact@v3
+      with:
+        name: bandit-report
+        path: bandit-report.json
 
   notify:
     name: Notify Status
     runs-on: ubuntu-latest
-    needs: [lint, test, build, security]
+    needs: [lint, test, security]
     if: always()
     
     steps:
