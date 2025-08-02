@@ -2,7 +2,7 @@ name: CI Pipeline
 
 "on":
   push:
-    branches: [ main, "copilot/**" ]
+    branches: [ main ]
   pull_request:
     branches: [ "copilot/**" ]
   workflow_dispatch:

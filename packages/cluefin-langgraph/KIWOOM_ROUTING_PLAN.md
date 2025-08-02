@@ -25,8 +25,6 @@ API 호출 및 결과 반환
 - **Routing Agent**: 최상위 라우터 에이전트
 - **Account Agent**: 계좌 관련 업무 (잔고, 보유종목 등)
 - **Chart Agent**: 차트 및 시세 데이터 조회
-- **Order Agent**: 주문 관련 업무 (매수/매도)
-- **Foreign Agent**: 해외주식 관련 업무
 - **Market Info Agent**: 시장 정보 및 종목 정보
 - **ETF Agent**: ETF 관련 정보
 - **Theme/Sector Agent**: 테마주 및 섹터 정보
@@ -36,7 +34,7 @@ API 호출 및 결과 반환
 ### Phase 1: 기본 구조 설정 (1주차)
 
 #### 1.1 프로젝트 구조 생성
-- [ ] 디렉토리 구조 생성
+- [x] 디렉토리 구조 생성
 ```
 packages/cluefin-langgraph/src/cluefin_langgraph/agents/kiwoom/
 ├── __init__.py
@@ -49,8 +47,6 @@ packages/cluefin-langgraph/src/cluefin_langgraph/agents/kiwoom/
 │   ├── __init__.py
 │   ├── account_agent.py          # 계좌 전용 에이전트
 │   ├── chart_agent.py            # 차트 전용 에이전트
-│   ├── order_agent.py            # 주문 전용 에이전트
-│   ├── foreign_agent.py          # 해외주식 전용 에이전트
 │   ├── market_info_agent.py      # 시장정보 전용 에이전트
 │   ├── etf_agent.py              # ETF 전용 에이전트
 │   └── theme_sector_agent.py     # 테마/섹터 전용 에이전트
@@ -61,7 +57,7 @@ packages/cluefin-langgraph/src/cluefin_langgraph/agents/kiwoom/
 ```
 
 #### 1.2 기본 타입 및 모델 정의
-- [ ] `routing_types.py` 구현 (AgentType, IntentClassification, RoutingRequest, RoutingResponse)
+- [x] `routing_types.py` 구현 (AgentType, IntentClassification, RoutingRequest, RoutingResponse)
 ```python
 # routing_types.py
 from enum import Enum
@@ -71,8 +67,6 @@ from typing import Optional, Dict, Any
 class AgentType(Enum):
     ACCOUNT = "account"
     CHART = "chart"
-    ORDER = "order"
-    FOREIGN = "foreign"
     MARKET_INFO = "market_info"
     ETF = "etf"
     THEME_SECTOR = "theme_sector"
@@ -96,9 +90,9 @@ class RoutingResponse(BaseModel):
 ### Phase 2: 의도 분류 시스템 구현 (2주차)
 
 #### 2.1 Intent Classifier 개발
-- [ ] `IntentClassifier` 클래스 구현
-- [ ] 분류 프롬프트 템플릿 작성
-- [ ] LLM 기반 의도 분류 로직 개발
+- [x] `IntentClassifier` 클래스 구현
+- [x] 분류 프롬프트 템플릿 작성
+- [x] LLM 기반 의도 분류 로직 개발
 ```python
 # intent_classifier.py
 class IntentClassifier:
@@ -118,11 +112,9 @@ class IntentClassifier:
         에이전트 유형:
         1. ACCOUNT: 계좌 잔고, 보유종목, 손익 조회
         2. CHART: 주가 차트, 시세 데이터 조회
-        3. ORDER: 주식 매수/매도 주문
-        4. FOREIGN: 해외주식 관련 업무
-        5. MARKET_INFO: 종목 정보, 시장 정보 조회
-        6. ETF: ETF 관련 정보 조회
-        7. THEME_SECTOR: 테마주, 섹터 정보 조회
+        3. MARKET_INFO: 종목 정보, 시장 정보 조회
+        4. ETF: ETF 관련 정보 조회
+        5. THEME_SECTOR: 테마주, 섹터 정보 조회
         
         사용자 요청: {user_prompt}
         
@@ -137,9 +129,9 @@ class IntentClassifier:
 ```
 
 #### 2.2 키워드 기반 보조 분류기
-- [ ] `KeywordBasedClassifier` 클래스 구현
-- [ ] 각 에이전트별 키워드 매핑 정의
-- [ ] LLM 분류 결과 검증 로직 추가
+- [x] `KeywordBasedClassifier` 클래스 구현
+- [x] 각 에이전트별 키워드 매핑 정의
+- [x] LLM 분류 결과 검증 로직 추가
 ```python
 # intent_classifier.py (추가)
 class KeywordBasedClassifier:
@@ -151,12 +143,6 @@ class KeywordBasedClassifier:
         ],
         AgentType.CHART: [
             "차트", "시세", "주가", "캔들", "일봉", "분봉", "시간봉", "가격"
-        ],
-        AgentType.ORDER: [
-            "매수", "매도", "주문", "거래", "체결", "미체결", "정정", "취소"
-        ],
-        AgentType.FOREIGN: [
-            "해외", "미국", "나스닥", "다우", "S&P", "외국주식", "해외종목"
         ],
         AgentType.MARKET_INFO: [
             "종목정보", "기업정보", "재무", "공시", "배당", "주주", "시가총액"
@@ -173,9 +159,9 @@ class KeywordBasedClassifier:
 ### Phase 3: 기본 에이전트 클래스 구현 (3주차)
 
 #### 3.1 Base Agent 클래스
-- [ ] `BaseKiwoomAgent` 추상 클래스 구현
-- [ ] 공통 메서드 정의 (`_initialize_tools`, `process_request`, `_format_response`)
-- [ ] Kiwoom 클라이언트 통합
+- [x] `BaseKiwoomAgent` 추상 클래스 구현
+- [x] 공통 메서드 정의 (`_initialize_tools`, `process_request`, `_format_response`)
+- [x] Kiwoom 클라이언트 통합
 ```python
 # base_agent.py
 from abc import ABC, abstractmethod
@@ -203,10 +189,10 @@ class BaseKiwoomAgent(ABC):
 ```
 
 #### 3.2 Kiwoom API 툴 래퍼
-- [ ] `KiwoomToolFactory` 클래스 구현
-- [ ] 계좌 관련 도구 래퍼 작성 (`create_account_tools`)
-- [ ] 차트 관련 도구 래퍼 작성 (`create_chart_tools`)
-- [ ] 기타 API 도구 래퍼 작성
+- [x] `KiwoomToolFactory` 클래스 구현
+- [x] 계좌 관련 도구 래퍼 작성 (`create_account_tools`)
+- [x] 차트 관련 도구 래퍼 작성 (`create_chart_tools`)
+- [x] 기타 API 도구 래퍼 작성
 ```python
 # kiwoom_tools.py
 from langchain.tools import Tool
@@ -247,10 +233,10 @@ class KiwoomToolFactory:
 ### Phase 4: 특화 에이전트 구현 (4-5주차)
 
 #### 4.1 Account Agent
-- [ ] `AccountAgent` 클래스 구현
-- [ ] 계좌 조회 로직 구현
-- [ ] 보유종목 조회 로직 구현
-- [ ] 손익 계산 로직 구현
+- [x] `AccountAgent` 클래스 구현
+- [x] 계좌 조회 로직 구현
+- [x] 보유종목 조회 로직 구현
+- [x] 손익 계산 로직 구현
 ```python
 # account_agent.py
 class AccountAgent(BaseKiwoomAgent):
@@ -267,10 +253,10 @@ class AccountAgent(BaseKiwoomAgent):
 ```
 
 #### 4.2 Chart Agent
-- [ ] `ChartAgent` 클래스 구현
-- [ ] 일봉/분봉/시간봉 차트 조회 로직
-- [ ] 종목코드 및 기간 파라미터 추출
-- [ ] 차트 데이터 분석 및 시각화
+- [x] `ChartAgent` 클래스 구현
+- [x] 일봉/분봉/시간봉 차트 조회 로직
+- [x] 종목코드 및 기간 파라미터 추출
+- [x] 차트 데이터 분석 및 시각화
 ```python
 # chart_agent.py
 class ChartAgent(BaseKiwoomAgent):
@@ -287,8 +273,6 @@ class ChartAgent(BaseKiwoomAgent):
 ```
 
 #### 4.3 기타 전문 에이전트들
-- [ ] `OrderAgent` 구현 (주문 관련)
-- [ ] `ForeignAgent` 구현 (해외주식 관련)
 - [ ] `MarketInfoAgent` 구현 (시장정보 관련)
 - [ ] `ETFAgent` 구현 (ETF 관련)
 - [ ] `ThemeSectorAgent` 구현 (테마/섹터 관련)
@@ -478,14 +462,6 @@ async def main():
 → Routing Agent가 CHART로 분류하고 종목코드 추출
 → Chart Agent가 일봉 데이터 조회
 → 차트 분석 결과와 함께 반환
-```
-
-### 시나리오 3: 주문 실행
-```
-사용자: "삼성전자 10주 시장가로 매수해줘"
-→ Routing Agent가 ORDER로 분류하고 주문 정보 추출
-→ Order Agent가 주문 검증 후 실행
-→ 주문 결과 반환
 ```
 
 ## 🔧 기술 스택
