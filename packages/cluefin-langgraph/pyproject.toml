@@ -12,6 +12,7 @@ dependencies = [
     "langgraph==0.6.0",
     "pydantic==2.11.7",
     "cluefin_openapi",
+    "loguru>=0.7.3",
 ]
 
 [project.optional-dependencies]

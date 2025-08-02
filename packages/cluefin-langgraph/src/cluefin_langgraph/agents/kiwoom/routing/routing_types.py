@@ -20,35 +20,25 @@ class IntentClassification(BaseModel):
     """Intent classification result from LLM."""
 
     agent_type: AgentType = Field(..., description="The classified agent type")
-    confidence: float = Field(
-        ..., ge=0.0, le=1.0, description="Confidence score of the classification"
-    )
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score of the classification")
     reasoning: str = Field(..., description="Reasoning behind the classification")
-    extracted_params: Dict[str, Any] = Field(
-        default_factory=dict, description="Extracted parameters from user prompt"
-    )
+    extracted_params: Dict[str, Any] = Field(default_factory=dict, description="Extracted parameters from user prompt")
 
 
 class RoutingRequest(BaseModel):
     """Request object for routing system."""
 
     user_prompt: str = Field(..., description="User's natural language prompt")
-    context: Optional[Dict[str, Any]] = Field(
-        default=None, description="Additional context for routing"
-    )
+    context: Optional[Dict[str, Any]] = Field(default=None, description="Additional context for routing")
 
 
 class RoutingResponse(BaseModel):
     """Response object from routing system."""
 
     agent_type: AgentType = Field(..., description="The agent that handled the request")
-    classification: IntentClassification = Field(
-        ..., description="Classification details"
-    )
+    classification: IntentClassification = Field(..., description="Classification details")
     result: Any = Field(..., description="The result from the specialized agent")
-    formatted_response: Optional[str] = Field(
-        default=None, description="Human-readable formatted response"
-    )
+    formatted_response: Optional[str] = Field(default=None, description="Human-readable formatted response")
 
 
 class AgentMetadata(BaseModel):
@@ -56,12 +46,8 @@ class AgentMetadata(BaseModel):
 
     name: str = Field(..., description="Display name of the agent")
     description: str = Field(..., description="Description of agent capabilities")
-    keywords: list[str] = Field(
-        default_factory=list, description="Keywords associated with this agent"
-    )
-    examples: list[str] = Field(
-        default_factory=list, description="Example prompts this agent can handle"
-    )
+    keywords: list[str] = Field(default_factory=list, description="Keywords associated with this agent")
+    examples: list[str] = Field(default_factory=list, description="Example prompts this agent can handle")
 
 
 # Agent metadata definitions
