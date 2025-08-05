@@ -48,11 +48,19 @@ class TestKiwoomRouterAgent:
     def router_agent(self, mock_kiwoom_client, mock_llm):
         """Create KiwoomRouterAgent instance for testing."""
         with patch.multiple(
-            "cluefin_langgraph.agents.kiwoom.routing.router_agent",
+            "cluefin_langgraph.agents.kiwoom.specialized.account_agent",
             AccountAgent=Mock,
+        ), patch.multiple(
+            "cluefin_langgraph.agents.kiwoom.specialized.chart_agent",
             ChartAgent=Mock,
+        ), patch.multiple(
+            "cluefin_langgraph.agents.kiwoom.specialized.market_info_agent",
             MarketInfoAgent=Mock,
+        ), patch.multiple(
+            "cluefin_langgraph.agents.kiwoom.specialized.etf_agent",
             ETFAgent=Mock,
+        ), patch.multiple(
+            "cluefin_langgraph.agents.kiwoom.specialized.theme_sector_agent",
             ThemeSectorAgent=Mock,
         ):
             return KiwoomRouterAgent(mock_kiwoom_client, mock_llm, verbose=True)
@@ -351,16 +359,24 @@ class TestKiwoomRouterAgent:
     def test_verbose_logging(self, mock_kiwoom_client, mock_llm, mock_classification):
         """Test verbose logging functionality."""
         with patch.multiple(
-            "cluefin_langgraph.agents.kiwoom.routing.router_agent",
+            "cluefin_langgraph.agents.kiwoom.specialized.account_agent",
             AccountAgent=Mock,
+        ), patch.multiple(
+            "cluefin_langgraph.agents.kiwoom.specialized.chart_agent",
             ChartAgent=Mock,
+        ), patch.multiple(
+            "cluefin_langgraph.agents.kiwoom.specialized.market_info_agent",
             MarketInfoAgent=Mock,
+        ), patch.multiple(
+            "cluefin_langgraph.agents.kiwoom.specialized.etf_agent",
             ETFAgent=Mock,
+        ), patch.multiple(
+            "cluefin_langgraph.agents.kiwoom.specialized.theme_sector_agent",
             ThemeSectorAgent=Mock,
         ):
             verbose_router = KiwoomRouterAgent(mock_kiwoom_client, mock_llm, verbose=True)
 
-            with patch("builtins.print") as mock_print:
+            with patch("loguru.logger.info") as mock_logger_info:
                 verbose_router.classifier.classify = Mock(return_value=mock_classification)
 
                 state: RouterState = {
@@ -373,9 +389,9 @@ class TestKiwoomRouterAgent:
 
                 verbose_router._classify_intent(state)
 
-                # Should have printed classification info
-                assert mock_print.call_count >= 1
-                call_args = str(mock_print.call_args_list)
+                # Should have logged classification info
+                assert mock_logger_info.call_count >= 1
+                call_args = str(mock_logger_info.call_args_list)
                 assert "Classifying intent" in call_args
                 assert "Classified as" in call_args
 

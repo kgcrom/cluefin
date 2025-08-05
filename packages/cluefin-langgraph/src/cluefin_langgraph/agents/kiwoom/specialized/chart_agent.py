@@ -47,14 +47,18 @@ class ChartAgent(BaseKiwoomAgent):
         """
         self._log(f"Processing chart request: {request}")
 
-        # Extract stock code from parameters
+        # Determine the type of chart operation needed
+        request_lower = request.lower()
+
+        # Handle ranking requests first (doesn't require stock_code)
+        if any(keyword in request_lower for keyword in ["순위", "상위", "ranking"]):
+            return self._handle_ranking_request(params)
+
+        # Extract stock code from parameters for other requests
         stock_code = self._extract_stock_code(params)
 
         if not stock_code:
             return {"error": "종목코드가 필요합니다. 종목명 또는 종목코드를 입력해주세요."}
-
-        # Determine the type of chart operation needed
-        request_lower = request.lower()
 
         if any(keyword in request_lower for keyword in ["일봉", "daily", "일간"]):
             return self._handle_daily_chart_request(stock_code, params)
@@ -64,9 +68,6 @@ class ChartAgent(BaseKiwoomAgent):
 
         elif any(keyword in request_lower for keyword in ["현재가", "시세", "호가"]):
             return self._handle_current_price_request(stock_code)
-
-        elif any(keyword in request_lower for keyword in ["순위", "상위", "ranking"]):
-            return self._handle_ranking_request(params)
 
         else:
             # Default to daily chart

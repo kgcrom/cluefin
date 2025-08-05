@@ -94,14 +94,3 @@ jobs:
           This PR was automatically created by the dependency update workflow.
         branch: automated/dependency-updates
         delete-branch: true
-        
-    - name: Notify about dependency updates
-      if: success()
-      env:
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-      run: |
-        echo "Dependency update PR created successfully"
-        if [ -n "$SLACK_WEBHOOK" ]; then
-          echo "Would notify Slack about dependency updates"
-        fi
-
