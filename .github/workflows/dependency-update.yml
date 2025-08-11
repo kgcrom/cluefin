@@ -48,6 +48,7 @@ jobs:
     - name: Install updated dependencies
       run: |
         uv sync --dev
+        uv sync --directory packages/cluefin-openapi
         
     - name: Run tests with updated dependencies
       env:
@@ -63,8 +64,8 @@ jobs:
         
     - name: Check for security vulnerabilities
       run: |
-        uv add safety --dev
-        uv run safety check
+        uv tool install pip-audit
+        uv run pip-audit --desc
         
     - name: Create Pull Request
       if: success()

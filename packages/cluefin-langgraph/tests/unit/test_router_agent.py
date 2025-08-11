@@ -47,21 +47,27 @@ class TestKiwoomRouterAgent:
     @pytest.fixture
     def router_agent(self, mock_kiwoom_client, mock_llm):
         """Create KiwoomRouterAgent instance for testing."""
-        with patch.multiple(
-            "cluefin_langgraph.agents.kiwoom.specialized.account_agent",
-            AccountAgent=Mock,
-        ), patch.multiple(
-            "cluefin_langgraph.agents.kiwoom.specialized.chart_agent",
-            ChartAgent=Mock,
-        ), patch.multiple(
-            "cluefin_langgraph.agents.kiwoom.specialized.market_info_agent",
-            MarketInfoAgent=Mock,
-        ), patch.multiple(
-            "cluefin_langgraph.agents.kiwoom.specialized.etf_agent",
-            ETFAgent=Mock,
-        ), patch.multiple(
-            "cluefin_langgraph.agents.kiwoom.specialized.theme_sector_agent",
-            ThemeSectorAgent=Mock,
+        with (
+            patch.multiple(
+                "cluefin_langgraph.agents.kiwoom.specialized.account_agent",
+                AccountAgent=Mock,
+            ),
+            patch.multiple(
+                "cluefin_langgraph.agents.kiwoom.specialized.chart_agent",
+                ChartAgent=Mock,
+            ),
+            patch.multiple(
+                "cluefin_langgraph.agents.kiwoom.specialized.market_info_agent",
+                MarketInfoAgent=Mock,
+            ),
+            patch.multiple(
+                "cluefin_langgraph.agents.kiwoom.specialized.etf_agent",
+                ETFAgent=Mock,
+            ),
+            patch.multiple(
+                "cluefin_langgraph.agents.kiwoom.specialized.theme_sector_agent",
+                ThemeSectorAgent=Mock,
+            ),
         ):
             return KiwoomRouterAgent(mock_kiwoom_client, mock_llm, verbose=True)
 
@@ -358,21 +364,27 @@ class TestKiwoomRouterAgent:
 
     def test_verbose_logging(self, mock_kiwoom_client, mock_llm, mock_classification):
         """Test verbose logging functionality."""
-        with patch.multiple(
-            "cluefin_langgraph.agents.kiwoom.specialized.account_agent",
-            AccountAgent=Mock,
-        ), patch.multiple(
-            "cluefin_langgraph.agents.kiwoom.specialized.chart_agent",
-            ChartAgent=Mock,
-        ), patch.multiple(
-            "cluefin_langgraph.agents.kiwoom.specialized.market_info_agent",
-            MarketInfoAgent=Mock,
-        ), patch.multiple(
-            "cluefin_langgraph.agents.kiwoom.specialized.etf_agent",
-            ETFAgent=Mock,
-        ), patch.multiple(
-            "cluefin_langgraph.agents.kiwoom.specialized.theme_sector_agent",
-            ThemeSectorAgent=Mock,
+        with (
+            patch.multiple(
+                "cluefin_langgraph.agents.kiwoom.specialized.account_agent",
+                AccountAgent=Mock,
+            ),
+            patch.multiple(
+                "cluefin_langgraph.agents.kiwoom.specialized.chart_agent",
+                ChartAgent=Mock,
+            ),
+            patch.multiple(
+                "cluefin_langgraph.agents.kiwoom.specialized.market_info_agent",
+                MarketInfoAgent=Mock,
+            ),
+            patch.multiple(
+                "cluefin_langgraph.agents.kiwoom.specialized.etf_agent",
+                ETFAgent=Mock,
+            ),
+            patch.multiple(
+                "cluefin_langgraph.agents.kiwoom.specialized.theme_sector_agent",
+                ThemeSectorAgent=Mock,
+            ),
         ):
             verbose_router = KiwoomRouterAgent(mock_kiwoom_client, mock_llm, verbose=True)
 

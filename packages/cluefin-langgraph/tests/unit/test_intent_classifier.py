@@ -280,7 +280,7 @@ class TestKeywordBasedClassifier:
 
         # 키워드가 매칭되지 않을 수 있으므로 우선 차트 키워드 추가
         result = keyword_classifier.classify("삼성전자 100주 차트 매수")
-        
+
         assert result is not None, "KeywordBasedClassifier should return a result for keyword-matched prompt"
         assert result.extracted_params.get("quantity") == "100"
 

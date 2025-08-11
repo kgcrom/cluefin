@@ -1,3 +1,6 @@
+KIWOOM_ROUTING_PLAN.md
+
+
 # Kiwoom 에이전트 라우팅 시스템 구현 계획
 
 ## 🎯 프로젝트 개요
@@ -34,107 +37,16 @@ API 호출 및 결과 반환
 ### Phase 1: 기본 구조 설정 (1주차)
 
 #### 1.1 프로젝트 구조 생성
-- [x] 디렉토리 구조 생성
-```
-packages/cluefin-langgraph/src/cluefin_langgraph/agents/kiwoom/
-├── __init__.py
-├── routing/
-│   ├── __init__.py
-│   ├── router_agent.py           # 메인 라우터 에이전트
-│   ├── intent_classifier.py      # 의도 분류기
-│   └── routing_types.py          # 라우팅 관련 타입 정의
-├── specialized/
-│   ├── __init__.py
-│   ├── account_agent.py          # 계좌 전용 에이전트
-│   ├── chart_agent.py            # 차트 전용 에이전트
-│   ├── market_info_agent.py      # 시장정보 전용 에이전트
-│   ├── etf_agent.py              # ETF 전용 에이전트
-│   └── theme_sector_agent.py     # 테마/섹터 전용 에이전트
-└── base/
-    ├── __init__.py
-    ├── base_agent.py             # 기본 에이전트 클래스
-    └── kiwoom_tools.py           # Kiwoom API 툴 래퍼
-```
+생략...
 
-#### 1.2 기본 타입 및 모델 정의
-- [x] `routing_types.py` 구현 (AgentType, IntentClassification, RoutingRequest, RoutingResponse)
-
-### Phase 2: 의도 분류 시스템 구현 (2주차)
-
-#### 2.1 Intent Classifier 개발
-- [x] `IntentClassifier` 클래스 구현
-- [x] 분류 프롬프트 템플릿 작성
-- [x] LLM 기반 의도 분류 로직 개발
-
-#### 2.2 키워드 기반 보조 분류기
-- [x] `KeywordBasedClassifier` 클래스 구현
-- [x] 각 에이전트별 키워드 매핑 정의
-- [x] LLM 분류 결과 검증 로직 추가
-
-### Phase 3: 기본 에이전트 클래스 구현 (3주차)
-
-#### 3.1 Base Agent 클래스
-- [x] `BaseKiwoomAgent` 추상 클래스 구현
-- [x] 공통 메서드 정의 (`_initialize_tools`, `process_request`, `_format_response`)
-- [x] Kiwoom 클라이언트 통합
-
-#### 3.2 Kiwoom API 툴 래퍼
-- [x] `KiwoomToolFactory` 클래스 구현
-- [x] 계좌 관련 도구 래퍼 작성 (`create_account_tools`)
-- [x] 차트 관련 도구 래퍼 작성 (`create_chart_tools`)
-- [x] 기타 API 도구 래퍼 작성
-
-### Phase 4: 특화 에이전트 구현 (4-5주차)
-
-#### 4.1 Account Agent
-- [x] `AccountAgent` 클래스 구현
-- [x] 계좌 조회 로직 구현
-- [x] 보유종목 조회 로직 구현
-- [x] 손익 계산 로직 구현
-
-#### 4.2 Chart Agent
-- [x] `ChartAgent` 클래스 구현
-- [x] 일봉/분봉/시간봉 차트 조회 로직
-- [x] 종목코드 및 기간 파라미터 추출
-- [x] 차트 데이터 분석 및 시각화
-
-#### 4.3 기타 전문 에이전트들
-<!-- - [ ] `MarketInfoAgent` 구현 (시장정보 관련)
-- [ ] `ETFAgent` 구현 (ETF 관련)
-- [ ] `ThemeSectorAgent` 구현 (테마/섹터 관련) -->
-
-### Phase 5: 라우터 에이전트 구현 (6주차)
-
-#### 5.1 메인 라우터
-- [x] `RouterState` TypedDict 정의
-- [x] `KiwoomRouterAgent` 클래스 구현
-- [x] LangGraph 워크플로우 구성
-- [x] 의도 분류 노드 구현
-- [x] 에이전트 라우팅 노드 구현
-- [x] 응답 포맷팅 노드 구현
-- [x] 비동기 처리 로직 구현
 
 ### Phase 6: 테스트 및 최적화 (7주차)
 
 #### 6.1 단위 테스트
-- [ ] Intent Classifier 테스트 작성
-- [ ] 각 특화 에이전트 테스트 작성
-- [ ] Router Agent 워크플로우 테스트 작성
-- [ ] API 도구 래퍼 테스트 작성
-```python
-# tests/unit/test_intent_classifier.py
-def test_account_intent_classification():
-    classifier = IntentClassifier(mock_llm)
-    result = classifier.classify("내 계좌 잔고를 알려줘")
-    assert result.agent_type == AgentType.ACCOUNT
-    assert result.confidence > 0.8
-
-# tests/unit/test_router_agent.py
-def test_routing_workflow():
-    router = KiwoomRouterAgent(mock_client, mock_llm)
-    response = await router.process("삼성전자 차트를 보여줘")
-    assert "차트" in response
-```
+- [x] Intent Classifier 테스트 작성
+- [x] 각 특화 에이전트 테스트 작성
+- [x] Router Agent 워크플로우 테스트 작성
+- [x] API 도구 래퍼 테스트 작성
 
 #### 6.2 통합 테스트
 - [ ] 실제 Kiwoom API를 사용한 종단간 테스트

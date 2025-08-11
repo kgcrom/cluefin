@@ -9,11 +9,11 @@ T_KiwoomHttpBody = TypeVar("T_KiwoomHttpBody", bound="KiwoomHttpBody")
 
 class KiwoomHttpHeader(BaseModel):
     # 연속조회여부
-    cont_yn: Literal["Y", "N"] = Field(..., alias="cont-yn")
+    cont_yn: Literal["Y", "N"] = Field(alias="cont-yn")
     # 연속조회키
-    next_key: str = Field(..., alias="next-key")
+    next_key: str = Field(alias="next-key")
     # TR명
-    api_id: str = Field(..., alias="api-id")
+    api_id: str = Field(alias="api-id")
 
 
 @dataclass

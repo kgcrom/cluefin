@@ -135,16 +135,17 @@ jobs:
       run: |
         uv sync --dev
         
-    - name: Run bandit security linter
+    - name: Run pip-audit vulnerability scan
       run: |
-        uv add bandit --dev
-        uvx bandit -r packages/ -f json -o bandit-report.json || true
+        uv tool install pip-audit
+        uv run pip-audit --desc --format json --output pip-audit-report.json || true
 
-    - name: Upload Bandit report
+    - name: Upload security reports
       uses: actions/upload-artifact@v4
       with:
-        name: bandit-report
-        path: bandit-report.json
+        name: security-reports
+        path: |
+          pip-audit-report.json
 
   notify:
     name: Notify Status
