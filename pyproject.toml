@@ -35,3 +35,15 @@ docstring-code-format = true
 [tool.ruff.lint]
 select = ["E", "F", "W", "B", "Q", "I", "ASYNC", "T20"]
 ignore = ["F401", "E501"]
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: integration tests",
+    "requires_auth: tests that require authentication",
+    "slow: mark test as slow running",
+]
+addopts = "-ra"
+testpaths = [
+    "packages/cluefin-openapi/tests",
+    "packages/cluefin-langgraph/tests"
+]
