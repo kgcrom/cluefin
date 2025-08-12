@@ -3,6 +3,7 @@ import time
 
 import dotenv
 import pytest
+from pydantic import SecretStr
 
 from cluefin_openapi.kiwoom._auth import Auth
 from cluefin_openapi.kiwoom._client import Client
@@ -29,7 +30,7 @@ def auth() -> Auth:
     dotenv.load_dotenv(dotenv_path=".env.test")
     return Auth(
         app_key=os.getenv("KIWOOM_APP_KEY"),
-        secret_key=os.getenv("KIWOOM_SECRET_KEY"),
+        secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY")),
         env="dev",
     )
 
@@ -45,7 +46,7 @@ def client(auth: Auth) -> Client:
         Client: A configured Client instance.
     """
     token = auth.generate_token()
-    return Client(token=token.token, env="dev")
+    return Client(token=token.get_token(), env="dev")
 
 
 def test_get_foreign_investor_trading_trend_by_stock(client: Client):

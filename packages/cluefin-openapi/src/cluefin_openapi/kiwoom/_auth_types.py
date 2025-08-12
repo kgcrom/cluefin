@@ -1,12 +1,15 @@
 from datetime import datetime
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, SecretStr, field_validator
 
 
 class TokenResponse(BaseModel):
     expires_dt: datetime
     token_type: str
-    token: str
+    token: SecretStr
+
+    def get_token(self):
+        return self.token.get_secret_value()
 
     @field_validator("expires_dt", mode="before")
     def parse_expires_dt(cls, v):

@@ -5,6 +5,7 @@ from datetime import datetime
 import pytest
 import requests
 import requests_mock
+from pydantic import SecretStr
 
 from cluefin_openapi.kiwoom._auth import Auth
 from cluefin_openapi.kiwoom._auth_types import TokenResponse
@@ -13,7 +14,7 @@ from cluefin_openapi.kiwoom._auth_types import TokenResponse
 @pytest.fixture
 def auth():
     """Create an Auth instance for testing."""
-    return Auth(app_key="test_app_key", secret_key="test_secret_key", env="dev")
+    return Auth(app_key="test_app_key", secret_key=SecretStr("test_secret_key"), env="dev")
 
 
 def test_generate_token_success(auth):
@@ -30,7 +31,7 @@ def test_generate_token_success(auth):
         token_response = auth.generate_token()
 
         assert isinstance(token_response, TokenResponse)
-        assert token_response.token == expected_token
+        assert token_response.token.get_secret_value() == expected_token
         assert token_response.token_type == expected_token_type
         assert token_response.expires_dt == datetime.strptime(expected_expires_dt, "%Y%m%d%H%M%S")
 

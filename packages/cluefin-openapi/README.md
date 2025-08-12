@@ -35,6 +35,8 @@ pip install -e .
 ### 기본 사용법
 
 ```python
+from loguru import logger
+from pydantic import SecretStr
 import os
 from cluefin_openapi.kiwoom._auth import Auth
 from cluefin_openapi.kiwoom._client import Client
@@ -42,18 +44,18 @@ from cluefin_openapi.kiwoom._client import Client
 # 인증 설정
 auth = Auth(
     app_key=os.getenv("KIWOOM_APP_KEY"),
-    secret_key=os.getenv("KIWOOM_SECRET_KEY"),
+    secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY")),
     env="dev",  # 개발환경: "dev", 운영환경: "prod"
 )
 
 # 토큰 생성 및 클라이언트 초기화
 token = auth.generate_token()
-client = Client(token=token.token, env="dev")
+client = Client(token=token.get_token(), env="dev")
 
 # 삼성전자(005930) 일별 실현손익 조회
 response = client.account.get_daily_stock_realized_profit_loss_by_date("005930", "20250630")
-print("응답 헤더:", response.headers)
-print("응답 데이터:", response.body)
+logger.info("응답 헤더:", response.headers)
+logger.info("응답 데이터:", response.body)
 ```
 
 
@@ -129,7 +131,7 @@ token = auth.generate_token()
 from cluefin_openapi.kiwoom._client import Client
 
 client = Client(
-    token=token.token,
+    token=token.get_token(),
     env="dev",
 )
 
@@ -148,6 +150,7 @@ krx_client = KRXClient(auth_key="your_krx_auth_key", timeout=60)
 ### 주식 시장 데이터
 
 ```python
+from loguru import logger
 from cluefin_openapi.krx._client import Client as KRXClient
 
 # KRX 클라이언트 초기화
@@ -155,15 +158,15 @@ krx_client = KRXClient(auth_key="your_krx_auth_key")
 
 # KOSPI 일별매매정보 조회
 kospi_data = krx_client.stock.get_kospi("20250721")
-print("KOSPI 데이터:", kospi_data.body)
+logger.info("KOSPI 데이터:", kospi_data.body)
 
 # KOSDAQ 일별매매정보 조회
 kosdaq_data = krx_client.stock.get_kosdaq("20250721")
-print("KOSDAQ 데이터:", kosdaq_data.body)
+logger.info("KOSDAQ 데이터:", kosdaq_data.body)
 
 # KONEX 일별매매정보 조회
 konex_data = krx_client.stock.get_konex("20250721")
-print("KONEX 데이터:", konex_data.body)
+logger.info("KONEX 데이터:", konex_data.body)
 
 # 워런트 및 신주인수권증서 조회
 warrant_data = krx_client.stock.get_warrant("20250721")
@@ -180,15 +183,15 @@ konex_base_info = krx_client.stock.get_konex_base_info("20250721")
 ```python
 # KRX 종합지수 조회
 krx_index = krx_client.index.get_krx("20250721")
-print("KRX 종합지수:", krx_index.body)
+logger.info("KRX 종합지수:", krx_index.body)
 
 # KOSPI 지수 조회
 kospi_index = krx_client.index.get_kospi("20250721")
-print("KOSPI 지수:", kospi_index.body)
+logger.info("KOSPI 지수:", kospi_index.body)
 
 # KOSDAQ 지수 조회
 kosdaq_index = krx_client.index.get_kosdaq("20250721")
-print("KOSDAQ 지수:", kosdaq_index.body)
+logger.info("KOSDAQ 지수:", kosdaq_index.body)
 
 # 채권 지수 조회
 bond_index = krx_client.index.get_bond("20250721")
@@ -202,6 +205,7 @@ derivatives_index = krx_client.index.get_derivatives("20250721")
 ```python
 import asyncio
 from datetime import datetime, timedelta
+from loguru import logger
 
 # 특정 날짜의 주요 시장 데이터 일괄 조회
 def get_market_overview(date: str):
@@ -225,13 +229,13 @@ def get_market_overview(date: str):
             "etf": etf.body
         }
     except Exception as e:
-        print(f"데이터 조회 중 오류 발생: {e}")
+        logger.info(f"데이터 조회 중 오류 발생: {e}")
         return None
 
 # 사용 예제
 market_data = get_market_overview("20250721")
 if market_data:
-    print("시장 개요 데이터 조회 완료")
+    logger.info("시장 개요 데이터 조회 완료")
 ```
 
 ## 🔧 구성 옵션
@@ -259,15 +263,16 @@ logger.add("kiwoom_api.log", level="INFO", rotation="10 MB")
 ### 키움증권 API 에러 처리
 
 ```python
+from loguru import logger
 from cluefin_openapi.kiwoom._exceptions import KiwoomAPIError
 
 try:
     response = client.account.get_inquire_balance()
 except KiwoomAPIError as e:
-    print(f"API 에러: {e.message}")
-    print(f"에러 코드: {e.error_code}")
+    logger.info(f"API 에러: {e.message}")
+    logger.info(f"에러 코드: {e.error_code}")
 except Exception as e:
-    print(f"일반 에러: {str(e)}")
+    logger.info(f"일반 에러: {str(e)}")
 ```
 
 ### 일반적인 에러 시나리오

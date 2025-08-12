@@ -1,5 +1,7 @@
 import json
 
+from loguru import logger
+
 from cluefin_openapi.kiwoom._domestic_account_types import (
     DomesticAccountDailyRealizedProfitLossDetails,
     DomesticAccountDailyRealizedProfitLossDetailsItem,
@@ -61,6 +63,7 @@ def test_account_daily_realized_profit_loss_details_json_serialization():
     deserialized = json.loads(serialized)
 
     # 검증
+    logger.info(f"deserialized: {deserialized}")
     assert deserialized["tdy_rlzt_pl"] == "179439"
     assert len(deserialized["tdy_rlzt_pl_dtl"]) == 2
     assert deserialized["tdy_rlzt_pl_dtl"][0]["stk_nm"] == "삼성전자"
@@ -136,6 +139,7 @@ def test_account_executed_json_serialization():
     deserialized = json.loads(serialized)
 
     # 검증
+    logger.info(f"deserialized: {deserialized}")
     assert len(deserialized["cntr"]) == 2
     assert deserialized["cntr"][0]["ord_no"] == "0000037"
     assert deserialized["cntr"][0]["stk_nm"] == "삼성전자"
@@ -209,6 +213,7 @@ def test_account_profit_rate_json_serialization():
     deserialized = json.loads(serialized)
 
     # 검증
+    logger.info(f"deserialized: {deserialized}")
     assert len(deserialized["acnt_prft_rt"]) == 2
     assert deserialized["acnt_prft_rt"][0]["stk_cd"] == "005930"
     assert deserialized["acnt_prft_rt"][0]["stk_nm"] == "삼성전자"
@@ -265,6 +270,7 @@ def test_response_full_serialization():
     deserialized = json.loads(serialized)
 
     # 검증
+    logger.info(f"deserialized: {deserialized}")
     assert deserialized["headers"]["cont-yn"] == "N"
     assert deserialized["headers"]["api-id"] == "ka10076"
     assert len(deserialized["body"]["cntr"]) == 1
@@ -277,6 +283,7 @@ def test_response_full_serialization():
     deserialized = json.loads(serialized)
 
     # 검증
+    logger.info(f"deserialized: {deserialized}")
     assert deserialized["headers"]["cont_yn"] == "N"
     assert deserialized["headers"]["api_id"] == "ka10076"
     assert len(deserialized["body"]["cntr"]) == 1

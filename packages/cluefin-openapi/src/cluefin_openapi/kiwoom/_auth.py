@@ -7,6 +7,7 @@ using client credentials authentication flow.
 from typing import Literal
 
 import requests
+from pydantic import SecretStr
 
 from ._auth_types import TokenResponse
 
@@ -24,7 +25,7 @@ class Auth:
         ValueError: If an invalid environment is provided.
     """
 
-    def __init__(self, app_key: str, secret_key: str, env: Literal["dev", "prod"] = "dev") -> None:
+    def __init__(self, app_key: str, secret_key: SecretStr, env: Literal["dev", "prod"] = "dev") -> None:
         self.app_key = app_key
         self.secret_key = secret_key
 
@@ -63,7 +64,11 @@ class Auth:
         headers = {
             "Content-Type": "application/json;charset=UTF-8",
         }
-        data = {"grant_type": "client_credentials", "appkey": self.app_key, "secretkey": self.secret_key}
+        data = {
+            "grant_type": "client_credentials",
+            "appkey": self.app_key,
+            "secretkey": self.secret_key.get_secret_value(),
+        }
 
         response = requests.post(f"{self.url}/oauth2/token", headers=headers, json=data)
         response.raise_for_status()
@@ -88,7 +93,7 @@ class Auth:
             "Content-Type": "application/json;charset=UTF-8",
         }
 
-        data = {"appkey": self.app_key, "secretkey": self.secret_key, "token": token}
+        data = {"appkey": self.app_key, "secretkey": self.secret_key.get_secret_value(), "token": token}
 
         response = requests.post(f"{self.url}/oauth2/revoke", headers=headers, json=data)
         response.raise_for_status()

@@ -3,6 +3,7 @@ import time
 
 import dotenv
 import pytest
+from pydantic import SecretStr
 
 from cluefin_openapi.kiwoom._auth import Auth
 from cluefin_openapi.kiwoom._client import Client
@@ -17,7 +18,7 @@ def auth() -> Auth:
     dotenv.load_dotenv(dotenv_path=".env.test")
     return Auth(
         app_key=os.getenv("KIWOOM_APP_KEY"),
-        secret_key=os.getenv("KIWOOM_SECRET_KEY"),
+        secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY")),
         env="dev",
     )
 
@@ -25,7 +26,7 @@ def auth() -> Auth:
 @pytest.fixture
 def client(auth: Auth) -> Client:
     token = auth.generate_token()
-    return Client(token=token.token, env="dev")
+    return Client(token=token.get_token(), env="dev")
 
 
 def test_get_theme_group(client: Client):
