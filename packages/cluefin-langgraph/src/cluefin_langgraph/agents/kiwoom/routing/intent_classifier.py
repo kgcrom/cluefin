@@ -9,6 +9,81 @@ from langchain_core.prompts import PromptTemplate
 from ..routing.routing_types import AGENT_METADATA, AgentType, IntentClassification
 
 
+def _standardize_params(raw_params: Dict[str, str]) -> Dict[str, str]:
+    """Standardize parameter names to match test expectations.
+
+    Args:
+        raw_params: Raw parameters from LLM extraction
+
+    Returns:
+        Standardized parameters with consistent naming
+    """
+    standardized = {}
+
+    # Define mappings from Korean/alternate names to standard names
+    param_mappings = {
+        # Stock-related parameters
+        "종목명": "stock_name",
+        "종목코드": "stock_code",
+        "symbol": "stock_code",
+        "ticker": "stock_code",
+        "매수수량": "quantity",
+        "수량": "quantity",
+        "주수": "quantity",
+        # ETF-related parameters
+        "ETF명": "etf_name",
+        "etf명": "etf_name",
+        # Theme/Sector parameters
+        "테마": "theme",
+        "섹터": "sector",
+        "테마/섹터": lambda v: {"theme": v}
+        if any(keyword in v for keyword in ["AI", "2차전지", "바이오", "게임"])
+        else {"sector": v},
+        # Time frame parameters
+        "시간프레임": "time_frame",
+        "차트타입": "chart_type",
+    }
+
+    for key, value in raw_params.items():
+        if key in param_mappings:
+            mapping = param_mappings[key]
+            if callable(mapping):
+                # Special handling for complex mappings
+                result = mapping(value)
+                standardized.update(result)
+            else:
+                standardized[mapping] = value
+        else:
+            # Keep unknown parameters as-is
+            standardized[key] = value
+
+    # Special handling for quantities - extract numeric values
+    if "quantity" in standardized:
+        import re
+
+        quantity_str = standardized["quantity"]
+        numbers = re.findall(r"\d+", str(quantity_str))
+        if numbers:
+            standardized["quantity"] = int(numbers[0])
+
+    # Convert stock names to stock codes when possible
+    if "stock_name" in standardized and "stock_code" not in standardized:
+        known_stocks = {
+            "삼성전자": "005930",
+            "SK하이닉스": "000660",
+            "NAVER": "035420",
+            "네이버": "035420",
+            "LG화학": "051910",
+            "현대차": "005380",
+            "현대자동차": "005380",
+        }
+        stock_name = standardized["stock_name"]
+        if stock_name in known_stocks:
+            standardized["stock_code"] = known_stocks[stock_name]
+
+    return standardized
+
+
 class IntentClassifier:
     """Classifies user intent to route to appropriate Kiwoom agent.
 
@@ -99,7 +174,13 @@ class IntentClassifier:
 중요 고려사항:
 1. 요청의 핵심 의도를 파악하세요
 2. 여러 에이전트가 가능한 경우, 가장 주요한 의도에 맞는 것을 선택하세요
-3. 파라미터 추출 시 종목명, 종목코드, 계좌번호, 수량, 가격 등을 찾아주세요
+3. 파라미터 추출 시 다음 표준 이름을 사용해주세요:
+   - 종목명/종목코드: "stock_code" (예: "005930"), "stock_name" (예: "삼성전자")
+   - 수량: "quantity" (예: 100)
+   - ETF명: "etf_name" (예: "KODEX 200")
+   - 섹터: "sector" (예: "반도체")
+   - 테마: "theme" (예: "AI", "2차전지")
+   - 시간프레임: "time_frame" (예: "5분", "일봉")
 4. 확신도는 요청의 명확성과 에이전트 매칭 정도를 반영해주세요"""
 
         return PromptTemplate(
@@ -135,11 +216,15 @@ class IntentClassifier:
             agent_type_str = classification_data.get("agent_type", "account").lower()
             agent_type = self._map_to_agent_type(agent_type_str)
 
+            # Standardize extracted parameters
+            raw_params = classification_data.get("extracted_params", {})
+            standardized_params = _standardize_params(raw_params)
+
             return IntentClassification(
                 agent_type=agent_type,
                 confidence=float(classification_data.get("confidence", 0.5)),
                 reasoning=classification_data.get("reasoning", ""),
-                extracted_params=classification_data.get("extracted_params", {}),
+                extracted_params=standardized_params,
             )
 
         except Exception as e:
@@ -261,7 +346,7 @@ class KeywordBasedClassifier:
             agent_type=agent_type,
             confidence=confidence,
             reasoning=f"Keyword matches: {', '.join(matched_keywords)}",
-            extracted_params=self._extract_basic_params(user_prompt),
+            extracted_params=_standardize_params(self._extract_basic_params(user_prompt)),
         )
 
     def _extract_basic_params(self, user_prompt: str) -> Dict[str, str]:

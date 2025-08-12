@@ -9,11 +9,12 @@ import pytest
 from cluefin_openapi.kiwoom import Client as KiwoomClient
 from cluefin_openapi.kiwoom._auth import Auth
 from langchain_openai import ChatOpenAI
+from loguru import logger
 from pydantic import SecretStr
 
 
 @pytest.fixture(scope="session")
-def integration_test_env() -> Dict[str, SecretStr]:
+def integration_test_env() -> Dict[str, str | SecretStr]:
     """Load environment variables required for integration tests.
 
     Returns:
@@ -25,7 +26,7 @@ def integration_test_env() -> Dict[str, SecretStr]:
     dotenv.load_dotenv(dotenv_path=".env.test")
 
     required_env_vars: Dict[str, SecretStr] = {
-        "KIWOOM_APP_KEY": SecretStr(os.getenv("KIWOOM_APP_KEY")),
+        "KIWOOM_APP_KEY": os.getenv("KIWOOM_APP_KEY"),
         "KIWOOM_SECRET_KEY": SecretStr(os.getenv("KIWOOM_SECRET_KEY")),
         "OPENAI_API_KEY": SecretStr(os.getenv("OPENAI_API_KEY")),
     }
@@ -55,7 +56,7 @@ def kiwoom_client(integration_test_env) -> KiwoomClient:
         env="dev",
     )
     client = KiwoomClient(
-        token=auth.generate_token().token,
+        token=auth.generate_token().get_token(),
         env="dev",
     )
 
@@ -283,6 +284,37 @@ def api_rate_limits() -> Dict[str, float]:
         "openai_requests_per_minute": 60,  # OpenAI API rate limit
         "delay_between_requests": 0.2,  # seconds
     }
+
+
+@pytest.fixture
+def measure_performance():
+    """Performance measurement utility for integration tests.
+
+    Returns:
+        Callable that logs performance metrics
+    """
+    metrics = {}
+
+    def _measure(test_name: str, elapsed_time: float):
+        """Record performance metric.
+
+        Args:
+            test_name: Name of the test/operation
+            elapsed_time: Time elapsed in seconds or metric value
+        """
+        if test_name not in metrics:
+            metrics[test_name] = []
+        metrics[test_name].append(elapsed_time)
+
+        # Log the metric
+        logger.info(f"Performance metric - {test_name}: {elapsed_time:.3f}")
+
+        # Log summary if we have multiple measurements
+        if len(metrics[test_name]) > 1:
+            avg = sum(metrics[test_name]) / len(metrics[test_name])
+            logger.info(f"Performance summary - {test_name}: avg={avg:.3f}, count={len(metrics[test_name])}")
+
+    return _measure
 
 
 # Skip markers for different test categories
