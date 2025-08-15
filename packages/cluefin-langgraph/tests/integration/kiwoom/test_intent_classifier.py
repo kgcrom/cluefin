@@ -194,17 +194,17 @@ class TestIntentClassifierIntegration:
 
         logger.info(f"ETF prompts - Accuracy: {accuracy:.2%}, Avg Confidence: {avg_confidence:.2f}")
 
-    def test_theme_sector_prompts_classification(
+    def test_theme_prompts_classification(
         self,
         intent_classifier: IntentClassifier,
         test_prompts: Dict[str, List[str]],
         performance_thresholds: Dict[str, float],
     ):
-        """Test classification accuracy for theme/sector prompts."""
-        theme_sector_prompts = test_prompts["theme_sector"]
+        """Test classification accuracy for theme prompts."""
+        theme_prompts = test_prompts["theme"]
         results = []
 
-        for prompt in theme_sector_prompts:
+        for prompt in theme_prompts:
             start_time = time.time()
             classification = intent_classifier.classify(prompt)
             elapsed_time = time.time() - start_time
@@ -218,19 +218,19 @@ class TestIntentClassifierIntegration:
             )
 
             assert isinstance(classification, IntentClassification)
-            assert classification.agent_type == AgentType.THEME_SECTOR
+            assert classification.agent_type == AgentType.THEME
             assert classification.confidence >= 0.5
             assert elapsed_time < performance_thresholds["classification_time_max"]
 
             time.sleep(0.1)
 
-        accuracy = sum(1 for r in results if r["classification"].agent_type == AgentType.THEME_SECTOR) / len(results)
+        accuracy = sum(1 for r in results if r["classification"].agent_type == AgentType.THEME) / len(results)
         avg_confidence = sum(r["classification"].confidence for r in results) / len(results)
 
         assert accuracy >= performance_thresholds["classification_accuracy_min"]
         assert avg_confidence > 0.7
 
-        logger.info(f"Theme/Sector prompts - Accuracy: {accuracy:.2%}, Avg Confidence: {avg_confidence:.2f}")
+        logger.info(f"Theme prompts - Accuracy: {accuracy:.2%}, Avg Confidence: {avg_confidence:.2f}")
 
     def test_complex_prompts_handling(
         self,
@@ -261,7 +261,7 @@ class TestIntentClassifierIntegration:
                 AgentType.CHART,
                 AgentType.MARKET_INFO,
                 AgentType.ETF,
-                AgentType.THEME_SECTOR,
+                AgentType.THEME,
             ]
             assert classification.confidence >= 0.3  # Lower threshold for complex prompts
             assert elapsed_time < performance_thresholds["classification_time_max"]
@@ -418,7 +418,6 @@ class TestIntentClassifierIntegration:
                     AgentType.CHART,
                     AgentType.MARKET_INFO,
                     AgentType.ETF,
-                    AgentType.THEME_SECTOR,
                 ]
 
                 # For problematic prompts, confidence might be low

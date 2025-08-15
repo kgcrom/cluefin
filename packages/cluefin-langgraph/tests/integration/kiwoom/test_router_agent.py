@@ -46,10 +46,10 @@ class TestRouterAgentEndToEnd:
             ("KODEX 200 ETF 정보 알려줘", AgentType.ETF, {"etf_name": "KODEX 200"}),
             ("반도체 ETF 추천해줘", AgentType.ETF, {"sector": "반도체"}),
             ("ETF 수익률 순위 보여줘", AgentType.ETF, {}),
-            # Theme/Sector agent workflows
-            ("2차전지 관련주 뭐가 있어?", AgentType.THEME_SECTOR, {"theme": "2차전지"}),
-            ("AI 테마주 추천해줘", AgentType.THEME_SECTOR, {"theme": "AI"}),
-            ("오늘 상승률 높은 섹터 알려줘", AgentType.THEME_SECTOR, {}),
+            # Theme agent workflows
+            ("2차전지 관련주 뭐가 있어?", AgentType.THEME, {"theme": "2차전지"}),
+            ("AI 테마주 추천해줘", AgentType.THEME, {"theme": "AI"}),
+            ("오늘 상승률 높은 섹터 알려줘", AgentType.THEME, {}),
         ],
     )
     def test_end_to_end_workflow(
@@ -150,7 +150,7 @@ class TestAgentRouting:
             ("차트 데이터 필요", AgentType.CHART),
             ("시장 현황 알려줘", AgentType.MARKET_INFO),
             ("ETF 정보 조회", AgentType.ETF),
-            ("테마주 추천", AgentType.THEME_SECTOR),
+            ("테마주 추천", AgentType.THEME),
         ]
 
         for prompt, expected_agent in test_cases:
@@ -189,7 +189,7 @@ class TestAgentRouting:
             AgentType.CHART: "차트 데이터",
             AgentType.MARKET_INFO: "시장 현황",
             AgentType.ETF: "ETF 정보",
-            AgentType.THEME_SECTOR: "테마주",
+            AgentType.THEME: "테마주",
         }
 
         for agent_type, prompt in test_prompts.items():
@@ -524,7 +524,7 @@ class TestPerformanceMetrics:
             ("삼성전자 차트", AgentType.CHART),
             ("코스피 현황", AgentType.MARKET_INFO),
             ("KODEX 200", AgentType.ETF),
-            ("AI 테마주", AgentType.THEME_SECTOR),
+            ("AI 테마주", AgentType.THEME),
         ]
 
         metrics = {}

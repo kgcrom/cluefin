@@ -56,7 +56,7 @@ class TestKiwoomToolFactory:
         assert len(tools) == 4
 
         tool_names = [tool.name for tool in tools]
-        expected_names = ["get_daily_chart", "get_minute_chart", "get_current_price", "get_price_volume_rank"]
+        expected_names = ["get_daily_chart", "get_minute_chart", "get_current_price", "get_technical_indicators"]
 
         assert all(name in tool_names for name in expected_names)
 
@@ -68,7 +68,7 @@ class TestKiwoomToolFactory:
         tools = tool_factory.create_market_info_tools()
 
         assert isinstance(tools, list)
-        assert len(tools) == 4
+        assert len(tools) == 6
 
         tool_names = [tool.name for tool in tools]
         expected_names = ["get_stock_info", "search_stock_by_name", "get_market_index", "get_sector_info"]
@@ -84,18 +84,6 @@ class TestKiwoomToolFactory:
 
         tool_names = [tool.name for tool in tools]
         expected_names = ["get_etf_info", "get_etf_nav", "search_etf_by_theme"]
-
-        assert all(name in tool_names for name in expected_names)
-
-    def test_create_theme_sector_tools(self, tool_factory):
-        """Test creation of theme/sector tools."""
-        tools = tool_factory.create_theme_sector_tools()
-
-        assert isinstance(tools, list)
-        assert len(tools) == 3
-
-        tool_names = [tool.name for tool in tools]
-        expected_names = ["get_theme_stocks", "get_sector_performance", "get_hot_themes"]
 
         assert all(name in tool_names for name in expected_names)
 
@@ -175,20 +163,24 @@ class TestKiwoomToolFactory:
         assert isinstance(result, dict)
         assert "005930" in result["message"]
 
-    def test_price_volume_rank_tool_execution(self, tool_factory):
-        """Test price/volume rank tool execution."""
-        result = tool_factory._get_price_volume_rank()
+    def test_technical_indicators_tool_execution(self, tool_factory):
+        """Test technical indicators tool execution."""
+        result = tool_factory._get_technical_indicators("005930")
 
-        assert isinstance(result, list)
-        assert len(result) > 0
-        assert "message" in result[0]
+        assert isinstance(result, dict)
+        assert "stock_code" in result
+        assert result["stock_code"] == "005930"
+        assert "indicators" in result
+        assert "supported_indicators" in result
 
-    def test_price_volume_rank_tool_with_parameters(self, tool_factory):
-        """Test price/volume rank tool with parameters."""
-        result = tool_factory._get_price_volume_rank("KOSPI", "price")
+    def test_technical_indicators_tool_with_parameters(self, tool_factory):
+        """Test technical indicators tool with custom indicators."""
+        indicators = ["MA5", "RSI", "MACD"]
+        result = tool_factory._get_technical_indicators("005930", indicators)
 
-        assert isinstance(result, list)
-        assert "message" in result[0]
+        assert isinstance(result, dict)
+        assert result["stock_code"] == "005930"
+        assert result["indicators"] == indicators
 
     def test_stock_info_tool_execution(self, tool_factory):
         """Test stock info tool execution."""
@@ -301,7 +293,7 @@ class TestKiwoomToolFactory:
             + tool_factory.create_chart_tools()
             + tool_factory.create_market_info_tools()
             + tool_factory.create_etf_tools()
-            + tool_factory.create_theme_sector_tools()
+            + tool_factory.create_theme_tools()
         )
 
         for tool in all_tools:
@@ -319,7 +311,7 @@ class TestKiwoomToolFactory:
             + tool_factory.create_chart_tools()
             + tool_factory.create_market_info_tools()
             + tool_factory.create_etf_tools()
-            + tool_factory.create_theme_sector_tools()
+            + tool_factory.create_theme_tools()
         )
 
         for tool in all_tools:
@@ -332,7 +324,7 @@ class TestKiwoomToolFactory:
             + tool_factory.create_chart_tools()
             + tool_factory.create_market_info_tools()
             + tool_factory.create_etf_tools()
-            + tool_factory.create_theme_sector_tools()
+            + tool_factory.create_theme_tools()
         )
 
         tool_names = [tool.name for tool in all_tools]
@@ -392,7 +384,7 @@ class TestKiwoomToolFactory:
         assert isinstance(tool_factory._get_daily_chart("005930"), list)
         assert isinstance(tool_factory._get_minute_chart("005930"), list)
         assert isinstance(tool_factory._get_current_price("005930"), dict)
-        assert isinstance(tool_factory._get_price_volume_rank(), list)
+        assert isinstance(tool_factory._get_technical_indicators("005930"), dict)
 
         # Test market info tools
         assert isinstance(tool_factory._get_stock_info("005930"), dict)

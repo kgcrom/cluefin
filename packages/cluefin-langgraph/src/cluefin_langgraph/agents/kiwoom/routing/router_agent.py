@@ -65,14 +65,16 @@ class KiwoomRouterAgent:
         from ..specialized.chart_agent import ChartAgent
         from ..specialized.etf_agent import ETFAgent
         from ..specialized.market_info_agent import MarketInfoAgent
-        from ..specialized.theme_sector_agent import ThemeSectorAgent
+        from ..specialized.stock_info_agent import StockInfoAgent
+        from ..specialized.theme_agent import ThemeAgent
 
         agents = {
             AgentType.ACCOUNT: AccountAgent(self.kiwoom_client, self.llm, self.verbose),
             AgentType.CHART: ChartAgent(self.kiwoom_client, self.llm, self.verbose),
             AgentType.MARKET_INFO: MarketInfoAgent(self.kiwoom_client, self.llm, self.verbose),
+            AgentType.STOCK_INFO: StockInfoAgent(self.kiwoom_client, self.llm, self.verbose),
+            AgentType.THEME: ThemeAgent(self.kiwoom_client, self.llm, self.verbose),
             AgentType.ETF: ETFAgent(self.kiwoom_client, self.llm, self.verbose),
-            AgentType.THEME_SECTOR: ThemeSectorAgent(self.kiwoom_client, self.llm, self.verbose),
         }
 
         return agents

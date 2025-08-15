@@ -11,11 +11,10 @@ from ..base.kiwoom_tools import KiwoomToolFactory
 class ChartAgent(BaseKiwoomAgent):
     """Specialized agent for chart and price data operations.
 
-    This agent handles:
+    This agent focuses purely on price and chart data:
     - Daily/minute chart data retrieval
     - Current price queries
-    - Price/volume rankings
-    - Technical analysis data
+    - Technical analysis data and indicators
     """
 
     def _get_agent_type(self) -> str:
@@ -38,6 +37,11 @@ class ChartAgent(BaseKiwoomAgent):
     ) -> Any:
         """Process chart-related requests.
 
+        This agent focuses purely on price and chart data operations:
+        - Daily/minute chart data
+        - Current price and quote information
+        - Technical indicators and analysis
+
         Args:
             request: User's original request
             params: Extracted parameters from intent classification
@@ -50,28 +54,32 @@ class ChartAgent(BaseKiwoomAgent):
         # Determine the type of chart operation needed
         request_lower = request.lower()
 
-        # Handle ranking requests first (doesn't require stock_code)
-        if any(keyword in request_lower for keyword in ["순위", "상위", "ranking"]):
-            return self._handle_ranking_request(params)
-
-        # Extract stock code from parameters for other requests
+        # Extract stock code from parameters for chart requests
         stock_code = self._extract_stock_code(params)
 
         if not stock_code:
             return {"error": "종목코드가 필요합니다. 종목명 또는 종목코드를 입력해주세요."}
 
-        if any(keyword in request_lower for keyword in ["일봉", "daily", "일간"]):
+        # Handle different types of chart requests
+        if any(keyword in request_lower for keyword in ["일봉", "daily", "일간", "차트"]):
             return self._handle_daily_chart_request(stock_code, params)
 
-        elif any(keyword in request_lower for keyword in ["분봉", "minute", "분간"]):
+        elif any(keyword in request_lower for keyword in ["분봉", "minute", "분간", "intraday"]):
             return self._handle_minute_chart_request(stock_code, params)
 
-        elif any(keyword in request_lower for keyword in ["현재가", "시세", "호가"]):
+        elif any(keyword in request_lower for keyword in ["현재가", "시세", "호가", "price", "quote"]):
             return self._handle_current_price_request(stock_code)
 
+        elif any(keyword in request_lower for keyword in ["기술", "지표", "technical", "indicators", "ma", "rsi", "macd", "이동평균"]):
+            return self._handle_technical_indicators_request(stock_code, params)
+
         else:
-            # Default to daily chart
-            return self._handle_daily_chart_request(stock_code, params)
+            # Default to current price for general price inquiries
+            if any(keyword in request_lower for keyword in ["가격", "주가"]):
+                return self._handle_current_price_request(stock_code)
+            # Default to daily chart for general chart requests
+            else:
+                return self._handle_daily_chart_request(stock_code, params)
 
     def _handle_daily_chart_request(self, stock_code: str, params: Optional[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Handle daily chart requests."""
@@ -142,25 +150,26 @@ class ChartAgent(BaseKiwoomAgent):
         else:
             return {"error": "Current price tool not available"}
 
-    def _handle_ranking_request(self, params: Optional[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Handle ranking requests."""
-        self._log("Handling ranking request")
+    def _handle_technical_indicators_request(self, stock_code: str, params: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """Handle technical indicators requests."""
+        self._log(f"Handling technical indicators request for {stock_code}")
 
-        # Extract market and rank type from parameters
-        market = "ALL"
-        rank_type = "volume"
+        # Extract indicators list from parameters
+        indicators = None
+        if params and "indicators" in params:
+            indicators = params["indicators"]
+        
+        # Default indicators if none specified
+        if not indicators:
+            indicators = ["MA5", "MA20", "RSI", "MACD"]
 
-        if params:
-            market = params.get("market", "ALL")
-            rank_type = params.get("rank_type", "volume")
+        technical_tool = next((tool for tool in self.tools if tool.name == "get_technical_indicators"), None)
 
-        ranking_tool = next((tool for tool in self.tools if tool.name == "get_price_volume_rank"), None)
-
-        if ranking_tool:
+        if technical_tool:
             try:
-                result = ranking_tool.func(market, rank_type)
-                return result if isinstance(result, list) else [result]
+                result = technical_tool.func(stock_code, indicators)
+                return result
             except Exception as e:
-                return [{"error": f"Failed to get ranking: {str(e)}"}]
+                return {"error": f"Failed to get technical indicators: {str(e)}"}
         else:
-            return [{"error": "Ranking tool not available"}]
+            return {"error": "Technical indicators tool not available"}

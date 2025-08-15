@@ -57,14 +57,14 @@ def _standardize_params(raw_params: Dict[str, str]) -> Dict[str, str]:
             # Keep unknown parameters as-is
             standardized[key] = value
 
-    # Special handling for quantities - extract numeric values
+    # Special handling for quantities - extract numeric values as strings
     if "quantity" in standardized:
         import re
 
         quantity_str = standardized["quantity"]
         numbers = re.findall(r"\d+", str(quantity_str))
         if numbers:
-            standardized["quantity"] = int(numbers[0])
+            standardized["quantity"] = numbers[0]
 
     # Convert stock names to stock codes when possible
     if "stock_name" in standardized and "stock_code" not in standardized:
@@ -163,7 +163,7 @@ class IntentClassifier:
 
 다음 형식의 JSON으로 응답해주세요:
 {{
-    "agent_type": "선택된 에이전트 타입 (account, chart, market_info, etf, theme_sector 중 하나)",
+    "agent_type": "선택된 에이전트 타입 (account, chart, market_info, etf, theme 중 하나)",
     "confidence": 0.0-1.0 사이의 확신도,
     "reasoning": "분류 근거 설명",
     "extracted_params": {{
@@ -231,7 +231,7 @@ class IntentClassifier:
             # Fallback classification
             return IntentClassification(
                 agent_type=AgentType.ACCOUNT,
-                confidence=0.0,
+                confidence=0.5,
                 reasoning=f"Classification error: {str(e)}",
                 extracted_params={},
             )
@@ -277,8 +277,9 @@ class IntentClassifier:
             "account": AgentType.ACCOUNT,
             "chart": AgentType.CHART,
             "market_info": AgentType.MARKET_INFO,
+            "stock_info": AgentType.STOCK_INFO,
+            "theme": AgentType.THEME,
             "etf": AgentType.ETF,
-            "theme_sector": AgentType.THEME_SECTOR,
         }
 
         return mapping.get(agent_type_str.lower(), AgentType.ACCOUNT)
@@ -340,7 +341,7 @@ class KeywordBasedClassifier:
         agent_type, (score, matched_keywords) = best_agent
 
         # Calculate confidence based on number of matches
-        confidence = min(0.3 + (score * 0.2), 0.9)
+        confidence = min(0.5 + (score * 0.2), 0.9)
 
         return IntentClassification(
             agent_type=agent_type,

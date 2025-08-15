@@ -65,8 +65,8 @@ class TestKiwoomRouterAgent:
                 ETFAgent=Mock,
             ),
             patch.multiple(
-                "cluefin_langgraph.agents.kiwoom.specialized.theme_sector_agent",
-                ThemeSectorAgent=Mock,
+                "cluefin_langgraph.agents.kiwoom.specialized.theme_agent",
+                ThemeAgent=Mock,
             ),
         ):
             return KiwoomRouterAgent(mock_kiwoom_client, mock_llm, verbose=True)
@@ -76,7 +76,7 @@ class TestKiwoomRouterAgent:
         assert router_agent.kiwoom_client is not None
         assert router_agent.llm is not None
         assert router_agent.classifier is not None
-        assert len(router_agent.agents) == 5
+        assert len(router_agent.agents) == 6
         assert AgentType.ACCOUNT in router_agent.agents
         assert AgentType.CHART in router_agent.agents
 
@@ -86,8 +86,9 @@ class TestKiwoomRouterAgent:
             AgentType.ACCOUNT,
             AgentType.CHART,
             AgentType.MARKET_INFO,
+            AgentType.STOCK_INFO,
+            AgentType.THEME,
             AgentType.ETF,
-            AgentType.THEME_SECTOR,
         }
 
         assert set(router_agent.agents.keys()) == expected_agent_types
@@ -382,8 +383,8 @@ class TestKiwoomRouterAgent:
                 ETFAgent=Mock,
             ),
             patch.multiple(
-                "cluefin_langgraph.agents.kiwoom.specialized.theme_sector_agent",
-                ThemeSectorAgent=Mock,
+                "cluefin_langgraph.agents.kiwoom.specialized.theme_agent",
+                ThemeAgent=Mock,
             ),
         ):
             verbose_router = KiwoomRouterAgent(mock_kiwoom_client, mock_llm, verbose=True)
@@ -414,7 +415,7 @@ class TestKiwoomRouterAgent:
             (AgentType.CHART, "삼성전자 차트"),
             (AgentType.MARKET_INFO, "LG화학 기업정보"),
             (AgentType.ETF, "KODEX 200 정보"),
-            (AgentType.THEME_SECTOR, "반도체 관련주"),
+            (AgentType.THEME, "반도체 관련주"),
         ]
 
         for agent_type, prompt in agent_types_and_prompts:

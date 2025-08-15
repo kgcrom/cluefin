@@ -10,10 +10,11 @@ class AgentType(Enum):
     """Available agent types for Kiwoom routing."""
 
     ACCOUNT = "account"
-    CHART = "chart"
+    STOCK_INFO = "stock_info"
     MARKET_INFO = "market_info"
+    CHART = "chart"
+    THEME = "theme"
     ETF = "etf"
-    THEME_SECTOR = "theme_sector"
 
 
 class IntentClassification(BaseModel):
@@ -59,7 +60,6 @@ AGENT_METADATA: Dict[AgentType, AgentMetadata] = {
             "계좌",
             "잔고",
             "보유",
-            "종목",
             "손익",
             "평가금액",
             "예수금",
@@ -71,92 +71,109 @@ AGENT_METADATA: Dict[AgentType, AgentMetadata] = {
             "내 계좌 잔고를 알려줘",
             "보유종목 목록을 보여줘",
             "오늘 수익률이 어떻게 되나요?",
-            "매수가능금액이 얼마인가요?",
         ],
     ),
-    AgentType.CHART: AgentMetadata(
-        name="차트 에이전트",
-        description="주가 차트, 시세 데이터 조회 등 차트 관련 업무를 처리합니다.",
-        keywords=[
-            "차트",
-            "시세",
-            "주가",
-            "캔들",
-            "일봉",
-            "분봉",
-            "시간봉",
-            "가격",
-            "거래량",
-            "이동평균",
-        ],
-        examples=[
-            "삼성전자 일봉 차트를 보여줘",
-            "NAVER 최근 한달 차트 분석해줘",
-            "코스피 지수 차트를 보여줘",
-        ],
-    ),
-    AgentType.MARKET_INFO: AgentMetadata(
-        name="시장정보 에이전트",
-        description="종목 정보, 시장 정보, 공시 등을 조회합니다.",
+    AgentType.STOCK_INFO: AgentMetadata(
+        name="종목정보 에이전트",
+        description="개별 종목의 기업정보, 재무데이터, 종목검색 등을 처리합니다.",
         keywords=[
             "종목정보",
             "기업정보",
             "재무",
-            "공시",
-            "배당",
-            "주주",
+            "검색",
+            "종목명",
+            "종목코드",
             "시가총액",
-            "업종",
-            "실적",
-            "뉴스",
+            "PER",
+            "PBR",
+            "배당",
         ],
         examples=[
             "삼성전자 기업정보를 알려줘",
             "LG화학 재무제표 보여줘",
-            "최근 공시 내역을 확인하고 싶어",
-            "배당금 지급일이 언제인가요?",
+            "네이버 종목코드 알려줘",
+        ],
+    ),
+    AgentType.MARKET_INFO: AgentMetadata(
+        name="시장정보 에이전트",
+        description="공매도, 기관/외국인 거래, 대차거래, 순위정보, 업종 분석 등 시장 전반 데이터를 처리합니다.",
+        keywords=[
+            "공매도",
+            "기관",
+            "외국인",
+            "대차거래",
+            "순위",
+            "상위",
+            "업종",
+            "섹터",
+            "거래량",
+            "상승률",
+        ],
+        examples=[
+            "거래량 상위 종목 알려줘",
+            "반도체 업종 수익률은?",
+            "외국인 순매수 상위 종목",
+        ],
+    ),
+    AgentType.CHART: AgentMetadata(
+        name="차트 에이전트",
+        description="주가 차트, 현재가, 호가 등 가격 데이터를 처리합니다.",
+        keywords=[
+            "차트",
+            "시세",
+            "주가",
+            "현재가",
+            "호가",
+            "일봉",
+            "분봉",
+            "캔들",
+            "이동평균",
+            "기술분석",
+        ],
+        examples=[
+            "삼성전자 일봉 차트를 보여줘",
+            "네이버 현재가 알려줘",
+            "코스피 지수 차트",
+        ],
+    ),
+    AgentType.THEME: AgentMetadata(
+        name="테마 에이전트",
+        description="테마주 발굴, 테마별 종목 분석, 핫테마 추적 등을 처리합니다.",
+        keywords=[
+            "테마",
+            "관련주",
+            "AI",
+            "반도체",
+            "2차전지",
+            "바이오",
+            "게임",
+            "메타버스",
+            "핫테마",
+            "급등",
+        ],
+        examples=[
+            "AI 관련주를 알려줘",
+            "반도체 테마 상승률 TOP 10",
+            "현재 핫한 테마는?",
         ],
     ),
     AgentType.ETF: AgentMetadata(
         name="ETF 에이전트",
-        description="ETF 정보 조회 및 ETF 관련 업무를 처리합니다.",
+        description="ETF 정보 조회, ETF 추천, ETF 분석 등을 처리합니다.",
         keywords=[
             "ETF",
+            "etf",
             "상장지수펀드",
-            "인덱스펀드",
-            "섹터ETF",
-            "테마ETF",
             "KODEX",
             "TIGER",
-            "ACE",
+            "ARIRANG",
+            "인덱스펀드",
+            "추천",
         ],
         examples=[
             "KODEX 200 정보를 알려줘",
-            "반도체 ETF 추천해줘",
-            "ETF 수익률 순위를 보여줘",
-            "인버스 ETF 종류가 뭐가 있나요?",
-        ],
-    ),
-    AgentType.THEME_SECTOR: AgentMetadata(
-        name="테마/섹터 에이전트",
-        description="테마주, 섹터별 종목 정보를 조회합니다.",
-        keywords=[
-            "테마",
-            "섹터",
-            "업종",
-            "그룹",
-            "바이오",
-            "게임",
-            "반도체",
-            "자동차",
-            "2차전지",
-            "AI",
-        ],
-        examples=[
-            "반도체 관련주를 알려줘",
-            "바이오 섹터 상승률 TOP 10",
-            "AI 테마주 추천해줘",
-            "자동차 업종 시황은 어때?",
+            "ETF 추천해줘",
+            "반도체 ETF 있나요?",
         ],
     ),
 }

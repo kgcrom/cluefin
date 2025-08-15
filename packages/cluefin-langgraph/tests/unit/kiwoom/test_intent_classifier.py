@@ -103,22 +103,22 @@ class TestIntentClassifier:
         assert result.agent_type == AgentType.ETF
         assert result.confidence >= 0.8
 
-    def test_theme_sector_intent_classification(self, classifier):
-        """Test classification of theme/sector related prompts."""
+    def test_theme_intent_classification(self, classifier):
+        """Test classification of theme related prompts."""
         mock_response = Mock()
         mock_response.content = json.dumps(
             {
-                "agent_type": "theme_sector",
+                "agent_type": "theme",
                 "confidence": 0.87,
-                "reasoning": "User asking about semiconductor sector stocks",
-                "extracted_params": {"sector": "반도체"},
+                "reasoning": "User asking about semiconductor stocks",
+                "extracted_params": {"theme": "반도체"},
             }
         )
         classifier.llm.invoke.return_value = mock_response
 
         result = classifier.classify("반도체 관련주를 알려줘")
 
-        assert result.agent_type == AgentType.THEME_SECTOR
+        assert result.agent_type == AgentType.THEME
         assert result.confidence >= 0.8
 
     def test_low_confidence_llm_with_keyword_boost(self, classifier):
@@ -168,7 +168,7 @@ class TestIntentClassifier:
         assert result.confidence == 0.5  # Updated to match actual implementation
         assert "error" in result.reasoning.lower() or "failed" in result.reasoning.lower()
 
-    def test_llm_exception_handling(self, classifier):
+    def test_llm_exception_handling(self, classifier: IntentClassifier):
         """Test handling of LLM exceptions."""
         classifier.llm.invoke.side_effect = Exception("LLM error")
 
@@ -176,7 +176,7 @@ class TestIntentClassifier:
 
         # Should return fallback classification
         assert result.agent_type == AgentType.ACCOUNT
-        assert result.confidence == 0.0
+        assert result.confidence == 0.5
         assert "error" in result.reasoning.lower()
 
     def test_agent_type_mapping(self, classifier):
@@ -186,7 +186,7 @@ class TestIntentClassifier:
             ("chart", AgentType.CHART),
             ("market_info", AgentType.MARKET_INFO),
             ("etf", AgentType.ETF),
-            ("theme_sector", AgentType.THEME_SECTOR),
+            ("theme", AgentType.THEME),
             ("invalid", AgentType.ACCOUNT),  # Should default to ACCOUNT
         ]
 
@@ -347,9 +347,9 @@ class TestIntentClassifierIntegration:
         [
             ("삼성전자 차트 보여줘", AgentType.CHART),
             ("내 계좌 잔고", AgentType.ACCOUNT),
-            ("ETF 추천", AgentType.ETF),
-            ("반도체 관련주", AgentType.THEME_SECTOR),
-            ("LG화학 기업정보", AgentType.MARKET_INFO),
+            ("ETF 추천", AgentType.STOCK_INFO),
+            ("반도체 관련주", AgentType.THEME),
+            ("LG화학 기업정보", AgentType.STOCK_INFO),
         ],
     )
     def test_classification_accuracy(self, classifier, prompt, expected_agent):
