@@ -49,6 +49,7 @@ jobs:
       run: |
         uv sync --dev
         uv sync --directory packages/cluefin-openapi
+        uv sync --directory packages/cluefin-langgraph --extra openai
         
     - name: Run tests with updated dependencies
       env:
@@ -56,6 +57,7 @@ jobs:
         LOG_LEVEL: ${{ vars.LOG_LEVEL || 'INFO' }}
       run: |
         uv run pytest packages/cluefin-openapi/tests/unit/ -v
+        uv run pytest packages/cluefin-langgraph/tests/unit/ -v
         
     - name: Run linting with updated dependencies
       run: |

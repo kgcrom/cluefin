@@ -73,7 +73,8 @@ jobs:
     - name: Install dependencies
       run: |
         uv sync --dev
-        uv pip install -e packages/cluefin-openapi
+        uv sync --directory packages/cluefin-openapi
+        uv sync --directory packages/cluefin-langgraph --extra openai
         
     - name: Create test environment file
       run: |
@@ -87,6 +88,7 @@ jobs:
         ENABLE_INTEGRATION_TESTS: ${{ vars.ENABLE_INTEGRATION_TESTS || 'false' }}
       run: |
         uv run pytest packages/cluefin-openapi/tests/unit/ -v
+        uv run pytest packages/cluefin-langgraph/tests/unit/ -v
         
     - name: Run integration tests
       if: vars.ENABLE_INTEGRATION_TESTS == 'true'
