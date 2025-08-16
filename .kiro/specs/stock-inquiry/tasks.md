@@ -5,14 +5,14 @@
   - Create __init__.py files for proper module imports
   - _Requirements: 4.1, 4.2, 5.1_
 
-- [ ] 2. Implement core data models and configuration
+- [x] 2. Implement core data models and configuration
 - [x] 2.1 Create Pydantic models for API configuration
   - Write ParameterConfig and APIConfig models using Pydantic BaseModel
   - Include proper type hints and validation rules
   - Create unit tests for model validation
   - _Requirements: 5.2, 5.3_
 
-- [ ] 2.2 Define API configuration data structures
+- [x] 2.2 Define API configuration data structures
   - Create configuration dictionaries for ranking, sector, and stock APIs
   - Map Korean API names to corresponding Kiwoom client methods
   - Include all required and optional parameters with Korean labels

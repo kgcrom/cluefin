@@ -6,13 +6,13 @@ from typing import Union
 def format_number(value: Union[str, int, float]) -> str:
     """
     Format a number with commas for thousands separators.
-    
+
     Args:
         value: Number to format (can be string, int, or float)
-    
+
     Returns:
         Formatted string with comma separators
-    
+
     Examples:
         >>> format_number(1000)
         '1,000'
@@ -36,7 +36,7 @@ def format_number(value: Union[str, int, float]) -> str:
                 num = int(value)
         else:
             num = value
-        
+
         # Format with commas
         if isinstance(num, float):
             # Keep decimal places
@@ -51,14 +51,14 @@ def format_number(value: Union[str, int, float]) -> str:
 def format_currency(value: Union[str, int, float], unit: str = "") -> str:
     """
     Format a number as Korean currency with commas.
-    
+
     Args:
         value: Number to format
         unit: Optional unit to append (e.g., '천원', '백만원')
-    
+
     Returns:
         Formatted currency string with ₩ symbol
-    
+
     Examples:
         >>> format_currency(1000000)
         '₩1,000,000'

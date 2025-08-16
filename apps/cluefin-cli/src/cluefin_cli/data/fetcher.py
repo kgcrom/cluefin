@@ -3,11 +3,11 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
 import pandas as pd
+from cluefin_openapi.kiwoom._auth import Auth as KiwoomAuth
+from cluefin_openapi.kiwoom._client import Client as KiwoomClient
 from pydantic import SecretStr
 
 from cluefin_cli.config.settings import settings
-from cluefin_openapi.kiwoom._client import Client as KiwoomClient
-from cluefin_openapi.kiwoom._auth import Auth as KiwoomAuth
 
 
 class DataFetcher:
@@ -18,7 +18,7 @@ class DataFetcher:
             raise ValueError("KIWOOM_APP_KEY environment variable is required")
         if not settings.kiwoom_secret_key:
             raise ValueError("KIWOOM_SECRET_KEY environment variable is required")
-        
+
         auth = KiwoomAuth(
             app_key=settings.kiwoom_app_key,
             secret_key=SecretStr(settings.kiwoom_secret_key),
@@ -45,54 +45,54 @@ class DataFetcher:
 
         # Merge both stock info responses into a single dictionary
         merged_data = {}
-        
+
         # Add fields from stock_info (DomesticStockInfoBasic)
         info_dict = stock_info.body
         merged_data.update({
-            'stock_code': info_dict.stk_cd,
-            'stock_name': info_dict.stk_nm,
-            'settlement_month': info_dict.setl_mm,
-            'face_value': info_dict.fav,
-            'capital': info_dict.cap,
-            'floating_stock': info_dict.flo_stk,
-            'distribution_stock': info_dict.dstr_stk,
-            'distribution_ratio': info_dict.dstr_rt,
-            'credit_ratio': info_dict.crd_rt,
-            'market_cap': info_dict.mac,
-            'market_cap_weight': info_dict.mac_wght,
-            'foreign_exhaustion_rate': info_dict.for_exh_rt,
-            'substitute_price': info_dict.repl_pric,
-            'per': info_dict.per,
-            'eps': info_dict.eps,
-            'roe': info_dict.roe,
-            'pbr': info_dict.pbr,
-            'ev': info_dict.ev,
-            'bps': info_dict.bps,
-            'revenue': info_dict.sale_amt,
-            'operating_profit': info_dict.open_pric,
-            'net_profit': info_dict.cup_nga,
-            '250_day_high': info_dict.hgst_250,
-            '250hgst_pric_pre_rt': info_dict.hgst_prict_250pre_rt,
-            '250_day_low': info_dict.lwst_250,
-            '250lwst_pric_pre_rt': info_dict.lwst_prict_250pre_rt,
+            "stock_code": info_dict.stk_cd,
+            "stock_name": info_dict.stk_nm,
+            "settlement_month": info_dict.setl_mm,
+            "face_value": info_dict.fav,
+            "capital": info_dict.cap,
+            "floating_stock": info_dict.flo_stk,
+            "distribution_stock": info_dict.dstr_stk,
+            "distribution_ratio": info_dict.dstr_rt,
+            "credit_ratio": info_dict.crd_rt,
+            "market_cap": info_dict.mac,
+            "market_cap_weight": info_dict.mac_wght,
+            "foreign_exhaustion_rate": info_dict.for_exh_rt,
+            "substitute_price": info_dict.repl_pric,
+            "per": info_dict.per,
+            "eps": info_dict.eps,
+            "roe": info_dict.roe,
+            "pbr": info_dict.pbr,
+            "ev": info_dict.ev,
+            "bps": info_dict.bps,
+            "revenue": info_dict.sale_amt,
+            "operating_profit": info_dict.open_pric,
+            "net_profit": info_dict.cup_nga,
+            "250_day_high": info_dict.hgst_250,
+            "250hgst_pric_pre_rt": info_dict.hgst_prict_250pre_rt,
+            "250_day_low": info_dict.lwst_250,
+            "250lwst_pric_pre_rt": info_dict.lwst_prict_250pre_rt,
         })
-        
+
         # Add additional fields from stock_info_v1 (DomesticStockInfoBasicV1)
         info_v1_dict = stock_info_v1.body
 
         merged_data.update({
-            'list_count': info_v1_dict.listCount,
-            'registration_day': info_v1_dict.regDay,
-            'state': info_v1_dict.state,
-            'market_name': info_v1_dict.marketName,
-            'sector_name': info_v1_dict.upName,
-            'order_warning': info_v1_dict.orderWarning,
-            'nxt_enabled': info_v1_dict.nxtEnable,
+            "list_count": info_v1_dict.listCount,
+            "registration_day": info_v1_dict.regDay,
+            "state": info_v1_dict.state,
+            "market_name": info_v1_dict.marketName,
+            "sector_name": info_v1_dict.upName,
+            "order_warning": info_v1_dict.orderWarning,
+            "nxt_enabled": info_v1_dict.nxtEnable,
         })
-        
+
         # Create DataFrame with a single row
         df = pd.DataFrame([merged_data])
-        
+
         return df
 
 
