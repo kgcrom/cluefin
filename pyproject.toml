@@ -23,7 +23,6 @@ dev = [
 
 [tool.uv.sources]
 cluefin-openapi = { workspace = true }
-cluefin-langgraph = { workspace = true }
 
 [tool.ruff]
 line-length = 120
@@ -45,5 +44,4 @@ markers = [
 addopts = "-ra"
 testpaths = [
     "packages/cluefin-openapi/tests",
-    "packages/cluefin-langgraph/tests"
 ]

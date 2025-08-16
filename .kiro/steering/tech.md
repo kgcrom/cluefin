@@ -47,7 +47,6 @@
 # Install all dependencies
 uv sync --dev
 uv sync --directory packages/cluefin-openapi
-uv sync --directory packages/cluefin-langgraph --extra openai
 
 # Install specific package in development mode
 uv sync --directory packages/cluefin-openapi --dev
@@ -72,10 +71,9 @@ uv run pytest
 
 # Run specific package tests
 uv run pytest packages/cluefin-openapi/tests/
-uv run pytest packages/cluefin-langgraph/tests/
 
 # Run with coverage
-uv run pytest --cov=cluefin_openapi --cov=cluefin_langgraph
+uv run pytest --cov=cluefin_openapi
 
 # Run only unit tests
 uv run pytest -m "not integration"
@@ -88,7 +86,6 @@ uv run pytest -m integration
 ```bash
 # Build specific package
 uv build --directory packages/cluefin-openapi
-uv build --directory packages/cluefin-langgraph
 ```
 
 ## CI/CD Pipeline

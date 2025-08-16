@@ -4,7 +4,6 @@
 
 This is a **financial API toolkit** organized as a **uv workspace monorepo** with multiple packages:
 - `packages/cluefin-openapi/`: OpenAPI clients for Kiwoom Securities and Korea Exchange (KRX)
-- `packages/cluefin-langgraph/`: LangGraph-based AI agent framework (in development)
 
 ### Key Design Patterns
 

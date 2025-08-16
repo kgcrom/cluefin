@@ -58,7 +58,6 @@ For detailed information on setting up environment variables and secrets for Git
 # Install dependencies with uv
 uv sync --dev
 uv sync --directory packages/cluefin-openapi
-uv sync --directory packages/cluefin-langgraph --extra openai
 
 # Run tests
 uv run pytest

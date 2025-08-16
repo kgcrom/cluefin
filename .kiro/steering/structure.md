@@ -9,8 +9,7 @@ Cluefin follows a **monorepo workspace structure** with two main packages under 
 ```
 cluefin/
 ├── packages/                    # Workspace packages
-│   ├── cluefin-openapi/        # API client library
-│   └── cluefin-langgraph/      # AI agent system
+│   └── cluefin-openapi/        # AI client library
 ├── docs/                       # Documentation
 ├── .kiro/                      # Kiro IDE configuration
 ├── .github/                    # GitHub Actions workflows
@@ -39,21 +38,6 @@ packages/cluefin-openapi/
 └── pyproject.toml
 ```
 
-### cluefin-langgraph Package
-```
-packages/cluefin-langgraph/
-├── src/cluefin_langgraph/
-│   └── agents/
-│       └── kiwoom/
-│           ├── base/          # Base agent classes and tools
-│           ├── routing/       # Router agent implementation
-│           └── specialized/   # Specialized domain agents
-├── tests/
-│   ├── unit/
-│   └── integration/
-└── pyproject.toml
-```
-
 ## Naming Conventions
 
 ### File Naming
@@ -65,11 +49,6 @@ packages/cluefin-langgraph/
 - **Domain separation**: Each API domain gets its own module (account, chart, etf, etc.)
 - **Client pattern**: Each package has a main `_client.py` as the entry point
 - **Type safety**: Separate `_types.py` files for Pydantic models
-
-### Agent Architecture (cluefin-langgraph)
-- **Base layer**: Common functionality in `base/` directory
-- **Routing layer**: Intent classification and agent routing
-- **Specialized layer**: Domain-specific agents (account, market_data, discovery, etf)
 
 ## Configuration Files
 
@@ -136,11 +115,9 @@ from pydantic import BaseModel, SecretStr
 
 ### Adding New Features
 1. **API Client**: Add to appropriate domain module in `cluefin-openapi`
-2. **Agent Logic**: Add to relevant agent in `cluefin-langgraph`
 3. **Tests**: Add both unit and integration tests
 4. **Types**: Define Pydantic models in `_types.py` files
 
 ### Cross-Package Dependencies
-- `cluefin-langgraph` depends on `cluefin-openapi`
 - Use workspace dependencies in `pyproject.toml`
 - Maintain clear separation of concerns between packages
