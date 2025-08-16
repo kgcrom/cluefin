@@ -4,11 +4,11 @@ version = "0.1.0"
 description = "Clearly Looking U Entered Financial Information"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = []
 
 [tool.uv.workspace]
 members = [
     "packages/*",
+    "apps/cluefin-cli",
 ]
 
 [dependency-groups]
@@ -23,6 +23,7 @@ dev = [
 
 [tool.uv.sources]
 cluefin-openapi = { workspace = true }
+cluefin-cli = { workspace = true }
 
 [tool.ruff]
 line-length = 120
@@ -44,4 +45,5 @@ markers = [
 addopts = "-ra"
 testpaths = [
     "packages/cluefin-openapi/tests",
+    "apps/cluefin-cli/tests",
 ]

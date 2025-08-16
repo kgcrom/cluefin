@@ -1,0 +1,29 @@
+[project]
+name = "cluefin-cli"
+version = "0.1.0"
+description = "Korean financial investment CLI toolkit with technical analysis and AI insights"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "cluefin-openapi",
+    "click>=8.1.7",
+    "rich>=13.7.0",
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "openai>=1.0.0",
+    "pydantic-settings>=2.0.0",
+    "plotext>=5.2.8",
+    "python-dotenv>=1.0.0",
+    "loguru>=0.7.3",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+cluefin-cli = "cluefin_cli.main:cli"
+
+[tool.ruff]
+extend = "../../pyproject.toml"
+include = ["src/**", "tests/**"]
