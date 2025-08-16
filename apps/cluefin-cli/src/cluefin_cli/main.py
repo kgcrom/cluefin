@@ -2,6 +2,7 @@ import click
 from rich.console import Console
 
 from cluefin_cli.commands.analyze import analyze
+from cluefin_cli.commands.inquiry import inquiry
 
 console = Console()
 
@@ -15,6 +16,7 @@ def cli():
 
 
 cli.add_command(analyze)
+cli.add_command(inquiry)
 
 
 if __name__ == "__main__":

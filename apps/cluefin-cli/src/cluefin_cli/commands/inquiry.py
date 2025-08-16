@@ -1,2 +1,10 @@
-# TODO 종목 탐색 기능을 하는 cli
-# 종목정보와 순위정보 괜찮은것 많다.
+"""
+Stock inquiry command - redirects to the inquiry subdirectory module.
+
+This file maintains backward compatibility while the actual implementation
+is organized in the inquiry/ subdirectory.
+"""
+
+from .inquiry import inquiry
+
+__all__ = ["inquiry"]

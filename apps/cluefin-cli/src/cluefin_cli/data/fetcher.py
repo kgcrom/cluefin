@@ -14,6 +14,11 @@ class DataFetcher:
     """Handles data fetching from Kiwoom Securities and KRX APIs."""
 
     def __init__(self):
+        if not settings.kiwoom_app_key:
+            raise ValueError("KIWOOM_APP_KEY environment variable is required")
+        if not settings.kiwoom_secret_key:
+            raise ValueError("KIWOOM_SECRET_KEY environment variable is required")
+        
         auth = KiwoomAuth(
             app_key=settings.kiwoom_app_key,
             secret_key=SecretStr(settings.kiwoom_secret_key),
