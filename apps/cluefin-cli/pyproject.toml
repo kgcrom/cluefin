@@ -13,7 +13,6 @@ dependencies = [
     "openai>=1.0.0",
     "pydantic-settings>=2.0.0",
     "plotext>=5.2.8",
-    "python-dotenv>=1.0.0",
     "loguru>=0.7.3",
 ]
 

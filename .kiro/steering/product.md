@@ -2,105 +2,90 @@
 inclusion: always
 ---
 
-# Product Guidelines
+# Cluefin Product Guidelines
 
-Cluefin is a Python toolkit for Korean financial market APIs and AI-powered investment analysis. Follow these product conventions when working with this codebase.
+Cluefin is a Python toolkit for Korean financial market APIs. When working with this codebase, follow these conventions to maintain consistency and quality.
 
-## Core Architecture
+## Architecture Patterns
 
-### Package Structure
-- **cluefin-openapi**: Low-level API client library for Korean financial APIs (Kiwoom Securities, KRX)
+### Module Organization
+- **Library packages** (`packages/`): Use private module naming with underscore prefix
+- **Application packages** (`apps/`): Use public module naming for CLI commands and features
+- **Type definitions**: Separate `_types.py` files with Pydantic models
+- **Domain modules**: One module per API domain or CLI feature area
+- **Entry points**: Libraries use `_client.py`, apps use `main.py`
 
-### Design Principles
-- **API-First**: All functionality exposed through clean, typed Python APIs
-- **Type Safety**: Pydantic models for all data structures and API responses
-- **Domain Separation**: Clear boundaries between different financial domains (account, market data, orders)
-- **Educational Focus**: Code should be readable and well-documented for learning purposes
+### Data Validation
+- All API responses MUST use Pydantic models for validation
+- Use `SecretStr` for credentials and sensitive data
+- Include timezone info for all timestamps
+- Use `Decimal` for financial values requiring precision
 
-## Development Conventions
+## Code Conventions
 
-### API Client Patterns
-- Use private module naming (`_client.py`, `_auth.py`) for internal implementation
-- Separate type definitions in `_types.py` files using Pydantic models
-- Domain-specific modules for each API area (`_domestic_account.py`, `_domestic_chart.py`)
-- Consistent error handling with custom exception classes
-
-### Data Handling
-- All API responses must be validated through Pydantic models
-- Use `SecretStr` for sensitive data (API keys, tokens)
-- Implement proper rate limiting for API compliance
-- Cache responses where appropriate to reduce API calls
-
-### Authentication & Security
-- Never hardcode credentials - use environment variables
-- Implement automatic token refresh for session-based APIs
-- Follow principle of least privilege for API permissions
-- Log security events appropriately without exposing sensitive data
-
-## Code Style Guidelines
-
-### Naming Conventions
-- Classes: PascalCase (`DomesticAccountClient`)
-- Functions/methods: snake_case (`get_account_balance`)
-- Constants: UPPER_SNAKE_CASE (`DEFAULT_TIMEOUT`)
-- Private attributes: Leading underscore (`_session`)
-
-### Documentation Requirements
-- All public classes and methods must have docstrings
-- Include usage examples in docstrings for complex APIs
-- Document rate limits and authentication requirements
-- Provide clear error handling guidance
+### Naming Standards
+- Classes: `PascalCase` (`DomesticAccountClient`)
+- Functions/methods: `snake_case` (`get_account_balance`)
+- Constants: `UPPER_SNAKE_CASE` (`DEFAULT_TIMEOUT`)
+- Private attributes: `_leading_underscore`
 
 ### Error Handling
 - Use domain-specific exceptions (`KiwoomAPIError`, `KRXAPIError`)
-- Include original API error codes and messages
-- Provide actionable error messages for common issues
-- Log errors with appropriate context
+- Include original API error codes in custom exceptions
+- Provide actionable error messages
+- Never expose sensitive data in error messages or logs
 
-## Financial Domain Rules
+### Documentation Requirements
+- All public classes and methods need docstrings
+- Include usage examples for complex APIs
+- Document rate limits and auth requirements
+- Specify return types and possible exceptions
 
-### Market Data
-- Always include timezone information for timestamps
-- Use appropriate data types for financial values (Decimal for precision)
-- Validate market hours and trading calendars
-- Handle market holidays and non-trading periods
+## Security & Compliance
+
+### Credentials Management
+- Never hardcode API keys or secrets
+- Use environment variables for all credentials
+- Implement automatic token refresh for session APIs
+- Log security events without exposing sensitive data
+
+### Financial Data Handling
+- Protect account data in logs and error messages
+- Validate account permissions before operations
+- Handle market hours and trading calendar validation
+- Include appropriate disclaimers (educational use only)
+
+## API Integration Rules
+
+### Rate Limiting & Reliability
+- Implement proper rate limiting for API compliance
+- Use backoff strategies for failed requests
+- Cache responses where appropriate to reduce API calls
+- Handle API versioning and deprecation gracefully
+
+### Testing Requirements
+- Unit tests for all business logic (mock external dependencies)
+- Integration tests marked with `@pytest.mark.integration`
+- Test error conditions and edge cases
+- Separate unit and integration test directories
+
+## Financial Domain Specifics
 
 ### Order Management
-- Implement proper order validation before submission
+- Validate orders before submission
+- Log all order operations for audit trails
+- Handle partial fills and status updates
 - Include risk management checks where applicable
-- Log all order-related operations for audit trails
-- Handle partial fills and order status updates
 
-### Account Information
-- Protect sensitive account data in logs and error messages
-- Implement proper data retention policies
-- Validate account permissions before operations
-- Handle multiple account scenarios
-
-## Integration Guidelines
-
-### External APIs
-- Respect rate limits and implement backoff strategies
-- Handle API versioning and deprecation gracefully
-- Provide fallback mechanisms for critical operations
-- Monitor API health and availability
-
-### Testing Strategy
-- Unit tests for all business logic
-- Integration tests for API interactions (marked appropriately)
-- Mock external dependencies in unit tests
-- Test error conditions and edge cases
-
-## Compliance & Disclaimers
-
-### Legal Requirements
-- This is educational/research software only - not financial advice
-- Users are responsible for their own investment decisions
-- Comply with Korean financial regulations and API terms of service
-- Include appropriate disclaimers in documentation
-
-### Data Usage
+### Market Data
+- Validate market hours before data requests
+- Handle market holidays and non-trading periods
+- Include proper data attribution where required
 - Respect data licensing agreements
-- Implement proper data attribution where required
-- Handle personal financial data with appropriate security
-- Follow data retention and deletion policies
+
+### CLI Application Patterns
+- **Command structure**: Use Click or similar for CLI command organization
+- **Terminal output**: Rich formatting with color-coded data and ASCII charts
+- **Configuration**: Environment variables for API keys and settings
+- **Analysis modules**: Separate technical indicators, AI analysis, and data fetching
+- **Display modules**: Terminal charts and formatted output rendering

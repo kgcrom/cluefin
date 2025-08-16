@@ -3,17 +3,93 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
 import pandas as pd
+from pydantic import SecretStr
 
 from cluefin_cli.config.settings import settings
+from cluefin_openapi.kiwoom._client import Client as KiwoomClient
+from cluefin_openapi.kiwoom._auth import Auth as KiwoomAuth
 
 
 class DataFetcher:
     """Handles data fetching from Kiwoom Securities and KRX APIs."""
 
     def __init__(self):
-        self.kiwoom_client = None
-        # For now, we'll use mock data until we have proper API tokens
-        # TODO: Implement real API integration when credentials are available
+        auth = KiwoomAuth(
+            app_key=settings.kiwoom_app_key,
+            secret_key=SecretStr(settings.kiwoom_secret_key),
+            env="dev",
+        )
+        token = auth.generate_token()
+        self.kiwoom_client = KiwoomClient(
+            token = token.get_token(),
+            env="dev",
+        )
+
+    async def get_basic_data(self, stock_code: str):
+        """
+        Fetch basic data in company
+
+        Args:
+            stock_code: Korean stock code (e.g., "005930" for Samsung)
+
+        Returns:
+            DataFrame with basic data
+        """
+        stock_info = self.kiwoom_client.stock_info.get_stock_info(stock_code)
+        stock_info_v1 = self.kiwoom_client.stock_info.get_stock_info_v1(stock_code)
+
+        # Merge both stock info responses into a single dictionary
+        merged_data = {}
+        
+        # Add fields from stock_info (DomesticStockInfoBasic)
+        info_dict = stock_info.body
+        merged_data.update({
+            'stock_code': info_dict.stk_cd,
+            'stock_name': info_dict.stk_nm,
+            'settlement_month': info_dict.setl_mm,
+            'face_value': info_dict.fav,
+            'capital': info_dict.cap,
+            'floating_stock': info_dict.flo_stk,
+            'distribution_stock': info_dict.dstr_stk,
+            'distribution_ratio': info_dict.dstr_rt,
+            'credit_ratio': info_dict.crd_rt,
+            'market_cap': info_dict.mac,
+            'market_cap_weight': info_dict.mac_wght,
+            'foreign_exhaustion_rate': info_dict.for_exh_rt,
+            'substitute_price': info_dict.repl_pric,
+            'per': info_dict.per,
+            'eps': info_dict.eps,
+            'roe': info_dict.roe,
+            'pbr': info_dict.pbr,
+            'ev': info_dict.ev,
+            'bps': info_dict.bps,
+            'revenue': info_dict.sale_amt,
+            'operating_profit': info_dict.open_pric,
+            'net_profit': info_dict.cup_nga,
+            '250_day_high': info_dict.hgst_250,
+            '250hgst_pric_pre_rt': info_dict.hgst_prict_250pre_rt,
+            '250_day_low': info_dict.lwst_250,
+            '250lwst_pric_pre_rt': info_dict.lwst_prict_250pre_rt,
+        })
+        
+        # Add additional fields from stock_info_v1 (DomesticStockInfoBasicV1)
+        info_v1_dict = stock_info_v1.body
+
+        merged_data.update({
+            'list_count': info_v1_dict.listCount,
+            'registration_day': info_v1_dict.regDay,
+            'state': info_v1_dict.state,
+            'market_name': info_v1_dict.marketName,
+            'sector_name': info_v1_dict.upName,
+            'order_warning': info_v1_dict.orderWarning,
+            'nxt_enabled': info_v1_dict.nxtEnable,
+        })
+        
+        # Create DataFrame with a single row
+        df = pd.DataFrame([merged_data])
+        
+        return df
+
 
     async def get_stock_data(self, stock_code: str, period: str = "3M") -> pd.DataFrame:
         """
@@ -42,6 +118,7 @@ class DataFetcher:
         """
         # For now, use mock data
         # TODO: Implement Kiwoom API integration
+        # self.kiwoom_client.foreign.get_consecutive_net_buy_sell_status_by_institution_foreigner()
         return self._generate_mock_foreign_data()
 
     async def get_kospi_data(self) -> Dict[str, Any]:

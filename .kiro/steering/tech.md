@@ -25,9 +25,10 @@
 ## Development Tools
 
 ### Code Quality
+#[[file:pyproject.toml]]
 - **Ruff**: Code formatting, linting, and import sorting (>=0.12.3)
 - **Line Length**: 120 characters
-- **Target Version**: Python 3.11
+- **Target Version**: Python 3.10
 - **Auto-fix**: Enabled for most issues
 
 ### Testing

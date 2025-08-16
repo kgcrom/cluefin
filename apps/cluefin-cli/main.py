@@ -1,7 +1,7 @@
 import click
 from rich.console import Console
 
-from .src.cluefin_cli.commands.analyze import analyze
+from cluefin_cli.commands.analyze import analyze
 
 console = Console()
 

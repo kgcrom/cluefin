@@ -2,14 +2,16 @@
 
 ## Repository Organization
 
-Cluefin follows a **monorepo workspace structure** with two main packages under the `packages/` directory.
+Cluefin follows a **monorepo workspace structure** with packages under `packages/` and applications under `apps/`.
 
 ## Root Level Structure
 
 ```
 cluefin/
-├── packages/                    # Workspace packages
-│   └── cluefin-openapi/        # AI client library
+├── packages/                    # Reusable library packages
+│   └── cluefin-openapi/        # Korean financial API clients
+├── apps/                       # Application packages
+│   └── cluefin-cli/           # Command-line interface
 ├── docs/                       # Documentation
 ├── .kiro/                      # Kiro IDE configuration
 ├── .github/                    # GitHub Actions workflows
@@ -19,7 +21,7 @@ cluefin/
 
 ## Package Structure Conventions
 
-### cluefin-openapi Package
+### cluefin-openapi Package (Library)
 ```
 packages/cluefin-openapi/
 ├── src/cluefin_openapi/
@@ -36,6 +38,21 @@ packages/cluefin-openapi/
 │   ├── unit/                  # Unit tests
 │   └── integration/           # Integration tests
 └── pyproject.toml
+```
+
+### cluefin-cli Application
+```
+apps/cluefin-cli/
+├── src/cluefin_cli/
+│   ├── commands/              # CLI command implementations
+│   ├── analysis/              # Technical indicators & AI analysis
+│   ├── data/                  # Data fetching and processing
+│   ├── display/               # Terminal charts and formatting
+│   ├── config/                # Configuration management
+│   └── main.py               # CLI entry point
+├── main.py                   # Application entry point
+├── tests/                    # Application tests
+└── pyproject.toml           # App-specific dependencies
 ```
 
 ## Naming Conventions
@@ -115,9 +132,16 @@ from pydantic import BaseModel, SecretStr
 
 ### Adding New Features
 1. **API Client**: Add to appropriate domain module in `cluefin-openapi`
-3. **Tests**: Add both unit and integration tests
-4. **Types**: Define Pydantic models in `_types.py` files
+2. **CLI Commands**: Add to `apps/cluefin-cli/src/cluefin_cli/commands/`
+3. **Analysis Features**: Add to `apps/cluefin-cli/src/cluefin_cli/analysis/`
+4. **Tests**: Add both unit and integration tests
+5. **Types**: Define Pydantic models in `_types.py` files
+
+### Package Types
+- **Libraries** (`packages/`): Reusable components, follow private module conventions
+- **Applications** (`apps/`): End-user applications, can use public module naming
 
 ### Cross-Package Dependencies
 - Use workspace dependencies in `pyproject.toml`
-- Maintain clear separation of concerns between packages
+- Apps can depend on packages, but packages should not depend on apps
+- Maintain clear separation of concerns between packages and applications
