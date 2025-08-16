@@ -33,23 +33,23 @@
   - Add stock code input with validation
   - _Requirements: 4.3, 4.4, 6.1-6.4_
 
-- [ ] 4. Create display formatting system
-- [ ] 4.1 Implement base display formatter
+- [x] 4. Create display formatting system
+- [x] 4.1 Implement base display formatter
   - Write DisplayFormatter class using rich library
   - Create table formatting methods with Korean text support
   - Implement proper text width calculation for Korean characters
   - Add color coding and styling for different data types
   - _Requirements: 4.5, 6.1-6.4_
 
-- [ ] 4.2 Create specialized formatters for each API category
+- [x] 4.2 Create specialized formatters for each API category
   - Implement ranking data formatter with volume and price formatting
   - Create sector data formatter with percentage and index formatting
   - Write stock information formatter with detailed metrics display
   - Add error message formatting with clear Korean text
   - _Requirements: 4.5, 6.1-6.4_
 
-- [ ] 5. Implement API module interfaces
-- [ ] 5.1 Create base API module class
+- [-] 5. Implement API module interfaces
+- [-] 5.1 Create base API module class
   - Write BaseAPIModule with common functionality
   - Implement error handling and retry logic
   - Add logging for API calls and responses

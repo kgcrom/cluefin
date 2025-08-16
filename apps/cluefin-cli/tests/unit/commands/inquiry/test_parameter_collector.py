@@ -332,10 +332,7 @@ class TestParameterCollector:
         """Test date input with invalid format."""
         with patch("inquirer.prompt") as mock_prompt, patch.object(collector.console, "print") as mock_print:
             # First call returns invalid format, second call returns valid format
-            mock_prompt.side_effect = [
-                {"date_input": "2023-12-01"},
-                {"date_input": "20231201"}
-            ]
+            mock_prompt.side_effect = [{"date_input": "2023-12-01"}, {"date_input": "20231201"}]
 
             result = collector.collect_date_input("기준일자", required=True)
 
@@ -356,10 +353,7 @@ class TestParameterCollector:
         """Test required date input with empty value."""
         with patch("inquirer.prompt") as mock_prompt, patch.object(collector.console, "print") as mock_print:
             # First call returns empty, second call returns valid date
-            mock_prompt.side_effect = [
-                {"date_input": ""},
-                {"date_input": "20231201"}
-            ]
+            mock_prompt.side_effect = [{"date_input": ""}, {"date_input": "20231201"}]
 
             result = collector.collect_date_input("기준일자", required=True)
 
@@ -379,7 +373,7 @@ class TestParameterCollector:
     def test_collect_numeric_choice_success(self, collector):
         """Test successful numeric choice collection."""
         choices = [("첫번째 옵션", "1"), ("두번째 옵션", "2"), ("세번째 옵션", "3")]
-        
+
         with patch("inquirer.prompt") as mock_prompt:
             mock_prompt.return_value = {"numeric_choice": "2"}
 
@@ -390,7 +384,7 @@ class TestParameterCollector:
     def test_collect_numeric_choice_optional_skip(self, collector):
         """Test optional numeric choice with skip option."""
         choices = [("첫번째 옵션", "1"), ("두번째 옵션", "2")]
-        
+
         with patch("inquirer.prompt") as mock_prompt:
             mock_prompt.return_value = {"numeric_choice": None}
 
@@ -401,7 +395,7 @@ class TestParameterCollector:
     def test_collect_numeric_choice_cancelled(self, collector):
         """Test numeric choice collection when user cancels."""
         choices = [("첫번째 옵션", "1"), ("두번째 옵션", "2")]
-        
+
         with patch("inquirer.prompt") as mock_prompt:
             mock_prompt.return_value = None
 
@@ -424,7 +418,7 @@ class TestParameterCollector:
             # First call returns invalid format, second call returns valid format
             mock_prompt.side_effect = [
                 {"stock_code": "12345"},  # Too short
-                {"stock_code": "005930"}
+                {"stock_code": "005930"},
             ]
 
             result = collector.collect_stock_code("종목코드를 입력하세요", required=True)
@@ -437,10 +431,7 @@ class TestParameterCollector:
         """Test stock code collection with non-numeric input."""
         with patch("inquirer.prompt") as mock_prompt, patch.object(collector.console, "print") as mock_print:
             # First call returns non-numeric, second call returns valid format
-            mock_prompt.side_effect = [
-                {"stock_code": "ABCD12"},
-                {"stock_code": "005930"}
-            ]
+            mock_prompt.side_effect = [{"stock_code": "ABCD12"}, {"stock_code": "005930"}]
 
             result = collector.collect_stock_code("종목코드를 입력하세요", required=True)
 
@@ -461,10 +452,7 @@ class TestParameterCollector:
         """Test required stock code with empty value."""
         with patch("inquirer.prompt") as mock_prompt, patch.object(collector.console, "print") as mock_print:
             # First call returns empty, second call returns valid code
-            mock_prompt.side_effect = [
-                {"stock_code": ""},
-                {"stock_code": "005930"}
-            ]
+            mock_prompt.side_effect = [{"stock_code": ""}, {"stock_code": "005930"}]
 
             result = collector.collect_stock_code("종목코드를 입력하세요", required=True)
 
@@ -484,20 +472,20 @@ class TestParameterCollector:
     def test_validate_stock_code_valid(self, collector):
         """Test stock code validation with valid codes."""
         valid_codes = ["005930", "000660", "035720", "051910"]
-        
+
         for code in valid_codes:
             assert collector._validate_stock_code(code) is True
 
     def test_validate_stock_code_invalid(self, collector):
         """Test stock code validation with invalid codes."""
         invalid_codes = [
-            "12345",    # Too short
+            "12345",  # Too short
             "1234567",  # Too long
-            "ABCD12",   # Contains letters
-            "00593A",   # Contains letter
-            "",         # Empty
-            "005-30",   # Contains dash
+            "ABCD12",  # Contains letters
+            "00593A",  # Contains letter
+            "",  # Empty
+            "005-30",  # Contains dash
         ]
-        
+
         for code in invalid_codes:
             assert collector._validate_stock_code(code) is False
