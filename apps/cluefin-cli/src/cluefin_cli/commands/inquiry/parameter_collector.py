@@ -4,15 +4,372 @@ Parameter collection system for interactive user input.
 This module handles collecting and validating user input parameters for API calls.
 """
 
-from typing import Any, Dict, Optional
+import re
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 import inquirer
 from rich.console import Console
 
+from .config_models import APIConfig, ParameterConfig
+
 console = Console()
 
 
-class ParameterCollector:
+class BaseParameterCollector:
+    """Base class for collecting user input parameters with validation."""
+
+    def __init__(self):
+        """Initialize the parameter collector."""
+        self.console = Console()
+
+    def collect_parameters(self, api_config: APIConfig) -> Optional[Dict[str, Any]]:
+        """
+        Collect all parameters for an API based on its configuration.
+
+        Args:
+            api_config: Configuration for the API including all parameters
+
+        Returns:
+            Dictionary of collected parameters or None if user cancelled
+        """
+        try:
+            # Collect required parameters first
+            params = {}
+
+            for param_config in api_config.required_params:
+                value = self._collect_single_parameter(param_config)
+                if value is None:
+                    self.console.print("[red]Required parameter collection cancelled[/red]")
+                    return None
+                params[param_config.name] = value
+
+            # Collect optional parameters
+            for param_config in api_config.optional_params:
+                value = self._collect_single_parameter(param_config, required=False)
+                if value is not None:
+                    params[param_config.name] = value
+
+            return params
+
+        except KeyboardInterrupt:
+            self.console.print("\n[yellow]Parameter collection cancelled by user[/yellow]")
+            return None
+        except Exception as e:
+            self.console.print(f"[red]Error collecting parameters: {e}[/red]")
+            return None
+
+    def _collect_single_parameter(self, param_config: ParameterConfig, required: bool = True) -> Optional[Any]:
+        """
+        Collect a single parameter based on its configuration.
+
+        Args:
+            param_config: Configuration for the parameter
+            required: Whether this parameter is required
+
+        Returns:
+            The collected parameter value or None
+        """
+        if param_config.param_type == "select":
+            return self._collect_select_parameter(param_config, required)
+        elif param_config.param_type == "text":
+            return self._collect_text_parameter(param_config, required)
+        elif param_config.param_type == "date":
+            return self._collect_date_parameter(param_config, required)
+        else:
+            raise ValueError(f"Unknown parameter type: {param_config.param_type}")
+
+    def _collect_select_parameter(self, param_config: ParameterConfig, required: bool = True) -> Optional[str]:
+        """
+        Collect a select parameter using inquirer.List.
+
+        Args:
+            param_config: Configuration for the select parameter
+            required: Whether this parameter is required
+
+        Returns:
+            Selected value or None
+        """
+        if not param_config.choices:
+            raise ValueError(f"No choices defined for select parameter: {param_config.name}")
+
+        # Create choices list with proper type handling
+        choices: List[tuple[str, Optional[str]]] = [(label, value) for value, label in param_config.choices]
+        if not required:
+            choices.insert(0, ("건너뛰기", None))
+
+        question = inquirer.List(param_config.name, message=param_config.korean_name, choices=choices)
+
+        answer = inquirer.prompt([question])
+        if not answer:
+            return None
+
+        return answer[param_config.name]
+
+    def _collect_text_parameter(self, param_config: ParameterConfig, required: bool = True) -> Optional[str]:
+        """
+        Collect a text parameter using inquirer.Text with validation.
+
+        Args:
+            param_config: Configuration for the text parameter
+            required: Whether this parameter is required
+
+        Returns:
+            Text value or None
+        """
+        message = param_config.korean_name
+        if not required:
+            message += " (선택사항, Enter로 건너뛰기)"
+
+        while True:
+            question = inquirer.Text(param_config.name, message=message)
+            answer = inquirer.prompt([question])
+
+            if not answer:
+                return None
+
+            value = answer[param_config.name].strip()
+
+            # If not required and empty, return None
+            if not required and not value:
+                return None
+
+            # If required but empty, ask again
+            if required and not value:
+                self.console.print("[red]이 값은 필수입니다. 다시 입력해주세요.[/red]")
+                continue
+
+            # Validate if validation pattern is provided
+            if param_config.validation and not self._validate_text(value, param_config.validation):
+                self.console.print(f"[red]올바르지 않은 형식입니다. {param_config.validation}[/red]")
+                continue
+
+            return value
+
+    def _collect_date_parameter(self, param_config: ParameterConfig, required: bool = True) -> Optional[str]:
+        """
+        Collect a date parameter with YYYYMMDD format validation.
+
+        Args:
+            param_config: Configuration for the date parameter
+            required: Whether this parameter is required
+
+        Returns:
+            Date string in YYYYMMDD format or None
+        """
+        message = f"{param_config.korean_name} (YYYYMMDD 형식)"
+        if not required:
+            message += " (선택사항, Enter로 건너뛰기)"
+
+        while True:
+            question = inquirer.Text(param_config.name, message=message)
+            answer = inquirer.prompt([question])
+
+            if not answer:
+                return None
+
+            value = answer[param_config.name].strip()
+
+            # If not required and empty, return None
+            if not required and not value:
+                return None
+
+            # If required but empty, ask again
+            if required and not value:
+                self.console.print("[red]이 값은 필수입니다. 다시 입력해주세요.[/red]")
+                continue
+
+            # Validate date format
+            if not self._validate_date(value):
+                self.console.print("[red]올바르지 않은 날짜 형식입니다. YYYYMMDD 형식으로 입력해주세요.[/red]")
+                continue
+
+            return value
+
+    def _validate_text(self, value: str, validation_pattern: str) -> bool:
+        """
+        Validate text input against a pattern.
+
+        Args:
+            value: The text value to validate
+            validation_pattern: The validation pattern or rule
+
+        Returns:
+            True if valid, False otherwise
+        """
+        try:
+            # Try to match as regex pattern
+            return bool(re.match(validation_pattern, value))
+        except re.error:
+            # If not a valid regex, assume it's a custom validation rule
+            # For now, just return True for custom rules
+            return True
+
+    def _validate_date(self, date_str: str) -> bool:
+        """
+        Validate date string in YYYYMMDD format.
+
+        Args:
+            date_str: Date string to validate
+
+        Returns:
+            True if valid date, False otherwise
+        """
+        if len(date_str) != 8 or not date_str.isdigit():
+            return False
+
+        try:
+            datetime.strptime(date_str, "%Y%m%d")
+            return True
+        except ValueError:
+            return False
+
+
+class ParameterCollector(BaseParameterCollector):
+    """Legacy parameter collector with specific methods for existing APIs."""
+
+    def collect_market_type(self, include_all: bool = True) -> Optional[str]:
+        """
+        Collect market type selection (KOSPI/KOSDAQ/전체).
+
+        Args:
+            include_all: Whether to include "전체" option
+
+        Returns:
+            Market type code or None if cancelled
+        """
+        choices = []
+        if include_all:
+            choices.append(("전체", "000"))
+        choices.extend([("코스피", "001"), ("코스닥", "101")])
+
+        question = inquirer.List("market_type", message="시장구분을 선택하세요", choices=choices)
+
+        answer = inquirer.prompt([question])
+        if not answer:
+            return None
+
+        return answer["market_type"]
+
+    def collect_date_input(self, prompt: str, required: bool = True) -> Optional[str]:
+        """
+        Collect date input with YYYYMMDD format validation.
+
+        Args:
+            prompt: Korean prompt message for the date input
+            required: Whether the date input is required
+
+        Returns:
+            Date string in YYYYMMDD format or None
+        """
+        message = f"{prompt} (YYYYMMDD 형식)"
+        if not required:
+            message += " (선택사항, Enter로 건너뛰기)"
+
+        while True:
+            question = inquirer.Text("date_input", message=message)
+            answer = inquirer.prompt([question])
+
+            if not answer:
+                return None
+
+            value = answer["date_input"].strip()
+
+            # If not required and empty, return None
+            if not required and not value:
+                return None
+
+            # If required but empty, ask again
+            if required and not value:
+                self.console.print("[red]날짜는 필수입니다. 다시 입력해주세요.[/red]")
+                continue
+
+            # Validate date format
+            if not self._validate_date(value):
+                self.console.print("[red]올바르지 않은 날짜 형식입니다. YYYYMMDD 형식으로 입력해주세요.[/red]")
+                continue
+
+            return value
+
+    def collect_numeric_choice(
+        self, prompt: str, choices: List[tuple[str, str]], required: bool = True
+    ) -> Optional[str]:
+        """
+        Collect numeric choice selection with Korean labels.
+
+        Args:
+            prompt: Korean prompt message for the selection
+            choices: List of (korean_label, value) tuples
+            required: Whether the selection is required
+
+        Returns:
+            Selected value or None
+        """
+        choice_list = [(label, value) for label, value in choices]
+        if not required:
+            choice_list.insert(0, ("건너뛰기", None))
+
+        question = inquirer.List("numeric_choice", message=prompt, choices=choice_list)
+
+        answer = inquirer.prompt([question])
+        if not answer:
+            return None
+
+        return answer["numeric_choice"]
+
+    def collect_stock_code(self, prompt: str = "종목코드를 입력하세요", required: bool = True) -> Optional[str]:
+        """
+        Collect stock code input with validation.
+
+        Args:
+            prompt: Korean prompt message for stock code input
+            required: Whether the stock code is required
+
+        Returns:
+            Stock code or None
+        """
+        message = prompt
+        if not required:
+            message += " (선택사항, Enter로 건너뛰기)"
+
+        while True:
+            question = inquirer.Text("stock_code", message=message)
+            answer = inquirer.prompt([question])
+
+            if not answer:
+                return None
+
+            value = answer["stock_code"].strip()
+
+            # If not required and empty, return None
+            if not required and not value:
+                return None
+
+            # If required but empty, ask again
+            if required and not value:
+                self.console.print("[red]종목코드는 필수입니다. 다시 입력해주세요.[/red]")
+                continue
+
+            # Validate stock code format (6 digits)
+            if not self._validate_stock_code(value):
+                self.console.print("[red]올바르지 않은 종목코드 형식입니다. 6자리 숫자로 입력해주세요.[/red]")
+                continue
+
+            return value
+
+    def _validate_stock_code(self, stock_code: str) -> bool:
+        """
+        Validate Korean stock code format (6 digits).
+
+        Args:
+            stock_code: Stock code to validate
+
+        Returns:
+            True if valid stock code format, False otherwise
+        """
+        # Korean stock codes are typically 6 digits
+        return len(stock_code) == 6 and stock_code.isdigit()
+
     def collect_volume_surge_params(self) -> Optional[Dict[str, Any]]:
         """거래량급증요청 파라미터를 수집합니다."""
         questions = [

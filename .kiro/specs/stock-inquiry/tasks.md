@@ -19,14 +19,14 @@
   - _Requirements: 1.1-1.8, 2.1-2.6, 3.1-3.5_
 
 - [ ] 3. Implement parameter collection system
-- [ ] 3.1 Create base parameter collector class
+- [x] 3.1 Create base parameter collector class
   - Write ParameterCollector class with inquirer integration
   - Implement methods for different input types (select, text, date)
   - Add input validation and error handling
   - Create unit tests for parameter collection logic
   - _Requirements: 4.3, 4.4, 6.1-6.4_
 
-- [ ] 3.2 Implement specialized parameter collection methods
+- [x] 3.2 Implement specialized parameter collection methods
   - Write market type selection (KOSPI/KOSDAQ/전체)
   - Implement date input with format validation (YYYYMMDD)
   - Create numeric choice selection with Korean labels

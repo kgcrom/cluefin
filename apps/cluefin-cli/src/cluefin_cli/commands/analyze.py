@@ -54,7 +54,6 @@ async def _analyze_stock(stock_code: str, period: str, chart: bool, ai_analysis:
     # TODO 업종 별 투자자 순매수요청,
     # TODO 업종현재가 요청   // 해당 업종에 돈이 들어오고 있는지 아닌지 판단. 한 기업이 여러 업종에 속한다면??
 
-
     console.print("[yellow]Fetching market indices...[/yellow]")
     kospi_data = await data_fetcher.get_kospi_data()
     kosdaq_data = await data_fetcher.get_kosdaq_data()
@@ -120,7 +119,10 @@ def _display_company_info(stock_code: str, data: pd.DataFrame):
 
     if "distribution_stock" in data.columns and info["distribution_stock"] and info["distribution_stock"]:
         if "distribution_ratio" in data.columns and info["distribution_ratio"]:
-            table.add_row("Distribution stock / Floating Stock", f"{str(info['distribution_stock'])} / {info['floating_stock']}({str(info['distribution_ratio'])}%)")
+            table.add_row(
+                "Distribution stock / Floating Stock",
+                f"{str(info['distribution_stock'])} / {info['floating_stock']}({str(info['distribution_ratio'])}%)",
+            )
 
     if "company_size" in data.columns and info["company_size"]:
         table.add_row("Company Size", str(info["company_size"]))
@@ -153,7 +155,6 @@ def _display_company_info(stock_code: str, data: pd.DataFrame):
     if "net_profit" in data.columns and info["net_profit"]:
         table.add_row("Net profit", format_currency(info["net_profit"], "억원"))
 
-
     # Price information
     if "250_day_high" in data.columns and info["250_day_high"]:
         if "250hgst_pric_pre_rt" in data.columns and info["250hgst_pric_pre_rt"]:
@@ -177,7 +178,7 @@ def _display_company_info(stock_code: str, data: pd.DataFrame):
             "3": "Short-term Overheating",
             "4": "Investment Risk",
             "5": "Investment Elapsed",
-            "1": "ETF Investment Caution"
+            "1": "ETF Investment Caution",
         }
         warning = warning_map.get(str(info["order_warning"]), "Warning")
         table.add_row("Investment Warning", warning)

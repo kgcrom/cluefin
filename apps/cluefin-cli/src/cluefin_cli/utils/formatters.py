@@ -16,7 +16,7 @@ def format_number(value: Union[str, int, float]) -> str:
     Examples:
         >>> format_number(1000)
         '1,000'
-        >>> format_number('1000000')
+        >>> format_number("1000000")
         '1,000,000'
         >>> format_number(1234.56)
         '1,234.56'
@@ -62,7 +62,7 @@ def format_currency(value: Union[str, int, float], unit: str = "") -> str:
     Examples:
         >>> format_currency(1000000)
         '₩1,000,000'
-        >>> format_currency(1000000, '천원')
+        >>> format_currency(1000000, "천원")
         '₩1,000,000천원'
     """
     formatted = format_number(value)

@@ -26,7 +26,7 @@ class DataFetcher:
         )
         token = auth.generate_token()
         self.kiwoom_client = KiwoomClient(
-            token = token.get_token(),
+            token=token.get_token(),
             env="dev",
         )
 
@@ -48,53 +48,56 @@ class DataFetcher:
 
         # Add fields from stock_info (DomesticStockInfoBasic)
         info_dict = stock_info.body
-        merged_data.update({
-            "stock_code": info_dict.stk_cd,
-            "stock_name": info_dict.stk_nm,
-            "settlement_month": info_dict.setl_mm,
-            "face_value": info_dict.fav,
-            "capital": info_dict.cap,
-            "floating_stock": info_dict.flo_stk,
-            "distribution_stock": info_dict.dstr_stk,
-            "distribution_ratio": info_dict.dstr_rt,
-            "credit_ratio": info_dict.crd_rt,
-            "market_cap": info_dict.mac,
-            "market_cap_weight": info_dict.mac_wght,
-            "foreign_exhaustion_rate": info_dict.for_exh_rt,
-            "substitute_price": info_dict.repl_pric,
-            "per": info_dict.per,
-            "eps": info_dict.eps,
-            "roe": info_dict.roe,
-            "pbr": info_dict.pbr,
-            "ev": info_dict.ev,
-            "bps": info_dict.bps,
-            "revenue": info_dict.sale_amt,
-            "operating_profit": info_dict.open_pric,
-            "net_profit": info_dict.cup_nga,
-            "250_day_high": info_dict.hgst_250,
-            "250hgst_pric_pre_rt": info_dict.hgst_prict_250pre_rt,
-            "250_day_low": info_dict.lwst_250,
-            "250lwst_pric_pre_rt": info_dict.lwst_prict_250pre_rt,
-        })
+        merged_data.update(
+            {
+                "stock_code": info_dict.stk_cd,
+                "stock_name": info_dict.stk_nm,
+                "settlement_month": info_dict.setl_mm,
+                "face_value": info_dict.fav,
+                "capital": info_dict.cap,
+                "floating_stock": info_dict.flo_stk,
+                "distribution_stock": info_dict.dstr_stk,
+                "distribution_ratio": info_dict.dstr_rt,
+                "credit_ratio": info_dict.crd_rt,
+                "market_cap": info_dict.mac,
+                "market_cap_weight": info_dict.mac_wght,
+                "foreign_exhaustion_rate": info_dict.for_exh_rt,
+                "substitute_price": info_dict.repl_pric,
+                "per": info_dict.per,
+                "eps": info_dict.eps,
+                "roe": info_dict.roe,
+                "pbr": info_dict.pbr,
+                "ev": info_dict.ev,
+                "bps": info_dict.bps,
+                "revenue": info_dict.sale_amt,
+                "operating_profit": info_dict.open_pric,
+                "net_profit": info_dict.cup_nga,
+                "250_day_high": info_dict.hgst_250,
+                "250hgst_pric_pre_rt": info_dict.hgst_prict_250pre_rt,
+                "250_day_low": info_dict.lwst_250,
+                "250lwst_pric_pre_rt": info_dict.lwst_prict_250pre_rt,
+            }
+        )
 
         # Add additional fields from stock_info_v1 (DomesticStockInfoBasicV1)
         info_v1_dict = stock_info_v1.body
 
-        merged_data.update({
-            "list_count": info_v1_dict.listCount,
-            "registration_day": info_v1_dict.regDay,
-            "state": info_v1_dict.state,
-            "market_name": info_v1_dict.marketName,
-            "sector_name": info_v1_dict.upName,
-            "order_warning": info_v1_dict.orderWarning,
-            "nxt_enabled": info_v1_dict.nxtEnable,
-        })
+        merged_data.update(
+            {
+                "list_count": info_v1_dict.listCount,
+                "registration_day": info_v1_dict.regDay,
+                "state": info_v1_dict.state,
+                "market_name": info_v1_dict.marketName,
+                "sector_name": info_v1_dict.upName,
+                "order_warning": info_v1_dict.orderWarning,
+                "nxt_enabled": info_v1_dict.nxtEnable,
+            }
+        )
 
         # Create DataFrame with a single row
         df = pd.DataFrame([merged_data])
 
         return df
-
 
     async def get_stock_data(self, stock_code: str, period: str = "3M") -> pd.DataFrame:
         """
