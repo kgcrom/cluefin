@@ -64,6 +64,12 @@ class BaseParameterCollector:
                     korean_name = param_config.korean_name if param_config else key
                     self.console.print(f"  • {korean_name}: {value}")
 
+                # Ask for confirmation for potentially expensive operations
+                if self._is_expensive_operation(api_config, params):
+                    if not self._confirm_expensive_operation(api_config, params):
+                        self.console.print("[yellow]사용자에 의해 API 실행이 취소되었습니다.[/yellow]")
+                        return None
+
             return params
 
         except KeyboardInterrupt:
@@ -213,7 +219,25 @@ class BaseParameterCollector:
         """
         try:
             # Try to match as regex pattern
-            return bool(re.match(validation_pattern, value))
+            match_result = re.match(validation_pattern, value)
+            if not match_result:
+                return False
+
+            # Additional validation for specific patterns
+            if "[0-9]" in validation_pattern:
+                # Numeric validation - check for reasonable ranges
+                try:
+                    num_value = int(value)
+                    # Check for reasonable stock ranking ranges (1-1000)
+                    if "rank" in validation_pattern.lower() and (num_value < 1 or num_value > 1000):
+                        return False
+                    # Check for reasonable count values (1-10000)
+                    elif "count" in validation_pattern.lower() and (num_value < 1 or num_value > 10000):
+                        return False
+                except ValueError:
+                    return False
+
+            return True
         except re.error:
             # If not a valid regex, assume it's a custom validation rule
             # For now, just return True for custom rules
@@ -233,10 +257,86 @@ class BaseParameterCollector:
             return False
 
         try:
-            datetime.strptime(date_str, "%Y%m%d")
+            parsed_date = datetime.strptime(date_str, "%Y%m%d")
+            current_date = datetime.now()
+
+            # Check if date is not too far in the future (max 1 year ahead)
+            if parsed_date > current_date.replace(year=current_date.year + 1):
+                return False
+
+            # Check if date is not too far in the past (max 30 years ago to allow historical data)
+            if parsed_date < current_date.replace(year=current_date.year - 30):
+                return False
+
             return True
         except ValueError:
             return False
+
+    def _is_expensive_operation(self, api_config: APIConfig, params: Dict[str, Any]) -> bool:
+        """
+        Determine if an API operation is potentially expensive based on parameters.
+
+        Args:
+            api_config: The API configuration
+            params: The collected parameters
+
+        Returns:
+            True if the operation might be expensive
+        """
+        # Define expensive operation patterns
+        expensive_apis = [
+            "get_all_sector_indices",  # All sector data
+            "get_trading_volume_top",  # Large datasets
+            "get_foreign_period_trading_top",  # Historical data
+        ]
+
+        # Check if this is a known expensive API
+        if api_config.api_method in expensive_apis:
+            return True
+
+        # Check for parameters that indicate large requests
+        for key, value in params.items():
+            if key.lower() in ["count", "rank_end", "조회건수"] and isinstance(value, (str, int)):
+                try:
+                    count = int(value)
+                    if count > 100:  # Large result sets
+                        return True
+                except (ValueError, TypeError):
+                    pass
+
+            # Check for historical data requests
+            if key.lower() in ["period", "기간", "dt"] and isinstance(value, str):
+                if value in ["60", "60일", "month", "year"]:
+                    return True
+
+        return False
+
+    def _confirm_expensive_operation(self, api_config: APIConfig, params: Dict[str, Any]) -> bool:
+        """
+        Ask user for confirmation before executing potentially expensive operations.
+
+        Args:
+            api_config: The API configuration
+            params: The collected parameters
+
+        Returns:
+            True if user confirms, False otherwise
+        """
+        self.console.print("\n[yellow]⚠️  주의: 이 요청은 많은 데이터를 가져올 수 있습니다.[/yellow]")
+        self.console.print(f"[dim]API: {api_config.korean_name}[/dim]")
+
+        # Show specific warnings based on the operation
+        if any(key.lower() in ["count", "rank_end"] for key in params.keys()):
+            self.console.print("[dim]• 대량의 데이터 요청으로 시간이 오래 걸릴 수 있습니다.[/dim]")
+        if any(key.lower() in ["period", "기간"] for key in params.keys()):
+            self.console.print("[dim]• 과거 데이터 요청으로 API 사용량이 많을 수 있습니다.[/dim]")
+
+        import inquirer
+
+        question = inquirer.Confirm("confirm", message="계속 진행하시겠습니까?", default=False)
+
+        answer = inquirer.prompt([question])
+        return answer and answer["confirm"] if answer else False
 
 
 class ParameterCollector(BaseParameterCollector):

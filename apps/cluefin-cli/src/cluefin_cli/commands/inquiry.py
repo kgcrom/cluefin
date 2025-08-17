@@ -5,6 +5,6 @@ This file maintains backward compatibility while the actual implementation
 is organized in the inquiry/ subdirectory.
 """
 
-from .inquiry import inquiry
+from .inquiry.main import inquiry
 
 __all__ = ["inquiry"]

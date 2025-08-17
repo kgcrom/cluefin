@@ -95,30 +95,30 @@
   - Handle user input validation and error recovery
   - _Requirements: 4.2, 4.6_
 
-- [ ] 7. Integrate with CLI command system
-- [ ] 7.1 Create main inquiry command entry point
+- [x] 7. Integrate with CLI command system
+- [x] 7.1 Create main inquiry command entry point
   - Write inquiry command function using Click framework
   - Integrate with existing CLI context and configuration
   - Initialize Kiwoom client from environment variables
   - Add command help text and usage examples
   - _Requirements: 4.1, 4.6_
 
-- [ ] 7.2 Wire together all components
+- [x] 7.2 Wire together all components
   - Connect MenuController with API modules
   - Integrate parameter collection with API execution
   - Connect response formatting with display output
   - Add comprehensive error handling throughout the flow
   - _Requirements: 4.6, 5.5_
 
-- [ ] 8. Add comprehensive error handling
-- [ ] 8.1 Implement API error handling
+- [x] 8. Add comprehensive error handling
+- [x] 8.1 Implement API error handling
   - Create error handlers for Kiwoom API exceptions
   - Add retry logic for network and rate limit errors
   - Implement graceful degradation for partial failures
   - Create user-friendly error messages in Korean
   - _Requirements: 4.6_
 
-- [ ] 8.2 Add input validation and user error handling
+- [x] 8.2 Add input validation and user error handling
   - Validate all user inputs before API calls
   - Handle invalid menu selections gracefully
   - Add confirmation prompts for potentially expensive operations

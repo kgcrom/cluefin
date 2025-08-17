@@ -78,15 +78,13 @@ class BaseAPIModule(ABC):
         for i, api in enumerate(category.apis, 1):
             choice_text = f"{i:2d}. {api.korean_name}"
             choices.append((choice_text, api.name))
-        
+
         choices.append(("⬅️  메인메뉴로 돌아가기", "back"))
 
         import inquirer
 
         question = inquirer.List(
-            "api_choice", 
-            message=f"조회할 {category.korean_name} API를 선택하세요",
-            choices=choices
+            "api_choice", message=f"조회할 {category.korean_name} API를 선택하세요", choices=choices
         )
 
         answer = inquirer.prompt([question])
@@ -116,9 +114,11 @@ class BaseAPIModule(ABC):
             # Display API information with breadcrumb navigation
             category = self.get_api_category()
             self.console.print("\n[bold green]─" * 60 + "[/bold green]")
-            self.console.print(f"[bold cyan]📊 메인 메뉴 > {category.korean_name} > {api_config.korean_name} 📊[/bold cyan]")
+            self.console.print(
+                f"[bold cyan]📊 메인 메뉴 > {category.korean_name} > {api_config.korean_name} 📊[/bold cyan]"
+            )
             self.console.print("[bold green]─" * 60 + "[/bold green]")
-            
+
             if api_config.description:
                 self.console.print(f"[dim]{api_config.description}[/dim]\n")
             else:
@@ -137,8 +137,14 @@ class BaseAPIModule(ABC):
             if result is None:
                 return False
 
+            # Check for partial data and handle gracefully
+            processed_result = self._handle_partial_data(result, api_config)
+            if processed_result is None:
+                self.formatter.display_error("데이터 처리 중 오류가 발생했습니다.", "데이터 오류")
+                return False
+
             # Format and display results
-            self._format_and_display_result(result, api_config)
+            self._format_and_display_result(processed_result, api_config)
             return True
 
         except KeyboardInterrupt:
@@ -214,12 +220,18 @@ class BaseAPIModule(ABC):
                 logger.error(f"Unexpected error on attempt {attempt + 1}: {e}")
                 break
 
-        # All retries failed
+        # All retries failed - provide detailed error information
         if isinstance(last_exception, KiwoomAPIError):
-            error_title = f"오류 코드: {last_exception.status_code}" if last_exception.status_code else "API 오류"
-            self.formatter.display_error(f"API 호출 실패: {last_exception.message}", error_title)
+            error_title = self._get_user_friendly_error_title(last_exception)
+            error_message = self._get_user_friendly_error_message(last_exception)
+            self.formatter.display_error(error_message, error_title)
+
+            # Show retry suggestion for certain errors
+            if self._is_retryable_error(last_exception):
+                self.console.print("[yellow]💡 잠시 후 다시 시도해 보세요.[/yellow]")
         else:
-            self.formatter.display_error(f"API 호출 실패: {str(last_exception)}", "네트워크 오류")
+            self.formatter.display_error(f"예상치 못한 오류가 발생했습니다: {str(last_exception)}", "시스템 오류")
+            self.console.print("[yellow]💡 네트워크 연결을 확인하고 다시 시도해 보세요.[/yellow]")
 
         return None
 
@@ -253,13 +265,186 @@ class BaseAPIModule(ABC):
             "KiwoomTimeoutError",
         ]
 
+        # Specific error message patterns that are retryable
+        retryable_message_patterns = [
+            "일시적",  # Temporary issues
+            "서버 점검",  # Server maintenance
+            "과도한 요청",  # Too many requests
+            "연결 시간 초과",  # Connection timeout
+            "네트워크",  # Network issues
+        ]
+
         # Check by status code
         if error.status_code and error.status_code in retryable_status_codes:
             return True
 
         # Check by error type
         error_type = type(error).__name__
-        return error_type in retryable_error_types
+        if error_type in retryable_error_types:
+            return True
+
+        # Check by error message patterns
+        error_message = str(error.message) if hasattr(error, "message") else str(error)
+        for pattern in retryable_message_patterns:
+            if pattern in error_message:
+                return True
+
+        return False
+
+    def _get_user_friendly_error_title(self, error: KiwoomAPIError) -> str:
+        """
+        Get a user-friendly error title based on the error type and status code.
+
+        Args:
+            error: The Kiwoom API error
+
+        Returns:
+            User-friendly error title in Korean
+        """
+        status_code = getattr(error, "status_code", None)
+        error_type = type(error).__name__
+
+        # Map common status codes to Korean titles
+        status_code_titles = {
+            400: "잘못된 요청",
+            401: "인증 실패",
+            403: "접근 배인",
+            404: "API 링크 찾을 수 없음",
+            429: "요청 한도 초과",
+            500: "서버 내부 오류",
+            502: "서버 연결 오류",
+            503: "서비스 일시 중단",
+            504: "서버 응답 시간 초과",
+        }
+
+        # Map error types to Korean titles
+        error_type_titles = {
+            "KiwoomRateLimitError": "요청 한도 초과",
+            "KiwoomServerError": "서버 오류",
+            "KiwoomNetworkError": "네트워크 오류",
+            "KiwoomTimeoutError": "시간 초과",
+            "KiwoomAuthError": "인증 실패",
+        }
+
+        if status_code and status_code in status_code_titles:
+            return f"{status_code_titles[status_code]} ({status_code})"
+        elif error_type in error_type_titles:
+            return error_type_titles[error_type]
+        elif status_code:
+            return f"API 오류 ({status_code})"
+        else:
+            return "API 오류"
+
+    def _get_user_friendly_error_message(self, error: KiwoomAPIError) -> str:
+        """
+        Get a user-friendly error message based on the error type and message.
+
+        Args:
+            error: The Kiwoom API error
+
+        Returns:
+            User-friendly error message in Korean
+        """
+        original_message = getattr(error, "message", str(error))
+        status_code = getattr(error, "status_code", None)
+
+        # Common error patterns and their user-friendly messages
+        error_patterns = {
+            "unauthorized": "인증 정보가 올바르지 않습니다. API 키를 확인해 보세요.",
+            "forbidden": "이 API에 대한 접근 권한이 없습니다.",
+            "not found": "요청한 데이터를 찾을 수 없습니다.",
+            "too many requests": "요청이 너무 많습니다. 잠시 후 다시 시도해 보세요.",
+            "rate limit": "요청 한도를 초과했습니다. 잠시 후 다시 시도해 보세요.",
+            "server error": "서버에 일시적인 문제가 발생했습니다.",
+            "timeout": "서버 응답 시간이 초과되었습니다.",
+            "network": "네트워크 연결에 문제가 있습니다.",
+        }
+
+        message_lower = original_message.lower()
+        for pattern, friendly_message in error_patterns.items():
+            if pattern in message_lower:
+                return friendly_message
+
+        # Status code specific messages
+        if status_code == 429:
+            return "요청 한도를 초과했습니다. 1분 후 다시 시도해 보세요."
+        elif status_code == 401:
+            return "API 인증에 실패했습니다. 환경변수를 확인해 보세요."
+        elif status_code == 500:
+            return "서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해 보세요."
+
+        # If no pattern matches, return a generic message with the original error
+        return f"API 호출 중 오류가 발생했습니다: {original_message}"
+
+    def _handle_partial_data(self, result: Any, api_config: APIConfig) -> Optional[Any]:
+        """
+        Handle partial data and implement graceful degradation.
+
+        Args:
+            result: The raw API response
+            api_config: The API configuration
+
+        Returns:
+            Processed result or None if data is unusable
+        """
+        try:
+            # Handle different result types
+            if result is None:
+                return None
+
+            # If result is a dictionary, check for error indicators
+            if isinstance(result, dict):
+                # Check for common error fields
+                if "error" in result or "msg_cd" in result:
+                    error_msg = result.get("error", result.get("msg_cd", "Unknown error"))
+                    logger.warning(f"API returned error: {error_msg}")
+
+                    # If it's a partial failure, try to extract useful data
+                    if "data" in result or "output" in result:
+                        partial_data = result.get("data", result.get("output"))
+                        if partial_data:
+                            self.console.print("[yellow]⚠️  부분적인 데이터만 가져왔습니다.[/yellow]")
+                            return partial_data
+                    return None
+
+                # Check if data array is empty or malformed
+                data_fields = ["data", "output", "result", "list"]
+                for field in data_fields:
+                    if field in result:
+                        data = result[field]
+                        if isinstance(data, list) and len(data) == 0:
+                            self.console.print("[yellow]해당 조건에 맞는 데이터가 없습니다.[/yellow]")
+                            return result  # Still return the structure for proper handling
+                        elif isinstance(data, list) and len(data) > 0:
+                            # Check for data quality issues
+                            valid_items = [item for item in data if item and len(str(item).strip()) > 0]
+                            if len(valid_items) < len(data):
+                                self.console.print(
+                                    f"[yellow]⚠️  전체 {len(data)}건 중 {len(valid_items)}건의 유효 데이터를 가져왔습니다.[/yellow]"
+                                )
+                                result[field] = valid_items
+                            return result
+
+            # If result is a list, check for emptiness or quality
+            elif isinstance(result, list):
+                if len(result) == 0:
+                    self.console.print("[yellow]해당 조건에 맞는 데이터가 없습니다.[/yellow]")
+                    return result
+
+                # Filter out invalid items
+                valid_items = [item for item in result if item and len(str(item).strip()) > 0]
+                if len(valid_items) < len(result):
+                    self.console.print(
+                        f"[yellow]⚠️  전체 {len(result)}건 중 {len(valid_items)}건의 유효 데이터를 가져왔습니다.[/yellow]"
+                    )
+                    return valid_items
+
+            return result
+
+        except Exception as e:
+            logger.error(f"Error handling partial data: {e}")
+            # Return original result if processing fails
+            return result
 
     @abstractmethod
     def _format_and_display_result(self, result: Any, api_config: APIConfig) -> None:

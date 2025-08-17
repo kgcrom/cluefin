@@ -237,15 +237,35 @@ class DisplayFormatter:
 
     def display_error(self, message: str, title: str = "오류") -> None:
         """
-        Display an error message with appropriate styling.
+        Display an error message with appropriate styling and helpful tips.
 
         Args:
             message: Error message to display
             title: Error title (default: "오류")
         """
+        error_content = message
+
+        # Add helpful tips based on error type
+        if "인증" in message or "API 키" in message:
+            error_content += "\n\n💡 도움말:"
+            error_content += "\n• KIWOOM_APP_KEY 환경변수를 확인해보세요"
+            error_content += "\n• KIWOOM_SECRET_KEY 환경변수를 확인해보세요"
+        elif "네트워크" in message or "연결" in message:
+            error_content += "\n\n💡 도움말:"
+            error_content += "\n• 인터넷 연결을 확인해보세요"
+            error_content += "\n• 잠시 후 다시 시도해보세요"
+        elif "한도" in message or "429" in message:
+            error_content += "\n\n💡 도움말:"
+            error_content += "\n• 1분 정도 기다린 후 다시 시도해보세요"
+            error_content += "\n• 요청 건수를 줄여보세요"
+        elif "데이터 없음" in title or "조회된 데이터가 없" in message:
+            error_content += "\n\n💡 도움말:"
+            error_content += "\n• 다른 조건으로 검색해보세요"
+            error_content += "\n• 시장 시간 내에 다시 시도해보세요"
+
         error_panel = Panel(
-            Text(message, style=self.styles["error"]),
-            title=f"[red bold]{title}[/red bold]",
+            Text(error_content, style=self.styles["error"]),
+            title=f"[red bold]❗ {title} ❗[/red bold]",
             border_style="red",
             expand=False,
         )

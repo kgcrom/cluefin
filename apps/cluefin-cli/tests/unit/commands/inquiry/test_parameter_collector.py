@@ -1,7 +1,6 @@
 """Unit tests for parameter collection system."""
 
-from typing import Any, Dict, List, Tuple
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -13,7 +12,7 @@ class TestBaseParameterCollector:
     """Test the base parameter collector class."""
 
     @pytest.fixture
-    def collector(self):
+    def collector(self) -> BaseParameterCollector:
         """Create a parameter collector instance for testing."""
         return BaseParameterCollector()
 
@@ -134,7 +133,9 @@ class TestBaseParameterCollector:
 
             assert result == "20231201"
 
-    def test_collect_date_parameter_invalid_format(self, collector, date_param_config):
+    def test_collect_date_parameter_invalid_format(
+        self, collector: BaseParameterCollector, date_param_config: ParameterConfig
+    ):
         """Test date parameter collection with invalid format."""
         with patch("inquirer.prompt") as mock_prompt, patch.object(collector.console, "print") as mock_print:
             # First call returns invalid date, second call returns valid date
@@ -146,7 +147,9 @@ class TestBaseParameterCollector:
             assert mock_prompt.call_count == 2
             mock_print.assert_called()
 
-    def test_collect_date_parameter_invalid_date(self, collector, date_param_config):
+    def test_collect_date_parameter_invalid_date(
+        self, collector: BaseParameterCollector, date_param_config: ParameterConfig
+    ):
         """Test date parameter collection with invalid date."""
         with patch("inquirer.prompt") as mock_prompt, patch.object(collector.console, "print") as mock_print:
             # First call returns invalid date, second call returns valid date
@@ -223,7 +226,7 @@ class TestBaseParameterCollector:
             result = collector.collect_parameters(api_config)
 
             assert result is None
-            mock_print.assert_called_with("[red]Required parameter collection cancelled[/red]")
+            mock_print.assert_called_with("[yellow]필수 파라미터 입력이 취소되었습니다.[/yellow]")
 
     def test_collect_parameters_optional_skipped(self, collector, api_config):
         """Test parameter collection with optional parameters skipped."""
@@ -236,7 +239,7 @@ class TestBaseParameterCollector:
             expected = {"market_type": "001", "stock_code": "005930"}
             assert result == expected
 
-    def test_collect_parameters_keyboard_interrupt(self, collector, api_config):
+    def test_collect_parameters_keyboard_interrupt(self, collector: BaseParameterCollector, api_config: APIConfig):
         """Test parameter collection with keyboard interrupt."""
         with (
             patch.object(collector, "_collect_single_parameter") as mock_collect,
@@ -247,9 +250,9 @@ class TestBaseParameterCollector:
             result = collector.collect_parameters(api_config)
 
             assert result is None
-            mock_print.assert_called_with("\n[yellow]Parameter collection cancelled by user[/yellow]")
+            mock_print.assert_called_with("\n[yellow]사용자에 의해 파라미터 입력이 취소되었습니다.[/yellow]")
 
-    def test_collect_parameters_exception(self, collector, api_config):
+    def test_collect_parameters_exception(self, collector: BaseParameterCollector, api_config: APIConfig):
         """Test parameter collection with exception."""
         with (
             patch.object(collector, "_collect_single_parameter") as mock_collect,
@@ -260,7 +263,7 @@ class TestBaseParameterCollector:
             result = collector.collect_parameters(api_config)
 
             assert result is None
-            mock_print.assert_called_with("[red]Error collecting parameters: Test error[/red]")
+            mock_print.assert_called_with("[red]파라미터 수집 중 오류가 발생했습니다: Test error[/red]")
 
     def test_collect_single_parameter_unknown_type(self, collector):
         """Test collecting parameter with unknown type."""
@@ -286,7 +289,7 @@ class TestParameterCollector:
     """Test the specialized parameter collector methods."""
 
     @pytest.fixture
-    def collector(self):
+    def collector(self) -> ParameterCollector:
         """Create a parameter collector instance for testing."""
         return ParameterCollector()
 
