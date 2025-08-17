@@ -27,9 +27,10 @@ class MenuController:
     def run_main_menu(self):
         """메인 메뉴를 실행합니다."""
         while True:
-            console.print("\n[bold green]─" * 50 + "[/bold green]")
-            console.print("[bold cyan]📊 메인 메뉴 📊[/bold cyan]")
-            console.print("[bold green]─" * 50 + "[/bold green]")
+            console.print("\n[bold green]─" * 60 + "[/bold green]")
+            console.print("[bold cyan]📊 Cluefin 주식 조회 시스템 📊[/bold cyan]")
+            console.print("[bold green]─" * 60 + "[/bold green]")
+            console.print("[dim]한국 금융시장 데이터를 조회할 수 있습니다.[/dim]\n")
 
             questions = [
                 inquirer.List(

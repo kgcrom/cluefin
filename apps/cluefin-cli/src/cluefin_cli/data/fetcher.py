@@ -1,6 +1,5 @@
-import asyncio
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import pandas as pd
 from cluefin_openapi.kiwoom._auth import Auth as KiwoomAuth

@@ -67,15 +67,27 @@ class BaseAPIModule(ABC):
         """
         category = self.get_api_category()
 
-        self.console.print(f"\n[bold blue]{category.korean_name} 메뉴[/bold blue]")
+        # Display breadcrumb navigation and clear menu title
+        self.console.print("\n[bold green]─" * 60 + "[/bold green]")
+        self.console.print(f"[bold cyan]📊 메인 메뉴 > {category.korean_name} 📊[/bold cyan]")
+        self.console.print("[bold green]─" * 60 + "[/bold green]")
+        self.console.print(f"[dim]총 {len(category.apis)}개의 {category.korean_name} API를 사용할 수 있습니다.[/dim]\n")
 
-        # Create choices from API configurations
-        choices = [(api.korean_name, api.name) for api in category.apis]
-        choices.append(("⬅️ 메인메뉴로 돌아가기", "back"))
+        # Create choices from API configurations with consistent formatting
+        choices = []
+        for i, api in enumerate(category.apis, 1):
+            choice_text = f"{i:2d}. {api.korean_name}"
+            choices.append((choice_text, api.name))
+        
+        choices.append(("⬅️  메인메뉴로 돌아가기", "back"))
 
         import inquirer
 
-        question = inquirer.List("api_choice", message=f"조회할 {category.korean_name}를 선택하세요", choices=choices)
+        question = inquirer.List(
+            "api_choice", 
+            message=f"조회할 {category.korean_name} API를 선택하세요",
+            choices=choices
+        )
 
         answer = inquirer.prompt([question])
         if not answer or answer["api_choice"] == "back":
@@ -101,8 +113,16 @@ class BaseAPIModule(ABC):
             return False
 
         try:
-            # Display API information
-            self.console.print(f"[cyan]{api_config.korean_name} - 파라미터 입력[/cyan]")
+            # Display API information with breadcrumb navigation
+            category = self.get_api_category()
+            self.console.print("\n[bold green]─" * 60 + "[/bold green]")
+            self.console.print(f"[bold cyan]📊 메인 메뉴 > {category.korean_name} > {api_config.korean_name} 📊[/bold cyan]")
+            self.console.print("[bold green]─" * 60 + "[/bold green]")
+            
+            if api_config.description:
+                self.console.print(f"[dim]{api_config.description}[/dim]\n")
+            else:
+                self.console.print(f"[dim]{api_config.korean_name} API 파라미터를 입력하세요.[/dim]\n")
 
             # Collect parameters
             params = self.get_api_parameters(api_config)
@@ -268,8 +288,16 @@ class BaseAPIModule(ABC):
                 success = self.execute_api(api_name)
 
                 if success:
-                    # Pause to let user review results
-                    self.console.print("\n[dim]계속하려면 엔터를 누르세요...[/dim]")
+                    # Show options after successful execution
+                    self.console.print("\n[bold green]조회가 완료되었습니다![/bold green]")
+                    self.console.print("[dim]• 엔터: 메뉴로 돌아가기[/dim]")
+                    self.console.print("[dim]• Ctrl+C: 프로그램 종료[/dim]")
+                    input()
+                else:
+                    # Show retry option after failure
+                    self.console.print("\n[yellow]조회에 실패했습니다.[/yellow]")
+                    self.console.print("[dim]• 엔터: 메뉴로 돌아가기[/dim]")
+                    self.console.print("[dim]• Ctrl+C: 프로그램 종료[/dim]")
                     input()
 
             except KeyboardInterrupt:
@@ -279,8 +307,10 @@ class BaseAPIModule(ABC):
                 logger.error(f"Menu loop error: {e}")
                 self.formatter.display_error(f"메뉴 처리 중 오류가 발생했습니다: {str(e)}", "시스템 오류")
 
-                # Pause before continuing
-                self.console.print("\n[dim]계속하려면 엔터를 누르세요...[/dim]")
+                # Pause before continuing with recovery options
+                self.console.print("\n[yellow]오류가 발생했지만 계속 진행할 수 있습니다.[/yellow]")
+                self.console.print("[dim]• 엔터: 메뉴로 돌아가기[/dim]")
+                self.console.print("[dim]• Ctrl+C: 프로그램 종료[/dim]")
                 input()
 
     def set_client(self, client: KiwoomClient) -> None:

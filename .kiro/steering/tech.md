@@ -1,45 +1,35 @@
-# Technology Stack
+# Technology Stack & Build System
 
-## Build System & Package Management
+## Package Management & Build System
 
-- **uv**: Primary package manager and build tool (Rust-based Python package manager)
-- **Workspace Structure**: Multi-package monorepo using uv workspace
-- **Build Backend**: Hatchling for package building
+- **uv**: Primary package manager (Rust-based Python package manager)
+- **Workspace Structure**: Multi-package workspace with `packages/` and `apps/` directories
+- **Python Version**: 3.10+ (specified in `.python-version`)
 
 ## Core Technologies
 
-### Python Environment
-- **Python Version**: >=3.10 required
-- **Type System**: Pydantic v2 for data validation and serialization
-- **Logging**: Loguru for structured logging
-
-### AI & Agent Framework
-- **LangGraph**: v0.6.0 for agent orchestration and workflows
-- **LangChain**: >=0.3.27 for LLM integrations
-- **OpenAI Integration**: Optional langchain-openai for GPT models
-
-### HTTP & API Client
+### Backend & APIs
+- **Python 3.10+**: Core language
+- **Pydantic**: Data validation and serialization (v2.11.7)
 - **Requests**: HTTP client for API interactions
-- **Rate Limiting**: Built-in request throttling for API compliance
+- **Loguru**: Structured logging
 
-## Development Tools
+### CLI & User Interface
+- **Click**: Command-line interface framework
+- **Rich**: Terminal formatting and tables
+- **Inquirer**: Interactive CLI prompts
+- **Plotext**: Terminal-based charts and visualizations
 
-### Code Quality
-#[[file:pyproject.toml]]
-- **Ruff**: Code formatting, linting, and import sorting (>=0.12.3)
-- **Line Length**: 120 characters
-- **Target Version**: Python 3.10
-- **Auto-fix**: Enabled for most issues
+### Data & Analysis
+- **Pandas**: Data manipulation and analysis
+- **NumPy**: Numerical computations
+- **OpenAI**: AI-powered market analysis integration
 
-### Testing
-- **pytest**: Primary testing framework (>=8.4.1)
-- **pytest-asyncio**: For async test support (>=0.25.0)
-- **Coverage**: Code coverage reporting (>=7.10.1)
-- **requests-mock**: HTTP request mocking for tests (>=1.12.1)
-
-### Environment Management
-- **python-dotenv**: Environment variable management (>=1.1.1)
-- **Environment Files**: `.env.test` for test configuration
+### Development Tools
+- **Ruff**: Code formatting and linting (replaces black, isort, flake8)
+- **pytest**: Testing framework with asyncio support
+- **pytest-mock**: Mocking for tests
+- **Coverage**: Code coverage reporting
 
 ## Common Commands
 
@@ -49,8 +39,8 @@
 uv sync --dev
 uv sync --directory packages/cluefin-openapi
 
-# Install specific package in development mode
-uv sync --directory packages/cluefin-openapi --dev
+# Install specific workspace member
+uv sync --directory apps/cluefin-cli
 ```
 
 ### Code Quality
@@ -58,11 +48,24 @@ uv sync --directory packages/cluefin-openapi --dev
 # Format code
 uv run ruff format .
 
-# Check linting
+# Lint code
 uv run ruff check .
-
-# Auto-fix linting issues
 uv run ruff check . --fix
+
+# Run tests
+uv run pytest
+
+# Run tests with coverage
+uv run pytest --cov=cluefin_openapi --cov-report=html
+```
+
+### Running Applications
+```bash
+# Run CLI tool
+uv run python apps/cluefin-cli/main.py analyze 005930
+
+# Run with specific options
+uv run python apps/cluefin-cli/main.py analyze 005930 --chart --ai-analysis
 ```
 
 ### Testing
@@ -70,51 +73,29 @@ uv run ruff check . --fix
 # Run all tests
 uv run pytest
 
-# Run specific package tests
-uv run pytest packages/cluefin-openapi/tests/
-
-# Run with coverage
-uv run pytest --cov=cluefin_openapi
-
-# Run only unit tests
-uv run pytest -m "not integration"
+# Run unit tests only
+uv run pytest packages/cluefin-openapi/tests/unit/ -v
+uv run pytest apps/cluefin-cli/tests/unit/ -v
 
 # Run integration tests (requires API keys)
-uv run pytest -m integration
+uv run pytest packages/cluefin-openapi/tests/integration/ -v
+
+# Run with markers
+uv run pytest -m "not integration"
+uv run pytest -m "requires_auth"
 ```
 
-### Package Building
-```bash
-# Build specific package
-uv build --directory packages/cluefin-openapi
-```
+## Configuration
 
-## CI/CD Pipeline
+### Environment Variables
+- **KIWOOM_APP_KEY**: Kiwoom Securities API key
+- **KIWOOM_SECRET_KEY**: Kiwoom Securities secret key
+- **KIWOOM_ENVIRONMENT**: dev/prod environment setting
+- **OPENAI_API_KEY**: OpenAI API key for AI analysis
+- **KRX_AUTH_KEY**: Korea Exchange API authentication key
 
-### GitHub Actions
-- **CI Pipeline**: Automated linting, testing, building, and security scans
-- **Release Pipeline**: Package publishing and deployment
-- **Dependency Updates**: Automated dependency management
-
-### Test Markers
-- `integration`: Tests requiring external API access
-- `requires_auth`: Tests needing authentication
-- `slow`: Long-running tests
-
-## API Integration Requirements
-
-### Kiwoom Securities API
-- APP_KEY and SECRET_KEY required
-- Environment-specific endpoints (dev/prod)
-- Rate limiting compliance
-
-### KRX (Korea Exchange) API
-- AUTH_KEY required for market data access
-- Individual API approval needed per endpoint
-
-## Performance Considerations
-
-- **Request Throttling**: Automatic rate limiting for API compliance
-- **Token Management**: Automatic token refresh for Kiwoom API
-- **Timeout Configuration**: Configurable timeouts for large data queries
-- **Caching**: Built-in response caching where appropriate
+### Ruff Configuration
+- Line length: 120 characters
+- Target version: Python 3.11
+- Auto-fix enabled
+- Specific rule selections for Korean financial domain

@@ -37,26 +37,40 @@ class BaseParameterCollector:
             # Collect required parameters first
             params = {}
 
-            for param_config in api_config.required_params:
-                value = self._collect_single_parameter(param_config)
-                if value is None:
-                    self.console.print("[red]Required parameter collection cancelled[/red]")
-                    return None
-                params[param_config.name] = value
+            if api_config.required_params:
+                self.console.print("[bold]필수 파라미터[/bold]")
+                for i, param_config in enumerate(api_config.required_params, 1):
+                    self.console.print(f"[cyan]({i}/{len(api_config.required_params)})[/cyan]", end=" ")
+                    value = self._collect_single_parameter(param_config)
+                    if value is None:
+                        self.console.print("[yellow]필수 파라미터 입력이 취소되었습니다.[/yellow]")
+                        return None
+                    params[param_config.name] = value
 
             # Collect optional parameters
-            for param_config in api_config.optional_params:
-                value = self._collect_single_parameter(param_config, required=False)
-                if value is not None:
-                    params[param_config.name] = value
+            if api_config.optional_params:
+                self.console.print("\n[bold]선택 파라미터[/bold]")
+                for i, param_config in enumerate(api_config.optional_params, 1):
+                    self.console.print(f"[cyan]({i}/{len(api_config.optional_params)})[/cyan]", end=" ")
+                    value = self._collect_single_parameter(param_config, required=False)
+                    if value is not None:
+                        params[param_config.name] = value
+
+            # Show collected parameters summary
+            if params:
+                self.console.print("\n[bold green]입력된 파라미터 요약:[/bold green]")
+                for key, value in params.items():
+                    param_config = api_config.get_param_by_name(key)
+                    korean_name = param_config.korean_name if param_config else key
+                    self.console.print(f"  • {korean_name}: {value}")
 
             return params
 
         except KeyboardInterrupt:
-            self.console.print("\n[yellow]Parameter collection cancelled by user[/yellow]")
+            self.console.print("\n[yellow]사용자에 의해 파라미터 입력이 취소되었습니다.[/yellow]")
             return None
         except Exception as e:
-            self.console.print(f"[red]Error collecting parameters: {e}[/red]")
+            self.console.print(f"[red]파라미터 수집 중 오류가 발생했습니다: {e}[/red]")
             return None
 
     def _collect_single_parameter(self, param_config: ParameterConfig, required: bool = True) -> Optional[Any]:

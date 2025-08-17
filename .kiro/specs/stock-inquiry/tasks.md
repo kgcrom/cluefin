@@ -80,15 +80,15 @@
   - Create unit tests for stock information API calls
   - _Requirements: 3.1-3.5_
 
-- [ ] 6. Create menu controller system
-- [ ] 6.1 Implement main menu controller
+- [x] 6. Create menu controller system
+- [x] 6.1 Implement main menu controller
   - Write MenuController class with inquirer-based navigation
   - Create main category selection menu (순위정보, 업종, 종목정보)
   - Implement navigation logic between menus
   - Add exit and back navigation options
   - _Requirements: 4.1, 4.2_
 
-- [ ] 6.2 Implement submenu navigation
+- [x] 6.2 Implement submenu navigation
   - Create API selection submenus for each category
   - Implement dynamic menu generation from API configurations
   - Add breadcrumb navigation and clear menu titles
