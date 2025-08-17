@@ -17,7 +17,7 @@ from .display_formatter import StockDataFormatter
 class StockInfoModule(BaseAPIModule):
     """
     Stock information module extending BaseAPIModule.
-    
+
     Handles all stock-specific APIs including detailed stock analysis,
     volume updates, and broker analysis.
     """
@@ -25,7 +25,7 @@ class StockInfoModule(BaseAPIModule):
     def __init__(self, client: Optional[KiwoomClient] = None):
         """
         Initialize the stock information module.
-        
+
         Args:
             client: Optional Kiwoom API client instance
         """
@@ -36,7 +36,7 @@ class StockInfoModule(BaseAPIModule):
     def get_api_category(self) -> APICategory:
         """
         Get the API category configuration for stock information.
-        
+
         Returns:
             APICategory with all stock APIs configured
         """
@@ -55,9 +55,11 @@ class StockInfoModule(BaseAPIModule):
                             name="stk_cd",
                             korean_name="종목코드",
                             param_type="text",
-                            validation=r"^\d{6}$"
+                            validation=r"^\d{6}$",
+                            required=True,
+                            choices=None,
                         )
-                    ]
+                    ],
                 ),
                 APIConfig(
                     name="supply_demand_concentration",
@@ -69,15 +71,19 @@ class StockInfoModule(BaseAPIModule):
                             name="stk_cd",
                             korean_name="종목코드",
                             param_type="text",
-                            validation=r"^\d{6}$"
+                            validation=r"^\d{6}$",
+                            required=True,
+                            choices=None,
                         ),
                         ParameterConfig(
                             name="prc_tp",
                             korean_name="가격구분",
                             param_type="select",
-                            choices=[("매도호가", "1"), ("매수호가", "2")]
-                        )
-                    ]
+                            choices=[("매도호가", "1"), ("매수호가", "2")],
+                            required=True,
+                            validation=None,
+                        ),
+                    ],
                 ),
                 APIConfig(
                     name="broker_supply_demand_analysis",
@@ -89,9 +95,11 @@ class StockInfoModule(BaseAPIModule):
                             name="stk_cd",
                             korean_name="종목코드",
                             param_type="text",
-                            validation=r"^\d{6}$"
+                            validation=r"^\d{6}$",
+                            required=True,
+                            choices=None,
                         )
-                    ]
+                    ],
                 ),
                 APIConfig(
                     name="stock_investor_institutional_total",
@@ -103,15 +111,19 @@ class StockInfoModule(BaseAPIModule):
                             name="stk_cd",
                             korean_name="종목코드",
                             param_type="text",
-                            validation=r"^\d{6}$"
+                            validation=r"^\d{6}$",
+                            required=True,
+                            choices=None,
                         ),
                         ParameterConfig(
                             name="trd_dt",
                             korean_name="거래일자구분",
                             param_type="select",
-                            choices=[("당일", "0"), ("전일", "1")]
-                        )
-                    ]
+                            choices=[("당일", "0"), ("전일", "1")],
+                            required=True,
+                            validation=None,
+                        ),
+                    ],
                 ),
                 APIConfig(
                     name="stock_basic_info",
@@ -123,9 +135,11 @@ class StockInfoModule(BaseAPIModule):
                             name="stk_cd",
                             korean_name="종목코드",
                             param_type="text",
-                            validation=r"^\d{6}$"
+                            validation=r"^\d{6}$",
+                            required=True,
+                            choices=None,
                         )
-                    ]
+                    ],
                 ),
                 APIConfig(
                     name="stock_price_info",
@@ -137,9 +151,11 @@ class StockInfoModule(BaseAPIModule):
                             name="stk_cd",
                             korean_name="종목코드",
                             param_type="text",
-                            validation=r"^\d{6}$"
+                            validation=r"^\d{6}$",
+                            required=True,
+                            choices=None,
                         )
-                    ]
+                    ],
                 ),
                 APIConfig(
                     name="stock_order_book",
@@ -151,9 +167,11 @@ class StockInfoModule(BaseAPIModule):
                             name="stk_cd",
                             korean_name="종목코드",
                             param_type="text",
-                            validation=r"^\d{6}$"
+                            validation=r"^\d{6}$",
+                            required=True,
+                            choices=None,
                         )
-                    ]
+                    ],
                 ),
                 APIConfig(
                     name="stock_daily_chart",
@@ -165,18 +183,26 @@ class StockInfoModule(BaseAPIModule):
                             name="stk_cd",
                             korean_name="종목코드",
                             param_type="text",
-                            validation=r"^\d{6}$"
+                            validation=r"^\d{6}$",
+                            required=True,
+                            choices=None,
                         ),
                         ParameterConfig(
                             name="strt_dt",
-                            korean_name="시작일자",
-                            param_type="date"
+                            korean_name="시작일자(YYYYMMDD)",
+                            param_type="date",
+                            validation=r"^\d{8}$",
+                            required=True,
+                            choices=None,
                         ),
                         ParameterConfig(
                             name="end_dt",
-                            korean_name="종료일자",
-                            param_type="date"
-                        )
+                            korean_name="종료일자(YYYYMMDD)",
+                            param_type="date",
+                            validation=r"^\d{8}$",
+                            required=True,
+                            choices=None,
+                        ),
                     ],
                     optional_params=[
                         ParameterConfig(
@@ -184,21 +210,20 @@ class StockInfoModule(BaseAPIModule):
                             korean_name="수정주가구분",
                             param_type="select",
                             choices=[("수정안함", "0"), ("수정주가", "1")],
-                            required=False
+                            required=False,
+                            validation=None,
                         )
-                    ]
-                )
-            ]
+                    ],
+                ),
+            ],
         )
 
     def _format_and_display_result(self, result: Any, api_config: APIConfig) -> None:
         """
         Format and display stock API results.
-        
+
         Args:
             result: The API response data
             api_config: Configuration for the API that was called
         """
         self.formatter.format_stock_data(result, api_config.korean_name)
-
-

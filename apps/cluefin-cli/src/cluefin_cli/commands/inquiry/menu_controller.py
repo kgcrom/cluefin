@@ -63,7 +63,7 @@ class MenuController:
     def set_client(self, client: KiwoomClient) -> None:
         """
         Set the Kiwoom API client for all modules.
-        
+
         Args:
             client: The Kiwoom API client instance
         """

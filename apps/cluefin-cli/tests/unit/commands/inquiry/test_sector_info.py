@@ -33,7 +33,7 @@ class TestSectorInfoModule:
     def test_initialization(self, mock_client):
         """Test proper initialization of SectorInfoModule."""
         module = SectorInfoModule(mock_client)
-        
+
         assert module.client == mock_client
         assert module.parameter_collector is not None
         assert module.formatter is not None
@@ -42,18 +42,18 @@ class TestSectorInfoModule:
     def test_initialization_without_client(self):
         """Test initialization without providing a client."""
         module = SectorInfoModule()
-        
+
         assert module.client is None
         assert module.parameter_collector is not None
 
     def test_get_api_category(self, sector_module):
         """Test API category configuration."""
         category = sector_module.get_api_category()
-        
+
         assert category.name == "sector_info"
         assert category.korean_name == "🏢 업종정보"
         assert len(category.apis) == 5  # Should have 5 sector APIs
-        
+
         # Check that all expected APIs are present
         api_names = [api.name for api in category.apis]
         expected_apis = [
@@ -61,9 +61,9 @@ class TestSectorInfoModule:
             "industry_current_price",
             "industry_price_by_sector",
             "all_industry_index",
-            "daily_industry_current_price"
+            "daily_industry_current_price",
         ]
-        
+
         for expected_api in expected_apis:
             assert expected_api in api_names
 
@@ -71,20 +71,20 @@ class TestSectorInfoModule:
         """Test configuration for industry investor net buy API."""
         category = sector_module.get_api_category()
         api = category.get_api_by_name("industry_investor_net_buy")
-        
+
         assert api is not None
         assert api.korean_name == "📊 업종별 투자자 순매수 요청"
         assert api.api_method == "get_industry_investor_net_buy"
         assert len(api.required_params) == 4
         assert len(api.optional_params) == 0
-        
+
         # Check required parameters
         param_names = [param.name for param in api.required_params]
         expected_params = ["mrkt_tp", "amt_qty_tp", "base_dt", "stex_tp"]
-        
+
         for expected_param in expected_params:
             assert expected_param in param_names
-            
+
         # Check that base_dt is a date parameter
         base_dt_param = next(p for p in api.required_params if p.name == "base_dt")
         assert base_dt_param.param_type == "date"
@@ -93,12 +93,12 @@ class TestSectorInfoModule:
         """Test configuration for industry current price API."""
         category = sector_module.get_api_category()
         api = category.get_api_by_name("industry_current_price")
-        
+
         assert api is not None
         assert api.korean_name == "💰 업종현재가 요청"
         assert api.api_method == "get_industry_current_price"
         assert len(api.required_params) == 2
-        
+
         # Check industry code validation
         inds_cd_param = next(p for p in api.required_params if p.name == "inds_cd")
         assert inds_cd_param.param_type == "text"
@@ -108,7 +108,7 @@ class TestSectorInfoModule:
         """Test configuration for industry price by sector API."""
         category = sector_module.get_api_category()
         api = category.get_api_by_name("industry_price_by_sector")
-        
+
         assert api is not None
         assert api.korean_name == "📈 업종별 주가요청"
         assert api.api_method == "get_industry_price_by_sector"
@@ -118,18 +118,18 @@ class TestSectorInfoModule:
         """Test configuration for all industry index API."""
         category = sector_module.get_api_category()
         api = category.get_api_by_name("all_industry_index")
-        
+
         assert api is not None
         assert api.korean_name == "🌐 전업종 지수요청"
         assert api.api_method == "get_all_industry_index"
         assert len(api.required_params) == 1
-        
+
         # Check that industry code has comprehensive choices
         inds_cd_param = api.required_params[0]
         assert inds_cd_param.name == "inds_cd"
         assert inds_cd_param.param_type == "select"
         assert len(inds_cd_param.choices) >= 25  # Should have many industry choices
-        
+
         # Check some specific industry codes
         choice_values = [choice[1] for choice in inds_cd_param.choices]
         assert "001" in choice_values  # KOSPI 종합
@@ -140,17 +140,17 @@ class TestSectorInfoModule:
         """Test configuration for daily industry current price API."""
         category = sector_module.get_api_category()
         api = category.get_api_by_name("daily_industry_current_price")
-        
+
         assert api is not None
         assert api.korean_name == "📅 업종현재가 일별요청"
         assert api.api_method == "get_daily_industry_current_price"
         assert len(api.required_params) == 4
-        
+
         # Check that it has start and end date parameters
         param_names = [param.name for param in api.required_params]
         assert "strt_dt" in param_names
         assert "end_dt" in param_names
-        
+
         # Both should be date parameters
         strt_dt_param = next(p for p in api.required_params if p.name == "strt_dt")
         end_dt_param = next(p for p in api.required_params if p.name == "end_dt")
@@ -160,13 +160,13 @@ class TestSectorInfoModule:
     def test_parameter_choices_validation(self, sector_module):
         """Test that all select parameters have proper choices defined."""
         category = sector_module.get_api_category()
-        
+
         for api in category.apis:
             for param in api.get_all_params():
                 if param.param_type == "select":
                     assert param.choices is not None
                     assert len(param.choices) > 0
-                    
+
                     # Each choice should be a tuple of (label, value)
                     for choice in param.choices:
                         assert isinstance(choice, tuple)
@@ -177,7 +177,7 @@ class TestSectorInfoModule:
     def test_text_parameter_validation(self, sector_module):
         """Test that text parameters have proper validation patterns."""
         category = sector_module.get_api_category()
-        
+
         for api in category.apis:
             for param in api.get_all_params():
                 if param.param_type == "text" and param.validation:
@@ -188,47 +188,37 @@ class TestSectorInfoModule:
     def test_format_and_display_result(self, sector_module):
         """Test result formatting and display."""
         mock_result = {"output": [{"sector_name": "테스트업종", "index": "1000.0"}]}
-        
+
         category = sector_module.get_api_category()
         api_config = category.get_api_by_name("industry_investor_net_buy")
-        
-        with patch.object(sector_module.formatter, 'format_sector_data') as mock_format:
+
+        with patch.object(sector_module.formatter, "format_sector_data") as mock_format:
             sector_module._format_and_display_result(mock_result, api_config)
-            
+
             mock_format.assert_called_once_with(mock_result, api_config.korean_name)
 
     def test_execute_api_success(self, sector_module, mock_client):
         """Test successful API execution."""
         # Mock parameter collection
-        with patch.object(sector_module.parameter_collector, 'collect_parameters') as mock_collect:
-            mock_collect.return_value = {
-                "mrkt_tp": "0",
-                "amt_qty_tp": "0",
-                "base_dt": "20240101",
-                "stex_tp": "1"
-            }
-            
+        with patch.object(sector_module.parameter_collector, "collect_parameters") as mock_collect:
+            mock_collect.return_value = {"mrkt_tp": "0", "amt_qty_tp": "0", "base_dt": "20240101", "stex_tp": "1"}
+
             # Mock result formatting
-            with patch.object(sector_module, '_format_and_display_result') as mock_format:
+            with patch.object(sector_module, "_format_and_display_result") as mock_format:
                 result = sector_module.execute_api("industry_investor_net_buy")
-                
+
                 assert result is True
                 mock_client.get_industry_investor_net_buy.assert_called_once()
                 mock_format.assert_called_once()
 
     def test_execute_api_with_date_parameters(self, sector_module, mock_client):
         """Test API execution with date parameters."""
-        with patch.object(sector_module.parameter_collector, 'collect_parameters') as mock_collect:
-            mock_collect.return_value = {
-                "mrkt_tp": "0",
-                "inds_cd": "001",
-                "strt_dt": "20240101",
-                "end_dt": "20240131"
-            }
-            
-            with patch.object(sector_module, '_format_and_display_result'):
+        with patch.object(sector_module.parameter_collector, "collect_parameters") as mock_collect:
+            mock_collect.return_value = {"mrkt_tp": "0", "inds_cd": "001", "strt_dt": "20240101", "end_dt": "20240131"}
+
+            with patch.object(sector_module, "_format_and_display_result"):
                 result = sector_module.execute_api("daily_industry_current_price")
-                
+
                 assert result is True
                 # Verify date parameters were passed
                 call_args = mock_client.get_daily_industry_current_price.call_args
@@ -238,32 +228,32 @@ class TestSectorInfoModule:
     def test_execute_api_invalid_name(self, sector_module):
         """Test API execution with invalid API name."""
         result = sector_module.execute_api("invalid_api_name")
-        
+
         assert result is False
 
     def test_execute_api_cancelled_parameters(self, sector_module):
         """Test API execution when parameter collection is cancelled."""
-        with patch.object(sector_module.parameter_collector, 'collect_parameters') as mock_collect:
+        with patch.object(sector_module.parameter_collector, "collect_parameters") as mock_collect:
             mock_collect.return_value = None  # User cancelled
-            
+
             result = sector_module.execute_api("industry_investor_net_buy")
-            
+
             assert result is False
 
-    @patch('inquirer.prompt')
+    @patch("inquirer.prompt")
     def test_show_api_menu(self, mock_prompt, sector_module):
         """Test API menu display."""
         mock_prompt.return_value = {"api_choice": "industry_investor_net_buy"}
-        
+
         result = sector_module.show_api_menu()
-        
+
         assert result == "industry_investor_net_buy"
         mock_prompt.assert_called_once()
-        
+
         # Check that the prompt includes all sector APIs
         call_args = mock_prompt.call_args[0][0][0]
         choices = [choice.value for choice in call_args.choices]
-        
+
         assert "industry_investor_net_buy" in choices
         assert "industry_current_price" in choices
         assert "back" in choices
@@ -271,15 +261,15 @@ class TestSectorInfoModule:
     def test_api_method_mapping(self, sector_module):
         """Test that all APIs have correct method mappings."""
         category = sector_module.get_api_category()
-        
+
         expected_mappings = {
             "industry_investor_net_buy": "get_industry_investor_net_buy",
             "industry_current_price": "get_industry_current_price",
             "industry_price_by_sector": "get_industry_price_by_sector",
             "all_industry_index": "get_all_industry_index",
-            "daily_industry_current_price": "get_daily_industry_current_price"
+            "daily_industry_current_price": "get_daily_industry_current_price",
         }
-        
+
         for api in category.apis:
             expected_method = expected_mappings.get(api.name)
             assert api.api_method == expected_method
@@ -287,33 +277,33 @@ class TestSectorInfoModule:
     def test_korean_names_and_descriptions(self, sector_module):
         """Test that all APIs have proper Korean names and descriptions."""
         category = sector_module.get_api_category()
-        
+
         for api in category.apis:
             # Korean name should contain Korean characters
-            assert any('\uac00' <= char <= '\ud7af' for char in api.korean_name)
-            
+            assert any("\uac00" <= char <= "\ud7af" for char in api.korean_name)
+
             # Should have description
             assert api.description is not None
             assert len(api.description) > 0
-            
+
             # All parameters should have Korean names
             for param in api.get_all_params():
-                assert any('\uac00' <= char <= '\ud7af' for char in param.korean_name)
+                assert any("\uac00" <= char <= "\ud7af" for char in param.korean_name)
 
     def test_market_type_choices_consistency(self, sector_module):
         """Test that market type choices are consistent across APIs."""
         category = sector_module.get_api_category()
-        
+
         # Find all market type parameters
         market_type_choices = []
         for api in category.apis:
             for param in api.get_all_params():
                 if param.name == "mrkt_tp":
                     market_type_choices.append(param.choices)
-        
+
         # Most should have similar choices (some may have additional options like KOSPI200)
         assert len(market_type_choices) > 0
-        
+
         # All should include basic KOSPI and KOSDAQ options
         for choices in market_type_choices:
             choice_values = [choice[1] for choice in choices]
@@ -323,13 +313,13 @@ class TestSectorInfoModule:
     def test_industry_code_parameter_types(self, sector_module):
         """Test that industry code parameters have appropriate types."""
         category = sector_module.get_api_category()
-        
+
         for api in category.apis:
             for param in api.get_all_params():
                 if param.name == "inds_cd":
                     # Should be either select (with predefined choices) or text (with validation)
                     assert param.param_type in ["select", "text"]
-                    
+
                     if param.param_type == "text":
                         assert param.validation is not None
                     elif param.param_type == "select":
@@ -352,22 +342,20 @@ class TestSectorInfoModuleIntegration:
             return_value={"output": [{"sector_name": "테스트업종", "net_buy": "1000000"}]}
         )
         integration_module.set_client(mock_client)
-        
+
         # Mock menu selection and parameter collection
-        with patch('inquirer.prompt') as mock_prompt:
+        with patch("inquirer.prompt") as mock_prompt:
             mock_prompt.side_effect = [
                 {"api_choice": "industry_investor_net_buy"},  # API selection
-                {"api_choice": "back"}  # Go back
+                {"api_choice": "back"},  # Go back
             ]
-            
-            with patch.object(integration_module.parameter_collector, 'collect_parameters') as mock_collect:
-                mock_collect.return_value = {
-                    "mrkt_tp": "0", "amt_qty_tp": "0", "base_dt": "20240101", "stex_tp": "1"
-                }
-                
-                with patch('builtins.input'):  # Mock pause input
+
+            with patch.object(integration_module.parameter_collector, "collect_parameters") as mock_collect:
+                mock_collect.return_value = {"mrkt_tp": "0", "amt_qty_tp": "0", "base_dt": "20240101", "stex_tp": "1"}
+
+                with patch("builtins.input"):  # Mock pause input
                     integration_module.handle_menu_loop()
-                
+
                 # Verify API was called
                 mock_client.get_industry_investor_net_buy.assert_called_once()
 
@@ -376,11 +364,11 @@ class TestSectorInfoModuleIntegration:
         # Without client
         status = integration_module.get_client_status()
         assert status["client_initialized"] is False
-        
+
         # With client
         mock_client = Mock()
         integration_module.set_client(mock_client)
-        
+
         status = integration_module.get_client_status()
         assert status["client_initialized"] is True
         assert status["client_type"] == "Mock"
@@ -390,18 +378,13 @@ class TestSectorInfoModuleIntegration:
         mock_client = Mock()
         mock_client.get_daily_industry_current_price = Mock(return_value={"output": []})
         integration_module.set_client(mock_client)
-        
+
         # Test with date range parameters
-        with patch.object(integration_module.parameter_collector, 'collect_parameters') as mock_collect:
-            mock_collect.return_value = {
-                "mrkt_tp": "0",
-                "inds_cd": "001", 
-                "strt_dt": "20240101",
-                "end_dt": "20240131"
-            }
-            
+        with patch.object(integration_module.parameter_collector, "collect_parameters") as mock_collect:
+            mock_collect.return_value = {"mrkt_tp": "0", "inds_cd": "001", "strt_dt": "20240101", "end_dt": "20240131"}
+
             result = integration_module.execute_api("daily_industry_current_price")
-            
+
             assert result is True
             mock_client.get_daily_industry_current_price.assert_called_once_with(
                 mrkt_tp="0", inds_cd="001", strt_dt="20240101", end_dt="20240131"

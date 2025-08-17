@@ -18,7 +18,7 @@ from .display_formatter import SectorDataFormatter
 class SectorInfoModule(BaseAPIModule):
     """
     Sector information module extending BaseAPIModule.
-    
+
     Handles all sector-related APIs including sector performance,
     investor activity by sector, and sector indices.
     """
@@ -26,7 +26,7 @@ class SectorInfoModule(BaseAPIModule):
     def __init__(self, client: Optional[KiwoomClient] = None):
         """
         Initialize the sector information module.
-        
+
         Args:
             client: Optional Kiwoom API client instance
         """
@@ -37,7 +37,7 @@ class SectorInfoModule(BaseAPIModule):
     def get_api_category(self) -> APICategory:
         """
         Get the API category configuration for sector information.
-        
+
         Returns:
             APICategory with all sector APIs configured
         """
@@ -56,26 +56,35 @@ class SectorInfoModule(BaseAPIModule):
                             name="mrkt_tp",
                             korean_name="시장구분",
                             param_type="select",
-                            choices=[("코스피", "0"), ("코스닥", "1")]
+                            choices=[("코스피", "0"), ("코스닥", "1")],
+                            required=True,
+                            validation=None,
                         ),
                         ParameterConfig(
                             name="amt_qty_tp",
                             korean_name="금액수량구분",
                             param_type="select",
-                            choices=[("금액", "0"), ("수량", "1")]
+                            choices=[("금액", "0"), ("수량", "1")],
+                            required=True,
+                            validation=None,
                         ),
                         ParameterConfig(
                             name="base_dt",
-                            korean_name="기준일자",
-                            param_type="date"
+                            korean_name="기준일자(YYYYMMDD)",
+                            param_type="date",
+                            required=True,
+                            validation=r"r^\d{8}$",
+                            choices=None,
                         ),
                         ParameterConfig(
                             name="stex_tp",
                             korean_name="거래소구분",
                             param_type="select",
-                            choices=[("KRX", "1"), ("NXT", "2"), ("통합", "3")]
-                        )
-                    ]
+                            choices=[("KRX", "1"), ("NXT", "2"), ("통합", "3")],
+                            required=True,
+                            validation=None,
+                        ),
+                    ],
                 ),
                 APIConfig(
                     name="industry_current_price",
@@ -87,15 +96,19 @@ class SectorInfoModule(BaseAPIModule):
                             name="mrkt_tp",
                             korean_name="시장구분",
                             param_type="select",
-                            choices=[("코스피", "0"), ("코스닥", "1"), ("코스피200", "2")]
+                            choices=[("코스피", "0"), ("코스닥", "1"), ("코스피200", "2")],
+                            required=True,
+                            validation=None,
                         ),
                         ParameterConfig(
                             name="inds_cd",
                             korean_name="업종코드",
                             param_type="text",
-                            validation=r"^\d{3}$"
-                        )
-                    ]
+                            validation=r"^\d{3}$",
+                            required=True,
+                            choices=None,
+                        ),
+                    ],
                 ),
                 APIConfig(
                     name="industry_price_by_sector",
@@ -107,21 +120,27 @@ class SectorInfoModule(BaseAPIModule):
                             name="mrkt_tp",
                             korean_name="시장구분",
                             param_type="select",
-                            choices=[("코스피", "0"), ("코스닥", "1"), ("코스피200", "2")]
+                            choices=[("코스피", "0"), ("코스닥", "1"), ("코스피200", "2")],
+                            required=True,
+                            validation=None,
                         ),
                         ParameterConfig(
                             name="inds_cd",
                             korean_name="업종코드",
                             param_type="text",
-                            validation=r"^\d{3}$"
+                            validation=r"^\d{3}$",
+                            required=True,
+                            choices=None,
                         ),
                         ParameterConfig(
                             name="stex_tp",
                             korean_name="거래소구분",
                             param_type="select",
-                            choices=[("KRX", "1"), ("NXT", "2"), ("통합", "3")]
-                        )
-                    ]
+                            choices=[("KRX", "1"), ("NXT", "2"), ("통합", "3")],
+                            required=True,
+                            validation=None,
+                        ),
+                    ],
                 ),
                 APIConfig(
                     name="all_industry_index",
@@ -135,7 +154,7 @@ class SectorInfoModule(BaseAPIModule):
                             param_type="select",
                             choices=[
                                 ("종합(KOSPI)", "001"),
-                                ("종합(KOSDAQ)", "101"), 
+                                ("종합(KOSDAQ)", "101"),
                                 ("KOSPI200", "201"),
                                 ("대형주", "002"),
                                 ("중형주", "003"),
@@ -161,10 +180,12 @@ class SectorInfoModule(BaseAPIModule):
                                 ("증권", "190"),
                                 ("보험", "200"),
                                 ("서비스업", "210"),
-                                ("제조업", "220")
-                            ]
+                                ("제조업", "220"),
+                            ],
+                            required=True,
+                            validation=None,
                         )
-                    ]
+                    ],
                 ),
                 APIConfig(
                     name="daily_industry_current_price",
@@ -176,37 +197,45 @@ class SectorInfoModule(BaseAPIModule):
                             name="mrkt_tp",
                             korean_name="시장구분",
                             param_type="select",
-                            choices=[("코스피", "0"), ("코스닥", "1"), ("코스피200", "2")]
+                            choices=[("코스피", "0"), ("코스닥", "1"), ("코스피200", "2")],
+                            required=True,
+                            validation=None,
                         ),
                         ParameterConfig(
                             name="inds_cd",
                             korean_name="업종코드",
                             param_type="text",
-                            validation=r"^\d{3}$"
+                            validation=r"^\d{3}$",
+                            required=True,
+                            choices=None,
                         ),
                         ParameterConfig(
                             name="strt_dt",
-                            korean_name="시작일자",
-                            param_type="date"
+                            korean_name="시작일자(YYYYMMDD)",
+                            param_type="date",
+                            validation=r"r$\d{8}$",
+                            required=True,
+                            choices=None,
                         ),
                         ParameterConfig(
                             name="end_dt",
-                            korean_name="종료일자",
-                            param_type="date"
-                        )
-                    ]
-                )
-            ]
+                            korean_name="종료일자(YYYYMMDD)",
+                            param_type="date",
+                            validation=r"r$\d{8}$",
+                            required=True,
+                            choices=None,
+                        ),
+                    ],
+                ),
+            ],
         )
 
     def _format_and_display_result(self, result: Any, api_config: APIConfig) -> None:
         """
         Format and display sector API results.
-        
+
         Args:
             result: The API response data
             api_config: Configuration for the API that was called
         """
         self.formatter.format_sector_data(result, api_config.korean_name)
-
-
