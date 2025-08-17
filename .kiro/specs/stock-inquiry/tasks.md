@@ -18,7 +18,7 @@
   - Include all required and optional parameters with Korean labels
   - _Requirements: 1.1-1.8, 2.1-2.6, 3.1-3.5_
 
-- [ ] 3. Implement parameter collection system
+- [x] 3. Implement parameter collection system
 - [x] 3.1 Create base parameter collector class
   - Write ParameterCollector class with inquirer integration
   - Implement methods for different input types (select, text, date)
@@ -48,15 +48,15 @@
   - Add error message formatting with clear Korean text
   - _Requirements: 4.5, 6.1-6.4_
 
-- [-] 5. Implement API module interfaces
-- [-] 5.1 Create base API module class
+- [x] 5. Implement API module interfaces
+- [x] 5.1 Create base API module class
   - Write BaseAPIModule with common functionality
   - Implement error handling and retry logic
   - Add logging for API calls and responses
   - Create unit tests for base module functionality
   - _Requirements: 4.6, 5.4_
 
-- [ ] 5.2 Implement ranking information module
+- [x] 5.2 Implement ranking information module
   - Create RankingInfoModule class extending BaseAPIModule
   - Map all ranking APIs from configuration to Kiwoom client methods
   - Implement parameter collection for each ranking API
@@ -64,7 +64,7 @@
   - Create unit tests for ranking API calls
   - _Requirements: 1.1-1.8_
 
-- [ ] 5.3 Implement sector information module
+- [x] 5.3 Implement sector information module
   - Create SectorInfoModule class extending BaseAPIModule
   - Map all sector APIs from configuration to Kiwoom client methods
   - Implement parameter collection for sector-specific parameters
@@ -72,7 +72,7 @@
   - Create unit tests for sector API calls
   - _Requirements: 2.1-2.6_
 
-- [ ] 5.4 Implement stock information module
+- [x] 5.4 Implement stock information module
   - Create StockInfoModule class extending BaseAPIModule
   - Map all stock information APIs from configuration to Kiwoom client methods
   - Implement parameter collection for stock-specific parameters

@@ -5,157 +5,370 @@ This module handles all ranking-related APIs (순위정보) including volume ran
 trading value rankings, and foreign investor activity rankings.
 """
 
-from typing import Any, Dict
+from typing import Any, Optional
 
-import inquirer
-from cluefin_openapi.kiwoom import Auth, Client
-from pydantic import SecretStr
-from rich.console import Console
+from cluefin_openapi.kiwoom import Client as KiwoomClient
 
-from cluefin_cli.config.settings import settings
-
-from .display_formatter import DisplayFormatter
-from .parameter_collector import ParameterCollector
-
-console = Console()
+from .base_api_module import BaseAPIModule
+from .config_models import APICategory, APIConfig, ParameterConfig
+from .display_formatter import RankingDataFormatter
 
 
-class RankingInfoHandler:
-    def __init__(self):
-        self.client = None
-        self.parameter_collector = ParameterCollector()
-        self.display_formatter = DisplayFormatter()
+class RankingInfoModule(BaseAPIModule):
+    """
+    Ranking information module extending BaseAPIModule.
+    
+    Handles all ranking-related APIs including volume rankings,
+    trading value rankings, and foreign investor activity.
+    """
 
-    def _ensure_client(self):
-        """클라이언트가 초기화되었는지 확인합니다."""
-        console.print("[yellow]API 클라이언트를 초기화하는 중...[/yellow]")
-        console.print("[yellow]실제 구현에서는 키움증권 API 토큰이 필요합니다.[/yellow]")
-        console.print("[red]데모 모드: API 호출이 구현되지 않았습니다.[/red]")
+    def __init__(self, client: Optional[KiwoomClient] = None):
+        """
+        Initialize the ranking information module.
+        
+        Args:
+            client: Optional Kiwoom API client instance
+        """
+        super().__init__(client)
+        # Use specialized formatter for ranking data
+        self.formatter = RankingDataFormatter()
 
-    def handle_ranking_menu(self):
-        """순위정보 메뉴를 처리합니다."""
-        while True:
-            console.print("\n[bold blue]📈 순위정보 메뉴[/bold blue]")
-
-            questions = [
-                inquirer.List(
-                    "ranking_choice",
-                    message="조회할 순위정보를 선택하세요",
-                    choices=[
-                        ("🚀 거래량급증요청", "volume_surge"),
-                        ("📊 당일거래량상위요청", "current_day_volume"),
-                        ("📉 전일거래량상위요청", "previous_day_volume"),
-                        ("💵 거래대금상위요청", "transaction_value"),
-                        ("🌍 외인기간별매매상위요청", "foreign_period_trading"),
-                        ("🔄 외인연속순매매상위요청", "foreign_consecutive_trading"),
-                        ("🏛️ 외국인기관매매상위요청", "foreign_institutional_trading"),
-                        ("⬅️ 메인메뉴로 돌아가기", "back"),
+    def get_api_category(self) -> APICategory:
+        """
+        Get the API category configuration for ranking information.
+        
+        Returns:
+            APICategory with all ranking APIs configured
+        """
+        return APICategory(
+            name="ranking_info",
+            korean_name="📈 순위정보",
+            description="거래량, 거래대금, 외국인 매매 등 다양한 순위 정보를 제공합니다.",
+            apis=[
+                APIConfig(
+                    name="rapidly_increasing_trading_volume",
+                    korean_name="🚀 거래량급증요청",
+                    api_method="get_rapidly_increasing_trading_volume",
+                    description="거래량이 급증한 종목들의 순위를 조회합니다.",
+                    required_params=[
+                        ParameterConfig(
+                            name="mrkt_tp",
+                            korean_name="시장구분",
+                            param_type="select",
+                            choices=[("전체", "000"), ("코스피", "001"), ("코스닥", "101")]
+                        ),
+                        ParameterConfig(
+                            name="sort_tp",
+                            korean_name="정렬구분",
+                            param_type="select",
+                            choices=[("급증량", "1"), ("급증률", "2"), ("급감량", "3"), ("급감률", "4")]
+                        ),
+                        ParameterConfig(
+                            name="tm_tp",
+                            korean_name="시간구분",
+                            param_type="select",
+                            choices=[("분 입력", "1"), ("전일 입력", "2")]
+                        ),
+                        ParameterConfig(
+                            name="trde_qty_tp",
+                            korean_name="거래량구분",
+                            param_type="select",
+                            choices=[
+                                ("5천주이상", "5"), ("1만주이상", "10"), ("5만주이상", "50"),
+                                ("10만주이상", "100"), ("20만주이상", "200"), ("30만주이상", "300"),
+                                ("50만주이상", "500"), ("백만주이상", "1000")
+                            ]
+                        ),
+                        ParameterConfig(
+                            name="stk_cnd",
+                            korean_name="종목조건",
+                            param_type="select",
+                            choices=[
+                                ("전체조회", "0"), ("관리종목제외", "1"), ("우선주제외", "3"),
+                                ("관리종목+우선주제외", "4"), ("증100제외", "5"), ("증100만보기", "6"),
+                                ("증40만보기", "7"), ("증30만보기", "8"), ("증20만보기", "9")
+                            ]
+                        ),
+                        ParameterConfig(
+                            name="pric_tp",
+                            korean_name="가격구분",
+                            param_type="select",
+                            choices=[
+                                ("전체조회", "0"), ("1천원~2천원", "2"), ("1만원이상", "5"),
+                                ("1천원이상", "6"), ("1만원미만", "9")
+                            ]
+                        ),
+                        ParameterConfig(
+                            name="stex_tp",
+                            korean_name="거래소구분",
+                            param_type="select",
+                            choices=[("KRX", "1"), ("NXT", "2")]
+                        )
                     ],
+                    optional_params=[
+                        ParameterConfig(
+                            name="tm",
+                            korean_name="시간(분)",
+                            param_type="text",
+                            required=False,
+                            validation=r"^\d+$"
+                        )
+                    ]
                 ),
+                APIConfig(
+                    name="current_day_trading_volume_top",
+                    korean_name="📊 당일거래량상위요청",
+                    api_method="get_current_day_trading_volume_top",
+                    description="당일 거래량 상위 종목들을 조회합니다.",
+                    required_params=[
+                        ParameterConfig(
+                            name="mrkt_tp",
+                            korean_name="시장구분",
+                            param_type="select",
+                            choices=[("전체", "000"), ("코스피", "001"), ("코스닥", "101")]
+                        ),
+                        ParameterConfig(
+                            name="sort_tp",
+                            korean_name="정렬구분",
+                            param_type="select",
+                            choices=[("거래량", "1"), ("거래회전율", "2"), ("거래대금", "3")]
+                        ),
+                        ParameterConfig(
+                            name="mang_stk_incls",
+                            korean_name="관리종목포함",
+                            param_type="select",
+                            choices=[
+                                ("관리종목 포함", "0"), ("관리종목 미포함", "1"), ("우선주제외", "3"),
+                                ("관리종목+우선주제외", "4"), ("증100제외", "5"), ("증100만보기", "6"),
+                                ("증40만보기", "7"), ("증30만보기", "8"), ("증20만보기", "9")
+                            ]
+                        ),
+                        ParameterConfig(
+                            name="crd_tp",
+                            korean_name="신용구분",
+                            param_type="select",
+                            choices=[
+                                ("전체조회", "0"), ("신용융자A군", "1"), ("신용융자B군", "2"),
+                                ("신용융자C군", "3"), ("신용융자D군", "4"), ("신용대주", "8")
+                            ]
+                        ),
+                        ParameterConfig(
+                            name="trde_qty_tp",
+                            korean_name="거래량구분",
+                            param_type="select",
+                            choices=[
+                                ("전체조회", "0"), ("5천주이상", "5"), ("1만주이상", "10"),
+                                ("5만주이상", "50"), ("10만주이상", "100"), ("20만주이상", "200"),
+                                ("30만주이상", "300"), ("50만주이상", "500"), ("백만주이상", "1000")
+                            ]
+                        ),
+                        ParameterConfig(
+                            name="pric_tp",
+                            korean_name="가격구분",
+                            param_type="select",
+                            choices=[
+                                ("전체조회", "0"), ("1천원미만", "1"), ("1천원이상", "2"),
+                                ("1천원~2천원", "3"), ("2천원~5천원", "4"), ("5천원이상", "5"),
+                                ("5천원~1만원", "6"), ("1만원미만", "7"), ("1만원이상", "8"), ("5만원이상", "9")
+                            ]
+                        ),
+                        ParameterConfig(
+                            name="trde_prica_tp",
+                            korean_name="거래대금구분",
+                            param_type="select",
+                            choices=[
+                                ("전체조회", "0"), ("1천만원이상", "1"), ("3천만원이상", "3"),
+                                ("5천만원이상", "4"), ("1억원이상", "10"), ("3억원이상", "30"),
+                                ("5억원이상", "50"), ("10억원이상", "100"), ("30억원이상", "300"),
+                                ("50억원이상", "500"), ("100억원이상", "1000"), ("300억원이상", "3000"),
+                                ("500억원이상", "5000")
+                            ]
+                        ),
+                        ParameterConfig(
+                            name="mrkt_open_tp",
+                            korean_name="장운영구분",
+                            param_type="select",
+                            choices=[("전체조회", "0"), ("장중", "1"), ("장전시간외", "2"), ("장후시간외", "3")]
+                        )
+                    ]
+                ),
+                APIConfig(
+                    name="previous_day_trading_volume_top",
+                    korean_name="📉 전일거래량상위요청",
+                    api_method="get_previous_day_trading_volume_top",
+                    description="전일 거래량 상위 종목들을 조회합니다.",
+                    required_params=[
+                        ParameterConfig(
+                            name="mrkt_tp",
+                            korean_name="시장구분",
+                            param_type="select",
+                            choices=[("전체", "000"), ("코스피", "001"), ("코스닥", "101")]
+                        ),
+                        ParameterConfig(
+                            name="qry_tp",
+                            korean_name="조회구분",
+                            param_type="select",
+                            choices=[("전일거래량 상위100종목", "1"), ("전일거래대금 상위100종목", "2")]
+                        ),
+                        ParameterConfig(
+                            name="rank_strt",
+                            korean_name="순위시작",
+                            param_type="text",
+                            validation=r"^[0-9]{1,3}$"
+                        ),
+                        ParameterConfig(
+                            name="rank_end",
+                            korean_name="순위끝",
+                            param_type="text",
+                            validation=r"^[0-9]{1,3}$"
+                        ),
+                        ParameterConfig(
+                            name="stex_tp",
+                            korean_name="거래소구분",
+                            param_type="select",
+                            choices=[("KRX", "1"), ("NXT", "2")]
+                        )
+                    ]
+                ),
+                APIConfig(
+                    name="trading_value_top",
+                    korean_name="💵 거래대금상위요청",
+                    api_method="get_trading_value_top",
+                    description="거래대금 상위 종목들을 조회합니다.",
+                    required_params=[
+                        ParameterConfig(
+                            name="mrkt_tp",
+                            korean_name="시장구분",
+                            param_type="select",
+                            choices=[("전체", "000"), ("코스피", "001"), ("코스닥", "101")]
+                        ),
+                        ParameterConfig(
+                            name="mang_stk_incls",
+                            korean_name="관리종목포함",
+                            param_type="select",
+                            choices=[("미포함", "0"), ("포함", "1")]
+                        ),
+                        ParameterConfig(
+                            name="stex_tp",
+                            korean_name="거래소구분",
+                            param_type="select",
+                            choices=[("KRX", "1"), ("NXT", "2")]
+                        )
+                    ]
+                ),
+                APIConfig(
+                    name="foreign_period_trading_top",
+                    korean_name="🌍 외인기간별매매상위요청",
+                    api_method="get_foreign_period_trading_top",
+                    description="외국인 기간별 매매 상위 종목들을 조회합니다.",
+                    required_params=[
+                        ParameterConfig(
+                            name="mrkt_tp",
+                            korean_name="시장구분",
+                            param_type="select",
+                            choices=[("전체", "000"), ("코스피", "001"), ("코스닥", "101")]
+                        ),
+                        ParameterConfig(
+                            name="trde_tp",
+                            korean_name="매매구분",
+                            param_type="select",
+                            choices=[("순매도", "1"), ("순매수", "2"), ("순매매", "3")]
+                        ),
+                        ParameterConfig(
+                            name="dt",
+                            korean_name="기간",
+                            param_type="select",
+                            choices=[("당일", "0"), ("전일", "1"), ("5일", "5"), ("10일", "10"), ("20일", "20"), ("60일", "60")]
+                        ),
+                        ParameterConfig(
+                            name="stex_tp",
+                            korean_name="거래소구분",
+                            param_type="select",
+                            choices=[("KRX", "1"), ("NXT", "2"), ("통합", "3")]
+                        )
+                    ]
+                ),
+                APIConfig(
+                    name="foreign_consecutive_trading_top",
+                    korean_name="🔄 외인연속순매매상위요청",
+                    api_method="get_foreign_consecutive_trading_top",
+                    description="외국인 연속 순매매 상위 종목들을 조회합니다.",
+                    required_params=[
+                        ParameterConfig(
+                            name="mrkt_tp",
+                            korean_name="시장구분",
+                            param_type="select",
+                            choices=[("전체", "000"), ("코스피", "001"), ("코스닥", "101")]
+                        ),
+                        ParameterConfig(
+                            name="trde_tp",
+                            korean_name="매매구분",
+                            param_type="select",
+                            choices=[("연속순매도", "1"), ("연속순매수", "2")]
+                        ),
+                        ParameterConfig(
+                            name="base_dt_tp",
+                            korean_name="기준일구분",
+                            param_type="select",
+                            choices=[("당일기준", "0"), ("전일기준", "1")]
+                        ),
+                        ParameterConfig(
+                            name="stex_tp",
+                            korean_name="거래소구분",
+                            param_type="select",
+                            choices=[("KRX", "1"), ("NXT", "2"), ("통합", "3")]
+                        )
+                    ]
+                ),
+                APIConfig(
+                    name="foreign_institutional_trading_top",
+                    korean_name="🏛️ 외국인기관매매상위요청",
+                    api_method="get_foreign_institutional_trading_top",
+                    description="외국인 및 기관 매매 상위 종목들을 조회합니다.",
+                    required_params=[
+                        ParameterConfig(
+                            name="mrkt_tp",
+                            korean_name="시장구분",
+                            param_type="select",
+                            choices=[("전체", "000"), ("코스피", "001"), ("코스닥", "101")]
+                        ),
+                        ParameterConfig(
+                            name="dt",
+                            korean_name="기간",
+                            param_type="select",
+                            choices=[("당일", "0"), ("전일", "1"), ("5일", "5"), ("10일", "10"), ("20일", "20"), ("60일", "60")]
+                        ),
+                        ParameterConfig(
+                            name="trde_tp",
+                            korean_name="매매구분",
+                            param_type="select",
+                            choices=[("순매수", "1"), ("순매도", "2"), ("매수", "3"), ("매도", "4")]
+                        ),
+                        ParameterConfig(
+                            name="sort_tp",
+                            korean_name="정렬구분",
+                            param_type="select",
+                            choices=[("금액", "1"), ("수량", "2")]
+                        ),
+                        ParameterConfig(
+                            name="stex_tp",
+                            korean_name="거래소구분",
+                            param_type="select",
+                            choices=[("KRX", "1"), ("NXT", "2"), ("통합", "3")]
+                        )
+                    ]
+                )
             ]
+        )
 
-            answers = inquirer.prompt(questions)
-            if not answers or answers["ranking_choice"] == "back":
-                break
+    def _format_and_display_result(self, result: Any, api_config: APIConfig) -> None:
+        """
+        Format and display ranking API results.
+        
+        Args:
+            result: The API response data
+            api_config: Configuration for the API that was called
+        """
+        self.formatter.format_ranking_data(result, api_config.korean_name)
 
-            choice = answers["ranking_choice"]
 
-            try:
-                self._ensure_client()
-
-                if choice == "volume_surge":
-                    self._handle_volume_surge()
-                elif choice == "current_day_volume":
-                    self._handle_current_day_volume()
-                elif choice == "previous_day_volume":
-                    self._handle_previous_day_volume()
-                elif choice == "transaction_value":
-                    self._handle_transaction_value()
-                elif choice == "foreign_period_trading":
-                    self._handle_foreign_period_trading()
-                elif choice == "foreign_consecutive_trading":
-                    self._handle_foreign_consecutive_trading()
-                elif choice == "foreign_institutional_trading":
-                    self._handle_foreign_institutional_trading()
-
-            except Exception as e:
-                console.print(f"[red]오류 발생: {str(e)}[/red]")
-                console.print("[yellow]계속하려면 엔터를 누르세요...[/yellow]")
-                input()
-
-    def _handle_volume_surge(self):
-        """거래량급증요청을 처리합니다."""
-        console.print("[cyan]거래량급증요청 - 파라미터 입력[/cyan]")
-
-        params = self.parameter_collector.collect_volume_surge_params()
-        if not params:
-            return
-
-        console.print("[yellow]API 호출이 구현되면 실제 데이터가 표시됩니다.[/yellow]")
-        console.print(f"[dim]입력된 파라미터: {params}[/dim]")
-
-    def _handle_current_day_volume(self):
-        """당일거래량상위요청을 처리합니다."""
-        console.print("[cyan]당일거래량상위요청 - 파라미터 입력[/cyan]")
-
-        params = self.parameter_collector.collect_current_day_volume_params()
-        if not params:
-            return
-
-        console.print("[yellow]API 호출이 구현되면 실제 데이터가 표시됩니다.[/yellow]")
-        console.print(f"[dim]입력된 파라미터: {params}[/dim]")
-
-    def _handle_previous_day_volume(self):
-        """전일거래량상위요청을 처리합니다."""
-        console.print("[cyan]전일거래량상위요청 - 파라미터 입력[/cyan]")
-
-        params = self.parameter_collector.collect_previous_day_volume_params()
-        if not params:
-            return
-
-        console.print("[yellow]API 호출이 구현되면 실제 데이터가 표시됩니다.[/yellow]")
-        console.print(f"[dim]입력된 파라미터: {params}[/dim]")
-
-    def _handle_transaction_value(self):
-        """거래대금상위요청을 처리합니다."""
-        console.print("[cyan]거래대금상위요청 - 파라미터 입력[/cyan]")
-
-        params = self.parameter_collector.collect_transaction_value_params()
-        if not params:
-            return
-
-        console.print("[yellow]API 호출이 구현되면 실제 데이터가 표시됩니다.[/yellow]")
-        console.print(f"[dim]입력된 파라미터: {params}[/dim]")
-
-    def _handle_foreign_period_trading(self):
-        """외인기간별매매상위요청을 처리합니다."""
-        console.print("[cyan]외인기간별매매상위요청 - 파라미터 입력[/cyan]")
-
-        params = self.parameter_collector.collect_foreign_period_trading_params()
-        if not params:
-            return
-
-        console.print("[yellow]API 호출이 구현되면 실제 데이터가 표시됩니다.[/yellow]")
-        console.print(f"[dim]입력된 파라미터: {params}[/dim]")
-
-    def _handle_foreign_consecutive_trading(self):
-        """외인연속순매매상위요청을 처리합니다."""
-        console.print("[cyan]외인연속순매매상위요청 - 파라미터 입력[/cyan]")
-
-        params = self.parameter_collector.collect_foreign_consecutive_trading_params()
-        if not params:
-            return
-
-        console.print("[yellow]API 호출이 구현되면 실제 데이터가 표시됩니다.[/yellow]")
-        console.print(f"[dim]입력된 파라미터: {params}[/dim]")
-
-    def _handle_foreign_institutional_trading(self):
-        """외국인기관매매상위요청을 처리합니다."""
-        console.print("[cyan]외국인기관매매상위요청 - 파라미터 입력[/cyan]")
-
-        params = self.parameter_collector.collect_foreign_institutional_trading_params()
-        if not params:
-            return
-
-        console.print("[yellow]API 호출이 구현되면 실제 데이터가 표시됩니다.[/yellow]")
-        console.print(f"[dim]입력된 파라미터: {params}[/dim]")

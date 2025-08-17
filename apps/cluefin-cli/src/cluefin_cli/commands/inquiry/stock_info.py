@@ -5,157 +5,200 @@ This module handles all stock-specific APIs (종목정보) including detailed st
 analysis, volume updates, and broker analysis.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
-import inquirer
-from rich.console import Console
+from cluefin_openapi.kiwoom import Client as KiwoomClient
 
-from .display_formatter import DisplayFormatter
-from .parameter_collector import ParameterCollector
-
-console = Console()
+from .base_api_module import BaseAPIModule
+from .config_models import APICategory, APIConfig, ParameterConfig
+from .display_formatter import StockDataFormatter
 
 
-class StockInfoHandler:
-    def __init__(self):
-        self.client = None
-        self.parameter_collector = ParameterCollector()
-        self.display_formatter = DisplayFormatter()
+class StockInfoModule(BaseAPIModule):
+    """
+    Stock information module extending BaseAPIModule.
+    
+    Handles all stock-specific APIs including detailed stock analysis,
+    volume updates, and broker analysis.
+    """
 
-    def _ensure_client(self):
-        """클라이언트가 초기화되었는지 확인합니다."""
-        console.print("[yellow]API 클라이언트를 초기화하는 중...[/yellow]")
-        console.print("[yellow]실제 구현에서는 키움증권 API 토큰이 필요합니다.[/yellow]")
-        console.print("[red]데모 모드: API 호출이 구현되지 않았습니다.[/red]")
+    def __init__(self, client: Optional[KiwoomClient] = None):
+        """
+        Initialize the stock information module.
+        
+        Args:
+            client: Optional Kiwoom API client instance
+        """
+        super().__init__(client)
+        # Use specialized formatter for stock data
+        self.formatter = StockDataFormatter()
 
-    def handle_stock_menu(self):
-        """종목정보 메뉴를 처리합니다."""
-        while True:
-            console.print("\n[bold blue]💰 종목정보 메뉴[/bold blue]")
-
-            questions = [
-                inquirer.List(
-                    "stock_choice",
-                    message="조회할 종목정보를 선택하세요",
-                    choices=[
-                        ("📈 거래량갱신요청", "volume_renewal"),
-                        ("💹 매출대집중요청", "supply_demand_concentration"),
-                        ("🏢 거래원매물대분석요청", "broker_supply_demand_analysis"),
-                        ("👥 종목별투자자기관별합계요청", "stock_investor_institutional_total"),
-                        ("⬅️ 메인메뉴로 돌아가기", "back"),
-                    ],
+    def get_api_category(self) -> APICategory:
+        """
+        Get the API category configuration for stock information.
+        
+        Returns:
+            APICategory with all stock APIs configured
+        """
+        return APICategory(
+            name="stock_info",
+            korean_name="💰 종목정보",
+            description="개별 종목의 상세 정보, 거래량 분석, 거래원 분석 등을 제공합니다.",
+            apis=[
+                APIConfig(
+                    name="trading_volume_renewal",
+                    korean_name="📈 거래량갱신요청",
+                    api_method="get_trading_volume_renewal",
+                    description="특정 종목의 거래량 갱신 정보를 실시간으로 조회합니다.",
+                    required_params=[
+                        ParameterConfig(
+                            name="stk_cd",
+                            korean_name="종목코드",
+                            param_type="text",
+                            validation=r"^\d{6}$"
+                        )
+                    ]
                 ),
+                APIConfig(
+                    name="supply_demand_concentration",
+                    korean_name="💹 매출대집중요청",
+                    api_method="get_supply_demand_concentration",
+                    description="특정 종목의 매도/매수 호가 집중도를 분석합니다.",
+                    required_params=[
+                        ParameterConfig(
+                            name="stk_cd",
+                            korean_name="종목코드",
+                            param_type="text",
+                            validation=r"^\d{6}$"
+                        ),
+                        ParameterConfig(
+                            name="prc_tp",
+                            korean_name="가격구분",
+                            param_type="select",
+                            choices=[("매도호가", "1"), ("매수호가", "2")]
+                        )
+                    ]
+                ),
+                APIConfig(
+                    name="broker_supply_demand_analysis",
+                    korean_name="🏢 거래원매물대분석요청",
+                    api_method="get_broker_supply_demand_analysis",
+                    description="특정 종목의 거래원별 매물대 분석 정보를 조회합니다.",
+                    required_params=[
+                        ParameterConfig(
+                            name="stk_cd",
+                            korean_name="종목코드",
+                            param_type="text",
+                            validation=r"^\d{6}$"
+                        )
+                    ]
+                ),
+                APIConfig(
+                    name="stock_investor_institutional_total",
+                    korean_name="👥 종목별투자자기관별합계요청",
+                    api_method="get_stock_investor_institutional_total",
+                    description="특정 종목의 투자자별, 기관별 매매 합계를 조회합니다.",
+                    required_params=[
+                        ParameterConfig(
+                            name="stk_cd",
+                            korean_name="종목코드",
+                            param_type="text",
+                            validation=r"^\d{6}$"
+                        ),
+                        ParameterConfig(
+                            name="trd_dt",
+                            korean_name="거래일자구분",
+                            param_type="select",
+                            choices=[("당일", "0"), ("전일", "1")]
+                        )
+                    ]
+                ),
+                APIConfig(
+                    name="stock_basic_info",
+                    korean_name="📊 종목기본정보요청",
+                    api_method="get_stock_basic_info",
+                    description="특정 종목의 기본 정보를 조회합니다.",
+                    required_params=[
+                        ParameterConfig(
+                            name="stk_cd",
+                            korean_name="종목코드",
+                            param_type="text",
+                            validation=r"^\d{6}$"
+                        )
+                    ]
+                ),
+                APIConfig(
+                    name="stock_price_info",
+                    korean_name="💲 종목현재가정보요청",
+                    api_method="get_stock_price_info",
+                    description="특정 종목의 현재가 및 관련 정보를 조회합니다.",
+                    required_params=[
+                        ParameterConfig(
+                            name="stk_cd",
+                            korean_name="종목코드",
+                            param_type="text",
+                            validation=r"^\d{6}$"
+                        )
+                    ]
+                ),
+                APIConfig(
+                    name="stock_order_book",
+                    korean_name="📋 종목호가정보요청",
+                    api_method="get_stock_order_book",
+                    description="특정 종목의 매도/매수 호가 정보를 조회합니다.",
+                    required_params=[
+                        ParameterConfig(
+                            name="stk_cd",
+                            korean_name="종목코드",
+                            param_type="text",
+                            validation=r"^\d{6}$"
+                        )
+                    ]
+                ),
+                APIConfig(
+                    name="stock_daily_chart",
+                    korean_name="📈 종목일봉차트요청",
+                    api_method="get_stock_daily_chart",
+                    description="특정 종목의 일봉 차트 데이터를 조회합니다.",
+                    required_params=[
+                        ParameterConfig(
+                            name="stk_cd",
+                            korean_name="종목코드",
+                            param_type="text",
+                            validation=r"^\d{6}$"
+                        ),
+                        ParameterConfig(
+                            name="strt_dt",
+                            korean_name="시작일자",
+                            param_type="date"
+                        ),
+                        ParameterConfig(
+                            name="end_dt",
+                            korean_name="종료일자",
+                            param_type="date"
+                        )
+                    ],
+                    optional_params=[
+                        ParameterConfig(
+                            name="adj_prc_tp",
+                            korean_name="수정주가구분",
+                            param_type="select",
+                            choices=[("수정안함", "0"), ("수정주가", "1")],
+                            required=False
+                        )
+                    ]
+                )
             ]
+        )
 
-            answers = inquirer.prompt(questions)
-            if not answers or answers["stock_choice"] == "back":
-                break
+    def _format_and_display_result(self, result: Any, api_config: APIConfig) -> None:
+        """
+        Format and display stock API results.
+        
+        Args:
+            result: The API response data
+            api_config: Configuration for the API that was called
+        """
+        self.formatter.format_stock_data(result, api_config.korean_name)
 
-            choice = answers["stock_choice"]
 
-            try:
-                self._ensure_client()
-
-                if choice == "volume_renewal":
-                    self._handle_volume_renewal()
-                elif choice == "supply_demand_concentration":
-                    self._handle_supply_demand_concentration()
-                elif choice == "broker_supply_demand_analysis":
-                    self._handle_broker_supply_demand_analysis()
-                elif choice == "stock_investor_institutional_total":
-                    self._handle_stock_investor_institutional_total()
-
-            except Exception as e:
-                console.print(f"[red]오류 발생: {str(e)}[/red]")
-                console.print("[yellow]계속하려면 엔터를 누르세요...[/yellow]")
-                input()
-
-    def _handle_volume_renewal(self):
-        """거래량갱신요청을 처리합니다."""
-        console.print("[cyan]거래량갱신요청 - 파라미터 입력[/cyan]")
-
-        params = self._collect_volume_renewal_params()
-        if not params:
-            return
-
-        console.print("[yellow]API 호출이 구현되면 실제 데이터가 표시됩니다.[/yellow]")
-        console.print(f"[dim]입력된 파라미터: {params}[/dim]")
-
-    def _handle_supply_demand_concentration(self):
-        """매출대집중요청을 처리합니다."""
-        console.print("[cyan]매출대집중요청 - 파라미터 입력[/cyan]")
-
-        params = self._collect_supply_demand_concentration_params()
-        if not params:
-            return
-
-        console.print("[yellow]API 호출이 구현되면 실제 데이터가 표시됩니다.[/yellow]")
-        console.print(f"[dim]입력된 파라미터: {params}[/dim]")
-
-    def _handle_broker_supply_demand_analysis(self):
-        """거래원매물대분석요청을 처리합니다."""
-        console.print("[cyan]거래원매물대분석요청 - 파라미터 입력[/cyan]")
-
-        params = self._collect_broker_supply_demand_analysis_params()
-        if not params:
-            return
-
-        console.print("[yellow]API 호출이 구현되면 실제 데이터가 표시됩니다.[/yellow]")
-        console.print(f"[dim]입력된 파라미터: {params}[/dim]")
-
-    def _handle_stock_investor_institutional_total(self):
-        """종목별투자자기관별합계요청을 처리합니다."""
-        console.print("[cyan]종목별투자자기관별합계요청 - 파라미터 입력[/cyan]")
-
-        params = self._collect_stock_investor_institutional_total_params()
-        if not params:
-            return
-
-        console.print("[yellow]API 호출이 구현되면 실제 데이터가 표시됩니다.[/yellow]")
-        console.print(f"[dim]입력된 파라미터: {params}[/dim]")
-
-    def _collect_volume_renewal_params(self) -> Optional[Dict[str, Any]]:
-        """거래량갱신 파라미터를 수집합니다."""
-        questions = [
-            inquirer.Text("stk_cd", message="종목코드를 입력하세요 (예: 005930)", default="005930"),
-        ]
-
-        answers = inquirer.prompt(questions)
-        return answers
-
-    def _collect_supply_demand_concentration_params(self) -> Optional[Dict[str, Any]]:
-        """매출대집중 파라미터를 수집합니다."""
-        questions = [
-            inquirer.Text("stk_cd", message="종목코드를 입력하세요 (예: 005930)", default="005930"),
-            inquirer.List(
-                "prc_tp",
-                message="가격구분을 선택하세요",
-                choices=[("매도호가", "1"), ("매수호가", "2")],
-            ),
-        ]
-
-        answers = inquirer.prompt(questions)
-        return answers
-
-    def _collect_broker_supply_demand_analysis_params(self) -> Optional[Dict[str, Any]]:
-        """거래원매물대분석 파라미터를 수집합니다."""
-        questions = [
-            inquirer.Text("stk_cd", message="종목코드를 입력하세요 (예: 005930)", default="005930"),
-        ]
-
-        answers = inquirer.prompt(questions)
-        return answers
-
-    def _collect_stock_investor_institutional_total_params(self) -> Optional[Dict[str, Any]]:
-        """종목별투자자기관별합계 파라미터를 수집합니다."""
-        questions = [
-            inquirer.Text("stk_cd", message="종목코드를 입력하세요 (예: 005930)", default="005930"),
-            inquirer.List(
-                "trd_dt",
-                message="거래일자구분을 선택하세요",
-                choices=[("당일", "0"), ("전일", "1")],
-            ),
-        ]
-
-        answers = inquirer.prompt(questions)
-        return answers

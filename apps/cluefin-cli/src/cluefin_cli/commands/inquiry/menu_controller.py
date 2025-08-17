@@ -4,21 +4,25 @@ Menu controller for interactive navigation in the stock inquiry system.
 This module handles the main menu display and navigation logic for the inquiry feature.
 """
 
+from typing import Optional
+
 import inquirer
+from cluefin_openapi.kiwoom import Client as KiwoomClient
 from rich.console import Console
 
-from .ranking_info import RankingInfoHandler
-from .sector_info import SectorInfoHandler
-from .stock_info import StockInfoHandler
+from .ranking_info import RankingInfoModule
+from .sector_info import SectorInfoModule
+from .stock_info import StockInfoModule
 
 console = Console()
 
 
 class MenuController:
-    def __init__(self):
-        self.ranking_handler = RankingInfoHandler()
-        self.sector_handler = SectorInfoHandler()
-        self.stock_handler = StockInfoHandler()
+    def __init__(self, client: Optional[KiwoomClient] = None):
+        self.client = client
+        self.ranking_module = RankingInfoModule(client)
+        self.sector_module = SectorInfoModule(client)
+        self.stock_module = StockInfoModule(client)
 
     def run_main_menu(self):
         """메인 메뉴를 실행합니다."""
@@ -47,11 +51,23 @@ class MenuController:
             choice = answers["main_choice"]
 
             if choice == "ranking":
-                self.ranking_handler.handle_ranking_menu()
+                self.ranking_module.handle_menu_loop()
             elif choice == "sector":
-                self.sector_handler.handle_sector_menu()
+                self.sector_module.handle_menu_loop()
             elif choice == "stock":
-                self.stock_handler.handle_stock_menu()
+                self.stock_module.handle_menu_loop()
             elif choice == "exit":
                 console.print("[yellow]프로그램을 종료합니다.[/yellow]")
                 break
+
+    def set_client(self, client: KiwoomClient) -> None:
+        """
+        Set the Kiwoom API client for all modules.
+        
+        Args:
+            client: The Kiwoom API client instance
+        """
+        self.client = client
+        self.ranking_module.set_client(client)
+        self.sector_module.set_client(client)
+        self.stock_module.set_client(client)

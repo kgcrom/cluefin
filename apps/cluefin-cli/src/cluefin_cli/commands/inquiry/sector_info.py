@@ -6,218 +6,207 @@ investor activity by sector, and sector indices.
 """
 
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
-import inquirer
-from cluefin_openapi.kiwoom import Client
-from rich.console import Console
+from cluefin_openapi.kiwoom import Client as KiwoomClient
 
-from .display_formatter import DisplayFormatter
-from .parameter_collector import ParameterCollector
-
-console = Console()
+from .base_api_module import BaseAPIModule
+from .config_models import APICategory, APIConfig, ParameterConfig
+from .display_formatter import SectorDataFormatter
 
 
-class SectorInfoHandler:
-    def __init__(self):
-        self.client = None
-        self.parameter_collector = ParameterCollector()
-        self.display_formatter = DisplayFormatter()
+class SectorInfoModule(BaseAPIModule):
+    """
+    Sector information module extending BaseAPIModule.
+    
+    Handles all sector-related APIs including sector performance,
+    investor activity by sector, and sector indices.
+    """
 
-    def _ensure_client(self):
-        """클라이언트가 초기화되었는지 확인합니다."""
-        console.print("[yellow]API 클라이언트를 초기화하는 중...[/yellow]")
-        console.print("[yellow]실제 구현에서는 키움증권 API 토큰이 필요합니다.[/yellow]")
-        console.print("[red]데모 모드: API 호출이 구현되지 않았습니다.[/red]")
+    def __init__(self, client: Optional[KiwoomClient] = None):
+        """
+        Initialize the sector information module.
+        
+        Args:
+            client: Optional Kiwoom API client instance
+        """
+        super().__init__(client)
+        # Use specialized formatter for sector data
+        self.formatter = SectorDataFormatter()
 
-    def handle_sector_menu(self):
-        """업종정보 메뉴를 처리합니다."""
-        while True:
-            console.print("\n[bold blue]🏢 업종정보 메뉴[/bold blue]")
-
-            questions = [
-                inquirer.List(
-                    "sector_choice",
-                    message="조회할 업종정보를 선택하세요",
-                    choices=[
-                        ("📊 업종별 투자자 순매수 요청", "sector_investor_net_buy"),
-                        ("💰 업종현재가 요청", "sector_current_price"),
-                        ("📈 업종별 주가요청", "sector_price_by_sector"),
-                        ("🌐 전업종 지수요청", "all_sector_index"),
-                        ("📅 업종현재가 일별요청", "daily_sector_current_price"),
-                        ("⬅️ 메인메뉴로 돌아가기", "back"),
-                    ],
+    def get_api_category(self) -> APICategory:
+        """
+        Get the API category configuration for sector information.
+        
+        Returns:
+            APICategory with all sector APIs configured
+        """
+        return APICategory(
+            name="sector_info",
+            korean_name="🏢 업종정보",
+            description="업종별 투자자 활동, 현재가, 지수 등 업종 관련 정보를 제공합니다.",
+            apis=[
+                APIConfig(
+                    name="industry_investor_net_buy",
+                    korean_name="📊 업종별 투자자 순매수 요청",
+                    api_method="get_industry_investor_net_buy",
+                    description="업종별 투자자(개인, 외국인, 기관) 순매수 현황을 조회합니다.",
+                    required_params=[
+                        ParameterConfig(
+                            name="mrkt_tp",
+                            korean_name="시장구분",
+                            param_type="select",
+                            choices=[("코스피", "0"), ("코스닥", "1")]
+                        ),
+                        ParameterConfig(
+                            name="amt_qty_tp",
+                            korean_name="금액수량구분",
+                            param_type="select",
+                            choices=[("금액", "0"), ("수량", "1")]
+                        ),
+                        ParameterConfig(
+                            name="base_dt",
+                            korean_name="기준일자",
+                            param_type="date"
+                        ),
+                        ParameterConfig(
+                            name="stex_tp",
+                            korean_name="거래소구분",
+                            param_type="select",
+                            choices=[("KRX", "1"), ("NXT", "2"), ("통합", "3")]
+                        )
+                    ]
                 ),
+                APIConfig(
+                    name="industry_current_price",
+                    korean_name="💰 업종현재가 요청",
+                    api_method="get_industry_current_price",
+                    description="업종별 현재가 정보를 조회합니다.",
+                    required_params=[
+                        ParameterConfig(
+                            name="mrkt_tp",
+                            korean_name="시장구분",
+                            param_type="select",
+                            choices=[("코스피", "0"), ("코스닥", "1"), ("코스피200", "2")]
+                        ),
+                        ParameterConfig(
+                            name="inds_cd",
+                            korean_name="업종코드",
+                            param_type="text",
+                            validation=r"^\d{3}$"
+                        )
+                    ]
+                ),
+                APIConfig(
+                    name="industry_price_by_sector",
+                    korean_name="📈 업종별 주가요청",
+                    api_method="get_industry_price_by_sector",
+                    description="특정 업종의 주가 정보를 조회합니다.",
+                    required_params=[
+                        ParameterConfig(
+                            name="mrkt_tp",
+                            korean_name="시장구분",
+                            param_type="select",
+                            choices=[("코스피", "0"), ("코스닥", "1"), ("코스피200", "2")]
+                        ),
+                        ParameterConfig(
+                            name="inds_cd",
+                            korean_name="업종코드",
+                            param_type="text",
+                            validation=r"^\d{3}$"
+                        ),
+                        ParameterConfig(
+                            name="stex_tp",
+                            korean_name="거래소구분",
+                            param_type="select",
+                            choices=[("KRX", "1"), ("NXT", "2"), ("통합", "3")]
+                        )
+                    ]
+                ),
+                APIConfig(
+                    name="all_industry_index",
+                    korean_name="🌐 전업종 지수요청",
+                    api_method="get_all_industry_index",
+                    description="전체 업종의 지수 정보를 조회합니다.",
+                    required_params=[
+                        ParameterConfig(
+                            name="inds_cd",
+                            korean_name="업종코드",
+                            param_type="select",
+                            choices=[
+                                ("종합(KOSPI)", "001"),
+                                ("종합(KOSDAQ)", "101"), 
+                                ("KOSPI200", "201"),
+                                ("대형주", "002"),
+                                ("중형주", "003"),
+                                ("소형주", "004"),
+                                ("음식료품", "010"),
+                                ("섬유의복", "020"),
+                                ("종이목재", "030"),
+                                ("화학", "040"),
+                                ("의약품", "050"),
+                                ("비금속광물", "060"),
+                                ("철강금속", "070"),
+                                ("기계", "080"),
+                                ("전기전자", "090"),
+                                ("의료정밀", "100"),
+                                ("운수장비", "110"),
+                                ("유통업", "120"),
+                                ("전기가스업", "130"),
+                                ("건설업", "140"),
+                                ("운수창고", "150"),
+                                ("통신업", "160"),
+                                ("금융업", "170"),
+                                ("은행", "180"),
+                                ("증권", "190"),
+                                ("보험", "200"),
+                                ("서비스업", "210"),
+                                ("제조업", "220")
+                            ]
+                        )
+                    ]
+                ),
+                APIConfig(
+                    name="daily_industry_current_price",
+                    korean_name="📅 업종현재가 일별요청",
+                    api_method="get_daily_industry_current_price",
+                    description="업종별 일별 현재가 정보를 조회합니다.",
+                    required_params=[
+                        ParameterConfig(
+                            name="mrkt_tp",
+                            korean_name="시장구분",
+                            param_type="select",
+                            choices=[("코스피", "0"), ("코스닥", "1"), ("코스피200", "2")]
+                        ),
+                        ParameterConfig(
+                            name="inds_cd",
+                            korean_name="업종코드",
+                            param_type="text",
+                            validation=r"^\d{3}$"
+                        ),
+                        ParameterConfig(
+                            name="strt_dt",
+                            korean_name="시작일자",
+                            param_type="date"
+                        ),
+                        ParameterConfig(
+                            name="end_dt",
+                            korean_name="종료일자",
+                            param_type="date"
+                        )
+                    ]
+                )
             ]
+        )
 
-            answers = inquirer.prompt(questions)
-            if not answers or answers["sector_choice"] == "back":
-                break
+    def _format_and_display_result(self, result: Any, api_config: APIConfig) -> None:
+        """
+        Format and display sector API results.
+        
+        Args:
+            result: The API response data
+            api_config: Configuration for the API that was called
+        """
+        self.formatter.format_sector_data(result, api_config.korean_name)
 
-            choice = answers["sector_choice"]
 
-            try:
-                self._ensure_client()
-
-                if choice == "sector_investor_net_buy":
-                    self._handle_sector_investor_net_buy()
-                elif choice == "sector_current_price":
-                    self._handle_sector_current_price()
-                elif choice == "sector_price_by_sector":
-                    self._handle_sector_price_by_sector()
-                elif choice == "all_sector_index":
-                    self._handle_all_sector_index()
-                elif choice == "daily_sector_current_price":
-                    self._handle_daily_sector_current_price()
-
-            except Exception as e:
-                console.print(f"[red]오류 발생: {str(e)}[/red]")
-                console.print("[yellow]계속하려면 엔터를 누르세요...[/yellow]")
-                input()
-
-    def _handle_sector_investor_net_buy(self):
-        """업종별 투자자 순매수 요청을 처리합니다."""
-        console.print("[cyan]업종별 투자자 순매수 요청 - 파라미터 입력[/cyan]")
-
-        params = self._collect_sector_investor_net_buy_params()
-        if not params:
-            return
-
-        console.print("[yellow]API 호출이 구현되면 실제 데이터가 표시됩니다.[/yellow]")
-        console.print(f"[dim]입력된 파라미터: {params}[/dim]")
-
-    def _handle_sector_current_price(self):
-        """업종현재가 요청을 처리합니다."""
-        console.print("[cyan]업종현재가 요청 - 파라미터 입력[/cyan]")
-
-        params = self._collect_sector_current_price_params()
-        if not params:
-            return
-
-        console.print("[yellow]API 호출이 구현되면 실제 데이터가 표시됩니다.[/yellow]")
-        console.print(f"[dim]입력된 파라미터: {params}[/dim]")
-
-    def _handle_sector_price_by_sector(self):
-        """업종별 주가요청을 처리합니다."""
-        console.print("[cyan]업종별 주가요청 - 파라미터 입력[/cyan]")
-
-        params = self._collect_sector_price_by_sector_params()
-        if not params:
-            return
-
-        console.print("[yellow]API 호출이 구현되면 실제 데이터가 표시됩니다.[/yellow]")
-        console.print(f"[dim]입력된 파라미터: {params}[/dim]")
-
-    def _handle_all_sector_index(self):
-        """전업종 지수요청을 처리합니다."""
-        console.print("[cyan]전업종 지수요청 - 파라미터 입력[/cyan]")
-
-        params = self._collect_all_sector_index_params()
-        if not params:
-            return
-
-        console.print("[yellow]API 호출이 구현되면 실제 데이터가 표시됩니다.[/yellow]")
-        console.print(f"[dim]입력된 파라미터: {params}[/dim]")
-
-    def _handle_daily_sector_current_price(self):
-        """업종현재가 일별요청을 처리합니다."""
-        console.print("[cyan]업종현재가 일별요청 - 파라미터 입력[/cyan]")
-
-        params = self._collect_daily_sector_current_price_params()
-        if not params:
-            return
-
-        console.print("[yellow]API 호출이 구현되면 실제 데이터가 표시됩니다.[/yellow]")
-        console.print(f"[dim]입력된 파라미터: {params}[/dim]")
-
-    def _collect_sector_investor_net_buy_params(self) -> Optional[Dict[str, Any]]:
-        """업종별 투자자 순매수 파라미터를 수집합니다."""
-        questions = [
-            inquirer.List(
-                "mrkt_tp",
-                message="시장구분을 선택하세요",
-                choices=[("코스피", "0"), ("코스닥", "1")],
-            ),
-            inquirer.List(
-                "amt_qty_tp",
-                message="금액수량구분을 선택하세요",
-                choices=[("금액", "0"), ("수량", "1")],
-            ),
-            inquirer.Text(
-                "base_dt", message="기준일자를 입력하세요 (YYYYMMDD)", default=datetime.now().strftime("%Y%m%d")
-            ),
-            inquirer.List(
-                "stex_tp",
-                message="거래소구분을 선택하세요",
-                choices=[("KRX", "1"), ("NXT", "2"), ("통합", "3")],
-            ),
-        ]
-
-        answers = inquirer.prompt(questions)
-        return answers
-
-    def _collect_sector_current_price_params(self) -> Optional[Dict[str, Any]]:
-        """업종현재가 파라미터를 수집합니다."""
-        questions = [
-            inquirer.List(
-                "mrkt_tp",
-                message="시장구분을 선택하세요",
-                choices=[("코스피", "0"), ("코스닥", "1"), ("코스피200", "2")],
-            ),
-            inquirer.Text(
-                "inds_cd", message="업종코드를 입력하세요 (예: 001:종합, 002:대형주, 003:중형주)", default="001"
-            ),
-        ]
-
-        answers = inquirer.prompt(questions)
-        return answers
-
-    def _collect_sector_price_by_sector_params(self) -> Optional[Dict[str, Any]]:
-        """업종별 주가 파라미터를 수집합니다."""
-        questions = [
-            inquirer.List(
-                "mrkt_tp",
-                message="시장구분을 선택하세요",
-                choices=[("코스피", "0"), ("코스닥", "1"), ("코스피200", "2")],
-            ),
-            inquirer.Text(
-                "inds_cd", message="업종코드를 입력하세요 (예: 001:종합, 002:대형주, 003:중형주)", default="001"
-            ),
-            inquirer.List(
-                "stex_tp",
-                message="거래소구분을 선택하세요",
-                choices=[("KRX", "1"), ("NXT", "2"), ("통합", "3")],
-            ),
-        ]
-
-        answers = inquirer.prompt(questions)
-        return answers
-
-    def _collect_all_sector_index_params(self) -> Optional[Dict[str, Any]]:
-        """전업종 지수 파라미터를 수집합니다."""
-        questions = [
-            inquirer.Text(
-                "inds_cd",
-                message="업종코드를 입력하세요 (001:종합(KOSPI), 101:종합(KOSDAQ), 201:KOSPI200)",
-                default="001",
-            ),
-        ]
-
-        answers = inquirer.prompt(questions)
-        return answers
-
-    def _collect_daily_sector_current_price_params(self) -> Optional[Dict[str, Any]]:
-        """업종현재가 일별 파라미터를 수집합니다."""
-        questions = [
-            inquirer.List(
-                "mrkt_tp",
-                message="시장구분을 선택하세요",
-                choices=[("코스피", "0"), ("코스닥", "1"), ("코스피200", "2")],
-            ),
-            inquirer.Text(
-                "inds_cd", message="업종코드를 입력하세요 (예: 001:종합, 002:대형주, 003:중형주)", default="001"
-            ),
-        ]
-
-        answers = inquirer.prompt(questions)
-        return answers
