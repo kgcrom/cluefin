@@ -12,9 +12,10 @@ from ._exceptions import (
 
 
 class Client(object):
+    # TODO convert auth_key type to SecretStr
     def __init__(self, auth_key: str, timeout: int = 30):
         self.auth_key = auth_key
-        self.base_url = "http://data-dbg.krx.co.kr"
+        self.base_url = "https://data-dbg.krx.co.kr"
         self.timeout = timeout
 
     @property
