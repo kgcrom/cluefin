@@ -114,24 +114,48 @@ class DataFetcher:
 
         return df
 
-    async def get_stock_data(self, stock_code: str, period: str = "3M") -> pd.DataFrame:
+    async def get_stock_data(self, stock_code: str, period: str) -> pd.DataFrame:
         """
         Fetch stock price data for the given period.
 
         Args:
             stock_code: Korean stock code (e.g., "005930" for Samsung)
-            period: Data period (1M, 3M, 6M, 1Y)
+            period: Data period (1D, 1W)
 
         Returns:
             DataFrame with OHLCV data
         """
-        # For now, always use mock data
-        # TODO: Implement Kiwoom API integration when ready
-        return self._generate_mock_data(stock_code, period)
+
+        # return self._generate_mock_data(stock_code, period)
+        # TODO: 주봉, 월봉도 같은 함수에서 리턴가능하도록. 타입먼저 처리해야한다.
+        parsed_date = datetime.now().strftime("%Y%m%d")
+        response = self.kiwoom_client.chart.get_stock_daily(stk_cd=stock_code, base_dt=parsed_date, upd_stkpc_tp="1")
+
+        # Convert stock data to DataFrame
+        stock_data = map(
+            lambda item: {
+                "date": pd.to_datetime(item.dt),
+                "open": self._safe_float(item.open_pric),
+                "high": self._safe_float(item.high_pric),
+                "low": self._safe_float(item.low_pric),
+                "close": self._safe_float(item.cur_prc),
+                "volume": self._safe_float(item.trde_qty),
+            },
+            response.body.stk_dt_pole_chart_qry,
+        )
+
+        if stock_data:
+            df = pd.DataFrame(stock_data)
+            df.set_index("date", inplace=True)
+            df.sort_index(inplace=True)
+        else:
+            # Fallback to empty DataFrame if no data available
+            df = pd.DataFrame(columns=["date", "open", "high", "low", "close", "volume", "timeframe"])
+
+        return df
 
     async def get_kospi_index_series(self) -> List[Dict[str, Any]]:
         """Return KOSPI index series with name, close_price, fluctuation_rate, trading_value, and transaction_amount."""
-        from datetime import datetime
 
         # Use current date as base_date
         # base_date = datetime.now().strftime("%Y%m%d")
@@ -284,10 +308,13 @@ class DataFetcher:
             Trading trend data
         """
 
+        start_date = (datetime.now() - timedelta(days=365)).strftime("%Y%m%d")
+        end_date = datetime.now().strftime("%Y%m%d")
+
         response = self.kiwoom_client.stock_info.get_total_institutional_investor_by_stock(
             stk_cd=stock_code,
-            strt_dt="20240818",
-            end_dt="20250814",
+            strt_dt=start_date,
+            end_dt=end_date,
             amt_qty_tp="1",
             trde_tp="0",
             unit_tp="1",

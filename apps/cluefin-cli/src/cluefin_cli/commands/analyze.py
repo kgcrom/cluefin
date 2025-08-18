@@ -19,21 +19,20 @@ console = Console()
 
 @click.command()
 @click.argument("stock_code")
-@click.option("--period", "-p", default="3M", help="Data period (1M, 3M, 6M, 1Y)")
 @click.option("--chart", "-c", is_flag=True, help="Display chart in terminal")
 @click.option("--ai-analysis", "-a", is_flag=True, help="Include AI-powered analysis")
-def analyze(stock_code: str, period: str, chart: bool, ai_analysis: bool):
+def analyze(stock_code: str, chart: bool, ai_analysis: bool):
     """Analyze stock with technical indicators and market data."""
     console.print(f"[bold blue]Analyzing {stock_code}...[/bold blue]")
 
     try:
         # Run async analysis
-        asyncio.run(_analyze_stock(stock_code, period, chart, ai_analysis))
+        asyncio.run(_analyze_stock(stock_code, chart, ai_analysis))
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
 
 
-async def _analyze_stock(stock_code: str, period: str, chart: bool, ai_analysis: bool):
+async def _analyze_stock(stock_code: str, chart: bool, ai_analysis: bool):
     """Main analysis logic."""
     # Initialize components
     data_fetcher = DataFetcher()
@@ -45,8 +44,7 @@ async def _analyze_stock(stock_code: str, period: str, chart: bool, ai_analysis:
 
     basic_data = await data_fetcher.get_basic_data(stock_code)
 
-    # TODO daily and weekly chart data
-    stock_data = await data_fetcher.get_stock_data(stock_code, period)
+    stock_data = await data_fetcher.get_stock_data(stock_code, "1D")
 
     console.print("[yellow]Fetching foreign trading data...[/yellow]")
     trading_trend_data = await data_fetcher.get_trading_trend(stock_code)
@@ -289,7 +287,9 @@ def _display_trading_trend(trading_trend_data):
     for investor_type, amount in trading_trend_data.items():
         # Format amount with proper currency formatting
         formatted_amount = (
-            format_currency(float(amount)) if amount and str(amount).replace("-", "").replace("+", "").isdigit() else str(amount)
+            format_currency(float(amount))
+            if amount and str(amount).replace("-", "").replace("+", "").isdigit()
+            else str(amount)
         )
         table.add_row(investor_type, formatted_amount)
 

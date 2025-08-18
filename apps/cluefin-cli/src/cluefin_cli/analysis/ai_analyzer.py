@@ -17,7 +17,10 @@ class AIAnalyzer:
             self.client = None
 
     async def analyze_stock(
-        self, stock_code: str, stock_data: pd.DataFrame, indicators: pd.DataFrame, # foreign_data: Dict[str, Any]
+        self,
+        stock_code: str,
+        stock_data: pd.DataFrame,
+        indicators: pd.DataFrame,  # foreign_data: Dict[str, Any]
     ) -> str | None:
         """
         Generate AI-powered stock analysis.
@@ -36,7 +39,7 @@ class AIAnalyzer:
 
         try:
             # Prepare data summary
-            analysis_data = self._prepare_analysis_data(stock_code, stock_data, indicators) #, foreign_data)
+            analysis_data = self._prepare_analysis_data(stock_code, stock_data, indicators)  # , foreign_data)
 
             # Create prompt
             prompt = self._create_analysis_prompt(analysis_data)
@@ -61,7 +64,10 @@ class AIAnalyzer:
             return f"Error generating AI analysis: {str(e)}"
 
     def _prepare_analysis_data(
-        self, stock_code: str, stock_data: pd.DataFrame, indicators: pd.DataFrame, # foreign_data: Dict[str, Any]
+        self,
+        stock_code: str,
+        stock_data: pd.DataFrame,
+        indicators: pd.DataFrame,  # foreign_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Prepare data for AI analysis."""
         if stock_data.empty:
@@ -154,11 +160,11 @@ Technical Indicators:
         # if foreign_data:
         #     net_foreign = foreign_data.get("buy", 0) - foreign_data.get("sell", 0)
         #     prompt += f"""
-# Foreign Trading:
-# - Foreign Buy: ₩{foreign_data.get("buy", 0):,.0f}
-# - Foreign Sell: ₩{foreign_data.get("sell", 0):,.0f}
-# - Net Foreign: ₩{net_foreign:+,.0f}
-# """
+        # Foreign Trading:
+        # - Foreign Buy: ₩{foreign_data.get("buy", 0):,.0f}
+        # - Foreign Sell: ₩{foreign_data.get("sell", 0):,.0f}
+        # - Net Foreign: ₩{net_foreign:+,.0f}
+        # """
 
         prompt += """
 Please provide a concise analysis including:
