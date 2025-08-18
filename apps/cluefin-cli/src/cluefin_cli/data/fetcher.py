@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import pandas as pd
 from cluefin_openapi.kiwoom._auth import Auth as KiwoomAuth
 from cluefin_openapi.kiwoom._client import Client as KiwoomClient
+from cluefin_openapi.krx._client import Client as KrxClient
 from pydantic import SecretStr
 
 from cluefin_cli.config.settings import settings
@@ -12,11 +13,23 @@ from cluefin_cli.config.settings import settings
 class DataFetcher:
     """Handles data fetching from Kiwoom Securities and KRX APIs."""
 
+    @staticmethod
+    def _safe_float(value: str) -> float:
+        """Safely convert string to float, returning 0 if value is '-' or invalid."""
+        if value == "-" or not value or value.strip() == "":
+            return 0.0
+        try:
+            return float(value)
+        except (ValueError, TypeError):
+            return 0.0
+
     def __init__(self):
         if not settings.kiwoom_app_key:
             raise ValueError("KIWOOM_APP_KEY environment variable is required")
         if not settings.kiwoom_secret_key:
             raise ValueError("KIWOOM_SECRET_KEY environment variable is required")
+        if not settings.krx_auth_key:
+            raise ValueError("KRX_AUTH_KEY environment variable is required")
 
         auth = KiwoomAuth(
             app_key=settings.kiwoom_app_key,
@@ -27,6 +40,9 @@ class DataFetcher:
         self.kiwoom_client = KiwoomClient(
             token=token.get_token(),
             env="dev",
+        )
+        self.krx_client = KrxClient(
+            auth_key=settings.krx_auth_key,
         )
 
     async def get_basic_data(self, stock_code: str):
@@ -113,38 +129,88 @@ class DataFetcher:
         # TODO: Implement Kiwoom API integration when ready
         return self._generate_mock_data(stock_code, period)
 
-    async def get_foreign_trading(self, stock_code: str) -> Dict[str, Any]:
-        """
-        Fetch foreign trading data for the stock.
+    async def get_kospi_index_series(self) -> List[Dict[str, Any]]:
+        """Return KOSPI index series with name, close_price, fluctuation_rate, trading_value, and transaction_amount."""
+        from datetime import datetime
 
-        Args:
-            stock_code: Korean stock code
+        # Use current date as base_date
+        # base_date = datetime.now().strftime("%Y%m%d")
 
-        Returns:
-            Dict with foreign buy/sell amounts
-        """
-        # For now, use mock data
-        # TODO: Implement Kiwoom API integration
-        # self.kiwoom_client.foreign.get_consecutive_net_buy_sell_status_by_institution_foreigner()
-        return self._generate_mock_foreign_data()
+        try:
+            response = self.krx_client.index.get_kospi(base_date="20250814")
 
-    async def get_kospi_data(self) -> Dict[str, Any]:
-        """Fetch KOSPI index data."""
-        # For now, return mock data since KRX client is not implemented yet
-        import random
+            # Filter for specific KOSPI indices
+            target_indices = ["코스피", "코스피 200", "코스피 200 중소형주", "코스피 200제외 코스피지수"]
+            filtered_data = filter(lambda item: item.index_name in target_indices, response.body.data)
 
-        base_value = 2500.0
-        change = random.uniform(-1.5, 1.5)
-        return {"value": base_value + (base_value * change / 100), "change": change}
+            # Extract data from response using map with lambda
+            index_data = list(
+                map(
+                    lambda item: {
+                        "name": item.index_name,
+                        "close_price": self._safe_float(item.close_price_index),
+                        "fluctuation_rate": self._safe_float(item.fluctuation_rate),
+                        "trading_value": self._safe_float(item.accumulated_trading_value),
+                        "transaction_amount": self._safe_float(item.accumulated_trading_volume),
+                    },
+                    filtered_data,
+                )
+            )
 
-    async def get_kosdaq_data(self) -> Dict[str, Any]:
+            return index_data
+        except Exception:
+            # Fallback to mock data if API call fails
+            return [
+                {
+                    "name": "KOSPI",
+                    "close_price": 2500.0,
+                    "fluctuation_rate": 1.5,
+                    "trading_value": 15000000000.0,
+                    "transaction_amount": 500000000.0,
+                }
+            ]
+
+    async def get_kosdaq_index_series(self) -> List[Dict[str, Any]]:
         """Fetch KOSDAQ index data."""
-        # For now, return mock data since KRX client is not implemented yet
-        import random
 
-        base_value = 850.0
-        change = random.uniform(-2.0, 2.0)
-        return {"value": base_value + (base_value * change / 100), "change": change}
+        # Use current date as base_date
+        # base_date = datetime.now().strftime("%Y%m%d")
+
+        try:
+            # KRX 데이터 집계는 익일 오전 8시에 업데이트
+            # TODO 실시간으로 조회 가능한 방법 찾아서 교체하기
+            response = self.krx_client.index.get_kosdaq(base_date="20250814")
+
+            # Filter for specific KOSDAQ indices
+            target_indices = ["코스닥", "코스닥 150"]
+            filtered_data = filter(lambda item: item.index_name in target_indices, response.body.data)
+
+            # Extract data from response using map with lambda
+            index_data = list(
+                map(
+                    lambda item: {
+                        "name": item.index_name,
+                        "close_price": self._safe_float(item.close_price_index),
+                        "fluctuation_rate": self._safe_float(item.fluctuation_rate),
+                        "trading_value": self._safe_float(item.accumulated_trading_value),
+                        "transaction_amount": self._safe_float(item.accumulated_trading_volume),
+                    },
+                    filtered_data,
+                )
+            )
+
+            return index_data
+        except Exception:
+            # Fallback to mock data if API call fails
+            return [
+                {
+                    "name": "KOSPI",
+                    "close_price": 2500.0,
+                    "fluctuation_rate": 1.5,
+                    "trading_value": 15000000000.0,
+                    "transaction_amount": 500000000.0,
+                }
+            ]
 
     def _generate_mock_data(self, stock_code: str, period: str) -> pd.DataFrame:
         """Generate mock stock data for testing."""
@@ -206,3 +272,36 @@ class DataFetcher:
         sell_amount = random.randint(1000000000, 10000000000)
 
         return {"buy": buy_amount, "sell": sell_amount}
+
+    async def get_trading_trend(self, stock_code: str) -> Dict[str, str]:
+        """
+        Fetch trading trend data for the given stock.
+
+        Args:
+            stock_code: Korean stock code (e.g., "005930" for Samsung)
+
+        Returns:
+            Trading trend data
+        """
+
+        response = self.kiwoom_client.stock_info.get_total_institutional_investor_by_stock(
+            stk_cd=stock_code,
+            strt_dt="20240818",
+            end_dt="20250814",
+            amt_qty_tp="1",
+            trde_tp="0",
+            unit_tp="1",
+        )
+
+        if len(response.body.stk_invsr_orgn_tot) == 0:
+            raise ValueError(f"No trading trend data available for stock code {stock_code}")
+
+        item = response.body.stk_invsr_orgn_tot[0]
+        return {
+            "개인투자자": item.ind_invsr[1:] if item.ind_invsr.startswith("--") else item.ind_invsr,
+            "외국인투자자": item.frgnr_invsr[1:] if item.frgnr_invsr.startswith("--") else item.frgnr_invsr,
+            "기관계": item.orgn[1:] if item.orgn.startswith("--") else item.orgn,
+            "금융투자": item.fnnc_invt[1:] if item.fnnc_invt.startswith("--") else item.fnnc_invt,
+            "투신": item.invtrt[1:] if item.invtrt.startswith("--") else item.invtrt,
+            "연기금": item.penfnd_etc[1:] if item.penfnd_etc.startswith("--") else item.penfnd_etc,
+        }

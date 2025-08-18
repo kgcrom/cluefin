@@ -1,4 +1,5 @@
 import asyncio
+from typing import Any, Dict, List
 
 import click
 import pandas as pd
@@ -42,21 +43,17 @@ async def _analyze_stock(stock_code: str, period: str, chart: bool, ai_analysis:
     # Fetch data
     console.print("[yellow]Fetching stock data...[/yellow]")
 
-    # TODO basic company data
     basic_data = await data_fetcher.get_basic_data(stock_code)
 
     # TODO daily and weekly chart data
     stock_data = await data_fetcher.get_stock_data(stock_code, period)
 
     console.print("[yellow]Fetching foreign trading data...[/yellow]")
-    foreign_data = await data_fetcher.get_foreign_trading(stock_code)
-
-    # TODO 업종 별 투자자 순매수요청,
-    # TODO 업종현재가 요청   // 해당 업종에 돈이 들어오고 있는지 아닌지 판단. 한 기업이 여러 업종에 속한다면??
+    trading_trend_data = await data_fetcher.get_trading_trend(stock_code)
 
     console.print("[yellow]Fetching market indices...[/yellow]")
-    kospi_data = await data_fetcher.get_kospi_data()
-    kosdaq_data = await data_fetcher.get_kosdaq_data()
+    kospi_data = await data_fetcher.get_kospi_index_series()
+    kosdaq_data = await data_fetcher.get_kosdaq_index_series()
 
     # Calculate technical indicators
     console.print("[yellow]Calculating technical indicators...[/yellow]")
@@ -66,7 +63,7 @@ async def _analyze_stock(stock_code: str, period: str, chart: bool, ai_analysis:
     _display_company_info(stock_code, basic_data)
     _display_stock_info(stock_code, stock_data)
     _display_market_indices(kospi_data, kosdaq_data)
-    _display_foreign_trading(foreign_data)
+    _display_trading_trend(trading_trend_data)
     _display_technical_indicators(indicators)
 
     # Display chart if requested
@@ -78,7 +75,7 @@ async def _analyze_stock(stock_code: str, period: str, chart: bool, ai_analysis:
     if ai_analysis and settings.openai_api_key:
         console.print("\n[yellow]Generating AI analysis...[/yellow]")
         ai_analyzer = AIAnalyzer()
-        analysis = await ai_analyzer.analyze_stock(stock_code, stock_data, indicators, foreign_data)
+        analysis = await ai_analyzer.analyze_stock(stock_code, stock_data, indicators)
         if analysis is None:
             raise Exception("Error analysis stock")
 
@@ -206,36 +203,95 @@ def _display_stock_info(stock_code: str, data):
     console.print(table)
 
 
-def _display_market_indices(kospi_data, kosdaq_data):
+def _display_market_indices(kospi_data: List[Dict[str, Any]], kosdaq_data: List[Dict[str, Any]]):
     """Display KOSPI and KOSDAQ indices."""
     table = Table(title="Market Indices")
     table.add_column("Index", style="cyan")
-    table.add_column("Value", style="magenta")
-    table.add_column("Change", style="green")
+    table.add_column("Close Price", style="magenta")
+    table.add_column("Change %", style="green")
+    table.add_column("Trading Value", style="yellow")
+    table.add_column("Transaction Amount", style="blue")
 
+    # Display KOSPI data
     if kospi_data:
-        table.add_row("KOSPI", f"{kospi_data['value']:.2f}", f"{kospi_data['change']:+.2f}%")
+        for item in kospi_data:
+            # Format change percentage with color
+            change_pct = item.get("fluctuation_rate", 0)
+            if change_pct > 0:
+                change_color = "green"
+                change_str = f"+{change_pct:.2f}%"
+            elif change_pct < 0:
+                change_color = "red"
+                change_str = f"{change_pct:.2f}%"
+            else:
+                change_color = "white"
+                change_str = f"{change_pct:.2f}%"
+
+            # Format large numbers with commas and units
+            trading_value = item.get("trading_value", 0)
+            transaction_amount = item.get("transaction_amount", 0)
+
+            # Convert to billions for better readability
+            trading_value_formatted = f"{trading_value / 1_000_000_000:.1f}B"
+            transaction_amount_formatted = f"{transaction_amount / 1_000_000:.1f}M"
+
+            table.add_row(
+                item.get("name", "KOSPI"),
+                f"{item.get('close_price', 0):.2f}",
+                f"[{change_color}]{change_str}[/{change_color}]",
+                f"[yellow]{trading_value_formatted}[/yellow]",
+                f"[blue]{transaction_amount_formatted}[/blue]",
+            )
+
+    # Display KOSDAQ data
     if kosdaq_data:
-        table.add_row("KOSDAQ", f"{kosdaq_data['value']:.2f}", f"{kosdaq_data['change']:+.2f}%")
+        for item in kosdaq_data:
+            # Format change percentage with color
+            change_pct = item.get("fluctuation_rate", 0)
+            if change_pct > 0:
+                change_color = "green"
+                change_str = f"+{change_pct:.2f}%"
+            elif change_pct < 0:
+                change_color = "red"
+                change_str = f"{change_pct:.2f}%"
+            else:
+                change_color = "white"
+                change_str = f"{change_pct:.2f}%"
+
+            # Format large numbers with commas and units
+            trading_value = item.get("trading_value", 0)
+            transaction_amount = item.get("transaction_amount", 0)
+
+            # Convert to billions for better readability
+            trading_value_formatted = f"{trading_value / 1_000_000_000:.1f}B"
+            transaction_amount_formatted = f"{transaction_amount / 1_000_000:.1f}M"
+
+            table.add_row(
+                item.get("name", "KOSDAQ"),
+                f"{item.get('close_price', 0):.2f}",
+                f"[{change_color}]{change_str}[/{change_color}]",
+                f"[yellow]{trading_value_formatted}[/yellow]",
+                f"[blue]{transaction_amount_formatted}[/blue]",
+            )
 
     console.print(table)
 
 
-def _display_foreign_trading(foreign_data):
-    """Display foreign trading information."""
-    if not foreign_data:
+def _display_trading_trend(trading_trend_data):
+    """Display trading trend information."""
+    if not trading_trend_data:
         return
 
-    table = Table(title="Foreign Trading")
-    table.add_column("Type", style="cyan")
-    table.add_column("Amount", style="magenta")
+    table = Table(title="Trading Trend (Last year)")
+    table.add_column("Investor Type", style="cyan")
+    table.add_column("Net Amount", style="magenta")
 
-    table.add_row("Foreign Buy", format_currency(foreign_data.get("buy", 0)))
-    table.add_row("Foreign Sell", format_currency(foreign_data.get("sell", 0)))
-    net = foreign_data.get("buy", 0) - foreign_data.get("sell", 0)
-    net_str = format_currency(abs(net))
-    net_str = f"+{net_str[1:]}" if net >= 0 else f"-{net_str[1:]}"
-    table.add_row("Net Foreign", net_str)
+    for investor_type, amount in trading_trend_data.items():
+        # Format amount with proper currency formatting
+        formatted_amount = (
+            format_currency(float(amount)) if amount and str(amount).replace("-", "").replace("+", "").isdigit() else str(amount)
+        )
+        table.add_row(investor_type, formatted_amount)
 
     console.print(table)
 
