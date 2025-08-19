@@ -33,6 +33,10 @@ class RankingInfoModule(BaseAPIModule):
         # Use specialized formatter for ranking data
         self.formatter = RankingDataFormatter()
 
+    def get_client_attribute_name(self) -> str:
+        """Get the client attribute name for ranking info APIs."""
+        return "rank_info"
+
     def get_api_category(self) -> APICategory:
         """
         Get the API category configuration for ranking information.
@@ -139,7 +143,7 @@ class RankingInfoModule(BaseAPIModule):
                             korean_name="시간(분)",
                             param_type="text",
                             required=False,
-                            validation=r"^\d+$",
+                            validation=r"^\d{2}$",
                             choices=None,
                         )
                     ],

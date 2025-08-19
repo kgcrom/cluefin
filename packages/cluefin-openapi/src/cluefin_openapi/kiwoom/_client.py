@@ -101,12 +101,6 @@ class Client(object):
         return DomesticChart(self)
 
     @property
-    def credit_order(self):
-        from ._domestic_credit_order import DomesticCreditOrder
-
-        return DomesticCreditOrder(self)
-
-    @property
     def etf(self):
         from ._domestic_etf import DomesticETF
 

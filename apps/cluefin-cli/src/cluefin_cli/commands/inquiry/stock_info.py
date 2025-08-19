@@ -33,6 +33,10 @@ class StockInfoModule(BaseAPIModule):
         # Use specialized formatter for stock data
         self.formatter = StockDataFormatter()
 
+    def get_client_attribute_name(self) -> str:
+        """Get the client attribute name for stock info APIs."""
+        return "stock_info"
+
     def get_api_category(self) -> APICategory:
         """
         Get the API category configuration for stock information.

@@ -51,7 +51,7 @@ def _create_kiwoom_client() -> KiwoomClient:
 
 @click.command()
 @click.pass_context
-def inquiry(ctx, mock: bool):
+def inquiry(ctx):
     """
     Interactive stock inquiry tool for Korean financial markets.
 
@@ -73,7 +73,6 @@ def inquiry(ctx, mock: bool):
     \b
     Examples:
     cluefin inquiry           # Start interactive inquiry session
-    cluefin inquiry --mock    # Run in mock mode for testing
     """
     # Display welcome message
     console.print()
@@ -84,16 +83,12 @@ def inquiry(ctx, mock: bool):
         )
     )
 
-    if mock:
-        console.print("[yellow]🧪 Mock mode enabled - No API calls will be made[/yellow]\n")
-
     try:
-        # Initialize Kiwoom client (unless in mock mode)
+        # Initialize Kiwoom client
         client = None
-        if not mock:
-            console.print("[yellow]🔌 Kiwoom API 클라이언트를 초기화하는 중...[/yellow]")
-            client = _create_kiwoom_client()
-            console.print("[green]✅ API 클라이언트 초기화 완료[/green]\n")
+        console.print("[yellow]🔌 Kiwoom API 클라이언트를 초기화하는 중...[/yellow]")
+        client = _create_kiwoom_client()
+        console.print("[green]✅ API 클라이언트 초기화 완료[/green]\n")
 
         # Initialize and run menu controller
         menu_controller = MenuController(client)

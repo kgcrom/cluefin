@@ -34,6 +34,10 @@ class SectorInfoModule(BaseAPIModule):
         # Use specialized formatter for sector data
         self.formatter = SectorDataFormatter()
 
+    def get_client_attribute_name(self) -> str:
+        """Get the client attribute name for sector info APIs."""
+        return "sector"
+
     def get_api_category(self) -> APICategory:
         """
         Get the API category configuration for sector information.

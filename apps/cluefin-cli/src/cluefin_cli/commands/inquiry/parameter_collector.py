@@ -114,7 +114,8 @@ class BaseParameterCollector:
             raise ValueError(f"No choices defined for select parameter: {param_config.name}")
 
         # Create choices list with proper type handling
-        choices: List[tuple[str, Optional[str]]] = [(label, value) for value, label in param_config.choices]
+        # param_config.choices is already in (label, value) format
+        choices: List[tuple[str, Optional[str]]] = [(label, value) for label, value in param_config.choices]
         if not required:
             choices.insert(0, ("건너뛰기", None))
 

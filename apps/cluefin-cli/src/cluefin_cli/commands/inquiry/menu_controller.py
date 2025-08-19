@@ -32,7 +32,7 @@ class MenuController:
                 console.print("[bold cyan]📊 Cluefin 주식 조회 시스템 📊[/bold cyan]")
                 console.print("[bold green]─" * 60 + "[/bold green]")
                 console.print("[dim]한국 금융시장 데이터를 조회할 수 있습니다.[/dim]")
-                console.print("[dim]팩: Ctrl+C로 언제든지 종료할 수 있습니다.[/dim]\n")
+                console.print("[dim]팁: Ctrl+C로 언제든지 종료할 수 있습니다.[/dim]\n")
 
                 questions = [
                     inquirer.List(

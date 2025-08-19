@@ -16,7 +16,7 @@ class ParameterConfig(BaseModel):
     korean_name: str = Field(..., description="Korean display name shown to users")
     param_type: Literal["select", "text", "date"] = Field(..., description="Type of input collection method")
     choices: Optional[List[Tuple[str, str]]] = Field(
-        None, description="List of (value, label) tuples for select type parameters"
+        None, description="List of (label, value) tuples for select type parameters"
     )
     validation: Optional[str] = Field(None, description="Validation pattern or rule for text inputs")
     required: bool = Field(True, description="Whether this parameter is required")

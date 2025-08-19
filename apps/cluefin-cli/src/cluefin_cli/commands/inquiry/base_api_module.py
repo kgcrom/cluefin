@@ -58,6 +58,21 @@ class BaseAPIModule(ABC):
         """
         pass
 
+    @abstractmethod
+    def get_client_attribute_name(self) -> str:
+        """
+        Get the client attribute name for this module.
+        
+        This is used to access the correct API client attribute:
+        - ranking_info -> 'rank_info'  
+        - stock_info -> 'stock_info'
+        - sector_info -> 'sector'
+
+        Returns:
+            The client attribute name as string
+        """
+        pass
+
     def show_api_menu(self) -> Optional[str]:
         """
         Display available APIs for this category and get user selection.
@@ -191,10 +206,15 @@ class BaseAPIModule(ABC):
             try:
                 logger.info(f"Executing API {api_config.api_method} (attempt {attempt + 1})")
 
-                # Get the API method from client
-                api_method = getattr(self.client, api_config.api_method, None)
+                # Get the correct client attribute and then the API method
+                client_attr_name = self.get_client_attribute_name()
+                client_attr = getattr(self.client, client_attr_name, None)
+                if not client_attr:
+                    raise AttributeError(f"Client attribute '{client_attr_name}' not found on client")
+
+                api_method = getattr(client_attr, api_config.api_method, None)
                 if not api_method:
-                    raise AttributeError(f"API method '{api_config.api_method}' not found on client")
+                    raise AttributeError(f"API method '{api_config.api_method}' not found on client.{client_attr_name}")
 
                 # Execute the API call
                 result = api_method(**params)
