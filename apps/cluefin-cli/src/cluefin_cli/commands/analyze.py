@@ -7,8 +7,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from cluefin_cli.analysis.ai_analyzer import AIAnalyzer
-from cluefin_cli.analysis.indicators import TechnicalAnalyzer
+from cluefin_cli.commands.analysis.ai_analyzer import AIAnalyzer
+from cluefin_cli.commands.analysis.indicators import TechnicalAnalyzer
 from cluefin_cli.config.settings import settings
 from cluefin_cli.data.fetcher import DataFetcher
 from cluefin_cli.display.charts import ChartRenderer
