@@ -2,7 +2,7 @@
 
 import unicodedata
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Union
 
 from rich import box
 from rich.align import Align
@@ -11,6 +11,9 @@ from rich.panel import Panel
 from rich.style import Style
 from rich.table import Table
 from rich.text import Text
+
+if TYPE_CHECKING:
+    from .config_models import APIConfig
 
 
 class DisplayFormatter:
@@ -333,33 +336,381 @@ class DisplayFormatter:
 class RankingDataFormatter(DisplayFormatter):
     """Specialized formatter for ranking API responses."""
 
-    def format_ranking_data(self, data: Any, api_name: str) -> None:
+    def format_ranking_data(self, data: Any, api_config: "APIConfig") -> None:
         """
         Format and display ranking data with volume and price formatting.
 
         Args:
             data: API response data
-            api_name: Name of the API for context
+            api_config: APIConfig object containing API metadata
         """
-        if not data or not hasattr(data, "output") or not data.output:
+        if not data:
             self.display_error("조회된 데이터가 없습니다.", "데이터 없음")
             return
 
-        # Get the output data
-        output_data = data.output
-        if isinstance(output_data, list) and len(output_data) == 0:
-            self.display_error("조회된 데이터가 없습니다.", "데이터 없음")
-            return
+        # Route to specific formatter based on API configuration
+        api_name = api_config.name
 
-        # Handle different ranking API response formats
-        if "거래량" in api_name:
-            self._format_volume_ranking(output_data, api_name)
-        elif "거래대금" in api_name:
-            self._format_trading_value_ranking(output_data, api_name)
-        elif "외인" in api_name or "외국인" in api_name:
-            self._format_foreign_ranking(output_data, api_name)
+        if api_name == "rapidly_increasing_trading_volume":
+            self._format_rapidly_increasing_trading_volume(data, api_config.korean_name)
+        elif api_name == "current_day_trading_volume_top":
+            self._format_current_day_trading_volume(data, api_config.korean_name)
+        elif api_name == "previous_day_trading_volume_top":
+            self._format_previous_day_trading_volume(data, api_config.korean_name)
+        elif api_name == "trading_value_top":
+            self._format_trading_value_top(data, api_config.korean_name)
+        elif api_name == "foreign_period_trading_top":
+            self._format_foreign_period_trading(data, api_config.korean_name)
+        elif api_name == "foreign_consecutive_trading_top":
+            self._format_foreign_consecutive_trading(data, api_config.korean_name)
+        elif api_name == "foreign_institutional_trading_top":
+            self._format_foreign_institutional_trading(data, api_config.korean_name)
         else:
-            self._format_generic_ranking(output_data, api_name)
+            # Fallback to generic formatting
+            self._format_generic_ranking(output_data, api_config.korean_name)
+
+    def _format_rapidly_increasing_trading_volume(self, data: Any, title: str) -> None:
+        """Format rapidly increasing trading volume data."""
+        headers = ["순위", "종목명", "종목코드", "현재가", "등락률", "이전거래량", "현재거래량", "급증량", "급증률"]
+        rows = []
+
+        # Access the trde_qty_sdnin array from the response
+        items = []
+        if hasattr(data, "trde_qty_sdnin"):
+            items = data.trde_qty_sdnin
+        elif isinstance(data, list):
+            items = data
+        else:
+            # Fallback to generic formatting
+            self._format_generic_ranking(data, title)
+            return
+
+        for i, item in enumerate(items[:20], 1):  # Show top 20
+            try:
+                # Extract fields based on DomesticRankInfoRapidlyIncreasingTradingVolumeItem
+                stock_name = getattr(item, "stk_nm", "-")
+                stock_code = getattr(item, "stk_cd", "-")
+                current_price = getattr(item, "cur_prc", "0")
+                change_rate = getattr(item, "flu_rt", "0")
+                prev_volume = getattr(item, "prev_trde_qty", "0")
+                current_volume = getattr(item, "now_trde_qty", "0")
+                increase_qty = getattr(item, "sdnin_qty", "0")
+                increase_rate = getattr(item, "sdnin_rt", "0")
+
+                rows.append([
+                    str(i),
+                    stock_name,
+                    stock_code,
+                    self.format_number(current_price, "price"),
+                    self.format_number(change_rate, "percentage"),
+                    self.format_number(prev_volume, "volume"),
+                    self.format_number(current_volume, "volume"),
+                    self.format_number(increase_qty, "volume"),
+                    self.format_number(increase_rate, "percentage"),
+                ])
+            except Exception:
+                continue
+
+        if rows:
+            self.display_table(headers, rows, f"🚀 {title}")
+        else:
+            self.display_error("데이터 형식을 인식할 수 없습니다.", "형식 오류")
+
+    def _format_current_day_trading_volume(self, data: Any, title: str) -> None:
+        """Format current day trading volume top data."""
+        headers = ["순위", "종목명", "종목코드", "현재가", "등락률", "거래량", "거래회전율", "거래대금", "장중거래량"]
+        rows = []
+
+        # Access the tdy_trde_qty_upper array from the response
+        items = []
+        if hasattr(data, "tdy_trde_qty_upper"):
+            items = data.tdy_trde_qty_upper
+        elif isinstance(data, list):
+            items = data
+        else:
+            # Fallback to generic formatting
+            self._format_generic_ranking(data, title)
+            return
+
+        for i, item in enumerate(items[:20], 1):  # Show top 20
+            try:
+                # Extract fields based on DomesticRankInfoTopCurrentDayTradingVolumeItem
+                stock_name = getattr(item, "stk_nm", "-")
+                stock_code = getattr(item, "stk_cd", "-")
+                current_price = getattr(item, "cur_prc", "0")
+                change_rate = getattr(item, "flu_rt", "0")
+                trading_volume = getattr(item, "trde_qty", "0")
+                trading_turnover = getattr(item, "trde_tern_rt", "0")
+                trading_amount = getattr(item, "trde_amt", "0")
+                intraday_volume = getattr(item, "opmr_trde_qty", "0")
+
+                rows.append([
+                    str(i),
+                    stock_name,
+                    stock_code,
+                    self.format_number(current_price, "price"),
+                    self.format_number(change_rate, "percentage"),
+                    self.format_number(trading_volume, "volume"),
+                    self.format_number(trading_turnover, "percentage"),
+                    self.format_number(trading_amount, "volume"),
+                    self.format_number(intraday_volume, "volume"),
+                ])
+            except Exception:
+                continue
+
+        if rows:
+            self.display_table(headers, rows, f"📊 {title}")
+        else:
+            self.display_error("데이터 형식을 인식할 수 없습니다.", "형식 오류")
+
+    def _format_previous_day_trading_volume(self, data: Any, title: str) -> None:
+        """Format previous day trading volume top data."""
+        headers = ["순위", "종목명", "종목코드", "현재가", "전일대비", "거래량"]
+        rows = []
+
+        # Access the pred_trde_qty_upper array from the response
+        items = []
+        if hasattr(data, "pred_trde_qty_upper"):
+            items = data.pred_trde_qty_upper
+        elif isinstance(data, list):
+            items = data
+        else:
+            # Fallback to generic formatting
+            self._format_generic_ranking(data, title)
+            return
+
+        for i, item in enumerate(items[:20], 1):  # Show top 20
+            try:
+                # Extract fields based on DomesticRankInfoTopPreviousDayTradingVolumeItem
+                stock_name = getattr(item, "stk_nm", "-")
+                stock_code = getattr(item, "stk_cd", "-")
+                current_price = getattr(item, "cur_prc", "0")
+                prev_diff = getattr(item, "pred_pre", "0")
+                trading_volume = getattr(item, "trde_qty", "0")
+
+                rows.append([
+                    str(i),
+                    stock_name,
+                    stock_code,
+                    self.format_number(current_price, "price"),
+                    self.format_number(prev_diff, "price"),
+                    self.format_number(trading_volume, "volume"),
+                ])
+            except Exception:
+                continue
+
+        if rows:
+            self.display_table(headers, rows, f"📉 {title}")
+        else:
+            self.display_error("데이터 형식을 인식할 수 없습니다.", "형식 오류")
+
+    def _format_trading_value_top(self, data: Any, title: str) -> None:
+        """Format trading value top data with ranking changes."""
+        headers = ["현재순위", "전일순위", "변동", "종목명", "종목코드", "현재가", "등락률", "거래대금", "현재거래량"]
+        rows = []
+
+        # Access the trde_prica_upper array from the response
+        items = []
+        if hasattr(data, "trde_prica_upper"):
+            items = data.trde_prica_upper
+        elif isinstance(data, list):
+            items = data
+        else:
+            # Fallback to generic formatting
+            self._format_generic_ranking(data, title)
+            return
+
+        for item in items[:20]:  # Show top 20
+            try:
+                # Extract fields based on DomesticRankInfoTopTransactionValueItem
+                now_rank = getattr(item, "now_rank", "0")
+                prev_rank = getattr(item, "pred_rank", "0")
+                stock_name = getattr(item, "stk_nm", "-")
+                stock_code = getattr(item, "stk_cd", "-")
+                current_price = getattr(item, "cur_prc", "0")
+                change_rate = getattr(item, "flu_rt", "0")
+                trading_value = getattr(item, "trde_prica", "0")
+                current_volume = getattr(item, "now_trde_qty", "0")
+
+                # Calculate rank change
+                rank_change = ""
+                try:
+                    now_rank_int = int(now_rank)
+                    prev_rank_int = int(prev_rank)
+                    if prev_rank_int == 0:
+                        rank_change = "신규"
+                    else:
+                        diff = prev_rank_int - now_rank_int
+                        if diff > 0:
+                            rank_change = f"↑{diff}"
+                        elif diff < 0:
+                            rank_change = f"↓{abs(diff)}"
+                        else:
+                            rank_change = "-"
+                except (ValueError, TypeError):
+                    rank_change = "-"
+
+                rows.append([
+                    now_rank,
+                    prev_rank if prev_rank != "0" else "-",
+                    rank_change,
+                    stock_name,
+                    stock_code,
+                    self.format_number(current_price, "price"),
+                    self.format_number(change_rate, "percentage"),
+                    self.format_number(trading_value, "volume"),
+                    self.format_number(current_volume, "volume"),
+                ])
+            except Exception:
+                continue
+
+        if rows:
+            self.display_table(headers, rows, f"💵 {title}")
+        else:
+            self.display_error("데이터 형식을 인식할 수 없습니다.", "형식 오류")
+
+    def _format_foreign_period_trading(self, data: Any, title: str) -> None:
+        """Format foreign period trading top data."""
+        headers = ["순위", "종목명", "종목코드", "현재가", "전일대비", "거래량", "순매수량", "취득가능주식수"]
+        rows = []
+
+        # Access the for_dt_trde_upper array from the response
+        items = []
+        if hasattr(data, "for_dt_trde_upper"):
+            items = data.for_dt_trde_upper
+        elif isinstance(data, list):
+            items = data
+        else:
+            # Fallback to generic formatting
+            self._format_generic_ranking(data, title)
+            return
+
+        for item in items[:20]:  # Show top 20
+            try:
+                # Extract fields based on DomesticRankInfoTopForeignerPeriodTradingItem
+                rank = getattr(item, "rank", "0")
+                stock_name = getattr(item, "stk_nm", "-")
+                stock_code = getattr(item, "stk_cd", "-")
+                current_price = getattr(item, "cur_prc", "0")
+                prev_diff = getattr(item, "pred_pre", "0")
+                trading_volume = getattr(item, "trde_qty", "0")
+                net_buy_qty = getattr(item, "netprps_qty", "0")
+                acquirable_shares = getattr(item, "gain_pos_stkcnt", "0")
+
+                rows.append([
+                    rank,
+                    stock_name,
+                    stock_code,
+                    self.format_number(current_price, "price"),
+                    self.format_number(prev_diff, "price"),
+                    self.format_number(trading_volume, "volume"),
+                    self.format_number(net_buy_qty, "volume"),
+                    self.format_number(acquirable_shares, "volume"),
+                ])
+            except Exception:
+                continue
+
+        if rows:
+            self.display_table(headers, rows, f"🌍 {title}")
+        else:
+            self.display_error("데이터 형식을 인식할 수 없습니다.", "형식 오류")
+
+    def _format_foreign_consecutive_trading(self, data: Any, title: str) -> None:
+        """Format foreign consecutive trading top data with daily breakdown."""
+        headers = ["순위", "종목명", "종목코드", "현재가", "전일대비", "D-1", "D-2", "D-3", "합계", "한도소진율"]
+        rows = []
+
+        # Access the for_cont_nettrde_upper array from the response
+        items = []
+        if hasattr(data, "for_cont_nettrde_upper"):
+            items = data.for_cont_nettrde_upper
+        elif isinstance(data, list):
+            items = data
+        else:
+            # Fallback to generic formatting
+            self._format_generic_ranking(data, title)
+            return
+
+        for i, item in enumerate(items[:20], 1):  # Show top 20
+            try:
+                # Extract fields based on DomesticRankInfoTopConsecutiveNetBuySellByForeignersItem
+                stock_name = getattr(item, "stk_nm", "-")
+                stock_code = getattr(item, "stk_cd", "-")
+                current_price = getattr(item, "cur_prc", "0")
+                prev_diff = getattr(item, "pred_pre", "0")
+                dm1 = getattr(item, "dm1", "0")
+                dm2 = getattr(item, "dm2", "0")
+                dm3 = getattr(item, "dm3", "0")
+                total = getattr(item, "tot", "0")
+                limit_exhaustion_rate = getattr(item, "limit_exh_rt", "0")
+
+                rows.append([
+                    str(i),
+                    stock_name,
+                    stock_code,
+                    self.format_number(current_price, "price"),
+                    self.format_number(prev_diff, "price"),
+                    self.format_number(dm1, "volume"),
+                    self.format_number(dm2, "volume"),
+                    self.format_number(dm3, "volume"),
+                    self.format_number(total, "volume"),
+                    self.format_number(limit_exhaustion_rate, "percentage"),
+                ])
+            except Exception:
+                continue
+
+        if rows:
+            self.display_table(headers, rows, f"🔄 {title}")
+        else:
+            self.display_error("데이터 형식을 인식할 수 없습니다.", "형식 오류")
+
+    def _format_foreign_institutional_trading(self, data: Any, title: str) -> None:
+        """Format foreign institutional trading top data with foreign/institutional breakdown."""
+        headers = ["순위", "외인종목", "외인매도대금", "외인매수대금", "기관종목", "기관매도대금", "기관매수대금"]
+        rows = []
+
+        # Access the frgnr_orgn_trde_upper array from the response
+        items = []
+        if hasattr(data, "frgnr_orgn_trde_upper"):
+            items = data.frgnr_orgn_trde_upper
+        elif isinstance(data, list):
+            items = data
+        else:
+            # Fallback to generic formatting
+            self._format_generic_ranking(data, title)
+            return
+
+        for i, item in enumerate(items[:15], 1):  # Show top 15 (more columns)
+            try:
+                # Extract fields based on DomesticRankInfoTopForeignerLimitExhaustionRateItem
+                # Foreign data
+                for_sell_stock = getattr(item, "for_netslmt_stk_nm", "-")
+                for_sell_amt = getattr(item, "for_netslmt_amt", "0")
+                for_buy_stock = getattr(item, "for_netprps_stk_nm", "-")
+                for_buy_amt = getattr(item, "for_netprps_amt", "0")
+
+                # Institutional data
+                orgn_sell_stock = getattr(item, "orgn_netslmt_stk_nm", "-")
+                orgn_sell_amt = getattr(item, "orgn_netslmt_amt", "0")
+                orgn_buy_stock = getattr(item, "orgn_netprps_stk_nm", "-")
+                orgn_buy_amt = getattr(item, "orgn_netprps_amt", "0")
+
+                rows.append([
+                    str(i),
+                    for_sell_stock if for_sell_stock != for_buy_stock else f"{for_sell_stock}(양)",
+                    self.format_number(for_sell_amt, "volume"),
+                    self.format_number(for_buy_amt, "volume"),
+                    orgn_sell_stock if orgn_sell_stock != orgn_buy_stock else f"{orgn_sell_stock}(양)",
+                    self.format_number(orgn_sell_amt, "volume"),
+                    self.format_number(orgn_buy_amt, "volume"),
+                ])
+            except Exception:
+                continue
+
+        if rows:
+            self.display_table(headers, rows, f"🏛️ {title}")
+        else:
+            self.display_error("데이터 형식을 인식할 수 없습니다.", "형식 오류")
 
     def _format_volume_ranking(self, data: Any, title: str) -> None:
         """Format volume-based ranking data."""

@@ -149,9 +149,9 @@ class RankingInfoModule(BaseAPIModule):
                     ],
                 ),
                 APIConfig(
-                    name="current_day_trading_volume_top",
+                    name="top_current_day_trading_volume",
                     korean_name="📊 당일거래량상위요청",
-                    api_method="get_current_day_trading_volume_top",
+                    api_method="get_top_current_day_trading_volume",
                     description="당일 거래량 상위 종목들을 조회합니다.",
                     required_params=[
                         ParameterConfig(
@@ -505,4 +505,4 @@ class RankingInfoModule(BaseAPIModule):
             result: The API response data
             api_config: Configuration for the API that was called
         """
-        self.formatter.format_ranking_data(result, api_config.korean_name)
+        self.formatter.format_ranking_data(result, api_config)

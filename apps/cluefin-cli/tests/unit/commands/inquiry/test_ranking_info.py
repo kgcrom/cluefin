@@ -19,7 +19,7 @@ class TestRankingInfoModule:
         """Create a mock Kiwoom client with ranking API methods."""
         client = Mock()
         client.get_rapidly_increasing_trading_volume = Mock(return_value={"output": []})
-        client.get_current_day_trading_volume_top = Mock(return_value={"output": []})
+        client.get_top_current_day_trading_volume = Mock(return_value={"output": []})
         client.get_previous_day_trading_volume_top = Mock(return_value={"output": []})
         client.get_trading_value_top = Mock(return_value={"output": []})
         client.get_foreign_period_trading_top = Mock(return_value={"output": []})
