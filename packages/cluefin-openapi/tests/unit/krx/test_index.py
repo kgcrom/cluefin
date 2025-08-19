@@ -68,7 +68,7 @@ def test_get_krx(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/idx/krx_dd_trd.json?basDd={base_date}",
+            f"https://data-dbg.krx.co.kr/svc/apis/idx/krx_dd_trd.json?basDd={base_date}",
             status_code=200,
             json=expected_data,
         )
@@ -130,7 +130,7 @@ def test_get_kospi(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/idx/kospi_dd_trd.json?basDd={base_date}",
+            f"https://data-dbg.krx.co.kr/svc/apis/idx/kospi_dd_trd.json?basDd={base_date}",
             status_code=200,
             json=expected_data,
         )
@@ -192,7 +192,7 @@ def test_get_kosdaq(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/idx/kosdaq_dd_trd.json?basDd={base_date}",
+            f"https://data-dbg.krx.co.kr/svc/apis/idx/kosdaq_dd_trd.json?basDd={base_date}",
             status_code=200,
             json=expected_data,
         )
@@ -263,7 +263,7 @@ def test_get_bond(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/idx/bon_dd_trd.json?basDd={base_date}",
+            f"https://data-dbg.krx.co.kr/svc/apis/idx/bon_dd_trd.json?basDd={base_date}",
             status_code=200,
             json=expected_data,
         )
@@ -316,7 +316,7 @@ def test_get_derivatives(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/idx/drvprod_dd_trd.json?basDd={base_date}",
+            f"https://data-dbg.krx.co.kr/svc/apis/idx/drvprod_dd_trd.json?basDd={base_date}",
             status_code=200,
             json=expected_data,
         )

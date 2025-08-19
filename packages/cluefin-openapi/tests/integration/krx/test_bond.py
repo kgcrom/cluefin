@@ -16,7 +16,7 @@ from cluefin_openapi.krx._client import Client
 def client() -> Client:
     time.sleep(1)
     dotenv.load_dotenv(dotenv_path=".env.test")
-    return Client(auth_key=os.getenv("KRX_AUTH_KEY"))
+    return Client(auth_key=os.getenv("KRX_AUTH_KEY") or "")
 
 
 def test_get_korea_treasury_bond_market(client: Client):

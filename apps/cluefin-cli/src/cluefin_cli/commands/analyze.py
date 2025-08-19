@@ -69,6 +69,7 @@ async def _analyze_stock(stock_code: str, chart: bool, ai_analysis: bool):
         console.print("\n[bold cyan]Price Chart with Technical Indicators[/bold cyan]")
         chart_renderer.render_stock_chart(stock_data, indicators)
 
+    # TODO: implement ai analysis
     # AI analysis if requested
     if ai_analysis and settings.openai_api_key:
         console.print("\n[yellow]Generating AI analysis...[/yellow]")

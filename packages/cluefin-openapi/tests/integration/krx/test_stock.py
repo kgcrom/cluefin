@@ -21,7 +21,7 @@ from cluefin_openapi.krx._stock_types import (
 def client() -> Client:
     time.sleep(1)
     dotenv.load_dotenv(dotenv_path=".env.test")
-    return Client(auth_key=os.getenv("KRX_AUTH_KEY"))
+    return Client(auth_key=os.getenv("KRX_AUTH_KEY", ""))
 
 
 def test_get_kospi(client: Client):

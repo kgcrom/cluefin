@@ -76,7 +76,7 @@ def test_get_trading_of_futures_exclude_stock(client: Client):
         ]
     }
     with requests_mock.Mocker() as m:
-        m.get("http://data-dbg.krx.co.kr/svc/apis/drv/fut_bydd_trd.json", status_code=200, json=expected_data)
+        m.get("https://data-dbg.krx.co.kr/svc/apis/drv/fut_bydd_trd.json", status_code=200, json=expected_data)
 
         response = client.derivatives.get_trading_of_futures_exclude_stock("20250721")
         assert isinstance(response.body, DerivativesTradingOfFuturesExcludeStock)
@@ -145,7 +145,7 @@ def teset_get_trading_of_kospi_futures(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/drv/stk_bydd_trd.json?basDd={base_date}",
+            f"https://data-dbg.krx.co.kr/svc/apis/drv/stk_bydd_trd.json?basDd={base_date}",
             json=expected_data,
             status_code=200,
         )
@@ -218,7 +218,7 @@ def test_get_trading_of_kosdaq_futures(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/drv/eqkfu_ksq_bydd_trd.json?basDd={base_date}",
+            f"https://data-dbg.krx.co.kr/svc/apis/drv/eqkfu_ksq_bydd_trd.json?basDd={base_date}",
             json=expected_data,
             status_code=200,
         )
@@ -291,7 +291,7 @@ def test_get_trading_of_option_exclude_stock(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/drv/opt_bydd_trd.json?basDd={base_date}",
+            f"https://data-dbg.krx.co.kr/svc/apis/drv/opt_bydd_trd.json?basDd={base_date}",
             json=expected_data,
             status_code=200,
         )
@@ -364,7 +364,7 @@ def test_get_trading_of_kospi_option(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/drv/eqsop_bydd_trd.json?basDd={base_date}",
+            f"https://data-dbg.krx.co.kr/svc/apis/drv/eqsop_bydd_trd.json?basDd={base_date}",
             json=expected_data,
             status_code=200,
         )
@@ -437,7 +437,7 @@ def test_get_trading_of_kosdaq_option(client: Client):
     with requests_mock.Mocker() as m:
         base_date = "20250721"
         m.get(
-            f"http://data-dbg.krx.co.kr/svc/apis/drv/eqkop_bydd_trd.json?basDd={base_date}",
+            f"https://data-dbg.krx.co.kr/svc/apis/drv/eqkop_bydd_trd.json?basDd={base_date}",
             json=expected_data,
             status_code=200,
         )

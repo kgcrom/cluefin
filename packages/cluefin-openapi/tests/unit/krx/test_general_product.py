@@ -47,7 +47,7 @@ def test_get_oil_market(client: Client):
     }
 
     with requests_mock.Mocker() as m:
-        m.get("http://data-dbg.krx.co.kr/svc/apis/gen/oil_bydd_trd.json", status_code=200, json=expected_data)
+        m.get("https://data-dbg.krx.co.kr/svc/apis/gen/oil_bydd_trd.json", status_code=200, json=expected_data)
 
         response = client.general_product.get_oil_market("20250721")
 
@@ -92,7 +92,7 @@ def test_get_gold_market(client: Client):
     }
 
     with requests_mock.Mocker() as m:
-        m.get("http://data-dbg.krx.co.kr/svc/apis/gen/gold_bydd_trd.json", status_code=200, json=expected_data)
+        m.get("https://data-dbg.krx.co.kr/svc/apis/gen/gold_bydd_trd.json", status_code=200, json=expected_data)
 
         response = client.general_product.get_gold_market("20250721")
 
@@ -151,7 +151,7 @@ def test_get_emissions_market(client: Client):
     }
 
     with requests_mock.Mocker() as m:
-        m.get("http://data-dbg.krx.co.kr/svc/apis/gen/ets_bydd_trd.json", status_code=200, json=expected_data)
+        m.get("https://data-dbg.krx.co.kr/svc/apis/gen/ets_bydd_trd.json", status_code=200, json=expected_data)
 
         response = client.general_product.get_emissions_market("20250721")
 
