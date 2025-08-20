@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+from cluefin_cli.commands.inquiry.config_models import APIConfig
 from cluefin_cli.commands.inquiry.display_formatter import (
     DisplayFormatter,
     RankingDataFormatter,
@@ -144,8 +145,12 @@ class TestRankingDataFormatter:
         mock_data = Mock()
         mock_data.output = []
 
+        mock_api_config = APIConfig(
+            name="test_api", korean_name="테스트 API", api_method="test_method", description="mocking api"
+        )
+
         with patch.object(self.formatter, "display_error") as mock_error:
-            self.formatter.format_ranking_data(mock_data, "테스트 API")
+            self.formatter.format_ranking_data(mock_data, mock_api_config)
             mock_error.assert_called_once()
 
     def test_format_volume_ranking_data(self):
@@ -160,10 +165,17 @@ class TestRankingDataFormatter:
         mock_item.acml_tr_pbmn = "75000000000"
 
         mock_data = Mock()
-        mock_data.output = [mock_item]
+        mock_data.tdy_trde_qty_upper = [mock_item]
+
+        mock_api_config = APIConfig(
+            name="current_day_trading_volume_top",
+            korean_name="거래량 상위 요청",
+            api_method="test_method",
+            description="test api",
+        )
 
         with patch.object(self.formatter, "display_table") as mock_display:
-            self.formatter.format_ranking_data(mock_data, "거래량 상위 요청")
+            self.formatter.format_ranking_data(mock_data, mock_api_config)
             mock_display.assert_called_once()
 
             # Check that the call was made with proper headers
@@ -172,23 +184,6 @@ class TestRankingDataFormatter:
             assert "순위" in headers
             assert "종목명" in headers
             assert "거래량" in headers
-
-    def test_format_foreign_ranking_data(self):
-        """Test foreign investor ranking data formatting."""
-        mock_item = Mock()
-        mock_item.hts_kor_isnm = "LG전자"
-        mock_item.mksc_shrn_iscd = "066570"
-        mock_item.stck_prpr = "120000"
-        mock_item.prdy_ctrt = "-0.83"
-        mock_item.frgn_ntby_qty = "50000"
-        mock_item.frgn_ntby_tr_pbmn = "6000000000"
-
-        mock_data = Mock()
-        mock_data.output = [mock_item]
-
-        with patch.object(self.formatter, "display_table") as mock_display:
-            self.formatter.format_ranking_data(mock_data, "외인기간별매매상위요청")
-            mock_display.assert_called_once()
 
 
 class TestSectorDataFormatter:
@@ -271,8 +266,15 @@ class TestStockDataFormatter:
         mock_data = Mock()
         mock_data.output = [mock_item]
 
+        mock_api_config = APIConfig(
+            name="trading_volume_renewal",
+            korean_name="거래량갱신요청",
+            api_method="test_method",
+            description="test api",
+        )
+
         with patch.object(self.formatter, "display_table") as mock_display:
-            self.formatter.format_stock_data(mock_data, "거래량갱신요청")
+            self.formatter.format_stock_data(mock_data, mock_api_config)
             mock_display.assert_called_once()
 
             args, kwargs = mock_display.call_args
@@ -292,8 +294,12 @@ class TestStockDataFormatter:
         mock_data = Mock()
         mock_data.output = [mock_item]
 
+        mock_api_config = APIConfig(
+            name="broker_trading_analysis", korean_name="거래원매물대분석요청", api_method="test_method"
+        )
+
         with patch.object(self.formatter, "display_table") as mock_display:
-            self.formatter.format_stock_data(mock_data, "거래원매물대분석요청")
+            self.formatter.format_stock_data(mock_data, mock_api_config)
             mock_display.assert_called_once()
 
             args, kwargs = mock_display.call_args

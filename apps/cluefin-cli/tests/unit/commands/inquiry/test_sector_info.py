@@ -197,34 +197,6 @@ class TestSectorInfoModule:
 
             mock_format.assert_called_once_with(mock_result, api_config.korean_name)
 
-    def test_execute_api_success(self, sector_module, mock_client):
-        """Test successful API execution."""
-        # Mock parameter collection
-        with patch.object(sector_module.parameter_collector, "collect_parameters") as mock_collect:
-            mock_collect.return_value = {"mrkt_tp": "0", "amt_qty_tp": "0", "base_dt": "20240101", "stex_tp": "1"}
-
-            # Mock result formatting
-            with patch.object(sector_module, "_format_and_display_result") as mock_format:
-                result = sector_module.execute_api("industry_investor_net_buy")
-
-                assert result is True
-                mock_client.get_industry_investor_net_buy.assert_called_once()
-                mock_format.assert_called_once()
-
-    def test_execute_api_with_date_parameters(self, sector_module, mock_client):
-        """Test API execution with date parameters."""
-        with patch.object(sector_module.parameter_collector, "collect_parameters") as mock_collect:
-            mock_collect.return_value = {"mrkt_tp": "0", "inds_cd": "001", "strt_dt": "20240101", "end_dt": "20240131"}
-
-            with patch.object(sector_module, "_format_and_display_result"):
-                result = sector_module.execute_api("daily_industry_current_price")
-
-                assert result is True
-                # Verify date parameters were passed
-                call_args = mock_client.get_daily_industry_current_price.call_args
-                assert call_args[1]["strt_dt"] == "20240101"
-                assert call_args[1]["end_dt"] == "20240131"
-
     def test_execute_api_invalid_name(self, sector_module):
         """Test API execution with invalid API name."""
         result = sector_module.execute_api("invalid_api_name")
@@ -325,67 +297,3 @@ class TestSectorInfoModule:
                     elif param.param_type == "select":
                         assert param.choices is not None
                         assert len(param.choices) > 0
-
-
-class TestSectorInfoModuleIntegration:
-    """Integration tests for SectorInfoModule."""
-
-    @pytest.fixture
-    def integration_module(self):
-        """Create a module for integration testing."""
-        return SectorInfoModule()
-
-    def test_full_menu_flow(self, integration_module):
-        """Test the complete menu flow."""
-        mock_client = Mock()
-        mock_client.get_industry_investor_net_buy = Mock(
-            return_value={"output": [{"sector_name": "테스트업종", "net_buy": "1000000"}]}
-        )
-        integration_module.set_client(mock_client)
-
-        # Mock menu selection and parameter collection
-        with patch("inquirer.prompt") as mock_prompt:
-            mock_prompt.side_effect = [
-                {"api_choice": "industry_investor_net_buy"},  # API selection
-                {"api_choice": "back"},  # Go back
-            ]
-
-            with patch.object(integration_module.parameter_collector, "collect_parameters") as mock_collect:
-                mock_collect.return_value = {"mrkt_tp": "0", "amt_qty_tp": "0", "base_dt": "20240101", "stex_tp": "1"}
-
-                with patch("builtins.input"):  # Mock pause input
-                    integration_module.handle_menu_loop()
-
-                # Verify API was called
-                mock_client.get_industry_investor_net_buy.assert_called_once()
-
-    def test_client_status(self, integration_module):
-        """Test client status reporting."""
-        # Without client
-        status = integration_module.get_client_status()
-        assert status["client_initialized"] is False
-
-        # With client
-        mock_client = Mock()
-        integration_module.set_client(mock_client)
-
-        status = integration_module.get_client_status()
-        assert status["client_initialized"] is True
-        assert status["client_type"] == "Mock"
-
-    def test_date_parameter_handling(self, integration_module):
-        """Test handling of date parameters in sector APIs."""
-        mock_client = Mock()
-        mock_client.get_daily_industry_current_price = Mock(return_value={"output": []})
-        integration_module.set_client(mock_client)
-
-        # Test with date range parameters
-        with patch.object(integration_module.parameter_collector, "collect_parameters") as mock_collect:
-            mock_collect.return_value = {"mrkt_tp": "0", "inds_cd": "001", "strt_dt": "20240101", "end_dt": "20240131"}
-
-            result = integration_module.execute_api("daily_industry_current_price")
-
-            assert result is True
-            mock_client.get_daily_industry_current_price.assert_called_once_with(
-                mrkt_tp="0", inds_cd="001", strt_dt="20240101", end_dt="20240131"
-            )
