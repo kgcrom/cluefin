@@ -5,7 +5,6 @@ This module handles all sector-related APIs (업종) including sector performanc
 investor activity by sector, and sector indices.
 """
 
-from datetime import datetime
 from typing import Any, Optional
 
 from cluefin_openapi.kiwoom import Client as KiwoomClient
@@ -77,7 +76,7 @@ class SectorInfoModule(BaseAPIModule):
                             korean_name="기준일자(YYYYMMDD)",
                             param_type="date",
                             required=True,
-                            validation=r"r^\d{8}$",
+                            validation=r"^\d{8}$",
                             choices=None,
                         ),
                         ParameterConfig(
@@ -213,22 +212,6 @@ class SectorInfoModule(BaseAPIModule):
                             required=True,
                             choices=None,
                         ),
-                        ParameterConfig(
-                            name="strt_dt",
-                            korean_name="시작일자(YYYYMMDD)",
-                            param_type="date",
-                            validation=r"r$\d{8}$",
-                            required=True,
-                            choices=None,
-                        ),
-                        ParameterConfig(
-                            name="end_dt",
-                            korean_name="종료일자(YYYYMMDD)",
-                            param_type="date",
-                            validation=r"r$\d{8}$",
-                            required=True,
-                            choices=None,
-                        ),
                     ],
                 ),
             ],
@@ -242,4 +225,4 @@ class SectorInfoModule(BaseAPIModule):
             result: The API response data
             api_config: Configuration for the API that was called
         """
-        self.formatter.format_sector_data(result, api_config.korean_name)
+        self.formatter.format_sector_data(result, api_config)

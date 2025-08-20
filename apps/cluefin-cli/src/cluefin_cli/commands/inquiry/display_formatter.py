@@ -872,7 +872,7 @@ class RankingDataFormatter(DisplayFormatter):
 class SectorDataFormatter(DisplayFormatter):
     """Specialized formatter for sector API responses."""
 
-    def format_sector_data(self, data: Any, api_name: str) -> None:
+    def format_sector_data(self, data: Any, api_config: "APIConfig") -> None:
         """
         Format and display sector data with percentage and index formatting.
 
@@ -880,49 +880,81 @@ class SectorDataFormatter(DisplayFormatter):
             data: API response data
             api_name: Name of the API for context
         """
-        if not data or not hasattr(data, "output") or not data.output:
+        if not data:
             self.display_error("조회된 데이터가 없습니다.", "데이터 없음")
             return
 
-        output_data = data.output
-        if isinstance(output_data, list) and len(output_data) == 0:
-            self.display_error("조회된 데이터가 없습니다.", "데이터 없음")
-            return
+        api_name = api_config.name
 
         # Handle different sector API response formats
-        if "투자자" in api_name:
-            self._format_investor_sector_data(output_data, api_name)
-        elif "지수" in api_name:
-            self._format_index_data(output_data, api_name)
-        elif "현재가" in api_name:
-            self._format_sector_price_data(output_data, api_name)
+        if api_name == "industry_investor_net_buy":
+            self._format_investor_sector_data(data, api_name)
+        elif api_name == "industry_current_price":
+            self._format_industry_current_price(data, api_name)
+        elif api_name == "industry_price_by_sector":
+            self._format_industry_price_by_sector(data, api_name)
+        elif api_name == "all_industry_index":
+            self._format_all_industry_index(data, api_name)
+        elif api_name == "daily_industry_current_price":
+            self._format_daily_industry_current_price(data, api_name)
         else:
-            self._format_generic_sector_data(output_data, api_name)
+            self._format_generic_sector_data(data, api_name)
 
     def _format_investor_sector_data(self, data: Any, title: str) -> None:
         """Format sector investor data."""
-        headers = ["업종명", "개인순매수", "외국인순매수", "기관순매수", "등락률", "거래대금"]
+        headers = [
+            "업종명",
+            "현재가",
+            "등락률",
+            "거래량",
+            "개인순매수",
+            "외국인순매수",
+            "기관계순매수",
+            "증권순매수",
+            "보험순매수",
+            "투신순매수",
+            "은행순매수",
+            "기금순매수",
+            "기타법인순매수",
+        ]
         rows = []
-
-        items = data if isinstance(data, list) else [data]
+        items = data.body.inds_netprps
 
         for item in items:
             try:
-                sector_name = getattr(item, "bstp_kor_isnm", getattr(item, "upjong_nm", "-"))
-                individual_net = getattr(item, "indv_ntby_tr_pbmn", "0")
-                foreign_net = getattr(item, "frgn_ntby_tr_pbmn", "0")
-                institution_net = getattr(item, "inst_ntby_tr_pbmn", "0")
-                change_rate = getattr(item, "bstp_prdy_ctrt", getattr(item, "ctrt", "0"))
-                trading_value = getattr(item, "tot_tr_pbmn", "0")
+                sector_name = getattr(item, "inds_nm", "-")
+                current_price = getattr(item, "cur_prc", "0")
+                change_rate = getattr(item, "flu_rt", "0")
+                trading_volume = getattr(item, "trde_qty", "0")
+
+                # 주요 투자자별 순매수
+                individual_net = getattr(item, "ind_netprps", "0")
+                foreign_net = getattr(item, "frgnr_netprps", "0")
+                institution_net = getattr(item, "orgn_netprps", "0")
+
+                # 세부 기관별 순매수
+                securities_net = getattr(item, "sc_netprps", "0")
+                insurance_net = getattr(item, "insrnc_netprps", "0")
+                investment_net = getattr(item, "invtrt_netprps", "0")
+                bank_net = getattr(item, "bank_netprps", "0")
+                fund_net = getattr(item, "endw_netprps", "0")
+                other_corp_net = getattr(item, "etc_corp_netprps", "0")
 
                 rows.append(
                     [
                         sector_name,
+                        self.format_number(current_price, "price"),
+                        self.format_number(change_rate, "percentage"),
+                        self.format_number(trading_volume, "volume"),
                         self.format_number(individual_net, "volume"),
                         self.format_number(foreign_net, "volume"),
                         self.format_number(institution_net, "volume"),
-                        self.format_number(change_rate, "percentage"),
-                        self.format_number(trading_value, "volume"),
+                        self.format_number(securities_net, "volume"),
+                        self.format_number(insurance_net, "volume"),
+                        self.format_number(investment_net, "volume"),
+                        self.format_number(bank_net, "volume"),
+                        self.format_number(fund_net, "volume"),
+                        self.format_number(other_corp_net, "volume"),
                     ]
                 )
             except Exception:
@@ -933,73 +965,276 @@ class SectorDataFormatter(DisplayFormatter):
         else:
             self.display_error("데이터 형식을 인식할 수 없습니다.", "형식 오류")
 
-    def _format_index_data(self, data: Any, title: str) -> None:
-        """Format sector index data."""
-        headers = ["업종명", "현재지수", "전일대비", "등락률", "거래량", "거래대금"]
+    def _format_industry_current_price(self, data: Any, title: str) -> None:
+        """Format industry current price data."""
+        headers = [
+            "현재가",
+            "전일대비",
+            "등락률",
+            "거래량",
+            "거래대금",
+            "거래형성종목수",
+            "거래형성비율",
+            "시가",
+            "고가",
+            "저가",
+            "상한",
+            "상승",
+            "보합",
+            "하락",
+            "하한",
+            "52주최고가",
+            "52주최고가일",
+            "52주최고가대비율",
+            "52주최저가",
+            "52주최저가일",
+            "52주최저가대비율",
+        ]
         rows = []
 
-        items = data if isinstance(data, list) else [data]
+        # data.body가 DomesticSectorIndustryCurrentPrice 객체인 경우
+        item = data.body
 
-        for item in items:
-            try:
-                sector_name = getattr(item, "bstp_kor_isnm", getattr(item, "upjong_nm", "-"))
-                current_index = getattr(item, "bstp_nmix_prpr", getattr(item, "idx_prpr", "0"))
-                change_value = getattr(item, "bstp_nmix_prdy_vrss", getattr(item, "prdy_vrss", "0"))
-                change_rate = getattr(item, "bstp_nmix_prdy_ctrt", getattr(item, "prdy_ctrt", "0"))
-                volume = getattr(item, "acml_vol", "0")
-                trading_value = getattr(item, "acml_tr_pbmn", "0")
+        try:
+            row = [
+                self.format_number(getattr(item, "cur_prc", "0"), "price"),
+                self.format_number(getattr(item, "pred_pre", "0"), "price"),
+                self.format_number(getattr(item, "flu_rt", "0"), "percentage"),
+                self.format_number(getattr(item, "trde_qty", "0"), "volume"),
+                self.format_number(getattr(item, "trde_prica", "0"), "volume"),
+                self.format_number(getattr(item, "trde_frmatn_stk_num", "0"), "number"),
+                self.format_number(getattr(item, "trde_frmatn_rt", "0"), "percentage"),
+                self.format_number(getattr(item, "open_pric", "0"), "price"),
+                self.format_number(getattr(item, "high_pric", "0"), "price"),
+                self.format_number(getattr(item, "low_pric", "0"), "price"),
+                self.format_number(getattr(item, "upl", "0"), "number"),
+                self.format_number(getattr(item, "rising", "0"), "number"),
+                self.format_number(getattr(item, "stdns", "0"), "number"),
+                self.format_number(getattr(item, "fall", "0"), "number"),
+                self.format_number(getattr(item, "lst", "0"), "number"),
+                self.format_number(getattr(item, "week52_hgst_pric", "0"), "price"),
+                getattr(item, "week52_hgst_pric_dt", "-"),
+                self.format_number(getattr(item, "week52_hgst_pric_pre_rt", "0"), "percentage"),
+                self.format_number(getattr(item, "week52_lwst_pric", "0"), "price"),
+                getattr(item, "week52_lwst_pric_dt", "-"),
+                self.format_number(getattr(item, "week52_lwst_pric_pre_rt", "0"), "percentage"),
+            ]
+            rows.append(row)
 
-                rows.append(
-                    [
-                        sector_name,
-                        self.format_number(current_index, "price"),
-                        self.format_number(change_value, "price"),
-                        self.format_number(change_rate, "percentage"),
-                        self.format_number(volume, "volume"),
-                        self.format_number(trading_value, "volume"),
-                    ]
-                )
-            except Exception:
-                continue
+            # 시간별 데이터도 있다면 추가로 표시
+            time_data = getattr(item, "inds_cur_prc_tm", [])
+            if time_data:
+                # 시간별 데이터용 별도 테이블
+                time_headers = ["시간", "현재가", "전일대비기호", "전일대비", "등락률", "거래량", "누적거래량"]
+                time_rows = []
+
+                for time_item in time_data:
+                    time_rows.append(
+                        [
+                            getattr(time_item, "tm_n", "-"),
+                            self.format_number(getattr(time_item, "cur_prc_n", "0"), "price"),
+                            getattr(time_item, "pred_pre_sig_n", "-"),
+                            self.format_number(getattr(time_item, "pred_pre_n", "0"), "price"),
+                            self.format_number(getattr(time_item, "flu_rt_n", "0"), "percentage"),
+                            self.format_number(getattr(time_item, "trde_qty_n", "0"), "volume"),
+                            self.format_number(getattr(time_item, "acc_trde_qty_n", "0"), "volume"),
+                        ]
+                    )
+
+                if time_rows:
+                    self.display_table(time_headers, time_rows, f"⏰ {title} (시간별)")
+
+        except Exception:
+            pass
 
         if rows:
-            self.display_table(headers, rows, f"📊 {title}")
+            self.display_table(headers, rows, f"💰 {title}")
         else:
             self.display_error("데이터 형식을 인식할 수 없습니다.", "형식 오류")
 
-    def _format_sector_price_data(self, data: Any, title: str) -> None:
-        """Format sector price data."""
-        headers = ["업종명", "현재가", "시가", "고가", "저가", "등락률", "거래량"]
+    def _format_industry_price_by_sector(self, data: Any, title: str) -> None:
+        """Format industry price by sector data."""
+        headers = [
+            "종목코드",
+            "종목명",
+            "현재가",
+            "전일대비기호",
+            "전일대비",
+            "등락률",
+            "현재거래량",
+            "매도호가",
+            "매수호가",
+            "시가",
+            "고가",
+            "저가",
+        ]
         rows = []
 
-        items = data if isinstance(data, list) else [data]
+        items = data.body.inds_stkpc
 
         for item in items:
             try:
-                sector_name = getattr(item, "bstp_kor_isnm", getattr(item, "upjong_nm", "-"))
-                current_price = getattr(item, "bstp_nmix_prpr", getattr(item, "prpr", "0"))
-                open_price = getattr(item, "bstp_nmix_oprc", getattr(item, "oprc", "0"))
-                high_price = getattr(item, "bstp_nmix_hgpr", getattr(item, "hgpr", "0"))
-                low_price = getattr(item, "bstp_nmix_lwpr", getattr(item, "lwpr", "0"))
-                change_rate = getattr(item, "bstp_nmix_prdy_ctrt", getattr(item, "prdy_ctrt", "0"))
-                volume = getattr(item, "acml_vol", "0")
-
                 rows.append(
                     [
-                        sector_name,
-                        self.format_number(current_price, "price"),
-                        self.format_number(open_price, "price"),
-                        self.format_number(high_price, "price"),
-                        self.format_number(low_price, "price"),
-                        self.format_number(change_rate, "percentage"),
-                        self.format_number(volume, "volume"),
+                        getattr(item, "stk_cd", "-"),
+                        getattr(item, "stk_nm", "-"),
+                        self.format_number(getattr(item, "cur_prc", "0"), "price"),
+                        getattr(item, "pred_pre_sig", "-"),
+                        self.format_number(getattr(item, "pred_pre", "0"), "price"),
+                        self.format_number(getattr(item, "flu_rt", "0"), "percentage"),
+                        self.format_number(getattr(item, "now_trde_qty", "0"), "volume"),
+                        self.format_number(getattr(item, "sel_bid", "0"), "price"),
+                        self.format_number(getattr(item, "buy_bid", "0"), "price"),
+                        self.format_number(getattr(item, "open_pric", "0"), "price"),
+                        self.format_number(getattr(item, "high_pric", "0"), "price"),
+                        self.format_number(getattr(item, "low_pric", "0"), "price"),
                     ]
                 )
             except Exception:
                 continue
 
         if rows:
-            self.display_table(headers, rows, f"💹 {title}")
+            self.display_table(headers, rows, f"📈 {title}")
+        else:
+            self.display_error("데이터 형식을 인식할 수 없습니다.", "형식 오류")
+
+    def _format_all_industry_index(self, data: Any, title: str) -> None:
+        """Format all industry index data."""
+        headers = [
+            "종목코드",
+            "종목명",
+            "현재가",
+            "대비기호",
+            "전일대비",
+            "등락률",
+            "거래량",
+            "비중",
+            "거래대금",
+            "상한",
+            "상승",
+            "보합",
+            "하락",
+            "하한",
+            "상장종목수",
+        ]
+        rows = []
+
+        items = data.body.all_inds_index
+
+        for item in items:
+            try:
+                rows.append(
+                    [
+                        getattr(item, "stk_cd", "-"),
+                        getattr(item, "stk_nm", "-"),
+                        self.format_number(getattr(item, "cur_prc", "0"), "price"),
+                        getattr(item, "pre_sig", "-"),
+                        self.format_number(getattr(item, "pred_pre", "0"), "price"),
+                        self.format_number(getattr(item, "flu_rt", "0"), "percentage"),
+                        self.format_number(getattr(item, "trde_qty", "0"), "volume"),
+                        self.format_number(getattr(item, "wght", "0"), "percentage"),
+                        self.format_number(getattr(item, "trde_prica", "0"), "volume"),
+                        self.format_number(getattr(item, "upl", "0"), "number"),
+                        self.format_number(getattr(item, "rising", "0"), "number"),
+                        self.format_number(getattr(item, "stdns", "0"), "number"),
+                        self.format_number(getattr(item, "fall", "0"), "number"),
+                        self.format_number(getattr(item, "lst", "0"), "number"),
+                        self.format_number(getattr(item, "flo_stk_num", "0"), "number"),
+                    ]
+                )
+            except Exception:
+                continue
+
+        if rows:
+            self.display_table(headers, rows, f"🌐 {title}")
+        else:
+            self.display_error("데이터 형식을 인식할 수 없습니다.", "형식 오류")
+
+    def _format_daily_industry_current_price(self, data: Any, title: str) -> None:
+        """Format daily industry current price data."""
+        headers = [
+            "현재가",
+            "전일대비기호",
+            "전일대비",
+            "등락률",
+            "거래량",
+            "거래대금",
+            "거래형성종목수",
+            "거래형성비율",
+            "시가",
+            "고가",
+            "저가",
+            "상한",
+            "상승",
+            "보합",
+            "하락",
+            "하한",
+            "52주최고가",
+            "52주최고가일",
+            "52주최고가대비율",
+            "52주최저가",
+            "52주최저가일",
+            "52주최저가대비율",
+        ]
+        rows = []
+
+        # data.body가 DomesticSectorDailyIndustryCurrentPrice 객체인 경우
+        item = data.body
+
+        try:
+            row = [
+                self.format_number(getattr(item, "cur_prc", "0"), "price"),
+                getattr(item, "pred_pre_sig", "-"),
+                self.format_number(getattr(item, "pred_pre", "0"), "price"),
+                self.format_number(getattr(item, "flu_rt", "0"), "percentage"),
+                self.format_number(getattr(item, "trde_qty", "0"), "volume"),
+                self.format_number(getattr(item, "trde_prica", "0"), "volume"),
+                self.format_number(getattr(item, "trde_frmatn_stk_num", "0"), "number"),
+                self.format_number(getattr(item, "trde_frmatn_rt", "0"), "percentage"),
+                self.format_number(getattr(item, "open_pric", "0"), "price"),
+                self.format_number(getattr(item, "high_pric", "0"), "price"),
+                self.format_number(getattr(item, "low_pric", "0"), "price"),
+                self.format_number(getattr(item, "upl", "0"), "number"),
+                self.format_number(getattr(item, "rising", "0"), "number"),
+                self.format_number(getattr(item, "stdns", "0"), "number"),
+                self.format_number(getattr(item, "fall", "0"), "number"),
+                self.format_number(getattr(item, "lst", "0"), "number"),
+                self.format_number(getattr(item, "week52_hgst_pric", "0"), "price"),
+                getattr(item, "week52_hgst_pric_dt", "-"),
+                self.format_number(getattr(item, "week52_hgst_pric_pre_rt", "0"), "percentage"),
+                self.format_number(getattr(item, "week52_lwst_pric", "0"), "price"),
+                getattr(item, "week52_lwst_pric_dt", "-"),
+                self.format_number(getattr(item, "week52_lwst_pric_pre_rt", "0"), "percentage"),
+            ]
+            rows.append(row)
+
+            # 일별 데이터도 있다면 추가로 표시
+            daily_data = getattr(item, "inds_cur_prc_daly_rept", [])
+            if daily_data:
+                # 일별 데이터용 별도 테이블
+                daily_headers = ["일자", "현재가", "전일대비기호", "전일대비", "등락률", "누적거래량"]
+                daily_rows = []
+
+                for daily_item in daily_data:
+                    daily_rows.append(
+                        [
+                            getattr(daily_item, "dt_n", "-"),
+                            self.format_number(getattr(daily_item, "cur_prc_n", "0"), "price"),
+                            getattr(daily_item, "pred_pre_sig_n", "-"),
+                            self.format_number(getattr(daily_item, "pred_pre_n", "0"), "price"),
+                            self.format_number(getattr(daily_item, "flu_rt_n", "0"), "percentage"),
+                            self.format_number(getattr(daily_item, "acc_trde_qty_n", "0"), "volume"),
+                        ]
+                    )
+
+                if daily_rows:
+                    self.display_table(daily_headers, daily_rows, f"📅 {title} (일별)")
+
+        except Exception:
+            pass
+
+        if rows:
+            self.display_table(headers, rows, f"📅 {title}")
         else:
             self.display_error("데이터 형식을 인식할 수 없습니다.", "형식 오류")
 
