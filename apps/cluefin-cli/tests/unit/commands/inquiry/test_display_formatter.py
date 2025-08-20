@@ -163,7 +163,7 @@ class TestRankingDataFormatter:
         mock_data.output = [mock_item]
 
         with patch.object(self.formatter, "display_table") as mock_display:
-            self.formatter.format_ranking_data(mock_data, "거래량 급증 요청")
+            self.formatter.format_ranking_data(mock_data, "거래량 상위 요청")
             mock_display.assert_called_once()
 
             # Check that the call was made with proper headers

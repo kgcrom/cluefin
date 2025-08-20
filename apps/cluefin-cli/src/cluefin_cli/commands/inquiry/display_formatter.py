@@ -397,17 +397,19 @@ class RankingDataFormatter(DisplayFormatter):
                 increase_qty = getattr(item, "sdnin_qty", "0")
                 increase_rate = getattr(item, "sdnin_rt", "0")
 
-                rows.append([
-                    str(i),
-                    stock_name,
-                    stock_code,
-                    self.format_number(current_price, "price"),
-                    self.format_number(change_rate, "percentage"),
-                    self.format_number(prev_volume, "volume"),
-                    self.format_number(current_volume, "volume"),
-                    self.format_number(increase_qty, "volume"),
-                    self.format_number(increase_rate, "percentage"),
-                ])
+                rows.append(
+                    [
+                        str(i),
+                        stock_name,
+                        stock_code,
+                        self.format_number(current_price, "price"),
+                        self.format_number(change_rate, "percentage"),
+                        self.format_number(prev_volume, "volume"),
+                        self.format_number(current_volume, "volume"),
+                        self.format_number(increase_qty, "volume"),
+                        self.format_number(increase_rate, "percentage"),
+                    ]
+                )
             except Exception:
                 continue
 
@@ -444,17 +446,19 @@ class RankingDataFormatter(DisplayFormatter):
                 trading_amount = getattr(item, "trde_amt", "0")
                 intraday_volume = getattr(item, "opmr_trde_qty", "0")
 
-                rows.append([
-                    str(i),
-                    stock_name,
-                    stock_code,
-                    self.format_number(current_price, "price"),
-                    self.format_number(change_rate, "percentage"),
-                    self.format_number(trading_volume, "volume"),
-                    self.format_number(trading_turnover, "percentage"),
-                    self.format_number(trading_amount, "volume"),
-                    self.format_number(intraday_volume, "volume"),
-                ])
+                rows.append(
+                    [
+                        str(i),
+                        stock_name,
+                        stock_code,
+                        self.format_number(current_price, "price"),
+                        self.format_number(change_rate, "percentage"),
+                        self.format_number(trading_volume, "volume"),
+                        self.format_number(trading_turnover, "percentage"),
+                        self.format_number(trading_amount, "volume"),
+                        self.format_number(intraday_volume, "volume"),
+                    ]
+                )
             except Exception:
                 continue
 
@@ -488,14 +492,16 @@ class RankingDataFormatter(DisplayFormatter):
                 prev_diff = getattr(item, "pred_pre", "0")
                 trading_volume = getattr(item, "trde_qty", "0")
 
-                rows.append([
-                    str(i),
-                    stock_name,
-                    stock_code,
-                    self.format_number(current_price, "price"),
-                    self.format_number(prev_diff, "price"),
-                    self.format_number(trading_volume, "volume"),
-                ])
+                rows.append(
+                    [
+                        str(i),
+                        stock_name,
+                        stock_code,
+                        self.format_number(current_price, "price"),
+                        self.format_number(prev_diff, "price"),
+                        self.format_number(trading_volume, "volume"),
+                    ]
+                )
             except Exception:
                 continue
 
@@ -550,17 +556,19 @@ class RankingDataFormatter(DisplayFormatter):
                 except (ValueError, TypeError):
                     rank_change = "-"
 
-                rows.append([
-                    now_rank,
-                    prev_rank if prev_rank != "0" else "-",
-                    rank_change,
-                    stock_name,
-                    stock_code,
-                    self.format_number(current_price, "price"),
-                    self.format_number(change_rate, "percentage"),
-                    self.format_number(trading_value, "volume"),
-                    self.format_number(current_volume, "volume"),
-                ])
+                rows.append(
+                    [
+                        now_rank,
+                        prev_rank if prev_rank != "0" else "-",
+                        rank_change,
+                        stock_name,
+                        stock_code,
+                        self.format_number(current_price, "price"),
+                        self.format_number(change_rate, "percentage"),
+                        self.format_number(trading_value, "volume"),
+                        self.format_number(current_volume, "volume"),
+                    ]
+                )
             except Exception:
                 continue
 
@@ -597,16 +605,18 @@ class RankingDataFormatter(DisplayFormatter):
                 net_buy_qty = getattr(item, "netprps_qty", "0")
                 acquirable_shares = getattr(item, "gain_pos_stkcnt", "0")
 
-                rows.append([
-                    rank,
-                    stock_name,
-                    stock_code,
-                    self.format_number(current_price, "price"),
-                    self.format_number(prev_diff, "price"),
-                    self.format_number(trading_volume, "volume"),
-                    self.format_number(net_buy_qty, "volume"),
-                    self.format_number(acquirable_shares, "volume"),
-                ])
+                rows.append(
+                    [
+                        rank,
+                        stock_name,
+                        stock_code,
+                        self.format_number(current_price, "price"),
+                        self.format_number(prev_diff, "price"),
+                        self.format_number(trading_volume, "volume"),
+                        self.format_number(net_buy_qty, "volume"),
+                        self.format_number(acquirable_shares, "volume"),
+                    ]
+                )
             except Exception:
                 continue
 
@@ -644,18 +654,20 @@ class RankingDataFormatter(DisplayFormatter):
                 total = getattr(item, "tot", "0")
                 limit_exhaustion_rate = getattr(item, "limit_exh_rt", "0")
 
-                rows.append([
-                    str(i),
-                    stock_name,
-                    stock_code,
-                    self.format_number(current_price, "price"),
-                    self.format_number(prev_diff, "price"),
-                    self.format_number(dm1, "volume"),
-                    self.format_number(dm2, "volume"),
-                    self.format_number(dm3, "volume"),
-                    self.format_number(total, "volume"),
-                    self.format_number(limit_exhaustion_rate, "percentage"),
-                ])
+                rows.append(
+                    [
+                        str(i),
+                        stock_name,
+                        stock_code,
+                        self.format_number(current_price, "price"),
+                        self.format_number(prev_diff, "price"),
+                        self.format_number(dm1, "volume"),
+                        self.format_number(dm2, "volume"),
+                        self.format_number(dm3, "volume"),
+                        self.format_number(total, "volume"),
+                        self.format_number(limit_exhaustion_rate, "percentage"),
+                    ]
+                )
             except Exception:
                 continue
 
@@ -695,15 +707,17 @@ class RankingDataFormatter(DisplayFormatter):
                 orgn_buy_stock = getattr(item, "orgn_netprps_stk_nm", "-")
                 orgn_buy_amt = getattr(item, "orgn_netprps_amt", "0")
 
-                rows.append([
-                    str(i),
-                    for_sell_stock if for_sell_stock != for_buy_stock else f"{for_sell_stock}(양)",
-                    self.format_number(for_sell_amt, "volume"),
-                    self.format_number(for_buy_amt, "volume"),
-                    orgn_sell_stock if orgn_sell_stock != orgn_buy_stock else f"{orgn_sell_stock}(양)",
-                    self.format_number(orgn_sell_amt, "volume"),
-                    self.format_number(orgn_buy_amt, "volume"),
-                ])
+                rows.append(
+                    [
+                        str(i),
+                        for_sell_stock if for_sell_stock != for_buy_stock else f"{for_sell_stock}(양)",
+                        self.format_number(for_sell_amt, "volume"),
+                        self.format_number(for_buy_amt, "volume"),
+                        orgn_sell_stock if orgn_sell_stock != orgn_buy_stock else f"{orgn_sell_stock}(양)",
+                        self.format_number(orgn_sell_amt, "volume"),
+                        self.format_number(orgn_buy_amt, "volume"),
+                    ]
+                )
             except Exception:
                 continue
 
@@ -1022,59 +1036,73 @@ class SectorDataFormatter(DisplayFormatter):
 class StockDataFormatter(DisplayFormatter):
     """Specialized formatter for stock information API responses."""
 
-    def format_stock_data(self, data: Any, api_name: str) -> None:
+    def format_stock_data(self, data: Any, api_config: "APIConfig") -> None:
         """
         Format and display stock information with detailed metrics.
 
         Args:
             data: API response data
-            api_name: Name of the API for context
+            api_config: APIConfig object containing API metadata
         """
-        if not data or not hasattr(data, "output") or not data.output:
+        if not data:
             self.display_error("조회된 데이터가 없습니다.", "데이터 없음")
             return
 
-        output_data = data.output
-        if isinstance(output_data, list) and len(output_data) == 0:
-            self.display_error("조회된 데이터가 없습니다.", "데이터 없음")
-            return
-
+        api_name = api_config.name
         # Handle different stock API response formats
-        if "거래량갱신" in api_name:
-            self._format_volume_renewal_data(output_data, api_name)
-        elif "매물대집중" in api_name:
-            self._format_sales_concentration_data(output_data, api_name)
-        elif "거래원" in api_name:
-            self._format_broker_analysis_data(output_data, api_name)
-        elif "투자자" in api_name:
-            self._format_investor_totals_data(output_data, api_name)
+        if api_name == "trading_volume_renewal":
+            self._format_trading_volume_renewal_data(data, api_name)
+        elif api_name == "supply_demand_concentration":
+            self._format_supply_demand_concentration(data, api_name)
+        elif api_name == "trading_member_supply_demand_analysis":
+            self._format_trading_member_supply_demand_analysis(data, api_name)
+        elif api_name == "total_institutional_investor_by_stock":
+            self._format_total_institutional_investor_by_stock(data, api_name)
+        elif api_name == "stock_info":
+            self._format_stock_info(data, api_name)
         else:
-            self._format_generic_stock_data(output_data, api_name)
+            self._format_generic_stock_data(data, api_name)
 
-    def _format_volume_renewal_data(self, data: Any, title: str) -> None:
+    def _format_trading_volume_renewal_data(self, data: Any, title: str) -> None:
         """Format volume renewal data."""
-        headers = ["시간", "현재가", "전일대비", "등락률", "거래량", "누적거래량"]
+        headers = [
+            "종목코드",
+            "종목명",
+            "현재가",
+            "전일대비",
+            "등락률",
+            "이전거래량",
+            "현재거래량",
+            "매도호가",
+            "매수호가",
+        ]
         rows = []
 
-        items = data if isinstance(data, list) else [data]
+        items = data.body.trde_qty_updt
 
         for item in items:
             try:
-                time_info = getattr(item, "stck_cntg_hour", getattr(item, "hour", "-"))
-                current_price = getattr(item, "stck_prpr", getattr(item, "prpr", "0"))
-                change_value = getattr(item, "prdy_vrss", "0")
-                change_rate = getattr(item, "prdy_ctrt", "0")
-                volume = getattr(item, "cntg_vol", getattr(item, "vol", "0"))
-                cumulative_vol = getattr(item, "acml_vol", "0")
+                stock_code = getattr(item, "stk_cd", "-")
+                stock_name = getattr(item, "stk_nm", "-")
+                current_price = getattr(item, "cur_prc", "0")
+                change_value = getattr(item, "pred_pre", "0")
+                change_rate = getattr(item, "flu_rt", "0")
+                prev_volume = getattr(item, "prev_trde_qty", "0")
+                now_volume = getattr(item, "now_trde_qty", "0")
+                sell_price = getattr(item, "sel_bid", "0")
+                buy_price = getattr(item, "buy_bid", "0")
 
                 rows.append(
                     [
-                        time_info,
+                        stock_code,
+                        stock_name,
                         self.format_number(current_price, "price"),
                         self.format_number(change_value, "price"),
                         self.format_number(change_rate, "percentage"),
-                        self.format_number(volume, "volume"),
-                        self.format_number(cumulative_vol, "volume"),
+                        self.format_number(prev_volume, "volume"),
+                        self.format_number(now_volume, "volume"),
+                        self.format_number(sell_price, "price"),
+                        self.format_number(buy_price, "price"),
                     ]
                 )
             except Exception:
@@ -1085,28 +1113,49 @@ class StockDataFormatter(DisplayFormatter):
         else:
             self.display_error("데이터 형식을 인식할 수 없습니다.", "형식 오류")
 
-    def _format_sales_concentration_data(self, data: Any, title: str) -> None:
+    def _format_supply_demand_concentration(self, data: Any, title: str) -> None:
         """Format sales concentration analysis data."""
-        headers = ["가격대", "매도잔량", "매수잔량", "총잔량", "비율"]
+        headers = [
+            "종목코드",
+            "종목명",
+            "현재가",
+            "전일대비",
+            "등락률",
+            "현재거래량",
+            "가격대시작",
+            "가격대끝",
+            "매물량",
+            "매물비율",
+        ]
         rows = []
 
-        items = data if isinstance(data, list) else [data]
+        items = data.body.prps_cnctr
 
         for item in items:
             try:
-                price_level = getattr(item, "askp_rsqn", getattr(item, "price", "-"))
-                sell_qty = getattr(item, "askp_rsqn_qty", "0")
-                buy_qty = getattr(item, "bidp_rsqn_qty", "0")
-                total_qty = int(sell_qty) + int(buy_qty) if sell_qty.isdigit() and buy_qty.isdigit() else 0
-                ratio = getattr(item, "rsqn_rate", "0")
+                stock_code = getattr(item, "stk_cd", "-")
+                stock_name = getattr(item, "stk_nm", "-")
+                current_price = getattr(item, "cur_prc", "0")
+                change_value = getattr(item, "pred_pre", "0")
+                change_rate = getattr(item, "flu_rt", "0")
+                current_volume = getattr(item, "now_trde_qty", "0")
+                price_start = getattr(item, "pric_strt", "0")
+                price_end = getattr(item, "pric_end", "0")
+                supply_qty = getattr(item, "prps_qty", "0")
+                supply_ratio = getattr(item, "prps_rt", "0")
 
                 rows.append(
                     [
-                        self.format_number(price_level, "price"),
-                        self.format_number(sell_qty, "volume"),
-                        self.format_number(buy_qty, "volume"),
-                        self.format_number(total_qty, "volume"),
-                        self.format_number(ratio, "percentage"),
+                        stock_code,
+                        stock_name,
+                        self.format_number(current_price, "price"),
+                        self.format_number(change_value, "price"),
+                        self.format_number(change_rate, "percentage"),
+                        self.format_number(current_volume, "volume"),
+                        self.format_number(price_start, "price"),
+                        self.format_number(price_end, "price"),
+                        self.format_number(supply_qty, "volume"),
+                        self.format_number(supply_ratio, "percentage"),
                     ]
                 )
             except Exception:
@@ -1117,28 +1166,34 @@ class StockDataFormatter(DisplayFormatter):
         else:
             self.display_error("데이터 형식을 인식할 수 없습니다.", "형식 오류")
 
-    def _format_broker_analysis_data(self, data: Any, title: str) -> None:
+    def _format_trading_member_supply_demand_analysis(self, data: Any, title: str) -> None:
         """Format broker order book analysis data."""
-        headers = ["거래원명", "매도량", "매수량", "순매수량", "비율"]
+        headers = ["일자", "종가", "전일대비", "매도량", "매수량", "순매수수량", "거래량합", "거래비중"]
         rows = []
 
-        items = data if isinstance(data, list) else [data]
+        items = data.body.trde_ori_prps_anly
 
         for item in items:
             try:
-                broker_name = getattr(item, "mbcr_name", getattr(item, "broker_nm", "-"))
-                sell_qty = getattr(item, "seln_qty", "0")
-                buy_qty = getattr(item, "shnu_qty", "0")
-                net_qty = int(buy_qty) - int(sell_qty) if buy_qty.isdigit() and sell_qty.isdigit() else 0
-                ratio = getattr(item, "ntby_qty_rate", "0")
+                date = getattr(item, "dt", "-")
+                close_price = getattr(item, "close_pric", "0")
+                change_value = getattr(item, "pred_pre", "0")
+                sell_qty = getattr(item, "sel_qty", "0")
+                buy_qty = getattr(item, "buy_qty", "0")
+                net_qty = getattr(item, "netprps_qty", "0")
+                total_volume = getattr(item, "trde_qty_sum", "0")
+                trade_weight = getattr(item, "trde_wght", "0")
 
                 rows.append(
                     [
-                        broker_name,
+                        date,
+                        self.format_number(close_price, "price"),
+                        self.format_number(change_value, "price"),
                         self.format_number(sell_qty, "volume"),
                         self.format_number(buy_qty, "volume"),
                         self.format_number(net_qty, "volume"),
-                        self.format_number(ratio, "percentage"),
+                        self.format_number(total_volume, "volume"),
+                        self.format_number(trade_weight, "percentage"),
                     ]
                 )
             except Exception:
@@ -1149,37 +1204,127 @@ class StockDataFormatter(DisplayFormatter):
         else:
             self.display_error("데이터 형식을 인식할 수 없습니다.", "형식 오류")
 
-    def _format_investor_totals_data(self, data: Any, title: str) -> None:
+    def _format_total_institutional_investor_by_stock(self, data: Any, title: str) -> None:
         """Format investor and institutional totals data."""
-        headers = ["투자자구분", "매도량", "매수량", "순매수량", "비율"]
+        headers = ["투자자구분", "금액/수량"]
         rows = []
 
-        items = data if isinstance(data, list) else [data]
+        items = data.body.stk_invsr_orgn_tot
 
-        for item in items:
+        if items:
+            item = items[0]  # Usually there's only one summary item
             try:
-                investor_type = getattr(item, "invst_tp_nm", getattr(item, "tp_nm", "-"))
-                sell_qty = getattr(item, "seln_qty", "0")
-                buy_qty = getattr(item, "shnu_qty", "0")
-                net_qty = int(buy_qty) - int(sell_qty) if buy_qty.isdigit() and sell_qty.isdigit() else 0
-                ratio = getattr(item, "ntby_qty_rate", "0")
+                investor_data = [
+                    ("개인투자자", getattr(item, "ind_invsr", "0")),
+                    ("외국인투자자", getattr(item, "frgnr_invsr", "0")),
+                    ("기관계", getattr(item, "orgn", "0")),
+                    ("금융투자", getattr(item, "fnnc_invt", "0")),
+                    ("보험", getattr(item, "insrnc", "0")),
+                    ("투신", getattr(item, "invtrt", "0")),
+                    ("기타금융", getattr(item, "etc_fnnc", "0")),
+                    ("은행", getattr(item, "bank", "0")),
+                    ("연기금등", getattr(item, "penfnd_etc", "0")),
+                    ("사모펀드", getattr(item, "samo_fund", "0")),
+                    ("국가", getattr(item, "natn", "0")),
+                    ("기타법인", getattr(item, "etc_corp", "0")),
+                    ("내외국인", getattr(item, "natfor", "0")),
+                ]
 
-                rows.append(
-                    [
-                        investor_type,
-                        self.format_number(sell_qty, "volume"),
-                        self.format_number(buy_qty, "volume"),
-                        self.format_number(net_qty, "volume"),
-                        self.format_number(ratio, "percentage"),
-                    ]
-                )
+                for investor_type, value in investor_data:
+                    if value and value != "0":
+                        rows.append([investor_type, self.format_number(value.replace("--", "-"), "volume")])
+
             except Exception:
-                continue
+                pass
 
         if rows:
             self.display_table(headers, rows, f"👤 {title}")
         else:
             self.display_error("데이터 형식을 인식할 수 없습니다.", "형식 오류")
+
+    def _format_stock_info(self, data: Any, title: str) -> None:
+        """Format stock basic information data."""
+        if not data:
+            self.display_error("조회된 데이터가 없습니다.", "데이터 없음")
+            return
+        item = data.body
+        try:
+            # Extract basic stock information
+            stock_code = getattr(item, "stk_cd", "-")
+            stock_name = getattr(item, "stk_nm", "-")
+            current_price = getattr(item, "cur_prc", "0")
+            change_value = getattr(item, "pred_pre", "0")
+            change_rate = getattr(item, "flu_rt", "0")
+
+            # Create basic info panel
+            basic_info = f"""[bold cyan]📊 종목 기본정보[/bold cyan]
+[white]종목코드:[/white] {stock_code}
+[white]종목명:[/white] {stock_name}
+[white]현재가:[/white] {self.format_number(current_price, "price")}원
+[white]전일대비:[/white] [{self.get_color_for_value(change_value)}]{self.format_number(change_value, "price")}[/{self.get_color_for_value(change_value)}]
+[white]등락률:[/white] [{self.get_color_for_value(change_rate)}]{self.format_number(change_rate, "percentage")}[/{self.get_color_for_value(change_rate)}]"""
+
+            # Extract price information
+            open_price = getattr(item, "open_pric", "0")
+            high_price = getattr(item, "high_pric", "0")
+            low_price = getattr(item, "low_pric", "0")
+            upper_limit = getattr(item, "upl_pric", "0")
+            lower_limit = getattr(item, "lst_pric", "0")
+
+            price_info = f"""[bold cyan]💹 가격정보[/bold cyan]
+[white]시가:[/white] {self.format_number(open_price, "price")}원
+[white]고가:[/white] {self.format_number(high_price, "price")}원
+[white]저가:[/white] {self.format_number(low_price, "price")}원
+[white]상한가:[/white] {self.format_number(upper_limit, "price")}원
+[white]하한가:[/white] {self.format_number(lower_limit, "price")}원"""
+
+            # Extract financial metrics
+            per = getattr(item, "per", "0")
+            pbr = getattr(item, "pbr", "0")
+            roe = getattr(item, "roe", "0")
+            eps = getattr(item, "eps", "0")
+            bps = getattr(item, "bps", "0")
+
+            financial_info = f"""[bold cyan]📈 재무지표[/bold cyan]
+[white]PER:[/white] {self.format_number(per, "default") if per and per != "0" else "-"}
+[white]PBR:[/white] {self.format_number(pbr, "default") if pbr and pbr != "0" else "-"}
+[white]ROE:[/white] {self.format_number(roe, "percentage") if roe and roe != "0" else "-"}
+[white]EPS:[/white] {self.format_number(eps, "price") if eps and eps != "0" else "-"}원
+[white]BPS:[/white] {self.format_number(bps, "price") if bps and bps != "0" else "-"}원"""
+
+            # Extract market data
+            market_cap = getattr(item, "mac", "0")
+            trading_volume = getattr(item, "trde_qty", "0")
+            year_high = getattr(item, "oyr_hgst", "0")
+            year_low = getattr(item, "oyr_lwst", "0")
+            foreign_rate = getattr(item, "for_exh_rt", "0")
+
+            market_info = f"""[bold cyan]🏢 시장정보[/bold cyan]
+[white]시가총액:[/white] {self.format_number(market_cap, "volume")}원
+[white]거래량:[/white] {self.format_number(trading_volume, "volume")}주
+[white]연중최고:[/white] {self.format_number(year_high, "price")}원
+[white]연중최저:[/white] {self.format_number(year_low, "price")}원
+[white]외인소진률:[/white] {self.format_number(foreign_rate, "percentage")}"""
+
+            # Create panels
+            from rich.columns import Columns
+            from rich.panel import Panel
+
+            panels = [
+                Panel(basic_info, expand=True),
+                Panel(price_info, expand=True),
+                Panel(financial_info, expand=True),
+                Panel(market_info, expand=True),
+            ]
+
+            # Display in 2x2 grid
+            self.console.print(f"\n[bold cyan]📊 {title}[/bold cyan]\n")
+            self.console.print(Columns([panels[0], panels[1]], equal=True))
+            self.console.print(Columns([panels[2], panels[3]], equal=True))
+            self.console.print()
+
+        except Exception as e:
+            self.display_error(f"데이터 형식 오류: {str(e)}", "형식 오류")
 
     def _format_generic_stock_data(self, data: Any, title: str) -> None:
         """Format generic stock data when specific format is unknown."""

@@ -62,9 +62,9 @@ class BaseAPIModule(ABC):
     def get_client_attribute_name(self) -> str:
         """
         Get the client attribute name for this module.
-        
+
         This is used to access the correct API client attribute:
-        - ranking_info -> 'rank_info'  
+        - ranking_info -> 'rank_info'
         - stock_info -> 'stock_info'
         - sector_info -> 'sector'
 

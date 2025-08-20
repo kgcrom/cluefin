@@ -43,12 +43,12 @@ class DomesticStockInfoBasic(BaseModel, KiwoomHttpBody):
     base_pric: str = Field(default="", description="기준가", max_length=20)
     exp_cntr_pric: str = Field(default="", description="예상체결가", max_length=20)
     exp_cntr_qty: str = Field(default="", description="예상체결수량", max_length=20)
-    hgst_prict_250dt: str = Field(default="", description="250최고가일", max_length=20, alias="250hgst_pric_dt")
-    hgst_prict_250pre_rt: str = Field(
+    hgst_pric_dt_250: str = Field(default="", description="250최고가일", max_length=20, alias="250hgst_pric_dt")
+    hgst_pric_pre_rt_250: str = Field(
         default="", description="250최고가대비율", max_length=20, alias="250hgst_pric_pre_rt"
     )
-    lwst_prict_250dt: str = Field(default="", description="250최저가일", max_length=20, alias="250lwst_pric_dt")
-    lwst_prict_250pre_rt: str = Field(
+    lwst_pric_dt_250: str = Field(default="", description="250최저가일", max_length=20, alias="250lwst_pric_dt")
+    lwst_pric_pre_rt_250: str = Field(
         default="", description="250최저가대비율", max_length=20, alias="250lwst_pric_pre_rt"
     )
     cur_prc: str = Field(default="", description="현재가", max_length=20)

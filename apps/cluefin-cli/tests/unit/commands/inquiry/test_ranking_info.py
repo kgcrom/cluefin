@@ -18,7 +18,7 @@ class TestRankingInfoModule:
     def mock_client(self):
         """Create a mock Kiwoom client with ranking API methods."""
         client = Mock()
-        
+
         # Create mock response with proper structure for each API
         def create_mock_response(data_attribute):
             mock_response = Mock()
@@ -28,7 +28,7 @@ class TestRankingInfoModule:
             mock_item.cur_prc = "10000"
             setattr(mock_response, data_attribute, [mock_item])
             return mock_response
-        
+
         # Create mock rank_info attribute with API methods
         rank_info = Mock()
         rank_info.get_rapidly_increasing_trading_volume = Mock(return_value=create_mock_response("trde_qty_sdnin"))
@@ -36,9 +36,13 @@ class TestRankingInfoModule:
         rank_info.get_previous_day_trading_volume_top = Mock(return_value=create_mock_response("yestervolume_upper"))
         rank_info.get_trading_value_top = Mock(return_value=create_mock_response("trading_value_upper"))
         rank_info.get_foreign_period_trading_top = Mock(return_value=create_mock_response("for_prd_nettrde_upper"))
-        rank_info.get_foreign_consecutive_trading_top = Mock(return_value=create_mock_response("for_cont_nettrde_upper"))
-        rank_info.get_foreign_institutional_trading_top = Mock(return_value=create_mock_response("for_inv_nettrde_upper"))
-        
+        rank_info.get_foreign_consecutive_trading_top = Mock(
+            return_value=create_mock_response("for_cont_nettrde_upper")
+        )
+        rank_info.get_foreign_institutional_trading_top = Mock(
+            return_value=create_mock_response("for_inv_nettrde_upper")
+        )
+
         client.rank_info = rank_info
         return client
 
@@ -346,7 +350,7 @@ class TestRankingInfoModuleIntegration:
         mock_item.stk_cd = "000000"
         mock_item.cur_prc = "10000"
         mock_response.trde_qty_sdnin = [mock_item]
-        
+
         rank_info = Mock()
         rank_info.get_rapidly_increasing_trading_volume = Mock(return_value=mock_response)
         mock_client.rank_info = rank_info
