@@ -358,16 +358,16 @@ class RankingDataFormatter(DisplayFormatter):
         elif api_name == "previous_day_trading_volume_top":
             self._format_previous_day_trading_volume(data, api_config.korean_name)
         elif api_name == "trading_value_top":
-            self._format_trading_value_top(data, api_config.korean_name)
+            self._format_top_trading_value(data, api_config.korean_name)
         elif api_name == "foreign_period_trading_top":
-            self._format_foreign_period_trading(data, api_config.korean_name)
+            self._format_top_foreign_period_trading(data, api_config.korean_name)
         elif api_name == "foreign_consecutive_trading_top":
             self._format_foreign_consecutive_trading(data, api_config.korean_name)
         elif api_name == "foreign_institutional_trading_top":
             self._format_foreign_institutional_trading(data, api_config.korean_name)
         else:
             # Fallback to generic formatting
-            self._format_generic_ranking(output_data, api_config.korean_name)
+            self._format_generic_ranking(data, api_config.korean_name)
 
     def _format_rapidly_increasing_trading_volume(self, data: Any, title: str) -> None:
         """Format rapidly increasing trading volume data."""
@@ -504,7 +504,7 @@ class RankingDataFormatter(DisplayFormatter):
         else:
             self.display_error("데이터 형식을 인식할 수 없습니다.", "형식 오류")
 
-    def _format_trading_value_top(self, data: Any, title: str) -> None:
+    def _format_top_trading_value(self, data: Any, title: str) -> None:
         """Format trading value top data with ranking changes."""
         headers = ["현재순위", "전일순위", "변동", "종목명", "종목코드", "현재가", "등락률", "거래대금", "현재거래량"]
         rows = []
@@ -569,7 +569,7 @@ class RankingDataFormatter(DisplayFormatter):
         else:
             self.display_error("데이터 형식을 인식할 수 없습니다.", "형식 오류")
 
-    def _format_foreign_period_trading(self, data: Any, title: str) -> None:
+    def _format_top_foreign_period_trading(self, data: Any, title: str) -> None:
         """Format foreign period trading top data."""
         headers = ["순위", "종목명", "종목코드", "현재가", "전일대비", "거래량", "순매수량", "취득가능주식수"]
         rows = []
@@ -1042,7 +1042,7 @@ class StockDataFormatter(DisplayFormatter):
         # Handle different stock API response formats
         if "거래량갱신" in api_name:
             self._format_volume_renewal_data(output_data, api_name)
-        elif "매출대집중" in api_name:
+        elif "매물대집중" in api_name:
             self._format_sales_concentration_data(output_data, api_name)
         elif "거래원" in api_name:
             self._format_broker_analysis_data(output_data, api_name)

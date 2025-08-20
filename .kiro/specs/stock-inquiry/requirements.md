@@ -42,7 +42,7 @@ The Stock Inquiry feature provides an interactive command-line interface for exp
 
 1. WHEN the user selects stock information THEN the system SHALL display a menu of available stock information APIs
 2. WHEN the user selects "거래량갱신요청" THEN the system SHALL show volume update information for stocks
-3. WHEN the user selects "매출대집중요청" THEN the system SHALL display sales concentration analysis
+3. WHEN the user selects "매물대집중요청" THEN the system SHALL display sales concentration analysis
 4. WHEN the user selects "거래원매물대분석요청" THEN the system SHALL show broker order book analysis
 5. WHEN the user selects "종목별투자자기관별합계요청" THEN the system SHALL display investor and institutional totals by stock
 

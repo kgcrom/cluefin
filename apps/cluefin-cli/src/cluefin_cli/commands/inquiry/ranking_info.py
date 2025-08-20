@@ -149,9 +149,9 @@ class RankingInfoModule(BaseAPIModule):
                     ],
                 ),
                 APIConfig(
-                    name="top_current_day_trading_volume",
+                    name="current_day_trading_volume_top",
                     korean_name="📊 당일거래량상위요청",
-                    api_method="get_top_current_day_trading_volume",
+                    api_method="get_current_day_trading_volume_top",
                     description="당일 거래량 상위 종목들을 조회합니다.",
                     required_params=[
                         ParameterConfig(
@@ -443,13 +443,21 @@ class RankingInfoModule(BaseAPIModule):
                     name="foreign_institutional_trading_top",
                     korean_name="🏛️ 외국인기관매매상위요청",
                     api_method="get_foreign_institutional_trading_top",
-                    description="외국인 및 기관 매매 상위 종목들을 조회합니다.",
+                    description="외국인 기관 매매 상위 종목들을 조회합니다.",
                     required_params=[
                         ParameterConfig(
                             name="mrkt_tp",
                             korean_name="시장구분",
                             param_type="select",
                             choices=[("전체", "000"), ("코스피", "001"), ("코스닥", "101")],
+                            required=True,
+                            validation=None,
+                        ),
+                        ParameterConfig(
+                            name="trde_tp",
+                            korean_name="매매구분",
+                            param_type="select",
+                            choices=[("순매도", "1"), ("순매수", "2"), ("순매매", "3")],
                             required=True,
                             validation=None,
                         ),
@@ -469,18 +477,10 @@ class RankingInfoModule(BaseAPIModule):
                             validation=None,
                         ),
                         ParameterConfig(
-                            name="trde_tp",
-                            korean_name="매매구분",
+                            name="inv_tp",
+                            korean_name="투자자구분",
                             param_type="select",
-                            choices=[("순매수", "1"), ("순매도", "2"), ("매수", "3"), ("매도", "4")],
-                            required=True,
-                            validation=None,
-                        ),
-                        ParameterConfig(
-                            name="sort_tp",
-                            korean_name="정렬구분",
-                            param_type="select",
-                            choices=[("금액", "1"), ("수량", "2")],
+                            choices=[("외국인", "1"), ("기관", "2"), ("기타법인", "3"), ("개인", "4")],
                             required=True,
                             validation=None,
                         ),

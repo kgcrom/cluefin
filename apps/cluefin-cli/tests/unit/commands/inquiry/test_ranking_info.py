@@ -18,13 +18,28 @@ class TestRankingInfoModule:
     def mock_client(self):
         """Create a mock Kiwoom client with ranking API methods."""
         client = Mock()
-        client.get_rapidly_increasing_trading_volume = Mock(return_value={"output": []})
-        client.get_top_current_day_trading_volume = Mock(return_value={"output": []})
-        client.get_previous_day_trading_volume_top = Mock(return_value={"output": []})
-        client.get_trading_value_top = Mock(return_value={"output": []})
-        client.get_foreign_period_trading_top = Mock(return_value={"output": []})
-        client.get_foreign_consecutive_trading_top = Mock(return_value={"output": []})
-        client.get_foreign_institutional_trading_top = Mock(return_value={"output": []})
+        
+        # Create mock response with proper structure for each API
+        def create_mock_response(data_attribute):
+            mock_response = Mock()
+            mock_item = Mock()
+            mock_item.stk_nm = "테스트주식"
+            mock_item.stk_cd = "000000"
+            mock_item.cur_prc = "10000"
+            setattr(mock_response, data_attribute, [mock_item])
+            return mock_response
+        
+        # Create mock rank_info attribute with API methods
+        rank_info = Mock()
+        rank_info.get_rapidly_increasing_trading_volume = Mock(return_value=create_mock_response("trde_qty_sdnin"))
+        rank_info.get_current_day_trading_volume_top = Mock(return_value=create_mock_response("todayvolume_upper"))
+        rank_info.get_previous_day_trading_volume_top = Mock(return_value=create_mock_response("yestervolume_upper"))
+        rank_info.get_trading_value_top = Mock(return_value=create_mock_response("trading_value_upper"))
+        rank_info.get_foreign_period_trading_top = Mock(return_value=create_mock_response("for_prd_nettrde_upper"))
+        rank_info.get_foreign_consecutive_trading_top = Mock(return_value=create_mock_response("for_cont_nettrde_upper"))
+        rank_info.get_foreign_institutional_trading_top = Mock(return_value=create_mock_response("for_inv_nettrde_upper"))
+        
+        client.rank_info = rank_info
         return client
 
     @pytest.fixture
@@ -187,7 +202,12 @@ class TestRankingInfoModule:
 
     def test_format_and_display_result(self, ranking_module):
         """Test result formatting and display."""
-        mock_result = {"output": [{"stock_name": "테스트주식", "price": "10000"}]}
+        mock_result = Mock()
+        mock_item = Mock()
+        mock_item.stk_nm = "테스트주식"
+        mock_item.stk_cd = "000000"
+        mock_item.cur_prc = "10000"
+        mock_result.trde_qty_sdnin = [mock_item]
 
         category = ranking_module.get_api_category()
         api_config = category.get_api_by_name("rapidly_increasing_trading_volume")
@@ -195,7 +215,7 @@ class TestRankingInfoModule:
         with patch.object(ranking_module.formatter, "format_ranking_data") as mock_format:
             ranking_module._format_and_display_result(mock_result, api_config)
 
-            mock_format.assert_called_once_with(mock_result, api_config.korean_name)
+            mock_format.assert_called_once_with(mock_result, api_config)
 
     def test_execute_api_success(self, ranking_module, mock_client):
         """Test successful API execution."""
@@ -216,7 +236,7 @@ class TestRankingInfoModule:
                 result = ranking_module.execute_api("rapidly_increasing_trading_volume")
 
                 assert result is True
-                mock_client.get_rapidly_increasing_trading_volume.assert_called_once()
+                mock_client.rank_info.get_rapidly_increasing_trading_volume.assert_called_once()
                 mock_format.assert_called_once()
 
     def test_execute_api_with_optional_parameters(self, ranking_module, mock_client):
@@ -238,7 +258,7 @@ class TestRankingInfoModule:
 
                 assert result is True
                 # Verify optional parameter was passed
-                call_args = mock_client.get_rapidly_increasing_trading_volume.call_args
+                call_args = mock_client.rank_info.get_rapidly_increasing_trading_volume.call_args
                 assert call_args[1]["tm"] == "30"
 
     def test_execute_api_invalid_name(self, ranking_module):
@@ -320,9 +340,16 @@ class TestRankingInfoModuleIntegration:
     def test_full_menu_flow(self, integration_module):
         """Test the complete menu flow."""
         mock_client = Mock()
-        mock_client.get_rapidly_increasing_trading_volume = Mock(
-            return_value={"output": [{"stock_name": "테스트", "volume": "1000"}]}
-        )
+        mock_response = Mock()
+        mock_item = Mock()
+        mock_item.stk_nm = "테스트"
+        mock_item.stk_cd = "000000"
+        mock_item.cur_prc = "10000"
+        mock_response.trde_qty_sdnin = [mock_item]
+        
+        rank_info = Mock()
+        rank_info.get_rapidly_increasing_trading_volume = Mock(return_value=mock_response)
+        mock_client.rank_info = rank_info
         integration_module.set_client(mock_client)
 
         # Mock menu selection and parameter collection
@@ -347,7 +374,7 @@ class TestRankingInfoModuleIntegration:
                     integration_module.handle_menu_loop()
 
                 # Verify API was called
-                mock_client.get_rapidly_increasing_trading_volume.assert_called_once()
+                mock_client.rank_info.get_rapidly_increasing_trading_volume.assert_called_once()
 
     def test_client_status(self, integration_module):
         """Test client status reporting."""
