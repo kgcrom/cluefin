@@ -7,7 +7,8 @@
   - lightgbm
   - scikit-learn 
   - shap
-  - ta (기술적 지표 라이브러리)
+  - TA-Lib (기술적 지표 라이브러리)
+
 
 ### 2. ML 모듈 구조 설계 및 디렉터리 생성
 - [x] 2.1 `apps/cluefin-cli/src/cluefin_cli/ml/` 디렉터리 생성
@@ -21,7 +22,8 @@
 ### 3. 피처 엔지니어링을 위한 데이터 전처리기 클래스 생성
 - [x] 3.1 `FeatureEngineer` 클래스 구현
   - 기존 기술적 지표 데이터를 ML 피처로 변환
-  - `ta` 라이브러리를 사용한 추가 기술적 지표 생성
+  - 기존 수작업 지표 + TA-Lib 150+ 지표
+  - RSI, MACD, Bollinger Bands, Stochastic 등
   - 타겟 변수 생성 (다음날 상승/하락 예측)
   - 데이터 정규화 및 결측치 처리
 
@@ -55,10 +57,21 @@
 ### 8. CLI 옵션 추가
 - [x] 8.1 `--ml-predict` 옵션 추가
 - [x] 8.2 `--shap-analysis` 옵션 추가
+- [x] 8.2 `--feature-immportance` 옵션 추가
 - [x] 8.3 기존 옵션들과 조합 가능하도록 구현
+- 예상 출력 예시  
+	📈 ML 예측 결과 (--ml-predict)
+	└── 상승 확률: 67.3%   
+	└── 모델 신뢰도: 0.82  
+	                
+	🔍 피처 중요도 TOP 5   
+	├── RSI_14: +0.15 (과매수 신호)      
+	├── MACD_signal: -0.12 (하향 신호)   
+	├── BB_position: +0.08 (상단 근접)   
+	└── Volume_ratio: +0.05 (거래량 증가) 
 
 ### 9. 테스트 및 검증
-- [x] 9.1 샘플 데이터로 ML 파이프라인 테스트
+- [ ] 9.1 샘플 데이터로 ML 파이프라인 테스트
 - [ ] 9.2 실제 주식 데이터로 예측 성능 검증 (종속성 설치 후)
 - [ ] 9.3 SHAP 분석 결과 검토 (종속성 설치 후)
 
@@ -96,4 +109,9 @@ cluefin-cli analyze 005930 --ml-predict --shap-analysis
 
 # 전체 기능 활용
 cluefin-cli analyze 005930 --chart --ai-analysis --ml-predict --shap-analysis
+```
+
+## 필요 설치
+```bash
+brew install ta-lib lightgbm
 ```

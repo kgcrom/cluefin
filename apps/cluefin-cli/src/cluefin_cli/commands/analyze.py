@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 
 import click
 import pandas as pd
+from loguru import logger
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -12,6 +13,7 @@ from cluefin_cli.commands.analysis.indicators import TechnicalAnalyzer
 from cluefin_cli.config.settings import settings
 from cluefin_cli.data.fetcher import DataFetcher
 from cluefin_cli.display.charts import ChartRenderer
+from cluefin_cli.ml import StockMLPredictor
 from cluefin_cli.utils.formatters import format_currency, format_number
 
 console = Console()
@@ -21,23 +23,50 @@ console = Console()
 @click.argument("stock_code")
 @click.option("--chart", "-c", is_flag=True, help="Display chart in terminal")
 @click.option("--ai-analysis", "-a", is_flag=True, help="Include AI-powered analysis")
-def analyze(stock_code: str, chart: bool, ai_analysis: bool):
+@click.option("--ml-predict", "-m", is_flag=True, help="Include ML-based price prediction")
+@click.option(
+    "--feature-importance", "-f", is_flag=True, help="Display basic feature importance (requires --ml-predict)"
+)
+@click.option(
+    "--shap-analysis",
+    "-s",
+    is_flag=True,
+    help="Display detailed SHAP analysis with explanations (requires --ml-predict)",
+)
+def analyze(
+    stock_code: str, chart: bool, ai_analysis: bool, ml_predict: bool, feature_importance: bool, shap_analysis: bool
+):
     """Analyze stock with technical indicators and market data."""
     console.print(f"[bold blue]Analyzing {stock_code}...[/bold blue]")
 
     try:
         # Run async analysis
-        asyncio.run(_analyze_stock(stock_code, chart, ai_analysis))
+        asyncio.run(_analyze_stock(stock_code, chart, ai_analysis, ml_predict, feature_importance, shap_analysis))
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
+        logger.error(f"Analysis error for {stock_code}: {e}")
 
 
-async def _analyze_stock(stock_code: str, chart: bool, ai_analysis: bool):
+async def _analyze_stock(
+    stock_code: str, chart: bool, ai_analysis: bool, ml_predict: bool, feature_importance: bool, shap_analysis: bool
+):
     """Main analysis logic."""
     # Initialize components
     data_fetcher = DataFetcher()
     technical_analyzer = TechnicalAnalyzer()
     chart_renderer = ChartRenderer()
+
+    # Initialize ML predictor if needed
+    ml_predictor = None
+    if ml_predict or feature_importance or shap_analysis:
+        ml_predictor = StockMLPredictor()
+
+    # Validate ML-dependent options
+    if (feature_importance or shap_analysis) and not ml_predict:
+        console.print(
+            "[yellow]⚠️  --feature-importance and --shap-analysis require --ml-predict. Enabling ML prediction.[/yellow]"
+        )
+        ml_predict = True
 
     # Fetch data
     console.print("[yellow]Fetching stock data...[/yellow]")
@@ -45,6 +74,13 @@ async def _analyze_stock(stock_code: str, chart: bool, ai_analysis: bool):
     basic_data = await data_fetcher.get_basic_data(stock_code)
 
     stock_data = await data_fetcher.get_stock_data(stock_code, "1D")
+
+    # Ensure we have enough data for ML analysis
+    if ml_predict and len(stock_data) < 30:
+        console.print("[red]⚠️  Not enough historical data for ML prediction (minimum 30 days required)[/red]")
+        ml_predict = False
+        feature_importance = False
+        shap_analysis = False
 
     console.print("[yellow]Fetching foreign trading data...[/yellow]")
     trading_trend_data = await data_fetcher.get_trading_trend(stock_code)
@@ -69,7 +105,10 @@ async def _analyze_stock(stock_code: str, chart: bool, ai_analysis: bool):
         console.print("\n[bold cyan]Price Chart with Technical Indicators[/bold cyan]")
         chart_renderer.render_stock_chart(stock_data, indicators)
 
-    # TODO: implement ai analysis
+    # ML prediction if requested
+    if ml_predict and ml_predictor:
+        await _perform_ml_analysis(ml_predictor, stock_code, stock_data, indicators, feature_importance, shap_analysis)
+
     # AI analysis if requested
     if ai_analysis and settings.openai_api_key:
         console.print("\n[yellow]Generating AI analysis...[/yellow]")
@@ -82,6 +121,186 @@ async def _analyze_stock(stock_code: str, chart: bool, ai_analysis: bool):
         console.print(Panel(analysis, expand=False))
     elif ai_analysis:
         console.print("[red]OpenAI API key not configured for AI analysis[/red]")
+
+
+async def _perform_ml_analysis(
+    ml_predictor: StockMLPredictor,
+    stock_code: str,
+    stock_data: pd.DataFrame,
+    indicators: Dict,
+    show_feature_importance: bool,
+    show_shap_analysis: bool,
+):
+    """
+    Perform ML analysis including training and prediction.
+
+    Args:
+        ml_predictor: ML predictor instance
+        stock_code: Stock code being analyzed
+        stock_data: Historical stock data
+        indicators: Technical indicators
+        show_feature_importance: Whether to display basic feature importance
+        show_shap_analysis: Whether to display detailed SHAP analysis
+    """
+    try:
+        console.print("\n[yellow]🤖 Preparing ML analysis...[/yellow]")
+
+        # Prepare data for ML
+        prepared_df, feature_names = ml_predictor.prepare_data(stock_data, indicators)
+
+        console.print(f"[green]✓[/green] Data preparation completed. Features: {len(feature_names)}")
+        console.print(f"[green]✓[/green] Training samples: {len(prepared_df)}")
+
+        # Check if we have enough data for training
+        if len(prepared_df) < 50:
+            console.print(
+                f"[yellow]⚠️  Limited data for ML training ({len(prepared_df)} samples). Results may be less reliable.[/yellow]"
+            )
+
+        # Train model
+        console.print("[yellow]🏋️  Training ML model...[/yellow]")
+        training_metrics = ml_predictor.train_model(prepared_df)
+
+        console.print("[green]✓[/green] Model training completed")
+
+        # Make prediction
+        console.print("[yellow]🔮 Making prediction...[/yellow]")
+        prediction_result = ml_predictor.predict(stock_data, indicators)
+
+        # Display results
+        console.print("\n" + "=" * 50)
+        ml_predictor.display_prediction_results(prediction_result)
+
+        # Display basic feature importance if requested (LightGBM built-in)
+        if show_feature_importance:
+            console.print("\n" + "=" * 50)
+            _display_basic_feature_importance(ml_predictor, feature_names)
+
+        # Display detailed SHAP analysis if requested
+        if show_shap_analysis:
+            console.print("\n" + "=" * 50)
+            ml_predictor.display_feature_importance(prediction_result, top_n=15)
+
+        # Display model summary
+        _display_ml_model_summary(training_metrics, len(feature_names))
+
+    except Exception as e:
+        console.print(f"[red]❌ ML Analysis Error: {e}[/red]")
+        logger.error(f"ML analysis error for {stock_code}: {e}")
+
+
+def _display_basic_feature_importance(ml_predictor: StockMLPredictor, feature_names: List[str]):
+    """
+    Display basic feature importance from LightGBM model.
+
+    Args:
+        ml_predictor: Trained ML predictor
+        feature_names: List of feature names
+    """
+    try:
+        console.print("[bold cyan]📊 Basic Feature Importance (LightGBM)[/bold cyan]")
+
+        # Get feature importance from trained model
+        importance_series = ml_predictor.model.get_feature_importance(top_n=15)
+
+        # Create table
+        table = Table(title="Top 15 Important Features")
+        table.add_column("Rank", style="dim", width=6)
+        table.add_column("Feature", style="bold blue", min_width=20)
+        table.add_column("Importance", justify="right", style="green")
+        table.add_column("Relative %", justify="right", style="yellow")
+
+        total_importance = importance_series.sum()
+
+        for idx, (feature, importance) in enumerate(importance_series.items(), 1):
+            relative_pct = (importance / total_importance) * 100
+            table.add_row(str(idx), feature, f"{importance:.3f}", f"{relative_pct:.1f}%")
+
+        console.print(table)
+
+        # Add explanation
+        explanation_text = """
+[bold]Feature Importance Explanation:[/bold]
+• Higher values indicate more important features for prediction
+• Based on how frequently features are used in tree splits
+• Relative % shows each feature's contribution to total importance
+        """
+
+        console.print(Panel(explanation_text.strip(), title="💡 Understanding Feature Importance", border_style="cyan"))
+
+    except Exception as e:
+        console.print(f"[red]Error displaying basic feature importance: {e}[/red]")
+        logger.error(f"Error displaying basic feature importance: {e}")
+
+
+def _display_ml_model_summary(training_metrics: Dict[str, float], n_features: int):
+    """
+    Display ML model training summary.
+
+    Args:
+        training_metrics: Dictionary of training metrics
+        n_features: Number of features used
+    """
+    try:
+        table = Table(title="🔬 ML Model Training Summary")
+        table.add_column("Metric", style="cyan", min_width=20)
+        table.add_column("Value", style="magenta", min_width=15)
+        table.add_column("Interpretation", style="green", min_width=25)
+
+        # Add metrics with interpretations
+        val_accuracy = training_metrics.get("val_accuracy", 0)
+        if val_accuracy > 0.6:
+            acc_interpretation = "Good"
+            acc_style = "green"
+        elif val_accuracy > 0.55:
+            acc_interpretation = "Fair"
+            acc_style = "yellow"
+        else:
+            acc_interpretation = "Poor"
+            acc_style = "red"
+
+        table.add_row("Validation Accuracy", f"{val_accuracy:.1%}", f"[{acc_style}]{acc_interpretation}[/{acc_style}]")
+
+        val_precision = training_metrics.get("val_precision", 0)
+        table.add_row("Precision", f"{val_precision:.3f}", "Higher is better")
+
+        val_recall = training_metrics.get("val_recall", 0)
+        table.add_row("Recall", f"{val_recall:.3f}", "Higher is better")
+
+        val_f1 = training_metrics.get("val_f1", 0)
+        table.add_row("F1-Score", f"{val_f1:.3f}", "Balanced metric")
+
+        val_auc = training_metrics.get("val_auc", 0)
+        if val_auc > 0.7:
+            auc_interpretation = "Excellent"
+            auc_style = "green"
+        elif val_auc > 0.6:
+            auc_interpretation = "Good"
+            auc_style = "yellow"
+        else:
+            auc_interpretation = "Fair"
+            auc_style = "red"
+
+        table.add_row("AUC Score", f"{val_auc:.3f}", f"[{auc_style}]{auc_interpretation}[/{auc_style}]")
+
+        table.add_row("Features Used", str(n_features), "Technical indicators")
+
+        console.print(table)
+
+        # Add interpretation note
+        interpretation_text = """
+[bold]Model Performance Guide:[/bold]
+• Accuracy > 60%: The model can predict price direction reasonably well
+• AUC > 0.7: Excellent discrimination between up/down movements
+• F1-Score: Balances precision and recall for reliable predictions
+
+[yellow]Note: Stock prediction is inherently uncertain. Use predictions as one factor among many in investment decisions.[/yellow]
+        """
+
+        console.print(Panel(interpretation_text.strip(), title="📚 How to Interpret Results", border_style="blue"))
+
+    except Exception as e:
+        logger.error(f"Error displaying ML model summary: {e}")
 
 
 def _display_company_info(stock_code: str, data: pd.DataFrame):

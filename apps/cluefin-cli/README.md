@@ -1,9 +1,10 @@
 # Cluefin CLI
 
-A powerful command-line interface for Korean stock market analysis with technical indicators, terminal charts, and AI-powered insights.
+A powerful command-line interface for Korean stock market analysis with technical indicators, terminal charts, AI-powered insights, and **machine learning-based price prediction**.
 
 ![CLI Demo](https://img.shields.io/badge/CLI-Korean%20Stock%20Analysis-blue)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-green)
+![ML](https://img.shields.io/badge/ML-LightGBM%20%2B%20SHAP-orange)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
 ## ( Features
@@ -36,11 +37,20 @@ A powerful command-line interface for Korean stock market analysis with technica
 - Korean market-specific analysis and terminology
 - Risk assessment and trading recommendations
 
+### **🤖 Machine Learning Prediction**
+- **LightGBM-based Classification** - Binary prediction for next-day price movement
+- **150+ Technical Indicators** - Enhanced feature engineering using TA-Lib
+- **SHAP Model Explainability** - Understand which features drive predictions
+- **Feature Importance Analysis** - Identify key factors affecting price movements
+- **Time Series Cross-Validation** - Proper validation for temporal data
+- **Performance Metrics** - Accuracy, precision, recall, F1-score, and AUC
+
 ## Quick Start
 
 ### Prerequisites
 - Python 3.10 or higher
 - uv package manager
+- **TA-Lib system dependency** (for ML features)
 
 ### Installation
 
@@ -49,12 +59,24 @@ A powerful command-line interface for Korean stock market analysis with technica
    cd apps/cluefin-cli
    ```
 
-2. **Install dependencies:**
+2. **Install TA-Lib system dependency:**
+   ```bash
+   # macOS
+   brew install ta-lib
+   
+   # Ubuntu/Debian
+   sudo apt-get install libta-lib0-dev
+   
+   # Windows
+   # Download from https://www.lfd.uci.edu/~gohlke/pythonlibs/#ta-lib
+   ```
+
+3. **Install Python dependencies:**
    ```bash
    uv sync --dev
    ```
 
-3. **Configure environment (optional):**
+4. **Configure environment (optional):**
    ```bash
    cp .env.sample .env
    # Edit .env with your API keys
@@ -64,16 +86,25 @@ A powerful command-line interface for Korean stock market analysis with technica
 
 ```bash
 # Basic stock analysis
-uv run python main.py analyze 005930
+cluefin-cli analyze 005930
 
 # With terminal charts
-uv run python main.py analyze 005930 --chart
+cluefin-cli analyze 005930 --chart
 
 # With AI-powered analysis
-uv run python main.py analyze 005930 --ai-analysis
+cluefin-cli analyze 005930 --ai-analysis
 
-# Different time periods
-uv run python main.py analyze 005930 --period 1Y --chart
+# 🤖 With ML prediction
+cluefin-cli analyze 005930 --ml-predict
+
+# 📊 With basic feature importance
+cluefin-cli analyze 005930 --ml-predict --feature-importance
+
+# 🔍 With detailed SHAP analysis
+cluefin-cli analyze 005930 --ml-predict --shap-analysis
+
+# 🚀 Full analysis (all features)
+cluefin-cli analyze 005930 --chart --ai-analysis --ml-predict --shap-analysis
 ```
 
 ## Command Reference
@@ -90,9 +121,11 @@ cluefin-cli analyze [OPTIONS] STOCK_CODE
 - `STOCK_CODE` - Korean stock code (e.g., `005930` for Samsung Electronics)
 
 #### Options
-- `-p, --period TEXT` - Data period: `1M`, `3M`, `6M`, `1Y` (default: `3M`)
 - `-c, --chart` - Display interactive charts in terminal
 - `-a, --ai-analysis` - Include AI-powered market analysis (requires OpenAI API key)
+- `-m, --ml-predict` - Include ML-based price prediction 🤖
+- `-f, --feature-importance` - Display basic feature importance (requires --ml-predict) 📊
+- `-s, --shap-analysis` - Display detailed SHAP analysis with explanations (requires --ml-predict) 🔍
 - `--help` - Show command help
 
 #### Examples
@@ -101,11 +134,23 @@ cluefin-cli analyze [OPTIONS] STOCK_CODE
 # Samsung Electronics basic analysis
 cluefin-cli analyze 005930
 
-# SK Hynix with 6-month data and charts
-cluefin-cli analyze 000660 --period 6M --chart
+# SK Hynix with charts
+cluefin-cli analyze 000660 --chart
 
-# NAVER with full analysis including AI insights
+# NAVER with AI insights
 cluefin-cli analyze 035420 --chart --ai-analysis
+
+# Samsung with ML prediction
+cluefin-cli analyze 005930 --ml-predict
+
+# LG Chem with ML + basic feature importance
+cluefin-cli analyze 051910 --ml-predict --feature-importance
+
+# Samsung Biologics with ML + detailed SHAP analysis
+cluefin-cli analyze 207940 --ml-predict --shap-analysis
+
+# LG Energy Solution - full analysis
+cluefin-cli analyze 373220 --chart --ai-analysis --ml-predict --shap-analysis
 ```
 
 ## <� Supported Stocks
@@ -137,6 +182,11 @@ OPENAI_API_KEY=your_openai_api_key_here
 
 # Optional: Environment setting
 KIWOOM_ENVIRONMENT=dev
+
+# ML Features (no additional configuration required)
+# - LightGBM: Works out of the box
+# - SHAP: Auto-configured with TreeExplainer
+# - TA-Lib: Requires system dependency (see Installation)
 ```
 
 ### API Integration
@@ -168,6 +218,40 @@ Technical Indicators
 | SMA (20)  | 63,110  | Above MA20 |
 |-----------|----------|------------|
 
+### 🤖 ML Prediction Output
+
+```
+==================================================
+🎯 ML Prediction Results
+┌─────────────────────────────────────────────────┐
+│ Signal: 📈 BUY (67.3%)                         │
+│ Confidence: 67.3%                              │
+│ Up Probability: 67.3%                          │
+│ Down Probability: 32.7%                        │
+└─────────────────────────────────────────────────┘
+
+📊 Model Performance
+┌─────────────────────────────────────────────────┐
+│ Validation Accuracy: 64.2%                     │
+│ Validation F1-Score: 0.638                     │
+│ Validation AUC: 0.721                          │
+└─────────────────────────────────────────────────┘
+```
+
+### 🔍 SHAP Analysis Output
+
+```
+🔍 Top 15 Feature Importance (SHAP)
+┌──────┬─────────────────────┬────────────┬────────────┬────────────┐
+│ Rank │ Feature             │ Importance │ Mean SHAP  │ Impact     │
+├──────┼─────────────────────┼────────────┼────────────┼────────────┤
+│  1   │ rsi_14             │   0.0234   │  +0.0156   │ 📈 UP     │
+│  2   │ macd_signal        │   0.0198   │  -0.0087   │ 📉 DOWN   │
+│  3   │ bb_position        │   0.0167   │  +0.0123   │ 📈 UP     │
+│  4   │ volume_ratio       │   0.0142   │  +0.0089   │ 📈 UP     │
+│  5   │ sma_20             │   0.0134   │  -0.0067   │ 📉 DOWN   │
+└──────┴─────────────────────┴────────────┴────────────┴────────────┘
+```
 
 ### Chart Visualization
 The `--chart` option displays beautiful ASCII charts directly in your terminal:
@@ -189,17 +273,24 @@ apps/cluefin-cli/
 |       |-- analysis/          # Technical indicators & AI
 |       |-- display/           # Chart rendering
 |       |-- config/            # Configuration
+|       |-- ml/                # 🤖 ML prediction module
+|           |-- feature_engineering.py  # TA-Lib + custom features
+|           |-- models.py              # LightGBM predictor
+|           |-- explainer.py           # SHAP analysis
+|           |-- predictor.py           # ML pipeline
 |-- main.py                    # CLI entry point
-|-- pyproject.toml            # Dependencies
+|-- pyproject.toml            # Dependencies (includes ML libs)
 |-- README.md                 # This file
 ```
 
 ### Adding New Features
 
-1. **New Technical Indicators**: Add to `src/cluefin_cli/analysis/indicators.py`
+1. **New Technical Indicators**: Add to `src/cluefin_cli/analysis/indicators.py` or `src/cluefin_cli/ml/feature_engineering.py`
 2. **Chart Types**: Extend `src/cluefin_cli/display/charts.py`
 3. **Data Sources**: Modify `src/cluefin_cli/data/fetcher.py`
 4. **CLI Commands**: Add to `src/cluefin_cli/commands/`
+5. **ML Models**: Extend `src/cluefin_cli/ml/models.py` or add new model classes
+6. **SHAP Visualizations**: Enhance `src/cluefin_cli/ml/explainer.py`
 
 ### Running Tests
 ```bash
@@ -208,7 +299,42 @@ uv run ruff check . --fix
 
 # Format code
 uv run ruff format .
+
+# Test ML pipeline (requires sample data)
+cluefin-cli analyze 005930 --ml-predict --shap-analysis
 ```
+
+### 🤖 ML Model Architecture
+
+The ML prediction system uses a sophisticated pipeline:
+
+1. **Feature Engineering** (150+ features)
+   - TA-Lib technical indicators (RSI, MACD, Bollinger Bands, etc.)
+   - Custom price-based features (ratios, volatility, momentum)
+   - Lag features for temporal patterns
+   - Volume-based indicators
+
+2. **Model Training**
+   - **LightGBM Classifier** for binary up/down prediction
+   - **Time Series Split** to prevent data leakage
+   - **Early Stopping** to prevent overfitting
+   - **Cross-Validation** with proper temporal ordering
+
+3. **Model Interpretation**
+   - **SHAP TreeExplainer** for feature importance
+   - **Individual Prediction Explanations** 
+   - **Global Feature Rankings**
+   - **Directional Impact Analysis** (positive/negative contributions)
+
+### ML Performance Guidelines
+
+- **Accuracy > 60%**: Good predictive performance
+- **AUC > 0.7**: Excellent discrimination between up/down movements  
+- **F1-Score > 0.6**: Balanced precision and recall
+- **Minimum 30 days**: Required historical data for training
+- **Recommended 100+ days**: For reliable model performance
+
+**⚠️ Important**: Stock prediction is inherently uncertain. Use ML predictions as one factor among many in investment decisions.
 
 ## Contributing
 

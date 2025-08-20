@@ -88,9 +88,9 @@ class DataFetcher:
                 "operating_profit": info_dict.open_pric,
                 "net_profit": info_dict.cup_nga,
                 "250_day_high": info_dict.hgst_250,
-                "250hgst_pric_pre_rt": info_dict.hgst_prict_250pre_rt,
+                "250hgst_pric_pre_rt": info_dict.hgst_pric_pre_rt_250,
                 "250_day_low": info_dict.lwst_250,
-                "250lwst_pric_pre_rt": info_dict.lwst_prict_250pre_rt,
+                "250lwst_pric_pre_rt": info_dict.lwst_pric_pre_rt_250,
             }
         )
 
