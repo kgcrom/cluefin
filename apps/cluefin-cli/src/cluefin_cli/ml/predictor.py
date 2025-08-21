@@ -141,7 +141,7 @@ class StockMLPredictor:
             df = self.feature_engineer.create_custom_features(df)
 
             # Handle missing values for feature columns only
-            feature_df = df[self.feature_names].fillna(method="ffill").fillna(method="bfill")
+            feature_df = df[self.feature_names].ffill().bfill().infer_objects(copy=False)
             feature_df = feature_df.dropna()
 
             if len(feature_df) == 0:

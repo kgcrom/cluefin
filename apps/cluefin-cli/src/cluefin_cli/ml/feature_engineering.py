@@ -211,8 +211,8 @@ class FeatureEngineer:
         Returns:
             DataFrame with handled missing values
         """
-        # Forward fill then backward fill
-        df[feature_cols] = df[feature_cols].fillna(method="ffill").fillna(method="bfill")
+        # Forward fill then backward fill (using new pandas methods)
+        df[feature_cols] = df[feature_cols].ffill().bfill().infer_objects(copy=False)
 
         # Drop rows with remaining NaN values
         initial_rows = len(df)
