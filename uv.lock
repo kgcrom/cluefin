@@ -210,6 +210,7 @@ source = { editable = "apps/cluefin-cli" }
 dependencies = [
     { name = "click" },
     { name = "cluefin-openapi" },
+    { name = "imbalanced-learn" },
     { name = "inquirer" },
     { name = "lightgbm" },
     { name = "loguru" },
@@ -229,6 +230,7 @@ dependencies = [
 requires-dist = [
     { name = "click", specifier = ">=8.1.7" },
     { name = "cluefin-openapi", editable = "packages/cluefin-openapi" },
+    { name = "imbalanced-learn", specifier = ">=0.14.0" },
     { name = "inquirer", specifier = ">=3.4.1" },
     { name = "lightgbm", specifier = ">=4.0.0,<5.0.0" },
     { name = "loguru", specifier = ">=0.7.3" },
@@ -433,6 +435,23 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f1/70/7703c29685631f5a7590aa73f1f1d3fa9a380e654b86af429e0934a32f7d/idna-3.10.tar.gz", hash = "sha256:12f65c9b470abda6dc35cf8e63cc574b1c52b11df2c86030af0ac09b01b13ea9", size = 190490, upload-time = "2024-09-15T18:07:39.745Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/76/c6/c88e154df9c4e1a2a66ccf0005a88dfb2650c1dffb6f5ce603dfbd452ce3/idna-3.10-py3-none-any.whl", hash = "sha256:946d195a0d259cbba61165e88e65941f16e9b36ea6ddb97f00452bae8b1287d3", size = 70442, upload-time = "2024-09-15T18:07:37.964Z" },
+]
+
+[[package]]
+name = "imbalanced-learn"
+version = "0.14.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "joblib" },
+    { name = "numpy" },
+    { name = "scikit-learn" },
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "scipy", version = "1.16.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "threadpoolctl" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7b/5a/ad42e366914abfea7434b9ab7a821778be52dae4a8cbeac165918e66e7b0/imbalanced_learn-0.14.0.tar.gz", hash = "sha256:22b9ba6dbd681a9ec613cd6e08c21d39639fb5ccbf2a3c991f9c36415b70522c", size = 534790, upload-time = "2025-08-14T14:15:31.923Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/65/60/103dc71019ec2fa987f42f9dbe88641a74edc57f8499fac8896955b66065/imbalanced_learn-0.14.0-py3-none-any.whl", hash = "sha256:8a8700c02ca185e113064815513f990fbf84eb4e7701f1d4e944ce67fb259a60", size = 239958, upload-time = "2025-08-14T14:15:30.174Z" },
 ]
 
 [[package]]

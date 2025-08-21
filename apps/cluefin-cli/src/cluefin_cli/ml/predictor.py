@@ -18,6 +18,7 @@ from rich.table import Table
 from .explainer import SHAPExplainer
 from .feature_engineering import FeatureEngineer
 from .models import StockPredictor
+from .diagnostics import MLDiagnostics
 
 
 class StockMLPredictor:
@@ -28,22 +29,27 @@ class StockMLPredictor:
     into a unified pipeline for stock price movement prediction.
     """
 
-    def __init__(self, model_params: Optional[Dict] = None):
+    def __init__(self, model_params: Optional[Dict] = None, enable_diagnostics: bool = True):
         """
         Initialize the ML prediction pipeline.
 
         Args:
             model_params: Optional parameters for the ML model
+            enable_diagnostics: Enable diagnostic features
         """
         self.feature_engineer = FeatureEngineer()
         self.model = StockPredictor(model_params)
         self.explainer: Optional[SHAPExplainer] = None
+        self.diagnostics = MLDiagnostics() if enable_diagnostics else None
         self.console = Console()
 
         # Pipeline state
         self.is_fitted = False
         self.feature_names: List[str] = []
         self.training_metrics: Dict[str, float] = {}
+
+        # Configuration
+        self.enable_diagnostics = enable_diagnostics
 
     def prepare_data(self, stock_data: pd.DataFrame, indicators: Dict) -> Tuple[pd.DataFrame, List[str]]:
         """
@@ -71,44 +77,82 @@ class StockMLPredictor:
             logger.error(f"Error preparing data: {e}")
             raise
 
-    def train_model(self, prepared_df: pd.DataFrame, validation_split: float = 0.2) -> Dict[str, float]:
+    def train_model(
+        self,
+        prepared_df: pd.DataFrame,
+        validation_split: float = 0.2,
+        use_smote: bool = True,
+        use_class_weights: bool = True,
+    ) -> Dict[str, float]:
         """
-        Train the ML model on prepared data.
+        Train the ML model on prepared data with improved handling for class imbalance.
 
         Args:
             prepared_df: DataFrame with features and target
             validation_split: Fraction of data for validation
+            use_smote: Whether to apply SMOTE oversampling
+            use_class_weights: Whether to use balanced class weights
 
         Returns:
             Dictionary of training metrics
         """
         try:
-            logger.info("Starting model training...")
+            logger.info("🏋️ Starting enhanced model training...")
 
             # Split features and target
             X = prepared_df[self.feature_names]
             y = prepared_df["target"]
 
-            logger.info(f"Training data shape: {X.shape}, Target distribution: {y.value_counts().to_dict()}")
+            logger.info(f"📊 Training data shape: {X.shape}")
+            logger.info(f"🎯 Original target distribution: {y.value_counts().to_dict()}")
+
+            # Run diagnostics if enabled
+            if self.enable_diagnostics and self.diagnostics:
+                logger.info("🔍 Running pre-training diagnostics...")
+                diagnosis = self.diagnostics.diagnose_training_data(X, y, self.feature_names)
+
+                # Apply recommendations
+                if diagnosis["target_analysis"]["is_severely_imbalanced"] and use_smote:
+                    logger.info("⚖️ Applying SMOTE to handle severe class imbalance...")
+                    X, y = self.feature_engineer.apply_smote_oversampling(X, y)
+                    logger.info(f"📈 After SMOTE - Data shape: {X.shape}, Distribution: {y.value_counts().to_dict()}")
+
+            # Calculate class weights if requested
+            class_weights = None
+            if use_class_weights:
+                class_weights = self.feature_engineer.calculate_class_weights(y)
+                if class_weights:
+                    # Update model params with class weights
+                    self.model.model_params["class_weight"] = class_weights
 
             # Train model
             self.training_metrics = self.model.train(X, y, validation_split)
 
-            # Initialize SHAP explainer
-            self.explainer = SHAPExplainer(self.model.model, model_type="tree")
+            # Log detailed training results
+            logger.info("✅ Model training completed successfully")
+            logger.info(f"📈 Validation accuracy: {self.training_metrics.get('val_accuracy', 0):.4f}")
+            logger.info(f"📈 Validation precision: {self.training_metrics.get('val_precision', 0):.4f}")
+            logger.info(f"📈 Validation recall: {self.training_metrics.get('val_recall', 0):.4f}")
+            logger.info(f"📈 Validation F1-score: {self.training_metrics.get('val_f1', 0):.4f}")
 
-            # Use a sample of training data as background for SHAP
-            background_size = min(100, len(X))
-            background_data = X.sample(background_size, random_state=42)
-            self.explainer.initialize_explainer(background_data)
+            # Initialize SHAP explainer
+            try:
+                self.explainer = SHAPExplainer(self.model.model, model_type="tree")
+                # Use a sample of training data as background for SHAP
+                background_size = min(100, len(X))
+                background_data = X.sample(background_size, random_state=42)
+                self.explainer.initialize_explainer(background_data)
+                logger.info("🔍 SHAP explainer initialized successfully")
+            except Exception as e:
+                logger.warning(f"⚠️ SHAP explainer initialization failed: {e}")
+                self.explainer = None
 
             self.is_fitted = True
-            logger.info("Model training and SHAP initialization completed successfully")
 
             return self.training_metrics
 
         except Exception as e:
-            logger.error(f"Error training model: {e}")
+            logger.error(f"❌ Error training model: {e}")
             raise
 
     def predict(self, stock_data: pd.DataFrame, indicators: Dict) -> Dict[str, Any]:

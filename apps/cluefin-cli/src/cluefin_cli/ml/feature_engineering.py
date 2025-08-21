@@ -13,6 +13,14 @@ import talib
 from loguru import logger
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
+try:
+    from imblearn.over_sampling import SMOTE
+
+    SMOTE_AVAILABLE = True
+except ImportError:
+    SMOTE_AVAILABLE = False
+    logger.warning("imbalanced-learn not available. SMOTE oversampling will be disabled.")
+
 
 class FeatureEngineer:
     """
@@ -120,31 +128,66 @@ class FeatureEngineer:
             logger.error(f"Error creating custom features: {e}")
             return df
 
-    def create_target_variable(self, df: pd.DataFrame, target_type: str = "binary") -> pd.DataFrame:
+    def create_target_variable(
+        self, df: pd.DataFrame, target_type: str = "binary", threshold_pct: float = 0.0, prediction_days: int = 1
+    ) -> pd.DataFrame:
         """
-        Create target variable for ML prediction.
+        Create target variable for ML prediction with improved methods.
 
         Args:
             df: DataFrame with stock data
-            target_type: Type of target ("binary" for up/down, "regression" for price change)
+            target_type: Type of target ("binary", "threshold", "regression")
+            threshold_pct: Percentage threshold for classification (e.g., 0.02 for 2%)
+            prediction_days: Number of days ahead to predict
 
         Returns:
             DataFrame with target variable
         """
         try:
+            logger.info(
+                f"Creating {target_type} target variable with threshold {threshold_pct:.2%}, {prediction_days} days ahead"
+            )
+
+            # Calculate future price change
+            future_close = df["close"].shift(-prediction_days)
+            current_close = df["close"]
+            price_change_pct = (future_close - current_close) / current_close
+
             if target_type == "binary":
-                # Binary classification: 1 if next day close > today close, 0 otherwise
-                df["target"] = (df["close"].shift(-1) > df["close"]).astype(int)
+                # Simple binary: 1 if price goes up, 0 if down
+                df["target"] = (price_change_pct > 0).astype(int)
+
+            elif target_type == "threshold":
+                # Threshold-based binary: 1 if change > threshold, 0 if change < -threshold
+                # Ignore small changes (neutral class becomes 0)
+                df["target"] = 0  # Default neutral
+                df.loc[price_change_pct > threshold_pct, "target"] = 1  # Significant up
+                df.loc[price_change_pct < -threshold_pct, "target"] = 0  # Significant down or neutral
+
             elif target_type == "regression":
-                # Regression: next day percentage change
-                df["target"] = df["close"].shift(-1).pct_change()
+                # Regression: future percentage change
+                df["target"] = price_change_pct
+
             else:
                 raise ValueError(f"Unknown target_type: {target_type}")
 
-            # Remove last row as it doesn't have target
-            df = df[:-1].copy()
+            # Remove rows without target (last N rows)
+            df = df[:-prediction_days].copy()
 
-            logger.info(f"Created {target_type} target variable")
+            # Log target distribution for debugging
+            if target_type in ["binary", "threshold"]:
+                target_dist = df["target"].value_counts()
+                logger.info(f"Target distribution: {target_dist.to_dict()}")
+
+                # Check for severe imbalance
+                if len(target_dist) == 2:
+                    ratio = max(target_dist) / min(target_dist)
+                    if ratio > 10:
+                        logger.warning(f"Severe class imbalance detected: {ratio:.2f}:1")
+                    elif ratio > 3:
+                        logger.warning(f"Moderate class imbalance detected: {ratio:.2f}:1")
+
+            logger.info(f"Created {target_type} target variable: {len(df)} samples")
             return df
 
         except Exception as e:
@@ -185,8 +228,15 @@ class FeatureEngineer:
             df = self.create_target_variable(df)
 
             # Remove non-feature columns and identify feature columns
-            non_feature_cols = ["open", "high", "low", "close", "volume", "target"]
+            non_feature_cols = ["open", "high", "low", "close", "volume", "target", "date", "datetime"]
             feature_cols = [col for col in df.columns if col not in non_feature_cols]
+            
+            # Also remove any columns with datetime-like dtypes
+            datetime_cols = [col for col in feature_cols if pd.api.types.is_datetime64_any_dtype(df[col])]
+            feature_cols = [col for col in feature_cols if col not in datetime_cols]
+            
+            if datetime_cols:
+                logger.info(f"Removed datetime columns from features: {datetime_cols}")
 
             # Handle missing values
             df = self._handle_missing_values(df, feature_cols)
@@ -249,3 +299,72 @@ class FeatureEngineer:
             return train_normalized, test_normalized
 
         return train_normalized, None
+
+    def apply_smote_oversampling(
+        self, X: pd.DataFrame, y: pd.Series, sampling_strategy: str = "auto", random_state: int = 42
+    ) -> Tuple[pd.DataFrame, pd.Series]:
+        """
+        Apply SMOTE oversampling to handle class imbalance.
+
+        Args:
+            X: Feature dataframe
+            y: Target series
+            sampling_strategy: SMOTE sampling strategy ('auto', 'minority', float)
+            random_state: Random state for reproducibility
+
+        Returns:
+            Tuple of (resampled_X, resampled_y)
+        """
+        if not SMOTE_AVAILABLE:
+            logger.warning("SMOTE not available. Returning original data.")
+            return X, y
+
+        try:
+            logger.info("Applying SMOTE oversampling...")
+
+            # Check class distribution before SMOTE
+            original_dist = y.value_counts()
+            logger.info(f"Original class distribution: {original_dist.to_dict()}")
+
+            # Apply SMOTE
+            smote = SMOTE(sampling_strategy=sampling_strategy, random_state=random_state)
+            X_resampled, y_resampled = smote.fit_resample(X, y)
+
+            # Convert back to DataFrame/Series with original column names
+            X_resampled = pd.DataFrame(X_resampled, columns=X.columns)
+            y_resampled = pd.Series(y_resampled, name=y.name)
+
+            # Check class distribution after SMOTE
+            new_dist = y_resampled.value_counts()
+            logger.info(f"After SMOTE class distribution: {new_dist.to_dict()}")
+            logger.info(f"Data size increased from {len(X)} to {len(X_resampled)} samples")
+
+            return X_resampled, y_resampled
+
+        except Exception as e:
+            logger.error(f"Error applying SMOTE: {e}")
+            return X, y
+
+    def calculate_class_weights(self, y: pd.Series) -> Dict[int, float]:
+        """
+        Calculate class weights for handling imbalanced data.
+
+        Args:
+            y: Target series
+
+        Returns:
+            Dictionary of class weights
+        """
+        try:
+            from sklearn.utils.class_weight import compute_class_weight
+
+            classes = np.unique(y)
+            class_weights = compute_class_weight("balanced", classes=classes, y=y)
+            weight_dict = {cls: weight for cls, weight in zip(classes, class_weights)}
+
+            logger.info(f"Calculated class weights: {weight_dict}")
+            return weight_dict
+
+        except Exception as e:
+            logger.error(f"Error calculating class weights: {e}")
+            return {}

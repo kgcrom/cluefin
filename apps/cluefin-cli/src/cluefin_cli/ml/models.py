@@ -54,6 +54,7 @@ class StockPredictor:
             "verbose": -1,
             "random_state": 42,
             "n_estimators": 100,
+            "class_weight": None,  # Will be set dynamically if needed
         }
 
     def train(self, X: pd.DataFrame, y: pd.Series, validation_split: float = 0.2) -> Dict[str, float]:
@@ -74,10 +75,24 @@ class StockPredictor:
             X_train, X_val = X.iloc[:split_idx], X.iloc[split_idx:]
             y_train, y_val = y.iloc[:split_idx], y.iloc[split_idx:]
 
-            logger.info(f"Training with {len(X_train)} samples, validating with {len(X_val)} samples")
+            logger.info(
+                f"📊 Train/Val split: {len(X_train)}/{len(X_val)} samples ({1 - validation_split:.1%}/{validation_split:.1%})"
+            )
+            logger.info(f"🎯 Train target distribution: {y_train.value_counts().to_dict()}")
+            logger.info(f"🎯 Validation target distribution: {y_val.value_counts().to_dict()}")
+
+            # Check for empty validation set or single class
+            if len(y_val.unique()) < 2:
+                logger.warning("⚠️ Validation set contains only one class. Metrics may be unreliable.")
+
+            if len(y_train.unique()) < 2:
+                logger.error("❌ Training set contains only one class. Cannot train binary classifier.")
+                raise ValueError("Training set must contain at least 2 classes")
 
             # Initialize and train model
             self.model = lgb.LGBMClassifier(**self.model_params)
+
+            logger.info(f"🏗️ Model parameters: {self.model_params}")
 
             # Train with early stopping
             self.model.fit(
@@ -92,27 +107,67 @@ class StockPredictor:
                 ascending=False
             )
 
-            # Calculate training metrics
+            # Calculate training metrics with error handling
             train_pred = self.model.predict(X_train)
             val_pred = self.model.predict(X_val)
-            val_pred_proba = self.model.predict_proba(X_val)[:, 1]
+            val_pred_proba = self.model.predict_proba(X_val)
 
+            # Ensure we have probability scores for both classes
+            if val_pred_proba.shape[1] == 2:
+                val_pred_proba_positive = val_pred_proba[:, 1]
+            else:
+                logger.warning("⚠️ Model prediction probabilities unexpected shape")
+                val_pred_proba_positive = val_pred_proba.ravel()
+
+            # Calculate metrics with proper error handling
             metrics = {
                 "train_accuracy": accuracy_score(y_train, train_pred),
                 "val_accuracy": accuracy_score(y_val, val_pred),
-                "val_precision": precision_score(y_val, val_pred),
-                "val_recall": recall_score(y_val, val_pred),
-                "val_f1": f1_score(y_val, val_pred),
-                "val_auc": roc_auc_score(y_val, val_pred_proba),
             }
 
+            # Calculate precision, recall, f1 with zero_division handling
+            try:
+                metrics["val_precision"] = precision_score(y_val, val_pred, zero_division=0)
+                metrics["val_recall"] = recall_score(y_val, val_pred, zero_division=0)
+                metrics["val_f1"] = f1_score(y_val, val_pred, zero_division=0)
+            except Exception as e:
+                logger.warning(f"⚠️ Error calculating precision/recall/f1: {e}")
+                metrics.update({"val_precision": 0.0, "val_recall": 0.0, "val_f1": 0.0})
+
+            # Calculate AUC with error handling
+            try:
+                if len(y_val.unique()) == 2:
+                    metrics["val_auc"] = roc_auc_score(y_val, val_pred_proba_positive)
+                else:
+                    metrics["val_auc"] = 0.0
+                    logger.warning("⚠️ Cannot calculate AUC: validation set doesn't have both classes")
+            except Exception as e:
+                logger.warning(f"⚠️ Error calculating AUC: {e}")
+                metrics["val_auc"] = 0.0
+
             self.is_trained = True
-            logger.info(f"Model training completed. Validation accuracy: {metrics['val_accuracy']:.4f}")
+
+            # Log detailed results
+            logger.info(f"✅ Model training completed successfully")
+            logger.info(f"📊 Final metrics:")
+            for metric, value in metrics.items():
+                if "val_" in metric:
+                    logger.info(f"   - {metric}: {value:.4f}")
+
+            # Check for potential issues
+            if metrics["val_precision"] == 0 and metrics["val_recall"] == 0:
+                logger.error("❌ Critical: Both precision and recall are 0. Model may be predicting only one class.")
+                # Print prediction distribution for debugging
+                pred_dist = pd.Series(val_pred).value_counts()
+                logger.error(f"   Validation predictions distribution: {pred_dist.to_dict()}")
 
             return metrics
 
         except Exception as e:
-            logger.error(f"Error training model: {e}")
+            logger.error(f"❌ Error training model: {e}")
+            import traceback
+
+            logger.error(f"   Traceback: {traceback.format_exc()}")
             raise
 
     def predict(self, X: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
