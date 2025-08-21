@@ -5,15 +5,16 @@ ML 모델 진단 및 데이터 품질 분석 모듈.
 도구들을 제공합니다.
 """
 
-from typing import Dict, List, Tuple, Any
+import warnings
+from collections import Counter
+from typing import Any, Dict, List, Tuple
+
 import numpy as np
 import pandas as pd
 from loguru import logger
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
-from collections import Counter
-import warnings
+from rich.table import Table
 
 warnings.filterwarnings("ignore")
 
@@ -128,21 +129,18 @@ class MLDiagnostics:
 
                 # 이상치 검출 (IQR 방법)
                 if not feature_data.empty and feature_data.dtype in ["int64", "float64"]:
-                    try:
-                        Q1 = feature_data.quantile(0.25)
-                        Q3 = feature_data.quantile(0.75)
-                        IQR = Q3 - Q1
-                        lower_bound = Q1 - 1.5 * IQR
-                        upper_bound = Q3 + 1.5 * IQR
-                        outliers = (feature_data < lower_bound) | (feature_data > upper_bound)
-                        feature_quality["outlier_count"] = outliers.sum()
-                        feature_quality["outlier_ratio"] = outliers.mean()
-                        feature_quality["q1"] = Q1
-                        feature_quality["q3"] = Q3
-                        feature_quality["mean"] = feature_data.mean()
-                        feature_quality["std"] = feature_data.std()
-                    except:
-                        pass
+                    Q1 = feature_data.quantile(0.25)
+                    Q3 = feature_data.quantile(0.75)
+                    IQR = Q3 - Q1
+                    lower_bound = Q1 - 1.5 * IQR
+                    upper_bound = Q3 + 1.5 * IQR
+                    outliers = (feature_data < lower_bound) | (feature_data > upper_bound)
+                    feature_quality["outlier_count"] = outliers.sum()
+                    feature_quality["outlier_ratio"] = outliers.mean()
+                    feature_quality["q1"] = Q1
+                    feature_quality["q3"] = Q3
+                    feature_quality["mean"] = feature_data.mean()
+                    feature_quality["std"] = feature_data.std()
 
                 analysis["feature_quality"][feature] = feature_quality
 

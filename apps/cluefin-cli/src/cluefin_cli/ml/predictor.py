@@ -15,10 +15,10 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from .diagnostics import MLDiagnostics
 from .explainer import SHAPExplainer
 from .feature_engineering import FeatureEngineer
 from .models import StockPredictor
-from .diagnostics import MLDiagnostics
 
 
 class StockMLPredictor:

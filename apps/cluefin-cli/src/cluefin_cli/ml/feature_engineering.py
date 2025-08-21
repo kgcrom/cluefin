@@ -230,11 +230,11 @@ class FeatureEngineer:
             # Remove non-feature columns and identify feature columns
             non_feature_cols = ["open", "high", "low", "close", "volume", "target", "date", "datetime"]
             feature_cols = [col for col in df.columns if col not in non_feature_cols]
-            
+
             # Also remove any columns with datetime-like dtypes
             datetime_cols = [col for col in feature_cols if pd.api.types.is_datetime64_any_dtype(df[col])]
             feature_cols = [col for col in feature_cols if col not in datetime_cols]
-            
+
             if datetime_cols:
                 logger.info(f"Removed datetime columns from features: {datetime_cols}")
 
@@ -360,7 +360,7 @@ class FeatureEngineer:
 
             classes = np.unique(y)
             class_weights = compute_class_weight("balanced", classes=classes, y=y)
-            weight_dict = {cls: weight for cls, weight in zip(classes, class_weights)}
+            weight_dict = {cls: weight for cls, weight in zip(classes, class_weights, strict=False)}
 
             logger.info(f"Calculated class weights: {weight_dict}")
             return weight_dict

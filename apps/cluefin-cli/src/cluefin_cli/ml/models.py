@@ -148,8 +148,8 @@ class StockPredictor:
             self.is_trained = True
 
             # Log detailed results
-            logger.info(f"✅ Model training completed successfully")
-            logger.info(f"📊 Final metrics:")
+            logger.info("✅ Model training completed successfully")
+            logger.info("📊 Final metrics:")
             for metric, value in metrics.items():
                 if "val_" in metric:
                     logger.info(f"   - {metric}: {value:.4f}")
