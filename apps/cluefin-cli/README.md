@@ -105,6 +105,9 @@ cluefin-cli analyze 005930 --ml-predict --shap-analysis
 
 # 🚀 Full analysis (all features)
 cluefin-cli analyze 005930 --chart --ai-analysis --ml-predict --shap-analysis
+
+# Interactive market inquiry
+cluefin-cli inquiry
 ```
 
 ## Command Reference
@@ -153,7 +156,21 @@ cluefin-cli analyze 207940 --ml-predict --shap-analysis
 cluefin-cli analyze 373220 --chart --ai-analysis --ml-predict --shap-analysis
 ```
 
-## <� Supported Stocks
+### `inquiry` Command
+
+Interactive market inquiry tool for exploring Korean stock market data through menu-driven interface.
+
+```bash
+cluefin-cli inquiry
+```
+
+This command launches an interactive CLI menu system that allows you to:
+- Browse stock information by sector
+- View market rankings and performance
+- Explore detailed stock data interactively
+- Navigate through different market categories
+
+## 📈 Supported Stocks
 
 The CLI supports all Korean stocks traded on KOSPI and KOSDAQ. Here are some popular examples:
 
@@ -266,31 +283,60 @@ The `--chart` option displays beautiful ASCII charts directly in your terminal:
 ### Project Structure
 ```
 apps/cluefin-cli/
-|-- src/
-|   |-- cluefin_cli/
-|       |-- commands/           # CLI commands
-|       |-- data/              # Data fetching
-|       |-- analysis/          # Technical indicators & AI
-|       |-- display/           # Chart rendering
-|       |-- config/            # Configuration
-|       |-- ml/                # 🤖 ML prediction module
-|           |-- feature_engineering.py  # TA-Lib + custom features
-|           |-- models.py              # LightGBM predictor
-|           |-- explainer.py           # SHAP analysis
-|           |-- predictor.py           # ML pipeline
-|-- main.py                    # CLI entry point
-|-- pyproject.toml            # Dependencies (includes ML libs)
-|-- README.md                 # This file
+├── src/
+│   └── cluefin_cli/
+│       ├── commands/             # CLI commands
+│       │   ├── analysis/         # Analysis-specific commands  
+│       │   │   ├── ai_analyzer.py    # AI-powered analysis
+│       │   │   └── indicators.py     # Technical indicators
+│       │   ├── inquiry/          # Market inquiry commands
+│       │   │   ├── base_api_module.py     # Base API functionality
+│       │   │   ├── config_models.py       # Configuration models
+│       │   │   ├── display_formatter.py   # Display formatting
+│       │   │   ├── main.py               # Inquiry main logic
+│       │   │   ├── menu_controller.py     # Menu navigation
+│       │   │   ├── parameter_collector.py # Parameter collection
+│       │   │   ├── ranking_info.py        # Stock ranking info
+│       │   │   ├── sector_info.py         # Sector information
+│       │   │   └── stock_info.py          # Stock information
+│       │   ├── analyze.py        # Main analyze command
+│       │   └── inquiry.py        # Market inquiry command
+│       ├── config/               # Configuration
+│       │   └── settings.py       # App settings
+│       ├── data/                 # Data fetching
+│       │   └── fetcher.py        # Data retrieval
+│       ├── display/              # Chart rendering
+│       │   └── charts.py         # Chart visualization
+│       ├── ml/                   # 🤖 ML prediction module
+│       │   ├── diagnostics.py    # Model diagnostics
+│       │   ├── explainer.py      # SHAP analysis
+│       │   ├── feature_engineering.py  # TA-Lib + custom features
+│       │   ├── models.py         # LightGBM predictor
+│       │   └── predictor.py      # ML pipeline
+│       ├── utils/                # Utility functions
+│       │   └── formatters.py     # Text formatting utilities
+│       └── main.py               # CLI main module
+├── tests/                        # Test suite
+│   └── unit/                     # Unit tests
+│       ├── commands/
+│       │   └── inquiry/          # Inquiry command tests
+│       └── ml/                   # ML pipeline tests
+├── main.py                       # CLI entry point
+├── pyproject.toml               # Dependencies (includes ML libs)
+└── README.md                    # This file
 ```
 
 ### Adding New Features
 
-1. **New Technical Indicators**: Add to `src/cluefin_cli/analysis/indicators.py` or `src/cluefin_cli/ml/feature_engineering.py`
+1. **New Technical Indicators**: Add to `src/cluefin_cli/commands/analysis/indicators.py` or `src/cluefin_cli/ml/feature_engineering.py`
 2. **Chart Types**: Extend `src/cluefin_cli/display/charts.py`
 3. **Data Sources**: Modify `src/cluefin_cli/data/fetcher.py`
-4. **CLI Commands**: Add to `src/cluefin_cli/commands/`
-5. **ML Models**: Extend `src/cluefin_cli/ml/models.py` or add new model classes
-6. **SHAP Visualizations**: Enhance `src/cluefin_cli/ml/explainer.py`
+4. **CLI Commands**: Add new commands to `src/cluefin_cli/commands/`
+5. **Market Inquiry Features**: Extend modules in `src/cluefin_cli/commands/inquiry/`
+6. **AI Analysis**: Enhance `src/cluefin_cli/commands/analysis/ai_analyzer.py`
+7. **ML Models**: Extend `src/cluefin_cli/ml/models.py` or add new model classes
+8. **SHAP Visualizations**: Enhance `src/cluefin_cli/ml/explainer.py`
+9. **Utility Functions**: Add to `src/cluefin_cli/utils/formatters.py`
 
 ### Running Tests
 ```bash

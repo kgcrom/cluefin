@@ -81,4 +81,4 @@ packages/*/src/*/__pycache__/
 packages/*/src/*/*.py[cod]
 
 # Environment variables
-.env.*
+.env*

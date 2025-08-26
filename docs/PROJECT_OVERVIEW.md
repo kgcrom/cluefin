@@ -1,60 +1,149 @@
 # Project Overview
 
+## ⚠️ Disclaimer
+
+```
+이 프로젝트는 교육 및 연구 목적으로만 제공됩니다.
+실제 거래나 투자 사용을 위한 것이 아니며, 금융 자문을 구성하거나 어떤 결과를 보장하지 않습니다.
+작성자와 기여자는 이 소프트웨어를 기반으로 한 금융 손실이나 결정에 대해 책임을 지지 않습니다.
+투자 결정을 하기 전에 항상 자격을 갖춘 금융 고문과 상담하십시오. 과거 성과는 미래 결과를 나타내지 않습니다.
+
+Cluefin을 사용함으로써 귀하는 자신의 책임 하에 학습이나 실험 목적으로만 사용할 것임을 인정하고 동의합니다.
+```
+
 ## About Cluefin
 
-Cluefin is a Korean financial investment toolkit organized as a **uv workspace monorepo** that provides OpenAPI clients for Korean financial services. The project focuses on providing Python clients for:
-- Kiwoom Securities API
-- Korea Exchange (KRX) API  
-- CLI tools for Korean stock market analysis
-- ML-powered stock prediction and AI analysis
+> **"Clearly Looking U Entered Financial Information"**  
+> 당신의 금융 투자 도우미 - Your Financial Investment Assistant
 
-**Current Development Status**: Phase 2 (DART integration and fundamental analysis enhancement) with active development of machine learning capabilities and interactive inquiry systems.
+Cluefin은 한국 금융 투자 툴킷으로 **uv workspace monorepo**로 구성된 프로젝트입니다. 개인 투자자들에게 전문가급 분석 도구를 제공하여 더 스마트한 투자 결정을 돕습니다.
 
-## Vision & Goals
+**주요 제공 서비스:**
+- 키움증권 API 클라이언트
+- 한국거래소(KRX) API 클라이언트  
+- 한국 주식시장 분석을 위한 CLI 도구
+- ML 기반 주식 예측 및 AI 분석
 
-> **"Clearly Looking U Entered Financial Information"**
-> 
-> Empowering individual investors with professional-grade analysis tools
+**현재 개발 상태**: Phase 2 (DART 통합 및 기본적 분석 강화) - ML 기능과 대화형 조회 시스템 개발 중
+
+## 🚀 Quick Start
+
+```bash
+# Setup
+uv sync --dev
+
+# Interactive stock analysis
+cluefin-cli inquiry
+
+# Quick analysis with AI insights
+cluefin-cli analyze 005930 --ai-analysis
+
+# ML prediction with SHAP explanations
+cluefin-cli analyze 035720 --ml-predict --shap-analysis
+
+# Run tests
+uv run pytest
+
+# Code quality
+uv run ruff check . --fix
+```
+
+## ✨ Key Features
+
+### 🔥 Core Capabilities
+- **대화형 CLI**: 메뉴 기반 주식 조회 시스템을 갖춘 Rich 터미널 인터페이스
+- **Type-Safe API 클라이언트**: 한국 금융 서비스를 위한 완전한 OpenAPI 클라이언트
+- **기술적 분석**: TA-Lib 통합을 통한 20+ 지표 (RSI, MACD, 볼린저 밴드 등)
+- **AI 기반 인사이트**: 시장 분석 및 자연어 설명을 위한 AI 통합
+- **ML 예측**: SHAP 설명 기능을 갖춘 LightGBM 기반 주식 움직임 예측
+
+### 📊 Supported Data Sources
+- **키움증권**: 실시간 시세, 계좌 관리, 주문 실행
+- **한국거래소(KRX)**: 시장 데이터, 지수, 섹터 정보
+- **OpenAI**: AI 기반 시장 인사이트 및 자연어 설명
+- **기술적 지표**: RSI, MACD, 볼린저 밴드 등 포괄적인 TA-Lib 통합
+
+## 🎯 Vision & Goals
 
 ### Primary Problems We Solve
 
-1. **Information Fragmentation**: Consolidating scattered financial data from multiple platforms
-2. **Technical Barriers**: Simplifying complex Korean financial APIs into intuitive CLI commands
-3. **Analysis Overwhelm**: Providing AI-powered insights and objective investment analysis
-4. **Time Inefficiency**: Reducing analysis time from 30-60 minutes to under 5 minutes
+1. **정보 파편화**: 여러 플랫폼에 흩어진 금융 데이터 통합
+2. **기술적 장벽**: 복잡한 한국 금융 API를 직관적인 CLI 명령어로 단순화
+3. **분석 과부하**: AI 기반 인사이트와 객관적인 투자 분석 제공
+4. **시간 비효율성**: 분석 시간을 30-60분에서 5분 미만으로 단축
 
 ### Target Users
 
-- Individual investors seeking comprehensive market analysis
-- Python developers building financial applications
-- Researchers studying Korean financial markets
-- Trading algorithm developers
+- **개인 투자자**: 포괄적인 시장 분석을 원하는 투자자
+- **Python 개발자**: 금융 애플리케이션을 구축하는 개발자
+- **연구자**: 한국 금융 시장을 연구하는 학술 연구자
+- **알고리즘 트레이더**: 트레이딩 알고리즘 개발자
 
-## Key Features
-
-### Core Capabilities
-- **Type-Safe API Clients**: Complete OpenAPI clients for Korean financial services
-- **Interactive CLI**: Rich terminal interface with menu-driven stock inquiry
-- **Technical Analysis**: 20+ built-in indicators via TA-Lib integration
-- **AI-Powered Insights**: GPT-4 integration for market analysis and explanations
-- **ML Predictions**: LightGBM-based stock movement prediction with SHAP explainability
-
-### Supported Data Sources
-- **Kiwoom Securities**: Real-time quotes, account management, order execution
-- **Korea Exchange (KRX)**: Market data, indices, sector information
-- **OpenAI**: AI-powered analysis and natural language insights
-- **Technical Indicators**: RSI, MACD, Bollinger Bands, and more
-
-## Project Philosophy
+## 🏗️ Project Philosophy
 
 ### Design Principles
-1. **Type Safety First**: Extensive Pydantic models with Korean field aliases
-2. **Developer Experience**: Intuitive CLI with beautiful Rich UI
-3. **Financial Domain Focus**: Korean market timezone and trading hour awareness
-4. **Open Source**: Democratizing access to professional-grade financial tools
+1. **Type Safety First**: 한국어 필드 별칭을 가진 광범위한 Pydantic 모델
+2. **Developer Experience**: Beautiful Rich UI를 가진 직관적인 CLI
+3. **Financial Domain Focus**: 한국 시장 시간대 및 거래 시간 인식
+4. **Open Source**: 전문가급 금융 도구에 대한 접근 민주화
 
 ### Korean Market Specialization
-- Market timezone: Korea Standard Time (KST)
-- Trading hours: 9:00-15:30 KST consideration in ML models
-- Korean field name aliases: `cont_yn: Literal["Y", "N"] = Field(..., alias="cont-yn")`
-- Realistic mock data using actual Korean stock codes (e.g., "005930" for Samsung Electronics)
+- **시장 시간대**: 한국 표준시(KST)
+- **거래 시간**: ML 모델에서 9:00-15:30 KST 고려
+- **한국어 필드 별칭**: `cont_yn: Literal["Y", "N"] = Field(..., alias="cont-yn")`
+- **실제 한국 주식 코드 사용**: 삼성전자 "005930" 등 실제 종목코드로 목 데이터 생성
+
+## 🏁 Getting Started
+
+### Prerequisites
+- Python 3.10+
+- [uv](https://github.com/astral-sh/uv) package manager
+
+### Installation
+```bash
+# Clone repository
+git clone https://github.com/kgcrom/cluefin.git
+cd cluefin
+
+# Install dependencies
+uv sync --dev
+
+# Install TA-Lib (for technical analysis)
+# macOS
+brew install ta-lib
+
+# Ubuntu/Debian
+sudo apt-get install libta-lib0-dev
+```
+
+### Environment Setup
+```bash
+# Copy sample env files
+cp packages/cluefin-openapi/.env.sample packages/cluefin-openapi/.env
+cp apps/cluefin-cli/.env.sample apps/cluefin-cli/.env
+
+# Edit with your API keys
+# KIWOOM_APP_KEY=your_app_key
+# KIWOOM_SECRET_KEY=your_secret_key  
+# OPENAI_API_KEY=your_openai_api_key
+```
+
+## 📈 Current Development Status
+
+**Phase 2: DART Integration & Fundamental Analysis Enhancement**
+
+현재 개발 중인 주요 기능:
+- 🤖 **Machine Learning Pipeline**: LightGBM 기반 주식 예측 모델
+- 🔍 **Interactive Inquiry System**: 메뉴 기반 주식 연구 시스템
+- 📊 **SHAP Explainability**: ML 모델 해석 및 설명 기능
+- 🧠 **AI Integration**: OpenAI를 활용한 자연어 시장 분석
+
+**다음 단계 (Phase 3)**:
+- DART 전자공시 데이터 통합
+- 기업 재무제표 분석 기능
+- 포트폴리오 최적화 도구
+
+---
+
+> _"더 스마트하게 투자하세요, 더 어렵게 하지 말고 Cluefin과 함께."_  
+> _"Invest smarter, not harder, with Cluefin."_
