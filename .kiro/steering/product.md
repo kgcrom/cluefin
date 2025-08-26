@@ -1,26 +1,56 @@
-# Cluefin Product Overview
+---
+inclusion: always
+---
 
-Cluefin is a Korean financial investment toolkit that provides comprehensive stock market analysis and trading tools. The project consists of two main components:
+# Cluefin Product Guidelines
 
-## Core Components
+## Product Overview
 
-**cluefin-openapi**: A Python client library for Korean financial APIs including:
-- Kiwoom Securities API integration for real-time trading data
-- KRX (Korea Exchange) API for market data and indices
-- Comprehensive data models with Pydantic validation
-- Rate limiting, caching, and error handling
+Cluefin is a Korean financial investment toolkit for educational and research purposes. Focus on Korean markets (KOSPI, KOSDAQ, KONEX) with Korean language support throughout.
 
-**cluefin-cli**: A command-line interface providing:
-- Technical analysis with indicators (RSI, MACD, Bollinger Bands, etc.)
-- Terminal-based charts and visualizations
-- AI-powered market analysis using OpenAI GPT-4
-- Foreign trading volume analysis
-- Market index monitoring (KOSPI, KOSDAQ)
+## Core Architecture
 
-## Target Market
+**cluefin-openapi** (Library Package):
+- Kiwoom Securities API client with authentication, rate limiting, caching
+- KRX (Korea Exchange) API client for market data
+- Pydantic models for all data validation
+- Domain-specific modules: account, chart, stock info, ranking, sector
 
-The project focuses specifically on Korean financial markets (KOSPI, KOSDAQ, KONEX) and provides Korean language support throughout the codebase and documentation.
+**cluefin-cli** (Application):
+- Technical analysis with standard indicators (RSI, MACD, Bollinger Bands)
+- Terminal-based visualizations using Rich and Plotext
+- AI-powered analysis via OpenAI integration
+- Interactive inquiry system for market exploration
 
-## Educational Purpose
+## Product Conventions
 
-**Important**: This project is for educational and research purposes only. It is not intended for actual trading or investment use and does not constitute financial advice.
+### Korean Market Focus
+- All stock codes use 6-digit Korean format (e.g., "005930" for Samsung)
+- Support KRW currency formatting and Korean number conventions
+- Include Korean company names alongside English when available
+- Market hours: 09:00-15:30 KST (Korean Standard Time)
+
+### Data Standards
+- Use Pydantic models for all external API responses
+- Implement proper error handling for market closures and holidays
+- Cache frequently accessed data (stock info, sector classifications)
+- Rate limit API calls to respect provider limits
+
+### User Experience
+- Provide clear educational disclaimers about investment risks
+- Use Rich formatting for terminal output (tables, progress bars, colors)
+- Support both interactive and batch processing modes
+- Include helpful error messages with suggested actions
+
+### AI Integration
+- Use OpenAI for market sentiment analysis and trend interpretation
+- Provide context about Korean market characteristics in AI prompts
+- Include technical indicator explanations for educational value
+- Maintain objectivity - avoid specific buy/sell recommendations
+
+## Compliance & Ethics
+
+- Always include educational purpose disclaimers
+- Never provide specific investment advice or recommendations
+- Respect API rate limits and terms of service
+- Handle sensitive financial data securely (no logging of account details)
