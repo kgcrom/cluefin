@@ -151,7 +151,7 @@ class RankingInfoModule(BaseAPIModule):
                 APIConfig(
                     name="current_day_trading_volume_top",
                     korean_name="📊 당일거래량상위요청",
-                    api_method="get_current_day_trading_volume_top",
+                    api_method="get_top_current_day_trading_volume",
                     description="당일 거래량 상위 종목들을 조회합니다.",
                     required_params=[
                         ParameterConfig(
@@ -275,7 +275,7 @@ class RankingInfoModule(BaseAPIModule):
                 APIConfig(
                     name="previous_day_trading_volume_top",
                     korean_name="📉 전일거래량상위요청",
-                    api_method="get_previous_day_trading_volume_top",
+                    api_method="get_top_previous_day_trading_volume",
                     description="전일 거래량 상위 종목들을 조회합니다.",
                     required_params=[
                         ParameterConfig(
@@ -323,7 +323,7 @@ class RankingInfoModule(BaseAPIModule):
                 APIConfig(
                     name="trading_value_top",
                     korean_name="💵 거래대금상위요청",
-                    api_method="get_trading_value_top",
+                    api_method="get_top_transaction_value",
                     description="거래대금 상위 종목들을 조회합니다.",
                     required_params=[
                         ParameterConfig(
@@ -355,7 +355,7 @@ class RankingInfoModule(BaseAPIModule):
                 APIConfig(
                     name="foreign_period_trading_top",
                     korean_name="🌍 외인기간별매매상위요청",
-                    api_method="get_foreign_period_trading_top",
+                    api_method="get_top_foreigner_period_trading",
                     description="외국인 기간별 매매 상위 종목들을 조회합니다.",
                     required_params=[
                         ParameterConfig(
@@ -402,7 +402,7 @@ class RankingInfoModule(BaseAPIModule):
                 APIConfig(
                     name="foreign_consecutive_trading_top",
                     korean_name="🔄 외인연속순매매상위요청",
-                    api_method="get_foreign_consecutive_trading_top",
+                    api_method="get_top_consecutive_net_buy_sell_by_foreigners",
                     description="외국인 연속 순매매 상위 종목들을 조회합니다.",
                     required_params=[
                         ParameterConfig(
@@ -426,61 +426,6 @@ class RankingInfoModule(BaseAPIModule):
                             korean_name="기준일구분",
                             param_type="select",
                             choices=[("당일기준", "0"), ("전일기준", "1")],
-                            required=True,
-                            validation=None,
-                        ),
-                        ParameterConfig(
-                            name="stex_tp",
-                            korean_name="거래소구분",
-                            param_type="select",
-                            choices=[("KRX", "1"), ("NXT", "2"), ("통합", "3")],
-                            required=True,
-                            validation=None,
-                        ),
-                    ],
-                ),
-                APIConfig(
-                    name="foreign_institutional_trading_top",
-                    korean_name="🏛️ 외국인기관매매상위요청",
-                    api_method="get_foreign_institutional_trading_top",
-                    description="외국인 기관 매매 상위 종목들을 조회합니다.",
-                    required_params=[
-                        ParameterConfig(
-                            name="mrkt_tp",
-                            korean_name="시장구분",
-                            param_type="select",
-                            choices=[("전체", "000"), ("코스피", "001"), ("코스닥", "101")],
-                            required=True,
-                            validation=None,
-                        ),
-                        ParameterConfig(
-                            name="trde_tp",
-                            korean_name="매매구분",
-                            param_type="select",
-                            choices=[("순매도", "1"), ("순매수", "2"), ("순매매", "3")],
-                            required=True,
-                            validation=None,
-                        ),
-                        ParameterConfig(
-                            name="dt",
-                            korean_name="기간",
-                            param_type="select",
-                            choices=[
-                                ("당일", "0"),
-                                ("전일", "1"),
-                                ("5일", "5"),
-                                ("10일", "10"),
-                                ("20일", "20"),
-                                ("60일", "60"),
-                            ],
-                            required=True,
-                            validation=None,
-                        ),
-                        ParameterConfig(
-                            name="inv_tp",
-                            korean_name="투자자구분",
-                            param_type="select",
-                            choices=[("외국인", "1"), ("기관", "2"), ("기타법인", "3"), ("개인", "4")],
                             required=True,
                             validation=None,
                         ),

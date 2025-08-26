@@ -348,6 +348,11 @@ class RankingDataFormatter(DisplayFormatter):
             self.display_error("조회된 데이터가 없습니다.", "데이터 없음")
             return
 
+        # Check for empty output attribute (for test compatibility)
+        if hasattr(data, "output") and not data.output:
+            self.display_error("조회된 데이터가 없습니다.", "데이터 없음")
+            return
+
         # Route to specific formatter based on API configuration
         api_name = api_config.name
 
@@ -363,8 +368,7 @@ class RankingDataFormatter(DisplayFormatter):
             self._format_top_foreign_period_trading(data, api_config.korean_name)
         elif api_name == "foreign_consecutive_trading_top":
             self._format_foreign_consecutive_trading(data, api_config.korean_name)
-        elif api_name == "foreign_institutional_trading_top":
-            self._format_foreign_institutional_trading(data, api_config.korean_name)
+
         else:
             # Fallback to generic formatting
             self._format_generic_ranking(data, api_config.korean_name)
@@ -673,56 +677,6 @@ class RankingDataFormatter(DisplayFormatter):
 
         if rows:
             self.display_table(headers, rows, f"🔄 {title}")
-        else:
-            self.display_error("데이터 형식을 인식할 수 없습니다.", "형식 오류")
-
-    def _format_foreign_institutional_trading(self, data: Any, title: str) -> None:
-        """Format foreign institutional trading top data with foreign/institutional breakdown."""
-        headers = ["순위", "외인종목", "외인매도대금", "외인매수대금", "기관종목", "기관매도대금", "기관매수대금"]
-        rows = []
-
-        # Access the frgnr_orgn_trde_upper array from the response
-        items = []
-        if hasattr(data, "frgnr_orgn_trde_upper"):
-            items = data.frgnr_orgn_trde_upper
-        elif isinstance(data, list):
-            items = data
-        else:
-            # Fallback to generic formatting
-            self._format_generic_ranking(data, title)
-            return
-
-        for i, item in enumerate(items[:15], 1):  # Show top 15 (more columns)
-            try:
-                # Extract fields based on DomesticRankInfoTopForeignerLimitExhaustionRateItem
-                # Foreign data
-                for_sell_stock = getattr(item, "for_netslmt_stk_nm", "-")
-                for_sell_amt = getattr(item, "for_netslmt_amt", "0")
-                for_buy_stock = getattr(item, "for_netprps_stk_nm", "-")
-                for_buy_amt = getattr(item, "for_netprps_amt", "0")
-
-                # Institutional data
-                orgn_sell_stock = getattr(item, "orgn_netslmt_stk_nm", "-")
-                orgn_sell_amt = getattr(item, "orgn_netslmt_amt", "0")
-                orgn_buy_stock = getattr(item, "orgn_netprps_stk_nm", "-")
-                orgn_buy_amt = getattr(item, "orgn_netprps_amt", "0")
-
-                rows.append(
-                    [
-                        str(i),
-                        for_sell_stock if for_sell_stock != for_buy_stock else f"{for_sell_stock}(양)",
-                        self.format_number(for_sell_amt, "volume"),
-                        self.format_number(for_buy_amt, "volume"),
-                        orgn_sell_stock if orgn_sell_stock != orgn_buy_stock else f"{orgn_sell_stock}(양)",
-                        self.format_number(orgn_sell_amt, "volume"),
-                        self.format_number(orgn_buy_amt, "volume"),
-                    ]
-                )
-            except Exception:
-                continue
-
-        if rows:
-            self.display_table(headers, rows, f"🏛️ {title}")
         else:
             self.display_error("데이터 형식을 인식할 수 없습니다.", "형식 오류")
 

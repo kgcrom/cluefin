@@ -32,15 +32,12 @@ class TestRankingInfoModule:
         # Create mock rank_info attribute with API methods
         rank_info = Mock()
         rank_info.get_rapidly_increasing_trading_volume = Mock(return_value=create_mock_response("trde_qty_sdnin"))
-        rank_info.get_current_day_trading_volume_top = Mock(return_value=create_mock_response("todayvolume_upper"))
-        rank_info.get_previous_day_trading_volume_top = Mock(return_value=create_mock_response("yestervolume_upper"))
-        rank_info.get_trading_value_top = Mock(return_value=create_mock_response("trading_value_upper"))
-        rank_info.get_foreign_period_trading_top = Mock(return_value=create_mock_response("for_prd_nettrde_upper"))
-        rank_info.get_foreign_consecutive_trading_top = Mock(
+        rank_info.get_top_current_day_trading_volume = Mock(return_value=create_mock_response("tdy_trde_qty_upper"))
+        rank_info.get_top_previous_day_trading_volume = Mock(return_value=create_mock_response("pred_trde_qty_upper"))
+        rank_info.get_top_transaction_value = Mock(return_value=create_mock_response("trde_prica_upper"))
+        rank_info.get_top_foreigner_period_trading = Mock(return_value=create_mock_response("for_dt_trde_upper"))
+        rank_info.get_top_consecutive_net_buy_sell_by_foreigners = Mock(
             return_value=create_mock_response("for_cont_nettrde_upper")
-        )
-        rank_info.get_foreign_institutional_trading_top = Mock(
-            return_value=create_mock_response("for_inv_nettrde_upper")
         )
 
         client.rank_info = rank_info
@@ -73,7 +70,7 @@ class TestRankingInfoModule:
 
         assert category.name == "ranking_info"
         assert category.korean_name == "📈 순위정보"
-        assert len(category.apis) == 7  # Should have 7 ranking APIs
+        assert len(category.apis) == 6  # Should have 6 ranking APIs
 
         # Check that all expected APIs are present
         api_names = [api.name for api in category.apis]
@@ -84,7 +81,6 @@ class TestRankingInfoModule:
             "trading_value_top",
             "foreign_period_trading_top",
             "foreign_consecutive_trading_top",
-            "foreign_institutional_trading_top",
         ]
 
         for expected_api in expected_apis:
@@ -119,7 +115,7 @@ class TestRankingInfoModule:
 
         assert api is not None
         assert api.korean_name == "📊 당일거래량상위요청"
-        assert api.api_method == "get_current_day_trading_volume_top"
+        assert api.api_method == "get_top_current_day_trading_volume"
         assert len(api.required_params) == 8
         assert len(api.optional_params) == 0
 
@@ -130,7 +126,7 @@ class TestRankingInfoModule:
 
         assert api is not None
         assert api.korean_name == "📉 전일거래량상위요청"
-        assert api.api_method == "get_previous_day_trading_volume_top"
+        assert api.api_method == "get_top_previous_day_trading_volume"
 
         # Check that rank parameters have proper validation
         rank_start_param = None
@@ -154,7 +150,7 @@ class TestRankingInfoModule:
 
         assert api is not None
         assert api.korean_name == "💵 거래대금상위요청"
-        assert api.api_method == "get_trading_value_top"
+        assert api.api_method == "get_top_transaction_value"
         assert len(api.required_params) == 3
 
     def test_foreign_period_trading_config(self, ranking_module):
@@ -164,7 +160,7 @@ class TestRankingInfoModule:
 
         assert api is not None
         assert api.korean_name == "🌍 외인기간별매매상위요청"
-        assert api.api_method == "get_foreign_period_trading_top"
+        assert api.api_method == "get_top_foreigner_period_trading"
         assert len(api.required_params) == 4
 
     def test_foreign_consecutive_trading_config(self, ranking_module):
@@ -174,18 +170,8 @@ class TestRankingInfoModule:
 
         assert api is not None
         assert api.korean_name == "🔄 외인연속순매매상위요청"
-        assert api.api_method == "get_foreign_consecutive_trading_top"
+        assert api.api_method == "get_top_consecutive_net_buy_sell_by_foreigners"
         assert len(api.required_params) == 4
-
-    def test_foreign_institutional_trading_config(self, ranking_module):
-        """Test configuration for foreign institutional trading API."""
-        category = ranking_module.get_api_category()
-        api = category.get_api_by_name("foreign_institutional_trading_top")
-
-        assert api is not None
-        assert api.korean_name == "🏛️ 외국인기관매매상위요청"
-        assert api.api_method == "get_foreign_institutional_trading_top"
-        assert len(api.required_params) == 5
 
     def test_parameter_choices_validation(self, ranking_module):
         """Test that all select parameters have proper choices defined."""
@@ -304,12 +290,11 @@ class TestRankingInfoModule:
 
         expected_mappings = {
             "rapidly_increasing_trading_volume": "get_rapidly_increasing_trading_volume",
-            "current_day_trading_volume_top": "get_current_day_trading_volume_top",
-            "previous_day_trading_volume_top": "get_previous_day_trading_volume_top",
-            "trading_value_top": "get_trading_value_top",
-            "foreign_period_trading_top": "get_foreign_period_trading_top",
-            "foreign_consecutive_trading_top": "get_foreign_consecutive_trading_top",
-            "foreign_institutional_trading_top": "get_foreign_institutional_trading_top",
+            "current_day_trading_volume_top": "get_top_current_day_trading_volume",
+            "previous_day_trading_volume_top": "get_top_previous_day_trading_volume",
+            "trading_value_top": "get_top_transaction_value",
+            "foreign_period_trading_top": "get_top_foreigner_period_trading",
+            "foreign_consecutive_trading_top": "get_top_consecutive_net_buy_sell_by_foreigners",
         }
 
         for api in category.apis:
