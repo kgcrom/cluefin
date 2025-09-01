@@ -6,8 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Essential Commands:**
 ```bash
-# Setup
-uv sync --dev
+# Setup with Python 3.10
+uv venv --python 3.10
+source .venv/bin/activate
+uv sync --all-packages
 
 # Test
 uv run pytest

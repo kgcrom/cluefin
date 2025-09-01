@@ -31,6 +31,7 @@ git clone https://github.com/kgcrom/cluefin
 cd cluefin
 uv venv --python 3.10
 source .venv/bin/activate
+uv sync --all-packages
 cd packages/cluefin-openapi
 ```
 
@@ -69,7 +70,8 @@ Pydantic을 활용한 강력한 타입 검증으로 런타임 에러를 방지�
 ### 3. 환경 변수 설정
 
 ```bash
-$> cp .env.sample .env
+# From project root
+cp .env.sample .env
 
 # .env 파일 수정
 
@@ -115,17 +117,24 @@ logger.info(f"응답 데이터: ${response.body}")
 
 ```python
 # 키움증권
+from loguru import logger
+import os
 from pydantic import SecretStr
+import dotenv
 from cluefin_openapi.kiwoom._auth import Auth
 
+# 인증 설정
+dotenv.load_dotenv(dotenv_path=".env")
+
 auth = Auth(
-    app_key="your_app_key",
-    secret_key=SecretStr("your_secret_key"),
-    env="dev"  # "dev" 또는 "prod"
+    app_key=os.getenv("KIWOOM_APP_KEY"),
+    secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY")),
+    env="dev",  # 개발환경: "dev", 운영환경: "prod"
 )
 
 # 토큰 생성
 token = auth.generate_token()
+logger.info(f"token => ${token}")
 ```
 
 ### 클라이언트 초기화
@@ -138,15 +147,21 @@ client = Client(
     token=token.get_token(),
     env="dev",
 )
+```
 
+```python
 # 한국거래소
+from loguru import logger
+import os
+from pydantic import SecretStr
+import dotenv
 from cluefin_openapi.krx._client import Client as KRXClient
 
-# 기본 설정
-krx_client = KRXClient(auth_key="your_krx_auth_key", timeout=30)
+# 인증 설정
+dotenv.load_dotenv(dotenv_path=".env")
 
-# 커스텀 타임아웃 설정 (대용량 데이터 조회시)
-krx_client = KRXClient(auth_key="your_krx_auth_key", timeout=60)
+krx_client = KRXClient(auth_key=os.getenv("KRX_AUTH_KEY"), timeout=30)
+logger.info(f"krx_client => ${krx_client}")
 ```
 
 ## 📊 KRX API 사용 예제
@@ -162,15 +177,15 @@ krx_client = KRXClient(auth_key="your_krx_auth_key")
 
 # KOSPI 일별매매정보 조회
 kospi_data = krx_client.stock.get_kospi("20250721")
-logger.info("KOSPI 데이터:", kospi_data.body)
+logger.info(f"KOSPI 데이터: ${kospi_data.body}")
 
 # KOSDAQ 일별매매정보 조회
 kosdaq_data = krx_client.stock.get_kosdaq("20250721")
-logger.info("KOSDAQ 데이터:", kosdaq_data.body)
+logger.info(f"KOSDAQ 데이터: ${kosdaq_data.body}")
 
 # KONEX 일별매매정보 조회
 konex_data = krx_client.stock.get_konex("20250721")
-logger.info("KONEX 데이터:", konex_data.body)
+logger.info(f"KONEX 데이터: ${konex_data.body}")
 
 # 워런트 및 신주인수권증서 조회
 warrant_data = krx_client.stock.get_warrant("20250721")
@@ -187,15 +202,15 @@ konex_base_info = krx_client.stock.get_konex_base_info("20250721")
 ```python
 # KRX 종합지수 조회
 krx_index = krx_client.index.get_krx("20250721")
-logger.info("KRX 종합지수:", krx_index.body)
+logger.info(f"KRX 종합지수: ${krx_index.body}")
 
 # KOSPI 지수 조회
 kospi_index = krx_client.index.get_kospi("20250721")
-logger.info("KOSPI 지수:", kospi_index.body)
+logger.info(f"KOSPI 지수: ${kospi_index.body")
 
 # KOSDAQ 지수 조회
 kosdaq_index = krx_client.index.get_kosdaq("20250721")
-logger.info("KOSDAQ 지수:", kosdaq_index.body)
+logger.info(f"KOSDAQ 지수: ${kosdaq_index.body}")
 
 # 채권 지수 조회
 bond_index = krx_client.index.get_bond("20250721")
@@ -296,13 +311,13 @@ except Exception as e:
 
 ```bash
 # 단위 테스트 실행
-pytest packages/cluefin-openapi/tests/unit/ -v
+uv run pytest packages/cluefin-openapi/tests/unit/ -v
 
 # 통합 테스트 실행 (API 키 필요)
-pytest packages/cluefin-openapi/tests/integration/ -v
+uv run pytest packages/cluefin-openapi/tests/integration/ -v
 
 # 코드 커버리지 확인
-pytest --cov=cluefin_openapi --cov-report=html
+uv run pytest --cov=cluefin_openapi --cov-report=html
 ```
 
 ## 🛠️ 개발 가이드
@@ -326,16 +341,10 @@ ruff check packages/cluefin-openapi/
 
 이 프로젝트는 MIT 라이선스 하에 배포됩니다. 자세한 내용은 [LICENSE](../../LICENSE) 파일을 참조하세요.
 
-## 📞 지원 및 문의
-
-- **이슈 및 버그 리포트**: [GitHub Issues](https://github.com/kgcrom/cluefin/issues)
-- **기능 요청**: [GitHub Discussions](https://github.com/kgcrom/cluefin/discussions)
-
 ## 🔗 관련 링크
 
 - [키움증권 OpenAPI 포털](https://openapi.kiwoom.com/)
 - [한국거래소 OpenAPI 포털](http://openapi.krx.co.kr)
-- [Cluefin 메인 프로젝트](https://github.com/kgcrom/cluefin)
 
 ---
 

@@ -7,7 +7,7 @@ A powerful command-line interface for Korean stock market analysis with technica
 ![ML](https://img.shields.io/badge/ML-LightGBM%20%2B%20SHAP-orange)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-## ( Features
+## ✨ Features
 
 ### **Comprehensive Stock Analysis**
 - Real-time Korean stock data analysis (KOSPI, KOSDAQ)

@@ -24,6 +24,36 @@ Cluefin을 사용함으로써 귀하는 자신의 책임 하에 학습이나 실
 
 ---
 
+## 🚀 Quick Start
+
+```bash
+# Clone and setup
+git clone https://github.com/kgcrom/cluefin.git
+cd cluefin
+uv venv --python 3.10
+source .venv/bin/activate
+
+# Install dependencies
+uv sync --all-packages
+
+# Install TA-Lib system dependency (macOS)
+brew install ta-lib
+
+# Configure environment
+cp apps/cluefin-cli/.env.sample .env
+# Edit .env with your API keys
+
+# Interactive stock analysis
+cluefin-cli inquiry
+
+# Advanced analysis with ML prediction
+cluefin-cli analyze 005930 --chart --ai-analysis --ml-predict --shap-analysis
+
+# Run tests and code quality
+uv run pytest
+uv run ruff check . --fix
+```
+
 ## ✨ 주요 기능
 
 ### 🔥 핵심 기능
@@ -57,6 +87,38 @@ cluefin/
 ├── apps/cluefin-cli/           # Interactive CLI application
 └── docs/                       # Comprehensive documentation
 ```
+
+## 🔧 Development
+
+### Testing
+```bash
+# Run all tests
+uv run pytest
+
+# Run specific package tests
+uv run pytest packages/cluefin-openapi/tests/unit/ -v
+uv run pytest apps/cluefin-cli/tests/unit/ -v
+
+# Run integration tests (requires API keys)
+uv run pytest packages/cluefin-openapi/tests/integration/ -v
+
+# Code quality
+uv run ruff check . --fix
+uv run ruff format .
+```
+
+### Component Overview
+
+**[cluefin-openapi](packages/cluefin-openapi/)** - Korean financial API clients
+- Type-safe Pydantic models for Kiwoom Securities & KRX APIs
+- OAuth2 authentication with automatic token management
+- Comprehensive error handling and rate limiting
+
+**[cluefin-cli](apps/cluefin-cli/)** - Interactive terminal application  
+- Rich-based UI with Korean stock market analysis
+- ML-powered predictions using LightGBM + SHAP explanations
+- Technical analysis with 150+ TA-Lib indicators
+- AI-powered insights via OpenAI integration
 
 ## 📄 라이선스
 이 프로젝트는 MIT 라이선스에 따라 라이선스가 부여됩니다. 자세한 내용은 [LICENSE](LICENSE)를 참조하세요.
