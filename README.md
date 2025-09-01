@@ -27,8 +27,11 @@ Cluefin을 사용함으로써 귀하는 자신의 책임 하에 학습이나 실
 ## 🚀 Quick Start
 
 ```bash
-# Setup
-uv sync --dev
+# Setup python 3.10
+uv venv --python 3.10
+source .venv/bin/activate
+
+uv sync --all-packages
 
 # Interactive stock analysis
 cluefin-cli inquiry

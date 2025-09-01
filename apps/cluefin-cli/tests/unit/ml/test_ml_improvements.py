@@ -15,10 +15,11 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from loguru import logger
+
 from cluefin_cli.ml.diagnostics import MLDiagnostics
 from cluefin_cli.ml.feature_engineering import FeatureEngineer
 from cluefin_cli.ml.predictor import StockMLPredictor
-from loguru import logger
 
 # Add the src directory to Python path
 src_path = Path(__file__).parent / "apps" / "cluefin-cli" / "src"
