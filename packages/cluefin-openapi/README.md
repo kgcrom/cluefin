@@ -29,35 +29,10 @@ pip install cluefin-openapi
 # 개발 환경에서 설치
 git clone https://github.com/kgcrom/cluefin
 cd cluefin
-pip install -e .
+uv venv --python 3.10
+source .venv/bin/activate
+cd packages/cluefin-openapi
 ```
-
-### 기본 사용법
-
-```python
-from loguru import logger
-from pydantic import SecretStr
-import os
-from cluefin_openapi.kiwoom._auth import Auth
-from cluefin_openapi.kiwoom._client import Client
-
-# 인증 설정
-auth = Auth(
-    app_key=os.getenv("KIWOOM_APP_KEY"),
-    secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY")),
-    env="dev",  # 개발환경: "dev", 운영환경: "prod"
-)
-
-# 토큰 생성 및 클라이언트 초기화
-token = auth.generate_token()
-client = Client(token=token.get_token(), env="dev")
-
-# 삼성전자(005930) 일별 실현손익 조회
-response = client.account.get_daily_stock_realized_profit_loss_by_date("005930", "20250630")
-logger.info("응답 헤더:", response.headers)
-logger.info("응답 데이터:", response.body)
-```
-
 
 ## 🎯 왜 cluefin-openapi인가요?
 
@@ -106,17 +81,46 @@ KIWOOM_SECRET_KEY=your_secret_key_here
 KRX_AUTH_KEY=your_krx_auth_key_here
 ```
 
+### 기본 사용법
+
+```python
+from loguru import logger
+from pydantic import SecretStr
+import os
+from cluefin_openapi.kiwoom._auth import Auth
+from cluefin_openapi.kiwoom._client import Client
+import dotenv
+
+# 인증 설정
+dotenv.load_dotenv(dotenv_path=".env")
+auth = Auth(
+    app_key=os.getenv("KIWOOM_APP_KEY"),
+    secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY")),
+    env="dev",  # 개발환경: "dev", 운영환경: "prod"
+)
+
+# 토큰 생성 및 클라이언트 초기화
+token = auth.generate_token()
+client = Client(token=token.get_token(), env="dev")
+
+# 삼성전자(005930) 일별 실현손익 조회
+response = client.account.get_daily_stock_realized_profit_loss_by_date("005930", "20250630")
+logger.info(f"응답 헤더: ${response.headers}")
+logger.info(f"응답 데이터: ${response.body}")
+```
+
 ## 📚 API 문서
 
 ### 인증 (Authentication)
 
 ```python
 # 키움증권
+from pydantic import SecretStr
 from cluefin_openapi.kiwoom._auth import Auth
 
 auth = Auth(
     app_key="your_app_key",
-    secret_key="your_secret_key",
+    secret_key=SecretStr("your_secret_key"),
     env="dev"  # "dev" 또는 "prod"
 )
 
