@@ -148,9 +148,6 @@ KIWOOM_SECRET_KEY=your_secret_key_here
 
 # OpenAI API key for AI-powered analysis
 OPENAI_API_KEY=your_openai_api_key_here
-
-# Optional: Environment setting (dev/prod)
-KIWOOM_ENVIRONMENT=dev
 ```
 
 ### Environment Setup
@@ -226,14 +223,6 @@ uv sync --dev
 # macOS with Homebrew
 brew install ta-lib
 uv run pip install TA-Lib
-
-# Ubuntu/Debian
-sudo apt-get install libta-lib0-dev
-uv run pip install TA-Lib
-
-# Windows (requires Visual Studio Build Tools)
-# Download wheel from https://www.lfd.uci.edu/~gohlke/pythonlibs/#ta-lib
-uv run pip install TA_Lib‑0.4.xx‑cpxx‑cpxxm‑win_amd64.whl
 ```
 
 ### OpenAI API Configuration

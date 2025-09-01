@@ -24,25 +24,6 @@ Cluefin을 사용함으로써 귀하는 자신의 책임 하에 학습이나 실
 
 ---
 
-## 🚀 Quick Start
-
-```bash
-# Setup python 3.10
-uv venv --python 3.10
-source .venv/bin/activate
-
-uv sync --all-packages
-
-# Interactive stock analysis
-cluefin-cli inquiry
-
-# Run tests
-uv run pytest
-
-# Code quanlity
-uv run ruff check . --fix
-```
-
 ## ✨ 주요 기능
 
 ### 🔥 핵심 기능
@@ -66,70 +47,7 @@ Cluefin은 모든 사람들에게 금융 투자, 포트폴리오 관리를 단�
 ## 🏁 Getting Started
 
 ### Prerequisites
-- Python 3.10+
 - [uv](https://github.com/astral-sh/uv) package manager
-
-### Installation
-```bash
-# Clone repository
-git clone https://github.com/kgcrom/cluefin.git
-cd cluefin
-
-# Install dependencies
-uv sync --dev
-
-# Install TA-Lib (for technical analysis)
-# macOS
-brew install ta-lib
-
-# Ubuntu/Debian
-sudo apt-get install libta-lib0-dev
-```
-
-### 환경 설정
-```bash
-# Copy sample env files
-cp packages/cluefin-openapi/.env.sample packages/cluefin-openapi/.env
-cp apps/cluefin-cli/.env.sample apps/cluefin-cli/.env
-
-# Edit with you API keys
-# KIWOOM_APP_KEY=your_app_key
-# KIWOOM_SECRET_KEY=your_secret_key  
-# OPENAI_API_KEY=your_openai_api_key
-```
-
-### Quick Usage
-```bash
-# Interactive stock inquiry
-cluefin-cli inquiry
-
-# Quick analysis with AI insights
-cluefin-cli analyze 005930 --ai-analysis
-
-# ML predict and print shap
-cluefin-cli analyze 035720 --ml-predict --shap-analysis 
-```
-
-## 🔧 Development
-
-### Local Development Setup
-```bash
-# Install all dependencies (packages + CLI app)
-uv sync --dev
-
-# Run all tests (unit + integration)
-uv run pytest
-
-# Run unit tests only
-uv run pytest packages/cluefin-openapi/tests/unit/ -v
-
-# Run integration tests (requires API keys)
-uv run pytest packages/cluefin-openapi/tests/integration/ -v
-
-# Code quality checks
-uv run ruff check . --fix
-uv run ruff format .
-```
 
 ### Project layout
 This project uses a **uv workspace monorepo**:
@@ -139,13 +57,6 @@ cluefin/
 ├── apps/cluefin-cli/           # Interactive CLI application
 └── docs/                       # Comprehensive documentation
 ```
-
-### CI/CD Pipeline
-- **CI Pipeline**: Runs linting, testing, building, and security scans
-- **Release Pipeline**: Handles package publishing and deployment
-- **Dependency Update**: Automated dependency updates via GitHub Actions
-
-환경 변수 설정은 [docs/ENVIRONMENT_VARIABLES.md](docs/ENVIRONMENT_VARIABLES.md)를 참조하세요.
 
 ## 📄 라이선스
 이 프로젝트는 MIT 라이선스에 따라 라이선스가 부여됩니다. 자세한 내용은 [LICENSE](LICENSE)를 참조하세요.

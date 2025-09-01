@@ -106,14 +106,11 @@ git clone https://github.com/kgcrom/cluefin.git
 cd cluefin
 
 # Install dependencies
-uv sync --dev
+uv sync --all-packages
 
 # Install TA-Lib (for technical analysis)
 # macOS
 brew install ta-lib
-
-# Ubuntu/Debian
-sudo apt-get install libta-lib0-dev
 ```
 
 ### Environment Setup

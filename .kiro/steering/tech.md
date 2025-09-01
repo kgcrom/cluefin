@@ -53,7 +53,6 @@ uv run python apps/cluefin-cli/main.py analyze 005930
 - `KIWOOM_APP_KEY`, `KIWOOM_SECRET_KEY`: Kiwoom API credentials
 - `OPENAI_API_KEY`: AI analysis features
 - `KRX_AUTH_KEY`: Korea Exchange API
-- `KIWOOM_ENVIRONMENT`: dev/prod setting
 
 ## Testing Rules
 - Unit tests: Mock all external dependencies

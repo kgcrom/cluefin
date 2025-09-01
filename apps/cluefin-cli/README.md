@@ -55,32 +55,30 @@ A powerful command-line interface for Korean stock market analysis with technica
 ### Installation
 
 1. **Clone and navigate to the project:**
-   ```bash
-   cd apps/cluefin-cli
-   ```
+```bash
+git clone https://github.com/kgcrom/cluefin
+cd cluefin
+uv venv --python 3.10
+source .venv/bin/activate
+cd apps/cluefin-cli
+```
 
 2. **Install TA-Lib system dependency:**
-   ```bash
-   # macOS
-   brew install ta-lib
-   
-   # Ubuntu/Debian
-   sudo apt-get install libta-lib0-dev
-   
-   # Windows
-   # Download from https://www.lfd.uci.edu/~gohlke/pythonlibs/#ta-lib
-   ```
+```bash
+# macOS
+brew install ta-lib
+```
 
 3. **Install Python dependencies:**
-   ```bash
-   uv sync --dev
-   ```
+```bash
+uv sync --all-packages
+```
 
 4. **Configure environment (optional):**
-   ```bash
-   cp .env.sample .env
-   # Edit .env with your API keys
-   ```
+```bash
+cp .env.sample .env
+# Edit .env with your API keys
+```
 
 ### Basic Usage
 
@@ -194,16 +192,10 @@ Create a `.env` file in the project root:
 KIWOOM_APP_KEY=your_app_key_here
 KIWOOM_SECRET_KEY=your_secret_key_here
 
+KRX_AUTH_KEY=you_auth_key_here
+
 # OpenAI API (for AI analysis)
 OPENAI_API_KEY=your_openai_api_key_here
-
-# Optional: Environment setting
-KIWOOM_ENVIRONMENT=dev
-
-# ML Features (no additional configuration required)
-# - LightGBM: Works out of the box
-# - SHAP: Auto-configured with TreeExplainer
-# - TA-Lib: Requires system dependency (see Installation)
 ```
 
 ### API Integration
@@ -211,7 +203,8 @@ KIWOOM_ENVIRONMENT=dev
 Currently, the CLI uses mock data for demonstration. To enable real data:
 
 1. **Kiwoom Securities API**: Sign up for API access and add credentials to `.env`
-2. **OpenAI API**: Get an API key from OpenAI for AI-powered analysis
+2. **KRX Auth key**: Get an AUTH key form KRX
+3. **OpenAI API**: Get an API key from OpenAI for AI-powered analysis
 
 ## Output Examples
 
