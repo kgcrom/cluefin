@@ -27,6 +27,9 @@ Cluefin을 사용함으로써 귀하는 자신의 책임 하에 학습이나 실
 ## 🚀 Quick Start
 
 ```bash
+# Install TA-Lib system dependency (macOS)
+brew install ta-lib lightgbm
+
 # Clone and setup
 git clone https://github.com/kgcrom/cluefin.git
 cd cluefin
@@ -35,9 +38,6 @@ source .venv/bin/activate
 
 # Install dependencies
 uv sync --all-packages
-
-# Install TA-Lib system dependency (macOS)
-brew install ta-lib
 
 # Configure environment
 cp apps/cluefin-cli/.env.sample .env

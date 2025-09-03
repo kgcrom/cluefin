@@ -66,7 +66,7 @@ cd apps/cluefin-cli
 2. **Install TA-Lib system dependency:**
 ```bash
 # macOS
-brew install ta-lib
+brew install ta-lib lightgbm
 ```
 
 3. **Install Python dependencies:**

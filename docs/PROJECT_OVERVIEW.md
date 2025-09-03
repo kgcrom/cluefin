@@ -110,7 +110,7 @@ uv sync --all-packages
 
 # Install TA-Lib (for technical analysis)
 # macOS
-brew install ta-lib
+brew install ta-lib lightgbm
 ```
 
 ### Environment Setup

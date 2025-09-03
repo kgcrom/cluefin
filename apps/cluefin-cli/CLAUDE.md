@@ -122,7 +122,7 @@ uv run pytest tests/unit/ml/ -v
 ### Environment Setup
 ```bash
 # Required system dependency (macOS)
-brew install ta-lib
+brew install ta-lib lightgbm
 
 # Required environment variables
 KIWOOM_APP_KEY=your_key

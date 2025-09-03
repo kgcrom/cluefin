@@ -221,8 +221,7 @@ uv sync --dev
 ### TA-Lib Installation
 ```bash
 # macOS with Homebrew
-brew install ta-lib
-uv run pip install TA-Lib
+brew install ta-lib lightgbm
 ```
 
 ### OpenAI API Configuration
