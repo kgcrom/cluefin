@@ -1,8 +1,8 @@
 name: CI Pipeline
 
 "on":
-  push:
-    branches: [ main ]
+  # push:
+    # branches: [ main ]
   workflow_dispatch:
     inputs:
       debug_enabled:
@@ -95,19 +95,44 @@ jobs:
         LOG_LEVEL: ${{ vars.LOG_LEVEL || 'DEBUG' }}
       run: |
         uv run pytest -m "integration" -v --tb=short
-        
-    - name: Generate coverage report
-      run: |
-        uv run coverage run --source=packages/cluefin-openapi/src -m pytest -m "not integration"
-        uv run coverage xml
-        
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-        token: ${{ secrets.CODECOV_TOKEN }}
+
+  coverage:
+    name: Codacy Coverage Report
+    runs-on: ubuntu-latest
+    environment: development
+    needs: test 
+    if: needs.test.result == 'success'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.10
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          
+      - name: Install dependencies
+        run: |
+          uv sync --all-packages
+      
+      - name: Generate coverage report
+        run: |
+          uv run coverage run -m pytest -m "not integration"
+          uv run coverage xml
+      
+      - name: Upload coverage to Codecov
+        env:
+          CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+          CODACY_ORGANIZATION_PROVIDER: gh
+          CODACY_USERNAME: kgcrom
+          CODACY_PROJECT_NAME: cluefin
+        run: |
+          bash <(curl -Ls https://coverage.codacy.com/get.sh) report -l Python -r coverage.xml
 
   security:
     name: Security Scan
