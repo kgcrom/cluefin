@@ -22,7 +22,10 @@ class TestBaseAPIModule:
     def mock_client(self):
         """Create a mock Kiwoom client."""
         client = Mock()
-        client.get_test_api = Mock(return_value={"status": "success", "data": []})
+        # Create the test_api attribute with the method
+        test_api = Mock()
+        test_api.get_test_api = Mock(return_value={"status": "success", "data": []})
+        client.test_api = test_api
         return client
 
     @pytest.fixture
@@ -48,6 +51,9 @@ class TestBaseAPIModule:
             def get_api_category(self):
                 return sample_category
 
+            def get_client_attribute_name(self):
+                return "test_api"
+
             def _format_and_display_result(self, result, api_config):
                 self.console.print(f"Result: {result}")
 
@@ -59,6 +65,9 @@ class TestBaseAPIModule:
         class TestModule(BaseAPIModule):
             def get_api_category(self):
                 return APICategory(name="test", korean_name="테스트", apis=[])
+
+            def get_client_attribute_name(self):
+                return "test_api"
 
             def _format_and_display_result(self, result, api_config):
                 pass
@@ -80,6 +89,9 @@ class TestBaseAPIModule:
         class TestModule(BaseAPIModule):
             def get_api_category(self):
                 return APICategory(name="test", korean_name="테스트", apis=[])
+
+            def get_client_attribute_name(self):
+                return "test_api"
 
             def _format_and_display_result(self, result, api_config):
                 pass
@@ -166,7 +178,7 @@ class TestBaseAPIModule:
         result = concrete_module._execute_api_with_retry(sample_api_config, params)
 
         assert result == expected_result
-        mock_client.get_test_api.assert_called_once_with(**params)
+        mock_client.test_api.get_test_api.assert_called_once_with(**params)
 
     def test_execute_api_with_retry_no_client(self, sample_api_config):
         """Test API execution when no client is available."""
@@ -174,6 +186,9 @@ class TestBaseAPIModule:
         class TestModule(BaseAPIModule):
             def get_api_category(self):
                 return APICategory(name="test", korean_name="테스트", apis=[])
+
+            def get_client_attribute_name(self):
+                return "test_api"
 
             def _format_and_display_result(self, result, api_config):
                 pass
@@ -187,7 +202,7 @@ class TestBaseAPIModule:
     def test_execute_api_with_retry_method_not_found(self, concrete_module, sample_api_config):
         """Test API execution when method doesn't exist on client."""
         # Remove the method from mock client
-        del concrete_module.client.get_test_api
+        del concrete_module.client.test_api.get_test_api
 
         result = concrete_module._execute_api_with_retry(sample_api_config, {})
 
@@ -201,41 +216,41 @@ class TestBaseAPIModule:
         error = KiwoomAPIError("RATE_LIMIT_EXCEEDED", "Rate limit exceeded")
         success_result = {"status": "success"}
 
-        mock_client.get_test_api.side_effect = [error, success_result]
+        mock_client.test_api.get_test_api.side_effect = [error, success_result]
 
         with patch.object(concrete_module, "_is_retryable_error", return_value=True):
             with patch("time.sleep"):  # Mock sleep to speed up test
                 result = concrete_module._execute_api_with_retry(sample_api_config, params)
 
         assert result == success_result
-        assert mock_client.get_test_api.call_count == 2
+        assert mock_client.test_api.get_test_api.call_count == 2
 
     def test_execute_api_with_retry_kiwoom_error_non_retryable(self, concrete_module, mock_client, sample_api_config):
         """Test retry logic with non-retryable Kiwoom API error."""
         params = {"param1": "value1"}
 
         error = KiwoomAPIError("Invalid credentials", status_code=401)
-        mock_client.get_test_api.side_effect = error
+        mock_client.test_api.get_test_api.side_effect = error
 
         with patch.object(concrete_module, "_is_retryable_error", return_value=False):
             result = concrete_module._execute_api_with_retry(sample_api_config, params)
 
         assert result is None
-        assert mock_client.get_test_api.call_count == 1  # No retry
+        assert mock_client.test_api.get_test_api.call_count == 1  # No retry
 
     def test_execute_api_with_retry_max_retries_exceeded(self, concrete_module, mock_client, sample_api_config):
         """Test retry logic when max retries are exceeded."""
         params = {"param1": "value1"}
 
         error = KiwoomAPIError("Rate limit exceeded", status_code=429)
-        mock_client.get_test_api.side_effect = error
+        mock_client.test_api.get_test_api.side_effect = error
 
         with patch.object(concrete_module, "_is_retryable_error", return_value=True):
             with patch("time.sleep"):  # Mock sleep to speed up test
                 result = concrete_module._execute_api_with_retry(sample_api_config, params)
 
         assert result is None
-        assert mock_client.get_test_api.call_count == concrete_module.max_retries
+        assert mock_client.test_api.get_test_api.call_count == concrete_module.max_retries
 
     def test_enforce_rate_limit(self, concrete_module):
         """Test rate limiting enforcement."""
@@ -317,6 +332,9 @@ class TestBaseAPIModule:
             def get_api_category(self):
                 return APICategory(name="test", korean_name="테스트", apis=[])
 
+            def get_client_attribute_name(self):
+                return "test_api"
+
             def _format_and_display_result(self, result, api_config):
                 pass
 
@@ -356,6 +374,9 @@ class TestBaseAPIModuleIntegration:
                     ],
                 )
 
+            def get_client_attribute_name(self):
+                return "test_api"
+
             def _format_and_display_result(self, result, api_config):
                 self.formatter.display_info(f"API {api_config.korean_name} 실행 완료")
 
@@ -365,7 +386,9 @@ class TestBaseAPIModuleIntegration:
         """Test the complete API execution flow."""
         # Mock client with test method
         mock_client = Mock()
-        mock_client.get_test_data = Mock(return_value={"data": "test_result"})
+        test_api = Mock()
+        test_api.get_test_data = Mock(return_value={"data": "test_result"})
+        mock_client.test_api = test_api
         integration_module.set_client(mock_client)
 
         # Mock parameter collection
@@ -376,4 +399,4 @@ class TestBaseAPIModuleIntegration:
             result = integration_module.execute_api("test_api")
 
             assert result is True
-            mock_client.get_test_data.assert_called_once_with(market_type="001")
+            mock_client.test_api.get_test_data.assert_called_once_with(market_type="001")

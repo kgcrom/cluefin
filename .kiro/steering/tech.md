@@ -4,58 +4,83 @@ inclusion: always
 
 # Technology Stack & Development Guidelines
 
-## Core Stack
-- **uv**: Package manager - use for all dependency management and command execution
-- **Python 3.10+**: Required version (check `.python-version`)
-- **Workspace**: Multi-package structure (`packages/cluefin-openapi`, `apps/cluefin-cli`)
+## Required Tools & Commands
 
-## Key Dependencies
-- **Pydantic v2**: All API models and validation
-- **Rich**: Terminal UI formatting and tables
-- **Click**: CLI framework
-- **Requests**: HTTP client
-- **Pandas/NumPy**: Data analysis
-- **pytest**: Testing with markers (`@pytest.mark.integration`, `@pytest.mark.requires_auth`)
+**Package Management**: Always use `uv` for all operations
+- Dependencies: `uv sync --dev` or `uv sync --directory <package>`
+- Code execution: `uv run <command>` (never use bare `python` or `pip`)
+- Python version: 3.10+ (enforced by `.python-version`)
 
-## Development Commands
-
-**Setup & Dependencies:**
+**Code Quality**: Run before any commits
 ```bash
-uv sync --dev                                    # Install all dependencies
-uv sync --directory packages/cluefin-openapi    # Install specific package
+uv run ruff format .        # Format all code
+uv run ruff check . --fix   # Lint and auto-fix issues
 ```
 
-**Code Quality (always run before commits):**
+**Testing Commands**:
 ```bash
-uv run ruff format .        # Format code
-uv run ruff check . --fix   # Lint and auto-fix
+uv run pytest -m "not integration"             # Unit tests only (default)
+uv run pytest packages/*/tests/unit/ -v        # Verbose unit tests
+uv run pytest -m integration                   # Integration tests (requires auth)
 ```
 
-**Testing:**
-```bash
-uv run pytest                                   # All tests
-uv run pytest packages/*/tests/unit/ -v        # Unit tests only
-uv run pytest -m "not integration"             # Skip integration tests
+## Mandatory Code Standards
+
+**Formatting & Style**:
+- Line length: 120 characters maximum
+- Use Ruff for all formatting/linting (replaces black, isort, flake8)
+- Type hints required for all public functions, methods, and class attributes
+- Docstrings required for all public APIs
+
+**Dependencies**:
+- Pydantic v2: All data models and validation (never use v1 syntax)
+- Rich: All terminal output formatting and tables
+- Click: CLI framework with proper decorators
+- pytest: Testing with proper markers (`@pytest.mark.integration`, `@pytest.mark.slow`)
+
+## Workspace Structure Rules
+
+**Multi-package monorepo**:
+- `packages/cluefin-openapi/`: Reusable API client library
+- `apps/cluefin-cli/`: CLI application consuming the library
+- Never create circular dependencies between packages
+
+**Import Patterns**:
+```python
+# Correct cross-package imports
+from cluefin_openapi.kiwoom import Client
+from cluefin_cli.commands import analyze
+
+# Correct relative imports within same package
+from ._client import KiwoomClient
+from ._auth_types import TokenResponse
 ```
 
-**Running CLI:**
-```bash
-uv run python apps/cluefin-cli/main.py analyze 005930
-```
+## Environment & Security
 
-## Code Standards
-- **Line length**: 120 characters
-- **Formatting**: Use Ruff (replaces black/isort/flake8)
-- **Type hints**: Required for all public APIs
-- **Docstrings**: Required for all public functions/classes
-
-## Environment Variables
+**Required Environment Variables**:
 - `KIWOOM_APP_KEY`, `KIWOOM_SECRET_KEY`: Kiwoom API credentials
 - `OPENAI_API_KEY`: AI analysis features
-- `KRX_AUTH_KEY`: Korea Exchange API
+- `KRX_AUTH_KEY`: Korea Exchange API access
 
-## Testing Rules
-- Unit tests: Mock all external dependencies
-- Integration tests: Require real API credentials, use markers
-- All new features must include tests
-- Use `pytest-mock` for mocking in tests
+**Security Rules**:
+- Never log API keys or sensitive credentials
+- Use environment variables for all external service credentials
+- Implement proper rate limiting and caching for all API clients
+
+## Testing Requirements
+
+**Unit Tests** (default for all new code):
+- Mock all external dependencies using `unittest.mock` or `pytest-mock`
+- Test files: `test_*.py` in `tests/unit/` directories
+- Run with: `uv run pytest -m "not integration"`
+
+**Integration Tests** (optional, requires credentials):
+- Use `@pytest.mark.integration` and `@pytest.mark.slow` markers
+- Real API calls allowed, but must handle rate limits
+- Run with: `uv run pytest -m integration`
+
+**Coverage Requirements**:
+- All new public functions must have unit tests
+- All new API endpoints must have integration tests
+- Use descriptive test names that explain the scenario being tested

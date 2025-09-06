@@ -4,95 +4,85 @@ inclusion: always
 
 # Project Structure & Architecture Patterns
 
-## Workspace Organization
+## Workspace Structure
 
-**uv workspace** with monorepo structure:
-- `packages/cluefin-openapi/` - Reusable Korean financial API client library
-- `apps/cluefin-cli/` - Command-line interface application
+**uv monorepo** with two main packages:
+- `packages/cluefin-openapi/` - Korean financial API client library
+- `apps/cluefin-cli/` - CLI application consuming the library
 
-## Architecture Rules
+## File Organization Rules
 
-### Module Organization
-- **Private modules**: Prefix with underscore (`_client.py`, `_auth.py`)
-- **Type definitions**: Suffix with `_types.py` (`_auth_types.py`)
-- **Domain grouping**: Group related functionality (`_domestic_account.py`, `_domestic_chart.py`)
-- **Client structure**: Match domain names as properties (`client.account`, `client.chart`)
+### Module Naming Patterns
+- **Private modules**: Underscore prefix (`_client.py`, `_auth.py`)
+- **Type definitions**: `_types.py` suffix (`_domestic_account_types.py`)
+- **Domain grouping**: Related functionality together (`_domestic_account.py`, `_domestic_chart.py`)
+- **Test files**: `test_` prefix (`test_auth.py`)
 
-### API Client Patterns
-- All API clients must implement rate limiting and caching
-- Use Pydantic models for all external API responses
-- Implement proper retry logic with exponential backoff
-- Custom exceptions with context (`KiwoomAuthenticationError`, `KiwoomRateLimitError`)
-- Method naming: Descriptive and consistent (`get_inquire_balance`, `get_daily_chart`)
+### Directory Structure
+- API modules in domain folders: `kiwoom/`, `krx/`
+- Tests split: `tests/unit/` (mocked), `tests/integration/` (real API calls)
+- Keep auth, client, and types in same domain folder
 
-## Code Style & Naming
+## Code Conventions
 
-### Naming Conventions
-- **Classes**: PascalCase (`DomesticAccount`, `TechnicalAnalyzer`)
+### Naming Standards
+- **Classes**: PascalCase (`DomesticAccount`, `KiwoomClient`)
 - **Functions/Methods**: snake_case (`get_stock_data`, `calculate_rsi`)
-- **Constants**: UPPER_SNAKE_CASE (`MAX_RETRIES`, `DEFAULT_TIMEOUT`)
-- **Test files**: Prefix with `test_` (`test_auth.py`)
+- **Constants**: UPPER_SNAKE_CASE (`MAX_RETRIES`, `API_BASE_URL`)
+- **Client properties**: Match domain names (`client.account`, `client.chart`)
 
-### File Organization Rules
-- Place new API modules in appropriate domain folders (`kiwoom/`, `krx/`)
-- Use `_types.py` suffix for Pydantic model definitions
-- Keep related functionality together (auth, client, types in same domain)
-
-## Testing Requirements
-
-### Test Structure
-- **Unit tests**: `tests/unit/` with mocking for external dependencies
-- **Integration tests**: `tests/integration/` for real API calls (require credentials)
-- Use `@pytest.mark.integration` and `@pytest.mark.requires_auth` markers
-- Mock API clients in CLI tests using `unittest.mock`
-
-## Import & Dependency Patterns
-
-### Import Rules
+### Import Order
 ```python
-# Within same package - use relative imports
-from ._client import Client
-from ._auth_types import TokenResponse
-
-# Cross-package workspace imports
-from cluefin_openapi.kiwoom import Client
-
-# Standard library first, then third-party, then local
+# 1. Standard library
 import asyncio
 from typing import Optional
+
+# 2. Third-party
 import click
 import pandas as pd
 from rich.console import Console
+
+# 3. Local - relative imports within same package
+from ._client import Client
+from ._auth_types import TokenResponse
+
+# 4. Cross-package workspace imports
+from cluefin_openapi.kiwoom import Client
 ```
 
-## Error Handling Requirements
+## API Client Architecture
 
-### Exception Patterns
-- Create specific exception types for different error conditions
-- Include context information (request details, status codes, Korean error messages)
-- Inherit from appropriate base exception classes
-- Use descriptive names: `KiwoomAuthenticationError`, `KiwoomRateLimitError`
+### Required Implementations
+- Rate limiting and caching for all API clients
+- Pydantic v2 models for all external API responses
+- Exponential backoff retry logic
+- Domain-specific custom exceptions (`KiwoomAuthenticationError`, `KiwoomRateLimitError`)
+- Consistent method naming (`get_inquire_balance`, `get_daily_chart`)
 
-### Retry & Resilience
-- Implement exponential backoff for retryable errors
-- Distinguish between retryable (network, rate limit) and non-retryable (auth, validation) errors
-- Log retry attempts with context for debugging
-- Respect API rate limits and implement proper caching
+### Error Handling Patterns
+- Specific exception types with context (request details, Korean error messages)
+- Distinguish retryable (network, rate limit) vs non-retryable (auth, validation) errors
+- Log retry attempts with debugging context
+- Respect API rate limits with proper caching
 
-## Development Commands
+## Testing Requirements
 
+### Test Organization
+- **Unit tests**: Mock all external dependencies using `unittest.mock`
+- **Integration tests**: Real API calls, require credentials
+- **Test markers**: Use `@pytest.mark.integration` and `@pytest.mark.slow`
+- Mock API clients in CLI application tests
+
+### Development Workflow
 ```bash
-# Setup and dependencies
+# Setup
 uv sync --dev
-uv sync --directory packages/cluefin-openapi
-uv sync --directory apps/cluefin-cli
 
-# Code quality
+# Code quality (run before commits)
 uv run ruff format .
 uv run ruff check . --fix
 
 # Testing
-uv run pytest                                    # All tests
-uv run pytest packages/cluefin-openapi/tests/unit/ -v    # Unit tests only
-uv run pytest -m "not integration"              # Skip integration tests
+uv run pytest -m "not integration"              # Unit tests only
+uv run pytest packages/*/tests/unit/ -v        # Verbose unit tests
 ```

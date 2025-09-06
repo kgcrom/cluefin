@@ -144,18 +144,16 @@ class TestSectorInfoModule:
         assert api is not None
         assert api.korean_name == "📅 업종현재가 일별요청"
         assert api.api_method == "get_daily_industry_current_price"
-        assert len(api.required_params) == 4
+        assert len(api.required_params) == 2
 
-        # Check that it has start and end date parameters
+        # Check parameter types
         param_names = [param.name for param in api.required_params]
-        assert "strt_dt" in param_names
-        assert "end_dt" in param_names
+        assert "mrkt_tp" in param_names
+        assert "inds_cd" in param_names
 
-        # Both should be date parameters
-        strt_dt_param = next(p for p in api.required_params if p.name == "strt_dt")
-        end_dt_param = next(p for p in api.required_params if p.name == "end_dt")
-        assert strt_dt_param.param_type == "date"
-        assert end_dt_param.param_type == "date"
+        # Check market type parameter
+        mrkt_tp_param = next(p for p in api.required_params if p.name == "mrkt_tp")
+        assert mrkt_tp_param.param_type == "select"
 
     def test_parameter_choices_validation(self, sector_module):
         """Test that all select parameters have proper choices defined."""
@@ -195,7 +193,7 @@ class TestSectorInfoModule:
         with patch.object(sector_module.formatter, "format_sector_data") as mock_format:
             sector_module._format_and_display_result(mock_result, api_config)
 
-            mock_format.assert_called_once_with(mock_result, api_config.korean_name)
+            mock_format.assert_called_once_with(mock_result, api_config)
 
     def test_execute_api_invalid_name(self, sector_module):
         """Test API execution with invalid API name."""

@@ -202,18 +202,28 @@ class TestSectorDataFormatter:
     def test_format_investor_sector_data(self):
         """Test investor sector data formatting."""
         mock_item = Mock()
-        mock_item.bstp_kor_isnm = "반도체"
-        mock_item.indv_ntby_tr_pbmn = "1000000000"
-        mock_item.frgn_ntby_tr_pbmn = "-500000000"
-        mock_item.inst_ntby_tr_pbmn = "200000000"
-        mock_item.bstp_prdy_ctrt = "2.15"
-        mock_item.tot_tr_pbmn = "5000000000"
+        mock_item.inds_nm = "반도체"
+        mock_item.cur_prc = "1000"
+        mock_item.flu_rt = "2.15"
+        mock_item.trde_qty = "5000000"
+        mock_item.ind_netprps = "1000000000"
+        mock_item.frgnr_netprps = "-500000000"
+        mock_item.orgn_netprps = "200000000"
 
+        # Create proper mock data structure
+        mock_body = Mock()
+        mock_body.inds_netprps = [mock_item]
         mock_data = Mock()
-        mock_data.output = [mock_item]
+        mock_data.body = mock_body
+
+        mock_api_config = APIConfig(
+            name="industry_investor_net_buy",
+            korean_name="업종별 투자자 순매수 요청",
+            api_method="test_method",
+        )
 
         with patch.object(self.formatter, "display_table") as mock_display:
-            self.formatter.format_sector_data(mock_data, "업종별 투자자 순매수 요청")
+            self.formatter.format_sector_data(mock_data, mock_api_config)
             mock_display.assert_called_once()
 
             args, kwargs = mock_display.call_args
@@ -225,18 +235,30 @@ class TestSectorDataFormatter:
     def test_format_index_data(self):
         """Test sector index data formatting."""
         mock_item = Mock()
-        mock_item.bstp_kor_isnm = "IT"
-        mock_item.bstp_nmix_prpr = "1500.25"
-        mock_item.bstp_nmix_prdy_vrss = "15.30"
-        mock_item.bstp_nmix_prdy_ctrt = "1.03"
-        mock_item.acml_vol = "50000000"
-        mock_item.acml_tr_pbmn = "2000000000"
+        mock_item.stk_cd = "001"
+        mock_item.stk_nm = "IT"
+        mock_item.cur_prc = "1500.25"
+        mock_item.pre_sig = "+"
+        mock_item.pred_pre = "15.30"
+        mock_item.flu_rt = "1.03"
+        mock_item.trde_qty = "50000000"
+        mock_item.wght = "10.5"
+        mock_item.trde_prica = "2000000000"
 
+        # Create proper mock data structure
+        mock_body = Mock()
+        mock_body.all_inds_index = [mock_item]
         mock_data = Mock()
-        mock_data.output = [mock_item]
+        mock_data.body = mock_body
+
+        mock_api_config = APIConfig(
+            name="all_industry_index",
+            korean_name="전업종 지수요청",
+            api_method="test_method",
+        )
 
         with patch.object(self.formatter, "display_table") as mock_display:
-            self.formatter.format_sector_data(mock_data, "전업종 지수요청")
+            self.formatter.format_sector_data(mock_data, mock_api_config)
             mock_display.assert_called_once()
 
 
@@ -263,8 +285,11 @@ class TestStockDataFormatter:
         mock_item.cntg_vol = "10000"
         mock_item.acml_vol = "500000"
 
+        # Create proper mock data structure
+        mock_body = Mock()
+        mock_body.trde_qty_updt = [mock_item]
         mock_data = Mock()
-        mock_data.output = [mock_item]
+        mock_data.body = mock_body
 
         mock_api_config = APIConfig(
             name="trading_volume_renewal",
@@ -279,23 +304,32 @@ class TestStockDataFormatter:
 
             args, kwargs = mock_display.call_args
             headers, rows, title = args
-            assert "시간" in headers
+            assert "종목코드" in headers
             assert "현재가" in headers
-            assert "거래량" in headers
+            assert "현재거래량" in headers
 
     def test_format_broker_analysis_data(self):
         """Test broker analysis data formatting."""
         mock_item = Mock()
-        mock_item.mbcr_name = "삼성증권"
-        mock_item.seln_qty = "10000"
-        mock_item.shnu_qty = "15000"
-        mock_item.ntby_qty_rate = "5.2"
+        mock_item.dt = "20231201"
+        mock_item.close_pric = "75000"
+        mock_item.pred_pre = "1000"
+        mock_item.sel_qty = "10000"
+        mock_item.buy_qty = "15000"
+        mock_item.netprps_qty = "5000"
+        mock_item.trde_qty_sum = "25000"
+        mock_item.trde_wght = "5.2"
 
+        # Create proper mock data structure
+        mock_body = Mock()
+        mock_body.trde_ori_prps_anly = [mock_item]
         mock_data = Mock()
-        mock_data.output = [mock_item]
+        mock_data.body = mock_body
 
         mock_api_config = APIConfig(
-            name="broker_trading_analysis", korean_name="거래원매물대분석요청", api_method="test_method"
+            name="trading_member_supply_demand_analysis", 
+            korean_name="거래원매물대분석요청", 
+            api_method="test_method"
         )
 
         with patch.object(self.formatter, "display_table") as mock_display:
@@ -304,7 +338,7 @@ class TestStockDataFormatter:
 
             args, kwargs = mock_display.call_args
             headers, rows, title = args
-            assert "거래원명" in headers
+            assert "일자" in headers
             assert "매도량" in headers
             assert "매수량" in headers
 
