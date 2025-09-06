@@ -47,15 +47,14 @@ jobs:
         
     - name: Install updated dependencies
       run: |
-        uv sync --dev
-        uv sync --directory packages/cluefin-openapi
+        uv sync --all-packages 
         
     - name: Run tests with updated dependencies
       env:
         TEST_ENVIRONMENT: ${{ vars.TEST_ENVIRONMENT || 'development' }}
         LOG_LEVEL: ${{ vars.LOG_LEVEL || 'INFO' }}
       run: |
-        uv run pytest packages/cluefin-openapi/tests/unit/ -v
+        uv run pytest -m "not integration" -v
         
     - name: Run linting with updated dependencies
       run: |

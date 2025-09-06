@@ -34,15 +34,14 @@ def client(auth: Auth) -> Client:
     return Client(token=token.get_token(), env="dev")
 
 
+@pytest.mark.integration
 def test_get_industry_program(client: Client):
     time.sleep(1)
     # Test parameters
     stk_code = "005930"  # Example sector code
-    cont_yn = None
-    next_key = None
 
     # Make the API call
-    response = client.sector.get_industry_program(stk_code=stk_code, cont_yn=cont_yn, next_key=next_key)
+    response = client.sector.get_industry_program(stk_code=stk_code)
 
     # Verify response structure
     assert response is not None

@@ -107,7 +107,7 @@ def test_diagnostics():
     logger.info("\nTesting comprehensive diagnosis...")
     diagnostics.diagnose_training_data(X, y_imbalanced)
 
-    return True
+    assert True  # Test passes if no exceptions are raised
 
 
 def test_feature_engineering():
@@ -145,7 +145,7 @@ def test_feature_engineering():
         class_weights = feature_engineer.calculate_class_weights(y)
         logger.info(f"Class weights: {class_weights}")
 
-    return True
+    assert True  # Test passes if no exceptions are raised
 
 
 def test_ml_pipeline():
@@ -157,33 +157,23 @@ def test_ml_pipeline():
     # Initialize predictor with diagnostics enabled
     predictor = StockMLPredictor(enable_diagnostics=True)
 
-    try:
-        # Prepare data
-        prepared_df, feature_names = predictor.prepare_data(stock_data, indicators)
-        logger.info(f"Prepared data shape: {prepared_df.shape}")
-        logger.info(f"Features: {len(feature_names)}")
+    # Prepare data
+    prepared_df, feature_names = predictor.prepare_data(stock_data, indicators)
+    logger.info(f"Prepared data shape: {prepared_df.shape}")
+    logger.info(f"Features: {len(feature_names)}")
 
-        # Train model
-        training_metrics = predictor.train_model(prepared_df, use_smote=True, use_class_weights=True)
+    # Train model
+    training_metrics = predictor.train_model(prepared_df, use_smote=True, use_class_weights=True)
 
-        logger.info("\n📊 Training Results:")
-        for metric, value in training_metrics.items():
-            logger.info(f"  {metric}: {value:.4f}")
+    logger.info("\n📊 Training Results:")
+    for metric, value in training_metrics.items():
+        logger.info(f"  {metric}: {value:.4f}")
 
-        # Test prediction
-        prediction_result = predictor.predict(stock_data, indicators)
-        logger.info(
-            f"\n🎯 Prediction: {prediction_result['signal']} (confidence: {prediction_result['confidence']:.4f})"
-        )
+    # Test prediction
+    prediction_result = predictor.predict(stock_data, indicators)
+    logger.info(f"\n🎯 Prediction: {prediction_result['signal']} (confidence: {prediction_result['confidence']:.4f})")
 
-        return True
-
-    except Exception as e:
-        logger.info(f"❌ Pipeline test failed: {e}")
-        import traceback
-
-        logger.info(traceback.format_exc())
-        return False
+    assert True  # Test passes if no exceptions are raised
 
 
 def main():

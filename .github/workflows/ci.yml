@@ -3,8 +3,6 @@ name: CI Pipeline
 "on":
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ "copilot/**" ]
   workflow_dispatch:
     inputs:
       debug_enabled:
@@ -72,8 +70,7 @@ jobs:
         
     - name: Install dependencies
       run: |
-        uv sync --dev
-        uv sync --directory packages/cluefin-openapi
+        uv sync --all-packages
         
     - name: Create test environment file
       run: |
@@ -86,7 +83,7 @@ jobs:
         LOG_LEVEL: ${{ vars.LOG_LEVEL || 'INFO' }}
         ENABLE_INTEGRATION_TESTS: ${{ vars.ENABLE_INTEGRATION_TESTS || 'false' }}
       run: |
-        uv run pytest packages/cluefin-openapi/tests/unit/ -v
+        uv run pytest -m "not integration"
         
     - name: Run integration tests
       if: vars.ENABLE_INTEGRATION_TESTS == 'true'
@@ -97,11 +94,11 @@ jobs:
         TEST_ENVIRONMENT: ${{ vars.TEST_ENVIRONMENT || 'development' }}
         LOG_LEVEL: ${{ vars.LOG_LEVEL || 'DEBUG' }}
       run: |
-        uv run pytest packages/cluefin-openapi/tests/integration/ -v --tb=short
+        uv run pytest -m "integration" -v --tb=short
         
     - name: Generate coverage report
       run: |
-        uv run coverage run --source=packages/cluefin-openapi/src -m pytest packages/cluefin-openapi/tests/unit/
+        uv run coverage run --source=packages/cluefin-openapi/src -m pytest -m "not integration"
         uv run coverage xml
         
     - name: Upload coverage to Codecov
@@ -133,7 +130,7 @@ jobs:
         
     - name: Install dependencies
       run: |
-        uv sync --dev
+        uv sync --all-packages
         
     - name: Run pip-audit vulnerability scan
       run: |
