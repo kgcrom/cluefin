@@ -43,8 +43,8 @@ from cluefin_openapi.kiwoom._domestic_stock_info_types import (
 def auth() -> Auth:
     dotenv.load_dotenv(dotenv_path=".env.test")
     return Auth(
-        app_key=os.getenv("KIWOOM_APP_KEY"),
-        secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY")),
+        app_key=os.getenv("KIWOOM_APP_KEY", ""),
+        secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY", "")),
         env="dev",
     )
 
@@ -63,6 +63,7 @@ def client(auth: Auth) -> Client:
     return Client(token=token.get_token(), env="dev")
 
 
+@pytest.mark.integration
 def test_get_stock_info(client: Client):
     time.sleep(1)
 
@@ -74,6 +75,7 @@ def test_get_stock_info(client: Client):
     assert isinstance(response.body, DomesticStockInfoBasic)
 
 
+@pytest.mark.integration
 def test_get_stock_trading_member(client: Client):
     time.sleep(1)
 
@@ -85,6 +87,7 @@ def test_get_stock_trading_member(client: Client):
     assert isinstance(response.body, DomesticStockInfoTradingMember)
 
 
+@pytest.mark.integration
 def test_get_execution_info(client: Client):
     time.sleep(1)
 
@@ -96,6 +99,7 @@ def test_get_execution_info(client: Client):
     assert isinstance(response.body, DomesticStockInfoExecution)
 
 
+@pytest.mark.integration
 def test_get_margin_trading_trend(client: Client):
     time.sleep(1)
 
@@ -107,6 +111,7 @@ def test_get_margin_trading_trend(client: Client):
     assert isinstance(response.body, DomesticStockInfoMarginTradingTrend)
 
 
+@pytest.mark.integration
 def test_get_daily_trading_details(client: Client):
     time.sleep(1)
 
@@ -118,6 +123,7 @@ def test_get_daily_trading_details(client: Client):
     assert isinstance(response.body, DomesticStockInfoDailyTradingDetails)
 
 
+@pytest.mark.integration
 def test_get_new_high_low_price(client: Client):
     time.sleep(1)
 
@@ -139,6 +145,7 @@ def test_get_new_high_low_price(client: Client):
     assert isinstance(response.body, DomesticStockInfoNewHighLowPrice)
 
 
+@pytest.mark.integration
 def test_get_upper_lower_limit_price(client: Client):
     time.sleep(1)
 
@@ -159,6 +166,7 @@ def test_get_upper_lower_limit_price(client: Client):
     assert isinstance(response.body, DomesticStockInfoUpperLowerLimitPrice)
 
 
+@pytest.mark.integration
 def test_get_high_low_price_approach(client: Client):
     time.sleep(1)
 
@@ -178,6 +186,7 @@ def test_get_high_low_price_approach(client: Client):
     assert isinstance(response.body, DomesticStockInfoHighLowPriceApproach)
 
 
+@pytest.mark.integration
 def test_get_price_volatility(client: Client):
     time.sleep(1)
 
@@ -200,6 +209,7 @@ def test_get_price_volatility(client: Client):
     assert isinstance(response.body, DomesticStockInfoPriceVolatility)
 
 
+@pytest.mark.integration
 def test_get_trading_volume_renewal(client: Client):
     time.sleep(1)
 
@@ -216,6 +226,7 @@ def test_get_trading_volume_renewal(client: Client):
     assert isinstance(response.body, DomesticStockInfoTradingVolumeRenewal)
 
 
+@pytest.mark.integration
 def test_get_supply_demand_concentration(client: Client):
     time.sleep(1)
 
@@ -234,6 +245,7 @@ def test_get_supply_demand_concentration(client: Client):
     assert isinstance(response.body, DomesticStockInfoSupplyDemandConcentration)
 
 
+@pytest.mark.integration
 def test_get_high_per(client: Client):
     time.sleep(1)
 
@@ -248,6 +260,7 @@ def test_get_high_per(client: Client):
     assert isinstance(response.body, DomesticStockInfoHighPer)
 
 
+@pytest.mark.integration
 def test_get_change_rate_from_open(client: Client):
     time.sleep(1)
 
@@ -269,6 +282,7 @@ def test_get_change_rate_from_open(client: Client):
     assert isinstance(response.body, DomesticStockInfoChangeRateFromOpen)
 
 
+@pytest.mark.integration
 def test_get_trading_member_supply_demand_analysis(client: Client):
     time.sleep(1)
 
@@ -290,6 +304,7 @@ def test_get_trading_member_supply_demand_analysis(client: Client):
     assert isinstance(response.body, DomesticStockInfoTradingMemberSupplyDemandAnalysis)
 
 
+@pytest.mark.integration
 def test_get_trading_member_instant_volume(client: Client):
     time.sleep(1)
 
@@ -308,6 +323,7 @@ def test_get_trading_member_instant_volume(client: Client):
     assert isinstance(response.body, DomesticStockInfoTradingMemberInstantVolume)
 
 
+@pytest.mark.integration
 def test_get_volatility_control_event(client: Client):
     time.sleep(1)
 
@@ -332,6 +348,7 @@ def test_get_volatility_control_event(client: Client):
     assert isinstance(response.body, DomesticStockInfoVolatilityControlEvent)
 
 
+@pytest.mark.integration
 def test_get_daily_previous_day_execution_volume(client: Client):
     time.sleep(1)
 
@@ -346,6 +363,7 @@ def test_get_daily_previous_day_execution_volume(client: Client):
     assert isinstance(response.body, DomesticStockInfoDailyPreviousDayExecutionVolume)
 
 
+@pytest.mark.integration
 def test_get_daily_trading_items_by_investor(client: Client):
     time.sleep(1)
 
@@ -364,6 +382,7 @@ def test_get_daily_trading_items_by_investor(client: Client):
     assert isinstance(response.body, DomesticStockInfoDailyTradingItemsByInvestor)
 
 
+@pytest.mark.integration
 def test_get_institutional_investor_by_stock(client: Client):
     time.sleep(1)
 
@@ -381,6 +400,7 @@ def test_get_institutional_investor_by_stock(client: Client):
     assert isinstance(response.body, DomesticStockInfoInstitutionalInvestorByStock)
 
 
+@pytest.mark.integration
 def test_get_total_institutional_investor_by_stock(client: Client):
     time.sleep(1)
 
@@ -399,6 +419,7 @@ def test_get_total_institutional_investor_by_stock(client: Client):
     assert isinstance(response.body, DomesticStockInfoTotalInstitutionalInvestorByStock)
 
 
+@pytest.mark.integration
 def test_get_daily_previous_day_conclusion(client: Client):
     time.sleep(1)
 
@@ -413,6 +434,7 @@ def test_get_daily_previous_day_conclusion(client: Client):
     assert isinstance(response.body, DomesticStockInfoDailyPreviousDayConclusion)
 
 
+@pytest.mark.integration
 def test_get_interest_stock_info(client: Client):
     time.sleep(1)
 
@@ -426,6 +448,7 @@ def test_get_interest_stock_info(client: Client):
     assert isinstance(response.body, DomesticStockInfoInterestStockInfo)
 
 
+@pytest.mark.integration
 def test_get_stock_info_summary(client: Client):
     time.sleep(1)
 
@@ -439,6 +462,7 @@ def test_get_stock_info_summary(client: Client):
     assert isinstance(response.body, DomesticStockInfoSummary)  # Assuming the response is a list of stock info objects
 
 
+@pytest.mark.integration
 def test_get_stock_info_v1(client: Client):
     time.sleep(1)
 
@@ -452,6 +476,7 @@ def test_get_stock_info_v1(client: Client):
     assert isinstance(response.body, DomesticStockInfoBasicV1)
 
 
+@pytest.mark.integration
 def test_get_industry_code(client: Client):
     time.sleep(1)
 
@@ -467,6 +492,7 @@ def test_get_industry_code(client: Client):
     )  # Assuming the response is a list of industry code objects
 
 
+@pytest.mark.integration
 def test_get_member_company(client: Client):
     time.sleep(1)
 
@@ -480,6 +506,7 @@ def test_get_member_company(client: Client):
     )  # Assuming the response is a list of member company objects
 
 
+@pytest.mark.integration
 def test_get_top_50_program_net_buy(client: Client):
     time.sleep(1)
 
@@ -496,6 +523,7 @@ def test_get_top_50_program_net_buy(client: Client):
     assert isinstance(response.body, DomesticStockInfoTop50ProgramNetBuy)
 
 
+@pytest.mark.integration
 def test_get_program_trading_status_by_stock(client: Client):
     time.sleep(1)
 

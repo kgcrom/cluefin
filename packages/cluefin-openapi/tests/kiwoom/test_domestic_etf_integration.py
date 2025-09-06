@@ -24,8 +24,8 @@ from cluefin_openapi.kiwoom._domestic_etf_types import (
 def auth() -> Auth:
     dotenv.load_dotenv(dotenv_path=".env.test")
     return Auth(
-        app_key=os.getenv("KIWOOM_APP_KEY"),
-        secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY")),
+        app_key=os.getenv("KIWOOM_APP_KEY", ""),
+        secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY", "")),
         env="dev",
     )
 
@@ -36,6 +36,7 @@ def client(auth: Auth) -> Client:
     return Client(token=token.get_token(), env="dev")
 
 
+@pytest.mark.integration
 def test_get_etf_return_rate(client: Client):
     time.sleep(1)
 
@@ -44,6 +45,7 @@ def test_get_etf_return_rate(client: Client):
     assert isinstance(response.body, DomesticEtfReturnRate)
 
 
+@pytest.mark.integration
 def test_get_etf_item_info(client: Client):
     time.sleep(1)
 
@@ -52,6 +54,7 @@ def test_get_etf_item_info(client: Client):
     assert isinstance(response.body, DomesticEtfItemInfo)
 
 
+@pytest.mark.integration
 def test_get_etf_daily_trend(client: Client):
     time.sleep(1)
 
@@ -60,6 +63,7 @@ def test_get_etf_daily_trend(client: Client):
     assert isinstance(response.body, DomesticEtfDailyTrend)
 
 
+@pytest.mark.integration
 def test_get_etf_full_price(client: Client):
     time.sleep(1)
 
@@ -68,6 +72,7 @@ def test_get_etf_full_price(client: Client):
     assert isinstance(response.body, DomesticEtfFullPrice)
 
 
+@pytest.mark.integration
 def test_get_etf_hourly_trend(client: Client):
     time.sleep(1)
 
@@ -76,6 +81,7 @@ def test_get_etf_hourly_trend(client: Client):
     assert isinstance(response.body, DomesticEtfHourlyTrend)
 
 
+@pytest.mark.integration
 def test_get_etf_hourly_execution(client: Client):
     time.sleep(1)
 
@@ -84,6 +90,7 @@ def test_get_etf_hourly_execution(client: Client):
     assert isinstance(response.body, DomesticEtfHourlyExecution)
 
 
+@pytest.mark.integration
 def test_get_etf_daily_execution(client: Client):
     time.sleep(1)
 
@@ -92,6 +99,7 @@ def test_get_etf_daily_execution(client: Client):
     assert isinstance(response.body, DomesticEtfDailyExecution)
 
 
+@pytest.mark.integration
 def test_get_etf_hourly_execution_v2(client: Client):
     time.sleep(1)
 
@@ -100,6 +108,7 @@ def test_get_etf_hourly_execution_v2(client: Client):
     assert isinstance(response.body, DomesticEtfHourlyExecutionV2)
 
 
+@pytest.mark.integration
 def test_get_etf_hourly_trend_v2(client: Client):
     time.sleep(1)
 

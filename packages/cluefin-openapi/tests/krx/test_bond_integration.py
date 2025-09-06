@@ -19,6 +19,7 @@ def client() -> Client:
     return Client(auth_key=os.getenv("KRX_AUTH_KEY") or "")
 
 
+@pytest.mark.integration
 def test_get_korea_treasury_bond_market(client: Client):
     time.sleep(1)
     response = client.bond.get_korea_treasury_bond_market("20250721")
@@ -28,6 +29,7 @@ def test_get_korea_treasury_bond_market(client: Client):
     assert isinstance(response.body, BondKoreaTreasuryBondMarket)
 
 
+@pytest.mark.integration
 def test_get_general_bond_market(client: Client):
     time.sleep(1)
     response = client.bond.get_general_bond_market("20250721")
@@ -38,6 +40,7 @@ def test_get_general_bond_market(client: Client):
     assert isinstance(response.body, BondGeneralBondMarket)
 
 
+@pytest.mark.integration
 def test_get_small_bond_market(client: Client):
     time.sleep(1)
     response = client.bond.get_small_bond_market("20250721")

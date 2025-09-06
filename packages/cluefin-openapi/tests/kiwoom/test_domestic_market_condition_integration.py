@@ -36,8 +36,8 @@ from cluefin_openapi.kiwoom._domestic_market_condition_types import (
 def auth() -> Auth:
     dotenv.load_dotenv(dotenv_path=".env.test")
     return Auth(
-        app_key=os.getenv("KIWOOM_APP_KEY"),
-        secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY")),
+        app_key=os.getenv("KIWOOM_APP_KEY", ""),
+        secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY", "")),
         env="dev",
     )
 
@@ -51,6 +51,7 @@ def client(auth: Auth) -> Client:
     )
 
 
+@pytest.mark.integration
 def test_get_stock_quote(client: Client):
     time.sleep(1)
     response = client.market_conditions.get_stock_quote("005930")
@@ -61,6 +62,7 @@ def test_get_stock_quote(client: Client):
     assert isinstance(response.body, DomesticMarketConditionStockQuote)
 
 
+@pytest.mark.integration
 def test_get_stock_quote_by_date(client: Client):
     time.sleep(1)
     response = client.market_conditions.get_stock_quote_by_date("005930")
@@ -71,6 +73,7 @@ def test_get_stock_quote_by_date(client: Client):
     assert isinstance(response.body, DomesticMarketConditionStockQuoteByDate)
 
 
+@pytest.mark.integration
 def test_get_stock_price(client: Client):
     time.sleep(1)
     response = client.market_conditions.get_stock_price("005930")
@@ -81,6 +84,7 @@ def test_get_stock_price(client: Client):
     assert isinstance(response.body, DomesticMarketConditionStockPrice)
 
 
+@pytest.mark.integration
 def test_get_market_sentiment_info(client: Client):
     time.sleep(1)
     response = client.market_conditions.get_market_sentiment_info("005930")
@@ -91,6 +95,7 @@ def test_get_market_sentiment_info(client: Client):
     assert isinstance(response.body, DomesticMarketConditionMarketSentimentInfo)
 
 
+@pytest.mark.integration
 def test_get_new_stock_warrant_price(client: Client):
     time.sleep(1)
     response = client.market_conditions.get_new_stock_warrant_price("00")
@@ -101,6 +106,7 @@ def test_get_new_stock_warrant_price(client: Client):
     assert isinstance(response.body, DomesticMarketConditionNewStockWarrantPrice)
 
 
+@pytest.mark.integration
 def test_get_daily_institutional_trading_items(client: Client):
     time.sleep(1)
     response = client.market_conditions.get_daily_institutional_trading_items("20241106", "20241107", "1", "001", "3")
@@ -111,6 +117,7 @@ def test_get_daily_institutional_trading_items(client: Client):
     assert isinstance(response.body, DomesticMarketConditionDailyInstitutionalTrading)
 
 
+@pytest.mark.integration
 def test_get_institutional_trading_trend_by_stock(client: Client):
     time.sleep(1)
     response = client.market_conditions.get_institutional_trading_trend_by_stock(
@@ -123,6 +130,7 @@ def test_get_institutional_trading_trend_by_stock(client: Client):
     assert isinstance(response.body, DomesticMarketConditionInstitutionalTradingTrendByStock)
 
 
+@pytest.mark.integration
 def test_get_execution_intensity_trend_by_time(client: Client):
     time.sleep(1)
     response = client.market_conditions.get_execution_intensity_trend_by_time("005930", "20241107", "1")
@@ -132,6 +140,7 @@ def test_get_execution_intensity_trend_by_time(client: Client):
     assert isinstance(response.body, DomesticMarketConditionExecutionIntensityTrendByTime)
 
 
+@pytest.mark.integration
 def test_get_execution_intensity_trend_by_date(client: Client):
     time.sleep(1)
     response = client.market_conditions.get_execution_intensity_trend_by_date("005930", "20241107")
@@ -141,6 +150,7 @@ def test_get_execution_intensity_trend_by_date(client: Client):
     assert isinstance(response.body, DomesticMarketConditionExecutionIntensityTrendByDate)
 
 
+@pytest.mark.integration
 def test_get_intraday_trading_by_investor(client: Client):
     time.sleep(1)
     response = client.market_conditions.get_intraday_trading_by_investor("000", "1", "6", "1", "1", "1")
@@ -150,6 +160,7 @@ def test_get_intraday_trading_by_investor(client: Client):
     assert isinstance(response.body, DomesticMarketConditionIntradayTradingByInvestor)
 
 
+@pytest.mark.integration
 def test_get_after_market_trading_by_investor(client: Client):
     time.sleep(1)
     response = client.market_conditions.get_after_market_trading_by_investor("000", "1", "0", "1")
@@ -159,6 +170,7 @@ def test_get_after_market_trading_by_investor(client: Client):
     assert isinstance(response.body, DomesticMarketConditionAfterMarketTradingByInvestor)
 
 
+@pytest.mark.integration
 def test_get_securities_firm_trading_trend_by_stock(client: Client):
     time.sleep(1)
     response = client.market_conditions.get_securities_firm_trading_trend_by_stock(
@@ -170,6 +182,7 @@ def test_get_securities_firm_trading_trend_by_stock(client: Client):
     assert isinstance(response.body, DomesticMarketConditionSecuritiesFirmTradingTrendByStock)
 
 
+@pytest.mark.integration
 def test_get_daily_stock_price(client: Client):
     time.sleep(1)
     response = client.market_conditions.get_daily_stock_price("005930", "20241125", "0")
@@ -180,6 +193,7 @@ def test_get_daily_stock_price(client: Client):
     assert isinstance(response.body, DomesticMarketConditionDailyStockPrice)
 
 
+@pytest.mark.integration
 def test_get_after_hours_single_price(client: Client):
     time.sleep(1)
     response = client.market_conditions.get_after_hours_single_price("039490")
@@ -189,6 +203,7 @@ def test_get_after_hours_single_price(client: Client):
     assert isinstance(response.body, DomesticMarketConditionAfterHoursSinglePrice)
 
 
+@pytest.mark.integration
 def test_get_program_trading_trend_by_time(client: Client):
     time.sleep(1)
     response = client.market_conditions.get_program_trading_trend_by_time("20250101", "1", "P00101", "0", "1")
@@ -198,6 +213,7 @@ def test_get_program_trading_trend_by_time(client: Client):
     assert isinstance(response.body, DomesticMarketConditionProgramTradingTrendByTime)
 
 
+@pytest.mark.integration
 def test_get_program_trading_arbitrage_balance_trend(client: Client):
     time.sleep(1)
     response = client.market_conditions.get_program_trading_arbitrage_balance_trend("20250101", "1")
@@ -207,6 +223,7 @@ def test_get_program_trading_arbitrage_balance_trend(client: Client):
     assert isinstance(response.body, DomesticMarketConditionProgramTradingArbitrageBalanceTrend)
 
 
+@pytest.mark.integration
 def test_get_program_trading_cumulative_trend(client: Client):
     time.sleep(1)
     response = client.market_conditions.get_program_trading_cumulative_trend("20250101", "1", "0", "1")
@@ -216,6 +233,7 @@ def test_get_program_trading_cumulative_trend(client: Client):
     assert isinstance(response.body, DomesticMarketConditionProgramTradingCumulativeTrend)
 
 
+@pytest.mark.integration
 def test_get_program_trading_trend_by_stock_and_time(client: Client):
     time.sleep(1)
     response = client.market_conditions.get_program_trading_trend_by_stock_and_time("1", "039490", "20250101")
@@ -225,6 +243,7 @@ def test_get_program_trading_trend_by_stock_and_time(client: Client):
     assert isinstance(response.body, DomesticMarketConditionProgramTradingTrendByStockAndTime)
 
 
+@pytest.mark.integration
 def test_get_program_trading_trend_by_date(client: Client):
     time.sleep(1)
     response = client.market_conditions.get_program_trading_trend_by_date("20250101", "1", "P00101", "0", "1")
@@ -233,6 +252,7 @@ def test_get_program_trading_trend_by_date(client: Client):
     assert isinstance(response.body, DomesticMarketConditionProgramTradingTrendByDate)
 
 
+@pytest.mark.integration
 def test_get_program_trading_trend_by_stock_and_date(client: Client):
     time.sleep(1)
     response = client.market_conditions.get_program_trading_trend_by_stock_and_date("1", "039490", "20250101")

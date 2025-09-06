@@ -15,6 +15,7 @@ def client() -> Client:
     return Client(auth_key=os.getenv("KRX_AUTH_KEY", ""))
 
 
+@pytest.mark.integration
 def test_get_socially_responsible_investment_bond(client: Client):
     time.sleep(1)
     response = client.esg.get_socially_responsible_investment_bond("20250721")

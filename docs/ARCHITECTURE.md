@@ -11,17 +11,21 @@ cluefin/
 │       ├── src/cluefin_openapi/
 │       │   ├── kiwoom/           # Kiwoom Securities client modules
 │       │   └── krx/              # Korea Exchange client modules
-│       └── tests/
-│           ├── unit/             # Fast, isolated tests with mocks
-│           └── integration/      # Real API tests (requires credentials)
+│       └── tests/                # Provider-based test organization
+│           ├── kiwoom/           # Kiwoom API tests (unit & integration)
+│           └── krx/              # KRX API tests (unit & integration)
 ├── apps/
 │   └── cluefin-cli/              # Command-line interface application
 │       ├── src/cluefin_cli/
 │       │   ├── commands/         # CLI command implementations
+│       │   │   ├── analysis/     # Technical analysis and AI modules
+│       │   │   └── inquiry/      # Interactive menu system modules
 │       │   ├── ml/              # ML pipeline and models
-│       │   ├── analysis/        # Technical analysis modules
-│       │   └── display/         # Rich UI components
-│       └── tests/
+│       │   ├── data/            # Data fetching abstraction
+│       │   ├── display/         # Rich UI components
+│       │   ├── utils/           # Utility functions
+│       │   └── config/          # Application settings
+│       └── tests/unit/          # Unit tests mirroring src structure
 └── docs/                        # Documentation
 ```
 
@@ -61,44 +65,63 @@ kiwoom/
 **Command Structure**:
 ```bash
 cluefin-cli
-├── analyze              # Quick stock analysis
-├── inquiry             # Interactive menu-driven research
-│   ├── stock-info      # Basic company information
-│   ├── ranking-info    # Performance rankings
-│   └── sector-info     # Industry analysis
-└── ml                  # Machine learning commands
-    ├── train           # Model training
-    ├── predict         # Generate predictions
-    └── explain         # SHAP-based explanations
+├── analyze              # Stock analysis with multiple options
+│   ├── --chart         # Terminal ASCII charts
+│   ├── --ai-analysis   # GPT-4 powered insights
+│   ├── --ml-predict    # ML-based price predictions
+│   ├── --feature-importance  # Basic feature importance
+│   └── --shap-analysis # Detailed SHAP explanations
+└── inquiry             # Interactive menu-driven research
+    ├── stock-info      # Basic company information
+    ├── ranking-info    # Performance rankings
+    └── sector-info     # Industry analysis
 ```
 
 ## ML Pipeline Architecture
 
 ### Core Components
 
-1. **StockPredictor** (`ml/models.py`)
-   - LightGBM-based binary classification
+1. **StockMLPredictor** (`ml/predictor.py`)
+   - Main orchestrator class integrating all ML components
+   - End-to-end prediction pipeline with SHAP explanations
+   - Korean market-specific configuration and optimization
+
+2. **StockPredictor** (`ml/models.py`)
+   - LightGBM-based binary classification for next-day price movement
    - Time-aware cross-validation with TimeSeriesSplit
-   - Korean market trading hours consideration
+   - Korean market trading hours consideration (9:00-15:30 KST)
 
-2. **FeatureEngineering** (`ml/feature_engineering.py`)
-   - 20+ technical indicators via TA-Lib
-   - Price momentum and volatility features
-   - Volume and market condition indicators
+3. **FeatureEngineer** (`ml/feature_engineering.py`)
+   - 150+ technical indicators via TA-Lib integration
+   - Price momentum, volatility, and trend features
+   - Volume-based and market condition indicators
+   - Lag features for temporal patterns
 
-3. **ModelExplainer** (`ml/explainer.py`)
-   - SHAP-based feature importance
-   - Individual prediction explanations
-   - Model interpretation for non-technical users
+4. **SHAPExplainer** (`ml/explainer.py`)
+   - SHAP TreeExplainer for feature importance
+   - Individual prediction explanations with directional impact
+   - Global feature rankings and model interpretation
 
-4. **Diagnostics** (`ml/diagnostics.py`)
-   - Model performance evaluation
-   - Precision, recall, F1-score, ROC-AUC metrics
-   - Time series validation results
+5. **ModelDiagnostics** (`ml/diagnostics.py`)
+   - Comprehensive model performance evaluation
+   - Accuracy, precision, recall, F1-score, AUC metrics
+   - Time series validation with proper temporal ordering
 
-### Data Flow
+### ML Pipeline Data Flow
 ```
-Raw Market Data → Feature Engineering → ML Model → Predictions → SHAP Explanations → AI Insights
+Korean Stock Data (OHLCV) → FeatureEngineer (150+ TA-Lib indicators) → 
+StockPredictor (LightGBM) → SHAPExplainer (Feature Importance) → 
+StockMLPredictor (Orchestration) → Rich UI Display
+```
+
+### Integration with CLI Commands
+The ML pipeline integrates with the CLI through the analyze command:
+```python
+# apps/cluefin-cli/src/cluefin_cli/commands/analyze.py
+if ml_predict:
+    predictor = StockMLPredictor()
+    result = predictor.analyze(stock_data)
+    # Display predictions with SHAP explanations
 ```
 
 ## API Client Architecture
@@ -134,9 +157,30 @@ KiwoomException
 - Separate unit and integration test directories
 
 ### Test Structure
-- Test files mirror source structure: `test_<module_name>.py`
+**Current Organization** (Provider-based):
+```
+packages/cluefin-openapi/tests/
+├── kiwoom/
+│   ├── test_auth_unit.py                    # Unit tests for authentication
+│   ├── test_auth_integration.py             # Integration tests for authentication
+│   ├── test_domestic_stock_info_unit.py     # Unit tests for stock info
+│   ├── test_domestic_stock_info_integration.py # Integration tests for stock info
+│   └── ... (other kiwoom modules)
+└── krx/
+    ├── test_stock_unit.py                   # Unit tests for KRX stock data
+    ├── test_stock_integration.py            # Integration tests for KRX stock data
+    └── ... (other krx modules)
+
+apps/cluefin-cli/tests/unit/
+├── commands/inquiry/                        # Inquiry command tests
+├── ml/                                      # ML pipeline tests
+└── ... (mirroring src structure)
+```
+
+**Test Naming Convention**:
+- Unit tests: `test_<module_name>_unit.py`
+- Integration tests: `test_<module_name>_integration.py`
 - Integration tests marked with `@pytest.mark.integration`
-- Authentication-required tests marked with `@pytest.mark.requires_auth`
 
 ## Korean Financial API Specifics
 
@@ -155,3 +199,47 @@ KiwoomException
 - Automatic rate limiting per Korean API requirements
 - Configurable requests per second
 - Graceful handling of quota exceeded responses
+
+## CLI Inquiry System Architecture
+
+### Interactive Menu System
+The inquiry command provides a sophisticated menu-driven interface:
+
+**Core Modules** (`apps/cluefin-cli/src/cluefin_cli/commands/inquiry/`):
+- `main.py` - Main inquiry command logic and orchestration
+- `menu_controller.py` - Interactive menu navigation and state management
+- `display_formatter.py` - Rich-based display formatting for Korean financial data
+- `parameter_collector.py` - User input collection with validation
+- `config_models.py` - Pydantic configuration models for menu settings
+
+**Domain-Specific Modules**:
+- `stock_info.py` - Individual stock information and detailed analysis
+- `ranking_info.py` - Stock rankings and performance comparisons
+- `sector_info.py` - Sector-based analysis and industry groupings
+- `base_api_module.py` - Base class for API integration patterns
+
+### Data Integration
+The CLI integrates with both API packages:
+```python
+# Data fetching abstraction
+from cluefin_cli.data.fetcher import DataFetcher
+
+# Integrates with:
+# - cluefin-openapi.kiwoom for real-time data
+# - cluefin-openapi.krx for market data
+# - OpenAI for AI-powered analysis
+```
+
+### Display Architecture
+**Rich UI Components**:
+- Korean Won currency formatting with proper locale
+- Color-coded tables for market data (red/green for price changes)
+- Progress bars for data loading operations
+- Panels and sections for organized information display
+- ASCII charts via plotext for terminal visualization
+
+**Korean Market UI Considerations**:
+- Right-to-left number alignment for price data
+- Korean company name display alongside stock codes
+- KST timezone display for market hours
+- Won currency symbol (₩) with comma separators

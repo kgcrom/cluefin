@@ -327,9 +327,7 @@ class TestStockDataFormatter:
         mock_data.body = mock_body
 
         mock_api_config = APIConfig(
-            name="trading_member_supply_demand_analysis", 
-            korean_name="거래원매물대분석요청", 
-            api_method="test_method"
+            name="trading_member_supply_demand_analysis", korean_name="거래원매물대분석요청", api_method="test_method"
         )
 
         with patch.object(self.formatter, "display_table") as mock_display:

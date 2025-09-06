@@ -30,7 +30,9 @@ Cluefin은 한국 금융 투자 툴킷으로 **uv workspace monorepo**로 구성
 
 ```bash
 # Setup
-uv sync --dev
+uv venv --python 3.10
+source .venv/bin/activate  
+uv sync --all-packages
 
 # Interactive stock analysis
 cluefin-cli inquiry
@@ -42,7 +44,8 @@ cluefin-cli analyze 005930 --ai-analysis
 cluefin-cli analyze 035720 --ml-predict --shap-analysis
 
 # Run tests
-uv run pytest
+uv run pytest -m "not integration"  # Unit tests only
+uv run pytest -m "integration"      # Integration tests (requires API keys)
 
 # Code quality
 uv run ruff check . --fix
@@ -115,30 +118,15 @@ brew install ta-lib lightgbm
 
 ### Environment Setup
 ```bash
-# Copy sample env files
-cp packages/cluefin-openapi/.env.sample packages/cluefin-openapi/.env
-cp apps/cluefin-cli/.env.sample apps/cluefin-cli/.env
+# Copy sample env file to workspace root
+cp apps/cluefin-cli/.env.sample .env
 
 # Edit with your API keys
 # KIWOOM_APP_KEY=your_app_key
 # KIWOOM_SECRET_KEY=your_secret_key  
 # OPENAI_API_KEY=your_openai_api_key
+# KRX_AUTH_KEY=your_krx_auth_key
 ```
-
-## 📈 Current Development Status
-
-**Phase 2: DART Integration & Fundamental Analysis Enhancement**
-
-현재 개발 중인 주요 기능:
-- 🤖 **Machine Learning Pipeline**: LightGBM 기반 주식 예측 모델
-- 🔍 **Interactive Inquiry System**: 메뉴 기반 주식 연구 시스템
-- 📊 **SHAP Explainability**: ML 모델 해석 및 설명 기능
-- 🧠 **AI Integration**: OpenAI를 활용한 자연어 시장 분석
-
-**다음 단계 (Phase 3)**:
-- DART 전자공시 데이터 통합
-- 기업 재무제표 분석 기능
-- 포트폴리오 최적화 도구
 
 ---
 

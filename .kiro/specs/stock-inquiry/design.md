@@ -233,7 +233,7 @@ class InquiryErrorHandler:
 ### Integration Tests
 
 1. **End-to-End Flow Tests**: Complete user journey from menu to results
-2. **API Client Tests**: Real API calls with test credentials (marked with `@pytest.mark.integration`)
+2. **API Client Tests**: Real API calls with test credentials
 3. **Error Scenario Tests**: Network failures, invalid credentials, rate limits
 
 ### Test Structure

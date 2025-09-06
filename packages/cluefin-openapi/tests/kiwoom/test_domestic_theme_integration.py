@@ -17,8 +17,8 @@ from cluefin_openapi.kiwoom._domestic_theme_types import (
 def auth() -> Auth:
     dotenv.load_dotenv(dotenv_path=".env.test")
     return Auth(
-        app_key=os.getenv("KIWOOM_APP_KEY"),
-        secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY")),
+        app_key=os.getenv("KIWOOM_APP_KEY", ""),
+        secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY", "")),
         env="dev",
     )
 
@@ -29,6 +29,7 @@ def client(auth: Auth) -> Client:
     return Client(token=token.get_token(), env="dev")
 
 
+@pytest.mark.integration
 def test_get_theme_group(client: Client):
     time.sleep(1)
 
@@ -44,6 +45,7 @@ def test_get_theme_group(client: Client):
     assert isinstance(response.body, DomesticThemeGroup)
 
 
+@pytest.mark.integration
 def test_get_theme_group_stocks(client: Client):
     time.sleep(1)
 

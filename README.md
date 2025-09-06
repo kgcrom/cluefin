@@ -27,7 +27,7 @@ Cluefin을 사용함으로써 귀하는 자신의 책임 하에 학습이나 실
 ## 🚀 Quick Start
 
 ```bash
-# Install TA-Lib system dependency (macOS)
+# Install system dependencies (macOS)
 brew install ta-lib lightgbm
 
 # Clone and setup
@@ -36,12 +36,12 @@ cd cluefin
 uv venv --python 3.10
 source .venv/bin/activate
 
-# Install dependencies
+# Install all workspace dependencies
 uv sync --all-packages
 
 # Configure environment
 cp apps/cluefin-cli/.env.sample .env
-# Edit .env with your API keys
+# Edit .env with your API keys (KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, OPENAI_API_KEY)
 
 # Interactive stock analysis
 cluefin-cli inquiry
@@ -49,8 +49,8 @@ cluefin-cli inquiry
 # Advanced analysis with ML prediction
 cluefin-cli analyze 005930 --chart --ai-analysis --ml-predict --shap-analysis
 
-# Run tests and code quality
-uv run pytest
+# Run tests and code quality checks
+uv run pytest -m "not integration"  # Unit tests only
 uv run ruff check . --fix
 ```
 
@@ -79,13 +79,17 @@ Cluefin은 모든 사람들에게 금융 투자, 포트폴리오 관리를 단�
 ### Prerequisites
 - [uv](https://github.com/astral-sh/uv) package manager
 
-### Project layout
-This project uses a **uv workspace monorepo**:
+### Project Layout
+This project uses a **uv workspace monorepo** structure:
 ```
 cluefin/
-├── packages/cluefin-openapi/    # financial Open API clients
-├── apps/cluefin-cli/           # Interactive CLI application
-└── docs/                       # Comprehensive documentation
+├── packages/cluefin-openapi/    # Korean financial API clients (Kiwoom Securities & KRX)
+│   ├── src/cluefin_openapi/
+│   │   ├── kiwoom/             # Kiwoom Securities API client
+│   │   └── krx/                # Korea Exchange API client  
+│   └── tests/                  # Unit and integration tests
+├── apps/cluefin-cli/           # Interactive CLI application with ML predictions
+└── docs/                       # Architecture and technical documentation
 ```
 
 ## 🔧 Development
@@ -95,12 +99,15 @@ cluefin/
 # Run all tests
 uv run pytest
 
-# Run specific package tests
-uv run pytest packages/cluefin-openapi/tests/unit/ -v
-uv run pytest apps/cluefin-cli/tests/unit/ -v
+# Run unit tests only (excludes integration tests)
+uv run pytest -m "not integration"
 
-# Run integration tests (requires API keys)
-uv run pytest packages/cluefin-openapi/tests/integration/ -v
+# Run integration tests only (requires API keys)
+uv run pytest -m "integration"
+
+# Run specific package tests
+uv run pytest packages/cluefin-openapi/tests/ -v
+uv run pytest apps/cluefin-cli/tests/ -v
 
 # Code quality
 uv run ruff check . --fix
@@ -109,16 +116,19 @@ uv run ruff format .
 
 ### Component Overview
 
-**[cluefin-openapi](packages/cluefin-openapi/)** - Korean financial API clients
-- Type-safe Pydantic models for Kiwoom Securities & KRX APIs
-- OAuth2 authentication with automatic token management
-- Comprehensive error handling and rate limiting
+**[cluefin-openapi](packages/cluefin-openapi/)** - Korean Financial API Clients
+- **Type-safe Pydantic models** for Kiwoom Securities & KRX APIs with Korean field aliases
+- **Structured response handling** with `KiwoomHttpResponse[T]` wrapper pattern
+- **OAuth2-style authentication** for Kiwoom, simple auth_key for KRX
+- **Rate limiting and error handling** optimized for Korean market APIs
+- **Test coverage** with unit tests using `requests_mock` and integration tests
 
-**[cluefin-cli](apps/cluefin-cli/)** - Interactive terminal application  
-- Rich-based UI with Korean stock market analysis
-- ML-powered predictions using LightGBM + SHAP explanations
-- Technical analysis with 150+ TA-Lib indicators
-- AI-powered insights via OpenAI integration
+**[cluefin-cli](apps/cluefin-cli/)** - Interactive Terminal Application  
+- **Rich-based UI** with Korean stock market analysis and menu navigation
+- **ML-powered predictions** using LightGBM with SHAP explanations for interpretability
+- **Technical analysis** with 150+ TA-Lib indicators (RSI, MACD, Bollinger Bands)
+- **AI-powered insights** via OpenAI integration for market analysis
+- **Korean timezone handling** (KST) and trading hours (9:00-15:30) awareness
 
 ## 📄 라이선스
 이 프로젝트는 MIT 라이선스에 따라 라이선스가 부여됩니다. 자세한 내용은 [LICENSE](LICENSE)를 참조하세요.

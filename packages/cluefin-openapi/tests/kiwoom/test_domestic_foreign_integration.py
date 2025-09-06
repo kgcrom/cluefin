@@ -18,26 +18,19 @@ from cluefin_openapi.kiwoom._domestic_foreign_types import (
 def auth() -> Auth:
     dotenv.load_dotenv(dotenv_path=".env.test")
     return Auth(
-        app_key=os.getenv("KIWOOM_APP_KEY"),
-        secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY")),
+        app_key=os.getenv("KIWOOM_APP_KEY", ""),
+        secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY", "")),
         env="dev",
     )
 
 
 @pytest.fixture
 def client(auth: Auth) -> Client:
-    """Create a Client instance for testing.
-
-    Args:
-        auth (Auth): The authenticated Auth instance.
-
-    Returns:
-        Client: A configured Client instance.
-    """
     token = auth.generate_token()
     return Client(token=token.get_token(), env="dev")
 
 
+@pytest.mark.integration
 def test_get_foreign_investor_trading_trend_by_stock(client: Client):
     time.sleep(1)
 
@@ -48,6 +41,7 @@ def test_get_foreign_investor_trading_trend_by_stock(client: Client):
     assert response.body.stk_frgnr is not None
 
 
+@pytest.mark.integration
 def test_get_stock_institution(client: Client):
     time.sleep(1)
 
@@ -58,6 +52,7 @@ def test_get_stock_institution(client: Client):
     assert response.body.pre is not None
 
 
+@pytest.mark.integration
 def test_get_consecutive_net_buy_sell_status_by_institution_foreigner(client: Client):
     time.sleep(1)
 

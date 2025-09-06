@@ -23,16 +23,15 @@
 ### 설치
 
 ```bash
-# 기본 설치
-pip install cluefin-openapi
-
-# 개발 환경에서 설치
+# 워크스페이스 설치 (권장)
 git clone https://github.com/kgcrom/cluefin
 cd cluefin
 uv venv --python 3.10
 source .venv/bin/activate
 uv sync --all-packages
-cd packages/cluefin-openapi
+
+# 패키지만 단독 설치
+pip install cluefin-openapi
 ```
 
 ## 🎯 왜 cluefin-openapi인가요?
@@ -70,16 +69,16 @@ Pydantic을 활용한 강력한 타입 검증으로 런타임 에러를 방지�
 ### 3. 환경 변수 설정
 
 ```bash
-# From project root
-cp .env.sample .env
+# 워크스페이스 루트 디렉토리에서
+cp apps/cluefin-cli/.env.sample .env
 
-# .env 파일 수정
+# .env 파일 수정 (워크스페이스 루트에 생성)
 
-# 키움증권 API 키 설정
+# 키움증권 API 키 설정 (OAuth2-style 인증)
 KIWOOM_APP_KEY=your_app_key_here
 KIWOOM_SECRET_KEY=your_secret_key_here
 
-# 한국거래소 API 키 설정
+# 한국거래소 API 키 설정 (단순 인증키)
 KRX_AUTH_KEY=your_krx_auth_key_here
 ```
 
@@ -310,15 +309,73 @@ except Exception as e:
 ## 🧪 테스트
 
 ```bash
-# 단위 테스트 실행
-uv run pytest packages/cluefin-openapi/tests/unit/ -v
+# 워크스페이스 루트에서 실행
 
-# 통합 테스트 실행 (API 키 필요)
-uv run pytest packages/cluefin-openapi/tests/integration/ -v
+# 단위 테스트만 실행 (통합 테스트 제외)
+uv run pytest -m "not integration"
+
+# 통합 테스트만 실행 (API 키 필요)
+uv run pytest -m "integration"
+
+# cluefin-openapi 패키지 테스트만 실행
+uv run pytest packages/cluefin-openapi/tests/ -v
+
+# 특정 모듈 테스트 실행
+uv run pytest packages/cluefin-openapi/tests/kiwoom/test_auth_unit.py -v
 
 # 코드 커버리지 확인
 uv run pytest --cov=cluefin_openapi --cov-report=html
 ```
+
+## 🏗️ 프로젝트 구조
+
+```
+packages/cluefin-openapi/
+├── src/cluefin_openapi/
+│   ├── kiwoom/                    # 키움증권 API 클라이언트
+│   │   ├── _auth.py              # OAuth2-style 인증 처리
+│   │   ├── _client.py            # 메인 클라이언트 클래스
+│   │   ├── _model.py             # KiwoomHttpResponse[T] 래퍼
+│   │   ├── _domestic_*.py        # 국내주식 관련 API 모듈들
+│   │   ├── _domestic_*_types.py  # API 응답 타입 정의 (Pydantic)
+│   │   ├── _rate_limiter.py      # API 요청 제한 관리
+│   │   └── _exceptions.py        # 키움증권 API 전용 예외
+│   ├── krx/                      # 한국거래소 API 클라이언트
+│   │   ├── _client.py            # KRX 클라이언트 클래스
+│   │   ├── _model.py             # KRX 응답 모델
+│   │   ├── _stock.py             # 주식 시장 데이터 API
+│   │   ├── _index.py             # 시장 지수 API
+│   │   ├── _bond.py              # 채권 시장 API
+│   │   ├── _derivatives.py       # 파생상품 API
+│   │   ├── _*_types.py           # 각 모듈별 타입 정의
+│   │   └── _exceptions.py        # KRX API 전용 예외
+│   └── __init__.py
+├── tests/                        # 테스트 스위트
+│   ├── kiwoom/                   # 키움증권 API 테스트
+│   │   ├── test_*_unit.py        # 단위 테스트 (requests_mock 사용)
+│   │   └── test_*_integration.py # 통합 테스트 (@pytest.mark.integration)
+│   └── krx/                      # KRX API 테스트
+│       ├── test_*_unit.py        # 단위 테스트
+│       └── test_*_integration.py # 통합 테스트
+├── sample.py                     # 사용 예제 코드
+├── pyproject.toml               # 패키지 의존성 및 설정
+└── README.md                    # 이 문서
+```
+
+### 핵심 설계 패턴
+
+**응답 래퍼 패턴**: 모든 API 응답을 구조화된 형태로 반환
+```python
+@dataclass
+class KiwoomHttpResponse(Generic[T]):
+    headers: KiwoomHttpHeader  # 헤더 정보 (연속조회키 등)
+    body: T                    # 응답 데이터 (Pydantic 모델)
+```
+
+**한국 금융 API 특화 기능**:
+- 한국 시장 시간대(KST) 처리
+- 한국 주식 코드 형식 (6자리, 예: "005930")
+- 한국어 필드명에 대한 영어 별칭: `cont_yn: Literal["Y", "N"] = Field(..., alias="cont-yn")`
 
 ## 🛠️ 개발 가이드
 
@@ -327,14 +384,24 @@ uv run pytest --cov=cluefin_openapi --cov-report=html
 - **Uv**: Rust로 만들어진 Python 패키지 메니저
 - **Ruff**: 코드 포맷팅 및 린팅
 - **pytest**: 테스트 프레임워크
-- **Pydantic**: 데이터 검증
+- **Pydantic**: 데이터 검증 및 타입 안전성
+- **requests**: HTTP 클라이언트
+- **loguru**: 구조화된 로깅
 
 ```bash
-# 코드 포맷팅
-ruff format packages/cluefin-openapi/
+# 워크스페이스 루트에서 실행
 
-# 린팅 확인
-ruff check packages/cluefin-openapi/
+# 코드 포맷팅 (전체 프로젝트)
+uv run ruff format .
+
+# 린팅 확인 및 자동 수정
+uv run ruff check . --fix
+
+# cluefin-openapi만 포맷팅
+uv run ruff format packages/cluefin-openapi/
+
+# cluefin-openapi만 린팅
+uv run ruff check packages/cluefin-openapi/
 ```
 
 ## 📝 라이선스

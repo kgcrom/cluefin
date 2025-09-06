@@ -38,8 +38,8 @@ from cluefin_openapi.kiwoom._domestic_rank_info_types import (
 def auth() -> Auth:
     dotenv.load_dotenv(dotenv_path=".env.test")
     return Auth(
-        app_key=os.getenv("KIWOOM_APP_KEY"),
-        secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY")),
+        app_key=os.getenv("KIWOOM_APP_KEY", ""),
+        secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY", "")),
         env="dev",
     )
 
@@ -50,6 +50,7 @@ def client(auth: Auth) -> Client:
     return Client(token=token.get_token(), env="dev")
 
 
+@pytest.mark.integration
 def test_get_top_remaining_order_quantity(client: Client):
     time.sleep(1)
 
@@ -62,6 +63,7 @@ def test_get_top_remaining_order_quantity(client: Client):
     assert len(response.body.bid_req_upper) > 0
 
 
+@pytest.mark.integration
 def test_get_rapidly_increasing_remaining_order_quantity(client: Client):
     time.sleep(1)
 
@@ -74,6 +76,7 @@ def test_get_rapidly_increasing_remaining_order_quantity(client: Client):
     assert len(response.body.bid_req_sdnin) > 0
 
 
+@pytest.mark.integration
 def test_get_rapidly_increasing_total_sell_orders(client: Client):
     time.sleep(1)
 
@@ -86,6 +89,7 @@ def test_get_rapidly_increasing_total_sell_orders(client: Client):
     assert len(response.body.req_rt_sdnin) > 0
 
 
+@pytest.mark.integration
 def test_get_rapidly_increasing_trading_volume(client: Client):
     time.sleep(1)
 
@@ -98,6 +102,7 @@ def test_get_rapidly_increasing_trading_volume(client: Client):
     assert len(response.body.trde_qty_sdnin) > 0
 
 
+@pytest.mark.integration
 def test_get_top_percentage_change_from_previous_day(client: Client):
     time.sleep(1)
 
@@ -117,6 +122,7 @@ def test_get_top_percentage_change_from_previous_day(client: Client):
     assert len(response.body.pred_pre_flu_rt_upper) > 0
 
 
+@pytest.mark.integration
 def test_get_top_expected_conclusion_percentage_change(client: Client):
     time.sleep(1)
 
@@ -134,6 +140,7 @@ def test_get_top_expected_conclusion_percentage_change(client: Client):
     assert len(response.body.exp_cntr_flu_rt_upper) > 0
 
 
+@pytest.mark.integration
 def test_get_top_current_day_trading_volume(client: Client):
     time.sleep(1)
 
@@ -153,6 +160,7 @@ def test_get_top_current_day_trading_volume(client: Client):
     assert len(response.body.tdy_trde_qty_upper) > 0
 
 
+@pytest.mark.integration
 def test_get_top_previous_day_trading_volume(client: Client):
     time.sleep(1)
 
@@ -164,6 +172,7 @@ def test_get_top_previous_day_trading_volume(client: Client):
     assert len(response.body.pred_trde_qty_upper) > 0
 
 
+@pytest.mark.integration
 def test_get_top_transaction_value(client: Client):
     time.sleep(1)
 
@@ -177,6 +186,7 @@ def test_get_top_transaction_value(client: Client):
     assert len(response.body.trde_prica_upper) > 0
 
 
+@pytest.mark.integration
 def test_get_top_margin_ratio(client: Client):
     time.sleep(1)
 
@@ -193,6 +203,7 @@ def test_get_top_margin_ratio(client: Client):
     assert len(response.body.crd_rt_upper) > 0
 
 
+@pytest.mark.integration
 def test_get_top_foreigner_period_trading(client: Client):
     time.sleep(1)
 
@@ -207,6 +218,7 @@ def test_get_top_foreigner_period_trading(client: Client):
     assert len(response.body.for_dt_trde_upper) > 0
 
 
+@pytest.mark.integration
 def test_get_top_consecutive_net_buy_sell_by_foreigners(client: Client):
     time.sleep(1)
 
@@ -221,6 +233,7 @@ def test_get_top_consecutive_net_buy_sell_by_foreigners(client: Client):
     assert len(response.body.for_cont_nettrde_upper) > 0
 
 
+@pytest.mark.integration
 def test_get_top_limit_exhaustion_rate_foreigner(client: Client):
     time.sleep(1)
 
@@ -234,6 +247,7 @@ def test_get_top_limit_exhaustion_rate_foreigner(client: Client):
     assert len(response.body.for_limit_exh_rt_incrs_upper) > 0
 
 
+@pytest.mark.integration
 def test_get_top_foreign_account_group_trading(client: Client):
     time.sleep(1)
 
@@ -245,6 +259,7 @@ def test_get_top_foreign_account_group_trading(client: Client):
     assert len(response.body.frgn_wicket_trde_upper) > 0
 
 
+@pytest.mark.integration
 def test_get_stock_specific_securities_firm_ranking(client: Client):
     time.sleep(1)
 
@@ -257,6 +272,7 @@ def test_get_stock_specific_securities_firm_ranking(client: Client):
     assert len(response.body.stk_sec_rank) > 0
 
 
+@pytest.mark.integration
 def test_get_top_securities_firm_trading(client: Client):
     time.sleep(1)
 
@@ -268,6 +284,7 @@ def test_get_top_securities_firm_trading(client: Client):
     assert len(response.body.sec_trde_upper) > 0
 
 
+@pytest.mark.integration
 def test_get_top_current_day_major_traders(client: Client):
     time.sleep(1)
 
@@ -277,6 +294,7 @@ def test_get_top_current_day_major_traders(client: Client):
     assert response.body.sel_trde_ori_1 is not None
 
 
+@pytest.mark.integration
 def test_get_top_net_buy_trader_ranking(client: Client):
     time.sleep(1)
 
@@ -288,6 +306,7 @@ def test_get_top_net_buy_trader_ranking(client: Client):
     assert len(response.body.netprps_trde_ori_rank) > 0
 
 
+@pytest.mark.integration
 def test_get_top_current_day_deviation_sources(client: Client):
     time.sleep(1)
 
@@ -299,6 +318,7 @@ def test_get_top_current_day_deviation_sources(client: Client):
     assert len(response.body.tdy_upper_scesn_ori) > 0
 
 
+@pytest.mark.integration
 def test_get_same_net_buy_sell_ranking(client: Client):
     time.sleep(1)
 
@@ -316,6 +336,7 @@ def test_get_same_net_buy_sell_ranking(client: Client):
     assert len(response.body.eql_nettrde_rank) > 0
 
 
+@pytest.mark.integration
 def test_get_top_intraday_trading_by_investor(client: Client):
     time.sleep(1)
 
@@ -328,6 +349,7 @@ def test_get_top_intraday_trading_by_investor(client: Client):
     assert isinstance(response.body, DomesticRankInfoTopIntradayTradingByInvestor)
 
 
+@pytest.mark.integration
 def test_get_after_hours_single_price_change_rate_ranking(client: Client):
     time.sleep(1)
 
@@ -344,6 +366,7 @@ def test_get_after_hours_single_price_change_rate_ranking(client: Client):
     assert len(response.body.ovt_sigpric_flu_rt_rank) > 0
 
 
+@pytest.mark.integration
 def test_get_top_foreigner_limit_exhaustion_rate(client: Client):
     time.sleep(1)
 

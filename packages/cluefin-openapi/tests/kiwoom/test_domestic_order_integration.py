@@ -13,8 +13,8 @@ from cluefin_openapi.kiwoom._client import Client
 def auth() -> Auth:
     dotenv.load_dotenv()
     return Auth(
-        app_key=os.getenv("KIWOOM_APP_KEY"),
-        secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY")),
+        app_key=os.getenv("KIWOOM_APP_KEY", ""),
+        secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY", "")),
         env="dev",
     )
 
@@ -25,6 +25,7 @@ def client(auth: Auth) -> Client:
     return Client(token=token.get_token(), env="dev")
 
 
+@pytest.mark.integration
 def test_request_buy_order(client: Client):
     time.sleep(1)
 
@@ -36,6 +37,7 @@ def test_request_buy_order(client: Client):
     assert response.body.ord_no is not None
 
 
+@pytest.mark.integration
 def test_request_sell_order(client: Client):
     time.sleep(1)
 
@@ -46,6 +48,7 @@ def test_request_sell_order(client: Client):
     assert response.body is not None
 
 
+@pytest.mark.integration
 def test_request_modify_order(client: Client):
     time.sleep(1)
 
@@ -56,6 +59,7 @@ def test_request_modify_order(client: Client):
     assert response.body is not None
 
 
+@pytest.mark.integration
 def test_request_cancel_order(client: Client):
     time.sleep(1)
 

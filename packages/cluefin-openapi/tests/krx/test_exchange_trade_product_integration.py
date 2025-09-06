@@ -19,6 +19,7 @@ def client() -> Client:
     return Client(auth_key=os.getenv("KRX_AUTH_KEY", ""))
 
 
+@pytest.mark.integration
 def test_get_etf(client: Client):
     time.sleep(1)
     response = client.exchange_traded_product.get_etf("20250721")
@@ -29,6 +30,7 @@ def test_get_etf(client: Client):
     assert isinstance(response.body, ExchangeTradedETF)
 
 
+@pytest.mark.integration
 def test_get_etn(client: Client):
     time.sleep(1)
     response = client.exchange_traded_product.get_etn("20250721")
@@ -39,6 +41,7 @@ def test_get_etn(client: Client):
     assert isinstance(response.body, ExchangeTradedETN)
 
 
+@pytest.mark.integration
 def test_get_elw(client: Client):
     time.sleep(1)
     response = client.exchange_traded_product.get_elw("20250721")

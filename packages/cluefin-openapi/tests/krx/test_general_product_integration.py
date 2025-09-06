@@ -19,6 +19,7 @@ def client() -> Client:
     return Client(auth_key=os.getenv("KRX_AUTH_KEY", ""))
 
 
+@pytest.mark.integration
 def test_get_oil_market(client: Client):
     time.sleep(1)
     response = client.general_product.get_oil_market("20250721")
@@ -27,6 +28,7 @@ def test_get_oil_market(client: Client):
     assert isinstance(response.body, GeneralProductOilMarket)
 
 
+@pytest.mark.integration
 def test_get_gold_market(client: Client):
     time.sleep(1)
     response = client.general_product.get_gold_market("20250721")
@@ -35,6 +37,7 @@ def test_get_gold_market(client: Client):
     assert isinstance(response.body, GeneralProductGoldMarket)
 
 
+@pytest.mark.integration
 def test_get_emissions_market(client: Client):
     time.sleep(1)
     response = client.general_product.get_emissions_market("20250721")

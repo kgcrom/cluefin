@@ -22,37 +22,19 @@ from cluefin_openapi.kiwoom._domestic_sector_types import (
 def auth() -> Auth:
     dotenv.load_dotenv(dotenv_path=".env.test")
     return Auth(
-        app_key=os.getenv("KIWOOM_APP_KEY"),
-        secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY")),
+        app_key=os.getenv("KIWOOM_APP_KEY", ""),
+        secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY", "")),
         env="dev",
     )
 
 
 @pytest.fixture
 def client(auth: Auth) -> Client:
-    """Create a Client instance for testing.
-
-    Args:
-        auth (Auth): The authenticated Auth instance.
-
-    Returns:
-        Client: A configured Client instance.
-    """
     token = auth.generate_token()
     return Client(token=token.get_token(), env="dev")
 
 
 def test_get_industry_program(client: Client):
-    """Test the get_industry_program method with actual API call.
-
-    This test verifies that:
-    1. The API request succeeds with status code 200
-    2. The response data matches the expected DomesticSectorIndustryProgram model
-    3. The response contains valid industry program data
-
-    Args:
-        client (Client): The Client instance.
-    """
     time.sleep(1)
     # Test parameters
     stk_code = "005930"  # Example sector code
@@ -71,17 +53,8 @@ def test_get_industry_program(client: Client):
     assert isinstance(response.body, DomesticSectorIndustryProgram)
 
 
+@pytest.mark.integration
 def test_get_industry_investor_net_buy(client: Client):
-    """Test the get_industry_investor_net_buy method with actual API call.
-
-    This test verifies that:
-    1. The API request succeeds (the client method raises an exception on failure).
-    2. The response data matches the expected DomesticSectorIndustryInvestorNetBuy model.
-    3. The response contains valid industry investor net buy data.
-
-    Args:
-        client (Client): The Client instance.
-    """
     time.sleep(1)
     # Test parameters
     mrkt_tp = "0"  # KOSPI
@@ -106,17 +79,8 @@ def test_get_industry_investor_net_buy(client: Client):
     assert isinstance(response.body, DomesticSectorIndustryInvestorNetBuy)
 
 
+@pytest.mark.integration
 def test_get_industry_current_price_success(client: Client):
-    """Test the get_industry_current_price method with actual API call.
-
-    This test verifies that:
-    1. The API request succeeds with status code 200
-    2. The response data matches the expected DomesticSectorIndustryCurrentPrice model
-    3. The response contains valid industry current price data
-
-    Args:
-        client (Client): The Client instance.
-    """
     time.sleep(1)
     # Test parameters
     mrkt_tp = "0"  # KOSPI
@@ -134,17 +98,8 @@ def test_get_industry_current_price_success(client: Client):
     assert isinstance(response.body, DomesticSectorIndustryCurrentPrice)
 
 
+@pytest.mark.integration
 def test_get_industry_price_by_sector_success(client: Client):
-    """Test the get_industry_price_by_sector method with actual API call.
-
-    This test verifies that:
-    1. The API request succeeds with status code 200
-    2. The response data matches the expected DomesticSectorIndustryPriceBySector model
-    3. The response contains valid industry price data
-
-    Args:
-        client (Client): The Client instance.
-    """
     time.sleep(1)
     # Test parameters
     mrkt_tp = "0"  # KOSPI
@@ -163,17 +118,8 @@ def test_get_industry_price_by_sector_success(client: Client):
     assert isinstance(response.body, DomesticSectorIndustryPriceBySector)
 
 
+@pytest.mark.integration
 def test_get_all_industry_index_success(client: Client):
-    """Test the get_all_industry_index method with actual API call.
-
-    This test verifies that:
-    1. The API request succeeds with status code 200
-    2. The response data matches the expected DomesticSectorAllIndustryIndex model
-    3. The response contains valid industry index data
-
-    Args:
-        client (Client): The Client instance.
-    """
     time.sleep(1)
     # Test parameters
     inds_cd = "001"  # Example industry code (KOSPI)
@@ -189,17 +135,8 @@ def test_get_all_industry_index_success(client: Client):
     assert isinstance(response.body, DomesticSectorAllIndustryIndex)
 
 
+@pytest.mark.integration
 def test_get_daily_industry_current_price_success(client: Client):
-    """Test the get_daily_industry_current_price method with actual API call.
-
-    This test verifies that:
-    1. The API request succeeds with status code 200
-    2. The response data matches the expected DomesticSectorIndustryCurrentPrice model
-    3. The response contains valid industry current price data
-
-    Args:
-        client (Client): The Client instance.
-    """
     time.sleep(1)
     # Test parameters
     mrkt_tp = "0"  # KOSPI

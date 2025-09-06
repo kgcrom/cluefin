@@ -72,7 +72,7 @@ class TestMenuController:
         # Mock user selecting ranking, then exit
         mock_prompt.side_effect = [
             {"main_choice": "ranking"},  # First selection
-            {"main_choice": "exit"},     # Second selection
+            {"main_choice": "exit"},  # Second selection
         ]
 
         with patch.object(menu_controller, "_handle_module_execution") as mock_handle:
@@ -147,7 +147,7 @@ class TestMenuController:
         """Test main menu with unknown choice value."""
         mock_prompt.side_effect = [
             {"main_choice": "unknown"},  # Unknown choice
-            {"main_choice": "exit"},     # Then exit
+            {"main_choice": "exit"},  # Then exit
         ]
 
         with patch.object(menu_controller, "_handle_module_execution") as mock_handle:
@@ -223,7 +223,7 @@ class TestMenuController:
 
             # Should have called all three modules
             assert mock_handle.call_count == 3
-            
+
             # Verify the calls were made with correct modules
             calls = mock_handle.call_args_list
             assert calls[0][0][0] == menu_controller.ranking_module
@@ -238,16 +238,16 @@ class TestMenuController:
         # This test verifies the menu structure without actually running it
         # We can't easily test the exact inquirer choices, but we can verify
         # the controller has the right modules and they're properly initialized
-        
-        assert hasattr(menu_controller, 'ranking_module')
-        assert hasattr(menu_controller, 'sector_module')
-        assert hasattr(menu_controller, 'stock_module')
-        
+
+        assert hasattr(menu_controller, "ranking_module")
+        assert hasattr(menu_controller, "sector_module")
+        assert hasattr(menu_controller, "stock_module")
+
         # Verify modules are the correct types
         from cluefin_cli.commands.inquiry.ranking_info import RankingInfoModule
         from cluefin_cli.commands.inquiry.sector_info import SectorInfoModule
         from cluefin_cli.commands.inquiry.stock_info import StockInfoModule
-        
+
         assert isinstance(menu_controller.ranking_module, RankingInfoModule)
         assert isinstance(menu_controller.sector_module, SectorInfoModule)
         assert isinstance(menu_controller.stock_module, StockInfoModule)
@@ -264,12 +264,12 @@ class TestMenuControllerIntegration:
     def test_client_propagation(self, integration_controller):
         """Test that client is properly propagated to all modules."""
         mock_client = Mock()
-        
+
         integration_controller.set_client(mock_client)
-        
+
         # Verify client is set on controller
         assert integration_controller.client == mock_client
-        
+
         # Verify client is propagated to all modules
         assert integration_controller.ranking_module.client == mock_client
         assert integration_controller.sector_module.client == mock_client
@@ -281,17 +281,17 @@ class TestMenuControllerIntegration:
         ranking_collector = integration_controller.ranking_module.parameter_collector
         sector_collector = integration_controller.sector_module.parameter_collector
         stock_collector = integration_controller.stock_module.parameter_collector
-        
+
         # They should be different instances
         assert ranking_collector is not sector_collector
         assert sector_collector is not stock_collector
         assert ranking_collector is not stock_collector
-        
+
         # Same for formatters
         ranking_formatter = integration_controller.ranking_module.formatter
         sector_formatter = integration_controller.sector_module.formatter
         stock_formatter = integration_controller.stock_module.formatter
-        
+
         assert ranking_formatter is not sector_formatter
         assert sector_formatter is not stock_formatter
         assert ranking_formatter is not stock_formatter
@@ -300,13 +300,13 @@ class TestMenuControllerIntegration:
         """Test that errors in one module don't affect others."""
         mock_client = Mock()
         integration_controller.set_client(mock_client)
-        
+
         # Simulate error in one module
         integration_controller.ranking_module.client = None
-        
+
         # Other modules should still have client
         assert integration_controller.sector_module.client == mock_client
         assert integration_controller.stock_module.client == mock_client
-        
+
         # Controller should still have client
         assert integration_controller.client == mock_client

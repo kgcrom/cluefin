@@ -72,21 +72,25 @@ cd packages/cluefin-openapi && uv pip install -e .
 # Run all tests across workspace
 uv run pytest
 
-# Run unit tests for API package
-uv run pytest packages/cluefin-openapi/tests/unit/ -v
+# Run unit tests only (excludes integration tests)
+uv run pytest -m "not integration"
 
-# Run integration tests (requires API keys)
-uv run pytest packages/cluefin-openapi/tests/integration/ -v
+# Run integration tests only (requires API keys)
+uv run pytest -m "integration"
+
+# Run tests for specific provider
+uv run pytest packages/cluefin-openapi/tests/kiwoom/ -v
+uv run pytest packages/cluefin-openapi/tests/krx/ -v
 
 # Run CLI app tests
 uv run pytest apps/cluefin-cli/tests/ -v
 
 # Run with coverage
-uv run coverage run --source=packages/cluefin-openapi/src -m pytest packages/cluefin-openapi/tests/unit/
+uv run coverage run --source=packages/cluefin-openapi/src -m pytest -m "not integration"
 uv run coverage xml
 
 # Run specific test file
-uv run pytest packages/cluefin-openapi/tests/unit/kiwoom/test_auth.py -v
+uv run pytest packages/cluefin-openapi/tests/kiwoom/test_auth_unit.py::test_generate_token_success -v
 ```
 
 ### Code Quality
@@ -183,7 +187,6 @@ ignore = ["F401", "E501"]  # Allow unused imports, long lines
 [tool.pytest.ini_options]
 markers = [
     "integration: integration tests",
-    "requires_auth: tests that require authentication",
     "slow: mark test as slow running",
 ]
 addopts = "-ra"
@@ -241,12 +244,13 @@ brew install ta-lib lightgbm
 - **Unit tests**: Use `requests-mock` with realistic Korean stock codes (e.g., "005930" for Samsung Electronics)
 - **Integration tests**: Require valid API credentials, marked with `@pytest.mark.integration`
 - **ML tests**: Use TimeSeriesSplit for financial data temporal validation
+- **Test structure**: Organized by provider (`kiwoom/`, `krx/`) with `_unit.py` and `_integration.py` suffixes
 - **Async tests**: Supported via pytest-asyncio for future async implementations
 
 ### Code Organization
 - Internal modules prefixed with underscore: `_client.py`, `_auth.py`, `_types.py`
 - Type definitions in dedicated `_types.py` files per module
-- Test files mirror source structure: `test_<module_name>.py`
+- Test files organized by provider with clear suffixes: `test_<module_name>_unit.py`, `test_<module_name>_integration.py`
 - Cross-package dependencies managed through workspace references
 
 ### Korean Financial Market Specifics
