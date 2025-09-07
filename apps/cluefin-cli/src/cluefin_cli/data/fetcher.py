@@ -28,8 +28,8 @@ class DataFetcher:
             raise ValueError("KIWOOM_APP_KEY environment variable is required")
         if not settings.kiwoom_secret_key:
             raise ValueError("KIWOOM_SECRET_KEY environment variable is required")
-        if not settings.krx_auth_key:
-            raise ValueError("KRX_AUTH_KEY environment variable is required")
+        # if not settings.krx_auth_key:
+        #     raise ValueError("KRX_AUTH_KEY environment variable is required")
 
         auth = KiwoomAuth(
             app_key=settings.kiwoom_app_key,
@@ -42,7 +42,7 @@ class DataFetcher:
             env="dev",
         )
         self.krx_client = KrxClient(
-            auth_key=settings.krx_auth_key,
+            auth_key=settings.krx_auth_key or "",
         )
 
     async def get_basic_data(self, stock_code: str):

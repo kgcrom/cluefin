@@ -5,7 +5,11 @@
 [![CI Pipeline](https://github.com/kgcrom/cluefin/actions/workflows/ci.yml/badge.svg)](https://github.com/kgcrom/cluefin/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/kgcrom/cluefin)](LICENSE)
 
-> **Cluefin: 당신의 금융 투자 도우미.**
+**Cluefin: 당신의 금융 투자 도우미.**
+
+> "clue"의 또 다른 의미는 "Clearly Looking for U Entered"입니다.
+> 투자자가 금융 의사결정을 분석, 자동화, 최적화할 수 있도록 돕는 파이썬 툴킷입니다.
+> _"더 스마트하게 투자하세요, 어렵게 하지 말고 Cluefin과 함께."_
 
 ## ⚠️ Disclaimer
 
@@ -17,10 +21,6 @@
 
 Cluefin을 사용함으로써 귀하는 자신의 책임 하에 학습이나 실험 목적으로만 사용할 것임을 인정하고 동의합니다.
 ```
-
-> "clue"의 또 다른 의미는 "Clearly Looking for U Entered"입니다.
-> 투자자가 금융 의사결정을 분석, 자동화, 최적화할 수 있도록 돕는 파이썬 툴킷입니다.
-> _"더 스마트하게 투자하세요, 어렵게 하지 말고 Cluefin과 함께."_
 
 ---
 

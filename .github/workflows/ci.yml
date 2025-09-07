@@ -100,7 +100,7 @@ jobs:
     name: Codacy Coverage Report
     runs-on: ubuntu-latest
     environment: development
-    needs: test 
+    needs: test
     if: needs.test.result == 'success'
     steps:
       - name: Checkout code
