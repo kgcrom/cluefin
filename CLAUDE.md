@@ -20,7 +20,10 @@ uv run pytest
 uv run pytest -m "not integration"
 # Integration tests only (requires API keys)
 uv run pytest -m "integration"
+
+# Linting and formatting
 uv run ruff check . --fix
+uv run ruff format .
 
 # CLI Usage
 cluefin-cli inquiry
@@ -130,7 +133,7 @@ cont_yn: Literal["Y", "N"] = Field(..., alias="cont-yn")
 KIWOOM_APP_KEY=your_key
 KIWOOM_SECRET_KEY=your_secret
 OPENAI_API_KEY=your_openai_key
-KRX_AUTH_KEY=your_auth_key_here
+KRX_AUTH_KEY=your_auth_key_here  # Optional for KRX (now optional per recent change)
 
 # Optional ML configuration
 ML_MODEL_PATH=models/
@@ -161,6 +164,31 @@ packages/cluefin-openapi/tests/
     ├── test_stock_unit.py
     └── test_stock_integration.py
 ```
+
+## Critical Notes
+
+### Client Architecture Pattern
+- Each financial provider (Kiwoom, KRX) has dedicated client with modular API structure
+- Extensive Pydantic models with Korean field aliases: `Field(..., alias="korean-name")`
+- Generic `KiwoomHttpResponse[T]` wrapper for type-safe response handling
+
+### Testing Patterns
+- Unit tests use `requests_mock` for Korean financial data simulation
+- Integration tests require API keys and use `@pytest.mark.integration`
+- Mock data should use realistic Korean stock codes (e.g., "005930")
+
+### Package Management Specifics
+- Root `pyproject.toml` defines workspace members and shared dev dependencies
+- Individual packages have their own `pyproject.toml` with specific dependencies  
+- Use `uv run` for all Python commands (never `pip` directly)
+- Ruff configured with 120 line length to accommodate Korean field names
+
+### Korean Financial API Considerations
+- **Kiwoom**: OAuth2-style token generation with app_key/secret_key
+- **KRX**: Simple auth_key header authentication (now optional)
+- Built-in rate limiting per Korean API requirements
+- Korean timezone (KST) considerations throughout
+- Environment separation for development vs production trading
 
 ---
 
