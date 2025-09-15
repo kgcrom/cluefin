@@ -142,6 +142,7 @@ uv run python -c "from cluefin_cli.ml.diagnostics import evaluate_model; evaluat
 # Kiwoom Securities API credentials
 KIWOOM_APP_KEY=your_app_key_here
 KIWOOM_SECRET_KEY=your_secret_key_here
+KIWOOM_ENV=dev # options: prod | dev(default)
 ```
 
 #### For cluefin-cli application:
@@ -149,6 +150,7 @@ KIWOOM_SECRET_KEY=your_secret_key_here
 # Kiwoom Securities API credentials
 KIWOOM_APP_KEY=your_app_key_here
 KIWOOM_SECRET_KEY=your_secret_key_here
+KIWOOM_ENV=dev # options: prod | dev(default)
 
 # OpenAI API key for AI-powered analysis
 OPENAI_API_KEY=your_openai_api_key_here

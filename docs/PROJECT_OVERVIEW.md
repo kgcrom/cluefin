@@ -124,6 +124,7 @@ cp apps/cluefin-cli/.env.sample .env
 # Edit with your API keys
 # KIWOOM_APP_KEY=your_app_key
 # KIWOOM_SECRET_KEY=your_secret_key  
+# KIWOOM_ENV=prod # options: prod | dev(default)
 # OPENAI_API_KEY=your_openai_api_key
 # KRX_AUTH_KEY=your_krx_auth_key
 ```

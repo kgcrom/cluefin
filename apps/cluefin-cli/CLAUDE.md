@@ -126,7 +126,8 @@ brew install ta-lib lightgbm
 
 # Required environment variables
 KIWOOM_APP_KEY=your_key
-KIWOOM_SECRET_KEY=your_secret  
+KIWOOM_SECRET_KEY=your_secret
+KIWOOM_ENV=dev # options: prod | dev(default)
 OPENAI_API_KEY=your_openai_key
 
 # Optional ML configuration

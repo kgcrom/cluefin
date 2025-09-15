@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -8,6 +8,7 @@ class Settings(BaseSettings):
 
     kiwoom_app_key: Optional[str] = None
     kiwoom_secret_key: Optional[str] = None
+    kiwoom_env: Literal["dev", "prod"] = "dev"
     krx_auth_key: Optional[str] = None
     openai_api_key: Optional[str] = None
 

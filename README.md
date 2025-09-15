@@ -41,7 +41,7 @@ uv sync --all-packages
 
 # Configure environment
 cp apps/cluefin-cli/.env.sample .env
-# Edit .env with your API keys (KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, OPENAI_API_KEY)
+# Edit .env with your API keys (KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, KIWOOM_ENV, OPENAI_API_KEY)
 
 # Interactive stock analysis
 cluefin-cli inquiry

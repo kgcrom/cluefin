@@ -76,7 +76,7 @@ uv sync --all-packages
 4. **Configure environment (optional):**
 ```bash
 cp apps/cluefin-cli/.env.sample .env
-# Edit .env with your API keys (KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, OPENAI_API_KEY)
+# Edit .env with your API keys (KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, KIWOOM_ENV, OPENAI_API_KEY)
 ```
 
 ### Basic Usage
@@ -190,6 +190,7 @@ Create a `.env` file in the **workspace root** directory:
 # Kiwoom Securities API (for real-time Korean stock data)
 KIWOOM_APP_KEY=your_app_key_here
 KIWOOM_SECRET_KEY=your_secret_key_here
+KIWOOM_ENV=prod # options: prod | dev(default)
 
 # Korea Exchange (KRX) API
 KRX_AUTH_KEY=your_auth_key_here

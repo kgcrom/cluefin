@@ -32,6 +32,8 @@ def _create_kiwoom_client() -> KiwoomClient:
         raise ValueError("KIWOOM_APP_KEY environment variable is required") from None
     if not settings.kiwoom_secret_key:
         raise ValueError("KIWOOM_SECRET_KEY environment variable is required") from None
+    if not settings.kiwoom_env:
+        raise ValueError("KIWOOM_ENV environment variable is required") from None
 
     try:
         auth = KiwoomAuth(

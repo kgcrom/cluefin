@@ -77,6 +77,7 @@ cp apps/cluefin-cli/.env.sample .env
 # 키움증권 API 키 설정 (OAuth2-style 인증)
 KIWOOM_APP_KEY=your_app_key_here
 KIWOOM_SECRET_KEY=your_secret_key_here
+KIWOOM_ENV=dev # options: prod | dev(default)
 
 # 한국거래소 API 키 설정 (단순 인증키)
 KRX_AUTH_KEY=your_krx_auth_key_here
