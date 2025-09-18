@@ -10,7 +10,7 @@ Requirements addressed: 4.2, 6.4
 
 import pytest
 import requests_mock
-from requests.exceptions import ConnectionError, ConnectTimeout, ReadTimeout
+from requests.exceptions import ConnectionError as RequestsConnectionError, ConnectTimeout, ReadTimeout
 
 from cluefin_openapi.krx._bond_types import BondKoreaTreasuryBondMarket
 from cluefin_openapi.krx._client import Client
@@ -289,10 +289,10 @@ class TestNetworkErrorCompatibility:
         with requests_mock.Mocker() as m:
             m.get(
                 "https://data-dbg.krx.co.kr/svc/apis/drv/fut_bydd_trd.json",
-                exc=ConnectionError("Failed to establish connection"),
+                exc=RequestsConnectionError("Failed to establish connection"),
             )
 
-            with pytest.raises(ConnectionError):
+            with pytest.raises(RequestsConnectionError):
                 factory_derivatives_method("20241201")
 
 

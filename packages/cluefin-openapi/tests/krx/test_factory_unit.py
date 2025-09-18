@@ -13,9 +13,6 @@ Tests cover:
 - requests_mock for API response simulation
 """
 
-from typing import get_type_hints
-from unittest.mock import Mock
-
 import pytest
 import requests_mock
 
