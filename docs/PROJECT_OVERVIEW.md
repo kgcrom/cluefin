@@ -24,7 +24,7 @@ Cluefin은 한국 금융 투자 툴킷으로 **uv workspace monorepo**로 구성
 - 한국 주식시장 분석을 위한 CLI 도구
 - ML 기반 주식 예측 및 AI 분석
 
-**현재 개발 상태**: Phase 2 (DART 통합 및 기본적 분석 강화) - ML 기능과 대화형 조회 시스템 개발 중
+**현재 개발 상태**: Production Ready - ML 예측, 대화형 조회 시스템, AI 인사이트 모든 기능 구현 완료
 
 ## 🚀 Quick Start
 
@@ -55,16 +55,16 @@ uv run ruff check . --fix
 
 ### 🔥 Core Capabilities
 - **대화형 CLI**: 메뉴 기반 주식 조회 시스템을 갖춘 Rich 터미널 인터페이스
-- **Type-Safe API 클라이언트**: 한국 금융 서비스를 위한 완전한 OpenAPI 클라이언트
-- **기술적 분석**: TA-Lib 통합을 통한 20+ 지표 (RSI, MACD, 볼린저 밴드 등)
-- **AI 기반 인사이트**: 시장 분석 및 자연어 설명을 위한 AI 통합
-- **ML 예측**: SHAP 설명 기능을 갖춘 LightGBM 기반 주식 움직임 예측
+- **Type-Safe API 클라이언트**: 한국 금융 서비스를 위한 완전한 OpenAPI 클라이언트 (rate limiting, 캐싱, 강력한 오류 처리)
+- **기술적 분석**: TA-Lib 통합을 통한 150+ 지표 (RSI, MACD, 볼린저 밴드 등)
+- **AI 기반 인사이트**: GPT-4를 활용한 시장 분석 및 자연어 설명
+- **ML 예측**: LightGBM과 SHAP 설명 기능을 갖춘 주식 움직임 예측 (TimeSeriesSplit을 이용한 시계열 검증)
 
 ### 📊 Supported Data Sources
-- **키움증권**: 실시간 시세, 계좌 관리, 주문 실행
-- **한국거래소(KRX)**: 시장 데이터, 지수, 섹터 정보
+- **키움증권**: 실시간 시세, 계좌 관리, 주문 실행 (OAuth2-style 인증, 내장 rate limiting 및 캐싱)
+- **한국거래소(KRX)**: 시장 데이터, 지수, 섹터 정보 (simple auth_key 인증, 선택사항)
 - **OpenAI**: AI 기반 시장 인사이트 및 자연어 설명
-- **기술적 지표**: RSI, MACD, 볼린저 밴드 등 포괄적인 TA-Lib 통합
+- **기술적 지표**: 150+ 기술적 지표를 포함한 포괄적인 TA-Lib 통합 (RSI, MACD, 볼린저 밴드, 모멘텀, 변동성 지표 등)
 
 ## 🎯 Vision & Goals
 
@@ -126,7 +126,7 @@ cp apps/cluefin-cli/.env.sample .env
 # KIWOOM_SECRET_KEY=your_secret_key  
 # KIWOOM_ENV=prod # options: prod | dev(default)
 # OPENAI_API_KEY=your_openai_api_key
-# KRX_AUTH_KEY=your_krx_auth_key
+# KRX_AUTH_KEY=your_krx_auth_key  # Optional for KRX data
 ```
 
 ---

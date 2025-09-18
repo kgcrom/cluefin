@@ -38,18 +38,22 @@ cluefin/
 - **Modular Clients**: Each provider (Kiwoom, KRX) has dedicated client with domain modules
 - **Type Safety**: Extensive Pydantic models with Korean-English field aliases
 - **Response Wrapping**: All APIs return `KiwoomHttpResponse[T]` with typed headers and body
-- **Rate Limiting**: Built-in configurable requests per second limiting
+- **Rate Limiting**: Built-in TokenBucket implementation for configurable requests per second limiting
+- **Caching**: SimpleCache system for API response caching with TTL support
 - **Error Handling**: Comprehensive exception hierarchy for different API error types
+- **Mock Response Support**: Built-in MockResponse for testing and caching scenarios
 
 **Module Structure**:
 ```python
 # Example: Kiwoom domestic stock module
 kiwoom/
-├── _client.py              # Main client class
+├── _client.py              # Main client class with rate limiting and caching
 ├── _auth.py               # Authentication handling
 ├── _domestic_stock_info.py # Stock information APIs
 ├── _domestic_stock_info_types.py # Pydantic models
-└── _exceptions.py         # Error handling
+├── _exceptions.py         # Error handling
+├── _cache.py              # SimpleCache implementation for response caching
+└── _rate_limiter.py       # TokenBucket rate limiting implementation
 ```
 
 ### cluefin-cli Application
@@ -58,9 +62,10 @@ kiwoom/
 **Architecture Components**:
 - **Click Framework**: Command structure and argument parsing
 - **Rich UI**: Beautiful terminal output with tables, panels, and progress bars
-- **Interactive Inquiry**: Menu-driven stock research system
-- **ML Pipeline**: LightGBM models with feature engineering
+- **Interactive Inquiry**: Menu-driven stock research system with async support
+- **ML Pipeline**: LightGBM models with 150+ TA-Lib technical indicators
 - **AI Integration**: OpenAI GPT-4 for market analysis
+- **Async Command Support**: Async/await pattern for improved performance
 
 **Command Structure**:
 ```bash
@@ -92,10 +97,11 @@ cluefin-cli
    - Korean market trading hours consideration (9:00-15:30 KST)
 
 3. **FeatureEngineer** (`ml/feature_engineering.py`)
-   - 150+ technical indicators via TA-Lib integration
+   - 150+ technical indicators via TA-Lib integration (RSI, MACD, Bollinger Bands, etc.)
    - Price momentum, volatility, and trend features
    - Volume-based and market condition indicators
    - Lag features for temporal patterns
+   - Korean market-specific feature engineering
 
 4. **SHAPExplainer** (`ml/explainer.py`)
    - SHAP TreeExplainer for feature importance
@@ -127,9 +133,10 @@ if ml_predict:
 ## API Client Architecture
 
 ### Authentication Patterns
-- **Kiwoom**: OAuth2-style token generation with app_key/secret_key
-- **KRX**: Simple auth_key header authentication  
+- **Kiwoom**: OAuth2-style token generation with app_key/secret_key (required)
+- **KRX**: Simple auth_key header authentication (now optional)
 - **Environment Separation**: Development vs production trading environments
+- **Token Caching**: Automatic token caching to reduce authentication overhead
 
 ### Response Structure
 All API responses follow a consistent pattern:
@@ -165,6 +172,8 @@ packages/cluefin-openapi/tests/
 │   ├── test_auth_integration.py             # Integration tests for authentication
 │   ├── test_domestic_stock_info_unit.py     # Unit tests for stock info
 │   ├── test_domestic_stock_info_integration.py # Integration tests for stock info
+│   ├── test_client_improvements_unit.py     # Client rate limiting and caching tests
+│   ├── test_account_json_serialization_unit.py # JSON serialization tests
 │   └── ... (other kiwoom modules)
 └── krx/
     ├── test_stock_unit.py                   # Unit tests for KRX stock data

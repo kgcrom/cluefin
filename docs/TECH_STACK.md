@@ -52,7 +52,7 @@ members = [
 ```
 
 ### Package Versions
-- **cluefin-openapi**: v0.1.3 (API client package)
+- **cluefin-openapi**: v0.1.4 (API client package)
 - **cluefin-cli**: v0.1.0 (CLI application)
 - **cluefin**: v0.1.0 (workspace root)
 
@@ -61,10 +61,11 @@ members = [
 ### Project Setup
 ```bash
 # Install all workspace dependencies
-uv sync --dev
+uv sync --all-packages
 
-# Install specific package in development mode
-cd packages/cluefin-openapi && uv pip install -e .
+# Setup virtual environment with Python 3.10
+uv venv --python 3.10
+source .venv/bin/activate
 ```
 
 ### Testing
@@ -123,48 +124,41 @@ cluefin-cli analyze 035720 --ml-predict --shap-analysis
 
 ### Machine Learning Operations
 ```bash
-# Train ML model (example commands - actual implementation may vary)
-uv run python -c "from cluefin_cli.ml.models import StockPredictor; StockPredictor().train('005930')"
+# Use ML predictions via CLI (recommended approach)
+cluefin-cli analyze 005930 --ml-predict --shap-analysis
 
-# Generate predictions
-uv run python -c "from cluefin_cli.ml.predictor import predict_stock; predict_stock('005930')"
+# Generate predictions with feature importance
+cluefin-cli analyze 035720 --ml-predict --feature-importance
 
-# Model diagnostics
-uv run python -c "from cluefin_cli.ml.diagnostics import evaluate_model; evaluate_model()"
+# Full analysis with all features
+cluefin-cli analyze 005930 --chart --ai-analysis --ml-predict --shap-analysis
 ```
 
 ## Environment Configuration
 
 ### Required Environment Variables
 
-#### For cluefin-openapi package:
+#### Required Environment Variables:
 ```bash
-# Kiwoom Securities API credentials
-KIWOOM_APP_KEY=your_app_key_here
-KIWOOM_SECRET_KEY=your_secret_key_here
-KIWOOM_ENV=dev # options: prod | dev(default)
-```
-
-#### For cluefin-cli application:
-```bash
-# Kiwoom Securities API credentials
+# Kiwoom Securities API credentials (required)
 KIWOOM_APP_KEY=your_app_key_here
 KIWOOM_SECRET_KEY=your_secret_key_here
 KIWOOM_ENV=dev # options: prod | dev(default)
 
-# OpenAI API key for AI-powered analysis
+# OpenAI API key for AI-powered analysis (required for AI features)
 OPENAI_API_KEY=your_openai_api_key_here
+
+# KRX API credentials (optional)
+KRX_AUTH_KEY=your_krx_auth_key_here
 ```
 
 ### Environment Setup
 ```bash
-# Copy sample environment files
-cp packages/cluefin-openapi/.env.sample packages/cluefin-openapi/.env
-cp apps/cluefin-cli/.env.sample apps/cluefin-cli/.env
+# Copy sample environment file to workspace root
+cp apps/cluefin-cli/.env.sample .env
 
 # Edit with your actual API keys
-# vim packages/cluefin-openapi/.env
-# vim apps/cluefin-cli/.env
+# vim .env
 ```
 
 ## Tool Configurations
@@ -236,9 +230,11 @@ brew install ta-lib lightgbm
 
 ### ML Model Considerations
 - Models are trained on Korean market data with KST timezone awareness
-- Feature engineering accounts for Korean trading hours (9:00-15:30 KST)
+- Feature engineering generates 150+ technical indicators via TA-Lib
 - Uses TimeSeriesSplit for proper temporal validation of financial data
+- SHAP explainability provides feature importance and prediction reasoning
 - Model artifacts cached in workspace for performance
+- Supports async prediction workflows for improved CLI responsiveness
 
 ## Development Workflow
 
@@ -260,6 +256,8 @@ brew install ta-lib lightgbm
 - **Trading hours**: 9:00-15:30 KST consideration in ML model features
 - **Market data**: Uses actual Korean stock codes for realistic testing and development
 - **API compatibility**: Designed for Korean financial service provider APIs (Kiwoom, KRX)
+- **Rate limiting**: Built-in TokenBucket implementation for Korean API requirements
+- **Caching**: SimpleCache system optimized for Korean market data patterns
 
 ---
 
