@@ -1,4 +1,5 @@
 from cluefin_openapi.krx._client import Client
+from cluefin_openapi.krx._factory import KrxApiMethodFactory
 from cluefin_openapi.krx._model import KrxHttpResponse
 from cluefin_openapi.krx._stock_types import (
     StockKonex,
@@ -17,95 +18,54 @@ class Stock:
         self.client = client
         self.path = "/svc/apis/sto/{}"
 
-    def get_kospi(self, base_date: str) -> KrxHttpResponse[StockKospi]:
-        """KOSPI 일별매매정보 조회
+        # Factory-generated methods to eliminate code duplication
+        self.get_kospi = KrxApiMethodFactory.create_single_param_method(
+            client=self.client,
+            path_template=self.path,
+            endpoint="stk_bydd_trd.json",
+            response_model=StockKospi,
+            docstring="KOSPI 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[StockKospi]: KOSPI 일별매매정보 데이터",
+        )
 
-        Args:
-            base_date (str): 조회할 날짜 (YYYYMMDD 형식)
+        self.get_kosdaq = KrxApiMethodFactory.create_single_param_method(
+            client=self.client,
+            path_template=self.path,
+            endpoint="ksq_bydd_trd.json",
+            response_model=StockKosdaq,
+            docstring="KOSDAQ 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[StockKosdaq]: KOSDAQ 일별매매정보 데이터",
+        )
 
-        Returns:
-            KrxHttpResponse[StockKospi]: KOSPI 일별매매정보 데이터
-        """
-        params = {"basDd": base_date}
-        response = self.client._get(self.path.format("stk_bydd_trd.json"), params=params)
+        self.get_konex = KrxApiMethodFactory.create_single_param_method(
+            client=self.client,
+            path_template=self.path,
+            endpoint="knx_bydd_trd.json",
+            response_model=StockKonex,
+            docstring="KONEX 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[StockKonex]: KONEX 일별매매정보 데이터",
+        )
 
-        body = StockKospi.model_validate(response)
-        return KrxHttpResponse(body=body)
+        self.get_warrant = KrxApiMethodFactory.create_single_param_method(
+            client=self.client,
+            path_template=self.path,
+            endpoint="sw_bydd_trd.json",
+            response_model=StockWarrant,
+            docstring="신주인수권증권 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[StockWarrant]: 신주인수권증권 일별매매정보 데이터",
+        )
 
-    def get_kosdaq(self, base_date: str) -> KrxHttpResponse[StockKosdaq]:
-        """KOSDAQ 일별매매정보 조회
+        self.get_subscription_warrant = KrxApiMethodFactory.create_single_param_method(
+            client=self.client,
+            path_template=self.path,
+            endpoint="sr_bydd_trd.json",
+            response_model=StockSubscriptionWarrant,
+            docstring="신주인수권증서 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[StockSubscriptionWarrant]: 신주인수권증서 일별매매정보 데이터",
+        )
 
-        Args:
-            base_date (str): 조회할 날짜 (YYYYMMDD 형식)
-
-        Returns:
-            KrxHttpResponse[StockKosdaq]: KOSDAQ 일별매매정보 데이터
-        """
-        params = {"basDd": base_date}
-        response = self.client._get(self.path.format("ksq_bydd_trd.json"), params=params)
-
-        body = StockKosdaq.model_validate(response)
-        return KrxHttpResponse(body=body)
-
-    def get_konex(self, base_date: str) -> KrxHttpResponse[StockKonex]:
-        """KONEX 일별매매정보 조회
-
-        Args:
-            base_date (str): 조회할 날짜 (YYYYMMDD 형식)
-
-        Returns:
-            KrxHttpResponse[StockKonex]: KONEX 일별매매정보 데이터
-        """
-        params = {"basDd": base_date}
-        response = self.client._get(self.path.format("knx_bydd_trd.json"), params=params)
-
-        body = StockKonex.model_validate(response)
-        return KrxHttpResponse(body=body)
-
-    def get_warrant(self, base_date: str) -> KrxHttpResponse[StockWarrant]:
-        """신주인수권증권 일별매매정보 조회
-
-        Args:
-            base_date (str): 조회할 날짜 (YYYYMMDD 형식)
-
-        Returns:
-            KrxHttpResponse[StockWarrant]: KOSDAQ 일별매매정보 데이터
-        """
-        params = {"basDd": base_date}
-        response = self.client._get(self.path.format("sw_bydd_trd.json"), params=params)
-
-        body = StockWarrant.model_validate(response)
-        return KrxHttpResponse(body=body)
-
-    def get_subscription_warrant(self, base_date: str) -> KrxHttpResponse[StockSubscriptionWarrant]:
-        """신주인수권증서 일별매매정보 조회
-
-        Args:
-            base_date (str): 조회할 날짜 (YYYYMMDD 형식)
-
-        Returns:
-            KrxHttpResponse[StockSubscriptionWarrant]: 신주인수권증서 일별매매정보 데이터
-        """
-        params = {"basDd": base_date}
-        response = self.client._get(self.path.format("sr_bydd_trd.json"), params=params)
-
-        body = StockSubscriptionWarrant.model_validate(response)
-        return KrxHttpResponse(body=body)
-
-    def get_kospi_base_info(self, base_date: str) -> KrxHttpResponse[StockKospiBaseInfo]:
-        """KOSPI 기본 정보 조회
-
-        Args:
-            base_date (str): 조회할 날짜 (YYYYMMDD 형식)
-
-        Returns:
-            KrxHttpResponse[StockKospiBaseInfo]: KOSPI 기본 정보 데이터
-        """
-        params = {"basDd": base_date}
-        response = self.client._get(self.path.format("stk_isu_base_info.json"), params=params)
-
-        body = StockKospiBaseInfo.model_validate(response)
-        return KrxHttpResponse(body=body)
+        self.get_kospi_base_info = KrxApiMethodFactory.create_single_param_method(
+            client=self.client,
+            path_template=self.path,
+            endpoint="stk_isu_base_info.json",
+            response_model=StockKospiBaseInfo,
+            docstring="KOSPI 기본 정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[StockKospiBaseInfo]: KOSPI 기본 정보 데이터",
+        )
 
     def get_kosdaq_base_info(self, base_date: str) -> KrxHttpResponse[StockKosdaqBaseInfo]:
         """KOSDAQ 기본 정보 조회

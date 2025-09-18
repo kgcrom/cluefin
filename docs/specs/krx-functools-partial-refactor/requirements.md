@@ -4,6 +4,8 @@
 
 This document outlines the requirements for refactoring the KRX module in `packages/cluefin-openapi/krx` to eliminate code duplication using Python's `functools.partial`. The current implementation contains significant duplication across multiple modules (_stock.py, _bond.py, _index.py, _derivatives.py, etc.) where similar patterns are repeated for API endpoint handling, parameter processing, HTTP requests, and response validation.
 
+**Status**: The core factory infrastructure (`_factory.py`) has been implemented. This refactoring task focuses on integrating the existing `KrxApiMethodFactory` into all KRX modules to eliminate code duplication while preserving 100% backward compatibility.
+
 The refactoring aims to improve code maintainability, reduce duplication, and establish reusable patterns while preserving all existing functionality and Korean financial API specifics.
 
 ## Requirements
@@ -17,14 +19,15 @@ The refactoring aims to improve code maintainability, reduce duplication, and es
 3. WHEN refactoring methods THEN the system SHALL maintain identical functionality and API signatures
 4. WHEN duplicate patterns are eliminated THEN the system SHALL provide reusable function templates using functools.partial
 
-### Requirement 2: Pattern Abstraction Using functools.partial
-**User Story:** As a developer, I want to use functools.partial to create reusable function templates so that common API patterns can be abstracted without sacrificing type safety or functionality.
+### Requirement 2: Integration of Existing Factory Pattern
+**User Story:** As a developer, I want to integrate the existing `KrxApiMethodFactory` into all KRX modules so that the implemented factory pattern eliminates code duplication without changing any external interfaces.
 
 #### Acceptance Criteria
-1. WHEN creating partial functions THEN the system SHALL abstract common patterns like single-parameter date-based API calls
-2. WHEN using functools.partial THEN the system SHALL preserve all original method signatures and return types
-3. WHEN implementing partial function templates THEN the system SHALL maintain compatibility with existing Pydantic model validation
-4. WHEN creating abstractions THEN the system SHALL ensure Korean field aliases and API specifics are preserved
+1. WHEN integrating the factory THEN the system SHALL use the existing `KrxApiMethodFactory.create_single_param_method()` for all single-parameter methods
+2. WHEN refactoring modules THEN the system SHALL replace duplicated method implementations with factory-generated methods
+3. WHEN using the factory THEN the system SHALL preserve all original method signatures and return types exactly
+4. WHEN implementing factory integration THEN the system SHALL maintain compatibility with existing Pydantic model validation
+5. WHEN creating factory methods THEN the system SHALL ensure Korean field aliases and API specifics are preserved
 
 ### Requirement 3: Type Safety Preservation
 **User Story:** As a developer, I want to maintain full type safety during refactoring so that mypy compatibility and IDE support remain intact.
@@ -58,6 +61,15 @@ The refactoring aims to improve code maintainability, reduce duplication, and es
 
 #### Acceptance Criteria
 1. WHEN refactoring is complete THEN the system SHALL pass all existing unit tests without any test modifications
-2. WHEN new patterns are introduced THEN the system SHALL include additional unit tests for the abstracted functionality
+2. WHEN factory methods are implemented THEN the system SHALL include unit tests for the `KrxApiMethodFactory` class
 3. WHEN integration tests are run THEN the system SHALL maintain identical API behavior with real KRX endpoints
 4. WHEN testing edge cases THEN the system SHALL handle error conditions identically to the original implementation
+
+### Requirement 7: Refactoring-Only Constraint
+**User Story:** As a project stakeholder, I want this task to focus solely on internal code improvements without adding any new features so that the scope remains controlled and risk is minimized.
+
+#### Acceptance Criteria
+1. WHEN refactoring modules THEN the system SHALL NOT add any new public methods or change existing method signatures
+2. WHEN integrating the factory THEN the system SHALL NOT modify any external APIs or response formats
+3. WHEN completing the refactoring THEN the system SHALL maintain identical behavior from a user's perspective
+4. WHEN updating code THEN the system SHALL focus only on eliminating duplication using the existing factory infrastructure

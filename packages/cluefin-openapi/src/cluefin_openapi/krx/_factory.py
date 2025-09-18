@@ -123,22 +123,24 @@ class KrxApiMethodFactory:
             ... )
             >>> response = get_kospi("20241201")  # Type-safe call
         """
-        # Create partial function with pre-filled parameters
-        method = partial(
-            _api_method_template,
-            client=client,
-            path_template=path_template,
-            endpoint=endpoint,
-            response_model=response_model,
-        )
+
+        def wrapper(base_date: str) -> KrxHttpResponse[T]:
+            """Generated wrapper function for single-parameter API method."""
+            return _api_method_template(
+                client=client,
+                path_template=path_template,
+                endpoint=endpoint,
+                response_model=response_model,
+                base_date=base_date,
+            )
 
         # Preserve docstring for documentation
-        method.__doc__ = docstring
+        wrapper.__doc__ = docstring
 
         # Set proper function name for debugging and introspection
-        method.__name__ = f"krx_api_method_{endpoint.replace('.', '_')}"
+        wrapper.__name__ = f"krx_api_method_{endpoint.replace('.', '_')}"
 
-        return method
+        return wrapper
 
     @staticmethod
     def create_multi_param_method(

@@ -2,9 +2,11 @@
 
 ## Overview
 
-This document outlines the technical design for refactoring the KRX module using `functools.partial` to eliminate code duplication. The refactoring will introduce a common abstraction layer that preserves type safety while reducing repetitive patterns across multiple KRX API modules.
+This document outlines the technical design for refactoring the KRX module using `functools.partial` to eliminate code duplication. The core factory infrastructure (`_factory.py`) has been implemented with the `KrxApiMethodFactory` class that provides a common abstraction layer while preserving type safety and reducing repetitive patterns across multiple KRX API modules.
 
-The core approach involves creating partial function templates for common API patterns, particularly the prevalent single-parameter date-based API calls that follow identical patterns across different market segments.
+**Implementation Status**: The `KrxApiMethodFactory` in `packages/cluefin-openapi/src/cluefin_openapi/krx/_factory.py` provides the core infrastructure. This design document shows how to integrate this existing factory into all KRX modules to eliminate code duplication.
+
+The core approach involves using the existing factory's `create_single_param_method()` to replace duplicated implementations across different market segments.
 
 ## Architecture
 
@@ -20,13 +22,13 @@ The core approach involves creating partial function templates for common API pa
 │  │ .get_kospi()│ │ .get_ktb()  │ │ .get_krx()  │          │
 │  └─────────────┘ └─────────────┘ └─────────────┘          │
 ├─────────────────────────────────────────────────────────────┤
-│                 Abstraction Layer                           │
+│                 Factory Layer (IMPLEMENTED)                 │
 │  ┌─────────────────────────────────────────────────────────┐ │
-│  │          Partial Function Templates                     │ │
-│  │  • _create_single_param_api_method()                   │ │
-│  │  • _create_multi_param_api_method()                    │ │
-│  │  • Common parameter processing                         │ │
-│  │  • Response validation patterns                        │ │
+│  │              KrxApiMethodFactory                        │ │
+│  │  • create_single_param_method() ✓ IMPLEMENTED          │ │
+│  │  • create_multi_param_method() ✓ IMPLEMENTED           │ │
+│  │  • _api_method_template() ✓ IMPLEMENTED                │ │
+│  │  • TypedApiMethod[T] Protocol ✓ IMPLEMENTED            │ │
 │  └─────────────────────────────────────────────────────────┘ │
 ├─────────────────────────────────────────────────────────────┤
 │                    Core Client Layer                        │
@@ -69,89 +71,104 @@ interface ApiMethodTemplate {
 }
 ```
 
-### Partial Function Factory
+### Implemented Factory Infrastructure
+
+The `KrxApiMethodFactory` has been implemented in `packages/cluefin-openapi/src/cluefin_openapi/krx/_factory.py`:
 
 ```python
+# Actual implementation from _factory.py
 from functools import partial
-from typing import TypeVar, Generic, Callable, Type, Dict, Any
-from pydantic import BaseModel
+from typing import Callable, Dict, Generic, Protocol, Type, TypeVar
+from cluefin_openapi.krx._client import Client
+from cluefin_openapi.krx._model import KrxHttpBody, KrxHttpResponse
 
-T = TypeVar('T', bound=BaseModel)
+T = TypeVar("T", bound=KrxHttpBody)
+
+class TypedApiMethod(Protocol, Generic[T]):
+    """Protocol for type-safe API method signatures with proper mypy compatibility."""
+    def __call__(self, base_date: str) -> KrxHttpResponse[T]: ...
+
+def _api_method_template(
+    client: Client, path_template: str, endpoint: str,
+    response_model: Type[T], base_date: str, **kwargs: Dict[str, str]
+) -> KrxHttpResponse[T]:
+    """Core template function for single-parameter API calls."""
+    params = {"basDd": base_date}  # Korean API parameter mapping
+    if kwargs:
+        params.update(kwargs)
+    response = client._get(path_template.format(endpoint), params=params)
+    body = response_model.model_validate(response)
+    return KrxHttpResponse(body=body)
 
 class KrxApiMethodFactory:
-    """Factory class for creating API methods using functools.partial"""
-    
-    def __init__(self, client: Client):
-        self.client = client
-    
+    """Factory class for generating partial functions that abstract common KRX API patterns."""
+
+    @staticmethod
     def create_single_param_method(
-        self,
-        path_template: str,
-        endpoint_file: str,
-        response_model: Type[T],
-        param_name: str = "base_date",
-        param_key: str = "basDd",
-        docstring: str = ""
-    ) -> Callable[[str], KrxHttpResponse[T]]:
-        """Creates a single parameter API method using functools.partial"""
-        
-        def _api_method_template(
-            path_template: str,
-            endpoint_file: str,
-            response_model: Type[T],
-            param_key: str,
-            docstring: str,
-            param_value: str
-        ) -> KrxHttpResponse[T]:
-            """Template function for single parameter API calls"""
-            params = {param_key: param_value}
-            response = self.client._get(
-                path_template.format(endpoint_file), 
-                params=params
-            )
-            body = response_model.model_validate(response)
-            return KrxHttpResponse(body=body)
-        
-        # Create partial function with pre-configured parameters
+        client: Client, path_template: str, endpoint: str,
+        response_model: Type[T], docstring: str
+    ) -> TypedApiMethod[T]:
+        """Create a partial function for single-parameter base_date API methods."""
         method = partial(
             _api_method_template,
-            path_template,
-            endpoint_file,
-            response_model,
-            param_key,
-            docstring
+            client=client,
+            path_template=path_template,
+            endpoint=endpoint,
+            response_model=response_model,
         )
-        
-        # Add docstring to the partial function
         method.__doc__ = docstring
-        
+        method.__name__ = f"krx_api_method_{endpoint.replace('.', '_')}"
         return method
 ```
 
-### Module Class Template
+### Stock Module Refactoring Example
 
+**Current Implementation (with duplication):**
 ```python
-class StockApiMethods:
-    """Template showing how modules will use the factory"""
-    
+class Stock:
     def __init__(self, client: Client):
         self.client = client
-        self.factory = KrxApiMethodFactory(client)
         self.path = "/svc/apis/sto/{}"
-        
-        # Create methods using partial functions
-        self.get_kospi = self.factory.create_single_param_method(
+
+    def get_kospi(self, base_date: str) -> KrxHttpResponse[StockKospi]:
+        """KOSPI 일별매매정보 조회"""
+        params = {"basDd": base_date}
+        response = self.client._get(self.path.format("stk_bydd_trd.json"), params=params)
+        body = StockKospi.model_validate(response)
+        return KrxHttpResponse(body=body)
+
+    def get_kosdaq(self, base_date: str) -> KrxHttpResponse[StockKosdaq]:
+        """KOSDAQ 일별매매정보 조회"""
+        params = {"basDd": base_date}
+        response = self.client._get(self.path.format("ksq_bydd_trd.json"), params=params)
+        body = StockKosdaq.model_validate(response)
+        return KrxHttpResponse(body=body)
+```
+
+**Refactored Implementation (using factory):**
+```python
+from cluefin_openapi.krx._factory import KrxApiMethodFactory
+
+class Stock:
+    def __init__(self, client: Client):
+        self.client = client
+        self.path = "/svc/apis/sto/{}"
+
+        # Use factory to eliminate duplication
+        self.get_kospi = KrxApiMethodFactory.create_single_param_method(
+            client=self.client,
             path_template=self.path,
-            endpoint_file="stk_bydd_trd.json",
+            endpoint="stk_bydd_trd.json",
             response_model=StockKospi,
-            docstring="KOSPI 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)"
+            docstring="KOSPI 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[StockKospi]: KOSPI 일별매매정보 데이터"
         )
-        
-        self.get_kosdaq = self.factory.create_single_param_method(
+
+        self.get_kosdaq = KrxApiMethodFactory.create_single_param_method(
+            client=self.client,
             path_template=self.path,
-            endpoint_file="ksq_bydd_trd.json",
+            endpoint="ksq_bydd_trd.json",
             response_model=StockKosdaq,
-            docstring="KOSDAQ 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)"
+            docstring="KOSDAQ 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[StockKosdaq]: KOSDAQ 일별매매정보 데이터"
         )
 ```
 
@@ -388,27 +405,30 @@ memory_overhead = partial_method_memory - original_method_memory
 
 ## Migration and Deployment
 
-### Phased Migration Approach
+### Migration Strategy (Factory Infrastructure Complete)
 
-**Phase 1: Core Infrastructure**
-1. Create `KrxApiMethodFactory` class
-2. Implement partial function templates
-3. Add comprehensive unit tests
+**Current Status**: ✅ Phase 1 Complete - Factory infrastructure exists in `_factory.py`
 
-**Phase 2: Single Module Migration**
-1. Refactor `_stock.py` module first (largest duplication)
-2. Validate identical behavior with existing tests
-3. Performance benchmarking
+**Phase 2: Stock Module Integration**
+1. Refactor `_stock.py` using existing `KrxApiMethodFactory.create_single_param_method()`
+2. Replace all 6 duplicated methods (get_kospi, get_kosdaq, get_konex, etc.)
+3. Validate identical behavior with existing unit tests
+4. Run integration tests to ensure no regressions
 
-**Phase 3: Remaining Modules**
-1. Apply pattern to `_bond.py`, `_index.py`, `_derivatives.py`
-2. Update any module-specific variations
+**Phase 3: Bond Module Integration**
+1. Apply factory pattern to `_bond.py` methods
+2. Refactor get_korea_treasury_bond_market, get_general_bond_market, get_small_bond_market
+3. Validate all Korean field aliases and API specifics
+
+**Phase 4: Remaining Module Integration**
+1. Apply pattern to `_index.py`, `_derivatives.py`, `_exchange_traded_product.py`
+2. Handle any module-specific variations using factory parameters
 3. Cross-module integration testing
 
-**Phase 4: Optimization and Documentation**
-1. Performance optimization if needed
-2. Update inline documentation
-3. Code review and final validation
+**Phase 5: Testing and Validation**
+1. Create comprehensive unit tests for `KrxApiMethodFactory`
+2. Performance benchmarking to measure duplication reduction
+3. Final regression testing with all existing test suites
 
 ### Deployment Strategy
 
