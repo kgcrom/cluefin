@@ -39,12 +39,12 @@ def _create_kiwoom_client() -> KiwoomClient:
         auth = KiwoomAuth(
             app_key=settings.kiwoom_app_key,
             secret_key=SecretStr(settings.kiwoom_secret_key),
-            env="dev",
+            env=settings.kiwoom_env,
         )
         token = auth.generate_token()
         client = KiwoomClient(
             token=token.get_token(),
-            env="dev",
+            env=settings.kiwoom_env,
         )
         return client
     except Exception as e:
