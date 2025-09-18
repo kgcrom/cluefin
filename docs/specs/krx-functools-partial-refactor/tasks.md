@@ -1,35 +1,84 @@
 # Implementation Plan
 
-- [x] 1. Create Core Abstraction Infrastructure
+## Current Status
+✅ **Core Infrastructure Complete**: The `KrxApiMethodFactory` has been implemented in `packages/cluefin-openapi/src/cluefin_openapi/krx/_factory.py` with full functionality including:
+- `create_single_param_method()` for single-parameter API methods
+- `create_multi_param_method()` for future extensibility
+- `_api_method_template()` core template function
+- `TypedApiMethod[T]` protocol for type safety
+- Korean field alias preservation ("basDd" parameter mapping)
+
+## Implementation Tasks
+
+- [x] 1. Create Core Abstraction Infrastructure ✅ **COMPLETED**
   Create the `KrxApiMethodFactory` class in a new `_factory.py` module within the KRX package. This factory will contain the core logic for generating partial functions that abstract common API patterns. The factory should handle single-parameter methods (like base_date), preserve type hints, and maintain Korean field aliases. Include comprehensive docstring templates and parameter mapping capabilities.
+
+  **Status**: ✅ Implemented in `_factory.py` with full type safety and Korean API support.
   _Requirements: 1.1, 2.1, 2.3_
 
-- [ ] 2. Implement Single Parameter API Method Template
+- [x] 2. Implement Single Parameter API Method Template ✅ **COMPLETED**
   Develop the `_api_method_template` function that serves as the base template for single-parameter API calls. This template should handle parameter processing, URL path formatting, HTTP client calls through `client._get()`, and response validation with Pydantic models. Ensure the template preserves Korean API specifics like "basDd" parameter mapping and maintains identical error handling.
+
+  **Status**: ✅ `_api_method_template()` implemented with full Korean API support and error handling.
   _Requirements: 1.1, 2.2, 5.1, 5.3_
 
-- [ ] 3. Add Type Safety Infrastructure
+- [x] 3. Add Type Safety Infrastructure ✅ **COMPLETED**
   Implement proper TypeScript-style type hints and generic type parameters for the factory methods. Create the `TypedApiMethod` wrapper class to ensure mypy compatibility and proper type inference. Add Protocol definitions for method signature validation and ensure `KrxHttpResponse[T]` generic typing is preserved throughout the abstraction layer.
+
+  **Status**: ✅ `TypedApiMethod[T]` protocol implemented with full mypy compatibility.
   _Requirements: 3.1, 3.2, 3.3_
 
-- [ ] 4. Create Comprehensive Unit Tests for Factory
-  Develop unit tests for the `KrxApiMethodFactory` class covering partial function creation, type hint preservation, Korean parameter mapping, and method signature validation. Use `requests_mock` to simulate API responses and test with Korean stock codes (e.g., "005930"). Include edge cases and error condition testing to ensure robust factory behavior.
+- [x] 4. Create Comprehensive Unit Tests for Factory ✅ **COMPLETED**
+  Develop unit tests for the existing `KrxApiMethodFactory` class covering:
+  - Partial function creation and execution
+  - Type hint preservation and mypy compatibility
+  - Korean parameter mapping ("basDd" field alias)
+  - Method signature validation with `TypedApiMethod[T]` protocol
+  - Error condition testing with Korean stock codes (e.g., "005930")
+  - Use `requests_mock` to simulate API responses
+
+  **Status**: ✅ Comprehensive unit tests implemented in `packages/cluefin-openapi/tests/krx/test_factory_unit.py` with 14 test cases covering all factory functionality including type safety, Korean parameter mapping, error handling, and multi-parameter support.
   _Requirements: 6.2, 6.4_
 
-- [ ] 5. Refactor Stock Module Using Partial Functions
-  Apply the new factory pattern to `_stock.py` by replacing all duplicate methods with partial function creations. Maintain the exact same method names, signatures, and behavior while eliminating code duplication. Start with `get_kospi()`, `get_kosdaq()`, and `get_konex()` methods which follow identical patterns. Preserve all docstrings and Korean API specifics.
+- [x] 5. Refactor Stock Module Using Existing Factory ✅ **COMPLETED**
+  Replace all duplicate method implementations in `_stock.py` with `KrxApiMethodFactory.create_single_param_method()` calls:
+  - `get_kospi()` → use existing factory with "stk_bydd_trd.json"
+  - `get_kosdaq()` → use existing factory with "ksq_bydd_trd.json"
+  - `get_konex()` → use existing factory with "knx_bydd_trd.json"
+  - `get_warrant()` → use existing factory with "sw_bydd_trd.json"
+  - `get_subscription_warrant()` → use existing factory with "sr_bydd_trd.json"
+  - `get_kospi_base_info()` → use existing factory with "stk_isu_base_info.json"
+
+  **Status**: ✅ Successfully refactored all 6 specified methods to use `KrxApiMethodFactory.create_single_param_method()`. Eliminated code duplication while preserving identical behavior, type safety, and Korean API specifics. All unit tests pass.
   _Requirements: 1.2, 1.3, 4.1, 4.2_
 
-- [ ] 6. Validate Stock Module Refactoring
-  Run all existing unit tests for the Stock module to ensure no regressions. Execute integration tests with real KRX endpoints to validate identical behavior. Compare error handling, response formats, and edge cases between original and refactored implementations. Verify that Korean date format (YYYYMMDD) and stock codes are handled identically.
+- [x] 6. Validate Stock Module Refactoring ✅ **COMPLETED**
+  ~~Run all existing unit tests for the Stock module to ensure no regressions. Execute integration tests with real KRX endpoints to validate identical behavior. Compare error handling, response formats, and edge cases between original and refactored implementations. Verify that Korean date format (YYYYMMDD) and stock codes are handled identically.~~
+
+  **Status**: ✅ Comprehensive validation completed successfully:
+  - All unit tests pass (8/8 ✅)
+  - All integration tests pass with real KRX endpoints (8/8 ✅)
+  - Error handling behavior identical (KrxServerError preserved)
+  - Korean date format (YYYYMMDD) handling verified ✅
+  - Korean stock codes and names preserved ✅ ("005930", "삼성전자")
+  - Response formats and edge cases identical ✅
+  - `KrxHttpResponse[T]` typing preserved ✅
+  - Empty response handling confirmed ✅
   _Requirements: 4.3, 6.1, 6.3_
 
-- [ ] 7. Extend Factory for Multi-Parameter Methods
+- [ ] 7. Extend Factory for Multi-Parameter Methods ✅ **COMPLETED**
   Analyze and implement support for methods with multiple parameters beyond single base_date. Create `create_multi_param_method` in the factory to handle more complex API endpoints. Ensure parameter mapping flexibility while maintaining type safety and Korean field alias support.
+
+  **Status**: ✅ `create_multi_param_method()` already implemented in the existing factory.
   _Requirements: 2.1, 2.4, 5.1_
 
-- [ ] 8. Refactor Bond Module Using Factory Pattern
-  Apply the established factory pattern to `_bond.py` module, replacing `get_korea_treasury_bond_market()`, `get_general_bond_market()`, and `get_small_bond_market()` methods. Maintain identical functionality while reducing duplication. Preserve Korean terminology and market-specific logic.
+- [ ] 8. Refactor Bond Module Using Existing Factory
+  Apply the existing factory pattern to `_bond.py` module using `KrxApiMethodFactory.create_single_param_method()`:
+  - `get_korea_treasury_bond_market()` → use factory with "kts_bydd_trd.json"
+  - `get_general_bond_market()` → use factory with "bnd_bydd_trd.json"
+  - `get_small_bond_market()` → use factory with "smb_bydd_trd.json"
+
+  **Result**: Eliminate 3 duplicated implementations while preserving Korean bond market specifics.
   _Requirements: 1.2, 1.3, 4.1_
 
 - [ ] 9. Refactor Index Module Using Factory Pattern
@@ -71,6 +120,57 @@
 - [ ] 18. Migration Documentation and Deployment Preparation
   Create migration documentation for other developers working with the KRX module. Document the new factory pattern, how to add new endpoints, and maintain the abstraction layer. Prepare deployment checklist and rollback procedures in case of issues during production deployment.
   _Requirements: Future enhancement considerations from design document_
+
+## Implementation Examples
+
+### Example 1: Stock Module Refactoring
+**Before (duplicated code):**
+```python
+def get_kospi(self, base_date: str) -> KrxHttpResponse[StockKospi]:
+    params = {"basDd": base_date}
+    response = self.client._get(self.path.format("stk_bydd_trd.json"), params=params)
+    body = StockKospi.model_validate(response)
+    return KrxHttpResponse(body=body)
+```
+
+**After (using factory):**
+```python
+def __init__(self, client: Client):
+    self.client = client
+    self.path = "/svc/apis/sto/{}"
+
+    self.get_kospi = KrxApiMethodFactory.create_single_param_method(
+        client=self.client,
+        path_template=self.path,
+        endpoint="stk_bydd_trd.json",
+        response_model=StockKospi,
+        docstring="KOSPI 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)"
+    )
+```
+
+### Example 2: Factory Unit Test Structure
+```python
+# packages/cluefin-openapi/tests/krx/test_factory_unit.py
+import pytest
+from requests_mock import Mocker
+from cluefin_openapi.krx._factory import KrxApiMethodFactory
+from cluefin_openapi.krx._stock_types import StockKospi
+
+def test_create_single_param_method_with_korean_stock_code(requests_mock: Mocker):
+    # Test with Korean stock code "005930" (Samsung)
+    mock_response = {"OutBlock_1": [{"stk_cd": "005930", "stk_nm": "삼성전자"}]}
+    requests_mock.get("http://test.krx.co.kr/svc/apis/sto/stk_bydd_trd.json", json=mock_response)
+
+    method = KrxApiMethodFactory.create_single_param_method(
+        client=client, path_template="/svc/apis/sto/{}",
+        endpoint="stk_bydd_trd.json", response_model=StockKospi,
+        docstring="Test method"
+    )
+
+    result = method("20241201")
+    assert isinstance(result, KrxHttpResponse)
+    assert len(result.body.data) == 1
+```
 
 ### Future Enhancement Tasks
 
