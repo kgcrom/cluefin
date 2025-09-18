@@ -17,5 +17,5 @@ class Esg:
             path_template=self.path,
             endpoint="sri_bond_info.json",
             response_model=EsgSociallyResponsibleInvestmentBond,
-            docstring="사회책임투자채권 정보 조회\n\nArgs:\n    base_date (str): 기준일자 (YYYYMMDD)\n\nReturns:\n    KrxHttpResponse[EsgSociallyResponsibleInvestmentBond]: 사회책임투자채권 정보"
+            docstring="사회책임투자채권 정보 조회\n\nArgs:\n    base_date (str): 기준일자 (YYYYMMDD)\n\nReturns:\n    KrxHttpResponse[EsgSociallyResponsibleInvestmentBond]: 사회책임투자채권 정보",
         )

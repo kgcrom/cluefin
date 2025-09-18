@@ -19,7 +19,7 @@ class ExchangeTradedProduct:
             path_template=self.path,
             endpoint="etf_bydd_trd.json",
             response_model=ExchangeTradedETF,
-            docstring="ETF 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[ExchangeTradedETF]: ETF 일별매매정보 데이터"
+            docstring="ETF 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[ExchangeTradedETF]: ETF 일별매매정보 데이터",
         )
 
         # ETN 일별매매정보 조회
@@ -28,7 +28,7 @@ class ExchangeTradedProduct:
             path_template=self.path,
             endpoint="etn_bydd_trd.json",
             response_model=ExchangeTradedETN,
-            docstring="ETN 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[ExchangeTradedETN]: ETN 일별매매정보 데이터"
+            docstring="ETN 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[ExchangeTradedETN]: ETN 일별매매정보 데이터",
         )
 
         # ELW 일별매매정보 조회
@@ -37,5 +37,5 @@ class ExchangeTradedProduct:
             path_template=self.path,
             endpoint="elw_bydd_trd.json",
             response_model=ExchangeTradedELW,
-            docstring="ELW 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[ExchangeTradedELW]: ELW 일별매매정보 데이터"
+            docstring="ELW 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[ExchangeTradedELW]: ELW 일별매매정보 데이터",
         )

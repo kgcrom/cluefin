@@ -19,7 +19,7 @@ class GeneralProduct:
             path_template=self.path,
             endpoint="oil_bydd_trd.json",
             response_model=GeneralProductOilMarket,
-            docstring="석유시장 일별매매정보 조회\n\nArgs:\n    base_date (str): 기준일자 (YYYYMMDD)\n\nReturns:\n    KrxHttpResponse[GeneralProductOilMarket]: 석유시장 일별매매정보"
+            docstring="석유시장 일별매매정보 조회\n\nArgs:\n    base_date (str): 기준일자 (YYYYMMDD)\n\nReturns:\n    KrxHttpResponse[GeneralProductOilMarket]: 석유시장 일별매매정보",
         )
 
         # 금시장 일별매매정보 조회
@@ -28,7 +28,7 @@ class GeneralProduct:
             path_template=self.path,
             endpoint="gold_bydd_trd.json",
             response_model=GeneralProductGoldMarket,
-            docstring="금시장 일별매매정보 조회\n\nArgs:\n    base_date (str): 기준일자 (YYYYMMDD)\n\nReturns:\n    KrxHttpResponse[GeneralProductGoldMarket]: 금시장 일별매매정보"
+            docstring="금시장 일별매매정보 조회\n\nArgs:\n    base_date (str): 기준일자 (YYYYMMDD)\n\nReturns:\n    KrxHttpResponse[GeneralProductGoldMarket]: 금시장 일별매매정보",
         )
 
         # 탄소 배출권시장 일별매매정보 조회
@@ -37,5 +37,5 @@ class GeneralProduct:
             path_template=self.path,
             endpoint="ets_bydd_trd.json",
             response_model=GeneralProductEmissionsMarket,
-            docstring="탄소 배출권시장 일별매매정보 조회\n\nArgs:\n    base_date (str): 기준일자 (YYYYMMDD)\n\nReturns:\n    KrxHttpResponse[GeneralProductEmissionsMarket]: 탄소시장 일별매매정보"
+            docstring="탄소 배출권시장 일별매매정보 조회\n\nArgs:\n    base_date (str): 기준일자 (YYYYMMDD)\n\nReturns:\n    KrxHttpResponse[GeneralProductEmissionsMarket]: 탄소시장 일별매매정보",
         )

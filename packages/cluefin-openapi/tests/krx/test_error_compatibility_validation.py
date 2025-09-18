@@ -41,7 +41,7 @@ def factory_stock_method(client):
         path_template="/svc/apis/sto/{}",
         endpoint="stk_bydd_trd.json",
         response_model=StockKospi,
-        docstring="Test stock method for error validation"
+        docstring="Test stock method for error validation",
     )
 
 
@@ -53,7 +53,7 @@ def factory_bond_method(client):
         path_template="/svc/apis/bnd/{}",
         endpoint="kts_bydd_trd.json",
         response_model=BondKoreaTreasuryBondMarket,
-        docstring="Test bond method for error validation"
+        docstring="Test bond method for error validation",
     )
 
 
@@ -65,7 +65,7 @@ def factory_index_method(client):
         path_template="/svc/apis/idx/{}",
         endpoint="idx_bydd_trd.json",
         response_model=IndexKrx,
-        docstring="Test index method for error validation"
+        docstring="Test index method for error validation",
     )
 
 
@@ -77,7 +77,7 @@ def factory_derivatives_method(client):
         path_template="/svc/apis/drv/{}",
         endpoint="fut_bydd_trd.json",
         response_model=DerivativesTradingOfFuturesExcludeStock,
-        docstring="Test derivatives method for error validation"
+        docstring="Test derivatives method for error validation",
     )
 
 
@@ -90,7 +90,7 @@ class TestAuthenticationErrorCompatibility:
             m.get(
                 "https://data-dbg.krx.co.kr/svc/apis/sto/stk_bydd_trd.json",
                 status_code=401,
-                json={"error": "invalid_token", "message": "Invalid or expired authentication token"}
+                json={"error": "invalid_token", "message": "Invalid or expired authentication token"},
             )
 
             with pytest.raises(KrxAuthenticationError) as exc_info:
@@ -106,9 +106,7 @@ class TestAuthenticationErrorCompatibility:
         """Test authentication error handling for bond methods."""
         with requests_mock.Mocker() as m:
             m.get(
-                "https://data-dbg.krx.co.kr/svc/apis/bnd/kts_bydd_trd.json",
-                status_code=401,
-                text="Unauthorized access"
+                "https://data-dbg.krx.co.kr/svc/apis/bnd/kts_bydd_trd.json", status_code=401, text="Unauthorized access"
             )
 
             with pytest.raises(KrxAuthenticationError) as exc_info:
@@ -128,7 +126,7 @@ class TestAuthorizationErrorCompatibility:
             m.get(
                 "https://data-dbg.krx.co.kr/svc/apis/idx/idx_bydd_trd.json",
                 status_code=403,
-                json={"error": "access_denied", "message": "Insufficient permissions for this resource"}
+                json={"error": "access_denied", "message": "Insufficient permissions for this resource"},
             )
 
             with pytest.raises(KrxAuthorizationError) as exc_info:
@@ -146,7 +144,7 @@ class TestAuthorizationErrorCompatibility:
             m.get(
                 "https://data-dbg.krx.co.kr/svc/apis/drv/fut_bydd_trd.json",
                 status_code=403,
-                text="Forbidden: API access denied"
+                text="Forbidden: API access denied",
             )
 
             with pytest.raises(KrxAuthorizationError) as exc_info:
@@ -166,7 +164,7 @@ class TestClientErrorCompatibility:
             m.get(
                 "https://data-dbg.krx.co.kr/svc/apis/sto/stk_bydd_trd.json",
                 status_code=400,
-                json={"error": "invalid_date_format", "message": "Date must be in YYYYMMDD format"}
+                json={"error": "invalid_date_format", "message": "Date must be in YYYYMMDD format"},
             )
 
             with pytest.raises(KrxClientError) as exc_info:
@@ -183,9 +181,7 @@ class TestClientErrorCompatibility:
         """Test 404 errors for invalid endpoints."""
         with requests_mock.Mocker() as m:
             m.get(
-                "https://data-dbg.krx.co.kr/svc/apis/bnd/kts_bydd_trd.json",
-                status_code=404,
-                text="Endpoint not found"
+                "https://data-dbg.krx.co.kr/svc/apis/bnd/kts_bydd_trd.json", status_code=404, text="Endpoint not found"
             )
 
             with pytest.raises(KrxClientError) as exc_info:
@@ -201,7 +197,7 @@ class TestClientErrorCompatibility:
             m.get(
                 "https://data-dbg.krx.co.kr/svc/apis/sto/stk_bydd_trd.json",
                 status_code=422,
-                json={"error": "validation_error", "message": "Invalid Korean stock code format"}
+                json={"error": "validation_error", "message": "Invalid Korean stock code format"},
             )
 
             with pytest.raises(KrxClientError) as exc_info:
@@ -221,7 +217,7 @@ class TestServerErrorCompatibility:
             m.get(
                 "https://data-dbg.krx.co.kr/svc/apis/idx/idx_bydd_trd.json",
                 status_code=500,
-                json={"error": "internal_error", "message": "Database connection failed"}
+                json={"error": "internal_error", "message": "Database connection failed"},
             )
 
             with pytest.raises(KrxServerError) as exc_info:
@@ -239,7 +235,7 @@ class TestServerErrorCompatibility:
             m.get(
                 "https://data-dbg.krx.co.kr/svc/apis/drv/fut_bydd_trd.json",
                 status_code=503,
-                text="Service temporarily unavailable - maintenance in progress"
+                text="Service temporarily unavailable - maintenance in progress",
             )
 
             with pytest.raises(KrxServerError) as exc_info:
@@ -255,7 +251,7 @@ class TestServerErrorCompatibility:
             m.get(
                 "https://data-dbg.krx.co.kr/svc/apis/sto/stk_bydd_trd.json",
                 status_code=502,
-                json={"error": "upstream_error", "message": "Upstream KRX service unavailable"}
+                json={"error": "upstream_error", "message": "Upstream KRX service unavailable"},
             )
 
             with pytest.raises(KrxServerError) as exc_info:
@@ -274,8 +270,7 @@ class TestNetworkErrorCompatibility:
         """Test that factory methods handle connection timeouts identically."""
         with requests_mock.Mocker() as m:
             m.get(
-                "https://data-dbg.krx.co.kr/svc/apis/bnd/kts_bydd_trd.json",
-                exc=ConnectTimeout("Connection timed out")
+                "https://data-dbg.krx.co.kr/svc/apis/bnd/kts_bydd_trd.json", exc=ConnectTimeout("Connection timed out")
             )
 
             with pytest.raises(ConnectTimeout):
@@ -284,10 +279,7 @@ class TestNetworkErrorCompatibility:
     def test_read_timeout_error(self, factory_index_method):
         """Test read timeout error handling."""
         with requests_mock.Mocker() as m:
-            m.get(
-                "https://data-dbg.krx.co.kr/svc/apis/idx/idx_bydd_trd.json",
-                exc=ReadTimeout("Read timed out")
-            )
+            m.get("https://data-dbg.krx.co.kr/svc/apis/idx/idx_bydd_trd.json", exc=ReadTimeout("Read timed out"))
 
             with pytest.raises(ReadTimeout):
                 factory_index_method("20241201")
@@ -297,7 +289,7 @@ class TestNetworkErrorCompatibility:
         with requests_mock.Mocker() as m:
             m.get(
                 "https://data-dbg.krx.co.kr/svc/apis/drv/fut_bydd_trd.json",
-                exc=ConnectionError("Failed to establish connection")
+                exc=ConnectionError("Failed to establish connection"),
             )
 
             with pytest.raises(ConnectionError):
@@ -310,11 +302,7 @@ class TestUnexpectedErrorCompatibility:
     def test_418_teapot_error(self, factory_stock_method):
         """Test that 418 status code (4xx range) raises KrxClientError."""
         with requests_mock.Mocker() as m:
-            m.get(
-                "https://data-dbg.krx.co.kr/svc/apis/sto/stk_bydd_trd.json",
-                status_code=418,
-                text="I'm a teapot"
-            )
+            m.get("https://data-dbg.krx.co.kr/svc/apis/sto/stk_bydd_trd.json", status_code=418, text="I'm a teapot")
 
             with pytest.raises(KrxClientError) as exc_info:
                 factory_stock_method("20241201")
@@ -333,7 +321,7 @@ class TestUnexpectedErrorCompatibility:
             m.get(
                 "https://data-dbg.krx.co.kr/svc/apis/bnd/kts_bydd_trd.json",
                 status_code=600,  # Outside standard HTTP ranges
-                text="Unusual status code"
+                text="Unusual status code",
             )
 
             with pytest.raises(KrxAPIError) as exc_info:
@@ -360,8 +348,8 @@ class TestKoreanParameterErrorCompatibility:
                 json={
                     "error": "invalid_bas_dd",
                     "message": "basDd parameter must be in YYYYMMDD format (Korean date standard)",
-                    "korean_message": "기준일자는 YYYYMMDD 형식이어야 합니다"
-                }
+                    "korean_message": "기준일자는 YYYYMMDD 형식이어야 합니다",
+                },
             )
 
             with pytest.raises(KrxClientError) as exc_info:
@@ -382,8 +370,8 @@ class TestKoreanParameterErrorCompatibility:
                 json={
                     "error": "market_closed",
                     "message": "Korean market was closed on the requested date",
-                    "korean_message": "요청한 날짜에 한국 시장이 휴장이었습니다"
-                }
+                    "korean_message": "요청한 날짜에 한국 시장이 휴장이었습니다",
+                },
             )
 
             with pytest.raises(KrxClientError) as exc_info:
@@ -414,7 +402,7 @@ class TestErrorMessageConsistency:
                 path_template=path_template,
                 endpoint=endpoint,
                 response_model=response_model,
-                docstring="Test method"
+                docstring="Test method",
             )
 
             with requests_mock.Mocker() as m:
@@ -422,7 +410,7 @@ class TestErrorMessageConsistency:
                 m.get(
                     f"https://data-dbg.krx.co.kr{path_template.format(endpoint)}",
                     status_code=401,
-                    json={"error": "unauthorized"}
+                    json={"error": "unauthorized"},
                 )
 
                 with pytest.raises(KrxAuthenticationError) as exc_info:
@@ -437,11 +425,7 @@ class TestErrorMessageConsistency:
     def test_exception_inheritance_consistency(self, factory_stock_method):
         """Test that exception inheritance hierarchy is preserved."""
         with requests_mock.Mocker() as m:
-            m.get(
-                "https://data-dbg.krx.co.kr/svc/apis/sto/stk_bydd_trd.json",
-                status_code=401,
-                json={"error": "test"}
-            )
+            m.get("https://data-dbg.krx.co.kr/svc/apis/sto/stk_bydd_trd.json", status_code=401, json={"error": "test"})
 
             with pytest.raises(Exception) as exc_info:
                 factory_stock_method("20241201")
@@ -458,15 +442,11 @@ class TestErrorMessageConsistency:
             "error_code": "AUTH_001",
             "error_message": "Invalid authentication token",
             "korean_message": "인증 토큰이 유효하지 않습니다",
-            "timestamp": "2024-12-01T09:00:00Z"
+            "timestamp": "2024-12-01T09:00:00Z",
         }
 
         with requests_mock.Mocker() as m:
-            m.get(
-                "https://data-dbg.krx.co.kr/svc/apis/bnd/kts_bydd_trd.json",
-                status_code=401,
-                json=test_response_data
-            )
+            m.get("https://data-dbg.krx.co.kr/svc/apis/bnd/kts_bydd_trd.json", status_code=401, json=test_response_data)
 
             with pytest.raises(KrxAuthenticationError) as exc_info:
                 factory_bond_method("20241201")
@@ -490,7 +470,7 @@ class TestErrorCompatibilityWithOriginalMethods:
             path_template="/svc/apis/sto/{}",
             endpoint="stk_bydd_trd.json",
             response_model=StockKospi,
-            docstring="Test method"
+            docstring="Test method",
         )
 
         test_cases = [
@@ -506,7 +486,7 @@ class TestErrorCompatibilityWithOriginalMethods:
                 m.get(
                     "https://data-dbg.krx.co.kr/svc/apis/sto/stk_bydd_trd.json",
                     status_code=status_code,
-                    json=response_data
+                    json=response_data,
                 )
 
                 # Test factory method

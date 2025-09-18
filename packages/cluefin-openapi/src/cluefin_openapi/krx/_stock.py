@@ -24,7 +24,7 @@ class Stock:
             path_template=self.path,
             endpoint="stk_bydd_trd.json",
             response_model=StockKospi,
-            docstring="KOSPI 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[StockKospi]: KOSPI 일별매매정보 데이터"
+            docstring="KOSPI 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[StockKospi]: KOSPI 일별매매정보 데이터",
         )
 
         self.get_kosdaq = KrxApiMethodFactory.create_single_param_method(
@@ -32,7 +32,7 @@ class Stock:
             path_template=self.path,
             endpoint="ksq_bydd_trd.json",
             response_model=StockKosdaq,
-            docstring="KOSDAQ 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[StockKosdaq]: KOSDAQ 일별매매정보 데이터"
+            docstring="KOSDAQ 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[StockKosdaq]: KOSDAQ 일별매매정보 데이터",
         )
 
         self.get_konex = KrxApiMethodFactory.create_single_param_method(
@@ -40,7 +40,7 @@ class Stock:
             path_template=self.path,
             endpoint="knx_bydd_trd.json",
             response_model=StockKonex,
-            docstring="KONEX 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[StockKonex]: KONEX 일별매매정보 데이터"
+            docstring="KONEX 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[StockKonex]: KONEX 일별매매정보 데이터",
         )
 
         self.get_warrant = KrxApiMethodFactory.create_single_param_method(
@@ -48,7 +48,7 @@ class Stock:
             path_template=self.path,
             endpoint="sw_bydd_trd.json",
             response_model=StockWarrant,
-            docstring="신주인수권증권 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[StockWarrant]: 신주인수권증권 일별매매정보 데이터"
+            docstring="신주인수권증권 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[StockWarrant]: 신주인수권증권 일별매매정보 데이터",
         )
 
         self.get_subscription_warrant = KrxApiMethodFactory.create_single_param_method(
@@ -56,7 +56,7 @@ class Stock:
             path_template=self.path,
             endpoint="sr_bydd_trd.json",
             response_model=StockSubscriptionWarrant,
-            docstring="신주인수권증서 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[StockSubscriptionWarrant]: 신주인수권증서 일별매매정보 데이터"
+            docstring="신주인수권증서 일별매매정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[StockSubscriptionWarrant]: 신주인수권증서 일별매매정보 데이터",
         )
 
         self.get_kospi_base_info = KrxApiMethodFactory.create_single_param_method(
@@ -64,7 +64,7 @@ class Stock:
             path_template=self.path,
             endpoint="stk_isu_base_info.json",
             response_model=StockKospiBaseInfo,
-            docstring="KOSPI 기본 정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[StockKospiBaseInfo]: KOSPI 기본 정보 데이터"
+            docstring="KOSPI 기본 정보 조회\n\nArgs:\n    base_date (str): 조회할 날짜 (YYYYMMDD 형식)\n\nReturns:\n    KrxHttpResponse[StockKospiBaseInfo]: KOSPI 기본 정보 데이터",
         )
 
     def get_kosdaq_base_info(self, base_date: str) -> KrxHttpResponse[StockKosdaqBaseInfo]:

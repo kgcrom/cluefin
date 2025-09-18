@@ -123,6 +123,7 @@ class KrxApiMethodFactory:
             ... )
             >>> response = get_kospi("20241201")  # Type-safe call
         """
+
         def wrapper(base_date: str) -> KrxHttpResponse[T]:
             """Generated wrapper function for single-parameter API method."""
             return _api_method_template(
