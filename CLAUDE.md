@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Essential Commands:**
 ```bash
-# Setup with Python 3.10
+# Setup with Python 3.10+
 uv venv --python 3.10
 source .venv/bin/activate
 uv sync --all-packages
@@ -130,10 +130,11 @@ cont_yn: Literal["Y", "N"] = Field(..., alias="cont-yn")
 ### Environment Variables
 ```bash
 # Required for full functionality
-KIWOOM_APP_KEY=your_key
-KIWOOM_SECRET_KEY=your_secret
-OPENAI_API_KEY=your_openai_key
-KRX_AUTH_KEY=your_auth_key_here  # Optional for KRX (now optional per recent change)
+KIWOOM_APP_KEY=your_app_key_here
+KIWOOM_SECRET_KEY=your_secret_key_here
+KIWOOM_ENV=dev  # options: prod | dev(default)
+KRX_AUTH_KEY=you_auth_key_here  # Optional for KRX
+OPENAI_API_KEY=your_openai_api_key_here
 
 # Optional ML configuration
 ML_MODEL_PATH=models/
@@ -179,9 +180,9 @@ packages/cluefin-openapi/tests/
 
 ### Package Management Specifics
 - Root `pyproject.toml` defines workspace members and shared dev dependencies
-- Individual packages have their own `pyproject.toml` with specific dependencies  
+- Individual packages have their own `pyproject.toml` with specific dependencies
 - Use `uv run` for all Python commands (never `pip` directly)
-- Ruff configured with 120 line length to accommodate Korean field names
+- Ruff configured with 120 line length, target version Python 3.11, includes E/F/W/B/Q/I/ASYNC/T20 rules
 
 ### Korean Financial API Considerations
 - **Kiwoom**: OAuth2-style token generation with app_key/secret_key
