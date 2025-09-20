@@ -82,3 +82,7 @@ packages/*/src/*/*.py[cod]
 
 # Environment variables
 .env*
+
+# Claude Code AI assistant configuration and memory
+.claude/
+.specify/

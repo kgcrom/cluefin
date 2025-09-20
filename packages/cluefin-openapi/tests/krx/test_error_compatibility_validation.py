@@ -10,7 +10,8 @@ Requirements addressed: 4.2, 6.4
 
 import pytest
 import requests_mock
-from requests.exceptions import ConnectionError as RequestsConnectionError, ConnectTimeout, ReadTimeout
+from requests.exceptions import ConnectionError as RequestsConnectionError
+from requests.exceptions import ConnectTimeout, ReadTimeout
 
 from cluefin_openapi.krx._bond_types import BondKoreaTreasuryBondMarket
 from cluefin_openapi.krx._client import Client

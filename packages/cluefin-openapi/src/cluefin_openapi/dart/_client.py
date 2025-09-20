@@ -17,6 +17,42 @@ class Client(object):
         self.base_url = "https://opendart.fss.or.kr"
         self.timeout = timeout
 
+    @property
+    def periodic_disclosure_main(self):
+        from .periodic_disclosure_main import PeriodicDisclosureMain
+
+        return PeriodicDisclosureMain(self)
+
+    @property
+    def periodic_disclosure_detail(self):
+        from .periodic_disclosure_detail import PeriodicDisclosureDetail
+
+        return PeriodicDisclosureDetail(self)
+
+    @property
+    def disclosure_comprehensive(self):
+        from .disclosure_comprehensive import DisclosureComprehensive
+
+        return DisclosureComprehensive(self)
+
+    @property
+    def major_shareholder_disclosure(self):
+        from .major_shareholder_disclosure import MajorShareholderDisclosure
+
+        return MajorShareholderDisclosure(self)
+
+    @property
+    def executive_disclosure(self):
+        from .executive_disclosure import ExecutiveDisclosure
+
+        return ExecutiveDisclosure(self)
+
+    @property
+    def public_disclosure(self):
+        from .public_disclosure import PublicDisclosure
+
+        return PublicDisclosure(self)
+
     def _get(self, path: str, params: Optional[Dict] = None):
         url = self.base_url + path
         if params is None:
