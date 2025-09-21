@@ -230,4 +230,3 @@ class PeriodicDisclosureMain:
         """
         # TODO: Implement API call with parameters and response handling
         pass
-

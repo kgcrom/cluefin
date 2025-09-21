@@ -19,53 +19,66 @@ class Client(object):
 
     @property
     def periodic_disclosure_main(self):
-        from .periodic_disclosure_main import PeriodicDisclosureMain
+        from ._periodic_disclosure_main import PeriodicDisclosureMain
 
         return PeriodicDisclosureMain(self)
 
     @property
     def periodic_disclosure_detail(self):
-        from .periodic_disclosure_detail import PeriodicDisclosureDetail
+        from ._periodic_disclosure_detail import PeriodicDisclosureDetail
 
         return PeriodicDisclosureDetail(self)
 
     @property
     def disclosure_comprehensive(self):
-        from .disclosure_comprehensive import DisclosureComprehensive
+        from ._disclosure_comprehensive import DisclosureComprehensive
 
         return DisclosureComprehensive(self)
 
     @property
     def major_shareholder_disclosure(self):
-        from .major_shareholder_disclosure import MajorShareholderDisclosure
+        from ._major_shareholder_disclosure import MajorShareholderDisclosure
 
         return MajorShareholderDisclosure(self)
 
     @property
     def executive_disclosure(self):
-        from .executive_disclosure import ExecutiveDisclosure
+        from ._executive_disclosure import ExecutiveDisclosure
 
         return ExecutiveDisclosure(self)
 
     @property
     def public_disclosure(self):
-        from .public_disclosure import PublicDisclosure
+        from ._public_disclosure import PublicDisclosure
 
         return PublicDisclosure(self)
 
-    def _get(self, path: str, params: Optional[Dict] = None):
+    def _get_bytes(self, path: str, *, params: Optional[Dict] = None):
         url = self.base_url + path
         if params is None:
             params = {}
         params["crtfc_key"] = self.auth_key
 
         response = requests.get(url, params=params, timeout=self.timeout)
+        self._raise_for_status(response)
+        return response.content
 
+    def _get(self, path: str, *, params: Optional[Dict] = None):
+        url = self.base_url + path
+        if params is None:
+            params = {}
+        params["crtfc_key"] = self.auth_key
+
+        response = requests.get(url, params=params, timeout=self.timeout)
+        self._raise_for_status(response)
+        try:
+            return response.json()
+        except ValueError:
+            return response.text
+
+    def _raise_for_status(self, response):
         if response.status_code == 200:
-            try:
-                return response.json()
-            except ValueError:
-                return response.text
+            return
         elif response.status_code == 401:
             raise DartAuthenticationError(
                 "Authentication failed - invalid or expired token",
