@@ -29,6 +29,12 @@ class Client(object):
 
         return PublicDisclosure(self)
 
+    @property
+    def periodic_report_key_information(self):
+        from ._periodic_report_key_information import PeriodicReportKeyInformation
+
+        return PeriodicReportKeyInformation(self)
+
     def _get_bytes(self, path: str, *, params: Optional[Dict] = None):
         url = self.base_url + path
         if params is None:

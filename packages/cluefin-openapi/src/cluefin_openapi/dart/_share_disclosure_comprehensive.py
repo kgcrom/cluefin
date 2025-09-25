@@ -12,6 +12,8 @@ from ._share_disclosure_comprehensive_types import (
 
 
 class ShareDisclosureComprehensive:
+    """DART 지분공시 종합정보 API"""
+
     def __init__(self, client: Client):
         self.client = client
 
@@ -41,8 +43,7 @@ class ShareDisclosureComprehensive:
         if not isinstance(payload, Mapping):
             raise TypeError(f"주식등의 대량보유 상황보고 응답은 매핑 타입이어야 합니다. 수신한 타입: {type(payload)!r}")
 
-        parsed = LargeHoldingReport.parse(payload, list_model=LargeHoldingReportItem)
-        return parsed
+        return LargeHoldingReport.parse(payload, list_model=LargeHoldingReportItem)
 
     def executive_major_shareholder_ownership_report(
         self,
@@ -73,7 +74,6 @@ class ShareDisclosureComprehensive:
         if not isinstance(payload, Mapping):
             raise TypeError(f"임원·주요주주 소유보고 응답은 매핑 타입이어야 합니다. 수신한 타입: {type(payload)!r}")
 
-        parsed = ExecutiveMajorShareholderOwnershipReport.parse(
+        return ExecutiveMajorShareholderOwnershipReport.parse(
             payload, list_model=ExecutiveMajorShareholderOwnershipReportItem
         )
-        return parsed

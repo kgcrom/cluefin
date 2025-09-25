@@ -24,6 +24,8 @@ from ._public_disclosure_types import (
 
 
 class PublicDisclosure:
+    """DART 공시정보 API"""
+
     def __init__(self, client: Client):
         self.client = client
 
