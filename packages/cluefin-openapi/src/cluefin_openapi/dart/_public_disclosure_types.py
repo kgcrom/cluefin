@@ -50,10 +50,8 @@ class PublicDisclosureSearchItem(BaseModel):
     )
 
 
-class PublicDisclosureSearch(BaseModel, DartHttpBody):
+class PublicDisclosureSearch(BaseModel, DartHttpBody[PublicDisclosureSearchItem]):
     model_config = ConfigDict(title="공시검색 요청 응답")
-
-    list: List[PublicDisclosureSearchItem] = Field(default_factory=list, alias="공시검색")
 
 
 class CompanyOverview(BaseModel):

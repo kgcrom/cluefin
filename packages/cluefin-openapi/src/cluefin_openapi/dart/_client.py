@@ -18,34 +18,10 @@ class Client(object):
         self.timeout = timeout
 
     @property
-    def periodic_disclosure_main(self):
-        from ._periodic_disclosure_main import PeriodicDisclosureMain
-
-        return PeriodicDisclosureMain(self)
-
-    @property
-    def periodic_disclosure_detail(self):
-        from ._periodic_disclosure_detail import PeriodicDisclosureDetail
-
-        return PeriodicDisclosureDetail(self)
-
-    @property
-    def disclosure_comprehensive(self):
-        from ._disclosure_comprehensive import DisclosureComprehensive
-
-        return DisclosureComprehensive(self)
-
-    @property
     def major_shareholder_disclosure(self):
         from ._major_shareholder_disclosure import MajorShareholderDisclosure
 
         return MajorShareholderDisclosure(self)
-
-    @property
-    def executive_disclosure(self):
-        from ._executive_disclosure import ExecutiveDisclosure
-
-        return ExecutiveDisclosure(self)
 
     @property
     def public_disclosure(self):
