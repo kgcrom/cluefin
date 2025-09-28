@@ -133,6 +133,9 @@ class PeriodicReportFinancialStatement:
             bsns_year (str): 사업연도 (YYYY)
             reprt_code (str): 보고서코드 (1분기:11013, 반기:11012, 3분기:11014, 사업보고서:11011)
             idx_cl_code (str): 지표구분코드 (수익성지표 : M210000 안정성지표 : M220000 성장성지표 : M230000 활동성지표 : M240000)
+
+        Returns:
+            SingleCompanyMajorIndicator: 단일회사 주요 재무지표 데이터 응답 객체
         """
         params = {
             "corp_code": corp_code,
@@ -143,6 +146,7 @@ class PeriodicReportFinancialStatement:
         payload = self.client._get("/api/fnlttSinglIndx.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"단일회사 주요 재무지표 API 응답은 매핑 타입이어야 합니다. 수신한 타입: {type(payload)!r}")
+
         return SingleCompanyMajorIndicator.parse(
             payload,
             list_model=SingleCompanyMajorIndicatorItem,

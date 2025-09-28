@@ -8,9 +8,9 @@ from cluefin_openapi.dart._model import DartHttpBody
 class TreasuryStockAcquisitionDisposalPlanItem(BaseModel):
     model_config = ConfigDict(title="자산양수도(기타), 풋백옵션 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     rp_rsn: str = Field(description="보고 사유")
     ast_inhtrf_prc: int = Field(description="자산양수ㆍ도 가액")
@@ -23,9 +23,9 @@ class TreasuryStockAcquisitionDisposalPlan(BaseModel, DartHttpBody[TreasuryStock
 class RealEstateDevelopmentItem(BaseModel):
     model_config = ConfigDict(title="부도발생 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     df_cn: str = Field(description="부도내용")
     df_amt: int = Field(description="부도금액")
@@ -41,9 +41,9 @@ class RealEstateDevelopment(BaseModel, DartHttpBody[RealEstateDevelopmentItem]):
 class BusinessLetterItem(BaseModel):
     model_config = ConfigDict(title="영업정지 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     bsnsp_rm: str = Field(description="영업정지 분야")
     bsnsp_amt: int = Field(description="영업정지 내역(영업정지금액)")
@@ -69,9 +69,9 @@ class BusinessLetter(BaseModel, DartHttpBody[BusinessLetterItem]):
 class CorporateRehabilitationProceedingsItem(BaseModel):
     model_config = ConfigDict(title="회생절차 개시신청 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     apcnt: str = Field(description="신청인 (회사와의 관계)")
     cpct: str = Field(description="관할법원")
@@ -87,9 +87,9 @@ class CorporateRehabilitationProceedings(BaseModel, DartHttpBody[CorporateRehabi
 class DissolutionOccurrenceItem(BaseModel):
     model_config = ConfigDict(title="해산사유 발생 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     ds_rs: str = Field(description="해산사유")
     ds_rsd: str = Field(description="해산사유발생일(결정일)")
@@ -105,9 +105,9 @@ class DissolutionOccurrence(BaseModel, DartHttpBody[DissolutionOccurrenceItem]):
 class SecuritiesGrantedDecisionItem(BaseModel):
     model_config = ConfigDict(title="유상증자 결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     nstk_ostk_cnt: int = Field(description="신주의 종류와 수(보통주식 (주))")
     nstk_estk_cnt: int = Field(description="신주의 종류와 수(기타주식 (주))")
@@ -133,9 +133,9 @@ class SecuritiesGrantedDecision(BaseModel, DartHttpBody[SecuritiesGrantedDecisio
 class FreeSecuritiesDecisionItem(BaseModel):
     model_config = ConfigDict(title="무상증자 결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     nstk_ostk_cnt: int = Field(description="신주의 종류와 수(보통주식 (주))")
     nstk_estk_cnt: int = Field(description="신주의 종류와 수(기타주식 (주))")
@@ -161,9 +161,9 @@ class FreeSecuritiesDecision(BaseModel, DartHttpBody[FreeSecuritiesDecisionItem]
 class PaidInCapitalReductionDecisionItem(BaseModel):
     model_config = ConfigDict(title="유무상증자 결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     piic_nstk_ostk_cnt: int = Field(description="유상증자(신주의 종류와 수(보통주식 (주)))")
     piic_nstk_estk_cnt: int = Field(description="유상증자(신주의 종류와 수(기타주식 (주)))")
@@ -208,9 +208,9 @@ class PaidInCapitalReductionDecision(BaseModel, DartHttpBody[PaidInCapitalReduct
 class CapitalReductionDecisionItem(BaseModel):
     model_config = ConfigDict(title="감자 결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     crstk_ostk_cnt: int = Field(description="감자주식의 종류와 수(보통주식 (주))")
     crstk_estk_cnt: int = Field(description="감자주식의 종류와 수(기타주식 (주))")
@@ -257,9 +257,9 @@ class CapitalReductionDecision(BaseModel, DartHttpBody[CapitalReductionDecisionI
 class GovernmentBondManagerReplacementItem(BaseModel):
     model_config = ConfigDict(title="재권은행 등의 관리절차 개시 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     mngt_pcbg_dd: str = Field(description="관리절차개시 결정일자")
     mngt_int: str = Field(description="관리기관")
@@ -275,9 +275,9 @@ class GovernmentBondManagerReplacement(BaseModel, DartHttpBody[GovernmentBondMan
 class ProfitRevocationItem(BaseModel):
     model_config = ConfigDict(title="소송 등의 제기 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     icnm: str = Field(description="사건의 명칭")
     ac_ap: str = Field(description="원고ㆍ신청인")
@@ -295,9 +295,9 @@ class ProfitRevocation(BaseModel, DartHttpBody[ProfitRevocationItem]):
 class OverseasSecuritiesTradingResolutionItem(BaseModel):
     model_config = ConfigDict(title="해외 증권시장 주권등 상장 결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     lstprstk_ostk_cnt: str = Field(description="상장예정주식 종류ㆍ수(주)(보통주식)")
     lstprstk_estk_cnt: str = Field(description="상장예정주식 종류ㆍ수(주)(기타주식)")
@@ -324,9 +324,9 @@ class OverseasSecuritiesTradingResolution(BaseModel, DartHttpBody[OverseasSecuri
 class OverseasSecuritiesTradingDelistingResolutionItem(BaseModel):
     model_config = ConfigDict(title="해외 증권시장 주권등 상장폐지 결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     dlststk_ostk_cnt: str = Field(description="상장폐지주식 종류ㆍ수(주)(보통주식)")
     dlststk_estk_cnt: str = Field(description="상장폐지주식 종류ㆍ수(주)(기타주식)")
@@ -349,26 +349,16 @@ class OverseasSecuritiesTradingDelistingResolution(
 class OverseasSecuritiesTradingStatusItem(BaseModel):
     model_config = ConfigDict(title="해외 증권시장 주권등 상장 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
-    lstprstk_ostk_cnt: str = Field(description="상장예정주식 종류ㆍ수(주)(보통주식)")
-    lstprstk_estk_cnt: str = Field(description="상장예정주식 종류ㆍ수(주)(기타주식)")
-    tisstk_ostk: str = Field(description="발행주식 총수(주)(보통주식)")
-    tisstk_estk: str = Field(description="발행주식 총수(주)(기타주식)")
-    psmth_nstk_sl: str = Field(description="공모방법(신주발행 (주))")
-    psmth_ostk_sl: str = Field(description="공모방법(구주매출 (주))")
-    fdpp: str = Field(description="자금조달(신주발행) 목적")
-    lststk_orlst: str = Field(description="상장증권(원주상장 (주))")
-    lststk_drlst: str = Field(description="상장증권(DR상장 (주))")
+    lststk_ostk_cnt: str = Field(description="상장주식 종류 및 수(보통주식(주))")
+    lststk_estk_cnt: str = Field(description="상장주식 종류 및 수(기타주식(주))")
     lstex_nt: str = Field(description="상장거래소(소재국가)")
-    lstpp: str = Field(description="해외상장목적")
-    lstprd: str = Field(description="상장예정일자")
-    bddd: str = Field(description="이사회결의일(결정일)")
-    od_a_at_t: str = Field(description="사외이사 참석여부(참석(명))")
-    od_a_at_b: str = Field(description="사외이사 참석여부(불참(명))")
-    adt_a_atn: str = Field(description="감사(감사위원)참석여부")
+    stk_cd: str = Field(description="종목 명 (code)")
+    lstd: str = Field(description="상장일자")
+    cfd: str = Field(description="확인일자")
 
 
 class OverseasSecuritiesTradingStatus(BaseModel, DartHttpBody[OverseasSecuritiesTradingStatusItem]):
@@ -378,9 +368,9 @@ class OverseasSecuritiesTradingStatus(BaseModel, DartHttpBody[OverseasSecurities
 class OverseasSecuritiesTradingStatusDelistingItem(BaseModel):
     model_config = ConfigDict(title="해외 증권시장 주권등 상장폐지 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     lstex_nt: str = Field(description="상장거래소 및 소재국가")
     dlststk_ostk_cnt: str = Field(description="상장폐지주식의 종류(보통주식(주))")
@@ -397,9 +387,9 @@ class OverseasSecuritiesTradingStatusDelisting(BaseModel, DartHttpBody[OverseasS
 class ConvertibleBondIssuanceDecisionItem(BaseModel):
     model_config = ConfigDict(title="전환사채권 발행결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     bd_tm: str = Field(description="사채의 종류(회차)")
     bd_knd: str = Field(description="사채의 종류(종류)")
@@ -458,9 +448,9 @@ class ConvertibleBondIssuanceDecision(BaseModel, DartHttpBody[ConvertibleBondIss
 class NewStockWarrantBondIssuanceDecisionItem(BaseModel):
     model_config = ConfigDict(title="신주인수권부사채권 발행결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     bd_tm: str = Field(description="사채의 종류(회차)")
     bd_knd: str = Field(description="사채의 종류(종류)")
@@ -524,9 +514,9 @@ class NewStockWarrantBondIssuanceDecision(BaseModel, DartHttpBody[NewStockWarran
 class CorporateBondIssuanceDecisionItem(BaseModel):
     model_config = ConfigDict(title="교환사채권 발행결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     bd_tm: str = Field(description="사채의 종류(회차)")
     bd_knd: str = Field(description="사채의 종류(종류)")
@@ -575,9 +565,9 @@ class CorporateBondIssuanceDecision(BaseModel, DartHttpBody[CorporateBondIssuanc
 class GovernmentBondManagerTransferTerminationItem(BaseModel):
     model_config = ConfigDict(title="채권은행 등의 관리절차 종단 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     mngt_pcsp_dd: str = Field(description="관리절차중단 결정일자")
     mngt_int: str = Field(description="관리기관")
@@ -593,9 +583,9 @@ class GovernmentBondManagerTransferTermination(BaseModel, DartHttpBody[Governmen
 class ReorganizationPlanApprovedRulingItem(BaseModel):
     model_config = ConfigDict(title="상각형 조건부자본증권 발행결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     bd_tm: str = Field(description="사채의 종류(회차)")
     bd_knd: str = Field(description="사채의 종류(종류)")
@@ -636,9 +626,9 @@ class ReorganizationPlanApprovedRuling(BaseModel, DartHttpBody[ReorganizationPla
 class TreasuryStockAcquisitionDecisionItem(BaseModel):
     model_config = ConfigDict(title="자기주식 취득 결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     aqpln_stk_ostk: str = Field(description="취득예정주식(주)(보통주식)")
     aqpln_stk_estk: str = Field(description="취득예정주식(주)(기타주식)")
@@ -674,9 +664,9 @@ class TreasuryStockAcquisitionDecision(BaseModel, DartHttpBody[TreasuryStockAcqu
 class TreasuryStockDisposalDecisionItem(BaseModel):
     model_config = ConfigDict(title="자기주식 처분 결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     dppln_stk_ostk: str = Field(description="처분예정주식(주)(보통주식)")
     dppln_stk_estk: str = Field(description="처분예정주식(주)(기타주식)")
@@ -715,9 +705,9 @@ class TreasuryStockDisposalDecision(BaseModel, DartHttpBody[TreasuryStockDisposa
 class TreasuryStockTrustContractDecisionItem(BaseModel):
     model_config = ConfigDict(title="자기주식취득 신탁계약 체결 결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     ctr_prc: str = Field(description="계약금액(원)")
     ctr_pd_bgd: str = Field(description="계약기간(시작일)")
@@ -747,9 +737,9 @@ class TreasuryStockTrustContractDecision(BaseModel, DartHttpBody[TreasuryStockTr
 class TreasuryStockTrustContractTerminationDecisionItem(BaseModel):
     model_config = ConfigDict(title="자기주식취득 신탁계약 해지 결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     ctr_prc_bfcc: str = Field(description="계약금액(원)(해지 전)")
     ctr_prc_atcc: str = Field(description="계약금액(원)(해지 후)")
@@ -782,9 +772,9 @@ class TreasuryStockTrustContractTerminationDecision(
 class BusinessPlanDecisionItem(BaseModel):
     model_config = ConfigDict(title="영업양수 결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     inh_bsn: str = Field(description="양수영업")
     inh_bsn_mc: str = Field(description="양수영업 주요내용")
@@ -839,9 +829,9 @@ class BusinessPlanDecision(BaseModel, DartHttpBody[BusinessPlanDecisionItem]):
 class BusinessTransferDecisionItem(BaseModel):
     model_config = ConfigDict(title="영업양도 결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     trf_bsn: str = Field(description="양도영업")
     trf_bsn_mc: str = Field(description="양도영업 주요내용")
@@ -889,9 +879,9 @@ class BusinessTransferDecision(BaseModel, DartHttpBody[BusinessTransferDecisionI
 class TangibleAssetPlanDecisionItem(BaseModel):
     model_config = ConfigDict(title="유형자산 양수 결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     ast_sen: str = Field(description="자산구분")
     ast_nm: str = Field(description="자산명")
@@ -938,9 +928,9 @@ class TangibleAssetPlanDecision(BaseModel, DartHttpBody[TangibleAssetPlanDecisio
 class TangibleAssetTransferDecisionItem(BaseModel):
     model_config = ConfigDict(title="유형자산 양도 결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     ast_sen: str = Field(description="자산구분")
     ast_nm: str = Field(description="자산명")
@@ -987,9 +977,9 @@ class TangibleAssetTransferDecision(BaseModel, DartHttpBody[TangibleAssetTransfe
 class RetirementStockInvestmentPlanDecisionItem(BaseModel):
     model_config = ConfigDict(title="타법인 주식 및 출자증권 양수결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     iscmp_cmpnm: str = Field(description="발행회사(회사명)")
     iscmp_nt: str = Field(description="발행회사(국적)")
@@ -1039,9 +1029,9 @@ class RetirementStockInvestmentPlanDecision(BaseModel, DartHttpBody[RetirementSt
 class RetirementStockInvestmentTransferDecisionItem(BaseModel):
     model_config = ConfigDict(title="타법인 주식 및 출자증권 양도결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     iscmp_cmpnm: str = Field(description="발행회사(회사명)")
     iscmp_nt: str = Field(description="발행회사(국적)")
@@ -1087,9 +1077,9 @@ class RetirementStockInvestmentTransferDecision(BaseModel, DartHttpBody[Retireme
 class StockRelatedBondPlanDecisionItem(BaseModel):
     model_config = ConfigDict(title="주권 관련 사채권 양수 결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     stkrtbd_kndn: str = Field(description="주권 관련 사채권의 종류")
     tm: str = Field(description="주권 관련 사채권의 종류(회차)")
@@ -1137,9 +1127,9 @@ class StockRelatedBondPlanDecision(BaseModel, DartHttpBody[StockRelatedBondPlanD
 class StockRelatedBondTransferDecisionItem(BaseModel):
     model_config = ConfigDict(title="주권 관련 사채권 양도 결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     stkrtbd_kndn: str = Field(description="주권 관련 사채권의 종류")
     tm: str = Field(description="주권 관련 사채권의 종류(회차)")
@@ -1187,9 +1177,9 @@ class StockRelatedBondTransferDecision(BaseModel, DartHttpBody[StockRelatedBondT
 class CorporateLawDecisionItem(BaseModel):
     model_config = ConfigDict(title="회사합병 결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     mg_mth: str = Field(description="합병방법")
     mg_stn: str = Field(description="합병형태")
@@ -1265,9 +1255,9 @@ class CorporateLawDecision(BaseModel, DartHttpBody[CorporateLawDecisionItem]):
 class CorporateDivisionDecisionItem(BaseModel):
     model_config = ConfigDict(title="회사분할 결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     dv_mth: str = Field(description="분할방법")
     dv_impef: str = Field(description="분할의 중요영향 및 효과")
@@ -1323,9 +1313,9 @@ class CorporateDivisionDecision(BaseModel, DartHttpBody[CorporateDivisionDecisio
 class CorporateLawMethodDecisionItem(BaseModel):
     model_config = ConfigDict(title="회사분할합병 결정 항목")
 
-    recpt_no: str = Field(description="접수번호(14자리)")
+    recpt_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     dvmg_mth: str = Field(description="분할합병 방법")
     dvmg_impef: str = Field(description="분할합병의 중요영향 및 효과")
@@ -1424,7 +1414,7 @@ class CorporateLawMethodDecision(BaseModel, DartHttpBody[CorporateLawMethodDecis
 class StockTradingOtherDecisionItem(BaseModel):
     model_config = ConfigDict(title="주식교환·이전 결정 항목")
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
     corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
     corp_name: str = Field(description="공시대상회사명")

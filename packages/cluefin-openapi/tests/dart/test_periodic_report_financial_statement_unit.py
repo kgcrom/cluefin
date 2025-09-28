@@ -47,7 +47,7 @@ XBRL_PARAMS = {
 }
 DOWNLOAD_PARAMS = {
     "rcept_no": "20240101000000",
-    "reprt_code": Literal["11011"],
+    "reprt_code": cast(Literal["11011"], "11011"),
 }
 SUCCESS_XML = "<result><status>000</status><message>정상적으로 처리되었습니다</message></result>".encode("utf-8")
 ERROR_XML = "<result><status>012</status><message>에러</message></result>".encode("utf-8")

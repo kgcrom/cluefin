@@ -8,7 +8,7 @@ from cluefin_openapi.dart._model import DartHttpBody
 class SingleCompanyMajorAccountItem(BaseModel):
     model_config = ConfigDict(title="단일회사 주요계정 현황", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     bsns_year: str = Field(description="사업 연도 (YYYY)")
     stock_code: str = Field(description="종목 코드 (상장회사의 종목코드 6자리)")
     reprt_code: str = Field(
@@ -41,7 +41,7 @@ class SingleCompanyMajorAccount(BaseModel, DartHttpBody[SingleCompanyMajorAccoun
 class MultiCompanyMajorAccountItem(BaseModel):
     model_config = ConfigDict(title="다중회사 주요계정 현황", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     bsns_year: str = Field(description="사업 연도 (YYYY)")
     stock_code: str = Field(description="종목 코드 (상장회사의 종목코드 6자리)")
     corp_name: Optional[str] = Field(description="회사명", default=None)
@@ -76,7 +76,7 @@ class MultiCompanyMajorAccount(BaseModel, DartHttpBody[MultiCompanyMajorAccountI
 class SingleCompanyFullStatementItem(BaseModel):
     model_config = ConfigDict(title="단일회사 전체 재무제표 현황", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     reprt_code: str = Field(
         description="보고서 코드 (1분기보고서:11013, 반기보고서:11012, 3분기보고서:11014, 사업보고서:11011)"
     )

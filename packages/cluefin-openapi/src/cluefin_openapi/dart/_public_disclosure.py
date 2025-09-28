@@ -87,12 +87,10 @@ class PublicDisclosure:
         if not isinstance(payload, Mapping):
             raise TypeError(f"DART 공시검색 응답은 매핑 타입이어야 합니다. 수신한 타입: {type(payload)!r}")
 
-        parsed = PublicDisclosureSearch.parse(
+        return PublicDisclosureSearch.parse(
             payload,
             list_model=PublicDisclosureSearchItem,
         )
-        parsed.list = list(parsed.result.list or [])
-        return parsed
 
     def company_overview(self, corp_code: str) -> CompanyOverview:
         """기업개황요청

@@ -8,7 +8,7 @@ from cluefin_openapi.dart._model import DartHttpBody
 class CapitalChangeStatusItem(BaseModel):
     model_config = ConfigDict(title="증자(감자) 현황 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
     corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
     corp_name: str = Field(description="법인명")
@@ -28,7 +28,7 @@ class CapitalChangeStatus(BaseModel, DartHttpBody[CapitalChangeStatusItem]):
 class DividendInformationItem(BaseModel):
     model_config = ConfigDict(title="배당 관련 사항 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
     corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
     corp_name: str = Field(description="법인명")
@@ -47,7 +47,7 @@ class DividendInformation(BaseModel, DartHttpBody[DividendInformationItem]):
 class TreasuryStockActivityItem(BaseModel):
     model_config = ConfigDict(title="자기주식 취득 및 처분 현황 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
     corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
     corp_name: str = Field(description="법인명")
@@ -71,7 +71,7 @@ class TreasuryStockActivity(BaseModel, DartHttpBody[TreasuryStockActivityItem]):
 class MajorShareholderStatusItem(BaseModel):
     model_config = ConfigDict(title="최대주주 현황 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
     corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
     corp_name: str = Field(description="법인명")
@@ -93,7 +93,7 @@ class MajorShareholderStatus(BaseModel, DartHttpBody[MajorShareholderStatusItem]
 class MajorShareholderChangesItem(BaseModel):
     model_config = ConfigDict(title="최대주주 변동현황 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
     corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
     corp_name: str = Field(description="법인명")
@@ -113,7 +113,7 @@ class MajorShareholderChanges(BaseModel, DartHttpBody[MajorShareholderChangesIte
 class MinorityShareholderStatusItem(BaseModel):
     model_config = ConfigDict(title="소액주주 현황 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
     corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
     corp_name: str = Field(description="법인명")
@@ -134,7 +134,7 @@ class MinorityShareholderStatus(BaseModel, DartHttpBody[MinorityShareholderStatu
 class ExecutiveStatusItem(BaseModel):
     model_config = ConfigDict(title="임원 현황 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
     corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
     corp_name: str = Field(description="법인명")
@@ -159,7 +159,7 @@ class ExecutiveStatus(BaseModel, DartHttpBody[ExecutiveStatusItem]):
 class EmployeeStatusItem(BaseModel):
     model_config = ConfigDict(title="직원 현황 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
     corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
     corp_name: str = Field(description="법인명")
@@ -187,7 +187,7 @@ class EmployeeStatus(BaseModel, DartHttpBody[EmployeeStatusItem]):
 class BoardAndAuditCompensationAbove500mItem(BaseModel):
     model_config = ConfigDict(title="이사·감사 개별 보수현황(5억 이상) 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
     corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
     corp_name: str = Field(description="법인명")
@@ -205,9 +205,9 @@ class BoardAndAuditCompensationAbove500m(BaseModel, DartHttpBody[BoardAndAuditCo
 class BoardAndAuditTotalCompensationItem(BaseModel):
     model_config = ConfigDict(title="이사·감사 전체 보수지급금액 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="법인명")
     nmpr: str = Field(description="인원수")
     mendng_totamt: str = Field(description="보수 총액")
@@ -223,9 +223,9 @@ class BoardAndAuditTotalCompensation(BaseModel, DartHttpBody[BoardAndAuditTotalC
 class TopFiveIndividualCompensationItem(BaseModel):
     model_config = ConfigDict(title="개인별 보수지급 금액(5억 이상 상위 5인) 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="법인명")
     nm: str = Field(description="이름")
     ofcps: str = Field(description="직위")
@@ -241,9 +241,9 @@ class TopFiveIndividualCompensation(BaseModel, DartHttpBody[TopFiveIndividualCom
 class OtherCorporationInvestmentsItem(BaseModel):
     model_config = ConfigDict(title="타법인 출자현황 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="회사명")
     inv_prm: str = Field(description="법인명")
     frst_acqs_de: str = Field(description="최초 취득 일자")
@@ -270,9 +270,9 @@ class OtherCorporationInvestments(BaseModel, DartHttpBody[OtherCorporationInvest
 class TotalNumberOfSharesItem(BaseModel):
     model_config = ConfigDict(title="주식의 총수 현황 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="회사명")
     se: str = Field(description="구분")
     isu_stock_totqy: str = Field(description="발행할 주식의 총수")
@@ -295,9 +295,9 @@ class TotalNumberOfShares(BaseModel, DartHttpBody[TotalNumberOfSharesItem]):
 class DebtSecuritiesIssuancePerformanceItem(BaseModel):
     model_config = ConfigDict(title="채무증권 발행실적 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="회사명")
     isu_cmpny: str = Field(description="발행회사")
     scrits_knd_nm: str = Field(description="증권종류")
@@ -319,9 +319,9 @@ class DebtSecuritiesIssuancePerformance(BaseModel, DartHttpBody[DebtSecuritiesIs
 class OutstandingCommercialPaperBalanceItem(BaseModel):
     model_config = ConfigDict(title="기업어음증권 미상환 잔액 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     remndr_exprtn1: str = Field(description="잔여만기")
     remndr_exprtn2: str = Field(description="잔여만기")
@@ -344,9 +344,9 @@ class OutstandingCommercialPaperBalance(BaseModel, DartHttpBody[OutstandingComme
 class OutstandingShortTermBondsItem(BaseModel):
     model_config = ConfigDict(title="단기사채 미상환 잔액 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     remndr_exprtn1: str = Field(description="잔여만기")
     remndr_exprtn2: str = Field(description="잔여만기")
@@ -368,9 +368,9 @@ class OutstandingShortTermBonds(BaseModel, DartHttpBody[OutstandingShortTermBond
 class OutstandingCorporateBondsItem(BaseModel):
     model_config = ConfigDict(title="회사채 미상환 잔액 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     remndr_exprtn1: str = Field(description="잔여만기")
     remndr_exprtn2: str = Field(description="잔여만기")
@@ -392,9 +392,9 @@ class OutstandingCorporateBonds(BaseModel, DartHttpBody[OutstandingCorporateBond
 class OutstandingHybridCapitalSecuritiesItem(BaseModel):
     model_config = ConfigDict(title="신종자본증권 미상환 잔액 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     remndr_exprtn1: str = Field(description="잔여만기")
     remndr_exprtn2: str = Field(description="잔여만기")
@@ -416,9 +416,9 @@ class OutstandingHybridCapitalSecurities(BaseModel, DartHttpBody[OutstandingHybr
 class OutstandingContingentCapitalSecuritiesItem(BaseModel):
     model_config = ConfigDict(title="조건부 자본증권 미상환 잔액 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     remndr_exprtn1: str = Field(description="잔여만기")
     remndr_exprtn2: str = Field(description="잔여만기")
@@ -442,9 +442,9 @@ class OutstandingContingentCapitalSecurities(BaseModel, DartHttpBody[Outstanding
 class AuditorNameAndOpinionItem(BaseModel):
     model_config = ConfigDict(title="회계감사인 명칭과 감사의견 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     bsns_year: str = Field(description="사업연도")
     adtor: str = Field(description="감사인")
@@ -462,9 +462,9 @@ class AuditorNameAndOpinion(BaseModel, DartHttpBody[AuditorNameAndOpinionItem]):
 class AuditServiceContractsItem(BaseModel):
     model_config = ConfigDict(title="감사용역 계약현황 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="회사명")
     bsns_year: str = Field(description="사업연도")
     adtor: str = Field(description="감사인")
@@ -485,9 +485,9 @@ class AuditServiceContracts(BaseModel, DartHttpBody[AuditServiceContractsItem]):
 class NonAuditServiceContractsItem(BaseModel):
     model_config = ConfigDict(title="회계감사인과의 비감사용역 계약체결 현황 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="공시대상회사명")
     bsns_year: str = Field(description="사업연도")
     cntrct_cncls_de: str = Field(description="계약체결일")
@@ -505,9 +505,9 @@ class NonAuditServiceContracts(BaseModel, DartHttpBody[NonAuditServiceContractsI
 class OutsideDirectorStatusItem(BaseModel):
     model_config = ConfigDict(title="사외이사 및 변동현황 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="회사명")
     drctr_co: str = Field(description="이사의 수")
     otcmp_drctr_co: str = Field(description="사외이사 수")
@@ -524,9 +524,9 @@ class OutsideDirectorStatus(BaseModel, DartHttpBody[OutsideDirectorStatusItem]):
 class UnregisteredExecutiveCompensationItem(BaseModel):
     model_config = ConfigDict(title="미등기임원 보수현황 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="회사명")
     se: str = Field(description="구분(미등기임원)")
     nmpr: str = Field(description="9,999,999,999")
@@ -543,9 +543,9 @@ class UnregisteredExecutiveCompensation(BaseModel, DartHttpBody[UnregisteredExec
 class BoardAndAuditCompensationShareholderApprovedItem(BaseModel):
     model_config = ConfigDict(title="이사·감사 전체 보수현황(주주총회 승인금액) 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="회사명")
     se: str = Field(description="구분")
     nmpr: str = Field(description="인원수")
@@ -563,9 +563,9 @@ class BoardAndAuditCompensationShareholderApproved(
 class BoardAndAuditCompensationByTypeItem(BaseModel):
     model_config = ConfigDict(title="이사·감사 전체 보수현황(보수지급금액 유형별) 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="회사명")
     se: str = Field(description="구분")
     nmpr: str = Field(description="인원수")
@@ -582,9 +582,9 @@ class BoardAndAuditCompensationByType(BaseModel, DartHttpBody[BoardAndAuditCompe
 class PublicOfferingFundUsageItem(BaseModel):
     model_config = ConfigDict(title="공모자금 사용내역 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="회사명")
     se_nm: str = Field(description="구분")
     tm: str = Field(description="회차")
@@ -607,9 +607,9 @@ class PublicOfferingFundUsage(BaseModel, DartHttpBody[PublicOfferingFundUsageIte
 class PrivatePlacementFundUsageItem(BaseModel):
     model_config = ConfigDict(title="사모자금 사용내역 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
     corp_cls: str = Field(description="법인구분")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
     corp_name: str = Field(description="회사명")
     se_nm: str = Field(description="구분")
     tm: str = Field(description="회차")

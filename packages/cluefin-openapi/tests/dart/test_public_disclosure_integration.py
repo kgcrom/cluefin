@@ -39,7 +39,7 @@ def test_public_disclosure_search(service: PublicDisclosure) -> None:
     assert isinstance(response, PublicDisclosureSearch)
     assert response.result.status is not None
 
-    items = response.list or []
+    items = response.result.list or []
     assert all(isinstance(item, PublicDisclosureSearchItem) for item in items)
 
 
@@ -84,7 +84,7 @@ def test_disclosure_document_file_integration(
         corp_code="00126380",
         page_count=1,
     )
-    items = search.list or []
+    items = search.result.list or []
     assert items, "공시 검색 결과가 비어 있습니다."
 
     time.sleep(1)
