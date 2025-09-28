@@ -13,7 +13,6 @@ from ._client import Client
 from ._exceptions import (
     DartAPIError,
 )
-from ._model import DartStatusCode
 from ._public_disclosure_types import (
     CompanyOverview,
     PublicDisclosureSearch,
@@ -117,10 +116,17 @@ class PublicDisclosure:
         destination: Path | str = Path("document.xml"),
         overwrite: bool = False,
     ) -> Path:
-        """공시서류원본파일 - 공시보고서 원본파일을 제공합니다."""
-        if not rcept_no:
-            raise ValueError("공시서류원본파일 조회에는 접수번호(rcept_no)가 필요합니다.")
+        """
+        공시서류원본파일 - 공시보고서 원본파일을 제공합니다.
 
+        Args:
+            rcept_no (str): 접수번호(14자리)
+            destination (Path | str, optional): 저장할 파일 경로. 기본값 Path("document.xml").
+            overwrite (bool, optional): 이미 존재하는 파일을 덮어쓸지 여부. 기본값 False.
+
+        Returns:
+            Path: 저장된 파일 경로
+        """
         params = {"rcept_no": rcept_no}
         payload = self.client._get_bytes("/api/document.xml", params=params)
         stripped = payload.lstrip()
