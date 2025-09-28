@@ -178,7 +178,6 @@ class PeriodicReportKeyInformation:
         payload = self.client._get("/api/hyslrSttus.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"최대주주 현황 응답은 매핑 타입이어야 합니다. 수신한 타입: {type(payload)!r}")
-
         return MajorShareholderStatus.parse(payload, list_model=MajorShareholderStatusItem)
 
     def get_major_shareholder_changes(
@@ -468,7 +467,6 @@ class PeriodicReportKeyInformation:
         payload = self.client._get("/api/detScritsIsuAcmslt.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"채무증권 발행실적 응답은 매핑 타입이어야 합니다. 수신한 타입: {type(payload)!r}")
-
         return DebtSecuritiesIssuancePerformance.parse(payload, list_model=DebtSecuritiesIssuancePerformanceItem)
 
     def get_outstanding_commercial_paper_balance(

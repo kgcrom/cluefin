@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from cluefin_openapi.dart._model import DartHttpBody
@@ -31,7 +33,7 @@ class DividendInformationItem(BaseModel):
     corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
     corp_name: str = Field(description="법인명")
     se: str = Field(description="구분")
-    stock_knd: str = Field(description="주식 종류")
+    stock_knd: Optional[str] = Field(description="주식 종류", default=None)
     thstrm: str = Field(description="당기")
     frmtrm: str = Field(description="전기")
     lwfr: str = Field(description="전전기")
@@ -74,7 +76,7 @@ class MajorShareholderStatusItem(BaseModel):
     corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
     corp_name: str = Field(description="법인명")
     nm: str = Field(description="성명")
-    relate: str = Field(description="관계")
+    relate: Optional[str] = Field(description="관계", default=None)
     stock_knd: str = Field(description="주식 종류")
     bsis_posesn_stock_co: str = Field(description="기초 소유 주식 수")
     bsis_posesn_stock_qota_rt: str = Field(description="기초 소유 주식 지분 율")
@@ -302,7 +304,7 @@ class DebtSecuritiesIssuancePerformanceItem(BaseModel):
     isu_mth_nm: str = Field(description="발행방법")
     isu_de: str = Field(description="발행일자(YYYYMMDD)")
     facvalu_totamt: str = Field(description="권면(전자등록)총액")
-    intrt: float = Field(description="이자율")
+    intrt: str = Field(description="이자율")
     evl_grad_instt: str = Field(description="평가등급(평가기관)")
     mtd: str = Field(description="만기일(YYYYMMDD)")
     repy_at: str = Field(description="상환여부")
@@ -449,7 +451,7 @@ class AuditorNameAndOpinionItem(BaseModel):
     adt_opinion: str = Field(description="감사의견")
     adt_reprt_spcmnt_matter: str = Field(description="감사보고서 특기사항")
     emphs_matter: str = Field(description="강조사항 등")
-    core_adt_matter: str = Field(description="핵심감사사항")
+    core_adt_matter: Optional[str] = Field(description="핵심감사사항")
     stlm_dt: str = Field(description="결산기준일")
 
 
@@ -507,11 +509,11 @@ class OutsideDirectorStatusItem(BaseModel):
     corp_cls: str = Field(description="법인구분")
     corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
     corp_name: str = Field(description="회사명")
-    drctr_co: int = Field(description="이사의 수")
-    otcmp_drctr_co: int = Field(description="사외이사 수")
-    apnt: int = Field(description="사외이사 변동현황(선임)")
-    rlsofc: int = Field(description="사외이사 변동현황(해임)")
-    mdstrm_resig: int = Field(description="사외이사 변동현황(중도퇴임)")
+    drctr_co: str = Field(description="이사의 수")
+    otcmp_drctr_co: str = Field(description="사외이사 수")
+    apnt: str = Field(description="사외이사 변동현황(선임)")
+    rlsofc: str = Field(description="사외이사 변동현황(해임)")
+    mdstrm_resig: str = Field(description="사외이사 변동현황(중도퇴임)")
     stlm_dt: str = Field(description="결산기준일")
 
 
@@ -527,9 +529,9 @@ class UnregisteredExecutiveCompensationItem(BaseModel):
     corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
     corp_name: str = Field(description="회사명")
     se: str = Field(description="구분(미등기임원)")
-    nmpr: int = Field(description="9,999,999,999")
-    fyer_salary_totamt: int = Field(description="연간급여 총액")
-    jan_salary_am: int = Field(description="1인평균 급여액")
+    nmpr: str = Field(description="9,999,999,999")
+    fyer_salary_totamt: str = Field(description="연간급여 총액")
+    jan_salary_am: str = Field(description="1인평균 급여액")
     rm: str = Field(description="비고")
     stlm_dt: str = Field(description="결산기준일")
 
@@ -546,8 +548,8 @@ class BoardAndAuditCompensationShareholderApprovedItem(BaseModel):
     corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
     corp_name: str = Field(description="회사명")
     se: str = Field(description="구분")
-    nmpr: int = Field(description="인원수")
-    gmtsck_confm_amount: int = Field(description="주주총회 승인금액")
+    nmpr: str = Field(description="인원수")
+    gmtsck_confm_amount: str = Field(description="주주총회 승인금액")
     rm: str = Field(description="비고")
     stlm_dt: str = Field(description="결산기준일")
 
@@ -566,8 +568,9 @@ class BoardAndAuditCompensationByTypeItem(BaseModel):
     corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
     corp_name: str = Field(description="회사명")
     se: str = Field(description="구분")
-    nmpr: int = Field(description="인원수")
-    gmtsck_confm_amount: int = Field(description="주주총회 승인금액")
+    nmpr: str = Field(description="인원수")
+    pymnt_totamt: str = Field(description="보수총액")
+    psn1_avrg_pymntamt: str = Field(description="1인 평균 보수액")
     rm: str = Field(description="비고")
     stlm_dt: str = Field(description="결산기준일")
 
@@ -586,13 +589,13 @@ class PublicOfferingFundUsageItem(BaseModel):
     se_nm: str = Field(description="구분")
     tm: str = Field(description="회차")
     pay_de: str = Field(description="납입일")
-    pay_amount: int = Field(description="납입금액")
+    pay_amount: str = Field(description="납입금액")
     on_dclrt_cptal_use_plan: str = Field(description="신고서상 자금사용 계획")
     real_cptal_use_sttus: str = Field(description="실제 자금사용 현황")
     rs_cptal_use_plan_useprps: str = Field(description="증권신고서 등의 자금사용 계획(사용용도)")
-    rs_cptal_use_plan_prcure_amount: int = Field(description="증권신고서 등의 자금사용 계획(조달금액)")
+    rs_cptal_use_plan_prcure_amount: str = Field(description="증권신고서 등의 자금사용 계획(조달금액)")
     real_cptal_use_dtls_cn: str = Field(description="실제 자금사용 내역(내용)")
-    real_cptal_use_dtls_amount: int = Field(description="실제 자금사용 내역(금액)")
+    real_cptal_use_dtls_amount: str = Field(description="실제 자금사용 내역(금액)")
     dffrnc_occrrnc_resn: str = Field(description="차이발생 사유 등")
     stlm_dt: str = Field(description="결산기준일")
 
@@ -611,13 +614,13 @@ class PrivatePlacementFundUsageItem(BaseModel):
     se_nm: str = Field(description="구분")
     tm: str = Field(description="회차")
     pay_de: str = Field(description="납입일")
-    pay_amount: int = Field(description="납입금액")
+    pay_amount: str = Field(description="납입금액")
     cptal_use_plan: str = Field(description="자금사용 계획")
     real_cptal_use_sttus: str = Field(description="실제 자금사용 현황")
     mtrpt_cptal_use_plan_useprps: str = Field(description="주요사항보고서의 자금사용 계획(사용용도)")
     mtrpt_cptal_use_plan_prcure_amount: str = Field(description="주요사항보고서의 자금사용 계획(조달금액)")
     real_cptal_use_dtls_cn: str = Field(description="실제 자금사용 내역(내용)")
-    real_cptal_use_dtls_amount: int = Field(description="실제 자금사용 내역(금액)")
+    real_cptal_use_dtls_amount: str = Field(description="실제 자금사용 내역(금액)")
     dffrnc_occrrnc_resn: str = Field(description="차이발생 사유 등")
     stlm_dt: str = Field(description="결산기준일")
 
