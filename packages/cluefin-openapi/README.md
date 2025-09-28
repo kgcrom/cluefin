@@ -11,12 +11,10 @@
 - **차트 데이터 및 분석**: 일/주/월 차트, 기술적 지표, 시계열 데이터
 - **ETF, 섹터, 테마**: ETF 정보, 업종별 정보, 테마별 종목 분류
 - **시장 상황 모니터링**: 시장 지수, 거래량, 시장 동향
-- **주문 관리**: 매수/매도 주문, 주문 조회, 실시간 체결 알림
 - **KRX 시장 데이터**: KOSPI/KOSDAQ/KONEX 일별매매정보, 시장지수, 종목 기본정보
 - **채권 시장 정보**: 국고채, 일반채권, 소액채권 시장 데이터
-- **파생상품 정보**: 선물/옵션 거래정보, KOSPI/KOSDAQ 파생상품 데이터
 - **상장 상품 정보**: ETF, ETN, ELW 등 거래소 상장 상품 데이터
-- **ESG 및 원자재**: ESG 채권, 유가, 금, 배출권 시장 정보
+- **기업 공시 분석 (DART)**: 공시 원문, 재무제표, 대량보유상황 등 공시 데이터
 
 ## ⚡ Quick Start
 
@@ -81,6 +79,9 @@ KIWOOM_ENV=dev # options: prod | dev(default)
 
 # 한국거래소 API 키 설정 (단순 인증키)
 KRX_AUTH_KEY=your_krx_auth_key_here
+
+# 금융감독원 DART API 키 설정
+DART_AUTH_KEY=your_dart_auth_key_here
 ```
 
 ### 기본 사용법
@@ -333,32 +334,20 @@ uv run pytest --cov=cluefin_openapi --cov-report=html
 ```
 packages/cluefin-openapi/
 ├── src/cluefin_openapi/
+│   ├── dart/                      # 금융감독원 DART 공시 클라이언트
 │   ├── kiwoom/                    # 키움증권 API 클라이언트
-│   │   ├── _auth.py              # OAuth2-style 인증 처리
-│   │   ├── _client.py            # 메인 클라이언트 클래스
-│   │   ├── _model.py             # KiwoomHttpResponse[T] 래퍼
-│   │   ├── _domestic_*.py        # 국내주식 관련 API 모듈들
-│   │   ├── _domestic_*_types.py  # API 응답 타입 정의 (Pydantic)
-│   │   ├── _rate_limiter.py      # API 요청 제한 관리
-│   │   └── _exceptions.py        # 키움증권 API 전용 예외
 │   ├── krx/                      # 한국거래소 API 클라이언트
-│   │   ├── _client.py            # KRX 클라이언트 클래스
-│   │   ├── _model.py             # KRX 응답 모델
-│   │   ├── _stock.py             # 주식 시장 데이터 API
-│   │   ├── _index.py             # 시장 지수 API
-│   │   ├── _bond.py              # 채권 시장 API
-│   │   ├── _derivatives.py       # 파생상품 API
-│   │   ├── _*_types.py           # 각 모듈별 타입 정의
-│   │   └── _exceptions.py        # KRX API 전용 예외
 │   └── __init__.py
 ├── tests/                        # 테스트 스위트
 │   ├── kiwoom/                   # 키움증권 API 테스트
 │   │   ├── test_*_unit.py        # 단위 테스트 (requests_mock 사용)
 │   │   └── test_*_integration.py # 통합 테스트 (@pytest.mark.integration)
-│   └── krx/                      # KRX API 테스트
+│   ├── krx/                      # KRX API 테스트
+│   │   ├── test_*_unit.py        # 단위 테스트
+│   │   └── test_*_integration.py # 통합 테스트
+│   └── dart/                      # Dart API 테스트
 │       ├── test_*_unit.py        # 단위 테스트
 │       └── test_*_integration.py # 통합 테스트
-├── sample.py                     # 사용 예제 코드
 ├── pyproject.toml               # 패키지 의존성 및 설정
 └── README.md                    # 이 문서
 ```
@@ -413,6 +402,7 @@ uv run ruff check packages/cluefin-openapi/
 
 - [키움증권 OpenAPI 포털](https://openapi.kiwoom.com/)
 - [한국거래소 OpenAPI 포털](http://openapi.krx.co.kr)
+- [금융감독원 OpenAPI 포털](https://opendart.fss.or.kr/)
 
 ---
 
