@@ -72,7 +72,7 @@ class Client(object):
             {
                 "Content-Type": "application/json",
                 "Accept": "application/json",
-                "User-Agent": "cluefin-kiwoom/0.1.0",
+                "User-Agent": "cluefin-openapi/1.0",
             }
         )
 

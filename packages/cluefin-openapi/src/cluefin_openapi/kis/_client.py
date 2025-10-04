@@ -1,94 +1,82 @@
-from cluefin_openapi.kis._domestic_account import DomesticAccount
-from cluefin_openapi.kis._domestic_basic_quote import DomesticBasicQuote
-from cluefin_openapi.kis._domestic_issue_other import DomesticIssueOther
-from cluefin_openapi.kis._domestic_stock_info import DomesticStockInfo
-from cluefin_openapi.kis._domestic_market_analysis import DomesticMarketAnalysis
-from cluefin_openapi.kis._domestic_ranking_analysis import DomesticRankingAnalysis
-from cluefin_openapi.kis._overseas_account import OverseasAccount
-from cluefin_openapi.kis._overseas_basic_quote import OverseasBasicQuote
-from cluefin_openapi.kis._overseas_market_analysis import OverseasMarketAnalysis
-from cluefin_openapi.kis._overseas_realtime_quote import OverseasRealtimeQuote
+from typing import Literal
+
+import requests
+from loguru import logger
 
 
-class Client:
-    def __init__(self, token: str, env: str = "prod"):
-        """
-        Initialize KIS API Client
-
-        Args:
-            token (str): Access token for authentication
-            env (str): Environment ("dev" or "prod")
-        """
+class Client(object):
+    def __init__(self, token: str, env: Literal["prod", "dev"] = "prod", debug: bool = False):
         self.token = token
         self.env = env
+        self.debug = debug
+        if self.env == "prod":
+            self.base_url = "https://openapi.koreainvestment.com:9443"
+        else:
+            self.base_url = "https://sandboxopenapi.koreainvestment.com:9443"
+        
+        self._session = requests.Session()
+        self._session.headers.update({
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "User-Agent": "cluefin-openapi/1.0",
+        })
+
+        if self.debug:
+            logger.enable("cluefin_openapi.kis")
+        else:
+            logger.disable("cluefin_openapi.kis")
 
 
     @property
-    def domestic_account(self) -> DomesticAccount:
+    def domestic_account(self):
         """국내주식 주문/계좌"""
-        if self._domestic_account is None:
-            self._domestic_account = DomesticAccount(self)
-        return self._domestic_account
+        from ._domestic_account import DomesticAccount
+        return DomesticAccount(self)
 
     @property
-    def domestic_basic_quote(self) -> DomesticBasicQuote:
+    def domestic_basic_quote(self):
         """국내주식 기본시세"""
-        if self._domestic_basic_quote is None:
-            self._domestic_basic_quote = DomesticBasicQuote(self)
-        return self._domestic_basic_quote
+        from ._domestic_basic_quote import DomesticBasicQuote
+        return DomesticBasicQuote(self)
 
     @property
-    def domestic_issue_other(self) -> DomesticIssueOther:
+    def domestic_issue_other(self):
         """국내주식 업종/기타"""
-        if self._domestic_issue_other is None:
-            self._domestic_issue_other = DomesticIssueOther(self)
-        return self._domestic_issue_other
+        from ._domestic_issue_other import DomesticIssueOther
+        return DomesticIssueOther(self)
 
     @property
-    def domestic_stock_info(self) -> DomesticStockInfo:
+    def domestic_stock_info(self):
         """국내주식 종목정보"""
-        if self._domestic_stock_info is None:
-            self._domestic_stock_info = DomesticStockInfo(self)
-        return self._domestic_stock_info
+        from ._domestic_stock_info import DomesticStockInfo
+        return DomesticStockInfo(self)
 
     @property
-    def domestic_market_analysis(self) -> DomesticMarketAnalysis:
+    def domestic_market_analysis(self):
         """국내주식 시세분석"""
-        if self._domestic_market_analysis is None:
-            self._domestic_market_analysis = DomesticMarketAnalysis(self)
-        return self._domestic_market_analysis
+        from ._domestic_market_analysis import DomesticMarketAnalysis
+        return DomesticMarketAnalysis(self)
 
     @property
-    def domestic_ranking_analysis(self) -> DomesticRankingAnalysis:
+    def domestic_ranking_analysis(self):
         """국내주식 순위분석"""
-        if self._domestic_ranking_analysis is None:
-            self._domestic_ranking_analysis = DomesticRankingAnalysis(self)
-        return self._domestic_ranking_analysis
+        from ._domestic_ranking_analysis import DomesticRankingAnalysis
+        return DomesticRankingAnalysis(self)
 
     @property
-    def overseas_account(self) -> OverseasAccount:
+    def overseas_account(self):
         """해외주식 주문/계좌"""
-        if self._overseas_account is None:
-            self._overseas_account = OverseasAccount(self)
-        return self._overseas_account
+        from ._overseas_account import OverseasAccount
+        return OverseasAccount(self)
 
     @property
-    def overseas_basic_quote(self) -> OverseasBasicQuote:
+    def overseas_basic_quote(self):
         """해외주식 기본시세"""
-        if self._overseas_basic_quote is None:
-            self._overseas_basic_quote = OverseasBasicQuote(self)
-        return self._overseas_basic_quote
+        from ._overseas_basic_quote import OverseasBasicQuote
+        return OverseasBasicQuote(self)
 
     @property
-    def overseas_market_analysis(self) -> OverseasMarketAnalysis:
+    def overseas_market_analysis(self):
         """해외주식 시세분석"""
-        if self._overseas_market_analysis is None:
-            self._overseas_market_analysis = OverseasMarketAnalysis(self)
-        return self._overseas_market_analysis
-
-    @property
-    def overseas_realtime_quote(self) -> OverseasRealtimeQuote:
-        """해외주식 실시간시세"""
-        if self._overseas_realtime_quote is None:
-            self._overseas_realtime_quote = OverseasRealtimeQuote(self)
-        return self._overseas_realtime_quote
+        from ._overseas_market_analysis import OverseasMarketAnalysis
+        return OverseasMarketAnalysis(self)

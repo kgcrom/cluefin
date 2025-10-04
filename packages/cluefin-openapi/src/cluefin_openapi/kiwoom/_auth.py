@@ -36,18 +36,6 @@ class Auth:
         else:
             raise ValueError("Invalid environment. Must be either 'dev' or 'prod'.")
 
-    @property
-    def token(self) -> TokenResponse:
-        """Get the current token data.
-
-        Returns:
-            TokenResponse: The current token data.
-
-        Raises:
-            AttributeError: If no token has been generated yet.
-        """
-        return self._token_data
-
     def generate_token(self) -> TokenResponse:
         """Generate a new access token.
 
