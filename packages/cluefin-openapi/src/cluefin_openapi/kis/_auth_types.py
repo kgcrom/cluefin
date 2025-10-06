@@ -7,5 +7,6 @@ class TokenResponse(BaseModel):
     expires_in: int
     access_token_token_expired: str
 
+
 class ApprovalResponse(BaseModel):
     approval_key: str

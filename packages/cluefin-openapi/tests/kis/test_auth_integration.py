@@ -10,6 +10,7 @@ from typing import Optional
 
 import dotenv
 import pytest
+import requests
 from pydantic import SecretStr
 
 from cluefin_openapi.kis._auth import Auth
@@ -44,23 +45,17 @@ class _TokenProvider:
         self._token = None
 
 
-
 @pytest.fixture(scope="module")
 def auth_dev():
     """Fixture to create Auth instance for dev environment."""
     dotenv.load_dotenv(dotenv_path=".env.test")
     app_key = os.getenv("KIS_APP_KEY")
     secret_key = os.getenv("KIS_SECRET_KEY")
-    
+
     if not app_key or not secret_key:
         pytest.skip("KIS API credentials not available in environment variables")
-    
 
-    return Auth(
-        app_key=app_key,
-        secret_key=SecretStr(secret_key),
-        env="dev"
-    )
+    return Auth(app_key=app_key, secret_key=SecretStr(secret_key), env="dev")
 
 
 @pytest.fixture(scope="module")
@@ -69,25 +64,26 @@ def token_provider(auth_dev):
     yield provider
     provider.clear()
 
+
 @pytest.mark.integration
 def test_generate_token_dev_environment(auth_dev, token_provider):
     """Test token generation in dev environment."""
     try:
         token_response = token_provider.get()
-        
+
         # Verify response structure
         assert isinstance(token_response, TokenResponse)
-        assert hasattr(token_response, 'access_token')
-        assert hasattr(token_response, 'token_type')
-        assert hasattr(token_response, 'expires_in')
-        assert hasattr(token_response, 'access_token_token_expired')
-        
+        assert hasattr(token_response, "access_token")
+        assert hasattr(token_response, "token_type")
+        assert hasattr(token_response, "expires_in")
+        assert hasattr(token_response, "access_token_token_expired")
+
         # Verify token content
         assert token_response.access_token is not None
         assert len(token_response.access_token) > 0
         assert token_response.token_type == "Bearer"
         assert token_response.expires_in > 0
-        
+
         # Verify token is stored in instance
         assert auth_dev._token_data == token_response
 
@@ -120,14 +116,15 @@ def test_approval_request_dev_environment(auth_dev):
     """Test approval request in dev environment."""
     try:
         approval_response = auth_dev.approve()
-        
+
         # Verify response structure
         assert isinstance(approval_response, ApprovalResponse)
-        assert hasattr(approval_response, 'approval_key')
+        assert hasattr(approval_response, "approval_key")
         assert approval_response.approval_key is not None
         assert len(approval_response.approval_key) > 0
     except Exception as e:
         pytest.fail(f"Approval request failed: {e}")
+
 
 @pytest.mark.integration
 def test_full_auth_workflow_dev_environment(auth_dev, token_provider):
@@ -151,15 +148,12 @@ def test_full_auth_workflow_dev_environment(auth_dev, token_provider):
     except Exception as e:
         pytest.fail(f"Full auth workflow failed: {e}")
 
+
 @pytest.mark.integration
 def test_invalid_credentials_handling():
     """Test handling of invalid credentials."""
-    invalid_auth = Auth(
-        "invalid_app_key",
-        SecretStr("invalid_secret_key"),
-        env="dev"
-    )
-    
+    invalid_auth = Auth("invalid_app_key", SecretStr("invalid_secret_key"), env="dev")
+
     # Should raise an HTTP error for unauthorized access
-    with pytest.raises(Exception):  # Could be HTTPError or other API error
+    with pytest.raises(requests.HTTPError):
         invalid_auth.generate()

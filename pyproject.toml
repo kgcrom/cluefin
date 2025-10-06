@@ -29,6 +29,7 @@ cluefin-cli = { workspace = true }
 line-length = 120
 fix = true
 target-version = "py311"
+extend-exclude = ["*.json"]
 
 [tool.ruff.format]
 docstring-code-format = true

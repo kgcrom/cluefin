@@ -2,11 +2,10 @@
 
 import pytest
 import requests
-import requests_mock
-from pydantic import SecretStr
+from pydantic import SecretStr, ValidationError
 
 from cluefin_openapi.kis._auth import Auth
-from cluefin_openapi.kis._auth_types import TokenResponse, ApprovalResponse
+from cluefin_openapi.kis._auth_types import ApprovalResponse, TokenResponse
 
 
 @pytest.fixture
@@ -23,8 +22,8 @@ def test_generate_success(dev_auth, requests_mock):
             "access_token": "test_access_token",
             "token_type": "Bearer",
             "expires_in": 86400,
-            "access_token_token_expired": "2025-10-05 10:00:00"
-        }
+            "access_token_token_expired": "2025-10-05 10:00:00",
+        },
     )
 
     result = dev_auth.generate()
@@ -43,9 +42,7 @@ def test_generate_success(dev_auth, requests_mock):
 def test_generate_http_error(dev_auth, requests_mock):
     """Test token generation with HTTP error."""
     requests_mock.post(
-        "https://openapivts.koreainvestment.com:29443/oauth2/tokenP",
-        status_code=401,
-        json={"error": "Unauthorized"}
+        "https://openapivts.koreainvestment.com:29443/oauth2/tokenP", status_code=401, json={"error": "Unauthorized"}
     )
 
     with pytest.raises(requests.HTTPError):
@@ -54,27 +51,22 @@ def test_generate_http_error(dev_auth, requests_mock):
 
 def test_generate_invalid_response_format(dev_auth, requests_mock):
     """Test token generation with invalid response format."""
-    requests_mock.post(
-        "https://openapivts.koreainvestment.com:29443/oauth2/tokenP",
-        json={"invalid": "data"}
-    )
+    requests_mock.post("https://openapivts.koreainvestment.com:29443/oauth2/tokenP", json={"invalid": "data"})
 
-    with pytest.raises(Exception):  # Pydantic validation error
+    with pytest.raises(ValidationError):
         dev_auth.generate()
 
 
 def test_revoke_success(dev_auth, requests_mock):
     """Test successful token revocation."""
-    requests_mock.post(
-        "https://openapivts.koreainvestment.com:29443/oauth2/revokeP"
-    )
+    requests_mock.post("https://openapivts.koreainvestment.com:29443/oauth2/revokeP")
 
     # Set up token data first
     dev_auth._token_data = TokenResponse(
         access_token="test_token",
         token_type="Bearer",
         expires_in=86400,
-        access_token_token_expired="2025-10-05 10:00:00"
+        access_token_token_expired="2025-10-05 10:00:00",
     )
 
     result = dev_auth.revoke()
@@ -84,16 +76,14 @@ def test_revoke_success(dev_auth, requests_mock):
 def test_revoke_http_error(dev_auth, requests_mock):
     """Test token revocation with HTTP error."""
     requests_mock.post(
-        "https://openapivts.koreainvestment.com:29443/oauth2/revokeP",
-        status_code=400,
-        json={"error": "Bad Request"}
+        "https://openapivts.koreainvestment.com:29443/oauth2/revokeP", status_code=400, json={"error": "Bad Request"}
     )
 
     dev_auth._token_data = TokenResponse(
         access_token="test_token",
         token_type="Bearer",
         expires_in=86400,
-        access_token_token_expired="2025-10-05 10:00:00"
+        access_token_token_expired="2025-10-05 10:00:00",
     )
 
     with pytest.raises(requests.HTTPError):
@@ -104,7 +94,7 @@ def test_approve_success(dev_auth, requests_mock):
     """Test successful approval request."""
     requests_mock.post(
         "https://openapivts.koreainvestment.com:29443/oauth2/Approval",
-        json={"approval_key": "test_approval_key_123456"}
+        json={"approval_key": "test_approval_key_123456"},
     )
 
     result = dev_auth.approve()
@@ -117,9 +107,7 @@ def test_approve_success(dev_auth, requests_mock):
 def test_approve_http_error(dev_auth, requests_mock):
     """Test approval request with HTTP error."""
     requests_mock.post(
-        "https://openapivts.koreainvestment.com:29443/oauth2/Approval",
-        status_code=403,
-        json={"error": "Forbidden"}
+        "https://openapivts.koreainvestment.com:29443/oauth2/Approval", status_code=403, json={"error": "Forbidden"}
     )
 
     with pytest.raises(requests.HTTPError):
@@ -128,12 +116,9 @@ def test_approve_http_error(dev_auth, requests_mock):
 
 def test_approve_invalid_response_format(dev_auth, requests_mock):
     """Test approval request with invalid response format."""
-    requests_mock.post(
-        "https://openapivts.koreainvestment.com:29443/oauth2/Approval",
-        json={"invalid": "data"}
-    )
+    requests_mock.post("https://openapivts.koreainvestment.com:29443/oauth2/Approval", json={"invalid": "data"})
 
-    with pytest.raises(Exception):  # Pydantic validation error
+    with pytest.raises(ValidationError):
         dev_auth.approve()
 
 
