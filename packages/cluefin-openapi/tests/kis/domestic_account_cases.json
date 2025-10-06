@@ -261,5 +261,154 @@
                 "prsm_tlex_smtl": "21000"
             }
         }
+    },
+    {
+        "method_name": "get_buy_tradable_inquiry",
+        "response_model_attr": "BuyTradableInquiry",
+        "endpoint": "/uapi/domestic-stock/v1/trading/inquire-psbl-order",
+        "method": "GET",
+        "call_kwargs": {
+            "tr_id": "TTTC0802R",
+            "tr_cont": "",
+            "cano": "12345678",
+            "acnt_prdt_cd": "01",
+            "afhr_flpr_yn": "N",
+            "inqr_dvsn": "01",
+            "fund_sttl_icld_yn": "N",
+            "prcs_dvsn": "00",
+            "ctx_area_fk100": "",
+            "ctx_area_nk100": ""
+        },
+        "expected_headers": {
+            "tr_id": "TTTC0802R",
+            "tr_cont": ""
+        },
+        "expected_body": {
+            "CANO": "12345678",
+            "ACNT_PRDT_CD": "01",
+            "AFHR_FLPR_YN": "N",
+            "OFL_YN": "",
+            "INQR_DVSN": "01",
+            "UNPR_DVSN": "01",
+            "FUND_STTL_ICLD_YN": "N",
+            "FNCG_AMT_AUTO_RDPT_YN": "N",
+            "PRCS_DVSN": "00",
+            "CTX_AREA_FK100": "",
+            "CTX_AREA_NK100": ""
+        },
+        "response_payload": {
+            "output": {
+                "ord_psbl_cash": "5000000",
+                "ord_psbl_sbst": "5000000",
+                "ruse_psbl_amt": "0",
+                "fund_rpch_chgs": "0",
+                "psbl_qty_calc_unpr": "70000",
+                "nrcvb_buy_amt": "0",
+                "nrcvb_buy_qty": "0",
+                "max_buy_amt": "5000000",
+                "max_buy_qty": "71",
+                "cma_evlu_amt": "0",
+                "ovrs_re_use_amt_wcrc": "0",
+                "ord_psbl_frcr_amt": "0",
+                "ord_psbl_frcr_amt_wcrc": "0"
+            }
+        }
+    },
+    {
+        "method_name": "get_stock_balance",
+        "response_model_attr": "StockBalance",
+        "endpoint": "/uapi/domestic-stock/v1/trading/inquire-balance",
+        "method": "GET",
+        "call_kwargs": {
+            "tr_id": "TTTC8434R",
+            "tr_cont": "",
+            "cano": "12345678",
+            "acnt_prdt_cd": "01",
+            "inqr_dvsn": "01",
+            "fund_sttl_icld_yn": "N",
+            "prcs_dvsn": "00",
+            "afhr_flpr_yn": "N",
+            "ctx_area_fk100": "",
+            "ctx_area_nk100": ""
+        },
+        "expected_headers": {
+            "tr_id": "TTTC8434R",
+            "tr_cont": ""
+        },
+        "expected_body": {
+            "CANO": "12345678",
+            "ACNT_PRDT_CD": "01",
+            "AFHR_FLPR_YN": "N",
+            "OFL_YN": "",
+            "INQR_DVSN": "01",
+            "UNPR_DVSN": "01",
+            "FUND_STTL_ICLD_YN": "N",
+            "FNCG_AMT_AUTO_RDPT_YN": "N",
+            "PRCS_DVSN": "00",
+            "CTX_AREA_FK100": "",
+            "CTX_AREA_NK100": ""
+        },
+        "response_payload": {
+            "ctx_area_fk100": "",
+            "ctx_area_nk100": "",
+            "output1": [
+                {
+                    "pdno": "005930",
+                    "prdt_name": "삼성전자",
+                    "trad_dvsn_name": "현금",
+                    "bfdy_buy_qty": "0",
+                    "bfdy_sll_qty": "0",
+                    "thdt_buyqty": "100",
+                    "thdt_sll_qty": "0",
+                    "hldg_qty": "100",
+                    "ord_psbl_qty": "100",
+                    "pchs_avg_pric": "70000.00",
+                    "pchs_amt": "7000000",
+                    "prpr": "72000",
+                    "evlu_amt": "7200000",
+                    "evlu_pfls_amt": "200000",
+                    "evlu_pfls_rt": "2.86",
+                    "evlu_erng_rt": "0",
+                    "loan_dt": "",
+                    "loan_amt": "0",
+                    "stln_slng_chgs": "0",
+                    "expd_dt": "",
+                    "fltt_rt": "1.50",
+                    "bfdy_cprs_icdc": "1000",
+                    "item_mgna_rt_name": "20%",
+                    "grta_rt_name": "40%",
+                    "sbst_pric": "7200000",
+                    "stck_loan_unpr": "0.00"
+                }
+            ],
+            "output2": [
+                {
+                    "dnca_tot_amt": "5000000",
+                    "nxdy_excc_amt": "5000000",
+                    "prvs_rcdl_excc_amt": "5000000",
+                    "cma_evlu_amt": "0",
+                    "bfdy_buy_amt": "0",
+                    "thdt_buy_amt": "7000000",
+                    "nxdy_auto_rdpt_amt": "0",
+                    "bfdy_sll_amt": "0",
+                    "thdt_sll_amt": "0",
+                    "d2_auto_rdpt_amt": "0",
+                    "bfdy_tlex_amt": "0",
+                    "thdt_tlex_amt": "21000",
+                    "tot_loan_amt": "0",
+                    "scts_evlu_amt": "7200000",
+                    "tot_evlu_amt": "12200000",
+                    "nass_amt": "12200000",
+                    "fncg_gld_auto_rdpt_yn": "N",
+                    "pchs_amt_smtl_amt": "7000000",
+                    "evlu_amt_smtl_amt": "7200000",
+                    "evlu_pfls_smtl_amt": "200000",
+                    "tot_stln_slng_chgs": "0",
+                    "bfdy_tot_asst_evlu_amt": "12000000",
+                    "asst_icdc_amt": "200000",
+                    "asst_icdc_erng_rt": "0"
+                }
+            ]
+        }
     }
 ]

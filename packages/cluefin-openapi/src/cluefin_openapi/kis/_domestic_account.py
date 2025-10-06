@@ -2,11 +2,13 @@ from typing import Literal, Optional
 
 from cluefin_openapi.kis._client import Client
 from cluefin_openapi.kis._domestic_account_types import (
+    BuyTradableInquiry,
+    StockBalance,
+    StockDailySeparateConclusion,
     StockQuoteCorrection,
     StockQuoteCorrectionCancellableQty,
     StockQuoteCredit,
     StockQuoteCurrent,
-    StockDailySeparateConclusion
 )
 
 
@@ -300,7 +302,9 @@ class DomesticAccount:
             "INQR_DVSN_2": inqr_dvsn_2,
         }
 
-        response = self.client._get("/uapi/domestic-stock/v1/trading/inquire-psbl-rvsecncl", headers=headers, params=params)
+        response = self.client._get(
+            "/uapi/domestic-stock/v1/trading/inquire-psbl-rvsecncl", headers=headers, params=params
+        )
         return StockQuoteCorrectionCancellableQty(**response)
 
     def get_stock_daily_separate_conclusion(
@@ -312,7 +316,6 @@ class DomesticAccount:
         inqr_strt_dt: str,
         inqr_end_dt: str,
         sll_buy_dvsn_cd: Literal["00", "01", "02"],
-        ord_gno_brno: str,
         ccld_dvsn: Literal["00", "01", "02"],
         inqr_dvsn: Literal["00", "01"],
         inqr_dvsn_1: Literal["", "1", "2"],
@@ -320,9 +323,10 @@ class DomesticAccount:
         excg_id_dvsn_cd: Literal["KRX", "NXT", "SOR", "ALL"],
         ctx_area_fk100: str,
         ctx_area_nk100: str,
+        ord_gno_brno: str = "",
         pdno: Optional[str] = None,
         odno: Optional[str] = None,
-        ) -> StockDailySeparateConclusion:
+    ) -> StockDailySeparateConclusion:
         """
         주식일별주문체결조회
 
@@ -334,7 +338,6 @@ class DomesticAccount:
             inqr_strt_dt: 조회시작일자, YYYYMMDD
             inqr_end_dt: 조회종료일자, YYYYMMDD
             sll_buy_dvsn_cd: 매도매수구분코드, 00 : 전체 / 01 : 매도 / 02 : 매수
-            ord_gno_brno: 주문채번지점번호, 주문시 한국투자증권 시스템에서 지정된 영업점코드
             ccld_dvsn: 체결구분, '00 전체 01 체결 02 미체결'
             inqr_dvsn: 조회구분, '00 역순 01 정순'
             inqr_dvsn_1: 조회구분1, '없음: 전체 1: ELW 2: 프리보드'
@@ -342,6 +345,7 @@ class DomesticAccount:
             excg_id_dvsn_cd: 거래소ID구분코드, 한국거래소 : KRX 대체거래소 (NXT) : NXT SOR (Smart Order Routing) : SOR ALL : 전체 ※ 모의투자는 KRX만 제공
             ctx_area_fk100: 연속조회검색조건100, '공란 : 최초 조회시는 이전 조회 Output CTX_AREA_FK100 값 : 다음페이지 조회시(2번째부터)'
             ctx_area_nk100: 연속조회키100, '공란 : 최초 조회시 이전 조회 Output CTX_AREA_NK100 값 : 다음페이지 조회시(2번째부터)'
+            ord_gno_brno: str = "",
             pdno: 상품번호, 종목번호(6자리)
             odno: 주문번호, 주문시 한국투자증권 시스템에서 채번된 주문번호
 
@@ -369,16 +373,116 @@ class DomesticAccount:
             "PDNO": pdno,
             "ODNO": odno,
         }
-        response = self.client._get("/uapi/domestic-stock/v1/trading/inquire-daily-ccld", headers=headers, params=params)
+        response = self.client._get(
+            "/uapi/domestic-stock/v1/trading/inquire-daily-ccld", headers=headers, params=params
+        )
         return StockDailySeparateConclusion(**response)
 
-    def get_stock_balance(self):
-        """주식잔고조회"""
-        pass
+    def get_stock_balance(
+        self,
+        tr_id: Literal["TTTC8434R", "VTTC8434R"],
+        tr_cont: Literal["", "N"],
+        cano: str,
+        acnt_prdt_cd: str,
+        inqr_dvsn: Literal["01", "02"],
+        fund_sttl_icld_yn: Literal["N", "Y"],
+        prcs_dvsn: Literal["00", "01"],
+        afhr_flpr_yn: Literal["N", "Y", "X"] = "N",
+        ctx_area_fk100: str = "",
+        ctx_area_nk100: str = "",
+    ) -> StockBalance:
+        """
+        주식잔고조회
 
-    def get_buy_tradable_inquiry(self):
-        """매수가능조회"""
-        pass
+        Args:
+            tr_id: TR ID
+            tr_cont: 연속 거래 여부, (공백 : 초기 조회, N : 다음 데이터 조회 (output header의 tr_cont가 M일 경우)
+            cano: 종합계좌번호
+            acnt_prdt_cd: 계좌상품코드
+            afhr_flpr_yn: 시간외단일가, 거래소여부
+            inqr_dvsn: 조회구분
+            fund_sttl_icld_yn: 펀드결제분포함여부
+            prcs_dvsn: 처리구분
+            ctx_area_fk100: 연속조회검색조건100, '공란 : 최초 조회시는 이전 조회 Output CTX_AREA_FK100 값 : 다음페이지 조회시(2번째부터)'
+            ctx_area_nk100: 연속조회키100, '공란 : 최초 조회시 이전 조회 Output CTX_AREA_NK100 값 : 다음페이지 조회시(2번째부터
+
+        Returns:
+            StockBalance: 주식잔고조회 응답 객체
+        """
+        headers = {
+            "tr_id": tr_id,
+            "tr_cont": tr_cont,
+        }
+        params = {
+            "CANO": cano,
+            "ACNT_PRDT_CD": acnt_prdt_cd,
+            "AFHR_FLPR_YN": afhr_flpr_yn,
+            "OFL_YN": "",
+            "INQR_DVSN": inqr_dvsn,
+            "UNPR_DVSN": "01",
+            "FUND_STTL_ICLD_YN": fund_sttl_icld_yn,
+            "FNCG_AMT_AUTO_RDPT_YN": "N",
+            "PRCS_DVSN": prcs_dvsn,
+            "CTX_AREA_FK100": ctx_area_fk100,
+            "CTX_AREA_NK100": ctx_area_nk100,
+        }
+
+        response = self.client._get("/uapi/domestic-stock/v1/trading/inquire-balance", headers=headers, params=params)
+        return StockBalance(**response)
+
+    def get_buy_tradable_inquiry(
+        self,
+        tr_id: Literal["TTTC0802R", "VTTC0802R"],
+        tr_cont: Literal["", "N"],
+        cano: str,
+        acnt_prdt_cd: str,
+        afhr_flpr_yn: Literal["N", "Y", "X"],
+        inqr_dvsn: Literal["01", "02"],
+        fund_sttl_icld_yn: Literal["N", "Y"],
+        prcs_dvsn: Literal["00", "01"],
+        ctx_area_fk100: str = "",
+        ctx_area_nk100: str = "",
+    ) -> BuyTradableInquiry:
+        """
+        매수가능조회
+
+        Args:
+            tr_id: TR ID
+            tr_cont: 연속 거래 여부, (공백 : 초기 조회, N : 다음 데이터 조회 (output header의 tr_cont가 M일 경우)
+            cano: 종합계좌번호
+            acnt_prdt_cd: 계좌상품코드
+            afhr_flpr_yn: 시간외단일가, 거래소여부
+            inqr_dvsn: 조회구분
+            fund_sttl_icld_yn: 펀드결제분포함여부
+            prcs_dvsn: 처리구분
+            ctx_area_fk100: 연속조회검색조건100, '공란 : 최초 조회시는 이전 조회 Output CTX_AREA_FK100 값 : 다음페이지 조회시(2번째부터)'
+            ctx_area_nk100: 연속조회키100, '공란 : 최초 조회시 이전 조회 Output CTX_AREA_NK100 값 : 다음페이지 조회시(2번째부터)'
+
+        Returns:
+            BuyTradableInquiry: 매수가능조회 응답 객체
+        """
+        headers = {
+            "tr_id": tr_id,
+            "tr_cont": tr_cont,
+        }
+        params = {
+            "CANO": cano,
+            "ACNT_PRDT_CD": acnt_prdt_cd,
+            "AFHR_FLPR_YN": afhr_flpr_yn,
+            "OFL_YN": "",
+            "INQR_DVSN": inqr_dvsn,
+            "UNPR_DVSN": "01",
+            "FUND_STTL_ICLD_YN": fund_sttl_icld_yn,
+            "FNCG_AMT_AUTO_RDPT_YN": "N",
+            "PRCS_DVSN": prcs_dvsn,
+            "CTX_AREA_FK100": ctx_area_fk100,
+            "CTX_AREA_NK100": ctx_area_nk100,
+        }
+
+        response = self.client._get(
+            "/uapi/domestic-stock/v1/trading/inquire-psbl-order", headers=headers, params=params
+        )
+        return BuyTradableInquiry(**response)
 
     def get_sell_tradable_inquiry(self):
         """매도가능수량조회"""

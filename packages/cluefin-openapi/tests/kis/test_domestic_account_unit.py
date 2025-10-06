@@ -32,6 +32,7 @@ def load_domestic_account_cases():
 
 DOMESTIC_ACCOUNT_CASES = load_domestic_account_cases()
 
+
 @pytest.mark.parametrize(
     (
         "method_name",
