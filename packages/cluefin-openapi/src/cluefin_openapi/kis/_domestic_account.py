@@ -2,8 +2,11 @@ from typing import Literal, Optional
 
 from cluefin_openapi.kis._client import Client
 from cluefin_openapi.kis._domestic_account_types import (
+    StockQuoteCorrection,
+    StockQuoteCorrectionCancellableQty,
     StockQuoteCredit,
     StockQuoteCurrent,
+    StockDailySeparateConclusion
 )
 
 
@@ -13,7 +16,7 @@ class DomesticAccount:
     def __init__(self, client: Client):
         self.client = client
 
-    def get_stock_quote_current(
+    def request_stock_quote_current(
         self,
         tr_id: Literal["TTTC0011U", "VTTC0011U", "TTTC0012U", "VTTC0012U"],
         cano: str,
@@ -78,10 +81,10 @@ class DomesticAccount:
             "EXCG_ID_DVSN_CD": excg_id_dvsn_cd,
         }
 
-        response = self.client.post("/uapi/domestic-stock/v1/trading/order-cash", headers=headers, body=body)
+        response = self.client._post("/uapi/domestic-stock/v1/trading/order-cash", headers=headers, body=body)
         return StockQuoteCurrent(**response)
 
-    def get_stock_quote_credit(
+    def request_stock_quote_credit(
         self,
         tr_id: Literal["TTTC0051U", "TTTC0052U"],
         cano: str,
@@ -185,20 +188,189 @@ class DomesticAccount:
             "EXCG_ID_DVSN_CD": excg_id_dvsn_cd,
             "CNDT_PRIC": cndt_pric,
         }
-        response = self.client.post("/uapi/domestic-stock/v1/trading/order-credit", headers=headers, body=body)
+        response = self.client._post("/uapi/domestic-stock/v1/trading/order-credit", headers=headers, body=body)
         return StockQuoteCredit(**response)
 
-    def get_stock_quote_correction(self):
-        """주식주문(정정취소)"""
-        pass
+    def request_stock_quote_correction(
+        self,
+        tr_id: Literal["TTTC0013U", "VTTC0013U"],
+        cano: str,
+        acnt_prdt_cd: str,
+        krx_fwdg_ord_orgno: str,
+        orgn_odno: str,
+        ord_dvsn: Literal[
+            "00",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16",
+            "21",
+            "22",
+            "23",
+            "24",
+        ],
+        rvse_cncl_dvsn_cd: Literal["01", "02"],
+        ord_qty: str,
+        ord_unpr: str,
+        qty_all_ord_yn: Literal["Y", "N"],
+        excg_id_dvsn_cd: Optional[Literal["KRX", "NXT", "SOR"]] = None,
+    ) -> StockQuoteCorrection:
+        """
+        주식주문(정정취소)
 
-    def get_stock_correction_cancellable_qty(self):
-        """주식정정취소가능주문조회"""
-        pass
+        Args:
+            tr_id: TR ID
+            cano: 종합계좌번호
+            acnt_prdt_cd: 계좌상품코드
+            krx_fwdg_ord_orgno: 한국거래소전송주문조직번호
+            orgn_odno: 원주문번호
+            ord_dvsn: 주문구분
+            rvse_cncl_dvsn_cd: 정정취소구분코드
+            ord_qty: 주문수량
+            ord_unpr: 주문단가
+            qty_all_ord_yn: 잔량전부주문여부
+            excg_id_dvsn_cd: 거래소ID구분코드
 
-    def get_stock_daily_separate_conclusion(self):
-        """주식일별주문체결조회"""
-        pass
+        Returns:
+            StockQuoteCorrection: 주식정정/취소 응답 객체
+        """
+        headers = {
+            "tr_id": tr_id,
+        }
+        body = {
+            "CANO": cano,
+            "ACNT_PRDT_CD": acnt_prdt_cd,
+            "KRX_FWDG_ORD_ORGNO": krx_fwdg_ord_orgno,
+            "ORGN_ODNO": orgn_odno,
+            "ORD_DVSN": ord_dvsn,
+            "RVSE_CNCL_DVSN_CD": rvse_cncl_dvsn_cd,
+            "ORD_QTY": ord_qty,
+            "ORD_UNPR": ord_unpr,
+            "QTY_ALL_ORD_YN": qty_all_ord_yn,
+            "EXCG_ID_DVSN_CD": excg_id_dvsn_cd,
+        }
+        response = self.client._post("/uapi/domestic-stock/v1/trading/order-rvsecncl", headers=headers, body=body)
+        return StockQuoteCorrection(**response)
+
+    def get_stock_correction_cancellable_qty(
+        self,
+        tr_id: Literal["TTTC0084R"],
+        tr_cont: str,
+        cano: str,
+        acnt_prdt_cd: str,
+        ctx_area_fk100: str,
+        ctx_area_nk100: str,
+        inqr_dvsn_1: Literal["0", "1"],
+        inqr_dvsn_2: Literal["0", "1", "2"],
+    ) -> StockQuoteCorrectionCancellableQty:
+        """
+        주식정정취소가능주문조회
+
+        Args:
+            tr_id: TR ID
+            tr_cont: 연속 거래 여부, (공백 : 초기 조회, N : 다음 데이터 조회 (output header의 tr_cont가 M일 경우)
+            cano: 종합계좌번호
+            acnt_prdt_cd: 계좌상품코드
+            ctx_area_fk100: 연속조회검색조건100, '공란 : 최초 조회시는 이전 조회 Output CTX_AREA_FK100 값 : 다음페이지 조회시(2번째부터)'
+            ctx_area_nk100: 연속조회키100, '공란 : 최초 조회시 이전 조회 Output CTX_AREA_NK100 값 : 다음페이지 조회시(2번째부터)'
+            inqr_dvsn_1: 조회구분1, '0 주문 1 종목'
+            inqr_dvsn_2: 조회구분2, '0 전체 1 매도 2 매수'
+
+        Returns:
+            StockQuoteCorrectionCancellableQty: 주식정정취소가능주문조회 응답 객체
+        """
+        headers = {
+            "tr_id": tr_id,
+            "tr_cont": tr_cont,
+        }
+
+        params = {
+            "CANO": cano,
+            "ACNT_PRDT_CD": acnt_prdt_cd,
+            "CTX_AREA_FK100": ctx_area_fk100,
+            "CTX_AREA_NK100": ctx_area_nk100,
+            "INQR_DVSN_1": inqr_dvsn_1,
+            "INQR_DVSN_2": inqr_dvsn_2,
+        }
+
+        response = self.client._get("/uapi/domestic-stock/v1/trading/inquire-psbl-rvsecncl", headers=headers, params=params)
+        return StockQuoteCorrectionCancellableQty(**response)
+
+    def get_stock_daily_separate_conclusion(
+        self,
+        tr_id: Literal["TTTC0081R", "CTSC9215R", "VTTC0081R", "VTSC9215R"],
+        tr_cont: Literal["", "N"],
+        cano: str,
+        acnt_prdt_cd: str,
+        inqr_strt_dt: str,
+        inqr_end_dt: str,
+        sll_buy_dvsn_cd: Literal["00", "01", "02"],
+        ord_gno_brno: str,
+        ccld_dvsn: Literal["00", "01", "02"],
+        inqr_dvsn: Literal["00", "01"],
+        inqr_dvsn_1: Literal["", "1", "2"],
+        inqr_dvsn_3: Literal["00", "01", "02", "03", "04", "05", "06", "07"],
+        excg_id_dvsn_cd: Literal["KRX", "NXT", "SOR", "ALL"],
+        ctx_area_fk100: str,
+        ctx_area_nk100: str,
+        pdno: Optional[str] = None,
+        odno: Optional[str] = None,
+        ) -> StockDailySeparateConclusion:
+        """
+        주식일별주문체결조회
+
+        Args:
+            tr_id: TR ID
+            tr_cont: 연속 거래 여부, (공백 : 초기 조회, N : 다음 데이터 조회 (output header의 tr_cont가 M일 경우)
+            cano: 종합계좌번호
+            acnt_prdt_cd: 계좌상품코드
+            inqr_strt_dt: 조회시작일자, YYYYMMDD
+            inqr_end_dt: 조회종료일자, YYYYMMDD
+            sll_buy_dvsn_cd: 매도매수구분코드, 00 : 전체 / 01 : 매도 / 02 : 매수
+            ord_gno_brno: 주문채번지점번호, 주문시 한국투자증권 시스템에서 지정된 영업점코드
+            ccld_dvsn: 체결구분, '00 전체 01 체결 02 미체결'
+            inqr_dvsn: 조회구분, '00 역순 01 정순'
+            inqr_dvsn_1: 조회구분1, '없음: 전체 1: ELW 2: 프리보드'
+            inqr_dvsn_3: 조회구분3, '00 전체 01 현금 02 신용 03 담보 04 대주 05 대여 06 자기융자신규/상환 07 유통융자신규/상환'
+            excg_id_dvsn_cd: 거래소ID구분코드, 한국거래소 : KRX 대체거래소 (NXT) : NXT SOR (Smart Order Routing) : SOR ALL : 전체 ※ 모의투자는 KRX만 제공
+            ctx_area_fk100: 연속조회검색조건100, '공란 : 최초 조회시는 이전 조회 Output CTX_AREA_FK100 값 : 다음페이지 조회시(2번째부터)'
+            ctx_area_nk100: 연속조회키100, '공란 : 최초 조회시 이전 조회 Output CTX_AREA_NK100 값 : 다음페이지 조회시(2번째부터)'
+            pdno: 상품번호, 종목번호(6자리)
+            odno: 주문번호, 주문시 한국투자증권 시스템에서 채번된 주문번호
+
+        Returns:
+            StockDailySeparateConclusion: 주식일별주문체결조회 응답 객체
+        """
+        headers = {
+            "tr_id": tr_id,
+            "tr_cont": tr_cont,
+        }
+        params = {
+            "CANO": cano,
+            "ACNT_PRDT_CD": acnt_prdt_cd,
+            "INQR_STRT_DT": inqr_strt_dt,
+            "INQR_END_DT": inqr_end_dt,
+            "SLL_BUY_DVSN_CD": sll_buy_dvsn_cd,
+            "ORD_GNO_BRNO": ord_gno_brno,
+            "CCLD_DVSN": ccld_dvsn,
+            "INQR_DVSN": inqr_dvsn,
+            "INQR_DVSN_1": inqr_dvsn_1,
+            "INQR_DVSN_3": inqr_dvsn_3,
+            "EXCG_ID_DVSN_CD": excg_id_dvsn_cd,
+            "CTX_AREA_FK100": ctx_area_fk100,
+            "CTX_AREA_NK100": ctx_area_nk100,
+            "PDNO": pdno,
+            "ODNO": odno,
+        }
+        response = self.client._get("/uapi/domestic-stock/v1/trading/inquire-daily-ccld", headers=headers, params=params)
+        return StockDailySeparateConclusion(**response)
 
     def get_stock_balance(self):
         """주식잔고조회"""

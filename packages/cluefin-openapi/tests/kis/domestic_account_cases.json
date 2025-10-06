@@ -1,8 +1,9 @@
 [
     {
-        "method_name": "get_stock_quote_current",
+        "method_name": "request_stock_quote_current",
         "response_model_attr": "StockQuoteCurrent",
         "endpoint": "/uapi/domestic-stock/v1/trading/order-cash",
+        "method": "POST",
         "call_kwargs": {
             "tr_id": "TTTC0011U",
             "cano": "12345678",
@@ -13,7 +14,7 @@
             "ord_qty": 100,
             "ord_unpr": 55000,
             "cndt_pric": 53000,
-            "excg_id_dvsn_cd": "KRX",
+            "excg_id_dvsn_cd": "KRX"
         },
         "expected_headers": {"tr_id": "TTTC0011U"},
         "expected_body": {
@@ -25,14 +26,15 @@
             "ORD_QTY": 100,
             "ORD_UNPR": 55000,
             "CNDT_PRIC": 53000,
-            "EXCG_ID_DVSN_CD": "KRX",
+            "EXCG_ID_DVSN_CD": "KRX"
         },
-        "response_payload": {"items": [{"KRX_FWDG_ORD_ORGNO": "00123", "ODNO": "0000001234", "ORD_TMD": "101500"}]},
+        "response_payload": {"items": [{"KRX_FWDG_ORD_ORGNO": "00123", "ODNO": "0000001234", "ORD_TMD": "101500"}]}
     },
     {
-        "method_name": "get_stock_quote_credit",
+        "method_name": "request_stock_quote_credit",
         "response_model_attr": "StockQuoteCredit",
         "endpoint": "/uapi/domestic-stock/v1/trading/order-credit",
+        "method": "POST",
         "call_kwargs": {
             "tr_id": "TTTC0051U",
             "cano": "87654321",
@@ -56,7 +58,7 @@
             "cvrg_slct_rson_cd": "C3",
             "cvrg_seq": "04",
             "excg_id_dvsn_cd": "KRX",
-            "cndt_pric": "73000",
+            "cndt_pric": "73000"
         },
         "expected_headers": {"tr_id": "TTTC0051U"},
         "expected_body": {
@@ -82,8 +84,182 @@
             "CVRG_SLCT_RSON_CD": "C3",
             "CVRG_SEQ": "04",
             "EXCG_ID_DVSN_CD": "KRX",
-            "CNDT_PRIC": "73000",
+            "CNDT_PRIC": "73000"
         },
-        "response_payload": {"items": [{"KRX_FWDG_ORD_ORGNO": "00999", "ODNO": "0000005678", "ORD_TMD": "101510"}]},
+        "response_payload": {"items": [{"KRX_FWDG_ORD_ORGNO": "00999", "ODNO": "0000005678", "ORD_TMD": "101510"}]}
     },
+    {
+        "method_name": "request_stock_quote_correction",
+        "response_model_attr": "StockQuoteCorrection",
+        "endpoint": "/uapi/domestic-stock/v1/trading/order-rvsecncl",
+        "method": "POST",
+        "call_kwargs": {
+            "tr_id": "TTTC0013U",
+            "cano": "12345678",
+            "acnt_prdt_cd": "01",
+            "krx_fwdg_ord_orgno": "00123",
+            "orgn_odno": "0000001234",
+            "ord_dvsn": "00",
+            "rvse_cncl_dvsn_cd": "01",
+            "ord_qty": "50",
+            "ord_unpr": "56000",
+            "qty_all_ord_yn": "N",
+            "excg_id_dvsn_cd": "KRX"
+        },
+        "expected_headers": {"tr_id": "TTTC0013U"},
+        "expected_body": {
+            "CANO": "12345678",
+            "ACNT_PRDT_CD": "01",
+            "KRX_FWDG_ORD_ORGNO": "00123",
+            "ORGN_ODNO": "0000001234",
+            "ORD_DVSN": "00",
+            "RVSE_CNCL_DVSN_CD": "01",
+            "ORD_QTY": "50",
+            "ORD_UNPR": "56000",
+            "QTY_ALL_ORD_YN": "N",
+            "EXCG_ID_DVSN_CD": "KRX"
+        },
+        "response_payload": {"items": [{"KRX_FWDG_ORD_ORGNO": "00123", "ODNO": "0000001234", "ORD_TMD": "101520"}]}
+    },
+    {
+        "method_name": "get_stock_correction_cancellable_qty",
+        "response_model_attr": "StockQuoteCorrectionCancellableQty",
+        "endpoint": "/uapi/domestic-stock/v1/trading/inquire-psbl-rvsecncl",
+        "method": "GET",
+        "call_kwargs": {
+            "tr_id": "TTTC0084R",
+            "tr_cont": "F",
+            "cano": "12345678",
+            "acnt_prdt_cd": "01",
+            "inqr_dvsn_1": "0",
+            "inqr_dvsn_2": "1",
+            "ctx_area_fk100": "CTX123",
+            "ctx_area_nk100": "NK456"
+        },
+        "expected_headers": {
+            "tr_id": "TTTC0084R",
+            "tr_cont": "F"
+        },
+        "expected_body": {
+            "CANO": "12345678",
+            "ACNT_PRDT_CD": "01",
+            "CTX_AREA_FK100": "CTX123",
+            "CTX_AREA_NK100": "NK456",
+            "INQR_DVSN_1": "0",
+            "INQR_DVSN_2": "1"
+        },
+        "response_payload": {
+            "items": [
+                {
+                    "ord_gno_brno": "06010",
+                    "odno": "0000012345",
+                    "orgn_odno": "000000",
+                    "ord_dvsn_name": "시장가",
+                    "pdno": "005930",
+                    "prdt_name": "삼성전자",
+                    "rvse_cncl_dvsn_name": "정상",
+                    "ord_qty": "100",
+                    "ord_unpr": "55000",
+                    "ord_tmd": "101500",
+                    "tot_ccld_qty": "50",
+                    "tot_ccld_amt": "2750000",
+                    "psbl_qty": "50",
+                    "sll_buy_dvsn_cd": "01",
+                    "ord_dvsn_cd": "00",
+                    "mgco_aptm_odno": "",
+                    "excg_dvsn_cd": "10",
+                    "excg_id_dvsn_cd": "KRX",
+                    "excg_id_dvsn_name": "한국거래소",
+                    "stpm_cndt_pric": "0",
+                    "stpm_efct_occr_yn": "N"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_daily_separate_conclusion",
+        "response_model_attr": "StockDailySeparateConclusion",
+        "endpoint": "/uapi/domestic-stock/v1/trading/inquire-daily-ccld",
+        "method": "GET",
+        "call_kwargs": {
+            "tr_id": "TTTC0081R",
+            "tr_cont": "",
+            "cano": "12345678",
+            "acnt_prdt_cd": "01",
+            "inqr_strt_dt": "20240101",
+            "inqr_end_dt": "20240131",
+            "sll_buy_dvsn_cd": "00",
+            "ord_gno_brno": "06010",
+            "ccld_dvsn": "00",
+            "inqr_dvsn": "00",
+            "inqr_dvsn_1": "",
+            "inqr_dvsn_3": "00",
+            "excg_id_dvsn_cd": "KRX",
+            "ctx_area_fk100": "",
+            "ctx_area_nk100": "",
+            "pdno": "005930",
+            "odno": "0000001234"
+        },
+        "expected_headers": {
+            "tr_id": "TTTC0081R",
+            "tr_cont": ""
+        },
+        "expected_body": {
+            "CANO": "12345678",
+            "ACNT_PRDT_CD": "01",
+            "INQR_STRT_DT": "20240101",
+            "INQR_END_DT": "20240131",
+            "SLL_BUY_DVSN_CD": "00",
+            "ORD_GNO_BRNO": "06010",
+            "CCLD_DVSN": "00",
+            "INQR_DVSN": "00",
+            "INQR_DVSN_1": "",
+            "INQR_DVSN_3": "00",
+            "EXCG_ID_DVSN_CD": "KRX",
+            "CTX_AREA_FK100": "",
+            "CTX_AREA_NK100": "",
+            "PDNO": "005930",
+            "ODNO": "0000001234"
+        },
+        "response_payload": {
+            "output1": [
+                {
+                    "ord_dt": "20240115",
+                    "ord_gno_brno": "06010",
+                    "odno": "0000001234",
+                    "orgn_odno": "0000000000",
+                    "ord_dvsn_name": "지정가",
+                    "sll_buy_dvsn_cd": "02",
+                    "sll_buy_dvsn_cd_name": "매수",
+                    "pdno": "005930",
+                    "prdt_name": "삼성전자",
+                    "ord_qty": "100",
+                    "ord_unpr": "70000",
+                    "ord_tmd": "093000",
+                    "tot_ccld_qty": "100",
+                    "avg_prvs": "70000",
+                    "cncl_yn": "N",
+                    "tot_ccld_amt": "7000000",
+                    "loan_dt": "",
+                    "ordr_empno": "",
+                    "ord_dvsn_cd": "00",
+                    "cnc_cfrm_qty": "0",
+                    "rmn_qty": "0",
+                    "rjct_qty": "0",
+                    "ccld_cndt_name": "",
+                    "infm_tmd": "093015",
+                    "ctac_tlno": "",
+                    "prdt_type_cd": "300",
+                    "excg_dvsn_cd": "10"
+                }
+            ],
+            "output2": {
+                "tot_ord_qty": "100",
+                "tot_ccld_qty": "100",
+                "tot_ccld_amt": "7000000",
+                "pchs_avg_pric": "70000",
+                "prsm_tlex_smtl": "21000"
+            }
+        }
+    }
 ]

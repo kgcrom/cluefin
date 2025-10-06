@@ -97,6 +97,28 @@ class Client(object):
         return OverseasMarketAnalysis(self)
 
     # TODO 법인은 추후 필요해지면 구현
+    def _get(self, path: str, headers: dict, params: dict) -> requests.Response:
+        url = self.base_url + path
+        if self.debug:
+            logger.debug(f"GET {url}")
+            logger.debug(f"Headers: {headers}")
+            logger.debug(f"Params: {params}")
+
+        merged_headers = self._session.headers.copy()
+        merged_headers["content-type"] = "application/json;charset=UTF-8"
+        merged_headers["accept"] = "application/json"
+        merged_headers["authorization"] = self.token
+        merged_headers["appkey"] = self.app_key
+        merged_headers["appsecret"] = self.secret_key
+        merged_headers["custtype"] = "P"  # P: 개인, C: 법인
+        response = self._session.get(url, headers=merged_headers, params=params, timeout=30)
+        if self.debug:
+            logger.debug(f"Response Status: {response.status_code}")
+            logger.debug(f"Response Headers: {response.headers}")
+            logger.debug(f"Response Body: {response.text}")
+        return response
+
+    # TODO 법인은 추후 필요해지면 구현
     def _post(self, path: str, headers: dict, body: dict) -> requests.Response:
         url = self.base_url + path
         if self.debug:

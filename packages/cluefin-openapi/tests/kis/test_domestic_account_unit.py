@@ -20,6 +20,7 @@ def load_domestic_account_cases():
             case["method_name"],
             case["response_model_attr"],
             case["endpoint"],
+            case["method"],
             case["call_kwargs"],
             case["expected_headers"],
             case["expected_body"],
@@ -31,28 +32,12 @@ def load_domestic_account_cases():
 
 DOMESTIC_ACCOUNT_CASES = load_domestic_account_cases()
 
-
-@pytest.fixture(autouse=True)
-def patch_request_fields(monkeypatch):
-    for name in (
-        "CANO",
-        "ACNT_PRDT_CD",
-        "PDNO",
-        "SLL_TYPE",
-        "ORD_DVSN",
-        "ORD_QTY",
-        "ORD_UNPR",
-        "CNDT_PRIC",
-        "EXCG_ID_DVSN_CD",
-    ):
-        monkeypatch.setattr(domestic_account_module, name, name, raising=False)
-
-
 @pytest.mark.parametrize(
     (
         "method_name",
         "response_model_attr",
         "endpoint",
+        "method",
         "call_kwargs",
         "expected_headers",
         "expected_body",
@@ -65,13 +50,15 @@ def test_domestic_account_builds_request(
     method_name,
     response_model_attr,
     endpoint,
+    method,
     call_kwargs,
     expected_headers,
     expected_body,
     response_payload,
 ):
     client = Mock()
-    client.post.return_value = response_payload
+    client._post.return_value = response_payload
+    client._get.return_value = response_payload
     captured_instances = []
 
     class DummyResponseModel:
@@ -84,11 +71,18 @@ def test_domestic_account_builds_request(
     account = DomesticAccount(client)
     result = getattr(account, method_name)(**call_kwargs)
 
-    client.post.assert_called_once_with(
-        endpoint,
-        headers=expected_headers,
-        body=expected_body,
-    )
+    if method == "POST":
+        client._post.assert_called_once_with(
+            endpoint,
+            headers=expected_headers,
+            body=expected_body,
+        )
+    else:
+        client._get.assert_called_once_with(
+            endpoint,
+            headers=expected_headers,
+            params=expected_body,
+        )
 
     assert len(captured_instances) == 1
     assert result is captured_instances[0]
