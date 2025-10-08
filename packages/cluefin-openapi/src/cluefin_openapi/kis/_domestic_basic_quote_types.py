@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Optional, Sequence, Literal
 
 from pydantic import BaseModel, Field
 
@@ -80,7 +80,7 @@ class DomesticStockCurrentPriceItem(BaseModel):
     stck_shrn_iscd: str = Field(title="주식 단축 종목코드", max_length=9)
     fcam_cnnm: str = Field(title="액면가 통화명", max_length=20)
     cpfn_cnnm: str = Field(title="자본금 통화명", max_length=20)
-    # 존재하지 않는 필드임
+    # TODO(typo) 존재하지 않는 필드임
     # apprch_rate: str = Field(title="접근도", max_length=112)
     frgn_hldn_qty: str = Field(title="외국인 보유 수량", max_length=18)
     vi_cls_code: str = Field(title="VI적용구분코드", max_length=1)
@@ -102,8 +102,8 @@ class DomesticStockCurrentPrice(BaseModel, KisHttpBody):
 class DomesticStockCurrentPriceItem2(BaseModel):
 
     rprs_mrkt_kor_name: str = Field(title="대표 시장 한글명", max_length=40)
-    new_hgpr_lwpr_cls_code: str = Field(title="신 고가 저가 구분 코드", max_length=10)
-    mxpr_llam_cls_code: str = Field(title="상한하한가 구분코드", max_length=10)
+    new_hgpr_lwpr_cls_code: Optional[str] = Field(default=None, title="신 고가 저가 구분 코드", max_length=10)
+    mxpr_llam_cls_code: Optional[str] = Field(default=None, title="상한하한가 구분코드", max_length=10)
     crdt_able_yn: str = Field(title="신용 가능 여부", max_length=1)
     stck_mxpr: str = Field(title="주식 상한가", max_length=10)
     elw_pblc_yn: str = Field(title="ELW 발행 여부", max_length=1)
@@ -133,14 +133,14 @@ class DomesticStockCurrentPriceItem2(BaseModel):
     stck_llam: str = Field(title="주식 하한가", max_length=10)
     new_lstn_cls_name: str = Field(title="신규 상장 구분명", max_length=40)
     vlnt_deal_cls_name: str = Field(title="임의 매매 구분명", max_length=16)
-    flng_cls_name: str = Field(title="락 구분 이름", max_length=40)
-    revl_issu_reas_name: str = Field(title="재평가 종목 사유 명", max_length=40)
-    mrkt_warn_cls_name: str = Field(title="시장 경고 구분명", max_length=40)
+    flng_cls_name: Optional[str] = Field(default=None, title="락 구분 이름", max_length=40)
+    revl_issu_reas_name: Optional[str] = Field(default=None, title="재평가 종목 사유 명", max_length=40)
+    mrkt_warn_cls_name: Optional[Literal["투자환기", "투자경고"]] = Field(default=None, title="시장 경고 구분명", max_length=40)
     stck_sdpr: str = Field(title="주식 기준가", max_length=10)
-    bstp_cls_code: str = Field(title="업종 구분 코드", max_length=4)
+    bstp_cls_code: str = Field(title="업종 구분 코드", max_length=9)
     stck_prdy_clpr: str = Field(title="주식 전일 종가", max_length=10)
     insn_pbnt_yn: str = Field(title="불성실 공시 여부", max_length=1)
-    fcam_mod_cls_name: str = Field(title="액면가 변경 구분 명", max_length=10)
+    fcam_mod_cls_name: Optional[str] = Field(default=None, title="액면가 변경 구분 명", max_length=10)
     stck_prpr: str = Field(title="주식 현재가", max_length=10)
     prdy_vrss: str = Field(title="전일 대비", max_length=10)
     prdy_vrss_sign: str = Field(title="전일 대비 부호", max_length=1)
@@ -178,7 +178,7 @@ class DomesticStockCurrentPriceDetailItem(BaseModel):
 class DomesticStockCurrentPriceDetail(BaseModel, KisHttpBody):
     """국내주식 현재가 체결"""
 
-    pass
+    output: Sequence[DomesticStockCurrentPriceDetailItem] = Field(default_factory=list)
 
 
 class DomesticStockCurrentPriceDailyItem(BaseModel):
@@ -301,7 +301,7 @@ class DomesticStockCurrentPriceAskingExpectedConclusionItem2(BaseModel):
 class DomesticStockCurrentPriceAskingExpectedConclusion(BaseModel, KisHttpBody):
     """국내주식 현재가 호가/예상체결"""
 
-    output1: Sequence[DomesticStockCurrentPriceAskingExpectedConclusionItem1] = Field(default_factory=list)
+    output1: DomesticStockCurrentPriceAskingExpectedConclusionItem1 = Field(title="응답상세1")
     output2: DomesticStockCurrentPriceAskingExpectedConclusionItem2 = Field(title="응답상세2")
 
 
@@ -420,7 +420,7 @@ class DomesticStockCurrentPriceMemberItem(BaseModel):
 class DomesticStockCurrentPriceMember(BaseModel, KisHttpBody):
     """국내주식 현재가 회원사"""
 
-    output: Sequence[DomesticStockCurrentPriceMemberItem] = Field(title="응답상세")
+    output: DomesticStockCurrentPriceMemberItem = Field(title="응답상세")
 
 
 class DomesticStockPeriodQuoteItem1(BaseModel):
@@ -453,7 +453,7 @@ class DomesticStockPeriodQuoteItem1(BaseModel):
     per: str = Field(title="PER", max_length=11)
     eps: str = Field(title="EPS", max_length=14)
     pbr: str = Field(title="PBR", max_length=11)
-    itewhol_loan_rmnd_ratem: str = Field(title="전체 융자 잔고 비율", max_length=13)
+    itewhol_loan_rmnd_rate: str = Field(alias="itewhol_loan_rmnd_ratem name", title="전체 융자 잔고 비율", max_length=13)
 
 class DomesticStockPeriodQuoteItem2(BaseModel):
     stck_bsop_date: str = Field(title="주식 영업 일자", max_length=8)
@@ -502,7 +502,7 @@ class DomesticStockTodayMinuteChartItem2(BaseModel):
 class DomesticStockTodayMinuteChart(BaseModel, KisHttpBody):
     """국내주식 당일분봉조회"""
 
-    output: DomesticStockTodayMinuteChartItem1 = Field(title="응답상세1")
+    output1: DomesticStockTodayMinuteChartItem1 = Field(title="응답상세1")
     output2: Sequence[DomesticStockTodayMinuteChartItem2] = Field(default_factory=list)
 
 
@@ -549,7 +549,8 @@ class DomesticStockCurrentPriceTimeItemConclusionItem2(BaseModel):
     """국내주식 현재가 당일시간대별체결 응답상세2"""
 
     stck_cntg_hour: str = Field(title="주식 체결 시간", max_length=6)
-    stck_pbpr: str = Field(title="주식 현재가", max_length=10)
+    # TODO(typo) 문서에는 stck_pbpr 이라고 되어있으나, stck_prpr 오타로 보임
+    stck_prpr: str = Field(title="주식 현재가", max_length=10)
     prdy_vrss: str = Field(title="전일 대비", max_length=10)
     prdy_vrss_sign: str = Field(title="전일 대비 부호", max_length=1)
     prdy_ctrt: str = Field(title="전일 대비율", max_length=11)
@@ -563,7 +564,7 @@ class DomesticStockCurrentPriceTimeItemConclusion(BaseModel, KisHttpBody):
     """국내주식 현재가 당일시간대별체결"""
 
     output1: DomesticStockCurrentPriceTimeItemConclusionItem1 = Field(title="응답상세1")
-    output2: DomesticStockCurrentPriceTimeItemConclusionItem2 = Field(title="응답상세2")
+    output2: Sequence[DomesticStockCurrentPriceTimeItemConclusionItem2] = Field(default_factory=list)
 
 
 class DomesticStockCurrentPriceDailyOvertimePriceItem1(BaseModel):
@@ -642,13 +643,13 @@ class DomesticStockCurrentPriceOvertimeConclusionItem2(BaseModel):
 class DomesticStockCurrentPriceOvertimeConclusion(BaseModel, KisHttpBody):
     """국내주식 현재가 시간외체결"""
 
-    output1: DomesticStockCurrentPriceOvertimeConclusionItem1 = Field(title="응답상세1")
-    output2: Sequence[DomesticStockCurrentPriceOvertimeConclusionItem2] = Field(default_factory=list)
+    output1: Optional[DomesticStockCurrentPriceOvertimeConclusionItem1] = Field(title="응답상세1", default=None)
+    output2: Optional[Sequence[DomesticStockCurrentPriceOvertimeConclusionItem2]] = Field(default_factory=list)
 
 
 class DomesticStockOvertimeCurrentPriceItem(BaseModel):
     bstp_kor_isnm: str = Field(title="업종 한글 종목명", max_length=40)
-    mang_issu_cls_name: str = Field(title="관리 종목 구분 명", max_length=40)
+    mang_issu_cls_name: Optional[str] = Field(title="관리 종목 구분 명", max_length=40, default=None)
     ovtm_untp_prpr: str = Field(title="시간외 단일가 현재가", max_length=10)
     ovtm_untp_prdy_vrss: str = Field(title="시간외 단일가 전일 대비", max_length=10)
     ovtm_untp_prdy_vrss_sign: str = Field(title="시간외 단일가 전일 대비 부호", max_length=1)
@@ -670,14 +671,15 @@ class DomesticStockOvertimeCurrentPriceItem(BaseModel):
     new_lstn_cls_name: str = Field(title="신규 상장 구분 명", max_length=40)
     sltr_yn: str = Field(title="정리매매 여부", max_length=1)
     mang_issu_yn: str = Field(title="관리 종목 여부", max_length=1)
-    mrkt_warn_cls_code: str = Field(title="시장 경고 구분 코드", max_length=2)
+    mrkt_warn_cls_code: Optional[str] = Field(title="시장 경고 구분 코드", max_length=2, default=None)
     trht_yn: str = Field(title="거래정지 여부", max_length=1)
     vlnt_deal_cls_name: str = Field(title="임의 매매 구분 명", max_length=16)
     ovtm_untp_sdpr: str = Field(title="시간외 단일가 기준가", max_length=10)
-    mrkt_warn_cls_name: str = Field(title="시장 경고 구분 명", max_length=40)
-    revl_issu_reas_name: str = Field(title="재평가 종목 사유 명", max_length=40)
+    # TODO(typo) 문서에는 required Y지만 실제로는 Optional, 한글명도 '시장 경구..'
+    mrkt_warn_cls_name: Optional[str] = Field(title="시장 경고 구분 명", max_length=40, default=None)
+    revl_issu_reas_name: Optional[str] = Field(title="재평가 종목 사유 명", max_length=40, default=None)
     insn_pbnt_yn: str = Field(title="불성실 공시 여부", max_length=1)
-    flng_cls_name: str = Field(title="락 구분 이름", max_length=40)
+    flng_cls_name: Optional[str] = Field(title="락 구분 이름", max_length=40, default=None)
     rprs_mrkt_kor_name: str = Field(title="대표 시장 한글 명", max_length=40)
     ovtm_vi_cls_code: str = Field(title="시간외단일가VI적용구분코드", max_length=1)
     bidp: str = Field(title="매수호가", max_length=10)
@@ -715,23 +717,24 @@ class DomesticStockOvertimeAskingPriceItem(BaseModel):
     ovtm_untp_askp_icdc1: str = Field(title="시간외 단일가 매도호가 증감1", max_length=10)
     ovtm_untp_askp_icdc2: str = Field(title="시간외 단일가 매도호가 증감2", max_length=10)
     ovtm_untp_askp_icdc3: str = Field(title="시간외 단일가 매도호가 증감3", max_length=10)
-    ovtm_untp_askp_icdc4: str = Field(title="시간외 단일가 매도호가 증감4", max_length=10)
-    ovtm_untp_askp_icdc5: str = Field(title="시간외 단일가 매도호가 증감5", max_length=10)
-    ovtm_untp_askp_icdc6: str = Field(title="시간외 단일가 매도호가 증감6", max_length=10)
-    ovtm_untp_askp_icdc7: str = Field(title="시간외 단일가 매도호가 증감7", max_length=10)
-    ovtm_untp_askp_icdc8: str = Field(title="시간외 단일가 매도호가 증감8", max_length=10)
-    ovtm_untp_askp_icdc9: str = Field(title="시간외 단일가 매도호가 증감9", max_length=10)
-    ovtm_untp_askp_icdc10: str = Field(title="시간외 단일가 매도호가 증감10", max_length=10)
+    # TODO(typo): 문서에는 required Y지만 실제로는 Optional
+    ovtm_untp_askp_icdc4: Optional[str] = Field(title="시간외 단일가 매도호가 증감4", max_length=10, default=None)
+    ovtm_untp_askp_icdc5: Optional[str] = Field(title="시간외 단일가 매도호가 증감5", max_length=10, default=None)
+    ovtm_untp_askp_icdc6: Optional[str] = Field(title="시간외 단일가 매도호가 증감6", max_length=10, default=None)
+    ovtm_untp_askp_icdc7: Optional[str] = Field(title="시간외 단일가 매도호가 증감7", max_length=10, default=None)
+    ovtm_untp_askp_icdc8: Optional[str] = Field(title="시간외 단일가 매도호가 증감8", max_length=10, default=None)
+    ovtm_untp_askp_icdc9: Optional[str] = Field(title="시간외 단일가 매도호가 증감9", max_length=10, default=None)
+    ovtm_untp_askp_icdc10: Optional[str] = Field(title="시간외 단일가 매도호가 증감10", max_length=10, default=None)
     ovtm_untp_bidp_icdc1: str = Field(title="시간외 단일가 매수호가 증감1", max_length=10)
     ovtm_untp_bidp_icdc2: str = Field(title="시간외 단일가 매수호가 증감2", max_length=10)
     ovtm_untp_bidp_icdc3: str = Field(title="시간외 단일가 매수호가 증감3", max_length=10)
-    ovtm_untp_bidp_icdc4: str = Field(title="시간외 단일가 매수호가 증감4", max_length=10)
-    ovtm_untp_bidp_icdc5: str = Field(title="시간외 단일가 매수호가 증감5", max_length=10)
-    ovtm_untp_bidp_icdc6: str = Field(title="시간외 단일가 매수호가 증감6", max_length=10)
-    ovtm_untp_bidp_icdc7: str = Field(title="시간외 단일가 매수호가 증감7", max_length=10)
-    ovtm_untp_bidp_icdc8: str = Field(title="시간외 단일가 매수호가 증감8", max_length=10)
-    ovtm_untp_bidp_icdc9: str = Field(title="시간외 단일가 매수호가 증감9", max_length=10)
-    ovtm_untp_bidp_icdc10: str = Field(title="시간외 단일가 매수호가 증감10", max_length=10)
+    ovtm_untp_bidp_icdc4: Optional[str] = Field(title="시간외 단일가 매수호가 증감4", max_length=10, default=None)
+    ovtm_untp_bidp_icdc5: Optional[str] = Field(title="시간외 단일가 매수호가 증감5", max_length=10, default=None)
+    ovtm_untp_bidp_icdc6: Optional[str] = Field(title="시간외 단일가 매수호가 증감6", max_length=10, default=None)
+    ovtm_untp_bidp_icdc7: Optional[str] = Field(title="시간외 단일가 매수호가 증감7", max_length=10, default=None)
+    ovtm_untp_bidp_icdc8: Optional[str] = Field(title="시간외 단일가 매수호가 증감8", max_length=10, default=None)
+    ovtm_untp_bidp_icdc9: Optional[str] = Field(title="시간외 단일가 매수호가 증감9", max_length=10, default=None)
+    ovtm_untp_bidp_icdc10: Optional[str] = Field(title="시간외 단일가 매수호가 증감10", max_length=10, default=None)
     ovtm_untp_askp_rsqn1: str = Field(title="시간외 단일가 매도호가 잔량1", max_length=12)
     ovtm_untp_askp_rsqn2: str = Field(title="시간외 단일가 매도호가 잔량2", max_length=12)
     ovtm_untp_askp_rsqn3: str = Field(title="시간외 단일가 매도호가 잔량3", max_length=12)
@@ -770,7 +773,8 @@ class DomesticStockOvertimeAskingPriceItem(BaseModel):
 class DomesticStockOvertimeAskingPrice(BaseModel, KisHttpBody):
     """국내주식 시간외호가"""
 
-    output1: DomesticStockOvertimeAskingPriceItem = Field(title="응답상세")
+    # TODO(typo) output이 맞지만 문서에는 output1로 잘못 표기되어 있음.
+    output: DomesticStockOvertimeAskingPriceItem = Field(title="응답상세")
 
 
 class DomesticStockClosingExpectedPriceItem(BaseModel):
@@ -815,7 +819,8 @@ class DomesticEtfEtnCurrentPriceItem(BaseModel):
     trc_errt: str = Field(title="추적 오차율", max_length=82)
     stck_sdpr: str = Field(title="주식 기준가", max_length=10)
     stck_sspr: str = Field(title="주식 대용가", max_length=10)
-    nmix_ctrt: str = Field(title="지수 대비율", max_length=135)
+    # TODO(typo) 존재하지 않는 필드가 문서에 포함되어 있음.
+    # nmix_ctrt: str = Field(title="지수 대비율", max_length=135)
     etf_crcl_stcn: str = Field(title="ETF 유통 주수", max_length=18)
     etf_ntas_ttam: str = Field(title="ETF 순자산 총액", max_length=22)
     etf_frcr_ntas_ttam: str = Field(title="ETF 외화 순자산 총액", max_length=22)
@@ -854,7 +859,7 @@ class DomesticEtfEtnCurrentPriceItem(BaseModel):
 
 
 class DomesticEtfEtnCurrentPrice(BaseModel, KisHttpBody):
-    """국내ETF/ETN 현재가 시세"""
+    """국내ETF/ETN 현재가"""
 
     output: DomesticEtfEtnCurrentPriceItem = Field(title="응답상세")
 
@@ -862,22 +867,22 @@ class DomesticEtfEtnCurrentPrice(BaseModel, KisHttpBody):
 class DomesticEtfComponentStockPriceItem1(BaseModel):
     """국내ETF 구성종목시세 아이템1"""
 
-    stlm_dt: str = Field(title="매매 일자", max_length=10)
-    stck_prpr: str = Field(title="주식 현재가", max_length=10)
+    stck_prpr: str = Field(title="매매 일자", max_length=10)
+    prdy_vrss: str = Field(title="주식 현재가", max_length=10)
     prdy_vrss_sign: str = Field(title="전일 대비 부호", max_length=1)
-    prdy_vrss: str = Field(title="전일 대비", max_length=82)
-    prdy_ctrt: str = Field(title="전일 대비율", max_length=18)
-    acml_vol: str = Field(title="누적 거래량", max_length=112)
-    prpr_dvsn: str = Field(title="결제 일자", max_length=1)
-    whol_ftln_new_qty: str = Field(title="전체 융자 신규 주수", max_length=112)
-    whol_ftln_rdem_qty: str = Field(title="전체 융자 상환 주수", max_length=112)
-    whol_ftln_rmnd_qty: str = Field(title="전체 융자 잔고 주수", max_length=84)
-    whol_ftln_new_amt: str = Field(title="전체 융자 신규 금액", max_length=22)
-    whol_ftln_rdem_amt: str = Field(title="전체 융자 상환 금액", max_length=112)
-    whol_ftln_rmnd_amt: str = Field(title="전체 융자 잔고 금액", max_length=112)
-    whol_ftln_rmnd_rate: str = Field(title="전체 융자 잔고 비율", max_length=112)
-    whol_ftln_rlim_rate: str = Field(title="전체 융자 공여율", max_length=112)
-    whol_seln_new_qty: str = Field(title="전체 대주 신규 주수", max_length=18)
+    prdy_ctrt: str = Field(title="전일 대비", max_length=82)
+    etf_cnfg_issu_avls: str = Field(title="전일 대비율", max_length=18)
+    nav: str = Field(title="누적 거래량", max_length=112)
+    nav_prdy_vrss_sign: str = Field(title="결제 일자", max_length=1)
+    nav_prdy_vrss: str = Field(title="전체 융자 신규 주수", max_length=112)
+    nav_prdy_ctrt: str = Field(title="전체 융자 상환 주수", max_length=84)
+    etf_ntas_ttam: str = Field(title="전체 융자 잔고 주수", max_length=22)
+    prdy_clpr_nav: str = Field(title="전체 융자 신규 금액", max_length=112)
+    oprc_nav: str = Field(title="전체 융자 상환 금액", max_length=112)
+    hprc_nav: str = Field(title="전체 융자 잔고 금액", max_length=112)
+    lprc_nav: str = Field(title="전체 융자 잔고 비율", max_length=112)
+    etf_cu_unit_scrt_cnt: str = Field(title="전체 융자 공여율", max_length=18)
+    etf_cnfg_issu_cnt: str = Field(title="전체 대주 신규 주수", max_length=18)
 
 class DomesticEtfComponentStockPriceItem2(BaseModel):
     """국내ETF 구성종목시세 아이템2"""

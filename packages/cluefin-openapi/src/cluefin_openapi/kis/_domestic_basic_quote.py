@@ -102,7 +102,7 @@ class DomesticBasicQuote:
             "FID_INPUT_ISCD": fid_input_iscd,
         }
         response = self.client._get(
-            "/uapi/domestic-stock/v1/quotations/inquire-detail-price", headers=headers, params=params
+            "/uapi/domestic-stock/v1/quotations/inquire-ccnl", headers=headers, params=params
         )
         return DomesticStockCurrentPriceDetail.model_validate(response.json())
 
@@ -203,7 +203,7 @@ class DomesticBasicQuote:
         response = self.client._get("/uapi/domestic-stock/v1/quotations/inquire-member", headers=headers, params=params)
         return DomesticStockCurrentPriceMember.model_validate(response.json())
 
-    def get_domestic_stock_period_quote(
+    def get_stock_period_quote(
         self,
         fid_cond_mrkt_div_code: Literal["J", "NX", "UN"],
         fid_input_iscd: str,
@@ -383,7 +383,7 @@ class DomesticBasicQuote:
         Args:
             fid_cond_mrkt_div_code (str): 조건 시장 분류 코드, J:KRX, NX:NXT, UN:통합
             fid_input_iscd (str): 입력 종목코드
-            fid_input_hour_1 (str): 입력 시간 1, 조회 시작시간 (HHMMSS)
+            fid_input_hour_1 (str): 입력 시간, 조회 시작시간 (HHMMSS)
 
         Returns:
             DomesticStockCurrentPriceOvertimeConclusion: 주식현재가 시간외시간별체결
@@ -596,7 +596,7 @@ class DomesticBasicQuote:
         self,
         fid_hour_cls_code: str,
         fid_input_iscd: str,
-        fid_cond_mrkt_div_code: Literal["J"] = "J",
+        fid_cond_mrkt_div_code: Literal["E"] = "E",
     ) -> DomesticEtfNavComparisonTimeTrend:
         """
         NAV 비교추이(분)

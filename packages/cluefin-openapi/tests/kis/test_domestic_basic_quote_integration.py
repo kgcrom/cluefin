@@ -5,6 +5,7 @@ credentials to be present in the environment (or in `.env.test`).
 """
 
 import os
+import time
 from typing import Literal, cast
 
 import dotenv
@@ -47,7 +48,8 @@ def client(auth_dev, token_cache):
         app_key=auth_dev.app_key,
         secret_key=auth_dev.secret_key,
         token=token_response.access_token,
-        env="dev",
+        env=auth_dev.env,
+        # debug=True,
     )
 
 
@@ -57,6 +59,7 @@ def client(auth_dev, token_cache):
 @pytest.mark.integration
 def test_get_stock_current_price(client: Client):
     """Test basic stock current price inquiry (Samsung Electronics)."""
+    time.sleep(1)
     try:
         response = client.domestic_basic_quote.get_stock_current_price(
             fid_cond_mrkt_div_code="J", fid_input_iscd="005930"
@@ -75,6 +78,7 @@ def test_get_stock_current_price(client: Client):
 @pytest.mark.integration
 def test_get_stock_current_price_2(client: Client):
     """Test alternative stock current price endpoint (Kakao)."""
+    time.sleep(1)
     try:
         response = client.domestic_basic_quote.get_stock_current_price_2(
             fid_cond_mrkt_div_code="J", fid_input_iscd="035720"
@@ -92,6 +96,7 @@ def test_get_stock_current_price_2(client: Client):
 @pytest.mark.integration
 def test_get_stock_current_price_detail(client: Client):
     """Test stock current price detail with execution info."""
+    time.sleep(1)
     try:
         response = client.domestic_basic_quote.get_stock_current_price_detail(
             fid_cond_mrkt_div_code="J", fid_input_iscd="005930"
@@ -109,6 +114,7 @@ def test_get_stock_current_price_detail(client: Client):
 @pytest.mark.integration
 def test_get_stock_current_price_daily(client: Client):
     """Test stock current price daily/weekly/monthly quotes."""
+    time.sleep(1)
     try:
         # Test daily quotes
         response = client.domestic_basic_quote.get_stock_current_price_daily(
@@ -130,6 +136,7 @@ def test_get_stock_current_price_daily(client: Client):
 @pytest.mark.integration
 def test_get_stock_current_price_asking_expected_conclusion(client: Client):
     """Test stock current price bid/ask and expected execution."""
+    time.sleep(1)
     try:
         response = client.domestic_basic_quote.get_stock_current_price_asking_expected_conclusion(
             fid_cond_mrkt_div_code="J", fid_input_iscd="005930"
@@ -147,6 +154,7 @@ def test_get_stock_current_price_asking_expected_conclusion(client: Client):
 @pytest.mark.integration
 def test_get_stock_current_price_investor(client: Client):
     """Test stock current price investor trading information."""
+    time.sleep(1)
     try:
         response = client.domestic_basic_quote.get_stock_current_price_investor(
             fid_cond_mrkt_div_code="J", fid_input_iscd="005930"
@@ -164,6 +172,7 @@ def test_get_stock_current_price_investor(client: Client):
 @pytest.mark.integration
 def test_get_stock_current_price_member(client: Client):
     """Test stock current price member firm trading information."""
+    time.sleep(1)
     try:
         response = client.domestic_basic_quote.get_stock_current_price_member(
             fid_cond_mrkt_div_code="J", fid_input_iscd="005930"
@@ -184,6 +193,7 @@ def test_get_stock_current_price_member(client: Client):
 @pytest.mark.integration
 def test_get_domestic_stock_period_quote(client: Client):
     """Test domestic stock period quote (daily/weekly/monthly/yearly)."""
+    time.sleep(1)
     try:
         # Test daily period quotes for the last 30 days
         response = client.domestic_basic_quote.get_domestic_stock_period_quote(
@@ -207,6 +217,7 @@ def test_get_domestic_stock_period_quote(client: Client):
 @pytest.mark.integration
 def test_get_stock_today_minute_chart(client: Client):
     """Test stock today's minute chart."""
+    time.sleep(1)
     try:
         response = client.domestic_basic_quote.get_stock_today_minute_chart(
             fid_cond_mrkt_div_code="J",
@@ -228,6 +239,7 @@ def test_get_stock_today_minute_chart(client: Client):
 @pytest.mark.integration
 def test_get_stock_daily_minute_chart(client: Client):
     """Test stock daily minute chart."""
+    time.sleep(1)
     try:
         response = client.domestic_basic_quote.get_stock_daily_minute_chart(
             fid_cond_mrkt_div_code="J",
@@ -250,6 +262,7 @@ def test_get_stock_daily_minute_chart(client: Client):
 @pytest.mark.integration
 def test_get_stock_current_price_time_item_conclusion(client: Client):
     """Test stock current price intraday time-based execution."""
+    time.sleep(1)
     try:
         response = client.domestic_basic_quote.get_stock_current_price_time_item_conclusion(
             fid_cond_mrkt_div_code="J", fid_input_iscd="005930", fid_input_hour_1="090000"
@@ -270,6 +283,7 @@ def test_get_stock_current_price_time_item_conclusion(client: Client):
 @pytest.mark.integration
 def test_get_stock_current_price_daily_overtime_price(client: Client):
     """Test stock current price daily overtime prices."""
+    time.sleep(1)
     try:
         response = client.domestic_basic_quote.get_stock_current_price_daily_overtime_price(
             fid_cond_mrkt_div_code="J", fid_input_iscd="005930"
@@ -287,6 +301,7 @@ def test_get_stock_current_price_daily_overtime_price(client: Client):
 @pytest.mark.integration
 def test_get_stock_current_price_overtime_conclusion(client: Client):
     """Test stock current price overtime execution by time."""
+    time.sleep(1)
     try:
         response = client.domestic_basic_quote.get_stock_current_price_overtime_conclusion(
             fid_cond_mrkt_div_code="J", fid_input_iscd="005930", fid_input_hour_1="080000"
@@ -304,6 +319,7 @@ def test_get_stock_current_price_overtime_conclusion(client: Client):
 @pytest.mark.integration
 def test_get_stock_overtime_current_price(client: Client):
     """Test stock overtime current price."""
+    time.sleep(1)
     try:
         response = client.domestic_basic_quote.get_stock_overtime_current_price(
             fid_cond_mrkt_div_code="J", fid_input_iscd="005930"
@@ -321,6 +337,7 @@ def test_get_stock_overtime_current_price(client: Client):
 @pytest.mark.integration
 def test_get_stock_overtime_asking_price(client: Client):
     """Test stock overtime bid/ask prices."""
+    time.sleep(1)
     try:
         response = client.domestic_basic_quote.get_stock_overtime_asking_price(
             fid_input_iscd="005930", fid_cond_mrkt_div_code="J"
@@ -341,6 +358,7 @@ def test_get_stock_overtime_asking_price(client: Client):
 @pytest.mark.integration
 def test_get_stock_closing_expected_price(client: Client):
     """Test market closing expected prices."""
+    time.sleep(1)
     try:
         response = client.domestic_basic_quote.get_stock_closing_expected_price(
             fid_rank_sort_cls_code="0",
@@ -365,6 +383,7 @@ def test_get_stock_closing_expected_price(client: Client):
 @pytest.mark.integration
 def test_get_etfetn_current_price(client: Client):
     """Test ETF/ETN current price (KODEX 200)."""
+    time.sleep(1)
     try:
         response = client.domestic_basic_quote.get_etfetn_current_price(
             fid_input_iscd="069500", fid_cond_mrkt_div_code="J"
@@ -382,6 +401,7 @@ def test_get_etfetn_current_price(client: Client):
 @pytest.mark.integration
 def test_get_etf_component_stock_price(client: Client):
     """Test ETF component stock prices (KODEX 200)."""
+    time.sleep(1)
     try:
         response = client.domestic_basic_quote.get_etf_component_stock_price(
             fid_input_iscd="069500", fid_cond_mrkt_div_code="J", fid_cond_scr_div_code="11216"
@@ -399,9 +419,10 @@ def test_get_etf_component_stock_price(client: Client):
 @pytest.mark.integration
 def test_get_etf_nav_comparison_trend(client: Client):
     """Test ETF NAV comparison trend at stock level."""
+    time.sleep(1)
     try:
         response = client.domestic_basic_quote.get_etf_nav_comparison_trend(
-            fid_input_iscd="069500", fid_cond_mrkt_div_code="J"
+            fid_input_iscd="069500",
         )
 
         # Verify response type
@@ -416,6 +437,7 @@ def test_get_etf_nav_comparison_trend(client: Client):
 @pytest.mark.integration
 def test_get_etf_nav_comparison_daily_trend(client: Client):
     """Test ETF NAV comparison daily trend."""
+    time.sleep(1)
     try:
         response = client.domestic_basic_quote.get_etf_nav_comparison_daily_trend(
             fid_input_iscd="069500",
@@ -436,9 +458,10 @@ def test_get_etf_nav_comparison_daily_trend(client: Client):
 @pytest.mark.integration
 def test_get_etf_nav_comparison_time_trend(client: Client):
     """Test ETF NAV comparison time (minute) trend."""
+    time.sleep(1)
     try:
         response = client.domestic_basic_quote.get_etf_nav_comparison_time_trend(
-            fid_hour_cls_code="60", fid_input_iscd="069500", fid_cond_mrkt_div_code="J"
+            fid_hour_cls_code="60", fid_input_iscd="069500",
         )
 
         # Verify response type

@@ -14,6 +14,7 @@ class Auth:
     def __init__(self, app_key: str, secret_key: SecretStr, env: Literal["dev", "prod"] = "dev") -> None:
         self.app_key = app_key
         self.secret_key = secret_key
+        self.env = env
 
         if env == "prod":
             self.url = "https://openapi.koreainvestment.com:9443"
