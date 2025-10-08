@@ -636,8 +636,8 @@
         }
     },
     {
-        "method_name": "get_pension_executed_balance",
-        "response_model_attr": "PensionExecutedBalance",
+        "method_name": "get_pension_conclusion_balance",
+        "response_model_attr": "PensionConclusionBalance",
         "endpoint": "/uapi/domestic-stock/v1/trading/pension/inquire-present-balance",
         "method": "GET",
         "call_kwargs": {
@@ -679,8 +679,8 @@
         }
     },
     {
-        "method_name": "get_pension_unexecuted_history",
-        "response_model_attr": "PensionUnexecutedHistory",
+        "method_name": "get_pension_not_conclusion_history",
+        "response_model_attr": "PensionNotConclusionHistory",
         "endpoint": "/uapi/domestic-stock/v1/trading/pension/inquire-daily-ccld",
         "method": "GET",
         "call_kwargs": {

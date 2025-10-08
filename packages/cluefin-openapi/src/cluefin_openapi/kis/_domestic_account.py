@@ -7,9 +7,9 @@ from cluefin_openapi.kis._domestic_account_types import (
     InvestmentAccountCurrentStatus,
     PensionBalanceInquiry,
     PensionBuyTradableInquiry,
-    PensionExecutedBalance,
+    PensionConclusionBalance,
+    PensionNotConclusionHistory,
     PensionReserveDepositInquiry,
-    PensionUnexecutedHistory,
     PeriodAccountingCurrentStatus,
     PeriodProfitSummary,
     PeriodTradingProfitStatus,
@@ -501,14 +501,14 @@ class DomesticAccount:
         return BuyTradableInquiry.model_validate(response.json())
 
     def get_sell_tradable_inquiry(
-            self,
-            cano: str,
-            acnt_prdt_cd: str,
-            pdno: str,
-            ) -> SellTradableInquiry:
+        self,
+        cano: str,
+        acnt_prdt_cd: str,
+        pdno: str,
+    ) -> SellTradableInquiry:
         """
         매도가능수량조회
-        
+
         Args:
             cano: 종합계좌번호
             acnt_prdt_cd: 계좌상품코드
@@ -525,9 +525,7 @@ class DomesticAccount:
             "ACNT_PRDT_CD": acnt_prdt_cd,
             "PDNO": pdno,
         }
-        response = self.client._get(
-            "/uapi/domestic-stock/v1/trading/inquire-psbl-sell", headers=headers, params=params
-        )
+        response = self.client._get("/uapi/domestic-stock/v1/trading/inquire-psbl-sell", headers=headers, params=params)
         return SellTradableInquiry.model_validate(response.json())
 
     def get_credit_tradable_inquiry(
@@ -536,11 +534,20 @@ class DomesticAccount:
         acnt_prdt_cd: str,
         pdno: str,
         ord_unpr: str,
-        ord_dvsn: Literal["00", "01","02","03","04","05","06","07",],
+        ord_dvsn: Literal[
+            "00",
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+        ],
         crdt_type: Literal["21", "22", "23", "24", "25", "26", "27", "28"],
         cma_evlu_amt_icld_yn: Literal["Y", "N"],
         ovrs_icld_yn: Literal["Y", "N"],
-        ):
+    ):
         """
         신용매수가능조회
 
@@ -575,7 +582,6 @@ class DomesticAccount:
         )
         return CreditTradableInquiry.model_validate(response.json())
 
-
     def request_stock_reserve_quote(
         self,
         cano: str,
@@ -589,7 +595,7 @@ class DomesticAccount:
         loan_dt: Optional[str] = None,
         rsvn_ord_end_dt: Optional[str] = None,
         ldng_dt: Optional[str] = None,
-        ) -> StockReserveQuote:
+    ) -> StockReserveQuote:
         """
         주식예약주문
 
@@ -627,7 +633,6 @@ class DomesticAccount:
         }
         response = self.client._post("/uapi/domestic-stock/v1/trading/order-resv", headers=headers, body=body)
         return StockReserveQuote.model_validate(response.json())
-        
 
     def request_stock_reserve_quote_correction(
         self,
@@ -645,7 +650,7 @@ class DomesticAccount:
         rsvn_ord_end_dt: Optional[str] = None,
         rsvn_ord_orgno: Optional[str] = None,
         rsvn_ord_ord_dt: Optional[str] = None,
-        ) -> StockReserveQuoteCorrection:
+    ) -> StockReserveQuoteCorrection:
         """
         주식예약주문정정취소
 
@@ -687,20 +692,20 @@ class DomesticAccount:
         return StockReserveQuoteCorrection.model_validate(response.json())
 
     def get_stock_reserve_quote_inquiry(
-            self,
-            tr_cont: Literal["", "N"],
-            rsvn_ord_ord_dt: str,
-            rsvn_ord_end_dt: str,
-            rsvn_ord_seq: str,
-            cano: str,
-            acnt_prdt_cd: str,
-            prcs_dvsn_cd: Literal["0", "1", "2"],
-            cncl_yn: Literal["Y", "N"],
-            pdno: str,
-            sll_buy_dvsn_cd: Literal["00", "01", "02"],
-            ctx_area_fk200: str = "",
-            ctx_area_nk200: str = "",
-            ) -> StockReserveQuoteInquiry:
+        self,
+        tr_cont: Literal["", "N"],
+        rsvn_ord_ord_dt: str,
+        rsvn_ord_end_dt: str,
+        rsvn_ord_seq: str,
+        cano: str,
+        acnt_prdt_cd: str,
+        prcs_dvsn_cd: Literal["0", "1", "2"],
+        cncl_yn: Literal["Y", "N"],
+        pdno: str,
+        sll_buy_dvsn_cd: Literal["00", "01", "02"],
+        ctx_area_fk200: str = "",
+        ctx_area_nk200: str = "",
+    ) -> StockReserveQuoteInquiry:
         """
         주식예약주문조회
 
@@ -741,14 +746,14 @@ class DomesticAccount:
         response = self.client._get("/uapi/domestic-stock/v1/trading/order-resv-ccnl", headers=headers, params=params)
         return StockReserveQuoteInquiry.model_validate(response.json())
 
-    def get_pension_executed_balance(
-            self,
-            cano: str,
-            ctx_area_fk100: str,
-            ctx_area_nk100: str,
-            acnt_prdt_cd: str = "29",
-            user_dvsn_cd: str = "00",
-            ) -> PensionExecutedBalance:
+    def get_pension_conclusion_balance(
+        self,
+        cano: str,
+        ctx_area_fk100: str,
+        ctx_area_nk100: str,
+        acnt_prdt_cd: str = "29",
+        user_dvsn_cd: str = "00",
+    ) -> PensionConclusionBalance:
         """
         퇴직연금 체결기준잔고
 
@@ -760,7 +765,7 @@ class DomesticAccount:
             user_dvsn_cd: 사용자구분코드, 기본값 "00"
 
         Returns:
-            PensionExecutedBalance: 퇴직연금 체결기준잔고 응답 객체
+            PensionConclusionBalance: 퇴직연금 체결기준잔고 응답 객체
         """
         headers = {
             "tr_id": "TTTC2202R",
@@ -772,20 +777,22 @@ class DomesticAccount:
             "CTX_AREA_FK100": ctx_area_fk100,
             "CTX_AREA_NK100": ctx_area_nk100,
         }
-        response = self.client._get("/uapi/domestic-stock/v1/trading/pension/inquire-present-balance", headers=headers, params=params)
-        return PensionExecutedBalance.model_validate(response.json())
+        response = self.client._get(
+            "/uapi/domestic-stock/v1/trading/pension/inquire-present-balance", headers=headers, params=params
+        )
+        return PensionConclusionBalance.model_validate(response.json())
 
-    def get_pension_unexecuted_history(
-            self,
-            cano: str,
-            sll_buy_dvsn_cd: Literal["00", "01", "02"],
-            ccld_nccs_dvsn: Literal["%%", "01", "02"],
-            ctx_area_fk100: str,
-            ctx_area_nk100: str,
-            acnt_prdt_cd: str = "29",
-            inqr_dvsn_3: Literal["00"] = "00",
-            user_dvsn_cd: str = "00",
-            ) -> PensionUnexecutedHistory:
+    def get_pension_not_conclusion_history(
+        self,
+        cano: str,
+        sll_buy_dvsn_cd: Literal["00", "01", "02"],
+        ccld_nccs_dvsn: Literal["%%", "01", "02"],
+        ctx_area_fk100: str,
+        ctx_area_nk100: str,
+        acnt_prdt_cd: str = "29",
+        inqr_dvsn_3: Literal["00"] = "00",
+        user_dvsn_cd: str = "00",
+    ) -> PensionNotConclusionHistory:
         """
         퇴직연금 미체결내역
 
@@ -800,7 +807,7 @@ class DomesticAccount:
             user_dvsn_cd: 사용자구분코드, 기본값 "00"
 
         Returns:
-            PensionUnexecutedHistory: 퇴직연금 미체결내역 응답 객체
+            PensionNotConclusionHistory: 퇴직연금 미체결내역 응답 객체
         """
         headers = {
             "tr_id": "TTTC2210R",
@@ -815,8 +822,10 @@ class DomesticAccount:
             "CTX_AREA_FK100": ctx_area_fk100,
             "CTX_AREA_NK100": ctx_area_nk100,
         }
-        response = self.client._get("/uapi/domestic-stock/v1/trading/pension/inquire-daily-ccld", headers=headers, params=params)
-        return PensionUnexecutedHistory.model_validate(response.json())
+        response = self.client._get(
+            "/uapi/domestic-stock/v1/trading/pension/inquire-daily-ccld", headers=headers, params=params
+        )
+        return PensionNotConclusionHistory.model_validate(response.json())
 
     def get_pension_buy_tradable_inquiry(
         self,
@@ -827,10 +836,10 @@ class DomesticAccount:
         ord_unpr: str,
         acnt_prdt_cd: str = "29",
         acca_dvsn_cd: Literal["00"] = "00",
-        ) -> PensionBuyTradableInquiry:
+    ) -> PensionBuyTradableInquiry:
         """
         퇴직연금 매수가능조회
-        
+
         Args:
             cano: 종합계좌번호
             pdno: 상품번호, 종목번호(6자리), 공백 입력시 전체조회
@@ -850,24 +859,25 @@ class DomesticAccount:
             "CANO": cano,
             "ACNT_PRDT_CD": acnt_prdt_cd,
             "PDNO": pdno,
-            "ACCA_DVSN_CD": acca_dvsn_cd,       
+            "ACCA_DVSN_CD": acca_dvsn_cd,
             "CMA_EVLU_AMT_ICLD_YN": cma_evlu_amt_icld_yn,
             "ORD_DVSN": ord_dvsn,
             "ORD_UNPR": ord_unpr,
         }
-        response = self.client._get("/uapi/domestic-stock/v1/trading/pension/inquire-psbl-order", headers=headers, params=params)
+        response = self.client._get(
+            "/uapi/domestic-stock/v1/trading/pension/inquire-psbl-order", headers=headers, params=params
+        )
         return PensionBuyTradableInquiry.model_validate(response.json())
 
-
     def get_pension_reserve_deposit_inquiry(
-            self,
-            cano: str,
-            acnt_prdt_cd: str = "29",
-            user_dvsn_cd: str = "00",
-            ) -> PensionReserveDepositInquiry:
+        self,
+        cano: str,
+        acnt_prdt_cd: str = "29",
+        user_dvsn_cd: str = "00",
+    ) -> PensionReserveDepositInquiry:
         """
         퇴직연금 예수금조회
-        
+
         Args:
             cano: 종합계좌번호
             acnt_prdt_cd: 계좌상품코드, 기본값 "29"
@@ -884,7 +894,9 @@ class DomesticAccount:
             "ACNT_PRDT_CD": acnt_prdt_cd,
             "USER_DVSN_CD": user_dvsn_cd,
         }
-        response = self.client._get("/uapi/domestic-stock/v1/trading/pension/inquire-deposit", headers=headers, params=params)
+        response = self.client._get(
+            "/uapi/domestic-stock/v1/trading/pension/inquire-deposit", headers=headers, params=params
+        )
         return PensionReserveDepositInquiry.model_validate(response.json())
 
     def get_pension_balance_inquiry(
@@ -895,7 +907,7 @@ class DomesticAccount:
         acnt_prdt_cd: str = "29",
         user_dvsn_cd: str = "00",
         inqr_dvsn: Literal["00"] = "00",
-        ) -> PensionBalanceInquiry:
+    ) -> PensionBalanceInquiry:
         """
         퇴직연금 잔고조회
 
@@ -921,7 +933,9 @@ class DomesticAccount:
             "CTX_AREA_FK100": ctx_area_fk100,
             "CTX_AREA_NK100": ctx_area_nk100,
         }
-        response = self.client._get("/uapi/domestic-stock/v1/trading/pension/inquire-balance", headers=headers, params=params)
+        response = self.client._get(
+            "/uapi/domestic-stock/v1/trading/pension/inquire-balance", headers=headers, params=params
+        )
         return PensionBalanceInquiry.model_validate(response.json())
 
     def get_stock_balance_loss_profit(
@@ -939,7 +953,7 @@ class DomesticAccount:
         fund_sttl_icld_yn: Literal["N", "Y"] = "N",
         fncg_amt_auto_rdpt_yn: Literal["N", "Y"] = "N",
         prcs_dvsn: Literal["00", "01"] = "00",
-        ) -> StockBalanceLossProfit:
+    ) -> StockBalanceLossProfit:
         """
         주식잔고조회 실현손익
 
@@ -979,7 +993,9 @@ class DomesticAccount:
             "CTX_AREA_FK100": ctx_area_fk100,
             "CTX_AREA_NK100": ctx_area_nk100,
         }
-        response = self.client._get("/uapi/domestic-stock/v1/trading/inquire-balance-rlz-pl", headers=headers, params=params)
+        response = self.client._get(
+            "/uapi/domestic-stock/v1/trading/inquire-balance-rlz-pl", headers=headers, params=params
+        )
         return StockBalanceLossProfit.model_validate(response.json())
 
     def get_investment_account_current_status(
@@ -989,10 +1005,10 @@ class DomesticAccount:
         acnt_prdt_cd: str,
         inqr_dvsn_1: Literal["", "N", "Y"] = "",
         bspr_bf_dt_aply_yn: Literal["", "N", "Y"] = "",
-        ) -> InvestmentAccountCurrentStatus:
+    ) -> InvestmentAccountCurrentStatus:
         """
         투자계좌자산현황조회
-        
+
         Args:
             tr_cont: 연속 거래 여부, (공백 : 초기 조회, N : 다음 데이터 조회 (output header의 tr_cont가 M일 경우)
             cano: 종합계좌번호
@@ -1013,7 +1029,9 @@ class DomesticAccount:
             "INQR_DVSN_1": inqr_dvsn_1,
             "BSPR_BF_DT_APLY_YN": bspr_bf_dt_aply_yn,
         }
-        response = self.client._get("/uapi/domestic-stock/v1/trading/inquire-account-balance", headers=headers, params=params)
+        response = self.client._get(
+            "/uapi/domestic-stock/v1/trading/inquire-account-balance", headers=headers, params=params
+        )
         return InvestmentAccountCurrentStatus.model_validate(response.json())
 
     def get_period_profit_summary(
@@ -1023,13 +1041,13 @@ class DomesticAccount:
         cano: str,
         inqr_strt_dt: str,
         inqr_end_dt: str,
-        pdno: str ,
+        pdno: str,
         ctx_area_nk100: str,
         ctx_area_fk100: str,
         sort_dvsn: Literal["00", "01", "02"],
         inqr_dvsn: Literal["00"] = "00",
-        cblc_dvsn: Literal["00"] = "00"
-        ) -> PeriodProfitSummary:
+        cblc_dvsn: Literal["00"] = "00",
+    ) -> PeriodProfitSummary:
         """
         기간별순익별합산조회
 
@@ -1060,10 +1078,12 @@ class DomesticAccount:
             "CTX_AREA_NK100": ctx_area_nk100,
             "CTX_AREA_FK100": ctx_area_fk100,
             "SORT_DVSN": sort_dvsn,
-            "INQR_DVSN": inqr_dvsn, 
+            "INQR_DVSN": inqr_dvsn,
             "CBLC_DVSN": cblc_dvsn,
         }
-        response = self.client._get("/uapi/domestic-stock/v1/trading/inquire-period-profit", headers=headers, params=params)
+        response = self.client._get(
+            "/uapi/domestic-stock/v1/trading/inquire-period-profit", headers=headers, params=params
+        )
         return PeriodProfitSummary.model_validate(response.json())
 
     def get_period_trading_profit_status(
@@ -1078,7 +1098,7 @@ class DomesticAccount:
         ctx_area_nk100: str,
         ctx_area_fk100: str,
         cblc_dvsn: Literal["00", "01", "02"] = "00",
-        ) -> PeriodTradingProfitStatus:
+    ) -> PeriodTradingProfitStatus:
         """
         기간별매매순익현황조회
 
@@ -1112,17 +1132,19 @@ class DomesticAccount:
             "CTX_AREA_FK100": ctx_area_fk100,
             "CBLC_DVSN": cblc_dvsn,
         }
-        response = self.client._get("/uapi/domestic-stock/v1/trading/inquire-period-trade-profit", headers=headers, params=params)
+        response = self.client._get(
+            "/uapi/domestic-stock/v1/trading/inquire-period-trade-profit", headers=headers, params=params
+        )
         return PeriodTradingProfitStatus.model_validate(response.json())
 
     def get_stock_integrated_deposit_balance(
-            self,
-            cano: str,
-            acnt_prdt_cd: str,
-            wcrc_frcr_dvsn_cd: Literal["01", "02"],
-            fwex_ctrt_frcr_dvsn_cd: Literal["01", "02"],
-            cma_evlu_amt_icld_yn: Literal["N", "Y"] = "N",
-            ) -> StockIntegratedDepositBalance:
+        self,
+        cano: str,
+        acnt_prdt_cd: str,
+        wcrc_frcr_dvsn_cd: Literal["01", "02"],
+        fwex_ctrt_frcr_dvsn_cd: Literal["01", "02"],
+        cma_evlu_amt_icld_yn: Literal["N", "Y"] = "N",
+    ) -> StockIntegratedDepositBalance:
         """
         주식통합증거금 현황
         Args:
@@ -1149,24 +1171,24 @@ class DomesticAccount:
         return StockIntegratedDepositBalance.model_validate(response.json())
 
     def get_period_accounting_current_status(
-            self,
-            tr_cont: Literal["", "N"],
-            cano: str,
-            acnt_prdt_cd: str,
-            inqr_strt_dt: str,
-            inqr_end_dt: str,
-            ctx_area_nk100: str,
-            ctx_area_fk100: str,
-            inqr_dvsn: Literal["03"] = "03",
-            cust_rncno25: str = "",
-            hmid: str = "",
-            rght_type_cd: str = "",
-            pdno: str = "",
-            prdt_type_cd: str = "",
-            ) -> PeriodAccountingCurrentStatus:
+        self,
+        tr_cont: Literal["", "N"],
+        cano: str,
+        acnt_prdt_cd: str,
+        inqr_strt_dt: str,
+        inqr_end_dt: str,
+        ctx_area_nk100: str,
+        ctx_area_fk100: str,
+        inqr_dvsn: Literal["03"] = "03",
+        cust_rncno25: str = "",
+        hmid: str = "",
+        rght_type_cd: str = "",
+        pdno: str = "",
+        prdt_type_cd: str = "",
+    ) -> PeriodAccountingCurrentStatus:
         """
         기간별계좌권리현황조회
-        
+
         Args:
             tr_cont: 연속 거래 여부, (공백 : 초기 조회, N : 다음 데이터 조회 (output header의 tr_cont가 M일 경우)
             cano: 종합계좌번호

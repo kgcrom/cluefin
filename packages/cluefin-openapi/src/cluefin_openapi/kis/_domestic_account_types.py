@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, Mapping, Optional, Sequence
+from typing import Optional, Sequence
 
 from pydantic import BaseModel, Field
 
@@ -314,10 +314,12 @@ class SellTradableInquiryItem(BaseModel):
     evlu_pfls_amt: str = Field(title="평가손익금액", description="평가금액 - 매입금액", max_length=19)
     evlu_pfls_rt: str = Field(title="평가손익율", max_length=72)
 
+
 class SellTradableInquiry(BaseModel, KisHttpBody):
     """매도가능수량조회 응답"""
 
     output1: Sequence[SellTradableInquiryItem] = Field(default_factory=list)
+
 
 class CreditTradableInquiryItem(BaseModel):
     ord_psbl_cash: str = Field(title="주문가능현금", max_length=19)
@@ -333,13 +335,16 @@ class CreditTradableInquiryItem(BaseModel):
     ovrs_re_use_amt_wcrc: str = Field(title="해외재사용금액원화", max_length=19)
     ord_psbl_frcr_amt_wcrc: str = Field(title="주문가능외화금액원화", max_length=19)
 
+
 class CreditTradableInquiry(BaseModel, KisHttpBody):
     """신용매수가능조회 응답"""
 
     output1: Sequence[CreditTradableInquiryItem] = Field(default_factory=list)
 
+
 class StockReserveQuoteItem(BaseModel):
     rsvn_ord_seq: Optional[str] = Field(title="예약주문순번", max_length=10)
+
 
 class StockReserveQuote(BaseModel, KisHttpBody):
     """주식예약주문 응답"""
@@ -350,10 +355,12 @@ class StockReserveQuote(BaseModel, KisHttpBody):
 class StockReserveQuoteCorrectionItem(BaseModel):
     nrml_prcs_yn: str = Field(title="정상처리여부", max_length=1)
 
+
 class StockReserveQuoteCorrection(BaseModel, KisHttpBody):
     """주식예약주문정정/취소 응답"""
 
     output: Sequence[StockReserveQuoteCorrectionItem] = Field(default_factory=list)
+
 
 class StockReserveQuoteInquiryItem(BaseModel):
     rsvn_ord_seq: str = Field(title="예약주문 순번", max_length=10)
@@ -380,13 +387,14 @@ class StockReserveQuoteInquiryItem(BaseModel):
     tmnl_mdia_kind_cd: str = Field(title="단말매체종류코드", max_length=2)
     rsvn_end_dt: str = Field(title="예약종료일자", max_length=8)
 
+
 class StockReserveQuoteInquiry(BaseModel, KisHttpBody):
     """주식예약주문조회 응답"""
 
     output: Sequence[StockReserveQuoteInquiryItem] = Field(default_factory=list)
 
 
-class PensionExecutedBalanceItem1(BaseModel):
+class PensionConclusionBalanceItem1(BaseModel):
     cblc_dvsn: str = Field(title="잔고구분", max_length=2)
     cblc_dvsn_name: str = Field(title="잔고구분명", max_length=60)
     pdno: str = Field(title="상품번호", max_length=12)
@@ -402,7 +410,7 @@ class PensionExecutedBalanceItem1(BaseModel):
     cblc_weit: str = Field(title="잔고비중", max_length=238)
 
 
-class PensionExecutedBalanceItem2(BaseModel):
+class PensionConclusionBalanceItem2(BaseModel):
     pchs_amt_smtl_amt: str = Field(title="매입금액합계금액", max_length=19)
     evlu_amt_smtl_amt: str = Field(title="평가금액합계금액", max_length=19)
     evlu_pfls_smtl_amt: str = Field(title="평가손익합계금액", max_length=19)
@@ -410,13 +418,15 @@ class PensionExecutedBalanceItem2(BaseModel):
     thdt_tot_pfls_amt: str = Field(title="당일총손익금액", max_length=19)
     pftrt: str = Field(title="수익률", max_length=238)
 
-class PensionExecutedBalance(BaseModel, KisHttpBody):
+
+class PensionConclusionBalance(BaseModel, KisHttpBody):
     """퇴직연금체결기준잔고 응답"""
 
-    output1: Sequence[PensionExecutedBalanceItem1] = Field(default_factory=list)
-    output2: Sequence[PensionExecutedBalanceItem2] = Field(default_factory=list)
+    output1: Sequence[PensionConclusionBalanceItem1] = Field(default_factory=list)
+    output2: Sequence[PensionConclusionBalanceItem2] = Field(default_factory=list)
 
-class PensionUnexecutedHistoryItem(BaseModel):
+
+class PensionNotConclusionHistoryItem(BaseModel):
     ord_gno_brno: str = Field(alias="ord_gno_brno", title="주문채번지점번호", max_length=5)
     sll_buy_dvsn_cd: str = Field(alias="sll_buy_dvsn_cd", title="매도매수구분코드", max_length=2)
     trad_dvsn_name: str = Field(alias="trad_dvsn_name", title="매매구분명", max_length=60)
@@ -438,10 +448,12 @@ class PensionUnexecutedHistoryItem(BaseModel):
     stpm_efct_occr_yn: str = Field(alias="stpm_efct_occr_yn", title="스톱지정가효력발생여부", max_length=1)
     excg_id_dvsn_cd: str = Field(alias="excg_id_dvsn_cd", title="거래소ID구분코드", max_length=3)
 
-class PensionUnexecutedHistory(BaseModel, KisHttpBody):
+
+class PensionNotConclusionHistory(BaseModel, KisHttpBody):
     """퇴직연금미체결내역 응답"""
 
-    output: Sequence[PensionUnexecutedHistoryItem] = Field(default_factory=list)
+    output: Sequence[PensionNotConclusionHistoryItem] = Field(default_factory=list)
+
 
 class PensionBuyTradableInquiryItem(BaseModel):
     ord_psbl_cash: str = Field(alias="ord_psbl_cash", title="주문가능현금", max_length=19)
@@ -450,16 +462,19 @@ class PensionBuyTradableInquiryItem(BaseModel):
     max_buy_amt: str = Field(alias="max_buy_amt", title="최대매수금액", max_length=19)
     max_buy_qty: str = Field(alias="max_buy_qty", title="최대매수수량", max_length=10)
 
+
 class PensionBuyTradableInquiry(BaseModel, KisHttpBody):
     """퇴직연금 매수가능조회 응답"""
 
     output: Sequence[PensionBuyTradableInquiryItem] = Field(default_factory=list)
+
 
 class PensionReserveDepositInquiryItem(BaseModel):
     dnca_tota: str = Field(alias="dnca_tota", title="예수금총액", max_length=19)
     nxdy_excc_amt: str = Field(alias="nxdy_excc_amt", title="익일정산액", max_length=19)
     nxdy_sttl_amt: str = Field(alias="nxdy_sttl_amt", title="익일결제금액", max_length=19)
     nx2_day_sttl_amt: str = Field(alias="nx2_day_sttl_amt", title="익일결제금액", max_length=19)
+
 
 class PensionReserveDepositInquiry(BaseModel, KisHttpBody):
     """퇴직연금 예수금조회 응답"""
@@ -483,6 +498,7 @@ class PensionBalanceInquiryItem1(BaseModel):
     evlu_pfls_amt: str = Field(alias="evlu_pfls_amt", title="평가손익금액", max_length=19)
     evlu_erng_rt: str = Field(alias="evlu_erng_rt", title="평가수익율", max_length=238)
 
+
 class PensionBalanceInquiryItem2(BaseModel):
     dnca_tot_amt: str = Field(alias="dnca_tot_amt", title="예수금총금액", max_length=19)
     nxdy_excc_amt: str = Field(alias="nxdy_excc_amt", title="익일정산금액", max_length=19)
@@ -493,11 +509,13 @@ class PensionBalanceInquiryItem2(BaseModel):
     scts_evlu_amt: str = Field(alias="scts_evlu_amt", title="유가평가금액", max_length=19)
     tot_evlu_amt: str = Field(alias="tot_evlu_amt", title="총평가금액", max_length=19)
 
+
 class PensionBalanceInquiry(BaseModel, KisHttpBody):
     """퇴직연금 잔고조회 응답"""
 
     output1: Sequence[PensionBalanceInquiryItem1] = Field(default_factory=list)
     output2: Sequence[PensionBalanceInquiryItem2] = Field(default_factory=list)
+
 
 class StockBalanceLossProfitItem1(BaseModel):
     pdno: str = Field(alias="pdno", title="상품번호", max_length=12)
@@ -523,6 +541,7 @@ class StockBalanceLossProfitItem1(BaseModel):
     stck_loan_unpr: str = Field(alias="stck_loan_unpr", title="주식대출단가", max_length=23)
     bfdy_cprs_icdc: str = Field(alias="bfdy_cprs_icdc", title="전일대비증감", max_length=19)
     fltt_rt: str = Field(alias="fltt_rt", title="등락율", max_length=32)
+
 
 class StockBalanceLossProfitItem2(BaseModel):
     dnca_tot_amt: str = Field(alias="dnca_tot_amt", title="예수금총금액", max_length=19)
@@ -554,11 +573,13 @@ class StockBalanceLossProfitItem2(BaseModel):
     real_evlu_pfls: str = Field(alias="real_evlu_pfls", title="실평가손익", max_length=19)
     real_evlu_pfls_erng_rt: str = Field(alias="real_evlu_pfls_erng_rt", title="실평가손익수익율", max_length=32)
 
+
 class StockBalanceLossProfit(BaseModel, KisHttpBody):
     """주식잔고조회 실현손익 응답"""
 
     output1: Sequence[StockBalanceLossProfitItem1] = Field(default_factory=list)
     output2: Sequence[StockBalanceLossProfitItem2] = Field(default_factory=list)
+
 
 class InvestmentAccountCurrentStatusItem1(BaseModel):
     pchs_amt: str = Field(description="매입금액")
@@ -567,6 +588,7 @@ class InvestmentAccountCurrentStatusItem1(BaseModel):
     crdt_lnd_amt: str = Field(description="신용대출금액")
     real_nass_amt: str = Field(description="실제순자산금액")
     whol_weit_rt: str = Field(description="전체비중율")
+
 
 class InvestmentAccountCurrentStatusItem2(BaseModel):
     pchs_amt_smtl: str = Field(description="매입금액합계")
@@ -595,11 +617,13 @@ class InvestmentAccountCurrentStatusItem2(BaseModel):
     pbst_sbsc_fnds_loan_use_amt: str = Field(description="공모주청약자금대출사용금액")
     etpr_crdt_grnt_loan_amt: str = Field(description="기업신용공여대출금액")
 
+
 class InvestmentAccountCurrentStatus(BaseModel, KisHttpBody):
     """투자계좌자산현황조회 응답"""
 
     output1: Sequence[InvestmentAccountCurrentStatusItem1] = Field(default_factory=list)
     output2: Sequence[InvestmentAccountCurrentStatusItem2] = Field(default_factory=list)
+
 
 class PeriodProfitSummaryItem1(BaseModel):
     trad_dt: str = Field(description="매매일자")
@@ -612,6 +636,7 @@ class PeriodProfitSummaryItem1(BaseModel):
     pfls_rt: str = Field(description="손익률")
     sll_qty1: str = Field(description="매도수량1")
     buy_qty1: str = Field(description="매수수량1")
+
 
 class PeriodProfitSummaryItem2(BaseModel):
     sll_qty_smtl: str = Field(description="매도수량합계")
@@ -632,11 +657,13 @@ class PeriodProfitSummaryItem2(BaseModel):
     tot_rlzt_pfls: str = Field(description="총실현손익")
     loan_int: str = Field(description="대출이자")
 
+
 class PeriodProfitSummary(BaseModel, KisHttpBody):
     """기간별순익별합산조회 응답"""
 
     output1: Sequence[PeriodProfitSummaryItem1] = Field(default_factory=list)
     output2: Sequence[PeriodProfitSummaryItem2] = Field(default_factory=list)
+
 
 class PeriodTradingProfitStatusItem1(BaseModel):
     """기간별 매매손익현황 개별 항목"""
@@ -689,6 +716,7 @@ class PeriodTradingProfitStatus(BaseModel, KisHttpBody):
     output1: Sequence[PeriodTradingProfitStatusItem1] = Field(default_factory=list)
     output2: Sequence[PeriodTradingProfitStatusItem2] = Field(default_factory=list)
 
+
 class StockIntegratedDepositBalanceItem(BaseModel):
     """주식통합증거금 현황조회 항목"""
 
@@ -698,39 +726,75 @@ class StockIntegratedDepositBalanceItem(BaseModel):
     stck_sbst_objt_amt: str = Field(alias="stck_sbst_objt_amt", description="주식대용대상금액")
     stck_evlu_objt_amt: str = Field(alias="stck_evlu_objt_amt", description="주식평가대상금액")
     stck_ruse_psbl_objt_amt: str = Field(alias="stck_ruse_psbl_objt_amt", description="주식재사용가능대상금액")
-    stck_fund_rpch_chgs_objt_amt: str = Field(alias="stck_fund_rpch_chgs_objt_amt", description="주식펀드환매대금대상금액")
+    stck_fund_rpch_chgs_objt_amt: str = Field(
+        alias="stck_fund_rpch_chgs_objt_amt", description="주식펀드환매대금대상금액"
+    )
     stck_fncg_rdpt_objt_atm: str = Field(alias="stck_fncg_rdpt_objt_atm", description="주식융자상환금대상금액")
     bond_ruse_psbl_objt_amt: str = Field(alias="bond_ruse_psbl_objt_amt", description="채권재사용가능대상금액")
     stck_cash_use_amt: str = Field(alias="stck_cash_use_amt", description="주식현금사용금액")
     stck_sbst_use_amt: str = Field(alias="stck_sbst_use_amt", description="주식대용사용금액")
     stck_evlu_use_amt: str = Field(alias="stck_evlu_use_amt", description="주식평가사용금액")
     stck_ruse_psbl_amt_use_amt: str = Field(alias="stck_ruse_psbl_amt_use_amt", description="주식재사용가능금사용금액")
-    stck_fund_rpch_chgs_use_amt: str = Field(alias="stck_fund_rpch_chgs_use_amt", description="주식펀드환매대금사용금액")
+    stck_fund_rpch_chgs_use_amt: str = Field(
+        alias="stck_fund_rpch_chgs_use_amt", description="주식펀드환매대금사용금액"
+    )
     stck_fncg_rdpt_amt_use_amt: str = Field(alias="stck_fncg_rdpt_amt_use_amt", description="주식융자상환금사용금액")
     bond_ruse_psbl_amt_use_amt: str = Field(alias="bond_ruse_psbl_amt_use_amt", description="채권재사용가능금사용금액")
     stck_cash_ord_psbl_amt: str = Field(alias="stck_cash_ord_psbl_amt", description="주식현금주문가능금액")
     stck_sbst_ord_psbl_amt: str = Field(alias="stck_sbst_ord_psbl_amt", description="주식대용주문가능금액")
     stck_evlu_ord_psbl_amt: str = Field(alias="stck_evlu_ord_psbl_amt", description="주식평가주문가능금액")
-    stck_ruse_psbl_ord_psbl_amt: str = Field(alias="stck_ruse_psbl_ord_psbl_amt", description="주식재사용가능주문가능금액")
-    stck_fund_rpch_ord_psbl_amt: str = Field(alias="stck_fund_rpch_ord_psbl_amt", description="주식펀드환매주문가능금액")
-    bond_ruse_psbl_ord_psbl_amt: str = Field(alias="bond_ruse_psbl_ord_psbl_amt", description="채권재사용가능주문가능금액")
+    stck_ruse_psbl_ord_psbl_amt: str = Field(
+        alias="stck_ruse_psbl_ord_psbl_amt", description="주식재사용가능주문가능금액"
+    )
+    stck_fund_rpch_ord_psbl_amt: str = Field(
+        alias="stck_fund_rpch_ord_psbl_amt", description="주식펀드환매주문가능금액"
+    )
+    bond_ruse_psbl_ord_psbl_amt: str = Field(
+        alias="bond_ruse_psbl_ord_psbl_amt", description="채권재사용가능주문가능금액"
+    )
     rcvb_amt: str = Field(alias="rcvb_amt", description="미수금액")
-    stck_loan_grta_ruse_psbl_amt: str = Field(alias="stck_loan_grta_ruse_psbl_amt", description="주식대출보증금재사용가능금액")
-    stck_cash20_max_ord_psbl_amt: str = Field(alias="stck_cash20_max_ord_psbl_amt", description="주식현금20최대주문가능금액")
-    stck_cash30_max_ord_psbl_amt: str = Field(alias="stck_cash30_max_ord_psbl_amt", description="주식현금30최대주문가능금액")
-    stck_cash40_max_ord_psbl_amt: str = Field(alias="stck_cash40_max_ord_psbl_amt", description="주식현금40최대주문가능금액")
-    stck_cash50_max_ord_psbl_amt: str = Field(alias="stck_cash50_max_ord_psbl_amt", description="주식현금50최대주문가능금액")
-    stck_cash60_max_ord_psbl_amt: str = Field(alias="stck_cash60_max_ord_psbl_amt", description="주식현금60최대주문가능금액")
-    stck_cash100_max_ord_psbl_amt: str = Field(alias="stck_cash100_max_ord_psbl_amt", description="주식현금100최대주문가능금액")
-    stck_rsip100_max_ord_psbl_amt: str = Field(alias="stck_rsip100_max_ord_psbl_amt", description="주식재사용불가100최대주문가능")
+    stck_loan_grta_ruse_psbl_amt: str = Field(
+        alias="stck_loan_grta_ruse_psbl_amt", description="주식대출보증금재사용가능금액"
+    )
+    stck_cash20_max_ord_psbl_amt: str = Field(
+        alias="stck_cash20_max_ord_psbl_amt", description="주식현금20최대주문가능금액"
+    )
+    stck_cash30_max_ord_psbl_amt: str = Field(
+        alias="stck_cash30_max_ord_psbl_amt", description="주식현금30최대주문가능금액"
+    )
+    stck_cash40_max_ord_psbl_amt: str = Field(
+        alias="stck_cash40_max_ord_psbl_amt", description="주식현금40최대주문가능금액"
+    )
+    stck_cash50_max_ord_psbl_amt: str = Field(
+        alias="stck_cash50_max_ord_psbl_amt", description="주식현금50최대주문가능금액"
+    )
+    stck_cash60_max_ord_psbl_amt: str = Field(
+        alias="stck_cash60_max_ord_psbl_amt", description="주식현금60최대주문가능금액"
+    )
+    stck_cash100_max_ord_psbl_amt: str = Field(
+        alias="stck_cash100_max_ord_psbl_amt", description="주식현금100최대주문가능금액"
+    )
+    stck_rsip100_max_ord_psbl_amt: str = Field(
+        alias="stck_rsip100_max_ord_psbl_amt", description="주식재사용불가100최대주문가능"
+    )
     bond_max_ord_psbl_amt: str = Field(alias="bond_max_ord_psbl_amt", description="채권최대주문가능금액")
-    stck_fncg45_max_ord_psbl_amt: str = Field(alias="stck_fncg45_max_ord_psbl_amt", description="주식융자45최대주문가능금액")
-    stck_fncg50_max_ord_psbl_amt: str = Field(alias="stck_fncg50_max_ord_psbl_amt", description="주식융자50최대주문가능금액")
-    stck_fncg60_max_ord_psbl_amt: str = Field(alias="stck_fncg60_max_ord_psbl_amt", description="주식융자60최대주문가능금액")
-    stck_fncg70_max_ord_psbl_amt: str = Field(alias="stck_fncg70_max_ord_psbl_amt", description="주식융자70최대주문가능금액")
+    stck_fncg45_max_ord_psbl_amt: str = Field(
+        alias="stck_fncg45_max_ord_psbl_amt", description="주식융자45최대주문가능금액"
+    )
+    stck_fncg50_max_ord_psbl_amt: str = Field(
+        alias="stck_fncg50_max_ord_psbl_amt", description="주식융자50최대주문가능금액"
+    )
+    stck_fncg60_max_ord_psbl_amt: str = Field(
+        alias="stck_fncg60_max_ord_psbl_amt", description="주식융자60최대주문가능금액"
+    )
+    stck_fncg70_max_ord_psbl_amt: str = Field(
+        alias="stck_fncg70_max_ord_psbl_amt", description="주식융자70최대주문가능금액"
+    )
     stck_stln_max_ord_psbl_amt: str = Field(alias="stck_stln_max_ord_psbl_amt", description="주식대주최대주문가능금액")
     lmt_amt: str = Field(alias="lmt_amt", description="한도금액")
-    ovrs_stck_itgr_mgna_dvsn_name: str = Field(alias="ovrs_stck_itgr_mgna_dvsn_name", description="해외주식통합증거금구분명")
+    ovrs_stck_itgr_mgna_dvsn_name: str = Field(
+        alias="ovrs_stck_itgr_mgna_dvsn_name", description="해외주식통합증거금구분명"
+    )
     usd_objt_amt: str = Field(alias="usd_objt_amt", description="미화대상금액")
     usd_use_amt: str = Field(alias="usd_use_amt", description="미화사용금액")
     usd_ord_psbl_amt: str = Field(alias="usd_ord_psbl_amt", description="미화주문가능금액")
@@ -763,34 +827,70 @@ class StockIntegratedDepositBalanceItem(BaseModel):
     jpy_itgr_ord_psbl_amt: str = Field(alias="jpy_itgr_ord_psbl_amt", description="엔화통합주문가능금액")
     cny_gnrl_ord_psbl_amt: str = Field(alias="cny_gnrl_ord_psbl_amt", description="위안화일반주문가능금액")
     cny_itgr_ord_psbl_amt: str = Field(alias="cny_itgr_ord_psbl_amt", description="위안화통합주문가능금액")
-    stck_itgr_cash20_ord_psbl_amt: str = Field(alias="stck_itgr_cash20_ord_psbl_amt", description="주식통합현금20주문가능금액")
-    stck_itgr_cash30_ord_psbl_amt: str = Field(alias="stck_itgr_cash30_ord_psbl_amt", description="주식통합현금30주문가능금액")
-    stck_itgr_cash40_ord_psbl_amt: str = Field(alias="stck_itgr_cash40_ord_psbl_amt", description="주식통합현금40주문가능금액")
-    stck_itgr_cash50_ord_psbl_amt: str = Field(alias="stck_itgr_cash50_ord_psbl_amt", description="주식통합현금50주문가능금액")
-    stck_itgr_cash60_ord_psbl_amt: str = Field(alias="stck_itgr_cash60_ord_psbl_amt", description="주식통합현금60주문가능금액")
-    stck_itgr_cash100_ord_psbl_amt: str = Field(alias="stck_itgr_cash100_ord_psbl_amt", description="주식통합현금100주문가능금액")
+    stck_itgr_cash20_ord_psbl_amt: str = Field(
+        alias="stck_itgr_cash20_ord_psbl_amt", description="주식통합현금20주문가능금액"
+    )
+    stck_itgr_cash30_ord_psbl_amt: str = Field(
+        alias="stck_itgr_cash30_ord_psbl_amt", description="주식통합현금30주문가능금액"
+    )
+    stck_itgr_cash40_ord_psbl_amt: str = Field(
+        alias="stck_itgr_cash40_ord_psbl_amt", description="주식통합현금40주문가능금액"
+    )
+    stck_itgr_cash50_ord_psbl_amt: str = Field(
+        alias="stck_itgr_cash50_ord_psbl_amt", description="주식통합현금50주문가능금액"
+    )
+    stck_itgr_cash60_ord_psbl_amt: str = Field(
+        alias="stck_itgr_cash60_ord_psbl_amt", description="주식통합현금60주문가능금액"
+    )
+    stck_itgr_cash100_ord_psbl_amt: str = Field(
+        alias="stck_itgr_cash100_ord_psbl_amt", description="주식통합현금100주문가능금액"
+    )
     stck_itgr_100_ord_psbl_amt: str = Field(alias="stck_itgr_100_ord_psbl_amt", description="주식통합100주문가능금액")
-    stck_itgr_fncg45_ord_psbl_amt: str = Field(alias="stck_itgr_fncg45_ord_psbl_amt", description="주식통합융자45주문가능금액")
-    stck_itgr_fncg50_ord_psbl_amt: str = Field(alias="stck_itgr_fncg50_ord_psbl_amt", description="주식통합융자50주문가능금액")
-    stck_itgr_fncg60_ord_psbl_amt: str = Field(alias="stck_itgr_fncg60_ord_psbl_amt", description="주식통합융자60주문가능금액")
-    stck_itgr_fncg70_ord_psbl_amt: str = Field(alias="stck_itgr_fncg70_ord_psbl_amt", description="주식통합융자70주문가능금액")
-    stck_itgr_stln_ord_psbl_amt: str = Field(alias="stck_itgr_stln_ord_psbl_amt", description="주식통합대주주문가능금액")
+    stck_itgr_fncg45_ord_psbl_amt: str = Field(
+        alias="stck_itgr_fncg45_ord_psbl_amt", description="주식통합융자45주문가능금액"
+    )
+    stck_itgr_fncg50_ord_psbl_amt: str = Field(
+        alias="stck_itgr_fncg50_ord_psbl_amt", description="주식통합융자50주문가능금액"
+    )
+    stck_itgr_fncg60_ord_psbl_amt: str = Field(
+        alias="stck_itgr_fncg60_ord_psbl_amt", description="주식통합융자60주문가능금액"
+    )
+    stck_itgr_fncg70_ord_psbl_amt: str = Field(
+        alias="stck_itgr_fncg70_ord_psbl_amt", description="주식통합융자70주문가능금액"
+    )
+    stck_itgr_stln_ord_psbl_amt: str = Field(
+        alias="stck_itgr_stln_ord_psbl_amt", description="주식통합대주주문가능금액"
+    )
     bond_itgr_ord_psbl_amt: str = Field(alias="bond_itgr_ord_psbl_amt", description="채권통합주문가능금액")
     stck_cash_ovrs_use_amt: str = Field(alias="stck_cash_ovrs_use_amt", description="주식현금해외사용금액")
     stck_sbst_ovrs_use_amt: str = Field(alias="stck_sbst_ovrs_use_amt", description="주식대용해외사용금액")
     stck_evlu_ovrs_use_amt: str = Field(alias="stck_evlu_ovrs_use_amt", description="주식평가해외사용금액")
-    stck_re_use_amt_ovrs_use_amt: str = Field(alias="stck_re_use_amt_ovrs_use_amt", description="주식재사용금액해외사용금액")
-    stck_fund_rpch_ovrs_use_amt: str = Field(alias="stck_fund_rpch_ovrs_use_amt", description="주식펀드환매해외사용금액")
-    stck_fncg_rdpt_ovrs_use_amt: str = Field(alias="stck_fncg_rdpt_ovrs_use_amt", description="주식융자상환해외사용금액")
+    stck_re_use_amt_ovrs_use_amt: str = Field(
+        alias="stck_re_use_amt_ovrs_use_amt", description="주식재사용금액해외사용금액"
+    )
+    stck_fund_rpch_ovrs_use_amt: str = Field(
+        alias="stck_fund_rpch_ovrs_use_amt", description="주식펀드환매해외사용금액"
+    )
+    stck_fncg_rdpt_ovrs_use_amt: str = Field(
+        alias="stck_fncg_rdpt_ovrs_use_amt", description="주식융자상환해외사용금액"
+    )
     bond_re_use_ovrs_use_amt: str = Field(alias="bond_re_use_ovrs_use_amt", description="채권재사용해외사용금액")
     usd_oth_mket_use_amt: str = Field(alias="usd_oth_mket_use_amt", description="미화타시장사용금액")
     jpy_oth_mket_use_amt: str = Field(alias="jpy_oth_mket_use_amt", description="엔화타시장사용금액")
     cny_oth_mket_use_amt: str = Field(alias="cny_oth_mket_use_amt", description="위안화타시장사용금액")
     hkd_oth_mket_use_amt: str = Field(alias="hkd_oth_mket_use_amt", description="홍콩달러타시장사용금액")
-    usd_re_use_oth_mket_use_amt: str = Field(alias="usd_re_use_oth_mket_use_amt", description="미화재사용타시장사용금액")
-    jpy_re_use_oth_mket_use_amt: str = Field(alias="jpy_re_use_oth_mket_use_amt", description="엔화재사용타시장사용금액")
-    cny_re_use_oth_mket_use_amt: str = Field(alias="cny_re_use_oth_mket_use_amt", description="위안화재사용타시장사용금액")
-    hkd_re_use_oth_mket_use_amt: str = Field(alias="hkd_re_use_oth_mket_use_amt", description="홍콩달러재사용타시장사용금액")
+    usd_re_use_oth_mket_use_amt: str = Field(
+        alias="usd_re_use_oth_mket_use_amt", description="미화재사용타시장사용금액"
+    )
+    jpy_re_use_oth_mket_use_amt: str = Field(
+        alias="jpy_re_use_oth_mket_use_amt", description="엔화재사용타시장사용금액"
+    )
+    cny_re_use_oth_mket_use_amt: str = Field(
+        alias="cny_re_use_oth_mket_use_amt", description="위안화재사용타시장사용금액"
+    )
+    hkd_re_use_oth_mket_use_amt: str = Field(
+        alias="hkd_re_use_oth_mket_use_amt", description="홍콩달러재사용타시장사용금액"
+    )
     hgkg_cny_re_use_amt: str = Field(alias="hgkg_cny_re_use_amt", description="홍콩위안화재사용금액")
     usd_frst_bltn_exrt: str = Field(alias="usd_frst_bltn_exrt", description="미국달러최초고시환율")
     hkd_frst_bltn_exrt: str = Field(alias="hkd_frst_bltn_exrt", description="홍콩달러최초고시환율")
@@ -802,6 +902,7 @@ class StockIntegratedDepositBalance(BaseModel, KisHttpBody):
     """주식통합증거금 현황조회 응답"""
 
     output: Sequence[StockIntegratedDepositBalanceItem] = Field(default_factory=list)
+
 
 class PeriodAccountingCurrentStatusItem(BaseModel):
     """기간별계좌권리현황 항목"""
@@ -835,6 +936,7 @@ class PeriodAccountingCurrentStatusItem(BaseModel):
     lstg_stqt: str = Field(alias="lstg_stqt")  # 상장주수
     tax_amt: str = Field(alias="tax_amt")  # 세금금액
     sbsc_unpr: str = Field(alias="sbsc_unpr")  # 청약단가
+
 
 class PeriodAccountingCurrentStatus(BaseModel, KisHttpBody):
     """기간별계좌권리현황조회 응답"""
