@@ -461,7 +461,8 @@ def test_get_etf_nav_comparison_time_trend(client: Client):
     time.sleep(1)
     try:
         response = client.domestic_basic_quote.get_etf_nav_comparison_time_trend(
-            fid_hour_cls_code="60", fid_input_iscd="069500",
+            fid_hour_cls_code="60",
+            fid_input_iscd="069500",
         )
 
         # Verify response type

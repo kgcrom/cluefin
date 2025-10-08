@@ -101,9 +101,7 @@ class DomesticBasicQuote:
             "FID_COND_MRKT_DIV_CODE": fid_cond_mrkt_div_code,
             "FID_INPUT_ISCD": fid_input_iscd,
         }
-        response = self.client._get(
-            "/uapi/domestic-stock/v1/quotations/inquire-ccnl", headers=headers, params=params
-        )
+        response = self.client._get("/uapi/domestic-stock/v1/quotations/inquire-ccnl", headers=headers, params=params)
         return DomesticStockCurrentPriceDetail.model_validate(response.json())
 
     def get_stock_current_price_daily(

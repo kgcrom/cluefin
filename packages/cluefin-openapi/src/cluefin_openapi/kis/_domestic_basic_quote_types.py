@@ -100,7 +100,6 @@ class DomesticStockCurrentPrice(BaseModel, KisHttpBody):
 
 
 class DomesticStockCurrentPriceItem2(BaseModel):
-
     rprs_mrkt_kor_name: str = Field(title="대표 시장 한글명", max_length=40)
     new_hgpr_lwpr_cls_code: Optional[str] = Field(default=None, title="신 고가 저가 구분 코드", max_length=10)
     mxpr_llam_cls_code: Optional[str] = Field(default=None, title="상한하한가 구분코드", max_length=10)
@@ -135,7 +134,9 @@ class DomesticStockCurrentPriceItem2(BaseModel):
     vlnt_deal_cls_name: str = Field(title="임의 매매 구분명", max_length=16)
     flng_cls_name: Optional[str] = Field(default=None, title="락 구분 이름", max_length=40)
     revl_issu_reas_name: Optional[str] = Field(default=None, title="재평가 종목 사유 명", max_length=40)
-    mrkt_warn_cls_name: Optional[Literal["투자환기", "투자경고"]] = Field(default=None, title="시장 경고 구분명", max_length=40)
+    mrkt_warn_cls_name: Optional[Literal["투자환기", "투자경고"]] = Field(
+        default=None, title="시장 경고 구분명", max_length=40
+    )
     stck_sdpr: str = Field(title="주식 기준가", max_length=10)
     bstp_cls_code: str = Field(title="업종 구분 코드", max_length=9)
     stck_prdy_clpr: str = Field(title="주식 전일 종가", max_length=10)
@@ -283,7 +284,6 @@ class DomesticStockCurrentPriceAskingExpectedConclusionItem1(BaseModel):
 
 
 class DomesticStockCurrentPriceAskingExpectedConclusionItem2(BaseModel):
-
     antc_mkop_cls_code: str = Field(title="예상 장운영 구분 코드", max_length=3)
     stck_prpr: str = Field(title="주식 현재가", max_length=10)
     stck_oprc: str = Field(title="주식 시가2", max_length=10)
@@ -298,6 +298,7 @@ class DomesticStockCurrentPriceAskingExpectedConclusionItem2(BaseModel):
     stck_shrn_iscd: str = Field(title="주식 단축 종목코드", max_length=9)
     vi_cls_code: str = Field(title="VI적용구분코드", max_length=1)
 
+
 class DomesticStockCurrentPriceAskingExpectedConclusion(BaseModel, KisHttpBody):
     """국내주식 현재가 호가/예상체결"""
 
@@ -306,7 +307,6 @@ class DomesticStockCurrentPriceAskingExpectedConclusion(BaseModel, KisHttpBody):
 
 
 class DomesticStockCurrentPriceInvestorItem(BaseModel):
-
     stck_bsop_date: str = Field(title="주식 영업 일자", max_length=8)
     stck_clpr: str = Field(title="주식 종가", max_length=10)
     prdy_vrss: str = Field(title="전일 대비", max_length=10)
@@ -338,7 +338,6 @@ class DomesticStockCurrentPriceInvestor(BaseModel, KisHttpBody):
 
 
 class DomesticStockCurrentPriceMemberItem(BaseModel):
-
     # 매도 회원사 정보
     seln_mbcr_no1: str = Field(description="매도 회원사 번호1")
     seln_mbcr_no2: str = Field(description="매도 회원사 번호2")
@@ -453,7 +452,10 @@ class DomesticStockPeriodQuoteItem1(BaseModel):
     per: str = Field(title="PER", max_length=11)
     eps: str = Field(title="EPS", max_length=14)
     pbr: str = Field(title="PBR", max_length=11)
-    itewhol_loan_rmnd_rate: str = Field(alias="itewhol_loan_rmnd_ratem name", title="전체 융자 잔고 비율", max_length=13)
+    itewhol_loan_rmnd_rate: str = Field(
+        alias="itewhol_loan_rmnd_ratem name", title="전체 융자 잔고 비율", max_length=13
+    )
+
 
 class DomesticStockPeriodQuoteItem2(BaseModel):
     stck_bsop_date: str = Field(title="주식 영업 일자", max_length=8)
@@ -463,12 +465,20 @@ class DomesticStockPeriodQuoteItem2(BaseModel):
     stck_lwpr: str = Field(title="주식 최저가", max_length=10)
     acml_vol: str = Field(title="누적 거래량", max_length=18)
     acml_tr_pbmn: str = Field(title="누적 거래 대금", max_length=18)
-    flng_cls_code: str = Field(title="락 구분 코드", description="01 : 권리락 02 : 배당락 03 : 분배락 04 : 권배락 05 : 중간(분기)배당락 06 : 권리중간배당락 07 : 권리분기배당락", max_length=2)
+    flng_cls_code: str = Field(
+        title="락 구분 코드",
+        description="01 : 권리락 02 : 배당락 03 : 분배락 04 : 권배락 05 : 중간(분기)배당락 06 : 권리중간배당락 07 : 권리분기배당락",
+        max_length=2,
+    )
     prtt_rate: str = Field(title="분할 비율", description="기준가/전일 종가", max_length=11)
     mod_yn: str = Field(title="변경 여부", max_length=1)
     prdy_vrss_sign: str = Field(title="전일 대비 부호", max_length=1)
     prdy_vrss: str = Field(title="전일 대비", max_length=10)
-    revl_issu_reas: str = Field(title="재평가사유코드", description="00:해당없음 01:회사분할 02:자본감소 03:장기간정지 04:초과분배 05:대규모배당 06:회사분할합병 07:ETN증권병합/분할 08:신종증권기세조정 99:기타", max_length=2)
+    revl_issu_reas: str = Field(
+        title="재평가사유코드",
+        description="00:해당없음 01:회사분할 02:자본감소 03:장기간정지 04:초과분배 05:대규모배당 06:회사분할합병 07:ETN증권병합/분할 08:신종증권기세조정 99:기타",
+        max_length=2,
+    )
 
 
 class DomesticStockPeriodQuote(BaseModel, KisHttpBody):
@@ -487,6 +497,7 @@ class DomesticStockTodayMinuteChartItem1(BaseModel):
     acml_tr_pbmn: str = Field(title="누적 거래대금", max_length=18)
     hts_kor_isnm: str = Field(title="한글 종목명", max_length=40)
     stck_prpr: str = Field(title="주식 현재가", max_length=10)
+
 
 class DomesticStockTodayMinuteChartItem2(BaseModel):
     stck_bsop_date: str = Field(title="주식 영업일자", max_length=8)
@@ -515,6 +526,7 @@ class DomesticStockDailyMinuteChartItem1(BaseModel):
     acml_tr_pbmn: str = Field(title="누적 거래 대금")
     hts_kor_isnm: str = Field(title="HTS 한글 종목명")
     stck_prpr: str = Field(title="주식 현재가")
+
 
 class DomesticStockDailyMinuteChartItem2(BaseModel):
     stck_bsop_date: str = Field(title="주식 영업 일자")
@@ -545,6 +557,7 @@ class DomesticStockCurrentPriceTimeItemConclusionItem1(BaseModel):
     prdy_vol: str = Field(title="전일 거래량", max_length=18)
     rprs_mrkt_kor_name: str = Field(title="대표 시장 한글 명", max_length=40)
 
+
 class DomesticStockCurrentPriceTimeItemConclusionItem2(BaseModel):
     """국내주식 현재가 당일시간대별체결 응답상세2"""
 
@@ -559,6 +572,7 @@ class DomesticStockCurrentPriceTimeItemConclusionItem2(BaseModel):
     tday_rltv: str = Field(title="당일 체결강도", max_length=14)
     acml_vol: str = Field(title="누적 거래량", max_length=18)
     cnqn: str = Field(title="체결량", max_length=18)
+
 
 class DomesticStockCurrentPriceTimeItemConclusion(BaseModel, KisHttpBody):
     """국내주식 현재가 당일시간대별체결"""
@@ -627,6 +641,7 @@ class DomesticStockCurrentPriceOvertimeConclusionItem1(BaseModel):
     ovtm_untp_antc_vol: str = Field(title="시간외 단일가 예상 거래량", max_length=18)
     uplm_sign: str = Field(title="상한 부호", max_length=1)
     lslm_sign: str = Field(title="하한 부호", max_length=1)
+
 
 class DomesticStockCurrentPriceOvertimeConclusionItem2(BaseModel):
     stck_cntg_hour: str = Field(title="주식 체결 시간", max_length=6)
@@ -884,6 +899,7 @@ class DomesticEtfComponentStockPriceItem1(BaseModel):
     etf_cu_unit_scrt_cnt: str = Field(title="전체 융자 공여율", max_length=18)
     etf_cnfg_issu_cnt: str = Field(title="전체 대주 신규 주수", max_length=18)
 
+
 class DomesticEtfComponentStockPriceItem2(BaseModel):
     """국내ETF 구성종목시세 아이템2"""
 
@@ -927,6 +943,7 @@ class DomesticEtfNavComparisonTrendItem1(BaseModel):
     stck_mxpr: str = Field(title="주식 상한가", max_length=10)
     stck_llam: str = Field(title="주식 하한가", max_length=10)
 
+
 class DomesticEtfNavComparisonTrendItem2(BaseModel):
     """국내ETF NAV 비교추이(종목) 아이템2"""
 
@@ -938,6 +955,7 @@ class DomesticEtfNavComparisonTrendItem2(BaseModel):
     oprc_nav: str = Field(title="NAV시가", max_length=11)
     hprc_nav: str = Field(title="NAV고가", max_length=11)
     lprc_nav: str = Field(title="NAV저가", max_length=11)
+
 
 class DomesticEtfNavComparisonTrend(BaseModel, KisHttpBody):
     """국내ETF NAV 비교추이(종목)"""

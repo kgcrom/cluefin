@@ -259,4 +259,3 @@ class InvestmentOpinionByBrokerage(BaseModel):
     """국내주식 증권사별 투자의견"""
 
     pass
-

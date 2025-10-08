@@ -5,42 +5,42 @@ from pydantic import BaseModel, Field
 from cluefin_openapi.kis._model import KisHttpBody
 
 
-bstp_nmix_prpr 업종 지수 현재가	String	Y	112	
-bstp_nmix_prdy_vrss 업종 지수 전일 대비	String	Y	112	
-prdy_vrss_sign 전일 대비 부호	String	Y	1	
-bstp_nmix_prdy_ctrt 업종 지수 전일 대비율	String	Y	82	
-acml_vol 누적 거래량	String	Y	18	
-prdy_vol 전일 거래량	String	Y	18	
-acml_tr_pbmn 누적 거래 대금	String	Y	18	
-prdy_tr_pbmn 전일 거래 대금	String	Y	18	
-bstp_nmix_oprc 업종 지수 시가2	String	Y	112	
-prdy_nmix_vrss_nmix_oprc 전일 지수 대비 지수 시가2	String	Y	112	
-oprc_vrss_prpr_sign 시가2 대비 현재가 부호	String	Y	1	
-bstp_nmix_oprc_prdy_ctrt 업종 지수 시가2 전일 대비율	String	Y	82	
-bstp_nmix_hgpr 업종 지수 최고가	String	Y	112	
-prdy_nmix_vrss_nmix_hgpr 전일 지수 대비 지수 최고가	String	Y	112	
-hgpr_vrss_prpr_sign 최고가 대비 현재가 부호	String	Y	1	
-bstp_nmix_hgpr_prdy_ctrt 업종 지수 최고가 전일 대비율	String	Y	82	
-bstp_nmix_lwpr 업종 지수 최저가	String	Y	112	
-prdy_clpr_vrss_lwpr 전일 종가 대비 최저가	String	Y	10	
-lwpr_vrss_prpr_sign 최저가 대비 현재가 부호	String	Y	1	
-prdy_clpr_vrss_lwpr_rate 전일 종가 대비 최저가 비율	String	Y	84	
-ascn_issu_cnt 상승 종목 수	String	Y	7	
-uplm_issu_cnt 상한 종목 수	String	Y	7	
-stnr_issu_cnt 보합 종목 수	String	Y	7	
-down_issu_cnt 하락 종목 수	String	Y	7	
-lslm_issu_cnt 하한 종목 수	String	Y	7	
-dryy_bstp_nmix_hgpr 연중업종지수최고가	String	Y	112	
-dryy_hgpr_vrss_prpr_rate 연중 최고가 대비 현재가 비율	String	Y	84	
-dryy_bstp_nmix_hgpr_date 연중업종지수최고가일자	String	Y	8	
-dryy_bstp_nmix_lwpr 연중업종지수최저가	String	Y	112	
-dryy_lwpr_vrss_prpr_rate 연중 최저가 대비 현재가 비율	String	Y	84	
-dryy_bstp_nmix_lwpr_date 연중업종지수최저가일자	String	Y	8	
-total_askp_rsqn 총 매도호가 잔량	String	Y	12	
-total_bidp_rsqn 총 매수호가 잔량	String	Y	12	
-seln_rsqn_rate 매도 잔량 비율	String	Y	84	
-shnu_rsqn_rate 매수2 잔량 비율	String	Y	84	
-ntby_rsqn 순매수 잔량	String	Y	12	
+bstp_nmix_prpr	업종 지수 현재가	String	Y	112	
+bstp_nmix_prdy_vrss	업종 지수 전일 대비	String	Y	112	
+prdy_vrss_sign	전일 대비 부호	String	Y	1	
+bstp_nmix_prdy_ctrt	업종 지수 전일 대비율	String	Y	82	
+acml_vol	누적 거래량	String	Y	18	
+prdy_vol	전일 거래량	String	Y	18	
+acml_tr_pbmn	누적 거래 대금	String	Y	18	
+prdy_tr_pbmn	전일 거래 대금	String	Y	18	
+bstp_nmix_oprc	업종 지수 시가2	String	Y	112	
+prdy_nmix_vrss_nmix_oprc	전일 지수 대비 지수 시가2	String	Y	112	
+oprc_vrss_prpr_sign	시가2 대비 현재가 부호	String	Y	1	
+bstp_nmix_oprc_prdy_ctrt	업종 지수 시가2 전일 대비율	String	Y	82	
+bstp_nmix_hgpr	업종 지수 최고가	String	Y	112	
+prdy_nmix_vrss_nmix_hgpr	전일 지수 대비 지수 최고가	String	Y	112	
+hgpr_vrss_prpr_sign	최고가 대비 현재가 부호	String	Y	1	
+bstp_nmix_hgpr_prdy_ctrt	업종 지수 최고가 전일 대비율	String	Y	82	
+bstp_nmix_lwpr	업종 지수 최저가	String	Y	112	
+prdy_clpr_vrss_lwpr	전일 종가 대비 최저가	String	Y	10	
+lwpr_vrss_prpr_sign	최저가 대비 현재가 부호	String	Y	1	
+prdy_clpr_vrss_lwpr_rate	전일 종가 대비 최저가 비율	String	Y	84	
+ascn_issu_cnt	상승 종목 수	String	Y	7	
+uplm_issu_cnt	상한 종목 수	String	Y	7	
+stnr_issu_cnt	보합 종목 수	String	Y	7	
+down_issu_cnt	하락 종목 수	String	Y	7	
+lslm_issu_cnt	하한 종목 수	String	Y	7	
+dryy_bstp_nmix_hgpr	연중업종지수최고가	String	Y	112	
+dryy_hgpr_vrss_prpr_rate	연중 최고가 대비 현재가 비율	String	Y	84	
+dryy_bstp_nmix_hgpr_date	연중업종지수최고가일자	String	Y	8	
+dryy_bstp_nmix_lwpr	연중업종지수최저가	String	Y	112	
+dryy_lwpr_vrss_prpr_rate	연중 최저가 대비 현재가 비율	String	Y	84	
+dryy_bstp_nmix_lwpr_date	연중업종지수최저가일자	String	Y	8	
+total_askp_rsqn	총 매도호가 잔량	String	Y	12	
+total_bidp_rsqn	총 매수호가 잔량	String	Y	12	
+seln_rsqn_rate	매도 잔량 비율	String	Y	84	
+shnu_rsqn_rate	매수2 잔량 비율	String	Y	84	
+ntby_rsqn	순매수 잔량	String	Y	12	
 class SectorCurrentIndexItem(BaseModel):
     pass
 
@@ -48,43 +48,43 @@ class SectorCurrentIndex(BaseModel, KisHttpBody):
     """국내업종 현재지수 응답"""
     output: SectorCurrentIndexItem = Field(title="응답상세")
 
-bstp_nmix_prpr 업종 지수 현재가	String	Y	112	
-bstp_nmix_prdy_vrss 업종 지수 전일 대비	String	Y	112	
-prdy_vrss_sign 전일 대비 부호	String	Y	1	
-bstp_nmix_prdy_ctrt 업종 지수 전일 대비율	String	Y	82	
-acml_vol 누적 거래량	String	Y	18	
-acml_tr_pbmn 누적 거래 대금	String	Y	18	
-bstp_nmix_oprc 업종 지수 시가2	String	Y	112	
-bstp_nmix_hgpr 업종 지수 최고가	String	Y	112	
-bstp_nmix_lwpr 업종 지수 최저가	String	Y	112	
-prdy_vol 전일 거래량	String	Y	18	
-ascn_issu_cnt 상승 종목 수	String	Y	7	
-down_issu_cnt 하락 종목 수	String	Y	7	
-stnr_issu_cnt 보합 종목 수	String	Y	7	
-uplm_issu_cnt 상한 종목 수	String	Y	7	
-lslm_issu_cnt 하한 종목 수	String	Y	7	
-prdy_tr_pbmn 전일 거래 대금	String	Y	18	
-dryy_bstp_nmix_hgpr_date 연중업종지수최고가일자	String	Y	8	
-dryy_bstp_nmix_hgpr 연중업종지수최고가	String	Y	112	
-dryy_bstp_nmix_lwpr 연중업종지수최저가	String	Y	112	
-dryy_bstp_nmix_lwpr_date 연중업종지수최저가일자	String	Y	8
+bstp_nmix_prpr	업종 지수 현재가	String	Y	112	
+bstp_nmix_prdy_vrss	업종 지수 전일 대비	String	Y	112	
+prdy_vrss_sign	전일 대비 부호	String	Y	1	
+bstp_nmix_prdy_ctrt	업종 지수 전일 대비율	String	Y	82	
+acml_vol	누적 거래량	String	Y	18	
+acml_tr_pbmn	누적 거래 대금	String	Y	18	
+bstp_nmix_oprc	업종 지수 시가2	String	Y	112	
+bstp_nmix_hgpr	업종 지수 최고가	String	Y	112	
+bstp_nmix_lwpr	업종 지수 최저가	String	Y	112	
+prdy_vol	전일 거래량	String	Y	18	
+ascn_issu_cnt	상승 종목 수	String	Y	7	
+down_issu_cnt	하락 종목 수	String	Y	7	
+stnr_issu_cnt	보합 종목 수	String	Y	7	
+uplm_issu_cnt	상한 종목 수	String	Y	7	
+lslm_issu_cnt	하한 종목 수	String	Y	7	
+prdy_tr_pbmn	전일 거래 대금	String	Y	18	
+dryy_bstp_nmix_hgpr_date	연중업종지수최고가일자	String	Y	8	
+dryy_bstp_nmix_hgpr	연중업종지수최고가	String	Y	112	
+dryy_bstp_nmix_lwpr	연중업종지수최저가	String	Y	112	
+dryy_bstp_nmix_lwpr_date	연중업종지수최저가일자	String	Y	8
 class SectorDailyIndexItem1(BaseModel):
     pass
 
 
-stck_bsop_date 주식 영업 일자	String	Y	8	
-bstp_nmix_prpr 업종 지수 현재가	String	Y	112	
-prdy_vrss_sign 전일 대비 부호	String	Y	1	
-bstp_nmix_prdy_vrss 업종 지수 전일 대비	String	Y	112	
-bstp_nmix_prdy_ctrt 업종 지수 전일 대비율	String	Y	82	
-bstp_nmix_oprc 업종 지수 시가2	String	Y	112	
-bstp_nmix_hgpr 업종 지수 최고가	String	Y	112	
-bstp_nmix_lwpr 업종 지수 최저가	String	Y	112	
-acml_vol_rlim 누적 거래량 비중	String	Y	72	
-acml_vol 누적 거래량	String	Y	18	
-acml_tr_pbmn 누적 거래 대금	String	Y	18	
-invt_new_psdg 투자 신 심리도	String	Y	112	
-d20_dsrt 20일 이격도	String	Y	112	
+stck_bsop_date	주식 영업 일자	String	Y	8	
+bstp_nmix_prpr	업종 지수 현재가	String	Y	112	
+prdy_vrss_sign	전일 대비 부호	String	Y	1	
+bstp_nmix_prdy_vrss	업종 지수 전일 대비	String	Y	112	
+bstp_nmix_prdy_ctrt	업종 지수 전일 대비율	String	Y	82	
+bstp_nmix_oprc	업종 지수 시가2	String	Y	112	
+bstp_nmix_hgpr	업종 지수 최고가	String	Y	112	
+bstp_nmix_lwpr	업종 지수 최저가	String	Y	112	
+acml_vol_rlim	누적 거래량 비중	String	Y	72	
+acml_vol	누적 거래량	String	Y	18	
+acml_tr_pbmn	누적 거래 대금	String	Y	18	
+invt_new_psdg	투자 신 심리도	String	Y	112	
+d20_dsrt    20일 이격도	String	Y	112	
 class SectorDailyIndexItem2(BaseModel):
     pass
 
@@ -94,14 +94,14 @@ class SectorDailyIndex(BaseModel, KisHttpBody):
     output1: SectorDailyIndexItem1 = Field(title="응답상세1")
     output2: Sequence[SectorDailyIndexItem2] = Field(default_factory=list)
 
-stck_cntg_hour 주식 체결 시간	String	Y	6	
-bstp_nmix_prpr 업종 지수 현재가	String	Y	112	
-bstp_nmix_prdy_vrss 업종 지수 전일 대비	String	Y	112	
-prdy_vrss_sign 전일 대비 부호	String	Y	1	
-bstp_nmix_prdy_ctrt 업종 지수 전일 대비율	String	Y	82	
-acml_tr_pbmn 누적 거래 대금	String	Y	18	
-acml_vol 누적 거래량	String	Y	18	
-cntg_vol 체결 거래량	String	Y	18
+stck_cntg_hour	주식 체결 시간	String	Y	6	
+bstp_nmix_prpr	업종 지수 현재가	String	Y	112	
+bstp_nmix_prdy_vrss	업종 지수 전일 대비	String	Y	112	
+prdy_vrss_sign	전일 대비 부호	String	Y	1	
+bstp_nmix_prdy_ctrt	업종 지수 전일 대비율	String	Y	82	
+acml_tr_pbmn	누적 거래 대금	String	Y	18	
+acml_vol	누적 거래량	String	Y	18	
+cntg_vol	체결 거래량	String	Y	18
 class SectorTimeIndexSecondItem(BaseModel):
     pass
 
@@ -109,14 +109,14 @@ class SectorTimeIndexSecond(BaseModel, KisHttpBody):
     """국내업종 시간별지수(초) 응답"""
     pass
 
-bsop_hour 영업 시간	String	Y	6	
-bstp_nmix_prpr 업종 지수 현재가	String	Y	112	
-bstp_nmix_prdy_vrss 업종 지수 전일 대비	String	Y	112	
-prdy_vrss_sign 전일 대비 부호	String	Y	1	
-bstp_nmix_prdy_ctrt 업종 지수 전일 대비율	String	Y	82	
-acml_tr_pbmn 누적 거래 대금	String	Y	18	
-acml_vol 누적 거래량	String	Y	18	
-cntg_vol 체결 거래량	String	Y	18	
+bsop_hour	영업 시간	String	Y	6	
+bstp_nmix_prpr	업종 지수 현재가	String	Y	112	
+bstp_nmix_prdy_vrss	업종 지수 전일 대비	String	Y	112	
+prdy_vrss_sign	전일 대비 부호	String	Y	1	
+bstp_nmix_prdy_ctrt	업종 지수 전일 대비율	String	Y	82	
+acml_tr_pbmn	누적 거래 대금	String	Y	18	
+acml_vol	누적 거래량	String	Y	18	
+cntg_vol	체결 거래량	String	Y	18	
 class SectorTimeIndexMinuteItem(BaseModel):
     pass
 
@@ -124,33 +124,33 @@ class SectorTimeIndexMinute(BaseModel, KisHttpBody):
     """국내업종 시간별지수(분) 응답"""
     pass
 
-bstp_nmix_prdy_vrss 업종 지수 전일 대비	String	Y	112	
-prdy_vrss_sign 전일 대비 부호	String	Y	1	
-bstp_nmix_prdy_ctrt 업종 지수 전일 대비율	String	Y	82	
-prdy_nmix 전일 지수	String	Y	112	
-acml_vol 누적 거래량	String	Y	18	
-acml_tr_pbmn 누적 거래 대금	String	Y	18	
-hts_kor_isnm HTS 한글 종목명	String	Y	40	
-bstp_nmix_prpr 업종 지수 현재가	String	Y	112	
-bstp_cls_code 업종 구분 코드	String	Y	4	
-prdy_vol 전일 거래량	String	Y	18	
-bstp_nmix_oprc 업종 지수 시가2	String	Y	112	
-bstp_nmix_hgpr 업종 지수 최고가	String	Y	112	
-bstp_nmix_lwpr 업종 지수 최저가	String	Y	112	
-futs_prdy_oprc 선물 전일 시가	String	Y	112	
-futs_prdy_hgpr 선물 전일 최고가	String	Y	112	
-futs_prdy_lwpr 선물 전일 최저가	String	Y	112
+bstp_nmix_prdy_vrss	업종 지수 전일 대비	String	Y	112	
+prdy_vrss_sign	전일 대비 부호	String	Y	1	
+bstp_nmix_prdy_ctrt	업종 지수 전일 대비율	String	Y	82	
+prdy_nmix	전일 지수	String	Y	112	
+acml_vol	누적 거래량	String	Y	18	
+acml_tr_pbmn	누적 거래 대금	String	Y	18	
+hts_kor_isnm	HTS 한글 종목명	String	Y	40	
+bstp_nmix_prpr	업종 지수 현재가	String	Y	112	
+bstp_cls_code	업종 구분 코드	String	Y	4	
+prdy_vol	전일 거래량	String	Y	18	
+bstp_nmix_oprc	업종 지수 시가2	String	Y	112	
+bstp_nmix_hgpr	업종 지수 최고가	String	Y	112	
+bstp_nmix_lwpr	업종 지수 최저가	String	Y	112	
+futs_prdy_oprc	선물 전일 시가	String	Y	112	
+futs_prdy_hgpr	선물 전일 최고가	String	Y	112	
+futs_prdy_lwpr	선물 전일 최저가	String	Y	112
 class SectorMinuteInquiryItem1(BaseModel):
     pass
 
-stck_bsop_date 주식 영업 일자	String	Y	8	
-stck_cntg_hour 주식 체결 시간	String	Y	6	
-bstp_nmix_prpr 업종 지수 현재가	String	Y	112	
-bstp_nmix_oprc 업종 지수 시가2	String	Y	112	
-bstp_nmix_hgpr 업종 지수 최고가	String	Y	112	
-bstp_nmix_lwpr 업종 지수 최저가	String	Y	112	
-cntg_vol 체결 거래량	String	Y	18	
-acml_tr_pbmn 누적 거래 대금	String	Y	18
+stck_bsop_date	주식 영업 일자	String	Y	8	
+stck_cntg_hour	주식 체결 시간	String	Y	6	
+bstp_nmix_prpr	업종 지수 현재가	String	Y	112	
+bstp_nmix_oprc	업종 지수 시가2	String	Y	112	
+bstp_nmix_hgpr	업종 지수 최고가	String	Y	112	
+bstp_nmix_lwpr	업종 지수 최저가	String	Y	112	
+cntg_vol	체결 거래량	String	Y	18	
+acml_tr_pbmn	누적 거래 대금	String	Y	18
 class SectorMinuteInquiryItem2(BaseModel):
     pass
 
@@ -159,32 +159,32 @@ class SectorMinuteInquiry(BaseModel, KisHttpBody):
     output1: Sequence[SectorMinuteInquiryItem1] = Field(default_factory=list)
     output2: Sequence[SectorMinuteInquiryItem2] = Field(default_factory=list)
 
-prdy_vrss_sign 전일 대비 부호	String	Y	1	
-bstp_nmix_prdy_ctrt 업종 지수 전일 대비율	String	Y	82	
-prdy_nmix 전일 지수	String	Y	112	
-acml_vol 누적 거래량	String	Y	18	
-acml_tr_pbmn 누적 거래 대금	String	Y	18	
-hts_kor_isnm HTS 한글 종목명	String	Y	40	
-bstp_nmix_prpr 업종 지수 현재가	String	Y	112	
-bstp_cls_code 업종 구분 코드	String	Y	4	
-prdy_vol 전일 거래량	String	Y	18	
-bstp_nmix_oprc 업종 지수 시가2	String	Y	112	
-bstp_nmix_hgpr 업종 지수 최고가	String	Y	112	
-bstp_nmix_lwpr 업종 지수 최저가	String	Y	112	
-futs_prdy_oprc 선물 전일 시가	String	Y	112	
-futs_prdy_hgpr 선물 전일 최고가	String	Y	112	
-futs_prdy_lwpr 선물 전일 최저가	String	Y	112	
+prdy_vrss_sign	전일 대비 부호	String	Y	1	
+bstp_nmix_prdy_ctrt	업종 지수 전일 대비율	String	Y	82	
+prdy_nmix	전일 지수	String	Y	112	
+acml_vol	누적 거래량	String	Y	18	
+acml_tr_pbmn	누적 거래 대금	String	Y	18	
+hts_kor_isnm	HTS 한글 종목명	String	Y	40	
+bstp_nmix_prpr	업종 지수 현재가	String	Y	112	
+bstp_cls_code	업종 구분 코드	String	Y	4	
+prdy_vol	전일 거래량	String	Y	18	
+bstp_nmix_oprc	업종 지수 시가2	String	Y	112	
+bstp_nmix_hgpr	업종 지수 최고가	String	Y	112	
+bstp_nmix_lwpr	업종 지수 최저가	String	Y	112	
+futs_prdy_oprc	선물 전일 시가	String	Y	112	
+futs_prdy_hgpr	선물 전일 최고가	String	Y	112	
+futs_prdy_lwpr	선물 전일 최저가	String	Y	112	
 class SectorPeriodQuoteItem1(BaseModel):
     pass
 
-stck_bsop_date 주식 영업 일자	String	Y	8	
-bstp_nmix_prpr 업종 지수 현재가	String	Y	112	
-bstp_nmix_oprc 업종 지수 시가2	String	Y	112	
-bstp_nmix_hgpr 업종 지수 최고가	String	Y	112	
-bstp_nmix_lwpr 업종 지수 최저가	String	Y	112	
-acml_vol 누적 거래량	String	Y	18	
-acml_tr_pbmn 누적 거래 대금	String	Y	18	
-mod_yn 변경 여부	String	Y	1	
+stck_bsop_date	주식 영업 일자	String	Y	8	
+bstp_nmix_prpr	업종 지수 현재가	String	Y	112	
+bstp_nmix_oprc	업종 지수 시가2	String	Y	112	
+bstp_nmix_hgpr	업종 지수 최고가	String	Y	112	
+bstp_nmix_lwpr	업종 지수 최저가	String	Y	112	
+acml_vol	누적 거래량	String	Y	18	
+acml_tr_pbmn	누적 거래 대금	String	Y	18	
+mod_yn	변경 여부	String	Y	1	
 class SectorPeriodQuoteItem2(BaseModel):
     pass
 
@@ -193,39 +193,39 @@ class SectorPeriodQuote(BaseModel, KisHttpBody):
     output1: SectorPeriodQuoteItem1 = Field(title="응답상세1")
     output2: Sequence[SectorPeriodQuoteItem2] = Field(default_factory=list)
 
-bstp_nmix_prpr 업종 지수 현재가	String	Y	112	
-bstp_nmix_prdy_vrss 업종 지수 전일 대비	String	Y	112	
-prdy_vrss_sign 전일 대비 부호	String	Y	1	
-bstp_nmix_prdy_ctrt 업종 지수 전일 대비율	String	Y	82	
-acml_vol 누적 거래량	String	Y	18	
-acml_tr_pbmn 누적 거래 대금	String	Y	18	
-bstp_nmix_oprc 업종 지수 시가2	String	Y	112	
-bstp_nmix_hgpr 업종 지수 최고가	String	Y	112	
-bstp_nmix_lwpr 업종 지수 최저가	String	Y	112	
-prdy_vol 전일 거래량	String	Y	18	
-ascn_issu_cnt 상승 종목 수	String	Y	7	
-down_issu_cnt 하락 종목 수	String	Y	7	
-stnr_issu_cnt 보합 종목 수	String	Y	7	
-uplm_issu_cnt 상한 종목 수	String	Y	7	
-lslm_issu_cnt 하한 종목 수	String	Y	7	
-prdy_tr_pbmn 전일 거래 대금	String	Y	18	
-dryy_bstp_nmix_hgpr_date 연중업종지수최고가일자	String	Y	8	
-dryy_bstp_nmix_hgpr 연중업종지수최고가	String	Y	112	
-dryy_bstp_nmix_lwpr 연중업종지수최저가	String	Y	112	
-dryy_bstp_nmix_lwpr_date 연중업종지수최저가일자	String	Y	8
+bstp_nmix_prpr	업종 지수 현재가	String	Y	112	
+bstp_nmix_prdy_vrss	업종 지수 전일 대비	String	Y	112	
+prdy_vrss_sign	전일 대비 부호	String	Y	1	
+bstp_nmix_prdy_ctrt	업종 지수 전일 대비율	String	Y	82	
+acml_vol	누적 거래량	String	Y	18	
+acml_tr_pbmn	누적 거래 대금	String	Y	18	
+bstp_nmix_oprc	업종 지수 시가2	String	Y	112	
+bstp_nmix_hgpr	업종 지수 최고가	String	Y	112	
+bstp_nmix_lwpr	업종 지수 최저가	String	Y	112	
+prdy_vol	전일 거래량	String	Y	18	
+ascn_issu_cnt	상승 종목 수	String	Y	7	
+down_issu_cnt	하락 종목 수	String	Y	7	
+stnr_issu_cnt	보합 종목 수	String	Y	7	
+uplm_issu_cnt	상한 종목 수	String	Y	7	
+lslm_issu_cnt	하한 종목 수	String	Y	7	
+prdy_tr_pbmn	전일 거래 대금	String	Y	18	
+dryy_bstp_nmix_hgpr_date	연중업종지수최고가일자	String	Y	8	
+dryy_bstp_nmix_hgpr	연중업종지수최고가	String	Y	112	
+dryy_bstp_nmix_lwpr	연중업종지수최저가	String	Y	112	
+dryy_bstp_nmix_lwpr_date	연중업종지수최저가일자	String	Y	8
 class SectorAllQuoteByCategoryItem1(BaseModel):
     pass
 
-bstp_cls_code 업종 구분 코드	String	Y	4	
-hts_kor_isnm HTS 한글 종목명	String	Y	40	
-bstp_nmix_prpr 업종 지수 현재가	String	Y	112	
-bstp_nmix_prdy_vrss 업종 지수 전일 대비	String	Y	112	
-prdy_vrss_sign 전일 대비 부호	String	Y	1	
-bstp_nmix_prdy_ctrt 업종 지수 전일 대비율	String	Y	82	
-acml_vol 누적 거래량	String	Y	18	
-acml_tr_pbmn 누적 거래 대금	String	Y	18	
-acml_vol_rlim 누적 거래량 비중	String	Y	72	
-acml_tr_pbmn_rlim 누적 거래 대금 비중	String	Y	72	
+bstp_cls_code	업종 구분 코드	String	Y	4	
+hts_kor_isnm	HTS 한글 종목명	String	Y	40	
+bstp_nmix_prpr	업종 지수 현재가	String	Y	112	
+bstp_nmix_prdy_vrss	업종 지수 전일 대비	String	Y	112	
+prdy_vrss_sign	전일 대비 부호	String	Y	1	
+bstp_nmix_prdy_ctrt	업종 지수 전일 대비율	String	Y	82	
+acml_vol	누적 거래량	String	Y	18	
+acml_tr_pbmn	누적 거래 대금	String	Y	18	
+acml_vol_rlim	누적 거래량 비중	String	Y	72	
+acml_tr_pbmn_rlim	누적 거래 대금 비중	String	Y	72	
 class SectorAllQuoteByCategoryItem2(BaseModel):
     pass
 
@@ -235,13 +235,13 @@ class SectorAllQuoteByCategory(BaseModel, KisHttpBody):
     output1: SectorAllQuoteByCategoryItem1 = Field(title="응답상세1")
     output2: Sequence[SectorAllQuoteByCategoryItem2] = Field(default_factory=list)
 
-stck_cntg_hour 주식 단축 종목코드	String	Y	6	
-bstp_nmix_prpr HTS 한글 종목명	String	Y	112	
-prdy_vrss_sign 주식 현재가	String	Y	1	
-bstp_nmix_prdy_vrss 전일 대비	String	Y	112	
-prdy_ctrt 전일 대비 부호	String	Y	82	
-acml_vol 전일 대비율	String	Y	18	
-acml_tr_pbmn 기준가 대비 현재가	String	Y	18	
+stck_cntg_hour	주식 단축 종목코드	String	Y	6	
+bstp_nmix_prpr	HTS 한글 종목명	String	Y	112	
+prdy_vrss_sign	주식 현재가	String	Y	1	
+bstp_nmix_prdy_vrss	전일 대비	String	Y	112	
+prdy_ctrt	전일 대비 부호	String	Y	82	
+acml_vol	전일 대비율	String	Y	18	
+acml_tr_pbmn	기준가 대비 현재가	String	Y	18	
 class ExpectedIndexTrendItem(BaseModel):
     pass
 
@@ -249,28 +249,28 @@ class ExpectedIndexTrend(BaseModel, KisHttpBody):
     """국내주식 예상체결지수 추이 응답"""
     pass
 
-bstp_nmix_prpr 업종 지수 현재가	String	Y	112	
-bstp_nmix_prdy_vrss 업종 지수 전일 대비	String	Y	112	
-prdy_vrss_sign 전일 대비 부호	String	Y	1	
-prdy_ctrt 전일 대비율	String	Y	82	
-acml_vol 누적 거래량	String	Y	18	
-ascn_issu_cnt 상승 종목 수	String	Y	7	
-down_issu_cnt 하락 종목 수	String	Y	7	
-stnr_issu_cnt 보합 종목 수	String	Y	7	
-bstp_cls_code 업종 구분 코드	String	Y	4	
+bstp_nmix_prpr	업종 지수 현재가	String	Y	112	
+bstp_nmix_prdy_vrss	업종 지수 전일 대비	String	Y	112	
+prdy_vrss_sign	전일 대비 부호	String	Y	1	
+prdy_ctrt	전일 대비율	String	Y	82	
+acml_vol	누적 거래량	String	Y	18	
+ascn_issu_cnt	상승 종목 수	String	Y	7	
+down_issu_cnt	하락 종목 수	String	Y	7	
+stnr_issu_cnt	보합 종목 수	String	Y	7	
+bstp_cls_code	업종 구분 코드	String	Y	4	
 class ExpectedIndexAllItem1(BaseModel):
     pass
 
-hts_kor_isnm HTS 한글 종목명	String	Y	40	
-bstp_nmix_prpr 업종 지수 현재가	String	Y	112	
-bstp_nmix_prdy_vrss 업종 지수 전일 대비	String	Y	112	
-prdy_vrss_sign 전일 대비 부호	String	Y	1	
-bstp_nmix_prdy_ctrt 업종 지수 전일 대비율	String	Y	82	
-acml_vol 누적 거래량	String	Y	18	
-nmix_sdpr 지수 기준가	String	Y	112	
-ascn_issu_cnt 상승 종목 수	String	Y	7	
-stnr_issu_cnt 보합 종목 수	String	Y	7	
-down_issu_cnt 하락 종목 수	String	Y	7
+hts_kor_isnm	HTS 한글 종목명	String	Y	40	
+bstp_nmix_prpr	업종 지수 현재가	String	Y	112	
+bstp_nmix_prdy_vrss	업종 지수 전일 대비	String	Y	112	
+prdy_vrss_sign	전일 대비 부호	String	Y	1	
+bstp_nmix_prdy_ctrt	업종 지수 전일 대비율	String	Y	82	
+acml_vol	누적 거래량	String	Y	18	
+nmix_sdpr	지수 기준가	String	Y	112	
+ascn_issu_cnt	상승 종목 수	String	Y	7	
+stnr_issu_cnt	보합 종목 수	String	Y	7	
+down_issu_cnt	하락 종목 수	String	Y	7
 class ExpectedIndexAllItem2(BaseModel):
     pass
 
@@ -279,19 +279,19 @@ class ExpectedIndexAll(BaseModel, KisHttpBody):
     output1: ExpectedIndexAllItem1 = Field(title="응답상세1")
     output2: Sequence[ExpectedIndexAllItem2] = Field(default_factory=list)
 
-hts_kor_isnm HTS 한글 종목명	String	Y	40	
-mksc_shrn_iscd 유가증권 단축 종목코드	String	Y	9	
-vi_cls_code VI발동상태	String	Y	1	Y: 발동 / N: 해제
-bsop_date 영업 일자	String	Y	8	
-cntg_vi_hour VI발동시간	String	Y	6	VI발동시간
-vi_cncl_hour VI해제시간	String	Y	6	VI해제시간
-vi_kind_code VI종류코드	String	Y	1	1:정적 2:동적 3:정적&동적
-vi_prc VI발동가격	String	Y	10	
-vi_stnd_prc 정적VI발동기준가격	String	Y	10	
-vi_dprt 정적VI발동괴리율	String	Y	82	%
-vi_dmc_stnd_prc 동적VI발동기준가격	String	Y	10	
-vi_dmc_dprt 동적VI발동괴리율	String	Y	82	%
-vi_count VI발동횟수	String	Y	7	
+hts_kor_isnm	HTS 한글 종목명	String	Y	40	
+mksc_shrn_iscd	유가증권 단축 종목코드	String	Y	9	
+vi_cls_code	VI발동상태	String	Y	1	Y: 발동 / N: 해제
+bsop_date	영업 일자	String	Y	8	
+cntg_vi_hour	VI발동시간	String	Y	6	VI발동시간
+vi_cncl_hour	VI해제시간	String	Y	6	VI해제시간
+vi_kind_code	VI종류코드	String	Y	1	1:정적 2:동적 3:정적&동적
+vi_prc	VI발동가격	String	Y	10	
+vi_stnd_prc	정적VI발동기준가격	String	Y	10	
+vi_dprt	정적VI발동괴리율	String	Y	82	%
+vi_dmc_stnd_prc	동적VI발동기준가격	String	Y	10	
+vi_dmc_dprt	동적VI발동괴리율	String	Y	82	%
+vi_count	VI발동횟수	String	Y	7	
 class VolatilityInterruptionStatusItem(BaseModel):
     pass
 
@@ -300,23 +300,23 @@ class VolatilityInterruptionStatus(BaseModel, KisHttpBody):
     output: VolatilityInterruptionStatusItem = Field(title="응답상세")
 
 
-bcdt_code 자료코드	String	Y	5	
-hts_kor_isnm HTS한글종목명	String	Y	40	
-bond_mnrt_prpr 채권금리현재가	String	Y	114	
-prdy_vrss_sign 전일대비부호	String	Y	1	
-bond_mnrt_prdy_vrss 채권금리전일대비	String	Y	114	
-prdy_ctrt 전일대비율	String	Y	82	
-stck_bsop_date 주식영업일자	String	Y	8	
+bcdt_code	자료코드	String	Y	5	
+hts_kor_isnm	HTS한글종목명	String	Y	40	
+bond_mnrt_prpr	채권금리현재가	String	Y	114	
+prdy_vrss_sign	전일대비부호	String	Y	1	
+bond_mnrt_prdy_vrss	채권금리전일대비	String	Y	114	
+prdy_ctrt	전일대비율	String	Y	82	
+stck_bsop_date	주식영업일자	String	Y	8	
 class InterestRateSummaryItem1(BaseModel):
     pass
 
-bcdt_code 자료코드	String	Y	5	
-hts_kor_isnm HTS한글종목명	String	Y	40	
-bond_mnrt_prpr 채권금리현재가	String	Y	114	
-prdy_vrss_sign 전일대비부호	String	Y	1	
-bond_mnrt_prdy_vrss 채권금리전일대비	String	Y	114	
-bstp_nmix_prdy_ctrt 업종지수전일대비율	String	Y	82	
-stck_bsop_date 주식영업일자	String	Y	8
+bcdt_code	자료코드	String	Y	5	
+hts_kor_isnm	HTS한글종목명	String	Y	40	
+bond_mnrt_prpr	채권금리현재가	String	Y	114	
+prdy_vrss_sign	전일대비부호	String	Y	1	
+bond_mnrt_prdy_vrss	채권금리전일대비	String	Y	114	
+bstp_nmix_prdy_ctrt	업종지수전일대비율	String	Y	82	
+stck_bsop_date	주식영업일자	String	Y	8
 class InterestRateSummaryItem2(BaseModel):
     pass
 
@@ -325,8 +325,8 @@ class InterestRateSummary(BaseModel, KisHttpBody):
     output1: InterestRateSummaryItem1 = Field(title="응답상세1")
     output2: Sequence[InterestRateSummaryItem2] = Field(default_factory=list)
 
-cntt_usiq_srno 내용 조회용 일련번호	String	Y	20	
-news_ofer_entp_code 뉴스 제공 업체 코드	String	Y	1	'2' /* 한경 news */
+cntt_usiq_srno	내용 조회용 일련번호	String	Y	20	
+news_ofer_entp_code	뉴스 제공 업체 코드	String	Y	1	<description>'2' /* 한경 news */
 '3' /* 사용안함 */
 '4' /* 이데일리 */
 '5' /* 머니투데이 */
@@ -353,10 +353,11 @@ news_ofer_entp_code 뉴스 제공 업체 코드	String	Y	1	'2' /* 한경 news */
 'Y' /* 이프렌드 Air 뉴스 */
 'Z' /* 인베스트조선 */
 'd' /* NSP통신 */
-data_dt 작성일자	String	Y	8	
-data_tm 작성시간	String	Y	6	
-hts_pbnt_titl_cntt HTS 공시 제목 내용	String	Y	400	
-news_lrdv_code 뉴스 대구분	String	Y	8	1:0:종합
+</description>
+data_dt	작성일자	String	Y	8	
+data_tm	작성시간	String	Y	6	
+hts_pbnt_titl_cntt	HTS 공시 제목 내용	String	Y	400	
+news_lrdv_code	뉴스 대구분	String	Y	8	<description>1:0:종합
 1:FGHIN:공시
 2:F:거래소
 3:01:수시공시
@@ -653,7 +654,8 @@ news_lrdv_code 뉴스 대구분	String	Y	8	1:0:종합
 3:02:VOD
 1:J:동향
 1:L:한투리서치
-dorg 자료원	String	Y	20	
+</description>
+dorg	자료원	String	Y	20	
 iscd1 종목 코드1	String	Y	9	
 iscd2 종목 코드2	String	Y	9	
 iscd3 종목 코드3	String	Y	9	
@@ -666,17 +668,12 @@ class MarketAnnouncementSchedule(BaseModel, KisHttpBody):
     """종합 시황/공시(제목) 응답"""
     pass
 
-bass_dt 기준일자	String	Y	8	기준일자(YYYYMMDD)
-wday_dvsn_cd 요일구분코드	String	Y	2	01:일요일, 02:월요일, 03:화요일, 04:수요일, 05:목요일, 06:금요일, 07:토요일
-bzdy_yn 영업일여부	String	Y	1	Y/N
-금융기관이 업무를 하는 날
-tr_day_yn 거래일여부	String	Y	1	Y/N
-증권 업무가 가능한 날(입출금, 이체 등의 업무 포함)
-opnd_yn 개장일여부	String	Y	1	Y/N
-주식시장이 개장되는 날
-* 주문을 넣고자 할 경우 개장일여부(opnd_yn)를 사용
-sttl_day_yn 결제일여부	String	Y	1	Y/N
-주식 거래에서 실제로 주식을 인수하고 돈을 지불하는 날
+bass_dt	기준일자	String	Y	8	기준일자(YYYYMMDD)
+wday_dvsn_cd	요일구분코드	String	Y	2	01:일요일, 02:월요일, 03:화요일, 04:수요일, 05:목요일, 06:금요일, 07:토요일
+bzdy_yn	영업일여부	String	Y	1	Y/N 금융기관이 업무를 하는 날
+tr_day_yn	거래일여부	String	Y	1	Y/N 증권 업무가 가능한 날(입출금, 이체 등의 업무 포함)
+opnd_yn	개장일여부	String	Y	1	Y/N 주식시장이 개장되는 날 * 주문을 넣고자 할 경우 개장일여부(opnd_yn)를 사용
+sttl_day_yn	결제일여부	String	Y	1	Y/N 주식 거래에서 실제로 주식을 인수하고 돈을 지불하는 날
 class HolidayInquiryItem(BaseModel):
     pass
 
@@ -689,10 +686,10 @@ date2 영업일2	String	Y	8
 date3 영업일3	String	Y	8	영업일 당일
 date4 영업일4	String	Y	8	
 date5 영업일5	String	Y	8	
-today 오늘일자	String	Y	8	
-time 현재시간	String	Y	6	
-s_time 장시작시간	String	Y	6	
-e_time 장마감시간	String	Y	6	
+today	오늘일자	String	Y	8	
+time	현재시간	String	Y	6	
+s_time	장시작시간	String	Y	6	
+e_time	장마감시간	String	Y	6	
 class FuturesBusinessDayInquiryItem(BaseModel):
     pass
 

@@ -7,7 +7,12 @@ from pydantic import SecretStr
 
 class Client(object):
     def __init__(
-        self, token: str, app_key: str, secret_key: Union[str, SecretStr], env: Literal["prod", "dev"] = "prod", debug: bool = False
+        self,
+        token: str,
+        app_key: str,
+        secret_key: Union[str, SecretStr],
+        env: Literal["prod", "dev"] = "prod",
+        debug: bool = False,
     ):
         self.token = token
         self.app_key = app_key
