@@ -148,7 +148,7 @@ class Client(object):
 
         return DomesticTheme(self)
 
-    def _post(self, path: str, headers: dict, body: dict, use_cache: bool = True):
+    def _post(self, path: str, headers: Dict[str, str], body: Dict[str, str], use_cache: bool = True):
         """Make a POST request with improved error handling and logging."""
         # Check cache first if enabled
         cache_key = None
@@ -334,7 +334,7 @@ class Client(object):
         if hasattr(self, "_session"):
             self._session.close()
 
-    def batch_post(self, requests_data: List[Tuple[str, dict, dict]]) -> List[requests.Response]:
+    def batch_post(self, requests_data: List[Tuple[str, Dict[str, str], Dict[str, str]]]) -> List[requests.Response]:
         """
         Execute multiple POST requests with rate limiting.
 

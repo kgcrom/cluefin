@@ -84,7 +84,7 @@ class DomesticAccount:
         }
 
         response = self.client._post("/uapi/domestic-stock/v1/trading/order-cash", headers=headers, body=body)
-        return StockQuoteCurrent(**response)
+        return StockQuoteCurrent.model_validate(response.json())
 
     def request_stock_quote_credit(
         self,
@@ -191,7 +191,7 @@ class DomesticAccount:
             "CNDT_PRIC": cndt_pric,
         }
         response = self.client._post("/uapi/domestic-stock/v1/trading/order-credit", headers=headers, body=body)
-        return StockQuoteCredit(**response)
+        return StockQuoteCredit.model_validate(response.json())
 
     def request_stock_quote_correction(
         self,
@@ -259,7 +259,7 @@ class DomesticAccount:
             "EXCG_ID_DVSN_CD": excg_id_dvsn_cd,
         }
         response = self.client._post("/uapi/domestic-stock/v1/trading/order-rvsecncl", headers=headers, body=body)
-        return StockQuoteCorrection(**response)
+        return StockQuoteCorrection.model_validate(response.json())
 
     def get_stock_correction_cancellable_qty(
         self,
@@ -305,7 +305,7 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/inquire-psbl-rvsecncl", headers=headers, params=params
         )
-        return StockQuoteCorrectionCancellableQty(**response)
+        return StockQuoteCorrectionCancellableQty.model_validate(response.json())
 
     def get_stock_daily_separate_conclusion(
         self,
@@ -376,7 +376,7 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/inquire-daily-ccld", headers=headers, params=params
         )
-        return StockDailySeparateConclusion(**response)
+        return StockDailySeparateConclusion.model_validate(response.json())
 
     def get_stock_balance(
         self,
@@ -428,7 +428,7 @@ class DomesticAccount:
         }
 
         response = self.client._get("/uapi/domestic-stock/v1/trading/inquire-balance", headers=headers, params=params)
-        return StockBalance(**response)
+        return StockBalance.model_validate(response.json())
 
     def get_buy_tradable_inquiry(
         self,
@@ -482,7 +482,7 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/inquire-psbl-order", headers=headers, params=params
         )
-        return BuyTradableInquiry(**response)
+        return BuyTradableInquiry.model_validate(response.json())
 
     def get_sell_tradable_inquiry(self):
         """매도가능수량조회"""

@@ -57,15 +57,23 @@ def test_domestic_account_builds_request(
     expected_body,
     response_payload,
 ):
+    # Mock response object with json() method
+    mock_response = Mock()
+    mock_response.json.return_value = response_payload
+
     client = Mock()
-    client._post.return_value = response_payload
-    client._get.return_value = response_payload
+    client._post.return_value = mock_response
+    client._get.return_value = mock_response
     captured_instances = []
 
     class DummyResponseModel:
         def __init__(self, **kwargs):
             self.kwargs = kwargs
             captured_instances.append(self)
+
+        @classmethod
+        def model_validate(cls, data):
+            return cls(**data)
 
     monkeypatch.setattr(domestic_account_module, response_model_attr, DummyResponseModel)
 
