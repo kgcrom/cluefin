@@ -21,7 +21,7 @@ class KisHttpHeader(BaseModel):
 
 @dataclass
 class KisHttpBody:
-    rt_cd: Literal["Y", "N"] = Field(description="성공 실패 여부")
+    rt_cd: Literal["1", "0"] = Field(description="성공 실패 여부, (0: 성공, 1: 실패)", max_length=1)
     msg_cd: str = Field(description="응답코드", max_length=8)
     msg1: str = Field(description="응답메세지", max_length=80)
 

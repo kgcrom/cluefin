@@ -1,23 +1,24 @@
-from typing import Literal
+from typing import Literal, Union
 
 import requests
 from loguru import logger
+from pydantic import SecretStr
 
 
 class Client(object):
     def __init__(
-        self, token: str, app_key: str, secret_key: str, env: Literal["prod", "dev"] = "prod", debug: bool = False
+        self, token: str, app_key: str, secret_key: Union[str, SecretStr], env: Literal["prod", "dev"] = "prod", debug: bool = False
     ):
         self.token = token
-        self.app_key = f"Bearer {app_key}"
-        self.secret_key = secret_key
+        self.app_key = app_key
+        self.secret_key = secret_key.get_secret_value() if isinstance(secret_key, SecretStr) else secret_key
         self.env = env
         self.debug = debug
 
         if self.env == "prod":
             self.base_url = "https://openapi.koreainvestment.com:9443"
         else:
-            self.base_url = "https://sandboxopenapi.koreainvestment.com:9443"
+            self.base_url = "https://openapivts.koreainvestment.com:29443"
 
         self._session = requests.Session()
         self._session.headers.update(
@@ -104,13 +105,14 @@ class Client(object):
             logger.debug(f"Headers: {headers}")
             logger.debug(f"Params: {params}")
 
-        merged_headers = self._session.headers.copy()
+        merged_headers = dict(self._session.headers)
         merged_headers["content-type"] = "application/json;charset=UTF-8"
         merged_headers["accept"] = "application/json"
-        merged_headers["authorization"] = self.token
+        merged_headers["authorization"] = f"Bearer {self.token}"
         merged_headers["appkey"] = self.app_key
         merged_headers["appsecret"] = self.secret_key
         merged_headers["custtype"] = "P"  # P: 개인, C: 법인
+        merged_headers.update(headers)  # Merge custom headers (e.g., tr_id)
         response = self._session.get(url, headers=merged_headers, params=params, timeout=30)
         if self.debug:
             logger.debug(f"Response Status: {response.status_code}")
@@ -126,13 +128,14 @@ class Client(object):
             logger.debug(f"Headers: {headers}")
             logger.debug(f"Body: {body}")
 
-        merged_headers = self._session.headers.copy()
+        merged_headers = dict(self._session.headers)
         merged_headers["content-type"] = "application/json;charset=UTF-8"
         merged_headers["accept"] = "application/json"
-        merged_headers["authorization"] = self.token
+        merged_headers["authorization"] = f"Bearer {self.token}"
         merged_headers["appkey"] = self.app_key
         merged_headers["appsecret"] = self.secret_key
         merged_headers["custtype"] = "P"  # P: 개인, C: 법인
+        merged_headers.update(headers)  # Merge custom headers (e.g., tr_id)
         response = self._session.post(url, headers=merged_headers, json=body, timeout=30)
         if self.debug:
             logger.debug(f"Response Status: {response.status_code}")

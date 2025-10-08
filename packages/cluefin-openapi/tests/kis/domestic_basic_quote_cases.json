@@ -1,0 +1,581 @@
+[
+    {
+        "method_name": "get_stock_current_price",
+        "response_model_attr": "DomesticStockCurrentPrice",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/inquire-price",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST01010100"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_INPUT_ISCD": "005930"
+        },
+        "response_payload": {
+            "output": {
+                "stck_prpr": "70000",
+                "prdy_vrss": "1000",
+                "prdy_vrss_sign": "2"
+            }
+        }
+    },
+    {
+        "method_name": "get_stock_current_price_2",
+        "response_model_attr": "DomesticStockCurrentPrice2",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/inquire-price-2",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "035720"
+        },
+        "expected_headers": {
+            "tr_id": "FHPST01010000"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_INPUT_ISCD": "035720"
+        },
+        "response_payload": {
+            "output": {
+                "stck_prpr": "50000",
+                "prdy_vrss": "-500"
+            }
+        }
+    },
+    {
+        "method_name": "get_stock_current_price_detail",
+        "response_model_attr": "DomesticStockCurrentPriceDetail",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/inquire-detail-price",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST01010300"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_INPUT_ISCD": "005930"
+        },
+        "response_payload": {
+            "output": {
+                "stck_cntg_hour": "153000",
+                "stck_prpr": "70000",
+                "cntg_vol": "1000"
+            }
+        }
+    },
+    {
+        "method_name": "get_stock_current_price_daily",
+        "response_model_attr": "DomesticStockCurrentPriceDaily",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/inquire-daily-price",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930",
+            "fid_period_div_code": "D",
+            "fid_org_adj_prc": "0"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST01010400"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_INPUT_ISCD": "005930",
+            "FID_PERIOD_DIV_CODE": "D",
+            "FID_ORG_ADJ_PRC": "0"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stck_bsop_date": "20250115",
+                    "stck_oprc": "69000",
+                    "stck_hgpr": "71000",
+                    "stck_lwpr": "68500",
+                    "stck_clpr": "70000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_current_price_asking_expected_conclusion",
+        "response_model_attr": "DomesticStockCurrentPriceAskingExpectedConclusion",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/inquire-asking-price-exp-ccn",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST01010200"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_INPUT_ISCD": "005930"
+        },
+        "response_payload": {
+            "output1": {
+                "askp1": "70500",
+                "bidp1": "70000",
+                "askp_rsqn1": "1000",
+                "bidp_rsqn1": "1500"
+            }
+        }
+    },
+    {
+        "method_name": "get_stock_current_price_investor",
+        "response_model_attr": "DomesticStockCurrentPriceInvestor",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/inquire-investor",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST01010900"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_INPUT_ISCD": "005930"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stck_bsop_date": "20250115",
+                    "frgn_ntby_qty": "10000",
+                    "orgn_ntby_qty": "5000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_current_price_member",
+        "response_model_attr": "DomesticStockCurrentPriceMember",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/inquire-member",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST01010600"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_INPUT_ISCD": "005930"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "mbcr_name": "삼성증권",
+                    "mbcr_askp_icdc": "100000",
+                    "mbcr_bidp_icdc": "50000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_domestic_stock_period_quote",
+        "response_model_attr": "DomesticStockPeriodQuote",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930",
+            "fid_input_date_1": "20250101",
+            "fid_input_date_2": "20250131",
+            "fid_period_div_code": "D",
+            "fid_org_adj_prc": "0"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST03010100"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_INPUT_ISCD": "005930",
+            "FID_INPUT_DATE_1": "20250101",
+            "FID_INPUT_DATE_2": "20250131",
+            "FID_PERIOD_DIV_CODE": "D",
+            "FID_ORG_ADJ_PRC": "0"
+        },
+        "response_payload": {
+            "output2": [
+                {
+                    "stck_bsop_date": "20250115",
+                    "stck_oprc": "69000",
+                    "stck_hgpr": "71000",
+                    "stck_lwpr": "68500",
+                    "stck_clpr": "70000",
+                    "acml_vol": "10000000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_today_minute_chart",
+        "response_model_attr": "DomesticStockTodayMinuteChart",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/inquire-time-itemchartprice",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930",
+            "fid_input_hour_1": "153000",
+            "fid_pw_data_incu_yn": "Y",
+            "fid_etc_cls_code": ""
+        },
+        "expected_headers": {
+            "tr_id": "FHKST03010200"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_INPUT_ISCD": "005930",
+            "FID_INPUT_HOUR_1": "153000",
+            "FID_PW_DATA_INCU_YN": "Y",
+            "FID_ETC_CLS_CODE": ""
+        },
+        "response_payload": {
+            "output2": [
+                {
+                    "stck_bsop_date": "20250115",
+                    "stck_cntg_hour": "153000",
+                    "stck_prpr": "70000",
+                    "cntg_vol": "1000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_daily_minute_chart",
+        "response_model_attr": "DomesticStockTodayMinuteChart",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/inquire-time-dailychartprice",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930",
+            "fid_input_hour_1": "153000",
+            "fid_input_date_1": "20250115",
+            "fid_pw_data_incu_yn": "Y",
+            "fid_fake_tick_incu_yn": ""
+        },
+        "expected_headers": {
+            "tr_id": "FHKST03010230"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_INPUT_ISCD": "005930",
+            "FID_INPUT_HOUR_1": "153000",
+            "FID_INPUT_DATE_1": "20250115",
+            "FID_PW_DATA_INCU_YN": "Y",
+            "FID_FAKE_TICK_INCU_YN": ""
+        },
+        "response_payload": {
+            "output2": [
+                {
+                    "stck_bsop_date": "20250115",
+                    "stck_cntg_hour": "153000",
+                    "stck_prpr": "70000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_current_price_time_item_conclusion",
+        "response_model_attr": "DomesticStockCurrentPriceTimeItemConclusion",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/inquire-time-itemconclusion",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930",
+            "fid_input_hour_1": "153000"
+        },
+        "expected_headers": {
+            "tr_id": "FHPST01060000"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_INPUT_ISCD": "005930",
+            "FID_INPUT_HOUR_1": "153000"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stck_cntg_hour": "153000",
+                    "stck_prpr": "70000",
+                    "cntg_vol": "1000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_current_price_daily_overtime_price",
+        "response_model_attr": "DomesticStockCurrentPriceDailyOvertimePrice",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/inquire-daily-overtimeprice",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930"
+        },
+        "expected_headers": {
+            "tr_id": "FHPST02320000"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_INPUT_ISCD": "005930"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stck_bsop_date": "20250115",
+                    "ovtm_unpr": "70500"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_current_price_overtime_conclusion",
+        "response_model_attr": "DomesticStockCurrentPriceOvertimeConclusion",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/inquire-time-overtimeconclusion",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930",
+            "fid_input_hour_1": "180000"
+        },
+        "expected_headers": {
+            "tr_id": "FHPST02310000"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_INPUT_ISCD": "005930",
+            "FID_INPUT_HOUR_1": "180000"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stck_cntg_hour": "180000",
+                    "ovtm_unpr": "70500",
+                    "cntg_vol": "500"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_overtime_current_price",
+        "response_model_attr": "DomesticStockOvertimeCurrentPrice",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/inquire-overtime-price",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930"
+        },
+        "expected_headers": {
+            "tr_id": "FHPST02300000"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_INPUT_ISCD": "005930"
+        },
+        "response_payload": {
+            "output": {
+                "ovtm_unpr": "70500",
+                "ovtm_vol": "10000"
+            }
+        }
+    },
+    {
+        "method_name": "get_stock_overtime_asking_price",
+        "response_model_attr": "DomesticStockOvertimeAskingPrice",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/inquire-overtime-asking-price",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_input_iscd": "005930",
+            "fid_cond_mrkt_div_code": "J"
+        },
+        "expected_headers": {
+            "tr_id": "FHPST02300400"
+        },
+        "expected_body": {
+            "FID_INPUT_ISCD": "005930",
+            "FID_COND_MRKT_DIV_CODE": "J"
+        },
+        "response_payload": {
+            "output1": {
+                "ovtm_askp1": "70500",
+                "ovtm_bidp1": "70000"
+            }
+        }
+    },
+    {
+        "method_name": "get_stock_closing_expected_price",
+        "response_model_attr": "DomesticStockClosingExpectedPrice",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/exp-closing-price",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_rank_sort_cls_code": "0",
+            "fid_input_iscd": "0000",
+            "fid_blng_cls_code": "0",
+            "fid_cond_mrkt_div_code": "J",
+            "fid_cond_scr_div_code": "11173"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST117300C0"
+        },
+        "expected_body": {
+            "FID_RANK_SORT_CLS_CODE": "0",
+            "FID_INPUT_ISCD": "0000",
+            "FID_BLNG_CLS_CODE": "0",
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_COND_SCR_DIV_CODE": "11173"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "mksc_shrn_iscd": "005930",
+                    "hts_kor_isnm": "삼성전자",
+                    "stck_prpr": "70000",
+                    "prdy_vrss": "1000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_etfetn_current_price",
+        "response_model_attr": "DomesticEtfEtnCurrentPrice",
+        "endpoint": "/uapi/etfetn/v1/quotations/inquire-price",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_input_iscd": "069500",
+            "fid_cond_mrkt_div_code": "J"
+        },
+        "expected_headers": {
+            "tr_id": "FHPST02400000"
+        },
+        "expected_body": {
+            "FID_INPUT_ISCD": "069500",
+            "FID_COND_MRKT_DIV_CODE": "J"
+        },
+        "response_payload": {
+            "output": {
+                "stck_prpr": "40000",
+                "prdy_vrss": "200"
+            }
+        }
+    },
+    {
+        "method_name": "get_etf_component_stock_price",
+        "response_model_attr": "DomesticEtfComponentStockPrice",
+        "endpoint": "/uapi/etfetn/v1/quotations/inquire-component-stock-price",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_input_iscd": "069500",
+            "fid_cond_mrkt_div_code": "J",
+            "fid_cond_scr_div_code": "11216"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST121600C0"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_INPUT_ISCD": "069500",
+            "FID_COND_SCR_DIV_CODE": "11216"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stck_shrn_iscd": "005930",
+                    "hts_kor_isnm": "삼성전자",
+                    "stck_prpr": "70000",
+                    "prdy_vrss": "1000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_etf_nav_comparison_trend",
+        "response_model_attr": "DomesticEtfNavComparisonTrend",
+        "endpoint": "/uapi/etfetn/v1/quotations/nav-comparison-trend",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_input_iscd": "069500",
+            "fid_cond_mrkt_div_code": "J"
+        },
+        "expected_headers": {
+            "tr_id": "FHPST02440000"
+        },
+        "expected_body": {
+            "FID_INPUT_ISCD": "069500",
+            "FID_COND_MRKT_DIV_CODE": "J"
+        },
+        "response_payload": {
+            "output": {
+                "stck_prpr": "40000",
+                "nav_prpr": "40100",
+                "thdt_nav_prpr_vrss_rate": "0.25"
+            }
+        }
+    },
+    {
+        "method_name": "get_etf_nav_comparison_daily_trend",
+        "response_model_attr": "DomesticEtfNavComparisonDailyTrend",
+        "endpoint": "/uapi/etfetn/v1/quotations/nav-comparison-daily-trend",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_input_iscd": "069500",
+            "fid_input_date_1": "20250101",
+            "fid_input_date_2": "20250131",
+            "fid_cond_mrkt_div_code": "J"
+        },
+        "expected_headers": {
+            "tr_id": "FHPST02440200"
+        },
+        "expected_body": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "069500",
+            "fid_input_date_1": "20250101",
+            "fid_input_date_2": "20250131"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stck_bsop_date": "20250115",
+                    "stck_clpr": "40000",
+                    "nav_prpr": "40100"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_etf_nav_comparison_time_trend",
+        "response_model_attr": "DomesticEtfNavComparisonTimeTrend",
+        "endpoint": "/uapi/etfetn/v1/quotations/nav-comparison-time-trend",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_hour_cls_code": "60",
+            "fid_input_iscd": "069500",
+            "fid_cond_mrkt_div_code": "J"
+        },
+        "expected_headers": {
+            "tr_id": "FHPST02440100"
+        },
+        "expected_body": {
+            "fid_hour_cls_code": "60",
+            "fid_input_iscd": "069500",
+            "fid_cond_mrkt_div_code": "J"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stck_bsop_date": "20250115",
+                    "stck_cntg_hour": "153000",
+                    "stck_prpr": "40000",
+                    "nav_prpr": "40100"
+                }
+            ]
+        }
+    }
+]

@@ -83,6 +83,10 @@ packages/*/src/*/*.py[cod]
 # Environment variables
 .env*
 
+# Token cache files
+.kis_token_cache.json
+*_token_cache.json
+
 # Claude Code AI assistant configuration and memory
 .claude/
 .specify/
