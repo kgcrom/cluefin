@@ -205,7 +205,7 @@ class StockPreferredStockRatioTopItem(BaseModel):
     prst_acml_vol: str = Field(title="우선주 누적 거래량", max_length=40)
     diff_prpr: str = Field(title="차이 현재가", max_length=10)
     dprt: str = Field(title="괴리율", max_length=10)
-    prdy_ctrt: str = Field(title="전일 대비율", max_length=1)
+    prdy_ctrt: str = Field(title="전일 대비율", max_length=82)
     prst_prdy_ctrt: str = Field(title="우선주 전일 대비율", max_length=82)
 
 
@@ -464,8 +464,7 @@ class StockShortSellingTopItem2(BaseModel):
 class StockShortSellingTop(BaseModel, KisHttpBody):
     """국내주식 공매도 상위종목"""
 
-    output1: StockShortSellingTopItem1 = Field(title="응답상세1")
-    output2: Sequence[StockShortSellingTopItem2] = Field(default_factory=list)
+    output: Sequence[StockCreditBalanceTopItem] = Field(default_factory=list)
 
 class StockAfterHoursFluctuationRankItem1(BaseModel):
     ovtm_untp_uplm_issu_cnt: str = Field(title="시간외 단일가 상한 종목 수", max_length=7)
@@ -542,7 +541,7 @@ class HtsInquiryTop20Item(BaseModel):
     )
     mksc_shrn_iscd: str = Field(
         title="종목코드",
-        max_length=2
+        max_length=9
     )
 
 
