@@ -460,7 +460,7 @@ class EstimatedEarningsItem1(BaseModel):
     item_kor_nm: str = Field(title="HTS한글종목명", max_length=40)
     name1: str = Field(title="ELW현재가", max_length=10)
     name2: str = Field(title="전일대비", max_length=10)
-    estdate: str = Field(title="전일대비부호", max_length=1)
+    estdate: str = Field(title="전일대비부호", max_length=8)
     rcmd_name: str = Field(title="전일대비율", max_length=82)
     capital: str = Field(title="누적거래량", max_length=18)
     forn_item_lmtrt: str = Field(title="행사가", max_length=112)
