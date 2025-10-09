@@ -48,7 +48,7 @@ class StockCurrentPriceDetailItem(BaseModel):
     pass
 
 
-class StockCurrentPriceDetail(BaseModel):
+class StockCurrentPriceDetail(BaseModel, KisHttpBody):
     """해외주식 현재가상세"""
 
     output: StockCurrentPriceDetailItem = Field(title="응답상세")
@@ -91,7 +91,7 @@ class CurrentPriceFirstQuoteItem(BaseModel):
     pass
 
 
-class CurrentPriceFirstQuote(BaseModel):
+class CurrentPriceFirstQuote(BaseModel, KisHttpBody):
     """해외주식 현재가 1호가"""
 
     output: CurrentPriceFirstQuoteItem = Field(title="응답상세")
@@ -117,7 +117,7 @@ class StockCurrentPriceConclusionItem(BaseModel):
     pass
 
 
-class StockCurrentPriceConclusion(BaseModel):
+class StockCurrentPriceConclusion(BaseModel, KisHttpBody):
     """해외주식 현재체결가"""
 
     output: StockCurrentPriceConclusionItem = Field(title="응답상세")
@@ -138,7 +138,7 @@ class ConclusionTrendItem(BaseModel):
     pass
 
 
-class ConclusionTrend(BaseModel):
+class ConclusionTrend(BaseModel, KisHttpBody):
     """해외주식 체결추이"""
 
     output1: Sequence[ConclusionTrendItem] = Field(default_factory=list)
@@ -170,7 +170,7 @@ class StockMinuteChartItem2(BaseModel):
     pass
 
 
-class StockMinuteChart(BaseModel):
+class StockMinuteChart(BaseModel, KisHttpBody):
     """해외주식분봉조회"""
 
     output1: Sequence[StockMinuteChartItem1] = Field(default_factory=list)
@@ -202,7 +202,7 @@ class IndexMinuteChartItem2(BaseModel):
     pass
 
 
-class IndexMinuteChart(BaseModel):
+class IndexMinuteChart(BaseModel, KisHttpBody):
     """해외지수분봉조회"""
 
     output1: IndexMinuteChartItem1 = Field(title="응답상세")
@@ -238,7 +238,7 @@ class StockPeriodQuoteItem2(BaseModel):
     pass
 
 
-class StockPeriodQuote(BaseModel):
+class StockPeriodQuote(BaseModel, KisHttpBody):
     """해외주식 기간별시세"""
 
     output1: StockPeriodQuoteItem1 = Field(title="응답상세")
@@ -270,11 +270,11 @@ mod_yn	변경 여부	string	N	1
 class ItemIndexExchangePeriodPriceItem2(BaseModel):
     pass
 
-class ItemIndexExchangePeriodPrice(BaseModel):
+class ItemIndexExchangePeriodPrice(BaseModel, KisHttpBody):
     """해외주식 종목/지수/환율기간별시세(일/주/월/년)"""
 
     output1: ItemIndexExchangePeriodPriceItem1 = Field(title="응답상세")
-    output2: Sequence[ItemIndexExchangePeriodPriceItem2] = Field(default_factory=list
+    output2: Sequence[ItemIndexExchangePeriodPriceItem2] = Field(default_factory=list)
 
 
 zdiv	소수점자리수	string	Y	1	소수점자리수
@@ -317,7 +317,7 @@ class SearchByConditionItem2(BaseModel):
     pass
 
 
-class SearchByCondition(BaseModel):
+class SearchByCondition(BaseModel, KisHttpBody):
     """해외주식조건검색"""
 
     output1: SearchByConditionItem1 = Field(title="응답상세")
@@ -340,7 +340,7 @@ class SettlementDateItem(BaseModel):
     pass
 
 
-class SettlementDate(BaseModel):
+class SettlementDate(BaseModel, KisHttpBody):
     """해외결제일자조회"""
 
     output: SettlementDateItem = Field(title="응답상세")
@@ -425,7 +425,7 @@ class ProductBaseInfoItem(BaseModel):
     pass
 
 
-class ProductBaseInfo(BaseModel):
+class ProductBaseInfo(BaseModel, KisHttpBody):
     """해외주식 상품기본정보"""
 
     output: ProductBaseInfoItem = Field(title="응답상세")
@@ -457,7 +457,7 @@ e_ordyn	매매가능	string	Y	2
 class SectorPriceItem2(BaseModel):
     pass
 
-class SectorPrice(BaseModel):
+class SectorPrice(BaseModel, KisHttpBody):
     """해외주식 업종별시세"""
 
     output1: SectorPriceItem1 = Field(title="응답상세")
@@ -474,7 +474,7 @@ class SectorCodesItem2(BaseModel):
     pass
 
 
-class SectorCodes(BaseModel):
+class SectorCodes(BaseModel, KisHttpBody):
     """해외주식 업종별코드조회"""
 
     output1: SectorCodesItem1 = Field(title="응답상세")

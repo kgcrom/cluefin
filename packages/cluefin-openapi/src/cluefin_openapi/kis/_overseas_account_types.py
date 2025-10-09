@@ -589,14 +589,14 @@ class OrderAfterDayTime(BaseModel, KisHttpBody):
 KRX_FWDG_ORD_ORGNO	한국거래소전송주문조직번호	string	Y	5	주문시 한국투자증권 시스템에서 지정된 영업점코드
 ODNO	주문번호	string	Y	10	주문시 한국투자증권 시스템에서 채번된 주문번호
 ORD_TMD	주문시각	string	Y	6	주문시각(시분초HHMMSS)
-class CorrectCancelAfterDayTimeItem(BaseModel):
+class CorrectAfterDayTimeItem(BaseModel):
     pass
 
 
-class CorrectCancelAfterDayTime(BaseModel, KisHttpBody):
+class CorrectAfterDayTime(BaseModel, KisHttpBody):
     """해외주식 미국주간정정취소"""
 
-    output: CorrectCancelAfterDayTimeItem = Field(title="응답상세")
+    output: CorrectAfterDayTimeItem = Field(title="응답상세")
 
 
 odno	주문번호	string	Y	10	
