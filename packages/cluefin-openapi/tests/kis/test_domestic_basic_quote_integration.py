@@ -94,11 +94,11 @@ def test_get_stock_current_price_2(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_current_price_detail(client: Client):
-    """Test stock current price detail with execution info."""
+def test_get_stock_current_price_conclusion(client: Client):
+    """Test stock current price conclusion with execution info."""
     time.sleep(1)
     try:
-        response = client.domestic_basic_quote.get_stock_current_price_detail(
+        response = client.domestic_basic_quote.get_stock_current_price_conclusion(
             fid_cond_mrkt_div_code="J", fid_input_iscd="005930"
         )
 
@@ -108,7 +108,7 @@ def test_get_stock_current_price_detail(client: Client):
         assert hasattr(response, "msg_cd")
 
     except Exception as e:
-        pytest.fail(f"get_stock_current_price_detail failed: {e}")
+        pytest.fail(f"get_stock_current_price_conclusion failed: {e}")
 
 
 @pytest.mark.integration
@@ -191,12 +191,12 @@ def test_get_stock_current_price_member(client: Client):
 
 
 @pytest.mark.integration
-def test_get_domestic_stock_period_quote(client: Client):
-    """Test domestic stock period quote (daily/weekly/monthly/yearly)."""
+def test_get_stock_period_quote(client: Client):
+    """Test stock period quote (daily/weekly/monthly/yearly)."""
     time.sleep(1)
     try:
         # Test daily period quotes for the last 30 days
-        response = client.domestic_basic_quote.get_domestic_stock_period_quote(
+        response = client.domestic_basic_quote.get_stock_period_quote(
             fid_cond_mrkt_div_code="J",
             fid_input_iscd="005930",
             fid_input_date_1="20240701",
@@ -211,7 +211,7 @@ def test_get_domestic_stock_period_quote(client: Client):
         assert hasattr(response, "msg_cd")
 
     except Exception as e:
-        pytest.fail(f"get_domestic_stock_period_quote failed: {e}")
+        pytest.fail(f"get_stock_period_quote failed: {e}")
 
 
 @pytest.mark.integration

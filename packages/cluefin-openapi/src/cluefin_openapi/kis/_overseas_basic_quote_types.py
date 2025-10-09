@@ -1,11 +1,11 @@
 from pydantic import BaseModel
 
 
-class CurrentPriceDetailItem(BaseModel):
+class StockCurrentPriceDetailItem(BaseModel):
     pass
 
 
-class CurrentPriceDetail(BaseModel):
+class StockCurrentPriceDetail(BaseModel):
     """해외주식 현재가상세"""
 
     pass
@@ -21,51 +21,51 @@ class CurrentPriceFirstQuote(BaseModel):
     pass
 
 
-class CurrentExecutionPriceItem(BaseModel):
+class StockCurrentPriceConclusionItem(BaseModel):
     pass
 
 
-class CurrentExecutionPrice(BaseModel):
+class StockCurrentPriceConclusion(BaseModel):
     """해외주식 현재체결가"""
 
     pass
 
 
-class ExecutionTrendItem(BaseModel):
+class ConclusionTrendItem(BaseModel):
     pass
 
 
-class ExecutionTrend(BaseModel):
+class ConclusionTrend(BaseModel):
     """해외주식 체결추이"""
 
     pass
 
 
-class StockMinuteDataItem(BaseModel):
+class StockMinuteChartItem(BaseModel):
     pass
 
 
-class StockMinuteData(BaseModel):
+class StockMinuteChart(BaseModel):
     """해외주식분봉조회"""
 
     pass
 
 
-class IndexMinuteDataItem(BaseModel):
+class IndexMinuteChartItem(BaseModel):
     pass
 
 
-class IndexMinuteData(BaseModel):
+class IndexMinuteChart(BaseModel):
     """해외지수분봉조회"""
 
     pass
 
 
-class PeriodPriceItem(BaseModel):
+class StockPeriodQuoteItem(BaseModel):
     pass
 
 
-class PeriodPrice(BaseModel):
+class StockPeriodQuote(BaseModel):
     """해외주식 기간별시세"""
 
     pass

@@ -13,7 +13,7 @@ from cluefin_openapi.kis._domestic_basic_quote_types import (
     DomesticStockCurrentPriceAskingExpectedConclusion,
     DomesticStockCurrentPriceDaily,
     DomesticStockCurrentPriceDailyOvertimePrice,
-    DomesticStockCurrentPriceDetail,
+    DomesticStockCurrentPriceConclusion,
     DomesticStockCurrentPriceInvestor,
     DomesticStockCurrentPriceMember,
     DomesticStockCurrentPriceOvertimeConclusion,
@@ -81,9 +81,9 @@ class DomesticBasicQuote:
         )
         return DomesticStockCurrentPrice2.model_validate(response.json())
 
-    def get_stock_current_price_detail(
+    def get_stock_current_price_conclusion(
         self, fid_cond_mrkt_div_code: Literal["J", "NX", "UN"], fid_input_iscd: str
-    ) -> DomesticStockCurrentPriceDetail:
+    ) -> DomesticStockCurrentPriceConclusion:
         """
         주식현재가 체결
 
@@ -92,7 +92,7 @@ class DomesticBasicQuote:
             fid_input_iscd (str): 입력 종목코드
 
         Returns:
-            DomesticStockCurrentPriceDetail: 주식현재가 체결
+            DomesticStockCurrentPriceConclusion: 주식현재가 체결
         """
         headers = {
             "tr_id": "FHKST01010300",
@@ -102,7 +102,7 @@ class DomesticBasicQuote:
             "FID_INPUT_ISCD": fid_input_iscd,
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/inquire-ccnl", headers=headers, params=params)
-        return DomesticStockCurrentPriceDetail.model_validate(response.json())
+        return DomesticStockCurrentPriceConclusion.model_validate(response.json())
 
     def get_stock_current_price_daily(
         self,

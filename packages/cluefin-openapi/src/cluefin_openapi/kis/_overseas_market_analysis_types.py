@@ -6,7 +6,7 @@ class StockPriceRiseFallItem(BaseModel):
 
 
 class StockPriceRiseFall(BaseModel):
-    """해외주식 가격금등락"""
+    """해외주식 가격급등락"""
 
     pass
 
@@ -16,7 +16,7 @@ class StockVolumeSurgeItem(BaseModel):
 
 
 class StockVolumeSurge(BaseModel):
-    """해외주식 거래량금증"""
+    """해외주식 거래량급증"""
 
     pass
 

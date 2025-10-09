@@ -47,8 +47,8 @@
         }
     },
     {
-        "method_name": "get_stock_current_price_detail",
-        "response_model_attr": "DomesticStockCurrentPriceDetail",
+        "method_name": "get_stock_current_price_conclusion",
+        "response_model_attr": "DomesticStockCurrentPriceConclusion",
         "endpoint": "/uapi/domestic-stock/v1/quotations/inquire-ccnl",
         "method": "GET",
         "call_kwargs": {

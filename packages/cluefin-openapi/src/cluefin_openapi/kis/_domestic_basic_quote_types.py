@@ -6,7 +6,6 @@ from cluefin_openapi.kis._model import KisHttpBody
 
 
 class DomesticStockCurrentPriceItem(BaseModel):
-    """국내주식 현재가 시세 아이템"""
 
     iscd_stat_cls_code: str = Field(title="종목 상태 구분 코드", max_length=3)
     marg_rate: str = Field(title="증거금 비율", max_length=84)
@@ -164,8 +163,7 @@ class DomesticStockCurrentPrice2(BaseModel, KisHttpBody):
     output: DomesticStockCurrentPriceItem2 = Field(title="응답상세")
 
 
-class DomesticStockCurrentPriceDetailItem(BaseModel):
-    """국내주식 현재가 체결 아이템"""
+class DomesticStockCurrentPriceConclusionItem(BaseModel):
 
     stck_cntg_hour: str = Field(title="주식 체결 시간", max_length=6)
     stck_prpr: str = Field(title="주식 현재가", max_length=10)
@@ -176,14 +174,13 @@ class DomesticStockCurrentPriceDetailItem(BaseModel):
     prdy_ctrt: str = Field(title="전일 대비율", max_length=82)
 
 
-class DomesticStockCurrentPriceDetail(BaseModel, KisHttpBody):
+class DomesticStockCurrentPriceConclusion(BaseModel, KisHttpBody):
     """국내주식 현재가 체결"""
 
-    output: Sequence[DomesticStockCurrentPriceDetailItem] = Field(default_factory=list)
+    output: Sequence[DomesticStockCurrentPriceConclusionItem] = Field(default_factory=list)
 
 
 class DomesticStockCurrentPriceDailyItem(BaseModel):
-    """국내주식 현재가 일자별 아이템"""
 
     stck_bsop_date: str = Field(title="주식 영업 일자", max_length=8)
     stck_oprc: str = Field(title="주식 시가2", max_length=10)
@@ -547,7 +544,6 @@ class DomesticStockDailyMinuteChart(BaseModel, KisHttpBody):
 
 
 class DomesticStockCurrentPriceTimeItemConclusionItem1(BaseModel):
-    """국내주식 현재가 당일시간대별체결 응답상세1"""
 
     stck_prpr: str = Field(title="주식 현재가", max_length=10)
     prdy_vrss: str = Field(title="전일 대비", max_length=10)
@@ -559,7 +555,6 @@ class DomesticStockCurrentPriceTimeItemConclusionItem1(BaseModel):
 
 
 class DomesticStockCurrentPriceTimeItemConclusionItem2(BaseModel):
-    """국내주식 현재가 당일시간대별체결 응답상세2"""
 
     stck_cntg_hour: str = Field(title="주식 체결 시간", max_length=6)
     # TODO(typo) 문서에는 stck_pbpr 이라고 되어있으나, stck_prpr 오타로 보임
@@ -880,7 +875,6 @@ class DomesticEtfEtnCurrentPrice(BaseModel, KisHttpBody):
 
 
 class DomesticEtfComponentStockPriceItem1(BaseModel):
-    """국내ETF 구성종목시세 아이템1"""
 
     stck_prpr: str = Field(title="매매 일자", max_length=10)
     prdy_vrss: str = Field(title="주식 현재가", max_length=10)
@@ -901,7 +895,6 @@ class DomesticEtfComponentStockPriceItem1(BaseModel):
 
 
 class DomesticEtfComponentStockPriceItem2(BaseModel):
-    """국내ETF 구성종목시세 아이템2"""
 
     stck_shrn_iscd: str = Field(title="주식 단축 종목코드", max_length=9)
     hts_kor_isnm: str = Field(title="HTS 한글 종목명", max_length=40)
@@ -928,7 +921,6 @@ class DomesticEtfComponentStockPrice(BaseModel, KisHttpBody):
 
 
 class DomesticEtfNavComparisonTrendItem1(BaseModel):
-    """국내ETF NAV 비교추이(종목) 아이템"""
 
     stck_prpr: str = Field(title="주식 현재가", max_length=8)
     prdy_vrss: str = Field(title="전일 대비", max_length=8)
@@ -945,7 +937,6 @@ class DomesticEtfNavComparisonTrendItem1(BaseModel):
 
 
 class DomesticEtfNavComparisonTrendItem2(BaseModel):
-    """국내ETF NAV 비교추이(종목) 아이템2"""
 
     nav: str = Field(title="NAV", max_length=11)
     nav_prdy_vrss_sign: str = Field(title="NAV 전일 대비 부호", max_length=1)
@@ -987,7 +978,6 @@ class DomesticEtfNavComparisonDailyTrend(BaseModel, KisHttpBody):
 
 
 class DomesticEtfNavComparisonTimeTrendItem(BaseModel):
-    """국내ETF NAV 비교추이(시간) 아이템"""
 
     bsop_hour: str = Field(description="영업 시간")
     nav: str = Field(description="NAV")
