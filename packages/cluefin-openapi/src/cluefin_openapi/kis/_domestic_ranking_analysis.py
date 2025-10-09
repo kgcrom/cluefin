@@ -421,7 +421,7 @@ class DomesticRankingAnalysis:
         fid_input_price_2: str,
     ) -> StockPreferredStockRatioTop:
         """
-        국내주식 우선주/리리율 상위
+        국내주식 우선주/괴리율 상위
 
         Args:
             fid_vol_cnt (str): 거래량 수 (입력값 없을때 전체, 거래량~)
