@@ -41,7 +41,7 @@ uv sync --all-packages
 
 # Configure environment
 cp apps/cluefin-cli/.env.sample .env
-# Edit .env with your API keys (KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, KIWOOM_ENV, OPENAI_API_KEY)
+# Edit .env with your API keys (KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, KIWOOM_ENV, KIS_APP_KEY, KIS_SECRET_KEY, KIS_ENV, KRX_AUTH_KEY, DART_AUTH_KEY, OPENAI_API_KEY)
 
 # Interactive stock analysis
 cluefin-cli inquiry
@@ -58,14 +58,16 @@ uv run ruff check . --fix
 
 ### 🔥 핵심 기능
 - **대화형 CLI**: 메뉴 기반 주식 조회 시스템을 갖춘 리치 터미널 인터페이스
-- **한국 금융 API**: 키움증권 & 한국거래소(KRX)를 위한 타입 안전한 클라이언트
+- **한국 금융 API**: 키움증권, 한국투자증권(KIS), 한국거래소(KRX), DART를 위한 타입 안전한 클라이언트
 - **ML 기반 예측**: 주식 움직임 예측을 위한 SHAP 설명 기능을 갖춘 LightGBM 모델
 - **기술적 분석**: TA-Lib 통합을 통한 20+ 지표 (RSI, MACD, 볼린저 밴드 등)
 - **AI 인사이트**: 시장 분석 및 자연어 설명을 위한 GPT-4 통합
 
 ### 📊 데이터 소스
 - **키움증권**: 실시간 시세, 계좌 관리, 주문 실행
+- **한국투자증권(KIS)**: 국내/해외 주식 시세, 계좌 조회, 시장 분석
 - **한국거래소(KRX)**: 시장 데이터, 지수, 섹터 정보
+- **DART**: 기업 공시, 재무제표, 대량보유상황
 - **기술적 지표**: 포괄적인 TA-Lib 통합
 - **AI 분석**: OpenAI 기반 시장 인사이트 및 설명
 
@@ -83,10 +85,12 @@ Cluefin은 모든 사람들에게 금융 투자, 포트폴리오 관리를 단�
 This project uses a **uv workspace monorepo** structure:
 ```
 cluefin/
-├── packages/cluefin-openapi/    # Korean financial API clients (Kiwoom Securities & KRX)
+├── packages/cluefin-openapi/    # Korean financial API clients
 │   ├── src/cluefin_openapi/
 │   │   ├── kiwoom/             # Kiwoom Securities API client
-│   │   └── krx/                # Korea Exchange API client  
+│   │   ├── kis/                # Korea Investment & Securities API client
+│   │   ├── krx/                # Korea Exchange API client
+│   │   └── dart/               # DART corporate disclosure API client
 │   └── tests/                  # Unit and integration tests
 ├── apps/cluefin-cli/           # Interactive CLI application with ML predictions
 └── docs/                       # Architecture and technical documentation
@@ -117,9 +121,9 @@ uv run ruff format .
 ### Component Overview
 
 **[cluefin-openapi](packages/cluefin-openapi/)** - Korean Financial API Clients
-- **Type-safe Pydantic models** for Kiwoom Securities & KRX APIs with Korean field aliases
+- **Type-safe Pydantic models** for Kiwoom, KIS, KRX, and DART APIs with Korean field aliases
 - **Structured response handling** with `KiwoomHttpResponse[T]` wrapper pattern
-- **OAuth2-style authentication** for Kiwoom, simple auth_key for KRX
+- **Multiple authentication methods**: OAuth2-style (Kiwoom), token-based (KIS), simple auth_key (KRX, DART)
 - **Rate limiting and error handling** optimized for Korean market APIs
 - **Test coverage** with unit tests using `requests_mock` and integration tests
 

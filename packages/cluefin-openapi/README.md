@@ -35,7 +35,7 @@ pip install cluefin-openapi
 ## 🎯 왜 cluefin-openapi인가요?
 
 ### 통합된 인터페이스
-키움증권, DART, KRX 등 여러 금융 OpenAPI를 하나의 Python 인터페이스로 통합하여 제공합니다.
+키움증권, 한국투자증권(KIS), KRX, DART 등 여러 금융 OpenAPI를 하나의 Python 인터페이스로 통합하여 제공합니다.
 
 ### 개발 시간 단축
 복잡한 금융 API 통합 작업을 대신 처리하여, 투자 도구 개발에 집중할 수 있습니다.
@@ -57,14 +57,19 @@ Pydantic을 활용한 강력한 타입 검증으로 런타임 에러를 방지�
 2. API 사용 신청 및 승인 대기
 3. APP_KEY 및 SECRET_KEY 발급 받기
 
+### 2. 한국투자증권 API 신청
 
-### 2. 한국거래소 OpenAPI 신청
+1. [한국투자증권 OpenAPI 사이트](https://apiportal.koreainvestment.com/)에서 계정 생성
+2. API 사용 신청 및 승인 대기
+3. APP_KEY 및 SECRET_KEY 발급 받기
+
+### 3. 한국거래소 OpenAPI 신청
 
 1. [한국거래소 OpenAPI 사이트](http://openapi.krx.co.kr/contents/OPP/MAIN/main/index.cmd)에서 계정 생성
 2. API 인증키 신청 및 승인 대기
 3. 사용할 API 마다 신청 및 승인 대기
 
-### 3. 환경 변수 설정
+### 4. 환경 변수 설정
 
 ```bash
 # 워크스페이스 루트 디렉토리에서
@@ -76,6 +81,11 @@ cp apps/cluefin-cli/.env.sample .env
 KIWOOM_APP_KEY=your_app_key_here
 KIWOOM_SECRET_KEY=your_secret_key_here
 KIWOOM_ENV=dev # options: prod | dev(default)
+
+# 한국투자증권 API 키 설정 (토큰 기반 인증)
+KIS_APP_KEY=your_kis_app_key_here
+KIS_SECRET_KEY=your_kis_secret_key_here
+KIS_ENV=dev # options: prod | dev(default)
 
 # 한국거래소 API 키 설정 (단순 인증키)
 KRX_AUTH_KEY=your_krx_auth_key_here
@@ -151,6 +161,36 @@ client = Client(
 ```
 
 ```python
+# 한국투자증권
+from loguru import logger
+import os
+from pydantic import SecretStr
+import dotenv
+from cluefin_openapi.kis._auth import Auth
+from cluefin_openapi.kis._client import Client as KISClient
+
+# 인증 설정
+dotenv.load_dotenv(dotenv_path=".env")
+
+# 토큰 생성
+auth = Auth(
+    app_key=os.getenv("KIS_APP_KEY"),
+    secret_key=SecretStr(os.getenv("KIS_SECRET_KEY")),
+    env="dev",
+)
+token = auth.generate()
+
+# 클라이언트 초기화
+kis_client = KISClient(
+    app_key=os.getenv("KIS_APP_KEY"),
+    secret_key=SecretStr(os.getenv("KIS_SECRET_KEY")),
+    token=token,
+    env="dev",
+)
+logger.info(f"kis_client => ${kis_client}")
+```
+
+```python
 # 한국거래소
 from loguru import logger
 import os
@@ -163,6 +203,63 @@ dotenv.load_dotenv(dotenv_path=".env")
 
 krx_client = KRXClient(auth_key=os.getenv("KRX_AUTH_KEY"), timeout=30)
 logger.info(f"krx_client => ${krx_client}")
+```
+
+## 📊 KIS API 사용 예제
+
+### 국내 주식 시세 조회
+
+```python
+from loguru import logger
+from cluefin_openapi.kis._client import Client as KISClient
+
+# 주식 현재가 시세 조회
+current_price = kis_client.domestic_basic_quote.get_inquire_price(
+    fid_cond_mrkt_div_code="J",  # 시장 분류 코드 (J: 주식)
+    fid_input_iscd="005930"      # 종목 코드 (삼성전자)
+)
+logger.info(f"현재가: {current_price}")
+
+# 주식 일별 시세 조회
+daily_price = kis_client.domestic_basic_quote.get_inquire_daily_itemchartprice(
+    fid_cond_mrkt_div_code="J",
+    fid_input_iscd="005930",
+    fid_input_date_1="20250101",  # 조회 시작일
+    fid_input_date_2="20250131",  # 조회 종료일
+    fid_period_div_code="D"        # 기간 분류 코드 (D: 일)
+)
+logger.info(f"일별 시세: {daily_price}")
+```
+
+### 국내 계좌 조회
+
+```python
+# 주식 잔고 조회
+balance = kis_client.domestic_account.get_inquire_balance(
+    cano="12345678",      # 종합계좌번호
+    acnt_prdt_cd="01",    # 계좌상품코드
+    afhr_flpr_yn="N",     # 시간외단일가여부
+    ofl_yn="N",           # 오프라인여부
+    inqr_dvsn="01",       # 조회구분
+    unpr_dvsn="01",       # 단가구분
+    fund_sttl_icld_yn="N", # 펀드결제분포함여부
+    fncg_amt_auto_rdpt_yn="N", # 융자금액자동상환여부
+    prcs_dvsn="00",       # 처리구분
+    ctx_area_fk100="",    # 연속조회검색조건100
+    ctx_area_nk100=""     # 연속조회키100
+)
+logger.info(f"잔고: {balance}")
+```
+
+### 해외 주식 시세 조회
+
+```python
+# 해외 주식 현재가 조회 (미국 주식)
+overseas_price = kis_client.overseas_basic_quote.get_inquire_price(
+    exch="NAS",           # 거래소 코드 (NAS: 나스닥)
+    symb="AAPL"           # 종목 코드 (애플)
+)
+logger.info(f"해외 주식 현재가: {overseas_price}")
 ```
 
 ## 📊 KRX API 사용 예제
@@ -295,12 +392,36 @@ except Exception as e:
     logger.info(f"일반 에러: {str(e)}")
 ```
 
+### 한국투자증권 API 에러 처리
+
+```python
+from loguru import logger
+from cluefin_openapi.kis._exceptions import KISAPIError
+
+try:
+    response = kis_client.domestic_basic_quote.get_inquire_price(
+        fid_cond_mrkt_div_code="J",
+        fid_input_iscd="005930"
+    )
+except KISAPIError as e:
+    logger.error(f"KIS API 에러: {e.message}")
+    logger.error(f"에러 코드: {e.error_code}")
+except Exception as e:
+    logger.error(f"일반 에러: {str(e)}")
+```
+
 ### 일반적인 에러 시나리오
 
 **키움증권 API 에러 코드:**
 - `40010000`: 잘못된 요청 형식
 - `40080000`: 토큰 만료
 - `50010000`: 서버 내부 오류
+
+**한국투자증권 API 에러 코드:**
+- `EGW00001`: 잘못된 요청 형식
+- `EGW00123`: API 키 오류
+- `EGW00201`: 토큰 만료 - 토큰 재생성 필요 (1분 간격 제한)
+- `40000000`: 서버 내부 오류
 
 **KRX API 에러 시나리오:**
 - `401`: 인증 실패 - AUTH_KEY 확인 필요
@@ -336,11 +457,15 @@ packages/cluefin-openapi/
 ├── src/cluefin_openapi/
 │   ├── dart/                      # 금융감독원 DART 공시 클라이언트
 │   ├── kiwoom/                    # 키움증권 API 클라이언트
+│   ├── kis/                       # 한국투자증권 API 클라이언트
 │   ├── krx/                      # 한국거래소 API 클라이언트
 │   └── __init__.py
 ├── tests/                        # 테스트 스위트
 │   ├── kiwoom/                   # 키움증권 API 테스트
 │   │   ├── test_*_unit.py        # 단위 테스트 (requests_mock 사용)
+│   │   └── test_*_integration.py # 통합 테스트 (@pytest.mark.integration)
+│   ├── kis/                       # 한국투자증권 API 테스트
+│   │   ├── test_*_unit.py        # 단위 테스트 (Mock 사용, JSON 테스트 케이스)
 │   │   └── test_*_integration.py # 통합 테스트 (@pytest.mark.integration)
 │   ├── krx/                      # KRX API 테스트
 │   │   ├── test_*_unit.py        # 단위 테스트
@@ -401,10 +526,11 @@ uv run ruff check packages/cluefin-openapi/
 ## 🔗 관련 링크
 
 - [키움증권 OpenAPI 포털](https://openapi.kiwoom.com/)
+- [한국투자증권 OpenAPI 포털](https://apiportal.koreainvestment.com/)
 - [한국거래소 OpenAPI 포털](http://openapi.krx.co.kr)
 - [금융감독원 OpenAPI 포털](https://opendart.fss.or.kr/)
 
 ---
 
-> ⚠️ **투자 주의사항**: 이 프로젝트는 키움증권과 공식적으로 연관되지 않습니다. 
+> ⚠️ **투자 주의사항**: 이 프로젝트는 키움증권, 한국투자증권과 공식적으로 연관되지 않습니다.
 > 투자는 신중하게 하시고, 모든 투자 손실에 대한 책임은 투자자 본인에게 있습니다.
