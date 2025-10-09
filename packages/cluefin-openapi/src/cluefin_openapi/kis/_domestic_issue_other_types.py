@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Sequence, Optional
 
 from pydantic import BaseModel, Field
 
@@ -154,7 +154,7 @@ class SectorMinuteInquiryItem2(BaseModel):
 
 class SectorMinuteInquiry(BaseModel, KisHttpBody):
     """업종 분봉조회 응답"""
-    output1: Sequence[SectorMinuteInquiryItem1] = Field(default_factory=list)
+    output1: SectorMinuteInquiryItem1 = Field(title="응답상세1")
     output2: Sequence[SectorMinuteInquiryItem2] = Field(default_factory=list)
 
 
@@ -251,13 +251,15 @@ class ExpectedIndexTrend(BaseModel, KisHttpBody):
 class ExpectedIndexAllItem1(BaseModel):
     bstp_nmix_prpr: str = Field(title="업종 지수 현재가", max_length=112)
     bstp_nmix_prdy_vrss: str = Field(title="업종 지수 전일 대비", max_length=112)
-    prdy_vrss_sign: str = Field(title="전일 대비 부호", max_length=1)
+    # TODO(typo): 문서에는 required Y, 실제로는 Optional
+    prdy_vrss_sign: Optional[str] = Field(default=None, title="전일 대비 부호", max_length=1)
     prdy_ctrt: str = Field(title="전일 대비율", max_length=82)
     acml_vol: str = Field(title="누적 거래량", max_length=18)
     ascn_issu_cnt: str = Field(title="상승 종목 수", max_length=7)
     down_issu_cnt: str = Field(title="하락 종목 수", max_length=7)
     stnr_issu_cnt: str = Field(title="보합 종목 수", max_length=7)
-    bstp_cls_code: str = Field(title="업종 구분 코드", max_length=4)
+    # TODO(typo): 문서에는 required Y, 실제로는 Optional
+    bstp_cls_code: Optional[str] = Field(default=None, title="업종 구분 코드", max_length=4)
 
 
 class ExpectedIndexAllItem2(BaseModel):
@@ -295,7 +297,8 @@ class VolatilityInterruptionStatusItem(BaseModel):
 
 class VolatilityInterruptionStatus(BaseModel, KisHttpBody):
     """변동성완화장치(VI) 현황 응답"""
-    output: VolatilityInterruptionStatusItem = Field(title="응답상세")
+    # TODO(typo): 문서에는 object, 실제로는 list
+    output: Sequence[VolatilityInterruptionStatusItem] = Field(default_factory=list)
 
 
 class InterestRateSummaryItem1(BaseModel):
@@ -319,7 +322,8 @@ class InterestRateSummaryItem2(BaseModel):
 
 class InterestRateSummary(BaseModel, KisHttpBody):
     """금리 종합(국내채권/금리) 응답"""
-    output1: InterestRateSummaryItem1 = Field(title="응답상세1")
+    # TODO(typo): 문서에는 object, 실제로는 list
+    output1: Sequence[InterestRateSummaryItem1] = Field(default_factory=list)
     output2: Sequence[InterestRateSummaryItem2] = Field(default_factory=list)
 
 class MarketAnnouncementScheduleItem(BaseModel):
@@ -338,7 +342,8 @@ class MarketAnnouncementScheduleItem(BaseModel):
 
 class MarketAnnouncementSchedule(BaseModel, KisHttpBody):
     """종합 시황/공시(제목) 응답"""
-    output: MarketAnnouncementScheduleItem = Field(title="응답상세")
+    # TODO(typo): 문서에는 object, 실제로는 list
+    output: Sequence[MarketAnnouncementScheduleItem] = Field(default_factory=list)
 
 class HolidayInquiryItem(BaseModel):
     bass_dt: str = Field(title="기준일자", max_length=8, description="기준일자(YYYYMMDD)")
@@ -350,7 +355,8 @@ class HolidayInquiryItem(BaseModel):
 
 class HolidayInquiry(BaseModel, KisHttpBody):
     """국내휴장일조회 응답"""
-    output: HolidayInquiryItem = Field(title="응답상세")
+    # TODO(typo): 문서에는 object, 실제로는 list
+    output: Sequence[HolidayInquiryItem] = Field(default_factory=list)
 
 class FuturesBusinessDayInquiryItem(BaseModel):
     date1: str = Field(title="영업일1", max_length=8)

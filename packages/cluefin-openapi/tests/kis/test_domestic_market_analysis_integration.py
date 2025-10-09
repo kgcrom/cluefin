@@ -113,8 +113,7 @@ def test_get_watchlist_groups(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert response.rt_cd == "0"
 
     except Exception as e:
         # This may fail if user_id doesn't have watchlists
@@ -209,10 +208,8 @@ def test_get_investor_trading_trend_by_stock_daily(client: Client):
     try:
         response = client.domestic_market_analysis.get_investor_trading_trend_by_stock_daily(
             fid_cond_mrkt_div_code="J",  # Market: J
-            fid_cond_scr_div_code="16441",  # Unique key
-            fid_input_iscd="0000",  # 0000:All, 1001:KOSPI, 2001:KOSDAQ
-            fid_rank_sort_cls_code="0",  # 0:Amount, 1:Volume
-            fid_rank_sort_cls_code_2="0",  # 0:Buy, 1:Sell
+            fid_input_iscd="005930",  # Samsung Electronics
+            fid_input_date_1="20251001",
         )
 
         # Verify response type
@@ -275,12 +272,9 @@ def test_get_foreign_brokerage_trading_aggregate(client: Client):
     time.sleep(1)
     try:
         response = client.domestic_market_analysis.get_foreign_brokerage_trading_aggregate(
-            fid_cond_mrkt_div_code="V",  # Default: V
-            fid_cond_scr_div_code="16449",  # Default: 16449
             fid_input_iscd="0000",  # 0000:All, 0001:KOSPI, 1001:KOSDAQ
-            fid_div_cls_code="0",  # 0:Volume, 1:Amount
             fid_rank_sort_cls_code="0",  # 0:Net buy, 1:Net sell
-            fid_etc_cls_code="0"  # 0:All, 1:Foreign, 2:Institution, 3:Other
+            fid_rank_sort_cls_code_2="0",
         )
 
         # Verify response type

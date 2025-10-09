@@ -396,76 +396,71 @@ class DomesticMarketAnalysis:
 
     def get_foreign_brokerage_trading_aggregate(
         self,
-        fid_cond_mrkt_div_code: str,
-        fid_cond_scr_div_code: str,
         fid_input_iscd: str,
-        fid_div_cls_code: str,
         fid_rank_sort_cls_code: str,
-        fid_etc_cls_code: str,
+        fid_rank_sort_cls_code_2: str,
     ) -> ForeignBrokerageTradingAggregate:
         """
         외국계 매매종목 가집계
 
         Args:
-            fid_cond_mrkt_div_code (str): 시장 분류 코드 (V: Default)
-            fid_cond_scr_div_code (str): 조건 화면 분류 코드 (16449: Default)
             fid_input_iscd (str): 입력 종목코드 (0000: 전체, 0001: 코스피, 1001: 코스닥)
-            fid_div_cls_code (str): 분류 구분 코드 (0: 수량정열, 1: 금액정열)
             fid_rank_sort_cls_code (str): 순위 정렬 구분 코드 (0: 순매수상위, 1: 순매도상위)
-            fid_etc_cls_code (str): 기타 구분 정렬 (0: 전체, 1: 외국인, 2: 기관계, 3: 기타)
+            fid_rank_sort_cls_code_2 (str): 순위 정렬 구분 코드2 (0: 매수순, 1: 매도순)
 
         Returns:
             ForeignBrokerageTradingAggregate: 외국계 매매종목 가집계 응답 객체
         """
         headers = {
-            "tr_id": "FHPTJ04400000",
-        }
-        params = {
-            "FID_COND_MRKT_DIV_CODE": fid_cond_mrkt_div_code,
-            "FID_COND_SCR_DIV_CODE": fid_cond_scr_div_code,
-            "FID_INPUT_ISCD": fid_input_iscd,
-            "FID_DIV_CLS_CODE": fid_div_cls_code,
-            "FID_RANK_SORT_CLS_CODE": fid_rank_sort_cls_code,
-            "FID_ETC_CLS_CODE": fid_etc_cls_code,
-        }
-        response = self.client._get(
-            "/uapi/domestic-stock/v1/quotations/foreign-institution-total", headers=headers, params=params
-        )
-        return ForeignBrokerageTradingAggregate.model_validate(response.json())
-
-    def get_investor_trading_trend_by_stock_daily(
-        self,
-        fid_cond_mrkt_div_code: str,
-        fid_cond_scr_div_code: str,
-        fid_input_iscd: str,
-        fid_rank_sort_cls_code: str,
-        fid_rank_sort_cls_code_2: str,
-    ) -> InvestorTradingTrendByStockDaily:
-        """
-        종목별 투자자매매동향(일별)
-
-        Args:
-            fid_cond_mrkt_div_code (str): 조건시장분류코드 (시장구분코드: J)
-            fid_cond_scr_div_code (str): 조건화면분류코드 (Uniquekey: 16441)
-            fid_input_iscd (str): 입력종목코드 (0000: 전체, 1001: 코스피, 2001: 코스닥)
-            fid_rank_sort_cls_code (str): 순위정렬구분코드 (0: 금액순, 1: 수량순)
-            fid_rank_sort_cls_code_2 (str): 순위정렬구분코드2 (0: 매수순, 1: 매도순)
-
-        Returns:
-            InvestorTradingTrendByStockDaily: 종목별 투자자매매동향(일별) 응답 객체
-        """
-        headers = {
             "tr_id": "FHKST644100C0",
         }
         params = {
-            "FID_COND_MRKT_DIV_CODE": fid_cond_mrkt_div_code,
-            "FID_COND_SCR_DIV_CODE": fid_cond_scr_div_code,
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_COND_SCR_DIV_CODE": "16441",
             "FID_INPUT_ISCD": fid_input_iscd,
             "FID_RANK_SORT_CLS_CODE": fid_rank_sort_cls_code,
             "FID_RANK_SORT_CLS_CODE_2": fid_rank_sort_cls_code_2,
         }
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/frgnmem-trade-estimate", headers=headers, params=params
+        )
+        return ForeignBrokerageTradingAggregate.model_validate(response.json())
+
+    def get_investor_trading_trend_by_stock_daily(
+        self,
+        fid_cond_mrkt_div_code: str,
+        fid_input_iscd: str,
+        fid_input_date_1: str,
+    ) -> InvestorTradingTrendByStockDaily:
+        """
+        종목별 투자자매매동향(일별)
+
+        Args:
+            fid_cond_mrkt_div_code (str): 조건시장분류코드 (시장구분코드: J)
+            fid_input_iscd (str): 입력종목코드, 종목번호(6자리) 
+            fid_input_date_1 (str): 입력날짜1 (예: 20240517)
+            fid_org_adj_prc (str): 수정주가 원주가 가격 (공란 입력)
+            fid_etc_cls_code (str): 기타 구분 코드 (공란 입력)
+            
+
+            FID_ORG_ADJ_PRC	수정주가 원주가 가격	String	Y	2	공란 입력
+FID_ETC_CLS_CODE	기타 구분 코드	String	Y	2	공란 입력
+
+        Returns:
+            InvestorTradingTrendByStockDaily: 종목별 투자자매매동향(일별) 응답 객체
+        """
+        headers = {
+            "tr_id": "FHPTJ04160001",
+        }
+        params = {
+            "FID_COND_MRKT_DIV_CODE": fid_cond_mrkt_div_code,
+            "FID_INPUT_ISCD": fid_input_iscd,
+            "FID_INPUT_DATE_1": fid_input_date_1,
+            "FID_ORG_ADJ_PRC": "",
+            "FID_ETC_CLS_CODE": "",
+        }
+        response = self.client._get(
+            "/uapi/domestic-stock/v1/quotations/investor-trade-by-stock-daily", headers=headers, params=params
         )
         return InvestorTradingTrendByStockDaily.model_validate(response.json())
 
