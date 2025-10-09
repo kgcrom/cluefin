@@ -7,7 +7,7 @@ from cluefin_openapi.kis._overseas_market_analysis_types import (
     StockMarketCapRank,
     StockNewHighLowPrice,
     StockPeriodRightsInquiry,
-    StockPriceRiseFall,
+    StockPriceFluctuation,
     StockRightsAggregate,
     StockRiseDeclineRate,
     StockTradingAmountRank,
@@ -24,21 +24,17 @@ class OverseasMarketAnalysis:
     def __init__(self, client: Client):
         self.client = client
 
-    def get_stock_price_rise_fall(
+    def get_stock_price_fluctuation(
         self,
-        keyb: str,
-        auth: str,
         excd: str,
         gubn: str,
         mixn: str,
         vol_rang: str,
-    ) -> StockPriceRiseFall:
+    ) -> StockPriceFluctuation:
         """
         해외주식 가격급등락
 
         Args:
-            keyb (str): NEXT KEY BUFF (공백)
-            auth (str): 사용자권한정보 (공백)
             excd (str): 거래소코드 (NYS: 뉴욕, NAS: 나스닥, AMS: 아멕스, HKS: 홍콩, SHS: 상해, SZS: 심천, HSX: 호치민, HNX: 하노이, TSE: 도쿄)
             gubn (str): 급등/급락구분 (0: 급락, 1: 급등)
             mixn (str): N분전콤보값 (0: 1분전, 1: 2분전, 2: 3분전, 3: 5분전, 4: 10분전, 5: 15분전, 6: 20분전, 7: 30분전, 8: 60분전, 9: 120분전)
@@ -51,15 +47,15 @@ class OverseasMarketAnalysis:
             "tr_id": "HHDFS76260000",
         }
         params = {
-            "KEYB": keyb,
-            "AUTH": auth,
+            "KEYB": "",
+            "AUTH": "",
             "EXCD": excd,
             "GUBN": gubn,
             "MIXN": mixn,
             "VOL_RANG": vol_rang,
         }
         response = self.client._get("/uapi/overseas-stock/v1/ranking/price-fluctuation", headers=headers, params=params)
-        return StockPriceRiseFall.model_validate(response.json())
+        return StockPriceFluctuation.model_validate(response.json())
 
     def get_stock_volume_surge(
         self,
