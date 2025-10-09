@@ -433,21 +433,21 @@ class DomesticMarketAnalysis:
         fid_input_date_1: str,
     ) -> InvestorTradingTrendByStockDaily:
         """
-        종목별 투자자매매동향(일별)
+                종목별 투자자매매동향(일별)
 
-        Args:
-            fid_cond_mrkt_div_code (str): 조건시장분류코드 (시장구분코드: J)
-            fid_input_iscd (str): 입력종목코드, 종목번호(6자리) 
-            fid_input_date_1 (str): 입력날짜1 (예: 20240517)
-            fid_org_adj_prc (str): 수정주가 원주가 가격 (공란 입력)
-            fid_etc_cls_code (str): 기타 구분 코드 (공란 입력)
-            
+                Args:
+                    fid_cond_mrkt_div_code (str): 조건시장분류코드 (시장구분코드: J)
+                    fid_input_iscd (str): 입력종목코드, 종목번호(6자리)
+                    fid_input_date_1 (str): 입력날짜1 (예: 20240517)
+                    fid_org_adj_prc (str): 수정주가 원주가 가격 (공란 입력)
+                    fid_etc_cls_code (str): 기타 구분 코드 (공란 입력)
 
-            FID_ORG_ADJ_PRC	수정주가 원주가 가격	String	Y	2	공란 입력
-FID_ETC_CLS_CODE	기타 구분 코드	String	Y	2	공란 입력
 
-        Returns:
-            InvestorTradingTrendByStockDaily: 종목별 투자자매매동향(일별) 응답 객체
+                    FID_ORG_ADJ_PRC	수정주가 원주가 가격	String	Y	2	공란 입력
+        FID_ETC_CLS_CODE	기타 구분 코드	String	Y	2	공란 입력
+
+                Returns:
+                    InvestorTradingTrendByStockDaily: 종목별 투자자매매동향(일별) 응답 객체
         """
         headers = {
             "tr_id": "FHPTJ04160001",

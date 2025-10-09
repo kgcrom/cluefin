@@ -1,0 +1,700 @@
+[
+    {
+        "method_name": "get_stock_current_price_detail",
+        "response_model_attr": "StockCurrentPriceDetail",
+        "endpoint": "/uapi/overseas-price/v1/quotations/price-detail",
+        "method": "GET",
+        "call_kwargs": {
+            "auth": "",
+            "excd": "NAS",
+            "symb": "TSLA"
+        },
+        "expected_headers": {
+            "tr_id": "HHDFS76200200"
+        },
+        "expected_body": {
+            "AUTH": "",
+            "EXCD": "NAS",
+            "SYMB": "TSLA"
+        },
+        "response_payload": {
+            "output": {
+                "rsym": "DNASTSLA",
+                "pvol": "100000",
+                "open": "250.50",
+                "high": "255.00",
+                "low": "248.00",
+                "last": "252.75",
+                "base": "250.00",
+                "tomv": "800000000000",
+                "pamt": "25000000000",
+                "uplp": "325.00",
+                "dnlp": "175.00",
+                "h52p": "280.00",
+                "h52d": "20241015",
+                "l52p": "150.00",
+                "l52d": "20240201",
+                "perx": "75.50",
+                "pbrx": "12.30",
+                "epsx": "3.35",
+                "bpsx": "20.50",
+                "shar": "3180000000",
+                "mcap": "800000000000",
+                "curr": "USD",
+                "zdiv": "2",
+                "vnit": "1",
+                "t_xprc": "336300",
+                "t_xdif": "3300",
+                "t_xrat": "1.00",
+                "p_xprc": "333000",
+                "p_xdif": "0",
+                "p_xrat": "0.00",
+                "t_rate": "1330.00",
+                "p_rate": "1332.00",
+                "t_xsgn": "2",
+                "p_xsng": "3",
+                "e_ordyn": "Y",
+                "e_hogau": "0.01",
+                "e_icod": "Technology",
+                "e_parp": "0.0001",
+                "tvol": "120000",
+                "tamt": "30000000000",
+                "etyp_nm": ""
+            }
+        }
+    },
+    {
+        "method_name": "get_current_price_first_quote",
+        "response_model_attr": "CurrentPriceFirstQuote",
+        "endpoint": "/uapi/overseas-price/v1/quotations/inquire-asking-price",
+        "method": "GET",
+        "call_kwargs": {
+            "excd": "NAS",
+            "symb": "TSLA",
+            "auth": ""
+        },
+        "expected_headers": {
+            "tr_id": "HHDFS76200100"
+        },
+        "expected_body": {
+            "AUTH": "",
+            "EXCD": "NAS",
+            "SYMB": "TSLA"
+        },
+        "response_payload": {
+            "output1": {
+                "rsym": "DNASTSLA",
+                "zdiv": "2",
+                "curr": "USD",
+                "base": "250.00",
+                "open": "250.50",
+                "high": "255.00",
+                "low": "248.00",
+                "last": "252.75",
+                "dymd": "20250115",
+                "dhms": "143000",
+                "bvol": "50000",
+                "avol": "48000",
+                "bdvl": "2000",
+                "advl": "1500",
+                "code": "TSLA",
+                "ropen": "0.20",
+                "rhigh": "2.00",
+                "rlow": "-0.80",
+                "rclose": "1.10"
+            },
+            "output2": {
+                "pbid1": "252.70",
+                "pask1": "252.80",
+                "vbid1": "5000",
+                "vask1": "4800",
+                "dbid1": "500",
+                "dask1": "400"
+            },
+            "output3": {
+                "vstm": null,
+                "vetm": null,
+                "csbp": null,
+                "cshi": null,
+                "cslo": null,
+                "iep": null,
+                "iev": null
+            }
+        }
+    },
+    {
+        "method_name": "get_stock_current_price_conclusion",
+        "response_model_attr": "StockCurrentPriceConclusion",
+        "endpoint": "/uapi/overseas-price/v1/quotations/price",
+        "method": "GET",
+        "call_kwargs": {
+            "auth": "",
+            "excd": "NAS",
+            "symb": "TSLA"
+        },
+        "expected_headers": {
+            "tr_id": "HHDFS00000300"
+        },
+        "expected_body": {
+            "AUTH": "",
+            "EXCD": "NAS",
+            "SYMB": "TSLA"
+        },
+        "response_payload": {
+            "output": {
+                "rsym": "DNASTSLA",
+                "zdiv": "2",
+                "base": "250.00",
+                "pvol": "100000",
+                "last": "252.75",
+                "sign": "2",
+                "diff": "2.75",
+                "rate": "1.10",
+                "tvol": "120000",
+                "tamt": "30000000000",
+                "ordy": "Y"
+            }
+        }
+    },
+    {
+        "method_name": "get_conclusion_trend",
+        "response_model_attr": "ConclusionTrend",
+        "endpoint": "/uapi/overseas-price/v1/quotations/inquire-ccnl",
+        "method": "GET",
+        "call_kwargs": {
+            "excd": "NAS",
+            "auth": "",
+            "keyb": "",
+            "tday": "1",
+            "symb": "TSLA"
+        },
+        "expected_headers": {
+            "tr_id": "HHDFS76200300"
+        },
+        "expected_body": {
+            "EXCD": "NAS",
+            "AUTH": "",
+            "KEYB": "",
+            "TDAY": "1",
+            "SYMB": "TSLA"
+        },
+        "response_payload": {
+            "output1": [
+                {
+                    "khms": "143000",
+                    "last": "252.75",
+                    "sign": "2",
+                    "diff": "2.75",
+                    "rate": "1.10",
+                    "evol": "1000",
+                    "tvol": "120000",
+                    "mtyp": "0",
+                    "pbid": "252.70",
+                    "pask": "252.80",
+                    "vpow": "105.5"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_minute_chart",
+        "response_model_attr": "StockMinuteChart",
+        "endpoint": "/uapi/overseas-price/v1/quotations/inquire-time-itemchartprice",
+        "method": "GET",
+        "call_kwargs": {
+            "auth": "",
+            "excd": "NAS",
+            "symb": "TSLA",
+            "nmin": "1",
+            "pinc": "0",
+            "next": "",
+            "nrec": "120",
+            "fill": "",
+            "keyb": ""
+        },
+        "expected_headers": {
+            "tr_id": "HHDFS76950200"
+        },
+        "expected_body": {
+            "AUTH": "",
+            "EXCD": "NAS",
+            "SYMB": "TSLA",
+            "NMIN": "1",
+            "PINC": "0",
+            "NEXT": "",
+            "NREC": "120",
+            "FILL": "",
+            "KEYB": ""
+        },
+        "response_payload": {
+            "output1": {
+                "rsym": "DNASTSLA",
+                "zdiv": "2",
+                "stim": "093000",
+                "etim": "160000",
+                "sktm": "233000",
+                "ektm": "060000",
+                "next": "N",
+                "more": "N",
+                "nrec": "120"
+            },
+            "output2": [
+                {
+                    "tymd": "20250115",
+                    "xymd": "20250115",
+                    "xhms": "143000",
+                    "kymd": "20250116",
+                    "khms": "043000",
+                    "open": "252.50",
+                    "high": "252.80",
+                    "low": "252.40",
+                    "last": "252.75",
+                    "evol": "1000",
+                    "eamt": "252750"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_index_minute_chart",
+        "response_model_attr": "IndexMinuteChart",
+        "endpoint": "/uapi/overseas-price/v1/quotations/inquire-time-indexchartprice",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "N",
+            "fid_input_iscd": "DJI@DJI",
+            "fid_hour_cls_code": "0",
+            "fid_pw_data_incu_yn": "Y"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST03030200"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "N",
+            "FID_INPUT_ISCD": "DJI@DJI",
+            "FID_HOUR_CLS_CODE": "0",
+            "FID_PW_DATA_INCU_YN": "Y"
+        },
+        "response_payload": {
+            "output1": {
+                "ovrs_nmix_prdy_vrss": "100.50",
+                "prdy_vrss_sign": "2",
+                "hts_kor_isnm": "다우존스산업평균",
+                "prdy_ctrt": "0.25",
+                "ovrs_nmix_prdy_clpr": "40000.00",
+                "acml_vol": "0",
+                "ovrs_nmix_prpr": "40100.50",
+                "stck_shrn_iscd": "DJI@DJI",
+                "ovrs_prod_oprc": "40050.00",
+                "ovrs_prod_hgpr": "40150.00",
+                "ovrs_prod_lwpr": "39950.00"
+            },
+            "output2": [
+                {
+                    "stck_bsop_date": "20250115",
+                    "stck_cntg_hour": "143000",
+                    "optn_prpr": "40100.50",
+                    "optn_oprc": "40050.00",
+                    "optn_hgpr": "40150.00",
+                    "optn_lwpr": "39950.00",
+                    "cntg_vol": "0"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_period_quote",
+        "response_model_attr": "StockPeriodQuote",
+        "endpoint": "/uapi/overseas-price/v1/quotations/dailyprice",
+        "method": "GET",
+        "call_kwargs": {
+            "auth": "",
+            "excd": "NAS",
+            "symb": "TSLA",
+            "gubn": "0",
+            "bymd": "20250115",
+            "modp": "0",
+            "keyb": ""
+        },
+        "expected_headers": {
+            "tr_id": "HHDFS76240000"
+        },
+        "expected_body": {
+            "AUTH": "",
+            "EXCD": "NAS",
+            "SYMB": "TSLA",
+            "GUBN": "0",
+            "BYMD": "20250115",
+            "MODP": "0",
+            "KEYB": ""
+        },
+        "response_payload": {
+            "output1": {
+                "rsym": "DNASTSLA",
+                "zdiv": "2",
+                "nrec": "250.00"
+            },
+            "output2": [
+                {
+                    "xymd": "20250115",
+                    "clos": "252.75",
+                    "sign": "2",
+                    "diff": "2.75",
+                    "rate": "1.10",
+                    "open": "250.50",
+                    "high": "255.00",
+                    "low": "248.00",
+                    "tvol": "120000",
+                    "tamt": "30000000000",
+                    "pbid": "252.70",
+                    "vbid": "5000",
+                    "pask": "252.80",
+                    "vask": "4800"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_item_index_exchange_period_price",
+        "response_model_attr": "ItemIndexExchangePeriodPrice",
+        "endpoint": "/uapi/overseas-price/v1/quotations/inquire-daily-chartprice",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "N",
+            "fid_input_iscd": "DJI@DJI",
+            "fid_input_date_1": "20250101",
+            "fid_input_date_2": "20250131",
+            "fid_period_div_code": "D"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST03030100"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "N",
+            "FID_INPUT_ISCD": "DJI@DJI",
+            "FID_INPUT_DATE_1": "20250101",
+            "FID_INPUT_DATE_2": "20250131",
+            "FID_PERIOD_DIV_CODE": "D"
+        },
+        "response_payload": {
+            "output1": {
+                "ovrs_nmix_prdy_vrss": "100.50",
+                "prdy_vrss_sign": "2",
+                "prdy_ctrt": "0.25",
+                "ovrs_nmix_prdy_clpr": "40000.00",
+                "acml_vol": "0",
+                "hts_kor_isnm": "다우존스산업평균",
+                "ovrs_nmix_prpr": "40100.50",
+                "stck_shrn_iscd": "DJI@DJI",
+                "prdy_vol": "0",
+                "ovrs_prod_oprc": "40050.00",
+                "ovrs_prod_hgpr": "40150.00",
+                "ovrs_prod_lwpr": "39950.00"
+            },
+            "output2": [
+                {
+                    "stck_bsop_date": "20250115",
+                    "ovrs_nmix_prpr": "40100.50",
+                    "ovrs_nmix_oprc": "40050.00",
+                    "ovrs_nmix_hgpr": "40150.00",
+                    "ovrs_nmix_lwpr": "39950.00",
+                    "acml_vol": "0",
+                    "mod_yn": "N"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "search_by_condition",
+        "response_model_attr": "SearchByCondition",
+        "endpoint": "/uapi/overseas-price/v1/quotations/inquire-search",
+        "method": "GET",
+        "call_kwargs": {
+            "auth": "",
+            "excd": "NAS",
+            "co_yn_pricecur": "1",
+            "co_st_pricecur": "100",
+            "co_en_pricecur": "300",
+            "co_yn_rate": "",
+            "co_st_rate": "",
+            "co_en_rate": "",
+            "co_yn_valx": "",
+            "co_st_valx": "",
+            "co_en_valx": "",
+            "co_yn_shar": "",
+            "co_st_shar": "",
+            "co_en_shar": "",
+            "co_yn_volume": "",
+            "co_st_volume": "",
+            "co_en_volume": "",
+            "co_yn_amt": "",
+            "co_st_amt": "",
+            "co_en_amt": "",
+            "co_yn_eps": "",
+            "co_st_eps": "",
+            "co_en_eps": "",
+            "co_yn_per": "",
+            "co_st_per": "",
+            "co_en_per": "",
+            "keyb": ""
+        },
+        "expected_headers": {
+            "tr_id": "HHDFS76410000"
+        },
+        "expected_body": {
+            "AUTH": "",
+            "EXCD": "NAS",
+            "CO_YN_PRICECUR": "1",
+            "CO_ST_PRICECUR": "100",
+            "CO_EN_PRICECUR": "300",
+            "CO_YN_RATE": "",
+            "CO_ST_RATE": "",
+            "CO_EN_RATE": "",
+            "CO_YN_VALX": "",
+            "CO_ST_VALX": "",
+            "CO_EN_VALX": "",
+            "CO_YN_SHAR": "",
+            "CO_ST_SHAR": "",
+            "CO_EN_SHAR": "",
+            "CO_YN_VOLUME": "",
+            "CO_ST_VOLUME": "",
+            "CO_EN_VOLUME": "",
+            "CO_YN_AMT": "",
+            "CO_ST_AMT": "",
+            "CO_EN_AMT": "",
+            "CO_YN_EPS": "",
+            "CO_ST_EPS": "",
+            "CO_EN_EPS": "",
+            "CO_YN_PER": "",
+            "CO_ST_PER": "",
+            "CO_EN_PER": "",
+            "KEYB": ""
+        },
+        "response_payload": {
+            "output1": {
+                "zdiv": "2",
+                "stat": "ACTIVE",
+                "crec": "10",
+                "trec": "100",
+                "nrec": "10"
+            },
+            "output2": [
+                {
+                    "rsym": "DNASTSLA",
+                    "excd": "NAS",
+                    "name": "Tesla Inc",
+                    "symb": "TSLA",
+                    "last": "252.75",
+                    "shar": "3180000",
+                    "valx": "800000000",
+                    "plow": "248.00",
+                    "phigh": "255.00",
+                    "popen": "250.50",
+                    "tvol": "120000",
+                    "rate": "1.10",
+                    "diff": "2.75",
+                    "sign": "2",
+                    "avol": "30000000",
+                    "eps": "3.35",
+                    "per": "75.50",
+                    "rank": "1",
+                    "ename": "Tesla Inc",
+                    "e_ordyn": "O"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_settlement_date",
+        "response_model_attr": "SettlementDate",
+        "endpoint": "/uapi/overseas-stock/v1/quotations/countries-holiday",
+        "method": "GET",
+        "call_kwargs": {
+            "trad_dt": "20250115",
+            "ctx_area_nk": "",
+            "ctx_area_fk": ""
+        },
+        "expected_headers": {
+            "tr_id": "CTOS5011R"
+        },
+        "expected_body": {
+            "TRAD_DT": "20250115",
+            "CTX_AREA_NK": "",
+            "CTX_AREA_FK": ""
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "prdt_type_cd": "512",
+                    "tr_natn_cd": "840",
+                    "tr_natn_name": "미국",
+                    "natn_eng_abrv_cd": "US",
+                    "tr_mket_cd": "01",
+                    "tr_mket_name": "나스닥",
+                    "acpl_sttl_dt": "20250117",
+                    "dmst_sttl_dt": "20250120"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_product_base_info",
+        "response_model_attr": "ProductBaseInfo",
+        "endpoint": "/uapi/overseas-price/v1/quotations/search-info",
+        "method": "GET",
+        "call_kwargs": {
+            "prdt_type_cd": "512",
+            "pdno": "TSLA"
+        },
+        "expected_headers": {
+            "tr_id": "CTPF1702R"
+        },
+        "expected_body": {
+            "PRDT_TYPE_CD": "512",
+            "PDNO": "TSLA"
+        },
+        "response_payload": {
+            "output": {
+                "std_pdno": "TSLA",
+                "prdt_eng_name": "Tesla Inc",
+                "natn_cd": "840",
+                "natn_name": "미국",
+                "tr_mket_cd": "01",
+                "tr_mket_name": "나스닥",
+                "ovrs_excg_cd": "NAS",
+                "ovrs_excg_name": "NASDAQ",
+                "tr_crcy_cd": "USD",
+                "ovrs_papr": "0.0001",
+                "crcy_name": "미국달러",
+                "ovrs_stck_dvsn_cd": "01",
+                "prdt_clsf_cd": "001001",
+                "prdt_clsf_name": "보통주",
+                "sll_unit_qty": "1",
+                "buy_unit_qty": "1",
+                "tr_unit_amt": "1",
+                "lstg_stck_num": "3180000000",
+                "lstg_dt": "20100629",
+                "ovrs_stck_tr_stop_dvsn_cd": "01",
+                "lstg_abol_item_yn": "N",
+                "ovrs_stck_prdt_grp_no": "TSLA",
+                "lstg_yn": "Y",
+                "tax_levy_yn": "Y",
+                "ovrs_stck_erlm_rosn_cd": "01",
+                "ovrs_stck_hist_rght_dvsn_cd": "00",
+                "chng_bf_pdno": "",
+                "prdt_type_cd_2": "512",
+                "ovrs_item_name": "Tesla Inc",
+                "sedol_no": "B616C79",
+                "blbg_tckr_text": "TSLA US",
+                "ovrs_stck_etf_risk_drtp_cd": "004",
+                "etp_chas_erng_rt_dbnb": "0",
+                "istt_usge_isin_cd": "US88160R1014",
+                "mint_svc_yn": "Y",
+                "mint_svc_yn_chng_dt": "20210101",
+                "prdt_name": "테슬라",
+                "lei_cd": "54930043XZGB27CTOV49",
+                "ovrs_stck_stop_rson_cd": "00",
+                "lstg_abol_dt": "",
+                "mini_stk_tr_stat_dvsn_cd": "01",
+                "mint_frst_svc_erlm_dt": "20210101",
+                "mint_dcpt_trad_psbl_yn": "Y",
+                "mint_fnum_trad_psbl_yn": "Y",
+                "mint_cblc_cvsn_ipsb_yn": "N",
+                "ptp_item_yn": "N",
+                "ptp_item_trfx_exmt_yn": "N",
+                "ptp_item_trfx_exmt_strt_dt": "",
+                "ptp_item_trfx_exmt_end_dt": "",
+                "dtm_tr_psbl_yn": "Y",
+                "sdrf_stop_ecls_yn": "N",
+                "sdrf_stop_ecls_erlm_dt": "",
+                "memo_text1": "",
+                "ovrs_now_pric1": "252.75",
+                "last_rcvg_dtime": "20250115143000"
+            }
+        }
+    },
+    {
+        "method_name": "get_sector_price",
+        "response_model_attr": "SectorPrice",
+        "endpoint": "/uapi/overseas-price/v1/quotations/industry-theme",
+        "method": "GET",
+        "call_kwargs": {
+            "keyb": "",
+            "auth": "",
+            "excd": "NAS",
+            "icod": "1000",
+            "vol_rang": "0"
+        },
+        "expected_headers": {
+            "tr_id": "HHDFS76370000"
+        },
+        "expected_body": {
+            "KEYB": "",
+            "AUTH": "",
+            "EXCD": "NAS",
+            "ICOD": "1000",
+            "VOL_RANG": "0"
+        },
+        "response_payload": {
+            "output1": {
+                "zdiv": "2",
+                "stat": "ACTIVE",
+                "crec": "50",
+                "trec": "500",
+                "nrec": "50"
+            },
+            "output2": [
+                {
+                    "rsym": "DNASTSLA",
+                    "excd": "NAS",
+                    "symb": "T",
+                    "name": "Tesla Inc",
+                    "last": "252.75",
+                    "sign": "2",
+                    "diff": "2.75",
+                    "rate": "1.10",
+                    "tvol": "120000",
+                    "vask": "4800",
+                    "pask": "252.80",
+                    "pbid": "252.70",
+                    "vbid": "5000",
+                    "seqn": "1",
+                    "ename": "Tesla Inc",
+                    "e_ordyn": "O"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_sector_codes",
+        "response_model_attr": "SectorCodes",
+        "endpoint": "/uapi/overseas-price/v1/quotations/industry-price",
+        "method": "GET",
+        "call_kwargs": {
+            "auth": "",
+            "excd": "NAS"
+        },
+        "expected_headers": {
+            "tr_id": "HHDFS76370100"
+        },
+        "expected_body": {
+            "AUTH": "",
+            "EXCD": "NAS"
+        },
+        "response_payload": {
+            "output1": {
+                "nrec": "10"
+            },
+            "output2": [
+                {
+                    "icod": "1000",
+                    "name": "Technology"
+                },
+                {
+                    "icod": "2000",
+                    "name": "Healthcare"
+                }
+            ]
+        }
+    }
+]

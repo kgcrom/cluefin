@@ -10,12 +10,11 @@ from typing import Literal, cast
 
 import dotenv
 import pytest
+from _token_cache import TokenCache
 from pydantic import SecretStr
 
 from cluefin_openapi.kis._auth import Auth
 from cluefin_openapi.kis._client import Client
-
-from _token_cache import TokenCache
 
 
 @pytest.fixture(scope="module")
@@ -84,7 +83,7 @@ def test_get_condition_search_result(client: Client):
         # Note: This requires a valid HTS ID and seq from condition list
         response = client.domestic_market_analysis.get_condition_search_result(
             user_id="test_user",  # Replace with actual HTS ID
-            seq="0"  # First condition
+            seq="0",  # First condition
         )
 
         # Verify response type
@@ -108,7 +107,7 @@ def test_get_watchlist_groups(client: Client):
         response = client.domestic_market_analysis.get_watchlist_groups(
             type="1",  # Unique key: 1
             fid_etc_cls_code="00",  # Unique key: 00
-            user_id="test_user"  # Replace with actual HTS ID
+            user_id="test_user",  # Replace with actual HTS ID
         )
 
         # Verify response type
@@ -228,7 +227,7 @@ def test_get_investor_trading_trend_by_market_intraday(client: Client):
     try:
         response = client.domestic_market_analysis.get_investor_trading_trend_by_market_intraday(
             fid_input_iscd="KSP",  # KSP:KOSPI, KSQ:KOSDAQ
-            fid_input_iscd_2="0001"  # Sector code (0001:KOSPI Total)
+            fid_input_iscd_2="0001",  # Sector code (0001:KOSPI Total)
         )
 
         # Verify response type
@@ -251,7 +250,7 @@ def test_get_investor_trading_trend_by_market_daily(client: Client):
             fid_input_date_1="20240701",  # Date
             fid_input_iscd_1="KSP",  # KSP:KOSPI, KSQ:KOSDAQ
             fid_input_date_2="20240701",  # Same as date_1
-            fid_input_iscd_2="0001"  # Sector classification code
+            fid_input_iscd_2="0001",  # Sector classification code
         )
 
         # Verify response type
@@ -294,7 +293,7 @@ def test_get_foreign_net_buy_trend_by_stock(client: Client):
         response = client.domestic_market_analysis.get_foreign_net_buy_trend_by_stock(
             fid_input_iscd="005930",  # Samsung Electronics
             fid_input_iscd_2="99999",  # 99999:All foreign brokerages
-            fid_cond_mrkt_div_code="J"  # J:KRX
+            fid_cond_mrkt_div_code="J",  # J:KRX
         )
 
         # Verify response type
@@ -317,7 +316,7 @@ def test_get_member_trading_trend_tick(client: Client):
             fid_input_iscd="005930",  # Samsung Electronics
             fid_input_iscd_2="99999",  # 99999:All members
             fid_mrkt_cls_code="",  # Empty when using fid_input_iscd
-            fid_vol_cnt=""  # Empty for all volumes
+            fid_vol_cnt="",  # Empty for all volumes
         )
 
         # Verify response type
@@ -340,7 +339,7 @@ def test_get_member_trading_trend_by_stock(client: Client):
             fid_input_iscd_2="",  # Member code (empty for all)
             fid_input_date_1="20240701",  # From date
             fid_input_date_2="20240731",  # To date
-            fid_sctn_cls_code=""  # Empty
+            fid_sctn_cls_code="",  # Empty
         )
 
         # Verify response type
@@ -380,7 +379,7 @@ def test_get_program_trading_trend_by_stock_intraday(client: Client):
     try:
         response = client.domestic_market_analysis.get_program_trading_trend_by_stock_intraday(
             fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
-            fid_input_iscd="005930"  # Samsung Electronics
+            fid_input_iscd="005930",  # Samsung Electronics
         )
 
         # Verify response type
@@ -400,7 +399,7 @@ def test_get_program_trading_trend_by_stock_daily(client: Client):
         response = client.domestic_market_analysis.get_program_trading_trend_by_stock_daily(
             fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
             fid_input_iscd="005930",  # Samsung Electronics
-            fid_input_date_1=""  # Empty for today
+            fid_input_date_1="",  # Empty for today
         )
 
         # Verify response type
@@ -423,7 +422,7 @@ def test_get_program_trading_summary_intraday(client: Client):
             fid_sctn_cls_code="",  # Empty
             fid_input_iscd="",  # Empty
             fid_cond_mrkt_div_code1="",  # Empty
-            fid_input_hour_1=""  # Empty
+            fid_input_hour_1="",  # Empty
         )
 
         # Verify response type
@@ -444,7 +443,7 @@ def test_get_program_trading_summary_daily(client: Client):
             fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
             fid_mrkt_cls_code="K",  # K:KOSPI, Q:KOSDAQ
             fid_input_date_1="",  # Empty (8 months max)
-            fid_input_date_2=""  # Empty
+            fid_input_date_2="",  # Empty
         )
 
         # Verify response type
@@ -463,7 +462,7 @@ def test_get_program_trading_investor_trend_today(client: Client):
     try:
         response = client.domestic_market_analysis.get_program_trading_investor_trend_today(
             exch_div_cls_code="J",  # J:KRX, NX:NXT, UN:Integrated
-            mrkt_div_cls_code="1"  # 1:KOSPI, 4:KOSDAQ
+            mrkt_div_cls_code="1",  # 1:KOSPI, 4:KOSDAQ
         )
 
         # Verify response type
@@ -488,7 +487,7 @@ def test_get_buy_sell_volume_by_stock_daily(client: Client):
             fid_input_iscd="005930",  # Samsung Electronics
             fid_input_date_1="20240701",  # From date
             fid_input_date_2="20240731",  # To date
-            fid_period_div_code="D"  # D:Daily
+            fid_period_div_code="D",  # D:Daily
         )
 
         # Verify response type
@@ -509,7 +508,7 @@ def test_get_credit_balance_trend_daily(client: Client):
             fid_cond_mrkt_div_code="J",  # J:Stock
             fid_cond_scr_div_code="20476",  # Unique key
             fid_input_iscd="005930",  # Samsung Electronics
-            fid_input_date_1="20240701"  # Settlement date
+            fid_input_date_1="20240701",  # Settlement date
         )
 
         # Verify response type
@@ -529,7 +528,7 @@ def test_get_expected_price_trend(client: Client):
         response = client.domestic_market_analysis.get_expected_price_trend(
             fid_mkop_cls_code="0",  # 0:All, 4:Exclude zero volume
             fid_cond_mrkt_div_code="J",  # J:Stock
-            fid_input_iscd="005930"  # Samsung Electronics
+            fid_input_iscd="005930",  # Samsung Electronics
         )
 
         # Verify response type
@@ -550,7 +549,7 @@ def test_get_short_selling_trend_daily(client: Client):
             fid_input_date_2="20240731",  # To date
             fid_cond_mrkt_div_code="J",  # J:Stock
             fid_input_iscd="005930",  # Samsung Electronics
-            fid_input_date_1="20240701"  # From date
+            fid_input_date_1="20240701",  # From date
         )
 
         # Verify response type
@@ -575,7 +574,7 @@ def test_get_after_hours_expected_fluctuation(client: Client):
             fid_div_cls_code="0",  # 0:All, 1:Managed, etc.
             fid_input_price_1="",  # Empty
             fid_input_price_2="",  # Empty
-            fid_input_vol_1=""  # Empty
+            fid_input_vol_1="",  # Empty
         )
 
         # Verify response type
@@ -595,7 +594,7 @@ def test_get_trading_weight_by_amount(client: Client):
         response = client.domestic_market_analysis.get_trading_weight_by_amount(
             fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
             fid_cond_scr_div_code="11119",  # Unique key
-            fid_input_iscd="005930"  # Samsung Electronics
+            fid_input_iscd="005930",  # Samsung Electronics
         )
 
         # Verify response type
@@ -635,7 +634,7 @@ def test_get_stock_loan_trend_daily(client: Client):
             mksc_shrn_iscd="005930",  # Samsung Electronics
             start_date="20240701",  # From date
             end_date="20240731",  # To date
-            cts=""  # Empty for first call
+            cts="",  # Empty for first call
         )
 
         # Verify response type
@@ -662,7 +661,7 @@ def test_get_limit_price_stocks(client: Client):
             fid_trgt_exls_cls_code="",  # Empty
             fid_input_price_1="",  # Empty
             fid_input_price_2="",  # Empty
-            fid_vol_cnt=""  # Empty
+            fid_vol_cnt="",  # Empty
         )
 
         # Verify response type
@@ -683,7 +682,7 @@ def test_get_resistance_level_trading_weight(client: Client):
             fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
             fid_input_iscd="005930",  # Samsung Electronics
             fid_cond_scr_div_code="20113",  # Unique key
-            fid_input_hour_1=""  # Empty
+            fid_input_hour_1="",  # Empty
         )
 
         # Verify response type

@@ -10,12 +10,11 @@ from typing import Literal, cast
 
 import dotenv
 import pytest
+from _token_cache import TokenCache
 from pydantic import SecretStr
 
 from cluefin_openapi.kis._auth import Auth
 from cluefin_openapi.kis._client import Client
-
-from _token_cache import TokenCache
 
 
 @pytest.fixture(scope="module")

@@ -1,5 +1,7 @@
-from pydantic import BaseModel, Field
 from typing import Sequence
+
+from pydantic import BaseModel, Field
+
 from cluefin_openapi.kis._model import KisHttpBody
 
 
@@ -110,7 +112,7 @@ class StockProfitabilityIndicatorRankItem(BaseModel):
 class StockProfitabilityIndicatorRank(BaseModel, KisHttpBody):
     """국내주식 수익자산지표 순위"""
 
-    output: Sequence[StockProfitabilityIndicatorRankItem] = Field(default_factory=list) 
+    output: Sequence[StockProfitabilityIndicatorRankItem] = Field(default_factory=list)
 
 
 class StockMarketCapTopItem(BaseModel):
@@ -168,6 +170,7 @@ class StockFinanceRatioRank(BaseModel, KisHttpBody):
 
     output: Sequence[StockFinanceRatioRankItem] = Field(default_factory=list)
 
+
 class StockTimeHogaRankItem(BaseModel):
     stck_shrn_iscd: str = Field(title="주식 단축 종목코드", max_length=9)
     data_rank: str = Field(title="데이터 순위", max_length=10)
@@ -182,11 +185,10 @@ class StockTimeHogaRankItem(BaseModel):
     mkfa_otcp_vol: str = Field(title="장종료후 시간외종가 거래량", max_length=18)
 
 
-class StockTimeHogaRank(BaseModel,  KisHttpBody):
+class StockTimeHogaRank(BaseModel, KisHttpBody):
     """국내주식 시간외잔량 순위"""
 
     output: Sequence[StockTimeHogaRankItem] = Field(default_factory=list)
-
 
 
 class StockPreferredStockRatioTopItem(BaseModel):
@@ -214,6 +216,7 @@ class StockPreferredStockRatioTop(BaseModel, KisHttpBody):
 
     output: Sequence[StockPreferredStockRatioTopItem] = Field(default_factory=list)
 
+
 class StockDisparityIndexRankItem(BaseModel):
     mksc_shrn_iscd: str = Field(title="유가증권 단축 종목코드", max_length=9)
     data_rank: str = Field(title="데이터 순위", max_length=10)
@@ -234,6 +237,7 @@ class StockDisparityIndexRank(BaseModel, KisHttpBody):
     """국내주식 이격도 순위"""
 
     output: Sequence[StockDisparityIndexRankItem] = Field(default_factory=list)
+
 
 class StockMarketPriceRankItem(BaseModel):
     data_rank: str = Field(title="데이터 순위", max_length=10)
@@ -263,6 +267,7 @@ class StockMarketPriceRank(BaseModel, KisHttpBody):
 
     output: Sequence[StockMarketPriceRankItem] = Field(default_factory=list)
 
+
 class StockExecutionStrengthTopItem(BaseModel):
     stck_shrn_iscd: str = Field(title="주식 단축 종목코드", max_length=9)
     data_rank: str = Field(title="데이터 순위", max_length=10)
@@ -281,6 +286,7 @@ class StockExecutionStrengthTop(BaseModel, KisHttpBody):
     """국내주식 체결강도 상위"""
 
     output: Sequence[StockExecutionStrengthTopItem] = Field(default_factory=list)
+
 
 class StockWatchlistRegistrationTopItem(BaseModel):
     mrkt_div_cls_name: str = Field(title="시장 분류 구분 명", max_length=40)
@@ -302,6 +308,7 @@ class StockWatchlistRegistrationTop(BaseModel, KisHttpBody):
     """국내주식 관심종목등록 상위"""
 
     output: Sequence[StockWatchlistRegistrationTopItem] = Field(default_factory=list)
+
 
 class StockExpectedExecutionRiseDeclineTopItem(BaseModel):
     stck_shrn_iscd: str = Field(title="주식 단축 종목코드", max_length=9)
@@ -372,6 +379,7 @@ class StockNewHighLowApproachingTop(BaseModel, KisHttpBody):
 
     output: Sequence[StockNewHighLowApproachingTopItem] = Field(default_factory=list)
 
+
 class StockDividendYieldTopItem(BaseModel):
     rank: str = Field(title="순위", max_length=4)
     sht_cd: str = Field(title="종목코드", max_length=9)
@@ -386,6 +394,7 @@ class StockDividendYieldTop(BaseModel, KisHttpBody):
     """국내주식 배당률 상위"""
 
     output1: Sequence[StockDividendYieldTopItem] = Field(default_factory=list)
+
 
 class StockLargeExecutionCountTopItem(BaseModel):
     mksc_shrn_iscd: str = Field(title="유가증권 단축 종목코드", max_length=9)
@@ -405,6 +414,7 @@ class StockLargeExecutionCountTop(BaseModel, KisHttpBody):
     """국내주식 대량체결건수 상위"""
 
     output: Sequence[StockLargeExecutionCountTopItem] = Field(default_factory=list)
+
 
 class StockCreditBalanceTopItem(BaseModel):
     mksc_shrn_iscd: str = Field(title="유가증권 단축 종목코드", max_length=9)
@@ -443,6 +453,7 @@ class StockShortSellingTopItem1(BaseModel):
     ovtm_untp_kosdaq_vol: str = Field(title="시간외 단일가 KOSDAQ 거래량", max_length=18)
     ovtm_untp_kosdaq_tr_pbmn: str = Field(title="시간외 단일가 KOSDAQ 거래대금", max_length=18)
 
+
 class StockShortSellingTopItem2(BaseModel):
     mksc_shrn_iscd: str = Field(title="유가증권 단축 종목코드", max_length=9)
     hts_kor_isnm: str = Field(title="HTS 한글 종목명", max_length=40)
@@ -461,10 +472,12 @@ class StockShortSellingTopItem2(BaseModel):
     bidp: str = Field(title="매수호가", max_length=10)
     askp: str = Field(title="매도호가", max_length=10)
 
+
 class StockShortSellingTop(BaseModel, KisHttpBody):
     """국내주식 공매도 상위종목"""
 
     output: Sequence[StockCreditBalanceTopItem] = Field(default_factory=list)
+
 
 class StockAfterHoursFluctuationRankItem1(BaseModel):
     ovtm_untp_uplm_issu_cnt: str = Field(title="시간외 단일가 상한 종목 수", max_length=7)
@@ -478,6 +491,7 @@ class StockAfterHoursFluctuationRankItem1(BaseModel):
     ovtm_untp_exch_tr_pbmn: str = Field(title="시간외 단일가 거래소 거래대금", max_length=18)
     ovtm_untp_kosdaq_vol: str = Field(title="시간외 단일가 KOSDAQ 거래량", max_length=18)
     ovtm_untp_kosdaq_tr_pbmn: str = Field(title="시간외 단일가 KOSDAQ 거래대금", max_length=18)
+
 
 class StockAfterHoursFluctuationRankItem2(BaseModel):
     mksc_shrn_iscd: str = Field(title="유가증권 단축 종목코드", max_length=9)
@@ -497,6 +511,7 @@ class StockAfterHoursFluctuationRankItem2(BaseModel):
     bidp: str = Field(title="매수호가", max_length=10)
     askp: str = Field(title="매도호가", max_length=10)
 
+
 class StockAfterHoursFluctuationRank(BaseModel, KisHttpBody):
     """국내주식 시간외등락율순위"""
 
@@ -509,6 +524,7 @@ class StockAfterHoursVolumeRankItem1(BaseModel):
     ovtm_untp_exch_tr_pbmn: str = Field(title="시간외 단일가 거래소 거래대금", max_length=18)
     ovtm_untp_kosdaq_vol: str = Field(title="시간외 단일가 KOSDAQ 거래량", max_length=18)
     ovtm_untp_kosdaq_tr_pbmn: str = Field(title="시간외 단일가 KOSDAQ 거래대금", max_length=18)
+
 
 class StockAfterHoursVolumeRankItem2(BaseModel):
     stck_shrn_iscd: str = Field(title="주식 단축 종목코드", max_length=9)
@@ -533,16 +549,10 @@ class StockAfterHoursVolumeRank(BaseModel, KisHttpBody):
     output1: StockAfterHoursVolumeRankItem1 = Field(title="응답상세1")
     output2: Sequence[StockAfterHoursVolumeRankItem2] = Field(default_factory=list)
 
+
 class HtsInquiryTop20Item(BaseModel):
-    mrkt_div_cls_code: str = Field(
-        title="시장구분",
-        max_length=9,
-        description="J : 코스피, Q : 코스닥"
-    )
-    mksc_shrn_iscd: str = Field(
-        title="종목코드",
-        max_length=9
-    )
+    mrkt_div_cls_code: str = Field(title="시장구분", max_length=9, description="J : 코스피, Q : 코스닥")
+    mksc_shrn_iscd: str = Field(title="종목코드", max_length=9)
 
 
 class HtsInquiryTop20(BaseModel, KisHttpBody):

@@ -10,12 +10,11 @@ from typing import Literal, cast
 
 import dotenv
 import pytest
+from _token_cache import TokenCache
 from pydantic import SecretStr
 
 from cluefin_openapi.kis._auth import Auth
 from cluefin_openapi.kis._client import Client
-
-from _token_cache import TokenCache
 
 
 @pytest.fixture(scope="module")
@@ -63,7 +62,7 @@ def test_get_sector_current_index(client: Client):
     try:
         response = client.domestic_issue_other.get_sector_current_index(
             fid_cond_mrkt_div_code="U",
-            fid_input_iscd="0001"  # 0001:코스피, 1001:코스닥, 2001:코스피200
+            fid_input_iscd="0001",  # 0001:코스피, 1001:코스닥, 2001:코스피200
         )
 
         # Verify response type
@@ -85,7 +84,7 @@ def test_get_sector_daily_index(client: Client):
             fid_period_div_code="D",  # D:일별, W:주별, M:월별
             fid_cond_mrkt_div_code="U",  # 업종 U
             fid_input_iscd="0001",  # 0001:코스피, 1001:코스닥, 2001:코스피200
-            fid_input_date_1="20240701"
+            fid_input_date_1="20240701",
         )
 
         # Verify response type
@@ -104,7 +103,7 @@ def test_get_sector_time_index_second(client: Client):
     try:
         response = client.domestic_issue_other.get_sector_time_index_second(
             fid_input_iscd="0001",  # 0001:거래소, 1001:코스닥, 2001:코스피200, 3003:KSQ150
-            fid_cond_mrkt_div_code="U"  # 업종 U
+            fid_cond_mrkt_div_code="U",  # 업종 U
         )
 
         # Verify response type
@@ -124,7 +123,7 @@ def test_get_sector_time_index_minute(client: Client):
         response = client.domestic_issue_other.get_sector_time_index_minute(
             fid_input_hour_1="60",  # 60:1분, 300:5분, 600:10분
             fid_input_iscd="0001",  # 0001:거래소, 1001:코스닥, 2001:코스피200, 3003:KSQ150
-            fid_cond_mrkt_div_code="U"  # 업종 U
+            fid_cond_mrkt_div_code="U",  # 업종 U
         )
 
         # Verify response type
@@ -146,7 +145,7 @@ def test_get_sector_minute_inquiry(client: Client):
             fid_etc_cls_code="0",  # 0:기본, 1:장마감,시간외 제외
             fid_input_iscd="0001",  # 0001:종합, 0002:대형주
             fid_input_hour_1="60",  # 30, 60:1분, 600:10분, 3600:1시간
-            fid_pw_data_incu_yn="N"  # Y:과거, N:당일
+            fid_pw_data_incu_yn="N",  # Y:과거, N:당일
         )
 
         # Verify response type
@@ -168,7 +167,7 @@ def test_get_sector_period_quote(client: Client):
             fid_input_iscd="0001",  # 0001:종합, 0002:대형주
             fid_input_date_1="20240501",
             fid_input_date_2="20240531",
-            fid_period_div_code="D"  # D:일봉, W:주봉, M:월봉, Y:년봉
+            fid_period_div_code="D",  # D:일봉, W:주봉, M:월봉, Y:년봉
         )
 
         # Verify response type
@@ -190,7 +189,7 @@ def test_get_sector_all_quote_by_category(client: Client):
             fid_input_iscd="0001",  # 0001:코스피, 1001:코스닥, 2001:코스피200
             fid_cond_scr_div_code="20214",  # Unique key: 20214
             fid_mrkt_cls_code="K",  # K:거래소, Q:코스닥, K2:코스피200
-            fid_blng_cls_code="0"  # 0:전업종, 1:기타구분, 2:자본금/벤처구분, 3:상업별/일반구분
+            fid_blng_cls_code="0",  # 0:전업종, 1:기타구분, 2:자본금/벤처구분, 3:상업별/일반구분
         )
 
         # Verify response type
@@ -214,7 +213,7 @@ def test_get_expected_index_trend(client: Client):
             fid_mkop_cls_code="1",  # 1:장시작전, 2:장마감
             fid_input_hour_1="60",  # 10:10초, 30:30초, 60:1분, 600:10분
             fid_input_iscd="0001",  # 0000:전체, 0001:코스피, 1001:코스닥, 2001:코스피200, 4001:KRX100
-            fid_cond_mrkt_div_code="U"  # 주식 U
+            fid_cond_mrkt_div_code="U",  # 주식 U
         )
 
         # Verify response type
@@ -236,7 +235,7 @@ def test_get_expected_index_all(client: Client):
             fid_cond_mrkt_div_code="U",  # 업종 U
             fid_cond_scr_div_code="11175",  # Unique key: 11175
             fid_input_iscd="0000",  # 0000:전체, 0001:거래소, 1001:코스닥, 2001:코스피200, 4001:KRX100
-            fid_mkop_cls_code="1"  # 1:장시작전, 2:장마감
+            fid_mkop_cls_code="1",  # 1:장시작전, 2:장마감
         )
 
         # Verify response type
@@ -264,7 +263,7 @@ def test_get_volatility_interruption_status(client: Client):
             fid_rank_sort_cls_code="0",  # 0:전체, 1:정적, 2:동적, 3:정적&동적
             fid_input_date_1="20250109",  # 영업일
             fid_trgt_cls_code="",
-            fid_trgt_exls_cls_code=""
+            fid_trgt_exls_cls_code="",
         )
 
         # Verify response type
@@ -285,7 +284,7 @@ def test_get_interest_rate_summary(client: Client):
             fid_cond_mrkt_div_code="I",  # Unique key: I
             fid_cond_scr_div_code="20702",  # Unique key: 20702
             fid_div_cls_code="1",  # 1:해외금리지표
-            fid_div_cls_code1=""  # 공백:전체
+            fid_div_cls_code1="",  # 공백:전체
         )
 
         # Verify response type
@@ -310,7 +309,7 @@ def test_get_market_announcement_schedule(client: Client):
             fid_input_date_1="",  # 공백:현재기준, 조회일자 ex. 00YYYYMMDD
             fid_input_hour_1="",  # 공백:현재기준, 조회시간 ex. 0000HHMMSS
             fid_rank_sort_cls_code="",  # 공백 필수
-            fid_input_srno=""  # 공백 필수
+            fid_input_srno="",  # 공백 필수
         )
 
         # Verify response type
@@ -330,7 +329,7 @@ def test_get_holiday_inquiry(client: Client):
         response = client.domestic_issue_other.get_holiday_inquiry(
             bass_dt="20250101",  # YYYYMMDD
             ctx_area_nk="",  # 공백으로 입력
-            ctx_area_fk=""  # 공백으로 입력
+            ctx_area_fk="",  # 공백으로 입력
         )
 
         # Verify response type

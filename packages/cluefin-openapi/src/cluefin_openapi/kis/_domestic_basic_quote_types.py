@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Literal
+from typing import Literal, Optional, Sequence
 
 from pydantic import BaseModel, Field
 
@@ -6,7 +6,6 @@ from cluefin_openapi.kis._model import KisHttpBody
 
 
 class DomesticStockCurrentPriceItem(BaseModel):
-
     iscd_stat_cls_code: str = Field(title="종목 상태 구분 코드", max_length=3)
     marg_rate: str = Field(title="증거금 비율", max_length=84)
     rprs_mrkt_kor_name: str = Field(title="대표 시장 한글명", max_length=40)
@@ -164,7 +163,6 @@ class DomesticStockCurrentPrice2(BaseModel, KisHttpBody):
 
 
 class DomesticStockCurrentPriceConclusionItem(BaseModel):
-
     stck_cntg_hour: str = Field(title="주식 체결 시간", max_length=6)
     stck_prpr: str = Field(title="주식 현재가", max_length=10)
     prdy_vrss: str = Field(title="전일 대비", max_length=10)
@@ -181,7 +179,6 @@ class DomesticStockCurrentPriceConclusion(BaseModel, KisHttpBody):
 
 
 class DomesticStockCurrentPriceDailyItem(BaseModel):
-
     stck_bsop_date: str = Field(title="주식 영업 일자", max_length=8)
     stck_oprc: str = Field(title="주식 시가2", max_length=10)
     stck_hgpr: str = Field(title="주식 최고가", max_length=10)
@@ -544,7 +541,6 @@ class DomesticStockDailyMinuteChart(BaseModel, KisHttpBody):
 
 
 class DomesticStockCurrentPriceTimeItemConclusionItem1(BaseModel):
-
     stck_prpr: str = Field(title="주식 현재가", max_length=10)
     prdy_vrss: str = Field(title="전일 대비", max_length=10)
     prdy_vrss_sign: str = Field(title="전일 대비 부호", max_length=1)
@@ -555,7 +551,6 @@ class DomesticStockCurrentPriceTimeItemConclusionItem1(BaseModel):
 
 
 class DomesticStockCurrentPriceTimeItemConclusionItem2(BaseModel):
-
     stck_cntg_hour: str = Field(title="주식 체결 시간", max_length=6)
     # TODO(typo) 문서에는 stck_pbpr 이라고 되어있으나, stck_prpr 오타로 보임
     stck_prpr: str = Field(title="주식 현재가", max_length=10)
@@ -875,7 +870,6 @@ class DomesticEtfEtnCurrentPrice(BaseModel, KisHttpBody):
 
 
 class DomesticEtfComponentStockPriceItem1(BaseModel):
-
     stck_prpr: str = Field(title="매매 일자", max_length=10)
     prdy_vrss: str = Field(title="주식 현재가", max_length=10)
     prdy_vrss_sign: str = Field(title="전일 대비 부호", max_length=1)
@@ -895,7 +889,6 @@ class DomesticEtfComponentStockPriceItem1(BaseModel):
 
 
 class DomesticEtfComponentStockPriceItem2(BaseModel):
-
     stck_shrn_iscd: str = Field(title="주식 단축 종목코드", max_length=9)
     hts_kor_isnm: str = Field(title="HTS 한글 종목명", max_length=40)
     stck_prpr: str = Field(title="주식 현재가", max_length=10)
@@ -921,7 +914,6 @@ class DomesticEtfComponentStockPrice(BaseModel, KisHttpBody):
 
 
 class DomesticEtfNavComparisonTrendItem1(BaseModel):
-
     stck_prpr: str = Field(title="주식 현재가", max_length=8)
     prdy_vrss: str = Field(title="전일 대비", max_length=8)
     prdy_vrss_sign: str = Field(title="전일 대비 부호", max_length=2)
@@ -937,7 +929,6 @@ class DomesticEtfNavComparisonTrendItem1(BaseModel):
 
 
 class DomesticEtfNavComparisonTrendItem2(BaseModel):
-
     nav: str = Field(title="NAV", max_length=11)
     nav_prdy_vrss_sign: str = Field(title="NAV 전일 대비 부호", max_length=1)
     nav_prdy_vrss: str = Field(title="NAV 전일 대비", max_length=11)
@@ -978,7 +969,6 @@ class DomesticEtfNavComparisonDailyTrend(BaseModel, KisHttpBody):
 
 
 class DomesticEtfNavComparisonTimeTrendItem(BaseModel):
-
     bsop_hour: str = Field(description="영업 시간")
     nav: str = Field(description="NAV")
     nav_prdy_vrss_sign: str = Field(description="NAV 전일 대비 부호")

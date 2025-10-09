@@ -1,0 +1,557 @@
+[
+    {
+        "method_name": "get_stock_price_fluctuation",
+        "response_model_attr": "StockPriceFluctuation",
+        "endpoint": "/uapi/overseas-stock/v1/ranking/price-fluctuation",
+        "method": "GET",
+        "call_kwargs": {
+            "excd": "NAS",
+            "gubn": "1",
+            "mixn": "3",
+            "vol_rang": "0"
+        },
+        "expected_headers": {
+            "tr_id": "HHDFS76260000"
+        },
+        "expected_body": {
+            "KEYB": "",
+            "AUTH": "",
+            "EXCD": "NAS",
+            "GUBN": "1",
+            "MIXN": "3",
+            "VOL_RANG": "0"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "rsym": "AAPL",
+                    "symb": "AAPL",
+                    "rsym_name": "Apple Inc",
+                    "last": "150.50",
+                    "sign": "2",
+                    "diff": "3.50"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_volume_surge",
+        "response_model_attr": "StockVolumeSurge",
+        "endpoint": "/uapi/overseas-stock/v1/ranking/volume-surge",
+        "method": "GET",
+        "call_kwargs": {
+            "keyb": "",
+            "auth": "",
+            "excd": "NYS",
+            "mixn": "4",
+            "vol_rang": "1"
+        },
+        "expected_headers": {
+            "tr_id": "HHDFS76270000"
+        },
+        "expected_body": {
+            "KEYB": "",
+            "AUTH": "",
+            "EXCD": "NYS",
+            "MIXN": "4",
+            "VOL_RANG": "1"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "rsym": "TSLA",
+                    "symb": "TSLA",
+                    "rsym_name": "Tesla Inc",
+                    "tvol": "15000000",
+                    "last": "250.75"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_buy_execution_strength_top",
+        "response_model_attr": "StockBuyExecutionStrengthTop",
+        "endpoint": "/uapi/overseas-stock/v1/ranking/volume-power",
+        "method": "GET",
+        "call_kwargs": {
+            "keyb": "",
+            "auth": "",
+            "excd": "NAS",
+            "nday": "0",
+            "vol_rang": "2"
+        },
+        "expected_headers": {
+            "tr_id": "HHDFS76280000"
+        },
+        "expected_body": {
+            "KEYB": "",
+            "AUTH": "",
+            "EXCD": "NAS",
+            "NDAY": "0",
+            "VOL_RANG": "2"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "rsym": "MSFT",
+                    "symb": "MSFT",
+                    "rsym_name": "Microsoft Corp",
+                    "last": "380.25",
+                    "rate": "125.5"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_rise_decline_rate",
+        "response_model_attr": "StockRiseDeclineRate",
+        "endpoint": "/uapi/overseas-stock/v1/ranking/updown-rate",
+        "method": "GET",
+        "call_kwargs": {
+            "keyb": "",
+            "auth": "",
+            "excd": "HKS",
+            "gubn": "1",
+            "nday": "0",
+            "vol_rang": "0"
+        },
+        "expected_headers": {
+            "tr_id": "HHDFS76290000"
+        },
+        "expected_body": {
+            "KEYB": "",
+            "AUTH": "",
+            "EXCD": "HKS",
+            "GUBN": "1",
+            "NDAY": "0",
+            "VOL_RANG": "0"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "rsym": "0700",
+                    "symb": "0700",
+                    "rsym_name": "Tencent Holdings",
+                    "last": "350.00",
+                    "rate": "5.25"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_new_high_low_price",
+        "response_model_attr": "StockNewHighLowPrice",
+        "endpoint": "/uapi/overseas-stock/v1/ranking/new-highlow",
+        "method": "GET",
+        "call_kwargs": {
+            "keyb": "",
+            "auth": "",
+            "excd": "NAS",
+            "gubn": "1",
+            "gubn2": "1",
+            "nday": "6",
+            "vol_rang": "0"
+        },
+        "expected_headers": {
+            "tr_id": "HHDFS76300000"
+        },
+        "expected_body": {
+            "KEYB": "",
+            "AUTH": "",
+            "EXCD": "NAS",
+            "GUBN": "1",
+            "GUBN2": "1",
+            "NDAY": "6",
+            "VOL_RANG": "0"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "rsym": "NVDA",
+                    "symb": "NVDA",
+                    "rsym_name": "NVIDIA Corp",
+                    "last": "500.00",
+                    "high_date": "20250109"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_trading_volume_rank",
+        "response_model_attr": "StockTradingVolumeRank",
+        "endpoint": "/uapi/overseas-stock/v1/ranking/trade-vol",
+        "method": "GET",
+        "call_kwargs": {
+            "keyb": "",
+            "auth": "",
+            "excd": "NYS",
+            "nday": "0",
+            "prc1": "0",
+            "prc2": "999999",
+            "vol_rang": "0"
+        },
+        "expected_headers": {
+            "tr_id": "HHDFS76310010"
+        },
+        "expected_body": {
+            "KEYB": "",
+            "AUTH": "",
+            "EXCD": "NYS",
+            "NDAY": "0",
+            "PRC1": "0",
+            "PRC2": "999999",
+            "VOL_RANG": "0"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "rsym": "AAPL",
+                    "symb": "AAPL",
+                    "rsym_name": "Apple Inc",
+                    "tvol": "50000000",
+                    "last": "150.50"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_trading_amount_rank",
+        "response_model_attr": "StockTradingAmountRank",
+        "endpoint": "/uapi/overseas-stock/v1/ranking/trade-pbmn",
+        "method": "GET",
+        "call_kwargs": {
+            "keyb": "",
+            "auth": "",
+            "excd": "NAS",
+            "nday": "0",
+            "vol_rang": "0",
+            "prc1": "0",
+            "prc2": "999999"
+        },
+        "expected_headers": {
+            "tr_id": "HHDFS76320010"
+        },
+        "expected_body": {
+            "KEYB": "",
+            "AUTH": "",
+            "EXCD": "NAS",
+            "NDAY": "0",
+            "VOL_RANG": "0",
+            "PRC1": "0",
+            "PRC2": "999999"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "rsym": "TSLA",
+                    "symb": "TSLA",
+                    "rsym_name": "Tesla Inc",
+                    "tamt": "5000000000",
+                    "last": "250.75"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_trading_increase_rate_rank",
+        "response_model_attr": "StockTradingIncreaseRateRank",
+        "endpoint": "/uapi/overseas-stock/v1/ranking/trade-growth",
+        "method": "GET",
+        "call_kwargs": {
+            "keyb": "",
+            "auth": "",
+            "excd": "NAS",
+            "nday": "1",
+            "vol_rang": "1"
+        },
+        "expected_headers": {
+            "tr_id": "HHDFS76330000"
+        },
+        "expected_body": {
+            "KEYB": "",
+            "AUTH": "",
+            "EXCD": "NAS",
+            "NDAY": "1",
+            "VOL_RANG": "1"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "rsym": "AMD",
+                    "symb": "AMD",
+                    "rsym_name": "Advanced Micro Devices",
+                    "rate": "250.5",
+                    "last": "125.50"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_trading_turnover_rate_rank",
+        "response_model_attr": "StockTradingTurnoverRateRank",
+        "endpoint": "/uapi/overseas-stock/v1/ranking/trade-turnover",
+        "method": "GET",
+        "call_kwargs": {
+            "keyb": "",
+            "auth": "",
+            "excd": "HKS",
+            "nday": "0",
+            "vol_rang": "0"
+        },
+        "expected_headers": {
+            "tr_id": "HHDFS76340000"
+        },
+        "expected_body": {
+            "KEYB": "",
+            "AUTH": "",
+            "EXCD": "HKS",
+            "NDAY": "0",
+            "VOL_RANG": "0"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "rsym": "0388",
+                    "symb": "0388",
+                    "rsym_name": "HK Exchanges",
+                    "rate": "15.5",
+                    "last": "320.00"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_market_cap_rank",
+        "response_model_attr": "StockMarketCapRank",
+        "endpoint": "/uapi/overseas-stock/v1/ranking/market-cap",
+        "method": "GET",
+        "call_kwargs": {
+            "keyb": "",
+            "auth": "",
+            "excd": "NYS",
+            "vol_rang": "0"
+        },
+        "expected_headers": {
+            "tr_id": "HHDFS76350100"
+        },
+        "expected_body": {
+            "KEYB": "",
+            "AUTH": "",
+            "EXCD": "NYS",
+            "VOL_RANG": "0"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "rsym": "AAPL",
+                    "symb": "AAPL",
+                    "rsym_name": "Apple Inc",
+                    "mcap": "2500000000000",
+                    "last": "150.50"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_period_rights_inquiry",
+        "response_model_attr": "StockPeriodRightsInquiry",
+        "endpoint": "/uapi/overseas-price/v1/quotations/period-rights",
+        "method": "GET",
+        "call_kwargs": {
+            "rght_type_cd": "%%",
+            "inqr_dvsn_cd": "02",
+            "inqr_strt_dt": "20250101",
+            "inqr_end_dt": "20250131",
+            "pdno": "",
+            "prdt_type_cd": "",
+            "ctx_area_nk50": "",
+            "ctx_area_fk50": ""
+        },
+        "expected_headers": {
+            "tr_id": "CTRGT011R"
+        },
+        "expected_body": {
+            "RGHT_TYPE_CD": "%%",
+            "INQR_DVSN_CD": "02",
+            "INQR_STRT_DT": "20250101",
+            "INQR_END_DT": "20250131",
+            "PDNO": "",
+            "PRDT_TYPE_CD": "",
+            "CTX_AREA_NK50": "",
+            "CTX_AREA_FK50": ""
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "pdno": "AAPL",
+                    "prdt_name": "Apple Inc",
+                    "rght_type_cd": "03",
+                    "rght_type_name": "배당",
+                    "lcal_base_dt": "20250115"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_news_aggregate_title",
+        "response_model_attr": "NewsAggregateTitle",
+        "endpoint": "/uapi/overseas-price/v1/quotations/news-title",
+        "method": "GET",
+        "call_kwargs": {
+            "info_gb": "",
+            "class_cd": "",
+            "nation_cd": "US",
+            "exchange_cd": "",
+            "symb": "",
+            "data_dt": "",
+            "data_tm": "",
+            "cts": ""
+        },
+        "expected_headers": {
+            "tr_id": "HHPSTH60100C1"
+        },
+        "expected_body": {
+            "INFO_GB": "",
+            "CLASS_CD": "",
+            "NATION_CD": "US",
+            "EXCHANGE_CD": "",
+            "SYMB": "",
+            "DATA_DT": "",
+            "DATA_TM": "",
+            "CTS": ""
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "news_no": "2025010901",
+                    "news_date": "20250109",
+                    "news_time": "093000",
+                    "news_title": "US Market Update",
+                    "news_ctnt": "Market opened higher"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_rights_aggregate",
+        "response_model_attr": "StockRightsAggregate",
+        "endpoint": "/uapi/overseas-price/v1/quotations/rights-by-ice",
+        "method": "GET",
+        "call_kwargs": {
+            "ncod": "US",
+            "symb": "AAPL",
+            "st_ymd": "20250101",
+            "ed_ymd": "20250131"
+        },
+        "expected_headers": {
+            "tr_id": "HHDFS78330900"
+        },
+        "expected_body": {
+            "NCOD": "US",
+            "SYMB": "AAPL",
+            "ST_YMD": "20250101",
+            "ED_YMD": "20250131"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "rght_type": "DIV",
+                    "rght_name": "Dividend",
+                    "ex_date": "20250115",
+                    "pay_date": "20250131",
+                    "rate": "0.25"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_collateral_loan_eligible",
+        "response_model_attr": "StockCollateralLoanEligible",
+        "endpoint": "/uapi/overseas-price/v1/quotations/colable-by-company",
+        "method": "GET",
+        "call_kwargs": {
+            "pdno": "AMD",
+            "prdt_type_cd": "",
+            "inqr_strt_dt": "",
+            "inqr_end_dt": "",
+            "inqr_dvsn": "",
+            "natn_cd": "840",
+            "inqr_sqn_dvsn": "01",
+            "rt_dvsn_cd": "",
+            "rt": "",
+            "loan_psbl_yn": "",
+            "ctx_area_fk100": "",
+            "ctx_area_nk100": ""
+        },
+        "expected_headers": {
+            "tr_id": "CTLN4050R"
+        },
+        "expected_body": {
+            "PDNO": "AMD",
+            "PRDT_TYPE_CD": "",
+            "INQR_STRT_DT": "",
+            "INQR_END_DT": "",
+            "INQR_DVSN": "",
+            "NATN_CD": "840",
+            "INQR_SQN_DVSN": "01",
+            "RT_DVSN_CD": "",
+            "RT": "",
+            "LOAN_PSBL_YN": "",
+            "CTX_AREA_FK100": "",
+            "CTX_AREA_NK100": ""
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "pdno": "AMD",
+                    "prdt_name": "Advanced Micro Devices",
+                    "loan_psbl_yn": "Y",
+                    "loan_rt": "70.0",
+                    "natn_cd": "840"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_breaking_news_title",
+        "response_model_attr": "BreakingNewsTitle",
+        "endpoint": "/uapi/overseas-price/v1/quotations/brknews-title",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_news_ofer_entp_code": "0",
+            "fid_cond_mrkt_cls_code": "",
+            "fid_input_iscd": "",
+            "fid_titl_cntt": "",
+            "fid_input_date_1": "",
+            "fid_input_hour_1": "",
+            "fid_rank_sort_cls_code": "",
+            "fid_input_srno": "",
+            "fid_cond_scr_div_code": "11801"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST01011801"
+        },
+        "expected_body": {
+            "FID_NEWS_OFER_ENTP_CODE": "0",
+            "FID_COND_MRKT_CLS_CODE": "",
+            "FID_INPUT_ISCD": "",
+            "FID_TITL_CNTT": "",
+            "FID_INPUT_DATE_1": "",
+            "FID_INPUT_HOUR_1": "",
+            "FID_RANK_SORT_CLS_CODE": "",
+            "FID_INPUT_SRNO": "",
+            "FID_COND_SCR_DIV_CODE": "11801"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "news_srno": "001",
+                    "news_date": "20250109",
+                    "news_time": "100500",
+                    "news_titl": "Breaking: Market Rally Continues",
+                    "news_ofer_entp_name": "Reuters"
+                }
+            ]
+        }
+    }
+]

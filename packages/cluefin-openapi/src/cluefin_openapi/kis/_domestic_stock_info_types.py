@@ -1,7 +1,9 @@
-from pydantic import BaseModel
-from typing import Sequence, Optional
-from pydantic import Field
+from typing import Optional, Sequence
+
+from pydantic import BaseModel, Field
+
 from cluefin_openapi.kis._model import KisHttpBody
+
 
 class ProductBasicInfoItem(BaseModel):
     pdno: str = Field(title="상품번호", max_length=12)
@@ -31,12 +33,25 @@ class ProductBasicInfo(BaseModel, KisHttpBody):
 
     output: ProductBasicInfoItem = Field(title="응답상세")
 
+
 class StockBasicInfoItem(BaseModel):
     pdno: str = Field(title="상품번호", max_length=12)
     prdt_type_cd: str = Field(title="상품유형코드", max_length=3)
-    mket_id_cd: str = Field(title="시장ID코드", max_length=3, description="AGR.농축산물파생\nBON.채권파생\nCMD.일반상품시장\nCUR.통화파생\nENG.에너지파생\nEQU.주식파생\nETF.ETF파생\nIRT.금리파생\nKNX.코넥스\nKSQ.코스닥\nMTL.금속파생\nSPI.주가지수파생\nSTK.유가증권")
-    scty_grp_id_cd: str = Field(title="증권그룹ID코드", max_length=2, description="BC.수익증권\nDR.주식예탁증서\nEF.ETF\nEN.ETN\nEW.ELW\nFE.해외ETF\nFO.선물옵션\nFS.외국주권\nFU.선물\nFX.플렉스 선물\nGD.금현물\nIC.투자계약증권\nIF.사회간접자본투융자회사\nKN.코넥스주권\nMF.투자회사\nOP.옵션\nRT.부동산투자회사\nSC.선박투자회사\nSR.신주인수권증서\nST.주권\nSW.신주인수권증권\nTC.신탁수익증권")
-    excg_dvsn_cd: str = Field(title="거래소구분코드", max_length=2, description="01.한국증권\n02.증권거래소\n03.코스닥\n04.K-OTC\n05.선물거래소\n06.CME\n07.EUREX\n21.금현물\n50.미국주간\n51.홍콩\n52.상해B\n53.심천\n54.홍콩거래소\n55.미국\n56.일본\n57.상해A\n58.심천A\n59.베트남\n61.장전시간외시장\n64.경쟁대량매매\n65.경매매시장\n81.시간외단일가시장")
+    mket_id_cd: str = Field(
+        title="시장ID코드",
+        max_length=3,
+        description="AGR.농축산물파생\nBON.채권파생\nCMD.일반상품시장\nCUR.통화파생\nENG.에너지파생\nEQU.주식파생\nETF.ETF파생\nIRT.금리파생\nKNX.코넥스\nKSQ.코스닥\nMTL.금속파생\nSPI.주가지수파생\nSTK.유가증권",
+    )
+    scty_grp_id_cd: str = Field(
+        title="증권그룹ID코드",
+        max_length=2,
+        description="BC.수익증권\nDR.주식예탁증서\nEF.ETF\nEN.ETN\nEW.ELW\nFE.해외ETF\nFO.선물옵션\nFS.외국주권\nFU.선물\nFX.플렉스 선물\nGD.금현물\nIC.투자계약증권\nIF.사회간접자본투융자회사\nKN.코넥스주권\nMF.투자회사\nOP.옵션\nRT.부동산투자회사\nSC.선박투자회사\nSR.신주인수권증서\nST.주권\nSW.신주인수권증권\nTC.신탁수익증권",
+    )
+    excg_dvsn_cd: str = Field(
+        title="거래소구분코드",
+        max_length=2,
+        description="01.한국증권\n02.증권거래소\n03.코스닥\n04.K-OTC\n05.선물거래소\n06.CME\n07.EUREX\n21.금현물\n50.미국주간\n51.홍콩\n52.상해B\n53.심천\n54.홍콩거래소\n55.미국\n56.일본\n57.상해A\n58.심천A\n59.베트남\n61.장전시간외시장\n64.경쟁대량매매\n65.경매매시장\n81.시간외단일가시장",
+    )
     setl_mmdd: str = Field(title="결산월일", max_length=4)
     lstg_stqt: str = Field(title="상장주수", max_length=19)
     lstg_cptl_amt: str = Field(title="상장자본금액", max_length=19)
@@ -56,7 +71,11 @@ class StockBasicInfoItem(BaseModel):
     idx_bztp_lcls_cd: str = Field(title="지수업종대분류코드", max_length=3)
     idx_bztp_mcls_cd: str = Field(title="지수업종중분류코드", max_length=3)
     idx_bztp_scls_cd: str = Field(title="지수업종소분류코드", max_length=3)
-    stck_kind_cd: str = Field(title="주식종류코드", max_length=3, description="000.해당사항없음\n101.보통주\n201.우선주\n202.2우선주\n203.3우선주\n204.4우선주\n205.5우선주\n206.6우선주\n207.7우선주\n208.8우선주\n209.9우선주\n210.10우선주\n211.11우선주\n212.12우선주\n213.13우선주\n214.14우선주\n215.15우선주\n216.16우선주\n217.17우선주\n218.18우선주\n219.19우선주\n220.20우선주\n301.후배주\n401.혼합주")
+    stck_kind_cd: str = Field(
+        title="주식종류코드",
+        max_length=3,
+        description="000.해당사항없음\n101.보통주\n201.우선주\n202.2우선주\n203.3우선주\n204.4우선주\n205.5우선주\n206.6우선주\n207.7우선주\n208.8우선주\n209.9우선주\n210.10우선주\n211.11우선주\n212.12우선주\n213.13우선주\n214.14우선주\n215.15우선주\n216.16우선주\n217.17우선주\n218.18우선주\n219.19우선주\n220.20우선주\n301.후배주\n401.혼합주",
+    )
     mfnd_opng_dt: str = Field(title="뮤추얼펀드개시일자", max_length=8)
     mfnd_end_dt: str = Field(title="뮤추얼펀드종료일자", max_length=8)
     dpsi_erlm_cncl_dt: str = Field(title="예탁등록취소일자", max_length=8)
@@ -83,8 +102,16 @@ class StockBasicInfoItem(BaseModel):
     clpr_chng_dt: str = Field(title="종가변경일자", max_length=8)
     std_idst_clsf_cd: str = Field(title="표준산업분류코드", max_length=6)
     std_idst_clsf_cd_name: str = Field(title="표준산업분류코드명", max_length=130, description="표준산업소분류코드")
-    idx_bztp_lcls_cd_name: str = Field(title="지수업종대분류코드명", max_length=60, description="표준산업대분류코드\n00\t해당사항없음\n01\t농업, 임업 및 어업\n02\t광업\n03\t제조업\n04\t전기, 가스, 증기 및 수도사업\n05\t하수-폐기물 처리, 원료재생 및환경복원업\n06\t건설업\n07\t도매 및 소매업\n08\t운수업\n09\t숙박 및 음식점업\n10\t출판, 영상, 방송통신 및 정보서비스업\n11\t금융 및 보험업\n12\t부동산업 및 임대업\n13\t전문, 과학 및 기술 서비스업\n14\t사업시설관리 및 사업지원서비스업\n15\t공공행정, 국방 및 사회보장 행정\n16\t교육 서비스업\n17\t보건업 및 사회복지 서비스업\n18\t예술, 스포츠 및 여가관련 서비스업\n19\t협회 및 단체, 수리 및 기타 개인 서비스업\n20\t가구내 고용활동 및 달리 분류되지 않은 자가소비생산활동\n21\t국제 및 외국기관")
-    idx_bztp_mcls_cd_name: str = Field(title="지수업종중분류코드명", max_length=60, description="표준산업중분류코드\n0000\t해당사항없음\n0101\t농업\n0102\t임업\n0103\t어업\n0205\t석탄, 원유 및 천연가스 광업\n0206\t금속 광업\n0207\t비금속광물 광업; 연료용 제외\n0208\t광업 지원 서비스업\n0310\t식료품 제조업\n0311\t음료 제조업\n0312\t담배 제조업\n0313\t섬유제품 제조업; 의복제외\n0314\t의복, 의복액세서리 및 모피제품제조업\n0315\t가죽, 가방 및 신발 제조업\n0316\t목재 및 나무제품 제조업;가구제외\n0317\t펄프, 종이 및 종이제품 제조업\n0318\t인쇄 및 기록매체 복제업\n0319\t코크스, 연탄 및 석유정제품 제조업\n0320\t화학물질 및 화학제품 제조업;의약품 제외\n0321\t의료용 물질 및 의약품 제조업\n0322\t고무제품 및 플라스틱제품 제조업\n0323\t비금속 광물제품 제조업\n0324\t1차 금속 제조업\n0325\t금속가공제품 제조업;기계 및가구 제외\n0326\t전자부품, 컴퓨터, 영상, 음향 및 통신장비 제조업\n0327\t의료, 정밀, 광학기기 및 시계 제조업\n0328\t전기장비 제조업\n0329\t기타 기계 및 장비 제조업\n0330\t자동차 및 트레일러 제조업\n0331\t기타 운송장비 제조업\n0332\t가구 제조업\n0333\t기타 제품 제조업\n0435\t전기, 가스, 증기 및 공기조절 공급업\n0436\t수도사업\n0537\t하수, 폐수 및 분뇨 처리업\n0538\t폐기물 수집운반, 처리 및 원료재생업\n0539\t환경 정화 및 복원업\n0641\t종합 건설업\n0642\t전문직별 공사업\n0745\t자동차 및 부품 판매업\n0746\t도매 및 상품중개업\n0747\t소매업; 자동차 제외\n0849\t육상운송 및 파이프라인 운송업\n0850\t수상 운송업\n0851\t항공 운송업\n0852\t창고 및 운송관련 서비스업\n0955\t숙박업\n0956\t음식점 및 주점업\n1058\t출판업\n1059\t영상·오디오 기록물 제작 및 배급업\n1060\t방송업\n1061\t통신업\n1062\t컴퓨터 프로그래밍, 시스템 통합및 관리업\n1063\t정보서비스업\n1164\t금융업\n1165\t보험 및 연금업\n1166\t금융 및 보험 관련 서비스업\n1268\t부동산업\n1269\t임대업;부동산 제외\n1370\t연구개발업\n1371\t전문서비스업\n1372\t건축기술, 엔지니어링 및 기타과학기술 서비스업\n1373\t기타 전문, 과학 및 기술 서비스업\n1474\t사업시설 관리 및 조경 서비스업\n1475\t사업지원 서비스업\n1584\t공공행정, 국방 및 사회보장 행정\n1685\t교육 서비스업\n1786\t보건업\n1787\t사회복지 서비스업\n1890\t창작, 예술 및 여가관련 서비스업\n1891\t스포츠 및 오락관련 서비스업\n1994\t협회 및 단체\n1995\t수리업\n1996\t기타 개인 서비스업\n2097\t가구내 고용활동\n2098\t달리 분류되지 않은 자가소비를 위한가구의 재화 및 서비스 생산활동\n2199\t국제 및 외국기관")
+    idx_bztp_lcls_cd_name: str = Field(
+        title="지수업종대분류코드명",
+        max_length=60,
+        description="표준산업대분류코드\n00\t해당사항없음\n01\t농업, 임업 및 어업\n02\t광업\n03\t제조업\n04\t전기, 가스, 증기 및 수도사업\n05\t하수-폐기물 처리, 원료재생 및환경복원업\n06\t건설업\n07\t도매 및 소매업\n08\t운수업\n09\t숙박 및 음식점업\n10\t출판, 영상, 방송통신 및 정보서비스업\n11\t금융 및 보험업\n12\t부동산업 및 임대업\n13\t전문, 과학 및 기술 서비스업\n14\t사업시설관리 및 사업지원서비스업\n15\t공공행정, 국방 및 사회보장 행정\n16\t교육 서비스업\n17\t보건업 및 사회복지 서비스업\n18\t예술, 스포츠 및 여가관련 서비스업\n19\t협회 및 단체, 수리 및 기타 개인 서비스업\n20\t가구내 고용활동 및 달리 분류되지 않은 자가소비생산활동\n21\t국제 및 외국기관",
+    )
+    idx_bztp_mcls_cd_name: str = Field(
+        title="지수업종중분류코드명",
+        max_length=60,
+        description="표준산업중분류코드\n0000\t해당사항없음\n0101\t농업\n0102\t임업\n0103\t어업\n0205\t석탄, 원유 및 천연가스 광업\n0206\t금속 광업\n0207\t비금속광물 광업; 연료용 제외\n0208\t광업 지원 서비스업\n0310\t식료품 제조업\n0311\t음료 제조업\n0312\t담배 제조업\n0313\t섬유제품 제조업; 의복제외\n0314\t의복, 의복액세서리 및 모피제품제조업\n0315\t가죽, 가방 및 신발 제조업\n0316\t목재 및 나무제품 제조업;가구제외\n0317\t펄프, 종이 및 종이제품 제조업\n0318\t인쇄 및 기록매체 복제업\n0319\t코크스, 연탄 및 석유정제품 제조업\n0320\t화학물질 및 화학제품 제조업;의약품 제외\n0321\t의료용 물질 및 의약품 제조업\n0322\t고무제품 및 플라스틱제품 제조업\n0323\t비금속 광물제품 제조업\n0324\t1차 금속 제조업\n0325\t금속가공제품 제조업;기계 및가구 제외\n0326\t전자부품, 컴퓨터, 영상, 음향 및 통신장비 제조업\n0327\t의료, 정밀, 광학기기 및 시계 제조업\n0328\t전기장비 제조업\n0329\t기타 기계 및 장비 제조업\n0330\t자동차 및 트레일러 제조업\n0331\t기타 운송장비 제조업\n0332\t가구 제조업\n0333\t기타 제품 제조업\n0435\t전기, 가스, 증기 및 공기조절 공급업\n0436\t수도사업\n0537\t하수, 폐수 및 분뇨 처리업\n0538\t폐기물 수집운반, 처리 및 원료재생업\n0539\t환경 정화 및 복원업\n0641\t종합 건설업\n0642\t전문직별 공사업\n0745\t자동차 및 부품 판매업\n0746\t도매 및 상품중개업\n0747\t소매업; 자동차 제외\n0849\t육상운송 및 파이프라인 운송업\n0850\t수상 운송업\n0851\t항공 운송업\n0852\t창고 및 운송관련 서비스업\n0955\t숙박업\n0956\t음식점 및 주점업\n1058\t출판업\n1059\t영상·오디오 기록물 제작 및 배급업\n1060\t방송업\n1061\t통신업\n1062\t컴퓨터 프로그래밍, 시스템 통합및 관리업\n1063\t정보서비스업\n1164\t금융업\n1165\t보험 및 연금업\n1166\t금융 및 보험 관련 서비스업\n1268\t부동산업\n1269\t임대업;부동산 제외\n1370\t연구개발업\n1371\t전문서비스업\n1372\t건축기술, 엔지니어링 및 기타과학기술 서비스업\n1373\t기타 전문, 과학 및 기술 서비스업\n1474\t사업시설 관리 및 조경 서비스업\n1475\t사업지원 서비스업\n1584\t공공행정, 국방 및 사회보장 행정\n1685\t교육 서비스업\n1786\t보건업\n1787\t사회복지 서비스업\n1890\t창작, 예술 및 여가관련 서비스업\n1891\t스포츠 및 오락관련 서비스업\n1994\t협회 및 단체\n1995\t수리업\n1996\t기타 개인 서비스업\n2097\t가구내 고용활동\n2098\t달리 분류되지 않은 자가소비를 위한가구의 재화 및 서비스 생산활동\n2199\t국제 및 외국기관",
+    )
     idx_bztp_scls_cd_name: str = Field(title="지수업종소분류코드명", max_length=60)
     ocr_no: str = Field(title="OCR번호", max_length=4)
     crfd_item_yn: str = Field(title="크라우드펀딩종목여부", max_length=1)
@@ -97,8 +124,14 @@ class StockBasicInfoItem(BaseModel):
     lstg_rqsr_issu_istt_cd: str = Field(title="상장신청인발행기관코드", max_length=5)
     lstg_rqsr_item_cd: str = Field(title="상장신청인종목코드", max_length=12)
     trst_istt_issu_istt_cd: str = Field(title="신탁기관발행기관코드", max_length=5)
-    cptt_trad_tr_psbl_yn: str = Field(title="NXT 거래종목여부", max_length=1, description="NXT 거래가능한 종목은 Y, 그 외 종목은 N")
-    nxt_tr_stop_yn: str = Field(title="NXT 거래정지여부", max_length=1, description="NXT 거래종목 중 거래정지가 된 종목은 Y, 그 외 모든 종목은 N")
+    cptt_trad_tr_psbl_yn: str = Field(
+        title="NXT 거래종목여부", max_length=1, description="NXT 거래가능한 종목은 Y, 그 외 종목은 N"
+    )
+    nxt_tr_stop_yn: str = Field(
+        title="NXT 거래정지여부",
+        max_length=1,
+        description="NXT 거래종목 중 거래정지가 된 종목은 Y, 그 외 모든 종목은 N",
+    )
 
 
 class StockBasicInfo(BaseModel, KisHttpBody):
@@ -125,6 +158,7 @@ class BalanceSheet(BaseModel, KisHttpBody):
     """국내주식 대차대조표"""
 
     output: Sequence[BalanceSheetItem] = Field(default_factory=list)
+
 
 class IncomeStatementItem(BaseModel):
     stac_yymm: str = Field(title="결산 년월", max_length=6)
@@ -180,6 +214,7 @@ class ProfitabilityRatio(BaseModel, KisHttpBody):
 
     output: Sequence[ProfitabilityRatioItem] = Field(default_factory=list)
 
+
 class OtherKeyRatioItem(BaseModel):
     stac_yymm: str = Field(title="결산 년월", max_length=6)
     payout_rate: str = Field(title="배당 성향", max_length=92)
@@ -233,6 +268,7 @@ class MarginTradableStocks(BaseModel, KisHttpBody):
 
     output: Sequence[MarginTradableStocksItem] = Field(default_factory=list)
 
+
 class KsdDividendDecisionItem(BaseModel):
     record_date: str = Field(title="기준일", max_length=8)
     sht_cd: str = Field(title="종목코드", max_length=9)
@@ -253,6 +289,7 @@ class KsdDividendDecision(BaseModel, KisHttpBody):
     """예탁원정보(배당결정)"""
 
     output: Sequence[KsdDividendDecisionItem] = Field(default_factory=list)
+
 
 class KsdStockDividendDecisionItem(BaseModel):
     record_date: str = Field(title="기준일", max_length=8)
@@ -367,6 +404,7 @@ class KsdIpoSubscriptionSchedule(BaseModel, KisHttpBody):
 
     output1: Sequence[KsdIpoSubscriptionScheduleItem] = Field(default_factory=list)
 
+
 class KsdForfeitedShareScheduleItem(BaseModel):
     record_date: str = Field(title="기준일", max_length=8)
     sht_cd: str = Field(title="종목코드", max_length=9)
@@ -399,6 +437,7 @@ class KsdDepositSchedule(BaseModel, KisHttpBody):
 
     output1: Sequence[KsdDepositScheduleItem] = Field(default_factory=list)
 
+
 class KsdPaidInCapitalIncreaseScheduleItem(BaseModel):
     record_date: str = Field(title="기준일", max_length=8)
     sht_cd: str = Field(title="종목코드", max_length=9)
@@ -420,6 +459,7 @@ class KsdPaidInCapitalIncreaseSchedule(BaseModel, KisHttpBody):
 
     output: Sequence[KsdPaidInCapitalIncreaseScheduleItem] = Field(default_factory=list)
 
+
 class KsdStockDividendScheduleItem(BaseModel):
     record_date: str = Field(title="기준일", max_length=8)
     sht_cd: str = Field(title="종목코드", max_length=9)
@@ -438,6 +478,7 @@ class KsdStockDividendSchedule(BaseModel, KisHttpBody):
     """예탁원정보(무상증자일정)"""
 
     output1: Sequence[KsdStockDividendScheduleItem] = Field(default_factory=list)
+
 
 class KsdShareholderMeetingScheduleItem(BaseModel):
     record_date: str = Field(title="기준일", max_length=8)
@@ -465,12 +506,14 @@ class EstimatedEarningsItem1(BaseModel):
     capital: str = Field(title="누적거래량", max_length=18)
     forn_item_lmtrt: str = Field(title="행사가", max_length=112)
 
+
 class EstimatedEarningsItem2(BaseModel):
     data1: str = Field(title="DATA1", max_length=15)
     data2: str = Field(title="DATA2", max_length=15)
     data3: str = Field(title="DATA3", max_length=15)
     data4: str = Field(title="DATA4", max_length=15)
     data5: str = Field(title="DATA5", max_length=15)
+
 
 class EstimatedEarningsItem3(BaseModel):
     data1: str = Field(title="DATA1", max_length=15, description="결산연월(outblock4) 참조")
@@ -479,8 +522,10 @@ class EstimatedEarningsItem3(BaseModel):
     data4: str = Field(title="DATA4", max_length=15, description="결산연월(outblock4) 참조")
     data5: str = Field(title="DATA5", max_length=15, description="결산연월(outblock4) 참조")
 
+
 class EstimatedEarningsItem4(BaseModel):
     dt: str = Field(title="결산년월", max_length=8)
+
 
 class EstimatedEarnings(BaseModel, KisHttpBody):
     """국내주식 종목추정실적"""
@@ -506,10 +551,12 @@ class StockLoanableListItem1(BaseModel):
     bass_dt: str = Field(title="기준일자", max_length=8)
     psbl_yn: str = Field(title="가능여부", max_length=1)
 
+
 class StockLoanableListItem2(BaseModel):
     tot_stup_lmt_qty: str = Field(title="총설정한도수량", max_length=19)
     brch_lmt_qty: str = Field(title="지점한도수량", max_length=19)
     rqst_psbl_qty: str = Field(title="신청가능수량", max_length=19)
+
 
 class StockLoanableList(BaseModel, KisHttpBody):
     """당사 대주가능 종목"""

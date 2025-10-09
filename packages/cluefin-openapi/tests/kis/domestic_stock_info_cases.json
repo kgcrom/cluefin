@@ -1,0 +1,770 @@
+[
+    {
+        "method_name": "get_product_basic_info",
+        "response_model_attr": "ProductBasicInfo",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/search-info",
+        "method": "GET",
+        "call_kwargs": {
+            "pdno": "000660",
+            "prdt_type_cd": "300"
+        },
+        "expected_headers": {
+            "tr_id": "CTPF1604R"
+        },
+        "expected_body": {
+            "PDNO": "000660",
+            "PRDT_TYPE_CD": "300"
+        },
+        "response_payload": {
+            "output": {
+                "pdno": "000660",
+                "prdt_name": "SK하이닉스",
+                "prdt_type_cd": "300"
+            }
+        }
+    },
+    {
+        "method_name": "get_stock_basic_info",
+        "response_model_attr": "StockBasicInfo",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/search-stock-info",
+        "method": "GET",
+        "call_kwargs": {
+            "prdt_type_cd": "300",
+            "pdno": "005930"
+        },
+        "expected_headers": {
+            "tr_id": "CTPF1002R"
+        },
+        "expected_body": {
+            "PRDT_TYPE_CD": "300",
+            "PDNO": "005930"
+        },
+        "response_payload": {
+            "output": {
+                "pdno": "005930",
+                "prdt_name": "삼성전자",
+                "prdt_type_cd": "300"
+            }
+        }
+    },
+    {
+        "method_name": "get_balance_sheet",
+        "response_model_attr": "BalanceSheet",
+        "endpoint": "/uapi/domestic-stock/v1/finance/balance-sheet",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_div_cls_code": "0",
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "000660"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST66430100"
+        },
+        "expected_body": {
+            "FID_DIV_CLS_CODE": "0",
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "000660"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stac_yymm": "202312",
+                    "cras": "1000000",
+                    "totl_aset": "5000000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_income_statement",
+        "response_model_attr": "IncomeStatement",
+        "endpoint": "/uapi/domestic-stock/v1/finance/income-statement",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_div_cls_code": "0",
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST66430200"
+        },
+        "expected_body": {
+            "FID_DIV_CLS_CODE": "0",
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stac_yymm": "202312",
+                    "sale_totl": "1000000",
+                    "sale_cost": "600000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_financial_ratio",
+        "response_model_attr": "FinancialRatio",
+        "endpoint": "/uapi/domestic-stock/v1/finance/financial-ratio",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_div_cls_code": "0",
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST66430300"
+        },
+        "expected_body": {
+            "FID_DIV_CLS_CODE": "0",
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stac_yymm": "202312",
+                    "grs": "25.5",
+                    "ocf": "150000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_profitability_ratio",
+        "response_model_attr": "ProfitabilityRatio",
+        "endpoint": "/uapi/domestic-stock/v1/finance/profit-ratio",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_input_iscd": "005930",
+            "fid_div_cls_code": "0",
+            "fid_cond_mrkt_div_code": "J"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST66430400"
+        },
+        "expected_body": {
+            "fid_input_iscd": "005930",
+            "FID_DIV_CLS_CODE": "0",
+            "fid_cond_mrkt_div_code": "J"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stac_yymm": "202312",
+                    "roe": "15.5",
+                    "roa": "10.2"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_other_key_ratio",
+        "response_model_attr": "OtherKeyRatio",
+        "endpoint": "/uapi/domestic-stock/v1/finance/other-major-ratios",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_input_iscd": "005930",
+            "fid_div_cls_code": "0",
+            "fid_cond_mrkt_div_code": "J"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST66430500"
+        },
+        "expected_body": {
+            "fid_input_iscd": "005930",
+            "fid_div_cls_code": "0",
+            "fid_cond_mrkt_div_code": "J"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stac_yymm": "202312",
+                    "eps": "5000",
+                    "per": "12.5"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stability_ratio",
+        "response_model_attr": "StabilityRatio",
+        "endpoint": "/uapi/domestic-stock/v1/finance/stability-ratio",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_input_iscd": "005930",
+            "fid_div_cls_code": "0",
+            "fid_cond_mrkt_div_code": "J"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST66430600"
+        },
+        "expected_body": {
+            "fid_input_iscd": "005930",
+            "fid_div_cls_code": "0",
+            "fid_cond_mrkt_div_code": "J"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stac_yymm": "202312",
+                    "lblt_rate": "45.5",
+                    "crnt_rate": "150.2"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_growth_ratio",
+        "response_model_attr": "GrowthRatio",
+        "endpoint": "/uapi/domestic-stock/v1/finance/growth-ratio",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_input_iscd": "005930",
+            "fid_div_cls_code": "0",
+            "fid_cond_mrkt_div_code": "J"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST66430800"
+        },
+        "expected_body": {
+            "fid_input_iscd": "005930",
+            "fid_div_cls_code": "0",
+            "fid_cond_mrkt_div_code": "J"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stac_yymm": "202312",
+                    "sale_totl_inrt": "12.5",
+                    "ntin_inrt": "15.3"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_margin_tradable_stocks",
+        "response_model_attr": "MarginTradableStocks",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/credit-by-company",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_rank_sort_cls_code": "0",
+            "fid_slct_yn": "0",
+            "fid_input_iscd": "0000",
+            "fid_cond_scr_div_code": "20477",
+            "fid_cond_mrkt_div_code": "J"
+        },
+        "expected_headers": {
+            "tr_id": "FHPST04770000"
+        },
+        "expected_body": {
+            "fid_rank_sort_cls_code": "0",
+            "fid_slct_yn": "0",
+            "fid_input_iscd": "0000",
+            "fid_cond_scr_div_code": "20477",
+            "fid_cond_mrkt_div_code": "J"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stck_shrn_iscd": "005930",
+                    "hts_kor_isnm": "삼성전자",
+                    "crdt_able_yn": "Y"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_ksd_dividend_decision",
+        "response_model_attr": "KsdDividendDecision",
+        "endpoint": "/uapi/domestic-stock/v1/ksdinfo/dividend",
+        "method": "GET",
+        "call_kwargs": {
+            "cts": "",
+            "gb1": "0",
+            "f_dt": "20231201",
+            "t_dt": "20240531",
+            "sht_cd": "",
+            "high_gb": ""
+        },
+        "expected_headers": {
+            "tr_id": "HHKDB669102C0"
+        },
+        "expected_body": {
+            "CTS": "",
+            "GB1": "0",
+            "F_DT": "20231201",
+            "T_DT": "20240531",
+            "SHT_CD": "",
+            "HIGH_GB": ""
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "sht_cd": "005930",
+                    "sht_nm": "삼성전자",
+                    "dvdn_amt": "1000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_ksd_stock_dividend_decision",
+        "response_model_attr": "KsdStockDividendDecision",
+        "endpoint": "/uapi/domestic-stock/v1/ksdinfo/purreq",
+        "method": "GET",
+        "call_kwargs": {
+            "sht_cd": "",
+            "t_dt": "20240531",
+            "f_dt": "20231201",
+            "cts": ""
+        },
+        "expected_headers": {
+            "tr_id": "HHKDB669103C0"
+        },
+        "expected_body": {
+            "SHT_CD": "",
+            "T_DT": "20240531",
+            "F_DT": "20231201",
+            "CTS": ""
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "sht_cd": "005930",
+                    "sht_nm": "삼성전자",
+                    "stk_dvdn_rate": "10"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_ksd_merger_split_decision",
+        "response_model_attr": "KsdMergerSplitDecision",
+        "endpoint": "/uapi/domestic-stock/v1/ksdinfo/merger-split",
+        "method": "GET",
+        "call_kwargs": {
+            "cts": "",
+            "f_dt": "20231201",
+            "t_dt": "20240531",
+            "sht_cd": ""
+        },
+        "expected_headers": {
+            "tr_id": "HHKDB669104C0"
+        },
+        "expected_body": {
+            "CTS": "",
+            "F_DT": "20231201",
+            "T_DT": "20240531",
+            "SHT_CD": ""
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "sht_cd": "005930",
+                    "sht_nm": "삼성전자",
+                    "mrgr_type": "합병"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_ksd_par_value_change_decision",
+        "response_model_attr": "KsdParValueChangeDecision",
+        "endpoint": "/uapi/domestic-stock/v1/ksdinfo/rev-split",
+        "method": "GET",
+        "call_kwargs": {
+            "sht_cd": "",
+            "cts": "",
+            "f_dt": "20231201",
+            "t_dt": "20240531",
+            "market_gb": "0"
+        },
+        "expected_headers": {
+            "tr_id": "HHKDB669105C0"
+        },
+        "expected_body": {
+            "SHT_CD": "",
+            "CTS": "",
+            "F_DT": "20231201",
+            "T_DT": "20240531",
+            "MARKET_GB": "0"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "sht_cd": "005930",
+                    "sht_nm": "삼성전자",
+                    "par_val": "100"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_ksd_capital_reduction_schedule",
+        "response_model_attr": "KsdCapitalReductionSchedule",
+        "endpoint": "/uapi/domestic-stock/v1/ksdinfo/cap-dcrs",
+        "method": "GET",
+        "call_kwargs": {
+            "cts": "",
+            "f_dt": "20231201",
+            "t_dt": "20240531",
+            "sht_cd": ""
+        },
+        "expected_headers": {
+            "tr_id": "HHKDB669106C0"
+        },
+        "expected_body": {
+            "CTS": "",
+            "F_DT": "20231201",
+            "T_DT": "20240531",
+            "SHT_CD": ""
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "sht_cd": "005930",
+                    "sht_nm": "삼성전자",
+                    "cap_dcrs_date": "20240315"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_ksd_listing_info_schedule",
+        "response_model_attr": "KsdListingInfoSchedule",
+        "endpoint": "/uapi/domestic-stock/v1/ksdinfo/list-info",
+        "method": "GET",
+        "call_kwargs": {
+            "sht_cd": "",
+            "t_dt": "20240531",
+            "f_dt": "20231201",
+            "cts": ""
+        },
+        "expected_headers": {
+            "tr_id": "HHKDB669107C0"
+        },
+        "expected_body": {
+            "SHT_CD": "",
+            "T_DT": "20240531",
+            "F_DT": "20231201",
+            "CTS": ""
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "sht_cd": "005930",
+                    "sht_nm": "삼성전자",
+                    "list_date": "20240201"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_ksd_ipo_subscription_schedule",
+        "response_model_attr": "KsdIpoSubscriptionSchedule",
+        "endpoint": "/uapi/domestic-stock/v1/ksdinfo/pub-offer",
+        "method": "GET",
+        "call_kwargs": {
+            "sht_cd": "",
+            "cts": "",
+            "f_dt": "20231201",
+            "t_dt": "20240531"
+        },
+        "expected_headers": {
+            "tr_id": "HHKDB669108C0"
+        },
+        "expected_body": {
+            "SHT_CD": "",
+            "CTS": "",
+            "F_DT": "20231201",
+            "T_DT": "20240531"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "sht_cd": "005930",
+                    "sht_nm": "삼성전자",
+                    "sbsc_strt_date": "20240301"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_ksd_forfeited_share_schedule",
+        "response_model_attr": "KsdForfeitedShareSchedule",
+        "endpoint": "/uapi/domestic-stock/v1/ksdinfo/forfeit",
+        "method": "GET",
+        "call_kwargs": {
+            "sht_cd": "",
+            "t_dt": "20240531",
+            "f_dt": "20231201",
+            "cts": ""
+        },
+        "expected_headers": {
+            "tr_id": "HHKDB669109C0"
+        },
+        "expected_body": {
+            "SHT_CD": "",
+            "T_DT": "20240531",
+            "F_DT": "20231201",
+            "CTS": ""
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "sht_cd": "005930",
+                    "sht_nm": "삼성전자",
+                    "frft_date": "20240401"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_ksd_deposit_schedule",
+        "response_model_attr": "KsdDepositSchedule",
+        "endpoint": "/uapi/domestic-stock/v1/ksdinfo/mand-deposit",
+        "method": "GET",
+        "call_kwargs": {
+            "t_dt": "20240531",
+            "sht_cd": "",
+            "f_dt": "20231201",
+            "cts": ""
+        },
+        "expected_headers": {
+            "tr_id": "HHKDB669110C0"
+        },
+        "expected_body": {
+            "T_DT": "20240531",
+            "SHT_CD": "",
+            "F_DT": "20231201",
+            "CTS": ""
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "sht_cd": "005930",
+                    "sht_nm": "삼성전자",
+                    "dpst_date": "20240315"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_ksd_paid_in_capital_increase_schedule",
+        "response_model_attr": "KsdPaidInCapitalIncreaseSchedule",
+        "endpoint": "/uapi/domestic-stock/v1/ksdinfo/paidin-capin",
+        "method": "GET",
+        "call_kwargs": {
+            "cts": "",
+            "gb1": "1",
+            "f_dt": "20231201",
+            "t_dt": "20240531",
+            "sht_cd": ""
+        },
+        "expected_headers": {
+            "tr_id": "HHKDB669100C0"
+        },
+        "expected_body": {
+            "CTS": "",
+            "GB1": "1",
+            "F_DT": "20231201",
+            "T_DT": "20240531",
+            "SHT_CD": ""
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "sht_cd": "005930",
+                    "sht_nm": "삼성전자",
+                    "capin_date": "20240301"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_ksd_stock_dividend_schedule",
+        "response_model_attr": "KsdStockDividendSchedule",
+        "endpoint": "/uapi/domestic-stock/v1/ksdinfo/bonus-issue",
+        "method": "GET",
+        "call_kwargs": {
+            "cts": "",
+            "f_dt": "20231201",
+            "t_dt": "20240531",
+            "sht_cd": ""
+        },
+        "expected_headers": {
+            "tr_id": "HHKDB669101C0"
+        },
+        "expected_body": {
+            "CTS": "",
+            "F_DT": "20231201",
+            "T_DT": "20240531",
+            "SHT_CD": ""
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "sht_cd": "005930",
+                    "sht_nm": "삼성전자",
+                    "stk_dvdn_date": "20240401"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_ksd_shareholder_meeting_schedule",
+        "response_model_attr": "KsdShareholderMeetingSchedule",
+        "endpoint": "/uapi/domestic-stock/v1/ksdinfo/sharehld-meet",
+        "method": "GET",
+        "call_kwargs": {
+            "cts": "",
+            "f_dt": "20231201",
+            "t_dt": "20240531",
+            "sht_cd": ""
+        },
+        "expected_headers": {
+            "tr_id": "HHKDB669111C0"
+        },
+        "expected_body": {
+            "CTS": "",
+            "F_DT": "20231201",
+            "T_DT": "20240531",
+            "SHT_CD": ""
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "sht_cd": "005930",
+                    "sht_nm": "삼성전자",
+                    "meet_date": "20240320"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_estimated_earnings",
+        "response_model_attr": "EstimatedEarnings",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/estimate-perform",
+        "method": "GET",
+        "call_kwargs": {
+            "sht_cd": "265520"
+        },
+        "expected_headers": {
+            "tr_id": "HHKST668300C0"
+        },
+        "expected_body": {
+            "SHT_CD": "265520"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stac_yymm": "202312",
+                    "sale_totl": "1000000",
+                    "ntin": "150000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_loanable_list",
+        "response_model_attr": "StockLoanableList",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/lendable-by-company",
+        "method": "GET",
+        "call_kwargs": {
+            "excg_dvsn_cd": "00",
+            "pdno": "",
+            "thco_stln_psbl_yn": "Y",
+            "inqr_dvsn_1": "0",
+            "ctx_area_fk200": "",
+            "ctx_area_nk100": ""
+        },
+        "expected_headers": {
+            "tr_id": "CTSC2702R"
+        },
+        "expected_body": {
+            "EXCG_DVSN_CD": "00",
+            "PDNO": "",
+            "THCO_STLN_PSBL_YN": "Y",
+            "INQR_DVSN_1": "0",
+            "CTX_AREA_FK200": "",
+            "CTX_AREA_NK100": ""
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stck_shrn_iscd": "005930",
+                    "hts_kor_isnm": "삼성전자",
+                    "stln_psbl_yn": "Y"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_investment_opinion",
+        "response_model_attr": "InvestmentOpinion",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/invest-opinion",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_cond_scr_div_code": "16633",
+            "fid_input_iscd": "005930",
+            "fid_input_date_1": "0020231113",
+            "fid_input_date_2": "0020240513"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST663300C0"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_COND_SCR_DIV_CODE": "16633",
+            "FID_INPUT_ISCD": "005930",
+            "FID_INPUT_DATE_1": "0020231113",
+            "FID_INPUT_DATE_2": "0020240513"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stck_bsop_date": "20240501",
+                    "invt_opnn": "매수",
+                    "rgbf_invt_opnn": "중립"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_investment_opinion_by_brokerage",
+        "response_model_attr": "InvestmentOpinionByBrokerage",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/invest-opbysec",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_cond_scr_div_code": "16634",
+            "fid_input_iscd": "005930",
+            "fid_div_cls_code": "0",
+            "fid_input_date_1": "0020231113",
+            "fid_input_date_2": "0020240513"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST663400C0"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_COND_SCR_DIV_CODE": "16634",
+            "FID_INPUT_ISCD": "005930",
+            "FID_DIV_CLS_CODE": "0",
+            "FID_INPUT_DATE_1": "0020231113",
+            "FID_INPUT_DATE_2": "0020240513"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stck_bsop_date": "20240501",
+                    "mbcr_name": "한국투자증권",
+                    "invt_opnn": "매수"
+                }
+            ]
+        }
+    }
+]

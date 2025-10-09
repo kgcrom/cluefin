@@ -1,14 +1,20 @@
-from typing import Sequence
+from typing import Literal, Optional, Sequence
+
 from pydantic import BaseModel, Field
-from typing import Optional, Literal
 
 from cluefin_openapi.kis._model import KisHttpBody
 
 
 class ConditionSearchListItem(BaseModel):
     user_id: str = Field(title="HTS ID", description="", max_length=40)
-    seq: str = Field(title="조건키값", description="해당 값을 종목조건검색조회 API의 input으로 사용 (0번부터 시작)", max_length=10)
-    grp_nm: str = Field(title="그룹명", description='HTS(eFriend Plus) [0110] "사용자조건검색"화면을 통해 등록한 사용자조건 그룹', max_length=40)
+    seq: str = Field(
+        title="조건키값", description="해당 값을 종목조건검색조회 API의 input으로 사용 (0번부터 시작)", max_length=10
+    )
+    grp_nm: str = Field(
+        title="그룹명",
+        description='HTS(eFriend Plus) [0110] "사용자조건검색"화면을 통해 등록한 사용자조건 그룹',
+        max_length=40,
+    )
     condition_nm: str = Field(title="조건명", description="등록한 사용자 조건명", max_length=40)
 
 
@@ -16,6 +22,7 @@ class ConditionSearchList(BaseModel, KisHttpBody):
     """종목조건검색 목록조회"""
 
     output2: Sequence[ConditionSearchListItem] = Field(default_factory=list)
+
 
 class ConditionSearchResultItem(BaseModel):
     code: str = Field(title="종목코드", max_length=6)
@@ -57,6 +64,7 @@ class WatchlistGroupsItem(BaseModel):
     inter_grp_code: str = Field(title="관심 그룹 코드", max_length=3)
     inter_grp_name: str = Field(title="관심 그룹 명", max_length=40)
     ask_cnt: str = Field(title="요청 개수", max_length=4)
+
 
 class WatchlistGroups(BaseModel, KisHttpBody):
     """관심종목 그룹조회"""
@@ -108,6 +116,7 @@ class WatchlistStocksByGroupItem1(BaseModel):
     data_rank: str = Field(title="데이터 순위", max_length=10)
     inter_grp_name: str = Field(title="관심 그룹 명", max_length=40)
 
+
 class WatchlistStocksByGroupItem2(BaseModel):
     fid_mrkt_cls_code: str = Field(title="FID 시장 구분 코드", max_length=2)
     data_rank: str = Field(title="데이터 순위", max_length=10)
@@ -126,6 +135,7 @@ class WatchlistStocksByGroup(BaseModel, KisHttpBody):
 
     output1: WatchlistStocksByGroupItem1 = Field(title="응답상세1")
     output2: Sequence[WatchlistStocksByGroupItem2] = Field(default_factory=list)
+
 
 class InstitutionalForeignTradingAggregateItem(BaseModel):
     hts_kor_isnm: str = Field(title="HTS 한글 종목명", max_length=40)
@@ -160,6 +170,7 @@ class InstitutionalForeignTradingAggregate(BaseModel, KisHttpBody):
     """국내기관_외국인 매매종목가집계"""
 
     output: InstitutionalForeignTradingAggregateItem = Field(title="응답상세")
+
 
 class ForeignBrokerageTradingAggregateItem(BaseModel):
     stck_shrn_iscd: str = Field(title="주식단축종목코드", max_length=9)
@@ -292,6 +303,7 @@ class InvestorTradingTrendByStockDailyItem2(BaseModel):
     etc_corp_seln_tr_pbmn: str = Field(title="기타 법인 매도 거래 대금", max_length=18)
     etc_corp_shnu_tr_pbmn: str = Field(title="기타 법인 매수2 거래 대금", max_length=18)
     bold_yn: str = Field(title="BOLD 여부", max_length=18)
+
 
 class InvestorTradingTrendByStockDaily(BaseModel, KisHttpBody):
     """종목별 투자자매매동향(일별)"""
@@ -433,6 +445,7 @@ class ForeignNetBuyTrendByStockItem1(BaseModel):
     total_seln_qty: str = Field(title="총매도수량", max_length=18)
     total_shnu_qty: str = Field(title="총매수2수량", max_length=18)
 
+
 class ForeignNetBuyTrendByStockItem2(BaseModel):
     bsop_hour: str = Field(title="영업시간", max_length=6)
     mbcr_name: str = Field(title="회원사명", max_length=50)
@@ -488,6 +501,7 @@ class MemberTradingTrendByStock(BaseModel, KisHttpBody):
 
     output: Sequence[MemberTradingTrendByStockItem] = Field(default_factory=list)
 
+
 class ProgramTradingTrendByStockIntradayItem(BaseModel):
     bsop_hour: str = Field(title="영업 시간", max_length=6)
     stck_prpr: str = Field(title="주식 현재가", max_length=10)
@@ -539,11 +553,11 @@ class ForeignInstitutionalEstimateByStockItem(BaseModel):
     bsop_hour_gb: str = Field(
         title="입력구분",
         description="1: 09시 30분 입력\n2: 10시 00분 입력\n3: 11시 20분 입력\n4: 13시 20분 입력\n5: 14시 30분 입력",
-        max_length=1
+        max_length=1,
     )
-    frgn_fake_ntby_qty: str = Field(title="외국인수량(가집계)",max_length=18)
-    orgn_fake_ntby_qty: str = Field(title="기관수량(가집계)",max_length=18)
-    sum_fake_ntby_qty: str = Field(title="합산수량(가집계)",max_length=18)
+    frgn_fake_ntby_qty: str = Field(title="외국인수량(가집계)", max_length=18)
+    orgn_fake_ntby_qty: str = Field(title="기관수량(가집계)", max_length=18)
+    sum_fake_ntby_qty: str = Field(title="합산수량(가집계)", max_length=18)
 
 
 class ForeignInstitutionalEstimateByStock(BaseModel, KisHttpBody):
@@ -551,9 +565,11 @@ class ForeignInstitutionalEstimateByStock(BaseModel, KisHttpBody):
 
     output2: Sequence[ForeignInstitutionalEstimateByStockItem] = Field(default_factory=list)
 
+
 class BuySellVolumeByStockDailyItem1(BaseModel):
     shnu_cnqn_smtn: str = Field(title="매수 체결량 합계", max_length=18)
     seln_cnqn_smtn: str = Field(title="매도 체결량 합계", max_length=18)
+
 
 class BuySellVolumeByStockDailyItem2(BaseModel):
     stck_bsop_date: str = Field(title="거래상태정보", max_length=8)
@@ -593,7 +609,8 @@ class ProgramTradingSummaryIntraday(BaseModel, KisHttpBody):
     """프로그램매매 종합현황(시간)"""
 
     output1: Sequence[ProgramTradingSummaryIntradayItem] = Field(default_factory=list)
-    
+
+
 class ProgramTradingSummaryDailyItem(BaseModel):
     stck_bsop_date: str = Field(title="주식 영업 일자", max_length=8)
     nabt_entm_seln_tr_pbmn: str = Field(title="비차익 위탁 매도 거래 대금", max_length=18)
@@ -702,6 +719,7 @@ class ProgramTradingSummaryDaily(BaseModel, KisHttpBody):
 
     output: Sequence[ProgramTradingSummaryDailyItem] = Field(default_factory=list)
 
+
 class ProgramTradingInvestorTrendTodayItem(BaseModel):
     invr_cls_code: str = Field(title="투자자코드", max_length=4)
     all_seln_qty: str = Field(title="전체매도수량", max_length=18)
@@ -765,6 +783,7 @@ class CreditBalanceTrendDaily(BaseModel, KisHttpBody):
 
     output: Sequence[CreditBalanceTrendDailyItem] = Field(default_factory=list)
 
+
 class ExpectedPriceTrendItem1(BaseModel):
     rprs_mrkt_kor_name: str = Field(title="대표 시장 한글 명", max_length=40)
     antc_cnpr: str = Field(title="예상 체결가", max_length=10)
@@ -824,6 +843,7 @@ class ShortSellingTrendDailyItem2(BaseModel):
     stck_lwpr: str = Field(title="주식 최저가", max_length=10)
     avrg_prc: str = Field(title="평균가격", max_length=11)
 
+
 class ShortSellingTrendDaily(BaseModel, KisHttpBody):
     """국내주식 공매도 일별추이"""
 
@@ -852,6 +872,7 @@ class AfterHoursExpectedFluctuation(BaseModel, KisHttpBody):
 
     output: Sequence[AfterHoursExpectedFluctuationItem] = Field(default_factory=list)
 
+
 class TradingWeightByAmountItem(BaseModel):
     prpr_name: str = Field(title="가격명", max_length=40)
     smtn_avrg_prpr: str = Field(title="합계 평균가격", max_length=10)
@@ -876,7 +897,9 @@ class MarketFundSummaryItem(BaseModel):
     bsop_date: str = Field(title="영업일자", max_length=8)
     bstp_nmix_prpr: str = Field(title="업종지수현재가", max_length=112)
     bstp_nmix_prdy_vrss: str = Field(title="업종지수전일대비", max_length=112)
-    prdy_vrss_sign: str = Field(title="전일대비부호", max_length=1, description="1. 상한 2. 상승 3. 보합 4. 하한 5. 하락")
+    prdy_vrss_sign: str = Field(
+        title="전일대비부호", max_length=1, description="1. 상한 2. 상승 3. 보합 4. 하한 5. 하락"
+    )
     prdy_ctrt: str = Field(title="전일대비율", max_length=82)
     hts_avls: str = Field(title="HTS시가총액", max_length=18, description="단위: 백만원")
     cust_dpmn_amt: str = Field(title="고객예탁금금액", max_length=18, description="단위: 억원")
@@ -958,12 +981,12 @@ class ResistanceLevelTradingWeightItem1(BaseModel):
     lstn_stcn: str = Field(title="상장주수", max_length=18)
 
 
-
 class ResistanceLevelTradingWeightItem2(BaseModel):
     data_rank: str = Field(title="데이터순위", max_length=10)
     stck_prpr: str = Field(title="주식현재가", max_length=10)
     cntg_vol: str = Field(title="체결거래량", max_length=18)
     acml_vol_rlim: str = Field(title="누적거래량비중", max_length=72)
+
 
 class ResistanceLevelTradingWeight(BaseModel, KisHttpBody):
     """국내주식 매물대/거래비중"""

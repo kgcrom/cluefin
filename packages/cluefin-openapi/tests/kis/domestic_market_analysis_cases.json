@@ -1,0 +1,508 @@
+[
+    {
+        "method_name": "get_condition_search_list",
+        "response_model_attr": "ConditionSearchList",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/psearch-title",
+        "method": "GET",
+        "call_kwargs": {
+            "user_id": "test_user_id"
+        },
+        "expected_headers": {
+            "tr_id": "HHKST03900300"
+        },
+        "expected_body": {
+            "user_id": "test_user_id"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "user_id": "test_user_id",
+                    "seq": "0",
+                    "title_name": "Test Condition",
+                    "search_yn": "Y"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_condition_search_result",
+        "response_model_attr": "ConditionSearchResult",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/psearch-result",
+        "method": "GET",
+        "call_kwargs": {
+            "user_id": "test_user_id",
+            "seq": "0"
+        },
+        "expected_headers": {
+            "tr_id": "HHKST03900400"
+        },
+        "expected_body": {
+            "user_id": "test_user_id",
+            "seq": "0"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stck_shrn_iscd": "005930",
+                    "hts_kor_isnm": "삼성전자",
+                    "stck_prpr": "70000",
+                    "prdy_vrss": "1000",
+                    "prdy_vrss_sign": "2"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_watchlist_groups",
+        "response_model_attr": "WatchlistGroups",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/intstock-grouplist",
+        "method": "GET",
+        "call_kwargs": {
+            "type": "1",
+            "fid_etc_cls_code": "00",
+            "user_id": "test_user_id"
+        },
+        "expected_headers": {
+            "tr_id": "HHKCM113004C7"
+        },
+        "expected_body": {
+            "TYPE": "1",
+            "FID_ETC_CLS_CODE": "00",
+            "USER_ID": "test_user_id"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "grp_no": "01",
+                    "grp_name": "내 관심 그룹",
+                    "stck_cnt": "10"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_investor_trading_trend_by_stock_daily",
+        "response_model_attr": "InvestorTradingTrendByStockDaily",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/investor-trade-by-stock-daily",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930",
+            "fid_input_date_1": "20250115"
+        },
+        "expected_headers": {
+            "tr_id": "FHPTJ04160001"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_INPUT_ISCD": "005930",
+            "FID_INPUT_DATE_1": "20250115",
+            "FID_ORG_ADJ_PRC": "",
+            "FID_ETC_CLS_CODE": ""
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stck_bsop_date": "20250115",
+                    "frgn_ntby_qty": "10000",
+                    "orgn_ntby_qty": "5000",
+                    "prsn_ntby_qty": "-15000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_investor_trading_trend_by_market_intraday",
+        "response_model_attr": "InvestorTradingTrendByMarketIntraday",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/inquire-investor-time-by-market",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_input_iscd": "KSP",
+            "fid_input_iscd_2": "0001"
+        },
+        "expected_headers": {
+            "tr_id": "FHPTJ04030000"
+        },
+        "expected_body": {
+            "fid_input_iscd": "KSP",
+            "fid_input_iscd_2": "0001"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stck_bsop_date": "20250115",
+                    "stck_cntg_hour": "153000",
+                    "frgn_ntby_qty": "10000",
+                    "orgn_ntby_qty": "5000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_investor_trading_trend_by_market_daily",
+        "response_model_attr": "InvestorTradingTrendByMarketDaily",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/inquire-investor-daily-by-market",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "U",
+            "fid_input_iscd": "0001",
+            "fid_input_date_1": "20250115",
+            "fid_input_iscd_1": "KSP",
+            "fid_input_date_2": "20250115",
+            "fid_input_iscd_2": "0001"
+        },
+        "expected_headers": {
+            "tr_id": "FHPTJ04040000"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "U",
+            "FID_INPUT_ISCD": "0001",
+            "FID_INPUT_DATE_1": "20250115",
+            "FID_INPUT_ISCD_1": "KSP",
+            "FID_INPUT_DATE_2": "20250115",
+            "FID_INPUT_ISCD_2": "0001"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stck_bsop_date": "20250115",
+                    "frgn_ntby_qty": "100000",
+                    "orgn_ntby_qty": "50000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_foreign_net_buy_trend_by_stock",
+        "response_model_attr": "ForeignNetBuyTrendByStock",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/frgnmem-pchs-trend",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_input_iscd": "005930",
+            "fid_input_iscd_2": "99999",
+            "fid_cond_mrkt_div_code": "J"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST644400C0"
+        },
+        "expected_body": {
+            "FID_INPUT_ISCD": "005930",
+            "FID_INPUT_ISCD_2": "99999",
+            "FID_COND_MRKT_DIV_CODE": "J"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stck_bsop_date": "20250115",
+                    "stck_cntg_hour": "153000",
+                    "seln_qty": "10000",
+                    "shnu_qty": "15000",
+                    "ntby_qty": "5000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_program_trading_trend_by_stock_intraday",
+        "response_model_attr": "ProgramTradingTrendByStockIntraday",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/program-trade-by-stock",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930"
+        },
+        "expected_headers": {
+            "tr_id": "FHPPG04650101"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_INPUT_ISCD": "005930"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stck_cntg_hour": "153000",
+                    "pgtr_ntby_qty": "1000",
+                    "pgtr_seln_qty": "5000",
+                    "pgtr_shnu_qty": "6000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_program_trading_trend_by_stock_daily",
+        "response_model_attr": "ProgramTradingTrendByStockDaily",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/program-trade-by-stock-daily",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930",
+            "fid_input_date_1": "20250115"
+        },
+        "expected_headers": {
+            "tr_id": "FHPPG04650201"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_INPUT_ISCD": "005930",
+            "FID_INPUT_DATE_1": "20250115"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stck_bsop_date": "20250115",
+                    "pgtr_ntby_qty": "10000",
+                    "pgtr_seln_qty": "50000",
+                    "pgtr_shnu_qty": "60000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_credit_balance_trend_daily",
+        "response_model_attr": "CreditBalanceTrendDaily",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/daily-credit-balance",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_cond_scr_div_code": "20476",
+            "fid_input_iscd": "005930",
+            "fid_input_date_1": "20250115"
+        },
+        "expected_headers": {
+            "tr_id": "FHPST04760000"
+        },
+        "expected_body": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_cond_scr_div_code": "20476",
+            "fid_input_iscd": "005930",
+            "fid_input_date_1": "20250115"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stck_bsop_date": "20250115",
+                    "crdt_rmnd_qty": "100000",
+                    "crdt_loan_amt": "7000000000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_short_selling_trend_daily",
+        "response_model_attr": "ShortSellingTrendDaily",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/daily-short-sale",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_input_date_2": "20250115",
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930",
+            "fid_input_date_1": "20250101"
+        },
+        "expected_headers": {
+            "tr_id": "FHPST04830000"
+        },
+        "expected_body": {
+            "FID_INPUT_DATE_2": "20250115",
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_INPUT_ISCD": "005930",
+            "FID_INPUT_DATE_1": "20250101"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stck_bsop_date": "20250115",
+                    "short_seln_qty": "50000",
+                    "short_seln_amt": "3500000000",
+                    "short_seln_tota_qty": "500000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_expected_price_trend",
+        "response_model_attr": "ExpectedPriceTrend",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/exp-price-trend",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_mkop_cls_code": "0",
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930"
+        },
+        "expected_headers": {
+            "tr_id": "FHPST01810000"
+        },
+        "expected_body": {
+            "fid_mkop_cls_code": "0",
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stck_prpr": "70000",
+                    "antc_cnpr": "70500",
+                    "antc_vol": "100000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_trading_weight_by_amount",
+        "response_model_attr": "TradingWeightByAmount",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/tradprt-byamt",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_cond_scr_div_code": "11119",
+            "fid_input_iscd": "005930"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST111900C0"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_COND_SCR_DIV_CODE": "11119",
+            "FID_INPUT_ISCD": "005930"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "prpr_cls_name": "1천만원이상",
+                    "seln_qty": "10000",
+                    "shnu_qty": "12000",
+                    "ntby_qty": "2000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_market_fund_summary",
+        "response_model_attr": "MarketFundSummary",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/mktfunds",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_input_date_1": "20250115"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST649100C0"
+        },
+        "expected_body": {
+            "FID_INPUT_DATE_1": "20250115"
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "fund_type": "주식형",
+                    "fund_amt": "1000000000000",
+                    "prdy_vrss": "10000000000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_loan_trend_daily",
+        "response_model_attr": "StockLoanTrendDaily",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/daily-loan-trans",
+        "method": "GET",
+        "call_kwargs": {
+            "mrkt_div_cls_code": "3",
+            "mksc_shrn_iscd": "005930",
+            "start_date": "20250101",
+            "end_date": "20250115",
+            "cts": ""
+        },
+        "expected_headers": {
+            "tr_id": "HHPST074500C0"
+        },
+        "expected_body": {
+            "MRKT_DIV_CLS_CODE": "3",
+            "MKSC_SHRN_ISCD": "005930",
+            "START_DATE": "20250101",
+            "END_DATE": "20250115",
+            "CTS": ""
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stck_bsop_date": "20250115",
+                    "loan_ntby_qty": "10000",
+                    "loan_rmnd_qty": "100000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_limit_price_stocks",
+        "response_model_attr": "LimitPriceStocks",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/capture-uplowprice",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_cond_scr_div_code": "11300",
+            "fid_prc_cls_code": "0",
+            "fid_div_cls_code": "0",
+            "fid_input_iscd": "0000",
+            "fid_trgt_cls_code": "",
+            "fid_trgt_exls_cls_code": "",
+            "fid_input_price_1": "",
+            "fid_input_price_2": "",
+            "fid_vol_cnt": ""
+        },
+        "expected_headers": {
+            "tr_id": "FHKST130000C0"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_COND_SCR_DIV_CODE": "11300",
+            "FID_PRC_CLS_CODE": "0",
+            "FID_DIV_CLS_CODE": "0",
+            "FID_INPUT_ISCD": "0000",
+            "FID_TRGT_CLS_CODE": "",
+            "FID_TRGT_EXLS_CLS_CODE": "",
+            "FID_INPUT_PRICE_1": "",
+            "FID_INPUT_PRICE_2": "",
+            "FID_VOL_CNT": ""
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "hts_kor_isnm": "테스트종목",
+                    "mksc_shrn_iscd": "005930",
+                    "stck_prpr": "89700",
+                    "prdy_vrss": "10000"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_resistance_level_trading_weight",
+        "response_model_attr": "ResistanceLevelTradingWeight",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/pbar-tratio",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930",
+            "fid_cond_scr_div_code": "20113",
+            "fid_input_hour_1": ""
+        },
+        "expected_headers": {
+            "tr_id": "FHPST01130000"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_INPUT_ISCD": "005930",
+            "FID_COND_SCR_DIV_CODE": "20113",
+            "FID_INPUT_HOUR_1": ""
+        },
+        "response_payload": {
+            "output": [
+                {
+                    "stck_prpr": "70000",
+                    "askp_vol": "100000",
+                    "bidp_vol": "120000"
+                }
+            ]
+        }
+    }
+]

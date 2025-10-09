@@ -9,17 +9,18 @@ Run with: uv run pytest packages/cluefin-openapi/tests/kis/test_overseas_basic_q
 """
 
 import os
-from datetime import datetime, timedelta
 import time
+from datetime import datetime, timedelta
+from typing import Literal, cast
 
-import pytest
 import dotenv
-from typing import cast, Literal
+import pytest
+from _token_cache import TokenCache
 from pydantic import SecretStr
 
 from cluefin_openapi.kis._auth import Auth
 from cluefin_openapi.kis._client import Client
-from _token_cache import TokenCache
+
 
 @pytest.fixture(scope="module")
 def auth_dev():
@@ -55,7 +56,6 @@ def client(auth_dev, token_cache) -> Client:
     )
 
 
-
 @pytest.mark.integration
 def test_get_stock_current_price_detail(client):
     """Test overseas stock current price detail retrieval."""
@@ -64,11 +64,11 @@ def test_get_stock_current_price_detail(client):
     response = client.overseas_basic_quote.get_stock_current_price_detail(
         auth="",
         excd="NAS",  # NASDAQ
-        symb="TSLA"
+        symb="TSLA",
     )
 
     assert response is not None
-    assert hasattr(response, 'output')
+    assert hasattr(response, "output")
 
 
 @pytest.mark.integration
@@ -76,14 +76,10 @@ def test_get_current_price_first_quote(client):
     """Test current price first quote retrieval."""
     time.sleep(1)
     # Test with Apple (AAPL) on NASDAQ
-    response = client.overseas_basic_quote.get_current_price_first_quote(
-        auth="",
-        excd="NAS",
-        symb="AAPL"
-    )
+    response = client.overseas_basic_quote.get_current_price_first_quote(auth="", excd="NAS", symb="AAPL")
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -91,14 +87,10 @@ def test_get_stock_current_price_conclusion(client):
     """Test current price conclusion retrieval."""
     time.sleep(1)
     # Test with Microsoft (MSFT) on NASDAQ
-    response = client.overseas_basic_quote.get_stock_current_price_conclusion(
-        auth="",
-        excd="NAS",
-        symb="MSFT"
-    )
+    response = client.overseas_basic_quote.get_stock_current_price_conclusion(auth="", excd="NAS", symb="MSFT")
 
     assert response is not None
-    assert hasattr(response, 'output')
+    assert hasattr(response, "output")
 
 
 @pytest.mark.integration
@@ -111,11 +103,11 @@ def test_get_conclusion_trend(client):
         auth="",
         keyb="",
         tday="1",  # Current day
-        symb="NVDA"
+        symb="NVDA",
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -132,11 +124,11 @@ def test_get_stock_minute_chart(client):
         next="",  # First query
         nrec="30",  # Request 30 records
         fill="",
-        keyb=""
+        keyb="",
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -148,11 +140,11 @@ def test_get_index_minute_chart(client):
         fid_cond_mrkt_div_code="N",  # Overseas index
         fid_input_iscd="COMP",  # NASDAQ Composite
         fid_hour_cls_code="0",  # Regular trading hours
-        fid_pw_data_incu_yn="Y"  # Include past data
+        fid_pw_data_incu_yn="Y",  # Include past data
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -167,11 +159,11 @@ def test_get_stock_period_quote(client):
         gubn="0",  # Daily
         bymd="",  # Use today as base date
         modp="0",  # No adjustment for stock split
-        keyb=""
+        keyb="",
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -187,11 +179,11 @@ def test_get_item_index_exchange_period_price(client):
         fid_input_iscd="SPX",  # S&P 500 index
         fid_input_date_1=start_date,
         fid_input_date_2=end_date,
-        fid_period_div_code="D"  # Daily
+        fid_period_div_code="D",  # Daily
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -205,11 +197,11 @@ def test_search_by_condition(client):
         co_yn_pricecur="1",  # Use current price condition
         co_st_pricecur="100",  # Start price: $100
         co_en_pricecur="500",  # End price: $500
-        keyb=""
+        keyb="",
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -219,11 +211,11 @@ def test_get_product_base_info(client):
     # Test with Apple (AAPL) - US NASDAQ product code
     response = client.overseas_basic_quote.get_product_base_info(
         prdt_type_cd="512",  # US NASDAQ
-        pdno="AAPL"
+        pdno="AAPL",
     )
 
     assert response is not None
-    assert hasattr(response, 'output')
+    assert hasattr(response, "output")
 
 
 @pytest.mark.integration
@@ -233,13 +225,13 @@ def test_get_sector_price(client):
     # First get sector codes to use a valid sector code
     codes_response = client.overseas_basic_quote.get_sector_codes(
         auth="",
-        excd="NYS"  # New York Stock Exchange
+        excd="NYS",  # New York Stock Exchange
     )
 
     assert codes_response is not None
 
     # If we got sector codes, test sector price with the first code
-    if hasattr(codes_response, 'output') and codes_response.output:
+    if hasattr(codes_response, "output") and codes_response.output:
         # Get first sector code (this depends on the response structure)
         # For now, we'll use a generic test
         try:
@@ -248,7 +240,7 @@ def test_get_sector_price(client):
                 auth="",
                 excd="NYS",
                 icod="0001",  # Sample sector code - may need adjustment
-                vol_rang="0"  # All volume ranges
+                vol_rang="0",  # All volume ranges
             )
             assert response is not None
         except Exception:
@@ -263,20 +255,20 @@ def test_get_sector_codes(client):
     # Test with NASDAQ
     response = client.overseas_basic_quote.get_sector_codes(
         auth="",
-        excd="NAS"  # NASDAQ
+        excd="NAS",  # NASDAQ
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
     # Test with NYSE
     response_nys = client.overseas_basic_quote.get_sector_codes(
         auth="",
-        excd="NYS"  # NYSE
+        excd="NYS",  # NYSE
     )
 
     assert response_nys is not None
-    assert hasattr(response_nys, 'output1')
+    assert hasattr(response_nys, "output1")
 
 
 @pytest.mark.integration
@@ -286,34 +278,29 @@ def test_get_settlement_date(client):
     # Test with current date
     trad_dt = datetime.now().strftime("%Y%m%d")
 
-    response = client.overseas_basic_quote.get_settlement_date(
-        trad_dt=trad_dt,
-        ctx_area_nk="",
-        ctx_area_fk=""
-    )
+    response = client.overseas_basic_quote.get_settlement_date(trad_dt=trad_dt, ctx_area_nk="", ctx_area_fk="")
 
     assert response is not None
-    assert hasattr(response, 'output')
+    assert hasattr(response, "output")
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize("exchange,symbol", [
-    ("NYS", "IBM"),      # New York Stock Exchange
-    ("NAS", "TSLA"),     # NASDAQ
-    ("HKS", "00700"),    # Hong Kong - Tencent
-    ("TSE", "7203"),     # Tokyo - Toyota
-])
+@pytest.mark.parametrize(
+    "exchange,symbol",
+    [
+        ("NYS", "IBM"),  # New York Stock Exchange
+        ("NAS", "TSLA"),  # NASDAQ
+        ("HKS", "00700"),  # Hong Kong - Tencent
+        ("TSE", "7203"),  # Tokyo - Toyota
+    ],
+)
 def test_current_price_multiple_exchanges(client, exchange, symbol):
     """Test current price retrieval across different exchanges."""
     time.sleep(1)
     try:
-        response = client.overseas_basic_quote.get_stock_current_price_detail(
-            auth="",
-            excd=exchange,
-            symb=symbol
-        )
+        response = client.overseas_basic_quote.get_stock_current_price_detail(auth="", excd=exchange, symb=symbol)
         assert response is not None
-        assert hasattr(response, 'output')
+        assert hasattr(response, "output")
     except Exception as e:
         # Some exchanges might not be accessible in dev environment
         pytest.skip(f"Exchange {exchange} not accessible: {str(e)}")
@@ -325,9 +312,7 @@ def test_invalid_stock_symbol(client):
     time.sleep(1)
     try:
         response = client.overseas_basic_quote.get_stock_current_price_detail(
-            auth="",
-            excd="NAS",
-            symb="INVALIDCODE123456"
+            auth="", excd="NAS", symb="INVALIDCODE123456"
         )
         # If no exception, check for error in response
         assert response is not None
@@ -341,11 +326,7 @@ def test_invalid_exchange_code(client):
     """Test handling of invalid exchange code."""
     time.sleep(1)
     try:
-        response = client.overseas_basic_quote.get_stock_current_price_detail(
-            auth="",
-            excd="INVALID",
-            symb="AAPL"
-        )
+        response = client.overseas_basic_quote.get_stock_current_price_detail(auth="", excd="INVALID", symb="AAPL")
         assert response is not None
     except Exception as e:
         # Expected to fail with invalid exchange
@@ -362,7 +343,7 @@ def test_invalid_date_format(client):
             fid_input_iscd="SPX",
             fid_input_date_1="invalid_date",
             fid_input_date_2="20250101",
-            fid_period_div_code="D"
+            fid_period_div_code="D",
         )
         assert response is not None
     except Exception as e:

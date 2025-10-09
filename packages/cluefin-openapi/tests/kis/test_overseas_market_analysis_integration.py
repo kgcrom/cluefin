@@ -11,14 +11,14 @@ Run with: uv run pytest packages/cluefin-openapi/tests/kis/test_overseas_market_
 import os
 import time
 from datetime import datetime, timedelta
+from typing import Literal, Optional, Sequence, cast
 
-import pytest
 import dotenv
-from typing import cast, Literal, Optional, Sequence
-from pydantic import BaseModel, Field, SecretStr
+import pytest
 from _token_cache import TokenCache
-from cluefin_openapi.kis._auth import Auth
+from pydantic import BaseModel, Field, SecretStr
 
+from cluefin_openapi.kis._auth import Auth
 from cluefin_openapi.kis._client import Client
 
 
@@ -62,7 +62,7 @@ def common_params():
     return {
         "keyb": "",  # NEXT KEY BUFF (empty for first call)
         "auth": "",  # User auth info (empty)
-        "vol_rang": "0"  # Volume condition (0: all)
+        "vol_rang": "0",  # Volume condition (0: all)
     }
 
 
@@ -76,6 +76,7 @@ def date_range():
 
 def handle_api_error(func):
     """Decorator to handle API errors and skip tests if endpoint not available."""
+
     def wrapper(*args, **kwargs):
         time.sleep(1)  # Rate limiting
         try:
@@ -86,6 +87,7 @@ def handle_api_error(func):
             if "404" in error_msg or "JSONDecodeError" in error_msg or "Expecting value" in error_msg:
                 pytest.skip(f"API endpoint not available: {error_msg[:100]}")
             raise
+
     return wrapper
 
 
@@ -135,11 +137,11 @@ def test_get_stock_volume_surge_nasdaq(client, common_params):
         auth=common_params["auth"],
         excd="NAS",  # NASDAQ
         mixn="3",  # 5 minutes ago
-        vol_rang=common_params["vol_rang"]
+        vol_rang=common_params["vol_rang"],
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -151,11 +153,11 @@ def test_get_stock_volume_surge_tse(client, common_params):
         auth=common_params["auth"],
         excd="TSE",  # Tokyo
         mixn="4",  # 10 minutes ago
-        vol_rang="2"  # 1000+ shares
+        vol_rang="2",  # 1000+ shares
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -167,11 +169,11 @@ def test_get_stock_buy_execution_strength_top(client, common_params):
         auth=common_params["auth"],
         excd="NYS",  # NYSE
         nday="3",  # 5 minutes ago
-        vol_rang=common_params["vol_rang"]
+        vol_rang=common_params["vol_rang"],
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 # Rate Rankings Tests
@@ -187,11 +189,11 @@ def test_get_stock_rise_decline_rate_rise(client, common_params):
         excd="NAS",  # NASDAQ
         gubn="1",  # Rise rate
         nday="0",  # Today
-        vol_rang=common_params["vol_rang"]
+        vol_rang=common_params["vol_rang"],
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -204,11 +206,11 @@ def test_get_stock_rise_decline_rate_decline_5day(client, common_params):
         excd="NYS",  # NYSE
         gubn="0",  # Decline rate
         nday="3",  # 5 days
-        vol_rang="1"  # 100+ shares
+        vol_rang="1",  # 100+ shares
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -222,11 +224,11 @@ def test_get_stock_new_high_low_price_high(client, common_params):
         gubn="1",  # New high
         gubn2="1",  # Sustained breakthrough
         nday="6",  # 52 weeks
-        vol_rang=common_params["vol_rang"]
+        vol_rang=common_params["vol_rang"],
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -240,11 +242,11 @@ def test_get_stock_new_high_low_price_low(client, common_params):
         gubn="0",  # New low
         gubn2="0",  # Temporary breakthrough
         nday="4",  # 60 days
-        vol_rang=common_params["vol_rang"]
+        vol_rang=common_params["vol_rang"],
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 # Trading Rankings Tests
@@ -261,11 +263,11 @@ def test_get_stock_trading_volume_rank_nasdaq(client, common_params):
         nday="0",  # Today
         prc1="0",  # Price from
         prc2="999999",  # Price to
-        vol_rang=common_params["vol_rang"]
+        vol_rang=common_params["vol_rang"],
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -279,11 +281,11 @@ def test_get_stock_trading_volume_rank_with_price_filter(client, common_params):
         nday="1",  # 2 days
         prc1="10",  # Price from $10
         prc2="100",  # Price to $100
-        vol_rang="2"  # 1000+ shares
+        vol_rang="2",  # 1000+ shares
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -297,11 +299,11 @@ def test_get_stock_trading_amount_rank(client, common_params):
         nday="0",  # Today
         vol_rang=common_params["vol_rang"],
         prc1="0",
-        prc2="999999"
+        prc2="999999",
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -313,11 +315,11 @@ def test_get_stock_trading_increase_rate_rank(client, common_params):
         auth=common_params["auth"],
         excd="NYS",  # NYSE
         nday="3",  # 5 days
-        vol_rang=common_params["vol_rang"]
+        vol_rang=common_params["vol_rang"],
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -329,11 +331,11 @@ def test_get_stock_trading_turnover_rate_rank(client, common_params):
         auth=common_params["auth"],
         excd="NAS",  # NASDAQ
         nday="0",  # Today
-        vol_rang=common_params["vol_rang"]
+        vol_rang=common_params["vol_rang"],
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 # Market Cap Tests
@@ -347,11 +349,11 @@ def test_get_stock_market_cap_rank_nasdaq(client, common_params):
         keyb=common_params["keyb"],
         auth=common_params["auth"],
         excd="NAS",  # NASDAQ
-        vol_rang=common_params["vol_rang"]
+        vol_rang=common_params["vol_rang"],
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -362,11 +364,11 @@ def test_get_stock_market_cap_rank_nyse(client, common_params):
         keyb=common_params["keyb"],
         auth=common_params["auth"],
         excd="NYS",  # NYSE
-        vol_rang="1"  # 100+ shares
+        vol_rang="1",  # 100+ shares
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -377,11 +379,11 @@ def test_get_stock_market_cap_rank_hks(client, common_params):
         keyb=common_params["keyb"],
         auth=common_params["auth"],
         excd="HKS",  # Hong Kong
-        vol_rang=common_params["vol_rang"]
+        vol_rang=common_params["vol_rang"],
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 # Rights Inquiry Tests
@@ -400,11 +402,11 @@ def test_get_stock_period_rights_inquiry_all(client, date_range):
         pdno="",  # All products
         prdt_type_cd="",
         ctx_area_nk50="",
-        ctx_area_fk50=""
+        ctx_area_fk50="",
     )
 
     assert response is not None
-    assert hasattr(response, 'output')
+    assert hasattr(response, "output")
 
 
 @pytest.mark.integration
@@ -420,11 +422,11 @@ def test_get_stock_period_rights_inquiry_dividend(client, date_range):
         pdno="",
         prdt_type_cd="",
         ctx_area_nk50="",
-        ctx_area_fk50=""
+        ctx_area_fk50="",
     )
 
     assert response is not None
-    assert hasattr(response, 'output')
+    assert hasattr(response, "output")
 
 
 @pytest.mark.integration
@@ -439,11 +441,11 @@ def test_get_stock_rights_aggregate_us(client):
         ncod="US",  # United States
         symb="AAPL",  # Apple
         st_ymd=start_dt,
-        ed_ymd=end_dt
+        ed_ymd=end_dt,
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -457,11 +459,11 @@ def test_get_stock_rights_aggregate_hk(client):
         ncod="HK",  # Hong Kong
         symb="00700",  # Tencent
         st_ymd=start_dt,
-        ed_ymd=end_dt
+        ed_ymd=end_dt,
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 # News Information Tests
@@ -479,11 +481,11 @@ def test_get_news_aggregate_title_all(client):
         symb="",  # All stocks
         data_dt="",  # All dates
         data_tm="",  # All times
-        cts=""  # First page
+        cts="",  # First page
     )
 
     assert response is not None
-    assert hasattr(response, 'outblock1')
+    assert hasattr(response, "outblock1")
 
 
 @pytest.mark.integration
@@ -498,11 +500,11 @@ def test_get_news_aggregate_title_us_only(client):
         symb="",
         data_dt="",
         data_tm="",
-        cts=""
+        cts="",
     )
 
     assert response is not None
-    assert hasattr(response, 'outblock1')
+    assert hasattr(response, "outblock1")
 
 
 @pytest.mark.integration
@@ -518,11 +520,11 @@ def test_get_news_aggregate_title_specific_date(client):
         symb="",
         data_dt=today,  # Today's news
         data_tm="",
-        cts=""
+        cts="",
     )
 
     assert response is not None
-    assert hasattr(response, 'outblock1')
+    assert hasattr(response, "outblock1")
 
 
 @pytest.mark.integration
@@ -538,11 +540,11 @@ def test_get_breaking_news_title(client):
         fid_input_hour_1="",
         fid_rank_sort_cls_code="",
         fid_input_srno="",
-        fid_cond_scr_div_code="11801"  # Screen code
+        fid_cond_scr_div_code="11801",  # Screen code
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 # Collateral Loan Tests
@@ -564,11 +566,11 @@ def test_get_stock_collateral_loan_eligible_us_all(client):
         rt="",
         loan_psbl_yn="",
         ctx_area_fk100="",
-        ctx_area_nk100=""
+        ctx_area_nk100="",
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -587,11 +589,11 @@ def test_get_stock_collateral_loan_eligible_us_specific(client):
         rt="",
         loan_psbl_yn="",
         ctx_area_fk100="",
-        ctx_area_nk100=""
+        ctx_area_nk100="",
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -610,11 +612,11 @@ def test_get_stock_collateral_loan_eligible_hk(client):
         rt="",
         loan_psbl_yn="",
         ctx_area_fk100="",
-        ctx_area_nk100=""
+        ctx_area_nk100="",
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -633,11 +635,11 @@ def test_get_stock_collateral_loan_eligible_china(client):
         rt="",
         loan_psbl_yn="",
         ctx_area_fk100="",
-        ctx_area_nk100=""
+        ctx_area_nk100="",
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 # Multiple Exchanges Tests
@@ -666,24 +668,24 @@ def test_get_stock_collateral_loan_eligible_china(client):
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize("exchange_code,exchange_name", [
-    ("NYS", "NYSE"),
-    ("NAS", "NASDAQ"),
-    ("HKS", "Hong Kong"),
-    ("TSE", "Tokyo"),
-])
+@pytest.mark.parametrize(
+    "exchange_code,exchange_name",
+    [
+        ("NYS", "NYSE"),
+        ("NAS", "NASDAQ"),
+        ("HKS", "Hong Kong"),
+        ("TSE", "Tokyo"),
+    ],
+)
 def test_market_cap_rank_multiple_exchanges(client, exchange_code, exchange_name):
     """Test market cap ranking across multiple exchanges."""
     time.sleep(1)
     response = client.overseas_market_analysis.get_stock_market_cap_rank(
-        keyb="",
-        auth="",
-        excd=exchange_code,
-        vol_rang="0"
+        keyb="", auth="", excd=exchange_code, vol_rang="0"
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 # Error Handling Tests
@@ -700,7 +702,7 @@ def test_invalid_exchange_code(client):
             excd="INVALID",  # Invalid exchange code
             gubn="1",
             mixn="3",
-            vol_rang="0"
+            vol_rang="0",
         )
         # If no exception, check for error in response
         assert response is not None
@@ -722,7 +724,7 @@ def test_invalid_date_range_rights(client):
             pdno="",
             prdt_type_cd="",
             ctx_area_nk50="",
-            ctx_area_fk50=""
+            ctx_area_fk50="",
         )
         assert response is not None
     except Exception as e:
@@ -742,7 +744,7 @@ def test_invalid_stock_symbol_rights(client):
             ncod="US",
             symb="INVALID999",  # Invalid symbol
             st_ymd=start_dt,
-            ed_ymd=end_dt
+            ed_ymd=end_dt,
         )
         # If no exception, check for error in response
         assert response is not None

@@ -1,11 +1,15 @@
+from typing import Literal, Optional, Sequence
+
 from pydantic import BaseModel, Field
+
 from cluefin_openapi.kis._model import KisHttpBody
-from typing import Sequence, Optional, Literal
+
 
 class StockPriceFluctuationItem1(BaseModel):
     zdiv: str = Field(title="소수점자리수", max_length=1)
     stat: str = Field(title="거래상태", max_length=20)
     nrec: str = Field(title="RecordCount", max_length=4)
+
 
 class StockPriceFluctuationItem2(BaseModel):
     rsym: str = Field(title="실시간조회심볼", max_length=16)
@@ -32,10 +36,12 @@ class StockPriceFluctuation(BaseModel, KisHttpBody):
     output1: StockPriceFluctuationItem1 = Field(title="응답상세1")
     output2: Sequence[StockPriceFluctuationItem2] = Field(default_factory=list)
 
+
 class StockVolumeSurgeItem1(BaseModel):
     zdiv: str = Field(title="소수점자리수", max_length=1)
     stat: str = Field(title="거래상태", max_length=20)
     nrec: str = Field(title="RecordCount", max_length=4)
+
 
 class StockVolumeSurgeItem2(BaseModel):
     rsym: str = Field(title="실시간조회심볼", max_length=16)
@@ -68,6 +74,7 @@ class StockBuyExecutionStrengthTopItem1(BaseModel):
     stat: str = Field(title="거래상태", max_length=20)
     nrec: str = Field(title="RecordCount", max_length=4)
 
+
 class StockBuyExecutionStrengthTopItem2(BaseModel):
     rsym: str = Field(title="실시간조회심볼", max_length=16)
     excd: str = Field(title="거래소코드", max_length=4)
@@ -86,11 +93,13 @@ class StockBuyExecutionStrengthTopItem2(BaseModel):
     enam: Optional[str] = Field(title="영문종목명", max_length=48, default=None)
     e_ordyn: str = Field(title="매매가능", max_length=2)
 
+
 class StockBuyExecutionStrengthTop(BaseModel, KisHttpBody):
     """해외주식 매수체결강도상위"""
 
     output1: StockBuyExecutionStrengthTopItem1 = Field(title="응답상세1")
     output2: Sequence[StockBuyExecutionStrengthTopItem2] = Field(default_factory=list)
+
 
 class StockRiseDeclineRateItem1(BaseModel):
     zdiv: str = Field(title="소수점자리수", max_length=1)
@@ -98,6 +107,7 @@ class StockRiseDeclineRateItem1(BaseModel):
     crec: str = Field(title="현재Count", max_length=6)
     trec: str = Field(title="전체조회종목수", max_length=6)
     nrec: str = Field(title="RecordCount", max_length=4)
+
 
 class StockRiseDeclineRateItem2(BaseModel):
     rsym: str = Field(title="실시간조회심볼", max_length=16)
@@ -118,6 +128,7 @@ class StockRiseDeclineRateItem2(BaseModel):
     ename: str = Field(title="영문종목명", max_length=48)
     e_ordyn: str = Field(title="매매가능", max_length=2)
 
+
 class StockRiseDeclineRate(BaseModel, KisHttpBody):
     """해외주식 상승률/하락율"""
 
@@ -129,6 +140,7 @@ class StockNewHighLowPriceItem1(BaseModel):
     zdiv: str = Field(title="소수점자리수", max_length=1)
     stat: str = Field(title="거래상태정보", max_length=20)
     nrec: str = Field(title="RecordCount", max_length=4)
+
 
 class StockNewHighLowPriceItem2(BaseModel):
     rsym: str = Field(title="실시간조회심볼", max_length=16)
@@ -155,12 +167,14 @@ class StockNewHighLowPrice(BaseModel, KisHttpBody):
     output1: StockNewHighLowPriceItem1 = Field(title="응답상세1")
     output2: Sequence[StockNewHighLowPriceItem2] = Field(default_factory=list)
 
+
 class StockTradingVolumeRankItem1(BaseModel):
     zdiv: str = Field(title="소수점자리수", max_length=1)
     stat: str = Field(title="거래상태정보", max_length=20)
     crec: str = Field(title="현재조회종목수", max_length=6)
     trec: str = Field(title="전체조회종목수", max_length=6)
     nrec: str = Field(title="RecordCount", max_length=4)
+
 
 class StockTradingVolumeRankItem2(BaseModel):
     rsym: str = Field(title="실시간조회심볼", max_length=16)
@@ -180,11 +194,13 @@ class StockTradingVolumeRankItem2(BaseModel):
     ename: str = Field(title="영문종목명", max_length=48)
     e_ordyn: str = Field(title="매매가능", max_length=2)
 
+
 class StockTradingVolumeRank(BaseModel, KisHttpBody):
     """해외주식 거래량순위"""
 
     output1: StockTradingVolumeRankItem1 = Field(title="응답상세1")
     output2: Sequence[StockTradingVolumeRankItem2] = Field(default_factory=list)
+
 
 class StockTradingAmountRankItem1(BaseModel):
     zdiv: str = Field(title="소수점자리수", max_length=1)
@@ -192,6 +208,7 @@ class StockTradingAmountRankItem1(BaseModel):
     crec: str = Field(title="현재조회종목수", max_length=6)
     trec: str = Field(title="전체조회종목수", max_length=6)
     nrec: str = Field(title="RecordCount", max_length=4)
+
 
 class StockTradingAmountRankItem2(BaseModel):
     rsym: str = Field(title="실시간조회심볼", max_length=16)
@@ -211,11 +228,13 @@ class StockTradingAmountRankItem2(BaseModel):
     ename: str = Field(title="영문종목명", max_length=48)
     e_ordyn: str = Field(title="매매가능", max_length=2)
 
+
 class StockTradingAmountRank(BaseModel, KisHttpBody):
     """해외주식 거래대금순위"""
 
     output1: StockTradingAmountRankItem1 = Field(title="응답상세1")
     output2: Sequence[StockTradingAmountRankItem2] = Field(default_factory=list)
+
 
 class StockTradingIncreaseRateRankItem1(BaseModel):
     zdiv: str = Field(title="소수점자리수", max_length=1)
@@ -223,6 +242,7 @@ class StockTradingIncreaseRateRankItem1(BaseModel):
     crec: str = Field(title="현재조회종목수", max_length=6)
     trec: str = Field(title="전체조회종목수", max_length=6)
     nrec: str = Field(title="RecordCount", max_length=4)
+
 
 class StockTradingIncreaseRateRankItem2(BaseModel):
     rsym: str = Field(title="실시간조회심볼", max_length=16)
@@ -257,6 +277,7 @@ class StockTradingTurnoverRateRankItem1(BaseModel):
     trec: str = Field(title="전체조회종목수", max_length=6)
     nrec: str = Field(title="RecordCount", max_length=4)
 
+
 class StockTradingTurnoverRateRankItem2(BaseModel):
     rsym: str = Field(title="실시간조회심볼", max_length=16)
     excd: str = Field(title="거래소코드", max_length=4)
@@ -284,12 +305,14 @@ class StockTradingTurnoverRateRank(BaseModel, KisHttpBody):
     output1: StockTradingTurnoverRateRankItem1 = Field(title="응답상세1")
     output2: Sequence[StockTradingTurnoverRateRankItem2] = Field(default_factory=list)
 
+
 class StockMarketCapRankItem1(BaseModel):
     zdiv: str = Field(title="소수점자리수", max_length=1)
     stat: str = Field(title="거래상태정보", max_length=20)
     crec: str = Field(title="현재조회종목수", max_length=6)
     trec: str = Field(title="전체조회종목수", max_length=6)
     nrec: str = Field(title="RecordCount", max_length=4)
+
 
 class StockMarketCapRankItem2(BaseModel):
     rsym: str = Field(title="실시간조회심볼", max_length=16)
@@ -308,11 +331,13 @@ class StockMarketCapRankItem2(BaseModel):
     ename: str = Field(title="영문종목명", max_length=48)
     e_ordyn: str = Field(title="매매가능", max_length=2)
 
+
 class StockMarketCapRank(BaseModel, KisHttpBody):
     """해외주식 시가총액순위"""
 
     output1: StockMarketCapRankItem1 = Field(title="응답상세1")
     output2: Sequence[StockMarketCapRankItem2] = Field(default_factory=list)
+
 
 class StockPeriodRightsInquiryItem(BaseModel):
     bass_dt: str = Field(title="기준일자", max_length=8)
@@ -342,6 +367,7 @@ class StockPeriodRightsInquiry(BaseModel, KisHttpBody):
 
     output: Sequence[StockPeriodRightsInquiryItem] = Field(default_factory=list)
 
+
 class NewsAggregateTitleItem(BaseModel):
     info_gb: str = Field(title="뉴스구분", max_length=1)
     news_key: str = Field(title="뉴스키", max_length=20)
@@ -361,6 +387,7 @@ class NewsAggregateTitle(BaseModel, KisHttpBody):
     """해외뉴스종합(제목)"""
 
     outblock1: Sequence[NewsAggregateTitleItem] = Field(default_factory=list)
+
 
 class StockRightsAggregateItem(BaseModel):
     anno_dt: str = Field(title="ICE공시일", max_length=8)
@@ -382,6 +409,7 @@ class StockRightsAggregate(BaseModel, KisHttpBody):
 
     output1: Sequence[StockRightsAggregateItem] = Field(default_factory=list)
 
+
 class StockCollateralLoanEligibleItem1(BaseModel):
     pdno: str = Field(title="상품번호", max_length=12)
     ovrs_item_name: str = Field(title="해외종목명", max_length=60)
@@ -396,6 +424,7 @@ class StockCollateralLoanEligibleItem1(BaseModel):
     natn_kor_name: str = Field(title="국가한글명", max_length=60)
     ovrs_excg_cd: str = Field(title="해외거래소코드", max_length=4)
 
+
 class StockCollateralLoanEligibleItem2(BaseModel):
     loan_psbl_item_num: str = Field(title="대출가능종목수", max_length=20)
 
@@ -406,6 +435,7 @@ class StockCollateralLoanEligible(BaseModel, KisHttpBody):
     output1: Sequence[StockCollateralLoanEligibleItem1] = Field(default_factory=list)
     # TODO(typo): 문서에는 list 형태로 나와있으나 실제로는 단일 객체
     output2: StockCollateralLoanEligibleItem2 = Field(title="응답상세2")
+
 
 class BreakingNewsTitleItem(BaseModel):
     cntt_usiq_srno: str = Field(title="내용조회용일련번호", max_length=20)

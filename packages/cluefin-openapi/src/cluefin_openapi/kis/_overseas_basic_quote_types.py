@@ -1,5 +1,7 @@
-from pydantic import BaseModel, Field
 from typing import List, Optional, Sequence
+
+from pydantic import BaseModel, Field
+
 from cluefin_openapi.kis._model import KisHttpBody
 
 
@@ -52,6 +54,7 @@ class StockCurrentPriceDetail(BaseModel, KisHttpBody):
 
     output: StockCurrentPriceDetailItem = Field(title="응답상세")
 
+
 class CurrentPriceFirstQuoteItem1(BaseModel):
     rsym: str = Field(title="실시간조회종목코드", max_length=16)
     zdiv: str = Field(title="소수점자리수", max_length=1)
@@ -72,7 +75,8 @@ class CurrentPriceFirstQuoteItem1(BaseModel):
     rhigh: str = Field(title="고가율", max_length=12)
     rlow: str = Field(title="저가율", max_length=12)
     rclose: str = Field(title="현재가율", max_length=12)
-    
+
+
 class CurrentPriceFirstQuoteItem2(BaseModel):
     pbid1: str = Field(title="매수호가가격1", max_length=12)
     pask1: str = Field(title="매도호가가격1", max_length=12)
@@ -80,7 +84,8 @@ class CurrentPriceFirstQuoteItem2(BaseModel):
     vask1: str = Field(title="매도호가잔량1", max_length=10)
     dbid1: str = Field(title="매수호가대비1", max_length=10)
     dask1: str = Field(title="매도호가대비1", max_length=10)
-    
+
+
 class CurrentPriceFirstQuoteItem3(BaseModel):
     vstm: Optional[str] = Field(title="VCMStart시간", max_length=6, description="데이터 없음")
     vetm: Optional[str] = Field(title="VCMEnd시간", max_length=6, description="데이터 없음")
@@ -98,6 +103,7 @@ class CurrentPriceFirstQuote(BaseModel, KisHttpBody):
     # TODO(typo): 문서는 list지만 실제로는 object
     output2: CurrentPriceFirstQuoteItem2 = Field(title="응답상세2")
     output3: CurrentPriceFirstQuoteItem3 = Field(title="응답상세3")
+
 
 class StockCurrentPriceConclusionItem(BaseModel):
     rsym: str = Field(title="실시간조회종목코드", max_length=16)
@@ -138,6 +144,7 @@ class ConclusionTrend(BaseModel, KisHttpBody):
 
     output1: Sequence[ConclusionTrendItem] = Field(default_factory=list)
 
+
 class StockMinuteChartItem1(BaseModel):
     rsym: str = Field(title="실시간종목코드", max_length=16)
     zdiv: str = Field(title="소수점자리수", max_length=1)
@@ -148,6 +155,7 @@ class StockMinuteChartItem1(BaseModel):
     next: str = Field(title="다음가능여부", max_length=1)
     more: str = Field(title="추가데이타여부", max_length=1)
     nrec: str = Field(title="레코드갯수", max_length=4)
+
 
 class StockMinuteChartItem2(BaseModel):
     tymd: str = Field(title="현지영업일자", max_length=8)
@@ -183,6 +191,7 @@ class IndexMinuteChartItem1(BaseModel):
     ovrs_prod_hgpr: str = Field(title="해외 상품 최고가", max_length=114, description="최고가")
     ovrs_prod_lwpr: str = Field(title="해외 상품 최저가", max_length=114, description="최저가")
 
+
 class IndexMinuteChartItem2(BaseModel):
     stck_bsop_date: str = Field(title="주식 영업 일자", max_length=8, description="영업 일자")
     stck_cntg_hour: str = Field(title="주식 체결 시간", max_length=6, description="체결 시간")
@@ -199,26 +208,46 @@ class IndexMinuteChart(BaseModel, KisHttpBody):
     output1: IndexMinuteChartItem1 = Field(title="응답상세")
     output2: Sequence[IndexMinuteChartItem2] = Field(default_factory=list)
 
+
 class StockPeriodQuoteItem1(BaseModel):
-    rsym: str = Field(title="실시간조회종목코드", max_length=16, description="D+시장구분(3자리)+종목코드 예) DNASAAPL : D+NAS(나스닥)+AAPL(애플) [시장구분] NYS : 뉴욕, NAS : 나스닥, AMS : 아멕스 , TSE : 도쿄, HKS : 홍콩, SHS : 상해, SZS : 심천 HSX : 호치민, HNX : 하노이")
+    rsym: str = Field(
+        title="실시간조회종목코드",
+        max_length=16,
+        description="D+시장구분(3자리)+종목코드 예) DNASAAPL : D+NAS(나스닥)+AAPL(애플) [시장구분] NYS : 뉴욕, NAS : 나스닥, AMS : 아멕스 , TSE : 도쿄, HKS : 홍콩, SHS : 상해, SZS : 심천 HSX : 호치민, HNX : 하노이",
+    )
     zdiv: str = Field(title="소수점자리수", max_length=1)
     nrec: str = Field(title="전일종가", max_length=12)
+
 
 class StockPeriodQuoteItem2(BaseModel):
     xymd: str = Field(title="일자(YYYYMMDD)", max_length=8)
     clos: str = Field(title="종가", max_length=12, description="해당 일자의 종가")
     sign: str = Field(title="대비기호", max_length=1, description="1 : 상한, 2 : 상승, 3 : 보합, 4 : 하한, 5 : 하락")
-    diff: str = Field(title="대비", max_length=12, description="해당 일자의 종가와 해당 전일 종가의 차이 (해당일 종가-해당 전일 종가)")
+    diff: str = Field(
+        title="대비", max_length=12, description="해당 일자의 종가와 해당 전일 종가의 차이 (해당일 종가-해당 전일 종가)"
+    )
     rate: str = Field(title="등락율", max_length=12, description="해당 전일 대비 / 해당일 종가 * 100")
     open: str = Field(title="시가", max_length=12, description="해당일 최초 거래가격")
     high: str = Field(title="고가", max_length=12, description="해당일 가장 높은 거래가격")
     low: str = Field(title="저가", max_length=12, description="해당일 가장 낮은 거래가격")
     tvol: str = Field(title="거래량", max_length=14, description="해당일 거래량")
     tamt: str = Field(title="거래대금", max_length=14, description="해당일 거래대금")
-    pbid: Optional[str] = Field(title="매수호가", max_length=12, description="마지막 체결이 발생한 시점의 매수호가. * 해당 일자 거래량 0인 경우 값이 수신되지 않음")
-    vbid: Optional[str] = Field(title="매수호가잔량", max_length=10, description="* 해당 일자 거래량 0인 경우 값이 수신되지 않음")
-    pask: Optional[str] = Field(title="매도호가", max_length=12, description="마지막 체결이 발생한 시점의 매도호가. * 해당 일자 거래량 0인 경우 값이 수신되지 않음")
-    vask: Optional[str] = Field(title="매도호가잔량", max_length=10, description="* 해당 일자 거래량 0인 경우 값이 수신되지 않음")
+    pbid: Optional[str] = Field(
+        title="매수호가",
+        max_length=12,
+        description="마지막 체결이 발생한 시점의 매수호가. * 해당 일자 거래량 0인 경우 값이 수신되지 않음",
+    )
+    vbid: Optional[str] = Field(
+        title="매수호가잔량", max_length=10, description="* 해당 일자 거래량 0인 경우 값이 수신되지 않음"
+    )
+    pask: Optional[str] = Field(
+        title="매도호가",
+        max_length=12,
+        description="마지막 체결이 발생한 시점의 매도호가. * 해당 일자 거래량 0인 경우 값이 수신되지 않음",
+    )
+    vask: Optional[str] = Field(
+        title="매도호가잔량", max_length=10, description="* 해당 일자 거래량 0인 경우 값이 수신되지 않음"
+    )
 
 
 class StockPeriodQuote(BaseModel, KisHttpBody):
@@ -242,6 +271,7 @@ class ItemIndexExchangePeriodPriceItem1(BaseModel):
     ovrs_prod_hgpr: Optional[str] = Field(title="최고가", max_length=16, default=None)
     ovrs_prod_lwpr: Optional[str] = Field(title="최저가", max_length=16, default=None)
 
+
 class ItemIndexExchangePeriodPriceItem2(BaseModel):
     stck_bsop_date: Optional[str] = Field(title="영업 일자", max_length=8, default=None)
     ovrs_nmix_prpr: Optional[str] = Field(title="현재가", max_length=16, default=None)
@@ -250,6 +280,7 @@ class ItemIndexExchangePeriodPriceItem2(BaseModel):
     ovrs_nmix_lwpr: Optional[str] = Field(title="최저가", max_length=16, default=None)
     acml_vol: Optional[str] = Field(title="누적 거래량", max_length=18, default=None)
     mod_yn: Optional[str] = Field(title="변경 여부", max_length=1, default=None)
+
 
 class ItemIndexExchangePeriodPrice(BaseModel, KisHttpBody):
     """해외주식 종목/지수/환율기간별시세(일/주/월/년)"""
@@ -264,12 +295,13 @@ class SearchByConditionItem1(BaseModel):
     crec: Optional[str] = Field(title="현재조회종목수", max_length=6)
     trec: Optional[str] = Field(title="전체조회종목수", max_length=6)
     nrec: Optional[str] = Field(title="Record Count", max_length=4)
-    
+
+
 class SearchByConditionItem2(BaseModel):
     rsym: Optional[str] = Field(
         title="실시간조회심볼",
         description="실시간조회심볼\n\nD+시장구분(3자리)+종목코드\n예) DNASAAPL : D+NAS(나스닥)+AAPL(애플)\n[시장구분]\nNYS : 뉴욕, NAS : 나스닥, AMS : 아멕스 ,\nTSE : 도쿄, HKS : 홍콩,\nSHS : 상해, SZS : 심천\nHSX : 호치민, HNX : 하노이",
-        max_length=32
+        max_length=32,
     )
     excd: Optional[str] = Field(title="거래소코드", max_length=4)
     name: Optional[str] = Field(title="종목명", max_length=48)
@@ -303,40 +335,19 @@ class SettlementDateItem(BaseModel):
     prdt_type_cd: str = Field(
         title="상품유형코드",
         max_length=3,
-        description="512  미국 나스닥 / 513  미국 뉴욕거래소 / 529  미국 아멕스 \n515  일본\n501  홍콩 / 543  홍콩CNY / 558  홍콩USD\n507  베트남 하노이거래소 / 508  베트남 호치민거래소\n551  중국 상해A / 552  중국 심천A"
+        description="512  미국 나스닥 / 513  미국 뉴욕거래소 / 529  미국 아멕스 \n515  일본\n501  홍콩 / 543  홍콩CNY / 558  홍콩USD\n507  베트남 하노이거래소 / 508  베트남 호치민거래소\n551  중국 상해A / 552  중국 심천A",
     )
     tr_natn_cd: str = Field(
-        title="거래국가코드",
-        max_length=3,
-        description="840 미국 / 392 일본 / 344 홍콩 / 704 베트남 / 156 중국"
+        title="거래국가코드", max_length=3, description="840 미국 / 392 일본 / 344 홍콩 / 704 베트남 / 156 중국"
     )
-    tr_natn_name: str = Field(
-        title="거래국가명",
-        max_length=60
-    )
+    tr_natn_name: str = Field(title="거래국가명", max_length=60)
     natn_eng_abrv_cd: str = Field(
-        title="국가영문약어코드",
-        max_length=2,
-        description="US 미국 / JP 일본 / HK 홍콩 / VN 베트남 / CN 중국"
+        title="국가영문약어코드", max_length=2, description="US 미국 / JP 일본 / HK 홍콩 / VN 베트남 / CN 중국"
     )
-    tr_mket_cd: str = Field(
-        title="거래시장코드",
-        max_length=2
-    )
-    tr_mket_name: str = Field(
-        title="거래시장명",
-        max_length=60
-    )
-    acpl_sttl_dt: str = Field(
-        title="현지결제일자",
-        max_length=8,
-        description="현지결제일자(YYYYMMDD)"
-    )
-    dmst_sttl_dt: str = Field(
-        title="국내결제일자",
-        max_length=8,
-        description="국내결제일자(YYYYMMDD)"
-    )
+    tr_mket_cd: str = Field(title="거래시장코드", max_length=2)
+    tr_mket_name: str = Field(title="거래시장명", max_length=60)
+    acpl_sttl_dt: str = Field(title="현지결제일자", max_length=8, description="현지결제일자(YYYYMMDD)")
+    dmst_sttl_dt: str = Field(title="국내결제일자", max_length=8, description="국내결제일자(YYYYMMDD)")
 
 
 class SettlementDate(BaseModel, KisHttpBody):
@@ -344,6 +355,7 @@ class SettlementDate(BaseModel, KisHttpBody):
 
     # TODO(typo): 문서는 object지만 실제로는 list
     output: Sequence[SettlementDateItem] = Field(default_factory=list)
+
 
 class ProductBaseInfoItem(BaseModel):
     std_pdno: str = Field(title="표준상품번호", max_length=12)
@@ -368,7 +380,7 @@ class ProductBaseInfoItem(BaseModel):
     ovrs_stck_tr_stop_dvsn_cd: str = Field(
         title="해외주식거래정지구분코드",
         max_length=2,
-        description="※ 해당 값 지연 반영될 수 있는 점 유의 부탁드립니다.\n\n01.정상\n02.거래정지(ALL)\n03.거래중단\n04.매도정지\n05.거래정지(위탁)\n06.매수정지"
+        description="※ 해당 값 지연 반영될 수 있는 점 유의 부탁드립니다.\n\n01.정상\n02.거래정지(ALL)\n03.거래중단\n04.매도정지\n05.거래정지(위탁)\n06.매수정지",
     )
     lstg_abol_item_yn: str = Field(title="상장폐지종목여부", max_length=1)
     ovrs_stck_prdt_grp_no: str = Field(title="해외주식상품그룹번호", max_length=20)
@@ -384,7 +396,7 @@ class ProductBaseInfoItem(BaseModel):
     ovrs_stck_etf_risk_drtp_cd: str = Field(
         title="해외주식ETF위험지표코드",
         max_length=3,
-        description="001.ETF\n002.ETN\n003.ETC(Exchage Traded Commodity)\n004.Others(REIT's, Mutual Fund)\n005.VIX Underlying ETF\n006.VIX Underlying ETN"
+        description="001.ETF\n002.ETN\n003.ETC(Exchage Traded Commodity)\n004.Others(REIT's, Mutual Fund)\n005.VIX Underlying ETF\n006.VIX Underlying ETN",
     )
     etp_chas_erng_rt_dbnb: str = Field(title="ETP추적수익율배수", max_length=236)
     istt_usge_isin_cd: str = Field(title="기관용도ISIN코드", max_length=12)
@@ -395,13 +407,11 @@ class ProductBaseInfoItem(BaseModel):
     ovrs_stck_stop_rson_cd: str = Field(
         title="해외주식정지사유코드",
         max_length=2,
-        description="01.권리발생\n02.ISIN상이\n03.기타\n04.급등락종목\n05.상장폐지(예정)\n06.종목코드,거래소변경\n07.PTP종목"
+        description="01.권리발생\n02.ISIN상이\n03.기타\n04.급등락종목\n05.상장폐지(예정)\n06.종목코드,거래소변경\n07.PTP종목",
     )
     lstg_abol_dt: str = Field(title="상장폐지일자", max_length=8)
     mini_stk_tr_stat_dvsn_cd: str = Field(
-        title="미니스탁거래상태구분코드",
-        max_length=2,
-        description="01.정상\n02.매매 불가\n03.매수 불가\n04.매도 불가"
+        title="미니스탁거래상태구분코드", max_length=2, description="01.정상\n02.매매 불가\n03.매수 불가\n04.매도 불가"
     )
     mint_frst_svc_erlm_dt: str = Field(title="MINT최초서비스등록일자", max_length=8)
     mint_dcpt_trad_psbl_yn: str = Field(title="MINT소수점매매가능여부", max_length=1)
@@ -432,6 +442,7 @@ class SectorPriceItem1(BaseModel):
     trec: str = Field(title="전체조회종목수", max_length=6)
     nrec: str = Field(title="RecordCount", max_length=4)
 
+
 class SectorPriceItem2(BaseModel):
     rsym: str = Field(title="실시간조회심볼", max_length=16)
     excd: str = Field(title="거래소코드", max_length=4)
@@ -450,6 +461,7 @@ class SectorPriceItem2(BaseModel):
     ename: str = Field(title="영문종목명", max_length=48)
     e_ordyn: str = Field(title="매매가능", max_length=2)
 
+
 class SectorPrice(BaseModel, KisHttpBody):
     """해외주식 업종별시세"""
 
@@ -459,6 +471,7 @@ class SectorPrice(BaseModel, KisHttpBody):
 
 class SectorCodesItem1(BaseModel):
     nrec: str = Field(title="RecordCount", max_length=4)
+
 
 class SectorCodesItem2(BaseModel):
     icod: str = Field(title="업종코드", max_length=4)

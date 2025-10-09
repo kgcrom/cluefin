@@ -9,16 +9,18 @@ Run with: uv run pytest packages/cluefin-openapi/tests/kis/test_domestic_stock_i
 """
 
 import os
-from datetime import datetime, timedelta
 import time
+from datetime import datetime, timedelta
+from typing import Literal, cast
+
 import dotenv
 import pytest
-from typing import cast, Literal
+from _token_cache import TokenCache
 from pydantic import SecretStr
 
-from cluefin_openapi.kis._client import Client
 from cluefin_openapi.kis._auth import Auth
-from _token_cache import TokenCache
+from cluefin_openapi.kis._client import Client
+
 
 @pytest.fixture(scope="module")
 def auth_dev():
@@ -62,11 +64,11 @@ def test_get_product_basic_info(kis_client):
     # Test with Samsung Electronics (005930)
     response = kis_client.domestic_stock_info.get_product_basic_info(
         pdno="005930",
-        prdt_type_cd="300"  # Stock
+        prdt_type_cd="300",  # Stock
     )
 
     assert response is not None
-    assert hasattr(response, 'output')
+    assert hasattr(response, "output")
 
 
 @pytest.mark.integration
@@ -76,11 +78,11 @@ def test_get_stock_basic_info(kis_client):
     # Test with SK Hynix (000660)
     response = kis_client.domestic_stock_info.get_stock_basic_info(
         prdt_type_cd="300",  # Stock
-        pdno="000660"
+        pdno="000660",
     )
 
     assert response is not None
-    assert hasattr(response, 'output')
+    assert hasattr(response, "output")
 
 
 @pytest.mark.integration
@@ -90,11 +92,11 @@ def test_get_balance_sheet(kis_client):
     response = kis_client.domestic_stock_info.get_balance_sheet(
         fid_div_cls_code="0",  # Year
         fid_cond_mrkt_div_code="J",  # Stock market
-        fid_input_iscd="005930"  # Samsung Electronics
+        fid_input_iscd="005930",  # Samsung Electronics
     )
 
     assert response is not None
-    assert hasattr(response, 'output')
+    assert hasattr(response, "output")
 
 
 @pytest.mark.integration
@@ -104,11 +106,11 @@ def test_get_income_statement(kis_client):
     response = kis_client.domestic_stock_info.get_income_statement(
         fid_div_cls_code="0",  # Year
         fid_cond_mrkt_div_code="J",
-        fid_input_iscd="005930"
+        fid_input_iscd="005930",
     )
 
     assert response is not None
-    assert hasattr(response, 'output')
+    assert hasattr(response, "output")
 
 
 @pytest.mark.integration
@@ -118,11 +120,11 @@ def test_get_financial_ratio(kis_client):
     response = kis_client.domestic_stock_info.get_financial_ratio(
         fid_div_cls_code="0",  # Year
         fid_cond_mrkt_div_code="J",
-        fid_input_iscd="000660"  # SK Hynix
+        fid_input_iscd="000660",  # SK Hynix
     )
 
     assert response is not None
-    assert hasattr(response, 'output')
+    assert hasattr(response, "output")
 
 
 @pytest.mark.integration
@@ -132,11 +134,11 @@ def test_get_profitability_ratio(kis_client):
     response = kis_client.domestic_stock_info.get_profitability_ratio(
         fid_input_iscd="005930",  # Samsung Electronics
         fid_div_cls_code="0",  # Year
-        fid_cond_mrkt_div_code="J"
+        fid_cond_mrkt_div_code="J",
     )
 
     assert response is not None
-    assert hasattr(response, 'output')
+    assert hasattr(response, "output")
 
 
 @pytest.mark.integration
@@ -146,11 +148,11 @@ def test_get_other_key_ratio(kis_client):
     response = kis_client.domestic_stock_info.get_other_key_ratio(
         fid_input_iscd="035720",  # Kakao
         fid_div_cls_code="0",  # Year
-        fid_cond_mrkt_div_code="J"
+        fid_cond_mrkt_div_code="J",
     )
 
     assert response is not None
-    assert hasattr(response, 'output')
+    assert hasattr(response, "output")
 
 
 @pytest.mark.integration
@@ -160,11 +162,11 @@ def test_get_stability_ratio(kis_client):
     response = kis_client.domestic_stock_info.get_stability_ratio(
         fid_input_iscd="005930",
         fid_div_cls_code="0",  # Year
-        fid_cond_mrkt_div_code="J"
+        fid_cond_mrkt_div_code="J",
     )
 
     assert response is not None
-    assert hasattr(response, 'output')
+    assert hasattr(response, "output")
 
 
 @pytest.mark.integration
@@ -174,11 +176,11 @@ def test_get_growth_ratio(kis_client):
     response = kis_client.domestic_stock_info.get_growth_ratio(
         fid_input_iscd="000660",  # SK Hynix
         fid_div_cls_code="0",  # Year
-        fid_cond_mrkt_div_code="J"
+        fid_cond_mrkt_div_code="J",
     )
 
     assert response is not None
-    assert hasattr(response, 'output')
+    assert hasattr(response, "output")
 
 
 @pytest.mark.integration
@@ -190,11 +192,11 @@ def test_get_margin_tradable_stocks(kis_client):
         fid_slct_yn="0",  # Margin tradable
         fid_input_iscd="0000",  # All stocks
         fid_cond_scr_div_code="20477",  # Screen code
-        fid_cond_mrkt_div_code="J"
+        fid_cond_mrkt_div_code="J",
     )
 
     assert response is not None
-    assert hasattr(response, 'output')
+    assert hasattr(response, "output")
 
 
 @pytest.mark.integration
@@ -207,12 +209,12 @@ def test_get_stock_loanable_list(kis_client):
         thco_stln_psbl_yn="Y",
         inqr_dvsn_1="0",  # All
         ctx_area_fk200="",
-        ctx_area_nk100=""
+        ctx_area_nk100="",
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
-    assert hasattr(response, 'output2')
+    assert hasattr(response, "output1")
+    assert hasattr(response, "output2")
 
 
 @pytest.fixture
@@ -234,11 +236,11 @@ def test_get_ksd_dividend_decision(kis_client, date_range):
         f_dt=f_dt,
         t_dt=t_dt,
         sht_cd="",  # All stocks
-        high_gb=""
+        high_gb="",
     )
 
     assert response is not None
-    assert hasattr(response, 'output')
+    assert hasattr(response, "output")
 
 
 @pytest.mark.integration
@@ -250,11 +252,11 @@ def test_get_ksd_stock_dividend_decision(kis_client, date_range):
         sht_cd="",  # All stocks
         t_dt=t_dt,
         f_dt=f_dt,
-        cts=""
+        cts="",
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -266,11 +268,11 @@ def test_get_ksd_merger_split_decision(kis_client, date_range):
         cts="",
         f_dt=f_dt,
         t_dt=t_dt,
-        sht_cd=""  # All stocks
+        sht_cd="",  # All stocks
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -283,11 +285,11 @@ def test_get_ksd_par_value_change_decision(kis_client, date_range):
         cts="",
         f_dt=f_dt,
         t_dt=t_dt,
-        market_gb="0"  # All markets
+        market_gb="0",  # All markets
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -296,14 +298,11 @@ def test_get_ksd_capital_reduction_schedule(kis_client, date_range):
     time.sleep(1)
     f_dt, t_dt = date_range
     response = kis_client.domestic_stock_info.get_ksd_capital_reduction_schedule(
-        cts="",
-        f_dt=f_dt,
-        t_dt=t_dt,
-        sht_cd=""
+        cts="", f_dt=f_dt, t_dt=t_dt, sht_cd=""
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -311,15 +310,10 @@ def test_get_ksd_listing_info_schedule(kis_client, date_range):
     """Test KSD listing information schedule retrieval."""
     time.sleep(1)
     f_dt, t_dt = date_range
-    response = kis_client.domestic_stock_info.get_ksd_listing_info_schedule(
-        sht_cd="",
-        t_dt=t_dt,
-        f_dt=f_dt,
-        cts=""
-    )
+    response = kis_client.domestic_stock_info.get_ksd_listing_info_schedule(sht_cd="", t_dt=t_dt, f_dt=f_dt, cts="")
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -327,15 +321,10 @@ def test_get_ksd_ipo_subscription_schedule(kis_client, date_range):
     """Test KSD IPO subscription schedule retrieval."""
     time.sleep(1)
     f_dt, t_dt = date_range
-    response = kis_client.domestic_stock_info.get_ksd_ipo_subscription_schedule(
-        sht_cd="",
-        cts="",
-        f_dt=f_dt,
-        t_dt=t_dt
-    )
+    response = kis_client.domestic_stock_info.get_ksd_ipo_subscription_schedule(sht_cd="", cts="", f_dt=f_dt, t_dt=t_dt)
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -343,15 +332,10 @@ def test_get_ksd_forfeited_share_schedule(kis_client, date_range):
     """Test KSD forfeited share schedule retrieval."""
     time.sleep(1)
     f_dt, t_dt = date_range
-    response = kis_client.domestic_stock_info.get_ksd_forfeited_share_schedule(
-        sht_cd="",
-        t_dt=t_dt,
-        f_dt=f_dt,
-        cts=""
-    )
+    response = kis_client.domestic_stock_info.get_ksd_forfeited_share_schedule(sht_cd="", t_dt=t_dt, f_dt=f_dt, cts="")
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -359,15 +343,10 @@ def test_get_ksd_deposit_schedule(kis_client, date_range):
     """Test KSD deposit schedule retrieval."""
     time.sleep(1)
     f_dt, t_dt = date_range
-    response = kis_client.domestic_stock_info.get_ksd_deposit_schedule(
-        t_dt=t_dt,
-        sht_cd="",
-        f_dt=f_dt,
-        cts=""
-    )
+    response = kis_client.domestic_stock_info.get_ksd_deposit_schedule(t_dt=t_dt, sht_cd="", f_dt=f_dt, cts="")
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -380,11 +359,11 @@ def test_get_ksd_paid_in_capital_increase_schedule(kis_client, date_range):
         gb1="1",  # By subscription date
         f_dt=f_dt,
         t_dt=t_dt,
-        sht_cd=""
+        sht_cd="",
     )
 
     assert response is not None
-    assert hasattr(response, 'output')
+    assert hasattr(response, "output")
 
 
 @pytest.mark.integration
@@ -392,15 +371,10 @@ def test_get_ksd_stock_dividend_schedule(kis_client, date_range):
     """Test KSD stock dividend schedule retrieval."""
     time.sleep(1)
     f_dt, t_dt = date_range
-    response = kis_client.domestic_stock_info.get_ksd_stock_dividend_schedule(
-        cts="",
-        f_dt=f_dt,
-        t_dt=t_dt,
-        sht_cd=""
-    )
+    response = kis_client.domestic_stock_info.get_ksd_stock_dividend_schedule(cts="", f_dt=f_dt, t_dt=t_dt, sht_cd="")
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -409,14 +383,11 @@ def test_get_ksd_shareholder_meeting_schedule(kis_client, date_range):
     time.sleep(1)
     f_dt, t_dt = date_range
     response = kis_client.domestic_stock_info.get_ksd_shareholder_meeting_schedule(
-        cts="",
-        f_dt=f_dt,
-        t_dt=t_dt,
-        sht_cd=""
+        cts="", f_dt=f_dt, t_dt=t_dt, sht_cd=""
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.fixture
@@ -437,7 +408,7 @@ def test_get_estimated_earnings(kis_client):
     )
 
     assert response is not None
-    assert hasattr(response, 'output1')
+    assert hasattr(response, "output1")
 
 
 @pytest.mark.integration
@@ -450,11 +421,11 @@ def test_get_investment_opinion(kis_client, investment_date_range):
         fid_cond_scr_div_code="16633",  # Primary key
         fid_input_iscd="005930",  # Samsung Electronics
         fid_input_date_1=f_dt,
-        fid_input_date_2=t_dt
+        fid_input_date_2=t_dt,
     )
 
     assert response is not None
-    assert hasattr(response, 'output')
+    assert hasattr(response, "output")
 
 
 @pytest.mark.integration
@@ -468,11 +439,11 @@ def test_get_investment_opinion_by_brokerage(kis_client, investment_date_range):
         fid_input_iscd="005930",  # Samsung Electronics
         fid_div_cls_code="0",  # All
         fid_input_date_1=f_dt,
-        fid_input_date_2=t_dt
+        fid_input_date_2=t_dt,
     )
 
     assert response is not None
-    assert hasattr(response, 'output')
+    assert hasattr(response, "output")
 
 
 @pytest.mark.integration
@@ -483,7 +454,7 @@ def test_invalid_stock_code(kis_client):
     try:
         response = kis_client.domestic_stock_info.get_product_basic_info(
             pdno="999999",  # Invalid code
-            prdt_type_cd="300"
+            prdt_type_cd="300",
         )
         # If no exception, check for error in response
         assert response is not None
@@ -503,7 +474,7 @@ def test_invalid_date_range(kis_client):
             f_dt="20990101",  # Future date
             t_dt="20000101",  # Past date (reversed range)
             sht_cd="",
-            high_gb=""
+            high_gb="",
         )
         assert response is not None
     except Exception as e:

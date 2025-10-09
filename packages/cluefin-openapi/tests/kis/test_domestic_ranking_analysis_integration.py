@@ -10,12 +10,11 @@ from typing import Literal, cast
 
 import dotenv
 import pytest
+from _token_cache import TokenCache
 from pydantic import SecretStr
 
 from cluefin_openapi.kis._auth import Auth
 from cluefin_openapi.kis._client import Client
-
-from _token_cache import TokenCache
 
 
 @pytest.fixture(scope="module")
@@ -71,7 +70,7 @@ def test_get_trading_volume_rank(client: Client):
             fid_input_price_1="",  # 가격~
             fid_input_price_2="",  # ~가격
             fid_vol_cnt="",  # 거래량~
-            fid_input_date_1=""  # 공란 입력
+            fid_input_date_1="",  # 공란 입력
         )
 
         # Verify response type
@@ -102,7 +101,7 @@ def test_get_stock_fluctuation_rank(client: Client):
             fid_trgt_cls_code="0",  # 0:전체
             fid_trgt_exls_cls_code="0",  # 0:전체
             fid_div_cls_code="0",  # 0:전체
-            fid_rsfl_rate1=""  # 비율~
+            fid_rsfl_rate1="",  # 비율~
         )
 
         # Verify response type
@@ -129,7 +128,7 @@ def test_get_stock_hoga_quantity_rank(client: Client):
             fid_trgt_cls_code="0",  # 0:전체
             fid_trgt_exls_cls_code="0",  # 0:전체
             fid_input_price_1="",  # 가격~
-            fid_input_price_2=""  # ~가격
+            fid_input_price_2="",  # ~가격
         )
 
         # Verify response type
@@ -162,7 +161,7 @@ def test_get_stock_profitability_indicator_rank(client: Client):
             fid_input_option_2="3",  # 0:1/4분기, 1:반기, 2:3/4분기, 3:결산
             fid_rank_sort_cls_code="0",  # 0:매출이익, 1:영업이익, 2:경상이익, 3:당기순이익, 4:자산총계, 5:부채총계, 6:자본총계
             fid_blng_cls_code="0",  # 0:전체
-            fid_trgt_exls_cls_code="0"  # 0:전체
+            fid_trgt_exls_cls_code="0",  # 0:전체
         )
 
         # Verify response type
@@ -188,7 +187,7 @@ def test_get_stock_market_cap_top(client: Client):
             fid_trgt_cls_code="0",  # 0:전체
             fid_trgt_exls_cls_code="0",  # 0:전체
             fid_input_price_1="",  # 가격~
-            fid_vol_cnt=""  # 거래량~
+            fid_vol_cnt="",  # 거래량~
         )
 
         # Verify response type
@@ -218,7 +217,7 @@ def test_get_stock_finance_ratio_rank(client: Client):
             fid_input_option_2="3",  # 0:1/4분기, 1:반기, 2:3/4분기, 3:결산
             fid_rank_sort_cls_code="7",  # 7:수익성분석, 11:안정성분석, 15:성장성분석, 20:활동성분석
             fid_blng_cls_code="0",
-            fid_trgt_exls_cls_code="0"  # 0:전체
+            fid_trgt_exls_cls_code="0",  # 0:전체
         )
 
         # Verify response type
@@ -248,7 +247,7 @@ def test_get_stock_market_price_rank(client: Client):
             fid_input_option_2="3",  # 0:1/4분기, 1:반기, 2:3/4분기, 3:결산
             fid_rank_sort_cls_code="23",  # 23:PER, 24:PBR, 25:PCR, 26:PSR, 27:EPS, 28:EVA, 29:EBITDA, 30:EV/EBITDA, 31:EBITDA/금융비율
             fid_blng_cls_code="0",  # 0:전체
-            fid_trgt_exls_cls_code="0"  # 0:전체
+            fid_trgt_exls_cls_code="0",  # 0:전체
         )
 
         # Verify response type
@@ -278,7 +277,7 @@ def test_get_stock_time_hoga_rank(client: Client):
             fid_trgt_exls_cls_code="0",  # 0:전체
             fid_trgt_cls_code="0",  # 0:전체
             fid_vol_cnt="",  # 거래량~
-            fid_input_price_2=""  # ~가격
+            fid_input_price_2="",  # ~가격
         )
 
         # Verify response type
@@ -305,7 +304,7 @@ def test_get_stock_after_hours_fluctuation_rank(client: Client):
             fid_input_price_2="",  # ~가격
             fid_vol_cnt="",  # 거래량~
             fid_trgt_cls_code="",  # 공백 입력
-            fid_trgt_exls_cls_code=""  # 공백 입력
+            fid_trgt_exls_cls_code="",  # 공백 입력
         )
 
         # Verify response type
@@ -331,7 +330,7 @@ def test_get_stock_after_hours_volume_rank(client: Client):
             fid_input_price_2="",  # ~가격
             fid_vol_cnt="",  # 거래량~
             fid_trgt_cls_code="",  # 공백
-            fid_trgt_exls_cls_code=""  # 공백
+            fid_trgt_exls_cls_code="",  # 공백
         )
 
         # Verify response type
@@ -360,7 +359,7 @@ def test_get_stock_preferred_stock_ratio_top(client: Client):
             fid_trgt_cls_code="0",  # 0:전체
             fid_trgt_exls_cls_code="0",  # 0:전체
             fid_input_price_1="",  # 가격~
-            fid_input_price_2=""  # ~가격
+            fid_input_price_2="",  # ~가격
         )
 
         # Verify response type
@@ -388,7 +387,7 @@ def test_get_stock_disparity_index_rank(client: Client):
             fid_trgt_cls_code="0",  # 0:전체
             fid_trgt_exls_cls_code="0",  # 0:전체
             fid_input_price_1="",  # 가격~
-            fid_vol_cnt=""  # 거래량~
+            fid_vol_cnt="",  # 거래량~
         )
 
         # Verify response type
@@ -414,7 +413,7 @@ def test_get_stock_execution_strength_top(client: Client):
             fid_input_price_1="",  # 가격~
             fid_input_price_2="",  # ~가격
             fid_vol_cnt="",  # 거래량~
-            fid_trgt_cls_code="0"  # 0:전체
+            fid_trgt_cls_code="0",  # 0:전체
         )
 
         # Verify response type
@@ -442,7 +441,7 @@ def test_get_stock_watchlist_registration_top(client: Client):
             fid_input_price_2="",  # ~가격
             fid_vol_cnt="",  # 거래량~
             fid_div_cls_code="0",  # 0:전체
-            fid_input_cnt_1="1"  # 순위검색 입력값, 1:1위부터, 10:10위부터
+            fid_input_cnt_1="1",  # 순위검색 입력값, 1:1위부터, 10:10위부터
         )
 
         # Verify response type
@@ -469,7 +468,7 @@ def test_get_stock_expected_execution_rise_decline_top(client: Client):
             fid_vol_cnt="",  # 거래량~
             fid_pbmn="",  # 거래대금~ 천원단위
             fid_blng_cls_code="0",  # 0:전체
-            fid_mkop_cls_code="0"  # 0:장전예상, 1:장마감예상
+            fid_mkop_cls_code="0",  # 0:장전예상, 1:장마감예상
         )
 
         # Verify response type
@@ -498,7 +497,7 @@ def test_get_stock_proprietary_trading_top(client: Client):
             fid_trgt_cls_code="0",  # 0:전체
             fid_aply_rang_vol="0",  # 0:전체, 100:100주 이상
             fid_aply_rang_prc_2="",  # ~가격
-            fid_aply_rang_prc_1=""  # 가격~
+            fid_aply_rang_prc_1="",  # 가격~
         )
 
         # Verify response type
@@ -527,7 +526,7 @@ def test_get_stock_new_high_low_approaching_top(client: Client):
             fid_trgt_cls_code="0",  # 0:전체
             fid_trgt_exls_cls_code="0",  # 0:전체
             fid_aply_rang_prc_1="",  # 가격~
-            fid_aply_rang_prc_2=""  # ~가격
+            fid_aply_rang_prc_2="",  # ~가격
         )
 
         # Verify response type
@@ -552,7 +551,7 @@ def test_get_stock_dividend_yield_top(client: Client):
             gb3="2",  # 1:주식배당, 2:현금배당
             f_dt="20240101",  # 기준일From (YYYYMMDD)
             t_dt="20241231",  # 기준일To (YYYYMMDD)
-            gb4="0"  # 0:전체, 1:결산배당, 2:중간배당
+            gb4="0",  # 0:전체, 1:결산배당, 2:중간배당
         )
 
         # Verify response type
@@ -581,7 +580,7 @@ def test_get_stock_large_execution_count_top(client: Client):
             fid_input_iscd_2="",  # 공백:전체종목, 개별종목 조회시 종목코드
             fid_trgt_exls_cls_code="0",  # 0:전체
             fid_trgt_cls_code="0",  # 0:전체
-            fid_vol_cnt=""  # 거래량~
+            fid_vol_cnt="",  # 거래량~
         )
 
         # Verify response type
@@ -603,7 +602,7 @@ def test_get_stock_credit_balance_top(client: Client):
             fid_input_iscd="0001",  # 0000:전체, 0001:거래소, 1001:코스닥, 2001:코스피200
             fid_option="7",  # 증가율기간 (2~999)
             fid_cond_mrkt_div_code="J",  # 주식 J
-            fid_rank_sort_cls_code="0"  # 융자: 0:잔고비율상위, 1:잔고수량상위, 2:잔고금액상위, 3:잔고비율증가상위, 4:잔고비율감소상위
+            fid_rank_sort_cls_code="0",  # 융자: 0:잔고비율상위, 1:잔고수량상위, 2:잔고금액상위, 3:잔고비율증가상위, 4:잔고비율감소상위
         )
 
         # Verify response type
@@ -630,7 +629,7 @@ def test_get_stock_short_selling_top(client: Client):
             fid_trgt_exls_cls_code="",  # 공백
             fid_trgt_cls_code="",  # 공백
             fid_aply_rang_prc_1="",  # 가격~
-            fid_aply_rang_prc_2=""  # ~가격
+            fid_aply_rang_prc_2="",  # ~가격
         )
 
         # Verify response type
