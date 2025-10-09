@@ -52,17 +52,17 @@ class BasicQuote:
 
     def get_current_price_first_quote(
         self,
-        auth: str,
         excd: str,
         symb: str,
+        auth: str = "",
     ) -> CurrentPriceFirstQuote:
         """
         해외주식 현재가 1호가
 
         Args:
-            auth (str): 사용자권한정보 (공백)
             excd (str): 거래소코드 (NYS: 뉴욕, NAS: 나스닥, AMS: 아멕스, HKS: 홍콩, SHS: 상해, SZS: 심천, HSX: 호치민, HNX: 하노이, TSE: 도쿄, BAY: 뉴욕(주간), BAQ: 나스닥(주간), BAA: 아멕스(주간))
             symb (str): 종목코드 (예: TSLA)
+            auth (str): 사용자권한정보 (공백)
 
         Returns:
             CurrentPriceFirstQuote: 해외주식 현재가 1호가 응답 객체
@@ -71,7 +71,7 @@ class BasicQuote:
             "tr_id": "HHDFS76200100",
         }
         params = {
-            "AUTH": auth,
+            "AUTH": "",
             "EXCD": excd,
             "SYMB": symb,
         }

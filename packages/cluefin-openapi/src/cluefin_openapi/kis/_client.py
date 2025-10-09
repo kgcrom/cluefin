@@ -91,9 +91,9 @@ class Client(object):
     @property
     def overseas_basic_quote(self):
         """해외주식 기본시세"""
-        from ._overseas_basic_quote import OverseasBasicQuote
+        from ._overseas_basic_quote import BasicQuote
 
-        return OverseasBasicQuote(self)
+        return BasicQuote(self)
 
     @property
     def overseas_market_analysis(self):

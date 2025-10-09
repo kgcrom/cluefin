@@ -52,7 +52,7 @@ class StockCurrentPriceDetail(BaseModel, KisHttpBody):
 
     output: StockCurrentPriceDetailItem = Field(title="응답상세")
 
-class CurrentPriceFirstQuoteItem(BaseModel):
+class CurrentPriceFirstQuoteItem1(BaseModel):
     rsym: str = Field(title="실시간조회종목코드", max_length=16)
     zdiv: str = Field(title="소수점자리수", max_length=1)
     curr: str = Field(title="통화", max_length=4)
@@ -72,14 +72,16 @@ class CurrentPriceFirstQuoteItem(BaseModel):
     rhigh: str = Field(title="고가율", max_length=12)
     rlow: str = Field(title="저가율", max_length=12)
     rclose: str = Field(title="현재가율", max_length=12)
-    output2: str = Field(title="응답상세", max_length=100)
+    
+class CurrentPriceFirstQuoteItem2(BaseModel):
     pbid1: str = Field(title="매수호가가격1", max_length=12)
     pask1: str = Field(title="매도호가가격1", max_length=12)
     vbid1: str = Field(title="매수호가잔량1", max_length=10)
     vask1: str = Field(title="매도호가잔량1", max_length=10)
     dbid1: str = Field(title="매수호가대비1", max_length=10)
     dask1: str = Field(title="매도호가대비1", max_length=10)
-    output3: str = Field(title="응답상세", max_length=100)
+    
+class CurrentPriceFirstQuoteItem3(BaseModel):
     vstm: Optional[str] = Field(title="VCMStart시간", max_length=6, description="데이터 없음")
     vetm: Optional[str] = Field(title="VCMEnd시간", max_length=6, description="데이터 없음")
     csbp: Optional[str] = Field(title="CAS/VCM기준가", max_length=12, description="데이터 없음")
@@ -92,7 +94,10 @@ class CurrentPriceFirstQuoteItem(BaseModel):
 class CurrentPriceFirstQuote(BaseModel, KisHttpBody):
     """해외주식 현재가 1호가"""
 
-    output: CurrentPriceFirstQuoteItem = Field(title="응답상세")
+    output1: CurrentPriceFirstQuoteItem1 = Field(title="응답상세1")
+    # TODO(typo): 문서는 list지만 실제로는 object
+    output2: CurrentPriceFirstQuoteItem2 = Field(title="응답상세2")
+    output3: CurrentPriceFirstQuoteItem3 = Field(title="응답상세3")
 
 class StockCurrentPriceConclusionItem(BaseModel):
     rsym: str = Field(title="실시간조회종목코드", max_length=16)
@@ -161,8 +166,8 @@ class StockMinuteChartItem2(BaseModel):
 class StockMinuteChart(BaseModel, KisHttpBody):
     """해외주식분봉조회"""
 
-    output1: Sequence[StockMinuteChartItem1] = Field(default_factory=list)
-    output2: StockMinuteChartItem2 = Field(title="응답상세")
+    output1: StockMinuteChartItem1 = Field(title="응답상세1")
+    output2: Sequence[StockMinuteChartItem2] = Field(default_factory=list)
 
 
 class IndexMinuteChartItem1(BaseModel):
@@ -224,27 +229,27 @@ class StockPeriodQuote(BaseModel, KisHttpBody):
 
 
 class ItemIndexExchangePeriodPriceItem1(BaseModel):
-    ovrs_nmix_prdy_vrss: Optional[str] = Field(title="전일 대비", max_length=16)
-    prdy_vrss_sign: Optional[str] = Field(title="전일 대비 부호", max_length=1)
-    prdy_ctrt: Optional[str] = Field(title="전일 대비율", max_length=11)
-    ovrs_nmix_prdy_clpr: Optional[str] = Field(title="전일 종가", max_length=16)
-    acml_vol: Optional[str] = Field(title="누적 거래량", max_length=18)
-    hts_kor_isnm: Optional[str] = Field(title="HTS 한글 종목명", max_length=40)
-    ovrs_nmix_prpr: Optional[str] = Field(title="현재가", max_length=16)
-    stck_shrn_iscd: Optional[str] = Field(title="단축 종목코드", max_length=9)
-    prdy_vol: Optional[str] = Field(title="전일 거래량", max_length=18)
-    ovrs_prod_oprc: Optional[str] = Field(title="시가", max_length=16)
-    ovrs_prod_hgpr: Optional[str] = Field(title="최고가", max_length=16)
-    ovrs_prod_lwpr: Optional[str] = Field(title="최저가", max_length=16)
+    ovrs_nmix_prdy_vrss: Optional[str] = Field(title="전일 대비", max_length=16, default=None)
+    prdy_vrss_sign: Optional[str] = Field(title="전일 대비 부호", max_length=1, default=None)
+    prdy_ctrt: Optional[str] = Field(title="전일 대비율", max_length=11, default=None)
+    ovrs_nmix_prdy_clpr: Optional[str] = Field(title="전일 종가", max_length=16, default=None)
+    acml_vol: Optional[str] = Field(title="누적 거래량", max_length=18, default=None)
+    hts_kor_isnm: Optional[str] = Field(title="HTS 한글 종목명", max_length=40, default=None)
+    ovrs_nmix_prpr: Optional[str] = Field(title="현재가", max_length=16, default=None)
+    stck_shrn_iscd: Optional[str] = Field(title="단축 종목코드", max_length=9, default=None)
+    prdy_vol: Optional[str] = Field(title="전일 거래량", max_length=18, default=None)
+    ovrs_prod_oprc: Optional[str] = Field(title="시가", max_length=16, default=None)
+    ovrs_prod_hgpr: Optional[str] = Field(title="최고가", max_length=16, default=None)
+    ovrs_prod_lwpr: Optional[str] = Field(title="최저가", max_length=16, default=None)
 
 class ItemIndexExchangePeriodPriceItem2(BaseModel):
-    stck_bsop_date: Optional[str] = Field(title="영업 일자", max_length=8)
-    ovrs_nmix_prpr: Optional[str] = Field(title="현재가", max_length=16)
-    ovrs_nmix_oprc: Optional[str] = Field(title="시가", max_length=16)
-    ovrs_nmix_hgpr: Optional[str] = Field(title="최고가", max_length=16)
-    ovrs_nmix_lwpr: Optional[str] = Field(title="최저가", max_length=16)
-    acml_vol: Optional[str] = Field(title="누적 거래량", max_length=18)
-    mod_yn: Optional[str] = Field(title="변경 여부", max_length=1)
+    stck_bsop_date: Optional[str] = Field(title="영업 일자", max_length=8, default=None)
+    ovrs_nmix_prpr: Optional[str] = Field(title="현재가", max_length=16, default=None)
+    ovrs_nmix_oprc: Optional[str] = Field(title="시가", max_length=16, default=None)
+    ovrs_nmix_hgpr: Optional[str] = Field(title="최고가", max_length=16, default=None)
+    ovrs_nmix_lwpr: Optional[str] = Field(title="최저가", max_length=16, default=None)
+    acml_vol: Optional[str] = Field(title="누적 거래량", max_length=18, default=None)
+    mod_yn: Optional[str] = Field(title="변경 여부", max_length=1, default=None)
 
 class ItemIndexExchangePeriodPrice(BaseModel, KisHttpBody):
     """해외주식 종목/지수/환율기간별시세(일/주/월/년)"""
@@ -337,7 +342,8 @@ class SettlementDateItem(BaseModel):
 class SettlementDate(BaseModel, KisHttpBody):
     """해외결제일자조회"""
 
-    output: SettlementDateItem = Field(title="응답상세")
+    # TODO(typo): 문서는 object지만 실제로는 list
+    output: Sequence[SettlementDateItem] = Field(default_factory=list)
 
 class ProductBaseInfoItem(BaseModel):
     std_pdno: str = Field(title="표준상품번호", max_length=12)

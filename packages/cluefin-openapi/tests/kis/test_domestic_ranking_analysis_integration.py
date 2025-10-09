@@ -37,7 +37,6 @@ def token_cache(auth_dev):
     """Fixture to provide persistent token cache."""
     cache = TokenCache(auth_dev)
     yield cache
-    # Note: We don't clear the cache on teardown to allow reuse across test runs
 
 
 @pytest.fixture(scope="module")

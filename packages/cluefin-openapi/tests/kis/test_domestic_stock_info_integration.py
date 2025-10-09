@@ -51,7 +51,7 @@ def kis_client(auth_dev, token_cache):
         secret_key=auth_dev.secret_key,
         token=token_response.access_token,
         env=auth_dev.env,
-        debug=True,
+        # debug=True,
     )
 
 
