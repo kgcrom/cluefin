@@ -459,7 +459,7 @@ class DomesticRankInfoTopCurrentDayDeviationSources(BaseModel, KiwoomHttpBody):
     )
 
 
-class DomesticRankInfoSameNetBuySellRanking(BaseModel):
+class DomesticRankInfoSameNetBuySellRankingItem(BaseModel):
     stk_cd: str = Field(default="", title="종목코드", max_length=20)
     rank: str = Field(default="", title="순위", max_length=20)
     stk_nm: str = Field(default="", title="종목명", max_length=40)
@@ -484,7 +484,9 @@ class DomesticRankInfoSameNetBuySellRanking(BaseModel):
 class DomesticRankInfoSameNetBuySellRanking(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="동일순매매상위요청 응답")
 
-    eql_nettrde_rank: list[DomesticRankInfoSameNetBuySellRanking] = Field(default_factory=list, title="동일순매매상위")
+    eql_nettrde_rank: list[DomesticRankInfoSameNetBuySellRankingItem] = Field(
+        default_factory=list, title="동일순매매상위"
+    )
 
 
 class DomesticRankInfoTopIntradayTradingByInvestorItem(BaseModel):

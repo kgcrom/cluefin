@@ -9,7 +9,6 @@ This script tests the Phase 1 improvements to the ML prediction system:
 - Improved logging and error handling
 """
 
-import os
 import sys
 from pathlib import Path
 

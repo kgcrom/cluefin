@@ -1,11 +1,10 @@
 """Display formatting system for stock inquiry results."""
 
 import unicodedata
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import TYPE_CHECKING, Any, List, Optional, Union
 
 from rich import box
-from rich.align import Align
 from rich.console import Console
 from rich.panel import Panel
 from rich.style import Style
@@ -48,6 +47,10 @@ class DisplayFormatter:
             "error": Style(color="red", bold=True),
             "success": Style(color="green", bold=True),
         }
+
+    def _log_data_error(self, context: str, error: Exception) -> None:
+        """Log non-fatal data formatting issues for troubleshooting."""
+        self.console.log(f"[warning]Failed to format {context}: {error!r}")
 
     def calculate_text_width(self, text: str) -> int:
         """
@@ -414,7 +417,8 @@ class RankingDataFormatter(DisplayFormatter):
                         self.format_number(increase_rate, "percentage"),
                     ]
                 )
-            except Exception:
+            except (AttributeError, TypeError, ValueError, InvalidOperation) as error:
+                self._log_data_error(f"{title} row {i}", error)
                 continue
 
         if rows:
@@ -463,7 +467,8 @@ class RankingDataFormatter(DisplayFormatter):
                         self.format_number(intraday_volume, "volume"),
                     ]
                 )
-            except Exception:
+            except (AttributeError, TypeError, ValueError, InvalidOperation) as error:
+                self._log_data_error(f"{title} row {i}", error)
                 continue
 
         if rows:
@@ -506,7 +511,8 @@ class RankingDataFormatter(DisplayFormatter):
                         self.format_number(trading_volume, "volume"),
                     ]
                 )
-            except Exception:
+            except (AttributeError, TypeError, ValueError, InvalidOperation) as error:
+                self._log_data_error(f"{title} row {i}", error)
                 continue
 
         if rows:
@@ -573,7 +579,8 @@ class RankingDataFormatter(DisplayFormatter):
                         self.format_number(current_volume, "volume"),
                     ]
                 )
-            except Exception:
+            except (AttributeError, TypeError, ValueError, InvalidOperation) as error:
+                self._log_data_error(f"{title} item processing", error)
                 continue
 
         if rows:
@@ -621,7 +628,9 @@ class RankingDataFormatter(DisplayFormatter):
                         self.format_number(acquirable_shares, "volume"),
                     ]
                 )
-            except Exception:
+            except (AttributeError, TypeError, ValueError, InvalidOperation) as error:
+                identifier = getattr(item, "stk_cd", getattr(item, "stk_nm", getattr(item, "rank", "?")))
+                self._log_data_error(f"{title} item {identifier}", error)
                 continue
 
         if rows:
@@ -672,7 +681,8 @@ class RankingDataFormatter(DisplayFormatter):
                         self.format_number(limit_exhaustion_rate, "percentage"),
                     ]
                 )
-            except Exception:
+            except (AttributeError, TypeError, ValueError, InvalidOperation) as error:
+                self._log_data_error(f"{title} row {i}", error)
                 continue
 
         if rows:
@@ -708,8 +718,8 @@ class RankingDataFormatter(DisplayFormatter):
                         self.format_number(trading_value, "volume"),
                     ]
                 )
-            except Exception:
-                # Skip malformed entries
+            except (AttributeError, TypeError, ValueError, InvalidOperation) as error:
+                self._log_data_error(f"{title} row {i}", error)
                 continue
 
         if rows:
@@ -744,7 +754,8 @@ class RankingDataFormatter(DisplayFormatter):
                         self.format_number(market_cap, "volume"),
                     ]
                 )
-            except Exception:
+            except (AttributeError, TypeError, ValueError, InvalidOperation) as error:
+                self._log_data_error(f"{title} row {i}", error)
                 continue
 
         if rows:
@@ -779,7 +790,8 @@ class RankingDataFormatter(DisplayFormatter):
                         self.format_number(net_buy_amt, "volume"),
                     ]
                 )
-            except Exception:
+            except (AttributeError, TypeError, ValueError, InvalidOperation) as error:
+                self._log_data_error(f"{title} row {i}", error)
                 continue
 
         if rows:
@@ -911,7 +923,9 @@ class SectorDataFormatter(DisplayFormatter):
                         self.format_number(other_corp_net, "volume"),
                     ]
                 )
-            except Exception:
+            except (AttributeError, TypeError, ValueError, InvalidOperation) as error:
+                sector = getattr(item, "inds_nm", "?")
+                self._log_data_error(f"{title} sector {sector}", error)
                 continue
 
         if rows:
@@ -998,8 +1012,8 @@ class SectorDataFormatter(DisplayFormatter):
                 if time_rows:
                     self.display_table(time_headers, time_rows, f"⏰ {title} (시간별)")
 
-        except Exception:
-            pass
+        except (AttributeError, TypeError, ValueError, InvalidOperation) as error:
+            self._log_data_error(f"{title} summary data", error)
 
         if rows:
             self.display_table(headers, rows, f"💰 {title}")
@@ -1044,7 +1058,9 @@ class SectorDataFormatter(DisplayFormatter):
                         self.format_number(getattr(item, "low_pric", "0"), "price"),
                     ]
                 )
-            except Exception:
+            except (AttributeError, TypeError, ValueError, InvalidOperation) as error:
+                identifier = getattr(item, "stk_cd", getattr(item, "stk_nm", "?"))
+                self._log_data_error(f"{title} item {identifier}", error)
                 continue
 
         if rows:
@@ -1096,7 +1112,9 @@ class SectorDataFormatter(DisplayFormatter):
                         self.format_number(getattr(item, "flo_stk_num", "0"), "number"),
                     ]
                 )
-            except Exception:
+            except (AttributeError, TypeError, ValueError, InvalidOperation) as error:
+                identifier = getattr(item, "stk_cd", getattr(item, "stk_nm", "?"))
+                self._log_data_error(f"{title} item {identifier}", error)
                 continue
 
         if rows:
@@ -1184,8 +1202,8 @@ class SectorDataFormatter(DisplayFormatter):
                 if daily_rows:
                     self.display_table(daily_headers, daily_rows, f"📅 {title} (일별)")
 
-        except Exception:
-            pass
+        except (AttributeError, TypeError, ValueError, InvalidOperation) as error:
+            self._log_data_error(f"{title} detailed data", error)
 
         if rows:
             self.display_table(headers, rows, f"📅 {title}")
@@ -1294,7 +1312,9 @@ class StockDataFormatter(DisplayFormatter):
                         self.format_number(buy_price, "price"),
                     ]
                 )
-            except Exception:
+            except (AttributeError, TypeError, ValueError, InvalidOperation) as error:
+                identifier = getattr(item, "stk_cd", getattr(item, "stk_nm", "?"))
+                self._log_data_error(f"{title} item {identifier}", error)
                 continue
 
         if rows:
@@ -1347,7 +1367,9 @@ class StockDataFormatter(DisplayFormatter):
                         self.format_number(supply_ratio, "percentage"),
                     ]
                 )
-            except Exception:
+            except (AttributeError, TypeError, ValueError, InvalidOperation) as error:
+                identifier = getattr(item, "stk_cd", getattr(item, "stk_nm", "?"))
+                self._log_data_error(f"{title} item {identifier}", error)
                 continue
 
         if rows:
@@ -1385,7 +1407,9 @@ class StockDataFormatter(DisplayFormatter):
                         self.format_number(trade_weight, "percentage"),
                     ]
                 )
-            except Exception:
+            except (AttributeError, TypeError, ValueError, InvalidOperation) as error:
+                date = getattr(item, "dt", "?")
+                self._log_data_error(f"{title} date {date}", error)
                 continue
 
         if rows:
@@ -1421,10 +1445,11 @@ class StockDataFormatter(DisplayFormatter):
 
                 for investor_type, value in investor_data:
                     if value and value != "0":
-                        rows.append([investor_type, self.format_number(value.replace("--", "-"), "volume")])
+                        cleaned_value = str(value).replace("--", "-")
+                        rows.append([investor_type, self.format_number(cleaned_value, "volume")])
 
-            except Exception:
-                pass
+            except (AttributeError, TypeError, ValueError, InvalidOperation) as error:
+                self._log_data_error(f"{title} investor summary", error)
 
         if rows:
             self.display_table(headers, rows, f"👤 {title}")
@@ -1512,8 +1537,9 @@ class StockDataFormatter(DisplayFormatter):
             self.console.print(Columns([panels[2], panels[3]], equal=True))
             self.console.print()
 
-        except Exception as e:
-            self.display_error(f"데이터 형식 오류: {str(e)}", "형식 오류")
+        except (AttributeError, TypeError, ValueError, InvalidOperation) as error:
+            self._log_data_error(f"{title} stock info", error)
+            self.display_error(f"데이터 형식 오류: {error}", "형식 오류")
 
     def _format_generic_stock_data(self, data: Any, title: str) -> None:
         """Format generic stock data when specific format is unknown."""

@@ -7,7 +7,9 @@ import zipfile
 from datetime import date, timedelta
 from pathlib import Path
 from typing import List, Literal, Mapping, Optional
-from xml.etree import ElementTree
+from xml.etree.ElementTree import Element
+
+from defusedxml.ElementTree import ParseError, fromstring
 
 from ._client import Client
 from ._exceptions import (
@@ -131,8 +133,8 @@ class PublicDisclosure:
         # DART returns error details as small XML bodies even on binary endpoints.
         if stripped.startswith(b"<"):
             try:
-                root = ElementTree.fromstring(payload)
-            except ElementTree.ParseError:
+                root = fromstring(payload)
+            except ParseError:
                 root = None
             if root is not None:
                 status = (root.findtext("status") or "").strip()
@@ -188,8 +190,8 @@ class PublicDisclosure:
             raise DartAPIError("고유번호 ZIP 파일이 손상되었습니다.") from exc
 
         try:
-            root = ElementTree.fromstring(xml_bytes)
-        except ElementTree.ParseError as exc:  # pragma: no cover - defensive guard
+            root = fromstring(xml_bytes)
+        except ParseError as exc:  # pragma: no cover - defensive guard
             raise DartAPIError("고유번호 XML 파싱에 실패했습니다.") from exc
 
         status = "000"
@@ -227,10 +229,10 @@ class PublicDisclosure:
         return UniqueNumber.parse(payload, list_model=UniqueNumberItem)
 
     @staticmethod
-    def _xml_text(node: ElementTree.Element, tag: str) -> str:
+    def _xml_text(node: Element, tag: str) -> str:
         value = node.findtext(tag)
         return value.strip() if value else ""
 
-    def _optional_xml_text(self, node: ElementTree.Element, tag: str) -> Optional[str]:
+    def _optional_xml_text(self, node: Element, tag: str) -> Optional[str]:
         value = self._xml_text(node, tag)
         return value or None
