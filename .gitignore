@@ -74,7 +74,6 @@ venv.bak/
 # Lock files
 Pipfile.lock
 poetry.lock
-uv.lock
 
 # Project-specific
 packages/*/src/*/__pycache__/
