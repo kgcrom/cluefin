@@ -28,4 +28,4 @@ __all__ = [
 
 
 def hello() -> str:
-    return "Hello from cluefin-kiwoom!"
+    return "Hello from cluefin-openapi/kiwoom!"

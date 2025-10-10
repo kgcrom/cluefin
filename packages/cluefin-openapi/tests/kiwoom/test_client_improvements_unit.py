@@ -46,7 +46,7 @@ def test_client_session_headers():
     expected_headers = {
         "Content-Type": "application/json",
         "Accept": "application/json",
-        "User-Agent": "cluefin-kiwoom/0.1.0",
+        "User-Agent": "cluefin-openapi/1.0",
     }
     for key, value in expected_headers.items():
         assert client._session.headers[key] == value
