@@ -102,9 +102,6 @@ cluefin-cli analyze 005930 --ml-predict --shap-analysis
 
 # 🚀 Full analysis (all features)
 cluefin-cli analyze 005930 --chart --ai-analysis --ml-predict --shap-analysis
-
-# Interactive market inquiry
-cluefin-cli inquiry
 ```
 
 ## 명령어 참조
@@ -152,20 +149,6 @@ cluefin-cli analyze 207940 --ml-predict --shap-analysis
 # LG에너지솔루션 - 전체 분석
 cluefin-cli analyze 373220 --chart --ai-analysis --ml-predict --shap-analysis
 ```
-
-### `inquiry` 명령어
-
-메뉴 기반 인터페이스를 통해 한국 주식 시장 데이터를 탐색하는 대화형 시장 조회 도구입니다.
-
-```bash
-cluefin-cli inquiry
-```
-
-이 명령어는 다음을 가능하게 하는 대화형 CLI 메뉴 시스템을 실행합니다:
-- 업종별 주식 정보 탐색
-- 시장 순위 및 성과 보기
-- 상세한 주식 데이터를 대화형으로 탐색
-- 다양한 시장 카테고리 탐색
 
 ## 📈 Supported Stocks
 

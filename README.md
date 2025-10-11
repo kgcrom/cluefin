@@ -43,9 +43,6 @@ uv sync --all-packages
 cp apps/cluefin-cli/.env.sample .env
 # Edit .env with your API keys (KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, KIWOOM_ENV, KIS_APP_KEY, KIS_SECRET_KEY, KIS_ENV, KRX_AUTH_KEY, DART_AUTH_KEY, OPENAI_API_KEY)
 
-# Interactive stock analysis
-cluefin-cli inquiry
-
 # Advanced analysis with ML prediction
 cluefin-cli analyze 005930 --chart --ai-analysis --ml-predict --shap-analysis
 
@@ -57,7 +54,7 @@ uv run ruff check . --fix
 ## ✨ 주요 기능
 
 ### 🔥 핵심 기능
-- **대화형 CLI**: 메뉴 기반 주식 조회 시스템을 갖춘 리치 터미널 인터페이스
+- **대화형 CLI**: Rich 기반 터미널 인터페이스로 핵심 분석 기능 제공
 - **한국 금융 API**: 키움증권, 한국투자증권(KIS), 한국거래소(KRX), DART를 위한 타입 안전한 클라이언트
 - **ML 기반 예측**: 주식 움직임 예측을 위한 SHAP 설명 기능을 갖춘 LightGBM 모델
 - **기술적 분석**: TA-Lib 통합을 통한 20+ 지표 (RSI, MACD, 볼린저 밴드 등)
