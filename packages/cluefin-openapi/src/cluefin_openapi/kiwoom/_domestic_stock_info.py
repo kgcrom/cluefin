@@ -687,6 +687,8 @@ class DomesticStockInfo:
         qty_tp: Literal["0", "1", "2", "3", "5", "10", "30", "50", "100"],
         pric_tp: Literal["0", "1", "8", "2", "3", "4", "5"],
         stex_tp: Literal["1", "2"],
+        cont_yn: Literal["Y", "N"] = "N",
+        next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticStockInfoTradingMemberInstantVolume]:
         """거래원순간거래량요청
 
@@ -705,6 +707,8 @@ class DomesticStockInfo:
             "Content-Type": "application/json",
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
+            "cont-yn": cont_yn,
+            "next-key": next_key,
             "api-id": "ka10052",
         }
 
@@ -775,7 +779,6 @@ class DomesticStockInfo:
         body = {
             "mrkt_tp": mrkt_tp,
             "bf_mkrt_tp": bf_mkrt_tp,
-            "stk_cd": stk_cd,
             "motn_tp": motn_tp,
             "skip_stk": skip_stk,
             "trde_qty_tp": trde_qty_tp,
@@ -787,6 +790,8 @@ class DomesticStockInfo:
             "motn_drc": motn_drc,
             "stex_tp": stex_tp,
         }
+        if stk_cd:
+            body["stk_cd"] = stk_cd
         response = self.client._post(self.path, headers, body)
 
         if response.status_code != 200:
@@ -819,6 +824,7 @@ class DomesticStockInfo:
         }
 
         body = {
+            "stk_cd": stk_cd,
             "tdy_pred": tdy_pred,
         }
         response = self.client._post(self.path, headers, body)

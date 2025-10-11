@@ -8,8 +8,8 @@ T_KiwoomHttpBody = TypeVar("T_KiwoomHttpBody", bound="KiwoomHttpBody")
 
 
 class KiwoomHttpHeader(BaseModel):
-    # 연속조회여부
-    cont_yn: Literal["Y", "N"] = Field(alias="cont-yn")
+    # 연속조회여부 (Kiwoom occasionally returns continuation keys here)
+    cont_yn: str = Field(alias="cont-yn")
     # 연속조회키
     next_key: str = Field(alias="next-key")
     # TR명

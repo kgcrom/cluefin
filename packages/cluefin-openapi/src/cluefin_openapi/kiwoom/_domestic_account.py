@@ -1000,13 +1000,13 @@ class DomesticAccount:
             "dmst_stex_tp": dmst_stex_tp,
         }
 
-        if stk_cd:
+        if stk_cd is not None:
             body["stk_cd"] = stk_cd
 
-        if crnc_cd:
+        if crnc_cd is not None:
             body["crnc_cd"] = crnc_cd
 
-        if frgn_stex_code:
+        if frgn_stex_code is not None:
             body["frgn_stex_code"] = frgn_stex_code
 
         response = self.client._post(self.path, headers, body)

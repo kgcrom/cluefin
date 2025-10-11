@@ -35,7 +35,7 @@ from cluefin_openapi.kiwoom._model import (
 class DomesticRankInfo:
     def __init__(self, client: Client):
         self.client = client
-        self.post = "/api/dostk/rkinfo"
+        self.path = "/api/dostk/rkinfo"
 
     def get_top_remaining_order_quantity(
         self,
@@ -101,7 +101,7 @@ class DomesticRankInfo:
             "stex_tp": stex_tp,
         }
 
-        response = self.client._post(self.post, headers, body)
+        response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
             raise Exception(f"Error fetching top remaining order quantity: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
@@ -117,7 +117,7 @@ class DomesticRankInfo:
         trde_qty_tp: Literal["1", "5", "10", "50", "100"],
         stk_cnd: Literal["0", "1", "5", "6", "7", "8", "9"],
         stex_tp: Literal["1", "2"],
-        cond_yn: Literal["Y", "N"] = "N",
+        cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticRankInfoRapidlyIncreasingRemainingOrderQuantity]:
         """호가잔량급증요청
@@ -142,7 +142,7 @@ class DomesticRankInfo:
                 - "8": 증30만보기
                 - "9": 증20만보기
             stex_tp (Literal["1", "2"]): 거래소구분 (KRX: "1", NXT: "2").
-            cond_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
+            cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
             next_key (str, optional): 다음 페이지 키. Defaults to "".
 
         Returns:
@@ -152,7 +152,7 @@ class DomesticRankInfo:
             "Content-Type": "application/json;charset=UTF-8",
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
-            "cond-yn": cond_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "ka10021",
         }
@@ -165,7 +165,7 @@ class DomesticRankInfo:
             "stk_cnd": stk_cnd,
             "stex_tp": stex_tp,
         }
-        response = self.client._post(self.post, headers, body)
+        response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
             raise Exception(f"Error fetching rapidly increasing remaining order quantity: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
@@ -180,7 +180,7 @@ class DomesticRankInfo:
         trde_qty_tp: Literal["5", "10", "50", "100"],
         stk_cnd: Literal["0", "1", "5", "6", "7", "8", "9"],
         stex_tp: Literal["1", "2"],
-        cond_yn: Literal["Y", "N"] = "N",
+        cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticRankInfoRapidlyIncreasingTotalSellOrders]:
         """전량매도급증요청
@@ -203,7 +203,7 @@ class DomesticRankInfo:
                 - "8": 증30만보기
                 - "9": 증20만보기
             stex_tp (Literal["1", "2"]): 거래소구분.
-            cond_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
+            cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
             next_key (str, optional): 다음 페이지 키. Defaults to "".
 
         Returns:
@@ -213,7 +213,7 @@ class DomesticRankInfo:
             "Content-Type": "application/json;charset=UTF-8",
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
-            "cond-yn": cond_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "ka10022",
         }
@@ -226,7 +226,7 @@ class DomesticRankInfo:
             "stk_cnd": stk_cnd,
             "stex_tp": stex_tp,
         }
-        response = self.client._post(self.post, headers, body)
+        response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
             raise Exception(f"Error fetching rapidly increasing total sell orders: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
@@ -243,7 +243,7 @@ class DomesticRankInfo:
         pric_tp: Literal["0", "2", "5", "6", "8", "9"],
         stex_tp: Literal["1", "2"],
         tm: str = "",
-        cond_yn: Literal["Y", "N"] = "N",
+        cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticRankInfoRapidlyIncreasingTradingVolume]:
         """거래량급증요청
@@ -290,7 +290,7 @@ class DomesticRankInfo:
                 - "9": 1만원미만
             stex_tp (Literal["1","2"]): 거래소구분 (1:KRX, 2:NXT 3.통합).
             tm (str, optional): 시간 입력.
-            cond_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
+            cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
             next_key (str, optional): 다음 페이지 키. Defaults to "".
 
         Returns:
@@ -300,7 +300,7 @@ class DomesticRankInfo:
             "Content-Type": "application/json;charset=UTF-8",
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
-            "cond-yn": cond_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "ka10023",
         }
@@ -310,12 +310,13 @@ class DomesticRankInfo:
             "sort_tp": sort_tp,
             "tm_tp": tm_tp,
             "trde_qty_tp": trde_qty_tp,
-            "tm": tm,
             "stk_cnd": stk_cnd,
             "pric_tp": pric_tp,
             "stex_tp": stex_tp,
         }
-        response = self.client._post(self.post, headers, body)
+        if tm:
+            body["tm"] = tm
+        response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
             raise Exception(f"Error fetching rapidly increasing trading volume: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
@@ -333,7 +334,7 @@ class DomesticRankInfo:
         pric_cnd: Literal["0", "1", "2", "3", "4", "5", "8", "10"],
         trde_prica_cnd: Literal["0", "3", "5", "10", "30", "50", "100", "300", "500", "1000", "3000", "5000"],
         stex_tp: Literal["1", "2"],
-        cond_yn: Literal["Y", "N"] = "N",
+        cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticRankInfoTopPercentageChangeFromPreviousDay]:
         """전일대비등락률상위요청
@@ -403,7 +404,7 @@ class DomesticRankInfo:
                 - "3000": 300억원이상
                 - "5000": 500억원이상
             stex_tp (Literal["1","2"]): 거래소구분 ('1': KRX, '2': NXT 3.통합)
-            cond_yn (Literal["Y","N"], optional): 연속조회 여부. Defaults to 'N'.
+            cont_yn (Literal["Y","N"], optional): 연속조회 여부. Defaults to 'N'.
             next_key (str, optional): 다음 페이지 키. Defaults to "".
 
         Returns:
@@ -413,7 +414,7 @@ class DomesticRankInfo:
             "Content-Type": "application/json;charset=UTF-8",
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
-            "cond-yn": cond_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "ka10027",
         }
@@ -428,7 +429,7 @@ class DomesticRankInfo:
             "trde_prica_cnd": trde_prica_cnd,
             "stex_tp": stex_tp,
         }
-        response = self.client._post(self.post, headers, body)
+        response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
             raise Exception(f"Error fetching top percentage change from previous day: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
@@ -525,7 +526,7 @@ class DomesticRankInfo:
             "pric_cnd": pric_cnd,
             "stex_tp": stex_tp,
         }
-        response = self.client._post(self.post, headers, body)
+        response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
             raise Exception(f"Error fetching top expected conclusion percentage change: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
@@ -543,7 +544,7 @@ class DomesticRankInfo:
         trde_prica_tp: Literal["0", "1", "3", "4", "10", "30", "50", "100", "300", "500", "1000", "3000", "5000"],
         mrkt_open_tp: Literal["0", "1", "2", "3"],
         stex_tp: Literal["1", "2"] = "1",
-        cond_yn: Literal["Y", "N"] = "N",
+        cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticRankInfoTopCurrentDayTradingVolume]:
         """당일거래량상위요청
@@ -618,7 +619,7 @@ class DomesticRankInfo:
                 - "2": 장전시간외
                 - "3": 장후시간외
             stex_tp (Literal["1","2"], optional): 거래소구분. Defaults to '1' (KRX).
-            cond_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
+            cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
             next_key (str, optional): 다음 페이지 키. Defaults to "".
 
         Returns:
@@ -628,7 +629,7 @@ class DomesticRankInfo:
             "Content-Type": "application/json;charset=UTF-8",
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
-            "cond-yn": cond_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "ka10030",
         }
@@ -643,7 +644,7 @@ class DomesticRankInfo:
             "mrkt_open_tp": mrkt_open_tp,
             "stex_tp": stex_tp,
         }
-        response = self.client._post(self.post, headers, body)
+        response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
             raise Exception(f"Error fetching top current day trading volume: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
@@ -657,7 +658,7 @@ class DomesticRankInfo:
         rank_strt: str,
         rank_end: str,
         stex_tp: Literal["1", "2"],
-        cond_yn: Literal["Y", "N"] = "N",
+        cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticRankInfoTopPreviousDayTradingVolume]:
         """전일거래량상위요청
@@ -670,7 +671,7 @@ class DomesticRankInfo:
             rank_strt (str): 순위시작 (0 ~ 100 값 중에 조회를 원하는 순위 시작값)
             rank_end (str): 순위끝 (0 ~ 100 값 중에 조회를 원하는 순위 끝값)
             stex_tp (Literal["1", "2"]): 거래소구분 ('1': KRX, '2': NXT 3.통합)
-            cond_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
+            cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
             next_key (str, optional): 다음 페이지 키. Defaults to "".
 
         Returns:
@@ -680,7 +681,7 @@ class DomesticRankInfo:
             "Content-Type": "application/json;charset=UTF-8",
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
-            "cond-yn": cond_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "ka10031",
         }
@@ -691,7 +692,7 @@ class DomesticRankInfo:
             "rank_end": rank_end,
             "stex_tp": stex_tp,
         }
-        response = self.client._post(self.post, headers, body)
+        response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
             raise Exception(f"Error fetching top previous day trading volume: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
@@ -703,7 +704,7 @@ class DomesticRankInfo:
         mrkt_tp: Literal["000", "001", "101"],
         mang_stk_incls: Literal["0", "1"],
         stex_tp: Literal["1", "2"],
-        cond_yn: Literal["Y", "N"] = "N",
+        cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticRankInfoTopTransactionValue]:
         """거래대금상위요청
@@ -712,7 +713,7 @@ class DomesticRankInfo:
             mrkt_tp (Literal["000", "001", "101"]): 시장구분 (전체: '000', 코스피: '001', 코스닥: '101')
             mang_stk_incls (Literal["0", "1"]): 관리종목포함 여부 ('0': 미포함, '1': 포함)
             stex_tp (Literal["1", "2"]): 거래소구분 ('1': KRX, '2': NXT 3.통합)
-            cond_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
+            cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
             next_key (str, optional): 다음 페이지 키. Defaults to "".
 
         Returns:
@@ -722,7 +723,7 @@ class DomesticRankInfo:
             "Content-Type": "application/json;charset=UTF-8",
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
-            "cond-yn": cond_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "ka10032",
         }
@@ -731,7 +732,7 @@ class DomesticRankInfo:
             "mang_stk_incls": mang_stk_incls,
             "stex_tp": stex_tp,
         }
-        response = self.client._post(self.post, headers, body)
+        response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
             raise Exception(f"Error fetching top trading value: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
@@ -746,7 +747,7 @@ class DomesticRankInfo:
         updown_incls: Literal["0", "1"],
         crd_cnd: Literal["0", "1", "2", "3", "4", "9"],
         stex_tp: Literal["1", "2", "3"],
-        cond_yn: Literal["Y", "N"] = "N",
+        cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticRankInfoTopMarginRatio]:
         """신용비율상위요청
@@ -779,7 +780,7 @@ class DomesticRankInfo:
                 - "4": 신용융자D군
                 - "9": 신용융자전체
             stex_tp (Literal["1","2","3"]): 거래소구분. (1: KRX, 2: NXT, 3: 통합)
-            cond_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
+            cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
             next_key (str, optional): 다음 페이지 키. Defaults to "".
 
         Returns:
@@ -789,7 +790,7 @@ class DomesticRankInfo:
             "Content-Type": "application/json;charset=UTF-8",
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
-            "cond-yn": cond_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "ka10033",
         }
@@ -801,7 +802,7 @@ class DomesticRankInfo:
             "crd_cnd": crd_cnd,
             "stex_tp": stex_tp,
         }
-        response = self.client._post(self.post, headers, body)
+        response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
             raise Exception(f"Error fetching top margin ratio: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
@@ -814,7 +815,7 @@ class DomesticRankInfo:
         trde_tp: Literal["1", "2", "3"],
         dt: Literal["0", "1", "5", "10", "20", "60"],
         stex_tp: Literal["1", "2", "3"],
-        cond_yn: Literal["Y", "N"] = "N",
+        cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticRankInfoTopForeignerPeriodTrading]:
         """외인기간별매매상위요청
@@ -832,7 +833,7 @@ class DomesticRankInfo:
                 - "20": 20일
                 - "60": 60일
             stex_tp (Literal["1", "2", "3"]): 거래소구분. (1: KRX, 2: NXT, 3: 통합)
-            cond_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
+            cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
             next_key (str, optional): 다음 페이지 키. Defaults to "".
 
         Returns:
@@ -842,7 +843,7 @@ class DomesticRankInfo:
             "Content-Type": "application/json;charset=UTF-8",
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
-            "cond-yn": cond_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "ka10034",
         }
@@ -853,7 +854,7 @@ class DomesticRankInfo:
             "stex_tp": stex_tp,
         }
 
-        response = self.client._post(self.post, headers, body)
+        response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
             raise Exception(f"Error fetching top foreigner period trading: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
@@ -866,7 +867,7 @@ class DomesticRankInfo:
         trde_tp: Literal["1", "2"],
         base_dt_tp: Literal["0", "1"],
         stex_tp: Literal["1", "2", "3"],
-        cond_yn: Literal["Y", "N"] = "N",
+        cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticRankInfoTopConsecutiveNetBuySellByForeigners]:
         """외국인연속순매매상위요청
@@ -880,7 +881,7 @@ class DomesticRankInfo:
                 - "0": 당일기준
                 - "1": 전일기준
             stex_tp (Literal["1", "2", "3"]): 거래소구분. (1: KRX, 2: NXT, 3: 통합)
-            cond_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
+            cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
             next_key (str, optional): 다음 페이지 키. Defaults to "".
 
         Returns:
@@ -890,7 +891,7 @@ class DomesticRankInfo:
             "Content-Type": "application/json;charset=UTF-8",
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
-            "cond-yn": cond_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "ka10035",
         }
@@ -900,7 +901,7 @@ class DomesticRankInfo:
             "base_dt_tp": base_dt_tp,
             "stex_tp": stex_tp,
         }
-        response = self.client._post(self.post, headers, body)
+        response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
             raise Exception(f"Error fetching top consecutive net buy/sell by foreigners: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
@@ -912,7 +913,7 @@ class DomesticRankInfo:
         mrkt_tp: Literal["000", "001", "101"],
         dt: Literal["0", "1", "5", "10", "20", "60"],
         stex_tp: Literal["1", "2", "3"],
-        cond_yn: Literal["Y", "N"] = "N",
+        cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticRankInfoTopLimitExhaustionRateForeigner]:
         """외인한도소진율상위요청
@@ -927,7 +928,7 @@ class DomesticRankInfo:
                 - "20": 20일
                 - "60": 60일
             stex_tp (Literal["1", "2", "3"]): 거래소구분. (1: KRX, 2: NXT, 3: 통합)
-            cond_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
+            cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
             next_key (str, optional): 다음 페이지 키. Defaults to "".
 
         Returns:
@@ -937,7 +938,7 @@ class DomesticRankInfo:
             "Content-Type": "application/json;charset=UTF-8",
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
-            "cond-yn": cond_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "ka10036",
         }
@@ -946,7 +947,7 @@ class DomesticRankInfo:
             "dt": dt,
             "stex_tp": stex_tp,
         }
-        response = self.client._post(self.post, headers, body)
+        response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
             raise Exception(f"Error fetching top foreigner limit exhaustion rate: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
@@ -1004,7 +1005,7 @@ class DomesticRankInfo:
             "sort_tp": sort_tp,
             "stex_tp": stex_tp,
         }
-        response = self.client._post(self.post, headers, body)
+        response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
             raise Exception(f"Error fetching top foreign account group trading: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
@@ -1018,7 +1019,7 @@ class DomesticRankInfo:
         end_dt: str,
         qry_tp: Literal["1", "2"],
         dt: Literal["1", "4", "9", "19", "39", "59", "119"] = "1",
-        cond_yn: Literal["Y", "N"] = "N",
+        cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticRankInfoStockSpecificSecuritiesFirmRanking]:
         """종목별증권사순위요청
@@ -1038,7 +1039,7 @@ class DomesticRankInfo:
                 - "39": 40일
                 - "59": 60일
                 - "119": 120일
-            cond_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
+            cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
             next_key (str, optional): 다음 페이지 키. Defaults to "".
 
         Returns:
@@ -1048,7 +1049,7 @@ class DomesticRankInfo:
             "Content-Type": "application/json;charset=UTF-8",
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
-            "cond-yn": cond_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "ka10038",
         }
@@ -1059,7 +1060,7 @@ class DomesticRankInfo:
             "qry_tp": qry_tp,
             "dt": dt,
         }
-        response = self.client._post(self.post, headers, body)
+        response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
             raise Exception(f"Error fetching stock specific securities firm ranking: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
@@ -1073,7 +1074,7 @@ class DomesticRankInfo:
         trde_tp: Literal["1", "2"],
         dt: Literal["1", "5", "10", "60"],
         stex_tp: Literal["1", "2", "3"],
-        cond_yn: Literal["Y", "N"] = "N",
+        cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticRankInfoTopSecuritiesFirmTrading]:
         """증권사별매매상위요청
@@ -1097,7 +1098,7 @@ class DomesticRankInfo:
                 - "10": 10일
                 - "60": 60일
             stex_tp (Literal["1", "2", "3"]): 거래소구분. (1: KRX, 2: NXT, 3: 통합)
-            cond_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
+            cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
             next_key (str, optional): 다음 페이지 키. Defaults to "".
 
         Returns:
@@ -1107,7 +1108,7 @@ class DomesticRankInfo:
             "Content-Type": "application/json;charset=UTF-8",
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
-            "cond-yn": cond_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "ka10039",
         }
@@ -1118,7 +1119,7 @@ class DomesticRankInfo:
             "dt": dt,
             "stex_tp": stex_tp,
         }
-        response = self.client._post(self.post, headers, body)
+        response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
             raise Exception(f"Error fetching top securities firm trading: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
@@ -1128,14 +1129,14 @@ class DomesticRankInfo:
     def get_top_current_day_major_traders(
         self,
         stk_cd: str,
-        cond_yn: Literal["Y", "N"] = "N",
+        cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticRankInfoTopCurrentDayMajorTraders]:
         """당일주요거래원요청
 
         Args:
             stk_cd (str): 종목코드 (거래소별 종목코드, 예: KRX:039490, NXT:039490_NX, SOR:039490_AL)
-            cond_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
+            cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
             next_key (str, optional): 다음 페이지 키. Defaults to "".
 
         Returns:
@@ -1145,14 +1146,14 @@ class DomesticRankInfo:
             "Content-Type": "application/json;charset=UTF-8",
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
-            "cond-yn": cond_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "ka10040",
         }
         body = {
             "stk_cd": stk_cd,
         }
-        response = self.client._post(self.post, headers, body)
+        response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
             raise Exception(f"Error fetching top current day major traders: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
@@ -1168,7 +1169,7 @@ class DomesticRankInfo:
         pot_tp: Literal["0", "1"],
         dt: Literal["5", "10", "20", "40", "60", "120"],
         sort_base: Literal["1", "2"],
-        cond_yn: Literal["Y", "N"] = "N",
+        cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticRankInfoTopNetBuyTraderRanking]:
         """순매수거래원순위요청
@@ -1193,7 +1194,7 @@ class DomesticRankInfo:
             sort_base (Literal["1", "2"]): 정렬기준
                 - "1": 종가순
                 - "2": 날짜순
-            cond_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
+            cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
             next_key (str, optional): 다음 페이지 키. Defaults to "".
 
         Returns:
@@ -1203,7 +1204,7 @@ class DomesticRankInfo:
             "Content-Type": "application/json;charset=UTF-8",
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
-            "cond-yn": cond_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "ka10042",
         }
@@ -1216,7 +1217,7 @@ class DomesticRankInfo:
             "dt": dt,
             "sort_base": sort_base,
         }
-        response = self.client._post(self.post, headers, body)
+        response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
             raise Exception(f"Error fetching top net buy trader ranking: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
@@ -1226,14 +1227,14 @@ class DomesticRankInfo:
     def get_top_current_day_deviation_sources(
         self,
         stk_cd: str,
-        cond_yn: Literal["Y", "N"] = "N",
+        cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticRankInfoTopCurrentDayDeviationSources]:
         """당일상위이탈원요청
 
         Args:
             stk_cd (str): 종목코드 (거래소별 종목코드, 예: KRX:039490, NXT:039490_NX, SOR:039490_AL)
-            cond_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
+            cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
             next_key (str, optional): 다음 페이지 키. Defaults to "".
 
         Returns:
@@ -1243,14 +1244,14 @@ class DomesticRankInfo:
             "Content-Type": "application/json;charset=UTF-8",
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
-            "cond-yn": cond_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "ka10053",
         }
         body = {
             "stk_cd": stk_cd,
         }
-        response = self.client._post(self.post, headers, body)
+        response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
             raise Exception(f"Error fetching top current day deviation sources: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
@@ -1266,6 +1267,8 @@ class DomesticRankInfo:
         sort_cnd: Literal["1", "2"],
         unit_tp: Literal["1", "1000"],
         stex_tp: Literal["1", "2", "3"],
+        cont_yn: Literal["Y", "N"] = "N",
+        next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticRankInfoSameNetBuySellRanking]:
         """동일순매매순위요청
 
@@ -1283,6 +1286,8 @@ class DomesticRankInfo:
                 - "1": 단주
                 - "1000": 천주
             stex_tp (Literal["1", "2", "3"]): 거래소구분. (1: KRX, 2: NXT, 3: 통합)
+            cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
+            next_key (str, optional): 다음 페이지 키. Defaults to "".
 
         Returns:
             KiwoomHttpResponse[DomesticRankInfoSameNetBuySellRanking]: 동일순매매순위요청 결과
@@ -1291,6 +1296,8 @@ class DomesticRankInfo:
             "Content-Type": "application/json;charset=UTF-8",
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
+            "cont-yn": cont_yn,
+            "next-key": next_key,
             "api-id": "ka10062",
         }
         body = {
@@ -1302,7 +1309,7 @@ class DomesticRankInfo:
             "unit_tp": unit_tp,
             "stex_tp": stex_tp,
         }
-        response = self.client._post(self.post, headers, body)
+        response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
             raise Exception(f"Error fetching same net buy/sell ranking: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
@@ -1314,7 +1321,7 @@ class DomesticRankInfo:
         trde_tp: Literal["1", "2"],
         mrkt_tp: Literal["000", "001", "101"],
         orgn_tp: Literal["9000", "9100", "1000", "3000", "5000", "4000", "2000", "6000", "7000", "7100", "9999"],
-        cond_yn: Literal["Y", "N"] = "N",
+        cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticRankInfoTopIntradayTradingByInvestor]:
         """장중투자자별매매상위요청
@@ -1336,7 +1343,7 @@ class DomesticRankInfo:
                 - "7000": 국가
                 - "7100": 기타법인
                 - "9999": 기관계
-            cond_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
+            cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
             next_key (str, optional): 다음 페이지 키. Defaults to "".
 
         Returns:
@@ -1346,15 +1353,16 @@ class DomesticRankInfo:
             "Content-Type": "application/json;charset=UTF-8",
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
-            "cond-yn": cond_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
+            "api-id": "ka10063",
         }
         body = {
             "trde_tp": trde_tp,
             "mrkt_tp": mrkt_tp,
             "orgn_tp": orgn_tp,
         }
-        response = self.client._post(self.post, headers, body)
+        response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
             raise Exception(f"Error fetching top intraday trading by investor: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
@@ -1369,7 +1377,7 @@ class DomesticRankInfo:
         trde_qty_cnd: Literal["0", "10", "50", "100", "500", "1000", "5000", "10000"],
         crd_cnd: Literal["0", "9", "1", "2", "3", "4", "8", "5"],
         trde_prica: Literal["0", "5", "10", "30", "50", "100", "300", "500", "1000", "3000", "5000"],
-        cond_yn: Literal["Y", "N"] = "N",
+        cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticRankInfoAfterHoursSinglePriceChangeRateRanking]:
         """시간외단일가등락률순위요청
@@ -1418,7 +1426,7 @@ class DomesticRankInfo:
                 - "8": 신용대주
                 - "5": 신용한도초과제외
             trde_prica (Literal["0","5","10","30","50","100","300","500","1000","3000","5000"]): 거래대금
-            cond_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
+            cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
             next_key (str, optional): 다음 페이지 키. Defaults to "".
 
         Returns:
@@ -1428,7 +1436,7 @@ class DomesticRankInfo:
             "Content-Type": "application/json;charset=UTF-8",
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
-            "cond-yn": cond_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "ka10098",
         }
@@ -1440,7 +1448,7 @@ class DomesticRankInfo:
             "crd_cnd": crd_cnd,
             "trde_prica": trde_prica,
         }
-        response = self.client._post(self.post, headers, body)
+        response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
             raise Exception(f"Error fetching after hours single price change rate ranking: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
@@ -1452,7 +1460,7 @@ class DomesticRankInfo:
         mrkt_tp: Literal["000", "001", "101"],
         dt: Literal["0", "1", "5", "10", "20", "60"],
         stex_tp: Literal["1", "2", "3"],
-        cond_yn: Literal["Y", "N"] = "N",
+        cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticRankInfoTopForeignerLimitExhaustionRate]:
         """외국인한도소진율상위요청
@@ -1467,7 +1475,7 @@ class DomesticRankInfo:
                 - "20": 20일
                 - "60": 60일
             stex_tp (Literal["1", "2", "3"]): 거래소구분. (1: KRX, 2: NXT, 3: 통합)
-            cond_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
+            cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
             next_key (str, optional): 다음 페이지 키. Defaults to "".
 
         Returns:
@@ -1478,7 +1486,7 @@ class DomesticRankInfo:
             "Content-Type": "application/json;charset=UTF-8",
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
-            "cond-yn": cond_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "ka10036",
         }
@@ -1487,7 +1495,7 @@ class DomesticRankInfo:
             "dt": dt,
             "stex_tp": stex_tp,
         }
-        response = self.client._post(self.post, headers, body)
+        response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
             raise Exception(f"Error fetching top foreigner limit exhaustion rate: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)

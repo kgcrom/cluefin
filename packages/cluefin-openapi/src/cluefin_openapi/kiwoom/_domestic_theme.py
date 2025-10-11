@@ -68,7 +68,7 @@ class DomesticTheme:
         thema_grp_cd: str,
         stex_tp: Literal[1, 2, 3],
         date_tp: str = "",
-        cond_yn: Literal["Y", "N"] = "N",
+        cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticThemeGroupStocks]:
         """테마구성종목요청
@@ -77,7 +77,7 @@ class DomesticTheme:
             thema_grp_cd: 테마그룹코드 (검색하려는 테마그룹코드)
             stex_tp: 거래소구분 (1:KRX, 2:NXT 3.통합)
             date_tp: 날짜구분 (n일전 (1일 ~ 99일 날짜입력))
-            cond_yn: 연속조회 여부 (Y:연속조회, N:비연속조회)
+            cont_yn: 연속조회 여부 (Y:연속조회, N:비연속조회)
             next_key: 다음키 (다음페이지 조회시 필요)
 
         Returns:
@@ -87,7 +87,7 @@ class DomesticTheme:
             "Content-Type": "application/json",
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
-            "cond-yn": cond_yn,
+            "cond-yn": cont_yn,
             "next-key": next_key,
             "api-id": "ka90002",
         }
