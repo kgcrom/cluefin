@@ -44,7 +44,7 @@ cp apps/cluefin-cli/.env.sample .env
 # Edit .env with your API keys (KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, KIWOOM_ENV, KIS_APP_KEY, KIS_SECRET_KEY, KIS_ENV, KRX_AUTH_KEY, DART_AUTH_KEY, OPENAI_API_KEY)
 
 # Advanced analysis with ML prediction
-cluefin-cli analyze 005930 --chart --ai-analysis --ml-predict --shap-analysis
+cluefin-cli ta 005930 --chart --ai-analysis --ml-predict --shap-analysis
 
 # Run tests and code quality checks
 uv run pytest -m "not integration"  # Unit tests only

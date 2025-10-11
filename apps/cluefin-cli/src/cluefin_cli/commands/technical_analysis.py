@@ -19,7 +19,7 @@ from cluefin_cli.utils.formatters import format_currency, format_number
 console = Console()
 
 
-@click.command()
+@click.command(name="ta")
 @click.argument("stock_code")
 @click.option("--chart", "-c", is_flag=True, help="Display chart in terminal")
 @click.option("--ai-analysis", "-a", is_flag=True, help="Include AI-powered analysis")
@@ -33,10 +33,10 @@ console = Console()
     is_flag=True,
     help="Display detailed SHAP analysis with explanations (requires --ml-predict)",
 )
-def analyze(
+def technical_analysis(
     stock_code: str, chart: bool, ai_analysis: bool, ml_predict: bool, feature_importance: bool, shap_analysis: bool
 ):
-    """Analyze stock with technical indicators and market data."""
+    """Run technical analysis for a given stock code."""
     console.print(f"[bold blue]Analyzing {stock_code}...[/bold blue]")
 
     try:

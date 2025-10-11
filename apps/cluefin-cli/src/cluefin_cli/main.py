@@ -1,7 +1,7 @@
 import click
 from rich.console import Console
 
-from cluefin_cli.commands.analyze import analyze
+from cluefin_cli.commands.technical_analysis import technical_analysis
 
 console = Console()
 
@@ -14,7 +14,7 @@ def cli():
     console.print("Use --help to see available commands")
 
 
-cli.add_command(analyze)
+cli.add_command(technical_analysis)
 
 
 if __name__ == "__main__":

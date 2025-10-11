@@ -83,35 +83,35 @@ cp apps/cluefin-cli/.env.sample .env
 
 ```bash
 # Basic stock analysis
-cluefin-cli analyze 005930
+cluefin-cli ta 005930
 
 # With terminal charts
-cluefin-cli analyze 005930 --chart
+cluefin-cli ta 005930 --chart
 
 # With AI-powered analysis
-cluefin-cli analyze 005930 --ai-analysis
+cluefin-cli ta 005930 --ai-analysis
 
 # 🤖 With ML prediction
-cluefin-cli analyze 005930 --ml-predict
+cluefin-cli ta 005930 --ml-predict
 
 # 📊 With basic feature importance
-cluefin-cli analyze 005930 --ml-predict --feature-importance
+cluefin-cli ta 005930 --ml-predict --feature-importance
 
 # 🔍 With detailed SHAP analysis
-cluefin-cli analyze 005930 --ml-predict --shap-analysis
+cluefin-cli ta 005930 --ml-predict --shap-analysis
 
 # 🚀 Full analysis (all features)
-cluefin-cli analyze 005930 --chart --ai-analysis --ml-predict --shap-analysis
+cluefin-cli ta 005930 --chart --ai-analysis --ml-predict --shap-analysis
 ```
 
 ## 명령어 참조
 
-### `analyze` 명령어
+### `ta` 명령어
 
 포괄적인 기술적 지표 및 시장 데이터로 한국 주식을 분석합니다.
 
 ```bash
-cluefin-cli analyze [OPTIONS] STOCK_CODE
+cluefin-cli ta [OPTIONS] STOCK_CODE
 ```
 
 #### 인수
@@ -129,25 +129,25 @@ cluefin-cli analyze [OPTIONS] STOCK_CODE
 
 ```bash
 # 삼성전자 기본 분석
-cluefin-cli analyze 005930
+cluefin-cli ta 005930
 
 # SK하이닉스 차트 포함
-cluefin-cli analyze 000660 --chart
+cluefin-cli ta 000660 --chart
 
 # 네이버 AI 인사이트 포함
-cluefin-cli analyze 035420 --chart --ai-analysis
+cluefin-cli ta 035420 --chart --ai-analysis
 
 # 삼성전자 ML 예측 포함
-cluefin-cli analyze 005930 --ml-predict
+cluefin-cli ta 005930 --ml-predict
 
 # LG화학 ML + 기본 피처 중요도
-cluefin-cli analyze 051910 --ml-predict --feature-importance
+cluefin-cli ta 051910 --ml-predict --feature-importance
 
 # 삼성바이오로직스 ML + 상세 SHAP 분석
-cluefin-cli analyze 207940 --ml-predict --shap-analysis
+cluefin-cli ta 207940 --ml-predict --shap-analysis
 
 # LG에너지솔루션 - 전체 분석
-cluefin-cli analyze 373220 --chart --ai-analysis --ml-predict --shap-analysis
+cluefin-cli ta 373220 --chart --ai-analysis --ml-predict --shap-analysis
 ```
 
 ## 📈 Supported Stocks
@@ -281,7 +281,7 @@ apps/cluefin-cli/
 │   │   │   ├── ranking_info.py        # Stock ranking and performance
 │   │   │   ├── sector_info.py         # Sector-based stock analysis
 │   │   │   └── stock_info.py          # Individual stock information
-│   │   ├── analyze.py            # Main analysis command (Click-based)
+│   │   ├── technical_analysis.py            # Main analysis command (Click-based)
 │   │   └── inquiry.py            # Market inquiry command entry
 │   ├── config/                   # Application configuration
 │   │   └── settings.py           # Pydantic settings management
@@ -339,7 +339,7 @@ uv run ruff check . --fix
 uv run ruff format .
 
 # Test ML pipeline with real example
-cluefin-cli analyze 005930 --ml-predict --shap-analysis
+cluefin-cli ta 005930 --ml-predict --shap-analysis
 ```
 
 ### 🤖 ML Model Architecture
