@@ -54,10 +54,10 @@ def test_company_overview(service: PublicDisclosure) -> None:
 
 
 @pytest.mark.integration
-def test_unique_number_integration(service: PublicDisclosure) -> None:
+def test_corp_code(service: PublicDisclosure) -> None:
     time.sleep(1)
 
-    response = service.unique_number()
+    response = service.corp_code()
 
     assert isinstance(response, UniqueNumber)
     assert response.result.status == "000"

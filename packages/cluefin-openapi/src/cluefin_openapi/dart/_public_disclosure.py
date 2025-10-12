@@ -172,7 +172,7 @@ class PublicDisclosure:
         destination_path.write_bytes(xml_bytes)
         return destination_path
 
-    def unique_number(self) -> UniqueNumber:
+    def corp_code(self) -> UniqueNumber:
         """고유번호 - DART에 등록되어있는 공시대상회사의 고유번호,회사명,종목코드, 최근변경일자를 파일로 제공합니다."""
         params = {"crtfc_key": self.client.auth_key}
         response = self.client._get_bytes("/api/corpCode.xml", params=params)

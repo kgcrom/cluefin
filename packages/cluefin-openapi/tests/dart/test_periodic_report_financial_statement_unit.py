@@ -3,7 +3,7 @@ import types
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal, Type, Union, cast, get_args, get_origin
+from typing import Any, Literal, Mapping, Type, Union, get_args, get_origin
 
 import pytest
 import requests_mock
@@ -45,9 +45,11 @@ INDICATOR_PARAMS = {
 XBRL_PARAMS = {
     "sj_div": "BS1",
 }
-DOWNLOAD_PARAMS = {
-    "rcept_no": "20240101000000",
-    "reprt_code": cast(Literal["11011"], "11011"),
+DOWNLOAD_RECEPT_NO = "20240101000000"
+DOWNLOAD_REPRT_CODE: Literal["11011", "11012", "11013", "11014"] = "11011"
+DOWNLOAD_QUERY_PARAMS = {
+    "rcept_no": DOWNLOAD_RECEPT_NO,
+    "reprt_code": DOWNLOAD_REPRT_CODE,
 }
 SUCCESS_XML = "<result><status>000</status><message>정상적으로 처리되었습니다</message></result>".encode("utf-8")
 ERROR_XML = "<result><status>012</status><message>에러</message></result>".encode("utf-8")
@@ -200,6 +202,63 @@ def test_periodic_report_financial_statement_methods_reject_non_mapping_payloads
     assert case.error_message in str(exc_info.value)
 
 
+def test_get_single_company_major_indicators_passes_payload_to_parser(
+    client: Client, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    service = PeriodicReportFinancialStatement(client)
+    params = dict(INDICATOR_PARAMS)
+    payload: Mapping[str, object] = {"result": {"status": "000", "message": "ok", "list": []}}
+    captured: dict[str, object] = {}
+
+    def fake_get(endpoint: str, params: Mapping[str, str]) -> Mapping[str, object]:
+        captured["endpoint"] = endpoint
+        captured["params"] = params
+        return payload
+
+    sentinel = object()
+
+    def fake_parse(
+        cls,
+        raw_payload: Mapping[str, object],
+        *,
+        list_model: type[BaseModel],
+        result_key: str = "result",
+    ):
+        captured["parse_payload"] = raw_payload
+        captured["list_model"] = list_model
+        captured["result_key"] = result_key
+        captured["cls"] = cls
+        return sentinel
+
+    monkeypatch.setattr(client, "_get", fake_get)
+    monkeypatch.setattr(SingleCompanyMajorIndicator, "parse", classmethod(fake_parse))
+
+    result = service.get_single_company_major_indicators(**params)
+
+    assert result is sentinel
+    assert captured["endpoint"] == "/api/fnlttSinglIndx.json"
+    assert captured["params"] == params
+    assert captured["parse_payload"] is payload
+    assert captured["list_model"] is SingleCompanyMajorIndicatorItem
+    assert captured["result_key"] == "result"
+    assert captured["cls"] is SingleCompanyMajorIndicator
+
+
+def test_get_single_company_major_indicators_reports_payload_type_in_error(
+    client: Client, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    service = PeriodicReportFinancialStatement(client)
+    monkeypatch.setattr(client, "_get", lambda *_args, **_kwargs: [])
+
+    with pytest.raises(TypeError) as exc_info:
+        service.get_single_company_major_indicators(**INDICATOR_PARAMS)
+
+    assert (
+        str(exc_info.value)
+        == "단일회사 주요 재무지표 API 응답은 매핑 타입이어야 합니다. 수신한 타입: <class 'list'>"
+    )
+
+
 def test_download_financial_statement_xbrl_writes_plain_xml(tmp_path: Path, client: Client) -> None:
     service = PeriodicReportFinancialStatement(client)
     xml_bytes = SUCCESS_XML
@@ -211,7 +270,8 @@ def test_download_financial_statement_xbrl_writes_plain_xml(tmp_path: Path, clie
             status_code=200,
         )
         result = service.download_financial_statement_xbrl(
-            **DOWNLOAD_PARAMS,
+            rcept_no=DOWNLOAD_RECEPT_NO,
+            reprt_code=DOWNLOAD_REPRT_CODE,
             destination=destination,
         )
     assert result == destination
@@ -219,7 +279,7 @@ def test_download_financial_statement_xbrl_writes_plain_xml(tmp_path: Path, clie
     last_request = mock_requests.last_request
     assert last_request is not None
     assert last_request.qs["crtfc_key"] == [AUTH_KEY]
-    assert_query_params(last_request, DOWNLOAD_PARAMS)
+    assert_query_params(last_request, DOWNLOAD_QUERY_PARAMS)
 
 
 def test_download_financial_statement_xbrl_extracts_zip(tmp_path: Path, client: Client) -> None:
@@ -237,7 +297,8 @@ def test_download_financial_statement_xbrl_extracts_zip(tmp_path: Path, client: 
             status_code=200,
         )
         result = service.download_financial_statement_xbrl(
-            **DOWNLOAD_PARAMS,
+            rcept_no=DOWNLOAD_RECEPT_NO,
+            reprt_code=DOWNLOAD_REPRT_CODE,
             destination=destination,
         )
     assert result == destination
@@ -255,7 +316,8 @@ def test_download_financial_statement_xbrl_raises_on_error_status(tmp_path: Path
         )
         with pytest.raises(DartAPIError) as exc_info:
             service.download_financial_statement_xbrl(
-                **DOWNLOAD_PARAMS,
+                rcept_no=DOWNLOAD_RECEPT_NO,
+                reprt_code=DOWNLOAD_REPRT_CODE,
                 destination=tmp_path / "error.xml",
             )
     message = str(exc_info.value)
@@ -272,7 +334,8 @@ def test_download_financial_statement_xbrl_rejects_existing_file(
     service = PeriodicReportFinancialStatement(client)
     with pytest.raises(FileExistsError):
         service.download_financial_statement_xbrl(
-            **DOWNLOAD_PARAMS,
+            rcept_no=DOWNLOAD_RECEPT_NO,
+            reprt_code=DOWNLOAD_REPRT_CODE,
             destination=destination,
         )
 
@@ -291,7 +354,8 @@ def test_download_financial_statement_xbrl_raises_when_zip_has_no_xml(tmp_path: 
         )
         with pytest.raises(DartAPIError) as exc_info:
             service.download_financial_statement_xbrl(
-                **DOWNLOAD_PARAMS,
+                rcept_no=DOWNLOAD_RECEPT_NO,
+                reprt_code=DOWNLOAD_REPRT_CODE,
                 destination=tmp_path / "missing.xml",
             )
     message = str(exc_info.value)

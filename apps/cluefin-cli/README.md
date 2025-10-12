@@ -14,6 +14,7 @@
 - 외국인 거래량 분석 (매수/매도 흐름)
 - 시장 지수 모니터링 (KOSPI, KOSDAQ)
 - 다중 기간 분석 (1개월, 3개월, 6개월, 1년)
+- DART 공시 기반 펀더멘털 데이터 (배당, 재무지표, 주요 주주)
 
 ### **기술적 지표**
 - **RSI (상대강도지수)** - 과매수/과매도 상황을 위한 모멘텀 오실레이터
@@ -76,7 +77,7 @@ uv sync --all-packages
 4. **Configure environment (optional):**
 ```bash
 cp apps/cluefin-cli/.env.sample .env
-# Edit .env with your API keys (KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, KIWOOM_ENV, OPENAI_API_KEY)
+# Edit .env with your API keys (KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, KIWOOM_ENV, KRX_AUTH_KEY, DART_AUTH_KEY, OPENAI_API_KEY)
 ```
 
 ### Basic Usage
@@ -102,6 +103,12 @@ cluefin-cli ta 005930 --ml-predict --shap-analysis
 
 # 🚀 Full analysis (all features)
 cluefin-cli ta 005930 --chart --ai-analysis --ml-predict --shap-analysis
+
+# 📘 Fundamental analysis (DART)
+cluefin-cli fa 005930
+
+# 📘 Fundamental analysis for 2023 business report with top 3 shareholders
+cluefin-cli fa 005930 --year 2023 --report annual --max-shareholders 3
 ```
 
 ## 명령어 참조
@@ -150,6 +157,33 @@ cluefin-cli ta 207940 --ml-predict --shap-analysis
 cluefin-cli ta 373220 --chart --ai-analysis --ml-predict --shap-analysis
 ```
 
+### `fa` 명령어
+
+DART 공시 데이터를 기반으로 기업의 펀더멘털 정보를 조회합니다.
+
+```bash
+cluefin-cli fa [OPTIONS] STOCK_CODE
+```
+
+#### 인수
+- `STOCK_CODE` - 한국 주식 코드 (예: 삼성전자는 `005930`)
+
+#### 옵션
+- `--year` - 조회할 사업연도 (기본값: 전년도)
+- `--report` - 공시 보고서 구분 (`annual`, `q1`, `half`, `q3`)
+- `--max-shareholders` - 출력할 주요 주주 수 (기본값: 5)
+- `--help` - 명령어 도움말 표시
+
+#### 예제
+
+```bash
+# 2023 사업보고서를 기준으로 삼성전자 기본적 분석
+cluefin-cli fa 005930 --year 2023 --report annual
+
+# 상위 3명의 주요 주주만 확인
+cluefin-cli fa 005930 --max-shareholders 3
+```
+
 ## 📈 Supported Stocks
 
 CLI는 KOSPI와 KOSDAQ에서 거래되는 모든 한국 주식을 지원합니다. 다음은 인기 종목 예시입니다:
@@ -178,6 +212,9 @@ KIWOOM_ENV=prod # options: prod | dev(default)
 # Korea Exchange (KRX) API
 KRX_AUTH_KEY=your_auth_key_here
 
+# Financial Supervisory Service DART API
+DART_AUTH_KEY=your_dart_auth_key_here
+
 # OpenAI API (for AI-powered market analysis)
 OPENAI_API_KEY=your_openai_api_key_here
 
@@ -191,8 +228,9 @@ ML_CACHE_DIR=.ml_cache/
 The CLI integrates with Korean financial APIs through the `cluefin-openapi` package:
 
 1. **Kiwoom Securities API**: OAuth2-style authentication for real-time stock data, orders, and account information
-2. **Korea Exchange (KRX)**: Simple auth_key authentication for market data, indices, and sector information  
-3. **OpenAI API**: GPT-4 integration for natural language market analysis and insights
+1. **Korea Exchange (KRX)**: Simple auth_key authentication for market data, indices, and sector information  
+1. **Financial Supervisory Service (DART)**: Fundamental disclosures, periodic reports, dividends, and shareholder data
+1. **OpenAI API**: GPT-4 integration for natural language market analysis and insights
 
 **Note**: The CLI can work with limited functionality without API keys, using mock data for demonstration purposes.
 

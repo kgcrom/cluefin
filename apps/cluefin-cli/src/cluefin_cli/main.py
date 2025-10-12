@@ -1,6 +1,7 @@
 import click
 from rich.console import Console
 
+from cluefin_cli.commands.fundamental_analysis import fundamental_analysis
 from cluefin_cli.commands.technical_analysis import technical_analysis
 
 console = Console()
@@ -15,6 +16,7 @@ def cli():
 
 
 cli.add_command(technical_analysis)
+cli.add_command(fundamental_analysis)
 
 
 if __name__ == "__main__":

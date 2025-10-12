@@ -134,7 +134,7 @@ def test_company_overview_rejects_non_mapping(client: Client, monkeypatch: pytes
         service.company_overview("00126380")
 
 
-def test_unique_number_returns_parsed_corp_codes(client: Client) -> None:
+def test_corp_code_returns_parsed_corp_codes(client: Client) -> None:
     xml_payload = """<?xml version=\"1.0\" encoding=\"utf-8\"?>
 <result>
   <status>000</status>
@@ -170,15 +170,15 @@ def test_unique_number_returns_parsed_corp_codes(client: Client) -> None:
             status_code=200,
         )
 
-        unique_number = service.unique_number()
+        corp_code_response = service.corp_code()
 
-        assert isinstance(unique_number, UniqueNumber)
-        assert unique_number.result.status == "000"
-        assert unique_number.result.message == "정상"
-        assert unique_number.result.list is not None
-        assert len(unique_number.result.list) == 2
+        assert isinstance(corp_code_response, UniqueNumber)
+        assert corp_code_response.result.status == "000"
+        assert corp_code_response.result.message == "정상"
+        assert corp_code_response.result.list is not None
+        assert len(corp_code_response.result.list) == 2
 
-        first = unique_number.result.list[0]
+        first = corp_code_response.result.list[0]
         assert first.corp_code == "00126380"
         assert first.corp_name == "삼성전자"
         assert first.corp_eng_name == "Samsung Electronics Co., Ltd."
@@ -186,7 +186,7 @@ def test_unique_number_returns_parsed_corp_codes(client: Client) -> None:
         assert first.corp_cls == "Y"
         assert first.modify_date == "20240101"
 
-        second = unique_number.result.list[1]
+        second = corp_code_response.result.list[1]
         assert second.corp_code == "01234567"
         assert second.corp_eng_name is None
         assert second.stock_code is None

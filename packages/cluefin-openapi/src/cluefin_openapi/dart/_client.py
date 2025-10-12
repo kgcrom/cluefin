@@ -12,10 +12,19 @@ from ._exceptions import (
 
 
 class Client(object):
+    # TODO remove timeout parameter
     def __init__(self, auth_key: str, timeout: int = 30):
         self.auth_key = auth_key
         self.base_url = "https://opendart.fss.or.kr"
         self.timeout = timeout
+        self._session = requests.Session()
+        self._session.headers.update(
+            {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "User-Agent": "cluefin-openapi/1.0",
+            }
+        )
 
     @property
     def major_shareholder_disclosure(self):
@@ -41,7 +50,7 @@ class Client(object):
             params = {}
         params["crtfc_key"] = self.auth_key
 
-        response = requests.get(url, params=params, timeout=self.timeout)
+        response = self._session.get(url, params=params, timeout=self.timeout)
         self._raise_for_status(response)
         return response.content
 
@@ -51,12 +60,10 @@ class Client(object):
             params = {}
         params["crtfc_key"] = self.auth_key
 
-        response = requests.get(url, params=params, timeout=self.timeout)
+        response = self._session.get(url, params=params, timeout=self.timeout)
         self._raise_for_status(response)
-        try:
-            return response.json()
-        except ValueError:
-            return response.text
+
+        return response.json()
 
     def _raise_for_status(self, response):
         if response.status_code == 200:

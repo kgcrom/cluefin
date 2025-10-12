@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     kiwoom_env: Literal["dev", "prod"] = "dev"
     krx_auth_key: Optional[str] = None
     openai_api_key: Optional[str] = None
+    dart_auth_key: Optional[str] = None
 
 
 settings = Settings()

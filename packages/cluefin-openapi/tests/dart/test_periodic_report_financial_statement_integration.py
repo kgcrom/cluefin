@@ -22,7 +22,7 @@ from cluefin_openapi.dart._periodic_report_financial_statement_types import (
 )
 
 CORP_CODE = "00126380"
-BSNS_YEAR = "2023"
+BSNS_YEAR = "2024"
 REPRT_CODE = "11011"
 IDX_CL_CODE = "M210000"
 FS_DIV = "CFS"
@@ -108,6 +108,55 @@ def test_periodic_report_financial_statement_endpoints(
         first_item = items[0]
         if hasattr(first_item, "corp_code"):
             assert first_item.corp_code == CORP_CODE
+
+
+@pytest.mark.integration
+def test_get_single_company_major_indicators_returns_expected_fields(
+    service: PeriodicReportFinancialStatement,
+) -> None:
+    time.sleep(REQUEST_DELAY_SECONDS)
+
+    response = service.get_single_company_major_indicators(
+        corp_code=CORP_CODE,
+        bsns_year=BSNS_YEAR,
+        reprt_code=REPRT_CODE,
+        idx_cl_code=IDX_CL_CODE,
+    )
+
+    assert isinstance(response, SingleCompanyMajorIndicator)
+    assert response.result is not None
+
+    items = response.result.list or []
+    assert all(item.idx_cl_code == IDX_CL_CODE for item in items)
+
+    if items:
+        first_item = items[0]
+        assert first_item.corp_code == CORP_CODE
+        assert first_item.idx_nm
+        if first_item.idx_val is not None:
+            assert first_item.idx_val
+
+
+@pytest.mark.integration
+def test_get_single_company_major_indicators_matches_request_metadata(
+    service: PeriodicReportFinancialStatement,
+) -> None:
+    time.sleep(REQUEST_DELAY_SECONDS)
+
+    response = service.get_single_company_major_indicators(
+        corp_code=CORP_CODE,
+        bsns_year=BSNS_YEAR,
+        reprt_code=REPRT_CODE,
+        idx_cl_code=IDX_CL_CODE,
+    )
+
+    assert response.result is not None
+    assert response.result.status == "000"
+
+    items = response.result.list or []
+    for item in items:
+        assert item.bsns_year == BSNS_YEAR
+        assert item.reprt_code == REPRT_CODE
 
 
 @pytest.mark.integration
