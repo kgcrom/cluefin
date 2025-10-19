@@ -128,9 +128,7 @@ class SingleCompanyMajorIndicatorItem(BaseModel):
     idx_cl_nm: str = Field(description="지표분류명 (수익성지표,안정성지표,성장성지표,활동성지표)")
     idx_code: str = Field(description="지표코드 (ex) M211000")
     idx_nm: str = Field(description="지표명 (ex) 영업이익률")
-    idx_val: Optional[str] = Field(
-        description="지표값 (ex) 0.256 — 일부 항목은 값이 제공되지 않습니다.", default=None
-    )
+    idx_val: Optional[str] = Field(description="지표값 (ex) 0.256 — 일부 항목은 값이 제공되지 않습니다.", default=None)
 
 
 class SingleCompanyMajorIndicator(BaseModel, DartHttpBody[SingleCompanyMajorIndicatorItem]):
@@ -153,9 +151,7 @@ class MultiCompanyMajorIndicatorItem(BaseModel):
     idx_cl_nm: str = Field(description="지표분류명 (수익성지표,안정성지표,성장성지표,활동성지표)")
     idx_code: str = Field(description="지표코드 (ex) M211000")
     idx_nm: str = Field(description="지표명 (ex) 영업이익률")
-    idx_val: Optional[str] = Field(
-        description="지표값 (ex) 0.256 — 일부 항목은 값이 제공되지 않습니다.", default=None
-    )
+    idx_val: Optional[str] = Field(description="지표값 (ex) 0.256 — 일부 항목은 값이 제공되지 않습니다.", default=None)
 
 
 class MultiCompanyMajorIndicator(BaseModel, DartHttpBody[MultiCompanyMajorIndicatorItem]):

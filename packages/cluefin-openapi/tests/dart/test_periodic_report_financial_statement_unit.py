@@ -254,8 +254,7 @@ def test_get_single_company_major_indicators_reports_payload_type_in_error(
         service.get_single_company_major_indicators(**INDICATOR_PARAMS)
 
     assert (
-        str(exc_info.value)
-        == "단일회사 주요 재무지표 API 응답은 매핑 타입이어야 합니다. 수신한 타입: <class 'list'>"
+        str(exc_info.value) == "단일회사 주요 재무지표 API 응답은 매핑 타입이어야 합니다. 수신한 타입: <class 'list'>"
     )
 
 
