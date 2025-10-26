@@ -3,6 +3,8 @@
 from typing import Optional
 
 from cluefin_openapi.kiwoom._client import Client
+from cluefin_openapi.kiwoom._domestic_stock_info_types import DomesticStockInfoSummary
+from cluefin_openapi.kiwoom._model import KiwoomHttpResponse
 from loguru import logger
 
 
@@ -56,7 +58,7 @@ class StockListFetcher:
 
         return stocks
 
-    def _parse_stocks_from_response(self, response) -> list[str]:
+    def _parse_stocks_from_response(self, response: KiwoomHttpResponse[DomesticStockInfoSummary]) -> list[str]:
         """Parse stock codes from API response.
 
         Args:
@@ -68,20 +70,9 @@ class StockListFetcher:
         stocks = []
 
         try:
-            # Response structure: KiwoomHttpResponse with body containing items
-            if hasattr(response, "body"):
-                body = response.body
-                if hasattr(body, "stocks"):
-                    # Get stock codes from stocks list
-                    for item in body.stocks:
-                        if hasattr(item, "stock_code"):
-                            code = item.stock_code.strip()
-                            if code:
-                                stocks.append(code)
-                        elif isinstance(item, dict) and "stock_code" in item:
-                            code = item["stock_code"].strip()
-                            if code:
-                                stocks.append(code)
+            for item in response.body.list:
+                if item.marketName == "거래소" or item.marketName == "코스닥":
+                    stocks.append(item.code.strip())
         except Exception as e:
             logger.error(f"Error parsing stock response: {e}")
 

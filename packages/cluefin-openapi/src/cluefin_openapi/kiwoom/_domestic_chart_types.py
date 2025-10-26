@@ -325,76 +325,16 @@ class DomesticChartStockMinute(BaseModel, KiwoomHttpBody):
 
 
 class DomesticChartStockDailyItem(BaseModel):
-    cur_prc: str = Field(
-        default="",
-        description="현재가",
-        max_length=20,
-    )
-    trde_qty: str = Field(
-        default="",
-        description="거래량",
-        max_length=20,
-    )
-    trde_prica: str = Field(
-        default="",
-        description="거래대금",
-        max_length=20,
-    )
-    dt: str = Field(
-        default="",
-        description="일자 (YYYYMMDD)",
-        max_length=20,
-    )
-    open_pric: str = Field(
-        default="",
-        description="시가",
-        max_length=20,
-    )
-    high_pric: str = Field(
-        default="",
-        description="고가",
-        max_length=20,
-    )
-    low_pric: str = Field(
-        default="",
-        description="저가",
-        max_length=20,
-    )
-    upd_stkpc_tp: str = Field(
-        default="",
-        description="수정주가구분, 1:유상증자, 2:무상증자, 4:배당락, 8:액면분할, 16:액면병합, 32:기업합병, 64:감자, 256:권리락",
-        max_length=20,
-    )
-    upd_rt: str = Field(
-        default="",
-        description="수정비율",
-        max_length=20,
-    )
-    bic_inds_tp: str = Field(
-        default="",
-        description="대업종구분",
-        max_length=20,
-    )
-    sm_inds_tp: str = Field(
-        default="",
-        description="소업종구분",
-        max_length=20,
-    )
-    stk_infr: str = Field(
-        default="",
-        description="종목정보",
-        max_length=20,
-    )
-    upd_stkpc_event: str = Field(
-        default="",
-        description="수정주가이벤트",
-        max_length=20,
-    )
-    pred_close_pric: str = Field(
-        default="",
-        description="전일종가",
-        max_length=20,
-    )
+    dt: str = Field(description="일자 (YYYYMMDD)", max_length=20)
+    cur_prc: str = Field(description="현재가", max_length=20)
+    trde_qty: str = Field(description="거래량", max_length=20)
+    trde_prica: str = Field(description="거래대금", max_length=20)
+    open_pric: str = Field(description="시가", max_length=20)
+    high_pric: str = Field(description="고가", max_length=20)
+    low_pric: str = Field(description="저가", max_length=20)
+    pred_pre: str = Field(description="전일대비", max_length=20)
+    pred_pre_sig: str = Field(description="전일대비부호", max_length=20)
+    trde_tern_rt: str = Field(description="거래전환율", max_length=20)
 
 
 class DomesticChartStockDaily(BaseModel, KiwoomHttpBody):
@@ -409,76 +349,16 @@ class DomesticChartStockDaily(BaseModel, KiwoomHttpBody):
 
 
 class DomesticChartStockWeeklyItem(BaseModel):
-    cur_prc: str = Field(
-        default="",
-        description="현재가",
-        max_length=20,
-    )
-    trde_qty: str = Field(
-        default="",
-        description="거래량",
-        max_length=20,
-    )
-    trde_prica: str = Field(
-        default="",
-        description="거래대금",
-        max_length=20,
-    )
-    dt: str = Field(
-        default="",
-        description="일자 (YYYYMMDD)",
-        max_length=20,
-    )
-    open_pric: str = Field(
-        default="",
-        description="시가",
-        max_length=20,
-    )
-    high_pric: str = Field(
-        default="",
-        description="고가",
-        max_length=20,
-    )
-    low_pric: str = Field(
-        default="",
-        description="저가",
-        max_length=20,
-    )
-    upd_stkpc_tp: str = Field(
-        default="",
-        description="수정주가구분, 1:유상증자, 2:무상증자, 4:배당락, 8:액면분할, 16:액면병합, 32:기업합병, 64:감자, 256:권리락",
-        max_length=20,
-    )
-    upd_rt: str = Field(
-        default="",
-        description="수정비율",
-        max_length=20,
-    )
-    bic_inds_tp: str = Field(
-        default="",
-        description="대업종구분",
-        max_length=20,
-    )
-    sm_inds_tp: str = Field(
-        default="",
-        description="소업종구분",
-        max_length=20,
-    )
-    stk_infr: str = Field(
-        default="",
-        description="종목정보",
-        max_length=20,
-    )
-    upd_stkpc_event: str = Field(
-        default="",
-        description="수정주가이벤트",
-        max_length=20,
-    )
-    pred_close_pric: str = Field(
-        default="",
-        description="전일종가",
-        max_length=20,
-    )
+    dt: str = Field(description="일자 (YYYYMMDD)", max_length=20)
+    cur_prc: str = Field(description="현재가", max_length=20)
+    trde_qty: str = Field(description="거래량", max_length=20)
+    trde_prica: str = Field(description="거래대금", max_length=20)
+    open_pric: str = Field(description="시가", max_length=20)
+    high_pric: str = Field(description="고가", max_length=20)
+    low_pric: str = Field(description="저가", max_length=20)
+    pred_pre: str = Field(description="전일대비", max_length=20)
+    pred_pre_sig: str = Field(description="전일대비부호", max_length=20)
+    trde_tern_rt: str = Field(description="거래전환율", max_length=20)
 
 
 class DomesticChartStockWeekly(BaseModel, KiwoomHttpBody):
@@ -493,76 +373,16 @@ class DomesticChartStockWeekly(BaseModel, KiwoomHttpBody):
 
 
 class DomesticChartStockMonthlyItem(BaseModel):
-    cur_prc: str = Field(
-        default="",
-        description="현재가",
-        max_length=20,
-    )
-    trde_qty: str = Field(
-        default="",
-        description="거래량",
-        max_length=20,
-    )
-    trde_prica: str = Field(
-        default="",
-        description="거래대금",
-        max_length=20,
-    )
-    dt: str = Field(
-        default="",
-        description="일자 (YYYYMMDD)",
-        max_length=20,
-    )
-    open_pric: str = Field(
-        default="",
-        description="시가",
-        max_length=20,
-    )
-    high_pric: str = Field(
-        default="",
-        description="고가",
-        max_length=20,
-    )
-    low_pric: str = Field(
-        default="",
-        description="저가",
-        max_length=20,
-    )
-    upd_stkpc_tp: str = Field(
-        default="",
-        description="수정주가구분, 1:유상증자, 2:무상증자, 4:배당락, 8:액면분할, 16:액면병합, 32:기업합병, 64:감자, 256:권리락",
-        max_length=20,
-    )
-    upd_rt: str = Field(
-        default="",
-        description="수정비율",
-        max_length=20,
-    )
-    bic_inds_tp: str = Field(
-        default="",
-        description="대업종구분",
-        max_length=20,
-    )
-    sm_inds_tp: str = Field(
-        default="",
-        description="소업종구분",
-        max_length=20,
-    )
-    stk_infr: str = Field(
-        default="",
-        description="종목정보",
-        max_length=20,
-    )
-    upd_stkpc_event: str = Field(
-        default="",
-        description="수정주가이벤트",
-        max_length=20,
-    )
-    pred_close_pric: str = Field(
-        default="",
-        description="전일종가",
-        max_length=20,
-    )
+    dt: str = Field(description="일자 (YYYYMMDD)", max_length=20)
+    cur_prc: str = Field(description="현재가", max_length=20)
+    trde_qty: str = Field(description="거래량", max_length=20)
+    trde_prica: str = Field(description="거래대금", max_length=20)
+    open_pric: str = Field(description="시가", max_length=20)
+    high_pric: str = Field(description="고가", max_length=20)
+    low_pric: str = Field(description="저가", max_length=20)
+    pred_pre: str = Field(description="전일대비", max_length=20)
+    pred_pre_sig: str = Field(description="전일대비부호", max_length=20)
+    trde_tern_rt: str = Field(description="거래전환율", max_length=20)
 
 
 class DomesticChartStockMonthly(BaseModel, KiwoomHttpBody):
@@ -577,61 +397,13 @@ class DomesticChartStockMonthly(BaseModel, KiwoomHttpBody):
 
 
 class DomesticChartStockYearlyItem(BaseModel):
-    cur_prc: str = Field(
-        default="",
-        description="현재가",
-        max_length=20,
-    )
-    trde_qty: str = Field(
-        default="",
-        description="거래량",
-        max_length=20,
-    )
-    trde_prica: str = Field(
-        default="",
-        description="거래대금",
-        max_length=20,
-    )
-    dt: str = Field(
-        default="",
-        description="일자 (YYYYMMDD)",
-        max_length=20,
-    )
-    open_pric: str = Field(
-        default="",
-        description="시가",
-        max_length=20,
-    )
-    high_pric: str = Field(
-        default="",
-        description="고가",
-        max_length=20,
-    )
-    low_pric: str = Field(
-        default="",
-        description="저가",
-        max_length=20,
-    )
-    upd_stkpc_tp: str = Field(
-        default="",
-        description="수정주가구분, 1:유상증자, 2:무상증자, 4:배당락, 8:액면분할, 16:액면병합, 32:기업합병, 64:감자, 256:권리락",
-        max_length=20,
-    )
-    upd_rt: str = Field(
-        default="",
-        description="수정비율",
-        max_length=20,
-    )
-    bic_inds_tp: str = Field(
-        default="",
-        description="대업종구분",
-        max_length=20,
-    )
-    sm_inds_tp: str = Field(
-        default="",
-        description="소업종구분",
-        max_length=20,
-    )
+    dt: str = Field(description="일자 (YYYYMMDD)", max_length=20)
+    cur_prc: str = Field(description="현재가", max_length=20)
+    trde_qty: str = Field(description="거래량", max_length=20)
+    trde_prica: str = Field(description="거래대금", max_length=20)
+    open_pric: str = Field(description="시가", max_length=20)
+    high_pric: str = Field(description="고가", max_length=20)
+    low_pric: str = Field(description="저가", max_length=20)
 
 
 class DomesticChartStockYearly(BaseModel, KiwoomHttpBody):

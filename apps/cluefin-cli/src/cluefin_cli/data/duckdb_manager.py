@@ -1,6 +1,5 @@
 """DuckDB management for stock chart data storage."""
 
-import json
 import os
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -18,10 +17,12 @@ class DuckDBManager:
         """Initialize DuckDB manager.
 
         Args:
-            db_path: Path to DuckDB database file. Defaults to ~/.cluefin/data.duckdb
+            db_path: Path to DuckDB database file. Defaults to <project_root>/data/data.duckdb
         """
         if db_path is None:
-            db_path = os.path.expanduser("~/.cluefin/data.duckdb")
+            # Use project root directory instead of home directory
+            project_root = Path(__file__).parent.parent.parent.parent.parent.parent
+            db_path = str(project_root / "data" / "data.duckdb")
 
         # Create directory if it doesn't exist
         Path(db_path).parent.mkdir(parents=True, exist_ok=True)
@@ -35,24 +36,20 @@ class DuckDBManager:
         """Create tables if they don't exist."""
         # Daily chart table
         self.connection.execute("""
-            CREATE TABLE IF NOT EXISTS daily_chart (
+            CREATE TABLE IF NOT EXISTS daily_charts (
                 stock_code VARCHAR NOT NULL,
                 date DATE NOT NULL,
-                open DOUBLE,
-                high DOUBLE,
-                low DOUBLE,
-                close DOUBLE,
-                volume BIGINT,
-                trading_value DOUBLE,
-                adjusted_close DOUBLE,
+                open BIGINT NOT NULL,
+                high BIGINT NOT NULL,
+                low BIGINT NOT NULL,
+                close BIGINT NOT NULL,
+                volume BIGINT NOT NULL,
+                trading_amount BIGINT NOT NULL,
 
                 -- From API response (for reference)
-                bic_inds_tp VARCHAR,
-                sm_inds_tp VARCHAR,
-                stk_infr VARCHAR,
-                upd_stkpc_tp VARCHAR,
-                upd_stkpc_event VARCHAR,
-                pred_close_pric VARCHAR,
+                pred_signal VARCHAR,
+                pred_diff_close_pric BIGINT,
+                turnover_rate DOUBLE,
 
                 -- Metadata
                 created_at TIMESTAMP DEFAULT NOW(),
@@ -62,24 +59,20 @@ class DuckDBManager:
 
         # Weekly chart table
         self.connection.execute("""
-            CREATE TABLE IF NOT EXISTS weekly_chart (
+            CREATE TABLE IF NOT EXISTS weekly_charts (
                 stock_code VARCHAR NOT NULL,
                 date DATE NOT NULL,
-                open DOUBLE,
-                high DOUBLE,
-                low DOUBLE,
-                close DOUBLE,
-                volume BIGINT,
-                trading_value DOUBLE,
-                adjusted_close DOUBLE,
+                open BIGINT NOT NULL,
+                high BIGINT NOT NULL,
+                low BIGINT NOT NULL,
+                close BIGINT NOT NULL,
+                volume BIGINT NOT NULL,
+                trading_amount BIGINT NOT NULL,
 
                 -- From API response (for reference)
-                bic_inds_tp VARCHAR,
-                sm_inds_tp VARCHAR,
-                stk_infr VARCHAR,
-                upd_stkpc_tp VARCHAR,
-                upd_stkpc_event VARCHAR,
-                pred_close_pric VARCHAR,
+                pred_signal VARCHAR,
+                pred_diff_close_pric BIGINT,
+                turnover_rate DOUBLE,
 
                 -- Metadata
                 created_at TIMESTAMP DEFAULT NOW(),
@@ -89,24 +82,20 @@ class DuckDBManager:
 
         # Monthly chart table
         self.connection.execute("""
-            CREATE TABLE IF NOT EXISTS monthly_chart (
+            CREATE TABLE IF NOT EXISTS monthly_charts (
                 stock_code VARCHAR NOT NULL,
                 date DATE NOT NULL,
-                open DOUBLE,
-                high DOUBLE,
-                low DOUBLE,
-                close DOUBLE,
-                volume BIGINT,
-                trading_value DOUBLE,
-                adjusted_close DOUBLE,
+                open BIGINT NOT NULL,
+                high BIGINT NOT NULL,
+                low BIGINT NOT NULL,
+                close BIGINT NOT NULL,
+                volume BIGINT NOT NULL,
+                trading_amount BIGINT NOT NULL,
 
                 -- From API response (for reference)
-                bic_inds_tp VARCHAR,
-                sm_inds_tp VARCHAR,
-                stk_infr VARCHAR,
-                upd_stkpc_tp VARCHAR,
-                upd_stkpc_event VARCHAR,
-                pred_close_pric VARCHAR,
+                pred_signal VARCHAR,
+                pred_diff_close_pric BIGINT,
+                turnover_rate DOUBLE,
 
                 -- Metadata
                 created_at TIMESTAMP DEFAULT NOW(),
@@ -143,18 +132,16 @@ class DuckDBManager:
             return 0
 
         # Prepare data
-        print(f"Stock: {stock_code}")
         insert_df = self._prepare_chart_data(stock_code, df)
-        print(f"Insert DataFrame:\n{insert_df.head()}")
 
         try:
             self.connection.register("insert_df", insert_df)
             self.connection.execute(
-                """INSERT INTO daily_chart
-                (stock_code, date, open, high, low, close, volume, trading_value, adjusted_close,
-                 bic_inds_tp, sm_inds_tp, stk_infr, upd_stkpc_tp, upd_stkpc_event, pred_close_pric)
-                SELECT stock_code, date, open, high, low, close, volume, trading_value, adjusted_close,
-                       bic_inds_tp, sm_inds_tp, stk_infr, upd_stkpc_tp, upd_stkpc_event, pred_close_pric
+                """INSERT INTO daily_charts
+                (stock_code, date, open, high, low, close, volume, trading_amount,
+                 pred_signal, pred_diff_close_pric, turnover_rate)
+                SELECT stock_code, date, open, high, low, close, volume, trading_amount,
+                       pred_signal, pred_diff_close_pric, turnover_rate
                 FROM insert_df
                 ON CONFLICT (stock_code, date) DO UPDATE SET created_at = NOW()"""
             )
@@ -171,7 +158,7 @@ class DuckDBManager:
 
         Args:
             stock_code: Stock code
-            df: DataFrame with columns matching weekly_chart schema
+            df: DataFrame with columns matching weekly_charts schema
 
         Returns:
             Number of records inserted
@@ -185,11 +172,11 @@ class DuckDBManager:
         try:
             self.connection.register("insert_df", insert_df)
             self.connection.execute(
-                """INSERT INTO weekly_chart
-                (stock_code, date, open, high, low, close, volume, trading_value, adjusted_close,
-                 bic_inds_tp, sm_inds_tp, stk_infr, upd_stkpc_tp, upd_stkpc_event, pred_close_pric)
-                SELECT stock_code, date, open, high, low, close, volume, trading_value, adjusted_close,
-                       bic_inds_tp, sm_inds_tp, stk_infr, upd_stkpc_tp, upd_stkpc_event, pred_close_pric
+                """INSERT INTO weekly_charts
+                (stock_code, date, open, high, low, close, volume, trading_amount,
+                 pred_signal, pred_diff_close_pric, turnover_rate)
+                SELECT stock_code, date, open, high, low, close, volume, trading_amount,
+                       pred_signal, pred_diff_close_pric, turnover_rate
                 FROM insert_df
                 ON CONFLICT (stock_code, date) DO UPDATE SET created_at = NOW()"""
             )
@@ -206,7 +193,7 @@ class DuckDBManager:
 
         Args:
             stock_code: Stock code
-            df: DataFrame with columns matching monthly_chart schema
+            df: DataFrame with columns matching monthly_charts schema
 
         Returns:
             Number of records inserted
@@ -220,11 +207,11 @@ class DuckDBManager:
         try:
             self.connection.register("insert_df", insert_df)
             self.connection.execute(
-                """INSERT INTO monthly_chart
-                (stock_code, date, open, high, low, close, volume, trading_value, adjusted_close,
-                 bic_inds_tp, sm_inds_tp, stk_infr, upd_stkpc_tp, upd_stkpc_event, pred_close_pric)
-                SELECT stock_code, date, open, high, low, close, volume, trading_value, adjusted_close,
-                       bic_inds_tp, sm_inds_tp, stk_infr, upd_stkpc_tp, upd_stkpc_event, pred_close_pric
+                """INSERT INTO monthly_charts
+                (stock_code, date, open, high, low, close, volume, trading_amount,
+                 pred_signal, pred_diff_close_pric, turnover_rate)
+                SELECT stock_code, date, open, high, low, close, volume, trading_amount,
+                       pred_signal, pred_diff_close_pric, turnover_rate
                 FROM insert_df
                 ON CONFLICT (stock_code, date) DO UPDATE SET created_at = NOW()"""
             )
@@ -246,15 +233,15 @@ class DuckDBManager:
         Returns:
             Prepared DataFrame
         """
-        # Create DataFrame with same length as input
-        result = pd.DataFrame(index=df.index)
-        result["stock_code"] = stock_code
+        result = pd.DataFrame()
 
         # Map date field
         if "dt" in df.columns:
             result["date"] = pd.to_datetime(df["dt"], format="%Y%m%d")
         else:
             result["date"] = pd.to_datetime(df.index)
+
+        result["stock_code"] = stock_code
 
         # Map OHLCV fields
         field_mapping = {
@@ -263,8 +250,7 @@ class DuckDBManager:
             "high_pric": "high",
             "low_pric": "low",
             "trde_qty": "volume",
-            "trde_prica": "trading_value",
-            "pred_close_pric": "adjusted_close",
+            "trde_prica": "trading_amount",
         }
 
         for api_field, db_field in field_mapping.items():
@@ -273,19 +259,23 @@ class DuckDBManager:
                 result[db_field] = pd.to_numeric(df[api_field], errors="coerce")
 
         # Map optional fields
-        optional_fields = [
-            "bic_inds_tp",
-            "sm_inds_tp",
-            "stk_infr",
-            "upd_stkpc_tp",
-            "upd_stkpc_event",
-            "pred_close_pric",
-        ]
-        for field in optional_fields:
-            if field in df.columns:
-                result[field] = df[field].astype(str)
+        optional_fields = {
+            "pred_pre": "pred_diff_close_pric",
+            "pred_pre_sig": "pred_signal",
+            "trde_tern_rt": "turnover_rate",
+        }
+        for api_field, db_field in optional_fields.items():
+            if api_field in df.columns:
+                if api_field == "pred_pre_sig":
+                    result[db_field] = df[api_field].astype(str)
+                else:
+                    # Remove leading '+' sign before converting to numeric
+                    result[db_field] = pd.to_numeric(
+                        df[api_field].astype(str).str.replace(r"^\+", "", regex=True), errors="coerce"
+                    )
             else:
-                result[field] = None
+                result[db_field] = None
+
         return result
 
     def update_stock_metadata(
@@ -337,7 +327,7 @@ class DuckDBManager:
         stats = {}
 
         # Count records per table
-        for table in ["daily_chart", "weekly_chart", "monthly_chart"]:
+        for table in ["daily_charts", "weekly_charts", "monthly_charts"]:
             result = self.connection.execute(f"SELECT COUNT(*) as count FROM {table}").fetchall()
             stats[f"{table}_count"] = result[0][0] if result else 0
 
@@ -363,23 +353,23 @@ class DuckDBManager:
         result = self.connection.execute(
             """
             SELECT DISTINCT stock_code FROM (
-                SELECT stock_code FROM daily_chart
+                SELECT stock_code FROM daily_charts
                 UNION
-                SELECT stock_code FROM weekly_chart
+                SELECT stock_code FROM weekly_charts
                 UNION
-                SELECT stock_code FROM monthly_chart
+                SELECT stock_code FROM monthly_charts
             ) ORDER BY stock_code
             """
         ).fetchall()
 
         return [row[0] for row in result]
 
-    def get_stock_date_range(self, stock_code: str, table: str = "daily_chart") -> Optional[tuple]:
+    def get_stock_date_range(self, stock_code: str, table: str = "daily_charts") -> Optional[tuple]:
         """Get date range for a stock in a table.
 
         Args:
             stock_code: Stock code
-            table: Table name (daily_chart, weekly_chart, monthly_chart)
+            table: Table name (daily_charts, weekly_charts, monthly_charts)
 
         Returns:
             Tuple of (min_date, max_date) or None if no data
@@ -404,7 +394,7 @@ class DuckDBManager:
         Returns:
             True if all data exists, False otherwise
         """
-        table = f"{frequency}_chart"
+        table = f"{frequency}_charts"
         start = pd.to_datetime(start_date, format="%Y%m%d").date()
         end = pd.to_datetime(end_date, format="%Y%m%d").date()
 
@@ -458,9 +448,9 @@ class DuckDBManager:
                 logger.info("Clear operation cancelled")
                 return
 
-        self.connection.execute("DELETE FROM daily_chart")
-        self.connection.execute("DELETE FROM weekly_chart")
-        self.connection.execute("DELETE FROM monthly_chart")
+        self.connection.execute("DELETE FROM daily_charts")
+        self.connection.execute("DELETE FROM weekly_charts")
+        self.connection.execute("DELETE FROM monthly_charts")
         self.connection.execute("DELETE FROM stock_metadata")
         logger.info("All tables cleared")
 

@@ -5,14 +5,14 @@ from datetime import datetime
 from typing import Optional
 
 import click
+from cluefin_openapi.kiwoom._auth import Auth as KiwoomAuth
+from cluefin_openapi.kiwoom._client import Client as KiwoomClient
 from loguru import logger
 from pydantic import SecretStr
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import BarColumn, MofNCompleteColumn, Progress, TextColumn
 from rich.table import Table
-from cluefin_openapi.kiwoom._auth import Auth as KiwoomAuth
-from cluefin_openapi.kiwoom._client import Client as KiwoomClient
 
 from cluefin_cli.config.settings import settings
 from cluefin_cli.data.duckdb_manager import DuckDBManager
@@ -62,12 +62,6 @@ stderr_console = Console(stderr=True)
     help="End date in YYYYMMDD format (default: today)",
 )
 @click.option(
-    "--batch-size",
-    type=int,
-    default=5,
-    help="Number of stocks to process concurrently",
-)
-@click.option(
     "--show-progress",
     is_flag=True,
     help="Show progress bar during import",
@@ -96,7 +90,6 @@ def import_command(
     frequency: tuple,
     start: Optional[str],
     end: Optional[str],
-    batch_size: int,
     show_progress: bool,
     skip_existing: bool,
     check_db: bool,
@@ -179,9 +172,7 @@ def import_command(
         start_date, end_date = _get_date_range(start, end)
 
         # Display summary
-        _display_import_summary(
-            codes_to_import, frequencies, start_date, end_date, skip_existing
-        )
+        _display_import_summary(codes_to_import, frequencies, start_date, end_date, skip_existing)
 
         # Run import
         _run_import(
@@ -291,7 +282,7 @@ def _get_date_range(start: Optional[str], end: Optional[str]) -> tuple[str, str]
         datetime.strptime(start, "%Y%m%d")
         datetime.strptime(end, "%Y%m%d")
     except ValueError as e:
-        raise ValueError(f"Invalid date format. Use YYYYMMDD format. Error: {e}")
+        raise ValueError(f"Invalid date format. Use YYYYMMDD format. Error: {e}") from e
 
     return (start, end)
 
@@ -352,9 +343,7 @@ def _run_import(
             MofNCompleteColumn(),
             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
         ) as progress:
-            task = progress.add_task(
-                "[cyan]Importing stocks...", total=len(stock_codes)
-            )
+            task = progress.add_task("[cyan]Importing stocks...", total=len(stock_codes))
 
             def update_progress(current: int, total: int, stock_code: str):
                 progress.update(task, advance=1, description=f"[cyan]Processing {stock_code}...")
@@ -407,12 +396,12 @@ def _show_database_stats(db_manager: DuckDBManager) -> None:
     stats_table.add_column("Metric", style="cyan")
     stats_table.add_column("Value", style="magenta")
 
-    stats_table.add_row("Daily Chart Records", f"{stats['daily_chart_count']:,}")
-    stats_table.add_row("Daily Chart Stocks", str(stats["daily_chart_stocks"]))
-    stats_table.add_row("Weekly Chart Records", f"{stats['weekly_chart_count']:,}")
-    stats_table.add_row("Weekly Chart Stocks", str(stats["weekly_chart_stocks"]))
-    stats_table.add_row("Monthly Chart Records", f"{stats['monthly_chart_count']:,}")
-    stats_table.add_row("Monthly Chart Stocks", str(stats["monthly_chart_stocks"]))
+    stats_table.add_row("Daily Chart Records", f"{stats['daily_charts_count']:,}")
+    stats_table.add_row("Daily Chart Stocks", str(stats["daily_charts_stocks"]))
+    stats_table.add_row("Weekly Chart Records", f"{stats['weekly_charts_count']:,}")
+    stats_table.add_row("Weekly Chart Stocks", str(stats["weekly_charts_stocks"]))
+    stats_table.add_row("Monthly Chart Records", f"{stats['monthly_charts_count']:,}")
+    stats_table.add_row("Monthly Chart Stocks", str(stats["monthly_charts_stocks"]))
     stats_table.add_row("Tracked Stocks", str(stats["tracked_stocks"]))
     stats_table.add_row("Database Size", f"{stats['database_size_mb']} MB")
 

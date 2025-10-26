@@ -131,7 +131,7 @@ class StockChartImporter:
 
         Args:
             stock_code: Stock code
-            base_date: Base date to fetch from (fetches backwards)
+            base_date: Base date to fetch from
 
         Returns:
             List of data records
@@ -217,16 +217,17 @@ class StockChartImporter:
         """Convert API item to dictionary.
 
         Args:
-            item: API response item
+            item: API response item (Pydantic BaseModel)
 
         Returns:
-            Dictionary representation
+            Dictionary representation with only model_fields
         """
         result = {}
 
-        # Get all attributes from the item
-        if hasattr(item, "__dict__"):
-            result = {k: getattr(item, k) for k in dir(item) if not k.startswith("_")}
+        # Extract only fields defined in model_fields
+        if hasattr(item, "model_fields"):
+            for field_name in item.model_fields.keys():
+                result[field_name] = getattr(item, field_name)
         elif isinstance(item, dict):
             result = item.copy()
 

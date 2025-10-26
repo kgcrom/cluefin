@@ -90,7 +90,20 @@ CHART_CASES = [
         response_payload={
             "return_code": 0,
             "return_msg": "OK",
-            "stk_dt_pole_chart_qry": [{"dt": "20240101", "cur_prc": "100000"}],
+            "stk_dt_pole_chart_qry": [
+                {
+                    "dt": "20240101",
+                    "cur_prc": "100000",
+                    "trde_qty": "1000000",
+                    "trde_prica": "100000000000",
+                    "open_pric": "99000",
+                    "high_pric": "101000",
+                    "low_pric": "98000",
+                    "pred_pre": "1000",
+                    "pred_pre_sig": "2",
+                    "trde_tern_rt": "0.5",
+                }
+            ],
         },
     ),
     EndpointCase(
