@@ -17,6 +17,7 @@ from rich.table import Table
 from cluefin_cli.config.settings import settings
 from cluefin_cli.data.duckdb_manager import DuckDBManager
 from cluefin_cli.data.importer import StockChartImporter
+from cluefin_cli.data.industry_importer import IndustryCodeImporter
 from cluefin_cli.data.stock_fetcher import StockListFetcher
 
 console = Console()
@@ -82,6 +83,11 @@ stderr_console = Console(stderr=True)
     is_flag=True,
     help="Clear all data from database",
 )
+@click.option(
+    "--industry-codes",
+    is_flag=True,
+    help="Import industry codes for all market types",
+)
 def import_command(
     stock_codes: tuple,
     from_stdin: bool,
@@ -94,6 +100,7 @@ def import_command(
     skip_existing: bool,
     check_db: bool,
     clear_db: bool,
+    industry_codes: bool,
 ):
     """Import stock chart data from Kiwoom API to DuckDB.
 
@@ -138,6 +145,7 @@ def import_command(
         )
         stock_fetcher = StockListFetcher(kiwoom_client)
         importer = StockChartImporter(kiwoom_client, db_manager)
+        industry_importer = IndustryCodeImporter(kiwoom_client, db_manager)
 
         # Handle database operations
         if check_db:
@@ -146,6 +154,12 @@ def import_command(
 
         if clear_db:
             db_manager.clear_all_tables(confirm=True)
+            return
+
+        # Handle industry codes import
+        if industry_codes:
+            _import_industry_codes(industry_importer, market)
+            _show_database_stats(db_manager)
             return
 
         # Handle list-stocks operation
@@ -228,7 +242,7 @@ def _collect_stock_codes(
     # From API if no codes specified
     elif not stock_codes:
         console.print("[yellow]Fetching available stocks from Kiwoom API...[/yellow]")
-        codes = stock_fetcher.get_all_stocks(market=market)
+        codes = [item.code for item in stock_fetcher.get_all_stocks(market=market)]
 
     # From arguments
     else:
@@ -368,6 +382,44 @@ def _run_import(
     console.print("[green]✓[/green] Import completed successfully")
 
 
+def _import_industry_codes(industry_importer: IndustryCodeImporter, market: Optional[str]) -> None:
+    """Import industry codes from Kiwoom API.
+
+    Args:
+        industry_importer: Industry code importer instance
+        market: Market filter (kospi or kosdaq)
+    """
+    console.print("[yellow]Importing industry codes from Kiwoom API...[/yellow]")
+
+    # Map market filter to market types
+    market_type = None
+    if market:
+        market_lower = market.lower()
+        if market_lower == "kospi":
+            market_type = "0"
+        elif market_lower == "kosdaq":
+            market_type = "1"
+
+    # Import industry codes
+    results = industry_importer.import_industry_codes(market_type=market_type)
+
+    # Display results
+    results_table = Table(title="Industry Code Import Results")
+    results_table.add_column("Market", style="cyan")
+    results_table.add_column("Count", style="magenta", justify="right")
+
+    for market_name, count in results.items():
+        if market_name != "total":
+            results_table.add_row(market_name, str(count))
+
+    if "total" in results:
+        results_table.add_row("", "", style="dim")
+        results_table.add_row("TOTAL", str(results["total"]), style="bold green")
+
+    console.print(results_table)
+    console.print(f"[green]✓[/green] Imported {results.get('total', 0)} industry codes successfully")
+
+
 def _list_stocks(stock_fetcher: StockListFetcher, market: Optional[str]) -> None:
     """List available stocks to stdout.
 
@@ -403,6 +455,7 @@ def _show_database_stats(db_manager: DuckDBManager) -> None:
     stats_table.add_row("Monthly Chart Records", f"{stats['monthly_charts_count']:,}")
     stats_table.add_row("Monthly Chart Stocks", str(stats["monthly_charts_stocks"]))
     stats_table.add_row("Tracked Stocks", str(stats["tracked_stocks"]))
+    stats_table.add_row("Industry Codes", f"{stats.get('industry_codes_count', 0):,}")
     stats_table.add_row("Database Size", f"{stats['database_size_mb']} MB")
 
     console.print(stats_table)

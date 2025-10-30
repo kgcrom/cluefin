@@ -3,7 +3,7 @@
 from typing import Optional
 
 from cluefin_openapi.kiwoom._client import Client
-from cluefin_openapi.kiwoom._domestic_stock_info_types import DomesticStockInfoSummary
+from cluefin_openapi.kiwoom._domestic_stock_info_types import DomesticStockInfoSummary, DomesticStockInfoSummaryItem
 from cluefin_openapi.kiwoom._model import KiwoomHttpResponse
 from loguru import logger
 
@@ -19,7 +19,7 @@ class StockListFetcher:
         """
         self.client = client
 
-    def get_all_stocks(self, market: Optional[str] = None) -> list[str]:
+    def get_all_stocks(self, market: Optional[str] = None) -> list[DomesticStockInfoSummaryItem]:
         """Get all listed stocks from Kiwoom API.
 
         Args:
@@ -28,7 +28,7 @@ class StockListFetcher:
         Returns:
             List of stock codes
         """
-        stocks = []
+        stocks: list[DomesticStockInfoSummaryItem] = []
 
         # Get KOSPI stocks (mrkt_tp = '0')
         if market is None or market.lower() == "kospi":
@@ -52,13 +52,14 @@ class StockListFetcher:
             except Exception as e:
                 logger.error(f"Error fetching KOSDAQ stocks: {e}")
 
-        # Remove duplicates and sort
-        stocks = sorted(set(stocks))
+        stocks = sorted(stocks, key=lambda x: x.code)
         logger.info(f"Total unique stocks: {len(stocks)}")
 
         return stocks
 
-    def _parse_stocks_from_response(self, response: KiwoomHttpResponse[DomesticStockInfoSummary]) -> list[str]:
+    def _parse_stocks_from_response(
+        self, response: KiwoomHttpResponse[DomesticStockInfoSummary]
+    ) -> list[DomesticStockInfoSummaryItem]:
         """Parse stock codes from API response.
 
         Args:
@@ -72,7 +73,7 @@ class StockListFetcher:
         try:
             for item in response.body.list:
                 if item.marketName == "거래소" or item.marketName == "코스닥":
-                    stocks.append(item.code.strip())
+                    stocks.append(item)
         except Exception as e:
             logger.error(f"Error parsing stock response: {e}")
 

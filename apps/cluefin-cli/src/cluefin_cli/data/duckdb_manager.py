@@ -115,6 +115,18 @@ class DuckDBManager:
             )
         """)
 
+        # Industry codes table
+        self.connection.execute("""
+            CREATE TABLE IF NOT EXISTS industry_codes (
+                code VARCHAR PRIMARY KEY,
+                name VARCHAR NOT NULL,
+                group_code INT NOT NULL,
+                market VARCHAR,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            )
+        """)
+
         logger.debug("DuckDB tables created/verified")
 
     def insert_daily_chart(self, stock_code: str, df: pd.DataFrame) -> int:
@@ -282,14 +294,12 @@ class DuckDBManager:
         self,
         stock_code: str,
         stock_name: Optional[str] = None,
-        import_frequency: Optional[str] = None,
     ) -> None:
         """Update stock metadata.
 
         Args:
             stock_code: Stock code
             stock_name: Stock name (optional)
-            import_frequency: Import frequency (daily/weekly/monthly/all)
         """
         today = datetime.now().date()
         next_import_date = today + timedelta(days=1)
@@ -309,14 +319,66 @@ class DuckDBManager:
                 stock_code,
                 stock_name,
                 today,
-                import_frequency,
+                None,
                 next_import_date,
                 today,
-                import_frequency,
+                None,
                 next_import_date,
             ],
         )
         logger.debug(f"Updated metadata for {stock_code}")
+
+    def insert_industry_codes(self, df: pd.DataFrame) -> int:
+        """Insert industry codes.
+
+        Args:
+            df: DataFrame with columns: code, name, group_name, market
+
+        Returns:
+            Number of records inserted/updated
+        """
+        if df.empty:
+            logger.warning("Empty DataFrame for industry codes")
+            return 0
+
+        try:
+            self.connection.register("insert_df", df)
+            self.connection.execute(
+                """INSERT INTO industry_codes
+                (code, name, group_code, market)
+                SELECT code, name, group_code, market
+                FROM insert_df
+                ON CONFLICT (code) DO UPDATE SET
+                    name = EXCLUDED.name,
+                    group_code = EXCLUDED.group_code,
+                    market = EXCLUDED.market,
+                    updated_at = NOW()"""
+            )
+            self.connection.unregister("insert_df")
+            count = len(df)
+            logger.info(f"Inserted/updated {count} industry code records")
+            return count
+        except Exception as e:
+            logger.error(f"Error inserting industry codes: {e}")
+            raise
+
+    def get_industry_codes(self, market_type: Optional[str] = None) -> pd.DataFrame:
+        """Get industry codes from database.
+
+        Args:
+            market_type: Filter by market type (0=KOSPI, 1=KOSDAQ, etc.)
+
+        Returns:
+            DataFrame with industry code data
+        """
+        if market_type:
+            result = self.connection.execute(
+                "SELECT * FROM industry_codes WHERE market_type = ? ORDER BY code", [market_type]
+            ).df()
+        else:
+            result = self.connection.execute("SELECT * FROM industry_codes ORDER BY code").df()
+
+        return result
 
     def get_database_stats(self) -> dict:
         """Get database statistics.
@@ -337,6 +399,10 @@ class DuckDBManager:
         # Count metadata
         result = self.connection.execute("SELECT COUNT(*) as count FROM stock_metadata").fetchall()
         stats["tracked_stocks"] = result[0][0] if result else 0
+
+        # Count industry codes
+        result = self.connection.execute("SELECT COUNT(*) as count FROM industry_codes").fetchall()
+        stats["industry_codes_count"] = result[0][0] if result else 0
 
         # Database size
         db_size = os.path.getsize(self.db_path)
@@ -406,35 +472,13 @@ class DuckDBManager:
             [stock_code, start, end],
         ).fetchall()
 
-        expected_trading_days = self._estimate_trading_days(start, end, frequency)
         actual_count = result[0][0] if result else 0
 
-        # Allow 10% tolerance for missing data (holidays, etc.)
-        tolerance = max(1, int(expected_trading_days * 0.1))
-        return actual_count >= (expected_trading_days - tolerance)
+        # If no data exists, return False
+        if actual_count == 0:
+            return False
 
-    def _estimate_trading_days(self, start_date, end_date, frequency: str) -> int:
-        """Estimate number of trading days in date range.
-
-        Args:
-            start_date: Start date
-            end_date: End date
-            frequency: daily/weekly/monthly
-
-        Returns:
-            Estimated number of trading periods
-        """
-        delta = end_date - start_date
-
-        if frequency == "daily":
-            # Korea has ~252 trading days per year, roughly 5 per week
-            return max(1, int(delta.days * 0.72))
-        elif frequency == "weekly":
-            return max(1, delta.days // 7)
-        elif frequency == "monthly":
-            return max(1, (delta.days // 30) + 1)
-
-        return 1
+        return True
 
     def clear_all_tables(self, confirm: bool = True) -> None:
         """Clear all data from tables.

@@ -67,13 +67,6 @@ class StockChartImporter:
                 logger.error(f"Error importing {frequency} data for {stock_code}: {e}")
                 results[frequency] = -1
 
-        # Update metadata
-        if any(count > 0 for count in results.values()):
-            self.db_manager.update_stock_metadata(
-                stock_code,
-                import_frequency=",".join(frequencies),
-            )
-
         return results
 
     def _import_frequency(self, stock_code: str, start_date: str, end_date: str, frequency: str) -> int:
@@ -108,7 +101,7 @@ class StockChartImporter:
             if all_data:
                 df = pd.DataFrame(all_data)
                 df = self._filter_date_range(df, start_date, end_date)
-
+                # pred_signal => 1: 상한가, 2:상승, 3:보합, 4:하한가, 5:하락
                 # Store in database
                 if frequency == "daily":
                     count = self.db_manager.insert_daily_chart(stock_code, df)
