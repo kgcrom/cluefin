@@ -103,6 +103,60 @@ class DuckDBManager:
             )
         """)
 
+        # Industry daily chart table
+        self.connection.execute("""
+            CREATE TABLE IF NOT EXISTS industry_daily_charts (
+                industry_code VARCHAR NOT NULL,
+                date DATE NOT NULL,
+                open BIGINT NOT NULL,
+                high BIGINT NOT NULL,
+                low BIGINT NOT NULL,
+                close BIGINT NOT NULL,
+                volume BIGINT NOT NULL,
+                trading_amount BIGINT NOT NULL,
+
+                -- Metadata
+                created_at TIMESTAMP DEFAULT NOW(),
+                PRIMARY KEY (industry_code, date)
+            )
+        """)
+
+        # Industry weekly chart table
+        self.connection.execute("""
+            CREATE TABLE IF NOT EXISTS industry_weekly_charts (
+                industry_code VARCHAR NOT NULL,
+                date DATE NOT NULL,
+                open BIGINT NOT NULL,
+                high BIGINT NOT NULL,
+                low BIGINT NOT NULL,
+                close BIGINT NOT NULL,
+                volume BIGINT NOT NULL,
+                trading_amount BIGINT NOT NULL,
+
+                -- Metadata
+                created_at TIMESTAMP DEFAULT NOW(),
+                PRIMARY KEY (industry_code, date)
+            )
+        """)
+
+        # Industry monthly chart table
+        self.connection.execute("""
+            CREATE TABLE IF NOT EXISTS industry_monthly_charts (
+                industry_code VARCHAR NOT NULL,
+                date DATE NOT NULL,
+                open BIGINT NOT NULL,
+                high BIGINT NOT NULL,
+                low BIGINT NOT NULL,
+                close BIGINT NOT NULL,
+                volume BIGINT NOT NULL,
+                trading_amount BIGINT NOT NULL,
+
+                -- Metadata
+                created_at TIMESTAMP DEFAULT NOW(),
+                PRIMARY KEY (industry_code, date)
+            )
+        """)
+
         # Stock metadata table
         self.connection.execute("""
             CREATE TABLE IF NOT EXISTS stock_metadata (
@@ -258,6 +312,106 @@ class DuckDBManager:
             logger.error(f"Error inserting monthly chart for {stock_code}: {e}")
             raise
 
+    def insert_industry_daily_chart(self, industry_code: str, df: pd.DataFrame) -> int:
+        """Insert industry daily chart data.
+
+        Args:
+            industry_code: Industry code
+            df: DataFrame with columns matching industry_daily_charts schema
+
+        Returns:
+            Number of records inserted
+        """
+        if df.empty:
+            logger.warning(f"Empty DataFrame for industry daily chart: {industry_code}")
+            return 0
+
+        # Prepare data
+        insert_df = self._prepare_industry_chart_data(industry_code, df)
+
+        try:
+            self.connection.register("insert_df", insert_df)
+            self.connection.execute(
+                """INSERT INTO industry_daily_charts
+                (industry_code, date, open, high, low, close, volume, trading_amount)
+                SELECT industry_code, date, open, high, low, close, volume, trading_amount
+                FROM insert_df
+                ON CONFLICT (industry_code, date) DO UPDATE SET created_at = NOW()"""
+            )
+            self.connection.unregister("insert_df")
+            count = len(insert_df)
+            logger.info(f"Inserted {count} industry daily chart records for {industry_code}")
+            return count
+        except Exception as e:
+            logger.error(f"Error inserting industry daily chart for {industry_code}: {e}")
+            raise
+
+    def insert_industry_weekly_chart(self, industry_code: str, df: pd.DataFrame) -> int:
+        """Insert industry weekly chart data.
+
+        Args:
+            industry_code: Industry code
+            df: DataFrame with columns matching industry_weekly_charts schema
+
+        Returns:
+            Number of records inserted
+        """
+        if df.empty:
+            logger.warning(f"Empty DataFrame for industry weekly chart: {industry_code}")
+            return 0
+
+        insert_df = self._prepare_industry_chart_data(industry_code, df)
+
+        try:
+            self.connection.register("insert_df", insert_df)
+            self.connection.execute(
+                """INSERT INTO industry_weekly_charts
+                (industry_code, date, open, high, low, close, volume, trading_amount)
+                SELECT industry_code, date, open, high, low, close, volume, trading_amount
+                FROM insert_df
+                ON CONFLICT (industry_code, date) DO UPDATE SET created_at = NOW()"""
+            )
+            self.connection.unregister("insert_df")
+            count = len(insert_df)
+            logger.info(f"Inserted {count} industry weekly chart records for {industry_code}")
+            return count
+        except Exception as e:
+            logger.error(f"Error inserting industry weekly chart for {industry_code}: {e}")
+            raise
+
+    def insert_industry_monthly_chart(self, industry_code: str, df: pd.DataFrame) -> int:
+        """Insert industry monthly chart data.
+
+        Args:
+            industry_code: Industry code
+            df: DataFrame with columns matching industry_monthly_charts schema
+
+        Returns:
+            Number of records inserted
+        """
+        if df.empty:
+            logger.warning(f"Empty DataFrame for industry monthly chart: {industry_code}")
+            return 0
+
+        insert_df = self._prepare_industry_chart_data(industry_code, df)
+
+        try:
+            self.connection.register("insert_df", insert_df)
+            self.connection.execute(
+                """INSERT INTO industry_monthly_charts
+                (industry_code, date, open, high, low, close, volume, trading_amount)
+                SELECT industry_code, date, open, high, low, close, volume, trading_amount
+                FROM insert_df
+                ON CONFLICT (industry_code, date) DO UPDATE SET created_at = NOW()"""
+            )
+            self.connection.unregister("insert_df")
+            count = len(insert_df)
+            logger.info(f"Inserted {count} industry monthly chart records for {industry_code}")
+            return count
+        except Exception as e:
+            logger.error(f"Error inserting industry monthly chart for {industry_code}: {e}")
+            raise
+
     def _prepare_chart_data(self, stock_code: str, df: pd.DataFrame) -> pd.DataFrame:
         """Prepare chart data for insertion.
 
@@ -310,6 +464,43 @@ class DuckDBManager:
                     )
             else:
                 result[db_field] = None
+
+        return result
+
+    def _prepare_industry_chart_data(self, industry_code: str, df: pd.DataFrame) -> pd.DataFrame:
+        """Prepare industry chart data for insertion.
+
+        Args:
+            industry_code: Industry code to add to data
+            df: Raw DataFrame from API
+
+        Returns:
+            Prepared DataFrame
+        """
+        result = pd.DataFrame()
+
+        # Map date field
+        if "dt" in df.columns:
+            result["date"] = pd.to_datetime(df["dt"], format="%Y%m%d")
+        else:
+            result["date"] = pd.to_datetime(df.index)
+
+        result["industry_code"] = industry_code
+
+        # Map OHLCV fields (same as stock charts)
+        field_mapping = {
+            "cur_prc": "close",
+            "open_pric": "open",
+            "high_pric": "high",
+            "low_pric": "low",
+            "trde_qty": "volume",
+            "trde_prica": "trading_amount",
+        }
+
+        for api_field, db_field in field_mapping.items():
+            if api_field in df.columns:
+                # Convert to numeric, handling empty strings
+                result[db_field] = pd.to_numeric(df[api_field], errors="coerce")
 
         return result
 
@@ -488,6 +679,16 @@ class DuckDBManager:
             result = self.connection.execute(f"SELECT COUNT(DISTINCT stock_code) as count FROM {table}").fetchall()
             stats[f"{table}_stocks"] = result[0][0] if result else 0
 
+        # Count industry chart records per table
+        for table in ["industry_daily_charts", "industry_weekly_charts", "industry_monthly_charts"]:
+            result = self.connection.execute(f"SELECT COUNT(*) as count FROM {table}").fetchall()
+            stats[f"{table}_count"] = result[0][0] if result else 0
+
+            result = self.connection.execute(
+                f"SELECT COUNT(DISTINCT industry_code) as count FROM {table}"
+            ).fetchall()
+            stats[f"{table}_industries"] = result[0][0] if result else 0
+
         # Count metadata
         result = self.connection.execute("SELECT COUNT(*) as count FROM stock_metadata").fetchall()
         stats["tracked_stocks"] = result[0][0] if result else 0
@@ -562,6 +763,40 @@ class DuckDBManager:
             WHERE stock_code = ? AND date BETWEEN ? AND ?
             """,
             [stock_code, start, end],
+        ).fetchall()
+
+        actual_count = result[0][0] if result else 0
+
+        # If no data exists, return False
+        if actual_count == 0:
+            return False
+
+        return True
+
+    def check_industry_data_exists(
+        self, industry_code: str, frequency: str, start_date: str, end_date: str
+    ) -> bool:
+        """Check if data already exists for an industry/frequency/date range.
+
+        Args:
+            industry_code: Industry code
+            frequency: daily/weekly/monthly
+            start_date: Start date (YYYYMMDD format)
+            end_date: End date (YYYYMMDD format)
+
+        Returns:
+            True if all data exists, False otherwise
+        """
+        table = f"industry_{frequency}_charts"
+        start = pd.to_datetime(start_date, format="%Y%m%d").date()
+        end = pd.to_datetime(end_date, format="%Y%m%d").date()
+
+        result = self.connection.execute(
+            f"""
+            SELECT COUNT(*) as count FROM {table}
+            WHERE industry_code = ? AND date BETWEEN ? AND ?
+            """,
+            [industry_code, start, end],
         ).fetchall()
 
         actual_count = result[0][0] if result else 0

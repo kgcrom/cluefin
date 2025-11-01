@@ -17,6 +17,7 @@ from rich.table import Table
 from cluefin_cli.config.settings import settings
 from cluefin_cli.data.duckdb_manager import DuckDBManager
 from cluefin_cli.data.importer import StockChartImporter
+from cluefin_cli.data.industry_chart_importer import IndustryChartImporter
 from cluefin_cli.data.industry_importer import IndustryCodeImporter
 from cluefin_cli.data.stock_fetcher import StockListFetcher
 
@@ -88,6 +89,11 @@ stderr_console = Console(stderr=True)
     is_flag=True,
     help="Import industry codes for all market types",
 )
+@click.option(
+    "--industry-charts",
+    is_flag=True,
+    help="Import industry chart data (positional args are industry codes)",
+)
 def import_command(
     stock_codes: tuple,
     from_stdin: bool,
@@ -101,6 +107,7 @@ def import_command(
     check_db: bool,
     clear_db: bool,
     industry_codes: bool,
+    industry_charts: bool,
 ):
     """Import stock chart data from Kiwoom API to DuckDB.
 
@@ -146,6 +153,7 @@ def import_command(
         stock_fetcher = StockListFetcher(kiwoom_client, db_manager)
         importer = StockChartImporter(kiwoom_client, db_manager)
         industry_importer = IndustryCodeImporter(kiwoom_client, db_manager)
+        industry_chart_importer = IndustryChartImporter(kiwoom_client, db_manager)
 
         # Handle database operations
         if check_db:
@@ -159,6 +167,42 @@ def import_command(
         # Handle industry codes import
         if industry_codes:
             _import_industry_codes(industry_importer, market)
+            _show_database_stats(db_manager)
+            return
+
+        # Handle industry chart import
+        if industry_charts:
+            # Collect industry codes
+            codes_to_import = _collect_industry_codes(
+                industry_codes=stock_codes,  # Reusing parameter name
+                db_manager=db_manager,
+            )
+
+            if not codes_to_import:
+                console.print("[yellow]No industry codes specified for import[/yellow]")
+                return
+
+            # Process frequencies
+            frequencies = _process_frequencies(frequency)
+
+            # Get date range
+            start_date, end_date = _get_date_range(start, end)
+
+            # Display summary
+            _display_industry_import_summary(codes_to_import, frequencies, start_date, end_date, skip_existing)
+
+            # Run import
+            _run_industry_import(
+                industry_chart_importer,
+                codes_to_import,
+                start_date,
+                end_date,
+                frequencies,
+                skip_existing,
+                show_progress,
+            )
+
+            # Display final statistics
             _show_database_stats(db_manager)
             return
 
@@ -436,6 +480,121 @@ def _list_stocks(stock_fetcher: StockListFetcher, market: Optional[str]) -> None
     stderr_console.print(f"[green]✓[/green] Listed {len(stocks)} stocks")
 
 
+def _collect_industry_codes(
+    industry_codes: tuple,
+    db_manager: DuckDBManager,
+) -> list[str]:
+    """Collect industry codes from arguments or database.
+
+    Args:
+        industry_codes: Industry codes from CLI arguments
+        db_manager: DuckDB manager instance
+
+    Returns:
+        List of industry codes to import
+    """
+    codes = []
+
+    # If codes specified, use them
+    if industry_codes:
+        codes = list(industry_codes)
+    else:
+        # Otherwise, get all industry codes from database
+        console.print("[yellow]Fetching all industry codes from database...[/yellow]")
+        industry_df = db_manager.get_industry_codes()
+        if not industry_df.empty:
+            codes = industry_df["code"].tolist()
+            logger.info(f"Found {len(codes)} industry codes in database")
+        else:
+            console.print(
+                "[yellow]No industry codes found in database. "
+                "Please run 'cluefin-cli import --industry-codes' first.[/yellow]"
+            )
+
+    return sorted(set(codes))
+
+
+def _display_industry_import_summary(
+    industry_codes: list[str],
+    frequencies: list[str],
+    start_date: str,
+    end_date: str,
+    skip_existing: bool,
+) -> None:
+    """Display industry import summary before starting.
+
+    Args:
+        industry_codes: List of industry codes to import
+        frequencies: List of frequencies
+        start_date: Start date
+        end_date: End date
+        skip_existing: Whether to skip existing data
+    """
+    summary_table = Table(title="Industry Chart Import Summary")
+    summary_table.add_column("Parameter", style="cyan")
+    summary_table.add_column("Value", style="magenta")
+
+    summary_table.add_row("Industry Codes", str(len(industry_codes)))
+    summary_table.add_row("Frequencies", ", ".join(frequencies))
+    summary_table.add_row("Start Date", start_date)
+    summary_table.add_row("End Date", end_date)
+    summary_table.add_row("Skip Existing", "Yes" if skip_existing else "No")
+
+    console.print(summary_table)
+
+
+def _run_industry_import(
+    importer: IndustryChartImporter,
+    industry_codes: list[str],
+    start_date: str,
+    end_date: str,
+    frequencies: list[str],
+    skip_existing: bool,
+    show_progress: bool,
+) -> None:
+    """Run the industry chart import process.
+
+    Args:
+        importer: Industry chart importer instance
+        industry_codes: Industry codes to import
+        start_date: Start date
+        end_date: End date
+        frequencies: Frequencies to import
+        skip_existing: Skip existing data
+        show_progress: Show progress bar
+    """
+    if show_progress:
+        with Progress(
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            MofNCompleteColumn(),
+            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+        ) as progress:
+            task = progress.add_task("[cyan]Importing industries...", total=len(industry_codes))
+
+            def update_progress(current: int, total: int, industry_code: str):
+                progress.update(task, advance=1, description=f"[cyan]Processing industry {industry_code}...")
+
+            importer.import_batch(
+                industry_codes,
+                start_date,
+                end_date,
+                frequencies,
+                progress_callback=update_progress,
+                skip_existing=skip_existing,
+            )
+    else:
+        importer.import_batch(
+            industry_codes,
+            start_date,
+            end_date,
+            frequencies,
+            skip_existing=skip_existing,
+        )
+
+    console.print("[green]✓[/green] Industry chart import completed successfully")
+
+
 def _show_database_stats(db_manager: DuckDBManager) -> None:
     """Show database statistics.
 
@@ -454,6 +613,14 @@ def _show_database_stats(db_manager: DuckDBManager) -> None:
     stats_table.add_row("Weekly Chart Stocks", str(stats["weekly_charts_stocks"]))
     stats_table.add_row("Monthly Chart Records", f"{stats['monthly_charts_count']:,}")
     stats_table.add_row("Monthly Chart Stocks", str(stats["monthly_charts_stocks"]))
+    stats_table.add_row("", "")
+    stats_table.add_row("Industry Daily Records", f"{stats.get('industry_daily_charts_count', 0):,}")
+    stats_table.add_row("Industry Daily Industries", str(stats.get("industry_daily_charts_industries", 0)))
+    stats_table.add_row("Industry Weekly Records", f"{stats.get('industry_weekly_charts_count', 0):,}")
+    stats_table.add_row("Industry Weekly Industries", str(stats.get("industry_weekly_charts_industries", 0)))
+    stats_table.add_row("Industry Monthly Records", f"{stats.get('industry_monthly_charts_count', 0):,}")
+    stats_table.add_row("Industry Monthly Industries", str(stats.get("industry_monthly_charts_industries", 0)))
+    stats_table.add_row("", "")
     stats_table.add_row("Tracked Stocks", str(stats["tracked_stocks"]))
     stats_table.add_row("Industry Codes", f"{stats.get('industry_codes_count', 0):,}")
     stats_table.add_row("Database Size", f"{stats['database_size_mb']} MB")
