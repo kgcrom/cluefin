@@ -2,6 +2,8 @@
 
 from typing import Optional
 
+from cluefin_cli.data.duckdb_manager import DuckDBManager
+import pandas as pd
 from cluefin_openapi.kiwoom._client import Client
 from cluefin_openapi.kiwoom._domestic_stock_info_types import DomesticStockInfoSummary, DomesticStockInfoSummaryItem
 from cluefin_openapi.kiwoom._model import KiwoomHttpResponse
@@ -11,13 +13,15 @@ from loguru import logger
 class StockListFetcher:
     """Fetch stock lists from Kiwoom API."""
 
-    def __init__(self, client: Client):
+    def __init__(self, client: Client, db_manager: DuckDBManager):
         """Initialize stock list fetcher.
 
         Args:
             client: Kiwoom API client
+            db_manager: DuckDB manager instance
         """
         self.client = client
+        self.db_manager = db_manager
 
     def get_all_stocks(self, market: Optional[str] = None) -> list[DomesticStockInfoSummaryItem]:
         """Get all listed stocks from Kiwoom API.
@@ -72,6 +76,8 @@ class StockListFetcher:
 
         try:
             for item in response.body.list:
+                if not item.code or len(item.code) != 6 or not item.code.isdigit():
+                    continue
                 if item.marketName == "거래소" or item.marketName == "코스닥":
                     stocks.append(item)
         except Exception as e:
@@ -79,24 +85,128 @@ class StockListFetcher:
 
         return stocks
 
-    def validate_stock_code(self, stock_code: str) -> bool:
-        """Validate if stock code exists in Kiwoom API.
+    def fetch_stock_metadata_extended(self, stock_info: DomesticStockInfoSummaryItem) -> Optional[dict]:
+        """Fetch extended stock metadata by combining two APIs.
+
+        Fetches data from both get_stock_info_v1 and get_stock_info APIs,
+        combining them into a single metadata dictionary.
 
         Args:
-            stock_code: Stock code to validate
+            stock_info: Stock info to fetch metadata for
 
         Returns:
-            True if stock code is valid, False otherwise
+            Dictionary with combined metadata fields, or None if either API fails.
+            Fields include both v1 API fields and get_stock_info fields.
         """
-        stock_code = stock_code.strip()
-
-        if not stock_code or len(stock_code) != 6 or not stock_code.isdigit():
-            return False
 
         try:
-            # Try to fetch basic info for the stock
-            self.client.stock_info.get_stock_info_v1(stk_cd=f"KRX:{stock_code}")
-            return True
+            v1_data = stock_info
+
+            # Fetch from get_stock_info API
+            logger.debug(f"Fetching metadata from get_stock_info for {stock_info.code}...")
+            response_basic = self.client.stock_info.get_stock_info(stock_info.code)
+            basic_data = response_basic.body
+
+            # Combine data from both APIs
+            metadata = {
+                "stock_code": v1_data.code,
+                # From get_stock_info_v1
+                "stock_name": v1_data.name,
+                "listing_date": self._parse_date(v1_data.regDay),
+                "market_name": v1_data.marketName,
+                "market_code": v1_data.marketCode,
+                "industry_name": v1_data.upName,
+                "company_size": v1_data.upSizeName,
+                "company_class": v1_data.companyClassName,
+                "audit_info": v1_data.auditInfo,
+                "stock_state": v1_data.state,
+                "investment_warning": v1_data.orderWarning if v1_data.orderWarning else None,
+                # From get_stock_info
+                "settlement_month": basic_data.setl_mm,
+                "face_value": self._parse_decimal(basic_data.fav),
+                "capital": self._parse_int(basic_data.cap),
+                "float_stock": self._parse_int(basic_data.flo_stk),
+                "per": self._parse_decimal(basic_data.per),
+                "eps": self._parse_decimal(basic_data.eps),
+                "roe": self._parse_decimal(basic_data.roe),
+                "pbr": self._parse_decimal(basic_data.pbr),
+                "bps": self._parse_decimal(basic_data.bps),
+                "sales_amount": self._parse_int(basic_data.sale_amt),
+                "business_profit": self._parse_int(basic_data.bus_pro),
+                "net_income": self._parse_int(basic_data.cup_nga),
+                "market_cap": self._parse_int(basic_data.mac),
+                "foreign_ownership_rate": self._parse_decimal(basic_data.for_exh_rt),
+                "distribution_rate": self._parse_decimal(basic_data.dstr_rt),
+                "distribution_stock": self._parse_int(basic_data.dstr_stk),
+            }
+
+            if metadata is None:
+                logger.warning(f"Failed to fetch extended metadata for {stock_info} - skipping enrichment")
+                return
+
+            # Convert metadata dict to DataFrame
+            df = pd.DataFrame([metadata])
+
+            # Upsert to database
+            count = self.db_manager.upsert_stock_metadata_extended(df)
+            logger.info(f"Successfully enriched metadata for {stock_info.code} ({count} record)")
+            return metadata
+
         except Exception as e:
-            logger.debug(f"Stock code validation failed for {stock_code}: {e}")
-            return False
+            logger.error(f"Error fetching extended metadata for {stock_info}: {e}")
+            return None
+
+    def _parse_date(self, value: Optional[str]) -> Optional[str]:
+        """Parse date string to YYYY-MM-DD format.
+
+        Args:
+            value: Date string (may be in YYYYMMDD or other format)
+
+        Returns:
+            Date string in YYYY-MM-DD format, or None
+        """
+        if not value:
+            return None
+        try:
+            # Try parsing as YYYYMMDD format
+            if isinstance(value, str) and len(value) == 8 and value.isdigit():
+                return f"{value[0:4]}-{value[4:6]}-{value[6:8]}"
+            return str(value)
+        except Exception:
+            return None
+
+    def _parse_decimal(self, value: Optional[str]) -> Optional[float]:
+        """Parse decimal value safely.
+
+        Args:
+            value: Value to parse
+
+        Returns:
+            Float value, or None if conversion fails
+        """
+        if value is None or value == "":
+            return None
+        try:
+            # Remove any whitespace and convert
+            cleaned = str(value).strip()
+            return float(cleaned) if cleaned else None
+        except (ValueError, TypeError):
+            return None
+
+    def _parse_int(self, value: Optional[str]) -> Optional[int]:
+        """Parse integer value safely.
+
+        Args:
+            value: Value to parse
+
+        Returns:
+            Integer value, or None if conversion fails
+        """
+        if value is None or value == "":
+            return None
+        try:
+            # Remove any whitespace, commas, and convert
+            cleaned = str(value).strip().replace(",", "")
+            return int(cleaned) if cleaned else None
+        except (ValueError, TypeError):
+            return None

@@ -45,7 +45,7 @@ class DomesticStockInfo:
         self, stk_cd: str, cont_yn: Literal["Y", "N"] = "N", next_key: str = ""
     ) -> KiwoomHttpResponse[DomesticStockInfoBasic]:
         """
-        주식기본정보 요청
+        주식기본정보요청
 
         Args:
             stk_cd (str): 거래소별 종목코드 (KRX:039490,NXT:039490_NX,SOR:039490_AL)

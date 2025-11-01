@@ -108,10 +108,33 @@ class DuckDBManager:
             CREATE TABLE IF NOT EXISTS stock_metadata (
                 stock_code VARCHAR PRIMARY KEY,
                 stock_name VARCHAR,
-                last_imported_date DATE,
-                import_frequency VARCHAR,
-                next_import_date DATE,
-                last_updated_at TIMESTAMP DEFAULT NOW()
+                -- get_stock_info_v1 fields
+                listing_date DATE,
+                market_name VARCHAR,
+                market_code VARCHAR,
+                industry_name VARCHAR,
+                company_size VARCHAR,
+                company_class VARCHAR,
+                audit_info VARCHAR,
+                stock_state VARCHAR,
+                investment_warning INTEGER,
+                -- get_stock_info fields
+                settlement_month VARCHAR,
+                face_value INTEGER,
+                capital BIGINT,
+                float_stock BIGINT,
+                per DECIMAL,
+                eps DECIMAL,
+                roe DECIMAL,
+                pbr DECIMAL,
+                bps DECIMAL,
+                sales_amount BIGINT,
+                business_profit BIGINT,
+                net_income BIGINT,
+                market_cap BIGINT,
+                foreign_ownership_rate DECIMAL,
+                distribution_rate DECIMAL,
+                distribution_stock BIGINT
             )
         """)
 
@@ -327,6 +350,75 @@ class DuckDBManager:
             ],
         )
         logger.debug(f"Updated metadata for {stock_code}")
+
+    def upsert_stock_metadata_extended(self, df: pd.DataFrame) -> int:
+        """Upsert extended stock metadata from combined API responses.
+
+        Args:
+            df: DataFrame with all stock metadata columns including:
+                stock_code, stock_name, listing_date, market_name, market_code,
+                industry_name, company_size, company_class, audit_info, stock_state,
+                investment_warning, settlement_month, face_value, capital, float_stock,
+                per, eps, roe, pbr, bps, sales_amount, business_profit, net_income,
+                market_cap, foreign_ownership_rate, distribution_rate, distribution_stock
+
+        Returns:
+            Number of records upserted
+        """
+        if df.empty:
+            logger.warning("Empty DataFrame for stock metadata")
+            return 0
+
+        try:
+            self.connection.register("insert_df", df)
+            self.connection.execute(
+                """INSERT INTO stock_metadata
+                (stock_code, stock_name, listing_date, market_name, market_code,
+                 industry_name, company_size, company_class, audit_info, stock_state,
+                 investment_warning, settlement_month, face_value, capital, float_stock,
+                 per, eps, roe, pbr, bps, sales_amount, business_profit, net_income,
+                 market_cap, foreign_ownership_rate, distribution_rate, distribution_stock)
+                SELECT stock_code, stock_name, listing_date, market_name, market_code,
+                       industry_name, company_size, company_class, audit_info, stock_state,
+                       investment_warning, settlement_month, face_value, capital, float_stock,
+                       per, eps, roe, pbr, bps, sales_amount, business_profit, net_income,
+                       market_cap, foreign_ownership_rate, distribution_rate, distribution_stock
+                FROM insert_df
+                ON CONFLICT (stock_code) DO UPDATE SET
+                    stock_name = EXCLUDED.stock_name,
+                    listing_date = EXCLUDED.listing_date,
+                    market_name = EXCLUDED.market_name,
+                    market_code = EXCLUDED.market_code,
+                    industry_name = EXCLUDED.industry_name,
+                    company_size = EXCLUDED.company_size,
+                    company_class = EXCLUDED.company_class,
+                    audit_info = EXCLUDED.audit_info,
+                    stock_state = EXCLUDED.stock_state,
+                    investment_warning = EXCLUDED.investment_warning,
+                    settlement_month = EXCLUDED.settlement_month,
+                    face_value = EXCLUDED.face_value,
+                    capital = EXCLUDED.capital,
+                    float_stock = EXCLUDED.float_stock,
+                    per = EXCLUDED.per,
+                    eps = EXCLUDED.eps,
+                    roe = EXCLUDED.roe,
+                    pbr = EXCLUDED.pbr,
+                    bps = EXCLUDED.bps,
+                    sales_amount = EXCLUDED.sales_amount,
+                    business_profit = EXCLUDED.business_profit,
+                    net_income = EXCLUDED.net_income,
+                    market_cap = EXCLUDED.market_cap,
+                    foreign_ownership_rate = EXCLUDED.foreign_ownership_rate,
+                    distribution_rate = EXCLUDED.distribution_rate,
+                    distribution_stock = EXCLUDED.distribution_stock"""
+            )
+            self.connection.unregister("insert_df")
+            count = len(df)
+            logger.info(f"Upserted {count} stock metadata records")
+            return count
+        except Exception as e:
+            logger.error(f"Error upserting stock metadata: {e}")
+            raise
 
     def insert_industry_codes(self, df: pd.DataFrame) -> int:
         """Insert industry codes.

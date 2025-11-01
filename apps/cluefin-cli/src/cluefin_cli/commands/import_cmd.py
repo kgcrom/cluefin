@@ -143,7 +143,7 @@ def import_command(
             token=token.get_token(),
             env=settings.kiwoom_env,
         )
-        stock_fetcher = StockListFetcher(kiwoom_client)
+        stock_fetcher = StockListFetcher(kiwoom_client, db_manager)
         importer = StockChartImporter(kiwoom_client, db_manager)
         industry_importer = IndustryCodeImporter(kiwoom_client, db_manager)
 
@@ -431,7 +431,7 @@ def _list_stocks(stock_fetcher: StockListFetcher, market: Optional[str]) -> None
     stocks = stock_fetcher.get_all_stocks(market=market)
 
     for stock in stocks:
-        click.echo(stock)
+        stock_fetcher.fetch_stock_metadata_extended(stock)
 
     stderr_console.print(f"[green]✓[/green] Listed {len(stocks)} stocks")
 
