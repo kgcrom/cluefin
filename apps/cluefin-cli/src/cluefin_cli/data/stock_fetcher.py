@@ -2,12 +2,13 @@
 
 from typing import Optional
 
-from cluefin_cli.data.duckdb_manager import DuckDBManager
 import pandas as pd
 from cluefin_openapi.kiwoom._client import Client
 from cluefin_openapi.kiwoom._domestic_stock_info_types import DomesticStockInfoSummary, DomesticStockInfoSummaryItem
 from cluefin_openapi.kiwoom._model import KiwoomHttpResponse
 from loguru import logger
+
+from cluefin_cli.data.duckdb_manager import DuckDBManager
 
 
 class StockListFetcher:

@@ -684,9 +684,7 @@ class DuckDBManager:
             result = self.connection.execute(f"SELECT COUNT(*) as count FROM {table}").fetchall()
             stats[f"{table}_count"] = result[0][0] if result else 0
 
-            result = self.connection.execute(
-                f"SELECT COUNT(DISTINCT industry_code) as count FROM {table}"
-            ).fetchall()
+            result = self.connection.execute(f"SELECT COUNT(DISTINCT industry_code) as count FROM {table}").fetchall()
             stats[f"{table}_industries"] = result[0][0] if result else 0
 
         # Count metadata
@@ -773,9 +771,7 @@ class DuckDBManager:
 
         return True
 
-    def check_industry_data_exists(
-        self, industry_code: str, frequency: str, start_date: str, end_date: str
-    ) -> bool:
+    def check_industry_data_exists(self, industry_code: str, frequency: str, start_date: str, end_date: str) -> bool:
         """Check if data already exists for an industry/frequency/date range.
 
         Args:
