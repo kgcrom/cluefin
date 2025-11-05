@@ -78,7 +78,7 @@ class StockListFetcher:
         try:
             for item in response.body.list:
                 # 6자리 숫자 코드이고 1의 자리가 0이 아닌 경우에는 우선주이므로 제외
-                if not item.code or len(item.code) != 6 or not item.code.isdigit() and int(item.code) % 10 != 0:
+                if not item.code or len(item.code) != 6 or not item.code.isdigit() or int(item.code) % 10 != 0:
                     continue
                 if item.marketName == "거래소" or item.marketName == "코스닥":
                     stocks.append(item)

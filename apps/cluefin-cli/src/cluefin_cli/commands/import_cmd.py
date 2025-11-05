@@ -10,7 +10,6 @@ from cluefin_openapi.kiwoom._client import Client as KiwoomClient
 from loguru import logger
 from pydantic import SecretStr
 from rich.console import Console
-from rich.panel import Panel
 from rich.progress import BarColumn, MofNCompleteColumn, Progress, TextColumn
 from rich.table import Table
 
