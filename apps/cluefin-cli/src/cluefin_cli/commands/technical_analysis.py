@@ -8,9 +8,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from cluefin_cli.commands.analysis.ai_analyzer import AIAnalyzer
 from cluefin_cli.commands.analysis.indicators import TechnicalAnalyzer
-from cluefin_cli.config.settings import settings
 from cluefin_cli.data.fetcher import DataFetcher
 from cluefin_cli.display.charts import ChartRenderer
 from cluefin_cli.ml import StockMLPredictor
@@ -22,7 +20,6 @@ console = Console()
 @click.command(name="ta")
 @click.argument("stock_code")
 @click.option("--chart", "-c", is_flag=True, help="Display chart in terminal")
-@click.option("--ai-analysis", "-a", is_flag=True, help="Include AI-powered analysis")
 @click.option("--ml-predict", "-m", is_flag=True, help="Include ML-based price prediction")
 @click.option(
     "--feature-importance", "-f", is_flag=True, help="Display basic feature importance (requires --ml-predict)"
@@ -34,21 +31,21 @@ console = Console()
     help="Display detailed SHAP analysis with explanations (requires --ml-predict)",
 )
 def technical_analysis(
-    stock_code: str, chart: bool, ai_analysis: bool, ml_predict: bool, feature_importance: bool, shap_analysis: bool
+    stock_code: str, chart: bool, ml_predict: bool, feature_importance: bool, shap_analysis: bool
 ):
     """Run technical analysis for a given stock code."""
     console.print(f"[bold blue]Analyzing {stock_code}...[/bold blue]")
 
     try:
         # Run async analysis
-        asyncio.run(_analyze_stock(stock_code, chart, ai_analysis, ml_predict, feature_importance, shap_analysis))
+        asyncio.run(_analyze_stock(stock_code, chart, ml_predict, feature_importance, shap_analysis))
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
         logger.error(f"Analysis error for {stock_code}: {e}")
 
 
 async def _analyze_stock(
-    stock_code: str, chart: bool, ai_analysis: bool, ml_predict: bool, feature_importance: bool, shap_analysis: bool
+    stock_code: str, chart: bool, ml_predict: bool, feature_importance: bool, shap_analysis: bool
 ):
     """Main analysis logic."""
     # Initialize components
@@ -108,19 +105,6 @@ async def _analyze_stock(
     # ML prediction if requested
     if ml_predict and ml_predictor:
         await _perform_ml_analysis(ml_predictor, stock_code, stock_data, indicators, feature_importance, shap_analysis)
-
-    # AI analysis if requested
-    if ai_analysis and settings.openai_api_key:
-        console.print("\n[yellow]Generating AI analysis...[/yellow]")
-        ai_analyzer = AIAnalyzer()
-        analysis = await ai_analyzer.analyze_stock(stock_code, stock_data, indicators)
-        if analysis is None:
-            raise Exception("Error analysis stock")
-
-        console.print("\n[bold green]AI Market Analysis[/bold green]")
-        console.print(Panel(analysis, expand=False))
-    elif ai_analysis:
-        console.print("[red]OpenAI API key not configured for AI analysis[/red]")
 
 
 async def _perform_ml_analysis(

@@ -4,10 +4,6 @@ __pycache__/
 *.so
 *.pyd
 
-# C extensions
-*.c
-*.cpp
-
 # Distribution / packaging
 build/
 dist/
@@ -89,3 +85,5 @@ packages/*/src/*/*.py[cod]
 # Claude Code AI assistant configuration and memory
 .claude/
 .specify/
+
+data/

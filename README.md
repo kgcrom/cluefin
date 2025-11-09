@@ -41,10 +41,10 @@ uv sync --all-packages
 
 # Configure environment
 cp apps/cluefin-cli/.env.sample .env
-# Edit .env with your API keys (KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, KIWOOM_ENV, KIS_APP_KEY, KIS_SECRET_KEY, KIS_ENV, KRX_AUTH_KEY, DART_AUTH_KEY, OPENAI_API_KEY)
+# Edit .env with your API keys (KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, KIWOOM_ENV, KIS_APP_KEY, KIS_SECRET_KEY, KIS_ENV, KRX_AUTH_KEY, DART_AUTH_KEY)
 
 # Advanced analysis with ML prediction
-cluefin-cli ta 005930 --chart --ai-analysis --ml-predict --shap-analysis
+cluefin-cli ta 005930 --chart --ml-predict --shap-analysis
 
 # Run tests and code quality checks
 uv run pytest -m "not integration"  # Unit tests only
@@ -58,7 +58,6 @@ uv run ruff check . --fix
 - **한국 금융 API**: 키움증권, 한국투자증권(KIS), 한국거래소(KRX), DART를 위한 타입 안전한 클라이언트
 - **ML 기반 예측**: 주식 움직임 예측을 위한 SHAP 설명 기능을 갖춘 LightGBM 모델
 - **기술적 분석**: TA-Lib 통합을 통한 20+ 지표 (RSI, MACD, 볼린저 밴드 등)
-- **AI 인사이트**: 시장 분석 및 자연어 설명을 위한 GPT-4 통합
 
 ### 📊 데이터 소스
 - **키움증권**: 실시간 시세, 계좌 관리, 주문 실행
@@ -66,7 +65,6 @@ uv run ruff check . --fix
 - **한국거래소(KRX)**: 시장 데이터, 지수, 섹터 정보
 - **DART**: 기업 공시, 재무제표, 대량보유상황
 - **기술적 지표**: 포괄적인 TA-Lib 통합
-- **AI 분석**: OpenAI 기반 시장 인사이트 및 설명
 
 ## 📖 Cluefin을 선택하는 이유?
 Cluefin은 모든 사람들에게 금융 투자, 포트폴리오 관리를 단순화하고 도와주는 역할을합니다.
@@ -128,7 +126,6 @@ uv run ruff format .
 - **Rich-based UI** with Korean stock market analysis and menu navigation
 - **ML-powered predictions** using LightGBM with SHAP explanations for interpretability
 - **Technical analysis** with 150+ TA-Lib indicators (RSI, MACD, Bollinger Bands)
-- **AI-powered insights** via OpenAI integration for market analysis
 - **Korean timezone handling** (KST) and trading hours (9:00-15:30) awareness
 
 ## 📄 라이선스

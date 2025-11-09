@@ -1,6 +1,6 @@
 # Cluefin CLI
 
-기술적 지표, 터미널 차트, AI 기반 인사이트 및 **머신러닝 기반 가격 예측**을 제공하는 한국 주식 시장 분석용 강력한 명령줄 인터페이스입니다.
+기술적 지표, 터미널 차트 및 **머신러닝 기반 가격 예측**을 제공하는 한국 주식 시장 분석용 강력한 명령줄 인터페이스입니다.
 
 ![CLI Demo](https://img.shields.io/badge/CLI-Korean%20Stock%20Analysis-blue)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-green)
@@ -32,11 +32,6 @@
 - MACD 히스토그램 및 시그널 라인 차트
 - 색상으로 구분된 데이터가 포함된 풍부한 형식의 테이블
 
-### **AI 기반 분석**
-- OpenAI GPT-4를 활용한 자연어 시장 분석
-- 기술적 지표 기반 맥락적 인사이트
-- 한국 시장 특화 분석 및 용어
-- 리스크 평가 및 거래 추천
 
 ### **🤖 머신러닝 예측**
 - **LightGBM 기반 분류** - 익일 가격 움직임에 대한 이진 예측
@@ -77,7 +72,7 @@ uv sync --all-packages
 4. **Configure environment (optional):**
 ```bash
 cp apps/cluefin-cli/.env.sample .env
-# Edit .env with your API keys (KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, KIWOOM_ENV, KRX_AUTH_KEY, DART_AUTH_KEY, OPENAI_API_KEY)
+# Edit .env with your API keys (KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, KIWOOM_ENV, KRX_AUTH_KEY, DART_AUTH_KEY)
 ```
 
 ### Basic Usage
@@ -89,9 +84,6 @@ cluefin-cli ta 005930
 # With terminal charts
 cluefin-cli ta 005930 --chart
 
-# With AI-powered analysis
-cluefin-cli ta 005930 --ai-analysis
-
 # 🤖 With ML prediction
 cluefin-cli ta 005930 --ml-predict
 
@@ -102,7 +94,7 @@ cluefin-cli ta 005930 --ml-predict --feature-importance
 cluefin-cli ta 005930 --ml-predict --shap-analysis
 
 # 🚀 Full analysis (all features)
-cluefin-cli ta 005930 --chart --ai-analysis --ml-predict --shap-analysis
+cluefin-cli ta 005930 --chart --ml-predict --shap-analysis
 
 # 📘 Fundamental analysis (DART)
 cluefin-cli fa 005930
@@ -126,7 +118,6 @@ cluefin-cli ta [OPTIONS] STOCK_CODE
 
 #### 옵션
 - `-c, --chart` - 터미널에서 대화형 차트 표시
-- `-a, --ai-analysis` - AI 기반 시장 분석 포함 (OpenAI API 키 필요)
 - `-m, --ml-predict` - ML 기반 가격 예측 포함 🤖
 - `-f, --feature-importance` - 기본 피처 중요도 표시 (--ml-predict 필요) 📊
 - `-s, --shap-analysis` - 설명이 포함된 상세 SHAP 분석 표시 (--ml-predict 필요) 🔍
@@ -141,9 +132,6 @@ cluefin-cli ta 005930
 # SK하이닉스 차트 포함
 cluefin-cli ta 000660 --chart
 
-# 네이버 AI 인사이트 포함
-cluefin-cli ta 035420 --chart --ai-analysis
-
 # 삼성전자 ML 예측 포함
 cluefin-cli ta 005930 --ml-predict
 
@@ -154,7 +142,7 @@ cluefin-cli ta 051910 --ml-predict --feature-importance
 cluefin-cli ta 207940 --ml-predict --shap-analysis
 
 # LG에너지솔루션 - 전체 분석
-cluefin-cli ta 373220 --chart --ai-analysis --ml-predict --shap-analysis
+cluefin-cli ta 373220 --chart --ml-predict --shap-analysis
 ```
 
 ### `fa` 명령어
@@ -215,9 +203,6 @@ KRX_AUTH_KEY=your_auth_key_here
 # Financial Supervisory Service DART API
 DART_AUTH_KEY=your_dart_auth_key_here
 
-# OpenAI API (for AI-powered market analysis)
-OPENAI_API_KEY=your_openai_api_key_here
-
 # Optional ML model configuration
 ML_MODEL_PATH=models/
 ML_CACHE_DIR=.ml_cache/
@@ -230,7 +215,6 @@ The CLI integrates with Korean financial APIs through the `cluefin-openapi` pack
 1. **Kiwoom Securities API**: OAuth2-style authentication for real-time stock data, orders, and account information
 1. **Korea Exchange (KRX)**: Simple auth_key authentication for market data, indices, and sector information  
 1. **Financial Supervisory Service (DART)**: Fundamental disclosures, periodic reports, dividends, and shareholder data
-1. **OpenAI API**: GPT-4 integration for natural language market analysis and insights
 
 **Note**: The CLI can work with limited functionality without API keys, using mock data for demonstration purposes.
 
@@ -306,25 +290,19 @@ The `--chart` option displays beautiful ASCII charts directly in your terminal:
 apps/cluefin-cli/
 ├── src/cluefin_cli/              # Main application code
 │   ├── commands/                 # CLI command implementations
-│   │   ├── analysis/             # Analysis-specific modules  
-│   │   │   ├── ai_analyzer.py    # OpenAI-powered market analysis
+│   │   ├── analysis/             # Technical analysis module
 │   │   │   └── indicators.py     # Technical indicators computation
-│   │   ├── inquiry/              # Interactive market inquiry system
-│   │   │   ├── base_api_module.py     # Base API integration patterns
-│   │   │   ├── config_models.py       # Pydantic configuration models
-│   │   │   ├── display_formatter.py   # Rich-based display formatting
-│   │   │   ├── main.py               # Main inquiry command logic
-│   │   │   ├── menu_controller.py     # Interactive menu navigation
-│   │   │   ├── parameter_collector.py # User input collection
-│   │   │   ├── ranking_info.py        # Stock ranking and performance
-│   │   │   ├── sector_info.py         # Sector-based stock analysis
-│   │   │   └── stock_info.py          # Individual stock information
-│   │   ├── technical_analysis.py            # Main analysis command (Click-based)
-│   │   └── inquiry.py            # Market inquiry command entry
+│   │   ├── technical_analysis.py # Main TA command (Click-based)
+│   │   ├── fundamental_analysis.py # Fundamental analysis command
+│   │   └── import_cmd.py         # Data import command
 │   ├── config/                   # Application configuration
 │   │   └── settings.py           # Pydantic settings management
 │   ├── data/                     # Data layer abstraction
-│   │   └── fetcher.py            # Data retrieval from cluefin-openapi
+│   │   ├── duckdb_manager.py     # DuckDB database management
+│   │   ├── fetcher.py            # Data retrieval from cluefin-openapi
+│   │   ├── importer.py           # Stock chart data importer
+│   │   ├── industry_importer.py  # Industry code importer
+│   │   └── industry_chart_importer.py # Industry chart data importer
 │   ├── display/                  # Terminal visualization
 │   │   └── charts.py             # ASCII chart rendering (plotext)
 │   ├── ml/                       # 🤖 Machine Learning pipeline
@@ -337,11 +315,9 @@ apps/cluefin-cli/
 │   │   └── formatters.py         # Korean currency and text formatting
 │   └── main.py                   # CLI entry point and Click app
 ├── tests/unit/                   # Unit test suite
-│   ├── commands/inquiry/         # Inquiry command tests
+│   ├── commands/                 # Command tests
 │   └── ml/                       # ML pipeline and model tests
-├── main.py                       # Alternative CLI entry point
 ├── pyproject.toml               # Package dependencies and configuration
-├── CLAUDE.md                    # Development guidelines for Claude Code
 └── README.md                    # This documentation
 ```
 
@@ -351,11 +327,9 @@ apps/cluefin-cli/
 2. **Chart Types**: Extend `src/cluefin_cli/display/charts.py`
 3. **Data Sources**: Modify `src/cluefin_cli/data/fetcher.py`
 4. **CLI Commands**: Add new commands to `src/cluefin_cli/commands/`
-5. **Market Inquiry Features**: Extend modules in `src/cluefin_cli/commands/inquiry/`
-6. **AI Analysis**: Enhance `src/cluefin_cli/commands/analysis/ai_analyzer.py`
-7. **ML Models**: Extend `src/cluefin_cli/ml/models.py` or add new model classes
-8. **SHAP Visualizations**: Enhance `src/cluefin_cli/ml/explainer.py`
-9. **Utility Functions**: Add to `src/cluefin_cli/utils/formatters.py`
+5. **ML Models**: Extend `src/cluefin_cli/ml/models.py` or add new model classes
+6. **SHAP Visualizations**: Enhance `src/cluefin_cli/ml/explainer.py`
+7. **Utility Functions**: Add to `src/cluefin_cli/utils/formatters.py`
 
 ### Running Tests
 
