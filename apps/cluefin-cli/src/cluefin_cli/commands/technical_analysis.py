@@ -30,9 +30,7 @@ console = Console()
     is_flag=True,
     help="Display detailed SHAP analysis with explanations (requires --ml-predict)",
 )
-def technical_analysis(
-    stock_code: str, chart: bool, ml_predict: bool, feature_importance: bool, shap_analysis: bool
-):
+def technical_analysis(stock_code: str, chart: bool, ml_predict: bool, feature_importance: bool, shap_analysis: bool):
     """Run technical analysis for a given stock code."""
     console.print(f"[bold blue]Analyzing {stock_code}...[/bold blue]")
 
@@ -44,9 +42,7 @@ def technical_analysis(
         logger.error(f"Analysis error for {stock_code}: {e}")
 
 
-async def _analyze_stock(
-    stock_code: str, chart: bool, ml_predict: bool, feature_importance: bool, shap_analysis: bool
-):
+async def _analyze_stock(stock_code: str, chart: bool, ml_predict: bool, feature_importance: bool, shap_analysis: bool):
     """Main analysis logic."""
     # Initialize components
     data_fetcher = DataFetcher()
