@@ -43,14 +43,6 @@ stderr_console = Console(stderr=True)
     help="Filter by market (KOSPI or KOSDAQ)",
 )
 @click.option(
-    "--frequency",
-    "-f",
-    type=click.Choice(["daily", "weekly", "monthly", "all"], case_sensitive=False),
-    multiple=True,
-    default=("all",),
-    help="Chart data frequencies to import (can specify multiple times)",
-)
-@click.option(
     "--start",
     type=str,
     default=None,
@@ -98,7 +90,6 @@ def import_command(
     from_stdin: bool,
     list_stocks: bool,
     market: Optional[str],
-    frequency: tuple,
     start: Optional[str],
     end: Optional[str],
     show_progress: bool,
@@ -181,14 +172,11 @@ def import_command(
                 console.print("[yellow]No industry codes specified for import[/yellow]")
                 return
 
-            # Process frequencies
-            frequencies = _process_frequencies(frequency)
-
             # Get date range
             start_date, end_date = _get_date_range(start, end)
 
             # Display summary
-            _display_industry_import_summary(codes_to_import, frequencies, start_date, end_date, skip_existing)
+            _display_industry_import_summary(codes_to_import, start_date, end_date, skip_existing)
 
             # Run import
             _run_industry_import(
@@ -196,7 +184,6 @@ def import_command(
                 codes_to_import,
                 start_date,
                 end_date,
-                frequencies,
                 skip_existing,
                 show_progress,
             )
@@ -222,14 +209,11 @@ def import_command(
             console.print("[yellow]No stock codes specified for import[/yellow]")
             return
 
-        # Process frequencies
-        frequencies = _process_frequencies(frequency)
-
         # Get date range
         start_date, end_date = _get_date_range(start, end)
 
         # Display summary
-        _display_import_summary(codes_to_import, frequencies, start_date, end_date, skip_existing)
+        _display_import_summary(codes_to_import, start_date, end_date, skip_existing)
 
         # Run import
         _run_import(
@@ -237,7 +221,6 @@ def import_command(
             codes_to_import,
             start_date,
             end_date,
-            frequencies,
             skip_existing,
             show_progress,
         )
@@ -294,29 +277,6 @@ def _collect_stock_codes(
     return sorted(set(codes))
 
 
-def _process_frequencies(frequency: tuple) -> list[str]:
-    """Process frequency options.
-
-    Args:
-        frequency: Raw frequency tuple from CLI
-
-    Returns:
-        List of normalized frequencies
-    """
-    if not frequency or frequency == ("all",):
-        return ["daily", "weekly", "monthly"]
-
-    result = []
-    for f in frequency:
-        f_lower = f.lower()
-        if f_lower == "all":
-            return ["daily", "weekly", "monthly"]
-        elif f_lower in ["daily", "weekly", "monthly"]:
-            result.append(f_lower)
-
-    return sorted(set(result)) if result else ["daily", "weekly", "monthly"]
-
-
 def _get_date_range(start: Optional[str], end: Optional[str]) -> tuple[str, str]:
     """Get and validate date range.
 
@@ -346,7 +306,6 @@ def _get_date_range(start: Optional[str], end: Optional[str]) -> tuple[str, str]
 
 def _display_import_summary(
     stock_codes: list[str],
-    frequencies: list[str],
     start_date: str,
     end_date: str,
     skip_existing: bool,
@@ -355,7 +314,6 @@ def _display_import_summary(
 
     Args:
         stock_codes: List of stock codes to import
-        frequencies: List of frequencies
         start_date: Start date
         end_date: End date
         skip_existing: Whether to skip existing data
@@ -365,7 +323,6 @@ def _display_import_summary(
     summary_table.add_column("Value", style="magenta")
 
     summary_table.add_row("Stock Codes", str(len(stock_codes)))
-    summary_table.add_row("Frequencies", ", ".join(frequencies))
     summary_table.add_row("Start Date", start_date)
     summary_table.add_row("End Date", end_date)
     summary_table.add_row("Skip Existing", "Yes" if skip_existing else "No")
@@ -378,7 +335,6 @@ def _run_import(
     stock_codes: list[str],
     start_date: str,
     end_date: str,
-    frequencies: list[str],
     skip_existing: bool,
     show_progress: bool,
 ) -> None:
@@ -389,7 +345,6 @@ def _run_import(
         stock_codes: Stock codes to import
         start_date: Start date
         end_date: End date
-        frequencies: Frequencies to import
         skip_existing: Skip existing data
         show_progress: Show progress bar
     """
@@ -409,7 +364,6 @@ def _run_import(
                 stock_codes,
                 start_date,
                 end_date,
-                frequencies,
                 progress_callback=update_progress,
                 skip_existing=skip_existing,
             )
@@ -418,7 +372,6 @@ def _run_import(
             stock_codes,
             start_date,
             end_date,
-            frequencies,
             skip_existing=skip_existing,
         )
 
@@ -515,7 +468,6 @@ def _collect_industry_codes(
 
 def _display_industry_import_summary(
     industry_codes: list[str],
-    frequencies: list[str],
     start_date: str,
     end_date: str,
     skip_existing: bool,
@@ -524,7 +476,6 @@ def _display_industry_import_summary(
 
     Args:
         industry_codes: List of industry codes to import
-        frequencies: List of frequencies
         start_date: Start date
         end_date: End date
         skip_existing: Whether to skip existing data
@@ -534,7 +485,6 @@ def _display_industry_import_summary(
     summary_table.add_column("Value", style="magenta")
 
     summary_table.add_row("Industry Codes", str(len(industry_codes)))
-    summary_table.add_row("Frequencies", ", ".join(frequencies))
     summary_table.add_row("Start Date", start_date)
     summary_table.add_row("End Date", end_date)
     summary_table.add_row("Skip Existing", "Yes" if skip_existing else "No")
@@ -547,7 +497,6 @@ def _run_industry_import(
     industry_codes: list[str],
     start_date: str,
     end_date: str,
-    frequencies: list[str],
     skip_existing: bool,
     show_progress: bool,
 ) -> None:
@@ -558,7 +507,6 @@ def _run_industry_import(
         industry_codes: Industry codes to import
         start_date: Start date
         end_date: End date
-        frequencies: Frequencies to import
         skip_existing: Skip existing data
         show_progress: Show progress bar
     """
@@ -578,7 +526,6 @@ def _run_industry_import(
                 industry_codes,
                 start_date,
                 end_date,
-                frequencies,
                 progress_callback=update_progress,
                 skip_existing=skip_existing,
             )
@@ -587,7 +534,6 @@ def _run_industry_import(
             industry_codes,
             start_date,
             end_date,
-            frequencies,
             skip_existing=skip_existing,
         )
 
@@ -608,17 +554,9 @@ def _show_database_stats(db_manager: DuckDBManager) -> None:
 
     stats_table.add_row("Daily Chart Records", f"{stats['daily_charts_count']:,}")
     stats_table.add_row("Daily Chart Stocks", str(stats["daily_charts_stocks"]))
-    stats_table.add_row("Weekly Chart Records", f"{stats['weekly_charts_count']:,}")
-    stats_table.add_row("Weekly Chart Stocks", str(stats["weekly_charts_stocks"]))
-    stats_table.add_row("Monthly Chart Records", f"{stats['monthly_charts_count']:,}")
-    stats_table.add_row("Monthly Chart Stocks", str(stats["monthly_charts_stocks"]))
     stats_table.add_row("", "")
     stats_table.add_row("Industry Daily Records", f"{stats.get('industry_daily_charts_count', 0):,}")
     stats_table.add_row("Industry Daily Industries", str(stats.get("industry_daily_charts_industries", 0)))
-    stats_table.add_row("Industry Weekly Records", f"{stats.get('industry_weekly_charts_count', 0):,}")
-    stats_table.add_row("Industry Weekly Industries", str(stats.get("industry_weekly_charts_industries", 0)))
-    stats_table.add_row("Industry Monthly Records", f"{stats.get('industry_monthly_charts_count', 0):,}")
-    stats_table.add_row("Industry Monthly Industries", str(stats.get("industry_monthly_charts_industries", 0)))
     stats_table.add_row("", "")
     stats_table.add_row("Tracked Stocks", str(stats["tracked_stocks"]))
     stats_table.add_row("Industry Codes", f"{stats.get('industry_codes_count', 0):,}")
