@@ -544,6 +544,49 @@ class DuckDBManager:
 
         return True
 
+    def check_data_exists_batch(
+        self, stock_codes: list[str], start_date: str, end_date: str
+    ) -> dict[str, bool]:
+        """Check if daily data exists for multiple stocks in batch.
+
+        Args:
+            stock_codes: List of stock codes
+            start_date: Start date (YYYYMMDD format)
+            end_date: End date (YYYYMMDD format)
+
+        Returns:
+            Dictionary mapping stock_code to existence status (True if data exists)
+        """
+        if not stock_codes:
+            return {}
+
+        start = pd.to_datetime(start_date, format="%Y%m%d").date()
+        end = pd.to_datetime(end_date, format="%Y%m%d").date()
+
+        # Create placeholders for SQL IN clause
+        placeholders = ",".join("?" * len(stock_codes))
+        query = f"""
+            SELECT stock_code, COUNT(*) as count
+            FROM daily_charts
+            WHERE stock_code IN ({placeholders})
+              AND date BETWEEN ? AND ?
+            GROUP BY stock_code
+        """
+
+        result = self.connection.execute(
+            query, [*stock_codes, start, end]
+        ).fetchall()
+
+        # Build result dict - stocks with count > 0 exist
+        exists_map = {row[0]: row[1] > 0 for row in result}
+
+        # Add stocks not in result (no data) as False
+        for stock_code in stock_codes:
+            if stock_code not in exists_map:
+                exists_map[stock_code] = False
+
+        return exists_map
+
     def check_industry_data_exists(self, industry_code: str, start_date: str, end_date: str) -> bool:
         """Check if daily data already exists for an industry/date range.
 

@@ -139,6 +139,8 @@ def import_command(
         kiwoom_client = KiwoomClient(
             token=token.get_token(),
             env=settings.kiwoom_env,
+            rate_limit_requests_per_second=1.0,
+            rate_limit_burst=2,
         )
         stock_fetcher = StockListFetcher(kiwoom_client, db_manager)
         importer = StockChartImporter(kiwoom_client, db_manager)
@@ -392,9 +394,12 @@ def _import_industry_codes(industry_importer: IndustryCodeImporter, market: Opti
     if market:
         market_lower = market.lower()
         if market_lower == "kospi":
-            market_type = "0"
+            market_type = list("0")
         elif market_lower == "kosdaq":
-            market_type = "1"
+            market_type = list("1")
+
+    if market_type is None:
+        raise ValueError(f"Invalid market specified: {market}")
 
     # Import industry codes
     results = industry_importer.import_industry_codes(market_type=market_type)

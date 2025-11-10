@@ -190,18 +190,42 @@ class StockChartImporter:
         """
         results = {}
         total = len(stock_codes)
+        chunk_size = 10
 
-        for idx, stock_code in enumerate(stock_codes, 1):
-            if progress_callback:
-                progress_callback(idx, total, stock_code)
+        # Process in chunks of 10
+        for chunk_start in range(0, len(stock_codes), chunk_size):
+            chunk_end = min(chunk_start + chunk_size, len(stock_codes))
+            chunk = stock_codes[chunk_start:chunk_end]
 
-            try:
-                results[stock_code] = self.import_stock_data(
-                    stock_code, start_date, end_date, skip_existing=skip_existing
-                )
-            except Exception as e:
-                logger.error(f"Error importing {stock_code}: {e}")
-                results[stock_code] = -1
+            # Batch check existence for this chunk
+            if skip_existing:
+                exists_map = self.db_manager.check_data_exists_batch(chunk, start_date, end_date)
+                existing_codes = [code for code, exists in exists_map.items() if exists]
+                if existing_codes:
+                    logger.info(f"Skipping {len(existing_codes)} existing stocks: {existing_codes}")
+                    for code in existing_codes:
+                        results[code] = 0  # Mark as skipped
+            else:
+                exists_map = {}
+
+            # Process each stock in chunk sequentially
+            for stock_code in chunk:
+                idx = stock_codes.index(stock_code) + 1
+
+                if progress_callback:
+                    progress_callback(idx, total, stock_code)
+
+                # Skip if already exists (checked in batch above)
+                if skip_existing and exists_map.get(stock_code, False):
+                    continue
+
+                try:
+                    results[stock_code] = self.import_stock_data(
+                        stock_code, start_date, end_date, skip_existing=False  # Already checked
+                    )
+                except Exception as e:
+                    logger.error(f"Error importing {stock_code}: {e}")
+                    results[stock_code] = -1
 
         return results
 
