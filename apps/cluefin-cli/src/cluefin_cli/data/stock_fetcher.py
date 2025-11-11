@@ -93,11 +93,14 @@ class StockListFetcher:
         Fetches data from both get_stock_info_v1 and get_stock_info APIs,
         combining them into a single metadata dictionary.
 
+        Note: This method does NOT save to database. Use fetch_and_save_metadata_batch
+        for batch processing with automatic DB saving.
+
         Args:
             stock_info: Stock info to fetch metadata for
 
         Returns:
-            Dictionary with combined metadata fields, or None if either API fails.
+            Dictionary with combined metadata fields, or None if API fails.
             Fields include both v1 API fields and get_stock_info fields.
         """
 
@@ -142,21 +145,78 @@ class StockListFetcher:
                 "distribution_stock": self._parse_int(basic_data.dstr_stk),
             }
 
-            if metadata is None:
-                logger.warning(f"Failed to fetch extended metadata for {stock_info} - skipping enrichment")
-                return
-
-            # Convert metadata dict to DataFrame
-            df = pd.DataFrame([metadata])
-
-            # Upsert to database
-            count = self.db_manager.upsert_stock_metadata_extended(df)
-            logger.info(f"Successfully enriched metadata for {stock_info.code} ({count} record)")
             return metadata
 
         except Exception as e:
             logger.error(f"Error fetching extended metadata for {stock_info}: {e}")
             return None
+
+    def fetch_and_save_metadata_batch(
+        self, stock_infos: list[DomesticStockInfoSummaryItem], chunk_size: int = 100
+    ) -> tuple[int, int]:
+        """Fetch metadata for multiple stocks and save to database in chunks.
+
+        Processes stocks in chunks to balance memory usage and incremental progress.
+        Each chunk is fetched and saved to database before moving to the next chunk.
+
+        Args:
+            stock_infos: List of stock info objects to fetch metadata for
+            chunk_size: Number of stocks to process per chunk (default: 100)
+
+        Returns:
+            Tuple of (success_count, failed_count)
+        """
+        total_stocks = len(stock_infos)
+        total_success = 0
+        total_failed = 0
+
+        # Calculate number of chunks
+        num_chunks = (total_stocks + chunk_size - 1) // chunk_size  # Ceiling division
+
+        logger.info(f"Processing {total_stocks} stocks in {num_chunks} chunks of {chunk_size}...")
+
+        # Process stocks in chunks
+        for chunk_idx in range(num_chunks):
+            chunk_start = chunk_idx * chunk_size
+            chunk_end = min(chunk_start + chunk_size, total_stocks)
+            chunk = stock_infos[chunk_start:chunk_end]
+
+            logger.info(f"[Chunk {chunk_idx + 1}/{num_chunks}] Processing stocks {chunk_start + 1}-{chunk_end}...")
+
+            chunk_metadata = []
+            chunk_failed = 0
+
+            # Fetch metadata for all stocks in this chunk
+            for stock_info in chunk:
+                global_idx = stock_infos.index(stock_info) + 1
+                logger.info(
+                    f"  [{global_idx}/{total_stocks}] Fetching metadata for {stock_info.code} ({stock_info.name})"
+                )
+                metadata = self.fetch_stock_metadata_extended(stock_info)
+
+                if metadata:
+                    chunk_metadata.append(metadata)
+                else:
+                    chunk_failed += 1
+                    logger.warning(f"  Failed to fetch metadata for {stock_info.code}")
+
+            # Save this chunk to database
+            if chunk_metadata:
+                logger.info(f"[Chunk {chunk_idx + 1}/{num_chunks}] Saving {len(chunk_metadata)} records to database...")
+                df = pd.DataFrame(chunk_metadata)
+                count = self.db_manager.upsert_stock_metadata_extended(df)
+                logger.info(f"[Chunk {chunk_idx + 1}/{num_chunks}] Successfully saved {count} records")
+                total_success += count
+            else:
+                logger.warning(f"[Chunk {chunk_idx + 1}/{num_chunks}] No metadata to save")
+
+            total_failed += chunk_failed
+            logger.info(
+                f"[Chunk {chunk_idx + 1}/{num_chunks}] Complete - Success: {len(chunk_metadata)}, Failed: {chunk_failed}"
+            )
+
+        logger.info(f"Batch processing complete - Total success: {total_success}, Total failed: {total_failed}")
+        return total_success, total_failed
 
     def _parse_date(self, value: Optional[str]) -> Optional[str]:
         """Parse date string to YYYY-MM-DD format.

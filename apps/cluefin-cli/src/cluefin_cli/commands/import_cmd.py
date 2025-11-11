@@ -431,10 +431,13 @@ def _list_stocks(stock_fetcher: StockListFetcher, market: Optional[str]) -> None
     stderr_console.print("[yellow]Fetching stock list from Kiwoom API...[/yellow]")
     stocks = stock_fetcher.get_all_stocks(market=market)
 
-    for stock in stocks:
-        stock_fetcher.fetch_stock_metadata_extended(stock)
+    # Fetch and save metadata in batch
+    success_count, failed_count = stock_fetcher.fetch_and_save_metadata_batch(stocks)
 
-    stderr_console.print(f"[green]✓[/green] Listed {len(stocks)} stocks")
+    stderr_console.print(
+        f"[green]✓[/green] Listed {len(stocks)} stocks "
+        f"(metadata saved: {success_count}, failed: {failed_count})"
+    )
 
 
 def _collect_industry_codes(
