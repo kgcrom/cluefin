@@ -9,7 +9,7 @@ class DomesticStockCurrentPriceItem(BaseModel):
     iscd_stat_cls_code: str = Field(title="종목 상태 구분 코드", max_length=3)
     marg_rate: str = Field(title="증거금 비율", max_length=84)
     rprs_mrkt_kor_name: str = Field(title="대표 시장 한글명", max_length=40)
-    new_hgpr_lwpr_cls_code: str = Field(title="신 고가 저가 구분 코드", max_length=10)
+    new_hgpr_lwpr_cls_code: Optional[str] = Field(default=None, title="신 고가 저가 구분 코드", max_length=10)
     bstp_kor_isnm: str = Field(title="업종 한글 종목명", max_length=40)
     temp_stop_yn: str = Field(title="임시 정지 여부", max_length=1)
     oprc_rang_cont_yn: str = Field(title="시가 범위 연장 여부", max_length=1)
@@ -94,7 +94,7 @@ class DomesticStockCurrentPriceItem(BaseModel):
 class DomesticStockCurrentPrice(BaseModel, KisHttpBody):
     """국내주식 현재가 시세"""
 
-    output: DomesticStockCurrentPriceItem = Field(title="응답상세")
+    output: Optional[DomesticStockCurrentPriceItem] = Field(default=None, title="응답상세")
 
 
 class DomesticStockCurrentPriceItem2(BaseModel):
@@ -159,7 +159,7 @@ class DomesticStockCurrentPriceItem2(BaseModel):
 class DomesticStockCurrentPrice2(BaseModel, KisHttpBody):
     """국내주식 현재가 시세2"""
 
-    output: DomesticStockCurrentPriceItem2 = Field(title="응답상세")
+    output: Optional[DomesticStockCurrentPriceItem2] = Field(default=None, title="응답상세")
 
 
 class DomesticStockCurrentPriceConclusionItem(BaseModel):
@@ -198,7 +198,7 @@ class DomesticStockCurrentPriceDailyItem(BaseModel):
 class DomesticStockCurrentPriceDaily(BaseModel, KisHttpBody):
     """국내주식 현재가 일자별"""
 
-    pass
+    output: Sequence[DomesticStockCurrentPriceDailyItem] = Field(default_factory=list)
 
 
 class DomesticStockCurrentPriceAskingExpectedConclusionItem1(BaseModel):
@@ -296,8 +296,8 @@ class DomesticStockCurrentPriceAskingExpectedConclusionItem2(BaseModel):
 class DomesticStockCurrentPriceAskingExpectedConclusion(BaseModel, KisHttpBody):
     """국내주식 현재가 호가/예상체결"""
 
-    output1: DomesticStockCurrentPriceAskingExpectedConclusionItem1 = Field(title="응답상세1")
-    output2: DomesticStockCurrentPriceAskingExpectedConclusionItem2 = Field(title="응답상세2")
+    output1: Optional[DomesticStockCurrentPriceAskingExpectedConclusionItem1] = Field(default=None, title="응답상세1")
+    output2: Optional[DomesticStockCurrentPriceAskingExpectedConclusionItem2] = Field(default=None, title="응답상세2")
 
 
 class DomesticStockCurrentPriceInvestorItem(BaseModel):
@@ -413,7 +413,7 @@ class DomesticStockCurrentPriceMemberItem(BaseModel):
 class DomesticStockCurrentPriceMember(BaseModel, KisHttpBody):
     """국내주식 현재가 회원사"""
 
-    output: DomesticStockCurrentPriceMemberItem = Field(title="응답상세")
+    output: Optional[DomesticStockCurrentPriceMemberItem] = Field(default=None, title="응답상세")
 
 
 class DomesticStockPeriodQuoteItem1(BaseModel):
@@ -478,7 +478,7 @@ class DomesticStockPeriodQuoteItem2(BaseModel):
 class DomesticStockPeriodQuote(BaseModel, KisHttpBody):
     """국내주식 기간별시세"""
 
-    output1: DomesticStockPeriodQuoteItem1 = Field(title="응답상세1")
+    output1: Optional[DomesticStockPeriodQuoteItem1] = Field(default=None, title="응답상세1")
     output2: Sequence[DomesticStockPeriodQuoteItem2] = Field(default_factory=list)
 
 
@@ -507,7 +507,7 @@ class DomesticStockTodayMinuteChartItem2(BaseModel):
 class DomesticStockTodayMinuteChart(BaseModel, KisHttpBody):
     """국내주식 당일분봉조회"""
 
-    output1: DomesticStockTodayMinuteChartItem1 = Field(title="응답상세1")
+    output1: Optional[DomesticStockTodayMinuteChartItem1] = Field(default=None, title="응답상세1")
     output2: Sequence[DomesticStockTodayMinuteChartItem2] = Field(default_factory=list)
 
 
@@ -536,7 +536,7 @@ class DomesticStockDailyMinuteChartItem2(BaseModel):
 class DomesticStockDailyMinuteChart(BaseModel, KisHttpBody):
     """국내주식 일별분봉조회"""
 
-    output1: DomesticStockDailyMinuteChartItem1 = Field(title="응답상세1")
+    output1: Optional[DomesticStockDailyMinuteChartItem1] = Field(default=None, title="응답상세1")
     output2: Sequence[DomesticStockDailyMinuteChartItem2] = Field(default_factory=list)
 
 
@@ -567,7 +567,7 @@ class DomesticStockCurrentPriceTimeItemConclusionItem2(BaseModel):
 class DomesticStockCurrentPriceTimeItemConclusion(BaseModel, KisHttpBody):
     """국내주식 현재가 당일시간대별체결"""
 
-    output1: DomesticStockCurrentPriceTimeItemConclusionItem1 = Field(title="응답상세1")
+    output1: Optional[DomesticStockCurrentPriceTimeItemConclusionItem1] = Field(default=None, title="응답상세1")
     output2: Sequence[DomesticStockCurrentPriceTimeItemConclusionItem2] = Field(default_factory=list)
 
 
@@ -608,7 +608,7 @@ class DomesticStockCurrentPriceDailyOvertimePriceItem2(BaseModel):
 class DomesticStockCurrentPriceDailyOvertimePrice(BaseModel, KisHttpBody):
     """국내주식 현재가 시간외일자별주가"""
 
-    output1: DomesticStockCurrentPriceDailyOvertimePriceItem1 = Field(title="응답상세1")
+    output1: Optional[DomesticStockCurrentPriceDailyOvertimePriceItem1] = Field(default=None, title="응답상세1")
     output2: Sequence[DomesticStockCurrentPriceDailyOvertimePriceItem2] = Field(default_factory=list)
 
 
@@ -694,7 +694,7 @@ class DomesticStockOvertimeCurrentPriceItem(BaseModel):
 class DomesticStockOvertimeCurrentPrice(BaseModel, KisHttpBody):
     """국내주식 시간외현재가"""
 
-    output: DomesticStockOvertimeCurrentPriceItem = Field(title="응답상세")
+    output: Optional[DomesticStockOvertimeCurrentPriceItem] = Field(default=None, title="응답상세")
 
 
 class DomesticStockOvertimeAskingPriceItem(BaseModel):
@@ -779,7 +779,7 @@ class DomesticStockOvertimeAskingPrice(BaseModel, KisHttpBody):
     """국내주식 시간외호가"""
 
     # TODO(typo) output이 맞지만 문서에는 output1로 잘못 표기되어 있음.
-    output: DomesticStockOvertimeAskingPriceItem = Field(title="응답상세")
+    output: Optional[DomesticStockOvertimeAskingPriceItem] = Field(default=None, title="응답상세")
 
 
 class DomesticStockClosingExpectedPriceItem(BaseModel):
@@ -866,7 +866,7 @@ class DomesticEtfEtnCurrentPriceItem(BaseModel):
 class DomesticEtfEtnCurrentPrice(BaseModel, KisHttpBody):
     """국내ETF/ETN 현재가"""
 
-    output: DomesticEtfEtnCurrentPriceItem = Field(title="응답상세")
+    output: Optional[DomesticEtfEtnCurrentPriceItem] = Field(default=None, title="응답상세")
 
 
 class DomesticEtfComponentStockPriceItem1(BaseModel):
@@ -909,7 +909,7 @@ class DomesticEtfComponentStockPriceItem2(BaseModel):
 class DomesticEtfComponentStockPrice(BaseModel, KisHttpBody):
     """국내ETF 구성종목시세"""
 
-    output1: DomesticEtfComponentStockPriceItem1 = Field(title="응답상세1")
+    output1: Optional[DomesticEtfComponentStockPriceItem1] = Field(default=None, title="응답상세1")
     output2: Sequence[DomesticEtfComponentStockPriceItem2] = Field(default_factory=list)
 
 
@@ -917,7 +917,7 @@ class DomesticEtfNavComparisonTrendItem1(BaseModel):
     stck_prpr: str = Field(title="주식 현재가", max_length=8)
     prdy_vrss: str = Field(title="전일 대비", max_length=8)
     prdy_vrss_sign: str = Field(title="전일 대비 부호", max_length=2)
-    prdy_ctrt: str = Field(title="전일 대비율", max_length=4)
+    prdy_ctrt: str = Field(title="전일 대비율", max_length=10)
     acml_vol: str = Field(title="누적 거래량", max_length=12)
     acml_tr_pbmn: str = Field(title="누적 거래 대금", max_length=60)
     stck_prdy_clpr: str = Field(title="주식 전일 종가", max_length=10)
@@ -942,8 +942,8 @@ class DomesticEtfNavComparisonTrendItem2(BaseModel):
 class DomesticEtfNavComparisonTrend(BaseModel, KisHttpBody):
     """국내ETF NAV 비교추이(종목)"""
 
-    output1: DomesticEtfNavComparisonTrendItem1 = Field(title="응답상세1")
-    output2: DomesticEtfNavComparisonTrendItem2 = Field(title="응답상세2")
+    output1: Optional[DomesticEtfNavComparisonTrendItem1] = Field(default=None, title="응답상세1")
+    output2: Optional[DomesticEtfNavComparisonTrendItem2] = Field(default=None, title="응답상세2")
 
 
 class DomesticEtfNavComparisonDailyTrendItem(BaseModel):

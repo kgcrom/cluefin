@@ -303,7 +303,7 @@ def test_get_stock_current_price_overtime_conclusion(client: Client):
     time.sleep(1)
     try:
         response = client.domestic_basic_quote.get_stock_current_price_overtime_conclusion(
-            fid_cond_mrkt_div_code="J", fid_input_iscd="005930", fid_input_hour_1="080000"
+            fid_cond_mrkt_div_code="J", fid_input_iscd="005930",
         )
 
         # Verify response type

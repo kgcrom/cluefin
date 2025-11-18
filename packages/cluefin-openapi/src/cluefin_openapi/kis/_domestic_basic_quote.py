@@ -31,6 +31,14 @@ class DomesticBasicQuote:
     def __init__(self, client: Client):
         self.client = client
 
+    def _check_response_error(self, response_data: dict) -> None:
+        """Check if API response contains an error and raise if so."""
+        rt_cd = response_data.get("rt_cd")
+        if rt_cd != "0":
+            msg_cd = response_data.get("msg_cd", "")
+            msg1 = response_data.get("msg1", "Unknown error")
+            raise ValueError(f"KIS API Error [{msg_cd}]: {msg1} (rt_cd={rt_cd})")
+
     def get_stock_current_price(
         self,
         fid_cond_mrkt_div_code: Literal["J", "NX", "UN"],
@@ -54,7 +62,9 @@ class DomesticBasicQuote:
             "FID_INPUT_ISCD": fid_input_iscd,
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/inquire-price", headers=headers, params=params)
-        return DomesticStockCurrentPrice.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        return DomesticStockCurrentPrice.model_validate(response_data)
 
     def get_stock_current_price_2(
         self, fid_cond_mrkt_div_code: Literal["J", "NX", "UN"], fid_input_iscd: str
@@ -79,7 +89,9 @@ class DomesticBasicQuote:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-price-2", headers=headers, params=params
         )
-        return DomesticStockCurrentPrice2.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        return DomesticStockCurrentPrice2.model_validate(response_data)
 
     def get_stock_current_price_conclusion(
         self, fid_cond_mrkt_div_code: Literal["J", "NX", "UN"], fid_input_iscd: str
@@ -102,7 +114,9 @@ class DomesticBasicQuote:
             "FID_INPUT_ISCD": fid_input_iscd,
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/inquire-ccnl", headers=headers, params=params)
-        return DomesticStockCurrentPriceConclusion.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        return DomesticStockCurrentPriceConclusion.model_validate(response_data)
 
     def get_stock_current_price_daily(
         self,
@@ -135,7 +149,9 @@ class DomesticBasicQuote:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-daily-price", headers=headers, params=params
         )
-        return DomesticStockCurrentPriceDaily.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        return DomesticStockCurrentPriceDaily.model_validate(response_data)
 
     def get_stock_current_price_asking_expected_conclusion(
         self, fid_cond_mrkt_div_code: Literal["J", "NX", "UN"], fid_input_iscd: str
@@ -160,7 +176,9 @@ class DomesticBasicQuote:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-asking-price-exp-ccn", headers=headers, params=params
         )
-        return DomesticStockCurrentPriceAskingExpectedConclusion.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        return DomesticStockCurrentPriceAskingExpectedConclusion.model_validate(response_data)
 
     def get_stock_current_price_investor(
         self, fid_cond_mrkt_div_code: Literal["J", "NX", "UN"], fid_input_iscd: str
@@ -185,7 +203,9 @@ class DomesticBasicQuote:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-investor", headers=headers, params=params
         )
-        return DomesticStockCurrentPriceInvestor.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        return DomesticStockCurrentPriceInvestor.model_validate(response_data)
 
     def get_stock_current_price_member(
         self, fid_cond_mrkt_div_code: Literal["J", "NX", "UN"], fid_input_iscd: str
@@ -199,7 +219,9 @@ class DomesticBasicQuote:
             "FID_INPUT_ISCD": fid_input_iscd,
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/inquire-member", headers=headers, params=params)
-        return DomesticStockCurrentPriceMember.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        return DomesticStockCurrentPriceMember.model_validate(response_data)
 
     def get_stock_period_quote(
         self,
@@ -238,7 +260,9 @@ class DomesticBasicQuote:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice", headers=headers, params=params
         )
-        return DomesticStockPeriodQuote.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        return DomesticStockPeriodQuote.model_validate(response_data)
 
     def get_stock_today_minute_chart(
         self,
@@ -274,7 +298,9 @@ class DomesticBasicQuote:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-time-itemchartprice", headers=headers, params=params
         )
-        return DomesticStockTodayMinuteChart.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        return DomesticStockTodayMinuteChart.model_validate(response_data)
 
     def get_stock_daily_minute_chart(
         self,
@@ -313,7 +339,9 @@ class DomesticBasicQuote:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-time-dailychartprice", headers=headers, params=params
         )
-        return DomesticStockTodayMinuteChart.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        return DomesticStockTodayMinuteChart.model_validate(response_data)
 
     def get_stock_current_price_time_item_conclusion(
         self,
@@ -343,7 +371,9 @@ class DomesticBasicQuote:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-time-itemconclusion", headers=headers, params=params
         )
-        return DomesticStockCurrentPriceTimeItemConclusion.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        return DomesticStockCurrentPriceTimeItemConclusion.model_validate(response_data)
 
     def get_stock_current_price_daily_overtime_price(
         self,
@@ -370,10 +400,12 @@ class DomesticBasicQuote:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-daily-overtimeprice", headers=headers, params=params
         )
-        return DomesticStockCurrentPriceDailyOvertimePrice.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        return DomesticStockCurrentPriceDailyOvertimePrice.model_validate(response_data)
 
     def get_stock_current_price_overtime_conclusion(
-        self, fid_cond_mrkt_div_code: Literal["J", "NX", "UN"], fid_input_iscd: str, fid_input_hour_1: str
+        self, fid_cond_mrkt_div_code: Literal["J", "NX", "UN"], fid_input_iscd: str
     ) -> DomesticStockCurrentPriceOvertimeConclusion:
         """
         주식현재가 시간외시간별체결
@@ -381,7 +413,6 @@ class DomesticBasicQuote:
         Args:
             fid_cond_mrkt_div_code (str): 조건 시장 분류 코드, J:KRX, NX:NXT, UN:통합
             fid_input_iscd (str): 입력 종목코드
-            fid_input_hour_1 (str): 입력 시간, 조회 시작시간 (HHMMSS)
 
         Returns:
             DomesticStockCurrentPriceOvertimeConclusion: 주식현재가 시간외시간별체결
@@ -392,12 +423,14 @@ class DomesticBasicQuote:
         params = {
             "FID_COND_MRKT_DIV_CODE": fid_cond_mrkt_div_code,
             "FID_INPUT_ISCD": fid_input_iscd,
-            "FID_INPUT_HOUR_1": fid_input_hour_1,
+            "FID_HOUR_CLS_CODE": "1",
         }
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-time-overtimeconclusion", headers=headers, params=params
         )
-        return DomesticStockCurrentPriceOvertimeConclusion.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        return DomesticStockCurrentPriceOvertimeConclusion.model_validate(response_data)
 
     def get_stock_overtime_current_price(
         self, fid_cond_mrkt_div_code: Literal["J", "NX", "UN"], fid_input_iscd: str
@@ -421,7 +454,9 @@ class DomesticBasicQuote:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-overtime-price", headers=heders, params=params
         )
-        return DomesticStockOvertimeCurrentPrice.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        return DomesticStockOvertimeCurrentPrice.model_validate(response_data)
 
     def get_stock_overtime_asking_price(
         self, fid_input_iscd: str, fid_cond_mrkt_div_code: Literal["J"] = "J"
@@ -446,7 +481,9 @@ class DomesticBasicQuote:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-overtime-asking-price", headers=headers, params=params
         )
-        return DomesticStockOvertimeAskingPrice.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        return DomesticStockOvertimeAskingPrice.model_validate(response_data)
 
     def get_stock_closing_expected_price(
         self,
@@ -482,7 +519,9 @@ class DomesticBasicQuote:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/exp-closing-price", headers=headers, params=params
         )
-        return DomesticStockClosingExpectedPrice.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        return DomesticStockClosingExpectedPrice.model_validate(response_data)
 
     def get_etfetn_current_price(
         self, fid_input_iscd: str, fid_cond_mrkt_div_code: Literal["J"] = "J"
@@ -505,7 +544,9 @@ class DomesticBasicQuote:
             "FID_COND_MRKT_DIV_CODE": fid_cond_mrkt_div_code,
         }
         response = self.client._get("/uapi/etfetn/v1/quotations/inquire-price", headers=headers, params=params)
-        return DomesticEtfEtnCurrentPrice.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        return DomesticEtfEtnCurrentPrice.model_validate(response_data)
 
     def get_etf_component_stock_price(
         self, fid_input_iscd: str, fid_cond_mrkt_div_code: Literal["J"] = "J", fid_cond_scr_div_code: str = "11216"
@@ -532,7 +573,9 @@ class DomesticBasicQuote:
         response = self.client._get(
             "/uapi/etfetn/v1/quotations/inquire-component-stock-price", headers=headers, params=params
         )
-        return DomesticEtfComponentStockPrice.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        return DomesticEtfComponentStockPrice.model_validate(response_data)
 
     def get_etf_nav_comparison_trend(
         self, fid_input_iscd: str, fid_cond_mrkt_div_code: Literal["J"] = "J"
@@ -555,7 +598,9 @@ class DomesticBasicQuote:
             "FID_COND_MRKT_DIV_CODE": fid_cond_mrkt_div_code,
         }
         response = self.client._get("/uapi/etfetn/v1/quotations/nav-comparison-trend", headers=headers, params=params)
-        return DomesticEtfNavComparisonTrend.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        return DomesticEtfNavComparisonTrend.model_validate(response_data)
 
     def get_etf_nav_comparison_daily_trend(
         self,
@@ -588,7 +633,9 @@ class DomesticBasicQuote:
         response = self.client._get(
             "/uapi/etfetn/v1/quotations/nav-comparison-daily-trend", headers=headers, params=params
         )
-        return DomesticEtfNavComparisonDailyTrend.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        return DomesticEtfNavComparisonDailyTrend.model_validate(response_data)
 
     def get_etf_nav_comparison_time_trend(
         self,
@@ -615,4 +662,6 @@ class DomesticBasicQuote:
         response = self.client._get(
             "/uapi/etfetn/v1/quotations/nav-comparison-time-trend", headers=headers, params=params
         )
-        return DomesticEtfNavComparisonTimeTrend.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        return DomesticEtfNavComparisonTimeTrend.model_validate(response_data)
