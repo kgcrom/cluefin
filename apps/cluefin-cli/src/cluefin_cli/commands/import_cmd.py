@@ -5,6 +5,8 @@ from datetime import datetime
 from typing import Optional
 
 import click
+from cluefin_openapi.kis._auth import Auth as KisAuth
+from cluefin_openapi.kis._client import Client as KisClient
 from cluefin_openapi.kiwoom._auth import Auth as KiwoomAuth
 from cluefin_openapi.kiwoom._client import Client as KiwoomClient
 from loguru import logger
@@ -99,20 +101,14 @@ def import_command(
     industry_codes: bool,
     industry_charts: bool,
 ):
-    """Import stock chart data from Kiwoom API to DuckDB.
+    """Import stock chart data from KIS API to DuckDB.
 
     Examples:
         # Import 3 years of data for specific stocks
         cluefin-cli import 005930 035720
 
-        # Import all KOSPI stocks
-        cluefin-cli import --market kospi
-
         # Import from stdin (pipeline)
         echo "005930\\n035720" | cluefin-cli import --from-stdin
-
-        # List stocks for piping
-        cluefin-cli import --list-stocks --market kosdaq
 
         # Custom date range
         cluefin-cli import 005930 --start 20220101 --end 20251023
@@ -120,32 +116,56 @@ def import_command(
         # Show database statistics
         cluefin-cli import --check-db
     """
-    if not settings.kiwoom_app_key:
-        raise ValueError("KIWOOM_APP_KEY environment variable is required")
-    if not settings.kiwoom_secret_key:
-        raise ValueError("KIWOOM_SECRET_KEY environment variable is required")
-    if not settings.kiwoom_env:
-        raise ValueError("KIWOOM_ENV environment variable is required")
+    # Check for KIS API credentials
+    if not settings.kis_app_key:
+        raise ValueError("KIS_APP_KEY environment variable is required")
+    if not settings.kis_secret_key:
+        raise ValueError("KIS_SECRET_KEY environment variable is required")
+    if not settings.kis_env:
+        raise ValueError("KIS_ENV environment variable is required")
+
     db_manager = None
     try:
         # Initialize components
         db_manager = DuckDBManager()
-        auth = KiwoomAuth(
-            app_key=settings.kiwoom_app_key,
-            secret_key=SecretStr(settings.kiwoom_secret_key),
-            env=settings.kiwoom_env,
+
+        # Initialize KIS client for stock chart import
+        kis_auth = KisAuth(
+            app_key=settings.kis_app_key,
+            secret_key=SecretStr(settings.kis_secret_key),
+            env=settings.kis_env,
         )
-        token = auth.generate_token()
-        kiwoom_client = KiwoomClient(
-            token=token.get_token(),
-            env=settings.kiwoom_env,
-            rate_limit_requests_per_second=1.0,
-            rate_limit_burst=2,
+        token = kis_auth.generate()
+        kis_client = KisClient(
+            token=token.access_token,
+            app_key=settings.kis_app_key,
+            secret_key=SecretStr(settings.kis_secret_key),
+            env=settings.kis_env,
         )
-        stock_fetcher = StockListFetcher(kiwoom_client, db_manager)
-        importer = StockChartImporter(kiwoom_client, db_manager)
-        industry_importer = IndustryCodeImporter(kiwoom_client, db_manager)
-        industry_chart_importer = IndustryChartImporter(kiwoom_client, db_manager)
+        importer = StockChartImporter(kis_client, db_manager)
+
+        # Initialize Kiwoom client for industry/list features (if credentials available)
+        kiwoom_client = None
+        stock_fetcher = None
+        industry_importer = None
+        industry_chart_importer = None
+
+        if settings.kiwoom_app_key and settings.kiwoom_secret_key:
+            kiwoom_auth = KiwoomAuth(
+                app_key=settings.kiwoom_app_key,
+                secret_key=SecretStr(settings.kiwoom_secret_key),
+                env=settings.kiwoom_env,
+            )
+            kiwoom_token = kiwoom_auth.generate_token()
+            kiwoom_client = KiwoomClient(
+                token=kiwoom_token.get_token(),
+                env=settings.kiwoom_env,
+                rate_limit_requests_per_second=1.0,
+                rate_limit_burst=2,
+            )
+            stock_fetcher = StockListFetcher(kiwoom_client, db_manager)
+            industry_importer = IndustryCodeImporter(kiwoom_client, db_manager)
+            industry_chart_importer = IndustryChartImporter(kiwoom_client, db_manager)
 
         # Handle database operations
         if check_db:
@@ -243,7 +263,7 @@ def _collect_stock_codes(
     stock_codes: tuple,
     from_stdin: bool,
     market: Optional[str],
-    stock_fetcher: StockListFetcher,
+    stock_fetcher: Optional[StockListFetcher],
 ) -> list[str]:
     """Collect stock codes from various sources.
 
@@ -269,6 +289,11 @@ def _collect_stock_codes(
 
     # From API if no codes specified
     elif not stock_codes:
+        if stock_fetcher is None:
+            raise ValueError(
+                "Cannot fetch stocks from API: Kiwoom credentials not configured. "
+                "Please provide stock codes via arguments or --from-stdin"
+            )
         console.print("[yellow]Fetching available stocks from Kiwoom API...[/yellow]")
         codes = [item.code for item in stock_fetcher.get_all_stocks(market=market)]
 
@@ -380,13 +405,19 @@ def _run_import(
     console.print("[green]✓[/green] Import completed successfully")
 
 
-def _import_industry_codes(industry_importer: IndustryCodeImporter, market: Optional[str]) -> None:
+def _import_industry_codes(industry_importer: Optional[IndustryCodeImporter], market: Optional[str]) -> None:
     """Import industry codes from Kiwoom API.
 
     Args:
         industry_importer: Industry code importer instance
         market: Market filter (kospi or kosdaq)
     """
+    if industry_importer is None:
+        raise ValueError(
+            "Industry code import requires Kiwoom credentials. "
+            "Please set KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, and KIWOOM_ENV"
+        )
+
     console.print("[yellow]Importing industry codes from Kiwoom API...[/yellow]")
 
     # Map market filter to market types
@@ -421,13 +452,18 @@ def _import_industry_codes(industry_importer: IndustryCodeImporter, market: Opti
     console.print(f"[green]✓[/green] Imported {results.get('total', 0)} industry codes successfully")
 
 
-def _list_stocks(stock_fetcher: StockListFetcher, market: Optional[str]) -> None:
+def _list_stocks(stock_fetcher: Optional[StockListFetcher], market: Optional[str]) -> None:
     """List available stocks to stdout.
 
     Args:
         stock_fetcher: Stock fetcher instance
         market: Market filter
     """
+    if stock_fetcher is None:
+        raise ValueError(
+            "Listing stocks requires Kiwoom credentials. Please set KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, and KIWOOM_ENV"
+        )
+
     stderr_console.print("[yellow]Fetching stock list from Kiwoom API...[/yellow]")
     stocks = stock_fetcher.get_all_stocks(market=market)
 
@@ -435,8 +471,7 @@ def _list_stocks(stock_fetcher: StockListFetcher, market: Optional[str]) -> None
     success_count, failed_count = stock_fetcher.fetch_and_save_metadata_batch(stocks)
 
     stderr_console.print(
-        f"[green]✓[/green] Listed {len(stocks)} stocks "
-        f"(metadata saved: {success_count}, failed: {failed_count})"
+        f"[green]✓[/green] Listed {len(stocks)} stocks (metadata saved: {success_count}, failed: {failed_count})"
     )
 
 
@@ -501,7 +536,7 @@ def _display_industry_import_summary(
 
 
 def _run_industry_import(
-    importer: IndustryChartImporter,
+    importer: Optional[IndustryChartImporter],
     industry_codes: list[str],
     start_date: str,
     end_date: str,
@@ -518,6 +553,12 @@ def _run_industry_import(
         skip_existing: Skip existing data
         show_progress: Show progress bar
     """
+    if importer is None:
+        raise ValueError(
+            "Industry chart import requires Kiwoom credentials. "
+            "Please set KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, and KIWOOM_ENV"
+        )
+
     if show_progress:
         with Progress(
             TextColumn("[progress.description]{task.description}"),
@@ -560,14 +601,27 @@ def _show_database_stats(db_manager: DuckDBManager) -> None:
     stats_table.add_column("Metric", style="cyan")
     stats_table.add_column("Value", style="magenta")
 
-    stats_table.add_row("Daily Chart Records", f"{stats['daily_charts_count']:,}")
-    stats_table.add_row("Daily Chart Stocks", str(stats["daily_charts_stocks"]))
+    # KIS data (new)
+    stats_table.add_row("Stock Daily Charts (KIS)", f"{stats.get('stock_daily_charts_count', 0):,}")
+    stats_table.add_row("└─ Unique Stocks", f"{stats.get('stock_daily_charts_stocks', 0):,}")
     stats_table.add_row("", "")
+
+    # Kiwoom data (legacy)
+    stats_table.add_row("Daily Charts (Kiwoom)", f"{stats['daily_charts_count']:,}")
+    stats_table.add_row("└─ Unique Stocks", str(stats["daily_charts_stocks"]))
+    stats_table.add_row("", "")
+
+    # Industry data
     stats_table.add_row("Industry Daily Records", f"{stats.get('industry_daily_charts_count', 0):,}")
-    stats_table.add_row("Industry Daily Industries", str(stats.get("industry_daily_charts_industries", 0)))
+    stats_table.add_row("└─ Unique Industries", str(stats.get("industry_daily_charts_industries", 0)))
     stats_table.add_row("", "")
-    stats_table.add_row("Tracked Stocks", str(stats["tracked_stocks"]))
+
+    # Metadata
+    stats_table.add_row("Stock Metadata Records", str(stats["tracked_stocks"]))
     stats_table.add_row("Industry Codes", f"{stats.get('industry_codes_count', 0):,}")
+    stats_table.add_row("", "")
+
+    # Database info
     stats_table.add_row("Database Size", f"{stats['database_size_mb']} MB")
 
     console.print(stats_table)

@@ -122,6 +122,40 @@ class DuckDBManager:
             )
         """)
 
+        # Stock daily charts table (KIS API)
+        self.connection.execute("""
+            CREATE TABLE IF NOT EXISTS stock_daily_charts (
+                stock_code VARCHAR NOT NULL,
+                date DATE NOT NULL,
+                open BIGINT NOT NULL,
+                high BIGINT NOT NULL,
+                low BIGINT NOT NULL,
+                close BIGINT NOT NULL,
+                volume BIGINT NOT NULL,
+                trading_amount BIGINT NOT NULL,
+                
+                -- Additional fields from KIS API
+                flng_cls_code VARCHAR,
+                prtt_rate DECIMAL,
+                mod_yn VARCHAR,
+                prdy_vrss_sign VARCHAR,
+                prdy_vrss BIGINT,
+                revl_issu_reas VARCHAR,
+                
+                -- Fields from output1
+                vol_tnrt DECIMAL,
+                lstn_stcn BIGINT,
+                hts_avls BIGINT,
+                per DECIMAL,
+                eps DECIMAL,
+                pbr DECIMAL,
+                
+                -- Metadata
+                created_at TIMESTAMP DEFAULT NOW(),
+                PRIMARY KEY (stock_code, date)
+            )
+        """)
+
         logger.debug("DuckDB tables created/verified")
 
     def insert_daily_chart(self, stock_code: str, df: pd.DataFrame) -> int:
@@ -192,6 +226,41 @@ class DuckDBManager:
             return count
         except Exception as e:
             logger.error(f"Error inserting industry daily chart for {industry_code}: {e}")
+            raise
+
+    def insert_stock_daily_chart(self, stock_code: str, df: pd.DataFrame) -> int:
+        """Insert stock daily chart data from KIS API.
+
+        Args:
+            stock_code: Stock code
+            df: DataFrame with columns matching stock_daily_charts schema
+
+        Returns:
+            Number of records inserted
+        """
+        if df.empty:
+            logger.warning(f"Empty DataFrame for stock daily chart: {stock_code}")
+            return 0
+
+        try:
+            self.connection.register("insert_df", df)
+            self.connection.execute(
+                """INSERT INTO stock_daily_charts
+                (stock_code, date, open, high, low, close, volume, trading_amount,
+                 flng_cls_code, prtt_rate, mod_yn, prdy_vrss_sign, prdy_vrss, revl_issu_reas,
+                 vol_tnrt, lstn_stcn, hts_avls, per, eps, pbr)
+                SELECT stock_code, date, open, high, low, close, volume, trading_amount,
+                       flng_cls_code, prtt_rate, mod_yn, prdy_vrss_sign, prdy_vrss, revl_issu_reas,
+                       vol_tnrt, lstn_stcn, hts_avls, per, eps, pbr
+                FROM insert_df
+                ON CONFLICT (stock_code, date) DO UPDATE SET created_at = NOW()"""
+            )
+            self.connection.unregister("insert_df")
+            count = len(df)
+            logger.debug(f"Inserted {count} stock daily chart records for {stock_code}")
+            return count
+        except Exception as e:
+            logger.error(f"Error inserting stock daily chart for {stock_code}: {e}")
             raise
 
     def _prepare_chart_data(self, stock_code: str, df: pd.DataFrame) -> pd.DataFrame:
@@ -453,12 +522,19 @@ class DuckDBManager:
         """
         stats = {}
 
-        # Count daily chart records
+        # Count daily chart records (old Kiwoom data)
         result = self.connection.execute("SELECT COUNT(*) as count FROM daily_charts").fetchall()
         stats["daily_charts_count"] = result[0][0] if result else 0
 
         result = self.connection.execute("SELECT COUNT(DISTINCT stock_code) as count FROM daily_charts").fetchall()
         stats["daily_charts_stocks"] = result[0][0] if result else 0
+
+        # Count stock daily chart records (new KIS data)
+        result = self.connection.execute("SELECT COUNT(*) as count FROM stock_daily_charts").fetchall()
+        stats["stock_daily_charts_count"] = result[0][0] if result else 0
+
+        result = self.connection.execute("SELECT COUNT(DISTINCT stock_code) as count FROM stock_daily_charts").fetchall()
+        stats["stock_daily_charts_stocks"] = result[0][0] if result else 0
 
         # Count industry daily chart records
         result = self.connection.execute("SELECT COUNT(*) as count FROM industry_daily_charts").fetchall()
@@ -581,6 +657,71 @@ class DuckDBManager:
         exists_map = {row[0]: row[1] > 0 for row in result}
 
         # Add stocks not in result (no data) as False
+        for stock_code in stock_codes:
+            if stock_code not in exists_map:
+                exists_map[stock_code] = False
+
+        return exists_map
+
+    def check_stock_data_exists(self, stock_code: str, start_date: str, end_date: str) -> bool:
+        """Check if stock daily data already exists for a stock/date range.
+
+        Args:
+            stock_code: Stock code
+            start_date: Start date (YYYYMMDD format)
+            end_date: End date (YYYYMMDD format)
+
+        Returns:
+            True if all data exists, False otherwise
+        """
+        start = pd.to_datetime(start_date, format="%Y%m%d").date()
+        end = pd.to_datetime(end_date, format="%Y%m%d").date()
+
+        result = self.connection.execute(
+            """
+            SELECT COUNT(*) as count FROM stock_daily_charts
+            WHERE stock_code = ? AND date BETWEEN ? AND ?
+            """,
+            [stock_code, start, end],
+        ).fetchall()
+
+        actual_count = result[0][0] if result else 0
+        return actual_count > 0
+
+    def check_stock_data_exists_batch(
+        self, stock_codes: list[str], start_date: str, end_date: str
+    ) -> dict[str, bool]:
+        """Check if stock daily data exists for multiple stocks in batch.
+
+        Args:
+            stock_codes: List of stock codes
+            start_date: Start date (YYYYMMDD format)
+            end_date: End date (YYYYMMDD format)
+
+        Returns:
+            Dictionary mapping stock_code to existence status (True if data exists)
+        """
+        if not stock_codes:
+            return {}
+
+        start = pd.to_datetime(start_date, format="%Y%m%d").date()
+        end = pd.to_datetime(end_date, format="%Y%m%d").date()
+
+        placeholders = ",".join("?" * len(stock_codes))
+        query = f"""
+            SELECT stock_code, COUNT(*) as count
+            FROM stock_daily_charts
+            WHERE stock_code IN ({placeholders})
+              AND date BETWEEN ? AND ?
+            GROUP BY stock_code
+        """
+
+        result = self.connection.execute(
+            query, [*stock_codes, start, end]
+        ).fetchall()
+
+        exists_map = {row[0]: row[1] > 0 for row in result}
+
         for stock_code in stock_codes:
             if stock_code not in exists_map:
                 exists_map[stock_code] = False
