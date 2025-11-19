@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 
 import requests
 from loguru import logger
@@ -8,13 +8,21 @@ from cluefin_openapi.kis._auth_types import (
     ApprovalResponse,
     TokenResponse,
 )
+from cluefin_openapi.kis._token_manager import TokenManager
 
 
 class Auth:
-    def __init__(self, app_key: str, secret_key: SecretStr, env: Literal["dev", "prod"] = "dev") -> None:
+    def __init__(
+        self,
+        app_key: str,
+        secret_key: SecretStr,
+        env: Literal["dev", "prod"] = "dev",
+        token_manager: Optional[TokenManager] = None,
+    ) -> None:
         self.app_key = app_key
         self.secret_key = secret_key
         self.env = env
+        self.token_manager = token_manager or TokenManager()
 
         if env == "prod":
             self.url = "https://openapi.koreainvestment.com:9443"
@@ -22,6 +30,19 @@ class Auth:
             self.url = "https://openapivts.koreainvestment.com:29443"
 
     def generate(self) -> TokenResponse:
+        """Get cached token or generate a new one if expired.
+
+        Returns:
+            TokenResponse: Valid access token
+        """
+        return self.token_manager.get_or_generate(self._generate_new_token)
+
+    def _generate_new_token(self) -> TokenResponse:
+        """Generate a new token from KIS API.
+
+        Returns:
+            TokenResponse: New access token
+        """
         headers = {
             "Content-Type": "application/json;charset=UTF-8",
         }

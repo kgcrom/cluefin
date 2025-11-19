@@ -1,127 +1,113 @@
-"""Industry code import functionality for Kiwoom API."""
+"""Industry code import functionality from idxcode.mst file.
 
+업종코드 파일 다운로드:
+https://apiportal.koreainvestment.com/apiservice-category
+"""
+
+from pathlib import Path
 from typing import Dict, List, Optional
 
 import pandas as pd
-from cluefin_openapi.kiwoom import Client
 from loguru import logger
 
 from .duckdb_manager import DuckDBManager
 
 
 class IndustryCodeImporter:
-    """Importer for industry code data from Kiwoom API."""
+    """Importer for industry code data from idxcode.mst file.
 
-    # Market type mapping
-    MARKET_TYPES = {
-        "0": "KOSPI",
-        "1": "KOSDAQ",
-    }
+    MST 파일은 고정폭 텍스트 파일로 cp949 인코딩됨:
+    - Position 0: market code (idx_div) - 1 character
+    - Position 1-4: industry code (idx_code) - 4 characters
+    - Position 5-44: industry name (idx_name) - 40 characters
 
-    def __init__(self, client: Client, db_manager: DuckDBManager):
+    업종코드 파일은 한국투자증권 API Portal에서 다운로드 가능:
+    https://apiportal.koreainvestment.com/apiservice-category
+    """
+
+    FILE_ENCODING = "cp949"
+
+    def __init__(self, db_manager: DuckDBManager):
         """Initialize industry code importer.
 
         Args:
-            client: Kiwoom API client
             db_manager: DuckDB manager instance
         """
-        self.client = client
         self.db_manager = db_manager
 
-    def import_industry_codes(self, market_type: Optional[List[str]] = None) -> Dict[str, int]:
-        """Import industry codes for specified market types.
+    def import_industry_codes(self, mst_file_path: str) -> Dict[str, int]:
+        """Import industry codes from idxcode.mst file.
 
         Args:
-            market_type: List of market type codes (0=KOSPI, 1=KOSDAQ)
-                         If None, imports all market types.
+            mst_file_path: Path to idxcode.mst file
 
         Returns:
-            Dictionary with import statistics per market type
+            Dictionary with import statistics
         """
-        if market_type is None:
-            market_types = list(self.MARKET_TYPES.keys())
-        else:
-            market_types = market_type
+        mst_path = Path(mst_file_path)
 
-        results = {}
-        total_imported = 0
+        if not mst_path.exists():
+            logger.error(f"MST file not found: {mst_path}")
+            raise FileNotFoundError(f"MST file not found: {mst_path}")
 
-        for market_code in market_types:
-            market_name = self.MARKET_TYPES.get(market_code, f"UNKNOWN_{market_code}")
-            logger.info(f"Importing industry codes for market: {market_name} ({market_code})")
+        logger.info(f"Importing industry codes from {mst_path}")
 
-            try:
-                count = self._import_single_market(market_code)
-                results[market_name] = count
-                total_imported += count
-                logger.info(f"Successfully imported {count} industry codes for {market_name}")
-            except Exception as e:
-                logger.error(f"Error importing industry codes for {market_name}: {e}")
-                results[market_name] = 0
+        try:
+            df = self._parse_mst_file(mst_path)
 
-        results["total"] = total_imported
-        return results
+            if df.empty:
+                logger.warning("No records found in MST file")
+                return {"total": 0}
 
-    def _import_single_market(self, market_type: str) -> int:
-        """Import industry codes for a single market type.
+            # Insert into database
+            count = self.db_manager.insert_industry_codes(df)
+            logger.info(f"Successfully imported {count} industry codes")
+
+            return {"total": count}
+        except Exception as e:
+            logger.error(f"Error importing industry codes: {e}")
+            raise
+
+    def _parse_mst_file(self, file_path: Path) -> pd.DataFrame:
+        """Parse idxcode.mst file.
+
+        File structure (고정폭 텍스트 파일):
+        - Position 1-5: industry code (idx_code) - 4 characters
+        - Position 5-45: industry name (idx_name) - 40 characters
 
         Args:
-            market_type: Market type code (0, 1)
+            file_path: Path to MST file
 
         Returns:
-            Number of industry codes imported
+            DataFrame with market, code, name columns
         """
-        all_items = []
-        cont_yn = "N"
-        next_key = ""
+        records = []
 
-        # Handle pagination
-        while True:
-            response = self.client.stock_info.get_industry_code(mrkt_tp=market_type, cont_yn=cont_yn, next_key=next_key)
+        try:
+            with open(file_path, "r", encoding="cp949") as f:
+                for row in f:
+                    # Extract fields from fixed-width format
+                    code = row[1:5].strip()  # Position 1-5: industry code
+                    name = row[5:45].rstrip()  # Position 5-45: industry name
 
-            if response.body.list:
-                all_items.extend(response.body.list)
+                    # Skip empty records
+                    if not code:
+                        continue
 
-            # Check if there are more pages
-            cont_yn = response.headers.cont_yn
-            next_key = response.headers.next_key
+                    records.append({"code": code, "name": name})
 
-            if cont_yn != "Y":
-                break
+            logger.info(f"Parsed {len(records)} records from {file_path.name}")
+            return pd.DataFrame(records)
 
-        if not all_items:
-            logger.warning(f"No industry codes found for market type: {market_type}")
-            return 0
-
-        # Convert to DataFrame
-        df = self._convert_to_dataframe(all_items, self.MARKET_TYPES[market_type])
-
-        # Insert into database
-        count = self.db_manager.insert_industry_codes(df)
-
-        return count
-
-    def _convert_to_dataframe(self, items: List, market_name: str) -> pd.DataFrame:
-        """Convert industry code items to DataFrame.
-
-        Args:
-            items: List of DomesticStockInfoIndustryCodeItem objects
-            market_name: Market name
-
-        Returns:
-            DataFrame with industry code data
-        """
-        data = []
-        for item in items:
-            data.append({"code": item.code, "name": item.name, "group_code": int(item.group), "market": market_name})
-
-        return pd.DataFrame(data)
+        except Exception as e:
+            logger.error(f"Error parsing MST file: {e}")
+            raise
 
     def get_industry_codes_summary(self) -> pd.DataFrame:
         """Get summary of industry codes in database.
 
         Returns:
-            DataFrame with industry code counts by market type
+            DataFrame with industry code counts by market
         """
         df = self.db_manager.get_industry_codes()
 
@@ -130,7 +116,7 @@ class IndustryCodeImporter:
             return pd.DataFrame()
 
         # Group by market and count
-        summary = df.groupby("market").agg({"code": "count", "name": "first"}).reset_index()
-        summary = summary.rename(columns={"code": "count", "market": "market_name"})
+        summary = df.groupby("market").size().reset_index(name="count")
+        summary = summary.rename(columns={"market": "market_code"})
 
-        return summary[["market_name", "count"]]
+        return summary[["market_code", "count"]]

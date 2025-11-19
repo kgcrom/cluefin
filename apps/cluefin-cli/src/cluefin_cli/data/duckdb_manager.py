@@ -92,8 +92,6 @@ class DuckDBManager:
             CREATE TABLE IF NOT EXISTS industry_codes (
                 code VARCHAR PRIMARY KEY,
                 name VARCHAR NOT NULL,
-                group_code INT NOT NULL,
-                market VARCHAR,
                 created_at TIMESTAMP DEFAULT NOW(),
                 updated_at TIMESTAMP DEFAULT NOW()
             )
@@ -352,7 +350,7 @@ class DuckDBManager:
         """Insert industry codes.
 
         Args:
-            df: DataFrame with columns: code, name, group_name, market
+            df: DataFrame with columns: code, name
 
         Returns:
             Number of records inserted/updated
@@ -365,13 +363,11 @@ class DuckDBManager:
             self.connection.register("insert_df", df)
             self.connection.execute(
                 """INSERT INTO industry_codes
-                (code, name, group_code, market)
-                SELECT code, name, group_code, market
+                (code, name)
+                SELECT code, name
                 FROM insert_df
                 ON CONFLICT (code) DO UPDATE SET
                     name = EXCLUDED.name,
-                    group_code = EXCLUDED.group_code,
-                    market = EXCLUDED.market,
                     updated_at = NOW()"""
             )
             self.connection.unregister("insert_df")
@@ -382,22 +378,13 @@ class DuckDBManager:
             logger.error(f"Error inserting industry codes: {e}")
             raise
 
-    def get_industry_codes(self, market_type: Optional[str] = None) -> pd.DataFrame:
+    def get_industry_codes(self) -> pd.DataFrame:
         """Get industry codes from database.
-
-        Args:
-            market_type: Filter by market type (0=KOSPI, 1=KOSDAQ, etc.)
 
         Returns:
             DataFrame with industry code data
         """
-        if market_type:
-            result = self.connection.execute(
-                "SELECT * FROM industry_codes WHERE market_type = ? ORDER BY code", [market_type]
-            ).df()
-        else:
-            result = self.connection.execute("SELECT * FROM industry_codes ORDER BY code").df()
-
+        result = self.connection.execute("SELECT * FROM industry_codes ORDER BY code").df()
         return result
 
     def get_database_stats(self) -> dict:

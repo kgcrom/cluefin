@@ -164,7 +164,7 @@ def import_command(
                 rate_limit_burst=2,
             )
             stock_fetcher = StockListFetcher(kiwoom_client, db_manager)
-            industry_importer = IndustryCodeImporter(kiwoom_client, db_manager)
+            industry_importer = IndustryCodeImporter(db_manager)
             industry_chart_importer = IndustryChartImporter(kiwoom_client, db_manager)
 
         # Handle database operations
@@ -406,50 +406,45 @@ def _run_import(
 
 
 def _import_industry_codes(industry_importer: Optional[IndustryCodeImporter], market: Optional[str]) -> None:
-    """Import industry codes from Kiwoom API.
+    """Import industry codes from idxcode.mst file.
+
+    업종코드 파일 다운로드:
+    https://apiportal.koreainvestment.com/apiservice-category
 
     Args:
         industry_importer: Industry code importer instance
-        market: Market filter (kospi or kosdaq)
+        market: Market filter (not used for file-based import, kept for API compatibility)
     """
     if industry_importer is None:
-        raise ValueError(
-            "Industry code import requires Kiwoom credentials. "
-            "Please set KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, and KIWOOM_ENV"
+        raise ValueError("Industry code importer not initialized")
+
+    console.print("[yellow]Importing industry codes from idxcode.mst file...[/yellow]")
+
+    # Locate MST file in project root
+    from pathlib import Path
+
+    project_root = Path(__file__).parent.parent.parent.parent.parent
+    mst_file_path = project_root / "idxcode.mst"
+
+    if not mst_file_path.exists():
+        raise FileNotFoundError(
+            f"MST file not found at {mst_file_path}\n"
+            "Please ensure idxcode.mst is located in the project root directory\n"
+            "Download from: https://apiportal.koreainvestment.com/apiservice-category"
         )
 
-    console.print("[yellow]Importing industry codes from Kiwoom API...[/yellow]")
-
-    # Map market filter to market types
-    market_type = None
-    if market:
-        market_lower = market.lower()
-        if market_lower == "kospi":
-            market_type = list("0")
-        elif market_lower == "kosdaq":
-            market_type = list("1")
-
-    if market_type is None:
-        raise ValueError(f"Invalid market specified: {market}")
-
-    # Import industry codes
-    results = industry_importer.import_industry_codes(market_type=market_type)
+    # Import industry codes from file
+    results = industry_importer.import_industry_codes(str(mst_file_path))
 
     # Display results
     results_table = Table(title="Industry Code Import Results")
-    results_table.add_column("Market", style="cyan")
+    results_table.add_column("Description", style="cyan")
     results_table.add_column("Count", style="magenta", justify="right")
 
-    for market_name, count in results.items():
-        if market_name != "total":
-            results_table.add_row(market_name, str(count))
-
-    if "total" in results:
-        results_table.add_row("", "", style="dim")
-        results_table.add_row("TOTAL", str(results["total"]), style="bold green")
+    results_table.add_row("Total imported", str(results.get("total", 0)))
 
     console.print(results_table)
-    console.print(f"[green]✓[/green] Imported {results.get('total', 0)} industry codes successfully")
+    console.print(f"[green]✓[/green] Imported {results.get('total', 0)} industry codes from {mst_file_path}")
 
 
 def _list_stocks(stock_fetcher: Optional[StockListFetcher], market: Optional[str]) -> None:
@@ -604,11 +599,6 @@ def _show_database_stats(db_manager: DuckDBManager) -> None:
     # KIS data (new)
     stats_table.add_row("Stock Daily Charts (KIS)", f"{stats.get('stock_daily_charts_count', 0):,}")
     stats_table.add_row("└─ Unique Stocks", f"{stats.get('stock_daily_charts_stocks', 0):,}")
-    stats_table.add_row("", "")
-
-    # Kiwoom data (legacy)
-    stats_table.add_row("Daily Charts (Kiwoom)", f"{stats['daily_charts_count']:,}")
-    stats_table.add_row("└─ Unique Stocks", str(stats["daily_charts_stocks"]))
     stats_table.add_row("", "")
 
     # Industry data
