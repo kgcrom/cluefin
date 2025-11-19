@@ -191,12 +191,12 @@ class StockChartImporter:
                 'prdy_vrss': pd.to_numeric(item.prdy_vrss, errors='coerce'),
                 'revl_issu_reas': item.revl_issu_reas,
                 # From output1
-                'vol_tnrt': pd.to_numeric(vol_tnrt, errors='coerce'),
-                'lstn_stcn': pd.to_numeric(lstn_stcn, errors='coerce'),
-                'hts_avls': pd.to_numeric(hts_avls, errors='coerce'),
-                'per': pd.to_numeric(per, errors='coerce'),
-                'eps': pd.to_numeric(eps, errors='coerce'),
-                'pbr': pd.to_numeric(pbr, errors='coerce'),
+                'vol_tnrt': pd.to_numeric(vol_tnrt, errors='coerce') if vol_tnrt is not None else None,
+                'lstn_stcn': pd.to_numeric(lstn_stcn, errors='coerce') if lstn_stcn is not None else None,
+                'hts_avls': pd.to_numeric(hts_avls, errors='coerce') if hts_avls is not None else None,
+                'per': pd.to_numeric(per, errors='coerce') if per is not None else None,
+                'eps': pd.to_numeric(eps, errors='coerce') if eps is not None else None,
+                'pbr': pd.to_numeric(pbr, errors='coerce') if pbr is not None else None,
             }
             rows.append(row)
 

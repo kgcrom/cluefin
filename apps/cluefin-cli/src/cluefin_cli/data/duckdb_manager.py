@@ -34,29 +34,6 @@ class DuckDBManager:
 
     def _create_tables(self):
         """Create tables if they don't exist."""
-        # Daily chart table
-        self.connection.execute("""
-            CREATE TABLE IF NOT EXISTS daily_charts (
-                stock_code VARCHAR NOT NULL,
-                date DATE NOT NULL,
-                open BIGINT NOT NULL,
-                high BIGINT NOT NULL,
-                low BIGINT NOT NULL,
-                close BIGINT NOT NULL,
-                volume BIGINT NOT NULL,
-                trading_amount BIGINT NOT NULL,
-
-                -- From API response (for reference)
-                pred_signal VARCHAR,
-                pred_diff_close_pric BIGINT,
-                turnover_rate DOUBLE,
-
-                -- Metadata
-                created_at TIMESTAMP DEFAULT NOW(),
-                PRIMARY KEY (stock_code, date)
-            )
-        """)
-
         # Industry daily chart table
         self.connection.execute("""
             CREATE TABLE IF NOT EXISTS industry_daily_charts (
@@ -158,42 +135,6 @@ class DuckDBManager:
 
         logger.debug("DuckDB tables created/verified")
 
-    def insert_daily_chart(self, stock_code: str, df: pd.DataFrame) -> int:
-        """Insert daily chart data.
-
-        Args:
-            stock_code: Stock code
-            df: DataFrame with columns matching daily_chart schema
-
-        Returns:
-            Number of records inserted
-        """
-        if df.empty:
-            logger.warning(f"Empty DataFrame for daily chart: {stock_code}")
-            return 0
-
-        # Prepare data
-        insert_df = self._prepare_chart_data(stock_code, df)
-
-        try:
-            self.connection.register("insert_df", insert_df)
-            self.connection.execute(
-                """INSERT INTO daily_charts
-                (stock_code, date, open, high, low, close, volume, trading_amount,
-                 pred_signal, pred_diff_close_pric, turnover_rate)
-                SELECT stock_code, date, open, high, low, close, volume, trading_amount,
-                       pred_signal, pred_diff_close_pric, turnover_rate
-                FROM insert_df
-                ON CONFLICT (stock_code, date) DO UPDATE SET created_at = NOW()"""
-            )
-            self.connection.unregister("insert_df")
-            count = len(insert_df)
-            logger.info(f"Inserted {count} daily chart records for {stock_code}")
-            return count
-        except Exception as e:
-            logger.error(f"Error inserting daily chart for {stock_code}: {e}")
-            raise
-
     def insert_industry_daily_chart(self, industry_code: str, df: pd.DataFrame) -> int:
         """Insert industry daily chart data.
 
@@ -262,61 +203,6 @@ class DuckDBManager:
         except Exception as e:
             logger.error(f"Error inserting stock daily chart for {stock_code}: {e}")
             raise
-
-    def _prepare_chart_data(self, stock_code: str, df: pd.DataFrame) -> pd.DataFrame:
-        """Prepare chart data for insertion.
-
-        Args:
-            stock_code: Stock code to add to data
-            df: Raw DataFrame from API
-
-        Returns:
-            Prepared DataFrame
-        """
-        result = pd.DataFrame()
-
-        # Map date field
-        if "dt" in df.columns:
-            result["date"] = pd.to_datetime(df["dt"], format="%Y%m%d")
-        else:
-            result["date"] = pd.to_datetime(df.index)
-
-        result["stock_code"] = stock_code
-
-        # Map OHLCV fields
-        field_mapping = {
-            "cur_prc": "close",
-            "open_pric": "open",
-            "high_pric": "high",
-            "low_pric": "low",
-            "trde_qty": "volume",
-            "trde_prica": "trading_amount",
-        }
-
-        for api_field, db_field in field_mapping.items():
-            if api_field in df.columns:
-                # Convert to numeric, handling empty strings
-                result[db_field] = pd.to_numeric(df[api_field], errors="coerce")
-
-        # Map optional fields
-        optional_fields = {
-            "pred_pre": "pred_diff_close_pric",
-            "pred_pre_sig": "pred_signal",
-            "trde_tern_rt": "turnover_rate",
-        }
-        for api_field, db_field in optional_fields.items():
-            if api_field in df.columns:
-                if api_field == "pred_pre_sig":
-                    result[db_field] = df[api_field].astype(str)
-                else:
-                    # Remove leading '+' sign before converting to numeric
-                    result[db_field] = pd.to_numeric(
-                        df[api_field].astype(str).str.replace(r"^\+", "", regex=True), errors="coerce"
-                    )
-            else:
-                result[db_field] = None
-
-        return result
 
     def _prepare_industry_chart_data(self, industry_code: str, df: pd.DataFrame) -> pd.DataFrame:
         """Prepare industry chart data for insertion.
@@ -522,13 +408,6 @@ class DuckDBManager:
         """
         stats = {}
 
-        # Count daily chart records (old Kiwoom data)
-        result = self.connection.execute("SELECT COUNT(*) as count FROM daily_charts").fetchall()
-        stats["daily_charts_count"] = result[0][0] if result else 0
-
-        result = self.connection.execute("SELECT COUNT(DISTINCT stock_code) as count FROM daily_charts").fetchall()
-        stats["daily_charts_stocks"] = result[0][0] if result else 0
-
         # Count stock daily chart records (new KIS data)
         result = self.connection.execute("SELECT COUNT(*) as count FROM stock_daily_charts").fetchall()
         stats["stock_daily_charts_count"] = result[0][0] if result else 0
@@ -557,27 +436,12 @@ class DuckDBManager:
 
         return stats
 
-    def get_imported_stocks(self) -> list[str]:
-        """Get list of all imported stock codes.
-
-        Returns:
-            List of stock codes with data in database
-        """
-        result = self.connection.execute(
-            """
-            SELECT DISTINCT stock_code FROM daily_charts
-            ORDER BY stock_code
-            """
-        ).fetchall()
-
-        return [row[0] for row in result]
-
-    def get_stock_date_range(self, stock_code: str, table: str = "daily_charts") -> Optional[tuple]:
+    def get_stock_date_range(self, stock_code: str, table: str = "stock_daily_charts") -> Optional[tuple]:
         """Get date range for a stock in a table.
 
         Args:
             stock_code: Stock code
-            table: Table name (daily_charts, weekly_charts, monthly_charts)
+            table: Table name (stock_daily_charts, industry_daily_charts)
 
         Returns:
             Tuple of (min_date, max_date) or None if no data
@@ -589,79 +453,6 @@ class DuckDBManager:
         if result and result[0][0] is not None:
             return (result[0][0], result[0][1])
         return None
-
-    def check_data_exists(self, stock_code: str, start_date: str, end_date: str) -> bool:
-        """Check if daily data already exists for a stock/date range.
-
-        Args:
-            stock_code: Stock code
-            start_date: Start date (YYYYMMDD format)
-            end_date: End date (YYYYMMDD format)
-
-        Returns:
-            True if all data exists, False otherwise
-        """
-        start = pd.to_datetime(start_date, format="%Y%m%d").date()
-        end = pd.to_datetime(end_date, format="%Y%m%d").date()
-
-        result = self.connection.execute(
-            """
-            SELECT COUNT(*) as count FROM daily_charts
-            WHERE stock_code = ? AND date BETWEEN ? AND ?
-            """,
-            [stock_code, start, end],
-        ).fetchall()
-
-        actual_count = result[0][0] if result else 0
-
-        # If no data exists, return False
-        if actual_count == 0:
-            return False
-
-        return True
-
-    def check_data_exists_batch(
-        self, stock_codes: list[str], start_date: str, end_date: str
-    ) -> dict[str, bool]:
-        """Check if daily data exists for multiple stocks in batch.
-
-        Args:
-            stock_codes: List of stock codes
-            start_date: Start date (YYYYMMDD format)
-            end_date: End date (YYYYMMDD format)
-
-        Returns:
-            Dictionary mapping stock_code to existence status (True if data exists)
-        """
-        if not stock_codes:
-            return {}
-
-        start = pd.to_datetime(start_date, format="%Y%m%d").date()
-        end = pd.to_datetime(end_date, format="%Y%m%d").date()
-
-        # Create placeholders for SQL IN clause
-        placeholders = ",".join("?" * len(stock_codes))
-        query = f"""
-            SELECT stock_code, COUNT(*) as count
-            FROM daily_charts
-            WHERE stock_code IN ({placeholders})
-              AND date BETWEEN ? AND ?
-            GROUP BY stock_code
-        """
-
-        result = self.connection.execute(
-            query, [*stock_codes, start, end]
-        ).fetchall()
-
-        # Build result dict - stocks with count > 0 exist
-        exists_map = {row[0]: row[1] > 0 for row in result}
-
-        # Add stocks not in result (no data) as False
-        for stock_code in stock_codes:
-            if stock_code not in exists_map:
-                exists_map[stock_code] = False
-
-        return exists_map
 
     def check_stock_data_exists(self, stock_code: str, start_date: str, end_date: str) -> bool:
         """Check if stock daily data already exists for a stock/date range.
@@ -770,7 +561,6 @@ class DuckDBManager:
                 logger.info("Clear operation cancelled")
                 return
 
-        self.connection.execute("DELETE FROM daily_charts")
         self.connection.execute("DELETE FROM industry_daily_charts")
         self.connection.execute("DELETE FROM stock_metadata")
         self.connection.execute("DELETE FROM industry_codes")
