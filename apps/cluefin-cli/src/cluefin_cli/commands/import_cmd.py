@@ -144,11 +144,10 @@ def import_command(
         )
         importer = StockChartImporter(kis_client, db_manager)
 
-        # Initialize Kiwoom client for industry/list features (if credentials available)
+        # Initialize Kiwoom client for list features (if credentials available)
         kiwoom_client = None
         stock_fetcher = None
         industry_importer = None
-        industry_chart_importer = None
 
         if settings.kiwoom_app_key and settings.kiwoom_secret_key:
             kiwoom_auth = KiwoomAuth(
@@ -165,7 +164,9 @@ def import_command(
             )
             stock_fetcher = StockListFetcher(kiwoom_client, db_manager)
             industry_importer = IndustryCodeImporter(db_manager)
-            industry_chart_importer = IndustryChartImporter(kiwoom_client, db_manager)
+
+        # Initialize industry chart importer (uses KIS API)
+        industry_chart_importer = IndustryChartImporter(kis_client, db_manager)
 
         # Handle database operations
         if check_db:
@@ -198,7 +199,7 @@ def import_command(
             start_date, end_date = _get_date_range(start, end)
 
             # Display summary
-            _display_industry_import_summary(codes_to_import, start_date, end_date, skip_existing)
+            _display_industry_import_summary(codes_to_import, start_date, end_date)
 
             # Run import
             _run_industry_import(
@@ -206,7 +207,6 @@ def import_command(
                 codes_to_import,
                 start_date,
                 end_date,
-                skip_existing,
                 show_progress,
             )
 
@@ -508,7 +508,6 @@ def _display_industry_import_summary(
     industry_codes: list[str],
     start_date: str,
     end_date: str,
-    skip_existing: bool,
 ) -> None:
     """Display industry import summary before starting.
 
@@ -516,7 +515,6 @@ def _display_industry_import_summary(
         industry_codes: List of industry codes to import
         start_date: Start date
         end_date: End date
-        skip_existing: Whether to skip existing data
     """
     summary_table = Table(title="Industry Chart Import Summary")
     summary_table.add_column("Parameter", style="cyan")
@@ -525,7 +523,6 @@ def _display_industry_import_summary(
     summary_table.add_row("Industry Codes", str(len(industry_codes)))
     summary_table.add_row("Start Date", start_date)
     summary_table.add_row("End Date", end_date)
-    summary_table.add_row("Skip Existing", "Yes" if skip_existing else "No")
 
     console.print(summary_table)
 
@@ -535,7 +532,6 @@ def _run_industry_import(
     industry_codes: list[str],
     start_date: str,
     end_date: str,
-    skip_existing: bool,
     show_progress: bool,
 ) -> None:
     """Run the industry chart import process.
@@ -545,13 +541,12 @@ def _run_industry_import(
         industry_codes: Industry codes to import
         start_date: Start date
         end_date: End date
-        skip_existing: Skip existing data
         show_progress: Show progress bar
     """
     if importer is None:
         raise ValueError(
-            "Industry chart import requires Kiwoom credentials. "
-            "Please set KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, and KIWOOM_ENV"
+            "Industry chart import requires KIS API credentials. "
+            "Please set KIS_APP_KEY, KIS_SECRET_KEY, and KIS_ENV"
         )
 
     if show_progress:
@@ -571,14 +566,12 @@ def _run_industry_import(
                 start_date,
                 end_date,
                 progress_callback=update_progress,
-                skip_existing=skip_existing,
             )
     else:
         importer.import_batch(
             industry_codes,
             start_date,
             end_date,
-            skip_existing=skip_existing,
         )
 
     console.print("[green]✓[/green] Industry chart import completed successfully")

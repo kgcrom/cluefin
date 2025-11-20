@@ -34,17 +34,28 @@ class DuckDBManager:
 
     def _create_tables(self):
         """Create tables if they don't exist."""
-        # Industry daily chart table
+        # Industry daily charts table (KIS API)
         self.connection.execute("""
             CREATE TABLE IF NOT EXISTS industry_daily_charts (
                 industry_code VARCHAR NOT NULL,
                 date DATE NOT NULL,
-                open BIGINT NOT NULL,
-                high BIGINT NOT NULL,
-                low BIGINT NOT NULL,
-                close BIGINT NOT NULL,
+
+                -- OHLCV from output2 (daily data)
+                open DECIMAL NOT NULL,
+                high DECIMAL NOT NULL,
+                low DECIMAL NOT NULL,
+                close DECIMAL NOT NULL,
                 volume BIGINT NOT NULL,
                 trading_amount BIGINT NOT NULL,
+                mod_yn VARCHAR,
+
+                -- Fields from output1 (metadata, constant per API call)
+                prdy_vrss_sign VARCHAR,
+                bstp_nmix_prdy_ctrt DECIMAL,
+                prdy_nmix DECIMAL,
+                hts_kor_isnm VARCHAR,
+                bstp_cls_code VARCHAR,
+                prdy_vol BIGINT,
 
                 -- Metadata
                 created_at TIMESTAMP DEFAULT NOW(),
@@ -154,8 +165,10 @@ class DuckDBManager:
             self.connection.register("insert_df", insert_df)
             self.connection.execute(
                 """INSERT INTO industry_daily_charts
-                (industry_code, date, open, high, low, close, volume, trading_amount)
-                SELECT industry_code, date, open, high, low, close, volume, trading_amount
+                (industry_code, date, open, high, low, close, volume, trading_amount,
+                 mod_yn, prdy_vrss_sign, bstp_nmix_prdy_ctrt, prdy_nmix, hts_kor_isnm, bstp_cls_code, prdy_vol)
+                SELECT industry_code, date, open, high, low, close, volume, trading_amount,
+                       mod_yn, prdy_vrss_sign, bstp_nmix_prdy_ctrt, prdy_nmix, hts_kor_isnm, bstp_cls_code, prdy_vol
                 FROM insert_df
                 ON CONFLICT (industry_code, date) DO UPDATE SET created_at = NOW()"""
             )
@@ -205,37 +218,25 @@ class DuckDBManager:
     def _prepare_industry_chart_data(self, industry_code: str, df: pd.DataFrame) -> pd.DataFrame:
         """Prepare industry chart data for insertion.
 
+        For KIS API data, the DataFrame is already prepared by IndustryChartImporter
+        with all required columns. This method just ensures data types are correct.
+
         Args:
-            industry_code: Industry code to add to data
-            df: Raw DataFrame from API
+            industry_code: Industry code (for reference)
+            df: DataFrame from IndustryChartImporter with correct schema
 
         Returns:
-            Prepared DataFrame
+            Prepared DataFrame (passed through with minor type conversions)
         """
-        result = pd.DataFrame()
+        # DataFrame is already properly formatted by IndustryChartImporter
+        # Just ensure numeric columns are correct type
+        result = df.copy()
 
-        # Map date field
-        if "dt" in df.columns:
-            result["date"] = pd.to_datetime(df["dt"], format="%Y%m%d")
-        else:
-            result["date"] = pd.to_datetime(df.index)
-
-        result["industry_code"] = industry_code
-
-        # Map OHLCV fields (same as stock charts)
-        field_mapping = {
-            "cur_prc": "close",
-            "open_pric": "open",
-            "high_pric": "high",
-            "low_pric": "low",
-            "trde_qty": "volume",
-            "trde_prica": "trading_amount",
-        }
-
-        for api_field, db_field in field_mapping.items():
-            if api_field in df.columns:
-                # Convert to numeric, handling empty strings
-                result[db_field] = pd.to_numeric(df[api_field], errors="coerce")
+        # Ensure key columns have correct types
+        numeric_cols = ["open", "high", "low", "close", "bstp_nmix_prdy_ctrt", "prdy_nmix"]
+        for col in numeric_cols:
+            if col in result.columns:
+                result[col] = pd.to_numeric(result[col], errors="coerce")
 
         return result
 

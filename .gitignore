@@ -86,4 +86,5 @@ packages/*/src/*/*.py[cod]
 .claude/
 .specify/
 
-data/
+data/data.duckdb
+data/data.duckdb.wal
