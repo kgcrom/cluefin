@@ -545,8 +545,7 @@ def _run_industry_import(
     """
     if importer is None:
         raise ValueError(
-            "Industry chart import requires KIS API credentials. "
-            "Please set KIS_APP_KEY, KIS_SECRET_KEY, and KIS_ENV"
+            "Industry chart import requires KIS API credentials. Please set KIS_APP_KEY, KIS_SECRET_KEY, and KIS_ENV"
         )
 
     if show_progress:

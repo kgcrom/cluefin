@@ -78,20 +78,14 @@ class TokenManager:
             return False
 
         try:
-            expiry = datetime.strptime(
-                self._token_cache.access_token_token_expired,
-                "%Y-%m-%d %H:%M:%S"
-            )
+            expiry = datetime.strptime(self._token_cache.access_token_token_expired, "%Y-%m-%d %H:%M:%S")
             # Check if token expires within buffer period
             now = datetime.now()
             expiry_threshold = expiry - self.EXPIRY_BUFFER
 
             is_valid = now < expiry_threshold
             if not is_valid:
-                logger.debug(
-                    f"Token expiring soon (expires at {expiry}, "
-                    f"refresh threshold at {expiry_threshold})"
-                )
+                logger.debug(f"Token expiring soon (expires at {expiry}, refresh threshold at {expiry_threshold})")
             return is_valid
         except (ValueError, AttributeError) as e:
             logger.warning(f"Error checking token validity: {e}")

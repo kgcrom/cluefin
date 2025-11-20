@@ -133,14 +133,11 @@ class StockChartImporter:
                 if attempt < max_retries - 1:
                     wait_time = 2**attempt  # Exponential backoff: 1s, 2s, 4s
                     logger.warning(
-                        f"Network error fetching {stock_code}, retry {attempt + 1}/{max_retries} "
-                        f"in {wait_time}s: {e}"
+                        f"Network error fetching {stock_code}, retry {attempt + 1}/{max_retries} in {wait_time}s: {e}"
                     )
                     time.sleep(wait_time)
                 else:
-                    logger.error(
-                        f"Failed to fetch {stock_code} after {max_retries} network error retries: {e}"
-                    )
+                    logger.error(f"Failed to fetch {stock_code} after {max_retries} network error retries: {e}")
                     raise
 
             except Exception as e:
@@ -158,45 +155,45 @@ class StockChartImporter:
         Returns:
             Prepared DataFrame
         """
-        output1 = data.get('output1')
-        output2 = data.get('output2', [])
+        output1 = data.get("output1")
+        output2 = data.get("output2", [])
 
         if not output2:
             return pd.DataFrame()
 
         # Extract fields from output1 (these are constant for all rows)
-        vol_tnrt = getattr(output1, 'vol_tnrt', None) if output1 else None
-        lstn_stcn = getattr(output1, 'lstn_stcn', None) if output1 else None
-        hts_avls = getattr(output1, 'hts_avls', None) if output1 else None
-        per = getattr(output1, 'per', None) if output1 else None
-        eps = getattr(output1, 'eps', None) if output1 else None
-        pbr = getattr(output1, 'pbr', None) if output1 else None
+        vol_tnrt = getattr(output1, "vol_tnrt", None) if output1 else None
+        lstn_stcn = getattr(output1, "lstn_stcn", None) if output1 else None
+        hts_avls = getattr(output1, "hts_avls", None) if output1 else None
+        per = getattr(output1, "per", None) if output1 else None
+        eps = getattr(output1, "eps", None) if output1 else None
+        pbr = getattr(output1, "pbr", None) if output1 else None
 
         # Convert output2 items to dict
         rows = []
         for item in output2:
             row = {
-                'stock_code': stock_code,
-                'date': pd.to_datetime(item.stck_bsop_date, format="%Y%m%d"),
-                'open': pd.to_numeric(item.stck_oprc, errors='coerce'),
-                'high': pd.to_numeric(item.stck_hgpr, errors='coerce'),
-                'low': pd.to_numeric(item.stck_lwpr, errors='coerce'),
-                'close': pd.to_numeric(item.stck_clpr, errors='coerce'),
-                'volume': pd.to_numeric(item.acml_vol, errors='coerce'),
-                'trading_amount': pd.to_numeric(item.acml_tr_pbmn, errors='coerce'),
-                'flng_cls_code': item.flng_cls_code,
-                'prtt_rate': pd.to_numeric(item.prtt_rate, errors='coerce'),
-                'mod_yn': item.mod_yn,
-                'prdy_vrss_sign': item.prdy_vrss_sign,
-                'prdy_vrss': pd.to_numeric(item.prdy_vrss, errors='coerce'),
-                'revl_issu_reas': item.revl_issu_reas,
+                "stock_code": stock_code,
+                "date": pd.to_datetime(item.stck_bsop_date, format="%Y%m%d"),
+                "open": pd.to_numeric(item.stck_oprc, errors="coerce"),
+                "high": pd.to_numeric(item.stck_hgpr, errors="coerce"),
+                "low": pd.to_numeric(item.stck_lwpr, errors="coerce"),
+                "close": pd.to_numeric(item.stck_clpr, errors="coerce"),
+                "volume": pd.to_numeric(item.acml_vol, errors="coerce"),
+                "trading_amount": pd.to_numeric(item.acml_tr_pbmn, errors="coerce"),
+                "flng_cls_code": item.flng_cls_code,
+                "prtt_rate": pd.to_numeric(item.prtt_rate, errors="coerce"),
+                "mod_yn": item.mod_yn,
+                "prdy_vrss_sign": item.prdy_vrss_sign,
+                "prdy_vrss": pd.to_numeric(item.prdy_vrss, errors="coerce"),
+                "revl_issu_reas": item.revl_issu_reas,
                 # From output1
-                'vol_tnrt': pd.to_numeric(vol_tnrt, errors='coerce') if vol_tnrt is not None else None,
-                'lstn_stcn': pd.to_numeric(lstn_stcn, errors='coerce') if lstn_stcn is not None else None,
-                'hts_avls': pd.to_numeric(hts_avls, errors='coerce') if hts_avls is not None else None,
-                'per': pd.to_numeric(per, errors='coerce') if per is not None else None,
-                'eps': pd.to_numeric(eps, errors='coerce') if eps is not None else None,
-                'pbr': pd.to_numeric(pbr, errors='coerce') if pbr is not None else None,
+                "vol_tnrt": pd.to_numeric(vol_tnrt, errors="coerce") if vol_tnrt is not None else None,
+                "lstn_stcn": pd.to_numeric(lstn_stcn, errors="coerce") if lstn_stcn is not None else None,
+                "hts_avls": pd.to_numeric(hts_avls, errors="coerce") if hts_avls is not None else None,
+                "per": pd.to_numeric(per, errors="coerce") if per is not None else None,
+                "eps": pd.to_numeric(eps, errors="coerce") if eps is not None else None,
+                "pbr": pd.to_numeric(pbr, errors="coerce") if pbr is not None else None,
             }
             rows.append(row)
 
@@ -282,7 +279,9 @@ class StockChartImporter:
                 exists_map = {}
 
             # Process each stock in chunk sequentially
-            logger.info(f"Stock charts import for stocks {chunk_start + 1} to {chunk_end} of {total}, start_date={start_date}, end_date={end_date}")
+            logger.info(
+                f"Stock charts import for stocks {chunk_start + 1} to {chunk_end} of {total}, start_date={start_date}, end_date={end_date}"
+            )
             for stock_code in chunk:
                 idx = stock_codes.index(stock_code) + 1
 
@@ -295,7 +294,10 @@ class StockChartImporter:
 
                 try:
                     results[stock_code] = self.import_stock_data(
-                        stock_code, start_date, end_date, skip_existing=False  # Already checked
+                        stock_code,
+                        start_date,
+                        end_date,
+                        skip_existing=False,  # Already checked
                     )
                     # Rate limit: 10 requests per second (0.1s sleep)
                     # If use dev token, consider increasing delay (2 requests/sec)

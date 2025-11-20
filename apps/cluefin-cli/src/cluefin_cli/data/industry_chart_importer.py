@@ -2,14 +2,22 @@
 
 import time
 from datetime import datetime, timedelta
-from typing import Callable, Optional
+from typing import Any, Callable, Optional, Sequence, TypedDict
 
 import pandas as pd
 import requests
 from cluefin_openapi.kis._client import Client
+from cluefin_openapi.kis._domestic_issue_other_types import SectorPeriodQuoteItem1, SectorPeriodQuoteItem2
 from loguru import logger
 
 from cluefin_cli.data.duckdb_manager import DuckDBManager
+
+
+class SectorPeriodData(TypedDict):
+    """Type definition for sector period data response."""
+
+    output1: SectorPeriodQuoteItem1
+    output2: Sequence[SectorPeriodQuoteItem2]
 
 
 class IndustryChartImporter:
@@ -106,9 +114,7 @@ class IndustryChartImporter:
             logger.error(f"Error importing period data for industry {industry_code}: {e}")
             raise
 
-    def _fetch_sector_period_data(
-        self, industry_code: str, start_date: str, end_date: str
-    ) -> dict:
+    def _fetch_sector_period_data(self, industry_code: str, start_date: str, end_date: str) -> SectorPeriodData:
         """Fetch sector period data from KIS API with retry logic.
 
         Args:
@@ -135,7 +141,7 @@ class IndustryChartImporter:
                 output1 = response.output1 if hasattr(response, "output1") else None
                 output2 = response.output2 if hasattr(response, "output2") else []
 
-                return {"output1": output1, "output2": output2}
+                return SectorPeriodData(output1=output1, output2=output2)
 
             except (
                 requests.exceptions.ConnectionError,
@@ -161,6 +167,9 @@ class IndustryChartImporter:
                 logger.error(f"API error fetching industry {industry_code} (no retry): {e}")
                 raise
 
+        # This should never be reached, but needed for type checking
+        raise RuntimeError(f"Failed to fetch data for industry {industry_code} after {max_retries} attempts")
+
     def _prepare_industry_chart_rows(self, industry_code: str, output2: list, output1=None) -> list[dict]:
         """Prepare industry chart rows for insertion.
 
@@ -175,7 +184,6 @@ class IndustryChartImporter:
         rows = []
 
         # Extract fields from output1 (constant for all rows)
-        mod_yn = None
         prdy_vrss_sign = None
         bstp_nmix_prdy_ctrt = None
         prdy_nmix = None
@@ -185,22 +193,32 @@ class IndustryChartImporter:
 
         if output1:
             prdy_vrss_sign = getattr(output1, "prdy_vrss_sign", None)
-            bstp_nmix_prdy_ctrt = pd.to_numeric(getattr(output1, "bstp_nmix_prdy_ctrt", None), errors="coerce")
-            prdy_nmix = pd.to_numeric(getattr(output1, "prdy_nmix", None), errors="coerce")
+            bstp_nmix_prdy_ctrt_val: Any = getattr(output1, "bstp_nmix_prdy_ctrt", None)
+            bstp_nmix_prdy_ctrt = pd.to_numeric(bstp_nmix_prdy_ctrt_val, errors="coerce")
+            prdy_nmix_val: Any = getattr(output1, "prdy_nmix", None)
+            prdy_nmix = pd.to_numeric(prdy_nmix_val, errors="coerce")
             hts_kor_isnm = getattr(output1, "hts_kor_isnm", None)
             bstp_cls_code = getattr(output1, "bstp_cls_code", None)
-            prdy_vol = pd.to_numeric(getattr(output1, "prdy_vol", None), errors="coerce")
+            prdy_vol_val: Any = getattr(output1, "prdy_vol", None)
+            prdy_vol = pd.to_numeric(prdy_vol_val, errors="coerce")
 
         for item in output2:
+            open_val: Any = item.bstp_nmix_oprc
+            high_val: Any = item.bstp_nmix_hgpr
+            low_val: Any = item.bstp_nmix_lwpr
+            close_val: Any = item.bstp_nmix_prpr
+            volume_val: Any = item.acml_vol
+            trading_amount_val: Any = item.acml_tr_pbmn
+
             row = {
                 "industry_code": industry_code,
                 "date": pd.to_datetime(item.stck_bsop_date, format="%Y%m%d"),
-                "open": pd.to_numeric(item.bstp_nmix_oprc, errors="coerce"),
-                "high": pd.to_numeric(item.bstp_nmix_hgpr, errors="coerce"),
-                "low": pd.to_numeric(item.bstp_nmix_lwpr, errors="coerce"),
-                "close": pd.to_numeric(item.bstp_nmix_prpr, errors="coerce"),
-                "volume": pd.to_numeric(item.acml_vol, errors="coerce"),
-                "trading_amount": pd.to_numeric(item.acml_tr_pbmn, errors="coerce"),
+                "open": pd.to_numeric(open_val, errors="coerce"),
+                "high": pd.to_numeric(high_val, errors="coerce"),
+                "low": pd.to_numeric(low_val, errors="coerce"),
+                "close": pd.to_numeric(close_val, errors="coerce"),
+                "volume": pd.to_numeric(volume_val, errors="coerce"),
+                "trading_amount": pd.to_numeric(trading_amount_val, errors="coerce"),
                 "mod_yn": getattr(item, "mod_yn", None),
                 # From output1
                 "prdy_vrss_sign": prdy_vrss_sign,
@@ -302,7 +320,9 @@ class IndustryChartImporter:
 
             try:
                 results[industry_code] = self.import_industry_data(
-                    industry_code, start_date, end_date,
+                    industry_code,
+                    start_date,
+                    end_date,
                 )
             except Exception as e:
                 logger.error(f"Error importing industry {industry_code}: {e}")

@@ -119,7 +119,7 @@ class DuckDBManager:
                 close BIGINT NOT NULL,
                 volume BIGINT NOT NULL,
                 trading_amount BIGINT NOT NULL,
-                
+
                 -- Additional fields from KIS API
                 flng_cls_code VARCHAR,
                 prtt_rate DECIMAL,
@@ -127,7 +127,7 @@ class DuckDBManager:
                 prdy_vrss_sign VARCHAR,
                 prdy_vrss BIGINT,
                 revl_issu_reas VARCHAR,
-                
+
                 -- Fields from output1
                 vol_tnrt DECIMAL,
                 lstn_stcn BIGINT,
@@ -135,7 +135,7 @@ class DuckDBManager:
                 per DECIMAL,
                 eps DECIMAL,
                 pbr DECIMAL,
-                
+
                 -- Metadata
                 created_at TIMESTAMP DEFAULT NOW(),
                 PRIMARY KEY (stock_code, date)
@@ -400,14 +400,18 @@ class DuckDBManager:
         result = self.connection.execute("SELECT COUNT(*) as count FROM stock_daily_charts").fetchall()
         stats["stock_daily_charts_count"] = result[0][0] if result else 0
 
-        result = self.connection.execute("SELECT COUNT(DISTINCT stock_code) as count FROM stock_daily_charts").fetchall()
+        result = self.connection.execute(
+            "SELECT COUNT(DISTINCT stock_code) as count FROM stock_daily_charts"
+        ).fetchall()
         stats["stock_daily_charts_stocks"] = result[0][0] if result else 0
 
         # Count industry daily chart records
         result = self.connection.execute("SELECT COUNT(*) as count FROM industry_daily_charts").fetchall()
         stats["industry_daily_charts_count"] = result[0][0] if result else 0
 
-        result = self.connection.execute("SELECT COUNT(DISTINCT industry_code) as count FROM industry_daily_charts").fetchall()
+        result = self.connection.execute(
+            "SELECT COUNT(DISTINCT industry_code) as count FROM industry_daily_charts"
+        ).fetchall()
         stats["industry_daily_charts_industries"] = result[0][0] if result else 0
 
         # Count metadata
@@ -467,9 +471,7 @@ class DuckDBManager:
         actual_count = result[0][0] if result else 0
         return actual_count > 0
 
-    def check_stock_data_exists_batch(
-        self, stock_codes: list[str], start_date: str, end_date: str
-    ) -> dict[str, bool]:
+    def check_stock_data_exists_batch(self, stock_codes: list[str], start_date: str, end_date: str) -> dict[str, bool]:
         """Check if stock daily data exists for multiple stocks in batch.
 
         Args:
@@ -495,9 +497,7 @@ class DuckDBManager:
             GROUP BY stock_code
         """
 
-        result = self.connection.execute(
-            query, [*stock_codes, start, end]
-        ).fetchall()
+        result = self.connection.execute(query, [*stock_codes, start, end]).fetchall()
 
         exists_map = {row[0]: row[1] > 0 for row in result}
 
