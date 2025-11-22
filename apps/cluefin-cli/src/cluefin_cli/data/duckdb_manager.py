@@ -142,6 +142,33 @@ class DuckDBManager:
             )
         """)
 
+        # Overseas stock daily charts table (KIS API)
+        self.connection.execute("""
+            CREATE TABLE IF NOT EXISTS overseas_stock_daily_charts (
+                exchange_code VARCHAR NOT NULL,
+                stock_code VARCHAR NOT NULL,
+                date DATE NOT NULL,
+                open DECIMAL NOT NULL,
+                high DECIMAL NOT NULL,
+                low DECIMAL NOT NULL,
+                close DECIMAL NOT NULL,
+                volume BIGINT NOT NULL,
+                trading_amount BIGINT NOT NULL,
+
+                -- Additional fields from KIS API
+                sign VARCHAR,
+                diff DECIMAL,
+                rate DECIMAL,
+
+                -- Fields from output1
+                zdiv VARCHAR,
+
+                -- Metadata
+                created_at TIMESTAMP DEFAULT NOW(),
+                PRIMARY KEY (exchange_code, stock_code, date)
+            )
+        """)
+
         logger.debug("DuckDB tables created/verified")
 
     def insert_domestic_industry_daily_chart(self, industry_code: str, df: pd.DataFrame) -> int:
@@ -213,6 +240,40 @@ class DuckDBManager:
             return count
         except Exception as e:
             logger.error(f"Error inserting domestic stock daily chart for {stock_code}: {e}")
+            raise
+
+    def insert_overseas_stock_daily_chart(self, exchange_code: str, stock_code: str, df: pd.DataFrame) -> int:
+        """Insert overseas stock daily chart data from KIS API.
+
+        Args:
+            exchange_code: Exchange code (NYS, NAS, AMS, HKS, TSE, etc.)
+            stock_code: Stock code/symbol (e.g., TSLA)
+            df: DataFrame with columns matching overseas_stock_daily_charts schema
+
+        Returns:
+            Number of records inserted
+        """
+        if df.empty:
+            logger.warning(f"Empty DataFrame for overseas stock {exchange_code}:{stock_code}")
+            return 0
+
+        try:
+            self.connection.register("insert_df", df)
+            self.connection.execute(
+                """INSERT INTO overseas_stock_daily_charts
+                (exchange_code, stock_code, date, open, high, low, close, volume, trading_amount,
+                 sign, diff, rate, zdiv)
+                SELECT exchange_code, stock_code, date, open, high, low, close, volume, trading_amount,
+                       sign, diff, rate, zdiv
+                FROM insert_df
+                ON CONFLICT (exchange_code, stock_code, date) DO UPDATE SET created_at = NOW()"""
+            )
+            self.connection.unregister("insert_df")
+            count = len(df)
+            logger.debug(f"Inserted {count} overseas stock daily chart records for {exchange_code}:{stock_code}")
+            return count
+        except Exception as e:
+            logger.error(f"Error inserting overseas stock daily chart for {exchange_code}:{stock_code}: {e}")
             raise
 
     def _prepare_industry_chart_data(self, industry_code: str, df: pd.DataFrame) -> pd.DataFrame:
@@ -422,6 +483,15 @@ class DuckDBManager:
         result = self.connection.execute("SELECT COUNT(*) as count FROM domestic_industry_codes").fetchall()
         stats["domestic_industry_codes_count"] = result[0][0] if result else 0
 
+        # Count overseas stock daily chart records
+        result = self.connection.execute("SELECT COUNT(*) as count FROM overseas_stock_daily_charts").fetchall()
+        stats["overseas_stock_daily_charts_count"] = result[0][0] if result else 0
+
+        result = self.connection.execute(
+            "SELECT COUNT(DISTINCT CONCAT(exchange_code, ':', stock_code)) as count FROM overseas_stock_daily_charts"
+        ).fetchall()
+        stats["overseas_stock_daily_charts_stocks"] = result[0][0] if result else 0
+
         # Database size
         db_size = os.path.getsize(self.db_path)
         stats["database_size_mb"] = round(db_size / (1024 * 1024), 2)
@@ -507,6 +577,71 @@ class DuckDBManager:
 
         return exists_map
 
+    def check_overseas_stock_data_exists(self, exchange_code: str, stock_code: str, start_date: str, end_date: str) -> bool:
+        """Check if overseas stock daily data already exists for a stock/date range.
+
+        Args:
+            exchange_code: Exchange code (NYS, NAS, AMS, HKS, TSE, etc.)
+            stock_code: Stock code/symbol
+            start_date: Start date (YYYYMMDD format)
+            end_date: End date (YYYYMMDD format)
+
+        Returns:
+            True if any data exists, False otherwise
+        """
+        start = pd.to_datetime(start_date, format="%Y%m%d").date()
+        end = pd.to_datetime(end_date, format="%Y%m%d").date()
+
+        result = self.connection.execute(
+            """
+            SELECT COUNT(*) as count FROM overseas_stock_daily_charts
+            WHERE exchange_code = ? AND stock_code = ? AND date BETWEEN ? AND ?
+            """,
+            [exchange_code, stock_code, start, end],
+        ).fetchall()
+
+        actual_count = result[0][0] if result else 0
+        return actual_count > 0
+
+    def check_overseas_stock_data_exists_batch(
+        self, exchange_code: str, stock_codes: list[str], start_date: str, end_date: str
+    ) -> dict[str, bool]:
+        """Check if overseas stock daily data exists for multiple stocks in batch.
+
+        Args:
+            exchange_code: Exchange code (NYS, NAS, AMS, HKS, TSE, etc.)
+            stock_codes: List of stock codes/symbols
+            start_date: Start date (YYYYMMDD format)
+            end_date: End date (YYYYMMDD format)
+
+        Returns:
+            Dictionary mapping stock_code to existence status (True if data exists)
+        """
+        if not stock_codes:
+            return {}
+
+        start = pd.to_datetime(start_date, format="%Y%m%d").date()
+        end = pd.to_datetime(end_date, format="%Y%m%d").date()
+
+        placeholders = ",".join("?" * len(stock_codes))
+        query = f"""
+            SELECT stock_code, COUNT(*) as count
+            FROM overseas_stock_daily_charts
+            WHERE exchange_code = ? AND stock_code IN ({placeholders})
+              AND date BETWEEN ? AND ?
+            GROUP BY stock_code
+        """
+
+        result = self.connection.execute(query, [exchange_code, *stock_codes, start, end]).fetchall()
+
+        exists_map = {row[0]: row[1] > 0 for row in result}
+
+        for stock_code in stock_codes:
+            if stock_code not in exists_map:
+                exists_map[stock_code] = False
+
+        return exists_map
+
     def check_domestic_industry_data_exists(self, industry_code: str, start_date: str, end_date: str) -> bool:
         """Check if daily data already exists for a domestic industry/date range.
 
@@ -552,6 +687,7 @@ class DuckDBManager:
         self.connection.execute("DELETE FROM domestic_industry_daily_charts")
         self.connection.execute("DELETE FROM domestic_stock_metadata")
         self.connection.execute("DELETE FROM domestic_industry_codes")
+        self.connection.execute("DELETE FROM overseas_stock_daily_charts")
         logger.info("All tables cleared")
 
     def close(self):

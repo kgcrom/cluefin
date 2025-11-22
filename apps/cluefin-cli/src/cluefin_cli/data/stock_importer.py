@@ -338,3 +338,298 @@ class DomesticStockChartImporter:
         start_date = end_date - timedelta(days=days_back)
 
         return (start_date.strftime("%Y%m%d"), end_date.strftime("%Y%m%d"))
+
+
+class OverseasStockChartImporter:
+    """Import overseas stock chart data from KIS API to DuckDB."""
+
+    def __init__(self, client: Client, db_manager: DuckDBManager):
+        """Initialize overseas chart data importer.
+
+        Args:
+            client: KIS API client
+            db_manager: DuckDB manager instance
+        """
+        self.client = client
+        self.db_manager = db_manager
+
+    def import_stock_data(
+        self,
+        exchange_code: str,
+        stock_code: str,
+        end_date: str,
+        skip_existing: bool = True,
+    ) -> int:
+        """Import daily chart data for a single overseas stock.
+
+        Args:
+            exchange_code: Exchange code (NYS, NAS, AMS, HKS, TSE, etc.)
+            stock_code: Stock code/symbol (e.g., TSLA)
+            end_date: End date in YYYYMMDD format
+            skip_existing: Skip import if data already exists
+
+        Returns:
+            Number of records imported
+        """
+        exchange_code = exchange_code.strip().upper()
+        stock_code = stock_code.strip().upper()
+
+        if not self._validate_date_format(end_date):
+            raise ValueError(f"Invalid end date format: {end_date}")
+
+        try:
+            # Check if data already exists
+            if skip_existing and self.db_manager.check_overseas_stock_data_exists(
+                exchange_code, stock_code, end_date, end_date
+            ):
+                logger.info(f"Data already exists for {exchange_code}:{stock_code}, skipping...")
+                return 0
+
+            # Fetch and store data
+            count = self._fetch_and_store_data(exchange_code, stock_code, end_date)
+            return count
+
+        except Exception as e:
+            logger.error(f"Error importing data for {exchange_code}:{stock_code}: {e}")
+            return -1
+
+    def _fetch_and_store_data(self, exchange_code: str, stock_code: str, end_date: str) -> int:
+        """Fetch overseas stock data and store in database.
+
+        Args:
+            exchange_code: Exchange code
+            stock_code: Stock code
+            end_date: End date (YYYYMMDD)
+
+        Returns:
+            Number of records imported
+        """
+        try:
+            all_data = self._fetch_period_data(exchange_code, stock_code, end_date)
+
+            if all_data:
+                df = self._prepare_stock_chart_data(exchange_code, stock_code, all_data)
+                count = self.db_manager.insert_overseas_stock_daily_chart(exchange_code, stock_code, df)
+                return count
+            else:
+                logger.warning(f"No data returned from API for {exchange_code}:{stock_code}")
+                return 0
+
+        except Exception as e:
+            logger.error(f"Error fetching data for {exchange_code}:{stock_code}: {e}")
+            raise
+
+    def _fetch_period_data(self, exchange_code: str, stock_code: str, end_date: str) -> dict:
+        """Fetch period chart data from overseas KIS API with retry logic and pagination.
+
+        Args:
+            exchange_code: Exchange code
+            stock_code: Stock code
+            end_date: End date (YYYYMMDD)
+
+        Returns:
+            Dictionary with output1 and output2 data
+        """
+        max_retries = 3
+        keyb = ""  # Start with empty key for first request
+        all_output2 = []
+        output1 = None
+
+        while True:
+            for attempt in range(max_retries):
+                try:
+                    response = self.client.overseas_basic_quote.get_stock_period_quote(
+                        auth="",
+                        excd=exchange_code,
+                        symb=stock_code,
+                        gubn="0",  # Daily
+                        bymd=end_date,  # Base date
+                        modp="1",  # Adjusted price
+                        keyb=keyb,
+                    )
+
+                    # Extract output1 and output2
+                    output1 = response.output1 if hasattr(response, "output1") else None
+                    output2 = response.output2 if hasattr(response, "output2") else []
+
+                    all_output2.extend(output2)
+
+                    # Check if there's more data to fetch (pagination)
+                    # Note: Check if response has more data indicator
+                    # For now, we assume single response contains all data
+                    break
+
+                except (
+                    requests.exceptions.ConnectionError,
+                    requests.exceptions.Timeout,
+                    requests.exceptions.ChunkedEncodingError,
+                ) as e:
+                    # Network errors - retry with exponential backoff
+                    if attempt < max_retries - 1:
+                        wait_time = 2**attempt  # Exponential backoff: 1s, 2s, 4s
+                        logger.warning(
+                            f"Network error fetching {exchange_code}:{stock_code}, retry {attempt + 1}/{max_retries} in {wait_time}s: {e}"
+                        )
+                        time.sleep(wait_time)
+                    else:
+                        logger.error(
+                            f"Failed to fetch {exchange_code}:{stock_code} after {max_retries} network error retries: {e}"
+                        )
+                        raise
+
+                except Exception as e:
+                    # API business logic errors (invalid token, bad params, etc) - fail immediately
+                    logger.error(f"API error fetching {exchange_code}:{stock_code} (no retry): {e}")
+                    raise
+
+            # If no more data, break the loop
+            if not all_output2 or not keyb:
+                break
+
+            time.sleep(0.1)  # Rate limit
+
+        return {"output1": output1, "output2": all_output2}
+
+    def _prepare_stock_chart_data(self, exchange_code: str, stock_code: str, data: dict) -> pd.DataFrame:
+        """Prepare overseas stock chart data for insertion.
+
+        Args:
+            exchange_code: Exchange code
+            stock_code: Stock code
+            data: Dictionary containing output1 and output2
+
+        Returns:
+            Prepared DataFrame
+        """
+        output1 = data.get("output1")
+        output2 = data.get("output2", [])
+
+        if not output2:
+            return pd.DataFrame()
+
+        # Extract fields from output1
+        zdiv = getattr(output1, "zdiv", None) if output1 else None
+
+        # Convert output2 items to dict
+        rows = []
+        for item in output2:
+            row = {
+                "exchange_code": exchange_code,
+                "stock_code": stock_code,
+                "date": pd.to_datetime(item.xymd, format="%Y%m%d"),
+                "open": pd.to_numeric(item.open, errors="coerce"),
+                "high": pd.to_numeric(item.high, errors="coerce"),
+                "low": pd.to_numeric(item.low, errors="coerce"),
+                "close": pd.to_numeric(item.clos, errors="coerce"),
+                "volume": pd.to_numeric(item.tvol, errors="coerce"),
+                "trading_amount": pd.to_numeric(item.tamt, errors="coerce"),
+                "sign": item.sign,
+                "diff": pd.to_numeric(item.diff, errors="coerce"),
+                "rate": pd.to_numeric(item.rate, errors="coerce"),
+                "zdiv": zdiv,
+            }
+            rows.append(row)
+
+        return pd.DataFrame(rows)
+
+    def import_batch(
+        self,
+        exchange_code: str,
+        stock_codes: list[str],
+        end_date: str,
+        progress_callback: Optional[Callable] = None,
+        skip_existing: bool = True,
+    ) -> dict:
+        """Import data for multiple overseas stocks.
+
+        Args:
+            exchange_code: Exchange code (NYS, NAS, AMS, HKS, TSE, etc.)
+            stock_codes: List of stock codes/symbols
+            end_date: End date (YYYYMMDD)
+            progress_callback: Optional callback for progress updates
+            skip_existing: Skip imports if data exists
+
+        Returns:
+            Dictionary with results {stock_code: count}
+        """
+        results = {}
+        total = len(stock_codes)
+        chunk_size = 10
+
+        # Process in chunks of 10
+        for chunk_start in range(0, len(stock_codes), chunk_size):
+            chunk_end = min(chunk_start + chunk_size, len(stock_codes))
+            chunk = stock_codes[chunk_start:chunk_end]
+
+            # Batch check existence for this chunk
+            if skip_existing:
+                exists_map = self.db_manager.check_overseas_stock_data_exists_batch(
+                    exchange_code, chunk, end_date, end_date
+                )
+                existing_codes = [code for code, exists in exists_map.items() if exists]
+                if existing_codes:
+                    logger.info(f"Skipping {len(existing_codes)} existing stocks: {existing_codes}")
+                    for code in existing_codes:
+                        results[code] = 0  # Mark as skipped
+            else:
+                exists_map = {}
+
+            # Process each stock in chunk sequentially
+            logger.info(
+                f"Overseas stock charts import for {exchange_code} stocks {chunk_start + 1} to {chunk_end} of {total}, end_date={end_date}"
+            )
+            for stock_code in chunk:
+                idx = stock_codes.index(stock_code) + 1
+
+                if progress_callback:
+                    progress_callback(idx, total, stock_code)
+
+                # Skip if already exists (checked in batch above)
+                if skip_existing and exists_map.get(stock_code, False):
+                    continue
+
+                try:
+                    results[stock_code] = self.import_stock_data(
+                        exchange_code,
+                        stock_code,
+                        end_date,
+                        skip_existing=False,  # Already checked
+                    )
+                    # Rate limit: 10 requests per second (0.1s sleep)
+                    time.sleep(0.1)
+                except Exception as e:
+                    logger.error(f"Error importing {exchange_code}:{stock_code}: {e}")
+                    results[stock_code] = -1
+
+        return results
+
+    @staticmethod
+    def _validate_date_format(date_str: str) -> bool:
+        """Validate date format (YYYYMMDD).
+
+        Args:
+            date_str: Date string to validate
+
+        Returns:
+            True if valid, False otherwise
+        """
+        try:
+            datetime.strptime(date_str, "%Y%m%d")
+            return True
+        except ValueError:
+            return False
+
+    @staticmethod
+    def get_default_date_range(days_back: int = 1095) -> tuple[str, str]:
+        """Get default date range (n days back from today).
+
+        Args:
+            days_back: Number of days to go back (default: 3 years = 1095 days)
+
+        Returns:
+            Tuple of (start_date, end_date) in YYYYMMDD format
+        """
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days_back)
+
+        return (start_date.strftime("%Y%m%d"), end_date.strftime("%Y%m%d"))
