@@ -34,9 +34,9 @@ class DuckDBManager:
 
     def _create_tables(self):
         """Create tables if they don't exist."""
-        # Industry daily charts table (KIS API)
+        # Domestic industry daily charts table (KIS API)
         self.connection.execute("""
-            CREATE TABLE IF NOT EXISTS industry_daily_charts (
+            CREATE TABLE IF NOT EXISTS domestic_industry_daily_charts (
                 industry_code VARCHAR NOT NULL,
                 date DATE NOT NULL,
 
@@ -63,9 +63,9 @@ class DuckDBManager:
             )
         """)
 
-        # Stock metadata table
+        # Domestic stock metadata table
         self.connection.execute("""
-            CREATE TABLE IF NOT EXISTS stock_metadata (
+            CREATE TABLE IF NOT EXISTS domestic_stock_metadata (
                 stock_code VARCHAR PRIMARY KEY,
                 stock_name VARCHAR,
                 -- get_stock_info_v1 fields
@@ -98,9 +98,9 @@ class DuckDBManager:
             )
         """)
 
-        # Industry codes table
+        # Domestic industry codes table
         self.connection.execute("""
-            CREATE TABLE IF NOT EXISTS industry_codes (
+            CREATE TABLE IF NOT EXISTS domestic_industry_codes (
                 code VARCHAR PRIMARY KEY,
                 name VARCHAR NOT NULL,
                 created_at TIMESTAMP DEFAULT NOW(),
@@ -108,9 +108,9 @@ class DuckDBManager:
             )
         """)
 
-        # Stock daily charts table (KIS API)
+        # Domestic stock daily charts table (KIS API)
         self.connection.execute("""
-            CREATE TABLE IF NOT EXISTS stock_daily_charts (
+            CREATE TABLE IF NOT EXISTS domestic_stock_daily_charts (
                 stock_code VARCHAR NOT NULL,
                 date DATE NOT NULL,
                 open BIGINT NOT NULL,
@@ -144,18 +144,18 @@ class DuckDBManager:
 
         logger.debug("DuckDB tables created/verified")
 
-    def insert_industry_daily_chart(self, industry_code: str, df: pd.DataFrame) -> int:
-        """Insert industry daily chart data.
+    def insert_domestic_industry_daily_chart(self, industry_code: str, df: pd.DataFrame) -> int:
+        """Insert domestic industry daily chart data.
 
         Args:
             industry_code: Industry code
-            df: DataFrame with columns matching industry_daily_charts schema
+            df: DataFrame with columns matching domestic_industry_daily_charts schema
 
         Returns:
             Number of records inserted
         """
         if df.empty:
-            logger.warning(f"Empty DataFrame for industry daily chart: {industry_code}")
+            logger.warning(f"Empty DataFrame for domestic industry daily chart: {industry_code}")
             return 0
 
         # Prepare data
@@ -164,7 +164,7 @@ class DuckDBManager:
         try:
             self.connection.register("insert_df", insert_df)
             self.connection.execute(
-                """INSERT INTO industry_daily_charts
+                """INSERT INTO domestic_industry_daily_charts
                 (industry_code, date, open, high, low, close, volume, trading_amount,
                  mod_yn, prdy_vrss_sign, bstp_nmix_prdy_ctrt, prdy_nmix, hts_kor_isnm, bstp_cls_code, prdy_vol)
                 SELECT industry_code, date, open, high, low, close, volume, trading_amount,
@@ -174,30 +174,30 @@ class DuckDBManager:
             )
             self.connection.unregister("insert_df")
             count = len(insert_df)
-            logger.info(f"Inserted {count} industry daily chart records for {industry_code}")
+            logger.info(f"Inserted {count} domestic industry daily chart records for {industry_code}")
             return count
         except Exception as e:
-            logger.error(f"Error inserting industry daily chart for {industry_code}: {e}")
+            logger.error(f"Error inserting domestic industry daily chart for {industry_code}: {e}")
             raise
 
-    def insert_stock_daily_chart(self, stock_code: str, df: pd.DataFrame) -> int:
-        """Insert stock daily chart data from KIS API.
+    def insert_domestic_stock_daily_chart(self, stock_code: str, df: pd.DataFrame) -> int:
+        """Insert domestic stock daily chart data from KIS API.
 
         Args:
             stock_code: Stock code
-            df: DataFrame with columns matching stock_daily_charts schema
+            df: DataFrame with columns matching domestic_stock_daily_charts schema
 
         Returns:
             Number of records inserted
         """
         if df.empty:
-            logger.warning(f"Empty DataFrame for stock daily chart: {stock_code}")
+            logger.warning(f"Empty DataFrame for domestic stock daily chart: {stock_code}")
             return 0
 
         try:
             self.connection.register("insert_df", df)
             self.connection.execute(
-                """INSERT INTO stock_daily_charts
+                """INSERT INTO domestic_stock_daily_charts
                 (stock_code, date, open, high, low, close, volume, trading_amount,
                  flng_cls_code, prtt_rate, mod_yn, prdy_vrss_sign, prdy_vrss, revl_issu_reas,
                  vol_tnrt, lstn_stcn, hts_avls, per, eps, pbr)
@@ -209,10 +209,10 @@ class DuckDBManager:
             )
             self.connection.unregister("insert_df")
             count = len(df)
-            logger.debug(f"Inserted {count} stock daily chart records for {stock_code}")
+            logger.debug(f"Inserted {count} domestic stock daily chart records for {stock_code}")
             return count
         except Exception as e:
-            logger.error(f"Error inserting stock daily chart for {stock_code}: {e}")
+            logger.error(f"Error inserting domestic stock daily chart for {stock_code}: {e}")
             raise
 
     def _prepare_industry_chart_data(self, industry_code: str, df: pd.DataFrame) -> pd.DataFrame:
@@ -240,12 +240,12 @@ class DuckDBManager:
 
         return result
 
-    def update_stock_metadata(
+    def update_domestic_stock_metadata(
         self,
         stock_code: str,
         stock_name: Optional[str] = None,
     ) -> None:
-        """Update stock metadata.
+        """Update domestic stock metadata.
 
         Args:
             stock_code: Stock code
@@ -256,7 +256,7 @@ class DuckDBManager:
 
         self.connection.execute(
             """
-            INSERT INTO stock_metadata
+            INSERT INTO domestic_stock_metadata
             (stock_code, stock_name, last_imported_date, import_frequency, next_import_date)
             VALUES (?, ?, ?, ?, ?)
             ON CONFLICT(stock_code) DO UPDATE SET
@@ -278,11 +278,11 @@ class DuckDBManager:
         )
         logger.debug(f"Updated metadata for {stock_code}")
 
-    def upsert_stock_metadata_extended(self, df: pd.DataFrame) -> int:
-        """Upsert extended stock metadata from combined API responses.
+    def upsert_domestic_stock_metadata_extended(self, df: pd.DataFrame) -> int:
+        """Upsert extended domestic stock metadata from combined API responses.
 
         Args:
-            df: DataFrame with all stock metadata columns including:
+            df: DataFrame with all domestic stock metadata columns including:
                 stock_code, stock_name, listing_date, market_name, market_code,
                 industry_name, company_size, company_class, audit_info, stock_state,
                 investment_warning, settlement_month, face_value, capital, float_stock,
@@ -293,13 +293,13 @@ class DuckDBManager:
             Number of records upserted
         """
         if df.empty:
-            logger.warning("Empty DataFrame for stock metadata")
+            logger.warning("Empty DataFrame for domestic stock metadata")
             return 0
 
         try:
             self.connection.register("insert_df", df)
             self.connection.execute(
-                """INSERT INTO stock_metadata
+                """INSERT INTO domestic_stock_metadata
                 (stock_code, stock_name, listing_date, market_name, market_code,
                  industry_name, company_size, company_class, audit_info, stock_state,
                  investment_warning, settlement_month, face_value, capital, float_stock,
@@ -341,14 +341,14 @@ class DuckDBManager:
             )
             self.connection.unregister("insert_df")
             count = len(df)
-            logger.info(f"Upserted {count} stock metadata records")
+            logger.info(f"Upserted {count} domestic stock metadata records")
             return count
         except Exception as e:
-            logger.error(f"Error upserting stock metadata: {e}")
+            logger.error(f"Error upserting domestic stock metadata: {e}")
             raise
 
-    def insert_industry_codes(self, df: pd.DataFrame) -> int:
-        """Insert industry codes.
+    def insert_domestic_industry_codes(self, df: pd.DataFrame) -> int:
+        """Insert domestic industry codes.
 
         Args:
             df: DataFrame with columns: code, name
@@ -357,13 +357,13 @@ class DuckDBManager:
             Number of records inserted/updated
         """
         if df.empty:
-            logger.warning("Empty DataFrame for industry codes")
+            logger.warning("Empty DataFrame for domestic industry codes")
             return 0
 
         try:
             self.connection.register("insert_df", df)
             self.connection.execute(
-                """INSERT INTO industry_codes
+                """INSERT INTO domestic_industry_codes
                 (code, name)
                 SELECT code, name
                 FROM insert_df
@@ -373,19 +373,19 @@ class DuckDBManager:
             )
             self.connection.unregister("insert_df")
             count = len(df)
-            logger.info(f"Inserted/updated {count} industry code records")
+            logger.info(f"Inserted/updated {count} domestic industry code records")
             return count
         except Exception as e:
-            logger.error(f"Error inserting industry codes: {e}")
+            logger.error(f"Error inserting domestic industry codes: {e}")
             raise
 
-    def get_industry_codes(self) -> pd.DataFrame:
-        """Get industry codes from database.
+    def get_domestic_industry_codes(self) -> pd.DataFrame:
+        """Get domestic industry codes from database.
 
         Returns:
-            DataFrame with industry code data
+            DataFrame with domestic industry code data
         """
-        result = self.connection.execute("SELECT * FROM industry_codes ORDER BY code").df()
+        result = self.connection.execute("SELECT * FROM domestic_industry_codes ORDER BY code").df()
         return result
 
     def get_database_stats(self) -> dict:
@@ -396,31 +396,31 @@ class DuckDBManager:
         """
         stats = {}
 
-        # Count stock daily chart records (new KIS data)
-        result = self.connection.execute("SELECT COUNT(*) as count FROM stock_daily_charts").fetchall()
-        stats["stock_daily_charts_count"] = result[0][0] if result else 0
+        # Count domestic stock daily chart records (new KIS data)
+        result = self.connection.execute("SELECT COUNT(*) as count FROM domestic_stock_daily_charts").fetchall()
+        stats["domestic_stock_daily_charts_count"] = result[0][0] if result else 0
 
         result = self.connection.execute(
-            "SELECT COUNT(DISTINCT stock_code) as count FROM stock_daily_charts"
+            "SELECT COUNT(DISTINCT stock_code) as count FROM domestic_stock_daily_charts"
         ).fetchall()
-        stats["stock_daily_charts_stocks"] = result[0][0] if result else 0
+        stats["domestic_stock_daily_charts_stocks"] = result[0][0] if result else 0
 
-        # Count industry daily chart records
-        result = self.connection.execute("SELECT COUNT(*) as count FROM industry_daily_charts").fetchall()
-        stats["industry_daily_charts_count"] = result[0][0] if result else 0
+        # Count domestic industry daily chart records
+        result = self.connection.execute("SELECT COUNT(*) as count FROM domestic_industry_daily_charts").fetchall()
+        stats["domestic_industry_daily_charts_count"] = result[0][0] if result else 0
 
         result = self.connection.execute(
-            "SELECT COUNT(DISTINCT industry_code) as count FROM industry_daily_charts"
+            "SELECT COUNT(DISTINCT industry_code) as count FROM domestic_industry_daily_charts"
         ).fetchall()
-        stats["industry_daily_charts_industries"] = result[0][0] if result else 0
+        stats["domestic_industry_daily_charts_industries"] = result[0][0] if result else 0
 
         # Count metadata
-        result = self.connection.execute("SELECT COUNT(*) as count FROM stock_metadata").fetchall()
-        stats["tracked_stocks"] = result[0][0] if result else 0
+        result = self.connection.execute("SELECT COUNT(*) as count FROM domestic_stock_metadata").fetchall()
+        stats["domestic_tracked_stocks"] = result[0][0] if result else 0
 
-        # Count industry codes
-        result = self.connection.execute("SELECT COUNT(*) as count FROM industry_codes").fetchall()
-        stats["industry_codes_count"] = result[0][0] if result else 0
+        # Count domestic industry codes
+        result = self.connection.execute("SELECT COUNT(*) as count FROM domestic_industry_codes").fetchall()
+        stats["domestic_industry_codes_count"] = result[0][0] if result else 0
 
         # Database size
         db_size = os.path.getsize(self.db_path)
@@ -428,12 +428,12 @@ class DuckDBManager:
 
         return stats
 
-    def get_stock_date_range(self, stock_code: str, table: str = "stock_daily_charts") -> Optional[tuple]:
+    def get_stock_date_range(self, stock_code: str, table: str = "domestic_stock_daily_charts") -> Optional[tuple]:
         """Get date range for a stock in a table.
 
         Args:
             stock_code: Stock code
-            table: Table name (stock_daily_charts, industry_daily_charts)
+            table: Table name (domestic_stock_daily_charts, industry_daily_charts)
 
         Returns:
             Tuple of (min_date, max_date) or None if no data
@@ -446,8 +446,8 @@ class DuckDBManager:
             return (result[0][0], result[0][1])
         return None
 
-    def check_stock_data_exists(self, stock_code: str, start_date: str, end_date: str) -> bool:
-        """Check if stock daily data already exists for a stock/date range.
+    def check_domestic_stock_data_exists(self, stock_code: str, start_date: str, end_date: str) -> bool:
+        """Check if domestic stock daily data already exists for a stock/date range.
 
         Args:
             stock_code: Stock code
@@ -462,7 +462,7 @@ class DuckDBManager:
 
         result = self.connection.execute(
             """
-            SELECT COUNT(*) as count FROM stock_daily_charts
+            SELECT COUNT(*) as count FROM domestic_stock_daily_charts
             WHERE stock_code = ? AND date BETWEEN ? AND ?
             """,
             [stock_code, start, end],
@@ -471,8 +471,8 @@ class DuckDBManager:
         actual_count = result[0][0] if result else 0
         return actual_count > 0
 
-    def check_stock_data_exists_batch(self, stock_codes: list[str], start_date: str, end_date: str) -> dict[str, bool]:
-        """Check if stock daily data exists for multiple stocks in batch.
+    def check_domestic_stock_data_exists_batch(self, stock_codes: list[str], start_date: str, end_date: str) -> dict[str, bool]:
+        """Check if domestic stock daily data exists for multiple stocks in batch.
 
         Args:
             stock_codes: List of stock codes
@@ -491,7 +491,7 @@ class DuckDBManager:
         placeholders = ",".join("?" * len(stock_codes))
         query = f"""
             SELECT stock_code, COUNT(*) as count
-            FROM stock_daily_charts
+            FROM domestic_stock_daily_charts
             WHERE stock_code IN ({placeholders})
               AND date BETWEEN ? AND ?
             GROUP BY stock_code
@@ -507,8 +507,8 @@ class DuckDBManager:
 
         return exists_map
 
-    def check_industry_data_exists(self, industry_code: str, start_date: str, end_date: str) -> bool:
-        """Check if daily data already exists for an industry/date range.
+    def check_domestic_industry_data_exists(self, industry_code: str, start_date: str, end_date: str) -> bool:
+        """Check if daily data already exists for a domestic industry/date range.
 
         Args:
             industry_code: Industry code
@@ -523,7 +523,7 @@ class DuckDBManager:
 
         result = self.connection.execute(
             """
-            SELECT COUNT(*) as count FROM industry_daily_charts
+            SELECT COUNT(*) as count FROM domestic_industry_daily_charts
             WHERE industry_code = ? AND date BETWEEN ? AND ?
             """,
             [industry_code, start, end],
@@ -549,9 +549,9 @@ class DuckDBManager:
                 logger.info("Clear operation cancelled")
                 return
 
-        self.connection.execute("DELETE FROM industry_daily_charts")
-        self.connection.execute("DELETE FROM stock_metadata")
-        self.connection.execute("DELETE FROM industry_codes")
+        self.connection.execute("DELETE FROM domestic_industry_daily_charts")
+        self.connection.execute("DELETE FROM domestic_stock_metadata")
+        self.connection.execute("DELETE FROM domestic_industry_codes")
         logger.info("All tables cleared")
 
     def close(self):

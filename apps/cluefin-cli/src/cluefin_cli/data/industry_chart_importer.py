@@ -20,11 +20,11 @@ class SectorPeriodData(TypedDict):
     output2: Sequence[SectorPeriodQuoteItem2]
 
 
-class IndustryChartImporter:
-    """Import industry chart data from KIS API to DuckDB."""
+class DomesticIndustryChartImporter:
+    """Import domestic industry chart data from KIS API to DuckDB."""
 
     def __init__(self, client: Client, db_manager: DuckDBManager):
-        """Initialize industry chart data importer.
+        """Initialize domestic industry chart data importer.
 
         Args:
             client: KIS API client
@@ -103,7 +103,7 @@ class IndustryChartImporter:
 
             if all_rows:
                 df = pd.DataFrame(all_rows)
-                count = self.db_manager.insert_industry_daily_chart(industry_code, df)
+                count = self.db_manager.insert_domestic_industry_daily_chart(industry_code, df)
                 logger.info(f"Imported {count} records for industry {industry_code}")
                 return count
             else:

@@ -87,8 +87,8 @@ class StockListFetcher:
 
         return stocks
 
-    def fetch_stock_metadata_extended(self, stock_info: DomesticStockInfoSummaryItem) -> Optional[dict]:
-        """Fetch extended stock metadata by combining two APIs.
+    def fetch_domestic_stock_metadata_extended(self, stock_info: DomesticStockInfoSummaryItem) -> Optional[dict]:
+        """Fetch extended domestic stock metadata by combining two APIs.
 
         Fetches data from both get_stock_info_v1 and get_stock_info APIs,
         combining them into a single metadata dictionary.
@@ -192,7 +192,7 @@ class StockListFetcher:
                 logger.info(
                     f"  [{global_idx}/{total_stocks}] Fetching metadata for {stock_info.code} ({stock_info.name})"
                 )
-                metadata = self.fetch_stock_metadata_extended(stock_info)
+                metadata = self.fetch_domestic_stock_metadata_extended(stock_info)
 
                 if metadata:
                     chunk_metadata.append(metadata)
@@ -204,7 +204,7 @@ class StockListFetcher:
             if chunk_metadata:
                 logger.info(f"[Chunk {chunk_idx + 1}/{num_chunks}] Saving {len(chunk_metadata)} records to database...")
                 df = pd.DataFrame(chunk_metadata)
-                count = self.db_manager.upsert_stock_metadata_extended(df)
+                count = self.db_manager.upsert_domestic_stock_metadata_extended(df)
                 logger.info(f"[Chunk {chunk_idx + 1}/{num_chunks}] Successfully saved {count} records")
                 total_success += count
             else:

@@ -17,9 +17,9 @@ from rich.table import Table
 
 from cluefin_cli.config.settings import settings
 from cluefin_cli.data.duckdb_manager import DuckDBManager
-from cluefin_cli.data.importer import StockChartImporter
-from cluefin_cli.data.industry_chart_importer import IndustryChartImporter
-from cluefin_cli.data.industry_importer import IndustryCodeImporter
+from cluefin_cli.data.importer import DomesticStockChartImporter
+from cluefin_cli.data.industry_chart_importer import DomesticIndustryChartImporter
+from cluefin_cli.data.industry_importer import DomesticIndustryCodeImporter
 from cluefin_cli.data.stock_fetcher import StockListFetcher
 
 console = Console()
@@ -142,7 +142,7 @@ def import_command(
             secret_key=SecretStr(settings.kis_secret_key),
             env=settings.kis_env,
         )
-        importer = StockChartImporter(kis_client, db_manager)
+        importer = DomesticStockChartImporter(kis_client, db_manager)
 
         # Initialize Kiwoom client for list features (if credentials available)
         kiwoom_client = None
@@ -163,10 +163,10 @@ def import_command(
                 rate_limit_burst=2,
             )
             stock_fetcher = StockListFetcher(kiwoom_client, db_manager)
-            industry_importer = IndustryCodeImporter(db_manager)
+            industry_importer = DomesticIndustryCodeImporter(db_manager)
 
         # Initialize industry chart importer (uses KIS API)
-        industry_chart_importer = IndustryChartImporter(kis_client, db_manager)
+        industry_chart_importer = DomesticIndustryChartImporter(kis_client, db_manager)
 
         # Handle database operations
         if check_db:
@@ -315,7 +315,7 @@ def _get_date_range(start: Optional[str], end: Optional[str]) -> tuple[str, str]
         Tuple of (start_date, end_date) in YYYYMMDD format
     """
     if not start or not end:
-        start_date, end_date = StockChartImporter.get_default_date_range()
+        start_date, end_date = DomesticStockChartImporter.get_default_date_range()
         if not start:
             start = start_date
         if not end:
@@ -358,7 +358,7 @@ def _display_import_summary(
 
 
 def _run_import(
-    importer: StockChartImporter,
+    importer: DomesticStockChartImporter,
     stock_codes: list[str],
     start_date: str,
     end_date: str,
@@ -405,7 +405,7 @@ def _run_import(
     console.print("[green]✓[/green] Import completed successfully")
 
 
-def _import_industry_codes(industry_importer: Optional[IndustryCodeImporter], market: Optional[str]) -> None:
+def _import_industry_codes(industry_importer: Optional[DomesticIndustryCodeImporter], market: Optional[str]) -> None:
     """Import industry codes from idxcode.mst file.
 
     업종코드 파일 다운로드:
@@ -490,14 +490,14 @@ def _collect_industry_codes(
         codes = list(industry_codes)
     else:
         # Otherwise, get all industry codes from database
-        console.print("[yellow]Fetching all industry codes from database...[/yellow]")
-        industry_df = db_manager.get_industry_codes()
+        console.print("[yellow]Fetching all domestic industry codes from database...[/yellow]")
+        industry_df = db_manager.get_domestic_industry_codes()
         if not industry_df.empty:
             codes = industry_df["code"].tolist()
-            logger.info(f"Found {len(codes)} industry codes in database")
+            logger.info(f"Found {len(codes)} domestic industry codes in database")
         else:
             console.print(
-                "[yellow]No industry codes found in database. "
+                "[yellow]No domestic industry codes found in database. "
                 "Please run 'cluefin-cli import --industry-codes' first.[/yellow]"
             )
 
@@ -528,13 +528,13 @@ def _display_industry_import_summary(
 
 
 def _run_industry_import(
-    importer: Optional[IndustryChartImporter],
+    importer: Optional[DomesticIndustryChartImporter],
     industry_codes: list[str],
     start_date: str,
     end_date: str,
     show_progress: bool,
 ) -> None:
-    """Run the industry chart import process.
+    """Run the domestic industry chart import process.
 
     Args:
         importer: Industry chart importer instance
@@ -589,18 +589,18 @@ def _show_database_stats(db_manager: DuckDBManager) -> None:
     stats_table.add_column("Value", style="magenta")
 
     # KIS data (new)
-    stats_table.add_row("Stock Daily Charts (KIS)", f"{stats.get('stock_daily_charts_count', 0):,}")
-    stats_table.add_row("└─ Unique Stocks", f"{stats.get('stock_daily_charts_stocks', 0):,}")
+    stats_table.add_row("Domestic Stock Daily Charts (KIS)", f"{stats.get('domestic_stock_daily_charts_count', 0):,}")
+    stats_table.add_row("└─ Unique Stocks", f"{stats.get('domestic_stock_daily_charts_stocks', 0):,}")
     stats_table.add_row("", "")
 
     # Industry data
-    stats_table.add_row("Industry Daily Records", f"{stats.get('industry_daily_charts_count', 0):,}")
-    stats_table.add_row("└─ Unique Industries", str(stats.get("industry_daily_charts_industries", 0)))
+    stats_table.add_row("Domestic Industry Daily Records", f"{stats.get('domestic_industry_daily_charts_count', 0):,}")
+    stats_table.add_row("└─ Unique Industries", str(stats.get("domestic_industry_daily_charts_industries", 0)))
     stats_table.add_row("", "")
 
     # Metadata
-    stats_table.add_row("Stock Metadata Records", str(stats["tracked_stocks"]))
-    stats_table.add_row("Industry Codes", f"{stats.get('industry_codes_count', 0):,}")
+    stats_table.add_row("Domestic Stock Metadata Records", str(stats["domestic_tracked_stocks"]))
+    stats_table.add_row("Domestic Industry Codes", f"{stats.get('domestic_industry_codes_count', 0):,}")
     stats_table.add_row("", "")
 
     # Database info

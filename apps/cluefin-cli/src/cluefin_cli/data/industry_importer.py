@@ -13,8 +13,8 @@ from loguru import logger
 from .duckdb_manager import DuckDBManager
 
 
-class IndustryCodeImporter:
-    """Importer for industry code data from idxcode.mst file.
+class DomesticIndustryCodeImporter:
+    """Importer for domestic industry code data from idxcode.mst file.
 
     MST 파일은 고정폭 텍스트 파일로 cp949 인코딩됨:
     - Position 0: market code (idx_div) - 1 character
@@ -60,8 +60,8 @@ class IndustryCodeImporter:
                 return {"total": 0}
 
             # Insert into database
-            count = self.db_manager.insert_industry_codes(df)
-            logger.info(f"Successfully imported {count} industry codes")
+            count = self.db_manager.insert_domestic_industry_codes(df)
+            logger.info(f"Successfully imported {count} domestic industry codes")
 
             return {"total": count}
         except Exception as e:
@@ -104,15 +104,15 @@ class IndustryCodeImporter:
             raise
 
     def get_industry_codes_summary(self) -> pd.DataFrame:
-        """Get summary of industry codes in database.
+        """Get summary of domestic industry codes in database.
 
         Returns:
             DataFrame with industry code counts by market
         """
-        df = self.db_manager.get_industry_codes()
+        df = self.db_manager.get_domestic_industry_codes()
 
         if df.empty:
-            logger.warning("No industry codes found in database")
+            logger.warning("No domestic industry codes found in database")
             return pd.DataFrame()
 
         # Group by market and count

@@ -12,8 +12,8 @@ from loguru import logger
 from cluefin_cli.data.duckdb_manager import DuckDBManager
 
 
-class StockChartImporter:
-    """Import stock chart data from KIS API to DuckDB."""
+class DomesticStockChartImporter:
+    """Import domestic stock chart data from KIS API to DuckDB."""
 
     def __init__(self, client: Client, db_manager: DuckDBManager):
         """Initialize chart data importer.
@@ -55,7 +55,7 @@ class StockChartImporter:
 
         try:
             # Check if data already exists
-            if skip_existing and self.db_manager.check_stock_data_exists(stock_code, start_date, end_date):
+            if skip_existing and self.db_manager.check_domestic_stock_data_exists(stock_code, start_date, end_date):
                 logger.info(f"Data already exists for {stock_code}, skipping...")
                 return 0
 
@@ -84,7 +84,7 @@ class StockChartImporter:
 
             if all_data:
                 df = self._prepare_stock_chart_data(stock_code, all_data)
-                count = self.db_manager.insert_stock_daily_chart(stock_code, df)
+                count = self.db_manager.insert_domestic_stock_daily_chart(stock_code, df)
                 return count
             else:
                 logger.warning(f"No data returned from API for {stock_code}")
@@ -269,7 +269,7 @@ class StockChartImporter:
 
             # Batch check existence for this chunk
             if skip_existing:
-                exists_map = self.db_manager.check_stock_data_exists_batch(chunk, start_date, end_date)
+                exists_map = self.db_manager.check_domestic_stock_data_exists_batch(chunk, start_date, end_date)
                 existing_codes = [code for code, exists in exists_map.items() if exists]
                 if existing_codes:
                     logger.info(f"Skipping {len(existing_codes)} existing stocks: {existing_codes}")
