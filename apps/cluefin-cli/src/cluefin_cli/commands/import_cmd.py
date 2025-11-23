@@ -690,6 +690,12 @@ def _show_database_stats(db_manager: DuckDBManager) -> None:
     stats_table.add_row("Domestic Industry Codes", f"{stats.get('domestic_industry_codes_count', 0):,}")
     stats_table.add_row("", "")
 
+    # Overseas stock data
+    stats_table.add_row("Overseas Stock Daily Charts", f"{stats.get('overseas_stock_daily_charts_count', 0):,}")
+    stats_table.add_row("└─ Unique Stocks", f"{stats.get('overseas_stock_daily_charts_stocks', 0):,}")
+    stats_table.add_row("Overseas Stock Metadata Records", f"{stats.get('overseas_stock_metadata_count', 0):,}")
+    stats_table.add_row("", "")
+
     # Database info
     stats_table.add_row("Database Size", f"{stats['database_size_mb']} MB")
 

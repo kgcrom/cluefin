@@ -630,6 +630,10 @@ class DuckDBManager:
         ).fetchall()
         stats["overseas_stock_daily_charts_stocks"] = result[0][0] if result else 0
 
+        # Count overseas stock metadata
+        result = self.connection.execute("SELECT COUNT(*) as count FROM overseas_stock_metadata").fetchall()
+        stats["overseas_stock_metadata_count"] = result[0][0] if result else 0
+
         # Database size
         db_size = os.path.getsize(self.db_path)
         stats["database_size_mb"] = round(db_size / (1024 * 1024), 2)
