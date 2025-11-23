@@ -18,7 +18,7 @@ from rich.table import Table
 from cluefin_cli.config.settings import settings
 from cluefin_cli.data.duckdb_manager import DuckDBManager
 from cluefin_cli.data.industry_chart_importer import DomesticIndustryChartImporter
-from cluefin_cli.data.industry_importer import DomesticIndustryCodeImporter, OverseasIndustryCodeImporter
+from cluefin_cli.data.industry_importer import DomesticIndustryCodeImporter
 from cluefin_cli.data.stock_fetcher import StockListFetcher
 from cluefin_cli.data.stock_importer import DomesticStockChartImporter, OverseasStockChartImporter
 
@@ -87,11 +87,6 @@ stderr_console = Console(stderr=True)
     is_flag=True,
     help="Import industry chart data (positional args are industry codes)",
 )
-@click.option(
-    "--overseas-industry-codes",
-    is_flag=True,
-    help="Import overseas industry codes for all exchanges",
-)
 def import_command(
     stock_codes: tuple,
     from_stdin: bool,
@@ -105,7 +100,6 @@ def import_command(
     clear_db: bool,
     industry_codes: bool,
     industry_charts: bool,
-    overseas_industry_codes: bool,
 ):
     """Import stock chart data from KIS API to DuckDB.
 
@@ -175,9 +169,6 @@ def import_command(
         # Initialize industry chart importer (uses KIS API)
         industry_chart_importer = DomesticIndustryChartImporter(kis_client, db_manager)
 
-        # Initialize overseas industry code importer (uses KIS API)
-        overseas_industry_code_importer = OverseasIndustryCodeImporter(kis_client, db_manager)
-
         # Handle database operations
         if check_db:
             _show_database_stats(db_manager)
@@ -190,12 +181,6 @@ def import_command(
         # Handle industry codes import
         if industry_codes:
             _import_industry_codes(industry_importer, market)
-            _show_database_stats(db_manager)
-            return
-
-        # Handle overseas industry codes import
-        if overseas_industry_codes:
-            _import_overseas_industry_codes(overseas_industry_code_importer)
             _show_database_stats(db_manager)
             return
 
@@ -576,14 +561,14 @@ def _collect_industry_codes(
         codes = list(industry_codes)
     else:
         # Otherwise, get all industry codes from database
-        console.print("[yellow]Fetching all domestic industry codes from database...[/yellow]")
-        industry_df = db_manager.get_domestic_industry_codes()
+        console.print("[yellow]Fetching all industry codes from database...[/yellow]")
+        industry_df = db_manager.get_industry_codes()
         if not industry_df.empty:
             codes = industry_df["code"].tolist()
-            logger.info(f"Found {len(codes)} domestic industry codes in database")
+            logger.info(f"Found {len(codes)} industry codes in database")
         else:
             console.print(
-                "[yellow]No domestic industry codes found in database. "
+                "[yellow]No industry codes found in database. "
                 "Please run 'cluefin-cli import --industry-codes' first.[/yellow]"
             )
 
@@ -680,21 +665,19 @@ def _show_database_stats(db_manager: DuckDBManager) -> None:
     stats_table.add_row("", "")
 
     # Industry data
-    stats_table.add_row("Domestic Industry Daily Records", f"{stats.get('domestic_industry_daily_charts_count', 0):,}")
-    stats_table.add_row("└─ Unique Industries", str(stats.get("domestic_industry_daily_charts_industries", 0)))
+    stats_table.add_row("Industry Daily Records", f"{stats.get('industry_daily_charts_count', 0):,}")
+    stats_table.add_row("└─ Unique Industries", str(stats.get("industry_daily_charts_industries", 0)))
     stats_table.add_row("", "")
 
     # Metadata
     stats_table.add_row("Domestic Stock Metadata Records", str(stats["domestic_tracked_stocks"]))
-    stats_table.add_row("Domestic Industry Codes", f"{stats.get('domestic_industry_codes_count', 0):,}")
+    stats_table.add_row("Industry Codes", f"{stats.get('industry_codes_count', 0):,}")
     stats_table.add_row("", "")
 
     # Overseas stock data
     stats_table.add_row("Overseas Stock Daily Charts", f"{stats.get('overseas_stock_daily_charts_count', 0):,}")
     stats_table.add_row("└─ Unique Stocks", f"{stats.get('overseas_stock_daily_charts_stocks', 0):,}")
     stats_table.add_row("Overseas Stock Metadata Records", f"{stats.get('overseas_stock_metadata_count', 0):,}")
-    stats_table.add_row("Overseas Industry Codes", f"{stats.get('overseas_industry_codes_count', 0):,}")
-    stats_table.add_row("└─ Unique Exchanges", str(stats.get("overseas_industry_codes_exchanges", 0)))
     stats_table.add_row("", "")
 
     # Database info
@@ -776,37 +759,3 @@ def _run_overseas_import(
         )
 
     console.print("[green]✓[/green] Overseas stock import completed successfully")
-
-
-def _import_overseas_industry_codes(importer: OverseasIndustryCodeImporter) -> None:
-    """Import overseas industry codes for all supported exchanges.
-
-    지원 거래소: NYSE, NASDAQ, AMEX, HKEX, SSE, SZSE, HOSE, HNX, TSE
-
-    Args:
-        importer: Overseas industry code importer instance
-    """
-    console.print("[yellow]Importing overseas industry codes for all exchanges...[/yellow]")
-
-    results = importer.import_all_exchanges()
-
-    # Display results
-    results_table = Table(title="Overseas Industry Code Import Results")
-    results_table.add_column("Exchange", style="cyan")
-    results_table.add_column("Count", style="magenta", justify="right")
-
-    for exchange_code, count in results["exchanges"].items():
-        if isinstance(count, dict) and "error" in count:
-            results_table.add_row(exchange_code, f"Error: {count['error']}")
-        else:
-            results_table.add_row(exchange_code, str(count))
-
-    results_table.add_row("", "")
-    results_table.add_row("Total Exchanges", str(results.get("total_exchanges", 0)))
-    results_table.add_row("Total Codes", str(results.get("total_codes", 0)))
-
-    console.print(results_table)
-    console.print(
-        f"[green]✓[/green] Imported {results.get('total_codes', 0)} overseas industry codes "
-        f"from {results.get('total_exchanges', 0)} exchanges"
-    )

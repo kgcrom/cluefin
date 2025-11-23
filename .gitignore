@@ -87,3 +87,6 @@ packages/*/src/*/*.py[cod]
 
 data/data.duckdb
 data/data.duckdb.wal
+
+.ruff_cache/
+.uv_cache/

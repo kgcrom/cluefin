@@ -5,7 +5,6 @@ import shutil
 import tempfile
 import urllib.request
 import zipfile
-from pathlib import Path
 from typing import Optional
 
 import pandas as pd
@@ -13,10 +12,11 @@ from cluefin_openapi.kis._client import Client as KisClient
 from cluefin_openapi.kiwoom._client import Client
 from cluefin_openapi.kiwoom._domestic_stock_info_types import DomesticStockInfoSummary, DomesticStockInfoSummaryItem
 from cluefin_openapi.kiwoom._model import KiwoomHttpResponse
-from loguru import logger
+import logging
 
 from cluefin_cli.data.duckdb_manager import DuckDBManager
 
+logger = logging.getLogger(__name__)
 
 class StockListFetcher:
     """Fetch stock lists from Kiwoom API and overseas stocks from KIS API."""

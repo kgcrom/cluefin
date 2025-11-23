@@ -12,10 +12,9 @@ import tempfile
 import urllib.request
 import zipfile
 from pathlib import Path
-from typing import Any, Dict
+from typing import Dict
 
 import pandas as pd
-from cluefin_openapi.kis._client import Client
 
 from .duckdb_manager import DuckDBManager
 
@@ -84,8 +83,8 @@ class DomesticIndustryCodeImporter:
                 return {"total": 0}
 
             # Insert into database
-            count = self.db_manager.insert_domestic_industry_codes(df)
-            logger.info(f"Successfully imported {count} domestic industry codes")
+            count = self.db_manager.insert_industry_codes(df)
+            logger.info(f"Successfully imported {count} industry codes")
 
             return {"total": count}
         except Exception as e:
@@ -133,12 +132,12 @@ class DomesticIndustryCodeImporter:
             raise
 
     def get_industry_codes_summary(self) -> pd.DataFrame:
-        """Get summary of domestic industry codes in database.
+        """Get summary of industry codes in database.
 
         Returns:
             DataFrame with industry code counts by market
         """
-        df = self.db_manager.get_domestic_industry_codes()
+        df = self.db_manager.get_industry_codes()
 
         if df.empty:
             logger.warning("No domestic industry codes found in database")
@@ -151,97 +150,3 @@ class DomesticIndustryCodeImporter:
         return summary[["market_code", "count"]]
 
 
-# 거래소 코드 매핑 (API 코드 → DB 저장용 풀네임)
-EXCHANGE_CODE_MAP = {
-    "NYS": "NYSE",  # 뉴욕
-    "NAS": "NASDAQ",  # 나스닥
-    "AMS": "AMEX",  # 아멕스
-    "HKS": "HKEX",  # 홍콩
-    "SHS": "SSE",  # 상해
-    "SZS": "SZSE",  # 심천
-    "HSX": "HOSE",  # 호치민
-    "HNX": "HNX",  # 하노이
-    "TSE": "TSE",  # 도쿄
-}
-
-
-class OverseasIndustryCodeImporter:
-    """Import overseas industry codes from KIS API to DuckDB."""
-
-    def __init__(self, client: Client, db_manager: DuckDBManager):
-        """Initialize overseas industry code importer.
-
-        Args:
-            client: KIS API client
-            db_manager: DuckDB manager instance
-        """
-        self.client = client
-        self.db_manager = db_manager
-
-    def import_industry_codes(self, exchange_code: str) -> dict[str, Any]:
-        """Import industry codes for a specific exchange.
-
-        Args:
-            exchange_code: API 거래소 코드 (NYS, NAS, AMS, HKS, SHS, SZS, HSX, HNX, TSE)
-
-        Returns:
-            Dictionary with import results
-        """
-        if exchange_code not in EXCHANGE_CODE_MAP:
-            raise ValueError(f"Unsupported exchange code: {exchange_code}")
-
-        try:
-            logger.info(f"Fetching industry codes for exchange {exchange_code}...")
-            response = self.client.overseas_basic_quote.get_sector_codes(auth="", excd=exchange_code)
-
-            if not response.output2:
-                logger.warning(f"No industry codes returned for exchange {exchange_code}")
-                return {"exchange_code": exchange_code, "total": 0}
-
-            # Convert API response to DataFrame
-            db_exchange_code = EXCHANGE_CODE_MAP[exchange_code]
-            data = [
-                {
-                    "exchange_code": db_exchange_code,
-                    "code": item.icod,
-                    "name": item.name,
-                }
-                for item in response.output2
-            ]
-            df = pd.DataFrame(data)
-
-            # Insert into database
-            count = self.db_manager.insert_overseas_industry_codes(df)
-
-            logger.info(f"Successfully imported {count} industry codes for {db_exchange_code} ({exchange_code})")
-            return {
-                "exchange_code": db_exchange_code,
-                "api_code": exchange_code,
-                "total": count,
-            }
-        except Exception as e:
-            logger.error(f"Error importing industry codes for {exchange_code}: {e}")
-            raise
-
-    def import_all_exchanges(self) -> dict[str, Any]:
-        """Import industry codes for all supported exchanges.
-
-        Returns:
-            Dictionary with aggregated import results
-        """
-        results = {
-            "total_exchanges": len(EXCHANGE_CODE_MAP),
-            "exchanges": {},
-            "total_codes": 0,
-        }
-
-        for api_code in EXCHANGE_CODE_MAP.keys():
-            try:
-                result = self.import_industry_codes(api_code)
-                results["exchanges"][result["exchange_code"]] = result["total"]
-                results["total_codes"] += result["total"]
-            except Exception as e:
-                logger.error(f"Failed to import codes for {api_code}: {e}")
-                results["exchanges"][api_code] = {"error": str(e)}
-
-        return results

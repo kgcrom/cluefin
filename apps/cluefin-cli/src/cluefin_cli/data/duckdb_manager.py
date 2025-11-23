@@ -40,9 +40,9 @@ class DuckDBManager:
 
     def _create_tables(self):
         """Create tables if they don't exist."""
-        # Domestic industry daily charts table (KIS API)
+        # Industry daily charts table (KIS API)
         self.connection.execute("""
-            CREATE TABLE IF NOT EXISTS domestic_industry_daily_charts (
+            CREATE TABLE IF NOT EXISTS industry_daily_charts (
                 industry_code VARCHAR NOT NULL,
                 date DATE NOT NULL,
 
@@ -104,9 +104,9 @@ class DuckDBManager:
             )
         """)
 
-        # Domestic industry codes table
+        # Industry codes table
         self.connection.execute("""
-            CREATE TABLE IF NOT EXISTS domestic_industry_codes (
+            CREATE TABLE IF NOT EXISTS industry_codes (
                 code VARCHAR PRIMARY KEY,
                 name VARCHAR NOT NULL,
                 created_at TIMESTAMP DEFAULT NOW(),
@@ -213,26 +213,15 @@ class DuckDBManager:
             )
         """)
 
-        # Overseas industry codes table
-        self.connection.execute("""
-            CREATE TABLE IF NOT EXISTS overseas_industry_codes (
-                exchange_code VARCHAR NOT NULL,
-                code VARCHAR NOT NULL,
-                name VARCHAR NOT NULL,
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW(),
-                PRIMARY KEY (exchange_code, code)
-            )
-        """)
 
         logger.debug("DuckDB tables created/verified")
 
-    def insert_domestic_industry_daily_chart(self, industry_code: str, df: pd.DataFrame) -> int:
-        """Insert domestic industry daily chart data.
+    def insert_industry_daily_chart(self, industry_code: str, df: pd.DataFrame) -> int:
+        """Insert industry daily chart data.
 
         Args:
             industry_code: Industry code
-            df: DataFrame with columns matching domestic_industry_daily_charts schema
+            df: DataFrame with columns matching industry_daily_charts schema
 
         Returns:
             Number of records inserted
@@ -247,7 +236,7 @@ class DuckDBManager:
         try:
             self.connection.register("insert_df", insert_df)
             self.connection.execute(
-                """INSERT INTO domestic_industry_daily_charts
+                """INSERT INTO industry_daily_charts
                 (industry_code, date, open, high, low, close, volume, trading_amount,
                  mod_yn, prdy_vrss_sign, bstp_nmix_prdy_ctrt, prdy_nmix, hts_kor_isnm, bstp_cls_code, prdy_vol)
                 SELECT industry_code, date, open, high, low, close, volume, trading_amount,
@@ -542,8 +531,8 @@ class DuckDBManager:
             logger.error(f"Error upserting overseas stock metadata: {e}")
             raise
 
-    def insert_domestic_industry_codes(self, df: pd.DataFrame) -> int:
-        """Insert domestic industry codes.
+    def insert_industry_codes(self, df: pd.DataFrame) -> int:
+        """Insert industry codes.
 
         Args:
             df: DataFrame with columns: code, name
@@ -552,13 +541,13 @@ class DuckDBManager:
             Number of records inserted/updated
         """
         if df.empty:
-            logger.warning("Empty DataFrame for domestic industry codes")
+            logger.warning("Empty DataFrame for industry codes")
             return 0
 
         try:
             self.connection.register("insert_df", df)
             self.connection.execute(
-                """INSERT INTO domestic_industry_codes
+                """INSERT INTO industry_codes
                 (code, name)
                 SELECT code, name
                 FROM insert_df
@@ -568,51 +557,19 @@ class DuckDBManager:
             )
             self.connection.unregister("insert_df")
             count = len(df)
-            logger.info(f"Inserted/updated {count} domestic industry code records")
+            logger.info(f"Inserted/updated {count} industry code records")
             return count
         except Exception as e:
-            logger.error(f"Error inserting domestic industry codes: {e}")
+            logger.error(f"Error inserting industry codes: {e}")
             raise
 
-    def insert_overseas_industry_codes(self, df: pd.DataFrame) -> int:
-        """Insert overseas industry codes.
-
-        Args:
-            df: DataFrame with columns: exchange_code, code, name
+    def get_industry_codes(self) -> pd.DataFrame:
+        """Get industry codes from database.
 
         Returns:
-            Number of records inserted/updated
+            DataFrame with industry code data
         """
-        if df.empty:
-            logger.warning("Empty DataFrame for overseas industry codes")
-            return 0
-
-        try:
-            self.connection.register("insert_df", df)
-            self.connection.execute(
-                """INSERT INTO overseas_industry_codes
-                (exchange_code, code, name)
-                SELECT exchange_code, code, name
-                FROM insert_df
-                ON CONFLICT (exchange_code, code) DO UPDATE SET
-                    name = EXCLUDED.name,
-                    updated_at = NOW()"""
-            )
-            self.connection.unregister("insert_df")
-            count = len(df)
-            logger.info(f"Inserted/updated {count} overseas industry code records")
-            return count
-        except Exception as e:
-            logger.error(f"Error inserting overseas industry codes: {e}")
-            raise
-
-    def get_domestic_industry_codes(self) -> pd.DataFrame:
-        """Get domestic industry codes from database.
-
-        Returns:
-            DataFrame with domestic industry code data
-        """
-        result = self.connection.execute("SELECT * FROM domestic_industry_codes ORDER BY code").df()
+        result = self.connection.execute("SELECT * FROM industry_codes ORDER BY code").df()
         return result
 
     def get_overseas_stock_codes(self, exchange_code: str) -> list[str]:
@@ -647,22 +604,22 @@ class DuckDBManager:
         ).fetchall()
         stats["domestic_stock_daily_charts_stocks"] = result[0][0] if result else 0
 
-        # Count domestic industry daily chart records
-        result = self.connection.execute("SELECT COUNT(*) as count FROM domestic_industry_daily_charts").fetchall()
-        stats["domestic_industry_daily_charts_count"] = result[0][0] if result else 0
+        # Count industry daily chart records
+        result = self.connection.execute("SELECT COUNT(*) as count FROM industry_daily_charts").fetchall()
+        stats["industry_daily_charts_count"] = result[0][0] if result else 0
 
         result = self.connection.execute(
-            "SELECT COUNT(DISTINCT industry_code) as count FROM domestic_industry_daily_charts"
+            "SELECT COUNT(DISTINCT industry_code) as count FROM industry_daily_charts"
         ).fetchall()
-        stats["domestic_industry_daily_charts_industries"] = result[0][0] if result else 0
+        stats["industry_daily_charts_industries"] = result[0][0] if result else 0
 
         # Count metadata
         result = self.connection.execute("SELECT COUNT(*) as count FROM domestic_stock_metadata").fetchall()
         stats["domestic_tracked_stocks"] = result[0][0] if result else 0
 
-        # Count domestic industry codes
-        result = self.connection.execute("SELECT COUNT(*) as count FROM domestic_industry_codes").fetchall()
-        stats["domestic_industry_codes_count"] = result[0][0] if result else 0
+        # Count industry codes
+        result = self.connection.execute("SELECT COUNT(*) as count FROM industry_codes").fetchall()
+        stats["industry_codes_count"] = result[0][0] if result else 0
 
         # Count overseas stock daily chart records
         result = self.connection.execute("SELECT COUNT(*) as count FROM overseas_stock_daily_charts").fetchall()
@@ -676,15 +633,6 @@ class DuckDBManager:
         # Count overseas stock metadata
         result = self.connection.execute("SELECT COUNT(*) as count FROM overseas_stock_metadata").fetchall()
         stats["overseas_stock_metadata_count"] = result[0][0] if result else 0
-
-        # Count overseas industry codes
-        result = self.connection.execute("SELECT COUNT(*) as count FROM overseas_industry_codes").fetchall()
-        stats["overseas_industry_codes_count"] = result[0][0] if result else 0
-
-        result = self.connection.execute(
-            "SELECT COUNT(DISTINCT exchange_code) as count FROM overseas_industry_codes"
-        ).fetchall()
-        stats["overseas_industry_codes_exchanges"] = result[0][0] if result else 0
 
         # Database size
         db_size = os.path.getsize(self.db_path)
@@ -840,8 +788,8 @@ class DuckDBManager:
 
         return exists_map
 
-    def check_domestic_industry_data_exists(self, industry_code: str, start_date: str, end_date: str) -> bool:
-        """Check if daily data already exists for a domestic industry/date range.
+    def check_industry_data_exists(self, industry_code: str, start_date: str, end_date: str) -> bool:
+        """Check if daily data already exists for an industry/date range.
 
         Args:
             industry_code: Industry code
@@ -856,7 +804,7 @@ class DuckDBManager:
 
         result = self.connection.execute(
             """
-            SELECT COUNT(*) as count FROM domestic_industry_daily_charts
+            SELECT COUNT(*) as count FROM industry_daily_charts
             WHERE industry_code = ? AND date BETWEEN ? AND ?
             """,
             [industry_code, start, end],
@@ -882,12 +830,11 @@ class DuckDBManager:
                 logger.info("Clear operation cancelled")
                 return
 
-        self.connection.execute("DELETE FROM domestic_industry_daily_charts")
+        self.connection.execute("DELETE FROM industry_daily_charts")
         self.connection.execute("DELETE FROM domestic_stock_metadata")
-        self.connection.execute("DELETE FROM domestic_industry_codes")
+        self.connection.execute("DELETE FROM industry_codes")
         self.connection.execute("DELETE FROM overseas_stock_daily_charts")
         self.connection.execute("DELETE FROM overseas_stock_metadata")
-        self.connection.execute("DELETE FROM overseas_industry_codes")
         logger.info("All tables cleared")
 
     def close(self):

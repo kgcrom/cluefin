@@ -103,7 +103,7 @@ class DomesticIndustryChartImporter:
 
             if all_rows:
                 df = pd.DataFrame(all_rows)
-                count = self.db_manager.insert_domestic_industry_daily_chart(industry_code, df)
+                count = self.db_manager.insert_industry_daily_chart(industry_code, df)
                 logger.info(f"Imported {count} records for industry {industry_code}")
                 return count
             else:
@@ -138,10 +138,12 @@ class DomesticIndustryChartImporter:
                 )
 
                 # Extract output1 and output2
-                output1 = response.output1 if hasattr(response, "output1") else None
-                output2 = response.output2 if hasattr(response, "output2") else []
+                if not hasattr(response, "output1"):
+                    raise ValueError("Response missing required 'output1' attribute")
+                if not hasattr(response, "output2"):
+                    raise ValueError("Response missing required 'output2' attribute")
 
-                return SectorPeriodData(output1=output1, output2=output2)
+                return SectorPeriodData(output1=response.output1, output2=response.output2)
 
             except (
                 requests.exceptions.ConnectionError,
@@ -360,3 +362,4 @@ class DomesticIndustryChartImporter:
         start_date = end_date - timedelta(days=days_back)
 
         return (start_date.strftime("%Y%m%d"), end_date.strftime("%Y%m%d"))
+
