@@ -497,7 +497,9 @@ class OverseasStockChartImporter:
 
         return {"output1": output1, "output2": all_output2}
 
-    def _prepare_stock_chart_data(self, exchange_code: str, stock_code: str, data: dict, start_date: str = None) -> pd.DataFrame:
+    def _prepare_stock_chart_data(
+        self, exchange_code: str, stock_code: str, data: dict, start_date: str = None
+    ) -> pd.DataFrame:
         """Prepare overseas stock chart data for insertion.
 
         Args:

@@ -9,7 +9,6 @@ import duckdb
 import pandas as pd
 from loguru import logger
 
-
 # Exchange code mapping: Full name (NYSE, NASDAQ) → API code (NYS, NAS)
 EXCHANGE_CODE_TO_API = {
     "NYSE": "NYS",
@@ -211,6 +210,18 @@ class DuckDBManager:
                 -- Metadata
                 created_at TIMESTAMP DEFAULT NOW(),
                 PRIMARY KEY (exchange_code, stock_code, date)
+            )
+        """)
+
+        # Overseas industry codes table
+        self.connection.execute("""
+            CREATE TABLE IF NOT EXISTS overseas_industry_codes (
+                exchange_code VARCHAR NOT NULL,
+                code VARCHAR NOT NULL,
+                name VARCHAR NOT NULL,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW(),
+                PRIMARY KEY (exchange_code, code)
             )
         """)
 
@@ -563,6 +574,38 @@ class DuckDBManager:
             logger.error(f"Error inserting domestic industry codes: {e}")
             raise
 
+    def insert_overseas_industry_codes(self, df: pd.DataFrame) -> int:
+        """Insert overseas industry codes.
+
+        Args:
+            df: DataFrame with columns: exchange_code, code, name
+
+        Returns:
+            Number of records inserted/updated
+        """
+        if df.empty:
+            logger.warning("Empty DataFrame for overseas industry codes")
+            return 0
+
+        try:
+            self.connection.register("insert_df", df)
+            self.connection.execute(
+                """INSERT INTO overseas_industry_codes
+                (exchange_code, code, name)
+                SELECT exchange_code, code, name
+                FROM insert_df
+                ON CONFLICT (exchange_code, code) DO UPDATE SET
+                    name = EXCLUDED.name,
+                    updated_at = NOW()"""
+            )
+            self.connection.unregister("insert_df")
+            count = len(df)
+            logger.info(f"Inserted/updated {count} overseas industry code records")
+            return count
+        except Exception as e:
+            logger.error(f"Error inserting overseas industry codes: {e}")
+            raise
+
     def get_domestic_industry_codes(self) -> pd.DataFrame:
         """Get domestic industry codes from database.
 
@@ -633,6 +676,15 @@ class DuckDBManager:
         # Count overseas stock metadata
         result = self.connection.execute("SELECT COUNT(*) as count FROM overseas_stock_metadata").fetchall()
         stats["overseas_stock_metadata_count"] = result[0][0] if result else 0
+
+        # Count overseas industry codes
+        result = self.connection.execute("SELECT COUNT(*) as count FROM overseas_industry_codes").fetchall()
+        stats["overseas_industry_codes_count"] = result[0][0] if result else 0
+
+        result = self.connection.execute(
+            "SELECT COUNT(DISTINCT exchange_code) as count FROM overseas_industry_codes"
+        ).fetchall()
+        stats["overseas_industry_codes_exchanges"] = result[0][0] if result else 0
 
         # Database size
         db_size = os.path.getsize(self.db_path)
@@ -835,6 +887,7 @@ class DuckDBManager:
         self.connection.execute("DELETE FROM domestic_industry_codes")
         self.connection.execute("DELETE FROM overseas_stock_daily_charts")
         self.connection.execute("DELETE FROM overseas_stock_metadata")
+        self.connection.execute("DELETE FROM overseas_industry_codes")
         logger.info("All tables cleared")
 
     def close(self):

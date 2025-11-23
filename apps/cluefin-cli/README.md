@@ -55,7 +55,6 @@
 git clone https://github.com/kgcrom/cluefin
 cd cluefin
 uv venv --python 3.10
-source .venv/bin/activate
 ```
 
 2. **Install system dependencies:**

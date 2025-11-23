@@ -34,7 +34,6 @@ brew install ta-lib lightgbm
 git clone https://github.com/kgcrom/cluefin.git
 cd cluefin
 uv venv --python 3.10
-source .venv/bin/activate
 
 # Install all workspace dependencies
 uv sync --all-packages

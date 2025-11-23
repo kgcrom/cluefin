@@ -2,7 +2,7 @@
 
 import sys
 from datetime import datetime
-from typing import Optional, Literal
+from typing import Literal, Optional
 
 import click
 from cluefin_openapi.kis._auth import Auth as KisAuth
@@ -17,10 +17,10 @@ from rich.table import Table
 
 from cluefin_cli.config.settings import settings
 from cluefin_cli.data.duckdb_manager import DuckDBManager
-from cluefin_cli.data.stock_importer import DomesticStockChartImporter, OverseasStockChartImporter
 from cluefin_cli.data.industry_chart_importer import DomesticIndustryChartImporter
-from cluefin_cli.data.industry_importer import DomesticIndustryCodeImporter
+from cluefin_cli.data.industry_importer import DomesticIndustryCodeImporter, OverseasIndustryCodeImporter
 from cluefin_cli.data.stock_fetcher import StockListFetcher
+from cluefin_cli.data.stock_importer import DomesticStockChartImporter, OverseasStockChartImporter
 
 console = Console()
 stderr_console = Console(stderr=True)
@@ -87,6 +87,11 @@ stderr_console = Console(stderr=True)
     is_flag=True,
     help="Import industry chart data (positional args are industry codes)",
 )
+@click.option(
+    "--overseas-industry-codes",
+    is_flag=True,
+    help="Import overseas industry codes for all exchanges",
+)
 def import_command(
     stock_codes: tuple,
     from_stdin: bool,
@@ -100,6 +105,7 @@ def import_command(
     clear_db: bool,
     industry_codes: bool,
     industry_charts: bool,
+    overseas_industry_codes: bool,
 ):
     """Import stock chart data from KIS API to DuckDB.
 
@@ -169,6 +175,9 @@ def import_command(
         # Initialize industry chart importer (uses KIS API)
         industry_chart_importer = DomesticIndustryChartImporter(kis_client, db_manager)
 
+        # Initialize overseas industry code importer (uses KIS API)
+        overseas_industry_code_importer = OverseasIndustryCodeImporter(kis_client, db_manager)
+
         # Handle database operations
         if check_db:
             _show_database_stats(db_manager)
@@ -181,6 +190,12 @@ def import_command(
         # Handle industry codes import
         if industry_codes:
             _import_industry_codes(industry_importer, market)
+            _show_database_stats(db_manager)
+            return
+
+        # Handle overseas industry codes import
+        if overseas_industry_codes:
+            _import_overseas_industry_codes(overseas_industry_code_importer)
             _show_database_stats(db_manager)
             return
 
@@ -334,9 +349,7 @@ def _collect_stock_codes(
         # For overseas stocks, fetch from DuckDB
         if market in ("nyse", "nasdaq"):
             exchange_code = "NYSE" if market == "nyse" else "NASD"
-            console.print(
-                f"[yellow]Fetching available {market.upper()} stocks from database...[/yellow]"
-            )
+            console.print(f"[yellow]Fetching available {market.upper()} stocks from database...[/yellow]")
             codes = db_manager.get_overseas_stock_codes(exchange_code)
             if not codes:
                 raise ValueError(
@@ -462,10 +475,9 @@ def _run_import(
 
 
 def _import_industry_codes(industry_importer: Optional[DomesticIndustryCodeImporter], market: Optional[str]) -> None:
-    """Import industry codes from idxcode.mst file.
+    """Import domestic industry codes.
 
-    업종코드 파일 다운로드:
-    https://apiportal.koreainvestment.com/apiservice-category
+    Automatically downloads idxcode.mst.zip from DWS server.
 
     Args:
         industry_importer: Industry code importer instance
@@ -474,23 +486,10 @@ def _import_industry_codes(industry_importer: Optional[DomesticIndustryCodeImpor
     if industry_importer is None:
         raise ValueError("Industry code importer not initialized")
 
-    console.print("[yellow]Importing industry codes from idxcode.mst file...[/yellow]")
+    console.print("[yellow]Importing industry codes from DWS server...[/yellow]")
 
-    # Locate MST file in project root
-    from pathlib import Path
-
-    project_root = Path(__file__).parent.parent.parent.parent.parent
-    mst_file_path = project_root / "idxcode.mst"
-
-    if not mst_file_path.exists():
-        raise FileNotFoundError(
-            f"MST file not found at {mst_file_path}\n"
-            "Please ensure idxcode.mst is located in the project root directory\n"
-            "Download from: https://apiportal.koreainvestment.com/apiservice-category"
-        )
-
-    # Import industry codes from file
-    results = industry_importer.import_industry_codes(str(mst_file_path))
+    # Import industry codes (downloads and processes from DWS)
+    results = industry_importer.import_industry_codes()
 
     # Display results
     results_table = Table(title="Industry Code Import Results")
@@ -500,7 +499,7 @@ def _import_industry_codes(industry_importer: Optional[DomesticIndustryCodeImpor
     results_table.add_row("Total imported", str(results.get("total", 0)))
 
     console.print(results_table)
-    console.print(f"[green]✓[/green] Imported {results.get('total', 0)} industry codes from {mst_file_path}")
+    console.print(f"[green]✓[/green] Imported {results.get('total', 0)} industry codes")
 
 
 def _list_domestic_stocks(stock_fetcher: Optional[StockListFetcher], market: str) -> None:
@@ -694,6 +693,8 @@ def _show_database_stats(db_manager: DuckDBManager) -> None:
     stats_table.add_row("Overseas Stock Daily Charts", f"{stats.get('overseas_stock_daily_charts_count', 0):,}")
     stats_table.add_row("└─ Unique Stocks", f"{stats.get('overseas_stock_daily_charts_stocks', 0):,}")
     stats_table.add_row("Overseas Stock Metadata Records", f"{stats.get('overseas_stock_metadata_count', 0):,}")
+    stats_table.add_row("Overseas Industry Codes", f"{stats.get('overseas_industry_codes_count', 0):,}")
+    stats_table.add_row("└─ Unique Exchanges", str(stats.get("overseas_industry_codes_exchanges", 0)))
     stats_table.add_row("", "")
 
     # Database info
@@ -775,3 +776,37 @@ def _run_overseas_import(
         )
 
     console.print("[green]✓[/green] Overseas stock import completed successfully")
+
+
+def _import_overseas_industry_codes(importer: OverseasIndustryCodeImporter) -> None:
+    """Import overseas industry codes for all supported exchanges.
+
+    지원 거래소: NYSE, NASDAQ, AMEX, HKEX, SSE, SZSE, HOSE, HNX, TSE
+
+    Args:
+        importer: Overseas industry code importer instance
+    """
+    console.print("[yellow]Importing overseas industry codes for all exchanges...[/yellow]")
+
+    results = importer.import_all_exchanges()
+
+    # Display results
+    results_table = Table(title="Overseas Industry Code Import Results")
+    results_table.add_column("Exchange", style="cyan")
+    results_table.add_column("Count", style="magenta", justify="right")
+
+    for exchange_code, count in results["exchanges"].items():
+        if isinstance(count, dict) and "error" in count:
+            results_table.add_row(exchange_code, f"Error: {count['error']}")
+        else:
+            results_table.add_row(exchange_code, str(count))
+
+    results_table.add_row("", "")
+    results_table.add_row("Total Exchanges", str(results.get("total_exchanges", 0)))
+    results_table.add_row("Total Codes", str(results.get("total_codes", 0)))
+
+    console.print(results_table)
+    console.print(
+        f"[green]✓[/green] Imported {results.get('total_codes', 0)} overseas industry codes "
+        f"from {results.get('total_exchanges', 0)} exchanges"
+    )

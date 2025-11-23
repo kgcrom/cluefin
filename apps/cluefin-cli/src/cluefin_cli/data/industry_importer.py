@@ -4,13 +4,22 @@
 https://apiportal.koreainvestment.com/apiservice-category
 """
 
+import logging
+import os
+import shutil
+import ssl
+import tempfile
+import urllib.request
+import zipfile
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict
 
 import pandas as pd
-from loguru import logger
+from cluefin_openapi.kis._client import Client
 
 from .duckdb_manager import DuckDBManager
+
+logger = logging.getLogger(__name__)
 
 
 class DomesticIndustryCodeImporter:
@@ -35,24 +44,39 @@ class DomesticIndustryCodeImporter:
         """
         self.db_manager = db_manager
 
-    def import_industry_codes(self, mst_file_path: str) -> Dict[str, int]:
+    def import_industry_codes(self) -> Dict[str, int]:
         """Import industry codes from idxcode.mst file.
 
-        Args:
-            mst_file_path: Path to idxcode.mst file
+        Downloads idxcode.mst.zip from DWS, extracts it, and imports industry codes.
 
         Returns:
             Dictionary with import statistics
         """
-        mst_path = Path(mst_file_path)
-
-        if not mst_path.exists():
-            logger.error(f"MST file not found: {mst_path}")
-            raise FileNotFoundError(f"MST file not found: {mst_path}")
-
-        logger.info(f"Importing industry codes from {mst_path}")
-
+        temp_dir = None
         try:
+            # Disable SSL verification for master file download
+            ssl._create_default_https_context = ssl._create_unverified_context
+
+            # Download master file zip
+            url = "https://new.real.download.dws.co.kr/common/master/idxcode.mst.zip"
+            temp_dir = tempfile.mkdtemp()
+
+            zip_path = os.path.join(temp_dir, "idxcode.mst.zip")
+            logger.debug(f"Downloading industry code file from {url}...")
+            urllib.request.urlretrieve(url, zip_path)
+
+            # Extract zip file
+            logger.debug(f"Extracting zip file from {zip_path}...")
+            with zipfile.ZipFile(zip_path) as zip_ref:
+                zip_ref.extractall(temp_dir)
+
+            # Read the master file
+            mst_path = Path(os.path.join(temp_dir, "idxcode.mst"))
+            if not mst_path.exists():
+                logger.error(f"MST file not found after extraction: {mst_path}")
+                raise FileNotFoundError("idxcode.mst not found in zip file")
+
+            logger.info(f"Importing industry codes from {mst_path}")
             df = self._parse_mst_file(mst_path)
 
             if df.empty:
@@ -67,6 +91,11 @@ class DomesticIndustryCodeImporter:
         except Exception as e:
             logger.error(f"Error importing industry codes: {e}")
             raise
+        finally:
+            # Clean up temp directory
+            if temp_dir and os.path.exists(temp_dir):
+                shutil.rmtree(temp_dir)
+                logger.debug(f"Cleaned up temp directory: {temp_dir}")
 
     def _parse_mst_file(self, file_path: Path) -> pd.DataFrame:
         """Parse idxcode.mst file.
@@ -120,3 +149,99 @@ class DomesticIndustryCodeImporter:
         summary = summary.rename(columns={"market": "market_code"})
 
         return summary[["market_code", "count"]]
+
+
+# 거래소 코드 매핑 (API 코드 → DB 저장용 풀네임)
+EXCHANGE_CODE_MAP = {
+    "NYS": "NYSE",  # 뉴욕
+    "NAS": "NASDAQ",  # 나스닥
+    "AMS": "AMEX",  # 아멕스
+    "HKS": "HKEX",  # 홍콩
+    "SHS": "SSE",  # 상해
+    "SZS": "SZSE",  # 심천
+    "HSX": "HOSE",  # 호치민
+    "HNX": "HNX",  # 하노이
+    "TSE": "TSE",  # 도쿄
+}
+
+
+class OverseasIndustryCodeImporter:
+    """Import overseas industry codes from KIS API to DuckDB."""
+
+    def __init__(self, client: Client, db_manager: DuckDBManager):
+        """Initialize overseas industry code importer.
+
+        Args:
+            client: KIS API client
+            db_manager: DuckDB manager instance
+        """
+        self.client = client
+        self.db_manager = db_manager
+
+    def import_industry_codes(self, exchange_code: str) -> dict[str, Any]:
+        """Import industry codes for a specific exchange.
+
+        Args:
+            exchange_code: API 거래소 코드 (NYS, NAS, AMS, HKS, SHS, SZS, HSX, HNX, TSE)
+
+        Returns:
+            Dictionary with import results
+        """
+        if exchange_code not in EXCHANGE_CODE_MAP:
+            raise ValueError(f"Unsupported exchange code: {exchange_code}")
+
+        try:
+            logger.info(f"Fetching industry codes for exchange {exchange_code}...")
+            response = self.client.overseas_basic_quote.get_sector_codes(auth="", excd=exchange_code)
+
+            if not response.output2:
+                logger.warning(f"No industry codes returned for exchange {exchange_code}")
+                return {"exchange_code": exchange_code, "total": 0}
+
+            # Convert API response to DataFrame
+            db_exchange_code = EXCHANGE_CODE_MAP[exchange_code]
+            data = [
+                {
+                    "exchange_code": db_exchange_code,
+                    "code": item.icod,
+                    "name": item.name,
+                }
+                for item in response.output2
+            ]
+            df = pd.DataFrame(data)
+
+            # Insert into database
+            count = self.db_manager.insert_overseas_industry_codes(df)
+
+            logger.info(f"Successfully imported {count} industry codes for {db_exchange_code} ({exchange_code})")
+            return {
+                "exchange_code": db_exchange_code,
+                "api_code": exchange_code,
+                "total": count,
+            }
+        except Exception as e:
+            logger.error(f"Error importing industry codes for {exchange_code}: {e}")
+            raise
+
+    def import_all_exchanges(self) -> dict[str, Any]:
+        """Import industry codes for all supported exchanges.
+
+        Returns:
+            Dictionary with aggregated import results
+        """
+        results = {
+            "total_exchanges": len(EXCHANGE_CODE_MAP),
+            "exchanges": {},
+            "total_codes": 0,
+        }
+
+        for api_code in EXCHANGE_CODE_MAP.keys():
+            try:
+                result = self.import_industry_codes(api_code)
+                results["exchanges"][result["exchange_code"]] = result["total"]
+                results["total_codes"] += result["total"]
+            except Exception as e:
+                logger.error(f"Failed to import codes for {api_code}: {e}")
+                results["exchanges"][api_code] = {"error": str(e)}
+
+        return results

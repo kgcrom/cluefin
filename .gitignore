@@ -84,7 +84,6 @@ packages/*/src/*/*.py[cod]
 
 # Claude Code AI assistant configuration and memory
 .claude/
-.specify/
 
 data/data.duckdb
 data/data.duckdb.wal

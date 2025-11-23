@@ -25,7 +25,6 @@
 git clone https://github.com/kgcrom/cluefin
 cd cluefin
 uv venv --python 3.10
-source .venv/bin/activate
 uv sync --all-packages
 
 # 패키지만 단독 설치
