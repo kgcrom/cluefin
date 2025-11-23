@@ -213,7 +213,6 @@ class DuckDBManager:
             )
         """)
 
-
         logger.debug("DuckDB tables created/verified")
 
     def insert_industry_daily_chart(self, industry_code: str, df: pd.DataFrame) -> int:

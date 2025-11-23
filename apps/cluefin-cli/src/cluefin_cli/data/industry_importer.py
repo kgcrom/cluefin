@@ -148,5 +148,3 @@ class DomesticIndustryCodeImporter:
         summary = summary.rename(columns={"market": "market_code"})
 
         return summary[["market_code", "count"]]
-
-

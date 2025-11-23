@@ -362,4 +362,3 @@ class DomesticIndustryChartImporter:
         start_date = end_date - timedelta(days=days_back)
 
         return (start_date.strftime("%Y%m%d"), end_date.strftime("%Y%m%d"))
-
