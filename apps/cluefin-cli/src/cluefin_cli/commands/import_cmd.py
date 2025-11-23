@@ -29,11 +29,6 @@ stderr_console = Console(stderr=True)
 @click.command(name="import")
 @click.argument("stock_codes", nargs=-1, default=None)
 @click.option(
-    "--from-stdin",
-    is_flag=True,
-    help="Read stock codes from stdin (for pipeline integration)",
-)
-@click.option(
     "--list-stocks",
     is_flag=True,
     help="List all available stock codes to stdout (for piping)",
@@ -89,7 +84,6 @@ stderr_console = Console(stderr=True)
 )
 def import_command(
     stock_codes: tuple,
-    from_stdin: bool,
     list_stocks: bool,
     market: Optional[Literal["kospi", "kosdaq", "nyse", "nasdaq"]],
     start: Optional[str],
@@ -106,9 +100,6 @@ def import_command(
     Examples:
         # Import 3 years of data for specific stocks
         cluefin-cli import 005930 035720
-
-        # Import from stdin (pipeline)
-        echo "005930\\n035720" | cluefin-cli import --from-stdin
 
         # Custom date range
         cluefin-cli import 005930 --start 20220101 --end 20251023
@@ -233,7 +224,6 @@ def import_command(
             # Domestic stocks (KOSPI/KOSDAQ)
             codes_to_import = _collect_stock_codes(
                 stock_codes=stock_codes,
-                from_stdin=from_stdin,
                 market=market,
                 stock_fetcher=stock_fetcher,
                 db_manager=db_manager,
@@ -263,7 +253,6 @@ def import_command(
             exchange_code = "NYSE" if market == "nyse" else "NASD"
             codes_to_import = _collect_stock_codes(
                 stock_codes=stock_codes,
-                from_stdin=from_stdin,
                 market=market,
                 stock_fetcher=stock_fetcher,
                 db_manager=db_manager,
@@ -301,7 +290,6 @@ def import_command(
 
 def _collect_stock_codes(
     stock_codes: tuple,
-    from_stdin: bool,
     market: Optional[str],
     stock_fetcher: Optional[StockListFetcher],
     db_manager: DuckDBManager,
@@ -310,7 +298,6 @@ def _collect_stock_codes(
 
     Args:
         stock_codes: Stock codes from CLI arguments
-        from_stdin: Whether to read from stdin
         market: Market filter
         stock_fetcher: Stock fetcher instance
         db_manager: DuckDB manager instance
@@ -320,17 +307,8 @@ def _collect_stock_codes(
     """
     codes = []
 
-    # From stdin
-    if from_stdin:
-        console.print("[yellow]Reading stock codes from stdin...[/yellow]")
-        for line in sys.stdin:
-            code = line.strip()
-            if code and len(code) == 6 and code.isdigit():
-                codes.append(code)
-        logger.info(f"Read {len(codes)} stock codes from stdin")
-
     # From API if no codes specified
-    elif not stock_codes:
+    if not stock_codes:
         # For overseas stocks, fetch from DuckDB
         if market in ("nyse", "nasdaq"):
             exchange_code = "NYSE" if market == "nyse" else "NASD"
@@ -346,7 +324,7 @@ def _collect_stock_codes(
             if stock_fetcher is None:
                 raise ValueError(
                     "Cannot fetch stocks from API: Kiwoom credentials not configured. "
-                    "Please provide stock codes via arguments or --from-stdin"
+                    "Please provide stock codes via arguments"
                 )
             console.print("[yellow]Fetching available stocks from Kiwoom API...[/yellow]")
             codes = [item.code for item in stock_fetcher.get_all_stocks(market=market)]
