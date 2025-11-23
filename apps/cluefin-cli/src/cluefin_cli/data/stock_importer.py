@@ -357,6 +357,7 @@ class OverseasStockChartImporter:
         self,
         exchange_code: str,
         stock_code: str,
+        start_date: str,
         end_date: str,
         skip_existing: bool = True,
     ) -> int:
@@ -365,6 +366,7 @@ class OverseasStockChartImporter:
         Args:
             exchange_code: Exchange code (NYS, NAS, AMS, HKS, TSE, etc.)
             stock_code: Stock code/symbol (e.g., TSLA)
+            start_date: Start date in YYYYMMDD format
             end_date: End date in YYYYMMDD format
             skip_existing: Skip import if data already exists
 
@@ -374,41 +376,46 @@ class OverseasStockChartImporter:
         exchange_code = exchange_code.strip().upper()
         stock_code = stock_code.strip().upper()
 
+        if not self._validate_date_format(start_date):
+            raise ValueError(f"Invalid start date format: {start_date}")
         if not self._validate_date_format(end_date):
             raise ValueError(f"Invalid end date format: {end_date}")
 
         try:
             # Check if data already exists
             if skip_existing and self.db_manager.check_overseas_stock_data_exists(
-                exchange_code, stock_code, end_date, end_date
+                exchange_code, stock_code, start_date, end_date
             ):
                 logger.info(f"Data already exists for {exchange_code}:{stock_code}, skipping...")
                 return 0
 
             # Fetch and store data
-            count = self._fetch_and_store_data(exchange_code, stock_code, end_date)
+            count = self._fetch_and_store_data(exchange_code, stock_code, start_date, end_date)
             return count
 
         except Exception as e:
             logger.error(f"Error importing data for {exchange_code}:{stock_code}: {e}")
             return -1
 
-    def _fetch_and_store_data(self, exchange_code: str, stock_code: str, end_date: str) -> int:
+    def _fetch_and_store_data(self, exchange_code: str, stock_code: str, start_date: str, end_date: str) -> int:
         """Fetch overseas stock data and store in database.
 
         Args:
             exchange_code: Exchange code
             stock_code: Stock code
+            start_date: Start date (YYYYMMDD)
             end_date: End date (YYYYMMDD)
 
         Returns:
             Number of records imported
         """
         try:
-            all_data = self._fetch_period_data(exchange_code, stock_code, end_date)
+            # Convert exchange code to API format (NYSE -> NYS, NASDAQ -> NAS)
+            api_exchange_code = "NYS" if exchange_code == "NYSE" else "NAS"
+            all_data = self._fetch_period_data(api_exchange_code, stock_code, end_date)
 
             if all_data:
-                df = self._prepare_stock_chart_data(exchange_code, stock_code, all_data)
+                df = self._prepare_stock_chart_data(exchange_code, stock_code, all_data, start_date)
                 count = self.db_manager.insert_overseas_stock_daily_chart(exchange_code, stock_code, df)
                 return count
             else:
@@ -419,13 +426,13 @@ class OverseasStockChartImporter:
             logger.error(f"Error fetching data for {exchange_code}:{stock_code}: {e}")
             raise
 
-    def _fetch_period_data(self, exchange_code: str, stock_code: str, end_date: str) -> dict:
+    def _fetch_period_data(self, exchange_code: str, stock_code: str, base_date: str) -> dict:
         """Fetch period chart data from overseas KIS API with retry logic and pagination.
 
         Args:
             exchange_code: Exchange code
             stock_code: Stock code
-            end_date: End date (YYYYMMDD)
+            base_date: Based date (YYYYMMDD)
 
         Returns:
             Dictionary with output1 and output2 data
@@ -443,7 +450,7 @@ class OverseasStockChartImporter:
                         excd=exchange_code,
                         symb=stock_code,
                         gubn="0",  # Daily
-                        bymd=end_date,  # Base date
+                        bymd=base_date,  # Base date
                         modp="1",  # Adjusted price
                         keyb=keyb,
                     )
@@ -490,13 +497,14 @@ class OverseasStockChartImporter:
 
         return {"output1": output1, "output2": all_output2}
 
-    def _prepare_stock_chart_data(self, exchange_code: str, stock_code: str, data: dict) -> pd.DataFrame:
+    def _prepare_stock_chart_data(self, exchange_code: str, stock_code: str, data: dict, start_date: str = None) -> pd.DataFrame:
         """Prepare overseas stock chart data for insertion.
 
         Args:
             exchange_code: Exchange code
             stock_code: Stock code
             data: Dictionary containing output1 and output2
+            start_date: Start date (YYYYMMDD) for filtering data
 
         Returns:
             Prepared DataFrame
@@ -513,10 +521,18 @@ class OverseasStockChartImporter:
         # Convert output2 items to dict
         rows = []
         for item in output2:
+            item_date = pd.to_datetime(item.xymd, format="%Y%m%d")
+
+            # Filter by start_date if provided
+            if start_date:
+                start_datetime = pd.to_datetime(start_date, format="%Y%m%d")
+                if item_date < start_datetime:
+                    continue
+
             row = {
                 "exchange_code": exchange_code,
                 "stock_code": stock_code,
-                "date": pd.to_datetime(item.xymd, format="%Y%m%d"),
+                "date": item_date,
                 "open": pd.to_numeric(item.open, errors="coerce"),
                 "high": pd.to_numeric(item.high, errors="coerce"),
                 "low": pd.to_numeric(item.low, errors="coerce"),
@@ -536,6 +552,7 @@ class OverseasStockChartImporter:
         self,
         exchange_code: str,
         stock_codes: list[str],
+        start_date: str,
         end_date: str,
         progress_callback: Optional[Callable] = None,
         skip_existing: bool = True,
@@ -545,6 +562,7 @@ class OverseasStockChartImporter:
         Args:
             exchange_code: Exchange code (NYS, NAS, AMS, HKS, TSE, etc.)
             stock_codes: List of stock codes/symbols
+            start_date: Start date (YYYYMMDD)
             end_date: End date (YYYYMMDD)
             progress_callback: Optional callback for progress updates
             skip_existing: Skip imports if data exists
@@ -564,7 +582,7 @@ class OverseasStockChartImporter:
             # Batch check existence for this chunk
             if skip_existing:
                 exists_map = self.db_manager.check_overseas_stock_data_exists_batch(
-                    exchange_code, chunk, end_date, end_date
+                    exchange_code, chunk, start_date, end_date
                 )
                 existing_codes = [code for code, exists in exists_map.items() if exists]
                 if existing_codes:
@@ -576,7 +594,7 @@ class OverseasStockChartImporter:
 
             # Process each stock in chunk sequentially
             logger.info(
-                f"Overseas stock charts import for {exchange_code} stocks {chunk_start + 1} to {chunk_end} of {total}, end_date={end_date}"
+                f"Overseas stock charts import for {exchange_code} stocks {chunk_start + 1} to {chunk_end} of {total}, start_date={start_date}, end_date={end_date}"
             )
             for stock_code in chunk:
                 idx = stock_codes.index(stock_code) + 1
@@ -592,6 +610,7 @@ class OverseasStockChartImporter:
                     results[stock_code] = self.import_stock_data(
                         exchange_code,
                         stock_code,
+                        start_date,
                         end_date,
                         skip_existing=False,  # Already checked
                     )

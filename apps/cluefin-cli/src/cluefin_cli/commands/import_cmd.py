@@ -2,7 +2,7 @@
 
 import sys
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Literal
 
 import click
 from cluefin_openapi.kis._auth import Auth as KisAuth
@@ -17,7 +17,7 @@ from rich.table import Table
 
 from cluefin_cli.config.settings import settings
 from cluefin_cli.data.duckdb_manager import DuckDBManager
-from cluefin_cli.data.stock_importer import DomesticStockChartImporter
+from cluefin_cli.data.stock_importer import DomesticStockChartImporter, OverseasStockChartImporter
 from cluefin_cli.data.industry_chart_importer import DomesticIndustryChartImporter
 from cluefin_cli.data.industry_importer import DomesticIndustryCodeImporter
 from cluefin_cli.data.stock_fetcher import StockListFetcher
@@ -91,7 +91,7 @@ def import_command(
     stock_codes: tuple,
     from_stdin: bool,
     list_stocks: bool,
-    market: Optional[str],
+    market: Optional[Literal["kospi", "kosdaq", "nyse", "nasdaq"]],
     start: Optional[str],
     end: Optional[str],
     show_progress: bool,
@@ -143,6 +143,7 @@ def import_command(
             env=settings.kis_env,
         )
         importer = DomesticStockChartImporter(kis_client, db_manager)
+        overseas_importer = OverseasStockChartImporter(kis_client, db_manager)
 
         # Initialize Kiwoom client for list features (if credentials available)
         kiwoom_client = None
@@ -224,36 +225,70 @@ def import_command(
                 console.print("[yellow]Please specify a market with --market (kospi, kosdaq, nyse, or nasdaq)[/yellow]")
             return
 
-        # Collect stock codes
-        codes_to_import = _collect_stock_codes(
-            stock_codes=stock_codes,
-            from_stdin=from_stdin,
-            market=market,
-            stock_fetcher=stock_fetcher,
-        )
-
-        if not codes_to_import:
-            console.print("[yellow]No stock codes specified for import[/yellow]")
-            return
-
         # Get date range
         start_date, end_date = _get_date_range(start, end)
 
-        # Display summary
-        _display_import_summary(codes_to_import, start_date, end_date, skip_existing)
+        # Branch by market type
+        if market in ("kospi", "kosdaq") or market is None:
+            # Domestic stocks (KOSPI/KOSDAQ)
+            codes_to_import = _collect_stock_codes(
+                stock_codes=stock_codes,
+                from_stdin=from_stdin,
+                market=market,
+                stock_fetcher=stock_fetcher,
+                db_manager=db_manager,
+            )
 
-        # Run import
-        _run_import(
-            importer,
-            codes_to_import,
-            start_date,
-            end_date,
-            skip_existing,
-            show_progress,
-        )
+            if not codes_to_import:
+                console.print("[yellow]No stock codes specified for import[/yellow]")
+                return
 
-        # Display final statistics
-        _show_database_stats(db_manager)
+            # Display summary
+            _display_import_summary(codes_to_import, start_date, end_date, skip_existing)
+
+            # Run import
+            _run_import(
+                importer,
+                codes_to_import,
+                start_date,
+                end_date,
+                skip_existing,
+                show_progress,
+            )
+
+            # Display final statistics
+            _show_database_stats(db_manager)
+        else:
+            # Overseas stocks (NYSE/NASDAQ)
+            exchange_code = "NYSE" if market == "nyse" else "NASD"
+            codes_to_import = _collect_stock_codes(
+                stock_codes=stock_codes,
+                from_stdin=from_stdin,
+                market=market,
+                stock_fetcher=stock_fetcher,
+                db_manager=db_manager,
+            )
+
+            if not codes_to_import:
+                console.print("[yellow]No stock codes specified for import[/yellow]")
+                return
+
+            # Display summary
+            _display_overseas_import_summary(codes_to_import, start_date, end_date)
+
+            # Run import
+            _run_overseas_import(
+                overseas_importer,
+                exchange_code,
+                codes_to_import,
+                start_date,
+                end_date,
+                skip_existing,
+                show_progress,
+            )
+
+            # Display final statistics
+            _show_database_stats(db_manager)
 
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
@@ -269,6 +304,7 @@ def _collect_stock_codes(
     from_stdin: bool,
     market: Optional[str],
     stock_fetcher: Optional[StockListFetcher],
+    db_manager: DuckDBManager,
 ) -> list[str]:
     """Collect stock codes from various sources.
 
@@ -277,6 +313,7 @@ def _collect_stock_codes(
         from_stdin: Whether to read from stdin
         market: Market filter
         stock_fetcher: Stock fetcher instance
+        db_manager: DuckDB manager instance
 
     Returns:
         List of stock codes to import
@@ -294,13 +331,27 @@ def _collect_stock_codes(
 
     # From API if no codes specified
     elif not stock_codes:
-        if stock_fetcher is None:
-            raise ValueError(
-                "Cannot fetch stocks from API: Kiwoom credentials not configured. "
-                "Please provide stock codes via arguments or --from-stdin"
+        # For overseas stocks, fetch from DuckDB
+        if market in ("nyse", "nasdaq"):
+            exchange_code = "NYSE" if market == "nyse" else "NASD"
+            console.print(
+                f"[yellow]Fetching available {market.upper()} stocks from database...[/yellow]"
             )
-        console.print("[yellow]Fetching available stocks from Kiwoom API...[/yellow]")
-        codes = [item.code for item in stock_fetcher.get_all_stocks(market=market)]
+            codes = db_manager.get_overseas_stock_codes(exchange_code)
+            if not codes:
+                raise ValueError(
+                    f"No {market.upper()} stocks found in database. "
+                    "Please run 'cluefin-cli import --market {market} --list-stocks' first."
+                )
+        # For domestic stocks, fetch from API
+        else:
+            if stock_fetcher is None:
+                raise ValueError(
+                    "Cannot fetch stocks from API: Kiwoom credentials not configured. "
+                    "Please provide stock codes via arguments or --from-stdin"
+                )
+            console.print("[yellow]Fetching available stocks from Kiwoom API...[/yellow]")
+            codes = [item.code for item in stock_fetcher.get_all_stocks(market=market)]
 
     # From arguments
     else:
@@ -643,3 +694,78 @@ def _show_database_stats(db_manager: DuckDBManager) -> None:
     stats_table.add_row("Database Size", f"{stats['database_size_mb']} MB")
 
     console.print(stats_table)
+
+
+def _display_overseas_import_summary(
+    stock_codes: list[str],
+    start_date: str,
+    end_date: str,
+) -> None:
+    """Display overseas import summary before starting.
+
+    Args:
+        stock_codes: List of stock codes to import
+        start_date: Start date
+        end_date: End date
+    """
+    summary_table = Table(title="Overseas Stock Import Summary")
+    summary_table.add_column("Parameter", style="cyan")
+    summary_table.add_column("Value", style="magenta")
+
+    summary_table.add_row("Stock Codes", str(len(stock_codes)))
+    summary_table.add_row("Start Date", start_date)
+    summary_table.add_row("End Date", end_date)
+
+    console.print(summary_table)
+
+
+def _run_overseas_import(
+    importer: OverseasStockChartImporter,
+    exchange_code: str,
+    stock_codes: list[str],
+    start_date: str,
+    end_date: str,
+    skip_existing: bool,
+    show_progress: bool,
+) -> None:
+    """Run the overseas stock import process.
+
+    Args:
+        importer: Overseas chart importer instance
+        exchange_code: Exchange code (NYS, NAS)
+        stock_codes: Stock codes to import
+        start_date: Start date
+        end_date: End date
+        skip_existing: Skip existing data
+        show_progress: Show progress bar
+    """
+    if show_progress:
+        with Progress(
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            MofNCompleteColumn(),
+            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+        ) as progress:
+            task = progress.add_task("[cyan]Importing overseas stocks...", total=len(stock_codes))
+
+            def update_progress(current: int, total: int, stock_code: str):
+                progress.update(task, advance=1, description=f"[cyan]Processing {stock_code}...")
+
+            importer.import_batch(
+                exchange_code,
+                stock_codes,
+                start_date,
+                end_date,
+                progress_callback=update_progress,
+                skip_existing=skip_existing,
+            )
+    else:
+        importer.import_batch(
+            exchange_code,
+            stock_codes,
+            start_date,
+            end_date,
+            skip_existing=skip_existing,
+        )
+
+    console.print("[green]✓[/green] Overseas stock import completed successfully")

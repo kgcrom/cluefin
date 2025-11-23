@@ -10,6 +10,13 @@ import pandas as pd
 from loguru import logger
 
 
+# Exchange code mapping: Full name (NYSE, NASDAQ) → API code (NYS, NAS)
+EXCHANGE_CODE_TO_API = {
+    "NYSE": "NYS",
+    "NASDAQ": "NAS",
+}
+
+
 class DuckDBManager:
     """Manager for DuckDB database operations."""
 
@@ -564,6 +571,21 @@ class DuckDBManager:
         """
         result = self.connection.execute("SELECT * FROM domestic_industry_codes ORDER BY code").df()
         return result
+
+    def get_overseas_stock_codes(self, exchange_code: str) -> list[str]:
+        """Get overseas stock codes from database by exchange.
+
+        Args:
+            exchange_code: Exchange code (NYSE for NYSE, NASD for NASDAQ)
+
+        Returns:
+            List of stock codes
+        """
+        result = self.connection.execute(
+            "SELECT stock_code FROM overseas_stock_metadata WHERE ovrs_excg_cd = ? ORDER BY stock_code",
+            [exchange_code],
+        ).fetchall()
+        return [row[0] for row in result]
 
     def get_database_stats(self) -> dict:
         """Get database statistics.
