@@ -1,8 +1,15 @@
-"""Stock list fetcher from Kiwoom API."""
+"""Stock list fetcher from Kiwoom API and KIS API."""
 
+import os
+import shutil
+import tempfile
+import urllib.request
+import zipfile
+from pathlib import Path
 from typing import Optional
 
 import pandas as pd
+from cluefin_openapi.kis._client import Client as KisClient
 from cluefin_openapi.kiwoom._client import Client
 from cluefin_openapi.kiwoom._domestic_stock_info_types import DomesticStockInfoSummary, DomesticStockInfoSummaryItem
 from cluefin_openapi.kiwoom._model import KiwoomHttpResponse
@@ -12,17 +19,19 @@ from cluefin_cli.data.duckdb_manager import DuckDBManager
 
 
 class StockListFetcher:
-    """Fetch stock lists from Kiwoom API."""
+    """Fetch stock lists from Kiwoom API and overseas stocks from KIS API."""
 
-    def __init__(self, client: Client, db_manager: DuckDBManager):
+    def __init__(self, client: Client, db_manager: DuckDBManager, kis_client: Optional[KisClient] = None):
         """Initialize stock list fetcher.
 
         Args:
             client: Kiwoom API client
             db_manager: DuckDB manager instance
+            kis_client: KIS API client (optional, required for overseas stocks)
         """
         self.client = client
         self.db_manager = db_manager
+        self.kis_client = kis_client
 
     def get_all_stocks(self, market: Optional[str] = None) -> list[DomesticStockInfoSummaryItem]:
         """Get all listed stocks from Kiwoom API.
@@ -272,3 +281,270 @@ class StockListFetcher:
             return int(cleaned) if cleaned else None
         except (ValueError, TypeError):
             return None
+
+    def _download_overseas_master(self, exchange: str) -> pd.DataFrame:
+        """Download overseas stock master file from Kiwoom.
+
+        Args:
+            exchange: Exchange code ('nas' for NASDAQ, 'nys' for NYSE)
+
+        Returns:
+            DataFrame with overseas stock master data
+
+        Raises:
+            Exception: If download or parsing fails
+        """
+        try:
+            import ssl
+
+            # Disable SSL verification for master file download
+            ssl._create_default_https_context = ssl._create_unverified_context
+
+            # Download master file zip
+            url = f"https://new.real.download.dws.co.kr/common/master/{exchange}mst.cod.zip"
+            temp_dir = tempfile.mkdtemp()
+
+            zip_path = os.path.join(temp_dir, f"{exchange}mst.cod.zip")
+            logger.debug(f"Downloading master file from {url}...")
+            urllib.request.urlretrieve(url, zip_path)
+
+            # Extract zip file
+            with zipfile.ZipFile(zip_path) as zip_ref:
+                zip_ref.extractall(temp_dir)
+
+            # Read the master file
+            master_path = os.path.join(temp_dir, f"{exchange}mst.cod")
+            columns = [
+                "National code",
+                "Exchange id",
+                "Exchange code",
+                "Exchange name",
+                "Symbol",
+                "realtime symbol",
+                "Korea name",
+                "English name",
+                "Security type",
+                "currency",
+                "float position",
+                "data type",
+                "base price",
+                "Bid order size",
+                "Ask order size",
+                "market start time",
+                "market end time",
+                "DR 여부",
+                "DR 국가코드",
+                "업종분류코드",
+                "지수구성종목 존재 여부",
+                "Tick size Type",
+                "구분코드",
+                "Tick size type 상세",
+            ]
+
+            logger.info(f"Reading master file from {master_path}...")
+            df = pd.read_table(master_path, sep="\t", encoding="cp949")
+            df.columns = columns
+
+            # Clean up temp directory
+            shutil.rmtree(temp_dir)
+
+            logger.info(f"Downloaded {len(df)} stocks from {exchange} master file")
+            return df
+
+        except Exception as e:
+            logger.error(f"Error downloading overseas master file for {exchange}: {e}")
+            raise
+
+    def get_all_overseas_stocks(self, market: Optional[str] = None) -> pd.DataFrame:
+        """Get all overseas stocks from master file.
+
+        Args:
+            market: Filter by market ('nasdaq', 'nyse', or None for all)
+
+        Returns:
+            DataFrame with overseas stocks
+        """
+        stocks: list[pd.DataFrame] = []
+
+        # Get NASDAQ stocks
+        if market is None or market.lower() == "nasdaq":
+            try:
+                logger.info("Fetching NASDAQ stocks from master file...")
+                nasdaq_stocks = self._download_overseas_master("nas")
+                stocks.append(nasdaq_stocks)
+                logger.info(f"Found {len(nasdaq_stocks)} NASDAQ stocks")
+            except Exception as e:
+                logger.error(f"Error fetching NASDAQ stocks: {e}")
+
+        # Get NYSE stocks
+        if market is None or market.lower() == "nyse":
+            try:
+                logger.info("Fetching NYSE stocks from master file...")
+                nyse_stocks = self._download_overseas_master("nys")
+                stocks.append(nyse_stocks)
+                logger.info(f"Found {len(nyse_stocks)} NYSE stocks")
+            except Exception as e:
+                logger.error(f"Error fetching NYSE stocks: {e}")
+
+        if not stocks:
+            logger.warning("No overseas stocks fetched")
+            return pd.DataFrame()
+
+        result = pd.concat(stocks, ignore_index=True)
+        result = result.sort_values("Symbol").reset_index(drop=True)
+        logger.info(f"Total unique overseas stocks: {len(result)}")
+
+        return result
+
+    def fetch_overseas_stock_metadata_extended(self, stock_row: pd.Series) -> Optional[dict]:
+        """Fetch extended overseas stock metadata by calling KIS API.
+
+        Args:
+            stock_row: Row from master file DataFrame with stock information
+
+        Returns:
+            Dictionary with combined metadata fields, or None if API fails
+        """
+        if self.kis_client is None:
+            logger.warning("KIS client not initialized, skipping metadata fetch")
+            return None
+
+        try:
+            symbol = stock_row["Symbol"]
+            exchange_code = stock_row["Exchange code"]
+
+            # Map exchange code to prdt_type_cd for ProductBaseInfo API
+            # 512: NASDAQ, 513: NYSE
+            prdt_type_cd_map = {"NAS": "512", "NYS": "513"}
+            prdt_type_cd = prdt_type_cd_map.get(exchange_code)
+
+            if not prdt_type_cd:
+                logger.warning(f"Unknown exchange code {exchange_code}, skipping {symbol}")
+                return None
+
+            logger.debug(f"Fetching product info for {symbol} ({exchange_code})...")
+            response = self.kis_client.overseas_basic_quote.get_product_base_info(
+                prdt_type_cd=prdt_type_cd, pdno=symbol
+            )
+
+            # Extract data from response
+            if response.output:
+                product_info = response.output
+
+                if hasattr(product_info, "ovrs_stck_etf_risk_drtp_cd"):
+                    return None
+
+                metadata = {
+                    "stock_code": symbol,
+                    # From master file
+                    "stock_name_en": stock_row["English name"],
+                    "stock_name_kr": stock_row["Korea name"],
+                    # From ProductBaseInfo API (ProductBaseInfoItem fields)
+                    "std_pdno": product_info.std_pdno if hasattr(product_info, "std_pdno") else None,
+                    "prdt_eng_name": product_info.prdt_eng_name if hasattr(product_info, "prdt_eng_name") else None,
+                    "natn_cd": product_info.natn_cd if hasattr(product_info, "natn_cd") else None,
+                    "natn_name": product_info.natn_name if hasattr(product_info, "natn_name") else None,
+                    "tr_mket_cd": product_info.tr_mket_cd if hasattr(product_info, "tr_mket_cd") else None,
+                    "tr_mket_name": product_info.tr_mket_name if hasattr(product_info, "tr_mket_name") else None,
+                    "ovrs_excg_cd": product_info.ovrs_excg_cd if hasattr(product_info, "ovrs_excg_cd") else None,
+                    "ovrs_excg_name": product_info.ovrs_excg_name if hasattr(product_info, "ovrs_excg_name") else None,
+                    "tr_crcy_cd": product_info.tr_crcy_cd if hasattr(product_info, "tr_crcy_cd") else None,
+                    "ovrs_papr": product_info.ovrs_papr if hasattr(product_info, "ovrs_papr") else None,
+                    "crcy_name": product_info.crcy_name if hasattr(product_info, "crcy_name") else None,
+                    "ovrs_stck_dvsn_cd": product_info.ovrs_stck_dvsn_cd
+                    if hasattr(product_info, "ovrs_stck_dvsn_cd")
+                    else None,
+                    "prdt_clsf_cd": product_info.prdt_clsf_cd if hasattr(product_info, "prdt_clsf_cd") else None,
+                    "prdt_clsf_name": product_info.prdt_clsf_name if hasattr(product_info, "prdt_clsf_name") else None,
+                    "lstg_stck_num": product_info.lstg_stck_num if hasattr(product_info, "lstg_stck_num") else None,
+                    "lstg_dt": product_info.lstg_dt if hasattr(product_info, "lstg_dt") else None,
+                    "ovrs_stck_tr_stop_dvsn_cd": product_info.ovrs_stck_tr_stop_dvsn_cd
+                    if hasattr(product_info, "ovrs_stck_tr_stop_dvsn_cd")
+                    else None,
+                    "lstg_abol_item_yn": product_info.lstg_abol_item_yn
+                    if hasattr(product_info, "lstg_abol_item_yn")
+                    else None,
+                    "lstg_yn": product_info.lstg_yn if hasattr(product_info, "lstg_yn") else None,
+                    "tax_levy_yn": product_info.tax_levy_yn if hasattr(product_info, "tax_levy_yn") else None,
+                    "ovrs_item_name": product_info.ovrs_item_name if hasattr(product_info, "ovrs_item_name") else None,
+                    "sedol_no": product_info.sedol_no if hasattr(product_info, "sedol_no") else None,
+                    "prdt_name": product_info.prdt_name if hasattr(product_info, "prdt_name") else None,
+                    "lstg_abol_dt": product_info.lstg_abol_dt if hasattr(product_info, "lstg_abol_dt") else None,
+                    "ptp_item_yn": product_info.ptp_item_yn if hasattr(product_info, "ptp_item_yn") else None,
+                    "dtm_tr_psbl_yn": product_info.dtm_tr_psbl_yn if hasattr(product_info, "dtm_tr_psbl_yn") else None,
+                    "ovrs_stck_etf_risk_drtp_cd": product_info.ovrs_stck_etf_risk_drtp_cd
+                    if hasattr(product_info, "ovrs_stck_etf_risk_drtp_cd")
+                    else None,
+                }
+
+                return metadata
+            else:
+                logger.warning(f"No product info returned for {symbol}")
+                return None
+
+        except Exception as e:
+            logger.error(f"Error fetching metadata for {stock_row.get('Symbol', 'unknown')}: {e}")
+            return None
+
+    def fetch_and_save_overseas_metadata_batch(self, stocks_df: pd.DataFrame, chunk_size: int = 50) -> tuple[int, int]:
+        """Fetch metadata for multiple overseas stocks and save to database in chunks.
+
+        Args:
+            stocks_df: DataFrame of stocks from master file
+            chunk_size: Number of stocks to process per chunk (default: 50)
+
+        Returns:
+            Tuple of (success_count, failed_count)
+        """
+        total_stocks = len(stocks_df)
+        total_success = 0
+        total_failed = 0
+
+        # Calculate number of chunks
+        num_chunks = (total_stocks + chunk_size - 1) // chunk_size
+
+        logger.info(f"Processing {total_stocks} overseas stocks in {num_chunks} chunks of {chunk_size}...")
+
+        # Process stocks in chunks
+        for chunk_idx in range(num_chunks):
+            chunk_start = chunk_idx * chunk_size
+            chunk_end = min(chunk_start + chunk_size, total_stocks)
+            chunk = stocks_df.iloc[chunk_start:chunk_end]
+
+            logger.info(f"[Chunk {chunk_idx + 1}/{num_chunks}] Processing stocks {chunk_start + 1}-{chunk_end}...")
+
+            chunk_metadata = []
+            chunk_failed = 0
+
+            # Fetch metadata for all stocks in this chunk
+            for idx, (_, stock_row) in enumerate(chunk.iterrows()):
+                global_idx = chunk_start + idx + 1
+                symbol = stock_row["Symbol"]
+                logger.info(
+                    f"  [{global_idx}/{total_stocks}] Fetching metadata for {symbol} ({stock_row['English name']})"
+                )
+                metadata = self.fetch_overseas_stock_metadata_extended(stock_row)
+
+                if metadata:
+                    chunk_metadata.append(metadata)
+                else:
+                    chunk_failed += 1
+                    logger.warning(f"  Failed to fetch metadata for {symbol}")
+
+            # Save this chunk to database
+            if chunk_metadata:
+                logger.info(f"[Chunk {chunk_idx + 1}/{num_chunks}] Saving {len(chunk_metadata)} records to database...")
+                df = pd.DataFrame(chunk_metadata)
+                count = self.db_manager.upsert_overseas_stock_metadata(df)
+                logger.info(f"[Chunk {chunk_idx + 1}/{num_chunks}] Successfully saved {count} records")
+                total_success += count
+            else:
+                logger.warning(f"[Chunk {chunk_idx + 1}/{num_chunks}] No metadata to save")
+
+            total_failed += chunk_failed
+            logger.info(
+                f"[Chunk {chunk_idx + 1}/{num_chunks}] Complete - Success: {len(chunk_metadata)}, Failed: {chunk_failed}"
+            )
+
+        logger.info(f"Batch processing complete - Total success: {total_success}, Total failed: {total_failed}")
+        return total_success, total_failed

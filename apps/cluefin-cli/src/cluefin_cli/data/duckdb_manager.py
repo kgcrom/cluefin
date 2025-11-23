@@ -142,6 +142,44 @@ class DuckDBManager:
             )
         """)
 
+        # Overseas stock metadata table
+        self.connection.execute("""
+            CREATE TABLE IF NOT EXISTS overseas_stock_metadata (
+                stock_code VARCHAR PRIMARY KEY,
+                -- Master file fields
+                stock_name_en VARCHAR,
+                stock_name_kr VARCHAR,
+                -- ProductBaseInfoItem API fields
+                std_pdno VARCHAR,
+                prdt_eng_name VARCHAR,
+                natn_cd VARCHAR,
+                natn_name VARCHAR,
+                tr_mket_cd VARCHAR,
+                tr_mket_name VARCHAR,
+                ovrs_excg_cd VARCHAR,
+                ovrs_excg_name VARCHAR,
+                tr_crcy_cd VARCHAR,
+                ovrs_papr VARCHAR,
+                crcy_name VARCHAR,
+                ovrs_stck_dvsn_cd VARCHAR,
+                prdt_clsf_cd VARCHAR,
+                prdt_clsf_name VARCHAR,
+                lstg_stck_num VARCHAR,
+                lstg_dt VARCHAR,
+                ovrs_stck_tr_stop_dvsn_cd VARCHAR,
+                lstg_abol_item_yn VARCHAR,
+                lstg_yn VARCHAR,
+                tax_levy_yn VARCHAR,
+                ovrs_item_name VARCHAR,
+                sedol_no VARCHAR,
+                prdt_name VARCHAR,
+                lstg_abol_dt VARCHAR,
+                ptp_item_yn VARCHAR,
+                dtm_tr_psbl_yn VARCHAR,
+                ovrs_stck_etf_risk_drtp_cd VARCHAR
+            )
+        """)
+
         # Overseas stock daily charts table (KIS API)
         self.connection.execute("""
             CREATE TABLE IF NOT EXISTS overseas_stock_daily_charts (
@@ -408,6 +446,84 @@ class DuckDBManager:
             logger.error(f"Error upserting domestic stock metadata: {e}")
             raise
 
+    def upsert_overseas_stock_metadata(self, df: pd.DataFrame) -> int:
+        """Upsert overseas stock metadata from master file and ProductBaseInfo API.
+
+        Args:
+            df: DataFrame with overseas stock metadata columns including:
+                stock_code, stock_name_en, stock_name_kr, std_pdno, prdt_eng_name,
+                natn_cd, natn_name, tr_mket_cd, tr_mket_name, ovrs_excg_cd,
+                ovrs_excg_name, tr_crcy_cd, ovrs_papr, crcy_name, ovrs_stck_dvsn_cd,
+                prdt_clsf_cd, prdt_clsf_name, lstg_stck_num, lstg_dt,
+                ovrs_stck_tr_stop_dvsn_cd, lstg_abol_item_yn, lstg_yn, tax_levy_yn,
+                ovrs_item_name, sedol_no, prdt_name, lstg_abol_dt, ptp_item_yn,
+                dtm_tr_psbl_yn, ovrs_stck_etf_risk_drtp_cd
+
+        Returns:
+            Number of records upserted
+        """
+        if df.empty:
+            logger.warning("Empty DataFrame for overseas stock metadata")
+            return 0
+
+        try:
+            self.connection.register("insert_df", df)
+            self.connection.execute(
+                """INSERT INTO overseas_stock_metadata
+                (stock_code, stock_name_en, stock_name_kr, std_pdno, prdt_eng_name,
+                 natn_cd, natn_name, tr_mket_cd, tr_mket_name, ovrs_excg_cd,
+                 ovrs_excg_name, tr_crcy_cd, ovrs_papr, crcy_name, ovrs_stck_dvsn_cd,
+                 prdt_clsf_cd, prdt_clsf_name, lstg_stck_num, lstg_dt,
+                 ovrs_stck_tr_stop_dvsn_cd, lstg_abol_item_yn, lstg_yn, tax_levy_yn,
+                 ovrs_item_name, sedol_no, prdt_name, lstg_abol_dt, ptp_item_yn,
+                 dtm_tr_psbl_yn, ovrs_stck_etf_risk_drtp_cd)
+                SELECT stock_code, stock_name_en, stock_name_kr, std_pdno, prdt_eng_name,
+                       natn_cd, natn_name, tr_mket_cd, tr_mket_name, ovrs_excg_cd,
+                       ovrs_excg_name, tr_crcy_cd, ovrs_papr, crcy_name, ovrs_stck_dvsn_cd,
+                       prdt_clsf_cd, prdt_clsf_name, lstg_stck_num, lstg_dt,
+                       ovrs_stck_tr_stop_dvsn_cd, lstg_abol_item_yn, lstg_yn, tax_levy_yn,
+                       ovrs_item_name, sedol_no, prdt_name, lstg_abol_dt, ptp_item_yn,
+                       dtm_tr_psbl_yn, ovrs_stck_etf_risk_drtp_cd
+                FROM insert_df
+                ON CONFLICT (stock_code) DO UPDATE SET
+                    stock_name_en = EXCLUDED.stock_name_en,
+                    stock_name_kr = EXCLUDED.stock_name_kr,
+                    std_pdno = EXCLUDED.std_pdno,
+                    prdt_eng_name = EXCLUDED.prdt_eng_name,
+                    natn_cd = EXCLUDED.natn_cd,
+                    natn_name = EXCLUDED.natn_name,
+                    tr_mket_cd = EXCLUDED.tr_mket_cd,
+                    tr_mket_name = EXCLUDED.tr_mket_name,
+                    ovrs_excg_cd = EXCLUDED.ovrs_excg_cd,
+                    ovrs_excg_name = EXCLUDED.ovrs_excg_name,
+                    tr_crcy_cd = EXCLUDED.tr_crcy_cd,
+                    ovrs_papr = EXCLUDED.ovrs_papr,
+                    crcy_name = EXCLUDED.crcy_name,
+                    ovrs_stck_dvsn_cd = EXCLUDED.ovrs_stck_dvsn_cd,
+                    prdt_clsf_cd = EXCLUDED.prdt_clsf_cd,
+                    prdt_clsf_name = EXCLUDED.prdt_clsf_name,
+                    lstg_stck_num = EXCLUDED.lstg_stck_num,
+                    lstg_dt = EXCLUDED.lstg_dt,
+                    ovrs_stck_tr_stop_dvsn_cd = EXCLUDED.ovrs_stck_tr_stop_dvsn_cd,
+                    lstg_abol_item_yn = EXCLUDED.lstg_abol_item_yn,
+                    lstg_yn = EXCLUDED.lstg_yn,
+                    tax_levy_yn = EXCLUDED.tax_levy_yn,
+                    ovrs_item_name = EXCLUDED.ovrs_item_name,
+                    sedol_no = EXCLUDED.sedol_no,
+                    prdt_name = EXCLUDED.prdt_name,
+                    lstg_abol_dt = EXCLUDED.lstg_abol_dt,
+                    ptp_item_yn = EXCLUDED.ptp_item_yn,
+                    dtm_tr_psbl_yn = EXCLUDED.dtm_tr_psbl_yn,
+                    ovrs_stck_etf_risk_drtp_cd = EXCLUDED.ovrs_stck_etf_risk_drtp_cd"""
+            )
+            self.connection.unregister("insert_df")
+            count = len(df)
+            logger.info(f"Upserted {count} overseas stock metadata records")
+            return count
+        except Exception as e:
+            logger.error(f"Error upserting overseas stock metadata: {e}")
+            raise
+
     def insert_domestic_industry_codes(self, df: pd.DataFrame) -> int:
         """Insert domestic industry codes.
 
@@ -541,7 +657,9 @@ class DuckDBManager:
         actual_count = result[0][0] if result else 0
         return actual_count > 0
 
-    def check_domestic_stock_data_exists_batch(self, stock_codes: list[str], start_date: str, end_date: str) -> dict[str, bool]:
+    def check_domestic_stock_data_exists_batch(
+        self, stock_codes: list[str], start_date: str, end_date: str
+    ) -> dict[str, bool]:
         """Check if domestic stock daily data exists for multiple stocks in batch.
 
         Args:
@@ -577,7 +695,9 @@ class DuckDBManager:
 
         return exists_map
 
-    def check_overseas_stock_data_exists(self, exchange_code: str, stock_code: str, start_date: str, end_date: str) -> bool:
+    def check_overseas_stock_data_exists(
+        self, exchange_code: str, stock_code: str, start_date: str, end_date: str
+    ) -> bool:
         """Check if overseas stock daily data already exists for a stock/date range.
 
         Args:
@@ -688,6 +808,7 @@ class DuckDBManager:
         self.connection.execute("DELETE FROM domestic_stock_metadata")
         self.connection.execute("DELETE FROM domestic_industry_codes")
         self.connection.execute("DELETE FROM overseas_stock_daily_charts")
+        self.connection.execute("DELETE FROM overseas_stock_metadata")
         logger.info("All tables cleared")
 
     def close(self):

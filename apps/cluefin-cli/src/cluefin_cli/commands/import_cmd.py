@@ -17,7 +17,7 @@ from rich.table import Table
 
 from cluefin_cli.config.settings import settings
 from cluefin_cli.data.duckdb_manager import DuckDBManager
-from cluefin_cli.data.importer import DomesticStockChartImporter
+from cluefin_cli.data.stock_importer import DomesticStockChartImporter
 from cluefin_cli.data.industry_chart_importer import DomesticIndustryChartImporter
 from cluefin_cli.data.industry_importer import DomesticIndustryCodeImporter
 from cluefin_cli.data.stock_fetcher import StockListFetcher
@@ -40,9 +40,9 @@ stderr_console = Console(stderr=True)
 )
 @click.option(
     "--market",
-    type=click.Choice(["kospi", "kosdaq"], case_sensitive=False),
+    type=click.Choice(["kospi", "kosdaq", "nyse", "nasdaq"], case_sensitive=False),
     default=None,
-    help="Filter by market (KOSPI or KOSDAQ)",
+    help="Filter by market (KOSPI, KOSDAQ, NYSE, or NASDAQ)",
 )
 @click.option(
     "--start",
@@ -162,7 +162,7 @@ def import_command(
                 rate_limit_requests_per_second=1.0,
                 rate_limit_burst=2,
             )
-            stock_fetcher = StockListFetcher(kiwoom_client, db_manager)
+            stock_fetcher = StockListFetcher(kiwoom_client, db_manager, kis_client)
             industry_importer = DomesticIndustryCodeImporter(db_manager)
 
         # Initialize industry chart importer (uses KIS API)
@@ -216,7 +216,12 @@ def import_command(
 
         # Handle list-stocks operation
         if list_stocks:
-            _list_stocks(stock_fetcher, market)
+            if market in ("kospi", "kosdaq"):
+                _list_domestic_stocks(stock_fetcher, market)
+            elif market in ("nyse", "nasdaq"):
+                _list_overseas_stocks(stock_fetcher, market)
+            else:
+                console.print("[yellow]Please specify a market with --market (kospi, kosdaq, nyse, or nasdaq)[/yellow]")
             return
 
         # Collect stock codes
@@ -447,26 +452,57 @@ def _import_industry_codes(industry_importer: Optional[DomesticIndustryCodeImpor
     console.print(f"[green]✓[/green] Imported {results.get('total', 0)} industry codes from {mst_file_path}")
 
 
-def _list_stocks(stock_fetcher: Optional[StockListFetcher], market: Optional[str]) -> None:
-    """List available stocks to stdout.
+def _list_domestic_stocks(stock_fetcher: Optional[StockListFetcher], market: str) -> None:
+    """List available domestic stocks and fetch metadata.
 
     Args:
         stock_fetcher: Stock fetcher instance
-        market: Market filter
+        market: Market filter (kospi or kosdaq)
     """
     if stock_fetcher is None:
         raise ValueError(
             "Listing stocks requires Kiwoom credentials. Please set KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, and KIWOOM_ENV"
         )
 
-    stderr_console.print("[yellow]Fetching stock list from Kiwoom API...[/yellow]")
+    stderr_console.print("[yellow]Fetching domestic stock list from Kiwoom API...[/yellow]")
     stocks = stock_fetcher.get_all_stocks(market=market)
 
     # Fetch and save metadata in batch
     success_count, failed_count = stock_fetcher.fetch_and_save_metadata_batch(stocks)
 
     stderr_console.print(
-        f"[green]✓[/green] Listed {len(stocks)} stocks (metadata saved: {success_count}, failed: {failed_count})"
+        f"[green]✓[/green] Listed {len(stocks)} domestic stocks "
+        f"(metadata saved: {success_count}, failed: {failed_count})"
+    )
+
+
+def _list_overseas_stocks(stock_fetcher: Optional[StockListFetcher], market: str) -> None:
+    """List available overseas stocks and fetch metadata.
+
+    Args:
+        stock_fetcher: Stock fetcher instance
+        market: Market filter (nyse or nasdaq)
+    """
+    if stock_fetcher is None:
+        raise ValueError(
+            "Listing stocks requires Kiwoom and KIS credentials. "
+            "Please set KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, KIWOOM_ENV, "
+            "KIS_APP_KEY, KIS_SECRET_KEY, and KIS_ENV"
+        )
+
+    stderr_console.print("[yellow]Fetching overseas stock list from master file...[/yellow]")
+    stocks_df = stock_fetcher.get_all_overseas_stocks(market=market)
+
+    if stocks_df.empty:
+        stderr_console.print("[yellow]No overseas stocks found for the specified market[/yellow]")
+        return
+
+    # Fetch and save metadata in batch
+    success_count, failed_count = stock_fetcher.fetch_and_save_overseas_metadata_batch(stocks_df)
+
+    stderr_console.print(
+        f"[green]✓[/green] Listed {len(stocks_df)} overseas stocks ({market.upper()}) "
+        f"(metadata saved: {success_count}, failed: {failed_count})"
     )
 
 
