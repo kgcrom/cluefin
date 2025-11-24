@@ -16,6 +16,7 @@
             "FID_INPUT_ISCD": "005930"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": {
                 "stck_prpr": "70000",
                 "prdy_vrss": "1000",
@@ -40,6 +41,7 @@
             "FID_INPUT_ISCD": "035720"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": {
                 "stck_prpr": "50000",
                 "prdy_vrss": "-500"
@@ -63,6 +65,7 @@
             "FID_INPUT_ISCD": "005930"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "stck_cntg_hour": "153000",
@@ -97,6 +100,7 @@
             "FID_ORG_ADJ_PRC": "0"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "stck_bsop_date": "20250115",
@@ -125,6 +129,7 @@
             "FID_INPUT_ISCD": "005930"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output1": {
                 "aspr_acpt_hour": "153000",
                 "askp1": "70500",
@@ -232,6 +237,7 @@
             "FID_INPUT_ISCD": "005930"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "stck_bsop_date": "20250115",
@@ -258,6 +264,7 @@
             "FID_INPUT_ISCD": "005930"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": {
                 "seln_mbcr_no1": "001",
                 "seln_mbcr_no2": "002",
@@ -354,6 +361,7 @@
             "FID_ORG_ADJ_PRC": "0"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output1": {
                 "prdy_vrss": "1000",
                 "prdy_vrss_sign": "2",
@@ -428,6 +436,7 @@
             "FID_ETC_CLS_CODE": ""
         },
         "response_payload": {
+            "rt_cd": "0",
             "output1": {
                 "prdy_vrss": "1000",
                 "prdy_vrss_sign": "2",
@@ -477,6 +486,7 @@
             "FID_FAKE_TICK_INCU_YN": ""
         },
         "response_payload": {
+            "rt_cd": "0",
             "output1": {
                 "prdy_vrss": "1000",
                 "prdy_vrss_sign": "2",
@@ -520,6 +530,7 @@
             "FID_INPUT_HOUR_1": "153000"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output1": {
                 "stck_prpr": "70000",
                 "prdy_vrss": "1000",
@@ -562,6 +573,7 @@
             "FID_INPUT_ISCD": "005930"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output1": {
                 "ovtm_untp_prpr": "70500",
                 "ovtm_untp_prdy_vrss": "500",
@@ -605,8 +617,7 @@
         "method": "GET",
         "call_kwargs": {
             "fid_cond_mrkt_div_code": "J",
-            "fid_input_iscd": "005930",
-            "fid_input_hour_1": "180000"
+            "fid_input_iscd": "005930"
         },
         "expected_headers": {
             "tr_id": "FHPST02310000"
@@ -614,9 +625,10 @@
         "expected_body": {
             "FID_COND_MRKT_DIV_CODE": "J",
             "FID_INPUT_ISCD": "005930",
-            "FID_INPUT_HOUR_1": "180000"
+            "FID_HOUR_CLS_CODE": "1"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output1": {
                 "ovtm_untp_prpr": "70500",
                 "ovtm_untp_prdy_vrss": "500",
@@ -669,6 +681,7 @@
             "FID_INPUT_ISCD": "005930"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": {
                 "ovtm_unpr": "70500",
                 "ovtm_vol": "10000"
@@ -692,6 +705,7 @@
             "FID_COND_MRKT_DIV_CODE": "J"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": {
                 "ovtm_untp_askp1": "70500",
                 "ovtm_untp_askp2": "71000",
@@ -768,6 +782,7 @@
             "FID_COND_SCR_DIV_CODE": "11173"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "mksc_shrn_iscd": "005930",
@@ -795,6 +810,7 @@
             "FID_COND_MRKT_DIV_CODE": "J"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": {
                 "stck_prpr": "40000",
                 "prdy_vrss": "200"
@@ -820,6 +836,7 @@
             "FID_COND_SCR_DIV_CODE": "11216"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "stck_shrn_iscd": "005930",
@@ -847,6 +864,7 @@
             "FID_COND_MRKT_DIV_CODE": "J"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output1": {
                 "stck_prpr": "40000",
                 "prdy_vrss": "200",
@@ -894,6 +912,7 @@
             "fid_input_date_2": "20250131"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "stck_bsop_date": "20250115",
@@ -922,6 +941,7 @@
             "fid_cond_mrkt_div_code": "E"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "stck_bsop_date": "20250115",

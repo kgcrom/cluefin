@@ -15,7 +15,7 @@ console = Console()
 def cli(debug: bool):
     """Korean financial investment CLI toolkit with technical analysis and AI insights."""
     setup_logging(debug=debug)
-    console.print("[bold blue]Cluefin CLI - Korean Stock Analysis Tool[/bold blue]")
+    console.print("[bold blue]Cluefin CLI - Stock Analysis Tool[/bold blue]")
     console.print("Use --help to see available commands")
 
 

@@ -44,7 +44,7 @@ def mock_db_manager(mock_duckdb_connection):
 def test_batch_check_empty_list(mock_db_manager, mock_duckdb_connection):
     """Test check_data_exists_batch with empty list."""
     # Empty list should return early without executing query
-    result = mock_db_manager.check_data_exists_batch([], "20240101", "20241231")
+    result = mock_db_manager.check_domestic_stock_data_exists_batch([], "20240101", "20241231")
 
     assert result == {}, "Empty list should return empty dict"
 
@@ -60,7 +60,7 @@ def test_batch_check_sample_codes(mock_db_manager, mock_duckdb_connection):
     ]
 
     sample_codes = ["005930", "035720", "000660"]
-    result = mock_db_manager.check_data_exists_batch(sample_codes, "20240101", "20241231")
+    result = mock_db_manager.check_domestic_stock_data_exists_batch(sample_codes, "20240101", "20241231")
 
     assert len(result) == 3, "Should return 3 entries"
     assert all(isinstance(v, bool) for v in result.values()), "All values should be bool"
@@ -76,7 +76,7 @@ def test_batch_check_larger_batch(mock_db_manager, mock_duckdb_connection):
     mock_duckdb_connection.execute.return_value.fetchall.return_value = mock_results
 
     large_batch = [f"{i:06d}" for i in range(1, 16)]
-    result = mock_db_manager.check_data_exists_batch(large_batch, "20240101", "20241231")
+    result = mock_db_manager.check_domestic_stock_data_exists_batch(large_batch, "20240101", "20241231")
 
     assert len(result) == 15, "Should return 15 entries"
     assert all(isinstance(v, bool) for v in result.values()), "All values should be bool"
