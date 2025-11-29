@@ -5,6 +5,8 @@ from typing import Dict, List, Literal, Optional, Tuple
 import requests
 from loguru import logger
 
+from cluefin_openapi._rate_limiter import TokenBucket
+
 from ._cache import SimpleCache, create_cache_key
 from ._exceptions import (
     KiwoomAPIError,
@@ -16,7 +18,6 @@ from ._exceptions import (
     KiwoomTimeoutError,
     KiwoomValidationError,
 )
-from ._rate_limiter import TokenBucket
 
 
 class MockResponse:

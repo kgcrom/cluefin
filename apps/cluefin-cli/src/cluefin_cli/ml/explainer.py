@@ -10,11 +10,11 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 import shap
-from scipy.special import expit as sigmoid
 from loguru import logger
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+from scipy.special import expit as sigmoid
 
 
 class SHAPExplainer:

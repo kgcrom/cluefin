@@ -6,11 +6,14 @@ from pydantic import SecretStr, ValidationError
 
 from cluefin_openapi.kis._auth import Auth
 from cluefin_openapi.kis._auth_types import ApprovalResponse, TokenResponse
+from cluefin_openapi.kis._token_manager import TokenManager
 
 
 @pytest.fixture
-def dev_auth() -> Auth:
-    return Auth("test_app_key", SecretStr("test_secret_key"), env="dev")
+def dev_auth(tmp_path) -> Auth:
+    """Create Auth instance with empty token cache for testing."""
+    token_manager = TokenManager(cache_dir=str(tmp_path))
+    return Auth("test_app_key", SecretStr("test_secret_key"), env="dev", token_manager=token_manager)
 
 
 def test_generate_success(dev_auth, requests_mock):
