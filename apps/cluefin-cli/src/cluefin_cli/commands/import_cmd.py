@@ -481,7 +481,7 @@ def _list_domestic_stocks(stock_fetcher: Optional[StockListFetcher], market: str
     stocks = stock_fetcher.get_all_stocks(market=market)
 
     # Fetch and save metadata in batch
-    success_count, failed_count = stock_fetcher.fetch_and_save_metadata_batch(stocks)
+    success_count, failed_count = stock_fetcher.fetch_and_save_domestic_metadata_batch(stocks)
 
     stderr_console.print(
         f"[green]✓[/green] Listed {len(stocks)} domestic stocks "

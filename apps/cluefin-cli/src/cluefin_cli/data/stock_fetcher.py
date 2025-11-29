@@ -161,7 +161,7 @@ class StockListFetcher:
             logger.error(f"Error fetching extended metadata for {stock_info}: {e}")
             return None
 
-    def fetch_and_save_metadata_batch(
+    def fetch_and_save_domestic_metadata_batch(
         self, stock_infos: list[DomesticStockInfoSummaryItem], chunk_size: int = 100
     ) -> tuple[int, int]:
         """Fetch metadata for multiple stocks and save to database in chunks.
@@ -392,6 +392,12 @@ class StockListFetcher:
             return pd.DataFrame()
 
         result = pd.concat(stocks, ignore_index=True)
+
+        # Filter by Security type 2 (Stock only)
+        before_filter = len(result)
+        result = result[result["Security type"] == 2]
+        logger.info(f"Filtered {before_filter - len(result)} non-stock items (ETF, etc.)")
+
         result = result.sort_values("Symbol").reset_index(drop=True)
         logger.info(f"Total unique overseas stocks: {len(result)}")
 
@@ -432,8 +438,10 @@ class StockListFetcher:
             if response.output:
                 product_info = response.output
 
-                if hasattr(product_info, "ovrs_stck_etf_risk_drtp_cd"):
-                    return None
+                etf_risk_code = getattr(product_info, "ovrs_stck_etf_risk_drtp_cd", None)
+                if etf_risk_code and etf_risk_code.strip():
+                    logger.info(f"  Skipping ETF: {symbol} (etf_risk_code={etf_risk_code})")
+                    return "ETF_SKIPPED"
 
                 metadata = {
                     "stock_code": symbol,
@@ -500,6 +508,7 @@ class StockListFetcher:
         total_stocks = len(stocks_df)
         total_success = 0
         total_failed = 0
+        total_skipped = 0
 
         # Calculate number of chunks
         num_chunks = (total_stocks + chunk_size - 1) // chunk_size
@@ -516,6 +525,7 @@ class StockListFetcher:
 
             chunk_metadata = []
             chunk_failed = 0
+            chunk_skipped = 0
 
             # Fetch metadata for all stocks in this chunk
             for idx, (_, stock_row) in enumerate(chunk.iterrows()):
@@ -524,10 +534,12 @@ class StockListFetcher:
                 logger.info(
                     f"  [{global_idx}/{total_stocks}] Fetching metadata for {symbol} ({stock_row['English name']})"
                 )
-                metadata = self.fetch_overseas_stock_metadata_extended(stock_row)
+                result = self.fetch_overseas_stock_metadata_extended(stock_row)
 
-                if metadata:
-                    chunk_metadata.append(metadata)
+                if isinstance(result, dict):
+                    chunk_metadata.append(result)
+                elif result == "ETF_SKIPPED":
+                    chunk_skipped += 1
                 else:
                     chunk_failed += 1
                     logger.warning(f"  Failed to fetch metadata for {symbol}")
@@ -543,9 +555,12 @@ class StockListFetcher:
                 logger.warning(f"[Chunk {chunk_idx + 1}/{num_chunks}] No metadata to save")
 
             total_failed += chunk_failed
+            total_skipped += chunk_skipped
             logger.info(
-                f"[Chunk {chunk_idx + 1}/{num_chunks}] Complete - Success: {len(chunk_metadata)}, Failed: {chunk_failed}"
+                f"[Chunk {chunk_idx + 1}/{num_chunks}] Complete - Success: {len(chunk_metadata)}, Skipped(ETF): {chunk_skipped}, Failed: {chunk_failed}"
             )
 
-        logger.info(f"Batch processing complete - Total success: {total_success}, Total failed: {total_failed}")
+        logger.info(
+            f"Batch processing complete - Total success: {total_success}, Total skipped(ETF): {total_skipped}, Total failed: {total_failed}"
+        )
         return total_success, total_failed
