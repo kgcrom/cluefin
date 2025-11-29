@@ -3,7 +3,6 @@ Tests for overlap indicators (SMA, EMA, WMA, DEMA, TEMA, KAMA, BBANDS).
 """
 
 import numpy as np
-import pytest
 import talib
 
 from cluefin_ta import BBANDS, DEMA, EMA, KAMA, SMA, TEMA, WMA

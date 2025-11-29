@@ -3,8 +3,6 @@ Tests for candlestick pattern recognition.
 """
 
 import numpy as np
-import pytest
-import talib
 
 from cluefin_ta import (
     CDLDARKCLOUDCOVER,

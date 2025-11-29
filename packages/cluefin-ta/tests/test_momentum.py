@@ -3,7 +3,6 @@ Tests for momentum indicators (RSI, MACD, STOCH, STOCHF, WILLR, MOM, ROC, CCI, M
 """
 
 import numpy as np
-import pytest
 import talib
 
 from cluefin_ta import ADX, CCI, MACD, MFI, MOM, ROC, RSI, STOCH, STOCHF, WILLR

@@ -3,7 +3,6 @@ Tests for volatility indicators (TRANGE, ATR, NATR).
 """
 
 import numpy as np
-import pytest
 import talib
 
 from cluefin_ta import ATR, NATR, TRANGE

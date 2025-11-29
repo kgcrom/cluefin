@@ -3,7 +3,6 @@ Tests for volume indicators (OBV, AD, ADOSC).
 """
 
 import numpy as np
-import pytest
 import talib
 
 from cluefin_ta import AD, ADOSC, OBV
