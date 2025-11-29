@@ -177,6 +177,7 @@ source = { editable = "apps/cluefin-cli" }
 dependencies = [
     { name = "click" },
     { name = "cluefin-openapi" },
+    { name = "cluefin-ta" },
     { name = "duckdb" },
     { name = "imbalanced-learn" },
     { name = "lightgbm" },
@@ -190,13 +191,13 @@ dependencies = [
     { name = "rich" },
     { name = "scikit-learn" },
     { name = "shap" },
-    { name = "ta-lib" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "click", specifier = ">=8.1.7" },
     { name = "cluefin-openapi", editable = "packages/cluefin-openapi" },
+    { name = "cluefin-ta", editable = "packages/cluefin-ta" },
     { name = "duckdb", specifier = ">=1.4.1" },
     { name = "imbalanced-learn", specifier = ">=0.14.0" },
     { name = "lightgbm", specifier = ">=4.0.0,<5.0.0" },
@@ -209,7 +210,6 @@ requires-dist = [
     { name = "rich", specifier = ">=13.7.0" },
     { name = "scikit-learn", specifier = ">=1.3.0,<2.0.0" },
     { name = "shap", specifier = ">=0.47.2,<1.0.0" },
-    { name = "ta-lib", specifier = ">=0.4.25" },
 ]
 
 [[package]]

@@ -7,9 +7,9 @@ into ML-ready features, including TA-Lib indicators and target variable creation
 
 from typing import Dict, List, Tuple
 
+import cluefin_ta as talib
 import numpy as np
 import pandas as pd
-import talib
 from loguru import logger
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 

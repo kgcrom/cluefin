@@ -24,6 +24,7 @@ dev = [
 
 [tool.uv.sources]
 cluefin-openapi = { workspace = true }
+cluefin-ta = { workspace = true }
 cluefin-cli = { workspace = true }
 
 [tool.ruff]
