@@ -291,3 +291,101 @@ def test_token_bucket_integration():
     assert isinstance(importer.rate_limiter, TokenBucket)
     assert importer.rate_limiter.capacity == 10
     assert importer.rate_limiter.refill_rate == 10.0
+
+
+# ============================================================================
+# OverseasStockChartImporter Tests
+# ============================================================================
+
+
+def test_overseas_create_worker_client():
+    """Test OverseasStockChartImporter._create_worker_client creates independent client."""
+    from cluefin_cli.data.stock_importer import OverseasStockChartImporter
+
+    mock_client = MagicMock()
+    mock_client.token = "test_token"
+    mock_client.app_key = "test_app_key"
+    mock_client.secret_key = "test_secret"
+    mock_client.env = "prod"
+    mock_client.debug = False
+
+    mock_db = MagicMock()
+
+    importer = OverseasStockChartImporter(mock_client, mock_db)
+
+    # Create worker client
+    worker_client = importer._create_worker_client()
+
+    # Verify it's a new instance with same credentials
+    assert worker_client is not mock_client
+    assert worker_client.token == mock_client.token
+    assert worker_client.app_key == mock_client.app_key
+
+
+def test_overseas_save_chunk_results_success():
+    """Test OverseasStockChartImporter._save_chunk_results with successful results."""
+    from cluefin_cli.data.stock_importer import (
+        OverseasStockChartImporter,
+        StockFetchResult,
+    )
+    import pandas as pd
+
+    mock_client = MagicMock()
+    mock_db = MagicMock()
+    mock_db.insert_overseas_stock_daily_chart.return_value = 10
+
+    importer = OverseasStockChartImporter(mock_client, mock_db)
+
+    # Mock _prepare_stock_chart_data
+    importer._prepare_stock_chart_data = MagicMock(return_value=pd.DataFrame())
+
+    results = [
+        StockFetchResult(
+            stock_code="AAPL",
+            success=True,
+            data={"output1": None, "output2": [1, 2, 3], "start_date": "20240101"},
+        ),
+    ]
+
+    counts = importer._save_chunk_results("NYSE", results)
+    assert counts["AAPL"] == 10
+
+
+def test_overseas_save_chunk_results_with_errors():
+    """Test OverseasStockChartImporter._save_chunk_results handles errors correctly."""
+    from cluefin_cli.data.stock_importer import (
+        OverseasStockChartImporter,
+        StockFetchResult,
+    )
+
+    mock_client = MagicMock()
+    mock_db = MagicMock()
+
+    importer = OverseasStockChartImporter(mock_client, mock_db)
+
+    results = [
+        StockFetchResult(stock_code="AAPL", success=False, error="Network error"),
+        StockFetchResult(stock_code="GOOGL", success=True, data=None),
+        StockFetchResult(stock_code="MSFT", success=True, data={"output2": []}),
+    ]
+
+    counts = importer._save_chunk_results("NYSE", results)
+    assert counts["AAPL"] == -1, "Failed fetch should return -1"
+    assert counts["GOOGL"] == 0, "No data should return 0"
+    assert counts["MSFT"] == 0, "Empty output2 should return 0"
+
+
+def test_overseas_token_bucket_integration():
+    """Test TokenBucket is properly integrated in OverseasStockChartImporter."""
+    from cluefin_openapi import TokenBucket
+    from cluefin_cli.data.stock_importer import OverseasStockChartImporter
+
+    mock_client = MagicMock()
+    mock_db = MagicMock()
+
+    importer = OverseasStockChartImporter(mock_client, mock_db, rate_limit=15.0)
+
+    # Verify TokenBucket is created with correct parameters
+    assert isinstance(importer.rate_limiter, TokenBucket)
+    assert importer.rate_limiter.capacity == 15
+    assert importer.rate_limiter.refill_rate == 15.0
