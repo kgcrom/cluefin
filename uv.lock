@@ -12,6 +12,7 @@ members = [
     "cluefin",
     "cluefin-cli",
     "cluefin-openapi",
+    "cluefin-ta",
 ]
 
 [[package]]
@@ -229,6 +230,35 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.12.0,<3.0.0" },
     { name = "requests", specifier = ">=2.32.4" },
 ]
+
+[[package]]
+name = "cluefin-ta"
+version = "0.1.0"
+source = { editable = "packages/cluefin-ta" }
+dependencies = [
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "numba" },
+    { name = "pytest" },
+    { name = "ta-lib" },
+]
+numba = [
+    { name = "numba" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "numba", marker = "extra == 'dev'", specifier = ">=0.56.0" },
+    { name = "numba", marker = "extra == 'numba'", specifier = ">=0.56.0" },
+    { name = "numpy", specifier = ">=1.20.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0" },
+    { name = "ta-lib", marker = "extra == 'dev'", specifier = ">=0.4.0" },
+]
+provides-extras = ["numba", "dev"]
 
 [[package]]
 name = "colorama"

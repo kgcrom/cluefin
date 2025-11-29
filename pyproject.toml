@@ -7,7 +7,8 @@ requires-python = ">=3.10"
 
 [tool.uv.workspace]
 members = [
-    "packages/*",
+    "packages/cluefin-openapi",
+    "packages/cluefin-ta",
     "apps/cluefin-cli",
 ]
 
@@ -37,6 +38,9 @@ docstring-code-format = true
 select = ["E", "F", "W", "B", "Q", "I", "ASYNC", "T20"]
 ignore = ["F401", "E501"]
 
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["T201"]
+
 [tool.pytest.ini_options]
 markers = [
     "integration: integration tests",
@@ -45,5 +49,6 @@ markers = [
 addopts = "-ra"
 testpaths = [
     "packages/cluefin-openapi/tests",
+    "packages/cluefin-ta/tests",
     "apps/cluefin-cli/tests",
 ]

@@ -10,8 +10,8 @@ from pydantic import SecretStr
 from cluefin_cli.config.settings import settings
 
 
-class DataFetcher:
-    """Handles data fetching from Kiwoom Securities and KRX APIs."""
+class DomesticDataFetcher:
+    """Handles domestic stock data fetching from Kiwoom Securities and KRX APIs."""
 
     @staticmethod
     def _safe_float(value: str) -> float:

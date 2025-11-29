@@ -11,7 +11,7 @@ from rich.table import Table
 from cluefin_cli.data.fundamentals import (
     AccountSnapshot,
     DividendSnapshot,
-    FundamentalDataFetcher,
+    DomesticFundamentalDataFetcher,
     IndicatorSnapshot,
     ShareholderSnapshot,
     default_business_year,
@@ -67,7 +67,7 @@ def fundamental_analysis(stock_code: str, year: str, report: str, max_shareholde
 
 
 async def _perform_fundamental_analysis(stock_code: str, year: str, report_code: str, max_shareholders: int) -> None:
-    fetcher = FundamentalDataFetcher()
+    fetcher = DomesticFundamentalDataFetcher()
     corp_code = await fetcher.get_corp_code(stock_code)
     overview = await fetcher.get_company_overview(corp_code)
 

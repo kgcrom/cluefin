@@ -93,8 +93,8 @@ class ShareholderSnapshot:
     holding_ratio_previous: Optional[str]
 
 
-class FundamentalDataFetcher:
-    """Fetches and normalises data required for fundamental analysis views."""
+class DomesticFundamentalDataFetcher:
+    """Fetches and normalises domestic stock fundamental data via DART OpenAPI."""
 
     def __init__(self):
         if not settings.dart_auth_key:

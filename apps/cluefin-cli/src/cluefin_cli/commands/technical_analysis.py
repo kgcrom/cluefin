@@ -9,7 +9,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from cluefin_cli.commands.analysis.indicators import TechnicalAnalyzer
-from cluefin_cli.data.fetcher import DataFetcher
+from cluefin_cli.data.fetcher import DomesticDataFetcher
 from cluefin_cli.display.charts import ChartRenderer
 from cluefin_cli.ml import StockMLPredictor
 from cluefin_cli.utils.formatters import format_currency, format_number
@@ -45,7 +45,7 @@ def technical_analysis(stock_code: str, chart: bool, ml_predict: bool, feature_i
 async def _analyze_stock(stock_code: str, chart: bool, ml_predict: bool, feature_importance: bool, shap_analysis: bool):
     """Main analysis logic."""
     # Initialize components
-    data_fetcher = DataFetcher()
+    data_fetcher = DomesticDataFetcher()
     technical_analyzer = TechnicalAnalyzer()
     chart_renderer = ChartRenderer()
 
