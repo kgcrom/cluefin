@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 import shap
+from scipy.special import expit as sigmoid
 from loguru import logger
 from rich.console import Console
 from rich.panel import Panel
@@ -173,10 +174,15 @@ class SHAPExplainer:
                 }
             ).sort_values("abs_shap", ascending=False)
 
+            total_prediction = base_value + sample_shap.sum()
+            # Convert log-odds to probability using sigmoid function
+            probability = float(sigmoid(total_prediction))
+
             return {
                 "base_value": base_value,
                 "prediction_impact": sample_shap.sum(),
-                "total_prediction": base_value + sample_shap.sum(),
+                "total_prediction": total_prediction,
+                "probability": probability,
                 "feature_contributions": explanation,
                 "top_positive": explanation[explanation["shap_value"] > 0].head(5),
                 "top_negative": explanation[explanation["shap_value"] < 0].head(5),
@@ -243,14 +249,14 @@ class SHAPExplainer:
             explanation = self.explain_prediction(X_sample, sample_idx)
 
             # Create summary panel
-            prediction_value = explanation["total_prediction"]
-            if prediction_value > 0.5:
-                prediction_text = f"[green]📈 UP ({prediction_value:.4f})[/green]"
+            probability = explanation["probability"]
+            if probability > 0.5:
+                prediction_text = f"[green]📈 UP ({probability:.1%})[/green]"
             else:
-                prediction_text = f"[red]📉 DOWN ({prediction_value:.4f})[/red]"
+                prediction_text = f"[red]📉 DOWN ({1 - probability:.1%})[/red]"
 
             summary_text = f"""
-Base Value: {explanation["base_value"]:.4f}
+Base Value (log-odds): {explanation["base_value"]:.4f}
 Prediction Impact: {explanation["prediction_impact"]:+.4f}
 Final Prediction: {prediction_text}
             """
