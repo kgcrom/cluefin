@@ -7,11 +7,14 @@ import pytest
 import talib
 
 from cluefin_ta import (
+    CDLDARKCLOUDCOVER,
     CDLDOJI,
     CDLENGULFING,
+    CDLEVENINGSTAR,
     CDLHAMMER,
     CDLHANGINGMAN,
     CDLHARAMI,
+    CDLMORNINGSTAR,
     CDLPIERCING,
     CDLSHOOTINGSTAR,
 )
@@ -336,4 +339,195 @@ class TestCDLPIERCING:
         close = np.array([99.5, 104.0])
 
         result = CDLPIERCING(open_arr, high, low, close)
+        assert result[0] == 0
+
+
+class TestCDLMORNINGSTAR:
+    """Tests for Morning Star pattern (3-bar bullish reversal)."""
+
+    def test_cdlmorningstar_output_values(self, sample_ohlcv):
+        """Verify CDLMORNINGSTAR returns valid values."""
+        result = CDLMORNINGSTAR(
+            sample_ohlcv["open"],
+            sample_ohlcv["high"],
+            sample_ohlcv["low"],
+            sample_ohlcv["close"],
+        )
+
+        unique_values = np.unique(result)
+        valid_values = {0, 100}
+        assert set(unique_values).issubset(valid_values)
+
+    def test_cdlmorningstar_perfect(self):
+        """Test detection of perfect morning star pattern."""
+        # Day 1: Large bearish candle
+        # Day 2: Small body (star) that gaps down
+        # Day 3: Large bullish candle that closes above day 1 midpoint
+        open_arr = np.array([110.0, 98.0, 99.0])
+        high = np.array([111.0, 99.0, 108.0])
+        low = np.array([99.0, 97.0, 98.0])
+        close = np.array([100.0, 98.5, 107.0])
+
+        result = CDLMORNINGSTAR(open_arr, high, low, close)
+
+        assert result[0] == 0  # No pattern on first day
+        assert result[1] == 0  # No pattern on second day
+        assert result[2] == 100  # Morning star detected on third day
+
+    def test_cdlmorningstar_no_gap(self):
+        """Test that pattern requires gap down for star."""
+        # Day 2 doesn't gap down from day 1
+        open_arr = np.array([110.0, 102.0, 99.0])  # Day 2 open too high
+        high = np.array([111.0, 103.0, 108.0])
+        low = np.array([99.0, 101.0, 98.0])
+        close = np.array([100.0, 102.5, 107.0])
+
+        result = CDLMORNINGSTAR(open_arr, high, low, close)
+
+        assert result[2] == 0  # No pattern - star didn't gap down
+
+    def test_cdlmorningstar_first_two_values(self):
+        """Verify first two values are always 0 (needs 3 candles)."""
+        open_arr = np.array([110.0, 98.0, 99.0])
+        high = np.array([111.0, 99.0, 108.0])
+        low = np.array([99.0, 97.0, 98.0])
+        close = np.array([100.0, 98.5, 107.0])
+
+        result = CDLMORNINGSTAR(open_arr, high, low, close)
+
+        assert result[0] == 0
+        assert result[1] == 0
+
+    def test_cdlmorningstar_short_array(self):
+        """Test with array shorter than 3 elements."""
+        open_arr = np.array([100.0, 95.0])
+        high = np.array([102.0, 96.0])
+        low = np.array([99.0, 94.0])
+        close = np.array([99.5, 95.5])
+
+        result = CDLMORNINGSTAR(open_arr, high, low, close)
+
+        assert len(result) == 2
+        assert np.all(result == 0)
+
+
+class TestCDLEVENINGSTAR:
+    """Tests for Evening Star pattern (3-bar bearish reversal)."""
+
+    def test_cdleveningstar_output_values(self, sample_ohlcv):
+        """Verify CDLEVENINGSTAR returns valid values."""
+        result = CDLEVENINGSTAR(
+            sample_ohlcv["open"],
+            sample_ohlcv["high"],
+            sample_ohlcv["low"],
+            sample_ohlcv["close"],
+        )
+
+        unique_values = np.unique(result)
+        valid_values = {-100, 0}
+        assert set(unique_values).issubset(valid_values)
+
+    def test_cdleveningstar_perfect(self):
+        """Test detection of perfect evening star pattern."""
+        # Day 1: Large bullish candle
+        # Day 2: Small body (star) that gaps up
+        # Day 3: Large bearish candle that closes below day 1 midpoint
+        open_arr = np.array([100.0, 112.0, 111.0])
+        high = np.array([111.0, 113.0, 112.0])
+        low = np.array([99.0, 111.0, 102.0])
+        close = np.array([110.0, 112.5, 103.0])
+
+        result = CDLEVENINGSTAR(open_arr, high, low, close)
+
+        assert result[0] == 0  # No pattern on first day
+        assert result[1] == 0  # No pattern on second day
+        assert result[2] == -100  # Evening star detected on third day
+
+    def test_cdleveningstar_no_gap(self):
+        """Test that pattern requires gap up for star."""
+        # Day 2 doesn't gap up from day 1
+        open_arr = np.array([100.0, 108.0, 109.0])  # Day 2 open not above day 1 close
+        high = np.array([111.0, 109.0, 110.0])
+        low = np.array([99.0, 107.0, 102.0])
+        close = np.array([110.0, 108.5, 103.0])
+
+        result = CDLEVENINGSTAR(open_arr, high, low, close)
+
+        assert result[2] == 0  # No pattern - star didn't gap up
+
+    def test_cdleveningstar_first_two_values(self):
+        """Verify first two values are always 0 (needs 3 candles)."""
+        open_arr = np.array([100.0, 112.0, 111.0])
+        high = np.array([111.0, 113.0, 112.0])
+        low = np.array([99.0, 111.0, 102.0])
+        close = np.array([110.0, 112.5, 103.0])
+
+        result = CDLEVENINGSTAR(open_arr, high, low, close)
+
+        assert result[0] == 0
+        assert result[1] == 0
+
+
+class TestCDLDARKCLOUDCOVER:
+    """Tests for Dark Cloud Cover pattern (2-bar bearish reversal)."""
+
+    def test_cdldarkcloudcover_output_values(self, sample_ohlcv):
+        """Verify CDLDARKCLOUDCOVER returns valid values."""
+        result = CDLDARKCLOUDCOVER(
+            sample_ohlcv["open"],
+            sample_ohlcv["high"],
+            sample_ohlcv["low"],
+            sample_ohlcv["close"],
+        )
+
+        unique_values = np.unique(result)
+        valid_values = {-100, 0}
+        assert set(unique_values).issubset(valid_values)
+
+    def test_cdldarkcloudcover_perfect(self):
+        """Test detection of perfect dark cloud cover pattern."""
+        # Day 1: Large bullish candle
+        # Day 2: Opens above day 1 high (gap up), closes below day 1 midpoint
+        open_arr = np.array([100.0, 112.0])  # Day 2 opens above day 1 high (111)
+        high = np.array([111.0, 113.0])
+        low = np.array([99.0, 103.0])
+        close = np.array([110.0, 104.0])  # Day 2 closes below midpoint (105) but above open (100)
+
+        result = CDLDARKCLOUDCOVER(open_arr, high, low, close)
+
+        assert result[0] == 0  # No pattern on first day
+        assert result[1] == -100  # Dark cloud cover detected
+
+    def test_cdldarkcloudcover_no_gap(self):
+        """Test that pattern requires gap up opening."""
+        # Day 2 doesn't open above day 1 high
+        open_arr = np.array([100.0, 109.0])  # Day 2 opens below day 1 high (111)
+        high = np.array([111.0, 110.0])
+        low = np.array([99.0, 103.0])
+        close = np.array([110.0, 104.0])
+
+        result = CDLDARKCLOUDCOVER(open_arr, high, low, close)
+
+        assert result[1] == 0  # No pattern - no gap up
+
+    def test_cdldarkcloudcover_close_above_midpoint(self):
+        """Test that pattern requires close below midpoint."""
+        # Day 2 closes above day 1 midpoint
+        open_arr = np.array([100.0, 112.0])
+        high = np.array([111.0, 113.0])
+        low = np.array([99.0, 106.0])
+        close = np.array([110.0, 107.0])  # Closes above midpoint (105)
+
+        result = CDLDARKCLOUDCOVER(open_arr, high, low, close)
+
+        assert result[1] == 0  # No pattern - close too high
+
+    def test_cdldarkcloudcover_first_value(self):
+        """Verify first value is always 0."""
+        open_arr = np.array([100.0, 112.0])
+        high = np.array([111.0, 113.0])
+        low = np.array([99.0, 103.0])
+        close = np.array([110.0, 104.0])
+
+        result = CDLDARKCLOUDCOVER(open_arr, high, low, close)
         assert result[0] == 0

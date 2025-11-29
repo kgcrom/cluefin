@@ -9,6 +9,9 @@ Functions:
     CDLHANGINGMAN: Hanging Man pattern
     CDLHARAMI: Harami pattern
     CDLPIERCING: Piercing Line pattern
+    CDLMORNINGSTAR: Morning Star pattern (3-bar)
+    CDLEVENINGSTAR: Evening Star pattern (3-bar)
+    CDLDARKCLOUDCOVER: Dark Cloud Cover pattern (2-bar)
 
 All pattern functions return:
     +100: Bullish pattern
@@ -461,6 +464,253 @@ def CDLPIERCING(
     return result
 
 
+def CDLMORNINGSTAR(
+    open_arr: np.ndarray,
+    high: np.ndarray,
+    low: np.ndarray,
+    close: np.ndarray,
+) -> np.ndarray:
+    """
+    Morning Star Pattern (3-bar bullish reversal).
+
+    A three-candle pattern indicating a potential bullish reversal:
+    1. First candle: Large bearish candle
+    2. Second candle: Small body (star) that gaps down from first
+    3. Third candle: Large bullish candle that closes above first candle's midpoint
+
+    Args:
+        open_arr: Array of opening prices
+        high: Array of high prices
+        low: Array of low prices
+        close: Array of closing prices
+
+    Returns:
+        Array with +100 (morning star), or 0 (no pattern)
+    """
+    open_arr = np.asarray(open_arr, dtype=np.float64)
+    high = np.asarray(high, dtype=np.float64)
+    low = np.asarray(low, dtype=np.float64)
+    close = np.asarray(close, dtype=np.float64)
+    n = len(close)
+
+    result = np.zeros(n, dtype=np.int32)
+
+    if n < 3:
+        return result
+
+    for i in range(2, n):
+        # Day 1 (first): Large bearish candle
+        day1_open = open_arr[i - 2]
+        day1_close = close[i - 2]
+        day1_body = _body_size(day1_open, day1_close)
+        day1_range = _candle_range(high[i - 2], low[i - 2])
+        day1_is_bearish = _is_bearish(day1_open, day1_close)
+
+        # Day 2 (star): Small body
+        day2_open = open_arr[i - 1]
+        day2_close = close[i - 1]
+        day2_body = _body_size(day2_open, day2_close)
+        day2_body_high = max(day2_open, day2_close)
+
+        # Day 3 (current): Large bullish candle
+        day3_open = open_arr[i]
+        day3_close = close[i]
+        day3_body = _body_size(day3_open, day3_close)
+        day3_is_bullish = _is_bullish(day3_open, day3_close)
+
+        if day1_range == 0:
+            continue
+
+        # Criteria:
+        # 1. Day 1 is bearish with substantial body (> 50% of range)
+        # 2. Day 2 has small body (< 30% of day 1 body) and gaps down
+        # 3. Day 3 is bullish and closes above day 1 midpoint
+
+        day1_midpoint = (day1_open + day1_close) / 2
+        day1_body_ratio = day1_body / day1_range
+
+        # Check day 1 is substantial bearish
+        if not day1_is_bearish or day1_body_ratio < 0.5:
+            continue
+
+        # Check day 2 is small body (star) and gaps down
+        if day2_body > day1_body * 0.3:
+            continue
+
+        # Gap down check: day2 body high should be below day1 close
+        if day2_body_high >= day1_close:
+            continue
+
+        # Check day 3 is bullish and closes above day 1 midpoint
+        if not day3_is_bullish:
+            continue
+
+        if day3_close <= day1_midpoint:
+            continue
+
+        # Day 3 should have substantial body
+        if day3_body < day1_body * 0.5:
+            continue
+
+        result[i] = 100
+
+    return result
+
+
+def CDLEVENINGSTAR(
+    open_arr: np.ndarray,
+    high: np.ndarray,
+    low: np.ndarray,
+    close: np.ndarray,
+) -> np.ndarray:
+    """
+    Evening Star Pattern (3-bar bearish reversal).
+
+    A three-candle pattern indicating a potential bearish reversal:
+    1. First candle: Large bullish candle
+    2. Second candle: Small body (star) that gaps up from first
+    3. Third candle: Large bearish candle that closes below first candle's midpoint
+
+    Args:
+        open_arr: Array of opening prices
+        high: Array of high prices
+        low: Array of low prices
+        close: Array of closing prices
+
+    Returns:
+        Array with -100 (evening star), or 0 (no pattern)
+    """
+    open_arr = np.asarray(open_arr, dtype=np.float64)
+    high = np.asarray(high, dtype=np.float64)
+    low = np.asarray(low, dtype=np.float64)
+    close = np.asarray(close, dtype=np.float64)
+    n = len(close)
+
+    result = np.zeros(n, dtype=np.int32)
+
+    if n < 3:
+        return result
+
+    for i in range(2, n):
+        # Day 1 (first): Large bullish candle
+        day1_open = open_arr[i - 2]
+        day1_close = close[i - 2]
+        day1_body = _body_size(day1_open, day1_close)
+        day1_range = _candle_range(high[i - 2], low[i - 2])
+        day1_is_bullish = _is_bullish(day1_open, day1_close)
+
+        # Day 2 (star): Small body
+        day2_open = open_arr[i - 1]
+        day2_close = close[i - 1]
+        day2_body = _body_size(day2_open, day2_close)
+        day2_body_low = min(day2_open, day2_close)
+
+        # Day 3 (current): Large bearish candle
+        day3_open = open_arr[i]
+        day3_close = close[i]
+        day3_body = _body_size(day3_open, day3_close)
+        day3_is_bearish = _is_bearish(day3_open, day3_close)
+
+        if day1_range == 0:
+            continue
+
+        # Criteria:
+        # 1. Day 1 is bullish with substantial body (> 50% of range)
+        # 2. Day 2 has small body (< 30% of day 1 body) and gaps up
+        # 3. Day 3 is bearish and closes below day 1 midpoint
+
+        day1_midpoint = (day1_open + day1_close) / 2
+        day1_body_ratio = day1_body / day1_range
+
+        # Check day 1 is substantial bullish
+        if not day1_is_bullish or day1_body_ratio < 0.5:
+            continue
+
+        # Check day 2 is small body (star) and gaps up
+        if day2_body > day1_body * 0.3:
+            continue
+
+        # Gap up check: day2 body low should be above day1 close
+        if day2_body_low <= day1_close:
+            continue
+
+        # Check day 3 is bearish and closes below day 1 midpoint
+        if not day3_is_bearish:
+            continue
+
+        if day3_close >= day1_midpoint:
+            continue
+
+        # Day 3 should have substantial body
+        if day3_body < day1_body * 0.5:
+            continue
+
+        result[i] = -100
+
+    return result
+
+
+def CDLDARKCLOUDCOVER(
+    open_arr: np.ndarray,
+    high: np.ndarray,
+    low: np.ndarray,
+    close: np.ndarray,
+) -> np.ndarray:
+    """
+    Dark Cloud Cover Pattern (2-bar bearish reversal).
+
+    A two-candle bearish reversal pattern:
+    1. First candle: Large bullish candle
+    2. Second candle: Opens above first's high (gap up), closes below first's midpoint
+
+    This is the bearish counterpart to the Piercing Line pattern.
+
+    Args:
+        open_arr: Array of opening prices
+        high: Array of high prices
+        low: Array of low prices
+        close: Array of closing prices
+
+    Returns:
+        Array with -100 (dark cloud cover), or 0 (no pattern)
+    """
+    open_arr = np.asarray(open_arr, dtype=np.float64)
+    high = np.asarray(high, dtype=np.float64)
+    low = np.asarray(low, dtype=np.float64)
+    close = np.asarray(close, dtype=np.float64)
+    n = len(close)
+
+    result = np.zeros(n, dtype=np.int32)
+
+    if n < 2:
+        return result
+
+    for i in range(1, n):
+        prev_open = open_arr[i - 1]
+        prev_close = close[i - 1]
+        curr_open = open_arr[i]
+        curr_close = close[i]
+
+        prev_is_bullish = _is_bullish(prev_open, prev_close)
+        curr_is_bearish = _is_bearish(curr_open, curr_close)
+
+        if not prev_is_bullish or not curr_is_bearish:
+            continue
+
+        prev_body = _body_size(prev_open, prev_close)
+        prev_midpoint = prev_open + (prev_body / 2)  # For bullish: open < close
+
+        # Dark Cloud Cover criteria:
+        # 1. Previous candle is bullish
+        # 2. Current candle is bearish
+        # 3. Current opens above previous high (gap up)
+        # 4. Current closes below midpoint of previous body but above previous open
+        if curr_open > high[i - 1] and curr_close < prev_midpoint and curr_close > prev_open:
+            result[i] = -100
+
+    return result
+
+
 __all__ = [
     "CDLDOJI",
     "CDLHAMMER",
@@ -469,4 +719,7 @@ __all__ = [
     "CDLHANGINGMAN",
     "CDLHARAMI",
     "CDLPIERCING",
+    "CDLMORNINGSTAR",
+    "CDLEVENINGSTAR",
+    "CDLDARKCLOUDCOVER",
 ]

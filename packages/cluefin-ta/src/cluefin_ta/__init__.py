@@ -25,16 +25,22 @@ from cluefin_ta.volume import AD, ADOSC, OBV
 
 # Pattern Recognition (Candlestick)
 from cluefin_ta.pattern import (
+    CDLDARKCLOUDCOVER,
     CDLDOJI,
     CDLENGULFING,
+    CDLEVENINGSTAR,
     CDLHAMMER,
     CDLHANGINGMAN,
     CDLHARAMI,
+    CDLMORNINGSTAR,
     CDLPIERCING,
     CDLSHOOTINGSTAR,
 )
 
-__version__ = "0.2.0"
+# Portfolio Metrics
+from cluefin_ta.portfolio import CAGR, CALMAR, MDD, SHARPE, SORTINO, VOLATILITY
+
+__version__ = "0.3.0"
 
 __all__ = [
     # Overlap
@@ -72,4 +78,14 @@ __all__ = [
     "CDLHANGINGMAN",
     "CDLHARAMI",
     "CDLPIERCING",
+    "CDLMORNINGSTAR",
+    "CDLEVENINGSTAR",
+    "CDLDARKCLOUDCOVER",
+    # Portfolio
+    "MDD",
+    "CAGR",
+    "VOLATILITY",
+    "SHARPE",
+    "SORTINO",
+    "CALMAR",
 ]
