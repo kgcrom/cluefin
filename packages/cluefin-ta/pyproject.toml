@@ -11,6 +11,14 @@ dependencies = [
     "numpy>=1.20.0",
 ]
 
+[project.optional-dependencies]
+numba = ["numba>=0.56.0"]
+dev = [
+    "pytest>=7.0",
+    "ta-lib>=0.4.0",
+    "numba>=0.56.0",
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

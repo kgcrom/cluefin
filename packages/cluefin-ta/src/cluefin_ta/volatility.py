@@ -9,6 +9,8 @@ Functions:
 
 import numpy as np
 
+from cluefin_ta._core import get_impl
+
 
 def TRANGE(
     high: np.ndarray,
@@ -36,19 +38,12 @@ def TRANGE(
     close = np.asarray(close, dtype=np.float64)
     n = len(close)
 
-    result = np.full(n, np.nan)
-
     if n < 2:
-        return result
+        return np.full(n, np.nan)
 
-    # Calculate True Range for each period (starting from index 1)
-    for i in range(1, n):
-        hl = high[i] - low[i]
-        hc = abs(high[i] - close[i - 1])
-        lc = abs(low[i] - close[i - 1])
-        result[i] = max(hl, hc, lc)
-
-    return result
+    # Use optimized implementation
+    impl = get_impl()
+    return impl.true_range_loop(high, low, close)
 
 
 def ATR(
@@ -76,22 +71,18 @@ def ATR(
     close = np.asarray(close, dtype=np.float64)
     n = len(close)
 
-    result = np.full(n, np.nan)
-
     if n < timeperiod + 1:
-        return result
+        return np.full(n, np.nan)
 
     # Calculate True Range
     tr = TRANGE(high, low, close)
 
     # First ATR value is SMA of True Range
-    result[timeperiod] = np.mean(tr[1 : timeperiod + 1])
+    initial_atr = np.mean(tr[1 : timeperiod + 1])
 
-    # Subsequent values use Wilder's smoothing
-    for i in range(timeperiod + 1, n):
-        result[i] = (result[i - 1] * (timeperiod - 1) + tr[i]) / timeperiod
-
-    return result
+    # Use optimized Wilder's smoothing
+    impl = get_impl()
+    return impl.wilder_smooth(tr, timeperiod, initial_atr, timeperiod)
 
 
 def NATR(

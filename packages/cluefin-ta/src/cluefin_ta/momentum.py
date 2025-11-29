@@ -10,7 +10,8 @@ Functions:
 
 import numpy as np
 
-from cluefin_ta.overlap import EMA, SMA
+from cluefin_ta._core import get_impl
+from cluefin_ta.overlap import EMA
 
 
 def RSI(close: np.ndarray, timeperiod: int = 14) -> np.ndarray:
@@ -42,23 +43,25 @@ def RSI(close: np.ndarray, timeperiod: int = 14) -> np.ndarray:
     avg_gain = np.mean(gains[:timeperiod])
     avg_loss = np.mean(losses[:timeperiod])
 
-    # Calculate RSI using Wilder's smoothing method (EMA with alpha=1/timeperiod)
+    # Calculate first RSI value
     if avg_loss == 0:
         result[timeperiod] = 100.0
     else:
         rs = avg_gain / avg_loss
         result[timeperiod] = 100.0 - (100.0 / (1.0 + rs))
 
-    # Continue with smoothed averages
-    for i in range(timeperiod, n - 1):
-        avg_gain = (avg_gain * (timeperiod - 1) + gains[i]) / timeperiod
-        avg_loss = (avg_loss * (timeperiod - 1) + losses[i]) / timeperiod
+    # Use Wilder's smoothing for gains and losses
+    impl = get_impl()
+    smoothed_gains = impl.wilder_smooth(gains, timeperiod, avg_gain, timeperiod - 1)
+    smoothed_losses = impl.wilder_smooth(losses, timeperiod, avg_loss, timeperiod - 1)
 
-        if avg_loss == 0:
-            result[i + 1] = 100.0
+    # Calculate RSI from smoothed values (starting from timeperiod+1)
+    for i in range(timeperiod + 1, n):
+        if smoothed_losses[i - 1] == 0:
+            result[i] = 100.0
         else:
-            rs = avg_gain / avg_loss
-            result[i + 1] = 100.0 - (100.0 / (1.0 + rs))
+            rs = smoothed_gains[i - 1] / smoothed_losses[i - 1]
+            result[i] = 100.0 - (100.0 / (1.0 + rs))
 
     return result
 
@@ -113,20 +116,6 @@ def MACD(
     return macd, signal, hist
 
 
-def _sma_ignore_nan(arr: np.ndarray, period: int) -> np.ndarray:
-    """Simple Moving Average that handles NaN values by ignoring them in the window."""
-    n = len(arr)
-    result = np.full(n, np.nan)
-
-    for i in range(period - 1, n):
-        window = arr[i - period + 1 : i + 1]
-        valid = window[~np.isnan(window)]
-        if len(valid) >= period:
-            result[i] = np.mean(valid)
-
-    return result
-
-
 def STOCH(
     high: np.ndarray,
     low: np.ndarray,
@@ -164,14 +153,18 @@ def STOCH(
     if n < fastk_period:
         return slowk, slowd
 
+    # Get optimized rolling min/max
+    impl = get_impl()
+    highest_high, lowest_low = impl.rolling_minmax(high, low, fastk_period)
+
     # Calculate Fast %K
     fastk = np.full(n, np.nan)
     for i in range(fastk_period - 1, n):
-        highest_high = np.max(high[i - fastk_period + 1 : i + 1])
-        lowest_low = np.min(low[i - fastk_period + 1 : i + 1])
+        hh = highest_high[i]
+        ll = lowest_low[i]
 
-        if highest_high != lowest_low:
-            fastk[i] = 100.0 * (close[i] - lowest_low) / (highest_high - lowest_low)
+        if hh != ll:
+            fastk[i] = 100.0 * (close[i] - ll) / (hh - ll)
         else:
             fastk[i] = 50.0  # Neutral when no range
 
@@ -218,12 +211,16 @@ def WILLR(
     if n < timeperiod:
         return result
 
-    for i in range(timeperiod - 1, n):
-        highest_high = np.max(high[i - timeperiod + 1 : i + 1])
-        lowest_low = np.min(low[i - timeperiod + 1 : i + 1])
+    # Get optimized rolling min/max
+    impl = get_impl()
+    highest_high, lowest_low = impl.rolling_minmax(high, low, timeperiod)
 
-        if highest_high != lowest_low:
-            result[i] = -100.0 * (highest_high - close[i]) / (highest_high - lowest_low)
+    for i in range(timeperiod - 1, n):
+        hh = highest_high[i]
+        ll = lowest_low[i]
+
+        if hh != ll:
+            result[i] = -100.0 * (hh - close[i]) / (hh - ll)
         else:
             result[i] = -50.0  # Neutral when no range
 

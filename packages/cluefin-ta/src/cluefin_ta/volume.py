@@ -8,6 +8,8 @@ Functions:
 
 import numpy as np
 
+from cluefin_ta._core import get_impl
+
 
 def OBV(close: np.ndarray, volume: np.ndarray) -> np.ndarray:
     """
@@ -27,24 +29,15 @@ def OBV(close: np.ndarray, volume: np.ndarray) -> np.ndarray:
     volume = np.asarray(volume, dtype=np.float64)
     n = len(close)
 
-    result = np.zeros(n, dtype=np.float64)
-
     if n < 2:
+        result = np.zeros(n, dtype=np.float64)
+        if n >= 1:
+            result[0] = volume[0]
         return result
 
-    # First value
-    result[0] = volume[0]
-
-    # Calculate OBV
-    for i in range(1, n):
-        if close[i] > close[i - 1]:
-            result[i] = result[i - 1] + volume[i]
-        elif close[i] < close[i - 1]:
-            result[i] = result[i - 1] - volume[i]
-        else:
-            result[i] = result[i - 1]
-
-    return result
+    # Use optimized implementation
+    impl = get_impl()
+    return impl.obv_loop(close, volume)
 
 
 def AD(
@@ -75,31 +68,12 @@ def AD(
     volume = np.asarray(volume, dtype=np.float64)
     n = len(close)
 
-    result = np.zeros(n, dtype=np.float64)
-
     if n < 1:
-        return result
+        return np.zeros(n, dtype=np.float64)
 
-    for i in range(n):
-        hl_range = high[i] - low[i]
-
-        if hl_range != 0:
-            # Money Flow Multiplier = ((Close - Low) - (High - Close)) / (High - Low)
-            # Simplified: (2 * Close - Low - High) / (High - Low)
-            mfm = ((close[i] - low[i]) - (high[i] - close[i])) / hl_range
-        else:
-            mfm = 0.0
-
-        # Money Flow Volume
-        mfv = mfm * volume[i]
-
-        # Accumulate
-        if i == 0:
-            result[i] = mfv
-        else:
-            result[i] = result[i - 1] + mfv
-
-    return result
+    # Use optimized implementation
+    impl = get_impl()
+    return impl.ad_loop(high, low, close, volume)
 
 
 __all__ = ["OBV", "AD"]

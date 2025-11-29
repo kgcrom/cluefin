@@ -240,8 +240,25 @@ dependencies = [
     { name = "numpy", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
 
+[package.optional-dependencies]
+dev = [
+    { name = "numba" },
+    { name = "pytest" },
+    { name = "ta-lib" },
+]
+numba = [
+    { name = "numba" },
+]
+
 [package.metadata]
-requires-dist = [{ name = "numpy", specifier = ">=1.20.0" }]
+requires-dist = [
+    { name = "numba", marker = "extra == 'dev'", specifier = ">=0.56.0" },
+    { name = "numba", marker = "extra == 'numba'", specifier = ">=0.56.0" },
+    { name = "numpy", specifier = ">=1.20.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0" },
+    { name = "ta-lib", marker = "extra == 'dev'", specifier = ">=0.4.0" },
+]
+provides-extras = ["numba", "dev"]
 
 [[package]]
 name = "colorama"

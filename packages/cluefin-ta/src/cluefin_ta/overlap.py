@@ -9,6 +9,8 @@ Functions:
 
 import numpy as np
 
+from cluefin_ta._core import get_impl
+
 
 def SMA(close: np.ndarray, timeperiod: int = 30) -> np.ndarray:
     """
@@ -28,7 +30,7 @@ def SMA(close: np.ndarray, timeperiod: int = 30) -> np.ndarray:
     if n < timeperiod:
         return result
 
-    # Use cumsum for efficient calculation
+    # Use cumsum for efficient calculation (already vectorized, no Numba needed)
     cumsum = np.cumsum(np.insert(close, 0, 0))
     result[timeperiod - 1 :] = (cumsum[timeperiod:] - cumsum[:-timeperiod]) / timeperiod
 
@@ -48,22 +50,19 @@ def EMA(close: np.ndarray, timeperiod: int = 30) -> np.ndarray:
     """
     close = np.asarray(close, dtype=np.float64)
     n = len(close)
-    result = np.full(n, np.nan)
 
     if n < timeperiod:
-        return result
+        return np.full(n, np.nan)
 
     # Calculate multiplier (smoothing factor)
     alpha = 2.0 / (timeperiod + 1)
 
     # Initialize with SMA for the first EMA value
-    result[timeperiod - 1] = np.mean(close[:timeperiod])
+    initial_sma = np.mean(close[:timeperiod])
 
-    # Calculate EMA iteratively
-    for i in range(timeperiod, n):
-        result[i] = alpha * close[i] + (1 - alpha) * result[i - 1]
-
-    return result
+    # Use optimized implementation
+    impl = get_impl()
+    return impl.ema_loop(close, timeperiod, alpha, initial_sma)
 
 
 def BBANDS(
@@ -89,22 +88,19 @@ def BBANDS(
     close = np.asarray(close, dtype=np.float64)
     n = len(close)
 
-    upper = np.full(n, np.nan)
-    middle = np.full(n, np.nan)
-    lower = np.full(n, np.nan)
-
     if n < timeperiod:
-        return upper, middle, lower
+        nan_arr = np.full(n, np.nan)
+        return nan_arr, nan_arr.copy(), nan_arr.copy()
 
     # Calculate middle band (SMA)
     middle = SMA(close, timeperiod)
 
-    # Calculate rolling standard deviation
-    for i in range(timeperiod - 1, n):
-        window = close[i - timeperiod + 1 : i + 1]
-        std = np.std(window, ddof=0)  # Population std (ta-lib uses ddof=0)
-        upper[i] = middle[i] + nbdevup * std
-        lower[i] = middle[i] - nbdevdn * std
+    # Use optimized rolling std
+    impl = get_impl()
+    std = impl.rolling_std(close, timeperiod)
+
+    upper = middle + nbdevup * std
+    lower = middle - nbdevdn * std
 
     return upper, middle, lower
 
