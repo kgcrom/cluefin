@@ -12,16 +12,9 @@ Usage:
 """
 
 # Overlap Studies (Moving Averages)
-from cluefin_ta.overlap import BBANDS, DEMA, EMA, KAMA, SMA, TEMA, WMA
-
 # Momentum Indicators
 from cluefin_ta.momentum import ADX, CCI, MACD, MFI, MOM, ROC, RSI, STOCH, STOCHF, WILLR
-
-# Volatility Indicators
-from cluefin_ta.volatility import ATR, NATR, TRANGE
-
-# Volume Indicators
-from cluefin_ta.volume import AD, ADOSC, OBV
+from cluefin_ta.overlap import BBANDS, DEMA, EMA, KAMA, SMA, TEMA, WMA
 
 # Pattern Recognition (Candlestick)
 from cluefin_ta.pattern import (
@@ -39,6 +32,12 @@ from cluefin_ta.pattern import (
 
 # Portfolio Metrics
 from cluefin_ta.portfolio import CAGR, CALMAR, MDD, SHARPE, SORTINO, VOLATILITY
+
+# Volatility Indicators
+from cluefin_ta.volatility import ATR, NATR, TRANGE
+
+# Volume Indicators
+from cluefin_ta.volume import AD, ADOSC, OBV
 
 __version__ = "0.3.0"
 

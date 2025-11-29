@@ -10,9 +10,7 @@ from numba import jit
 
 
 @jit(nopython=True, cache=True)
-def ema_loop(
-    close: np.ndarray, period: int, alpha: float, initial_sma: float
-) -> np.ndarray:
+def ema_loop(close: np.ndarray, period: int, alpha: float, initial_sma: float) -> np.ndarray:
     """
     EMA calculation loop (Numba-accelerated).
 
@@ -78,9 +76,7 @@ def rolling_std(data: np.ndarray, period: int) -> np.ndarray:
 
 
 @jit(nopython=True, cache=True)
-def wilder_smooth(
-    values: np.ndarray, period: int, initial_value: float, start_idx: int
-) -> np.ndarray:
+def wilder_smooth(values: np.ndarray, period: int, initial_value: float, start_idx: int) -> np.ndarray:
     """
     Wilder's smoothing method (Numba-accelerated).
 
@@ -111,9 +107,7 @@ def wilder_smooth(
 
 
 @jit(nopython=True, cache=True)
-def rolling_minmax(
-    high: np.ndarray, low: np.ndarray, period: int
-) -> tuple[np.ndarray, np.ndarray]:
+def rolling_minmax(high: np.ndarray, low: np.ndarray, period: int) -> tuple[np.ndarray, np.ndarray]:
     """
     Rolling highest high and lowest low (Numba-accelerated).
 
@@ -151,9 +145,7 @@ def rolling_minmax(
 
 
 @jit(nopython=True, cache=True)
-def true_range_loop(
-    high: np.ndarray, low: np.ndarray, close: np.ndarray
-) -> np.ndarray:
+def true_range_loop(high: np.ndarray, low: np.ndarray, close: np.ndarray) -> np.ndarray:
     """
     True Range calculation loop (Numba-accelerated).
 
@@ -213,9 +205,7 @@ def obv_loop(close: np.ndarray, volume: np.ndarray) -> np.ndarray:
 
 
 @jit(nopython=True, cache=True)
-def ad_loop(
-    high: np.ndarray, low: np.ndarray, close: np.ndarray, volume: np.ndarray
-) -> np.ndarray:
+def ad_loop(high: np.ndarray, low: np.ndarray, close: np.ndarray, volume: np.ndarray) -> np.ndarray:
     """
     Accumulation/Distribution calculation loop (Numba-accelerated).
 

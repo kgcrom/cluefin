@@ -8,9 +8,7 @@ All functions are designed to match Numba-accelerated versions exactly.
 import numpy as np
 
 
-def ema_loop(
-    close: np.ndarray, period: int, alpha: float, initial_sma: float
-) -> np.ndarray:
+def ema_loop(close: np.ndarray, period: int, alpha: float, initial_sma: float) -> np.ndarray:
     """
     EMA calculation loop.
 
@@ -54,9 +52,7 @@ def rolling_std(data: np.ndarray, period: int) -> np.ndarray:
     return result
 
 
-def wilder_smooth(
-    values: np.ndarray, period: int, initial_value: float, start_idx: int
-) -> np.ndarray:
+def wilder_smooth(values: np.ndarray, period: int, initial_value: float, start_idx: int) -> np.ndarray:
     """
     Wilder's smoothing method.
 
@@ -81,9 +77,7 @@ def wilder_smooth(
     return result
 
 
-def rolling_minmax(
-    high: np.ndarray, low: np.ndarray, period: int
-) -> tuple[np.ndarray, np.ndarray]:
+def rolling_minmax(high: np.ndarray, low: np.ndarray, period: int) -> tuple[np.ndarray, np.ndarray]:
     """
     Rolling highest high and lowest low.
 
@@ -106,9 +100,7 @@ def rolling_minmax(
     return highest, lowest
 
 
-def true_range_loop(
-    high: np.ndarray, low: np.ndarray, close: np.ndarray
-) -> np.ndarray:
+def true_range_loop(high: np.ndarray, low: np.ndarray, close: np.ndarray) -> np.ndarray:
     """
     True Range calculation loop.
 
@@ -158,9 +150,7 @@ def obv_loop(close: np.ndarray, volume: np.ndarray) -> np.ndarray:
     return result
 
 
-def ad_loop(
-    high: np.ndarray, low: np.ndarray, close: np.ndarray, volume: np.ndarray
-) -> np.ndarray:
+def ad_loop(high: np.ndarray, low: np.ndarray, close: np.ndarray, volume: np.ndarray) -> np.ndarray:
     """
     Accumulation/Distribution calculation loop.
 

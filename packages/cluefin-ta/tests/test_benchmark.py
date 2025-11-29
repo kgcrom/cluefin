@@ -93,12 +93,8 @@ class TestEmaLoopBenchmark:
         alpha = 2.0 / (period + 1)
         initial_sma = np.mean(large_close[:period])
 
-        numpy_time, numpy_std = benchmark_function(
-            numpy_impl.ema_loop, large_close, period, alpha, initial_sma
-        )
-        numba_time, numba_std = benchmark_function(
-            numba_impl.ema_loop, large_close, period, alpha, initial_sma
-        )
+        numpy_time, numpy_std = benchmark_function(numpy_impl.ema_loop, large_close, period, alpha, initial_sma)
+        numba_time, numba_std = benchmark_function(numba_impl.ema_loop, large_close, period, alpha, initial_sma)
 
         speedup = numpy_time / numba_time
 
@@ -120,12 +116,8 @@ class TestRollingStdBenchmark:
         """Compare rolling std performance."""
         period = 20
 
-        numpy_time, numpy_std = benchmark_function(
-            numpy_impl.rolling_std, large_close, period
-        )
-        numba_time, numba_std = benchmark_function(
-            numba_impl.rolling_std, large_close, period
-        )
+        numpy_time, numpy_std = benchmark_function(numpy_impl.rolling_std, large_close, period)
+        numba_time, numba_std = benchmark_function(numba_impl.rolling_std, large_close, period)
 
         speedup = numpy_time / numba_time
 
@@ -148,12 +140,8 @@ class TestRollingMinMaxBenchmark:
         low = large_ohlcv["low"]
         period = 14
 
-        numpy_time, numpy_std = benchmark_function(
-            numpy_impl.rolling_minmax, high, low, period
-        )
-        numba_time, numba_std = benchmark_function(
-            numba_impl.rolling_minmax, high, low, period
-        )
+        numpy_time, numpy_std = benchmark_function(numpy_impl.rolling_minmax, high, low, period)
+        numba_time, numba_std = benchmark_function(numba_impl.rolling_minmax, high, low, period)
 
         speedup = numpy_time / numba_time
 
@@ -176,12 +164,8 @@ class TestTrueRangeBenchmark:
         low = large_ohlcv["low"]
         close = large_ohlcv["close"]
 
-        numpy_time, numpy_std = benchmark_function(
-            numpy_impl.true_range_loop, high, low, close
-        )
-        numba_time, numba_std = benchmark_function(
-            numba_impl.true_range_loop, high, low, close
-        )
+        numpy_time, numpy_std = benchmark_function(numpy_impl.true_range_loop, high, low, close)
+        numba_time, numba_std = benchmark_function(numba_impl.true_range_loop, high, low, close)
 
         speedup = numpy_time / numba_time
 
@@ -228,12 +212,8 @@ class TestADBenchmark:
         close = large_ohlcv["close"]
         volume = large_ohlcv["volume"]
 
-        numpy_time, numpy_std = benchmark_function(
-            numpy_impl.ad_loop, high, low, close, volume
-        )
-        numba_time, numba_std = benchmark_function(
-            numba_impl.ad_loop, high, low, close, volume
-        )
+        numpy_time, numpy_std = benchmark_function(numpy_impl.ad_loop, high, low, close, volume)
+        numba_time, numba_std = benchmark_function(numba_impl.ad_loop, high, low, close, volume)
 
         speedup = numpy_time / numba_time
 
@@ -263,12 +243,8 @@ class TestBenchmarkSummary:
         period = 20
         alpha = 2.0 / (period + 1)
         initial_sma = np.mean(close[:period])
-        numpy_t, _ = benchmark_function(
-            numpy_impl.ema_loop, close, period, alpha, initial_sma
-        )
-        numba_t, _ = benchmark_function(
-            numba_impl.ema_loop, close, period, alpha, initial_sma
-        )
+        numpy_t, _ = benchmark_function(numpy_impl.ema_loop, close, period, alpha, initial_sma)
+        numba_t, _ = benchmark_function(numba_impl.ema_loop, close, period, alpha, initial_sma)
         results.append(("EMA Loop", numpy_t, numba_t))
 
         # Rolling Std
@@ -297,17 +273,17 @@ class TestBenchmarkSummary:
         results.append(("A/D", numpy_t, numba_t))
 
         with capsys.disabled():
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"Benchmark Summary (n={len(close)})")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")
             print(f"{'Function':<20} {'NumPy (ms)':<15} {'Numba (ms)':<15} {'Speedup':<10}")
-            print(f"{'-'*60}")
+            print(f"{'-' * 60}")
 
             for name, numpy_time, numba_time in results:
                 speedup = numpy_time / numba_time
                 print(f"{name:<20} {numpy_time:<15.3f} {numba_time:<15.3f} {speedup:<10.2f}x")
 
             avg_speedup = np.mean([r[1] / r[2] for r in results])
-            print(f"{'-'*60}")
+            print(f"{'-' * 60}")
             print(f"{'Average':<20} {'':<15} {'':<15} {avg_speedup:<10.2f}x")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")

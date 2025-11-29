@@ -480,7 +480,7 @@ def ADX(
     first_adx_idx = timeperiod * 2 - 1
     if first_adx_idx < n:
         # Average of DX values from index 'period' to '2*period-1'
-        dx_values = dx[timeperiod:first_adx_idx + 1]
+        dx_values = dx[timeperiod : first_adx_idx + 1]
         valid_dx = dx_values[~np.isnan(dx_values)]
         if len(valid_dx) > 0:
             result[first_adx_idx] = np.mean(valid_dx)
