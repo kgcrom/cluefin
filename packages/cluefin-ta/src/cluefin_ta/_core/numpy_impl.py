@@ -194,6 +194,184 @@ def ad_loop(
     return result
 
 
+def kama_loop(
+    close: np.ndarray,
+    period: int,
+    fast_sc: float,
+    slow_sc: float,
+) -> np.ndarray:
+    """
+    Kaufman Adaptive Moving Average calculation loop.
+
+    Args:
+        close: Array of closing prices
+        period: Efficiency ratio period
+        fast_sc: Fast smoothing constant (2 / (fast + 1))
+        slow_sc: Slow smoothing constant (2 / (slow + 1))
+
+    Returns:
+        Array of KAMA values with NaN for initial periods
+    """
+    n = len(close)
+    result = np.full(n, np.nan)
+
+    if n < period:
+        return result
+
+    # First KAMA value is the first close price after enough data
+    result[period - 1] = close[period - 1]
+
+    for i in range(period, n):
+        # Change = |close - close[period ago]|
+        change = abs(close[i] - close[i - period])
+
+        # Volatility = sum of |close - prev_close| over period
+        volatility = 0.0
+        for j in range(i - period + 1, i + 1):
+            volatility += abs(close[j] - close[j - 1])
+
+        # Efficiency Ratio
+        if volatility != 0:
+            er = change / volatility
+        else:
+            er = 0.0
+
+        # Smoothing Constant: SC = (ER * (fast_sc - slow_sc) + slow_sc)^2
+        sc = (er * (fast_sc - slow_sc) + slow_sc) ** 2
+
+        # KAMA = prev_KAMA + SC * (close - prev_KAMA)
+        result[i] = result[i - 1] + sc * (close[i] - result[i - 1])
+
+    return result
+
+
+def dx_loop(
+    high: np.ndarray,
+    low: np.ndarray,
+    prev_close: np.ndarray,
+    period: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Directional Index calculation loop for ADX.
+
+    Calculates +DI, -DI, and DX using Wilder's smoothing.
+
+    Args:
+        high: Array of high prices
+        low: Array of low prices
+        prev_close: Array of previous close prices (close shifted by 1)
+        period: Smoothing period
+
+    Returns:
+        Tuple of (+DI, -DI, DX) arrays
+    """
+    n = len(high)
+    plus_di = np.full(n, np.nan)
+    minus_di = np.full(n, np.nan)
+    dx = np.full(n, np.nan)
+
+    if n < period + 1:
+        return plus_di, minus_di, dx
+
+    # Calculate +DM, -DM, and TR
+    plus_dm = np.zeros(n)
+    minus_dm = np.zeros(n)
+    tr = np.zeros(n)
+
+    for i in range(1, n):
+        up_move = high[i] - high[i - 1]
+        down_move = low[i - 1] - low[i]
+
+        if up_move > down_move and up_move > 0:
+            plus_dm[i] = up_move
+        if down_move > up_move and down_move > 0:
+            minus_dm[i] = down_move
+
+        # True Range
+        hl = high[i] - low[i]
+        hc = abs(high[i] - prev_close[i])
+        lc = abs(low[i] - prev_close[i])
+        tr[i] = max(hl, hc, lc)
+
+    # Wilder smoothing for +DM, -DM, TR
+    smooth_plus_dm = np.full(n, np.nan)
+    smooth_minus_dm = np.full(n, np.nan)
+    smooth_tr = np.full(n, np.nan)
+
+    # Initialize with sum of first 'period' values
+    smooth_plus_dm[period] = np.sum(plus_dm[1 : period + 1])
+    smooth_minus_dm[period] = np.sum(minus_dm[1 : period + 1])
+    smooth_tr[period] = np.sum(tr[1 : period + 1])
+
+    # Wilder smoothing
+    for i in range(period + 1, n):
+        smooth_plus_dm[i] = smooth_plus_dm[i - 1] - (smooth_plus_dm[i - 1] / period) + plus_dm[i]
+        smooth_minus_dm[i] = smooth_minus_dm[i - 1] - (smooth_minus_dm[i - 1] / period) + minus_dm[i]
+        smooth_tr[i] = smooth_tr[i - 1] - (smooth_tr[i - 1] / period) + tr[i]
+
+    # Calculate +DI, -DI
+    for i in range(period, n):
+        if smooth_tr[i] != 0:
+            plus_di[i] = 100.0 * smooth_plus_dm[i] / smooth_tr[i]
+            minus_di[i] = 100.0 * smooth_minus_dm[i] / smooth_tr[i]
+        else:
+            plus_di[i] = 0.0
+            minus_di[i] = 0.0
+
+        # Calculate DX
+        di_sum = plus_di[i] + minus_di[i]
+        if di_sum != 0:
+            dx[i] = 100.0 * abs(plus_di[i] - minus_di[i]) / di_sum
+        else:
+            dx[i] = 0.0
+
+    return plus_di, minus_di, dx
+
+
+def mfi_loop(
+    typical_price: np.ndarray,
+    volume: np.ndarray,
+    period: int,
+) -> np.ndarray:
+    """
+    Money Flow Index calculation loop.
+
+    Args:
+        typical_price: Array of typical prices ((H+L+C)/3)
+        volume: Array of volume data
+        period: MFI period
+
+    Returns:
+        Array of MFI values (0-100) with NaN for initial periods
+    """
+    n = len(typical_price)
+    result = np.full(n, np.nan)
+
+    if n < period + 1:
+        return result
+
+    # Raw money flow
+    raw_mf = typical_price * volume
+
+    for i in range(period, n):
+        pos_mf = 0.0
+        neg_mf = 0.0
+
+        for j in range(i - period + 1, i + 1):
+            if typical_price[j] > typical_price[j - 1]:
+                pos_mf += raw_mf[j]
+            elif typical_price[j] < typical_price[j - 1]:
+                neg_mf += raw_mf[j]
+
+        if neg_mf != 0:
+            mf_ratio = pos_mf / neg_mf
+            result[i] = 100.0 - (100.0 / (1.0 + mf_ratio))
+        else:
+            result[i] = 100.0
+
+    return result
+
+
 __all__ = [
     "ema_loop",
     "rolling_std",
@@ -202,4 +380,7 @@ __all__ = [
     "true_range_loop",
     "obv_loop",
     "ad_loop",
+    "kama_loop",
+    "dx_loop",
+    "mfi_loop",
 ]

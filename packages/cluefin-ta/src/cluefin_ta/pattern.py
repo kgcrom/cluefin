@@ -5,6 +5,10 @@ Functions:
     CDLDOJI: Doji pattern
     CDLHAMMER: Hammer pattern
     CDLENGULFING: Engulfing pattern
+    CDLSHOOTINGSTAR: Shooting Star pattern
+    CDLHANGINGMAN: Hanging Man pattern
+    CDLHARAMI: Harami pattern
+    CDLPIERCING: Piercing Line pattern
 
 All pattern functions return:
     +100: Bullish pattern
@@ -33,6 +37,16 @@ def _lower_shadow(low: float, open_price: float, close_price: float) -> float:
 def _candle_range(high: float, low: float) -> float:
     """Calculate the full range of a candle."""
     return high - low
+
+
+def _is_bullish(open_price: float, close_price: float) -> bool:
+    """Check if a candle is bullish (close > open)."""
+    return close_price > open_price
+
+
+def _is_bearish(open_price: float, close_price: float) -> bool:
+    """Check if a candle is bearish (close < open)."""
+    return close_price < open_price
 
 
 def CDLDOJI(
@@ -203,4 +217,256 @@ def CDLENGULFING(
     return result
 
 
-__all__ = ["CDLDOJI", "CDLHAMMER", "CDLENGULFING"]
+def CDLSHOOTINGSTAR(
+    open_arr: np.ndarray,
+    high: np.ndarray,
+    low: np.ndarray,
+    close: np.ndarray,
+) -> np.ndarray:
+    """
+    Shooting Star Pattern.
+
+    A shooting star is a bearish reversal pattern with:
+    - Small body at the lower end of the trading range
+    - Long upper shadow (at least 2x the body)
+    - Little or no lower shadow
+    - Typically appears after an uptrend
+
+    Args:
+        open_arr: Array of opening prices
+        high: Array of high prices
+        low: Array of low prices
+        close: Array of closing prices
+
+    Returns:
+        Array with -100 (shooting star), or 0 (no pattern)
+    """
+    open_arr = np.asarray(open_arr, dtype=np.float64)
+    high = np.asarray(high, dtype=np.float64)
+    low = np.asarray(low, dtype=np.float64)
+    close = np.asarray(close, dtype=np.float64)
+    n = len(close)
+
+    result = np.zeros(n, dtype=np.int32)
+
+    for i in range(n):
+        candle_range = _candle_range(high[i], low[i])
+
+        if candle_range == 0:
+            continue
+
+        body = _body_size(open_arr[i], close[i])
+        lower_shadow = _lower_shadow(low[i], open_arr[i], close[i])
+        upper_shadow = _upper_shadow(high[i], open_arr[i], close[i])
+
+        # Shooting Star criteria (opposite of hammer):
+        # 1. Upper shadow at least 2x the body
+        # 2. Lower shadow very small (less than 10% of range)
+        # 3. Body in lower portion of range
+
+        if body == 0:
+            body = 0.001 * candle_range  # Prevent division by zero
+
+        upper_shadow_ratio = upper_shadow / body if body > 0 else 0
+        lower_shadow_ratio = lower_shadow / candle_range
+
+        if upper_shadow_ratio >= 2.0 and lower_shadow_ratio <= 0.1:
+            result[i] = -100
+
+    return result
+
+
+def CDLHANGINGMAN(
+    open_arr: np.ndarray,
+    high: np.ndarray,
+    low: np.ndarray,
+    close: np.ndarray,
+) -> np.ndarray:
+    """
+    Hanging Man Pattern.
+
+    A hanging man has the same shape as a hammer but appears at the top of an uptrend.
+    It's a bearish reversal pattern with:
+    - Small body at the upper end of the trading range
+    - Long lower shadow (at least 2x the body)
+    - Little or no upper shadow
+
+    Note: This implementation detects the candlestick shape only.
+    For proper trading use, additional trend context should be considered.
+
+    Args:
+        open_arr: Array of opening prices
+        high: Array of high prices
+        low: Array of low prices
+        close: Array of closing prices
+
+    Returns:
+        Array with -100 (hanging man), or 0 (no pattern)
+    """
+    open_arr = np.asarray(open_arr, dtype=np.float64)
+    high = np.asarray(high, dtype=np.float64)
+    low = np.asarray(low, dtype=np.float64)
+    close = np.asarray(close, dtype=np.float64)
+    n = len(close)
+
+    result = np.zeros(n, dtype=np.int32)
+
+    for i in range(n):
+        candle_range = _candle_range(high[i], low[i])
+
+        if candle_range == 0:
+            continue
+
+        body = _body_size(open_arr[i], close[i])
+        lower_shadow = _lower_shadow(low[i], open_arr[i], close[i])
+        upper_shadow = _upper_shadow(high[i], open_arr[i], close[i])
+
+        # Hanging Man has same shape as hammer
+        # 1. Lower shadow at least 2x the body
+        # 2. Upper shadow very small (less than 10% of range)
+
+        if body == 0:
+            body = 0.001 * candle_range
+
+        lower_shadow_ratio = lower_shadow / body if body > 0 else 0
+        upper_shadow_ratio = upper_shadow / candle_range
+
+        if lower_shadow_ratio >= 2.0 and upper_shadow_ratio <= 0.1:
+            # Return -100 as it's a bearish reversal signal when at top
+            result[i] = -100
+
+    return result
+
+
+def CDLHARAMI(
+    open_arr: np.ndarray,
+    high: np.ndarray,
+    low: np.ndarray,
+    close: np.ndarray,
+) -> np.ndarray:
+    """
+    Harami Pattern.
+
+    A harami is a two-candle pattern where the second candle's body is completely
+    contained within the first candle's body.
+
+    Bullish Harami: First candle bearish, second candle bullish and contained.
+    Bearish Harami: First candle bullish, second candle bearish and contained.
+
+    Args:
+        open_arr: Array of opening prices
+        high: Array of high prices
+        low: Array of low prices
+        close: Array of closing prices
+
+    Returns:
+        Array with +100 (bullish harami), -100 (bearish harami), or 0 (no pattern)
+    """
+    open_arr = np.asarray(open_arr, dtype=np.float64)
+    high = np.asarray(high, dtype=np.float64)
+    low = np.asarray(low, dtype=np.float64)
+    close = np.asarray(close, dtype=np.float64)
+    n = len(close)
+
+    result = np.zeros(n, dtype=np.int32)
+
+    if n < 2:
+        return result
+
+    for i in range(1, n):
+        prev_open = open_arr[i - 1]
+        prev_close = close[i - 1]
+        curr_open = open_arr[i]
+        curr_close = close[i]
+
+        prev_is_bullish = _is_bullish(prev_open, prev_close)
+        curr_is_bullish = _is_bullish(curr_open, curr_close)
+
+        prev_body_high = max(prev_open, prev_close)
+        prev_body_low = min(prev_open, prev_close)
+        curr_body_high = max(curr_open, curr_close)
+        curr_body_low = min(curr_open, curr_close)
+
+        # Check if current body is contained within previous body
+        is_contained = curr_body_high < prev_body_high and curr_body_low > prev_body_low
+
+        if is_contained:
+            # Bullish Harami: prev bearish, curr bullish
+            if not prev_is_bullish and curr_is_bullish:
+                result[i] = 100
+            # Bearish Harami: prev bullish, curr bearish
+            elif prev_is_bullish and not curr_is_bullish:
+                result[i] = -100
+
+    return result
+
+
+def CDLPIERCING(
+    open_arr: np.ndarray,
+    high: np.ndarray,
+    low: np.ndarray,
+    close: np.ndarray,
+) -> np.ndarray:
+    """
+    Piercing Line Pattern.
+
+    A bullish reversal pattern consisting of two candles:
+    1. First candle is a long bearish candle
+    2. Second candle opens below the first candle's low
+    3. Second candle closes above the midpoint of the first candle's body
+
+    Args:
+        open_arr: Array of opening prices
+        high: Array of high prices
+        low: Array of low prices
+        close: Array of closing prices
+
+    Returns:
+        Array with +100 (piercing line), or 0 (no pattern)
+    """
+    open_arr = np.asarray(open_arr, dtype=np.float64)
+    high = np.asarray(high, dtype=np.float64)
+    low = np.asarray(low, dtype=np.float64)
+    close = np.asarray(close, dtype=np.float64)
+    n = len(close)
+
+    result = np.zeros(n, dtype=np.int32)
+
+    if n < 2:
+        return result
+
+    for i in range(1, n):
+        prev_open = open_arr[i - 1]
+        prev_close = close[i - 1]
+        curr_open = open_arr[i]
+        curr_close = close[i]
+
+        prev_is_bearish = _is_bearish(prev_open, prev_close)
+        curr_is_bullish = _is_bullish(curr_open, curr_close)
+
+        if not prev_is_bearish or not curr_is_bullish:
+            continue
+
+        prev_body = _body_size(prev_open, prev_close)
+        prev_midpoint = prev_close + (prev_body / 2)  # For bearish: close < open
+
+        # Piercing Line criteria:
+        # 1. Previous candle is bearish
+        # 2. Current candle is bullish
+        # 3. Current opens below previous low
+        # 4. Current closes above midpoint of previous body but below previous open
+        if curr_open < low[i - 1] and curr_close > prev_midpoint and curr_close < prev_open:
+            result[i] = 100
+
+    return result
+
+
+__all__ = [
+    "CDLDOJI",
+    "CDLHAMMER",
+    "CDLENGULFING",
+    "CDLSHOOTINGSTAR",
+    "CDLHANGINGMAN",
+    "CDLHARAMI",
+    "CDLPIERCING",
+]

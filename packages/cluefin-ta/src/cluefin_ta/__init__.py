@@ -12,31 +12,50 @@ Usage:
 """
 
 # Overlap Studies (Moving Averages)
-# Momentum Indicators
-from cluefin_ta.momentum import MACD, RSI, STOCH, WILLR
-from cluefin_ta.overlap import BBANDS, EMA, SMA
+from cluefin_ta.overlap import BBANDS, DEMA, EMA, KAMA, SMA, TEMA, WMA
 
-# Pattern Recognition (Candlestick)
-from cluefin_ta.pattern import CDLDOJI, CDLENGULFING, CDLHAMMER
+# Momentum Indicators
+from cluefin_ta.momentum import ADX, CCI, MACD, MFI, MOM, ROC, RSI, STOCH, STOCHF, WILLR
 
 # Volatility Indicators
 from cluefin_ta.volatility import ATR, NATR, TRANGE
 
 # Volume Indicators
-from cluefin_ta.volume import AD, OBV
+from cluefin_ta.volume import AD, ADOSC, OBV
 
-__version__ = "0.1.0"
+# Pattern Recognition (Candlestick)
+from cluefin_ta.pattern import (
+    CDLDOJI,
+    CDLENGULFING,
+    CDLHAMMER,
+    CDLHANGINGMAN,
+    CDLHARAMI,
+    CDLPIERCING,
+    CDLSHOOTINGSTAR,
+)
+
+__version__ = "0.2.0"
 
 __all__ = [
     # Overlap
     "SMA",
     "EMA",
+    "WMA",
+    "DEMA",
+    "TEMA",
+    "KAMA",
     "BBANDS",
     # Momentum
     "RSI",
     "MACD",
     "STOCH",
+    "STOCHF",
     "WILLR",
+    "MOM",
+    "ROC",
+    "CCI",
+    "MFI",
+    "ADX",
     # Volatility
     "TRANGE",
     "ATR",
@@ -44,8 +63,13 @@ __all__ = [
     # Volume
     "OBV",
     "AD",
+    "ADOSC",
     # Pattern
     "CDLDOJI",
     "CDLHAMMER",
     "CDLENGULFING",
+    "CDLSHOOTINGSTAR",
+    "CDLHANGINGMAN",
+    "CDLHARAMI",
+    "CDLPIERCING",
 ]

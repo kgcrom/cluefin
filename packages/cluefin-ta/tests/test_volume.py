@@ -1,12 +1,12 @@
 """
-Tests for volume indicators (OBV, AD).
+Tests for volume indicators (OBV, AD, ADOSC).
 """
 
 import numpy as np
 import pytest
 import talib
 
-from cluefin_ta import AD, OBV
+from cluefin_ta import AD, ADOSC, OBV
 
 
 class TestOBV:
@@ -108,3 +108,30 @@ class TestAD:
         # MFM = ((110-90) - (110-110)) / (110-90) = 20/20 = 1
         # Money Flow Volume = 1 * 1000 = 1000
         assert result[0] == 1000.0
+
+
+class TestADOSC:
+    """Tests for Chaikin A/D Oscillator."""
+
+    def test_adosc_matches_talib(self, sample_ohlcv):
+        """Verify ADOSC matches ta-lib output."""
+        high = sample_ohlcv["high"]
+        low = sample_ohlcv["low"]
+        close = sample_ohlcv["close"]
+        volume = sample_ohlcv["volume"]
+
+        expected = talib.ADOSC(high, low, close, volume, fastperiod=3, slowperiod=10)
+        actual = ADOSC(high, low, close, volume, fastperiod=3, slowperiod=10)
+
+        mask = ~np.isnan(expected)
+        np.testing.assert_allclose(actual[mask], expected[mask], rtol=1e-10)
+
+    def test_adosc_short_array(self):
+        """Test ADOSC with array shorter than slow period."""
+        high = np.array([100.0, 101.0, 102.0])
+        low = np.array([99.0, 100.0, 101.0])
+        close = np.array([100.5, 101.5, 102.5])
+        volume = np.array([1000.0, 2000.0, 3000.0])
+
+        result = ADOSC(high, low, close, volume, fastperiod=3, slowperiod=10)
+        assert np.all(np.isnan(result))

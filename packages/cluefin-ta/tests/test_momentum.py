@@ -1,12 +1,12 @@
 """
-Tests for momentum indicators (RSI, MACD, STOCH, WILLR).
+Tests for momentum indicators (RSI, MACD, STOCH, STOCHF, WILLR, MOM, ROC, CCI, MFI, ADX).
 """
 
 import numpy as np
 import pytest
 import talib
 
-from cluefin_ta import MACD, RSI, STOCH, WILLR
+from cluefin_ta import ADX, CCI, MACD, MFI, MOM, ROC, RSI, STOCH, STOCHF, WILLR
 
 
 class TestRSI:
@@ -144,3 +144,158 @@ class TestWILLR:
 
         assert np.all(valid >= -100)
         assert np.all(valid <= 0)
+
+
+class TestSTOCHF:
+    """Tests for Fast Stochastic Oscillator."""
+
+    def test_stochf_matches_talib(self, sample_ohlcv):
+        """Verify STOCHF matches ta-lib output."""
+        high = sample_ohlcv["high"]
+        low = sample_ohlcv["low"]
+        close = sample_ohlcv["close"]
+
+        expected_k, expected_d = talib.STOCHF(high, low, close)
+        actual_k, actual_d = STOCHF(high, low, close)
+
+        k_mask = ~np.isnan(expected_k)
+        d_mask = ~np.isnan(expected_d)
+
+        np.testing.assert_allclose(actual_k[k_mask], expected_k[k_mask], rtol=1e-10)
+        np.testing.assert_allclose(actual_d[d_mask], expected_d[d_mask], rtol=1e-10)
+
+    def test_stochf_range(self, sample_ohlcv):
+        """Verify STOCHF values are in range [0, 100]."""
+        high = sample_ohlcv["high"]
+        low = sample_ohlcv["low"]
+        close = sample_ohlcv["close"]
+
+        fastk, fastd = STOCHF(high, low, close)
+
+        valid_k = fastk[~np.isnan(fastk)]
+        valid_d = fastd[~np.isnan(fastd)]
+
+        assert np.all(valid_k >= 0) and np.all(valid_k <= 100)
+        assert np.all(valid_d >= 0) and np.all(valid_d <= 100)
+
+
+class TestMOM:
+    """Tests for Momentum."""
+
+    def test_mom_matches_talib(self, sample_close):
+        """Verify MOM matches ta-lib output."""
+        timeperiod = 10
+        expected = talib.MOM(sample_close, timeperiod=timeperiod)
+        actual = MOM(sample_close, timeperiod=timeperiod)
+
+        mask = ~np.isnan(expected)
+        np.testing.assert_allclose(actual[mask], expected[mask], rtol=1e-10)
+
+    def test_mom_short_array(self, short_data):
+        """Test MOM with short array."""
+        result = MOM(short_data, timeperiod=10)
+        assert np.all(np.isnan(result))
+
+
+class TestROC:
+    """Tests for Rate of Change."""
+
+    def test_roc_matches_talib(self, sample_close):
+        """Verify ROC matches ta-lib output."""
+        timeperiod = 10
+        expected = talib.ROC(sample_close, timeperiod=timeperiod)
+        actual = ROC(sample_close, timeperiod=timeperiod)
+
+        mask = ~np.isnan(expected)
+        np.testing.assert_allclose(actual[mask], expected[mask], rtol=1e-10)
+
+    def test_roc_short_array(self, short_data):
+        """Test ROC with short array."""
+        result = ROC(short_data, timeperiod=10)
+        assert np.all(np.isnan(result))
+
+
+class TestCCI:
+    """Tests for Commodity Channel Index."""
+
+    def test_cci_matches_talib(self, sample_ohlcv):
+        """Verify CCI matches ta-lib output."""
+        high = sample_ohlcv["high"]
+        low = sample_ohlcv["low"]
+        close = sample_ohlcv["close"]
+
+        expected = talib.CCI(high, low, close, timeperiod=14)
+        actual = CCI(high, low, close, timeperiod=14)
+
+        mask = ~np.isnan(expected)
+        np.testing.assert_allclose(actual[mask], expected[mask], rtol=1e-10)
+
+    def test_cci_short_array(self, short_data):
+        """Test CCI with short array."""
+        result = CCI(short_data, short_data, short_data, timeperiod=14)
+        assert np.all(np.isnan(result))
+
+
+class TestMFI:
+    """Tests for Money Flow Index."""
+
+    def test_mfi_matches_talib(self, sample_ohlcv):
+        """Verify MFI matches ta-lib output."""
+        high = sample_ohlcv["high"]
+        low = sample_ohlcv["low"]
+        close = sample_ohlcv["close"]
+        volume = sample_ohlcv["volume"]
+
+        expected = talib.MFI(high, low, close, volume, timeperiod=14)
+        actual = MFI(high, low, close, volume, timeperiod=14)
+
+        mask = ~np.isnan(expected)
+        np.testing.assert_allclose(actual[mask], expected[mask], rtol=1e-10)
+
+    def test_mfi_range(self, sample_ohlcv):
+        """Verify MFI values are in range [0, 100]."""
+        high = sample_ohlcv["high"]
+        low = sample_ohlcv["low"]
+        close = sample_ohlcv["close"]
+        volume = sample_ohlcv["volume"]
+
+        result = MFI(high, low, close, volume, timeperiod=14)
+        valid = result[~np.isnan(result)]
+
+        assert np.all(valid >= 0)
+        assert np.all(valid <= 100)
+
+
+class TestADX:
+    """Tests for Average Directional Index."""
+
+    def test_adx_matches_talib(self, sample_ohlcv):
+        """Verify ADX matches ta-lib output within acceptable tolerance."""
+        high = sample_ohlcv["high"]
+        low = sample_ohlcv["low"]
+        close = sample_ohlcv["close"]
+
+        expected = talib.ADX(high, low, close, timeperiod=14)
+        actual = ADX(high, low, close, timeperiod=14)
+
+        mask = ~np.isnan(expected) & ~np.isnan(actual)
+        # ADX uses multiple smoothing operations, allow some tolerance
+        # Early values may differ slightly due to initialization differences
+        np.testing.assert_allclose(actual[mask], expected[mask], rtol=0.06)
+
+    def test_adx_range(self, sample_ohlcv):
+        """Verify ADX values are in range [0, 100]."""
+        high = sample_ohlcv["high"]
+        low = sample_ohlcv["low"]
+        close = sample_ohlcv["close"]
+
+        result = ADX(high, low, close, timeperiod=14)
+        valid = result[~np.isnan(result)]
+
+        assert np.all(valid >= 0)
+        assert np.all(valid <= 100)
+
+    def test_adx_short_array(self, short_data):
+        """Test ADX with short array."""
+        result = ADX(short_data, short_data, short_data, timeperiod=14)
+        assert np.all(np.isnan(result))

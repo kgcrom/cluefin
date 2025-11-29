@@ -1,12 +1,12 @@
 """
-Tests for overlap indicators (SMA, EMA, BBANDS).
+Tests for overlap indicators (SMA, EMA, WMA, DEMA, TEMA, KAMA, BBANDS).
 """
 
 import numpy as np
 import pytest
 import talib
 
-from cluefin_ta import BBANDS, EMA, SMA
+from cluefin_ta import BBANDS, DEMA, EMA, KAMA, SMA, TEMA, WMA
 
 
 class TestSMA:
@@ -112,3 +112,91 @@ class TestBBANDS:
         assert np.all(np.isnan(upper))
         assert np.all(np.isnan(middle))
         assert np.all(np.isnan(lower))
+
+
+class TestWMA:
+    """Tests for Weighted Moving Average."""
+
+    def test_wma_matches_talib(self, sample_close):
+        """Verify WMA matches ta-lib output."""
+        timeperiod = 20
+        expected = talib.WMA(sample_close, timeperiod=timeperiod)
+        actual = WMA(sample_close, timeperiod=timeperiod)
+
+        mask = ~np.isnan(expected)
+        np.testing.assert_allclose(actual[mask], expected[mask], rtol=1e-10)
+
+    def test_wma_nan_prefix(self, sample_close):
+        """Verify WMA has correct NaN prefix."""
+        timeperiod = 20
+        result = WMA(sample_close, timeperiod=timeperiod)
+
+        assert np.all(np.isnan(result[: timeperiod - 1]))
+        assert not np.isnan(result[timeperiod - 1])
+
+    def test_wma_short_array(self, short_data):
+        """Test WMA with array shorter than timeperiod."""
+        result = WMA(short_data, timeperiod=10)
+        assert np.all(np.isnan(result))
+
+
+class TestDEMA:
+    """Tests for Double Exponential Moving Average."""
+
+    def test_dema_matches_talib(self, sample_close):
+        """Verify DEMA matches ta-lib output."""
+        timeperiod = 20
+        expected = talib.DEMA(sample_close, timeperiod=timeperiod)
+        actual = DEMA(sample_close, timeperiod=timeperiod)
+
+        mask = ~np.isnan(expected)
+        np.testing.assert_allclose(actual[mask], expected[mask], rtol=1e-10)
+
+    def test_dema_short_array(self, short_data):
+        """Test DEMA with array shorter than timeperiod."""
+        result = DEMA(short_data, timeperiod=10)
+        assert np.all(np.isnan(result))
+
+
+class TestTEMA:
+    """Tests for Triple Exponential Moving Average."""
+
+    def test_tema_matches_talib(self, sample_close):
+        """Verify TEMA matches ta-lib output."""
+        timeperiod = 20
+        expected = talib.TEMA(sample_close, timeperiod=timeperiod)
+        actual = TEMA(sample_close, timeperiod=timeperiod)
+
+        mask = ~np.isnan(expected)
+        np.testing.assert_allclose(actual[mask], expected[mask], rtol=1e-10)
+
+    def test_tema_short_array(self, short_data):
+        """Test TEMA with array shorter than timeperiod."""
+        result = TEMA(short_data, timeperiod=10)
+        assert np.all(np.isnan(result))
+
+
+class TestKAMA:
+    """Tests for Kaufman Adaptive Moving Average."""
+
+    def test_kama_matches_talib(self, sample_close):
+        """Verify KAMA matches ta-lib output."""
+        timeperiod = 30
+        expected = talib.KAMA(sample_close, timeperiod=timeperiod)
+        actual = KAMA(sample_close, timeperiod=timeperiod)
+
+        mask = ~np.isnan(expected)
+        np.testing.assert_allclose(actual[mask], expected[mask], rtol=1e-6)
+
+    def test_kama_nan_prefix(self, sample_close):
+        """Verify KAMA has correct NaN prefix."""
+        timeperiod = 30
+        result = KAMA(sample_close, timeperiod=timeperiod)
+
+        assert np.all(np.isnan(result[: timeperiod - 1]))
+        assert not np.isnan(result[timeperiod - 1])
+
+    def test_kama_short_array(self, short_data):
+        """Test KAMA with array shorter than timeperiod."""
+        result = KAMA(short_data, timeperiod=10)
+        assert np.all(np.isnan(result))
