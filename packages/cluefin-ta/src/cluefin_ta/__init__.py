@@ -11,6 +11,8 @@ Usage:
     from cluefin_ta import SMA, EMA, RSI, MACD
 """
 
+from importlib.metadata import PackageNotFoundError, version
+
 # Overlap Studies (Moving Averages)
 # Momentum Indicators
 from cluefin_ta.momentum import ADX, CCI, MACD, MFI, MOM, ROC, RSI, STOCH, STOCHF, WILLR
@@ -39,7 +41,10 @@ from cluefin_ta.volatility import ATR, NATR, TRANGE
 # Volume Indicators
 from cluefin_ta.volume import AD, ADOSC, OBV
 
-__version__ = "0.3.0"
+try:
+    __version__ = version("cluefin-ta")
+except PackageNotFoundError:
+    __version__ = "0.0.0"
 
 __all__ = [
     # Overlap
