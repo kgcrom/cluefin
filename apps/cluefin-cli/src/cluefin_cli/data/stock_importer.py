@@ -1,29 +1,56 @@
 """Stock chart data importer from KIS API."""
 
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Callable, Optional
 
 import pandas as pd
 import requests
+from cluefin_openapi import TokenBucket
 from cluefin_openapi.kis._client import Client
 from loguru import logger
 
 from cluefin_cli.data.duckdb_manager import DuckDBManager
 
 
+@dataclass
+class StockFetchResult:
+    """Result container for a single stock fetch operation."""
+
+    stock_code: str
+    success: bool
+    data: Optional[dict] = None
+    error: Optional[str] = None
+
+
 class DomesticStockChartImporter:
     """Import domestic stock chart data from KIS API to DuckDB."""
 
-    def __init__(self, client: Client, db_manager: DuckDBManager):
+    def __init__(
+        self,
+        client: Client,
+        db_manager: DuckDBManager,
+        rate_limit: float = 20.0,
+        max_workers: int = 3,
+    ):
         """Initialize chart data importer.
 
         Args:
             client: KIS API client
             db_manager: DuckDB manager instance
+            rate_limit: API requests per second (default: 20)
+            max_workers: Number of parallel workers (default: 3, max: 10)
         """
         self.client = client
         self.db_manager = db_manager
+        self.rate_limit = rate_limit
+        self.max_workers = min(max_workers, 10)
+        self.rate_limiter = TokenBucket(
+            capacity=int(rate_limit),
+            refill_rate=rate_limit,
+        )
 
     def import_stock_data(
         self,
@@ -238,6 +265,165 @@ class DomesticStockChartImporter:
 
         return weekday_count
 
+    def _create_worker_client(self) -> Client:
+        """Create a new KIS client instance for worker thread.
+
+        Each worker needs its own client because requests.Session is not thread-safe.
+
+        Returns:
+            New Client instance with same credentials
+        """
+        return Client(
+            token=self.client.token,
+            app_key=self.client.app_key,
+            secret_key=self.client.secret_key,
+            env=self.client.env,
+            debug=self.client.debug,
+        )
+
+    def _fetch_single_stock_worker(
+        self,
+        worker_client: Client,
+        stock_code: str,
+        start_date: str,
+        end_date: str,
+    ) -> StockFetchResult:
+        """Worker function to fetch a single stock's data (thread-safe).
+
+        Args:
+            worker_client: KIS client for this worker
+            stock_code: Stock code to fetch
+            start_date: Start date (YYYYMMDD)
+            end_date: End date (YYYYMMDD)
+
+        Returns:
+            StockFetchResult with fetched data or error
+        """
+        try:
+            # Wait for rate limit token (thread-safe)
+            if not self.rate_limiter.wait_for_tokens(1, timeout=30.0):
+                return StockFetchResult(
+                    stock_code=stock_code,
+                    success=False,
+                    error="Rate limit timeout",
+                )
+
+            # Make API call using worker's own client
+            response = worker_client.domestic_basic_quote.get_stock_period_quote(
+                fid_cond_mrkt_div_code="J",
+                fid_input_iscd=stock_code,
+                fid_input_date_1=start_date,
+                fid_input_date_2=end_date,
+                fid_period_div_code="D",
+                fid_org_adj_prc="1",
+            )
+
+            output1 = response.output1 if hasattr(response, "output1") else None
+            output2 = response.output2 if hasattr(response, "output2") else []
+
+            return StockFetchResult(
+                stock_code=stock_code,
+                success=True,
+                data={"output1": output1, "output2": output2},
+            )
+
+        except (
+            requests.exceptions.ConnectionError,
+            requests.exceptions.Timeout,
+            requests.exceptions.ChunkedEncodingError,
+        ) as e:
+            logger.warning(f"Network error fetching {stock_code}: {e}")
+            return StockFetchResult(
+                stock_code=stock_code,
+                success=False,
+                error=f"Network error: {e}",
+            )
+        except Exception as e:
+            logger.error(f"Error fetching {stock_code}: {e}")
+            return StockFetchResult(
+                stock_code=stock_code,
+                success=False,
+                error=str(e),
+            )
+
+    def _process_chunk_parallel(
+        self,
+        stock_codes: list[str],
+        start_date: str,
+        end_date: str,
+    ) -> list[StockFetchResult]:
+        """Process a chunk of stocks in parallel using ThreadPoolExecutor.
+
+        Args:
+            stock_codes: List of stock codes to fetch
+            start_date: Start date (YYYYMMDD)
+            end_date: End date (YYYYMMDD)
+
+        Returns:
+            List of StockFetchResult for each stock
+        """
+        results = []
+
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            futures = {}
+            for stock_code in stock_codes:
+                worker_client = self._create_worker_client()
+                future = executor.submit(
+                    self._fetch_single_stock_worker,
+                    worker_client,
+                    stock_code,
+                    start_date,
+                    end_date,
+                )
+                futures[future] = stock_code
+
+            for future in as_completed(futures):
+                stock_code = futures[future]
+                try:
+                    result = future.result(timeout=60)
+                    results.append(result)
+                except Exception as e:
+                    logger.error(f"Worker error for {stock_code}: {e}")
+                    results.append(
+                        StockFetchResult(
+                            stock_code=stock_code,
+                            success=False,
+                            error=str(e),
+                        )
+                    )
+
+        return results
+
+    def _save_chunk_results(self, results: list[StockFetchResult]) -> dict[str, int]:
+        """Save all results from a chunk to database (main thread only).
+
+        Args:
+            results: List of fetch results
+
+        Returns:
+            Dictionary with {stock_code: record_count} (-1 for errors)
+        """
+        counts = {}
+
+        for result in results:
+            if not result.success:
+                counts[result.stock_code] = -1
+                continue
+
+            if result.data is None or not result.data.get("output2"):
+                counts[result.stock_code] = 0
+                continue
+
+            try:
+                df = self._prepare_stock_chart_data(result.stock_code, result.data)
+                count = self.db_manager.insert_domestic_stock_daily_chart(result.stock_code, df)
+                counts[result.stock_code] = count
+            except Exception as e:
+                logger.error(f"Error saving {result.stock_code}: {e}")
+                counts[result.stock_code] = -1
+
+        return counts
+
     def import_batch(
         self,
         stock_codes: list[str],
@@ -245,8 +431,9 @@ class DomesticStockChartImporter:
         end_date: str,
         progress_callback: Optional[Callable] = None,
         skip_existing: bool = True,
+        chunk_size: int = 10,
     ) -> dict:
-        """Import data for multiple stocks.
+        """Import data for multiple stocks using parallel fetching.
 
         Args:
             stock_codes: List of stock codes
@@ -254,15 +441,14 @@ class DomesticStockChartImporter:
             end_date: End date (YYYYMMDD)
             progress_callback: Optional callback for progress updates
             skip_existing: Skip imports if data exists
+            chunk_size: Number of stocks per chunk (default: 10)
 
         Returns:
             Dictionary with results {stock_code: count}
         """
         results = {}
         total = len(stock_codes)
-        chunk_size = 10
 
-        # Process in chunks of 10
         for chunk_start in range(0, len(stock_codes), chunk_size):
             chunk_end = min(chunk_start + chunk_size, len(stock_codes))
             chunk = stock_codes[chunk_start:chunk_end]
@@ -274,37 +460,29 @@ class DomesticStockChartImporter:
                 if existing_codes:
                     logger.info(f"Skipping {len(existing_codes)} existing stocks: {existing_codes}")
                     for code in existing_codes:
-                        results[code] = 0  # Mark as skipped
+                        results[code] = 0
             else:
                 exists_map = {}
 
-            # Process each stock in chunk sequentially
-            logger.info(
-                f"Stock charts import for stocks {chunk_start + 1} to {chunk_end} of {total}, start_date={start_date}, end_date={end_date}"
-            )
-            for stock_code in chunk:
-                idx = stock_codes.index(stock_code) + 1
+            # Filter out existing codes
+            codes_to_fetch = [code for code in chunk if not exists_map.get(code, False)]
 
-                if progress_callback:
-                    progress_callback(idx, total, stock_code)
+            if codes_to_fetch:
+                logger.info(
+                    f"Stock charts import for stocks {chunk_start + 1} to {chunk_end} of {total}, "
+                    f"fetching {len(codes_to_fetch)} stocks, start_date={start_date}, end_date={end_date}"
+                )
 
-                # Skip if already exists (checked in batch above)
-                if skip_existing and exists_map.get(stock_code, False):
-                    continue
+                # Parallel fetch for this chunk
+                fetch_results = self._process_chunk_parallel(codes_to_fetch, start_date, end_date)
 
-                try:
-                    results[stock_code] = self.import_stock_data(
-                        stock_code,
-                        start_date,
-                        end_date,
-                        skip_existing=False,  # Already checked
-                    )
-                    # Rate limit: 10 requests per second (0.1s sleep)
-                    # If use dev token, consider increasing delay (2 requests/sec)
-                    time.sleep(0.1)
-                except Exception as e:
-                    logger.error(f"Error importing {stock_code}: {e}")
-                    results[stock_code] = -1
+                # Save all results to DB (main thread)
+                chunk_results = self._save_chunk_results(fetch_results)
+                results.update(chunk_results)
+
+            # Update progress
+            if progress_callback:
+                progress_callback(chunk_end, total, chunk[-1])
 
         return results
 
@@ -343,15 +521,29 @@ class DomesticStockChartImporter:
 class OverseasStockChartImporter:
     """Import overseas stock chart data from KIS API to DuckDB."""
 
-    def __init__(self, client: Client, db_manager: DuckDBManager):
+    def __init__(
+        self,
+        client: Client,
+        db_manager: DuckDBManager,
+        rate_limit: float = 20.0,
+        max_workers: int = 3,
+    ):
         """Initialize overseas chart data importer.
 
         Args:
             client: KIS API client
             db_manager: DuckDB manager instance
+            rate_limit: API requests per second (default: 20)
+            max_workers: Number of parallel workers (default: 3, max: 10)
         """
         self.client = client
         self.db_manager = db_manager
+        self.rate_limit = rate_limit
+        self.max_workers = min(max_workers, 10)
+        self.rate_limiter = TokenBucket(
+            capacity=int(rate_limit),
+            refill_rate=rate_limit,
+        )
 
     def import_stock_data(
         self,
@@ -550,6 +742,185 @@ class OverseasStockChartImporter:
 
         return pd.DataFrame(rows)
 
+    def _create_worker_client(self) -> Client:
+        """Create a new KIS client instance for worker thread.
+
+        Returns:
+            New Client instance with same credentials
+        """
+        return Client(
+            token=self.client.token,
+            app_key=self.client.app_key,
+            secret_key=self.client.secret_key,
+            env=self.client.env,
+            debug=self.client.debug,
+        )
+
+    def _fetch_single_stock_worker(
+        self,
+        worker_client: Client,
+        exchange_code: str,
+        stock_code: str,
+        start_date: str,
+        end_date: str,
+    ) -> StockFetchResult:
+        """Worker function to fetch a single overseas stock's data (thread-safe).
+
+        Args:
+            worker_client: KIS client for this worker
+            exchange_code: Exchange code (NYS, NAS, etc.)
+            stock_code: Stock code to fetch
+            start_date: Start date (YYYYMMDD)
+            end_date: End date (YYYYMMDD)
+
+        Returns:
+            StockFetchResult with fetched data or error
+        """
+        try:
+            # Wait for rate limit token (thread-safe)
+            if not self.rate_limiter.wait_for_tokens(1, timeout=30.0):
+                return StockFetchResult(
+                    stock_code=stock_code,
+                    success=False,
+                    error="Rate limit timeout",
+                )
+
+            # Convert exchange code to API format
+            api_exchange_code = "NYS" if exchange_code == "NYSE" else "NAS"
+
+            # Make API call using worker's own client
+            response = worker_client.overseas_basic_quote.get_stock_period_quote(
+                auth="",
+                excd=api_exchange_code,
+                symb=stock_code,
+                gubn="0",
+                bymd=end_date,
+                modp="1",
+                keyb="",
+            )
+
+            output1 = response.output1 if hasattr(response, "output1") else None
+            output2 = response.output2 if hasattr(response, "output2") else []
+
+            return StockFetchResult(
+                stock_code=stock_code,
+                success=True,
+                data={"output1": output1, "output2": output2, "start_date": start_date},
+            )
+
+        except (
+            requests.exceptions.ConnectionError,
+            requests.exceptions.Timeout,
+            requests.exceptions.ChunkedEncodingError,
+        ) as e:
+            logger.warning(f"Network error fetching {exchange_code}:{stock_code}: {e}")
+            return StockFetchResult(
+                stock_code=stock_code,
+                success=False,
+                error=f"Network error: {e}",
+            )
+        except Exception as e:
+            logger.error(f"Error fetching {exchange_code}:{stock_code}: {e}")
+            return StockFetchResult(
+                stock_code=stock_code,
+                success=False,
+                error=str(e),
+            )
+
+    def _process_chunk_parallel(
+        self,
+        exchange_code: str,
+        stock_codes: list[str],
+        start_date: str,
+        end_date: str,
+    ) -> list[StockFetchResult]:
+        """Process a chunk of overseas stocks in parallel.
+
+        Args:
+            exchange_code: Exchange code
+            stock_codes: List of stock codes to fetch
+            start_date: Start date (YYYYMMDD)
+            end_date: End date (YYYYMMDD)
+
+        Returns:
+            List of StockFetchResult for each stock
+        """
+        results = []
+
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            futures = {}
+            for stock_code in stock_codes:
+                worker_client = self._create_worker_client()
+                future = executor.submit(
+                    self._fetch_single_stock_worker,
+                    worker_client,
+                    exchange_code,
+                    stock_code,
+                    start_date,
+                    end_date,
+                )
+                futures[future] = stock_code
+
+            for future in as_completed(futures):
+                stock_code = futures[future]
+                try:
+                    result = future.result(timeout=60)
+                    results.append(result)
+                except Exception as e:
+                    logger.error(f"Worker error for {stock_code}: {e}")
+                    results.append(
+                        StockFetchResult(
+                            stock_code=stock_code,
+                            success=False,
+                            error=str(e),
+                        )
+                    )
+
+        return results
+
+    def _save_chunk_results(
+        self,
+        exchange_code: str,
+        results: list[StockFetchResult],
+    ) -> dict[str, int]:
+        """Save all results from a chunk to database (main thread only).
+
+        Args:
+            exchange_code: Exchange code
+            results: List of fetch results
+
+        Returns:
+            Dictionary with {stock_code: record_count} (-1 for errors)
+        """
+        counts = {}
+
+        for result in results:
+            if not result.success:
+                counts[result.stock_code] = -1
+                continue
+
+            if result.data is None or not result.data.get("output2"):
+                counts[result.stock_code] = 0
+                continue
+
+            try:
+                start_date = result.data.get("start_date")
+                df = self._prepare_stock_chart_data(
+                    exchange_code,
+                    result.stock_code,
+                    result.data,
+                    start_date,
+                )
+                count = self.db_manager.insert_overseas_stock_daily_chart(
+                    exchange_code, result.stock_code, df
+                )
+                counts[result.stock_code] = count
+            except Exception as e:
+                logger.error(f"Error saving {exchange_code}:{result.stock_code}: {e}")
+                counts[result.stock_code] = -1
+
+        return counts
+
     def import_batch(
         self,
         exchange_code: str,
@@ -558,8 +929,9 @@ class OverseasStockChartImporter:
         end_date: str,
         progress_callback: Optional[Callable] = None,
         skip_existing: bool = True,
+        chunk_size: int = 10,
     ) -> dict:
-        """Import data for multiple overseas stocks.
+        """Import data for multiple overseas stocks using parallel fetching.
 
         Args:
             exchange_code: Exchange code (NYS, NAS, AMS, HKS, TSE, etc.)
@@ -568,15 +940,14 @@ class OverseasStockChartImporter:
             end_date: End date (YYYYMMDD)
             progress_callback: Optional callback for progress updates
             skip_existing: Skip imports if data exists
+            chunk_size: Number of stocks per chunk (default: 10)
 
         Returns:
             Dictionary with results {stock_code: count}
         """
         results = {}
         total = len(stock_codes)
-        chunk_size = 10
 
-        # Process in chunks of 10
         for chunk_start in range(0, len(stock_codes), chunk_size):
             chunk_end = min(chunk_start + chunk_size, len(stock_codes))
             chunk = stock_codes[chunk_start:chunk_end]
@@ -590,37 +961,31 @@ class OverseasStockChartImporter:
                 if existing_codes:
                     logger.info(f"Skipping {len(existing_codes)} existing stocks: {existing_codes}")
                     for code in existing_codes:
-                        results[code] = 0  # Mark as skipped
+                        results[code] = 0
             else:
                 exists_map = {}
 
-            # Process each stock in chunk sequentially
-            logger.info(
-                f"Overseas stock charts import for {exchange_code} stocks {chunk_start + 1} to {chunk_end} of {total}, start_date={start_date}, end_date={end_date}"
-            )
-            for stock_code in chunk:
-                idx = stock_codes.index(stock_code) + 1
+            # Filter out existing codes
+            codes_to_fetch = [code for code in chunk if not exists_map.get(code, False)]
 
-                if progress_callback:
-                    progress_callback(idx, total, stock_code)
+            if codes_to_fetch:
+                logger.info(
+                    f"Overseas stock charts import for {exchange_code} stocks {chunk_start + 1} to {chunk_end} of {total}, "
+                    f"fetching {len(codes_to_fetch)} stocks, start_date={start_date}, end_date={end_date}"
+                )
 
-                # Skip if already exists (checked in batch above)
-                if skip_existing and exists_map.get(stock_code, False):
-                    continue
+                # Parallel fetch for this chunk
+                fetch_results = self._process_chunk_parallel(
+                    exchange_code, codes_to_fetch, start_date, end_date
+                )
 
-                try:
-                    results[stock_code] = self.import_stock_data(
-                        exchange_code,
-                        stock_code,
-                        start_date,
-                        end_date,
-                        skip_existing=False,  # Already checked
-                    )
-                    # Rate limit: 10 requests per second (0.1s sleep)
-                    time.sleep(0.1)
-                except Exception as e:
-                    logger.error(f"Error importing {exchange_code}:{stock_code}: {e}")
-                    results[stock_code] = -1
+                # Save all results to DB (main thread)
+                chunk_results = self._save_chunk_results(exchange_code, fetch_results)
+                results.update(chunk_results)
+
+            # Update progress
+            if progress_callback:
+                progress_callback(chunk_end, total, chunk[-1])
 
         return results
 
