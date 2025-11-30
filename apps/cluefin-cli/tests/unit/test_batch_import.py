@@ -173,16 +173,12 @@ def test_domestic_importer_init_with_rate_limit():
     assert importer.rate_limiter is not None
 
     # Custom values
-    importer = DomesticStockChartImporter(
-        mock_client, mock_db, rate_limit=10.0, max_workers=5
-    )
+    importer = DomesticStockChartImporter(mock_client, mock_db, rate_limit=10.0, max_workers=5)
     assert importer.rate_limit == 10.0
     assert importer.max_workers == 5
 
     # Max workers limit
-    importer = DomesticStockChartImporter(
-        mock_client, mock_db, max_workers=20
-    )
+    importer = DomesticStockChartImporter(mock_client, mock_db, max_workers=20)
     assert importer.max_workers == 10, "max_workers should be capped at 10"
 
 
@@ -226,11 +222,12 @@ def test_create_worker_client():
 
 def test_save_chunk_results_success():
     """Test _save_chunk_results with successful results."""
+    import pandas as pd
+
     from cluefin_cli.data.stock_importer import (
         DomesticStockChartImporter,
         StockFetchResult,
     )
-    import pandas as pd
 
     mock_client = MagicMock()
     mock_db = MagicMock()
@@ -280,6 +277,7 @@ def test_save_chunk_results_with_errors():
 def test_token_bucket_integration():
     """Test TokenBucket is properly integrated."""
     from cluefin_openapi import TokenBucket
+
     from cluefin_cli.data.stock_importer import DomesticStockChartImporter
 
     mock_client = MagicMock()
@@ -324,11 +322,12 @@ def test_overseas_create_worker_client():
 
 def test_overseas_save_chunk_results_success():
     """Test OverseasStockChartImporter._save_chunk_results with successful results."""
+    import pandas as pd
+
     from cluefin_cli.data.stock_importer import (
         OverseasStockChartImporter,
         StockFetchResult,
     )
-    import pandas as pd
 
     mock_client = MagicMock()
     mock_db = MagicMock()
@@ -378,6 +377,7 @@ def test_overseas_save_chunk_results_with_errors():
 def test_overseas_token_bucket_integration():
     """Test TokenBucket is properly integrated in OverseasStockChartImporter."""
     from cluefin_openapi import TokenBucket
+
     from cluefin_cli.data.stock_importer import OverseasStockChartImporter
 
     mock_client = MagicMock()

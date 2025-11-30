@@ -8,7 +8,7 @@ import urllib.request
 import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from typing import Optional
+from typing import Literal, Optional
 
 import pandas as pd
 from cluefin_openapi import TokenBucket
@@ -40,7 +40,7 @@ class StockListFetcher:
         self,
         client: Client,
         db_manager: DuckDBManager,
-        kis_client: Optional[KisClient] = None,
+        kis_client: KisClient,
         rate_limit: float = 20.0,
         max_workers: int = 3,
     ):
@@ -126,70 +126,6 @@ class StockListFetcher:
 
         return stocks
 
-    def fetch_domestic_stock_metadata_extended(self, stock_info: DomesticStockInfoSummaryItem) -> Optional[dict]:
-        """Fetch extended domestic stock metadata by combining two APIs.
-
-        Fetches data from both get_stock_info_v1 and get_stock_info APIs,
-        combining them into a single metadata dictionary.
-
-        Note: This method does NOT save to database. Use fetch_and_save_metadata_batch
-        for batch processing with automatic DB saving.
-
-        Args:
-            stock_info: Stock info to fetch metadata for
-
-        Returns:
-            Dictionary with combined metadata fields, or None if API fails.
-            Fields include both v1 API fields and get_stock_info fields.
-        """
-
-        try:
-            v1_data = stock_info
-
-            # Fetch from get_stock_info API
-            logger.debug(f"Fetching metadata from get_stock_info for {stock_info.code}...")
-            response_basic = self.client.stock_info.get_stock_info(stock_info.code)
-            basic_data = response_basic.body
-
-            # Combine data from both APIs
-            metadata = {
-                "stock_code": v1_data.code,
-                # From get_stock_info_v1
-                "stock_name": v1_data.name,
-                "listing_date": self._parse_date(v1_data.regDay),
-                "market_name": v1_data.marketName,
-                "market_code": v1_data.marketCode,
-                "industry_name": v1_data.upName,
-                "company_size": v1_data.upSizeName,
-                "company_class": v1_data.companyClassName,
-                "audit_info": v1_data.auditInfo,
-                "stock_state": v1_data.state,
-                "investment_warning": v1_data.orderWarning if v1_data.orderWarning else None,
-                # From get_stock_info
-                "settlement_month": basic_data.setl_mm,
-                "face_value": self._parse_decimal(basic_data.fav),
-                "capital": self._parse_int(basic_data.cap),
-                "float_stock": self._parse_int(basic_data.flo_stk),
-                "per": self._parse_decimal(basic_data.per),
-                "eps": self._parse_decimal(basic_data.eps),
-                "roe": self._parse_decimal(basic_data.roe),
-                "pbr": self._parse_decimal(basic_data.pbr),
-                "bps": self._parse_decimal(basic_data.bps),
-                "sales_amount": self._parse_int(basic_data.sale_amt),
-                "business_profit": self._parse_int(basic_data.bus_pro),
-                "net_income": self._parse_int(basic_data.cup_nga),
-                "market_cap": self._parse_int(basic_data.mac),
-                "foreign_ownership_rate": self._parse_decimal(basic_data.for_exh_rt),
-                "distribution_rate": self._parse_decimal(basic_data.dstr_rt),
-                "distribution_stock": self._parse_int(basic_data.dstr_stk),
-            }
-
-            return metadata
-
-        except Exception as e:
-            logger.error(f"Error fetching extended metadata for {stock_info}: {e}")
-            return None
-
     def _create_kiwoom_worker_client(self) -> Client:
         """Create a new Kiwoom client instance for worker thread."""
         # Determine env from URL
@@ -206,11 +142,12 @@ class StockListFetcher:
         """Create a new KIS client instance for worker thread."""
         if self.kis_client is None:
             return None
+        env: Literal["prod", "dev"] = "dev" if self.kis_client.env == "dev" else "prod"
         return KisClient(
             token=self.kis_client.token,
             app_key=self.kis_client.app_key,
             secret_key=self.kis_client.secret_key,
-            env=self.kis_client.env,
+            env=env,
             debug=self.kis_client.debug,
         )
 
@@ -545,98 +482,6 @@ class StockListFetcher:
 
         return result
 
-    def fetch_overseas_stock_metadata_extended(self, stock_row: pd.Series) -> Optional[dict]:
-        """Fetch extended overseas stock metadata by calling KIS API.
-
-        Args:
-            stock_row: Row from master file DataFrame with stock information
-
-        Returns:
-            Dictionary with combined metadata fields, or None if API fails
-        """
-        if self.kis_client is None:
-            logger.warning("KIS client not initialized, skipping metadata fetch")
-            return None
-
-        try:
-            symbol = stock_row["Symbol"]
-            exchange_code = stock_row["Exchange code"]
-
-            # Map exchange code to prdt_type_cd for ProductBaseInfo API
-            # 512: NASDAQ, 513: NYSE
-            prdt_type_cd_map = {"NAS": "512", "NYS": "513"}
-            prdt_type_cd = prdt_type_cd_map.get(exchange_code)
-
-            if not prdt_type_cd:
-                logger.warning(f"Unknown exchange code {exchange_code}, skipping {symbol}")
-                return None
-
-            logger.debug(f"Fetching product info for {symbol} ({exchange_code})...")
-            response = self.kis_client.overseas_basic_quote.get_product_base_info(
-                prdt_type_cd=prdt_type_cd, pdno=symbol
-            )
-
-            # Extract data from response
-            if response.output:
-                product_info = response.output
-
-                etf_risk_code = getattr(product_info, "ovrs_stck_etf_risk_drtp_cd", None)
-                if etf_risk_code and etf_risk_code.strip():
-                    logger.info(f"  Skipping ETF: {symbol} (etf_risk_code={etf_risk_code})")
-                    return "ETF_SKIPPED"
-
-                metadata = {
-                    "stock_code": symbol,
-                    # From master file
-                    "stock_name_en": stock_row["English name"],
-                    "stock_name_kr": stock_row["Korea name"],
-                    # From ProductBaseInfo API (ProductBaseInfoItem fields)
-                    "std_pdno": product_info.std_pdno if hasattr(product_info, "std_pdno") else None,
-                    "prdt_eng_name": product_info.prdt_eng_name if hasattr(product_info, "prdt_eng_name") else None,
-                    "natn_cd": product_info.natn_cd if hasattr(product_info, "natn_cd") else None,
-                    "natn_name": product_info.natn_name if hasattr(product_info, "natn_name") else None,
-                    "tr_mket_cd": product_info.tr_mket_cd if hasattr(product_info, "tr_mket_cd") else None,
-                    "tr_mket_name": product_info.tr_mket_name if hasattr(product_info, "tr_mket_name") else None,
-                    "ovrs_excg_cd": product_info.ovrs_excg_cd if hasattr(product_info, "ovrs_excg_cd") else None,
-                    "ovrs_excg_name": product_info.ovrs_excg_name if hasattr(product_info, "ovrs_excg_name") else None,
-                    "tr_crcy_cd": product_info.tr_crcy_cd if hasattr(product_info, "tr_crcy_cd") else None,
-                    "ovrs_papr": product_info.ovrs_papr if hasattr(product_info, "ovrs_papr") else None,
-                    "crcy_name": product_info.crcy_name if hasattr(product_info, "crcy_name") else None,
-                    "ovrs_stck_dvsn_cd": product_info.ovrs_stck_dvsn_cd
-                    if hasattr(product_info, "ovrs_stck_dvsn_cd")
-                    else None,
-                    "prdt_clsf_cd": product_info.prdt_clsf_cd if hasattr(product_info, "prdt_clsf_cd") else None,
-                    "prdt_clsf_name": product_info.prdt_clsf_name if hasattr(product_info, "prdt_clsf_name") else None,
-                    "lstg_stck_num": product_info.lstg_stck_num if hasattr(product_info, "lstg_stck_num") else None,
-                    "lstg_dt": product_info.lstg_dt if hasattr(product_info, "lstg_dt") else None,
-                    "ovrs_stck_tr_stop_dvsn_cd": product_info.ovrs_stck_tr_stop_dvsn_cd
-                    if hasattr(product_info, "ovrs_stck_tr_stop_dvsn_cd")
-                    else None,
-                    "lstg_abol_item_yn": product_info.lstg_abol_item_yn
-                    if hasattr(product_info, "lstg_abol_item_yn")
-                    else None,
-                    "lstg_yn": product_info.lstg_yn if hasattr(product_info, "lstg_yn") else None,
-                    "tax_levy_yn": product_info.tax_levy_yn if hasattr(product_info, "tax_levy_yn") else None,
-                    "ovrs_item_name": product_info.ovrs_item_name if hasattr(product_info, "ovrs_item_name") else None,
-                    "sedol_no": product_info.sedol_no if hasattr(product_info, "sedol_no") else None,
-                    "prdt_name": product_info.prdt_name if hasattr(product_info, "prdt_name") else None,
-                    "lstg_abol_dt": product_info.lstg_abol_dt if hasattr(product_info, "lstg_abol_dt") else None,
-                    "ptp_item_yn": product_info.ptp_item_yn if hasattr(product_info, "ptp_item_yn") else None,
-                    "dtm_tr_psbl_yn": product_info.dtm_tr_psbl_yn if hasattr(product_info, "dtm_tr_psbl_yn") else None,
-                    "ovrs_stck_etf_risk_drtp_cd": product_info.ovrs_stck_etf_risk_drtp_cd
-                    if hasattr(product_info, "ovrs_stck_etf_risk_drtp_cd")
-                    else None,
-                }
-
-                return metadata
-            else:
-                logger.warning(f"No product info returned for {symbol}")
-                return None
-
-        except Exception as e:
-            logger.error(f"Error fetching metadata for {stock_row.get('Symbol', 'unknown')}: {e}")
-            return None
-
     def _fetch_overseas_metadata_worker(
         self,
         worker_client: KisClient,
@@ -664,9 +509,7 @@ class StockListFetcher:
                     error=f"Unknown exchange code {exchange_code}",
                 )
 
-            response = worker_client.overseas_basic_quote.get_product_base_info(
-                prdt_type_cd=prdt_type_cd, pdno=symbol
-            )
+            response = worker_client.overseas_basic_quote.get_product_base_info(prdt_type_cd=prdt_type_cd, pdno=symbol)
 
             if response.output:
                 product_info = response.output

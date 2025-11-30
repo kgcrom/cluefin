@@ -89,9 +89,7 @@ def test_stock_list_fetcher_init_with_custom_rate_limit():
     mock_kiwoom_client = MagicMock()
     mock_db = MagicMock()
 
-    fetcher = StockListFetcher(
-        mock_kiwoom_client, mock_db, rate_limit=10.0, max_workers=5
-    )
+    fetcher = StockListFetcher(mock_kiwoom_client, mock_db, rate_limit=10.0, max_workers=5)
 
     assert fetcher.rate_limit == 10.0
     assert fetcher.max_workers == 5
@@ -104,9 +102,7 @@ def test_stock_list_fetcher_init_max_workers_capped():
     mock_kiwoom_client = MagicMock()
     mock_db = MagicMock()
 
-    fetcher = StockListFetcher(
-        mock_kiwoom_client, mock_db, max_workers=20
-    )
+    fetcher = StockListFetcher(mock_kiwoom_client, mock_db, max_workers=20)
 
     assert fetcher.max_workers == 10, "max_workers should be capped at 10"
 
@@ -119,9 +115,7 @@ def test_stock_list_fetcher_init_with_kis_client():
     mock_kis_client = MagicMock()
     mock_db = MagicMock()
 
-    fetcher = StockListFetcher(
-        mock_kiwoom_client, mock_db, kis_client=mock_kis_client
-    )
+    fetcher = StockListFetcher(mock_kiwoom_client, mock_db, kis_client=mock_kis_client)
 
     assert fetcher.kis_client is mock_kis_client
 
@@ -188,9 +182,7 @@ def test_create_kis_worker_client():
 
     mock_db = MagicMock()
 
-    fetcher = StockListFetcher(
-        mock_kiwoom_client, mock_db, kis_client=mock_kis_client
-    )
+    fetcher = StockListFetcher(mock_kiwoom_client, mock_db, kis_client=mock_kis_client)
 
     # Create worker client
     worker_client = fetcher._create_kis_worker_client()
@@ -421,6 +413,7 @@ def test_save_overseas_chunk_results_all_skipped():
 def test_token_bucket_integration():
     """Test TokenBucket is properly integrated in StockListFetcher."""
     from cluefin_openapi import TokenBucket
+
     from cluefin_cli.data.stock_fetcher import StockListFetcher
 
     mock_kiwoom_client = MagicMock()

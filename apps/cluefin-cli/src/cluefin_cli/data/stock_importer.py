@@ -911,9 +911,7 @@ class OverseasStockChartImporter:
                     result.data,
                     start_date,
                 )
-                count = self.db_manager.insert_overseas_stock_daily_chart(
-                    exchange_code, result.stock_code, df
-                )
+                count = self.db_manager.insert_overseas_stock_daily_chart(exchange_code, result.stock_code, df)
                 counts[result.stock_code] = count
             except Exception as e:
                 logger.error(f"Error saving {exchange_code}:{result.stock_code}: {e}")
@@ -975,9 +973,7 @@ class OverseasStockChartImporter:
                 )
 
                 # Parallel fetch for this chunk
-                fetch_results = self._process_chunk_parallel(
-                    exchange_code, codes_to_fetch, start_date, end_date
-                )
+                fetch_results = self._process_chunk_parallel(exchange_code, codes_to_fetch, start_date, end_date)
 
                 # Save all results to DB (main thread)
                 chunk_results = self._save_chunk_results(exchange_code, fetch_results)

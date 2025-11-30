@@ -69,3 +69,41 @@ class KrxServerError(KrxAPIError):
         response_data: Optional[Dict] = None,
     ):
         super().__init__(message, status_code, response_data)
+
+
+class KrxRateLimitError(KrxAPIError):
+    """Exception raised for 429 rate limit errors."""
+
+    def __init__(
+        self,
+        message: str = "Rate limit exceeded",
+        status_code: int = 429,
+        response_data: Optional[Dict] = None,
+        retry_after: Optional[int] = None,
+    ):
+        super().__init__(message, status_code, response_data)
+        self.retry_after = retry_after
+
+
+class KrxTimeoutError(KrxAPIError):
+    """Exception raised for request timeout errors."""
+
+    def __init__(
+        self,
+        message: str = "Request timeout",
+        status_code: Optional[int] = None,
+        response_data: Optional[Dict] = None,
+    ):
+        super().__init__(message, status_code, response_data)
+
+
+class KrxNetworkError(KrxAPIError):
+    """Exception raised for network connection errors."""
+
+    def __init__(
+        self,
+        message: str = "Network connection failed",
+        status_code: Optional[int] = None,
+        response_data: Optional[Dict] = None,
+    ):
+        super().__init__(message, status_code, response_data)
