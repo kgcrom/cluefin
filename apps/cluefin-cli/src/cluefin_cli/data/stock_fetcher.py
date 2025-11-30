@@ -8,7 +8,7 @@ import urllib.request
 import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from typing import Optional, Union
+from typing import Optional
 
 import pandas as pd
 from cluefin_openapi import TokenBucket

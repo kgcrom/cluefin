@@ -11,10 +11,6 @@ Run with: uv run pytest apps/cluefin-cli/tests/unit/test_stock_fetcher.py -v
 
 from unittest.mock import MagicMock
 
-import pandas as pd
-import pytest
-
-
 # ============================================================================
 # MetadataFetchResult Dataclass Tests
 # ============================================================================
@@ -141,7 +137,7 @@ def test_create_kiwoom_worker_client():
 
     mock_kiwoom_client = MagicMock()
     mock_kiwoom_client.url = "https://api.kiwoom.com"  # prod URL
-    mock_kiwoom_client.token = "test_token"
+    mock_kiwoom_client.token = "test_token"  # nosec B105 - test mock value
     mock_kiwoom_client.timeout = 30
     mock_kiwoom_client.max_retries = 3
     mock_kiwoom_client.debug = False
@@ -184,9 +180,9 @@ def test_create_kis_worker_client():
 
     mock_kiwoom_client = MagicMock()
     mock_kis_client = MagicMock()
-    mock_kis_client.token = "kis_token"
+    mock_kis_client.token = "kis_token"  # nosec B105 - test mock value
     mock_kis_client.app_key = "app_key"
-    mock_kis_client.secret_key = "secret_key"
+    mock_kis_client.secret_key = "secret_key"  # nosec B105 - test mock value
     mock_kis_client.env = "prod"
     mock_kis_client.debug = False
 

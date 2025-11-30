@@ -205,9 +205,9 @@ def test_create_worker_client():
     from cluefin_cli.data.stock_importer import DomesticStockChartImporter
 
     mock_client = MagicMock()
-    mock_client.token = "test_token"
-    mock_client.app_key = "test_app_key"
-    mock_client.secret_key = "test_secret"
+    mock_client.token = "test_token"  # nosec B105 - test mock value
+    mock_client.app_key = "test_app_key"  # nosec B105 - test mock value
+    mock_client.secret_key = "test_secret"  # nosec B105 - test mock value
     mock_client.env = "prod"
     mock_client.debug = False
 
@@ -303,9 +303,9 @@ def test_overseas_create_worker_client():
     from cluefin_cli.data.stock_importer import OverseasStockChartImporter
 
     mock_client = MagicMock()
-    mock_client.token = "test_token"
-    mock_client.app_key = "test_app_key"
-    mock_client.secret_key = "test_secret"
+    mock_client.token = "test_token"  # nosec B105 - test mock value
+    mock_client.app_key = "test_app_key"  # nosec B105 - test mock value
+    mock_client.secret_key = "test_secret"  # nosec B105 - test mock value
     mock_client.env = "prod"
     mock_client.debug = False
 
