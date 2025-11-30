@@ -21,7 +21,9 @@ from cluefin_openapi.krx._exceptions import (
     KrxAuthenticationError,
     KrxAuthorizationError,
     KrxClientError,
+    KrxNetworkError,
     KrxServerError,
+    KrxTimeoutError,
 )
 from cluefin_openapi.krx._factory import KrxApiMethodFactory
 from cluefin_openapi.krx._index_types import IndexKrx
@@ -30,8 +32,8 @@ from cluefin_openapi.krx._stock_types import StockKospi
 
 @pytest.fixture
 def client():
-    """Create test client instance."""
-    return Client(auth_key="test_auth_key")
+    """Create test client instance with no retries for faster testing."""
+    return Client(auth_key="test_auth_key", max_retries=0)
 
 
 @pytest.fixture
@@ -274,16 +276,20 @@ class TestNetworkErrorCompatibility:
                 "https://data-dbg.krx.co.kr/svc/apis/bnd/kts_bydd_trd.json", exc=ConnectTimeout("Connection timed out")
             )
 
-            with pytest.raises(ConnectTimeout):
+            with pytest.raises(KrxTimeoutError) as exc_info:
                 factory_bond_method("20241201")
+
+            assert "timeout" in str(exc_info.value).lower()
 
     def test_read_timeout_error(self, factory_index_method):
         """Test read timeout error handling."""
         with requests_mock.Mocker() as m:
             m.get("https://data-dbg.krx.co.kr/svc/apis/idx/idx_bydd_trd.json", exc=ReadTimeout("Read timed out"))
 
-            with pytest.raises(ReadTimeout):
+            with pytest.raises(KrxTimeoutError) as exc_info:
                 factory_index_method("20241201")
+
+            assert "timeout" in str(exc_info.value).lower()
 
     def test_connection_error(self, factory_derivatives_method):
         """Test network connection errors."""
@@ -293,8 +299,10 @@ class TestNetworkErrorCompatibility:
                 exc=RequestsConnectionError("Failed to establish connection"),
             )
 
-            with pytest.raises(RequestsConnectionError):
+            with pytest.raises(KrxNetworkError) as exc_info:
                 factory_derivatives_method("20241201")
+
+            assert "Network connection failed" in str(exc_info.value)
 
 
 class TestUnexpectedErrorCompatibility:

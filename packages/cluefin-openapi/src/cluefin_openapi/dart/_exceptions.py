@@ -69,3 +69,41 @@ class DartServerError(DartAPIError):
         response_data: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(message, status_code, response_data)
+
+
+class DartRateLimitError(DartAPIError):
+    """Exception raised for 429 rate limit errors or rate limit timeout."""
+
+    def __init__(
+        self,
+        message: str,
+        status_code: Optional[int] = 429,
+        response_data: Optional[Dict[str, Any]] = None,
+        retry_after: Optional[int] = None,
+    ):
+        super().__init__(message, status_code, response_data)
+        self.retry_after = retry_after
+
+
+class DartTimeoutError(DartAPIError):
+    """Exception raised for request timeout errors."""
+
+    def __init__(
+        self,
+        message: str = "Request timeout",
+        status_code: Optional[int] = None,
+        response_data: Optional[Dict[str, Any]] = None,
+    ):
+        super().__init__(message, status_code, response_data)
+
+
+class DartNetworkError(DartAPIError):
+    """Exception raised for network connection errors."""
+
+    def __init__(
+        self,
+        message: str = "Network connection failed",
+        status_code: Optional[int] = None,
+        response_data: Optional[Dict[str, Any]] = None,
+    ):
+        super().__init__(message, status_code, response_data)
