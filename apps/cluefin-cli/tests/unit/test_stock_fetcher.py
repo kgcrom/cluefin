@@ -73,9 +73,10 @@ def test_stock_list_fetcher_init_with_default_rate_limit():
     from cluefin_cli.data.stock_fetcher import StockListFetcher
 
     mock_kiwoom_client = MagicMock()
+    mock_kis_client = MagicMock()
     mock_db = MagicMock()
 
-    fetcher = StockListFetcher(mock_kiwoom_client, mock_db)
+    fetcher = StockListFetcher(mock_kiwoom_client, mock_db, mock_kis_client)
 
     assert fetcher.rate_limit == 20.0
     assert fetcher.max_workers == 3
@@ -87,9 +88,10 @@ def test_stock_list_fetcher_init_with_custom_rate_limit():
     from cluefin_cli.data.stock_fetcher import StockListFetcher
 
     mock_kiwoom_client = MagicMock()
+    mock_kis_client = MagicMock()
     mock_db = MagicMock()
 
-    fetcher = StockListFetcher(mock_kiwoom_client, mock_db, rate_limit=10.0, max_workers=5)
+    fetcher = StockListFetcher(mock_kiwoom_client, mock_db, mock_kis_client, rate_limit=10.0, max_workers=5)
 
     assert fetcher.rate_limit == 10.0
     assert fetcher.max_workers == 5
@@ -100,9 +102,10 @@ def test_stock_list_fetcher_init_max_workers_capped():
     from cluefin_cli.data.stock_fetcher import StockListFetcher
 
     mock_kiwoom_client = MagicMock()
+    mock_kis_client = MagicMock()
     mock_db = MagicMock()
 
-    fetcher = StockListFetcher(mock_kiwoom_client, mock_db, max_workers=20)
+    fetcher = StockListFetcher(mock_kiwoom_client, mock_db, mock_kis_client, max_workers=20)
 
     assert fetcher.max_workers == 10, "max_workers should be capped at 10"
 
@@ -136,9 +139,10 @@ def test_create_kiwoom_worker_client():
     mock_kiwoom_client.max_retries = 3
     mock_kiwoom_client.debug = False
 
+    mock_kis_client = MagicMock()
     mock_db = MagicMock()
 
-    fetcher = StockListFetcher(mock_kiwoom_client, mock_db)
+    fetcher = StockListFetcher(mock_kiwoom_client, mock_db, mock_kis_client)
 
     # Create worker client
     worker_client = fetcher._create_kiwoom_worker_client()
@@ -154,14 +158,15 @@ def test_create_kiwoom_worker_client_dev_env():
 
     mock_kiwoom_client = MagicMock()
     mock_kiwoom_client.url = "https://mockapi.kiwoom.com"  # dev URL
-    mock_kiwoom_client.token = "test_token"
+    mock_kiwoom_client.token = "test_token"  # nosec B105 - test mock value
     mock_kiwoom_client.timeout = 30
     mock_kiwoom_client.max_retries = 3
     mock_kiwoom_client.debug = False
 
+    mock_kis_client = MagicMock()
     mock_db = MagicMock()
 
-    fetcher = StockListFetcher(mock_kiwoom_client, mock_db)
+    fetcher = StockListFetcher(mock_kiwoom_client, mock_db, mock_kis_client)
     worker_client = fetcher._create_kiwoom_worker_client()
 
     # Dev environment should use mockapi URL
@@ -216,10 +221,11 @@ def test_save_domestic_chunk_results_success():
     from cluefin_cli.data.stock_fetcher import MetadataFetchResult, StockListFetcher
 
     mock_kiwoom_client = MagicMock()
+    mock_kis_client = MagicMock()
     mock_db = MagicMock()
     mock_db.upsert_domestic_stock_metadata_extended.return_value = 3
 
-    fetcher = StockListFetcher(mock_kiwoom_client, mock_db)
+    fetcher = StockListFetcher(mock_kiwoom_client, mock_db, mock_kis_client)
 
     results = [
         MetadataFetchResult(
@@ -251,10 +257,11 @@ def test_save_domestic_chunk_results_with_errors():
     from cluefin_cli.data.stock_fetcher import MetadataFetchResult, StockListFetcher
 
     mock_kiwoom_client = MagicMock()
+    mock_kis_client = MagicMock()
     mock_db = MagicMock()
     mock_db.upsert_domestic_stock_metadata_extended.return_value = 1
 
-    fetcher = StockListFetcher(mock_kiwoom_client, mock_db)
+    fetcher = StockListFetcher(mock_kiwoom_client, mock_db, mock_kis_client)
 
     results = [
         MetadataFetchResult(
@@ -285,9 +292,10 @@ def test_save_domestic_chunk_results_empty():
     from cluefin_cli.data.stock_fetcher import MetadataFetchResult, StockListFetcher
 
     mock_kiwoom_client = MagicMock()
+    mock_kis_client = MagicMock()
     mock_db = MagicMock()
 
-    fetcher = StockListFetcher(mock_kiwoom_client, mock_db)
+    fetcher = StockListFetcher(mock_kiwoom_client, mock_db, mock_kis_client)
 
     results = [
         MetadataFetchResult(
@@ -309,10 +317,11 @@ def test_save_overseas_chunk_results_success():
     from cluefin_cli.data.stock_fetcher import MetadataFetchResult, StockListFetcher
 
     mock_kiwoom_client = MagicMock()
+    mock_kis_client = MagicMock()
     mock_db = MagicMock()
     mock_db.upsert_overseas_stock_metadata.return_value = 2
 
-    fetcher = StockListFetcher(mock_kiwoom_client, mock_db)
+    fetcher = StockListFetcher(mock_kiwoom_client, mock_db, mock_kis_client)
 
     results = [
         MetadataFetchResult(
@@ -340,10 +349,11 @@ def test_save_overseas_chunk_results_with_skipped():
     from cluefin_cli.data.stock_fetcher import MetadataFetchResult, StockListFetcher
 
     mock_kiwoom_client = MagicMock()
+    mock_kis_client = MagicMock()
     mock_db = MagicMock()
     mock_db.upsert_overseas_stock_metadata.return_value = 1
 
-    fetcher = StockListFetcher(mock_kiwoom_client, mock_db)
+    fetcher = StockListFetcher(mock_kiwoom_client, mock_db, mock_kis_client)
 
     results = [
         MetadataFetchResult(
@@ -380,9 +390,10 @@ def test_save_overseas_chunk_results_all_skipped():
     from cluefin_cli.data.stock_fetcher import MetadataFetchResult, StockListFetcher
 
     mock_kiwoom_client = MagicMock()
+    mock_kis_client = MagicMock()
     mock_db = MagicMock()
 
-    fetcher = StockListFetcher(mock_kiwoom_client, mock_db)
+    fetcher = StockListFetcher(mock_kiwoom_client, mock_db, mock_kis_client)
 
     results = [
         MetadataFetchResult(
@@ -417,9 +428,10 @@ def test_token_bucket_integration():
     from cluefin_cli.data.stock_fetcher import StockListFetcher
 
     mock_kiwoom_client = MagicMock()
+    mock_kis_client = MagicMock()
     mock_db = MagicMock()
 
-    fetcher = StockListFetcher(mock_kiwoom_client, mock_db, rate_limit=10.0)
+    fetcher = StockListFetcher(mock_kiwoom_client, mock_db, mock_kis_client, rate_limit=10.0)
 
     # Verify TokenBucket is created with correct parameters
     assert isinstance(fetcher.rate_limiter, TokenBucket)
