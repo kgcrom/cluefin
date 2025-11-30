@@ -28,7 +28,7 @@ Cluefin을 사용함으로써 귀하는 자신의 책임 하에 학습이나 실
 
 ```bash
 # Install system dependencies (macOS)
-brew install ta-lib lightgbm
+brew install lightgbm
 
 # Clone and setup
 git clone https://github.com/kgcrom/cluefin.git
@@ -56,14 +56,14 @@ uv run ruff check . --fix
 - **대화형 CLI**: Rich 기반 터미널 인터페이스로 핵심 분석 기능 제공
 - **한국 금융 API**: 키움증권, 한국투자증권(KIS), 한국거래소(KRX), DART를 위한 타입 안전한 클라이언트
 - **ML 기반 예측**: 주식 움직임 예측을 위한 SHAP 설명 기능을 갖춘 LightGBM 모델
-- **기술적 분석**: TA-Lib 통합을 통한 20+ 지표 (RSI, MACD, 볼린저 밴드 등)
+- **기술적 분석**: cluefin-ta를 통한 150+ 지표 (RSI, MACD, 볼린저 밴드 등)
 
 ### 📊 데이터 소스
 - **키움증권**: 실시간 시세, 계좌 관리, 주문 실행
 - **한국투자증권(KIS)**: 국내/해외 주식 시세, 계좌 조회, 시장 분석
 - **한국거래소(KRX)**: 시장 데이터, 지수, 섹터 정보
 - **DART**: 기업 공시, 재무제표, 대량보유상황
-- **기술적 지표**: 포괄적인 TA-Lib 통합
+- **기술적 지표**: 순수 Python 기반 cluefin-ta 라이브러리 (TA-Lib 호환 API)
 
 ## 📖 Cluefin을 선택하는 이유?
 Cluefin은 모든 사람들에게 금융 투자, 포트폴리오 관리를 단순화하고 도와주는 역할을합니다.
@@ -79,13 +79,16 @@ Cluefin은 모든 사람들에게 금융 투자, 포트폴리오 관리를 단�
 This project uses a **uv workspace monorepo** structure:
 ```
 cluefin/
-├── packages/cluefin-openapi/    # Korean financial API clients
-│   ├── src/cluefin_openapi/
-│   │   ├── kiwoom/             # Kiwoom Securities API client
-│   │   ├── kis/                # Korea Investment & Securities API client
-│   │   ├── krx/                # Korea Exchange API client
-│   │   └── dart/               # DART corporate disclosure API client
-│   └── tests/                  # Unit and integration tests
+├── packages/
+│   ├── cluefin-openapi/        # Korean financial API clients
+│   │   ├── src/cluefin_openapi/
+│   │   │   ├── kiwoom/         # Kiwoom Securities API client
+│   │   │   ├── kis/            # Korea Investment & Securities API client
+│   │   │   ├── krx/            # Korea Exchange API client
+│   │   │   └── dart/           # DART corporate disclosure API client
+│   │   └── tests/              # Unit and integration tests
+│   └── cluefin-ta/             # Pure Python technical analysis library
+│       └── src/cluefin_ta/     # TA-Lib compatible API, no system dependencies
 ├── apps/cluefin-cli/           # Interactive CLI application with ML predictions
 └── docs/                       # Architecture and technical documentation
 ```
@@ -121,10 +124,16 @@ uv run ruff format .
 - **Rate limiting and error handling** optimized for Korean market APIs
 - **Test coverage** with unit tests using `requests_mock` and integration tests
 
-**[cluefin-cli](apps/cluefin-cli/)** - Interactive Terminal Application  
+**[cluefin-ta](packages/cluefin-ta/)** - Pure Python Technical Analysis Library
+- **TA-Lib compatible API** - Drop-in replacement: `import cluefin_ta as talib`
+- **No system dependencies** - Pure NumPy implementation (no C library required)
+- **150+ indicators** - Overlap, momentum, volatility, volume, candlestick patterns
+- **Portfolio metrics** - MDD, Sharpe, Sortino, Calmar, CAGR calculations
+
+**[cluefin-cli](apps/cluefin-cli/)** - Interactive Terminal Application
 - **Rich-based UI** with Korean stock market analysis and menu navigation
 - **ML-powered predictions** using LightGBM with SHAP explanations for interpretability
-- **Technical analysis** with 150+ TA-Lib indicators (RSI, MACD, Bollinger Bands)
+- **Technical analysis** with 150+ cluefin-ta indicators (RSI, MACD, Bollinger Bands)
 - **Korean timezone handling** (KST) and trading hours (9:00-15:30) awareness
 
 ## 📄 라이선스
