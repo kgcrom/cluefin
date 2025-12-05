@@ -30,8 +30,8 @@ class Client(object):
         debug: bool = False,
         timeout: int = 30,
         max_retries: int = 3,
-        rate_limit_requests_per_second: float = 10.0,
-        rate_limit_burst: int = 20,
+        rate_limit_requests_per_second: float = 20.0,
+        rate_limit_burst: int = 3,
     ):
         self.token = token
         self.app_key = app_key

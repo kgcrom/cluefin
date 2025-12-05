@@ -47,8 +47,8 @@ class Client(object):
         timeout: int = 30,
         max_retries: int = 3,
         debug: bool = False,
-        rate_limit_requests_per_second: float = 10.0,
-        rate_limit_burst: int = 20,
+        rate_limit_requests_per_second: float = 3.0,
+        rate_limit_burst: int = 1,
         enable_caching: bool = False,
         cache_ttl: int = 300,
     ):
