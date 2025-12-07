@@ -30,7 +30,7 @@ from cluefin_openapi.kis._domestic_market_analysis_types import (
     WatchlistMultiQuote,
     WatchlistStocksByGroup,
 )
-from cluefin_openapi.kis._model import KisHttpResponse, KisHttpHeader
+from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 
 
 class DomesticMarketAnalysis:
@@ -746,7 +746,9 @@ class DomesticMarketAnalysis:
         body = ProgramTradingTrendByStockDaily.model_validate(response.json())
         return KisHttpResponse(header=header, body=body)
 
-    def get_foreign_institutional_estimate_by_stock(self, mksc_shrn_iscd: str) -> KisHttpResponse[ForeignInstitutionalEstimateByStock]:
+    def get_foreign_institutional_estimate_by_stock(
+        self, mksc_shrn_iscd: str
+    ) -> KisHttpResponse[ForeignInstitutionalEstimateByStock]:
         """
         종목별 외인기관 추정기전계
 

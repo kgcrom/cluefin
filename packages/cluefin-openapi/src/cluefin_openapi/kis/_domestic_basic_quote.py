@@ -1,7 +1,6 @@
 from typing_extensions import Literal
 
 from cluefin_openapi.kis._client import Client
-from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 from cluefin_openapi.kis._domestic_basic_quote_types import (
     DomesticEtfComponentStockPrice,
     DomesticEtfEtnCurrentPrice,
@@ -24,6 +23,7 @@ from cluefin_openapi.kis._domestic_basic_quote_types import (
     DomesticStockPeriodQuote,
     DomesticStockTodayMinuteChart,
 )
+from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 
 
 class DomesticBasicQuote:

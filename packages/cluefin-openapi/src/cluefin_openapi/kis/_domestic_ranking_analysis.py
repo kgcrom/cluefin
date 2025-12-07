@@ -1,5 +1,4 @@
 from cluefin_openapi.kis._client import Client
-from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 from cluefin_openapi.kis._domestic_ranking_analysis_types import (
     HtsInquiryTop20,
     StockAfterHoursFluctuationRank,
@@ -24,6 +23,7 @@ from cluefin_openapi.kis._domestic_ranking_analysis_types import (
     StockWatchlistRegistrationTop,
     TradingVolumeRank,
 )
+from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 
 
 class DomesticRankingAnalysis:

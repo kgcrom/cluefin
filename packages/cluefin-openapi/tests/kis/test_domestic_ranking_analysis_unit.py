@@ -7,7 +7,6 @@ from unittest.mock import Mock
 import pytest
 
 from cluefin_openapi.kis._domestic_ranking_analysis import DomesticRankingAnalysis
-from cluefin_openapi.kis._model import KisHttpResponse
 from cluefin_openapi.kis._domestic_ranking_analysis_types import (
     HtsInquiryTop20,
     StockAfterHoursFluctuationRank,
@@ -32,6 +31,7 @@ from cluefin_openapi.kis._domestic_ranking_analysis_types import (
     StockWatchlistRegistrationTop,
     TradingVolumeRank,
 )
+from cluefin_openapi.kis._model import KisHttpResponse
 
 
 def load_test_cases():

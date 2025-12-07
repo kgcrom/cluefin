@@ -15,7 +15,7 @@ from cluefin_openapi.kis._domestic_issue_other_types import (
     SectorTimeIndexSecond,
     VolatilityInterruptionStatus,
 )
-from cluefin_openapi.kis._model import KisHttpResponse, KisHttpHeader
+from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 
 
 class DomesticIssueOther:

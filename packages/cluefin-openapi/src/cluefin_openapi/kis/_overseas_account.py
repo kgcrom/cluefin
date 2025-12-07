@@ -1,5 +1,5 @@
 from cluefin_openapi.kis._client import Client
-from cluefin_openapi.kis._model import KisHttpResponse, KisHttpHeader
+from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 from cluefin_openapi.kis._overseas_account_types import (
     BalanceBySettlement,
     BuyTradableAmount,

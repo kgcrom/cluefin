@@ -1,5 +1,4 @@
 from cluefin_openapi.kis._client import Client
-from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 from cluefin_openapi.kis._domestic_stock_info_types import (
     BalanceSheet,
     EstimatedEarnings,
@@ -28,6 +27,7 @@ from cluefin_openapi.kis._domestic_stock_info_types import (
     StockBasicInfo,
     StockLoanableList,
 )
+from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 
 
 class DomesticStockInfo:
