@@ -19,7 +19,6 @@ dependencies = [
     "shap>=0.47.2,<1.0.0",
     "cluefin-ta",
     "imbalanced-learn>=0.14.0",
-    "duckdb>=1.4.1"
 ]
 
 [build-system]

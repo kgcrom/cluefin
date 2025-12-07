@@ -1,6 +1,6 @@
 """지분공시 종합정보 (Disclosure Comprehensive Information) API client."""
 
-from typing import Mapping, Optional
+from typing import Mapping
 
 from ._client import Client
 from ._share_disclosure_comprehensive_types import (

@@ -5,7 +5,6 @@ from cluefin_openapi.krx._bond_types import (
 )
 from cluefin_openapi.krx._client import Client
 from cluefin_openapi.krx._factory import KrxApiMethodFactory
-from cluefin_openapi.krx._model import KrxHttpResponse
 
 
 class Bond:

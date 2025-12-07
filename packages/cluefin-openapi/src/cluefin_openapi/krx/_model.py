@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from typing import Generic, TypeVar
 
-from pydantic import BaseModel, Field
-
 T_KrxHttpBody = TypeVar("T_KrxHttpBody", bound="KrxHttpBody")
 
 

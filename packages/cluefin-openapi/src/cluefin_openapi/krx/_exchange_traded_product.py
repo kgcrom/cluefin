@@ -5,7 +5,6 @@ from cluefin_openapi.krx._exchange_traded_product_types import (
     ExchangeTradedETN,
 )
 from cluefin_openapi.krx._factory import KrxApiMethodFactory
-from cluefin_openapi.krx._model import KrxHttpResponse
 
 
 class ExchangeTradedProduct:

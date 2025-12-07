@@ -1,11 +1,9 @@
 """KRX API Method Factory for generating partial functions to eliminate code duplication.
 
 This module provides the core abstraction infrastructure for creating reusable function
-templates using functools.partial while preserving type safety and Korean financial
-API specifics.
+templates while preserving type safety and Korean financial API specifics.
 """
 
-from functools import partial
 from typing import Callable, Dict, Generic, Protocol, Type, TypeVar
 
 from cluefin_openapi.krx._client import Client

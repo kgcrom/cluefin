@@ -5,7 +5,6 @@ from cluefin_openapi.krx._general_product_types import (
     GeneralProductGoldMarket,
     GeneralProductOilMarket,
 )
-from cluefin_openapi.krx._model import KrxHttpResponse
 
 
 class GeneralProduct:

@@ -3,7 +3,6 @@ from cluefin_openapi.krx._esg_types import (
     EsgSociallyResponsibleInvestmentBond,
 )
 from cluefin_openapi.krx._factory import KrxApiMethodFactory
-from cluefin_openapi.krx._model import KrxHttpResponse
 
 
 class Esg:

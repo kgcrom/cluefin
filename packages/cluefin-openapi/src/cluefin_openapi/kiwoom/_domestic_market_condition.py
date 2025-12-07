@@ -24,7 +24,6 @@ from cluefin_openapi.kiwoom._domestic_market_condition_types import (
     DomesticMarketConditionStockQuoteByDate,
 )
 from cluefin_openapi.kiwoom._model import (
-    KiwoomHttpBody,
     KiwoomHttpHeader,
     KiwoomHttpResponse,
 )
