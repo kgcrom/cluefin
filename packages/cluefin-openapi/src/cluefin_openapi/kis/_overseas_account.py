@@ -1,4 +1,5 @@
 from cluefin_openapi.kis._client import Client
+from cluefin_openapi.kis._model import KisHttpResponse, KisHttpHeader
 from cluefin_openapi.kis._overseas_account_types import (
     BalanceBySettlement,
     BuyTradableAmount,
@@ -39,7 +40,7 @@ class OverseasAccount:
         start_time: str = "",
         end_time: str = "",
         algo_ord_tmd_dvsn_cd: str = "",
-    ) -> StockQuoteCurrent:
+    ) -> KisHttpResponse[StockQuoteCurrent]:
         """해외주식 주문
 
         Args:
@@ -55,7 +56,7 @@ class OverseasAccount:
             algo_ord_tmd_dvsn_cd (str): 알고리즘주문시간구분코드 (00: 분할주문 시간 직접입력, 02: 정규장 종료시까지)
 
         Returns:
-            StockQuoteCurrent: 해외주식 주문 응답 객체
+            KisHttpResponse[StockQuoteCurrent]: 해외주식 주문 응답 객체
         """
         headers = {
             "tr_id": "TTTT1002U",
@@ -73,7 +74,11 @@ class OverseasAccount:
             "ALGO_ORD_TMD_DVSN_CD": algo_ord_tmd_dvsn_cd,
         }
         response = self.client._post("/uapi/overseas-stock/v1/trading/order", headers=headers, body=body)
-        return StockQuoteCurrent.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching overseas stock order: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockQuoteCurrent.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def request_stock_quote_correction(
         self,
@@ -87,7 +92,7 @@ class OverseasAccount:
         ovrs_ord_unpr: str,
         mgco_aptm_odno: str = "",
         ord_svr_dvsn_cd: str = "0",
-    ) -> StockQuoteCorrection:
+    ) -> KisHttpResponse[StockQuoteCorrection]:
         """해외주식 정정취소주문
 
         Args:
@@ -125,7 +130,11 @@ class OverseasAccount:
             headers=headers,
             body=body,
         )
-        return StockQuoteCorrection.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching overseas stock correction/cancellation: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockQuoteCorrection.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def request_stock_reserve_quote(
         self,
@@ -143,7 +152,7 @@ class OverseasAccount:
         ord_dvsn: str = "",
         ovrs_rsvn_odno: str = "",
         algo_ord_tmd_dvsn_cd: str = "",
-    ) -> StockReserveQuote:
+    ) -> KisHttpResponse[StockReserveQuote]:
         """해외주식 예약주문접수
 
         Args:
@@ -185,7 +194,11 @@ class OverseasAccount:
             "ALGO_ORD_TMD_DVSN_CD": algo_ord_tmd_dvsn_cd,
         }
         response = self.client._post("/uapi/overseas-stock/v1/trading/order-resv", headers=headers, body=body)
-        return StockReserveQuote.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching overseas reserve quote: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockReserveQuote.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def request_stock_reserve_quote_correction(
         self,
@@ -193,7 +206,7 @@ class OverseasAccount:
         acnt_prdt_cd: str,
         rsyn_ord_rcit_dt: str,
         ovrs_rsvn_odno: str,
-    ) -> StockReserveQuoteCorrection:
+    ) -> KisHttpResponse[StockReserveQuoteCorrection]:
         """해외주식 예약주문접수취소
 
         Args:
@@ -219,7 +232,11 @@ class OverseasAccount:
             headers=headers,
             body=body,
         )
-        return StockReserveQuoteCorrection.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching overseas reserve quote correction: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockReserveQuoteCorrection.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_buy_tradable_amount(
         self,
@@ -228,7 +245,7 @@ class OverseasAccount:
         ovrs_excg_cd: str,
         ovrs_ord_unpr: str,
         item_cd: str,
-    ) -> BuyTradableAmount:
+    ) -> KisHttpResponse[BuyTradableAmount]:
         """해외주식 매수가능금액조회
 
         Args:
@@ -256,7 +273,11 @@ class OverseasAccount:
             headers=headers,
             params=params,
         )
-        return BuyTradableAmount.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching overseas buy tradable amount: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = BuyTradableAmount.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_not_conclusion_history(
         self,
@@ -266,7 +287,7 @@ class OverseasAccount:
         sort_sqn: str,
         ctx_area_fk200: str = "",
         ctx_area_nk200: str = "",
-    ) -> StockNotConclusion:
+    ) -> KisHttpResponse[StockNotConclusion]:
         """해외주식 미체결내역
 
         Args:
@@ -296,7 +317,11 @@ class OverseasAccount:
             headers=headers,
             params=params,
         )
-        return StockNotConclusion.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching overseas stock not conclusion history: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockNotConclusion.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_balance(
         self,
@@ -306,7 +331,7 @@ class OverseasAccount:
         tr_crcy_cd: str,
         ctx_area_fk200: str = "",
         ctx_area_nk200: str = "",
-    ) -> StockBalance:
+    ) -> KisHttpResponse[StockBalance]:
         """해외주식 잔고
 
         Args:
@@ -336,7 +361,11 @@ class OverseasAccount:
             headers=headers,
             params=params,
         )
-        return StockBalance.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching overseas stock balance: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockBalance.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_conclusion_history(
         self,
@@ -354,7 +383,7 @@ class OverseasAccount:
         odno: str = "",
         ctx_area_nk200: str = "",
         ctx_area_fk200: str = "",
-    ) -> StockConclusionHistory:
+    ) -> KisHttpResponse[StockConclusionHistory]:
         """해외주식 주문체결내역
 
         Args:
@@ -400,7 +429,11 @@ class OverseasAccount:
             headers=headers,
             params=params,
         )
-        return StockConclusionHistory.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching overseas stock conclusion history: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockConclusionHistory.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_current_balance_by_conclusion(
         self,
@@ -410,7 +443,7 @@ class OverseasAccount:
         natn_cd: str,
         tr_mket_cd: str,
         inqr_dvsn_cd: str,
-    ) -> CurrentBalanceByConclusion:
+    ) -> KisHttpResponse[CurrentBalanceByConclusion]:
         """해외주식 체결기준현재잔고
 
         Args:
@@ -440,7 +473,11 @@ class OverseasAccount:
             headers=headers,
             params=params,
         )
-        return CurrentBalanceByConclusion.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching overseas current balance by conclusion: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = CurrentBalanceByConclusion.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_reserve_orders(
         self,
@@ -453,7 +490,7 @@ class OverseasAccount:
         ovrs_excg_cd: str,
         ctx_area_fk200: str = "",
         ctx_area_nk200: str = "",
-    ) -> ReserveOrders:
+    ) -> KisHttpResponse[ReserveOrders]:
         """해외주식 예약주문조회
 
         Args:
@@ -489,7 +526,11 @@ class OverseasAccount:
             headers=headers,
             params=params,
         )
-        return ReserveOrders.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching overseas reserve orders: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = ReserveOrders.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_balance_by_settlement(
         self,
@@ -498,7 +539,7 @@ class OverseasAccount:
         bass_dt: str,
         wcrc_frcr_dvsn_cd: str,
         inqr_dvsn_cd: str,
-    ) -> BalanceBySettlement:
+    ) -> KisHttpResponse[BalanceBySettlement]:
         """해외주식 결제기준잔고
 
         Args:
@@ -526,7 +567,11 @@ class OverseasAccount:
             headers=headers,
             params=params,
         )
-        return BalanceBySettlement.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching overseas balance by settlement: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = BalanceBySettlement.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_daily_transaction_history(
         self,
@@ -540,7 +585,7 @@ class OverseasAccount:
         loan_dvsn_cd: str,
         ctx_area_fk100: str = "",
         ctx_area_nk100: str = "",
-    ) -> DailyTransactionHistory:
+    ) -> KisHttpResponse[DailyTransactionHistory]:
         """해외주식 일별거래내역
 
         Args:
@@ -578,7 +623,11 @@ class OverseasAccount:
             headers=headers,
             params=params,
         )
-        return DailyTransactionHistory.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching overseas daily transaction history: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = DailyTransactionHistory.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_period_profit_loss(
         self,
@@ -593,7 +642,7 @@ class OverseasAccount:
         wcrc_frcr_dvsn_cd: str,
         ctx_area_fk200: str = "",
         ctx_area_nk200: str = "",
-    ) -> PeriodProfitLoss:
+    ) -> KisHttpResponse[PeriodProfitLoss]:
         """해외주식 기간손익
 
         Args:
@@ -633,13 +682,17 @@ class OverseasAccount:
             headers=headers,
             params=params,
         )
-        return PeriodProfitLoss.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching overseas period profit loss: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = PeriodProfitLoss.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_margin_aggregate(
         self,
         cano: str,
         acnt_prdt_cd: str,
-    ) -> MarginAggregate:
+    ) -> KisHttpResponse[MarginAggregate]:
         """해외증거금 통합변조회
 
         Args:
@@ -661,7 +714,11 @@ class OverseasAccount:
             headers=headers,
             params=params,
         )
-        return MarginAggregate.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching overseas margin aggregate: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = MarginAggregate.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def request_order_after_day_time(
         self,
@@ -675,7 +732,7 @@ class OverseasAccount:
         ctac_tlno: str = "",
         mgco_aptm_odno: str = "",
         ord_svr_dvsn_cd: str = "0",
-    ) -> OrderAfterDayTime:
+    ) -> KisHttpResponse[OrderAfterDayTime]:
         """해외주식 미국주간주문
 
         Args:
@@ -713,7 +770,11 @@ class OverseasAccount:
             headers=headers,
             body=body,
         )
-        return OrderAfterDayTime.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching overseas daytime order: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = OrderAfterDayTime.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def cancel_correct_after_day_time(
         self,
@@ -728,7 +789,7 @@ class OverseasAccount:
         ctac_tlno: str = "",
         mgco_aptm_odno: str = "",
         ord_svr_dvsn_cd: str = "0",
-    ) -> CorrectAfterDayTime:
+    ) -> KisHttpResponse[CorrectAfterDayTime]:
         """해외주식 미국주간정정취소
 
         Args:
@@ -768,7 +829,11 @@ class OverseasAccount:
             headers=headers,
             body=body,
         )
-        return CorrectAfterDayTime.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching overseas daytime correction/cancellation: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = CorrectAfterDayTime.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_limit_order_number(
         self,
@@ -777,7 +842,7 @@ class OverseasAccount:
         acno_prdt_cd: str,
         ctx_area_nk200: str = "",
         ctx_area_fk200: str = "",
-    ) -> LimitOrderNumber:
+    ) -> KisHttpResponse[LimitOrderNumber]:
         """해외주식 지정가주문번호조회
 
         Args:
@@ -801,7 +866,11 @@ class OverseasAccount:
             "CTX_AREA_FK200": ctx_area_fk200,
         }
         response = self.client._get("/uapi/overseas-stock/v1/trading/algo-ordno", headers=headers, params=params)
-        return LimitOrderNumber.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching overseas limit order number: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = LimitOrderNumber.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_limit_order_execution_history(
         self,
@@ -813,7 +882,7 @@ class OverseasAccount:
         ttlz_icld_yn: str = "",
         ctx_area_nk200: str = "",
         ctx_area_fk200: str = "",
-    ) -> LimitOrderExecutionHistory:
+    ) -> KisHttpResponse[LimitOrderExecutionHistory]:
         """해외주식 지정가체결내역조회
 
         Args:
@@ -847,4 +916,8 @@ class OverseasAccount:
             headers=headers,
             params=params,
         )
-        return LimitOrderExecutionHistory.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching overseas limit order execution history: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = LimitOrderExecutionHistory.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
