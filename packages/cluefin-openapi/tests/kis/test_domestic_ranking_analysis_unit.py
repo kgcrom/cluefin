@@ -7,6 +7,7 @@ from unittest.mock import Mock
 import pytest
 
 from cluefin_openapi.kis._domestic_ranking_analysis import DomesticRankingAnalysis
+from cluefin_openapi.kis._model import KisHttpResponse
 from cluefin_openapi.kis._domestic_ranking_analysis_types import (
     HtsInquiryTop20,
     StockAfterHoursFluctuationRank,
@@ -50,6 +51,13 @@ def test_domestic_ranking_analysis_methods(test_case):
     mock_client = Mock()
     mock_response = Mock()
     mock_response.json.return_value = test_case["response_payload"]
+    mock_response.status_code = 200
+    mock_response.headers = {
+        "content-type": "application/json; charset=utf-8",
+        "tr_id": test_case["expected_headers"].get("tr_id", ""),
+        "tr_cont": "",
+        "gt_uid": None,
+    }
 
     # Configure mock based on HTTP method
     if test_case["method"] == "GET":
@@ -97,7 +105,8 @@ def test_domestic_ranking_analysis_methods(test_case):
     # Verify result type
     response_model_name = test_case["response_model_attr"]
     response_model_class = globals()[response_model_name]
-    assert isinstance(result, response_model_class)
+    assert isinstance(result, KisHttpResponse)
+    assert isinstance(result.body, response_model_class)
 
 
 def test_get_trading_volume_rank_detailed():
@@ -133,6 +142,13 @@ def test_get_trading_volume_rank_detailed():
             }
         ],
     }
+    mock_response.status_code = 200
+    mock_response.headers = {
+        "content-type": "application/json; charset=utf-8",
+        "tr_id": "FHPST01710000",
+        "tr_cont": "",
+        "gt_uid": None,
+    }
     mock_client._get.return_value = mock_response
 
     # Execute
@@ -152,7 +168,8 @@ def test_get_trading_volume_rank_detailed():
     )
 
     # Verify
-    assert isinstance(result, TradingVolumeRank)
+    assert isinstance(result, KisHttpResponse)
+    assert isinstance(result.body, TradingVolumeRank)
     mock_client._get.assert_called_once_with(
         "/uapi/domestic-stock/v1/quotations/volume-rank",
         headers={"tr_id": "FHPST01710000"},
@@ -210,6 +227,13 @@ def test_get_stock_fluctuation_rank_detailed():
             }
         ],
     }
+    mock_response.status_code = 200
+    mock_response.headers = {
+        "content-type": "application/json; charset=utf-8",
+        "tr_id": "FHPST01700000",
+        "tr_cont": "",
+        "gt_uid": None,
+    }
     mock_client._get.return_value = mock_response
 
     # Execute
@@ -232,7 +256,8 @@ def test_get_stock_fluctuation_rank_detailed():
     )
 
     # Verify
-    assert isinstance(result, StockFluctuationRank)
+    assert isinstance(result, KisHttpResponse)
+    assert isinstance(result.body, StockFluctuationRank)
     mock_client._get.assert_called_once_with(
         "/uapi/domestic-stock/v1/ranking/fluctuation",
         headers={"tr_id": "FHPST01700000"},
@@ -271,6 +296,13 @@ def test_get_hts_inquiry_top_20_detailed():
             }
         ],
     }
+    mock_response.status_code = 200
+    mock_response.headers = {
+        "content-type": "application/json; charset=utf-8",
+        "tr_id": "HHMCM000100C0",
+        "tr_cont": "",
+        "gt_uid": None,
+    }
     mock_client._get.return_value = mock_response
 
     # Execute
@@ -278,7 +310,8 @@ def test_get_hts_inquiry_top_20_detailed():
     result = ranking_analysis.get_hts_inquiry_top_20()
 
     # Verify
-    assert isinstance(result, HtsInquiryTop20)
+    assert isinstance(result, KisHttpResponse)
+    assert isinstance(result.body, HtsInquiryTop20)
     mock_client._get.assert_called_once_with(
         "/uapi/domestic-stock/v1/ranking/hts-top-view", headers={"tr_id": "HHMCM000100C0"}, params={}
     )
@@ -309,6 +342,13 @@ def test_get_stock_market_cap_top_detailed():
             }
         ],
     }
+    mock_response.status_code = 200
+    mock_response.headers = {
+        "content-type": "application/json; charset=utf-8",
+        "tr_id": "FHPST01740000",
+        "tr_cont": "",
+        "gt_uid": None,
+    }
     mock_client._get.return_value = mock_response
 
     # Execute
@@ -326,7 +366,8 @@ def test_get_stock_market_cap_top_detailed():
     )
 
     # Verify
-    assert isinstance(result, StockMarketCapTop)
+    assert isinstance(result, KisHttpResponse)
+    assert isinstance(result.body, StockMarketCapTop)
     mock_client._get.assert_called_once()
 
 

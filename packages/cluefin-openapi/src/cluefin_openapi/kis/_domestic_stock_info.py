@@ -1,4 +1,5 @@
 from cluefin_openapi.kis._client import Client
+from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 from cluefin_openapi.kis._domestic_stock_info_types import (
     BalanceSheet,
     EstimatedEarnings,
@@ -39,7 +40,7 @@ class DomesticStockInfo:
         self,
         pdno: str,
         prdt_type_cd: str,
-    ) -> ProductBasicInfo:
+    ) -> KisHttpResponse[ProductBasicInfo]:
         """
         상품기본조회
 
@@ -48,7 +49,7 @@ class DomesticStockInfo:
             prdt_type_cd (str): 상품유형코드 (300: 주식, 301: 선물옵션, 302: 채권, 512: 미국 나스닥, 513: 미국 뉴욕, 529: 미국 아멕스, 515: 일본, 501: 홍콩, 543: 홍콩CNY, 558: 홍콩USD, 507: 베트남 하노이, 508: 베트남 호치민, 551: 중국 상해A, 552: 중국 심천A)
 
         Returns:
-            ProductBasicInfo: 상품기본조회 응답 객체
+            KisHttpResponse[ProductBasicInfo]: 상품기본조회 응답 객체
         """
         headers = {
             "tr_id": "CTPF1604R",
@@ -58,13 +59,17 @@ class DomesticStockInfo:
             "PRDT_TYPE_CD": prdt_type_cd,
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/search-info", headers=headers, params=params)
-        return ProductBasicInfo.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching product basic info: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = ProductBasicInfo.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_basic_info(
         self,
         prdt_type_cd: str,
         pdno: str,
-    ) -> StockBasicInfo:
+    ) -> KisHttpResponse[StockBasicInfo]:
         """
         주식기본조회
 
@@ -73,7 +78,7 @@ class DomesticStockInfo:
             pdno (str): 상품번호 (종목번호 6자리, ETN의 경우 Q로 시작, 예: Q500001)
 
         Returns:
-            StockBasicInfo: 주식기본조회 응답 객체
+            KisHttpResponse[StockBasicInfo]: 주식기본조회 응답 객체
         """
         headers = {
             "tr_id": "CTPF1002R",
@@ -85,14 +90,18 @@ class DomesticStockInfo:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/search-stock-info", headers=headers, params=params
         )
-        return StockBasicInfo.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock basic info: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockBasicInfo.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_balance_sheet(
         self,
         fid_div_cls_code: str,
         fid_cond_mrkt_div_code: str,
         fid_input_iscd: str,
-    ) -> BalanceSheet:
+    ) -> KisHttpResponse[BalanceSheet]:
         """
         국내주식 대차대조표
 
@@ -102,7 +111,7 @@ class DomesticStockInfo:
             fid_input_iscd (str): 입력 종목코드 (예: 000660)
 
         Returns:
-            BalanceSheet: 국내주식 대차대조표 응답 객체
+            KisHttpResponse[BalanceSheet]: 국내주식 대차대조표 응답 객체
         """
         headers = {
             "tr_id": "FHKST66430100",
@@ -113,14 +122,18 @@ class DomesticStockInfo:
             "fid_input_iscd": fid_input_iscd,
         }
         response = self.client._get("/uapi/domestic-stock/v1/finance/balance-sheet", headers=headers, params=params)
-        return BalanceSheet.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching balance sheet: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = BalanceSheet.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_income_statement(
         self,
         fid_div_cls_code: str,
         fid_cond_mrkt_div_code: str,
         fid_input_iscd: str,
-    ) -> IncomeStatement:
+    ) -> KisHttpResponse[IncomeStatement]:
         """
         국내주식 손익계산서
 
@@ -130,7 +143,7 @@ class DomesticStockInfo:
             fid_input_iscd (str): 입력 종목코드 (예: 000660)
 
         Returns:
-            IncomeStatement: 국내주식 손익계산서 응답 객체
+            KisHttpResponse[IncomeStatement]: 국내주식 손익계산서 응답 객체
         """
         headers = {
             "tr_id": "FHKST66430200",
@@ -141,14 +154,18 @@ class DomesticStockInfo:
             "fid_input_iscd": fid_input_iscd,
         }
         response = self.client._get("/uapi/domestic-stock/v1/finance/income-statement", headers=headers, params=params)
-        return IncomeStatement.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching income statement: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = IncomeStatement.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_financial_ratio(
         self,
         fid_div_cls_code: str,
         fid_cond_mrkt_div_code: str,
         fid_input_iscd: str,
-    ) -> FinancialRatio:
+    ) -> KisHttpResponse[FinancialRatio]:
         """
         국내주식 재무비율
 
@@ -158,7 +175,7 @@ class DomesticStockInfo:
             fid_input_iscd (str): 입력 종목코드 (예: 000660)
 
         Returns:
-            FinancialRatio: 국내주식 재무비율 응답 객체
+            KisHttpResponse[FinancialRatio]: 국내주식 재무비율 응답 객체
         """
         headers = {
             "tr_id": "FHKST66430300",
@@ -169,14 +186,18 @@ class DomesticStockInfo:
             "fid_input_iscd": fid_input_iscd,
         }
         response = self.client._get("/uapi/domestic-stock/v1/finance/financial-ratio", headers=headers, params=params)
-        return FinancialRatio.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching financial ratio: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = FinancialRatio.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_profitability_ratio(
         self,
         fid_input_iscd: str,
         fid_div_cls_code: str,
         fid_cond_mrkt_div_code: str,
-    ) -> ProfitabilityRatio:
+    ) -> KisHttpResponse[ProfitabilityRatio]:
         """
         국내주식 수익성비율
 
@@ -186,7 +207,7 @@ class DomesticStockInfo:
             fid_cond_mrkt_div_code (str): 조건 시장 분류 코드 (J)
 
         Returns:
-            ProfitabilityRatio: 국내주식 수익성비율 응답 객체
+            KisHttpResponse[ProfitabilityRatio]: 국내주식 수익성비율 응답 객체
         """
         headers = {
             "tr_id": "FHKST66430400",
@@ -197,14 +218,18 @@ class DomesticStockInfo:
             "fid_cond_mrkt_div_code": fid_cond_mrkt_div_code,
         }
         response = self.client._get("/uapi/domestic-stock/v1/finance/profit-ratio", headers=headers, params=params)
-        return ProfitabilityRatio.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching profitability ratio: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = ProfitabilityRatio.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_other_key_ratio(
         self,
         fid_input_iscd: str,
         fid_div_cls_code: str,
         fid_cond_mrkt_div_code: str,
-    ) -> OtherKeyRatio:
+    ) -> KisHttpResponse[OtherKeyRatio]:
         """
         국내주식 기타주요비율
 
@@ -214,7 +239,7 @@ class DomesticStockInfo:
             fid_cond_mrkt_div_code (str): 조건 시장 분류 코드 (J)
 
         Returns:
-            OtherKeyRatio: 국내주식 기타주요비율 응답 객체
+            KisHttpResponse[OtherKeyRatio]: 국내주식 기타주요비율 응답 객체
         """
         headers = {
             "tr_id": "FHKST66430500",
@@ -227,14 +252,18 @@ class DomesticStockInfo:
         response = self.client._get(
             "/uapi/domestic-stock/v1/finance/other-major-ratios", headers=headers, params=params
         )
-        return OtherKeyRatio.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching other key ratio: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = OtherKeyRatio.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stability_ratio(
         self,
         fid_input_iscd: str,
         fid_div_cls_code: str,
         fid_cond_mrkt_div_code: str,
-    ) -> StabilityRatio:
+    ) -> KisHttpResponse[StabilityRatio]:
         """
         국내주식 안정성비율
 
@@ -244,7 +273,7 @@ class DomesticStockInfo:
             fid_cond_mrkt_div_code (str): 조건 시장 분류 코드 (J)
 
         Returns:
-            StabilityRatio: 국내주식 안정성비율 응답 객체
+            KisHttpResponse[StabilityRatio]: 국내주식 안정성비율 응답 객체
         """
         headers = {
             "tr_id": "FHKST66430600",
@@ -255,14 +284,18 @@ class DomesticStockInfo:
             "fid_cond_mrkt_div_code": fid_cond_mrkt_div_code,
         }
         response = self.client._get("/uapi/domestic-stock/v1/finance/stability-ratio", headers=headers, params=params)
-        return StabilityRatio.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stability ratio: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StabilityRatio.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_growth_ratio(
         self,
         fid_input_iscd: str,
         fid_div_cls_code: str,
         fid_cond_mrkt_div_code: str,
-    ) -> GrowthRatio:
+    ) -> KisHttpResponse[GrowthRatio]:
         """
         국내주식 성장성비율
 
@@ -272,7 +305,7 @@ class DomesticStockInfo:
             fid_cond_mrkt_div_code (str): 조건 시장 분류 코드 (시장구분코드, 주식 J)
 
         Returns:
-            GrowthRatio: 국내주식 성장성비율 응답 객체
+            KisHttpResponse[GrowthRatio]: 국내주식 성장성비율 응답 객체
         """
         headers = {
             "tr_id": "FHKST66430800",
@@ -283,7 +316,11 @@ class DomesticStockInfo:
             "fid_cond_mrkt_div_code": fid_cond_mrkt_div_code,
         }
         response = self.client._get("/uapi/domestic-stock/v1/finance/growth-ratio", headers=headers, params=params)
-        return GrowthRatio.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching growth ratio: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = GrowthRatio.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_margin_tradable_stocks(
         self,
@@ -292,7 +329,7 @@ class DomesticStockInfo:
         fid_input_iscd: str,
         fid_cond_scr_div_code: str,
         fid_cond_mrkt_div_code: str,
-    ) -> MarginTradableStocks:
+    ) -> KisHttpResponse[MarginTradableStocks]:
         """
         국내주식 당사 신용가능종목
 
@@ -304,7 +341,7 @@ class DomesticStockInfo:
             fid_cond_mrkt_div_code (str): 조건 시장 분류 코드 (시장구분코드, 주식 J)
 
         Returns:
-            MarginTradableStocks: 국내주식 당사 신용가능종목 응답 객체
+            KisHttpResponse[MarginTradableStocks]: 국내주식 당사 신용가능종목 응답 객체
         """
         headers = {
             "tr_id": "FHPST04770000",
@@ -319,7 +356,11 @@ class DomesticStockInfo:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/credit-by-company", headers=headers, params=params
         )
-        return MarginTradableStocks.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching margin tradable stocks: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = MarginTradableStocks.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_ksd_dividend_decision(
         self,
@@ -329,7 +370,7 @@ class DomesticStockInfo:
         t_dt: str,
         sht_cd: str,
         high_gb: str,
-    ) -> KsdDividendDecision:
+    ) -> KisHttpResponse[KsdDividendDecision]:
         """
         예탁원정보(배당결정)
 
@@ -342,7 +383,7 @@ class DomesticStockInfo:
             high_gb (str): 고배당여부 (공백)
 
         Returns:
-            KsdDividendDecision: 예탁원정보(배당결정) 응답 객체
+            KisHttpResponse[KsdDividendDecision]: 예탁원정보(배당결정) 응답 객체
         """
         headers = {
             "tr_id": "HHKDB669102C0",
@@ -356,7 +397,11 @@ class DomesticStockInfo:
             "HIGH_GB": high_gb,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ksdinfo/dividend", headers=headers, params=params)
-        return KsdDividendDecision.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching ksd dividend decision: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = KsdDividendDecision.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_ksd_stock_dividend_decision(
         self,
@@ -364,7 +409,7 @@ class DomesticStockInfo:
         t_dt: str,
         f_dt: str,
         cts: str,
-    ) -> KsdStockDividendDecision:
+    ) -> KisHttpResponse[KsdStockDividendDecision]:
         """
         예탁원정보(주식배수청구결정)
 
@@ -375,7 +420,7 @@ class DomesticStockInfo:
             cts (str): CTS (공백)
 
         Returns:
-            KsdStockDividendDecision: 예탁원정보(주식배수청구결정) 응답 객체
+            KisHttpResponse[KsdStockDividendDecision]: 예탁원정보(주식배수청구결정) 응답 객체
         """
         headers = {
             "tr_id": "HHKDB669103C0",
@@ -387,7 +432,11 @@ class DomesticStockInfo:
             "CTS": cts,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ksdinfo/purreq", headers=headers, params=params)
-        return KsdStockDividendDecision.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching ksd stock dividend decision: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = KsdStockDividendDecision.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_ksd_merger_split_decision(
         self,
@@ -395,7 +444,7 @@ class DomesticStockInfo:
         f_dt: str,
         t_dt: str,
         sht_cd: str,
-    ) -> KsdMergerSplitDecision:
+    ) -> KisHttpResponse[KsdMergerSplitDecision]:
         """
         예탁원정보(합병/분할결정)
 
@@ -406,7 +455,7 @@ class DomesticStockInfo:
             sht_cd (str): 종목코드 (공백: 전체, 특정종목 조회시: 종목코드)
 
         Returns:
-            KsdMergerSplitDecision: 예탁원정보(합병/분할결정) 응답 객체
+            KisHttpResponse[KsdMergerSplitDecision]: 예탁원정보(합병/분할결정) 응답 객체
         """
         headers = {
             "tr_id": "HHKDB669104C0",
@@ -418,7 +467,11 @@ class DomesticStockInfo:
             "SHT_CD": sht_cd,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ksdinfo/merger-split", headers=headers, params=params)
-        return KsdMergerSplitDecision.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching ksd merger split decision: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = KsdMergerSplitDecision.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_ksd_par_value_change_decision(
         self,
@@ -427,7 +480,7 @@ class DomesticStockInfo:
         f_dt: str,
         t_dt: str,
         market_gb: str,
-    ) -> KsdParValueChangeDecision:
+    ) -> KisHttpResponse[KsdParValueChangeDecision]:
         """
         예탁원정보(액면교체결정)
 
@@ -439,7 +492,7 @@ class DomesticStockInfo:
             market_gb (str): 시장구분 (0: 전체, 1: 코스피, 2: 코스닥)
 
         Returns:
-            KsdParValueChangeDecision: 예탁원정보(액면교체결정) 응답 객체
+            KisHttpResponse[KsdParValueChangeDecision]: 예탁원정보(액면교체결정) 응답 객체
         """
         headers = {
             "tr_id": "HHKDB669105C0",
@@ -452,7 +505,11 @@ class DomesticStockInfo:
             "MARKET_GB": market_gb,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ksdinfo/rev-split", headers=headers, params=params)
-        return KsdParValueChangeDecision.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching ksd par value change decision: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = KsdParValueChangeDecision.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_ksd_capital_reduction_schedule(
         self,
@@ -460,7 +517,7 @@ class DomesticStockInfo:
         f_dt: str,
         t_dt: str,
         sht_cd: str,
-    ) -> KsdCapitalReductionSchedule:
+    ) -> KisHttpResponse[KsdCapitalReductionSchedule]:
         """
         예탁원정보(자본감소일정)
 
@@ -471,7 +528,7 @@ class DomesticStockInfo:
             sht_cd (str): 종목코드 (공백: 전체, 특정종목 조회시: 종목코드)
 
         Returns:
-            KsdCapitalReductionSchedule: 예탁원정보(자본감소일정) 응답 객체
+            KisHttpResponse[KsdCapitalReductionSchedule]: 예탁원정보(자본감소일정) 응답 객체
         """
         headers = {
             "tr_id": "HHKDB669106C0",
@@ -483,7 +540,11 @@ class DomesticStockInfo:
             "SHT_CD": sht_cd,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ksdinfo/cap-dcrs", headers=headers, params=params)
-        return KsdCapitalReductionSchedule.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching ksd capital reduction schedule: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = KsdCapitalReductionSchedule.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_ksd_listing_info_schedule(
         self,
@@ -491,7 +552,7 @@ class DomesticStockInfo:
         t_dt: str,
         f_dt: str,
         cts: str,
-    ) -> KsdListingInfoSchedule:
+    ) -> KisHttpResponse[KsdListingInfoSchedule]:
         """
         예탁원정보(상장정보일정)
 
@@ -502,7 +563,7 @@ class DomesticStockInfo:
             cts (str): CTS (공백)
 
         Returns:
-            KsdListingInfoSchedule: 예탁원정보(상장정보일정) 응답 객체
+            KisHttpResponse[KsdListingInfoSchedule]: 예탁원정보(상장정보일정) 응답 객체
         """
         headers = {
             "tr_id": "HHKDB669107C0",
@@ -514,7 +575,11 @@ class DomesticStockInfo:
             "CTS": cts,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ksdinfo/list-info", headers=headers, params=params)
-        return KsdListingInfoSchedule.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching ksd listing info schedule: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = KsdListingInfoSchedule.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_ksd_ipo_subscription_schedule(
         self,
@@ -522,7 +587,7 @@ class DomesticStockInfo:
         cts: str,
         f_dt: str,
         t_dt: str,
-    ) -> KsdIpoSubscriptionSchedule:
+    ) -> KisHttpResponse[KsdIpoSubscriptionSchedule]:
         """
         예탁원정보(공모주청약일정)
 
@@ -533,7 +598,7 @@ class DomesticStockInfo:
             t_dt (str): 조회일자To (~ 일자, 예: 20240531)
 
         Returns:
-            KsdIpoSubscriptionSchedule: 예탁원정보(공모주청약일정) 응답 객체
+            KisHttpResponse[KsdIpoSubscriptionSchedule]: 예탁원정보(공모주청약일정) 응답 객체
         """
         headers = {
             "tr_id": "HHKDB669108C0",
@@ -545,7 +610,11 @@ class DomesticStockInfo:
             "T_DT": t_dt,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ksdinfo/pub-offer", headers=headers, params=params)
-        return KsdIpoSubscriptionSchedule.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching ksd ipo subscription schedule: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = KsdIpoSubscriptionSchedule.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_ksd_forfeited_share_schedule(
         self,
@@ -553,7 +622,7 @@ class DomesticStockInfo:
         t_dt: str,
         f_dt: str,
         cts: str,
-    ) -> KsdForfeitedShareSchedule:
+    ) -> KisHttpResponse[KsdForfeitedShareSchedule]:
         """
         예탁원정보(실권주일정)
 
@@ -564,7 +633,7 @@ class DomesticStockInfo:
             cts (str): CTS (공백)
 
         Returns:
-            KsdForfeitedShareSchedule: 예탁원정보(실권주일정) 응답 객체
+            KisHttpResponse[KsdForfeitedShareSchedule]: 예탁원정보(실권주일정) 응답 객체
         """
         headers = {
             "tr_id": "HHKDB669109C0",
@@ -576,7 +645,11 @@ class DomesticStockInfo:
             "CTS": cts,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ksdinfo/forfeit", headers=headers, params=params)
-        return KsdForfeitedShareSchedule.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching ksd forfeited share schedule: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = KsdForfeitedShareSchedule.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_ksd_deposit_schedule(
         self,
@@ -584,7 +657,7 @@ class DomesticStockInfo:
         sht_cd: str,
         f_dt: str,
         cts: str,
-    ) -> KsdDepositSchedule:
+    ) -> KisHttpResponse[KsdDepositSchedule]:
         """
         예탁원정보(입무예치일정)
 
@@ -595,7 +668,7 @@ class DomesticStockInfo:
             cts (str): CTS (공백)
 
         Returns:
-            KsdDepositSchedule: 예탁원정보(입무예치일정) 응답 객체
+            KisHttpResponse[KsdDepositSchedule]: 예탁원정보(입무예치일정) 응답 객체
         """
         headers = {
             "tr_id": "HHKDB669110C0",
@@ -607,7 +680,11 @@ class DomesticStockInfo:
             "CTS": cts,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ksdinfo/mand-deposit", headers=headers, params=params)
-        return KsdDepositSchedule.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching ksd deposit schedule: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = KsdDepositSchedule.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_ksd_paid_in_capital_increase_schedule(
         self,
@@ -616,7 +693,7 @@ class DomesticStockInfo:
         f_dt: str,
         t_dt: str,
         sht_cd: str,
-    ) -> KsdPaidInCapitalIncreaseSchedule:
+    ) -> KisHttpResponse[KsdPaidInCapitalIncreaseSchedule]:
         """
         예탁원정보(유상증자일정)
 
@@ -628,7 +705,7 @@ class DomesticStockInfo:
             sht_cd (str): 종목코드 (공백: 전체, 특정종목 조회시: 종목코드)
 
         Returns:
-            KsdPaidInCapitalIncreaseSchedule: 예탁원정보(유상증자일정) 응답 객체
+            KisHttpResponse[KsdPaidInCapitalIncreaseSchedule]: 예탁원정보(유상증자일정) 응답 객체
         """
         headers = {
             "tr_id": "HHKDB669100C0",
@@ -641,7 +718,11 @@ class DomesticStockInfo:
             "SHT_CD": sht_cd,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ksdinfo/paidin-capin", headers=headers, params=params)
-        return KsdPaidInCapitalIncreaseSchedule.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching ksd paid in capital increase schedule: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = KsdPaidInCapitalIncreaseSchedule.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_ksd_stock_dividend_schedule(
         self,
@@ -649,7 +730,7 @@ class DomesticStockInfo:
         f_dt: str,
         t_dt: str,
         sht_cd: str,
-    ) -> KsdStockDividendSchedule:
+    ) -> KisHttpResponse[KsdStockDividendSchedule]:
         """
         예탁원정보(무상증자일정)
 
@@ -660,7 +741,7 @@ class DomesticStockInfo:
             sht_cd (str): 종목코드 (공백: 전체, 특정종목 조회시: 종목코드)
 
         Returns:
-            KsdStockDividendSchedule: 예탁원정보(무상증자일정) 응답 객체
+            KisHttpResponse[KsdStockDividendSchedule]: 예탁원정보(무상증자일정) 응답 객체
         """
         headers = {
             "tr_id": "HHKDB669101C0",
@@ -672,7 +753,11 @@ class DomesticStockInfo:
             "SHT_CD": sht_cd,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ksdinfo/bonus-issue", headers=headers, params=params)
-        return KsdStockDividendSchedule.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching ksd stock dividend schedule: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = KsdStockDividendSchedule.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_ksd_shareholder_meeting_schedule(
         self,
@@ -680,7 +765,7 @@ class DomesticStockInfo:
         f_dt: str,
         t_dt: str,
         sht_cd: str,
-    ) -> KsdShareholderMeetingSchedule:
+    ) -> KisHttpResponse[KsdShareholderMeetingSchedule]:
         """
         예탁원정보(주주총회일정)
 
@@ -691,7 +776,7 @@ class DomesticStockInfo:
             sht_cd (str): 종목코드 (공백: 전체, 특정종목 조회시: 종목코드)
 
         Returns:
-            KsdShareholderMeetingSchedule: 예탁원정보(주주총회일정) 응답 객체
+            KisHttpResponse[KsdShareholderMeetingSchedule]: 예탁원정보(주주총회일정) 응답 객체
         """
         headers = {
             "tr_id": "HHKDB669111C0",
@@ -703,12 +788,16 @@ class DomesticStockInfo:
             "SHT_CD": sht_cd,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ksdinfo/sharehld-meet", headers=headers, params=params)
-        return KsdShareholderMeetingSchedule.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching ksd shareholder meeting schedule: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = KsdShareholderMeetingSchedule.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_estimated_earnings(
         self,
         sht_cd: str,
-    ) -> EstimatedEarnings:
+    ) -> KisHttpResponse[EstimatedEarnings]:
         """
         국내주식 종목추정실적
 
@@ -716,7 +805,7 @@ class DomesticStockInfo:
             sht_cd (str): 종목코드 (예: 265520)
 
         Returns:
-            EstimatedEarnings: 국내주식 종목추정실적 응답 객체
+            KisHttpResponse[EstimatedEarnings]: 국내주식 종목추정실적 응답 객체
         """
         headers = {
             "tr_id": "HHKST668300C0",
@@ -727,7 +816,11 @@ class DomesticStockInfo:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/estimate-perform", headers=headers, params=params
         )
-        return EstimatedEarnings.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching estimated earnings: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = EstimatedEarnings.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_loanable_list(
         self,
@@ -737,7 +830,7 @@ class DomesticStockInfo:
         inqr_dvsn_1: str,
         ctx_area_fk200: str,
         ctx_area_nk100: str,
-    ) -> StockLoanableList:
+    ) -> KisHttpResponse[StockLoanableList]:
         """
         당사 대주가능 종목
 
@@ -750,7 +843,7 @@ class DomesticStockInfo:
             ctx_area_nk100 (str): 연속조회키100 (미입력, 다음조회 불가)
 
         Returns:
-            StockLoanableList: 당사 대주가능 종목 응답 객체
+            KisHttpResponse[StockLoanableList]: 당사 대주가능 종목 응답 객체
         """
         headers = {
             "tr_id": "CTSC2702R",
@@ -766,7 +859,11 @@ class DomesticStockInfo:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/lendable-by-company", headers=headers, params=params
         )
-        return StockLoanableList.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock loanable list: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockLoanableList.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_investment_opinion(
         self,
@@ -775,7 +872,7 @@ class DomesticStockInfo:
         fid_input_iscd: str,
         fid_input_date_1: str,
         fid_input_date_2: str,
-    ) -> InvestmentOpinion:
+    ) -> KisHttpResponse[InvestmentOpinion]:
         """
         국내주식 종목투자의견
 
@@ -787,7 +884,7 @@ class DomesticStockInfo:
             fid_input_date_2 (str): 입력날짜2 (~ 이전, 예: 0020240513)
 
         Returns:
-            InvestmentOpinion: 국내주식 종목투자의견 응답 객체
+            KisHttpResponse[InvestmentOpinion]: 국내주식 종목투자의견 응답 객체
         """
         headers = {
             "tr_id": "FHKST663300C0",
@@ -800,7 +897,11 @@ class DomesticStockInfo:
             "FID_INPUT_DATE_2": fid_input_date_2,
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/invest-opinion", headers=headers, params=params)
-        return InvestmentOpinion.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching investment opinion: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = InvestmentOpinion.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_investment_opinion_by_brokerage(
         self,
@@ -810,7 +911,7 @@ class DomesticStockInfo:
         fid_div_cls_code: str,
         fid_input_date_1: str,
         fid_input_date_2: str,
-    ) -> InvestmentOpinionByBrokerage:
+    ) -> KisHttpResponse[InvestmentOpinionByBrokerage]:
         """
         국내주식 증권사별 투자의견
 
@@ -823,7 +924,7 @@ class DomesticStockInfo:
             fid_input_date_2 (str): 입력날짜2 (~ 이전, 예: 0020240513)
 
         Returns:
-            InvestmentOpinionByBrokerage: 국내주식 증권사별 투자의견 응답 객체
+            KisHttpResponse[InvestmentOpinionByBrokerage]: 국내주식 증권사별 투자의견 응답 객체
         """
         headers = {
             "tr_id": "FHKST663400C0",
@@ -837,4 +938,8 @@ class DomesticStockInfo:
             "FID_INPUT_DATE_2": fid_input_date_2,
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/invest-opbysec", headers=headers, params=params)
-        return InvestmentOpinionByBrokerage.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching investment opinion by brokerage: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = InvestmentOpinionByBrokerage.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)

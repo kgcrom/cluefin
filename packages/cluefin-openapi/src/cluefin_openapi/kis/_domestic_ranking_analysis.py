@@ -1,4 +1,5 @@
 from cluefin_openapi.kis._client import Client
+from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 from cluefin_openapi.kis._domestic_ranking_analysis_types import (
     HtsInquiryTop20,
     StockAfterHoursFluctuationRank,
@@ -44,7 +45,7 @@ class DomesticRankingAnalysis:
         fid_input_price_2: str,
         fid_vol_cnt: str,
         fid_input_date_1: str,
-    ) -> TradingVolumeRank:
+    ) -> KisHttpResponse[TradingVolumeRank]:
         """
         거래량순위
 
@@ -81,7 +82,11 @@ class DomesticRankingAnalysis:
             "FID_INPUT_DATE_1": fid_input_date_1,
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/volume-rank", headers=headers, params=params)
-        return TradingVolumeRank.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching trading volume rank: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = TradingVolumeRank.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_fluctuation_rank(
         self,
@@ -99,7 +104,7 @@ class DomesticRankingAnalysis:
         fid_trgt_exls_cls_code: str,
         fid_div_cls_code: str,
         fid_rsfl_rate1: str,
-    ) -> StockFluctuationRank:
+    ) -> KisHttpResponse[StockFluctuationRank]:
         """
         국내주식 등락률 순위
 
@@ -142,7 +147,11 @@ class DomesticRankingAnalysis:
             "fid_rsfl_rate1": fid_rsfl_rate1,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/fluctuation", headers=headers, params=params)
-        return StockFluctuationRank.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock fluctuation rank: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockFluctuationRank.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_hoga_quantity_rank(
         self,
@@ -156,7 +165,7 @@ class DomesticRankingAnalysis:
         fid_trgt_exls_cls_code: str,
         fid_input_price_1: str,
         fid_input_price_2: str,
-    ) -> StockHogaQuantityRank:
+    ) -> KisHttpResponse[StockHogaQuantityRank]:
         """
         국내주식 호가잔량 순위
 
@@ -191,7 +200,11 @@ class DomesticRankingAnalysis:
             "fid_input_price_2": fid_input_price_2,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/quote-balance", headers=headers, params=params)
-        return StockHogaQuantityRank.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock hoga quantity rank: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockHogaQuantityRank.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_profitability_indicator_rank(
         self,
@@ -208,7 +221,7 @@ class DomesticRankingAnalysis:
         fid_rank_sort_cls_code: str,
         fid_blng_cls_code: str,
         fid_trgt_exls_cls_code: str,
-    ) -> StockProfitabilityIndicatorRank:
+    ) -> KisHttpResponse[StockProfitabilityIndicatorRank]:
         """
         국내주식 수익자산지표 순위
 
@@ -251,7 +264,11 @@ class DomesticRankingAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/ranking/profit-asset-index", headers=headers, params=params
         )
-        return StockProfitabilityIndicatorRank.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock profitability indicator rank: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockProfitabilityIndicatorRank.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_market_cap_top(
         self,
@@ -264,7 +281,7 @@ class DomesticRankingAnalysis:
         fid_trgt_exls_cls_code: str,
         fid_input_price_1: str,
         fid_vol_cnt: str,
-    ) -> StockMarketCapTop:
+    ) -> KisHttpResponse[StockMarketCapTop]:
         """
         국내주식 시가총액 상위
 
@@ -297,7 +314,11 @@ class DomesticRankingAnalysis:
             "fid_vol_cnt": fid_vol_cnt,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/market-cap", headers=headers, params=params)
-        return StockMarketCapTop.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock market cap top: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockMarketCapTop.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_finance_ratio_rank(
         self,
@@ -314,7 +335,7 @@ class DomesticRankingAnalysis:
         fid_rank_sort_cls_code: str,
         fid_blng_cls_code: str,
         fid_trgt_exls_cls_code: str,
-    ) -> StockFinanceRatioRank:
+    ) -> KisHttpResponse[StockFinanceRatioRank]:
         """
         국내주식 재무비율 순위
 
@@ -355,7 +376,11 @@ class DomesticRankingAnalysis:
             "fid_trgt_exls_cls_code": fid_trgt_exls_cls_code,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/finance-ratio", headers=headers, params=params)
-        return StockFinanceRatioRank.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock finance ratio rank: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockFinanceRatioRank.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_time_hoga_rank(
         self,
@@ -369,7 +394,7 @@ class DomesticRankingAnalysis:
         fid_trgt_cls_code: str,
         fid_vol_cnt: str,
         fid_input_price_2: str,
-    ) -> StockTimeHogaRank:
+    ) -> KisHttpResponse[StockTimeHogaRank]:
         """
         국내주식 시간외잔량 순위
 
@@ -406,7 +431,11 @@ class DomesticRankingAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/ranking/after-hour-balance", headers=headers, params=params
         )
-        return StockTimeHogaRank.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock time hoga rank: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockTimeHogaRank.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_preferred_stock_ratio_top(
         self,
@@ -419,7 +448,7 @@ class DomesticRankingAnalysis:
         fid_trgt_exls_cls_code: str,
         fid_input_price_1: str,
         fid_input_price_2: str,
-    ) -> StockPreferredStockRatioTop:
+    ) -> KisHttpResponse[StockPreferredStockRatioTop]:
         """
         국내주식 우선주/괴리율 상위
 
@@ -454,7 +483,11 @@ class DomesticRankingAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/ranking/prefer-disparate-ratio", headers=headers, params=params
         )
-        return StockPreferredStockRatioTop.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock preferred stock ratio top: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockPreferredStockRatioTop.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_disparity_index_rank(
         self,
@@ -469,7 +502,7 @@ class DomesticRankingAnalysis:
         fid_trgt_exls_cls_code: str,
         fid_input_price_1: str,
         fid_vol_cnt: str,
-    ) -> StockDisparityIndexRank:
+    ) -> KisHttpResponse[StockDisparityIndexRank]:
         """
         국내주식 이격도 순위
 
@@ -506,7 +539,11 @@ class DomesticRankingAnalysis:
             "fid_vol_cnt": fid_vol_cnt,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/disparity", headers=headers, params=params)
-        return StockDisparityIndexRank.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock disparity index rank: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockDisparityIndexRank.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_market_price_rank(
         self,
@@ -523,7 +560,7 @@ class DomesticRankingAnalysis:
         fid_rank_sort_cls_code: str,
         fid_blng_cls_code: str,
         fid_trgt_exls_cls_code: str,
-    ) -> StockMarketPriceRank:
+    ) -> KisHttpResponse[StockMarketPriceRank]:
         """
         국내주식 시장가치 순위
 
@@ -564,7 +601,11 @@ class DomesticRankingAnalysis:
             "fid_trgt_exls_cls_code": fid_trgt_exls_cls_code,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/market-value", headers=headers, params=params)
-        return StockMarketPriceRank.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock market price rank: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockMarketPriceRank.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_execution_strength_top(
         self,
@@ -577,7 +618,7 @@ class DomesticRankingAnalysis:
         fid_input_price_2: str,
         fid_vol_cnt: str,
         fid_trgt_cls_code: str,
-    ) -> StockExecutionStrengthTop:
+    ) -> KisHttpResponse[StockExecutionStrengthTop]:
         """
         국내주식 체결강도 상위
 
@@ -610,7 +651,11 @@ class DomesticRankingAnalysis:
             "fid_trgt_cls_code": fid_trgt_cls_code,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/volume-power", headers=headers, params=params)
-        return StockExecutionStrengthTop.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock execution strength top: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockExecutionStrengthTop.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_watchlist_registration_top(
         self,
@@ -625,7 +670,7 @@ class DomesticRankingAnalysis:
         fid_vol_cnt: str,
         fid_div_cls_code: str,
         fid_input_cnt_1: str,
-    ) -> StockWatchlistRegistrationTop:
+    ) -> KisHttpResponse[StockWatchlistRegistrationTop]:
         """
         국내주식 관심종목등록 상위
 
@@ -664,7 +709,11 @@ class DomesticRankingAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/ranking/top-interest-stock", headers=headers, params=params
         )
-        return StockWatchlistRegistrationTop.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock watchlist registration top: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockWatchlistRegistrationTop.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_expected_execution_rise_decline_top(
         self,
@@ -678,7 +727,7 @@ class DomesticRankingAnalysis:
         fid_pbmn: str,
         fid_blng_cls_code: str,
         fid_mkop_cls_code: str,
-    ) -> StockExpectedExecutionRiseDeclineTop:
+    ) -> KisHttpResponse[StockExpectedExecutionRiseDeclineTop]:
         """
         국내주식 예상체결 상승/하락상위
 
@@ -713,7 +762,11 @@ class DomesticRankingAnalysis:
             "fid_mkop_cls_code": fid_mkop_cls_code,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/exp-trans-updown", headers=headers, params=params)
-        return StockExpectedExecutionRiseDeclineTop.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock expected execution rise decline top: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockExpectedExecutionRiseDeclineTop.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_proprietary_trading_top(
         self,
@@ -729,7 +782,7 @@ class DomesticRankingAnalysis:
         fid_aply_rang_vol: str,
         fid_aply_rang_prc_2: str,
         fid_aply_rang_prc_1: str,
-    ) -> StockProprietaryTradingTop:
+    ) -> KisHttpResponse[StockProprietaryTradingTop]:
         """
         국내주식 당사매매종목 상위
 
@@ -768,7 +821,11 @@ class DomesticRankingAnalysis:
             "fid_aply_rang_prc_1": fid_aply_rang_prc_1,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/traded-by-company", headers=headers, params=params)
-        return StockProprietaryTradingTop.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock proprietary trading top: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockProprietaryTradingTop.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_new_high_low_approaching_top(
         self,
@@ -784,7 +841,7 @@ class DomesticRankingAnalysis:
         fid_trgt_exls_cls_code: str,
         fid_aply_rang_prc_1: str,
         fid_aply_rang_prc_2: str,
-    ) -> StockNewHighLowApproachingTop:
+    ) -> KisHttpResponse[StockNewHighLowApproachingTop]:
         """
         국내주식 신고/신저근접종목 상위
 
@@ -823,7 +880,11 @@ class DomesticRankingAnalysis:
             "fid_aply_rang_prc_2": fid_aply_rang_prc_2,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/near-new-highlow", headers=headers, params=params)
-        return StockNewHighLowApproachingTop.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock new high low approaching top: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockNewHighLowApproachingTop.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_dividend_yield_top(
         self,
@@ -835,7 +896,7 @@ class DomesticRankingAnalysis:
         f_dt: str,
         t_dt: str,
         gb4: str,
-    ) -> StockDividendYieldTop:
+    ) -> KisHttpResponse[StockDividendYieldTop]:
         """
         국내주식 배당률 상위
 
@@ -866,7 +927,11 @@ class DomesticRankingAnalysis:
             "GB4": gb4,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/dividend-rate", headers=headers, params=params)
-        return StockDividendYieldTop.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock dividend yield top: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockDividendYieldTop.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_large_execution_count_top(
         self,
@@ -882,7 +947,7 @@ class DomesticRankingAnalysis:
         fid_trgt_exls_cls_code: str,
         fid_trgt_cls_code: str,
         fid_vol_cnt: str,
-    ) -> StockLargeExecutionCountTop:
+    ) -> KisHttpResponse[StockLargeExecutionCountTop]:
         """
         국내주식 대량체결건수 상위
 
@@ -921,7 +986,11 @@ class DomesticRankingAnalysis:
             "fid_vol_cnt": fid_vol_cnt,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/bulk-trans-num", headers=headers, params=params)
-        return StockLargeExecutionCountTop.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock large execution count top: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockLargeExecutionCountTop.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_credit_balance_top(
         self,
@@ -930,7 +999,7 @@ class DomesticRankingAnalysis:
         fid_option: str,
         fid_cond_mrkt_div_code: str,
         fid_rank_sort_cls_code: str,
-    ) -> StockCreditBalanceTop:
+    ) -> KisHttpResponse[StockCreditBalanceTop]:
         """
         국내주식 신용잔고 상위
 
@@ -955,7 +1024,11 @@ class DomesticRankingAnalysis:
             "FID_RANK_SORT_CLS_CODE": fid_rank_sort_cls_code,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/credit-balance", headers=headers, params=params)
-        return StockCreditBalanceTop.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock credit balance top: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockCreditBalanceTop.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_short_selling_top(
         self,
@@ -969,7 +1042,7 @@ class DomesticRankingAnalysis:
         fid_trgt_cls_code: str,
         fid_aply_rang_prc_1: str,
         fid_aply_rang_prc_2: str,
-    ) -> StockShortSellingTop:
+    ) -> KisHttpResponse[StockShortSellingTop]:
         """
         국내주식 공매도 상위종목
 
@@ -1004,7 +1077,11 @@ class DomesticRankingAnalysis:
             "FID_APLY_RANG_PRC_2": fid_aply_rang_prc_2,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/short-sale", headers=headers, params=params)
-        return StockShortSellingTop.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock short selling top: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockShortSellingTop.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_after_hours_fluctuation_rank(
         self,
@@ -1018,7 +1095,7 @@ class DomesticRankingAnalysis:
         fid_vol_cnt: str,
         fid_trgt_cls_code: str,
         fid_trgt_exls_cls_code: str,
-    ) -> StockAfterHoursFluctuationRank:
+    ) -> KisHttpResponse[StockAfterHoursFluctuationRank]:
         """
         국내주식 시간외등락율순위
 
@@ -1055,7 +1132,11 @@ class DomesticRankingAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/ranking/overtime-fluctuation", headers=headers, params=params
         )
-        return StockAfterHoursFluctuationRank.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock after hours fluctuation rank: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockAfterHoursFluctuationRank.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_after_hours_volume_rank(
         self,
@@ -1068,7 +1149,7 @@ class DomesticRankingAnalysis:
         fid_vol_cnt: str,
         fid_trgt_cls_code: str,
         fid_trgt_exls_cls_code: str,
-    ) -> StockAfterHoursVolumeRank:
+    ) -> KisHttpResponse[StockAfterHoursVolumeRank]:
         """
         국내주식 시간외거래량순위
 
@@ -1101,18 +1182,26 @@ class DomesticRankingAnalysis:
             "FID_TRGT_EXLS_CLS_CODE": fid_trgt_exls_cls_code,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/overtime-volume", headers=headers, params=params)
-        return StockAfterHoursVolumeRank.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock after hours volume rank: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockAfterHoursVolumeRank.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
-    def get_hts_inquiry_top_20(self) -> HtsInquiryTop20:
+    def get_hts_inquiry_top_20(self) -> KisHttpResponse[HtsInquiryTop20]:
         """
         HTS조회상위20종목
 
         Returns:
-            HtsInquiryTop20: HTS조회상위20종목 응답 객체
+            KisHttpResponse[HtsInquiryTop20]: HTS조회상위20종목 응답 객체
         """
         headers = {
             "tr_id": "HHMCM000100C0",
         }
         params = {}
         response = self.client._get("/uapi/domestic-stock/v1/ranking/hts-top-view", headers=headers, params=params)
-        return HtsInquiryTop20.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching HTS inquiry top 20: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = HtsInquiryTop20.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
