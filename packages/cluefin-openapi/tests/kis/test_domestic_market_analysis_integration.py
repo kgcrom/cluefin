@@ -110,7 +110,7 @@ def test_get_watchlist_groups(client: Client):
 
     try:
         response = client.domestic_market_analysis.get_watchlist_groups(
-            type="1",  # Unique key: 1
+            interest_type="1",  # Unique key: 1
             fid_etc_cls_code="00",  # Unique key: 00
             user_id=user_id,  # Use environment variable or fallback
         )

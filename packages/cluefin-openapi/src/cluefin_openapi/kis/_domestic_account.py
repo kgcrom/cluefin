@@ -26,7 +26,7 @@ from cluefin_openapi.kis._domestic_account_types import (
     StockReserveQuoteCorrection,
     StockReserveQuoteInquiry,
 )
-from cluefin_openapi.kis._model import KisHttpBody, KisHttpHeader, KisHttpResponse
+from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 
 
 class DomesticAccount:

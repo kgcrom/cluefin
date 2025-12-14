@@ -87,12 +87,14 @@ class DomesticMarketAnalysis:
         body = ConditionSearchResult.model_validate(response.json())
         return KisHttpResponse(header=header, body=body)
 
-    def get_watchlist_groups(self, type: str, fid_etc_cls_code: str, user_id: str) -> KisHttpResponse[WatchlistGroups]:
+    def get_watchlist_groups(
+        self, interest_type: str, fid_etc_cls_code: str, user_id: str
+    ) -> KisHttpResponse[WatchlistGroups]:
         """
         관심종목 그룹조회
 
         Args:
-            type (str): 관심종목구분코드 (Unique key: 1)
+            interest_type (str): 관심종목구분코드 (Unique key: 1)
             fid_etc_cls_code (str): FID 기타 구분 코드 (Unique key: 00)
             user_id (str): 사용자 ID (HTS_ID 입력)
 
@@ -103,7 +105,7 @@ class DomesticMarketAnalysis:
             "tr_id": "HHKCM113004C7",
         }
         params = {
-            "TYPE": type,
+            "TYPE": interest_type,
             "FID_ETC_CLS_CODE": fid_etc_cls_code,
             "USER_ID": user_id,
         }
