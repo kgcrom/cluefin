@@ -8,14 +8,18 @@ T_KisHttpBody = TypeVar("T_KisHttpBody", bound="KisHttpBody")
 
 class KisHttpHeader(BaseModel):
     content_type: str = Field(alias="content-type", description="컨텐츠타입", max_length=40)
-    tr_id: str = Field(title="거래ID", description="요청한 tr_id", max_length=13)
-    tr_cont: Literal["F", "M", "D", "E", ""] | None = Field(
+    tr_id: str = Field(title="거래ID", description="요청한 tr_id", max_length=14)
+    tr_cont: Literal["F", "M", "D", "E", "", "0"] | None = Field(
+        default=None,
         title="연속 거래 여부",
         description="F or M : 다음 데이터 있음, D or E : 마지막 데이터",
         max_length=1,
     )
     gt_uid: str | None = Field(
-        title="Global UID", description="[법인 전용] 거래고유번호로 사용하므로 거래별로 UNIQUE해야 함", max_length=32
+        default=None,
+        title="Global UID",
+        description="[법인 전용] 거래고유번호로 사용하므로 거래별로 UNIQUE해야 함",
+        max_length=32,
     )
 
 

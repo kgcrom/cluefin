@@ -9,26 +9,12 @@ import pytest
 from cluefin_openapi.kis._domestic_ranking_analysis import DomesticRankingAnalysis
 from cluefin_openapi.kis._domestic_ranking_analysis_types import (
     HtsInquiryTop20,
-    StockAfterHoursFluctuationRank,
-    StockAfterHoursVolumeRank,
-    StockCreditBalanceTop,
-    StockDisparityIndexRank,
-    StockDividendYieldTop,
-    StockExecutionStrengthTop,
-    StockExpectedExecutionRiseDeclineTop,
     StockFinanceRatioRank,
     StockFluctuationRank,
     StockHogaQuantityRank,
-    StockLargeExecutionCountTop,
     StockMarketCapTop,
-    StockMarketPriceRank,
-    StockNewHighLowApproachingTop,
-    StockPreferredStockRatioTop,
     StockProfitabilityIndicatorRank,
-    StockProprietaryTradingTop,
-    StockShortSellingTop,
     StockTimeHogaRank,
-    StockWatchlistRegistrationTop,
     TradingVolumeRank,
 )
 from cluefin_openapi.kis._model import KisHttpResponse

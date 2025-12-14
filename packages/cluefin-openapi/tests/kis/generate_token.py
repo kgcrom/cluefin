@@ -6,18 +6,14 @@ This allows you to run integration tests without hitting the 1-minute rate limit
 
 import os
 import sys
-from pathlib import Path
 
 import dotenv
 from loguru import logger
 from pydantic import SecretStr
 
-# Add the parent directory to the path so we can import the token cache
-sys.path.insert(0, str(Path(__file__).parent))
-
-from _token_cache import TokenCache
-
 from cluefin_openapi.kis._auth import Auth
+
+from ._token_cache import TokenCache
 
 
 def main():

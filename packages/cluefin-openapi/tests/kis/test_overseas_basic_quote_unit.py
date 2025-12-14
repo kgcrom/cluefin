@@ -55,9 +55,16 @@ def test_overseas_basic_quote_builds_request(
     expected_body,
     response_payload,
 ):
-    # Mock response object with json() method
+    # Mock response object with json() method and headers
     mock_response = Mock()
     mock_response.json.return_value = response_payload
+    mock_response.status_code = 200
+    mock_response.headers = {
+        "content-type": "application/json; charset=utf-8",
+        "tr_id": expected_headers.get("tr_id", ""),
+        "tr_cont": "",
+        "gt_uid": None,
+    }
 
     client = Mock()
     client._post.return_value = mock_response
@@ -92,5 +99,5 @@ def test_overseas_basic_quote_builds_request(
         )
 
     assert len(captured_instances) == 1
-    assert result is captured_instances[0]
+    assert result.body is captured_instances[0]
     assert captured_instances[0].kwargs == response_payload

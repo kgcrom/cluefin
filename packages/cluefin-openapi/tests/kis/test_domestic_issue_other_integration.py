@@ -10,11 +10,12 @@ from typing import Literal, cast
 
 import dotenv
 import pytest
-from _token_cache import TokenCache
 from pydantic import SecretStr
 
 from cluefin_openapi.kis._auth import Auth
 from cluefin_openapi.kis._client import Client
+
+from ._token_cache import TokenCache
 
 
 @pytest.fixture(scope="module")
@@ -67,9 +68,9 @@ def test_get_sector_current_index(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
-        assert hasattr(response, "msg1")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
+        assert hasattr(response.body, "msg1")
 
     except Exception as e:
         pytest.fail(f"get_sector_current_index failed: {e}")
@@ -89,8 +90,8 @@ def test_get_sector_daily_index(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_sector_daily_index failed: {e}")
@@ -108,8 +109,8 @@ def test_get_sector_time_index_second(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_sector_time_index_second failed: {e}")
@@ -128,8 +129,8 @@ def test_get_sector_time_index_minute(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_sector_time_index_minute failed: {e}")
@@ -150,8 +151,8 @@ def test_get_sector_minute_inquiry(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_sector_minute_inquiry failed: {e}")
@@ -172,8 +173,8 @@ def test_get_sector_period_quote(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_sector_period_quote failed: {e}")
@@ -194,8 +195,8 @@ def test_get_sector_all_quote_by_category(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_sector_all_quote_by_category failed: {e}")
@@ -218,8 +219,8 @@ def test_get_expected_index_trend(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_expected_index_trend failed: {e}")
@@ -240,8 +241,8 @@ def test_get_expected_index_all(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_expected_index_all failed: {e}")
@@ -268,8 +269,8 @@ def test_get_volatility_interruption_status(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_volatility_interruption_status failed: {e}")
@@ -289,8 +290,8 @@ def test_get_interest_rate_summary(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_interest_rate_summary failed: {e}")
@@ -314,8 +315,8 @@ def test_get_market_announcement_schedule(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_market_announcement_schedule failed: {e}")
@@ -334,8 +335,8 @@ def test_get_holiday_inquiry(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_holiday_inquiry failed: {e}")
@@ -350,8 +351,8 @@ def test_get_futures_business_day_inquiry(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_futures_business_day_inquiry failed: {e}")

@@ -1,9 +1,9 @@
 """Integration tests for KIS Overseas Basic Quote API.
 
 These tests require valid API credentials in environment variables:
-- KIWOOM_APP_KEY
-- KIWOOM_SECRET_KEY
-- KIWOOM_ENV (dev or prod)
+- KIS_APP_KEY
+- KIS_SECRET_KEY
+- KIS_ENV (dev or prod)
 
 Run with: uv run pytest packages/cluefin-openapi/tests/kis/test_overseas_basic_quote_integration.py -v -m integration
 """
@@ -15,11 +15,12 @@ from typing import Literal, cast
 
 import dotenv
 import pytest
-from _token_cache import TokenCache
 from pydantic import SecretStr
 
 from cluefin_openapi.kis._auth import Auth
 from cluefin_openapi.kis._client import Client
+
+from ._token_cache import TokenCache
 
 
 @pytest.fixture(scope="module")
@@ -68,7 +69,7 @@ def test_get_stock_current_price_detail(client):
     )
 
     assert response is not None
-    assert hasattr(response, "output")
+    assert hasattr(response.body, "output")
 
 
 @pytest.mark.integration
@@ -79,7 +80,7 @@ def test_get_current_price_first_quote(client):
     response = client.overseas_basic_quote.get_current_price_first_quote(auth="", excd="NAS", symb="AAPL")
 
     assert response is not None
-    assert hasattr(response, "output1")
+    assert hasattr(response.body, "output1")
 
 
 @pytest.mark.integration
@@ -90,7 +91,7 @@ def test_get_stock_current_price_conclusion(client):
     response = client.overseas_basic_quote.get_stock_current_price_conclusion(auth="", excd="NAS", symb="MSFT")
 
     assert response is not None
-    assert hasattr(response, "output")
+    assert hasattr(response.body, "output")
 
 
 @pytest.mark.integration
@@ -107,7 +108,7 @@ def test_get_conclusion_trend(client):
     )
 
     assert response is not None
-    assert hasattr(response, "output1")
+    assert hasattr(response.body, "output1")
 
 
 @pytest.mark.integration
@@ -128,7 +129,7 @@ def test_get_stock_minute_chart(client):
     )
 
     assert response is not None
-    assert hasattr(response, "output1")
+    assert hasattr(response.body, "output1")
 
 
 @pytest.mark.integration
@@ -144,7 +145,7 @@ def test_get_index_minute_chart(client):
     )
 
     assert response is not None
-    assert hasattr(response, "output1")
+    assert hasattr(response.body, "output1")
 
 
 @pytest.mark.integration
@@ -163,7 +164,7 @@ def test_get_stock_period_quote(client):
     )
 
     assert response is not None
-    assert hasattr(response, "output1")
+    assert hasattr(response.body, "output1")
 
 
 @pytest.mark.integration
@@ -183,7 +184,7 @@ def test_get_item_index_exchange_period_price(client):
     )
 
     assert response is not None
-    assert hasattr(response, "output1")
+    assert hasattr(response.body, "output1")
 
 
 @pytest.mark.integration
@@ -201,7 +202,7 @@ def test_search_by_condition(client):
     )
 
     assert response is not None
-    assert hasattr(response, "output1")
+    assert hasattr(response.body, "output1")
 
 
 @pytest.mark.integration
@@ -215,7 +216,7 @@ def test_get_product_base_info(client):
     )
 
     assert response is not None
-    assert hasattr(response, "output")
+    assert hasattr(response.body, "output")
 
 
 @pytest.mark.integration
@@ -231,7 +232,7 @@ def test_get_sector_price(client):
     assert codes_response is not None
 
     # If we got sector codes, test sector price with the first code
-    if hasattr(codes_response, "output") and codes_response.output:
+    if hasattr(codes_response.body, "output") and codes_response.body.output:
         # Get first sector code (this depends on the response structure)
         # For now, we'll use a generic test
         try:
@@ -259,7 +260,7 @@ def test_get_sector_codes(client):
     )
 
     assert response is not None
-    assert hasattr(response, "output1")
+    assert hasattr(response.body, "output1")
 
     # Test with NYSE
     response_nys = client.overseas_basic_quote.get_sector_codes(
@@ -268,7 +269,7 @@ def test_get_sector_codes(client):
     )
 
     assert response_nys is not None
-    assert hasattr(response_nys, "output1")
+    assert hasattr(response_nys.body, "output1")
 
 
 @pytest.mark.integration
@@ -281,7 +282,7 @@ def test_get_settlement_date(client):
     response = client.overseas_basic_quote.get_settlement_date(trad_dt=trad_dt, ctx_area_nk="", ctx_area_fk="")
 
     assert response is not None
-    assert hasattr(response, "output")
+    assert hasattr(response.body, "output")
 
 
 @pytest.mark.integration
@@ -300,7 +301,7 @@ def test_current_price_multiple_exchanges(client, exchange, symbol):
     try:
         response = client.overseas_basic_quote.get_stock_current_price_detail(auth="", excd=exchange, symb=symbol)
         assert response is not None
-        assert hasattr(response, "output")
+        assert hasattr(response.body, "output")
     except Exception as e:
         # Some exchanges might not be accessible in dev environment
         pytest.skip(f"Exchange {exchange} not accessible: {str(e)}")

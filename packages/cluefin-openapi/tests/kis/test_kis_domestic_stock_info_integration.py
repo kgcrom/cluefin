@@ -1,9 +1,9 @@
 """Integration tests for KIS Domestic Stock Info API.
 
 These tests require valid API credentials in environment variables:
-- KIWOOM_APP_KEY
-- KIWOOM_SECRET_KEY
-- KIWOOM_ENV (dev or prod)
+- KIS_APP_KEY
+- KIS_SECRET_KEY
+- KIS_ENV (dev or prod)
 
 Run with: uv run pytest packages/cluefin-openapi/tests/kis/test_domestic_stock_info_integration.py -v -m integration
 """
@@ -15,11 +15,12 @@ from typing import Literal, cast
 
 import dotenv
 import pytest
-from _token_cache import TokenCache
 from pydantic import SecretStr
 
 from cluefin_openapi.kis._auth import Auth
 from cluefin_openapi.kis._client import Client
+
+from ._token_cache import TokenCache
 
 
 @pytest.fixture(scope="module")
@@ -68,7 +69,7 @@ def test_get_product_basic_info(kis_client):
     )
 
     assert response is not None
-    assert hasattr(response, "output")
+    assert hasattr(response.body, "output")
 
 
 @pytest.mark.integration
@@ -82,7 +83,7 @@ def test_get_stock_basic_info(kis_client):
     )
 
     assert response is not None
-    assert hasattr(response, "output")
+    assert hasattr(response.body, "output")
 
 
 @pytest.mark.integration
@@ -96,7 +97,7 @@ def test_get_balance_sheet(kis_client):
     )
 
     assert response is not None
-    assert hasattr(response, "output")
+    assert hasattr(response.body, "output")
 
 
 @pytest.mark.integration
@@ -110,7 +111,7 @@ def test_get_income_statement(kis_client):
     )
 
     assert response is not None
-    assert hasattr(response, "output")
+    assert hasattr(response.body, "output")
 
 
 @pytest.mark.integration
@@ -124,7 +125,7 @@ def test_get_financial_ratio(kis_client):
     )
 
     assert response is not None
-    assert hasattr(response, "output")
+    assert hasattr(response.body, "output")
 
 
 @pytest.mark.integration
@@ -138,7 +139,7 @@ def test_get_profitability_ratio(kis_client):
     )
 
     assert response is not None
-    assert hasattr(response, "output")
+    assert hasattr(response.body, "output")
 
 
 @pytest.mark.integration
@@ -152,7 +153,7 @@ def test_get_other_key_ratio(kis_client):
     )
 
     assert response is not None
-    assert hasattr(response, "output")
+    assert hasattr(response.body, "output")
 
 
 @pytest.mark.integration
@@ -166,7 +167,7 @@ def test_get_stability_ratio(kis_client):
     )
 
     assert response is not None
-    assert hasattr(response, "output")
+    assert hasattr(response.body, "output")
 
 
 @pytest.mark.integration
@@ -180,7 +181,7 @@ def test_get_growth_ratio(kis_client):
     )
 
     assert response is not None
-    assert hasattr(response, "output")
+    assert hasattr(response.body, "output")
 
 
 @pytest.mark.integration
@@ -196,7 +197,7 @@ def test_get_margin_tradable_stocks(kis_client):
     )
 
     assert response is not None
-    assert hasattr(response, "output")
+    assert hasattr(response.body, "output")
 
 
 @pytest.mark.integration
@@ -213,8 +214,8 @@ def test_get_stock_loanable_list(kis_client):
     )
 
     assert response is not None
-    assert hasattr(response, "output1")
-    assert hasattr(response, "output2")
+    assert hasattr(response.body, "output1")
+    assert hasattr(response.body, "output2")
 
 
 @pytest.fixture
@@ -240,7 +241,7 @@ def test_get_ksd_dividend_decision(kis_client, date_range):
     )
 
     assert response is not None
-    assert hasattr(response, "output")
+    assert hasattr(response.body, "output")
 
 
 @pytest.mark.integration
@@ -256,7 +257,7 @@ def test_get_ksd_stock_dividend_decision(kis_client, date_range):
     )
 
     assert response is not None
-    assert hasattr(response, "output1")
+    assert hasattr(response.body, "output1")
 
 
 @pytest.mark.integration
@@ -272,7 +273,7 @@ def test_get_ksd_merger_split_decision(kis_client, date_range):
     )
 
     assert response is not None
-    assert hasattr(response, "output1")
+    assert hasattr(response.body, "output1")
 
 
 @pytest.mark.integration
@@ -289,7 +290,7 @@ def test_get_ksd_par_value_change_decision(kis_client, date_range):
     )
 
     assert response is not None
-    assert hasattr(response, "output1")
+    assert hasattr(response.body, "output1")
 
 
 @pytest.mark.integration
@@ -302,7 +303,7 @@ def test_get_ksd_capital_reduction_schedule(kis_client, date_range):
     )
 
     assert response is not None
-    assert hasattr(response, "output1")
+    assert hasattr(response.body, "output1")
 
 
 @pytest.mark.integration
@@ -313,7 +314,7 @@ def test_get_ksd_listing_info_schedule(kis_client, date_range):
     response = kis_client.domestic_stock_info.get_ksd_listing_info_schedule(sht_cd="", t_dt=t_dt, f_dt=f_dt, cts="")
 
     assert response is not None
-    assert hasattr(response, "output1")
+    assert hasattr(response.body, "output1")
 
 
 @pytest.mark.integration
@@ -324,7 +325,7 @@ def test_get_ksd_ipo_subscription_schedule(kis_client, date_range):
     response = kis_client.domestic_stock_info.get_ksd_ipo_subscription_schedule(sht_cd="", cts="", f_dt=f_dt, t_dt=t_dt)
 
     assert response is not None
-    assert hasattr(response, "output1")
+    assert hasattr(response.body, "output1")
 
 
 @pytest.mark.integration
@@ -335,7 +336,7 @@ def test_get_ksd_forfeited_share_schedule(kis_client, date_range):
     response = kis_client.domestic_stock_info.get_ksd_forfeited_share_schedule(sht_cd="", t_dt=t_dt, f_dt=f_dt, cts="")
 
     assert response is not None
-    assert hasattr(response, "output1")
+    assert hasattr(response.body, "output1")
 
 
 @pytest.mark.integration
@@ -346,7 +347,7 @@ def test_get_ksd_deposit_schedule(kis_client, date_range):
     response = kis_client.domestic_stock_info.get_ksd_deposit_schedule(t_dt=t_dt, sht_cd="", f_dt=f_dt, cts="")
 
     assert response is not None
-    assert hasattr(response, "output1")
+    assert hasattr(response.body, "output1")
 
 
 @pytest.mark.integration
@@ -363,7 +364,7 @@ def test_get_ksd_paid_in_capital_increase_schedule(kis_client, date_range):
     )
 
     assert response is not None
-    assert hasattr(response, "output")
+    assert hasattr(response.body, "output")
 
 
 @pytest.mark.integration
@@ -374,7 +375,7 @@ def test_get_ksd_stock_dividend_schedule(kis_client, date_range):
     response = kis_client.domestic_stock_info.get_ksd_stock_dividend_schedule(cts="", f_dt=f_dt, t_dt=t_dt, sht_cd="")
 
     assert response is not None
-    assert hasattr(response, "output1")
+    assert hasattr(response.body, "output1")
 
 
 @pytest.mark.integration
@@ -387,7 +388,7 @@ def test_get_ksd_shareholder_meeting_schedule(kis_client, date_range):
     )
 
     assert response is not None
-    assert hasattr(response, "output1")
+    assert hasattr(response.body, "output1")
 
 
 @pytest.fixture
@@ -408,7 +409,7 @@ def test_get_estimated_earnings(kis_client):
     )
 
     assert response is not None
-    assert hasattr(response, "output1")
+    assert hasattr(response.body, "output1")
 
 
 @pytest.mark.integration
@@ -425,7 +426,7 @@ def test_get_investment_opinion(kis_client, investment_date_range):
     )
 
     assert response is not None
-    assert hasattr(response, "output")
+    assert hasattr(response.body, "output")
 
 
 @pytest.mark.integration
@@ -443,7 +444,7 @@ def test_get_investment_opinion_by_brokerage(kis_client, investment_date_range):
     )
 
     assert response is not None
-    assert hasattr(response, "output")
+    assert hasattr(response.body, "output")
 
 
 @pytest.mark.integration
