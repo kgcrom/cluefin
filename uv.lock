@@ -239,7 +239,7 @@ requires-dist = [
 
 [[package]]
 name = "cluefin-openapi"
-version = "0.3.0"
+version = "0.3.2"
 source = { editable = "packages/cluefin-openapi" }
 dependencies = [
     { name = "defusedxml" },
@@ -266,24 +266,30 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+numba = [
+    { name = "numba" },
+]
+
+[package.dev-dependencies]
 dev = [
     { name = "numba" },
     { name = "pytest" },
     { name = "ta-lib" },
 ]
-numba = [
-    { name = "numba" },
-]
 
 [package.metadata]
 requires-dist = [
-    { name = "numba", marker = "extra == 'dev'", specifier = ">=0.56.0" },
     { name = "numba", marker = "extra == 'numba'", specifier = ">=0.56.0" },
     { name = "numpy", specifier = ">=1.20.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0" },
-    { name = "ta-lib", marker = "extra == 'dev'", specifier = ">=0.4.0" },
 ]
-provides-extras = ["numba", "dev"]
+provides-extras = ["numba"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "numba", specifier = ">=0.56.0" },
+    { name = "pytest", specifier = ">=7.0" },
+    { name = "ta-lib", specifier = ">=0.4.0" },
+]
 
 [[package]]
 name = "colorama"

@@ -58,7 +58,7 @@
         "endpoint": "/uapi/domestic-stock/v1/quotations/intstock-grouplist",
         "method": "GET",
         "call_kwargs": {
-            "type": "1",
+            "interest_type": "1",
             "fid_etc_cls_code": "00",
             "user_id": "test_user_id"
         },
