@@ -1,4 +1,5 @@
 from cluefin_openapi.kis._client import Client
+from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 from cluefin_openapi.kis._overseas_basic_quote_types import (
     ConclusionTrend,
     CurrentPriceFirstQuote,
@@ -22,12 +23,20 @@ class BasicQuote:
     def __init__(self, client: Client):
         self.client = client
 
+    def _check_response_error(self, response_data: dict) -> None:
+        """Check if API response contains an error and raise if so."""
+        rt_cd = response_data.get("rt_cd")
+        if rt_cd != "0":
+            msg_cd = response_data.get("msg_cd", "")
+            msg1 = response_data.get("msg1", "Unknown error")
+            raise ValueError(f"KIS API Error [{msg_cd}]: {msg1} (rt_cd={rt_cd})")
+
     def get_stock_current_price_detail(
         self,
         auth: str,
         excd: str,
         symb: str,
-    ) -> StockCurrentPriceDetail:
+    ) -> KisHttpResponse[StockCurrentPriceDetail]:
         """
         해외주식 현재가상세
 
@@ -37,7 +46,7 @@ class BasicQuote:
             symb (str): 종목코드
 
         Returns:
-            StockCurrentPriceDetail: 해외주식 현재가상세 응답 객체
+            KisHttpResponse[StockCurrentPriceDetail]: 해외주식 현재가상세 응답 객체
         """
         headers = {
             "tr_id": "HHDFS76200200",
@@ -48,14 +57,18 @@ class BasicQuote:
             "SYMB": symb,
         }
         response = self.client._get("/uapi/overseas-price/v1/quotations/price-detail", headers=headers, params=params)
-        return StockCurrentPriceDetail.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockCurrentPriceDetail.model_validate(response_data)
+        return KisHttpResponse(header=header, body=body)
 
     def get_current_price_first_quote(
         self,
         excd: str,
         symb: str,
         auth: str = "",
-    ) -> CurrentPriceFirstQuote:
+    ) -> KisHttpResponse[CurrentPriceFirstQuote]:
         """
         해외주식 현재가 1호가
 
@@ -65,7 +78,7 @@ class BasicQuote:
             auth (str): 사용자권한정보 (공백)
 
         Returns:
-            CurrentPriceFirstQuote: 해외주식 현재가 1호가 응답 객체
+            KisHttpResponse[CurrentPriceFirstQuote]: 해외주식 현재가 1호가 응답 객체
         """
         headers = {
             "tr_id": "HHDFS76200100",
@@ -78,14 +91,18 @@ class BasicQuote:
         response = self.client._get(
             "/uapi/overseas-price/v1/quotations/inquire-asking-price", headers=headers, params=params
         )
-        return CurrentPriceFirstQuote.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        header = KisHttpHeader.model_validate(response.headers)
+        body = CurrentPriceFirstQuote.model_validate(response_data)
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_current_price_conclusion(
         self,
         auth: str,
         excd: str,
         symb: str,
-    ) -> StockCurrentPriceConclusion:
+    ) -> KisHttpResponse[StockCurrentPriceConclusion]:
         """
         해외주식 현재체결가
 
@@ -95,7 +112,7 @@ class BasicQuote:
             symb (str): 종목코드
 
         Returns:
-            StockCurrentPriceConclusion: 해외주식 현재체결가 응답 객체
+            KisHttpResponse[StockCurrentPriceConclusion]: 해외주식 현재체결가 응답 객체
         """
         headers = {
             "tr_id": "HHDFS00000300",
@@ -106,7 +123,11 @@ class BasicQuote:
             "SYMB": symb,
         }
         response = self.client._get("/uapi/overseas-price/v1/quotations/price", headers=headers, params=params)
-        return StockCurrentPriceConclusion.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockCurrentPriceConclusion.model_validate(response_data)
+        return KisHttpResponse(header=header, body=body)
 
     def get_conclusion_trend(
         self,
@@ -115,7 +136,7 @@ class BasicQuote:
         keyb: str,
         tday: str,
         symb: str,
-    ) -> ConclusionTrend:
+    ) -> KisHttpResponse[ConclusionTrend]:
         """
         해외주식 체결추이
 
@@ -127,7 +148,7 @@ class BasicQuote:
             symb (str): 종목코드 (해외종목코드)
 
         Returns:
-            ConclusionTrend: 해외주식 체결추이 응답 객체
+            KisHttpResponse[ConclusionTrend]: 해외주식 체결추이 응답 객체
         """
         headers = {
             "tr_id": "HHDFS76200300",
@@ -140,7 +161,11 @@ class BasicQuote:
             "SYMB": symb,
         }
         response = self.client._get("/uapi/overseas-price/v1/quotations/inquire-ccnl", headers=headers, params=params)
-        return ConclusionTrend.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        header = KisHttpHeader.model_validate(response.headers)
+        body = ConclusionTrend.model_validate(response_data)
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_minute_chart(
         self,
@@ -153,7 +178,7 @@ class BasicQuote:
         nrec: str,
         fill: str,
         keyb: str,
-    ) -> StockMinuteChart:
+    ) -> KisHttpResponse[StockMinuteChart]:
         """
         해외주식분봉조회
 
@@ -169,7 +194,7 @@ class BasicQuote:
             keyb (str): NEXT KEY BUFF (처음 조회 시 "" 공백 입력, 다음 조회 시 이전 조회 결과의 마지막 분봉 데이터를 이용하여 1분 전 혹은 n분 전의 시간을 입력, 형식: YYYYMMDDHHMMSS, 예: 20241014140100)
 
         Returns:
-            StockMinuteChart: 해외주식분봉조회 응답 객체
+            KisHttpResponse[StockMinuteChart]: 해외주식분봉조회 응답 객체
         """
         headers = {
             "tr_id": "HHDFS76950200",
@@ -188,7 +213,11 @@ class BasicQuote:
         response = self.client._get(
             "/uapi/overseas-price/v1/quotations/inquire-time-itemchartprice", headers=headers, params=params
         )
-        return StockMinuteChart.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockMinuteChart.model_validate(response_data)
+        return KisHttpResponse(header=header, body=body)
 
     def get_index_minute_chart(
         self,
@@ -196,7 +225,7 @@ class BasicQuote:
         fid_input_iscd: str,
         fid_hour_cls_code: str,
         fid_pw_data_incu_yn: str,
-    ) -> IndexMinuteChart:
+    ) -> KisHttpResponse[IndexMinuteChart]:
         """
         해외지수분봉조회
 
@@ -207,7 +236,7 @@ class BasicQuote:
             fid_pw_data_incu_yn (str): 과거 데이터 포함 여부 (Y/N)
 
         Returns:
-            IndexMinuteChart: 해외지수분봉조회 응답 객체
+            KisHttpResponse[IndexMinuteChart]: 해외지수분봉조회 응답 객체
         """
         headers = {
             "tr_id": "FHKST03030200",
@@ -221,7 +250,11 @@ class BasicQuote:
         response = self.client._get(
             "/uapi/overseas-price/v1/quotations/inquire-time-indexchartprice", headers=headers, params=params
         )
-        return IndexMinuteChart.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        header = KisHttpHeader.model_validate(response.headers)
+        body = IndexMinuteChart.model_validate(response_data)
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_period_quote(
         self,
@@ -232,7 +265,7 @@ class BasicQuote:
         bymd: str,
         modp: str,
         keyb: str = "",
-    ) -> StockPeriodQuote:
+    ) -> KisHttpResponse[StockPeriodQuote]:
         """
         해외주식 기간별시세
 
@@ -246,7 +279,7 @@ class BasicQuote:
             keyb (str): NEXT KEY BUFF (응답시 다음값이 있으면 값이 셋팅되어 있으므로 다음 조회시 응답값 그대로 셋팅)
 
         Returns:
-            StockPeriodQuote: 해외주식 기간별시세 응답 객체
+            KisHttpResponse[StockPeriodQuote]: 해외주식 기간별시세 응답 객체
         """
         headers = {
             "tr_id": "HHDFS76240000",
@@ -261,7 +294,11 @@ class BasicQuote:
             "KEYB": keyb,
         }
         response = self.client._get("/uapi/overseas-price/v1/quotations/dailyprice", headers=headers, params=params)
-        return StockPeriodQuote.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockPeriodQuote.model_validate(response_data)
+        return KisHttpResponse(header=header, body=body)
 
     def get_item_index_exchange_period_price(
         self,
@@ -270,7 +307,7 @@ class BasicQuote:
         fid_input_date_1: str,
         fid_input_date_2: str,
         fid_period_div_code: str,
-    ) -> ItemIndexExchangePeriodPrice:
+    ) -> KisHttpResponse[ItemIndexExchangePeriodPrice]:
         """
         해외주식 종목/지수/환율기간별시세(일/주/월/년)
 
@@ -282,7 +319,7 @@ class BasicQuote:
             fid_period_div_code (str): FID 기간 분류 코드 (D: 일, W: 주, M: 월, Y: 년)
 
         Returns:
-            ItemIndexExchangePeriodPrice: 해외주식 종목/지수/환율기간별시세(일/주/월/년) 응답 객체
+            KisHttpResponse[ItemIndexExchangePeriodPrice]: 해외주식 종목/지수/환율기간별시세(일/주/월/년) 응답 객체
         """
         headers = {
             "tr_id": "FHKST03030100",
@@ -297,7 +334,11 @@ class BasicQuote:
         response = self.client._get(
             "/uapi/overseas-price/v1/quotations/inquire-daily-chartprice", headers=headers, params=params
         )
-        return ItemIndexExchangePeriodPrice.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        header = KisHttpHeader.model_validate(response.headers)
+        body = ItemIndexExchangePeriodPrice.model_validate(response_data)
+        return KisHttpResponse(header=header, body=body)
 
     def search_by_condition(
         self,
@@ -328,7 +369,7 @@ class BasicQuote:
         co_st_per: str = "",
         co_en_per: str = "",
         keyb: str = "",
-    ) -> SearchByCondition:
+    ) -> KisHttpResponse[SearchByCondition]:
         """
         해외주식조건검색
 
@@ -362,7 +403,7 @@ class BasicQuote:
             keyb (str): NEXT KEY BUFF ("" 공백 입력)
 
         Returns:
-            SearchByCondition: 해외주식조건검색 응답 객체
+            KisHttpResponse[SearchByCondition]: 해외주식조건검색 응답 객체
         """
         headers = {
             "tr_id": "HHDFS76410000",
@@ -397,14 +438,18 @@ class BasicQuote:
             "KEYB": keyb,
         }
         response = self.client._get("/uapi/overseas-price/v1/quotations/inquire-search", headers=headers, params=params)
-        return SearchByCondition.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        header = KisHttpHeader.model_validate(response.headers)
+        body = SearchByCondition.model_validate(response_data)
+        return KisHttpResponse(header=header, body=body)
 
     def get_settlement_date(
         self,
         trad_dt: str,
         ctx_area_nk: str,
         ctx_area_fk: str,
-    ) -> SettlementDate:
+    ) -> KisHttpResponse[SettlementDate]:
         """
         해외결제일자조회
 
@@ -414,7 +459,7 @@ class BasicQuote:
             ctx_area_fk (str): 연속조회검색조건 (공백으로 입력)
 
         Returns:
-            SettlementDate: 해외결제일자조회 응답 객체
+            KisHttpResponse[SettlementDate]: 해외결제일자조회 응답 객체
         """
         headers = {
             "tr_id": "CTOS5011R",
@@ -427,13 +472,17 @@ class BasicQuote:
         response = self.client._get(
             "/uapi/overseas-stock/v1/quotations/countries-holiday", headers=headers, params=params
         )
-        return SettlementDate.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        header = KisHttpHeader.model_validate(response.headers)
+        body = SettlementDate.model_validate(response_data)
+        return KisHttpResponse(header=header, body=body)
 
     def get_product_base_info(
         self,
         prdt_type_cd: str,
         pdno: str,
-    ) -> ProductBaseInfo:
+    ) -> KisHttpResponse[ProductBaseInfo]:
         """
         해외주식 상품기본정보
 
@@ -442,7 +491,7 @@ class BasicQuote:
             pdno (str): 상품번호 (예: AAPL)
 
         Returns:
-            ProductBaseInfo: 해외주식 상품기본정보 응답 객체
+            KisHttpResponse[ProductBaseInfo]: 해외주식 상품기본정보 응답 객체
         """
         headers = {
             "tr_id": "CTPF1702R",
@@ -452,7 +501,11 @@ class BasicQuote:
             "PDNO": pdno,
         }
         response = self.client._get("/uapi/overseas-price/v1/quotations/search-info", headers=headers, params=params)
-        return ProductBaseInfo.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        header = KisHttpHeader.model_validate(response.headers)
+        body = ProductBaseInfo.model_validate(response_data)
+        return KisHttpResponse(header=header, body=body)
 
     def get_sector_price(
         self,
@@ -461,7 +514,7 @@ class BasicQuote:
         excd: str,
         icod: str,
         vol_rang: str,
-    ) -> SectorPrice:
+    ) -> KisHttpResponse[SectorPrice]:
         """
         해외주식 업종별시세
 
@@ -473,7 +526,7 @@ class BasicQuote:
             vol_rang (str): 거래량조건 (0: 전체, 1: 1백주이상, 2: 1천주이상, 3: 1만주이상, 4: 10만주이상, 5: 100만주이상, 6: 1000만주이상)
 
         Returns:
-            SectorPrice: 해외주식 업종별시세 응답 객체
+            KisHttpResponse[SectorPrice]: 해외주식 업종별시세 응답 객체
         """
         headers = {
             "tr_id": "HHDFS76370000",
@@ -486,13 +539,17 @@ class BasicQuote:
             "VOL_RANG": vol_rang,
         }
         response = self.client._get("/uapi/overseas-price/v1/quotations/industry-theme", headers=headers, params=params)
-        return SectorPrice.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        header = KisHttpHeader.model_validate(response.headers)
+        body = SectorPrice.model_validate(response_data)
+        return KisHttpResponse(header=header, body=body)
 
     def get_sector_codes(
         self,
         auth: str,
         excd: str,
-    ) -> SectorCodes:
+    ) -> KisHttpResponse[SectorCodes]:
         """
         해외주식 업종별코드조회
 
@@ -501,7 +558,7 @@ class BasicQuote:
             excd (str): 거래소코드 (NYS: 뉴욕, NAS: 나스닥, AMS: 아멕스, HKS: 홍콩, SHS: 상해, SZS: 심천, HSX: 호치민, HNX: 하노이, TSE: 도쿄)
 
         Returns:
-            SectorCodes: 해외주식 업종별코드조회 응답 객체
+            KisHttpResponse[SectorCodes]: 해외주식 업종별코드조회 응답 객체
         """
         headers = {
             "tr_id": "HHDFS76370100",
@@ -511,4 +568,8 @@ class BasicQuote:
             "EXCD": excd,
         }
         response = self.client._get("/uapi/overseas-price/v1/quotations/industry-price", headers=headers, params=params)
-        return SectorCodes.model_validate(response.json())
+        response_data = response.json()
+        self._check_response_error(response_data)
+        header = KisHttpHeader.model_validate(response.headers)
+        body = SectorCodes.model_validate(response_data)
+        return KisHttpResponse(header=header, body=body)

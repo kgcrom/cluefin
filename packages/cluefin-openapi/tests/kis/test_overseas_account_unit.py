@@ -4,12 +4,12 @@ from unittest.mock import Mock
 
 import pytest
 
-from cluefin_openapi.kis import _overseas_basic_quote as overseas_basic_quote_module
-from cluefin_openapi.kis._overseas_basic_quote import BasicQuote
+from cluefin_openapi.kis import _overseas_account as overseas_account_module
+from cluefin_openapi.kis._overseas_account import OverseasAccount
 
 
-def load_overseas_basic_quote_cases():
-    path = Path(__file__).with_name("overseas_basic_quote_cases.json")
+def load_overseas_account_cases():
+    path = Path(__file__).with_name("overseas_account_cases.json")
     with path.open(encoding="utf-8") as case_file:
         raw_cases = json.load(case_file)
 
@@ -28,7 +28,7 @@ def load_overseas_basic_quote_cases():
     ]
 
 
-OVERSEAS_BASIC_QUOTE_CASES = load_overseas_basic_quote_cases()
+OVERSEAS_ACCOUNT_CASES = load_overseas_account_cases()
 
 
 @pytest.mark.parametrize(
@@ -42,9 +42,9 @@ OVERSEAS_BASIC_QUOTE_CASES = load_overseas_basic_quote_cases()
         "expected_body",
         "response_payload",
     ),
-    OVERSEAS_BASIC_QUOTE_CASES,
+    OVERSEAS_ACCOUNT_CASES,
 )
-def test_overseas_basic_quote_builds_request(
+def test_overseas_account_builds_request(
     monkeypatch,
     method_name,
     response_model_attr,
@@ -55,14 +55,15 @@ def test_overseas_basic_quote_builds_request(
     expected_body,
     response_payload,
 ):
-    # Mock response object with json() method and headers
+    # Mock response object with json() method
     mock_response = Mock()
     mock_response.json.return_value = response_payload
     mock_response.status_code = 200
+    mock_response.text = ""
     mock_response.headers = {
         "content-type": "application/json; charset=utf-8",
         "tr_id": expected_headers.get("tr_id", ""),
-        "tr_cont": "",
+        "tr_cont": expected_headers.get("tr_cont", ""),
         "gt_uid": None,
     }
 
@@ -80,10 +81,10 @@ def test_overseas_basic_quote_builds_request(
         def model_validate(cls, data):
             return cls(**data)
 
-    monkeypatch.setattr(overseas_basic_quote_module, response_model_attr, DummyResponseModel)
+    monkeypatch.setattr(overseas_account_module, response_model_attr, DummyResponseModel)
 
-    basic_quote = BasicQuote(client)
-    result = getattr(basic_quote, method_name)(**call_kwargs)
+    account = OverseasAccount(client)
+    result = getattr(account, method_name)(**call_kwargs)
 
     if method == "POST":
         client._post.assert_called_once_with(

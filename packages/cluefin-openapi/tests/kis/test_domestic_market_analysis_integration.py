@@ -10,11 +10,12 @@ from typing import Literal, cast
 
 import dotenv
 import pytest
-from _token_cache import TokenCache
 from pydantic import SecretStr
 
 from cluefin_openapi.kis._auth import Auth
 from cluefin_openapi.kis._client import Client
+
+from ._token_cache import TokenCache
 
 
 @pytest.fixture(scope="module")
@@ -67,8 +68,8 @@ def test_get_condition_search_list(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         # This may fail if user_id doesn't have saved conditions
@@ -88,8 +89,8 @@ def test_get_condition_search_result(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         # This may fail if user_id doesn't have saved conditions
@@ -103,16 +104,20 @@ def test_get_condition_search_result(client: Client):
 def test_get_watchlist_groups(client: Client):
     """Test watchlist groups inquiry."""
     time.sleep(1)
+
+    # Get user ID from environment variable, fallback to "test_user"
+    user_id = os.getenv("KIS_HTS_USER_ID", "test_user")
+
     try:
         response = client.domestic_market_analysis.get_watchlist_groups(
-            type="1",  # Unique key: 1
+            interest_type="1",  # Unique key: 1
             fid_etc_cls_code="00",  # Unique key: 00
-            user_id="test_user",  # Replace with actual HTS ID
+            user_id=user_id,  # Use environment variable or fallback
         )
 
         # Verify response type
         assert response is not None
-        assert response.rt_cd == "0"
+        assert response.body.rt_cd == "0"
 
     except Exception as e:
         # This may fail if user_id doesn't have watchlists
@@ -190,8 +195,8 @@ def test_get_watchlist_multi_quote(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_watchlist_multi_quote failed: {e}")
@@ -213,8 +218,8 @@ def test_get_investor_trading_trend_by_stock_daily(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_investor_trading_trend_by_stock_daily failed: {e}")
@@ -232,8 +237,8 @@ def test_get_investor_trading_trend_by_market_intraday(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_investor_trading_trend_by_market_intraday failed: {e}")
@@ -255,8 +260,8 @@ def test_get_investor_trading_trend_by_market_daily(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_investor_trading_trend_by_market_daily failed: {e}")
@@ -278,8 +283,8 @@ def test_get_foreign_brokerage_trading_aggregate(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_foreign_brokerage_trading_aggregate failed: {e}")
@@ -298,8 +303,8 @@ def test_get_foreign_net_buy_trend_by_stock(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_foreign_net_buy_trend_by_stock failed: {e}")
@@ -321,8 +326,8 @@ def test_get_member_trading_trend_tick(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_member_trading_trend_tick failed: {e}")
@@ -344,8 +349,8 @@ def test_get_member_trading_trend_by_stock(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_member_trading_trend_by_stock failed: {e}")
@@ -362,8 +367,8 @@ def test_get_foreign_institutional_estimate_by_stock(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_foreign_institutional_estimate_by_stock failed: {e}")
@@ -384,8 +389,8 @@ def test_get_program_trading_trend_by_stock_intraday(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_program_trading_trend_by_stock_intraday failed: {e}")
@@ -404,8 +409,8 @@ def test_get_program_trading_trend_by_stock_daily(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_program_trading_trend_by_stock_daily failed: {e}")
@@ -427,8 +432,8 @@ def test_get_program_trading_summary_intraday(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_program_trading_summary_intraday failed: {e}")
@@ -448,8 +453,8 @@ def test_get_program_trading_summary_daily(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_program_trading_summary_daily failed: {e}")
@@ -467,8 +472,8 @@ def test_get_program_trading_investor_trend_today(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_program_trading_investor_trend_today failed: {e}")
@@ -492,8 +497,8 @@ def test_get_buy_sell_volume_by_stock_daily(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_buy_sell_volume_by_stock_daily failed: {e}")
@@ -513,8 +518,8 @@ def test_get_credit_balance_trend_daily(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_credit_balance_trend_daily failed: {e}")
@@ -533,8 +538,8 @@ def test_get_expected_price_trend(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_expected_price_trend failed: {e}")
@@ -554,8 +559,8 @@ def test_get_short_selling_trend_daily(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_short_selling_trend_daily failed: {e}")
@@ -579,8 +584,8 @@ def test_get_after_hours_expected_fluctuation(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_after_hours_expected_fluctuation failed: {e}")
@@ -599,8 +604,8 @@ def test_get_trading_weight_by_amount(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_trading_weight_by_amount failed: {e}")
@@ -617,8 +622,8 @@ def test_get_market_fund_summary(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_market_fund_summary failed: {e}")
@@ -639,8 +644,8 @@ def test_get_stock_loan_trend_daily(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_stock_loan_trend_daily failed: {e}")
@@ -666,8 +671,8 @@ def test_get_limit_price_stocks(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_limit_price_stocks failed: {e}")
@@ -687,8 +692,8 @@ def test_get_resistance_level_trading_weight(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_resistance_level_trading_weight failed: {e}")

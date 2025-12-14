@@ -10,11 +10,12 @@ from typing import Literal, cast
 
 import dotenv
 import pytest
-from _token_cache import TokenCache
 from pydantic import SecretStr
 
 from cluefin_openapi.kis._auth import Auth
 from cluefin_openapi.kis._client import Client
+
+from ._token_cache import TokenCache
 
 
 @pytest.fixture(scope="module")
@@ -66,9 +67,9 @@ def test_get_stock_current_price(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
-        assert hasattr(response, "msg1")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
+        assert hasattr(response.body, "msg1")
 
     except Exception as e:
         pytest.fail(f"get_stock_current_price failed: {e}")
@@ -85,8 +86,8 @@ def test_get_stock_current_price_2(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_stock_current_price_2 failed: {e}")
@@ -103,8 +104,8 @@ def test_get_stock_current_price_conclusion(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_stock_current_price_conclusion failed: {e}")
@@ -125,8 +126,8 @@ def test_get_stock_current_price_daily(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_stock_current_price_daily failed: {e}")
@@ -143,8 +144,8 @@ def test_get_stock_current_price_asking_expected_conclusion(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_stock_current_price_asking_expected_conclusion failed: {e}")
@@ -161,8 +162,8 @@ def test_get_stock_current_price_investor(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_stock_current_price_investor failed: {e}")
@@ -179,8 +180,8 @@ def test_get_stock_current_price_member(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_stock_current_price_member failed: {e}")
@@ -206,8 +207,8 @@ def test_get_stock_period_quote(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_stock_period_quote failed: {e}")
@@ -228,8 +229,8 @@ def test_get_stock_today_minute_chart(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_stock_today_minute_chart failed: {e}")
@@ -251,8 +252,8 @@ def test_get_stock_daily_minute_chart(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_stock_daily_minute_chart failed: {e}")
@@ -269,8 +270,8 @@ def test_get_stock_current_price_time_item_conclusion(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_stock_current_price_time_item_conclusion failed: {e}")
@@ -290,8 +291,8 @@ def test_get_stock_current_price_daily_overtime_price(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_stock_current_price_daily_overtime_price failed: {e}")
@@ -309,8 +310,8 @@ def test_get_stock_current_price_overtime_conclusion(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_stock_current_price_overtime_conclusion failed: {e}")
@@ -327,8 +328,8 @@ def test_get_stock_overtime_current_price(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_stock_overtime_current_price failed: {e}")
@@ -345,8 +346,8 @@ def test_get_stock_overtime_asking_price(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_stock_overtime_asking_price failed: {e}")
@@ -370,8 +371,8 @@ def test_get_stock_closing_expected_price(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_stock_closing_expected_price failed: {e}")
@@ -391,8 +392,8 @@ def test_get_etfetn_current_price(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_etfetn_current_price failed: {e}")
@@ -409,8 +410,8 @@ def test_get_etf_component_stock_price(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_etf_component_stock_price failed: {e}")
@@ -427,8 +428,8 @@ def test_get_etf_nav_comparison_trend(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_etf_nav_comparison_trend failed: {e}")
@@ -448,8 +449,8 @@ def test_get_etf_nav_comparison_daily_trend(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_etf_nav_comparison_daily_trend failed: {e}")
@@ -467,8 +468,8 @@ def test_get_etf_nav_comparison_time_trend(client: Client):
 
         # Verify response type
         assert response is not None
-        assert hasattr(response, "rt_cd")
-        assert hasattr(response, "msg_cd")
+        assert hasattr(response.body, "rt_cd")
+        assert hasattr(response.body, "msg_cd")
 
     except Exception as e:
         pytest.fail(f"get_etf_nav_comparison_time_trend failed: {e}")

@@ -15,6 +15,9 @@ from loguru import logger
 from cluefin_openapi.kis._auth import Auth
 from cluefin_openapi.kis._auth_types import TokenResponse
 
+# Maximum cache age in hours before forcing a new token generation
+MAX_CACHE_AGE_HOURS = 6
+
 
 class TokenCache:
     """Persistent token cache that saves tokens to disk."""
@@ -50,6 +53,7 @@ class TokenCache:
         # Try to load from memory cache first
         if self._token is not None and self._is_token_valid(self._token):
             logger.debug("Using token from memory cache")
+            self._auth._token_data = self._token
             return self._token
 
         # Try to load from disk cache
@@ -57,6 +61,8 @@ class TokenCache:
         if cached_token is not None and self._is_token_valid(cached_token):
             logger.debug("Using token from disk cache")
             self._token = cached_token
+            self._auth._token_data = self._token
+            self._auth.token_manager._token_cache = self._token
             return self._token
 
         # Need to generate a new token
@@ -69,6 +75,7 @@ class TokenCache:
 
         self._token = self._auth.generate()
         self._last_generated_at = time.monotonic()
+        self._auth.token_manager._token_cache = self._token
         self._save_to_disk(self._token)
         return self._token
 
@@ -93,8 +100,11 @@ class TokenCache:
             # Parse the expiration timestamp
             # Format: "YYYY-MM-DD HH:MM:SS"
             expiry = datetime.strptime(token.access_token_token_expired, "%Y-%m-%d %H:%M:%S")
-            # Add a 5-minute buffer to avoid using tokens that are about to expire
-            return datetime.now() < (expiry - timedelta(minutes=5))
+            now = datetime.now()
+            threshold = expiry - timedelta(minutes=5)
+            is_valid = now < threshold
+            logger.debug(f"Token validity: expiry={expiry}, now={now}, threshold={threshold}, valid={is_valid}")
+            return is_valid
         except Exception as e:
             logger.warning(f"Failed to parse token expiration: {e}")
             return False
@@ -112,6 +122,16 @@ class TokenCache:
         try:
             with open(self._cache_file, "r") as f:
                 data = json.load(f)
+
+            # Check if cache is older than MAX_CACHE_AGE_HOURS
+            cached_at = data.pop("cached_at", None)
+            if cached_at:
+                cached_time = datetime.fromisoformat(cached_at)
+                age = datetime.now() - cached_time
+                if age > timedelta(hours=MAX_CACHE_AGE_HOURS):
+                    logger.debug(f"Token cache expired (age: {age}), will generate new token")
+                    return None
+
             token = TokenResponse(**data)
             logger.debug(f"Loaded token from cache file: {self._cache_file}")
             return token
@@ -127,8 +147,10 @@ class TokenCache:
             token: Token to save
         """
         try:
+            data = token.model_dump()
+            data["cached_at"] = datetime.now().isoformat()
             with open(self._cache_file, "w") as f:
-                json.dump(token.model_dump(), f, indent=2)
+                json.dump(data, f, indent=2)
             logger.debug(f"Saved token to cache file: {self._cache_file}")
         except Exception as e:
             logger.warning(f"Failed to save token to cache: {e}")

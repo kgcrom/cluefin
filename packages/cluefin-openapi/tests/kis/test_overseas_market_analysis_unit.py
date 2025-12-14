@@ -5,6 +5,7 @@ from unittest.mock import Mock
 import pytest
 
 from cluefin_openapi.kis import _overseas_market_analysis as overseas_market_analysis_module
+from cluefin_openapi.kis._model import KisHttpResponse
 from cluefin_openapi.kis._overseas_market_analysis import OverseasMarketAnalysis
 
 
@@ -58,6 +59,13 @@ def test_overseas_market_analysis_builds_request(
     # Mock response object with json() method
     mock_response = Mock()
     mock_response.json.return_value = response_payload
+    mock_response.status_code = 200
+    mock_response.headers = {
+        "content-type": "application/json; charset=utf-8",
+        "tr_id": expected_headers.get("tr_id", ""),
+        "tr_cont": "",
+        "gt_uid": None,
+    }
 
     client = Mock()
     client._post.return_value = mock_response
@@ -92,5 +100,6 @@ def test_overseas_market_analysis_builds_request(
         )
 
     assert len(captured_instances) == 1
-    assert result is captured_instances[0]
+    assert isinstance(result, KisHttpResponse)
+    assert result.body is captured_instances[0]
     assert captured_instances[0].kwargs == response_payload

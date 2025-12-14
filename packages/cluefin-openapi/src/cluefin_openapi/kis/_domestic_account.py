@@ -26,6 +26,7 @@ from cluefin_openapi.kis._domestic_account_types import (
     StockReserveQuoteCorrection,
     StockReserveQuoteInquiry,
 )
+from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 
 
 class DomesticAccount:
@@ -65,7 +66,7 @@ class DomesticAccount:
         sll_type: Literal["01", "02", "05"] = "01",
         cndt_pric: Optional[int] = None,
         excg_id_dvsn_cd: Optional[Literal["KRX", "NXT", "SOR"]] = None,
-    ) -> StockQuoteCurrent:
+    ) -> KisHttpResponse[StockQuoteCurrent]:
         """
         주식주문(현금)
 
@@ -100,7 +101,12 @@ class DomesticAccount:
         }
 
         response = self.client._post("/uapi/domestic-stock/v1/trading/order-cash", headers=headers, body=body)
-        return StockQuoteCurrent.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock quote current: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockQuoteCurrent.model_validate(response.json())
+
+        return KisHttpResponse(header=header, body=body)
 
     def request_stock_quote_credit(
         self,
@@ -146,7 +152,7 @@ class DomesticAccount:
         cvrg_seq: Optional[str] = None,
         excg_id_dvsn_cd: Optional[Literal["KRX", "NXT", "SOR"]] = None,
         cndt_pric: Optional[str] = None,
-    ) -> StockQuoteCredit:
+    ) -> KisHttpResponse[StockQuoteCredit]:
         """
         주식주문(신용)
 
@@ -176,7 +182,7 @@ class DomesticAccount:
             cndt_pric: 조건가격, 스탑지정가호가 주문
 
         Returns:
-            StockQuoteCredit: 주식주문(신용) 응답 객체
+            KisHttpResponse[StockQuoteCredit]: 주식주문(신용) 응답 객체
         """
         headers = {
             "tr_id": tr_id,
@@ -207,7 +213,11 @@ class DomesticAccount:
             "CNDT_PRIC": cndt_pric,
         }
         response = self.client._post("/uapi/domestic-stock/v1/trading/order-credit", headers=headers, body=body)
-        return StockQuoteCredit.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock quote credit: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockQuoteCredit.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def request_stock_quote_correction(
         self,
@@ -239,7 +249,7 @@ class DomesticAccount:
         ord_unpr: str,
         qty_all_ord_yn: Literal["Y", "N"],
         excg_id_dvsn_cd: Optional[Literal["KRX", "NXT", "SOR"]] = None,
-    ) -> StockQuoteCorrection:
+    ) -> KisHttpResponse[StockQuoteCorrection]:
         """
         주식주문(정정취소)
 
@@ -257,7 +267,7 @@ class DomesticAccount:
             excg_id_dvsn_cd: 거래소ID구분코드
 
         Returns:
-            StockQuoteCorrection: 주식정정/취소 응답 객체
+            KisHttpResponse[StockQuoteCorrection]: 주식정정/취소 응답 객체
         """
         headers = {
             "tr_id": tr_id,
@@ -275,7 +285,11 @@ class DomesticAccount:
             "EXCG_ID_DVSN_CD": excg_id_dvsn_cd,
         }
         response = self.client._post("/uapi/domestic-stock/v1/trading/order-rvsecncl", headers=headers, body=body)
-        return StockQuoteCorrection.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock quote correction: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockQuoteCorrection.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_correction_cancellable_qty(
         self,
@@ -287,7 +301,7 @@ class DomesticAccount:
         ctx_area_nk100: str,
         inqr_dvsn_1: Literal["0", "1"],
         inqr_dvsn_2: Literal["0", "1", "2"],
-    ) -> StockQuoteCorrectionCancellableQty:
+    ) -> KisHttpResponse[StockQuoteCorrectionCancellableQty]:
         """
         주식정정취소가능주문조회
 
@@ -302,7 +316,7 @@ class DomesticAccount:
             inqr_dvsn_2: 조회구분2, '0 전체 1 매도 2 매수'
 
         Returns:
-            StockQuoteCorrectionCancellableQty: 주식정정취소가능주문조회 응답 객체
+            KisHttpResponse[StockQuoteCorrectionCancellableQty]: 주식정정취소가능주문조회 응답 객체
         """
         headers = {
             "tr_id": tr_id,
@@ -321,7 +335,11 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/inquire-psbl-rvsecncl", headers=headers, params=params
         )
-        return StockQuoteCorrectionCancellableQty.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock correction cancellable qty: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockQuoteCorrectionCancellableQty.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_daily_separate_conclusion(
         self,
@@ -342,7 +360,7 @@ class DomesticAccount:
         ord_gno_brno: str = "",
         pdno: Optional[str] = None,
         odno: Optional[str] = None,
-    ) -> StockDailySeparateConclusion:
+    ) -> KisHttpResponse[StockDailySeparateConclusion]:
         """
         주식일별주문체결조회
 
@@ -366,7 +384,7 @@ class DomesticAccount:
             odno: 주문번호, 주문시 한국투자증권 시스템에서 채번된 주문번호
 
         Returns:
-            StockDailySeparateConclusion: 주식일별주문체결조회 응답 객체
+            KisHttpResponse[StockDailySeparateConclusion]: 주식일별주문체결조회 응답 객체
         """
         headers = {
             "tr_id": tr_id,
@@ -392,7 +410,11 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/inquire-daily-ccld", headers=headers, params=params
         )
-        return StockDailySeparateConclusion.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock daily separate conclusion: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockDailySeparateConclusion.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_balance(
         self,
@@ -406,7 +428,7 @@ class DomesticAccount:
         afhr_flpr_yn: Literal["N", "Y", "X"] = "N",
         ctx_area_fk100: str = "",
         ctx_area_nk100: str = "",
-    ) -> StockBalance:
+    ) -> KisHttpResponse[StockBalance]:
         """
         주식잔고조회
 
@@ -423,7 +445,7 @@ class DomesticAccount:
             ctx_area_nk100: 연속조회키100, '공란 : 최초 조회시 이전 조회 Output CTX_AREA_NK100 값 : 다음페이지 조회시(2번째부터
 
         Returns:
-            StockBalance: 주식잔고조회 응답 객체
+            KisHttpResponse[StockBalance]: 주식잔고조회 응답 객체
         """
         headers = {
             "tr_id": tr_id,
@@ -444,7 +466,11 @@ class DomesticAccount:
         }
 
         response = self.client._get("/uapi/domestic-stock/v1/trading/inquire-balance", headers=headers, params=params)
-        return StockBalance.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock balance: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockBalance.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_buy_tradable_inquiry(
         self,
@@ -458,7 +484,7 @@ class DomesticAccount:
         prcs_dvsn: Literal["00", "01"],
         ctx_area_fk100: str = "",
         ctx_area_nk100: str = "",
-    ) -> BuyTradableInquiry:
+    ) -> KisHttpResponse[BuyTradableInquiry]:
         """
         매수가능조회
 
@@ -475,7 +501,7 @@ class DomesticAccount:
             ctx_area_nk100: 연속조회키100, '공란 : 최초 조회시 이전 조회 Output CTX_AREA_NK100 값 : 다음페이지 조회시(2번째부터)'
 
         Returns:
-            BuyTradableInquiry: 매수가능조회 응답 객체
+            KisHttpResponse[BuyTradableInquiry]: 매수가능조회 응답 객체
         """
         headers = {
             "tr_id": tr_id,
@@ -498,14 +524,18 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/inquire-psbl-order", headers=headers, params=params
         )
-        return BuyTradableInquiry.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching buy tradable inquiry: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = BuyTradableInquiry.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_sell_tradable_inquiry(
         self,
         cano: str,
         acnt_prdt_cd: str,
         pdno: str,
-    ) -> SellTradableInquiry:
+    ) -> KisHttpResponse[SellTradableInquiry]:
         """
         매도가능수량조회
 
@@ -515,7 +545,7 @@ class DomesticAccount:
             pdno: 종목코드(6자리) , ETN의 경우 7자리 입력
 
         Returns:
-            SellTradableInquiry: 매도가능수량조회 응답 객체
+            KisHttpResponse[SellTradableInquiry]: 매도가능수량조회 응답 객체
         """
         headers = {
             "tr_id": "TTTC8408R",
@@ -526,7 +556,11 @@ class DomesticAccount:
             "PDNO": pdno,
         }
         response = self.client._get("/uapi/domestic-stock/v1/trading/inquire-psbl-sell", headers=headers, params=params)
-        return SellTradableInquiry.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching sell tradable inquiry: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = SellTradableInquiry.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_credit_tradable_inquiry(
         self,
@@ -547,7 +581,7 @@ class DomesticAccount:
         crdt_type: Literal["21", "22", "23", "24", "25", "26", "27", "28"],
         cma_evlu_amt_icld_yn: Literal["Y", "N"],
         ovrs_icld_yn: Literal["Y", "N"],
-    ):
+    ) -> KisHttpResponse[CreditTradableInquiry]:
         """
         신용매수가능조회
 
@@ -562,7 +596,7 @@ class DomesticAccount:
             ovrs_icld_yn: 해외포함여부 (Y/N)
 
         Returns:
-            SellTradableInquiry: 신용매수가능조회 응답 객체
+            KisHttpResponse[CreditTradableInquiry]: 신용매수가능조회 응답 객체
         """
         headers = {
             "tr_id": "TTTC8909R",
@@ -580,7 +614,11 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/inquire-credit-psamount", headers=headers, params=params
         )
-        return CreditTradableInquiry.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching credit tradable inquiry: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = CreditTradableInquiry.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def request_stock_reserve_quote(
         self,
@@ -595,7 +633,7 @@ class DomesticAccount:
         loan_dt: Optional[str] = None,
         rsvn_ord_end_dt: Optional[str] = None,
         ldng_dt: Optional[str] = None,
-    ) -> StockReserveQuote:
+    ) -> KisHttpResponse[StockReserveQuote]:
         """
         주식예약주문
 
@@ -613,7 +651,7 @@ class DomesticAccount:
             ldng_dt: 대여일자
 
         Returns:
-            None: 주식예약주문 응답 객체
+            KisHttpResponse[StockReserveQuote]: 주식예약주문 응답 객체
         """
         headers = {
             "tr_id": "CTSC0008U",
@@ -632,7 +670,11 @@ class DomesticAccount:
             "LDNG_DT": ldng_dt,
         }
         response = self.client._post("/uapi/domestic-stock/v1/trading/order-resv", headers=headers, body=body)
-        return StockReserveQuote.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock reserve quote: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockReserveQuote.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def request_stock_reserve_quote_correction(
         self,
@@ -650,7 +692,7 @@ class DomesticAccount:
         rsvn_ord_end_dt: Optional[str] = None,
         rsvn_ord_orgno: Optional[str] = None,
         rsvn_ord_ord_dt: Optional[str] = None,
-    ) -> StockReserveQuoteCorrection:
+    ) -> KisHttpResponse[StockReserveQuoteCorrection]:
         """
         주식예약주문정정취소
 
@@ -669,6 +711,9 @@ class DomesticAccount:
             rsvn_ord_end_dt: 예약주문종료일자 (YYYYMMDD) 현재 일자보다 이후로 설정해야 함
             rsvn_ord_orgno: 예약주문조직번호
             rsvn_ord_ord_dt: 예약주문주문일자 (YYYYMMDD)
+
+        Returns:
+            KisHttpResponse[StockReserveQuoteCorrection]: 주식예약주문정정취소 응답 객체
         """
         headers = {
             "tr_id": tr_id,
@@ -689,7 +734,11 @@ class DomesticAccount:
             "RSVN_ORD_ORD_DT": rsvn_ord_ord_dt,
         }
         response = self.client._post("/uapi/domestic-stock/v1/trading/order-resv-rvsecncl", headers=headers, body=body)
-        return StockReserveQuoteCorrection.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock reserve quote correction: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockReserveQuoteCorrection.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_reserve_quote_inquiry(
         self,
@@ -705,7 +754,7 @@ class DomesticAccount:
         sll_buy_dvsn_cd: Literal["00", "01", "02"],
         ctx_area_fk200: str = "",
         ctx_area_nk200: str = "",
-    ) -> StockReserveQuoteInquiry:
+    ) -> KisHttpResponse[StockReserveQuoteInquiry]:
         """
         주식예약주문조회
 
@@ -724,7 +773,7 @@ class DomesticAccount:
             ctx_area_nk200: 연속조회키200, '공란 : 최초 조회시 이전 조회 Output CTX_AREA_NK200 값 : 다음페이지 조회시(2번째부터)
 
         Returns:
-            StockReserveQuoteInquiry: 주식예약주문조회 응답 객체
+            KisHttpResponse[StockReserveQuoteInquiry]: 주식예약주문조회 응답 객체
         """
         headers = {
             "tr_id": "CTSC0004R",
@@ -744,7 +793,11 @@ class DomesticAccount:
             "CTX_AREA_NK200": ctx_area_nk200,
         }
         response = self.client._get("/uapi/domestic-stock/v1/trading/order-resv-ccnl", headers=headers, params=params)
-        return StockReserveQuoteInquiry.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock reserve quote inquiry: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockReserveQuoteInquiry.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_pension_conclusion_balance(
         self,
@@ -753,7 +806,7 @@ class DomesticAccount:
         ctx_area_nk100: str,
         acnt_prdt_cd: str = "29",
         user_dvsn_cd: str = "00",
-    ) -> PensionConclusionBalance:
+    ) -> KisHttpResponse[PensionConclusionBalance]:
         """
         퇴직연금 체결기준잔고
 
@@ -765,7 +818,7 @@ class DomesticAccount:
             user_dvsn_cd: 사용자구분코드, 기본값 "00"
 
         Returns:
-            PensionConclusionBalance: 퇴직연금 체결기준잔고 응답 객체
+            KisHttpResponse[PensionConclusionBalance]: 퇴직연금 체결기준잔고 응답 객체
         """
         headers = {
             "tr_id": "TTTC2202R",
@@ -780,7 +833,11 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/pension/inquire-present-balance", headers=headers, params=params
         )
-        return PensionConclusionBalance.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching pension conclusion balance: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = PensionConclusionBalance.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_pension_not_conclusion_history(
         self,
@@ -792,7 +849,7 @@ class DomesticAccount:
         acnt_prdt_cd: str = "29",
         inqr_dvsn_3: Literal["00"] = "00",
         user_dvsn_cd: str = "00",
-    ) -> PensionNotConclusionHistory:
+    ) -> KisHttpResponse[PensionNotConclusionHistory]:
         """
         퇴직연금 미체결내역
 
@@ -807,7 +864,7 @@ class DomesticAccount:
             user_dvsn_cd: 사용자구분코드, 기본값 "00"
 
         Returns:
-            PensionNotConclusionHistory: 퇴직연금 미체결내역 응답 객체
+            KisHttpResponse[PensionNotConclusionHistory]: 퇴직연금 미체결내역 응답 객체
         """
         headers = {
             "tr_id": "TTTC2210R",
@@ -825,7 +882,11 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/pension/inquire-daily-ccld", headers=headers, params=params
         )
-        return PensionNotConclusionHistory.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching pension not conclusion history: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = PensionNotConclusionHistory.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_pension_buy_tradable_inquiry(
         self,
@@ -836,7 +897,7 @@ class DomesticAccount:
         ord_unpr: str,
         acnt_prdt_cd: str = "29",
         acca_dvsn_cd: Literal["00"] = "00",
-    ) -> PensionBuyTradableInquiry:
+    ) -> KisHttpResponse[PensionBuyTradableInquiry]:
         """
         퇴직연금 매수가능조회
 
@@ -850,7 +911,7 @@ class DomesticAccount:
             acca_dvsn_cd: 적립금구분코드, 기본값 "00"
 
         Returns:
-            PensionBuyTradableInquiry: 퇴직연금 매수가능조회 응답 객체
+            KisHttpResponse[PensionBuyTradableInquiry]: 퇴직연금 매수가능조회 응답 객체
         """
         headers = {
             "tr_id": "TTTC0503R",
@@ -867,14 +928,18 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/pension/inquire-psbl-order", headers=headers, params=params
         )
-        return PensionBuyTradableInquiry.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching pension buy tradable inquiry: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = PensionBuyTradableInquiry.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_pension_reserve_deposit_inquiry(
         self,
         cano: str,
         acnt_prdt_cd: str = "29",
         user_dvsn_cd: str = "00",
-    ) -> PensionReserveDepositInquiry:
+    ) -> KisHttpResponse[PensionReserveDepositInquiry]:
         """
         퇴직연금 예수금조회
 
@@ -884,7 +949,7 @@ class DomesticAccount:
             user_dvsn_cd: 사용자구분코드, 기본값 "00"
 
         Returns:
-            PensionReserveDepositInquiry: 퇴직연금 예수금조회 응답 객체
+            KisHttpResponse[PensionReserveDepositInquiry]: 퇴직연금 예수금조회 응답 객체
         """
         headers = {
             "tr_id": "TTTC0506R",
@@ -897,7 +962,11 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/pension/inquire-deposit", headers=headers, params=params
         )
-        return PensionReserveDepositInquiry.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching pension reserve deposit inquiry: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = PensionReserveDepositInquiry.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_pension_balance_inquiry(
         self,
@@ -907,7 +976,7 @@ class DomesticAccount:
         acnt_prdt_cd: str = "29",
         user_dvsn_cd: str = "00",
         inqr_dvsn: Literal["00"] = "00",
-    ) -> PensionBalanceInquiry:
+    ) -> KisHttpResponse[PensionBalanceInquiry]:
         """
         퇴직연금 잔고조회
 
@@ -920,7 +989,7 @@ class DomesticAccount:
             inqr_dvsn: 조회구분, 기본값 "00"
 
         Returns:
-            PensionBalanceInquiry: 퇴직연금 잔고조회 응답 객체
+            KisHttpResponse[PensionBalanceInquiry]: 퇴직연금 잔고조회 응답 객체
         """
         headers = {
             "tr_id": "TTTC2208R",
@@ -936,7 +1005,11 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/pension/inquire-balance", headers=headers, params=params
         )
-        return PensionBalanceInquiry.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching pension balance inquiry: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = PensionBalanceInquiry.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_balance_loss_profit(
         self,
@@ -953,7 +1026,7 @@ class DomesticAccount:
         fund_sttl_icld_yn: Literal["N", "Y"] = "N",
         fncg_amt_auto_rdpt_yn: Literal["N", "Y"] = "N",
         prcs_dvsn: Literal["00", "01"] = "00",
-    ) -> StockBalanceLossProfit:
+    ) -> KisHttpResponse[StockBalanceLossProfit]:
         """
         주식잔고조회 실현손익
 
@@ -973,7 +1046,7 @@ class DomesticAccount:
             prcs_dvsn: 처리구분 (00 : 전일매매포함, 01 : 전일매매미포함)
 
         Returns:
-            StockBalanceLossProfit: 주식잔고조회 실현손익 응답 객체
+            KisHttpResponse[StockBalanceLossProfit]: 주식잔고조회 실현손익 응답 객체
         """
         headers = {
             "tr_id": "TTTC8494R",
@@ -996,7 +1069,11 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/inquire-balance-rlz-pl", headers=headers, params=params
         )
-        return StockBalanceLossProfit.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock balance loss profit: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockBalanceLossProfit.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_investment_account_current_status(
         self,
@@ -1005,7 +1082,7 @@ class DomesticAccount:
         acnt_prdt_cd: str,
         inqr_dvsn_1: Literal["", "N", "Y"] = "",
         bspr_bf_dt_aply_yn: Literal["", "N", "Y"] = "",
-    ) -> InvestmentAccountCurrentStatus:
+    ) -> KisHttpResponse[InvestmentAccountCurrentStatus]:
         """
         투자계좌자산현황조회
 
@@ -1017,7 +1094,7 @@ class DomesticAccount:
             bspr_bf_dt_aply_yn: 기준가이전일자적용여부, 기본값 ""
 
         Returns:
-            InvestmentAccountCurrentStatus: 투자계좌자산현황조회 응답 객체
+            KisHttpResponse[InvestmentAccountCurrentStatus]: 투자계좌자산현황조회 응답 객체
         """
         headers = {
             "tr_id": "CTRP6548R",
@@ -1032,7 +1109,11 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/inquire-account-balance", headers=headers, params=params
         )
-        return InvestmentAccountCurrentStatus.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching investment account current status: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = InvestmentAccountCurrentStatus.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_period_profit_summary(
         self,
@@ -1047,7 +1128,7 @@ class DomesticAccount:
         sort_dvsn: Literal["00", "01", "02"],
         inqr_dvsn: Literal["00"] = "00",
         cblc_dvsn: Literal["00"] = "00",
-    ) -> PeriodProfitSummary:
+    ) -> KisHttpResponse[PeriodProfitSummary]:
         """
         기간별순익별합산조회
 
@@ -1063,7 +1144,7 @@ class DomesticAccount:
             sort_dvsn: 정렬구분 (00: 최근 순, 01: 과거 순, 02: 최근 순)
 
         Returns:
-            PeriodProfitSummary: 기간별순익별합산조회 응답 객체
+            KisHttpResponse[PeriodProfitSummary]: 기간별순익별합산조회 응답 객체
         """
         headers = {
             "tr_id": "TTTC8708R",
@@ -1084,7 +1165,11 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/inquire-period-profit", headers=headers, params=params
         )
-        return PeriodProfitSummary.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching period profit summary: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = PeriodProfitSummary.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_period_trading_profit_status(
         self,
@@ -1098,7 +1183,7 @@ class DomesticAccount:
         ctx_area_nk100: str,
         ctx_area_fk100: str,
         cblc_dvsn: Literal["00", "01", "02"] = "00",
-    ) -> PeriodTradingProfitStatus:
+    ) -> KisHttpResponse[PeriodTradingProfitStatus]:
         """
         기간별매매순익현황조회
 
@@ -1115,7 +1200,7 @@ class DomesticAccount:
             cblc_dvsn: 잔고구분 (00: 전체, 01: 잔고, 02: 대기)
 
         Returns:
-            PeriodTradingProfitStatus: 기간별매매순익현황조회 응답 객체
+            KisHttpResponse[PeriodTradingProfitStatus]: 기간별매매순익현황조회 응답 객체
         """
         headers = {
             "tr_id": "TTTC8715R",
@@ -1135,7 +1220,11 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/inquire-period-trade-profit", headers=headers, params=params
         )
-        return PeriodTradingProfitStatus.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching period trading profit status: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = PeriodTradingProfitStatus.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_stock_integrated_deposit_balance(
         self,
@@ -1144,7 +1233,7 @@ class DomesticAccount:
         wcrc_frcr_dvsn_cd: Literal["01", "02"],
         fwex_ctrt_frcr_dvsn_cd: Literal["01", "02"],
         cma_evlu_amt_icld_yn: Literal["N", "Y"] = "N",
-    ) -> StockIntegratedDepositBalance:
+    ) -> KisHttpResponse[StockIntegratedDepositBalance]:
         """
         주식통합증거금 현황
         Args:
@@ -1155,7 +1244,7 @@ class DomesticAccount:
             cma_evlu_amt_icld_yn: CMA평가금액포함여부 (N/Y), 기본값 "N"
 
         Returns:
-            StockIntegratedDepositBalance: 주식통합증거금 현황 응답 객체
+            KisHttpResponse[StockIntegratedDepositBalance]: 주식통합증거금 현황 응답 객체
         """
         headers = {
             "tr_id": "TTTC0869R",
@@ -1168,7 +1257,11 @@ class DomesticAccount:
             "CMA_EVLU_AMT_ICLD_YN": cma_evlu_amt_icld_yn,
         }
         response = self.client._get("/uapi/domestic-stock/v1/trading/intgr-margin", headers=headers, params=params)
-        return StockIntegratedDepositBalance.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock integrated deposit balance: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = StockIntegratedDepositBalance.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)
 
     def get_period_accounting_current_status(
         self,
@@ -1185,7 +1278,7 @@ class DomesticAccount:
         rght_type_cd: str = "",
         pdno: str = "",
         prdt_type_cd: str = "",
-    ) -> PeriodAccountingCurrentStatus:
+    ) -> KisHttpResponse[PeriodAccountingCurrentStatus]:
         """
         기간별계좌권리현황조회
 
@@ -1205,7 +1298,7 @@ class DomesticAccount:
             prdt_type_cd: 상품유형코드, 기본값 ""
 
         Returns:
-            PeriodAccountingCurrentStatus: 기간별계좌권리현황조회 응답 객체
+            KisHttpResponse[PeriodAccountingCurrentStatus]: 기간별계좌권리현황조회 응답 객체
         """
         headers = {
             "tr_id": "CTRGA011R",
@@ -1226,4 +1319,8 @@ class DomesticAccount:
             "PRDT_TYPE_CD": prdt_type_cd,
         }
         response = self.client._get("/uapi/domestic-stock/v1/trading/period-rights", headers=headers, params=params)
-        return PeriodAccountingCurrentStatus.model_validate(response.json())
+        if response.status_code != 200:
+            raise Exception(f"Error fetching period accounting current status: {response.text}")
+        header = KisHttpHeader.model_validate(response.headers)
+        body = PeriodAccountingCurrentStatus.model_validate(response.json())
+        return KisHttpResponse(header=header, body=body)

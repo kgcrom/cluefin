@@ -18,6 +18,9 @@
             "SYMB": "TSLA"
         },
         "response_payload": {
+            "rt_cd": "0",
+            "msg_cd": "MCA00000",
+            "msg1": "정상처리 되었습니다.",
             "output": {
                 "rsym": "DNASTSLA",
                 "pvol": "100000",
@@ -82,6 +85,9 @@
             "SYMB": "TSLA"
         },
         "response_payload": {
+            "rt_cd": "0",
+            "msg_cd": "MCA00000",
+            "msg1": "정상처리 되었습니다.",
             "output1": {
                 "rsym": "DNASTSLA",
                 "zdiv": "2",
@@ -141,6 +147,9 @@
             "SYMB": "TSLA"
         },
         "response_payload": {
+            "rt_cd": "0",
+            "msg_cd": "MCA00000",
+            "msg1": "정상처리 되었습니다.",
             "output": {
                 "rsym": "DNASTSLA",
                 "zdiv": "2",
@@ -179,6 +188,9 @@
             "SYMB": "TSLA"
         },
         "response_payload": {
+            "rt_cd": "0",
+            "msg_cd": "MCA00000",
+            "msg1": "정상처리 되었습니다.",
             "output1": [
                 {
                     "khms": "143000",
@@ -227,6 +239,9 @@
             "KEYB": ""
         },
         "response_payload": {
+            "rt_cd": "0",
+            "msg_cd": "MCA00000",
+            "msg1": "정상처리 되었습니다.",
             "output1": {
                 "rsym": "DNASTSLA",
                 "zdiv": "2",
@@ -276,6 +291,9 @@
             "FID_PW_DATA_INCU_YN": "Y"
         },
         "response_payload": {
+            "rt_cd": "0",
+            "msg_cd": "MCA00000",
+            "msg1": "정상처리 되었습니다.",
             "output1": {
                 "ovrs_nmix_prdy_vrss": "100.50",
                 "prdy_vrss_sign": "2",
@@ -329,6 +347,9 @@
             "KEYB": ""
         },
         "response_payload": {
+            "rt_cd": "0",
+            "msg_cd": "MCA00000",
+            "msg1": "정상처리 되었습니다.",
             "output1": {
                 "rsym": "DNASTSLA",
                 "zdiv": "2",
@@ -377,6 +398,9 @@
             "FID_PERIOD_DIV_CODE": "D"
         },
         "response_payload": {
+            "rt_cd": "0",
+            "msg_cd": "MCA00000",
+            "msg1": "정상처리 되었습니다.",
             "output1": {
                 "ovrs_nmix_prdy_vrss": "100.50",
                 "prdy_vrss_sign": "2",
@@ -471,6 +495,9 @@
             "KEYB": ""
         },
         "response_payload": {
+            "rt_cd": "0",
+            "msg_cd": "MCA00000",
+            "msg1": "정상처리 되었습니다.",
             "output1": {
                 "zdiv": "2",
                 "stat": "ACTIVE",
@@ -523,6 +550,9 @@
             "CTX_AREA_FK": ""
         },
         "response_payload": {
+            "rt_cd": "0",
+            "msg_cd": "MCA00000",
+            "msg1": "정상처리 되었습니다.",
             "output": [
                 {
                     "prdt_type_cd": "512",
@@ -554,6 +584,9 @@
             "PDNO": "TSLA"
         },
         "response_payload": {
+            "rt_cd": "0",
+            "msg_cd": "MCA00000",
+            "msg1": "정상처리 되었습니다.",
             "output": {
                 "std_pdno": "TSLA",
                 "prdt_eng_name": "Tesla Inc",
@@ -636,6 +669,9 @@
             "VOL_RANG": "0"
         },
         "response_payload": {
+            "rt_cd": "0",
+            "msg_cd": "MCA00000",
+            "msg1": "정상처리 되었습니다.",
             "output1": {
                 "zdiv": "2",
                 "stat": "ACTIVE",
@@ -682,6 +718,9 @@
             "EXCD": "NAS"
         },
         "response_payload": {
+            "rt_cd": "0",
+            "msg_cd": "MCA00000",
+            "msg1": "정상처리 되었습니다.",
             "output1": {
                 "nrec": "10"
             },
