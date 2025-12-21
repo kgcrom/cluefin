@@ -5,6 +5,7 @@ import dotenv
 import pytest
 
 from cluefin_openapi.dart._client import Client
+from cluefin_openapi.dart._model import DartStatusCode
 from cluefin_openapi.dart._periodic_report_financial_statement import PeriodicReportFinancialStatement
 from cluefin_openapi.dart._periodic_report_financial_statement_types import (
     MultiCompanyMajorAccount,
@@ -99,7 +100,7 @@ def test_periodic_report_financial_statement_endpoints(
 
     assert isinstance(response, response_type)
     assert response.result is not None
-    assert response.result.status is not None
+    assert response.result.status == DartStatusCode.SUCCESS
 
     items = response.result.list or []
     assert all(isinstance(item, item_type) for item in items)
@@ -125,6 +126,7 @@ def test_get_single_company_major_indicators_returns_expected_fields(
 
     assert isinstance(response, SingleCompanyMajorIndicator)
     assert response.result is not None
+    assert response.result.status == DartStatusCode.SUCCESS
 
     items = response.result.list or []
     assert all(item.idx_cl_code == IDX_CL_CODE for item in items)
@@ -151,7 +153,7 @@ def test_get_single_company_major_indicators_matches_request_metadata(
     )
 
     assert response.result is not None
-    assert response.result.status == "000"
+    assert response.result.status == DartStatusCode.SUCCESS
 
     items = response.result.list or []
     for item in items:
@@ -169,7 +171,7 @@ def test_periodic_report_financial_statement_xbrl_taxonomy(
 
     assert isinstance(response, XbrlTaxonomy)
     assert response.result is not None
-    assert response.result.status is not None
+    assert response.result.status == DartStatusCode.SUCCESS
 
     items = response.result.list or []
     assert all(isinstance(item, XbrlTaxonomyItem) for item in items)

@@ -5,6 +5,7 @@ import dotenv
 import pytest
 
 from cluefin_openapi.dart._client import Client
+from cluefin_openapi.dart._model import DartStatusCode
 from cluefin_openapi.dart._share_disclosure_comprehensive import ShareDisclosureComprehensive
 from cluefin_openapi.dart._share_disclosure_comprehensive_types import (
     ExecutiveMajorShareholderOwnershipReport,
@@ -33,7 +34,7 @@ def test_large_holding_report_integration(service: ShareDisclosureComprehensive)
     response = service.large_holding_report(corp_code="00126380")
 
     assert isinstance(response, LargeHoldingReport)
-    assert response.result.status is not None
+    assert response.result.status == DartStatusCode.SUCCESS
 
     items = response.result.list or []
     assert all(isinstance(item, LargeHoldingReportItem) for item in items)
@@ -52,7 +53,7 @@ def test_executive_major_shareholder_ownership_report_integration(service: Share
     response = service.executive_major_shareholder_ownership_report(corp_code="00126380")
 
     assert isinstance(response, ExecutiveMajorShareholderOwnershipReport)
-    assert response.result.status is not None
+    assert response.result.status == DartStatusCode.SUCCESS
 
     items = response.result.list or []
     assert all(isinstance(item, ExecutiveMajorShareholderOwnershipReportItem) for item in items)
@@ -74,7 +75,7 @@ def test_large_holding_report_with_different_corp_codes(service: ShareDisclosure
         response = service.large_holding_report(corp_code=corp_code)
 
         assert isinstance(response, LargeHoldingReport)
-        assert response.result.status is not None
+        assert response.result.status == DartStatusCode.SUCCESS
 
         if response.result.list:
             for item in response.result.list:
@@ -94,7 +95,7 @@ def test_executive_major_shareholder_ownership_report_with_different_corp_codes(
         response = service.executive_major_shareholder_ownership_report(corp_code=corp_code)
 
         assert isinstance(response, ExecutiveMajorShareholderOwnershipReport)
-        assert response.result.status is not None
+        assert response.result.status == DartStatusCode.SUCCESS
 
         if response.result.list:
             for item in response.result.list:

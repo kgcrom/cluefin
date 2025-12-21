@@ -6,6 +6,7 @@ from xml.etree import ElementTree
 
 from cluefin_openapi.dart._client import Client
 from cluefin_openapi.dart._exceptions import DartAPIError
+from cluefin_openapi.dart._model import DartStatusCode
 from cluefin_openapi.dart._periodic_report_financial_statement_types import (
     MultiCompanyMajorAccount,
     MultiCompanyMajorAccountItem,
@@ -250,7 +251,7 @@ class PeriodicReportFinancialStatement:
         params = {
             "sj_div": sj_div,
         }
-        payload = self.client._get("/api/fnlttXbrlTaxonomy.json", params=params)
+        payload = self.client._get("/api/xbrlTaxonomy.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(
                 f"XBRL 택사노미 재무제표 양식 API 응답은 매핑 타입이어야 합니다. 수신한 타입: {type(payload)!r}"
@@ -290,7 +291,7 @@ class PeriodicReportFinancialStatement:
                 root = None
             if root is not None:
                 status = (root.findtext("status") or "").strip()
-                if status and status != "000":
+                if status and status != DartStatusCode.SUCCESS:
                     message = (root.findtext("message") or "").strip()
                     raise DartAPIError(
                         message or "재무제표 원본파일(XBRL) 조회에 실패했습니다.",

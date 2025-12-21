@@ -280,3 +280,42 @@ def test_disclosure_document_file_respects_overwrite_flag(
         last_request = mock_requests.last_request
         assert last_request is not None
         assert last_request.qs["rcept_no"] == ["20240315001234"]
+
+
+def test_public_disclosure_search_passes_pblntf_params(client: Client) -> None:
+    """pblntf_ty와 pblntf_detail_ty 파라미터가 올바르게 전달되는지 확인.
+
+    Note:
+        DART API에서 pblntf_ty=A(정기공시)를 지정하면 pblntf_detail_ty 파라미터와
+        관계없이 모든 정기공시(사업보고서, 반기보고서, 분기보고서)를 반환합니다.
+        이 테스트는 파라미터 전달 자체가 올바르게 동작하는지만 검증합니다.
+    """
+    expected_payload = {
+        "status": "000",
+        "message": "정상",
+        "page_no": "1",
+        "page_count": "10",
+        "total_count": "0",
+        "total_page": "1",
+        "list": [],
+    }
+
+    service = PublicDisclosure(client)
+
+    with requests_mock.Mocker() as mock_requests:
+        mock_requests.get(
+            "https://opendart.fss.or.kr/api/list.json",
+            json=expected_payload,
+            status_code=200,
+        )
+
+        service.public_disclosure_search(
+            pblntf_ty="A",
+            pblntf_detail_ty="A001",
+        )
+
+        last_request = mock_requests.last_request
+        assert last_request is not None
+        # requests_mock은 query string 값을 소문자로 변환하므로 대소문자 무시 비교
+        assert last_request.qs["pblntf_ty"][0].upper() == "A"
+        assert last_request.qs["pblntf_detail_ty"][0].upper() == "A001"
