@@ -1,14 +1,17 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """dartex 설정"""
 
-    dart_api_key: str = ""
+    dart_auth_key: str = ""
     data_dir: str = "./data"
 
-    model_config = {"env_prefix": "DARTEX_", "env_file": ".env"}
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
 
-def get_settings() -> Settings:
-    return Settings()
+settings = Settings()
