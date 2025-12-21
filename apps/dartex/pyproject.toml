@@ -1,0 +1,28 @@
+[project]
+name = "dartex"
+version = "0.1.0"
+description = "DART 재무제표 주석 파싱 CLI 도구"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "cluefin-openapi",
+    "docling>=2.60.0",
+    "pandas>=2.0.0",
+    "typer>=0.9.0",
+    "rich>=13.0.0",
+    "sqlalchemy>=2.0.0",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=5.0.0",
+    "pydantic-settings>=2.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+dartex = "dartex.cli:app"
+
+[tool.ruff]
+extend = "../../pyproject.toml"
+include = ["src/**", "tests/**"]
