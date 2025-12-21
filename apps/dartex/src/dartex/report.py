@@ -1,13 +1,12 @@
 """DART 보고서 조회 모듈.
 
-기업 검색 및 사업보고서 목록 조회 기능을 제공합니다.
+기업 검색 및 정기보고서 목록 조회 기능을 제공합니다.
 """
 
 from __future__ import annotations
 
 import re
 from datetime import datetime
-from typing import Literal
 
 from cluefin_openapi.dart._client import Client as DartClient
 from pydantic import BaseModel
@@ -33,13 +32,6 @@ class ReportInfo(BaseModel):
     report_nm: str  # 보고서명
     rcept_dt: str  # 접수일자 (YYYYMMDD)
     fiscal_year: int  # 사업연도
-
-
-# 보고서 유형 코드
-REPORT_TYPE_ANNUAL = "A001"  # 사업보고서
-REPORT_TYPE_SEMI_ANNUAL = "A002"  # 반기보고서
-REPORT_TYPE_Q1 = "A003"  # 1분기보고서
-REPORT_TYPE_Q3 = "A004"  # 3분기보고서
 
 
 def _extract_fiscal_year(report_nm: str, rcept_dt: str) -> int:
@@ -106,25 +98,16 @@ def search_company(name: str) -> list[CompanyInfo]:
 def search_reports(
     corp_code: str,
     years: int = 5,
-    report_types: list[str] | None = None,
 ) -> list[ReportInfo]:
-    """기업의 사업보고서 목록 조회.
+    """기업의 정기보고서 목록 조회.
 
     Args:
         corp_code: 기업 고유번호 (8자리)
         years: 조회할 연도 수 (기본 5년)
-        report_types: 보고서 유형 목록 (기본: 사업보고서만)
-            - A001: 사업보고서
-            - A002: 반기보고서
-            - A003: 1분기보고서
-            - A004: 3분기보고서
 
     Returns:
-        보고서 정보 목록 (최신순)
+        보고서 정보 목록 (최신순) - 1분기, 반기, 3분기, 사업보고서 포함
     """
-    if report_types is None:
-        report_types = [REPORT_TYPE_ANNUAL]
-
     # 날짜 범위 계산
     end_date = datetime.now()
     start_year = end_date.year - years
@@ -133,21 +116,16 @@ def search_reports(
 
     client = _get_dart_client()
     try:
-        all_reports: list[ReportInfo] = []
-
-        for report_type in report_types:
-            reports = _fetch_reports_with_pagination(
-                client=client,
-                corp_code=corp_code,
-                bgn_de=bgn_de,
-                end_de=end_de,
-                report_type=report_type,
-            )
-            all_reports.extend(reports)
+        reports = _fetch_reports_with_pagination(
+            client=client,
+            corp_code=corp_code,
+            bgn_de=bgn_de,
+            end_de=end_de,
+        )
 
         # 접수일자 기준 최신순 정렬
-        all_reports.sort(key=lambda r: r.rcept_dt, reverse=True)
-        return all_reports
+        reports.sort(key=lambda r: r.rcept_dt, reverse=True)
+        return reports
     finally:
         client.close()
 
@@ -157,16 +135,14 @@ def _fetch_reports_with_pagination(
     corp_code: str,
     bgn_de: str,
     end_de: str,
-    report_type: str,
 ) -> list[ReportInfo]:
-    """페이지네이션을 처리하여 모든 보고서 조회.
+    """페이지네이션을 처리하여 모든 정기보고서 조회.
 
     Args:
         client: DART API 클라이언트
         corp_code: 기업 고유번호
         bgn_de: 시작일 (YYYYMMDD)
         end_de: 종료일 (YYYYMMDD)
-        report_type: 보고서 유형 코드
 
     Returns:
         보고서 정보 목록
@@ -181,7 +157,6 @@ def _fetch_reports_with_pagination(
             bgn_de=bgn_de,
             end_de=end_de,
             pblntf_ty="A",  # 정기공시
-            pblntf_detail_ty=report_type,
             sort="date",
             sort_mth="desc",
             page_no=page_no,
@@ -223,7 +198,6 @@ def _fetch_reports_with_pagination(
 def get_report_rcept_nos(
     corp_code: str,
     years: int = 5,
-    report_types: list[str] | None = None,
 ) -> list[str]:
     """보고서 접수번호 목록 조회.
 
@@ -232,10 +206,31 @@ def get_report_rcept_nos(
     Args:
         corp_code: 기업 고유번호 (8자리)
         years: 조회할 연도 수 (기본 5년)
-        report_types: 보고서 유형 목록
 
     Returns:
         접수번호 목록
     """
-    reports = search_reports(corp_code, years, report_types)
+    reports = search_reports(corp_code, years)
     return [report.rcept_no for report in reports]
+
+
+def get_corp_code_by_stock_code(stock_code: str) -> str | None:
+    """종목코드로 DART 고유번호 조회.
+
+    Args:
+        stock_code: 종목코드 (예: "035720")
+
+    Returns:
+        DART 고유번호 (예: "00258801") 또는 None
+    """
+    client = _get_dart_client()
+    try:
+        response = client.public_disclosure.corp_code()
+        if response.result.status != "000" or not response.result.list:
+            return None
+        for item in response.result.list:
+            if item.stock_code == stock_code:
+                return item.corp_code
+        return None
+    finally:
+        client.close()

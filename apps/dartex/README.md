@@ -31,6 +31,19 @@ dartex timeseries --corp-code 00258801 --section "주주현황" --format table
 dartex export --corp-code 00258801 --format excel --output ./kakao_notes.xlsx
 ```
 
+## 테스트
+
+```bash
+# Unit 테스트
+uv run pytest apps/dartex/tests -m "not integration" -v
+
+# Integration 테스트 (DART_AUTH_KEY 필요)
+uv run pytest apps/dartex/tests -m "integration" -v
+
+# 로그 출력과 함께 실행
+uv run pytest apps/dartex/tests -m "integration" -v --log-cli-level=INFO
+```
+
 ## 기술 스택
 
 - **파싱 엔진**: Docling (MIT, Apple Silicon MPS 지원)

@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from dartex.report import (
-    REPORT_TYPE_ANNUAL,
-    REPORT_TYPE_SEMI_ANNUAL,
     CompanyInfo,
     ReportInfo,
     _extract_fiscal_year,
@@ -57,9 +54,7 @@ def _create_mock_company_item(
     return item
 
 
-def _create_mock_report_item(
-    corp_code: str, corp_name: str, rcept_no: str, report_nm: str, rcept_dt: str
-) -> MagicMock:
+def _create_mock_report_item(corp_code: str, corp_name: str, rcept_no: str, report_nm: str, rcept_dt: str) -> MagicMock:
     """Mock report item 생성."""
     item = MagicMock()
     item.corp_code = corp_code
@@ -138,12 +133,8 @@ class TestSearchReports:
         mock_response.result.status = "000"
         mock_response.result.total_page = 1
         mock_response.result.list = [
-            _create_mock_report_item(
-                "00258801", "카카오", "20250324000901", "사업보고서 (2024.12)", "20250324"
-            ),
-            _create_mock_report_item(
-                "00258801", "카카오", "20240325000123", "사업보고서 (2023.12)", "20240325"
-            ),
+            _create_mock_report_item("00258801", "카카오", "20250324000901", "사업보고서 (2024.12)", "20250324"),
+            _create_mock_report_item("00258801", "카카오", "20240325000123", "사업보고서 (2023.12)", "20240325"),
         ]
 
         with patch("dartex.report._get_dart_client") as mock_client:
@@ -166,9 +157,7 @@ class TestSearchReports:
         page1_response.result.status = "000"
         page1_response.result.total_page = 2
         page1_response.result.list = [
-            _create_mock_report_item(
-                "00258801", "카카오", "20250324000901", "사업보고서 (2024.12)", "20250324"
-            ),
+            _create_mock_report_item("00258801", "카카오", "20250324000901", "사업보고서 (2024.12)", "20250324"),
         ]
 
         # Second page response
@@ -176,9 +165,7 @@ class TestSearchReports:
         page2_response.result.status = "000"
         page2_response.result.total_page = 2
         page2_response.result.list = [
-            _create_mock_report_item(
-                "00258801", "카카오", "20240325000123", "사업보고서 (2023.12)", "20240325"
-            ),
+            _create_mock_report_item("00258801", "카카오", "20240325000123", "사업보고서 (2023.12)", "20240325"),
         ]
 
         with patch("dartex.report._get_dart_client") as mock_client:
@@ -209,47 +196,6 @@ class TestSearchReports:
 
             assert len(result) == 0
 
-    def test_search_reports_multiple_types(self) -> None:
-        """여러 보고서 유형 검색 테스트."""
-        # Annual report response
-        annual_response = MagicMock()
-        annual_response.result.status = "000"
-        annual_response.result.total_page = 1
-        annual_response.result.list = [
-            _create_mock_report_item(
-                "00258801", "카카오", "20250324000901", "사업보고서 (2024.12)", "20250324"
-            ),
-        ]
-
-        # Semi-annual report response
-        semi_response = MagicMock()
-        semi_response.result.status = "000"
-        semi_response.result.total_page = 1
-        semi_response.result.list = [
-            _create_mock_report_item(
-                "00258801", "카카오", "20240815000456", "반기보고서 (2024.06)", "20240815"
-            ),
-        ]
-
-        with patch("dartex.report._get_dart_client") as mock_client:
-            mock_instance = MagicMock()
-            mock_client.return_value = mock_instance
-            mock_instance.public_disclosure.public_disclosure_search.side_effect = [
-                annual_response,
-                semi_response,
-            ]
-
-            result = search_reports(
-                "00258801",
-                years=5,
-                report_types=[REPORT_TYPE_ANNUAL, REPORT_TYPE_SEMI_ANNUAL],
-            )
-
-            assert len(result) == 2
-            # 최신순 정렬 확인
-            assert result[0].rcept_dt == "20250324"
-            assert result[1].rcept_dt == "20240815"
-
 
 class TestGetReportRceptNos:
     """get_report_rcept_nos 함수 테스트."""
@@ -260,12 +206,8 @@ class TestGetReportRceptNos:
         mock_response.result.status = "000"
         mock_response.result.total_page = 1
         mock_response.result.list = [
-            _create_mock_report_item(
-                "00258801", "카카오", "20250324000901", "사업보고서 (2024.12)", "20250324"
-            ),
-            _create_mock_report_item(
-                "00258801", "카카오", "20240325000123", "사업보고서 (2023.12)", "20240325"
-            ),
+            _create_mock_report_item("00258801", "카카오", "20250324000901", "사업보고서 (2024.12)", "20250324"),
+            _create_mock_report_item("00258801", "카카오", "20240325000123", "사업보고서 (2023.12)", "20240325"),
         ]
 
         with patch("dartex.report._get_dart_client") as mock_client:
