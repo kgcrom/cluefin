@@ -1,6 +1,6 @@
 [project]
 name = "cluefin-openapi"
-version = "0.3.3"
+version = "0.3.4"
 description = "OpenAPI Client for Cluefin"
 readme = "README.md"
 authors = [

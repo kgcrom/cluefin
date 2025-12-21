@@ -264,18 +264,29 @@ class PeriodicReportFinancialStatement:
         rcept_no: str,
         reprt_code: Literal["11011", "11012", "11013", "11014"],
         *,
-        destination: Path | str = Path("fnlttXbrl.xml"),
+        destination: Path | str = Path("."),
         overwrite: bool = False,
     ) -> Path:
         """
         재무제표 원본파일(XBRL) - 정기보고서에 첨부된 XBRL 재무제표 원본파일을 다운로드합니다.
 
+        DART API는 XBRL 패키지를 ZIP 형식으로 반환합니다. ZIP 파일에는 다음 파일들이 포함됩니다:
+        - .xbrl: XBRL instance document (실제 재무 데이터)
+        - .xsd: Taxonomy schema (확장 스키마)
+        - _def.xml: Definition linkbase
+        - _cal.xml: Calculation linkbase
+        - _pre.xml: Presentation linkbase
+        - _lab-ko.xml: Korean label linkbase
+        - _lab-en.xml: English label linkbase
+
         Args:
             rcept_no (str): 접수번호 (14자리)
             reprt_code (Literal): 보고서코드 (11011: 사업보고서, 11012: 반기보고서, 11013: 1분기보고서, 11014: 3분기보고서)
+            destination (Path | str): 압축 해제할 폴더 경로. Defaults to current directory.
+            overwrite (bool): 기존 파일 덮어쓰기 여부. Defaults to False.
 
         Returns:
-            Path: 다운로드한 XBRL 파일 경로
+            Path: XBRL 파일들이 압축 해제된 폴더 경로
         """
         params = {
             "rcept_no": rcept_no,
@@ -298,29 +309,23 @@ class PeriodicReportFinancialStatement:
                         response_data={"status": status, "message": message},
                     )
 
-        xml_bytes = payload
+        destination_path = Path(destination).expanduser()
+        destination_path.mkdir(parents=True, exist_ok=True)
+
         buffer = io.BytesIO(payload)
         if zipfile.is_zipfile(buffer):
             buffer.seek(0)
             try:
                 with zipfile.ZipFile(buffer) as archive:
-                    xml_name = next(
-                        (name for name in archive.namelist() if name.lower().endswith(".xml")),
-                        None,
-                    )
-                    if xml_name is None:
-                        raise DartAPIError("ZIP 파일에 XML 데이터가 포함되어있지 않습니다.")
-                    xml_bytes = archive.read(xml_name)
+                    if not overwrite:
+                        for name in archive.namelist():
+                            file_path = destination_path / name
+                            if file_path.exists():
+                                raise FileExistsError(f"이미 존재하는 파일을 덮어쓸 수 없습니다: {file_path}")
+                    archive.extractall(destination_path)
             except zipfile.BadZipFile as exc:  # pragma: no cover - defensive guard
                 raise DartAPIError("ZIP 파일이 손상되었습니다.") from exc
+        else:
+            raise DartAPIError("응답이 ZIP 파일 형식이 아닙니다.")
 
-        destination_path = Path(destination).expanduser()
-        if destination_path.is_dir():
-            destination_path = destination_path / "fnlttXbrl.xml"
-
-        if destination_path.exists() and not overwrite:
-            raise FileExistsError(f"이미 존재하는 파일을 덮어쓸 수 없습니다: {destination_path}")
-
-        destination_path.parent.mkdir(parents=True, exist_ok=True)
-        destination_path.write_bytes(xml_bytes)
         return destination_path

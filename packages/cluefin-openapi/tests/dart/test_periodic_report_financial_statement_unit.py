@@ -258,23 +258,25 @@ def test_get_single_company_major_indicators_reports_payload_type_in_error(
     )
 
 
-def test_download_financial_statement_xbrl_writes_plain_xml(tmp_path: Path, client: Client) -> None:
+def test_download_financial_statement_xbrl_raises_on_non_zip_response(tmp_path: Path, client: Client) -> None:
+    """plain XML 응답이 오면 ZIP 파일 형식이 아니라는 에러를 발생시켜야 함"""
     service = PeriodicReportFinancialStatement(client)
     xml_bytes = SUCCESS_XML
-    destination = tmp_path / "fnltt.xml"
+    destination = tmp_path / "xbrl_output"
     with requests_mock.Mocker() as mock_requests:
         mock_requests.get(
             f"{BASE_URL}/api/fnlttXbrl.xml",
             content=xml_bytes,
             status_code=200,
         )
-        result = service.download_financial_statement_xbrl(
-            rcept_no=DOWNLOAD_RECEPT_NO,
-            reprt_code=DOWNLOAD_REPRT_CODE,
-            destination=destination,
-        )
-    assert result == destination
-    assert destination.read_bytes() == xml_bytes
+        with pytest.raises(DartAPIError) as exc_info:
+            service.download_financial_statement_xbrl(
+                rcept_no=DOWNLOAD_RECEPT_NO,
+                reprt_code=DOWNLOAD_REPRT_CODE,
+                destination=destination,
+            )
+    message = str(exc_info.value)
+    assert "ZIP 파일 형식이 아닙니다" in message
     last_request = mock_requests.last_request
     assert last_request is not None
     assert last_request.qs["crtfc_key"] == [AUTH_KEY]
@@ -282,13 +284,18 @@ def test_download_financial_statement_xbrl_writes_plain_xml(tmp_path: Path, clie
 
 
 def test_download_financial_statement_xbrl_extracts_zip(tmp_path: Path, client: Client) -> None:
+    """ZIP 파일의 모든 내용을 지정된 폴더에 압축 해제해야 함"""
     service = PeriodicReportFinancialStatement(client)
-    xml_bytes = SUCCESS_XML
+    xbrl_content = b"<xbrl>instance data</xbrl>"
+    xsd_content = b"<xsd>schema</xsd>"
+    label_content = b"<label>labels</label>"
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as archive:
-        archive.writestr("document.xml", xml_bytes)
+        archive.writestr("entity_2024.xbrl", xbrl_content)
+        archive.writestr("entity_2024.xsd", xsd_content)
+        archive.writestr("entity_2024_lab-ko.xml", label_content)
     buffer.seek(0)
-    destination = tmp_path / "unzipped.xml"
+    destination = tmp_path / "xbrl_output"
     with requests_mock.Mocker() as mock_requests:
         mock_requests.get(
             f"{BASE_URL}/api/fnlttXbrl.xml",
@@ -301,7 +308,10 @@ def test_download_financial_statement_xbrl_extracts_zip(tmp_path: Path, client: 
             destination=destination,
         )
     assert result == destination
-    assert destination.read_bytes() == xml_bytes
+    assert result.is_dir()
+    assert (destination / "entity_2024.xbrl").read_bytes() == xbrl_content
+    assert (destination / "entity_2024.xsd").read_bytes() == xsd_content
+    assert (destination / "entity_2024_lab-ko.xml").read_bytes() == label_content
 
 
 def test_download_financial_statement_xbrl_raises_on_error_status(tmp_path: Path, client: Client) -> None:
@@ -324,39 +334,59 @@ def test_download_financial_statement_xbrl_raises_on_error_status(tmp_path: Path
     assert message.endswith("에러")
 
 
-def test_download_financial_statement_xbrl_rejects_existing_file(
-    tmp_path: Path, client: Client, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    destination = tmp_path / "existing.xml"
-    destination.write_text("existing")
-    monkeypatch.setattr(client, "_get_bytes", lambda *args, **kwargs: SUCCESS_XML)
+def test_download_financial_statement_xbrl_rejects_existing_file(tmp_path: Path, client: Client) -> None:
+    """ZIP 내 파일이 이미 존재하면 FileExistsError를 발생시켜야 함"""
     service = PeriodicReportFinancialStatement(client)
-    with pytest.raises(FileExistsError):
-        service.download_financial_statement_xbrl(
-            rcept_no=DOWNLOAD_RECEPT_NO,
-            reprt_code=DOWNLOAD_REPRT_CODE,
-            destination=destination,
-        )
+    destination = tmp_path / "xbrl_output"
+    destination.mkdir(parents=True)
+    existing_file = destination / "entity_2024.xbrl"
+    existing_file.write_text("existing content")
 
-
-def test_download_financial_statement_xbrl_raises_when_zip_has_no_xml(tmp_path: Path, client: Client) -> None:
-    service = PeriodicReportFinancialStatement(client)
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as archive:
-        archive.writestr("readme.txt", "no xml")
+        archive.writestr("entity_2024.xbrl", b"<xbrl>new data</xbrl>")
     buffer.seek(0)
+
     with requests_mock.Mocker() as mock_requests:
         mock_requests.get(
             f"{BASE_URL}/api/fnlttXbrl.xml",
             content=buffer.getvalue(),
             status_code=200,
         )
-        with pytest.raises(DartAPIError) as exc_info:
+        with pytest.raises(FileExistsError) as exc_info:
             service.download_financial_statement_xbrl(
                 rcept_no=DOWNLOAD_RECEPT_NO,
                 reprt_code=DOWNLOAD_REPRT_CODE,
-                destination=tmp_path / "missing.xml",
+                destination=destination,
             )
-    message = str(exc_info.value)
-    assert message.startswith("DART API Error:")
-    assert message.endswith("ZIP 파일에 XML 데이터가 포함되어있지 않습니다.")
+    assert "entity_2024.xbrl" in str(exc_info.value)
+
+
+def test_download_financial_statement_xbrl_overwrites_with_flag(tmp_path: Path, client: Client) -> None:
+    """overwrite=True일 때 기존 파일을 덮어쓸 수 있어야 함"""
+    service = PeriodicReportFinancialStatement(client)
+    destination = tmp_path / "xbrl_output"
+    destination.mkdir(parents=True)
+    existing_file = destination / "entity_2024.xbrl"
+    existing_file.write_text("old content")
+
+    new_content = b"<xbrl>new data</xbrl>"
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr("entity_2024.xbrl", new_content)
+    buffer.seek(0)
+
+    with requests_mock.Mocker() as mock_requests:
+        mock_requests.get(
+            f"{BASE_URL}/api/fnlttXbrl.xml",
+            content=buffer.getvalue(),
+            status_code=200,
+        )
+        result = service.download_financial_statement_xbrl(
+            rcept_no=DOWNLOAD_RECEPT_NO,
+            reprt_code=DOWNLOAD_REPRT_CODE,
+            destination=destination,
+            overwrite=True,
+        )
+    assert result == destination
+    assert existing_file.read_bytes() == new_content

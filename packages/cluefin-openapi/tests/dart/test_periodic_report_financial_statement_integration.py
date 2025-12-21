@@ -1,5 +1,8 @@
+import io
+import logging
 import os
 import time
+import zipfile
 
 import dotenv
 import pytest
@@ -21,6 +24,8 @@ from cluefin_openapi.dart._periodic_report_financial_statement_types import (
     XbrlTaxonomy,
     XbrlTaxonomyItem,
 )
+
+logger = logging.getLogger(__name__)
 
 CORP_CODE = "00126380"
 BSNS_YEAR = "2024"
@@ -187,6 +192,8 @@ def test_download_financial_statement_xbrl(
     service: PeriodicReportFinancialStatement,
     tmp_path,
 ) -> None:
+    logger.info(f"tmp_path: {tmp_path}")
+
     time.sleep(REQUEST_DELAY_SECONDS)
 
     major_accounts = service.get_single_company_major_accounts(**REQUEST_PARAMS)
@@ -194,10 +201,33 @@ def test_download_financial_statement_xbrl(
     assert account_items, "단일회사 주요계정 데이터가 비어 있습니다."
 
     rcept_no = account_items[0].rcept_no
+    logger.info(f"rcept_no: {rcept_no}")
 
     time.sleep(REQUEST_DELAY_SECONDS)
 
-    destination = tmp_path / "fnlttXbrl.xml"
+    # ZIP 파일 내용 확인을 위해 raw 바이트 저장
+    raw_path = tmp_path / "fnlttXbrl_raw.zip"
+    raw_bytes = service.client._get_bytes(
+        "/api/fnlttXbrl.xml",
+        params={"rcept_no": rcept_no, "reprt_code": REPRT_CODE},
+    )
+    raw_path.write_bytes(raw_bytes)
+    logger.info(f"Raw file saved: {raw_path}")
+    logger.info(f"Raw file size: {len(raw_bytes)} bytes")
+
+    # ZIP 파일인 경우 내용 로깅
+    buffer = io.BytesIO(raw_bytes)
+    if zipfile.is_zipfile(buffer):
+        buffer.seek(0)
+        with zipfile.ZipFile(buffer) as archive:
+            logger.info("=== ZIP 파일 내용 ===")
+            for info in archive.infolist():
+                logger.info(f"  - {info.filename} ({info.file_size} bytes)")
+    else:
+        logger.info("응답이 ZIP 파일이 아닙니다")
+
+    # 폴더에 XBRL 파일들 압축 해제
+    destination = tmp_path / "xbrl_output"
     saved_path = service.download_financial_statement_xbrl(
         rcept_no=rcept_no,
         reprt_code=REPRT_CODE,
@@ -206,5 +236,18 @@ def test_download_financial_statement_xbrl(
     )
 
     assert saved_path.exists()
-    assert saved_path.stat().st_size > 0
-    assert saved_path.read_bytes().strip().startswith(b"<")
+    assert saved_path.is_dir()
+
+    # 압축 해제된 파일들 확인
+    extracted_files = list(destination.iterdir())
+    logger.info(f"=== 압축 해제된 파일 ({len(extracted_files)}개) ===")
+    for f in extracted_files:
+        logger.info(f"  - {f.name} ({f.stat().st_size} bytes)")
+
+    # XBRL instance 파일이 존재하는지 확인
+    xbrl_files = [f for f in extracted_files if f.suffix == ".xbrl"]
+    assert xbrl_files, "XBRL instance 파일(.xbrl)이 존재해야 합니다"
+
+    # XBRL 파일 내용 확인
+    xbrl_content = xbrl_files[0].read_bytes()
+    assert xbrl_content.strip().startswith(b"<")
