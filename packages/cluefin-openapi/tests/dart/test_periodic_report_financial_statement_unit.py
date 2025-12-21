@@ -109,7 +109,7 @@ METHOD_CASES = [
     ),
     MethodCase(
         method_name="get_xbrl_taxonomy",
-        endpoint="/api/fnlttXbrlTaxonomy.json",
+        endpoint="/api/xbrlTaxonomy.json",
         response_type=XbrlTaxonomy,
         item_type=XbrlTaxonomyItem,
         params=dict(XBRL_PARAMS),

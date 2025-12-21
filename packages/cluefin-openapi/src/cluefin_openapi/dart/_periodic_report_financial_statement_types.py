@@ -169,8 +169,9 @@ class XbrlTaxonomyItem(BaseModel):
     bsns_de: str = Field(description="기준일 (ex: 20221231)")
     label_kor: str = Field(description="한글 출력명 (ex: 자본총계)")
     label_eng: str = Field(description="영문 출력명 (ex: Total Equity)")
-    data_tp: str = Field(
-        description="데이터 유형 (※ 데이타 유형설명 - text block : 제목 - Text : Text - yyyy-mm-dd : Date - X : Monetary Value - (X): Monetary Value(Negative) - X.XX : Decimalized Value - Shares : Number of shares (주식 수) - For each : 공시된 항목이 전후로 반복적으로 공시될 경우 사용 - 공란 : 입력 필요 없음)"
+    data_tp: Optional[str] = Field(
+        default=None,
+        description="데이터 유형 (※ 데이타 유형설명 - text block : 제목 - Text : Text - yyyy-mm-dd : Date - X : Monetary Value - (X): Monetary Value(Negative) - X.XX : Decimalized Value - Shares : Number of shares (주식 수) - For each : 공시된 항목이 전후로 반복적으로 공시될 경우 사용 - 공란 : 입력 필요 없음)",
     )
     ifrs_ref: str = Field(description="IFRS Reference (ex: K-IFRS 1001 문단 54 (9),K-IFRS 1007 문단 45)")
 

@@ -5,6 +5,7 @@ import dotenv
 import pytest
 
 from cluefin_openapi.dart._client import Client
+from cluefin_openapi.dart._model import DartStatusCode
 from cluefin_openapi.dart._public_disclosure import PublicDisclosure
 from cluefin_openapi.dart._public_disclosure_types import (
     CompanyOverview,
@@ -37,7 +38,7 @@ def test_public_disclosure_search(service: PublicDisclosure) -> None:
     )
 
     assert isinstance(response, PublicDisclosureSearch)
-    assert response.result.status is not None
+    assert response.result.status == DartStatusCode.SUCCESS
 
     items = response.result.list or []
     assert all(isinstance(item, PublicDisclosureSearchItem) for item in items)
@@ -60,7 +61,7 @@ def test_corp_code(service: PublicDisclosure) -> None:
     response = service.corp_code()
 
     assert isinstance(response, UniqueNumber)
-    assert response.result.status == "000"
+    assert response.result.status == DartStatusCode.SUCCESS
     assert response.result.message == "정상"
 
     samsung = next(

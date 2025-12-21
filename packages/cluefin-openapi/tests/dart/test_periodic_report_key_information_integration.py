@@ -5,6 +5,7 @@ import dotenv
 import pytest
 
 from cluefin_openapi.dart._client import Client
+from cluefin_openapi.dart._model import DartStatusCode
 from cluefin_openapi.dart._periodic_report_key_information import PeriodicReportKeyInformation
 from cluefin_openapi.dart._periodic_report_key_information_types import (
     AuditorNameAndOpinion,
@@ -250,7 +251,7 @@ def test_periodic_report_key_information_endpoints(
 
     assert isinstance(response, response_type)
     assert response.result is not None
-    assert response.result.status is not None
+    assert response.result.status == DartStatusCode.SUCCESS
 
     items = response.result.list or []
     assert all(isinstance(item, item_type) for item in items)
