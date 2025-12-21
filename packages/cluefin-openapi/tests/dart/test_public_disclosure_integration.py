@@ -97,3 +97,31 @@ def test_disclosure_document_file_integration(
 
     assert saved_path.exists()
     assert saved_path.stat().st_size > 0
+
+
+@pytest.mark.integration
+def test_public_disclosure_search_pblntf_ty_a_ignores_detail_type(service: PublicDisclosure) -> None:
+    """pblntf_ty=A(정기공시) 지정 시 pblntf_detail_ty가 무시되는지 검증.
+
+    DART API에서 pblntf_ty=A를 지정하면 pblntf_detail_ty 파라미터와 관계없이
+    모든 정기공시(사업보고서, 반기보고서, 분기보고서)를 반환합니다.
+    """
+    time.sleep(1)
+
+    # pblntf_ty=A와 pblntf_detail_ty=A001(사업보고서) 함께 지정
+    response_with_detail = service.public_disclosure_search(
+        pblntf_ty="A",
+        pblntf_detail_ty="A001",  # 사업보고서
+        page_count=100,
+    )
+
+    detail_report_names = [item.report_nm for item in (response_with_detail.result.list or [])]
+
+    # pblntf_detail_ty=A001(사업보고서)을 지정했지만 반기/분기 보고서도 포함되는지 확인
+    has_non_annual = any("반기" in name or "분기" in name for name in detail_report_names)
+
+    # pblntf_detail_ty가 무시되면 반기/분기 보고서도 포함됨
+    assert has_non_annual, (
+        "pblntf_ty=A와 pblntf_detail_ty=A001 지정 시에도 반기/분기 보고서가 포함되어야 합니다. "
+        f"이는 DART API가 pblntf_detail_ty를 무시하기 때문입니다. 조회된 보고서: {detail_report_names[:10]}"
+    )

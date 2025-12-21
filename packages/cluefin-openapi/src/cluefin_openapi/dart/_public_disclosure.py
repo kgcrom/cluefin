@@ -12,9 +12,8 @@ from xml.etree.ElementTree import Element
 from defusedxml.ElementTree import ParseError, fromstring
 
 from ._client import Client
-from ._exceptions import (
-    DartAPIError,
-)
+from ._exceptions import DartAPIError
+from ._model import DartStatusCode
 from ._public_disclosure_types import (
     CompanyOverview,
     PublicDisclosureSearch,
@@ -53,12 +52,19 @@ class PublicDisclosure:
             end_de (str, optional): 종료일 (선택). 검색종료 접수일자(YYYYMMDD).
             last_reprt_at (Literal["Y", "N"], optional): 최종보고서 검색 여부. 기본값 "N".
             pblntf_ty (Literal["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"], optional): 공시유형.
+                A(정기공시), B(주요사항보고), C(발행공시), D(지분공시), E(기타공시),
+                F(외부감사관련), G(펀드공시), H(자산유동화), I(거래소공시), J(공정위공시).
             pblntf_detail_ty (str, optional): 공시상세유형. ※ 상세요청 시 공시유형과 동시에 제공.
             corp_cls (Literal["Y", "K", "N", "E"], optional): 법인구분. Y(유가), K(코스닥), N(코넥스), E(기타).
             sort (Literal["date", "crp", "rpt"], optional): 정렬기준. date(접수일자), crp(회사명), rpt(보고서명).
             sort_mth (Literal["asc", "desc"], optional): 정렬방식. asc(오름차순), desc(내림차순).
             page_no (int, optional): 페이지 번호(1~N). 기본값 1.
             page_count (int, optional): 페이지 별 건수(1~100). 기본값 10.
+
+        Note:
+            pblntf_ty="A"(정기공시) 지정 시 pblntf_detail_ty 파라미터는 무시됩니다.
+            DART API가 pblntf_ty="A"를 지정하면 pblntf_detail_ty 값과 관계없이
+            모든 정기공시(사업보고서, 반기보고서, 분기보고서)를 반환합니다.
 
         Returns:
             PublicDisclosureSearch: 공시검색 결과
@@ -139,7 +145,7 @@ class PublicDisclosure:
             if root is not None:
                 status = (root.findtext("status") or "").strip()
                 message = (root.findtext("message") or "").strip()
-                if status and status != "000":
+                if status and status != DartStatusCode.SUCCESS:
                     raise DartAPIError(
                         message or "공시서류 원본파일 조회에 실패했습니다.",
                         response_data={"status": status, "message": message},
@@ -194,7 +200,7 @@ class PublicDisclosure:
         except ParseError as exc:  # pragma: no cover - defensive guard
             raise DartAPIError("고유번호 XML 파싱에 실패했습니다.") from exc
 
-        status = "000"
+        status = DartStatusCode.SUCCESS
         message = "정상"
 
         items: List[UniqueNumberItem] = []
