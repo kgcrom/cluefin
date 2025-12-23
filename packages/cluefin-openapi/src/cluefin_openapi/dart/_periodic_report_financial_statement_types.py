@@ -27,9 +27,15 @@ class SingleCompanyMajorAccountItem(BaseModel):
     frmtrm_dt: str = Field(description="전기일자 (ex: 2017.01.01 ~ 2017.12.31)")
     frmtrm_amount: str = Field(description="전기금액 (ex: 9,999,999,999)")
     frmtrm_add_amount: Optional[str] = Field(description="전기누적금액 (ex: 9,999,999,999)", default=None)
-    bfefrmtrm_nm: str = Field(description="전전기명 (ex: 제 11 기말(※ 사업보고서의 경우에만 출력))")
-    bfefrmtrm_dt: str = Field(description="전전기일자 (ex: 2016.12.31 현재(※ 사업보고서의 경우에만 출력))")
-    bfefrmtrm_amount: str = Field(description="전전기금액 (ex: 9,999,999,999(※ 사업보고서의 경우에만 출력))")
+    bfefrmtrm_nm: Optional[str] = Field(
+        default=None, description="전전기명 (ex: 제 11 기말(※ 사업보고서의 경우에만 출력))"
+    )
+    bfefrmtrm_dt: Optional[str] = Field(
+        default=None, description="전전기일자 (ex: 2016.12.31 현재(※ 사업보고서의 경우에만 출력))"
+    )
+    bfefrmtrm_amount: Optional[str] = Field(
+        default=None, description="전전기금액 (ex: 9,999,999,999(※ 사업보고서의 경우에만 출력))"
+    )
     ord: int = Field(description="계정과목 정렬순서")
     currency: str = Field(description="통화 단위")
 
@@ -62,9 +68,15 @@ class MultiCompanyMajorAccountItem(BaseModel):
     frmtrm_dt: str = Field(description="전기일자 (ex: 2017.01.01 ~ 2017.12.31)")
     frmtrm_amount: str = Field(description="전기금액 (ex: 9,999,999,999)")
     frmtrm_add_amount: Optional[str] = Field(description="전기누적금액 (ex: 9,999,999,999)", default=None)
-    bfefrmtrm_nm: str = Field(description="전전기명 (ex: 제 11 기말(※ 사업보고서의 경우에만 출력))")
-    bfefrmtrm_dt: str = Field(description="전전기일자 (ex: 2016.12.31 현재(※ 사업보고서의 경우에만 출력))")
-    bfefrmtrm_amount: str = Field(description="전전기금액 (ex: 9,999,999,999(※ 사업보고서의 경우에만 출력))")
+    bfefrmtrm_nm: Optional[str] = Field(
+        default=None, description="전전기명 (ex: 제 11 기말(※ 사업보고서의 경우에만 출력))"
+    )
+    bfefrmtrm_dt: Optional[str] = Field(
+        default=None, description="전전기일자 (ex: 2016.12.31 현재(※ 사업보고서의 경우에만 출력))"
+    )
+    bfefrmtrm_amount: Optional[str] = Field(
+        default=None, description="전전기금액 (ex: 9,999,999,999(※ 사업보고서의 경우에만 출력))"
+    )
     ord: str = Field(description="계정과목 정렬순서")
     currency: str = Field(description="통화 단위")
 
@@ -94,16 +106,20 @@ class SingleCompanyFullStatementItem(BaseModel):
         description="당기금액 (9,999,999,999 ※ 분/반기 보고서이면서 (포괄)손익계산서 일 경우 [3개월] 금액)"
     )
     thstrm_add_amount: Optional[str] = Field(description="당기누적금액 (9,999,999,999)", default=None)
-    frmtrm_nm: str = Field(description="전기명 (ex: 제 12 기말)")
-    frmtrm_amount: str = Field(description="전기금액 (9,999,999,999)")
+    frmtrm_nm: Optional[str] = Field(default=None, description="전기명 (ex: 제 12 기말)")
+    frmtrm_amount: Optional[str] = Field(default=None, description="전기금액 (9,999,999,999)")
     frmtrm_q_nm: Optional[str] = Field(description="전기명(분/반기) (ex: 제 18 기 반기)", default=None)
     frmtrm_q_amount: Optional[str] = Field(
         description="전기금액(분/반기) (9,999,999,999 ※ 분/반기 보고서이면서 (포괄)손익계산서 일 경우 [3개월] 금액)",
         default=None,
     )
     frmtrm_add_amount: Optional[str] = Field(description="전기누적금액 (9,999,999,999)", default=None)
-    bfefrmtrm_nm: str = Field(description="전전기명 (ex: 제 11 기말(※ 사업보고서의 경우에만 출력))")
-    bfefrmtrm_amount: str = Field(description="전전기금액 (9,999,999,999(※ 사업보고서의 경우에만 출력))")
+    bfefrmtrm_nm: Optional[str] = Field(
+        default=None, description="전전기명 (ex: 제 11 기말(※ 사업보고서의 경우에만 출력))"
+    )
+    bfefrmtrm_amount: Optional[str] = Field(
+        default=None, description="전전기금액 (9,999,999,999(※ 사업보고서의 경우에만 출력))"
+    )
     ord: str = Field(description="계정과목 정렬순서 (계정과목 정렬순서)")
     currency: str = Field(description="통화 단위 (통화 단위)")
 

@@ -390,3 +390,23 @@ def test_download_financial_statement_xbrl_overwrites_with_flag(tmp_path: Path, 
         )
     assert result == destination
     assert existing_file.read_bytes() == new_content
+
+
+@pytest.mark.parametrize(
+    "item_type,fields",
+    [
+        (SingleCompanyMajorAccountItem, ["bfefrmtrm_nm", "bfefrmtrm_dt", "bfefrmtrm_amount"]),
+        (MultiCompanyMajorAccountItem, ["bfefrmtrm_nm", "bfefrmtrm_dt", "bfefrmtrm_amount"]),
+        (SingleCompanyFullStatementItem, ["bfefrmtrm_nm", "bfefrmtrm_amount"]),
+    ],
+)
+def test_bfefrmtrm_fields_are_optional(item_type: Type[BaseModel], fields: list[str]) -> None:
+    """분기/반기 보고서에서 bfefrmtrm_* 필드가 없어도 파싱되어야 함"""
+    payload = build_payload(item_type)
+    # bfefrmtrm_* 필드 제거
+    for field in fields:
+        del payload["list"][0][field]
+    # 파싱 성공 확인
+    item = item_type(**payload["list"][0])
+    for field in fields:
+        assert getattr(item, field) is None

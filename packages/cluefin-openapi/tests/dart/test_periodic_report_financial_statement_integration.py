@@ -251,3 +251,108 @@ def test_download_financial_statement_xbrl(
     # XBRL 파일 내용 확인
     xbrl_content = xbrl_files[0].read_bytes()
     assert xbrl_content.strip().startswith(b"<")
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    ("reprt_code", "reprt_name"),
+    [
+        ("11012", "반기보고서"),
+        ("11013", "1분기보고서"),
+        ("11014", "3분기보고서"),
+    ],
+)
+def test_quarterly_report_single_company_major_accounts_bfefrmtrm_is_none(
+    service: PeriodicReportFinancialStatement,
+    reprt_code: str,
+    reprt_name: str,
+) -> None:
+    """분기/반기 보고서의 단일회사 주요계정에서 bfefrmtrm_* 필드가 None인지 검증"""
+    time.sleep(REQUEST_DELAY_SECONDS)
+
+    response = service.get_single_company_major_accounts(
+        corp_code=CORP_CODE,
+        bsns_year=BSNS_YEAR,
+        reprt_code=reprt_code,
+    )
+
+    assert response.result is not None
+    assert response.result.status == DartStatusCode.SUCCESS
+
+    items = response.result.list or []
+    assert len(items) > 0, f"{reprt_name} 데이터가 비어 있습니다"
+
+    for item in items:
+        assert item.bfefrmtrm_nm is None, f"{reprt_name}: bfefrmtrm_nm should be None"
+        assert item.bfefrmtrm_dt is None, f"{reprt_name}: bfefrmtrm_dt should be None"
+        assert item.bfefrmtrm_amount is None, f"{reprt_name}: bfefrmtrm_amount should be None"
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    ("reprt_code", "reprt_name"),
+    [
+        ("11012", "반기보고서"),
+        ("11013", "1분기보고서"),
+        ("11014", "3분기보고서"),
+    ],
+)
+def test_quarterly_report_multi_company_major_accounts_bfefrmtrm_is_none(
+    service: PeriodicReportFinancialStatement,
+    reprt_code: str,
+    reprt_name: str,
+) -> None:
+    """분기/반기 보고서의 다중회사 주요계정에서 bfefrmtrm_* 필드가 None인지 검증"""
+    time.sleep(REQUEST_DELAY_SECONDS)
+
+    response = service.get_multi_company_major_accounts(
+        corp_code=CORP_CODE,
+        bsns_year=BSNS_YEAR,
+        reprt_code=reprt_code,
+    )
+
+    assert response.result is not None
+    assert response.result.status == DartStatusCode.SUCCESS
+
+    items = response.result.list or []
+    assert len(items) > 0, f"{reprt_name} 데이터가 비어 있습니다"
+
+    for item in items:
+        assert item.bfefrmtrm_nm is None, f"{reprt_name}: bfefrmtrm_nm should be None"
+        assert item.bfefrmtrm_dt is None, f"{reprt_name}: bfefrmtrm_dt should be None"
+        assert item.bfefrmtrm_amount is None, f"{reprt_name}: bfefrmtrm_amount should be None"
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    ("reprt_code", "reprt_name"),
+    [
+        ("11012", "반기보고서"),
+        ("11013", "1분기보고서"),
+        ("11014", "3분기보고서"),
+    ],
+)
+def test_quarterly_report_single_company_full_statements_bfefrmtrm_is_none(
+    service: PeriodicReportFinancialStatement,
+    reprt_code: str,
+    reprt_name: str,
+) -> None:
+    """분기/반기 보고서의 전체 재무제표에서 bfefrmtrm_* 필드가 None인지 검증"""
+    time.sleep(REQUEST_DELAY_SECONDS)
+
+    response = service.get_single_company_full_statements(
+        corp_code=CORP_CODE,
+        bsns_year=BSNS_YEAR,
+        reprt_code=reprt_code,
+        fs_div=FS_DIV,
+    )
+
+    assert response.result is not None
+    assert response.result.status == DartStatusCode.SUCCESS
+
+    items = response.result.list or []
+    assert len(items) > 0, f"{reprt_name} 데이터가 비어 있습니다"
+
+    for item in items:
+        assert item.bfefrmtrm_nm is None, f"{reprt_name}: bfefrmtrm_nm should be None"
+        assert item.bfefrmtrm_amount is None, f"{reprt_name}: bfefrmtrm_amount should be None"
