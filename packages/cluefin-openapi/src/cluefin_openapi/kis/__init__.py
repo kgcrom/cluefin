@@ -1,6 +1,5 @@
 """Korea Investment & Securities (KIS) API Client"""
 
-from cluefin_openapi.kis._client import Client
 from cluefin_openapi.kis._exceptions import (
     KISAPIError,
     KISAuthenticationError,
@@ -11,11 +10,17 @@ from cluefin_openapi.kis._exceptions import (
     KISTimeoutError,
     KISValidationError,
 )
+from cluefin_openapi.kis._http_client import HttpClient
+from cluefin_openapi.kis._socket_client import SocketClient, SubscriptionType, WebSocketEvent, WebSocketMessage
 from cluefin_openapi.kis._token_manager import TokenManager
 
 __all__ = [
-    "Client",
+    "HttpClient",
+    "SocketClient",
+    "SubscriptionType",
     "TokenManager",
+    "WebSocketEvent",
+    "WebSocketMessage",
     "KISAPIError",
     "KISAuthenticationError",
     "KISAuthorizationError",

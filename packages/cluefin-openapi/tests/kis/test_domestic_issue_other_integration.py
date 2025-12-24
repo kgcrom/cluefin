@@ -13,9 +13,7 @@ import pytest
 from pydantic import SecretStr
 
 from cluefin_openapi.kis._auth import Auth
-from cluefin_openapi.kis._client import Client
-
-from ._token_cache import TokenCache
+from cluefin_openapi.kis._http_client import HttpClient
 
 
 @pytest.fixture(scope="module")
@@ -33,18 +31,10 @@ def auth_dev():
 
 
 @pytest.fixture(scope="module")
-def token_cache(auth_dev):
-    """Fixture to provide persistent token cache."""
-    cache = TokenCache(auth_dev)
-    yield cache
-    # Note: We don't clear the cache on teardown to allow reuse across test runs
-
-
-@pytest.fixture(scope="module")
-def client(auth_dev, token_cache):
+def client(auth_dev):
     """Fixture to create KIS Client with valid token."""
-    token_response = token_cache.get()
-    return Client(
+    token_response = auth_dev.generate()
+    return HttpClient(
         app_key=auth_dev.app_key,
         secret_key=auth_dev.secret_key,
         token=token_response.access_token,
@@ -57,7 +47,7 @@ def client(auth_dev, token_cache):
 
 
 @pytest.mark.integration
-def test_get_sector_current_index(client: Client):
+def test_get_sector_current_index(client: HttpClient):
     """Test sector current index inquiry (KOSPI)."""
     time.sleep(1)
     try:
@@ -77,7 +67,7 @@ def test_get_sector_current_index(client: Client):
 
 
 @pytest.mark.integration
-def test_get_sector_daily_index(client: Client):
+def test_get_sector_daily_index(client: HttpClient):
     """Test sector daily index inquiry (KOSPI daily)."""
     time.sleep(1)
     try:
@@ -98,7 +88,7 @@ def test_get_sector_daily_index(client: Client):
 
 
 @pytest.mark.integration
-def test_get_sector_time_index_second(client: Client):
+def test_get_sector_time_index_second(client: HttpClient):
     """Test sector time index by second (KOSPI)."""
     time.sleep(1)
     try:
@@ -117,7 +107,7 @@ def test_get_sector_time_index_second(client: Client):
 
 
 @pytest.mark.integration
-def test_get_sector_time_index_minute(client: Client):
+def test_get_sector_time_index_minute(client: HttpClient):
     """Test sector time index by minute (KOSPI 1-minute)."""
     time.sleep(1)
     try:
@@ -137,7 +127,7 @@ def test_get_sector_time_index_minute(client: Client):
 
 
 @pytest.mark.integration
-def test_get_sector_minute_inquiry(client: Client):
+def test_get_sector_minute_inquiry(client: HttpClient):
     """Test sector minute candle inquiry (KOSPI 1-minute)."""
     time.sleep(1)
     try:
@@ -159,7 +149,7 @@ def test_get_sector_minute_inquiry(client: Client):
 
 
 @pytest.mark.integration
-def test_get_sector_period_quote(client: Client):
+def test_get_sector_period_quote(client: HttpClient):
     """Test sector period quote (daily/weekly/monthly/yearly)."""
     time.sleep(1)
     try:
@@ -181,7 +171,7 @@ def test_get_sector_period_quote(client: Client):
 
 
 @pytest.mark.integration
-def test_get_sector_all_quote_by_category(client: Client):
+def test_get_sector_all_quote_by_category(client: HttpClient):
     """Test sector all quote by category (KOSPI)."""
     time.sleep(1)
     try:
@@ -206,7 +196,7 @@ def test_get_sector_all_quote_by_category(client: Client):
 
 
 @pytest.mark.integration
-def test_get_expected_index_trend(client: Client):
+def test_get_expected_index_trend(client: HttpClient):
     """Test expected index trend (pre-market KOSPI)."""
     time.sleep(1)
     try:
@@ -227,7 +217,7 @@ def test_get_expected_index_trend(client: Client):
 
 
 @pytest.mark.integration
-def test_get_expected_index_all(client: Client):
+def test_get_expected_index_all(client: HttpClient):
     """Test expected index all (pre-market all indices)."""
     time.sleep(1)
     try:
@@ -252,7 +242,7 @@ def test_get_expected_index_all(client: Client):
 
 
 @pytest.mark.integration
-def test_get_volatility_interruption_status(client: Client):
+def test_get_volatility_interruption_status(client: HttpClient):
     """Test volatility interruption (VI) status."""
     time.sleep(1)
     try:
@@ -277,7 +267,7 @@ def test_get_volatility_interruption_status(client: Client):
 
 
 @pytest.mark.integration
-def test_get_interest_rate_summary(client: Client):
+def test_get_interest_rate_summary(client: HttpClient):
     """Test interest rate summary (domestic bonds/interest rates)."""
     time.sleep(1)
     try:
@@ -298,7 +288,7 @@ def test_get_interest_rate_summary(client: Client):
 
 
 @pytest.mark.integration
-def test_get_market_announcement_schedule(client: Client):
+def test_get_market_announcement_schedule(client: HttpClient):
     """Test market announcement schedule (news titles)."""
     time.sleep(1)
     try:
@@ -323,7 +313,7 @@ def test_get_market_announcement_schedule(client: Client):
 
 
 @pytest.mark.integration
-def test_get_holiday_inquiry(client: Client):
+def test_get_holiday_inquiry(client: HttpClient):
     """Test holiday inquiry (domestic market holidays)."""
     time.sleep(1)
     try:
@@ -343,7 +333,7 @@ def test_get_holiday_inquiry(client: Client):
 
 
 @pytest.mark.integration
-def test_get_futures_business_day_inquiry(client: Client):
+def test_get_futures_business_day_inquiry(client: HttpClient):
     """Test futures business day inquiry."""
     time.sleep(1)
     try:

@@ -1,6 +1,5 @@
 from typing import Literal, Optional
 
-from cluefin_openapi.kis._client import Client
 from cluefin_openapi.kis._domestic_account_types import (
     BuyTradableInquiry,
     CreditTradableInquiry,
@@ -26,13 +25,14 @@ from cluefin_openapi.kis._domestic_account_types import (
     StockReserveQuoteCorrection,
     StockReserveQuoteInquiry,
 )
+from cluefin_openapi.kis._http_client import HttpClient
 from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 
 
 class DomesticAccount:
     """국내주식 주문/계좌"""
 
-    def __init__(self, client: Client):
+    def __init__(self, client: HttpClient):
         self.client = client
 
     def request_stock_quote_current(

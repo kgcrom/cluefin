@@ -18,9 +18,7 @@ import pytest
 from pydantic import SecretStr
 
 from cluefin_openapi.kis._auth import Auth
-from cluefin_openapi.kis._client import Client
-
-from ._token_cache import TokenCache
+from cluefin_openapi.kis._http_client import HttpClient
 
 
 @pytest.fixture(scope="module")
@@ -38,18 +36,11 @@ def auth_dev():
 
 
 @pytest.fixture(scope="module")
-def token_cache(auth_dev):
-    """Fixture to provide persistent token cache."""
-    cache = TokenCache(auth_dev)
-    yield cache
-
-
-@pytest.fixture(scope="module")
-def kis_client(auth_dev, token_cache):
+def kis_client(auth_dev):
     """Create KIS client with real credentials."""
-    token_response = token_cache.get()
+    token_response = auth_dev.generate()
 
-    return Client(
+    return HttpClient(
         app_key=auth_dev.app_key,
         secret_key=auth_dev.secret_key,
         token=token_response.access_token,

@@ -1,4 +1,4 @@
-from cluefin_openapi.kis._client import Client
+from cluefin_openapi.kis._http_client import HttpClient
 from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 from cluefin_openapi.kis._overseas_market_analysis_types import (
     BreakingNewsTitle,
@@ -22,7 +22,7 @@ from cluefin_openapi.kis._overseas_market_analysis_types import (
 class OverseasMarketAnalysis:
     """해외주식 시세분석"""
 
-    def __init__(self, client: Client):
+    def __init__(self, client: HttpClient):
         self.client = client
 
     def get_stock_price_fluctuation(

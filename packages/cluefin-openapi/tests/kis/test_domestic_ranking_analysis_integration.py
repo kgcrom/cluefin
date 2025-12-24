@@ -13,9 +13,7 @@ import pytest
 from pydantic import SecretStr
 
 from cluefin_openapi.kis._auth import Auth
-from cluefin_openapi.kis._client import Client
-
-from ._token_cache import TokenCache
+from cluefin_openapi.kis._http_client import HttpClient
 
 
 @pytest.fixture(scope="module")
@@ -33,17 +31,10 @@ def auth_dev():
 
 
 @pytest.fixture(scope="module")
-def token_cache(auth_dev):
-    """Fixture to provide persistent token cache."""
-    cache = TokenCache(auth_dev)
-    yield cache
-
-
-@pytest.fixture(scope="module")
-def client(auth_dev, token_cache):
+def client(auth_dev):
     """Fixture to create KIS Client with valid token."""
-    token_response = token_cache.get()
-    return Client(
+    token_response = auth_dev.generate()
+    return HttpClient(
         app_key=auth_dev.app_key,
         secret_key=auth_dev.secret_key,
         token=token_response.access_token,
@@ -56,7 +47,7 @@ def client(auth_dev, token_cache):
 
 
 @pytest.mark.integration
-def test_get_trading_volume_rank(client: Client):
+def test_get_trading_volume_rank(client: HttpClient):
     """Test trading volume ranking."""
     time.sleep(1)
     try:
@@ -84,7 +75,7 @@ def test_get_trading_volume_rank(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_fluctuation_rank(client: Client):
+def test_get_stock_fluctuation_rank(client: HttpClient):
     """Test stock fluctuation (rise/fall) ranking."""
     time.sleep(1)
     try:
@@ -115,7 +106,7 @@ def test_get_stock_fluctuation_rank(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_hoga_quantity_rank(client: Client):
+def test_get_stock_hoga_quantity_rank(client: HttpClient):
     """Test stock bid/ask quantity ranking."""
     time.sleep(1)
     try:
@@ -145,7 +136,7 @@ def test_get_stock_hoga_quantity_rank(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_profitability_indicator_rank(client: Client):
+def test_get_stock_profitability_indicator_rank(client: HttpClient):
     """Test stock profitability indicator ranking."""
     time.sleep(1)
     try:
@@ -175,7 +166,7 @@ def test_get_stock_profitability_indicator_rank(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_market_cap_top(client: Client):
+def test_get_stock_market_cap_top(client: HttpClient):
     """Test stock market capitalization top ranking."""
     time.sleep(1)
     try:
@@ -201,7 +192,7 @@ def test_get_stock_market_cap_top(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_finance_ratio_rank(client: Client):
+def test_get_stock_finance_ratio_rank(client: HttpClient):
     """Test stock financial ratio ranking."""
     time.sleep(1)
     try:
@@ -231,7 +222,7 @@ def test_get_stock_finance_ratio_rank(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_market_price_rank(client: Client):
+def test_get_stock_market_price_rank(client: HttpClient):
     """Test stock market price (value) ranking."""
     time.sleep(1)
     try:
@@ -264,7 +255,7 @@ def test_get_stock_market_price_rank(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_time_hoga_rank(client: Client):
+def test_get_stock_time_hoga_rank(client: HttpClient):
     """Test stock after-hours bid/ask quantity ranking."""
     time.sleep(1)
     try:
@@ -291,7 +282,7 @@ def test_get_stock_time_hoga_rank(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_after_hours_fluctuation_rank(client: Client):
+def test_get_stock_after_hours_fluctuation_rank(client: HttpClient):
     """Test stock after-hours fluctuation ranking."""
     time.sleep(1)
     try:
@@ -318,7 +309,7 @@ def test_get_stock_after_hours_fluctuation_rank(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_after_hours_volume_rank(client: Client):
+def test_get_stock_after_hours_volume_rank(client: HttpClient):
     """Test stock after-hours volume ranking."""
     time.sleep(1)
     try:
@@ -347,7 +338,7 @@ def test_get_stock_after_hours_volume_rank(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_preferred_stock_ratio_top(client: Client):
+def test_get_stock_preferred_stock_ratio_top(client: HttpClient):
     """Test preferred stock ratio (disparity) top ranking."""
     time.sleep(1)
     try:
@@ -373,7 +364,7 @@ def test_get_stock_preferred_stock_ratio_top(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_disparity_index_rank(client: Client):
+def test_get_stock_disparity_index_rank(client: HttpClient):
     """Test stock disparity index ranking."""
     time.sleep(1)
     try:
@@ -401,7 +392,7 @@ def test_get_stock_disparity_index_rank(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_execution_strength_top(client: Client):
+def test_get_stock_execution_strength_top(client: HttpClient):
     """Test stock execution strength top ranking."""
     time.sleep(1)
     try:
@@ -427,7 +418,7 @@ def test_get_stock_execution_strength_top(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_watchlist_registration_top(client: Client):
+def test_get_stock_watchlist_registration_top(client: HttpClient):
     """Test stock watchlist registration top ranking."""
     time.sleep(1)
     try:
@@ -455,7 +446,7 @@ def test_get_stock_watchlist_registration_top(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_expected_execution_rise_decline_top(client: Client):
+def test_get_stock_expected_execution_rise_decline_top(client: HttpClient):
     """Test stock expected execution rise/decline top ranking."""
     time.sleep(1)
     try:
@@ -482,7 +473,7 @@ def test_get_stock_expected_execution_rise_decline_top(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_proprietary_trading_top(client: Client):
+def test_get_stock_proprietary_trading_top(client: HttpClient):
     """Test stock proprietary trading top ranking."""
     time.sleep(1)
     try:
@@ -511,7 +502,7 @@ def test_get_stock_proprietary_trading_top(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_new_high_low_approaching_top(client: Client):
+def test_get_stock_new_high_low_approaching_top(client: HttpClient):
     """Test stock new high/low approaching top ranking."""
     time.sleep(1)
     try:
@@ -540,7 +531,7 @@ def test_get_stock_new_high_low_approaching_top(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_dividend_yield_top(client: Client):
+def test_get_stock_dividend_yield_top(client: HttpClient):
     """Test stock dividend yield top ranking."""
     time.sleep(1)
     try:
@@ -565,7 +556,7 @@ def test_get_stock_dividend_yield_top(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_large_execution_count_top(client: Client):
+def test_get_stock_large_execution_count_top(client: HttpClient):
     """Test stock large execution count top ranking."""
     time.sleep(1)
     try:
@@ -594,7 +585,7 @@ def test_get_stock_large_execution_count_top(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_credit_balance_top(client: Client):
+def test_get_stock_credit_balance_top(client: HttpClient):
     """Test stock credit balance top ranking."""
     time.sleep(1)
     try:
@@ -616,7 +607,7 @@ def test_get_stock_credit_balance_top(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_short_selling_top(client: Client):
+def test_get_stock_short_selling_top(client: HttpClient):
     """Test stock short selling top ranking."""
     time.sleep(1)
     try:
@@ -643,7 +634,7 @@ def test_get_stock_short_selling_top(client: Client):
 
 
 @pytest.mark.integration
-def test_get_hts_inquiry_top_20(client: Client):
+def test_get_hts_inquiry_top_20(client: HttpClient):
     """Test HTS inquiry top 20 stocks."""
     time.sleep(1)
     try:

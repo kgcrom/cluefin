@@ -13,9 +13,7 @@ import pytest
 from pydantic import SecretStr
 
 from cluefin_openapi.kis._auth import Auth
-from cluefin_openapi.kis._client import Client
-
-from ._token_cache import TokenCache
+from cluefin_openapi.kis._http_client import HttpClient
 
 
 @pytest.fixture(scope="module")
@@ -33,18 +31,10 @@ def auth_dev():
 
 
 @pytest.fixture(scope="module")
-def token_cache(auth_dev):
-    """Fixture to provide persistent token cache."""
-    cache = TokenCache(auth_dev)
-    yield cache
-    # Note: We don't clear the cache on teardown to allow reuse across test runs
-
-
-@pytest.fixture(scope="module")
-def client(auth_dev, token_cache):
-    """Fixture to create KIS Client with valid token."""
-    token_response = token_cache.get()
-    return Client(
+def client(auth_dev):
+    """Fixture to create KIS HttpClient with valid token."""
+    token_response = auth_dev.generate()
+    return HttpClient(
         app_key=auth_dev.app_key,
         secret_key=auth_dev.secret_key,
         token=token_response.access_token,
@@ -57,7 +47,7 @@ def client(auth_dev, token_cache):
 
 
 @pytest.mark.integration
-def test_get_stock_current_price(client: Client):
+def test_get_stock_current_price(client: HttpClient):
     """Test basic stock current price inquiry (Samsung Electronics)."""
     time.sleep(1)
     try:
@@ -76,7 +66,7 @@ def test_get_stock_current_price(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_current_price_2(client: Client):
+def test_get_stock_current_price_2(client: HttpClient):
     """Test alternative stock current price endpoint (Kakao)."""
     time.sleep(1)
     try:
@@ -94,7 +84,7 @@ def test_get_stock_current_price_2(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_current_price_conclusion(client: Client):
+def test_get_stock_current_price_conclusion(client: HttpClient):
     """Test stock current price conclusion with execution info."""
     time.sleep(1)
     try:
@@ -112,7 +102,7 @@ def test_get_stock_current_price_conclusion(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_current_price_daily(client: Client):
+def test_get_stock_current_price_daily(client: HttpClient):
     """Test stock current price daily/weekly/monthly quotes."""
     time.sleep(1)
     try:
@@ -134,7 +124,7 @@ def test_get_stock_current_price_daily(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_current_price_asking_expected_conclusion(client: Client):
+def test_get_stock_current_price_asking_expected_conclusion(client: HttpClient):
     """Test stock current price bid/ask and expected execution."""
     time.sleep(1)
     try:
@@ -152,7 +142,7 @@ def test_get_stock_current_price_asking_expected_conclusion(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_current_price_investor(client: Client):
+def test_get_stock_current_price_investor(client: HttpClient):
     """Test stock current price investor trading information."""
     time.sleep(1)
     try:
@@ -170,7 +160,7 @@ def test_get_stock_current_price_investor(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_current_price_member(client: Client):
+def test_get_stock_current_price_member(client: HttpClient):
     """Test stock current price member firm trading information."""
     time.sleep(1)
     try:
@@ -191,7 +181,7 @@ def test_get_stock_current_price_member(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_period_quote(client: Client):
+def test_get_stock_period_quote(client: HttpClient):
     """Test stock period quote (daily/weekly/monthly/yearly)."""
     time.sleep(1)
     try:
@@ -215,7 +205,7 @@ def test_get_stock_period_quote(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_today_minute_chart(client: Client):
+def test_get_stock_today_minute_chart(client: HttpClient):
     """Test stock today's minute chart."""
     time.sleep(1)
     try:
@@ -237,7 +227,7 @@ def test_get_stock_today_minute_chart(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_daily_minute_chart(client: Client):
+def test_get_stock_daily_minute_chart(client: HttpClient):
     """Test stock daily minute chart."""
     time.sleep(1)
     try:
@@ -260,7 +250,7 @@ def test_get_stock_daily_minute_chart(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_current_price_time_item_conclusion(client: Client):
+def test_get_stock_current_price_time_item_conclusion(client: HttpClient):
     """Test stock current price intraday time-based execution."""
     time.sleep(1)
     try:
@@ -281,7 +271,7 @@ def test_get_stock_current_price_time_item_conclusion(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_current_price_daily_overtime_price(client: Client):
+def test_get_stock_current_price_daily_overtime_price(client: HttpClient):
     """Test stock current price daily overtime prices."""
     time.sleep(1)
     try:
@@ -299,7 +289,7 @@ def test_get_stock_current_price_daily_overtime_price(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_current_price_overtime_conclusion(client: Client):
+def test_get_stock_current_price_overtime_conclusion(client: HttpClient):
     """Test stock current price overtime execution by time."""
     time.sleep(1)
     try:
@@ -318,7 +308,7 @@ def test_get_stock_current_price_overtime_conclusion(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_overtime_current_price(client: Client):
+def test_get_stock_overtime_current_price(client: HttpClient):
     """Test stock overtime current price."""
     time.sleep(1)
     try:
@@ -336,7 +326,7 @@ def test_get_stock_overtime_current_price(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_overtime_asking_price(client: Client):
+def test_get_stock_overtime_asking_price(client: HttpClient):
     """Test stock overtime bid/ask prices."""
     time.sleep(1)
     try:
@@ -357,7 +347,7 @@ def test_get_stock_overtime_asking_price(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_closing_expected_price(client: Client):
+def test_get_stock_closing_expected_price(client: HttpClient):
     """Test market closing expected prices."""
     time.sleep(1)
     try:
@@ -382,7 +372,7 @@ def test_get_stock_closing_expected_price(client: Client):
 
 
 @pytest.mark.integration
-def test_get_etfetn_current_price(client: Client):
+def test_get_etfetn_current_price(client: HttpClient):
     """Test ETF/ETN current price (KODEX 200)."""
     time.sleep(1)
     try:
@@ -400,7 +390,7 @@ def test_get_etfetn_current_price(client: Client):
 
 
 @pytest.mark.integration
-def test_get_etf_component_stock_price(client: Client):
+def test_get_etf_component_stock_price(client: HttpClient):
     """Test ETF component stock prices (KODEX 200)."""
     time.sleep(1)
     try:
@@ -418,7 +408,7 @@ def test_get_etf_component_stock_price(client: Client):
 
 
 @pytest.mark.integration
-def test_get_etf_nav_comparison_trend(client: Client):
+def test_get_etf_nav_comparison_trend(client: HttpClient):
     """Test ETF NAV comparison trend at stock level."""
     time.sleep(1)
     try:
@@ -436,7 +426,7 @@ def test_get_etf_nav_comparison_trend(client: Client):
 
 
 @pytest.mark.integration
-def test_get_etf_nav_comparison_daily_trend(client: Client):
+def test_get_etf_nav_comparison_daily_trend(client: HttpClient):
     """Test ETF NAV comparison daily trend."""
     time.sleep(1)
     try:
@@ -457,7 +447,7 @@ def test_get_etf_nav_comparison_daily_trend(client: Client):
 
 
 @pytest.mark.integration
-def test_get_etf_nav_comparison_time_trend(client: Client):
+def test_get_etf_nav_comparison_time_trend(client: HttpClient):
     """Test ETF NAV comparison time (minute) trend."""
     time.sleep(1)
     try:

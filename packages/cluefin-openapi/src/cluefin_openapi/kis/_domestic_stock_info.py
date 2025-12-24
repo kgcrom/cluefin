@@ -1,4 +1,3 @@
-from cluefin_openapi.kis._client import Client
 from cluefin_openapi.kis._domestic_stock_info_types import (
     BalanceSheet,
     EstimatedEarnings,
@@ -27,13 +26,14 @@ from cluefin_openapi.kis._domestic_stock_info_types import (
     StockBasicInfo,
     StockLoanableList,
 )
+from cluefin_openapi.kis._http_client import HttpClient
 from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 
 
 class DomesticStockInfo:
     """국내주식 종목정보"""
 
-    def __init__(self, client: Client):
+    def __init__(self, client: HttpClient):
         self.client = client
 
     def get_product_basic_info(

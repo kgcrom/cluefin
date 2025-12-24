@@ -20,7 +20,7 @@ from ._exceptions import (
 )
 
 
-class Client(object):
+class HttpClient(object):
     def __init__(
         self,
         token: str,

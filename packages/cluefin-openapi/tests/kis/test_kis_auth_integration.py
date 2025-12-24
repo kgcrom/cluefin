@@ -14,8 +14,6 @@ from pydantic import SecretStr
 from cluefin_openapi.kis._auth import Auth
 from cluefin_openapi.kis._auth_types import ApprovalResponse, TokenResponse
 
-from ._token_cache import TokenCache
-
 
 @pytest.fixture(scope="module")
 def auth_dev():
@@ -30,18 +28,11 @@ def auth_dev():
     return Auth(app_key=app_key, secret_key=SecretStr(secret_key), env="dev")
 
 
-@pytest.fixture(scope="module")
-def token_cache(auth_dev):
-    """Fixture to provide persistent token cache."""
-    cache = TokenCache(auth_dev)
-    yield cache
-
-
 @pytest.mark.integration
-def test_generate_token_dev_environment(auth_dev, token_cache):
+def test_generate_token_dev_environment(auth_dev):
     """Test token generation in dev environment."""
     try:
-        token_response = token_cache.get()
+        token_response = auth_dev.generate()
 
         # Verify response structure
         assert isinstance(token_response, TokenResponse)
@@ -61,10 +52,10 @@ def test_generate_token_dev_environment(auth_dev, token_cache):
 
 
 @pytest.mark.integration
-def test_token_expiration_information(auth_dev, token_cache):
+def test_token_expiration_information(auth_dev):
     """Test that token expiration information is properly returned."""
     try:
-        token_response = token_cache.get()
+        token_response = auth_dev.generate()
 
         # Verify expiration fields are present and valid
         assert token_response.expires_in > 0
@@ -96,11 +87,11 @@ def test_approval_request_dev_environment(auth_dev):
 
 
 @pytest.mark.integration
-def test_full_auth_workflow_dev_environment(auth_dev, token_cache):
+def test_full_auth_workflow_dev_environment(auth_dev):
     """Test complete authentication workflow in dev environment."""
     try:
         # Step 1: Generate or reuse a token while respecting the rate limit.
-        token_response = token_cache.get()
+        token_response = auth_dev.generate()
         assert isinstance(token_response, TokenResponse)
         assert token_response.access_token is not None
 
@@ -112,7 +103,7 @@ def test_full_auth_workflow_dev_environment(auth_dev, token_cache):
         # Step 3: Revoke token
         revoke_result = auth_dev.revoke()
         assert revoke_result is True
-        token_cache.clear()
+        auth_dev.token_manager.clear_cache()
 
     except Exception as e:
         pytest.fail(f"Full auth workflow failed: {e}")

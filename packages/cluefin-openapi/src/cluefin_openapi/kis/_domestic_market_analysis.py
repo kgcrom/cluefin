@@ -1,4 +1,3 @@
-from cluefin_openapi.kis._client import Client
 from cluefin_openapi.kis._domestic_market_analysis_types import (
     AfterHoursExpectedFluctuation,
     BuySellVolumeByStockDaily,
@@ -30,13 +29,14 @@ from cluefin_openapi.kis._domestic_market_analysis_types import (
     WatchlistMultiQuote,
     WatchlistStocksByGroup,
 )
+from cluefin_openapi.kis._http_client import HttpClient
 from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 
 
 class DomesticMarketAnalysis:
     """국내주식 시세분석"""
 
-    def __init__(self, client: Client):
+    def __init__(self, client: HttpClient):
         self.client = client
 
     def get_condition_search_list(self, user_id: str) -> KisHttpResponse[ConditionSearchList]:
