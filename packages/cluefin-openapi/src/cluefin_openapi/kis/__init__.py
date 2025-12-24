@@ -1,5 +1,10 @@
 """Korea Investment & Securities (KIS) API Client"""
 
+from cluefin_openapi.kis._domestic_realtime_quote import DomesticRealtimeQuote
+from cluefin_openapi.kis._domestic_realtime_quote_types import (
+    EXECUTION_FIELD_NAMES,
+    DomesticRealtimeExecutionItem,
+)
 from cluefin_openapi.kis._exceptions import (
     KISAPIError,
     KISAuthenticationError,
@@ -15,6 +20,9 @@ from cluefin_openapi.kis._socket_client import SocketClient, SubscriptionType, W
 from cluefin_openapi.kis._token_manager import TokenManager
 
 __all__ = [
+    "DomesticRealtimeExecutionItem",
+    "DomesticRealtimeQuote",
+    "EXECUTION_FIELD_NAMES",
     "HttpClient",
     "SocketClient",
     "SubscriptionType",
