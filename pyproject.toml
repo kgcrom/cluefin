@@ -45,6 +45,7 @@ ignore = ["F401", "E501"]
 [tool.pytest.ini_options]
 markers = [
     "integration: integration tests",
+    "realtime: real-time data tests (requires market hours 9:00-15:30 KST)",
     "slow: mark test as slow running",
 ]
 addopts = "-ra"

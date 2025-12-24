@@ -7,7 +7,9 @@ import pytest
 from cluefin_openapi.kis._domestic_realtime_quote import DomesticRealtimeQuote
 from cluefin_openapi.kis._domestic_realtime_quote_types import (
     EXECUTION_FIELD_NAMES,
+    ORDERBOOK_FIELD_NAMES,
     DomesticRealtimeExecutionItem,
+    DomesticRealtimeOrderbookItem,
 )
 from cluefin_openapi.kis._socket_client import SocketClient
 
@@ -224,3 +226,203 @@ class TestExecutionFieldNames:
         model_fields = set(DomesticRealtimeExecutionItem.model_fields.keys())
         field_names_set = set(EXECUTION_FIELD_NAMES)
         assert field_names_set == model_fields
+
+
+# ===== Orderbook Tests =====
+
+
+@pytest.fixture
+def sample_orderbook_data() -> list[str]:
+    """Generate sample orderbook data (59 fields)."""
+    return [
+        "005930",  # mksc_shrn_iscd
+        "093000",  # bsop_hour
+        "0",  # hour_cls_code
+        "70100",  # askp1
+        "70200",  # askp2
+        "70300",  # askp3
+        "70400",  # askp4
+        "70500",  # askp5
+        "70600",  # askp6
+        "70700",  # askp7
+        "70800",  # askp8
+        "70900",  # askp9
+        "71000",  # askp10
+        "70000",  # bidp1
+        "69900",  # bidp2
+        "69800",  # bidp3
+        "69700",  # bidp4
+        "69600",  # bidp5
+        "69500",  # bidp6
+        "69400",  # bidp7
+        "69300",  # bidp8
+        "69200",  # bidp9
+        "69100",  # bidp10
+        "10000",  # askp_rsqn1
+        "20000",  # askp_rsqn2
+        "30000",  # askp_rsqn3
+        "40000",  # askp_rsqn4
+        "50000",  # askp_rsqn5
+        "60000",  # askp_rsqn6
+        "70000",  # askp_rsqn7
+        "80000",  # askp_rsqn8
+        "90000",  # askp_rsqn9
+        "100000",  # askp_rsqn10
+        "15000",  # bidp_rsqn1
+        "25000",  # bidp_rsqn2
+        "35000",  # bidp_rsqn3
+        "45000",  # bidp_rsqn4
+        "55000",  # bidp_rsqn5
+        "65000",  # bidp_rsqn6
+        "75000",  # bidp_rsqn7
+        "85000",  # bidp_rsqn8
+        "95000",  # bidp_rsqn9
+        "105000",  # bidp_rsqn10
+        "550000",  # total_askp_rsqn
+        "600000",  # total_bidp_rsqn
+        "1000",  # ovtm_total_askp_rsqn
+        "2000",  # ovtm_total_bidp_rsqn
+        "70050",  # antc_cnpr
+        "5000",  # antc_cnqn
+        "10000000",  # antc_vol
+        "50",  # antc_cntg_vrss
+        "2",  # antc_cntg_vrss_sign
+        "0.07",  # antc_cntg_prdy_ctrt
+        "5000000",  # acml_vol
+        "10000",  # total_askp_rsqn_icdc
+        "-5000",  # total_bidp_rsqn_icdc
+        "100",  # ovtm_total_askp_icdc
+        "-200",  # ovtm_total_bidp_icdc
+        "00",  # stck_deal_cls_code
+    ]
+
+
+class TestSubscribeOrderbook:
+    """Test subscribe_orderbook method."""
+
+    @pytest.mark.asyncio
+    async def test_subscribe_orderbook_calls_socket_client(self, realtime_quote, mock_socket_client):
+        """Test that subscribe_orderbook calls socket_client.subscribe with correct args."""
+        await realtime_quote.subscribe_orderbook("005930")
+
+        mock_socket_client.subscribe.assert_called_with("H0STASP0", "005930")
+
+    @pytest.mark.asyncio
+    async def test_subscribe_orderbook_different_stock_codes(self, realtime_quote, mock_socket_client):
+        """Test subscription with different stock codes."""
+        await realtime_quote.subscribe_orderbook("000660")
+        mock_socket_client.subscribe.assert_called_with("H0STASP0", "000660")
+
+
+class TestUnsubscribeOrderbook:
+    """Test unsubscribe_orderbook method."""
+
+    @pytest.mark.asyncio
+    async def test_unsubscribe_orderbook_calls_socket_client(self, realtime_quote, mock_socket_client):
+        """Test that unsubscribe_orderbook calls socket_client.unsubscribe with correct args."""
+        await realtime_quote.unsubscribe_orderbook("005930")
+
+        mock_socket_client.unsubscribe.assert_called_once_with("H0STASP0", "005930")
+
+
+class TestParseOrderbookData:
+    """Test parse_orderbook_data method."""
+
+    def test_parse_orderbook_data_returns_model(self, sample_orderbook_data):
+        """Test that parse_orderbook_data returns DomesticRealtimeOrderbookItem."""
+        result = DomesticRealtimeQuote.parse_orderbook_data(sample_orderbook_data)
+        assert isinstance(result, DomesticRealtimeOrderbookItem)
+
+    def test_parse_orderbook_data_field_values(self, sample_orderbook_data):
+        """Test that parsed data has correct field values."""
+        result = DomesticRealtimeQuote.parse_orderbook_data(sample_orderbook_data)
+
+        assert result.mksc_shrn_iscd == "005930"
+        assert result.bsop_hour == "093000"
+        assert result.hour_cls_code == "0"
+        assert result.askp1 == "70100"
+        assert result.bidp1 == "70000"
+        assert result.total_askp_rsqn == "550000"
+        assert result.total_bidp_rsqn == "600000"
+        assert result.antc_cnpr == "70050"
+        assert result.acml_vol == "5000000"
+
+    def test_parse_orderbook_data_wrong_field_count_raises_error(self):
+        """Test that wrong field count raises ValueError."""
+        short_data = ["005930", "093000", "0"]  # Only 3 fields
+
+        with pytest.raises(ValueError) as exc_info:
+            DomesticRealtimeQuote.parse_orderbook_data(short_data)
+
+        assert "Expected 59 fields, got 3" in str(exc_info.value)
+
+    def test_parse_orderbook_data_empty_list_raises_error(self):
+        """Test that empty list raises ValueError."""
+        with pytest.raises(ValueError) as exc_info:
+            DomesticRealtimeQuote.parse_orderbook_data([])
+
+        assert "Expected 59 fields, got 0" in str(exc_info.value)
+
+
+class TestDomesticRealtimeOrderbookItem:
+    """Test DomesticRealtimeOrderbookItem Pydantic model."""
+
+    def test_model_field_count(self):
+        """Test that model has exactly 59 fields."""
+        assert len(ORDERBOOK_FIELD_NAMES) == 59
+        assert len(DomesticRealtimeOrderbookItem.model_fields) == 59
+
+    def test_model_validation_from_dict(self, sample_orderbook_data):
+        """Test model can be created from dictionary."""
+        field_dict = dict(zip(ORDERBOOK_FIELD_NAMES, sample_orderbook_data, strict=False))
+        item = DomesticRealtimeOrderbookItem.model_validate(field_dict)
+
+        assert item.mksc_shrn_iscd == "005930"
+        assert item.askp1 == "70100"
+
+    def test_field_names_list_order(self, sample_orderbook_data):
+        """Test that ORDERBOOK_FIELD_NAMES order matches model fields."""
+        field_dict = dict(zip(ORDERBOOK_FIELD_NAMES, sample_orderbook_data, strict=False))
+        item = DomesticRealtimeOrderbookItem.model_validate(field_dict)
+
+        # First field
+        assert ORDERBOOK_FIELD_NAMES[0] == "mksc_shrn_iscd"
+        assert item.mksc_shrn_iscd == "005930"
+
+        # Last field
+        assert ORDERBOOK_FIELD_NAMES[58] == "stck_deal_cls_code"
+        assert item.stck_deal_cls_code == "00"
+
+
+class TestOrderbookFieldNames:
+    """Test ORDERBOOK_FIELD_NAMES constant."""
+
+    def test_field_names_count(self):
+        """Test that field names list has 59 entries."""
+        assert len(ORDERBOOK_FIELD_NAMES) == 59
+
+    def test_field_names_all_strings(self):
+        """Test that all field names are strings."""
+        assert all(isinstance(name, str) for name in ORDERBOOK_FIELD_NAMES)
+
+    def test_field_names_no_duplicates(self):
+        """Test that there are no duplicate field names."""
+        assert len(ORDERBOOK_FIELD_NAMES) == len(set(ORDERBOOK_FIELD_NAMES))
+
+    def test_field_names_match_model_fields(self):
+        """Test that all field names exist in the model."""
+        model_fields = set(DomesticRealtimeOrderbookItem.model_fields.keys())
+        field_names_set = set(ORDERBOOK_FIELD_NAMES)
+        assert field_names_set == model_fields
+
+
+class TestTrIdConstants:
+    """Test TR ID constants."""
+
+    def test_tr_id_execution(self):
+        """Test TR_ID_EXECUTION constant."""
+        assert DomesticRealtimeQuote.TR_ID_EXECUTION == "H0UNCNT0"
+
+    def test_tr_id_orderbook(self):
+        """Test TR_ID_ORDERBOOK constant."""
+        assert DomesticRealtimeQuote.TR_ID_ORDERBOOK == "H0STASP0"

@@ -64,7 +64,75 @@ class DomesticRealtimeExecutionItem(BaseModel):
     vi_stnd_prc: str = Field(title="정적VI발동기준가")
 
 
-# 필드 순서 리스트 (WebSocket 데이터 파싱용)
+class DomesticRealtimeOrderbookItem(BaseModel):
+    """국내주식 실시간호가 (KRX) - H0STASP0.
+
+    WebSocket 메시지의 데이터 부분을 파싱한 모델입니다.
+    데이터는 "^" 구분자로 59개 필드가 구분되어 전달됩니다.
+    """
+
+    mksc_shrn_iscd: str = Field(title="유가증권 단축 종목코드")
+    bsop_hour: str = Field(title="영업 시간")
+    hour_cls_code: str = Field(title="시간 구분 코드")
+    askp1: str = Field(title="매도호가1")
+    askp2: str = Field(title="매도호가2")
+    askp3: str = Field(title="매도호가3")
+    askp4: str = Field(title="매도호가4")
+    askp5: str = Field(title="매도호가5")
+    askp6: str = Field(title="매도호가6")
+    askp7: str = Field(title="매도호가7")
+    askp8: str = Field(title="매도호가8")
+    askp9: str = Field(title="매도호가9")
+    askp10: str = Field(title="매도호가10")
+    bidp1: str = Field(title="매수호가1")
+    bidp2: str = Field(title="매수호가2")
+    bidp3: str = Field(title="매수호가3")
+    bidp4: str = Field(title="매수호가4")
+    bidp5: str = Field(title="매수호가5")
+    bidp6: str = Field(title="매수호가6")
+    bidp7: str = Field(title="매수호가7")
+    bidp8: str = Field(title="매수호가8")
+    bidp9: str = Field(title="매수호가9")
+    bidp10: str = Field(title="매수호가10")
+    askp_rsqn1: str = Field(title="매도호가 잔량1")
+    askp_rsqn2: str = Field(title="매도호가 잔량2")
+    askp_rsqn3: str = Field(title="매도호가 잔량3")
+    askp_rsqn4: str = Field(title="매도호가 잔량4")
+    askp_rsqn5: str = Field(title="매도호가 잔량5")
+    askp_rsqn6: str = Field(title="매도호가 잔량6")
+    askp_rsqn7: str = Field(title="매도호가 잔량7")
+    askp_rsqn8: str = Field(title="매도호가 잔량8")
+    askp_rsqn9: str = Field(title="매도호가 잔량9")
+    askp_rsqn10: str = Field(title="매도호가 잔량10")
+    bidp_rsqn1: str = Field(title="매수호가 잔량1")
+    bidp_rsqn2: str = Field(title="매수호가 잔량2")
+    bidp_rsqn3: str = Field(title="매수호가 잔량3")
+    bidp_rsqn4: str = Field(title="매수호가 잔량4")
+    bidp_rsqn5: str = Field(title="매수호가 잔량5")
+    bidp_rsqn6: str = Field(title="매수호가 잔량6")
+    bidp_rsqn7: str = Field(title="매수호가 잔량7")
+    bidp_rsqn8: str = Field(title="매수호가 잔량8")
+    bidp_rsqn9: str = Field(title="매수호가 잔량9")
+    bidp_rsqn10: str = Field(title="매수호가 잔량10")
+    total_askp_rsqn: str = Field(title="총 매도호가 잔량")
+    total_bidp_rsqn: str = Field(title="총 매수호가 잔량")
+    ovtm_total_askp_rsqn: str = Field(title="시간외 총 매도호가 잔량")
+    ovtm_total_bidp_rsqn: str = Field(title="시간외 총 매수호가 잔량")
+    antc_cnpr: str = Field(title="예상 체결가")
+    antc_cnqn: str = Field(title="예상 체결량")
+    antc_vol: str = Field(title="예상 거래량")
+    antc_cntg_vrss: str = Field(title="예상 체결 대비")
+    antc_cntg_vrss_sign: str = Field(title="예상 체결 대비 부호")
+    antc_cntg_prdy_ctrt: str = Field(title="예상 체결 전일 대비율")
+    acml_vol: str = Field(title="누적 거래량")
+    total_askp_rsqn_icdc: str = Field(title="총 매도호가 잔량 증감")
+    total_bidp_rsqn_icdc: str = Field(title="총 매수호가 잔량 증감")
+    ovtm_total_askp_icdc: str = Field(title="시간외 총 매도호가 증감")
+    ovtm_total_bidp_icdc: str = Field(title="시간외 총 매수호가 증감")
+    stck_deal_cls_code: str = Field(title="주식 매매 구분 코드")
+
+
+# 필드 순서 리스트 (WebSocket 데이터 파싱용) - 체결가
 EXECUTION_FIELD_NAMES: list[str] = [
     "mksc_shrn_iscd",
     "stck_cntg_hour",
@@ -112,4 +180,67 @@ EXECUTION_FIELD_NAMES: list[str] = [
     "hour_cls_code",
     "mrkt_trtm_cls_code",
     "vi_stnd_prc",
+]
+
+# 필드 순서 리스트 (WebSocket 데이터 파싱용) - 호가
+ORDERBOOK_FIELD_NAMES: list[str] = [
+    "mksc_shrn_iscd",
+    "bsop_hour",
+    "hour_cls_code",
+    "askp1",
+    "askp2",
+    "askp3",
+    "askp4",
+    "askp5",
+    "askp6",
+    "askp7",
+    "askp8",
+    "askp9",
+    "askp10",
+    "bidp1",
+    "bidp2",
+    "bidp3",
+    "bidp4",
+    "bidp5",
+    "bidp6",
+    "bidp7",
+    "bidp8",
+    "bidp9",
+    "bidp10",
+    "askp_rsqn1",
+    "askp_rsqn2",
+    "askp_rsqn3",
+    "askp_rsqn4",
+    "askp_rsqn5",
+    "askp_rsqn6",
+    "askp_rsqn7",
+    "askp_rsqn8",
+    "askp_rsqn9",
+    "askp_rsqn10",
+    "bidp_rsqn1",
+    "bidp_rsqn2",
+    "bidp_rsqn3",
+    "bidp_rsqn4",
+    "bidp_rsqn5",
+    "bidp_rsqn6",
+    "bidp_rsqn7",
+    "bidp_rsqn8",
+    "bidp_rsqn9",
+    "bidp_rsqn10",
+    "total_askp_rsqn",
+    "total_bidp_rsqn",
+    "ovtm_total_askp_rsqn",
+    "ovtm_total_bidp_rsqn",
+    "antc_cnpr",
+    "antc_cnqn",
+    "antc_vol",
+    "antc_cntg_vrss",
+    "antc_cntg_vrss_sign",
+    "antc_cntg_prdy_ctrt",
+    "acml_vol",
+    "total_askp_rsqn_icdc",
+    "total_bidp_rsqn_icdc",
+    "ovtm_total_askp_icdc",
+    "ovtm_total_bidp_icdc",
+    "stck_deal_cls_code",
 ]

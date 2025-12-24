@@ -10,7 +10,9 @@ from typing import List
 
 from ._domestic_realtime_quote_types import (
     EXECUTION_FIELD_NAMES,
+    ORDERBOOK_FIELD_NAMES,
     DomesticRealtimeExecutionItem,
+    DomesticRealtimeOrderbookItem,
 )
 from ._socket_client import SocketClient
 
@@ -47,6 +49,7 @@ class DomesticRealtimeQuote:
 
     # Transaction IDs
     TR_ID_EXECUTION = "H0UNCNT0"  # 실시간 체결가 (통합)
+    TR_ID_ORDERBOOK = "H0STASP0"  # 실시간 호가 (KRX)
 
     def __init__(self, socket_client: SocketClient):
         """Initialize DomesticRealtimeQuote.
@@ -96,3 +99,44 @@ class DomesticRealtimeQuote:
 
         field_dict = dict(zip(EXECUTION_FIELD_NAMES, data, strict=False))
         return DomesticRealtimeExecutionItem.model_validate(field_dict)
+
+    async def subscribe_orderbook(self, stock_code: str) -> None:
+        """Subscribe to real-time orderbook data.
+
+        Args:
+            stock_code: Stock code (e.g., "005930" for Samsung Electronics)
+        """
+        await self.socket_client.subscribe(self.TR_ID_ORDERBOOK, stock_code)
+
+    async def unsubscribe_orderbook(self, stock_code: str) -> None:
+        """Unsubscribe from real-time orderbook data.
+
+        Args:
+            stock_code: Stock code to unsubscribe
+        """
+        await self.socket_client.unsubscribe(self.TR_ID_ORDERBOOK, stock_code)
+
+    @staticmethod
+    def parse_orderbook_data(data: List[str]) -> DomesticRealtimeOrderbookItem:
+        """Parse WebSocket data into DomesticRealtimeOrderbookItem.
+
+        WebSocket data is received as a list of 59 string values
+        separated by "^" delimiter.
+
+        Args:
+            data: List of 59 string values from WebSocket message
+
+        Returns:
+            Parsed DomesticRealtimeOrderbookItem model
+
+        Raises:
+            ValueError: If data does not contain exactly 59 fields
+        """
+        if len(data) != len(ORDERBOOK_FIELD_NAMES):
+            raise ValueError(
+                f"Expected {len(ORDERBOOK_FIELD_NAMES)} fields, got {len(data)}. "
+                f"First field: {data[0] if data else 'empty'}"
+            )
+
+        field_dict = dict(zip(ORDERBOOK_FIELD_NAMES, data, strict=False))
+        return DomesticRealtimeOrderbookItem.model_validate(field_dict)
