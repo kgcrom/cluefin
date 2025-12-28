@@ -37,6 +37,7 @@ class SHAPExplainer:
         self.model_type = model_type
         self.explainer: Optional[shap.Explainer] = None
         self.shap_values: Optional[np.ndarray] = None
+        self.base_values: Optional[np.ndarray] = None
         self.feature_names: List[str] = []
         self.console = Console()
 
@@ -51,8 +52,8 @@ class SHAPExplainer:
             self.feature_names = list(X_background.columns)
 
             if self.model_type == "tree":
-                # TreeExplainer for tree-based models (LightGBM, XGBoost, etc.)
-                self.explainer = shap.TreeExplainer(self.model)
+                # Use unified Explainer API (automatically detects TreeExplainer for tree models)
+                self.explainer = shap.Explainer(self.model, X_background)
             elif self.model_type == "kernel":
                 # KernelExplainer for model-agnostic explanations
                 self.explainer = shap.KernelExplainer(
@@ -65,7 +66,7 @@ class SHAPExplainer:
             else:
                 raise ValueError(f"Unknown model_type: {self.model_type}")
 
-            logger.info(f"SHAP {self.model_type}Explainer initialized successfully")
+            logger.info(f"SHAP Explainer initialized successfully with {self.model_type} backend")
 
         except Exception as e:
             logger.error(f"Error initializing SHAP explainer: {e}")
@@ -87,17 +88,33 @@ class SHAPExplainer:
         try:
             # Calculate SHAP values
             if self.model_type == "tree":
-                # For tree models, get SHAP values for positive class
-                shap_values = self.explainer.shap_values(X)
-                if isinstance(shap_values, list):
-                    # Binary classification returns list of arrays
-                    self.shap_values = shap_values[1]  # Positive class
-                else:
-                    self.shap_values = shap_values
-            else:
-                self.shap_values = self.explainer.shap_values(X)
+                # New unified API returns Explanation object
+                explanation = self.explainer(X)
 
-            logger.info(f"SHAP values calculated for {len(X)} samples")
+                # Handle binary classification 3D array: (n_samples, n_features, 2)
+                if len(explanation.values.shape) == 3 and explanation.values.shape[2] == 2:
+                    # Extract positive class (index 1)
+                    self.shap_values = explanation.values[:, :, 1]
+                    logger.debug(f"Extracted positive class from shape {explanation.values.shape}")
+                elif len(explanation.values.shape) == 2:
+                    # Single output (already correct shape)
+                    self.shap_values = explanation.values
+                else:
+                    logger.warning(f"Unexpected SHAP shape: {explanation.values.shape}")
+                    self.shap_values = explanation.values
+
+                # Store base values for later use
+                if hasattr(explanation, "base_values"):
+                    self.base_values = explanation.base_values
+            else:
+                # Keep legacy API for kernel/linear explainers
+                shap_values = self.explainer.shap_values(X)
+                self.shap_values = shap_values
+                # Try to get base values from expected_value
+                if hasattr(self.explainer, "expected_value"):
+                    self.base_values = np.array([self.explainer.expected_value] * len(X))
+
+            logger.info(f"SHAP values calculated for {len(X)} samples with shape {self.shap_values.shape}")
             return self.shap_values
 
         except Exception as e:
@@ -155,14 +172,27 @@ class SHAPExplainer:
             sample_shap = self.shap_values[sample_idx]
             sample_features = X_sample.iloc[sample_idx]
 
-            # Get prediction and base value
-            if hasattr(self.explainer, "expected_value"):
+            # Get base value from stored base_values or explainer
+            base_value = 0.0
+            if self.base_values is not None:
+                # Handle different base_values shapes
+                if len(self.base_values.shape) == 2 and self.base_values.shape[1] == 2:
+                    # Binary classification: (n_samples, 2) - extract positive class
+                    base_value = float(self.base_values[sample_idx, 1])
+                elif len(self.base_values.shape) == 1:
+                    # Single value per sample
+                    base_value = float(self.base_values[sample_idx])
+                elif self.base_values.shape == ():
+                    # Scalar value
+                    base_value = float(self.base_values)
+                logger.debug(f"Using base_value from stored base_values: {base_value}")
+            elif hasattr(self.explainer, "expected_value"):
+                # Fallback to legacy expected_value for backward compatibility
                 if isinstance(self.explainer.expected_value, list):
                     base_value = self.explainer.expected_value[1]  # Positive class
                 else:
                     base_value = self.explainer.expected_value
-            else:
-                base_value = 0.0
+                logger.debug(f"Using base_value from expected_value: {base_value}")
 
             # Create explanation DataFrame
             explanation = pd.DataFrame(
