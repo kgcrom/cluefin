@@ -19,6 +19,11 @@ dependencies = [
     "shap>=0.47.2,<1.0.0",
     "cluefin-ta",
     "imbalanced-learn>=0.14.0",
+    "docling>=2.60.0",
+    "typer>=0.9.0",
+    "sqlalchemy>=2.0.0",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=5.0.0",
 ]
 
 [build-system]

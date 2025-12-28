@@ -10,7 +10,6 @@ members = [
     "packages/cluefin-openapi",
     "packages/cluefin-ta",
     "apps/cluefin-cli",
-    "apps/dartex",
 ]
 
 [dependency-groups]
@@ -53,5 +52,4 @@ testpaths = [
     "packages/cluefin-openapi/tests",
     "packages/cluefin-ta/tests",
     "apps/cluefin-cli/tests",
-    "apps/dartex/tests",
 ]
