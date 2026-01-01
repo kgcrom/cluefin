@@ -9,7 +9,7 @@ Functions:
 
 import numpy as np
 
-from cluefin_ta._core import get_impl
+from cluefin_ta._core import ad_loop, obv_loop
 
 
 def OBV(close: np.ndarray, volume: np.ndarray) -> np.ndarray:
@@ -36,9 +36,7 @@ def OBV(close: np.ndarray, volume: np.ndarray) -> np.ndarray:
             result[0] = volume[0]
         return result
 
-    # Use optimized implementation
-    impl = get_impl()
-    return impl.obv_loop(close, volume)
+    return obv_loop(close, volume)
 
 
 def AD(
@@ -72,9 +70,7 @@ def AD(
     if n < 1:
         return np.zeros(n, dtype=np.float64)
 
-    # Use optimized implementation
-    impl = get_impl()
-    return impl.ad_loop(high, low, close, volume)
+    return ad_loop(high, low, close, volume)
 
 
 def ADOSC(
