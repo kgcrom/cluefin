@@ -3,7 +3,12 @@
 import numpy as np
 import pytest
 
-from cluefin_ta import REGIME_MA, REGIME_MA_DURATION
+from cluefin_ta import (
+    REGIME_COMBINED,
+    REGIME_MA,
+    REGIME_MA_DURATION,
+    REGIME_VOLATILITY,
+)
 
 
 class TestREGIME_MA:
@@ -228,3 +233,248 @@ class TestREGIME_MA_Integration:
             duration_diffs = np.diff(durations[valid_idx])
             # At least some should be +1 (increasing duration)
             assert np.any(duration_diffs == 1), "Duration should increase in stable regime"
+
+
+class TestREGIME_VOLATILITY:
+    """Tests for volatility-based regime detection."""
+
+    def test_volatility_regime_basic(self):
+        """Test basic volatility regime classification."""
+        # Create sample OHLC with varying volatility
+        np.random.seed(42)
+        n = 100
+
+        # Low volatility period followed by high volatility
+        close = np.concatenate(
+            [
+                100 + np.random.uniform(-1, 1, 50),  # Low vol
+                100 + np.random.uniform(-10, 10, 50),  # High vol
+            ]
+        )
+        high = close + np.abs(np.random.uniform(0, 2, n))
+        low = close - np.abs(np.random.uniform(0, 2, n))
+
+        result = REGIME_VOLATILITY(high, low, close, atr_period=14, threshold_percentile=50)
+
+        assert len(result) == n
+        # First atr_period values should be NaN
+        assert np.sum(np.isnan(result[:14])) > 0
+
+    def test_volatility_regime_output_values(self):
+        """Test that output values are only 0, 1, or NaN."""
+        np.random.seed(42)
+        n = 100
+        close = 100 + np.cumsum(np.random.uniform(-1, 1, n))
+        high = close + np.random.uniform(0, 2, n)
+        low = close - np.random.uniform(0, 2, n)
+
+        result = REGIME_VOLATILITY(high, low, close)
+
+        valid = result[~np.isnan(result)]
+        unique_values = np.unique(valid)
+
+        # All values should be in {0, 1}
+        assert np.all(np.isin(unique_values, [0, 1])), "Volatility regime must be 0 or 1"
+
+    def test_volatility_percentile_boundary(self):
+        """Test percentile threshold boundary behavior."""
+        np.random.seed(42)
+        n = 100
+        close = 100 + np.cumsum(np.random.uniform(-1, 1, n))
+        high = close + np.random.uniform(0, 2, n)
+        low = close - np.random.uniform(0, 2, n)
+
+        # With 50th percentile, roughly half should be high vol
+        result_50 = REGIME_VOLATILITY(high, low, close, threshold_percentile=50)
+        valid_50 = result_50[~np.isnan(result_50)]
+        high_vol_ratio_50 = np.mean(valid_50 == 1)
+
+        # With 90th percentile, much less should be high vol
+        result_90 = REGIME_VOLATILITY(high, low, close, threshold_percentile=90)
+        valid_90 = result_90[~np.isnan(result_90)]
+        high_vol_ratio_90 = np.mean(valid_90 == 1)
+
+        # Higher percentile should result in fewer high vol classifications
+        assert high_vol_ratio_90 < high_vol_ratio_50
+
+    def test_volatility_short_array(self):
+        """Test with insufficient data."""
+        high = np.array([105, 108, 112])
+        low = np.array([95, 98, 102])
+        close = np.array([100, 105, 110])
+
+        result = REGIME_VOLATILITY(high, low, close, atr_period=14)
+
+        # Should return all NaN for insufficient data
+        assert len(result) == 3
+        # Most or all should be NaN
+        assert np.sum(np.isnan(result)) >= 1
+
+    def test_volatility_constant_prices(self):
+        """Test with constant prices (zero volatility)."""
+        n = 100
+        high = np.full(n, 100.0)
+        low = np.full(n, 100.0)
+        close = np.full(n, 100.0)
+
+        result = REGIME_VOLATILITY(high, low, close)
+
+        valid = result[~np.isnan(result)]
+        if len(valid) > 0:
+            # All should be low volatility (0) with constant prices
+            assert np.all(valid == 0), "Constant prices should be low volatility"
+
+    def test_volatility_nan_handling(self):
+        """Test NaN handling in input."""
+        np.random.seed(42)
+        n = 100
+        close = 100 + np.cumsum(np.random.uniform(-1, 1, n))
+        close[10] = np.nan  # Insert NaN
+        high = close + np.random.uniform(0, 2, n)
+        low = close - np.random.uniform(0, 2, n)
+
+        result = REGIME_VOLATILITY(high, low, close)
+
+        # Should handle NaN gracefully
+        assert len(result) == n
+
+
+class TestREGIME_COMBINED:
+    """Tests for combined regime detection."""
+
+    def test_combined_encoding(self):
+        """Test combined regime encoding formula."""
+        # Create simple trend
+        close = np.linspace(100, 200, 100)  # Uptrend
+        high = close + 2
+        low = close - 2
+
+        trend, vol, combined = REGIME_COMBINED(high, low, close)
+
+        # All outputs should have same length
+        assert len(trend) == len(vol) == len(combined) == 100
+
+        # Check encoding: combined = trend * 2 + vol
+        valid_mask = ~np.isnan(combined)
+        if np.any(valid_mask):
+            expected_combined = trend[valid_mask] * 2 + vol[valid_mask]
+            np.testing.assert_array_equal(
+                combined[valid_mask], expected_combined, err_msg="Combined encoding should be trend * 2 + vol"
+            )
+
+    def test_combined_output_range(self):
+        """Test that combined regime values are in valid range 0-5."""
+        np.random.seed(42)
+        n = 100
+        close = 100 + np.cumsum(np.random.uniform(-1, 1, n))
+        high = close + np.random.uniform(0, 3, n)
+        low = close - np.random.uniform(0, 3, n)
+
+        trend, vol, combined = REGIME_COMBINED(high, low, close)
+
+        # Check valid values
+        valid_combined = combined[~np.isnan(combined)]
+        if len(valid_combined) > 0:
+            assert np.all(valid_combined >= 0) and np.all(valid_combined <= 5), "Combined regime must be in range 0-5"
+
+    def test_combined_consistency(self):
+        """Test consistency between trend, vol, and combined."""
+        close = np.linspace(100, 200, 100)
+        high = close + 2
+        low = close - 2
+
+        trend, vol, combined = REGIME_COMBINED(high, low, close)
+
+        # Where combined is valid, trend and vol should also be valid
+        valid_combined_mask = ~np.isnan(combined)
+
+        if np.any(valid_combined_mask):
+            assert np.all(~np.isnan(trend[valid_combined_mask])), "Trend should be valid where combined is valid"
+            assert np.all(~np.isnan(vol[valid_combined_mask])), "Volatility should be valid where combined is valid"
+
+    def test_combined_all_states(self):
+        """Test that combined can produce various regime combinations."""
+        # This is a weaker test - just checks that function works
+        # Not all 6 states may appear in random data
+        np.random.seed(42)
+        n = 200  # Longer period to get more variety
+        close = 100 + np.cumsum(np.random.uniform(-2, 2, n))
+        high = close + np.abs(np.random.uniform(0, 5, n))
+        low = close - np.abs(np.random.uniform(0, 5, n))
+
+        trend, vol, combined = REGIME_COMBINED(high, low, close)
+
+        valid_combined = combined[~np.isnan(combined)]
+
+        # Should have at least 2 different combined states
+        unique_states = np.unique(valid_combined)
+        assert len(unique_states) >= 2, "Should detect multiple regime combinations"
+
+    def test_combined_bull_low_vol(self):
+        """Test Bull + Low Vol regime (should be 4)."""
+        # Create strong uptrend with low volatility
+        close = np.linspace(100, 200, 100)
+        high = close + 0.5  # Very low volatility
+        low = close - 0.5
+
+        trend, vol, combined = REGIME_COMBINED(high, low, close)
+
+        valid_combined = combined[~np.isnan(combined)]
+
+        if len(valid_combined) > 10:
+            # In strong uptrend, most should be Bull (2)
+            # With low volatility, combined should be mostly 4 (2*2 + 0)
+            assert np.mean(valid_combined == 4) > 0.3, "Strong uptrend with low vol should produce regime 4"
+
+    def test_combined_nan_preservation(self):
+        """Test that NaN is preserved when either component is NaN."""
+        close = np.linspace(100, 150, 50)  # Shorter than slow_period
+        high = close + 2
+        low = close - 2
+
+        trend, vol, combined = REGIME_COMBINED(high, low, close)
+
+        # Where trend is NaN, combined should also be NaN
+        nan_trend_mask = np.isnan(trend)
+        assert np.all(np.isnan(combined[nan_trend_mask])), "Combined should be NaN where trend is NaN"
+
+
+class TestREGIME_Phase2_Integration:
+    """Integration tests for Phase 2 functions."""
+
+    def test_all_regime_functions_together(self):
+        """Test using all regime functions together."""
+        # Create sample data
+        np.random.seed(42)
+        n = 100
+        close = 100 + np.cumsum(np.random.uniform(-1, 1, n))
+        high = close + np.random.uniform(0, 2, n)
+        low = close - np.random.uniform(0, 2, n)
+
+        # Calculate all regimes
+        ma_regime = REGIME_MA(close)
+        ma_duration = REGIME_MA_DURATION(ma_regime)
+        vol_regime = REGIME_VOLATILITY(high, low, close)
+        trend, vol, combined = REGIME_COMBINED(high, low, close)
+
+        # All should have same length
+        assert len(ma_regime) == len(ma_duration) == len(vol_regime) == len(trend) == len(vol) == len(combined) == n
+
+        # MA regime and trend from combined should be identical
+        valid_mask = ~np.isnan(trend)
+        if np.any(valid_mask):
+            np.testing.assert_array_equal(
+                ma_regime[valid_mask],
+                trend[valid_mask],
+                err_msg="REGIME_MA and trend from REGIME_COMBINED should match",
+            )
+
+    def test_import_all_phase2_functions(self):
+        """Test that all Phase 2 functions can be imported."""
+        from cluefin_ta import REGIME_COMBINED, REGIME_MA, REGIME_MA_DURATION, REGIME_VOLATILITY
+
+        # Just verify they're callable
+        assert callable(REGIME_MA)
+        assert callable(REGIME_MA_DURATION)
+        assert callable(REGIME_VOLATILITY)
+        assert callable(REGIME_COMBINED)

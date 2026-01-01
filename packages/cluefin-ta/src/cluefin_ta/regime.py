@@ -4,6 +4,8 @@ Market Regime Detection - Statistical methods for identifying market states.
 Functions:
     REGIME_MA: Moving Average-based regime detection
     REGIME_MA_DURATION: Calculate regime duration
+    REGIME_VOLATILITY: Volatility-based regime detection
+    REGIME_COMBINED: Combined trend and volatility regime detection
 
 Regime States:
     0: Bear Market (Fast MA < Slow MA and diverging)
@@ -14,8 +16,9 @@ Regime States:
 import numpy as np
 
 from cluefin_ta.overlap import SMA
+from cluefin_ta.volatility import NATR
 
-__all__ = ["REGIME_MA", "REGIME_MA_DURATION"]
+__all__ = ["REGIME_MA", "REGIME_MA_DURATION", "REGIME_VOLATILITY", "REGIME_COMBINED"]
 
 
 def REGIME_MA(
@@ -152,3 +155,151 @@ def REGIME_MA_DURATION(regime_states: np.ndarray) -> np.ndarray:
             durations[i] = counter
 
     return durations
+
+
+def REGIME_VOLATILITY(
+    high: np.ndarray,
+    low: np.ndarray,
+    close: np.ndarray,
+    atr_period: int = 14,
+    threshold_percentile: int = 66,
+) -> np.ndarray:
+    """
+    Volatility-based Market Regime Detection.
+
+    Classifies market into low/high volatility regimes based on NATR:
+    - 0 (Low Volatility): NATR below threshold percentile
+    - 1 (High Volatility): NATR above threshold percentile
+
+    Uses Normalized ATR (NATR) to measure volatility as a percentage of price,
+    making it comparable across different price levels.
+
+    Args:
+        high: Array of high prices
+        low: Array of low prices
+        close: Array of closing prices
+        atr_period: ATR calculation period (default: 14)
+        threshold_percentile: Percentile for high/low volatility split (default: 66)
+                            66 means top 34% is high volatility
+
+    Returns:
+        Array of volatility regime (0/1) with NaN for initial periods
+
+    Examples:
+        >>> import numpy as np
+        >>> from cluefin_ta import REGIME_VOLATILITY
+        >>>
+        >>> # Sample OHLC data
+        >>> high = np.array([105, 108, 112, 110, 115])
+        >>> low = np.array([95, 98, 102, 100, 105])
+        >>> close = np.array([100, 105, 110, 108, 112])
+        >>>
+        >>> regime = REGIME_VOLATILITY(high, low, close, atr_period=3, threshold_percentile=50)
+        >>> # Returns 0 or 1 for low/high volatility
+
+    Notes:
+        - First valid value appears at index (atr_period)
+        - Higher threshold_percentile means more restrictive high volatility classification
+        - NATR is used instead of ATR to normalize across different price levels
+    """
+    high = np.asarray(high, dtype=np.float64)
+    low = np.asarray(low, dtype=np.float64)
+    close = np.asarray(close, dtype=np.float64)
+    n = len(close)
+
+    # Calculate NATR (Normalized ATR as percentage)
+    natr = NATR(high, low, close, timeperiod=atr_period)
+
+    # Get valid NATR values (non-NaN)
+    valid_natr = natr[~np.isnan(natr)]
+
+    if len(valid_natr) == 0:
+        # No valid data, return all NaN
+        return np.full(n, np.nan)
+
+    # Calculate threshold based on percentile
+    threshold = np.percentile(valid_natr, threshold_percentile)
+
+    # Classify regime: High volatility (1) if above threshold, Low volatility (0) otherwise
+    regime = np.where(natr > threshold, 1, 0)
+
+    # Preserve NaN values from NATR calculation
+    regime = np.where(np.isnan(natr), np.nan, regime)
+
+    return regime
+
+
+def REGIME_COMBINED(
+    high: np.ndarray,
+    low: np.ndarray,
+    close: np.ndarray,
+    fast_period: int = 20,
+    slow_period: int = 50,
+    atr_period: int = 14,
+    sideways_threshold: float = 0.02,
+    vol_percentile: int = 66,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Combined Trend and Volatility Regime Detection.
+
+    Combines MA-based trend regime with volatility regime to create
+    a comprehensive market state classification.
+
+    Args:
+        high: Array of high prices
+        low: Array of low prices
+        close: Array of closing prices
+        fast_period: Fast MA period for trend detection (default: 20)
+        slow_period: Slow MA period for trend detection (default: 50)
+        atr_period: ATR period for volatility detection (default: 14)
+        sideways_threshold: Threshold for sideways trend (default: 0.02)
+        vol_percentile: Percentile for volatility classification (default: 66)
+
+    Returns:
+        Tuple of (trend_regime, volatility_regime, combined_regime)
+
+        trend_regime: 0=Bear, 1=Sideways, 2=Bull
+        volatility_regime: 0=Low Vol, 1=High Vol
+        combined_regime: Combined encoding (0-5):
+            0: Bear + Low Vol
+            1: Bear + High Vol
+            2: Sideways + Low Vol
+            3: Sideways + High Vol
+            4: Bull + Low Vol
+            5: Bull + High Vol
+
+    Examples:
+        >>> import numpy as np
+        >>> from cluefin_ta import REGIME_COMBINED
+        >>>
+        >>> # Uptrend with increasing volatility
+        >>> high = np.linspace(105, 205, 100)
+        >>> low = np.linspace(95, 195, 100)
+        >>> close = np.linspace(100, 200, 100)
+        >>>
+        >>> trend, vol, combined = REGIME_COMBINED(high, low, close)
+        >>> # trend: mostly 2 (Bull)
+        >>> # vol: 0 or 1 based on volatility
+        >>> # combined: 4 or 5 (Bull + Low/High Vol)
+
+    Notes:
+        - Combined regime provides 6 distinct market states
+        - Encoding: combined = trend * 2 + volatility
+        - NaN values are preserved where either component is NaN
+    """
+    # Calculate trend regime using MA crossover
+    trend_regime = REGIME_MA(
+        close, fast_period=fast_period, slow_period=slow_period, sideways_threshold=sideways_threshold
+    )
+
+    # Calculate volatility regime using NATR
+    vol_regime = REGIME_VOLATILITY(high, low, close, atr_period=atr_period, threshold_percentile=vol_percentile)
+
+    # Combine regimes: trend * 2 + volatility
+    # This creates 6 possible states (0-5)
+    combined = trend_regime * 2 + vol_regime
+
+    # Preserve NaN if either component is NaN
+    combined = np.where(np.isnan(trend_regime) | np.isnan(vol_regime), np.nan, combined)
+
+    return trend_regime, vol_regime, combined
