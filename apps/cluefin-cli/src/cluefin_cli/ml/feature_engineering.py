@@ -128,6 +128,95 @@ class FeatureEngineer:
             logger.error(f"Error creating custom features: {e}")
             return df
 
+    def create_regime_detection_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Create market regime detection features.
+
+        Adds regime-based features using cluefin_ta regime detection functions:
+        - MA-based trend regime (Bull/Sideways/Bear)
+        - Volatility regime (High/Low)
+        - Combined regime (Trend + Volatility)
+        - HMM-based regime (optional, requires hmmlearn)
+
+        Args:
+            df: DataFrame with OHLCV data
+
+        Returns:
+            DataFrame with additional regime features
+
+        Notes:
+            - Requires 'high', 'low', 'close' columns in DataFrame
+            - HMM features are optional and will be skipped if hmmlearn not available
+            - All regime features will automatically be included in ML training
+        """
+        try:
+            high = df["high"].values
+            low = df["low"].values
+            close = df["close"].values
+
+            # 1. MA-based trend regime features
+            logger.info("Creating MA-based regime features...")
+            df["regime_trend"] = talib.REGIME_MA(close, fast_period=20, slow_period=50)
+            df["regime_trend_duration"] = talib.REGIME_MA_DURATION(df["regime_trend"].values)
+
+            # 2. Volatility regime features
+            logger.info("Creating volatility regime features...")
+            df["regime_volatility"] = talib.REGIME_VOLATILITY(
+                high, low, close, atr_period=14, threshold_percentile=66
+            )
+
+            # 3. Combined regime features
+            logger.info("Creating combined regime features...")
+            _, _, combined = talib.REGIME_COMBINED(high, low, close)
+            df["regime_combined"] = combined
+
+            # 4. HMM-based regime features (optional - requires hmmlearn)
+            try:
+                logger.info("Creating HMM regime features...")
+                returns = talib.REGIME_HMM_RETURNS(close)
+                hmm_states, transition_probs, state_means = talib.REGIME_HMM(
+                    returns, n_states=3, random_state=42
+                )
+
+                df["regime_hmm_state"] = hmm_states
+
+                # Add transition probabilities as features
+                # These represent probability of transitioning TO each state from current state
+                for i in range(3):
+                    trans_prob_col = np.full(len(df), np.nan)
+                    for state in range(3):
+                        mask = df["regime_hmm_state"] == state
+                        if np.any(mask):
+                            # Probability of transitioning from current state to state i
+                            trans_prob_col[mask] = transition_probs[state, i]
+                    df[f"regime_hmm_trans_to_{i}"] = trans_prob_col
+
+                # Add expected return for current regime state
+                # This is the learned mean return for each HMM state
+                state_mean_col = np.full(len(df), np.nan)
+                for state in range(3):
+                    mask = df["regime_hmm_state"] == state
+                    if np.any(mask):
+                        state_mean_col[mask] = state_means[state]
+                df["regime_hmm_expected_return"] = state_mean_col
+
+                logger.info("Successfully created HMM regime features")
+
+            except ImportError:
+                logger.warning(
+                    "hmmlearn not available. Skipping HMM regime features. "
+                    "Install with: uv add --optional hmm hmmlearn"
+                )
+            except Exception as e:
+                logger.warning(f"Error creating HMM features: {e}. Skipping HMM regime features.")
+
+            logger.info("Successfully created regime detection features")
+            return df
+
+        except Exception as e:
+            logger.error(f"Error creating regime features: {e}")
+            return df
+
     def create_target_variable(
         self, df: pd.DataFrame, target_type: str = "binary", threshold_pct: float = 0.0, prediction_days: int = 1
     ) -> pd.DataFrame:
@@ -223,6 +312,9 @@ class FeatureEngineer:
 
             # Create custom features
             df = self.create_custom_features(df)
+
+            # Create regime detection features
+            df = self.create_regime_detection_features(df)
 
             # Create target variable
             df = self.create_target_variable(df)
