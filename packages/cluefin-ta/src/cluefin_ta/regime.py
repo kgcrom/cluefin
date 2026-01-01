@@ -471,9 +471,7 @@ def REGIME_HMM(
         # HMM fitting failed (convergence issues, etc.)
         import warnings
 
-        warnings.warn(
-            f"HMM fitting failed: {e}. Returning NaN.", UserWarning, stacklevel=2
-        )
+        warnings.warn(f"HMM fitting failed: {e}. Returning NaN.", UserWarning, stacklevel=2)
         return (np.full(n, np.nan), np.full((n_states, n_states), np.nan), np.full(n_states, np.nan))
 
     # Map hidden states back to original array (with NaN preserved)

@@ -161,9 +161,7 @@ class FeatureEngineer:
 
             # 2. Volatility regime features
             logger.info("Creating volatility regime features...")
-            df["regime_volatility"] = talib.REGIME_VOLATILITY(
-                high, low, close, atr_period=14, threshold_percentile=66
-            )
+            df["regime_volatility"] = talib.REGIME_VOLATILITY(high, low, close, atr_period=14, threshold_percentile=66)
 
             # 3. Combined regime features
             logger.info("Creating combined regime features...")
@@ -174,9 +172,7 @@ class FeatureEngineer:
             try:
                 logger.info("Creating HMM regime features...")
                 returns = talib.REGIME_HMM_RETURNS(close)
-                hmm_states, transition_probs, state_means = talib.REGIME_HMM(
-                    returns, n_states=3, random_state=42
-                )
+                hmm_states, transition_probs, state_means = talib.REGIME_HMM(returns, n_states=3, random_state=42)
 
                 df["regime_hmm_state"] = hmm_states
 
@@ -204,8 +200,7 @@ class FeatureEngineer:
 
             except ImportError:
                 logger.warning(
-                    "hmmlearn not available. Skipping HMM regime features. "
-                    "Install with: uv add --optional hmm hmmlearn"
+                    "hmmlearn not available. Skipping HMM regime features. Install with: uv add --optional hmm hmmlearn"
                 )
             except Exception as e:
                 logger.warning(f"Error creating HMM features: {e}. Skipping HMM regime features.")

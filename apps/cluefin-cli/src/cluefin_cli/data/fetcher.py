@@ -44,6 +44,7 @@ class DomesticDataFetcher:
         self.krx_client = KrxClient(
             auth_key=settings.krx_auth_key or "",
         )
+        self._krx_index_base_date = None
 
     async def get_basic_data(self, stock_code: str):
         """
@@ -125,43 +126,85 @@ class DomesticDataFetcher:
         Returns:
             DataFrame with OHLCV data
         """
-
         # return self._generate_mock_data(stock_code, period)
         # TODO: 주봉, 월봉도 같은 함수에서 리턴가능하도록. 타입먼저 처리해야한다.
         parsed_date = datetime.now().strftime("%Y%m%d")
-        response = self.kiwoom_client.chart.get_stock_daily(stk_cd=stock_code, base_dt=parsed_date, upd_stkpc_tp="1")
+        max_pages = 3  # Fetch ~300 trading days via continuation
+        cont_yn = "N"
+        next_key = ""
+        rows: List[Dict[str, Any]] = []
 
-        # Convert stock data to DataFrame
-        stock_data = map(
-            lambda item: {
-                "date": pd.to_datetime(item.dt),
-                "open": self._safe_float(item.open_pric),
-                "high": self._safe_float(item.high_pric),
-                "low": self._safe_float(item.low_pric),
-                "close": self._safe_float(item.cur_prc),
-                "volume": self._safe_float(item.trde_qty),
-            },
-            response.body.stk_dt_pole_chart_qry,
-        )
+        for _ in range(max_pages):
+            response = self.kiwoom_client.chart.get_stock_daily(
+                stk_cd=stock_code,
+                base_dt=parsed_date,
+                upd_stkpc_tp="1",
+                cont_yn=cont_yn,
+                next_key=next_key,
+            )
 
-        if stock_data:
-            df = pd.DataFrame(stock_data)
+            items = response.body.stk_dt_pole_chart_qry
+            if not items:
+                break
+
+            rows.extend(
+                {
+                    "date": pd.to_datetime(item.dt),
+                    "open": self._safe_float(item.open_pric),
+                    "high": self._safe_float(item.high_pric),
+                    "low": self._safe_float(item.low_pric),
+                    "close": self._safe_float(item.cur_prc),
+                    "volume": self._safe_float(item.trde_qty),
+                }
+                for item in items
+            )
+
+            cont_yn = response.headers.cont_yn
+            next_key = response.headers.next_key
+            if cont_yn != "Y" or not next_key:
+                break
+
+        if rows:
+            df = pd.DataFrame(rows)
             df.set_index("date", inplace=True)
             df.sort_index(inplace=True)
+            df = df[~df.index.duplicated(keep="last")]
         else:
             # Fallback to empty DataFrame if no data available
             df = pd.DataFrame(columns=["date", "open", "high", "low", "close", "volume", "timeframe"])
 
         return df
 
+    def _get_latest_krx_index_base_date(self) -> str:
+        """Find the latest KRX index trading date by probing recent business days."""
+        if self._krx_index_base_date:
+            return self._krx_index_base_date
+
+        today = datetime.now().date()
+        for offset in range(0, 31):
+            candidate = today - timedelta(days=offset)
+            if candidate.weekday() >= 5:
+                continue
+
+            candidate_str = candidate.strftime("%Y%m%d")
+            try:
+                response = self.krx_client.index.get_kospi(base_date=candidate_str)
+            except Exception:
+                continue
+
+            if response and response.body and response.body.data:
+                self._krx_index_base_date = candidate_str
+                return candidate_str
+
+        self._krx_index_base_date = today.strftime("%Y%m%d")
+        return self._krx_index_base_date
+
     async def get_kospi_index_series(self) -> List[Dict[str, Any]]:
         """Return KOSPI index series with name, close_price, fluctuation_rate, trading_value, and transaction_amount."""
 
-        # Use current date as base_date
-        # base_date = datetime.now().strftime("%Y%m%d")
-
         try:
-            response = self.krx_client.index.get_kospi(base_date="20250814")
+            base_date = self._get_latest_krx_index_base_date()
+            response = self.krx_client.index.get_kospi(base_date=base_date)
 
             # Filter for specific KOSPI indices
             target_indices = ["코스피", "코스피 200", "코스피 200 중소형주", "코스피 200제외 코스피지수"]
@@ -197,13 +240,11 @@ class DomesticDataFetcher:
     async def get_kosdaq_index_series(self) -> List[Dict[str, Any]]:
         """Fetch KOSDAQ index data."""
 
-        # Use current date as base_date
-        # base_date = datetime.now().strftime("%Y%m%d")
-
         try:
             # KRX 데이터 집계는 익일 오전 8시에 업데이트
             # TODO 실시간으로 조회 가능한 방법 찾아서 교체하기
-            response = self.krx_client.index.get_kosdaq(base_date="20250814")
+            base_date = self._get_latest_krx_index_base_date()
+            response = self.krx_client.index.get_kosdaq(base_date=base_date)
 
             # Filter for specific KOSDAQ indices
             target_indices = ["코스닥", "코스닥 150"]

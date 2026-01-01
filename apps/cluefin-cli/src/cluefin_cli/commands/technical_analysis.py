@@ -2,6 +2,7 @@ import asyncio
 from typing import Any, Dict, List
 
 import click
+import numpy as np
 import pandas as pd
 from loguru import logger
 from rich.console import Console
@@ -30,19 +31,39 @@ console = Console()
     is_flag=True,
     help="Display detailed SHAP analysis with explanations (requires --ml-predict)",
 )
-def technical_analysis(stock_code: str, chart: bool, ml_predict: bool, feature_importance: bool, shap_analysis: bool):
+@click.option(
+    "--regime-analysis",
+    "-r",
+    is_flag=True,
+    help="Display detailed market regime analysis (Bull/Bear/Sideways, Volatility, HMM)",
+)
+def technical_analysis(
+    stock_code: str,
+    chart: bool,
+    ml_predict: bool,
+    feature_importance: bool,
+    shap_analysis: bool,
+    regime_analysis: bool,
+):
     """Run technical analysis for a given stock code."""
     console.print(f"[bold blue]Analyzing {stock_code}...[/bold blue]")
 
     try:
         # Run async analysis
-        asyncio.run(_analyze_stock(stock_code, chart, ml_predict, feature_importance, shap_analysis))
+        asyncio.run(_analyze_stock(stock_code, chart, ml_predict, feature_importance, shap_analysis, regime_analysis))
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
         logger.error(f"Analysis error for {stock_code}: {e}")
 
 
-async def _analyze_stock(stock_code: str, chart: bool, ml_predict: bool, feature_importance: bool, shap_analysis: bool):
+async def _analyze_stock(
+    stock_code: str,
+    chart: bool,
+    ml_predict: bool,
+    feature_importance: bool,
+    shap_analysis: bool,
+    regime_analysis: bool,
+):
     """Main analysis logic."""
     # Initialize components
     data_fetcher = DomesticDataFetcher()
@@ -92,6 +113,10 @@ async def _analyze_stock(stock_code: str, chart: bool, ml_predict: bool, feature
     _display_market_indices(kospi_data, kosdaq_data)
     _display_trading_trend(trading_trend_data)
     _display_technical_indicators(indicators)
+
+    # Display regime analysis if requested
+    if regime_analysis:
+        _display_regime_analysis(stock_data, indicators)
 
     # Display chart if requested
     if chart:
@@ -281,6 +306,216 @@ def _display_ml_model_summary(training_metrics: Dict[str, float], n_features: in
 
     except Exception as e:
         logger.error(f"Error displaying ML model summary: {e}")
+
+
+def _display_regime_analysis(stock_data: pd.DataFrame, indicators: Dict):
+    """
+    Display detailed market regime analysis.
+
+    Shows current regime state, distribution statistics, and HMM analysis (if available).
+
+    Args:
+        stock_data: Historical stock data with OHLCV columns
+        indicators: Technical indicators dictionary
+    """
+    try:
+        import cluefin_ta as talib
+
+        console.print("\n[bold cyan]📊 Market Regime Analysis[/bold cyan]")
+
+        high = stock_data["high"].values
+        low = stock_data["low"].values
+        close = stock_data["close"].values
+
+        # Calculate regime indicators
+        trend_regime = talib.REGIME_MA(close, fast_period=20, slow_period=50)
+        vol_regime = talib.REGIME_VOLATILITY(high, low, close, atr_period=14)
+        trend_duration = talib.REGIME_MA_DURATION(trend_regime)
+
+        # Get current regime values (last valid value)
+        def get_last_valid(arr):
+            """Get last valid (non-NaN) value from array."""
+            valid = arr[~np.isnan(arr)]
+            return valid[-1] if len(valid) > 0 else None
+
+        current_trend = get_last_valid(trend_regime)
+        current_vol = get_last_valid(vol_regime)
+        current_duration = get_last_valid(trend_duration)
+
+        # ========================================
+        # Current Regime Table
+        # ========================================
+        regime_table = Table(title="Current Market Regime", show_header=True, header_style="bold cyan")
+        regime_table.add_column("Metric", style="cyan", min_width=20)
+        regime_table.add_column("Value", style="magenta", min_width=20)
+        regime_table.add_column("Interpretation", style="green", min_width=30)
+
+        # Trend regime
+        if current_trend is not None:
+            trend_map = {0: "Bear", 1: "Sideways", 2: "Bull"}
+            trend_color = {0: "red", 1: "yellow", 2: "green"}
+            trend_name = trend_map.get(int(current_trend), "Unknown")
+            trend_style = trend_color.get(int(current_trend), "white")
+
+            regime_table.add_row(
+                "Trend Regime",
+                f"[{trend_style}]{trend_name}[/{trend_style}]",
+                "Based on MA(20) vs MA(50)",
+            )
+
+        # Volatility regime
+        if current_vol is not None:
+            vol_map = {0: "Low Volatility", 1: "High Volatility"}
+            vol_color = {0: "green", 1: "yellow"}
+            vol_name = vol_map.get(int(current_vol), "Unknown")
+            vol_style = vol_color.get(int(current_vol), "white")
+
+            regime_table.add_row(
+                "Volatility Regime",
+                f"[{vol_style}]{vol_name}[/{vol_style}]",
+                "Based on NATR percentile (66%)",
+            )
+
+        # Regime duration
+        if current_duration is not None:
+            duration_str = f"{int(current_duration)} days"
+            duration_interpretation = "Established regime" if current_duration > 10 else "New regime"
+            regime_table.add_row("Regime Duration", duration_str, duration_interpretation)
+
+        console.print(regime_table)
+
+        # ========================================
+        # Regime Statistics Table (Last 300 days)
+        # ========================================
+        stats_table = Table(title="Regime Distribution (Last 300 days)", show_header=True, header_style="bold cyan")
+        stats_table.add_column("Regime", style="cyan", min_width=15)
+        stats_table.add_column("Frequency", style="magenta", min_width=12)
+        stats_table.add_column("Avg Duration", style="green", min_width=15)
+
+        # Calculate statistics for last 300 days
+        lookback = min(300, len(trend_regime))
+        recent_trend = trend_regime[-lookback:]
+        recent_duration = trend_duration[-lookback:]
+
+        valid_mask = ~np.isnan(recent_trend)
+        if np.any(valid_mask):
+            valid_trend = recent_trend[valid_mask]
+            valid_duration = recent_duration[valid_mask]
+
+            for regime_val, _ in [(2, "Bull"), (1, "Sideways"), (0, "Bear")]:
+                regime_mask = valid_trend == regime_val
+                frequency = np.sum(regime_mask)
+                frequency_pct = (frequency / len(valid_trend)) * 100 if len(valid_trend) > 0 else 0
+
+                # Average duration in this regime
+                regime_durations = valid_duration[regime_mask]
+                avg_duration = np.mean(regime_durations) if len(regime_durations) > 0 else 0
+
+                # Color coding
+                if regime_val == 2:  # Bull
+                    regime_display = "[green]Bull[/green]"
+                elif regime_val == 1:  # Sideways
+                    regime_display = "[yellow]Sideways[/yellow]"
+                else:  # Bear
+                    regime_display = "[red]Bear[/red]"
+
+                stats_table.add_row(regime_display, f"{frequency_pct:.1f}%", f"{avg_duration:.1f} days")
+
+        console.print(stats_table)
+
+        # ========================================
+        # HMM Analysis (Optional)
+        # ========================================
+        try:
+            returns = talib.REGIME_HMM_RETURNS(close)
+            hmm_states, transition_probs, state_means = talib.REGIME_HMM(returns, n_states=3, random_state=42)
+
+            current_hmm = get_last_valid(hmm_states)
+
+            if current_hmm is not None:
+                console.print("\n[bold cyan]🔮 Hidden Markov Model Regime Analysis[/bold cyan]")
+
+                # Current HMM state table
+                hmm_table = Table(title="HMM Current State", show_header=True, header_style="bold cyan")
+                hmm_table.add_column("Metric", style="cyan", min_width=20)
+                hmm_table.add_column("Value", style="magenta", min_width=30)
+
+                state_map = {0: "Bear (Low Return)", 1: "Neutral", 2: "Bull (High Return)"}
+                state_name = state_map.get(int(current_hmm), "Unknown")
+
+                hmm_table.add_row("Current HMM State", state_name)
+                hmm_table.add_row(
+                    "Expected Daily Return",
+                    f"{state_means[int(current_hmm)]:.4f} ({state_means[int(current_hmm)] * 100:.2f}%)",
+                )
+
+                console.print(hmm_table)
+
+                # Transition probability table
+                trans_table = Table(title="State Transition Probabilities", show_header=True, header_style="bold cyan")
+                trans_table.add_column("From State ↓ / To State →", style="cyan", min_width=20)
+                trans_table.add_column("Bear (0)", style="red", min_width=12)
+                trans_table.add_column("Neutral (1)", style="yellow", min_width=12)
+                trans_table.add_column("Bull (2)", style="green", min_width=12)
+
+                for i, from_state in enumerate(["Bear (0)", "Neutral (1)", "Bull (2)"]):
+                    # Highlight current state row
+                    from_state_display = f"[bold]{from_state}[/bold]" if i == int(current_hmm) else from_state
+
+                    trans_table.add_row(
+                        from_state_display,
+                        f"{transition_probs[i, 0]:.3f}",
+                        f"{transition_probs[i, 1]:.3f}",
+                        f"{transition_probs[i, 2]:.3f}",
+                    )
+
+                console.print(trans_table)
+
+                # Interpretation note
+                console.print(f"\n[dim]Note: Row {int(current_hmm)} is highlighted (current state)[/dim]")
+
+        except ImportError:
+            console.print("\n[yellow]💡 Tip: Install hmmlearn for advanced HMM regime analysis[/yellow]")
+            console.print("[dim]   Run: uv add --optional hmm hmmlearn[/dim]")
+        except Exception as e:
+            logger.warning(f"HMM analysis failed: {e}")
+            console.print(f"\n[yellow]⚠️  HMM analysis unavailable: {e}[/yellow]")
+
+        # ========================================
+        # Interpretation Panel
+        # ========================================
+        interpretation = """
+[bold]📚 Understanding Regime Analysis:[/bold]
+
+[bold cyan]Trend Regime[/bold cyan] (MA-based)
+  • [green]Bull[/green]: Fast MA(20) > Slow MA(50) → Uptrend momentum
+  • [yellow]Sideways[/yellow]: MAs converged → Consolidation, no clear direction
+  • [red]Bear[/red]: Fast MA(20) < Slow MA(50) → Downtrend momentum
+
+[bold cyan]Volatility Regime[/bold cyan] (NATR-based)
+  • [green]Low Volatility[/green]: Stable price action, lower risk
+  • [yellow]High Volatility[/yellow]: Increased uncertainty, higher risk/reward
+
+[bold cyan]Regime Duration[/bold cyan]
+  • Longer duration = More established trend, higher confidence
+  • Short duration = Potential regime change, transition period
+
+[bold cyan]HMM Analysis[/bold cyan] (Advanced)
+  • Learns hidden market states from returns automatically
+  • Transition probabilities indicate regime persistence
+  • Expected returns show characteristic of each regime
+
+[yellow]⚠️  Important:[/yellow]
+Regime detection is based on historical patterns. It identifies the [bold]current[/bold]
+market state but does [bold]not[/bold] predict future regime changes or market direction.
+Use as one component of a broader analysis strategy.
+        """
+
+        console.print(Panel(interpretation.strip(), title="📖 Guide", border_style="blue"))
+
+    except Exception as e:
+        console.print(f"[red]Error displaying regime analysis: {e}[/red]")
+        logger.error(f"Regime analysis display error: {e}")
 
 
 def _display_company_info(stock_code: str, data: pd.DataFrame):
