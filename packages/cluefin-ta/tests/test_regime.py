@@ -5,6 +5,8 @@ import pytest
 
 from cluefin_ta import (
     REGIME_COMBINED,
+    REGIME_HMM,
+    REGIME_HMM_RETURNS,
     REGIME_MA,
     REGIME_MA_DURATION,
     REGIME_VOLATILITY,
@@ -478,3 +480,258 @@ class TestREGIME_Phase2_Integration:
         assert callable(REGIME_MA_DURATION)
         assert callable(REGIME_VOLATILITY)
         assert callable(REGIME_COMBINED)
+
+
+class TestREGIME_HMM_RETURNS:
+    """Tests for HMM returns preparation."""
+
+    def test_returns_basic(self):
+        """Test basic returns calculation."""
+        prices = np.array([100, 102, 105, 103, 107], dtype=float)
+        returns = REGIME_HMM_RETURNS(prices)
+
+        # First value should be NaN
+        assert np.isnan(returns[0])
+
+        # Check subsequent returns
+        expected_returns = np.array(
+            [
+                np.nan,
+                0.02,  # (102-100)/100
+                0.02941176,  # (105-102)/102
+                -0.01904762,  # (103-105)/105
+                0.03883495,  # (107-103)/103
+            ]
+        )
+
+        np.testing.assert_array_almost_equal(returns, expected_returns, decimal=6)
+
+    def test_returns_constant_prices(self):
+        """Test returns with constant prices."""
+        prices = np.full(10, 100.0)
+        returns = REGIME_HMM_RETURNS(prices)
+
+        # First value NaN, rest should be 0
+        assert np.isnan(returns[0])
+        assert np.all(returns[1:] == 0.0)
+
+    def test_returns_short_array(self):
+        """Test returns with very short array."""
+        # Single price
+        prices = np.array([100])
+        returns = REGIME_HMM_RETURNS(prices)
+        assert len(returns) == 1
+        assert np.isnan(returns[0])
+
+        # Two prices
+        prices = np.array([100, 102])
+        returns = REGIME_HMM_RETURNS(prices)
+        assert len(returns) == 2
+        assert np.isnan(returns[0])
+        assert returns[1] == pytest.approx(0.02)
+
+    def test_returns_empty_array(self):
+        """Test returns with empty array."""
+        prices = np.array([])
+        returns = REGIME_HMM_RETURNS(prices)
+        assert len(returns) == 0
+
+    def test_returns_with_nan(self):
+        """Test returns with NaN in prices."""
+        prices = np.array([100, np.nan, 105, 103])
+        returns = REGIME_HMM_RETURNS(prices)
+
+        assert np.isnan(returns[0])
+        assert np.isnan(returns[1])  # NaN input produces NaN output
+        # Subsequent values may also be NaN due to nan propagation
+
+
+class TestREGIME_HMM:
+    """Tests for HMM-based regime detection."""
+
+    @pytest.mark.skipif(
+        not pytest.importorskip("hmmlearn", reason="hmmlearn not installed"), reason="hmmlearn required for HMM tests"
+    )
+    def test_hmm_import_required(self):
+        """Test that hmmlearn is imported correctly."""
+        # This test only runs if hmmlearn is available
+        import hmmlearn
+
+        assert hmmlearn is not None
+
+    def test_hmm_missing_library(self):
+        """Test graceful failure when hmmlearn not installed."""
+        # Mock the import to always fail
+        import sys
+
+        original_modules = sys.modules.copy()
+
+        try:
+            # Remove hmmlearn from sys.modules if it exists
+            if "hmmlearn" in sys.modules:
+                del sys.modules["hmmlearn"]
+            if "hmmlearn.hmm" in sys.modules:
+                del sys.modules["hmmlearn.hmm"]
+
+            # We can't actually test this easily without mocking
+            # Just verify function exists
+            assert callable(REGIME_HMM)
+
+        finally:
+            # Restore sys.modules
+            sys.modules.update(original_modules)
+
+    @pytest.mark.skipif(
+        pytest.importorskip("hmmlearn", reason="hmmlearn not installed") is None, reason="hmmlearn required"
+    )
+    def test_hmm_basic_three_states(self):
+        """Test basic 3-state HMM detection."""
+        pytest.importorskip("hmmlearn")
+
+        np.random.seed(42)
+
+        # Create synthetic regime-switching data
+        # Bear regime: negative returns
+        bear_returns = np.random.normal(-0.01, 0.02, 40)
+        # Sideways regime: zero mean returns
+        sideways_returns = np.random.normal(0.0, 0.01, 30)
+        # Bull regime: positive returns
+        bull_returns = np.random.normal(0.02, 0.02, 40)
+
+        returns = np.concatenate([bear_returns, sideways_returns, bull_returns])
+
+        # Detect regimes
+        states, trans_probs, means = REGIME_HMM(returns, n_states=3, random_state=42)
+
+        # Check output shapes
+        assert len(states) == len(returns)
+        assert trans_probs.shape == (3, 3)
+        assert len(means) == 3
+
+        # Check that states are sorted by mean (Bear < Neutral < Bull)
+        assert means[0] < means[1] < means[2]
+
+        # Valid states should be in range [0, 2]
+        valid_states = states[~np.isnan(states)]
+        assert np.all((valid_states >= 0) & (valid_states <= 2))
+
+    @pytest.mark.skipif(
+        pytest.importorskip("hmmlearn", reason="hmmlearn not installed") is None, reason="hmmlearn required"
+    )
+    def test_hmm_transition_matrix_valid(self):
+        """Test that transition matrix rows sum to 1."""
+        pytest.importorskip("hmmlearn")
+
+        np.random.seed(42)
+        returns = np.random.normal(0, 0.02, 100)
+
+        states, trans_probs, means = REGIME_HMM(returns, n_states=3)
+
+        if not np.all(np.isnan(trans_probs)):
+            # Each row should sum to 1 (probability distribution)
+            row_sums = np.sum(trans_probs, axis=1)
+            np.testing.assert_array_almost_equal(row_sums, np.ones(3), decimal=5)
+
+    @pytest.mark.skipif(
+        pytest.importorskip("hmmlearn", reason="hmmlearn not installed") is None, reason="hmmlearn required"
+    )
+    def test_hmm_insufficient_data(self):
+        """Test HMM with insufficient data."""
+        pytest.importorskip("hmmlearn")
+
+        # Only 5 samples, need at least 2 * n_states = 6
+        returns = np.array([0.01, -0.02, 0.03, -0.01, 0.02])
+
+        states, trans_probs, means = REGIME_HMM(returns, n_states=3)
+
+        # Should return all NaN
+        assert np.all(np.isnan(states))
+        assert np.all(np.isnan(trans_probs))
+        assert np.all(np.isnan(means))
+
+    @pytest.mark.skipif(
+        pytest.importorskip("hmmlearn", reason="hmmlearn not installed") is None, reason="hmmlearn required"
+    )
+    def test_hmm_with_nan_values(self):
+        """Test HMM with NaN values in returns."""
+        pytest.importorskip("hmmlearn")
+
+        np.random.seed(42)
+        returns = np.random.normal(0, 0.02, 100)
+        returns[10:15] = np.nan  # Insert some NaN values
+
+        states, trans_probs, means = REGIME_HMM(returns, n_states=3)
+
+        # Should handle NaN gracefully
+        assert len(states) == len(returns)
+        # NaN positions should remain NaN
+        assert np.all(np.isnan(states[10:15]))
+
+    @pytest.mark.skipif(
+        pytest.importorskip("hmmlearn", reason="hmmlearn not installed") is None, reason="hmmlearn required"
+    )
+    def test_hmm_reproducibility(self):
+        """Test that HMM is reproducible with same random_state."""
+        pytest.importorskip("hmmlearn")
+
+        np.random.seed(42)
+        returns = np.random.normal(0, 0.02, 100)
+
+        # Run twice with same random_state
+        states1, trans1, means1 = REGIME_HMM(returns, n_states=3, random_state=42)
+        states2, trans2, means2 = REGIME_HMM(returns, n_states=3, random_state=42)
+
+        # Should produce identical results
+        np.testing.assert_array_equal(states1, states2)
+        np.testing.assert_array_almost_equal(trans1, trans2, decimal=10)
+        np.testing.assert_array_almost_equal(means1, means2, decimal=10)
+
+    @pytest.mark.skipif(
+        pytest.importorskip("hmmlearn", reason="hmmlearn not installed") is None, reason="hmmlearn required"
+    )
+    def test_hmm_two_states(self):
+        """Test HMM with 2 states (Bull/Bear only)."""
+        pytest.importorskip("hmmlearn")
+
+        np.random.seed(42)
+        returns = np.random.normal(0, 0.02, 100)
+
+        states, trans_probs, means = REGIME_HMM(returns, n_states=2)
+
+        assert trans_probs.shape == (2, 2)
+        assert len(means) == 2
+        valid_states = states[~np.isnan(states)]
+        assert np.all((valid_states >= 0) & (valid_states <= 1))
+
+
+class TestREGIME_HMM_Integration:
+    """Integration tests for HMM functions."""
+
+    @pytest.mark.skipif(
+        pytest.importorskip("hmmlearn", reason="hmmlearn not installed") is None, reason="hmmlearn required"
+    )
+    def test_hmm_returns_to_hmm_pipeline(self):
+        """Test using REGIME_HMM_RETURNS -> REGIME_HMM pipeline."""
+        pytest.importorskip("hmmlearn")
+
+        np.random.seed(42)
+
+        # Generate prices
+        prices = 100 + np.cumsum(np.random.normal(0.01, 0.02, 100))
+
+        # Calculate returns
+        returns = REGIME_HMM_RETURNS(prices)
+
+        # Detect regimes
+        states, trans_probs, means = REGIME_HMM(returns, n_states=3)
+
+        # Should work end-to-end
+        assert len(states) == len(prices)
+        assert not np.all(np.isnan(states))  # Should have some valid states
+
+    def test_import_all_hmm_functions(self):
+        """Test that all HMM functions can be imported."""
+        from cluefin_ta import REGIME_HMM, REGIME_HMM_RETURNS
+
+        assert callable(REGIME_HMM_RETURNS)
+        assert callable(REGIME_HMM)

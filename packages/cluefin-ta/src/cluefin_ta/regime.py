@@ -18,7 +18,14 @@ import numpy as np
 from cluefin_ta.overlap import SMA
 from cluefin_ta.volatility import NATR
 
-__all__ = ["REGIME_MA", "REGIME_MA_DURATION", "REGIME_VOLATILITY", "REGIME_COMBINED"]
+__all__ = [
+    "REGIME_MA",
+    "REGIME_MA_DURATION",
+    "REGIME_VOLATILITY",
+    "REGIME_COMBINED",
+    "REGIME_HMM",
+    "REGIME_HMM_RETURNS",
+]
 
 
 def REGIME_MA(
@@ -303,3 +310,194 @@ def REGIME_COMBINED(
     combined = np.where(np.isnan(trend_regime) | np.isnan(vol_regime), np.nan, combined)
 
     return trend_regime, vol_regime, combined
+
+
+def REGIME_HMM_RETURNS(close: np.ndarray) -> np.ndarray:
+    """
+    Prepare returns for HMM regime detection.
+
+    Calculates percentage returns from closing prices.
+    Returns are used as input for HMM-based regime detection.
+
+    Args:
+        close: Array of closing prices
+
+    Returns:
+        Array of percentage returns with NaN for first value
+
+    Examples:
+        >>> import numpy as np
+        >>> from cluefin_ta import REGIME_HMM_RETURNS
+        >>>
+        >>> prices = np.array([100, 102, 105, 103, 107])
+        >>> returns = REGIME_HMM_RETURNS(prices)
+        >>> print(returns)
+        [nan 0.02 0.02941176 -0.01904762 0.03883495]
+        >>>
+        >>> # First value is always NaN (no previous price for return calculation)
+
+    Notes:
+        - Returns are calculated as: (price[i] - price[i-1]) / price[i-1]
+        - First element is always NaN (no previous price available)
+        - Handles division by zero gracefully
+    """
+    close = np.asarray(close, dtype=np.float64)
+    n = len(close)
+
+    if n < 2:
+        return np.full(n, np.nan)
+
+    # Initialize returns array with NaN
+    returns = np.full(n, np.nan)
+
+    # Calculate percentage returns: (close[i] - close[i-1]) / close[i-1]
+    # Equivalent to: close[i] / close[i-1] - 1
+    with np.errstate(divide="ignore", invalid="ignore"):
+        returns[1:] = np.diff(close) / close[:-1]
+
+    return returns
+
+
+def REGIME_HMM(
+    returns: np.ndarray,
+    n_states: int = 3,
+    covariance_type: str = "full",
+    n_iter: int = 100,
+    random_state: int = 42,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Hidden Markov Model-based Regime Detection.
+
+    Uses Gaussian HMM to identify hidden market regimes from returns data.
+    The model automatically learns regime characteristics (means, variances, transitions)
+    from historical data without manual threshold setting.
+
+    Args:
+        returns: Array of price returns (use REGIME_HMM_RETURNS to prepare)
+        n_states: Number of hidden states/regimes (default: 3)
+                 Typically 3 for Bull/Neutral/Bear
+        covariance_type: HMM covariance type (default: "full")
+                        Options: "full", "diag", "spherical", "tied"
+        n_iter: Maximum HMM training iterations (default: 100)
+        random_state: Random seed for reproducibility (default: 42)
+
+    Returns:
+        Tuple of (regime_states, transition_probs, state_means)
+
+        regime_states: Array of regime states (0 to n_states-1)
+                      Sorted by mean return: 0=Bear (lowest), 1=Neutral, 2=Bull (highest)
+        transition_probs: State transition probability matrix (n_states x n_states)
+                         Element [i,j] = P(state j at t+1 | state i at t)
+        state_means: Mean return for each state, sorted ascending
+                    Useful for interpreting what each state represents
+
+    Examples:
+        >>> import numpy as np
+        >>> from cluefin_ta import REGIME_HMM, REGIME_HMM_RETURNS
+        >>>
+        >>> # Create price data with regime changes
+        >>> prices = np.concatenate(
+        ...     [
+        ...         100 + np.cumsum(np.random.normal(-0.01, 0.02, 50)),  # Bear
+        ...         100 + np.cumsum(np.random.normal(0.02, 0.02, 50)),  # Bull
+        ...     ]
+        ... )
+        >>>
+        >>> # Prepare returns
+        >>> returns = REGIME_HMM_RETURNS(prices)
+        >>>
+        >>> # Detect regimes
+        >>> states, trans_probs, means = REGIME_HMM(returns, n_states=3)
+        >>>
+        >>> print(f"State means: {means}")  # Shows avg return for each regime
+        >>> print(f"Current regime: {states[-1]}")  # Last detected regime
+        >>> print(f"Transition probs shape: {trans_probs.shape}")  # (3, 3)
+
+    Raises:
+        ImportError: If hmmlearn is not installed
+
+    Notes:
+        - Requires hmmlearn library: `uv add --optional hmm hmmlearn`
+        - Minimum data requirement: 2 * n_states samples
+        - States are automatically sorted by mean return for interpretability
+        - NaN values in returns are handled by fitting on valid data only
+        - Returns NaN arrays if insufficient valid data
+        - Transition probabilities can be used to predict regime persistence
+    """
+    # Check if hmmlearn is available
+    try:
+        from hmmlearn import hmm
+    except ImportError as e:
+        raise ImportError(
+            "hmmlearn is required for HMM regime detection. "
+            "Install with: uv add --optional hmm hmmlearn\n"
+            "Or for development: uv sync --group dev"
+        ) from e
+
+    returns = np.asarray(returns, dtype=np.float64)
+    n = len(returns)
+
+    # Handle insufficient data
+    if n < 2 * n_states:
+        # Not enough data for reliable HMM
+        return (np.full(n, np.nan), np.full((n_states, n_states), np.nan), np.full(n_states, np.nan))
+
+    # Remove NaN values for HMM fitting
+    valid_mask = ~np.isnan(returns)
+    valid_returns = returns[valid_mask]
+
+    if len(valid_returns) < 2 * n_states:
+        # Not enough valid data
+        return (np.full(n, np.nan), np.full((n_states, n_states), np.nan), np.full(n_states, np.nan))
+
+    # Reshape for hmmlearn (expects 2D array: [n_samples, n_features])
+    valid_returns_2d = valid_returns.reshape(-1, 1)
+
+    # Fit Gaussian HMM
+    try:
+        model = hmm.GaussianHMM(
+            n_components=n_states,
+            covariance_type=covariance_type,
+            n_iter=n_iter,
+            random_state=random_state,
+        )
+
+        model.fit(valid_returns_2d)
+
+        # Predict hidden states
+        hidden_states = model.predict(valid_returns_2d)
+
+    except Exception as e:
+        # HMM fitting failed (convergence issues, etc.)
+        import warnings
+
+        warnings.warn(
+            f"HMM fitting failed: {e}. Returning NaN.", UserWarning, stacklevel=2
+        )
+        return (np.full(n, np.nan), np.full((n_states, n_states), np.nan), np.full(n_states, np.nan))
+
+    # Map hidden states back to original array (with NaN preserved)
+    regime_states = np.full(n, np.nan)
+    regime_states[valid_mask] = hidden_states
+
+    # Extract transition probabilities and state means
+    transition_probs = model.transmat_
+    state_means = model.means_.flatten()
+
+    # Sort states by mean return (Bear=0, Neutral=1, Bull=2)
+    # This makes interpretation easier and consistent
+    sorted_indices = np.argsort(state_means)
+
+    # Create mapping from old states to new sorted states
+    state_mapping = np.empty(n_states, dtype=int)
+    state_mapping[sorted_indices] = np.arange(n_states)
+
+    # Remap regime states to sorted order
+    regime_states_valid = regime_states[valid_mask]
+    regime_states[valid_mask] = state_mapping[regime_states_valid.astype(int)]
+
+    # Rearrange transition matrix and means to match sorted states
+    transition_probs = transition_probs[sorted_indices][:, sorted_indices]
+    state_means = state_means[sorted_indices]
+
+    return regime_states, transition_probs, state_means
