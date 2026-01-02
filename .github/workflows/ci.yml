@@ -140,7 +140,7 @@ jobs:
 
       - name: Generate coverage report
         run: |
-          uv run coverage run -m pytest -m "not integration"
+          uv run coverage run -m pytest -m "not integration and not slow"
           uv run coverage xml
       
       - name: Upload coverage to Codecov
