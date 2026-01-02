@@ -102,7 +102,12 @@ def rolling_minmax(high: np.ndarray, low: np.ndarray, period: int) -> tuple[np.n
 
 def true_range_loop(high: np.ndarray, low: np.ndarray, close: np.ndarray) -> np.ndarray:
     """
-    True Range calculation loop.
+    True Range calculation (vectorized).
+
+    True Range is the greatest of:
+    - Current High - Current Low
+    - |Current High - Previous Close|
+    - |Current Low - Previous Close|
 
     Args:
         high: Array of high prices
@@ -115,12 +120,16 @@ def true_range_loop(high: np.ndarray, low: np.ndarray, close: np.ndarray) -> np.
     n = len(close)
     result = np.full(n, np.nan)
 
-    for i in range(1, n):
-        hl = high[i] - low[i]
-        hc = abs(high[i] - close[i - 1])
-        lc = abs(low[i] - close[i - 1])
-        result[i] = max(hl, hc, lc)
+    if n < 2:
+        return result
 
+    # Vectorized calculation for indices 1 to n
+    prev_close = close[:-1]
+    hl = high[1:] - low[1:]
+    hc = np.abs(high[1:] - prev_close)
+    lc = np.abs(low[1:] - prev_close)
+
+    result[1:] = np.maximum(np.maximum(hl, hc), lc)
     return result
 
 

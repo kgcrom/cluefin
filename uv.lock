@@ -334,14 +334,10 @@ dependencies = [
 hmm = [
     { name = "hmmlearn" },
 ]
-numba = [
-    { name = "numba" },
-]
 
 [package.dev-dependencies]
 dev = [
     { name = "hmmlearn" },
-    { name = "numba" },
     { name = "pytest" },
     { name = "ta-lib" },
 ]
@@ -349,15 +345,13 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "hmmlearn", marker = "extra == 'hmm'", specifier = ">=0.3.0" },
-    { name = "numba", marker = "extra == 'numba'", specifier = ">=0.56.0" },
     { name = "numpy", specifier = ">=1.20.0" },
 ]
-provides-extras = ["numba", "hmm"]
+provides-extras = ["hmm"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "hmmlearn", specifier = ">=0.3.0" },
-    { name = "numba", specifier = ">=0.56.0" },
     { name = "pytest", specifier = ">=7.0" },
     { name = "ta-lib", specifier = ">=0.4.0" },
 ]

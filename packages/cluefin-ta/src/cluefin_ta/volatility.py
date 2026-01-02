@@ -9,7 +9,7 @@ Functions:
 
 import numpy as np
 
-from cluefin_ta._core import get_impl
+from cluefin_ta._core import true_range_loop, wilder_smooth
 
 
 def TRANGE(
@@ -41,9 +41,7 @@ def TRANGE(
     if n < 2:
         return np.full(n, np.nan)
 
-    # Use optimized implementation
-    impl = get_impl()
-    return impl.true_range_loop(high, low, close)
+    return true_range_loop(high, low, close)
 
 
 def ATR(
@@ -80,9 +78,8 @@ def ATR(
     # First ATR value is SMA of True Range
     initial_atr = np.mean(tr[1 : timeperiod + 1])
 
-    # Use optimized Wilder's smoothing
-    impl = get_impl()
-    return impl.wilder_smooth(tr, timeperiod, initial_atr, timeperiod)
+    # Apply Wilder's smoothing
+    return wilder_smooth(tr, timeperiod, initial_atr, timeperiod)
 
 
 def NATR(

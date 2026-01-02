@@ -13,7 +13,7 @@ Functions:
 
 import numpy as np
 
-from cluefin_ta._core import get_impl
+from cluefin_ta._core import ema_loop, kama_loop, rolling_std
 
 
 def SMA(close: np.ndarray, timeperiod: int = 30) -> np.ndarray:
@@ -64,9 +64,7 @@ def EMA(close: np.ndarray, timeperiod: int = 30) -> np.ndarray:
     # Initialize with SMA for the first EMA value
     initial_sma = np.mean(close[:timeperiod])
 
-    # Use optimized implementation
-    impl = get_impl()
-    return impl.ema_loop(close, timeperiod, alpha, initial_sma)
+    return ema_loop(close, timeperiod, alpha, initial_sma)
 
 
 def WMA(close: np.ndarray, timeperiod: int = 30) -> np.ndarray:
@@ -206,8 +204,7 @@ def KAMA(close: np.ndarray, timeperiod: int = 30) -> np.ndarray:
     fast_sc = 2.0 / (2 + 1)  # 2 / 3
     slow_sc = 2.0 / (30 + 1)  # 2 / 31
 
-    impl = get_impl()
-    return impl.kama_loop(close, timeperiod, fast_sc, slow_sc)
+    return kama_loop(close, timeperiod, fast_sc, slow_sc)
 
 
 def BBANDS(
@@ -240,9 +237,8 @@ def BBANDS(
     # Calculate middle band (SMA)
     middle = SMA(close, timeperiod)
 
-    # Use optimized rolling std
-    impl = get_impl()
-    std = impl.rolling_std(close, timeperiod)
+    # Calculate rolling standard deviation
+    std = rolling_std(close, timeperiod)
 
     upper = middle + nbdevup * std
     lower = middle - nbdevdn * std
