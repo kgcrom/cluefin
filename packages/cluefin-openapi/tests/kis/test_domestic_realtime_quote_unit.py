@@ -130,50 +130,81 @@ class TestParseExecutionData:
     """Test parse_execution_data method."""
 
     def test_parse_execution_data_returns_model(self, sample_execution_data):
-        """Test that parse_execution_data returns DomesticRealtimeExecutionItem."""
+        """Test that parse_execution_data returns list of DomesticRealtimeExecutionItem."""
         result = DomesticRealtimeQuote.parse_execution_data(sample_execution_data)
-        assert isinstance(result, DomesticRealtimeExecutionItem)
+        assert isinstance(result, list)
+        assert len(result) == 1
+        assert isinstance(result[0], DomesticRealtimeExecutionItem)
 
     def test_parse_execution_data_field_values(self, sample_execution_data):
         """Test that parsed data has correct field values."""
         result = DomesticRealtimeQuote.parse_execution_data(sample_execution_data)
 
-        assert result.mksc_shrn_iscd == "005930"
-        assert result.stck_cntg_hour == "093000"
-        assert result.stck_prpr == "70000"
-        assert result.prdy_vrss_sign == "2"
-        assert result.prdy_vrss == "1000"
-        assert result.prdy_ctrt == "1.45"
-        assert result.acml_vol == "5000000"
-        assert result.cttr == "118.00"
-        assert result.bsop_date == "20251224"
-        assert result.trht_yn == "N"
-        assert result.vi_stnd_prc == "68000"
+        assert result[0].mksc_shrn_iscd == "005930"
+        assert result[0].stck_cntg_hour == "093000"
+        assert result[0].stck_prpr == "70000"
+        assert result[0].prdy_vrss_sign == "2"
+        assert result[0].prdy_vrss == "1000"
+        assert result[0].prdy_ctrt == "1.45"
+        assert result[0].acml_vol == "5000000"
+        assert result[0].cttr == "118.00"
+        assert result[0].bsop_date == "20251224"
+        assert result[0].trht_yn == "N"
+        assert result[0].vi_stnd_prc == "68000"
 
-    def test_parse_execution_data_wrong_field_count_raises_error(self):
-        """Test that wrong field count raises ValueError."""
+    def test_parse_execution_data_insufficient_fields_raises_error(self):
+        """Test that insufficient fields raises ValueError."""
         short_data = ["005930", "093000", "70000"]  # Only 3 fields
 
         with pytest.raises(ValueError) as exc_info:
             DomesticRealtimeQuote.parse_execution_data(short_data)
 
-        assert "Expected 46 fields, got 3" in str(exc_info.value)
+        assert "Expected at least 46 fields, got 3" in str(exc_info.value)
 
     def test_parse_execution_data_empty_list_raises_error(self):
         """Test that empty list raises ValueError."""
         with pytest.raises(ValueError) as exc_info:
             DomesticRealtimeQuote.parse_execution_data([])
 
-        assert "Expected 46 fields, got 0" in str(exc_info.value)
+        assert "Expected at least 46 fields, got 0" in str(exc_info.value)
 
-    def test_parse_execution_data_too_many_fields_raises_error(self):
-        """Test that too many fields raises ValueError."""
-        long_data = ["value"] * 50  # 50 fields instead of 46
+    def test_parse_execution_data_batched_12_records(self, sample_execution_data):
+        """Test parsing 12 batched records (12 × 46 = 552 fields)."""
+        batched_data = []
+        for i in range(12):
+            record = sample_execution_data.copy()
+            # Vary price field to distinguish records
+            record[2] = str(70000 + i * 100)
+            batched_data.extend(record)
 
-        with pytest.raises(ValueError) as exc_info:
-            DomesticRealtimeQuote.parse_execution_data(long_data)
+        result = DomesticRealtimeQuote.parse_execution_data(batched_data)
 
-        assert "Expected 46 fields, got 50" in str(exc_info.value)
+        assert isinstance(result, list)
+        assert len(result) == 12
+        for i, item in enumerate(result):
+            assert isinstance(item, DomesticRealtimeExecutionItem)
+            assert item.stck_prpr == str(70000 + i * 100)
+
+    def test_parse_execution_data_single_record_with_extra_fields(self, sample_execution_data):
+        """Test single record with extra fields (46 + 3 = 49 fields) - forward compatibility."""
+        data = sample_execution_data + ["extra1", "extra2", "extra3"]
+
+        result = DomesticRealtimeQuote.parse_execution_data(data)
+
+        assert isinstance(result, list)
+        assert len(result) == 1
+        # Extra fields should be ignored, first 46 used
+        assert result[0].mksc_shrn_iscd == "005930"
+        assert result[0].vi_stnd_prc == "68000"
+
+    def test_parse_execution_data_large_batch(self):
+        """Test parsing large batch (50 × 46 = 2300 fields)."""
+        data = ["value"] * (50 * 46)
+
+        result = DomesticRealtimeQuote.parse_execution_data(data)
+
+        assert isinstance(result, list)
+        assert len(result) == 50
 
 
 class TestDomesticRealtimeExecutionItem:
@@ -329,23 +360,25 @@ class TestParseOrderbookData:
     """Test parse_orderbook_data method."""
 
     def test_parse_orderbook_data_returns_model(self, sample_orderbook_data):
-        """Test that parse_orderbook_data returns DomesticRealtimeOrderbookItem."""
+        """Test that parse_orderbook_data returns list of DomesticRealtimeOrderbookItem."""
         result = DomesticRealtimeQuote.parse_orderbook_data(sample_orderbook_data)
-        assert isinstance(result, DomesticRealtimeOrderbookItem)
+        assert isinstance(result, list)
+        assert len(result) == 1
+        assert isinstance(result[0], DomesticRealtimeOrderbookItem)
 
     def test_parse_orderbook_data_field_values(self, sample_orderbook_data):
         """Test that parsed data has correct field values."""
         result = DomesticRealtimeQuote.parse_orderbook_data(sample_orderbook_data)
 
-        assert result.mksc_shrn_iscd == "005930"
-        assert result.bsop_hour == "093000"
-        assert result.hour_cls_code == "0"
-        assert result.askp1 == "70100"
-        assert result.bidp1 == "70000"
-        assert result.total_askp_rsqn == "550000"
-        assert result.total_bidp_rsqn == "600000"
-        assert result.antc_cnpr == "70050"
-        assert result.acml_vol == "5000000"
+        assert result[0].mksc_shrn_iscd == "005930"
+        assert result[0].bsop_hour == "093000"
+        assert result[0].hour_cls_code == "0"
+        assert result[0].askp1 == "70100"
+        assert result[0].bidp1 == "70000"
+        assert result[0].total_askp_rsqn == "550000"
+        assert result[0].total_bidp_rsqn == "600000"
+        assert result[0].antc_cnpr == "70050"
+        assert result[0].acml_vol == "5000000"
 
     def test_parse_orderbook_data_wrong_field_count_raises_error(self):
         """Test that wrong field count raises ValueError."""
@@ -354,14 +387,56 @@ class TestParseOrderbookData:
         with pytest.raises(ValueError) as exc_info:
             DomesticRealtimeQuote.parse_orderbook_data(short_data)
 
-        assert "Expected 59 fields, got 3" in str(exc_info.value)
+        assert "Expected at least 59 fields, got 3" in str(exc_info.value)
 
     def test_parse_orderbook_data_empty_list_raises_error(self):
         """Test that empty list raises ValueError."""
         with pytest.raises(ValueError) as exc_info:
             DomesticRealtimeQuote.parse_orderbook_data([])
 
-        assert "Expected 59 fields, got 0" in str(exc_info.value)
+        assert "Expected at least 59 fields, got 0" in str(exc_info.value)
+
+    def test_parse_orderbook_data_batched_10_records(self, sample_orderbook_data):
+        """Test parsing 10 batched orderbook records (10 × 59 = 590 fields)."""
+        batched_data = []
+        for i in range(10):
+            record = sample_orderbook_data.copy()
+            # Vary askp1 to distinguish records
+            record[3] = str(70100 + i * 10)
+            batched_data.extend(record)
+
+        result = DomesticRealtimeQuote.parse_orderbook_data(batched_data)
+
+        assert isinstance(result, list)
+        assert len(result) == 10
+        for i, item in enumerate(result):
+            assert isinstance(item, DomesticRealtimeOrderbookItem)
+            assert item.askp1 == str(70100 + i * 10)
+
+    def test_parse_orderbook_data_single_record_with_extra_fields(self, sample_orderbook_data):
+        """Test single record with 62 fields (59 + 3 extra) - forward compatibility."""
+        # Simulate API returning 62 fields (actual case mentioned in docs)
+        data = sample_orderbook_data + ["extra1", "extra2", "extra3"]
+
+        result = DomesticRealtimeQuote.parse_orderbook_data(data)
+
+        assert isinstance(result, list)
+        assert len(result) == 1
+        # Extra fields should be ignored, first 59 used
+        assert result[0].mksc_shrn_iscd == "005930"
+        assert result[0].stck_deal_cls_code == "00"
+
+    def test_parse_orderbook_data_batched_with_extra_fields_per_record(self):
+        """Test batched records where each has extra fields."""
+        # 5 records × 62 fields per record (59 + 3 extras) = 310 total
+        # Should parse floor(310 / 59) = 5 complete records
+        data = ["value"] * (5 * 62)
+
+        result = DomesticRealtimeQuote.parse_orderbook_data(data)
+
+        assert isinstance(result, list)
+        assert len(result) == 5
+        assert all(isinstance(item, DomesticRealtimeOrderbookItem) for item in result)
 
 
 class TestDomesticRealtimeOrderbookItem:

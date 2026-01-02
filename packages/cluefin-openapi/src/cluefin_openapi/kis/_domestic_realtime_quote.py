@@ -42,8 +42,9 @@ class DomesticRealtimeQuote:
             # Process events
             async for event in socket_client.events():
                 if event.event_type == "data" and event.tr_id == DomesticRealtimeQuote.TR_ID_EXECUTION:
-                    execution = realtime.parse_execution_data(event.data["values"])
-                    print(f"Price: {execution.stck_prpr}, Volume: {execution.cntg_vol}")
+                    executions = realtime.parse_execution_data(event.data["values"])
+                    for execution in executions:
+                        print(f"Price: {execution.stck_prpr}, Volume: {execution.cntg_vol}")
         ```
     """
 
@@ -76,29 +77,68 @@ class DomesticRealtimeQuote:
         await self.socket_client.unsubscribe(self.TR_ID_EXECUTION, stock_code)
 
     @staticmethod
-    def parse_execution_data(data: List[str]) -> DomesticRealtimeExecutionItem:
-        """Parse WebSocket data into DomesticRealtimeExecutionItem.
+    def parse_execution_data(data: List[str]) -> List[DomesticRealtimeExecutionItem]:
+        """Parse WebSocket data into list of DomesticRealtimeExecutionItem.
 
-        WebSocket data is received as a list of 46 string values
-        separated by "^" delimiter.
+        WebSocket data is received as a list of string values separated by "^" delimiter.
+        The API may send batched updates (multiple records concatenated).
+        This method parses ALL records and returns them as a list.
 
         Args:
-            data: List of 46 string values from WebSocket message
+            data: List of string values from WebSocket message.
+                  - Single record: 46 fields
+                  - Batched: N×46 fields (e.g., 552 = 12×46)
+                  - With extra fields: 46+ per record (forward compatible)
 
         Returns:
-            Parsed DomesticRealtimeExecutionItem model
+            List of parsed DomesticRealtimeExecutionItem models.
+            Always returns a list, even for single records.
 
         Raises:
-            ValueError: If data does not contain exactly 46 fields
+            ValueError: If data has insufficient fields (< 46)
+
+        Example:
+            ```python
+            # Single record
+            data = ["005930", "093000", "70000", ...]  # 46 fields
+            items = parse_execution_data(data)
+            assert len(items) == 1
+
+            # Batched records
+            data = [...] * 12  # 552 fields = 12 records
+            items = parse_execution_data(data)
+            assert len(items) == 12
+
+            for item in items:
+                print(f"Price: {item.stck_prpr}")
+            ```
         """
-        if len(data) != len(EXECUTION_FIELD_NAMES):
+        field_count = len(EXECUTION_FIELD_NAMES)
+
+        # Validate minimum field count
+        if len(data) < field_count:
             raise ValueError(
-                f"Expected {len(EXECUTION_FIELD_NAMES)} fields, got {len(data)}. "
-                f"First field: {data[0] if data else 'empty'}"
+                f"Expected at least {field_count} fields, got {len(data)}. First field: {data[0] if data else 'empty'}"
             )
 
-        field_dict = dict(zip(EXECUTION_FIELD_NAMES, data, strict=False))
-        return DomesticRealtimeExecutionItem.model_validate(field_dict)
+        # Calculate number of complete records
+        num_records = len(data) // field_count
+
+        # Parse all complete records
+        results = []
+        for i in range(num_records):
+            start_idx = i * field_count
+            end_idx = start_idx + field_count
+
+            # Slice to expected field count (handles extra fields per record)
+            record_data = data[start_idx:end_idx]
+
+            # Create field dictionary and validate
+            field_dict = dict(zip(EXECUTION_FIELD_NAMES, record_data, strict=False))
+            item = DomesticRealtimeExecutionItem.model_validate(field_dict)
+            results.append(item)
+
+        return results
 
     async def subscribe_orderbook(self, stock_code: str) -> None:
         """Subscribe to real-time orderbook data.
@@ -117,26 +157,66 @@ class DomesticRealtimeQuote:
         await self.socket_client.unsubscribe(self.TR_ID_ORDERBOOK, stock_code)
 
     @staticmethod
-    def parse_orderbook_data(data: List[str]) -> DomesticRealtimeOrderbookItem:
-        """Parse WebSocket data into DomesticRealtimeOrderbookItem.
+    def parse_orderbook_data(data: List[str]) -> List[DomesticRealtimeOrderbookItem]:
+        """Parse WebSocket data into list of DomesticRealtimeOrderbookItem.
 
-        WebSocket data is received as a list of 59 string values
-        separated by "^" delimiter.
+        WebSocket data is received as a list of string values separated by "^" delimiter.
+        The API may send batched updates (multiple records concatenated).
+        This method parses ALL records and returns them as a list.
+
+        Note: The API may return extra fields beyond the documented 59 fields.
+        This parser will use the first 59 fields per record and ignore any extras.
+        This provides forward compatibility with future API schema changes.
 
         Args:
-            data: List of 59 string values from WebSocket message
+            data: List of string values from WebSocket message.
+                  - Single record: 59+ fields
+                  - Batched: N×59+ fields
+                  - With schema changes: 62+ per record (forward compatible)
 
         Returns:
-            Parsed DomesticRealtimeOrderbookItem model
+            List of parsed DomesticRealtimeOrderbookItem models.
+            Always returns a list, even for single records.
 
         Raises:
-            ValueError: If data does not contain exactly 59 fields
+            ValueError: If data has insufficient fields (< 59)
+
+        Example:
+            ```python
+            # Single record with extra fields
+            data = [...] * 62  # 62 fields (59 used, 3 ignored)
+            items = parse_orderbook_data(data)
+            assert len(items) == 1
+
+            # Batched records
+            data = [...] * (10 * 59)  # 590 fields = 10 records
+            items = parse_orderbook_data(data)
+            assert len(items) == 10
+            ```
         """
-        if len(data) != len(ORDERBOOK_FIELD_NAMES):
+        field_count = len(ORDERBOOK_FIELD_NAMES)
+
+        # Validate minimum field count
+        if len(data) < field_count:
             raise ValueError(
-                f"Expected {len(ORDERBOOK_FIELD_NAMES)} fields, got {len(data)}. "
-                f"First field: {data[0] if data else 'empty'}"
+                f"Expected at least {field_count} fields, got {len(data)}. First field: {data[0] if data else 'empty'}"
             )
 
-        field_dict = dict(zip(ORDERBOOK_FIELD_NAMES, data, strict=False))
-        return DomesticRealtimeOrderbookItem.model_validate(field_dict)
+        # Calculate number of complete records
+        num_records = len(data) // field_count
+
+        # Parse all complete records
+        results = []
+        for i in range(num_records):
+            start_idx = i * field_count
+            end_idx = start_idx + field_count
+
+            # Slice to expected field count (handles extra fields per record)
+            record_data = data[start_idx:end_idx]
+
+            # Create field dictionary and validate
+            field_dict = dict(zip(ORDERBOOK_FIELD_NAMES, record_data, strict=False))
+            item = DomesticRealtimeOrderbookItem.model_validate(field_dict)
+            results.append(item)
+
+        return results

@@ -10,6 +10,8 @@ for reliable real-time data. Outside market hours, data may not be available.
 import asyncio
 import os
 import re
+from datetime import datetime, time
+from zoneinfo import ZoneInfo
 
 import dotenv
 import pytest
@@ -30,11 +32,24 @@ def _markexpr_includes(markexpr: str, name: str) -> bool:
     return re.search(rf"(?<![A-Za-z0-9_]){re.escape(name)}(?![A-Za-z0-9_])", markexpr) is not None
 
 
+def _is_kst_market_hours() -> bool:
+    now = datetime.now(ZoneInfo("Asia/Seoul"))
+    if now.weekday() >= 5:
+        return False
+    return time(9, 0) <= now.time() <= time(15, 30)
+
+
 @pytest.fixture(autouse=True, scope="module")
 def _require_integration_and_realtime(request):
     markexpr = request.config.option.markexpr or ""
     if not (_markexpr_includes(markexpr, "integration") and _markexpr_includes(markexpr, "realtime")):
         pytest.skip('Requires -m "integration and realtime"')
+
+
+@pytest.fixture(autouse=True, scope="module")
+def _require_kst_market_hours():
+    if not _is_kst_market_hours():
+        pytest.skip("Requires KST market hours (Mon-Fri 09:00-15:30)")
 
 
 @pytest.fixture(scope="module")
@@ -69,7 +84,6 @@ def socket_client_params(auth_dev, approval_key):
     }
 
 
-@pytest.mark.socket_integration
 @pytest.mark.asyncio
 async def test_websocket_connection(socket_client_params):
     """Test WebSocket connection to KIS server."""
@@ -84,7 +98,6 @@ async def test_websocket_connection(socket_client_params):
         pytest.fail(f"WebSocket connection failed: {e}")
 
 
-@pytest.mark.socket_integration
 @pytest.mark.asyncio
 async def test_subscribe_execution(socket_client_params):
     """Test subscribing to real-time execution data."""
@@ -102,7 +115,6 @@ async def test_subscribe_execution(socket_client_params):
         pytest.fail(f"Subscription failed: {e}")
 
 
-@pytest.mark.socket_integration
 @pytest.mark.asyncio
 async def test_unsubscribe_execution(socket_client_params):
     """Test unsubscribing from real-time execution data."""
@@ -122,7 +134,6 @@ async def test_unsubscribe_execution(socket_client_params):
         pytest.fail(f"Unsubscription failed: {e}")
 
 
-@pytest.mark.socket_integration
 @pytest.mark.asyncio
 async def test_receive_execution_data(socket_client_params):
     """Test receiving real-time execution data.
@@ -144,10 +155,15 @@ async def test_receive_execution_data(socket_client_params):
                 nonlocal data_received
                 async for event in client.events():
                     if event.event_type == "data" and event.tr_id == DomesticRealtimeQuote.TR_ID_EXECUTION:
-                        # Parse the data
-                        execution = realtime.parse_execution_data(event.data["values"])
+                        # Parse the data (returns list of items)
+                        executions = realtime.parse_execution_data(event.data["values"])
 
-                        # Verify it's a valid model
+                        # Verify it's a valid list
+                        assert isinstance(executions, list)
+                        assert len(executions) >= 1
+                        execution = executions[0]
+
+                        # Verify the first item is a valid model
                         assert isinstance(execution, DomesticRealtimeExecutionItem)
                         assert execution.mksc_shrn_iscd == "005930"
                         assert execution.stck_prpr != ""  # Should have a price
@@ -170,7 +186,6 @@ async def test_receive_execution_data(socket_client_params):
         pytest.fail(f"Data reception failed: {e}")
 
 
-@pytest.mark.socket_integration
 @pytest.mark.asyncio
 async def test_multiple_subscriptions(socket_client_params):
     """Test subscribing to multiple stocks simultaneously."""
@@ -200,7 +215,6 @@ async def test_multiple_subscriptions(socket_client_params):
         pytest.fail(f"Multiple subscription test failed: {e}")
 
 
-@pytest.mark.socket_integration
 @pytest.mark.asyncio
 async def test_subscription_events(socket_client_params):
     """Test that subscription events are emitted correctly."""
@@ -237,7 +251,6 @@ async def test_subscription_events(socket_client_params):
 # ===== Orderbook (H0STASP0) Integration Tests =====
 
 
-@pytest.mark.socket_integration
 @pytest.mark.asyncio
 async def test_subscribe_orderbook(socket_client_params):
     """Test subscribing to real-time orderbook data."""
@@ -255,7 +268,6 @@ async def test_subscribe_orderbook(socket_client_params):
         pytest.fail(f"Orderbook subscription failed: {e}")
 
 
-@pytest.mark.socket_integration
 @pytest.mark.asyncio
 async def test_unsubscribe_orderbook(socket_client_params):
     """Test unsubscribing from real-time orderbook data."""
@@ -275,7 +287,6 @@ async def test_unsubscribe_orderbook(socket_client_params):
         pytest.fail(f"Orderbook unsubscription failed: {e}")
 
 
-@pytest.mark.socket_integration
 @pytest.mark.asyncio
 async def test_receive_orderbook_data(socket_client_params):
     """Test receiving real-time orderbook data.
@@ -298,10 +309,15 @@ async def test_receive_orderbook_data(socket_client_params):
                 nonlocal data_received
                 async for event in client.events():
                     if event.event_type == "data" and event.tr_id == DomesticRealtimeQuote.TR_ID_ORDERBOOK:
-                        # Parse the data
-                        orderbook = realtime.parse_orderbook_data(event.data["values"])
+                        # Parse the data (returns list of items)
+                        orderbooks = realtime.parse_orderbook_data(event.data["values"])
 
-                        # Verify it's a valid model
+                        # Verify it's a valid list
+                        assert isinstance(orderbooks, list)
+                        assert len(orderbooks) >= 1
+                        orderbook = orderbooks[0]
+
+                        # Verify the first item is a valid model
                         assert isinstance(orderbook, DomesticRealtimeOrderbookItem)
                         assert orderbook.mksc_shrn_iscd == "005930"
                         assert orderbook.askp1 != ""  # Should have ask price
@@ -325,7 +341,6 @@ async def test_receive_orderbook_data(socket_client_params):
         pytest.fail(f"Orderbook data reception failed: {e}")
 
 
-@pytest.mark.socket_integration
 @pytest.mark.asyncio
 async def test_multiple_orderbook_subscriptions(socket_client_params):
     """Test subscribing to multiple stocks' orderbook simultaneously."""
@@ -355,7 +370,6 @@ async def test_multiple_orderbook_subscriptions(socket_client_params):
         pytest.fail(f"Multiple orderbook subscription test failed: {e}")
 
 
-@pytest.mark.socket_integration
 @pytest.mark.asyncio
 async def test_orderbook_subscription_events(socket_client_params):
     """Test that orderbook subscription events are emitted correctly."""
@@ -389,7 +403,6 @@ async def test_orderbook_subscription_events(socket_client_params):
         pytest.fail(f"Orderbook subscription event test failed: {e}")
 
 
-@pytest.mark.socket_integration
 @pytest.mark.asyncio
 async def test_combined_execution_and_orderbook(socket_client_params):
     """Test subscribing to both execution and orderbook data simultaneously."""
@@ -414,12 +427,16 @@ async def test_combined_execution_and_orderbook(socket_client_params):
                 async for event in client.events():
                     if event.event_type == "data":
                         if event.tr_id == DomesticRealtimeQuote.TR_ID_EXECUTION:
-                            execution = realtime.parse_execution_data(event.data["values"])
-                            assert isinstance(execution, DomesticRealtimeExecutionItem)
+                            executions = realtime.parse_execution_data(event.data["values"])
+                            assert isinstance(executions, list)
+                            assert len(executions) >= 1
+                            assert isinstance(executions[0], DomesticRealtimeExecutionItem)
                             data_received["execution"] = True
                         elif event.tr_id == DomesticRealtimeQuote.TR_ID_ORDERBOOK:
-                            orderbook = realtime.parse_orderbook_data(event.data["values"])
-                            assert isinstance(orderbook, DomesticRealtimeOrderbookItem)
+                            orderbooks = realtime.parse_orderbook_data(event.data["values"])
+                            assert isinstance(orderbooks, list)
+                            assert len(orderbooks) >= 1
+                            assert isinstance(orderbooks[0], DomesticRealtimeOrderbookItem)
                             data_received["orderbook"] = True
 
                         # Exit if we received at least one type of data
