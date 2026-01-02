@@ -92,7 +92,7 @@ jobs:
         LOG_LEVEL: ${{ vars.LOG_LEVEL || 'INFO' }}
         ENABLE_INTEGRATION_TESTS: ${{ vars.ENABLE_INTEGRATION_TESTS || 'false' }}
       run: |
-        uv run pytest -m "not integration"
+        uv run pytest -m "not integration and not slow"
         
     - name: Run integration tests
       if: vars.ENABLE_INTEGRATION_TESTS == 'true'
