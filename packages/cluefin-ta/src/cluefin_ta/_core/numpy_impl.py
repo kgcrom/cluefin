@@ -42,13 +42,26 @@ def rolling_std(data: np.ndarray, period: int) -> np.ndarray:
     Returns:
         Array of rolling std values with NaN for initial periods
     """
+    data = np.asarray(data, dtype=np.float64)
     n = len(data)
     result = np.full(n, np.nan)
 
-    for i in range(period - 1, n):
-        window = data[i - period + 1 : i + 1]
-        result[i] = np.std(window, ddof=0)
+    if n < period:
+        return result
 
+    # Vectorized rolling std using cumulative sums for O(n) performance.
+    cumsum = np.cumsum(np.insert(data, 0, 0.0))
+    cumsum_sq = np.cumsum(np.insert(data * data, 0, 0.0))
+
+    sum_x = cumsum[period:] - cumsum[:-period]
+    sum_x2 = cumsum_sq[period:] - cumsum_sq[:-period]
+
+    mean = sum_x / period
+    mean_sq = sum_x2 / period
+    var = mean_sq - mean * mean
+    var = np.maximum(var, 0.0)  # Numerical guard against small negatives
+
+    result[period - 1 :] = np.sqrt(var)
     return result
 
 
