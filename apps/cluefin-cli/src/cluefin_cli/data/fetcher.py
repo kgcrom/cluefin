@@ -5,6 +5,7 @@ import pandas as pd
 from cluefin_openapi.kiwoom._auth import Auth as KiwoomAuth
 from cluefin_openapi.kiwoom._client import Client as KiwoomClient
 from cluefin_openapi.krx._client import Client as KrxClient
+from loguru import logger
 from pydantic import SecretStr
 
 from cluefin_cli.config.settings import settings
@@ -189,7 +190,8 @@ class DomesticDataFetcher:
             candidate_str = candidate.strftime("%Y%m%d")
             try:
                 response = self.krx_client.index.get_kospi(base_date=candidate_str)
-            except Exception:
+            except Exception as e:
+                logger.error(f"KRX API failed for date {candidate_str}: {e}")
                 continue
 
             if response and response.body and response.body.data:
