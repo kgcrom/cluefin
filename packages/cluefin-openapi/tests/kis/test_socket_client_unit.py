@@ -13,6 +13,8 @@ from cluefin_openapi.kis._socket_client import (
     WebSocketMessage,
 )
 
+TEST_SECRET_KEY = "test_key"
+
 
 @pytest.fixture
 def socket_client() -> SocketClient:
@@ -20,7 +22,7 @@ def socket_client() -> SocketClient:
     return SocketClient(
         approval_key="test_approval_key",
         app_key="test_app_key",
-        secret_key=SecretStr("test_secret_key"),
+        secret_key=SecretStr(TEST_SECRET_KEY),
         env="dev",
         debug=False,
     )
@@ -34,10 +36,10 @@ class TestSocketClientInit:
         client = SocketClient(
             approval_key="test_approval_key",
             app_key="test_app_key",
-            secret_key="test_secret_key",
+            secret_key=TEST_SECRET_KEY,
             env="prod",
         )
-        assert client.secret_key == "test_secret_key"
+        assert client.secret_key == TEST_SECRET_KEY
         assert client._ws_url == SocketClient.WS_URL_PROD
 
     def test_init_with_secret_str(self):
@@ -45,10 +47,10 @@ class TestSocketClientInit:
         client = SocketClient(
             approval_key="test_approval_key",
             app_key="test_app_key",
-            secret_key=SecretStr("test_secret_key"),
+            secret_key=SecretStr(TEST_SECRET_KEY),
             env="dev",
         )
-        assert client.secret_key == "test_secret_key"
+        assert client.secret_key == TEST_SECRET_KEY
         assert client._ws_url == SocketClient.WS_URL_DEV
 
     def test_init_prod_url(self):

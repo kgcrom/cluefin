@@ -17,9 +17,9 @@ import json
 import ssl
 import struct
 from asyncio import Queue
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from loguru import logger
 from pydantic import SecretStr
@@ -245,6 +245,9 @@ class SocketClient:
             f"\r\n"
         )
 
+        if self._writer is None or self._reader is None:
+            raise KISNetworkError("WebSocket handshake failed: connection not initialized")
+
         self._writer.write(handshake.encode())
         await self._writer.drain()
 
@@ -274,6 +277,9 @@ class SocketClient:
             opcode: WebSocket opcode (0x1 = text, 0x9 = ping, 0xA = pong)
         """
         length = len(data)
+
+        if self._writer is None:
+            raise KISNetworkError("WebSocket send failed: connection not initialized")
 
         # Build frame header
         frame = bytearray()
@@ -312,6 +318,9 @@ class SocketClient:
         Returns:
             Tuple of (opcode, payload)
         """
+        if self._reader is None:
+            raise KISNetworkError("WebSocket receive failed: connection not initialized")
+
         # Read first 2 bytes
         header = await self._reader.readexactly(2)
         # FIN bit: (header[0] >> 7) & 1 - not used but kept for reference
@@ -584,13 +593,15 @@ class SocketClient:
             try:
                 # Send close frame
                 await self._send_frame(b"", opcode=0x8)
-            except Exception:
-                pass
+            except Exception as exc:
+                if self.debug:
+                    logger.debug("Failed to send close frame: {}", exc)
             self._writer.close()
             try:
                 await self._writer.wait_closed()
-            except Exception:
-                pass
+            except Exception as exc:
+                if self.debug:
+                    logger.debug("Failed to close writer: {}", exc)
             self._writer = None
             self._reader = None
 
