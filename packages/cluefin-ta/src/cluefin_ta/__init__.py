@@ -35,6 +35,16 @@ from cluefin_ta.pattern import (
 # Portfolio Metrics
 from cluefin_ta.portfolio import CAGR, CALMAR, MDD, SHARPE, SORTINO, VOLATILITY
 
+# Regime Detection
+from cluefin_ta.regime import (
+    REGIME_COMBINED,
+    REGIME_HMM,
+    REGIME_HMM_RETURNS,
+    REGIME_MA,
+    REGIME_MA_DURATION,
+    REGIME_VOLATILITY,
+)
+
 # Volatility Indicators
 from cluefin_ta.volatility import ATR, NATR, TRANGE
 
@@ -92,4 +102,11 @@ __all__ = [
     "SHARPE",
     "SORTINO",
     "CALMAR",
+    # Regime Detection
+    "REGIME_MA",
+    "REGIME_MA_DURATION",
+    "REGIME_VOLATILITY",
+    "REGIME_COMBINED",
+    "REGIME_HMM",
+    "REGIME_HMM_RETURNS",
 ]

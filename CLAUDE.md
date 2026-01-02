@@ -115,29 +115,6 @@ class QuoteResponse(BaseModel):
     current_price: int = Field(..., alias="stck_prpr")
 ```
 
-**Authentication by API**:
-- **Kiwoom**: OAuth2-style with `Auth.generate_token()` (1-hour validity)
-- **KIS**: Token-based with 1-minute generation interval limit (cached tokens essential)
-- **KRX/DART**: Simple `auth_key` per request
-
-**Data Pipeline** (`import_cmd.py` orchestration):
-1. Fetch via `StockChartImporter`/`IndustryChartImporter`
-2. Transform to DuckDB schema
-3. Insert with `ON CONFLICT ... DO UPDATE` for idempotency
-4. Date chunking (KIS API: max 50 weekdays per request)
-
-**ML Pipeline** (`ml/predictor.py`):
-1. Feature engineering: 150+ technical indicators via cluefin-ta
-2. Time-series cross-validation (prevents data leakage)
-3. LightGBM with early stopping
-4. SHAP TreeExplainer for interpretability
-
-**cluefin-ta Design** (`packages/cluefin-ta/`):
-- Drop-in replacement for TA-Lib: `import cluefin_ta as talib`
-- Pure NumPy implementation (no C dependencies)
-- Optional Numba JIT acceleration (`_core/numba_impl.py`)
-- TA-Lib compatible function signatures and return values
-
 ## Testing Strategy
 
 **Unit Tests** (`tests/unit/` or `test_*_unit.py`):
@@ -157,13 +134,6 @@ class QuoteResponse(BaseModel):
 - **Thread Safety**: Use `ContextVar` for async-safe context
 - **Rate Limiting**: Use shared `TokenBucket` from `cluefin_openapi._rate_limiter` for API clients
 
-## Linting Rules (from pyproject.toml)
-
-- Line length: 120 chars
-- Target: Python 3.11+
-- Ruff: `E, F, W, B, Q, I, ASYNC, T20`
-- Ignored: `F401` (unused imports), `E501` (line too long)
-
 ## CI/CD
 
 CI runs on push to `main` branch only (not on PRs).
@@ -173,4 +143,3 @@ CI runs on push to `main` branch only (not on PRs).
 - **Integration**: Only when `ENABLE_INTEGRATION_TESTS=true`
 - **Coverage**: Reports to Codacy
 - **Security**: pip-audit vulnerability scan
-

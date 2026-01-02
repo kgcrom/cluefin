@@ -181,6 +181,7 @@ class StockMLPredictor:
             # Create TA-Lib and custom features
             df = self.feature_engineer.create_talib_features(df)
             df = self.feature_engineer.create_custom_features(df)
+            df = self.feature_engineer.create_regime_detection_features(df)
 
             # Handle missing values for feature columns only
             feature_df = df[self.feature_names].ffill().bfill().infer_objects(copy=False)
