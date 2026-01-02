@@ -758,4 +758,22 @@ def _display_technical_indicators(indicators):
         signal = "Above MA20" if current_price > sma_20 else "Below MA20"
         table.add_row("SMA (20)", format_currency(sma_20), signal)
 
+    if "sma_50" in indicators and not pd.isna(indicators["sma_50"].iloc[-1]):
+        sma_50 = indicators["sma_50"].iloc[-1]
+        current_price = indicators["close"].iloc[-1] if "close" in indicators else 0
+        signal = "Above MA50" if current_price > sma_50 else "Below MA50"
+        table.add_row("SMA (50)", format_currency(sma_50), signal)
+
+    if "sma_120" in indicators and not pd.isna(indicators["sma_120"].iloc[-1]):
+        sma_120 = indicators["sma_120"].iloc[-1]
+        current_price = indicators["close"].iloc[-1] if "close" in indicators else 0
+        signal = "Above MA120" if current_price > sma_120 else "Below MA120"
+        table.add_row("SMA (120)", format_currency(sma_120), signal)
+
+    if "sma_240" in indicators and not pd.isna(indicators["sma_240"].iloc[-1]):
+        sma_240 = indicators["sma_240"].iloc[-1]
+        current_price = indicators["close"].iloc[-1] if "close" in indicators else 0
+        signal = "Above MA240" if current_price > sma_240 else "Below MA240"
+        table.add_row("SMA (240)", format_currency(sma_240), signal)
+
     console.print(table)

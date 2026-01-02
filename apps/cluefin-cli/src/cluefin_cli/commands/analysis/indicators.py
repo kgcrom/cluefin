@@ -25,6 +25,8 @@ class TechnicalAnalyzer:
         result["sma_5"] = self._sma(data["close"], 5)
         result["sma_20"] = self._sma(data["close"], 20)
         result["sma_50"] = self._sma(data["close"], 50)
+        result["sma_120"] = self._sma(data["close"], 120)
+        result["sma_240"] = self._sma(data["close"], 240)
         result["ema_12"] = self._ema(data["close"], 12)
         result["ema_26"] = self._ema(data["close"], 26)
 
