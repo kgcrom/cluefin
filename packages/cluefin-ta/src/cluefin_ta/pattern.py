@@ -12,6 +12,7 @@ Functions:
     CDLMORNINGSTAR: Morning Star pattern (3-bar)
     CDLEVENINGSTAR: Evening Star pattern (3-bar)
     CDLDARKCLOUDCOVER: Dark Cloud Cover pattern (2-bar)
+    CUP_HANDLE: Cup & Handle pattern
 
 All pattern functions return:
     +100: Bullish pattern
@@ -50,6 +51,91 @@ def _is_bullish(open_price: float, close_price: float) -> bool:
 def _is_bearish(open_price: float, close_price: float) -> bool:
     """Check if a candle is bearish (close < open)."""
     return close_price < open_price
+
+
+def _extract_pivots_fractal(
+    close: np.ndarray, left: int, right: int
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return fractal pivot highs/lows indices."""
+    n = len(close)
+    if left < 1 or right < 1 or n == 0:
+        return np.array([], dtype=np.int32), np.array([], dtype=np.int32)
+
+    highs = []
+    lows = []
+    for i in range(left, n - right):
+        center = close[i]
+        left_slice = close[i - left : i]
+        right_slice = close[i + 1 : i + right + 1]
+        if np.all(center > left_slice) and np.all(center >= right_slice):
+            highs.append(i)
+        if np.all(center < left_slice) and np.all(center <= right_slice):
+            lows.append(i)
+
+    return np.array(highs, dtype=np.int32), np.array(lows, dtype=np.int32)
+
+
+def _extract_pivots_zigzag(
+    close: np.ndarray, pivot_pct: float
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return zigzag pivot highs/lows indices."""
+    n = len(close)
+    if n == 0 or pivot_pct <= 0:
+        return np.array([], dtype=np.int32), np.array([], dtype=np.int32)
+
+    pivots_high = []
+    pivots_low = []
+    last_idx = 0
+    last_price = close[0]
+    trend = 0
+
+    for i in range(1, n):
+        price = close[i]
+        if last_price == 0:
+            last_price = price
+        change = (price - last_price) / last_price if last_price != 0 else 0
+
+        if trend == 0:
+            if abs(change) >= pivot_pct:
+                trend = 1 if change > 0 else -1
+                if trend == 1:
+                    pivots_low.append(last_idx)
+                else:
+                    pivots_high.append(last_idx)
+                last_idx = i
+                last_price = price
+            else:
+                if price > last_price:
+                    last_price = price
+                    last_idx = i
+                elif price < last_price:
+                    last_price = price
+                    last_idx = i
+        elif trend == 1:
+            if price > last_price:
+                last_price = price
+                last_idx = i
+            elif (last_price - price) / last_price >= pivot_pct:
+                pivots_high.append(last_idx)
+                trend = -1
+                last_idx = i
+                last_price = price
+        else:
+            if price < last_price:
+                last_price = price
+                last_idx = i
+            elif (price - last_price) / last_price >= pivot_pct:
+                pivots_low.append(last_idx)
+                trend = 1
+                last_idx = i
+                last_price = price
+
+    if trend == 1:
+        pivots_high.append(last_idx)
+    elif trend == -1:
+        pivots_low.append(last_idx)
+
+    return np.array(pivots_high, dtype=np.int32), np.array(pivots_low, dtype=np.int32)
 
 
 def CDLDOJI(
@@ -711,6 +797,186 @@ def CDLDARKCLOUDCOVER(
     return result
 
 
+def CUP_HANDLE(
+    open_arr: np.ndarray,
+    high: np.ndarray,
+    low: np.ndarray,
+    close: np.ndarray,
+    volume: np.ndarray | None = None,
+    cup_lookback: int = 90,
+    cup_min_len: int = 30,
+    rim_tolerance: float = 0.03,
+    cup_depth_min: float = 0.15,
+    cup_depth_max: float = 0.50,
+    cup_slope_max: float = 0.03,
+    handle_len: int = 10,
+    handle_depth_max: float = 0.08,
+    confirm_bars: int = 0,
+    pivot_method: str = "zigzag",
+    pivot_pct: float = 0.04,
+    pivot_left: int = 2,
+    pivot_right: int = 2,
+    vol_lookback: int = 20,
+    vol_cup_start_len: int = 3,
+    vol_cup_start_mult: float = 1.3,
+    vol_handle_max_mult: float = 0.9,
+    vol_breakout_mult: float = 1.5,
+    use_volume: bool = False,
+) -> np.ndarray:
+    """
+    Cup & Handle pattern.
+
+    Returns +100 on breakout confirmation, otherwise 0.
+    """
+    close = np.asarray(close, dtype=np.float64)
+    n = len(close)
+    out = np.zeros(n, dtype=np.int32)
+
+    if n < cup_min_len + handle_len + 5:
+        return out
+
+    use_volume = bool(use_volume)
+    volume_arr = None
+    if use_volume and volume is not None:
+        volume_arr = np.asarray(volume, dtype=np.float64)
+        if len(volume_arr) != n:
+            volume_arr = None
+            use_volume = False
+    else:
+        use_volume = False
+
+    rolling_return_5 = np.zeros(n, dtype=np.float64)
+    for i in range(5, n):
+        if close[i - 5] != 0:
+            rolling_return_5[i] = close[i] / close[i - 5] - 1.0
+
+    if pivot_method == "fractal":
+        pivots_high, pivots_low = _extract_pivots_fractal(
+            close, pivot_left, pivot_right
+        )
+    else:
+        pivots_high, pivots_low = _extract_pivots_zigzag(close, pivot_pct)
+
+    if len(pivots_high) == 0 or len(pivots_low) == 0:
+        return out
+
+    pivots_high = np.sort(pivots_high)
+    pivots_low = np.sort(pivots_low)
+    cooldown_until = -1
+
+    for t0 in pivots_high:
+        if t0 <= cooldown_until:
+            continue
+
+        t0_max = min(t0 + cup_lookback, n - 1)
+        found = False
+
+        for t1 in pivots_low:
+            if t1 <= t0:
+                continue
+            if t1 > t0_max:
+                break
+
+            for t2 in pivots_high:
+                if t2 <= t1:
+                    continue
+                if t2 > t0_max:
+                    break
+                if t2 - t0 < cup_min_len:
+                    continue
+
+                window_min_idx = t0 + int(np.argmin(close[t0 : t2 + 1]))
+                if t1 != window_min_idx:
+                    continue
+
+                rim_avg = (close[t0] + close[t2]) / 2.0
+                if rim_avg == 0:
+                    continue
+                if abs(close[t0] - close[t2]) / rim_avg > rim_tolerance:
+                    continue
+
+                cup_depth = (rim_avg - close[t1]) / rim_avg
+                if cup_depth < cup_depth_min or cup_depth > cup_depth_max:
+                    continue
+
+                if t2 - t1 < 5:
+                    continue
+                if np.max(rolling_return_5[t1 : t2 + 1]) > cup_slope_max:
+                    continue
+
+                if use_volume:
+                    if t0 - vol_lookback < 0 or t0 + vol_cup_start_len > n:
+                        continue
+                    base_mean = np.mean(volume_arr[t0 - vol_lookback : t0])
+                    start_mean = np.mean(volume_arr[t0 : t0 + vol_cup_start_len])
+                    if base_mean <= 0 or start_mean < vol_cup_start_mult * base_mean:
+                        continue
+                    cup_left_mean = np.mean(volume_arr[t0 : t1 + 1])
+                    cup_right_mean = np.mean(volume_arr[t1 : t2 + 1])
+                    if cup_left_mean < cup_right_mean:
+                        continue
+
+                handle_end = min(t2 + handle_len, n - 1)
+                if handle_end <= t2:
+                    continue
+
+                handle_slice = close[t2 : handle_end + 1]
+                t3 = t2 + int(np.argmin(handle_slice))
+                handle_depth = (
+                    (close[t2] - close[t3]) / close[t2] if close[t2] != 0 else 0
+                )
+                if handle_depth > handle_depth_max:
+                    continue
+                if close[t3] <= close[t1]:
+                    continue
+
+                handle_high = np.max(close[t2 : t3 + 1])
+                if handle_high > max(close[t0], close[t2]):
+                    continue
+
+                if use_volume:
+                    handle_mean = np.mean(volume_arr[t2 : t3 + 1])
+                    cup_mean = np.mean(volume_arr[t0 : t2 + 1])
+                    if handle_mean > vol_handle_max_mult * cup_mean:
+                        continue
+
+                signal_idx = None
+                for t4 in range(t3 + 1, handle_end + 1):
+                    if close[t4] <= handle_high:
+                        continue
+                    if use_volume:
+                        if t4 - vol_lookback < 0:
+                            continue
+                        breakout_mean = np.mean(volume_arr[t4 - vol_lookback : t4])
+                        if breakout_mean <= 0:
+                            continue
+                        if volume_arr[t4] < vol_breakout_mult * breakout_mean:
+                            continue
+
+                    if confirm_bars <= 0:
+                        signal_idx = t4
+                    else:
+                        end_idx = t4 + confirm_bars - 1
+                        if end_idx >= n:
+                            break
+                        if np.all(close[t4 : end_idx + 1] > handle_high):
+                            signal_idx = end_idx
+                        else:
+                            continue
+                    break
+
+                if signal_idx is not None:
+                    out[signal_idx] = 100
+                    cooldown_until = signal_idx + handle_len
+                    found = True
+                    break
+
+            if found:
+                break
+
+    return out
+
+
 __all__ = [
     "CDLDOJI",
     "CDLHAMMER",
@@ -722,4 +988,5 @@ __all__ = [
     "CDLMORNINGSTAR",
     "CDLEVENINGSTAR",
     "CDLDARKCLOUDCOVER",
+    "CUP_HANDLE",
 ]
