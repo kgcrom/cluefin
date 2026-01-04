@@ -33,6 +33,7 @@ from cluefin_ta.pattern import (
     CDLMORNINGSTAR,
     CDLPIERCING,
     CDLSHOOTINGSTAR,
+    CUP_HANDLE,
 )
 
 # Portfolio Metrics
@@ -96,6 +97,7 @@ __all__ = [
     "CDLMORNINGSTAR",
     "CDLEVENINGSTAR",
     "CDLDARKCLOUDCOVER",
+    "CUP_HANDLE",
     # Portfolio
     "MDD",
     "CAGR",
