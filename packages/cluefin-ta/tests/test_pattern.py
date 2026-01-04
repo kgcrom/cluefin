@@ -543,9 +543,7 @@ class TestCUPHANDLE:
         handle_down = np.linspace(100.0, 95.0, 4)
         handle_flat = np.linspace(95.0, 96.0, 3)
         breakout = np.array([97.0, 101.0, 103.0])
-        close = np.concatenate(
-            [pre, down, up, handle_down, handle_flat, breakout]
-        ).astype(np.float64)
+        close = np.concatenate([pre, down, up, handle_down, handle_flat, breakout]).astype(np.float64)
         open_arr = close.copy()
         high = close * 1.01
         low = close * 0.99

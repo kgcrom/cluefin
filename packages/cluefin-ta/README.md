@@ -8,6 +8,7 @@ ta-lib 호환 API를 제공하는 Python 기술적 분석 라이브러리입니�
 - **ta-lib 호환 API**: 기존 ta-lib 코드를 최소한의 변경으로 마이그레이션
 - **선택적 Numba 가속**: Numba 설치 시 평균 ~238배 성능 향상
 - **포트폴리오 메트릭**: ta-lib에 없는 MDD, Sharpe, Sortino 등 추가 제공
+- **다우 이론 기반 추세 분석**: Swing 분석, 거래량 확인, 인덱스 상관관계를 통한 고전적 추세 분류
 - **시장 레짐 감지**: 이동평균, 변동성, HMM 기반 시장 상태 분류
 
 ## 설치
@@ -71,6 +72,50 @@ calmar = CALMAR(returns)                    # 칼마비율
 vol = VOLATILITY(returns)                   # 연환산변동성
 ```
 
+### 다우 이론 기반 추세 분석
+
+```python
+from cluefin_ta import DOW_THEORY
+
+high = np.array([...])    # 고가 데이터
+low = np.array([...])     # 저가 데이터
+close = np.array([...])   # 종가 데이터
+volume = np.array([...])  # 거래량 데이터 (선택)
+
+# 기본 사용: Swing 기반 추세 분석
+trend, corr = DOW_THEORY(high, low, close)
+# trend: -2=강한하락, -1=약한하락, 0=횡보, +1=약한상승, +2=강한상승
+# corr: NaN (인덱스 미제공)
+
+# 거래량 확인 포함
+trend, corr = DOW_THEORY(high, low, close, volume=volume)
+# 거래량이 이동평균을 초과하면 추세 강도 업그레이드 (±1 → ±2)
+
+# 인덱스 상관관계 확인 (다우 이론의 "상호확인" 원칙)
+index_high = np.array([...])
+index_low = np.array([...])
+index_close = np.array([...])
+
+trend, corr = DOW_THEORY(
+    high, low, close, volume=volume,
+    index_high=index_high, index_low=index_low, index_close=index_close
+)
+# corr: 1.0=확인됨 (같은 방향), -1.0=발산 (반대 방향), 0.0=중립 (하나 이상 횡보)
+
+# 이동평균 교차 방법 사용 (대체 방법)
+trend, corr = DOW_THEORY(
+    high, low, close,
+    method="ma_cross",  # 'swing' (기본), 'ma_cross', 'hybrid' 중 선택
+    minor_period=20, secondary_period=60, primary_period=200
+)
+
+# Hybrid 방법: Swing과 MA 교차 모두 합치기
+trend, corr = DOW_THEORY(
+    high, low, close,
+    method="hybrid"  # 두 방법 모두 동의해야 신호 발생
+)
+```
+
 ### 시장 레짐 감지
 
 ```python
@@ -91,6 +136,8 @@ states, trans_probs, means = REGIME_HMM(returns, n_states=3)
 ```
 
 ## 지원 함수
+
+총 **49개** 기술 분석 함수 지원
 
 ### Overlap Studies (이동평균) - 7개
 
@@ -161,6 +208,12 @@ states, trans_probs, means = REGIME_HMM(returns, n_states=3)
 | `SORTINO(returns, risk_free=0, periods_per_year=252)` | 소르티노비율 |
 | `CALMAR(returns, periods_per_year=252)` | 칼마비율 |
 | `VOLATILITY(returns, periods_per_year=252)` | 연환산변동성 |
+
+### Trend Analysis (추세 분석) - 1개
+
+| 함수 | 설명 |
+|------|------|
+| `DOW_THEORY(high, low, close, volume=None, index_high=None, index_low=None, index_close=None, swing_window=5, method='swing', ...)` | 다우 이론 기반 추세 분석 (Swing 분석, 거래량 확인, 인덱스 상관관계) |
 
 ### Regime Detection (시장 레짐 감지) - 6개
 

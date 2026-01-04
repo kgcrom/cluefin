@@ -53,9 +53,7 @@ def _is_bearish(open_price: float, close_price: float) -> bool:
     return close_price < open_price
 
 
-def _extract_pivots_fractal(
-    close: np.ndarray, left: int, right: int
-) -> tuple[np.ndarray, np.ndarray]:
+def _extract_pivots_fractal(close: np.ndarray, left: int, right: int) -> tuple[np.ndarray, np.ndarray]:
     """Return fractal pivot highs/lows indices."""
     n = len(close)
     if left < 1 or right < 1 or n == 0:
@@ -75,9 +73,7 @@ def _extract_pivots_fractal(
     return np.array(highs, dtype=np.int32), np.array(lows, dtype=np.int32)
 
 
-def _extract_pivots_zigzag(
-    close: np.ndarray, pivot_pct: float
-) -> tuple[np.ndarray, np.ndarray]:
+def _extract_pivots_zigzag(close: np.ndarray, pivot_pct: float) -> tuple[np.ndarray, np.ndarray]:
     """Return zigzag pivot highs/lows indices."""
     n = len(close)
     if n == 0 or pivot_pct <= 0:
@@ -851,9 +847,7 @@ def CUP_HANDLE(
             rolling_return_5[i] = close[i] / close[i - 5] - 1.0
 
     if pivot_method == "fractal":
-        pivots_high, pivots_low = _extract_pivots_fractal(
-            close, pivot_left, pivot_right
-        )
+        pivots_high, pivots_low = _extract_pivots_fractal(close, pivot_left, pivot_right)
     else:
         pivots_high, pivots_low = _extract_pivots_zigzag(close, pivot_pct)
 
@@ -922,9 +916,7 @@ def CUP_HANDLE(
 
                 handle_slice = close[t2 : handle_end + 1]
                 t3 = t2 + int(np.argmin(handle_slice))
-                handle_depth = (
-                    (close[t2] - close[t3]) / close[t2] if close[t2] != 0 else 0
-                )
+                handle_depth = (close[t2] - close[t3]) / close[t2] if close[t2] != 0 else 0
                 if handle_depth > handle_depth_max:
                     continue
                 if close[t3] <= close[t1]:
