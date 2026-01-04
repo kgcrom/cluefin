@@ -13,6 +13,9 @@ Usage:
 
 from importlib.metadata import PackageNotFoundError, version
 
+# Regime Detection
+from cluefin_ta.dow import DOW_THEORY
+
 # Overlap Studies (Moving Averages)
 # Momentum Indicators
 from cluefin_ta.momentum import ADX, CCI, MACD, MFI, MOM, ROC, RSI, STOCH, STOCHF, WILLR
@@ -34,8 +37,6 @@ from cluefin_ta.pattern import (
 
 # Portfolio Metrics
 from cluefin_ta.portfolio import CAGR, CALMAR, MDD, SHARPE, SORTINO, VOLATILITY
-
-# Regime Detection
 from cluefin_ta.regime import (
     REGIME_COMBINED,
     REGIME_HMM,
@@ -109,4 +110,5 @@ __all__ = [
     "REGIME_COMBINED",
     "REGIME_HMM",
     "REGIME_HMM_RETURNS",
+    "DOW_THEORY",
 ]
