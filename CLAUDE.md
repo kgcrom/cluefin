@@ -14,7 +14,7 @@ This is an **educational/research project**—not for production trading systems
 
 ## Development Commands
 
-### CRITICAL: Always use `uv run` instead of `python`
+### CRITICAL: Always use `uv run` not `python`
 
 ```bash
 # CORRECT
@@ -38,25 +38,13 @@ cp apps/cluefin-cli/.env.sample .env
 ```bash
 uv run pytest -m "not integration"  # Unit tests only (no API keys needed)
 uv run pytest -m "not slow"          # Exclude slow tests
-uv run pytest                        # All tests
-uv run pytest packages/cluefin-openapi/tests/ -v
-uv run pytest packages/cluefin-ta/tests/ -v
-uv run pytest apps/cluefin-cli/tests/ -v
+uv run pytest -v                     # All tests
 ```
 
 ### Code Quality
 ```bash
 uv run ruff format .       # Format code
 uv run ruff check . --fix  # Lint and auto-fix
-```
-
-### CLI Usage
-```bash
-cluefin-cli ta 005930                                    # Basic technical analysis
-cluefin-cli ta 005930 --chart --ml-predict --shap-analysis  # Full analysis
-cluefin-cli fa 005930 --year 2023 --report annual        # Fundamental analysis (DART)
-cluefin-cli import --stock --start 20250101 --end 20250131
-cluefin-cli --debug ta 005930                            # Enable debug logging
 ```
 
 ## Architecture
@@ -143,3 +131,4 @@ CI runs on push to `main` branch only (not on PRs).
 - **Integration**: Only when `ENABLE_INTEGRATION_TESTS=true`
 - **Coverage**: Reports to Codacy
 - **Security**: pip-audit vulnerability scan
+- If you need my input, you MUST use the 'AskUseQuestion' tool
