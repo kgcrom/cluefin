@@ -75,7 +75,11 @@ class MLDiagnostics:
             # 결과 출력
             self._display_target_analysis(analysis, target_name)
 
-            logger.info(f"타겟 변수 분석 완료: 총 {total_samples}개 샘플, 불균형 비율 {imbalance_ratio:.2f}")
+            # 불균형 비율 로깅 (None일 경우 처리)
+            if imbalance_ratio is not None:
+                logger.info(f"타겟 변수 분석 완료: 총 {total_samples}개 샘플, 불균형 비율 {imbalance_ratio:.2f}")
+            else:
+                logger.info(f"타겟 변수 분석 완료: 총 {total_samples}개 샘플 (단일 클래스 또는 데이터 부족)")
 
             return analysis
 

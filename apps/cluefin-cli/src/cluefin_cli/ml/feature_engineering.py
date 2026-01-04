@@ -86,7 +86,114 @@ class FeatureEngineer:
             df["cdl_hammer"] = talib.CDLHAMMER(df["open"], high, low, close)
             df["cdl_engulfing"] = talib.CDLENGULFING(df["open"], high, low, close)
 
-            logger.info("Successfully created TA-Lib features")
+            # NEW: Cup & Handle Pattern Features
+            if len(df) >= 120:
+                try:
+                    cup_pattern = talib.CUP_HANDLE(
+                        open_arr=df["open"].values,
+                        high=high,
+                        low=low,
+                        close=close,
+                        volume=volume,
+                        cup_lookback=120,
+                        handle_len=30,
+                        pivot_method="zigzag",
+                        pivot_pct=0.04,
+                        use_volume=True,
+                    )
+                    df["cup_pattern"] = cup_pattern
+
+                    # Derived feature: Days since last cup breakout
+                    breakout_indices = np.where(cup_pattern == 100)[0]
+                    days_since_cup = np.full(len(df), -1, dtype=np.int32)
+
+                    if len(breakout_indices) > 0:
+                        for i in range(len(df)):
+                            past_breakouts = breakout_indices[breakout_indices < i]
+                            if len(past_breakouts) > 0:
+                                days_since_cup[i] = i - past_breakouts[-1]
+
+                    df["days_since_cup_breakout"] = days_since_cup
+
+                except Exception as e:
+                    logger.warning(f"Cup pattern feature creation failed: {e}")
+                    df["cup_pattern"] = 0
+                    df["days_since_cup_breakout"] = -1
+            else:
+                df["cup_pattern"] = 0
+                df["days_since_cup_breakout"] = -1
+
+            # NEW: Dow Theory Features
+            if len(df) >= 200:
+                try:
+                    trend_state, correlation_state = talib.DOW_THEORY(
+                        high=high,
+                        low=low,
+                        close=close,
+                        volume=volume,
+                        swing_window=5,
+                        method="swing",
+                    )
+
+                    # Fill NaN values with 0 (neutral state) for startup period
+                    trend_state = np.nan_to_num(trend_state, nan=0.0)
+                    correlation_state = np.nan_to_num(correlation_state, nan=0.0)
+
+                    df["dow_trend"] = trend_state
+                    df["dow_correlation"] = correlation_state
+
+                    # One-hot encode trend states for better ML representation
+                    df["dow_strong_bull"] = (trend_state == 2).astype(int)
+                    df["dow_weak_bull"] = (trend_state == 1).astype(int)
+                    df["dow_sideways"] = (trend_state == 0).astype(int)
+                    df["dow_weak_bear"] = (trend_state == -1).astype(int)
+                    df["dow_strong_bear"] = (trend_state == -2).astype(int)
+
+                    # Trend persistence: Count consecutive days in same trend
+                    trend_persistence = np.zeros(len(df))
+                    current_count = 0
+                    last_trend = None
+
+                    for i in range(len(df)):
+                        if not np.isnan(trend_state[i]):
+                            if trend_state[i] == last_trend:
+                                current_count += 1
+                            else:
+                                current_count = 1
+                                last_trend = trend_state[i]
+                            trend_persistence[i] = current_count
+
+                    df["dow_trend_persistence"] = trend_persistence
+
+                    # Correlation confirmation flags
+                    df["dow_index_confirms"] = (correlation_state == 1.0).astype(int)
+                    df["dow_index_diverges"] = (correlation_state == -1.0).astype(int)
+
+                except Exception as e:
+                    logger.warning(f"Dow Theory feature creation failed: {e}")
+                    df["dow_trend"] = 0
+                    df["dow_correlation"] = 0
+                    df["dow_strong_bull"] = 0
+                    df["dow_weak_bull"] = 0
+                    df["dow_sideways"] = 0
+                    df["dow_weak_bear"] = 0
+                    df["dow_strong_bear"] = 0
+                    df["dow_trend_persistence"] = 0
+                    df["dow_index_confirms"] = 0
+                    df["dow_index_diverges"] = 0
+            else:
+                df["dow_trend"] = 0
+                df["dow_correlation"] = 0
+                df["dow_strong_bull"] = 0
+                df["dow_weak_bull"] = 0
+                df["dow_sideways"] = 0
+                df["dow_weak_bear"] = 0
+                df["dow_strong_bear"] = 0
+                df["dow_trend_persistence"] = 0
+                df["dow_index_confirms"] = 0
+                df["dow_index_diverges"] = 0
+
+            logger.info("Successfully created TA-Lib features including Cup & Handle and Dow Theory")
             return df
 
         except Exception as e:
@@ -351,13 +458,15 @@ class FeatureEngineer:
         # Forward fill then backward fill (using new pandas methods)
         df[feature_cols] = df[feature_cols].ffill().bfill().infer_objects(copy=False)
 
-        # Drop rows with remaining NaN values
+        # Drop rows with NaN values (only from feature columns, not target or metadata)
         initial_rows = len(df)
-        df = df.dropna()
+        df_features = df[feature_cols]
+        # Only drop rows where ALL features are NaN, or drop rows with any NaN
+        df = df.dropna(subset=feature_cols)
         final_rows = len(df)
 
         if initial_rows != final_rows:
-            logger.warning(f"Dropped {initial_rows - final_rows} rows due to missing values")
+            logger.warning(f"Dropped {initial_rows - final_rows} rows due to missing values in feature columns")
 
         return df
 
