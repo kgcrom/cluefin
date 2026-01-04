@@ -8,6 +8,7 @@ ta-lib 호환 API를 제공하는 Python 기술적 분석 라이브러리입니�
 - **ta-lib 호환 API**: 기존 ta-lib 코드를 최소한의 변경으로 마이그레이션
 - **선택적 Numba 가속**: Numba 설치 시 평균 ~238배 성능 향상
 - **포트폴리오 메트릭**: ta-lib에 없는 MDD, Sharpe, Sortino 등 추가 제공
+- **시장 레짐 감지**: 이동평균, 변동성, HMM 기반 시장 상태 분류
 
 ## 설치
 
@@ -70,6 +71,25 @@ calmar = CALMAR(returns)                    # 칼마비율
 vol = VOLATILITY(returns)                   # 연환산변동성
 ```
 
+### 시장 레짐 감지
+
+```python
+from cluefin_ta import REGIME_MA, REGIME_COMBINED, REGIME_HMM, REGIME_HMM_RETURNS
+
+# 이동평균 기반 레짐 감지
+regime = REGIME_MA(close, fast_period=20, slow_period=50)
+# 0=하락장, 1=횡보장, 2=상승장
+
+# 추세+변동성 결합 레짐
+trend, vol, combined = REGIME_COMBINED(high, low, close)
+# combined: 0-5 (6가지 시장 상태)
+
+# HMM 기반 레짐 감지 (선택적 의존성 필요)
+returns = REGIME_HMM_RETURNS(close)
+states, trans_probs, means = REGIME_HMM(returns, n_states=3)
+# states: 0=약세, 1=중립, 2=강세
+```
+
 ## 지원 함수
 
 ### Overlap Studies (이동평균) - 7개
@@ -115,7 +135,7 @@ vol = VOLATILITY(returns)                   # 연환산변동성
 | `AD(high, low, close, volume)` | 축적/분산 |
 | `ADOSC(high, low, close, volume, fastperiod=3, slowperiod=10)` | A/D 오실레이터 |
 
-### Candlestick Patterns (캔들패턴) - 10개
+### Candlestick Patterns (캔들패턴) - 11개
 
 | 함수 | 설명 | 신호 |
 |------|------|--------|
@@ -129,6 +149,7 @@ vol = VOLATILITY(returns)                   # 연환산변동성
 | `CDLMORNINGSTAR` | 샛별 (3봉) | +100 |
 | `CDLEVENINGSTAR` | 저녁별 (3봉) | -100 |
 | `CDLDARKCLOUDCOVER` | 먹구름 | -100 |
+| `CUP_HANDLE` | 컵앤핸들 (다봉) | +100 |
 
 ### Portfolio Metrics (포트폴리오) - 6개
 
@@ -140,6 +161,17 @@ vol = VOLATILITY(returns)                   # 연환산변동성
 | `SORTINO(returns, risk_free=0, periods_per_year=252)` | 소르티노비율 |
 | `CALMAR(returns, periods_per_year=252)` | 칼마비율 |
 | `VOLATILITY(returns, periods_per_year=252)` | 연환산변동성 |
+
+### Regime Detection (시장 레짐 감지) - 6개
+
+| 함수 | 설명 |
+|------|------|
+| `REGIME_MA(close, fast_period=20, slow_period=50, sideways_threshold=0.02)` | 이동평균 기반 레짐 감지 (0=하락, 1=횡보, 2=상승) |
+| `REGIME_MA_DURATION(regime_states)` | 현재 레짐 지속 기간 계산 |
+| `REGIME_VOLATILITY(high, low, close, atr_period=14, threshold_percentile=66)` | 변동성 기반 레짐 감지 (0=저변동성, 1=고변동성) |
+| `REGIME_COMBINED(high, low, close, ...)` | 추세+변동성 결합 레짐 (0-5: 6가지 시장 상태) |
+| `REGIME_HMM_RETURNS(close)` | HMM 레짐 감지용 수익률 계산 |
+| `REGIME_HMM(returns, n_states=3, ...)` | 은닉 마르코프 모델 기반 레짐 감지 |
 
 ## 성능
 
@@ -160,3 +192,4 @@ Numba 설치 시 루프 기반 함수가 JIT 컴파일되어 성능 향상:
 
 - **필수**: `numpy>=1.20.0`
 - **선택**: `numba>=0.56.0` (성능 향상)
+- **선택**: `hmmlearn` (HMM 레짐 감지용, `uv add --optional hmm hmmlearn`)
