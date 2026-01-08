@@ -2,7 +2,6 @@
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from cluefin_cli.commands.analysis.indicators import TechnicalAnalyzer
 
@@ -58,7 +57,7 @@ class TestPatternRecognition:
         # Should still calculate, but return all 0s (no pattern)
         assert "cup_pattern" in indicators.columns
         assert all(indicators["cup_pattern"] == 0)
-        assert all(indicators["cup_has_volume"] == False)
+        assert all(~indicators["cup_has_volume"])
 
     def test_dow_theory_with_sufficient_data(self):
         """Test Dow Theory calculation with sufficient data (250 days)."""

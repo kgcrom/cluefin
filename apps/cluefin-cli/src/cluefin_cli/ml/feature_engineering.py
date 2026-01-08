@@ -460,7 +460,6 @@ class FeatureEngineer:
 
         # Drop rows with NaN values (only from feature columns, not target or metadata)
         initial_rows = len(df)
-        df_features = df[feature_cols]
         # Only drop rows where ALL features are NaN, or drop rows with any NaN
         df = df.dropna(subset=feature_cols)
         final_rows = len(df)
