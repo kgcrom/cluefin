@@ -1,14 +1,19 @@
 # cluefin-ta
 
-ta-lib 호환 API를 제공하는 Python 기술적 분석 라이브러리입니다.
+TA-Lib 호환 API를 제공하는 순수 Python 기술적 분석 라이브러리입니다.
+
+![Python](https://img.shields.io/badge/Python-3.10%2B-green)
+![NumPy](https://img.shields.io/badge/NumPy-Pure%20Python-blue)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
 ## 특징
 
-- **간편한 설치**: `pip install`만으로 설치 가능 (brew/apt 불필요)
-- **ta-lib 호환 API**: 기존 ta-lib 코드를 최소한의 변경으로 마이그레이션
+- **간편한 설치**: `pip install`만으로 설치 가능 (brew/apt 시스템 의존성 불필요)
+- **TA-Lib 호환 API**: 기존 TA-Lib 코드를 최소한의 변경으로 마이그레이션
 - **선택적 Numba 가속**: Numba 설치 시 평균 ~238배 성능 향상
-- **포트폴리오 메트릭**: ta-lib에 없는 MDD, Sharpe, Sortino 등 추가 제공
+- **포트폴리오 메트릭**: TA-Lib에 없는 MDD, Sharpe, Sortino 등 추가 제공
 - **다우 이론 기반 추세 분석**: Swing 분석, 거래량 확인, 인덱스 상관관계를 통한 고전적 추세 분류
+- **차트 패턴 인식**: Cup & Handle 패턴 등 다봉 패턴 감지
 - **시장 레짐 감지**: 이동평균, 변동성, HMM 기반 시장 상태 분류
 
 ## 설치

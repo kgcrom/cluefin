@@ -1,6 +1,10 @@
 # cluefin-openapi
 
-> **cluefin-openapi**: 투자 OpenAPI를 위한 Python 클라이언트
+> **cluefin-openapi**: 주식 투자 OpenAPI를 위한 Python 클라이언트
+
+![Python](https://img.shields.io/badge/Python-3.10%2B-green)
+![Pydantic](https://img.shields.io/badge/Pydantic-Type%20Safe-blue)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
 ---
 
@@ -16,7 +20,7 @@
 - **상장 상품 정보**: ETF, ETN, ELW 등 거래소 상장 상품 데이터
 - **기업 공시 분석 (DART)**: 공시 원문, 재무제표, 대량보유상황 등 공시 데이터
 
-## ⚡ Quick Start
+## ⚡ 빠른 시작
 
 ### 설치
 
@@ -123,7 +127,7 @@ logger.info(f"응답 데이터: ${response.body}")
 
 ## 📚 API 문서
 
-### 인증 (Authentication)
+### 인증
 
 ```python
 # 키움증권
