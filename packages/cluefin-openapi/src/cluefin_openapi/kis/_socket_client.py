@@ -261,9 +261,12 @@ class SocketClient:
         if b"101" not in response:
             raise KISNetworkError(f"WebSocket handshake failed: {response.decode()}")
 
-        # Verify Sec-WebSocket-Accept
+        # Verify Sec-WebSocket-Accept (SHA1 is required by RFC 6455 WebSocket protocol)
         expected_accept = base64.b64encode(
-            hashlib.sha1((ws_key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode()).digest()
+            hashlib.sha1(
+                (ws_key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode(),
+                usedforsecurity=False,
+            ).digest()
         ).decode()
 
         if expected_accept.encode() not in response:
