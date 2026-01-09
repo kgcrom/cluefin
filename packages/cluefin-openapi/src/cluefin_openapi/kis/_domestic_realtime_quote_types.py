@@ -64,6 +64,41 @@ class DomesticRealtimeExecutionItem(BaseModel):
     vi_stnd_prc: str = Field(title="정적VI발동기준가")
 
 
+class DomesticRealtimeExecutionNotificationItem(BaseModel):
+    """국내주식 실시간체결통보 - H0STCNI0(실전)/H0STCNI9(모의).
+
+    WebSocket 메시지의 데이터 부분을 파싱한 모델입니다.
+    데이터는 "^" 구분자로 26개 필드가 구분되어 전달됩니다.
+    """
+
+    cust_id: str = Field(title="고객 ID")
+    acnt_no: str = Field(title="계좌번호")
+    oder_no: str = Field(title="주문번호")
+    ooder_no: str = Field(title="원주문번호")
+    seln_byov_cls: str = Field(title="매도매수구분")  # 01:매도, 02:매수
+    rctf_cls: str = Field(title="정정구분")  # 0:정상, 1:정정, 2:취소
+    oder_kind: str = Field(title="주문종류")
+    oder_cond: str = Field(title="주문조건")  # 0:없음, 1:IOC, 2:FOK
+    stck_shrn_iscd: str = Field(title="주식 단축 종목코드")
+    cntg_qty: str = Field(title="체결 수량")
+    cntg_unpr: str = Field(title="체결단가")
+    stck_cntg_hour: str = Field(title="주식 체결 시간")
+    rfus_yn: str = Field(title="거부여부")  # 0:승인, 1:거부
+    cntg_yn: str = Field(title="체결여부")  # 1:주문/정정/취소/거부, 2:체결
+    acpt_yn: str = Field(title="접수여부")  # 1:주문접수, 2:확인, 3:취소(FOK/IOC)
+    brnc_no: str = Field(title="지점번호")
+    oder_qty: str = Field(title="주문수량")
+    acnt_name: str = Field(title="계좌명")
+    ord_cond_prc: str = Field(title="호가조건가격")  # 스톱지정가 시 표시
+    ord_exg_gb: str = Field(title="주문거래소 구분")  # 1:KRX, 2:NXT, 3:SOR-KRX, 4:SOR-NXT
+    popup_yn: str = Field(title="실시간체결창 표시여부")  # Y/N
+    filler: str = Field(title="필러")
+    crdt_cls: str = Field(title="신용구분")
+    crdt_loan_date: str = Field(title="신용대출일자")
+    cntg_isnm40: str = Field(title="체결종목명")
+    oder_prc: str = Field(title="주문가격")
+
+
 class DomesticRealtimeOrderbookItem(BaseModel):
     """국내주식 실시간호가 (KRX) - H0STASP0.
 
@@ -243,4 +278,34 @@ ORDERBOOK_FIELD_NAMES: list[str] = [
     "ovtm_total_askp_icdc",
     "ovtm_total_bidp_icdc",
     "stck_deal_cls_code",
+]
+
+# 필드 순서 리스트 (WebSocket 데이터 파싱용) - 실시간체결통보
+EXECUTION_NOTIFICATION_FIELD_NAMES: list[str] = [
+    "cust_id",
+    "acnt_no",
+    "oder_no",
+    "ooder_no",
+    "seln_byov_cls",
+    "rctf_cls",
+    "oder_kind",
+    "oder_cond",
+    "stck_shrn_iscd",
+    "cntg_qty",
+    "cntg_unpr",
+    "stck_cntg_hour",
+    "rfus_yn",
+    "cntg_yn",
+    "acpt_yn",
+    "brnc_no",
+    "oder_qty",
+    "acnt_name",
+    "ord_cond_prc",
+    "ord_exg_gb",
+    "popup_yn",
+    "filler",
+    "crdt_cls",
+    "crdt_loan_date",
+    "cntg_isnm40",
+    "oder_prc",
 ]

@@ -167,6 +167,9 @@ async def test_receive_execution_data(socket_client_params):
                         assert isinstance(execution, DomesticRealtimeExecutionItem)
                         assert execution.mksc_shrn_iscd == "005930"
                         assert execution.stck_prpr != ""  # Should have a price
+                        # Verify sign codes are valid (1~5)
+                        assert execution.prdy_vrss_sign in ["1", "2", "3", "4", "5"]
+                        assert execution.oprc_vrss_prpr_sign in ["1", "2", "3", "4", "5"]
 
                         data_received = True
                         return
@@ -322,6 +325,8 @@ async def test_receive_orderbook_data(socket_client_params):
                         assert orderbook.mksc_shrn_iscd == "005930"
                         assert orderbook.askp1 != ""  # Should have ask price
                         assert orderbook.bidp1 != ""  # Should have bid price
+                        # Verify hour_cls_code is valid (0: 장중, A: 장후예상, B: 장전예상, C: VI발동, D: 시간외단일가)
+                        assert orderbook.hour_cls_code in ["0", "A", "B", "C", "D"]
 
                         data_received = True
                         return
