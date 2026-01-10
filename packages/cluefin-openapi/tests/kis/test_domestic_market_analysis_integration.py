@@ -13,9 +13,7 @@ import pytest
 from pydantic import SecretStr
 
 from cluefin_openapi.kis._auth import Auth
-from cluefin_openapi.kis._client import Client
-
-from ._token_cache import TokenCache
+from cluefin_openapi.kis._http_client import HttpClient
 
 
 @pytest.fixture(scope="module")
@@ -33,18 +31,10 @@ def auth_dev():
 
 
 @pytest.fixture(scope="module")
-def token_cache(auth_dev):
-    """Fixture to provide persistent token cache."""
-    cache = TokenCache(auth_dev)
-    yield cache
-    # Note: We don't clear the cache on teardown to allow reuse across test runs
-
-
-@pytest.fixture(scope="module")
-def client(auth_dev, token_cache):
+def client(auth_dev):
     """Fixture to create KIS Client with valid token."""
-    token_response = token_cache.get()
-    return Client(
+    token_response = auth_dev.generate()
+    return HttpClient(
         app_key=auth_dev.app_key,
         secret_key=auth_dev.secret_key,
         token=token_response.access_token,
@@ -57,7 +47,7 @@ def client(auth_dev, token_cache):
 
 
 @pytest.mark.integration
-def test_get_condition_search_list(client: Client):
+def test_get_condition_search_list(client: HttpClient):
     """Test condition search list inquiry."""
     time.sleep(1)
     try:
@@ -77,7 +67,7 @@ def test_get_condition_search_list(client: Client):
 
 
 @pytest.mark.integration
-def test_get_condition_search_result(client: Client):
+def test_get_condition_search_result(client: HttpClient):
     """Test condition search result inquiry."""
     time.sleep(1)
     try:
@@ -101,7 +91,7 @@ def test_get_condition_search_result(client: Client):
 
 
 @pytest.mark.integration
-def test_get_watchlist_groups(client: Client):
+def test_get_watchlist_groups(client: HttpClient):
     """Test watchlist groups inquiry."""
     time.sleep(1)
 
@@ -125,7 +115,7 @@ def test_get_watchlist_groups(client: Client):
 
 
 @pytest.mark.integration
-def test_get_watchlist_multi_quote(client: Client):
+def test_get_watchlist_multi_quote(client: HttpClient):
     """Test watchlist multi-stock quote inquiry."""
     time.sleep(1)
     try:
@@ -206,7 +196,7 @@ def test_get_watchlist_multi_quote(client: Client):
 
 
 @pytest.mark.integration
-def test_get_investor_trading_trend_by_stock_daily(client: Client):
+def test_get_investor_trading_trend_by_stock_daily(client: HttpClient):
     """Test investor trading trend by stock (daily)."""
     time.sleep(1)
     try:
@@ -226,7 +216,7 @@ def test_get_investor_trading_trend_by_stock_daily(client: Client):
 
 
 @pytest.mark.integration
-def test_get_investor_trading_trend_by_market_intraday(client: Client):
+def test_get_investor_trading_trend_by_market_intraday(client: HttpClient):
     """Test investor trading trend by market (intraday)."""
     time.sleep(1)
     try:
@@ -245,7 +235,7 @@ def test_get_investor_trading_trend_by_market_intraday(client: Client):
 
 
 @pytest.mark.integration
-def test_get_investor_trading_trend_by_market_daily(client: Client):
+def test_get_investor_trading_trend_by_market_daily(client: HttpClient):
     """Test investor trading trend by market (daily)."""
     time.sleep(1)
     try:
@@ -271,7 +261,7 @@ def test_get_investor_trading_trend_by_market_daily(client: Client):
 
 
 @pytest.mark.integration
-def test_get_foreign_brokerage_trading_aggregate(client: Client):
+def test_get_foreign_brokerage_trading_aggregate(client: HttpClient):
     """Test foreign brokerage trading aggregate."""
     time.sleep(1)
     try:
@@ -291,7 +281,7 @@ def test_get_foreign_brokerage_trading_aggregate(client: Client):
 
 
 @pytest.mark.integration
-def test_get_foreign_net_buy_trend_by_stock(client: Client):
+def test_get_foreign_net_buy_trend_by_stock(client: HttpClient):
     """Test foreign net buy trend by stock."""
     time.sleep(1)
     try:
@@ -311,7 +301,7 @@ def test_get_foreign_net_buy_trend_by_stock(client: Client):
 
 
 @pytest.mark.integration
-def test_get_member_trading_trend_tick(client: Client):
+def test_get_member_trading_trend_tick(client: HttpClient):
     """Test member trading trend (tick)."""
     time.sleep(1)
     try:
@@ -334,7 +324,7 @@ def test_get_member_trading_trend_tick(client: Client):
 
 
 @pytest.mark.integration
-def test_get_member_trading_trend_by_stock(client: Client):
+def test_get_member_trading_trend_by_stock(client: HttpClient):
     """Test member trading trend by stock."""
     time.sleep(1)
     try:
@@ -357,7 +347,7 @@ def test_get_member_trading_trend_by_stock(client: Client):
 
 
 @pytest.mark.integration
-def test_get_foreign_institutional_estimate_by_stock(client: Client):
+def test_get_foreign_institutional_estimate_by_stock(client: HttpClient):
     """Test foreign/institutional estimate by stock."""
     time.sleep(1)
     try:
@@ -378,7 +368,7 @@ def test_get_foreign_institutional_estimate_by_stock(client: Client):
 
 
 @pytest.mark.integration
-def test_get_program_trading_trend_by_stock_intraday(client: Client):
+def test_get_program_trading_trend_by_stock_intraday(client: HttpClient):
     """Test program trading trend by stock (intraday)."""
     time.sleep(1)
     try:
@@ -397,7 +387,7 @@ def test_get_program_trading_trend_by_stock_intraday(client: Client):
 
 
 @pytest.mark.integration
-def test_get_program_trading_trend_by_stock_daily(client: Client):
+def test_get_program_trading_trend_by_stock_daily(client: HttpClient):
     """Test program trading trend by stock (daily)."""
     time.sleep(1)
     try:
@@ -417,7 +407,7 @@ def test_get_program_trading_trend_by_stock_daily(client: Client):
 
 
 @pytest.mark.integration
-def test_get_program_trading_summary_intraday(client: Client):
+def test_get_program_trading_summary_intraday(client: HttpClient):
     """Test program trading summary (intraday)."""
     time.sleep(1)
     try:
@@ -440,7 +430,7 @@ def test_get_program_trading_summary_intraday(client: Client):
 
 
 @pytest.mark.integration
-def test_get_program_trading_summary_daily(client: Client):
+def test_get_program_trading_summary_daily(client: HttpClient):
     """Test program trading summary (daily)."""
     time.sleep(1)
     try:
@@ -461,7 +451,7 @@ def test_get_program_trading_summary_daily(client: Client):
 
 
 @pytest.mark.integration
-def test_get_program_trading_investor_trend_today(client: Client):
+def test_get_program_trading_investor_trend_today(client: HttpClient):
     """Test program trading investor trend (today)."""
     time.sleep(1)
     try:
@@ -483,7 +473,7 @@ def test_get_program_trading_investor_trend_today(client: Client):
 
 
 @pytest.mark.integration
-def test_get_buy_sell_volume_by_stock_daily(client: Client):
+def test_get_buy_sell_volume_by_stock_daily(client: HttpClient):
     """Test buy/sell volume by stock (daily)."""
     time.sleep(1)
     try:
@@ -505,7 +495,7 @@ def test_get_buy_sell_volume_by_stock_daily(client: Client):
 
 
 @pytest.mark.integration
-def test_get_credit_balance_trend_daily(client: Client):
+def test_get_credit_balance_trend_daily(client: HttpClient):
     """Test credit balance trend (daily)."""
     time.sleep(1)
     try:
@@ -526,7 +516,7 @@ def test_get_credit_balance_trend_daily(client: Client):
 
 
 @pytest.mark.integration
-def test_get_expected_price_trend(client: Client):
+def test_get_expected_price_trend(client: HttpClient):
     """Test expected price trend."""
     time.sleep(1)
     try:
@@ -546,7 +536,7 @@ def test_get_expected_price_trend(client: Client):
 
 
 @pytest.mark.integration
-def test_get_short_selling_trend_daily(client: Client):
+def test_get_short_selling_trend_daily(client: HttpClient):
     """Test short selling trend (daily)."""
     time.sleep(1)
     try:
@@ -567,7 +557,7 @@ def test_get_short_selling_trend_daily(client: Client):
 
 
 @pytest.mark.integration
-def test_get_after_hours_expected_fluctuation(client: Client):
+def test_get_after_hours_expected_fluctuation(client: HttpClient):
     """Test after hours expected fluctuation."""
     time.sleep(1)
     try:
@@ -592,7 +582,7 @@ def test_get_after_hours_expected_fluctuation(client: Client):
 
 
 @pytest.mark.integration
-def test_get_trading_weight_by_amount(client: Client):
+def test_get_trading_weight_by_amount(client: HttpClient):
     """Test trading weight by amount."""
     time.sleep(1)
     try:
@@ -612,7 +602,7 @@ def test_get_trading_weight_by_amount(client: Client):
 
 
 @pytest.mark.integration
-def test_get_market_fund_summary(client: Client):
+def test_get_market_fund_summary(client: HttpClient):
     """Test market fund summary."""
     time.sleep(1)
     try:
@@ -630,7 +620,7 @@ def test_get_market_fund_summary(client: Client):
 
 
 @pytest.mark.integration
-def test_get_stock_loan_trend_daily(client: Client):
+def test_get_stock_loan_trend_daily(client: HttpClient):
     """Test stock loan trend (daily)."""
     time.sleep(1)
     try:
@@ -652,7 +642,7 @@ def test_get_stock_loan_trend_daily(client: Client):
 
 
 @pytest.mark.integration
-def test_get_limit_price_stocks(client: Client):
+def test_get_limit_price_stocks(client: HttpClient):
     """Test limit price stocks (upper/lower limit)."""
     time.sleep(1)
     try:
@@ -679,7 +669,7 @@ def test_get_limit_price_stocks(client: Client):
 
 
 @pytest.mark.integration
-def test_get_resistance_level_trading_weight(client: Client):
+def test_get_resistance_level_trading_weight(client: HttpClient):
     """Test resistance level trading weight."""
     time.sleep(1)
     try:

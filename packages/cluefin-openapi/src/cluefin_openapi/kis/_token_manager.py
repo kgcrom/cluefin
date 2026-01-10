@@ -21,6 +21,10 @@ class TokenManager:
     # Expiry buffer: refresh token if expiry is within this duration
     EXPIRY_BUFFER = timedelta(hours=1)
 
+    # Maximum cache age: force refresh if token is older than this
+    # KIS server may invalidate tokens before the stated 24-hour expiry
+    MAX_CACHE_AGE = timedelta(hours=6)
+
     def __init__(self, cache_dir: Optional[str] = None):
         """Initialize token manager.
 
@@ -69,13 +73,21 @@ class TokenManager:
 
         Token is considered valid if:
         1. Token exists in memory or disk cache
-        2. Expiry time is more than EXPIRY_BUFFER in the future
+        2. Cache age is less than MAX_CACHE_AGE
+        3. Expiry time is more than EXPIRY_BUFFER in the future
 
         Returns:
             True if token can be used, False if new token needed
         """
         if self._token_cache is None:
             return False
+
+        # Check if cache is too old (server may invalidate tokens early)
+        if self._last_refresh is not None:
+            age = datetime.now() - self._last_refresh
+            if age > self.MAX_CACHE_AGE:
+                logger.debug(f"Token cache expired (age: {age}, max: {self.MAX_CACHE_AGE})")
+                return False
 
         try:
             expiry = datetime.strptime(self._token_cache.access_token_token_expired, "%Y-%m-%d %H:%M:%S")
@@ -129,6 +141,8 @@ class TokenManager:
             if token_data:
                 self._token_cache = TokenResponse(**token_data)
                 cached_at = cache_data.get("cached_at")
+                if cached_at:
+                    self._last_refresh = datetime.fromisoformat(cached_at)
                 logger.debug(f"Loaded cached token from disk (cached at {cached_at})")
             else:
                 logger.warning("Token cache file is empty or malformed")

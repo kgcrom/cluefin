@@ -1,4 +1,4 @@
-from cluefin_openapi.kis._client import Client
+from cluefin_openapi.kis._http_client import HttpClient
 from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 from cluefin_openapi.kis._overseas_basic_quote_types import (
     ConclusionTrend,
@@ -20,7 +20,7 @@ from cluefin_openapi.kis._overseas_basic_quote_types import (
 class BasicQuote:
     """해외주식 기본시세"""
 
-    def __init__(self, client: Client):
+    def __init__(self, client: HttpClient):
         self.client = client
 
     def _check_response_error(self, response_data: dict) -> None:

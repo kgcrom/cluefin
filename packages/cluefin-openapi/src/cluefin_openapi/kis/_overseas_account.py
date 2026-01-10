@@ -1,4 +1,4 @@
-from cluefin_openapi.kis._client import Client
+from cluefin_openapi.kis._http_client import HttpClient
 from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 from cluefin_openapi.kis._overseas_account_types import (
     BalanceBySettlement,
@@ -25,7 +25,7 @@ from cluefin_openapi.kis._overseas_account_types import (
 class OverseasAccount:
     """해외주식 주문/계좌"""
 
-    def __init__(self, client: Client):
+    def __init__(self, client: HttpClient):
         self.client = client
 
     def request_stock_order(

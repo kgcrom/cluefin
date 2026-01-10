@@ -1,6 +1,6 @@
 """Utility script to generate and cache a KIS API token.
 
-Run this script once to generate a token that will be cached for ~24 hours.
+Run this script once to generate a token that will be cached for ~6 hours.
 This allows you to run integration tests without hitting the 1-minute rate limit.
 """
 
@@ -12,8 +12,6 @@ from loguru import logger
 from pydantic import SecretStr
 
 from cluefin_openapi.kis._auth import Auth
-
-from ._token_cache import TokenCache
 
 
 def main():
@@ -31,18 +29,15 @@ def main():
 
     logger.info(f"Generating token for KIS API ({env} environment)...")
 
-    # Create auth and token cache
+    # Create auth and generate token
     auth = Auth(app_key=app_key, secret_key=SecretStr(secret_key), env=env)
-    cache = TokenCache(auth)
-
-    # Generate and cache token
-    token = cache.get()
+    token = auth.generate()
 
     logger.success("Token generated successfully!")
     logger.info(f"Access token: {token.access_token[:20]}...")
     logger.info(f"Expires at: {token.access_token_token_expired}")
     logger.info(f"Token type: {token.token_type}")
-    logger.info(f"Cached to: {cache._cache_file}")
+    logger.info(f"Cached to: {auth.token_manager.cache_file}")
     logger.info("You can now run integration tests without waiting for rate limits.")
 
 

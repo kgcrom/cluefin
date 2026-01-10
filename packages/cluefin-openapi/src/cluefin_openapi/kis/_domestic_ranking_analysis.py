@@ -1,4 +1,3 @@
-from cluefin_openapi.kis._client import Client
 from cluefin_openapi.kis._domestic_ranking_analysis_types import (
     HtsInquiryTop20,
     StockAfterHoursFluctuationRank,
@@ -23,13 +22,14 @@ from cluefin_openapi.kis._domestic_ranking_analysis_types import (
     StockWatchlistRegistrationTop,
     TradingVolumeRank,
 )
+from cluefin_openapi.kis._http_client import HttpClient
 from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 
 
 class DomesticRankingAnalysis:
     """국내주식 순위분석"""
 
-    def __init__(self, client: Client):
+    def __init__(self, client: HttpClient):
         self.client = client
 
     def get_trading_volume_rank(

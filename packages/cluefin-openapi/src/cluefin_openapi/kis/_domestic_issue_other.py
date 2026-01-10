@@ -1,4 +1,3 @@
-from cluefin_openapi.kis._client import Client
 from cluefin_openapi.kis._domestic_issue_other_types import (
     ExpectedIndexAll,
     ExpectedIndexTrend,
@@ -15,13 +14,14 @@ from cluefin_openapi.kis._domestic_issue_other_types import (
     SectorTimeIndexSecond,
     VolatilityInterruptionStatus,
 )
+from cluefin_openapi.kis._http_client import HttpClient
 from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 
 
 class DomesticIssueOther:
     """국내주식 업종/기타"""
 
-    def __init__(self, client: Client):
+    def __init__(self, client: HttpClient):
         self.client = client
 
     def get_sector_current_index(
