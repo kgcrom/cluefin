@@ -13,9 +13,6 @@ Usage:
 
 from importlib.metadata import PackageNotFoundError, version
 
-# Regime Detection
-from cluefin_ta.dow import DOW_THEORY
-
 # Overlap Studies (Moving Averages)
 # Momentum Indicators
 from cluefin_ta.momentum import ADX, CCI, MACD, MFI, MOM, ROC, RSI, STOCH, STOCHF, WILLR
@@ -33,7 +30,6 @@ from cluefin_ta.pattern import (
     CDLMORNINGSTAR,
     CDLPIERCING,
     CDLSHOOTINGSTAR,
-    CUP_HANDLE,
 )
 
 # Portfolio Metrics
@@ -97,7 +93,6 @@ __all__ = [
     "CDLMORNINGSTAR",
     "CDLEVENINGSTAR",
     "CDLDARKCLOUDCOVER",
-    "CUP_HANDLE",
     # Portfolio
     "MDD",
     "CAGR",
@@ -112,5 +107,4 @@ __all__ = [
     "REGIME_COMBINED",
     "REGIME_HMM",
     "REGIME_HMM_RETURNS",
-    "DOW_THEORY",
 ]

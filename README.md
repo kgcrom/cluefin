@@ -57,7 +57,6 @@ uv run ruff check . --fix
 - **한국 금융 API**: 키움증권, 한국투자증권(KIS), 한국거래소(KRX), DART를 위한 타입 안전한 클라이언트
 - **ML 기반 예측**: 주식 움직임 예측을 위한 SHAP 설명 기능을 갖춘 LightGBM 모델
 - **기술적 분석**: cluefin-ta를 통한 150+ 지표 (RSI, MACD, 볼린저 밴드 등)
-- **차트 패턴 인식**: Cup Pattern, Dow Theory 기반 추세 분석
 
 ### 📊 데이터 소스
 - **키움증권**: 실시간 시세, 계좌 관리, 주문 실행
@@ -131,7 +130,6 @@ uv run ruff format .
 - **시스템 의존성 없음**: 순수 NumPy 구현 (C 라이브러리 불필요)
 - **150+ 지표**: 오버랩, 모멘텀, 변동성, 거래량, 캔들스틱 패턴
 - **포트폴리오 지표**: MDD, 샤프, 소르티노, 칼마, CAGR 계산
-- **차트 패턴**: Cup Pattern, Dow Theory 기반 추세 분석
 
 **[cluefin-cli](apps/cluefin-cli/)** - 대화형 터미널 애플리케이션
 - **Rich 기반 UI**: 한국 주식 시장 분석 및 메뉴 네비게이션
