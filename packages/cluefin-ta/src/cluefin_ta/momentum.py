@@ -16,7 +16,7 @@ Functions:
 
 import numpy as np
 
-from cluefin_ta._core import get_impl
+from cluefin_ta._core import dx_loop, mfi_loop, rolling_minmax, wilder_smooth
 from cluefin_ta.overlap import EMA
 
 
@@ -57,9 +57,8 @@ def RSI(close: np.ndarray, timeperiod: int = 14) -> np.ndarray:
         result[timeperiod] = 100.0 - (100.0 / (1.0 + rs))
 
     # Use Wilder's smoothing for gains and losses
-    impl = get_impl()
-    smoothed_gains = impl.wilder_smooth(gains, timeperiod, avg_gain, timeperiod - 1)
-    smoothed_losses = impl.wilder_smooth(losses, timeperiod, avg_loss, timeperiod - 1)
+    smoothed_gains = wilder_smooth(gains, timeperiod, avg_gain, timeperiod - 1)
+    smoothed_losses = wilder_smooth(losses, timeperiod, avg_loss, timeperiod - 1)
 
     # Calculate RSI from smoothed values (starting from timeperiod+1)
     for i in range(timeperiod + 1, n):
@@ -159,9 +158,8 @@ def STOCH(
     if n < fastk_period:
         return slowk, slowd
 
-    # Get optimized rolling min/max
-    impl = get_impl()
-    highest_high, lowest_low = impl.rolling_minmax(high, low, fastk_period)
+    # Get rolling min/max
+    highest_high, lowest_low = rolling_minmax(high, low, fastk_period)
 
     # Calculate Fast %K
     fastk = np.full(n, np.nan)
@@ -217,9 +215,8 @@ def WILLR(
     if n < timeperiod:
         return result
 
-    # Get optimized rolling min/max
-    impl = get_impl()
-    highest_high, lowest_low = impl.rolling_minmax(high, low, timeperiod)
+    # Get rolling min/max
+    highest_high, lowest_low = rolling_minmax(high, low, timeperiod)
 
     for i in range(timeperiod - 1, n):
         hh = highest_high[i]
@@ -266,9 +263,8 @@ def STOCHF(
     if n < fastk_period:
         return fastk, fastd
 
-    # Get optimized rolling min/max
-    impl = get_impl()
-    highest_high, lowest_low = impl.rolling_minmax(high, low, fastk_period)
+    # Get rolling min/max
+    highest_high, lowest_low = rolling_minmax(high, low, fastk_period)
 
     # Calculate Fast %K
     for i in range(fastk_period - 1, n):
@@ -432,8 +428,7 @@ def MFI(
     # Typical Price
     tp = (high + low + close) / 3.0
 
-    impl = get_impl()
-    return impl.mfi_loop(tp, volume, timeperiod)
+    return mfi_loop(tp, volume, timeperiod)
 
 
 def ADX(
@@ -472,8 +467,7 @@ def ADX(
     prev_close[1:] = close[:-1]
 
     # Get +DI, -DI, DX
-    impl = get_impl()
-    plus_di, minus_di, dx = impl.dx_loop(high, low, prev_close, timeperiod)
+    plus_di, minus_di, dx = dx_loop(high, low, prev_close, timeperiod)
 
     # ADX = Wilder smoothed average of DX
     # First ADX is the average of first 'period' DX values

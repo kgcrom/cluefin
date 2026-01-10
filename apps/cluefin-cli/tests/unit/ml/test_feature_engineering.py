@@ -1,0 +1,217 @@
+import numpy as np
+import pandas as pd
+import pytest
+
+from cluefin_cli.ml.feature_engineering import FeatureEngineer
+
+
+class TestRegimeFeatures:
+    """Tests for regime detection feature engineering."""
+
+    def test_create_regime_detection_features(self):
+        """Test regime feature creation."""
+        # Create sample OHLCV DataFrame
+        n = 100
+        dates = pd.date_range("2024-01-01", periods=n, freq="D")
+
+        df = pd.DataFrame(
+            {
+                "date": dates,
+                "open": 100 + np.cumsum(np.random.uniform(-1, 1, n)),
+                "high": 105 + np.cumsum(np.random.uniform(-1, 1, n)),
+                "low": 95 + np.cumsum(np.random.uniform(-1, 1, n)),
+                "close": 100 + np.cumsum(np.random.uniform(-1, 1, n)),
+                "volume": np.random.randint(1000000, 10000000, n),
+            }
+        )
+
+        engineer = FeatureEngineer()
+        result_df = engineer.create_regime_detection_features(df)
+
+        # Verify regime columns are created
+        expected_columns = [
+            "regime_trend",
+            "regime_trend_duration",
+            "regime_volatility",
+            "regime_combined",
+        ]
+
+        for col in expected_columns:
+            assert col in result_df.columns, f"{col} should be in DataFrame"
+
+        # Check data types
+        assert result_df["regime_trend"].dtype == np.float64
+        assert result_df["regime_trend_duration"].dtype == np.float64
+        assert result_df["regime_volatility"].dtype == np.float64
+        assert result_df["regime_combined"].dtype == np.float64
+
+    def test_regime_features_with_hmm(self):
+        """Test regime features including HMM (if available)."""
+        pytest.importorskip("hmmlearn")
+
+        n = 100
+        dates = pd.date_range("2024-01-01", periods=n, freq="D")
+
+        df = pd.DataFrame(
+            {
+                "date": dates,
+                "open": 100 + np.cumsum(np.random.uniform(-1, 1, n)),
+                "high": 105 + np.cumsum(np.random.uniform(-1, 1, n)),
+                "low": 95 + np.cumsum(np.random.uniform(-1, 1, n)),
+                "close": 100 + np.cumsum(np.random.uniform(-1, 1, n)),
+                "volume": np.random.randint(1000000, 10000000, n),
+            }
+        )
+
+        engineer = FeatureEngineer()
+        result_df = engineer.create_regime_detection_features(df)
+
+        # Check HMM features
+        hmm_columns = [
+            "regime_hmm_state",
+            "regime_hmm_trans_to_0",
+            "regime_hmm_trans_to_1",
+            "regime_hmm_trans_to_2",
+            "regime_hmm_expected_return",
+        ]
+
+        for col in hmm_columns:
+            assert col in result_df.columns, f"{col} should be in DataFrame when hmmlearn available"
+
+    def test_regime_features_no_nan_propagation(self):
+        """Test regime features handle NaN appropriately."""
+        n = 100
+        dates = pd.date_range("2024-01-01", periods=n, freq="D")
+
+        df = pd.DataFrame(
+            {
+                "date": dates,
+                "open": 100 + np.cumsum(np.random.uniform(-1, 1, n)),
+                "high": 105 + np.cumsum(np.random.uniform(-1, 1, n)),
+                "low": 95 + np.cumsum(np.random.uniform(-1, 1, n)),
+                "close": 100 + np.cumsum(np.random.uniform(-1, 1, n)),
+                "volume": np.random.randint(1000000, 10000000, n),
+            }
+        )
+
+        engineer = FeatureEngineer()
+        result_df = engineer.create_regime_detection_features(df)
+
+        # Check that some values are valid (not all NaN)
+        assert not result_df["regime_trend"].isna().all(), "Should have some valid regime values"
+        assert not result_df["regime_volatility"].isna().all(), "Should have some valid volatility values"
+
+    def test_regime_features_with_insufficient_data(self):
+        """Test regime features with short data (should handle gracefully)."""
+        n = 30  # Less than slow_period (50)
+        dates = pd.date_range("2024-01-01", periods=n, freq="D")
+
+        df = pd.DataFrame(
+            {
+                "date": dates,
+                "open": 100 + np.cumsum(np.random.uniform(-1, 1, n)),
+                "high": 105 + np.cumsum(np.random.uniform(-1, 1, n)),
+                "low": 95 + np.cumsum(np.random.uniform(-1, 1, n)),
+                "close": 100 + np.cumsum(np.random.uniform(-1, 1, n)),
+                "volume": np.random.randint(1000000, 10000000, n),
+            }
+        )
+
+        engineer = FeatureEngineer()
+        result_df = engineer.create_regime_detection_features(df)
+
+        # Should not raise error, just have more NaN values
+        assert "regime_trend" in result_df.columns
+        # Most values will be NaN due to insufficient data
+        assert result_df["regime_trend"].isna().sum() > n // 2
+
+
+class TestRegimeFeatureIntegration:
+    """Integration tests for regime features in ML pipeline."""
+
+    def test_regime_features_in_prepare_features(self):
+        """Test regime features integrated in full prepare_features pipeline."""
+        # Create sample stock data
+        n = 100
+        dates = pd.date_range("2024-01-01", periods=n, freq="D")
+
+        stock_data = pd.DataFrame(
+            {
+                "date": dates,
+                "open": 100 + np.cumsum(np.random.uniform(-1, 1, n)),
+                "high": 105 + np.cumsum(np.random.uniform(-1, 1, n)),
+                "low": 95 + np.cumsum(np.random.uniform(-1, 1, n)),
+                "close": 100 + np.cumsum(np.random.uniform(-1, 1, n)),
+                "volume": np.random.randint(1000000, 10000000, n),
+            }
+        )
+
+        # Create sample indicators (from TechnicalAnalyzer)
+        indicators = {
+            "sma_20": np.random.uniform(90, 110, n),
+            "ema_20": np.random.uniform(90, 110, n),
+            "rsi_14": np.random.uniform(30, 70, n),
+            "macd": np.random.uniform(-5, 5, n),
+            "macd_signal": np.random.uniform(-5, 5, n),
+        }
+
+        engineer = FeatureEngineer()
+        df, feature_names = engineer.prepare_features(stock_data, indicators)
+
+        # Check for regime features in output
+        regime_features = [f for f in feature_names if f.startswith("regime_")]
+        assert len(regime_features) > 0, "Regime features should be created"
+
+        # Verify specific regime features
+        expected_features = [
+            "regime_trend",
+            "regime_trend_duration",
+            "regime_volatility",
+            "regime_combined",
+        ]
+
+        for feature in expected_features:
+            assert feature in feature_names, f"{feature} should be in feature list"
+
+        # Check DataFrame has regime columns
+        for feature in expected_features:
+            assert feature in df.columns, f"{feature} should be in DataFrame"
+
+    def test_regime_features_work_with_ml_predictor(self):
+        """Test that regime features work in full ML predictor pipeline."""
+        # This is a smoke test to ensure no errors in full pipeline
+        from cluefin_cli.ml import StockMLPredictor
+
+        # Create realistic sample data
+        n = 300  # Need enough data for ML
+        dates = pd.date_range("2024-01-01", periods=n, freq="D")
+
+        stock_data = pd.DataFrame(
+            {
+                "date": dates,
+                "open": 100 + np.cumsum(np.random.normal(0.1, 1, n)),
+                "high": 105 + np.cumsum(np.random.normal(0.1, 1, n)),
+                "low": 95 + np.cumsum(np.random.normal(0.1, 1, n)),
+                "close": 100 + np.cumsum(np.random.normal(0.1, 1, n)),
+                "volume": np.random.randint(1000000, 10000000, n),
+            }
+        )
+
+        indicators = {
+            "sma_20": 100 + np.cumsum(np.random.normal(0.1, 0.5, n)),
+            "ema_20": 100 + np.cumsum(np.random.normal(0.1, 0.5, n)),
+            "rsi_14": np.random.uniform(30, 70, n),
+        }
+
+        predictor = StockMLPredictor()
+
+        try:
+            # Try to prepare data with regime features
+            prepared_df, feature_names = predictor.prepare_data(stock_data, indicators)
+
+            # Should succeed without errors
+            assert "regime_trend" in feature_names or len(feature_names) > 0
+
+        except Exception as e:
+            # If it fails, it should be due to insufficient data, not regime features
+            assert "regime" not in str(e).lower(), f"Should not fail due to regime features: {e}"

@@ -11,7 +11,7 @@
 > 투자자가 금융 의사결정을 분석, 자동화, 최적화할 수 있도록 돕는 파이썬 툴킷입니다.
 > _"더 스마트하게 투자하세요, 어렵게 하지 말고 Cluefin과 함께."_
 
-## ⚠️ Disclaimer
+## ⚠️ 면책 조항
 
 ```
 이 프로젝트는 교육 및 연구 목적으로만 제공됩니다.
@@ -24,29 +24,29 @@ Cluefin을 사용함으로써 귀하는 자신의 책임 하에 학습이나 실
 
 ---
 
-## 🚀 Quick Start
+## 🚀 빠른 시작
 
 ```bash
-# Install system dependencies (macOS)
+# 시스템 의존성 설치 (macOS)
 brew install lightgbm
 
-# Clone and setup
+# 클론 및 설정
 git clone https://github.com/kgcrom/cluefin.git
 cd cluefin
 uv venv --python 3.10
 
-# Install all workspace dependencies
+# 모든 워크스페이스 의존성 설치
 uv sync --all-packages
 
-# Configure environment
+# 환경 설정
 cp apps/cluefin-cli/.env.sample .env
-# Edit .env with your API keys (KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, KIWOOM_ENV, KIS_APP_KEY, KIS_SECRET_KEY, KIS_ENV, KRX_AUTH_KEY, DART_AUTH_KEY)
+# .env 파일에 API 키 설정 (KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, KIWOOM_ENV, KIS_APP_KEY, KIS_SECRET_KEY, KIS_ENV, KRX_AUTH_KEY, DART_AUTH_KEY)
 
-# Advanced analysis with ML prediction
+# ML 예측을 포함한 고급 분석
 cluefin-cli ta 005930 --chart --ml-predict --shap-analysis
 
-# Run tests and code quality checks
-uv run pytest -m "not integration"  # Unit tests only
+# 테스트 및 코드 품질 검사
+uv run pytest -m "not integration"  # 단위 테스트만
 uv run ruff check . --fix
 ```
 
@@ -66,75 +66,76 @@ uv run ruff check . --fix
 - **기술적 지표**: 순수 Python 기반 cluefin-ta 라이브러리 (TA-Lib 호환 API)
 
 ## 📖 Cluefin을 선택하는 이유?
-Cluefin은 모든 사람들에게 금융 투자, 포트폴리오 관리를 단순화하고 도와주는 역할을합니다.
+Cluefin은 모든 사람들에게 금융 투자, 포트폴리오 관리를 단순화하고 도와주는 역할을 합니다.
 
 초보자든 전문가든 시장을 분석하고 거래를 자동화하며 포트폴리오를 효율적으로 관리할 수 있는 도구를 제공합니다.
 
-## 🏁 Getting Started
+## 🏁 시작하기
 
-### Prerequisites
-- [uv](https://github.com/astral-sh/uv) package manager
+### 사전 요구사항
+- [uv](https://github.com/astral-sh/uv) 패키지 매니저
+- Python 3.10 이상
 
-### Project Layout
-This project uses a **uv workspace monorepo** structure:
+### 프로젝트 구조
+이 프로젝트는 **uv 워크스페이스 모노레포** 구조를 사용합니다:
 ```
 cluefin/
 ├── packages/
-│   ├── cluefin-openapi/        # Korean financial API clients
+│   ├── cluefin-openapi/        # 한국 금융 API 클라이언트
 │   │   ├── src/cluefin_openapi/
-│   │   │   ├── kiwoom/         # Kiwoom Securities API client
-│   │   │   ├── kis/            # Korea Investment & Securities API client
-│   │   │   ├── krx/            # Korea Exchange API client
-│   │   │   └── dart/           # DART corporate disclosure API client
-│   │   └── tests/              # Unit and integration tests
-│   └── cluefin-ta/             # Pure Python technical analysis library
-│       └── src/cluefin_ta/     # TA-Lib compatible API, no system dependencies
-├── apps/cluefin-cli/           # Interactive CLI application with ML predictions
-└── docs/                       # Architecture and technical documentation
+│   │   │   ├── kiwoom/         # 키움증권 API 클라이언트
+│   │   │   ├── kis/            # 한국투자증권 API 클라이언트
+│   │   │   ├── krx/            # 한국거래소 API 클라이언트
+│   │   │   └── dart/           # DART 기업공시 API 클라이언트
+│   │   └── tests/              # 단위 및 통합 테스트
+│   └── cluefin-ta/             # 순수 Python 기술적 분석 라이브러리
+│       └── src/cluefin_ta/     # TA-Lib 호환 API, 시스템 의존성 없음
+├── apps/cluefin-cli/           # ML 예측 기능이 포함된 대화형 CLI 애플리케이션
+└── docs/                       # 아키텍처 및 기술 문서
 ```
 
-## 🔧 Development
+## 🔧 개발
 
-### Testing
+### 테스트
 ```bash
-# Run all tests
+# 모든 테스트 실행
 uv run pytest
 
-# Run unit tests only (excludes integration tests)
+# 단위 테스트만 실행 (통합 테스트 제외)
 uv run pytest -m "not integration"
 
-# Run integration tests only (requires API keys)
+# 통합 테스트만 실행 (API 키 필요)
 uv run pytest -m "integration"
 
-# Run specific package tests
+# 특정 패키지 테스트 실행
 uv run pytest packages/cluefin-openapi/tests/ -v
 uv run pytest apps/cluefin-cli/tests/ -v
 
-# Code quality
+# 코드 품질 검사
 uv run ruff check . --fix
 uv run ruff format .
 ```
 
-### Component Overview
+### 컴포넌트 개요
 
-**[cluefin-openapi](packages/cluefin-openapi/)** - Korean Financial API Clients
-- **Type-safe Pydantic models** for Kiwoom, KIS, KRX, and DART APIs with Korean field aliases
-- **Structured response handling** with `KiwoomHttpResponse[T]` wrapper pattern
-- **Multiple authentication methods**: OAuth2-style (Kiwoom), token-based (KIS), simple auth_key (KRX, DART)
-- **Rate limiting and error handling** optimized for Korean market APIs
-- **Test coverage** with unit tests using `requests_mock` and integration tests
+**[cluefin-openapi](packages/cluefin-openapi/)** - 한국 금융 API 클라이언트
+- **타입 안전한 Pydantic 모델**: 키움, KIS, KRX, DART API를 위한 한국어 필드 별칭 지원
+- **구조화된 응답 처리**: `KiwoomHttpResponse[T]` 래퍼 패턴으로 통일된 페이지네이션/상태 처리
+- **다양한 인증 방식**: OAuth2 스타일(키움), 토큰 기반(KIS), 단순 auth_key(KRX, DART)
+- **속도 제한 및 에러 처리**: 한국 시장 API에 최적화
+- **테스트 커버리지**: `requests_mock`을 사용한 단위 테스트 및 통합 테스트
 
-**[cluefin-ta](packages/cluefin-ta/)** - Pure Python Technical Analysis Library
-- **TA-Lib compatible API** - Drop-in replacement: `import cluefin_ta as talib`
-- **No system dependencies** - Pure NumPy implementation (no C library required)
-- **150+ indicators** - Overlap, momentum, volatility, volume, candlestick patterns
-- **Portfolio metrics** - MDD, Sharpe, Sortino, Calmar, CAGR calculations
+**[cluefin-ta](packages/cluefin-ta/)** - 순수 Python 기술적 분석 라이브러리
+- **TA-Lib 호환 API**: 드롭인 대체 가능 - `import cluefin_ta as talib`
+- **시스템 의존성 없음**: 순수 NumPy 구현 (C 라이브러리 불필요)
+- **150+ 지표**: 오버랩, 모멘텀, 변동성, 거래량, 캔들스틱 패턴
+- **포트폴리오 지표**: MDD, 샤프, 소르티노, 칼마, CAGR 계산
 
-**[cluefin-cli](apps/cluefin-cli/)** - Interactive Terminal Application
-- **Rich-based UI** with Korean stock market analysis and menu navigation
-- **ML-powered predictions** using LightGBM with SHAP explanations for interpretability
-- **Technical analysis** with 150+ cluefin-ta indicators (RSI, MACD, Bollinger Bands)
-- **Korean timezone handling** (KST) and trading hours (9:00-15:30) awareness
+**[cluefin-cli](apps/cluefin-cli/)** - 대화형 터미널 애플리케이션
+- **Rich 기반 UI**: 한국 주식 시장 분석 및 메뉴 네비게이션
+- **ML 기반 예측**: 해석 가능성을 위한 SHAP 설명 기능이 포함된 LightGBM 사용
+- **기술적 분석**: 150+ cluefin-ta 지표 (RSI, MACD, 볼린저 밴드)
+- **한국 시간대 처리**: KST 시간대 및 거래 시간(9:00-15:30) 인식
 
 ## 📄 라이선스
 이 프로젝트는 MIT 라이선스에 따라 라이선스가 부여됩니다. 자세한 내용은 [LICENSE](LICENSE)를 참조하세요.

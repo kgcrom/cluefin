@@ -10,6 +10,7 @@ work correctly together.
 import sys
 import warnings
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Dict
 
 import numpy as np
@@ -19,7 +20,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 # Add the apps/cluefin-cli/src directory to Python path for imports
-sys.path.append("/Volumes/kgcrom-2tb/kgcrom/workspace/cluefin/apps/cluefin-cli/src")
+sys.path.append(str(Path(__file__).resolve().parents[3] / "src"))
 
 from cluefin_cli.ml import StockMLPredictor
 

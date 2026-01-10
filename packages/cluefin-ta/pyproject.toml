@@ -12,13 +12,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-numba = ["numba>=0.56.0"]
+hmm = ["hmmlearn>=0.3.0"]
 
 [dependency-groups]
 dev = [
     "pytest>=7.0",
     "ta-lib>=0.4.0",
-    "numba>=0.56.0",
+    "hmmlearn>=0.3.0",
 ]
 
 [build-system]

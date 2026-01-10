@@ -54,3 +54,27 @@ testpaths = [
     "packages/cluefin-ta/tests",
     "apps/cluefin-cli/tests",
 ]
+
+[tool.coverage.run]
+source = [
+    "packages/cluefin-openapi/src",
+    "packages/cluefin-ta/src",
+    "apps/cluefin-cli/src",
+]
+omit = [
+    "*/tests/*",
+    "*/.venv/*",
+    "*/site-packages/*",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]

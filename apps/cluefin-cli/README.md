@@ -35,70 +35,70 @@
 
 ### **🤖 머신러닝 예측**
 - **LightGBM 기반 분류** - 익일 가격 움직임에 대한 이진 예측
-- **150개 이상의 기술적 지표** - TA-Lib을 사용한 향상된 피처 엔지니어링
+- **150개 이상의 기술적 지표** - cluefin-ta를 사용한 향상된 피처 엔지니어링
 - **SHAP 모델 해석가능성** - 예측을 주도하는 피처 이해
 - **피처 중요도 분석** - 가격 움직임에 영향을 미치는 주요 요소 식별
 - **시계열 교차검증** - 시계열 데이터를 위한 적절한 검증
 - **성능 메트릭** - 정확도, 정밀도, 재현율, F1-score, AUC
 
-## Quick Start
+## 🚀 빠른 시작
 
-### Prerequisites
-- Python 3.10 or higher
-- uv package manager
-- **TA-Lib system dependency** (for ML features)
+### 사전 요구사항
+- Python 3.10 이상
+- uv 패키지 매니저
+- **LightGBM 시스템 의존성** (ML 기능용)
 
-### Installation
+### 설치
 
-1. **Clone and setup workspace:**
+1. **저장소 클론 및 워크스페이스 설정:**
 ```bash
 git clone https://github.com/kgcrom/cluefin
 cd cluefin
 uv venv --python 3.10
 ```
 
-2. **Install system dependencies:**
+2. **시스템 의존성 설치:**
 ```bash
 # macOS
-brew install ta-lib lightgbm
+brew install lightgbm
 ```
 
-3. **Install all workspace dependencies:**
+3. **모든 워크스페이스 의존성 설치:**
 ```bash
 uv sync --all-packages
 ```
 
-4. **Configure environment (optional):**
+4. **환경 설정 (선택사항):**
 ```bash
 cp apps/cluefin-cli/.env.sample .env
-# Edit .env with your API keys (KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, KIWOOM_ENV, KRX_AUTH_KEY, DART_AUTH_KEY)
+# .env 파일에 API 키 설정 (KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, KIWOOM_ENV, KRX_AUTH_KEY, DART_AUTH_KEY)
 ```
 
-### Basic Usage
+### 기본 사용법
 
 ```bash
-# Basic stock analysis
+# 기본 주식 분석
 cluefin-cli ta 005930
 
-# With terminal charts
+# 터미널 차트 포함
 cluefin-cli ta 005930 --chart
 
-# 🤖 With ML prediction
+# 🤖 ML 예측 포함
 cluefin-cli ta 005930 --ml-predict
 
-# 📊 With basic feature importance
+# 📊 기본 피처 중요도 포함
 cluefin-cli ta 005930 --ml-predict --feature-importance
 
-# 🔍 With detailed SHAP analysis
+# 🔍 상세 SHAP 분석 포함
 cluefin-cli ta 005930 --ml-predict --shap-analysis
 
-# 🚀 Full analysis (all features)
+# 🚀 전체 분석 (모든 기능)
 cluefin-cli ta 005930 --chart --ml-predict --shap-analysis
 
-# 📘 Fundamental analysis (DART)
+# 📘 펀더멘털 분석 (DART)
 cluefin-cli fa 005930
 
-# 📘 Fundamental analysis for 2023 business report with top 3 shareholders
+# 📘 2023 사업보고서 기준 펀더멘털 분석 (상위 3명 주주)
 cluefin-cli fa 005930 --year 2023 --report annual --max-shareholders 3
 ```
 
@@ -171,55 +171,55 @@ cluefin-cli fa 005930 --year 2023 --report annual
 cluefin-cli fa 005930 --max-shareholders 3
 ```
 
-## 📈 Supported Stocks
+## 📈 지원 종목
 
 CLI는 KOSPI와 KOSDAQ에서 거래되는 모든 한국 주식을 지원합니다. 다음은 인기 종목 예시입니다:
 
-| Stock Code | Company | Market |
-|------------|---------|---------|
-| `005930` | Samsung Electronics | KOSPI |
-| `000660` | SK Hynix | KOSPI |
+| 종목 코드 | 회사명 | 시장 |
+|----------|--------|------|
+| `005930` | 삼성전자 | KOSPI |
+| `000660` | SK하이닉스 | KOSPI |
 | `035420` | NAVER | KOSPI |
-| `051910` | LG Chemical | KOSPI |
-| `207940` | Samsung Biologics | KOSPI |
-| `373220` | LG Energy Solution | KOSPI |
+| `051910` | LG화학 | KOSPI |
+| `207940` | 삼성바이오로직스 | KOSPI |
+| `373220` | LG에너지솔루션 | KOSPI |
 
-## Configuration
+## 설정
 
-### Environment Variables
+### 환경 변수
 
-Create a `.env` file in the **workspace root** directory:
+**워크스페이스 루트** 디렉토리에 `.env` 파일을 생성하세요:
 
 ```env
-# Kiwoom Securities API (for real-time Korean stock data)
+# 키움증권 API (실시간 한국 주식 데이터용)
 KIWOOM_APP_KEY=your_app_key_here
 KIWOOM_SECRET_KEY=your_secret_key_here
-KIWOOM_ENV=prod # options: prod | dev(default)
+KIWOOM_ENV=prod # 옵션: prod | dev(기본값)
 
-# Korea Exchange (KRX) API
+# 한국거래소(KRX) API
 KRX_AUTH_KEY=your_auth_key_here
 
-# Financial Supervisory Service DART API
+# 금융감독원 DART API
 DART_AUTH_KEY=your_dart_auth_key_here
 
-# Optional ML model configuration
+# ML 모델 설정 (선택사항)
 ML_MODEL_PATH=models/
 ML_CACHE_DIR=.ml_cache/
 ```
 
-### API Integration
+### API 연동
 
-The CLI integrates with Korean financial APIs through the `cluefin-openapi` package:
+CLI는 `cluefin-openapi` 패키지를 통해 한국 금융 API와 연동됩니다:
 
-1. **Kiwoom Securities API**: OAuth2-style authentication for real-time stock data, orders, and account information
-1. **Korea Exchange (KRX)**: Simple auth_key authentication for market data, indices, and sector information  
-1. **Financial Supervisory Service (DART)**: Fundamental disclosures, periodic reports, dividends, and shareholder data
+1. **키움증권 API**: 실시간 주식 데이터, 주문, 계좌 정보를 위한 OAuth2 스타일 인증
+2. **한국거래소(KRX)**: 시장 데이터, 지수, 섹터 정보를 위한 단순 auth_key 인증
+3. **금융감독원(DART)**: 기업 공시, 정기 보고서, 배당, 주주 데이터
 
-**Note**: The CLI can work with limited functionality without API keys, using mock data for demonstration purposes.
+**참고**: API 키 없이도 데모용 목업 데이터를 사용하여 제한된 기능으로 CLI를 사용할 수 있습니다.
 
-## Output Examples
+## 출력 예시
 
-### Basic Analysis Output
+### 기본 분석 출력
 
 Stock Information - 005930
 
@@ -228,7 +228,6 @@ Stock Information - 005930
 | Current Price | 64,775          |
 | Change        | -1,300 (-1.97%) |
 | Volume        | 7,544,353        |
-|---------------|------------------|
 
 Technical Indicators
 
@@ -237,9 +236,8 @@ Technical Indicators
 | RSI (14)  | 57.60    | Neutral    |
 | MACD      | 429.71   | Bullish    |
 | SMA (20)  | 63,110  | Above MA20 |
-|-----------|----------|------------|
 
-### 🤖 ML Prediction Output
+### 🤖 ML 예측 출력
 
 ```
 ==================================================
@@ -259,7 +257,7 @@ Technical Indicators
 └─────────────────────────────────────────────────┘
 ```
 
-### 🔍 SHAP Analysis Output
+### 🔍 SHAP 분석 출력
 
 ```
 🔍 Top 15 Feature Importance (SHAP)
@@ -274,141 +272,142 @@ Technical Indicators
 └──────┴─────────────────────┴────────────┴────────────┴────────────┘
 ```
 
-### Chart Visualization
-The `--chart` option displays beautiful ASCII charts directly in your terminal:
-- Price charts with moving averages
-- Volume analysis
-- RSI oscillator with key levels
-- MACD with signal lines and histogram
+### 차트 시각화
+`--chart` 옵션은 터미널에서 직접 아름다운 ASCII 차트를 표시합니다:
+- 이동평균선이 포함된 가격 차트
+- 거래량 분석
+- 주요 레벨이 포함된 RSI 오실레이터
+- 시그널 라인과 히스토그램이 포함된 MACD
 
 
-## Development
+## 개발
 
-### Project Structure
+### 프로젝트 구조
 ```
 apps/cluefin-cli/
-├── src/cluefin_cli/              # Main application code
-│   ├── commands/                 # CLI command implementations
-│   │   ├── analysis/             # Technical analysis module
-│   │   │   └── indicators.py     # Technical indicators computation
-│   │   ├── technical_analysis.py # Main TA command (Click-based)
-│   │   ├── fundamental_analysis.py # Fundamental analysis command
-│   │   └── import_cmd.py         # Data import command
-│   ├── config/                   # Application configuration
-│   │   └── settings.py           # Pydantic settings management
-│   ├── data/                     # Data layer abstraction
-│   │   ├── duckdb_manager.py     # DuckDB database management
-│   │   ├── fetcher.py            # Data retrieval from cluefin-openapi
-│   │   ├── importer.py           # Stock chart data importer
-│   │   ├── industry_importer.py  # Industry code importer
-│   │   └── industry_chart_importer.py # Industry chart data importer
-│   ├── display/                  # Terminal visualization
-│   │   └── charts.py             # ASCII chart rendering (plotext)
-│   ├── ml/                       # 🤖 Machine Learning pipeline
-│   │   ├── diagnostics.py        # Model performance evaluation
-│   │   ├── explainer.py          # SHAP-based model explainability
-│   │   ├── feature_engineering.py  # TA-Lib feature generation (150+ indicators)
-│   │   ├── models.py             # LightGBM classifier implementation
-│   │   └── predictor.py          # Complete ML prediction pipeline
-│   ├── utils/                    # Shared utilities
-│   │   └── formatters.py         # Korean currency and text formatting
-│   └── main.py                   # CLI entry point and Click app
-├── tests/unit/                   # Unit test suite
-│   ├── commands/                 # Command tests
-│   └── ml/                       # ML pipeline and model tests
-├── pyproject.toml               # Package dependencies and configuration
-└── README.md                    # This documentation
+├── src/cluefin_cli/              # 메인 애플리케이션 코드
+│   ├── commands/                 # CLI 명령어 구현
+│   │   ├── analysis/             # 기술적 분석 모듈
+│   │   │   └── indicators.py     # 기술적 지표 계산
+│   │   ├── technical_analysis.py # 메인 TA 명령어 (Click 기반)
+│   │   ├── fundamental_analysis.py # 펀더멘털 분석 명령어
+│   │   └── import_cmd.py         # 데이터 임포트 명령어
+│   ├── config/                   # 애플리케이션 설정
+│   │   └── settings.py           # Pydantic 설정 관리
+│   ├── data/                     # 데이터 레이어 추상화
+│   │   ├── duckdb_manager.py     # DuckDB 데이터베이스 관리
+│   │   ├── fetcher.py            # cluefin-openapi에서 데이터 조회
+│   │   ├── importer.py           # 주식 차트 데이터 임포터
+│   │   ├── industry_importer.py  # 업종 코드 임포터
+│   │   └── industry_chart_importer.py # 업종 차트 데이터 임포터
+│   ├── display/                  # 터미널 시각화
+│   │   └── charts.py             # ASCII 차트 렌더링 (plotext)
+│   ├── ml/                       # 🤖 머신러닝 파이프라인
+│   │   ├── diagnostics.py        # 모델 성능 평가
+│   │   ├── explainer.py          # SHAP 기반 모델 해석가능성
+│   │   ├── feature_engineering.py  # cluefin-ta 피처 생성 (150+ 지표)
+│   │   ├── models.py             # LightGBM 분류기 구현
+│   │   └── predictor.py          # 완전한 ML 예측 파이프라인
+│   ├── utils/                    # 공유 유틸리티
+│   │   └── formatters.py         # 한국 통화 및 텍스트 포맷팅
+│   └── main.py                   # CLI 진입점 및 Click 앱
+├── tests/unit/                   # 단위 테스트 모음
+│   ├── commands/                 # 명령어 테스트
+│   └── ml/                       # ML 파이프라인 및 모델 테스트
+├── pyproject.toml               # 패키지 의존성 및 설정
+└── README.md                    # 이 문서
 ```
 
-### Adding New Features
+### 새 기능 추가
 
-1. **New Technical Indicators**: Add to `src/cluefin_cli/commands/analysis/indicators.py` or `src/cluefin_cli/ml/feature_engineering.py`
-2. **Chart Types**: Extend `src/cluefin_cli/display/charts.py`
-3. **Data Sources**: Modify `src/cluefin_cli/data/fetcher.py`
-4. **CLI Commands**: Add new commands to `src/cluefin_cli/commands/`
-5. **ML Models**: Extend `src/cluefin_cli/ml/models.py` or add new model classes
-6. **SHAP Visualizations**: Enhance `src/cluefin_cli/ml/explainer.py`
-7. **Utility Functions**: Add to `src/cluefin_cli/utils/formatters.py`
+1. **새 기술적 지표**: `src/cluefin_cli/commands/analysis/indicators.py` 또는 `src/cluefin_cli/ml/feature_engineering.py`에 추가
+2. **차트 유형**: `src/cluefin_cli/display/charts.py` 확장
+3. **데이터 소스**: `src/cluefin_cli/data/fetcher.py` 수정
+4. **CLI 명령어**: `src/cluefin_cli/commands/`에 새 명령어 추가
+5. **ML 모델**: `src/cluefin_cli/ml/models.py` 확장 또는 새 모델 클래스 추가
+6. **SHAP 시각화**: `src/cluefin_cli/ml/explainer.py` 개선
+7. **유틸리티 함수**: `src/cluefin_cli/utils/formatters.py`에 추가
 
-### Running Tests
+### 테스트 실행
 
 ```bash
-# From workspace root directory
+# 워크스페이스 루트 디렉토리에서
 cd cluefin
 
-# Run all CLI tests 
+# 모든 CLI 테스트 실행
 uv run pytest apps/cluefin-cli/tests/ -v
 
-# Run unit tests only (excludes integration tests)
+# 단위 테스트만 실행 (통합 테스트 제외)
 uv run pytest -m "not integration"
 
-# Run specific test module
+# 특정 테스트 모듈 실행
 uv run pytest apps/cluefin-cli/tests/unit/ml/test_ml_pipeline.py -v
 
-# Code quality checks
+# 코드 품질 검사
 uv run ruff check . --fix
 uv run ruff format .
 
-# Test ML pipeline with real example
+# 실제 예제로 ML 파이프라인 테스트
 cluefin-cli ta 005930 --ml-predict --shap-analysis
 ```
 
-### 🤖 ML Model Architecture
+### 🤖 ML 모델 아키텍처
 
-The ML prediction system uses a sophisticated pipeline:
+ML 예측 시스템은 정교한 파이프라인을 사용합니다:
 
-1. **Feature Engineering** (150+ features)
-   - TA-Lib technical indicators (RSI, MACD, Bollinger Bands, etc.)
-   - Custom price-based features (ratios, volatility, momentum)
-   - Lag features for temporal patterns
-   - Volume-based indicators
+1. **피처 엔지니어링** (150+ 피처)
+   - cluefin-ta 기술적 지표 (RSI, MACD, 볼린저 밴드 등)
+   - 커스텀 가격 기반 피처 (비율, 변동성, 모멘텀)
+   - 시간적 패턴을 위한 래그 피처
+   - 거래량 기반 지표
 
-2. **Model Training**
-   - **LightGBM Classifier** for binary up/down prediction
-   - **Time Series Split** to prevent data leakage
-   - **Early Stopping** to prevent overfitting
-   - **Cross-Validation** with proper temporal ordering
+2. **모델 학습**
+   - **LightGBM 분류기**: 상승/하락 이진 예측
+   - **시계열 분할**: 데이터 누수 방지
+   - **조기 중단**: 과적합 방지
+   - **교차 검증**: 적절한 시간 순서 유지
 
-3. **Model Interpretation**
-   - **SHAP TreeExplainer** for feature importance
-   - **Individual Prediction Explanations** 
-   - **Global Feature Rankings**
-   - **Directional Impact Analysis** (positive/negative contributions)
+3. **모델 해석**
+   - **SHAP TreeExplainer**: 피처 중요도
+   - **개별 예측 설명**
+   - **전역 피처 순위**
+   - **방향성 영향 분석** (긍정/부정 기여도)
 
-### ML Performance Guidelines
+### ML 성능 가이드라인
 
-- **Accuracy > 60%**: Good predictive performance
-- **AUC > 0.7**: Excellent discrimination between up/down movements  
-- **F1-Score > 0.6**: Balanced precision and recall
-- **Minimum 30 days**: Required historical data for training
-- **Recommended 100+ days**: For reliable model performance
+- **정확도 > 60%**: 좋은 예측 성능
+- **AUC > 0.7**: 상승/하락 움직임 간 우수한 구별력
+- **F1-Score > 0.6**: 균형 잡힌 정밀도와 재현율
+- **최소 30일**: 학습에 필요한 과거 데이터
+- **권장 100일 이상**: 신뢰할 수 있는 모델 성능을 위해
 
-**⚠️ Important**: Stock prediction is inherently uncertain. Use ML predictions as one factor among many in investment decisions.
+**⚠️ 중요**: 주가 예측은 본질적으로 불확실합니다. ML 예측을 투자 결정 시 여러 요소 중 하나로 활용하세요.
 
-## Contributing
+## 기여하기
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. 저장소 포크
+2. 피처 브랜치 생성 (`git checkout -b feature/amazing-feature`)
+3. 변경사항 커밋 (`git commit -m 'Add amazing feature'`)
+4. 브랜치에 푸시 (`git push origin feature/amazing-feature`)
+5. Pull Request 열기
 
-## License
+## 라이선스
 
-This project is licensed under the MIT License - see the [LICENSE](../../LICENSE) file for details.
+이 프로젝트는 MIT 라이선스에 따라 라이선스가 부여됩니다. 자세한 내용은 [LICENSE](../../LICENSE) 파일을 참조하세요.
 
-## Support
+## 지원
 
-- **Documentation**: Check the main [Cluefin documentation](../../README.md)
-- **Issues**: Report bugs or request features on [GitHub Issues](https://github.com/your-org/cluefin/issues)
-- **Discussions**: Join community discussions on [GitHub Discussions](https://github.com/your-org/cluefin/discussions)
+- **문서**: 메인 [Cluefin 문서](../../README.md) 확인
+- **이슈**: [GitHub Issues](https://github.com/kgcrom/cluefin/issues)에서 버그 신고 또는 기능 요청
+- **토론**: [GitHub Discussions](https://github.com/kgcrom/cluefin/discussions)에서 커뮤니티 토론 참여
 
-## Related Projects
+## 관련 프로젝트
 
-- **[cluefin-openapi](../../packages/cluefin-openapi/)** - Korean financial API clients
+- **[cluefin-openapi](../../packages/cluefin-openapi/)** - 한국 금융 API 클라이언트
+- **[cluefin-ta](../../packages/cluefin-ta/)** - 순수 Python 기술적 분석 라이브러리
 
 ---
 
-** Built with love for Korean financial markets ** 
+**한국 금융 시장을 위해 정성을 담아 만들었습니다**
 
 *"Clearly Looking U Entered Financial Information"*
