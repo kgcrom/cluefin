@@ -48,6 +48,34 @@ class XbrlFact(BaseModel):
     dimensions: dict[str, str] = {}
 
 
+class ConceptLabel(BaseModel):
+    """Label information for a concept."""
+
+    model_config = ConfigDict(frozen=True)
+
+    concept_local_name: str
+    concept_qname: str
+    label_ko: Optional[str] = None
+    label_en: Optional[str] = None
+
+
+class PresentationNode(BaseModel):
+    """A node in the presentation tree hierarchy."""
+
+    concept_local_name: str
+    concept_qname: str
+    order: float = 0.0
+    depth: int = 0
+    children: list[PresentationNode] = []
+
+
+class TaxonomyInfo(BaseModel):
+    """Taxonomy label and presentation information."""
+
+    labels: dict[str, ConceptLabel] = {}
+    presentation_trees: dict[str, list[PresentationNode]] = {}
+
+
 class XbrlDocument(BaseModel):
     """Parsed XBRL instance document."""
 
@@ -55,3 +83,4 @@ class XbrlDocument(BaseModel):
     facts: list[XbrlFact]
     entity_id: Optional[str] = None
     reporting_period_end: Optional[date] = None
+    taxonomy: Optional[TaxonomyInfo] = None

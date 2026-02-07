@@ -11,6 +11,28 @@
     <xsd:import namespace="http://www.xbrl.org/2003/instance"
                 schemaLocation="http://www.xbrl.org/2003/xbrl-instance-2003-12-31.xsd"/>
 
+    <xsd:annotation>
+        <xsd:appinfo>
+            <link:linkbaseRef xlink:type="simple"
+                              xlink:href="sample_lab-ko.xml"
+                              xlink:role="http://www.xbrl.org/2003/role/labelLinkbaseRef"
+                              xlink:arcrole="http://www.w3.org/1999/xlink/properties/linkbase"/>
+            <link:linkbaseRef xlink:type="simple"
+                              xlink:href="sample_lab-en.xml"
+                              xlink:role="http://www.xbrl.org/2003/role/labelLinkbaseRef"
+                              xlink:arcrole="http://www.w3.org/1999/xlink/properties/linkbase"/>
+            <link:linkbaseRef xlink:type="simple"
+                              xlink:href="sample_pre.xml"
+                              xlink:role="http://www.xbrl.org/2003/role/presentationLinkbaseRef"
+                              xlink:arcrole="http://www.w3.org/1999/xlink/properties/linkbase"/>
+            <link:roleType id="StatementOfFinancialPosition"
+                           roleURI="http://example.com/role/StatementOfFinancialPosition">
+                <link:definition>Statement of Financial Position</link:definition>
+                <link:usedOn>link:presentationLink</link:usedOn>
+            </link:roleType>
+        </xsd:appinfo>
+    </xsd:annotation>
+
     <xsd:element name="Assets" id="sample_Assets"
                  substitutionGroup="xbrli:item" type="xbrli:monetaryItemType"
                  xbrli:periodType="instant" nillable="true"/>
