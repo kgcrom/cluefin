@@ -76,6 +76,48 @@ class TaxonomyInfo(BaseModel):
     presentation_trees: dict[str, list[PresentationNode]] = {}
 
 
+class StatementType(str, Enum):
+    """Financial statement type."""
+
+    BS = "BS"
+    IS = "IS"
+    CIS = "CIS"
+    CF = "CF"
+    SCE = "SCE"
+
+
+class StatementLineItem(BaseModel):
+    """A single line item in a financial statement."""
+
+    concept_local_name: str
+    concept_qname: str
+    label_ko: Optional[str] = None
+    label_en: Optional[str] = None
+    value: Optional[Decimal] = None
+    unit: Optional[str] = None
+    period: Optional[XbrlPeriod] = None
+    depth: int = 0
+    order: float = 0.0
+    is_abstract: bool = False
+
+
+class FinancialStatement(BaseModel):
+    """A structured financial statement."""
+
+    statement_type: StatementType
+    linkrole: str
+    line_items: list[StatementLineItem] = []
+    periods: list[XbrlPeriod] = []
+
+
+class ParsedFinancialStatements(BaseModel):
+    """Collection of parsed financial statements."""
+
+    source_file: str
+    entity_id: Optional[str] = None
+    statements: dict[str, FinancialStatement] = {}
+
+
 class XbrlDocument(BaseModel):
     """Parsed XBRL instance document."""
 
