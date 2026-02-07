@@ -19,3 +19,4 @@ build-backend = "hatchling.build"
 [tool.ruff]
 extend = "../../pyproject.toml"
 include = ["src/**", "tests/**"]
+extend-exclude = ["*.xbrl", "*.xsd", "*.xml"]
