@@ -9,6 +9,7 @@ requires-python = ">=3.10"
 members = [
     "packages/cluefin-openapi",
     "packages/cluefin-ta",
+    "packages/cluefin-xbrl",
     "apps/cluefin-cli",
 ]
 
@@ -25,6 +26,7 @@ dev = [
 [tool.uv.sources]
 cluefin-openapi = { workspace = true }
 cluefin-ta = { workspace = true }
+cluefin-xbrl = { workspace = true }
 cluefin-cli = { workspace = true }
 
 [tool.ruff]
@@ -52,6 +54,7 @@ addopts = "-ra"
 testpaths = [
     "packages/cluefin-openapi/tests",
     "packages/cluefin-ta/tests",
+    "packages/cluefin-xbrl/tests",
     "apps/cluefin-cli/tests",
 ]
 
@@ -59,6 +62,7 @@ testpaths = [
 source = [
     "packages/cluefin-openapi/src",
     "packages/cluefin-ta/src",
+    "packages/cluefin-xbrl/src",
     "apps/cluefin-cli/src",
 ]
 omit = [

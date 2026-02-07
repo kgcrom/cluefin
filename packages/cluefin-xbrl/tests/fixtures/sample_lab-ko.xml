@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<link:linkbase
+    xmlns:link="http://www.xbrl.org/2003/linkbase"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.xbrl.org/2003/linkbase http://www.xbrl.org/2003/xbrl-linkbase-2003-12-31.xsd">
+
+    <link:labelLink xlink:type="extended" xlink:role="http://www.xbrl.org/2003/role/link">
+        <link:loc xlink:type="locator" xlink:href="sample.xsd#sample_Assets" xlink:label="loc_Assets"/>
+        <link:label xlink:type="resource" xlink:role="http://www.xbrl.org/2003/role/label"
+                    xlink:label="lab_Assets" xml:lang="ko" id="lab_Assets_ko">자산총계</link:label>
+        <link:labelArc xlink:type="arc" xlink:arcrole="http://www.xbrl.org/2003/arcrole/concept-label"
+                       xlink:from="loc_Assets" xlink:to="lab_Assets"/>
+
+        <link:loc xlink:type="locator" xlink:href="sample.xsd#sample_Equity" xlink:label="loc_Equity"/>
+        <link:label xlink:type="resource" xlink:role="http://www.xbrl.org/2003/role/label"
+                    xlink:label="lab_Equity" xml:lang="ko" id="lab_Equity_ko">자본총계</link:label>
+        <link:labelArc xlink:type="arc" xlink:arcrole="http://www.xbrl.org/2003/arcrole/concept-label"
+                       xlink:from="loc_Equity" xlink:to="lab_Equity"/>
+
+        <link:loc xlink:type="locator" xlink:href="sample.xsd#sample_Revenue" xlink:label="loc_Revenue"/>
+        <link:label xlink:type="resource" xlink:role="http://www.xbrl.org/2003/role/label"
+                    xlink:label="lab_Revenue" xml:lang="ko" id="lab_Revenue_ko">수익(매출액)</link:label>
+        <link:labelArc xlink:type="arc" xlink:arcrole="http://www.xbrl.org/2003/arcrole/concept-label"
+                       xlink:from="loc_Revenue" xlink:to="lab_Revenue"/>
+    </link:labelLink>
+</link:linkbase>
