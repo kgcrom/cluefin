@@ -14,20 +14,22 @@ from cluefin_xbrl._types import (
 )
 
 _STATEMENT_TYPE_PATTERNS: dict[str, StatementType] = {
+    # Generic XBRL / IFRS linkrole patterns
     "StatementOfFinancialPosition": StatementType.BS,
     "FinancialPosition": StatementType.BS,
     "BalanceSheet": StatementType.BS,
-    "BS": StatementType.BS,
     "IncomeStatement": StatementType.IS,
     "ProfitOrLoss": StatementType.IS,
-    "IS": StatementType.IS,
     "ComprehensiveIncome": StatementType.CIS,
-    "CIS": StatementType.CIS,
     "CashFlow": StatementType.CF,
-    "CF": StatementType.CF,
     "ChangesInEquity": StatementType.SCE,
     "StatementsOfChangesInEquity": StatementType.SCE,
-    "SCE": StatementType.SCE,
+    # DART XBRL role codes (e.g. role-D210000 consolidated, role-D210005 separate)
+    "role-D21": StatementType.BS,
+    "role-D31": StatementType.IS,
+    "role-D41": StatementType.CIS,
+    "role-D52": StatementType.CF,
+    "role-D61": StatementType.SCE,
 }
 
 
@@ -70,12 +72,14 @@ def extract_financial_statements(doc: XbrlDocument) -> ParsedFinancialStatements
                     seen_periods.add(period_key)
                     periods.append(item.period)
 
-        statements[stmt_type.value] = FinancialStatement(
-            statement_type=stmt_type,
-            linkrole=linkrole,
-            line_items=line_items,
-            periods=periods,
-        )
+        # Keep first match per type (consolidated roles come before separate roles)
+        if stmt_type.value not in statements:
+            statements[stmt_type.value] = FinancialStatement(
+                statement_type=stmt_type,
+                linkrole=linkrole,
+                line_items=line_items,
+                periods=periods,
+            )
 
     return ParsedFinancialStatements(
         source_file=doc.source_file,

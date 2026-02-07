@@ -35,6 +35,41 @@ class TestIdentifyStatementType:
     def test_unknown_role(self):
         assert _identify_statement_type("http://example.com/role/SomeOtherRole") is None
 
+    def test_dart_role_bs(self):
+        assert (
+            _identify_statement_type("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D210000") == StatementType.BS
+        )
+
+    def test_dart_role_bs_separate(self):
+        assert (
+            _identify_statement_type("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D210005") == StatementType.BS
+        )
+
+    def test_dart_role_is(self):
+        assert (
+            _identify_statement_type("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D310000") == StatementType.IS
+        )
+
+    def test_dart_role_cis(self):
+        assert (
+            _identify_statement_type("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D410000")
+            == StatementType.CIS
+        )
+
+    def test_dart_role_cf(self):
+        assert (
+            _identify_statement_type("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D520000") == StatementType.CF
+        )
+
+    def test_dart_role_sce(self):
+        assert (
+            _identify_statement_type("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D610000")
+            == StatementType.SCE
+        )
+
+    def test_dart_note_role_no_match(self):
+        assert _identify_statement_type("http://dart.fss.or.kr/role/ifrs/ias_10_role-D815000") is None
+
 
 class TestExtractFinancialStatements:
     def test_from_document(self, sample_xbrl_path):

@@ -102,7 +102,6 @@ def _parse_with_session(path: Path) -> ModelXbrl:
         with Session() as session:
             options = RuntimeOptions(
                 entrypointFile=str(path),
-                internetConnectivity="offline",
                 keepOpen=True,
             )
             session.run(options)
