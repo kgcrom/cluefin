@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from cluefin_xbrl._types import PeriodType, XbrlDocument, XbrlFact, XbrlPeriod
 
 if TYPE_CHECKING:
-    from arelle.ModelInstanceObject import ModelContext, ModelFact
+    from arelle.ModelInstanceObject import ModelContext
     from arelle.ModelXbrl import ModelXbrl
 
 _arelle_lock = threading.Lock()
