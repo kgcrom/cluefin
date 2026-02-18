@@ -106,6 +106,13 @@ class HttpClient(object):
         return DomesticRankingAnalysis(self)
 
     @property
+    def onmarket_bond_basic_quote(self):
+        """장내채권 기본시세"""
+        from ._onmarket_bond_basic_quote import OnmarketBondBasicQuote
+
+        return OnmarketBondBasicQuote(self)
+
+    @property
     def overseas_account(self):
         """해외주식 주문/계좌"""
         from ._overseas_account import OverseasAccount

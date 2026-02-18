@@ -22,6 +22,7 @@
             "VOL_RANG": "0"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "rsym": "AAPL",
@@ -58,6 +59,7 @@
             "VOL_RANG": "1"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "rsym": "TSLA",
@@ -92,6 +94,7 @@
             "VOL_RANG": "2"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "rsym": "MSFT",
@@ -128,6 +131,7 @@
             "VOL_RANG": "0"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "rsym": "0700",
@@ -166,6 +170,7 @@
             "VOL_RANG": "0"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "rsym": "NVDA",
@@ -204,6 +209,7 @@
             "VOL_RANG": "0"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "rsym": "AAPL",
@@ -242,6 +248,7 @@
             "PRC2": "999999"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "rsym": "TSLA",
@@ -276,6 +283,7 @@
             "VOL_RANG": "1"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "rsym": "AMD",
@@ -310,6 +318,7 @@
             "VOL_RANG": "0"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "rsym": "0388",
@@ -343,6 +352,7 @@
             "CURR_GB": "0"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "rsym": "AAPL",
@@ -383,6 +393,7 @@
             "CTX_AREA_FK50": ""
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "pdno": "AAPL",
@@ -423,6 +434,7 @@
             "CTS": ""
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "news_no": "2025010901",
@@ -455,6 +467,7 @@
             "ED_YMD": "20250131"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "rght_type": "DIV",
@@ -503,6 +516,7 @@
             "CTX_AREA_NK100": ""
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "pdno": "AMD",
@@ -545,6 +559,7 @@
             "FID_COND_SCR_DIV_CODE": "11801"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "news_srno": "001",
