@@ -8,16 +8,12 @@ for reliable real-time data. Outside market hours, data may not be available.
 """
 
 import asyncio
-import os
 import re
 from datetime import datetime, time
 from zoneinfo import ZoneInfo
 
-import dotenv
 import pytest
-from pydantic import SecretStr
 
-from cluefin_openapi.kis._auth import Auth
 from cluefin_openapi.kis._domestic_realtime_quote import DomesticRealtimeQuote
 from cluefin_openapi.kis._domestic_realtime_quote_types import (
     DomesticRealtimeExecutionItem,
@@ -50,19 +46,6 @@ def _require_integration_and_realtime(request):
 def _require_kst_market_hours():
     if not _is_kst_market_hours():
         pytest.skip("Requires KST market hours (Mon-Fri 09:00-15:30)")
-
-
-@pytest.fixture(scope="module")
-def auth_dev():
-    """Fixture to create Auth instance for dev environment."""
-    dotenv.load_dotenv(dotenv_path=".env.test")
-    app_key = os.getenv("KIS_APP_KEY")
-    secret_key = os.getenv("KIS_SECRET_KEY")
-
-    if not app_key or not secret_key:
-        pytest.skip("KIS API credentials not available in environment variables")
-
-    return Auth(app_key=app_key, secret_key=SecretStr(secret_key), env="dev")
 
 
 @pytest.fixture(scope="module")

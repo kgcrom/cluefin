@@ -5,43 +5,10 @@ credentials to be present in the environment (or in `.env.test`).
 """
 
 import os
-import time
-from typing import Literal, cast
 
-import dotenv
 import pytest
-from pydantic import SecretStr
 
-from cluefin_openapi.kis._auth import Auth
 from cluefin_openapi.kis._http_client import HttpClient
-
-
-@pytest.fixture(scope="module")
-def auth_dev():
-    """Fixture to create Auth instance for dev environment."""
-    dotenv.load_dotenv(dotenv_path=".env.test")
-    app_key = os.getenv("KIS_APP_KEY")
-    secret_key = os.getenv("KIS_SECRET_KEY")
-    env = cast(Literal["dev", "prod"], os.getenv("KIS_ENV", "dev"))
-
-    if not app_key or not secret_key:
-        pytest.skip("KIS API credentials not available in environment variables")
-
-    return Auth(app_key=app_key, secret_key=SecretStr(secret_key), env=env)
-
-
-@pytest.fixture(scope="module")
-def client(auth_dev):
-    """Fixture to create KIS Client with valid token."""
-    token_response = auth_dev.generate()
-    return HttpClient(
-        app_key=auth_dev.app_key,
-        secret_key=auth_dev.secret_key,
-        token=token_response.access_token,
-        env=auth_dev.env,
-        # debug=True,
-    )
-
 
 # ==================== Condition Search APIs ====================
 
@@ -49,7 +16,6 @@ def client(auth_dev):
 @pytest.mark.integration
 def test_get_condition_search_list(client: HttpClient):
     """Test condition search list inquiry."""
-    time.sleep(1)
     try:
         # Note: This requires a valid HTS ID with saved conditions
         response = client.domestic_market_analysis.get_condition_search_list(
@@ -69,7 +35,6 @@ def test_get_condition_search_list(client: HttpClient):
 @pytest.mark.integration
 def test_get_condition_search_result(client: HttpClient):
     """Test condition search result inquiry."""
-    time.sleep(1)
     try:
         # Note: This requires a valid HTS ID and seq from condition list
         response = client.domestic_market_analysis.get_condition_search_result(
@@ -93,8 +58,6 @@ def test_get_condition_search_result(client: HttpClient):
 @pytest.mark.integration
 def test_get_watchlist_groups(client: HttpClient):
     """Test watchlist groups inquiry."""
-    time.sleep(1)
-
     # Get user ID from environment variable, fallback to "test_user"
     user_id = os.getenv("KIS_HTS_USER_ID", "test_user")
 
@@ -117,7 +80,6 @@ def test_get_watchlist_groups(client: HttpClient):
 @pytest.mark.integration
 def test_get_watchlist_multi_quote(client: HttpClient):
     """Test watchlist multi-stock quote inquiry."""
-    time.sleep(1)
     try:
         # Query for Samsung Electronics (005930) only, rest are empty
         response = client.domestic_market_analysis.get_watchlist_multi_quote(
@@ -198,7 +160,6 @@ def test_get_watchlist_multi_quote(client: HttpClient):
 @pytest.mark.integration
 def test_get_investor_trading_trend_by_stock_daily(client: HttpClient):
     """Test investor trading trend by stock (daily)."""
-    time.sleep(1)
     try:
         response = client.domestic_market_analysis.get_investor_trading_trend_by_stock_daily(
             fid_cond_mrkt_div_code="J",  # Market: J
@@ -218,7 +179,6 @@ def test_get_investor_trading_trend_by_stock_daily(client: HttpClient):
 @pytest.mark.integration
 def test_get_investor_trading_trend_by_market_intraday(client: HttpClient):
     """Test investor trading trend by market (intraday)."""
-    time.sleep(1)
     try:
         response = client.domestic_market_analysis.get_investor_trading_trend_by_market_intraday(
             fid_input_iscd="KSP",  # KSP:KOSPI, KSQ:KOSDAQ
@@ -237,7 +197,6 @@ def test_get_investor_trading_trend_by_market_intraday(client: HttpClient):
 @pytest.mark.integration
 def test_get_investor_trading_trend_by_market_daily(client: HttpClient):
     """Test investor trading trend by market (daily)."""
-    time.sleep(1)
     try:
         response = client.domestic_market_analysis.get_investor_trading_trend_by_market_daily(
             fid_cond_mrkt_div_code="U",  # U:Sector
@@ -263,7 +222,6 @@ def test_get_investor_trading_trend_by_market_daily(client: HttpClient):
 @pytest.mark.integration
 def test_get_foreign_brokerage_trading_aggregate(client: HttpClient):
     """Test foreign brokerage trading aggregate."""
-    time.sleep(1)
     try:
         response = client.domestic_market_analysis.get_foreign_brokerage_trading_aggregate(
             fid_input_iscd="0000",  # 0000:All, 0001:KOSPI, 1001:KOSDAQ
@@ -283,7 +241,6 @@ def test_get_foreign_brokerage_trading_aggregate(client: HttpClient):
 @pytest.mark.integration
 def test_get_foreign_net_buy_trend_by_stock(client: HttpClient):
     """Test foreign net buy trend by stock."""
-    time.sleep(1)
     try:
         response = client.domestic_market_analysis.get_foreign_net_buy_trend_by_stock(
             fid_input_iscd="005930",  # Samsung Electronics
@@ -303,7 +260,6 @@ def test_get_foreign_net_buy_trend_by_stock(client: HttpClient):
 @pytest.mark.integration
 def test_get_member_trading_trend_tick(client: HttpClient):
     """Test member trading trend (tick)."""
-    time.sleep(1)
     try:
         response = client.domestic_market_analysis.get_member_trading_trend_tick(
             fid_cond_scr_div_code="20432",  # Primary key
@@ -326,7 +282,6 @@ def test_get_member_trading_trend_tick(client: HttpClient):
 @pytest.mark.integration
 def test_get_member_trading_trend_by_stock(client: HttpClient):
     """Test member trading trend by stock."""
-    time.sleep(1)
     try:
         response = client.domestic_market_analysis.get_member_trading_trend_by_stock(
             fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
@@ -349,7 +304,6 @@ def test_get_member_trading_trend_by_stock(client: HttpClient):
 @pytest.mark.integration
 def test_get_foreign_institutional_estimate_by_stock(client: HttpClient):
     """Test foreign/institutional estimate by stock."""
-    time.sleep(1)
     try:
         response = client.domestic_market_analysis.get_foreign_institutional_estimate_by_stock(
             mksc_shrn_iscd="005930"  # Samsung Electronics
@@ -370,7 +324,6 @@ def test_get_foreign_institutional_estimate_by_stock(client: HttpClient):
 @pytest.mark.integration
 def test_get_program_trading_trend_by_stock_intraday(client: HttpClient):
     """Test program trading trend by stock (intraday)."""
-    time.sleep(1)
     try:
         response = client.domestic_market_analysis.get_program_trading_trend_by_stock_intraday(
             fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
@@ -389,7 +342,6 @@ def test_get_program_trading_trend_by_stock_intraday(client: HttpClient):
 @pytest.mark.integration
 def test_get_program_trading_trend_by_stock_daily(client: HttpClient):
     """Test program trading trend by stock (daily)."""
-    time.sleep(1)
     try:
         response = client.domestic_market_analysis.get_program_trading_trend_by_stock_daily(
             fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
@@ -409,7 +361,6 @@ def test_get_program_trading_trend_by_stock_daily(client: HttpClient):
 @pytest.mark.integration
 def test_get_program_trading_summary_intraday(client: HttpClient):
     """Test program trading summary (intraday)."""
-    time.sleep(1)
     try:
         response = client.domestic_market_analysis.get_program_trading_summary_intraday(
             fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
@@ -432,7 +383,6 @@ def test_get_program_trading_summary_intraday(client: HttpClient):
 @pytest.mark.integration
 def test_get_program_trading_summary_daily(client: HttpClient):
     """Test program trading summary (daily)."""
-    time.sleep(1)
     try:
         response = client.domestic_market_analysis.get_program_trading_summary_daily(
             fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
@@ -453,7 +403,6 @@ def test_get_program_trading_summary_daily(client: HttpClient):
 @pytest.mark.integration
 def test_get_program_trading_investor_trend_today(client: HttpClient):
     """Test program trading investor trend (today)."""
-    time.sleep(1)
     try:
         response = client.domestic_market_analysis.get_program_trading_investor_trend_today(
             exch_div_cls_code="J",  # J:KRX, NX:NXT, UN:Integrated
@@ -475,7 +424,6 @@ def test_get_program_trading_investor_trend_today(client: HttpClient):
 @pytest.mark.integration
 def test_get_buy_sell_volume_by_stock_daily(client: HttpClient):
     """Test buy/sell volume by stock (daily)."""
-    time.sleep(1)
     try:
         response = client.domestic_market_analysis.get_buy_sell_volume_by_stock_daily(
             fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
@@ -497,7 +445,6 @@ def test_get_buy_sell_volume_by_stock_daily(client: HttpClient):
 @pytest.mark.integration
 def test_get_credit_balance_trend_daily(client: HttpClient):
     """Test credit balance trend (daily)."""
-    time.sleep(1)
     try:
         response = client.domestic_market_analysis.get_credit_balance_trend_daily(
             fid_cond_mrkt_div_code="J",  # J:Stock
@@ -518,7 +465,6 @@ def test_get_credit_balance_trend_daily(client: HttpClient):
 @pytest.mark.integration
 def test_get_expected_price_trend(client: HttpClient):
     """Test expected price trend."""
-    time.sleep(1)
     try:
         response = client.domestic_market_analysis.get_expected_price_trend(
             fid_mkop_cls_code="0",  # 0:All, 4:Exclude zero volume
@@ -538,7 +484,6 @@ def test_get_expected_price_trend(client: HttpClient):
 @pytest.mark.integration
 def test_get_short_selling_trend_daily(client: HttpClient):
     """Test short selling trend (daily)."""
-    time.sleep(1)
     try:
         response = client.domestic_market_analysis.get_short_selling_trend_daily(
             fid_input_date_2="20240731",  # To date
@@ -559,7 +504,6 @@ def test_get_short_selling_trend_daily(client: HttpClient):
 @pytest.mark.integration
 def test_get_after_hours_expected_fluctuation(client: HttpClient):
     """Test after hours expected fluctuation."""
-    time.sleep(1)
     try:
         response = client.domestic_market_analysis.get_after_hours_expected_fluctuation(
             fid_cond_mrkt_div_code="J",  # J:Stock
@@ -584,7 +528,6 @@ def test_get_after_hours_expected_fluctuation(client: HttpClient):
 @pytest.mark.integration
 def test_get_trading_weight_by_amount(client: HttpClient):
     """Test trading weight by amount."""
-    time.sleep(1)
     try:
         response = client.domestic_market_analysis.get_trading_weight_by_amount(
             fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
@@ -604,7 +547,6 @@ def test_get_trading_weight_by_amount(client: HttpClient):
 @pytest.mark.integration
 def test_get_market_fund_summary(client: HttpClient):
     """Test market fund summary."""
-    time.sleep(1)
     try:
         response = client.domestic_market_analysis.get_market_fund_summary(
             fid_input_date_1="20240701"  # Date
@@ -622,7 +564,6 @@ def test_get_market_fund_summary(client: HttpClient):
 @pytest.mark.integration
 def test_get_stock_loan_trend_daily(client: HttpClient):
     """Test stock loan trend (daily)."""
-    time.sleep(1)
     try:
         response = client.domestic_market_analysis.get_stock_loan_trend_daily(
             mrkt_div_cls_code="3",  # 1:KOSPI, 2:KOSDAQ, 3:Stock
@@ -644,7 +585,6 @@ def test_get_stock_loan_trend_daily(client: HttpClient):
 @pytest.mark.integration
 def test_get_limit_price_stocks(client: HttpClient):
     """Test limit price stocks (upper/lower limit)."""
-    time.sleep(1)
     try:
         response = client.domestic_market_analysis.get_limit_price_stocks(
             fid_cond_mrkt_div_code="J",  # J:Market
@@ -671,7 +611,6 @@ def test_get_limit_price_stocks(client: HttpClient):
 @pytest.mark.integration
 def test_get_resistance_level_trading_weight(client: HttpClient):
     """Test resistance level trading weight."""
-    time.sleep(1)
     try:
         response = client.domestic_market_analysis.get_resistance_level_trading_weight(
             fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated

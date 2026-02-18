@@ -4,28 +4,12 @@ These tests require actual API credentials and network access.
 They should be run against the sandbox environment for safety.
 """
 
-import os
-
-import dotenv
 import pytest
 import requests
 from pydantic import SecretStr
 
 from cluefin_openapi.kis._auth import Auth
 from cluefin_openapi.kis._auth_types import ApprovalResponse, TokenResponse
-
-
-@pytest.fixture(scope="module")
-def auth_dev():
-    """Fixture to create Auth instance for dev environment."""
-    dotenv.load_dotenv(dotenv_path=".env.test")
-    app_key = os.getenv("KIS_APP_KEY")
-    secret_key = os.getenv("KIS_SECRET_KEY")
-
-    if not app_key or not secret_key:
-        pytest.skip("KIS API credentials not available in environment variables")
-
-    return Auth(app_key=app_key, secret_key=SecretStr(secret_key), env="dev")
 
 
 @pytest.mark.integration

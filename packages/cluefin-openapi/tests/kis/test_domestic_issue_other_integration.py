@@ -4,44 +4,9 @@ These tests hit the real KIS sandbox API and therefore require valid
 credentials to be present in the environment (or in `.env.test`).
 """
 
-import os
-import time
-from typing import Literal, cast
-
-import dotenv
 import pytest
-from pydantic import SecretStr
 
-from cluefin_openapi.kis._auth import Auth
 from cluefin_openapi.kis._http_client import HttpClient
-
-
-@pytest.fixture(scope="module")
-def auth_dev():
-    """Fixture to create Auth instance for dev environment."""
-    dotenv.load_dotenv(dotenv_path=".env.test")
-    app_key = os.getenv("KIS_APP_KEY")
-    secret_key = os.getenv("KIS_SECRET_KEY")
-    env = cast(Literal["dev", "prod"], os.getenv("KIS_ENV", "dev"))
-
-    if not app_key or not secret_key:
-        pytest.skip("KIS API credentials not available in environment variables")
-
-    return Auth(app_key=app_key, secret_key=SecretStr(secret_key), env=env)
-
-
-@pytest.fixture(scope="module")
-def client(auth_dev):
-    """Fixture to create KIS Client with valid token."""
-    token_response = auth_dev.generate()
-    return HttpClient(
-        app_key=auth_dev.app_key,
-        secret_key=auth_dev.secret_key,
-        token=token_response.access_token,
-        env=auth_dev.env,
-        # debug=True,
-    )
-
 
 # ==================== Sector Index APIs ====================
 
@@ -49,7 +14,6 @@ def client(auth_dev):
 @pytest.mark.integration
 def test_get_sector_current_index(client: HttpClient):
     """Test sector current index inquiry (KOSPI)."""
-    time.sleep(1)
     try:
         response = client.domestic_issue_other.get_sector_current_index(
             fid_cond_mrkt_div_code="U",
@@ -69,7 +33,6 @@ def test_get_sector_current_index(client: HttpClient):
 @pytest.mark.integration
 def test_get_sector_daily_index(client: HttpClient):
     """Test sector daily index inquiry (KOSPI daily)."""
-    time.sleep(1)
     try:
         response = client.domestic_issue_other.get_sector_daily_index(
             fid_period_div_code="D",  # D:일별, W:주별, M:월별
@@ -90,7 +53,6 @@ def test_get_sector_daily_index(client: HttpClient):
 @pytest.mark.integration
 def test_get_sector_time_index_second(client: HttpClient):
     """Test sector time index by second (KOSPI)."""
-    time.sleep(1)
     try:
         response = client.domestic_issue_other.get_sector_time_index_second(
             fid_input_iscd="0001",  # 0001:거래소, 1001:코스닥, 2001:코스피200, 3003:KSQ150
@@ -109,7 +71,6 @@ def test_get_sector_time_index_second(client: HttpClient):
 @pytest.mark.integration
 def test_get_sector_time_index_minute(client: HttpClient):
     """Test sector time index by minute (KOSPI 1-minute)."""
-    time.sleep(1)
     try:
         response = client.domestic_issue_other.get_sector_time_index_minute(
             fid_input_hour_1="60",  # 60:1분, 300:5분, 600:10분
@@ -129,7 +90,6 @@ def test_get_sector_time_index_minute(client: HttpClient):
 @pytest.mark.integration
 def test_get_sector_minute_inquiry(client: HttpClient):
     """Test sector minute candle inquiry (KOSPI 1-minute)."""
-    time.sleep(1)
     try:
         response = client.domestic_issue_other.get_sector_minute_inquiry(
             fid_cond_mrkt_div_code="U",  # U
@@ -151,7 +111,6 @@ def test_get_sector_minute_inquiry(client: HttpClient):
 @pytest.mark.integration
 def test_get_sector_period_quote(client: HttpClient):
     """Test sector period quote (daily/weekly/monthly/yearly)."""
-    time.sleep(1)
     try:
         response = client.domestic_issue_other.get_sector_period_quote(
             fid_cond_mrkt_div_code="U",  # 업종:U
@@ -173,7 +132,6 @@ def test_get_sector_period_quote(client: HttpClient):
 @pytest.mark.integration
 def test_get_sector_all_quote_by_category(client: HttpClient):
     """Test sector all quote by category (KOSPI)."""
-    time.sleep(1)
     try:
         response = client.domestic_issue_other.get_sector_all_quote_by_category(
             fid_cond_mrkt_div_code="U",  # 업종 U
@@ -198,7 +156,6 @@ def test_get_sector_all_quote_by_category(client: HttpClient):
 @pytest.mark.integration
 def test_get_expected_index_trend(client: HttpClient):
     """Test expected index trend (pre-market KOSPI)."""
-    time.sleep(1)
     try:
         response = client.domestic_issue_other.get_expected_index_trend(
             fid_mkop_cls_code="1",  # 1:장시작전, 2:장마감
@@ -219,7 +176,6 @@ def test_get_expected_index_trend(client: HttpClient):
 @pytest.mark.integration
 def test_get_expected_index_all(client: HttpClient):
     """Test expected index all (pre-market all indices)."""
-    time.sleep(1)
     try:
         response = client.domestic_issue_other.get_expected_index_all(
             fid_mrkt_cls_code="0",  # 0:전체, K:거래소, Q:코스닥
@@ -244,7 +200,6 @@ def test_get_expected_index_all(client: HttpClient):
 @pytest.mark.integration
 def test_get_volatility_interruption_status(client: HttpClient):
     """Test volatility interruption (VI) status."""
-    time.sleep(1)
     try:
         response = client.domestic_issue_other.get_volatility_interruption_status(
             fid_div_cls_code="0",  # 0:전체, 1:상승, 2:하락
@@ -269,7 +224,6 @@ def test_get_volatility_interruption_status(client: HttpClient):
 @pytest.mark.integration
 def test_get_interest_rate_summary(client: HttpClient):
     """Test interest rate summary (domestic bonds/interest rates)."""
-    time.sleep(1)
     try:
         response = client.domestic_issue_other.get_interest_rate_summary(
             fid_cond_mrkt_div_code="I",  # Unique key: I
@@ -290,7 +244,6 @@ def test_get_interest_rate_summary(client: HttpClient):
 @pytest.mark.integration
 def test_get_market_announcement_schedule(client: HttpClient):
     """Test market announcement schedule (news titles)."""
-    time.sleep(1)
     try:
         response = client.domestic_issue_other.get_market_announcement_schedule(
             fid_news_ofer_entp_code="",  # 공백 필수
@@ -315,7 +268,6 @@ def test_get_market_announcement_schedule(client: HttpClient):
 @pytest.mark.integration
 def test_get_holiday_inquiry(client: HttpClient):
     """Test holiday inquiry (domestic market holidays)."""
-    time.sleep(1)
     try:
         response = client.domestic_issue_other.get_holiday_inquiry(
             bass_dt="20250101",  # YYYYMMDD
@@ -335,7 +287,6 @@ def test_get_holiday_inquiry(client: HttpClient):
 @pytest.mark.integration
 def test_get_futures_business_day_inquiry(client: HttpClient):
     """Test futures business day inquiry."""
-    time.sleep(1)
     try:
         response = client.domestic_issue_other.get_futures_business_day_inquiry()
 

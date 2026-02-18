@@ -8,44 +8,12 @@ These tests require valid API credentials in environment variables:
 Run with: uv run pytest packages/cluefin-openapi/tests/kis/test_overseas_market_analysis_integration.py -v -m integration
 """
 
-import os
 import time
 from datetime import datetime, timedelta
-from typing import Literal, cast
 
-import dotenv
 import pytest
-from pydantic import SecretStr
 
-from cluefin_openapi.kis._auth import Auth
 from cluefin_openapi.kis._http_client import HttpClient
-
-
-@pytest.fixture(scope="module")
-def auth_dev():
-    """Fixture to create Auth instance for dev environment."""
-    dotenv.load_dotenv(dotenv_path=".env.test")
-    app_key = os.getenv("KIS_APP_KEY")
-    secret_key = os.getenv("KIS_SECRET_KEY")
-    env = cast(Literal["dev", "prod"], os.getenv("KIS_ENV", "dev"))
-
-    if not app_key or not secret_key:
-        pytest.skip("KIS API credentials not available in environment variables")
-
-    return Auth(app_key=app_key, secret_key=SecretStr(secret_key), env=env)
-
-
-@pytest.fixture(scope="module")
-def client(auth_dev) -> HttpClient:
-    """Fixture to create KIS Client with valid token."""
-    token_response = auth_dev.generate()
-    return HttpClient(
-        app_key=auth_dev.app_key,
-        secret_key=auth_dev.secret_key,
-        token=token_response.access_token,
-        env=auth_dev.env,
-        # debug=True,
-    )
 
 
 @pytest.fixture(scope="module")
@@ -90,7 +58,6 @@ def handle_api_error(func):
 # @pytest.mark.integration
 # def test_get_stock_price_rise_fall_nasdaq_rise(client):
 #     """Test stock price rise/fall for NASDAQ - rising stocks."""
-#     time.sleep(1)
 #     response = client.overseas_market_analysis.get_stock_price_rise_fall(
 #         excd="NAS",  # NASDAQ
 #         gubn="1",  # Rising
@@ -105,7 +72,6 @@ def handle_api_error(func):
 # @pytest.mark.integration
 # def test_get_stock_price_fluctuation_nyse_fall(client, common_params):
 #     """Test stock price fluctuation for NYSE - falling stocks."""
-#     time.sleep(1)
 #     response = client.overseas_market_analysis.get_stock_price_fluctuation(
 #         excd="NYS",  # NYSE
 #         gubn="0",  # Falling
@@ -121,9 +87,8 @@ def handle_api_error(func):
 
 
 @pytest.mark.integration
-def test_get_stock_volume_surge_nasdaq(client, common_params):
+def test_get_stock_volume_surge_nasdaq(client: HttpClient, common_params):
     """Test volume surge analysis for NASDAQ."""
-    time.sleep(1)
     response = client.overseas_market_analysis.get_stock_volume_surge(
         keyb=common_params["keyb"],
         auth=common_params["auth"],
@@ -137,9 +102,8 @@ def test_get_stock_volume_surge_nasdaq(client, common_params):
 
 
 @pytest.mark.integration
-def test_get_stock_volume_surge_tse(client, common_params):
+def test_get_stock_volume_surge_tse(client: HttpClient, common_params):
     """Test volume surge analysis for Tokyo Stock Exchange."""
-    time.sleep(1)
     response = client.overseas_market_analysis.get_stock_volume_surge(
         keyb=common_params["keyb"],
         auth=common_params["auth"],
@@ -153,9 +117,8 @@ def test_get_stock_volume_surge_tse(client, common_params):
 
 
 @pytest.mark.integration
-def test_get_stock_buy_execution_strength_top(client, common_params):
+def test_get_stock_buy_execution_strength_top(client: HttpClient, common_params):
     """Test buy execution strength top ranking."""
-    time.sleep(1)
     response = client.overseas_market_analysis.get_stock_buy_execution_strength_top(
         keyb=common_params["keyb"],
         auth=common_params["auth"],
@@ -172,9 +135,8 @@ def test_get_stock_buy_execution_strength_top(client, common_params):
 
 
 @pytest.mark.integration
-def test_get_stock_rise_decline_rate_rise(client, common_params):
+def test_get_stock_rise_decline_rate_rise(client: HttpClient, common_params):
     """Test stock rise/decline rate - rising stocks."""
-    time.sleep(1)
     response = client.overseas_market_analysis.get_stock_rise_decline_rate(
         keyb=common_params["keyb"],
         auth=common_params["auth"],
@@ -189,9 +151,8 @@ def test_get_stock_rise_decline_rate_rise(client, common_params):
 
 
 @pytest.mark.integration
-def test_get_stock_rise_decline_rate_decline_5day(client, common_params):
+def test_get_stock_rise_decline_rate_decline_5day(client: HttpClient, common_params):
     """Test stock rise/decline rate - declining stocks over 5 days."""
-    time.sleep(1)
     response = client.overseas_market_analysis.get_stock_rise_decline_rate(
         keyb=common_params["keyb"],
         auth=common_params["auth"],
@@ -206,9 +167,8 @@ def test_get_stock_rise_decline_rate_decline_5day(client, common_params):
 
 
 @pytest.mark.integration
-def test_get_stock_new_high_low_price_high(client, common_params):
+def test_get_stock_new_high_low_price_high(client: HttpClient, common_params):
     """Test new high price stocks."""
-    time.sleep(1)
     response = client.overseas_market_analysis.get_stock_new_high_low_price(
         keyb=common_params["keyb"],
         auth=common_params["auth"],
@@ -224,9 +184,8 @@ def test_get_stock_new_high_low_price_high(client, common_params):
 
 
 @pytest.mark.integration
-def test_get_stock_new_high_low_price_low(client, common_params):
+def test_get_stock_new_high_low_price_low(client: HttpClient, common_params):
     """Test new low price stocks."""
-    time.sleep(1)
     response = client.overseas_market_analysis.get_stock_new_high_low_price(
         keyb=common_params["keyb"],
         auth=common_params["auth"],
@@ -245,9 +204,8 @@ def test_get_stock_new_high_low_price_low(client, common_params):
 
 
 @pytest.mark.integration
-def test_get_stock_trading_volume_rank_nasdaq(client, common_params):
+def test_get_stock_trading_volume_rank_nasdaq(client: HttpClient, common_params):
     """Test trading volume ranking for NASDAQ."""
-    time.sleep(1)
     response = client.overseas_market_analysis.get_stock_trading_volume_rank(
         keyb=common_params["keyb"],
         auth=common_params["auth"],
@@ -263,9 +221,8 @@ def test_get_stock_trading_volume_rank_nasdaq(client, common_params):
 
 
 @pytest.mark.integration
-def test_get_stock_trading_volume_rank_with_price_filter(client, common_params):
+def test_get_stock_trading_volume_rank_with_price_filter(client: HttpClient, common_params):
     """Test trading volume ranking with price filter."""
-    time.sleep(1)
     response = client.overseas_market_analysis.get_stock_trading_volume_rank(
         keyb=common_params["keyb"],
         auth=common_params["auth"],
@@ -281,9 +238,8 @@ def test_get_stock_trading_volume_rank_with_price_filter(client, common_params):
 
 
 @pytest.mark.integration
-def test_get_stock_trading_amount_rank(client, common_params):
+def test_get_stock_trading_amount_rank(client: HttpClient, common_params):
     """Test trading amount ranking."""
-    time.sleep(1)
     response = client.overseas_market_analysis.get_stock_trading_amount_rank(
         keyb=common_params["keyb"],
         auth=common_params["auth"],
@@ -299,9 +255,8 @@ def test_get_stock_trading_amount_rank(client, common_params):
 
 
 @pytest.mark.integration
-def test_get_stock_trading_increase_rate_rank(client, common_params):
+def test_get_stock_trading_increase_rate_rank(client: HttpClient, common_params):
     """Test trading increase rate ranking."""
-    time.sleep(1)
     response = client.overseas_market_analysis.get_stock_trading_increase_rate_rank(
         keyb=common_params["keyb"],
         auth=common_params["auth"],
@@ -315,9 +270,8 @@ def test_get_stock_trading_increase_rate_rank(client, common_params):
 
 
 @pytest.mark.integration
-def test_get_stock_trading_turnover_rate_rank(client, common_params):
+def test_get_stock_trading_turnover_rate_rank(client: HttpClient, common_params):
     """Test trading turnover rate ranking."""
-    time.sleep(1)
     response = client.overseas_market_analysis.get_stock_trading_turnover_rate_rank(
         keyb=common_params["keyb"],
         auth=common_params["auth"],
@@ -334,9 +288,8 @@ def test_get_stock_trading_turnover_rate_rank(client, common_params):
 
 
 @pytest.mark.integration
-def test_get_stock_market_cap_rank_nasdaq(client, common_params):
+def test_get_stock_market_cap_rank_nasdaq(client: HttpClient, common_params):
     """Test market cap ranking for NASDAQ."""
-    time.sleep(1)
     response = client.overseas_market_analysis.get_stock_market_cap_rank(
         keyb=common_params["keyb"],
         auth=common_params["auth"],
@@ -349,9 +302,8 @@ def test_get_stock_market_cap_rank_nasdaq(client, common_params):
 
 
 @pytest.mark.integration
-def test_get_stock_market_cap_rank_nyse(client, common_params):
+def test_get_stock_market_cap_rank_nyse(client: HttpClient, common_params):
     """Test market cap ranking for NYSE."""
-    time.sleep(1)
     response = client.overseas_market_analysis.get_stock_market_cap_rank(
         keyb=common_params["keyb"],
         auth=common_params["auth"],
@@ -364,9 +316,8 @@ def test_get_stock_market_cap_rank_nyse(client, common_params):
 
 
 @pytest.mark.integration
-def test_get_stock_market_cap_rank_hks(client, common_params):
+def test_get_stock_market_cap_rank_hks(client: HttpClient, common_params):
     """Test market cap ranking for Hong Kong."""
-    time.sleep(1)
     response = client.overseas_market_analysis.get_stock_market_cap_rank(
         keyb=common_params["keyb"],
         auth=common_params["auth"],
@@ -382,9 +333,8 @@ def test_get_stock_market_cap_rank_hks(client, common_params):
 
 
 @pytest.mark.integration
-def test_get_stock_period_rights_inquiry_all(client, date_range):
+def test_get_stock_period_rights_inquiry_all(client: HttpClient, date_range):
     """Test period rights inquiry - all types."""
-    time.sleep(1)
     start_dt, end_dt = date_range
     response = client.overseas_market_analysis.get_stock_period_rights_inquiry(
         rght_type_cd="%%",  # All types
@@ -402,9 +352,8 @@ def test_get_stock_period_rights_inquiry_all(client, date_range):
 
 
 @pytest.mark.integration
-def test_get_stock_period_rights_inquiry_dividend(client, date_range):
+def test_get_stock_period_rights_inquiry_dividend(client: HttpClient, date_range):
     """Test period rights inquiry - dividends only."""
-    time.sleep(1)
     start_dt, end_dt = date_range
     response = client.overseas_market_analysis.get_stock_period_rights_inquiry(
         rght_type_cd="03",  # Dividend
@@ -422,9 +371,8 @@ def test_get_stock_period_rights_inquiry_dividend(client, date_range):
 
 
 @pytest.mark.integration
-def test_get_stock_rights_aggregate_us(client):
+def test_get_stock_rights_aggregate_us(client: HttpClient):
     """Test stock rights aggregate for US stocks."""
-    time.sleep(1)
     # Use specific stock like AAPL
     start_dt = (datetime.now() - timedelta(days=90)).strftime("%Y%m%d")
     end_dt = (datetime.now() + timedelta(days=90)).strftime("%Y%m%d")
@@ -441,9 +389,8 @@ def test_get_stock_rights_aggregate_us(client):
 
 
 @pytest.mark.integration
-def test_get_stock_rights_aggregate_hk(client):
+def test_get_stock_rights_aggregate_hk(client: HttpClient):
     """Test stock rights aggregate for Hong Kong stocks."""
-    time.sleep(1)
     start_dt = (datetime.now() - timedelta(days=90)).strftime("%Y%m%d")
     end_dt = (datetime.now() + timedelta(days=90)).strftime("%Y%m%d")
 
@@ -462,9 +409,8 @@ def test_get_stock_rights_aggregate_hk(client):
 
 
 @pytest.mark.integration
-def test_get_news_aggregate_title_all(client):
+def test_get_news_aggregate_title_all(client: HttpClient):
     """Test news aggregate title - all news."""
-    time.sleep(1)
     response = client.overseas_market_analysis.get_news_aggregate_title(
         info_gb="",  # All news
         class_cd="",  # All categories
@@ -481,9 +427,8 @@ def test_get_news_aggregate_title_all(client):
 
 
 @pytest.mark.integration
-def test_get_news_aggregate_title_us_only(client):
+def test_get_news_aggregate_title_us_only(client: HttpClient):
     """Test news aggregate title - US news only."""
-    time.sleep(1)
     response = client.overseas_market_analysis.get_news_aggregate_title(
         info_gb="",
         class_cd="",
@@ -500,9 +445,8 @@ def test_get_news_aggregate_title_us_only(client):
 
 
 @pytest.mark.integration
-def test_get_news_aggregate_title_specific_date(client):
+def test_get_news_aggregate_title_specific_date(client: HttpClient):
     """Test news aggregate title - specific date."""
-    time.sleep(1)
     today = datetime.now().strftime("%Y%m%d")
     response = client.overseas_market_analysis.get_news_aggregate_title(
         info_gb="",
@@ -520,9 +464,8 @@ def test_get_news_aggregate_title_specific_date(client):
 
 
 @pytest.mark.integration
-def test_get_breaking_news_title(client):
+def test_get_breaking_news_title(client: HttpClient):
     """Test breaking news title retrieval."""
-    time.sleep(1)
     response = client.overseas_market_analysis.get_breaking_news_title(
         fid_news_ofer_entp_code="0",  # All providers
         fid_cond_mrkt_cls_code="",
@@ -543,9 +486,8 @@ def test_get_breaking_news_title(client):
 
 
 @pytest.mark.integration
-def test_get_stock_collateral_loan_eligible_us_all(client):
+def test_get_stock_collateral_loan_eligible_us_all(client: HttpClient):
     """Test collateral loan eligible stocks - US all stocks."""
-    time.sleep(1)
     response = client.overseas_market_analysis.get_stock_collateral_loan_eligible(
         pdno="",  # All stocks
         prdt_type_cd="",
@@ -566,9 +508,8 @@ def test_get_stock_collateral_loan_eligible_us_all(client):
 
 
 @pytest.mark.integration
-def test_get_stock_collateral_loan_eligible_us_specific(client):
+def test_get_stock_collateral_loan_eligible_us_specific(client: HttpClient):
     """Test collateral loan eligible stocks - specific US stock."""
-    time.sleep(1)
     response = client.overseas_market_analysis.get_stock_collateral_loan_eligible(
         pdno="AAPL",  # Apple
         prdt_type_cd="",
@@ -589,9 +530,8 @@ def test_get_stock_collateral_loan_eligible_us_specific(client):
 
 
 @pytest.mark.integration
-def test_get_stock_collateral_loan_eligible_hk(client):
+def test_get_stock_collateral_loan_eligible_hk(client: HttpClient):
     """Test collateral loan eligible stocks - Hong Kong."""
-    time.sleep(1)
     response = client.overseas_market_analysis.get_stock_collateral_loan_eligible(
         pdno="",
         prdt_type_cd="",
@@ -612,9 +552,8 @@ def test_get_stock_collateral_loan_eligible_hk(client):
 
 
 @pytest.mark.integration
-def test_get_stock_collateral_loan_eligible_china(client):
+def test_get_stock_collateral_loan_eligible_china(client: HttpClient):
     """Test collateral loan eligible stocks - China."""
-    time.sleep(1)
     response = client.overseas_market_analysis.get_stock_collateral_loan_eligible(
         pdno="",
         prdt_type_cd="",
@@ -647,7 +586,6 @@ def test_get_stock_collateral_loan_eligible_china(client):
 # ])
 # def test_price_rise_fall_multiple_exchanges(client, exchange_code):
 #     """Test price rise/fall across multiple exchanges."""
-#     time.sleep(1)
 #     response = client.overseas_market_analysis.get_stock_price_fluctuation(
 #         excd=exchange_code,
 #         gubn="1",  # Rising
@@ -669,9 +607,8 @@ def test_get_stock_collateral_loan_eligible_china(client):
         ("TSE", "Tokyo"),
     ],
 )
-def test_market_cap_rank_multiple_exchanges(client, exchange_code, exchange_name):
+def test_market_cap_rank_multiple_exchanges(client: HttpClient, exchange_code, exchange_name):
     """Test market cap ranking across multiple exchanges."""
-    time.sleep(1)
     response = client.overseas_market_analysis.get_stock_market_cap_rank(
         keyb="", auth="", excd=exchange_code, vol_rang="0"
     )
@@ -684,9 +621,8 @@ def test_market_cap_rank_multiple_exchanges(client, exchange_code, exchange_name
 
 
 @pytest.mark.integration
-def test_invalid_exchange_code(client):
+def test_invalid_exchange_code(client: HttpClient):
     """Test handling of invalid exchange code."""
-    time.sleep(1)
     try:
         response = client.overseas_market_analysis.get_stock_price_rise_fall(
             keyb="",
@@ -704,9 +640,8 @@ def test_invalid_exchange_code(client):
 
 
 @pytest.mark.integration
-def test_invalid_date_range_rights(client):
+def test_invalid_date_range_rights(client: HttpClient):
     """Test handling of invalid date range for rights inquiry."""
-    time.sleep(1)
     try:
         response = client.overseas_market_analysis.get_stock_period_rights_inquiry(
             rght_type_cd="%%",
@@ -725,9 +660,8 @@ def test_invalid_date_range_rights(client):
 
 
 @pytest.mark.integration
-def test_invalid_stock_symbol_rights(client):
+def test_invalid_stock_symbol_rights(client: HttpClient):
     """Test handling of invalid stock symbol in rights aggregate."""
-    time.sleep(1)
     start_dt = (datetime.now() - timedelta(days=90)).strftime("%Y%m%d")
     end_dt = (datetime.now() + timedelta(days=90)).strftime("%Y%m%d")
 

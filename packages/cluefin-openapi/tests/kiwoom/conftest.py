@@ -37,6 +37,7 @@ def client(auth) -> Client:
 
 
 @pytest.fixture(autouse=True)
-def _kiwoom_api_rate_limit():
-    """Rate-limit guard: wait 1 second before each test."""
-    time.sleep(1)
+def _kiwoom_api_rate_limit(request):
+    """Rate-limit guard: wait 1 second before each integration test."""
+    if request.node.get_closest_marker("integration"):
+        time.sleep(1)

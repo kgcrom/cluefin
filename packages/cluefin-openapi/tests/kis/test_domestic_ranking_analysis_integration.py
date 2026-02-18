@@ -4,44 +4,9 @@ These tests hit the real KIS sandbox API and therefore require valid
 credentials to be present in the environment (or in `.env.test`).
 """
 
-import os
-import time
-from typing import Literal, cast
-
-import dotenv
 import pytest
-from pydantic import SecretStr
 
-from cluefin_openapi.kis._auth import Auth
 from cluefin_openapi.kis._http_client import HttpClient
-
-
-@pytest.fixture(scope="module")
-def auth_dev():
-    """Fixture to create Auth instance for dev environment."""
-    dotenv.load_dotenv(dotenv_path=".env.test")
-    app_key = os.getenv("KIS_APP_KEY")
-    secret_key = os.getenv("KIS_SECRET_KEY")
-    env = cast(Literal["dev", "prod"], os.getenv("KIS_ENV", "dev"))
-
-    if not app_key or not secret_key:
-        pytest.skip("KIS API credentials not available in environment variables")
-
-    return Auth(app_key=app_key, secret_key=SecretStr(secret_key), env=env)
-
-
-@pytest.fixture(scope="module")
-def client(auth_dev):
-    """Fixture to create KIS Client with valid token."""
-    token_response = auth_dev.generate()
-    return HttpClient(
-        app_key=auth_dev.app_key,
-        secret_key=auth_dev.secret_key,
-        token=token_response.access_token,
-        env=auth_dev.env,
-        # debug=True,
-    )
-
 
 # ==================== Volume & Trading APIs ====================
 
@@ -49,7 +14,6 @@ def client(auth_dev):
 @pytest.mark.integration
 def test_get_trading_volume_rank(client: HttpClient):
     """Test trading volume ranking."""
-    time.sleep(1)
     try:
         response = client.domestic_ranking_analysis.get_trading_volume_rank(
             fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT
@@ -77,7 +41,6 @@ def test_get_trading_volume_rank(client: HttpClient):
 @pytest.mark.integration
 def test_get_stock_fluctuation_rank(client: HttpClient):
     """Test stock fluctuation (rise/fall) ranking."""
-    time.sleep(1)
     try:
         response = client.domestic_ranking_analysis.get_stock_fluctuation_rank(
             fid_rsfl_rate2="",  # ~비율
@@ -108,7 +71,6 @@ def test_get_stock_fluctuation_rank(client: HttpClient):
 @pytest.mark.integration
 def test_get_stock_hoga_quantity_rank(client: HttpClient):
     """Test stock bid/ask quantity ranking."""
-    time.sleep(1)
     try:
         response = client.domestic_ranking_analysis.get_stock_hoga_quantity_rank(
             fid_vol_cnt="",  # 거래량~
@@ -138,7 +100,6 @@ def test_get_stock_hoga_quantity_rank(client: HttpClient):
 @pytest.mark.integration
 def test_get_stock_profitability_indicator_rank(client: HttpClient):
     """Test stock profitability indicator ranking."""
-    time.sleep(1)
     try:
         response = client.domestic_ranking_analysis.get_stock_profitability_indicator_rank(
             fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT
@@ -168,7 +129,6 @@ def test_get_stock_profitability_indicator_rank(client: HttpClient):
 @pytest.mark.integration
 def test_get_stock_market_cap_top(client: HttpClient):
     """Test stock market capitalization top ranking."""
-    time.sleep(1)
     try:
         response = client.domestic_ranking_analysis.get_stock_market_cap_top(
             fid_input_price_2="",  # ~가격
@@ -194,7 +154,6 @@ def test_get_stock_market_cap_top(client: HttpClient):
 @pytest.mark.integration
 def test_get_stock_finance_ratio_rank(client: HttpClient):
     """Test stock financial ratio ranking."""
-    time.sleep(1)
     try:
         response = client.domestic_ranking_analysis.get_stock_finance_ratio_rank(
             fid_trgt_cls_code="0",  # 0:전체
@@ -224,7 +183,6 @@ def test_get_stock_finance_ratio_rank(client: HttpClient):
 @pytest.mark.integration
 def test_get_stock_market_price_rank(client: HttpClient):
     """Test stock market price (value) ranking."""
-    time.sleep(1)
     try:
         response = client.domestic_ranking_analysis.get_stock_market_price_rank(
             fid_trgt_cls_code="0",  # 0:전체
@@ -257,7 +215,6 @@ def test_get_stock_market_price_rank(client: HttpClient):
 @pytest.mark.integration
 def test_get_stock_time_hoga_rank(client: HttpClient):
     """Test stock after-hours bid/ask quantity ranking."""
-    time.sleep(1)
     try:
         response = client.domestic_ranking_analysis.get_stock_time_hoga_rank(
             fid_input_price_1="",  # 가격~
@@ -284,7 +241,6 @@ def test_get_stock_time_hoga_rank(client: HttpClient):
 @pytest.mark.integration
 def test_get_stock_after_hours_fluctuation_rank(client: HttpClient):
     """Test stock after-hours fluctuation ranking."""
-    time.sleep(1)
     try:
         response = client.domestic_ranking_analysis.get_stock_after_hours_fluctuation_rank(
             fid_cond_mrkt_div_code="J",  # J:주식
@@ -311,7 +267,6 @@ def test_get_stock_after_hours_fluctuation_rank(client: HttpClient):
 @pytest.mark.integration
 def test_get_stock_after_hours_volume_rank(client: HttpClient):
     """Test stock after-hours volume ranking."""
-    time.sleep(1)
     try:
         response = client.domestic_ranking_analysis.get_stock_after_hours_volume_rank(
             fid_cond_mrkt_div_code="J",  # J:주식
@@ -340,7 +295,6 @@ def test_get_stock_after_hours_volume_rank(client: HttpClient):
 @pytest.mark.integration
 def test_get_stock_preferred_stock_ratio_top(client: HttpClient):
     """Test preferred stock ratio (disparity) top ranking."""
-    time.sleep(1)
     try:
         response = client.domestic_ranking_analysis.get_stock_preferred_stock_ratio_top(
             fid_vol_cnt="",  # 거래량~
@@ -366,7 +320,6 @@ def test_get_stock_preferred_stock_ratio_top(client: HttpClient):
 @pytest.mark.integration
 def test_get_stock_disparity_index_rank(client: HttpClient):
     """Test stock disparity index ranking."""
-    time.sleep(1)
     try:
         response = client.domestic_ranking_analysis.get_stock_disparity_index_rank(
             fid_input_price_2="",  # ~가격
@@ -394,7 +347,6 @@ def test_get_stock_disparity_index_rank(client: HttpClient):
 @pytest.mark.integration
 def test_get_stock_execution_strength_top(client: HttpClient):
     """Test stock execution strength top ranking."""
-    time.sleep(1)
     try:
         response = client.domestic_ranking_analysis.get_stock_execution_strength_top(
             fid_trgt_exls_cls_code="0",  # 0:전체
@@ -420,7 +372,6 @@ def test_get_stock_execution_strength_top(client: HttpClient):
 @pytest.mark.integration
 def test_get_stock_watchlist_registration_top(client: HttpClient):
     """Test stock watchlist registration top ranking."""
-    time.sleep(1)
     try:
         response = client.domestic_ranking_analysis.get_stock_watchlist_registration_top(
             fid_input_iscd_2="000000",  # 000000:필수입력값
@@ -448,7 +399,6 @@ def test_get_stock_watchlist_registration_top(client: HttpClient):
 @pytest.mark.integration
 def test_get_stock_expected_execution_rise_decline_top(client: HttpClient):
     """Test stock expected execution rise/decline top ranking."""
-    time.sleep(1)
     try:
         response = client.domestic_ranking_analysis.get_stock_expected_execution_rise_decline_top(
             fid_rank_sort_cls_code="0",  # 0:상승률, 1:상승폭, 2:보합, 3:하락율, 4:하락폭, 5:체결량, 6:거래대금
@@ -475,7 +425,6 @@ def test_get_stock_expected_execution_rise_decline_top(client: HttpClient):
 @pytest.mark.integration
 def test_get_stock_proprietary_trading_top(client: HttpClient):
     """Test stock proprietary trading top ranking."""
-    time.sleep(1)
     try:
         response = client.domestic_ranking_analysis.get_stock_proprietary_trading_top(
             fid_trgt_exls_cls_code="0",  # 0:전체
@@ -504,7 +453,6 @@ def test_get_stock_proprietary_trading_top(client: HttpClient):
 @pytest.mark.integration
 def test_get_stock_new_high_low_approaching_top(client: HttpClient):
     """Test stock new high/low approaching top ranking."""
-    time.sleep(1)
     try:
         response = client.domestic_ranking_analysis.get_stock_new_high_low_approaching_top(
             fid_aply_rang_vol="0",  # 0:전체, 100:100주 이상
@@ -533,7 +481,6 @@ def test_get_stock_new_high_low_approaching_top(client: HttpClient):
 @pytest.mark.integration
 def test_get_stock_dividend_yield_top(client: HttpClient):
     """Test stock dividend yield top ranking."""
-    time.sleep(1)
     try:
         response = client.domestic_ranking_analysis.get_stock_dividend_yield_top(
             cts_area="",  # 공백
@@ -558,7 +505,6 @@ def test_get_stock_dividend_yield_top(client: HttpClient):
 @pytest.mark.integration
 def test_get_stock_large_execution_count_top(client: HttpClient):
     """Test stock large execution count top ranking."""
-    time.sleep(1)
     try:
         response = client.domestic_ranking_analysis.get_stock_large_execution_count_top(
             fid_aply_rang_prc_2="",  # ~가격
@@ -587,7 +533,6 @@ def test_get_stock_large_execution_count_top(client: HttpClient):
 @pytest.mark.integration
 def test_get_stock_credit_balance_top(client: HttpClient):
     """Test stock credit balance top ranking."""
-    time.sleep(1)
     try:
         response = client.domestic_ranking_analysis.get_stock_credit_balance_top(
             fid_cond_scr_div_code="11701",
@@ -609,7 +554,6 @@ def test_get_stock_credit_balance_top(client: HttpClient):
 @pytest.mark.integration
 def test_get_stock_short_selling_top(client: HttpClient):
     """Test stock short selling top ranking."""
-    time.sleep(1)
     try:
         response = client.domestic_ranking_analysis.get_stock_short_selling_top(
             fid_aply_rang_vol="",  # 공백
@@ -636,7 +580,6 @@ def test_get_stock_short_selling_top(client: HttpClient):
 @pytest.mark.integration
 def test_get_hts_inquiry_top_20(client: HttpClient):
     """Test HTS inquiry top 20 stocks."""
-    time.sleep(1)
     try:
         response = client.domestic_ranking_analysis.get_hts_inquiry_top_20()
 

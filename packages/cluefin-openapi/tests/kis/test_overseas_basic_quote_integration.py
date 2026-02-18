@@ -8,50 +8,16 @@ These tests require valid API credentials in environment variables:
 Run with: uv run pytest packages/cluefin-openapi/tests/kis/test_overseas_basic_quote_integration.py -v -m integration
 """
 
-import os
-import time
 from datetime import datetime, timedelta
-from typing import Literal, cast
 
-import dotenv
 import pytest
-from pydantic import SecretStr
 
-from cluefin_openapi.kis._auth import Auth
 from cluefin_openapi.kis._http_client import HttpClient
 
 
-@pytest.fixture(scope="module")
-def auth_dev():
-    """Fixture to create Auth instance for dev environment."""
-    dotenv.load_dotenv(dotenv_path=".env.test")
-    app_key = os.getenv("KIS_APP_KEY")
-    secret_key = os.getenv("KIS_SECRET_KEY")
-    env = cast(Literal["dev", "prod"], os.getenv("KIS_ENV", "dev"))
-
-    if not app_key or not secret_key:
-        pytest.skip("KIS API credentials not available in environment variables")
-
-    return Auth(app_key=app_key, secret_key=SecretStr(secret_key), env=env)
-
-
-@pytest.fixture(scope="module")
-def client(auth_dev) -> HttpClient:
-    """Fixture to create KIS Client with valid token."""
-    token_response = auth_dev.generate()
-    return HttpClient(
-        app_key=auth_dev.app_key,
-        secret_key=auth_dev.secret_key,
-        token=token_response.access_token,
-        env=auth_dev.env,
-        debug=True,
-    )
-
-
 @pytest.mark.integration
-def test_get_stock_current_price_detail(client):
+def test_get_stock_current_price_detail(client: HttpClient):
     """Test overseas stock current price detail retrieval."""
-    time.sleep(1)
     # Test with Tesla (TSLA) on NASDAQ
     response = client.overseas_basic_quote.get_stock_current_price_detail(
         auth="",
@@ -64,9 +30,8 @@ def test_get_stock_current_price_detail(client):
 
 
 @pytest.mark.integration
-def test_get_current_price_first_quote(client):
+def test_get_current_price_first_quote(client: HttpClient):
     """Test current price first quote retrieval."""
-    time.sleep(1)
     # Test with Apple (AAPL) on NASDAQ
     response = client.overseas_basic_quote.get_current_price_first_quote(auth="", excd="NAS", symb="AAPL")
 
@@ -75,9 +40,8 @@ def test_get_current_price_first_quote(client):
 
 
 @pytest.mark.integration
-def test_get_stock_current_price_conclusion(client):
+def test_get_stock_current_price_conclusion(client: HttpClient):
     """Test current price conclusion retrieval."""
-    time.sleep(1)
     # Test with Microsoft (MSFT) on NASDAQ
     response = client.overseas_basic_quote.get_stock_current_price_conclusion(auth="", excd="NAS", symb="MSFT")
 
@@ -86,9 +50,8 @@ def test_get_stock_current_price_conclusion(client):
 
 
 @pytest.mark.integration
-def test_get_conclusion_trend(client):
+def test_get_conclusion_trend(client: HttpClient):
     """Test conclusion trend retrieval."""
-    time.sleep(1)
     # Test with NVIDIA (NVDA) on NASDAQ
     response = client.overseas_basic_quote.get_conclusion_trend(
         excd="NAS",
@@ -103,9 +66,8 @@ def test_get_conclusion_trend(client):
 
 
 @pytest.mark.integration
-def test_get_stock_minute_chart(client):
+def test_get_stock_minute_chart(client: HttpClient):
     """Test stock minute chart retrieval."""
-    time.sleep(1)
     # Test with Amazon (AMZN) on NASDAQ
     response = client.overseas_basic_quote.get_stock_minute_chart(
         auth="",
@@ -124,9 +86,8 @@ def test_get_stock_minute_chart(client):
 
 
 @pytest.mark.integration
-def test_get_index_minute_chart(client):
+def test_get_index_minute_chart(client: HttpClient):
     """Test index minute chart retrieval."""
-    time.sleep(1)
     # Test with NASDAQ index
     response = client.overseas_basic_quote.get_index_minute_chart(
         fid_cond_mrkt_div_code="N",  # Overseas index
@@ -140,9 +101,8 @@ def test_get_index_minute_chart(client):
 
 
 @pytest.mark.integration
-def test_get_stock_period_quote(client):
+def test_get_stock_period_quote(client: HttpClient):
     """Test stock period quote retrieval."""
-    time.sleep(1)
     # Test with Google (GOOGL) on NASDAQ with daily data
     response = client.overseas_basic_quote.get_stock_period_quote(
         auth="",
@@ -159,9 +119,8 @@ def test_get_stock_period_quote(client):
 
 
 @pytest.mark.integration
-def test_get_item_index_exchange_period_price(client):
+def test_get_item_index_exchange_period_price(client: HttpClient):
     """Test item/index/exchange period price retrieval."""
-    time.sleep(1)
     # Test with date range
     end_date = datetime.now().strftime("%Y%m%d")
     start_date = (datetime.now() - timedelta(days=30)).strftime("%Y%m%d")
@@ -179,9 +138,8 @@ def test_get_item_index_exchange_period_price(client):
 
 
 @pytest.mark.integration
-def test_search_by_condition(client):
+def test_search_by_condition(client: HttpClient):
     """Test search by condition."""
-    time.sleep(1)
     # Search for stocks on NYSE with price range
     response = client.overseas_basic_quote.search_by_condition(
         auth="",
@@ -197,9 +155,8 @@ def test_search_by_condition(client):
 
 
 @pytest.mark.integration
-def test_get_product_base_info(client):
+def test_get_product_base_info(client: HttpClient):
     """Test product base information retrieval."""
-    time.sleep(1)
     # Test with Apple (AAPL) - US NASDAQ product code
     response = client.overseas_basic_quote.get_product_base_info(
         prdt_type_cd="512",  # US NASDAQ
@@ -211,9 +168,8 @@ def test_get_product_base_info(client):
 
 
 @pytest.mark.integration
-def test_get_sector_price(client):
+def test_get_sector_price(client: HttpClient):
     """Test sector price retrieval."""
-    time.sleep(1)
     # First get sector codes to use a valid sector code
     codes_response = client.overseas_basic_quote.get_sector_codes(
         auth="",
@@ -241,9 +197,8 @@ def test_get_sector_price(client):
 
 
 @pytest.mark.integration
-def test_get_sector_codes(client):
+def test_get_sector_codes(client: HttpClient):
     """Test sector codes retrieval."""
-    time.sleep(1)
     # Test with NASDAQ
     response = client.overseas_basic_quote.get_sector_codes(
         auth="",
@@ -264,9 +219,8 @@ def test_get_sector_codes(client):
 
 
 @pytest.mark.integration
-def test_get_settlement_date(client):
+def test_get_settlement_date(client: HttpClient):
     """Test settlement date retrieval."""
-    time.sleep(1)
     # Test with current date
     trad_dt = datetime.now().strftime("%Y%m%d")
 
@@ -286,9 +240,8 @@ def test_get_settlement_date(client):
         ("TSE", "7203"),  # Tokyo - Toyota
     ],
 )
-def test_current_price_multiple_exchanges(client, exchange, symbol):
+def test_current_price_multiple_exchanges(client: HttpClient, exchange, symbol):
     """Test current price retrieval across different exchanges."""
-    time.sleep(1)
     try:
         response = client.overseas_basic_quote.get_stock_current_price_detail(auth="", excd=exchange, symb=symbol)
         assert response is not None
@@ -299,9 +252,8 @@ def test_current_price_multiple_exchanges(client, exchange, symbol):
 
 
 @pytest.mark.integration
-def test_invalid_stock_symbol(client):
+def test_invalid_stock_symbol(client: HttpClient):
     """Test handling of invalid stock symbol."""
-    time.sleep(1)
     try:
         response = client.overseas_basic_quote.get_stock_current_price_detail(
             auth="", excd="NAS", symb="INVALIDCODE123456"
@@ -314,9 +266,8 @@ def test_invalid_stock_symbol(client):
 
 
 @pytest.mark.integration
-def test_invalid_exchange_code(client):
+def test_invalid_exchange_code(client: HttpClient):
     """Test handling of invalid exchange code."""
-    time.sleep(1)
     try:
         response = client.overseas_basic_quote.get_stock_current_price_detail(auth="", excd="INVALID", symb="AAPL")
         assert response is not None
@@ -326,9 +277,8 @@ def test_invalid_exchange_code(client):
 
 
 @pytest.mark.integration
-def test_invalid_date_format(client):
+def test_invalid_date_format(client: HttpClient):
     """Test handling of invalid date format."""
-    time.sleep(1)
     try:
         response = client.overseas_basic_quote.get_item_index_exchange_period_price(
             fid_cond_mrkt_div_code="N",
