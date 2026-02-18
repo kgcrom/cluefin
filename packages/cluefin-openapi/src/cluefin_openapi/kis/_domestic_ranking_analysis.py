@@ -32,6 +32,14 @@ class DomesticRankingAnalysis:
     def __init__(self, client: HttpClient):
         self.client = client
 
+    def _check_response_error(self, response_data: dict) -> None:
+        """Check if API response contains an error and raise if so."""
+        rt_cd = response_data.get("rt_cd")
+        if rt_cd != "0":
+            msg_cd = response_data.get("msg_cd", "")
+            msg1 = response_data.get("msg1", "Unknown error")
+            raise ValueError(f"KIS API Error [{msg_cd}]: {msg1} (rt_cd={rt_cd})")
+
     def get_trading_volume_rank(
         self,
         fid_cond_mrkt_div_code: str,
@@ -82,10 +90,10 @@ class DomesticRankingAnalysis:
             "FID_INPUT_DATE_1": fid_input_date_1,
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/volume-rank", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching trading volume rank: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = TradingVolumeRank.model_validate(response.json())
+        body = TradingVolumeRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_fluctuation_rank(
@@ -147,10 +155,10 @@ class DomesticRankingAnalysis:
             "fid_rsfl_rate1": fid_rsfl_rate1,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/fluctuation", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock fluctuation rank: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockFluctuationRank.model_validate(response.json())
+        body = StockFluctuationRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_hoga_quantity_rank(
@@ -200,10 +208,10 @@ class DomesticRankingAnalysis:
             "fid_input_price_2": fid_input_price_2,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/quote-balance", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock hoga quantity rank: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockHogaQuantityRank.model_validate(response.json())
+        body = StockHogaQuantityRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_profitability_indicator_rank(
@@ -264,10 +272,10 @@ class DomesticRankingAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/ranking/profit-asset-index", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock profitability indicator rank: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockProfitabilityIndicatorRank.model_validate(response.json())
+        body = StockProfitabilityIndicatorRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_market_cap_top(
@@ -314,10 +322,10 @@ class DomesticRankingAnalysis:
             "fid_vol_cnt": fid_vol_cnt,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/market-cap", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock market cap top: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockMarketCapTop.model_validate(response.json())
+        body = StockMarketCapTop.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_finance_ratio_rank(
@@ -376,10 +384,10 @@ class DomesticRankingAnalysis:
             "fid_trgt_exls_cls_code": fid_trgt_exls_cls_code,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/finance-ratio", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock finance ratio rank: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockFinanceRatioRank.model_validate(response.json())
+        body = StockFinanceRatioRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_time_hoga_rank(
@@ -431,10 +439,10 @@ class DomesticRankingAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/ranking/after-hour-balance", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock time hoga rank: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockTimeHogaRank.model_validate(response.json())
+        body = StockTimeHogaRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_preferred_stock_ratio_top(
@@ -483,10 +491,10 @@ class DomesticRankingAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/ranking/prefer-disparate-ratio", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock preferred stock ratio top: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockPreferredStockRatioTop.model_validate(response.json())
+        body = StockPreferredStockRatioTop.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_disparity_index_rank(
@@ -539,10 +547,10 @@ class DomesticRankingAnalysis:
             "fid_vol_cnt": fid_vol_cnt,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/disparity", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock disparity index rank: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockDisparityIndexRank.model_validate(response.json())
+        body = StockDisparityIndexRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_market_price_rank(
@@ -601,10 +609,10 @@ class DomesticRankingAnalysis:
             "fid_trgt_exls_cls_code": fid_trgt_exls_cls_code,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/market-value", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock market price rank: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockMarketPriceRank.model_validate(response.json())
+        body = StockMarketPriceRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_execution_strength_top(
@@ -651,10 +659,10 @@ class DomesticRankingAnalysis:
             "fid_trgt_cls_code": fid_trgt_cls_code,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/volume-power", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock execution strength top: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockExecutionStrengthTop.model_validate(response.json())
+        body = StockExecutionStrengthTop.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_watchlist_registration_top(
@@ -709,10 +717,10 @@ class DomesticRankingAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/ranking/top-interest-stock", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock watchlist registration top: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockWatchlistRegistrationTop.model_validate(response.json())
+        body = StockWatchlistRegistrationTop.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_expected_execution_rise_decline_top(
@@ -762,10 +770,10 @@ class DomesticRankingAnalysis:
             "fid_mkop_cls_code": fid_mkop_cls_code,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/exp-trans-updown", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock expected execution rise decline top: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockExpectedExecutionRiseDeclineTop.model_validate(response.json())
+        body = StockExpectedExecutionRiseDeclineTop.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_proprietary_trading_top(
@@ -821,10 +829,10 @@ class DomesticRankingAnalysis:
             "fid_aply_rang_prc_1": fid_aply_rang_prc_1,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/traded-by-company", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock proprietary trading top: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockProprietaryTradingTop.model_validate(response.json())
+        body = StockProprietaryTradingTop.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_new_high_low_approaching_top(
@@ -880,10 +888,10 @@ class DomesticRankingAnalysis:
             "fid_aply_rang_prc_2": fid_aply_rang_prc_2,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/near-new-highlow", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock new high low approaching top: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockNewHighLowApproachingTop.model_validate(response.json())
+        body = StockNewHighLowApproachingTop.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_dividend_yield_top(
@@ -927,10 +935,10 @@ class DomesticRankingAnalysis:
             "GB4": gb4,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/dividend-rate", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock dividend yield top: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockDividendYieldTop.model_validate(response.json())
+        body = StockDividendYieldTop.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_large_execution_count_top(
@@ -986,10 +994,10 @@ class DomesticRankingAnalysis:
             "fid_vol_cnt": fid_vol_cnt,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/bulk-trans-num", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock large execution count top: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockLargeExecutionCountTop.model_validate(response.json())
+        body = StockLargeExecutionCountTop.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_credit_balance_top(
@@ -1024,10 +1032,10 @@ class DomesticRankingAnalysis:
             "FID_RANK_SORT_CLS_CODE": fid_rank_sort_cls_code,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/credit-balance", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock credit balance top: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockCreditBalanceTop.model_validate(response.json())
+        body = StockCreditBalanceTop.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_short_selling_top(
@@ -1077,10 +1085,10 @@ class DomesticRankingAnalysis:
             "FID_APLY_RANG_PRC_2": fid_aply_rang_prc_2,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/short-sale", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock short selling top: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockShortSellingTop.model_validate(response.json())
+        body = StockShortSellingTop.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_after_hours_fluctuation_rank(
@@ -1132,10 +1140,10 @@ class DomesticRankingAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/ranking/overtime-fluctuation", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock after hours fluctuation rank: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockAfterHoursFluctuationRank.model_validate(response.json())
+        body = StockAfterHoursFluctuationRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_after_hours_volume_rank(
@@ -1182,10 +1190,10 @@ class DomesticRankingAnalysis:
             "FID_TRGT_EXLS_CLS_CODE": fid_trgt_exls_cls_code,
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/overtime-volume", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock after hours volume rank: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockAfterHoursVolumeRank.model_validate(response.json())
+        body = StockAfterHoursVolumeRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_hts_inquiry_top_20(self) -> KisHttpResponse[HtsInquiryTop20]:
@@ -1200,8 +1208,8 @@ class DomesticRankingAnalysis:
         }
         params = {}
         response = self.client._get("/uapi/domestic-stock/v1/ranking/hts-top-view", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching HTS inquiry top 20: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = HtsInquiryTop20.model_validate(response.json())
+        body = HtsInquiryTop20.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)

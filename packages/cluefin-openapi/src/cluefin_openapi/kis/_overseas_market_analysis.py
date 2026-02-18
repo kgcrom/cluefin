@@ -25,6 +25,14 @@ class OverseasMarketAnalysis:
     def __init__(self, client: HttpClient):
         self.client = client
 
+    def _check_response_error(self, response_data: dict) -> None:
+        """Check if API response contains an error and raise if so."""
+        rt_cd = response_data.get("rt_cd")
+        if rt_cd != "0":
+            msg_cd = response_data.get("msg_cd", "")
+            msg1 = response_data.get("msg1", "Unknown error")
+            raise ValueError(f"KIS API Error [{msg_cd}]: {msg1} (rt_cd={rt_cd})")
+
     def get_stock_price_fluctuation(
         self,
         excd: str,
@@ -56,10 +64,10 @@ class OverseasMarketAnalysis:
             "VOL_RANG": vol_rang,
         }
         response = self.client._get("/uapi/overseas-stock/v1/ranking/price-fluctuation", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock price fluctuation: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockPriceFluctuation.model_validate(response.json())
+        body = StockPriceFluctuation.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_volume_surge(
@@ -97,10 +105,10 @@ class OverseasMarketAnalysis:
             "VOL_RANG": vol_rang,
         }
         response = self.client._get("/uapi/overseas-stock/v1/ranking/volume-surge", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock volume surge: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockVolumeSurge.model_validate(response.json())
+        body = StockVolumeSurge.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_buy_execution_strength_top(
@@ -135,10 +143,10 @@ class OverseasMarketAnalysis:
             "VOL_RANG": vol_rang,
         }
         response = self.client._get("/uapi/overseas-stock/v1/ranking/volume-power", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock buy execution strength top: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockBuyExecutionStrengthTop.model_validate(response.json())
+        body = StockBuyExecutionStrengthTop.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_rise_decline_rate(
@@ -176,10 +184,10 @@ class OverseasMarketAnalysis:
             "VOL_RANG": vol_rang,
         }
         response = self.client._get("/uapi/overseas-stock/v1/ranking/updown-rate", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock rise decline rate: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockRiseDeclineRate.model_validate(response.json())
+        body = StockRiseDeclineRate.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_new_high_low_price(
@@ -220,10 +228,10 @@ class OverseasMarketAnalysis:
             "VOL_RANG": vol_rang,
         }
         response = self.client._get("/uapi/overseas-stock/v1/ranking/new-highlow", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock new high low price: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockNewHighLowPrice.model_validate(response.json())
+        body = StockNewHighLowPrice.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_trading_volume_rank(
@@ -264,10 +272,10 @@ class OverseasMarketAnalysis:
             "VOL_RANG": vol_rang,
         }
         response = self.client._get("/uapi/overseas-stock/v1/ranking/trade-vol", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock trading volume rank: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockTradingVolumeRank.model_validate(response.json())
+        body = StockTradingVolumeRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_trading_amount_rank(
@@ -308,10 +316,10 @@ class OverseasMarketAnalysis:
             "PRC2": prc2,
         }
         response = self.client._get("/uapi/overseas-stock/v1/ranking/trade-pbmn", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock trading amount rank: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockTradingAmountRank.model_validate(response.json())
+        body = StockTradingAmountRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_trading_increase_rate_rank(
@@ -346,10 +354,10 @@ class OverseasMarketAnalysis:
             "VOL_RANG": vol_rang,
         }
         response = self.client._get("/uapi/overseas-stock/v1/ranking/trade-growth", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock trading increase rate rank: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockTradingIncreaseRateRank.model_validate(response.json())
+        body = StockTradingIncreaseRateRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_trading_turnover_rate_rank(
@@ -384,10 +392,10 @@ class OverseasMarketAnalysis:
             "VOL_RANG": vol_rang,
         }
         response = self.client._get("/uapi/overseas-stock/v1/ranking/trade-turnover", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock trading turnover rate rank: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockTradingTurnoverRateRank.model_validate(response.json())
+        body = StockTradingTurnoverRateRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_market_cap_rank(
@@ -422,10 +430,10 @@ class OverseasMarketAnalysis:
             "CURR_GB": curr_gb,
         }
         response = self.client._get("/uapi/overseas-stock/v1/ranking/market-cap", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock market cap rank: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockMarketCapRank.model_validate(response.json())
+        body = StockMarketCapRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_period_rights_inquiry(
@@ -469,10 +477,10 @@ class OverseasMarketAnalysis:
             "CTX_AREA_FK50": ctx_area_fk50,
         }
         response = self.client._get("/uapi/overseas-price/v1/quotations/period-rights", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock period rights inquiry: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockPeriodRightsInquiry.model_validate(response.json())
+        body = StockPeriodRightsInquiry.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_news_aggregate_title(
@@ -516,10 +524,10 @@ class OverseasMarketAnalysis:
             "CTS": cts,
         }
         response = self.client._get("/uapi/overseas-price/v1/quotations/news-title", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching news aggregate title: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = NewsAggregateTitle.model_validate(response.json())
+        body = NewsAggregateTitle.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_rights_aggregate(
@@ -551,10 +559,10 @@ class OverseasMarketAnalysis:
             "ED_YMD": ed_ymd,
         }
         response = self.client._get("/uapi/overseas-price/v1/quotations/rights-by-ice", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock rights aggregate: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockRightsAggregate.model_validate(response.json())
+        body = StockRightsAggregate.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_collateral_loan_eligible(
@@ -612,10 +620,10 @@ class OverseasMarketAnalysis:
         response = self.client._get(
             "/uapi/overseas-price/v1/quotations/colable-by-company", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock collateral loan eligible: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockCollateralLoanEligible.model_validate(response.json())
+        body = StockCollateralLoanEligible.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_breaking_news_title(
@@ -662,8 +670,8 @@ class OverseasMarketAnalysis:
             "FID_COND_SCR_DIV_CODE": fid_cond_scr_div_code,
         }
         response = self.client._get("/uapi/overseas-price/v1/quotations/brknews-title", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching breaking news title: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = BreakingNewsTitle.model_validate(response.json())
+        body = BreakingNewsTitle.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)

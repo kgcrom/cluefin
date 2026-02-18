@@ -24,6 +24,14 @@ class DomesticIssueOther:
     def __init__(self, client: HttpClient):
         self.client = client
 
+    def _check_response_error(self, response_data: dict) -> None:
+        """Check if API response contains an error and raise if so."""
+        rt_cd = response_data.get("rt_cd")
+        if rt_cd != "0":
+            msg_cd = response_data.get("msg_cd", "")
+            msg1 = response_data.get("msg1", "Unknown error")
+            raise ValueError(f"KIS API Error [{msg_cd}]: {msg1} (rt_cd={rt_cd})")
+
     def get_sector_current_index(
         self,
         fid_cond_mrkt_div_code: str,
@@ -49,10 +57,10 @@ class DomesticIssueOther:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-index-price", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching sector current index: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = SectorCurrentIndex.model_validate(response.json())
+        body = SectorCurrentIndex.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_sector_daily_index(
@@ -86,10 +94,10 @@ class DomesticIssueOther:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-index-daily-price", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching sector daily index: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = SectorDailyIndex.model_validate(response.json())
+        body = SectorDailyIndex.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_sector_time_index_second(
@@ -117,10 +125,10 @@ class DomesticIssueOther:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-index-tickprice", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching sector time index second: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = SectorTimeIndexSecond.model_validate(response.json())
+        body = SectorTimeIndexSecond.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_sector_time_index_minute(
@@ -151,10 +159,10 @@ class DomesticIssueOther:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-index-timeprice", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching sector time index minute: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = SectorTimeIndexMinute.model_validate(response.json())
+        body = SectorTimeIndexMinute.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_sector_minute_inquiry(
@@ -191,10 +199,10 @@ class DomesticIssueOther:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-time-indexchartprice", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching sector minute inquiry: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = SectorMinuteInquiry.model_validate(response.json())
+        body = SectorMinuteInquiry.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_sector_period_quote(
@@ -231,10 +239,10 @@ class DomesticIssueOther:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-daily-indexchartprice", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching sector period quote: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = SectorPeriodQuote.model_validate(response.json())
+        body = SectorPeriodQuote.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_sector_all_quote_by_category(
@@ -271,10 +279,10 @@ class DomesticIssueOther:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-index-category-price", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching sector all quote by category: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = SectorAllQuoteByCategory.model_validate(response.json())
+        body = SectorAllQuoteByCategory.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_expected_index_trend(
@@ -308,10 +316,10 @@ class DomesticIssueOther:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/exp-index-trend", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching expected index trend: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = ExpectedIndexTrend.model_validate(response.json())
+        body = ExpectedIndexTrend.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_expected_index_all(
@@ -348,10 +356,10 @@ class DomesticIssueOther:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/exp-total-index", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching expected index all: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = ExpectedIndexAll.model_validate(response.json())
+        body = ExpectedIndexAll.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_volatility_interruption_status(
@@ -397,10 +405,10 @@ class DomesticIssueOther:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-vi-status", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching volatility interruption status: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = VolatilityInterruptionStatus.model_validate(response.json())
+        body = VolatilityInterruptionStatus.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_interest_rate_summary(
@@ -432,10 +440,10 @@ class DomesticIssueOther:
             "FID_DIV_CLS_CODE1": fid_div_cls_code1,
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/comp-interest", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching interest rate summary: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = InterestRateSummary.model_validate(response.json())
+        body = InterestRateSummary.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_market_announcement_schedule(
@@ -479,10 +487,10 @@ class DomesticIssueOther:
             "FID_INPUT_SRNO": fid_input_srno,
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/news-title", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching market announcement schedule: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = MarketAnnouncementSchedule.model_validate(response.json())
+        body = MarketAnnouncementSchedule.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_holiday_inquiry(
@@ -511,10 +519,10 @@ class DomesticIssueOther:
             "CTX_AREA_FK": ctx_area_fk,
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/chk-holiday", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching holiday inquiry: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = HolidayInquiry.model_validate(response.json())
+        body = HolidayInquiry.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_futures_business_day_inquiry(self) -> KisHttpResponse[FuturesBusinessDayInquiry]:
@@ -529,8 +537,8 @@ class DomesticIssueOther:
         }
         params = {}
         response = self.client._get("/uapi/domestic-stock/v1/quotations/market-time", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching futures business day inquiry: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = FuturesBusinessDayInquiry.model_validate(response.json())
+        body = FuturesBusinessDayInquiry.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)

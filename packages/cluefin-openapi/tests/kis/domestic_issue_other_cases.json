@@ -16,6 +16,7 @@
             "FID_INPUT_ISCD": "0001"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": {
                 "bstp_nmix_prpr": "2500.00",
                 "bstp_nmix_prdy_vrss": "10.00",
@@ -44,6 +45,7 @@
             "FID_INPUT_DATE_1": "20250101"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "stck_bsop_date": "20250115",
@@ -72,6 +74,7 @@
             "FID_COND_MRKT_DIV_CODE": "U"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "stck_bsop_date": "20250115",
@@ -101,6 +104,7 @@
             "FID_COND_MRKT_DIV_CODE": "U"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "stck_bsop_date": "20250115",
@@ -136,6 +140,7 @@
             "FID_PW_DATA_INCU_YN": "Y"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output1": {
                 "bstp_nmix_prpr": "2500.00",
                 "bstp_nmix_prdy_vrss": "10.00",
@@ -174,6 +179,7 @@
             "FID_PERIOD_DIV_CODE": "D"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output1": {
                 "bstp_nmix_prpr": "2500.00",
                 "bstp_nmix_prdy_vrss": "10.00",
@@ -213,6 +219,7 @@
             "FID_BLNG_CLS_CODE": "0"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "bstp_kor_isnm": "코스피",
@@ -244,6 +251,7 @@
             "FID_COND_MRKT_DIV_CODE": "U"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output1": {
                 "bstp_nmix_prpr": "2500.00",
                 "bstp_nmix_prdy_vrss": "10.00",
@@ -281,6 +289,7 @@
             "fid_mkop_cls_code": "1"
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "bstp_kor_isnm": "코스피",
@@ -320,6 +329,7 @@
             "FID_TRGT_EXLS_CLS_CODE": ""
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "mksc_shrn_iscd": "005930",
@@ -351,6 +361,7 @@
             "FID_DIV_CLS_CODE1": ""
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "irrt_kor_isnm": "미국 10년물 국채",
@@ -389,6 +400,7 @@
             "FID_INPUT_SRNO": ""
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "news_titl": "삼성전자, 신규 반도체 공장 건설 계획 발표",
@@ -417,6 +429,7 @@
             "CTX_AREA_FK": ""
         },
         "response_payload": {
+            "rt_cd": "0",
             "output": [
                 {
                     "bass_dt": "20250101",
@@ -438,6 +451,7 @@
         },
         "expected_body": {},
         "response_payload": {
+            "rt_cd": "0",
             "output": {
                 "bsop_date": "20250115",
                 "prdy_bsop_date": "20250114",

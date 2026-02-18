@@ -35,6 +35,14 @@ class DomesticAccount:
     def __init__(self, client: HttpClient):
         self.client = client
 
+    def _check_response_error(self, response_data: dict) -> None:
+        """Check if API response contains an error and raise if so."""
+        rt_cd = response_data.get("rt_cd")
+        if rt_cd != "0":
+            msg_cd = response_data.get("msg_cd", "")
+            msg1 = response_data.get("msg1", "Unknown error")
+            raise ValueError(f"KIS API Error [{msg_cd}]: {msg1} (rt_cd={rt_cd})")
+
     def request_stock_quote_current(
         self,
         tr_id: Literal["TTTC0011U", "VTTC0011U", "TTTC0012U", "VTTC0012U"],
@@ -101,11 +109,10 @@ class DomesticAccount:
         }
 
         response = self.client._post("/uapi/domestic-stock/v1/trading/order-cash", headers=headers, body=body)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock quote current: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockQuoteCurrent.model_validate(response.json())
-
+        body = StockQuoteCurrent.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def request_stock_quote_credit(
@@ -213,10 +220,10 @@ class DomesticAccount:
             "CNDT_PRIC": cndt_pric,
         }
         response = self.client._post("/uapi/domestic-stock/v1/trading/order-credit", headers=headers, body=body)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock quote credit: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockQuoteCredit.model_validate(response.json())
+        body = StockQuoteCredit.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def request_stock_quote_correction(
@@ -285,10 +292,10 @@ class DomesticAccount:
             "EXCG_ID_DVSN_CD": excg_id_dvsn_cd,
         }
         response = self.client._post("/uapi/domestic-stock/v1/trading/order-rvsecncl", headers=headers, body=body)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock quote correction: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockQuoteCorrection.model_validate(response.json())
+        body = StockQuoteCorrection.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_correction_cancellable_qty(
@@ -335,10 +342,10 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/inquire-psbl-rvsecncl", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock correction cancellable qty: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockQuoteCorrectionCancellableQty.model_validate(response.json())
+        body = StockQuoteCorrectionCancellableQty.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_daily_separate_conclusion(
@@ -410,10 +417,10 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/inquire-daily-ccld", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock daily separate conclusion: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockDailySeparateConclusion.model_validate(response.json())
+        body = StockDailySeparateConclusion.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_balance(
@@ -466,10 +473,10 @@ class DomesticAccount:
         }
 
         response = self.client._get("/uapi/domestic-stock/v1/trading/inquire-balance", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock balance: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockBalance.model_validate(response.json())
+        body = StockBalance.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_buy_tradable_inquiry(
@@ -524,10 +531,10 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/inquire-psbl-order", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching buy tradable inquiry: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = BuyTradableInquiry.model_validate(response.json())
+        body = BuyTradableInquiry.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_sell_tradable_inquiry(
@@ -556,10 +563,10 @@ class DomesticAccount:
             "PDNO": pdno,
         }
         response = self.client._get("/uapi/domestic-stock/v1/trading/inquire-psbl-sell", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching sell tradable inquiry: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = SellTradableInquiry.model_validate(response.json())
+        body = SellTradableInquiry.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_credit_tradable_inquiry(
@@ -614,10 +621,10 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/inquire-credit-psamount", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching credit tradable inquiry: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = CreditTradableInquiry.model_validate(response.json())
+        body = CreditTradableInquiry.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def request_stock_reserve_quote(
@@ -670,10 +677,10 @@ class DomesticAccount:
             "LDNG_DT": ldng_dt,
         }
         response = self.client._post("/uapi/domestic-stock/v1/trading/order-resv", headers=headers, body=body)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock reserve quote: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockReserveQuote.model_validate(response.json())
+        body = StockReserveQuote.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def request_stock_reserve_quote_correction(
@@ -734,10 +741,10 @@ class DomesticAccount:
             "RSVN_ORD_ORD_DT": rsvn_ord_ord_dt,
         }
         response = self.client._post("/uapi/domestic-stock/v1/trading/order-resv-rvsecncl", headers=headers, body=body)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock reserve quote correction: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockReserveQuoteCorrection.model_validate(response.json())
+        body = StockReserveQuoteCorrection.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_reserve_quote_inquiry(
@@ -793,10 +800,10 @@ class DomesticAccount:
             "CTX_AREA_NK200": ctx_area_nk200,
         }
         response = self.client._get("/uapi/domestic-stock/v1/trading/order-resv-ccnl", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock reserve quote inquiry: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockReserveQuoteInquiry.model_validate(response.json())
+        body = StockReserveQuoteInquiry.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_pension_conclusion_balance(
@@ -833,10 +840,10 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/pension/inquire-present-balance", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching pension conclusion balance: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = PensionConclusionBalance.model_validate(response.json())
+        body = PensionConclusionBalance.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_pension_not_conclusion_history(
@@ -882,10 +889,10 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/pension/inquire-daily-ccld", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching pension not conclusion history: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = PensionNotConclusionHistory.model_validate(response.json())
+        body = PensionNotConclusionHistory.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_pension_buy_tradable_inquiry(
@@ -928,10 +935,10 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/pension/inquire-psbl-order", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching pension buy tradable inquiry: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = PensionBuyTradableInquiry.model_validate(response.json())
+        body = PensionBuyTradableInquiry.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_pension_reserve_deposit_inquiry(
@@ -962,10 +969,10 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/pension/inquire-deposit", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching pension reserve deposit inquiry: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = PensionReserveDepositInquiry.model_validate(response.json())
+        body = PensionReserveDepositInquiry.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_pension_balance_inquiry(
@@ -1005,10 +1012,10 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/pension/inquire-balance", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching pension balance inquiry: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = PensionBalanceInquiry.model_validate(response.json())
+        body = PensionBalanceInquiry.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_balance_loss_profit(
@@ -1069,10 +1076,10 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/inquire-balance-rlz-pl", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock balance loss profit: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockBalanceLossProfit.model_validate(response.json())
+        body = StockBalanceLossProfit.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_investment_account_current_status(
@@ -1109,10 +1116,10 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/inquire-account-balance", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching investment account current status: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = InvestmentAccountCurrentStatus.model_validate(response.json())
+        body = InvestmentAccountCurrentStatus.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_period_profit_summary(
@@ -1165,10 +1172,10 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/inquire-period-profit", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching period profit summary: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = PeriodProfitSummary.model_validate(response.json())
+        body = PeriodProfitSummary.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_period_trading_profit_status(
@@ -1220,10 +1227,10 @@ class DomesticAccount:
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/inquire-period-trade-profit", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching period trading profit status: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = PeriodTradingProfitStatus.model_validate(response.json())
+        body = PeriodTradingProfitStatus.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_integrated_deposit_balance(
@@ -1257,10 +1264,10 @@ class DomesticAccount:
             "CMA_EVLU_AMT_ICLD_YN": cma_evlu_amt_icld_yn,
         }
         response = self.client._get("/uapi/domestic-stock/v1/trading/intgr-margin", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock integrated deposit balance: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockIntegratedDepositBalance.model_validate(response.json())
+        body = StockIntegratedDepositBalance.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_period_accounting_current_status(
@@ -1319,8 +1326,8 @@ class DomesticAccount:
             "PRDT_TYPE_CD": prdt_type_cd,
         }
         response = self.client._get("/uapi/domestic-stock/v1/trading/period-rights", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching period accounting current status: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = PeriodAccountingCurrentStatus.model_validate(response.json())
+        body = PeriodAccountingCurrentStatus.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)

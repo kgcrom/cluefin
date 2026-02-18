@@ -39,6 +39,14 @@ class DomesticMarketAnalysis:
     def __init__(self, client: HttpClient):
         self.client = client
 
+    def _check_response_error(self, response_data: dict) -> None:
+        """Check if API response contains an error and raise if so."""
+        rt_cd = response_data.get("rt_cd")
+        if rt_cd != "0":
+            msg_cd = response_data.get("msg_cd", "")
+            msg1 = response_data.get("msg1", "Unknown error")
+            raise ValueError(f"KIS API Error [{msg_cd}]: {msg1} (rt_cd={rt_cd})")
+
     def get_condition_search_list(self, user_id: str) -> KisHttpResponse[ConditionSearchList]:
         """
         종목조건검색 목록조회
@@ -56,10 +64,10 @@ class DomesticMarketAnalysis:
             "user_id": user_id,
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/psearch-title", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching condition search list: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = ConditionSearchList.model_validate(response.json())
+        body = ConditionSearchList.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_condition_search_result(self, user_id: str, seq: str) -> KisHttpResponse[ConditionSearchResult]:
@@ -81,10 +89,10 @@ class DomesticMarketAnalysis:
             "seq": seq,
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/psearch-result", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching condition search result: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = ConditionSearchResult.model_validate(response.json())
+        body = ConditionSearchResult.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_watchlist_groups(
@@ -112,10 +120,10 @@ class DomesticMarketAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/intstock-grouplist", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching watchlist groups: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = WatchlistGroups.model_validate(response.json())
+        body = WatchlistGroups.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_watchlist_multi_quote(
@@ -317,10 +325,10 @@ class DomesticMarketAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/intstock-multprice", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching watchlist multi quote: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = WatchlistMultiQuote.model_validate(response.json())
+        body = WatchlistMultiQuote.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_watchlist_stocks_by_group(
@@ -366,10 +374,10 @@ class DomesticMarketAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/intstock-stocklist-by-group", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching watchlist stocks by group: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = WatchlistStocksByGroup.model_validate(response.json())
+        body = WatchlistStocksByGroup.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_institutional_foreign_trading_aggregate(
@@ -415,10 +423,10 @@ class DomesticMarketAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/intstock-stocklist-by-group", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching institutional foreign trading aggregate: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = InstitutionalForeignTradingAggregate.model_validate(response.json())
+        body = InstitutionalForeignTradingAggregate.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_foreign_brokerage_trading_aggregate(
@@ -451,10 +459,10 @@ class DomesticMarketAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/frgnmem-trade-estimate", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching foreign brokerage trading aggregate: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = ForeignBrokerageTradingAggregate.model_validate(response.json())
+        body = ForeignBrokerageTradingAggregate.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_investor_trading_trend_by_stock_daily(
@@ -493,10 +501,10 @@ class DomesticMarketAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/investor-trade-by-stock-daily", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching investor trading trend by stock daily: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = InvestorTradingTrendByStockDaily.model_validate(response.json())
+        body = InvestorTradingTrendByStockDaily.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_investor_trading_trend_by_market_intraday(
@@ -522,10 +530,10 @@ class DomesticMarketAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-investor-time-by-market", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching investor trading trend by market intraday: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = InvestorTradingTrendByMarketIntraday.model_validate(response.json())
+        body = InvestorTradingTrendByMarketIntraday.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_investor_trading_trend_by_market_daily(
@@ -565,10 +573,10 @@ class DomesticMarketAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-investor-daily-by-market", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching investor trading trend by market daily: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = InvestorTradingTrendByMarketDaily.model_validate(response.json())
+        body = InvestorTradingTrendByMarketDaily.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_foreign_net_buy_trend_by_stock(
@@ -596,10 +604,10 @@ class DomesticMarketAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/frgnmem-pchs-trend", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching foreign net buy trend by stock: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = ForeignNetBuyTrendByStock.model_validate(response.json())
+        body = ForeignNetBuyTrendByStock.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_member_trading_trend_tick(
@@ -639,10 +647,10 @@ class DomesticMarketAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/frgnmem-trade-trend", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching member trading trend tick: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = MemberTradingTrendTick.model_validate(response.json())
+        body = MemberTradingTrendTick.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_member_trading_trend_by_stock(
@@ -682,10 +690,10 @@ class DomesticMarketAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-member-daily", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching member trading trend by stock: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = MemberTradingTrendByStock.model_validate(response.json())
+        body = MemberTradingTrendByStock.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_program_trading_trend_by_stock_intraday(
@@ -711,10 +719,10 @@ class DomesticMarketAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/program-trade-by-stock", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching program trading trend by stock intraday: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = ProgramTradingTrendByStockIntraday.model_validate(response.json())
+        body = ProgramTradingTrendByStockIntraday.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_program_trading_trend_by_stock_daily(
@@ -742,10 +750,10 @@ class DomesticMarketAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/program-trade-by-stock-daily", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching program trading trend by stock daily: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = ProgramTradingTrendByStockDaily.model_validate(response.json())
+        body = ProgramTradingTrendByStockDaily.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_foreign_institutional_estimate_by_stock(
@@ -769,10 +777,10 @@ class DomesticMarketAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/investor-trend-estimate", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching foreign institutional estimate by stock: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = ForeignInstitutionalEstimateByStock.model_validate(response.json())
+        body = ForeignInstitutionalEstimateByStock.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_buy_sell_volume_by_stock_daily(
@@ -817,10 +825,10 @@ class DomesticMarketAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-daily-trade-volume", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching buy sell volume by stock daily: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = BuySellVolumeByStockDaily.model_validate(response.json())
+        body = BuySellVolumeByStockDaily.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_program_trading_summary_intraday(
@@ -860,10 +868,10 @@ class DomesticMarketAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/comp-program-trade-today", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching program trading summary intraday: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = ProgramTradingSummaryIntraday.model_validate(response.json())
+        body = ProgramTradingSummaryIntraday.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_program_trading_summary_daily(
@@ -897,10 +905,10 @@ class DomesticMarketAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/comp-program-trade-daily", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching program trading summary daily: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = ProgramTradingSummaryDaily.model_validate(response.json())
+        body = ProgramTradingSummaryDaily.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_program_trading_investor_trend_today(
@@ -926,10 +934,10 @@ class DomesticMarketAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/investor-program-trade-today", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching program trading investor trend today: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = ProgramTradingInvestorTrendToday.model_validate(response.json())
+        body = ProgramTradingInvestorTrendToday.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_credit_balance_trend_daily(
@@ -963,10 +971,10 @@ class DomesticMarketAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/daily-credit-balance", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching credit balance trend daily: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = CreditBalanceTrendDaily.model_validate(response.json())
+        body = CreditBalanceTrendDaily.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_expected_price_trend(
@@ -994,10 +1002,10 @@ class DomesticMarketAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/exp-price-trend", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching expected price trend: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = ExpectedPriceTrend.model_validate(response.json())
+        body = ExpectedPriceTrend.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_short_selling_trend_daily(
@@ -1031,10 +1039,10 @@ class DomesticMarketAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/daily-short-sale", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching short selling trend daily: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = ShortSellingTrendDaily.model_validate(response.json())
+        body = ShortSellingTrendDaily.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_after_hours_expected_fluctuation(
@@ -1080,10 +1088,10 @@ class DomesticMarketAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/ranking/overtime-exp-trans-fluct", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching after hours expected fluctuation: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = AfterHoursExpectedFluctuation.model_validate(response.json())
+        body = AfterHoursExpectedFluctuation.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_trading_weight_by_amount(
@@ -1109,10 +1117,10 @@ class DomesticMarketAnalysis:
             "FID_INPUT_ISCD": fid_input_iscd,
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/tradprt-byamt", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching trading weight by amount: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = TradingWeightByAmount.model_validate(response.json())
+        body = TradingWeightByAmount.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_market_fund_summary(self, fid_input_date_1: str) -> KisHttpResponse[MarketFundSummary]:
@@ -1132,10 +1140,10 @@ class DomesticMarketAnalysis:
             "FID_INPUT_DATE_1": fid_input_date_1,
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/mktfunds", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching market fund summary: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = MarketFundSummary.model_validate(response.json())
+        body = MarketFundSummary.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_loan_trend_daily(
@@ -1167,10 +1175,10 @@ class DomesticMarketAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/daily-loan-trans", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching stock loan trend daily: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockLoanTrendDaily.model_validate(response.json())
+        body = StockLoanTrendDaily.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_limit_price_stocks(
@@ -1222,10 +1230,10 @@ class DomesticMarketAnalysis:
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/capture-uplowprice", headers=headers, params=params
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching limit price stocks: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = LimitPriceStocks.model_validate(response.json())
+        body = LimitPriceStocks.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_resistance_level_trading_weight(
@@ -1257,8 +1265,8 @@ class DomesticMarketAnalysis:
             "FID_INPUT_HOUR_1": fid_input_hour_1,
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/pbar-tratio", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching resistance level trading weight: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = ResistanceLevelTradingWeight.model_validate(response.json())
+        body = ResistanceLevelTradingWeight.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)

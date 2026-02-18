@@ -28,6 +28,14 @@ class OverseasAccount:
     def __init__(self, client: HttpClient):
         self.client = client
 
+    def _check_response_error(self, response_data: dict) -> None:
+        """Check if API response contains an error and raise if so."""
+        rt_cd = response_data.get("rt_cd")
+        if rt_cd != "0":
+            msg_cd = response_data.get("msg_cd", "")
+            msg1 = response_data.get("msg1", "Unknown error")
+            raise ValueError(f"KIS API Error [{msg_cd}]: {msg1} (rt_cd={rt_cd})")
+
     def request_stock_order(
         self,
         cano: str,
@@ -74,10 +82,10 @@ class OverseasAccount:
             "ALGO_ORD_TMD_DVSN_CD": algo_ord_tmd_dvsn_cd,
         }
         response = self.client._post("/uapi/overseas-stock/v1/trading/order", headers=headers, body=body)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching overseas stock order: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockQuoteCurrent.model_validate(response.json())
+        body = StockQuoteCurrent.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def request_stock_quote_correction(
@@ -130,10 +138,10 @@ class OverseasAccount:
             headers=headers,
             body=body,
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching overseas stock correction/cancellation: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockQuoteCorrection.model_validate(response.json())
+        body = StockQuoteCorrection.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def request_stock_reserve_quote(
@@ -194,10 +202,10 @@ class OverseasAccount:
             "ALGO_ORD_TMD_DVSN_CD": algo_ord_tmd_dvsn_cd,
         }
         response = self.client._post("/uapi/overseas-stock/v1/trading/order-resv", headers=headers, body=body)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching overseas reserve quote: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockReserveQuote.model_validate(response.json())
+        body = StockReserveQuote.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def request_stock_reserve_quote_correction(
@@ -232,10 +240,10 @@ class OverseasAccount:
             headers=headers,
             body=body,
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching overseas reserve quote correction: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockReserveQuoteCorrection.model_validate(response.json())
+        body = StockReserveQuoteCorrection.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_buy_tradable_amount(
@@ -273,10 +281,10 @@ class OverseasAccount:
             headers=headers,
             params=params,
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching overseas buy tradable amount: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = BuyTradableAmount.model_validate(response.json())
+        body = BuyTradableAmount.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_not_conclusion_history(
@@ -317,10 +325,10 @@ class OverseasAccount:
             headers=headers,
             params=params,
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching overseas stock not conclusion history: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockNotConclusion.model_validate(response.json())
+        body = StockNotConclusion.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_balance(
@@ -361,10 +369,10 @@ class OverseasAccount:
             headers=headers,
             params=params,
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching overseas stock balance: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockBalance.model_validate(response.json())
+        body = StockBalance.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_conclusion_history(
@@ -429,10 +437,10 @@ class OverseasAccount:
             headers=headers,
             params=params,
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching overseas stock conclusion history: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = StockConclusionHistory.model_validate(response.json())
+        body = StockConclusionHistory.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_current_balance_by_conclusion(
@@ -473,10 +481,10 @@ class OverseasAccount:
             headers=headers,
             params=params,
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching overseas current balance by conclusion: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = CurrentBalanceByConclusion.model_validate(response.json())
+        body = CurrentBalanceByConclusion.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_reserve_orders(
@@ -526,10 +534,10 @@ class OverseasAccount:
             headers=headers,
             params=params,
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching overseas reserve orders: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = ReserveOrders.model_validate(response.json())
+        body = ReserveOrders.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_balance_by_settlement(
@@ -567,10 +575,10 @@ class OverseasAccount:
             headers=headers,
             params=params,
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching overseas balance by settlement: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = BalanceBySettlement.model_validate(response.json())
+        body = BalanceBySettlement.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_daily_transaction_history(
@@ -623,10 +631,10 @@ class OverseasAccount:
             headers=headers,
             params=params,
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching overseas daily transaction history: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = DailyTransactionHistory.model_validate(response.json())
+        body = DailyTransactionHistory.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_period_profit_loss(
@@ -682,10 +690,10 @@ class OverseasAccount:
             headers=headers,
             params=params,
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching overseas period profit loss: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = PeriodProfitLoss.model_validate(response.json())
+        body = PeriodProfitLoss.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_margin_aggregate(
@@ -714,10 +722,10 @@ class OverseasAccount:
             headers=headers,
             params=params,
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching overseas margin aggregate: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = MarginAggregate.model_validate(response.json())
+        body = MarginAggregate.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def request_order_after_day_time(
@@ -770,10 +778,10 @@ class OverseasAccount:
             headers=headers,
             body=body,
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching overseas daytime order: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = OrderAfterDayTime.model_validate(response.json())
+        body = OrderAfterDayTime.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def cancel_correct_after_day_time(
@@ -829,10 +837,10 @@ class OverseasAccount:
             headers=headers,
             body=body,
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching overseas daytime correction/cancellation: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = CorrectAfterDayTime.model_validate(response.json())
+        body = CorrectAfterDayTime.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_limit_order_number(
@@ -866,10 +874,10 @@ class OverseasAccount:
             "CTX_AREA_FK200": ctx_area_fk200,
         }
         response = self.client._get("/uapi/overseas-stock/v1/trading/algo-ordno", headers=headers, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching overseas limit order number: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = LimitOrderNumber.model_validate(response.json())
+        body = LimitOrderNumber.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_limit_order_execution_history(
@@ -916,8 +924,8 @@ class OverseasAccount:
             headers=headers,
             params=params,
         )
-        if response.status_code != 200:
-            raise Exception(f"Error fetching overseas limit order execution history: {response.text}")
+        response_data = response.json()
+        self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = LimitOrderExecutionHistory.model_validate(response.json())
+        body = LimitOrderExecutionHistory.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
