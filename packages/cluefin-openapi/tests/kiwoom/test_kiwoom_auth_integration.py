@@ -1,21 +1,6 @@
-import os
 from datetime import datetime
 
-import dotenv
 import pytest
-from pydantic import SecretStr
-
-from cluefin_openapi.kiwoom._auth import Auth
-
-
-@pytest.fixture
-def auth():
-    dotenv.load_dotenv(dotenv_path=".env.test")
-    return Auth(
-        app_key=os.getenv("KIWOOM_APP_KEY", ""),
-        secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY", "")),
-        env=os.getenv("KIWOOM_ENV", "dev").lower(),
-    )
 
 
 @pytest.mark.integration

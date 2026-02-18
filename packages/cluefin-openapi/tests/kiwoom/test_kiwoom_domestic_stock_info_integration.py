@@ -1,11 +1,5 @@
-import os
-import time
-
-import dotenv
 import pytest
-from pydantic import SecretStr
 
-from cluefin_openapi.kiwoom._auth import Auth
 from cluefin_openapi.kiwoom._client import Client
 from cluefin_openapi.kiwoom._domestic_stock_info_types import (
     DomesticStockInfoBasic,
@@ -39,34 +33,8 @@ from cluefin_openapi.kiwoom._domestic_stock_info_types import (
 )
 
 
-@pytest.fixture
-def auth() -> Auth:
-    dotenv.load_dotenv(dotenv_path=".env.test")
-    return Auth(
-        app_key=os.getenv("KIWOOM_APP_KEY", ""),
-        secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY", "")),
-        env=os.getenv("KIWOOM_ENV", "dev").lower(),
-    )
-
-
-@pytest.fixture
-def client(auth: Auth) -> Client:
-    """Create a Client instance for testing.
-
-    Args:
-        auth (Auth): The authenticated Auth instance.
-
-    Returns:
-        Client: A configured Client instance.
-    """
-    token = auth.generate_token()
-    return Client(token=token.get_token(), env=os.getenv("KIWOOM_ENV", "dev").lower())
-
-
 @pytest.mark.integration
 def test_get_stock_info(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_stock_info("005930")
 
     assert response is not None
@@ -77,8 +45,6 @@ def test_get_stock_info(client: Client):
 
 @pytest.mark.integration
 def test_get_stock_trading_member(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_stock_trading_member("005930")
 
     assert response is not None
@@ -89,8 +55,6 @@ def test_get_stock_trading_member(client: Client):
 
 @pytest.mark.integration
 def test_get_execution_info(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_execution("005930")
 
     assert response is not None
@@ -101,8 +65,6 @@ def test_get_execution_info(client: Client):
 
 @pytest.mark.integration
 def test_get_margin_trading_trend(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_margin_trading_trend(stk_cd="005930", dt="20250701", qry_tp="1")
 
     assert response is not None
@@ -113,8 +75,6 @@ def test_get_margin_trading_trend(client: Client):
 
 @pytest.mark.integration
 def test_get_daily_trading_details(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_daily_trading_details(stk_cd="005930", strt_dt="20250701")
 
     assert response is not None
@@ -125,8 +85,6 @@ def test_get_daily_trading_details(client: Client):
 
 @pytest.mark.integration
 def test_get_new_high_low_price(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_new_high_low_price(
         mrkt_tp="001",  # KOSPI
         ntl_tp="1",  # 신고가
@@ -147,8 +105,6 @@ def test_get_new_high_low_price(client: Client):
 
 @pytest.mark.integration
 def test_get_upper_lower_limit_price(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_upper_lower_limit_price(
         mrkt_tp="001",  # KOSPI
         updown_tp="1",  # 상한
@@ -168,8 +124,6 @@ def test_get_upper_lower_limit_price(client: Client):
 
 @pytest.mark.integration
 def test_get_high_low_price_approach(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_high_low_price_approach(
         high_low_tp="1",  # 고가
         alacc_rt="05",  # 0.5%
@@ -188,8 +142,6 @@ def test_get_high_low_price_approach(client: Client):
 
 @pytest.mark.integration
 def test_get_price_volatility(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_price_volatility(
         mrkt_tp="000",
         flu_tp="1",  # 상위
@@ -211,8 +163,6 @@ def test_get_price_volatility(client: Client):
 
 @pytest.mark.integration
 def test_get_trading_volume_renewal(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_trading_volume_renewal(
         mrkt_tp="001",  # KOSPI
         cycle_tp="5",  # 5일
@@ -228,8 +178,6 @@ def test_get_trading_volume_renewal(client: Client):
 
 @pytest.mark.integration
 def test_get_supply_demand_concentration(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_supply_demand_concentration(
         mrkt_tp="001",  # KOSPI
         prps_cnctr_rt="50",  # 매물집중비율 50%
@@ -247,8 +195,6 @@ def test_get_supply_demand_concentration(client: Client):
 
 @pytest.mark.integration
 def test_get_high_per(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_high_per(
         pertp="4",  # 고PER
         stex_tp="1",  # KRX
@@ -262,8 +208,6 @@ def test_get_high_per(client: Client):
 
 @pytest.mark.integration
 def test_get_change_rate_from_open(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_change_rate_from_open(
         sort_tp="1",  # 시가
         trde_qty_cnd="0000",  # 전체조회
@@ -284,8 +228,6 @@ def test_get_change_rate_from_open(client: Client):
 
 @pytest.mark.integration
 def test_get_trading_member_supply_demand_analysis(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_trading_member_supply_demand_analysis(
         stk_cd="005930",  # 종목코드
         strt_dt="20250701",  # 시작일자
@@ -306,8 +248,6 @@ def test_get_trading_member_supply_demand_analysis(client: Client):
 
 @pytest.mark.integration
 def test_get_trading_member_instant_volume(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_trading_member_instant_volume(
         mmcm_cd="001",  # 회원사코드 (예시)
         stk_cd="005930",  # 종목코드
@@ -325,8 +265,6 @@ def test_get_trading_member_instant_volume(client: Client):
 
 @pytest.mark.integration
 def test_get_volatility_control_event(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_volatility_control_event(
         mrkt_tp="001",  # KOSPI
         bf_mkrt_tp="0",  # 전체
@@ -350,8 +288,6 @@ def test_get_volatility_control_event(client: Client):
 
 @pytest.mark.integration
 def test_get_daily_previous_day_execution_volume(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_daily_previous_day_execution_volume(
         stk_cd="005930",  # 종목코드
         tdy_pred="1",  # 당일
@@ -365,8 +301,6 @@ def test_get_daily_previous_day_execution_volume(client: Client):
 
 @pytest.mark.integration
 def test_get_daily_trading_items_by_investor(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_daily_trading_items_by_investor(
         strt_dt="20250701",  # 시작일자
         end_dt="20250731",  # 종료일자
@@ -384,8 +318,6 @@ def test_get_daily_trading_items_by_investor(client: Client):
 
 @pytest.mark.integration
 def test_get_institutional_investor_by_stock(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_institutional_investor_by_stock(
         dt="20250701",  # 일자
         stk_cd="005930",  # 종목코드
@@ -402,8 +334,6 @@ def test_get_institutional_investor_by_stock(client: Client):
 
 @pytest.mark.integration
 def test_get_total_institutional_investor_by_stock(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_total_institutional_investor_by_stock(
         stk_cd="005930",  # 종목코드
         strt_dt="20250701",  # 시작일자
@@ -421,8 +351,6 @@ def test_get_total_institutional_investor_by_stock(client: Client):
 
 @pytest.mark.integration
 def test_get_daily_previous_day_conclusion(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_daily_previous_day_conclusion(
         stk_cd="005930",  # 종목코드
         tdy_pred="1",  # 당일
@@ -436,8 +364,6 @@ def test_get_daily_previous_day_conclusion(client: Client):
 
 @pytest.mark.integration
 def test_get_interest_stock_info(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_interest_stock_info(
         stk_cd="005930|000660",  # 여러 종목코드 입력시 | 로 구분
     )
@@ -450,8 +376,6 @@ def test_get_interest_stock_info(client: Client):
 
 @pytest.mark.integration
 def test_get_stock_info_summary(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_stock_info_summary(
         mrkt_tp="0",  # KOSPI
     )
@@ -464,8 +388,6 @@ def test_get_stock_info_summary(client: Client):
 
 @pytest.mark.integration
 def test_get_stock_info_v1(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_stock_info_v1(
         stk_cd="005930",  # 종목코드
     )
@@ -478,8 +400,6 @@ def test_get_stock_info_v1(client: Client):
 
 @pytest.mark.integration
 def test_get_industry_code(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_industry_code(
         mrkt_tp="0",  # KOSPI
     )
@@ -494,8 +414,6 @@ def test_get_industry_code(client: Client):
 
 @pytest.mark.integration
 def test_get_member_company(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_member_company()
 
     assert response is not None
@@ -508,8 +426,6 @@ def test_get_member_company(client: Client):
 
 @pytest.mark.integration
 def test_get_top_50_program_net_buy(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_top_50_program_net_buy(
         trde_upper_tp="2",  # 순매수상위
         amt_qty_tp="1",  # 금액
@@ -525,8 +441,6 @@ def test_get_top_50_program_net_buy(client: Client):
 
 @pytest.mark.integration
 def test_get_program_trading_status_by_stock(client: Client):
-    time.sleep(1)
-
     response = client.stock_info.get_program_trading_status_by_stock(
         dt="20250701",  # 일자
         mrkt_tp="P00101",  # KOSPI

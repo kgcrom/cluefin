@@ -1,11 +1,5 @@
-import os
-import time
-
-import dotenv
 import pytest
-from pydantic import SecretStr
 
-from cluefin_openapi.kiwoom._auth import Auth
 from cluefin_openapi.kiwoom._client import Client
 from cluefin_openapi.kiwoom._domestic_rank_info_types import (
     DomesticRankInfoAfterHoursSinglePriceChangeRateRanking,
@@ -34,26 +28,8 @@ from cluefin_openapi.kiwoom._domestic_rank_info_types import (
 )
 
 
-@pytest.fixture
-def auth() -> Auth:
-    dotenv.load_dotenv(dotenv_path=".env.test")
-    return Auth(
-        app_key=os.getenv("KIWOOM_APP_KEY", ""),
-        secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY", "")),
-        env=os.getenv("KIWOOM_ENV", "dev").lower(),
-    )
-
-
-@pytest.fixture
-def client(auth: Auth) -> Client:
-    token = auth.generate_token()
-    return Client(token=token.get_token(), env=os.getenv("KIWOOM_ENV", "dev").lower())
-
-
 @pytest.mark.integration
 def test_get_top_remaining_order_quantity(client: Client):
-    time.sleep(1)
-
     response = client.rank_info.get_top_remaining_order_quantity(
         mrkt_tp="001", sort_tp="1", trde_qty_tp="0000", stk_cnd="0", crd_cnd="0", stex_tp="1"
     )
@@ -65,8 +41,6 @@ def test_get_top_remaining_order_quantity(client: Client):
 
 @pytest.mark.integration
 def test_get_rapidly_increasing_remaining_order_quantity(client: Client):
-    time.sleep(1)
-
     response = client.rank_info.get_rapidly_increasing_remaining_order_quantity(
         mrkt_tp="001", trde_tp="1", sort_tp="1", tm_tp="30", trde_qty_tp="1", stk_cnd="0", stex_tp="1"
     )
@@ -78,8 +52,6 @@ def test_get_rapidly_increasing_remaining_order_quantity(client: Client):
 
 @pytest.mark.integration
 def test_get_rapidly_increasing_total_sell_orders(client: Client):
-    time.sleep(1)
-
     response = client.rank_info.get_rapidly_increasing_total_sell_orders(
         mrkt_tp="001", rt_tp="1", tm_tp="1", trde_qty_tp="5", stk_cnd="0", stex_tp="1"
     )
@@ -91,8 +63,6 @@ def test_get_rapidly_increasing_total_sell_orders(client: Client):
 
 @pytest.mark.integration
 def test_get_rapidly_increasing_trading_volume(client: Client):
-    time.sleep(1)
-
     response = client.rank_info.get_rapidly_increasing_trading_volume(
         mrkt_tp="000", sort_tp="1", tm_tp="2", trde_qty_tp="5", stk_cnd="0", pric_tp="0", stex_tp="1"
     )
@@ -104,8 +74,6 @@ def test_get_rapidly_increasing_trading_volume(client: Client):
 
 @pytest.mark.integration
 def test_get_top_percentage_change_from_previous_day(client: Client):
-    time.sleep(1)
-
     response = client.rank_info.get_top_percentage_change_from_previous_day(
         mrkt_tp="000",
         sort_tp="1",
@@ -124,8 +92,6 @@ def test_get_top_percentage_change_from_previous_day(client: Client):
 
 @pytest.mark.integration
 def test_get_top_expected_conclusion_percentage_change(client: Client):
-    time.sleep(1)
-
     response = client.rank_info.get_top_expected_conclusion_percentage_change(
         mrkt_tp="000",
         sort_tp="1",
@@ -142,8 +108,6 @@ def test_get_top_expected_conclusion_percentage_change(client: Client):
 
 @pytest.mark.integration
 def test_get_top_current_day_trading_volume(client: Client):
-    time.sleep(1)
-
     response = client.rank_info.get_top_current_day_trading_volume(
         mrkt_tp="000",
         sort_tp="1",
@@ -162,8 +126,6 @@ def test_get_top_current_day_trading_volume(client: Client):
 
 @pytest.mark.integration
 def test_get_top_previous_day_trading_volume(client: Client):
-    time.sleep(1)
-
     response = client.rank_info.get_top_previous_day_trading_volume(
         mrkt_tp="101", qry_tp="1", rank_strt="0", rank_end="10", stex_tp="1"
     )
@@ -174,8 +136,6 @@ def test_get_top_previous_day_trading_volume(client: Client):
 
 @pytest.mark.integration
 def test_get_top_transaction_value(client: Client):
-    time.sleep(1)
-
     response = client.rank_info.get_top_transaction_value(
         mrkt_tp="001",
         mang_stk_incls="0",
@@ -188,8 +148,6 @@ def test_get_top_transaction_value(client: Client):
 
 @pytest.mark.integration
 def test_get_top_margin_ratio(client: Client):
-    time.sleep(1)
-
     response = client.rank_info.get_top_margin_ratio(
         mrkt_tp="000",
         trde_qty_tp="0",
@@ -205,8 +163,6 @@ def test_get_top_margin_ratio(client: Client):
 
 @pytest.mark.integration
 def test_get_top_foreigner_period_trading(client: Client):
-    time.sleep(1)
-
     response = client.rank_info.get_top_foreigner_period_trading(
         mrkt_tp="001",
         trde_tp="2",
@@ -220,8 +176,6 @@ def test_get_top_foreigner_period_trading(client: Client):
 
 @pytest.mark.integration
 def test_get_top_consecutive_net_buy_sell_by_foreigners(client: Client):
-    time.sleep(1)
-
     response = client.rank_info.get_top_consecutive_net_buy_sell_by_foreigners(
         mrkt_tp="000",
         trde_tp="2",
@@ -235,8 +189,6 @@ def test_get_top_consecutive_net_buy_sell_by_foreigners(client: Client):
 
 @pytest.mark.integration
 def test_get_top_limit_exhaustion_rate_foreigner(client: Client):
-    time.sleep(1)
-
     response = client.rank_info.get_top_limit_exhaustion_rate_foreigner(
         mrkt_tp="000",
         dt="0",
@@ -249,8 +201,6 @@ def test_get_top_limit_exhaustion_rate_foreigner(client: Client):
 
 @pytest.mark.integration
 def test_get_top_foreign_account_group_trading(client: Client):
-    time.sleep(1)
-
     response = client.rank_info.get_top_foreign_account_group_trading(
         mrkt_tp="000", dt="0", trde_tp="1", sort_tp="2", stex_tp="1"
     )
@@ -261,8 +211,6 @@ def test_get_top_foreign_account_group_trading(client: Client):
 
 @pytest.mark.integration
 def test_get_stock_specific_securities_firm_ranking(client: Client):
-    time.sleep(1)
-
     response = client.rank_info.get_stock_specific_securities_firm_ranking(
         stk_cd="005930", strt_dt="20250601", end_dt="20250602", qry_tp="2", dt="1"
     )
@@ -274,8 +222,6 @@ def test_get_stock_specific_securities_firm_ranking(client: Client):
 
 @pytest.mark.integration
 def test_get_top_securities_firm_trading(client: Client):
-    time.sleep(1)
-
     response = client.rank_info.get_top_securities_firm_trading(
         mmcm_cd="001", trde_qty_tp="0", trde_tp="1", dt="1", stex_tp="1"
     )
@@ -286,8 +232,6 @@ def test_get_top_securities_firm_trading(client: Client):
 
 @pytest.mark.integration
 def test_get_top_current_day_major_traders(client: Client):
-    time.sleep(1)
-
     response = client.rank_info.get_top_current_day_major_traders(stk_cd="005930")
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoTopCurrentDayMajorTraders)
@@ -296,8 +240,6 @@ def test_get_top_current_day_major_traders(client: Client):
 
 @pytest.mark.integration
 def test_get_top_net_buy_trader_ranking(client: Client):
-    time.sleep(1)
-
     response = client.rank_info.get_top_net_buy_trader_ranking(
         stk_cd="005930", strt_dt="20241031", end_dt="20241107", qry_dt_tp="0", pot_tp="0", dt="5", sort_base="1"
     )
@@ -308,8 +250,6 @@ def test_get_top_net_buy_trader_ranking(client: Client):
 
 @pytest.mark.integration
 def test_get_top_current_day_deviation_sources(client: Client):
-    time.sleep(1)
-
     response = client.rank_info.get_top_current_day_deviation_sources(
         stk_cd="005930",
     )
@@ -320,8 +260,6 @@ def test_get_top_current_day_deviation_sources(client: Client):
 
 @pytest.mark.integration
 def test_get_same_net_buy_sell_ranking(client: Client):
-    time.sleep(1)
-
     response = client.rank_info.get_same_net_buy_sell_ranking(
         strt_dt="20241106",
         end_dt="20241107",
@@ -338,8 +276,6 @@ def test_get_same_net_buy_sell_ranking(client: Client):
 
 @pytest.mark.integration
 def test_get_top_intraday_trading_by_investor(client: Client):
-    time.sleep(1)
-
     response = client.rank_info.get_top_intraday_trading_by_investor(
         trde_tp="1",
         mrkt_tp="000",
@@ -351,8 +287,6 @@ def test_get_top_intraday_trading_by_investor(client: Client):
 
 @pytest.mark.integration
 def test_get_after_hours_single_price_change_rate_ranking(client: Client):
-    time.sleep(1)
-
     response = client.rank_info.get_after_hours_single_price_change_rate_ranking(
         mrkt_tp="000",
         sort_base="5",
@@ -368,8 +302,6 @@ def test_get_after_hours_single_price_change_rate_ranking(client: Client):
 
 @pytest.mark.integration
 def test_get_top_foreigner_limit_exhaustion_rate(client: Client):
-    time.sleep(1)
-
     response = client.rank_info.get_top_foreigner_limit_exhaustion_rate(mrkt_tp="001", dt="1", stex_tp="1")
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoTopForeignerLimitExhaustionRate)

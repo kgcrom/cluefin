@@ -1,12 +1,7 @@
-import os
-import time
 from datetime import datetime
 
-import dotenv
 import pytest
-from pydantic import SecretStr
 
-from cluefin_openapi.kiwoom._auth import Auth
 from cluefin_openapi.kiwoom._client import Client
 from cluefin_openapi.kiwoom._domestic_sector_types import (
     DomesticSectorAllIndustryIndex,
@@ -18,25 +13,8 @@ from cluefin_openapi.kiwoom._domestic_sector_types import (
 )
 
 
-@pytest.fixture
-def auth() -> Auth:
-    dotenv.load_dotenv(dotenv_path=".env.test")
-    return Auth(
-        app_key=os.getenv("KIWOOM_APP_KEY", ""),
-        secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY", "")),
-        env=os.getenv("KIWOOM_ENV", "dev").lower(),
-    )
-
-
-@pytest.fixture
-def client(auth: Auth) -> Client:
-    token = auth.generate_token()
-    return Client(token=token.get_token(), env=os.getenv("KIWOOM_ENV", "dev").lower())
-
-
 @pytest.mark.integration
 def test_get_industry_program(client: Client):
-    time.sleep(1)
     # Test parameters
     stk_code = "005930"  # Example sector code
 
@@ -54,7 +32,6 @@ def test_get_industry_program(client: Client):
 
 @pytest.mark.integration
 def test_get_industry_investor_net_buy(client: Client):
-    time.sleep(1)
     # Test parameters
     mrkt_tp = "0"  # KOSPI
     amt_qty_tp = "0"  # Amount
@@ -80,7 +57,6 @@ def test_get_industry_investor_net_buy(client: Client):
 
 @pytest.mark.integration
 def test_get_industry_current_price_success(client: Client):
-    time.sleep(1)
     # Test parameters
     mrkt_tp = "0"  # KOSPI
     inds_cd = "001"  # Example industry code (KOSPI)
@@ -99,7 +75,6 @@ def test_get_industry_current_price_success(client: Client):
 
 @pytest.mark.integration
 def test_get_industry_price_by_sector_success(client: Client):
-    time.sleep(1)
     # Test parameters
     mrkt_tp = "0"  # KOSPI
     inds_cd = "001"  # Example industry code (KOSPI)
@@ -119,7 +94,6 @@ def test_get_industry_price_by_sector_success(client: Client):
 
 @pytest.mark.integration
 def test_get_all_industry_index_success(client: Client):
-    time.sleep(1)
     # Test parameters
     inds_cd = "001"  # Example industry code (KOSPI)
     # Make the API call
@@ -136,7 +110,6 @@ def test_get_all_industry_index_success(client: Client):
 
 @pytest.mark.integration
 def test_get_daily_industry_current_price_success(client: Client):
-    time.sleep(1)
     # Test parameters
     mrkt_tp = "0"  # KOSPI
     inds_cd = "001"  # Example industry code (KOSPI)
