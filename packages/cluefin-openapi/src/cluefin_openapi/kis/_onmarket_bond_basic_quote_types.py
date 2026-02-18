@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Sequence
 
 from pydantic import BaseModel, Field
 
@@ -94,3 +94,23 @@ class OnmarketBondExecution(BaseModel, KisHttpBody):
     """장내채권현재가(체결)"""
 
     output: Optional[OnmarketBondExecutionItem] = Field(default=None, title="응답상세")
+
+
+class OnmarketBondDailyPriceItem(BaseModel):
+    """장내채권현재가(일별) 응답 항목"""
+
+    stck_bsop_date: str = Field(title="주식 영업 일자", max_length=8)
+    bond_prpr: str = Field(title="채권 현재가", max_length=112)
+    bond_prdy_vrss: str = Field(title="채권 전일 대비", max_length=112)
+    prdy_vrss_sign: str = Field(title="전일 대비 부호", max_length=1)
+    prdy_ctrt: str = Field(title="전일 대비율", max_length=82)
+    acml_vol: str = Field(title="누적 거래량", max_length=18)
+    bond_oprc: str = Field(title="채권 시가", max_length=112)
+    bond_hgpr: str = Field(title="채권 고가", max_length=112)
+    bond_lwpr: str = Field(title="채권 저가", max_length=112)
+
+
+class OnmarketBondDailyPrice(BaseModel, KisHttpBody):
+    """장내채권현재가(일별)"""
+
+    output: Sequence[OnmarketBondDailyPriceItem] = Field(default_factory=list)

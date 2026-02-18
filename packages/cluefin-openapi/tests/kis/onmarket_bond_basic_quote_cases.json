@@ -117,5 +117,46 @@
                 "acml_vol": "500"
             }
         }
+    },
+    {
+        "method_name": "get_bond_daily_price",
+        "response_model_attr": "OnmarketBondDailyPrice",
+        "endpoint": "/uapi/domestic-bond/v1/quotations/inquire-daily-price",
+        "method": "GET",
+        "call_kwargs": {"fid_input_iscd": "KR2033022D33"},
+        "expected_headers": {"tr_id": "FHKBJ773404C0"},
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "B",
+            "FID_INPUT_ISCD": "KR2033022D33"
+        },
+        "response_payload": {
+            "rt_cd": "0",
+            "msg_cd": "MCA00000",
+            "msg1": "정상처리 되었습니다.",
+            "output": [
+                {
+                    "stck_bsop_date": "20260218",
+                    "bond_prpr": "9950.00",
+                    "bond_prdy_vrss": "-50.00",
+                    "prdy_vrss_sign": "5",
+                    "prdy_ctrt": "-0.50",
+                    "acml_vol": "1000",
+                    "bond_oprc": "9960.00",
+                    "bond_hgpr": "9970.00",
+                    "bond_lwpr": "9940.00"
+                },
+                {
+                    "stck_bsop_date": "20260217",
+                    "bond_prpr": "10000.00",
+                    "bond_prdy_vrss": "30.00",
+                    "prdy_vrss_sign": "2",
+                    "prdy_ctrt": "0.30",
+                    "acml_vol": "800",
+                    "bond_oprc": "9980.00",
+                    "bond_hgpr": "10010.00",
+                    "bond_lwpr": "9970.00"
+                }
+            ]
+        }
     }
 ]
