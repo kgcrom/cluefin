@@ -1,6 +1,6 @@
 from typing import Optional, Sequence
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from cluefin_openapi.kis._model import KisHttpBody
 
@@ -151,8 +151,15 @@ class ConclusionTrendMeta(BaseModel):
 class ConclusionTrend(BaseModel, KisHttpBody):
     """해외주식 체결추이"""
 
-    output1: ConclusionTrendMeta = Field(title="응답상세1")
+    output1: Optional[ConclusionTrendMeta] = Field(default=None, title="응답상세1")
     output2: Sequence[ConclusionTrendItem] = Field(default_factory=list, title="응답상세2")
+
+    @field_validator("output1", mode="before")
+    @classmethod
+    def _empty_list_to_none(cls, v):
+        if isinstance(v, list):
+            return None
+        return v
 
 
 class StockMinuteChartItem1(BaseModel):
