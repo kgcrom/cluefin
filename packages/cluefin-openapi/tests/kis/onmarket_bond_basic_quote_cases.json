@@ -1,0 +1,59 @@
+[
+    {
+        "method_name": "get_bond_asking_price",
+        "response_model_attr": "OnmarketBondAskingPrice",
+        "endpoint": "/uapi/domestic-bond/v1/quotations/inquire-asking-price",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_input_iscd": "KR2088012A16"
+        },
+        "expected_headers": {
+            "tr_id": "FHKBJ773401C0"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "B",
+            "FID_INPUT_ISCD": "KR2088012A16"
+        },
+        "response_payload": {
+            "rt_cd": "0",
+            "msg_cd": "MCA00000",
+            "msg1": "정상처리 되었습니다.",
+            "output": {
+                "aspr_acpt_hour": "153000",
+                "bond_askp1": "10050.00",
+                "bond_askp2": "10055.00",
+                "bond_askp3": "10060.00",
+                "bond_askp4": "10065.00",
+                "bond_askp5": "10070.00",
+                "bond_bidp1": "10045.00",
+                "bond_bidp2": "10040.00",
+                "bond_bidp3": "10035.00",
+                "bond_bidp4": "10030.00",
+                "bond_bidp5": "10025.00",
+                "askp_rsqn1": "100",
+                "askp_rsqn2": "200",
+                "askp_rsqn3": "150",
+                "askp_rsqn4": "50",
+                "askp_rsqn5": "300",
+                "bidp_rsqn1": "120",
+                "bidp_rsqn2": "80",
+                "bidp_rsqn3": "250",
+                "bidp_rsqn4": "60",
+                "bidp_rsqn5": "180",
+                "total_askp_rsqn": "800",
+                "total_bidp_rsqn": "690",
+                "ntby_aspr_rsqn": "-110",
+                "seln_ernn_rate1": "3.250",
+                "seln_ernn_rate2": "3.245",
+                "seln_ernn_rate3": "3.240",
+                "seln_ernn_rate4": "3.235",
+                "seln_ernn_rate5": "3.230",
+                "shnu_ernn_rate1": "3.255",
+                "shnu_ernn_rate2": "3.260",
+                "shnu_ernn_rate3": "3.265",
+                "shnu_ernn_rate4": "3.270",
+                "shnu_ernn_rate5": "3.275"
+            }
+        }
+    }
+]
