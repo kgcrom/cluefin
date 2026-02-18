@@ -443,6 +443,16 @@ uv run pytest -m "not integration"
 # 통합 테스트만 실행 (API 키 필요)
 uv run pytest -m "integration"
 
+# Kiwoom 통합 테스트는 .env.test의 KIWOOM_ENV(dev|prod)를 사용
+# - KIWOOM_ENV=dev  -> mockapi 키 사용
+# - KIWOOM_ENV=prod -> 실서버 키 사용
+
+# 권한/샌드박스 환경에서 uv 캐시 접근 오류가 나면
+# (예: ".../.cache/uv/... Operation not permitted")
+# 워크스페이스 내부 캐시 경로를 지정해서 실행
+mkdir -p .uv-cache
+UV_CACHE_DIR=.uv-cache uv run pytest packages/cluefin-openapi/tests/kiwoom/test_domestic_chart_integration.py -q
+
 # cluefin-openapi 패키지 테스트만 실행
 uv run pytest packages/cluefin-openapi/tests/ -v
 
@@ -452,6 +462,15 @@ uv run pytest packages/cluefin-openapi/tests/kiwoom/test_auth_unit.py -v
 # 코드 커버리지 확인
 uv run pytest --cov=cluefin_openapi --cov-report=html
 ```
+
+### 통합 테스트 실행 이슈 (uv 캐시 권한)
+
+- 증상: `uv run pytest ...` 실행 시 `.../.cache/uv/... Operation not permitted`
+- 원인: 실행 환경(샌드박스/권한 정책)에서 기본 uv 캐시 경로 접근이 제한됨
+- 해결:
+  1. 워크스페이스 내부 캐시 디렉터리 생성: `mkdir -p .uv-cache`
+  2. 실행 시 캐시 경로 지정: `UV_CACHE_DIR=.uv-cache uv run pytest <file_or_args>`
+  3. 필요하면 동일 세션에서 `export UV_CACHE_DIR=.uv-cache` 후 반복 실행
 
 ## 🏗️ 프로젝트 구조
 

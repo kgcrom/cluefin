@@ -14,7 +14,7 @@ def auth():
     return Auth(
         app_key=os.getenv("KIWOOM_APP_KEY", ""),
         secret_key=SecretStr(os.getenv("KIWOOM_SECRET_KEY", "")),
-        env="dev",
+        env=os.getenv("KIWOOM_ENV", "dev").lower(),
     )
 
 
