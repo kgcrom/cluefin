@@ -604,6 +604,11 @@ class DomesticBasicQuote:
             "FID_COND_MRKT_DIV_CODE": fid_cond_mrkt_div_code,
             "FID_INPUT_ISCD": fid_input_iscd,
             "FID_COND_SCR_DIV_CODE": fid_cond_scr_div_code,
+            # KIS has been observed to intermittently require `_1`-suffixed field names for this endpoint.
+            # Sending both variants keeps the request compatible across backend versions.
+            "FID_COND_MRKT_DIV_CODE_1": fid_cond_mrkt_div_code,
+            "FID_INPUT_ISCD_1": fid_input_iscd,
+            "FID_COND_SCR_DIV_CODE_1": fid_cond_scr_div_code,
         }
         response = self.client._get(
             "/uapi/etfetn/v1/quotations/inquire-component-stock-price", headers=headers, params=params

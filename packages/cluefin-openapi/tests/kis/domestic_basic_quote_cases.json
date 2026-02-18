@@ -833,7 +833,10 @@
         "expected_body": {
             "FID_COND_MRKT_DIV_CODE": "J",
             "FID_INPUT_ISCD": "069500",
-            "FID_COND_SCR_DIV_CODE": "11216"
+            "FID_COND_SCR_DIV_CODE": "11216",
+            "FID_COND_MRKT_DIV_CODE_1": "J",
+            "FID_INPUT_ISCD_1": "069500",
+            "FID_COND_SCR_DIV_CODE_1": "11216"
         },
         "response_payload": {
             "rt_cd": "0",

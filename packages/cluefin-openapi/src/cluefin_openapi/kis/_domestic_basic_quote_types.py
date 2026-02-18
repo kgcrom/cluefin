@@ -1,6 +1,6 @@
-from typing import Literal, Optional, Sequence
+from typing import Any, Literal, Optional, Sequence
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from cluefin_openapi.kis._model import KisHttpBody
 
@@ -413,7 +413,18 @@ class DomesticStockCurrentPriceMemberItem(BaseModel):
 class DomesticStockCurrentPriceMember(BaseModel, KisHttpBody):
     """국내주식 현재가 회원사"""
 
-    output: Optional[DomesticStockCurrentPriceMemberItem] = Field(default=None, title="응답상세")
+    output: Sequence[DomesticStockCurrentPriceMemberItem] = Field(default_factory=list, title="응답상세")
+
+    @field_validator("output", mode="before")
+    @classmethod
+    def _coerce_output(cls, value: Any) -> Any:
+        # KIS has been observed to return `output` as either a dict (single item)
+        # or a list of dicts. Normalize to a list for stable downstream typing.
+        if value is None:
+            return []
+        if isinstance(value, dict):
+            return [value]
+        return value
 
 
 class DomesticStockPeriodQuoteItem1(BaseModel):
