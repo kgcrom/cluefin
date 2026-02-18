@@ -131,3 +131,75 @@ class OnmarketBondDailyChartPrice(BaseModel, KisHttpBody):
     """장내채권 기간별시세(일)"""
 
     output: list[OnmarketBondDailyChartPriceItem] = Field(default_factory=list, title="응답상세")
+
+
+class OnmarketBondAvgUnitPriceOutput1Item(BaseModel):
+    """장내채권 평균단가조회 output1 항목 (단가/수익율)"""
+
+    evlu_dt: str = Field(title="평가일자", max_length=8)
+    pdno: str = Field(title="상품번호", max_length=12)
+    prdt_type_cd: str = Field(title="상품유형코드", max_length=3)
+    prdt_name: str = Field(title="상품명", max_length=60)
+    kis_unpr: str = Field(title="KIS단가", max_length=24)
+    kbp_unpr: str = Field(title="KBP단가", max_length=24)
+    nice_evlu_unpr: str = Field(title="NICE평가단가", max_length=24)
+    fnp_unpr: str = Field(title="FnP단가", max_length=24)
+    avg_evlu_unpr: str = Field(title="평균평가단가", max_length=24)
+    kis_crdt_grad_text: str = Field(title="KIS신용등급텍스트", max_length=40)
+    kbp_crdt_grad_text: str = Field(title="KBP신용등급텍스트", max_length=40)
+    nice_crdt_grad_text: str = Field(title="NICE신용등급텍스트", max_length=40)
+    fnp_crdt_grad_text: str = Field(title="FnP신용등급텍스트", max_length=40)
+    chng_yn: str = Field(title="변경여부", max_length=1)
+    kis_erng_rt: str = Field(title="KIS수익률", max_length=24)
+    kbp_erng_rt: str = Field(title="KBP수익률", max_length=24)
+    nice_evlu_erng_rt: str = Field(title="NICE평가수익률", max_length=24)
+    fnp_erng_rt: str = Field(title="FnP수익률", max_length=24)
+    avg_evlu_erng_rt: str = Field(title="평균평가수익률", max_length=24)
+    kis_rf_unpr: str = Field(title="KIS기준단가", max_length=24)
+    kbp_rf_unpr: str = Field(title="KBP기준단가", max_length=24)
+    nice_evlu_rf_unpr: str = Field(title="NICE평가기준단가", max_length=24)
+    avg_evlu_rf_unpr: str = Field(title="평균평가기준단가", max_length=24)
+
+
+class OnmarketBondAvgUnitPriceOutput2Item(BaseModel):
+    """장내채권 평균단가조회 output2 항목 (평가금액)"""
+
+    evlu_dt: str = Field(title="평가일자", max_length=8)
+    pdno: str = Field(title="상품번호", max_length=12)
+    prdt_type_cd: str = Field(title="상품유형코드", max_length=3)
+    prdt_name: str = Field(title="상품명", max_length=60)
+    kis_evlu_amt: str = Field(title="KIS평가금액", max_length=24)
+    kbp_evlu_amt: str = Field(title="KBP평가금액", max_length=24)
+    nice_evlu_amt: str = Field(title="NICE평가금액", max_length=24)
+    fnp_evlu_amt: str = Field(title="FnP평가금액", max_length=24)
+    avg_evlu_amt: str = Field(title="평균평가금액", max_length=24)
+    chng_yn: str = Field(title="변경여부", max_length=1)
+
+
+class OnmarketBondAvgUnitPriceOutput3Item(BaseModel):
+    """장내채권 평균단가조회 output3 항목 (외화평가)"""
+
+    evlu_dt: str = Field(title="평가일자", max_length=8)
+    pdno: str = Field(title="상품번호", max_length=12)
+    prdt_type_cd: str = Field(title="상품유형코드", max_length=3)
+    prdt_name: str = Field(title="상품명", max_length=60)
+    kis_crcy_cd: str = Field(title="KIS통화코드", max_length=3)
+    kis_evlu_unit_pric: str = Field(title="KIS평가단위가격", max_length=24)
+    kis_evlu_pric: str = Field(title="KIS평가가격", max_length=24)
+    kbp_crcy_cd: str = Field(title="KBP통화코드", max_length=3)
+    kbp_evlu_unit_pric: str = Field(title="KBP평가단위가격", max_length=24)
+    kbp_evlu_pric: str = Field(title="KBP평가가격", max_length=24)
+    nice_crcy_cd: str = Field(title="NICE통화코드", max_length=3)
+    nice_evlu_unit_pric: str = Field(title="NICE평가단위가격", max_length=24)
+    nice_evlu_pric: str = Field(title="NICE평가가격", max_length=24)
+    avg_evlu_unit_pric: str = Field(title="평균평가단위가격", max_length=24)
+    avg_evlu_pric: str = Field(title="평균평가가격", max_length=24)
+    chng_yn: str = Field(title="변경여부", max_length=1)
+
+
+class OnmarketBondAvgUnitPrice(BaseModel, KisHttpBody):
+    """장내채권 평균단가조회"""
+
+    output1: list[OnmarketBondAvgUnitPriceOutput1Item] = Field(default_factory=list, title="단가/수익율")
+    output2: list[OnmarketBondAvgUnitPriceOutput2Item] = Field(default_factory=list, title="평가금액")
+    output3: list[OnmarketBondAvgUnitPriceOutput3Item] = Field(default_factory=list, title="외화평가")

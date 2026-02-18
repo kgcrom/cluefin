@@ -193,5 +193,91 @@
                 }
             ]
         }
+    },
+    {
+        "method_name": "get_bond_avg_unit_price",
+        "response_model_attr": "OnmarketBondAvgUnitPrice",
+        "endpoint": "/uapi/domestic-bond/v1/quotations/avg-unit",
+        "method": "GET",
+        "call_kwargs": {
+            "inqr_strt_dt": "20260201",
+            "inqr_end_dt": "20260218"
+        },
+        "expected_headers": {"tr_id": "CTPF2005R", "custtype": "P"},
+        "expected_body": {
+            "INQR_STRT_DT": "20260201",
+            "INQR_END_DT": "20260218",
+            "PDNO": "",
+            "PRDT_TYPE_CD": "302",
+            "VRFC_KIND_CD": "00",
+            "CTX_AREA_NK30": "",
+            "CTX_AREA_FK100": ""
+        },
+        "response_payload": {
+            "rt_cd": "0",
+            "msg_cd": "MCA00000",
+            "msg1": "정상처리 되었습니다.",
+            "output1": [
+                {
+                    "evlu_dt": "20260218",
+                    "pdno": "KR2033022D33",
+                    "prdt_type_cd": "302",
+                    "prdt_name": "국고채권 03-2(33-2)",
+                    "kis_unpr": "10050.00",
+                    "kbp_unpr": "10045.00",
+                    "nice_evlu_unpr": "10048.00",
+                    "fnp_unpr": "10047.00",
+                    "avg_evlu_unpr": "10047.50",
+                    "kis_crdt_grad_text": "AAA",
+                    "kbp_crdt_grad_text": "AAA",
+                    "nice_crdt_grad_text": "AAA",
+                    "fnp_crdt_grad_text": "AAA",
+                    "chng_yn": "N",
+                    "kis_erng_rt": "3.250",
+                    "kbp_erng_rt": "3.255",
+                    "nice_evlu_erng_rt": "3.252",
+                    "fnp_erng_rt": "3.253",
+                    "avg_evlu_erng_rt": "3.252",
+                    "kis_rf_unpr": "10050.00",
+                    "kbp_rf_unpr": "10045.00",
+                    "nice_evlu_rf_unpr": "10048.00",
+                    "avg_evlu_rf_unpr": "10047.67"
+                }
+            ],
+            "output2": [
+                {
+                    "evlu_dt": "20260218",
+                    "pdno": "KR2033022D33",
+                    "prdt_type_cd": "302",
+                    "prdt_name": "국고채권 03-2(33-2)",
+                    "kis_evlu_amt": "1005000",
+                    "kbp_evlu_amt": "1004500",
+                    "nice_evlu_amt": "1004800",
+                    "fnp_evlu_amt": "1004700",
+                    "avg_evlu_amt": "1004750",
+                    "chng_yn": "N"
+                }
+            ],
+            "output3": [
+                {
+                    "evlu_dt": "20260218",
+                    "pdno": "KR2033022D33",
+                    "prdt_type_cd": "302",
+                    "prdt_name": "국고채권 03-2(33-2)",
+                    "kis_crcy_cd": "USD",
+                    "kis_evlu_unit_pric": "7.50",
+                    "kis_evlu_pric": "750.00",
+                    "kbp_crcy_cd": "USD",
+                    "kbp_evlu_unit_pric": "7.49",
+                    "kbp_evlu_pric": "749.00",
+                    "nice_crcy_cd": "USD",
+                    "nice_evlu_unit_pric": "7.50",
+                    "nice_evlu_pric": "750.00",
+                    "avg_evlu_unit_pric": "7.50",
+                    "avg_evlu_pric": "749.67",
+                    "chng_yn": "N"
+                }
+            ]
+        }
     }
 ]

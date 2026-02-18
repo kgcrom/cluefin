@@ -6,6 +6,7 @@ from cluefin_openapi.kis._http_client import HttpClient
 from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 from cluefin_openapi.kis._onmarket_bond_basic_quote_types import (
     OnmarketBondAskingPrice,
+    OnmarketBondAvgUnitPrice,
     OnmarketBondDailyChartPrice,
     OnmarketBondDailyPrice,
     OnmarketBondExecution,
@@ -160,4 +161,48 @@ class OnmarketBondBasicQuote:
         self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = OnmarketBondDailyChartPrice.model_validate(response_data)
+        return KisHttpResponse(header=header, body=body)
+
+    def get_bond_avg_unit_price(
+        self,
+        inqr_strt_dt: str,
+        inqr_end_dt: str,
+        pdno: str = "",
+        prdt_type_cd: str = "302",
+        vrfc_kind_cd: str = "00",
+        custtype: Literal["B", "P"] = "P",
+    ) -> KisHttpResponse[OnmarketBondAvgUnitPrice]:
+        """
+        장내채권 평균단가조회 [국내주식-158]
+
+        Args:
+            inqr_strt_dt (str): 조회시작일자 (YYYYMMDD)
+            inqr_end_dt (str): 조회종료일자 (YYYYMMDD)
+            pdno (str): 상품번호 (채권종목코드)
+            prdt_type_cd (str): 상품유형코드 (302: 채권)
+            vrfc_kind_cd (str): 검증종류코드 (00)
+            custtype (str): 고객타입 (B: 법인, P: 개인)
+
+        Returns:
+            KisHttpResponse[OnmarketBondAvgUnitPrice]: 장내채권 평균단가조회
+        """
+        headers = {"tr_id": "CTPF2005R", "custtype": custtype}
+        params = {
+            "INQR_STRT_DT": inqr_strt_dt,
+            "INQR_END_DT": inqr_end_dt,
+            "PDNO": pdno,
+            "PRDT_TYPE_CD": prdt_type_cd,
+            "VRFC_KIND_CD": vrfc_kind_cd,
+            "CTX_AREA_NK30": "",
+            "CTX_AREA_FK100": "",
+        }
+        response = self.client._get(
+            "/uapi/domestic-bond/v1/quotations/avg-unit",
+            headers=headers,
+            params=params,
+        )
+        response_data = response.json()
+        self._check_response_error(response_data)
+        header = KisHttpHeader.model_validate(response.headers)
+        body = OnmarketBondAvgUnitPrice.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
