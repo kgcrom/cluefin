@@ -4,7 +4,11 @@ from typing_extensions import Literal
 
 from cluefin_openapi.kis._http_client import HttpClient
 from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
-from cluefin_openapi.kis._onmarket_bond_basic_quote_types import OnmarketBondAskingPrice, OnmarketBondPrice
+from cluefin_openapi.kis._onmarket_bond_basic_quote_types import (
+    OnmarketBondAskingPrice,
+    OnmarketBondExecution,
+    OnmarketBondPrice,
+)
 
 
 class OnmarketBondBasicQuote:
@@ -73,4 +77,29 @@ class OnmarketBondBasicQuote:
         self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = OnmarketBondPrice.model_validate(response_data)
+        return KisHttpResponse(header=header, body=body)
+
+    def get_bond_execution(
+        self, fid_input_iscd: str, fid_cond_mrkt_div_code: Literal["B"] = "B"
+    ) -> KisHttpResponse[OnmarketBondExecution]:
+        """
+        장내채권현재가(체결) [국내주식-201]
+
+        Args:
+            fid_input_iscd (str): 채권종목코드 (ex. KR2033022D33)
+            fid_cond_mrkt_div_code (str): 조건 시장 분류 코드, B: 장내채권
+
+        Returns:
+            KisHttpResponse[OnmarketBondExecution]: 장내채권현재가(체결)
+        """
+        headers = {"tr_id": "FHKBJ773403C0"}
+        params = {
+            "FID_COND_MRKT_DIV_CODE": fid_cond_mrkt_div_code,
+            "FID_INPUT_ISCD": fid_input_iscd,
+        }
+        response = self.client._get("/uapi/domestic-bond/v1/quotations/inquire-ccnl", headers=headers, params=params)
+        response_data = response.json()
+        self._check_response_error(response_data)
+        header = KisHttpHeader.model_validate(response.headers)
+        body = OnmarketBondExecution.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
