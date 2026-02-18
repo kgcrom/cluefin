@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -113,7 +113,7 @@ class OnmarketBondDailyPriceItem(BaseModel):
 class OnmarketBondDailyPrice(BaseModel, KisHttpBody):
     """장내채권현재가(일별)"""
 
-    output: Sequence[OnmarketBondDailyPriceItem] = Field(default_factory=list)
+    output: list[OnmarketBondDailyPriceItem] = Field(default_factory=list, title="응답상세")
 
 
 class OnmarketBondDailyChartPriceItem(BaseModel):
