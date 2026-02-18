@@ -10,6 +10,7 @@ from cluefin_openapi.kis._onmarket_bond_basic_quote_types import (
     OnmarketBondDailyChartPrice,
     OnmarketBondDailyPrice,
     OnmarketBondExecution,
+    OnmarketBondIssueInfo,
     OnmarketBondPrice,
 )
 
@@ -205,4 +206,24 @@ class OnmarketBondBasicQuote:
         self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = OnmarketBondAvgUnitPrice.model_validate(response_data)
+        return KisHttpResponse(header=header, body=body)
+
+    def get_bond_issue_info(self, pdno: str, prdt_type_cd: str = "302") -> KisHttpResponse[OnmarketBondIssueInfo]:
+        """
+        장내채권 발행정보 [국내주식-156]
+
+        Args:
+            pdno (str): 채권 종목번호 (ex. KR6449111CB8)
+            prdt_type_cd (str): 상품유형코드 (302: 채권)
+
+        Returns:
+            KisHttpResponse[OnmarketBondIssueInfo]: 장내채권 발행정보
+        """
+        headers = {"tr_id": "CTPF1101R"}
+        params = {"PDNO": pdno, "PRDT_TYPE_CD": prdt_type_cd}
+        response = self.client._get("/uapi/domestic-bond/v1/quotations/issue-info", headers=headers, params=params)
+        response_data = response.json()
+        self._check_response_error(response_data)
+        header = KisHttpHeader.model_validate(response.headers)
+        body = OnmarketBondIssueInfo.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
