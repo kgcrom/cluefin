@@ -93,7 +93,7 @@ class OnmarketBondExecutionItem(BaseModel):
 class OnmarketBondExecution(BaseModel, KisHttpBody):
     """장내채권현재가(체결)"""
 
-    output: Optional[OnmarketBondExecutionItem] = Field(default=None, title="응답상세")
+    output: list[OnmarketBondExecutionItem] = Field(default_factory=list, title="응답상세")
 
 
 class OnmarketBondDailyPriceItem(BaseModel):
