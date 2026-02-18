@@ -114,3 +114,20 @@ class OnmarketBondDailyPrice(BaseModel, KisHttpBody):
     """장내채권현재가(일별)"""
 
     output: Sequence[OnmarketBondDailyPriceItem] = Field(default_factory=list)
+
+
+class OnmarketBondDailyChartPriceItem(BaseModel):
+    """장내채권 기간별시세(일) 응답 항목"""
+
+    stck_bsop_date: str = Field(title="주식영업일자", max_length=8)
+    bond_oprc: str = Field(title="채권시가2", max_length=112)
+    bond_hgpr: str = Field(title="채권고가", max_length=112)
+    bond_lwpr: str = Field(title="채권저가", max_length=112)
+    bond_prpr: str = Field(title="채권현재가", max_length=112)
+    acml_vol: str = Field(title="누적거래량", max_length=18)
+
+
+class OnmarketBondDailyChartPrice(BaseModel, KisHttpBody):
+    """장내채권 기간별시세(일)"""
+
+    output: list[OnmarketBondDailyChartPriceItem] = Field(default_factory=list, title="응답상세")
