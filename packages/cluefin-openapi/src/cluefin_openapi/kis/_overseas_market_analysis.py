@@ -69,6 +69,7 @@ class OverseasMarketAnalysis:
         excd: str,
         mixn: str,
         vol_rang: str,
+        minx: str | None = None,
     ) -> KisHttpResponse[StockVolumeSurge]:
         """
         해외주식 거래량급증
@@ -79,6 +80,7 @@ class OverseasMarketAnalysis:
             excd (str): 거래소코드 (NYS: 뉴욕, NAS: 나스닥, AMS: 아멕스, HKS: 홍콩, SHS: 상해, SZS: 심천, HSX: 호치민, HNX: 하노이, TSE: 도쿄)
             mixn (str): N분전콤보값 (0: 1분전, 1: 2분전, 2: 3분전, 3: 5분전, 4: 10분전, 5: 15분전, 6: 20분전, 7: 30분전, 8: 60분전, 9: 120분전)
             vol_rang (str): 거래량조건 (0: 전체, 1: 1백주이상, 2: 1천주이상, 3: 1만주이상, 4: 10만주이상, 5: 100만주이상, 6: 1000만주이상)
+            minx (str | None): 분 기준(MINX). 미지정 시 mixn 값을 사용
 
         Returns:
             StockVolumeSurge: 해외주식 거래량급증 응답 객체
@@ -91,6 +93,7 @@ class OverseasMarketAnalysis:
             "AUTH": auth,
             "EXCD": excd,
             "MIXN": mixn,
+            "MINX": mixn if minx is None else minx,
             "VOL_RANG": vol_rang,
         }
         response = self.client._get("/uapi/overseas-stock/v1/ranking/volume-surge", headers=headers, params=params)
@@ -393,6 +396,7 @@ class OverseasMarketAnalysis:
         auth: str,
         excd: str,
         vol_rang: str,
+        curr_gb: str = "0",
     ) -> KisHttpResponse[StockMarketCapRank]:
         """
         해외주식 시가총액순위
@@ -402,6 +406,7 @@ class OverseasMarketAnalysis:
             auth (str): 사용자권한정보 (공백)
             excd (str): 거래소코드 (NYS: 뉴욕, NAS: 나스닥, AMS: 아멕스, HKS: 홍콩, SHS: 상해, SZS: 심천, HSX: 호치민, HNX: 하노이, TSE: 도쿄)
             vol_rang (str): 거래량조건 (0: 전체, 1: 1백주이상, 2: 1천주이상, 3: 1만주이상, 4: 10만주이상, 5: 100만주이상, 6: 1000만주이상)
+            curr_gb (str): 통화 구분값(CURR_GB)
 
         Returns:
             StockMarketCapRank: 해외주식 시가총액순위 응답 객체
@@ -414,6 +419,7 @@ class OverseasMarketAnalysis:
             "AUTH": auth,
             "EXCD": excd,
             "VOL_RANG": vol_rang,
+            "CURR_GB": curr_gb,
         }
         response = self.client._get("/uapi/overseas-stock/v1/ranking/market-cap", headers=headers, params=params)
         if response.status_code != 200:

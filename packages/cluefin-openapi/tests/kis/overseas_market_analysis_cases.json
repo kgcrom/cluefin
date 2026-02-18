@@ -54,6 +54,7 @@
             "AUTH": "",
             "EXCD": "NYS",
             "MIXN": "4",
+            "MINX": "4",
             "VOL_RANG": "1"
         },
         "response_payload": {
@@ -338,7 +339,8 @@
             "KEYB": "",
             "AUTH": "",
             "EXCD": "NYS",
-            "VOL_RANG": "0"
+            "VOL_RANG": "0",
+            "CURR_GB": "0"
         },
         "response_payload": {
             "output": [

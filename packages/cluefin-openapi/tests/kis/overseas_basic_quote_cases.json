@@ -191,7 +191,12 @@
             "rt_cd": "0",
             "msg_cd": "MCA00000",
             "msg1": "정상처리 되었습니다.",
-            "output1": [
+            "output1": {
+                "rsym": "DNASNVDA",
+                "zdiv": "4",
+                "nrec": "1"
+            },
+            "output2": [
                 {
                     "khms": "143000",
                     "last": "252.75",

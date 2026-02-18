@@ -782,6 +782,8 @@ class DomesticMarketAnalysis:
         fid_input_date_1: str,
         fid_input_date_2: str,
         fid_period_div_code: str,
+        fid_cond_mrkt_div_code_1: str | None = None,
+        fid_input_iscd_1: str | None = None,
     ) -> KisHttpResponse[BuySellVolumeByStockDaily]:
         """
         종목별일별매수매도체결량
@@ -792,6 +794,8 @@ class DomesticMarketAnalysis:
             fid_input_date_1 (str): FID 입력 날짜1 (from)
             fid_input_date_2 (str): FID 입력 날짜2 (to)
             fid_period_div_code (str): FID 기간 분류 코드 (D)
+            fid_cond_mrkt_div_code_1 (str | None): FID 조건 시장 분류 코드_1 (미지정 시 fid_cond_mrkt_div_code 사용)
+            fid_input_iscd_1 (str | None): FID 입력 종목코드_1 (미지정 시 fid_input_iscd 사용)
 
         Returns:
             KisHttpResponse[BuySellVolumeByStockDaily]: 종목별일별매수매도체결량 응답 객체
@@ -805,6 +809,10 @@ class DomesticMarketAnalysis:
             "FID_INPUT_DATE_1": fid_input_date_1,
             "FID_INPUT_DATE_2": fid_input_date_2,
             "FID_PERIOD_DIV_CODE": fid_period_div_code,
+            "FID_COND_MRKT_DIV_CODE_1": (
+                fid_cond_mrkt_div_code if fid_cond_mrkt_div_code_1 is None else fid_cond_mrkt_div_code_1
+            ),
+            "FID_INPUT_ISCD_1": fid_input_iscd if fid_input_iscd_1 is None else fid_input_iscd_1,
         }
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/inquire-daily-trade-volume", headers=headers, params=params

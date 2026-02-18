@@ -139,10 +139,20 @@ class ConclusionTrendItem(BaseModel):
     vpow: str = Field(title="체결강도", max_length=10)
 
 
+class ConclusionTrendMeta(BaseModel):
+    rsym: str = Field(title="실시간조회심볼", max_length=16)
+    zdiv: str = Field(title="소수점자리수", max_length=1)
+    stat: Optional[str] = Field(default=None, title="거래상태정보", max_length=20)
+    crec: Optional[str] = Field(default=None, title="현재조회종목수", max_length=6)
+    trec: Optional[str] = Field(default=None, title="전체조회종목수", max_length=6)
+    nrec: str = Field(title="RecordCount", max_length=4)
+
+
 class ConclusionTrend(BaseModel, KisHttpBody):
     """해외주식 체결추이"""
 
-    output1: Sequence[ConclusionTrendItem] = Field(default_factory=list)
+    output1: ConclusionTrendMeta = Field(title="응답상세1")
+    output2: Sequence[ConclusionTrendItem] = Field(default_factory=list, title="응답상세2")
 
 
 class StockMinuteChartItem1(BaseModel):
