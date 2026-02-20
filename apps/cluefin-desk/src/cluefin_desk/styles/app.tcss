@@ -1,0 +1,50 @@
+Screen {
+    layout: vertical;
+}
+
+#market-bar {
+    height: 1;
+    background: $surface;
+    dock: top;
+    padding: 0 1;
+}
+
+#screening-content {
+    height: 1fr;
+}
+
+#screening-tabs {
+    height: 1fr;
+}
+
+/* Stock Detail Screen */
+#detail-container {
+    layout: horizontal;
+    height: 1fr;
+}
+
+#detail-left {
+    width: 35;
+    height: 1fr;
+}
+
+#detail-right {
+    width: 1fr;
+    height: 1fr;
+}
+
+#price-chart {
+    height: 2fr;
+    border: solid $primary;
+}
+
+#indicator-panel {
+    height: 1fr;
+    border: solid $secondary;
+}
+
+#company-info {
+    height: 1fr;
+    border: solid $accent;
+    padding: 1;
+}
