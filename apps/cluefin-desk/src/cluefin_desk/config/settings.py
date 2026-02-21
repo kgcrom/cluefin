@@ -14,5 +14,8 @@ class Settings(BaseSettings):
     # KRX API settings
     krx_auth_key: Optional[str] = None
 
+    # DART API settings
+    dart_auth_key: Optional[str] = None
+
 
 settings = Settings()

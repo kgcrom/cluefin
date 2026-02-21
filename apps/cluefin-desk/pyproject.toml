@@ -16,6 +16,9 @@ dependencies = [
     "plotext>=5.2.8",
 ]
 
+[project.optional-dependencies]
+xbrl = ["cluefin-xbrl"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

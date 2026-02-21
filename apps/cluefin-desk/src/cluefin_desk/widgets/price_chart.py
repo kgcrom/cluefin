@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import plotext as plt
 from cluefin_ta import SMA
+from rich.text import Text
 from textual.widgets import Static
 
 
@@ -68,4 +69,4 @@ class PriceChartWidget(Static):
         plt.xticks(x_ticks, x_labels)
 
         chart_str = plt.build()
-        self.update(chart_str)
+        self.update(Text.from_ansi(chart_str))

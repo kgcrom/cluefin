@@ -359,10 +359,16 @@ dependencies = [
     { name = "textual" },
 ]
 
+[package.optional-dependencies]
+xbrl = [
+    { name = "cluefin-xbrl" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "cluefin-openapi", editable = "packages/cluefin-openapi" },
     { name = "cluefin-ta", editable = "packages/cluefin-ta" },
+    { name = "cluefin-xbrl", marker = "extra == 'xbrl'", editable = "packages/cluefin-xbrl" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "numpy", specifier = ">=1.24.0" },
     { name = "pandas", specifier = ">=2.0.0" },
@@ -371,6 +377,7 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.0.0" },
     { name = "textual", specifier = ">=1.0.0" },
 ]
+provides-extras = ["xbrl"]
 
 [[package]]
 name = "cluefin-openapi"

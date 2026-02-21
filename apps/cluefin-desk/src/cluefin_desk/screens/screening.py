@@ -1,16 +1,31 @@
+import asyncio
+
 from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical
 from textual.screen import Screen
-from textual.widgets import Footer, Header, TabbedContent, TabPane
+from textual.widgets import DataTable, Header, TabbedContent, TabPane
 
 from cluefin_desk.widgets.market_overview import MarketOverviewBar
+from cluefin_desk.widgets.nav_bar import NavBar
+from cluefin_desk.widgets.nav_footer import NavFooter
 from cluefin_desk.widgets.stock_table import StockScreeningTable
+
+TAB_CONFIG = [
+    ("상승률", "tab-gainers", "table-gainers"),
+    ("하락률", "tab-losers", "table-losers"),
+    ("거래량", "tab-volume", "table-volume"),
+    ("거래대금", "tab-value", "table-value"),
+    ("외인순매", "tab-foreigner", "table-foreigner"),
+    ("신고가", "tab-newhigh", "table-newhigh"),
+    ("급등/급락", "tab-volatility", "table-volatility"),
+    ("신용잔", "tab-margin", "table-margin"),
+]
 
 
 class ScreeningScreen(Screen):
-    """Main screening screen with tabbed stock rankings."""
+    """Screen 2: Rankings with 8 tabs."""
 
     BINDINGS = [
         Binding("r", "refresh", "Refresh"),
@@ -20,18 +35,18 @@ class ScreeningScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
+        yield NavBar(id="nav-bar")
         yield MarketOverviewBar(id="market-bar")
         with Vertical(id="screening-content"):
             with TabbedContent(id="screening-tabs"):
-                with TabPane("상승률", id="tab-gainers"):
-                    yield StockScreeningTable(id="table-gainers")
-                with TabPane("거래량", id="tab-volume"):
-                    yield StockScreeningTable(id="table-volume")
-                with TabPane("거래대금", id="tab-value"):
-                    yield StockScreeningTable(id="table-value")
-        yield Footer()
+                for tab_label, tab_id, table_id in TAB_CONFIG:
+                    with TabPane(tab_label, id=tab_id):
+                        yield StockScreeningTable(id=table_id)
+        yield NavFooter(active_screen_key="2")
 
     def on_mount(self) -> None:
+        nav = self.query_one("#nav-bar", NavBar)
+        nav.set_active("2")
         self.load_all_data()
 
     @work(thread=True)
@@ -40,8 +55,6 @@ class ScreeningScreen(Screen):
         self._load_screening_data()
 
     def _load_market_overview(self) -> None:
-        import asyncio
-
         fetcher = self.app.fetcher
         loop = asyncio.new_event_loop()
         try:
@@ -56,30 +69,40 @@ class ScreeningScreen(Screen):
     def _load_screening_data(self) -> None:
         screener = self.app.screener
 
-        gainers = screener.get_top_gainers()
-        table_gainers = self.query_one("#table-gainers", StockScreeningTable)
-        self.app.call_from_thread(table_gainers.load_data, gainers)
+        loaders = [
+            ("table-gainers", screener.get_top_gainers),
+            ("table-losers", screener.get_top_losers),
+            ("table-volume", screener.get_top_volume),
+            ("table-value", screener.get_top_value),
+            ("table-foreigner", screener.get_top_foreigner_net_buy),
+            ("table-newhigh", screener.get_new_high_price),
+            ("table-volatility", screener.get_price_volatility),
+            ("table-margin", screener.get_top_margin_ratio),
+        ]
 
-        volume = screener.get_top_volume()
-        table_volume = self.query_one("#table-volume", StockScreeningTable)
-        self.app.call_from_thread(table_volume.load_data, volume)
-
-        value = screener.get_top_value()
-        table_value = self.query_one("#table-value", StockScreeningTable)
-        self.app.call_from_thread(table_value.load_data, value)
+        for table_id, loader_fn in loaders:
+            try:
+                data = loader_fn()
+                table = self.query_one(f"#{table_id}", StockScreeningTable)
+                self.app.call_from_thread(table.load_data, data)
+            except Exception:
+                pass
 
     def action_refresh(self) -> None:
         self.load_all_data()
 
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        stock_code = str(event.row_key.value)
+        if stock_code:
+            from cluefin_desk.screens.stock_detail import StockDetailScreen
+
+            self.app.push_screen(StockDetailScreen(stock_code=stock_code))
+
     def action_select_stock(self) -> None:
         tabs = self.query_one("#screening-tabs", TabbedContent)
         active_tab_id = tabs.active
-        table_map = {
-            "tab-gainers": "#table-gainers",
-            "tab-volume": "#table-volume",
-            "tab-value": "#table-value",
-        }
-        table_id = table_map.get(active_tab_id, "#table-gainers")
+        table_map = {cfg[1]: f"#{cfg[2]}" for cfg in TAB_CONFIG}
+        table_id = table_map.get(active_tab_id, f"#{TAB_CONFIG[0][2]}")
         table = self.query_one(table_id, StockScreeningTable)
         stock_code = table.get_selected_stock_code()
         if stock_code:
