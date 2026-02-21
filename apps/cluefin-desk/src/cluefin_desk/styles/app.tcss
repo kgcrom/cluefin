@@ -63,6 +63,11 @@ Screen {
     height: 1fr;
 }
 
+#sector-select {
+    height: 3;
+    margin: 0 1;
+}
+
 #sector-table-container {
     height: 1fr;
     border: solid $primary;

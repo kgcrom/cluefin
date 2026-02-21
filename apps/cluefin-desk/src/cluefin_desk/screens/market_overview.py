@@ -5,11 +5,13 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
-from textual.widgets import DataTable, Header, Static
+from textual.widgets import DataTable, Header, Select, Static
 
 from cluefin_desk.widgets.market_overview import MarketOverviewBar
 from cluefin_desk.widgets.nav_bar import NavBar
 from cluefin_desk.widgets.nav_footer import NavFooter
+
+INDUSTRY_CODES = [("KOSPI", "001"), ("KOSDAQ", "101")]
 
 
 class MarketOverviewScreen(Screen):
@@ -26,6 +28,7 @@ class MarketOverviewScreen(Screen):
         yield NavBar(id="nav-bar")
         yield MarketOverviewBar(id="market-bar")
         with Vertical(id="market-overview-content"):
+            yield Select(INDUSTRY_CODES, value="001", id="sector-select")
             yield DataTable(id="sector-table-container")
             with Horizontal(id="top-movers-container"):
                 yield Static("Loading...", id="top-gainers-panel")
@@ -37,6 +40,10 @@ class MarketOverviewScreen(Screen):
         nav.set_active("1")
         self._setup_sector_table()
         self.load_all_data()
+
+    def on_select_changed(self, event: Select.Changed) -> None:
+        if event.select.id == "sector-select" and event.value != Select.BLANK:
+            self._reload_sector_data(str(event.value))
 
     def _setup_sector_table(self) -> None:
         table = self.query_one("#sector-table-container", DataTable)
@@ -55,8 +62,12 @@ class MarketOverviewScreen(Screen):
     @work(thread=True)
     def load_all_data(self) -> None:
         self._load_market_overview()
-        self._load_sector_data()
+        self._load_sector_data("001")
         self._load_top_movers()
+
+    @work(thread=True)
+    def _reload_sector_data(self, inds_cd: str) -> None:
+        self._load_sector_data(inds_cd)
 
     def _load_market_overview(self) -> None:
         fetcher = self.app.fetcher
@@ -70,11 +81,11 @@ class MarketOverviewScreen(Screen):
         bar = self.query_one("#market-bar", MarketOverviewBar)
         self.app.call_from_thread(bar.update_indices, kospi, kosdaq)
 
-    def _load_sector_data(self) -> None:
+    def _load_sector_data(self, inds_cd: str = "001") -> None:
         try:
             fetcher = self.app.fetcher
-            response = fetcher.get_all_industry_index()
-            items = response.body.all_inds_index
+            response = fetcher.get_all_industry_index(inds_cd=inds_cd)
+            items = response.body.all_inds_idex
             if not items:
                 return
 

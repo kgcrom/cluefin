@@ -144,7 +144,7 @@ class DomesticSectorAllIndustryIndexItem(BaseModel):
 class DomesticSectorAllIndustryIndex(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="전업종지수요청 응답")
 
-    all_inds_index: list[DomesticSectorAllIndustryIndexItem] = Field(
+    all_inds_idex: list[DomesticSectorAllIndustryIndexItem] = Field(
         default_factory=list, description="전업종지수 데이터"
     )
 

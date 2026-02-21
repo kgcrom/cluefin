@@ -276,7 +276,7 @@ class DomesticDataFetcher:
     # Sector / Industry
     # ──────────────────────────────────────
 
-    def get_all_industry_index(self, inds_cd: str = "0000"):
+    def get_all_industry_index(self, inds_cd: str = "001"):
         return self.kiwoom_client.sector.get_all_industry_index(inds_cd=inds_cd)
 
     def get_industry_current_price(self, mrkt_tp: str = "0001", inds_cd: str = "001"):

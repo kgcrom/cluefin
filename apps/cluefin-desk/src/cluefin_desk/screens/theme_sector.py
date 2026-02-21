@@ -132,7 +132,7 @@ class ThemeSectorScreen(Screen):
         try:
             fetcher = self.app.fetcher
             response = fetcher.get_all_industry_index()
-            items = response.body.all_inds_index
+            items = response.body.all_inds_idex
             if not items:
                 return
 
