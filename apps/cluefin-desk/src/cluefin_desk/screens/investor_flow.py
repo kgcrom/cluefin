@@ -1,5 +1,6 @@
 import asyncio
 
+from loguru import logger
 from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -93,8 +94,16 @@ class InvestorFlowScreen(Screen):
         try:
             fetcher = self.app.fetcher
             response = fetcher.get_top_foreigner_period_trading(trde_tp="1")
+            logger.debug(f"[INV] foreign API response status: {response.headers}")
             items = response.body.for_dt_trde_upper
+            logger.debug(f"[INV] foreign items count: {len(items)}")
             if not items:
+
+                def _update_empty():
+                    panel = self.query_one("#foreign-net-buy-panel", Static)
+                    panel.update("[bold]외국인 순매수 상위[/bold]\n\n  데이터 없음")
+
+                self.app.call_from_thread(_update_empty)
                 return
 
             def _update():
@@ -106,16 +115,29 @@ class InvestorFlowScreen(Screen):
 
             self.app.call_from_thread(_update)
         except Exception as e:
-            from loguru import logger
-
             logger.error(f"Failed to load foreign net buy: {e}")
+            err_msg = str(e)
+
+            def _update_error():
+                panel = self.query_one("#foreign-net-buy-panel", Static)
+                panel.update(f"[bold]외국인 순매수 상위[/bold]\n\n  로드 실패: {err_msg}")
+
+            self.app.call_from_thread(_update_error)
 
     def _load_institutional_net_buy(self) -> None:
         try:
             fetcher = self.app.fetcher
             response = fetcher.get_top_intraday_trading_by_investor(trde_tp="1", orgn_tp="1000")
+            logger.debug(f"[INV] institutional API response status: {response.headers}")
             items = response.body.opmr_invsr_trde_upper
+            logger.debug(f"[INV] institutional items count: {len(items)}")
             if not items:
+
+                def _update_empty():
+                    panel = self.query_one("#institutional-net-buy-panel", Static)
+                    panel.update("[bold]기관 순매수 상위[/bold]\n\n  데이터 없음")
+
+                self.app.call_from_thread(_update_empty)
                 return
 
             def _update():
@@ -127,15 +149,22 @@ class InvestorFlowScreen(Screen):
 
             self.app.call_from_thread(_update)
         except Exception as e:
-            from loguru import logger
-
             logger.error(f"Failed to load institutional net buy: {e}")
+            err_msg = str(e)
+
+            def _update_error():
+                panel = self.query_one("#institutional-net-buy-panel", Static)
+                panel.update(f"[bold]기관 순매수 상위[/bold]\n\n  로드 실패: {err_msg}")
+
+            self.app.call_from_thread(_update_error)
 
     def _load_program_trading(self) -> None:
         try:
             fetcher = self.app.fetcher
             response = fetcher.get_top_50_program_net_buy()
+            logger.debug(f"[INV] program trading API response status: {response.headers}")
             items = response.body.prm_netprps_upper_50
+            logger.debug(f"[INV] program trading items count: {len(items)}")
             if not items:
                 return
 
@@ -156,15 +185,15 @@ class InvestorFlowScreen(Screen):
 
             self.app.call_from_thread(_update)
         except Exception as e:
-            from loguru import logger
-
             logger.error(f"Failed to load program trading: {e}")
 
     def _load_sector_investor(self) -> None:
         try:
             fetcher = self.app.fetcher
             response = fetcher.get_industry_investor_net_buy()
+            logger.debug(f"[INV] sector investor API response status: {response.headers}")
             items = response.body.inds_netprps
+            logger.debug(f"[INV] sector investor items count: {len(items)}")
             if not items:
                 return
 
@@ -190,8 +219,6 @@ class InvestorFlowScreen(Screen):
 
             self.app.call_from_thread(_update)
         except Exception as e:
-            from loguru import logger
-
             logger.error(f"Failed to load sector investor: {e}")
 
     def action_refresh(self) -> None:
