@@ -1,0 +1,67 @@
+name: 기능 요청
+description: 새로운 기능이나 개선 사항을 제안해주세요.
+title: "[FEAT] "
+labels: ["enhancement"]
+body:
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 사전 체크리스트
+      options:
+        - label: 기존 이슈에서 동일한 기능이 요청된 적 없는지 확인했습니다.
+          required: true
+
+  - type: dropdown
+    id: package
+    attributes:
+      label: 영향 패키지
+      description: 기능이 추가될 패키지를 선택해주세요.
+      multiple: true
+      options:
+        - cluefin-openapi
+        - cluefin-ta
+        - cluefin-cli
+        - cluefin-desk
+        - cluefin-xbrl
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 설명
+      description: 제안하는 기능을 설명해주세요.
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: 동기
+      description: 이 기능이 왜 필요한지 설명해주세요.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: 제안하는 해결 방법
+      description: 기능을 어떻게 구현하면 좋을지 제안해주세요.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 대안
+      description: 고려한 대안이 있다면 설명해주세요.
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 추가 정보
+      description: 참고 자료, 스크린샷 등 추가 정보가 있다면 공유해주세요.
+    validations:
+      required: false

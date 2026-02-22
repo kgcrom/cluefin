@@ -1,0 +1,95 @@
+name: 버그 리포트
+description: 버그를 발견한 경우 사용해주세요.
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 사전 체크리스트
+      options:
+        - label: 기존 이슈에서 동일한 버그가 보고된 적 없는지 확인했습니다.
+          required: true
+        - label: 최신 버전에서도 동일한 문제가 발생하는지 확인했습니다.
+          required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: 버전
+      description: "`uv pip show cluefin-openapi` 등으로 확인한 패키지 버전을 입력해주세요."
+      placeholder: "예: cluefin-openapi 0.3.7"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: package
+    attributes:
+      label: 영향 패키지
+      description: 버그가 발생한 패키지를 선택해주세요.
+      multiple: true
+      options:
+        - cluefin-openapi
+        - cluefin-ta
+        - cluefin-cli
+        - cluefin-desk
+        - cluefin-xbrl
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 버그 설명
+      description: 어떤 버그인지 간결하게 설명해주세요.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 재현 절차
+      description: 버그를 재현할 수 있는 단계를 작성해주세요.
+      placeholder: |
+        1. `uv run python -c "from cluefin_openapi import ..."`
+        2. 특정 함수 호출
+        3. 에러 발생
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 기대 동작
+      description: 정상적으로 동작했을 때 기대하는 결과를 설명해주세요.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 실제 동작
+      description: 실제로 발생한 결과를 설명해주세요.
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 환경 정보
+      description: OS, Python, uv 버전 등 환경 정보를 입력해주세요.
+      placeholder: |
+        - OS: macOS 15.x / Ubuntu 24.04
+        - Python: 3.10.x
+        - uv: 0.x.x
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 에러 로그
+      description: 관련 에러 로그가 있다면 붙여넣어 주세요.
+      render: bash
+    validations:
+      required: false
