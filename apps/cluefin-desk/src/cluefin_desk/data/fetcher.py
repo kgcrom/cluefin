@@ -312,7 +312,7 @@ class DomesticDataFetcher:
 
     def get_theme_group(self):
         return self.kiwoom_client.theme.get_theme_group(
-            qry_tp="1",
+            qry_tp="0",
             date_tp="1",
             thema_nm="",
             flu_pl_amt_tp="1",
