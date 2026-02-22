@@ -364,34 +364,34 @@ class DomesticStockInfo:
 
     def get_price_volatility(
         self,
-        mrkt_tp: str,
-        flu_tp: str,
-        tm_tp: str,
+        mrkt_tp: Literal["000", "001", "101", "201"],
+        flu_tp: Literal["1", "2"],
+        tm_tp: Literal["1", "2"],
         tm: str,
-        trde_qty_tp: str,
-        stk_cnd: str,
-        crd_cnd: str,
-        pric_cnd: str,
-        updown_incls: str,
-        stex_tp: str,
+        trde_qty_tp: Literal["00000", "00010", "00050", "00100", "00150", "00200", "00300", "00500", "01000"],
+        stk_cnd: Literal["0", "1", "3", "5", "6", "7", "8"],
+        crd_cnd: Literal["0", "1", "2", "3", "4", "7", "9"],
+        pric_cnd: Literal["0", "1", "2", "3", "4", "5", "8"],
+        updown_incls: Literal["0", "1"],
+        stex_tp: Literal["1", "2", "3"],
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticStockInfoPriceVolatility]:
         """가격급등락요청
 
         Args:
-            mrkt_tp (str): 시장구분 (000:전체, 001:코스피, 101:코스닥, 201:코스피200)
-            flu_tp (str): 등락구분 (1:급등, 2:급락)
-            tm_tp (str): 시간구분 (1:분전, 2:일전)
-            tm (str): 시간 (분 혹은 일 입력)
-            trde_qty_tp (str): 거래량구분 (00000:전체조회, 00010:만주이상, 00050:5만주이상, 00100:10만주이상, 00150:15만주이상, 00200:20만주이상, 00300:30만주이상, 00500:50만주이상, 01000:백만주이상)
-            stk_cnd (str): 종목조건 (0:전체조회,1:관리종목제외, 3:우선주제외, 5:증100제외, 6:증100만보기, 7:증40만보기, 8:증30만보기)
-            crd_cnd (str): 신용조건 (0:전체조회, 1:신용융자A군, 2:신용융자B군, 3:신용융자C군, 4:신용융자D군, 9:신용융자전체)
-            pric_cnd (str): 가격조건 (0:전체조회, 1:1천원미만, 2:1천원~2천원, 3:2천원~3천원, 4:5천원~1만원, 5:1만원이상, 8:1천원이상)
-            updown_incls (str): 상하한포함 (0:미포함, 1:포함)
-            stex_tp (str): 거래소구분 (1:KRX, 2:NXT)
-            cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
-            next_key (str, optional): 다음키. Defaults to "".
+            mrkt_tp: 시장구분 (000:전체, 001:코스피, 101:코스닥, 201:코스피200)
+            flu_tp: 등락구분 (1:급등, 2:급락)
+            tm_tp: 시간구분 (1:분전, 2:일전)
+            tm: 시간 (분 혹은 일 입력)
+            trde_qty_tp: 거래량구분 (00000:전체조회, 00010:만주이상, 00050:5만주이상, 00100:10만주이상, 00150:15만주이상, 00200:20만주이상, 00300:30만주이상, 00500:50만주이상, 01000:백만주이상)
+            stk_cnd: 종목조건 (0:전체조회, 1:관리종목제외, 3:우선주제외, 5:증100제외, 6:증100만보기, 7:증40만보기, 8:증30만보기)
+            crd_cnd: 신용조건 (0:전체조회, 1:신용융자A군, 2:신용융자B군, 3:신용융자C군, 4:신용융자D군, 7:신용융자E군, 9:신용융자전체)
+            pric_cnd: 가격조건 (0:전체조회, 1:1천원미만, 2:1천원~2천원, 3:2천원~3천원, 4:5천원~1만원, 5:1만원이상, 8:1천원이상)
+            updown_incls: 상하한포함 (0:미포함, 1:포함)
+            stex_tp: 거래소구분 (1:KRX, 2:NXT, 3:통합)
+            cont_yn: 연속조회 여부. Defaults to "N".
+            next_key: 다음키. Defaults to "".
 
         Returns:
             KiwoomHttpResponse[DomesticStockInfoPriceVolatility]: 가격 급등락 응답
