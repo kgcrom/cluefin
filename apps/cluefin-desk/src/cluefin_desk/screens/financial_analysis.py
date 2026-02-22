@@ -1,7 +1,6 @@
 from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Vertical
 from textual.screen import Screen
 from textual.widgets import DataTable, Header, Static, TabbedContent, TabPane
 
