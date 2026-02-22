@@ -15,11 +15,11 @@ class DomesticTheme:
 
     def get_theme_group(
         self,
-        qry_tp: Literal[0, 1, 2],
+        qry_tp: Literal["0", "1", "2"],
         date_tp: str,
         thema_nm: str,
-        flu_pl_amt_tp: Literal[1, 2, 3, 4],
-        stex_tp: Literal[1, 2, 3],
+        flu_pl_amt_tp: Literal["1", "2", "3", "4"],
+        stex_tp: Literal["1", "2", "3"],
         stk_cd: str = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
@@ -66,7 +66,7 @@ class DomesticTheme:
     def get_theme_group_stocks(
         self,
         thema_grp_cd: str,
-        stex_tp: Literal[1, 2, 3],
+        stex_tp: Literal["1", "2", "3"],
         date_tp: str = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",

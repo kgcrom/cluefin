@@ -1,0 +1,229 @@
+Screen {
+    layout: vertical;
+}
+
+/* Navigation Bar */
+#nav-bar {
+    dock: top;
+    height: 1;
+    background: $surface;
+}
+
+/* Market Overview Bar */
+#market-bar {
+    height: 1;
+    background: $surface;
+    dock: top;
+    padding: 0 1;
+}
+
+/* Screening */
+#screening-content {
+    height: 1fr;
+}
+
+#screening-tabs {
+    height: 1fr;
+}
+
+/* Stock Detail Screen */
+#detail-container {
+    layout: horizontal;
+    height: 1fr;
+}
+
+#detail-left {
+    width: 35;
+    height: 1fr;
+}
+
+#detail-right {
+    width: 1fr;
+    height: 1fr;
+}
+
+#price-chart {
+    height: 2fr;
+    border: solid $primary;
+}
+
+#indicator-panel {
+    height: 1fr;
+    border: solid $secondary;
+}
+
+#company-info {
+    height: 1fr;
+    border: solid $accent;
+    padding: 1;
+}
+
+/* Market Overview Screen */
+#market-overview-content {
+    height: 1fr;
+}
+
+#sector-select {
+    height: 3;
+    margin: 0 1;
+}
+
+#sector-table-container {
+    height: 1fr;
+    border: solid $primary;
+}
+
+#top-movers-container {
+    layout: horizontal;
+    height: 12;
+}
+
+#top-gainers-panel {
+    width: 1fr;
+    height: 1fr;
+    border: solid red;
+    padding: 0 1;
+}
+
+#top-losers-panel {
+    width: 1fr;
+    height: 1fr;
+    border: solid dodgerblue;
+    padding: 0 1;
+}
+
+/* Theme & Sector Screen */
+#theme-sector-tabs {
+    height: 1fr;
+}
+
+#theme-content {
+    layout: horizontal;
+    height: 1fr;
+}
+
+#theme-group-list {
+    width: 35;
+    height: 1fr;
+    border: solid $primary;
+}
+
+#theme-stocks-table {
+    width: 1fr;
+    height: 1fr;
+    border: solid $secondary;
+}
+
+#sector-content {
+    layout: horizontal;
+    height: 1fr;
+}
+
+#sector-list {
+    width: 35;
+    height: 1fr;
+    border: solid $primary;
+}
+
+#sector-chart-panel {
+    width: 1fr;
+    height: 1fr;
+    border: solid $secondary;
+}
+
+/* ETF Analysis Screen */
+#etf-content {
+    height: 1fr;
+}
+
+#etf-price-table {
+    height: 2fr;
+    border: solid $primary;
+}
+
+#etf-return-table {
+    height: 1fr;
+    border: solid $secondary;
+}
+
+/* Investor Flow Screen */
+#investor-content {
+    height: 1fr;
+}
+
+#investor-top-container {
+    layout: horizontal;
+    height: 12;
+}
+
+#foreign-net-buy-panel {
+    width: 1fr;
+    height: 1fr;
+    border: solid $primary;
+    padding: 0 1;
+}
+
+#institutional-net-buy-panel {
+    width: 1fr;
+    height: 1fr;
+    border: solid $secondary;
+    padding: 0 1;
+}
+
+#program-trading-table {
+    height: 1fr;
+    border: solid $accent;
+}
+
+#sector-investor-table {
+    height: 1fr;
+    border: solid $primary;
+}
+
+/* Stock Detail Tabs */
+#detail-tabs {
+    height: 1fr;
+}
+
+#detail-chart-content {
+    layout: horizontal;
+    height: 1fr;
+}
+
+#investor-detail-table {
+    height: 1fr;
+}
+
+#broker-detail-content {
+    height: 1fr;
+    padding: 1;
+}
+
+#supply-detail-content {
+    height: 1fr;
+    padding: 1;
+}
+
+/* Financial Analysis Screen */
+#financial-tabs {
+    height: 1fr;
+}
+
+#financial-statement-content {
+    height: 1fr;
+    padding: 1;
+}
+
+#disclosure-list-content {
+    height: 1fr;
+}
+
+#major-shareholder-content {
+    height: 1fr;
+    padding: 1;
+}
+
+#share-change-content {
+    height: 1fr;
+    padding: 1;
+}

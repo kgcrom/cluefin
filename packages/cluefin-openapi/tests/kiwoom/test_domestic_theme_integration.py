@@ -10,11 +10,11 @@ from cluefin_openapi.kiwoom._domestic_theme_types import (
 @pytest.mark.integration
 def test_get_theme_group(client: Client):
     response = client.theme.get_theme_group(
-        qry_tp=1,
+        qry_tp="1",
         date_tp="1",
         thema_nm="test",
-        flu_pl_amt_tp=1,
-        stex_tp=1,
+        flu_pl_amt_tp="1",
+        stex_tp="1",
     )
     assert response.headers is not None
     assert response.body is not None
