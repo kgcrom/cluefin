@@ -90,6 +90,89 @@ class OnmarketBondIndexRealtimeExecutionItem(BaseModel):
     bond_avrg_frdl_ytm_val: str = Field(title="평균선도YTM")
 
 
+class OnmarketBondRealtimeOrderbookItem(BaseModel):
+    """장내채권 실시간 호가 - H0BJASP0.
+
+    WebSocket 메시지의 데이터 부분을 파싱한 모델입니다.
+    데이터는 "^" 구분자로 34개 필드가 구분되어 전달됩니다.
+    5단계 매도/매수 호가(수익률, 가격, 잔량) 및 총잔량을 포함합니다.
+    """
+
+    stnd_iscd: str = Field(title="표준종목코드")
+    stck_cntg_hour: str = Field(title="주식체결시간")
+    askp_ert1: str = Field(title="매도호가수익률1")
+    bidp_ert1: str = Field(title="매수호가수익률1")
+    askp1: str = Field(title="매도호가1")
+    bidp1: str = Field(title="매수호가1")
+    askp_rsqn1: str = Field(title="매도호가잔량1")
+    bidp_rsqn1: str = Field(title="매수호가잔량1")
+    askp_ert2: str = Field(title="매도호가수익률2")
+    bidp_ert2: str = Field(title="매수호가수익률2")
+    askp2: str = Field(title="매도호가2")
+    bidp2: str = Field(title="매수호가2")
+    askp_rsqn2: str = Field(title="매도호가잔량2")
+    bidp_rsqn2: str = Field(title="매수호가잔량2")
+    askp_ert3: str = Field(title="매도호가수익률3")
+    bidp_ert3: str = Field(title="매수호가수익률3")
+    askp3: str = Field(title="매도호가3")
+    bidp3: str = Field(title="매수호가3")
+    askp_rsqn3: str = Field(title="매도호가잔량3")
+    bidp_rsqn3: str = Field(title="매수호가잔량3")
+    askp_ert4: str = Field(title="매도호가수익률4")
+    bidp_ert4: str = Field(title="매수호가수익률4")
+    askp4: str = Field(title="매도호가4")
+    bidp4: str = Field(title="매수호가4")
+    askp_rsqn4: str = Field(title="매도호가잔량4")
+    bidp_rsqn4: str = Field(title="매수호가잔량4")
+    askp_ert5: str = Field(title="매도호가수익률5")
+    bidp_ert5: str = Field(title="매수호가수익률5")
+    askp5: str = Field(title="매도호가5")
+    bidp5: str = Field(title="매수호가5")
+    askp_rsqn5: str = Field(title="매도호가잔량5")
+    bidp_rsqn5: str = Field(title="매수호가잔량5")
+    total_askp_rsqn: str = Field(title="총매도호가잔량")
+    total_bidp_rsqn: str = Field(title="총매수호가잔량")
+
+
+# 필드 순서 리스트 (WebSocket 데이터 파싱용) - 채권 호가
+BOND_ORDERBOOK_FIELD_NAMES: list[str] = [
+    "stnd_iscd",
+    "stck_cntg_hour",
+    "askp_ert1",
+    "bidp_ert1",
+    "askp1",
+    "bidp1",
+    "askp_rsqn1",
+    "bidp_rsqn1",
+    "askp_ert2",
+    "bidp_ert2",
+    "askp2",
+    "bidp2",
+    "askp_rsqn2",
+    "bidp_rsqn2",
+    "askp_ert3",
+    "bidp_ert3",
+    "askp3",
+    "bidp3",
+    "askp_rsqn3",
+    "bidp_rsqn3",
+    "askp_ert4",
+    "bidp_ert4",
+    "askp4",
+    "bidp4",
+    "askp_rsqn4",
+    "bidp_rsqn4",
+    "askp_ert5",
+    "bidp_ert5",
+    "askp5",
+    "bidp5",
+    "askp_rsqn5",
+    "bidp_rsqn5",
+    "total_askp_rsqn",
+    "total_bidp_rsqn",
+]
+
+
 # 필드 순서 리스트 (WebSocket 데이터 파싱용) - 채권지수 체결가
 BOND_INDEX_EXECUTION_FIELD_NAMES: list[str] = [
     "nmix_id",

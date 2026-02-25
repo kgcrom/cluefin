@@ -8,8 +8,10 @@ from cluefin_openapi.kis._onmarket_bond_realtime_quote import OnmarketBondRealti
 from cluefin_openapi.kis._onmarket_bond_realtime_quote_types import (
     BOND_EXECUTION_FIELD_NAMES,
     BOND_INDEX_EXECUTION_FIELD_NAMES,
+    BOND_ORDERBOOK_FIELD_NAMES,
     OnmarketBondIndexRealtimeExecutionItem,
     OnmarketBondRealtimeExecutionItem,
+    OnmarketBondRealtimeOrderbookItem,
 )
 from cluefin_openapi.kis._socket_client import SocketClient
 
@@ -275,6 +277,224 @@ class TestBondExecutionFieldNames:
         """Test that all field names exist in the model."""
         model_fields = set(OnmarketBondRealtimeExecutionItem.model_fields.keys())
         field_names_set = set(BOND_EXECUTION_FIELD_NAMES)
+        assert field_names_set == model_fields
+
+
+# ============================================================
+# Bond Orderbook Tests (H0BJASP0)
+# ============================================================
+
+
+@pytest.fixture
+def sample_bond_orderbook_data() -> list[str]:
+    """Generate sample bond orderbook data (34 fields)."""
+    return [
+        "KR103502GA34",  # stnd_iscd
+        "093000",  # stck_cntg_hour
+        "3.500",  # askp_ert1
+        "3.510",  # bidp_ert1
+        "10050",  # askp1
+        "10040",  # bidp1
+        "5000",  # askp_rsqn1
+        "3000",  # bidp_rsqn1
+        "3.490",  # askp_ert2
+        "3.520",  # bidp_ert2
+        "10060",  # askp2
+        "10030",  # bidp2
+        "4000",  # askp_rsqn2
+        "2500",  # bidp_rsqn2
+        "3.480",  # askp_ert3
+        "3.530",  # bidp_ert3
+        "10070",  # askp3
+        "10020",  # bidp3
+        "3500",  # askp_rsqn3
+        "2000",  # bidp_rsqn3
+        "3.470",  # askp_ert4
+        "3.540",  # bidp_ert4
+        "10080",  # askp4
+        "10010",  # bidp4
+        "3000",  # askp_rsqn4
+        "1500",  # bidp_rsqn4
+        "3.460",  # askp_ert5
+        "3.550",  # bidp_ert5
+        "10090",  # askp5
+        "10000",  # bidp5
+        "2500",  # askp_rsqn5
+        "1000",  # bidp_rsqn5
+        "18000",  # total_askp_rsqn
+        "10000",  # total_bidp_rsqn
+    ]
+
+
+class TestTrIdOrderbookConstant:
+    """Test TR_ID_ORDERBOOK constant."""
+
+    def test_tr_id_orderbook_constant(self):
+        """Test TR_ID_ORDERBOOK constant value."""
+        assert OnmarketBondRealtimeQuote.TR_ID_ORDERBOOK == "H0BJASP0"
+
+
+class TestSubscribeBondOrderbook:
+    """Test subscribe_orderbook method."""
+
+    @pytest.mark.asyncio
+    async def test_subscribe_orderbook_calls_socket_client(self, realtime_quote, mock_socket_client):
+        """Test that subscribe_orderbook calls socket_client.subscribe with correct args."""
+        await realtime_quote.subscribe_orderbook("KR103502GA34")
+
+        mock_socket_client.subscribe.assert_called_once_with("H0BJASP0", "KR103502GA34")
+
+    @pytest.mark.asyncio
+    async def test_subscribe_orderbook_raises_error_in_dev_env(self, mock_socket_client_dev):
+        """Test that subscribe_orderbook raises ValueError in dev environment."""
+        realtime_quote = OnmarketBondRealtimeQuote(mock_socket_client_dev)
+
+        with pytest.raises(ValueError) as exc_info:
+            await realtime_quote.subscribe_orderbook("KR103502GA34")
+
+        assert "운영 서버(prod)에서만 사용 가능" in str(exc_info.value)
+        assert "dev" in str(exc_info.value)
+
+
+class TestUnsubscribeBondOrderbook:
+    """Test unsubscribe_orderbook method."""
+
+    @pytest.mark.asyncio
+    async def test_unsubscribe_orderbook_calls_socket_client(self, realtime_quote, mock_socket_client):
+        """Test that unsubscribe_orderbook calls socket_client.unsubscribe with correct args."""
+        await realtime_quote.unsubscribe_orderbook("KR103502GA34")
+
+        mock_socket_client.unsubscribe.assert_called_once_with("H0BJASP0", "KR103502GA34")
+
+    @pytest.mark.asyncio
+    async def test_unsubscribe_orderbook_raises_error_in_dev_env(self, mock_socket_client_dev):
+        """Test that unsubscribe_orderbook raises ValueError in dev environment."""
+        realtime_quote = OnmarketBondRealtimeQuote(mock_socket_client_dev)
+
+        with pytest.raises(ValueError) as exc_info:
+            await realtime_quote.unsubscribe_orderbook("KR103502GA34")
+
+        assert "운영 서버(prod)에서만 사용 가능" in str(exc_info.value)
+        assert "dev" in str(exc_info.value)
+
+
+class TestParseBondOrderbookData:
+    """Test parse_orderbook_data method."""
+
+    def test_parse_orderbook_data_returns_model(self, sample_bond_orderbook_data):
+        """Test that parse_orderbook_data returns list of OnmarketBondRealtimeOrderbookItem."""
+        result = OnmarketBondRealtimeQuote.parse_orderbook_data(sample_bond_orderbook_data)
+        assert isinstance(result, list)
+        assert len(result) == 1
+        assert isinstance(result[0], OnmarketBondRealtimeOrderbookItem)
+
+    def test_parse_orderbook_data_field_values(self, sample_bond_orderbook_data):
+        """Test that parsed data has correct field values."""
+        result = OnmarketBondRealtimeQuote.parse_orderbook_data(sample_bond_orderbook_data)
+
+        assert result[0].stnd_iscd == "KR103502GA34"
+        assert result[0].stck_cntg_hour == "093000"
+        assert result[0].askp_ert1 == "3.500"
+        assert result[0].bidp_ert1 == "3.510"
+        assert result[0].askp1 == "10050"
+        assert result[0].bidp1 == "10040"
+        assert result[0].askp_rsqn1 == "5000"
+        assert result[0].bidp_rsqn1 == "3000"
+        assert result[0].askp5 == "10090"
+        assert result[0].bidp5 == "10000"
+        assert result[0].askp_rsqn5 == "2500"
+        assert result[0].bidp_rsqn5 == "1000"
+        assert result[0].total_askp_rsqn == "18000"
+        assert result[0].total_bidp_rsqn == "10000"
+
+    def test_parse_orderbook_data_insufficient_fields_raises_error(self):
+        """Test that insufficient fields raises ValueError."""
+        short_data = ["KR103502GA34", "093000", "3.500"]  # Only 3 fields
+
+        with pytest.raises(ValueError) as exc_info:
+            OnmarketBondRealtimeQuote.parse_orderbook_data(short_data)
+
+        assert "Expected at least 34 fields, got 3" in str(exc_info.value)
+
+    def test_parse_orderbook_data_empty_list_raises_error(self):
+        """Test that empty list raises ValueError."""
+        with pytest.raises(ValueError) as exc_info:
+            OnmarketBondRealtimeQuote.parse_orderbook_data([])
+
+        assert "Expected at least 34 fields, got 0" in str(exc_info.value)
+
+    def test_parse_orderbook_data_batched_5_records(self, sample_bond_orderbook_data):
+        """Test parsing 5 batched records (5 × 34 = 170 fields)."""
+        batched_data = []
+        for i in range(5):
+            record = sample_bond_orderbook_data.copy()
+            # Vary askp1 field to distinguish records
+            record[4] = str(10050 + i * 10)
+            batched_data.extend(record)
+
+        result = OnmarketBondRealtimeQuote.parse_orderbook_data(batched_data)
+
+        assert isinstance(result, list)
+        assert len(result) == 5
+        for i, item in enumerate(result):
+            assert isinstance(item, OnmarketBondRealtimeOrderbookItem)
+            assert item.askp1 == str(10050 + i * 10)
+
+    def test_parse_orderbook_data_single_record_with_extra_fields(self, sample_bond_orderbook_data):
+        """Test single record with extra fields (34 + 3 = 37 fields) - forward compatibility."""
+        data = sample_bond_orderbook_data + ["extra1", "extra2", "extra3"]
+
+        result = OnmarketBondRealtimeQuote.parse_orderbook_data(data)
+
+        assert isinstance(result, list)
+        assert len(result) == 1
+        # Extra fields should be ignored, first 34 used
+        assert result[0].stnd_iscd == "KR103502GA34"
+        assert result[0].total_bidp_rsqn == "10000"
+
+    def test_parse_orderbook_data_large_batch(self):
+        """Test parsing large batch (20 × 34 = 680 fields)."""
+        data = ["value"] * (20 * 34)
+
+        result = OnmarketBondRealtimeQuote.parse_orderbook_data(data)
+
+        assert isinstance(result, list)
+        assert len(result) == 20
+
+
+class TestOnmarketBondRealtimeOrderbookItem:
+    """Test OnmarketBondRealtimeOrderbookItem Pydantic model."""
+
+    def test_model_field_count(self):
+        """Test that model has exactly 34 fields."""
+        assert len(BOND_ORDERBOOK_FIELD_NAMES) == 34
+        assert len(OnmarketBondRealtimeOrderbookItem.model_fields) == 34
+
+    def test_model_validation_from_dict(self, sample_bond_orderbook_data):
+        """Test model can be created from dictionary."""
+        field_dict = dict(zip(BOND_ORDERBOOK_FIELD_NAMES, sample_bond_orderbook_data, strict=False))
+        item = OnmarketBondRealtimeOrderbookItem.model_validate(field_dict)
+
+        assert item.stnd_iscd == "KR103502GA34"
+        assert item.askp1 == "10050"
+        assert item.total_askp_rsqn == "18000"
+
+
+class TestBondOrderbookFieldNames:
+    """Test BOND_ORDERBOOK_FIELD_NAMES constant."""
+
+    def test_field_names_count(self):
+        """Test that field names list has 34 entries."""
+        assert len(BOND_ORDERBOOK_FIELD_NAMES) == 34
+
+    def test_field_names_no_duplicates(self):
+        """Test that there are no duplicate field names."""
+        assert len(BOND_ORDERBOOK_FIELD_NAMES) == len(set(BOND_ORDERBOOK_FIELD_NAMES))
+
+    def test_field_names_match_model_fields(self):
+        """Test that all field names exist in the model."""
+        model_fields = set(OnmarketBondRealtimeOrderbookItem.model_fields.keys())
+        field_names_set = set(BOND_ORDERBOOK_FIELD_NAMES)
         assert field_names_set == model_fields
 
 

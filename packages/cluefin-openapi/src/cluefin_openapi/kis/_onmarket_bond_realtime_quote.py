@@ -1,6 +1,6 @@
 """장내채권 실시간시세 WebSocket API.
 
-WebSocket을 통해 일반채권 실시간 체결가 및 채권지수 실시간 체결가 데이터를 구독합니다.
+WebSocket을 통해 일반채권 실시간 체결가, 실시간 호가, 채권지수 실시간 체결가 데이터를 구독합니다.
 
 References:
 - https://apiportal.koreainvestment.com/apiservice/apiservice-domestic-bond-real
@@ -12,8 +12,10 @@ from typing import List
 from ._onmarket_bond_realtime_quote_types import (
     BOND_EXECUTION_FIELD_NAMES,
     BOND_INDEX_EXECUTION_FIELD_NAMES,
+    BOND_ORDERBOOK_FIELD_NAMES,
     OnmarketBondIndexRealtimeExecutionItem,
     OnmarketBondRealtimeExecutionItem,
+    OnmarketBondRealtimeOrderbookItem,
 )
 from ._socket_client import SocketClient
 
@@ -39,7 +41,7 @@ def _require_prod_env(func):
 class OnmarketBondRealtimeQuote:
     """장내채권 실시간시세 WebSocket API.
 
-    SocketClient를 사용하여 일반채권 실시간 체결가 및 채권지수 실시간 체결가 데이터를 구독합니다.
+    SocketClient를 사용하여 일반채권 실시간 체결가, 실시간 호가, 채권지수 실시간 체결가 데이터를 구독합니다.
 
     Note:
         이 API는 운영 서버(prod)에서만 사용 가능합니다. 모의투자는 미지원됩니다.
@@ -61,6 +63,9 @@ class OnmarketBondRealtimeQuote:
             # Subscribe to real-time bond execution data
             await realtime.subscribe_execution("KR103502GA34")
 
+            # Subscribe to real-time bond orderbook data
+            await realtime.subscribe_orderbook("KR103502GA34")
+
             # Subscribe to real-time bond index execution data
             await realtime.subscribe_index_execution("BOND_IDX_001")
 
@@ -70,6 +75,10 @@ class OnmarketBondRealtimeQuote:
                     executions = realtime.parse_execution_data(event.data["values"])
                     for execution in executions:
                         print(f"Price: {execution.stck_prpr}, Yield: {execution.bond_cntg_ert}")
+                elif event.event_type == "data" and event.tr_id == OnmarketBondRealtimeQuote.TR_ID_ORDERBOOK:
+                    orderbooks = realtime.parse_orderbook_data(event.data["values"])
+                    for ob in orderbooks:
+                        print(f"Ask1: {ob.askp1}, Bid1: {ob.bidp1}")
                 elif event.event_type == "data" and event.tr_id == OnmarketBondRealtimeQuote.TR_ID_INDEX_EXECUTION:
                     index_data = realtime.parse_index_execution_data(event.data["values"])
                     for idx in index_data:
@@ -79,6 +88,7 @@ class OnmarketBondRealtimeQuote:
 
     # Transaction IDs
     TR_ID_EXECUTION = "H0BJCNT0"  # 일반채권 실시간 체결가
+    TR_ID_ORDERBOOK = "H0BJASP0"  # 일반채권 실시간 호가
     TR_ID_INDEX_EXECUTION = "H0BICNT0"  # 채권지수 실시간 체결가
 
     def __init__(self, socket_client: SocketClient):
@@ -167,6 +177,88 @@ class OnmarketBondRealtimeQuote:
             # Create field dictionary and validate
             field_dict = dict(zip(BOND_EXECUTION_FIELD_NAMES, record_data, strict=False))
             item = OnmarketBondRealtimeExecutionItem.model_validate(field_dict)
+            results.append(item)
+
+        return results
+
+    @_require_prod_env
+    async def subscribe_orderbook(self, bond_code: str) -> None:
+        """Subscribe to real-time bond orderbook data.
+
+        Args:
+            bond_code: Bond code (e.g., "KR103502GA34")
+        """
+        await self.socket_client.subscribe(self.TR_ID_ORDERBOOK, bond_code)
+
+    @_require_prod_env
+    async def unsubscribe_orderbook(self, bond_code: str) -> None:
+        """Unsubscribe from real-time bond orderbook data.
+
+        Args:
+            bond_code: Bond code to unsubscribe
+        """
+        await self.socket_client.unsubscribe(self.TR_ID_ORDERBOOK, bond_code)
+
+    @staticmethod
+    def parse_orderbook_data(data: List[str]) -> List[OnmarketBondRealtimeOrderbookItem]:
+        """Parse WebSocket data into list of OnmarketBondRealtimeOrderbookItem.
+
+        WebSocket data is received as a list of string values separated by "^" delimiter.
+        The API may send batched updates (multiple records concatenated).
+        This method parses ALL records and returns them as a list.
+
+        Args:
+            data: List of string values from WebSocket message.
+                  - Single record: 34 fields
+                  - Batched: N×34 fields
+                  - With extra fields: 34+ per record (forward compatible)
+
+        Returns:
+            List of parsed OnmarketBondRealtimeOrderbookItem models.
+            Always returns a list, even for single records.
+
+        Raises:
+            ValueError: If data has insufficient fields (< 34)
+
+        Example:
+            ```python
+            # Single record
+            data = ["KR103502GA34", "093000", "3.500", ...]  # 34 fields
+            items = parse_orderbook_data(data)
+            assert len(items) == 1
+
+            # Batched records
+            data = [...] * 5  # 170 fields = 5 records
+            items = parse_orderbook_data(data)
+            assert len(items) == 5
+
+            for item in items:
+                print(f"Ask1: {item.askp1}, Bid1: {item.bidp1}")
+            ```
+        """
+        field_count = len(BOND_ORDERBOOK_FIELD_NAMES)
+
+        # Validate minimum field count
+        if len(data) < field_count:
+            raise ValueError(
+                f"Expected at least {field_count} fields, got {len(data)}. First field: {data[0] if data else 'empty'}"
+            )
+
+        # Calculate number of complete records
+        num_records = len(data) // field_count
+
+        # Parse all complete records
+        results = []
+        for i in range(num_records):
+            start_idx = i * field_count
+            end_idx = start_idx + field_count
+
+            # Slice to expected field count (handles extra fields per record)
+            record_data = data[start_idx:end_idx]
+
+            # Create field dictionary and validate
+            field_dict = dict(zip(BOND_ORDERBOOK_FIELD_NAMES, record_data, strict=False))
+            item = OnmarketBondRealtimeOrderbookItem.model_validate(field_dict)
             results.append(item)
 
         return results
