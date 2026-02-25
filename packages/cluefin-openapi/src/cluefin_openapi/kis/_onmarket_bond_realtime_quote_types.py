@@ -59,3 +59,57 @@ BOND_EXECUTION_FIELD_NAMES: list[str] = [
     "prdy_vol",
     "cntg_type_cls_code",
 ]
+
+
+class OnmarketBondIndexRealtimeExecutionItem(BaseModel):
+    """채권지수 실시간 체결가 - H0BICNT0.
+
+    WebSocket 메시지의 데이터 부분을 파싱한 모델입니다.
+    데이터는 "^" 구분자로 20개 필드가 구분되어 전달됩니다.
+    """
+
+    nmix_id: str = Field(title="지수ID")
+    stnd_date1: str = Field(title="기준일자1")
+    trnm_hour: str = Field(title="전송시간")
+    totl_ernn_nmix_oprc: str = Field(title="총수익지수시가지수")
+    totl_ernn_nmix_hgpr: str = Field(title="총수익지수최고가")
+    totl_ernn_nmix_lwpr: str = Field(title="총수익지수최저가")
+    totl_ernn_nmix: str = Field(title="총수익지수")
+    prdy_totl_ernn_nmix: str = Field(title="전일총수익지수")
+    totl_ernn_nmix_prdy_vrss: str = Field(title="총수익지수전일대비")
+    totl_ernn_nmix_prdy_vrss_sign: str = Field(title="총수익지수전일대비부호")
+    totl_ernn_nmix_prdy_ctrt: str = Field(title="총수익지수전일대비율")
+    clen_prc_nmix: str = Field(title="순가격지수")
+    mrkt_prc_nmix: str = Field(title="시장가격지수")
+    bond_call_rnvs_nmix: str = Field(title="Call재투자지수")
+    bond_zero_rnvs_nmix: str = Field(title="Zero재투자지수")
+    bond_futs_thpr: str = Field(title="선물이론가격")
+    bond_avrg_drtn_val: str = Field(title="평균듀레이션")
+    bond_avrg_cnvx_val: str = Field(title="평균컨벡서티")
+    bond_avrg_ytm_val: str = Field(title="평균YTM")
+    bond_avrg_frdl_ytm_val: str = Field(title="평균선도YTM")
+
+
+# 필드 순서 리스트 (WebSocket 데이터 파싱용) - 채권지수 체결가
+BOND_INDEX_EXECUTION_FIELD_NAMES: list[str] = [
+    "nmix_id",
+    "stnd_date1",
+    "trnm_hour",
+    "totl_ernn_nmix_oprc",
+    "totl_ernn_nmix_hgpr",
+    "totl_ernn_nmix_lwpr",
+    "totl_ernn_nmix",
+    "prdy_totl_ernn_nmix",
+    "totl_ernn_nmix_prdy_vrss",
+    "totl_ernn_nmix_prdy_vrss_sign",
+    "totl_ernn_nmix_prdy_ctrt",
+    "clen_prc_nmix",
+    "mrkt_prc_nmix",
+    "bond_call_rnvs_nmix",
+    "bond_zero_rnvs_nmix",
+    "bond_futs_thpr",
+    "bond_avrg_drtn_val",
+    "bond_avrg_cnvx_val",
+    "bond_avrg_ytm_val",
+    "bond_avrg_frdl_ytm_val",
+]
