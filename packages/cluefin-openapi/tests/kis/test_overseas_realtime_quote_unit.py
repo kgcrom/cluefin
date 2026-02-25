@@ -44,12 +44,12 @@ def sample_orderbook_data() -> list[str]:
     # Create a list with 71 items
     # Using specific values to help identification
     data = ["val_" + str(i) for i in range(71)]
-    
+
     # Set critical fields to match expected types if they had specific validation (currently all str)
     # rsym (0), symb (1)
     data[0] = "RNASAAPL"
     data[1] = "AAPL"
-    
+
     return data
 
 
@@ -97,10 +97,10 @@ class TestSubscribe:
     async def test_subscribe_raises_error_in_dev_env(self, mock_socket_client_dev):
         """Test that subscribe raises ValueError in dev environment."""
         quote = OverseasRealtimeQuote(mock_socket_client_dev)
-        
+
         with pytest.raises(ValueError) as exc_info:
             await quote.subscribe("AAPL", "NAS")
-            
+
         assert "운영 서버(prod)에서만 사용 가능" in str(exc_info.value)
 
 
@@ -118,15 +118,15 @@ class TestUnsubscribe:
         """Test unsubscribe with specific service type."""
         await realtime_quote.unsubscribe("AAPL", "NAS", service_type="D")
         mock_socket_client.unsubscribe.assert_called_once_with("HDFSASP0", "DNASAAPL")
-        
+
     @pytest.mark.asyncio
     async def test_unsubscribe_raises_error_in_dev_env(self, mock_socket_client_dev):
         """Test that unsubscribe raises ValueError in dev environment."""
         quote = OverseasRealtimeQuote(mock_socket_client_dev)
-        
+
         with pytest.raises(ValueError) as exc_info:
             await quote.unsubscribe("AAPL", "NAS")
-            
+
         assert "운영 서버(prod)에서만 사용 가능" in str(exc_info.value)
 
 
@@ -143,7 +143,7 @@ class TestParseData:
     def test_parse_data_field_values(self, sample_orderbook_data):
         """Test that parsed data has correct field values."""
         result = OverseasRealtimeQuote.parse_data(sample_orderbook_data)
-        
+
         assert result[0].rsym == "RNASAAPL"
         assert result[0].symb == "AAPL"
         # Check last field (index 70)
@@ -152,18 +152,18 @@ class TestParseData:
     def test_parse_data_insufficient_fields_raises_error(self):
         """Test that insufficient fields raises ValueError."""
         short_data = ["val"] * 70  # Only 70 fields
-        
+
         with pytest.raises(ValueError) as exc_info:
             OverseasRealtimeQuote.parse_data(short_data)
-            
+
         assert "Expected at least 71 fields, got 70" in str(exc_info.value)
 
     def test_parse_data_batched_records(self, sample_orderbook_data):
         """Test parsing batched records (multiple of 71)."""
         batched_data = sample_orderbook_data * 2  # 142 fields
-        
+
         result = OverseasRealtimeQuote.parse_data(batched_data)
-        
+
         assert isinstance(result, list)
         assert len(result) == 2
         assert result[0].rsym == "RNASAAPL"

@@ -65,9 +65,7 @@ class OverseasRealtimeQuote:
         return f"{service_type}{market_code}{stock_code}"
 
     @_require_prod_env
-    async def subscribe(
-        self, stock_code: str, market_code: str, service_type: str = "R"
-    ) -> None:
+    async def subscribe(self, stock_code: str, market_code: str, service_type: str = "R") -> None:
         """Subscribe to real-time orderbook data.
 
         Args:
@@ -81,9 +79,7 @@ class OverseasRealtimeQuote:
         await self.socket_client.subscribe(self.TR_ID, tr_key)
 
     @_require_prod_env
-    async def unsubscribe(
-        self, stock_code: str, market_code: str, service_type: str = "R"
-    ) -> None:
+    async def unsubscribe(self, stock_code: str, market_code: str, service_type: str = "R") -> None:
         """Unsubscribe from real-time orderbook data.
 
         Args:
