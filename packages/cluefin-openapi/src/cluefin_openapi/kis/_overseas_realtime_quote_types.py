@@ -292,3 +292,67 @@ OVERSEAS_EXECUTION_FIELD_NAMES: list[str] = [
     "strn",
     "mtyp",
 ]
+
+
+class OverseasRealtimeExecutionNotificationItem(BaseModel):
+    """해외주식 실시간체결통보[실시간-009] - H0GSCNI0.
+
+    WebSocket 메시지의 데이터 부분을 파싱한 모델입니다.
+    데이터는 "^" 구분자로 25개 필드가 구분되어 전달됩니다.
+    """
+
+    cust_id: str = Field(title="고객ID")
+    acnt_no: str = Field(title="계좌번호")
+    oder_no: str = Field(title="주문번호")
+    ooder_no: str = Field(title="원주문번호")
+    seln_byov_cls: str = Field(title="매도매수구분")
+    rctf_cls: str = Field(title="정정구분")
+    oder_kind2: str = Field(title="주문종류2")
+    stck_shrn_iscd: str = Field(title="주식단축종목코드")
+    cntg_qty: str = Field(title="체결수량")
+    cntg_unpr: str = Field(title="체결단가")
+    stck_cntg_hour: str = Field(title="주식체결시간")
+    rfus_yn: str = Field(title="거부여부")
+    cntg_yn: str = Field(title="체결여부")
+    acpt_yn: str = Field(title="접수여부")
+    brnc_no: str = Field(title="지점번호")
+    oder_qty: str = Field(title="주문수량")
+    acnt_name: str = Field(title="계좌명")
+    cntg_isnm: str = Field(title="체결종목명")
+    oder_cond: str = Field(title="해외종목구분")
+    debt_gb: str = Field(title="담보유형코드")
+    debt_date: str = Field(title="담보대출일자")
+    start_tm: str = Field(title="분할매수매도시작시간")
+    end_tm: str = Field(title="분할매수매도종료시간")
+    tm_div_tp: str = Field(title="시간분할타입유형")
+    cntg_unpr12: str = Field(title="체결단가12")
+
+
+# 필드 순서 리스트 (WebSocket 데이터 파싱용) - 해외주식 실시간체결통보
+OVERSEAS_EXECUTION_NOTIFICATION_FIELD_NAMES: list[str] = [
+    "cust_id",
+    "acnt_no",
+    "oder_no",
+    "ooder_no",
+    "seln_byov_cls",
+    "rctf_cls",
+    "oder_kind2",
+    "stck_shrn_iscd",
+    "cntg_qty",
+    "cntg_unpr",
+    "stck_cntg_hour",
+    "rfus_yn",
+    "cntg_yn",
+    "acpt_yn",
+    "brnc_no",
+    "oder_qty",
+    "acnt_name",
+    "cntg_isnm",
+    "oder_cond",
+    "debt_gb",
+    "debt_date",
+    "start_tm",
+    "end_tm",
+    "tm_div_tp",
+    "cntg_unpr12",
+]

@@ -8,9 +8,11 @@ from cluefin_openapi.kis._overseas_realtime_quote import OverseasRealtimeQuote
 from cluefin_openapi.kis._overseas_realtime_quote_types import (
     OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES,
     OVERSEAS_EXECUTION_FIELD_NAMES,
+    OVERSEAS_EXECUTION_NOTIFICATION_FIELD_NAMES,
     OVERSEAS_ORDERBOOK_FIELD_NAMES,
     OverseasRealtimeDelayedOrderbookItem,
     OverseasRealtimeExecutionItem,
+    OverseasRealtimeExecutionNotificationItem,
     OverseasRealtimeOrderbookItem,
 )
 from cluefin_openapi.kis._socket_client import SocketClient
@@ -612,4 +614,235 @@ class TestOverseasDelayedOrderbookFieldNames:
         """Test that all field names exist in the model."""
         model_fields = set(OverseasRealtimeDelayedOrderbookItem.model_fields.keys())
         field_names_set = set(OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES)
+        assert field_names_set == model_fields
+
+
+# ============================================================================
+# 해외주식 실시간체결통보 [실시간-009] Tests
+# ============================================================================
+
+
+@pytest.fixture
+def sample_execution_notification_data() -> list[str]:
+    """Generate sample overseas execution notification data (25 fields)."""
+    return [
+        "user01",  # cust_id
+        "50012345-01",  # acnt_no
+        "0000012345",  # oder_no
+        "0000000000",  # ooder_no
+        "02",  # seln_byov_cls (매수)
+        "0",  # rctf_cls (정상)
+        "2",  # oder_kind2 (지정가)
+        "AAPL",  # stck_shrn_iscd
+        "10",  # cntg_qty
+        "182.5000",  # cntg_unpr
+        "103000",  # stck_cntg_hour
+        "0",  # rfus_yn (정상)
+        "2",  # cntg_yn (체결)
+        "1",  # acpt_yn (주문접수)
+        "0001",  # brnc_no
+        "10",  # oder_qty
+        "테스트계좌",  # acnt_name
+        "APPLE INC",  # cntg_isnm
+        "6",  # oder_cond (NASDAQ)
+        "10",  # debt_gb (현금)
+        "20260225",  # debt_date
+        "100000",  # start_tm
+        "153000",  # end_tm
+        "00",  # tm_div_tp (시간직접설정)
+        "182.5000",  # cntg_unpr12
+    ]
+
+
+class TestSubscribeExecutionNotification:
+    """Test subscribe_execution_notification method."""
+
+    @pytest.mark.asyncio
+    async def test_subscribe_calls_socket_client(self, realtime_quote, mock_socket_client):
+        """Test that subscribe_execution_notification calls socket_client.subscribe with correct args."""
+        await realtime_quote.subscribe_execution_notification("user01")
+
+        mock_socket_client.subscribe.assert_called_once_with("H0GSCNI0", "user01")
+
+    @pytest.mark.asyncio
+    async def test_subscribe_raises_error_in_dev_env(self, mock_socket_client_dev):
+        """Test that subscribe_execution_notification raises ValueError in dev environment."""
+        realtime_quote = OverseasRealtimeQuote(mock_socket_client_dev)
+
+        with pytest.raises(ValueError) as exc_info:
+            await realtime_quote.subscribe_execution_notification("user01")
+
+        assert "운영 서버(prod)에서만 사용 가능" in str(exc_info.value)
+        assert "dev" in str(exc_info.value)
+
+
+class TestUnsubscribeExecutionNotification:
+    """Test unsubscribe_execution_notification method."""
+
+    @pytest.mark.asyncio
+    async def test_unsubscribe_calls_socket_client(self, realtime_quote, mock_socket_client):
+        """Test that unsubscribe_execution_notification calls socket_client.unsubscribe with correct args."""
+        await realtime_quote.unsubscribe_execution_notification("user01")
+
+        mock_socket_client.unsubscribe.assert_called_once_with("H0GSCNI0", "user01")
+
+    @pytest.mark.asyncio
+    async def test_unsubscribe_raises_error_in_dev_env(self, mock_socket_client_dev):
+        """Test that unsubscribe_execution_notification raises ValueError in dev environment."""
+        realtime_quote = OverseasRealtimeQuote(mock_socket_client_dev)
+
+        with pytest.raises(ValueError) as exc_info:
+            await realtime_quote.unsubscribe_execution_notification("user01")
+
+        assert "운영 서버(prod)에서만 사용 가능" in str(exc_info.value)
+        assert "dev" in str(exc_info.value)
+
+
+class TestParseExecutionNotificationData:
+    """Test parse_execution_notification_data method."""
+
+    def test_parse_returns_model(self, sample_execution_notification_data):
+        """Test that parse_execution_notification_data returns list of OverseasRealtimeExecutionNotificationItem."""
+        result = OverseasRealtimeQuote.parse_execution_notification_data(sample_execution_notification_data)
+        assert isinstance(result, list)
+        assert len(result) == 1
+        assert isinstance(result[0], OverseasRealtimeExecutionNotificationItem)
+
+    def test_parse_field_values(self, sample_execution_notification_data):
+        """Test that parsed data has correct field values."""
+        result = OverseasRealtimeQuote.parse_execution_notification_data(sample_execution_notification_data)
+
+        assert result[0].cust_id == "user01"
+        assert result[0].acnt_no == "50012345-01"
+        assert result[0].oder_no == "0000012345"
+        assert result[0].ooder_no == "0000000000"
+        assert result[0].seln_byov_cls == "02"
+        assert result[0].rctf_cls == "0"
+        assert result[0].oder_kind2 == "2"
+        assert result[0].stck_shrn_iscd == "AAPL"
+        assert result[0].cntg_qty == "10"
+        assert result[0].cntg_unpr == "182.5000"
+        assert result[0].stck_cntg_hour == "103000"
+        assert result[0].rfus_yn == "0"
+        assert result[0].cntg_yn == "2"
+        assert result[0].acpt_yn == "1"
+        assert result[0].brnc_no == "0001"
+        assert result[0].oder_qty == "10"
+        assert result[0].acnt_name == "테스트계좌"
+        assert result[0].cntg_isnm == "APPLE INC"
+        assert result[0].oder_cond == "6"
+        assert result[0].debt_gb == "10"
+        assert result[0].debt_date == "20260225"
+        assert result[0].start_tm == "100000"
+        assert result[0].end_tm == "153000"
+        assert result[0].tm_div_tp == "00"
+        assert result[0].cntg_unpr12 == "182.5000"
+
+    def test_parse_batched_5_records(self, sample_execution_notification_data):
+        """Test parsing 5 batched records (5 × 25 = 125 fields)."""
+        batched_data = []
+        for i in range(5):
+            record = sample_execution_notification_data.copy()
+            record[2] = f"000001234{i}"  # Vary oder_no
+            batched_data.extend(record)
+
+        result = OverseasRealtimeQuote.parse_execution_notification_data(batched_data)
+
+        assert isinstance(result, list)
+        assert len(result) == 5
+        for i, item in enumerate(result):
+            assert isinstance(item, OverseasRealtimeExecutionNotificationItem)
+            assert item.oder_no == f"000001234{i}"
+
+    def test_parse_insufficient_fields_raises_error(self):
+        """Test that insufficient fields raises ValueError."""
+        short_data = ["user01", "50012345-01", "0000012345"]
+
+        with pytest.raises(ValueError) as exc_info:
+            OverseasRealtimeQuote.parse_execution_notification_data(short_data)
+
+        assert "Expected at least 25 fields, got 3" in str(exc_info.value)
+
+    def test_parse_empty_list_raises_error(self):
+        """Test that empty list raises ValueError."""
+        with pytest.raises(ValueError) as exc_info:
+            OverseasRealtimeQuote.parse_execution_notification_data([])
+
+        assert "Expected at least 25 fields, got 0" in str(exc_info.value)
+
+    def test_parse_single_record_with_extra_fields(self, sample_execution_notification_data):
+        """Test single record with extra fields (25 + 3 = 28 fields) - forward compatibility."""
+        data = sample_execution_notification_data + ["extra1", "extra2", "extra3"]
+
+        result = OverseasRealtimeQuote.parse_execution_notification_data(data)
+
+        assert isinstance(result, list)
+        assert len(result) == 1
+        assert result[0].cust_id == "user01"
+        assert result[0].cntg_unpr12 == "182.5000"
+
+    def test_parse_large_batch(self):
+        """Test parsing large batch (20 × 25 = 500 fields)."""
+        data = ["value"] * (20 * 25)
+
+        result = OverseasRealtimeQuote.parse_execution_notification_data(data)
+
+        assert isinstance(result, list)
+        assert len(result) == 20
+
+
+class TestOverseasRealtimeExecutionNotificationItem:
+    """Test OverseasRealtimeExecutionNotificationItem Pydantic model."""
+
+    def test_model_field_count(self):
+        """Test that model has exactly 25 fields."""
+        assert len(OVERSEAS_EXECUTION_NOTIFICATION_FIELD_NAMES) == 25
+        assert len(OverseasRealtimeExecutionNotificationItem.model_fields) == 25
+
+    def test_model_validation_from_dict(self, sample_execution_notification_data):
+        """Test model can be created from dictionary."""
+        field_dict = dict(
+            zip(OVERSEAS_EXECUTION_NOTIFICATION_FIELD_NAMES, sample_execution_notification_data, strict=False)
+        )
+        item = OverseasRealtimeExecutionNotificationItem.model_validate(field_dict)
+
+        assert item.cust_id == "user01"
+        assert item.stck_shrn_iscd == "AAPL"
+        assert item.cntg_unpr12 == "182.5000"
+
+    def test_field_names_list_order(self, sample_execution_notification_data):
+        """Test that OVERSEAS_EXECUTION_NOTIFICATION_FIELD_NAMES order matches model fields."""
+        field_dict = dict(
+            zip(OVERSEAS_EXECUTION_NOTIFICATION_FIELD_NAMES, sample_execution_notification_data, strict=False)
+        )
+        item = OverseasRealtimeExecutionNotificationItem.model_validate(field_dict)
+
+        # First field
+        assert OVERSEAS_EXECUTION_NOTIFICATION_FIELD_NAMES[0] == "cust_id"
+        assert item.cust_id == "user01"
+
+        # Last field
+        assert OVERSEAS_EXECUTION_NOTIFICATION_FIELD_NAMES[24] == "cntg_unpr12"
+        assert item.cntg_unpr12 == "182.5000"
+
+
+class TestOverseasExecutionNotificationFieldNames:
+    """Test OVERSEAS_EXECUTION_NOTIFICATION_FIELD_NAMES constant."""
+
+    def test_field_names_count(self):
+        """Test that field names list has 25 entries."""
+        assert len(OVERSEAS_EXECUTION_NOTIFICATION_FIELD_NAMES) == 25
+
+    def test_field_names_all_strings(self):
+        """Test that all field names are strings."""
+        assert all(isinstance(name, str) for name in OVERSEAS_EXECUTION_NOTIFICATION_FIELD_NAMES)
+
+    def test_field_names_no_duplicates(self):
+        """Test that there are no duplicate field names."""
+        assert len(OVERSEAS_EXECUTION_NOTIFICATION_FIELD_NAMES) == len(set(OVERSEAS_EXECUTION_NOTIFICATION_FIELD_NAMES))
+
+    def test_field_names_match_model_fields(self):
+        """Test that all field names exist in the model."""
+        model_fields = set(OverseasRealtimeExecutionNotificationItem.model_fields.keys())
+        field_names_set = set(OVERSEAS_EXECUTION_NOTIFICATION_FIELD_NAMES)
         assert field_names_set == model_fields

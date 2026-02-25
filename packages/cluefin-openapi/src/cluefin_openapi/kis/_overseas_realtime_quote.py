@@ -12,9 +12,11 @@ from typing import List
 from ._overseas_realtime_quote_types import (
     OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES,
     OVERSEAS_EXECUTION_FIELD_NAMES,
+    OVERSEAS_EXECUTION_NOTIFICATION_FIELD_NAMES,
     OVERSEAS_ORDERBOOK_FIELD_NAMES,
     OverseasRealtimeDelayedOrderbookItem,
     OverseasRealtimeExecutionItem,
+    OverseasRealtimeExecutionNotificationItem,
     OverseasRealtimeOrderbookItem,
 )
 from ._socket_client import SocketClient
@@ -51,6 +53,7 @@ class OverseasRealtimeQuote:
     TR_ID = "HDFSASP0"  # 해외주식 실시간호가 (실전 전용)
     TR_ID_EXECUTION = "HDFSCNT0"  # 해외주식 실시간지연체결가
     TR_ID_DELAYED_ORDERBOOK = "HDFSASP1"  # 해외주식 지연호가(아시아)
+    TR_ID_EXECUTION_NOTIFICATION = "H0GSCNI0"  # 해외주식 실시간체결통보
 
     def __init__(self, socket_client: SocketClient):
         """Initialize OverseasRealtimeQuote.
@@ -264,6 +267,74 @@ class OverseasRealtimeQuote:
             # Create field dictionary and validate
             field_dict = dict(zip(OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES, record_data, strict=False))
             item = OverseasRealtimeDelayedOrderbookItem.model_validate(field_dict)
+            results.append(item)
+
+        return results
+
+    @_require_prod_env
+    async def subscribe_execution_notification(self, hts_id: str) -> None:
+        """Subscribe to real-time execution notification.
+
+        Args:
+            hts_id: HTS ID for execution notification subscription
+        """
+        await self.socket_client.subscribe(self.TR_ID_EXECUTION_NOTIFICATION, hts_id)
+
+    @_require_prod_env
+    async def unsubscribe_execution_notification(self, hts_id: str) -> None:
+        """Unsubscribe from real-time execution notification.
+
+        Args:
+            hts_id: HTS ID to unsubscribe
+        """
+        await self.socket_client.unsubscribe(self.TR_ID_EXECUTION_NOTIFICATION, hts_id)
+
+    @staticmethod
+    def parse_execution_notification_data(
+        data: List[str],
+    ) -> List[OverseasRealtimeExecutionNotificationItem]:
+        """Parse WebSocket data into list of OverseasRealtimeExecutionNotificationItem.
+
+        WebSocket data is received as a list of string values separated by "^" delimiter.
+        The API may send batched updates (multiple records concatenated).
+        This method parses ALL records and returns them as a list.
+
+        Args:
+            data: List of string values from WebSocket message.
+                  - Single record: 25 fields
+                  - Batched: N×25 fields
+                  - With extra fields: 25+ per record (forward compatible)
+
+        Returns:
+            List of parsed OverseasRealtimeExecutionNotificationItem models.
+            Always returns a list, even for single records.
+
+        Raises:
+            ValueError: If data has insufficient fields (< 25)
+        """
+        field_count = len(OVERSEAS_EXECUTION_NOTIFICATION_FIELD_NAMES)
+
+        # Validate minimum field count
+        if len(data) < field_count:
+            raise ValueError(
+                f"Expected at least {field_count} fields, got {len(data)}. First field: {data[0] if data else 'empty'}"
+            )
+
+        # Calculate number of complete records
+        num_records = len(data) // field_count
+
+        # Parse all complete records
+        results = []
+        for i in range(num_records):
+            start_idx = i * field_count
+            end_idx = start_idx + field_count
+
+            # Slice to expected field count (handles extra fields per record)
+            record_data = data[start_idx:end_idx]
+
+            # Create field dictionary and validate
+            field_dict = dict(zip(OVERSEAS_EXECUTION_NOTIFICATION_FIELD_NAMES, record_data, strict=False))
+            item = OverseasRealtimeExecutionNotificationItem.model_validate(field_dict)
             results.append(item)
 
         return results
