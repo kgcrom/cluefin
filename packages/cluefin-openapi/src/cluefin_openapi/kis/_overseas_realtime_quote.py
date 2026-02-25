@@ -1,8 +1,126 @@
-from cluefin_openapi.kis._http_client import HttpClient
+"""해외주식 실시간시세 WebSocket API.
+
+WebSocket을 통해 해외주식 실시간 호가 데이터를 구독합니다.
+
+References:
+- 해외주식 실시간호가 API 문서
+"""
+
+from functools import wraps
+from typing import List
+
+from ._overseas_realtime_quote_types import (
+    OVERSEAS_ORDERBOOK_FIELD_NAMES,
+    OverseasRealtimeOrderbookItem,
+)
+from ._socket_client import SocketClient
+
+
+def _require_prod_env(func):
+    """Decorator that validates production environment before method execution.
+
+    Raises:
+        ValueError: If socket client is not connected to production environment
+    """
+
+    @wraps(func)
+    async def wrapper(self, *args, **kwargs):
+        if self.socket_client.env != "prod":
+            raise ValueError(
+                f"해외주식 실시간 시세는 운영 서버(prod)에서만 사용 가능합니다. 현재 환경: {self.socket_client.env}"
+            )
+        return await func(self, *args, **kwargs)
+
+    return wrapper
 
 
 class OverseasRealtimeQuote:
-    """해외주식 실시간시세"""
+    """해외주식 실시간시세 WebSocket API.
 
-    def __init__(self, client: HttpClient):
-        self.client = client
+    SocketClient를 사용하여 실시간 시세 데이터를 구독합니다.
+    """
+
+    # Transaction IDs
+    TR_ID = "HDFSASP0"  # 해외주식 실시간호가 (실전 전용)
+
+    def __init__(self, socket_client: SocketClient):
+        """Initialize OverseasRealtimeQuote.
+
+        Args:
+            socket_client: Connected SocketClient instance
+        """
+        self.socket_client = socket_client
+
+    def _generate_tr_key(self, stock_code: str, market_code: str, service_type: str) -> str:
+        """Generate TR Key (R거래소명종목코드) based on service type.
+
+        Args:
+            stock_code: Symbol code (e.g. AAPL)
+            market_code: Market code (e.g. NAS, NYS, AMS, ... or BAQ, BAY, BAA ...)
+            service_type: Service type. "R": Regular/Day, "D": US Night
+
+        Returns:
+            TR Key string (e.g. RNASAAPL)
+        """
+        return f"{service_type}{market_code}{stock_code}"
+
+    @_require_prod_env
+    async def subscribe(self, stock_code: str, market_code: str, service_type: str = "R") -> None:
+        """Subscribe to real-time orderbook data.
+
+        Args:
+            stock_code: Stock code (e.g., "AAPL")
+            market_code: Market code (e.g., "NAS", "NYS", "HKS", etc.)
+            service_type: Service type indicator ("R" or "D", default "R")
+                          - "R": Regular market / US Day market
+                          - "D": US Night market
+        """
+        tr_key = self._generate_tr_key(stock_code, market_code, service_type)
+        await self.socket_client.subscribe(self.TR_ID, tr_key)
+
+    @_require_prod_env
+    async def unsubscribe(self, stock_code: str, market_code: str, service_type: str = "R") -> None:
+        """Unsubscribe from real-time orderbook data.
+
+        Args:
+            stock_code: Stock code to unsubscribe
+            market_code: Market code
+            service_type: Service type ("R" or "D")
+        """
+        tr_key = self._generate_tr_key(stock_code, market_code, service_type)
+        await self.socket_client.unsubscribe(self.TR_ID, tr_key)
+
+    @staticmethod
+    def parse_data(data: List[str]) -> List[OverseasRealtimeOrderbookItem]:
+        """Parse WebSocket data into list of OverseasRealtimeOrderbookItem.
+
+        Args:
+            data: List of string values from WebSocket message.
+                  - Single record: 71 fields
+
+        Returns:
+            List of parsed OverseasRealtimeOrderbookItem models.
+        """
+        field_count = len(OVERSEAS_ORDERBOOK_FIELD_NAMES)
+
+        # Validate minimum field count
+        if len(data) < field_count:
+            raise ValueError(
+                f"Expected at least {field_count} fields, got {len(data)}. First field: {data[0] if data else 'empty'}"
+            )
+
+        # Calculate number of complete records
+        num_records = len(data) // field_count
+
+        results = []
+        for i in range(num_records):
+            start_idx = i * field_count
+            end_idx = start_idx + field_count
+
+            record_data = data[start_idx:end_idx]
+
+            field_dict = dict(zip(OVERSEAS_ORDERBOOK_FIELD_NAMES, record_data, strict=False))
+            item = OverseasRealtimeOrderbookItem.model_validate(field_dict)
+            results.append(item)
+
+        return results

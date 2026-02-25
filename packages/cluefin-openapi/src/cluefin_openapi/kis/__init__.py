@@ -18,6 +18,11 @@ from cluefin_openapi.kis._exceptions import (
     KISValidationError,
 )
 from cluefin_openapi.kis._http_client import HttpClient
+from cluefin_openapi.kis._overseas_realtime_quote import OverseasRealtimeQuote
+from cluefin_openapi.kis._overseas_realtime_quote_types import (
+    OVERSEAS_ORDERBOOK_FIELD_NAMES,
+    OverseasRealtimeOrderbookItem,
+)
 from cluefin_openapi.kis._socket_client import SocketClient, SubscriptionType, WebSocketEvent, WebSocketMessage
 from cluefin_openapi.kis._token_manager import TokenManager
 
@@ -27,6 +32,9 @@ __all__ = [
     "DomesticRealtimeQuote",
     "EXECUTION_FIELD_NAMES",
     "ORDERBOOK_FIELD_NAMES",
+    "OVERSEAS_ORDERBOOK_FIELD_NAMES",
+    "OverseasRealtimeOrderbookItem",
+    "OverseasRealtimeQuote",
     "HttpClient",
     "SocketClient",
     "SubscriptionType",
