@@ -226,3 +226,69 @@ OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES: list[str] = [
     "dbid1",
     "dask1",
 ]
+
+
+class OverseasRealtimeExecutionItem(BaseModel):
+    """해외주식 실시간지연체결가[실시간-007] - HDFSCNT0.
+
+    WebSocket 메시지의 데이터 부분을 파싱한 모델입니다.
+    데이터는 "^" 구분자로 26개 필드가 구분되어 전달됩니다.
+    """
+
+    rsym: str = Field(title="실시간종목코드")
+    symb: str = Field(title="종목코드")
+    zdiv: str = Field(title="소수점자리수")
+    tymd: str = Field(title="현지영업일자")
+    xymd: str = Field(title="현지일자")
+    xhms: str = Field(title="현지시간")
+    kymd: str = Field(title="한국일자")
+    khms: str = Field(title="한국시간")
+    open: str = Field(title="시가")
+    high: str = Field(title="고가")
+    low: str = Field(title="저가")
+    last: str = Field(title="현재가")
+    sign: str = Field(title="대비구분")
+    diff: str = Field(title="전일대비")
+    rate: str = Field(title="등락율")
+    pbid: str = Field(title="매수호가")
+    pask: str = Field(title="매도호가")
+    vbid: str = Field(title="매수잔량")
+    vask: str = Field(title="매도잔량")
+    evol: str = Field(title="체결량")
+    tvol: str = Field(title="거래량")
+    tamt: str = Field(title="거래대금")
+    bivl: str = Field(title="매도체결량")
+    asvl: str = Field(title="매수체결량")
+    strn: str = Field(title="체결강도")
+    mtyp: str = Field(title="시장구분")
+
+
+# 필드 순서 리스트 (WebSocket 데이터 파싱용) - 해외주식 실시간지연체결가
+OVERSEAS_EXECUTION_FIELD_NAMES: list[str] = [
+    "rsym",
+    "symb",
+    "zdiv",
+    "tymd",
+    "xymd",
+    "xhms",
+    "kymd",
+    "khms",
+    "open",
+    "high",
+    "low",
+    "last",
+    "sign",
+    "diff",
+    "rate",
+    "pbid",
+    "pask",
+    "vbid",
+    "vask",
+    "evol",
+    "tvol",
+    "tamt",
+    "bivl",
+    "asvl",
+    "strn",
+    "mtyp",
+]

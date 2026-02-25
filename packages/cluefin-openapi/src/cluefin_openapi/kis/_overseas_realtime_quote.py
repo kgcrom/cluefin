@@ -1,6 +1,6 @@
 """해외주식 실시간시세 WebSocket API.
 
-WebSocket을 통해 해외주식 실시간 호가 및 지연호가(아시아) 데이터를 구독합니다.
+WebSocket을 통해 해외주식 실시간 호가, 지연호가(아시아), 실시간지연체결가 데이터를 구독합니다.
 
 References:
 - https://apiportal.koreainvestment.com/apiservice/apiservice-oversea-stock-real
@@ -11,8 +11,10 @@ from typing import List
 
 from ._overseas_realtime_quote_types import (
     OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES,
+    OVERSEAS_EXECUTION_FIELD_NAMES,
     OVERSEAS_ORDERBOOK_FIELD_NAMES,
     OverseasRealtimeDelayedOrderbookItem,
+    OverseasRealtimeExecutionItem,
     OverseasRealtimeOrderbookItem,
 )
 from ._socket_client import SocketClient
@@ -39,7 +41,7 @@ def _require_prod_env(func):
 class OverseasRealtimeQuote:
     """해외주식 실시간시세 WebSocket API.
 
-    SocketClient를 사용하여 해외주식 실시간 호가 및 지연호가(아시아) 데이터를 구독합니다.
+    SocketClient를 사용하여 해외주식 실시간 호가, 지연호가(아시아), 실시간지연체결가 데이터를 구독합니다.
 
     Note:
         이 API는 운영 서버(prod)에서만 사용 가능합니다. 모의투자는 미지원됩니다.
@@ -47,6 +49,7 @@ class OverseasRealtimeQuote:
 
     # Transaction IDs
     TR_ID = "HDFSASP0"  # 해외주식 실시간호가 (실전 전용)
+    TR_ID_EXECUTION = "HDFSCNT0"  # 해외주식 실시간지연체결가
     TR_ID_DELAYED_ORDERBOOK = "HDFSASP1"  # 해외주식 지연호가(아시아)
 
     def __init__(self, socket_client: SocketClient):
@@ -127,6 +130,73 @@ class OverseasRealtimeQuote:
 
             field_dict = dict(zip(OVERSEAS_ORDERBOOK_FIELD_NAMES, record_data, strict=False))
             item = OverseasRealtimeOrderbookItem.model_validate(field_dict)
+            results.append(item)
+
+        return results
+
+    @_require_prod_env
+    async def subscribe_execution(self, tr_key: str) -> None:
+        """Subscribe to real-time delayed execution data.
+
+        Args:
+            tr_key: Transaction key (e.g., "DNASAAPL")
+                    Format: D + market code (3 chars) + stock code
+        """
+        await self.socket_client.subscribe(self.TR_ID_EXECUTION, tr_key)
+
+    @_require_prod_env
+    async def unsubscribe_execution(self, tr_key: str) -> None:
+        """Unsubscribe from real-time delayed execution data.
+
+        Args:
+            tr_key: Transaction key to unsubscribe
+        """
+        await self.socket_client.unsubscribe(self.TR_ID_EXECUTION, tr_key)
+
+    @staticmethod
+    def parse_execution_data(data: List[str]) -> List[OverseasRealtimeExecutionItem]:
+        """Parse WebSocket data into list of OverseasRealtimeExecutionItem.
+
+        WebSocket data is received as a list of string values separated by "^" delimiter.
+        The API may send batched updates (multiple records concatenated).
+        This method parses ALL records and returns them as a list.
+
+        Args:
+            data: List of string values from WebSocket message.
+                  - Single record: 26 fields
+                  - Batched: N×26 fields
+                  - With extra fields: 26+ per record (forward compatible)
+
+        Returns:
+            List of parsed OverseasRealtimeExecutionItem models.
+            Always returns a list, even for single records.
+
+        Raises:
+            ValueError: If data has insufficient fields (< 26)
+        """
+        field_count = len(OVERSEAS_EXECUTION_FIELD_NAMES)
+
+        # Validate minimum field count
+        if len(data) < field_count:
+            raise ValueError(
+                f"Expected at least {field_count} fields, got {len(data)}. First field: {data[0] if data else 'empty'}"
+            )
+
+        # Calculate number of complete records
+        num_records = len(data) // field_count
+
+        # Parse all complete records
+        results = []
+        for i in range(num_records):
+            start_idx = i * field_count
+            end_idx = start_idx + field_count
+
+            # Slice to expected field count (handles extra fields per record)
+            record_data = data[start_idx:end_idx]
+
+            # Create field dictionary and validate
+            field_dict = dict(zip(OVERSEAS_EXECUTION_FIELD_NAMES, record_data, strict=False))
+            item = OverseasRealtimeExecutionItem.model_validate(field_dict)
             results.append(item)
 
         return results
