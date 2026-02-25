@@ -1,3 +1,11 @@
+"""해외주식 실시간시세 타입 정의.
+
+WebSocket을 통해 수신되는 해외주식 실시간 시세 데이터의 Pydantic 모델을 정의합니다.
+
+References:
+- https://apiportal.koreainvestment.com/apiservice/apiservice-oversea-stock-real
+"""
+
 from pydantic import BaseModel, Field
 
 
@@ -169,4 +177,52 @@ OVERSEAS_ORDERBOOK_FIELD_NAMES = [
     "vask10",
     "dbid10",
     "dask10",
+]
+
+
+class OverseasRealtimeDelayedOrderbookItem(BaseModel):
+    """해외주식 지연호가(아시아)[실시간-008] - HDFSASP1.
+
+    WebSocket 메시지의 데이터 부분을 파싱한 모델입니다.
+    데이터는 "^" 구분자로 17개 필드가 구분되어 전달됩니다.
+    """
+
+    rsym: str = Field(title="실시간종목코드")
+    symb: str = Field(title="종목코드")
+    zdiv: str = Field(title="소수점자리수")
+    xymd: str = Field(title="현지일자")
+    xhms: str = Field(title="현지시간")
+    kymd: str = Field(title="한국일자")
+    khms: str = Field(title="한국시간")
+    bvol: str = Field(title="매수총잔량")
+    avol: str = Field(title="매도총잔량")
+    bdvl: str = Field(title="매수총잔량대비")
+    advl: str = Field(title="매도총잔량대비")
+    pbid1: str = Field(title="매수호가1")
+    pask1: str = Field(title="매도호가1")
+    vbid1: str = Field(title="매수잔량1")
+    vask1: str = Field(title="매도잔량1")
+    dbid1: str = Field(title="매수잔량대비1")
+    dask1: str = Field(title="매도잔량대비1")
+
+
+# 필드 순서 리스트 (WebSocket 데이터 파싱용) - 해외주식 지연호가(아시아)
+OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES: list[str] = [
+    "rsym",
+    "symb",
+    "zdiv",
+    "xymd",
+    "xhms",
+    "kymd",
+    "khms",
+    "bvol",
+    "avol",
+    "bdvl",
+    "advl",
+    "pbid1",
+    "pask1",
+    "vbid1",
+    "vask1",
+    "dbid1",
+    "dask1",
 ]

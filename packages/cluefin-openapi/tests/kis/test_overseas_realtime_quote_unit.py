@@ -6,7 +6,9 @@ import pytest
 
 from cluefin_openapi.kis._overseas_realtime_quote import OverseasRealtimeQuote
 from cluefin_openapi.kis._overseas_realtime_quote_types import (
+    OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES,
     OVERSEAS_ORDERBOOK_FIELD_NAMES,
+    OverseasRealtimeDelayedOrderbookItem,
     OverseasRealtimeOrderbookItem,
 )
 from cluefin_openapi.kis._socket_client import SocketClient
@@ -41,16 +43,34 @@ def realtime_quote(mock_socket_client) -> OverseasRealtimeQuote:
 @pytest.fixture
 def sample_orderbook_data() -> list[str]:
     """Generate sample overseas orderbook data (71 fields)."""
-    # Create a list with 71 items
-    # Using specific values to help identification
     data = ["val_" + str(i) for i in range(71)]
-
-    # Set critical fields to match expected types if they had specific validation (currently all str)
-    # rsym (0), symb (1)
     data[0] = "RNASAAPL"
     data[1] = "AAPL"
-
     return data
+
+
+@pytest.fixture
+def sample_delayed_orderbook_data() -> list[str]:
+    """Generate sample delayed orderbook data (17 fields)."""
+    return [
+        "DHKS00003",  # rsym
+        "00003",  # symb
+        "2",  # zdiv
+        "20250224",  # xymd
+        "143000",  # xhms
+        "20250225",  # kymd
+        "003000",  # khms
+        "50000",  # bvol
+        "30000",  # avol
+        "1000",  # bdvl
+        "-500",  # advl
+        "12.50",  # pbid1
+        "12.55",  # pask1
+        "10000",  # vbid1
+        "8000",  # vask1
+        "200",  # dbid1
+        "-100",  # dask1
+    ]
 
 
 class TestOverseasRealtimeQuoteInit:
@@ -65,13 +85,16 @@ class TestOverseasRealtimeQuoteInit:
         """Test TR_ID constant value."""
         assert OverseasRealtimeQuote.TR_ID == "HDFSASP0"
 
+    def test_tr_id_delayed_orderbook_constant(self):
+        """Test TR_ID_DELAYED_ORDERBOOK constant value."""
+        assert OverseasRealtimeQuote.TR_ID_DELAYED_ORDERBOOK == "HDFSASP1"
+
 
 class TestSubscribe:
     """Test subscribe method."""
 
     def test_generate_tr_key_regular(self, realtime_quote):
         """Test TR Key generation for Regular/Day market (R)."""
-        # Default "R"
         key = realtime_quote._generate_tr_key("AAPL", "NAS", "R")
         assert key == "RNASAAPL"
 
@@ -84,7 +107,6 @@ class TestSubscribe:
     async def test_subscribe_calls_socket_client(self, realtime_quote, mock_socket_client):
         """Test that subscribe calls socket_client.subscribe with correct args."""
         await realtime_quote.subscribe("AAPL", "NAS")
-        # Default service_type is "R" -> "RNASAAPL"
         mock_socket_client.subscribe.assert_called_once_with("HDFSASP0", "RNASAAPL")
 
     @pytest.mark.asyncio
@@ -146,12 +168,11 @@ class TestParseData:
 
         assert result[0].rsym == "RNASAAPL"
         assert result[0].symb == "AAPL"
-        # Check last field (index 70)
         assert result[0].dask10 == "val_70"
 
     def test_parse_data_insufficient_fields_raises_error(self):
         """Test that insufficient fields raises ValueError."""
-        short_data = ["val"] * 70  # Only 70 fields
+        short_data = ["val"] * 70
 
         with pytest.raises(ValueError) as exc_info:
             OverseasRealtimeQuote.parse_data(short_data)
@@ -160,7 +181,7 @@ class TestParseData:
 
     def test_parse_data_batched_records(self, sample_orderbook_data):
         """Test parsing batched records (multiple of 71)."""
-        batched_data = sample_orderbook_data * 2  # 142 fields
+        batched_data = sample_orderbook_data * 2
 
         result = OverseasRealtimeQuote.parse_data(batched_data)
 
@@ -177,3 +198,192 @@ class TestOverseasRealtimeOrderbookItem:
         """Test that model has exactly 71 fields."""
         assert len(OVERSEAS_ORDERBOOK_FIELD_NAMES) == 71
         assert len(OverseasRealtimeOrderbookItem.model_fields) == 71
+
+
+class TestSubscribeDelayedOrderbook:
+    """Test subscribe_delayed_orderbook method."""
+
+    @pytest.mark.asyncio
+    async def test_subscribe_calls_socket_client(self, realtime_quote, mock_socket_client):
+        """Test that subscribe_delayed_orderbook calls socket_client.subscribe with correct args."""
+        await realtime_quote.subscribe_delayed_orderbook("DHKS00003")
+
+        mock_socket_client.subscribe.assert_called_once_with("HDFSASP1", "DHKS00003")
+
+    @pytest.mark.asyncio
+    async def test_subscribe_different_tr_keys(self, realtime_quote, mock_socket_client):
+        """Test subscription with different tr_keys."""
+        await realtime_quote.subscribe_delayed_orderbook("DHKS00003")
+        mock_socket_client.subscribe.assert_called_with("HDFSASP1", "DHKS00003")
+
+        await realtime_quote.subscribe_delayed_orderbook("DNAS00001")
+        mock_socket_client.subscribe.assert_called_with("HDFSASP1", "DNAS00001")
+
+    @pytest.mark.asyncio
+    async def test_subscribe_raises_error_in_dev_env(self, mock_socket_client_dev):
+        """Test that subscribe_delayed_orderbook raises ValueError in dev environment."""
+        realtime_quote = OverseasRealtimeQuote(mock_socket_client_dev)
+
+        with pytest.raises(ValueError) as exc_info:
+            await realtime_quote.subscribe_delayed_orderbook("DHKS00003")
+
+        assert "운영 서버(prod)에서만 사용 가능" in str(exc_info.value)
+        assert "dev" in str(exc_info.value)
+
+
+class TestUnsubscribeDelayedOrderbook:
+    """Test unsubscribe_delayed_orderbook method."""
+
+    @pytest.mark.asyncio
+    async def test_unsubscribe_calls_socket_client(self, realtime_quote, mock_socket_client):
+        """Test that unsubscribe_delayed_orderbook calls socket_client.unsubscribe with correct args."""
+        await realtime_quote.unsubscribe_delayed_orderbook("DHKS00003")
+
+        mock_socket_client.unsubscribe.assert_called_once_with("HDFSASP1", "DHKS00003")
+
+    @pytest.mark.asyncio
+    async def test_unsubscribe_raises_error_in_dev_env(self, mock_socket_client_dev):
+        """Test that unsubscribe_delayed_orderbook raises ValueError in dev environment."""
+        realtime_quote = OverseasRealtimeQuote(mock_socket_client_dev)
+
+        with pytest.raises(ValueError) as exc_info:
+            await realtime_quote.unsubscribe_delayed_orderbook("DHKS00003")
+
+        assert "운영 서버(prod)에서만 사용 가능" in str(exc_info.value)
+        assert "dev" in str(exc_info.value)
+
+
+class TestParseDelayedOrderbookData:
+    """Test parse_delayed_orderbook_data method."""
+
+    def test_parse_returns_model(self, sample_delayed_orderbook_data):
+        """Test that parse_delayed_orderbook_data returns list of OverseasRealtimeDelayedOrderbookItem."""
+        result = OverseasRealtimeQuote.parse_delayed_orderbook_data(sample_delayed_orderbook_data)
+        assert isinstance(result, list)
+        assert len(result) == 1
+        assert isinstance(result[0], OverseasRealtimeDelayedOrderbookItem)
+
+    def test_parse_field_values(self, sample_delayed_orderbook_data):
+        """Test that parsed data has correct field values."""
+        result = OverseasRealtimeQuote.parse_delayed_orderbook_data(sample_delayed_orderbook_data)
+
+        assert result[0].rsym == "DHKS00003"
+        assert result[0].symb == "00003"
+        assert result[0].zdiv == "2"
+        assert result[0].xymd == "20250224"
+        assert result[0].xhms == "143000"
+        assert result[0].kymd == "20250225"
+        assert result[0].khms == "003000"
+        assert result[0].bvol == "50000"
+        assert result[0].avol == "30000"
+        assert result[0].bdvl == "1000"
+        assert result[0].advl == "-500"
+        assert result[0].pbid1 == "12.50"
+        assert result[0].pask1 == "12.55"
+        assert result[0].vbid1 == "10000"
+        assert result[0].vask1 == "8000"
+        assert result[0].dbid1 == "200"
+        assert result[0].dask1 == "-100"
+
+    def test_parse_insufficient_fields_raises_error(self):
+        """Test that insufficient fields raises ValueError."""
+        short_data = ["DHKS00003", "00003", "2"]
+
+        with pytest.raises(ValueError) as exc_info:
+            OverseasRealtimeQuote.parse_delayed_orderbook_data(short_data)
+
+        assert "Expected at least 17 fields, got 3" in str(exc_info.value)
+
+    def test_parse_empty_list_raises_error(self):
+        """Test that empty list raises ValueError."""
+        with pytest.raises(ValueError) as exc_info:
+            OverseasRealtimeQuote.parse_delayed_orderbook_data([])
+
+        assert "Expected at least 17 fields, got 0" in str(exc_info.value)
+
+    def test_parse_batched_5_records(self, sample_delayed_orderbook_data):
+        """Test parsing 5 batched records (5 × 17 = 85 fields)."""
+        batched_data = []
+        for i in range(5):
+            record = sample_delayed_orderbook_data.copy()
+            record[11] = str(12.50 + i * 0.10)
+            batched_data.extend(record)
+
+        result = OverseasRealtimeQuote.parse_delayed_orderbook_data(batched_data)
+
+        assert isinstance(result, list)
+        assert len(result) == 5
+        for i, item in enumerate(result):
+            assert isinstance(item, OverseasRealtimeDelayedOrderbookItem)
+            assert item.pbid1 == str(12.50 + i * 0.10)
+
+    def test_parse_single_record_with_extra_fields(self, sample_delayed_orderbook_data):
+        """Test single record with extra fields (17 + 3 = 20 fields) - forward compatibility."""
+        data = sample_delayed_orderbook_data + ["extra1", "extra2", "extra3"]
+
+        result = OverseasRealtimeQuote.parse_delayed_orderbook_data(data)
+
+        assert isinstance(result, list)
+        assert len(result) == 1
+        assert result[0].rsym == "DHKS00003"
+        assert result[0].dask1 == "-100"
+
+    def test_parse_large_batch(self):
+        """Test parsing large batch (20 × 17 = 340 fields)."""
+        data = ["value"] * (20 * 17)
+
+        result = OverseasRealtimeQuote.parse_delayed_orderbook_data(data)
+
+        assert isinstance(result, list)
+        assert len(result) == 20
+
+
+class TestOverseasRealtimeDelayedOrderbookItem:
+    """Test OverseasRealtimeDelayedOrderbookItem Pydantic model."""
+
+    def test_model_field_count(self):
+        """Test that model has exactly 17 fields."""
+        assert len(OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES) == 17
+        assert len(OverseasRealtimeDelayedOrderbookItem.model_fields) == 17
+
+    def test_model_validation_from_dict(self, sample_delayed_orderbook_data):
+        """Test model can be created from dictionary."""
+        field_dict = dict(zip(OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES, sample_delayed_orderbook_data, strict=False))
+        item = OverseasRealtimeDelayedOrderbookItem.model_validate(field_dict)
+
+        assert item.rsym == "DHKS00003"
+        assert item.pbid1 == "12.50"
+        assert item.pask1 == "12.55"
+
+    def test_field_names_list_order(self, sample_delayed_orderbook_data):
+        """Test that OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES order matches model fields."""
+        field_dict = dict(zip(OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES, sample_delayed_orderbook_data, strict=False))
+        item = OverseasRealtimeDelayedOrderbookItem.model_validate(field_dict)
+
+        assert OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES[0] == "rsym"
+        assert item.rsym == "DHKS00003"
+
+        assert OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES[16] == "dask1"
+        assert item.dask1 == "-100"
+
+
+class TestOverseasDelayedOrderbookFieldNames:
+    """Test OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES constant."""
+
+    def test_field_names_count(self):
+        """Test that field names list has 17 entries."""
+        assert len(OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES) == 17
+
+    def test_field_names_all_strings(self):
+        """Test that all field names are strings."""
+        assert all(isinstance(name, str) for name in OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES)
+
+    def test_field_names_no_duplicates(self):
+        """Test that there are no duplicate field names."""
+        assert len(OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES) == len(set(OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES))
+
+    def test_field_names_match_model_fields(self):
+        """Test that all field names exist in the model."""
+        model_fields = set(OverseasRealtimeDelayedOrderbookItem.model_fields.keys())
+        field_names_set = set(OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES)
+        assert field_names_set == model_fields

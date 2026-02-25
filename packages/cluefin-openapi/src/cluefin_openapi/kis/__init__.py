@@ -20,7 +20,9 @@ from cluefin_openapi.kis._exceptions import (
 from cluefin_openapi.kis._http_client import HttpClient
 from cluefin_openapi.kis._overseas_realtime_quote import OverseasRealtimeQuote
 from cluefin_openapi.kis._overseas_realtime_quote_types import (
+    OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES,
     OVERSEAS_ORDERBOOK_FIELD_NAMES,
+    OverseasRealtimeDelayedOrderbookItem,
     OverseasRealtimeOrderbookItem,
 )
 from cluefin_openapi.kis._socket_client import SocketClient, SubscriptionType, WebSocketEvent, WebSocketMessage
@@ -32,10 +34,12 @@ __all__ = [
     "DomesticRealtimeQuote",
     "EXECUTION_FIELD_NAMES",
     "ORDERBOOK_FIELD_NAMES",
+    "OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES",
     "OVERSEAS_ORDERBOOK_FIELD_NAMES",
+    "HttpClient",
+    "OverseasRealtimeDelayedOrderbookItem",
     "OverseasRealtimeOrderbookItem",
     "OverseasRealtimeQuote",
-    "HttpClient",
     "SocketClient",
     "SubscriptionType",
     "TokenManager",
