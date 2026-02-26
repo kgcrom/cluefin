@@ -22,6 +22,7 @@ members = [
     "cluefin-cli",
     "cluefin-desk",
     "cluefin-openapi",
+    "cluefin-rpc",
     "cluefin-ta",
     "cluefin-xbrl",
 ]
@@ -396,6 +397,34 @@ requires-dist = [
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "pydantic", specifier = ">=2.12.0,<3.0.0" },
     { name = "requests", specifier = ">=2.32.4" },
+]
+
+[[package]]
+name = "cluefin-rpc"
+version = "0.1.0"
+source = { editable = "apps/cluefin-rpc" }
+dependencies = [
+    { name = "cluefin-openapi" },
+    { name = "cluefin-ta" },
+    { name = "cluefin-xbrl" },
+    { name = "loguru" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "python-dotenv" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "cluefin-openapi", editable = "packages/cluefin-openapi" },
+    { name = "cluefin-ta", editable = "packages/cluefin-ta" },
+    { name = "cluefin-xbrl", editable = "packages/cluefin-xbrl" },
+    { name = "loguru", specifier = ">=0.7.3" },
+    { name = "numpy", specifier = ">=1.24.0" },
+    { name = "pydantic", specifier = ">=2.12.0,<3.0.0" },
+    { name = "pydantic-settings", specifier = ">=2.0.0" },
+    { name = "python-dotenv", specifier = ">=1.1.1" },
 ]
 
 [[package]]
