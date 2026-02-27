@@ -48,7 +48,6 @@ apps/cluefin-rpc/
 │   │   ├── session.py            # 5 meta/session 핸들러
 │   │   ├── quote.py              # 12 시세 핸들러
 │   │   ├── ta.py                 # 11 기술 분석 핸들러
-│   │   ├── account.py            # 7 계좌 핸들러
 │   │   └── dart.py               # 4 공시 핸들러
 │   └── middleware/
 │       ├── __init__.py
@@ -168,7 +167,7 @@ class MethodSchema:
     description: str                  # 사람이 읽을 수 있는 설명
     parameters: dict[str, Any]        # JSON Schema (params)
     returns: dict[str, Any]           # JSON Schema (return)
-    category: str = ""                # "rpc", "quote", "ta", "account", "dart"
+    category: str = ""                # "rpc", "quote", "ta", "dart"
     requires_session: bool = True     # False → session 주입 안 함
     broker: str | None = None         # "kis", "kiwoom", "krx", "dart"
 
@@ -451,36 +450,17 @@ printf '{"jsonrpc":"2.0","id":1,"method":"session.initialize","params":{"broker"
 
 ---
 
-## 8. Phase 4: Account + DART (11개)
+## 8. Phase 4: DART (4개)
 
 ### 목표
-계좌 조회 7개 + 공시 조회 4개. 모두 **세션 필요, 읽기 전용** — 주문 실행은 노출하지 않는다.
+공시 조회 4개. 모두 **세션 필요, 읽기 전용**.
 
 ### 선행 Phase
 Phase 0 + Phase 1 (세션 필요)
 
 ### 구현 모듈
 
-`handlers/account.py`, `handlers/dart.py`
-
-### 메서드 테이블 — Account (7개)
-
-#### KIS (3개)
-
-| RPC 메서드 | cluefin-openapi 호출 | 파라미터 |
-|---|---|---|
-| `account.kis.balance` | `kis.domestic_account.get_stock_balance(...)` | inqr_dvsn (01: 요약, 02: 상세, 기본 02) |
-| `account.kis.tradable_buy` | `kis.domestic_account.get_buy_tradable_inquiry(...)` | inqr_dvsn (기본 01) |
-| `account.kis.tradable_sell` | `kis.domestic_account.get_sell_tradable_inquiry(...)` | stock_code (필수) |
-
-#### Kiwoom (4개)
-
-| RPC 메서드 | cluefin-openapi 호출 | 파라미터 |
-|---|---|---|
-| `account.kiwoom.balance` | `kiwoom.account.get_execution_balance(dmst_stex_tp)` | exchange (KRX/NXT, 기본 KRX) |
-| `account.kiwoom.executed` | `kiwoom.account.get_executed(qry_tp, sell_tp, stex_tp)` | qry_tp, sell_tp, stex_tp (기본 0) |
-| `account.kiwoom.unexecuted` | `kiwoom.account.get_unexecuted(all_stk_tp, trde_tp, stex_tp)` | all_stk_tp, trde_tp, stex_tp (기본 0) |
-| `account.kiwoom.profit_loss` | `kiwoom.account.get_daily_realized_profit_loss(strt_dt, end_dt)` | start_date, end_date (필수, YYYYMMDD) |
+`handlers/dart.py`
 
 ### 메서드 테이블 — DART (4개)
 
@@ -494,9 +474,6 @@ Phase 0 + Phase 1 (세션 필요)
 ### 검증
 
 ```sh
-# KIS 잔고
-printf '{"jsonrpc":"2.0","id":1,"method":"session.initialize","params":{"broker":"kis"}}\n{"jsonrpc":"2.0","id":2,"method":"account.kis.balance","params":{}}\n' | uv run -m cluefin_rpc
-
 # DART 기업 개황
 printf '{"jsonrpc":"2.0","id":1,"method":"session.initialize","params":{"broker":"dart"}}\n{"jsonrpc":"2.0","id":2,"method":"dart.company_overview","params":{"corp_code":"00126380"}}\n' | uv run -m cluefin_rpc
 ```
@@ -515,8 +492,8 @@ Phase 0 (Foundation)
  │      ├──→ Phase 3 (Quote, 12개)
  │      │      KIS 6 + Kiwoom 4 + KRX 2
  │      │
- │      └──→ Phase 4 (Account + DART, 11개)
- │             Account 7 + DART 4
+ │      └──→ Phase 4 (DART, 4개)
+ │             DART 4
  │
  └──→ Phase 2 (TA, 11개)  ← 독립, Phase 0 직후 가능
         requires_session=False, numpy 기반
@@ -529,7 +506,7 @@ Phase 0 (Foundation)
 
 ---
 
-## 10. 전체 메서드 레지스트리 (39개)
+## 10. 전체 메서드 레지스트리 (32개)
 
 ### Meta (5개, requires_session=False)
 
@@ -574,26 +551,14 @@ Phase 0 (Foundation)
 | 27 | `ta.mdd` | ta.py | — |
 | 28 | `ta.sharpe` | ta.py | — |
 
-### Account (7개, requires_session=True)
-
-| # | RPC 메서드 | 핸들러 모듈 | broker |
-|---|---|---|---|
-| 29 | `account.kis.balance` | account.py | kis |
-| 30 | `account.kis.tradable_buy` | account.py | kis |
-| 31 | `account.kis.tradable_sell` | account.py | kis |
-| 32 | `account.kiwoom.balance` | account.py | kiwoom |
-| 33 | `account.kiwoom.executed` | account.py | kiwoom |
-| 34 | `account.kiwoom.unexecuted` | account.py | kiwoom |
-| 35 | `account.kiwoom.profit_loss` | account.py | kiwoom |
-
 ### DART (4개, requires_session=True)
 
 | # | RPC 메서드 | 핸들러 모듈 | broker |
 |---|---|---|---|
-| 36 | `dart.disclosure_search` | dart.py | dart |
-| 37 | `dart.company_overview` | dart.py | dart |
-| 38 | `dart.corp_code_lookup` | dart.py | dart |
-| 39 | `dart.major_shareholder` | dart.py | dart |
+| 29 | `dart.disclosure_search` | dart.py | dart |
+| 30 | `dart.company_overview` | dart.py | dart |
+| 31 | `dart.corp_code_lookup` | dart.py | dart |
+| 32 | `dart.major_shareholder` | dart.py | dart |
 
 ---
 
