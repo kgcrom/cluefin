@@ -59,6 +59,8 @@ test('Kiwoom endpoint metadata should map request path, headers, and body', asyn
   const client = new KiwoomClient({
     token: 'token',
     env: 'dev',
+    rateLimitRequestsPerSecond: 1_000,
+    rateLimitBurst: 1_000,
     fetchImpl: fetchMock,
   });
 

@@ -60,6 +60,8 @@ test('KIS endpoint metadata should map request path, headers, and query/body', a
     appKey: 'app-key',
     secretKey: 'secret-key',
     env: 'dev',
+    rateLimitRequestsPerSecond: 1_000,
+    rateLimitBurst: 1_000,
     fetchImpl: fetchMock,
   });
 
