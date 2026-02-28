@@ -1,8 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = process.cwd();
-const typesDir = path.join(root, 'dist', 'types');
+const scriptPath = fileURLToPath(import.meta.url);
+const scriptDir = path.dirname(scriptPath);
+const packageRoot = path.resolve(scriptDir, '..');
+const typesDir = path.join(packageRoot, 'dist', 'types');
 const typesPath = path.join(typesDir, 'index.d.ts');
 
 fs.mkdirSync(typesDir, { recursive: true });
@@ -207,4 +210,4 @@ export class KiwoomClient {
 `;
 
 fs.writeFileSync(typesPath, content, 'utf8');
-console.log(`Wrote ${path.relative(root, typesPath)}`);
+console.log(`Wrote ${path.relative(packageRoot, typesPath)}`);

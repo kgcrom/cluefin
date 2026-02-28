@@ -1,7 +1,20 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = process.cwd();
+const scriptPath = fileURLToPath(import.meta.url);
+const scriptDir = path.dirname(scriptPath);
+const packageRoot = path.resolve(scriptDir, '..');
+const workspaceRoot = path.resolve(packageRoot, '..', '..');
+
+const resolveWithinRoot = (rootDir, relativePath) => {
+  const resolved = path.resolve(rootDir, relativePath);
+  const relative = path.relative(rootDir, resolved);
+  if (relative.startsWith('..') || path.isAbsolute(relative)) {
+    throw new Error(`Path escapes root: ${relativePath}`);
+  }
+  return resolved;
+};
 
 const toCamelCase = (value) =>
   value
@@ -197,7 +210,8 @@ const extractMethods = (source) => {
   return methods;
 };
 
-const buildKisMetadata = (sourcePath) => {
+const buildKisMetadata = (sourceRelativePath) => {
+  const sourcePath = resolveWithinRoot(workspaceRoot, sourceRelativePath);
   const source = fs.readFileSync(sourcePath, 'utf8');
   const methods = extractMethods(source);
 
@@ -221,7 +235,8 @@ const buildKisMetadata = (sourcePath) => {
   });
 };
 
-const buildKiwoomMetadata = (sourcePath) => {
+const buildKiwoomMetadata = (sourceRelativePath) => {
+  const sourcePath = resolveWithinRoot(workspaceRoot, sourceRelativePath);
   const source = fs.readFileSync(sourcePath, 'utf8');
   const methods = extractMethods(source);
   const classPath = (source.match(/self\.path\s*=\s*"([^"]+)"/) || [])[1] ?? '';
@@ -249,11 +264,12 @@ const buildKiwoomMetadata = (sourcePath) => {
   });
 };
 
-const writeTs = (targetPath, symbolName, importPath, data) => {
-  const fullPath = path.join(ROOT, targetPath);
+const writeTs = (targetRelativePath, symbolName, importPath, data) => {
+  const fullPath = resolveWithinRoot(workspaceRoot, targetRelativePath);
   const content =
     `import type { ${importPath} } from '../../core/types';\n\n` +
     `export const ${symbolName}: ${importPath}[] = ${JSON.stringify(data, null, 2)};\n`;
+  fs.mkdirSync(path.dirname(fullPath), { recursive: true });
   fs.writeFileSync(fullPath, content);
 };
 
