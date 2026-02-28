@@ -36,7 +36,9 @@
     "lint:fix": "biome lint --write .",
     "check": "biome check .",
     "typecheck": "bun scripts/typecheck.mjs",
-    "test": "bun test --preload ./tests/setup-env.ts",
+    "test:unit": "bun test --preload ./tests/setup-env.ts",
+    "test:integration": "CLUEFIN_OPENAPI_TS_RUN_INTEGRATION=1 bun test --preload ./tests/setup-integration-env.ts tests/**/*.integration.test.ts",
+    "test": "bun run test:unit",
     "publish:check": "bun run build && bun run check && bun run typecheck && bun run test",
     "publish:manual": "npm publish --access public"
   },

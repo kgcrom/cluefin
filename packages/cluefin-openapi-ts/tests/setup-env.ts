@@ -2,6 +2,9 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 type EnvMap = Record<string, string | undefined>;
+interface LoadProjectRootEnvOptions {
+  envFiles?: string[];
+}
 
 const parseEnvContent = (content: string): Record<string, string> => {
   const parsed: Record<string, string> = {};
@@ -43,25 +46,30 @@ const resolveProjectRootDir = (): string => {
   return resolve(packageRootDir, '..', '..');
 };
 
-export const loadProjectRootEnv = (targetEnv: EnvMap = process.env): string[] => {
+export const loadProjectRootEnv = (
+  targetEnv: EnvMap = process.env,
+  options: LoadProjectRootEnvOptions = {},
+): string[] => {
   const projectRootDir = resolveProjectRootDir();
   targetEnv.PROJECT_ROOT_DIR ??= projectRootDir;
-
-  const envPath = resolve(projectRootDir, '.env');
-  if (!existsSync(envPath)) {
-    return [];
-  }
-
-  const parsed = parseEnvContent(readFileSync(envPath, 'utf8'));
   const loadedKeys: string[] = [];
+  const envFiles = options.envFiles ?? ['.env'];
 
-  for (const [key, value] of Object.entries(parsed)) {
-    if (value === undefined || targetEnv[key] !== undefined) {
+  for (const envFile of envFiles) {
+    const envPath = resolve(projectRootDir, envFile);
+    if (!existsSync(envPath)) {
       continue;
     }
 
-    targetEnv[key] = value;
-    loadedKeys.push(key);
+    const parsed = parseEnvContent(readFileSync(envPath, 'utf8'));
+    for (const [key, value] of Object.entries(parsed)) {
+      if (value === undefined || targetEnv[key] !== undefined) {
+        continue;
+      }
+
+      targetEnv[key] = value;
+      loadedKeys.push(key);
+    }
   }
 
   return loadedKeys;

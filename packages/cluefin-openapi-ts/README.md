@@ -157,21 +157,29 @@ bun install
 bun run build
 bun run check
 bun run typecheck
-bun run test
+bun run test:unit
+bun run test:integration
 ```
 
 ## ✅ 테스트와 .env 로딩
 
-`bun run test`는 `tests/setup-env.ts`를 preload하여 환경 변수를 먼저 로드합니다.
+`bun run test`와 `bun run test:unit`은 `tests/setup-env.ts`를 preload하여 환경 변수를 먼저 로드합니다.
 
 - `PROJECT_ROOT_DIR`가 설정되어 있으면 `${PROJECT_ROOT_DIR}/.env`를 읽습니다.
 - 미설정 시 모노레포 루트의 `.env`를 기본 경로로 사용합니다.
 - 이미 설정된 환경 변수는 덮어쓰지 않습니다.
 
+`bun run test:integration`은 `tests/setup-integration-env.ts`를 preload합니다.
+
+- `${PROJECT_ROOT_DIR}/.env.test`를 먼저 읽고, 없으면 `${PROJECT_ROOT_DIR}/.env`로 fallback합니다.
+- `CLUEFIN_OPENAPI_TS_RUN_INTEGRATION=1` 플래그로 integration 테스트를 실행합니다.
+- 키움 인증 integration 테스트는 `KIWOOM_APP_KEY`, `KIWOOM_SECRET_KEY`가 없으면 실패합니다.
+
 예시:
 
 ```bash
-PROJECT_ROOT_DIR=/path/to/cluefin bun run test
+PROJECT_ROOT_DIR=/path/to/cluefin bun run test:unit
+PROJECT_ROOT_DIR=/path/to/cluefin bun run test:integration
 ```
 
 ## 🚢 배포
