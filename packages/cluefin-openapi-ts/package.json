@@ -36,7 +36,7 @@
     "lint:fix": "biome lint --write .",
     "check": "biome check .",
     "typecheck": "bun scripts/typecheck.mjs",
-    "test": "bun test",
+    "test": "bun test --preload ./tests/setup-env.ts",
     "publish:check": "bun run build && bun run check && bun run typecheck && bun run test",
     "publish:manual": "npm publish --access public"
   },
