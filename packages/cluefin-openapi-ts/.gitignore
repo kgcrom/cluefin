@@ -1,0 +1,7 @@
+# Node.js local artifacts
+node_modules/
+.npm-cache/
+npm-debug.log*
+
+# npm publish artifacts
+cluefin-openapi-*.tgz

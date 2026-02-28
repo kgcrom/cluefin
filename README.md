@@ -81,11 +81,12 @@ Cluefin은 모든 사람들에게 금융 투자, 포트폴리오 관리를 단�
 cluefin/
 ├── packages/
 │   ├── cluefin-openapi/        # 한국 금융 API 클라이언트
-│   │   ├── src/cluefin_openapi/
-│   │   │   ├── kiwoom/         # 키움증권 API 클라이언트
+│   ├── cluefin-openapi-ts/     # 한국 금융 API TypeScript 클라이언트 (KIS, Kiwoom)
+│   │   ├── src/
+│   │   │   ├── core/           # 공통 HTTP/재시도/레이트리밋/검증 유틸
 │   │   │   ├── kis/            # 한국투자증권 API 클라이언트
-│   │   │   └── dart/           # DART 기업공시 API 클라이언트
-│   │   └── tests/              # 단위 및 통합 테스트
+│   │   │   └── kiwoom/         # 키움증권 API 클라이언트
+│   │   └── tests/              # 단위/컨트랙트/스모크 테스트
 │   └── cluefin-ta/             # 순수 Python 기술적 분석 라이브러리
 │       └── src/cluefin_ta/     # TA-Lib 호환 API, 시스템 의존성 없음
 ├── apps/cluefin-cli/           # ML 예측 기능이 포함된 대화형 CLI 애플리케이션
@@ -123,6 +124,13 @@ uv run ruff format .
 - **속도 제한 및 에러 처리**: 한국 시장 API에 최적화
 - **테스트 커버리지**: `requests_mock`을 사용한 단위 테스트 및 통합 테스트
 
+**[cluefin-openapi-ts](packages/cluefin-openapi-ts/)** - 한국 금융 API TypeScript 클라이언트
+- **KIS/키움 1차 지원**: 인증, 공통 HTTP 클라이언트, REST endpoint 래퍼
+- **Bun 우선 + Node 호환**: `Node >=20`, `Bun >=1.3` 기준으로 ESM/CJS 동시 제공
+- **런타임 검증**: Zod 기반 입력/envelope 검증 + camelCase 응답 변환
+- **Biome 기반 품질 관리**: 포맷팅/린팅을 단일 도구로 운영
+- **v1 구현 범위**: KIS 47개 + 키움 65개, 총 112개 REST 메서드 메타데이터 기반 제공
+
 **[cluefin-ta](packages/cluefin-ta/)** - 순수 Python 기술적 분석 라이브러리
 - **TA-Lib 호환 API**: 드롭인 대체 가능 - `import cluefin_ta as talib`
 - **시스템 의존성 없음**: 순수 NumPy 구현 (C 라이브러리 불필요)
@@ -134,6 +142,38 @@ uv run ruff format .
 - **ML 기반 예측**: 해석 가능성을 위한 SHAP 설명 기능이 포함된 LightGBM 사용
 - **기술적 분석**: 150+ cluefin-ta 지표 (RSI, MACD, 볼린저 밴드)
 - **한국 시간대 처리**: KST 시간대 및 거래 시간(9:00-15:30) 인식
+
+## 📦 cluefin-openapi-ts npm 배포
+
+### 사전 준비
+```bash
+cd packages/cluefin-openapi-ts
+npm whoami           # 로그인 상태 확인 (필요 시 npm login)
+```
+
+### 버전 올리기
+```bash
+# 패치/마이너/메이저 중 선택
+npm version patch
+```
+
+### 배포 전 검증
+```bash
+bun run publish:check
+npm pack --dry-run
+```
+
+### npmjs 배포
+```bash
+npm publish --access public
+```
+
+### 최근 구현 요약 (cluefin-openapi-ts)
+- 패키지명: `cluefin-openapi`
+- 런타임: Bun 우선, Node 호환 (`>=20`)
+- 포맷/린트: Biome (`@biomejs/biome`)
+- 타입 환경: Bun 타입 (`@types/bun`)
+- 테스트/검증: `bun test`, `bun run check`, `bun run typecheck`, `bun run build`, `bun run publish:check`
 
 ## 📄 라이선스
 이 프로젝트는 MIT 라이선스에 따라 라이선스가 부여됩니다. 자세한 내용은 [LICENSE](LICENSE)를 참조하세요.
