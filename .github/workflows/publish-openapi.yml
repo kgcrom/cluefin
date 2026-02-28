@@ -1,0 +1,82 @@
+name: Publish cluefin-openapi
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type"
+        required: true
+        type: choice
+        options:
+          - micro
+          - minor
+          - major
+
+env:
+  PYTHON_VERSION: "3.10"
+  PACKAGE_DIR: packages/cluefin-openapi
+
+jobs:
+  publish:
+    name: Bump Version, Build & Publish
+    runs-on: ubuntu-latest
+    environment: development
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Bump version
+        id: bump
+        run: |
+          current=$(grep '^version' ${{ env.PACKAGE_DIR }}/pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+          IFS='.' read -r major minor micro <<< "$current"
+
+          case "${{ inputs.bump }}" in
+            major) major=$((major + 1)); minor=0; micro=0 ;;
+            minor) minor=$((minor + 1)); micro=0 ;;
+            micro) micro=$((micro + 1)) ;;
+          esac
+
+          new_version="${major}.${minor}.${micro}"
+          sed -i "s/^version = \".*\"/version = \"${new_version}\"/" ${{ env.PACKAGE_DIR }}/pyproject.toml
+
+          echo "old_version=$current" >> "$GITHUB_OUTPUT"
+          echo "new_version=$new_version" >> "$GITHUB_OUTPUT"
+          echo "Bumped version: $current -> $new_version"
+
+      - name: Install dependencies
+        run: uv sync --all-packages
+
+      - name: Run tests
+        run: uv run pytest ${{ env.PACKAGE_DIR }}/tests -m "not integration and not slow"
+
+      - name: Build package
+        run: uv build --package cluefin-openapi
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+
+      - name: Commit version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ${{ env.PACKAGE_DIR }}/pyproject.toml
+          git commit -m "release(openapi): v${{ steps.bump.outputs.new_version }}"
+          git tag "cluefin-openapi/v${{ steps.bump.outputs.new_version }}"
+          git push origin main --tags
