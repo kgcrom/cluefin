@@ -99,10 +99,6 @@ async def _analyze_stock(
     console.print("[yellow]Fetching foreign trading data...[/yellow]")
     trading_trend_data = await data_fetcher.get_trading_trend(stock_code)
 
-    console.print("[yellow]Fetching market indices...[/yellow]")
-    kospi_data = await data_fetcher.get_kospi_index_series()
-    kosdaq_data = await data_fetcher.get_kosdaq_index_series()
-
     # Calculate technical indicators
     console.print("[yellow]Calculating technical indicators...[/yellow]")
     indicators = technical_analyzer.calculate_all(stock_data)
@@ -110,7 +106,6 @@ async def _analyze_stock(
     # Display results
     _display_company_info(stock_code, basic_data)
     _display_stock_info(stock_code, stock_data)
-    _display_market_indices(kospi_data, kosdaq_data)
     _display_trading_trend(trading_trend_data)
     _display_technical_indicators(indicators)
 
@@ -632,80 +627,6 @@ def _display_stock_info(stock_code: str, data):
     change_str = f"+{change_str[1:]}" if change >= 0 else f"-{change_str[1:]}"
     table.add_row("Change", f"{change_str} ({change_pct:+.2f}%)")
     table.add_row("Volume", format_number(data["volume"].iloc[-1]) if not data.empty else "N/A")
-
-    console.print(table)
-
-
-def _display_market_indices(kospi_data: List[Dict[str, Any]], kosdaq_data: List[Dict[str, Any]]):
-    """Display KOSPI and KOSDAQ indices."""
-    table = Table(title="Market Indices")
-    table.add_column("Index", style="cyan")
-    table.add_column("Close Price", style="magenta")
-    table.add_column("Change %", style="green")
-    table.add_column("Trading Value", style="yellow")
-    table.add_column("Transaction Amount", style="blue")
-
-    # Display KOSPI data
-    if kospi_data:
-        for item in kospi_data:
-            # Format change percentage with color
-            change_pct = item.get("fluctuation_rate", 0)
-            if change_pct > 0:
-                change_color = "green"
-                change_str = f"+{change_pct:.2f}%"
-            elif change_pct < 0:
-                change_color = "red"
-                change_str = f"{change_pct:.2f}%"
-            else:
-                change_color = "white"
-                change_str = f"{change_pct:.2f}%"
-
-            # Format large numbers with commas and units
-            trading_value = item.get("trading_value", 0)
-            transaction_amount = item.get("transaction_amount", 0)
-
-            # Convert to billions for better readability
-            trading_value_formatted = f"{trading_value / 1_000_000_000:.1f}B"
-            transaction_amount_formatted = f"{transaction_amount / 1_000_000:.1f}M"
-
-            table.add_row(
-                item.get("name", "KOSPI"),
-                f"{item.get('close_price', 0):.2f}",
-                f"[{change_color}]{change_str}[/{change_color}]",
-                f"[yellow]{trading_value_formatted}[/yellow]",
-                f"[blue]{transaction_amount_formatted}[/blue]",
-            )
-
-    # Display KOSDAQ data
-    if kosdaq_data:
-        for item in kosdaq_data:
-            # Format change percentage with color
-            change_pct = item.get("fluctuation_rate", 0)
-            if change_pct > 0:
-                change_color = "green"
-                change_str = f"+{change_pct:.2f}%"
-            elif change_pct < 0:
-                change_color = "red"
-                change_str = f"{change_pct:.2f}%"
-            else:
-                change_color = "white"
-                change_str = f"{change_pct:.2f}%"
-
-            # Format large numbers with commas and units
-            trading_value = item.get("trading_value", 0)
-            transaction_amount = item.get("transaction_amount", 0)
-
-            # Convert to billions for better readability
-            trading_value_formatted = f"{trading_value / 1_000_000_000:.1f}B"
-            transaction_amount_formatted = f"{transaction_amount / 1_000_000:.1f}M"
-
-            table.add_row(
-                item.get("name", "KOSDAQ"),
-                f"{item.get('close_price', 0):.2f}",
-                f"[{change_color}]{change_str}[/{change_color}]",
-                f"[yellow]{trading_value_formatted}[/yellow]",
-                f"[blue]{transaction_amount_formatted}[/blue]",
-            )
 
     console.print(table)
 

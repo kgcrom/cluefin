@@ -5,7 +5,7 @@
 **Cluefin**: Korean stock market analysis toolkit (Python, uv workspace monorepo)
 
 ### Packages
-- `cluefin-openapi` — API clients (Kiwoom, KIS, KRX, DART)
+- `cluefin-openapi` — API clients (Kiwoom, KIS, DART)
 - `cluefin-ta` — Technical analysis (TA-Lib compatible, pure Python)
 - `cluefin-xbrl` — XBRL/DART financial statement parser
 
@@ -26,7 +26,7 @@ uv run ruff format . && uv run ruff check . --fix  # Lint
 
 - Always use `uv run`, never bare `python`
 - Pydantic aliasing: Korean API fields → English (`stck_prpr` → `current_price`)
-- Auth: Kiwoom (OAuth2), KIS (token cache), KRX/DART (auth_key)
+- Auth: Kiwoom (OAuth2), KIS (token cache), DART (auth_key)
 - Secrets in `.env` only, managed via `pydantic_settings.BaseSettings`
 - Rate limiting: `TokenBucket` from `cluefin_openapi._rate_limiter`
 - Unit tests use mocks; integration tests (`@pytest.mark.integration`) need real API keys

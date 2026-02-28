@@ -19,4 +19,3 @@ cluefin-desk
 ## Requirements
 
 - Kiwoom API keys (`KIWOOM_APP_KEY`, `KIWOOM_SECRET_KEY`)
-- KRX API key (`KRX_AUTH_KEY`) for market index data

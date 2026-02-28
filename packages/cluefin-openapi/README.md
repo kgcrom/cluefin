@@ -15,9 +15,6 @@
 - **차트 데이터 및 분석**: 일/주/월 차트, 기술적 지표, 시계열 데이터
 - **ETF, 섹터, 테마**: ETF 정보, 업종별 정보, 테마별 종목 분류
 - **시장 상황 모니터링**: 시장 지수, 거래량, 시장 동향
-- **KRX 시장 데이터**: KOSPI/KOSDAQ/KONEX 일별매매정보, 시장지수, 종목 기본정보
-- **채권 시장 정보**: 국고채, 일반채권, 소액채권 시장 데이터
-- **상장 상품 정보**: ETF, ETN, ELW 등 거래소 상장 상품 데이터
 - **기업 공시 분석 (DART)**: 공시 원문, 재무제표, 대량보유상황 등 공시 데이터
 
 ## ⚡ 빠른 시작
@@ -38,7 +35,7 @@ pip install cluefin-openapi
 ## 🎯 왜 cluefin-openapi인가요?
 
 ### 통합된 인터페이스
-키움증권, 한국투자증권(KIS), KRX, DART 등 여러 금융 OpenAPI를 하나의 Python 인터페이스로 통합하여 제공합니다.
+키움증권, 한국투자증권(KIS), DART 등 여러 금융 OpenAPI를 하나의 Python 인터페이스로 통합하여 제공합니다.
 
 ### 개발 시간 단축
 복잡한 금융 API 통합 작업을 대신 처리하여, 투자 도구 개발에 집중할 수 있습니다.
@@ -66,13 +63,7 @@ Pydantic을 활용한 강력한 타입 검증으로 런타임 에러를 방지�
 2. API 사용 신청 및 승인 대기
 3. APP_KEY 및 SECRET_KEY 발급 받기
 
-### 3. 한국거래소 OpenAPI 신청
-
-1. [한국거래소 OpenAPI 사이트](http://openapi.krx.co.kr/contents/OPP/MAIN/main/index.cmd)에서 계정 생성
-2. API 인증키 신청 및 승인 대기
-3. 사용할 API 마다 신청 및 승인 대기
-
-### 4. 환경 변수 설정
+### 3. 환경 변수 설정
 
 ```bash
 # 워크스페이스 루트 디렉토리에서
@@ -89,9 +80,6 @@ KIWOOM_ENV=dev # options: prod | dev(default)
 KIS_APP_KEY=your_kis_app_key_here
 KIS_SECRET_KEY=your_kis_secret_key_here
 KIS_ENV=dev # options: prod | dev(default)
-
-# 한국거래소 API 키 설정 (단순 인증키)
-KRX_AUTH_KEY=your_krx_auth_key_here
 
 # 금융감독원 DART API 키 설정
 DART_AUTH_KEY=your_dart_auth_key_here
@@ -193,21 +181,6 @@ kis_client = KISClient(
 logger.info(f"kis_client => ${kis_client}")
 ```
 
-```python
-# 한국거래소
-from loguru import logger
-import os
-from pydantic import SecretStr
-import dotenv
-from cluefin_openapi.krx._client import Client as KRXClient
-
-# 인증 설정
-dotenv.load_dotenv(dotenv_path=".env")
-
-krx_client = KRXClient(auth_key=os.getenv("KRX_AUTH_KEY"), timeout=30)
-logger.info(f"krx_client => ${krx_client}")
-```
-
 ## 📊 KIS API 사용 예제
 
 ### 국내 주식 시세 조회
@@ -263,99 +236,6 @@ overseas_price = kis_client.overseas_basic_quote.get_inquire_price(
     symb="AAPL"           # 종목 코드 (애플)
 )
 logger.info(f"해외 주식 현재가: {overseas_price}")
-```
-
-## 📊 KRX API 사용 예제
-
-### 주식 시장 데이터
-
-```python
-from loguru import logger
-from cluefin_openapi.krx._client import Client as KRXClient
-
-# KRX 클라이언트 초기화
-krx_client = KRXClient(auth_key="your_krx_auth_key")
-
-# KOSPI 일별매매정보 조회
-kospi_data = krx_client.stock.get_kospi("20250721")
-logger.info(f"KOSPI 데이터: ${kospi_data.body}")
-
-# KOSDAQ 일별매매정보 조회
-kosdaq_data = krx_client.stock.get_kosdaq("20250721")
-logger.info(f"KOSDAQ 데이터: ${kosdaq_data.body}")
-
-# KONEX 일별매매정보 조회
-konex_data = krx_client.stock.get_konex("20250721")
-logger.info(f"KONEX 데이터: ${konex_data.body}")
-
-# 워런트 및 신주인수권증서 조회
-warrant_data = krx_client.stock.get_warrant("20250721")
-subscription_warrant_data = krx_client.stock.get_subscription_warrant("20250721")
-
-# 종목 기본정보 조회
-kospi_base_info = krx_client.stock.get_kospi_base_info("20250721")
-kosdaq_base_info = krx_client.stock.get_kosdaq_base_info("20250721")
-konex_base_info = krx_client.stock.get_konex_base_info("20250721")
-```
-
-### 시장 지수 정보
-
-```python
-# KRX 종합지수 조회
-krx_index = krx_client.index.get_krx("20250721")
-logger.info(f"KRX 종합지수: ${krx_index.body}")
-
-# KOSPI 지수 조회
-kospi_index = krx_client.index.get_kospi("20250721")
-logger.info(f"KOSPI 지수: ${kospi_index.body")
-
-# KOSDAQ 지수 조회
-kosdaq_index = krx_client.index.get_kosdaq("20250721")
-logger.info(f"KOSDAQ 지수: ${kosdaq_index.body}")
-
-# 채권 지수 조회
-bond_index = krx_client.index.get_bond("20250721")
-
-# 파생상품 지수 조회
-derivatives_index = krx_client.index.get_derivatives("20250721")
-```
-
-### 일괄 데이터 조회 예제
-
-```python
-import asyncio
-from datetime import datetime, timedelta
-from loguru import logger
-
-# 특정 날짜의 주요 시장 데이터 일괄 조회
-def get_market_overview(date: str):
-    """특정 날짜의 시장 개요 데이터를 조회합니다."""
-    try:
-        # 주식 시장 데이터
-        kospi = krx_client.stock.get_kospi(date)
-        kosdaq = krx_client.stock.get_kosdaq(date)
-        
-        # 지수 데이터
-        krx_index = krx_client.index.get_krx(date)
-        
-        # ETF 데이터
-        etf = krx_client.exchange_traded_product.get_etf(date)
-        
-        return {
-            "date": date,
-            "kospi": kospi.body,
-            "kosdaq": kosdaq.body,
-            "index": krx_index.body,
-            "etf": etf.body
-        }
-    except Exception as e:
-        logger.info(f"데이터 조회 중 오류 발생: {e}")
-        return None
-
-# 사용 예제
-market_data = get_market_overview("20250721")
-if market_data:
-    logger.info("시장 개요 데이터 조회 완료")
 ```
 
 ## 🔧 구성 옵션
@@ -426,12 +306,6 @@ except Exception as e:
 - `EGW00201`: 토큰 만료 - 토큰 재생성 필요 (1분 간격 제한)
 - `40000000`: 서버 내부 오류
 
-**KRX API 에러 시나리오:**
-- `401`: 인증 실패 - AUTH_KEY 확인 필요
-- `403`: 접근 권한 없음 - API 사용 신청 상태 확인 필요
-- `400`: 잘못된 요청 - 날짜 형식(YYYYMMDD) 등 파라미터 확인 필요
-- `500`: 서버 오류 - 네트워크 상태 확인 및 재시도 필요
-
 ## 🧪 테스트
 
 ```bash
@@ -480,7 +354,6 @@ packages/cluefin-openapi/
 │   ├── dart/                      # 금융감독원 DART 공시 클라이언트
 │   ├── kiwoom/                    # 키움증권 API 클라이언트
 │   ├── kis/                       # 한국투자증권 API 클라이언트
-│   ├── krx/                      # 한국거래소 API 클라이언트
 │   └── __init__.py
 ├── tests/                        # 테스트 스위트
 │   ├── kiwoom/                   # 키움증권 API 테스트
@@ -489,9 +362,6 @@ packages/cluefin-openapi/
 │   ├── kis/                       # 한국투자증권 API 테스트
 │   │   ├── test_*_unit.py        # 단위 테스트 (Mock 사용, JSON 테스트 케이스)
 │   │   └── test_*_integration.py # 통합 테스트 (@pytest.mark.integration)
-│   ├── krx/                      # KRX API 테스트
-│   │   ├── test_*_unit.py        # 단위 테스트
-│   │   └── test_*_integration.py # 통합 테스트
 │   └── dart/                      # Dart API 테스트
 │       ├── test_*_unit.py        # 단위 테스트
 │       └── test_*_integration.py # 통합 테스트
@@ -549,7 +419,6 @@ uv run ruff check packages/cluefin-openapi/
 
 - [키움증권 OpenAPI 포털](https://openapi.kiwoom.com/)
 - [한국투자증권 OpenAPI 포털](https://apiportal.koreainvestment.com/)
-- [한국거래소 OpenAPI 포털](http://openapi.krx.co.kr)
 - [금융감독원 OpenAPI 포털](https://opendart.fss.or.kr/)
 
 ---

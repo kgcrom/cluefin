@@ -4,15 +4,13 @@ from typing import Any, Dict, List
 import pandas as pd
 from cluefin_openapi.kiwoom._auth import Auth as KiwoomAuth
 from cluefin_openapi.kiwoom._client import Client as KiwoomClient
-from cluefin_openapi.krx._client import Client as KrxClient
-from loguru import logger
 from pydantic import SecretStr
 
 from cluefin_desk.config.settings import settings
 
 
 class DomesticDataFetcher:
-    """Handles domestic stock data fetching from Kiwoom Securities and KRX APIs."""
+    """Handles domestic stock data fetching from Kiwoom Securities API."""
 
     @staticmethod
     def _safe_float(value: str) -> float:
@@ -39,10 +37,6 @@ class DomesticDataFetcher:
             token=token.get_token(),
             env=settings.kiwoom_env,
         )
-        self.krx_client = KrxClient(
-            auth_key=settings.krx_auth_key or "",
-        )
-        self._krx_index_base_date = None
 
     # ──────────────────────────────────────
     # Basic stock data
@@ -115,76 +109,6 @@ class DomesticDataFetcher:
             df = pd.DataFrame(columns=["date", "open", "high", "low", "close", "volume"])
 
         return df
-
-    # ──────────────────────────────────────
-    # KRX Index data
-    # ──────────────────────────────────────
-
-    def _get_latest_krx_index_base_date(self) -> str:
-        if self._krx_index_base_date:
-            return self._krx_index_base_date
-
-        today = datetime.now().date()
-        for offset in range(0, 31):
-            candidate = today - timedelta(days=offset)
-            if candidate.weekday() >= 5:
-                continue
-
-            candidate_str = candidate.strftime("%Y%m%d")
-            try:
-                response = self.krx_client.index.get_kospi(base_date=candidate_str)
-            except Exception as e:
-                logger.error(f"KRX API failed for date {candidate_str}: {e}")
-                continue
-
-            if response and response.body and response.body.data:
-                self._krx_index_base_date = candidate_str
-                return candidate_str
-
-        self._krx_index_base_date = today.strftime("%Y%m%d")
-        return self._krx_index_base_date
-
-    async def get_kospi_index_series(self) -> List[Dict[str, Any]]:
-        try:
-            base_date = self._get_latest_krx_index_base_date()
-            response = self.krx_client.index.get_kospi(base_date=base_date)
-
-            target_indices = ["코스피", "코스피 200"]
-            filtered_data = filter(lambda item: item.index_name in target_indices, response.body.data)
-
-            return list(
-                map(
-                    lambda item: {
-                        "name": item.index_name,
-                        "close_price": self._safe_float(item.close_price_index),
-                        "fluctuation_rate": self._safe_float(item.fluctuation_rate),
-                    },
-                    filtered_data,
-                )
-            )
-        except Exception:
-            return [{"name": "코스피", "close_price": 0.0, "fluctuation_rate": 0.0}]
-
-    async def get_kosdaq_index_series(self) -> List[Dict[str, Any]]:
-        try:
-            base_date = self._get_latest_krx_index_base_date()
-            response = self.krx_client.index.get_kosdaq(base_date=base_date)
-
-            target_indices = ["코스닥", "코스닥 150"]
-            filtered_data = filter(lambda item: item.index_name in target_indices, response.body.data)
-
-            return list(
-                map(
-                    lambda item: {
-                        "name": item.index_name,
-                        "close_price": self._safe_float(item.close_price_index),
-                        "fluctuation_rate": self._safe_float(item.fluctuation_rate),
-                    },
-                    filtered_data,
-                )
-            )
-        except Exception:
-            return [{"name": "코스닥", "close_price": 0.0, "fluctuation_rate": 0.0}]
 
     # ──────────────────────────────────────
     # Rankings (existing)

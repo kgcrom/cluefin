@@ -1,4 +1,4 @@
-"""Quote handlers for KIS, Kiwoom, and KRX market data."""
+"""Quote handlers for KIS and Kiwoom market data."""
 
 from __future__ import annotations
 
@@ -352,61 +352,6 @@ def handle_kiwoom_stock_monthly(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# KRX Quote Handlers
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="quote.krx.kospi",
-    description="Get KOSPI daily trading data from KRX.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "base_date": {"type": "string", "description": "Date (YYYYMMDD)"},
-        },
-        "required": ["base_date"],
-    },
-    returns={"type": "object"},
-    category="quote",
-    broker="krx",
-)
-def handle_krx_kospi(params: dict, session) -> dict:
-    krx = session.get_krx()
-    response = krx.stock.get_kospi(params["base_date"])
-    items = response.body.output if hasattr(response.body, "output") else []
-    data = []
-    for item in items or []:
-        entry = item.model_dump() if hasattr(item, "model_dump") else {}
-        data.append(entry)
-    return {"base_date": params["base_date"], "data": data}
-
-
-@rpc_method(
-    name="quote.krx.kosdaq",
-    description="Get KOSDAQ daily trading data from KRX.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "base_date": {"type": "string", "description": "Date (YYYYMMDD)"},
-        },
-        "required": ["base_date"],
-    },
-    returns={"type": "object"},
-    category="quote",
-    broker="krx",
-)
-def handle_krx_kosdaq(params: dict, session) -> dict:
-    krx = session.get_krx()
-    response = krx.stock.get_kosdaq(params["base_date"])
-    items = response.body.output if hasattr(response.body, "output") else []
-    data = []
-    for item in items or []:
-        entry = item.model_dump() if hasattr(item, "model_dump") else {}
-        data.append(entry)
-    return {"base_date": params["base_date"], "data": data}
-
-
-# ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
 
@@ -421,8 +366,6 @@ _ALL_HANDLERS = [
     handle_kiwoom_stock_minute,
     handle_kiwoom_stock_weekly,
     handle_kiwoom_stock_monthly,
-    handle_krx_kospi,
-    handle_krx_kosdaq,
 ]
 
 

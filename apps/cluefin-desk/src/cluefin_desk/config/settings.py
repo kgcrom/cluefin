@@ -11,9 +11,6 @@ class Settings(BaseSettings):
     kiwoom_secret_key: Optional[str] = None
     kiwoom_env: Literal["dev", "prod"] = "dev"
 
-    # KRX API settings
-    krx_auth_key: Optional[str] = None
-
     # DART API settings
     dart_auth_key: Optional[str] = None
 

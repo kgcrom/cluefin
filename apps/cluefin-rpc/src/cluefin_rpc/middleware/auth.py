@@ -11,7 +11,6 @@ if TYPE_CHECKING:
     from cluefin_openapi.dart._client import Client as DartClient
     from cluefin_openapi.kis._http_client import HttpClient as KisHttpClient
     from cluefin_openapi.kiwoom._client import Client as KiwoomClient
-    from cluefin_openapi.krx._client import Client as KrxClient
 
     from cluefin_rpc.config import RpcSettings
 
@@ -25,7 +24,6 @@ class SessionManager:
         self.settings = settings
         self._kis: KisHttpClient | None = None
         self._kiwoom: KiwoomClient | None = None
-        self._krx: KrxClient | None = None
         self._dart: DartClient | None = None
 
     def initialize(self, broker: str) -> dict:
@@ -33,8 +31,6 @@ class SessionManager:
             return self._init_kis()
         elif broker == "kiwoom":
             return self._init_kiwoom()
-        elif broker == "krx":
-            return self._init_krx()
         elif broker == "dart":
             return self._init_dart()
         else:
@@ -81,17 +77,6 @@ class SessionManager:
         logger.info("Kiwoom session initialized (env={})", s.kiwoom_env)
         return {"broker": "kiwoom", "status": "initialized", "env": s.kiwoom_env}
 
-    def _init_krx(self) -> dict:
-        from cluefin_openapi.krx._client import Client as KrxClient
-
-        s = self.settings
-        if not s.krx_auth_key:
-            raise ValueError("KRX credentials not configured (krx_auth_key)")
-
-        self._krx = KrxClient(auth_key=s.krx_auth_key)
-        logger.info("KRX session initialized")
-        return {"broker": "krx", "status": "initialized"}
-
     def _init_dart(self) -> dict:
         from cluefin_openapi.dart._client import Client as DartClient
 
@@ -115,11 +100,6 @@ class SessionManager:
             )
         return self._kiwoom
 
-    def get_krx(self) -> KrxClient:
-        if self._krx is None:
-            raise SessionNotInitialized("KRX session not initialized. Call session.initialize with broker='krx' first.")
-        return self._krx
-
     def get_dart(self) -> DartClient:
         if self._dart is None:
             raise SessionNotInitialized(
@@ -131,7 +111,6 @@ class SessionManager:
         return {
             "kis": self._kis is not None,
             "kiwoom": self._kiwoom is not None,
-            "krx": self._krx is not None,
             "dart": self._dart is not None,
         }
 
@@ -142,8 +121,6 @@ class SessionManager:
             self._kis = None
         elif broker == "kiwoom":
             self._kiwoom = None
-        elif broker == "krx":
-            self._krx = None
         elif broker == "dart":
             self._dart = None
         else:
@@ -154,7 +131,6 @@ class SessionManager:
     def close_all(self) -> dict:
         self._kis = None
         self._kiwoom = None
-        self._krx = None
         self._dart = None
         logger.info("All sessions closed")
         return {"status": "all_closed"}

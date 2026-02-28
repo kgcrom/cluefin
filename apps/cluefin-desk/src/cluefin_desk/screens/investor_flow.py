@@ -1,5 +1,3 @@
-import asyncio
-
 from loguru import logger
 from textual import work
 from textual.app import ComposeResult
@@ -72,23 +70,10 @@ class InvestorFlowScreen(Screen):
 
     @work(thread=True)
     def load_all_data(self) -> None:
-        self._load_market_overview()
         self._load_foreign_net_buy()
         self._load_institutional_net_buy()
         self._load_program_trading()
         self._load_sector_investor()
-
-    def _load_market_overview(self) -> None:
-        fetcher = self.app.fetcher
-        loop = asyncio.new_event_loop()
-        try:
-            kospi = loop.run_until_complete(fetcher.get_kospi_index_series())
-            kosdaq = loop.run_until_complete(fetcher.get_kosdaq_index_series())
-        finally:
-            loop.close()
-
-        bar = self.query_one("#market-bar", MarketOverviewBar)
-        self.app.call_from_thread(bar.update_indices, kospi, kosdaq)
 
     def _load_foreign_net_buy(self) -> None:
         try:

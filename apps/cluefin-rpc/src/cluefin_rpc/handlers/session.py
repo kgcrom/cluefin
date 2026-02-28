@@ -31,7 +31,7 @@ def handle_ping(params: dict) -> dict:
         "type": "object",
         "properties": {
             "category": {"type": "string", "description": "Filter by category (rpc, quote, ta, account, dart)"},
-            "broker": {"type": "string", "description": "Filter by broker (kis, kiwoom, krx, dart)"},
+            "broker": {"type": "string", "description": "Filter by broker (kis, kiwoom, dart)"},
         },
     },
     returns={"type": "array", "items": {"type": "object"}},
@@ -55,7 +55,7 @@ def handle_list_methods(params: dict, *, _dispatcher: Dispatcher | None = None) 
         "properties": {
             "broker": {
                 "type": "string",
-                "enum": ["kis", "kiwoom", "krx", "dart"],
+                "enum": ["kis", "kiwoom", "dart"],
                 "description": "Broker to initialize",
             },
         },
@@ -93,7 +93,7 @@ def handle_session_status(params: dict, *, _session_manager: SessionManager | No
         "properties": {
             "broker": {
                 "type": "string",
-                "enum": ["kis", "kiwoom", "krx", "dart"],
+                "enum": ["kis", "kiwoom", "dart"],
                 "description": "Broker to close. Omit to close all.",
             },
         },

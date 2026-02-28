@@ -1,5 +1,3 @@
-import asyncio
-
 from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -61,25 +59,12 @@ class MarketOverviewScreen(Screen):
 
     @work(thread=True)
     def load_all_data(self) -> None:
-        self._load_market_overview()
         self._load_sector_data("001")
         self._load_top_movers()
 
     @work(thread=True)
     def _reload_sector_data(self, inds_cd: str) -> None:
         self._load_sector_data(inds_cd)
-
-    def _load_market_overview(self) -> None:
-        fetcher = self.app.fetcher
-        loop = asyncio.new_event_loop()
-        try:
-            kospi = loop.run_until_complete(fetcher.get_kospi_index_series())
-            kosdaq = loop.run_until_complete(fetcher.get_kosdaq_index_series())
-        finally:
-            loop.close()
-
-        bar = self.query_one("#market-bar", MarketOverviewBar)
-        self.app.call_from_thread(bar.update_indices, kospi, kosdaq)
 
     def _load_sector_data(self, inds_cd: str = "001") -> None:
         try:

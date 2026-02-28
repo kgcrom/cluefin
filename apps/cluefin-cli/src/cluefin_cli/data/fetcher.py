@@ -4,15 +4,13 @@ from typing import Any, Dict, List
 import pandas as pd
 from cluefin_openapi.kiwoom._auth import Auth as KiwoomAuth
 from cluefin_openapi.kiwoom._client import Client as KiwoomClient
-from cluefin_openapi.krx._client import Client as KrxClient
-from loguru import logger
 from pydantic import SecretStr
 
 from cluefin_cli.config.settings import settings
 
 
 class DomesticDataFetcher:
-    """Handles domestic stock data fetching from Kiwoom Securities and KRX APIs."""
+    """Handles domestic stock data fetching from Kiwoom Securities API."""
 
     @staticmethod
     def _safe_float(value: str) -> float:
@@ -42,10 +40,6 @@ class DomesticDataFetcher:
             token=token.get_token(),
             env=settings.kiwoom_env,
         )
-        self.krx_client = KrxClient(
-            auth_key=settings.krx_auth_key or "",
-        )
-        self._krx_index_base_date = None
 
     async def get_basic_data(self, stock_code: str):
         """
@@ -175,109 +169,6 @@ class DomesticDataFetcher:
             df = pd.DataFrame(columns=["date", "open", "high", "low", "close", "volume", "timeframe"])
 
         return df
-
-    def _get_latest_krx_index_base_date(self) -> str:
-        """Find the latest KRX index trading date by probing recent business days."""
-        if self._krx_index_base_date:
-            return self._krx_index_base_date
-
-        today = datetime.now().date()
-        for offset in range(0, 31):
-            candidate = today - timedelta(days=offset)
-            if candidate.weekday() >= 5:
-                continue
-
-            candidate_str = candidate.strftime("%Y%m%d")
-            try:
-                response = self.krx_client.index.get_kospi(base_date=candidate_str)
-            except Exception as e:
-                logger.error(f"KRX API failed for date {candidate_str}: {e}")
-                continue
-
-            if response and response.body and response.body.data:
-                self._krx_index_base_date = candidate_str
-                return candidate_str
-
-        self._krx_index_base_date = today.strftime("%Y%m%d")
-        return self._krx_index_base_date
-
-    async def get_kospi_index_series(self) -> List[Dict[str, Any]]:
-        """Return KOSPI index series with name, close_price, fluctuation_rate, trading_value, and transaction_amount."""
-
-        try:
-            base_date = self._get_latest_krx_index_base_date()
-            response = self.krx_client.index.get_kospi(base_date=base_date)
-
-            # Filter for specific KOSPI indices
-            target_indices = ["코스피", "코스피 200", "코스피 200 중소형주", "코스피 200제외 코스피지수"]
-            filtered_data = filter(lambda item: item.index_name in target_indices, response.body.data)
-
-            # Extract data from response using map with lambda
-            index_data = list(
-                map(
-                    lambda item: {
-                        "name": item.index_name,
-                        "close_price": self._safe_float(item.close_price_index),
-                        "fluctuation_rate": self._safe_float(item.fluctuation_rate),
-                        "trading_value": self._safe_float(item.accumulated_trading_value),
-                        "transaction_amount": self._safe_float(item.accumulated_trading_volume),
-                    },
-                    filtered_data,
-                )
-            )
-
-            return index_data
-        except Exception:
-            # Fallback to mock data if API call fails
-            return [
-                {
-                    "name": "KOSPI",
-                    "close_price": 2500.0,
-                    "fluctuation_rate": 1.5,
-                    "trading_value": 15000000000.0,
-                    "transaction_amount": 500000000.0,
-                }
-            ]
-
-    async def get_kosdaq_index_series(self) -> List[Dict[str, Any]]:
-        """Fetch KOSDAQ index data."""
-
-        try:
-            # KRX 데이터 집계는 익일 오전 8시에 업데이트
-            # TODO 실시간으로 조회 가능한 방법 찾아서 교체하기
-            base_date = self._get_latest_krx_index_base_date()
-            response = self.krx_client.index.get_kosdaq(base_date=base_date)
-
-            # Filter for specific KOSDAQ indices
-            target_indices = ["코스닥", "코스닥 150"]
-            filtered_data = filter(lambda item: item.index_name in target_indices, response.body.data)
-
-            # Extract data from response using map with lambda
-            index_data = list(
-                map(
-                    lambda item: {
-                        "name": item.index_name,
-                        "close_price": self._safe_float(item.close_price_index),
-                        "fluctuation_rate": self._safe_float(item.fluctuation_rate),
-                        "trading_value": self._safe_float(item.accumulated_trading_value),
-                        "transaction_amount": self._safe_float(item.accumulated_trading_volume),
-                    },
-                    filtered_data,
-                )
-            )
-
-            return index_data
-        except Exception:
-            # Fallback to mock data if API call fails
-            return [
-                {
-                    "name": "KOSPI",
-                    "close_price": 2500.0,
-                    "fluctuation_rate": 1.5,
-                    "trading_value": 15000000000.0,
-                    "transaction_amount": 500000000.0,
-                }
-            ]
 
     def _generate_mock_data(self, stock_code: str, period: str) -> pd.DataFrame:
         """Generate mock stock data for testing."""

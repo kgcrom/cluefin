@@ -14,7 +14,7 @@
 ### 의존성
 ```toml
 dependencies = [
-    "cluefin-openapi",           # 브로커 API 클라이언트 (KIS, Kiwoom, KRX, DART)
+    "cluefin-openapi",           # 브로커 API 클라이언트 (KIS, Kiwoom, DART)
     "cluefin-ta",                # 기술 분석 함수
     "pydantic>=2.12.0",          # 데이터 검증
     "pydantic-settings>=2.0.0",  # BaseSettings (.env 로딩)
@@ -46,7 +46,7 @@ apps/cluefin-rpc/
 │   │   ├── __init__.py
 │   │   ├── _base.py              # MethodSchema + @rpc_method 데코레이터
 │   │   ├── session.py            # 5 meta/session 핸들러
-│   │   ├── quote.py              # 12 시세 핸들러
+│   │   ├── quote.py              # 10 시세 핸들러
 │   │   ├── ta.py                 # 11 기술 분석 핸들러
 │   │   └── dart.py               # 4 공시 핸들러
 │   └── middleware/
@@ -149,9 +149,6 @@ class RpcSettings(BaseSettings):
     kiwoom_app_key: Optional[str] = None
     kiwoom_secret_key: Optional[str] = None
     kiwoom_env: Literal["dev", "prod"] = "dev"
-
-    # KRX
-    krx_auth_key: Optional[str] = None
 
     # DART
     dart_auth_key: Optional[str] = None
@@ -283,16 +280,15 @@ class SessionManager:
     def __init__(self, settings: RpcSettings) -> None
 
     def initialize(self, broker: str) -> dict:
-        """broker ∈ {"kis", "kiwoom", "krx", "dart"}"""
+        """broker ∈ {"kis", "kiwoom", "dart"}"""
         # → {"broker": "...", "status": "initialized", "env": "..."}
 
     def get_kis(self) -> KisHttpClient           # raises SessionNotInitialized
     def get_kiwoom(self) -> KiwoomClient          # raises SessionNotInitialized
-    def get_krx(self) -> KrxClient               # raises SessionNotInitialized
     def get_dart(self) -> DartClient              # raises SessionNotInitialized
 
     def status(self) -> dict:
-        # → {"kis": bool, "kiwoom": bool, "krx": bool, "dart": bool}
+        # → {"kis": bool, "kiwoom": bool, "dart": bool}
 
     def close(self, broker: str | None = None) -> dict:
         # broker=None → 전체 종료
@@ -308,7 +304,6 @@ class SessionNotInitialized(Exception): ...
 |---|---|---|
 | KIS | `kis_app_key`, `kis_secret_key`, `kis_env` | `cluefin_openapi.kis._auth.Auth` → `KisHttpClient` |
 | Kiwoom | `kiwoom_app_key`, `kiwoom_secret_key`, `kiwoom_env` | `cluefin_openapi.kiwoom._auth.Auth` → `Client` |
-| KRX | `krx_auth_key` | `cluefin_openapi.krx._client.Client` |
 | DART | `dart_auth_key` | `cluefin_openapi.dart._client.Client` |
 
 #### 5.2 `middleware/errors.py` — 예외 매핑
@@ -321,7 +316,7 @@ def map_exception_to_rpc_error(exc: Exception) -> tuple[int, str, Any]:
     SessionNotInitialized         → -32004 (SESSION_ERROR)
     KIS/Kiwoom AuthenticationError → -32001 (AUTH_ERROR)
     KIS/Kiwoom RateLimitError     → -32002 (RATE_LIMIT_ERROR), retry_after 포함
-    KIS/Kiwoom/KRX/DART APIError  → -32003 (BROKER_API_ERROR), status_code/response_data 포함
+    KIS/Kiwoom/DART APIError      → -32003 (BROKER_API_ERROR), status_code/response_data 포함
     ValueError, TypeError          → -32602 (INVALID_PARAMS)
     기타                           → -32603 (INTERNAL_ERROR)
     """
@@ -388,7 +383,7 @@ echo '{"jsonrpc":"2.0","id":1,"method":"ta.sharpe","params":{"returns":[0.01,-0.
 ## 7. Phase 3: Quote (시세, 12개)
 
 ### 목표
-KIS 시세 6 + Kiwoom 차트 4 + KRX 지수 2 = 12개 읽기 전용 시세 조회 메서드.
+KIS 시세 6 + Kiwoom 차트 4 = 10개 읽기 전용 시세 조회 메서드.
 
 ### 선행 Phase
 Phase 0 + Phase 1 (세션 필요)
@@ -428,13 +423,6 @@ def handle_kis_stock_current(params: dict, session) -> dict:
 | `quote.kiwoom.stock_weekly` | `kiwoom.chart.get_stock_weekly(...)` | stock_code, base_date (필수), adj_price |
 | `quote.kiwoom.stock_monthly` | `kiwoom.chart.get_stock_monthly(...)` | stock_code, base_date (필수), adj_price |
 
-#### KRX (2개)
-
-| RPC 메서드 | cluefin-openapi 호출 | 파라미터 |
-|---|---|---|
-| `quote.krx.kospi` | `krx.stock.get_kospi(base_date)` | base_date (필수) |
-| `quote.krx.kosdaq` | `krx.stock.get_kosdaq(base_date)` | base_date (필수) |
-
 ### 검증
 
 ```sh
@@ -444,8 +432,6 @@ printf '{"jsonrpc":"2.0","id":1,"method":"session.initialize","params":{"broker"
 # Kiwoom 일봉
 printf '{"jsonrpc":"2.0","id":1,"method":"session.initialize","params":{"broker":"kiwoom"}}\n{"jsonrpc":"2.0","id":2,"method":"quote.kiwoom.stock_daily","params":{"stock_code":"005930","base_date":"20250101"}}\n' | uv run -m cluefin_rpc
 
-# KRX 코스피
-printf '{"jsonrpc":"2.0","id":1,"method":"session.initialize","params":{"broker":"krx"}}\n{"jsonrpc":"2.0","id":2,"method":"quote.krx.kospi","params":{"base_date":"20250224"}}\n' | uv run -m cluefin_rpc
 ```
 
 ---
@@ -489,8 +475,8 @@ Phase 0 (Foundation)
  ├──→ Phase 1 (Session + Middleware)
  │      SessionManager, 에러 매핑
  │      │
- │      ├──→ Phase 3 (Quote, 12개)
- │      │      KIS 6 + Kiwoom 4 + KRX 2
+ │      ├──→ Phase 3 (Quote, 10개)
+ │      │      KIS 6 + Kiwoom 4
  │      │
  │      └──→ Phase 4 (DART, 4개)
  │             DART 4
@@ -506,7 +492,7 @@ Phase 0 (Foundation)
 
 ---
 
-## 10. 전체 메서드 레지스트리 (32개)
+## 10. 전체 메서드 레지스트리 (30개)
 
 ### Meta (5개, requires_session=False)
 
@@ -518,7 +504,7 @@ Phase 0 (Foundation)
 | 4 | `session.status` | session.py | — |
 | 5 | `session.close` | session.py | — |
 
-### Quote (12개, requires_session=True)
+### Quote (10개, requires_session=True)
 
 | # | RPC 메서드 | 핸들러 모듈 | broker |
 |---|---|---|---|
@@ -532,8 +518,6 @@ Phase 0 (Foundation)
 | 13 | `quote.kiwoom.stock_minute` | quote.py | kiwoom |
 | 14 | `quote.kiwoom.stock_weekly` | quote.py | kiwoom |
 | 15 | `quote.kiwoom.stock_monthly` | quote.py | kiwoom |
-| 16 | `quote.krx.kospi` | quote.py | krx |
-| 17 | `quote.krx.kosdaq` | quote.py | krx |
 
 ### TA (11개, requires_session=False)
 

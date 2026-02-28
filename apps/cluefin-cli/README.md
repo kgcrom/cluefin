@@ -71,7 +71,7 @@ uv sync --all-packages
 4. **환경 설정 (선택사항):**
 ```bash
 cp apps/cluefin-cli/.env.sample .env
-# .env 파일에 API 키 설정 (KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, KIWOOM_ENV, KRX_AUTH_KEY, DART_AUTH_KEY)
+# .env 파일에 API 키 설정 (KIWOOM_APP_KEY, KIWOOM_SECRET_KEY, KIWOOM_ENV, DART_AUTH_KEY)
 ```
 
 ### 기본 사용법
@@ -196,9 +196,6 @@ KIWOOM_APP_KEY=your_app_key_here
 KIWOOM_SECRET_KEY=your_secret_key_here
 KIWOOM_ENV=prod # 옵션: prod | dev(기본값)
 
-# 한국거래소(KRX) API
-KRX_AUTH_KEY=your_auth_key_here
-
 # 금융감독원 DART API
 DART_AUTH_KEY=your_dart_auth_key_here
 
@@ -212,8 +209,7 @@ ML_CACHE_DIR=.ml_cache/
 CLI는 `cluefin-openapi` 패키지를 통해 한국 금융 API와 연동됩니다:
 
 1. **키움증권 API**: 실시간 주식 데이터, 주문, 계좌 정보를 위한 OAuth2 스타일 인증
-2. **한국거래소(KRX)**: 시장 데이터, 지수, 섹터 정보를 위한 단순 auth_key 인증
-3. **금융감독원(DART)**: 기업 공시, 정기 보고서, 배당, 주주 데이터
+2. **금융감독원(DART)**: 기업 공시, 정기 보고서, 배당, 주주 데이터
 
 **참고**: API 키 없이도 데모용 목업 데이터를 사용하여 제한된 기능으로 CLI를 사용할 수 있습니다.
 

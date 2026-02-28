@@ -14,7 +14,6 @@ class RpcSettings(BaseSettings):
     kiwoom_secret_key: Optional[str] = None
     kiwoom_env: Literal["dev", "prod"] = "dev"
 
-    krx_auth_key: Optional[str] = None
     dart_auth_key: Optional[str] = None
 
     kis_account_no: Optional[str] = None
