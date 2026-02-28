@@ -182,9 +182,39 @@ PROJECT_ROOT_DIR=/path/to/cluefin bun run test:unit
 PROJECT_ROOT_DIR=/path/to/cluefin bun run test:integration
 ```
 
-## 🚢 배포
+## 🚢 배포 (npm publish)
+
+### 1. npm 로그인
 
 ```bash
+npm login          # 브라우저 인증으로 로그인
+npm whoami         # 로그인 확인
+```
+
+### 2. 빌드 & 검증
+
+```bash
+bun run publish:check    # clean → build → lint → typecheck → test
+```
+
+### 3. 배포 파일 확인
+
+```bash
+npm pack --dry-run    # 실제 배포될 파일 목록 미리 확인
+```
+
+### 4. 배포
+
+```bash
+bun run publish:manual    # npm publish --access public
+```
+
+### 5. 버전 업데이트 (이후 배포 시)
+
+```bash
+npm version patch    # 0.1.0 → 0.1.1 (버그픽스)
+npm version minor    # 0.1.0 → 0.2.0 (기능 추가)
+npm version major    # 0.1.0 → 1.0.0 (Breaking change)
 bun run publish:check
 bun run publish:manual
 ```
