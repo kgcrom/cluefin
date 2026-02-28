@@ -9,9 +9,22 @@ export const isRetryableError = (error: unknown): boolean => {
   return /network|timeout|abort|fetch/i.test(error.message);
 };
 
+const U32_RANGE = 0x1_0000_0000;
+const secureRandomInt = (maxExclusive: number): number => {
+  if (maxExclusive <= 1) {
+    return 0;
+  }
+
+  const values = new Uint32Array(1);
+  globalThis.crypto.getRandomValues(values);
+  const randomValue = values[0];
+  return Math.floor((randomValue / U32_RANGE) * maxExclusive);
+};
+
 export const computeBackoffMs = (attempt: number, baseDelayMs: number): number => {
   const exponential = baseDelayMs * 2 ** attempt;
-  const jitter = Math.floor(Math.random() * Math.max(25, Math.floor(baseDelayMs / 2)));
+  const jitterMax = Math.max(25, Math.floor(baseDelayMs / 2));
+  const jitter = secureRandomInt(jitterMax);
   return exponential + jitter;
 };
 

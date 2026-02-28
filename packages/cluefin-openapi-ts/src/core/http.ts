@@ -42,7 +42,9 @@ export class BaseHttpClient {
     return withRetry(
       async () => {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), this.options.timeoutMs);
+        const timeout = setTimeout(() => {
+          controller.abort();
+        }, this.options.timeoutMs);
 
         try {
           const url = new URL(request.url);
