@@ -15,6 +15,8 @@ from loguru import logger
 from cluefin_rpc.config import RpcSettings
 from cluefin_rpc.dispatcher import Dispatcher, InvalidParamsError, MethodNotFoundError
 from cluefin_rpc.handlers.dart import register_dart_handlers
+from cluefin_rpc.handlers.kis import register_kis_handlers
+from cluefin_rpc.handlers.kiwoom import register_kiwoom_handlers
 from cluefin_rpc.handlers.quote import register_quote_handlers
 from cluefin_rpc.handlers.session import register_session_handlers
 from cluefin_rpc.handlers.ta import register_ta_handlers
@@ -39,6 +41,8 @@ logger.add(sys.stderr, level="DEBUG")
 def _build_dispatcher() -> Dispatcher:
     dispatcher = Dispatcher()
     register_session_handlers(dispatcher, session_manager=None)
+    register_kis_handlers(dispatcher)
+    register_kiwoom_handlers(dispatcher)
     register_quote_handlers(dispatcher)
     register_ta_handlers(dispatcher)
     register_dart_handlers(dispatcher)
@@ -80,6 +84,8 @@ def main() -> int:
     session_manager = SessionManager(settings)
 
     register_session_handlers(dispatcher, session_manager)
+    register_kis_handlers(dispatcher)
+    register_kiwoom_handlers(dispatcher)
     register_quote_handlers(dispatcher)
     register_ta_handlers(dispatcher)
     register_dart_handlers(dispatcher)
