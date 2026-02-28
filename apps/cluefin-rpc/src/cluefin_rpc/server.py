@@ -51,14 +51,14 @@ def _print_methods(dispatcher: Dispatcher) -> None:
     for m in methods:
         grouped[m["category"] or "other"].append(m)
 
-    print(f"cluefin-rpc v{VERSION} — {len(methods)} methods\n")
+    logger.info("cluefin-rpc v{} — {} methods\n", VERSION, len(methods))
     for category in sorted(grouped):
         items = sorted(grouped[category], key=lambda m: m["name"])
-        print(f"[{category}] ({len(items)})")
+        logger.info("[{}] ({})", category, len(items))
         max_name = max(len(m["name"]) for m in items)
         for m in items:
-            print(f"  {m['name']:<{max_name}}  {m['description']}")
-        print()
+            logger.info("  {:<{}}  {}", m["name"], max_name, m["description"])
+        logger.info("")
 
 
 def main() -> int:
