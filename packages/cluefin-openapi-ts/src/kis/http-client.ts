@@ -20,7 +20,11 @@ import {
 import { BaseHttpClient } from '../core/http';
 import type { ApiEnv, ApiResponse, KisEndpointDefinition } from '../core/types';
 import { createInputSchema, kisEnvelopeSchema } from '../core/validation';
+import { DomesticAccount } from './domestic-account';
 import { DomesticBasicQuote } from './domestic-basic-quote';
+import { DomesticIssueOther } from './domestic-issue-other';
+import { DomesticMarketAnalysis } from './domestic-market-analysis';
+import { DomesticRankingAnalysis } from './domestic-ranking-analysis';
 import { DomesticStockInfo } from './domestic-stock-info';
 
 export interface KisHttpClientOptions {
@@ -79,7 +83,11 @@ export class KisHttpClient {
   private readonly appKey: string;
   private readonly secretKey: string;
 
+  private domesticAccountInstance?: DomesticAccount;
   private domesticBasicQuoteInstance?: DomesticBasicQuote;
+  private domesticIssueOtherInstance?: DomesticIssueOther;
+  private domesticMarketAnalysisInstance?: DomesticMarketAnalysis;
+  private domesticRankingAnalysisInstance?: DomesticRankingAnalysis;
   private domesticStockInfoInstance?: DomesticStockInfo;
 
   public constructor(options: KisHttpClientOptions) {
@@ -105,11 +113,39 @@ export class KisHttpClient {
     );
   }
 
+  public get domesticAccount(): DomesticAccount {
+    if (!this.domesticAccountInstance) {
+      this.domesticAccountInstance = new DomesticAccount(this);
+    }
+    return this.domesticAccountInstance;
+  }
+
   public get domesticBasicQuote(): DomesticBasicQuote {
     if (!this.domesticBasicQuoteInstance) {
       this.domesticBasicQuoteInstance = new DomesticBasicQuote(this);
     }
     return this.domesticBasicQuoteInstance;
+  }
+
+  public get domesticIssueOther(): DomesticIssueOther {
+    if (!this.domesticIssueOtherInstance) {
+      this.domesticIssueOtherInstance = new DomesticIssueOther(this);
+    }
+    return this.domesticIssueOtherInstance;
+  }
+
+  public get domesticMarketAnalysis(): DomesticMarketAnalysis {
+    if (!this.domesticMarketAnalysisInstance) {
+      this.domesticMarketAnalysisInstance = new DomesticMarketAnalysis(this);
+    }
+    return this.domesticMarketAnalysisInstance;
+  }
+
+  public get domesticRankingAnalysis(): DomesticRankingAnalysis {
+    if (!this.domesticRankingAnalysisInstance) {
+      this.domesticRankingAnalysisInstance = new DomesticRankingAnalysis(this);
+    }
+    return this.domesticRankingAnalysisInstance;
   }
 
   public get domesticStockInfo(): DomesticStockInfo {

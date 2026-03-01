@@ -20,9 +20,16 @@ import {
 import { BaseHttpClient } from '../core/http';
 import type { ApiEnv, ApiResponse, KiwoomEndpointDefinition } from '../core/types';
 import { createInputSchema, kiwoomEnvelopeSchema } from '../core/validation';
+import { DomesticAccount } from './domestic-account';
 import { DomesticChart } from './domestic-chart';
+import { DomesticETF } from './domestic-etf';
+import { DomesticForeign } from './domestic-foreign';
+import { DomesticMarketCondition } from './domestic-market-condition';
+import { DomesticOrder } from './domestic-order';
 import { DomesticRankInfo } from './domestic-rank-info';
+import { DomesticSector } from './domestic-sector';
 import { DomesticStockInfo } from './domestic-stock-info';
+import { DomesticTheme } from './domestic-theme';
 
 export interface KiwoomClientOptions {
   token: string;
@@ -75,9 +82,16 @@ export class KiwoomClient {
   private readonly http: BaseHttpClient;
   private readonly token: string;
 
+  private domesticAccountInstance?: DomesticAccount;
   private domesticChartInstance?: DomesticChart;
-  private domesticStockInfoInstance?: DomesticStockInfo;
+  private domesticEtfInstance?: DomesticETF;
+  private domesticForeignInstance?: DomesticForeign;
+  private domesticMarketConditionInstance?: DomesticMarketCondition;
+  private domesticOrderInstance?: DomesticOrder;
   private domesticRankInfoInstance?: DomesticRankInfo;
+  private domesticSectorInstance?: DomesticSector;
+  private domesticStockInfoInstance?: DomesticStockInfo;
+  private domesticThemeInstance?: DomesticTheme;
 
   public constructor(options: KiwoomClientOptions) {
     const env = options.env ?? 'dev';
@@ -100,11 +114,60 @@ export class KiwoomClient {
     );
   }
 
+  public get domesticAccount(): DomesticAccount {
+    if (!this.domesticAccountInstance) {
+      this.domesticAccountInstance = new DomesticAccount(this);
+    }
+    return this.domesticAccountInstance;
+  }
+
   public get domesticChart(): DomesticChart {
     if (!this.domesticChartInstance) {
       this.domesticChartInstance = new DomesticChart(this);
     }
     return this.domesticChartInstance;
+  }
+
+  public get domesticEtf(): DomesticETF {
+    if (!this.domesticEtfInstance) {
+      this.domesticEtfInstance = new DomesticETF(this);
+    }
+    return this.domesticEtfInstance;
+  }
+
+  public get domesticForeign(): DomesticForeign {
+    if (!this.domesticForeignInstance) {
+      this.domesticForeignInstance = new DomesticForeign(this);
+    }
+    return this.domesticForeignInstance;
+  }
+
+  public get domesticMarketCondition(): DomesticMarketCondition {
+    if (!this.domesticMarketConditionInstance) {
+      this.domesticMarketConditionInstance = new DomesticMarketCondition(this);
+    }
+    return this.domesticMarketConditionInstance;
+  }
+
+  public get domesticOrder(): DomesticOrder {
+    if (!this.domesticOrderInstance) {
+      this.domesticOrderInstance = new DomesticOrder(this);
+    }
+    return this.domesticOrderInstance;
+  }
+
+  public get domesticRankInfo(): DomesticRankInfo {
+    if (!this.domesticRankInfoInstance) {
+      this.domesticRankInfoInstance = new DomesticRankInfo(this);
+    }
+    return this.domesticRankInfoInstance;
+  }
+
+  public get domesticSector(): DomesticSector {
+    if (!this.domesticSectorInstance) {
+      this.domesticSectorInstance = new DomesticSector(this);
+    }
+    return this.domesticSectorInstance;
   }
 
   public get domesticStockInfo(): DomesticStockInfo {
@@ -114,11 +177,11 @@ export class KiwoomClient {
     return this.domesticStockInfoInstance;
   }
 
-  public get domesticRankInfo(): DomesticRankInfo {
-    if (!this.domesticRankInfoInstance) {
-      this.domesticRankInfoInstance = new DomesticRankInfo(this);
+  public get domesticTheme(): DomesticTheme {
+    if (!this.domesticThemeInstance) {
+      this.domesticThemeInstance = new DomesticTheme(this);
     }
-    return this.domesticRankInfoInstance;
+    return this.domesticThemeInstance;
   }
 
   public async invokeEndpoint(
