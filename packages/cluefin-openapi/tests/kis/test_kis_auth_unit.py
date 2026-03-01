@@ -42,6 +42,18 @@ def test_generate_success(dev_auth, requests_mock):
     assert dev_auth._token_data == result
 
 
+def test_token_response_get_token_returns_access_token():
+    """KIS TokenResponse should provide get_token() for RPC session init compatibility."""
+    token_response = TokenResponse(
+        access_token="test_access_token",
+        token_type="Bearer",
+        expires_in=86400,
+        access_token_token_expired="2025-10-05 10:00:00",
+    )
+
+    assert token_response.get_token() == "test_access_token"
+
+
 def test_generate_http_error(dev_auth, requests_mock):
     """Test token generation with HTTP error."""
     requests_mock.post(
