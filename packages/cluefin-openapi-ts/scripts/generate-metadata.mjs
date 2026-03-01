@@ -287,6 +287,24 @@ const tasks = [
     kind: 'kis',
   },
   {
+    sourcePath: 'packages/cluefin-openapi/src/cluefin_openapi/kis/_domestic_ranking_analysis.py',
+    targetPath: 'packages/cluefin-openapi-ts/src/kis/metadata/domestic-ranking-analysis.ts',
+    symbolName: 'domesticRankingAnalysisEndpoints',
+    kind: 'kis',
+  },
+  {
+    sourcePath: 'packages/cluefin-openapi/src/cluefin_openapi/kis/_domestic_market_analysis.py',
+    targetPath: 'packages/cluefin-openapi-ts/src/kis/metadata/domestic-market-analysis.ts',
+    symbolName: 'domesticMarketAnalysisEndpoints',
+    kind: 'kis',
+  },
+  {
+    sourcePath: 'packages/cluefin-openapi/src/cluefin_openapi/kis/_domestic_issue_other.py',
+    targetPath: 'packages/cluefin-openapi-ts/src/kis/metadata/domestic-issue-other.ts',
+    symbolName: 'domesticIssueOtherEndpoints',
+    kind: 'kis',
+  },
+  {
     sourcePath: 'packages/cluefin-openapi/src/cluefin_openapi/kiwoom/_domestic_chart.py',
     targetPath: 'packages/cluefin-openapi-ts/src/kiwoom/metadata/domestic-chart.ts',
     symbolName: 'domesticChartEndpoints',
@@ -302,6 +320,36 @@ const tasks = [
     sourcePath: 'packages/cluefin-openapi/src/cluefin_openapi/kiwoom/_domestic_rank_info.py',
     targetPath: 'packages/cluefin-openapi-ts/src/kiwoom/metadata/domestic-rank-info.ts',
     symbolName: 'domesticRankInfoEndpoints',
+    kind: 'kiwoom',
+  },
+  {
+    sourcePath: 'packages/cluefin-openapi/src/cluefin_openapi/kiwoom/_domestic_etf.py',
+    targetPath: 'packages/cluefin-openapi-ts/src/kiwoom/metadata/domestic-etf.ts',
+    symbolName: 'domesticEtfEndpoints',
+    kind: 'kiwoom',
+  },
+  {
+    sourcePath: 'packages/cluefin-openapi/src/cluefin_openapi/kiwoom/_domestic_sector.py',
+    targetPath: 'packages/cluefin-openapi-ts/src/kiwoom/metadata/domestic-sector.ts',
+    symbolName: 'domesticSectorEndpoints',
+    kind: 'kiwoom',
+  },
+  {
+    sourcePath: 'packages/cluefin-openapi/src/cluefin_openapi/kiwoom/_domestic_theme.py',
+    targetPath: 'packages/cluefin-openapi-ts/src/kiwoom/metadata/domestic-theme.ts',
+    symbolName: 'domesticThemeEndpoints',
+    kind: 'kiwoom',
+  },
+  {
+    sourcePath: 'packages/cluefin-openapi/src/cluefin_openapi/kiwoom/_domestic_foreign.py',
+    targetPath: 'packages/cluefin-openapi-ts/src/kiwoom/metadata/domestic-foreign.ts',
+    symbolName: 'domesticForeignEndpoints',
+    kind: 'kiwoom',
+  },
+  {
+    sourcePath: 'packages/cluefin-openapi/src/cluefin_openapi/kiwoom/_domestic_market_condition.py',
+    targetPath: 'packages/cluefin-openapi-ts/src/kiwoom/metadata/domestic-market-condition.ts',
+    symbolName: 'domesticMarketConditionEndpoints',
     kind: 'kiwoom',
   },
 ];
