@@ -1,4 +1,4 @@
-import { expect, test } from 'bun:test';
+import { expect, test } from 'vitest';
 
 import { domesticBasicQuoteEndpoints } from '../../src/kis/metadata/domestic-basic-quote';
 import { domesticStockInfoEndpoints } from '../../src/kis/metadata/domestic-stock-info';

@@ -126,7 +126,7 @@ uv run ruff format .
 
 **[cluefin-openapi-ts](packages/cluefin-openapi-ts/)** - 한국 금융 API TypeScript 클라이언트
 - **KIS/키움 1차 지원**: 인증, 공통 HTTP 클라이언트, REST endpoint 래퍼
-- **Bun 우선 + Node 호환**: `Node >=20`, `Bun >=1.3` 기준으로 ESM/CJS 동시 제공
+- **Node + npm 기반 배포**: `Node >=20` 기준으로 ESM/CJS 동시 제공
 - **런타임 검증**: Zod 기반 입력/envelope 검증 + camelCase 응답 변환
 - **Biome 기반 품질 관리**: 포맷팅/린팅을 단일 도구로 운영
 - **v1 구현 범위**: KIS 47개 + 키움 65개, 총 112개 REST 메서드 메타데이터 기반 제공
@@ -159,7 +159,7 @@ npm version patch
 
 ### 배포 전 검증
 ```bash
-bun run publish:check
+npm run publish:check
 npm pack --dry-run
 ```
 
@@ -170,10 +170,10 @@ npm publish --access public
 
 ### 최근 구현 요약 (cluefin-openapi-ts)
 - 패키지명: `cluefin-openapi`
-- 런타임: Bun 우선, Node 호환 (`>=20`)
+- 런타임: Node (`>=20`)
 - 포맷/린트: Biome (`@biomejs/biome`)
-- 타입 환경: Bun 타입 (`@types/bun`)
-- 테스트/검증: `bun test`, `bun run check`, `bun run typecheck`, `bun run build`, `bun run publish:check`
+- 타입 환경: Node 타입 (`@types/node`)
+- 테스트/검증: `npm run test`, `npm run check`, `npm run typecheck`, `npm run build`, `npm run publish:check`
 
 ## 📄 라이선스
 이 프로젝트는 MIT 라이선스에 따라 라이선스가 부여됩니다. 자세한 내용은 [LICENSE](LICENSE)를 참조하세요.

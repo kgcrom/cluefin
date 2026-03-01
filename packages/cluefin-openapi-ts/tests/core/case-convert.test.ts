@@ -1,4 +1,4 @@
-import { expect, test } from 'bun:test';
+import { expect, test } from 'vitest';
 
 import { camelizeKeys, toCamelCase, toSnakeCase } from '../../src/core/case-convert';
 
