@@ -5,5 +5,11 @@ export default defineConfig({
     environment: 'node',
     include: ['tests/**/*.integration.test.ts'],
     setupFiles: ['./tests/setup-integration-env.ts'],
+    testTimeout: 180_000,
+    fileParallelism: false,
+    pool: 'forks',
+    poolOptions: {
+      forks: { singleFork: true },
+    },
   },
 });
