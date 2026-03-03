@@ -125,11 +125,11 @@ describe('Kiwoom DomesticStockInfo', () => {
   it('getSupplyDemandConcentration', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getSupplyDemandConcentration({
-      mrktTp: '0',
+      mrktTp: '001',
       prpsCnctrRt: '50',
       curPrcEntry: '0',
-      prpscnt: '0',
-      cycleTp: '0',
+      prpscnt: '10',
+      cycleTp: '100',
       stexTp: '1',
     });
     assertKiwoomResponse(res);
