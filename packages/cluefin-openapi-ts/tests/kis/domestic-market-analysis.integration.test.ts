@@ -16,7 +16,7 @@ const itWithUserId = runIntegration && userId ? test : test.skip;
 describe('KIS DomesticMarketAnalysis', () => {
   it('getInvestorTradingTrendByMarketDaily', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getInvestorTradingTrendByMarketDaily({
+    const res = await client.domesticMarketAnalysis.getInvestorTradingTrendByMarketDaily({
       fidCondMrktDivCode: 'J',
       fidInputIscd: '0001',
       fidInputDate1: ONE_MONTH_AGO,
@@ -29,7 +29,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   it('getInvestorTradingTrendByMarketIntraday', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getInvestorTradingTrendByMarketIntraday({
+    const res = await client.domesticMarketAnalysis.getInvestorTradingTrendByMarketIntraday({
       fidInputIscd: '0001',
       fidInputIscd2: '0001',
     });
@@ -38,7 +38,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   it('getInvestorTradingTrendByStockDaily', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getInvestorTradingTrendByStockDaily({
+    const res = await client.domesticMarketAnalysis.getInvestorTradingTrendByStockDaily({
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
       fidInputDate1: ONE_MONTH_AGO,
@@ -48,7 +48,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   it('getForeignNetBuyTrendByStock', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getForeignNetBuyTrendByStock({
+    const res = await client.domesticMarketAnalysis.getForeignNetBuyTrendByStock({
       fidInputIscd: SAMSUNG,
       fidInputIscd2: SAMSUNG,
       fidCondMrktDivCode: 'J',
@@ -58,7 +58,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   it('getForeignBrokerageTradingAggregate', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getForeignBrokerageTradingAggregate({
+    const res = await client.domesticMarketAnalysis.getForeignBrokerageTradingAggregate({
       fidInputIscd: SAMSUNG,
       fidRankSortClsCode: '0',
       fidRankSortClsCode2: '0',
@@ -68,7 +68,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   it('getForeignInstitutionalEstimateByStock', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getForeignInstitutionalEstimateByStock({
+    const res = await client.domesticMarketAnalysis.getForeignInstitutionalEstimateByStock({
       mkscShrnIscd: SAMSUNG,
     });
     assertKisResponse(res);
@@ -76,7 +76,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   it('getMemberTradingTrendByStock', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getMemberTradingTrendByStock({
+    const res = await client.domesticMarketAnalysis.getMemberTradingTrendByStock({
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
       fidInputIscd2: '',
@@ -89,7 +89,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   it('getMemberTradingTrendTick', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getMemberTradingTrendTick({
+    const res = await client.domesticMarketAnalysis.getMemberTradingTrendTick({
       fidCondScrDivCode: '20432',
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
@@ -102,7 +102,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   it('getBuySellVolumeByStockDaily', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getBuySellVolumeByStockDaily({
+    const res = await client.domesticMarketAnalysis.getBuySellVolumeByStockDaily({
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
       fidInputDate1: ONE_MONTH_AGO,
@@ -114,7 +114,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   it('getCreditBalanceTrendDaily', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getCreditBalanceTrendDaily({
+    const res = await client.domesticMarketAnalysis.getCreditBalanceTrendDaily({
       fidCondMrktDivCode: 'J',
       fidCondScrDivCode: '20476',
       fidInputIscd: SAMSUNG,
@@ -125,7 +125,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   it('getStockLoanTrendDaily', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getStockLoanTrendDaily({
+    const res = await client.domesticMarketAnalysis.getStockLoanTrendDaily({
       mrktDivClsCode: '01',
       mkscShrnIscd: SAMSUNG,
       startDate: ONE_MONTH_AGO,
@@ -137,7 +137,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   it('getProgramTradingSummaryDaily', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getProgramTradingSummaryDaily({
+    const res = await client.domesticMarketAnalysis.getProgramTradingSummaryDaily({
       fidCondMrktDivCode: 'J',
       fidMrktClsCode: '0',
       fidInputDate1: ONE_MONTH_AGO,
@@ -148,7 +148,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   it('getProgramTradingSummaryIntraday', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getProgramTradingSummaryIntraday({
+    const res = await client.domesticMarketAnalysis.getProgramTradingSummaryIntraday({
       fidCondMrktDivCode: 'J',
       fidMrktClsCode: '0',
       fidSctnClsCode: '0',
@@ -161,7 +161,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   it('getProgramTradingTrendByStockDaily', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getProgramTradingTrendByStockDaily({
+    const res = await client.domesticMarketAnalysis.getProgramTradingTrendByStockDaily({
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
       fidInputDate1: ONE_MONTH_AGO,
@@ -171,7 +171,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   it('getProgramTradingTrendByStockIntraday', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getProgramTradingTrendByStockIntraday({
+    const res = await client.domesticMarketAnalysis.getProgramTradingTrendByStockIntraday({
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
     });
@@ -180,7 +180,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   it('getProgramTradingInvestorTrendToday', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getProgramTradingInvestorTrendToday({
+    const res = await client.domesticMarketAnalysis.getProgramTradingInvestorTrendToday({
       exchDivClsCode: '01',
       mrktDivClsCode: '01',
     });
@@ -189,7 +189,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   it('getShortSellingTrendDaily', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getShortSellingTrendDaily({
+    const res = await client.domesticMarketAnalysis.getShortSellingTrendDaily({
       fidInputDate2: TODAY,
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
@@ -200,7 +200,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   it('getExpectedPriceTrend', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getExpectedPriceTrend({
+    const res = await client.domesticMarketAnalysis.getExpectedPriceTrend({
       fidMkopClsCode: '0',
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
@@ -210,7 +210,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   it('getAfterHoursExpectedFluctuation', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getAfterHoursExpectedFluctuation({
+    const res = await client.domesticMarketAnalysis.getAfterHoursExpectedFluctuation({
       fidCondMrktDivCode: 'J',
       fidCondScrDivCode: '11186',
       fidInputIscd: '0000',
@@ -225,7 +225,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   it('getLimitPriceStocks', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getLimitPriceStocks({
+    const res = await client.domesticMarketAnalysis.getLimitPriceStocks({
       fidCondMrktDivCode: 'J',
       fidCondScrDivCode: '11300',
       fidPrcClsCode: '0',
@@ -242,7 +242,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   it('getTradingWeightByAmount', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getTradingWeightByAmount({
+    const res = await client.domesticMarketAnalysis.getTradingWeightByAmount({
       fidCondMrktDivCode: 'J',
       fidCondScrDivCode: '11119',
       fidInputIscd: SAMSUNG,
@@ -252,7 +252,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   it('getResistanceLevelTradingWeight', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getResistanceLevelTradingWeight({
+    const res = await client.domesticMarketAnalysis.getResistanceLevelTradingWeight({
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
       fidCondScrDivCode: '10113',
@@ -263,7 +263,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   it('getMarketFundSummary', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getMarketFundSummary({
+    const res = await client.domesticMarketAnalysis.getMarketFundSummary({
       fidInputDate1: TODAY,
     });
     assertKisResponse(res);
@@ -276,14 +276,14 @@ describe('KIS DomesticMarketAnalysis', () => {
       params[`fidCondMrktDivCode${i}`] = i <= 2 ? 'J' : '';
       params[`fidInputIscd${i}`] = i === 1 ? SAMSUNG : i === 2 ? '000660' : '';
     }
-    const res = await (client.domesticMarketAnalysis as any).getWatchlistMultiQuote(params);
+    const res = await client.domesticMarketAnalysis.getWatchlistMultiQuote(params);
     assertKisResponse(res);
   });
 
   // userId 필요 엔드포인트
   itWithUserId('getConditionSearchList', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getConditionSearchList({
+    const res = await client.domesticMarketAnalysis.getConditionSearchList({
       userId,
     });
     assertKisResponse(res);
@@ -291,7 +291,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   itWithUserId('getConditionSearchResult', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getConditionSearchResult({
+    const res = await client.domesticMarketAnalysis.getConditionSearchResult({
       userId,
       seq: '0',
     });
@@ -300,7 +300,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   itWithUserId('getWatchlistGroups', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getWatchlistGroups({
+    const res = await client.domesticMarketAnalysis.getWatchlistGroups({
       interestType: '0',
       fidEtcClsCode: '',
       userId,
@@ -310,7 +310,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   itWithUserId('getWatchlistStocksByGroup', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getWatchlistStocksByGroup({
+    const res = await client.domesticMarketAnalysis.getWatchlistStocksByGroup({
       type: '0',
       userId,
       dataRank: '',
@@ -325,7 +325,7 @@ describe('KIS DomesticMarketAnalysis', () => {
 
   itWithUserId('getInstitutionalForeignTradingAggregate', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticMarketAnalysis as any).getInstitutionalForeignTradingAggregate({
+    const res = await client.domesticMarketAnalysis.getInstitutionalForeignTradingAggregate({
       type: '0',
       userId,
       dataRank: '',

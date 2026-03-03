@@ -14,31 +14,31 @@ const it = runIntegration ? test : test.skip;
 describe('Kiwoom DomesticMarketCondition', () => {
   it('getStockQuote', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticMarketCondition as any).getStockQuote({ stkCd: SAMSUNG });
+    const res = await client.domesticMarketCondition.getStockQuote({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
   });
 
   it('getStockQuoteByDate', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticMarketCondition as any).getStockQuoteByDate({ stkCd: SAMSUNG });
+    const res = await client.domesticMarketCondition.getStockQuoteByDate({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
   });
 
   it('getStockPrice', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticMarketCondition as any).getStockPrice({ stkCd: SAMSUNG });
+    const res = await client.domesticMarketCondition.getStockPrice({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
   });
 
   it('getMarketSentimentInfo', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticMarketCondition as any).getMarketSentimentInfo({ stkCd: SAMSUNG });
+    const res = await client.domesticMarketCondition.getMarketSentimentInfo({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
   });
 
   it('getNewStockWarrantPrice', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticMarketCondition as any).getNewStockWarrantPrice({
+    const res = await client.domesticMarketCondition.getNewStockWarrantPrice({
       newstkRecvrhtTp: '0',
     });
     assertKiwoomResponse(res);
@@ -46,7 +46,7 @@ describe('Kiwoom DomesticMarketCondition', () => {
 
   it('getDailyInstitutionalTradingItems', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticMarketCondition as any).getDailyInstitutionalTradingItems({
+    const res = await client.domesticMarketCondition.getDailyInstitutionalTradingItems({
       strtDt: ONE_MONTH_AGO,
       endDt: TODAY,
       trdeTp: '0',
@@ -58,7 +58,7 @@ describe('Kiwoom DomesticMarketCondition', () => {
 
   it('getInstitutionalTradingTrendByStock', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticMarketCondition as any).getInstitutionalTradingTrendByStock({
+    const res = await client.domesticMarketCondition.getInstitutionalTradingTrendByStock({
       stkCd: SAMSUNG,
       strtDt: ONE_MONTH_AGO,
       endDt: TODAY,
@@ -70,7 +70,7 @@ describe('Kiwoom DomesticMarketCondition', () => {
 
   it('getExecutionIntensityTrendByTime', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticMarketCondition as any).getExecutionIntensityTrendByTime({
+    const res = await client.domesticMarketCondition.getExecutionIntensityTrendByTime({
       stkCd: SAMSUNG,
     });
     assertKiwoomResponse(res);
@@ -78,7 +78,7 @@ describe('Kiwoom DomesticMarketCondition', () => {
 
   it('getExecutionIntensityTrendByDate', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticMarketCondition as any).getExecutionIntensityTrendByDate({
+    const res = await client.domesticMarketCondition.getExecutionIntensityTrendByDate({
       stkCd: SAMSUNG,
     });
     assertKiwoomResponse(res);
@@ -86,7 +86,7 @@ describe('Kiwoom DomesticMarketCondition', () => {
 
   it('getIntradayTradingByInvestor', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticMarketCondition as any).getIntradayTradingByInvestor({
+    const res = await client.domesticMarketCondition.getIntradayTradingByInvestor({
       mrktTp: '0',
       amtQtyTp: '1',
       invsr: '0',
@@ -99,7 +99,7 @@ describe('Kiwoom DomesticMarketCondition', () => {
 
   it('getAfterMarketTradingByInvestor', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticMarketCondition as any).getAfterMarketTradingByInvestor({
+    const res = await client.domesticMarketCondition.getAfterMarketTradingByInvestor({
       mrktTp: '0',
       amtQtyTp: '1',
       trdeTp: '0',
@@ -110,7 +110,7 @@ describe('Kiwoom DomesticMarketCondition', () => {
 
   it('getSecuritiesFirmTradingTrendByStock', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticMarketCondition as any).getSecuritiesFirmTradingTrendByStock({
+    const res = await client.domesticMarketCondition.getSecuritiesFirmTradingTrendByStock({
       mmcmCd: '0000',
       stkCd: SAMSUNG,
       strtDt: ONE_MONTH_AGO,
@@ -121,7 +121,7 @@ describe('Kiwoom DomesticMarketCondition', () => {
 
   it('getDailyStockPrice', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticMarketCondition as any).getDailyStockPrice({
+    const res = await client.domesticMarketCondition.getDailyStockPrice({
       stkCd: SAMSUNG,
       qryDt: TODAY,
       indcTp: '0',
@@ -131,7 +131,7 @@ describe('Kiwoom DomesticMarketCondition', () => {
 
   it('getAfterHoursSinglePrice', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticMarketCondition as any).getAfterHoursSinglePrice({
+    const res = await client.domesticMarketCondition.getAfterHoursSinglePrice({
       stkCd: SAMSUNG,
     });
     assertKiwoomResponse(res);
@@ -139,7 +139,7 @@ describe('Kiwoom DomesticMarketCondition', () => {
 
   it('getProgramTradingTrendByTime', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticMarketCondition as any).getProgramTradingTrendByTime({
+    const res = await client.domesticMarketCondition.getProgramTradingTrendByTime({
       date: TODAY,
       amtQtyTp: '1',
       mrktTp: '0',
@@ -151,7 +151,7 @@ describe('Kiwoom DomesticMarketCondition', () => {
 
   it('getProgramTradingArbitrageBalanceTrend', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticMarketCondition as any).getProgramTradingArbitrageBalanceTrend({
+    const res = await client.domesticMarketCondition.getProgramTradingArbitrageBalanceTrend({
       date: TODAY,
       stexTp: '1',
     });
@@ -160,7 +160,7 @@ describe('Kiwoom DomesticMarketCondition', () => {
 
   it('getProgramTradingCumulativeTrend', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticMarketCondition as any).getProgramTradingCumulativeTrend({
+    const res = await client.domesticMarketCondition.getProgramTradingCumulativeTrend({
       date: TODAY,
       amtQtyTp: '1',
       mrktTp: '0',
@@ -171,7 +171,7 @@ describe('Kiwoom DomesticMarketCondition', () => {
 
   it('getProgramTradingTrendByStockAndTime', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticMarketCondition as any).getProgramTradingTrendByStockAndTime({
+    const res = await client.domesticMarketCondition.getProgramTradingTrendByStockAndTime({
       amtQtyTp: '1',
       stkCd: SAMSUNG,
       date: TODAY,
@@ -181,7 +181,7 @@ describe('Kiwoom DomesticMarketCondition', () => {
 
   it('getProgramTradingTrendByDate', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticMarketCondition as any).getProgramTradingTrendByDate({
+    const res = await client.domesticMarketCondition.getProgramTradingTrendByDate({
       date: TODAY,
       amtQtyTp: '1',
       mrktTp: '0',
@@ -193,7 +193,7 @@ describe('Kiwoom DomesticMarketCondition', () => {
 
   it('getProgramTradingTrendByStockAndDate', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticMarketCondition as any).getProgramTradingTrendByStockAndDate({
+    const res = await client.domesticMarketCondition.getProgramTradingTrendByStockAndDate({
       amtQtyTp: '1',
       stkCd: SAMSUNG,
       date: TODAY,

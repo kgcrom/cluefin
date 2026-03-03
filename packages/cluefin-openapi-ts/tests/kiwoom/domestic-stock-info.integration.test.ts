@@ -14,25 +14,25 @@ const it = runIntegration ? test : test.skip;
 describe('Kiwoom DomesticStockInfo', () => {
   it('getStockInfo', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getStockInfo({ stkCd: SAMSUNG });
+    const res = await client.domesticStockInfo.getStockInfo({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
   });
 
   it('getStockTradingMember', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getStockTradingMember({ stkCd: SAMSUNG });
+    const res = await client.domesticStockInfo.getStockTradingMember({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
   });
 
   it('getExecution', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getExecution({ stkCd: SAMSUNG });
+    const res = await client.domesticStockInfo.getExecution({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
   });
 
   it('getMarginTradingTrend', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getMarginTradingTrend({
+    const res = await client.domesticStockInfo.getMarginTradingTrend({
       stkCd: SAMSUNG,
       dt: TODAY,
       qryTp: '0',
@@ -42,7 +42,7 @@ describe('Kiwoom DomesticStockInfo', () => {
 
   it('getDailyTradingDetails', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getDailyTradingDetails({
+    const res = await client.domesticStockInfo.getDailyTradingDetails({
       stkCd: SAMSUNG,
       strtDt: ONE_MONTH_AGO,
     });
@@ -51,7 +51,7 @@ describe('Kiwoom DomesticStockInfo', () => {
 
   it('getNewHighLowPrice', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getNewHighLowPrice({
+    const res = await client.domesticStockInfo.getNewHighLowPrice({
       mrktTp: '0',
       ntlTp: '0',
       highLowCloseTp: '0',
@@ -67,7 +67,7 @@ describe('Kiwoom DomesticStockInfo', () => {
 
   it('getUpperLowerLimitPrice', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getUpperLowerLimitPrice({
+    const res = await client.domesticStockInfo.getUpperLowerLimitPrice({
       mrktTp: '0',
       updownTp: '0',
       sortTp: '0',
@@ -82,7 +82,7 @@ describe('Kiwoom DomesticStockInfo', () => {
 
   it('getHighLowPriceApproach', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getHighLowPriceApproach({
+    const res = await client.domesticStockInfo.getHighLowPriceApproach({
       highLowTp: '0',
       alaccRt: '5',
       mrktTp: '0',
@@ -96,7 +96,7 @@ describe('Kiwoom DomesticStockInfo', () => {
 
   it('getPriceVolatility', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getPriceVolatility({
+    const res = await client.domesticStockInfo.getPriceVolatility({
       mrktTp: '0',
       fluTp: '0',
       tmTp: '0',
@@ -113,7 +113,7 @@ describe('Kiwoom DomesticStockInfo', () => {
 
   it('getTradingVolumeRenewal', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getTradingVolumeRenewal({
+    const res = await client.domesticStockInfo.getTradingVolumeRenewal({
       mrktTp: '0',
       cycleTp: '0',
       trdeQtyTp: '0',
@@ -124,7 +124,7 @@ describe('Kiwoom DomesticStockInfo', () => {
 
   it('getSupplyDemandConcentration', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getSupplyDemandConcentration({
+    const res = await client.domesticStockInfo.getSupplyDemandConcentration({
       mrktTp: '0',
       prpsCnctrRt: '50',
       curPrcEntry: '0',
@@ -137,7 +137,7 @@ describe('Kiwoom DomesticStockInfo', () => {
 
   it('getHighPer', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getHighPer({
+    const res = await client.domesticStockInfo.getHighPer({
       pertp: '0',
       stexTp: '1',
     });
@@ -146,7 +146,7 @@ describe('Kiwoom DomesticStockInfo', () => {
 
   it('getChangeRateFromOpen', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getChangeRateFromOpen({
+    const res = await client.domesticStockInfo.getChangeRateFromOpen({
       sortTp: '0',
       trdeQtyCnd: '0',
       mrktTp: '0',
@@ -162,7 +162,7 @@ describe('Kiwoom DomesticStockInfo', () => {
 
   it('getTradingMemberSupplyDemandAnalysis', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getTradingMemberSupplyDemandAnalysis({
+    const res = await client.domesticStockInfo.getTradingMemberSupplyDemandAnalysis({
       stkCd: SAMSUNG,
       strtDt: ONE_MONTH_AGO,
       endDt: TODAY,
@@ -178,7 +178,7 @@ describe('Kiwoom DomesticStockInfo', () => {
 
   it('getTradingMemberInstantVolume', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getTradingMemberInstantVolume({
+    const res = await client.domesticStockInfo.getTradingMemberInstantVolume({
       stkCd: SAMSUNG,
       mmcmCd: '0000',
       mrktTp: '0',
@@ -191,7 +191,7 @@ describe('Kiwoom DomesticStockInfo', () => {
 
   it('getVolatilityControlEvent', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getVolatilityControlEvent({
+    const res = await client.domesticStockInfo.getVolatilityControlEvent({
       mrktTp: '0',
       bfMkrtTp: '0',
       motnTp: '0',
@@ -206,7 +206,7 @@ describe('Kiwoom DomesticStockInfo', () => {
 
   it('getDailyPreviousDayExecutionVolume', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getDailyPreviousDayExecutionVolume({
+    const res = await client.domesticStockInfo.getDailyPreviousDayExecutionVolume({
       stkCd: SAMSUNG,
       tdyPred: '0',
     });
@@ -215,7 +215,7 @@ describe('Kiwoom DomesticStockInfo', () => {
 
   it('getDailyTradingItemsByInvestor', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getDailyTradingItemsByInvestor({
+    const res = await client.domesticStockInfo.getDailyTradingItemsByInvestor({
       strtDt: ONE_MONTH_AGO,
       endDt: TODAY,
       trdeTp: '0',
@@ -228,7 +228,7 @@ describe('Kiwoom DomesticStockInfo', () => {
 
   it('getInstitutionalInvestorByStock', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getInstitutionalInvestorByStock({
+    const res = await client.domesticStockInfo.getInstitutionalInvestorByStock({
       dt: TODAY,
       stkCd: SAMSUNG,
       amtQtyTp: '1',
@@ -240,7 +240,7 @@ describe('Kiwoom DomesticStockInfo', () => {
 
   it('getTotalInstitutionalInvestorByStock', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getTotalInstitutionalInvestorByStock({
+    const res = await client.domesticStockInfo.getTotalInstitutionalInvestorByStock({
       stkCd: SAMSUNG,
       strtDt: ONE_MONTH_AGO,
       endDt: TODAY,
@@ -253,7 +253,7 @@ describe('Kiwoom DomesticStockInfo', () => {
 
   it('getDailyPreviousDayConclusion', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getDailyPreviousDayConclusion({
+    const res = await client.domesticStockInfo.getDailyPreviousDayConclusion({
       stkCd: SAMSUNG,
       tdyPred: '0',
     });
@@ -262,37 +262,37 @@ describe('Kiwoom DomesticStockInfo', () => {
 
   it('getInterestStockInfo', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getInterestStockInfo({ stkCd: SAMSUNG });
+    const res = await client.domesticStockInfo.getInterestStockInfo({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
   });
 
   it('getStockInfoSummary', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getStockInfoSummary({ mrktTp: '0' });
+    const res = await client.domesticStockInfo.getStockInfoSummary({ mrktTp: '0' });
     assertKiwoomResponse(res);
   });
 
   it('getStockInfoV1', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getStockInfoV1({ stkCd: SAMSUNG });
+    const res = await client.domesticStockInfo.getStockInfoV1({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
   });
 
   it('getIndustryCode', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getIndustryCode({ mrktTp: '0' });
+    const res = await client.domesticStockInfo.getIndustryCode({ mrktTp: '0' });
     assertKiwoomResponse(res);
   });
 
   it('getMemberCompany', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getMemberCompany({});
+    const res = await client.domesticStockInfo.getMemberCompany({});
     assertKiwoomResponse(res);
   });
 
   it('getTop50ProgramNetBuy', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getTop50ProgramNetBuy({
+    const res = await client.domesticStockInfo.getTop50ProgramNetBuy({
       trdeUpperTp: '0',
       amtQtyTp: '1',
       mrktTp: '0',
@@ -303,7 +303,7 @@ describe('Kiwoom DomesticStockInfo', () => {
 
   it('getProgramTradingStatusByStock', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticStockInfo as any).getProgramTradingStatusByStock({
+    const res = await client.domesticStockInfo.getProgramTradingStatusByStock({
       dt: TODAY,
       mrktTp: '0',
       stexTp: '1',

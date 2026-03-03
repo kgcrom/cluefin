@@ -14,7 +14,7 @@ const it = runIntegration ? test : test.skip;
 describe('Kiwoom DomesticRankInfo', () => {
   it('getTopRemainingOrderQuantity', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticRankInfo as any).getTopRemainingOrderQuantity({
+    const res = await client.domesticRankInfo.getTopRemainingOrderQuantity({
       mrktTp: '0',
       sortTp: '0',
       trdeQtyTp: '0',
@@ -27,7 +27,7 @@ describe('Kiwoom DomesticRankInfo', () => {
 
   it('getRapidlyIncreasingRemainingOrderQuantity', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticRankInfo as any).getRapidlyIncreasingRemainingOrderQuantity({
+    const res = await client.domesticRankInfo.getRapidlyIncreasingRemainingOrderQuantity({
       mrktTp: '0',
       trdeTp: '0',
       sortTp: '0',
@@ -41,7 +41,7 @@ describe('Kiwoom DomesticRankInfo', () => {
 
   it('getRapidlyIncreasingTotalSellOrders', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticRankInfo as any).getRapidlyIncreasingTotalSellOrders({
+    const res = await client.domesticRankInfo.getRapidlyIncreasingTotalSellOrders({
       mrktTp: '0',
       rtTp: '0',
       tmTp: '0',
@@ -54,7 +54,7 @@ describe('Kiwoom DomesticRankInfo', () => {
 
   it('getRapidlyIncreasingTradingVolume', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticRankInfo as any).getRapidlyIncreasingTradingVolume({
+    const res = await client.domesticRankInfo.getRapidlyIncreasingTradingVolume({
       mrktTp: '0',
       sortTp: '0',
       tmTp: '0',
@@ -68,7 +68,7 @@ describe('Kiwoom DomesticRankInfo', () => {
 
   it('getTopPercentageChangeFromPreviousDay', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticRankInfo as any).getTopPercentageChangeFromPreviousDay({
+    const res = await client.domesticRankInfo.getTopPercentageChangeFromPreviousDay({
       mrktTp: '0',
       sortTp: '1',
       trdeQtyCnd: '0',
@@ -84,7 +84,7 @@ describe('Kiwoom DomesticRankInfo', () => {
 
   it('getTopExpectedConclusionPercentageChange', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticRankInfo as any).getTopExpectedConclusionPercentageChange({
+    const res = await client.domesticRankInfo.getTopExpectedConclusionPercentageChange({
       mrktTp: '0',
       sortTp: '0',
       trdeQtyCnd: '0',
@@ -98,7 +98,7 @@ describe('Kiwoom DomesticRankInfo', () => {
 
   it('getTopCurrentDayTradingVolume', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticRankInfo as any).getTopCurrentDayTradingVolume({
+    const res = await client.domesticRankInfo.getTopCurrentDayTradingVolume({
       mrktTp: '0',
       sortTp: '1',
       mangStkIncls: '0',
@@ -113,7 +113,7 @@ describe('Kiwoom DomesticRankInfo', () => {
 
   it('getTopPreviousDayTradingVolume', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticRankInfo as any).getTopPreviousDayTradingVolume({
+    const res = await client.domesticRankInfo.getTopPreviousDayTradingVolume({
       mrktTp: '0',
       qryTp: '0',
       rankStrt: '1',
@@ -125,7 +125,7 @@ describe('Kiwoom DomesticRankInfo', () => {
 
   it('getTopTransactionValue', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticRankInfo as any).getTopTransactionValue({
+    const res = await client.domesticRankInfo.getTopTransactionValue({
       mrktTp: '0',
       mangStkIncls: '0',
       stexTp: '1',
@@ -135,7 +135,7 @@ describe('Kiwoom DomesticRankInfo', () => {
 
   it('getTopMarginRatio', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticRankInfo as any).getTopMarginRatio({
+    const res = await client.domesticRankInfo.getTopMarginRatio({
       mrktTp: '0',
       trdeQtyTp: '0',
       stkCnd: '0',
@@ -148,7 +148,7 @@ describe('Kiwoom DomesticRankInfo', () => {
 
   it('getTopForeignerPeriodTrading', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticRankInfo as any).getTopForeignerPeriodTrading({
+    const res = await client.domesticRankInfo.getTopForeignerPeriodTrading({
       mrktTp: '0',
       trdeTp: '0',
       dt: TODAY,
@@ -159,7 +159,7 @@ describe('Kiwoom DomesticRankInfo', () => {
 
   it('getTopConsecutiveNetBuySellByForeigners', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticRankInfo as any).getTopConsecutiveNetBuySellByForeigners({
+    const res = await client.domesticRankInfo.getTopConsecutiveNetBuySellByForeigners({
       mrktTp: '0',
       trdeTp: '0',
       baseDtTp: '0',
@@ -170,7 +170,7 @@ describe('Kiwoom DomesticRankInfo', () => {
 
   it('getTopLimitExhaustionRateForeigner', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticRankInfo as any).getTopLimitExhaustionRateForeigner({
+    const res = await client.domesticRankInfo.getTopLimitExhaustionRateForeigner({
       mrktTp: '0',
       dt: TODAY,
       stexTp: '1',
@@ -180,7 +180,7 @@ describe('Kiwoom DomesticRankInfo', () => {
 
   it('getTopForeignAccountGroupTrading', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticRankInfo as any).getTopForeignAccountGroupTrading({
+    const res = await client.domesticRankInfo.getTopForeignAccountGroupTrading({
       mrktTp: '0',
       dt: TODAY,
       trdeTp: '0',
@@ -192,7 +192,7 @@ describe('Kiwoom DomesticRankInfo', () => {
 
   it('getStockSpecificSecuritiesFirmRanking', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticRankInfo as any).getStockSpecificSecuritiesFirmRanking({
+    const res = await client.domesticRankInfo.getStockSpecificSecuritiesFirmRanking({
       stkCd: SAMSUNG,
       strtDt: ONE_MONTH_AGO,
       endDt: TODAY,
@@ -203,7 +203,7 @@ describe('Kiwoom DomesticRankInfo', () => {
 
   it('getTopSecuritiesFirmTrading', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticRankInfo as any).getTopSecuritiesFirmTrading({
+    const res = await client.domesticRankInfo.getTopSecuritiesFirmTrading({
       mmcmCd: '0000',
       trdeQtyTp: '0',
       trdeTp: '0',
@@ -215,7 +215,7 @@ describe('Kiwoom DomesticRankInfo', () => {
 
   it('getTopCurrentDayMajorTraders', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticRankInfo as any).getTopCurrentDayMajorTraders({
+    const res = await client.domesticRankInfo.getTopCurrentDayMajorTraders({
       stkCd: SAMSUNG,
     });
     assertKiwoomResponse(res);
@@ -223,7 +223,7 @@ describe('Kiwoom DomesticRankInfo', () => {
 
   it('getTopNetBuyTraderRanking', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticRankInfo as any).getTopNetBuyTraderRanking({
+    const res = await client.domesticRankInfo.getTopNetBuyTraderRanking({
       stkCd: SAMSUNG,
       strtDt: ONE_MONTH_AGO,
       endDt: TODAY,
@@ -237,7 +237,7 @@ describe('Kiwoom DomesticRankInfo', () => {
 
   it('getTopCurrentDayDeviationSources', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticRankInfo as any).getTopCurrentDayDeviationSources({
+    const res = await client.domesticRankInfo.getTopCurrentDayDeviationSources({
       stkCd: SAMSUNG,
     });
     assertKiwoomResponse(res);
@@ -245,7 +245,7 @@ describe('Kiwoom DomesticRankInfo', () => {
 
   it('getSameNetBuySellRanking', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticRankInfo as any).getSameNetBuySellRanking({
+    const res = await client.domesticRankInfo.getSameNetBuySellRanking({
       strtDt: ONE_MONTH_AGO,
       endDt: TODAY,
       mrktTp: '0',
@@ -259,7 +259,7 @@ describe('Kiwoom DomesticRankInfo', () => {
 
   it('getTopIntradayTradingByInvestor', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticRankInfo as any).getTopIntradayTradingByInvestor({
+    const res = await client.domesticRankInfo.getTopIntradayTradingByInvestor({
       trdeTp: '0',
       mrktTp: '0',
       orgnTp: '0',
@@ -269,7 +269,7 @@ describe('Kiwoom DomesticRankInfo', () => {
 
   it('getAfterHoursSinglePriceChangeRateRanking', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticRankInfo as any).getAfterHoursSinglePriceChangeRateRanking({
+    const res = await client.domesticRankInfo.getAfterHoursSinglePriceChangeRateRanking({
       mrktTp: '0',
       sortBase: '0',
       stkCnd: '0',
@@ -282,7 +282,7 @@ describe('Kiwoom DomesticRankInfo', () => {
 
   it('getTopForeignerLimitExhaustionRate', async () => {
     const client = await getKiwoomClient();
-    const res = await (client.domesticRankInfo as any).getTopForeignerLimitExhaustionRate({
+    const res = await client.domesticRankInfo.getTopForeignerLimitExhaustionRate({
       mrktTp: '0',
       dt: TODAY,
       stexTp: '1',

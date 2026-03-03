@@ -14,7 +14,7 @@ const it = runIntegration ? test : test.skip;
 describe('KIS DomesticStockInfo', () => {
   it('getProductBasicInfo', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getProductBasicInfo({
+    const res = await client.domesticStockInfo.getProductBasicInfo({
       pdno: SAMSUNG,
       prdtTypeCd: '300',
     });
@@ -23,7 +23,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getStockBasicInfo', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getStockBasicInfo({
+    const res = await client.domesticStockInfo.getStockBasicInfo({
       prdtTypeCd: '300',
       pdno: SAMSUNG,
     });
@@ -32,7 +32,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getBalanceSheet', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getBalanceSheet({
+    const res = await client.domesticStockInfo.getBalanceSheet({
       fidDivClsCode: '0',
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
@@ -42,7 +42,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getIncomeStatement', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getIncomeStatement({
+    const res = await client.domesticStockInfo.getIncomeStatement({
       fidDivClsCode: '0',
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
@@ -52,7 +52,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getFinancialRatio', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getFinancialRatio({
+    const res = await client.domesticStockInfo.getFinancialRatio({
       fidDivClsCode: '0',
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
@@ -62,7 +62,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getProfitabilityRatio', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getProfitabilityRatio({
+    const res = await client.domesticStockInfo.getProfitabilityRatio({
       fidInputIscd: SAMSUNG,
       fidDivClsCode: '0',
       fidCondMrktDivCode: 'J',
@@ -72,7 +72,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getOtherKeyRatio', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getOtherKeyRatio({
+    const res = await client.domesticStockInfo.getOtherKeyRatio({
       fidInputIscd: SAMSUNG,
       fidDivClsCode: '0',
       fidCondMrktDivCode: 'J',
@@ -82,7 +82,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getStabilityRatio', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getStabilityRatio({
+    const res = await client.domesticStockInfo.getStabilityRatio({
       fidInputIscd: SAMSUNG,
       fidDivClsCode: '0',
       fidCondMrktDivCode: 'J',
@@ -92,7 +92,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getGrowthRatio', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getGrowthRatio({
+    const res = await client.domesticStockInfo.getGrowthRatio({
       fidInputIscd: SAMSUNG,
       fidDivClsCode: '0',
       fidCondMrktDivCode: 'J',
@@ -102,7 +102,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getMarginTradableStocks', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getMarginTradableStocks({
+    const res = await client.domesticStockInfo.getMarginTradableStocks({
       fidRankSortClsCode: '0',
       fidSlctYn: 'N',
       fidInputIscd: SAMSUNG,
@@ -114,7 +114,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getKsdDividendDecision', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getKsdDividendDecision({
+    const res = await client.domesticStockInfo.getKsdDividendDecision({
       cts: '',
       gb1: '0',
       fDt: ONE_MONTH_AGO,
@@ -127,7 +127,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getKsdStockDividendDecision', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getKsdStockDividendDecision({
+    const res = await client.domesticStockInfo.getKsdStockDividendDecision({
       shtCd: '',
       tDt: TODAY,
       fDt: ONE_MONTH_AGO,
@@ -138,7 +138,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getKsdMergerSplitDecision', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getKsdMergerSplitDecision({
+    const res = await client.domesticStockInfo.getKsdMergerSplitDecision({
       cts: '',
       fDt: ONE_MONTH_AGO,
       tDt: TODAY,
@@ -149,7 +149,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getKsdParValueChangeDecision', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getKsdParValueChangeDecision({
+    const res = await client.domesticStockInfo.getKsdParValueChangeDecision({
       shtCd: '',
       cts: '',
       fDt: ONE_MONTH_AGO,
@@ -161,7 +161,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getKsdCapitalReductionSchedule', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getKsdCapitalReductionSchedule({
+    const res = await client.domesticStockInfo.getKsdCapitalReductionSchedule({
       cts: '',
       fDt: ONE_MONTH_AGO,
       tDt: TODAY,
@@ -172,7 +172,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getKsdListingInfoSchedule', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getKsdListingInfoSchedule({
+    const res = await client.domesticStockInfo.getKsdListingInfoSchedule({
       shtCd: '',
       tDt: TODAY,
       fDt: ONE_MONTH_AGO,
@@ -183,7 +183,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getKsdIpoSubscriptionSchedule', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getKsdIpoSubscriptionSchedule({
+    const res = await client.domesticStockInfo.getKsdIpoSubscriptionSchedule({
       shtCd: '',
       cts: '',
       fDt: ONE_MONTH_AGO,
@@ -194,7 +194,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getKsdForfeitedShareSchedule', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getKsdForfeitedShareSchedule({
+    const res = await client.domesticStockInfo.getKsdForfeitedShareSchedule({
       shtCd: '',
       tDt: TODAY,
       fDt: ONE_MONTH_AGO,
@@ -205,7 +205,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getKsdDepositSchedule', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getKsdDepositSchedule({
+    const res = await client.domesticStockInfo.getKsdDepositSchedule({
       tDt: TODAY,
       shtCd: '',
       fDt: ONE_MONTH_AGO,
@@ -216,7 +216,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getKsdPaidInCapitalIncreaseSchedule', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getKsdPaidInCapitalIncreaseSchedule({
+    const res = await client.domesticStockInfo.getKsdPaidInCapitalIncreaseSchedule({
       cts: '',
       gb1: '0',
       fDt: ONE_MONTH_AGO,
@@ -228,7 +228,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getKsdStockDividendSchedule', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getKsdStockDividendSchedule({
+    const res = await client.domesticStockInfo.getKsdStockDividendSchedule({
       cts: '',
       fDt: ONE_MONTH_AGO,
       tDt: TODAY,
@@ -239,7 +239,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getKsdShareholderMeetingSchedule', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getKsdShareholderMeetingSchedule({
+    const res = await client.domesticStockInfo.getKsdShareholderMeetingSchedule({
       cts: '',
       fDt: ONE_MONTH_AGO,
       tDt: TODAY,
@@ -250,7 +250,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getEstimatedEarnings', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getEstimatedEarnings({
+    const res = await client.domesticStockInfo.getEstimatedEarnings({
       shtCd: SAMSUNG,
     });
     assertKisResponse(res);
@@ -258,7 +258,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getStockLoanableList', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getStockLoanableList({
+    const res = await client.domesticStockInfo.getStockLoanableList({
       excgDvsnCd: '01',
       pdno: SAMSUNG,
       thcoStlnPsblYn: '',
@@ -271,7 +271,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getInvestmentOpinion', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getInvestmentOpinion({
+    const res = await client.domesticStockInfo.getInvestmentOpinion({
       fidCondMrktDivCode: 'J',
       fidCondScrDivCode: '16633',
       fidInputIscd: SAMSUNG,
@@ -283,7 +283,7 @@ describe('KIS DomesticStockInfo', () => {
 
   it('getInvestmentOpinionByBrokerage', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticStockInfo as any).getInvestmentOpinionByBrokerage({
+    const res = await client.domesticStockInfo.getInvestmentOpinionByBrokerage({
       fidCondMrktDivCode: 'J',
       fidCondScrDivCode: '16634',
       fidInputIscd: SAMSUNG,

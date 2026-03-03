@@ -10,6 +10,101 @@ const typesPath = path.join(typesDir, 'index.d.ts');
 
 fs.mkdirSync(typesDir, { recursive: true });
 
+const extractMethodNames = (metadataRelPath) => {
+  const fullPath = path.join(packageRoot, metadataRelPath);
+  const source = fs.readFileSync(fullPath, 'utf8');
+  const matches = [...source.matchAll(/methodName:\s*'([^']+)'/g)];
+  return matches.map((m) => m[1]);
+};
+
+const renderDomainClass = (className, methods) => {
+  const methodLines = methods.map((m) => `  ${m}(input: Record<string, unknown>): Promise<ApiResponse>;`).join('\n');
+  return `export declare class ${className} {\n${methodLines}\n}`;
+};
+
+const kisDomains = [
+  { className: 'DomesticAccount', metadataPath: 'src/kis/metadata/domestic-account.ts', prop: 'domesticAccount' },
+  {
+    className: 'DomesticBasicQuote',
+    metadataPath: 'src/kis/metadata/domestic-basic-quote.ts',
+    prop: 'domesticBasicQuote',
+  },
+  {
+    className: 'DomesticIssueOther',
+    metadataPath: 'src/kis/metadata/domestic-issue-other.ts',
+    prop: 'domesticIssueOther',
+  },
+  {
+    className: 'DomesticMarketAnalysis',
+    metadataPath: 'src/kis/metadata/domestic-market-analysis.ts',
+    prop: 'domesticMarketAnalysis',
+  },
+  {
+    className: 'DomesticRankingAnalysis',
+    metadataPath: 'src/kis/metadata/domestic-ranking-analysis.ts',
+    prop: 'domesticRankingAnalysis',
+  },
+  { className: 'DomesticStockInfo', metadataPath: 'src/kis/metadata/domestic-stock-info.ts', prop: 'domesticStockInfo' },
+  {
+    className: 'OnmarketBondBasicQuote',
+    metadataPath: 'src/kis/metadata/onmarket-bond-basic-quote.ts',
+    prop: 'onmarketBondBasicQuote',
+  },
+  {
+    className: 'OverseasBasicQuote',
+    metadataPath: 'src/kis/metadata/overseas-basic-quote.ts',
+    prop: 'overseasBasicQuote',
+  },
+];
+
+const kiwoomDomains = [
+  {
+    className: 'KiwoomDomesticAccount',
+    metadataPath: 'src/kiwoom/metadata/domestic-account.ts',
+    prop: 'domesticAccount',
+  },
+  { className: 'KiwoomDomesticChart', metadataPath: 'src/kiwoom/metadata/domestic-chart.ts', prop: 'domesticChart' },
+  { className: 'KiwoomDomesticETF', metadataPath: 'src/kiwoom/metadata/domestic-etf.ts', prop: 'domesticEtf' },
+  {
+    className: 'KiwoomDomesticForeign',
+    metadataPath: 'src/kiwoom/metadata/domestic-foreign.ts',
+    prop: 'domesticForeign',
+  },
+  {
+    className: 'KiwoomDomesticMarketCondition',
+    metadataPath: 'src/kiwoom/metadata/domestic-market-condition.ts',
+    prop: 'domesticMarketCondition',
+  },
+  { className: 'KiwoomDomesticOrder', metadataPath: 'src/kiwoom/metadata/domestic-order.ts', prop: 'domesticOrder' },
+  {
+    className: 'KiwoomDomesticRankInfo',
+    metadataPath: 'src/kiwoom/metadata/domestic-rank-info.ts',
+    prop: 'domesticRankInfo',
+  },
+  {
+    className: 'KiwoomDomesticSector',
+    metadataPath: 'src/kiwoom/metadata/domestic-sector.ts',
+    prop: 'domesticSector',
+  },
+  {
+    className: 'KiwoomDomesticStockInfo',
+    metadataPath: 'src/kiwoom/metadata/domestic-stock-info.ts',
+    prop: 'domesticStockInfo',
+  },
+  { className: 'KiwoomDomesticTheme', metadataPath: 'src/kiwoom/metadata/domestic-theme.ts', prop: 'domesticTheme' },
+];
+
+const kisDomainDecls = kisDomains
+  .map((d) => renderDomainClass(d.className, extractMethodNames(d.metadataPath)))
+  .join('\n\n');
+
+const kiwoomDomainDecls = kiwoomDomains
+  .map((d) => renderDomainClass(d.className, extractMethodNames(d.metadataPath)))
+  .join('\n\n');
+
+const kisClientProps = kisDomains.map((d) => `  readonly ${d.prop}: ${d.className};`).join('\n');
+const kiwoomClientProps = kiwoomDomains.map((d) => `  readonly ${d.prop}: ${d.className};`).join('\n');
+
 const content = `export type ApiEnv = 'dev' | 'prod';
 
 export interface ApiResponse<TBody = Record<string, unknown>> {
@@ -145,18 +240,11 @@ export interface KisHttpClientOptions {
   fetchImpl?: typeof fetch;
 }
 
-export class DomesticBasicQuote {
-  [methodName: string]: ((input: Record<string, unknown>) => Promise<ApiResponse>) | unknown;
-}
-
-export class DomesticStockInfo {
-  [methodName: string]: ((input: Record<string, unknown>) => Promise<ApiResponse>) | unknown;
-}
+${kisDomainDecls}
 
 export class KisHttpClient {
   constructor(options: KisHttpClientOptions);
-  readonly domesticBasicQuote: DomesticBasicQuote;
-  readonly domesticStockInfo: DomesticStockInfo;
+${kisClientProps}
 }
 
 export interface KiwoomAuthOptions {
@@ -189,23 +277,11 @@ export interface KiwoomClientOptions {
   fetchImpl?: typeof fetch;
 }
 
-export class DomesticChart {
-  [methodName: string]: ((input: Record<string, unknown>) => Promise<ApiResponse>) | unknown;
-}
-
-export class DomesticRankInfo {
-  [methodName: string]: ((input: Record<string, unknown>) => Promise<ApiResponse>) | unknown;
-}
-
-export class KiwoomDomesticStockInfo {
-  [methodName: string]: ((input: Record<string, unknown>) => Promise<ApiResponse>) | unknown;
-}
+${kiwoomDomainDecls}
 
 export class KiwoomClient {
   constructor(options: KiwoomClientOptions);
-  readonly domesticChart: DomesticChart;
-  readonly domesticStockInfo: KiwoomDomesticStockInfo;
-  readonly domesticRankInfo: DomesticRankInfo;
+${kiwoomClientProps}
 }
 `;
 

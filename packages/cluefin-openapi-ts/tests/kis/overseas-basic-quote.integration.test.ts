@@ -7,7 +7,7 @@ const it = runIntegration ? test : test.skip;
 describe('KIS OverseasBasicQuote', () => {
   it('getStockCurrentPriceDetail', async () => {
     const client = await getKisClient();
-    const res = await (client.overseasBasicQuote as any).getStockCurrentPriceDetail({
+    const res = await client.overseasBasicQuote.getStockCurrentPriceDetail({
       auth: '',
       excd: 'NAS',
       symb: 'AAPL',
@@ -17,7 +17,7 @@ describe('KIS OverseasBasicQuote', () => {
 
   it('getStockPeriodQuote', async () => {
     const client = await getKisClient();
-    const res = await (client.overseasBasicQuote as any).getStockPeriodQuote({
+    const res = await client.overseasBasicQuote.getStockPeriodQuote({
       auth: '',
       excd: 'NAS',
       symb: 'AAPL',
@@ -30,7 +30,7 @@ describe('KIS OverseasBasicQuote', () => {
 
   it('getProductBaseInfo', async () => {
     const client = await getKisClient();
-    const res = await (client.overseasBasicQuote as any).getProductBaseInfo({
+    const res = await client.overseasBasicQuote.getProductBaseInfo({
       prdtTypeCd: '512',
       pdno: 'AAPL',
     });

@@ -7,7 +7,7 @@ const it = runIntegration ? test : test.skip;
 describe('KIS DomesticRankingAnalysis', () => {
   it('getTradingVolumeRank', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticRankingAnalysis as any).getTradingVolumeRank({
+    const res = await client.domesticRankingAnalysis.getTradingVolumeRank({
       fidCondMrktDivCode: 'J',
       fidCondScrDivCode: '20171',
       fidInputIscd: '0000',
@@ -25,7 +25,7 @@ describe('KIS DomesticRankingAnalysis', () => {
 
   it('getStockFluctuationRank', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticRankingAnalysis as any).getStockFluctuationRank({
+    const res = await client.domesticRankingAnalysis.getStockFluctuationRank({
       fidRsflRate2: '',
       fidCondMrktDivCode: 'J',
       fidCondScrDivCode: '20170',
@@ -46,7 +46,7 @@ describe('KIS DomesticRankingAnalysis', () => {
 
   it('getStockHogaQuantityRank', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticRankingAnalysis as any).getStockHogaQuantityRank({
+    const res = await client.domesticRankingAnalysis.getStockHogaQuantityRank({
       fidVolCnt: '0',
       fidCondMrktDivCode: 'J',
       fidCondScrDivCode: '20172',
@@ -63,7 +63,7 @@ describe('KIS DomesticRankingAnalysis', () => {
 
   it('getStockProfitabilityIndicatorRank', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticRankingAnalysis as any).getStockProfitabilityIndicatorRank({
+    const res = await client.domesticRankingAnalysis.getStockProfitabilityIndicatorRank({
       fidCondMrktDivCode: 'J',
       fidTrgtClsCode: '0',
       fidCondScrDivCode: '20173',
@@ -83,7 +83,7 @@ describe('KIS DomesticRankingAnalysis', () => {
 
   it('getStockMarketCapTop', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticRankingAnalysis as any).getStockMarketCapTop({
+    const res = await client.domesticRankingAnalysis.getStockMarketCapTop({
       fidInputPrice2: '0',
       fidCondMrktDivCode: 'J',
       fidCondScrDivCode: '20174',
@@ -99,7 +99,7 @@ describe('KIS DomesticRankingAnalysis', () => {
 
   it('getStockFinanceRatioRank', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticRankingAnalysis as any).getStockFinanceRatioRank({
+    const res = await client.domesticRankingAnalysis.getStockFinanceRatioRank({
       fidTrgtClsCode: '0',
       fidCondMrktDivCode: 'J',
       fidCondScrDivCode: '20175',
@@ -119,7 +119,7 @@ describe('KIS DomesticRankingAnalysis', () => {
 
   it('getStockTimeHogaRank', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticRankingAnalysis as any).getStockTimeHogaRank({
+    const res = await client.domesticRankingAnalysis.getStockTimeHogaRank({
       fidInputPrice1: '0',
       fidCondMrktDivCode: 'J',
       fidCondScrDivCode: '20176',
@@ -136,7 +136,7 @@ describe('KIS DomesticRankingAnalysis', () => {
 
   it('getStockPreferredStockRatioTop', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticRankingAnalysis as any).getStockPreferredStockRatioTop({
+    const res = await client.domesticRankingAnalysis.getStockPreferredStockRatioTop({
       fidVolCnt: '0',
       fidCondMrktDivCode: 'J',
       fidCondScrDivCode: '20177',
@@ -152,7 +152,7 @@ describe('KIS DomesticRankingAnalysis', () => {
 
   it('getStockDisparityIndexRank', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticRankingAnalysis as any).getStockDisparityIndexRank({
+    const res = await client.domesticRankingAnalysis.getStockDisparityIndexRank({
       fidInputPrice2: '0',
       fidCondMrktDivCode: 'J',
       fidCondScrDivCode: '20178',
@@ -170,7 +170,7 @@ describe('KIS DomesticRankingAnalysis', () => {
 
   it('getStockMarketPriceRank', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticRankingAnalysis as any).getStockMarketPriceRank({
+    const res = await client.domesticRankingAnalysis.getStockMarketPriceRank({
       fidTrgtClsCode: '0',
       fidCondMrktDivCode: 'J',
       fidCondScrDivCode: '20179',
@@ -190,7 +190,7 @@ describe('KIS DomesticRankingAnalysis', () => {
 
   it('getStockExecutionStrengthTop', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticRankingAnalysis as any).getStockExecutionStrengthTop({
+    const res = await client.domesticRankingAnalysis.getStockExecutionStrengthTop({
       fidTrgtExlsClsCode: '0',
       fidCondMrktDivCode: 'J',
       fidCondScrDivCode: '20168',
@@ -206,7 +206,7 @@ describe('KIS DomesticRankingAnalysis', () => {
 
   it('getStockWatchlistRegistrationTop', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticRankingAnalysis as any).getStockWatchlistRegistrationTop({
+    const res = await client.domesticRankingAnalysis.getStockWatchlistRegistrationTop({
       fidInputIscd2: '0000',
       fidCondMrktDivCode: 'J',
       fidCondScrDivCode: '20180',
@@ -224,7 +224,7 @@ describe('KIS DomesticRankingAnalysis', () => {
 
   it('getStockExpectedExecutionRiseDeclineTop', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticRankingAnalysis as any).getStockExpectedExecutionRiseDeclineTop({
+    const res = await client.domesticRankingAnalysis.getStockExpectedExecutionRiseDeclineTop({
       fidRankSortClsCode: '0',
       fidCondMrktDivCode: 'J',
       fidCondScrDivCode: '20182',
@@ -241,7 +241,7 @@ describe('KIS DomesticRankingAnalysis', () => {
 
   it('getStockProprietaryTradingTop', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticRankingAnalysis as any).getStockProprietaryTradingTop({
+    const res = await client.domesticRankingAnalysis.getStockProprietaryTradingTop({
       fidTrgtExlsClsCode: '0',
       fidCondMrktDivCode: 'J',
       fidCondScrDivCode: '20186',
@@ -260,7 +260,7 @@ describe('KIS DomesticRankingAnalysis', () => {
 
   it('getStockNewHighLowApproachingTop', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticRankingAnalysis as any).getStockNewHighLowApproachingTop({
+    const res = await client.domesticRankingAnalysis.getStockNewHighLowApproachingTop({
       fidAplyRangVol: '0',
       fidCondMrktDivCode: 'J',
       fidCondScrDivCode: '20187',
@@ -279,7 +279,7 @@ describe('KIS DomesticRankingAnalysis', () => {
 
   it('getStockShortSellingTop', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticRankingAnalysis as any).getStockShortSellingTop({
+    const res = await client.domesticRankingAnalysis.getStockShortSellingTop({
       fidAplyRangVol: '0',
       fidCondMrktDivCode: 'J',
       fidCondScrDivCode: '20482',
@@ -296,7 +296,7 @@ describe('KIS DomesticRankingAnalysis', () => {
 
   it('getStockAfterHoursFluctuationRank', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticRankingAnalysis as any).getStockAfterHoursFluctuationRank({
+    const res = await client.domesticRankingAnalysis.getStockAfterHoursFluctuationRank({
       fidCondMrktDivCode: 'J',
       fidMrktClsCode: '0',
       fidCondScrDivCode: '20234',
@@ -313,7 +313,7 @@ describe('KIS DomesticRankingAnalysis', () => {
 
   it('getStockAfterHoursVolumeRank', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticRankingAnalysis as any).getStockAfterHoursVolumeRank({
+    const res = await client.domesticRankingAnalysis.getStockAfterHoursVolumeRank({
       fidCondMrktDivCode: 'J',
       fidCondScrDivCode: '20235',
       fidInputIscd: '0000',
@@ -329,7 +329,7 @@ describe('KIS DomesticRankingAnalysis', () => {
 
   it('getStockCreditBalanceTop', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticRankingAnalysis as any).getStockCreditBalanceTop({
+    const res = await client.domesticRankingAnalysis.getStockCreditBalanceTop({
       fidCondScrDivCode: '17001',
       fidInputIscd: '0000',
       fidOption: '0',
@@ -341,7 +341,7 @@ describe('KIS DomesticRankingAnalysis', () => {
 
   it('getStockDividendYieldTop', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticRankingAnalysis as any).getStockDividendYieldTop({
+    const res = await client.domesticRankingAnalysis.getStockDividendYieldTop({
       ctsArea: '',
       gb1: '0',
       upjong: '0001',
@@ -356,7 +356,7 @@ describe('KIS DomesticRankingAnalysis', () => {
 
   it('getStockLargeExecutionCountTop', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticRankingAnalysis as any).getStockLargeExecutionCountTop({
+    const res = await client.domesticRankingAnalysis.getStockLargeExecutionCountTop({
       fidAplyRangPrc2: '0',
       fidCondMrktDivCode: 'J',
       fidCondScrDivCode: '19090',
@@ -375,7 +375,7 @@ describe('KIS DomesticRankingAnalysis', () => {
 
   it('getHtsInquiryTop20', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticRankingAnalysis as any).getHtsInquiryTop20({});
+    const res = await client.domesticRankingAnalysis.getHtsInquiryTop20({});
     assertKisResponse(res);
   });
 });

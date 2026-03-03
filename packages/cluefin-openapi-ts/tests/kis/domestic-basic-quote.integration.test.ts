@@ -15,7 +15,7 @@ const it = runIntegration ? test : test.skip;
 describe('KIS DomesticBasicQuote', () => {
   it('getStockCurrentPrice', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticBasicQuote as any).getStockCurrentPrice({
+    const res = await client.domesticBasicQuote.getStockCurrentPrice({
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
     });
@@ -24,7 +24,7 @@ describe('KIS DomesticBasicQuote', () => {
 
   it('getStockCurrentPrice2', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticBasicQuote as any).getStockCurrentPrice2({
+    const res = await client.domesticBasicQuote.getStockCurrentPrice2({
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
     });
@@ -33,7 +33,7 @@ describe('KIS DomesticBasicQuote', () => {
 
   it('getStockCurrentPriceConclusion', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticBasicQuote as any).getStockCurrentPriceConclusion({
+    const res = await client.domesticBasicQuote.getStockCurrentPriceConclusion({
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
     });
@@ -42,7 +42,7 @@ describe('KIS DomesticBasicQuote', () => {
 
   it('getStockCurrentPriceDaily', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticBasicQuote as any).getStockCurrentPriceDaily({
+    const res = await client.domesticBasicQuote.getStockCurrentPriceDaily({
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
       fidPeriodDivCode: 'D',
@@ -53,7 +53,7 @@ describe('KIS DomesticBasicQuote', () => {
 
   it('getStockCurrentPriceAskingExpectedConclusion', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticBasicQuote as any).getStockCurrentPriceAskingExpectedConclusion({
+    const res = await client.domesticBasicQuote.getStockCurrentPriceAskingExpectedConclusion({
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
     });
@@ -62,7 +62,7 @@ describe('KIS DomesticBasicQuote', () => {
 
   it('getStockCurrentPriceInvestor', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticBasicQuote as any).getStockCurrentPriceInvestor({
+    const res = await client.domesticBasicQuote.getStockCurrentPriceInvestor({
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
     });
@@ -71,7 +71,7 @@ describe('KIS DomesticBasicQuote', () => {
 
   it('getStockCurrentPriceMember', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticBasicQuote as any).getStockCurrentPriceMember({
+    const res = await client.domesticBasicQuote.getStockCurrentPriceMember({
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
     });
@@ -80,7 +80,7 @@ describe('KIS DomesticBasicQuote', () => {
 
   it('getStockPeriodQuote', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticBasicQuote as any).getStockPeriodQuote({
+    const res = await client.domesticBasicQuote.getStockPeriodQuote({
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
       fidInputDate1: ONE_MONTH_AGO,
@@ -93,7 +93,7 @@ describe('KIS DomesticBasicQuote', () => {
 
   it('getStockTodayMinuteChart', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticBasicQuote as any).getStockTodayMinuteChart({
+    const res = await client.domesticBasicQuote.getStockTodayMinuteChart({
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
       fidInputHour1: '155000',
@@ -105,7 +105,7 @@ describe('KIS DomesticBasicQuote', () => {
 
   it('getStockDailyMinuteChart', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticBasicQuote as any).getStockDailyMinuteChart({
+    const res = await client.domesticBasicQuote.getStockDailyMinuteChart({
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
       fidInputHour1: '155000',
@@ -117,7 +117,7 @@ describe('KIS DomesticBasicQuote', () => {
 
   it('getStockCurrentPriceTimeItemConclusion', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticBasicQuote as any).getStockCurrentPriceTimeItemConclusion({
+    const res = await client.domesticBasicQuote.getStockCurrentPriceTimeItemConclusion({
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
       fidInputHour1: '155000',
@@ -127,7 +127,7 @@ describe('KIS DomesticBasicQuote', () => {
 
   it('getStockCurrentPriceDailyOvertimePrice', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticBasicQuote as any).getStockCurrentPriceDailyOvertimePrice({
+    const res = await client.domesticBasicQuote.getStockCurrentPriceDailyOvertimePrice({
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
     });
@@ -136,7 +136,7 @@ describe('KIS DomesticBasicQuote', () => {
 
   it('getStockCurrentPriceOvertimeConclusion', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticBasicQuote as any).getStockCurrentPriceOvertimeConclusion({
+    const res = await client.domesticBasicQuote.getStockCurrentPriceOvertimeConclusion({
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
     });
@@ -145,7 +145,7 @@ describe('KIS DomesticBasicQuote', () => {
 
   it('getStockOvertimeCurrentPrice', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticBasicQuote as any).getStockOvertimeCurrentPrice({
+    const res = await client.domesticBasicQuote.getStockOvertimeCurrentPrice({
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
     });
@@ -154,7 +154,7 @@ describe('KIS DomesticBasicQuote', () => {
 
   it('getStockOvertimeAskingPrice', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticBasicQuote as any).getStockOvertimeAskingPrice({
+    const res = await client.domesticBasicQuote.getStockOvertimeAskingPrice({
       fidInputIscd: SAMSUNG,
     });
     assertKisResponse(res);
@@ -162,7 +162,7 @@ describe('KIS DomesticBasicQuote', () => {
 
   it('getStockClosingExpectedPrice', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticBasicQuote as any).getStockClosingExpectedPrice({
+    const res = await client.domesticBasicQuote.getStockClosingExpectedPrice({
       fidRankSortClsCode: '0',
       fidInputIscd: SAMSUNG,
       fidBlngClsCode: '0',
@@ -172,7 +172,7 @@ describe('KIS DomesticBasicQuote', () => {
 
   it('getEtfetnCurrentPrice', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticBasicQuote as any).getEtfetnCurrentPrice({
+    const res = await client.domesticBasicQuote.getEtfetnCurrentPrice({
       fidInputIscd: KODEX200,
     });
     assertKisResponse(res);
@@ -180,7 +180,7 @@ describe('KIS DomesticBasicQuote', () => {
 
   it('getEtfComponentStockPrice', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticBasicQuote as any).getEtfComponentStockPrice({
+    const res = await client.domesticBasicQuote.getEtfComponentStockPrice({
       fidInputIscd: KODEX200,
     });
     assertKisResponse(res);
@@ -188,7 +188,7 @@ describe('KIS DomesticBasicQuote', () => {
 
   it('getEtfNavComparisonTrend', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticBasicQuote as any).getEtfNavComparisonTrend({
+    const res = await client.domesticBasicQuote.getEtfNavComparisonTrend({
       fidInputIscd: KODEX200,
     });
     assertKisResponse(res);
@@ -196,7 +196,7 @@ describe('KIS DomesticBasicQuote', () => {
 
   it('getEtfNavComparisonDailyTrend', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticBasicQuote as any).getEtfNavComparisonDailyTrend({
+    const res = await client.domesticBasicQuote.getEtfNavComparisonDailyTrend({
       fidInputIscd: KODEX200,
       fidInputDate1: ONE_MONTH_AGO,
       fidInputDate2: TODAY,
@@ -206,7 +206,7 @@ describe('KIS DomesticBasicQuote', () => {
 
   it('getEtfNavComparisonTimeTrend', async () => {
     const client = await getKisClient();
-    const res = await (client.domesticBasicQuote as any).getEtfNavComparisonTimeTrend({
+    const res = await client.domesticBasicQuote.getEtfNavComparisonTimeTrend({
       fidHourClsCode: '0',
       fidInputIscd: KODEX200,
     });
