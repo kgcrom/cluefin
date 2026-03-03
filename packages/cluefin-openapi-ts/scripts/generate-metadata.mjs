@@ -305,6 +305,18 @@ const tasks = [
     kind: 'kis',
   },
   {
+    sourcePath: 'packages/cluefin-openapi/src/cluefin_openapi/kis/_overseas_basic_quote.py',
+    targetPath: 'packages/cluefin-openapi-ts/src/kis/metadata/overseas-basic-quote.ts',
+    symbolName: 'overseasBasicQuoteEndpoints',
+    kind: 'kis',
+  },
+  {
+    sourcePath: 'packages/cluefin-openapi/src/cluefin_openapi/kis/_onmarket_bond_basic_quote.py',
+    targetPath: 'packages/cluefin-openapi-ts/src/kis/metadata/onmarket-bond-basic-quote.ts',
+    symbolName: 'onmarketBondBasicQuoteEndpoints',
+    kind: 'kis',
+  },
+  {
     sourcePath: 'packages/cluefin-openapi/src/cluefin_openapi/kiwoom/_domestic_chart.py',
     targetPath: 'packages/cluefin-openapi-ts/src/kiwoom/metadata/domestic-chart.ts',
     symbolName: 'domesticChartEndpoints',
