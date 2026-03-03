@@ -63,4 +63,8 @@ export interface HttpRequestOptions {
   body?: Record<string, unknown>;
 }
 
+export type DomainMethods<T extends string> = {
+  [K in T]: (input: Record<string, unknown>) => Promise<ApiResponse>;
+};
+
 export type FetchLike = typeof fetch;

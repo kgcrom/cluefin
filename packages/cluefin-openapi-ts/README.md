@@ -3,8 +3,8 @@
 > **cluefin-openapi (TypeScript)**: KIS/키움 OpenAPI를 위한 타입 안전 TypeScript 클라이언트
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)
-![Bun](https://img.shields.io/badge/Bun-1.3%2B-black)
 ![Node](https://img.shields.io/badge/Node-20%2B-green)
+![npm](https://img.shields.io/badge/npm-10%2B-cb3837)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
 ---
@@ -23,15 +23,12 @@
 
 ```bash
 # 패키지 설치
-bun add cluefin-openapi
-# or
 npm install cluefin-openapi
 ```
 
 ### 런타임 요구사항
 
 - Node.js 20+
-- Bun 1.3+ (개발/테스트 권장)
 
 ## 🎯 왜 cluefin-openapi (TypeScript)인가요?
 
@@ -153,23 +150,23 @@ try {
 ```bash
 cd packages/cluefin-openapi-ts
 
-bun install
-bun run build
-bun run check
-bun run typecheck
-bun run test:unit
-bun run test:integration
+npm install
+npm run build
+npm run check
+npm run typecheck
+npm run test:unit
+npm run test:integration
 ```
 
 ## ✅ 테스트와 .env 로딩
 
-`bun run test`와 `bun run test:unit`은 `tests/setup-env.ts`를 preload하여 환경 변수를 먼저 로드합니다.
+`npm run test`와 `npm run test:unit`은 Vitest `setupFiles`로 `tests/setup-env.ts`를 먼저 실행해 환경 변수를 로드합니다.
 
 - `PROJECT_ROOT_DIR`가 설정되어 있으면 `${PROJECT_ROOT_DIR}/.env`를 읽습니다.
 - 미설정 시 모노레포 루트의 `.env`를 기본 경로로 사용합니다.
 - 이미 설정된 환경 변수는 덮어쓰지 않습니다.
 
-`bun run test:integration`은 `tests/setup-integration-env.ts`를 preload합니다.
+`npm run test:integration`은 Vitest `setupFiles`로 `tests/setup-integration-env.ts`를 먼저 실행합니다.
 
 - `${PROJECT_ROOT_DIR}/.env.test`를 먼저 읽고, 없으면 `${PROJECT_ROOT_DIR}/.env`로 fallback합니다.
 - `CLUEFIN_OPENAPI_TS_RUN_INTEGRATION=1` 플래그로 integration 테스트를 실행합니다.
@@ -178,8 +175,8 @@ bun run test:integration
 예시:
 
 ```bash
-PROJECT_ROOT_DIR=/path/to/cluefin bun run test:unit
-PROJECT_ROOT_DIR=/path/to/cluefin bun run test:integration
+PROJECT_ROOT_DIR=/path/to/cluefin npm run test:unit
+PROJECT_ROOT_DIR=/path/to/cluefin npm run test:integration
 ```
 
 ## 🚢 배포 (npm publish)
@@ -194,7 +191,7 @@ npm whoami         # 로그인 확인
 ### 2. 빌드 & 검증
 
 ```bash
-bun run publish:check    # clean → build → lint → typecheck → test
+npm run publish:check    # clean → build → lint → typecheck → test
 ```
 
 ### 3. 배포 파일 확인
@@ -206,7 +203,7 @@ npm pack --dry-run    # 실제 배포될 파일 목록 미리 확인
 ### 4. 배포
 
 ```bash
-bun run publish:manual    # npm publish --access public
+npm run publish:manual    # npm publish --access public
 ```
 
 ### 5. 버전 업데이트 (이후 배포 시)
@@ -215,6 +212,6 @@ bun run publish:manual    # npm publish --access public
 npm version patch    # 0.1.0 → 0.1.1 (버그픽스)
 npm version minor    # 0.1.0 → 0.2.0 (기능 추가)
 npm version major    # 0.1.0 → 1.0.0 (Breaking change)
-bun run publish:check
-bun run publish:manual
+npm run publish:check
+npm run publish:manual
 ```

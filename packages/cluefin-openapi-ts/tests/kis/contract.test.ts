@@ -1,7 +1,9 @@
-import { expect, test } from 'bun:test';
+import { expect, test } from 'vitest';
 
 import { domesticBasicQuoteEndpoints } from '../../src/kis/metadata/domestic-basic-quote';
 import { domesticStockInfoEndpoints } from '../../src/kis/metadata/domestic-stock-info';
+import { onmarketBondBasicQuoteEndpoints } from '../../src/kis/metadata/onmarket-bond-basic-quote';
+import { overseasBasicQuoteEndpoints } from '../../src/kis/metadata/overseas-basic-quote';
 
 const sampleValue = (name: string, fallback?: unknown): string => {
   if (fallback !== undefined) {
@@ -25,6 +27,8 @@ const hasZodDependency = async (): Promise<boolean> => {
 test('KIS metadata should expose expected endpoint count', () => {
   expect(domesticBasicQuoteEndpoints.length).toBe(21);
   expect(domesticStockInfoEndpoints.length).toBe(26);
+  expect(overseasBasicQuoteEndpoints.length).toBe(13);
+  expect(onmarketBondBasicQuoteEndpoints.length).toBe(8);
 });
 
 test('KIS endpoint metadata should map request path, headers, and query/body', async () => {
@@ -73,6 +77,14 @@ test('KIS endpoint metadata should map request path, headers, and query/body', a
     {
       instance: client.domesticStockInfo as Record<string, (input: Record<string, unknown>) => Promise<unknown>>,
       defs: domesticStockInfoEndpoints,
+    },
+    {
+      instance: client.overseasBasicQuote as Record<string, (input: Record<string, unknown>) => Promise<unknown>>,
+      defs: overseasBasicQuoteEndpoints,
+    },
+    {
+      instance: client.onmarketBondBasicQuote as Record<string, (input: Record<string, unknown>) => Promise<unknown>>,
+      defs: onmarketBondBasicQuoteEndpoints,
     },
   ];
 
