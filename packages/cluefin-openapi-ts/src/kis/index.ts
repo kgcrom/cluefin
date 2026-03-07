@@ -4,6 +4,20 @@ export { DomesticRealtimeQuote } from './domestic-realtime-quote';
 export type { KisHttpClientOptions } from './http-client';
 export { KisHttpClient } from './http-client';
 export type {
+  BondRealtimeExecutionItem,
+  BondRealtimeIndexExecutionItem,
+  BondRealtimeOrderbookItem,
+} from './metadata/onmarket-bond-realtime-quote';
+export {
+  BOND_EXECUTION_FIELD_NAMES,
+  BOND_INDEX_EXECUTION_FIELD_NAMES,
+  BOND_ORDERBOOK_FIELD_NAMES,
+  bondRealtimeExecutionSchema,
+  bondRealtimeIndexExecutionSchema,
+  bondRealtimeOrderbookSchema,
+} from './metadata/onmarket-bond-realtime-quote';
+export { OnmarketBondRealtimeQuote } from './onmarket-bond-realtime-quote';
+export type {
   DomesticRealtimeExecutionItem,
   DomesticRealtimeExecutionNotificationItem,
   DomesticRealtimeOrderbookItem,
