@@ -1,3 +1,14 @@
+export type {
+  BaseWebSocketClientEvents,
+  BaseWebSocketClientOptions,
+  MessageType,
+  SubscriptionType,
+  WebSocketEvent,
+  WebSocketEventType,
+  WebSocketMessage,
+} from './core/websocket';
+export { BaseWebSocketClient } from './core/websocket';
+
 export {
   ApiAuthenticationError,
   ApiAuthorizationError,

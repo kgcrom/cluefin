@@ -7,7 +7,7 @@ const baseConfig = {
   sourcemap: true,
   clean: false,
   dts: false,
-  external: ['zod'],
+  external: ['zod', 'ws'],
 };
 
 export default defineConfig([
