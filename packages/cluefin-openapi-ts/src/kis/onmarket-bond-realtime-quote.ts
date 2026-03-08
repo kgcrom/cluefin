@@ -26,11 +26,8 @@ function parseRecords<T>(data: string[], fieldNames: readonly string[]): T[] {
 
   for (let i = 0; i < numRecords; i++) {
     const startIdx = i * fieldCount;
-    const record: Record<string, string> = {};
-    for (let j = 0; j < fieldCount; j++) {
-      record[fieldNames[j]!] = data[startIdx + j]!;
-    }
-    results.push(record as T);
+    const entries = fieldNames.map((name, j) => [name, data[startIdx + j] ?? ''] as const);
+    results.push(Object.fromEntries(entries) as T);
   }
 
   return results;
