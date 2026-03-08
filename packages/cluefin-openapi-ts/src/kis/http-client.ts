@@ -53,6 +53,12 @@ const mapKisError = (error: unknown): never => {
   if (error instanceof KisApiError) {
     throw error;
   }
+  if (error instanceof ApiError) {
+    console.error('[KIS API Error]', {
+      status: error.statusCode,
+      body: error.responseData,
+    });
+  }
   if (error instanceof ApiValidationError) {
     throw new KisValidationError(error.message, error);
   }

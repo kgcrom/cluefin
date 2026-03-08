@@ -1,6 +1,9 @@
+import path from 'node:path';
+
 import { expect, test } from 'vitest';
 
 import { KisAuth } from '../../src/kis/auth';
+import { FileTokenCacheStore } from '../../src/kis/token-cache';
 
 const runIntegration = process.env.CLUEFIN_OPENAPI_TS_RUN_INTEGRATION === '1';
 const integrationTest = runIntegration ? test : test.skip;
@@ -13,7 +16,9 @@ integrationTest('KisAuth integration should generate and revoke token', async ()
   }
 
   const env = process.env.KIS_ENV === 'prod' ? 'prod' : 'dev';
-  const auth = new KisAuth({ appKey, secretKey, env });
+  const cacheDir = process.env.KIS_TOKEN_CACHE_DIR ?? path.resolve(__dirname, '../../../../data');
+  const tokenCacheStore = new FileTokenCacheStore(path.join(cacheDir, '.kis_token_cache.json'));
+  const auth = new KisAuth({ appKey, secretKey, env, tokenCacheStore });
 
   const tokenResponse = await auth.generate();
   expect(typeof tokenResponse.accessToken).toBe('string');
