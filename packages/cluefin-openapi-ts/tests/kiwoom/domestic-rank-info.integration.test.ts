@@ -257,16 +257,6 @@ describe('Kiwoom DomesticRankInfo', () => {
     assertKiwoomResponse(res);
   });
 
-  it('getTopIntradayTradingByInvestor', async () => {
-    const client = await getKiwoomClient();
-    const res = await client.domesticRankInfo.getTopIntradayTradingByInvestor({
-      trdeTp: '0',
-      mrktTp: '0',
-      orgnTp: '0',
-    });
-    assertKiwoomResponse(res);
-  });
-
   it('getAfterHoursSinglePriceChangeRateRanking', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticRankInfo.getAfterHoursSinglePriceChangeRateRanking({

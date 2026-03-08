@@ -79,8 +79,8 @@ export function assertKisResponse(res: ApiResponse): void {
 export function assertKiwoomResponse(res: ApiResponse): void {
   expect(res).toBeDefined();
   expect(res.body).toBeDefined();
-  if (res.body.returnCode !== '0') {
+  if (res.body.returnCode !== 0) {
     console.error('Kiwoom Error Response:', JSON.stringify(res.body, null, 2));
   }
-  expect(res.body.returnCode).toEqual('0');
+  expect(res.body.returnCode).toEqual(0);
 }

@@ -1004,44 +1004,6 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
     ]
   },
   {
-    "methodName": "getTopIntradayTradingByInvestor",
-    "path": "/api/dostk/rkinfo",
-    "apiId": "ka10063",
-    "bodyMap": {
-      "trde_tp": "trdeTp",
-      "mrkt_tp": "mrktTp",
-      "orgn_tp": "orgnTp"
-    },
-    "headerParamMap": {
-      "cont-yn": "contYn",
-      "next-key": "nextKey"
-    },
-    "params": [
-      {
-        "name": "trdeTp",
-        "required": true
-      },
-      {
-        "name": "mrktTp",
-        "required": true
-      },
-      {
-        "name": "orgnTp",
-        "required": true
-      },
-      {
-        "name": "contYn",
-        "required": false,
-        "defaultValue": "N"
-      },
-      {
-        "name": "nextKey",
-        "required": false,
-        "defaultValue": ""
-      }
-    ]
-  },
-  {
     "methodName": "getAfterHoursSinglePriceChangeRateRanking",
     "path": "/api/dostk/rkinfo",
     "apiId": "ka10098",
@@ -1155,6 +1117,5 @@ export type DomesticRankInfoMethodName =
   | 'getTopNetBuyTraderRanking'
   | 'getTopCurrentDayDeviationSources'
   | 'getSameNetBuySellRanking'
-  | 'getTopIntradayTradingByInvestor'
   | 'getAfterHoursSinglePriceChangeRateRanking'
   | 'getTopForeignerLimitExhaustionRate';

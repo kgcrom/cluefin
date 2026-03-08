@@ -489,22 +489,6 @@ class DomesticRankInfoSameNetBuySellRanking(BaseModel, KiwoomHttpBody):
     )
 
 
-class DomesticRankInfoTopIntradayTradingByInvestorItem(BaseModel):
-    stk_cd: str = Field(default="", title="종목코드", max_length=20)
-    stk_nm: str = Field(default="", title="종목명", max_length=40)
-    sel_qty: str = Field(default="", title="매도량", max_length=20)
-    buy_qty: str = Field(default="", title="매수량", max_length=20)
-    netslmt: str = Field(default="", title="순매도", max_length=20)
-
-
-class DomesticRankInfoTopIntradayTradingByInvestor(BaseModel, KiwoomHttpBody):
-    model_config = ConfigDict(title="장중투자자별매매상위요청 응답")
-
-    opmr_invsr_trde_upper: list[DomesticRankInfoTopIntradayTradingByInvestorItem] = Field(
-        default_factory=list, title="장중투자자별매매상위"
-    )
-
-
 class DomesticRankInfoAfterHoursSinglePriceChangeRateRankingItem(BaseModel):
     rank: str = Field(default="", title="순위", max_length=20)
     stk_cd: str = Field(default="", title="종목코드", max_length=20)

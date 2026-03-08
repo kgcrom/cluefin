@@ -192,14 +192,18 @@ describe('Kiwoom DomesticStockInfo', () => {
   it('getVolatilityControlEvent', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getVolatilityControlEvent({
-      mrktTp: '0',
+      mrktTp: '000',
       bfMkrtTp: '0',
       motnTp: '0',
-      skipStk: '0',
+      skipStk: '000000000',
       trdeQtyTp: '0',
       trdePricaTp: '0',
       motnDrc: '0',
       stexTp: '1',
+      minTrdeQty: '0',
+      maxTrdeQty: '100000000',
+      minTrdePrica: '0',
+      maxTrdePrica: '100000000',
     });
     assertKiwoomResponse(res);
   });
@@ -208,7 +212,7 @@ describe('Kiwoom DomesticStockInfo', () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getDailyPreviousDayExecutionVolume({
       stkCd: SAMSUNG,
-      tdyPred: '0',
+      tdyPred: '1',
     });
     assertKiwoomResponse(res);
   });
@@ -255,7 +259,8 @@ describe('Kiwoom DomesticStockInfo', () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getDailyPreviousDayConclusion({
       stkCd: SAMSUNG,
-      tdyPred: '0',
+      tdyPred: '1',
+      ticMin: '0',
     });
     assertKiwoomResponse(res);
   });

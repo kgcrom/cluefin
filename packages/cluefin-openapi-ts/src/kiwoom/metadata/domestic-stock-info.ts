@@ -1021,7 +1021,8 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
     "apiId": "ka10084",
     "bodyMap": {
       "stk_cd": "stkCd",
-      "tdy_pred": "tdyPred"
+      "tdy_pred": "tdyPred",
+      "tic_min": "ticMin"
     },
     "headerParamMap": {
       "cont-yn": "contYn",
@@ -1034,6 +1035,10 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
       },
       {
         "name": "tdyPred",
+        "required": true
+      },
+      {
+        "name": "ticMin",
         "required": true
       },
       {
