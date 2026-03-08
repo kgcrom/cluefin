@@ -121,10 +121,10 @@ describe('KIS DomesticIssueOther', () => {
   it('getInterestRateSummary', async () => {
     const client = await getKisClient();
     const res = await client.domesticIssueOther.getInterestRateSummary({
-      fidCondMrktDivCode: 'J',
-      fidCondScrDivCode: '10702',
-      fidDivClsCode: '0',
-      fidDivClsCode1: '0',
+      fidCondMrktDivCode: 'I',
+      fidCondScrDivCode: '20702',
+      fidDivClsCode: '1',
+      fidDivClsCode1: '',
     });
     assertKisResponse(res);
   });

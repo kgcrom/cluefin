@@ -1,15 +1,22 @@
 import { expect } from 'vitest';
 
+import path from 'node:path';
+
 import { KisAuth } from '../../src/kis/auth';
 import { KisHttpClient } from '../../src/kis/http-client';
+import { FileTokenCacheStore } from '../../src/kis/token-cache';
 import { KiwoomAuth } from '../../src/kiwoom/auth';
 import { KiwoomClient } from '../../src/kiwoom/client';
 import type { ApiResponse } from '../../src/core/types';
 
 export const runIntegration = process.env.CLUEFIN_OPENAPI_TS_RUN_INTEGRATION === '1';
+export const runAccountIntegration = runIntegration && !!process.env.KIS_CANO;
 
 export const SAMSUNG = '005930';
 export const KODEX200 = '069500';
+
+export const KIS_CANO = process.env.KIS_CANO ?? '';
+export const KIS_ACNT_PRDT_CD = process.env.KIS_ACNT_PRDT_CD ?? '01';
 
 const fmt = (d: Date): string => d.toISOString().slice(0, 10).replace(/-/g, '');
 
@@ -27,7 +34,10 @@ export function getKisClient(): Promise<KisHttpClient> {
         throw new Error('KIS_APP_KEY and KIS_SECRET_KEY are required');
       }
       const env = process.env.KIS_ENV === 'prod' ? 'prod' : 'dev';
-      const auth = new KisAuth({ appKey, secretKey, env });
+      // Share token cache with Python cluefin-openapi to avoid KIS 1-req/min rate limit
+      const cacheDir = process.env.KIS_TOKEN_CACHE_DIR ?? path.resolve(__dirname, '../../../../data');
+      const tokenCacheStore = new FileTokenCacheStore(path.join(cacheDir, '.kis_token_cache.json'));
+      const auth = new KisAuth({ appKey, secretKey, env, tokenCacheStore });
       const tokenResponse = await auth.generate();
       return new KisHttpClient({
         token: tokenResponse.accessToken,

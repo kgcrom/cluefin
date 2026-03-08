@@ -207,7 +207,7 @@ describe('KIS DomesticRankingAnalysis', () => {
   it('getStockWatchlistRegistrationTop', async () => {
     const client = await getKisClient();
     const res = await client.domesticRankingAnalysis.getStockWatchlistRegistrationTop({
-      fidInputIscd2: '0000',
+      fidInputIscd2: '000000',
       fidCondMrktDivCode: 'J',
       fidCondScrDivCode: '20180',
       fidInputIscd: '0000',
@@ -298,15 +298,15 @@ describe('KIS DomesticRankingAnalysis', () => {
     const client = await getKisClient();
     const res = await client.domesticRankingAnalysis.getStockAfterHoursFluctuationRank({
       fidCondMrktDivCode: 'J',
-      fidMrktClsCode: '0',
+      fidMrktClsCode: '',
       fidCondScrDivCode: '20234',
       fidInputIscd: '0000',
-      fidDivClsCode: '0',
+      fidDivClsCode: '2',
       fidInputPrice1: '0',
       fidInputPrice2: '0',
       fidVolCnt: '0',
-      fidTrgtClsCode: '0',
-      fidTrgtExlsClsCode: '0',
+      fidTrgtClsCode: '',
+      fidTrgtExlsClsCode: '',
     });
     assertKisResponse(res);
   });
@@ -327,12 +327,13 @@ describe('KIS DomesticRankingAnalysis', () => {
     assertKisResponse(res);
   });
 
-  it('getStockCreditBalanceTop', async () => {
+  // HHKST17010000 tr_id는 API 구독 플랜에 따라 사용 불가할 수 있음
+  it.skip('getStockCreditBalanceTop', async () => {
     const client = await getKisClient();
     const res = await client.domesticRankingAnalysis.getStockCreditBalanceTop({
-      fidCondScrDivCode: '17001',
-      fidInputIscd: '0000',
-      fidOption: '0',
+      fidCondScrDivCode: '11701',
+      fidInputIscd: '0001',
+      fidOption: '7',
       fidCondMrktDivCode: 'J',
       fidRankSortClsCode: '0',
     });
@@ -346,7 +347,7 @@ describe('KIS DomesticRankingAnalysis', () => {
       gb1: '0',
       upjong: '0001',
       gb2: '0',
-      gb3: '0',
+      gb3: '2',
       fDt: ONE_MONTH_AGO,
       tDt: TODAY,
       gb4: '0',
@@ -354,21 +355,22 @@ describe('KIS DomesticRankingAnalysis', () => {
     assertKisResponse(res);
   });
 
-  it('getStockLargeExecutionCountTop', async () => {
+  // HHKST1909000C0 tr_id는 API 구독 플랜에 따라 사용 불가할 수 있음
+  it.skip('getStockLargeExecutionCountTop', async () => {
     const client = await getKisClient();
     const res = await client.domesticRankingAnalysis.getStockLargeExecutionCountTop({
-      fidAplyRangPrc2: '0',
+      fidAplyRangPrc2: '',
       fidCondMrktDivCode: 'J',
-      fidCondScrDivCode: '19090',
-      fidInputIscd: '0000',
+      fidCondScrDivCode: '11909',
+      fidInputIscd: '0001',
       fidRankSortClsCode: '0',
       fidDivClsCode: '0',
-      fidInputPrice1: '0',
-      fidAplyRangPrc1: '0',
-      fidInputIscd2: '0000',
+      fidInputPrice1: '',
+      fidAplyRangPrc1: '',
+      fidInputIscd2: '',
       fidTrgtExlsClsCode: '0',
       fidTrgtClsCode: '0',
-      fidVolCnt: '0',
+      fidVolCnt: '',
     });
     assertKisResponse(res);
   });

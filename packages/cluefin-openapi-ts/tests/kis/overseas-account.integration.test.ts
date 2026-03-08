@@ -1,15 +1,21 @@
 import { describe, test } from 'vitest';
 
-import { assertKisResponse, getKisClient, runIntegration } from '../_helpers/integration-setup';
+import {
+  assertKisResponse,
+  getKisClient,
+  KIS_ACNT_PRDT_CD,
+  KIS_CANO,
+  runAccountIntegration,
+} from '../_helpers/integration-setup';
 
-const it = runIntegration ? test : test.skip;
+const it = runAccountIntegration ? test : test.skip;
 
 describe('KIS OverseasAccount', () => {
   it('getBuyTradableAmount', async () => {
     const client = await getKisClient();
     const res = await client.overseasAccount.getBuyTradableAmount({
-      cano: process.env.KIS_CANO ?? '',
-      acntPrdtCd: process.env.KIS_ACNT_PRDT_CD ?? '01',
+      cano: KIS_CANO,
+      acntPrdtCd: KIS_ACNT_PRDT_CD,
       ovrsExcgCd: 'NASD',
       ovrsOrdUnpr: '150',
       itemCd: 'AAPL',
@@ -20,8 +26,8 @@ describe('KIS OverseasAccount', () => {
   it('getStockBalance', async () => {
     const client = await getKisClient();
     const res = await client.overseasAccount.getStockBalance({
-      cano: process.env.KIS_CANO ?? '',
-      acntPrdtCd: process.env.KIS_ACNT_PRDT_CD ?? '01',
+      cano: KIS_CANO,
+      acntPrdtCd: KIS_ACNT_PRDT_CD,
       ovrsExcgCd: 'NASD',
       trCrcyCd: 'USD',
     });
@@ -31,8 +37,8 @@ describe('KIS OverseasAccount', () => {
   it('getStockNotConclusionHistory', async () => {
     const client = await getKisClient();
     const res = await client.overseasAccount.getStockNotConclusionHistory({
-      cano: process.env.KIS_CANO ?? '',
-      acntPrdtCd: process.env.KIS_ACNT_PRDT_CD ?? '01',
+      cano: KIS_CANO,
+      acntPrdtCd: KIS_ACNT_PRDT_CD,
       ovrsExcgCd: 'NASD',
       sortSqn: 'DS',
     });

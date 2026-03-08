@@ -5,7 +5,8 @@ import { assertKisResponse, getKisClient, runIntegration } from '../_helpers/int
 const it = runIntegration ? test : test.skip;
 
 describe('KIS OverseasMarketAnalysis', () => {
-  it('getStockPriceFluctuation', async () => {
+  // TODO: KIS API 이슈로 비활성화 — Python 참조 코드에서도 동일하게 주석 처리됨 (404 반환)
+  test.skip('getStockPriceFluctuation', async () => {
     const client = await getKisClient();
     const res = await client.overseasMarketAnalysis.getStockPriceFluctuation({
       excd: 'NAS',
