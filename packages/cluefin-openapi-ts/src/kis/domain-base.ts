@@ -2,8 +2,6 @@ import type { ApiResponse, KisEndpointDefinition } from '../core/types';
 import type { KisHttpClient } from './http-client';
 
 export class KisDomainBase {
-  [key: string]: unknown;
-
   public constructor(
     protected readonly client: KisHttpClient,
     protected readonly endpoints: readonly KisEndpointDefinition[],

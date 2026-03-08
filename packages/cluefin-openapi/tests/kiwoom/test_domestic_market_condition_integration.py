@@ -22,6 +22,7 @@ from cluefin_openapi.kiwoom._domestic_market_condition_types import (
     DomesticMarketConditionStockPrice,
     DomesticMarketConditionStockQuote,
     DomesticMarketConditionStockQuoteByDate,
+    DomesticMarketConditionTopIntradayTradingByInvestor,
 )
 
 
@@ -214,3 +215,15 @@ def test_get_program_trading_trend_by_stock_and_date(client: Client):
     assert response is not None
     assert response.body is not None
     assert isinstance(response.body, DomesticMarketConditionProgramTradingTrendByStockAndDate)
+
+
+@pytest.mark.integration
+def test_get_top_intraday_trading_by_investor(client: Client):
+    response = client.market_conditions.get_top_intraday_trading_by_investor(
+        trde_tp="1",
+        mrkt_tp="000",
+        orgn_tp="9000",
+        amt_qty_tp="1",
+    )
+    assert response is not None
+    assert isinstance(response.body, DomesticMarketConditionTopIntradayTradingByInvestor)

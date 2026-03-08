@@ -1,4 +1,4 @@
-import { expect, test } from 'bun:test';
+import { expect, test } from 'vitest';
 
 import { domesticChartEndpoints } from '../../src/kiwoom/metadata/domestic-chart';
 import { domesticRankInfoEndpoints } from '../../src/kiwoom/metadata/domestic-rank-info';

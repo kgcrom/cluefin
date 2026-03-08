@@ -1,4 +1,4 @@
-import { expect, test } from 'bun:test';
+import { expect, test } from 'vitest';
 
 import { TokenBucket } from '../../src/core/rate-limiter';
 
@@ -8,6 +8,6 @@ test('TokenBucket allows burst then waits for refill', async () => {
   const first = await bucket.waitForToken(10);
   const second = await bucket.waitForToken(10);
 
-  expect(first).toBeTrue();
-  expect(second).toBeFalse();
+  expect(first).toBe(true);
+  expect(second).toBe(false);
 });

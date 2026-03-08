@@ -26,6 +26,10 @@ import { DomesticIssueOther } from './domestic-issue-other';
 import { DomesticMarketAnalysis } from './domestic-market-analysis';
 import { DomesticRankingAnalysis } from './domestic-ranking-analysis';
 import { DomesticStockInfo } from './domestic-stock-info';
+import { OnmarketBondBasicQuote } from './onmarket-bond-basic-quote';
+import { OverseasAccount } from './overseas-account';
+import { OverseasBasicQuote } from './overseas-basic-quote';
+import { OverseasMarketAnalysis } from './overseas-market-analysis';
 
 export interface KisHttpClientOptions {
   token: string;
@@ -48,6 +52,12 @@ const stringifyParam = (value: unknown): string => (typeof value === 'string' ? 
 const mapKisError = (error: unknown): never => {
   if (error instanceof KisApiError) {
     throw error;
+  }
+  if (error instanceof ApiError) {
+    console.error('[KIS API Error]', {
+      status: error.statusCode,
+      body: error.responseData,
+    });
   }
   if (error instanceof ApiValidationError) {
     throw new KisValidationError(error.message, error);
@@ -89,6 +99,10 @@ export class KisHttpClient {
   private domesticMarketAnalysisInstance?: DomesticMarketAnalysis;
   private domesticRankingAnalysisInstance?: DomesticRankingAnalysis;
   private domesticStockInfoInstance?: DomesticStockInfo;
+  private onmarketBondBasicQuoteInstance?: OnmarketBondBasicQuote;
+  private overseasAccountInstance?: OverseasAccount;
+  private overseasBasicQuoteInstance?: OverseasBasicQuote;
+  private overseasMarketAnalysisInstance?: OverseasMarketAnalysis;
 
   public constructor(options: KisHttpClientOptions) {
     const env = options.env ?? 'prod';
@@ -153,6 +167,34 @@ export class KisHttpClient {
       this.domesticStockInfoInstance = new DomesticStockInfo(this);
     }
     return this.domesticStockInfoInstance;
+  }
+
+  public get onmarketBondBasicQuote(): OnmarketBondBasicQuote {
+    if (!this.onmarketBondBasicQuoteInstance) {
+      this.onmarketBondBasicQuoteInstance = new OnmarketBondBasicQuote(this);
+    }
+    return this.onmarketBondBasicQuoteInstance;
+  }
+
+  public get overseasAccount(): OverseasAccount {
+    if (!this.overseasAccountInstance) {
+      this.overseasAccountInstance = new OverseasAccount(this);
+    }
+    return this.overseasAccountInstance;
+  }
+
+  public get overseasBasicQuote(): OverseasBasicQuote {
+    if (!this.overseasBasicQuoteInstance) {
+      this.overseasBasicQuoteInstance = new OverseasBasicQuote(this);
+    }
+    return this.overseasBasicQuoteInstance;
+  }
+
+  public get overseasMarketAnalysis(): OverseasMarketAnalysis {
+    if (!this.overseasMarketAnalysisInstance) {
+      this.overseasMarketAnalysisInstance = new OverseasMarketAnalysis(this);
+    }
+    return this.overseasMarketAnalysisInstance;
   }
 
   public async invokeEndpoint(definition: KisEndpointDefinition, input: Record<string, unknown>): Promise<ApiResponse> {

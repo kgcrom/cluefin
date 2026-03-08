@@ -107,7 +107,8 @@ export class KisAuth {
       throw new KisServerError('KIS token server error');
     }
     if (!response.ok) {
-      throw new KisApiError(`Unexpected token response status ${response.status}`);
+      const body = await response.text().catch(() => '(unable to read body)');
+      throw new KisApiError(`Unexpected token response status ${response.status}: ${body}`);
     }
 
     let payload: unknown;

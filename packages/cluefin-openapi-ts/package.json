@@ -5,17 +5,16 @@
   "license": "MIT",
   "type": "module",
   "engines": {
-    "node": ">=20",
-    "bun": ">=1.3.0"
+    "node": ">=20"
   },
-  "main": "./dist/cjs/index.js",
+  "main": "./dist/cjs/index.cjs",
   "module": "./dist/esm/index.js",
   "types": "./dist/types/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
       "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js"
+      "require": "./dist/cjs/index.cjs"
     }
   },
   "files": [
@@ -25,29 +24,32 @@
   ],
   "scripts": {
     "clean": "rm -rf dist",
-    "generate:metadata": "bun scripts/generate-metadata.mjs",
-    "build:types": "bun scripts/generate-types.mjs",
-    "build:esm": "bun build ./src/index.ts --outdir ./dist/esm --format esm --target node --packages external",
-    "build:cjs": "bun build ./src/index.ts --outdir ./dist/cjs --format cjs --target node --packages external",
-    "build": "bun run clean && bun run build:types && bun run build:esm && bun run build:cjs",
+    "generate:metadata": "node ./scripts/generate-metadata.mjs",
+    "build:types": "node ./scripts/generate-types.mjs",
+    "build:js": "tsup --config ./tsup.config.ts",
+    "build": "npm run clean && npm run build:types && npm run build:js",
     "format": "biome format --write .",
     "format:check": "biome format .",
     "lint": "biome lint .",
     "lint:fix": "biome lint --write .",
     "check": "biome check .",
-    "typecheck": "bun scripts/typecheck.mjs",
-    "test:unit": "bun test --preload ./tests/setup-env.ts",
-    "test:integration": "CLUEFIN_OPENAPI_TS_RUN_INTEGRATION=1 bun test --preload ./tests/setup-integration-env.ts tests/**/*.integration.test.ts",
-    "test": "bun run test:unit",
-    "publish:check": "bun run build && bun run check && bun run typecheck && bun run test",
+    "typecheck": "tsup --config ./tsup.config.ts --silent",
+    "test:unit": "vitest run --config ./vitest.config.ts",
+    "test:integration": "CLUEFIN_OPENAPI_TS_RUN_INTEGRATION=1 vitest run --config ./vitest.integration.config.ts",
+    "test": "npm run test:unit",
+    "publish:check": "npm run build && npm run check && npm run typecheck && npm run test",
     "publish:manual": "npm publish --access public"
   },
   "dependencies": {
+    "ws": "^8.19.0",
     "zod": "^4.1.5"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.13",
-    "@types/bun": "^1.3.8",
-    "typescript": "^5.9.2"
+    "@types/node": "^24.3.0",
+    "@types/ws": "^8.18.1",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
   }
 }

@@ -670,3 +670,19 @@ class DomesticMarketConditionProgramTradingTrendByStockAndDate(BaseModel, Kiwoom
     stk_daly_prm_trde_trnsn: list[DomesticMarketConditionProgramTradingTrendByStockAndDateItem] = Field(
         default_factory=list, description="종목일별프로그램매매추이"
     )
+
+
+class DomesticMarketConditionTopIntradayTradingByInvestorItem(BaseModel):
+    stk_cd: str = Field(default="", title="종목코드", max_length=20)
+    stk_nm: str = Field(default="", title="종목명", max_length=40)
+    sel_qty: str = Field(default="", title="매도량", max_length=20)
+    buy_qty: str = Field(default="", title="매수량", max_length=20)
+    netslmt: str = Field(default="", title="순매도", max_length=20)
+
+
+class DomesticMarketConditionTopIntradayTradingByInvestor(BaseModel, KiwoomHttpBody):
+    model_config = ConfigDict(title="장중투자자별매매상위요청 응답")
+
+    opmr_invsr_trde_upper: list[DomesticMarketConditionTopIntradayTradingByInvestorItem] = Field(
+        default_factory=list, title="장중투자자별매매상위"
+    )

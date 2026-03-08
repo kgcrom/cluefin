@@ -2,8 +2,6 @@ import type { ApiResponse, KiwoomEndpointDefinition } from '../core/types';
 import type { KiwoomClient } from './client';
 
 export class KiwoomDomainBase {
-  [key: string]: unknown;
-
   public constructor(
     protected readonly client: KiwoomClient,
     protected readonly endpoints: readonly KiwoomEndpointDefinition[],
