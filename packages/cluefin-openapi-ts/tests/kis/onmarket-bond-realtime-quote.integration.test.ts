@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import { KisAuth } from '../../src/kis/auth';
-import { KisSocketClient } from '../../src/kis/socket-client';
-import { OnmarketBondRealtimeQuote } from '../../src/kis/onmarket-bond-realtime-quote';
 import type { WebSocketEvent } from '../../src/core/websocket';
+import { KisAuth } from '../../src/kis/auth';
+import { OnmarketBondRealtimeQuote } from '../../src/kis/onmarket-bond-realtime-quote';
+import { KisSocketClient } from '../../src/kis/socket-client';
 
 const runIntegration = process.env.CLUEFIN_OPENAPI_TS_RUN_INTEGRATION === '1';
 const integrationTest = runIntegration ? test : test.skip;
@@ -49,7 +49,7 @@ describe('OnmarketBondRealtimeQuote integration', () => {
         if (event.trId === OnmarketBondRealtimeQuote.TR_ID_BOND_EXECUTION && event.data) {
           const items = OnmarketBondRealtimeQuote.parseBondExecutionData(event.data.values);
           expect(items.length).toBeGreaterThan(0);
-          expect(items[0]!.stndIscd).toBe('KR1035010001');
+          expect(items[0]?.stndIscd).toBe('KR1035010001');
           clearTimeout(timeout);
           client.close();
           resolve({ connected: true, dataReceived: true });
@@ -98,7 +98,7 @@ describe('OnmarketBondRealtimeQuote integration', () => {
         if (event.trId === OnmarketBondRealtimeQuote.TR_ID_BOND_ORDERBOOK && event.data) {
           const items = OnmarketBondRealtimeQuote.parseBondOrderbookData(event.data.values);
           expect(items.length).toBeGreaterThan(0);
-          expect(items[0]!.stndIscd).toBe('KR1035010001');
+          expect(items[0]?.stndIscd).toBe('KR1035010001');
           clearTimeout(timeout);
           client.close();
           resolve({ connected: true, dataReceived: true });

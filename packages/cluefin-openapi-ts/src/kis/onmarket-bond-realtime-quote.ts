@@ -1,4 +1,3 @@
-import type { KisSocketClient } from './socket-client';
 import {
   BOND_EXECUTION_FIELD_NAMES,
   BOND_INDEX_EXECUTION_FIELD_NAMES,
@@ -7,6 +6,7 @@ import {
   type BondRealtimeIndexExecutionItem,
   type BondRealtimeOrderbookItem,
 } from './metadata/onmarket-bond-realtime-quote';
+import type { KisSocketClient } from './socket-client';
 
 const TR_ID_BOND_EXECUTION = 'H0BJCNT0';
 const TR_ID_BOND_ORDERBOOK = 'H0BJASP0';
@@ -16,9 +16,7 @@ function parseRecords<T>(data: string[], fieldNames: readonly string[]): T[] {
   const fieldCount = fieldNames.length;
 
   if (data.length < fieldCount) {
-    throw new Error(
-      `Expected at least ${fieldCount} fields, got ${data.length}. First field: ${data[0] ?? 'empty'}`,
-    );
+    throw new Error(`Expected at least ${fieldCount} fields, got ${data.length}. First field: ${data[0] ?? 'empty'}`);
   }
 
   const numRecords = Math.floor(data.length / fieldCount);

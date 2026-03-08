@@ -1,12 +1,12 @@
-import type { KisSocketClient } from './socket-client';
 import {
-  EXECUTION_FIELD_NAMES,
-  EXECUTION_NOTIFICATION_FIELD_NAMES,
-  ORDERBOOK_FIELD_NAMES,
   type DomesticRealtimeExecutionItem,
   type DomesticRealtimeExecutionNotificationItem,
   type DomesticRealtimeOrderbookItem,
+  EXECUTION_FIELD_NAMES,
+  EXECUTION_NOTIFICATION_FIELD_NAMES,
+  ORDERBOOK_FIELD_NAMES,
 } from './metadata/domestic-realtime-quote';
+import type { KisSocketClient } from './socket-client';
 
 const TR_ID_EXECUTION = 'H0UNCNT0';
 const TR_ID_ORDERBOOK = 'H0STASP0';
@@ -16,9 +16,7 @@ function parseRecords<T>(data: string[], fieldNames: readonly string[]): T[] {
   const fieldCount = fieldNames.length;
 
   if (data.length < fieldCount) {
-    throw new Error(
-      `Expected at least ${fieldCount} fields, got ${data.length}. First field: ${data[0] ?? 'empty'}`,
-    );
+    throw new Error(`Expected at least ${fieldCount} fields, got ${data.length}. First field: ${data[0] ?? 'empty'}`);
   }
 
   const numRecords = Math.floor(data.length / fieldCount);
@@ -42,9 +40,7 @@ export class DomesticRealtimeQuote {
 
   private requireProdEnv(): void {
     if (this.socketClient.env !== 'prod') {
-      throw new Error(
-        `실시간 체결통보는 운영 서버(prod)에서만 사용 가능합니다. 현재 환경: ${this.socketClient.env}`,
-      );
+      throw new Error(`실시간 체결통보는 운영 서버(prod)에서만 사용 가능합니다. 현재 환경: ${this.socketClient.env}`);
     }
   }
 

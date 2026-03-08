@@ -6,13 +6,24 @@ const it = runIntegration ? test : test.skip;
 describe('Kiwoom DomesticChart', () => {
   it('getIndividualStockInstitutionalChart', async () => {
     const client = await getKiwoomClient();
-    const res = await client.domesticChart.getIndividualStockInstitutionalChart({ dt: TODAY, stkCd: SAMSUNG, amtQtyTp: '1', trdeTp: '0', unitTp: '1' });
+    const res = await client.domesticChart.getIndividualStockInstitutionalChart({
+      dt: TODAY,
+      stkCd: SAMSUNG,
+      amtQtyTp: '1',
+      trdeTp: '0',
+      unitTp: '1',
+    });
     assertKiwoomResponse(res);
   });
 
   it('getIntradayInvestorTrading', async () => {
     const client = await getKiwoomClient();
-    const res = await client.domesticChart.getIntradayInvestorTrading({ mrktTp: '0', amtQtyTp: '1', trdeTp: '0', stkCd: SAMSUNG });
+    const res = await client.domesticChart.getIntradayInvestorTrading({
+      mrktTp: '0',
+      amtQtyTp: '1',
+      trdeTp: '0',
+      stkCd: SAMSUNG,
+    });
     assertKiwoomResponse(res);
   });
 

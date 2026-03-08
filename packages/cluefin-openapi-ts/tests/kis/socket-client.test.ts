@@ -13,17 +13,13 @@ describe('KisSocketClient', () => {
     it('should use dev URL by default', () => {
       const client = new KisSocketClient(defaultOptions);
       expect(client.env).toBe('dev');
-      expect((client as unknown as { url: string }).url).toBe(
-        'ws://ops.koreainvestment.com:31000/tryitout',
-      );
+      expect((client as unknown as { url: string }).url).toBe('ws://ops.koreainvestment.com:31000/tryitout');
     });
 
     it('should use prod URL when env is prod', () => {
       const client = new KisSocketClient({ ...defaultOptions, env: 'prod' });
       expect(client.env).toBe('prod');
-      expect((client as unknown as { url: string }).url).toBe(
-        'ws://ops.koreainvestment.com:21000/tryitout',
-      );
+      expect((client as unknown as { url: string }).url).toBe('ws://ops.koreainvestment.com:21000/tryitout');
     });
 
     it('should extend BaseWebSocketClient', () => {
@@ -41,8 +37,9 @@ describe('KisSocketClient', () => {
   describe('buildSubscriptionMessage', () => {
     it('should build correct subscribe message', () => {
       const client = new KisSocketClient(defaultOptions);
-      const buildMsg = (client as unknown as { buildSubscriptionMessage: (a: string, b: string, c: string) => string })
-        .buildSubscriptionMessage.bind(client);
+      const buildMsg = (
+        client as unknown as { buildSubscriptionMessage: (a: string, b: string, c: string) => string }
+      ).buildSubscriptionMessage.bind(client);
       const raw = buildMsg('H0STASP0', '005930', '1');
       const parsed = JSON.parse(raw);
 
@@ -56,8 +53,9 @@ describe('KisSocketClient', () => {
 
     it('should build correct unsubscribe message', () => {
       const client = new KisSocketClient(defaultOptions);
-      const buildMsg = (client as unknown as { buildSubscriptionMessage: (a: string, b: string, c: string) => string })
-        .buildSubscriptionMessage.bind(client);
+      const buildMsg = (
+        client as unknown as { buildSubscriptionMessage: (a: string, b: string, c: string) => string }
+      ).buildSubscriptionMessage.bind(client);
       const raw = buildMsg('H0STASP0', '005930', '2');
       const parsed = JSON.parse(raw);
 

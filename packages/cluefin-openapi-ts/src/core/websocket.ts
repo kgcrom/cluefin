@@ -159,7 +159,7 @@ export class BaseWebSocketClient extends EventEmitter {
       if (parts.length >= 4) {
         const encrypted = parts[0] === '1';
         const trId = parts[1];
-        const dataStr = parts[3]!;
+        const dataStr = parts[3] ?? '';
         const data = dataStr.length > 0 ? dataStr.split('^') : [];
 
         return { messageType: 'DATA', trId, data, raw, encrypted };

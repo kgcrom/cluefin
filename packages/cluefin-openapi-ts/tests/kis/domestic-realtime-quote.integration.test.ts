@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import { KisAuth } from '../../src/kis/auth';
-import { KisSocketClient } from '../../src/kis/socket-client';
-import { DomesticRealtimeQuote } from '../../src/kis/domestic-realtime-quote';
 import type { WebSocketEvent } from '../../src/core/websocket';
+import { KisAuth } from '../../src/kis/auth';
+import { DomesticRealtimeQuote } from '../../src/kis/domestic-realtime-quote';
+import { KisSocketClient } from '../../src/kis/socket-client';
 
 const runIntegration = process.env.CLUEFIN_OPENAPI_TS_RUN_INTEGRATION === '1';
 const integrationTest = runIntegration ? test : test.skip;
@@ -49,7 +49,7 @@ describe('DomesticRealtimeQuote integration', () => {
         if (event.trId === DomesticRealtimeQuote.TR_ID_EXECUTION && event.data) {
           const items = DomesticRealtimeQuote.parseExecutionData(event.data.values);
           expect(items.length).toBeGreaterThan(0);
-          expect(items[0]!.mkscShrnIscd).toBe('005930');
+          expect(items[0]?.mkscShrnIscd).toBe('005930');
           clearTimeout(timeout);
           client.close();
           resolve({ connected: true, dataReceived: true });
@@ -99,7 +99,7 @@ describe('DomesticRealtimeQuote integration', () => {
         if (event.trId === DomesticRealtimeQuote.TR_ID_ORDERBOOK && event.data) {
           const items = DomesticRealtimeQuote.parseOrderbookData(event.data.values);
           expect(items.length).toBeGreaterThan(0);
-          expect(items[0]!.mkscShrnIscd).toBe('005930');
+          expect(items[0]?.mkscShrnIscd).toBe('005930');
           clearTimeout(timeout);
           client.close();
           resolve({ connected: true, dataReceived: true });

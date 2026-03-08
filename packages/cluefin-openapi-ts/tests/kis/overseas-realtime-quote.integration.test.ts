@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import { KisAuth } from '../../src/kis/auth';
-import { KisSocketClient } from '../../src/kis/socket-client';
-import { OverseasRealtimeQuote } from '../../src/kis/overseas-realtime-quote';
 import type { WebSocketEvent } from '../../src/core/websocket';
+import { KisAuth } from '../../src/kis/auth';
+import { OverseasRealtimeQuote } from '../../src/kis/overseas-realtime-quote';
+import { KisSocketClient } from '../../src/kis/socket-client';
 
 const runIntegration = process.env.CLUEFIN_OPENAPI_TS_RUN_INTEGRATION === '1';
 const integrationTest = runIntegration ? test : test.skip;
@@ -49,7 +49,7 @@ describe('OverseasRealtimeQuote integration', () => {
         if (event.trId === OverseasRealtimeQuote.TR_ID_EXECUTION && event.data) {
           const items = OverseasRealtimeQuote.parseExecutionData(event.data.values);
           expect(items.length).toBeGreaterThan(0);
-          expect(items[0]!.symb).toBe('AAPL');
+          expect(items[0]?.symb).toBe('AAPL');
           clearTimeout(timeout);
           client.close();
           resolve({ connected: true, dataReceived: true });
@@ -98,7 +98,7 @@ describe('OverseasRealtimeQuote integration', () => {
         if (event.trId === OverseasRealtimeQuote.TR_ID_ORDERBOOK && event.data) {
           const items = OverseasRealtimeQuote.parseOrderbookData(event.data.values);
           expect(items.length).toBeGreaterThan(0);
-          expect(items[0]!.symb).toBe('AAPL');
+          expect(items[0]?.symb).toBe('AAPL');
           clearTimeout(timeout);
           client.close();
           resolve({ connected: true, dataReceived: true });

@@ -2,8 +2,8 @@ import type { DomainMethods } from '../core/types';
 import { KisDomainBase } from './domain-base';
 import type { KisHttpClient } from './http-client';
 import {
-  onmarketBondBasicQuoteEndpoints,
   type OnmarketBondBasicQuoteMethodName,
+  onmarketBondBasicQuoteEndpoints,
 } from './metadata/onmarket-bond-basic-quote';
 
 export interface OnmarketBondBasicQuote extends DomainMethods<OnmarketBondBasicQuoteMethodName> {}

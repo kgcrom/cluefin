@@ -286,6 +286,4 @@ export const domesticRealtimeExecutionNotificationSchema = z.object({
 
 export type DomesticRealtimeExecutionItem = z.infer<typeof domesticRealtimeExecutionSchema>;
 export type DomesticRealtimeOrderbookItem = z.infer<typeof domesticRealtimeOrderbookSchema>;
-export type DomesticRealtimeExecutionNotificationItem = z.infer<
-  typeof domesticRealtimeExecutionNotificationSchema
->;
+export type DomesticRealtimeExecutionNotificationItem = z.infer<typeof domesticRealtimeExecutionNotificationSchema>;

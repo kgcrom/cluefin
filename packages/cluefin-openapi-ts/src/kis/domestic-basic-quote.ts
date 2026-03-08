@@ -1,7 +1,7 @@
 import type { DomainMethods } from '../core/types';
 import { KisDomainBase } from './domain-base';
 import type { KisHttpClient } from './http-client';
-import { domesticBasicQuoteEndpoints, type DomesticBasicQuoteMethodName } from './metadata/domestic-basic-quote';
+import { type DomesticBasicQuoteMethodName, domesticBasicQuoteEndpoints } from './metadata/domestic-basic-quote';
 
 export interface DomesticBasicQuote extends DomainMethods<DomesticBasicQuoteMethodName> {}
 export class DomesticBasicQuote extends KisDomainBase {

@@ -6,7 +6,13 @@ const it = runIntegration ? test : test.skip;
 describe('Kiwoom DomesticTheme', () => {
   it('getThemeGroup', async () => {
     const client = await getKiwoomClient();
-    const res = await client.domesticTheme.getThemeGroup({ qryTp: '0', dateTp: '0', themaNm: '', fluPlAmtTp: '0', stexTp: '1' });
+    const res = await client.domesticTheme.getThemeGroup({
+      qryTp: '0',
+      dateTp: '0',
+      themaNm: '',
+      fluPlAmtTp: '0',
+      stexTp: '1',
+    });
     assertKiwoomResponse(res);
   });
 

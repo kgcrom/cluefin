@@ -2,8 +2,8 @@ import type { DomainMethods } from '../core/types';
 import { KisDomainBase } from './domain-base';
 import type { KisHttpClient } from './http-client';
 import {
-  domesticMarketAnalysisEndpoints,
   type DomesticMarketAnalysisMethodName,
+  domesticMarketAnalysisEndpoints,
 } from './metadata/domestic-market-analysis';
 
 export interface DomesticMarketAnalysis extends DomainMethods<DomesticMarketAnalysisMethodName> {}

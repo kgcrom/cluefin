@@ -1,4 +1,3 @@
-import type { KisSocketClient } from './socket-client';
 import {
   OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES,
   OVERSEAS_EXECUTION_FIELD_NAMES,
@@ -9,6 +8,7 @@ import {
   type OverseasRealtimeExecutionNotificationItem,
   type OverseasRealtimeOrderbookItem,
 } from './metadata/overseas-realtime-quote';
+import type { KisSocketClient } from './socket-client';
 
 const TR_ID_ORDERBOOK = 'HDFSASP0';
 const TR_ID_EXECUTION = 'HDFSCNT0';

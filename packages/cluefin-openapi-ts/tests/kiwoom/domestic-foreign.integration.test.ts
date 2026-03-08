@@ -18,7 +18,13 @@ describe('Kiwoom DomesticForeign', () => {
 
   it('getConsecutiveNetBuySellStatusByInstitutionForeigner', async () => {
     const client = await getKiwoomClient();
-    const res = await client.domesticForeign.getConsecutiveNetBuySellStatusByInstitutionForeigner({ dt: TODAY, mrktTp: '0', stkIndsTp: '0', amtQtyTp: '1', stexTp: '1' });
+    const res = await client.domesticForeign.getConsecutiveNetBuySellStatusByInstitutionForeigner({
+      dt: TODAY,
+      mrktTp: '0',
+      stkIndsTp: '0',
+      amtQtyTp: '1',
+      stexTp: '1',
+    });
     assertKiwoomResponse(res);
   });
 });

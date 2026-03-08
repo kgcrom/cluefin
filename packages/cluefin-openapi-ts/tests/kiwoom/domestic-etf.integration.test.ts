@@ -1,5 +1,5 @@
 import { describe, test } from 'vitest';
-import { assertKiwoomResponse, getKiwoomClient, runIntegration, KODEX200, TODAY } from '../_helpers/integration-setup';
+import { assertKiwoomResponse, getKiwoomClient, KODEX200, runIntegration, TODAY } from '../_helpers/integration-setup';
 
 const it = runIntegration ? test : test.skip;
 
@@ -24,7 +24,14 @@ describe('Kiwoom DomesticEtf', () => {
 
   it('getEtfFullPrice', async () => {
     const client = await getKiwoomClient();
-    const res = await client.domesticEtf.getEtfFullPrice({ txonType: '0', navpre: '0', mngmcomp: '0', txonYn: '0', traceIdex: '0', stexTp: '1' });
+    const res = await client.domesticEtf.getEtfFullPrice({
+      txonType: '0',
+      navpre: '0',
+      mngmcomp: '0',
+      txonYn: '0',
+      traceIdex: '0',
+      stexTp: '1',
+    });
     assertKiwoomResponse(res);
   });
 

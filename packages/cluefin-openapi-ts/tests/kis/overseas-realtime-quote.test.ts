@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import { OverseasRealtimeQuote } from '../../src/kis/overseas-realtime-quote';
-import type { KisSocketClient } from '../../src/kis/socket-client';
 import {
   OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES,
   OVERSEAS_EXECUTION_FIELD_NAMES,
   OVERSEAS_EXECUTION_NOTIFICATION_FIELD_NAMES,
   OVERSEAS_ORDERBOOK_FIELD_NAMES,
 } from '../../src/kis/metadata/overseas-realtime-quote';
+import { OverseasRealtimeQuote } from '../../src/kis/overseas-realtime-quote';
+import type { KisSocketClient } from '../../src/kis/socket-client';
 
 function createMockSocketClient(env: 'prod' | 'dev' = 'prod'): KisSocketClient {
   return {
@@ -320,13 +320,13 @@ describe('parseOrderbookData', () => {
   it('should parse single record correctly', () => {
     const result = OverseasRealtimeQuote.parseOrderbookData(sampleOrderbookData);
     expect(result).toHaveLength(1);
-    expect(result[0]!.rsym).toBe('DNASAAPL');
-    expect(result[0]!.symb).toBe('AAPL');
-    expect(result[0]!.zdiv).toBe('2');
-    expect(result[0]!.pbid1).toBe('190.50');
-    expect(result[0]!.pask1).toBe('190.60');
-    expect(result[0]!.pbid10).toBe('189.60');
-    expect(result[0]!.dask10).toBe('-290');
+    expect(result[0]?.rsym).toBe('DNASAAPL');
+    expect(result[0]?.symb).toBe('AAPL');
+    expect(result[0]?.zdiv).toBe('2');
+    expect(result[0]?.pbid1).toBe('190.50');
+    expect(result[0]?.pask1).toBe('190.60');
+    expect(result[0]?.pbid10).toBe('189.60');
+    expect(result[0]?.dask10).toBe('-290');
   });
 
   it('should throw on insufficient fields', () => {
@@ -343,7 +343,7 @@ describe('parseOrderbookData', () => {
     const data = [...sampleOrderbookData, 'extra1', 'extra2'];
     const result = OverseasRealtimeQuote.parseOrderbookData(data);
     expect(result).toHaveLength(1);
-    expect(result[0]!.rsym).toBe('DNASAAPL');
+    expect(result[0]?.rsym).toBe('DNASAAPL');
   });
 });
 
@@ -351,11 +351,11 @@ describe('parseDelayedOrderbookData', () => {
   it('should parse single record correctly', () => {
     const result = OverseasRealtimeQuote.parseDelayedOrderbookData(sampleDelayedOrderbookData);
     expect(result).toHaveLength(1);
-    expect(result[0]!.rsym).toBe('DHKS00003');
-    expect(result[0]!.symb).toBe('00003');
-    expect(result[0]!.pbid1).toBe('25.50');
-    expect(result[0]!.pask1).toBe('25.60');
-    expect(result[0]!.dask1).toBe('-60');
+    expect(result[0]?.rsym).toBe('DHKS00003');
+    expect(result[0]?.symb).toBe('00003');
+    expect(result[0]?.pbid1).toBe('25.50');
+    expect(result[0]?.pask1).toBe('25.60');
+    expect(result[0]?.dask1).toBe('-60');
   });
 
   it('should parse batched records (2 x 17)', () => {
@@ -363,8 +363,8 @@ describe('parseDelayedOrderbookData', () => {
     batched[17] = 'DHKS00005';
     const result = OverseasRealtimeQuote.parseDelayedOrderbookData(batched);
     expect(result).toHaveLength(2);
-    expect(result[0]!.rsym).toBe('DHKS00003');
-    expect(result[1]!.rsym).toBe('DHKS00005');
+    expect(result[0]?.rsym).toBe('DHKS00003');
+    expect(result[1]?.rsym).toBe('DHKS00005');
   });
 
   it('should throw on insufficient fields', () => {
@@ -382,16 +382,16 @@ describe('parseExecutionData', () => {
   it('should parse single record correctly', () => {
     const result = OverseasRealtimeQuote.parseExecutionData(sampleExecutionData);
     expect(result).toHaveLength(1);
-    expect(result[0]!.rsym).toBe('DNASAAPL');
-    expect(result[0]!.symb).toBe('AAPL');
-    expect(result[0]!.open).toBe('189.00');
-    expect(result[0]!.high).toBe('191.50');
-    expect(result[0]!.last).toBe('190.50');
-    expect(result[0]!.sign).toBe('2');
-    expect(result[0]!.diff).toBe('1.50');
-    expect(result[0]!.rate).toBe('0.79');
-    expect(result[0]!.strn).toBe('118.00');
-    expect(result[0]!.mtyp).toBe('1');
+    expect(result[0]?.rsym).toBe('DNASAAPL');
+    expect(result[0]?.symb).toBe('AAPL');
+    expect(result[0]?.open).toBe('189.00');
+    expect(result[0]?.high).toBe('191.50');
+    expect(result[0]?.last).toBe('190.50');
+    expect(result[0]?.sign).toBe('2');
+    expect(result[0]?.diff).toBe('1.50');
+    expect(result[0]?.rate).toBe('0.79');
+    expect(result[0]?.strn).toBe('118.00');
+    expect(result[0]?.mtyp).toBe('1');
   });
 
   it('should parse batched records (2 x 26 = 52 fields)', () => {
@@ -399,15 +399,15 @@ describe('parseExecutionData', () => {
     batched[26 + 11] = '191.00'; // second record's last price
     const result = OverseasRealtimeQuote.parseExecutionData(batched);
     expect(result).toHaveLength(2);
-    expect(result[0]!.last).toBe('190.50');
-    expect(result[1]!.last).toBe('191.00');
+    expect(result[0]?.last).toBe('190.50');
+    expect(result[1]?.last).toBe('191.00');
   });
 
   it('should handle extra fields (forward compatibility)', () => {
     const data = [...sampleExecutionData, 'extra1', 'extra2'];
     const result = OverseasRealtimeQuote.parseExecutionData(data);
     expect(result).toHaveLength(1);
-    expect(result[0]!.mtyp).toBe('1');
+    expect(result[0]?.mtyp).toBe('1');
   });
 
   it('should throw on insufficient fields', () => {
@@ -431,16 +431,16 @@ describe('parseExecutionNotificationData', () => {
   it('should parse single record correctly', () => {
     const result = OverseasRealtimeQuote.parseExecutionNotificationData(sampleExecutionNotificationData);
     expect(result).toHaveLength(1);
-    expect(result[0]!.custId).toBe('CUST0001');
-    expect(result[0]!.acntNo).toBe('1234567890');
-    expect(result[0]!.oderNo).toBe('0000000001');
-    expect(result[0]!.selnByovCls).toBe('02');
-    expect(result[0]!.stckShrnIscd).toBe('AAPL');
-    expect(result[0]!.cntgQty).toBe('100');
-    expect(result[0]!.cntgUnpr).toBe('190.50');
-    expect(result[0]!.acntName).toBe('홍길동계좌');
-    expect(result[0]!.cntgIsnm).toBe('APPLE INC');
-    expect(result[0]!.cntgUnpr12).toBe('190.500000000000');
+    expect(result[0]?.custId).toBe('CUST0001');
+    expect(result[0]?.acntNo).toBe('1234567890');
+    expect(result[0]?.oderNo).toBe('0000000001');
+    expect(result[0]?.selnByovCls).toBe('02');
+    expect(result[0]?.stckShrnIscd).toBe('AAPL');
+    expect(result[0]?.cntgQty).toBe('100');
+    expect(result[0]?.cntgUnpr).toBe('190.50');
+    expect(result[0]?.acntName).toBe('홍길동계좌');
+    expect(result[0]?.cntgIsnm).toBe('APPLE INC');
+    expect(result[0]?.cntgUnpr12).toBe('190.500000000000');
   });
 
   it('should parse batched records (3 x 25)', () => {
@@ -453,7 +453,7 @@ describe('parseExecutionNotificationData', () => {
     const result = OverseasRealtimeQuote.parseExecutionNotificationData(batched);
     expect(result).toHaveLength(3);
     for (let i = 0; i < 3; i++) {
-      expect(result[i]!.oderNo).toBe(`000000000${i + 1}`);
+      expect(result[i]?.oderNo).toBe(`000000000${i + 1}`);
     }
   });
 
@@ -461,7 +461,7 @@ describe('parseExecutionNotificationData', () => {
     const data = [...sampleExecutionNotificationData, 'extra1', 'extra2'];
     const result = OverseasRealtimeQuote.parseExecutionNotificationData(data);
     expect(result).toHaveLength(1);
-    expect(result[0]!.custId).toBe('CUST0001');
+    expect(result[0]?.custId).toBe('CUST0001');
   });
 
   it('should throw on insufficient fields', () => {

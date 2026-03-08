@@ -44,7 +44,11 @@ const kisDomains = [
     metadataPath: 'src/kis/metadata/domestic-ranking-analysis.ts',
     prop: 'domesticRankingAnalysis',
   },
-  { className: 'DomesticStockInfo', metadataPath: 'src/kis/metadata/domestic-stock-info.ts', prop: 'domesticStockInfo' },
+  {
+    className: 'DomesticStockInfo',
+    metadataPath: 'src/kis/metadata/domestic-stock-info.ts',
+    prop: 'domesticStockInfo',
+  },
   {
     className: 'OnmarketBondBasicQuote',
     metadataPath: 'src/kis/metadata/onmarket-bond-basic-quote.ts',

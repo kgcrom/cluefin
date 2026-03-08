@@ -1,13 +1,11 @@
-import { expect } from 'vitest';
-
 import path from 'node:path';
-
+import { expect } from 'vitest';
+import type { ApiResponse } from '../../src/core/types';
 import { KisAuth } from '../../src/kis/auth';
 import { KisHttpClient } from '../../src/kis/http-client';
 import { FileTokenCacheStore } from '../../src/kis/token-cache';
 import { KiwoomAuth } from '../../src/kiwoom/auth';
 import { KiwoomClient } from '../../src/kiwoom/client';
-import type { ApiResponse } from '../../src/core/types';
 
 export const runIntegration = process.env.CLUEFIN_OPENAPI_TS_RUN_INTEGRATION === '1';
 export const runAccountIntegration = runIntegration && !!process.env.KIS_CANO;
