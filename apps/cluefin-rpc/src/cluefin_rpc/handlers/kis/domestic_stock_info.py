@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 @rpc_method(
-    name="kis.stock_info.product_basic_info",
+    name="stock.product_info",
     description="Get product basic information.",
     parameters={
         "type": "object",
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
         "required": ["pdno", "prdt_type_cd"],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="stock",
     broker="kis",
 )
 def handle_kis_product_basic_info(params: dict, session) -> dict:
@@ -49,7 +49,7 @@ def handle_kis_product_basic_info(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.stock_info.stock_basic_info",
+    name="stock.basic_info",
     description="Get stock basic information.",
     parameters={
         "type": "object",
@@ -66,7 +66,7 @@ def handle_kis_product_basic_info(params: dict, session) -> dict:
         "required": ["pdno"],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="stock",
     broker="kis",
 )
 def handle_kis_stock_basic_info(params: dict, session) -> dict:
@@ -85,7 +85,7 @@ def handle_kis_stock_basic_info(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.stock_info.balance_sheet",
+    name="financial.balance_sheet",
     description="Get balance sheet data.",
     parameters={
         "type": "object",
@@ -107,7 +107,7 @@ def handle_kis_stock_basic_info(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="financial",
     broker="kis",
 )
 def handle_kis_balance_sheet(params: dict, session) -> dict:
@@ -124,7 +124,7 @@ def handle_kis_balance_sheet(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.stock_info.income_statement",
+    name="financial.income_statement",
     description="Get income statement data.",
     parameters={
         "type": "object",
@@ -146,7 +146,7 @@ def handle_kis_balance_sheet(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="financial",
     broker="kis",
 )
 def handle_kis_income_statement(params: dict, session) -> dict:
@@ -163,7 +163,7 @@ def handle_kis_income_statement(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.stock_info.financial_ratio",
+    name="financial.ratio",
     description="Get financial ratio data.",
     parameters={
         "type": "object",
@@ -185,7 +185,7 @@ def handle_kis_income_statement(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="financial",
     broker="kis",
 )
 def handle_kis_financial_ratio(params: dict, session) -> dict:
@@ -202,7 +202,7 @@ def handle_kis_financial_ratio(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.stock_info.profitability_ratio",
+    name="financial.profitability",
     description="Get profitability ratio data.",
     parameters={
         "type": "object",
@@ -224,7 +224,7 @@ def handle_kis_financial_ratio(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="financial",
     broker="kis",
 )
 def handle_kis_profitability_ratio(params: dict, session) -> dict:
@@ -241,7 +241,7 @@ def handle_kis_profitability_ratio(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.stock_info.other_key_ratio",
+    name="financial.other_key",
     description="Get other key ratio data (payout ratio, EVA, EBITDA).",
     parameters={
         "type": "object",
@@ -263,7 +263,7 @@ def handle_kis_profitability_ratio(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="financial",
     broker="kis",
 )
 def handle_kis_other_key_ratio(params: dict, session) -> dict:
@@ -280,7 +280,7 @@ def handle_kis_other_key_ratio(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.stock_info.stability_ratio",
+    name="financial.stability",
     description="Get stability ratio data (debt ratio, current ratio, quick ratio).",
     parameters={
         "type": "object",
@@ -302,7 +302,7 @@ def handle_kis_other_key_ratio(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="financial",
     broker="kis",
 )
 def handle_kis_stability_ratio(params: dict, session) -> dict:
@@ -319,7 +319,7 @@ def handle_kis_stability_ratio(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.stock_info.growth_ratio",
+    name="financial.growth",
     description="Get growth ratio data (revenue growth, operating profit growth).",
     parameters={
         "type": "object",
@@ -341,7 +341,7 @@ def handle_kis_stability_ratio(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="financial",
     broker="kis",
 )
 def handle_kis_growth_ratio(params: dict, session) -> dict:
@@ -358,7 +358,7 @@ def handle_kis_growth_ratio(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.stock_info.margin_tradable_stocks",
+    name="stock.margin_tradable",
     description="Get margin-tradable stock list.",
     parameters={
         "type": "object",
@@ -389,7 +389,7 @@ def handle_kis_growth_ratio(params: dict, session) -> dict:
         "required": [],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="stock",
     broker="kis",
 )
 def handle_kis_margin_tradable_stocks(params: dict, session) -> dict:
@@ -410,7 +410,7 @@ def handle_kis_margin_tradable_stocks(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.stock_info.ksd_dividend_decision",
+    name="schedule.dividend",
     description="Get KSD dividend decision information.",
     parameters={
         "type": "object",
@@ -444,7 +444,7 @@ def handle_kis_margin_tradable_stocks(params: dict, session) -> dict:
         "required": ["start_date", "end_date"],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="schedule",
     broker="kis",
 )
 def handle_kis_ksd_dividend_decision(params: dict, session) -> dict:
@@ -466,7 +466,7 @@ def handle_kis_ksd_dividend_decision(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.stock_info.ksd_stock_dividend_decision",
+    name="schedule.stock_dividend",
     description="Get KSD stock dividend purchase request decision.",
     parameters={
         "type": "object",
@@ -491,7 +491,7 @@ def handle_kis_ksd_dividend_decision(params: dict, session) -> dict:
         "required": ["start_date", "end_date"],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="schedule",
     broker="kis",
 )
 def handle_kis_ksd_stock_dividend_decision(params: dict, session) -> dict:
@@ -511,7 +511,7 @@ def handle_kis_ksd_stock_dividend_decision(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.stock_info.ksd_merger_split_decision",
+    name="schedule.merger_split",
     description="Get KSD merger/split decision information.",
     parameters={
         "type": "object",
@@ -536,7 +536,7 @@ def handle_kis_ksd_stock_dividend_decision(params: dict, session) -> dict:
         "required": ["start_date", "end_date"],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="schedule",
     broker="kis",
 )
 def handle_kis_ksd_merger_split_decision(params: dict, session) -> dict:
@@ -556,7 +556,7 @@ def handle_kis_ksd_merger_split_decision(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.stock_info.ksd_par_value_change_decision",
+    name="schedule.par_value_change",
     description="Get KSD par value change (reverse split) decision.",
     parameters={
         "type": "object",
@@ -586,7 +586,7 @@ def handle_kis_ksd_merger_split_decision(params: dict, session) -> dict:
         "required": ["start_date", "end_date"],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="schedule",
     broker="kis",
 )
 def handle_kis_ksd_par_value_change_decision(params: dict, session) -> dict:
@@ -607,7 +607,7 @@ def handle_kis_ksd_par_value_change_decision(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.stock_info.ksd_capital_reduction_schedule",
+    name="schedule.capital_reduction",
     description="Get KSD capital reduction schedule.",
     parameters={
         "type": "object",
@@ -632,7 +632,7 @@ def handle_kis_ksd_par_value_change_decision(params: dict, session) -> dict:
         "required": ["start_date", "end_date"],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="schedule",
     broker="kis",
 )
 def handle_kis_ksd_capital_reduction_schedule(params: dict, session) -> dict:
@@ -652,7 +652,7 @@ def handle_kis_ksd_capital_reduction_schedule(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.stock_info.ksd_listing_info_schedule",
+    name="schedule.listing",
     description="Get KSD listing information schedule.",
     parameters={
         "type": "object",
@@ -677,7 +677,7 @@ def handle_kis_ksd_capital_reduction_schedule(params: dict, session) -> dict:
         "required": ["start_date", "end_date"],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="schedule",
     broker="kis",
 )
 def handle_kis_ksd_listing_info_schedule(params: dict, session) -> dict:
@@ -697,7 +697,7 @@ def handle_kis_ksd_listing_info_schedule(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.stock_info.ksd_ipo_subscription_schedule",
+    name="schedule.ipo_subscription",
     description="Get KSD IPO subscription schedule.",
     parameters={
         "type": "object",
@@ -722,7 +722,7 @@ def handle_kis_ksd_listing_info_schedule(params: dict, session) -> dict:
         "required": ["start_date", "end_date"],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="schedule",
     broker="kis",
 )
 def handle_kis_ksd_ipo_subscription_schedule(params: dict, session) -> dict:
@@ -742,7 +742,7 @@ def handle_kis_ksd_ipo_subscription_schedule(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.stock_info.ksd_forfeited_share_schedule",
+    name="schedule.forfeited_share",
     description="Get KSD forfeited share schedule.",
     parameters={
         "type": "object",
@@ -767,7 +767,7 @@ def handle_kis_ksd_ipo_subscription_schedule(params: dict, session) -> dict:
         "required": ["start_date", "end_date"],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="schedule",
     broker="kis",
 )
 def handle_kis_ksd_forfeited_share_schedule(params: dict, session) -> dict:
@@ -787,7 +787,7 @@ def handle_kis_ksd_forfeited_share_schedule(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.stock_info.ksd_deposit_schedule",
+    name="schedule.deposit",
     description="Get KSD mandatory deposit schedule.",
     parameters={
         "type": "object",
@@ -812,7 +812,7 @@ def handle_kis_ksd_forfeited_share_schedule(params: dict, session) -> dict:
         "required": ["start_date", "end_date"],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="schedule",
     broker="kis",
 )
 def handle_kis_ksd_deposit_schedule(params: dict, session) -> dict:
@@ -832,7 +832,7 @@ def handle_kis_ksd_deposit_schedule(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.stock_info.ksd_paid_in_capital_increase_schedule",
+    name="schedule.capital_increase",
     description="Get KSD paid-in capital increase schedule.",
     parameters={
         "type": "object",
@@ -862,7 +862,7 @@ def handle_kis_ksd_deposit_schedule(params: dict, session) -> dict:
         "required": ["start_date", "end_date"],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="schedule",
     broker="kis",
 )
 def handle_kis_ksd_paid_in_capital_increase_schedule(params: dict, session) -> dict:
@@ -883,7 +883,7 @@ def handle_kis_ksd_paid_in_capital_increase_schedule(params: dict, session) -> d
 
 
 @rpc_method(
-    name="kis.stock_info.ksd_stock_dividend_schedule",
+    name="schedule.bonus_issue",
     description="Get KSD stock dividend (bonus issue) schedule.",
     parameters={
         "type": "object",
@@ -908,7 +908,7 @@ def handle_kis_ksd_paid_in_capital_increase_schedule(params: dict, session) -> d
         "required": ["start_date", "end_date"],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="schedule",
     broker="kis",
 )
 def handle_kis_ksd_stock_dividend_schedule(params: dict, session) -> dict:
@@ -928,7 +928,7 @@ def handle_kis_ksd_stock_dividend_schedule(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.stock_info.ksd_shareholder_meeting_schedule",
+    name="schedule.shareholder_meeting",
     description="Get KSD shareholder meeting schedule.",
     parameters={
         "type": "object",
@@ -953,7 +953,7 @@ def handle_kis_ksd_stock_dividend_schedule(params: dict, session) -> dict:
         "required": ["start_date", "end_date"],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="schedule",
     broker="kis",
 )
 def handle_kis_ksd_shareholder_meeting_schedule(params: dict, session) -> dict:
@@ -973,7 +973,7 @@ def handle_kis_ksd_shareholder_meeting_schedule(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.stock_info.estimated_earnings",
+    name="stock.estimated_earnings",
     description="Get estimated earnings for a stock.",
     parameters={
         "type": "object",
@@ -986,7 +986,7 @@ def handle_kis_ksd_shareholder_meeting_schedule(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="stock",
     broker="kis",
 )
 def handle_kis_estimated_earnings(params: dict, session) -> dict:
@@ -1006,7 +1006,7 @@ def handle_kis_estimated_earnings(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.stock_info.stock_loanable_list",
+    name="stock.loanable",
     description="Get loanable stock list for short selling.",
     parameters={
         "type": "object",
@@ -1041,7 +1041,7 @@ def handle_kis_estimated_earnings(params: dict, session) -> dict:
         "required": [],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="stock",
     broker="kis",
 )
 def handle_kis_stock_loanable_list(params: dict, session) -> dict:
@@ -1066,7 +1066,7 @@ def handle_kis_stock_loanable_list(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.stock_info.investment_opinion",
+    name="stock.investment_opinion",
     description="Get investment opinion for a stock.",
     parameters={
         "type": "object",
@@ -1095,7 +1095,7 @@ def handle_kis_stock_loanable_list(params: dict, session) -> dict:
         "required": ["stock_code", "start_date", "end_date"],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="stock",
     broker="kis",
 )
 def handle_kis_investment_opinion(params: dict, session) -> dict:
@@ -1114,7 +1114,7 @@ def handle_kis_investment_opinion(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.stock_info.investment_opinion_by_brokerage",
+    name="stock.investment_opinion_by_brokerage",
     description="Get investment opinion by brokerage.",
     parameters={
         "type": "object",
@@ -1148,7 +1148,7 @@ def handle_kis_investment_opinion(params: dict, session) -> dict:
         "required": ["stock_code", "start_date", "end_date"],
     },
     returns={"type": "object"},
-    category="kis.stock_info",
+    category="stock",
     broker="kis",
 )
 def handle_kis_investment_opinion_by_brokerage(params: dict, session) -> dict:

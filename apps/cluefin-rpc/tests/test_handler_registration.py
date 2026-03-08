@@ -46,6 +46,20 @@ from cluefin_rpc.handlers.kiwoom.domestic_theme import (
 )
 from cluefin_rpc.server import _build_dispatcher
 
+_VALID_CATEGORIES = {
+    "analysis",
+    "chart",
+    "etf",
+    "financial",
+    "market",
+    "program",
+    "ranking",
+    "schedule",
+    "sector",
+    "stock",
+    "theme",
+}
+
 # ---------------------------------------------------------------------------
 # KIS per-module counts
 # ---------------------------------------------------------------------------
@@ -53,16 +67,16 @@ from cluefin_rpc.server import _build_dispatcher
 
 class TestKisModuleCounts:
     def test_basic_quote_count(self):
-        assert len(KIS_BASIC_QUOTE) == 21
+        assert len(KIS_BASIC_QUOTE) == 17
 
     def test_issue_other_count(self):
-        assert len(KIS_ISSUE_OTHER) == 14
+        assert len(KIS_ISSUE_OTHER) == 12
 
     def test_market_analysis_count(self):
-        assert len(KIS_MARKET_ANALYSIS) == 29
+        assert len(KIS_MARKET_ANALYSIS) == 21
 
     def test_ranking_analysis_count(self):
-        assert len(KIS_RANKING) == 22
+        assert len(KIS_RANKING) == 20
 
     def test_stock_info_count(self):
         assert len(KIS_STOCK_INFO) == 26
@@ -73,13 +87,14 @@ class TestKisRegistration:
         d = Dispatcher()
         register_kis_handlers(d)
         methods = d.list_methods(broker="kis")
-        assert len(methods) == 112
+        assert len(methods) == 96
 
-    def test_all_methods_have_kis_prefix(self):
+    def test_all_methods_use_category_prefix(self):
         d = Dispatcher()
         register_kis_handlers(d)
         for m in d.list_methods(broker="kis"):
-            assert m["name"].startswith("kis."), f"{m['name']} missing kis. prefix"
+            prefix = m["name"].split(".")[0]
+            assert prefix in _VALID_CATEGORIES, f"{m['name']} has invalid category prefix '{prefix}'"
 
     def test_all_handlers_broker_is_kis(self):
         d = Dispatcher()
@@ -107,25 +122,25 @@ class TestKisRegistration:
 
 class TestKiwoomModuleCounts:
     def test_chart_count(self):
-        assert len(KW_CHART) == 14
+        assert len(KW_CHART) == 4
 
     def test_etf_count(self):
-        assert len(KW_ETF) == 9
+        assert len(KW_ETF) == 7
 
     def test_foreign_count(self):
         assert len(KW_FOREIGN) == 3
 
     def test_market_condition_count(self):
-        assert len(KW_MARKET_COND) == 20
+        assert len(KW_MARKET_COND) == 18
 
     def test_rank_info_count(self):
-        assert len(KW_RANK_INFO) == 23
+        assert len(KW_RANK_INFO) == 21
 
     def test_sector_count(self):
-        assert len(KW_SECTOR) == 6
+        assert len(KW_SECTOR) == 4
 
     def test_stock_info_count(self):
-        assert len(KW_STOCK_INFO) == 28
+        assert len(KW_STOCK_INFO) == 24
 
     def test_theme_count(self):
         assert len(KW_THEME) == 2
@@ -136,13 +151,14 @@ class TestKiwoomRegistration:
         d = Dispatcher()
         register_kiwoom_handlers(d)
         methods = d.list_methods(broker="kiwoom")
-        assert len(methods) == 105
+        assert len(methods) == 83
 
-    def test_all_methods_have_kiwoom_prefix(self):
+    def test_all_methods_use_category_prefix(self):
         d = Dispatcher()
         register_kiwoom_handlers(d)
         for m in d.list_methods(broker="kiwoom"):
-            assert m["name"].startswith("kiwoom."), f"{m['name']} missing kiwoom. prefix"
+            prefix = m["name"].split(".")[0]
+            assert prefix in _VALID_CATEGORIES, f"{m['name']} has invalid category prefix '{prefix}'"
 
     def test_all_handlers_broker_is_kiwoom(self):
         d = Dispatcher()
@@ -174,4 +190,4 @@ class TestCombinedRegistration:
     def test_build_dispatcher_total_methods(self):
         d = _build_dispatcher()
         all_methods = d.list_methods()
-        assert len(all_methods) >= 217
+        assert len(all_methods) >= 179

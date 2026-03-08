@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 @rpc_method(
-    name="kis.ranking.trading_volume",
+    name="ranking.volume",
     description="Get trading volume ranking from KIS.",
     parameters={
         "type": "object",
@@ -35,7 +35,7 @@ if TYPE_CHECKING:
         "required": ["market"],
     },
     returns={"type": "object"},
-    category="kis.ranking",
+    category="ranking",
     broker="kis",
 )
 def handle_kis_trading_volume_rank(params: dict, session) -> dict:
@@ -57,69 +57,12 @@ def handle_kis_trading_volume_rank(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# kis.ranking.stock_fluctuation
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kis.ranking.stock_fluctuation",
-    description="Get stock fluctuation (rise/decline rate) ranking from KIS.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "market": {"type": "string", "enum": ["J", "NX"], "description": "Market code"},
-            "sector_code": {
-                "type": "string",
-                "description": "Sector code (0000:all, 0001:KOSPI, 1001:KOSDAQ, 2001:KOSPI200)",
-            },
-            "sort_by": {
-                "type": "string",
-                "enum": ["0", "1", "2", "3", "4"],
-                "description": "0:rise-rate, 1:decline-rate, 2:open-rise, 3:open-decline, 4:volatility",
-            },
-            "days": {"type": "string", "description": "Accumulation days (0:all)"},
-            "price_cls_code": {
-                "type": "string",
-                "description": "Price cls (rise:0=low-based/1=close-based, decline:0=high-based/1=close-based)",
-            },
-            "classification": {"type": "string", "description": "Classification code (0:all)"},
-            "fluctuation_rate_min": {"type": "string", "description": "Min fluctuation rate"},
-            "fluctuation_rate_max": {"type": "string", "description": "Max fluctuation rate"},
-        },
-        "required": ["market"],
-    },
-    returns={"type": "object"},
-    category="kis.ranking",
-    broker="kis",
-)
-def handle_kis_stock_fluctuation_rank(params: dict, session) -> dict:
-    kis = session.get_kis()
-    response = kis.domestic_ranking_analysis.get_stock_fluctuation_rank(
-        fid_rsfl_rate2=params.get("fluctuation_rate_max", ""),
-        fid_cond_mrkt_div_code=params["market"],
-        fid_cond_scr_div_code="20170",
-        fid_input_iscd=params.get("sector_code", "0000"),
-        fid_rank_sort_cls_code=params.get("sort_by", "0"),
-        fid_input_cnt_1=params.get("days", "0"),
-        fid_prc_cls_code=params.get("price_cls_code", "0"),
-        fid_input_price_1=params.get("price_min", ""),
-        fid_input_price_2=params.get("price_max", ""),
-        fid_vol_cnt=params.get("volume_min", ""),
-        fid_trgt_cls_code=params.get("target_cls", "0"),
-        fid_trgt_exls_cls_code=params.get("target_exclude_cls", "0"),
-        fid_div_cls_code=params.get("classification", "0"),
-        fid_rsfl_rate1=params.get("fluctuation_rate_min", ""),
-    )
-    return {"data": extract_output(response, "output")}
-
-
-# ---------------------------------------------------------------------------
 # kis.ranking.hoga_quantity
 # ---------------------------------------------------------------------------
 
 
 @rpc_method(
-    name="kis.ranking.hoga_quantity",
+    name="ranking.hoga_quantity",
     description="Get hoga (order book) quantity ranking from KIS.",
     parameters={
         "type": "object",
@@ -139,7 +82,7 @@ def handle_kis_stock_fluctuation_rank(params: dict, session) -> dict:
         "required": ["market"],
     },
     returns={"type": "object"},
-    category="kis.ranking",
+    category="ranking",
     broker="kis",
 )
 def handle_kis_hoga_quantity_rank(params: dict, session) -> dict:
@@ -165,7 +108,7 @@ def handle_kis_hoga_quantity_rank(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.ranking.profitability_indicator",
+    name="ranking.profitability",
     description="Get profitability/asset indicator ranking from KIS.",
     parameters={
         "type": "object",
@@ -191,7 +134,7 @@ def handle_kis_hoga_quantity_rank(params: dict, session) -> dict:
         "required": ["market", "fiscal_year", "quarter", "sort_by"],
     },
     returns={"type": "object"},
-    category="kis.ranking",
+    category="ranking",
     broker="kis",
 )
 def handle_kis_profitability_indicator_rank(params: dict, session) -> dict:
@@ -220,7 +163,7 @@ def handle_kis_profitability_indicator_rank(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.ranking.market_cap",
+    name="ranking.market_cap",
     description="Get market cap top ranking from KIS.",
     parameters={
         "type": "object",
@@ -239,7 +182,7 @@ def handle_kis_profitability_indicator_rank(params: dict, session) -> dict:
         "required": ["market"],
     },
     returns={"type": "object"},
-    category="kis.ranking",
+    category="ranking",
     broker="kis",
 )
 def handle_kis_market_cap_top(params: dict, session) -> dict:
@@ -264,7 +207,7 @@ def handle_kis_market_cap_top(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.ranking.finance_ratio",
+    name="ranking.finance_ratio",
     description="Get finance ratio ranking from KIS.",
     parameters={
         "type": "object",
@@ -289,7 +232,7 @@ def handle_kis_market_cap_top(params: dict, session) -> dict:
         "required": ["market", "fiscal_year", "quarter", "sort_by"],
     },
     returns={"type": "object"},
-    category="kis.ranking",
+    category="ranking",
     broker="kis",
 )
 def handle_kis_finance_ratio_rank(params: dict, session) -> dict:
@@ -318,7 +261,7 @@ def handle_kis_finance_ratio_rank(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.ranking.time_hoga",
+    name="ranking.time_hoga",
     description="Get after-hours hoga (order book balance) ranking from KIS.",
     parameters={
         "type": "object",
@@ -338,7 +281,7 @@ def handle_kis_finance_ratio_rank(params: dict, session) -> dict:
         "required": ["market", "sort_by"],
     },
     returns={"type": "object"},
-    category="kis.ranking",
+    category="ranking",
     broker="kis",
 )
 def handle_kis_time_hoga_rank(params: dict, session) -> dict:
@@ -364,7 +307,7 @@ def handle_kis_time_hoga_rank(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.ranking.preferred_stock_ratio",
+    name="ranking.preferred_stock",
     description="Get preferred stock / disparity ratio top from KIS.",
     parameters={
         "type": "object",
@@ -379,7 +322,7 @@ def handle_kis_time_hoga_rank(params: dict, session) -> dict:
         "required": ["market"],
     },
     returns={"type": "object"},
-    category="kis.ranking",
+    category="ranking",
     broker="kis",
 )
 def handle_kis_preferred_stock_ratio_top(params: dict, session) -> dict:
@@ -404,7 +347,7 @@ def handle_kis_preferred_stock_ratio_top(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.ranking.disparity_index",
+    name="ranking.disparity",
     description="Get disparity index ranking from KIS.",
     parameters={
         "type": "object",
@@ -432,7 +375,7 @@ def handle_kis_preferred_stock_ratio_top(params: dict, session) -> dict:
         "required": ["market", "sort_by", "disparity_period"],
     },
     returns={"type": "object"},
-    category="kis.ranking",
+    category="ranking",
     broker="kis",
 )
 def handle_kis_disparity_index_rank(params: dict, session) -> dict:
@@ -459,7 +402,7 @@ def handle_kis_disparity_index_rank(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.ranking.market_price",
+    name="ranking.market_value",
     description="Get market value ranking (PER/PBR/PCR/PSR/EPS etc.) from KIS.",
     parameters={
         "type": "object",
@@ -487,7 +430,7 @@ def handle_kis_disparity_index_rank(params: dict, session) -> dict:
         "required": ["market", "fiscal_year", "quarter", "sort_by"],
     },
     returns={"type": "object"},
-    category="kis.ranking",
+    category="ranking",
     broker="kis",
 )
 def handle_kis_market_price_rank(params: dict, session) -> dict:
@@ -516,7 +459,7 @@ def handle_kis_market_price_rank(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.ranking.execution_strength",
+    name="ranking.execution_strength",
     description="Get execution strength top from KIS.",
     parameters={
         "type": "object",
@@ -535,7 +478,7 @@ def handle_kis_market_price_rank(params: dict, session) -> dict:
         "required": ["market"],
     },
     returns={"type": "object"},
-    category="kis.ranking",
+    category="ranking",
     broker="kis",
 )
 def handle_kis_execution_strength_top(params: dict, session) -> dict:
@@ -560,7 +503,7 @@ def handle_kis_execution_strength_top(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.ranking.watchlist_registration",
+    name="ranking.watchlist",
     description="Get watchlist registration top from KIS.",
     parameters={
         "type": "object",
@@ -579,7 +522,7 @@ def handle_kis_execution_strength_top(params: dict, session) -> dict:
         "required": ["market"],
     },
     returns={"type": "object"},
-    category="kis.ranking",
+    category="ranking",
     broker="kis",
 )
 def handle_kis_watchlist_registration_top(params: dict, session) -> dict:
@@ -606,7 +549,7 @@ def handle_kis_watchlist_registration_top(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.ranking.expected_execution_rise_decline",
+    name="ranking.expected_execution",
     description="Get expected execution rise/decline top from KIS.",
     parameters={
         "type": "object",
@@ -635,7 +578,7 @@ def handle_kis_watchlist_registration_top(params: dict, session) -> dict:
         "required": ["market", "sort_by"],
     },
     returns={"type": "object"},
-    category="kis.ranking",
+    category="ranking",
     broker="kis",
 )
 def handle_kis_expected_execution_rise_decline_top(params: dict, session) -> dict:
@@ -661,7 +604,7 @@ def handle_kis_expected_execution_rise_decline_top(params: dict, session) -> dic
 
 
 @rpc_method(
-    name="kis.ranking.proprietary_trading",
+    name="ranking.proprietary",
     description="Get proprietary (company) trading top from KIS.",
     parameters={
         "type": "object",
@@ -686,7 +629,7 @@ def handle_kis_expected_execution_rise_decline_top(params: dict, session) -> dic
         "required": ["market", "sort_by", "start_date", "end_date"],
     },
     returns={"type": "object"},
-    category="kis.ranking",
+    category="ranking",
     broker="kis",
 )
 def handle_kis_proprietary_trading_top(params: dict, session) -> dict:
@@ -714,7 +657,7 @@ def handle_kis_proprietary_trading_top(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.ranking.new_high_low_approaching",
+    name="ranking.new_high_low",
     description="Get new high/low approaching stocks top from KIS.",
     parameters={
         "type": "object",
@@ -739,7 +682,7 @@ def handle_kis_proprietary_trading_top(params: dict, session) -> dict:
         "required": ["market", "price_cls_code"],
     },
     returns={"type": "object"},
-    category="kis.ranking",
+    category="ranking",
     broker="kis",
 )
 def handle_kis_new_high_low_approaching_top(params: dict, session) -> dict:
@@ -767,7 +710,7 @@ def handle_kis_new_high_low_approaching_top(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.ranking.dividend_yield",
+    name="ranking.dividend_yield",
     description="Get dividend yield top from KIS.",
     parameters={
         "type": "object",
@@ -802,7 +745,7 @@ def handle_kis_new_high_low_approaching_top(params: dict, session) -> dict:
         "required": ["market_type", "sector_code", "dividend_type", "start_date", "end_date"],
     },
     returns={"type": "object"},
-    category="kis.ranking",
+    category="ranking",
     broker="kis",
 )
 def handle_kis_dividend_yield_top(params: dict, session) -> dict:
@@ -826,7 +769,7 @@ def handle_kis_dividend_yield_top(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.ranking.large_execution_count",
+    name="ranking.large_execution",
     description="Get large execution count top from KIS.",
     parameters={
         "type": "object",
@@ -848,7 +791,7 @@ def handle_kis_dividend_yield_top(params: dict, session) -> dict:
         "required": ["market"],
     },
     returns={"type": "object"},
-    category="kis.ranking",
+    category="ranking",
     broker="kis",
 )
 def handle_kis_large_execution_count_top(params: dict, session) -> dict:
@@ -876,7 +819,7 @@ def handle_kis_large_execution_count_top(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.ranking.credit_balance",
+    name="ranking.credit",
     description="Get credit balance top from KIS.",
     parameters={
         "type": "object",
@@ -899,7 +842,7 @@ def handle_kis_large_execution_count_top(params: dict, session) -> dict:
         "required": ["market", "sort_by", "increase_rate_period"],
     },
     returns={"type": "object"},
-    category="kis.ranking",
+    category="ranking",
     broker="kis",
 )
 def handle_kis_credit_balance_top(params: dict, session) -> dict:
@@ -920,7 +863,7 @@ def handle_kis_credit_balance_top(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.ranking.short_selling",
+    name="ranking.short_selling",
     description="Get short selling top from KIS.",
     parameters={
         "type": "object",
@@ -943,7 +886,7 @@ def handle_kis_credit_balance_top(params: dict, session) -> dict:
         "required": ["market", "period_type", "period_days"],
     },
     returns={"type": "object"},
-    category="kis.ranking",
+    category="ranking",
     broker="kis",
 )
 def handle_kis_short_selling_top(params: dict, session) -> dict:
@@ -964,57 +907,12 @@ def handle_kis_short_selling_top(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# kis.ranking.after_hours_fluctuation
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kis.ranking.after_hours_fluctuation",
-    description="Get after-hours fluctuation ranking from KIS.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "market": {"type": "string", "enum": ["J"], "description": "Market code (J only)"},
-            "sector_code": {
-                "type": "string",
-                "description": "Sector code (0000:all, 0001:KOSPI, 1001:KOSDAQ)",
-            },
-            "classification": {
-                "type": "string",
-                "enum": ["1", "2", "3", "4", "5"],
-                "description": "1:upper-limit, 2:rise-rate, 3:flat, 4:lower-limit, 5:decline-rate",
-            },
-        },
-        "required": ["market", "classification"],
-    },
-    returns={"type": "object"},
-    category="kis.ranking",
-    broker="kis",
-)
-def handle_kis_after_hours_fluctuation_rank(params: dict, session) -> dict:
-    kis = session.get_kis()
-    response = kis.domestic_ranking_analysis.get_stock_after_hours_fluctuation_rank(
-        fid_cond_mrkt_div_code=params["market"],
-        fid_mrkt_cls_code="",
-        fid_cond_scr_div_code="20234",
-        fid_input_iscd=params.get("sector_code", "0000"),
-        fid_div_cls_code=params["classification"],
-        fid_input_price_1=params.get("price_min", ""),
-        fid_input_price_2=params.get("price_max", ""),
-        fid_vol_cnt=params.get("volume_min", ""),
-        fid_trgt_cls_code=params.get("target_cls", ""),
-        fid_trgt_exls_cls_code=params.get("target_exclude_cls", ""),
-    )
-    return {"data": extract_output(response, "output")}
-
-
-# ---------------------------------------------------------------------------
 # kis.ranking.after_hours_volume
 # ---------------------------------------------------------------------------
 
 
 @rpc_method(
-    name="kis.ranking.after_hours_volume",
+    name="ranking.after_hours_volume",
     description="Get after-hours volume ranking from KIS.",
     parameters={
         "type": "object",
@@ -1033,7 +931,7 @@ def handle_kis_after_hours_fluctuation_rank(params: dict, session) -> dict:
         "required": ["market"],
     },
     returns={"type": "object"},
-    category="kis.ranking",
+    category="ranking",
     broker="kis",
 )
 def handle_kis_after_hours_volume_rank(params: dict, session) -> dict:
@@ -1058,7 +956,7 @@ def handle_kis_after_hours_volume_rank(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.ranking.hts_inquiry_top_20",
+    name="ranking.hts_inquiry",
     description="Get HTS inquiry top 20 stocks from KIS.",
     parameters={
         "type": "object",
@@ -1066,7 +964,7 @@ def handle_kis_after_hours_volume_rank(params: dict, session) -> dict:
         "required": [],
     },
     returns={"type": "object"},
-    category="kis.ranking",
+    category="ranking",
     broker="kis",
 )
 def handle_kis_hts_inquiry_top_20(params: dict, session) -> dict:
@@ -1081,7 +979,6 @@ def handle_kis_hts_inquiry_top_20(params: dict, session) -> dict:
 
 _ALL_HANDLERS = [
     handle_kis_trading_volume_rank,
-    handle_kis_stock_fluctuation_rank,
     handle_kis_hoga_quantity_rank,
     handle_kis_profitability_indicator_rank,
     handle_kis_market_cap_top,
@@ -1099,7 +996,6 @@ _ALL_HANDLERS = [
     handle_kis_large_execution_count_top,
     handle_kis_credit_balance_top,
     handle_kis_short_selling_top,
-    handle_kis_after_hours_fluctuation_rank,
     handle_kis_after_hours_volume_rank,
     handle_kis_hts_inquiry_top_20,
 ]

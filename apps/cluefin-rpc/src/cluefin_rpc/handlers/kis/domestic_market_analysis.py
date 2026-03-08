@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 @rpc_method(
-    name="kis.market_analysis.condition_search_list",
+    name="analysis.condition_search_list",
     description="Get condition search list from KIS.",
     parameters={
         "type": "object",
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
         "required": ["user_id"],
     },
     returns={"type": "object"},
-    category="kis.market_analysis",
+    category="analysis",
     broker="kis",
 )
 def handle_kis_condition_search_list(params: dict, session) -> dict:
@@ -41,7 +41,7 @@ def handle_kis_condition_search_list(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.market_analysis.condition_search_result",
+    name="analysis.condition_search_result",
     description="Get condition search result from KIS.",
     parameters={
         "type": "object",
@@ -52,7 +52,7 @@ def handle_kis_condition_search_list(params: dict, session) -> dict:
         "required": ["user_id", "seq"],
     },
     returns={"type": "object"},
-    category="kis.market_analysis",
+    category="analysis",
     broker="kis",
 )
 def handle_kis_condition_search_result(params: dict, session) -> dict:
@@ -70,7 +70,7 @@ def handle_kis_condition_search_result(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.market_analysis.watchlist_groups",
+    name="analysis.watchlist_groups",
     description="Get watchlist groups from KIS.",
     parameters={
         "type": "object",
@@ -82,7 +82,7 @@ def handle_kis_condition_search_result(params: dict, session) -> dict:
         "required": ["user_id"],
     },
     returns={"type": "object"},
-    category="kis.market_analysis",
+    category="analysis",
     broker="kis",
 )
 def handle_kis_watchlist_groups(params: dict, session) -> dict:
@@ -101,7 +101,7 @@ def handle_kis_watchlist_groups(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.market_analysis.watchlist_multi_quote",
+    name="analysis.watchlist_multi_quote",
     description="Get multi-stock watchlist quotes from KIS (up to 30 stocks).",
     parameters={
         "type": "object",
@@ -123,7 +123,7 @@ def handle_kis_watchlist_groups(params: dict, session) -> dict:
         "required": ["stocks"],
     },
     returns={"type": "object"},
-    category="kis.market_analysis",
+    category="analysis",
     broker="kis",
 )
 def handle_kis_watchlist_multi_quote(params: dict, session) -> dict:
@@ -147,7 +147,7 @@ def handle_kis_watchlist_multi_quote(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.market_analysis.watchlist_stocks_by_group",
+    name="analysis.watchlist_stocks",
     description="Get stocks in a watchlist group from KIS.",
     parameters={
         "type": "object",
@@ -160,7 +160,7 @@ def handle_kis_watchlist_multi_quote(params: dict, session) -> dict:
         "required": ["user_id", "group_code"],
     },
     returns={"type": "object"},
-    category="kis.market_analysis",
+    category="analysis",
     broker="kis",
 )
 def handle_kis_watchlist_stocks_by_group(params: dict, session) -> dict:
@@ -184,7 +184,7 @@ def handle_kis_watchlist_stocks_by_group(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.market_analysis.institutional_foreign_aggregate",
+    name="analysis.institutional_foreign",
     description="Get institutional/foreign trading aggregate from KIS.",
     parameters={
         "type": "object",
@@ -197,7 +197,7 @@ def handle_kis_watchlist_stocks_by_group(params: dict, session) -> dict:
         "required": ["user_id", "group_code"],
     },
     returns={"type": "object"},
-    category="kis.market_analysis",
+    category="analysis",
     broker="kis",
 )
 def handle_kis_institutional_foreign_aggregate(params: dict, session) -> dict:
@@ -221,7 +221,7 @@ def handle_kis_institutional_foreign_aggregate(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.market_analysis.foreign_brokerage_aggregate",
+    name="analysis.foreign_brokerage",
     description="Get foreign brokerage trading aggregate from KIS.",
     parameters={
         "type": "object",
@@ -244,7 +244,7 @@ def handle_kis_institutional_foreign_aggregate(params: dict, session) -> dict:
         "required": ["sector_code", "sort_by", "sort_by_2"],
     },
     returns={"type": "object"},
-    category="kis.market_analysis",
+    category="analysis",
     broker="kis",
 )
 def handle_kis_foreign_brokerage_aggregate(params: dict, session) -> dict:
@@ -258,43 +258,12 @@ def handle_kis_foreign_brokerage_aggregate(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# kis.market_analysis.investor_trend_by_stock_daily
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kis.market_analysis.investor_trend_by_stock_daily",
-    description="Get daily investor trading trend by stock from KIS.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "stock_code": {"type": "string", "description": "6-digit stock code"},
-            "date": {"type": "string", "description": "Date (YYYYMMDD)"},
-            "market": {"type": "string", "enum": ["J", "NX", "UN"], "description": "Market code. Default J."},
-        },
-        "required": ["stock_code", "date"],
-    },
-    returns={"type": "object"},
-    category="kis.market_analysis",
-    broker="kis",
-)
-def handle_kis_investor_trend_by_stock_daily(params: dict, session) -> dict:
-    kis = session.get_kis()
-    response = kis.domestic_market_analysis.get_investor_trading_trend_by_stock_daily(
-        fid_cond_mrkt_div_code=params.get("market", "J"),
-        fid_input_iscd=params["stock_code"],
-        fid_input_date_1=params["date"],
-    )
-    return {"data": extract_output(response, "output")}
-
-
-# ---------------------------------------------------------------------------
 # kis.market_analysis.investor_trend_by_market_intraday
 # ---------------------------------------------------------------------------
 
 
 @rpc_method(
-    name="kis.market_analysis.investor_trend_by_market_intraday",
+    name="analysis.investor_by_market_intraday",
     description="Get intraday investor trading trend by market from KIS.",
     parameters={
         "type": "object",
@@ -311,7 +280,7 @@ def handle_kis_investor_trend_by_stock_daily(params: dict, session) -> dict:
         "required": ["market_code", "sector_code"],
     },
     returns={"type": "object"},
-    category="kis.market_analysis",
+    category="analysis",
     broker="kis",
 )
 def handle_kis_investor_trend_by_market_intraday(params: dict, session) -> dict:
@@ -329,7 +298,7 @@ def handle_kis_investor_trend_by_market_intraday(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.market_analysis.investor_trend_by_market_daily",
+    name="analysis.investor_by_market_daily",
     description="Get daily investor trading trend by market from KIS.",
     parameters={
         "type": "object",
@@ -356,7 +325,7 @@ def handle_kis_investor_trend_by_market_intraday(params: dict, session) -> dict:
         "required": ["market", "sector_code", "start_date", "market_code", "end_date", "sub_sector_code"],
     },
     returns={"type": "object"},
-    category="kis.market_analysis",
+    category="analysis",
     broker="kis",
 )
 def handle_kis_investor_trend_by_market_daily(params: dict, session) -> dict:
@@ -373,46 +342,12 @@ def handle_kis_investor_trend_by_market_daily(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# kis.market_analysis.foreign_net_buy_trend
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kis.market_analysis.foreign_net_buy_trend",
-    description="Get foreign net buy trend by stock from KIS.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "stock_code": {"type": "string", "description": "6-digit stock code"},
-            "brokerage_code": {
-                "type": "string",
-                "description": "Brokerage code (99999 for all foreign)",
-            },
-            "market": {"type": "string", "enum": ["J"], "description": "Market code (J only). Default J."},
-        },
-        "required": ["stock_code"],
-    },
-    returns={"type": "object"},
-    category="kis.market_analysis",
-    broker="kis",
-)
-def handle_kis_foreign_net_buy_trend(params: dict, session) -> dict:
-    kis = session.get_kis()
-    response = kis.domestic_market_analysis.get_foreign_net_buy_trend_by_stock(
-        fid_input_iscd=params["stock_code"],
-        fid_input_iscd_2=params.get("brokerage_code", "99999"),
-        fid_cond_mrkt_div_code=params.get("market", "J"),
-    )
-    return {"data": extract_output(response, "output")}
-
-
-# ---------------------------------------------------------------------------
 # kis.market_analysis.member_trend_tick
 # ---------------------------------------------------------------------------
 
 
 @rpc_method(
-    name="kis.market_analysis.member_trend_tick",
+    name="analysis.member_trend_tick",
     description="Get member trading trend tick from KIS.",
     parameters={
         "type": "object",
@@ -435,7 +370,7 @@ def handle_kis_foreign_net_buy_trend(params: dict, session) -> dict:
         "required": [],
     },
     returns={"type": "object"},
-    category="kis.market_analysis",
+    category="analysis",
     broker="kis",
 )
 def handle_kis_member_trend_tick(params: dict, session) -> dict:
@@ -452,123 +387,12 @@ def handle_kis_member_trend_tick(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# kis.market_analysis.member_trend_by_stock
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kis.market_analysis.member_trend_by_stock",
-    description="Get member trading trend by stock from KIS.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "stock_code": {"type": "string", "description": "6-digit stock code"},
-            "brokerage_code": {"type": "string", "description": "Member/brokerage code"},
-            "start_date": {"type": "string", "description": "Start date (YYYYMMDD)"},
-            "end_date": {"type": "string", "description": "End date (YYYYMMDD)"},
-            "market": {
-                "type": "string",
-                "enum": ["J", "NX", "UN"],
-                "description": "Market code. Default J.",
-            },
-        },
-        "required": ["stock_code", "brokerage_code", "start_date", "end_date"],
-    },
-    returns={"type": "object"},
-    category="kis.market_analysis",
-    broker="kis",
-)
-def handle_kis_member_trend_by_stock(params: dict, session) -> dict:
-    kis = session.get_kis()
-    response = kis.domestic_market_analysis.get_member_trading_trend_by_stock(
-        fid_cond_mrkt_div_code=params.get("market", "J"),
-        fid_input_iscd=params["stock_code"],
-        fid_input_iscd_2=params["brokerage_code"],
-        fid_input_date_1=params["start_date"],
-        fid_input_date_2=params["end_date"],
-        fid_sctn_cls_code="",
-    )
-    return {"data": extract_output(response, "output")}
-
-
-# ---------------------------------------------------------------------------
-# kis.market_analysis.program_trend_by_stock_intraday
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kis.market_analysis.program_trend_by_stock_intraday",
-    description="Get intraday program trading trend by stock from KIS.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "stock_code": {"type": "string", "description": "6-digit stock code"},
-            "market": {
-                "type": "string",
-                "enum": ["J", "NX", "UN"],
-                "description": "Market code. Default J.",
-            },
-        },
-        "required": ["stock_code"],
-    },
-    returns={"type": "object"},
-    category="kis.market_analysis",
-    broker="kis",
-)
-def handle_kis_program_trend_by_stock_intraday(params: dict, session) -> dict:
-    kis = session.get_kis()
-    response = kis.domestic_market_analysis.get_program_trading_trend_by_stock_intraday(
-        fid_cond_mrkt_div_code=params.get("market", "J"),
-        fid_input_iscd=params["stock_code"],
-    )
-    return {"data": extract_output(response, "output")}
-
-
-# ---------------------------------------------------------------------------
-# kis.market_analysis.program_trend_by_stock_daily
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kis.market_analysis.program_trend_by_stock_daily",
-    description="Get daily program trading trend by stock from KIS.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "stock_code": {"type": "string", "description": "6-digit stock code"},
-            "date": {
-                "type": "string",
-                "description": "Base date (YYYYMMDD with leading 00, e.g. 0020240308). Empty for today.",
-            },
-            "market": {
-                "type": "string",
-                "enum": ["J", "NX", "UN"],
-                "description": "Market code. Default J.",
-            },
-        },
-        "required": ["stock_code"],
-    },
-    returns={"type": "object"},
-    category="kis.market_analysis",
-    broker="kis",
-)
-def handle_kis_program_trend_by_stock_daily(params: dict, session) -> dict:
-    kis = session.get_kis()
-    response = kis.domestic_market_analysis.get_program_trading_trend_by_stock_daily(
-        fid_cond_mrkt_div_code=params.get("market", "J"),
-        fid_input_iscd=params["stock_code"],
-        fid_input_date_1=params.get("date", ""),
-    )
-    return {"data": extract_output(response, "output")}
-
-
-# ---------------------------------------------------------------------------
 # kis.market_analysis.foreign_institutional_estimate
 # ---------------------------------------------------------------------------
 
 
 @rpc_method(
-    name="kis.market_analysis.foreign_institutional_estimate",
+    name="analysis.foreign_institutional_estimate",
     description="Get foreign/institutional estimate by stock from KIS.",
     parameters={
         "type": "object",
@@ -578,7 +402,7 @@ def handle_kis_program_trend_by_stock_daily(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kis.market_analysis",
+    category="analysis",
     broker="kis",
 )
 def handle_kis_foreign_institutional_estimate(params: dict, session) -> dict:
@@ -595,7 +419,7 @@ def handle_kis_foreign_institutional_estimate(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.market_analysis.buy_sell_volume_by_stock_daily",
+    name="analysis.buy_sell_volume_daily",
     description="Get daily buy/sell volume by stock from KIS.",
     parameters={
         "type": "object",
@@ -613,7 +437,7 @@ def handle_kis_foreign_institutional_estimate(params: dict, session) -> dict:
         "required": ["stock_code", "start_date", "end_date"],
     },
     returns={"type": "object"},
-    category="kis.market_analysis",
+    category="analysis",
     broker="kis",
 )
 def handle_kis_buy_sell_volume_by_stock_daily(params: dict, session) -> dict:
@@ -629,95 +453,12 @@ def handle_kis_buy_sell_volume_by_stock_daily(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# kis.market_analysis.program_summary_intraday
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kis.market_analysis.program_summary_intraday",
-    description="Get intraday program trading summary from KIS.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "market_cls_code": {
-                "type": "string",
-                "enum": ["K", "Q"],
-                "description": "K:KOSPI, Q:KOSDAQ",
-            },
-            "market": {
-                "type": "string",
-                "enum": ["J", "NX", "UN"],
-                "description": "Market code. Default J.",
-            },
-            "hour": {"type": "string", "description": "Hour filter (empty for all)"},
-        },
-        "required": ["market_cls_code"],
-    },
-    returns={"type": "object"},
-    category="kis.market_analysis",
-    broker="kis",
-)
-def handle_kis_program_summary_intraday(params: dict, session) -> dict:
-    kis = session.get_kis()
-    response = kis.domestic_market_analysis.get_program_trading_summary_intraday(
-        fid_cond_mrkt_div_code=params.get("market", "J"),
-        fid_mrkt_cls_code=params["market_cls_code"],
-        fid_sctn_cls_code="",
-        fid_input_iscd="",
-        fid_cond_mrkt_div_code1="",
-        fid_input_hour_1=params.get("hour", ""),
-    )
-    return {"data": extract_output(response, "output")}
-
-
-# ---------------------------------------------------------------------------
-# kis.market_analysis.program_summary_daily
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kis.market_analysis.program_summary_daily",
-    description="Get daily program trading summary from KIS.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "market_cls_code": {
-                "type": "string",
-                "enum": ["K", "Q"],
-                "description": "K:KOSPI, Q:KOSDAQ",
-            },
-            "start_date": {"type": "string", "description": "Start date (YYYYMMDD, empty for default)"},
-            "end_date": {"type": "string", "description": "End date (YYYYMMDD, empty for default)"},
-            "market": {
-                "type": "string",
-                "enum": ["J", "NX", "UN"],
-                "description": "Market code. Default J.",
-            },
-        },
-        "required": ["market_cls_code"],
-    },
-    returns={"type": "object"},
-    category="kis.market_analysis",
-    broker="kis",
-)
-def handle_kis_program_summary_daily(params: dict, session) -> dict:
-    kis = session.get_kis()
-    response = kis.domestic_market_analysis.get_program_trading_summary_daily(
-        fid_cond_mrkt_div_code=params.get("market", "J"),
-        fid_mrkt_cls_code=params["market_cls_code"],
-        fid_input_date_1=params.get("start_date", ""),
-        fid_input_date_2=params.get("end_date", ""),
-    )
-    return {"data": extract_output(response, "output")}
-
-
-# ---------------------------------------------------------------------------
 # kis.market_analysis.program_investor_trend_today
 # ---------------------------------------------------------------------------
 
 
 @rpc_method(
-    name="kis.market_analysis.program_investor_trend_today",
+    name="program.investor_trend",
     description="Get today's program trading investor trend from KIS.",
     parameters={
         "type": "object",
@@ -736,7 +477,7 @@ def handle_kis_program_summary_daily(params: dict, session) -> dict:
         "required": ["exchange_code", "market_code"],
     },
     returns={"type": "object"},
-    category="kis.market_analysis",
+    category="program",
     broker="kis",
 )
 def handle_kis_program_investor_trend_today(params: dict, session) -> dict:
@@ -749,44 +490,12 @@ def handle_kis_program_investor_trend_today(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# kis.market_analysis.credit_balance_trend_daily
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kis.market_analysis.credit_balance_trend_daily",
-    description="Get daily credit balance trend from KIS.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "stock_code": {"type": "string", "description": "6-digit stock code"},
-            "date": {"type": "string", "description": "Settlement date (YYYYMMDD)"},
-            "market": {"type": "string", "description": "Market code. Default J."},
-        },
-        "required": ["stock_code", "date"],
-    },
-    returns={"type": "object"},
-    category="kis.market_analysis",
-    broker="kis",
-)
-def handle_kis_credit_balance_trend_daily(params: dict, session) -> dict:
-    kis = session.get_kis()
-    response = kis.domestic_market_analysis.get_credit_balance_trend_daily(
-        fid_cond_mrkt_div_code=params.get("market", "J"),
-        fid_cond_scr_div_code="20476",
-        fid_input_iscd=params["stock_code"],
-        fid_input_date_1=params["date"],
-    )
-    return {"data": extract_output(response, "output")}
-
-
-# ---------------------------------------------------------------------------
 # kis.market_analysis.expected_price_trend
 # ---------------------------------------------------------------------------
 
 
 @rpc_method(
-    name="kis.market_analysis.expected_price_trend",
+    name="analysis.expected_price_trend",
     description="Get expected price trend from KIS.",
     parameters={
         "type": "object",
@@ -802,7 +511,7 @@ def handle_kis_credit_balance_trend_daily(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kis.market_analysis",
+    category="analysis",
     broker="kis",
 )
 def handle_kis_expected_price_trend(params: dict, session) -> dict:
@@ -821,7 +530,7 @@ def handle_kis_expected_price_trend(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.market_analysis.short_selling_trend_daily",
+    name="analysis.short_selling_trend",
     description="Get daily short selling trend from KIS.",
     parameters={
         "type": "object",
@@ -834,7 +543,7 @@ def handle_kis_expected_price_trend(params: dict, session) -> dict:
         "required": ["stock_code", "end_date"],
     },
     returns={"type": "object"},
-    category="kis.market_analysis",
+    category="analysis",
     broker="kis",
 )
 def handle_kis_short_selling_trend_daily(params: dict, session) -> dict:
@@ -854,7 +563,7 @@ def handle_kis_short_selling_trend_daily(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.market_analysis.after_hours_expected_fluctuation",
+    name="analysis.after_hours_expected",
     description="Get after-hours expected fluctuation from KIS.",
     parameters={
         "type": "object",
@@ -880,7 +589,7 @@ def handle_kis_short_selling_trend_daily(params: dict, session) -> dict:
         "required": ["sector_code", "sort_by"],
     },
     returns={"type": "object"},
-    category="kis.market_analysis",
+    category="analysis",
     broker="kis",
 )
 def handle_kis_after_hours_expected_fluctuation(params: dict, session) -> dict:
@@ -904,7 +613,7 @@ def handle_kis_after_hours_expected_fluctuation(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.market_analysis.trading_weight_by_amount",
+    name="analysis.trading_weight",
     description="Get trading weight by execution amount from KIS.",
     parameters={
         "type": "object",
@@ -919,7 +628,7 @@ def handle_kis_after_hours_expected_fluctuation(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kis.market_analysis",
+    category="analysis",
     broker="kis",
 )
 def handle_kis_trading_weight_by_amount(params: dict, session) -> dict:
@@ -938,7 +647,7 @@ def handle_kis_trading_weight_by_amount(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.market_analysis.market_fund_summary",
+    name="analysis.market_fund_summary",
     description="Get market fund summary from KIS.",
     parameters={
         "type": "object",
@@ -948,7 +657,7 @@ def handle_kis_trading_weight_by_amount(params: dict, session) -> dict:
         "required": ["date"],
     },
     returns={"type": "object"},
-    category="kis.market_analysis",
+    category="analysis",
     broker="kis",
 )
 def handle_kis_market_fund_summary(params: dict, session) -> dict:
@@ -965,7 +674,7 @@ def handle_kis_market_fund_summary(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.market_analysis.stock_loan_trend_daily",
+    name="analysis.stock_loan_trend",
     description="Get daily stock loan trend from KIS.",
     parameters={
         "type": "object",
@@ -983,7 +692,7 @@ def handle_kis_market_fund_summary(params: dict, session) -> dict:
         "required": ["market_div_code", "stock_code", "start_date", "end_date"],
     },
     returns={"type": "object"},
-    category="kis.market_analysis",
+    category="analysis",
     broker="kis",
 )
 def handle_kis_stock_loan_trend_daily(params: dict, session) -> dict:
@@ -1004,7 +713,7 @@ def handle_kis_stock_loan_trend_daily(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.market_analysis.limit_price_stocks",
+    name="analysis.limit_price_stocks",
     description="Get limit price (upper/lower) stocks from KIS.",
     parameters={
         "type": "object",
@@ -1027,7 +736,7 @@ def handle_kis_stock_loan_trend_daily(params: dict, session) -> dict:
         "required": ["price_cls_code", "classification", "sector_code"],
     },
     returns={"type": "object"},
-    category="kis.market_analysis",
+    category="analysis",
     broker="kis",
 )
 def handle_kis_limit_price_stocks(params: dict, session) -> dict:
@@ -1053,7 +762,7 @@ def handle_kis_limit_price_stocks(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.market_analysis.resistance_level_trading_weight",
+    name="analysis.resistance_level",
     description="Get resistance level / trading weight from KIS.",
     parameters={
         "type": "object",
@@ -1069,7 +778,7 @@ def handle_kis_limit_price_stocks(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kis.market_analysis",
+    category="analysis",
     broker="kis",
 )
 def handle_kis_resistance_level_trading_weight(params: dict, session) -> dict:
@@ -1095,20 +804,12 @@ _ALL_HANDLERS = [
     handle_kis_watchlist_stocks_by_group,
     handle_kis_institutional_foreign_aggregate,
     handle_kis_foreign_brokerage_aggregate,
-    handle_kis_investor_trend_by_stock_daily,
     handle_kis_investor_trend_by_market_intraday,
     handle_kis_investor_trend_by_market_daily,
-    handle_kis_foreign_net_buy_trend,
     handle_kis_member_trend_tick,
-    handle_kis_member_trend_by_stock,
-    handle_kis_program_trend_by_stock_intraday,
-    handle_kis_program_trend_by_stock_daily,
     handle_kis_foreign_institutional_estimate,
     handle_kis_buy_sell_volume_by_stock_daily,
-    handle_kis_program_summary_intraday,
-    handle_kis_program_summary_daily,
     handle_kis_program_investor_trend_today,
-    handle_kis_credit_balance_trend_daily,
     handle_kis_expected_price_trend,
     handle_kis_short_selling_trend_daily,
     handle_kis_after_hours_expected_fluctuation,

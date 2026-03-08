@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 @rpc_method(
-    name="kis.issue_other.sector_current_index",
+    name="sector.current_index",
     description="Get current sector index price.",
     parameters={
         "type": "object",
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
         "required": ["sector_code"],
     },
     returns={"type": "object"},
-    category="kis.issue_other",
+    category="sector",
     broker="kis",
 )
 def handle_kis_sector_current_index(params: dict, session) -> dict:
@@ -50,7 +50,7 @@ def handle_kis_sector_current_index(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.issue_other.sector_daily_index",
+    name="sector.daily",
     description="Get sector daily index history.",
     parameters={
         "type": "object",
@@ -76,7 +76,7 @@ def handle_kis_sector_current_index(params: dict, session) -> dict:
         "required": ["sector_code", "start_date"],
     },
     returns={"type": "object"},
-    category="kis.issue_other",
+    category="sector",
     broker="kis",
 )
 def handle_kis_sector_daily_index(params: dict, session) -> dict:
@@ -98,7 +98,7 @@ def handle_kis_sector_daily_index(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.issue_other.sector_time_index_second",
+    name="sector.time_second",
     description="Get sector time index by second.",
     parameters={
         "type": "object",
@@ -115,7 +115,7 @@ def handle_kis_sector_daily_index(params: dict, session) -> dict:
         "required": ["sector_code"],
     },
     returns={"type": "object"},
-    category="kis.issue_other",
+    category="sector",
     broker="kis",
 )
 def handle_kis_sector_time_index_second(params: dict, session) -> dict:
@@ -131,7 +131,7 @@ def handle_kis_sector_time_index_second(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.issue_other.sector_time_index_minute",
+    name="sector.time_minute",
     description="Get sector time index by minute.",
     parameters={
         "type": "object",
@@ -152,7 +152,7 @@ def handle_kis_sector_time_index_second(params: dict, session) -> dict:
         "required": ["hour", "sector_code"],
     },
     returns={"type": "object"},
-    category="kis.issue_other",
+    category="sector",
     broker="kis",
 )
 def handle_kis_sector_time_index_minute(params: dict, session) -> dict:
@@ -168,7 +168,7 @@ def handle_kis_sector_time_index_minute(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.issue_other.sector_minute_inquiry",
+    name="sector.minute",
     description="Get sector minute chart data.",
     parameters={
         "type": "object",
@@ -198,7 +198,7 @@ def handle_kis_sector_time_index_minute(params: dict, session) -> dict:
         "required": ["sector_code", "hour"],
     },
     returns={"type": "object"},
-    category="kis.issue_other",
+    category="sector",
     broker="kis",
 )
 def handle_kis_sector_minute_inquiry(params: dict, session) -> dict:
@@ -221,7 +221,7 @@ def handle_kis_sector_minute_inquiry(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.issue_other.sector_period_quote",
+    name="sector.period",
     description="Get sector period quote (daily/weekly/monthly/yearly).",
     parameters={
         "type": "object",
@@ -251,7 +251,7 @@ def handle_kis_sector_minute_inquiry(params: dict, session) -> dict:
         "required": ["sector_code", "start_date", "end_date"],
     },
     returns={"type": "object"},
-    category="kis.issue_other",
+    category="sector",
     broker="kis",
 )
 def handle_kis_sector_period_quote(params: dict, session) -> dict:
@@ -268,64 +268,12 @@ def handle_kis_sector_period_quote(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# kis.issue_other.sector_all_quote_by_category
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kis.issue_other.sector_all_quote_by_category",
-    description="Get all sector quotes by category.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "market": {
-                "type": "string",
-                "description": "Market division code (U for sector). Default U.",
-            },
-            "sector_code": {
-                "type": "string",
-                "description": "Sector code (0001:KOSPI, 1001:KOSDAQ, 2001:KOSPI200)",
-            },
-            "cond_scr_div_code": {
-                "type": "string",
-                "description": "Screen division code (unique key: 20214). Default 20214.",
-            },
-            "mrkt_cls_code": {
-                "type": "string",
-                "description": "Market class code (K:KRX, Q:KOSDAQ, K2:KOSPI200)",
-            },
-            "blng_cls_code": {
-                "type": "string",
-                "description": "Category code (0:all sectors, 1:other, 2:capital/venture, 3:industry/general). Default 0.",
-            },
-        },
-        "required": ["sector_code", "mrkt_cls_code"],
-    },
-    returns={"type": "object"},
-    category="kis.issue_other",
-    broker="kis",
-)
-def handle_kis_sector_all_quote_by_category(params: dict, session) -> dict:
-    kis = session.get_kis()
-    market = params.get("market", "U")
-    cond_scr_div_code = params.get("cond_scr_div_code", "20214")
-    blng_cls_code = params.get("blng_cls_code", "0")
-    response = kis.domestic_issue_other.get_sector_all_quote_by_category(
-        market, params["sector_code"], cond_scr_div_code, params["mrkt_cls_code"], blng_cls_code
-    )
-    return {
-        "summary": extract_output(response, "output1"),
-        "data": extract_output(response, "output2"),
-    }
-
-
-# ---------------------------------------------------------------------------
 # kis.issue_other.expected_index_trend
 # ---------------------------------------------------------------------------
 
 
 @rpc_method(
-    name="kis.issue_other.expected_index_trend",
+    name="sector.expected_index_trend",
     description="Get expected settlement index trend.",
     parameters={
         "type": "object",
@@ -351,7 +299,7 @@ def handle_kis_sector_all_quote_by_category(params: dict, session) -> dict:
         "required": ["mkop_cls_code", "hour", "sector_code"],
     },
     returns={"type": "object"},
-    category="kis.issue_other",
+    category="sector",
     broker="kis",
 )
 def handle_kis_expected_index_trend(params: dict, session) -> dict:
@@ -369,7 +317,7 @@ def handle_kis_expected_index_trend(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.issue_other.expected_index_all",
+    name="sector.expected_index_all",
     description="Get all expected settlement indices.",
     parameters={
         "type": "object",
@@ -399,7 +347,7 @@ def handle_kis_expected_index_trend(params: dict, session) -> dict:
         "required": ["sector_code", "mkop_cls_code"],
     },
     returns={"type": "object"},
-    category="kis.issue_other",
+    category="sector",
     broker="kis",
 )
 def handle_kis_expected_index_all(params: dict, session) -> dict:
@@ -417,78 +365,12 @@ def handle_kis_expected_index_all(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# kis.issue_other.volatility_interruption_status
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kis.issue_other.volatility_interruption_status",
-    description="Get VI (Volatility Interruption) status.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "div_cls_code": {
-                "type": "string",
-                "enum": ["0", "1", "2"],
-                "description": "Direction (0:all, 1:up, 2:down). Default 0.",
-            },
-            "cond_scr_div_code": {
-                "type": "string",
-                "description": "Screen division code (unique key: 20139). Default 20139.",
-            },
-            "mrkt_cls_code": {
-                "type": "string",
-                "description": "Market class code (0:all, K:KRX, Q:KOSDAQ). Default 0.",
-            },
-            "stock_code": {
-                "type": "string",
-                "description": "Stock code (blank for all)",
-            },
-            "rank_sort_cls_code": {
-                "type": "string",
-                "description": "Sort code (0:all, 1:static, 2:dynamic, 3:static&dynamic). Default 0.",
-            },
-            "start_date": {
-                "type": "string",
-                "description": "Business date (YYYYMMDD)",
-            },
-            "trgt_cls_code": {
-                "type": "string",
-                "description": "Target classification code. Default empty.",
-            },
-            "trgt_exls_cls_code": {
-                "type": "string",
-                "description": "Target exclusion code. Default empty.",
-            },
-        },
-        "required": ["start_date"],
-    },
-    returns={"type": "object"},
-    category="kis.issue_other",
-    broker="kis",
-)
-def handle_kis_volatility_interruption_status(params: dict, session) -> dict:
-    kis = session.get_kis()
-    response = kis.domestic_issue_other.get_volatility_interruption_status(
-        params.get("div_cls_code", "0"),
-        params.get("cond_scr_div_code", "20139"),
-        params.get("mrkt_cls_code", "0"),
-        params.get("stock_code", ""),
-        params.get("rank_sort_cls_code", "0"),
-        params["start_date"],
-        params.get("trgt_cls_code", ""),
-        params.get("trgt_exls_cls_code", ""),
-    )
-    return {"data": extract_output(response, "output")}
-
-
-# ---------------------------------------------------------------------------
 # kis.issue_other.interest_rate_summary
 # ---------------------------------------------------------------------------
 
 
 @rpc_method(
-    name="kis.issue_other.interest_rate_summary",
+    name="market.interest_rate",
     description="Get interest rate summary (domestic bonds/rates).",
     parameters={
         "type": "object",
@@ -513,7 +395,7 @@ def handle_kis_volatility_interruption_status(params: dict, session) -> dict:
         "required": [],
     },
     returns={"type": "object"},
-    category="kis.issue_other",
+    category="market",
     broker="kis",
 )
 def handle_kis_interest_rate_summary(params: dict, session) -> dict:
@@ -536,7 +418,7 @@ def handle_kis_interest_rate_summary(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.issue_other.market_announcement_schedule",
+    name="market.announcement",
     description="Get market news and announcement titles.",
     parameters={
         "type": "object",
@@ -577,7 +459,7 @@ def handle_kis_interest_rate_summary(params: dict, session) -> dict:
         "required": [],
     },
     returns={"type": "object"},
-    category="kis.issue_other",
+    category="market",
     broker="kis",
 )
 def handle_kis_market_announcement_schedule(params: dict, session) -> dict:
@@ -601,7 +483,7 @@ def handle_kis_market_announcement_schedule(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.issue_other.holiday_inquiry",
+    name="market.holiday",
     description="Get domestic market holiday schedule.",
     parameters={
         "type": "object",
@@ -622,7 +504,7 @@ def handle_kis_market_announcement_schedule(params: dict, session) -> dict:
         "required": ["bass_dt"],
     },
     returns={"type": "object"},
-    category="kis.issue_other",
+    category="market",
     broker="kis",
 )
 def handle_kis_holiday_inquiry(params: dict, session) -> dict:
@@ -641,7 +523,7 @@ def handle_kis_holiday_inquiry(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.issue_other.futures_business_day_inquiry",
+    name="market.futures_business_day",
     description="Get futures business day information.",
     parameters={
         "type": "object",
@@ -649,7 +531,7 @@ def handle_kis_holiday_inquiry(params: dict, session) -> dict:
         "required": [],
     },
     returns={"type": "object"},
-    category="kis.issue_other",
+    category="market",
     broker="kis",
 )
 def handle_kis_futures_business_day_inquiry(params: dict, session) -> dict:
@@ -669,10 +551,8 @@ _ALL_HANDLERS = [
     handle_kis_sector_time_index_minute,
     handle_kis_sector_minute_inquiry,
     handle_kis_sector_period_quote,
-    handle_kis_sector_all_quote_by_category,
     handle_kis_expected_index_trend,
     handle_kis_expected_index_all,
-    handle_kis_volatility_interruption_status,
     handle_kis_interest_rate_summary,
     handle_kis_market_announcement_schedule,
     handle_kis_holiday_inquiry,

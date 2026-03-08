@@ -1,4 +1,4 @@
-"""RPC handlers for Kiwoom DomesticETF API (9 methods)."""
+"""RPC handlers for Kiwoom DomesticETF API (7 methods)."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 @rpc_method(
-    name="kiwoom.etf.return_rate",
+    name="etf.return_rate",
     description="Get ETF return rate from Kiwoom.",
     parameters={
         "type": "object",
@@ -34,7 +34,7 @@ if TYPE_CHECKING:
         "required": ["stock_code", "index_code", "period"],
     },
     returns={"type": "object"},
-    category="kiwoom.etf",
+    category="etf",
     broker="kiwoom",
 )
 def handle_kiwoom_etf_return_rate(params: dict, session) -> dict:
@@ -50,74 +50,12 @@ def handle_kiwoom_etf_return_rate(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# ETF Item Info
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kiwoom.etf.item_info",
-    description="Get ETF item information from Kiwoom.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "stock_code": {"type": "string", "description": "ETF stock code (e.g. KRX:069500)"},
-            "cont_yn": {"type": "string", "enum": ["Y", "N"], "description": "Continuation flag. Default N."},
-            "next_key": {"type": "string", "description": "Continuation key. Default empty."},
-        },
-        "required": ["stock_code"],
-    },
-    returns={"type": "object"},
-    category="kiwoom.etf",
-    broker="kiwoom",
-)
-def handle_kiwoom_etf_item_info(params: dict, session) -> dict:
-    kiwoom = session.get_kiwoom()
-    response = kiwoom.etf.get_etf_item_info(
-        stk_cd=params["stock_code"],
-        cont_yn=params.get("cont_yn", "N"),
-        next_key=params.get("next_key", ""),
-    )
-    return extract_body(response)
-
-
-# ---------------------------------------------------------------------------
-# ETF Daily Trend
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kiwoom.etf.daily_trend",
-    description="Get ETF daily trend from Kiwoom.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "stock_code": {"type": "string", "description": "ETF stock code (e.g. KRX:069500)"},
-            "cont_yn": {"type": "string", "enum": ["Y", "N"], "description": "Continuation flag. Default N."},
-            "next_key": {"type": "string", "description": "Continuation key. Default empty."},
-        },
-        "required": ["stock_code"],
-    },
-    returns={"type": "object"},
-    category="kiwoom.etf",
-    broker="kiwoom",
-)
-def handle_kiwoom_etf_daily_trend(params: dict, session) -> dict:
-    kiwoom = session.get_kiwoom()
-    response = kiwoom.etf.get_etf_daily_trend(
-        stk_cd=params["stock_code"],
-        cont_yn=params.get("cont_yn", "N"),
-        next_key=params.get("next_key", ""),
-    )
-    return extract_body(response)
-
-
-# ---------------------------------------------------------------------------
 # ETF Full Price
 # ---------------------------------------------------------------------------
 
 
 @rpc_method(
-    name="kiwoom.etf.full_price",
+    name="etf.full_price",
     description="Get ETF full price list from Kiwoom.",
     parameters={
         "type": "object",
@@ -154,7 +92,7 @@ def handle_kiwoom_etf_daily_trend(params: dict, session) -> dict:
         "required": ["tax_type", "nav_premium", "management_company", "tax_yn", "trace_index", "exchange_type"],
     },
     returns={"type": "object"},
-    category="kiwoom.etf",
+    category="etf",
     broker="kiwoom",
 )
 def handle_kiwoom_etf_full_price(params: dict, session) -> dict:
@@ -178,7 +116,7 @@ def handle_kiwoom_etf_full_price(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.etf.hourly_trend",
+    name="etf.hourly",
     description="Get ETF hourly trend from Kiwoom.",
     parameters={
         "type": "object",
@@ -190,7 +128,7 @@ def handle_kiwoom_etf_full_price(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kiwoom.etf",
+    category="etf",
     broker="kiwoom",
 )
 def handle_kiwoom_etf_hourly_trend(params: dict, session) -> dict:
@@ -209,7 +147,7 @@ def handle_kiwoom_etf_hourly_trend(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.etf.hourly_execution",
+    name="etf.hourly_execution",
     description="Get ETF hourly execution data from Kiwoom.",
     parameters={
         "type": "object",
@@ -221,7 +159,7 @@ def handle_kiwoom_etf_hourly_trend(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kiwoom.etf",
+    category="etf",
     broker="kiwoom",
 )
 def handle_kiwoom_etf_hourly_execution(params: dict, session) -> dict:
@@ -240,7 +178,7 @@ def handle_kiwoom_etf_hourly_execution(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.etf.daily_execution",
+    name="etf.daily_execution",
     description="Get ETF daily execution data from Kiwoom.",
     parameters={
         "type": "object",
@@ -252,7 +190,7 @@ def handle_kiwoom_etf_hourly_execution(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kiwoom.etf",
+    category="etf",
     broker="kiwoom",
 )
 def handle_kiwoom_etf_daily_execution(params: dict, session) -> dict:
@@ -271,7 +209,7 @@ def handle_kiwoom_etf_daily_execution(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.etf.hourly_execution_v2",
+    name="etf.hourly_execution_v2",
     description="Get ETF hourly execution data (v2) from Kiwoom.",
     parameters={
         "type": "object",
@@ -283,7 +221,7 @@ def handle_kiwoom_etf_daily_execution(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kiwoom.etf",
+    category="etf",
     broker="kiwoom",
 )
 def handle_kiwoom_etf_hourly_execution_v2(params: dict, session) -> dict:
@@ -302,7 +240,7 @@ def handle_kiwoom_etf_hourly_execution_v2(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.etf.hourly_trend_v2",
+    name="etf.hourly_v2",
     description="Get ETF hourly trend data (v2) from Kiwoom.",
     parameters={
         "type": "object",
@@ -314,7 +252,7 @@ def handle_kiwoom_etf_hourly_execution_v2(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kiwoom.etf",
+    category="etf",
     broker="kiwoom",
 )
 def handle_kiwoom_etf_hourly_trend_v2(params: dict, session) -> dict:
@@ -333,8 +271,6 @@ def handle_kiwoom_etf_hourly_trend_v2(params: dict, session) -> dict:
 
 _ALL_HANDLERS = [
     handle_kiwoom_etf_return_rate,
-    handle_kiwoom_etf_item_info,
-    handle_kiwoom_etf_daily_trend,
     handle_kiwoom_etf_full_price,
     handle_kiwoom_etf_hourly_trend,
     handle_kiwoom_etf_hourly_execution,

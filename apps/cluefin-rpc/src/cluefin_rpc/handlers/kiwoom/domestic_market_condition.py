@@ -1,4 +1,4 @@
-"""RPC handlers for Kiwoom DomesticMarketCondition API (20 methods)."""
+"""RPC handlers for Kiwoom DomesticMarketCondition API (18 methods)."""
 
 from __future__ import annotations
 
@@ -11,43 +11,12 @@ if TYPE_CHECKING:
 
 
 # ---------------------------------------------------------------------------
-# Stock Quote
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kiwoom.market_condition.stock_quote",
-    description="Get stock order book quote data.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "stock_code": {"type": "string", "description": "Stock code (e.g. 039490, 039490_NX, 039490_AL)"},
-            "cont_yn": {"type": "string", "enum": ["Y", "N"], "description": "Continuation flag. Default N."},
-            "next_key": {"type": "string", "description": "Pagination key. Default empty."},
-        },
-        "required": ["stock_code"],
-    },
-    returns={"type": "object"},
-    category="kiwoom.market_condition",
-    broker="kiwoom",
-)
-def handle_kiwoom_stock_quote(params: dict, session) -> dict:
-    kiwoom = session.get_kiwoom()
-    response = kiwoom.market_conditions.get_stock_quote(
-        params["stock_code"],
-        cont_yn=params.get("cont_yn", "N"),
-        next_key=params.get("next_key", ""),
-    )
-    return extract_body(response)
-
-
-# ---------------------------------------------------------------------------
 # Stock Quote by Date
 # ---------------------------------------------------------------------------
 
 
 @rpc_method(
-    name="kiwoom.market_condition.stock_quote_by_date",
+    name="stock.order_book_by_date",
     description="Get stock order book quote data by date.",
     parameters={
         "type": "object",
@@ -59,7 +28,7 @@ def handle_kiwoom_stock_quote(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kiwoom.market_condition",
+    category="stock",
     broker="kiwoom",
 )
 def handle_kiwoom_stock_quote_by_date(params: dict, session) -> dict:
@@ -73,43 +42,12 @@ def handle_kiwoom_stock_quote_by_date(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Stock Price
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kiwoom.market_condition.stock_price",
-    description="Get current stock price data.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "stock_code": {"type": "string", "description": "Stock code (e.g. 039490, 039490_NX, 039490_AL)"},
-            "cont_yn": {"type": "string", "enum": ["Y", "N"], "description": "Continuation flag. Default N."},
-            "next_key": {"type": "string", "description": "Pagination key. Default empty."},
-        },
-        "required": ["stock_code"],
-    },
-    returns={"type": "object"},
-    category="kiwoom.market_condition",
-    broker="kiwoom",
-)
-def handle_kiwoom_stock_price(params: dict, session) -> dict:
-    kiwoom = session.get_kiwoom()
-    response = kiwoom.market_conditions.get_stock_price(
-        params["stock_code"],
-        cont_yn=params.get("cont_yn", "N"),
-        next_key=params.get("next_key", ""),
-    )
-    return extract_body(response)
-
-
-# ---------------------------------------------------------------------------
 # Market Sentiment
 # ---------------------------------------------------------------------------
 
 
 @rpc_method(
-    name="kiwoom.market_condition.market_sentiment",
+    name="stock.sentiment",
     description="Get market sentiment information for a stock.",
     parameters={
         "type": "object",
@@ -121,7 +59,7 @@ def handle_kiwoom_stock_price(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kiwoom.market_condition",
+    category="stock",
     broker="kiwoom",
 )
 def handle_kiwoom_market_sentiment(params: dict, session) -> dict:
@@ -140,7 +78,7 @@ def handle_kiwoom_market_sentiment(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.market_condition.new_stock_warrant_price",
+    name="market.warrant_price",
     description="Get new stock warrant (preemptive rights) price data.",
     parameters={
         "type": "object",
@@ -156,7 +94,7 @@ def handle_kiwoom_market_sentiment(params: dict, session) -> dict:
         "required": ["newstk_recvrht_tp"],
     },
     returns={"type": "object"},
-    category="kiwoom.market_condition",
+    category="market",
     broker="kiwoom",
 )
 def handle_kiwoom_new_stock_warrant_price(params: dict, session) -> dict:
@@ -175,7 +113,7 @@ def handle_kiwoom_new_stock_warrant_price(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.market_condition.daily_institutional_trading",
+    name="analysis.daily_institutional",
     description="Get daily institutional trading items by date range.",
     parameters={
         "type": "object",
@@ -203,7 +141,7 @@ def handle_kiwoom_new_stock_warrant_price(params: dict, session) -> dict:
         "required": ["start_date", "end_date", "trde_tp", "market_type", "exchange_type"],
     },
     returns={"type": "object"},
-    category="kiwoom.market_condition",
+    category="analysis",
     broker="kiwoom",
 )
 def handle_kiwoom_daily_institutional_trading(params: dict, session) -> dict:
@@ -226,7 +164,7 @@ def handle_kiwoom_daily_institutional_trading(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.market_condition.institutional_trend_by_stock",
+    name="analysis.institutional_trend",
     description="Get institutional trading trend for a specific stock by date range.",
     parameters={
         "type": "object",
@@ -250,7 +188,7 @@ def handle_kiwoom_daily_institutional_trading(params: dict, session) -> dict:
         "required": ["stock_code", "start_date", "end_date", "orgn_prsm_unp_tp", "for_prsm_unp_tp"],
     },
     returns={"type": "object"},
-    category="kiwoom.market_condition",
+    category="analysis",
     broker="kiwoom",
 )
 def handle_kiwoom_institutional_trend_by_stock(params: dict, session) -> dict:
@@ -273,7 +211,7 @@ def handle_kiwoom_institutional_trend_by_stock(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.market_condition.execution_intensity_by_time",
+    name="stock.execution_intensity_time",
     description="Get execution intensity trend by time for a stock.",
     parameters={
         "type": "object",
@@ -285,7 +223,7 @@ def handle_kiwoom_institutional_trend_by_stock(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kiwoom.market_condition",
+    category="stock",
     broker="kiwoom",
 )
 def handle_kiwoom_execution_intensity_by_time(params: dict, session) -> dict:
@@ -304,7 +242,7 @@ def handle_kiwoom_execution_intensity_by_time(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.market_condition.execution_intensity_by_date",
+    name="stock.execution_intensity_date",
     description="Get execution intensity trend by date for a stock.",
     parameters={
         "type": "object",
@@ -316,7 +254,7 @@ def handle_kiwoom_execution_intensity_by_time(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kiwoom.market_condition",
+    category="stock",
     broker="kiwoom",
 )
 def handle_kiwoom_execution_intensity_by_date(params: dict, session) -> dict:
@@ -335,7 +273,7 @@ def handle_kiwoom_execution_intensity_by_date(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.market_condition.intraday_trading_by_investor",
+    name="analysis.intraday_investor",
     description="Get intraday trading data grouped by investor type.",
     parameters={
         "type": "object",
@@ -376,7 +314,7 @@ def handle_kiwoom_execution_intensity_by_date(params: dict, session) -> dict:
         "required": ["market_type", "amount_qty_type", "invsr", "frgn_all", "smtm_netprps_tp", "exchange_type"],
     },
     returns={"type": "object"},
-    category="kiwoom.market_condition",
+    category="analysis",
     broker="kiwoom",
 )
 def handle_kiwoom_intraday_trading_by_investor(params: dict, session) -> dict:
@@ -400,7 +338,7 @@ def handle_kiwoom_intraday_trading_by_investor(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.market_condition.after_market_trading_by_investor",
+    name="analysis.after_market_investor",
     description="Get after-market trading data grouped by investor type.",
     parameters={
         "type": "object",
@@ -431,7 +369,7 @@ def handle_kiwoom_intraday_trading_by_investor(params: dict, session) -> dict:
         "required": ["market_type", "amount_qty_type", "trde_tp", "exchange_type"],
     },
     returns={"type": "object"},
-    category="kiwoom.market_condition",
+    category="analysis",
     broker="kiwoom",
 )
 def handle_kiwoom_after_market_trading_by_investor(params: dict, session) -> dict:
@@ -453,7 +391,7 @@ def handle_kiwoom_after_market_trading_by_investor(params: dict, session) -> dic
 
 
 @rpc_method(
-    name="kiwoom.market_condition.securities_firm_trend",
+    name="analysis.member_trend",
     description="Get securities firm trading trend by stock.",
     parameters={
         "type": "object",
@@ -468,7 +406,7 @@ def handle_kiwoom_after_market_trading_by_investor(params: dict, session) -> dic
         "required": ["mmcm_cd", "stock_code", "start_date", "end_date"],
     },
     returns={"type": "object"},
-    category="kiwoom.market_condition",
+    category="analysis",
     broker="kiwoom",
 )
 def handle_kiwoom_securities_firm_trend(params: dict, session) -> dict:
@@ -490,7 +428,7 @@ def handle_kiwoom_securities_firm_trend(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.market_condition.daily_stock_price",
+    name="stock.daily_price",
     description="Get daily stock price with optional indicator display.",
     parameters={
         "type": "object",
@@ -508,7 +446,7 @@ def handle_kiwoom_securities_firm_trend(params: dict, session) -> dict:
         "required": ["stock_code", "qry_dt", "indc_tp"],
     },
     returns={"type": "object"},
-    category="kiwoom.market_condition",
+    category="stock",
     broker="kiwoom",
 )
 def handle_kiwoom_daily_stock_price(params: dict, session) -> dict:
@@ -529,7 +467,7 @@ def handle_kiwoom_daily_stock_price(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.market_condition.after_hours_single_price",
+    name="stock.overtime_price",
     description="Get after-hours single price data for a stock.",
     parameters={
         "type": "object",
@@ -541,7 +479,7 @@ def handle_kiwoom_daily_stock_price(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kiwoom.market_condition",
+    category="stock",
     broker="kiwoom",
 )
 def handle_kiwoom_after_hours_single_price(params: dict, session) -> dict:
@@ -560,7 +498,7 @@ def handle_kiwoom_after_hours_single_price(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.market_condition.program_trading_trend_by_time",
+    name="program.summary_intraday",
     description="Get program trading trend by time period.",
     parameters={
         "type": "object",
@@ -592,7 +530,7 @@ def handle_kiwoom_after_hours_single_price(params: dict, session) -> dict:
         "required": ["date", "amount_qty_type", "market_type", "min_tic_tp", "exchange_type"],
     },
     returns={"type": "object"},
-    category="kiwoom.market_condition",
+    category="program",
     broker="kiwoom",
 )
 def handle_kiwoom_program_trading_trend_by_time(params: dict, session) -> dict:
@@ -615,7 +553,7 @@ def handle_kiwoom_program_trading_trend_by_time(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.market_condition.program_arbitrage_balance",
+    name="program.arbitrage_balance",
     description="Get program trading arbitrage balance trend.",
     parameters={
         "type": "object",
@@ -632,7 +570,7 @@ def handle_kiwoom_program_trading_trend_by_time(params: dict, session) -> dict:
         "required": ["date", "exchange_type"],
     },
     returns={"type": "object"},
-    category="kiwoom.market_condition",
+    category="program",
     broker="kiwoom",
 )
 def handle_kiwoom_program_arbitrage_balance(params: dict, session) -> dict:
@@ -652,7 +590,7 @@ def handle_kiwoom_program_arbitrage_balance(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.market_condition.program_cumulative",
+    name="program.cumulative",
     description="Get program trading cumulative trend.",
     parameters={
         "type": "object",
@@ -679,7 +617,7 @@ def handle_kiwoom_program_arbitrage_balance(params: dict, session) -> dict:
         "required": ["date", "amount_qty_type", "market_type", "exchange_type"],
     },
     returns={"type": "object"},
-    category="kiwoom.market_condition",
+    category="program",
     broker="kiwoom",
 )
 def handle_kiwoom_program_cumulative(params: dict, session) -> dict:
@@ -701,7 +639,7 @@ def handle_kiwoom_program_cumulative(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.market_condition.program_by_stock_and_time",
+    name="program.by_stock_intraday",
     description="Get program trading trend by stock and time.",
     parameters={
         "type": "object",
@@ -719,7 +657,7 @@ def handle_kiwoom_program_cumulative(params: dict, session) -> dict:
         "required": ["amount_qty_type", "stock_code", "date"],
     },
     returns={"type": "object"},
-    category="kiwoom.market_condition",
+    category="program",
     broker="kiwoom",
 )
 def handle_kiwoom_program_by_stock_and_time(params: dict, session) -> dict:
@@ -740,7 +678,7 @@ def handle_kiwoom_program_by_stock_and_time(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.market_condition.program_trend_by_date",
+    name="program.summary_daily",
     description="Get program trading trend by date.",
     parameters={
         "type": "object",
@@ -772,7 +710,7 @@ def handle_kiwoom_program_by_stock_and_time(params: dict, session) -> dict:
         "required": ["date", "amount_qty_type", "market_type", "min_tic_tp", "exchange_type"],
     },
     returns={"type": "object"},
-    category="kiwoom.market_condition",
+    category="program",
     broker="kiwoom",
 )
 def handle_kiwoom_program_trend_by_date(params: dict, session) -> dict:
@@ -795,7 +733,7 @@ def handle_kiwoom_program_trend_by_date(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.market_condition.program_by_stock_and_date",
+    name="program.by_stock_daily",
     description="Get program trading trend by stock and date.",
     parameters={
         "type": "object",
@@ -813,7 +751,7 @@ def handle_kiwoom_program_trend_by_date(params: dict, session) -> dict:
         "required": ["amount_qty_type", "stock_code", "date"],
     },
     returns={"type": "object"},
-    category="kiwoom.market_condition",
+    category="program",
     broker="kiwoom",
 )
 def handle_kiwoom_program_by_stock_and_date(params: dict, session) -> dict:
@@ -833,9 +771,7 @@ def handle_kiwoom_program_by_stock_and_date(params: dict, session) -> dict:
 # ---------------------------------------------------------------------------
 
 _ALL_HANDLERS = [
-    handle_kiwoom_stock_quote,
     handle_kiwoom_stock_quote_by_date,
-    handle_kiwoom_stock_price,
     handle_kiwoom_market_sentiment,
     handle_kiwoom_new_stock_warrant_price,
     handle_kiwoom_daily_institutional_trading,

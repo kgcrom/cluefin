@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 @rpc_method(
-    name="kiwoom.foreign.investor_trading_trend",
+    name="analysis.foreign_net_buy",
     description="Get foreign investor trading trend by stock from Kiwoom.",
     parameters={
         "type": "object",
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kiwoom.foreign",
+    category="analysis",
     broker="kiwoom",
 )
 def handle_kiwoom_foreign_investor_trading_trend(params: dict, session) -> dict:
@@ -47,7 +47,7 @@ def handle_kiwoom_foreign_investor_trading_trend(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.foreign.stock_institution",
+    name="analysis.foreign_institution",
     description="Get stock institution data from Kiwoom.",
     parameters={
         "type": "object",
@@ -59,7 +59,7 @@ def handle_kiwoom_foreign_investor_trading_trend(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kiwoom.foreign",
+    category="analysis",
     broker="kiwoom",
 )
 def handle_kiwoom_stock_institution(params: dict, session) -> dict:
@@ -78,7 +78,7 @@ def handle_kiwoom_stock_institution(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.foreign.consecutive_net_buy_sell",
+    name="analysis.foreign_consecutive",
     description="Get consecutive net buy/sell status by institution and foreigner from Kiwoom.",
     parameters={
         "type": "object",
@@ -119,7 +119,7 @@ def handle_kiwoom_stock_institution(params: dict, session) -> dict:
         "required": ["period", "market_type", "stock_industry_type", "amount_qty_type", "exchange_type"],
     },
     returns={"type": "object"},
-    category="kiwoom.foreign",
+    category="analysis",
     broker="kiwoom",
 )
 def handle_kiwoom_consecutive_net_buy_sell(params: dict, session) -> dict:

@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 @rpc_method(
-    name="kis.basic_quote.stock_current_price",
+    name="stock.current_price",
     description="Get current stock price from KIS. Returns price, volume, market cap, PER, PBR.",
     parameters={
         "type": "object",
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kis.basic_quote",
+    category="stock",
     broker="kis",
 )
 def handle_kis_stock_current_price(params: dict, session) -> dict:
@@ -74,7 +74,7 @@ def handle_kis_stock_current_price(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.basic_quote.stock_current_price_2",
+    name="stock.current_price_extended",
     description="Get extended current stock price from KIS (includes warning flags, credit info, VI status).",
     parameters={
         "type": "object",
@@ -89,7 +89,7 @@ def handle_kis_stock_current_price(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kis.basic_quote",
+    category="stock",
     broker="kis",
 )
 def handle_kis_stock_current_price_2(params: dict, session) -> dict:
@@ -108,7 +108,7 @@ def handle_kis_stock_current_price_2(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.basic_quote.stock_conclusion",
+    name="stock.conclusion",
     description="Get recent stock trade conclusions (tick-level execution data).",
     parameters={
         "type": "object",
@@ -123,7 +123,7 @@ def handle_kis_stock_current_price_2(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kis.basic_quote",
+    category="stock",
     broker="kis",
 )
 def handle_kis_stock_conclusion(params: dict, session) -> dict:
@@ -139,7 +139,7 @@ def handle_kis_stock_conclusion(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.basic_quote.stock_daily",
+    name="chart.daily",
     description="Get daily stock price history from KIS.",
     parameters={
         "type": "object",
@@ -164,7 +164,7 @@ def handle_kis_stock_conclusion(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kis.basic_quote",
+    category="chart",
     broker="kis",
 )
 def handle_kis_stock_daily(params: dict, session) -> dict:
@@ -198,7 +198,7 @@ def handle_kis_stock_daily(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.basic_quote.stock_asking_expected",
+    name="stock.order_book",
     description="Get order book (bid/ask prices) and expected conclusion data for a stock.",
     parameters={
         "type": "object",
@@ -213,7 +213,7 @@ def handle_kis_stock_daily(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kis.basic_quote",
+    category="stock",
     broker="kis",
 )
 def handle_kis_stock_asking_expected(params: dict, session) -> dict:
@@ -228,74 +228,12 @@ def handle_kis_stock_asking_expected(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Stock Investor
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kis.basic_quote.stock_investor",
-    description="Get investor trading data (individual, foreign, institutional) for a stock.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "stock_code": {"type": "string", "description": "6-digit stock code", "pattern": "^[0-9]{6}$"},
-            "market": {
-                "type": "string",
-                "enum": ["J", "NX", "UN"],
-                "description": "Market code (J:KRX, NX:NXT, UN:Combined). Default J.",
-            },
-        },
-        "required": ["stock_code"],
-    },
-    returns={"type": "object"},
-    category="kis.basic_quote",
-    broker="kis",
-)
-def handle_kis_stock_investor(params: dict, session) -> dict:
-    kis = session.get_kis()
-    market = params.get("market", "J")
-    response = kis.domestic_basic_quote.get_stock_current_price_investor(market, params["stock_code"])
-    return {"stock_code": params["stock_code"], "data": extract_output(response, "output")}
-
-
-# ---------------------------------------------------------------------------
-# Stock Member (Brokerage Firm Trading)
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kis.basic_quote.stock_member",
-    description="Get top brokerage firm (member) trading data for a stock.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "stock_code": {"type": "string", "description": "6-digit stock code", "pattern": "^[0-9]{6}$"},
-            "market": {
-                "type": "string",
-                "enum": ["J", "NX", "UN"],
-                "description": "Market code (J:KRX, NX:NXT, UN:Combined). Default J.",
-            },
-        },
-        "required": ["stock_code"],
-    },
-    returns={"type": "object"},
-    category="kis.basic_quote",
-    broker="kis",
-)
-def handle_kis_stock_member(params: dict, session) -> dict:
-    kis = session.get_kis()
-    market = params.get("market", "J")
-    response = kis.domestic_basic_quote.get_stock_current_price_member(market, params["stock_code"])
-    return {"stock_code": params["stock_code"], "data": extract_output(response, "output")}
-
-
-# ---------------------------------------------------------------------------
 # Stock Period Quote
 # ---------------------------------------------------------------------------
 
 
 @rpc_method(
-    name="kis.basic_quote.stock_period_quote",
+    name="chart.period",
     description="Get stock price for a specific date range (daily/weekly/monthly/yearly candles).",
     parameters={
         "type": "object",
@@ -322,7 +260,7 @@ def handle_kis_stock_member(params: dict, session) -> dict:
         "required": ["stock_code", "start_date", "end_date"],
     },
     returns={"type": "object"},
-    category="kis.basic_quote",
+    category="chart",
     broker="kis",
 )
 def handle_kis_stock_period_quote(params: dict, session) -> dict:
@@ -346,7 +284,7 @@ def handle_kis_stock_period_quote(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.basic_quote.stock_today_minute",
+    name="chart.minute",
     description="Get intraday minute-level chart data for a stock (today only).",
     parameters={
         "type": "object",
@@ -368,7 +306,7 @@ def handle_kis_stock_period_quote(params: dict, session) -> dict:
         "required": ["stock_code", "hour"],
     },
     returns={"type": "object"},
-    category="kis.basic_quote",
+    category="chart",
     broker="kis",
 )
 def handle_kis_stock_today_minute(params: dict, session) -> dict:
@@ -392,7 +330,7 @@ def handle_kis_stock_today_minute(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.basic_quote.stock_daily_minute",
+    name="chart.daily_minute",
     description="Get minute-level chart data for a stock across multiple days.",
     parameters={
         "type": "object",
@@ -419,7 +357,7 @@ def handle_kis_stock_today_minute(params: dict, session) -> dict:
         "required": ["stock_code", "hour", "date"],
     },
     returns={"type": "object"},
-    category="kis.basic_quote",
+    category="chart",
     broker="kis",
 )
 def handle_kis_stock_daily_minute(params: dict, session) -> dict:
@@ -443,7 +381,7 @@ def handle_kis_stock_daily_minute(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.basic_quote.stock_time_conclusion",
+    name="stock.time_conclusion",
     description="Get intraday trade conclusions grouped by time for a stock.",
     parameters={
         "type": "object",
@@ -459,7 +397,7 @@ def handle_kis_stock_daily_minute(params: dict, session) -> dict:
         "required": ["stock_code", "hour"],
     },
     returns={"type": "object"},
-    category="kis.basic_quote",
+    category="stock",
     broker="kis",
 )
 def handle_kis_stock_time_conclusion(params: dict, session) -> dict:
@@ -481,7 +419,7 @@ def handle_kis_stock_time_conclusion(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.basic_quote.stock_overtime_daily_price",
+    name="stock.overtime_daily",
     description="Get after-hours daily price history for a stock.",
     parameters={
         "type": "object",
@@ -496,7 +434,7 @@ def handle_kis_stock_time_conclusion(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kis.basic_quote",
+    category="stock",
     broker="kis",
 )
 def handle_kis_stock_overtime_daily_price(params: dict, session) -> dict:
@@ -516,7 +454,7 @@ def handle_kis_stock_overtime_daily_price(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.basic_quote.stock_overtime_conclusion",
+    name="stock.overtime_conclusion",
     description="Get after-hours trade conclusions for a stock.",
     parameters={
         "type": "object",
@@ -531,7 +469,7 @@ def handle_kis_stock_overtime_daily_price(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kis.basic_quote",
+    category="stock",
     broker="kis",
 )
 def handle_kis_stock_overtime_conclusion(params: dict, session) -> dict:
@@ -546,46 +484,12 @@ def handle_kis_stock_overtime_conclusion(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Stock Overtime Current Price
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kis.basic_quote.stock_overtime_current_price",
-    description="Get after-hours current price for a stock.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "stock_code": {"type": "string", "description": "6-digit stock code", "pattern": "^[0-9]{6}$"},
-            "market": {
-                "type": "string",
-                "enum": ["J", "NX", "UN"],
-                "description": "Market code (J:KRX, NX:NXT, UN:Combined). Default J.",
-            },
-        },
-        "required": ["stock_code"],
-    },
-    returns={"type": "object"},
-    category="kis.basic_quote",
-    broker="kis",
-)
-def handle_kis_stock_overtime_current_price(params: dict, session) -> dict:
-    kis = session.get_kis()
-    market = params.get("market", "J")
-    response = kis.domestic_basic_quote.get_stock_overtime_current_price(market, params["stock_code"])
-    result = extract_output(response, "output")
-    if result is None:
-        return {"stock_code": params["stock_code"], "error": "No data returned"}
-    return {"stock_code": params["stock_code"], **result}
-
-
-# ---------------------------------------------------------------------------
 # Stock Overtime Asking Price
 # ---------------------------------------------------------------------------
 
 
 @rpc_method(
-    name="kis.basic_quote.stock_overtime_asking_price",
+    name="stock.overtime_order_book",
     description="Get after-hours order book (bid/ask prices) for a stock.",
     parameters={
         "type": "object",
@@ -595,7 +499,7 @@ def handle_kis_stock_overtime_current_price(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kis.basic_quote",
+    category="stock",
     broker="kis",
 )
 def handle_kis_stock_overtime_asking_price(params: dict, session) -> dict:
@@ -613,7 +517,7 @@ def handle_kis_stock_overtime_asking_price(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.basic_quote.stock_closing_expected_price",
+    name="stock.closing_expected",
     description="Get expected closing prices at market close (ranked list of stocks).",
     parameters={
         "type": "object",
@@ -640,7 +544,7 @@ def handle_kis_stock_overtime_asking_price(params: dict, session) -> dict:
         "required": ["sort_code", "sector_code", "classification"],
     },
     returns={"type": "object"},
-    category="kis.basic_quote",
+    category="stock",
     broker="kis",
 )
 def handle_kis_stock_closing_expected_price(params: dict, session) -> dict:
@@ -657,7 +561,7 @@ def handle_kis_stock_closing_expected_price(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.basic_quote.etf_etn_current_price",
+    name="etf.current_price",
     description="Get current price and NAV data for an ETF or ETN.",
     parameters={
         "type": "object",
@@ -667,7 +571,7 @@ def handle_kis_stock_closing_expected_price(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kis.basic_quote",
+    category="etf",
     broker="kis",
 )
 def handle_kis_etf_etn_current_price(params: dict, session) -> dict:
@@ -685,7 +589,7 @@ def handle_kis_etf_etn_current_price(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.basic_quote.etf_component_stock_price",
+    name="etf.component_stocks",
     description="Get component stock prices and weights for an ETF.",
     parameters={
         "type": "object",
@@ -695,7 +599,7 @@ def handle_kis_etf_etn_current_price(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kis.basic_quote",
+    category="etf",
     broker="kis",
 )
 def handle_kis_etf_component_stock_price(params: dict, session) -> dict:
@@ -714,7 +618,7 @@ def handle_kis_etf_component_stock_price(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.basic_quote.etf_nav_comparison_trend",
+    name="etf.nav_trend",
     description="Get ETF NAV comparison trend data (price vs NAV for a single ETF).",
     parameters={
         "type": "object",
@@ -724,7 +628,7 @@ def handle_kis_etf_component_stock_price(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kis.basic_quote",
+    category="etf",
     broker="kis",
 )
 def handle_kis_etf_nav_comparison_trend(params: dict, session) -> dict:
@@ -743,7 +647,7 @@ def handle_kis_etf_nav_comparison_trend(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kis.basic_quote.etf_nav_comparison_daily",
+    name="etf.daily",
     description="Get daily ETF NAV comparison trend for a date range.",
     parameters={
         "type": "object",
@@ -755,7 +659,7 @@ def handle_kis_etf_nav_comparison_trend(params: dict, session) -> dict:
         "required": ["stock_code", "start_date", "end_date"],
     },
     returns={"type": "object"},
-    category="kis.basic_quote",
+    category="etf",
     broker="kis",
 )
 def handle_kis_etf_nav_comparison_daily(params: dict, session) -> dict:
@@ -763,35 +667,6 @@ def handle_kis_etf_nav_comparison_daily(params: dict, session) -> dict:
     response = kis.domestic_basic_quote.get_etf_nav_comparison_daily_trend(
         params["stock_code"], params["start_date"], params["end_date"]
     )
-    return {"stock_code": params["stock_code"], "data": extract_output(response, "output")}
-
-
-# ---------------------------------------------------------------------------
-# ETF NAV Comparison Time Trend (Minute)
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kis.basic_quote.etf_nav_comparison_time",
-    description="Get minute-level ETF NAV comparison trend (1min=60, 3min=180, etc.).",
-    parameters={
-        "type": "object",
-        "properties": {
-            "stock_code": {"type": "string", "description": "ETF 6-digit code", "pattern": "^[0-9]{6}$"},
-            "hour_cls_code": {
-                "type": "string",
-                "description": "Time interval in seconds (60=1min, 180=3min, 300=5min, etc.).",
-            },
-        },
-        "required": ["stock_code", "hour_cls_code"],
-    },
-    returns={"type": "object"},
-    category="kis.basic_quote",
-    broker="kis",
-)
-def handle_kis_etf_nav_comparison_time(params: dict, session) -> dict:
-    kis = session.get_kis()
-    response = kis.domestic_basic_quote.get_etf_nav_comparison_time_trend(params["hour_cls_code"], params["stock_code"])
     return {"stock_code": params["stock_code"], "data": extract_output(response, "output")}
 
 
@@ -805,22 +680,18 @@ _ALL_HANDLERS = [
     handle_kis_stock_conclusion,
     handle_kis_stock_daily,
     handle_kis_stock_asking_expected,
-    handle_kis_stock_investor,
-    handle_kis_stock_member,
     handle_kis_stock_period_quote,
     handle_kis_stock_today_minute,
     handle_kis_stock_daily_minute,
     handle_kis_stock_time_conclusion,
     handle_kis_stock_overtime_daily_price,
     handle_kis_stock_overtime_conclusion,
-    handle_kis_stock_overtime_current_price,
     handle_kis_stock_overtime_asking_price,
     handle_kis_stock_closing_expected_price,
     handle_kis_etf_etn_current_price,
     handle_kis_etf_component_stock_price,
     handle_kis_etf_nav_comparison_trend,
     handle_kis_etf_nav_comparison_daily,
-    handle_kis_etf_nav_comparison_time,
 ]
 
 

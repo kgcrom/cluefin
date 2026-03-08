@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 @rpc_method(
-    name="kiwoom.theme.group",
+    name="theme.group",
     description="Get theme group data from Kiwoom.",
     parameters={
         "type": "object",
@@ -48,7 +48,7 @@ if TYPE_CHECKING:
         "required": ["query_type", "date_type", "theme_name", "fluctuation_type", "exchange_type"],
     },
     returns={"type": "object"},
-    category="kiwoom.theme",
+    category="theme",
     broker="kiwoom",
 )
 def handle_kiwoom_theme_group(params: dict, session) -> dict:
@@ -72,7 +72,7 @@ def handle_kiwoom_theme_group(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.theme.group_stocks",
+    name="theme.group_stocks",
     description="Get stocks belonging to a theme group from Kiwoom.",
     parameters={
         "type": "object",
@@ -90,7 +90,7 @@ def handle_kiwoom_theme_group(params: dict, session) -> dict:
         "required": ["theme_group_code", "exchange_type"],
     },
     returns={"type": "object"},
-    category="kiwoom.theme",
+    category="theme",
     broker="kiwoom",
 )
 def handle_kiwoom_theme_group_stocks(params: dict, session) -> dict:

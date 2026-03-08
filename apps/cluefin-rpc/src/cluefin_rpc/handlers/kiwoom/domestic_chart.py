@@ -1,4 +1,4 @@
-"""RPC handlers for Kiwoom DomesticChart API (14 methods)."""
+"""RPC handlers for Kiwoom DomesticChart API (4 methods)."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 @rpc_method(
-    name="kiwoom.chart.stock_tick",
+    name="chart.tick",
     description="Get stock tick chart data from Kiwoom.",
     parameters={
         "type": "object",
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
         "required": ["stock_code", "tic_scope"],
     },
     returns={"type": "object"},
-    category="kiwoom.chart",
+    category="chart",
     broker="kiwoom",
 )
 def handle_kiwoom_stock_tick(params: dict, session) -> dict:
@@ -53,210 +53,12 @@ def handle_kiwoom_stock_tick(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Stock Minute Chart
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kiwoom.chart.stock_minute",
-    description="Get stock minute chart data from Kiwoom.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "stock_code": {"type": "string", "description": "Stock code (e.g. KRX:039490, NXT:039490_NX)"},
-            "tic_scope": {
-                "type": "string",
-                "description": "Minute scope (1:1min, 3:3min, 5:5min, 10:10min, 15:15min, 30:30min, 45:45min, 60:60min)",
-            },
-            "adj_price": {
-                "type": "string",
-                "enum": ["0", "1"],
-                "description": "Adjusted price type. Default 0.",
-            },
-            "cont_yn": {"type": "string", "enum": ["Y", "N"], "description": "Continuation flag. Default N."},
-            "next_key": {"type": "string", "description": "Continuation key. Default empty."},
-        },
-        "required": ["stock_code", "tic_scope"],
-    },
-    returns={"type": "object"},
-    category="kiwoom.chart",
-    broker="kiwoom",
-)
-def handle_kiwoom_stock_minute(params: dict, session) -> dict:
-    kiwoom = session.get_kiwoom()
-    response = kiwoom.chart.get_stock_minute(
-        stk_cd=params["stock_code"],
-        tic_scope=params["tic_scope"],
-        upd_stkpc_tp=params.get("adj_price", "0"),
-        cont_yn=params.get("cont_yn", "N"),
-        next_key=params.get("next_key", ""),
-    )
-    return extract_body(response)
-
-
-# ---------------------------------------------------------------------------
-# Stock Daily Chart
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kiwoom.chart.stock_daily",
-    description="Get stock daily chart data from Kiwoom.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "stock_code": {"type": "string", "description": "Stock code (e.g. KRX:039490, NXT:039490_NX)"},
-            "base_date": {"type": "string", "description": "Base date (YYYYMMDD)"},
-            "adj_price": {
-                "type": "string",
-                "enum": ["0", "1"],
-                "description": "Adjusted price (0:unadjusted, 1:adjusted). Default 1.",
-            },
-            "cont_yn": {"type": "string", "enum": ["Y", "N"], "description": "Continuation flag. Default N."},
-            "next_key": {"type": "string", "description": "Continuation key. Default empty."},
-        },
-        "required": ["stock_code", "base_date"],
-    },
-    returns={"type": "object"},
-    category="kiwoom.chart",
-    broker="kiwoom",
-)
-def handle_kiwoom_stock_daily(params: dict, session) -> dict:
-    kiwoom = session.get_kiwoom()
-    response = kiwoom.chart.get_stock_daily(
-        stk_cd=params["stock_code"],
-        base_dt=params["base_date"],
-        upd_stkpc_tp=params.get("adj_price", "1"),
-        cont_yn=params.get("cont_yn", "N"),
-        next_key=params.get("next_key", ""),
-    )
-    return extract_body(response)
-
-
-# ---------------------------------------------------------------------------
-# Stock Weekly Chart
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kiwoom.chart.stock_weekly",
-    description="Get stock weekly chart data from Kiwoom.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "stock_code": {"type": "string", "description": "Stock code (e.g. KRX:039490, NXT:039490_NX)"},
-            "base_date": {"type": "string", "description": "Base date (YYYYMMDD)"},
-            "adj_price": {
-                "type": "string",
-                "enum": ["0", "1"],
-                "description": "Adjusted price (0:unadjusted, 1:adjusted). Default 1.",
-            },
-            "cont_yn": {"type": "string", "enum": ["Y", "N"], "description": "Continuation flag. Default N."},
-            "next_key": {"type": "string", "description": "Continuation key. Default empty."},
-        },
-        "required": ["stock_code", "base_date"],
-    },
-    returns={"type": "object"},
-    category="kiwoom.chart",
-    broker="kiwoom",
-)
-def handle_kiwoom_stock_weekly(params: dict, session) -> dict:
-    kiwoom = session.get_kiwoom()
-    response = kiwoom.chart.get_stock_weekly(
-        stk_cd=params["stock_code"],
-        base_dt=params["base_date"],
-        upd_stkpc_tp=params.get("adj_price", "1"),
-        cont_yn=params.get("cont_yn", "N"),
-        next_key=params.get("next_key", ""),
-    )
-    return extract_body(response)
-
-
-# ---------------------------------------------------------------------------
-# Stock Monthly Chart
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kiwoom.chart.stock_monthly",
-    description="Get stock monthly chart data from Kiwoom.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "stock_code": {"type": "string", "description": "Stock code (e.g. KRX:039490, NXT:039490_NX)"},
-            "base_date": {"type": "string", "description": "Base date (YYYYMMDD)"},
-            "adj_price": {
-                "type": "string",
-                "enum": ["0", "1"],
-                "description": "Adjusted price (0:unadjusted, 1:adjusted). Default 1.",
-            },
-            "cont_yn": {"type": "string", "enum": ["Y", "N"], "description": "Continuation flag. Default N."},
-            "next_key": {"type": "string", "description": "Continuation key. Default empty."},
-        },
-        "required": ["stock_code", "base_date"],
-    },
-    returns={"type": "object"},
-    category="kiwoom.chart",
-    broker="kiwoom",
-)
-def handle_kiwoom_stock_monthly(params: dict, session) -> dict:
-    kiwoom = session.get_kiwoom()
-    response = kiwoom.chart.get_stock_monthly(
-        stk_cd=params["stock_code"],
-        base_dt=params["base_date"],
-        upd_stkpc_tp=params.get("adj_price", "1"),
-        cont_yn=params.get("cont_yn", "N"),
-        next_key=params.get("next_key", ""),
-    )
-    return extract_body(response)
-
-
-# ---------------------------------------------------------------------------
-# Stock Yearly Chart
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kiwoom.chart.stock_yearly",
-    description="Get stock yearly chart data from Kiwoom.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "stock_code": {"type": "string", "description": "Stock code (e.g. KRX:039490, NXT:039490_NX)"},
-            "base_date": {"type": "string", "description": "Base date (YYYYMMDD)"},
-            "adj_price": {
-                "type": "string",
-                "enum": ["0", "1"],
-                "description": "Adjusted price (0:unadjusted, 1:adjusted). Default 1.",
-            },
-            "cont_yn": {"type": "string", "enum": ["Y", "N"], "description": "Continuation flag. Default N."},
-            "next_key": {"type": "string", "description": "Continuation key. Default empty."},
-        },
-        "required": ["stock_code", "base_date"],
-    },
-    returns={"type": "object"},
-    category="kiwoom.chart",
-    broker="kiwoom",
-)
-def handle_kiwoom_stock_yearly(params: dict, session) -> dict:
-    kiwoom = session.get_kiwoom()
-    response = kiwoom.chart.get_stock_yearly(
-        stk_cd=params["stock_code"],
-        base_dt=params["base_date"],
-        upd_stkpc_tp=params.get("adj_price", "1"),
-        cont_yn=params.get("cont_yn", "N"),
-        next_key=params.get("next_key", ""),
-    )
-    return extract_body(response)
-
-
-# ---------------------------------------------------------------------------
 # Industry Tick Chart
 # ---------------------------------------------------------------------------
 
 
 @rpc_method(
-    name="kiwoom.chart.industry_tick",
+    name="chart.industry_tick",
     description="Get industry tick chart data from Kiwoom.",
     parameters={
         "type": "object",
@@ -275,7 +77,7 @@ def handle_kiwoom_stock_yearly(params: dict, session) -> dict:
         "required": ["industry_code", "tic_scope"],
     },
     returns={"type": "object"},
-    category="kiwoom.chart",
+    category="chart",
     broker="kiwoom",
 )
 def handle_kiwoom_industry_tick(params: dict, session) -> dict:
@@ -290,195 +92,12 @@ def handle_kiwoom_industry_tick(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Industry Minute Chart
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kiwoom.chart.industry_minute",
-    description="Get industry minute chart data from Kiwoom.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "industry_code": {
-                "type": "string",
-                "description": "Industry code (001:KOSPI, 002:Large, 003:Mid, 004:Small, 101:KOSDAQ, 201:KOSPI200, 302:KOSTAR, 701:KRX100)",
-            },
-            "tic_scope": {
-                "type": "string",
-                "description": "Tick scope (1:1tick, 3:3tick, 5:5tick, 10:10tick, 30:30tick)",
-            },
-            "cont_yn": {"type": "string", "enum": ["Y", "N"], "description": "Continuation flag. Default N."},
-            "next_key": {"type": "string", "description": "Continuation key. Default empty."},
-        },
-        "required": ["industry_code", "tic_scope"],
-    },
-    returns={"type": "object"},
-    category="kiwoom.chart",
-    broker="kiwoom",
-)
-def handle_kiwoom_industry_minute(params: dict, session) -> dict:
-    kiwoom = session.get_kiwoom()
-    response = kiwoom.chart.get_industry_minute(
-        inds_cd=params["industry_code"],
-        tic_scope=params["tic_scope"],
-        cont_yn=params.get("cont_yn", "N"),
-        next_key=params.get("next_key", ""),
-    )
-    return extract_body(response)
-
-
-# ---------------------------------------------------------------------------
-# Industry Daily Chart
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kiwoom.chart.industry_daily",
-    description="Get industry daily chart data from Kiwoom.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "industry_code": {
-                "type": "string",
-                "description": "Industry code (001:KOSPI, 002:Large, 003:Mid, 004:Small, 101:KOSDAQ, 201:KOSPI200, 302:KOSTAR, 701:KRX100)",
-            },
-            "base_date": {"type": "string", "description": "Base date (YYYYMMDD)"},
-            "cont_yn": {"type": "string", "enum": ["Y", "N"], "description": "Continuation flag. Default N."},
-            "next_key": {"type": "string", "description": "Continuation key. Default empty."},
-        },
-        "required": ["industry_code", "base_date"],
-    },
-    returns={"type": "object"},
-    category="kiwoom.chart",
-    broker="kiwoom",
-)
-def handle_kiwoom_industry_daily(params: dict, session) -> dict:
-    kiwoom = session.get_kiwoom()
-    response = kiwoom.chart.get_industry_daily(
-        inds_cd=params["industry_code"],
-        base_dt=params["base_date"],
-        cont_yn=params.get("cont_yn", "N"),
-        next_key=params.get("next_key", ""),
-    )
-    return extract_body(response)
-
-
-# ---------------------------------------------------------------------------
-# Industry Weekly Chart
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kiwoom.chart.industry_weekly",
-    description="Get industry weekly chart data from Kiwoom.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "industry_code": {
-                "type": "string",
-                "description": "Industry code (001:KOSPI, 002:Large, 003:Mid, 004:Small, 101:KOSDAQ, 201:KOSPI200, 302:KOSTAR, 701:KRX100)",
-            },
-            "base_date": {"type": "string", "description": "Base date (YYYYMMDD)"},
-            "cont_yn": {"type": "string", "enum": ["Y", "N"], "description": "Continuation flag. Default N."},
-            "next_key": {"type": "string", "description": "Continuation key. Default empty."},
-        },
-        "required": ["industry_code", "base_date"],
-    },
-    returns={"type": "object"},
-    category="kiwoom.chart",
-    broker="kiwoom",
-)
-def handle_kiwoom_industry_weekly(params: dict, session) -> dict:
-    kiwoom = session.get_kiwoom()
-    response = kiwoom.chart.get_industry_weekly(
-        inds_cd=params["industry_code"],
-        base_dt=params["base_date"],
-        cont_yn=params.get("cont_yn", "N"),
-        next_key=params.get("next_key", ""),
-    )
-    return extract_body(response)
-
-
-# ---------------------------------------------------------------------------
-# Industry Monthly Chart
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kiwoom.chart.industry_monthly",
-    description="Get industry monthly chart data from Kiwoom.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "industry_code": {
-                "type": "string",
-                "description": "Industry code (001:KOSPI, 002:Large, 003:Mid, 004:Small, 101:KOSDAQ, 201:KOSPI200, 302:KOSTAR, 701:KRX100)",
-            },
-            "base_date": {"type": "string", "description": "Base date (YYYYMMDD)"},
-            "cont_yn": {"type": "string", "enum": ["Y", "N"], "description": "Continuation flag. Default N."},
-            "next_key": {"type": "string", "description": "Continuation key. Default empty."},
-        },
-        "required": ["industry_code", "base_date"],
-    },
-    returns={"type": "object"},
-    category="kiwoom.chart",
-    broker="kiwoom",
-)
-def handle_kiwoom_industry_monthly(params: dict, session) -> dict:
-    kiwoom = session.get_kiwoom()
-    response = kiwoom.chart.get_industry_monthly(
-        inds_cd=params["industry_code"],
-        base_dt=params["base_date"],
-        cont_yn=params.get("cont_yn", "N"),
-        next_key=params.get("next_key", ""),
-    )
-    return extract_body(response)
-
-
-# ---------------------------------------------------------------------------
-# Industry Yearly Chart
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kiwoom.chart.industry_yearly",
-    description="Get industry yearly chart data from Kiwoom.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "industry_code": {
-                "type": "string",
-                "description": "Industry code (001:KOSPI, 002:Large, 003:Mid, 004:Small, 101:KOSDAQ, 201:KOSPI200, 302:KOSTAR, 701:KRX100)",
-            },
-            "base_date": {"type": "string", "description": "Base date (YYYYMMDD)"},
-            "cont_yn": {"type": "string", "enum": ["Y", "N"], "description": "Continuation flag. Default N."},
-            "next_key": {"type": "string", "description": "Continuation key. Default empty."},
-        },
-        "required": ["industry_code", "base_date"],
-    },
-    returns={"type": "object"},
-    category="kiwoom.chart",
-    broker="kiwoom",
-)
-def handle_kiwoom_industry_yearly(params: dict, session) -> dict:
-    kiwoom = session.get_kiwoom()
-    response = kiwoom.chart.get_industry_yearly(
-        inds_cd=params["industry_code"],
-        base_dt=params["base_date"],
-        cont_yn=params.get("cont_yn", "N"),
-        next_key=params.get("next_key", ""),
-    )
-    return extract_body(response)
-
-
-# ---------------------------------------------------------------------------
 # Institutional By Stock Chart
 # ---------------------------------------------------------------------------
 
 
 @rpc_method(
-    name="kiwoom.chart.institutional_by_stock",
+    name="chart.institutional",
     description="Get institutional investor chart by stock from Kiwoom.",
     parameters={
         "type": "object",
@@ -506,7 +125,7 @@ def handle_kiwoom_industry_yearly(params: dict, session) -> dict:
         "required": ["date", "stock_code", "amount_qty_type", "trade_type", "unit_type"],
     },
     returns={"type": "object"},
-    category="kiwoom.chart",
+    category="chart",
     broker="kiwoom",
 )
 def handle_kiwoom_institutional_by_stock(params: dict, session) -> dict:
@@ -529,7 +148,7 @@ def handle_kiwoom_institutional_by_stock(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.chart.intraday_investor_trading",
+    name="chart.intraday_investor",
     description="Get intraday investor trading chart from Kiwoom.",
     parameters={
         "type": "object",
@@ -556,7 +175,7 @@ def handle_kiwoom_institutional_by_stock(params: dict, session) -> dict:
         "required": ["market_type", "amount_qty_type", "trade_type", "stock_code"],
     },
     returns={"type": "object"},
-    category="kiwoom.chart",
+    category="chart",
     broker="kiwoom",
 )
 def handle_kiwoom_intraday_investor_trading(params: dict, session) -> dict:
@@ -578,17 +197,7 @@ def handle_kiwoom_intraday_investor_trading(params: dict, session) -> dict:
 
 _ALL_HANDLERS = [
     handle_kiwoom_stock_tick,
-    handle_kiwoom_stock_minute,
-    handle_kiwoom_stock_daily,
-    handle_kiwoom_stock_weekly,
-    handle_kiwoom_stock_monthly,
-    handle_kiwoom_stock_yearly,
     handle_kiwoom_industry_tick,
-    handle_kiwoom_industry_minute,
-    handle_kiwoom_industry_daily,
-    handle_kiwoom_industry_weekly,
-    handle_kiwoom_industry_monthly,
-    handle_kiwoom_industry_yearly,
     handle_kiwoom_institutional_by_stock,
     handle_kiwoom_intraday_investor_trading,
 ]

@@ -1,4 +1,4 @@
-"""RPC handlers for Kiwoom DomesticRankInfo API (23 methods)."""
+"""RPC handlers for Kiwoom DomesticRankInfo API (21 methods)."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 @rpc_method(
-    name="kiwoom.rank_info.remaining_order_qty",
+    name="ranking.remaining_order",
     description="Get top stocks by remaining order quantity ranking.",
     parameters={
         "type": "object",
@@ -53,7 +53,7 @@ if TYPE_CHECKING:
         "required": ["market_type", "sort_tp"],
     },
     returns={"type": "object"},
-    category="kiwoom.rank_info",
+    category="ranking",
     broker="kiwoom",
 )
 def handle_kiwoom_remaining_order_qty(params: dict, session) -> dict:
@@ -77,7 +77,7 @@ def handle_kiwoom_remaining_order_qty(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.rank_info.increasing_remaining_order",
+    name="ranking.increasing_order",
     description="Get stocks with rapidly increasing remaining order quantity.",
     parameters={
         "type": "object",
@@ -111,7 +111,7 @@ def handle_kiwoom_remaining_order_qty(params: dict, session) -> dict:
         "required": ["market_type", "trde_tp", "sort_tp", "tm_tp"],
     },
     returns={"type": "object"},
-    category="kiwoom.rank_info",
+    category="ranking",
     broker="kiwoom",
 )
 def handle_kiwoom_increasing_remaining_order(params: dict, session) -> dict:
@@ -136,7 +136,7 @@ def handle_kiwoom_increasing_remaining_order(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.rank_info.increasing_total_sell",
+    name="ranking.increasing_sell",
     description="Get stocks with rapidly increasing total sell orders.",
     parameters={
         "type": "object",
@@ -169,7 +169,7 @@ def handle_kiwoom_increasing_remaining_order(params: dict, session) -> dict:
         "required": ["market_type", "rt_tp", "tm_tp"],
     },
     returns={"type": "object"},
-    category="kiwoom.rank_info",
+    category="ranking",
     broker="kiwoom",
 )
 def handle_kiwoom_increasing_total_sell(params: dict, session) -> dict:
@@ -193,7 +193,7 @@ def handle_kiwoom_increasing_total_sell(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.rank_info.increasing_volume",
+    name="ranking.increasing_volume",
     description="Get stocks with rapidly increasing trading volume.",
     parameters={
         "type": "object",
@@ -235,7 +235,7 @@ def handle_kiwoom_increasing_total_sell(params: dict, session) -> dict:
         "required": ["market_type", "sort_tp", "tm_tp"],
     },
     returns={"type": "object"},
-    category="kiwoom.rank_info",
+    category="ranking",
     broker="kiwoom",
 )
 def handle_kiwoom_increasing_volume(params: dict, session) -> dict:
@@ -261,7 +261,7 @@ def handle_kiwoom_increasing_volume(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.rank_info.pct_change_from_prev",
+    name="ranking.fluctuation",
     description="Get top stocks by percentage change from previous day.",
     parameters={
         "type": "object",
@@ -304,7 +304,7 @@ def handle_kiwoom_increasing_volume(params: dict, session) -> dict:
         "required": ["market_type", "sort_tp"],
     },
     returns={"type": "object"},
-    category="kiwoom.rank_info",
+    category="ranking",
     broker="kiwoom",
 )
 def handle_kiwoom_pct_change_from_prev(params: dict, session) -> dict:
@@ -331,7 +331,7 @@ def handle_kiwoom_pct_change_from_prev(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.rank_info.expected_conclusion_pct_change",
+    name="ranking.expected_conclusion",
     description="Get top stocks by expected conclusion percentage change.",
     parameters={
         "type": "object",
@@ -360,7 +360,7 @@ def handle_kiwoom_pct_change_from_prev(params: dict, session) -> dict:
         "required": ["market_type"],
     },
     returns={"type": "object"},
-    category="kiwoom.rank_info",
+    category="ranking",
     broker="kiwoom",
 )
 def handle_kiwoom_expected_conclusion_pct_change(params: dict, session) -> dict:
@@ -380,75 +380,12 @@ def handle_kiwoom_expected_conclusion_pct_change(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Top Current Day Trading Volume
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kiwoom.rank_info.current_day_volume",
-    description="Get top stocks by current day trading volume.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "market_type": {
-                "type": "string",
-                "enum": ["000", "001", "101"],
-                "description": "Market (000:all, 001:KOSPI, 101:KOSDAQ)",
-            },
-            "sort_tp": {
-                "type": "string",
-                "enum": ["1", "2", "3"],
-                "description": "Sort (1:volume, 2:turnover rate, 3:trade amount)",
-            },
-            "mang_stk_incls": {"type": "string", "description": "Admin stock include condition. Default 0."},
-            "crd_tp": {"type": "string", "description": "Credit type. Default 0."},
-            "trde_qty_tp": {"type": "string", "description": "Volume filter. Default 0."},
-            "pric_tp": {"type": "string", "description": "Price filter. Default 0."},
-            "trde_prica_tp": {"type": "string", "description": "Trade amount filter. Default 0."},
-            "mrkt_open_tp": {
-                "type": "string",
-                "enum": ["0", "1", "2", "3"],
-                "description": "Market session (0:all, 1:regular, 2:pre-market, 3:after-hours). Default 0.",
-            },
-            "exchange_type": {
-                "type": "string",
-                "enum": ["1", "2"],
-                "description": "Exchange (1:KRX, 2:NXT). Default 1.",
-            },
-            "cont_yn": {"type": "string", "enum": ["Y", "N"], "description": "Continuation flag. Default N."},
-            "next_key": {"type": "string", "description": "Continuation key. Default empty."},
-        },
-        "required": ["market_type", "sort_tp"],
-    },
-    returns={"type": "object"},
-    category="kiwoom.rank_info",
-    broker="kiwoom",
-)
-def handle_kiwoom_current_day_volume(params: dict, session) -> dict:
-    kiwoom = session.get_kiwoom()
-    response = kiwoom.rank_info.get_top_current_day_trading_volume(
-        mrkt_tp=params["market_type"],
-        sort_tp=params["sort_tp"],
-        mang_stk_incls=params.get("mang_stk_incls", "0"),
-        crd_tp=params.get("crd_tp", "0"),
-        trde_qty_tp=params.get("trde_qty_tp", "0"),
-        pric_tp=params.get("pric_tp", "0"),
-        trde_prica_tp=params.get("trde_prica_tp", "0"),
-        mrkt_open_tp=params.get("mrkt_open_tp", "0"),
-        stex_tp=params.get("exchange_type", "1"),
-        cont_yn=params.get("cont_yn", "N"),
-        next_key=params.get("next_key", ""),
-    )
-    return extract_body(response)
-
-
-# ---------------------------------------------------------------------------
 # Top Previous Day Trading Volume
 # ---------------------------------------------------------------------------
 
 
 @rpc_method(
-    name="kiwoom.rank_info.prev_day_volume",
+    name="ranking.prev_day_volume",
     description="Get top stocks by previous day trading volume.",
     parameters={
         "type": "object",
@@ -476,7 +413,7 @@ def handle_kiwoom_current_day_volume(params: dict, session) -> dict:
         "required": ["market_type", "qry_tp", "rank_strt", "rank_end"],
     },
     returns={"type": "object"},
-    category="kiwoom.rank_info",
+    category="ranking",
     broker="kiwoom",
 )
 def handle_kiwoom_prev_day_volume(params: dict, session) -> dict:
@@ -499,7 +436,7 @@ def handle_kiwoom_prev_day_volume(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.rank_info.transaction_value",
+    name="ranking.transaction_value",
     description="Get top stocks by transaction value.",
     parameters={
         "type": "object",
@@ -525,7 +462,7 @@ def handle_kiwoom_prev_day_volume(params: dict, session) -> dict:
         "required": ["market_type"],
     },
     returns={"type": "object"},
-    category="kiwoom.rank_info",
+    category="ranking",
     broker="kiwoom",
 )
 def handle_kiwoom_transaction_value(params: dict, session) -> dict:
@@ -541,73 +478,12 @@ def handle_kiwoom_transaction_value(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Top Margin Ratio
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="kiwoom.rank_info.margin_ratio",
-    description="Get top stocks by margin (credit) ratio.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "market_type": {
-                "type": "string",
-                "enum": ["000", "001", "101"],
-                "description": "Market (000:all, 001:KOSPI, 101:KOSDAQ)",
-            },
-            "trde_qty_tp": {"type": "string", "description": "Volume filter. Default 0."},
-            "stk_cnd": {
-                "type": "string",
-                "enum": ["0", "1", "5", "6", "7", "8", "9"],
-                "description": "Stock condition. Default 0.",
-            },
-            "updown_incls": {
-                "type": "string",
-                "enum": ["0", "1"],
-                "description": "Include upper/lower limit (0:no, 1:yes). Default 0.",
-            },
-            "crd_cnd": {
-                "type": "string",
-                "enum": ["0", "1", "2", "3", "4", "9"],
-                "description": "Credit condition. Default 0.",
-            },
-            "exchange_type": {
-                "type": "string",
-                "enum": ["1", "2", "3"],
-                "description": "Exchange (1:KRX, 2:NXT, 3:Combined). Default 1.",
-            },
-            "cont_yn": {"type": "string", "enum": ["Y", "N"], "description": "Continuation flag. Default N."},
-            "next_key": {"type": "string", "description": "Continuation key. Default empty."},
-        },
-        "required": ["market_type"],
-    },
-    returns={"type": "object"},
-    category="kiwoom.rank_info",
-    broker="kiwoom",
-)
-def handle_kiwoom_margin_ratio(params: dict, session) -> dict:
-    kiwoom = session.get_kiwoom()
-    response = kiwoom.rank_info.get_top_margin_ratio(
-        mrkt_tp=params["market_type"],
-        trde_qty_tp=params.get("trde_qty_tp", "0"),
-        stk_cnd=params.get("stk_cnd", "0"),
-        updown_incls=params.get("updown_incls", "0"),
-        crd_cnd=params.get("crd_cnd", "0"),
-        stex_tp=params.get("exchange_type", "1"),
-        cont_yn=params.get("cont_yn", "N"),
-        next_key=params.get("next_key", ""),
-    )
-    return extract_body(response)
-
-
-# ---------------------------------------------------------------------------
 # Top Foreigner Period Trading
 # ---------------------------------------------------------------------------
 
 
 @rpc_method(
-    name="kiwoom.rank_info.foreigner_period_trading",
+    name="ranking.foreigner_period",
     description="Get top stocks by foreigner period trading.",
     parameters={
         "type": "object",
@@ -638,7 +514,7 @@ def handle_kiwoom_margin_ratio(params: dict, session) -> dict:
         "required": ["market_type", "trde_tp", "dt"],
     },
     returns={"type": "object"},
-    category="kiwoom.rank_info",
+    category="ranking",
     broker="kiwoom",
 )
 def handle_kiwoom_foreigner_period_trading(params: dict, session) -> dict:
@@ -660,7 +536,7 @@ def handle_kiwoom_foreigner_period_trading(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.rank_info.consecutive_net_buy_sell_foreigners",
+    name="ranking.consecutive_foreign",
     description="Get top stocks by consecutive net buy/sell by foreigners.",
     parameters={
         "type": "object",
@@ -691,7 +567,7 @@ def handle_kiwoom_foreigner_period_trading(params: dict, session) -> dict:
         "required": ["market_type", "trde_tp", "base_dt_tp"],
     },
     returns={"type": "object"},
-    category="kiwoom.rank_info",
+    category="ranking",
     broker="kiwoom",
 )
 def handle_kiwoom_consecutive_net_buy_sell_foreigners(params: dict, session) -> dict:
@@ -713,7 +589,7 @@ def handle_kiwoom_consecutive_net_buy_sell_foreigners(params: dict, session) -> 
 
 
 @rpc_method(
-    name="kiwoom.rank_info.limit_exhaustion_rate_foreigner",
+    name="ranking.foreign_limit",
     description="Get top stocks by foreigner ownership limit exhaustion rate.",
     parameters={
         "type": "object",
@@ -739,7 +615,7 @@ def handle_kiwoom_consecutive_net_buy_sell_foreigners(params: dict, session) -> 
         "required": ["market_type", "dt"],
     },
     returns={"type": "object"},
-    category="kiwoom.rank_info",
+    category="ranking",
     broker="kiwoom",
 )
 def handle_kiwoom_limit_exhaustion_rate_foreigner(params: dict, session) -> dict:
@@ -760,7 +636,7 @@ def handle_kiwoom_limit_exhaustion_rate_foreigner(params: dict, session) -> dict
 
 
 @rpc_method(
-    name="kiwoom.rank_info.foreign_account_group_trading",
+    name="ranking.foreign_account",
     description="Get top stocks by foreign account group trading.",
     parameters={
         "type": "object",
@@ -796,7 +672,7 @@ def handle_kiwoom_limit_exhaustion_rate_foreigner(params: dict, session) -> dict
         "required": ["market_type", "dt", "trde_tp", "sort_tp"],
     },
     returns={"type": "object"},
-    category="kiwoom.rank_info",
+    category="ranking",
     broker="kiwoom",
 )
 def handle_kiwoom_foreign_account_group_trading(params: dict, session) -> dict:
@@ -819,7 +695,7 @@ def handle_kiwoom_foreign_account_group_trading(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.rank_info.securities_firm_by_stock",
+    name="ranking.securities_firm_by_stock",
     description="Get securities firm ranking for a specific stock.",
     parameters={
         "type": "object",
@@ -843,7 +719,7 @@ def handle_kiwoom_foreign_account_group_trading(params: dict, session) -> dict:
         "required": ["stock_code", "start_date", "end_date", "qry_tp"],
     },
     returns={"type": "object"},
-    category="kiwoom.rank_info",
+    category="ranking",
     broker="kiwoom",
 )
 def handle_kiwoom_securities_firm_by_stock(params: dict, session) -> dict:
@@ -866,7 +742,7 @@ def handle_kiwoom_securities_firm_by_stock(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.rank_info.securities_firm_trading",
+    name="ranking.securities_firm",
     description="Get top stocks traded by a specific securities firm.",
     parameters={
         "type": "object",
@@ -894,7 +770,7 @@ def handle_kiwoom_securities_firm_by_stock(params: dict, session) -> dict:
         "required": ["member_company_code", "trde_tp"],
     },
     returns={"type": "object"},
-    category="kiwoom.rank_info",
+    category="ranking",
     broker="kiwoom",
 )
 def handle_kiwoom_securities_firm_trading(params: dict, session) -> dict:
@@ -917,7 +793,7 @@ def handle_kiwoom_securities_firm_trading(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.rank_info.current_day_major_traders",
+    name="ranking.major_traders",
     description="Get current day major traders (top trading firms) for a stock.",
     parameters={
         "type": "object",
@@ -929,7 +805,7 @@ def handle_kiwoom_securities_firm_trading(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kiwoom.rank_info",
+    category="ranking",
     broker="kiwoom",
 )
 def handle_kiwoom_current_day_major_traders(params: dict, session) -> dict:
@@ -948,7 +824,7 @@ def handle_kiwoom_current_day_major_traders(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.rank_info.net_buy_trader",
+    name="ranking.net_buy_trader",
     description="Get net buy trader ranking for a stock.",
     parameters={
         "type": "object",
@@ -982,7 +858,7 @@ def handle_kiwoom_current_day_major_traders(params: dict, session) -> dict:
         "required": ["stock_code", "start_date", "end_date", "qry_dt_tp", "pot_tp", "dt", "sort_base"],
     },
     returns={"type": "object"},
-    category="kiwoom.rank_info",
+    category="ranking",
     broker="kiwoom",
 )
 def handle_kiwoom_net_buy_trader(params: dict, session) -> dict:
@@ -1007,7 +883,7 @@ def handle_kiwoom_net_buy_trader(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.rank_info.current_day_deviation_sources",
+    name="ranking.deviation_sources",
     description="Get top current day deviation sources for a stock.",
     parameters={
         "type": "object",
@@ -1019,7 +895,7 @@ def handle_kiwoom_net_buy_trader(params: dict, session) -> dict:
         "required": ["stock_code"],
     },
     returns={"type": "object"},
-    category="kiwoom.rank_info",
+    category="ranking",
     broker="kiwoom",
 )
 def handle_kiwoom_current_day_deviation_sources(params: dict, session) -> dict:
@@ -1038,7 +914,7 @@ def handle_kiwoom_current_day_deviation_sources(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.rank_info.same_net_buy_sell",
+    name="ranking.same_net_buy_sell",
     description="Get same net buy/sell ranking across dates.",
     parameters={
         "type": "object",
@@ -1076,7 +952,7 @@ def handle_kiwoom_current_day_deviation_sources(params: dict, session) -> dict:
         "required": ["start_date", "end_date", "market_type", "trde_tp", "sort_cnd"],
     },
     returns={"type": "object"},
-    category="kiwoom.rank_info",
+    category="ranking",
     broker="kiwoom",
 )
 def handle_kiwoom_same_net_buy_sell(params: dict, session) -> dict:
@@ -1101,7 +977,7 @@ def handle_kiwoom_same_net_buy_sell(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.rank_info.intraday_trading_by_investor",
+    name="ranking.intraday_investor",
     description="Get top intraday trading stocks by investor type.",
     parameters={
         "type": "object",
@@ -1139,7 +1015,7 @@ def handle_kiwoom_same_net_buy_sell(params: dict, session) -> dict:
         "required": ["trde_tp", "market_type", "orgn_tp"],
     },
     returns={"type": "object"},
-    category="kiwoom.rank_info",
+    category="ranking",
     broker="kiwoom",
 )
 def handle_kiwoom_intraday_trading_by_investor(params: dict, session) -> dict:
@@ -1160,7 +1036,7 @@ def handle_kiwoom_intraday_trading_by_investor(params: dict, session) -> dict:
 
 
 @rpc_method(
-    name="kiwoom.rank_info.after_hours_single_price_change",
+    name="ranking.after_hours",
     description="Get after-hours single price change rate ranking.",
     parameters={
         "type": "object",
@@ -1185,7 +1061,7 @@ def handle_kiwoom_intraday_trading_by_investor(params: dict, session) -> dict:
         "required": ["market_type", "sort_base"],
     },
     returns={"type": "object"},
-    category="kiwoom.rank_info",
+    category="ranking",
     broker="kiwoom",
 )
 def handle_kiwoom_after_hours_single_price_change(params: dict, session) -> dict:
@@ -1209,7 +1085,7 @@ def handle_kiwoom_after_hours_single_price_change(params: dict, session) -> dict
 
 
 @rpc_method(
-    name="kiwoom.rank_info.foreigner_limit_exhaustion_rate",
+    name="ranking.foreigner_limit_rate",
     description="Get top stocks by foreigner limit exhaustion rate.",
     parameters={
         "type": "object",
@@ -1235,7 +1111,7 @@ def handle_kiwoom_after_hours_single_price_change(params: dict, session) -> dict
         "required": ["market_type", "dt"],
     },
     returns={"type": "object"},
-    category="kiwoom.rank_info",
+    category="ranking",
     broker="kiwoom",
 )
 def handle_kiwoom_foreigner_limit_exhaustion_rate(params: dict, session) -> dict:
@@ -1261,10 +1137,8 @@ _ALL_HANDLERS = [
     handle_kiwoom_increasing_volume,
     handle_kiwoom_pct_change_from_prev,
     handle_kiwoom_expected_conclusion_pct_change,
-    handle_kiwoom_current_day_volume,
     handle_kiwoom_prev_day_volume,
     handle_kiwoom_transaction_value,
-    handle_kiwoom_margin_ratio,
     handle_kiwoom_foreigner_period_trading,
     handle_kiwoom_consecutive_net_buy_sell_foreigners,
     handle_kiwoom_limit_exhaustion_rate_foreigner,
