@@ -9,12 +9,12 @@ import pytest
 from cluefin_openapi.kis._domestic_ranking_analysis import DomesticRankingAnalysis
 from cluefin_openapi.kis._domestic_ranking_analysis_types import (
     HtsInquiryTop20,
-    StockFinanceRatioRank,
+    StockFinanceRatioRank,  # noqa: F401 - used via globals()
     StockFluctuationRank,
-    StockHogaQuantityRank,
+    StockHogaQuantityRank,  # noqa: F401 - used via globals()
     StockMarketCapTop,
-    StockProfitabilityIndicatorRank,
-    StockTimeHogaRank,
+    StockProfitabilityIndicatorRank,  # noqa: F401 - used via globals()
+    StockTimeHogaRank,  # noqa: F401 - used via globals()
     TradingVolumeRank,
 )
 from cluefin_openapi.kis._model import KisHttpResponse

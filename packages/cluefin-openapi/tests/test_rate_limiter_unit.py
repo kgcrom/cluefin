@@ -2,9 +2,6 @@
 
 import threading
 import time
-from unittest.mock import patch
-
-import pytest
 
 from cluefin_openapi import TokenBucket
 from cluefin_openapi._rate_limiter import TokenBucket as TokenBucketDirect
