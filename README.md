@@ -95,6 +95,21 @@ cluefin/
 
 ## 🔧 개발
 
+### Git Hooks (Lefthook)
+[Lefthook](https://github.com/evilmartians/lefthook)으로 커밋/푸시 시 자동으로 린트와 테스트를 실행합니다.
+
+```bash
+# 초기 설정 (clone 후 1회)
+uv run lefthook install
+```
+
+| Hook | 대상 | 실행 내용 |
+|------|------|-----------|
+| pre-commit | `*.py` | `ruff format --check` + `ruff check` |
+| pre-commit | `*.{ts,tsx,js}` | `biome check` |
+| pre-push | `*.py` | `pytest -m "not integration"` |
+| pre-push | `*.{ts,tsx,js}` | `vitest` unit test |
+
 ### 테스트
 ```bash
 # 모든 테스트 실행
