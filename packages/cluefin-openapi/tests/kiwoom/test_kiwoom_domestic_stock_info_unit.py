@@ -153,6 +153,7 @@ CALL_KWARGS = {
     "get_daily_previous_day_conclusion": {
         "stk_cd": "005930",
         "tdy_pred": "1",
+        "tic_min": "0",
     },
     "get_interest_stock_info": {"stk_cd": "005930"},
     "get_stock_info_summary": {"mrkt_tp": "0"},
