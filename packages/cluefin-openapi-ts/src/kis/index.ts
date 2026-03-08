@@ -56,4 +56,4 @@ export { OverseasMarketAnalysis } from './overseas-market-analysis';
 export type { KisSocketClientOptions } from './socket-client';
 export { KisSocketClient } from './socket-client';
 export type { TokenCacheEntry, TokenCacheStore } from './token-cache';
-export { MemoryTokenCacheStore } from './token-cache';
+export { FileTokenCacheStore, MemoryTokenCacheStore } from './token-cache';
