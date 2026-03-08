@@ -17,10 +17,10 @@ describe('KIS DomesticMarketAnalysis', () => {
   it('getInvestorTradingTrendByMarketDaily', async () => {
     const client = await getKisClient();
     const res = await client.domesticMarketAnalysis.getInvestorTradingTrendByMarketDaily({
-      fidCondMrktDivCode: 'J',
+      fidCondMrktDivCode: 'U',
       fidInputIscd: '0001',
       fidInputDate1: ONE_MONTH_AGO,
-      fidInputIscd1: '0001',
+      fidInputIscd1: 'KSP',
       fidInputDate2: TODAY,
       fidInputIscd2: '0001',
     });
@@ -42,6 +42,8 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
       fidInputDate1: ONE_MONTH_AGO,
+      fidOrgAdjPrc: '0',
+      fidEtcClsCode: '',
     });
     assertKisResponse(res);
   });
@@ -59,6 +61,8 @@ describe('KIS DomesticMarketAnalysis', () => {
   it('getForeignBrokerageTradingAggregate', async () => {
     const client = await getKisClient();
     const res = await client.domesticMarketAnalysis.getForeignBrokerageTradingAggregate({
+      fidCondMrktDivCode: 'J',
+      fidCondScrDivCode: '20440',
       fidInputIscd: SAMSUNG,
       fidRankSortClsCode: '0',
       fidRankSortClsCode2: '0',
@@ -108,6 +112,8 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputDate1: ONE_MONTH_AGO,
       fidInputDate2: TODAY,
       fidPeriodDivCode: 'D',
+      fidCondMrktDivCode1: 'J',
+      fidInputIscd1: SAMSUNG,
     });
     assertKisResponse(res);
   });
@@ -126,7 +132,7 @@ describe('KIS DomesticMarketAnalysis', () => {
   it('getStockLoanTrendDaily', async () => {
     const client = await getKisClient();
     const res = await client.domesticMarketAnalysis.getStockLoanTrendDaily({
-      mrktDivClsCode: '01',
+      mrktDivClsCode: '1',
       mkscShrnIscd: SAMSUNG,
       startDate: ONE_MONTH_AGO,
       endDate: TODAY,
@@ -181,8 +187,8 @@ describe('KIS DomesticMarketAnalysis', () => {
   it('getProgramTradingInvestorTrendToday', async () => {
     const client = await getKisClient();
     const res = await client.domesticMarketAnalysis.getProgramTradingInvestorTrendToday({
-      exchDivClsCode: '01',
-      mrktDivClsCode: '01',
+      exchDivClsCode: 'J',
+      mrktDivClsCode: '1',
     });
     assertKisResponse(res);
   });
@@ -273,7 +279,7 @@ describe('KIS DomesticMarketAnalysis', () => {
     const client = await getKisClient();
     const params: Record<string, string> = {};
     for (let i = 1; i <= 30; i++) {
-      params[`fidCondMrktDivCode${i}`] = i <= 2 ? 'J' : '';
+      params[`fidCondMrktDivCode${i}`] = 'J';
       params[`fidInputIscd${i}`] = i === 1 ? SAMSUNG : i === 2 ? '000660' : '';
     }
     const res = await client.domesticMarketAnalysis.getWatchlistMultiQuote(params);

@@ -60,14 +60,17 @@ export function getKiwoomClient(): Promise<KiwoomClient> {
 export function assertKisResponse(res: ApiResponse): void {
   expect(res).toBeDefined();
   expect(res.body).toBeDefined();
-  expect(res.body).toHaveProperty('rtCd');
-  expect(res.body).toHaveProperty('msgCd');
-  expect(res.body).toHaveProperty('msg1');
+  if (res.body.rtCd !== '0') {
+    console.error('KIS Error Response:', JSON.stringify(res.body, null, 2));
+  }
+  expect(res.body.rtCd).toEqual('0');
 }
 
 export function assertKiwoomResponse(res: ApiResponse): void {
   expect(res).toBeDefined();
   expect(res.body).toBeDefined();
-  expect(res.body).toHaveProperty('returnCode');
-  expect(res.body).toHaveProperty('returnMsg');
+  if (res.body.returnCode !== '0') {
+    console.error('Kiwoom Error Response:', JSON.stringify(res.body, null, 2));
+  }
+  expect(res.body.returnCode).toEqual('0');
 }
