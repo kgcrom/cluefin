@@ -3,6 +3,20 @@
   "version": "0.1.0",
   "description": "TypeScript OpenAPI client for KIS and Kiwoom",
   "license": "MIT",
+  "author": "kgcrom",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kgcrom/cluefin.git",
+    "directory": "packages/cluefin-openapi-ts"
+  },
+  "keywords": [
+    "korean-stock",
+    "kiwoom",
+    "kis",
+    "openapi",
+    "trading",
+    "stock-market"
+  ],
   "type": "module",
   "engines": {
     "node": ">=20"
@@ -38,7 +52,8 @@
     "test:integration": "CLUEFIN_OPENAPI_TS_RUN_INTEGRATION=1 vitest run --config ./vitest.integration.config.ts",
     "test": "npm run test:unit",
     "publish:check": "npm run build && npm run check && npm run typecheck && npm run test",
-    "publish:manual": "npm publish --access public"
+    "publish:preview": "npm run publish:check && npm pack --dry-run",
+    "publish:manual": "npm run publish:check && npm publish --access public"
   },
   "dependencies": {
     "ws": "^8.19.0",
