@@ -174,7 +174,7 @@ class BasicQuote:
         symb: str,
         nmin: str,
         pinc: str,
-        next: str,
+        next_: str,
         nrec: str,
         fill: str,
         keyb: str,
@@ -188,7 +188,7 @@ class BasicQuote:
             symb (str): 종목코드 (예: TSLA)
             nmin (str): 분갭 (분단위, 1: 1분봉, 2: 2분봉, ...)
             pinc (str): 전일포함여부 (0: 당일, 1: 전일포함, ※ 다음조회 시 반드시 "1"로 입력)
-            next (str): 다음여부 (처음조회 시 "" 공백 입력, 다음조회 시 "1" 입력)
+            next_ (str): 다음여부 (처음조회 시 "" 공백 입력, 다음조회 시 "1" 입력)
             nrec (str): 요청갯수 (레코드요청갯수, 최대 120)
             fill (str): 미체결채움구분 ("" 공백으로 입력)
             keyb (str): NEXT KEY BUFF (처음 조회 시 "" 공백 입력, 다음 조회 시 이전 조회 결과의 마지막 분봉 데이터를 이용하여 1분 전 혹은 n분 전의 시간을 입력, 형식: YYYYMMDDHHMMSS, 예: 20241014140100)
@@ -205,7 +205,7 @@ class BasicQuote:
             "SYMB": symb,
             "NMIN": nmin,
             "PINC": pinc,
-            "NEXT": next,
+            "NEXT": next_,
             "NREC": nrec,
             "FILL": fill,
             "KEYB": keyb,

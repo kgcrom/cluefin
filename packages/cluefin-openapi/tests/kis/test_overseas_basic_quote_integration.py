@@ -75,7 +75,7 @@ def test_get_stock_minute_chart(client: HttpClient):
         symb="AMZN",
         nmin="1",  # 1-minute chart
         pinc="0",  # Current day only
-        next="",  # First query
+        next_="",  # First query
         nrec="30",  # Request 30 records
         fill="",
         keyb="",

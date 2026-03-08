@@ -333,7 +333,7 @@ class DomesticMarketAnalysis:
 
     def get_watchlist_stocks_by_group(
         self,
-        type: str,
+        type_: str,
         user_id: str,
         data_rank: str,
         inter_grp_code: str,
@@ -346,7 +346,7 @@ class DomesticMarketAnalysis:
         관심종목 그룹별 종목조회
 
         Args:
-            type (str): 관심종목구분코드 (Unique key: 1)
+            type_ (str): 관심종목구분코드 (Unique key: 1)
             user_id (str): 사용자 ID (HTS_ID 입력)
             data_rank (str): 데이터 순위 (공백)
             inter_grp_code (str): 관심 그룹 코드 (관심그룹 조회 결과의 그룹 값 입력)
@@ -362,7 +362,7 @@ class DomesticMarketAnalysis:
             "tr_id": "HHKCM113004C6",
         }
         params = {
-            "TYPE": type,
+            "TYPE": type_,
             "USER_ID": user_id,
             "DATA_RANK": data_rank,
             "INTER_GRP_CODE": inter_grp_code,
@@ -382,7 +382,7 @@ class DomesticMarketAnalysis:
 
     def get_institutional_foreign_trading_aggregate(
         self,
-        type: str,
+        type_: str,
         user_id: str,
         data_rank: str,
         inter_grp_code: str,
@@ -395,7 +395,7 @@ class DomesticMarketAnalysis:
         국내기관_외국인 매매종목가집계
 
         Args:
-            type (str): 관심종목구분코드 (Unique key: 1)
+            type_ (str): 관심종목구분코드 (Unique key: 1)
             user_id (str): 사용자 ID (HTS_ID 입력)
             data_rank (str): 데이터 순위 (공백)
             inter_grp_code (str): 관심 그룹 코드 (관심그룹 조회 결과의 그룹 값 입력)
@@ -411,7 +411,7 @@ class DomesticMarketAnalysis:
             "tr_id": "HHKCM113004C6",
         }
         params = {
-            "TYPE": type,
+            "TYPE": type_,
             "USER_ID": user_id,
             "DATA_RANK": data_rank,
             "INTER_GRP_CODE": inter_grp_code,

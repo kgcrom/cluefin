@@ -224,7 +224,7 @@
             "symb": "TSLA",
             "nmin": "1",
             "pinc": "0",
-            "next": "",
+            "next_": "",
             "nrec": "120",
             "fill": "",
             "keyb": ""

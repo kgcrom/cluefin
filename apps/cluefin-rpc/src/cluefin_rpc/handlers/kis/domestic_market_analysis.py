@@ -166,7 +166,7 @@ def handle_kis_watchlist_multi_quote(params: dict, session) -> dict:
 def handle_kis_watchlist_stocks_by_group(params: dict, session) -> dict:
     kis = session.get_kis()
     response = kis.domestic_market_analysis.get_watchlist_stocks_by_group(
-        type=params.get("interest_type", "1"),
+        type_=params.get("interest_type", "1"),
         user_id=params["user_id"],
         data_rank="",
         inter_grp_code=params["group_code"],
@@ -203,7 +203,7 @@ def handle_kis_watchlist_stocks_by_group(params: dict, session) -> dict:
 def handle_kis_institutional_foreign_aggregate(params: dict, session) -> dict:
     kis = session.get_kis()
     response = kis.domestic_market_analysis.get_institutional_foreign_trading_aggregate(
-        type=params.get("interest_type", "1"),
+        type_=params.get("interest_type", "1"),
         user_id=params["user_id"],
         data_rank="",
         inter_grp_code=params["group_code"],
