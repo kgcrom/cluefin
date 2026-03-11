@@ -1057,13 +1057,15 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'getTopForeignerLimitExhaustionRate',
+    methodName: 'getTopForeignerInstitutionTrading',
     path: '/api/dostk/rkinfo',
-    apiId: 'ka10036',
+    apiId: 'ka90009',
     bodyMap: {
       mrkt_tp: 'mrktTp',
-      dt: 'dt',
+      amt_qty_tp: 'amtQtyTp',
+      qry_dt_tp: 'qryDtTp',
       stex_tp: 'stexTp',
+      date: 'date',
     },
     headerParamMap: {
       'cont-yn': 'contYn',
@@ -1075,12 +1077,21 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
         required: true,
       },
       {
-        name: 'dt',
+        name: 'amtQtyTp',
+        required: true,
+      },
+      {
+        name: 'qryDtTp',
         required: true,
       },
       {
         name: 'stexTp',
         required: true,
+      },
+      {
+        name: 'date',
+        required: false,
+        defaultValue: '',
       },
       {
         name: 'contYn',
@@ -1118,4 +1129,4 @@ export type DomesticRankInfoMethodName =
   | 'getTopCurrentDayDeviationSources'
   | 'getSameNetBuySellRanking'
   | 'getAfterHoursSinglePriceChangeRateRanking'
-  | 'getTopForeignerLimitExhaustionRate';
+  | 'getTopForeignerInstitutionTrading';

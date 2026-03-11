@@ -270,11 +270,12 @@ describe('Kiwoom DomesticRankInfo', () => {
     assertKiwoomResponse(res);
   });
 
-  it('getTopForeignerLimitExhaustionRate', async () => {
+  it('getTopForeignerInstitutionTrading', async () => {
     const client = await getKiwoomClient();
-    const res = await client.domesticRankInfo.getTopForeignerLimitExhaustionRate({
-      mrktTp: '0',
-      dt: TODAY,
+    const res = await client.domesticRankInfo.getTopForeignerInstitutionTrading({
+      mrktTp: '000',
+      amtQtyTp: '1',
+      qryDtTp: '0',
       stexTp: '1',
     });
     assertKiwoomResponse(res);
