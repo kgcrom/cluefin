@@ -513,7 +513,7 @@ class DomesticRankInfoAfterHoursSinglePriceChangeRateRanking(BaseModel, KiwoomHt
     )
 
 
-class DomesticRankInfoTopForeignerLimitExhaustionRateItem(BaseModel):
+class DomesticRankInfoTopForeignerInstitutionTradingItem(BaseModel):
     for_netslmt_stk_cd: str = Field(default="", title="외인순매도종목코드", max_length=20)
     for_netslmt_stk_nm: str = Field(default="", title="외인순매도종목명", max_length=40)
     for_netslmt_amt: str = Field(default="", title="외인순매도금액", max_length=20)
@@ -532,9 +532,9 @@ class DomesticRankInfoTopForeignerLimitExhaustionRateItem(BaseModel):
     orgn_netprps_qty: str = Field(default="", title="기관순매수수량", max_length=20)
 
 
-class DomesticRankInfoTopForeignerLimitExhaustionRate(BaseModel, KiwoomHttpBody):
+class DomesticRankInfoTopForeignerInstitutionTrading(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="외국인기관매매상위요청 응답")
 
-    frgnr_orgn_trde_upper: list[DomesticRankInfoTopForeignerLimitExhaustionRateItem] = Field(
+    frgnr_orgn_trde_upper: list[DomesticRankInfoTopForeignerInstitutionTradingItem] = Field(
         default_factory=list, title="외국인기관매매상위"
     )
