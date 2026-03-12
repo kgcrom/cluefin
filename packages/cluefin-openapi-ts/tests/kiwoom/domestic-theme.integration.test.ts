@@ -1,5 +1,17 @@
 import { describe, test } from 'vitest';
-import { assertKiwoomResponse, getKiwoomClient, runIntegration } from '../_helpers/integration-setup';
+
+import {
+  themeGroupItemSchema,
+  themeGroupResponseSchema,
+  themeGroupStocksItemSchema,
+  themeGroupStocksResponseSchema,
+} from '../../src/kiwoom/schemas/domestic-theme';
+import {
+  assertKiwoomResponse,
+  assertResponseShape,
+  getKiwoomClient,
+  runIntegration,
+} from '../_helpers/integration-setup';
 
 const it = runIntegration ? test : test.skip;
 
@@ -14,11 +26,13 @@ describe('Kiwoom DomesticTheme', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, themeGroupResponseSchema, 'themaGrp', themeGroupItemSchema);
   });
 
   it('getThemeGroupStocks', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticTheme.getThemeGroupStocks({ themaGrpCd: '0001', stexTp: '1' });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, themeGroupStocksResponseSchema, 'themaCompStk', themeGroupStocksItemSchema);
   });
 });
