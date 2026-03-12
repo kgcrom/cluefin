@@ -1,6 +1,25 @@
 import { describe, test } from 'vitest';
 
-import { assertKiwoomResponse, getKiwoomClient, runIntegration, TODAY } from '../_helpers/integration-setup';
+import {
+  allIndustryIndexItemSchema,
+  allIndustryIndexResponseSchema,
+  dailyIndustryCurrentPriceDailyItemSchema,
+  dailyIndustryCurrentPriceResponseSchema,
+  industryCurrentPriceResponseSchema,
+  industryCurrentPriceTimeItemSchema,
+  industryInvestorNetBuyItemSchema,
+  industryInvestorNetBuyResponseSchema,
+  industryPriceBySectorItemSchema,
+  industryPriceBySectorResponseSchema,
+  industryProgramResponseSchema,
+} from '../../src/kiwoom/schemas/domestic-sector';
+import {
+  assertKiwoomResponse,
+  assertResponseShape,
+  getKiwoomClient,
+  runIntegration,
+  TODAY,
+} from '../_helpers/integration-setup';
 
 const it = runIntegration ? test : test.skip;
 
@@ -9,6 +28,7 @@ describe('Kiwoom DomesticSector', () => {
     const client = await getKiwoomClient();
     const res = await client.domesticSector.getIndustryProgram({ stkCode: '001' });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, industryProgramResponseSchema);
   });
 
   it('getIndustryInvestorNetBuy', async () => {
@@ -20,6 +40,12 @@ describe('Kiwoom DomesticSector', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      industryInvestorNetBuyResponseSchema,
+      'indsNetprps',
+      industryInvestorNetBuyItemSchema,
+    );
   });
 
   it('getIndustryCurrentPrice', async () => {
@@ -29,6 +55,12 @@ describe('Kiwoom DomesticSector', () => {
       indsCd: '001',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      industryCurrentPriceResponseSchema,
+      'indsCurPrcTm',
+      industryCurrentPriceTimeItemSchema,
+    );
   });
 
   it('getIndustryPriceBySector', async () => {
@@ -39,12 +71,14 @@ describe('Kiwoom DomesticSector', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, industryPriceBySectorResponseSchema, 'indsStkpc', industryPriceBySectorItemSchema);
   });
 
   it('getAllIndustryIndex', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticSector.getAllIndustryIndex({ indsCd: '001' });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, allIndustryIndexResponseSchema, 'allIndsIdex', allIndustryIndexItemSchema);
   });
 
   it('getDailyIndustryCurrentPrice', async () => {
@@ -54,5 +88,11 @@ describe('Kiwoom DomesticSector', () => {
       indsCd: '001',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      dailyIndustryCurrentPriceResponseSchema,
+      'indsCurPrcDalyRept',
+      dailyIndustryCurrentPriceDailyItemSchema,
+    );
   });
 });
