@@ -1,5 +1,20 @@
 import { describe, test } from 'vitest';
-import { assertKiwoomResponse, getKiwoomClient, runIntegration, SAMSUNG, TODAY } from '../_helpers/integration-setup';
+
+import {
+  consecutiveNetBuySellStatusByInstitutionForeignerItemSchema,
+  consecutiveNetBuySellStatusByInstitutionForeignerResponseSchema,
+  foreignInvestorTradingTrendByStockItemSchema,
+  foreignInvestorTradingTrendByStockResponseSchema,
+  stockInstitutionResponseSchema,
+} from '../../src/kiwoom/schemas/domestic-foreign';
+import {
+  assertKiwoomResponse,
+  assertResponseShape,
+  getKiwoomClient,
+  runIntegration,
+  SAMSUNG,
+  TODAY,
+} from '../_helpers/integration-setup';
 
 const it = runIntegration ? test : test.skip;
 
@@ -8,12 +23,19 @@ describe('Kiwoom DomesticForeign', () => {
     const client = await getKiwoomClient();
     const res = await client.domesticForeign.getForeignInvestorTradingTrendByStock({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      foreignInvestorTradingTrendByStockResponseSchema,
+      'stkFrgnr',
+      foreignInvestorTradingTrendByStockItemSchema,
+    );
   });
 
   it('getStockInstitution', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticForeign.getStockInstitution({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, stockInstitutionResponseSchema);
   });
 
   it('getConsecutiveNetBuySellStatusByInstitutionForeigner', async () => {
@@ -26,5 +48,11 @@ describe('Kiwoom DomesticForeign', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      consecutiveNetBuySellStatusByInstitutionForeignerResponseSchema,
+      'orgnFrgnrContTrdePrst',
+      consecutiveNetBuySellStatusByInstitutionForeignerItemSchema,
+    );
   });
 });
