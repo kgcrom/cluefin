@@ -1,8 +1,31 @@
 import type { KiwoomEndpointDefinition } from '../../core/types';
+import {
+  afterHoursSinglePriceResponseSchema,
+  afterMarketTradingByInvestorResponseSchema,
+  dailyInstitutionalTradingItemsResponseSchema,
+  dailyStockPriceResponseSchema,
+  executionIntensityTrendByDateResponseSchema,
+  executionIntensityTrendByTimeResponseSchema,
+  institutionalTradingTrendByStockResponseSchema,
+  intradayTradingByInvestorResponseSchema,
+  marketSentimentInfoResponseSchema,
+  newStockWarrantPriceResponseSchema,
+  programTradingArbitrageBalanceTrendResponseSchema,
+  programTradingCumulativeTrendResponseSchema,
+  programTradingTrendByDateResponseSchema,
+  programTradingTrendByStockAndDateResponseSchema,
+  programTradingTrendByStockAndTimeResponseSchema,
+  programTradingTrendByTimeResponseSchema,
+  securitiesFirmTradingTrendByStockResponseSchema,
+  stockPriceResponseSchema,
+  stockQuoteByDateResponseSchema,
+  stockQuoteResponseSchema,
+} from '../schemas/domestic-market-condition';
 
 export const domesticMarketConditionEndpoints: KiwoomEndpointDefinition[] = [
   {
     methodName: 'getStockQuote',
+    responseSchema: stockQuoteResponseSchema,
     path: '/api/dostk/mrkcond',
     apiId: 'ka10004',
     bodyMap: {
@@ -31,6 +54,7 @@ export const domesticMarketConditionEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getStockQuoteByDate',
+    responseSchema: stockQuoteByDateResponseSchema,
     path: '/api/dostk/mrkcond',
     apiId: 'ka10005',
     bodyMap: {
@@ -59,6 +83,7 @@ export const domesticMarketConditionEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getStockPrice',
+    responseSchema: stockPriceResponseSchema,
     path: '/api/dostk/mrkcond',
     apiId: 'ka10006',
     bodyMap: {
@@ -87,6 +112,7 @@ export const domesticMarketConditionEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getMarketSentimentInfo',
+    responseSchema: marketSentimentInfoResponseSchema,
     path: '/api/dostk/mrkcond',
     apiId: 'ka10007',
     bodyMap: {
@@ -115,6 +141,7 @@ export const domesticMarketConditionEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getNewStockWarrantPrice',
+    responseSchema: newStockWarrantPriceResponseSchema,
     path: '/api/dostk/mrkcond',
     apiId: 'ka10011',
     bodyMap: {
@@ -143,6 +170,7 @@ export const domesticMarketConditionEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getDailyInstitutionalTradingItems',
+    responseSchema: dailyInstitutionalTradingItemsResponseSchema,
     path: '/api/dostk/mrkcond',
     apiId: 'ka10044',
     bodyMap: {
@@ -191,6 +219,7 @@ export const domesticMarketConditionEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getInstitutionalTradingTrendByStock',
+    responseSchema: institutionalTradingTrendByStockResponseSchema,
     path: '/api/dostk/mrkcond',
     apiId: 'ka10045',
     bodyMap: {
@@ -239,6 +268,7 @@ export const domesticMarketConditionEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getExecutionIntensityTrendByTime',
+    responseSchema: executionIntensityTrendByTimeResponseSchema,
     path: '/api/dostk/mrkcond',
     apiId: 'ka10046',
     bodyMap: {
@@ -267,6 +297,7 @@ export const domesticMarketConditionEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getExecutionIntensityTrendByDate',
+    responseSchema: executionIntensityTrendByDateResponseSchema,
     path: '/api/dostk/mrkcond',
     apiId: 'ka10047',
     bodyMap: {
@@ -295,6 +326,7 @@ export const domesticMarketConditionEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getIntradayTradingByInvestor',
+    responseSchema: intradayTradingByInvestorResponseSchema,
     path: '/api/dostk/mrkcond',
     apiId: 'ka10063',
     bodyMap: {
@@ -348,6 +380,7 @@ export const domesticMarketConditionEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getAfterMarketTradingByInvestor',
+    responseSchema: afterMarketTradingByInvestorResponseSchema,
     path: '/api/dostk/mrkcond',
     apiId: 'ka10066',
     bodyMap: {
@@ -391,6 +424,7 @@ export const domesticMarketConditionEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getSecuritiesFirmTradingTrendByStock',
+    responseSchema: securitiesFirmTradingTrendByStockResponseSchema,
     path: '/api/dostk/mrkcond',
     apiId: 'ka10078',
     bodyMap: {
@@ -434,6 +468,7 @@ export const domesticMarketConditionEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getDailyStockPrice',
+    responseSchema: dailyStockPriceResponseSchema,
     path: '/api/dostk/mrkcond',
     apiId: 'ka10086',
     bodyMap: {
@@ -472,6 +507,7 @@ export const domesticMarketConditionEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getAfterHoursSinglePrice',
+    responseSchema: afterHoursSinglePriceResponseSchema,
     path: '/api/dostk/mrkcond',
     apiId: 'ka10087',
     bodyMap: {
@@ -500,6 +536,7 @@ export const domesticMarketConditionEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getProgramTradingTrendByTime',
+    responseSchema: programTradingTrendByTimeResponseSchema,
     path: '/api/dostk/mrkcond',
     apiId: 'ka90005',
     bodyMap: {
@@ -548,6 +585,7 @@ export const domesticMarketConditionEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getProgramTradingArbitrageBalanceTrend',
+    responseSchema: programTradingArbitrageBalanceTrendResponseSchema,
     path: '/api/dostk/mrkcond',
     apiId: 'ka90006',
     bodyMap: {
@@ -581,6 +619,7 @@ export const domesticMarketConditionEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getProgramTradingCumulativeTrend',
+    responseSchema: programTradingCumulativeTrendResponseSchema,
     path: '/api/dostk/mrkcond',
     apiId: 'ka90007',
     bodyMap: {
@@ -624,6 +663,7 @@ export const domesticMarketConditionEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getProgramTradingTrendByStockAndTime',
+    responseSchema: programTradingTrendByStockAndTimeResponseSchema,
     path: '/api/dostk/mrkcond',
     apiId: 'ka90008',
     bodyMap: {
@@ -662,6 +702,7 @@ export const domesticMarketConditionEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getProgramTradingTrendByDate',
+    responseSchema: programTradingTrendByDateResponseSchema,
     path: '/api/dostk/mrkcond',
     apiId: 'ka90010',
     bodyMap: {
@@ -710,6 +751,7 @@ export const domesticMarketConditionEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getProgramTradingTrendByStockAndDate',
+    responseSchema: programTradingTrendByStockAndDateResponseSchema,
     path: '/api/dostk/mrkcond',
     apiId: 'ka90013',
     bodyMap: {
@@ -748,6 +790,7 @@ export const domesticMarketConditionEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getTopIntradayTradingByInvestor',
+    responseSchema: intradayTradingByInvestorResponseSchema,
     path: '/api/dostk/mrkcond',
     apiId: 'ka10063',
     bodyMap: {
