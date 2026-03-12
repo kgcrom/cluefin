@@ -1,7 +1,54 @@
 import { describe, test } from 'vitest';
 
 import {
+  afterHoursSinglePriceChangeRateRankingItemSchema,
+  afterHoursSinglePriceChangeRateRankingResponseSchema,
+  rapidlyIncreasingRemainingOrderQuantityItemSchema,
+  rapidlyIncreasingRemainingOrderQuantityResponseSchema,
+  rapidlyIncreasingTotalSellOrdersItemSchema,
+  rapidlyIncreasingTotalSellOrdersResponseSchema,
+  rapidlyIncreasingTradingVolumeItemSchema,
+  rapidlyIncreasingTradingVolumeResponseSchema,
+  sameNetBuySellRankingItemSchema,
+  sameNetBuySellRankingResponseSchema,
+  stockSpecificSecuritiesFirmRankingItemSchema,
+  stockSpecificSecuritiesFirmRankingResponseSchema,
+  topConsecutiveNetBuySellByForeignersItemSchema,
+  topConsecutiveNetBuySellByForeignersResponseSchema,
+  topCurrentDayDeviationSourcesItemSchema,
+  topCurrentDayDeviationSourcesResponseSchema,
+  topCurrentDayMajorTradersItemSchema,
+  topCurrentDayMajorTradersResponseSchema,
+  topCurrentDayTradingVolumeItemSchema,
+  topCurrentDayTradingVolumeResponseSchema,
+  topExpectedConclusionPercentageChangeItemSchema,
+  topExpectedConclusionPercentageChangeResponseSchema,
+  topForeignAccountGroupTradingItemSchema,
+  topForeignAccountGroupTradingResponseSchema,
+  topForeignerInstitutionTradingItemSchema,
+  topForeignerInstitutionTradingResponseSchema,
+  topForeignerPeriodTradingItemSchema,
+  topForeignerPeriodTradingResponseSchema,
+  topLimitExhaustionRateForeignerItemSchema,
+  topLimitExhaustionRateForeignerResponseSchema,
+  topMarginRatioItemSchema,
+  topMarginRatioResponseSchema,
+  topNetBuyTraderRankingItemSchema,
+  topNetBuyTraderRankingResponseSchema,
+  topPercentageChangeFromPreviousDayItemSchema,
+  topPercentageChangeFromPreviousDayResponseSchema,
+  topPreviousDayTradingVolumeItemSchema,
+  topPreviousDayTradingVolumeResponseSchema,
+  topRemainingOrderQuantityItemSchema,
+  topRemainingOrderQuantityResponseSchema,
+  topSecuritiesFirmTradingItemSchema,
+  topSecuritiesFirmTradingResponseSchema,
+  topTransactionValueItemSchema,
+  topTransactionValueResponseSchema,
+} from '../../src/kiwoom/schemas/domestic-rank-info';
+import {
   assertKiwoomResponse,
+  assertResponseShape,
   getKiwoomClient,
   ONE_MONTH_AGO,
   runIntegration,
@@ -23,6 +70,12 @@ describe('Kiwoom DomesticRankInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      topRemainingOrderQuantityResponseSchema,
+      'bidReqUpper',
+      topRemainingOrderQuantityItemSchema,
+    );
   });
 
   it('getRapidlyIncreasingRemainingOrderQuantity', async () => {
@@ -37,6 +90,12 @@ describe('Kiwoom DomesticRankInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      rapidlyIncreasingRemainingOrderQuantityResponseSchema,
+      'bidReqSdnin',
+      rapidlyIncreasingRemainingOrderQuantityItemSchema,
+    );
   });
 
   it('getRapidlyIncreasingTotalSellOrders', async () => {
@@ -50,6 +109,12 @@ describe('Kiwoom DomesticRankInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      rapidlyIncreasingTotalSellOrdersResponseSchema,
+      'reqRtSdnin',
+      rapidlyIncreasingTotalSellOrdersItemSchema,
+    );
   });
 
   it('getRapidlyIncreasingTradingVolume', async () => {
@@ -64,6 +129,12 @@ describe('Kiwoom DomesticRankInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      rapidlyIncreasingTradingVolumeResponseSchema,
+      'trdeQtySdnin',
+      rapidlyIncreasingTradingVolumeItemSchema,
+    );
   });
 
   it('getTopPercentageChangeFromPreviousDay', async () => {
@@ -80,6 +151,12 @@ describe('Kiwoom DomesticRankInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      topPercentageChangeFromPreviousDayResponseSchema,
+      'predPreFluRtUpper',
+      topPercentageChangeFromPreviousDayItemSchema,
+    );
   });
 
   it('getTopExpectedConclusionPercentageChange', async () => {
@@ -94,6 +171,12 @@ describe('Kiwoom DomesticRankInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      topExpectedConclusionPercentageChangeResponseSchema,
+      'expCntrFluRtUpper',
+      topExpectedConclusionPercentageChangeItemSchema,
+    );
   });
 
   it('getTopCurrentDayTradingVolume', async () => {
@@ -109,6 +192,12 @@ describe('Kiwoom DomesticRankInfo', () => {
       mrktOpenTp: '0',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      topCurrentDayTradingVolumeResponseSchema,
+      'tdyTrdeQtyUpper',
+      topCurrentDayTradingVolumeItemSchema,
+    );
   });
 
   it('getTopPreviousDayTradingVolume', async () => {
@@ -121,6 +210,12 @@ describe('Kiwoom DomesticRankInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      topPreviousDayTradingVolumeResponseSchema,
+      'predTrdeQtyUpper',
+      topPreviousDayTradingVolumeItemSchema,
+    );
   });
 
   it('getTopTransactionValue', async () => {
@@ -131,6 +226,7 @@ describe('Kiwoom DomesticRankInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, topTransactionValueResponseSchema, 'trdePricaUpper', topTransactionValueItemSchema);
   });
 
   it('getTopMarginRatio', async () => {
@@ -144,6 +240,7 @@ describe('Kiwoom DomesticRankInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, topMarginRatioResponseSchema, 'crdRtUpper', topMarginRatioItemSchema);
   });
 
   it('getTopForeignerPeriodTrading', async () => {
@@ -155,6 +252,12 @@ describe('Kiwoom DomesticRankInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      topForeignerPeriodTradingResponseSchema,
+      'forDtTrdeUpper',
+      topForeignerPeriodTradingItemSchema,
+    );
   });
 
   it('getTopConsecutiveNetBuySellByForeigners', async () => {
@@ -166,6 +269,12 @@ describe('Kiwoom DomesticRankInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      topConsecutiveNetBuySellByForeignersResponseSchema,
+      'forContNettrdeUpper',
+      topConsecutiveNetBuySellByForeignersItemSchema,
+    );
   });
 
   it('getTopLimitExhaustionRateForeigner', async () => {
@@ -176,6 +285,12 @@ describe('Kiwoom DomesticRankInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      topLimitExhaustionRateForeignerResponseSchema,
+      'forLimitExhRtIncrsUpper',
+      topLimitExhaustionRateForeignerItemSchema,
+    );
   });
 
   it('getTopForeignAccountGroupTrading', async () => {
@@ -188,6 +303,12 @@ describe('Kiwoom DomesticRankInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      topForeignAccountGroupTradingResponseSchema,
+      'frgnWicketTrdeUpper',
+      topForeignAccountGroupTradingItemSchema,
+    );
   });
 
   it('getStockSpecificSecuritiesFirmRanking', async () => {
@@ -199,6 +320,12 @@ describe('Kiwoom DomesticRankInfo', () => {
       qryTp: '0',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      stockSpecificSecuritiesFirmRankingResponseSchema,
+      'stkSecRank',
+      stockSpecificSecuritiesFirmRankingItemSchema,
+    );
   });
 
   it('getTopSecuritiesFirmTrading', async () => {
@@ -211,6 +338,12 @@ describe('Kiwoom DomesticRankInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      topSecuritiesFirmTradingResponseSchema,
+      'secTrdeUpper',
+      topSecuritiesFirmTradingItemSchema,
+    );
   });
 
   it('getTopCurrentDayMajorTraders', async () => {
@@ -219,6 +352,12 @@ describe('Kiwoom DomesticRankInfo', () => {
       stkCd: SAMSUNG,
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      topCurrentDayMajorTradersResponseSchema,
+      'tdyMainTrdeOri',
+      topCurrentDayMajorTradersItemSchema,
+    );
   });
 
   it('getTopNetBuyTraderRanking', async () => {
@@ -233,6 +372,12 @@ describe('Kiwoom DomesticRankInfo', () => {
       sortBase: '0',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      topNetBuyTraderRankingResponseSchema,
+      'netprpsTrdeOriRank',
+      topNetBuyTraderRankingItemSchema,
+    );
   });
 
   it('getTopCurrentDayDeviationSources', async () => {
@@ -241,6 +386,12 @@ describe('Kiwoom DomesticRankInfo', () => {
       stkCd: SAMSUNG,
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      topCurrentDayDeviationSourcesResponseSchema,
+      'tdyUpperScesnOri',
+      topCurrentDayDeviationSourcesItemSchema,
+    );
   });
 
   it('getSameNetBuySellRanking', async () => {
@@ -255,6 +406,12 @@ describe('Kiwoom DomesticRankInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      sameNetBuySellRankingResponseSchema,
+      'eqlNettrdeRank',
+      sameNetBuySellRankingItemSchema,
+    );
   });
 
   it('getAfterHoursSinglePriceChangeRateRanking', async () => {
@@ -268,6 +425,12 @@ describe('Kiwoom DomesticRankInfo', () => {
       trdePrica: '0',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      afterHoursSinglePriceChangeRateRankingResponseSchema,
+      'ovtSigpricFluRtRank',
+      afterHoursSinglePriceChangeRateRankingItemSchema,
+    );
   });
 
   it('getTopForeignerInstitutionTrading', async () => {
@@ -279,5 +442,11 @@ describe('Kiwoom DomesticRankInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      topForeignerInstitutionTradingResponseSchema,
+      'frgnrOrgnTrdeUpper',
+      topForeignerInstitutionTradingItemSchema,
+    );
   });
 });
