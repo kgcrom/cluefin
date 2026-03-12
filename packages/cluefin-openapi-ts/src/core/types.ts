@@ -1,4 +1,16 @@
+import type { z } from 'zod';
+
 export type ApiEnv = 'dev' | 'prod';
+
+type CamelCase<S extends string> = S extends `${infer P}_${infer Q}${infer R}`
+  ? `${P}${Uppercase<Q>}${CamelCase<R>}`
+  : S;
+
+export type CamelizeKeys<T> = T extends (infer U)[]
+  ? CamelizeKeys<U>[]
+  : T extends Record<string, unknown>
+    ? { [K in keyof T as K extends string ? CamelCase<K> : K]: CamelizeKeys<T[K]> }
+    : T;
 
 export interface ApiResponse<TBody = Record<string, unknown>> {
   headers: Record<string, string>;
@@ -46,6 +58,7 @@ export interface KiwoomEndpointDefinition extends EndpointBaseDefinition {
   apiId: string;
   bodyMap: Record<string, string>;
   headerParamMap: Record<string, string>;
+  responseSchema?: z.ZodTypeAny;
 }
 
 export interface HttpClientOptions {
@@ -63,8 +76,10 @@ export interface HttpRequestOptions {
   body?: Record<string, unknown>;
 }
 
-export type DomainMethods<T extends string> = {
-  [K in T]: (input: Record<string, unknown>) => Promise<ApiResponse>;
+export type DomainMethods<T extends string, TResponseMap extends Partial<Record<T, unknown>> = Record<T, never>> = {
+  [K in T]: (
+    input: Record<string, unknown>,
+  ) => Promise<ApiResponse<K extends keyof TResponseMap ? TResponseMap[K] : Record<string, unknown>>>;
 };
 
 export type FetchLike = typeof fetch;
