@@ -1,7 +1,63 @@
 import { describe, test } from 'vitest';
 
 import {
+  changeRateFromOpenItemSchema,
+  changeRateFromOpenResponseSchema,
+  dailyPreviousDayConclusionItemSchema,
+  dailyPreviousDayConclusionResponseSchema,
+  dailyPreviousDayExecutionVolumeItemSchema,
+  dailyPreviousDayExecutionVolumeResponseSchema,
+  dailyTradingDetailsItemSchema,
+  dailyTradingDetailsResponseSchema,
+  dailyTradingItemsByInvestorItemSchema,
+  dailyTradingItemsByInvestorResponseSchema,
+  executionItemSchema,
+  executionResponseSchema,
+  highLowPriceApproachItemSchema,
+  highLowPriceApproachResponseSchema,
+  highPerItemSchema,
+  highPerResponseSchema,
+  industryCodeItemSchema,
+  industryCodeResponseSchema,
+  institutionalInvestorByStockItemSchema,
+  institutionalInvestorByStockResponseSchema,
+  interestStockInfoItemSchema,
+  interestStockInfoResponseSchema,
+  marginTradingTrendItemSchema,
+  marginTradingTrendResponseSchema,
+  memberCompanyItemSchema,
+  memberCompanyResponseSchema,
+  newHighLowPriceItemSchema,
+  newHighLowPriceResponseSchema,
+  priceVolatilityItemSchema,
+  priceVolatilityResponseSchema,
+  programTradingStatusByStockItemSchema,
+  programTradingStatusByStockResponseSchema,
+  stockInfoResponseSchema,
+  stockInfoSummaryItemSchema,
+  stockInfoSummaryResponseSchema,
+  stockInfoV1ResponseSchema,
+  stockTradingMemberResponseSchema,
+  supplyDemandConcentrationItemSchema,
+  supplyDemandConcentrationResponseSchema,
+  top50ProgramNetBuyItemSchema,
+  top50ProgramNetBuyResponseSchema,
+  totalInstitutionalInvestorByStockItemSchema,
+  totalInstitutionalInvestorByStockResponseSchema,
+  tradingMemberInstantVolumeItemSchema,
+  tradingMemberInstantVolumeResponseSchema,
+  tradingMemberSupplyDemandAnalysisItemSchema,
+  tradingMemberSupplyDemandAnalysisResponseSchema,
+  tradingVolumeRenewalItemSchema,
+  tradingVolumeRenewalResponseSchema,
+  upperLowerLimitPriceItemSchema,
+  upperLowerLimitPriceResponseSchema,
+  volatilityControlEventItemSchema,
+  volatilityControlEventResponseSchema,
+} from '../../src/kiwoom/schemas/domestic-stock-info';
+import {
   assertKiwoomResponse,
+  assertResponseShape,
   getKiwoomClient,
   ONE_MONTH_AGO,
   runIntegration,
@@ -16,18 +72,21 @@ describe('Kiwoom DomesticStockInfo', () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getStockInfo({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, stockInfoResponseSchema);
   });
 
   it('getStockTradingMember', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getStockTradingMember({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, stockTradingMemberResponseSchema);
   });
 
   it('getExecution', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getExecution({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, executionResponseSchema, 'cntrInfr', executionItemSchema);
   });
 
   it('getMarginTradingTrend', async () => {
@@ -38,6 +97,7 @@ describe('Kiwoom DomesticStockInfo', () => {
       qryTp: '0',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, marginTradingTrendResponseSchema, 'crdTrdeTrend', marginTradingTrendItemSchema);
   });
 
   it('getDailyTradingDetails', async () => {
@@ -47,6 +107,7 @@ describe('Kiwoom DomesticStockInfo', () => {
       strtDt: ONE_MONTH_AGO,
     });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, dailyTradingDetailsResponseSchema, 'dalyTrdeDtl', dailyTradingDetailsItemSchema);
   });
 
   it('getNewHighLowPrice', async () => {
@@ -63,6 +124,7 @@ describe('Kiwoom DomesticStockInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, newHighLowPriceResponseSchema, 'ntlPric', newHighLowPriceItemSchema);
   });
 
   it('getUpperLowerLimitPrice', async () => {
@@ -78,6 +140,7 @@ describe('Kiwoom DomesticStockInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, upperLowerLimitPriceResponseSchema, 'updownPric', upperLowerLimitPriceItemSchema);
   });
 
   it('getHighLowPriceApproach', async () => {
@@ -92,6 +155,12 @@ describe('Kiwoom DomesticStockInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      highLowPriceApproachResponseSchema,
+      'highLowPricAlacc',
+      highLowPriceApproachItemSchema,
+    );
   });
 
   it('getPriceVolatility', async () => {
@@ -109,6 +178,7 @@ describe('Kiwoom DomesticStockInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, priceVolatilityResponseSchema, 'pricJmpflu', priceVolatilityItemSchema);
   });
 
   it('getTradingVolumeRenewal', async () => {
@@ -120,6 +190,7 @@ describe('Kiwoom DomesticStockInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, tradingVolumeRenewalResponseSchema, 'trdeQtyUpdt', tradingVolumeRenewalItemSchema);
   });
 
   it('getSupplyDemandConcentration', async () => {
@@ -133,6 +204,12 @@ describe('Kiwoom DomesticStockInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      supplyDemandConcentrationResponseSchema,
+      'prpsCnctr',
+      supplyDemandConcentrationItemSchema,
+    );
   });
 
   it('getHighPer', async () => {
@@ -142,6 +219,7 @@ describe('Kiwoom DomesticStockInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, highPerResponseSchema, 'highLowPer', highPerItemSchema);
   });
 
   it('getChangeRateFromOpen', async () => {
@@ -158,6 +236,7 @@ describe('Kiwoom DomesticStockInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, changeRateFromOpenResponseSchema, 'openPricPreFluRt', changeRateFromOpenItemSchema);
   });
 
   it('getTradingMemberSupplyDemandAnalysis', async () => {
@@ -174,6 +253,12 @@ describe('Kiwoom DomesticStockInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      tradingMemberSupplyDemandAnalysisResponseSchema,
+      'trdeOriPrpsAnly',
+      tradingMemberSupplyDemandAnalysisItemSchema,
+    );
   });
 
   it('getTradingMemberInstantVolume', async () => {
@@ -187,6 +272,12 @@ describe('Kiwoom DomesticStockInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      tradingMemberInstantVolumeResponseSchema,
+      'trdeOriMontTrdeQty',
+      tradingMemberInstantVolumeItemSchema,
+    );
   });
 
   it('getVolatilityControlEvent', async () => {
@@ -206,6 +297,7 @@ describe('Kiwoom DomesticStockInfo', () => {
       maxTrdePrica: '100000000',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, volatilityControlEventResponseSchema, 'motnStk', volatilityControlEventItemSchema);
   });
 
   it('getDailyPreviousDayExecutionVolume', async () => {
@@ -215,6 +307,12 @@ describe('Kiwoom DomesticStockInfo', () => {
       tdyPred: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      dailyPreviousDayExecutionVolumeResponseSchema,
+      'tdyPredCntrQty',
+      dailyPreviousDayExecutionVolumeItemSchema,
+    );
   });
 
   it('getDailyTradingItemsByInvestor', async () => {
@@ -228,6 +326,12 @@ describe('Kiwoom DomesticStockInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      dailyTradingItemsByInvestorResponseSchema,
+      'invsrDalyTrdeStk',
+      dailyTradingItemsByInvestorItemSchema,
+    );
   });
 
   it('getInstitutionalInvestorByStock', async () => {
@@ -240,6 +344,12 @@ describe('Kiwoom DomesticStockInfo', () => {
       unitTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      institutionalInvestorByStockResponseSchema,
+      'stkInvsrOrgn',
+      institutionalInvestorByStockItemSchema,
+    );
   });
 
   it('getTotalInstitutionalInvestorByStock', async () => {
@@ -253,6 +363,12 @@ describe('Kiwoom DomesticStockInfo', () => {
       unitTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      totalInstitutionalInvestorByStockResponseSchema,
+      'stkInvsrOrgnTot',
+      totalInstitutionalInvestorByStockItemSchema,
+    );
   });
 
   it('getDailyPreviousDayConclusion', async () => {
@@ -263,36 +379,47 @@ describe('Kiwoom DomesticStockInfo', () => {
       ticMin: '0',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      dailyPreviousDayConclusionResponseSchema,
+      'tdyPredCntr',
+      dailyPreviousDayConclusionItemSchema,
+    );
   });
 
   it('getInterestStockInfo', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getInterestStockInfo({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, interestStockInfoResponseSchema, 'atnStkInfr', interestStockInfoItemSchema);
   });
 
   it('getStockInfoSummary', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getStockInfoSummary({ mrktTp: '0' });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, stockInfoSummaryResponseSchema, 'list', stockInfoSummaryItemSchema);
   });
 
   it('getStockInfoV1', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getStockInfoV1({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, stockInfoV1ResponseSchema);
   });
 
   it('getIndustryCode', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getIndustryCode({ mrktTp: '0' });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, industryCodeResponseSchema, 'list', industryCodeItemSchema);
   });
 
   it('getMemberCompany', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getMemberCompany({});
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, memberCompanyResponseSchema, 'list', memberCompanyItemSchema);
   });
 
   it('getTop50ProgramNetBuy', async () => {
@@ -304,6 +431,7 @@ describe('Kiwoom DomesticStockInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, top50ProgramNetBuyResponseSchema, 'prmNetprpsUpper50', top50ProgramNetBuyItemSchema);
   });
 
   it('getProgramTradingStatusByStock', async () => {
@@ -314,5 +442,11 @@ describe('Kiwoom DomesticStockInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      programTradingStatusByStockResponseSchema,
+      'stkPrmTrdePrst',
+      programTradingStatusByStockItemSchema,
+    );
   });
 });
