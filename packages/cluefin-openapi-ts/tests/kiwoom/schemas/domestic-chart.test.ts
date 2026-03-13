@@ -133,7 +133,7 @@ describe('domestic-chart response schemas', () => {
       };
       const result = individualStockInstitutionalChartResponseSchema.parse(input);
       expect(result.stk_invsr_orgn_chart).toHaveLength(1);
-      expect(result.stk_invsr_orgn_chart[0].dt).toBe('20260312');
+      expect(result.stk_invsr_orgn_chart[0]!.dt).toBe('20260312');
     });
 
     it('ka10081: parses stock daily OHLCV item', () => {
@@ -158,7 +158,7 @@ describe('domestic-chart response schemas', () => {
       const result = stockDailyResponseSchema.parse(input);
       expect(result.stk_cd).toBe('005930');
       expect(result.stk_dt_pole_chart_qry).toHaveLength(1);
-      expect(result.stk_dt_pole_chart_qry[0].open_pric).toBe('186600');
+      expect(result.stk_dt_pole_chart_qry[0]!.open_pric).toBe('186600');
     });
 
     it('ka20006: parses industry daily item', () => {
@@ -216,7 +216,7 @@ describe('domestic-chart response schemas', () => {
         ],
       };
       const result = stockDailyResponseSchema.parse(input);
-      expect((result.stk_dt_pole_chart_qry[0] as Record<string, unknown>).extra_field).toBe('hello');
+      expect((result.stk_dt_pole_chart_qry[0]! as Record<string, unknown>).extra_field).toBe('hello');
     });
   });
 
@@ -228,7 +228,7 @@ describe('domestic-chart response schemas', () => {
         stk_yr_pole_chart_qry: [{}],
       };
       const result = stockYearlyResponseSchema.parse(input);
-      const item = result.stk_yr_pole_chart_qry[0];
+      const item = result.stk_yr_pole_chart_qry[0]!;
       expect(item.cur_prc).toBe('');
       expect(item.trde_qty).toBe('');
       expect(item.dt).toBe('');

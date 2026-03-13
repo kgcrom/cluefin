@@ -39,8 +39,8 @@ describe('domestic-theme response schemas', () => {
       };
       const result = themeGroupResponseSchema.parse(input);
       expect(result.themaGrp).toHaveLength(1);
-      expect(result.themaGrp[0].themaGrpCd).toBe('103');
-      expect(result.themaGrp[0].themaNm).toBe('태양광_발전/설치/운영');
+      expect(result.themaGrp[0]!.themaGrpCd).toBe('103');
+      expect(result.themaGrp[0]!.themaNm).toBe('태양광_발전/설치/운영');
     });
 
     it('ka90002: parses theme group stocks item', () => {
@@ -67,7 +67,7 @@ describe('domestic-theme response schemas', () => {
       };
       const result = themeGroupStocksResponseSchema.parse(input);
       expect(result.themaCompStk).toHaveLength(1);
-      expect(result.themaCompStk[0].stkCd).toBe('005930');
+      expect(result.themaCompStk[0]!.stkCd).toBe('005930');
       expect(result.fluRt).toBe('+1.23');
     });
   });
@@ -102,7 +102,7 @@ describe('domestic-theme response schemas', () => {
         ],
       };
       const result = themeGroupResponseSchema.parse(input);
-      expect((result.themaGrp[0] as Record<string, unknown>).extra_field).toBe('hello');
+      expect((result.themaGrp[0]! as Record<string, unknown>).extra_field).toBe('hello');
     });
   });
 
@@ -113,7 +113,7 @@ describe('domestic-theme response schemas', () => {
         themaCompStk: [{}],
       };
       const result = themeGroupStocksResponseSchema.parse(input);
-      const item = result.themaCompStk[0];
+      const item = result.themaCompStk[0]!;
       expect(item.stkCd).toBe('');
       expect(item.stkNm).toBe('');
       expect(item.curPrc).toBe('');

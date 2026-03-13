@@ -238,7 +238,7 @@ export class KiwoomClient {
         body: camelizeKeys(rawJson),
       };
     } catch (error) {
-      mapKiwoomError(error);
+      return mapKiwoomError(error);
     }
   }
 }

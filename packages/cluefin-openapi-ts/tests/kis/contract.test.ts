@@ -14,8 +14,9 @@ const sampleValue = (name: string, fallback?: unknown): string => {
   return `v_${name}`;
 };
 
-const buildInput = (params: { name: string; required: boolean; defaultValue?: string | number | boolean }[]) =>
-  Object.fromEntries(params.map((param) => [param.name, sampleValue(param.name, param.defaultValue)]));
+const buildInput = (
+  params: { name: string; required: boolean; defaultValue?: string | number | boolean | undefined }[],
+) => Object.fromEntries(params.map((param) => [param.name, sampleValue(param.name, param.defaultValue)]));
 
 const hasZodDependency = async (): Promise<boolean> => {
   try {
@@ -75,27 +76,45 @@ test('KIS endpoint metadata should map request path, headers, and query/body', a
 
   const domains = [
     {
-      instance: client.domesticBasicQuote as Record<string, (input: Record<string, unknown>) => Promise<unknown>>,
+      instance: client.domesticBasicQuote as unknown as Record<
+        string,
+        (input: Record<string, unknown>) => Promise<unknown>
+      >,
       defs: domesticBasicQuoteEndpoints,
     },
     {
-      instance: client.domesticStockInfo as Record<string, (input: Record<string, unknown>) => Promise<unknown>>,
+      instance: client.domesticStockInfo as unknown as Record<
+        string,
+        (input: Record<string, unknown>) => Promise<unknown>
+      >,
       defs: domesticStockInfoEndpoints,
     },
     {
-      instance: client.overseasAccount as Record<string, (input: Record<string, unknown>) => Promise<unknown>>,
+      instance: client.overseasAccount as unknown as Record<
+        string,
+        (input: Record<string, unknown>) => Promise<unknown>
+      >,
       defs: overseasAccountEndpoints,
     },
     {
-      instance: client.overseasBasicQuote as Record<string, (input: Record<string, unknown>) => Promise<unknown>>,
+      instance: client.overseasBasicQuote as unknown as Record<
+        string,
+        (input: Record<string, unknown>) => Promise<unknown>
+      >,
       defs: overseasBasicQuoteEndpoints,
     },
     {
-      instance: client.overseasMarketAnalysis as Record<string, (input: Record<string, unknown>) => Promise<unknown>>,
+      instance: client.overseasMarketAnalysis as unknown as Record<
+        string,
+        (input: Record<string, unknown>) => Promise<unknown>
+      >,
       defs: overseasMarketAnalysisEndpoints,
     },
     {
-      instance: client.onmarketBondBasicQuote as Record<string, (input: Record<string, unknown>) => Promise<unknown>>,
+      instance: client.onmarketBondBasicQuote as unknown as Record<
+        string,
+        (input: Record<string, unknown>) => Promise<unknown>
+      >,
       defs: onmarketBondBasicQuoteEndpoints,
     },
   ];
@@ -106,7 +125,7 @@ test('KIS endpoint metadata should map request path, headers, and query/body', a
       expect(typeof method).toBe('function');
 
       const input = buildInput(endpoint.params);
-      const response = (await method(input)) as { body: Record<string, unknown> };
+      const response = (await method!(input)) as { body: Record<string, unknown> };
       expect(response.body.rtCd).toBe('0');
 
       const latest = requests.at(-1);

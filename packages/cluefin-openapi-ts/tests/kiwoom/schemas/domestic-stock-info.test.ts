@@ -203,8 +203,8 @@ describe('domestic-stock-info response schemas', () => {
       };
       const result = executionResponseSchema.parse(input);
       expect(result.cntr_infr).toHaveLength(1);
-      expect(result.cntr_infr[0].tm).toBe('153000');
-      expect(result.cntr_infr[0].cur_prc).toBe('-187900');
+      expect(result.cntr_infr[0]!.tm).toBe('153000');
+      expect(result.cntr_infr[0]!.cur_prc).toBe('-187900');
     });
 
     it('ka10059: parses institutional investor by stock item', () => {
@@ -237,8 +237,8 @@ describe('domestic-stock-info response schemas', () => {
       };
       const result = institutionalInvestorByStockResponseSchema.parse(input);
       expect(result.stk_invsr_orgn).toHaveLength(1);
-      expect(result.stk_invsr_orgn[0].dt).toBe('20260312');
-      expect(result.stk_invsr_orgn[0].ind_invsr).toBe('805003');
+      expect(result.stk_invsr_orgn[0]!.dt).toBe('20260312');
+      expect(result.stk_invsr_orgn[0]!.ind_invsr).toBe('805003');
     });
 
     it('ka90004: parses program trading status by stock item', () => {
@@ -269,7 +269,7 @@ describe('domestic-stock-info response schemas', () => {
       const result = programTradingStatusByStockResponseSchema.parse(input);
       expect(result.tot1).toBe('100');
       expect(result.stk_prm_trde_prst).toHaveLength(1);
-      expect(result.stk_prm_trde_prst[0].stk_cd).toBe('005930');
+      expect(result.stk_prm_trde_prst[0]!.stk_cd).toBe('005930');
     });
   });
 
@@ -306,7 +306,7 @@ describe('domestic-stock-info response schemas', () => {
         ],
       };
       const result = executionResponseSchema.parse(input);
-      expect((result.cntr_infr[0] as Record<string, unknown>).extra_field).toBe('hello');
+      expect((result.cntr_infr[0]! as Record<string, unknown>).extra_field).toBe('hello');
     });
   });
 
@@ -317,7 +317,7 @@ describe('domestic-stock-info response schemas', () => {
         crd_trde_trend: [{}],
       };
       const result = marginTradingTrendResponseSchema.parse(input);
-      const item = result.crd_trde_trend[0];
+      const item = result.crd_trde_trend[0]!;
       expect(item.dt).toBe('');
       expect(item.cur_prc).toBe('');
       expect(item.pred_pre).toBe('');

@@ -54,12 +54,16 @@ export class BaseHttpClient {
             }
           }
 
-          const response = await this.fetchImpl(url.toString(), {
+          const fetchInit: RequestInit = {
             method: request.method,
             headers: request.headers,
-            body: request.body ? JSON.stringify(request.body) : undefined,
             signal: controller.signal,
-          });
+          };
+          if (request.body) {
+            fetchInit.body = JSON.stringify(request.body);
+          }
+
+          const response = await this.fetchImpl(url.toString(), fetchInit);
 
           if (response.status === 400) {
             throw new ApiValidationError('Bad request', {
@@ -80,11 +84,15 @@ export class BaseHttpClient {
             });
           }
           if (response.status === 429) {
-            throw new ApiRateLimitError('Rate limit exceeded', {
+            const rateLimitDetails: import('./errors').ApiErrorDetails = {
               statusCode: response.status,
               responseData: await this.safeJson(response),
-              retryAfter: getRetryAfter(response),
-            });
+            };
+            const retryAfter = getRetryAfter(response);
+            if (retryAfter !== undefined) {
+              rateLimitDetails.retryAfter = retryAfter;
+            }
+            throw new ApiRateLimitError('Rate limit exceeded', rateLimitDetails);
           }
           if (response.status >= 500) {
             throw new ApiServerError('Server error', {

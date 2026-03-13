@@ -105,8 +105,8 @@ describe('domestic-sector response schemas', () => {
       };
       const result = industryInvestorNetBuyResponseSchema.parse(input);
       expect(result.inds_netprps).toHaveLength(1);
-      expect(result.inds_netprps[0].inds_cd).toBe('001');
-      expect(result.inds_netprps[0].orgn_netprps).toBe('+9757');
+      expect(result.inds_netprps[0]!.inds_cd).toBe('001');
+      expect(result.inds_netprps[0]!.orgn_netprps).toBe('+9757');
     });
 
     it('ka20001: parses industryCurrentPrice with time items', () => {
@@ -149,7 +149,7 @@ describe('domestic-sector response schemas', () => {
       const result = industryCurrentPriceResponseSchema.parse(input);
       expect(result.cur_prc).toBe('-5583.25');
       expect(result.inds_cur_prc_tm).toHaveLength(1);
-      expect(result.inds_cur_prc_tm[0].tm_n).toBe('153250');
+      expect(result.inds_cur_prc_tm[0]!.tm_n).toBe('153250');
     });
 
     it('ka20002: parses industryPriceBySector items', () => {
@@ -174,7 +174,7 @@ describe('domestic-sector response schemas', () => {
       };
       const result = industryPriceBySectorResponseSchema.parse(input);
       expect(result.inds_stkpc).toHaveLength(1);
-      expect(result.inds_stkpc[0].stk_cd).toBe('000020');
+      expect(result.inds_stkpc[0]!.stk_cd).toBe('000020');
     });
 
     it('ka20003: parses allIndustryIndex items', () => {
@@ -202,8 +202,8 @@ describe('domestic-sector response schemas', () => {
       };
       const result = allIndustryIndexResponseSchema.parse(input);
       expect(result.all_inds_idex).toHaveLength(1);
-      expect(result.all_inds_idex[0].stk_cd).toBe('001');
-      expect(result.all_inds_idex[0].flo_stk_num).toBe('951');
+      expect(result.all_inds_idex[0]!.stk_cd).toBe('001');
+      expect(result.all_inds_idex[0]!.flo_stk_num).toBe('951');
     });
 
     it('ka20009: parses dailyIndustryCurrentPrice with daily items', () => {
@@ -245,7 +245,7 @@ describe('domestic-sector response schemas', () => {
       const result = dailyIndustryCurrentPriceResponseSchema.parse(input);
       expect(result.cur_prc).toBe('-5583.25');
       expect(result.inds_cur_prc_daly_rept).toHaveLength(1);
-      expect(result.inds_cur_prc_daly_rept[0].dt_n).toBe('20260312');
+      expect(result.inds_cur_prc_daly_rept[0]!.dt_n).toBe('20260312');
     });
   });
 
@@ -285,7 +285,7 @@ describe('domestic-sector response schemas', () => {
         ],
       };
       const result = allIndustryIndexResponseSchema.parse(input);
-      expect((result.all_inds_idex[0] as Record<string, unknown>).extra_field).toBe('hello');
+      expect((result.all_inds_idex[0]! as Record<string, unknown>).extra_field).toBe('hello');
     });
   });
 
@@ -296,7 +296,7 @@ describe('domestic-sector response schemas', () => {
         all_inds_idex: [{}],
       };
       const result = allIndustryIndexResponseSchema.parse(input);
-      const item = result.all_inds_idex[0];
+      const item = result.all_inds_idex[0]!;
       expect(item.stk_cd).toBe('');
       expect(item.stk_nm).toBe('');
       expect(item.cur_prc).toBe('');

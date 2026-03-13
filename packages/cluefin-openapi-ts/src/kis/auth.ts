@@ -174,6 +174,6 @@ export class KisAuth {
     }
 
     const payload = approvalResponseSchema.parse(await response.json());
-    return camelizeKeys(payload);
+    return { approvalKey: payload.approval_key };
   }
 }

@@ -185,7 +185,7 @@ describe('domestic-account response schemas', () => {
       };
       const result = dailyRealizedProfitLossResponseSchema.parse(input);
       expect(result.dt_rlzt_pl).toHaveLength(1);
-      expect(result.dt_rlzt_pl[0].dt).toBe('20260312');
+      expect(result.dt_rlzt_pl[0]!.dt).toBe('20260312');
       expect(result.tot_buy_amt).toBe('1000000');
     });
 
@@ -221,7 +221,7 @@ describe('domestic-account response schemas', () => {
       };
       const result = accountOrderExecutionDetailsResponseSchema.parse(input);
       expect(result.acnt_ord_cntr_prps_dtl).toHaveLength(1);
-      expect(result.acnt_ord_cntr_prps_dtl[0].stk_cd).toBe('005930');
+      expect(result.acnt_ord_cntr_prps_dtl[0]!.stk_cd).toBe('005930');
     });
 
     it('kt00001: parses depositBalanceDetails scalars', () => {
@@ -282,7 +282,7 @@ describe('domestic-account response schemas', () => {
         ],
       };
       const result = dailyRealizedProfitLossResponseSchema.parse(input);
-      expect((result.dt_rlzt_pl[0] as Record<string, unknown>).extra_field).toBe('hello');
+      expect((result.dt_rlzt_pl[0]! as Record<string, unknown>).extra_field).toBe('hello');
     });
   });
 
@@ -293,7 +293,7 @@ describe('domestic-account response schemas', () => {
         acnt_prft_rt: [{}],
       };
       const result = accountProfitRateResponseSchema.parse(input);
-      const item = result.acnt_prft_rt[0];
+      const item = result.acnt_prft_rt[0]!;
       expect(item.dt).toBe('');
       expect(item.stk_cd).toBe('');
       expect(item.stk_nm).toBe('');
