@@ -122,7 +122,7 @@ export class BaseHttpClient {
       },
       this.options.retry,
       (error) => {
-        if (error instanceof ApiRateLimitError || error instanceof ApiServerError) {
+        if (error instanceof ApiRateLimitError || error instanceof ApiServerError || error instanceof ApiTimeoutError) {
           return true;
         }
         if (error instanceof ApiError) {
