@@ -33,6 +33,24 @@ from cluefin_rpc.protocol import (
 
 VERSION = "0.1.0"
 
+CATEGORY_DESCRIPTIONS: dict[str, str] = {
+    "rpc": "서버 상태 확인 및 메서드 목록 조회",
+    "session": "브로커 세션 초기화·상태 조회·종료",
+    "ta": "기술적 분석 지표 (이동평균, RSI, MACD, 볼린저밴드 등)",
+    "stock": "종목 현재가·호가·체결·시세 조회",
+    "chart": "일봉·분봉·틱 차트 데이터 조회",
+    "etf": "ETF 시세·NAV·구성종목·수익률 조회",
+    "financial": "재무제표·재무비율·수익성·안정성·성장성 분석",
+    "schedule": "배당·유상증자·IPO·주주총회 등 기업 일정 조회",
+    "analysis": "투자자·외국인·기관 매매동향 및 시장 분석",
+    "ranking": "거래량·시가총액·등락률·공매도 등 종목 순위",
+    "program": "프로그램 매매·차익거래 잔고·투자자별 추이",
+    "sector": "업종별 지수·투자자 순매수·시세 조회",
+    "market": "금리·공시·휴장일·워런트 등 시장 기본 정보",
+    "dart": "DART 공시 검색·기업 개황·대주주 현황 조회",
+    "theme": "테마 그룹 목록 및 테마별 종목 조회",
+}
+
 # Configure loguru to stderr only
 logger.remove()
 logger.add(sys.stderr, level="DEBUG")
@@ -47,6 +65,19 @@ def _build_dispatcher() -> Dispatcher:
     register_ta_handlers(dispatcher)
     register_dart_handlers(dispatcher)
     return dispatcher
+
+
+def _print_categories(dispatcher: Dispatcher) -> None:
+    methods = dispatcher.list_methods()
+    grouped: dict[str, int] = defaultdict(int)
+    for m in methods:
+        grouped[m["category"] or "other"] += 1
+
+    logger.info("cluefin-rpc v{} — {} categories, {} methods\n", VERSION, len(grouped), len(methods))
+    max_cat = max(len(c) for c in grouped)
+    for category in sorted(grouped):
+        desc = CATEGORY_DESCRIPTIONS.get(category, "")
+        logger.info("  {:<{}}  {:>3} methods  {}", category, max_cat, grouped[category], desc)
 
 
 def _print_methods(dispatcher: Dispatcher) -> None:
@@ -68,11 +99,21 @@ def _print_methods(dispatcher: Dispatcher) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description="cluefin JSON-RPC 2.0 server")
     parser.add_argument(
+        "--list-categories",
+        action="store_true",
+        help="Print RPC method categories and exit",
+    )
+    parser.add_argument(
         "--list-methods",
         action="store_true",
         help="Print registered RPC methods and exit",
     )
     args = parser.parse_args()
+
+    if args.list_categories:
+        dispatcher = _build_dispatcher()
+        _print_categories(dispatcher)
+        return 0
 
     if args.list_methods:
         dispatcher = _build_dispatcher()
