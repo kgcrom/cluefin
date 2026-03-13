@@ -212,7 +212,7 @@ export class KisHttpClient {
           .filter((entry): entry is [string, string] => entry !== null),
       );
 
-      const response = await this.http.request({
+      const requestOptions: import('../core/types').HttpRequestOptions = {
         method: definition.method,
         url: `${this.baseUrl}${definition.path}`,
         headers: {
@@ -222,11 +222,16 @@ export class KisHttpClient {
           appkey: this.appKey,
           appsecret: this.secretKey,
           custtype: 'P',
-          tr_id: definition.trId,
+          ...(definition.trId ? { tr_id: definition.trId } : {}),
         },
-        query: definition.method === 'GET' ? mappedRequest : undefined,
-        body: definition.method === 'POST' ? mappedRequest : undefined,
-      });
+      };
+      if (definition.method === 'GET') {
+        requestOptions.query = mappedRequest;
+      } else {
+        requestOptions.body = mappedRequest;
+      }
+
+      const response = await this.http.request(requestOptions);
 
       const rawJson = await response.json();
       kisEnvelopeSchema.parse(rawJson);
@@ -236,7 +241,7 @@ export class KisHttpClient {
         body: camelizeKeys(rawJson),
       };
     } catch (error) {
-      mapKisError(error);
+      return mapKisError(error);
     }
   }
 }

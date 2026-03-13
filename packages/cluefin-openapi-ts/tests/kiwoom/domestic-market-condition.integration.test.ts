@@ -1,7 +1,44 @@
 import { describe, test } from 'vitest';
 
 import {
+  afterHoursSinglePriceResponseSchema,
+  afterMarketTradingByInvestorItemSchema,
+  afterMarketTradingByInvestorResponseSchema,
+  dailyInstitutionalTradingItemsItemSchema,
+  dailyInstitutionalTradingItemsResponseSchema,
+  dailyStockPriceItemSchema,
+  dailyStockPriceResponseSchema,
+  executionIntensityTrendByDateItemSchema,
+  executionIntensityTrendByDateResponseSchema,
+  executionIntensityTrendByTimeItemSchema,
+  executionIntensityTrendByTimeResponseSchema,
+  institutionalTradingTrendByStockItemSchema,
+  institutionalTradingTrendByStockResponseSchema,
+  intradayTradingByInvestorItemSchema,
+  intradayTradingByInvestorResponseSchema,
+  marketSentimentInfoResponseSchema,
+  newStockWarrantPriceItemSchema,
+  newStockWarrantPriceResponseSchema,
+  programTradingArbitrageBalanceTrendItemSchema,
+  programTradingArbitrageBalanceTrendResponseSchema,
+  programTradingCumulativeTrendItemSchema,
+  programTradingCumulativeTrendResponseSchema,
+  programTradingTrendByDateResponseSchema,
+  programTradingTrendByStockAndDateItemSchema,
+  programTradingTrendByStockAndDateResponseSchema,
+  programTradingTrendByStockAndTimeItemSchema,
+  programTradingTrendByStockAndTimeResponseSchema,
+  programTradingTrendByTimeResponseSchema,
+  securitiesFirmTradingTrendByStockItemSchema,
+  securitiesFirmTradingTrendByStockResponseSchema,
+  stockPriceResponseSchema,
+  stockQuoteByDateItemSchema,
+  stockQuoteByDateResponseSchema,
+  stockQuoteResponseSchema,
+} from '../../src/kiwoom/schemas/domestic-market-condition';
+import {
   assertKiwoomResponse,
+  assertResponseShape,
   getKiwoomClient,
   ONE_MONTH_AGO,
   runIntegration,
@@ -16,24 +53,28 @@ describe('Kiwoom DomesticMarketCondition', () => {
     const client = await getKiwoomClient();
     const res = await client.domesticMarketCondition.getStockQuote({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, stockQuoteResponseSchema);
   });
 
   it('getStockQuoteByDate', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticMarketCondition.getStockQuoteByDate({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, stockQuoteByDateResponseSchema, 'stkDdwkmm', stockQuoteByDateItemSchema);
   });
 
   it('getStockPrice', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticMarketCondition.getStockPrice({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, stockPriceResponseSchema);
   });
 
   it('getMarketSentimentInfo', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticMarketCondition.getMarketSentimentInfo({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, marketSentimentInfoResponseSchema);
   });
 
   it('getNewStockWarrantPrice', async () => {
@@ -42,6 +83,12 @@ describe('Kiwoom DomesticMarketCondition', () => {
       newstkRecvrhtTp: '0',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      newStockWarrantPriceResponseSchema,
+      'newstkRecvrhtMrpr',
+      newStockWarrantPriceItemSchema,
+    );
   });
 
   it('getDailyInstitutionalTradingItems', async () => {
@@ -54,6 +101,12 @@ describe('Kiwoom DomesticMarketCondition', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      dailyInstitutionalTradingItemsResponseSchema,
+      'dalyOrgnTrdeStk',
+      dailyInstitutionalTradingItemsItemSchema,
+    );
   });
 
   it('getInstitutionalTradingTrendByStock', async () => {
@@ -66,6 +119,12 @@ describe('Kiwoom DomesticMarketCondition', () => {
       forPrsmUnpTp: '0',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      institutionalTradingTrendByStockResponseSchema,
+      'stkOrgnTrdeTrnsn',
+      institutionalTradingTrendByStockItemSchema,
+    );
   });
 
   it('getExecutionIntensityTrendByTime', async () => {
@@ -74,6 +133,12 @@ describe('Kiwoom DomesticMarketCondition', () => {
       stkCd: SAMSUNG,
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      executionIntensityTrendByTimeResponseSchema,
+      'cntrStrTm',
+      executionIntensityTrendByTimeItemSchema,
+    );
   });
 
   it('getExecutionIntensityTrendByDate', async () => {
@@ -82,6 +147,12 @@ describe('Kiwoom DomesticMarketCondition', () => {
       stkCd: SAMSUNG,
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      executionIntensityTrendByDateResponseSchema,
+      'cntrStrDaly',
+      executionIntensityTrendByDateItemSchema,
+    );
   });
 
   it('getIntradayTradingByInvestor', async () => {
@@ -95,6 +166,12 @@ describe('Kiwoom DomesticMarketCondition', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      intradayTradingByInvestorResponseSchema,
+      'opmrInvsrTrde',
+      intradayTradingByInvestorItemSchema,
+    );
   });
 
   it('getAfterMarketTradingByInvestor', async () => {
@@ -106,6 +183,12 @@ describe('Kiwoom DomesticMarketCondition', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      afterMarketTradingByInvestorResponseSchema,
+      'opafInvsrTrde',
+      afterMarketTradingByInvestorItemSchema,
+    );
   });
 
   it('getSecuritiesFirmTradingTrendByStock', async () => {
@@ -117,6 +200,12 @@ describe('Kiwoom DomesticMarketCondition', () => {
       endDt: TODAY,
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      securitiesFirmTradingTrendByStockResponseSchema,
+      'secStkTrdeTrend',
+      securitiesFirmTradingTrendByStockItemSchema,
+    );
   });
 
   it('getDailyStockPrice', async () => {
@@ -127,6 +216,7 @@ describe('Kiwoom DomesticMarketCondition', () => {
       indcTp: '0',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, dailyStockPriceResponseSchema, 'dalyStkpc', dailyStockPriceItemSchema);
   });
 
   it('getAfterHoursSinglePrice', async () => {
@@ -135,6 +225,7 @@ describe('Kiwoom DomesticMarketCondition', () => {
       stkCd: SAMSUNG,
     });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, afterHoursSinglePriceResponseSchema);
   });
 
   it('getProgramTradingTrendByTime', async () => {
@@ -147,6 +238,7 @@ describe('Kiwoom DomesticMarketCondition', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, programTradingTrendByTimeResponseSchema);
   });
 
   it('getProgramTradingArbitrageBalanceTrend', async () => {
@@ -156,6 +248,12 @@ describe('Kiwoom DomesticMarketCondition', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      programTradingArbitrageBalanceTrendResponseSchema,
+      'prmTrdeDfrtRemnTrnsn',
+      programTradingArbitrageBalanceTrendItemSchema,
+    );
   });
 
   it('getProgramTradingCumulativeTrend', async () => {
@@ -167,6 +265,12 @@ describe('Kiwoom DomesticMarketCondition', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      programTradingCumulativeTrendResponseSchema,
+      'prmTrdeAccTrnsn',
+      programTradingCumulativeTrendItemSchema,
+    );
   });
 
   it('getProgramTradingTrendByStockAndTime', async () => {
@@ -177,6 +281,12 @@ describe('Kiwoom DomesticMarketCondition', () => {
       date: TODAY,
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      programTradingTrendByStockAndTimeResponseSchema,
+      'stkTmPrmTrdeTrnsn',
+      programTradingTrendByStockAndTimeItemSchema,
+    );
   });
 
   it('getProgramTradingTrendByDate', async () => {
@@ -189,6 +299,7 @@ describe('Kiwoom DomesticMarketCondition', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(res.body, programTradingTrendByDateResponseSchema);
   });
 
   it('getProgramTradingTrendByStockAndDate', async () => {
@@ -199,6 +310,12 @@ describe('Kiwoom DomesticMarketCondition', () => {
       date: TODAY,
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      programTradingTrendByStockAndDateResponseSchema,
+      'stkDalyPrmTrdeTrnsn',
+      programTradingTrendByStockAndDateItemSchema,
+    );
   });
 
   it('getTopIntradayTradingByInvestor', async () => {
@@ -214,5 +331,11 @@ describe('Kiwoom DomesticMarketCondition', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      intradayTradingByInvestorResponseSchema,
+      'opmrInvsrTrde',
+      intradayTradingByInvestorItemSchema,
+    );
   });
 });

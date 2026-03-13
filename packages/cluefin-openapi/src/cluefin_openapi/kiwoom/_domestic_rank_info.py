@@ -14,7 +14,7 @@ from cluefin_openapi.kiwoom._domestic_rank_info_types import (
     DomesticRankInfoTopCurrentDayTradingVolume,
     DomesticRankInfoTopExpectedConclusionPercentageChange,
     DomesticRankInfoTopForeignAccountGroupTrading,
-    DomesticRankInfoTopForeignerLimitExhaustionRate,
+    DomesticRankInfoTopForeignerInstitutionTrading,
     DomesticRankInfoTopForeignerPeriodTrading,
     DomesticRankInfoTopLimitExhaustionRateForeigner,
     DomesticRankInfoTopMarginRatio,
@@ -1401,32 +1401,33 @@ class DomesticRankInfo:
         body = DomesticRankInfoAfterHoursSinglePriceChangeRateRanking.model_validate(response.json())
         return KiwoomHttpResponse(headers=headers, body=body)
 
-    def get_top_foreigner_limit_exhaustion_rate(
+    def get_top_foreigner_institution_trading(
         self,
         mrkt_tp: Literal["000", "001", "101"],
-        dt: Literal["0", "1", "5", "10", "20", "60"],
+        amt_qty_tp: Literal["1", "2"],
+        qry_dt_tp: Literal["0", "1"],
         stex_tp: Literal["1", "2", "3"],
+        date: str = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
-    ) -> KiwoomHttpResponse[DomesticRankInfoTopForeignerLimitExhaustionRate]:
-        """외국인한도소진율상위요청
+    ) -> KiwoomHttpResponse[DomesticRankInfoTopForeignerInstitutionTrading]:
+        """외국인기관매매상위요청
 
         Args:
             mrkt_tp (Literal["000", "001", "101"]): 시장구분 (전체: '000', 코스피: '001', 코스닥: '101')
-            dt (Literal["0", "1", "5", "10", "20", "60"]): 기간
-                - "0": 당일
-                - "1": 전일
-                - "5": 5일
-                - "10": 10일
-                - "20": 20일
-                - "60": 60일
-            stex_tp (Literal["1", "2", "3"]): 거래소구분. (1: KRX, 2: NXT, 3: 통합)
+            amt_qty_tp (Literal["1", "2"]): 금액수량구분
+                - "1": 금액(천만)
+                - "2": 수량(천)
+            qry_dt_tp (Literal["0", "1"]): 조회일자구분
+                - "0": 조회일자 미포함
+                - "1": 조회일자 포함
+            stex_tp (Literal["1", "2", "3"]): 거래소구분 (1: KRX, 2: NXT, 3: 통합)
+            date (str, optional): 날짜 (YYYYMMDD 형식). Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
             next_key (str, optional): 다음 페이지 키. Defaults to "".
 
         Returns:
-            KiwoomHttpResponse[DomesticRankInfoTopForeignerLimitExhaustionRate]: 외국인한도소진율상위요청 결과
-
+            KiwoomHttpResponse[DomesticRankInfoTopForeignerInstitutionTrading]: 외국인기관매매상위요청 결과
         """
         headers = {
             "Content-Type": "application/json;charset=UTF-8",
@@ -1434,16 +1435,19 @@ class DomesticRankInfo:
             "Authorization": f"Bearer {self.client.token}",
             "cont-yn": cont_yn,
             "next-key": next_key,
-            "api-id": "ka10036",
+            "api-id": "ka90009",
         }
         body = {
             "mrkt_tp": mrkt_tp,
-            "dt": dt,
+            "amt_qty_tp": amt_qty_tp,
+            "qry_dt_tp": qry_dt_tp,
             "stex_tp": stex_tp,
         }
+        if date:
+            body["date"] = date
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
-            raise Exception(f"Error fetching top foreigner limit exhaustion rate: {response.text}")
+            raise Exception(f"Error fetching top foreigner institution trading: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
-        body = DomesticRankInfoTopForeignerLimitExhaustionRate.model_validate(response.json())
+        body = DomesticRankInfoTopForeignerInstitutionTrading.model_validate(response.json())
         return KiwoomHttpResponse(headers=headers, body=body)

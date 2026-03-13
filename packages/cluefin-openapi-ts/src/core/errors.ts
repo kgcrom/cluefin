@@ -1,14 +1,14 @@
 export interface ApiErrorDetails {
-  statusCode?: number;
+  statusCode?: number | undefined;
   responseData?: unknown;
-  requestContext?: Record<string, unknown>;
-  retryAfter?: number;
+  requestContext?: Record<string, unknown> | undefined;
+  retryAfter?: number | undefined;
 }
 
 export class ApiError extends Error {
-  public readonly statusCode?: number;
+  public readonly statusCode?: number | undefined;
   public readonly responseData?: unknown;
-  public readonly requestContext?: Record<string, unknown>;
+  public readonly requestContext?: Record<string, unknown> | undefined;
 
   public constructor(message: string, details: ApiErrorDetails = {}) {
     super(message);
@@ -27,7 +27,7 @@ export class ApiNetworkError extends ApiError {}
 export class ApiTimeoutError extends ApiError {}
 
 export class ApiRateLimitError extends ApiError {
-  public readonly retryAfter?: number;
+  public readonly retryAfter?: number | undefined;
 
   public constructor(message: string, details: ApiErrorDetails = {}) {
     super(message, details);

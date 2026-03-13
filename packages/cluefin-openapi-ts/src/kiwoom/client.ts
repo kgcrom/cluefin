@@ -229,13 +229,16 @@ export class KiwoomClient {
 
       const rawJson = await response.json();
       kiwoomEnvelopeSchema.parse(rawJson);
+      if (definition.responseSchema) {
+        definition.responseSchema.parse(rawJson);
+      }
 
       return {
         headers: normalizeHeaders(response.headers),
         body: camelizeKeys(rawJson),
       };
     } catch (error) {
-      mapKiwoomError(error);
+      return mapKiwoomError(error);
     }
   }
 }

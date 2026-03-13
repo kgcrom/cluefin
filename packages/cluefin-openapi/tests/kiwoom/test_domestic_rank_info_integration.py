@@ -14,7 +14,7 @@ from cluefin_openapi.kiwoom._domestic_rank_info_types import (
     DomesticRankInfoTopCurrentDayTradingVolume,
     DomesticRankInfoTopExpectedConclusionPercentageChange,
     DomesticRankInfoTopForeignAccountGroupTrading,
-    DomesticRankInfoTopForeignerLimitExhaustionRate,
+    DomesticRankInfoTopForeignerInstitutionTrading,
     DomesticRankInfoTopForeignerPeriodTrading,
     DomesticRankInfoTopLimitExhaustionRateForeigner,
     DomesticRankInfoTopMarginRatio,
@@ -289,7 +289,9 @@ def test_get_after_hours_single_price_change_rate_ranking(client: Client):
 
 
 @pytest.mark.integration
-def test_get_top_foreigner_limit_exhaustion_rate(client: Client):
-    response = client.rank_info.get_top_foreigner_limit_exhaustion_rate(mrkt_tp="001", dt="1", stex_tp="1")
+def test_get_top_foreigner_institution_trading(client: Client):
+    response = client.rank_info.get_top_foreigner_institution_trading(
+        mrkt_tp="001", amt_qty_tp="1", qry_dt_tp="0", stex_tp="1"
+    )
     assert response is not None
-    assert isinstance(response.body, DomesticRankInfoTopForeignerLimitExhaustionRate)
+    assert isinstance(response.body, DomesticRankInfoTopForeignerInstitutionTrading)

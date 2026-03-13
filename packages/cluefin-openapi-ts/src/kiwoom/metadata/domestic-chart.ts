@@ -1,8 +1,25 @@
 import type { KiwoomEndpointDefinition } from '../../core/types';
+import {
+  individualStockInstitutionalChartResponseSchema,
+  industryDailyResponseSchema,
+  industryMinuteResponseSchema,
+  industryMonthlyResponseSchema,
+  industryTickResponseSchema,
+  industryWeeklyResponseSchema,
+  industryYearlyResponseSchema,
+  intradayInvestorTradingResponseSchema,
+  stockDailyResponseSchema,
+  stockMinuteResponseSchema,
+  stockMonthlyResponseSchema,
+  stockTickResponseSchema,
+  stockWeeklyResponseSchema,
+  stockYearlyResponseSchema,
+} from '../schemas/domestic-chart';
 
 export const domesticChartEndpoints: KiwoomEndpointDefinition[] = [
   {
     methodName: 'getIndividualStockInstitutionalChart',
+    responseSchema: individualStockInstitutionalChartResponseSchema,
     path: '/api/dostk/chart',
     apiId: 'ka10060',
     bodyMap: {
@@ -51,6 +68,7 @@ export const domesticChartEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getIntradayInvestorTrading',
+    responseSchema: intradayInvestorTradingResponseSchema,
     path: '/api/dostk/chart',
     apiId: 'ka10064',
     bodyMap: {
@@ -94,6 +112,7 @@ export const domesticChartEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getStockTick',
+    responseSchema: stockTickResponseSchema,
     path: '/api/dostk/chart',
     apiId: 'ka10079',
     bodyMap: {
@@ -133,6 +152,7 @@ export const domesticChartEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getStockMinute',
+    responseSchema: stockMinuteResponseSchema,
     path: '/api/dostk/chart',
     apiId: 'ka10080',
     bodyMap: {
@@ -172,6 +192,7 @@ export const domesticChartEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getStockDaily',
+    responseSchema: stockDailyResponseSchema,
     path: '/api/dostk/chart',
     apiId: 'ka10081',
     bodyMap: {
@@ -210,6 +231,7 @@ export const domesticChartEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getStockWeekly',
+    responseSchema: stockWeeklyResponseSchema,
     path: '/api/dostk/chart',
     apiId: 'ka10082',
     bodyMap: {
@@ -248,6 +270,7 @@ export const domesticChartEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getStockMonthly',
+    responseSchema: stockMonthlyResponseSchema,
     path: '/api/dostk/chart',
     apiId: 'ka10083',
     bodyMap: {
@@ -286,6 +309,7 @@ export const domesticChartEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getStockYearly',
+    responseSchema: stockYearlyResponseSchema,
     path: '/api/dostk/chart',
     apiId: 'ka10094',
     bodyMap: {
@@ -324,6 +348,7 @@ export const domesticChartEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getIndustryTick',
+    responseSchema: industryTickResponseSchema,
     path: '/api/dostk/chart',
     apiId: 'ka20004',
     bodyMap: {
@@ -357,6 +382,7 @@ export const domesticChartEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getIndustryMinute',
+    responseSchema: industryMinuteResponseSchema,
     path: '/api/dostk/chart',
     apiId: 'ka20005',
     bodyMap: {
@@ -390,6 +416,7 @@ export const domesticChartEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getIndustryDaily',
+    responseSchema: industryDailyResponseSchema,
     path: '/api/dostk/chart',
     apiId: 'ka20006',
     bodyMap: {
@@ -423,6 +450,7 @@ export const domesticChartEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getIndustryWeekly',
+    responseSchema: industryWeeklyResponseSchema,
     path: '/api/dostk/chart',
     apiId: 'ka20007',
     bodyMap: {
@@ -456,6 +484,7 @@ export const domesticChartEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getIndustryMonthly',
+    responseSchema: industryMonthlyResponseSchema,
     path: '/api/dostk/chart',
     apiId: 'ka20008',
     bodyMap: {
@@ -489,6 +518,7 @@ export const domesticChartEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getIndustryYearly',
+    responseSchema: industryYearlyResponseSchema,
     path: '/api/dostk/chart',
     apiId: 'ka20019',
     bodyMap: {

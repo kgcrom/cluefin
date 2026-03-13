@@ -8,8 +8,8 @@ export type WebSocketEventType = 'data' | 'connected' | 'disconnected' | 'error'
 
 export interface WebSocketMessage {
   messageType: MessageType;
-  trId?: string;
-  data?: string[];
+  trId?: string | undefined;
+  data?: string[] | undefined;
   raw: string;
   encrypted: boolean;
 }

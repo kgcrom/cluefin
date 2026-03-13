@@ -170,9 +170,10 @@ CALL_KWARGS: Dict[str, Dict[str, str]] = {
         "crd_cnd": "0",
         "trde_prica": "0",
     },
-    "get_top_foreigner_limit_exhaustion_rate": {
+    "get_top_foreigner_institution_trading": {
         "mrkt_tp": "001",
-        "dt": "1",
+        "amt_qty_tp": "1",
+        "qry_dt_tp": "0",
         "stex_tp": "1",
     },
 }

@@ -1,10 +1,35 @@
 import type { KiwoomEndpointDefinition } from '../../core/types';
+import {
+  afterHoursSinglePriceChangeRateRankingResponseSchema,
+  rapidlyIncreasingRemainingOrderQuantityResponseSchema,
+  rapidlyIncreasingTotalSellOrdersResponseSchema,
+  rapidlyIncreasingTradingVolumeResponseSchema,
+  sameNetBuySellRankingResponseSchema,
+  stockSpecificSecuritiesFirmRankingResponseSchema,
+  topConsecutiveNetBuySellByForeignersResponseSchema,
+  topCurrentDayDeviationSourcesResponseSchema,
+  topCurrentDayMajorTradersResponseSchema,
+  topCurrentDayTradingVolumeResponseSchema,
+  topExpectedConclusionPercentageChangeResponseSchema,
+  topForeignAccountGroupTradingResponseSchema,
+  topForeignerInstitutionTradingResponseSchema,
+  topForeignerPeriodTradingResponseSchema,
+  topLimitExhaustionRateForeignerResponseSchema,
+  topMarginRatioResponseSchema,
+  topNetBuyTraderRankingResponseSchema,
+  topPercentageChangeFromPreviousDayResponseSchema,
+  topPreviousDayTradingVolumeResponseSchema,
+  topRemainingOrderQuantityResponseSchema,
+  topSecuritiesFirmTradingResponseSchema,
+  topTransactionValueResponseSchema,
+} from '../schemas/domestic-rank-info';
 
 export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
   {
     methodName: 'getTopRemainingOrderQuantity',
     path: '/api/dostk/rkinfo',
     apiId: 'ka10020',
+    responseSchema: topRemainingOrderQuantityResponseSchema,
     bodyMap: {
       mrkt_tp: 'mrktTp',
       sort_tp: 'sortTp',
@@ -58,6 +83,7 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
     methodName: 'getRapidlyIncreasingRemainingOrderQuantity',
     path: '/api/dostk/rkinfo',
     apiId: 'ka10021',
+    responseSchema: rapidlyIncreasingRemainingOrderQuantityResponseSchema,
     bodyMap: {
       mrkt_tp: 'mrktTp',
       trde_tp: 'trdeTp',
@@ -116,6 +142,7 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
     methodName: 'getRapidlyIncreasingTotalSellOrders',
     path: '/api/dostk/rkinfo',
     apiId: 'ka10022',
+    responseSchema: rapidlyIncreasingTotalSellOrdersResponseSchema,
     bodyMap: {
       mrkt_tp: 'mrktTp',
       rt_tp: 'rtTp',
@@ -169,6 +196,7 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
     methodName: 'getRapidlyIncreasingTradingVolume',
     path: '/api/dostk/rkinfo',
     apiId: 'ka10023',
+    responseSchema: rapidlyIncreasingTradingVolumeResponseSchema,
     bodyMap: {
       mrkt_tp: 'mrktTp',
       sort_tp: 'sortTp',
@@ -232,6 +260,7 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
     methodName: 'getTopPercentageChangeFromPreviousDay',
     path: '/api/dostk/rkinfo',
     apiId: 'ka10027',
+    responseSchema: topPercentageChangeFromPreviousDayResponseSchema,
     bodyMap: {
       mrkt_tp: 'mrktTp',
       sort_tp: 'sortTp',
@@ -300,6 +329,7 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
     methodName: 'getTopExpectedConclusionPercentageChange',
     path: '/api/dostk/rkinfo',
     apiId: 'ka10029',
+    responseSchema: topExpectedConclusionPercentageChangeResponseSchema,
     bodyMap: {
       mrkt_tp: 'mrktTp',
       sort_tp: 'sortTp',
@@ -358,6 +388,7 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
     methodName: 'getTopCurrentDayTradingVolume',
     path: '/api/dostk/rkinfo',
     apiId: 'ka10030',
+    responseSchema: topCurrentDayTradingVolumeResponseSchema,
     bodyMap: {
       mrkt_tp: 'mrktTp',
       sort_tp: 'sortTp',
@@ -427,6 +458,7 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
     methodName: 'getTopPreviousDayTradingVolume',
     path: '/api/dostk/rkinfo',
     apiId: 'ka10031',
+    responseSchema: topPreviousDayTradingVolumeResponseSchema,
     bodyMap: {
       mrkt_tp: 'mrktTp',
       qry_tp: 'qryTp',
@@ -475,6 +507,7 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
     methodName: 'getTopTransactionValue',
     path: '/api/dostk/rkinfo',
     apiId: 'ka10032',
+    responseSchema: topTransactionValueResponseSchema,
     bodyMap: {
       mrkt_tp: 'mrktTp',
       mang_stk_incls: 'mangStkIncls',
@@ -513,6 +546,7 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
     methodName: 'getTopMarginRatio',
     path: '/api/dostk/rkinfo',
     apiId: 'ka10033',
+    responseSchema: topMarginRatioResponseSchema,
     bodyMap: {
       mrkt_tp: 'mrktTp',
       trde_qty_tp: 'trdeQtyTp',
@@ -566,6 +600,7 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
     methodName: 'getTopForeignerPeriodTrading',
     path: '/api/dostk/rkinfo',
     apiId: 'ka10034',
+    responseSchema: topForeignerPeriodTradingResponseSchema,
     bodyMap: {
       mrkt_tp: 'mrktTp',
       trde_tp: 'trdeTp',
@@ -609,6 +644,7 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
     methodName: 'getTopConsecutiveNetBuySellByForeigners',
     path: '/api/dostk/rkinfo',
     apiId: 'ka10035',
+    responseSchema: topConsecutiveNetBuySellByForeignersResponseSchema,
     bodyMap: {
       mrkt_tp: 'mrktTp',
       trde_tp: 'trdeTp',
@@ -652,6 +688,7 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
     methodName: 'getTopLimitExhaustionRateForeigner',
     path: '/api/dostk/rkinfo',
     apiId: 'ka10036',
+    responseSchema: topLimitExhaustionRateForeignerResponseSchema,
     bodyMap: {
       mrkt_tp: 'mrktTp',
       dt: 'dt',
@@ -690,6 +727,7 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
     methodName: 'getTopForeignAccountGroupTrading',
     path: '/api/dostk/rkinfo',
     apiId: 'ka10037',
+    responseSchema: topForeignAccountGroupTradingResponseSchema,
     bodyMap: {
       mrkt_tp: 'mrktTp',
       dt: 'dt',
@@ -738,6 +776,7 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
     methodName: 'getStockSpecificSecuritiesFirmRanking',
     path: '/api/dostk/rkinfo',
     apiId: 'ka10038',
+    responseSchema: stockSpecificSecuritiesFirmRankingResponseSchema,
     bodyMap: {
       stk_cd: 'stkCd',
       strt_dt: 'strtDt',
@@ -787,6 +826,7 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
     methodName: 'getTopSecuritiesFirmTrading',
     path: '/api/dostk/rkinfo',
     apiId: 'ka10039',
+    responseSchema: topSecuritiesFirmTradingResponseSchema,
     bodyMap: {
       mmcm_cd: 'mmcmCd',
       trde_qty_tp: 'trdeQtyTp',
@@ -835,6 +875,7 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
     methodName: 'getTopCurrentDayMajorTraders',
     path: '/api/dostk/rkinfo',
     apiId: 'ka10040',
+    responseSchema: topCurrentDayMajorTradersResponseSchema,
     bodyMap: {
       stk_cd: 'stkCd',
     },
@@ -863,6 +904,7 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
     methodName: 'getTopNetBuyTraderRanking',
     path: '/api/dostk/rkinfo',
     apiId: 'ka10042',
+    responseSchema: topNetBuyTraderRankingResponseSchema,
     bodyMap: {
       stk_cd: 'stkCd',
       strt_dt: 'strtDt',
@@ -921,6 +963,7 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
     methodName: 'getTopCurrentDayDeviationSources',
     path: '/api/dostk/rkinfo',
     apiId: 'ka10053',
+    responseSchema: topCurrentDayDeviationSourcesResponseSchema,
     bodyMap: {
       stk_cd: 'stkCd',
     },
@@ -949,6 +992,7 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
     methodName: 'getSameNetBuySellRanking',
     path: '/api/dostk/rkinfo',
     apiId: 'ka10062',
+    responseSchema: sameNetBuySellRankingResponseSchema,
     bodyMap: {
       strt_dt: 'strtDt',
       end_dt: 'endDt',
@@ -1007,6 +1051,7 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
     methodName: 'getAfterHoursSinglePriceChangeRateRanking',
     path: '/api/dostk/rkinfo',
     apiId: 'ka10098',
+    responseSchema: afterHoursSinglePriceChangeRateRankingResponseSchema,
     bodyMap: {
       mrkt_tp: 'mrktTp',
       sort_base: 'sortBase',
@@ -1057,13 +1102,16 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'getTopForeignerLimitExhaustionRate',
+    methodName: 'getTopForeignerInstitutionTrading',
     path: '/api/dostk/rkinfo',
-    apiId: 'ka10036',
+    apiId: 'ka90009',
+    responseSchema: topForeignerInstitutionTradingResponseSchema,
     bodyMap: {
       mrkt_tp: 'mrktTp',
-      dt: 'dt',
+      amt_qty_tp: 'amtQtyTp',
+      qry_dt_tp: 'qryDtTp',
       stex_tp: 'stexTp',
+      date: 'date',
     },
     headerParamMap: {
       'cont-yn': 'contYn',
@@ -1075,12 +1123,21 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
         required: true,
       },
       {
-        name: 'dt',
+        name: 'amtQtyTp',
+        required: true,
+      },
+      {
+        name: 'qryDtTp',
         required: true,
       },
       {
         name: 'stexTp',
         required: true,
+      },
+      {
+        name: 'date',
+        required: false,
+        defaultValue: '',
       },
       {
         name: 'contYn',
@@ -1118,4 +1175,4 @@ export type DomesticRankInfoMethodName =
   | 'getTopCurrentDayDeviationSources'
   | 'getSameNetBuySellRanking'
   | 'getAfterHoursSinglePriceChangeRateRanking'
-  | 'getTopForeignerLimitExhaustionRate';
+  | 'getTopForeignerInstitutionTrading';

@@ -1,5 +1,7 @@
 import path from 'node:path';
 import { expect } from 'vitest';
+import type { z } from 'zod';
+import { toCamelCase } from '../../src/core/case-convert';
 import type { ApiResponse } from '../../src/core/types';
 import { KisAuth } from '../../src/kis/auth';
 import { KisHttpClient } from '../../src/kis/http-client';
@@ -81,4 +83,24 @@ export function assertKiwoomResponse(res: ApiResponse): void {
     console.error('Kiwoom Error Response:', JSON.stringify(res.body, null, 2));
   }
   expect(res.body.returnCode).toEqual(0);
+}
+
+export function assertResponseShape(
+  body: Record<string, unknown>,
+  responseSchema: z.ZodObject<z.ZodRawShape>,
+  itemKey?: string,
+  itemSchema?: z.ZodObject<z.ZodRawShape>,
+): void {
+  const expectedKeys = Object.keys(responseSchema.shape).map(toCamelCase).sort();
+  const actualKeys = Object.keys(body).sort();
+  expect(actualKeys).toEqual(expectedKeys);
+
+  if (itemKey && itemSchema) {
+    const items = body[itemKey] as Record<string, unknown>[];
+    if (items.length > 0) {
+      const expectedItemKeys = Object.keys(itemSchema.shape).map(toCamelCase).sort();
+      const actualItemKeys = Object.keys(items[0]!).sort();
+      expect(actualItemKeys).toEqual(expectedItemKeys);
+    }
+  }
 }

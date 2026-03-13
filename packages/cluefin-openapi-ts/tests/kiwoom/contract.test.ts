@@ -11,8 +11,9 @@ const sampleValue = (name: string, fallback?: unknown): string => {
   return `v_${name}`;
 };
 
-const buildInput = (params: { name: string; required: boolean; defaultValue?: string | number | boolean }[]) =>
-  Object.fromEntries(params.map((param) => [param.name, sampleValue(param.name, param.defaultValue)]));
+const buildInput = (
+  params: { name: string; required: boolean; defaultValue?: string | number | boolean | undefined }[],
+) => Object.fromEntries(params.map((param) => [param.name, sampleValue(param.name, param.defaultValue)]));
 
 const hasZodDependency = async (): Promise<boolean> => {
   try {
@@ -66,15 +67,21 @@ test('Kiwoom endpoint metadata should map request path, headers, and body', asyn
 
   const domains = [
     {
-      instance: client.domesticChart as Record<string, (input: Record<string, unknown>) => Promise<unknown>>,
+      instance: client.domesticChart as unknown as Record<string, (input: Record<string, unknown>) => Promise<unknown>>,
       defs: domesticChartEndpoints,
     },
     {
-      instance: client.domesticStockInfo as Record<string, (input: Record<string, unknown>) => Promise<unknown>>,
+      instance: client.domesticStockInfo as unknown as Record<
+        string,
+        (input: Record<string, unknown>) => Promise<unknown>
+      >,
       defs: domesticStockInfoEndpoints,
     },
     {
-      instance: client.domesticRankInfo as Record<string, (input: Record<string, unknown>) => Promise<unknown>>,
+      instance: client.domesticRankInfo as unknown as Record<
+        string,
+        (input: Record<string, unknown>) => Promise<unknown>
+      >,
       defs: domesticRankInfoEndpoints,
     },
   ];
@@ -85,7 +92,7 @@ test('Kiwoom endpoint metadata should map request path, headers, and body', asyn
       expect(typeof method).toBe('function');
 
       const input = buildInput(endpoint.params);
-      const response = (await method(input)) as { body: Record<string, unknown> };
+      const response = (await method!(input)) as { body: Record<string, unknown> };
       expect(response.body.returnCode).toBe(0);
 
       const latest = requests.at(-1);
