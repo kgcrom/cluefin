@@ -1,6 +1,6 @@
 import { describe, test } from 'vitest';
 
-import { assertKisResponse, getKisClient, ONE_MONTH_AGO, runIntegration, TODAY } from '../_helpers/integration-setup';
+import { assertKisResponse, getKisClient, runIntegration, TODAY } from '../_helpers/integration-setup';
 
 const it = runIntegration ? test : test.skip;
 
