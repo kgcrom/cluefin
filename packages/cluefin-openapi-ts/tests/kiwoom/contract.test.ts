@@ -92,7 +92,7 @@ test('Kiwoom endpoint metadata should map request path, headers, and body', asyn
       expect(typeof method).toBe('function');
 
       const input = buildInput(endpoint.params);
-      const response = (await method!(input)) as { body: Record<string, unknown> };
+      const response = (await method?.(input)) as { body: Record<string, unknown> };
       expect(response.body.returnCode).toBe(0);
 
       const latest = requests.at(-1);
