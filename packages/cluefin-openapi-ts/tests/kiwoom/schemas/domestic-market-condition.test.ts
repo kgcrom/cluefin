@@ -165,7 +165,7 @@ describe('domestic-market-condition response schemas', () => {
       };
       const result = stockQuoteByDateResponseSchema.parse(input);
       expect(result.stk_ddwkmm).toHaveLength(1);
-      expect(result.stk_ddwkmm[0]!.date).toBe('20260312');
+      expect(result.stk_ddwkmm[0]?.date).toBe('20260312');
     });
 
     it('ka10044: parses daily institutional trading item', () => {
@@ -186,7 +186,7 @@ describe('domestic-market-condition response schemas', () => {
       };
       const result = dailyInstitutionalTradingItemsResponseSchema.parse(input);
       expect(result.daly_orgn_trde_stk).toHaveLength(1);
-      expect(result.daly_orgn_trde_stk[0]!.stk_cd).toBe('005930');
+      expect(result.daly_orgn_trde_stk[0]?.stk_cd).toBe('005930');
     });
 
     it('ka10086: parses daily stock price item', () => {
@@ -221,8 +221,8 @@ describe('domestic-market-condition response schemas', () => {
       };
       const result = dailyStockPriceResponseSchema.parse(input);
       expect(result.daly_stkpc).toHaveLength(1);
-      expect(result.daly_stkpc[0]!.date).toBe('20260312');
-      expect(result.daly_stkpc[0]!.for_netprps).toBe('--6518898');
+      expect(result.daly_stkpc[0]?.date).toBe('20260312');
+      expect(result.daly_stkpc[0]?.for_netprps).toBe('--6518898');
     });
 
     it('ka90007: parses program trading cumulative trend item', () => {
@@ -244,7 +244,7 @@ describe('domestic-market-condition response schemas', () => {
       };
       const result = programTradingCumulativeTrendResponseSchema.parse(input);
       expect(result.prm_trde_acc_trnsn).toHaveLength(1);
-      expect(result.prm_trde_acc_trnsn[0]!.kospi200).toBe('+827.51');
+      expect(result.prm_trde_acc_trnsn[0]?.kospi200).toBe('+827.51');
     });
   });
 
@@ -278,7 +278,7 @@ describe('domestic-market-condition response schemas', () => {
         ],
       };
       const result = securitiesFirmTradingTrendByStockResponseSchema.parse(input);
-      expect((result.sec_stk_trde_trend[0]! as Record<string, unknown>).extra_field).toBe('hello');
+      expect((result.sec_stk_trde_trend[0] as Record<string, unknown>).extra_field).toBe('hello');
     });
   });
 
@@ -289,7 +289,7 @@ describe('domestic-market-condition response schemas', () => {
         cntr_str_daly: [{}],
       };
       const result = executionIntensityTrendByDateResponseSchema.parse(input);
-      const item = result.cntr_str_daly[0]!;
+      const item = result.cntr_str_daly[0];
       expect(item.dt).toBe('');
       expect(item.cur_prc).toBe('');
       expect(item.cntr_str).toBe('');

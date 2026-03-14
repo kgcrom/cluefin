@@ -370,6 +370,8 @@ class SettlementDateItem(BaseModel):
 class SettlementDate(BaseModel, KisHttpBody):
     """해외결제일자조회"""
 
+    ctx_area_fk: str = Field(default="", title="연속조회검색조건", max_length=100)
+    ctx_area_nk: str = Field(default="", title="연속조회키", max_length=100)
     # TODO(typo): 문서는 object지만 실제로는 list
     output: Sequence[SettlementDateItem] = Field(default_factory=list)
 

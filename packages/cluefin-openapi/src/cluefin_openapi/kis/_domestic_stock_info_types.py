@@ -288,7 +288,7 @@ class KsdDividendDecisionItem(BaseModel):
 class KsdDividendDecision(BaseModel, KisHttpBody):
     """예탁원정보(배당결정)"""
 
-    output: Sequence[KsdDividendDecisionItem] = Field(default_factory=list)
+    output1: Sequence[KsdDividendDecisionItem] = Field(default_factory=list)
 
 
 class KsdStockDividendDecisionItem(BaseModel):
@@ -457,7 +457,7 @@ class KsdPaidInCapitalIncreaseScheduleItem(BaseModel):
 class KsdPaidInCapitalIncreaseSchedule(BaseModel, KisHttpBody):
     """예탁원정보(유상증자일정)"""
 
-    output: Sequence[KsdPaidInCapitalIncreaseScheduleItem] = Field(default_factory=list)
+    output1: Sequence[KsdPaidInCapitalIncreaseScheduleItem] = Field(default_factory=list)
 
 
 class KsdStockDividendScheduleItem(BaseModel):
@@ -561,6 +561,8 @@ class StockLoanableListItem2(BaseModel):
 class StockLoanableList(BaseModel, KisHttpBody):
     """당사 대주가능 종목"""
 
+    ctx_area_fk200: str = Field(default="", title="연속조회검색조건200", max_length=200)
+    ctx_area_nk100: str = Field(default="", title="연속조회키100", max_length=100)
     output1: Sequence[StockLoanableListItem1] = Field(default_factory=list)
     output2: StockLoanableListItem2 = Field(title="응답상세2")
 
