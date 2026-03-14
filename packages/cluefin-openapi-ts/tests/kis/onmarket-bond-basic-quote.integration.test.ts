@@ -1,6 +1,27 @@
 import { describe, test } from 'vitest';
-
-import { assertKisResponse, getKisClient, runIntegration, TODAY } from '../_helpers/integration-setup';
+import {
+  getBondAskingPriceResponseSchema,
+  getBondAvgUnitPriceOutput1ItemSchema,
+  getBondAvgUnitPriceOutput2ItemSchema,
+  getBondAvgUnitPriceOutput3ItemSchema,
+  getBondAvgUnitPriceResponseSchema,
+  getBondDailyChartPriceItemSchema,
+  getBondDailyChartPriceResponseSchema,
+  getBondDailyPriceItemSchema,
+  getBondDailyPriceResponseSchema,
+  getBondExecutionItemSchema,
+  getBondExecutionResponseSchema,
+  getBondInfoResponseSchema,
+  getBondIssueInfoResponseSchema,
+  getBondPriceResponseSchema,
+} from '../../src/kis/schemas/onmarket-bond-basic-quote';
+import {
+  assertKisResponse,
+  assertResponseShape,
+  getKisClient,
+  runIntegration,
+  TODAY,
+} from '../_helpers/integration-setup';
 
 const it = runIntegration ? test : test.skip;
 
@@ -13,6 +34,7 @@ describe('KIS OnmarketBondBasicQuote', () => {
       fidInputIscd: BOND_CODE,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getBondPriceResponseSchema);
   });
 
   it('getBondInfo', async () => {
@@ -21,6 +43,7 @@ describe('KIS OnmarketBondBasicQuote', () => {
       pdno: BOND_CODE,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getBondInfoResponseSchema);
   });
 
   it('getBondAskingPrice', async () => {
@@ -29,6 +52,7 @@ describe('KIS OnmarketBondBasicQuote', () => {
       fidInputIscd: BOND_CODE,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getBondAskingPriceResponseSchema);
   });
 
   it('getBondExecution', async () => {
@@ -37,6 +61,7 @@ describe('KIS OnmarketBondBasicQuote', () => {
       fidInputIscd: BOND_CODE,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getBondExecutionResponseSchema, 'output', getBondExecutionItemSchema);
   });
 
   it('getBondDailyPrice', async () => {
@@ -45,6 +70,7 @@ describe('KIS OnmarketBondBasicQuote', () => {
       fidInputIscd: BOND_CODE,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getBondDailyPriceResponseSchema, 'output', getBondDailyPriceItemSchema);
   });
 
   it('getBondDailyChartPrice', async () => {
@@ -53,6 +79,7 @@ describe('KIS OnmarketBondBasicQuote', () => {
       fidInputIscd: BOND_CODE,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getBondDailyChartPriceResponseSchema, 'output', getBondDailyChartPriceItemSchema);
   });
 
   it('getBondAvgUnitPrice', async () => {
@@ -62,6 +89,10 @@ describe('KIS OnmarketBondBasicQuote', () => {
       inqrEndDt: TODAY,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getBondAvgUnitPriceResponseSchema);
+    assertResponseShape(res.body, getBondAvgUnitPriceResponseSchema, 'output1', getBondAvgUnitPriceOutput1ItemSchema);
+    assertResponseShape(res.body, getBondAvgUnitPriceResponseSchema, 'output2', getBondAvgUnitPriceOutput2ItemSchema);
+    assertResponseShape(res.body, getBondAvgUnitPriceResponseSchema, 'output3', getBondAvgUnitPriceOutput3ItemSchema);
   });
 
   it('getBondIssueInfo', async () => {
@@ -70,5 +101,6 @@ describe('KIS OnmarketBondBasicQuote', () => {
       pdno: BOND_CODE,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getBondIssueInfoResponseSchema);
   });
 });

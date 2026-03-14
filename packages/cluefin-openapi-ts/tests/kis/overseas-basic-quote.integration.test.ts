@@ -1,6 +1,36 @@
 import { describe, test } from 'vitest';
-
-import { assertKisResponse, getKisClient, ONE_MONTH_AGO, runIntegration, TODAY } from '../_helpers/integration-setup';
+import {
+  getConclusionTrendOutput2ItemSchema,
+  getConclusionTrendResponseSchema,
+  getCurrentPriceFirstQuoteResponseSchema,
+  getIndexMinuteChartOutput2ItemSchema,
+  getIndexMinuteChartResponseSchema,
+  getItemIndexExchangePeriodPriceOutput2ItemSchema,
+  getItemIndexExchangePeriodPriceResponseSchema,
+  getProductBaseInfoResponseSchema,
+  getSectorCodesOutput2ItemSchema,
+  getSectorCodesResponseSchema,
+  getSectorPriceOutput2ItemSchema,
+  getSectorPriceResponseSchema,
+  getSettlementDateItemSchema,
+  getSettlementDateResponseSchema,
+  getStockCurrentPriceConclusionResponseSchema,
+  getStockCurrentPriceDetailResponseSchema,
+  getStockMinuteChartOutput2ItemSchema,
+  getStockMinuteChartResponseSchema,
+  getStockPeriodQuoteOutput2ItemSchema,
+  getStockPeriodQuoteResponseSchema,
+  searchByConditionOutput2ItemSchema,
+  searchByConditionResponseSchema,
+} from '../../src/kis/schemas/overseas-basic-quote';
+import {
+  assertKisResponse,
+  assertResponseShape,
+  getKisClient,
+  ONE_MONTH_AGO,
+  runIntegration,
+  TODAY,
+} from '../_helpers/integration-setup';
 
 const it = runIntegration ? test : test.skip;
 
@@ -13,6 +43,7 @@ describe('KIS OverseasBasicQuote', () => {
       symb: 'AAPL',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getStockCurrentPriceDetailResponseSchema);
   });
 
   it('getStockPeriodQuote', async () => {
@@ -26,6 +57,8 @@ describe('KIS OverseasBasicQuote', () => {
       modp: '0',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getStockPeriodQuoteResponseSchema);
+    assertResponseShape(res.body, getStockPeriodQuoteResponseSchema, 'output2', getStockPeriodQuoteOutput2ItemSchema);
   });
 
   it('getProductBaseInfo', async () => {
@@ -35,6 +68,7 @@ describe('KIS OverseasBasicQuote', () => {
       pdno: 'AAPL',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getProductBaseInfoResponseSchema);
   });
 
   it('getCurrentPriceFirstQuote', async () => {
@@ -44,6 +78,7 @@ describe('KIS OverseasBasicQuote', () => {
       symb: 'AAPL',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getCurrentPriceFirstQuoteResponseSchema);
   });
 
   it('getStockCurrentPriceConclusion', async () => {
@@ -54,6 +89,7 @@ describe('KIS OverseasBasicQuote', () => {
       symb: 'AAPL',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getStockCurrentPriceConclusionResponseSchema);
   });
 
   it('getConclusionTrend', async () => {
@@ -66,6 +102,8 @@ describe('KIS OverseasBasicQuote', () => {
       symb: 'AAPL',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getConclusionTrendResponseSchema);
+    assertResponseShape(res.body, getConclusionTrendResponseSchema, 'output2', getConclusionTrendOutput2ItemSchema);
   });
 
   it('getStockMinuteChart', async () => {
@@ -82,6 +120,8 @@ describe('KIS OverseasBasicQuote', () => {
       keyb: '',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getStockMinuteChartResponseSchema);
+    assertResponseShape(res.body, getStockMinuteChartResponseSchema, 'output2', getStockMinuteChartOutput2ItemSchema);
   });
 
   it('getIndexMinuteChart', async () => {
@@ -93,6 +133,8 @@ describe('KIS OverseasBasicQuote', () => {
       fidPwDataIncuYn: 'N',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getIndexMinuteChartResponseSchema);
+    assertResponseShape(res.body, getIndexMinuteChartResponseSchema, 'output2', getIndexMinuteChartOutput2ItemSchema);
   });
 
   it('getItemIndexExchangePeriodPrice', async () => {
@@ -105,6 +147,13 @@ describe('KIS OverseasBasicQuote', () => {
       fidPeriodDivCode: 'D',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getItemIndexExchangePeriodPriceResponseSchema);
+    assertResponseShape(
+      res.body,
+      getItemIndexExchangePeriodPriceResponseSchema,
+      'output2',
+      getItemIndexExchangePeriodPriceOutput2ItemSchema,
+    );
   });
 
   it('searchByCondition', async () => {
@@ -114,6 +163,8 @@ describe('KIS OverseasBasicQuote', () => {
       excd: 'NAS',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, searchByConditionResponseSchema);
+    assertResponseShape(res.body, searchByConditionResponseSchema, 'output2', searchByConditionOutput2ItemSchema);
   });
 
   it('getSettlementDate', async () => {
@@ -124,6 +175,7 @@ describe('KIS OverseasBasicQuote', () => {
       ctxAreaFk: '',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getSettlementDateResponseSchema, 'output', getSettlementDateItemSchema);
   });
 
   it('getSectorPrice', async () => {
@@ -136,6 +188,8 @@ describe('KIS OverseasBasicQuote', () => {
       volRang: '0',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getSectorPriceResponseSchema);
+    assertResponseShape(res.body, getSectorPriceResponseSchema, 'output2', getSectorPriceOutput2ItemSchema);
   });
 
   it('getSectorCodes', async () => {
@@ -145,5 +199,7 @@ describe('KIS OverseasBasicQuote', () => {
       excd: 'NAS',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getSectorCodesResponseSchema);
+    assertResponseShape(res.body, getSectorCodesResponseSchema, 'output2', getSectorCodesOutput2ItemSchema);
   });
 });

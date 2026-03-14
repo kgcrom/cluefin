@@ -79,8 +79,7 @@ class StockBuyExecutionStrengthTopItem2(BaseModel):
     rsym: str = Field(title="실시간조회심볼", max_length=16)
     excd: str = Field(title="거래소코드", max_length=4)
     symb: str = Field(title="종목코드", max_length=16)
-    # TODO(typo): 문서에는 required로 나와있으나 실제로는 optional
-    knam: Optional[str] = Field(title="종목명", max_length=48, default=None)
+    name: str = Field(title="종목명", max_length=48)
     last: str = Field(title="현재가", max_length=12)
     sign: str = Field(title="기호", max_length=1)
     diff: str = Field(title="대비", max_length=12)
@@ -90,7 +89,7 @@ class StockBuyExecutionStrengthTopItem2(BaseModel):
     pbid: str = Field(title="매수호가", max_length=12)
     tpow: str = Field(title="당일체결강도", max_length=10)
     powx: str = Field(title="체결강도", max_length=10)
-    enam: Optional[str] = Field(title="영문종목명", max_length=48, default=None)
+    ename: str = Field(title="영문종목명", max_length=48)
     e_ordyn: str = Field(title="매매가능", max_length=2)
 
 
@@ -290,8 +289,6 @@ class StockTradingTurnoverRateRankItem2(BaseModel):
     tvol: str = Field(title="거래량", max_length=14)
     pask: str = Field(title="매도호가", max_length=12)
     pbid: str = Field(title="매수호가", max_length=12)
-    # TODO(typo): 문서에는 required로 나와있으나 실제로는 optional
-    n_tvol: Optional[str] = Field(title="평균거래량", max_length=14, default=None)
     shar: str = Field(title="상장주식수", max_length=16)
     tover: str = Field(title="회전율", max_length=10)
     rank: str = Field(title="순위", max_length=6)
@@ -320,12 +317,15 @@ class StockMarketCapRankItem2(BaseModel):
     symb: str = Field(title="종목코드", max_length=16)
     name: str = Field(title="종목명", max_length=48)
     last: str = Field(title="현재가", max_length=16)
+    last_org: str = Field(title="현재가(원본)", max_length=16)
     sign: str = Field(title="기호", max_length=1)
     diff: str = Field(title="대비", max_length=12)
+    diff_org: str = Field(title="대비(원본)", max_length=12)
     rate: str = Field(title="등락율", max_length=12)
     tvol: str = Field(title="거래량", max_length=14)
     shar: str = Field(title="상장주식수", max_length=16)
     tomv: str = Field(title="시가총액", max_length=16)
+    tomv_org: str = Field(title="시가총액(원본)", max_length=16)
     grav: str = Field(title="비중", max_length=10)
     rank: str = Field(title="순위", max_length=6)
     ename: str = Field(title="영문종목명", max_length=48)
@@ -365,6 +365,8 @@ class StockPeriodRightsInquiryItem(BaseModel):
 class StockPeriodRightsInquiry(BaseModel, KisHttpBody):
     """해외주식 기간별권리조회"""
 
+    ctx_area_fk50: str = Field(default="", title="연속조회검색조건50", max_length=50)
+    ctx_area_nk50: str = Field(default="", title="연속조회키50", max_length=50)
     output: Sequence[StockPeriodRightsInquiryItem] = Field(default_factory=list)
 
 
@@ -432,6 +434,8 @@ class StockCollateralLoanEligibleItem2(BaseModel):
 class StockCollateralLoanEligible(BaseModel, KisHttpBody):
     """당사 해외주식담보대출 가능 종목"""
 
+    ctx_area_fk100: str = Field(default="", title="연속조회검색조건100", max_length=100)
+    ctx_area_nk100: str = Field(default="", title="연속조회키100", max_length=100)
     output1: Sequence[StockCollateralLoanEligibleItem1] = Field(default_factory=list)
     # TODO(typo): 문서에는 list 형태로 나와있으나 실제로는 단일 객체
     output2: StockCollateralLoanEligibleItem2 = Field(title="응답상세2")
@@ -470,5 +474,4 @@ class BreakingNewsTitleItem(BaseModel):
 class BreakingNewsTitle(BaseModel, KisHttpBody):
     """해외속보(제목)"""
 
-    # TODO(typo): 문서에는 output으로 나와있으나 실제로는 output1
-    output1: Sequence[BreakingNewsTitleItem] = Field(default_factory=list)
+    output: Sequence[BreakingNewsTitleItem] = Field(default_factory=list)

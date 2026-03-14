@@ -200,6 +200,8 @@ class OnmarketBondAvgUnitPriceOutput3Item(BaseModel):
 class OnmarketBondAvgUnitPrice(BaseModel, KisHttpBody):
     """장내채권 평균단가조회"""
 
+    ctx_area_fk100: str = Field(default="", title="연속조회검색조건100", max_length=100)
+    ctx_area_nk30: str = Field(default="", title="연속조회키30", max_length=30)
     output1: list[OnmarketBondAvgUnitPriceOutput1Item] = Field(default_factory=list, title="단가/수익율")
     output2: list[OnmarketBondAvgUnitPriceOutput2Item] = Field(default_factory=list, title="평가금액")
     output3: list[OnmarketBondAvgUnitPriceOutput3Item] = Field(default_factory=list, title="외화평가")

@@ -1,7 +1,44 @@
 import { describe, test } from 'vitest';
-
+import {
+  getEtfComponentStockPriceOutput2ItemSchema,
+  getEtfComponentStockPriceResponseSchema,
+  getEtfetnCurrentPriceResponseSchema,
+  getEtfNavComparisonDailyTrendItemSchema,
+  getEtfNavComparisonDailyTrendResponseSchema,
+  getEtfNavComparisonTimeTrendItemSchema,
+  getEtfNavComparisonTimeTrendResponseSchema,
+  getEtfNavComparisonTrendResponseSchema,
+  getStockClosingExpectedPriceItemSchema,
+  getStockClosingExpectedPriceResponseSchema,
+  getStockCurrentPrice2ResponseSchema,
+  getStockCurrentPriceAskingExpectedConclusionResponseSchema,
+  getStockCurrentPriceConclusionItemSchema,
+  getStockCurrentPriceConclusionResponseSchema,
+  getStockCurrentPriceDailyItemSchema,
+  getStockCurrentPriceDailyOvertimePriceOutput2ItemSchema,
+  getStockCurrentPriceDailyOvertimePriceResponseSchema,
+  getStockCurrentPriceDailyResponseSchema,
+  getStockCurrentPriceInvestorItemSchema,
+  getStockCurrentPriceInvestorResponseSchema,
+  getStockCurrentPriceMemberItemSchema,
+  getStockCurrentPriceMemberResponseSchema,
+  getStockCurrentPriceOvertimeConclusionOutput2ItemSchema,
+  getStockCurrentPriceOvertimeConclusionResponseSchema,
+  getStockCurrentPriceResponseSchema,
+  getStockCurrentPriceTimeItemConclusionOutput2ItemSchema,
+  getStockCurrentPriceTimeItemConclusionResponseSchema,
+  getStockDailyMinuteChartOutput2ItemSchema,
+  getStockDailyMinuteChartResponseSchema,
+  getStockOvertimeAskingPriceResponseSchema,
+  getStockOvertimeCurrentPriceResponseSchema,
+  getStockPeriodQuoteOutput2ItemSchema,
+  getStockPeriodQuoteResponseSchema,
+  getStockTodayMinuteChartOutput2ItemSchema,
+  getStockTodayMinuteChartResponseSchema,
+} from '../../src/kis/schemas/domestic-basic-quote';
 import {
   assertKisResponse,
+  assertResponseShape,
   getKisClient,
   KODEX200,
   ONE_MONTH_AGO,
@@ -20,6 +57,7 @@ describe('KIS DomesticBasicQuote', () => {
       fidInputIscd: SAMSUNG,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getStockCurrentPriceResponseSchema);
   });
 
   it('getStockCurrentPrice2', async () => {
@@ -29,6 +67,7 @@ describe('KIS DomesticBasicQuote', () => {
       fidInputIscd: SAMSUNG,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getStockCurrentPrice2ResponseSchema);
   });
 
   it('getStockCurrentPriceConclusion', async () => {
@@ -38,6 +77,12 @@ describe('KIS DomesticBasicQuote', () => {
       fidInputIscd: SAMSUNG,
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getStockCurrentPriceConclusionResponseSchema,
+      'output',
+      getStockCurrentPriceConclusionItemSchema,
+    );
   });
 
   it('getStockCurrentPriceDaily', async () => {
@@ -49,6 +94,12 @@ describe('KIS DomesticBasicQuote', () => {
       fidOrgAdjPrc: '0',
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getStockCurrentPriceDailyResponseSchema,
+      'output',
+      getStockCurrentPriceDailyItemSchema,
+    );
   });
 
   it('getStockCurrentPriceAskingExpectedConclusion', async () => {
@@ -58,6 +109,7 @@ describe('KIS DomesticBasicQuote', () => {
       fidInputIscd: SAMSUNG,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getStockCurrentPriceAskingExpectedConclusionResponseSchema);
   });
 
   it('getStockCurrentPriceInvestor', async () => {
@@ -67,6 +119,12 @@ describe('KIS DomesticBasicQuote', () => {
       fidInputIscd: SAMSUNG,
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getStockCurrentPriceInvestorResponseSchema,
+      'output',
+      getStockCurrentPriceInvestorItemSchema,
+    );
   });
 
   it('getStockCurrentPriceMember', async () => {
@@ -76,6 +134,12 @@ describe('KIS DomesticBasicQuote', () => {
       fidInputIscd: SAMSUNG,
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getStockCurrentPriceMemberResponseSchema,
+      'output',
+      getStockCurrentPriceMemberItemSchema,
+    );
   });
 
   it('getStockPeriodQuote', async () => {
@@ -89,6 +153,8 @@ describe('KIS DomesticBasicQuote', () => {
       fidOrgAdjPrc: '0',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getStockPeriodQuoteResponseSchema);
+    assertResponseShape(res.body, getStockPeriodQuoteResponseSchema, 'output2', getStockPeriodQuoteOutput2ItemSchema);
   });
 
   it('getStockTodayMinuteChart', async () => {
@@ -101,6 +167,13 @@ describe('KIS DomesticBasicQuote', () => {
       fidEtcClsCode: '',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getStockTodayMinuteChartResponseSchema);
+    assertResponseShape(
+      res.body,
+      getStockTodayMinuteChartResponseSchema,
+      'output2',
+      getStockTodayMinuteChartOutput2ItemSchema,
+    );
   });
 
   it('getStockDailyMinuteChart', async () => {
@@ -113,6 +186,13 @@ describe('KIS DomesticBasicQuote', () => {
       fidPwDataIncuYn: 'Y',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getStockDailyMinuteChartResponseSchema);
+    assertResponseShape(
+      res.body,
+      getStockDailyMinuteChartResponseSchema,
+      'output2',
+      getStockDailyMinuteChartOutput2ItemSchema,
+    );
   });
 
   it('getStockCurrentPriceTimeItemConclusion', async () => {
@@ -123,6 +203,13 @@ describe('KIS DomesticBasicQuote', () => {
       fidInputHour1: '155000',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getStockCurrentPriceTimeItemConclusionResponseSchema);
+    assertResponseShape(
+      res.body,
+      getStockCurrentPriceTimeItemConclusionResponseSchema,
+      'output2',
+      getStockCurrentPriceTimeItemConclusionOutput2ItemSchema,
+    );
   });
 
   it('getStockCurrentPriceDailyOvertimePrice', async () => {
@@ -132,6 +219,13 @@ describe('KIS DomesticBasicQuote', () => {
       fidInputIscd: SAMSUNG,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getStockCurrentPriceDailyOvertimePriceResponseSchema);
+    assertResponseShape(
+      res.body,
+      getStockCurrentPriceDailyOvertimePriceResponseSchema,
+      'output2',
+      getStockCurrentPriceDailyOvertimePriceOutput2ItemSchema,
+    );
   });
 
   it('getStockCurrentPriceOvertimeConclusion', async () => {
@@ -141,6 +235,13 @@ describe('KIS DomesticBasicQuote', () => {
       fidInputIscd: SAMSUNG,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getStockCurrentPriceOvertimeConclusionResponseSchema);
+    assertResponseShape(
+      res.body,
+      getStockCurrentPriceOvertimeConclusionResponseSchema,
+      'output2',
+      getStockCurrentPriceOvertimeConclusionOutput2ItemSchema,
+    );
   });
 
   it('getStockOvertimeCurrentPrice', async () => {
@@ -150,6 +251,7 @@ describe('KIS DomesticBasicQuote', () => {
       fidInputIscd: SAMSUNG,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getStockOvertimeCurrentPriceResponseSchema);
   });
 
   it('getStockOvertimeAskingPrice', async () => {
@@ -158,6 +260,7 @@ describe('KIS DomesticBasicQuote', () => {
       fidInputIscd: SAMSUNG,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getStockOvertimeAskingPriceResponseSchema);
   });
 
   it('getStockClosingExpectedPrice', async () => {
@@ -168,6 +271,12 @@ describe('KIS DomesticBasicQuote', () => {
       fidBlngClsCode: '0',
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getStockClosingExpectedPriceResponseSchema,
+      'output',
+      getStockClosingExpectedPriceItemSchema,
+    );
   });
 
   it('getEtfetnCurrentPrice', async () => {
@@ -176,6 +285,7 @@ describe('KIS DomesticBasicQuote', () => {
       fidInputIscd: KODEX200,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getEtfetnCurrentPriceResponseSchema);
   });
 
   it('getEtfComponentStockPrice', async () => {
@@ -184,6 +294,13 @@ describe('KIS DomesticBasicQuote', () => {
       fidInputIscd: KODEX200,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getEtfComponentStockPriceResponseSchema);
+    assertResponseShape(
+      res.body,
+      getEtfComponentStockPriceResponseSchema,
+      'output2',
+      getEtfComponentStockPriceOutput2ItemSchema,
+    );
   });
 
   it('getEtfNavComparisonTrend', async () => {
@@ -192,6 +309,7 @@ describe('KIS DomesticBasicQuote', () => {
       fidInputIscd: KODEX200,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getEtfNavComparisonTrendResponseSchema);
   });
 
   it('getEtfNavComparisonDailyTrend', async () => {
@@ -202,6 +320,12 @@ describe('KIS DomesticBasicQuote', () => {
       fidInputDate2: TODAY,
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getEtfNavComparisonDailyTrendResponseSchema,
+      'output',
+      getEtfNavComparisonDailyTrendItemSchema,
+    );
   });
 
   it('getEtfNavComparisonTimeTrend', async () => {
@@ -211,5 +335,11 @@ describe('KIS DomesticBasicQuote', () => {
       fidInputIscd: KODEX200,
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getEtfNavComparisonTimeTrendResponseSchema,
+      'output',
+      getEtfNavComparisonTimeTrendItemSchema,
+    );
   });
 });

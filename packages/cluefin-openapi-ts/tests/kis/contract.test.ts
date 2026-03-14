@@ -125,7 +125,7 @@ test('KIS endpoint metadata should map request path, headers, and query/body', a
       expect(typeof method).toBe('function');
 
       const input = buildInput(endpoint.params);
-      const response = (await method!(input)) as { body: Record<string, unknown> };
+      const response = (await method?.(input)) as { body: Record<string, unknown> };
       expect(response.body.rtCd).toBe('0');
 
       const latest = requests.at(-1);

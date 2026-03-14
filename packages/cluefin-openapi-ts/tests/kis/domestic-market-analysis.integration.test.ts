@@ -1,7 +1,65 @@
 import { describe, test } from 'vitest';
-
+import {
+  getAfterHoursExpectedFluctuationItemSchema,
+  getAfterHoursExpectedFluctuationResponseSchema,
+  getBuySellVolumeByStockDailyOutput2ItemSchema,
+  getBuySellVolumeByStockDailyResponseSchema,
+  getConditionSearchListItemSchema,
+  getConditionSearchListResponseSchema,
+  getConditionSearchResultItemSchema,
+  getConditionSearchResultResponseSchema,
+  getCreditBalanceTrendDailyItemSchema,
+  getCreditBalanceTrendDailyResponseSchema,
+  getExpectedPriceTrendOutput2ItemSchema,
+  getExpectedPriceTrendResponseSchema,
+  getForeignBrokerageTradingAggregateItemSchema,
+  getForeignBrokerageTradingAggregateResponseSchema,
+  getForeignInstitutionalEstimateByStockItemSchema,
+  getForeignInstitutionalEstimateByStockResponseSchema,
+  getForeignNetBuyTrendByStockOutput1ItemSchema,
+  getForeignNetBuyTrendByStockOutput2ItemSchema,
+  getForeignNetBuyTrendByStockResponseSchema,
+  getInstitutionalForeignTradingAggregateResponseSchema,
+  getInvestorTradingTrendByMarketDailyItemSchema,
+  getInvestorTradingTrendByMarketDailyResponseSchema,
+  getInvestorTradingTrendByMarketIntradayItemSchema,
+  getInvestorTradingTrendByMarketIntradayResponseSchema,
+  getInvestorTradingTrendByStockDailyOutput2ItemSchema,
+  getInvestorTradingTrendByStockDailyResponseSchema,
+  getLimitPriceStocksItemSchema,
+  getLimitPriceStocksResponseSchema,
+  getMarketFundSummaryItemSchema,
+  getMarketFundSummaryResponseSchema,
+  getMemberTradingTrendByStockItemSchema,
+  getMemberTradingTrendByStockResponseSchema,
+  getMemberTradingTrendTickItemSchema,
+  getMemberTradingTrendTickResponseSchema,
+  getProgramTradingInvestorTrendTodayItemSchema,
+  getProgramTradingInvestorTrendTodayResponseSchema,
+  getProgramTradingSummaryDailyItemSchema,
+  getProgramTradingSummaryDailyResponseSchema,
+  getProgramTradingSummaryIntradayItemSchema,
+  getProgramTradingSummaryIntradayResponseSchema,
+  getProgramTradingTrendByStockDailyItemSchema,
+  getProgramTradingTrendByStockDailyResponseSchema,
+  getProgramTradingTrendByStockIntradayItemSchema,
+  getProgramTradingTrendByStockIntradayResponseSchema,
+  getResistanceLevelTradingWeightOutput2ItemSchema,
+  getResistanceLevelTradingWeightResponseSchema,
+  getShortSellingTrendDailyOutput2ItemSchema,
+  getShortSellingTrendDailyResponseSchema,
+  getStockLoanTrendDailyItemSchema,
+  getStockLoanTrendDailyResponseSchema,
+  getTradingWeightByAmountItemSchema,
+  getTradingWeightByAmountResponseSchema,
+  getWatchlistGroupsItemSchema,
+  getWatchlistGroupsResponseSchema,
+  getWatchlistStocksByGroupOutput2ItemSchema,
+  getWatchlistStocksByGroupResponseSchema,
+} from '../../src/kis/schemas/domestic-market-analysis';
 import {
   assertKisResponse,
+  assertResponseShape,
   getKisClient,
   ONE_MONTH_AGO,
   runIntegration,
@@ -25,6 +83,12 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputIscd2: '0001',
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getInvestorTradingTrendByMarketDailyResponseSchema,
+      'output',
+      getInvestorTradingTrendByMarketDailyItemSchema,
+    );
   });
 
   it('getInvestorTradingTrendByMarketIntraday', async () => {
@@ -34,6 +98,12 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputIscd2: '0001',
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getInvestorTradingTrendByMarketIntradayResponseSchema,
+      'output',
+      getInvestorTradingTrendByMarketIntradayItemSchema,
+    );
   });
 
   it('getInvestorTradingTrendByStockDaily', async () => {
@@ -46,6 +116,13 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidEtcClsCode: '',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getInvestorTradingTrendByStockDailyResponseSchema);
+    assertResponseShape(
+      res.body,
+      getInvestorTradingTrendByStockDailyResponseSchema,
+      'output2',
+      getInvestorTradingTrendByStockDailyOutput2ItemSchema,
+    );
   });
 
   it('getForeignNetBuyTrendByStock', async () => {
@@ -56,6 +133,19 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidCondMrktDivCode: 'J',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getForeignNetBuyTrendByStockResponseSchema);
+    assertResponseShape(
+      res.body,
+      getForeignNetBuyTrendByStockResponseSchema,
+      'output1',
+      getForeignNetBuyTrendByStockOutput1ItemSchema,
+    );
+    assertResponseShape(
+      res.body,
+      getForeignNetBuyTrendByStockResponseSchema,
+      'output2',
+      getForeignNetBuyTrendByStockOutput2ItemSchema,
+    );
   });
 
   it('getForeignBrokerageTradingAggregate', async () => {
@@ -68,6 +158,12 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidRankSortClsCode2: '0',
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getForeignBrokerageTradingAggregateResponseSchema,
+      'output',
+      getForeignBrokerageTradingAggregateItemSchema,
+    );
   });
 
   it('getForeignInstitutionalEstimateByStock', async () => {
@@ -76,6 +172,12 @@ describe('KIS DomesticMarketAnalysis', () => {
       mkscShrnIscd: SAMSUNG,
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getForeignInstitutionalEstimateByStockResponseSchema,
+      'output2',
+      getForeignInstitutionalEstimateByStockItemSchema,
+    );
   });
 
   it('getMemberTradingTrendByStock', async () => {
@@ -89,6 +191,12 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidSctnClsCode: '0',
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getMemberTradingTrendByStockResponseSchema,
+      'output',
+      getMemberTradingTrendByStockItemSchema,
+    );
   });
 
   it('getMemberTradingTrendTick', async () => {
@@ -102,6 +210,12 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidVolCnt: '0',
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getMemberTradingTrendTickResponseSchema,
+      'output',
+      getMemberTradingTrendTickItemSchema,
+    );
   });
 
   it('getBuySellVolumeByStockDaily', async () => {
@@ -116,6 +230,13 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputIscd1: SAMSUNG,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getBuySellVolumeByStockDailyResponseSchema);
+    assertResponseShape(
+      res.body,
+      getBuySellVolumeByStockDailyResponseSchema,
+      'output2',
+      getBuySellVolumeByStockDailyOutput2ItemSchema,
+    );
   });
 
   it('getCreditBalanceTrendDaily', async () => {
@@ -127,6 +248,12 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputDate1: ONE_MONTH_AGO,
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getCreditBalanceTrendDailyResponseSchema,
+      'output',
+      getCreditBalanceTrendDailyItemSchema,
+    );
   });
 
   it('getStockLoanTrendDaily', async () => {
@@ -139,6 +266,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       cts: '',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getStockLoanTrendDailyResponseSchema, 'output1', getStockLoanTrendDailyItemSchema);
   });
 
   it('getProgramTradingSummaryDaily', async () => {
@@ -150,6 +278,12 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputDate2: TODAY,
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getProgramTradingSummaryDailyResponseSchema,
+      'output',
+      getProgramTradingSummaryDailyItemSchema,
+    );
   });
 
   it('getProgramTradingSummaryIntraday', async () => {
@@ -163,6 +297,12 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputHour1: '155000',
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getProgramTradingSummaryIntradayResponseSchema,
+      'output',
+      getProgramTradingSummaryIntradayItemSchema,
+    );
   });
 
   it('getProgramTradingTrendByStockDaily', async () => {
@@ -173,6 +313,12 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputDate1: ONE_MONTH_AGO,
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getProgramTradingTrendByStockDailyResponseSchema,
+      'output',
+      getProgramTradingTrendByStockDailyItemSchema,
+    );
   });
 
   it('getProgramTradingTrendByStockIntraday', async () => {
@@ -182,6 +328,12 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputIscd: SAMSUNG,
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getProgramTradingTrendByStockIntradayResponseSchema,
+      'output',
+      getProgramTradingTrendByStockIntradayItemSchema,
+    );
   });
 
   it('getProgramTradingInvestorTrendToday', async () => {
@@ -191,6 +343,12 @@ describe('KIS DomesticMarketAnalysis', () => {
       mrktDivClsCode: '1',
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getProgramTradingInvestorTrendTodayResponseSchema,
+      'output1',
+      getProgramTradingInvestorTrendTodayItemSchema,
+    );
   });
 
   it('getShortSellingTrendDaily', async () => {
@@ -202,6 +360,13 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputDate1: ONE_MONTH_AGO,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getShortSellingTrendDailyResponseSchema);
+    assertResponseShape(
+      res.body,
+      getShortSellingTrendDailyResponseSchema,
+      'output2',
+      getShortSellingTrendDailyOutput2ItemSchema,
+    );
   });
 
   it('getExpectedPriceTrend', async () => {
@@ -212,6 +377,13 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputIscd: SAMSUNG,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getExpectedPriceTrendResponseSchema);
+    assertResponseShape(
+      res.body,
+      getExpectedPriceTrendResponseSchema,
+      'output2',
+      getExpectedPriceTrendOutput2ItemSchema,
+    );
   });
 
   it('getAfterHoursExpectedFluctuation', async () => {
@@ -227,6 +399,12 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputVol1: '0',
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getAfterHoursExpectedFluctuationResponseSchema,
+      'output',
+      getAfterHoursExpectedFluctuationItemSchema,
+    );
   });
 
   it('getLimitPriceStocks', async () => {
@@ -244,6 +422,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidVolCnt: '0',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getLimitPriceStocksResponseSchema, 'output', getLimitPriceStocksItemSchema);
   });
 
   it('getTradingWeightByAmount', async () => {
@@ -254,6 +433,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputIscd: SAMSUNG,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getTradingWeightByAmountResponseSchema, 'output', getTradingWeightByAmountItemSchema);
   });
 
   it('getResistanceLevelTradingWeight', async () => {
@@ -265,6 +445,13 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputHour1: '155000',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getResistanceLevelTradingWeightResponseSchema);
+    assertResponseShape(
+      res.body,
+      getResistanceLevelTradingWeightResponseSchema,
+      'output2',
+      getResistanceLevelTradingWeightOutput2ItemSchema,
+    );
   });
 
   it('getMarketFundSummary', async () => {
@@ -273,6 +460,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputDate1: TODAY,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getMarketFundSummaryResponseSchema, 'output', getMarketFundSummaryItemSchema);
   });
 
   it('getWatchlistMultiQuote', async () => {
@@ -293,6 +481,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       userId,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getConditionSearchListResponseSchema, 'output2', getConditionSearchListItemSchema);
   });
 
   itWithUserId('getConditionSearchResult', async () => {
@@ -302,6 +491,12 @@ describe('KIS DomesticMarketAnalysis', () => {
       seq: '0',
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getConditionSearchResultResponseSchema,
+      'output2',
+      getConditionSearchResultItemSchema,
+    );
   });
 
   itWithUserId('getWatchlistGroups', async () => {
@@ -312,6 +507,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       userId,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getWatchlistGroupsResponseSchema, 'output2', getWatchlistGroupsItemSchema);
   });
 
   itWithUserId('getWatchlistStocksByGroup', async () => {
@@ -327,6 +523,13 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidEtcClsCode: '',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getWatchlistStocksByGroupResponseSchema);
+    assertResponseShape(
+      res.body,
+      getWatchlistStocksByGroupResponseSchema,
+      'output2',
+      getWatchlistStocksByGroupOutput2ItemSchema,
+    );
   });
 
   itWithUserId('getInstitutionalForeignTradingAggregate', async () => {
@@ -342,5 +545,6 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidEtcClsCode: '',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getInstitutionalForeignTradingAggregateResponseSchema);
   });
 });
