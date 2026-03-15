@@ -277,6 +277,7 @@ class ExpectedIndexAllItem1(BaseModel):
 
 
 class ExpectedIndexAllItem2(BaseModel):
+    bstp_cls_code: str = Field(title="업종 구분 코드", max_length=4)
     hts_kor_isnm: str = Field(title="HTS 한글 종목명", max_length=40)
     bstp_nmix_prpr: str = Field(title="업종 지수 현재가", max_length=112)
     bstp_nmix_prdy_vrss: str = Field(title="업종 지수 전일 대비", max_length=112)
@@ -401,6 +402,8 @@ class HolidayInquiryItem(BaseModel):
 class HolidayInquiry(BaseModel, KisHttpBody):
     """국내휴장일조회 응답"""
 
+    ctx_area_fk: str = Field(default="", title="연속조회검색조건", max_length=100)
+    ctx_area_nk: str = Field(default="", title="연속조회키", max_length=100)
     # TODO(typo): 문서에는 object, 실제로는 list
     output: Sequence[HolidayInquiryItem] = Field(default_factory=list)
 
@@ -420,4 +423,4 @@ class FuturesBusinessDayInquiryItem(BaseModel):
 class FuturesBusinessDayInquiry(BaseModel, KisHttpBody):
     """국내선물 영업일조회 응답"""
 
-    output: Sequence[FuturesBusinessDayInquiryItem] = Field(default_factory=list)
+    output1: Sequence[FuturesBusinessDayInquiryItem] = Field(default_factory=list)

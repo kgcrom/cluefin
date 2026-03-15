@@ -99,7 +99,7 @@ export function assertResponseShape(
     const items = body[itemKey] as Record<string, unknown>[];
     if (items.length > 0) {
       const expectedItemKeys = Object.keys(itemSchema.shape).map(toCamelCase).sort();
-      const actualItemKeys = Object.keys(items[0]!).sort();
+      const actualItemKeys = Object.keys(items[0] as Record<string, unknown>).sort();
       expect(actualItemKeys).toEqual(expectedItemKeys);
     }
   }

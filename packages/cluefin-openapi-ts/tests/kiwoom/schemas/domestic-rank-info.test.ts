@@ -168,7 +168,7 @@ describe('domestic-rank-info response schemas', () => {
       };
       const result = topRemainingOrderQuantityResponseSchema.parse(input);
       expect(result.bid_req_upper).toHaveLength(1);
-      expect(result.bid_req_upper[0]!.stk_cd).toBe('005930');
+      expect(result.bid_req_upper[0]?.stk_cd).toBe('005930');
     });
 
     it('ka10021: parses item with "int" alias field', () => {
@@ -190,7 +190,7 @@ describe('domestic-rank-info response schemas', () => {
         ],
       };
       const result = rapidlyIncreasingRemainingOrderQuantityResponseSchema.parse(input);
-      expect(result.bid_req_sdnin[0]!.int).toBe('10.5');
+      expect(result.bid_req_sdnin[0]?.int).toBe('10.5');
     });
 
     it('ka10038: parses scalar fields + list', () => {
@@ -240,7 +240,7 @@ describe('domestic-rank-info response schemas', () => {
         ],
       };
       const result = topRemainingOrderQuantityResponseSchema.parse(input);
-      expect((result.bid_req_upper[0]! as Record<string, unknown>).extra_field).toBe('hello');
+      expect((result.bid_req_upper[0] as Record<string, unknown>).extra_field).toBe('hello');
     });
   });
 
@@ -251,7 +251,7 @@ describe('domestic-rank-info response schemas', () => {
         pred_trde_qty_upper: [{}],
       };
       const result = topPreviousDayTradingVolumeResponseSchema.parse(input);
-      const item = result.pred_trde_qty_upper[0]!;
+      const item = result.pred_trde_qty_upper[0];
       expect(item.stk_cd).toBe('');
       expect(item.stk_nm).toBe('');
       expect(item.cur_prc).toBe('');

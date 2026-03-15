@@ -387,6 +387,7 @@ class DomesticStockCurrentPriceMemberItem(BaseModel):
     shnu_qty_icdc5: str = Field(description="매수2 수량 증감5")
 
     # 외국계 정보
+    acml_vol: str = Field(description="누적 거래량")
     glob_total_seln_qty: str = Field(description="외국계 총 매도 수량")
     glob_seln_rlim: str = Field(description="외국계 매도 비중")
     glob_ntby_qty: str = Field(description="외국계 순매수 수량")
@@ -808,7 +809,7 @@ class DomesticStockClosingExpectedPriceItem(BaseModel):
 class DomesticStockClosingExpectedPrice(BaseModel, KisHttpBody):
     """국내주식 장마감 예상체결가"""
 
-    output1: Sequence[DomesticStockClosingExpectedPriceItem] = Field(default_factory=list)
+    output: Sequence[DomesticStockClosingExpectedPriceItem] = Field(default_factory=list)
 
 
 class DomesticEtfEtnCurrentPriceItem(BaseModel):
@@ -914,6 +915,7 @@ class DomesticEtfComponentStockPriceItem2(BaseModel):
     hts_avls: str = Field(title="HTS 시가총액", max_length=18)
     etf_cnfg_issu_avls: str = Field(title="ETF구성종목시가총액", max_length=18)
     etf_cnfg_issu_rlim: str = Field(title="ETF구성종목비중", max_length=72)
+    etf_cu_unit_scrt_cnt: str = Field(title="ETF CU 단위 증권 수", max_length=18)
     etf_vltn_amt: str = Field(title="ETF구성종목내평가금액", max_length=18)
 
 

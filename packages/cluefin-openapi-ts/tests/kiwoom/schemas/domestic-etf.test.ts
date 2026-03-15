@@ -107,8 +107,8 @@ describe('domestic-etf response schemas', () => {
       };
       const result = etfDailyTrendResponseSchema.parse(input);
       expect(result.etfdaly_trnsn).toHaveLength(1);
-      expect(result.etfdaly_trnsn[0]!.cntr_dt).toBe('20260313');
-      expect(result.etfdaly_trnsn[0]!.nav).toBe('57250');
+      expect(result.etfdaly_trnsn[0]?.cntr_dt).toBe('20260313');
+      expect(result.etfdaly_trnsn[0]?.nav).toBe('57250');
     });
 
     it('ka40004: parses full price item', () => {
@@ -139,8 +139,8 @@ describe('domestic-etf response schemas', () => {
       };
       const result = etfFullPriceResponseSchema.parse(input);
       expect(result.etfall_mrpr).toHaveLength(1);
-      expect(result.etfall_mrpr[0]!.stk_nm).toBe('KODEX 200');
-      expect(result.etfall_mrpr[0]!.trace_idex_nm).toBe('KOSPI200');
+      expect(result.etfall_mrpr[0]?.stk_nm).toBe('KODEX 200');
+      expect(result.etfall_mrpr[0]?.trace_idex_nm).toBe('KOSPI200');
     });
 
     it('ka40008: parses daily execution with scalar fields', () => {
@@ -166,7 +166,7 @@ describe('domestic-etf response schemas', () => {
       const result = etfDailyExecutionResponseSchema.parse(input);
       expect(result.cntr_tm).toBe('153000');
       expect(result.etfnetprps_qty_array).toHaveLength(1);
-      expect(result.etfnetprps_qty_array[0]!.for_netprps_qty).toBe('123456');
+      expect(result.etfnetprps_qty_array[0]?.for_netprps_qty).toBe('123456');
     });
   });
 
@@ -205,7 +205,7 @@ describe('domestic-etf response schemas', () => {
         ],
       };
       const result = etfDailyTrendResponseSchema.parse(input);
-      expect((result.etfdaly_trnsn[0]! as Record<string, unknown>).extra_field).toBe('hello');
+      expect((result.etfdaly_trnsn[0] as Record<string, unknown>).extra_field).toBe('hello');
     });
   });
 
@@ -216,7 +216,7 @@ describe('domestic-etf response schemas', () => {
         etfprft_rt_lst: [{}],
       };
       const result = etfReturnRateResponseSchema.parse(input);
-      const item = result.etfprft_rt_lst[0]!;
+      const item = result.etfprft_rt_lst[0];
       expect(item.etfprft_rt).toBe('');
       expect(item.cntr_prft_rt).toBe('');
       expect(item.for_netprps_qty).toBe('');

@@ -54,9 +54,9 @@ describe('domestic-foreign response schemas', () => {
       };
       const result = foreignInvestorTradingTrendByStockResponseSchema.parse(input);
       expect(result.stk_frgnr).toHaveLength(1);
-      expect(result.stk_frgnr[0]!.dt).toBe('20260312');
-      expect(result.stk_frgnr[0]!.close_pric).toBe('187900');
-      expect(result.stk_frgnr[0]!.limit_exh_rt).toBe('54.44');
+      expect(result.stk_frgnr[0]?.dt).toBe('20260312');
+      expect(result.stk_frgnr[0]?.close_pric).toBe('187900');
+      expect(result.stk_frgnr[0]?.limit_exh_rt).toBe('54.44');
     });
 
     it('ka10131: parses consecutive net buy/sell status item', () => {
@@ -88,8 +88,8 @@ describe('domestic-foreign response schemas', () => {
       };
       const result = consecutiveNetBuySellStatusByInstitutionForeignerResponseSchema.parse(input);
       expect(result.orgn_frgnr_cont_trde_prst).toHaveLength(1);
-      expect(result.orgn_frgnr_cont_trde_prst[0]!.stk_cd).toBe('005930');
-      expect(result.orgn_frgnr_cont_trde_prst[0]!.stk_nm).toBe('삼성전자');
+      expect(result.orgn_frgnr_cont_trde_prst[0]?.stk_cd).toBe('005930');
+      expect(result.orgn_frgnr_cont_trde_prst[0]?.stk_nm).toBe('삼성전자');
     });
   });
 
@@ -117,7 +117,7 @@ describe('domestic-foreign response schemas', () => {
         ],
       };
       const result = consecutiveNetBuySellStatusByInstitutionForeignerResponseSchema.parse(input);
-      expect((result.orgn_frgnr_cont_trde_prst[0]! as Record<string, unknown>).extra_field).toBe('hello');
+      expect((result.orgn_frgnr_cont_trde_prst[0] as Record<string, unknown>).extra_field).toBe('hello');
     });
   });
 
@@ -128,7 +128,7 @@ describe('domestic-foreign response schemas', () => {
         stk_frgnr: [{}],
       };
       const result = foreignInvestorTradingTrendByStockResponseSchema.parse(input);
-      const item = result.stk_frgnr[0]!;
+      const item = result.stk_frgnr[0];
       expect(item.dt).toBe('');
       expect(item.close_pric).toBe('');
       expect(item.trde_qty).toBe('');

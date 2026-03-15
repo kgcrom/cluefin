@@ -462,8 +462,7 @@ class ForeignNetBuyTrendByStockItem2(BaseModel):
 class ForeignNetBuyTrendByStock(BaseModel, KisHttpBody):
     """종목별 외국계 순매수추이"""
 
-    output1: Sequence[ForeignNetBuyTrendByStockItem1] = Field(default_factory=list)
-    output2: Sequence[ForeignNetBuyTrendByStockItem2] = Field(default_factory=list)
+    output: Sequence[ForeignNetBuyTrendByStockItem1] = Field(default_factory=list)
 
 
 class MemberTradingTrendTickItem(BaseModel):
@@ -481,7 +480,8 @@ class MemberTradingTrendTickItem(BaseModel):
 class MemberTradingTrendTick(BaseModel, KisHttpBody):
     """회원사 실시간 매매동향(틱)"""
 
-    output: Sequence[MemberTradingTrendTickItem] = Field(default_factory=list)
+    output1: Sequence[MemberTradingTrendTickItem] = Field(default_factory=list)
+    output2: Sequence[MemberTradingTrendTickItem] = Field(default_factory=list)
 
 
 class MemberTradingTrendByStockItem(BaseModel):
@@ -608,7 +608,7 @@ class ProgramTradingSummaryIntradayItem(BaseModel):
 class ProgramTradingSummaryIntraday(BaseModel, KisHttpBody):
     """프로그램매매 종합현황(시간)"""
 
-    output1: Sequence[ProgramTradingSummaryIntradayItem] = Field(default_factory=list)
+    output: Sequence[ProgramTradingSummaryIntradayItem] = Field(default_factory=list)
 
 
 class ProgramTradingSummaryDailyItem(BaseModel):
@@ -938,7 +938,7 @@ class StockLoanTrendDailyItem(BaseModel):
 class StockLoanTrendDaily(BaseModel, KisHttpBody):
     """종목별 일별 대차거래추이"""
 
-    output: Sequence[StockLoanTrendDailyItem] = Field(default_factory=list)
+    output1: Sequence[StockLoanTrendDailyItem] = Field(default_factory=list)
 
 
 class LimitPriceStocksItem(BaseModel):

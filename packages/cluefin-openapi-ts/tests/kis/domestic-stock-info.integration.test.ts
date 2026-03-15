@@ -1,7 +1,61 @@
 import { describe, test } from 'vitest';
-
+import {
+  getBalanceSheetItemSchema,
+  getBalanceSheetResponseSchema,
+  getEstimatedEarningsOutput2ItemSchema,
+  getEstimatedEarningsOutput3ItemSchema,
+  getEstimatedEarningsOutput4ItemSchema,
+  getEstimatedEarningsResponseSchema,
+  getFinancialRatioItemSchema,
+  getFinancialRatioResponseSchema,
+  getGrowthRatioItemSchema,
+  getGrowthRatioResponseSchema,
+  getIncomeStatementItemSchema,
+  getIncomeStatementResponseSchema,
+  getInvestmentOpinionByBrokerageItemSchema,
+  getInvestmentOpinionByBrokerageResponseSchema,
+  getInvestmentOpinionItemSchema,
+  getInvestmentOpinionResponseSchema,
+  getKsdCapitalReductionScheduleItemSchema,
+  getKsdCapitalReductionScheduleResponseSchema,
+  getKsdDepositScheduleItemSchema,
+  getKsdDepositScheduleResponseSchema,
+  getKsdDividendDecisionItemSchema,
+  getKsdDividendDecisionResponseSchema,
+  getKsdForfeitedShareScheduleItemSchema,
+  getKsdForfeitedShareScheduleResponseSchema,
+  getKsdIpoSubscriptionScheduleItemSchema,
+  getKsdIpoSubscriptionScheduleResponseSchema,
+  getKsdListingInfoScheduleItemSchema,
+  getKsdListingInfoScheduleResponseSchema,
+  getKsdMergerSplitDecisionItemSchema,
+  getKsdMergerSplitDecisionResponseSchema,
+  getKsdPaidInCapitalIncreaseScheduleItemSchema,
+  getKsdPaidInCapitalIncreaseScheduleResponseSchema,
+  getKsdParValueChangeDecisionItemSchema,
+  getKsdParValueChangeDecisionResponseSchema,
+  getKsdShareholderMeetingScheduleItemSchema,
+  getKsdShareholderMeetingScheduleResponseSchema,
+  getKsdStockDividendDecisionItemSchema,
+  getKsdStockDividendDecisionResponseSchema,
+  getKsdStockDividendScheduleItemSchema,
+  getKsdStockDividendScheduleResponseSchema,
+  getMarginTradableStocksItemSchema,
+  getMarginTradableStocksResponseSchema,
+  getOtherKeyRatioItemSchema,
+  getOtherKeyRatioResponseSchema,
+  getProductBasicInfoResponseSchema,
+  getProfitabilityRatioItemSchema,
+  getProfitabilityRatioResponseSchema,
+  getStabilityRatioItemSchema,
+  getStabilityRatioResponseSchema,
+  getStockBasicInfoResponseSchema,
+  getStockLoanableListOutput1ItemSchema,
+  getStockLoanableListResponseSchema,
+} from '../../src/kis/schemas/domestic-stock-info';
 import {
   assertKisResponse,
+  assertResponseShape,
   getKisClient,
   ONE_MONTH_AGO,
   runIntegration,
@@ -19,6 +73,7 @@ describe('KIS DomesticStockInfo', () => {
       prdtTypeCd: '300',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getProductBasicInfoResponseSchema);
   });
 
   it('getStockBasicInfo', async () => {
@@ -28,6 +83,7 @@ describe('KIS DomesticStockInfo', () => {
       pdno: SAMSUNG,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getStockBasicInfoResponseSchema);
   });
 
   it('getBalanceSheet', async () => {
@@ -38,6 +94,7 @@ describe('KIS DomesticStockInfo', () => {
       fidInputIscd: SAMSUNG,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getBalanceSheetResponseSchema, 'output', getBalanceSheetItemSchema);
   });
 
   it('getIncomeStatement', async () => {
@@ -48,6 +105,7 @@ describe('KIS DomesticStockInfo', () => {
       fidInputIscd: SAMSUNG,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getIncomeStatementResponseSchema, 'output', getIncomeStatementItemSchema);
   });
 
   it('getFinancialRatio', async () => {
@@ -58,6 +116,7 @@ describe('KIS DomesticStockInfo', () => {
       fidInputIscd: SAMSUNG,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getFinancialRatioResponseSchema, 'output', getFinancialRatioItemSchema);
   });
 
   it('getProfitabilityRatio', async () => {
@@ -68,6 +127,7 @@ describe('KIS DomesticStockInfo', () => {
       fidCondMrktDivCode: 'J',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getProfitabilityRatioResponseSchema, 'output', getProfitabilityRatioItemSchema);
   });
 
   it('getOtherKeyRatio', async () => {
@@ -78,6 +138,7 @@ describe('KIS DomesticStockInfo', () => {
       fidCondMrktDivCode: 'J',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getOtherKeyRatioResponseSchema, 'output', getOtherKeyRatioItemSchema);
   });
 
   it('getStabilityRatio', async () => {
@@ -88,6 +149,7 @@ describe('KIS DomesticStockInfo', () => {
       fidCondMrktDivCode: 'J',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getStabilityRatioResponseSchema, 'output', getStabilityRatioItemSchema);
   });
 
   it('getGrowthRatio', async () => {
@@ -98,6 +160,7 @@ describe('KIS DomesticStockInfo', () => {
       fidCondMrktDivCode: 'J',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getGrowthRatioResponseSchema, 'output', getGrowthRatioItemSchema);
   });
 
   it('getMarginTradableStocks', async () => {
@@ -110,6 +173,7 @@ describe('KIS DomesticStockInfo', () => {
       fidCondMrktDivCode: 'J',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getMarginTradableStocksResponseSchema, 'output', getMarginTradableStocksItemSchema);
   });
 
   it('getKsdDividendDecision', async () => {
@@ -123,6 +187,7 @@ describe('KIS DomesticStockInfo', () => {
       highGb: '0',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getKsdDividendDecisionResponseSchema, 'output1', getKsdDividendDecisionItemSchema);
   });
 
   it('getKsdStockDividendDecision', async () => {
@@ -134,6 +199,12 @@ describe('KIS DomesticStockInfo', () => {
       cts: '',
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getKsdStockDividendDecisionResponseSchema,
+      'output1',
+      getKsdStockDividendDecisionItemSchema,
+    );
   });
 
   it('getKsdMergerSplitDecision', async () => {
@@ -145,6 +216,12 @@ describe('KIS DomesticStockInfo', () => {
       shtCd: '',
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getKsdMergerSplitDecisionResponseSchema,
+      'output1',
+      getKsdMergerSplitDecisionItemSchema,
+    );
   });
 
   it('getKsdParValueChangeDecision', async () => {
@@ -157,6 +234,12 @@ describe('KIS DomesticStockInfo', () => {
       marketGb: '0',
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getKsdParValueChangeDecisionResponseSchema,
+      'output1',
+      getKsdParValueChangeDecisionItemSchema,
+    );
   });
 
   it('getKsdCapitalReductionSchedule', async () => {
@@ -168,6 +251,12 @@ describe('KIS DomesticStockInfo', () => {
       shtCd: '',
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getKsdCapitalReductionScheduleResponseSchema,
+      'output1',
+      getKsdCapitalReductionScheduleItemSchema,
+    );
   });
 
   it('getKsdListingInfoSchedule', async () => {
@@ -179,6 +268,12 @@ describe('KIS DomesticStockInfo', () => {
       cts: '',
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getKsdListingInfoScheduleResponseSchema,
+      'output1',
+      getKsdListingInfoScheduleItemSchema,
+    );
   });
 
   it('getKsdIpoSubscriptionSchedule', async () => {
@@ -190,6 +285,12 @@ describe('KIS DomesticStockInfo', () => {
       tDt: TODAY,
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getKsdIpoSubscriptionScheduleResponseSchema,
+      'output1',
+      getKsdIpoSubscriptionScheduleItemSchema,
+    );
   });
 
   it('getKsdForfeitedShareSchedule', async () => {
@@ -201,6 +302,12 @@ describe('KIS DomesticStockInfo', () => {
       cts: '',
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getKsdForfeitedShareScheduleResponseSchema,
+      'output1',
+      getKsdForfeitedShareScheduleItemSchema,
+    );
   });
 
   it('getKsdDepositSchedule', async () => {
@@ -212,6 +319,7 @@ describe('KIS DomesticStockInfo', () => {
       cts: '',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getKsdDepositScheduleResponseSchema, 'output1', getKsdDepositScheduleItemSchema);
   });
 
   it('getKsdPaidInCapitalIncreaseSchedule', async () => {
@@ -224,6 +332,12 @@ describe('KIS DomesticStockInfo', () => {
       shtCd: '',
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getKsdPaidInCapitalIncreaseScheduleResponseSchema,
+      'output1',
+      getKsdPaidInCapitalIncreaseScheduleItemSchema,
+    );
   });
 
   it('getKsdStockDividendSchedule', async () => {
@@ -235,6 +349,12 @@ describe('KIS DomesticStockInfo', () => {
       shtCd: '',
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getKsdStockDividendScheduleResponseSchema,
+      'output1',
+      getKsdStockDividendScheduleItemSchema,
+    );
   });
 
   it('getKsdShareholderMeetingSchedule', async () => {
@@ -246,6 +366,12 @@ describe('KIS DomesticStockInfo', () => {
       shtCd: '',
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getKsdShareholderMeetingScheduleResponseSchema,
+      'output1',
+      getKsdShareholderMeetingScheduleItemSchema,
+    );
   });
 
   it('getEstimatedEarnings', async () => {
@@ -254,6 +380,10 @@ describe('KIS DomesticStockInfo', () => {
       shtCd: SAMSUNG,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getEstimatedEarningsResponseSchema);
+    assertResponseShape(res.body, getEstimatedEarningsResponseSchema, 'output2', getEstimatedEarningsOutput2ItemSchema);
+    assertResponseShape(res.body, getEstimatedEarningsResponseSchema, 'output3', getEstimatedEarningsOutput3ItemSchema);
+    assertResponseShape(res.body, getEstimatedEarningsResponseSchema, 'output4', getEstimatedEarningsOutput4ItemSchema);
   });
 
   it('getStockLoanableList', async () => {
@@ -267,6 +397,8 @@ describe('KIS DomesticStockInfo', () => {
       ctxAreaNk100: '',
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getStockLoanableListResponseSchema);
+    assertResponseShape(res.body, getStockLoanableListResponseSchema, 'output1', getStockLoanableListOutput1ItemSchema);
   });
 
   it('getInvestmentOpinion', async () => {
@@ -279,6 +411,7 @@ describe('KIS DomesticStockInfo', () => {
       fidInputDate2: TODAY,
     });
     assertKisResponse(res);
+    assertResponseShape(res.body, getInvestmentOpinionResponseSchema, 'output', getInvestmentOpinionItemSchema);
   });
 
   it('getInvestmentOpinionByBrokerage', async () => {
@@ -292,5 +425,11 @@ describe('KIS DomesticStockInfo', () => {
       fidInputDate2: TODAY,
     });
     assertKisResponse(res);
+    assertResponseShape(
+      res.body,
+      getInvestmentOpinionByBrokerageResponseSchema,
+      'output',
+      getInvestmentOpinionByBrokerageItemSchema,
+    );
   });
 });
