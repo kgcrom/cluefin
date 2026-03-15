@@ -17,7 +17,7 @@ const secureRandomInt = (maxExclusive: number): number => {
 
   const values = new Uint32Array(1);
   globalThis.crypto.getRandomValues(values);
-  const randomValue = values[0] ?? 0;
+  const randomValue = values[0];
   return Math.floor((randomValue / U32_RANGE) * maxExclusive);
 };
 
