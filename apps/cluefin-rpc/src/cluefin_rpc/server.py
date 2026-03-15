@@ -80,16 +80,21 @@ def _print_categories(dispatcher: Dispatcher) -> None:
         logger.info("  {:<{}}  {:>3} methods  {}", category, max_cat, grouped[category], desc)
 
 
-def _print_methods(dispatcher: Dispatcher) -> None:
-    methods = dispatcher.list_methods()
+def _print_methods(dispatcher: Dispatcher, category: str | None = None) -> None:
+    methods = dispatcher.list_methods(category=category)
+    if not methods:
+        logger.info("카테고리 '{}'에 해당하는 메서드가 없습니다.", category)
+        logger.info("사용 가능한 카테고리 목록은 --list-categories 로 확인하세요.")
+        return
+
     grouped: dict[str, list[dict]] = defaultdict(list)
     for m in methods:
         grouped[m["category"] or "other"].append(m)
 
     logger.info("cluefin-rpc v{} — {} methods\n", VERSION, len(methods))
-    for category in sorted(grouped):
-        items = sorted(grouped[category], key=lambda m: m["name"])
-        logger.info("[{}] ({})", category, len(items))
+    for cat in sorted(grouped):
+        items = sorted(grouped[cat], key=lambda m: m["name"])
+        logger.info("[{}] ({})", cat, len(items))
         max_name = max(len(m["name"]) for m in items)
         for m in items:
             logger.info("  {:<{}}  {}", m["name"], max_name, m["description"])
@@ -105,8 +110,11 @@ def main() -> int:
     )
     parser.add_argument(
         "--list-methods",
-        action="store_true",
-        help="Print registered RPC methods and exit",
+        nargs="?",
+        const=True,
+        default=None,
+        metavar="CATEGORY",
+        help="Print registered RPC methods and exit (optionally filter by category)",
     )
     args = parser.parse_args()
 
@@ -115,9 +123,10 @@ def main() -> int:
         _print_categories(dispatcher)
         return 0
 
-    if args.list_methods:
+    if args.list_methods is not None:
         dispatcher = _build_dispatcher()
-        _print_methods(dispatcher)
+        category = args.list_methods if isinstance(args.list_methods, str) else None
+        _print_methods(dispatcher, category=category)
         return 0
 
     settings = RpcSettings()
