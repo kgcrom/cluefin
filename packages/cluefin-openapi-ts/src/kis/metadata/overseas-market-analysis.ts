@@ -7,20 +7,28 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
     path: '/uapi/overseas-stock/v1/ranking/price-fluctuation',
     trId: 'HHDFS76260000',
     requestMap: {
-      KEYB: 'keyb',
-      AUTH: 'auth',
       EXCD: 'excd',
       GUBN: 'gubn',
       MIXN: 'mixn',
       VOL_RANG: 'volRang',
     },
     params: [
-      { name: 'excd', required: true },
-      { name: 'gubn', required: true },
-      { name: 'mixn', required: true },
-      { name: 'volRang', required: true },
-      { name: 'keyb', required: false, defaultValue: '' },
-      { name: 'auth', required: false, defaultValue: '' },
+      {
+        name: 'excd',
+        required: true,
+      },
+      {
+        name: 'gubn',
+        required: true,
+      },
+      {
+        name: 'mixn',
+        required: true,
+      },
+      {
+        name: 'volRang',
+        required: true,
+      },
     ],
   },
   {
@@ -33,16 +41,34 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
       AUTH: 'auth',
       EXCD: 'excd',
       MIXN: 'mixn',
-      MINX: 'minx',
+      MINX: 'mixn',
       VOL_RANG: 'volRang',
     },
     params: [
-      { name: 'excd', required: true },
-      { name: 'mixn', required: true },
-      { name: 'volRang', required: true },
-      { name: 'minx', required: true },
-      { name: 'keyb', required: false, defaultValue: '' },
-      { name: 'auth', required: false, defaultValue: '' },
+      {
+        name: 'keyb',
+        required: true,
+      },
+      {
+        name: 'auth',
+        required: true,
+      },
+      {
+        name: 'excd',
+        required: true,
+      },
+      {
+        name: 'mixn',
+        required: true,
+      },
+      {
+        name: 'volRang',
+        required: true,
+      },
+      {
+        name: 'minx',
+        required: false,
+      },
     ],
   },
   {
@@ -58,11 +84,26 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
       VOL_RANG: 'volRang',
     },
     params: [
-      { name: 'excd', required: true },
-      { name: 'nday', required: true },
-      { name: 'volRang', required: true },
-      { name: 'keyb', required: false, defaultValue: '' },
-      { name: 'auth', required: false, defaultValue: '' },
+      {
+        name: 'keyb',
+        required: true,
+      },
+      {
+        name: 'auth',
+        required: true,
+      },
+      {
+        name: 'excd',
+        required: true,
+      },
+      {
+        name: 'nday',
+        required: true,
+      },
+      {
+        name: 'volRang',
+        required: true,
+      },
     ],
   },
   {
@@ -79,12 +120,30 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
       VOL_RANG: 'volRang',
     },
     params: [
-      { name: 'excd', required: true },
-      { name: 'gubn', required: true },
-      { name: 'nday', required: true },
-      { name: 'volRang', required: true },
-      { name: 'keyb', required: false, defaultValue: '' },
-      { name: 'auth', required: false, defaultValue: '' },
+      {
+        name: 'keyb',
+        required: true,
+      },
+      {
+        name: 'auth',
+        required: true,
+      },
+      {
+        name: 'excd',
+        required: true,
+      },
+      {
+        name: 'gubn',
+        required: true,
+      },
+      {
+        name: 'nday',
+        required: true,
+      },
+      {
+        name: 'volRang',
+        required: true,
+      },
     ],
   },
   {
@@ -102,13 +161,34 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
       VOL_RANG: 'volRang',
     },
     params: [
-      { name: 'excd', required: true },
-      { name: 'gubn', required: true },
-      { name: 'gubn2', required: true },
-      { name: 'nday', required: true },
-      { name: 'volRang', required: true },
-      { name: 'keyb', required: false, defaultValue: '' },
-      { name: 'auth', required: false, defaultValue: '' },
+      {
+        name: 'keyb',
+        required: true,
+      },
+      {
+        name: 'auth',
+        required: true,
+      },
+      {
+        name: 'excd',
+        required: true,
+      },
+      {
+        name: 'gubn',
+        required: true,
+      },
+      {
+        name: 'gubn2',
+        required: true,
+      },
+      {
+        name: 'nday',
+        required: true,
+      },
+      {
+        name: 'volRang',
+        required: true,
+      },
     ],
   },
   {
@@ -126,13 +206,34 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
       VOL_RANG: 'volRang',
     },
     params: [
-      { name: 'excd', required: true },
-      { name: 'nday', required: true },
-      { name: 'prc1', required: true },
-      { name: 'prc2', required: true },
-      { name: 'volRang', required: true },
-      { name: 'keyb', required: false, defaultValue: '' },
-      { name: 'auth', required: false, defaultValue: '' },
+      {
+        name: 'keyb',
+        required: true,
+      },
+      {
+        name: 'auth',
+        required: true,
+      },
+      {
+        name: 'excd',
+        required: true,
+      },
+      {
+        name: 'nday',
+        required: true,
+      },
+      {
+        name: 'prc1',
+        required: true,
+      },
+      {
+        name: 'prc2',
+        required: true,
+      },
+      {
+        name: 'volRang',
+        required: true,
+      },
     ],
   },
   {
@@ -150,13 +251,34 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
       PRC2: 'prc2',
     },
     params: [
-      { name: 'excd', required: true },
-      { name: 'nday', required: true },
-      { name: 'volRang', required: true },
-      { name: 'prc1', required: true },
-      { name: 'prc2', required: true },
-      { name: 'keyb', required: false, defaultValue: '' },
-      { name: 'auth', required: false, defaultValue: '' },
+      {
+        name: 'keyb',
+        required: true,
+      },
+      {
+        name: 'auth',
+        required: true,
+      },
+      {
+        name: 'excd',
+        required: true,
+      },
+      {
+        name: 'nday',
+        required: true,
+      },
+      {
+        name: 'volRang',
+        required: true,
+      },
+      {
+        name: 'prc1',
+        required: true,
+      },
+      {
+        name: 'prc2',
+        required: true,
+      },
     ],
   },
   {
@@ -172,11 +294,26 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
       VOL_RANG: 'volRang',
     },
     params: [
-      { name: 'excd', required: true },
-      { name: 'nday', required: true },
-      { name: 'volRang', required: true },
-      { name: 'keyb', required: false, defaultValue: '' },
-      { name: 'auth', required: false, defaultValue: '' },
+      {
+        name: 'keyb',
+        required: true,
+      },
+      {
+        name: 'auth',
+        required: true,
+      },
+      {
+        name: 'excd',
+        required: true,
+      },
+      {
+        name: 'nday',
+        required: true,
+      },
+      {
+        name: 'volRang',
+        required: true,
+      },
     ],
   },
   {
@@ -192,11 +329,26 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
       VOL_RANG: 'volRang',
     },
     params: [
-      { name: 'excd', required: true },
-      { name: 'nday', required: true },
-      { name: 'volRang', required: true },
-      { name: 'keyb', required: false, defaultValue: '' },
-      { name: 'auth', required: false, defaultValue: '' },
+      {
+        name: 'keyb',
+        required: true,
+      },
+      {
+        name: 'auth',
+        required: true,
+      },
+      {
+        name: 'excd',
+        required: true,
+      },
+      {
+        name: 'nday',
+        required: true,
+      },
+      {
+        name: 'volRang',
+        required: true,
+      },
     ],
   },
   {
@@ -212,11 +364,27 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
       CURR_GB: 'currGb',
     },
     params: [
-      { name: 'excd', required: true },
-      { name: 'volRang', required: true },
-      { name: 'keyb', required: false, defaultValue: '' },
-      { name: 'auth', required: false, defaultValue: '' },
-      { name: 'currGb', required: false, defaultValue: '0' },
+      {
+        name: 'keyb',
+        required: true,
+      },
+      {
+        name: 'auth',
+        required: true,
+      },
+      {
+        name: 'excd',
+        required: true,
+      },
+      {
+        name: 'volRang',
+        required: true,
+      },
+      {
+        name: 'currGb',
+        required: false,
+        defaultValue: '0',
+      },
     ],
   },
   {
@@ -235,14 +403,38 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
       CTX_AREA_FK50: 'ctxAreaFk50',
     },
     params: [
-      { name: 'rghtTypeCd', required: true },
-      { name: 'inqrDvsnCd', required: true },
-      { name: 'inqrStrtDt', required: true },
-      { name: 'inqrEndDt', required: true },
-      { name: 'pdno', required: true },
-      { name: 'prdtTypeCd', required: true },
-      { name: 'ctxAreaNk50', required: true },
-      { name: 'ctxAreaFk50', required: true },
+      {
+        name: 'rghtTypeCd',
+        required: true,
+      },
+      {
+        name: 'inqrDvsnCd',
+        required: true,
+      },
+      {
+        name: 'inqrStrtDt',
+        required: true,
+      },
+      {
+        name: 'inqrEndDt',
+        required: true,
+      },
+      {
+        name: 'pdno',
+        required: true,
+      },
+      {
+        name: 'prdtTypeCd',
+        required: true,
+      },
+      {
+        name: 'ctxAreaNk50',
+        required: true,
+      },
+      {
+        name: 'ctxAreaFk50',
+        required: true,
+      },
     ],
   },
   {
@@ -261,14 +453,38 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
       CTS: 'cts',
     },
     params: [
-      { name: 'infoGb', required: true },
-      { name: 'classCd', required: true },
-      { name: 'nationCd', required: true },
-      { name: 'exchangeCd', required: true },
-      { name: 'symb', required: true },
-      { name: 'dataDt', required: true },
-      { name: 'dataTm', required: true },
-      { name: 'cts', required: true },
+      {
+        name: 'infoGb',
+        required: true,
+      },
+      {
+        name: 'classCd',
+        required: true,
+      },
+      {
+        name: 'nationCd',
+        required: true,
+      },
+      {
+        name: 'exchangeCd',
+        required: true,
+      },
+      {
+        name: 'symb',
+        required: true,
+      },
+      {
+        name: 'dataDt',
+        required: true,
+      },
+      {
+        name: 'dataTm',
+        required: true,
+      },
+      {
+        name: 'cts',
+        required: true,
+      },
     ],
   },
   {
@@ -283,10 +499,22 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
       ED_YMD: 'edYmd',
     },
     params: [
-      { name: 'ncod', required: true },
-      { name: 'symb', required: true },
-      { name: 'stYmd', required: true },
-      { name: 'edYmd', required: true },
+      {
+        name: 'ncod',
+        required: true,
+      },
+      {
+        name: 'symb',
+        required: true,
+      },
+      {
+        name: 'stYmd',
+        required: true,
+      },
+      {
+        name: 'edYmd',
+        required: true,
+      },
     ],
   },
   {
@@ -309,18 +537,54 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
       CTX_AREA_NK100: 'ctxAreaNk100',
     },
     params: [
-      { name: 'pdno', required: true },
-      { name: 'prdtTypeCd', required: true },
-      { name: 'inqrStrtDt', required: true },
-      { name: 'inqrEndDt', required: true },
-      { name: 'inqrDvsn', required: true },
-      { name: 'natnCd', required: true },
-      { name: 'inqrSqnDvsn', required: true },
-      { name: 'rtDvsnCd', required: true },
-      { name: 'rt', required: true },
-      { name: 'loanPsblYn', required: true },
-      { name: 'ctxAreaFk100', required: true },
-      { name: 'ctxAreaNk100', required: true },
+      {
+        name: 'pdno',
+        required: true,
+      },
+      {
+        name: 'prdtTypeCd',
+        required: true,
+      },
+      {
+        name: 'inqrStrtDt',
+        required: true,
+      },
+      {
+        name: 'inqrEndDt',
+        required: true,
+      },
+      {
+        name: 'inqrDvsn',
+        required: true,
+      },
+      {
+        name: 'natnCd',
+        required: true,
+      },
+      {
+        name: 'inqrSqnDvsn',
+        required: true,
+      },
+      {
+        name: 'rtDvsnCd',
+        required: true,
+      },
+      {
+        name: 'rt',
+        required: true,
+      },
+      {
+        name: 'loanPsblYn',
+        required: true,
+      },
+      {
+        name: 'ctxAreaFk100',
+        required: true,
+      },
+      {
+        name: 'ctxAreaNk100',
+        required: true,
+      },
     ],
   },
   {
@@ -340,15 +604,42 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
       FID_COND_SCR_DIV_CODE: 'fidCondScrDivCode',
     },
     params: [
-      { name: 'fidNewsOferEntpCode', required: true },
-      { name: 'fidCondMrktClsCode', required: true },
-      { name: 'fidInputIscd', required: true },
-      { name: 'fidTitlCntt', required: true },
-      { name: 'fidInputDate1', required: true },
-      { name: 'fidInputHour1', required: true },
-      { name: 'fidRankSortClsCode', required: true },
-      { name: 'fidInputSrno', required: true },
-      { name: 'fidCondScrDivCode', required: true },
+      {
+        name: 'fidNewsOferEntpCode',
+        required: true,
+      },
+      {
+        name: 'fidCondMrktClsCode',
+        required: true,
+      },
+      {
+        name: 'fidInputIscd',
+        required: true,
+      },
+      {
+        name: 'fidTitlCntt',
+        required: true,
+      },
+      {
+        name: 'fidInputDate1',
+        required: true,
+      },
+      {
+        name: 'fidInputHour1',
+        required: true,
+      },
+      {
+        name: 'fidRankSortClsCode',
+        required: true,
+      },
+      {
+        name: 'fidInputSrno',
+        required: true,
+      },
+      {
+        name: 'fidCondScrDivCode',
+        required: true,
+      },
     ],
   },
 ];

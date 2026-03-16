@@ -1,39 +1,8 @@
 import type { KiwoomEndpointDefinition } from '../../core/types';
-import {
-  changeRateFromOpenResponseSchema,
-  dailyPreviousDayConclusionResponseSchema,
-  dailyPreviousDayExecutionVolumeResponseSchema,
-  dailyTradingDetailsResponseSchema,
-  dailyTradingItemsByInvestorResponseSchema,
-  executionResponseSchema,
-  highLowPriceApproachResponseSchema,
-  highPerResponseSchema,
-  industryCodeResponseSchema,
-  institutionalInvestorByStockResponseSchema,
-  interestStockInfoResponseSchema,
-  marginTradingTrendResponseSchema,
-  memberCompanyResponseSchema,
-  newHighLowPriceResponseSchema,
-  priceVolatilityResponseSchema,
-  programTradingStatusByStockResponseSchema,
-  stockInfoResponseSchema,
-  stockInfoSummaryResponseSchema,
-  stockInfoV1ResponseSchema,
-  stockTradingMemberResponseSchema,
-  supplyDemandConcentrationResponseSchema,
-  top50ProgramNetBuyResponseSchema,
-  totalInstitutionalInvestorByStockResponseSchema,
-  tradingMemberInstantVolumeResponseSchema,
-  tradingMemberSupplyDemandAnalysisResponseSchema,
-  tradingVolumeRenewalResponseSchema,
-  upperLowerLimitPriceResponseSchema,
-  volatilityControlEventResponseSchema,
-} from '../schemas/domestic-stock-info';
 
 export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   {
     methodName: 'getStockInfo',
-    responseSchema: stockInfoResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10001',
     bodyMap: {
@@ -62,7 +31,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getStockTradingMember',
-    responseSchema: stockTradingMemberResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10002',
     bodyMap: {
@@ -91,7 +59,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getExecution',
-    responseSchema: executionResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10003',
     bodyMap: {
@@ -120,7 +87,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getMarginTradingTrend',
-    responseSchema: marginTradingTrendResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10013',
     bodyMap: {
@@ -159,7 +125,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getDailyTradingDetails',
-    responseSchema: dailyTradingDetailsResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10015',
     bodyMap: {
@@ -193,7 +158,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getNewHighLowPrice',
-    responseSchema: newHighLowPriceResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10016',
     bodyMap: {
@@ -262,7 +226,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getUpperLowerLimitPrice',
-    responseSchema: upperLowerLimitPriceResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10017',
     bodyMap: {
@@ -326,7 +289,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getHighLowPriceApproach',
-    responseSchema: highLowPriceApproachResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10018',
     bodyMap: {
@@ -385,7 +347,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getPriceVolatility',
-    responseSchema: priceVolatilityResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10019',
     bodyMap: {
@@ -459,7 +420,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getTradingVolumeRenewal',
-    responseSchema: tradingVolumeRenewalResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10024',
     bodyMap: {
@@ -503,7 +463,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getSupplyDemandConcentration',
-    responseSchema: supplyDemandConcentrationResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10025',
     bodyMap: {
@@ -557,7 +516,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getHighPer',
-    responseSchema: highPerResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10026',
     bodyMap: {
@@ -591,7 +549,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getChangeRateFromOpen',
-    responseSchema: changeRateFromOpenResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10028',
     bodyMap: {
@@ -660,7 +617,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getTradingMemberSupplyDemandAnalysis',
-    responseSchema: tradingMemberSupplyDemandAnalysisResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10043',
     bodyMap: {
@@ -729,7 +685,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getTradingMemberInstantVolume',
-    responseSchema: tradingMemberInstantVolumeResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10052',
     bodyMap: {
@@ -783,7 +738,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getVolatilityControlEvent',
-    responseSchema: volatilityControlEventResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10054',
     bodyMap: {
@@ -876,7 +830,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getDailyPreviousDayExecutionVolume',
-    responseSchema: dailyPreviousDayExecutionVolumeResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10055',
     bodyMap: {
@@ -910,7 +863,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getDailyTradingItemsByInvestor',
-    responseSchema: dailyTradingItemsByInvestorResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10058',
     bodyMap: {
@@ -964,7 +916,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getInstitutionalInvestorByStock',
-    responseSchema: institutionalInvestorByStockResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10059',
     bodyMap: {
@@ -1013,7 +964,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getTotalInstitutionalInvestorByStock',
-    responseSchema: totalInstitutionalInvestorByStockResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10061',
     bodyMap: {
@@ -1067,7 +1017,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getDailyPreviousDayConclusion',
-    responseSchema: dailyPreviousDayConclusionResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10084',
     bodyMap: {
@@ -1090,7 +1039,8 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
       },
       {
         name: 'ticMin',
-        required: true,
+        required: false,
+        defaultValue: '0',
       },
       {
         name: 'contYn',
@@ -1106,7 +1056,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getInterestStockInfo',
-    responseSchema: interestStockInfoResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10095',
     bodyMap: {
@@ -1135,7 +1084,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getStockInfoSummary',
-    responseSchema: stockInfoSummaryResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10099',
     bodyMap: {
@@ -1164,7 +1112,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getStockInfoV1',
-    responseSchema: stockInfoV1ResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10100',
     bodyMap: {
@@ -1193,7 +1140,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getIndustryCode',
-    responseSchema: industryCodeResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10101',
     bodyMap: {
@@ -1222,7 +1168,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getMemberCompany',
-    responseSchema: memberCompanyResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka10102',
     bodyMap: {},
@@ -1245,7 +1190,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getTop50ProgramNetBuy',
-    responseSchema: top50ProgramNetBuyResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka90003',
     bodyMap: {
@@ -1289,7 +1233,6 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getProgramTradingStatusByStock',
-    responseSchema: programTradingStatusByStockResponseSchema,
     path: '/api/dostk/stkinfo',
     apiId: 'ka90004',
     bodyMap: {

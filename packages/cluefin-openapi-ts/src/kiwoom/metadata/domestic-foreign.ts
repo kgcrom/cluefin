@@ -1,14 +1,8 @@
 import type { KiwoomEndpointDefinition } from '../../core/types';
-import {
-  consecutiveNetBuySellStatusByInstitutionForeignerResponseSchema,
-  foreignInvestorTradingTrendByStockResponseSchema,
-  stockInstitutionResponseSchema,
-} from '../schemas/domestic-foreign';
 
 export const domesticForeignEndpoints: KiwoomEndpointDefinition[] = [
   {
     methodName: 'getForeignInvestorTradingTrendByStock',
-    responseSchema: foreignInvestorTradingTrendByStockResponseSchema,
     path: '/api/dostk/frgnistt',
     apiId: 'ka10008',
     bodyMap: {
@@ -37,7 +31,6 @@ export const domesticForeignEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getStockInstitution',
-    responseSchema: stockInstitutionResponseSchema,
     path: '/api/dostk/frgnistt',
     apiId: 'ka10009',
     bodyMap: {
@@ -66,7 +59,6 @@ export const domesticForeignEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getConsecutiveNetBuySellStatusByInstitutionForeigner',
-    responseSchema: consecutiveNetBuySellStatusByInstitutionForeignerResponseSchema,
     path: '/api/dostk/frgnistt',
     apiId: 'ka10131',
     bodyMap: {

@@ -1,21 +1,12 @@
 import type { KiwoomEndpointDefinition } from '../../core/types';
-import {
-  allIndustryIndexResponseSchema,
-  dailyIndustryCurrentPriceResponseSchema,
-  industryCurrentPriceResponseSchema,
-  industryInvestorNetBuyResponseSchema,
-  industryPriceBySectorResponseSchema,
-  industryProgramResponseSchema,
-} from '../schemas/domestic-sector';
 
 export const domesticSectorEndpoints: KiwoomEndpointDefinition[] = [
   {
     methodName: 'getIndustryProgram',
-    responseSchema: industryProgramResponseSchema,
     path: '/api/dostk/sect',
     apiId: 'ka10010',
     bodyMap: {
-      stk_cd: 'stkCode',
+      stk_code: 'stkCode',
     },
     headerParamMap: {
       'cont-yn': 'contYn',
@@ -40,7 +31,6 @@ export const domesticSectorEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getIndustryInvestorNetBuy',
-    responseSchema: industryInvestorNetBuyResponseSchema,
     path: '/api/dostk/sect',
     apiId: 'ka10051',
     bodyMap: {
@@ -84,7 +74,6 @@ export const domesticSectorEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getIndustryCurrentPrice',
-    responseSchema: industryCurrentPriceResponseSchema,
     path: '/api/dostk/sect',
     apiId: 'ka20001',
     bodyMap: {
@@ -118,7 +107,6 @@ export const domesticSectorEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getIndustryPriceBySector',
-    responseSchema: industryPriceBySectorResponseSchema,
     path: '/api/dostk/sect',
     apiId: 'ka20002',
     bodyMap: {
@@ -157,7 +145,6 @@ export const domesticSectorEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getAllIndustryIndex',
-    responseSchema: allIndustryIndexResponseSchema,
     path: '/api/dostk/sect',
     apiId: 'ka20003',
     bodyMap: {
@@ -186,7 +173,6 @@ export const domesticSectorEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getDailyIndustryCurrentPrice',
-    responseSchema: dailyIndustryCurrentPriceResponseSchema,
     path: '/api/dostk/sect',
     apiId: 'ka20009',
     bodyMap: {

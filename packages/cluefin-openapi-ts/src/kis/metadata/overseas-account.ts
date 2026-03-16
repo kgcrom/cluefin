@@ -19,16 +19,49 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       ALGO_ORD_TMD_DVSN_CD: 'algoOrdTmdDvsnCd',
     },
     params: [
-      { name: 'cano', required: true },
-      { name: 'acntPrdtCd', required: true },
-      { name: 'ovrsExcgCd', required: true },
-      { name: 'pdno', required: true },
-      { name: 'ordQty', required: true },
-      { name: 'ovrsOrdUnpr', required: true },
-      { name: 'ordDvsn', required: true },
-      { name: 'startTime', required: false, defaultValue: '' },
-      { name: 'endTime', required: false, defaultValue: '' },
-      { name: 'algoOrdTmdDvsnCd', required: false, defaultValue: '' },
+      {
+        name: 'cano',
+        required: true,
+      },
+      {
+        name: 'acntPrdtCd',
+        required: true,
+      },
+      {
+        name: 'ovrsExcgCd',
+        required: true,
+      },
+      {
+        name: 'pdno',
+        required: true,
+      },
+      {
+        name: 'ordQty',
+        required: true,
+      },
+      {
+        name: 'ovrsOrdUnpr',
+        required: true,
+      },
+      {
+        name: 'ordDvsn',
+        required: true,
+      },
+      {
+        name: 'startTime',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'endTime',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'algoOrdTmdDvsnCd',
+        required: false,
+        defaultValue: '',
+      },
     ],
   },
   {
@@ -49,16 +82,48 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       ORD_SVR_DVSN_CD: 'ordSvrDvsnCd',
     },
     params: [
-      { name: 'cano', required: true },
-      { name: 'acntPrdtCd', required: true },
-      { name: 'ovrsExcgCd', required: true },
-      { name: 'pdno', required: true },
-      { name: 'orgnOdno', required: true },
-      { name: 'rvseCnclDvsnCd', required: true },
-      { name: 'ordQty', required: true },
-      { name: 'ovrsOrdUnpr', required: true },
-      { name: 'mgcoAptmOdno', required: false, defaultValue: '' },
-      { name: 'ordSvrDvsnCd', required: false, defaultValue: '0' },
+      {
+        name: 'cano',
+        required: true,
+      },
+      {
+        name: 'acntPrdtCd',
+        required: true,
+      },
+      {
+        name: 'ovrsExcgCd',
+        required: true,
+      },
+      {
+        name: 'pdno',
+        required: true,
+      },
+      {
+        name: 'orgnOdno',
+        required: true,
+      },
+      {
+        name: 'rvseCnclDvsnCd',
+        required: true,
+      },
+      {
+        name: 'ordQty',
+        required: true,
+      },
+      {
+        name: 'ovrsOrdUnpr',
+        required: true,
+      },
+      {
+        name: 'mgcoAptmOdno',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'ordSvrDvsnCd',
+        required: false,
+        defaultValue: '0',
+      },
     ],
   },
   {
@@ -83,20 +148,69 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       ALGO_ORD_TMD_DVSN_CD: 'algoOrdTmdDvsnCd',
     },
     params: [
-      { name: 'cano', required: true },
-      { name: 'acntPrdtCd', required: true },
-      { name: 'pdno', required: true },
-      { name: 'prdtTypeCd', required: true },
-      { name: 'ovrsExcgCd', required: true },
-      { name: 'ftOrdQty', required: true },
-      { name: 'ftOrdUnpr3', required: true },
-      { name: 'sllBuyDvsnCd', required: false, defaultValue: '' },
-      { name: 'rvseCnclDvsnCd', required: false, defaultValue: '' },
-      { name: 'ordSvrDvsnCd', required: false, defaultValue: '0' },
-      { name: 'rsvnOrdRcitDt', required: false, defaultValue: '' },
-      { name: 'ordDvsn', required: false, defaultValue: '' },
-      { name: 'ovrsRsvnOdno', required: false, defaultValue: '' },
-      { name: 'algoOrdTmdDvsnCd', required: false, defaultValue: '' },
+      {
+        name: 'cano',
+        required: true,
+      },
+      {
+        name: 'acntPrdtCd',
+        required: true,
+      },
+      {
+        name: 'pdno',
+        required: true,
+      },
+      {
+        name: 'prdtTypeCd',
+        required: true,
+      },
+      {
+        name: 'ovrsExcgCd',
+        required: true,
+      },
+      {
+        name: 'ftOrdQty',
+        required: true,
+      },
+      {
+        name: 'ftOrdUnpr3',
+        required: true,
+      },
+      {
+        name: 'sllBuyDvsnCd',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'rvseCnclDvsnCd',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'ordSvrDvsnCd',
+        required: false,
+        defaultValue: '0',
+      },
+      {
+        name: 'rsvnOrdRcitDt',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'ordDvsn',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'ovrsRsvnOdno',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'algoOrdTmdDvsnCd',
+        required: false,
+        defaultValue: '',
+      },
     ],
   },
   {
@@ -111,72 +225,22 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       OVRS_RSVN_ODNO: 'ovrsRsvnOdno',
     },
     params: [
-      { name: 'cano', required: true },
-      { name: 'acntPrdtCd', required: true },
-      { name: 'rsynOrdRcitDt', required: true },
-      { name: 'ovrsRsvnOdno', required: true },
-    ],
-  },
-  {
-    methodName: 'requestOrderAfterDayTime',
-    method: 'POST',
-    path: '/uapi/overseas-stock/v1/trading/daytime-order',
-    trId: 'TTTS6036U',
-    requestMap: {
-      CANO: 'cano',
-      ACNT_PRDT_CD: 'acntPrdtCd',
-      OVRS_EXCG_CD: 'ovrsExcgCd',
-      PDNO: 'pdno',
-      ORD_QTY: 'ordQty',
-      OVRS_ORD_UNPR: 'ovrsOrdUnpr',
-      CTAC_TLNO: 'ctacTlno',
-      MGCO_APTM_ODNO: 'mgcoAptmOdno',
-      ORD_SVR_DVSN_CD: 'ordSvrDvsnCd',
-      ORD_DVSN: 'ordDvsn',
-    },
-    params: [
-      { name: 'cano', required: true },
-      { name: 'acntPrdtCd', required: true },
-      { name: 'ovrsExcgCd', required: true },
-      { name: 'pdno', required: true },
-      { name: 'ordQty', required: true },
-      { name: 'ovrsOrdUnpr', required: true },
-      { name: 'ordDvsn', required: true },
-      { name: 'ctacTlno', required: false, defaultValue: '' },
-      { name: 'mgcoAptmOdno', required: false, defaultValue: '' },
-      { name: 'ordSvrDvsnCd', required: false, defaultValue: '0' },
-    ],
-  },
-  {
-    methodName: 'cancelCorrectAfterDayTime',
-    method: 'POST',
-    path: '/uapi/overseas-stock/v1/trading/daytime-order-rvsecncl',
-    trId: 'TTTS6038U',
-    requestMap: {
-      CANO: 'cano',
-      ACNT_PRDT_CD: 'acntPrdtCd',
-      OVRS_EXCG_CD: 'ovrsExcgCd',
-      PDNO: 'pdno',
-      ORGN_ODNO: 'orgnOdno',
-      RVSE_CNCL_DVSN_CD: 'rvseCnclDvsnCd',
-      ORD_QTY: 'ordQty',
-      OVRS_ORD_UNPR: 'ovrsOrdUnpr',
-      CTAC_TLNO: 'ctacTlno',
-      MGCO_APTM_ODNO: 'mgcoAptmOdno',
-      ORD_SVR_DVSN_CD: 'ordSvrDvsnCd',
-    },
-    params: [
-      { name: 'cano', required: true },
-      { name: 'acntPrdtCd', required: true },
-      { name: 'ovrsExcgCd', required: true },
-      { name: 'pdno', required: true },
-      { name: 'orgnOdno', required: true },
-      { name: 'rvseCnclDvsnCd', required: true },
-      { name: 'ordQty', required: true },
-      { name: 'ovrsOrdUnpr', required: true },
-      { name: 'ctacTlno', required: false, defaultValue: '' },
-      { name: 'mgcoAptmOdno', required: false, defaultValue: '' },
-      { name: 'ordSvrDvsnCd', required: false, defaultValue: '0' },
+      {
+        name: 'cano',
+        required: true,
+      },
+      {
+        name: 'acntPrdtCd',
+        required: true,
+      },
+      {
+        name: 'rsynOrdRcitDt',
+        required: true,
+      },
+      {
+        name: 'ovrsRsvnOdno',
+        required: true,
+      },
     ],
   },
   {
@@ -192,11 +256,26 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       ITEM_CD: 'itemCd',
     },
     params: [
-      { name: 'cano', required: true },
-      { name: 'acntPrdtCd', required: true },
-      { name: 'ovrsExcgCd', required: true },
-      { name: 'ovrsOrdUnpr', required: true },
-      { name: 'itemCd', required: true },
+      {
+        name: 'cano',
+        required: true,
+      },
+      {
+        name: 'acntPrdtCd',
+        required: true,
+      },
+      {
+        name: 'ovrsExcgCd',
+        required: true,
+      },
+      {
+        name: 'ovrsOrdUnpr',
+        required: true,
+      },
+      {
+        name: 'itemCd',
+        required: true,
+      },
     ],
   },
   {
@@ -213,12 +292,32 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       CTX_AREA_NK200: 'ctxAreaNk200',
     },
     params: [
-      { name: 'cano', required: true },
-      { name: 'acntPrdtCd', required: true },
-      { name: 'ovrsExcgCd', required: true },
-      { name: 'sortSqn', required: true },
-      { name: 'ctxAreaFk200', required: false, defaultValue: '' },
-      { name: 'ctxAreaNk200', required: false, defaultValue: '' },
+      {
+        name: 'cano',
+        required: true,
+      },
+      {
+        name: 'acntPrdtCd',
+        required: true,
+      },
+      {
+        name: 'ovrsExcgCd',
+        required: true,
+      },
+      {
+        name: 'sortSqn',
+        required: true,
+      },
+      {
+        name: 'ctxAreaFk200',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'ctxAreaNk200',
+        required: false,
+        defaultValue: '',
+      },
     ],
   },
   {
@@ -235,12 +334,32 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       CTX_AREA_NK200: 'ctxAreaNk200',
     },
     params: [
-      { name: 'cano', required: true },
-      { name: 'acntPrdtCd', required: true },
-      { name: 'ovrsExcgCd', required: true },
-      { name: 'trCrcyCd', required: true },
-      { name: 'ctxAreaFk200', required: false, defaultValue: '' },
-      { name: 'ctxAreaNk200', required: false, defaultValue: '' },
+      {
+        name: 'cano',
+        required: true,
+      },
+      {
+        name: 'acntPrdtCd',
+        required: true,
+      },
+      {
+        name: 'ovrsExcgCd',
+        required: true,
+      },
+      {
+        name: 'trCrcyCd',
+        required: true,
+      },
+      {
+        name: 'ctxAreaFk200',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'ctxAreaNk200',
+        required: false,
+        defaultValue: '',
+      },
     ],
   },
   {
@@ -265,20 +384,67 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       CTX_AREA_FK200: 'ctxAreaFk200',
     },
     params: [
-      { name: 'cano', required: true },
-      { name: 'acntPrdtCd', required: true },
-      { name: 'pdno', required: true },
-      { name: 'ordStrtDt', required: true },
-      { name: 'ordEndDt', required: true },
-      { name: 'sllBuyDvsn', required: true },
-      { name: 'ccldNccsDvsn', required: true },
-      { name: 'ovrsExcgCd', required: true },
-      { name: 'sortSqn', required: true },
-      { name: 'ordDt', required: false, defaultValue: '' },
-      { name: 'ordGnoBrno', required: false, defaultValue: '' },
-      { name: 'odno', required: false, defaultValue: '' },
-      { name: 'ctxAreaNk200', required: false, defaultValue: '' },
-      { name: 'ctxAreaFk200', required: false, defaultValue: '' },
+      {
+        name: 'cano',
+        required: true,
+      },
+      {
+        name: 'acntPrdtCd',
+        required: true,
+      },
+      {
+        name: 'pdno',
+        required: true,
+      },
+      {
+        name: 'ordStrtDt',
+        required: true,
+      },
+      {
+        name: 'ordEndDt',
+        required: true,
+      },
+      {
+        name: 'sllBuyDvsn',
+        required: true,
+      },
+      {
+        name: 'ccldNccsDvsn',
+        required: true,
+      },
+      {
+        name: 'ovrsExcgCd',
+        required: true,
+      },
+      {
+        name: 'sortSqn',
+        required: true,
+      },
+      {
+        name: 'ordDt',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'ordGnoBrno',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'odno',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'ctxAreaNk200',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'ctxAreaFk200',
+        required: false,
+        defaultValue: '',
+      },
     ],
   },
   {
@@ -295,12 +461,30 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       INQR_DVSN_CD: 'inqrDvsnCd',
     },
     params: [
-      { name: 'cano', required: true },
-      { name: 'acntPrdtCd', required: true },
-      { name: 'wcrcFrcrDvsnCd', required: true },
-      { name: 'natnCd', required: true },
-      { name: 'trMketCd', required: true },
-      { name: 'inqrDvsnCd', required: true },
+      {
+        name: 'cano',
+        required: true,
+      },
+      {
+        name: 'acntPrdtCd',
+        required: true,
+      },
+      {
+        name: 'wcrcFrcrDvsnCd',
+        required: true,
+      },
+      {
+        name: 'natnCd',
+        required: true,
+      },
+      {
+        name: 'trMketCd',
+        required: true,
+      },
+      {
+        name: 'inqrDvsnCd',
+        required: true,
+      },
     ],
   },
   {
@@ -320,15 +504,44 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       CTX_AREA_NK200: 'ctxAreaNk200',
     },
     params: [
-      { name: 'cano', required: true },
-      { name: 'acntPrdtCd', required: true },
-      { name: 'inqrStrtDt', required: true },
-      { name: 'inqrEndDt', required: true },
-      { name: 'inqrDvsnCd', required: true },
-      { name: 'prdtTypeCd', required: true },
-      { name: 'ovrsExcgCd', required: true },
-      { name: 'ctxAreaFk200', required: false, defaultValue: '' },
-      { name: 'ctxAreaNk200', required: false, defaultValue: '' },
+      {
+        name: 'cano',
+        required: true,
+      },
+      {
+        name: 'acntPrdtCd',
+        required: true,
+      },
+      {
+        name: 'inqrStrtDt',
+        required: true,
+      },
+      {
+        name: 'inqrEndDt',
+        required: true,
+      },
+      {
+        name: 'inqrDvsnCd',
+        required: true,
+      },
+      {
+        name: 'prdtTypeCd',
+        required: true,
+      },
+      {
+        name: 'ovrsExcgCd',
+        required: true,
+      },
+      {
+        name: 'ctxAreaFk200',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'ctxAreaNk200',
+        required: false,
+        defaultValue: '',
+      },
     ],
   },
   {
@@ -344,11 +557,26 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       INQR_DVSN_CD: 'inqrDvsnCd',
     },
     params: [
-      { name: 'cano', required: true },
-      { name: 'acntPrdtCd', required: true },
-      { name: 'bassDt', required: true },
-      { name: 'wcrcFrcrDvsnCd', required: true },
-      { name: 'inqrDvsnCd', required: true },
+      {
+        name: 'cano',
+        required: true,
+      },
+      {
+        name: 'acntPrdtCd',
+        required: true,
+      },
+      {
+        name: 'bassDt',
+        required: true,
+      },
+      {
+        name: 'wcrcFrcrDvsnCd',
+        required: true,
+      },
+      {
+        name: 'inqrDvsnCd',
+        required: true,
+      },
     ],
   },
   {
@@ -369,16 +597,48 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       CTX_AREA_NK100: 'ctxAreaNk100',
     },
     params: [
-      { name: 'cano', required: true },
-      { name: 'acntPrdtCd', required: true },
-      { name: 'erlmStrtDt', required: true },
-      { name: 'erlmEndDt', required: true },
-      { name: 'ovrsExcgCd', required: true },
-      { name: 'pdno', required: true },
-      { name: 'sllBuyDvsnCd', required: true },
-      { name: 'loanDvsnCd', required: true },
-      { name: 'ctxAreaFk100', required: false, defaultValue: '' },
-      { name: 'ctxAreaNk100', required: false, defaultValue: '' },
+      {
+        name: 'cano',
+        required: true,
+      },
+      {
+        name: 'acntPrdtCd',
+        required: true,
+      },
+      {
+        name: 'erlmStrtDt',
+        required: true,
+      },
+      {
+        name: 'erlmEndDt',
+        required: true,
+      },
+      {
+        name: 'ovrsExcgCd',
+        required: true,
+      },
+      {
+        name: 'pdno',
+        required: true,
+      },
+      {
+        name: 'sllBuyDvsnCd',
+        required: true,
+      },
+      {
+        name: 'loanDvsnCd',
+        required: true,
+      },
+      {
+        name: 'ctxAreaFk100',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'ctxAreaNk100',
+        required: false,
+        defaultValue: '',
+      },
     ],
   },
   {
@@ -400,17 +660,52 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       CTX_AREA_NK200: 'ctxAreaNk200',
     },
     params: [
-      { name: 'cano', required: true },
-      { name: 'acntPrdtCd', required: true },
-      { name: 'ovrsExcgCd', required: true },
-      { name: 'natnCd', required: true },
-      { name: 'crcyCd', required: true },
-      { name: 'pdno', required: true },
-      { name: 'inqrStrtDt', required: true },
-      { name: 'inqrEndDt', required: true },
-      { name: 'wcrcFrcrDvsnCd', required: true },
-      { name: 'ctxAreaFk200', required: false, defaultValue: '' },
-      { name: 'ctxAreaNk200', required: false, defaultValue: '' },
+      {
+        name: 'cano',
+        required: true,
+      },
+      {
+        name: 'acntPrdtCd',
+        required: true,
+      },
+      {
+        name: 'ovrsExcgCd',
+        required: true,
+      },
+      {
+        name: 'natnCd',
+        required: true,
+      },
+      {
+        name: 'crcyCd',
+        required: true,
+      },
+      {
+        name: 'pdno',
+        required: true,
+      },
+      {
+        name: 'inqrStrtDt',
+        required: true,
+      },
+      {
+        name: 'inqrEndDt',
+        required: true,
+      },
+      {
+        name: 'wcrcFrcrDvsnCd',
+        required: true,
+      },
+      {
+        name: 'ctxAreaFk200',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'ctxAreaNk200',
+        required: false,
+        defaultValue: '',
+      },
     ],
   },
   {
@@ -423,8 +718,145 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       ACNT_PRDT_CD: 'acntPrdtCd',
     },
     params: [
-      { name: 'cano', required: true },
-      { name: 'acntPrdtCd', required: true },
+      {
+        name: 'cano',
+        required: true,
+      },
+      {
+        name: 'acntPrdtCd',
+        required: true,
+      },
+    ],
+  },
+  {
+    methodName: 'requestOrderAfterDayTime',
+    method: 'POST',
+    path: '/uapi/overseas-stock/v1/trading/daytime-order',
+    trId: 'TTTS6036U',
+    requestMap: {
+      CANO: 'cano',
+      ACNT_PRDT_CD: 'acntPrdtCd',
+      OVRS_EXCG_CD: 'ovrsExcgCd',
+      PDNO: 'pdno',
+      ORD_QTY: 'ordQty',
+      OVRS_ORD_UNPR: 'ovrsOrdUnpr',
+      CTAC_TLNO: 'ctacTlno',
+      MGCO_APTM_ODNO: 'mgcoAptmOdno',
+      ORD_SVR_DVSN_CD: 'ordSvrDvsnCd',
+      ORD_DVSN: 'ordDvsn',
+    },
+    params: [
+      {
+        name: 'cano',
+        required: true,
+      },
+      {
+        name: 'acntPrdtCd',
+        required: true,
+      },
+      {
+        name: 'ovrsExcgCd',
+        required: true,
+      },
+      {
+        name: 'pdno',
+        required: true,
+      },
+      {
+        name: 'ordQty',
+        required: true,
+      },
+      {
+        name: 'ovrsOrdUnpr',
+        required: true,
+      },
+      {
+        name: 'ordDvsn',
+        required: true,
+      },
+      {
+        name: 'ctacTlno',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'mgcoAptmOdno',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'ordSvrDvsnCd',
+        required: false,
+        defaultValue: '0',
+      },
+    ],
+  },
+  {
+    methodName: 'cancelCorrectAfterDayTime',
+    method: 'POST',
+    path: '/uapi/overseas-stock/v1/trading/daytime-order-rvsecncl',
+    trId: 'TTTS6038U',
+    requestMap: {
+      CANO: 'cano',
+      ACNT_PRDT_CD: 'acntPrdtCd',
+      OVRS_EXCG_CD: 'ovrsExcgCd',
+      PDNO: 'pdno',
+      ORGN_ODNO: 'orgnOdno',
+      RVSE_CNCL_DVSN_CD: 'rvseCnclDvsnCd',
+      ORD_QTY: 'ordQty',
+      OVRS_ORD_UNPR: 'ovrsOrdUnpr',
+      CTAC_TLNO: 'ctacTlno',
+      MGCO_APTM_ODNO: 'mgcoAptmOdno',
+      ORD_SVR_DVSN_CD: 'ordSvrDvsnCd',
+    },
+    params: [
+      {
+        name: 'cano',
+        required: true,
+      },
+      {
+        name: 'acntPrdtCd',
+        required: true,
+      },
+      {
+        name: 'ovrsExcgCd',
+        required: true,
+      },
+      {
+        name: 'pdno',
+        required: true,
+      },
+      {
+        name: 'orgnOdno',
+        required: true,
+      },
+      {
+        name: 'rvseCnclDvsnCd',
+        required: true,
+      },
+      {
+        name: 'ordQty',
+        required: true,
+      },
+      {
+        name: 'ovrsOrdUnpr',
+        required: true,
+      },
+      {
+        name: 'ctacTlno',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'mgcoAptmOdno',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'ordSvrDvsnCd',
+        required: false,
+        defaultValue: '0',
+      },
     ],
   },
   {
@@ -440,11 +872,28 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       CTX_AREA_FK200: 'ctxAreaFk200',
     },
     params: [
-      { name: 'tradDt', required: true },
-      { name: 'cano', required: true },
-      { name: 'acnoPrdtCd', required: true },
-      { name: 'ctxAreaNk200', required: false, defaultValue: '' },
-      { name: 'ctxAreaFk200', required: false, defaultValue: '' },
+      {
+        name: 'tradDt',
+        required: true,
+      },
+      {
+        name: 'cano',
+        required: true,
+      },
+      {
+        name: 'acnoPrdtCd',
+        required: true,
+      },
+      {
+        name: 'ctxAreaNk200',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'ctxAreaFk200',
+        required: false,
+        defaultValue: '',
+      },
     ],
   },
   {
@@ -463,14 +912,42 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       CTX_AREA_FK200: 'ctxAreaFk200',
     },
     params: [
-      { name: 'cano', required: true },
-      { name: 'acntPrdtCd', required: true },
-      { name: 'ordDt', required: true },
-      { name: 'odno', required: true },
-      { name: 'ordGnoBrno', required: false, defaultValue: '' },
-      { name: 'ttlzIcldYn', required: false, defaultValue: '' },
-      { name: 'ctxAreaNk200', required: false, defaultValue: '' },
-      { name: 'ctxAreaFk200', required: false, defaultValue: '' },
+      {
+        name: 'cano',
+        required: true,
+      },
+      {
+        name: 'acntPrdtCd',
+        required: true,
+      },
+      {
+        name: 'ordDt',
+        required: true,
+      },
+      {
+        name: 'odno',
+        required: true,
+      },
+      {
+        name: 'ordGnoBrno',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'ttlzIcldYn',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'ctxAreaNk200',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'ctxAreaFk200',
+        required: false,
+        defaultValue: '',
+      },
     ],
   },
 ];
@@ -480,8 +957,6 @@ export type OverseasAccountMethodName =
   | 'requestStockQuoteCorrection'
   | 'requestStockReserveQuote'
   | 'requestStockReserveQuoteCorrection'
-  | 'requestOrderAfterDayTime'
-  | 'cancelCorrectAfterDayTime'
   | 'getBuyTradableAmount'
   | 'getStockNotConclusionHistory'
   | 'getStockBalance'
@@ -492,5 +967,7 @@ export type OverseasAccountMethodName =
   | 'getDailyTransactionHistory'
   | 'getPeriodProfitLoss'
   | 'getMarginAggregate'
+  | 'requestOrderAfterDayTime'
+  | 'cancelCorrectAfterDayTime'
   | 'getLimitOrderNumber'
   | 'getLimitOrderExecutionHistory';

@@ -1,20 +1,8 @@
 import type { KiwoomEndpointDefinition } from '../../core/types';
-import {
-  etfDailyExecutionResponseSchema,
-  etfDailyTrendResponseSchema,
-  etfFullPriceResponseSchema,
-  etfHourlyExecutionResponseSchema,
-  etfHourlyExecutionV2ResponseSchema,
-  etfHourlyTrendResponseSchema,
-  etfHourlyTrendV2ResponseSchema,
-  etfItemInfoResponseSchema,
-  etfReturnRateResponseSchema,
-} from '../schemas/domestic-etf';
 
 export const domesticEtfEndpoints: KiwoomEndpointDefinition[] = [
   {
     methodName: 'getEtfReturnRate',
-    responseSchema: etfReturnRateResponseSchema,
     path: '/api/dostk/etf',
     apiId: 'ka40001',
     bodyMap: {
@@ -53,7 +41,6 @@ export const domesticEtfEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getEtfItemInfo',
-    responseSchema: etfItemInfoResponseSchema,
     path: '/api/dostk/etf',
     apiId: 'ka40002',
     bodyMap: {
@@ -82,7 +69,6 @@ export const domesticEtfEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getEtfDailyTrend',
-    responseSchema: etfDailyTrendResponseSchema,
     path: '/api/dostk/etf',
     apiId: 'ka40003',
     bodyMap: {
@@ -111,7 +97,6 @@ export const domesticEtfEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getEtfFullPrice',
-    responseSchema: etfFullPriceResponseSchema,
     path: '/api/dostk/etf',
     apiId: 'ka40004',
     bodyMap: {
@@ -165,7 +150,6 @@ export const domesticEtfEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getEtfHourlyTrend',
-    responseSchema: etfHourlyTrendResponseSchema,
     path: '/api/dostk/etf',
     apiId: 'ka40006',
     bodyMap: {
@@ -194,7 +178,6 @@ export const domesticEtfEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getEtfHourlyExecution',
-    responseSchema: etfHourlyExecutionResponseSchema,
     path: '/api/dostk/etf',
     apiId: 'ka40007',
     bodyMap: {
@@ -223,7 +206,6 @@ export const domesticEtfEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getEtfDailyExecution',
-    responseSchema: etfDailyExecutionResponseSchema,
     path: '/api/dostk/etf',
     apiId: 'ka40008',
     bodyMap: {
@@ -252,7 +234,6 @@ export const domesticEtfEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getEtfHourlyExecutionV2',
-    responseSchema: etfHourlyExecutionV2ResponseSchema,
     path: '/api/dostk/etf',
     apiId: 'ka40009',
     bodyMap: {
@@ -281,7 +262,6 @@ export const domesticEtfEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getEtfHourlyTrendV2',
-    responseSchema: etfHourlyTrendV2ResponseSchema,
     path: '/api/dostk/etf',
     apiId: 'ka40010',
     bodyMap: {

@@ -1,10 +1,8 @@
 import type { KiwoomEndpointDefinition } from '../../core/types';
-import { themeGroupResponseSchema, themeGroupStocksResponseSchema } from '../schemas/domestic-theme';
 
 export const domesticThemeEndpoints: KiwoomEndpointDefinition[] = [
   {
     methodName: 'getThemeGroup',
-    responseSchema: themeGroupResponseSchema,
     path: '/api/dostk/thme',
     apiId: 'ka90001',
     bodyMap: {
@@ -59,7 +57,6 @@ export const domesticThemeEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getThemeGroupStocks',
-    responseSchema: themeGroupStocksResponseSchema,
     path: '/api/dostk/thme',
     apiId: 'ka90002',
     bodyMap: {

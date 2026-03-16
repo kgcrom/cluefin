@@ -1,36 +1,8 @@
 import type { KiwoomEndpointDefinition } from '../../core/types';
-import {
-  accountCurrentDayStatusResponseSchema,
-  accountEvaluationBalanceDetailsResponseSchema,
-  accountEvaluationStatusResponseSchema,
-  accountNextDaySettlementDetailsResponseSchema,
-  accountOrderExecutionDetailsResponseSchema,
-  accountOrderExecutionStatusResponseSchema,
-  accountProfitRateResponseSchema,
-  availableOrderQuantityByMarginLoanStockResponseSchema,
-  availableOrderQuantityByMarginRateResponseSchema,
-  availableWithdrawalAmountResponseSchema,
-  consignmentComprehensiveTransactionHistoryResponseSchema,
-  currentDayTradingJournalResponseSchema,
-  dailyAccountProfitRateDetailsResponseSchema,
-  dailyEstimatedDepositAssetBalanceResponseSchema,
-  dailyRealizedProfitLossDetailsResponseSchema,
-  dailyRealizedProfitLossResponseSchema,
-  dailyStockRealizedProfitLossByDateResponseSchema,
-  dailyStockRealizedProfitLossByPeriodResponseSchema,
-  depositBalanceDetailsResponseSchema,
-  estimatedAssetBalanceResponseSchema,
-  executedResponseSchema,
-  executionBalanceResponseSchema,
-  marginDetailsResponseSchema,
-  unexecutedResponseSchema,
-  unexecutedSplitOrderDetailsResponseSchema,
-} from '../schemas/domestic-account';
 
 export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   {
     methodName: 'getDailyStockRealizedProfitLossByDate',
-    responseSchema: dailyStockRealizedProfitLossByDateResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'ka10072',
     bodyMap: {
@@ -64,7 +36,6 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getDailyStockRealizedProfitLossByPeriod',
-    responseSchema: dailyStockRealizedProfitLossByPeriodResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'ka10073',
     bodyMap: {
@@ -103,7 +74,6 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getDailyRealizedProfitLoss',
-    responseSchema: dailyRealizedProfitLossResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'ka10074',
     bodyMap: {
@@ -137,7 +107,6 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getUnexecuted',
-    responseSchema: unexecutedResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'ka10075',
     bodyMap: {
@@ -181,7 +150,6 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getExecuted',
-    responseSchema: executedResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'ka10076',
     bodyMap: {
@@ -230,7 +198,6 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getDailyRealizedProfitLossDetails',
-    responseSchema: dailyRealizedProfitLossDetailsResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'ka10077',
     bodyMap: {
@@ -259,7 +226,6 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getAccountProfitRate',
-    responseSchema: accountProfitRateResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'ka10085',
     bodyMap: {
@@ -288,7 +254,6 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getUnexecutedSplitOrderDetails',
-    responseSchema: unexecutedSplitOrderDetailsResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'ka10088',
     bodyMap: {
@@ -317,7 +282,6 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getCurrentDayTradingJournal',
-    responseSchema: currentDayTradingJournalResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'ka10170',
     bodyMap: {
@@ -355,7 +319,6 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getDepositBalanceDetails',
-    responseSchema: depositBalanceDetailsResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'kt00001',
     bodyMap: {
@@ -384,7 +347,6 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getDailyEstimatedDepositAssetBalance',
-    responseSchema: dailyEstimatedDepositAssetBalanceResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'kt00002',
     bodyMap: {
@@ -418,7 +380,6 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getEstimatedAssetBalance',
-    responseSchema: estimatedAssetBalanceResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'kt00003',
     bodyMap: {
@@ -447,7 +408,6 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getAccountEvaluationStatus',
-    responseSchema: accountEvaluationStatusResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'kt00004',
     bodyMap: {
@@ -481,7 +441,6 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getExecutionBalance',
-    responseSchema: executionBalanceResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'kt00005',
     bodyMap: {
@@ -510,7 +469,6 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getAccountOrderExecutionDetails',
-    responseSchema: accountOrderExecutionDetailsResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'kt00007',
     bodyMap: {
@@ -572,7 +530,6 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getAccountNextDaySettlementDetails',
-    responseSchema: accountNextDaySettlementDetailsResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'kt00008',
     bodyMap: {
@@ -602,7 +559,6 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getAccountOrderExecutionStatus',
-    responseSchema: accountOrderExecutionStatusResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'kt00009',
     bodyMap: {
@@ -663,7 +619,6 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getAvailableWithdrawalAmount',
-    responseSchema: availableWithdrawalAmountResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'kt00010',
     bodyMap: {
@@ -714,7 +669,6 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getAvailableOrderQuantityByMarginRate',
-    responseSchema: availableOrderQuantityByMarginRateResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'kt00011',
     bodyMap: {
@@ -747,7 +701,6 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getAvailableOrderQuantityByMarginLoanStock',
-    responseSchema: availableOrderQuantityByMarginLoanStockResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'kt00012',
     bodyMap: {
@@ -780,7 +733,6 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getMarginDetails',
-    responseSchema: marginDetailsResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'kt00013',
     bodyMap: {},
@@ -803,7 +755,6 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getConsignmentComprehensiveTransactionHistory',
-    responseSchema: consignmentComprehensiveTransactionHistoryResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'kt00015',
     bodyMap: {
@@ -864,7 +815,6 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getDailyAccountProfitRateDetails',
-    responseSchema: dailyAccountProfitRateDetailsResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'kt00016',
     bodyMap: {
@@ -898,7 +848,6 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getAccountCurrentDayStatus',
-    responseSchema: accountCurrentDayStatusResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'kt00017',
     bodyMap: {},
@@ -921,7 +870,6 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
   },
   {
     methodName: 'getAccountEvaluationBalanceDetails',
-    responseSchema: accountEvaluationBalanceDetailsResponseSchema,
     path: '/api/dostk/acnt',
     apiId: 'kt00018',
     bodyMap: {
