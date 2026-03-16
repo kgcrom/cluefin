@@ -980,7 +980,7 @@ export const getAfterHoursExpectedFluctuationItemSchema = z
     hts_kor_isnm: s(),
     ovtm_untp_antc_cnpr: s(),
     ovtm_untp_antc_cntg_vrss: s(),
-    ovtm_untp_antc_cntg_vrsssign: s(),
+    ovtm_untp_antc_cntg_vrss_sign: s(),
     ovtm_untp_antc_cntg_ctrt: s(),
     ovtm_untp_askp_rsqn1: s(),
     ovtm_untp_bidp_rsqn1: s(),
