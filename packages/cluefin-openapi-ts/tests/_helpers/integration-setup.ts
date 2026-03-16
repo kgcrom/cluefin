@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { expect } from 'vitest';
+import { beforeEach, expect } from 'vitest';
 import type { z } from 'zod';
 import { toCamelCase } from '../../src/core/case-convert';
 import type { ApiResponse } from '../../src/core/types';
@@ -8,6 +8,14 @@ import { KisHttpClient } from '../../src/kis/http-client';
 import { FileTokenCacheStore } from '../../src/kis/token-cache';
 import { KiwoomAuth } from '../../src/kiwoom/auth';
 import { KiwoomClient } from '../../src/kiwoom/client';
+
+export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+export function setupKiwoomRateLimit(): void {
+  beforeEach(async () => {
+    await sleep(500);
+  });
+}
 
 export const runIntegration = process.env.CLUEFIN_OPENAPI_TS_RUN_INTEGRATION === '1';
 export const runAccountIntegration = runIntegration && !!process.env.KIS_CANO;

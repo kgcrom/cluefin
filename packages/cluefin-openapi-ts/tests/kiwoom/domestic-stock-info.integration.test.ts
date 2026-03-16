@@ -62,12 +62,14 @@ import {
   ONE_MONTH_AGO,
   runIntegration,
   SAMSUNG,
+  setupKiwoomRateLimit,
   TODAY,
 } from '../_helpers/integration-setup';
 
 const it = runIntegration ? test : test.skip;
 
 describe('Kiwoom DomesticStockInfo', () => {
+  setupKiwoomRateLimit();
   it('getStockInfo', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getStockInfo({ stkCd: SAMSUNG });

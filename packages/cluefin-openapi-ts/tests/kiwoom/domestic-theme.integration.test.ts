@@ -11,11 +11,13 @@ import {
   assertResponseShape,
   getKiwoomClient,
   runIntegration,
+  setupKiwoomRateLimit,
 } from '../_helpers/integration-setup';
 
 const it = runIntegration ? test : test.skip;
 
 describe('Kiwoom DomesticTheme', () => {
+  setupKiwoomRateLimit();
   it('getThemeGroup', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticTheme.getThemeGroup({

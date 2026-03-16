@@ -13,12 +13,14 @@ import {
   getKiwoomClient,
   runIntegration,
   SAMSUNG,
+  setupKiwoomRateLimit,
   TODAY,
 } from '../_helpers/integration-setup';
 
 const it = runIntegration ? test : test.skip;
 
 describe('Kiwoom DomesticForeign', () => {
+  setupKiwoomRateLimit();
   it('getForeignInvestorTradingTrendByStock', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticForeign.getForeignInvestorTradingTrendByStock({ stkCd: SAMSUNG });

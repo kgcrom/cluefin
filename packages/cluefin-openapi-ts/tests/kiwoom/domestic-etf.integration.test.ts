@@ -25,11 +25,13 @@ import {
   getKiwoomClient,
   KODEX200,
   runIntegration,
+  setupKiwoomRateLimit,
 } from '../_helpers/integration-setup';
 
 const it = runIntegration ? test : test.skip;
 
 describe('Kiwoom DomesticEtf', () => {
+  setupKiwoomRateLimit();
   it('getEtfReturnRate', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticEtf.getEtfReturnRate({

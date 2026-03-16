@@ -18,12 +18,14 @@ import {
   assertResponseShape,
   getKiwoomClient,
   runIntegration,
+  setupKiwoomRateLimit,
   TODAY,
 } from '../_helpers/integration-setup';
 
 const it = runIntegration ? test : test.skip;
 
 describe('Kiwoom DomesticSector', () => {
+  setupKiwoomRateLimit();
   it('getIndustryProgram', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticSector.getIndustryProgram({ stkCode: '001' });
