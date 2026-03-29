@@ -6,6 +6,7 @@ import pytest
 
 from cluefin_openapi.kis import _domestic_market_analysis as domestic_market_analysis_module
 from cluefin_openapi.kis._domestic_market_analysis import DomesticMarketAnalysis
+from cluefin_openapi.kis._domestic_market_analysis_types import ForeignNetBuyTrendByStock
 
 
 def load_domestic_market_analysis_cases():
@@ -167,3 +168,32 @@ def test_get_watchlist_multi_quote_rejects_incomplete_optional_pair(monkeypatch)
         )
 
     client._get.assert_not_called()
+
+
+def test_foreign_net_buy_trend_by_stock_matches_live_output_schema():
+    payload = {
+        "rt_cd": "0",
+        "msg_cd": "0000",
+        "msg1": "OK",
+        "output": [
+            {
+                "bsop_hour": "153049",
+                "stck_prpr": "179700",
+                "prdy_vrss": "-400",
+                "prdy_vrss_sign": "5",
+                "prdy_ctrt": "-0.22",
+                "acml_vol": "29102559",
+                "frgn_seln_vol": "9155337",
+                "frgn_shnu_vol": "511586",
+                "glob_ntby_qty": "-8643751",
+                "frgn_ntby_qty_icdc": "-596817",
+            }
+        ],
+    }
+
+    body = ForeignNetBuyTrendByStock.model_validate(payload)
+
+    assert len(body.output) == 1
+    assert body.output[0].bsop_hour == "153049"
+    assert body.output[0].acml_vol == "29102559"
+    assert body.output[0].glob_ntby_qty == "-8643751"
