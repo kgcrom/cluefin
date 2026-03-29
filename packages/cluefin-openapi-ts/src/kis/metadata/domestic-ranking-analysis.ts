@@ -1110,7 +1110,7 @@ export const domesticRankingAnalysisEndpoints: KisEndpointDefinition[] = [
     methodName: 'getStockCreditBalanceTop',
     method: 'GET',
     path: '/uapi/domestic-stock/v1/ranking/credit-balance',
-    trId: 'HHKST17010000',
+    trId: 'FHKST17010000',
     requestMap: {
       FID_COND_SCR_DIV_CODE: 'fidCondScrDivCode',
       FID_INPUT_ISCD: 'fidInputIscd',

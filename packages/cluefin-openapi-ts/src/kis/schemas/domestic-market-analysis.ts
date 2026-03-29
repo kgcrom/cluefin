@@ -496,8 +496,16 @@ export const getInvestorTradingTrendByMarketDailyResponseSchema = z
 
 export const getForeignNetBuyTrendByStockItemSchema = z
   .object({
-    total_seln_qty: s(),
-    total_shnu_qty: s(),
+    bsop_hour: s(),
+    stck_prpr: s(),
+    prdy_vrss: s(),
+    prdy_vrss_sign: s(),
+    prdy_ctrt: s(),
+    acml_vol: s(),
+    frgn_seln_vol: s(),
+    frgn_shnu_vol: s(),
+    glob_ntby_qty: s(),
+    frgn_ntby_qty_icdc: s(),
   })
   .passthrough();
 
@@ -512,29 +520,23 @@ export const getForeignNetBuyTrendByStockResponseSchema = z
 
 export const getMemberTradingTrendTickOutput1ItemSchema = z
   .object({
-    stck_bsop_date: s(),
     total_seln_qty: s(),
     total_shnu_qty: s(),
-    ntby_qty: s(),
-    stck_prpr: s(),
-    prdy_vrss: s(),
-    prdy_vrss_sign: s(),
-    prdy_ctrt: s(),
-    acml_vol: s(),
   })
   .passthrough();
 
 export const getMemberTradingTrendTickOutput2ItemSchema = z
   .object({
-    stck_bsop_date: s(),
-    total_seln_qty: s(),
-    total_shnu_qty: s(),
-    ntby_qty: s(),
+    bsop_hour: s(),
+    mbcr_name: s(),
+    hts_kor_isnm: s(),
     stck_prpr: s(),
     prdy_vrss: s(),
     prdy_vrss_sign: s(),
-    prdy_ctrt: s(),
-    acml_vol: s(),
+    cntg_vol: s(),
+    acml_ntby_qty: s(),
+    glob_ntby_qty: s(),
+    frgn_ntby_qty_icdc: s(),
   })
   .passthrough();
 
@@ -675,19 +677,12 @@ export const getProgramTradingSummaryIntradayItemSchema = z
   .object({
     bsop_hour: s(),
     arbt_smtn_seln_tr_pbmn: s(),
-    arbt_smtm_seln_tr_pbmn_rate: s(),
     arbt_smtn_shnu_tr_pbmn: s(),
-    arbt_smtm_shun_tr_pbmn_rate: s(),
     nabt_smtn_seln_tr_pbmn: s(),
-    nabt_smtm_seln_tr_pbmn_rate: s(),
     nabt_smtn_shnu_tr_pbmn: s(),
-    nabt_smtm_shun_tr_pbmn_rate: s(),
     arbt_smtn_ntby_tr_pbmn: s(),
-    arbt_smtm_ntby_tr_pbmn_rate: s(),
     nabt_smtn_ntby_tr_pbmn: s(),
-    nabt_smtm_ntby_tr_pbmn_rate: s(),
     whol_smtn_ntby_tr_pbmn: s(),
-    whol_ntby_tr_pbmn_rate: s(),
     bstp_nmix_prpr: s(),
     bstp_nmix_prdy_vrss: s(),
     prdy_vrss_sign: s(),

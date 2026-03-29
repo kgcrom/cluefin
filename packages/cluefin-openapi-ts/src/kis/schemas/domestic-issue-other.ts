@@ -483,7 +483,7 @@ export const getFuturesBusinessDayInquiryItemSchema = z
 export const getFuturesBusinessDayInquiryResponseSchema = z
   .object({
     ...kisEnvelope,
-    output1: z.array(getFuturesBusinessDayInquiryItemSchema).default([]),
+    output1: getFuturesBusinessDayInquiryItemSchema.optional(),
   })
   .passthrough();
 

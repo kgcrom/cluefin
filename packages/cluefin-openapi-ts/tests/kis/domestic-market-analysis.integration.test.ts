@@ -16,8 +16,7 @@ import {
   getForeignBrokerageTradingAggregateResponseSchema,
   getForeignInstitutionalEstimateByStockItemSchema,
   getForeignInstitutionalEstimateByStockResponseSchema,
-  getForeignNetBuyTrendByStockOutput1ItemSchema,
-  getForeignNetBuyTrendByStockOutput2ItemSchema,
+  getForeignNetBuyTrendByStockItemSchema,
   getForeignNetBuyTrendByStockResponseSchema,
   getInstitutionalForeignTradingAggregateResponseSchema,
   getInvestorTradingTrendByMarketDailyItemSchema,
@@ -32,7 +31,8 @@ import {
   getMarketFundSummaryResponseSchema,
   getMemberTradingTrendByStockItemSchema,
   getMemberTradingTrendByStockResponseSchema,
-  getMemberTradingTrendTickItemSchema,
+  getMemberTradingTrendTickOutput1ItemSchema,
+  getMemberTradingTrendTickOutput2ItemSchema,
   getMemberTradingTrendTickResponseSchema,
   getProgramTradingInvestorTrendTodayItemSchema,
   getProgramTradingInvestorTrendTodayResponseSchema,
@@ -137,14 +137,8 @@ describe('KIS DomesticMarketAnalysis', () => {
     assertResponseShape(
       res.body,
       getForeignNetBuyTrendByStockResponseSchema,
-      'output1',
-      getForeignNetBuyTrendByStockOutput1ItemSchema,
-    );
-    assertResponseShape(
-      res.body,
-      getForeignNetBuyTrendByStockResponseSchema,
-      'output2',
-      getForeignNetBuyTrendByStockOutput2ItemSchema,
+      'output',
+      getForeignNetBuyTrendByStockItemSchema,
     );
   });
 
@@ -213,8 +207,14 @@ describe('KIS DomesticMarketAnalysis', () => {
     assertResponseShape(
       res.body,
       getMemberTradingTrendTickResponseSchema,
-      'output',
-      getMemberTradingTrendTickItemSchema,
+      'output1',
+      getMemberTradingTrendTickOutput1ItemSchema,
+    );
+    assertResponseShape(
+      res.body,
+      getMemberTradingTrendTickResponseSchema,
+      'output2',
+      getMemberTradingTrendTickOutput2ItemSchema,
     );
   });
 
