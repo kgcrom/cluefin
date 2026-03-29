@@ -6,7 +6,10 @@ import pytest
 
 from cluefin_openapi.kis import _domestic_market_analysis as domestic_market_analysis_module
 from cluefin_openapi.kis._domestic_market_analysis import DomesticMarketAnalysis
-from cluefin_openapi.kis._domestic_market_analysis_types import ForeignNetBuyTrendByStock
+from cluefin_openapi.kis._domestic_market_analysis_types import (
+    ForeignNetBuyTrendByStock,
+    MemberTradingTrendTick,
+)
 
 
 def load_domestic_market_analysis_cases():
@@ -197,3 +200,39 @@ def test_foreign_net_buy_trend_by_stock_matches_live_output_schema():
     assert body.output[0].bsop_hour == "153049"
     assert body.output[0].acml_vol == "29102559"
     assert body.output[0].glob_ntby_qty == "-8643751"
+
+
+def test_member_trading_trend_tick_matches_live_output_schema():
+    payload = {
+        "rt_cd": "0",
+        "msg_cd": "0000",
+        "msg1": "OK",
+        "output1": [
+            {
+                "total_seln_qty": "9155337",
+                "total_shnu_qty": "511586",
+            }
+        ],
+        "output2": [
+            {
+                "bsop_hour": "153049",
+                "mbcr_name": "UBS",
+                "hts_kor_isnm": "삼성전자",
+                "stck_prpr": "179700",
+                "prdy_vrss": "-400",
+                "prdy_vrss_sign": "5",
+                "cntg_vol": "-596817",
+                "acml_ntby_qty": "-1904542",
+                "glob_ntby_qty": "-8643751",
+                "frgn_ntby_qty_icdc": "-596817",
+            }
+        ],
+    }
+
+    body = MemberTradingTrendTick.model_validate(payload)
+
+    assert len(body.output1) == 1
+    assert body.output1[0].total_seln_qty == "9155337"
+    assert len(body.output2) == 1
+    assert body.output2[0].mbcr_name == "UBS"
+    assert body.output2[0].acml_ntby_qty == "-1904542"

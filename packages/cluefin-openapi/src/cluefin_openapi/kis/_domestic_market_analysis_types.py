@@ -460,22 +460,28 @@ class ForeignNetBuyTrendByStock(BaseModel, KisHttpBody):
     output: Sequence[ForeignNetBuyTrendByStockItem1] = Field(default_factory=list)
 
 
-class MemberTradingTrendTickItem(BaseModel):
-    stck_bsop_date: str = Field(title="주식영업일자", max_length=8)
+class MemberTradingTrendTickSummaryItem(BaseModel):
     total_seln_qty: str = Field(title="총매도수량", max_length=18)
     total_shnu_qty: str = Field(title="총매수2수량", max_length=18)
-    ntby_qty: str = Field(title="순매수수량", max_length=18)
+
+
+class MemberTradingTrendTickItem(BaseModel):
+    bsop_hour: str = Field(title="영업시간", max_length=6)
+    mbcr_name: str = Field(title="회원사명", max_length=50)
+    hts_kor_isnm: str = Field(title="HTS한글종목명", max_length=40)
     stck_prpr: str = Field(title="주식현재가", max_length=10)
     prdy_vrss: str = Field(title="전일대비", max_length=10)
     prdy_vrss_sign: str = Field(title="전일대비부호", max_length=1)
-    prdy_ctrt: str = Field(title="전일대비율", max_length=82)
-    acml_vol: str = Field(title="누적거래량", max_length=18)
+    cntg_vol: str = Field(title="체결거래량", max_length=18)
+    acml_ntby_qty: str = Field(title="누적순매수수량", max_length=18)
+    glob_ntby_qty: str = Field(title="외국계순매수수량", max_length=12)
+    frgn_ntby_qty_icdc: str = Field(title="외국인순매수수량증감", max_length=10)
 
 
 class MemberTradingTrendTick(BaseModel, KisHttpBody):
     """회원사 실시간 매매동향(틱)"""
 
-    output1: Sequence[MemberTradingTrendTickItem] = Field(default_factory=list)
+    output1: Sequence[MemberTradingTrendTickSummaryItem] = Field(default_factory=list)
     output2: Sequence[MemberTradingTrendTickItem] = Field(default_factory=list)
 
 
