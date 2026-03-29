@@ -102,3 +102,68 @@ def test_domestic_market_analysis_builds_request(
     assert len(captured_instances) == 1
     assert result.body is captured_instances[0]
     assert captured_instances[0].kwargs == response_payload
+
+
+def _make_mock_response(tr_id: str = "FHKST11300006") -> Mock:
+    mock_response = Mock()
+    mock_response.json.return_value = {"rt_cd": "0", "msg_cd": "0000", "msg1": "OK", "output": []}
+    mock_response.status_code = 200
+    mock_response.text = ""
+    mock_response.headers = {
+        "content-type": "application/json; charset=utf-8",
+        "tr_id": tr_id,
+        "tr_cont": "",
+        "gt_uid": None,
+    }
+    return mock_response
+
+
+def _install_dummy_watchlist_model(monkeypatch):
+    class DummyResponseModel:
+        @classmethod
+        def model_validate(cls, data):
+            return cls()
+
+    monkeypatch.setattr(domestic_market_analysis_module, "WatchlistMultiQuote", DummyResponseModel)
+
+
+def test_get_watchlist_multi_quote_includes_populated_optional_pairs(monkeypatch):
+    _install_dummy_watchlist_model(monkeypatch)
+
+    client = Mock()
+    client._get.return_value = _make_mock_response()
+
+    market_analysis = DomesticMarketAnalysis(client)
+    market_analysis.get_watchlist_multi_quote(
+        fid_cond_mrkt_div_code_1="J",
+        fid_input_iscd_1="005930",
+        fid_cond_mrkt_div_code_2="J",
+        fid_input_iscd_2="000660",
+    )
+
+    client._get.assert_called_once_with(
+        "/uapi/domestic-stock/v1/quotations/intstock-multprice",
+        headers={"tr_id": "FHKST11300006"},
+        params={
+            "FID_COND_MRKT_DIV_CODE_1": "J",
+            "FID_INPUT_ISCD_1": "005930",
+            "FID_COND_MRKT_DIV_CODE_2": "J",
+            "FID_INPUT_ISCD_2": "000660",
+        },
+    )
+
+
+def test_get_watchlist_multi_quote_rejects_incomplete_optional_pair(monkeypatch):
+    _install_dummy_watchlist_model(monkeypatch)
+
+    client = Mock()
+    market_analysis = DomesticMarketAnalysis(client)
+
+    with pytest.raises(ValueError, match="must be provided together"):
+        market_analysis.get_watchlist_multi_quote(
+            fid_cond_mrkt_div_code_1="J",
+            fid_input_iscd_1="005930",
+            fid_cond_mrkt_div_code_2="J",
+        )
+
+    client._get.assert_not_called()

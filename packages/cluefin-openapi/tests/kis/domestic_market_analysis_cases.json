@@ -84,6 +84,34 @@
         }
     },
     {
+        "method_name": "get_watchlist_multi_quote",
+        "response_model_attr": "WatchlistMultiQuote",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/intstock-multprice",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code_1": "J",
+            "fid_input_iscd_1": "005930"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST11300006"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE_1": "J",
+            "FID_INPUT_ISCD_1": "005930"
+        },
+        "response_payload": {
+            "rt_cd": "0",
+            "output": [
+                {
+                    "stck_shrn_iscd": "005930",
+                    "hts_kor_isnm": "삼성전자",
+                    "stck_prpr": "70000",
+                    "prdy_vrss": "1000"
+                }
+            ]
+        }
+    },
+    {
         "method_name": "get_investor_trading_trend_by_stock_daily",
         "response_model_attr": "InvestorTradingTrendByStockDaily",
         "endpoint": "/uapi/domestic-stock/v1/quotations/investor-trade-by-stock-daily",
