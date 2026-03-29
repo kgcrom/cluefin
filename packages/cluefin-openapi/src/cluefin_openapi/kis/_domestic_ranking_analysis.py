@@ -1022,7 +1022,7 @@ class DomesticRankingAnalysis:
             StockCreditBalanceTop: 국내주식 신용잔고 상위 응답 객체
         """
         headers = {
-            "tr_id": "HHKST17010000",
+            "tr_id": "FHKST17010000",
         }
         params = {
             "FID_COND_SCR_DIV_CODE": fid_cond_scr_div_code,

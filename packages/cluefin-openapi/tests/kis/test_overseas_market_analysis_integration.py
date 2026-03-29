@@ -479,7 +479,7 @@ def test_get_breaking_news_title(client: HttpClient):
     )
 
     assert response is not None
-    assert hasattr(response.body, "output1")
+    assert hasattr(response.body, "output")
 
 
 # Collateral Loan Tests
