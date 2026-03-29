@@ -423,4 +423,4 @@ class FuturesBusinessDayInquiryItem(BaseModel):
 class FuturesBusinessDayInquiry(BaseModel, KisHttpBody):
     """국내선물 영업일조회 응답"""
 
-    output1: Sequence[FuturesBusinessDayInquiryItem] = Field(default_factory=list)
+    output1: FuturesBusinessDayInquiryItem = Field(default=None, title="응답상세")
