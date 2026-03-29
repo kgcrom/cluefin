@@ -9,6 +9,7 @@ from cluefin_openapi.kis._domestic_market_analysis import DomesticMarketAnalysis
 from cluefin_openapi.kis._domestic_market_analysis_types import (
     ForeignNetBuyTrendByStock,
     MemberTradingTrendTick,
+    ProgramTradingSummaryIntraday,
 )
 
 
@@ -236,3 +237,33 @@ def test_member_trading_trend_tick_matches_live_output_schema():
     assert len(body.output2) == 1
     assert body.output2[0].mbcr_name == "UBS"
     assert body.output2[0].acml_ntby_qty == "-1904542"
+
+
+def test_program_trading_summary_intraday_matches_live_output_schema():
+    payload = {
+        "rt_cd": "0",
+        "msg_cd": "0000",
+        "msg1": "OK",
+        "output": [
+            {
+                "bsop_hour": "180500",
+                "arbt_smtn_seln_tr_pbmn": "317582",
+                "arbt_smtn_shnu_tr_pbmn": "340577",
+                "nabt_smtn_seln_tr_pbmn": "8118891",
+                "nabt_smtn_shnu_tr_pbmn": "6179753",
+                "arbt_smtn_ntby_tr_pbmn": "22996",
+                "nabt_smtn_ntby_tr_pbmn": "-1939137",
+                "whol_smtn_ntby_tr_pbmn": "-1916142",
+                "bstp_nmix_prpr": "",
+                "bstp_nmix_prdy_vrss": "",
+                "prdy_vrss_sign": "",
+            }
+        ],
+    }
+
+    body = ProgramTradingSummaryIntraday.model_validate(payload)
+
+    assert len(body.output) == 1
+    assert body.output[0].bsop_hour == "180500"
+    assert body.output[0].nabt_smtn_ntby_tr_pbmn == "-1939137"
+    assert body.output[0].prdy_vrss_sign == ""
