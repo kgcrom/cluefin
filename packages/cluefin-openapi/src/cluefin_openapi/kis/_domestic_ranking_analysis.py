@@ -977,7 +977,7 @@ class DomesticRankingAnalysis:
             StockLargeExecutionCountTop: 국내주식 대량체결건수 상위 응답 객체
         """
         headers = {
-            "tr_id": "HHKST1909000C0",
+            "tr_id": "FHKST190900C0",
         }
         params = {
             "fid_aply_rang_prc_2": fid_aply_rang_prc_2,

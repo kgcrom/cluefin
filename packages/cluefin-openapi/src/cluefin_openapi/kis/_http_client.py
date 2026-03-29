@@ -1,6 +1,9 @@
 import json
+import tempfile
 import time
-from typing import Dict, Literal, Optional, Union
+from pathlib import Path
+from typing import Any, Dict, Literal, Optional, Union
+from uuid import uuid4
 
 import requests
 from loguru import logger
@@ -40,6 +43,7 @@ class HttpClient(object):
         self.debug = debug
         self.timeout = timeout
         self.max_retries = max_retries
+        self._last_response_debug: Optional[Dict[str, Any]] = None
 
         if self.env == "prod":
             self.base_url = "https://openapi.koreainvestment.com:9443"
@@ -162,6 +166,106 @@ class HttpClient(object):
                 pass
         return None
 
+    def _sanitize_request_context(self, request_context: dict) -> dict:
+        """Keep only non-secret request metadata for debugging."""
+        headers = request_context.get("headers", {})
+        sanitized = {
+            "method": request_context.get("method"),
+            "path": request_context.get("path"),
+            "url": request_context.get("url"),
+            "tr_id": headers.get("tr_id") or headers.get("TR_ID"),
+        }
+        if "params" in request_context:
+            sanitized["params"] = request_context["params"]
+        if "body" in request_context:
+            sanitized["body"] = request_context["body"]
+        return sanitized
+
+    def _serialize_payload(self, payload: Any) -> str:
+        """Serialize payload for previews and debug artifacts."""
+        if isinstance(payload, (dict, list)):
+            return json.dumps(payload, ensure_ascii=False, indent=2, default=str)
+        return str(payload)
+
+    def _write_debug_artifact(
+        self,
+        request_context: dict,
+        response: requests.Response,
+        response_payload: Any,
+    ) -> Optional[str]:
+        """Persist the last response payload to a temp file for quick inspection."""
+        try:
+            debug_dir = Path(tempfile.gettempdir()) / "cluefin-kis-debug"
+            debug_dir.mkdir(parents=True, exist_ok=True)
+
+            path_slug = (request_context.get("path") or "response").strip("/").replace("/", "_") or "response"
+            tr_id = request_context.get("tr_id") or "unknown-tr-id"
+            artifact_path = debug_dir / f"{int(time.time())}-{tr_id}-{path_slug}-{uuid4().hex[:8]}.json"
+
+            artifact = {
+                "request": request_context,
+                "response": {
+                    "status_code": response.status_code,
+                    "headers": dict(response.headers),
+                    "body": response_payload,
+                },
+            }
+            artifact_path.write_text(
+                json.dumps(artifact, ensure_ascii=False, indent=2, default=str),
+                encoding="utf-8",
+            )
+        except OSError:
+            return None
+
+        return str(artifact_path)
+
+    def _record_last_response(self, response: requests.Response, request_context: dict) -> None:
+        """Store a sanitized snapshot of the last response for test failure reporting."""
+        response_payload = self._safe_json(response)
+        if response_payload is None:
+            response_payload = response.text
+
+        sanitized_context = self._sanitize_request_context(request_context)
+        artifact_path = self._write_debug_artifact(sanitized_context, response, response_payload)
+        preview = self._serialize_payload(response_payload)
+        if len(preview) > 4000:
+            preview = f"{preview[:4000]}\n... (truncated)"
+
+        self._last_response_debug = {
+            "request": sanitized_context,
+            "status_code": response.status_code,
+            "artifact_path": artifact_path,
+            "preview": preview,
+        }
+
+    @property
+    def last_response_debug(self) -> Optional[Dict[str, Any]]:
+        """Return the last recorded response snapshot."""
+        return self._last_response_debug
+
+    def format_last_response_debug(self) -> str:
+        """Format the last response snapshot for pytest failure output."""
+        if not self._last_response_debug:
+            return ""
+
+        request = self._last_response_debug["request"]
+        lines = [
+            f"status_code: {self._last_response_debug['status_code']}",
+            f"method: {request.get('method')}",
+            f"path: {request.get('path')}",
+        ]
+        if request.get("tr_id"):
+            lines.append(f"tr_id: {request['tr_id']}")
+        if "params" in request:
+            lines.append(f"params: {json.dumps(request['params'], ensure_ascii=False, default=str)}")
+        if "body" in request:
+            lines.append(f"body: {json.dumps(request['body'], ensure_ascii=False, default=str)}")
+        if self._last_response_debug.get("artifact_path"):
+            lines.append(f"artifact_path: {self._last_response_debug['artifact_path']}")
+        lines.append("response_preview:")
+        lines.append(self._last_response_debug["preview"])
+        return "\n".join(lines)
+
     # TODO 법인은 추후 필요해지면 구현
     def _get(self, path: str, headers: dict, params: dict) -> requests.Response:
         """Make a GET request with rate limiting, retry, and error handling."""
@@ -188,6 +292,7 @@ class HttpClient(object):
             "headers": merged_headers,
             "params": params,
         }
+        self._last_response_debug = None
 
         for attempt in range(self.max_retries + 1):
             try:
@@ -201,6 +306,8 @@ class HttpClient(object):
                     logger.debug(f"Response received in {duration:.3f}s - Status: {response.status_code}")
                     logger.debug(f"Response Headers: {response.headers}")
                     logger.debug(f"Response Body: {response.text}")
+
+                self._record_last_response(response, request_context)
 
                 # Handle different HTTP status codes
                 if response.status_code == 200:
@@ -321,6 +428,7 @@ class HttpClient(object):
             "headers": merged_headers,
             "body": body,
         }
+        self._last_response_debug = None
 
         for attempt in range(self.max_retries + 1):
             try:
@@ -334,6 +442,8 @@ class HttpClient(object):
                     logger.debug(f"Response received in {duration:.3f}s - Status: {response.status_code}")
                     logger.debug(f"Response Headers: {response.headers}")
                     logger.debug(f"Response Body: {response.text}")
+
+                self._record_last_response(response, request_context)
 
                 # Handle different HTTP status codes
                 if response.status_code == 200:

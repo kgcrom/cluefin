@@ -317,6 +317,10 @@ uv run pytest -m "not integration"
 # 통합 테스트만 실행 (API 키 필요)
 uv run pytest -m "integration"
 
+# KIS integration 테스트 실패 시 마지막 raw 응답 출력
+# 기본값은 조용함. 필요할 때만 켜서 사용
+KIS_DEBUG_ON_FAILURE=1 uv run pytest packages/cluefin-openapi/tests/kis/ -m "integration"
+
 # Kiwoom 통합 테스트는 .env.test의 KIWOOM_ENV(dev|prod)를 사용
 # - KIWOOM_ENV=dev  -> mockapi 키 사용
 # - KIWOOM_ENV=prod -> 실서버 키 사용
@@ -335,6 +339,18 @@ uv run pytest packages/cluefin-openapi/tests/kiwoom/test_auth_unit.py -v
 
 # 코드 커버리지 확인
 uv run pytest --cov=cluefin_openapi --cov-report=html
+```
+
+### KIS 통합 테스트 디버깅
+
+- 기본적으로 KIS integration 테스트 실패 시 raw 응답을 출력하지 않습니다.
+- 필요할 때만 `KIS_DEBUG_ON_FAILURE=1` 를 주면 실패한 테스트의 마지막 KIS 응답이 같이 출력됩니다.
+- 출력에는 `status_code`, `tr_id`, `path`, 요청 파라미터 요약, `response_preview`, `artifact_path` 가 포함됩니다.
+- 전체 payload는 `artifact_path` 로 표시된 `/tmp/cluefin-kis-debug/*.json` 파일에서 확인할 수 있습니다.
+
+```bash
+# KIS integration 실패 시 마지막 raw 응답 보기
+KIS_DEBUG_ON_FAILURE=1 uv run pytest packages/cluefin-openapi/tests/kis/test_domestic_market_analysis_integration.py -m "integration"
 ```
 
 ### 통합 테스트 실행 이슈 (uv 캐시 권한)
