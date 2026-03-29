@@ -6,6 +6,11 @@ import pytest
 
 from cluefin_openapi.kis import _domestic_market_analysis as domestic_market_analysis_module
 from cluefin_openapi.kis._domestic_market_analysis import DomesticMarketAnalysis
+from cluefin_openapi.kis._domestic_market_analysis_types import (
+    ForeignNetBuyTrendByStock,
+    MemberTradingTrendTick,
+    ProgramTradingSummaryIntraday,
+)
 
 
 def load_domestic_market_analysis_cases():
@@ -102,3 +107,163 @@ def test_domestic_market_analysis_builds_request(
     assert len(captured_instances) == 1
     assert result.body is captured_instances[0]
     assert captured_instances[0].kwargs == response_payload
+
+
+def _make_mock_response(tr_id: str = "FHKST11300006") -> Mock:
+    mock_response = Mock()
+    mock_response.json.return_value = {"rt_cd": "0", "msg_cd": "0000", "msg1": "OK", "output": []}
+    mock_response.status_code = 200
+    mock_response.text = ""
+    mock_response.headers = {
+        "content-type": "application/json; charset=utf-8",
+        "tr_id": tr_id,
+        "tr_cont": "",
+        "gt_uid": None,
+    }
+    return mock_response
+
+
+def _install_dummy_watchlist_model(monkeypatch):
+    class DummyResponseModel:
+        @classmethod
+        def model_validate(cls, data):
+            return cls()
+
+    monkeypatch.setattr(domestic_market_analysis_module, "WatchlistMultiQuote", DummyResponseModel)
+
+
+def test_get_watchlist_multi_quote_includes_populated_optional_pairs(monkeypatch):
+    _install_dummy_watchlist_model(monkeypatch)
+
+    client = Mock()
+    client._get.return_value = _make_mock_response()
+
+    market_analysis = DomesticMarketAnalysis(client)
+    market_analysis.get_watchlist_multi_quote(
+        fid_cond_mrkt_div_code_1="J",
+        fid_input_iscd_1="005930",
+        fid_cond_mrkt_div_code_2="J",
+        fid_input_iscd_2="000660",
+    )
+
+    client._get.assert_called_once_with(
+        "/uapi/domestic-stock/v1/quotations/intstock-multprice",
+        headers={"tr_id": "FHKST11300006"},
+        params={
+            "FID_COND_MRKT_DIV_CODE_1": "J",
+            "FID_INPUT_ISCD_1": "005930",
+            "FID_COND_MRKT_DIV_CODE_2": "J",
+            "FID_INPUT_ISCD_2": "000660",
+        },
+    )
+
+
+def test_get_watchlist_multi_quote_rejects_incomplete_optional_pair(monkeypatch):
+    _install_dummy_watchlist_model(monkeypatch)
+
+    client = Mock()
+    market_analysis = DomesticMarketAnalysis(client)
+
+    with pytest.raises(ValueError, match="must be provided together"):
+        market_analysis.get_watchlist_multi_quote(
+            fid_cond_mrkt_div_code_1="J",
+            fid_input_iscd_1="005930",
+            fid_cond_mrkt_div_code_2="J",
+        )
+
+    client._get.assert_not_called()
+
+
+def test_foreign_net_buy_trend_by_stock_matches_live_output_schema():
+    payload = {
+        "rt_cd": "0",
+        "msg_cd": "0000",
+        "msg1": "OK",
+        "output": [
+            {
+                "bsop_hour": "153049",
+                "stck_prpr": "179700",
+                "prdy_vrss": "-400",
+                "prdy_vrss_sign": "5",
+                "prdy_ctrt": "-0.22",
+                "acml_vol": "29102559",
+                "frgn_seln_vol": "9155337",
+                "frgn_shnu_vol": "511586",
+                "glob_ntby_qty": "-8643751",
+                "frgn_ntby_qty_icdc": "-596817",
+            }
+        ],
+    }
+
+    body = ForeignNetBuyTrendByStock.model_validate(payload)
+
+    assert len(body.output) == 1
+    assert body.output[0].bsop_hour == "153049"
+    assert body.output[0].acml_vol == "29102559"
+    assert body.output[0].glob_ntby_qty == "-8643751"
+
+
+def test_member_trading_trend_tick_matches_live_output_schema():
+    payload = {
+        "rt_cd": "0",
+        "msg_cd": "0000",
+        "msg1": "OK",
+        "output1": [
+            {
+                "total_seln_qty": "9155337",
+                "total_shnu_qty": "511586",
+            }
+        ],
+        "output2": [
+            {
+                "bsop_hour": "153049",
+                "mbcr_name": "UBS",
+                "hts_kor_isnm": "삼성전자",
+                "stck_prpr": "179700",
+                "prdy_vrss": "-400",
+                "prdy_vrss_sign": "5",
+                "cntg_vol": "-596817",
+                "acml_ntby_qty": "-1904542",
+                "glob_ntby_qty": "-8643751",
+                "frgn_ntby_qty_icdc": "-596817",
+            }
+        ],
+    }
+
+    body = MemberTradingTrendTick.model_validate(payload)
+
+    assert len(body.output1) == 1
+    assert body.output1[0].total_seln_qty == "9155337"
+    assert len(body.output2) == 1
+    assert body.output2[0].mbcr_name == "UBS"
+    assert body.output2[0].acml_ntby_qty == "-1904542"
+
+
+def test_program_trading_summary_intraday_matches_live_output_schema():
+    payload = {
+        "rt_cd": "0",
+        "msg_cd": "0000",
+        "msg1": "OK",
+        "output": [
+            {
+                "bsop_hour": "180500",
+                "arbt_smtn_seln_tr_pbmn": "317582",
+                "arbt_smtn_shnu_tr_pbmn": "340577",
+                "nabt_smtn_seln_tr_pbmn": "8118891",
+                "nabt_smtn_shnu_tr_pbmn": "6179753",
+                "arbt_smtn_ntby_tr_pbmn": "22996",
+                "nabt_smtn_ntby_tr_pbmn": "-1939137",
+                "whol_smtn_ntby_tr_pbmn": "-1916142",
+                "bstp_nmix_prpr": "",
+                "bstp_nmix_prdy_vrss": "",
+                "prdy_vrss_sign": "",
+            }
+        ],
+    }
+
+    body = ProgramTradingSummaryIntraday.model_validate(payload)
+
+    assert len(body.output) == 1
+    assert body.output[0].bsop_hour == "180500"
+    assert body.output[0].nabt_smtn_ntby_tr_pbmn == "-1939137"
+    assert body.output[0].prdy_vrss_sign == ""

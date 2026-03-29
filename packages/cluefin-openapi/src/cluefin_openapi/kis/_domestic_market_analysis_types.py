@@ -442,11 +442,30 @@ class InvestorTradingTrendByMarketDaily(BaseModel, KisHttpBody):
 
 
 class ForeignNetBuyTrendByStockItem1(BaseModel):
+    bsop_hour: str = Field(title="영업시간", max_length=6)
+    stck_prpr: str = Field(title="주식현재가", max_length=10)
+    prdy_vrss: str = Field(title="전일대비", max_length=10)
+    prdy_vrss_sign: str = Field(title="전일대비부호", max_length=1)
+    prdy_ctrt: str = Field(title="전일대비율", max_length=82)
+    acml_vol: str = Field(title="누적거래량", max_length=18)
+    frgn_seln_vol: str = Field(title="외국인매도거래량", max_length=18)
+    frgn_shnu_vol: str = Field(title="외국인매수거래량", max_length=18)
+    glob_ntby_qty: str = Field(title="외국계순매수수량", max_length=12)
+    frgn_ntby_qty_icdc: str = Field(title="외국인순매수수량증감", max_length=10)
+
+
+class ForeignNetBuyTrendByStock(BaseModel, KisHttpBody):
+    """종목별 외국계 순매수추이"""
+
+    output: Sequence[ForeignNetBuyTrendByStockItem1] = Field(default_factory=list)
+
+
+class MemberTradingTrendTickSummaryItem(BaseModel):
     total_seln_qty: str = Field(title="총매도수량", max_length=18)
     total_shnu_qty: str = Field(title="총매수2수량", max_length=18)
 
 
-class ForeignNetBuyTrendByStockItem2(BaseModel):
+class MemberTradingTrendTickItem(BaseModel):
     bsop_hour: str = Field(title="영업시간", max_length=6)
     mbcr_name: str = Field(title="회원사명", max_length=50)
     hts_kor_isnm: str = Field(title="HTS한글종목명", max_length=40)
@@ -459,28 +478,10 @@ class ForeignNetBuyTrendByStockItem2(BaseModel):
     frgn_ntby_qty_icdc: str = Field(title="외국인순매수수량증감", max_length=10)
 
 
-class ForeignNetBuyTrendByStock(BaseModel, KisHttpBody):
-    """종목별 외국계 순매수추이"""
-
-    output: Sequence[ForeignNetBuyTrendByStockItem1] = Field(default_factory=list)
-
-
-class MemberTradingTrendTickItem(BaseModel):
-    stck_bsop_date: str = Field(title="주식영업일자", max_length=8)
-    total_seln_qty: str = Field(title="총매도수량", max_length=18)
-    total_shnu_qty: str = Field(title="총매수2수량", max_length=18)
-    ntby_qty: str = Field(title="순매수수량", max_length=18)
-    stck_prpr: str = Field(title="주식현재가", max_length=10)
-    prdy_vrss: str = Field(title="전일대비", max_length=10)
-    prdy_vrss_sign: str = Field(title="전일대비부호", max_length=1)
-    prdy_ctrt: str = Field(title="전일대비율", max_length=82)
-    acml_vol: str = Field(title="누적거래량", max_length=18)
-
-
 class MemberTradingTrendTick(BaseModel, KisHttpBody):
     """회원사 실시간 매매동향(틱)"""
 
-    output1: Sequence[MemberTradingTrendTickItem] = Field(default_factory=list)
+    output1: Sequence[MemberTradingTrendTickSummaryItem] = Field(default_factory=list)
     output2: Sequence[MemberTradingTrendTickItem] = Field(default_factory=list)
 
 
@@ -587,19 +588,12 @@ class BuySellVolumeByStockDaily(BaseModel, KisHttpBody):
 class ProgramTradingSummaryIntradayItem(BaseModel):
     bsop_hour: str = Field(title="영업 시간", max_length=6)
     arbt_smtn_seln_tr_pbmn: str = Field(title="차익 합계 매도 거래 대금", max_length=18)
-    arbt_smtm_seln_tr_pbmn_rate: str = Field(title="차익 합계 매도 거래대금 비율", max_length=72)
     arbt_smtn_shnu_tr_pbmn: str = Field(title="차익 합계 매수2 거래 대금", max_length=18)
-    arbt_smtm_shun_tr_pbmn_rate: str = Field(title="차익합계매수거래대금비율", max_length=72)
     nabt_smtn_seln_tr_pbmn: str = Field(title="비차익 합계 매도 거래 대금", max_length=18)
-    nabt_smtm_seln_tr_pbmn_rate: str = Field(title="비차익 합계 매도 거래대금 비율", max_length=72)
     nabt_smtn_shnu_tr_pbmn: str = Field(title="비차익 합계 매수2 거래 대금", max_length=18)
-    nabt_smtm_shun_tr_pbmn_rate: str = Field(title="비차익합계매수거래대금비율", max_length=72)
     arbt_smtn_ntby_tr_pbmn: str = Field(title="차익 합계 순매수 거래 대금", max_length=18)
-    arbt_smtm_ntby_tr_pbmn_rate: str = Field(title="차익 합계 순매수 거래대금 비율", max_length=72)
     nabt_smtn_ntby_tr_pbmn: str = Field(title="비차익 합계 순매수 거래 대금", max_length=18)
-    nabt_smtm_ntby_tr_pbmn_rate: str = Field(title="비차익 합계 순매수 거래대금 비", max_length=72)
     whol_smtn_ntby_tr_pbmn: str = Field(title="전체 합계 순매수 거래 대금", max_length=18)
-    whol_ntby_tr_pbmn_rate: str = Field(title="전체 순매수 거래대금 비율", max_length=72)
     bstp_nmix_prpr: str = Field(title="업종 지수 현재가", max_length=112)
     bstp_nmix_prdy_vrss: str = Field(title="업종 지수 전일 대비", max_length=112)
     prdy_vrss_sign: str = Field(title="전일 대비 부호", max_length=1)

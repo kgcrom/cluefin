@@ -1,3 +1,5 @@
+from typing import Optional
+
 from cluefin_openapi.kis._domestic_market_analysis_types import (
     AfterHoursExpectedFluctuation,
     BuySellVolumeByStockDaily,
@@ -126,133 +128,102 @@ class DomesticMarketAnalysis:
         body = WatchlistGroups.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
+    @staticmethod
+    def _normalize_watchlist_multi_quote_slot(
+        slot_index: int,
+        market_code: Optional[str],
+        input_iscd: Optional[str],
+        *,
+        required: bool,
+    ) -> Optional[tuple[str, str]]:
+        """Normalize a watchlist slot and validate paired optional inputs."""
+        if market_code in (None, "") and input_iscd in (None, ""):
+            if required:
+                raise ValueError("fid_cond_mrkt_div_code_1 and fid_input_iscd_1 are required")
+            return None
+
+        if market_code in (None, "") or input_iscd in (None, ""):
+            raise ValueError(
+                f"fid_cond_mrkt_div_code_{slot_index} and fid_input_iscd_{slot_index} must be provided together"
+            )
+
+        return market_code, input_iscd
+
     def get_watchlist_multi_quote(
         self,
         fid_cond_mrkt_div_code_1: str,
         fid_input_iscd_1: str,
-        fid_cond_mrkt_div_code_2: str,
-        fid_input_iscd_2: str,
-        fid_cond_mrkt_div_code_3: str,
-        fid_input_iscd_3: str,
-        fid_cond_mrkt_div_code_4: str,
-        fid_input_iscd_4: str,
-        fid_cond_mrkt_div_code_5: str,
-        fid_input_iscd_5: str,
-        fid_cond_mrkt_div_code_6: str,
-        fid_input_iscd_6: str,
-        fid_cond_mrkt_div_code_7: str,
-        fid_input_iscd_7: str,
-        fid_cond_mrkt_div_code_8: str,
-        fid_input_iscd_8: str,
-        fid_cond_mrkt_div_code_9: str,
-        fid_input_iscd_9: str,
-        fid_cond_mrkt_div_code_10: str,
-        fid_input_iscd_10: str,
-        fid_cond_mrkt_div_code_11: str,
-        fid_input_iscd_11: str,
-        fid_cond_mrkt_div_code_12: str,
-        fid_input_iscd_12: str,
-        fid_cond_mrkt_div_code_13: str,
-        fid_input_iscd_13: str,
-        fid_cond_mrkt_div_code_14: str,
-        fid_input_iscd_14: str,
-        fid_cond_mrkt_div_code_15: str,
-        fid_input_iscd_15: str,
-        fid_cond_mrkt_div_code_16: str,
-        fid_input_iscd_16: str,
-        fid_cond_mrkt_div_code_17: str,
-        fid_input_iscd_17: str,
-        fid_cond_mrkt_div_code_18: str,
-        fid_input_iscd_18: str,
-        fid_cond_mrkt_div_code_19: str,
-        fid_input_iscd_19: str,
-        fid_cond_mrkt_div_code_20: str,
-        fid_input_iscd_20: str,
-        fid_cond_mrkt_div_code_21: str,
-        fid_input_iscd_21: str,
-        fid_cond_mrkt_div_code_22: str,
-        fid_input_iscd_22: str,
-        fid_cond_mrkt_div_code_23: str,
-        fid_input_iscd_23: str,
-        fid_cond_mrkt_div_code_24: str,
-        fid_input_iscd_24: str,
-        fid_cond_mrkt_div_code_25: str,
-        fid_input_iscd_25: str,
-        fid_cond_mrkt_div_code_26: str,
-        fid_input_iscd_26: str,
-        fid_cond_mrkt_div_code_27: str,
-        fid_input_iscd_27: str,
-        fid_cond_mrkt_div_code_28: str,
-        fid_input_iscd_28: str,
-        fid_cond_mrkt_div_code_29: str,
-        fid_input_iscd_29: str,
-        fid_cond_mrkt_div_code_30: str,
-        fid_input_iscd_30: str,
+        fid_cond_mrkt_div_code_2: Optional[str] = None,
+        fid_input_iscd_2: Optional[str] = None,
+        fid_cond_mrkt_div_code_3: Optional[str] = None,
+        fid_input_iscd_3: Optional[str] = None,
+        fid_cond_mrkt_div_code_4: Optional[str] = None,
+        fid_input_iscd_4: Optional[str] = None,
+        fid_cond_mrkt_div_code_5: Optional[str] = None,
+        fid_input_iscd_5: Optional[str] = None,
+        fid_cond_mrkt_div_code_6: Optional[str] = None,
+        fid_input_iscd_6: Optional[str] = None,
+        fid_cond_mrkt_div_code_7: Optional[str] = None,
+        fid_input_iscd_7: Optional[str] = None,
+        fid_cond_mrkt_div_code_8: Optional[str] = None,
+        fid_input_iscd_8: Optional[str] = None,
+        fid_cond_mrkt_div_code_9: Optional[str] = None,
+        fid_input_iscd_9: Optional[str] = None,
+        fid_cond_mrkt_div_code_10: Optional[str] = None,
+        fid_input_iscd_10: Optional[str] = None,
+        fid_cond_mrkt_div_code_11: Optional[str] = None,
+        fid_input_iscd_11: Optional[str] = None,
+        fid_cond_mrkt_div_code_12: Optional[str] = None,
+        fid_input_iscd_12: Optional[str] = None,
+        fid_cond_mrkt_div_code_13: Optional[str] = None,
+        fid_input_iscd_13: Optional[str] = None,
+        fid_cond_mrkt_div_code_14: Optional[str] = None,
+        fid_input_iscd_14: Optional[str] = None,
+        fid_cond_mrkt_div_code_15: Optional[str] = None,
+        fid_input_iscd_15: Optional[str] = None,
+        fid_cond_mrkt_div_code_16: Optional[str] = None,
+        fid_input_iscd_16: Optional[str] = None,
+        fid_cond_mrkt_div_code_17: Optional[str] = None,
+        fid_input_iscd_17: Optional[str] = None,
+        fid_cond_mrkt_div_code_18: Optional[str] = None,
+        fid_input_iscd_18: Optional[str] = None,
+        fid_cond_mrkt_div_code_19: Optional[str] = None,
+        fid_input_iscd_19: Optional[str] = None,
+        fid_cond_mrkt_div_code_20: Optional[str] = None,
+        fid_input_iscd_20: Optional[str] = None,
+        fid_cond_mrkt_div_code_21: Optional[str] = None,
+        fid_input_iscd_21: Optional[str] = None,
+        fid_cond_mrkt_div_code_22: Optional[str] = None,
+        fid_input_iscd_22: Optional[str] = None,
+        fid_cond_mrkt_div_code_23: Optional[str] = None,
+        fid_input_iscd_23: Optional[str] = None,
+        fid_cond_mrkt_div_code_24: Optional[str] = None,
+        fid_input_iscd_24: Optional[str] = None,
+        fid_cond_mrkt_div_code_25: Optional[str] = None,
+        fid_input_iscd_25: Optional[str] = None,
+        fid_cond_mrkt_div_code_26: Optional[str] = None,
+        fid_input_iscd_26: Optional[str] = None,
+        fid_cond_mrkt_div_code_27: Optional[str] = None,
+        fid_input_iscd_27: Optional[str] = None,
+        fid_cond_mrkt_div_code_28: Optional[str] = None,
+        fid_input_iscd_28: Optional[str] = None,
+        fid_cond_mrkt_div_code_29: Optional[str] = None,
+        fid_input_iscd_29: Optional[str] = None,
+        fid_cond_mrkt_div_code_30: Optional[str] = None,
+        fid_input_iscd_30: Optional[str] = None,
     ) -> KisHttpResponse[WatchlistMultiQuote]:
         """
         관심종목(멀티종목) 시세조회
 
         Args:
-            fid_cond_mrkt_div_code_1 (str): 조건 시장 분류 코드1 (J: KRX, NX: NXT, UN: 통합, 예: J)
-            fid_input_iscd_1 (str): 입력 종목코드1 (예: 005930)
-            fid_cond_mrkt_div_code_2 (str): 조건 시장 분류 코드2
-            fid_input_iscd_2 (str): 입력 종목코드2
-            fid_cond_mrkt_div_code_3 (str): 조건 시장 분류 코드3
-            fid_input_iscd_3 (str): 입력 종목코드3
-            fid_cond_mrkt_div_code_4 (str): 조건 시장 분류 코드4
-            fid_input_iscd_4 (str): 입력 종목코드4
-            fid_cond_mrkt_div_code_5 (str): 조건 시장 분류 코드5
-            fid_input_iscd_5 (str): 입력 종목코드5
-            fid_cond_mrkt_div_code_6 (str): 조건 시장 분류 코드6
-            fid_input_iscd_6 (str): 입력 종목코드6
-            fid_cond_mrkt_div_code_7 (str): 조건 시장 분류 코드7
-            fid_input_iscd_7 (str): 입력 종목코드7
-            fid_cond_mrkt_div_code_8 (str): 조건 시장 분류 코드8
-            fid_input_iscd_8 (str): 입력 종목코드8
-            fid_cond_mrkt_div_code_9 (str): 조건 시장 분류 코드9
-            fid_input_iscd_9 (str): 입력 종목코드9
-            fid_cond_mrkt_div_code_10 (str): 조건 시장 분류 코드10
-            fid_input_iscd_10 (str): 입력 종목코드10
-            fid_cond_mrkt_div_code_11 (str): 조건 시장 분류 코드11
-            fid_input_iscd_11 (str): 입력 종목코드11
-            fid_cond_mrkt_div_code_12 (str): 조건 시장 분류 코드12
-            fid_input_iscd_12 (str): 입력 종목코드12
-            fid_cond_mrkt_div_code_13 (str): 조건 시장 분류 코드13
-            fid_input_iscd_13 (str): 입력 종목코드13
-            fid_cond_mrkt_div_code_14 (str): 조건 시장 분류 코드14
-            fid_input_iscd_14 (str): 입력 종목코드14
-            fid_cond_mrkt_div_code_15 (str): 조건 시장 분류 코드15
-            fid_input_iscd_15 (str): 입력 종목코드15
-            fid_cond_mrkt_div_code_16 (str): 조건 시장 분류 코드16
-            fid_input_iscd_16 (str): 입력 종목코드16
-            fid_cond_mrkt_div_code_17 (str): 조건 시장 분류 코드17
-            fid_input_iscd_17 (str): 입력 종목코드17
-            fid_cond_mrkt_div_code_18 (str): 조건 시장 분류 코드18
-            fid_input_iscd_18 (str): 입력 종목코드18
-            fid_cond_mrkt_div_code_19 (str): 조건 시장 분류 코드19
-            fid_input_iscd_19 (str): 입력 종목코드19
-            fid_cond_mrkt_div_code_20 (str): 조건 시장 분류 코드20
-            fid_input_iscd_20 (str): 입력 종목코드20
-            fid_cond_mrkt_div_code_21 (str): 조건 시장 분류 코드21
-            fid_input_iscd_21 (str): 입력 종목코드21
-            fid_cond_mrkt_div_code_22 (str): 조건 시장 분류 코드22
-            fid_input_iscd_22 (str): 입력 종목코드22
-            fid_cond_mrkt_div_code_23 (str): 조건 시장 분류 코드23
-            fid_input_iscd_23 (str): 입력 종목코드23
-            fid_cond_mrkt_div_code_24 (str): 조건 시장 분류 코드24
-            fid_input_iscd_24 (str): 입력 종목코드24
-            fid_cond_mrkt_div_code_25 (str): 조건 시장 분류 코드25
-            fid_input_iscd_25 (str): 입력 종목코드25
-            fid_cond_mrkt_div_code_26 (str): 조건 시장 분류 코드26
-            fid_input_iscd_26 (str): 입력 종목코드26
-            fid_cond_mrkt_div_code_27 (str): 조건 시장 분류 코드27
-            fid_input_iscd_27 (str): 입력 종목코드27
-            fid_cond_mrkt_div_code_28 (str): 조건 시장 분류 코드28
-            fid_input_iscd_28 (str): 입력 종목코드28
-            fid_cond_mrkt_div_code_29 (str): 조건 시장 분류 코드29
-            fid_input_iscd_29 (str): 입력 종목코드29
-            fid_cond_mrkt_div_code_30 (str): 조건 시장 분류 코드30
-            fid_input_iscd_30 (str): 입력 종목코드30
+            fid_cond_mrkt_div_code_1 (str): 조건 시장 분류 코드1 (필수, 예: J)
+            fid_input_iscd_1 (str): 입력 종목코드1 (필수, 예: 005930)
+            fid_cond_mrkt_div_code_2~30 (Optional[str]): 조건 시장 분류 코드2~30 (선택)
+            fid_input_iscd_2~30 (Optional[str]): 입력 종목코드2~30 (선택)
+
+        Note:
+            - 2~30 슬롯은 시장코드와 종목코드를 한 쌍으로 함께 입력해야 합니다.
+            - 2~30 슬롯을 생략할 때는 None을 사용합니다.
 
         Returns:
             KisHttpResponse[WatchlistMultiQuote]: 관심종목(멀티종목) 시세조회 응답 객체
@@ -260,68 +231,156 @@ class DomesticMarketAnalysis:
         headers = {
             "tr_id": "FHKST11300006",
         }
-        params = {
-            "FID_COND_MRKT_DIV_CODE_1": fid_cond_mrkt_div_code_1,
-            "FID_INPUT_ISCD_1": fid_input_iscd_1,
-            "FID_COND_MRKT_DIV_CODE_2": fid_cond_mrkt_div_code_2,
-            "FID_INPUT_ISCD_2": fid_input_iscd_2,
-            "FID_COND_MRKT_DIV_CODE_3": fid_cond_mrkt_div_code_3,
-            "FID_INPUT_ISCD_3": fid_input_iscd_3,
-            "FID_COND_MRKT_DIV_CODE_4": fid_cond_mrkt_div_code_4,
-            "FID_INPUT_ISCD_4": fid_input_iscd_4,
-            "FID_COND_MRKT_DIV_CODE_5": fid_cond_mrkt_div_code_5,
-            "FID_INPUT_ISCD_5": fid_input_iscd_5,
-            "FID_COND_MRKT_DIV_CODE_6": fid_cond_mrkt_div_code_6,
-            "FID_INPUT_ISCD_6": fid_input_iscd_6,
-            "FID_COND_MRKT_DIV_CODE_7": fid_cond_mrkt_div_code_7,
-            "FID_INPUT_ISCD_7": fid_input_iscd_7,
-            "FID_COND_MRKT_DIV_CODE_8": fid_cond_mrkt_div_code_8,
-            "FID_INPUT_ISCD_8": fid_input_iscd_8,
-            "FID_COND_MRKT_DIV_CODE_9": fid_cond_mrkt_div_code_9,
-            "FID_INPUT_ISCD_9": fid_input_iscd_9,
-            "FID_COND_MRKT_DIV_CODE_10": fid_cond_mrkt_div_code_10,
-            "FID_INPUT_ISCD_10": fid_input_iscd_10,
-            "FID_COND_MRKT_DIV_CODE_11": fid_cond_mrkt_div_code_11,
-            "FID_INPUT_ISCD_11": fid_input_iscd_11,
-            "FID_COND_MRKT_DIV_CODE_12": fid_cond_mrkt_div_code_12,
-            "FID_INPUT_ISCD_12": fid_input_iscd_12,
-            "FID_COND_MRKT_DIV_CODE_13": fid_cond_mrkt_div_code_13,
-            "FID_INPUT_ISCD_13": fid_input_iscd_13,
-            "FID_COND_MRKT_DIV_CODE_14": fid_cond_mrkt_div_code_14,
-            "FID_INPUT_ISCD_14": fid_input_iscd_14,
-            "FID_COND_MRKT_DIV_CODE_15": fid_cond_mrkt_div_code_15,
-            "FID_INPUT_ISCD_15": fid_input_iscd_15,
-            "FID_COND_MRKT_DIV_CODE_16": fid_cond_mrkt_div_code_16,
-            "FID_INPUT_ISCD_16": fid_input_iscd_16,
-            "FID_COND_MRKT_DIV_CODE_17": fid_cond_mrkt_div_code_17,
-            "FID_INPUT_ISCD_17": fid_input_iscd_17,
-            "FID_COND_MRKT_DIV_CODE_18": fid_cond_mrkt_div_code_18,
-            "FID_INPUT_ISCD_18": fid_input_iscd_18,
-            "FID_COND_MRKT_DIV_CODE_19": fid_cond_mrkt_div_code_19,
-            "FID_INPUT_ISCD_19": fid_input_iscd_19,
-            "FID_COND_MRKT_DIV_CODE_20": fid_cond_mrkt_div_code_20,
-            "FID_INPUT_ISCD_20": fid_input_iscd_20,
-            "FID_COND_MRKT_DIV_CODE_21": fid_cond_mrkt_div_code_21,
-            "FID_INPUT_ISCD_21": fid_input_iscd_21,
-            "FID_COND_MRKT_DIV_CODE_22": fid_cond_mrkt_div_code_22,
-            "FID_INPUT_ISCD_22": fid_input_iscd_22,
-            "FID_COND_MRKT_DIV_CODE_23": fid_cond_mrkt_div_code_23,
-            "FID_INPUT_ISCD_23": fid_input_iscd_23,
-            "FID_COND_MRKT_DIV_CODE_24": fid_cond_mrkt_div_code_24,
-            "FID_INPUT_ISCD_24": fid_input_iscd_24,
-            "FID_COND_MRKT_DIV_CODE_25": fid_cond_mrkt_div_code_25,
-            "FID_INPUT_ISCD_25": fid_input_iscd_25,
-            "FID_COND_MRKT_DIV_CODE_26": fid_cond_mrkt_div_code_26,
-            "FID_INPUT_ISCD_26": fid_input_iscd_26,
-            "FID_COND_MRKT_DIV_CODE_27": fid_cond_mrkt_div_code_27,
-            "FID_INPUT_ISCD_27": fid_input_iscd_27,
-            "FID_COND_MRKT_DIV_CODE_28": fid_cond_mrkt_div_code_28,
-            "FID_INPUT_ISCD_28": fid_input_iscd_28,
-            "FID_COND_MRKT_DIV_CODE_29": fid_cond_mrkt_div_code_29,
-            "FID_INPUT_ISCD_29": fid_input_iscd_29,
-            "FID_COND_MRKT_DIV_CODE_30": fid_cond_mrkt_div_code_30,
-            "FID_INPUT_ISCD_30": fid_input_iscd_30,
-        }
+        normalized_slots = [
+            self._normalize_watchlist_multi_quote_slot(
+                1,
+                fid_cond_mrkt_div_code_1,
+                fid_input_iscd_1,
+                required=True,
+            ),
+            self._normalize_watchlist_multi_quote_slot(2, fid_cond_mrkt_div_code_2, fid_input_iscd_2, required=False),
+            self._normalize_watchlist_multi_quote_slot(3, fid_cond_mrkt_div_code_3, fid_input_iscd_3, required=False),
+            self._normalize_watchlist_multi_quote_slot(4, fid_cond_mrkt_div_code_4, fid_input_iscd_4, required=False),
+            self._normalize_watchlist_multi_quote_slot(5, fid_cond_mrkt_div_code_5, fid_input_iscd_5, required=False),
+            self._normalize_watchlist_multi_quote_slot(6, fid_cond_mrkt_div_code_6, fid_input_iscd_6, required=False),
+            self._normalize_watchlist_multi_quote_slot(7, fid_cond_mrkt_div_code_7, fid_input_iscd_7, required=False),
+            self._normalize_watchlist_multi_quote_slot(8, fid_cond_mrkt_div_code_8, fid_input_iscd_8, required=False),
+            self._normalize_watchlist_multi_quote_slot(9, fid_cond_mrkt_div_code_9, fid_input_iscd_9, required=False),
+            self._normalize_watchlist_multi_quote_slot(
+                10,
+                fid_cond_mrkt_div_code_10,
+                fid_input_iscd_10,
+                required=False,
+            ),
+            self._normalize_watchlist_multi_quote_slot(
+                11,
+                fid_cond_mrkt_div_code_11,
+                fid_input_iscd_11,
+                required=False,
+            ),
+            self._normalize_watchlist_multi_quote_slot(
+                12,
+                fid_cond_mrkt_div_code_12,
+                fid_input_iscd_12,
+                required=False,
+            ),
+            self._normalize_watchlist_multi_quote_slot(
+                13,
+                fid_cond_mrkt_div_code_13,
+                fid_input_iscd_13,
+                required=False,
+            ),
+            self._normalize_watchlist_multi_quote_slot(
+                14,
+                fid_cond_mrkt_div_code_14,
+                fid_input_iscd_14,
+                required=False,
+            ),
+            self._normalize_watchlist_multi_quote_slot(
+                15,
+                fid_cond_mrkt_div_code_15,
+                fid_input_iscd_15,
+                required=False,
+            ),
+            self._normalize_watchlist_multi_quote_slot(
+                16,
+                fid_cond_mrkt_div_code_16,
+                fid_input_iscd_16,
+                required=False,
+            ),
+            self._normalize_watchlist_multi_quote_slot(
+                17,
+                fid_cond_mrkt_div_code_17,
+                fid_input_iscd_17,
+                required=False,
+            ),
+            self._normalize_watchlist_multi_quote_slot(
+                18,
+                fid_cond_mrkt_div_code_18,
+                fid_input_iscd_18,
+                required=False,
+            ),
+            self._normalize_watchlist_multi_quote_slot(
+                19,
+                fid_cond_mrkt_div_code_19,
+                fid_input_iscd_19,
+                required=False,
+            ),
+            self._normalize_watchlist_multi_quote_slot(
+                20,
+                fid_cond_mrkt_div_code_20,
+                fid_input_iscd_20,
+                required=False,
+            ),
+            self._normalize_watchlist_multi_quote_slot(
+                21,
+                fid_cond_mrkt_div_code_21,
+                fid_input_iscd_21,
+                required=False,
+            ),
+            self._normalize_watchlist_multi_quote_slot(
+                22,
+                fid_cond_mrkt_div_code_22,
+                fid_input_iscd_22,
+                required=False,
+            ),
+            self._normalize_watchlist_multi_quote_slot(
+                23,
+                fid_cond_mrkt_div_code_23,
+                fid_input_iscd_23,
+                required=False,
+            ),
+            self._normalize_watchlist_multi_quote_slot(
+                24,
+                fid_cond_mrkt_div_code_24,
+                fid_input_iscd_24,
+                required=False,
+            ),
+            self._normalize_watchlist_multi_quote_slot(
+                25,
+                fid_cond_mrkt_div_code_25,
+                fid_input_iscd_25,
+                required=False,
+            ),
+            self._normalize_watchlist_multi_quote_slot(
+                26,
+                fid_cond_mrkt_div_code_26,
+                fid_input_iscd_26,
+                required=False,
+            ),
+            self._normalize_watchlist_multi_quote_slot(
+                27,
+                fid_cond_mrkt_div_code_27,
+                fid_input_iscd_27,
+                required=False,
+            ),
+            self._normalize_watchlist_multi_quote_slot(
+                28,
+                fid_cond_mrkt_div_code_28,
+                fid_input_iscd_28,
+                required=False,
+            ),
+            self._normalize_watchlist_multi_quote_slot(
+                29,
+                fid_cond_mrkt_div_code_29,
+                fid_input_iscd_29,
+                required=False,
+            ),
+            self._normalize_watchlist_multi_quote_slot(
+                30,
+                fid_cond_mrkt_div_code_30,
+                fid_input_iscd_30,
+                required=False,
+            ),
+        ]
+        params = {}
+        for slot_index, slot in enumerate(normalized_slots, start=1):
+            if slot is None:
+                continue
+            market_code, input_iscd = slot
+            params[f"FID_COND_MRKT_DIV_CODE_{slot_index}"] = market_code
+            params[f"FID_INPUT_ISCD_{slot_index}"] = input_iscd
+
         response = self.client._get(
             "/uapi/domestic-stock/v1/quotations/intstock-multprice", headers=headers, params=params
         )
