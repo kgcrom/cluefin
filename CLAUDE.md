@@ -1,49 +1,39 @@
 # CLAUDE.md
 
-## Overview
+## Project
 
-**Cluefin**: Korean stock market analysis toolkit (Python, uv workspace monorepo)
+Cluefin is a Korean market analysis monorepo.
 
-### Packages
-- `cluefin-openapi` — API clients (Kiwoom, KIS, DART)
-- `cluefin-openapi-ts` — TypeScript OpenAPI client (npm/biome, independent of uv workspace)
-- `cluefin-ta` — Technical analysis (TA-Lib compatible, pure Python)
-- `cluefin-xbrl` — XBRL/DART financial statement parser
+- `packages/cluefin-openapi`: Kiwoom, KIS, DART clients
+- `packages/cluefin-ta`: technical indicators
+- `packages/cluefin-xbrl`: XBRL / DART statement parsing
+- `apps/cluefin-cli`: analysis CLI
+- `apps/cluefin-openapi-cli`: broker command CLI
+- `apps/cluefin-desk`: TUI app
 
-### Apps
-- `cluefin-cli` — CLI (TA, ML predictions, SHAP)
-- `cluefin-desk` — TUI dashboard
-- `cluefin-openapi-cli` — Agent-friendly broker CLI
+## Rules
 
-## Commands
+- Use `uv run` for Python commands
+- Keep secrets in `.env`
+- Use mocks for unit tests
+- Use real API keys only for `integration` tests
+
+## Common Commands
 
 ```bash
-uv sync --all-packages                        # Setup
-uv run pytest -m "not integration"             # Unit tests
-uv run pytest -m integration                   # Integration tests (needs API keys in .env)
-uv run pytest packages/cluefin-openapi         # Single package tests
-uv run ruff format . && uv run ruff check . --fix  # Lint
+uv sync --all-packages
+uv run pytest -m "not integration"
+uv run pytest -m integration
+uv run ruff format .
+uv run ruff check . --fix
 ```
 
-### TypeScript (cluefin-openapi-ts)
+## TypeScript
+
 ```bash
 cd packages/cluefin-openapi-ts
-npm install                                    # Setup
-npm run test:unit                              # Unit tests
-npm run lint                                   # Biome lint
-npm run build                                  # Build
+npm install
+npm run test:unit
+npm run lint
+npm run build
 ```
-
-## Conventions
-
-- Git hooks via lefthook: pre-commit runs ruff (Python) + biome (TS), pre-push runs tests
-- Always use `uv run`, never bare `python`
-- Pydantic aliasing: Korean API fields → English (`stck_prpr` → `current_price`)
-- Auth: Kiwoom (OAuth2), KIS (token cache), DART (auth_key)
-- Secrets in `.env` only, managed via `pydantic_settings.BaseSettings`
-- Rate limiting: `TokenBucket` from `cluefin_openapi._rate_limiter`
-- Unit tests use mocks; integration tests (`@pytest.mark.integration`) need real API keys
-- Ruff: line 120, target py311, rules `E,F,W,B,Q,I,ASYNC,T20`
-- Python 3.10+, stock codes are 6-digit strings (e.g., `"005930"`)
-- TypeScript: Biome (not ESLint), Vitest (not Jest), tsup for bundling
-- TS package uses Zod schemas for runtime API response validation
