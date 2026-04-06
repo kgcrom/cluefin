@@ -5,6 +5,10 @@ from typing import Any, Callable, Iterable, Protocol
 
 from cluefin_openapi import BrokerClientFactory
 
+from cluefin_openapi_cli.handlers.dart import _ALL_HANDLERS as DART_HANDLERS
+from cluefin_openapi_cli.handlers.kis import get_kis_handlers
+from cluefin_openapi_cli.handlers.kiwoom import get_kiwoom_handlers
+
 
 @dataclass(frozen=True, slots=True)
 class CommandSpec:
@@ -17,7 +21,7 @@ class CommandSpec:
     path_segments: tuple[str, ...]
     parameters: dict[str, Any] = field(default_factory=dict)
     returns: dict[str, Any] = field(default_factory=dict)
-    executor: Callable[[dict[str, Any]], Any] | None = None
+    executor: Callable[[dict[str, Any], Any], Any] | None = None
 
     @property
     def path(self) -> tuple[str, ...]:
@@ -51,7 +55,7 @@ class RegistryProtocol(Protocol):
 
 
 class EmptyRegistry:
-    """Default registry used until the shared registry is wired in."""
+    """Default registry used until the command registry is wired in."""
 
     def list_commands(
         self,
@@ -101,26 +105,56 @@ class _BrokerSession:
         return self._get_client()
 
 
+def _kebab_case(value: str) -> str:
+    return value.replace("_", "-").replace(".", "-")
+
+
+def _iter_broker_handlers() -> Iterable[Callable[..., Any]]:
+    yield from get_kis_handlers()
+    yield from get_kiwoom_handlers()
+    yield from DART_HANDLERS
+
+
+def build_cli_registry() -> dict[tuple[str, ...], CommandSpec]:
+    registry: dict[tuple[str, ...], CommandSpec] = {}
+
+    for handler in _iter_broker_handlers():
+        schema = handler._rpc_schema
+        method_name = schema.name
+
+        if schema.broker == "dart":
+            _, leaf_name = method_name.split(".", 1)
+            category = "dart"
+            path_segments = ("dart", _kebab_case(leaf_name))
+            command_name = _kebab_case(leaf_name)
+        else:
+            category, leaf_name = method_name.split(".", 1)
+            path_segments = (schema.broker, _kebab_case(category), _kebab_case(leaf_name))
+            command_name = _kebab_case(leaf_name)
+
+        if path_segments in registry:
+            raise ValueError(f"Duplicate CLI path detected: {' '.join(path_segments)}")
+
+        registry[path_segments] = CommandSpec(
+            broker=schema.broker,
+            category=category,
+            name=command_name,
+            description=schema.description,
+            path_segments=path_segments,
+            parameters=schema.parameters,
+            returns=schema.returns,
+            executor=handler,
+        )
+
+    return registry
+
+
 class RpcRegistry:
-    """Adapter from the shared RPC registry to CLI-facing command specs."""
+    """CLI command registry with broker metadata and executors."""
 
     def __init__(self, client_factory: BrokerClientFactory | None = None) -> None:
         self._client_factory = client_factory or BrokerClientFactory()
-        from cluefin_rpc.registry import list_cli_commands
-
-        self._commands = {
-            definition.path_segments: CommandSpec(
-                broker=definition.broker,
-                category=definition.category,
-                name=definition.command_name,
-                description=definition.description,
-                path_segments=definition.path_segments,
-                parameters=definition.parameters,
-                returns=definition.returns,
-                executor=definition.executor,
-            )
-            for definition in list_cli_commands()
-        }
+        self._commands = build_cli_registry()
 
     def list_commands(self, *, broker: str | None = None, category: str | None = None) -> list[CommandSpec]:
         commands = list(self._commands.values())

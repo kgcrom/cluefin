@@ -2,7 +2,7 @@
 
 `cluefin-openapi-cli`는 `cluefin-openapi`의 broker API를 agent-friendly CLI로 노출하는 명령줄 인터페이스입니다.
 
-현재 `cluefin-rpc`와 같은 shared registry를 사용하므로, broker command set이 일치합니다. 사용 흐름은 `list`로 탐색하고, `describe`로 입력 schema를 확인한 뒤, broker-first command path로 실행하는 방식입니다.
+CLI 내부에 독립 command registry를 가지며, 사용 흐름은 `list`로 탐색하고, `describe`로 입력 schema를 확인한 뒤, broker-first command path로 실행하는 방식입니다.
 
 ## 빠른 시작
 
@@ -123,7 +123,7 @@ uv run cluefin-openapi-cli dart company-overview --corp-code 00126380 --json
 
 ## 동작 원칙
 
-- `cluefin-rpc`의 shared registry를 사용해 command metadata와 executor set을 맞춤
+- CLI 내부 registry가 command metadata와 executor set을 직접 관리
 - 실제 broker client 생성은 `cluefin_openapi.client_factory`를 사용
 - KIS, Kiwoom은 토큰 캐시를 사용하고, DART는 stateless client로 동작
 

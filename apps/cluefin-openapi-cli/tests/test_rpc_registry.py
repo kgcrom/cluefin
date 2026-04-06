@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from cluefin_openapi_cli.registry import RpcRegistry
+from cluefin_openapi_cli.registry import RpcRegistry, build_cli_registry
 
 
 class _FakeDartResult:
@@ -33,6 +33,16 @@ def test_rpc_registry_lists_real_commands() -> None:
 
     assert commands
     assert any(command.path_segments == ("dart", "company-overview") for command in commands)
+
+
+def test_cli_registry_keeps_existing_command_surface() -> None:
+    registry = build_cli_registry()
+
+    assert len(registry) == 183
+    assert ("kis", "stock", "current-price") in registry
+    assert ("kiwoom", "chart", "tick") in registry
+    assert ("dart", "company-overview") in registry
+    assert len(registry) == len(set(registry))
 
 
 def test_rpc_registry_resolves_real_command_path() -> None:

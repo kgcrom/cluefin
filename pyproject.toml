@@ -13,7 +13,6 @@ members = [
     "apps/cluefin-cli",
     "apps/cluefin-openapi-cli",
     "apps/cluefin-desk",
-    "apps/cluefin-rpc",
 ]
 
 [dependency-groups]
@@ -34,7 +33,6 @@ cluefin-xbrl = { workspace = true }
 cluefin-cli = { workspace = true }
 cluefin-openapi-cli = { workspace = true }
 cluefin-desk = { workspace = true }
-cluefin-rpc = { workspace = true }
 
 [tool.ruff]
 line-length = 120
@@ -65,7 +63,6 @@ testpaths = [
     "apps/cluefin-cli/tests",
     "apps/cluefin-openapi-cli/tests",
     "apps/cluefin-desk/tests",
-    "apps/cluefin-rpc/tests",
 ]
 
 [tool.coverage.run]
@@ -76,7 +73,6 @@ source = [
     "apps/cluefin-cli/src",
     "apps/cluefin-openapi-cli/src",
     "apps/cluefin-desk/src",
-    "apps/cluefin-rpc/src",
 ]
 omit = [
     "*/tests/*",

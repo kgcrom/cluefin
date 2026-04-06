@@ -13,7 +13,7 @@
 ### Apps
 - `cluefin-cli` — CLI (TA, ML predictions, SHAP)
 - `cluefin-desk` — TUI dashboard
-- `cluefin-rpc` — RPC server
+- `cluefin-openapi-cli` — Agent-friendly broker CLI
 
 ## Commands
 

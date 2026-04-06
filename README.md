@@ -33,7 +33,6 @@ uv 워크스페이스 모노레포:
 | [cluefin-cli](apps/cluefin-cli/) | Rich 기반 CLI (기술적 분석, LightGBM + SHAP 예측) |
 | [cluefin-openapi-cli](apps/cluefin-openapi-cli/) | Agent-friendly broker CLI (`list`, `describe`, broker-first command path) |
 | [cluefin-desk](apps/cluefin-desk/) | TUI 대시보드 |
-| [cluefin-rpc](apps/cluefin-rpc/) | RPC 서버 |
 
 ## 개발
 
