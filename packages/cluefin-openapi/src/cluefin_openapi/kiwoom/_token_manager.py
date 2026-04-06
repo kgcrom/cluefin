@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
+from tempfile import gettempdir
 from typing import Optional
 
 from loguru import logger
@@ -19,13 +20,16 @@ class TokenManager:
     EXPIRY_BUFFER = timedelta(hours=1)
     MAX_CACHE_AGE = timedelta(hours=6)
 
+    @staticmethod
+    def _default_cache_dir() -> Path:
+        """Return a writable fallback cache directory for token storage."""
+        return Path(gettempdir()) / "cluefin-openapi"
+
     def __init__(self, cache_dir: Optional[str] = None) -> None:
         if cache_dir is None:
-            project_root = Path(__file__).resolve().parent.parent.parent.parent.parent.parent
-            cache_dir = str(project_root / "data")
+            cache_dir = str(self._default_cache_dir())
 
         self.cache_dir = Path(cache_dir)
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.cache_file = self.cache_dir / ".kiwoom_token_cache.json"
         self._token_cache: Optional[TokenResponse] = None
         self._last_refresh: Optional[datetime] = None
@@ -74,6 +78,7 @@ class TokenManager:
                 "token": token_data,
                 "cached_at": self._last_refresh.isoformat(),
             }
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
             write_json_atomic(self.cache_file, cache_data)
             logger.debug("Kiwoom token cached at {}", self.cache_file)
         except Exception as exc:

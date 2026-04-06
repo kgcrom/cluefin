@@ -2,6 +2,7 @@
 
 from datetime import datetime, timedelta
 from pathlib import Path
+from tempfile import gettempdir
 from typing import Optional
 
 from loguru import logger
@@ -25,19 +26,21 @@ class TokenManager:
     # KIS server may invalidate tokens before the stated 24-hour expiry
     MAX_CACHE_AGE = timedelta(hours=6)
 
+    @staticmethod
+    def _default_cache_dir() -> Path:
+        """Return a writable fallback cache directory for token storage."""
+        return Path(gettempdir()) / "cluefin-openapi"
+
     def __init__(self, cache_dir: Optional[str] = None):
         """Initialize token manager.
 
         Args:
-            cache_dir: Directory to store token cache. Defaults to <project_root>/data
+            cache_dir: Directory to store token cache. Defaults to a writable cache directory.
         """
         if cache_dir is None:
-            # Use project root directory for cache, same as DuckDB
-            project_root = Path(__file__).parent.parent.parent.parent.parent.parent
-            cache_dir = str(project_root / "data")
+            cache_dir = str(self._default_cache_dir())
 
         self.cache_dir = Path(cache_dir)
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.cache_file = self.cache_dir / ".kis_token_cache.json"
 
         # In-memory cache
@@ -119,6 +122,7 @@ class TokenManager:
                 "cached_at": self._last_refresh.isoformat(),
             }
 
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
             write_json_atomic(self.cache_file, cache_data)
 
             logger.debug(f"Token cached at {self.cache_file}")

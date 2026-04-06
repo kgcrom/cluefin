@@ -121,9 +121,15 @@ def _load_params_json(raw: str | None) -> dict[str, Any]:
 def _coerce_value(raw_value: str, schema: dict[str, Any]) -> Any:
     schema_type = schema.get("type", "string")
     if schema_type == "integer":
-        return int(raw_value)
+        try:
+            return int(raw_value)
+        except ValueError as exc:
+            raise CliError(f"Invalid integer value `{raw_value}`.", exit_code=2) from exc
     if schema_type == "number":
-        return float(raw_value)
+        try:
+            return float(raw_value)
+        except ValueError as exc:
+            raise CliError(f"Invalid number value `{raw_value}`.", exit_code=2) from exc
     if schema_type == "boolean":
         lowered = raw_value.lower()
         if lowered in {"1", "true", "yes", "on"}:
