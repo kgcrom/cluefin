@@ -1,5 +1,6 @@
 """Tests for the Auth class."""
 
+import tempfile
 from datetime import datetime
 
 import pytest
@@ -14,7 +15,13 @@ from cluefin_openapi.kiwoom._auth_types import TokenResponse
 @pytest.fixture
 def auth():
     """Create an Auth instance for testing."""
-    return Auth(app_key="test_app_key", secret_key=SecretStr("test_secret_key"), env="dev")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        yield Auth(
+            app_key="test_app_key",
+            secret_key=SecretStr("test_secret_key"),
+            env="dev",
+            cache_dir=tmpdir,
+        )
 
 
 def test_generate_token_success(auth):

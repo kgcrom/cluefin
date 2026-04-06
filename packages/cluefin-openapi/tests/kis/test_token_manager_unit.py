@@ -2,6 +2,7 @@
 
 import json
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -232,3 +233,29 @@ def test_concurrent_cache_access(temp_cache_dir, valid_token):
 
     assert manager2._token_cache is not None
     assert manager2._token_cache.access_token == valid_token.access_token
+
+
+def test_concurrent_writes_keep_cache_readable(temp_cache_dir):
+    """Rapid concurrent writes should not corrupt the cache file."""
+    manager1 = TokenManager(cache_dir=temp_cache_dir)
+    manager2 = TokenManager(cache_dir=temp_cache_dir)
+    tokens = [
+        TokenResponse(
+            access_token=f"token-{index}",
+            token_type="Bearer",
+            expires_in=86400,
+            access_token_token_expired=(datetime.now() + timedelta(hours=12 + index)).strftime("%Y-%m-%d %H:%M:%S"),
+        )
+        for index in range(2)
+    ]
+
+    def save(manager, token):
+        manager._save_token(token)
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        executor.submit(save, manager1, tokens[0])
+        executor.submit(save, manager2, tokens[1])
+
+    reloaded = TokenManager(cache_dir=temp_cache_dir)
+    assert reloaded._token_cache is not None
+    assert reloaded._token_cache.access_token in {token.access_token for token in tokens}

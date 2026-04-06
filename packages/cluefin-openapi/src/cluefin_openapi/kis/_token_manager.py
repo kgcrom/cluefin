@@ -1,12 +1,12 @@
 """Token manager for KIS API authentication with local caching."""
 
-import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
 from loguru import logger
 
+from cluefin_openapi._atomic_file import read_json_locked, write_json_atomic
 from cluefin_openapi.kis._auth_types import TokenResponse
 
 
@@ -119,8 +119,7 @@ class TokenManager:
                 "cached_at": self._last_refresh.isoformat(),
             }
 
-            with open(self.cache_file, "w") as f:
-                json.dump(cache_data, f, indent=2)
+            write_json_atomic(self.cache_file, cache_data)
 
             logger.debug(f"Token cached at {self.cache_file}")
         except Exception as e:
@@ -134,8 +133,7 @@ class TokenManager:
             return
 
         try:
-            with open(self.cache_file, "r") as f:
-                cache_data = json.load(f)
+            cache_data = read_json_locked(self.cache_file)
 
             token_data = cache_data.get("token")
             if token_data:
@@ -146,7 +144,7 @@ class TokenManager:
                 logger.debug(f"Loaded cached token from disk (cached at {cached_at})")
             else:
                 logger.warning("Token cache file is empty or malformed")
-        except (json.JSONDecodeError, FileNotFoundError, ValueError) as e:
+        except (FileNotFoundError, ValueError) as e:
             logger.warning(f"Failed to load token cache: {e}")
             # Cache will be regenerated on next request
 

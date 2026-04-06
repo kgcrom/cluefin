@@ -31,6 +31,7 @@ uv 워크스페이스 모노레포:
 | [cluefin-ta](packages/cluefin-ta/) | 순수 Python 기술적 분석 (TA-Lib 호환, 150+ 지표) |
 | [cluefin-xbrl](packages/cluefin-xbrl/) | DART XBRL 재무제표 파서 |
 | [cluefin-cli](apps/cluefin-cli/) | Rich 기반 CLI (기술적 분석, LightGBM + SHAP 예측) |
+| [cluefin-openapi-cli](apps/cluefin-openapi-cli/) | Agent-friendly broker CLI (`list`, `describe`, broker-first command path) |
 | [cluefin-desk](apps/cluefin-desk/) | TUI 대시보드 |
 | [cluefin-rpc](apps/cluefin-rpc/) | RPC 서버 |
 

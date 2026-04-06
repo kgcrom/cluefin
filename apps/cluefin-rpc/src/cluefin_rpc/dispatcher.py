@@ -50,6 +50,13 @@ class Dispatcher:
             )
         return results
 
+    def get_entry(self, method_name: str) -> tuple[Callable, MethodSchema] | None:
+        return self._registry.get(method_name)
+
+    def iter_entries(self):
+        for method_name, (handler, schema) in self._registry.items():
+            yield method_name, handler, schema
+
 
 class MethodNotFoundError(Exception):
     code = METHOD_NOT_FOUND
