@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 from cluefin_openapi.client_factory import BrokerClientConfig, BrokerClientFactory
 
@@ -29,6 +30,45 @@ def test_config_from_env(monkeypatch):
     assert config.dart_auth_key == "dart-key"
     assert config.cache_dir == "/tmp/cluefin-cache"
     assert config.debug is True
+
+
+def test_config_from_env_reads_dotenv_from_cwd(tmp_path, monkeypatch):
+    dotenv_path = tmp_path / ".env"
+    dotenv_path.write_text(
+        "KIS_APP_KEY=dotenv-kis\n"
+        "KIS_SECRET_KEY=dotenv-secret\n"
+        "KIWOOM_APP_KEY=dotenv-kiwoom\n"
+        "KIWOOM_SECRET_KEY=dotenv-kiwoom-secret\n"
+        "DART_AUTH_KEY=dotenv-dart\n"
+        "CLUEFIN_OPENAPI_CACHE_DIR=.cache/cluefin\n",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("KIS_APP_KEY", raising=False)
+    monkeypatch.delenv("KIS_SECRET_KEY", raising=False)
+    monkeypatch.delenv("KIWOOM_APP_KEY", raising=False)
+    monkeypatch.delenv("KIWOOM_SECRET_KEY", raising=False)
+    monkeypatch.delenv("DART_AUTH_KEY", raising=False)
+    monkeypatch.delenv("CLUEFIN_OPENAPI_CACHE_DIR", raising=False)
+
+    config = BrokerClientConfig.from_env()
+
+    assert config.kis_app_key == "dotenv-kis"
+    assert config.kis_secret_key == "dotenv-secret"
+    assert config.kiwoom_app_key == "dotenv-kiwoom"
+    assert config.kiwoom_secret_key == "dotenv-kiwoom-secret"
+    assert config.dart_auth_key == "dotenv-dart"
+    assert config.cache_dir == ".cache/cluefin"
+
+
+def test_environment_overrides_dotenv(tmp_path, monkeypatch):
+    (tmp_path / ".env").write_text("KIS_APP_KEY=dotenv-kis\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("KIS_APP_KEY", "process-kis")
+
+    config = BrokerClientConfig.from_env()
+
+    assert config.kis_app_key == "process-kis"
 
 
 @dataclass

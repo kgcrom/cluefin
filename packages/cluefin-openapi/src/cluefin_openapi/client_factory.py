@@ -37,7 +37,7 @@ class BrokerClientConfig:
 
     @classmethod
     def from_env(cls, environ: Mapping[str, str] | None = None) -> "BrokerClientConfig":
-        env = environ or os.environ
+        env = _merge_env_with_dotenv(environ or os.environ)
         return cls(
             kis_app_key=env.get("KIS_APP_KEY"),
             kis_secret_key=env.get("KIS_SECRET_KEY"),
@@ -54,6 +54,38 @@ class BrokerClientConfig:
         if self.cache_dir:
             return str(Path(self.cache_dir).expanduser())
         return None
+
+
+def _merge_env_with_dotenv(environ: Mapping[str, str]) -> dict[str, str]:
+    """Load `.env` from the current working directory, keeping real env precedence."""
+    merged = dict(_load_dotenv_file(Path.cwd() / ".env"))
+    merged.update(dict(environ))
+    return merged
+
+
+def _load_dotenv_file(path: Path) -> dict[str, str]:
+    if not path.exists():
+        return {}
+
+    values: dict[str, str] = {}
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+
+        key, _, value = line.partition("=")
+        key = key.strip()
+        value = value.strip()
+
+        if not key:
+            continue
+
+        if value and value[0] == value[-1] and value[0] in {'"', "'"}:
+            value = value[1:-1]
+
+        values[key] = value
+
+    return values
 
 
 class BrokerClientFactory:
