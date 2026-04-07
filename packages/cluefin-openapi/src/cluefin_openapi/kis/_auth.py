@@ -17,12 +17,13 @@ class Auth:
         app_key: str,
         secret_key: SecretStr,
         env: Literal["dev", "prod"] = "dev",
+        cache_dir: Optional[str] = None,
         token_manager: Optional[TokenManager] = None,
     ) -> None:
         self.app_key = app_key
         self.secret_key = secret_key
         self.env = env
-        self.token_manager = token_manager or TokenManager()
+        self.token_manager = token_manager or TokenManager(cache_dir=cache_dir)
         self._token_data: Optional[TokenResponse] = None
 
         if env == "prod":

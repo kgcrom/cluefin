@@ -1,12 +1,13 @@
 """Token manager for KIS API authentication with local caching."""
 
-import json
 from datetime import datetime, timedelta
 from pathlib import Path
+from tempfile import gettempdir
 from typing import Optional
 
 from loguru import logger
 
+from cluefin_openapi._atomic_file import read_json_locked, write_json_atomic
 from cluefin_openapi.kis._auth_types import TokenResponse
 
 
@@ -25,19 +26,21 @@ class TokenManager:
     # KIS server may invalidate tokens before the stated 24-hour expiry
     MAX_CACHE_AGE = timedelta(hours=6)
 
+    @staticmethod
+    def _default_cache_dir() -> Path:
+        """Return a writable fallback cache directory for token storage."""
+        return Path(gettempdir()) / "cluefin-openapi"
+
     def __init__(self, cache_dir: Optional[str] = None):
         """Initialize token manager.
 
         Args:
-            cache_dir: Directory to store token cache. Defaults to <project_root>/data
+            cache_dir: Directory to store token cache. Defaults to a writable cache directory.
         """
         if cache_dir is None:
-            # Use project root directory for cache, same as DuckDB
-            project_root = Path(__file__).parent.parent.parent.parent.parent.parent
-            cache_dir = str(project_root / "data")
+            cache_dir = str(self._default_cache_dir())
 
         self.cache_dir = Path(cache_dir)
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.cache_file = self.cache_dir / ".kis_token_cache.json"
 
         # In-memory cache
@@ -119,8 +122,8 @@ class TokenManager:
                 "cached_at": self._last_refresh.isoformat(),
             }
 
-            with open(self.cache_file, "w") as f:
-                json.dump(cache_data, f, indent=2)
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
+            write_json_atomic(self.cache_file, cache_data)
 
             logger.debug(f"Token cached at {self.cache_file}")
         except Exception as e:
@@ -134,8 +137,7 @@ class TokenManager:
             return
 
         try:
-            with open(self.cache_file, "r") as f:
-                cache_data = json.load(f)
+            cache_data = read_json_locked(self.cache_file)
 
             token_data = cache_data.get("token")
             if token_data:
@@ -146,7 +148,7 @@ class TokenManager:
                 logger.debug(f"Loaded cached token from disk (cached at {cached_at})")
             else:
                 logger.warning("Token cache file is empty or malformed")
-        except (json.JSONDecodeError, FileNotFoundError, ValueError) as e:
+        except (FileNotFoundError, ValueError) as e:
             logger.warning(f"Failed to load token cache: {e}")
             # Cache will be regenerated on next request
 

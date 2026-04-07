@@ -1,0 +1,21 @@
+[project]
+name = "cluefin-openapi-cli"
+version = "0.1.0"
+description = "Agent-friendly CLI surface for cluefin-openapi broker metadata"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "cluefin-openapi",
+    "pydantic>=2.12.0,<3.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+cluefin-openapi-cli = "cluefin_openapi_cli.main:main"
+
+[tool.ruff]
+extend = "../../pyproject.toml"
+include = ["src/**", "tests/**"]

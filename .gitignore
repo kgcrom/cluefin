@@ -71,22 +71,15 @@ venv.bak/
 Pipfile.lock
 poetry.lock
 
-# Project-specific
-packages/*/src/*/__pycache__/
-packages/*/src/*/*.py[cod]
-
 # Environment variables
 .env*
 
 # Token cache files
-.kis_token_cache.json
 *_token_cache.json
 
 # Claude Code AI assistant configuration and memory
 .claude/
 
-data/data.duckdb
-data/data.duckdb.wal
-
 .ruff_cache/
 .uv_cache/
+data/
