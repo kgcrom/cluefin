@@ -23,6 +23,7 @@ members = [
     "cluefin-openapi",
     "cluefin-openapi-cli",
     "cluefin-ta",
+    "cluefin-ta-cli",
     "cluefin-xbrl",
 ]
 
@@ -446,6 +447,22 @@ dev = [
     { name = "hmmlearn", specifier = ">=0.3.0" },
     { name = "pytest", specifier = ">=7.0" },
     { name = "ta-lib", specifier = ">=0.4.0" },
+]
+
+[[package]]
+name = "cluefin-ta-cli"
+version = "0.1.0"
+source = { editable = "apps/cluefin-ta-cli" }
+dependencies = [
+    { name = "cluefin-ta" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "cluefin-ta", editable = "packages/cluefin-ta" },
+    { name = "numpy", specifier = ">=1.24.0" },
 ]
 
 [[package]]
