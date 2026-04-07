@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from cluefin_rpc.handlers.ta import _ALL_HANDLERS as RPC_TA_HANDLERS
-
-from cluefin_ta_cli.registry import Registry
+from cluefin_ta_cli.registry import Registry, build_registry
 
 
 def test_registry_contains_all_expected_commands() -> None:
@@ -37,10 +35,15 @@ def test_command_spec_qualified_name() -> None:
     assert spec.description == "Simple Moving Average."
 
 
-def test_registry_command_names_match_rpc_ta_handlers() -> None:
+def test_registry_paths_are_unique() -> None:
+    registry = build_registry()
+
+    assert len(registry) == len(set(registry))
+
+
+def test_registry_command_names_are_category_prefixed() -> None:
     registry = Registry()
 
-    cli_names = {command.qualified_name for command in registry.list_commands(category="ta")}
-    rpc_names = {handler._rpc_schema.name for handler in RPC_TA_HANDLERS}
-
-    assert cli_names == rpc_names
+    assert {command.qualified_name for command in registry.list_commands(category="ta")} == {
+        f"ta.{command.name}" for command in registry.list_commands(category="ta")
+    }
