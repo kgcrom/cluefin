@@ -47,6 +47,9 @@ class TokenManager:
         self._token_cache: Optional[TokenResponse] = None
         self._last_refresh: Optional[datetime] = None
 
+        # Ensure the configured cache directory is ready even before the first save.
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+
         # Load cached token on initialization
         self._load_from_disk()
 
