@@ -140,7 +140,8 @@ def test_rate_limit_error_no_retry(client):
         assert exc_info.value.retry_after == 60
 
 
-def test_server_error_with_retry(client):
+@patch("time.sleep")
+def test_server_error_with_retry(mock_sleep, client):
     """Test 500 server error with retry logic."""
     client.max_retries = 1
 
@@ -158,6 +159,7 @@ def test_server_error_with_retry(client):
         response = client._post("/test", {}, {})
         assert response.status_code == 200
         assert response.json() == {"success": True}
+        mock_sleep.assert_called_once_with(1)
 
 
 def test_timeout_error(client):

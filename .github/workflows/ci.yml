@@ -36,7 +36,7 @@ jobs:
         
     - name: Install dependencies
       run: |
-        uv sync --dev
+        uv sync --dev --locked
         
     - name: Run ruff linter
       run: |
@@ -79,7 +79,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        uv sync --all-packages --all-extras
+        uv sync --all-packages --all-extras --locked
 
     - name: Create test environment file
       run: |
@@ -136,7 +136,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --all-packages --all-extras
+          uv sync --all-packages --all-extras --locked
 
       - name: Generate coverage report
         run: |
@@ -173,7 +173,7 @@ jobs:
         
     - name: Install dependencies
       run: |
-        uv sync --all-packages
+        uv sync --all-packages --locked
         
     - name: Run pip-audit vulnerability scan
       run: |
@@ -195,7 +195,7 @@ jobs:
     
     steps:
     - name: Notify success
-      if: needs.lint.result == 'success' && needs.test.result == 'success' && needs.build.result == 'success' && needs.security.result == 'success'
+      if: needs.lint.result == 'success' && needs.test.result == 'success' && needs.security.result == 'success'
       env:
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
         DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
@@ -206,7 +206,7 @@ jobs:
         fi
         
     - name: Notify failure
-      if: needs.lint.result == 'failure' || needs.test.result == 'failure' || needs.build.result == 'failure' || needs.security.result == 'failure'
+      if: needs.lint.result == 'failure' || needs.test.result == 'failure' || needs.security.result == 'failure'
       env:
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
         DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}

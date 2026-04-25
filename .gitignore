@@ -81,5 +81,5 @@ poetry.lock
 .claude/
 
 .ruff_cache/
-.uv_cache/
+.uv-cache/
 data/

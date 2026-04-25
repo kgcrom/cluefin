@@ -182,16 +182,21 @@ class RpcRegistry:
 
 
 _registry_provider: Callable[[], RegistryProtocol] = RpcRegistry
+_registry_cache: RegistryProtocol | None = None
 
 
 def set_registry_provider(provider: Callable[[], RegistryProtocol]) -> None:
     """Install a registry provider for runtime and tests."""
 
-    global _registry_provider
+    global _registry_cache, _registry_provider
     _registry_provider = provider
+    _registry_cache = None
 
 
 def get_registry() -> RegistryProtocol:
     """Return the active registry instance."""
 
-    return _registry_provider()
+    global _registry_cache
+    if _registry_cache is None:
+        _registry_cache = _registry_provider()
+    return _registry_cache

@@ -40,6 +40,16 @@ class FakeRegistry:
                 returns={"type": "object"},
                 executor=lambda params: {"corp_code": params["corp_code"]},
             ),
+            CommandSpec(
+                broker="dart",
+                category="dart",
+                name="failing-command",
+                description="Raise an executor error.",
+                path_segments=("dart", "failing-command"),
+                parameters={"type": "object"},
+                returns={"type": "object"},
+                executor=lambda params: (_ for _ in ()).throw(RuntimeError("broker unavailable")),
+            ),
         ]
 
     def list_commands(self, *, broker: str | None = None, category: str | None = None):
@@ -152,3 +162,20 @@ def test_leaf_command_reports_missing_required_params_as_json_error() -> None:
     assert result.exit_code == 2
     assert '"error"' in result.stdout
     assert '"missing"' in result.stdout
+
+
+def test_leaf_command_reports_invalid_params_json_before_schema_flags() -> None:
+    result = run_cli(["dart", "company-overview", "--params-json", "{", "--corp-code", "00126380", "--json"])
+
+    assert result.exit_code == 2
+    assert '"error"' in result.stdout
+    assert "--params-json" in result.stdout
+
+
+def test_leaf_command_reports_executor_failure_as_json_error() -> None:
+    result = run_cli(["dart", "failing-command", "--json"])
+
+    assert result.exit_code == 1
+    assert '"error"' in result.stdout
+    assert "dart.failing-command" in result.stdout
+    assert "broker unavailable" in result.stdout

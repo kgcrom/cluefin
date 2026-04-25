@@ -1,10 +1,33 @@
 """Unit tests for the TokenBucket rate limiter."""
 
 import threading
-import time
 
+import cluefin_openapi._rate_limiter as rate_limiter_module
 from cluefin_openapi import TokenBucket
 from cluefin_openapi._rate_limiter import TokenBucket as TokenBucketDirect
+
+
+class FakeClock:
+    def __init__(self) -> None:
+        self.now = 1000.0
+        self.sleeps: list[float] = []
+
+    def time(self) -> float:
+        return self.now
+
+    def sleep(self, seconds: float) -> None:
+        self.sleeps.append(seconds)
+        self.now += seconds + 1e-9
+
+    def advance(self, seconds: float) -> None:
+        self.now += seconds
+
+
+def install_fake_clock(monkeypatch) -> FakeClock:
+    clock = FakeClock()
+    monkeypatch.setattr(rate_limiter_module.time, "time", clock.time)
+    monkeypatch.setattr(rate_limiter_module.time, "sleep", clock.sleep)
+    return clock
 
 
 class TestTokenBucketInitialization:
@@ -70,38 +93,38 @@ class TestTokenBucketConsume:
 class TestTokenBucketRefill:
     """Tests for TokenBucket refill mechanism."""
 
-    def test_refill_adds_tokens_over_time(self):
+    def test_refill_adds_tokens_over_time(self, monkeypatch):
         """Test that tokens are refilled based on elapsed time."""
+        clock = install_fake_clock(monkeypatch)
         bucket = TokenBucket(capacity=10, refill_rate=10.0)
 
         # Consume all tokens
         bucket.consume(tokens=10)
         assert bucket.tokens == 0.0
 
-        # Wait for refill
-        time.sleep(0.2)
+        clock.advance(0.2)
 
         # Should have about 2 tokens (10 tokens/sec * 0.2 sec)
         available = bucket.available_tokens
         assert 1.5 <= available <= 2.5
 
-    def test_refill_does_not_exceed_capacity(self):
+    def test_refill_does_not_exceed_capacity(self, monkeypatch):
         """Test that refill does not exceed capacity."""
+        clock = install_fake_clock(monkeypatch)
         bucket = TokenBucket(capacity=5, refill_rate=100.0)
 
-        # Wait for potential over-refill
-        time.sleep(0.1)
+        clock.advance(0.1)
 
         # Should not exceed capacity
         assert bucket.available_tokens <= 5.0
 
-    def test_available_tokens_triggers_refill(self):
+    def test_available_tokens_triggers_refill(self, monkeypatch):
         """Test that available_tokens property triggers refill."""
+        clock = install_fake_clock(monkeypatch)
         bucket = TokenBucket(capacity=10, refill_rate=10.0)
         bucket.consume(tokens=10)
 
-        # Wait briefly
-        time.sleep(0.1)
+        clock.advance(0.1)
 
         # available_tokens should show refilled amount
         tokens = bucket.available_tokens
@@ -111,49 +134,48 @@ class TestTokenBucketRefill:
 class TestTokenBucketWaitForTokens:
     """Tests for TokenBucket.wait_for_tokens method."""
 
-    def test_wait_for_tokens_returns_immediately_when_available(self):
+    def test_wait_for_tokens_returns_immediately_when_available(self, monkeypatch):
         """Test that wait_for_tokens returns immediately when tokens available."""
+        clock = install_fake_clock(monkeypatch)
         bucket = TokenBucket(capacity=10, refill_rate=5.0)
 
-        start = time.time()
         result = bucket.wait_for_tokens(tokens=1)
-        elapsed = time.time() - start
 
         assert result is True
-        assert elapsed < 0.1
+        assert clock.sleeps == []
 
-    def test_wait_for_tokens_waits_for_refill(self):
+    def test_wait_for_tokens_waits_for_refill(self, monkeypatch):
         """Test that wait_for_tokens waits for token refill."""
+        clock = install_fake_clock(monkeypatch)
         bucket = TokenBucket(capacity=10, refill_rate=50.0)  # 50 tokens/sec
         bucket.consume(tokens=10)
 
-        start = time.time()
         result = bucket.wait_for_tokens(tokens=1, timeout=1.0)
-        elapsed = time.time() - start
 
         assert result is True
-        assert elapsed < 0.5  # Should get token quickly with high refill rate
+        assert clock.sleeps == [0.02]
 
-    def test_wait_for_tokens_respects_timeout(self):
+    def test_wait_for_tokens_respects_timeout(self, monkeypatch):
         """Test that wait_for_tokens respects timeout."""
+        clock = install_fake_clock(monkeypatch)
         bucket = TokenBucket(capacity=10, refill_rate=0.1)  # Very slow refill
         bucket.consume(tokens=10)
 
-        start = time.time()
         result = bucket.wait_for_tokens(tokens=5, timeout=0.2)
-        elapsed = time.time() - start
 
         assert result is False
-        assert 0.2 <= elapsed < 0.4
+        assert clock.sleeps == [0.1, 0.1]
 
-    def test_wait_for_tokens_without_timeout(self):
+    def test_wait_for_tokens_without_timeout(self, monkeypatch):
         """Test wait_for_tokens without timeout (returns when tokens available)."""
+        clock = install_fake_clock(monkeypatch)
         bucket = TokenBucket(capacity=10, refill_rate=100.0)
         bucket.consume(tokens=10)
 
         # Should eventually get tokens
         result = bucket.wait_for_tokens(tokens=1, timeout=None)
         assert result is True
+        assert clock.sleeps == [0.01]
 
 
 class TestTokenBucketReset:
@@ -168,12 +190,13 @@ class TestTokenBucketReset:
         bucket.reset()
         assert bucket.tokens == 10.0
 
-    def test_reset_updates_last_refill_time(self):
+    def test_reset_updates_last_refill_time(self, monkeypatch):
         """Test that reset updates the last refill time."""
+        clock = install_fake_clock(monkeypatch)
         bucket = TokenBucket(capacity=10, refill_rate=1.0)
         old_time = bucket.last_refill
 
-        time.sleep(0.1)
+        clock.advance(0.1)
         bucket.reset()
 
         assert bucket.last_refill > old_time
@@ -245,8 +268,9 @@ class TestTokenBucketUseCases:
         # Remaining capacity check
         assert bucket.available_tokens < 6
 
-    def test_dart_rate_limiting_scenario(self):
+    def test_dart_rate_limiting_scenario(self, monkeypatch):
         """Test rate limiting scenario similar to DART API usage."""
+        install_fake_clock(monkeypatch)
         # DART API might have lower limits
         bucket = TokenBucket(capacity=5, refill_rate=1.0)
 
@@ -270,8 +294,9 @@ class TestTokenBucketUseCases:
         # Should have some tokens left
         assert bucket.available_tokens >= 1
 
-    def test_kiwoom_rate_limiting_scenario(self):
+    def test_kiwoom_rate_limiting_scenario(self, monkeypatch):
         """Test rate limiting scenario matching existing Kiwoom implementation."""
+        clock = install_fake_clock(monkeypatch)
         # Match default values from Kiwoom client
         bucket = TokenBucket(capacity=20, refill_rate=10.0)
 
@@ -289,6 +314,7 @@ class TestTokenBucketUseCases:
         result = bucket.wait_for_tokens(tokens=1, timeout=0.2)
         # Should get a token after ~0.1 seconds
         assert result is True
+        assert clock.sleeps == [0.1]
 
 
 class TestTokenBucketEdgeCases:
@@ -302,30 +328,32 @@ class TestTokenBucketEdgeCases:
         # Even with empty bucket, consuming 0 should work
         assert bucket.consume(tokens=0) is True
 
-    def test_very_high_refill_rate(self):
+    def test_very_high_refill_rate(self, monkeypatch):
         """Test with very high refill rate."""
+        clock = install_fake_clock(monkeypatch)
         bucket = TokenBucket(capacity=1000, refill_rate=10000.0)
         bucket.consume(tokens=1000)
 
-        time.sleep(0.1)
+        clock.advance(0.1)
         assert bucket.available_tokens >= 900
 
-    def test_very_low_refill_rate(self):
+    def test_very_low_refill_rate(self, monkeypatch):
         """Test with very low refill rate."""
+        clock = install_fake_clock(monkeypatch)
         bucket = TokenBucket(capacity=10, refill_rate=0.1)
         bucket.consume(tokens=10)
 
-        time.sleep(0.1)
+        clock.advance(0.1)
         # Should have only ~0.01 tokens
         assert bucket.available_tokens < 0.1
 
-    def test_fractional_token_accumulation(self):
+    def test_fractional_token_accumulation(self, monkeypatch):
         """Test that fractional tokens accumulate correctly."""
+        clock = install_fake_clock(monkeypatch)
         bucket = TokenBucket(capacity=10, refill_rate=5.0)
         bucket.consume(tokens=10)
 
-        # Wait for half a token worth of time
-        time.sleep(0.1)
+        clock.advance(0.1)
 
         tokens = bucket.available_tokens
         # Should have accumulated ~0.5 tokens

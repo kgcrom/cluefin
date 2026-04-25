@@ -319,7 +319,13 @@ def _run_dynamic(argv: list[str]) -> None:
         return
 
     force_json, params = _merge_params(command, options)
-    result = registry.invoke_command(command, params)
+    try:
+        result = registry.invoke_command(command, params)
+    except Exception as exc:
+        raise CliError(
+            f"Command `{command.qualified_name}` failed: {exc}",
+            data={"command": command.qualified_name},
+        ) from exc
     render_output(result, force_json=force_json)
 
 
