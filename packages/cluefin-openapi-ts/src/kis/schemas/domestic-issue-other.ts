@@ -404,7 +404,7 @@ export const getInterestRateSummaryOutput2ItemSchema = z
     prdy_vrss_sign: s(),
     bond_mnrt_prdy_vrss: s(),
     bstp_nmix_prdy_ctrt: s(),
-    stck_bsop_date: s(),
+    stck_bsop_date: z.string().optional().default(''),
   })
   .passthrough();
 

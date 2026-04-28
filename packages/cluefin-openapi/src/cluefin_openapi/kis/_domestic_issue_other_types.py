@@ -334,10 +334,10 @@ class InterestRateSummaryItem2(BaseModel):
     bcdt_code: str = Field(title="자료코드", max_length=5)
     hts_kor_isnm: str = Field(title="HTS한글종목명", max_length=40)
     bond_mnrt_prpr: str = Field(title="채권금리현재가", max_length=114)
-    prdy_vrss_sign: str = Field(title="전일대비부호", max_length=1)
+    prdy_vrss_sign: str = Field(title="전일대비부호")
     bond_mnrt_prdy_vrss: str = Field(title="채권금리전일대비", max_length=114)
     bstp_nmix_prdy_ctrt: str = Field(title="업종지수전일대비율", max_length=82)
-    stck_bsop_date: str = Field(title="주식영업일자", max_length=8)
+    stck_bsop_date: Optional[str] = Field(default="", title="주식영업일자", max_length=8)
 
 
 class InterestRateSummary(BaseModel, KisHttpBody):

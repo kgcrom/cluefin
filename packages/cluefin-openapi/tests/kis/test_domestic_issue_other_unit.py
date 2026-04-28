@@ -6,6 +6,7 @@ import pytest
 
 from cluefin_openapi.kis import _domestic_issue_other as domestic_issue_other_module
 from cluefin_openapi.kis._domestic_issue_other import DomesticIssueOther
+from cluefin_openapi.kis._domestic_issue_other_types import InterestRateSummary
 
 
 def load_domestic_issue_other_cases():
@@ -102,3 +103,27 @@ def test_domestic_issue_other_builds_request(
     assert len(captured_instances) == 1
     assert result.body is captured_instances[0]
     assert captured_instances[0].kwargs == response_payload
+
+
+def test_interest_rate_summary_accepts_live_output2_shape():
+    payload = {
+        "rt_cd": "0",
+        "msg_cd": "MCA00000",
+        "msg1": "정상처리 되었습니다.",
+        "output1": [],
+        "output2": [
+            {
+                "bcdt_code": "Y0102",
+                "hts_kor_isnm": "Y0110",
+                "bond_mnrt_prpr": "Y0198",
+                "prdy_vrss_sign": "Call 지수",
+                "bond_mnrt_prdy_vrss": "202.0567",
+                "bstp_nmix_prdy_ctrt": "2",
+            }
+        ],
+    }
+
+    body = InterestRateSummary.model_validate(payload)
+
+    assert body.output2[0].prdy_vrss_sign == "Call 지수"
+    assert body.output2[0].stck_bsop_date == ""

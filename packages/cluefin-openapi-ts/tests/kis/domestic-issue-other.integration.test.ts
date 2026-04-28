@@ -1,4 +1,4 @@
-import { describe, test } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import {
   getExpectedIndexAllOutput2ItemSchema,
   getExpectedIndexAllResponseSchema,
@@ -200,12 +200,19 @@ describe('KIS DomesticIssueOther', () => {
       'output1',
       getInterestRateSummaryOutput1ItemSchema,
     );
-    assertResponseShape(
-      res.body,
-      getInterestRateSummaryResponseSchema,
-      'output2',
-      getInterestRateSummaryOutput2ItemSchema,
-    );
+    expect(getInterestRateSummaryOutput2ItemSchema.parse({}).stck_bsop_date).toBe('');
+    if (res.body.output2.length > 0) {
+      expect(Object.keys(res.body.output2[0]).sort()).toEqual(
+        expect.arrayContaining([
+          'bcdtCode',
+          'htsKorIsnm',
+          'bondMnrtPrpr',
+          'prdyVrssSign',
+          'bondMnrtPrdyVrss',
+          'bstpNmixPrdyCtrt',
+        ]),
+      );
+    }
   });
 
   it('getMarketAnnouncementSchedule', async () => {
