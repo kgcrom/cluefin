@@ -1,4 +1,4 @@
-[$git-commit](/Volumes/kgcrom-2tb/kgcrom/.agents/skills/git-commit/SKILL.md)  .gitignore
+[$git-commit](/Volumes/kgcrom-2tb/kgcrom/.agents/skills/git-commit/SKILL.md) in staged files.
 
 ---
 
@@ -98,7 +98,3 @@ Do not trigger for requests like:
 - `PR 설명문 작성해줘`
 
 </skill>
-
----
-
-rewrite [AGENTS.md](AGENTS.md) reflect by this project.
