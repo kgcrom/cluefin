@@ -105,12 +105,16 @@ export function assertResponseShape(
 
   if (itemKey && itemSchema) {
     const itemValue = body[itemKey];
+    const expectedItemKeys = Object.keys(itemSchema.shape).map(toCamelCase).sort();
     if (Array.isArray(itemValue) && itemValue.length > 0) {
-      const expectedItemKeys = Object.keys(itemSchema.shape).map(toCamelCase).sort();
       const actualItemKeys = Object.keys(itemValue[0] as Record<string, unknown>).sort();
       expect(actualItemKeys).toEqual(expectedItemKeys);
-    } else if (itemValue && typeof itemValue === 'object') {
-      const expectedItemKeys = Object.keys(itemSchema.shape).map(toCamelCase).sort();
+    } else if (
+      itemValue &&
+      typeof itemValue === 'object' &&
+      !Array.isArray(itemValue) &&
+      Object.keys(itemValue).length > 0
+    ) {
       const actualItemKeys = Object.keys(itemValue as Record<string, unknown>).sort();
       expect(actualItemKeys).toEqual(expectedItemKeys);
     }

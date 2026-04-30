@@ -6,7 +6,7 @@ export const domesticSectorEndpoints: KiwoomEndpointDefinition[] = [
     path: '/api/dostk/sect',
     apiId: 'ka10010',
     bodyMap: {
-      stk_code: 'stkCode',
+      stk_cd: 'stkCode',
     },
     headerParamMap: {
       'cont-yn': 'contYn',

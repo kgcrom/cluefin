@@ -233,6 +233,7 @@ describe('KIS DomesticBasicQuote', () => {
     const res = await client.domesticBasicQuote.getStockCurrentPriceOvertimeConclusion({
       fidCondMrktDivCode: 'J',
       fidInputIscd: SAMSUNG,
+      fidHourClsCode: '1',
     });
     assertKisResponse(res);
     assertResponseShape(res.body, getStockCurrentPriceOvertimeConclusionResponseSchema);

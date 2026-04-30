@@ -122,7 +122,7 @@ export const overseasBasicQuoteEndpoints: KisEndpointDefinition[] = [
       SYMB: 'symb',
       NMIN: 'nmin',
       PINC: 'pinc',
-      NEXT: 'next_',
+      NEXT: 'next',
       NREC: 'nrec',
       FILL: 'fill',
       KEYB: 'keyb',
@@ -149,7 +149,7 @@ export const overseasBasicQuoteEndpoints: KisEndpointDefinition[] = [
         required: true,
       },
       {
-        name: 'next_',
+        name: 'next',
         required: true,
       },
       {

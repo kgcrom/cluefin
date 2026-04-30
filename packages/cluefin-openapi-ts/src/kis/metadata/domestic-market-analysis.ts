@@ -477,11 +477,21 @@ export const domesticMarketAnalysisEndpoints: KisEndpointDefinition[] = [
     path: '/uapi/domestic-stock/v1/quotations/frgnmem-trade-estimate',
     trId: 'FHKST644100C0',
     requestMap: {
+      FID_COND_MRKT_DIV_CODE: 'fidCondMrktDivCode',
+      FID_COND_SCR_DIV_CODE: 'fidCondScrDivCode',
       FID_INPUT_ISCD: 'fidInputIscd',
       FID_RANK_SORT_CLS_CODE: 'fidRankSortClsCode',
       FID_RANK_SORT_CLS_CODE_2: 'fidRankSortClsCode2',
     },
     params: [
+      {
+        name: 'fidCondMrktDivCode',
+        required: true,
+      },
+      {
+        name: 'fidCondScrDivCode',
+        required: true,
+      },
       {
         name: 'fidInputIscd',
         required: true,
@@ -505,6 +515,8 @@ export const domesticMarketAnalysisEndpoints: KisEndpointDefinition[] = [
       FID_COND_MRKT_DIV_CODE: 'fidCondMrktDivCode',
       FID_INPUT_ISCD: 'fidInputIscd',
       FID_INPUT_DATE_1: 'fidInputDate1',
+      FID_ORG_ADJ_PRC: 'fidOrgAdjPrc',
+      FID_ETC_CLS_CODE: 'fidEtcClsCode',
     },
     params: [
       {
@@ -518,6 +530,16 @@ export const domesticMarketAnalysisEndpoints: KisEndpointDefinition[] = [
       {
         name: 'fidInputDate1',
         required: true,
+      },
+      {
+        name: 'fidOrgAdjPrc',
+        required: false,
+        defaultValue: '0',
+      },
+      {
+        name: 'fidEtcClsCode',
+        required: false,
+        defaultValue: '',
       },
     ],
   },
@@ -757,7 +779,8 @@ export const domesticMarketAnalysisEndpoints: KisEndpointDefinition[] = [
       FID_INPUT_DATE_1: 'fidInputDate1',
       FID_INPUT_DATE_2: 'fidInputDate2',
       FID_PERIOD_DIV_CODE: 'fidPeriodDivCode',
-      FID_INPUT_ISCD_1: 'fidInputIscd',
+      FID_COND_MRKT_DIV_CODE_1: 'fidCondMrktDivCode1',
+      FID_INPUT_ISCD_1: 'fidInputIscd1',
     },
     params: [
       {

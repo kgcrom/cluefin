@@ -320,6 +320,7 @@ export const domesticBasicQuoteEndpoints: KisEndpointDefinition[] = [
     requestMap: {
       FID_COND_MRKT_DIV_CODE: 'fidCondMrktDivCode',
       FID_INPUT_ISCD: 'fidInputIscd',
+      FID_HOUR_CLS_CODE: 'fidHourClsCode',
     },
     params: [
       {
@@ -329,6 +330,11 @@ export const domesticBasicQuoteEndpoints: KisEndpointDefinition[] = [
       {
         name: 'fidInputIscd',
         required: true,
+      },
+      {
+        name: 'fidHourClsCode',
+        required: false,
+        defaultValue: '1',
       },
     ],
   },
