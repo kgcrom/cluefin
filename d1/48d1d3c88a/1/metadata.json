@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "d148d1d3c88a",
+  "session_id": "019ddeec-2fb8-7d03-b248-ac917d662edb",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-30T15:10:22.881891Z",
+  "branch": "main",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "packages/cluefin-openapi-ts/package.json",
+    "packages/cluefin-openapi-ts/package-lock.json"
+  ],
+  "agent": "Codex",
+  "model": "gpt-5.4-mini",
+  "turn_id": "f14f11402f44",
+  "initial_attribution": {
+    "calculated_at": "2026-04-30T15:10:22.881574Z",
+    "agent_lines": 3,
+    "agent_removed": 3,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 3,
+    "total_lines_changed": 6,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
