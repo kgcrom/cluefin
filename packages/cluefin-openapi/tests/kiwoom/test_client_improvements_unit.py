@@ -9,10 +9,12 @@ import requests_mock
 
 from cluefin_openapi.kiwoom._client import Client
 from cluefin_openapi.kiwoom._exceptions import (
+    KiwoomAPIError,
     KiwoomAuthenticationError,
     KiwoomAuthorizationError,
     KiwoomNetworkError,
     KiwoomRateLimitError,
+    KiwoomServerError,
     KiwoomTimeoutError,
     KiwoomValidationError,
 )
@@ -38,6 +40,12 @@ def test_client_initialization():
     assert client_prod.timeout == 60
     assert client_prod.max_retries == 5
     assert client_prod.debug
+
+
+def test_client_rejects_invalid_environment():
+    """Test client initialization rejects unknown environment."""
+    with pytest.raises(ValueError, match="Invalid environment"):
+        Client("token", "sandbox")
 
 
 def test_client_session_headers():
@@ -71,6 +79,38 @@ def test_successful_post_request(client):
 
         assert response.status_code == 200
         assert response.json() == response_data
+
+
+def test_post_returns_cached_response_without_http_call():
+    """Test cache hit bypasses rate limiting and HTTP calls."""
+    client = Client("token", "dev", enable_caching=True)
+    cached = Mock()
+    client._cache.get = Mock(return_value=cached)
+    client._rate_limiter.wait_for_tokens = Mock()
+    client._session.post = Mock()
+
+    response = client._post("/test", {"api-id": "test"}, {"code": "005930"})
+
+    assert response is cached
+    client._rate_limiter.wait_for_tokens.assert_not_called()
+    client._session.post.assert_not_called()
+
+
+def test_successful_post_request_is_cached():
+    """Test successful response is cached when caching is enabled."""
+    client = Client("token", "dev", enable_caching=True)
+    client._cache.set = Mock(wraps=client._cache.set)
+
+    with requests_mock.Mocker() as m:
+        m.post("https://mockapi.kiwoom.com/test", json={"ok": True}, status_code=200)
+
+        response = client._post("/test", {"api-id": "test"}, {"code": "005930"})
+
+    assert response.status_code == 200
+    assert client._cache.set.call_count == 1
+    cached_response = client._cache.set.call_args.args[1]
+    assert cached_response.json() == {"ok": True}
+    assert cached_response.text == '{"ok": true}'
 
 
 def test_authentication_error(client):
@@ -141,6 +181,28 @@ def test_rate_limit_error_no_retry(client):
 
 
 @patch("time.sleep")
+def test_rate_limit_error_after_retries_uses_retry_after(mock_sleep, client):
+    """Test terminal 429 preserves retry-after after retry exhaustion."""
+    client.max_retries = 1
+
+    with requests_mock.Mocker() as m:
+        m.post(
+            "https://mockapi.kiwoom.com/test",
+            [
+                {"status_code": 429, "json": {"error": "Rate Limited"}, "headers": {"Retry-After": "2"}},
+                {"status_code": 429, "json": {"error": "Rate Limited"}, "headers": {"Retry-After": "3"}},
+            ],
+        )
+
+        with pytest.raises(KiwoomRateLimitError) as exc_info:
+            client._post("/test", {}, {})
+
+    mock_sleep.assert_called_once_with(2)
+    assert exc_info.value.status_code == 429
+    assert exc_info.value.retry_after == 3
+
+
+@patch("time.sleep")
 def test_server_error_with_retry(mock_sleep, client):
     """Test 500 server error with retry logic."""
     client.max_retries = 1
@@ -160,6 +222,40 @@ def test_server_error_with_retry(mock_sleep, client):
         assert response.status_code == 200
         assert response.json() == {"success": True}
         mock_sleep.assert_called_once_with(1)
+
+
+@patch("time.sleep")
+def test_server_error_after_retries_raises_server_error(mock_sleep, client):
+    """Test terminal 5xx raises KiwoomServerError after retries."""
+    client.max_retries = 1
+
+    with requests_mock.Mocker() as m:
+        m.post(
+            "https://mockapi.kiwoom.com/test",
+            [
+                {"status_code": 500, "text": "first"},
+                {"status_code": 503, "text": "second"},
+            ],
+        )
+
+        with pytest.raises(KiwoomServerError) as exc_info:
+            client._post("/test", {}, {})
+
+    mock_sleep.assert_called_once_with(1)
+    assert exc_info.value.status_code == 503
+    assert "Server error: second" in str(exc_info.value)
+
+
+def test_unexpected_status_code_raises_api_error(client):
+    """Test non-mapped status codes raise KiwoomAPIError."""
+    with requests_mock.Mocker() as m:
+        m.post("https://mockapi.kiwoom.com/test", text="teapot", status_code=418)
+
+        with pytest.raises(KiwoomAPIError) as exc_info:
+            client._post("/test", {}, {})
+
+    assert exc_info.value.status_code == 418
+    assert "Unexpected status code 418" in str(exc_info.value)
 
 
 def test_timeout_error(client):
@@ -182,6 +278,17 @@ def test_connection_error(client):
 
         with pytest.raises(KiwoomNetworkError):
             client._post("/test", {}, {})
+
+
+def test_request_exception_error(client):
+    """Test generic request exceptions are wrapped as network errors."""
+    with requests_mock.Mocker() as m:
+        m.post("https://mockapi.kiwoom.com/test", exc=requests.exceptions.RequestException("boom"))
+
+        with pytest.raises(KiwoomNetworkError) as exc_info:
+            client._post("/test", {}, {})
+
+    assert "Request failed: boom" in str(exc_info.value)
 
 
 def test_safe_json_parsing(client):
@@ -224,6 +331,60 @@ def test_client_close(client):
     client.close()
     # Session should still exist but be closed
     assert hasattr(client, "_session")
+
+
+def test_batch_post_collects_successes_and_errors(client):
+    """Test batch_post returns both successful responses and captured errors."""
+    with requests_mock.Mocker() as m:
+        m.post("https://mockapi.kiwoom.com/ok", json={"ok": True}, status_code=200)
+        m.post("https://mockapi.kiwoom.com/bad", json={"error": "Bad Request"}, status_code=400)
+
+        responses = client.batch_post(
+            [
+                ("/ok", {}, {"a": "1"}),
+                ("/bad", {}, {"b": "2"}),
+            ]
+        )
+
+    assert responses[0].status_code == 200
+    assert responses[0].json() == {"ok": True}
+    assert responses[1].status_code == 0
+    assert responses[1].json()["exception_type"] == "KiwoomValidationError"
+    assert "Bad request" in responses[1].json()["error"]
+
+
+def test_cache_management_methods_without_cache_return_empty_values():
+    """Test cache helper methods are safe when caching is disabled."""
+    client = Client("token", "dev", enable_caching=False)
+
+    client.clear_cache()
+
+    assert client.cache_info() is None
+    assert client.cleanup_cache() == 0
+
+
+def test_cache_management_methods_with_cache():
+    """Test cache helper methods delegate to enabled cache."""
+    client = Client("token", "dev", enable_caching=True)
+    client._cache.set("fresh", "value", ttl=60)
+    client._cache.set("expired", "value", ttl=-1)
+
+    assert client.cache_info() == {"total_entries": 2, "valid_entries": 1, "expired_entries": 1}
+    assert client.cleanup_cache() == 1
+    assert client.cache_info() == {"total_entries": 1, "valid_entries": 1, "expired_entries": 0}
+
+    client.clear_cache()
+    assert client.cache_info() == {"total_entries": 0, "valid_entries": 0, "expired_entries": 0}
+
+
+def test_mock_response_decodes_content_when_json_data_is_absent():
+    """Test MockResponse can decode JSON content without pre-parsed data."""
+    from cluefin_openapi.kiwoom._client import MockResponse
+
+    response = MockResponse(status_code=200, headers={"x": "y"}, content=b'{"value": 1}')
+
+    assert response.json() == {"value": 1}
+    assert response.text == '{"value": 1}'
 
 
 def test_header_merging(client):
