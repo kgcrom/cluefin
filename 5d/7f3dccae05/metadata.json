@@ -15,6 +15,12 @@
       "transcript": "/5d/7f3dccae05/0/full.jsonl",
       "content_hash": "/5d/7f3dccae05/0/content_hash.txt",
       "prompt": "/5d/7f3dccae05/0/prompt.txt"
+    },
+    {
+      "metadata": "/5d/7f3dccae05/1/metadata.json",
+      "transcript": "/5d/7f3dccae05/1/full.jsonl",
+      "content_hash": "/5d/7f3dccae05/1/content_hash.txt",
+      "prompt": ""
     }
   ],
   "token_usage": {
