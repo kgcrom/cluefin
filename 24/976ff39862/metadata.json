@@ -3,7 +3,7 @@
   "checkpoint_id": "24976ff39862",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 0,
+  "checkpoints_count": 1,
   "files_touched": [
     "apps/cluefin-openapi-cli/tests/test_kis_market_analysis_handlers.py",
     "apps/cluefin-openapi-cli/tests/test_kiwoom_foreign_handlers.py",
@@ -17,6 +17,19 @@
       "transcript": "/24/976ff39862/0/full.jsonl",
       "content_hash": "/24/976ff39862/0/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/24/976ff39862/1/metadata.json",
+      "transcript": "/24/976ff39862/1/full.jsonl",
+      "content_hash": "/24/976ff39862/1/content_hash.txt",
+      "prompt": "/24/976ff39862/1/prompt.txt"
     }
-  ]
+  ],
+  "token_usage": {
+    "input_tokens": 8578376,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 7688448,
+    "output_tokens": 47563,
+    "api_call_count": 78
+  }
 }

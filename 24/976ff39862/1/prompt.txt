@@ -1,0 +1,80 @@
+https://app.codacy.com/gh/kgcrom/cluefin/files/analyzed
+
+I want to add to test for coverage code file.  위 url에는 grade가 있는데 낮은 grade부터 처리하는거 가능한지 확인해줘
+
+---
+
+첨부한 이미지가 말고 codacy 명령어를 이용해서 grade를 정하거나 커버리지를 측정 후 보강합니다.
+
+---
+
+Codacy API token is '603af670f6d54675b5845dcbb117300a'
+
+---
+
+DutWrm16uszJ2FDDaSlY
+
+---
+
+PLEASE IMPLEMENT THIS PLAN:
+# Codacy Grade 기반 Coverage 보강 계획
+
+## Summary
+
+- Codacy API로 실제 파일별 grade를 조회했다. 결과는 총 435개 파일, `F 49 / E 20 / D 27 / C 29 / B 92 / A 218`.
+- 우선순위는 Codacy `gradeLetter` 낮은 순서로 잡고, 같은 grade 안에서는 Codacy coverage와 로컬 coverage missing line을 함께 본다.
+- TS 파일과 테스트 파일도 Codacy F에 포함되지만, 현재 CI의 Codacy coverage 업로드는 Python `coverage.xml`만 올리므로 이번 테스트 보강은 Python source file부터 처리한다.
+
+## Priority Targets
+
+1. `apps/cluefin-openapi-cli/src/cluefin_openapi_cli/handlers/kis/domestic_market_analysis.py`
+   - Codacy `F`, Codacy coverage `38`, local coverage `38.33%`, missing `74`
+   - 첫 번째 보강 대상.
+2. `apps/cluefin-openapi-cli/src/cluefin_openapi_cli/handlers/kiwoom/domestic_rank_info.py`
+   - Codacy `F`, Codacy coverage `41`, local coverage `41.07%`, missing `66`
+   - duplication도 높아 grade 개선 효과가 제한될 수 있지만 coverage 보강 대상은 맞다.
+3. `apps/cluefin-openapi-cli/src/cluefin_openapi_cli/handlers/kiwoom/domestic_market_condition.py`
+   - Codacy `F`, Codacy coverage `41`, local coverage `41.24%`, missing `57`
+4. `packages/cluefin-openapi/src/cluefin_openapi/kiwoom/_client.py`
+   - Codacy `F`, Codacy coverage `63`, local coverage `63.21%`, missing `71`
+   - HTTP/cache/error handling unit test로 보강 가능성이 높다.
+5. `apps/cluefin-desk/src/cluefin_desk/data/fetcher.py`
+   - Codacy `E`, Codacy coverage `36`, local coverage `36.11%`, missing `69`
+   - F 대상 이후 처리.
+
+## Implementation Changes
+
+- Codacy 조회는 account API token을 환경변수로만 받아 실행한다. 토큰은 파일에 저장하지 않는다.
+- Codacy source: official `listFiles` API returns `path`, `gradeLetter`, `totalIssues`, `complexity`, `coverage`, `duplication`: [Codacy docs](https://docs.codacy.com/codacy-api/examples/obtaining-code-quality-metrics-for-files/).
+- 작업 흐름:
+  - Codacy API 전체 pagination 수집.
+  - 로컬 `coverage json` 결과와 path 기준 join.
+  - `F -> E -> D` 순서에서 Python source + missing lines > 0인 파일만 선택.
+  - 기존 테스트 패턴에 맞춰 behavior-focused unit test 추가.
+  - 한 번에 위 후보 1-2개씩 처리해서 review 범위를 작게 유지.
+
+## Test Plan
+
+- 우선순위 재산출:
+  ```bash
+  UV_CACHE_DIR=/tmp/uv-cache uv run coverage run -m pytest -m "not integration and not slow"
+  UV_CACHE_DIR=/tmp/uv-cache uv run coverage json -o /tmp/cluefin-coverage.json
+  ```
+- 대상별 검증:
+  ```bash
+  UV_CACHE_DIR=/tmp/uv-cache uv run pytest <target-test-file>
+  UV_CACHE_DIR=/tmp/uv-cache uv run coverage run -m pytest <target-test-file>
+  UV_CACHE_DIR=/tmp/uv-cache uv run coverage report -m --include='<target-source-file>'
+  ```
+- 최종 검증:
+  ```bash
+  UV_CACHE_DIR=/tmp/uv-cache uv run pytest -m "not integration and not slow"
+  UV_CACHE_DIR=/tmp/uv-cache uv run ruff format . --check
+  UV_CACHE_DIR=/tmp/uv-cache uv run ruff check .
+  ```
+
+## Assumptions
+
+- 이번 범위는 “테스트 보강으로 coverage를 올릴 수 있는 Python source”다.
+- Codacy grade는 coverage 외에 issues, complexity, duplication도 포함하므로, coverage가 100%인데 F인 파일은 이번 작업에서 제외하고 별도 refactor/duplication 작업으로 분리한다.
+- 토큰이 대화에 노출됐으므로 작업 후 Codacy에서 rotate/revoke하는 것을 권장한다.
