@@ -1,0 +1,9 @@
+그럼 지금 있는 파일은 어떻게 처리해?
+
+---
+
+.codex 는 필요한데?
+
+---
+
+[$git-commit](/Volumes/kgcrom-2tb/kgcrom/.agents/skills/git-commit/SKILL.md)  .gitignore
