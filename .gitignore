@@ -83,3 +83,5 @@ poetry.lock
 .ruff_cache/
 .uv-cache/
 data/
+
+.entire/
