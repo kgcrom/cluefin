@@ -1,0 +1,104 @@
+[$git-commit](/Volumes/kgcrom-2tb/kgcrom/.agents/skills/git-commit/SKILL.md)  .gitignore
+
+---
+
+<skill>
+<name>git-commit</name>
+<path>/Volumes/kgcrom-2tb/kgcrom/.agents/skills/git-commit/SKILL.md</path>
+---
+name: git-commit
+description: Use when the user explicitly asks you to stage the current task's changed files and create a real git commit with a Korean message, not when they only want commit-message examples, git commit explanations, or PR text.
+allowed-tools:
+  - "git add"
+  - "git status"
+  - "git commit"
+---
+
+# Git Commit
+
+Use this skill when the user wants an actual git commit, not a commit-message explanation or general git help.
+
+## Workflow
+
+1. Run `git status` first.
+2. Identify which files were changed in the current session.
+3. If unrelated changes are present, ask the user before staging anything outside the current task.
+4. Stage only the files for this task with `git add <specific-files>`.
+5. Write the commit message in the required Korean format.
+6. Run `git commit` with the finalized message.
+
+## Commit Format
+
+```text
+<type>: <short summary in Korean>
+
+<optional body in Korean>
+```
+
+## Message Rules
+
+- Use an English type prefix: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `perf`, `style`.
+- Write the summary and body in Korean.
+- Keep the header under 50 characters.
+- End the header without a period.
+- Use concise verb forms such as `추가`, `수정`, `삭제`, `제거`.
+- Describe what changed, not how it was implemented.
+- Use the optional body only when the reason or impact needs clarification.
+- In the body, explain why the change matters more than restating the diff.
+- End each body line with a noun or short phrase such as `정리`, `개선`, `방지`.
+- Do not end body lines with sentence-style wording such as `했다`, `했음`, `좋음`.
+
+## Commit Body Command Safety
+
+- When the body needs multiple lines, pass real newline characters to Git.
+- Do not place the two-character string `\n` inside a quoted `-m` value and expect Git to convert it.
+- Prefer one header `-m` plus a second `-m` with actual line breaks, or shell quoting that expands `\n` before Git receives it.
+
+## Good Commit Commands
+
+```bash
+git commit -m "docs: README 정리" -m "빠른 시작 절차 명확화
+설정 문서를 분리해 가독성 개선"
+
+git commit -m "docs: README 정리" -m $'빠른 시작 절차 명확화\n설정 문서를 분리해 가독성 개선'
+```
+
+## Bad Commit Commands
+
+```bash
+git commit -m "docs: README 정리" -m "빠른 시작 절차 명확화\n설정 문서를 분리해 가독성 개선"
+```
+
+## Good Headers
+
+```text
+feat: JWT 인증 추가
+fix: 타임존 계산 오류 수정
+refactor: 주문 로직 분리
+```
+
+## Bad Headers
+
+```text
+feat: JWT 인증을 추가하도록 함
+파일 업데이트
+fixed bug
+```
+
+## Trigger Boundary
+
+Trigger for requests like:
+- `커밋해줘`
+- `이번 작업만 스테이징해서 커밋해줘`
+- `한국어 커밋 메시지 규칙으로 커밋해줘`
+
+Do not trigger for requests like:
+- `커밋 메시지 예시만 알려줘`
+- `git commit -m 차이가 뭐야?`
+- `PR 설명문 작성해줘`
+
+</skill>
+
+---
+
+rewrite [AGENTS.md](AGENTS.md) reflect by this project.
