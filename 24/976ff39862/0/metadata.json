@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "24976ff39862",
+  "session_id": "019ddeec-2fb8-7d03-b248-ac917d662edb",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-30T23:50:28.282867Z",
+  "branch": "main",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "apps/cluefin-openapi-cli/tests/test_kis_market_analysis_handlers.py",
+    "apps/cluefin-openapi-cli/tests/test_kiwoom_foreign_handlers.py",
+    "apps/cluefin-openapi-cli/tests/test_kiwoom_market_condition_handlers.py",
+    "apps/cluefin-openapi-cli/tests/test_kiwoom_rank_info_handlers.py",
+    "packages/cluefin-openapi/tests/kiwoom/test_client_improvements_unit.py"
+  ],
+  "agent": "Codex",
+  "model": "gpt-5.4-mini",
+  "turn_id": "f14f11402f44",
+  "initial_attribution": {
+    "calculated_at": "2026-04-30T23:50:28.282488Z",
+    "agent_lines": 273,
+    "agent_removed": 0,
+    "human_added": 400,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 673,
+    "total_lines_changed": 673,
+    "agent_percentage": 40.56463595839524,
+    "metric_version": 2
+  }
+}
