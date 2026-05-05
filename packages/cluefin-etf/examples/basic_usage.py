@@ -1,17 +1,32 @@
 import logging
 
-from cluefin_etf import EtfClient, ProviderName, get_provider
+from cluefin_etf import EtfClient, EtfSummary, ProviderName, get_provider
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def main() -> None:
-    provider = get_provider(ProviderName.KODEX)
-    logger.info("provider=%s", provider.info)
+def log_sample_items(provider: ProviderName, items: list[EtfSummary]) -> None:
+    logger.info("%s items=%s", provider.value, len(items))
+    for item in items[:3]:
+        logger.info(
+            "%s %s name=%s category=%s nav=%s aum=%s",
+            item.provider.value,
+            item.code,
+            item.name,
+            item.category,
+            item.nav,
+            item.aum,
+        )
 
-    client = EtfClient("kiwoom")
-    logger.info("items=%s", client.fetch_list())
+
+def main() -> None:
+    for provider_name in (ProviderName.KODEX, ProviderName.KIWOOM):
+        provider = get_provider(provider_name)
+        logger.info("provider=%s", provider.info)
+
+        client = EtfClient(provider_name)
+        log_sample_items(provider_name, client.fetch_list())
 
 
 if __name__ == "__main__":

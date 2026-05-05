@@ -48,7 +48,10 @@ def test_unknown_provider_raises_provider_not_found():
         get_provider("unknown")
 
 
-@pytest.mark.parametrize("provider_name", [name for name in PROVIDER_CLASSES if name is not ProviderName.KIWOOM])
+@pytest.mark.parametrize(
+    "provider_name",
+    [name for name in PROVIDER_CLASSES if name not in {ProviderName.KODEX, ProviderName.KIWOOM}],
+)
 def test_scaffolded_provider_list_methods(provider_name):
     provider = get_provider(provider_name)
 
@@ -65,7 +68,7 @@ def test_scaffolded_provider_detail_methods(provider_name):
 
 
 def test_parse_hooks_are_not_implemented_yet():
-    provider = get_provider("kodex")
+    provider = get_provider("tiger")
 
     with pytest.raises(NotImplementedError):
         provider.parse_list_html("<html></html>")
@@ -192,3 +195,90 @@ def test_kiwoom_fetch_list_collects_all_pages_and_maps_summaries():
     assert items[0].detail_url == "https://www.kiwoometf.com/service/etf/KO02010200M?gcode=253250"
     assert items[0].raw["etcFlags"] == ["레버리지/인버스"]
     assert items[1].benchmark == "코스닥 150"
+
+
+class KodexListFetcher:
+    def __init__(self) -> None:
+        self.calls = []
+        self.pages = {
+            "1": [
+                {
+                    "fNm": "KODEX AI전력핵심설비",
+                    "stkTicker": "487240",
+                    "fId": "2ETFN7",
+                    "typeLnm": "국내주식",
+                    "typeNm": "테마",
+                    "listD": "20240709",
+                    "gijunYMD": "20260430",
+                    "basp": "57890.35",
+                    "nav": "35789",
+                    "curp": "58355",
+                    "risep": "5535",
+                    "risepRt": "10.48",
+                    "basrp": "1919.99",
+                    "basrpRt": "3.78",
+                    "yieldWeek": "23.74",
+                    "yieldMon1": "79.43",
+                    "yieldMon3": "85.69",
+                    "yieldMon6": "111.63",
+                    "yieldYear1": "430.32",
+                    "yieldYear3": None,
+                    "yieldYear": "129.82",
+                    "yieldList": "413.65",
+                    "dcYn": "개인연금",
+                    "irpYn": "퇴직연금",
+                    "totalCnt": "21",
+                }
+            ]
+            * 20,
+            "2": [
+                {
+                    "fNm": "KODEX WTI원유선물(H)",
+                    "stkTicker": "261220",
+                    "fId": "2ETF72",
+                    "typeLnm": "원자재 및 통화",
+                    "listD": "20161227",
+                    "gijunYMD": "20260430",
+                    "basp": "26736.55",
+                    "nav": "808",
+                    "totalCnt": "21",
+                }
+            ],
+        }
+
+    def fetch(self, url: str, *, provider: ProviderName | str, validator=None, **kwargs) -> FetchResult:
+        page_no = url.rsplit("pageNo=", maxsplit=1)[1]
+        html = json.dumps(self.pages[page_no], ensure_ascii=False)
+        result = FetchResult(
+            html=html,
+            metadata=FetchMetadata(provider=ProviderName(provider), url=url, strategy="http"),
+        )
+        self.calls.append((url, provider, kwargs))
+        assert validator is not None
+        assert validator(result) is True
+        return result
+
+
+def test_kodex_fetch_list_collects_all_pages_and_maps_summaries():
+    fetcher = KodexListFetcher()
+    provider = get_provider("kodex", fetcher=fetcher)
+
+    items = provider.fetch_list()
+
+    assert [call[0].rsplit("pageNo=", maxsplit=1)[1] for call in fetcher.calls] == ["1", "2"]
+    assert all(call[2]["headers"] == {"Accept": "application/json"} for call in fetcher.calls)
+    assert len(items) == 21
+    assert items[0].provider == ProviderName.KODEX
+    assert items[0].code == "487240"
+    assert items[0].name == "KODEX AI전력핵심설비"
+    assert items[0].category == "국내주식"
+    assert items[0].listing_date == date(2024, 7, 9)
+    assert items[0].as_of_date == date(2026, 4, 30)
+    assert items[0].nav == Decimal("57890.35")
+    assert items[0].aum == Decimal("35789")
+    assert items[0].detail_url == "https://www.samsungfund.com/etf/product/view.do?id=2ETFN7"
+    assert items[0].raw["curp"] == "58355"
+    assert items[0].raw["yieldWeek"] == "23.74"
+    assert items[0].raw["dcYn"] == "개인연금"
+    assert items[0].raw["irpYn"] == "퇴직연금"
+    assert items[-1].code == "261220"
