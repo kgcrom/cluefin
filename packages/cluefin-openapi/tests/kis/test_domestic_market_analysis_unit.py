@@ -1,3 +1,4 @@
+import inspect
 import json
 from pathlib import Path
 from unittest.mock import Mock
@@ -34,6 +35,63 @@ def load_domestic_market_analysis_cases():
 
 
 DOMESTIC_MARKET_ANALYSIS_CASES = load_domestic_market_analysis_cases()
+
+
+def _all_market_analysis_methods():
+    return [
+        name
+        for name, method in inspect.getmembers(DomesticMarketAnalysis, predicate=inspect.isfunction)
+        if name.startswith("get_")
+    ]
+
+
+def _all_kwargs_for(method_name: str) -> dict:
+    signature = inspect.signature(getattr(DomesticMarketAnalysis, method_name))
+    return {name: f"value_for_{name}" for name in signature.parameters if name != "self"}
+
+
+@pytest.mark.parametrize("method_name", _all_market_analysis_methods())
+def test_all_domestic_market_analysis_wrappers_call_client(monkeypatch, method_name):
+    """Every market-analysis wrapper should call the HTTP client and wrap the response."""
+
+    class DummyResponseModel:
+        @classmethod
+        def model_validate(cls, data):
+            instance = cls()
+            instance.payload = data
+            return instance
+
+    for model_name, model in vars(domestic_market_analysis_module).items():
+        if model_name != "KisHttpHeader" and hasattr(model, "model_validate"):
+            monkeypatch.setattr(domestic_market_analysis_module, model_name, DummyResponseModel)
+
+    mock_response = Mock()
+    mock_response.json.return_value = {"rt_cd": "0", "msg_cd": "0000", "msg1": "OK", "output": []}
+    mock_response.status_code = 200
+    mock_response.text = ""
+    mock_response.headers = {
+        "content-type": "application/json; charset=utf-8",
+        "tr_id": "TEST_TR_ID",
+        "tr_cont": "",
+        "gt_uid": None,
+    }
+
+    client = Mock()
+    client._get.return_value = mock_response
+    client._post.return_value = mock_response
+
+    result = getattr(DomesticMarketAnalysis(client), method_name)(**_all_kwargs_for(method_name))
+
+    assert client._get.call_count + client._post.call_count == 1
+    assert result.body.payload == mock_response.json.return_value
+
+
+def test_domestic_market_analysis_raises_on_api_error():
+    client = Mock()
+    analysis = DomesticMarketAnalysis(client)
+
+    with pytest.raises(ValueError, match=r"KIS API Error \[EGW001\]"):
+        analysis._check_response_error({"rt_cd": "1", "msg_cd": "EGW001", "msg1": "Bad request"})
 
 
 @pytest.mark.parametrize(
