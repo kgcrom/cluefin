@@ -50,7 +50,7 @@ def test_unknown_provider_raises_provider_not_found():
 
 @pytest.mark.parametrize(
     "provider_name",
-    [name for name in PROVIDER_CLASSES if name not in {ProviderName.KODEX, ProviderName.KIWOOM}],
+    [name for name in PROVIDER_CLASSES if name not in {ProviderName.KODEX, ProviderName.SOL, ProviderName.KIWOOM}],
 )
 def test_scaffolded_provider_list_methods(provider_name):
     provider = get_provider(provider_name)
@@ -195,6 +195,106 @@ def test_kiwoom_fetch_list_collects_all_pages_and_maps_summaries():
     assert items[0].detail_url == "https://www.kiwoometf.com/service/etf/KO02010200M?gcode=253250"
     assert items[0].raw["etcFlags"] == ["레버리지/인버스"]
     assert items[1].benchmark == "코스닥 150"
+
+
+class SolListFetcher:
+    list_url = "https://www.soletf.com/ko/fund"
+
+    def __init__(self) -> None:
+        self.calls = []
+        self.html = """
+        <html>
+          <body>
+            <table class="fd-list">
+              <tbody>
+                <tr id="tr_210980">
+                  <td class="tb-subj">
+                    <a href="/ko/fund/etf/210980" class="fd-link">
+                      <span class="i-bdg-g">
+                        <span class="i-bdg ty-1-2">국내주식</span>
+                        <span class="i-bdg ty-1-3">소부장</span>
+                        <span class="i-bdg ty-1-3">패시브</span>
+                        <span class="i-bdg ty-1-1">개인연금</span>
+                        <span class="i-bdg ty-1-1">퇴직연금</span>
+                      </span>
+                      <span class="fd-name">SOL  AI반도체소부장 <br> (455850)</span>
+                    </a>
+                  </td>
+                  <td>31,789.71</td>
+                  <td>13,272</td>
+                  <td class="short">0.57</td>
+                  <td class="short">32.62</td>
+                  <td class="short">43.34</td>
+                  <td class="short">84.93</td>
+                  <td class="short">89.62</td>
+                  <td class="long">211.87</td>
+                  <td class="long">225.48</td>
+                  <td class="long">-</td>
+                  <td class="long">226.83</td>
+                  <td></td>
+                </tr>
+                <tr id="tr_211106">
+                  <td class="tb-subj">
+                    <a href="/ko/fund/etf/211106" class="fd-link">
+                      <span class="i-bdg-g">
+                        <span class="i-bdg ty-1-2">국내주식</span>
+                        <span class="i-bdg ty-1-3">메가트렌드</span>
+                      </span>
+                      <span class="fd-name">SOL AI반도체TOP2플러스 <br> (0167A0)</span>
+                    </a>
+                  </td>
+                  <td>12,345.67</td>
+                  <td>987</td>
+                  <td class="short">1.23</td>
+                  <td class="short">4.56</td>
+                  <td class="short">7.89</td>
+                  <td class="short">10.11</td>
+                  <td class="short">12.13</td>
+                  <td class="long">14.15</td>
+                  <td class="long">16.17</td>
+                  <td class="long">18.19</td>
+                  <td class="long">20.21</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+          </body>
+        </html>
+        """
+
+    def fetch(self, url: str, *, provider: ProviderName | str, validator=None, **kwargs) -> FetchResult:
+        result = FetchResult(
+            html=self.html,
+            metadata=FetchMetadata(provider=ProviderName(provider), url=url, strategy="http"),
+        )
+        self.calls.append((url, provider, kwargs))
+        assert validator is not None
+        assert validator(result) is True
+        return result
+
+
+def test_sol_fetch_list_parses_server_rendered_table_and_maps_summaries():
+    fetcher = SolListFetcher()
+    provider = get_provider("sol", fetcher=fetcher)
+
+    items = provider.fetch_list()
+
+    assert [call[0] for call in fetcher.calls] == [fetcher.list_url]
+    assert len(items) == 2
+    assert items[0].provider == ProviderName.SOL
+    assert items[0].code == "455850"
+    assert items[0].name == "SOL AI반도체소부장"
+    assert items[0].category == "국내주식 / 소부장 / 패시브"
+    assert items[0].nav == Decimal("31789.71")
+    assert items[0].aum == Decimal("13272")
+    assert items[0].detail_url == "https://www.soletf.com/ko/fund/etf/210980"
+    assert items[0].raw["fundCode"] == "210980"
+    assert items[0].raw["etfCode"] == "455850"
+    assert items[0].raw["pensionFlags"] == ["개인연금", "퇴직연금"]
+    assert items[0].raw["returns"]["month_1"] == "32.62"
+    assert items[0].raw["returns"]["year_5"] == "-"
+    assert items[1].code == "0167A0"
+    assert items[1].category == "국내주식 / 메가트렌드"
 
 
 class KodexListFetcher:
