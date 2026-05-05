@@ -375,6 +375,11 @@ class FallbackFetcher:
             data=data,
             referrer=referrer,
         )
+        fallback_reason = self.should_fallback(result, validator=validator)
+        if fallback_reason is not None:
+            raise FetchError(
+                f"Fallback fetch result was rejected for {url}: {fallback_reason}; primary reason: {reason}"
+            )
         return result.model_copy(update={"metadata": result.metadata.model_copy(update={"fallback_reason": reason})})
 
 

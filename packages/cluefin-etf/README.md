@@ -1,10 +1,29 @@
 # cluefin-etf
 
-Scaffold package for Korean ETF page scraping.
+Research-oriented package for Korean ETF page scraping.
 
-The first version defines shared fetchers, provider registry, and provider
-interfaces for KODEX, TIGER, RISE, ACE, SOL, and Kiwoom ETF pages. Site-specific
-parsers are intentionally left for later implementation.
+The package defines shared fetchers, a provider registry, and provider
+interfaces for KODEX, TIGER, RISE, ACE, SOL, and Kiwoom ETF pages.
+
+## Current Support
+
+| Provider | `fetch_list` | `fetch_detail` |
+| --- | --- | --- |
+| KODEX | Implemented | Not implemented |
+| TIGER | Not implemented | Not implemented |
+| RISE | Not implemented | Not implemented |
+| ACE | Implemented | Not implemented |
+| SOL | Implemented | Not implemented |
+| Kiwoom | Implemented | Not implemented |
+
+## Usage
+
+```python
+from cluefin_etf import EtfClient
+
+kodex_items = EtfClient("kodex").fetch_list()
+kiwoom_items = EtfClient("kiwoom").fetch_list()
+```
 
 ## Provider Homepages
 

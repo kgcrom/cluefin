@@ -50,7 +50,11 @@ def test_unknown_provider_raises_provider_not_found():
 
 @pytest.mark.parametrize(
     "provider_name",
-    [name for name in PROVIDER_CLASSES if name not in {ProviderName.KODEX, ProviderName.SOL, ProviderName.KIWOOM}],
+    [
+        name
+        for name in PROVIDER_CLASSES
+        if name not in {ProviderName.KODEX, ProviderName.ACE, ProviderName.SOL, ProviderName.KIWOOM}
+    ],
 )
 def test_scaffolded_provider_list_methods(provider_name):
     provider = get_provider(provider_name)
@@ -195,6 +199,105 @@ def test_kiwoom_fetch_list_collects_all_pages_and_maps_summaries():
     assert items[0].detail_url == "https://www.kiwoometf.com/service/etf/KO02010200M?gcode=253250"
     assert items[0].raw["etcFlags"] == ["레버리지/인버스"]
     assert items[1].benchmark == "코스닥 150"
+
+
+def _kiwoom_fetch_result(payload: dict) -> FetchResult:
+    return FetchResult(
+        html=json.dumps(payload, ensure_ascii=False),
+        metadata=FetchMetadata(provider=ProviderName.KIWOOM, url="https://example.test/kiwoom", strategy="http"),
+    )
+
+
+def test_kiwoom_list_validator_rejects_empty_json_object():
+    provider = get_provider("kiwoom")
+
+    assert provider.validate_list_result(_kiwoom_fetch_result({})) is False
+
+
+def test_kiwoom_list_validator_rejects_empty_items_with_positive_total_count():
+    provider = get_provider("kiwoom")
+
+    result = _kiwoom_fetch_result({"totalCnt": 1, "searchVO": {"pageNo": 1, "endPage": 1}, "etfList": []})
+
+    assert provider.validate_list_result(result) is False
+
+
+def test_kiwoom_list_validator_rejects_items_missing_required_fields():
+    provider = get_provider("kiwoom")
+
+    result = _kiwoom_fetch_result(
+        {"totalCnt": 1, "searchVO": {"pageNo": 1, "endPage": 1}, "etfList": [{"gcode": "253250"}]}
+    )
+
+    assert provider.validate_list_result(result) is False
+
+
+def test_kiwoom_list_validator_rejects_positive_total_count_without_end_page():
+    provider = get_provider("kiwoom")
+
+    result = _kiwoom_fetch_result(
+        {
+            "totalCnt": 1,
+            "searchVO": {"pageNo": 1},
+            "etfList": [{"gcode": "253250", "goodsNm": "KIWOOM 200선물레버리지"}],
+        }
+    )
+
+    assert provider.validate_list_result(result) is False
+
+
+class AceListFetcher:
+    page_url = "https://www.aceetf.co.kr/modal/allfund"
+    chunk_url = "https://www.aceetf.co.kr/_next/static/chunks/pages/modal/allfund-test.js"
+
+    def __init__(self) -> None:
+        self.calls = []
+        self.responses = {
+            self.page_url: (
+                '<html><script src="/_next/static/chunks/pages/modal/allfund-test.js" defer=""></script></html>'
+            ),
+            self.chunk_url: (
+                'children:["국내주식/대표지수",(0,l.jsx)("span",{className:"cnt",children:"2건"})]'
+                'onClick:()=>goPage(t.G.FundDetail,"KR5101877748"),className:"txt",children:"ACE 200"})}),'
+                '(0,l.jsx)("span",{className:"type1",children:"개인연금"}),'
+                '(0,l.jsx)("span",{className:"type2",children:"퇴직연금"})'
+                'onClick:()=>goPage(t.G.FundDetail,"K55101CT6711"),className:"txt",children:"ACE 200TR"})})'
+                'children:["국내채권",(0,l.jsx)("span",{className:"cnt",children:"1건"})]'
+                'onClick:()=>goPage(t.G.FundDetail,"K55101B26297"),className:"txt",children:"ACE 국고채10년"})}),'
+                '(0,l.jsx)("span",{className:"type2",children:"퇴직연금"})'
+            ),
+        }
+
+    def fetch(self, url: str, *, provider: ProviderName | str, validator=None, **kwargs) -> FetchResult:
+        result = FetchResult(
+            html=self.responses[url],
+            metadata=FetchMetadata(provider=ProviderName(provider), url=url, strategy="http"),
+        )
+        self.calls.append((url, provider, kwargs))
+        assert validator is not None
+        assert validator(result) is True
+        return result
+
+
+def test_ace_fetch_list_loads_allfund_chunk_and_maps_summaries():
+    fetcher = AceListFetcher()
+    provider = get_provider("ace", fetcher=fetcher)
+
+    items = provider.fetch_list()
+
+    assert [call[0] for call in fetcher.calls] == [fetcher.page_url, fetcher.chunk_url]
+    assert len(items) == 3
+    assert items[0].provider == ProviderName.ACE
+    assert items[0].code == "KR5101877748"
+    assert items[0].isin == "KR5101877748"
+    assert items[0].name == "ACE 200"
+    assert items[0].category == "국내주식/대표지수"
+    assert items[0].detail_url == "https://www.aceetf.co.kr/fund/KR5101877748"
+    assert items[0].raw["fundCode"] == "KR5101877748"
+    assert items[0].raw["pensionFlags"] == ["개인연금", "퇴직연금"]
+    assert items[1].raw["pensionFlags"] == []
+    assert items[2].category == "국내채권"
+    assert items[2].raw["pensionFlags"] == ["퇴직연금"]
 
 
 class SolListFetcher:

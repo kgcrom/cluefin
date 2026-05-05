@@ -79,10 +79,14 @@ class KiwoomProvider(EtfProvider):
 
     def validate_list_result(self, result: FetchResult) -> bool:
         try:
-            self._parse_list_response(result.html)
+            response = self._parse_list_response(result.html)
         except (json.JSONDecodeError, ValueError):
             return False
-        return True
+        if not response.etfList:
+            return False
+        if response.totalCnt > 0 and response.searchVO.endPage is None:
+            return False
+        return all(bool(item.gcode.strip() and item.goodsNm.strip()) for item in response.etfList)
 
     def parse_list_html(self, html: str) -> list[EtfSummary]:
         response = self._parse_list_response(html)
