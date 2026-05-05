@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
-from typing import Protocol
+from collections.abc import Callable, Mapping
+from typing import Any, Literal, Protocol
+from urllib.parse import urlencode, urlsplit
 
 import requests
 
@@ -10,6 +11,8 @@ from cluefin_etf._errors import FetchError
 from cluefin_etf._models import FetchMetadata, FetchResult, ProviderName
 
 PageValidator = Callable[[FetchResult], bool]
+HttpMethod = Literal["GET", "POST"]
+RequestData = Mapping[str, Any] | str | bytes
 
 
 class PageFetcher(Protocol):
@@ -19,6 +22,10 @@ class PageFetcher(Protocol):
         *,
         provider: ProviderName | str,
         validator: PageValidator | None = None,
+        method: HttpMethod = "GET",
+        headers: Mapping[str, str] | None = None,
+        data: RequestData | None = None,
+        referrer: str | None = None,
     ) -> FetchResult:
         """Fetch a page and return raw HTML with metadata."""
 
@@ -45,10 +52,24 @@ class SimpleHttpFetcher:
         *,
         provider: ProviderName | str,
         validator: PageValidator | None = None,
+        method: HttpMethod = "GET",
+        headers: Mapping[str, str] | None = None,
+        data: RequestData | None = None,
+        referrer: str | None = None,
     ) -> FetchResult:
         started_at = time.perf_counter()
+        request_headers = {**self.headers, **(headers or {})}
+        if referrer is not None:
+            request_headers.setdefault("Referer", referrer)
+
         try:
-            response = self.session.get(url, headers=self.headers, timeout=self.timeout)
+            response = self.session.request(
+                method,
+                url,
+                headers=request_headers,
+                data=data,
+                timeout=self.timeout,
+            )
             response.raise_for_status()
         except requests.RequestException as exc:
             raise FetchError(f"HTTP fetch failed for {url}") from exc
@@ -71,7 +92,15 @@ class SimpleHttpFetcher:
 
 
 class BrowserSession(Protocol):
-    def fetch_html(self, url: str) -> tuple[str, str | None]:
+    def fetch_html(
+        self,
+        url: str,
+        *,
+        method: HttpMethod = "GET",
+        headers: Mapping[str, str] | None = None,
+        data: RequestData | None = None,
+        referrer: str | None = None,
+    ) -> tuple[str, str | None]:
         """Fetch rendered HTML and return `(html, final_url)`."""
 
 
@@ -86,12 +115,14 @@ class PlaywrightBrowserSession:
         locale: str = "ko-KR",
         timezone_id: str = "Asia/Seoul",
         user_agent: str = "cluefin-etf/0.1",
+        ignore_https_errors: bool = True,
     ) -> None:
         self.timeout_ms = timeout_ms
         self.headless = headless
         self.locale = locale
         self.timezone_id = timezone_id
         self.user_agent = user_agent
+        self.ignore_https_errors = ignore_https_errors
         self._manager = None
         self._browser = None
         self._context = None
@@ -109,6 +140,7 @@ class PlaywrightBrowserSession:
             locale=self.locale,
             timezone_id=self.timezone_id,
             user_agent=self.user_agent,
+            ignore_https_errors=self.ignore_https_errors,
         )
         return self
 
@@ -123,14 +155,55 @@ class PlaywrightBrowserSession:
             self._manager.__exit__(exc_type, exc, traceback)
             self._manager = None
 
-    def fetch_html(self, url: str) -> tuple[str, str | None]:
+    def fetch_html(
+        self,
+        url: str,
+        *,
+        method: HttpMethod = "GET",
+        headers: Mapping[str, str] | None = None,
+        data: RequestData | None = None,
+        referrer: str | None = None,
+    ) -> tuple[str, str | None]:
         if self._context is None:
             raise FetchError("PlaywrightBrowserSession is not open")
 
         page = self._context.new_page()
         try:
-            page.goto(url, wait_until="networkidle", timeout=self.timeout_ms)
-            return page.content(), page.url
+            if method == "GET":
+                page.goto(url, wait_until="networkidle", timeout=self.timeout_ms, referer=referrer)
+                return page.content(), page.url
+
+            page.goto(referrer or _origin_url(url), wait_until="networkidle", timeout=self.timeout_ms)
+            result = page.evaluate(
+                """async ({url, method, headers, body, referrer}) => {
+                    const options = {
+                        method,
+                        headers,
+                        body,
+                        credentials: "include"
+                    };
+                    if (referrer) {
+                        options.referrer = referrer;
+                    }
+                    const response = await fetch(url, options);
+                    return {
+                        ok: response.ok,
+                        status: response.status,
+                        text: await response.text(),
+                        url: response.url
+                    };
+                }""",
+                {
+                    "url": url,
+                    "method": method,
+                    "headers": dict(headers or {}),
+                    "body": _browser_request_body(data),
+                    "referrer": referrer,
+                },
+            )
+            if not result["ok"]:
+                raise FetchError(f"Playwright fetch failed for {url}: status {result['status']}")
+            return result["text"], result["url"]
         finally:
             page.close()
 
@@ -146,6 +219,7 @@ class PlaywrightFetcher:
         locale: str = "ko-KR",
         timezone_id: str = "Asia/Seoul",
         user_agent: str = "cluefin-etf/0.1",
+        ignore_https_errors: bool = True,
     ) -> None:
         self.timeout_ms = timeout_ms
         self.headless = headless
@@ -153,6 +227,7 @@ class PlaywrightFetcher:
         self.locale = locale
         self.timezone_id = timezone_id
         self.user_agent = user_agent
+        self.ignore_https_errors = ignore_https_errors
 
     def fetch(
         self,
@@ -160,11 +235,21 @@ class PlaywrightFetcher:
         *,
         provider: ProviderName | str,
         validator: PageValidator | None = None,
+        method: HttpMethod = "GET",
+        headers: Mapping[str, str] | None = None,
+        data: RequestData | None = None,
+        referrer: str | None = None,
     ) -> FetchResult:
         started_at = time.perf_counter()
         try:
             if self.session is not None:
-                html, final_url = self.session.fetch_html(url)
+                html, final_url = self.session.fetch_html(
+                    url,
+                    method=method,
+                    headers=headers,
+                    data=data,
+                    referrer=referrer,
+                )
             else:
                 with PlaywrightBrowserSession(
                     timeout_ms=self.timeout_ms,
@@ -172,8 +257,15 @@ class PlaywrightFetcher:
                     locale=self.locale,
                     timezone_id=self.timezone_id,
                     user_agent=self.user_agent,
+                    ignore_https_errors=self.ignore_https_errors,
                 ) as session:
-                    html, final_url = session.fetch_html(url)
+                    html, final_url = session.fetch_html(
+                        url,
+                        method=method,
+                        headers=headers,
+                        data=data,
+                        referrer=referrer,
+                    )
         except Exception as exc:
             if isinstance(exc, FetchError):
                 raise
@@ -210,15 +302,45 @@ class FallbackFetcher:
         *,
         provider: ProviderName | str,
         validator: PageValidator | None = None,
+        method: HttpMethod = "GET",
+        headers: Mapping[str, str] | None = None,
+        data: RequestData | None = None,
+        referrer: str | None = None,
     ) -> FetchResult:
         try:
-            result = self.primary.fetch(url, provider=provider, validator=validator)
+            result = self.primary.fetch(
+                url,
+                provider=provider,
+                validator=validator,
+                method=method,
+                headers=headers,
+                data=data,
+                referrer=referrer,
+            )
         except FetchError as exc:
-            return self._fetch_fallback(url, provider=provider, validator=validator, reason=str(exc))
+            return self._fetch_fallback(
+                url,
+                provider=provider,
+                validator=validator,
+                method=method,
+                headers=headers,
+                data=data,
+                referrer=referrer,
+                reason=str(exc),
+            )
 
         fallback_reason = self.should_fallback(result, validator=validator)
         if fallback_reason is not None:
-            return self._fetch_fallback(url, provider=provider, validator=validator, reason=fallback_reason)
+            return self._fetch_fallback(
+                url,
+                provider=provider,
+                validator=validator,
+                method=method,
+                headers=headers,
+                data=data,
+                referrer=referrer,
+                reason=fallback_reason,
+            )
 
         return result
 
@@ -238,11 +360,38 @@ class FallbackFetcher:
         *,
         provider: ProviderName | str,
         validator: PageValidator | None,
+        method: HttpMethod,
+        headers: Mapping[str, str] | None,
+        data: RequestData | None,
+        referrer: str | None,
         reason: str,
     ) -> FetchResult:
-        result = self.fallback.fetch(url, provider=provider, validator=validator)
+        result = self.fallback.fetch(
+            url,
+            provider=provider,
+            validator=validator,
+            method=method,
+            headers=headers,
+            data=data,
+            referrer=referrer,
+        )
         return result.model_copy(update={"metadata": result.metadata.model_copy(update={"fallback_reason": reason})})
 
 
 def create_default_fetcher() -> FallbackFetcher:
     return FallbackFetcher()
+
+
+def _browser_request_body(data: RequestData | None) -> str | None:
+    if data is None:
+        return None
+    if isinstance(data, bytes):
+        return data.decode()
+    if isinstance(data, str):
+        return data
+    return urlencode(data, doseq=True)
+
+
+def _origin_url(url: str) -> str:
+    parsed = urlsplit(url)
+    return f"{parsed.scheme}://{parsed.netloc}"

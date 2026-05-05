@@ -10,7 +10,7 @@ def main() -> None:
     provider = get_provider(ProviderName.KODEX)
     logger.info("provider=%s", provider.info)
 
-    client = EtfClient("tiger")
+    client = EtfClient("kiwoom")
     logger.info("items=%s", client.fetch_list())
 
 
