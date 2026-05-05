@@ -2,6 +2,7 @@
 node_modules/
 .npm-cache/
 npm-debug.log*
+coverage/
 
 # npm publish artifacts
 cluefin-openapi-*.tgz

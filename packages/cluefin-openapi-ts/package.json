@@ -49,6 +49,7 @@
     "check": "biome check .",
     "typecheck": "tsup --config ./tsup.config.ts --silent",
     "test:unit": "vitest run --config ./vitest.config.ts",
+    "test:coverage": "vitest run --config ./vitest.config.ts --coverage",
     "test:integration": "CLUEFIN_OPENAPI_TS_RUN_INTEGRATION=1 vitest run --config ./vitest.integration.config.ts",
     "test": "npm run test:unit",
     "publish:check": "npm run build && npm run check && npm run typecheck && npm run test",
@@ -63,6 +64,7 @@
     "@biomejs/biome": "^2.3.13",
     "@types/node": "^24.3.0",
     "@types/ws": "^8.18.1",
+    "@vitest/coverage-v8": "^3.2.4",
     "tsup": "^8.5.0",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
