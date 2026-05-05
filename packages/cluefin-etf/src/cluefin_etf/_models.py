@@ -29,7 +29,7 @@ class ProviderInfo(BaseModel):
 
     name: ProviderName
     display_name: str
-    homepage_url: str | None = None
+    homepage_url: str
 
 
 class EtfSummary(BaseModel):

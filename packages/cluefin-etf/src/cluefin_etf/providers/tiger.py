@@ -3,4 +3,8 @@ from cluefin_etf._provider import EtfProvider
 
 
 class TigerProvider(EtfProvider):
-    info = ProviderInfo(name=ProviderName.TIGER, display_name="TIGER")
+    info = ProviderInfo(
+        name=ProviderName.TIGER,
+        display_name="TIGER",
+        homepage_url="https://investments.miraeasset.com/magi/index.do",
+    )

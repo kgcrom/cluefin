@@ -3,4 +3,8 @@ from cluefin_etf._provider import EtfProvider
 
 
 class SolProvider(EtfProvider):
-    info = ProviderInfo(name=ProviderName.SOL, display_name="SOL")
+    info = ProviderInfo(
+        name=ProviderName.SOL,
+        display_name="SOL",
+        homepage_url="https://www.soletf.com/ko/main",
+    )
