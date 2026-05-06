@@ -764,6 +764,56 @@ def test_kiwoom_fetch_detail_fetches_pdf_holdings():
     }
 
 
+class KiwoomRenderedHoldingsFallbackFetcher(KiwoomDetailFetcher):
+    def __init__(self) -> None:
+        super().__init__()
+        self.detail_html = (
+            self.detail_html
+            + """
+            <table>
+              <caption>구성종목(PDF) 정보 테이블입니다.</caption>
+              <thead>
+                <tr><th>NO.</th><th>종목명</th><th>종목코드</th><th>비중</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>1</td><td>설정현금액</td><td>CASH00000001</td><td>-</td></tr>
+                <tr><td>2</td><td>현금</td><td>KRD010010001</td><td>-</td></tr>
+                <tr><td>3</td><td>KIWOOM 200</td><td>KR7069660009</td><td>17.20%</td></tr>
+                <tr><td>4</td><td>선물2026년06월물</td><td>KR4A01660005</td><td>0.00%</td></tr>
+              </tbody>
+            </table>
+            """
+        )
+
+    def fetch(self, url: str, *, provider: ProviderName | str, validator=None, **kwargs) -> FetchResult:
+        if url == self.holdings_url:
+            raise FetchError("Kiwoom holdings API failed")
+        return super().fetch(url, provider=provider, validator=validator, **kwargs)
+
+
+def test_kiwoom_fetch_detail_falls_back_to_rendered_pdf_table_when_api_fails():
+    fetcher = KiwoomRenderedHoldingsFallbackFetcher()
+    provider = get_provider("kiwoom", fetcher=fetcher)
+
+    detail = provider.fetch_detail("253250")
+
+    assert [call[0] for call in fetcher.calls] == [fetcher.detail_url]
+    assert detail.holdings_url == f"{fetcher.detail_url}#pdf"
+    assert len(detail.holdings) == 4
+    assert detail.holdings[0].rank == 1
+    assert detail.holdings[0].code == "CASH00000001"
+    assert detail.holdings[0].name == "설정현금액"
+    assert detail.holdings[0].weight is None
+    assert detail.holdings[0].as_of_date == date(2026, 5, 6)
+    assert detail.holdings[2].rank == 3
+    assert detail.holdings[2].code == "KR7069660009"
+    assert detail.holdings[2].name == "KIWOOM 200"
+    assert detail.holdings[2].weight == Decimal("17.20")
+    assert detail.holdings[2].quantity is None
+    assert detail.holdings[2].valuation_amount is None
+    assert set(detail.holdings[2].raw) == {"rank", "itemCode", "itemTitle", "ratio"}
+
+
 class KodexListFetcher:
     def __init__(self) -> None:
         self.calls = []

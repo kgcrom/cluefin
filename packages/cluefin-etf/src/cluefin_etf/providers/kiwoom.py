@@ -8,6 +8,7 @@ from decimal import Decimal
 from bs4 import BeautifulSoup
 from pydantic import BaseModel, ConfigDict, Field
 
+from cluefin_etf._errors import FetchError
 from cluefin_etf._models import EtfDetail, EtfHolding, EtfSummary, FetchResult, ProviderInfo, ProviderName
 from cluefin_etf._provider import EtfProvider
 from cluefin_etf.providers._parsing import (
@@ -71,19 +72,32 @@ class KiwoomProvider(EtfProvider):
         result = self.fetcher.fetch(url, provider=self.name, validator=self.validate_detail_result)
         detail = self.parse_detail_html(code, result.html)
         pdf_date = _pdf_date_from_html(result.html) or _compact_date(detail.as_of_date)
-        holdings_result = self.fetcher.fetch(
-            self.holdings_url,
-            provider=self.name,
-            validator=self.validate_holdings_result,
-            method="POST",
-            headers=self.list_headers,
-            data={"schGubun1": detail.code, "startDate": pdf_date or ""},
-            referrer=url,
-        )
+        holdings_url = self.holdings_url
+        try:
+            holdings_result = self.fetcher.fetch(
+                self.holdings_url,
+                provider=self.name,
+                validator=self.validate_holdings_result,
+                method="POST",
+                headers=self.list_headers,
+                data={"schGubun1": detail.code, "startDate": pdf_date or ""},
+                referrer=url,
+            )
+            holdings = self.parse_holdings_json(holdings_result.html)
+            if not holdings:
+                raise FetchError(f"Kiwoom holdings API returned no rows for {detail.code}")
+        except FetchError:
+            holdings = self.parse_holdings_html(result.html, as_of_date=detail.as_of_date)
+            if not holdings:
+                rendered_result = self.fetcher.fetch(
+                    url, provider=self.name, validator=self.validate_rendered_holdings_result
+                )
+                holdings = self.parse_holdings_html(rendered_result.html, as_of_date=detail.as_of_date)
+            holdings_url = f"{url}#pdf"
         return detail.model_copy(
             update={
-                "holdings_url": self.holdings_url,
-                "holdings": self.parse_holdings_json(holdings_result.html),
+                "holdings_url": holdings_url,
+                "holdings": holdings,
             }
         )
 
@@ -165,6 +179,9 @@ class KiwoomProvider(EtfProvider):
             return False
         return isinstance(payload.get("pdfList"), list)
 
+    def validate_rendered_holdings_result(self, result: FetchResult) -> bool:
+        return bool(_rendered_holdings_table(BeautifulSoup(result.html, "html.parser")))
+
     def parse_holdings_json(self, html: str) -> list[EtfHolding]:
         payload = json.loads(html)
         items = payload.get("pdfList")
@@ -173,6 +190,40 @@ class KiwoomProvider(EtfProvider):
         return [
             _holding_from_pdf_item(index, item) for index, item in enumerate(items, start=1) if isinstance(item, dict)
         ]
+
+    def parse_holdings_html(self, html: str, *, as_of_date: date | None = None) -> list[EtfHolding]:
+        table = _rendered_holdings_table(BeautifulSoup(html, "html.parser"))
+        if table is None:
+            return []
+
+        holdings: list[EtfHolding] = []
+        for row in table.select("tbody tr"):
+            cells = [normalize_space(cell.get_text(" ", strip=True)) for cell in row.find_all("td")]
+            if len(cells) < 4:
+                continue
+            rank = parse_int_text(cells[0])
+            name = cells[1] or None
+            code = cells[2] or None
+            weight = parse_decimal_text(cells[3])
+            holdings.append(
+                EtfHolding(
+                    rank=rank,
+                    code=code,
+                    name=name,
+                    weight=weight,
+                    as_of_date=as_of_date,
+                    raw=compact_raw(
+                        {
+                            "rank": cells[0],
+                            "itemTitle": cells[1],
+                            "itemCode": cells[2],
+                            "ratio": cells[3],
+                        },
+                        ("rank", "itemCode", "itemTitle", "ratio"),
+                    ),
+                )
+            )
+        return holdings
 
     def _parse_list_response(self, html: str) -> KiwoomEtfListResponse:
         return KiwoomEtfListResponse.model_validate_json(html)
@@ -264,6 +315,14 @@ def _basic_info(soup: BeautifulSoup) -> dict[str, str]:
         if key is not None and value is not None:
             values[normalize_space(key.get_text(" ", strip=True))] = normalize_space(value.get_text(" ", strip=True))
     return values
+
+
+def _rendered_holdings_table(soup: BeautifulSoup):
+    for table in soup.find_all("table"):
+        headers = [normalize_space(node.get_text(" ", strip=True)) for node in table.find_all(["th", "td"])]
+        if {"NO.", "종목명", "종목코드", "비중"}.issubset(headers):
+            return table
+    return None
 
 
 def _holding_from_pdf_item(index: int, item: dict[str, object]) -> EtfHolding:
