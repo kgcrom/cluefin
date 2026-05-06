@@ -11,7 +11,15 @@ from cluefin_etf._fetchers import (
     PlaywrightFetcher,
     SimpleHttpFetcher,
 )
-from cluefin_etf._models import EtfDetail, EtfSummary, FetchMetadata, FetchResult, ProviderInfo, ProviderName
+from cluefin_etf._models import (
+    EtfDetail,
+    EtfHolding,
+    EtfSummary,
+    FetchMetadata,
+    FetchResult,
+    ProviderInfo,
+    ProviderName,
+)
 from cluefin_etf._registry import get_provider, list_providers
 
 try:
@@ -23,6 +31,7 @@ __all__ = [
     "CluefinEtfError",
     "EtfClient",
     "EtfDetail",
+    "EtfHolding",
     "EtfSummary",
     "FallbackFetcher",
     "FetchError",

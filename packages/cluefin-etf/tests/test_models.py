@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
-from cluefin_etf import EtfDetail, EtfSummary, FetchMetadata, ProviderName
+from cluefin_etf import EtfDetail, EtfHolding, EtfSummary, FetchMetadata, ProviderName
 
 
 def test_etf_summary_accepts_normalized_optional_fields():
@@ -41,11 +41,25 @@ def test_etf_detail_accepts_normalized_optional_fields():
         as_of_date=date(2026, 5, 5),
         detail_url="https://example.test/detail/102110",
         holdings_url="https://example.test/holdings/102110",
+        holdings=[
+            EtfHolding(
+                rank=1,
+                code="005930",
+                name="삼성전자",
+                quantity=Decimal("7039"),
+                valuation_amount=Decimal("1636567500"),
+                weight=Decimal("31.02"),
+                as_of_date=date(2026, 5, 5),
+                raw={"provider_specific": "holding"},
+            )
+        ],
         raw={"provider_specific": "value"},
     )
 
     assert detail.provider == ProviderName.TIGER
     assert detail.expense_ratio == Decimal("0.05")
+    assert detail.holdings[0].code == "005930"
+    assert detail.holdings[0].raw["provider_specific"] == "holding"
     assert detail.raw["provider_specific"] == "value"
 
 

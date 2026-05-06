@@ -51,6 +51,19 @@ class EtfSummary(BaseModel):
     raw: dict[str, Any] = Field(default_factory=dict)
 
 
+class EtfHolding(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    rank: int | None = None
+    code: str | None = None
+    name: str | None = None
+    quantity: Decimal | None = None
+    valuation_amount: Decimal | None = None
+    weight: Decimal | None = None
+    as_of_date: date | None = None
+    raw: dict[str, Any] = Field(default_factory=dict)
+
+
 class EtfDetail(BaseModel):
     model_config = ConfigDict(frozen=True)
 
@@ -67,6 +80,7 @@ class EtfDetail(BaseModel):
     as_of_date: date | None = None
     detail_url: str | None = None
     holdings_url: str | None = None
+    holdings: list[EtfHolding] = Field(default_factory=list)
     raw: dict[str, Any] = Field(default_factory=dict)
 
 

@@ -1,14 +1,25 @@
 from __future__ import annotations
 
+import json
 import re
+from datetime import date
 from decimal import Decimal, InvalidOperation
-from urllib.parse import urljoin
+from urllib.parse import urlencode, urljoin
 
 from bs4 import BeautifulSoup
 from pydantic import BaseModel, ConfigDict, Field
 
-from cluefin_etf._models import EtfSummary, FetchResult, ProviderInfo, ProviderName
+from cluefin_etf._models import EtfDetail, EtfHolding, EtfSummary, FetchResult, ProviderInfo, ProviderName
 from cluefin_etf._provider import EtfProvider
+from cluefin_etf.providers._parsing import (
+    compact_raw,
+    definition_value,
+    normalize_space,
+    parse_date_text,
+    parse_decimal_text,
+    parse_int_text,
+    parse_korean_eok_amount,
+)
 
 
 class SolEtfListItem(BaseModel):
@@ -28,8 +39,12 @@ class SolEtfListItem(BaseModel):
 
 class SolProvider(EtfProvider):
     list_url = "https://www.soletf.com/ko/fund"
-    detail_url_template = None
+    detail_url_template = "https://www.soletf.com/ko/fund/etf/{code}"
     detail_url_base = "https://www.soletf.com/ko/fund/etf"
+    holdings_api_url = "https://www.soletf.com/api/fund/pdfList"
+    holdings_headers = {
+        "Accept": "application/json",
+    }
 
     info = ProviderInfo(
         name=ProviderName.SOL,
@@ -40,8 +55,122 @@ class SolProvider(EtfProvider):
     def validate_list_result(self, result: FetchResult) -> bool:
         return bool(self._parse_list_items(result.html))
 
+    def fetch_detail(self, code: str) -> EtfDetail:
+        fund_code = self._resolve_detail_fund_code(code)
+        url = f"{self.detail_url_base}/{fund_code}"
+        result = self.fetcher.fetch(url, provider=self.name, validator=self.validate_detail_result)
+        holdings_page_url = f"{url}?tabIndex=3"
+        holdings_page = self.fetcher.fetch(
+            holdings_page_url,
+            provider=self.name,
+            validator=self.validate_holdings_page_result,
+        )
+        detail = self.parse_detail_html(code, result.html)
+        work_date = _holdings_work_date(holdings_page.html)
+        if work_date is None:
+            return detail.model_copy(
+                update={
+                    "holdings_url": holdings_page_url,
+                    "holdings": self.parse_holdings_html(holdings_page.html),
+                }
+            )
+
+        holdings_url = f"{self.holdings_api_url}?{urlencode({'fund_cd': fund_code, 'work_dt': work_date})}"
+        holdings_result = self.fetcher.fetch(
+            holdings_url,
+            provider=self.name,
+            validator=self.validate_holdings_result,
+            headers=self.holdings_headers,
+            referrer=holdings_page_url,
+        )
+        return detail.model_copy(
+            update={
+                "holdings_url": holdings_url,
+                "holdings": self.parse_holdings_json(holdings_result.html),
+            }
+        )
+
     def parse_list_html(self, html: str) -> list[EtfSummary]:
         return [self._to_summary(item) for item in self._parse_list_items(html)]
+
+    def validate_detail_result(self, result: FetchResult) -> bool:
+        detail = self.parse_detail_html("", result.html)
+        return bool(detail.code and detail.name)
+
+    def parse_detail_html(self, code: str, html: str) -> EtfDetail:
+        soup = BeautifulSoup(html, "html.parser")
+        title = soup.select_one(".fv-name") or soup.find("h1")
+        name, etf_code = _parse_name_and_code(normalize_space(title.get_text(" ", strip=True)) if title else "")
+        badges = [normalize_space(node.get_text(" ", strip=True)) for node in soup.select(".i-bdg-g .i-bdg")]
+        pension_flags = [badge for badge in badges if badge in {"개인연금", "퇴직연금"}]
+        category_badges = [badge for badge in badges if badge not in pension_flags]
+
+        return EtfDetail(
+            provider=self.name,
+            code=etf_code or code,
+            name=name,
+            category=" / ".join(category_badges) if category_badges else None,
+            benchmark=_base_index_name(soup),
+            listing_date=parse_date_text(definition_value(soup, "상장일")),
+            nav=_fund_head_decimal(soup, "기준가격"),
+            aum=parse_korean_eok_amount(definition_value(soup, "순자산 총액")),
+            expense_ratio=parse_decimal_text(definition_value(soup, "총보수")),
+            detail_url=f"{self.detail_url_base}/{_fund_code_from_html(html) or code}",
+            raw={
+                "inputCode": code,
+                "fundCode": _fund_code_from_html(html),
+                "badges": badges,
+                "pensionFlags": pension_flags,
+            },
+        )
+
+    def validate_holdings_page_result(self, result: FetchResult) -> bool:
+        soup = BeautifulSoup(result.html, "html.parser")
+        return soup.select_one("#pdf-table") is not None or _holdings_work_date(result.html) is not None
+
+    def validate_holdings_result(self, result: FetchResult) -> bool:
+        try:
+            payload = json.loads(result.html)
+        except json.JSONDecodeError:
+            return False
+        return isinstance(payload, list)
+
+    def parse_holdings_json(self, html: str) -> list[EtfHolding]:
+        payload = json.loads(html)
+        if not isinstance(payload, list):
+            return []
+        return [
+            _holding_from_pdf_item(index, item) for index, item in enumerate(payload, start=1) if isinstance(item, dict)
+        ]
+
+    def parse_holdings_html(self, html: str) -> list[EtfHolding]:
+        soup = BeautifulSoup(html, "html.parser")
+        holdings: list[EtfHolding] = []
+        for row in soup.select("#pdf-table tbody tr"):
+            cells = [normalize_space(cell.get_text(" ", strip=True)) for cell in row.find_all("td")]
+            if len(cells) < 5:
+                continue
+            holdings.append(
+                EtfHolding(
+                    rank=parse_int_text(cells[0]),
+                    name=cells[1] or None,
+                    quantity=parse_decimal_text(cells[2]),
+                    valuation_amount=parse_decimal_text(cells[3]),
+                    weight=parse_decimal_text(cells[4]),
+                    as_of_date=parse_date_text(_holdings_work_date(html)),
+                    raw=compact_raw(
+                        {
+                            "rank": cells[0],
+                            "name": cells[1],
+                            "quantity": cells[2],
+                            "valuationAmount": cells[3],
+                            "weight": cells[4],
+                        },
+                        ("rank", "name", "quantity", "valuationAmount", "weight"),
+                    ),
+                )
+            )
+        return holdings
 
     def _parse_list_items(self, html: str) -> list[SolEtfListItem]:
         soup = BeautifulSoup(html, "html.parser")
@@ -66,6 +195,12 @@ class SolProvider(EtfProvider):
             detail_url=item.detail_url,
             raw=item.raw,
         )
+
+    def _resolve_detail_fund_code(self, code: str) -> str:
+        for summary in self.fetch_list():
+            if summary.code == code and summary.raw.get("fundCode"):
+                return str(summary.raw["fundCode"])
+        return code
 
 
 def _parse_sol_row(row) -> SolEtfListItem | None:
@@ -151,3 +286,63 @@ def _parse_return_cells(cells: list) -> dict[str, str | None]:
         text = cells[offset].get_text(" ", strip=True)
         values[label] = text or None
     return values
+
+
+def _fund_head_decimal(soup: BeautifulSoup, label: str) -> Decimal | None:
+    for node in soup.select(".fv-exp dl"):
+        title = node.find("dt")
+        if title is None or label not in normalize_space(title.get_text(" ", strip=True)):
+            continue
+        value = node.select_one(".fd-pri")
+        if value is not None:
+            return parse_decimal_text(value.get_text(" ", strip=True))
+    return None
+
+
+def _base_index_name(soup: BeautifulSoup) -> str | None:
+    for container in soup.select(".cont-col"):
+        title = container.select_one(".g-title, h3")
+        if title is None or "기초지수정보" not in normalize_space(title.get_text(" ", strip=True)):
+            continue
+        node = container.select_one("dl.g-conts dt")
+        return normalize_space(node.get_text(" ", strip=True)) if node else None
+    return None
+
+
+def _fund_code_from_html(html: str) -> str | None:
+    for match in re.finditer(r"/ko/fund/etf/(?P<fund_code>[^/?#'\"]+)", html):
+        fund_code = match.group("fund_code")
+        if fund_code not in {"pds", "summary"}:
+            return fund_code
+    return None
+
+
+def _holdings_work_date(html: str) -> str | None:
+    soup = BeautifulSoup(html, "html.parser")
+    node = soup.select_one("#f-pdf-calendar")
+    value = node.get("value") if node is not None else None
+    if not isinstance(value, str) or not value.strip():
+        return None
+    return value.replace("-", "").replace(".", "")
+
+
+def _holding_from_pdf_item(index: int, item: dict[str, object]) -> EtfHolding:
+    return EtfHolding(
+        rank=index,
+        code=str(item.get("STOCK_CODE")) if item.get("STOCK_CODE") is not None else None,
+        name=str(item.get("SEC_NM")) if item.get("SEC_NM") is not None else None,
+        quantity=parse_decimal_text(str(item.get("QTY"))) if item.get("QTY") is not None else None,
+        valuation_amount=parse_decimal_text(str(item.get("PRICE"))) if item.get("PRICE") is not None else None,
+        weight=parse_decimal_text(str(item.get("WT_DISP"))) if item.get("WT_DISP") is not None else None,
+        as_of_date=_parse_compact_sol_date(item.get("WORK_DT")),
+        raw=compact_raw(item, ("WORK_DT", "SEQ_NO", "STOCK_CODE", "SEC_NM", "QTY", "PRICE", "WT_DISP")),
+    )
+
+
+def _parse_compact_sol_date(value: object) -> date | None:
+    if value is None:
+        return None
+    text = str(value)
+    if re.fullmatch(r"\d{8}", text):
+        return parse_date_text(f"{text[:4]}.{text[4:6]}.{text[6:8]}")
+    return parse_date_text(text)
