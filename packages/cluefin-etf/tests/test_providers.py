@@ -212,6 +212,15 @@ def _kiwoom_fetch_result(payload: dict) -> FetchResult:
     )
 
 
+def _fetch_result(provider_name: ProviderName, html: str) -> FetchResult:
+    return FetchResult(
+        html=html,
+        metadata=FetchMetadata(
+            provider=provider_name, url=f"https://example.test/{provider_name.value}", strategy="http"
+        ),
+    )
+
+
 def test_kiwoom_list_validator_rejects_empty_json_object():
     provider = get_provider("kiwoom")
 
@@ -302,6 +311,18 @@ def test_ace_fetch_list_loads_allfund_chunk_and_maps_summaries():
     assert items[1].raw["pensionFlags"] == []
     assert items[2].category == "국내채권"
     assert items[2].raw["pensionFlags"] == ["퇴직연금"]
+
+
+def test_ace_validators_reject_missing_or_malformed_payloads():
+    provider = get_provider("ace")
+
+    assert provider.validate_list_result(_fetch_result(ProviderName.ACE, "<html></html>")) is False
+    assert provider._validate_chunk_result(_fetch_result(ProviderName.ACE, "children:[]")) is False
+    assert provider._validate_detail_page_result(_fetch_result(ProviderName.ACE, "<html></html>")) is False
+    assert provider.validate_detail_result(_fetch_result(ProviderName.ACE, "{")) is False
+    assert provider.validate_detail_result(_fetch_result(ProviderName.ACE, '{"fundCd":"KR5101877748"}')) is False
+    assert provider.validate_holdings_result(_fetch_result(ProviderName.ACE, "{")) is False
+    assert provider.validate_holdings_result(_fetch_result(ProviderName.ACE, '{"pdfList":{}}')) is False
 
 
 class AceDetailFetcher:
@@ -507,6 +528,16 @@ def test_sol_fetch_list_parses_server_rendered_table_and_maps_summaries():
     assert items[1].category == "국내주식 / 메가트렌드"
 
 
+def test_sol_validators_reject_missing_or_malformed_payloads():
+    provider = get_provider("sol")
+
+    assert provider.validate_list_result(_fetch_result(ProviderName.SOL, "<html></html>")) is False
+    assert provider.validate_detail_result(_fetch_result(ProviderName.SOL, "<html></html>")) is False
+    assert provider.validate_holdings_page_result(_fetch_result(ProviderName.SOL, "<html></html>")) is False
+    assert provider.validate_holdings_result(_fetch_result(ProviderName.SOL, "{")) is False
+    assert provider.validate_holdings_result(_fetch_result(ProviderName.SOL, '{"pdfList":[]}')) is False
+
+
 def test_sol_parse_detail_html_maps_server_rendered_detail_page():
     provider = get_provider("sol")
     html = """
@@ -634,6 +665,43 @@ def test_sol_fetch_detail_fetches_pdf_holdings():
     assert detail.holdings[0].as_of_date == date(2026, 5, 6)
     assert set(detail.holdings[0].raw) == {"WORK_DT", "SEQ_NO", "STOCK_CODE", "SEC_NM", "QTY", "PRICE", "WT_DISP"}
     assert "유의사항" not in str(detail.raw)
+
+
+class SolRenderedHoldingsFallbackFetcher(SolDetailFetcher):
+    def __init__(self) -> None:
+        super().__init__()
+        self.responses[self.holdings_page_url] = """
+        <html><body>
+          <table id="pdf-table">
+            <tbody>
+              <tr><td>1</td><td>한미반도체</td><td>981</td><td>370,818,000</td><td>23.33%</td></tr>
+            </tbody>
+          </table>
+        </body></html>
+        """
+
+
+def test_sol_fetch_detail_uses_rendered_holdings_table_when_work_date_is_missing():
+    fetcher = SolRenderedHoldingsFallbackFetcher()
+    provider = get_provider("sol", fetcher=fetcher)
+
+    detail = provider.fetch_detail("455850")
+
+    assert [call[0] for call in fetcher.calls] == [
+        fetcher.list_url,
+        fetcher.detail_url,
+        fetcher.holdings_page_url,
+    ]
+    assert detail.holdings_url == fetcher.holdings_page_url
+    assert len(detail.holdings) == 1
+    assert detail.holdings[0].rank == 1
+    assert detail.holdings[0].code is None
+    assert detail.holdings[0].name == "한미반도체"
+    assert detail.holdings[0].quantity == Decimal("981")
+    assert detail.holdings[0].valuation_amount == Decimal("370818000")
+    assert detail.holdings[0].weight == Decimal("23.33")
+    assert detail.holdings[0].as_of_date is None
+    assert set(detail.holdings[0].raw) == {"rank", "name", "quantity", "valuationAmount", "weight"}
 
 
 def test_kiwoom_parse_detail_html_maps_server_rendered_detail_page():
@@ -901,6 +969,23 @@ def test_kodex_fetch_list_collects_all_pages_and_maps_summaries():
     assert items[-1].code == "261220"
 
 
+def test_kodex_validators_reject_missing_or_malformed_payloads():
+    provider = get_provider("kodex")
+
+    assert provider.validate_list_result(_fetch_result(ProviderName.KODEX, "{")) is False
+    assert (
+        provider.validate_list_result(
+            _fetch_result(ProviderName.KODEX, json.dumps([{"fNm": "KODEX AI전력핵심설비"}], ensure_ascii=False))
+        )
+        is False
+    )
+    assert provider.validate_detail_result(_fetch_result(ProviderName.KODEX, "<html></html>")) is False
+    assert provider.validate_product_result(_fetch_result(ProviderName.KODEX, '{"pdf":{}}')) is False
+    assert provider.validate_holdings_result(_fetch_result(ProviderName.KODEX, "{")) is False
+    assert provider.validate_holdings_result(_fetch_result(ProviderName.KODEX, '{"pdf":{}}')) is False
+    assert provider.validate_rendered_holdings_result(_fetch_result(ProviderName.KODEX, "<table></table>")) is False
+
+
 class TigerListFetcher:
     search_url = "https://investments.miraeasset.com/tigeretf/ko/product/search/list.ajax"
 
@@ -970,6 +1055,16 @@ def test_tiger_fetch_list_maps_search_rows_to_summaries():
             },
         )
     ]
+
+
+def test_tiger_validators_reject_missing_payloads():
+    provider = get_provider("tiger")
+
+    assert provider.validate_list_result(_fetch_result(ProviderName.TIGER, "<html></html>")) is False
+    assert provider.validate_detail_result(_fetch_result(ProviderName.TIGER, "<html></html>")) is False
+    assert provider.validate_holdings_page_result(_fetch_result(ProviderName.TIGER, "<html></html>")) is False
+    assert provider.validate_holdings_result(_fetch_result(ProviderName.TIGER, "<table></table>")) is False
+    assert provider._validate_search_result(_fetch_result(ProviderName.TIGER, "<html></html>")) is False
 
 
 class KodexDetailFetcher:
@@ -1059,6 +1154,45 @@ def test_kodex_fetch_detail_parses_json_ld_detail_page():
     assert detail.holdings[0].weight == Decimal("24.6")
     assert detail.holdings[0].as_of_date == date(2026, 5, 6)
     assert set(detail.holdings[0].raw) == {"rank", "itmNo", "secNm", "applyQ", "evalA", "ratio"}
+
+
+class KodexTickerResolveDetailFetcher(KodexDetailFetcher):
+    list_url_page_1 = (
+        "https://www.samsungfund.com/api/v1/kodex/product.do?srchTerm=w&ordrSort=DESC&ordrColm=YIELD_WEEK&pageNo=1"
+    )
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.responses[self.list_url_page_1] = json.dumps(
+            [
+                {
+                    "fNm": "KODEX AI전력핵심설비",
+                    "stkTicker": "487240",
+                    "fId": "2ETFN7",
+                    "totalCnt": 1,
+                }
+            ],
+            ensure_ascii=False,
+        )
+
+
+def test_kodex_fetch_detail_resolves_ticker_to_fund_id_before_fetching_detail():
+    fetcher = KodexTickerResolveDetailFetcher()
+    provider = get_provider("kodex", fetcher=fetcher)
+
+    detail = provider.fetch_detail("487240")
+
+    assert [call[0] for call in fetcher.calls] == [
+        fetcher.list_url_page_1,
+        fetcher.detail_url,
+        fetcher.product_url,
+        fetcher.holdings_url,
+    ]
+    assert detail.provider == ProviderName.KODEX
+    assert detail.code == "487240"
+    assert detail.name == "KODEX AI전력핵심설비"
+    assert detail.holdings_url == fetcher.holdings_url
+    assert detail.holdings[0].code == "010120"
 
 
 class KodexRenderedHoldingsFallbackFetcher(KodexDetailFetcher):
@@ -1240,3 +1374,32 @@ def test_tiger_fetch_detail_resolves_short_code_and_parses_detail_page():
     assert detail.holdings[0].as_of_date == date(2026, 5, 4)
     assert "유의사항" not in str(detail.raw)
     assert set(detail.holdings[0].raw) == {"code", "name", "quantity", "valuationAmount", "weight", "return"}
+
+
+class TigerEmptySearchFetcher:
+    search_url = "https://investments.miraeasset.com/tigeretf/ko/product/search/list.ajax"
+
+    def __init__(self) -> None:
+        self.calls = []
+
+    def fetch(self, url: str, *, provider: ProviderName | str, validator=None, **kwargs) -> FetchResult:
+        result = FetchResult(
+            html="<html></html>",
+            metadata=FetchMetadata(provider=ProviderName(provider), url=url, strategy="http"),
+        )
+        self.calls.append((url, provider, kwargs))
+        assert validator is not None
+        if validator(result) is False:
+            raise FetchError("Fallback fetch result was rejected")
+        return result
+
+
+def test_tiger_fetch_detail_raises_fetch_error_when_short_code_search_has_no_rows():
+    fetcher = TigerEmptySearchFetcher()
+    provider = get_provider("tiger", fetcher=fetcher)
+
+    with pytest.raises(FetchError):
+        provider.fetch_detail("102110")
+
+    assert [call[0] for call in fetcher.calls] == [fetcher.search_url]
+    assert fetcher.calls[0][2]["data"]["q"] == "102110"
