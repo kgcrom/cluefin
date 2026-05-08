@@ -65,6 +65,7 @@ def main() -> None:
               uv run python packages/cluefin-etf/examples/fetch_detail.py ace KR5101877748
               uv run python packages/cluefin-etf/examples/fetch_detail.py kiwoom 253250
               uv run python packages/cluefin-etf/examples/fetch_detail.py kodex 2ETFN7
+              uv run python packages/cluefin-etf/examples/fetch_detail.py rise 252400
               uv run python packages/cluefin-etf/examples/fetch_detail.py sol 210980
               uv run python packages/cluefin-etf/examples/fetch_detail.py tiger 102110
             """

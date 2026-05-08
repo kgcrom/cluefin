@@ -40,6 +40,7 @@ def main() -> None:
               uv run python packages/cluefin-etf/examples/fetch_list.py ace --limit 5
               uv run python packages/cluefin-etf/examples/fetch_list.py kiwoom --limit 5
               uv run python packages/cluefin-etf/examples/fetch_list.py kodex --limit 5
+              uv run python packages/cluefin-etf/examples/fetch_list.py rise --limit 5
               uv run python packages/cluefin-etf/examples/fetch_list.py sol --limit 5
               uv run python packages/cluefin-etf/examples/fetch_list.py tiger --limit 5
             """

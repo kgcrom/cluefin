@@ -10,7 +10,6 @@ from cluefin_etf import (
     FetchError,
     FetchMetadata,
     FetchResult,
-    ProviderCapabilityError,
     ProviderName,
     ProviderNotFoundError,
     get_provider,
@@ -49,40 +48,288 @@ def test_unknown_provider_raises_provider_not_found():
         get_provider("unknown")
 
 
-@pytest.mark.parametrize(
-    "provider_name",
-    [
-        name
-        for name in PROVIDER_CLASSES
-        if name not in {ProviderName.KODEX, ProviderName.TIGER, ProviderName.ACE, ProviderName.SOL, ProviderName.KIWOOM}
-    ],
-)
-def test_scaffolded_provider_list_methods(provider_name):
-    provider = get_provider(provider_name)
+class RiseListFetcher:
+    list_url = "https://www.riseetf.co.kr/prod/finder/listJquery"
 
-    with pytest.raises(ProviderCapabilityError):
-        provider.fetch_list()
+    def __init__(self) -> None:
+        self.calls = []
 
-
-@pytest.mark.parametrize("provider_name", list(PROVIDER_CLASSES))
-def test_scaffolded_provider_detail_methods(provider_name):
-    if provider_name is not ProviderName.RISE:
-        pytest.skip("detail fetching is implemented for non-RISE providers")
-
-    provider = get_provider(provider_name)
-
-    with pytest.raises(ProviderCapabilityError):
-        provider.fetch_detail("069500")
+    def fetch(self, url: str, *, provider: ProviderName | str, validator=None, **kwargs) -> FetchResult:
+        html = _rise_list_html(kwargs["data"]["page"])
+        result = FetchResult(
+            html=html,
+            metadata=FetchMetadata(provider=ProviderName(provider), url=url, strategy="http"),
+        )
+        self.calls.append((url, provider, kwargs))
+        assert validator is not None
+        assert validator(result) is True
+        return result
 
 
-def test_parse_hooks_are_not_implemented_yet():
+def test_rise_fetch_list_collects_pages_and_maps_summaries():
+    fetcher = RiseListFetcher()
+    provider = get_provider("rise", fetcher=fetcher)
+
+    items = provider.fetch_list()
+
+    assert [call[2]["data"]["page"] for call in fetcher.calls] == ["1", "2"]
+    assert fetcher.calls[0][0] == fetcher.list_url
+    assert fetcher.calls[0][2]["method"] == "POST"
+    assert fetcher.calls[0][2]["data"]["searchFieldType"] == "list"
+    assert items == [
+        EtfSummary(
+            provider=ProviderName.RISE,
+            code="252400",
+            name="RISE 200선물레버리지",
+            category="레버리지 /인버스",
+            listing_date=date(2016, 9, 12),
+            nav=Decimal("142558.89"),
+            expense_ratio=Decimal("0.022"),
+            detail_url="https://www.riseetf.co.kr/prod/finderDetail/4447",
+            raw={
+                "productId": "4447",
+                "tags": ["레버리지 /인버스", "패시브"],
+                "returns": {
+                    "1개월": "94.71",
+                    "3개월": "118.14",
+                    "6개월": "280.71",
+                    "1년": "894.81",
+                    "3년": "905.10",
+                    "상장이후": "1,338.73",
+                },
+            },
+        ),
+        EtfSummary(
+            provider=ProviderName.RISE,
+            code="367760",
+            name="RISE 네트워크인프라",
+            category="국내주식 / 테마",
+            listing_date=date(2020, 10, 29),
+            nav=Decimal("55516.95"),
+            expense_ratio=Decimal("0.45"),
+            detail_url="https://www.riseetf.co.kr/prod/finderDetail/44A7",
+            raw={
+                "productId": "44A7",
+                "tags": ["국내주식", "테마", "개인연금", "퇴직연금", "액티브"],
+                "returns": {
+                    "1개월": "62.11",
+                    "3개월": "103.80",
+                    "6개월": "177.97",
+                    "1년": "468.85",
+                    "3년": "613.62",
+                    "상장이후": "476.73",
+                },
+            },
+        ),
+    ]
+
+
+def test_rise_validators_reject_missing_payloads():
     provider = get_provider("rise")
 
-    with pytest.raises(NotImplementedError):
-        provider.parse_list_html("<html></html>")
+    assert provider.validate_list_result(_fetch_result(ProviderName.RISE, "<html></html>")) is False
+    assert provider.validate_detail_result(_fetch_result(ProviderName.RISE, "<html></html>")) is False
+    assert provider.validate_holdings_result(_fetch_result(ProviderName.RISE, "<html></html>")) is False
 
-    with pytest.raises(NotImplementedError):
-        provider.parse_detail_html("069500", "<html></html>")
+
+class RiseDetailFetcher(RiseListFetcher):
+    detail_url = "https://www.riseetf.co.kr/prod/finderDetail/4447"
+
+    def fetch(self, url: str, *, provider: ProviderName | str, validator=None, **kwargs) -> FetchResult:
+        html = _rise_detail_html() if url == self.detail_url else _rise_list_html(kwargs["data"]["page"])
+        result = FetchResult(
+            html=html,
+            metadata=FetchMetadata(provider=ProviderName(provider), url=url, strategy="http"),
+        )
+        self.calls.append((url, provider, kwargs))
+        assert validator is not None
+        assert validator(result) is True
+        return result
+
+
+def test_rise_fetch_detail_resolves_ticker_and_parses_detail_page():
+    fetcher = RiseDetailFetcher()
+    provider = get_provider("rise", fetcher=fetcher)
+
+    detail = provider.fetch_detail("252400")
+
+    assert [call[0] for call in fetcher.calls] == [fetcher.list_url, fetcher.list_url, fetcher.detail_url]
+    assert fetcher.calls[0][2]["data"]["page"] == "1"
+    assert fetcher.calls[1][2]["data"]["page"] == "2"
+    assert detail.provider == ProviderName.RISE
+    assert detail.code == "252400"
+    assert detail.name == "RISE 200선물레버리지"
+    assert detail.category == "레버리지 /인버스"
+    assert detail.benchmark == "코스피200 선물지수(F-KOSPI200)"
+    assert detail.listing_date == date(2016, 9, 12)
+    assert detail.nav == Decimal("142558")
+    assert detail.aum == Decimal("128303002429")
+    assert detail.expense_ratio == Decimal("0.022")
+    assert detail.as_of_date == date(2026, 5, 8)
+    assert detail.detail_url == "https://www.riseetf.co.kr/prod/finderDetail/4447"
+    assert detail.holdings_url == "https://www.riseetf.co.kr/prod/finderDetail/4447#pdf"
+    assert detail.raw["productId"] == "4447"
+    assert detail.raw["tags"] == ["레버리지 /인버스", "패시브"]
+    assert len(detail.holdings) == 2
+    assert detail.holdings[0].rank == 1
+    assert detail.holdings[0].name == "선물2026년06월물"
+    assert detail.holdings[0].code == "KR4A01660005"
+    assert detail.holdings[0].quantity == Decimal("87.55")
+    assert detail.holdings[0].weight == Decimal("177.9")
+    assert detail.holdings[0].valuation_amount == Decimal("25361046250")
+    assert detail.holdings[0].as_of_date == date(2026, 5, 8)
+    assert detail.holdings[1].name == "설정현금액"
+    assert set(detail.holdings[0].raw) == {"rank", "name", "code", "quantity", "weight", "valuationAmount"}
+
+
+def test_rise_fetch_detail_accepts_product_id_without_list_resolution():
+    fetcher = RiseDetailFetcher()
+    provider = get_provider("rise", fetcher=fetcher)
+
+    detail = provider.fetch_detail("4447")
+
+    assert [call[0] for call in fetcher.calls] == [fetcher.detail_url]
+    assert detail.code == "252400"
+
+
+def _rise_list_html(page: str) -> str:
+    rows = """
+    <tr data-class="dataList">
+      <th scope="row">
+        <span class="tag_type01">레버리지<br/>/인버스</span>
+        <br/>
+        <span class="tag_type03">패시브</span>
+        <p><a href="/prod/finderDetail/4447">RISE 200선물레버리지</a></p>
+        <span class="code">(252400)</span>
+      </th>
+      <td>142,558.89</td>
+      <td>연 0.022</td>
+      <td><span class="arrow up">94.71<span class="blind">상승</span></span></td>
+      <td><span class="arrow up">118.14<span class="blind">상승</span></span></td>
+      <td><span class="arrow up">280.71<span class="blind">상승</span></span></td>
+      <td><span class="arrow up">894.81<span class="blind">상승</span></span></td>
+      <td><span class="arrow up">905.10<span class="blind">상승</span></span></td>
+      <td><span class="arrow up">1,338.73<span class="blind">상승</span></span></td>
+      <td style="text-align: center;">2016.09.12</td>
+    </tr>
+    """
+    if page == "2":
+        rows += """
+        <tr data-class="dataList">
+          <th scope="row">
+            <span class="tag_type01">국내주식</span>
+            <span class="tag_type02">테마</span>
+            <br/>
+            <span class="tag_type03">개인연금</span>
+            <span class="tag_type03">퇴직연금</span>
+            <span class="tag_type03">액티브</span>
+            <p><a href="/prod/finderDetail/44A7">RISE 네트워크인프라</a></p>
+            <span class="code">(367760)</span>
+          </th>
+          <td>55,516.95</td>
+          <td>연 0.45</td>
+          <td><span class="arrow up">62.11<span class="blind">상승</span></span></td>
+          <td><span class="arrow up">103.80<span class="blind">상승</span></span></td>
+          <td><span class="arrow up">177.97<span class="blind">상승</span></span></td>
+          <td><span class="arrow up">468.85<span class="blind">상승</span></span></td>
+          <td><span class="arrow up">613.62<span class="blind">상승</span></span></td>
+          <td><span class="arrow up">476.73<span class="blind">상승</span></span></td>
+          <td style="text-align: center;">2020.10.29</td>
+        </tr>
+        """
+    return f"""
+    <table>
+      <tbody>{rows}</tbody>
+    </table>
+    <a href="javascript:;" class="btn btn_index_more" data-class="more" data-value='{{"totalCount":"2"}}'>
+      더보기 <span class="cnt" data-class="cnt">( 12 / 2 )</span>
+    </a>
+    """
+
+
+def _rise_detail_html() -> str:
+    return """
+    <html>
+      <head><meta property="og:url" content="https://www.riseetf.co.kr/prod/finderDetail/4447"/></head>
+      <body>
+        <main>
+          <div class="page_visual prod_detail_visual">
+            <div class="tag_area">
+              <span class="tag_type04">레버리지<br/>/인버스</span>
+              <span class="tag_type05">패시브</span>
+            </div>
+            <h2 class="page_title prod_title">RISE 200선물레버리지 <span>(252400)</span></h2>
+            <div class="date_info">2026.05.08 기준</div>
+          </div>
+          <table>
+            <tbody>
+              <tr>
+                <th scope="col"><strong>ETF명(종목번호)</strong></th>
+                <th scope="col"><strong><span class="blind">툴팁 열기</span>기초지수</strong></th>
+                <th scope="col"><strong>상장일</strong></th>
+                <th scope="col"><strong>설정단위(CU)</strong></th>
+                <th scope="col"><strong>순 자산 규모(원)</strong></th>
+              </tr>
+              <tr class="no_border">
+                <td>KB RISE 200선물레버리지 증권 상장지수 투자신탁(주식-파생형)<br/>(252400)</td>
+                <td>코스피200 선물지수(F-KOSPI200)</td>
+                <td>2016.09.12</td>
+                <td>100,000</td>
+                <td>128,303,002,429</td>
+              </tr>
+              <tr>
+                <th scope="col"><strong>수탁은행</strong></th>
+                <th scope="col"><strong><span class="blind">툴팁 열기</span>현재가(원)</strong></th>
+                <th scope="col"><strong><span class="blind">툴팁 열기</span>기준가격(NAV)</strong></th>
+                <th scope="col"><strong>거래량(주)</strong></th>
+                <th scope="col"></th>
+              </tr>
+              <tr class="no_border">
+                <td>한국씨티은행</td>
+                <td>141,310<br/>※ 전 영업일 종가 기준</td>
+                <td>142,558</td>
+                <td>51,162</td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+          <table>
+            <tbody>
+              <tr>
+                <th scope="col"><strong>총 보수(%)</strong></th>
+                <th scope="col"><strong>분배금 지급 기준일</strong></th>
+              </tr>
+              <tr class="no_border">
+                <td>연 0.022% (지정참가회사 : 0.001%)</td>
+                <td>회계기간 종료일</td>
+              </tr>
+            </tbody>
+          </table>
+          <table class="tr_border align_center_m">
+            <caption>구성종목(PDF) 현황: 번호, 종목명, 종목코드, 수량(주), 보유비중(%), 평가금액(원) 표</caption>
+            <tbody data-class="tab3PdfList">
+              <tr>
+                <th class="center" scope="row">1</th>
+                <td class="align_center">선물2026년06월물</td>
+                <td class="align_center">KR4A01660005</td>
+                <td class="align_center">87.55</td>
+                <td class="align_center">177.9</td>
+                <td class="align_center">25,361,046,250</td>
+              </tr>
+              <tr>
+                <th class="center" scope="row">2</th>
+                <td class="align_center">설정현금액</td>
+                <td class="align_center">CASH00000001</td>
+                <td class="align_center">14,255,889,158</td>
+                <td class="align_center">100</td>
+                <td class="align_center">14,255,889,158</td>
+              </tr>
+            </tbody>
+          </table>
+        </main>
+      </body>
+    </html>
+    """
 
 
 class ValidatingProvider(EtfProvider):

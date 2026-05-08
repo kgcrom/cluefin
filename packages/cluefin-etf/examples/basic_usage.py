@@ -21,7 +21,7 @@ def log_sample_items(provider: ProviderName, items: list[EtfSummary]) -> None:
 
 
 def main() -> None:
-    for provider_name in (ProviderName.KODEX, ProviderName.KIWOOM):
+    for provider_name in (ProviderName.KODEX, ProviderName.KIWOOM, ProviderName.RISE):
         provider = get_provider(provider_name)
         logger.info("provider=%s", provider.info)
 

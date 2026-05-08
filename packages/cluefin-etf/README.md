@@ -9,12 +9,12 @@ interfaces for KODEX, TIGER, RISE, ACE, SOL, and Kiwoom ETF pages.
 
 | Provider | `fetch_list` | `fetch_detail` |
 | --- | --- | --- |
-| KODEX | Implemented | Not implemented |
-| TIGER | Not implemented | Not implemented |
-| RISE | Not implemented | Not implemented |
-| ACE | Implemented | Not implemented |
-| SOL | Implemented | Not implemented |
-| Kiwoom | Implemented | Not implemented |
+| KODEX | Implemented | Implemented |
+| TIGER | Implemented | Implemented |
+| RISE | Implemented | Implemented |
+| ACE | Implemented | Implemented |
+| SOL | Implemented | Implemented |
+| Kiwoom | Implemented | Implemented |
 
 ## Usage
 
@@ -23,6 +23,26 @@ from cluefin_etf import EtfClient
 
 kodex_items = EtfClient("kodex").fetch_list()
 kiwoom_items = EtfClient("kiwoom").fetch_list()
+```
+
+## List Lookup Examples
+
+```bash
+uv run python packages/cluefin-etf/examples/fetch_list.py kodex --limit 5
+uv run python packages/cluefin-etf/examples/fetch_list.py rise --limit 5
+uv run python packages/cluefin-etf/examples/fetch_list.py tiger --limit 5
+uv run python packages/cluefin-etf/examples/fetch_list.py ace --raw
+```
+
+## Detail Lookup Examples
+
+```bash
+uv run python packages/cluefin-etf/examples/fetch_detail.py ace KR5101877748
+uv run python packages/cluefin-etf/examples/fetch_detail.py kiwoom 253250
+uv run python packages/cluefin-etf/examples/fetch_detail.py kodex 2ETFN7
+uv run python packages/cluefin-etf/examples/fetch_detail.py rise 252400
+uv run python packages/cluefin-etf/examples/fetch_detail.py sol 210980
+uv run python packages/cluefin-etf/examples/fetch_detail.py tiger 102110
 ```
 
 ## Provider Homepages
