@@ -6,9 +6,11 @@ import {
   onmarketBondBasicQuoteEndpoints,
 } from './metadata/onmarket-bond-basic-quote';
 
-export interface OnmarketBondBasicQuote extends DomainMethods<OnmarketBondBasicQuoteMethodName> {}
-export class OnmarketBondBasicQuote extends KisDomainBase {
+export type OnmarketBondBasicQuote = KisDomainBase & DomainMethods<OnmarketBondBasicQuoteMethodName>;
+export const OnmarketBondBasicQuote = class OnmarketBondBasicQuote extends KisDomainBase {
   public constructor(client: KisHttpClient) {
     super(client, onmarketBondBasicQuoteEndpoints);
   }
-}
+} as {
+  new (client: KisHttpClient): OnmarketBondBasicQuote;
+};

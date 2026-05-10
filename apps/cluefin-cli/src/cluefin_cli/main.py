@@ -25,4 +25,4 @@ cli.add_command(xbrl_analysis)
 
 
 if __name__ == "__main__":
-    cli()
+    cli()  # pylint: disable=no-value-for-parameter

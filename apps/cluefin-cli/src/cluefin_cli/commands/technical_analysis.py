@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Dict, List
+from typing import Dict, List
 
 import click
 import numpy as np

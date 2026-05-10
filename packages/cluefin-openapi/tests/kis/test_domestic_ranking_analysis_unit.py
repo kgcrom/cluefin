@@ -11,15 +11,26 @@ from cluefin_openapi.kis import _domestic_ranking_analysis as ranking_analysis_m
 from cluefin_openapi.kis._domestic_ranking_analysis import DomesticRankingAnalysis
 from cluefin_openapi.kis._domestic_ranking_analysis_types import (
     HtsInquiryTop20,
-    StockFinanceRatioRank,  # noqa: F401 - used via globals()
+    StockFinanceRatioRank,
     StockFluctuationRank,
-    StockHogaQuantityRank,  # noqa: F401 - used via globals()
+    StockHogaQuantityRank,
     StockMarketCapTop,
-    StockProfitabilityIndicatorRank,  # noqa: F401 - used via globals()
-    StockTimeHogaRank,  # noqa: F401 - used via globals()
+    StockProfitabilityIndicatorRank,
+    StockTimeHogaRank,
     TradingVolumeRank,
 )
 from cluefin_openapi.kis._model import KisHttpResponse
+
+RESPONSE_MODELS = {
+    "TradingVolumeRank": TradingVolumeRank,
+    "StockFluctuationRank": StockFluctuationRank,
+    "StockHogaQuantityRank": StockHogaQuantityRank,
+    "StockProfitabilityIndicatorRank": StockProfitabilityIndicatorRank,
+    "StockMarketCapTop": StockMarketCapTop,
+    "StockFinanceRatioRank": StockFinanceRatioRank,
+    "StockTimeHogaRank": StockTimeHogaRank,
+    "HtsInquiryTop20": HtsInquiryTop20,
+}
 
 
 def load_test_cases():
@@ -153,7 +164,7 @@ def test_domestic_ranking_analysis_methods(test_case):
 
     # Verify result type
     response_model_name = test_case["response_model_attr"]
-    response_model_class = globals()[response_model_name]
+    response_model_class = RESPONSE_MODELS[response_model_name]
     assert isinstance(result, KisHttpResponse)
     assert isinstance(result.body, response_model_class)
 

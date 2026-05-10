@@ -193,6 +193,7 @@ export class KiwoomClient {
       const body = Object.fromEntries(
         Object.entries(definition.bodyMap)
           .map(([apiKey, inputKey]) => {
+            // eslint-disable-next-line security/detect-object-injection -- inputKey comes from internal endpoint metadata.
             const value = parsedInput[inputKey];
             if (value === undefined || value === null) {
               return null;
@@ -205,6 +206,7 @@ export class KiwoomClient {
       const continuationHeaders = Object.fromEntries(
         Object.entries(definition.headerParamMap)
           .map(([headerName, inputKey]) => {
+            // eslint-disable-next-line security/detect-object-injection -- inputKey comes from internal endpoint metadata.
             const value = parsedInput[inputKey];
             if (value === undefined || value === null) {
               return null;

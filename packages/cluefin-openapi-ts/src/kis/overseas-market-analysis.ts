@@ -6,9 +6,11 @@ import {
   overseasMarketAnalysisEndpoints,
 } from './metadata/overseas-market-analysis';
 
-export interface OverseasMarketAnalysis extends DomainMethods<OverseasMarketAnalysisMethodName> {}
-export class OverseasMarketAnalysis extends KisDomainBase {
+export type OverseasMarketAnalysis = KisDomainBase & DomainMethods<OverseasMarketAnalysisMethodName>;
+export const OverseasMarketAnalysis = class OverseasMarketAnalysis extends KisDomainBase {
   public constructor(client: KisHttpClient) {
     super(client, overseasMarketAnalysisEndpoints);
   }
-}
+} as {
+  new (client: KisHttpClient): OverseasMarketAnalysis;
+};

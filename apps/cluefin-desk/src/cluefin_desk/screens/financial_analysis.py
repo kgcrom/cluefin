@@ -58,17 +58,17 @@ class FinancialAnalysisScreen(Screen):
         dart_client = self.app.dart_client
         if dart_client is None:
 
-            def _update():
+            def _clear_disclosure_table():
                 tbl = self.query_one("#disclosure-list-content", DataTable)
                 tbl.clear()
 
-            self.app.call_from_thread(_update)
+            self.app.call_from_thread(_clear_disclosure_table)
 
-            def _update_msg():
+            def _show_missing_dart_key():
                 panel = self.query_one("#financial-statement-content", Static)
                 panel.update("DART API key not configured.\nSet DART_AUTH_KEY in .env to use financial analysis.")
 
-            self.app.call_from_thread(_update_msg)
+            self.app.call_from_thread(_show_missing_dart_key)
             return
 
         try:
@@ -85,7 +85,7 @@ class FinancialAnalysisScreen(Screen):
             if not items:
                 return
 
-            def _update():
+            def _update_disclosure_table():
                 tbl = self.query_one("#disclosure-list-content", DataTable)
                 tbl.clear()
                 for item in items:
@@ -96,16 +96,16 @@ class FinancialAnalysisScreen(Screen):
                         key=item.rcept_no,
                     )
 
-            self.app.call_from_thread(_update)
+            self.app.call_from_thread(_update_disclosure_table)
 
             # Update title with company name
             if items:
 
-                def _update_title():
+                def _update_financial_title():
                     title = self.query_one("#financial-title-bar", Static)
                     title.update(f"[bold]{items[0].corp_name}[/bold] ({self.stock_code}) — 재무 분석  [Esc·뒤로]")
 
-                self.app.call_from_thread(_update_title)
+                self.app.call_from_thread(_update_financial_title)
 
         except Exception as e:
             from loguru import logger
@@ -126,14 +126,14 @@ class FinancialAnalysisScreen(Screen):
             items = response.body.result.list
             if not items:
 
-                def _update():
+                def _show_empty_major_shareholders():
                     panel = self.query_one("#major-shareholder-content", Static)
                     panel.update("No major shareholder data available")
 
-                self.app.call_from_thread(_update)
+                self.app.call_from_thread(_show_empty_major_shareholders)
                 return
 
-            def _update():
+            def _update_major_shareholders():
                 lines = ["[bold]주식등의 대량보유 상황보고[/bold]", ""]
                 for item in items[:20]:
                     rcept_dt = getattr(item, "rcept_dt", "-")
@@ -143,7 +143,7 @@ class FinancialAnalysisScreen(Screen):
                 panel = self.query_one("#major-shareholder-content", Static)
                 panel.update("\n".join(lines))
 
-            self.app.call_from_thread(_update)
+            self.app.call_from_thread(_update_major_shareholders)
         except Exception as e:
             from loguru import logger
 

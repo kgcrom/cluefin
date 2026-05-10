@@ -6,9 +6,11 @@ import {
   domesticRankingAnalysisEndpoints,
 } from './metadata/domestic-ranking-analysis';
 
-export interface DomesticRankingAnalysis extends DomainMethods<DomesticRankingAnalysisMethodName> {}
-export class DomesticRankingAnalysis extends KisDomainBase {
+export type DomesticRankingAnalysis = KisDomainBase & DomainMethods<DomesticRankingAnalysisMethodName>;
+export const DomesticRankingAnalysis = class DomesticRankingAnalysis extends KisDomainBase {
   public constructor(client: KisHttpClient) {
     super(client, domesticRankingAnalysisEndpoints);
   }
-}
+} as {
+  new (client: KisHttpClient): DomesticRankingAnalysis;
+};

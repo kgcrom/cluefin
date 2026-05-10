@@ -5,7 +5,7 @@ This module provides model interpretability using SHAP (SHapley Additive exPlana
 for understanding feature importance and individual prediction explanations.
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd

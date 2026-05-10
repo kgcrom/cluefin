@@ -215,7 +215,7 @@ class DomesticStockInfoNewHighLowPrice(BaseModel, KiwoomHttpBody):
     )
 
 
-class DomesticStockInfoNewHighLowPriceItem(BaseModel):
+class DomesticStockInfoUpperLowerLimitPriceItem(BaseModel):
     stk_cd: str = Field(default="", description="종목코드", max_length=20)
     stk_infr: str = Field(default="", description="종목정보", max_length=20)
     stk_nm: str = Field(default="", description="종목명", max_length=40)
@@ -234,7 +234,7 @@ class DomesticStockInfoNewHighLowPriceItem(BaseModel):
 
 class DomesticStockInfoUpperLowerLimitPrice(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="주식상하한가요청 응답")
-    updown_pric: List[DomesticStockInfoNewHighLowPriceItem] = Field(
+    updown_pric: List[DomesticStockInfoUpperLowerLimitPriceItem] = Field(
         default_factory=list, description="상하한가", max_length=1000
     )
 

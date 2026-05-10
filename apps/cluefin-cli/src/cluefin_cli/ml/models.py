@@ -5,7 +5,7 @@ This module contains ML model implementations using LightGBM and scikit-learn
 for stock price prediction and classification.
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import lightgbm as lgb
 import numpy as np

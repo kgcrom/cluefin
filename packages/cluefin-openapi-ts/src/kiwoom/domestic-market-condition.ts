@@ -7,10 +7,12 @@ import {
 } from './metadata/domestic-market-condition';
 import type { DomesticMarketConditionResponseMap } from './schemas/domestic-market-condition';
 
-export interface DomesticMarketCondition
-  extends DomainMethods<DomesticMarketConditionMethodName, DomesticMarketConditionResponseMap> {}
-export class DomesticMarketCondition extends KiwoomDomainBase {
+export type DomesticMarketCondition = KiwoomDomainBase &
+  DomainMethods<DomesticMarketConditionMethodName, DomesticMarketConditionResponseMap>;
+export const DomesticMarketCondition = class DomesticMarketCondition extends KiwoomDomainBase {
   public constructor(client: KiwoomClient) {
     super(client, domesticMarketConditionEndpoints);
   }
-}
+} as {
+  new (client: KiwoomClient): DomesticMarketCondition;
+};

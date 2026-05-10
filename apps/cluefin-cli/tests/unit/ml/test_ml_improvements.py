@@ -191,7 +191,8 @@ def main():
             logger.info(f"\n{'=' * 50}")
             logger.info(f"Running {test_name} Test")
             logger.info("=" * 50)
-            result = test_func()
+            test_func()
+            result = True
             results.append((test_name, result))
             if result:
                 logger.info(f"✅ {test_name} test passed!")

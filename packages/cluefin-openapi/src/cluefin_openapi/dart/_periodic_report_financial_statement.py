@@ -2,7 +2,8 @@ import io
 import zipfile
 from pathlib import Path
 from typing import Literal, Mapping
-from xml.etree import ElementTree
+
+from defusedxml import ElementTree
 
 from cluefin_openapi.dart._client import Client
 from cluefin_openapi.dart._exceptions import DartAPIError

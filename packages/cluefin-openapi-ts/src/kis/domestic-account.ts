@@ -3,9 +3,11 @@ import { KisDomainBase } from './domain-base';
 import type { KisHttpClient } from './http-client';
 import { type DomesticAccountMethodName, domesticAccountEndpoints } from './metadata/domestic-account';
 
-export interface DomesticAccount extends DomainMethods<DomesticAccountMethodName> {}
-export class DomesticAccount extends KisDomainBase {
+export type DomesticAccount = KisDomainBase & DomainMethods<DomesticAccountMethodName>;
+export const DomesticAccount = class DomesticAccount extends KisDomainBase {
   public constructor(client: KisHttpClient) {
     super(client, domesticAccountEndpoints);
   }
-}
+} as {
+  new (client: KisHttpClient): DomesticAccount;
+};

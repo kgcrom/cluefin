@@ -11,7 +11,7 @@ import cluefin_ta as talib
 import numpy as np
 import pandas as pd
 from loguru import logger
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import StandardScaler
 
 try:
     from imblearn.over_sampling import SMOTE

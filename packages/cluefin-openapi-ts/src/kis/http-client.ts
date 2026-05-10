@@ -203,6 +203,7 @@ export class KisHttpClient {
       const mappedRequest = Object.fromEntries(
         Object.entries(definition.requestMap)
           .map(([apiKey, inputKey]) => {
+            // eslint-disable-next-line security/detect-object-injection -- inputKey comes from internal endpoint metadata.
             const value = parsedInput[inputKey];
             if (value === undefined || value === null) {
               return null;
