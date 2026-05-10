@@ -8,7 +8,7 @@ from math import ceil
 from urllib.parse import urlencode
 
 from bs4 import BeautifulSoup
-from pydantic import BaseModel, ConfigDict, TypeAdapter
+from pydantic import BaseModel, ConfigDict, TypeAdapter, field_validator
 
 from cluefin_etf._errors import FetchError
 from cluefin_etf._models import EtfDetail, EtfHolding, EtfSummary, FetchResult, ProviderInfo, ProviderName
@@ -53,6 +53,30 @@ class KodexEtfListItem(BaseModel):
     dcYn: str | None = None
     irpYn: str | None = None
     totalCnt: int | None = None
+
+    @field_validator(
+        "basp",
+        "nav",
+        "curp",
+        "risep",
+        "risepRt",
+        "basrp",
+        "basrpRt",
+        "yieldWeek",
+        "yieldMon1",
+        "yieldMon3",
+        "yieldMon6",
+        "yieldYear1",
+        "yieldYear3",
+        "yieldYear",
+        "yieldList",
+        mode="before",
+    )
+    @classmethod
+    def _empty_decimal_to_none(cls, value: object) -> object:
+        if value == "":
+            return None
+        return value
 
 
 _KODEX_LIST_ADAPTER = TypeAdapter(list[KodexEtfListItem])

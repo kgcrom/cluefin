@@ -45,6 +45,20 @@ uv run python packages/cluefin-etf/examples/fetch_detail.py sol 210980
 uv run python packages/cluefin-etf/examples/fetch_detail.py tiger 102110
 ```
 
+## Tests
+
+Fast unit tests use local fixtures and mocked fetchers:
+
+```bash
+uv run pytest packages/cluefin-etf/tests -m "not integration"
+```
+
+Integration tests call public provider sites and may fail when a provider site is unavailable or changes its markup/API:
+
+```bash
+uv run pytest packages/cluefin-etf/tests -m integration
+```
+
 ## Provider Homepages
 
 | Provider | Homepage |

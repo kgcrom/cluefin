@@ -1233,6 +1233,37 @@ def test_kodex_validators_reject_missing_or_malformed_payloads():
     assert provider.validate_rendered_holdings_result(_fetch_result(ProviderName.KODEX, "<table></table>")) is False
 
 
+def test_kodex_list_parser_accepts_empty_optional_decimal_fields():
+    provider = get_provider("kodex")
+    html = json.dumps(
+        [
+            {
+                "fNm": "KODEX 조선TOP10",
+                "stkTicker": "0115D0",
+                "fId": "2ETFAA",
+                "listD": "20251028",
+                "gijunYMD": "20260508",
+                "basp": "11113.13",
+                "nav": "0",
+                "basrp": "",
+                "basrpRt": "",
+                "totalCnt": "1",
+            }
+        ],
+        ensure_ascii=False,
+    )
+    result = _fetch_result(ProviderName.KODEX, html)
+
+    assert provider.validate_list_result(result) is True
+    items = provider.parse_list_html(html)
+
+    assert len(items) == 1
+    assert items[0].code == "0115D0"
+    assert items[0].nav == Decimal("11113.13")
+    assert items[0].raw["basrp"] is None
+    assert items[0].raw["basrpRt"] is None
+
+
 class TigerListFetcher:
     search_url = "https://investments.miraeasset.com/tigeretf/ko/product/search/list.ajax"
 
