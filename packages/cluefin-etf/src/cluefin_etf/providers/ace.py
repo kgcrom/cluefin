@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import date
+from decimal import Decimal
 from urllib.parse import urljoin
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from cluefin_etf._models import EtfDetail, EtfHolding, EtfSummary, FetchResult, ProviderInfo, ProviderName
 from cluefin_etf._provider import EtfProvider
@@ -19,6 +21,104 @@ class AceEtfListItem(BaseModel):
     category: str | None = None
     pension_flags: list[str] = Field(default_factory=list)
     raw: dict[str, object] = Field(default_factory=dict)
+
+    @field_validator("fund_code", "name", mode="before")
+    @classmethod
+    def _required_text(cls, value: object) -> object:
+        value = _blank_to_none(value)
+        if isinstance(value, str):
+            return value.strip()
+        return value
+
+    @field_validator("category", mode="before")
+    @classmethod
+    def _optional_text(cls, value: object) -> object:
+        return _blank_to_none(value)
+
+
+class AceDetailPayload(BaseModel):
+    model_config = ConfigDict(extra="allow", frozen=True)
+
+    fundCd: str
+    fundNm: str
+    stockCd: str | None = None
+    fundWhlNm: str | None = None
+    stdDt: date | None = None
+    stpr: Decimal | None = None
+    nastAmt: Decimal | None = None
+    lstdDt: date | None = None
+    badge: dict[str, object] = Field(default_factory=dict)
+    summaryContent: str | None = None
+
+    @field_validator("fundCd", "fundNm", mode="before")
+    @classmethod
+    def _required_text(cls, value: object) -> object:
+        value = _blank_to_none(value)
+        if isinstance(value, str):
+            return value.strip()
+        return value
+
+    @field_validator("stockCd", "fundWhlNm", "summaryContent", mode="before")
+    @classmethod
+    def _optional_text(cls, value: object) -> object:
+        return _blank_to_none(value)
+
+    @field_validator("stdDt", "lstdDt", mode="before")
+    @classmethod
+    def _parse_date(cls, value: object) -> object:
+        if isinstance(value, date):
+            return value
+        return parse_compact_date(value)
+
+    @field_validator("stpr", "nastAmt", mode="before")
+    @classmethod
+    def _parse_decimal(cls, value: object) -> object:
+        return _parse_decimal(value)
+
+    @field_validator("badge", mode="before")
+    @classmethod
+    def _badge_dict(cls, value: object) -> object:
+        return value if isinstance(value, dict) else {}
+
+
+class AcePdfHoldingItem(BaseModel):
+    model_config = ConfigDict(extra="allow", frozen=True)
+
+    rank: int | None = None
+    jm_KSC_CD: str | None = None
+    sec_NM: str | None = None
+    cu_ITEM_CNT: Decimal | None = None
+    val_AM: Decimal | None = None
+    wg: Decimal | None = None
+    std_DT: date | None = None
+
+    @field_validator("rank", mode="before")
+    @classmethod
+    def _parse_int(cls, value: object) -> object:
+        return parse_int_text(_blank_to_none(value))
+
+    @field_validator("jm_KSC_CD", "sec_NM", mode="before")
+    @classmethod
+    def _optional_text(cls, value: object) -> object:
+        return _blank_to_none(value)
+
+    @field_validator("cu_ITEM_CNT", "val_AM", "wg", mode="before")
+    @classmethod
+    def _parse_decimal(cls, value: object) -> object:
+        return _parse_decimal(value)
+
+    @field_validator("std_DT", mode="before")
+    @classmethod
+    def _parse_date(cls, value: object) -> object:
+        if isinstance(value, date):
+            return value
+        return parse_compact_date(value)
+
+
+class AceHoldingsPayload(BaseModel):
+    model_config = ConfigDict(extra="allow", frozen=True)
+
+    pdfList: list[AcePdfHoldingItem]
 
 
 class AceProvider(EtfProvider):
@@ -81,13 +181,15 @@ class AceProvider(EtfProvider):
     def validate_detail_result(self, result: FetchResult) -> bool:
         try:
             payload = json.loads(result.html)
-        except json.JSONDecodeError:
+            AceDetailPayload.model_validate(payload)
+        except (json.JSONDecodeError, ValidationError):
             return False
-        return bool(payload.get("fundCd") and payload.get("fundNm"))
+        return True
 
     def parse_detail_html(self, code: str, html: str) -> EtfDetail:
-        payload = json.loads(html)
-        badge = payload.get("badge") if isinstance(payload.get("badge"), dict) else {}
+        raw_payload = json.loads(html)
+        payload = AceDetailPayload.model_validate(raw_payload)
+        badge = payload.badge
         category = _join_badges(
             badge.get("regionTypeNames"),
             badge.get("assetTypeNames"),
@@ -96,31 +198,38 @@ class AceProvider(EtfProvider):
 
         return EtfDetail(
             provider=self.name,
-            code=payload.get("fundCd") or code,
-            name=payload.get("fundNm"),
-            isin=payload.get("fundCd"),
+            code=payload.fundCd or code,
+            name=payload.fundNm,
+            isin=payload.fundCd,
             category=category,
-            listing_date=parse_compact_date(payload.get("lstdDt")),
-            nav=parse_decimal_text(str(payload.get("stpr"))) if payload.get("stpr") is not None else None,
-            aum=parse_decimal_text(str(payload.get("nastAmt"))) if payload.get("nastAmt") is not None else None,
-            as_of_date=parse_compact_date(payload.get("stdDt")),
-            detail_url=f"{self.detail_url_base}/{payload.get('fundCd') or code}",
-            raw=_ace_detail_raw(payload),
+            listing_date=payload.lstdDt,
+            nav=payload.stpr,
+            aum=payload.nastAmt,
+            as_of_date=payload.stdDt,
+            detail_url=f"{self.detail_url_base}/{payload.fundCd or code}",
+            raw=_ace_detail_raw(raw_payload),
         )
 
     def validate_holdings_result(self, result: FetchResult) -> bool:
         try:
             payload = json.loads(result.html)
-        except json.JSONDecodeError:
+            AceHoldingsPayload.model_validate(payload)
+        except (json.JSONDecodeError, ValidationError):
             return False
-        return isinstance(payload.get("pdfList"), list)
+        return True
 
     def parse_holdings_json(self, html: str) -> list[EtfHolding]:
-        payload = json.loads(html)
-        items = payload.get("pdfList")
-        if not isinstance(items, list):
+        try:
+            raw_payload = json.loads(html)
+            payload = AceHoldingsPayload.model_validate(raw_payload)
+        except (json.JSONDecodeError, ValidationError):
             return []
-        return [_holding_from_pdf_item(item) for item in items if isinstance(item, dict)]
+        raw_items = raw_payload.get("pdfList")
+        if not isinstance(raw_items, list):
+            raw_items = [{} for _ in payload.pdfList]
+        return [
+            _holding_from_pdf_item(item, raw_item) for item, raw_item in zip(payload.pdfList, raw_items, strict=False)
+        ]
 
     def _validate_chunk_result(self, result: FetchResult) -> bool:
         return bool(self._parse_chunk_items(result.html))
@@ -231,14 +340,31 @@ def _ace_detail_raw(payload: dict[str, object]) -> dict[str, object]:
     )
 
 
-def _holding_from_pdf_item(item: dict[str, object]) -> EtfHolding:
+def _holding_from_pdf_item(item: AcePdfHoldingItem, raw_item: object | None = None) -> EtfHolding:
+    raw = raw_item if isinstance(raw_item, dict) else item.model_dump(mode="python")
     return EtfHolding(
-        rank=parse_int_text(item.get("rank")),
-        code=str(item.get("jm_KSC_CD")) if item.get("jm_KSC_CD") is not None else None,
-        name=str(item.get("sec_NM")) if item.get("sec_NM") is not None else None,
-        quantity=parse_decimal_text(str(item.get("cu_ITEM_CNT"))) if item.get("cu_ITEM_CNT") is not None else None,
-        valuation_amount=parse_decimal_text(str(item.get("val_AM"))) if item.get("val_AM") is not None else None,
-        weight=parse_decimal_text(str(item.get("wg"))) if item.get("wg") is not None else None,
-        as_of_date=parse_compact_date(item.get("std_DT")),
-        raw=compact_raw(item, ("rank", "jm_KSC_CD", "sec_NM", "cu_ITEM_CNT", "val_AM", "wg", "std_DT")),
+        rank=item.rank,
+        code=item.jm_KSC_CD,
+        name=item.sec_NM,
+        quantity=item.cu_ITEM_CNT,
+        valuation_amount=item.val_AM,
+        weight=item.wg,
+        as_of_date=item.std_DT,
+        raw=compact_raw(raw, ("rank", "jm_KSC_CD", "sec_NM", "cu_ITEM_CNT", "val_AM", "wg", "std_DT")),
     )
+
+
+def _blank_to_none(value: object) -> object:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        normalized = value.strip()
+        return None if normalized in {"", "-"} else normalized
+    return value
+
+
+def _parse_decimal(value: object) -> Decimal | None:
+    value = _blank_to_none(value)
+    if value is None or isinstance(value, Decimal):
+        return value
+    return parse_decimal_text(str(value))

@@ -132,6 +132,27 @@ def test_rise_validators_reject_missing_payloads():
     assert provider.validate_holdings_result(_fetch_result(ProviderName.RISE, "<html></html>")) is False
 
 
+def test_rise_schema_normalizes_display_numeric_fields():
+    from cluefin_etf.providers.rise import RiseEtfListItem, RiseHoldingItem
+
+    item = RiseEtfListItem(
+        code="252400",
+        name="RISE 200선물레버리지",
+        nav="-",
+        expense_ratio="연 0.022",
+        detail_url="https://www.riseetf.co.kr/prod/finderDetail/4447",
+    )
+    holding = RiseHoldingItem(rank="1", name="", code="-", quantity="87.55", weight="177.9 상승", valuation_amount="")
+
+    assert item.nav is None
+    assert item.expense_ratio == Decimal("0.022")
+    assert holding.name is None
+    assert holding.code is None
+    assert holding.quantity == Decimal("87.55")
+    assert holding.weight == Decimal("177.9")
+    assert holding.valuation_amount is None
+
+
 class RiseDetailFetcher(RiseListFetcher):
     detail_url = "https://www.riseetf.co.kr/prod/finderDetail/4447"
 
@@ -593,6 +614,28 @@ def test_ace_validators_reject_missing_or_malformed_payloads():
     assert provider.validate_detail_result(_fetch_result(ProviderName.ACE, '{"fundCd":"KR5101877748"}')) is False
     assert provider.validate_holdings_result(_fetch_result(ProviderName.ACE, "{")) is False
     assert provider.validate_holdings_result(_fetch_result(ProviderName.ACE, '{"pdfList":{}}')) is False
+
+
+def test_ace_schemas_normalize_optional_fields_and_reject_blank_required_fields():
+    from pydantic import ValidationError
+
+    from cluefin_etf.providers.ace import AceDetailPayload, AceEtfListItem, AcePdfHoldingItem
+
+    item = AceEtfListItem(fund_code="KR5101877748", name="ACE 200", category="")
+    detail = AceDetailPayload(fundCd="KR5101877748", fundNm="ACE 200", stpr="", nastAmt="-")
+    holding = AcePdfHoldingItem(rank="1", jm_KSC_CD="", sec_NM="-", cu_ITEM_CNT="", val_AM="1608435000", wg="30.67")
+
+    assert item.category is None
+    assert detail.stpr is None
+    assert detail.nastAmt is None
+    assert holding.jm_KSC_CD is None
+    assert holding.sec_NM is None
+    assert holding.cu_ITEM_CNT is None
+    assert holding.val_AM == Decimal("1608435000")
+    assert holding.wg == Decimal("30.67")
+
+    with pytest.raises(ValidationError):
+        AceEtfListItem(fund_code="", name="ACE 200")
 
 
 class AceDetailFetcher:
@@ -1377,6 +1420,34 @@ def test_tiger_validators_reject_missing_payloads():
     assert provider.validate_holdings_page_result(_fetch_result(ProviderName.TIGER, "<html></html>")) is False
     assert provider.validate_holdings_result(_fetch_result(ProviderName.TIGER, "<table></table>")) is False
     assert provider._validate_search_result(_fetch_result(ProviderName.TIGER, "<html></html>")) is False
+
+
+def test_tiger_schemas_normalize_empty_and_display_fields():
+    from cluefin_etf.providers.tiger import TigerEtfListItem, TigerHoldingItem
+
+    item = TigerEtfListItem(
+        code="243880",
+        name="TIGER 200 IT레버리지",
+        ksd_fund="",
+        listing_date="-",
+        nav="",
+        aum="3,148",
+        returns={"1주": "17.06 상승", "3년": "-"},
+        total_count="225",
+    )
+    holding = TigerHoldingItem(rank="1", code="", name="-", quantity="", valuation_amount="1,636,567,500", weight="-")
+
+    assert item.ksd_fund is None
+    assert item.listing_date is None
+    assert item.nav is None
+    assert item.aum == Decimal("3148")
+    assert item.returns == {"1주": "17.06", "3년": None}
+    assert item.total_count == 225
+    assert holding.code is None
+    assert holding.name is None
+    assert holding.quantity is None
+    assert holding.valuation_amount == Decimal("1636567500")
+    assert holding.weight is None
 
 
 class KodexDetailFetcher:

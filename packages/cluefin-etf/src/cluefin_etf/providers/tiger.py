@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import re
+from datetime import date
+from decimal import Decimal
 from urllib.parse import urlencode
 
 from bs4 import BeautifulSoup
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from cluefin_etf._models import EtfDetail, EtfHolding, EtfSummary, FetchResult, ProviderInfo, ProviderName
 from cluefin_etf._provider import EtfProvider
@@ -16,6 +19,128 @@ from cluefin_etf.providers._parsing import (
     parse_decimal_text,
     parse_int_text,
 )
+
+
+class TigerEtfListItem(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    code: str
+    name: str
+    ksd_fund: str | None = None
+    category: str | None = None
+    categories: list[str] = Field(default_factory=list)
+    pension_flags: list[str] = Field(default_factory=list)
+    listing_date: date | None = None
+    nav: Decimal | None = None
+    aum: Decimal | None = None
+    returns: dict[str, str | None] = Field(default_factory=dict)
+    total_count: int | None = None
+
+    @field_validator("code", "name", mode="before")
+    @classmethod
+    def _required_text(cls, value: object) -> object:
+        value = _blank_to_none(value)
+        if isinstance(value, str):
+            return normalize_space(value)
+        return value
+
+    @field_validator("ksd_fund", "category", mode="before")
+    @classmethod
+    def _optional_text(cls, value: object) -> object:
+        return _blank_to_none(value)
+
+    @field_validator("listing_date", mode="before")
+    @classmethod
+    def _parse_date(cls, value: object) -> object:
+        if isinstance(value, date):
+            return value
+        return parse_date_text(value)
+
+    @field_validator("nav", "aum", mode="before")
+    @classmethod
+    def _parse_decimal(cls, value: object) -> object:
+        return _parse_display_decimal(value)
+
+    @field_validator("total_count", mode="before")
+    @classmethod
+    def _parse_int(cls, value: object) -> object:
+        return parse_int_text(_blank_to_none(value))
+
+    @field_validator("returns", mode="before")
+    @classmethod
+    def _normalize_returns(cls, value: object) -> object:
+        if not isinstance(value, dict):
+            return value
+        return {str(key): _return_text(item) for key, item in value.items()}
+
+
+class TigerEtfDetailData(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    code: str
+    name: str
+    category: str | None = None
+    benchmark: str | None = None
+    listing_date: date | None = None
+    nav: Decimal | None = None
+    aum: Decimal | None = None
+    expense_ratio: Decimal | None = None
+    as_of_date: date | None = None
+    detail_url: str | None = None
+    raw: dict[str, object] = Field(default_factory=dict)
+
+    @field_validator("code", "name", mode="before")
+    @classmethod
+    def _required_text(cls, value: object) -> object:
+        value = _blank_to_none(value)
+        if isinstance(value, str):
+            return normalize_space(value)
+        return value
+
+    @field_validator("category", "benchmark", "detail_url", mode="before")
+    @classmethod
+    def _optional_text(cls, value: object) -> object:
+        return _blank_to_none(value)
+
+    @field_validator("listing_date", "as_of_date", mode="before")
+    @classmethod
+    def _parse_date(cls, value: object) -> object:
+        if isinstance(value, date):
+            return value
+        return parse_date_text(value)
+
+    @field_validator("nav", "aum", "expense_ratio", mode="before")
+    @classmethod
+    def _parse_decimal(cls, value: object) -> object:
+        return _parse_display_decimal(value)
+
+
+class TigerHoldingItem(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    rank: int | None = None
+    code: str | None = None
+    name: str | None = None
+    quantity: Decimal | None = None
+    valuation_amount: Decimal | None = None
+    weight: Decimal | None = None
+    as_of_date: date | None = None
+    raw: dict[str, object] = Field(default_factory=dict)
+
+    @field_validator("rank", mode="before")
+    @classmethod
+    def _parse_int(cls, value: object) -> object:
+        return parse_int_text(_blank_to_none(value))
+
+    @field_validator("code", "name", mode="before")
+    @classmethod
+    def _optional_text(cls, value: object) -> object:
+        return _blank_to_none(value)
+
+    @field_validator("quantity", "valuation_amount", "weight", mode="before")
+    @classmethod
+    def _parse_decimal(cls, value: object) -> object:
+        return _parse_display_decimal(value)
 
 
 class TigerProvider(EtfProvider):
@@ -99,7 +224,10 @@ class TigerProvider(EtfProvider):
         return items
 
     def validate_detail_result(self, result: FetchResult) -> bool:
-        detail = self.parse_detail_html("", result.html)
+        try:
+            detail = self.parse_detail_html("", result.html)
+        except ValidationError:
+            return False
         return bool(detail.code and detail.name)
 
     def parse_detail_html(self, code: str, html: str) -> EtfDetail:
@@ -115,17 +243,15 @@ class TigerProvider(EtfProvider):
         category = " / ".join(
             item for item in categories if not item.startswith("개인연금") and not item.startswith("퇴직연금")
         )
-
-        return EtfDetail(
-            provider=self.name,
+        item = TigerEtfDetailData(
             code=ticker or code,
             name=name,
-            category=category or None,
+            category=category,
             benchmark=definition_value(soup, "벤치마크") or definition_value(soup, "기초지수"),
-            listing_date=parse_date_text(definition_value(soup, "상장일")),
+            listing_date=definition_value(soup, "상장일"),
             nav=_summary_decimal(soup, "기준가격"),
-            aum=_summary_decimal(soup, "순자산 규모") or parse_decimal_text(definition_value(soup, "순자산총액")),
-            expense_ratio=parse_decimal_text(definition_value(soup, "총보수")),
+            aum=_summary_decimal(soup, "순자산 규모") or definition_value(soup, "순자산총액"),
+            expense_ratio=definition_value(soup, "총보수"),
             as_of_date=_as_of_date(soup),
             detail_url=meta_content(soup, property_="og:url") or meta_content(soup, name="canonical"),
             raw={
@@ -133,6 +259,21 @@ class TigerProvider(EtfProvider):
                 "ksdFund": _ksd_fund_from_html(html),
                 "categories": categories,
             },
+        )
+
+        return EtfDetail(
+            provider=self.name,
+            code=item.code,
+            name=item.name,
+            category=item.category,
+            benchmark=item.benchmark,
+            listing_date=item.listing_date,
+            nav=item.nav,
+            aum=item.aum,
+            expense_ratio=item.expense_ratio,
+            as_of_date=item.as_of_date,
+            detail_url=item.detail_url,
+            raw=item.raw,
         )
 
     def validate_holdings_page_result(self, result: FetchResult) -> bool:
@@ -150,26 +291,36 @@ class TigerProvider(EtfProvider):
             cells = [normalize_space(cell.get_text(" ", strip=True)) for cell in row.find_all("td")]
             if len(cells) < 5:
                 continue
+            item = TigerHoldingItem(
+                rank=index,
+                code=cells[0],
+                name=cells[1],
+                quantity=cells[2],
+                valuation_amount=cells[3],
+                weight=cells[4],
+                as_of_date=as_of_date,
+                raw=compact_raw(
+                    {
+                        "code": cells[0],
+                        "name": cells[1],
+                        "quantity": cells[2],
+                        "valuationAmount": cells[3],
+                        "weight": cells[4],
+                        "return": cells[5] if len(cells) > 5 else None,
+                    },
+                    ("code", "name", "quantity", "valuationAmount", "weight", "return"),
+                ),
+            )
             holdings.append(
                 EtfHolding(
-                    rank=index,
-                    code=cells[0] or None,
-                    name=cells[1] or None,
-                    quantity=parse_decimal_text(cells[2]),
-                    valuation_amount=parse_decimal_text(cells[3]),
-                    weight=parse_decimal_text(cells[4]),
-                    as_of_date=as_of_date,
-                    raw=compact_raw(
-                        {
-                            "code": cells[0],
-                            "name": cells[1],
-                            "quantity": cells[2],
-                            "valuationAmount": cells[3],
-                            "weight": cells[4],
-                            "return": cells[5] if len(cells) > 5 else None,
-                        },
-                        ("code", "name", "quantity", "valuationAmount", "weight", "return"),
-                    ),
+                    rank=item.rank,
+                    code=item.code,
+                    name=item.name,
+                    quantity=item.quantity,
+                    valuation_amount=item.valuation_amount,
+                    weight=item.weight,
+                    as_of_date=item.as_of_date,
+                    raw=item.raw,
                 )
             )
         return holdings
@@ -185,13 +336,15 @@ class TigerProvider(EtfProvider):
         )
         soup = BeautifulSoup(result.html, "html.parser")
         row = soup.select_one(".c-data-row[data-ksd-fund]")
-        if row is None:
+        item = self._list_item_from_row(row) if row is not None else None
+        if item is None:
             return code
-        return str(row.get("data-ksd-fund") or code)
+        return item.ksd_fund or code
 
     def _validate_search_result(self, result: FetchResult) -> bool:
         soup = BeautifulSoup(result.html, "html.parser")
-        return soup.select_one(".c-data-row[data-ksd-fund]") is not None
+        row = soup.select_one(".c-data-row[data-ksd-fund]")
+        return row is not None and self._list_item_from_row(row) is not None
 
     def _search_request_data(self, code: str) -> dict[str, str]:
         return {
@@ -217,6 +370,30 @@ class TigerProvider(EtfProvider):
         return data
 
     def _to_summary(self, row) -> EtfSummary | None:
+        item = self._list_item_from_row(row)
+        if item is None:
+            return None
+
+        return EtfSummary(
+            provider=self.name,
+            code=item.code,
+            isin=item.ksd_fund,
+            name=item.name,
+            category=item.category,
+            listing_date=item.listing_date,
+            nav=item.nav,
+            aum=item.aum,
+            detail_url=f"{self.detail_url_base}?{urlencode({'ksdFund': item.ksd_fund})}" if item.ksd_fund else None,
+            raw={
+                "ksdFund": item.ksd_fund,
+                "categories": item.categories,
+                "pensionFlags": item.pension_flags,
+                "returns": item.returns,
+                "totalCount": item.total_count,
+            },
+        )
+
+    def _list_item_from_row(self, row) -> TigerEtfListItem | None:
         name = normalize_space(
             row.select_one(".title a").get_text(" ", strip=True) if row.select_one(".title a") else ""
         )
@@ -233,24 +410,22 @@ class TigerProvider(EtfProvider):
         category = " / ".join(item for item in categories if item not in pension_flags)
         ksd_fund = str(row.get("data-ksd-fund") or "")
 
-        return EtfSummary(
-            provider=self.name,
-            code=code,
-            isin=ksd_fund or None,
-            name=name,
-            category=category or None,
-            listing_date=parse_date_text(_pair_value(row, "상장일")),
-            nav=parse_decimal_text(_pair_value(row, "기준가")),
-            aum=parse_decimal_text(_pair_value(row, "순자산")),
-            detail_url=f"{self.detail_url_base}?{urlencode({'ksdFund': ksd_fund})}" if ksd_fund else None,
-            raw={
-                "ksdFund": ksd_fund or None,
-                "categories": categories,
-                "pensionFlags": pension_flags,
-                "returns": _returns(row),
-                "totalCount": parse_int_text(row.get("data-tot-cnt")),
-            },
-        )
+        try:
+            return TigerEtfListItem(
+                code=code,
+                name=name,
+                ksd_fund=ksd_fund,
+                category=category,
+                categories=categories,
+                pension_flags=pension_flags,
+                listing_date=_pair_value(row, "상장일"),
+                nav=_pair_value(row, "기준가"),
+                aum=_pair_value(row, "순자산"),
+                returns=_returns(row),
+                total_count=row.get("data-tot-cnt"),
+            )
+        except ValidationError:
+            return None
 
 
 def _parse_title_and_code(value: str) -> tuple[str | None, str | None]:
@@ -295,6 +470,31 @@ def _return_value(item) -> str | None:
         return None
     value = normalize_space(value_node.get_text(" ", strip=True))
     return None if value == "-" else value
+
+
+def _blank_to_none(value: object) -> object:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        normalized = normalize_space(value)
+        return None if normalized in {"", "-"} else normalized
+    return value
+
+
+def _parse_display_decimal(value: object) -> Decimal | None:
+    value = _blank_to_none(value)
+    if value is None or isinstance(value, Decimal):
+        return value
+    if isinstance(value, str):
+        value = value.replace(" 상승", "").replace(" 하락", "").removeprefix("연 ")
+    return parse_decimal_text(value)
+
+
+def _return_text(value: object) -> str | None:
+    value = _blank_to_none(value)
+    if value is None:
+        return None
+    return normalize_space(str(value)).replace(" 상승", "").replace(" 하락", "")
 
 
 def _first_product_title(soup: BeautifulSoup):

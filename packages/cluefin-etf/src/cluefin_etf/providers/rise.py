@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import date
+from decimal import Decimal
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from cluefin_etf._models import EtfDetail, EtfHolding, EtfSummary, FetchResult, ProviderInfo, ProviderName
 from cluefin_etf._provider import EtfProvider
@@ -15,6 +18,113 @@ from cluefin_etf.providers._parsing import (
     parse_decimal_text,
     parse_int_text,
 )
+
+
+class RiseEtfListItem(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    code: str
+    name: str
+    category: str | None = None
+    listing_date: date | None = None
+    nav: Decimal | None = None
+    expense_ratio: Decimal | None = None
+    detail_url: str
+    raw: dict[str, object] = Field(default_factory=dict)
+
+    @field_validator("code", "name", "detail_url", mode="before")
+    @classmethod
+    def _required_text(cls, value: object) -> object:
+        value = _blank_to_none(value)
+        if isinstance(value, str):
+            return normalize_space(value)
+        return value
+
+    @field_validator("category", mode="before")
+    @classmethod
+    def _optional_text(cls, value: object) -> object:
+        return _blank_to_none(value)
+
+    @field_validator("listing_date", mode="before")
+    @classmethod
+    def _parse_date(cls, value: object) -> object:
+        if isinstance(value, date):
+            return value
+        return parse_date_text(value)
+
+    @field_validator("nav", "expense_ratio", mode="before")
+    @classmethod
+    def _parse_decimal(cls, value: object) -> object:
+        return _parse_display_decimal(value)
+
+
+class RiseEtfDetailData(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    code: str
+    name: str
+    category: str | None = None
+    benchmark: str | None = None
+    listing_date: date | None = None
+    nav: Decimal | None = None
+    aum: Decimal | None = None
+    expense_ratio: Decimal | None = None
+    as_of_date: date | None = None
+    detail_url: str | None = None
+    raw: dict[str, object] = Field(default_factory=dict)
+
+    @field_validator("code", "name", mode="before")
+    @classmethod
+    def _required_text(cls, value: object) -> object:
+        value = _blank_to_none(value)
+        if isinstance(value, str):
+            return normalize_space(value)
+        return value
+
+    @field_validator("category", "benchmark", "detail_url", mode="before")
+    @classmethod
+    def _optional_text(cls, value: object) -> object:
+        return _blank_to_none(value)
+
+    @field_validator("listing_date", "as_of_date", mode="before")
+    @classmethod
+    def _parse_date(cls, value: object) -> object:
+        if isinstance(value, date):
+            return value
+        return parse_date_text(value)
+
+    @field_validator("nav", "aum", "expense_ratio", mode="before")
+    @classmethod
+    def _parse_decimal(cls, value: object) -> object:
+        return _parse_display_decimal(value)
+
+
+class RiseHoldingItem(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    rank: int | None = None
+    name: str | None = None
+    code: str | None = None
+    quantity: Decimal | None = None
+    weight: Decimal | None = None
+    valuation_amount: Decimal | None = None
+    as_of_date: date | None = None
+    raw: dict[str, object] = Field(default_factory=dict)
+
+    @field_validator("rank", mode="before")
+    @classmethod
+    def _parse_int(cls, value: object) -> object:
+        return parse_int_text(_blank_to_none(value))
+
+    @field_validator("name", "code", mode="before")
+    @classmethod
+    def _optional_text(cls, value: object) -> object:
+        return _blank_to_none(value)
+
+    @field_validator("quantity", "weight", "valuation_amount", mode="before")
+    @classmethod
+    def _parse_decimal(cls, value: object) -> object:
+        return _parse_display_decimal(value)
 
 
 class RiseProvider(EtfProvider):
@@ -81,7 +191,10 @@ class RiseProvider(EtfProvider):
         return [summary for row in soup.select('[data-class="dataList"]') if (summary := self._to_summary(row))]
 
     def validate_detail_result(self, result: FetchResult) -> bool:
-        detail = self.parse_detail_html("", result.html)
+        try:
+            detail = self.parse_detail_html("", result.html)
+        except ValidationError:
+            return False
         return bool(detail.code and detail.name)
 
     def parse_detail_html(self, code: str, html: str) -> EtfDetail:
@@ -89,17 +202,15 @@ class RiseProvider(EtfProvider):
         title = soup.select_one("h2.prod_title") or _first_title(soup)
         name, ticker = _parse_name_and_code(normalize_space(title.get_text(" ", strip=True)) if title else "")
         info = _detail_info(soup)
-
-        return EtfDetail(
-            provider=self.name,
+        item = RiseEtfDetailData(
             code=ticker or code,
             name=name,
             category=_detail_category(soup),
             benchmark=info.get("기초지수"),
-            listing_date=parse_date_text(info.get("상장일")),
-            nav=parse_decimal_text(info.get("기준가격(NAV)")),
-            aum=parse_decimal_text(info.get("순 자산 규모(원)")),
-            expense_ratio=parse_decimal_text(info.get("총 보수(%)") or info.get("총보수(%)")),
+            listing_date=info.get("상장일"),
+            nav=info.get("기준가격(NAV)"),
+            aum=info.get("순 자산 규모(원)"),
+            expense_ratio=info.get("총 보수(%)") or info.get("총보수(%)"),
             as_of_date=_as_of_date(soup),
             detail_url=_canonical_detail_url(soup, ticker or code),
             raw=compact_raw(
@@ -113,8 +224,23 @@ class RiseProvider(EtfProvider):
             ),
         )
 
+        return EtfDetail(
+            provider=self.name,
+            code=item.code,
+            name=item.name,
+            category=item.category,
+            benchmark=item.benchmark,
+            listing_date=item.listing_date,
+            nav=item.nav,
+            aum=item.aum,
+            expense_ratio=item.expense_ratio,
+            as_of_date=item.as_of_date,
+            detail_url=item.detail_url,
+            raw=item.raw,
+        )
+
     def validate_holdings_result(self, result: FetchResult) -> bool:
-        return bool(BeautifulSoup(result.html, "html.parser").select_one('tbody[data-class="tab3PdfList"] tr'))
+        return bool(self.parse_holdings_html(result.html))
 
     def parse_holdings_html(self, html: str, *, as_of_date=None) -> list[EtfHolding]:
         soup = BeautifulSoup(html, "html.parser")
@@ -123,26 +249,36 @@ class RiseProvider(EtfProvider):
             cells = [normalize_space(cell.get_text(" ", strip=True)) for cell in row.find_all(["th", "td"])]
             if len(cells) < 6:
                 continue
+            item = RiseHoldingItem(
+                rank=cells[0],
+                name=cells[1],
+                code=cells[2],
+                quantity=cells[3],
+                weight=cells[4],
+                valuation_amount=cells[5],
+                as_of_date=as_of_date,
+                raw=compact_raw(
+                    {
+                        "rank": cells[0],
+                        "name": cells[1],
+                        "code": cells[2],
+                        "quantity": cells[3],
+                        "weight": cells[4],
+                        "valuationAmount": cells[5],
+                    },
+                    ("rank", "name", "code", "quantity", "weight", "valuationAmount"),
+                ),
+            )
             holdings.append(
                 EtfHolding(
-                    rank=parse_int_text(cells[0]),
-                    name=cells[1] or None,
-                    code=cells[2] or None,
-                    quantity=parse_decimal_text(cells[3]),
-                    weight=parse_decimal_text(cells[4]),
-                    valuation_amount=parse_decimal_text(cells[5]),
-                    as_of_date=as_of_date,
-                    raw=compact_raw(
-                        {
-                            "rank": cells[0],
-                            "name": cells[1],
-                            "code": cells[2],
-                            "quantity": cells[3],
-                            "weight": cells[4],
-                            "valuationAmount": cells[5],
-                        },
-                        ("rank", "name", "code", "quantity", "weight", "valuationAmount"),
-                    ),
+                    rank=item.rank,
+                    name=item.name,
+                    code=item.code,
+                    quantity=item.quantity,
+                    weight=item.weight,
+                    valuation_amount=item.valuation_amount,
+                    as_of_date=item.as_of_date,
+                    raw=item.raw,
                 )
             )
         return holdings
@@ -175,24 +311,37 @@ class RiseProvider(EtfProvider):
         tags = _row_tags(row)
         returns = _row_returns(row)
         cells = row.find_all("td", recursive=False)
+        try:
+            item = RiseEtfListItem(
+                code=code,
+                name=name,
+                category=_row_category(row),
+                listing_date=_cell_text(cells, 8),
+                nav=_cell_text(cells, 0),
+                expense_ratio=_cell_text(cells, 1),
+                detail_url=urljoin("https://www.riseetf.co.kr", href),
+                raw=compact_raw(
+                    {
+                        "productId": _product_id_from_href(href),
+                        "tags": tags,
+                        "returns": returns,
+                    },
+                    ("productId", "tags", "returns"),
+                ),
+            )
+        except ValidationError:
+            return None
 
         return EtfSummary(
             provider=self.name,
-            code=code,
-            name=name,
-            category=_row_category(row),
-            listing_date=parse_date_text(_cell_text(cells, 8)),
-            nav=parse_decimal_text(_cell_text(cells, 0)),
-            expense_ratio=parse_decimal_text(_cell_text(cells, 1)),
-            detail_url=urljoin("https://www.riseetf.co.kr", href),
-            raw=compact_raw(
-                {
-                    "productId": _product_id_from_href(href),
-                    "tags": tags,
-                    "returns": returns,
-                },
-                ("productId", "tags", "returns"),
-            ),
+            code=item.code,
+            name=item.name,
+            category=item.category,
+            listing_date=item.listing_date,
+            nav=item.nav,
+            expense_ratio=item.expense_ratio,
+            detail_url=item.detail_url,
+            raw=item.raw,
         )
 
 
@@ -200,6 +349,24 @@ def _cell_text(cells, index: int) -> str | None:
     if index >= len(cells):
         return None
     return normalize_space(cells[index].get_text(" ", strip=True))
+
+
+def _blank_to_none(value: object) -> object:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        normalized = normalize_space(value)
+        return None if normalized in {"", "-"} else normalized
+    return value
+
+
+def _parse_display_decimal(value: object) -> Decimal | None:
+    value = _blank_to_none(value)
+    if value is None or isinstance(value, Decimal):
+        return value
+    if isinstance(value, str):
+        value = value.replace(" 상승", "").replace(" 하락", "").removeprefix("연 ")
+    return parse_decimal_text(value)
 
 
 def _row_tags(row) -> list[str]:
