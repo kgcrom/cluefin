@@ -6,7 +6,7 @@ from datetime import date
 from decimal import Decimal
 
 from bs4 import BeautifulSoup
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from cluefin_etf._errors import FetchError
 from cluefin_etf._models import EtfDetail, EtfHolding, EtfSummary, FetchResult, ProviderInfo, ProviderName
@@ -27,6 +27,13 @@ class KiwoomSearchVO(BaseModel):
     pageNo: int = 1
     endPage: int | None = None
 
+    @field_validator("endPage", mode="before")
+    @classmethod
+    def _empty_int_to_none(cls, value: object) -> object:
+        if value == "":
+            return None
+        return value
+
 
 class KiwoomEtfListItem(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -39,6 +46,13 @@ class KiwoomEtfListItem(BaseModel):
     setdate: str | None = None
     standardprice: Decimal | None = None
     fundtotalamount: Decimal | None = None
+
+    @field_validator("standardprice", "fundtotalamount", mode="before")
+    @classmethod
+    def _empty_decimal_to_none(cls, value: object) -> object:
+        if value == "":
+            return None
+        return value
 
 
 class KiwoomEtfListResponse(BaseModel):

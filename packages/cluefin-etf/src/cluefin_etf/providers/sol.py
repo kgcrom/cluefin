@@ -7,7 +7,7 @@ from decimal import Decimal, InvalidOperation
 from urllib.parse import urlencode, urljoin
 
 from bs4 import BeautifulSoup
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from cluefin_etf._models import EtfDetail, EtfHolding, EtfSummary, FetchResult, ProviderInfo, ProviderName
 from cluefin_etf._provider import EtfProvider
@@ -35,6 +35,13 @@ class SolEtfListItem(BaseModel):
     detail_url: str
     returns: dict[str, str | None] = Field(default_factory=dict)
     raw: dict[str, object] = Field(default_factory=dict)
+
+    @field_validator("nav", "aum", mode="before")
+    @classmethod
+    def _empty_decimal_to_none(cls, value: object) -> object:
+        if value == "":
+            return None
+        return value
 
 
 class SolProvider(EtfProvider):

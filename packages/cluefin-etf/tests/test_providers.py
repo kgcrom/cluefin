@@ -452,6 +452,29 @@ def test_kiwoom_fetch_list_collects_all_pages_and_maps_summaries():
     assert items[1].benchmark == "코스닥 150"
 
 
+def test_kiwoom_list_parser_accepts_empty_optional_numeric_fields():
+    provider = get_provider("kiwoom")
+    result = _kiwoom_fetch_result(
+        {
+            "totalCnt": 1,
+            "searchVO": {"pageNo": 1, "endPage": ""},
+            "etfList": [
+                {
+                    "gcode": "253250",
+                    "goodsNm": "KIWOOM 200선물레버리지",
+                    "standardprice": "",
+                    "fundtotalamount": "",
+                }
+            ],
+        }
+    )
+
+    items = provider.parse_list_html(result.html)
+
+    assert items[0].nav is None
+    assert items[0].aum is None
+
+
 def _kiwoom_fetch_result(payload: dict) -> FetchResult:
     return FetchResult(
         html=json.dumps(payload, ensure_ascii=False),
@@ -773,6 +796,17 @@ def test_sol_fetch_list_parses_server_rendered_table_and_maps_summaries():
     assert items[0].raw["returns"]["year_5"] == "-"
     assert items[1].code == "0167A0"
     assert items[1].category == "국내주식 / 메가트렌드"
+
+
+def test_sol_list_item_accepts_empty_optional_decimal_fields():
+    from cluefin_etf.providers.sol import SolEtfListItem
+
+    item = SolEtfListItem(
+        fund_code="210980", etf_code="455850", name="SOL AI반도체소부장", nav="", aum="", detail_url="/"
+    )
+
+    assert item.nav is None
+    assert item.aum is None
 
 
 def test_sol_validators_reject_missing_or_malformed_payloads():
