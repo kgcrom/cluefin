@@ -1,66 +1,21 @@
 from __future__ import annotations
 
 import json
-import re
-from datetime import date
-from decimal import Decimal
 
 from bs4 import BeautifulSoup
-from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from cluefin_etf._errors import FetchError
 from cluefin_etf._models import EtfDetail, EtfHolding, EtfSummary, FetchResult, ProviderInfo, ProviderName
 from cluefin_etf._provider import EtfProvider
-from cluefin_etf.providers._parsing import (
-    compact_raw,
-    definition_value,
-    normalize_space,
-    parse_date_text,
-    parse_decimal_text,
-    parse_int_text,
+from cluefin_etf.providers._kiwoom_detail import compact_date, parse_kiwoom_detail_html, pdf_date_from_html
+from cluefin_etf.providers._kiwoom_holdings import (
+    parse_kiwoom_holdings_html,
+    parse_kiwoom_holdings_json,
+    rendered_kiwoom_holdings_table,
+    validate_kiwoom_holdings_json,
 )
-
-
-class KiwoomSearchVO(BaseModel):
-    model_config = ConfigDict(extra="allow")
-
-    pageNo: int = 1
-    endPage: int | None = None
-
-    @field_validator("endPage", mode="before")
-    @classmethod
-    def _empty_int_to_none(cls, value: object) -> object:
-        if value == "":
-            return None
-        return value
-
-
-class KiwoomEtfListItem(BaseModel):
-    model_config = ConfigDict(extra="allow")
-
-    gcode: str
-    goodsNm: str
-    goodsTypeNm: str | None = None
-    bsisIdex: str | None = None
-    idexNm: str | None = None
-    setdate: str | None = None
-    standardprice: Decimal | None = None
-    fundtotalamount: Decimal | None = None
-
-    @field_validator("standardprice", "fundtotalamount", mode="before")
-    @classmethod
-    def _empty_decimal_to_none(cls, value: object) -> object:
-        if value == "":
-            return None
-        return value
-
-
-class KiwoomEtfListResponse(BaseModel):
-    model_config = ConfigDict(extra="allow")
-
-    totalCnt: int = 0
-    searchVO: KiwoomSearchVO = Field(default_factory=KiwoomSearchVO)
-    etfList: list[KiwoomEtfListItem] = Field(default_factory=list)
+from cluefin_etf.providers._kiwoom_list import kiwoom_list_request_data, kiwoom_to_summary, parse_kiwoom_list_response
+from cluefin_etf.providers._kiwoom_models import KiwoomEtfListItem, KiwoomEtfListResponse
 
 
 class KiwoomProvider(EtfProvider):
@@ -85,7 +40,7 @@ class KiwoomProvider(EtfProvider):
         url = self.detail_url_template.format(code=code)
         result = self.fetcher.fetch(url, provider=self.name, validator=self.validate_detail_result)
         detail = self.parse_detail_html(code, result.html)
-        pdf_date = _pdf_date_from_html(result.html) or _compact_date(detail.as_of_date)
+        pdf_date = pdf_date_from_html(result.html) or compact_date(detail.as_of_date)
         holdings_url = self.holdings_url
         try:
             holdings_result = self.fetcher.fetch(
@@ -157,202 +112,25 @@ class KiwoomProvider(EtfProvider):
         return bool(detail.code and detail.name)
 
     def parse_detail_html(self, code: str, html: str) -> EtfDetail:
-        soup = BeautifulSoup(html, "html.parser")
-        title = soup.select_one(".head-group h2, .fund-title h2, h2")
-        code_text = (
-            normalize_space(soup.select_one(".fund-code").get_text(" ", strip=True))
-            if soup.select_one(".fund-code")
-            else ""
-        )
-        parsed_code = _code_from_text(code_text) or code
-
-        return EtfDetail(
-            provider=self.name,
-            code=parsed_code,
-            name=_direct_text(title) if title else None,
-            category=_category_from_title_area(soup),
-            benchmark=definition_value(soup, "기초지수"),
-            listing_date=parse_date_text(definition_value(soup, "설정일(상장일)")),
-            nav=_summary_decimal(soup, "기준가"),
-            aum=_summary_decimal(soup, "순자산 규모"),
-            expense_ratio=parse_decimal_text(definition_value(soup, "보수(연)")),
-            as_of_date=parse_date_text(soup.select_one(".fund-info-wrap .note").get_text(" ", strip=True))
-            if soup.select_one(".fund-info-wrap .note")
-            else None,
-            detail_url=f"{self.detail_url_base}?gcode={parsed_code}" if parsed_code else None,
-            raw={
-                "fundCodeText": code_text,
-                "basicInfo": _basic_info(soup),
-            },
-        )
+        return parse_kiwoom_detail_html(code, html, self.name, self.detail_url_base)
 
     def validate_holdings_result(self, result: FetchResult) -> bool:
-        try:
-            payload = json.loads(result.html)
-        except json.JSONDecodeError:
-            return False
-        return isinstance(payload.get("pdfList"), list)
+        return validate_kiwoom_holdings_json(result.html)
 
     def validate_rendered_holdings_result(self, result: FetchResult) -> bool:
-        return bool(_rendered_holdings_table(BeautifulSoup(result.html, "html.parser")))
+        return bool(rendered_kiwoom_holdings_table(BeautifulSoup(result.html, "html.parser")))
 
     def parse_holdings_json(self, html: str) -> list[EtfHolding]:
-        payload = json.loads(html)
-        items = payload.get("pdfList")
-        if not isinstance(items, list):
-            return []
-        return [
-            _holding_from_pdf_item(index, item) for index, item in enumerate(items, start=1) if isinstance(item, dict)
-        ]
+        return parse_kiwoom_holdings_json(html)
 
-    def parse_holdings_html(self, html: str, *, as_of_date: date | None = None) -> list[EtfHolding]:
-        table = _rendered_holdings_table(BeautifulSoup(html, "html.parser"))
-        if table is None:
-            return []
-
-        holdings: list[EtfHolding] = []
-        for row in table.select("tbody tr"):
-            cells = [normalize_space(cell.get_text(" ", strip=True)) for cell in row.find_all("td")]
-            if len(cells) < 4:
-                continue
-            rank = parse_int_text(cells[0])
-            name = cells[1] or None
-            code = cells[2] or None
-            weight = parse_decimal_text(cells[3])
-            holdings.append(
-                EtfHolding(
-                    rank=rank,
-                    code=code,
-                    name=name,
-                    weight=weight,
-                    as_of_date=as_of_date,
-                    raw=compact_raw(
-                        {
-                            "rank": cells[0],
-                            "itemTitle": cells[1],
-                            "itemCode": cells[2],
-                            "ratio": cells[3],
-                        },
-                        ("rank", "itemCode", "itemTitle", "ratio"),
-                    ),
-                )
-            )
-        return holdings
+    def parse_holdings_html(self, html: str, *, as_of_date=None) -> list[EtfHolding]:
+        return parse_kiwoom_holdings_html(html, as_of_date=as_of_date)
 
     def _parse_list_response(self, html: str) -> KiwoomEtfListResponse:
-        return KiwoomEtfListResponse.model_validate_json(html)
+        return parse_kiwoom_list_response(html)
 
     def _to_summary(self, item: KiwoomEtfListItem) -> EtfSummary:
-        return EtfSummary(
-            provider=self.name,
-            code=item.gcode,
-            name=item.goodsNm,
-            category=item.goodsTypeNm,
-            benchmark=item.bsisIdex or item.idexNm,
-            listing_date=_parse_kiwoom_date(item.setdate),
-            nav=item.standardprice,
-            aum=item.fundtotalamount,
-            detail_url=f"{self.detail_url_base}?gcode={item.gcode}",
-            raw=item.model_dump(mode="json"),
-        )
+        return kiwoom_to_summary(item, self.name, self.detail_url_base)
 
     def _list_request_data(self, page_no: int) -> dict[str, str]:
-        return {
-            "pageNo": str(page_no),
-            "schContent": "",
-            "schGubun1": "",
-            "pension": "false",
-            "schOrder": "03",
-        }
-
-
-def _parse_kiwoom_date(value: str | None) -> date | None:
-    if not value:
-        return None
-    year, month, day = (int(part) for part in value.split("."))
-    return date(year, month, day)
-
-
-def _compact_date(value: date | None) -> str | None:
-    return value.strftime("%Y%m%d") if value else None
-
-
-def _pdf_date_from_html(html: str) -> str | None:
-    soup = BeautifulSoup(html, "html.parser")
-    node = soup.select_one("#pdfDt, input[name='pdfDt']")
-    value = node.get("value") if node is not None else None
-    if not isinstance(value, str):
-        return None
-    return value.replace("-", "").replace(".", "") or None
-
-
-def _summary_decimal(soup: BeautifulSoup, label: str) -> Decimal | None:
-    for node in soup.select("dl.summary > div"):
-        title = node.find("dt")
-        if title is None or label not in normalize_space(title.get_text(" ", strip=True)):
-            continue
-        value = node.find("dd")
-        if value is not None:
-            return parse_decimal_text(value.get_text(" ", strip=True))
-    return None
-
-
-def _code_from_text(value: str) -> str | None:
-    match = re.search(r"종목코드\s*:\s*(?P<code>[A-Z0-9]+)", value)
-    return match.group("code") if match else None
-
-
-def _category_from_title_area(soup: BeautifulSoup) -> str | None:
-    tags = [normalize_space(node.get_text(" ", strip=True)) for node in soup.select(".tag-wrap em")]
-    if tags:
-        return " / ".join(tags)
-
-    fund_title = soup.select_one(".fund-title")
-    if fund_title is None:
-        return None
-    title = fund_title.select_one("h2")
-    if title is not None:
-        title.extract()
-    text = normalize_space(fund_title.get_text(" ", strip=True))
-    return text or None
-
-
-def _direct_text(node) -> str:
-    return normalize_space(" ".join(str(child).strip() for child in node.children if isinstance(child, str)))
-
-
-def _basic_info(soup: BeautifulSoup) -> dict[str, str]:
-    values: dict[str, str] = {}
-    for node in soup.select(".fund-detail-info dl > div"):
-        key = node.find("dt")
-        value = node.find("dd")
-        if key is not None and value is not None:
-            values[normalize_space(key.get_text(" ", strip=True))] = normalize_space(value.get_text(" ", strip=True))
-    return values
-
-
-def _rendered_holdings_table(soup: BeautifulSoup):
-    for table in soup.find_all("table"):
-        headers = [normalize_space(node.get_text(" ", strip=True)) for node in table.find_all(["th", "td"])]
-        if {"NO.", "종목명", "종목코드", "비중"}.issubset(headers):
-            return table
-    return None
-
-
-def _holding_from_pdf_item(index: int, item: dict[str, object]) -> EtfHolding:
-    code = item.get("itemCode") or item.get("gcode") or item.get("fundcode")
-    return EtfHolding(
-        rank=index,
-        code=str(code) if code is not None else None,
-        name=str(item.get("itemTitle")) if item.get("itemTitle") is not None else None,
-        quantity=parse_decimal_text(str(item.get("volume"))) if item.get("volume") is not None else None,
-        valuation_amount=parse_decimal_text(str(item.get("assessment")))
-        if item.get("assessment") is not None
-        else None,
-        weight=parse_decimal_text(str(item.get("ratio"))) if item.get("ratio") is not None else None,
-        as_of_date=parse_date_text(str(item.get("businessDate"))) if item.get("businessDate") is not None else None,
-        raw=compact_raw(
-            item,
-            ("businessDate", "itemCode", "gcode", "fundcode", "itemTitle", "volume", "assessment", "ratio"),
-        ),
-    )
+        return kiwoom_list_request_data(page_no)

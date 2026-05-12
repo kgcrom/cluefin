@@ -27,14 +27,35 @@ kiwoom_items = EtfClient("kiwoom").fetch_list()
 
 ## List Lookup Examples
 
+Run examples from the repository root. List lookup uses:
+
 ```bash
+uv run python packages/cluefin-etf/examples/fetch_list.py <provider> --limit <N>
+```
+
+Supported providers are `ace`, `kiwoom`, `kodex`, `rise`, `sol`, and `tiger`.
+Use `--limit` to control how many items are printed, and `--raw` to include provider-specific raw fields.
+
+```bash
+uv run python packages/cluefin-etf/examples/fetch_list.py ace --limit 5
+uv run python packages/cluefin-etf/examples/fetch_list.py kiwoom --limit 5
 uv run python packages/cluefin-etf/examples/fetch_list.py kodex --limit 5
 uv run python packages/cluefin-etf/examples/fetch_list.py rise --limit 5
+uv run python packages/cluefin-etf/examples/fetch_list.py sol --limit 5
 uv run python packages/cluefin-etf/examples/fetch_list.py tiger --limit 5
-uv run python packages/cluefin-etf/examples/fetch_list.py ace --raw
 ```
 
 ## Detail Lookup Examples
+
+Detail lookup uses:
+
+```bash
+uv run python packages/cluefin-etf/examples/fetch_detail.py <provider> <code>
+```
+
+Most providers accept a six-digit ticker. Some providers also accept their own fund code or ISIN.
+Use `--raw` to include provider-specific raw fields, `--holdings-limit <N>` to limit printed holdings,
+or `--holdings-limit -1` to print all holdings.
 
 ```bash
 uv run python packages/cluefin-etf/examples/fetch_detail.py ace KR5101877748
