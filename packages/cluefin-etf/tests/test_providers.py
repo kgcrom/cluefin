@@ -12,6 +12,7 @@ from cluefin_etf import (
     FetchResult,
     ProviderName,
     ProviderNotFoundError,
+    RateLimitedFetcher,
     get_provider,
     list_providers,
 )
@@ -36,6 +37,13 @@ def test_provider_names_resolve_consistently(provider_name):
 
     assert provider.name == provider_name
     assert provider.info.name == provider_name
+
+
+@pytest.mark.parametrize("provider_name", list(PROVIDER_CLASSES))
+def test_default_provider_fetchers_are_rate_limited(provider_name):
+    provider = get_provider(provider_name)
+
+    assert isinstance(provider.fetcher, RateLimitedFetcher)
 
 
 def test_provider_lookup_accepts_strings():

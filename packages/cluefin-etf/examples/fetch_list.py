@@ -7,6 +7,8 @@ from cluefin_etf import EtfClient, EtfSummary, FetchError, ProviderCapabilityErr
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+PROVIDER_SEPARATOR = "=" * 40
+
 
 def log_item(item: EtfSummary, *, include_raw: bool) -> None:
     logger.info(
@@ -32,30 +34,26 @@ def log_item(item: EtfSummary, *, include_raw: bool) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Fetch ETF list for one provider.",
+        description="Fetch ETF lists for all supported providers.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=textwrap.dedent(
             """\
             Examples:
-              uv run python packages/cluefin-etf/examples/fetch_list.py ace --limit 5
-              uv run python packages/cluefin-etf/examples/fetch_list.py kiwoom --limit 5
-              uv run python packages/cluefin-etf/examples/fetch_list.py kodex --limit 5
-              uv run python packages/cluefin-etf/examples/fetch_list.py rise --limit 5
-              uv run python packages/cluefin-etf/examples/fetch_list.py sol --limit 5
-              uv run python packages/cluefin-etf/examples/fetch_list.py tiger --limit 5
+              uv run python packages/cluefin-etf/examples/fetch_list.py --limit 5
             """
         ),
-    )
-    parser.add_argument(
-        "provider",
-        choices=[provider.value for provider in list_providers()],
-        help="ETF provider to fetch.",
     )
     parser.add_argument("--limit", type=int, default=10, help="Maximum number of items to print. Defaults to 10.")
     parser.add_argument("--raw", action="store_true", help="Print provider-specific raw payload fields.")
     args = parser.parse_args()
 
-    provider = ProviderName(args.provider)
+    for provider in list_providers():
+        fetch_and_log_provider_list(provider, limit=args.limit, include_raw=args.raw)
+
+
+def fetch_and_log_provider_list(provider: ProviderName, *, limit: int | None, include_raw: bool) -> None:
+    logger.info("%s START %s %s", PROVIDER_SEPARATOR, provider.value, PROVIDER_SEPARATOR)
+
     client = EtfClient(provider)
 
     try:
@@ -67,11 +65,11 @@ def main() -> None:
         logger.error("%s list fetch failed: %s", provider.value, exc)
         return
 
-    display_items = items[: args.limit] if args.limit is not None else items
+    display_items = items[:limit] if limit is not None else items
     logger.info("fetched %s %s ETF items; printing %s", len(items), provider.value, len(display_items))
 
     for item in display_items:
-        log_item(item, include_raw=args.raw)
+        log_item(item, include_raw=include_raw)
 
 
 if __name__ == "__main__":

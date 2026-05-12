@@ -7,6 +7,17 @@ from cluefin_etf import EtfClient, EtfDetail, FetchError, ProviderCapabilityErro
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+PROVIDER_SEPARATOR = "=" * 40
+
+DEFAULT_DETAIL_CODES = {
+    ProviderName.KODEX: "2ETFN7",
+    ProviderName.TIGER: "102110",
+    ProviderName.RISE: "252400",
+    ProviderName.ACE: "KR5101877748",
+    ProviderName.SOL: "210980",
+    ProviderName.KIWOOM: "253250",
+}
+
 
 def log_detail(detail: EtfDetail, *, include_raw: bool, holdings_limit: int) -> None:
     logger.info(
@@ -57,30 +68,13 @@ def log_detail(detail: EtfDetail, *, include_raw: bool, holdings_limit: int) -> 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Fetch detailed ETF information for one provider.",
+        description="Fetch detailed ETF information for all supported providers.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=textwrap.dedent(
             """\
             Examples:
-              uv run python packages/cluefin-etf/examples/fetch_detail.py ace KR5101877748
-              uv run python packages/cluefin-etf/examples/fetch_detail.py kiwoom 253250
-              uv run python packages/cluefin-etf/examples/fetch_detail.py kodex 2ETFN7
-              uv run python packages/cluefin-etf/examples/fetch_detail.py rise 252400
-              uv run python packages/cluefin-etf/examples/fetch_detail.py sol 210980
-              uv run python packages/cluefin-etf/examples/fetch_detail.py tiger 102110
+              uv run python packages/cluefin-etf/examples/fetch_detail.py --holdings-limit 5
             """
-        ),
-    )
-    parser.add_argument(
-        "provider",
-        choices=[provider.value for provider in list_providers()],
-        help="ETF provider to fetch.",
-    )
-    parser.add_argument(
-        "code",
-        help=(
-            "Provider-specific ETF identifier. Most providers accept a six-digit ticker; "
-            "some also accept their own fund code or ISIN."
         ),
     )
     parser.add_argument("--raw", action="store_true", help="Print provider-specific raw payload fields.")
@@ -92,19 +86,26 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    provider = ProviderName(args.provider)
+    for provider in list_providers():
+        fetch_and_log_provider_detail(provider, include_raw=args.raw, holdings_limit=args.holdings_limit)
+
+
+def fetch_and_log_provider_detail(provider: ProviderName, *, include_raw: bool, holdings_limit: int) -> None:
+    code = DEFAULT_DETAIL_CODES[provider]
+    logger.info("%s START %s %s", PROVIDER_SEPARATOR, provider.value, PROVIDER_SEPARATOR)
+
     client = EtfClient(provider)
 
     try:
-        detail = client.fetch_detail(args.code)
+        detail = client.fetch_detail(code)
     except ProviderCapabilityError as exc:
         logger.error("%s detail fetch is not available yet: %s", provider.value, exc)
         return
     except FetchError as exc:
-        logger.error("%s detail fetch failed for %s: %s", provider.value, args.code, exc)
+        logger.error("%s detail fetch failed for %s: %s", provider.value, code, exc)
         return
 
-    log_detail(detail, include_raw=args.raw, holdings_limit=args.holdings_limit)
+    log_detail(detail, include_raw=include_raw, holdings_limit=holdings_limit)
 
 
 if __name__ == "__main__":

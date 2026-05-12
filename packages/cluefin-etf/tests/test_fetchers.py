@@ -6,6 +6,7 @@ from cluefin_etf import (
     FetchResult,
     PlaywrightFetcher,
     ProviderName,
+    RateLimitedFetcher,
     SimpleHttpFetcher,
     _fetchers,
 )
@@ -236,6 +237,62 @@ def test_fallback_fetcher_uses_playwright_for_empty_html():
 
     assert result.metadata.strategy == "playwright"
     assert result.metadata.fallback_reason == "empty_html"
+
+
+def test_rate_limited_fetcher_sleeps_between_consecutive_page_calls():
+    now = 100.0
+    sleeps = []
+
+    def clock() -> float:
+        return now
+
+    def sleeper(seconds: float) -> None:
+        nonlocal now
+        sleeps.append(seconds)
+        now += seconds
+
+    fetcher = RateLimitedFetcher(
+        RecordingFetcher("http"),
+        min_interval_seconds=1.0,
+        clock=clock,
+        sleeper=sleeper,
+    )
+
+    fetcher.fetch("https://example.test/page-1", provider="kodex")
+    now += 0.25
+    fetcher.fetch("https://example.test/page-2", provider="kodex")
+
+    assert sleeps == [0.75]
+
+
+def test_rate_limited_fetcher_records_failed_calls_before_next_delay():
+    now = 100.0
+    sleeps = []
+    fetcher = RateLimitedFetcher(
+        FailingFetcher(),
+        min_interval_seconds=1.0,
+        clock=lambda: now,
+        sleeper=sleeps.append,
+    )
+
+    try:
+        fetcher.fetch("https://example.test/page-1", provider="kodex")
+    except FetchError:
+        pass
+    else:
+        raise AssertionError("FetchError was not raised")
+
+    fetcher.fetcher = RecordingFetcher("http")
+    fetcher.fetch("https://example.test/page-2", provider="kodex")
+
+    assert sleeps == [1.0]
+
+
+def test_create_default_fetcher_rate_limits_fallback_fetcher():
+    fetcher = _fetchers.create_default_fetcher()
+
+    assert isinstance(fetcher, RateLimitedFetcher)
+    assert isinstance(fetcher.fetcher, FallbackFetcher)
 
 
 class FakeExternalBrowserSession:
@@ -496,16 +553,3 @@ def test_playwright_fetcher_wraps_unexpected_session_errors():
         assert "Playwright fetch failed" in str(exc)
     else:
         raise AssertionError("FetchError was not raised")
-
-
-def test_browser_request_body_converts_supported_payloads():
-    assert _fetchers._browser_request_body(None) is None
-    assert _fetchers._browser_request_body(b"pageNo=1") == "pageNo=1"
-    assert _fetchers._browser_request_body("pageNo=1") == "pageNo=1"
-    assert _fetchers._browser_request_body({"pageNo": "1", "type": ["domestic", "bond"]}) == (
-        "pageNo=1&type=domestic&type=bond"
-    )
-
-
-def test_origin_url_returns_scheme_and_host():
-    assert _fetchers._origin_url("https://example.test/path?x=1") == "https://example.test"

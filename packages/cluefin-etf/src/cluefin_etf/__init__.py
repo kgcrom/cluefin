@@ -9,6 +9,7 @@ from cluefin_etf._fetchers import (
     PageValidator,
     PlaywrightBrowserSession,
     PlaywrightFetcher,
+    RateLimitedFetcher,
     SimpleHttpFetcher,
 )
 from cluefin_etf._models import (
@@ -44,6 +45,7 @@ __all__ = [
     "PageValidator",
     "ProviderCapabilityError",
     "ProviderNotFoundError",
+    "RateLimitedFetcher",
     "SimpleHttpFetcher",
     "get_provider",
     "list_providers",

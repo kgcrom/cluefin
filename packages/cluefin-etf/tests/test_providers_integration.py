@@ -44,6 +44,26 @@ def test_provider_fetch_detail_integration(provider_name: ProviderName) -> None:
     _assert_detail_shape(provider_name, detail, expected_code=expected_code)
 
 
+@pytest.mark.integration
+@pytest.mark.parametrize("provider_name", list_providers())
+def test_provider_fetch_detail_from_list_item_integration(provider_name: ProviderName) -> None:
+    provider = get_provider(provider_name)
+
+    items = provider.fetch_list()
+    assert items, f"{provider_name.value} ETF list is empty"
+
+    detail_code = items[0].code
+    if provider_name == ProviderName.KODEX and items[0].raw.get("fId"):
+        detail_code = str(items[0].raw["fId"])
+
+    detail = provider.fetch_detail(detail_code)
+
+    assert detail.provider == provider_name
+    assert detail.code
+    assert detail.name
+    assert detail.detail_url
+
+
 def _assert_summary_shape(provider_name: ProviderName, item: EtfSummary) -> None:
     assert item.provider == provider_name
     assert item.code
