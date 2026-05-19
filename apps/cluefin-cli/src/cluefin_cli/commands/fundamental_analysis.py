@@ -51,7 +51,7 @@ REPORT_CHOICES = {
     help="Number of top shareholders to display.",
 )
 def fundamental_analysis(stock_code: str, year: str, report: str, max_shareholders: int) -> None:
-    """Run fundamental analysis for a given stock code using DART OpenAPI data."""
+    """DEPRECATED: use the `statements` domain command instead."""
     report_key = report.lower()
     report_code, report_description = REPORT_CHOICES[report_key]
 

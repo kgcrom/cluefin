@@ -45,7 +45,7 @@ def technical_analysis(
     shap_analysis: bool,
     regime_analysis: bool,
 ):
-    """Run technical analysis for a given stock code."""
+    """DEPRECATED: use `chart` and `trading-flow` domain commands instead."""
     console.print(f"[bold blue]Analyzing {stock_code}...[/bold blue]")
 
     try:

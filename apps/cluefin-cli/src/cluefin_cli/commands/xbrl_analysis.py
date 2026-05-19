@@ -46,7 +46,7 @@ STATEMENT_TYPE_LABELS: dict[str, str] = {
     help="Filter to a specific statement type. Show all if not set.",
 )
 def xbrl_analysis(stock_code: str, year: str, report: str, statement_type: str | None) -> None:
-    """Analyse XBRL financial statements for a given stock code."""
+    """DEPRECATED: use `statements --include-xbrl` instead."""
     reprt_code = REPORT_CODE_MAP[report.lower()]
 
     console.print(f"[bold blue]XBRL Analysis for {stock_code} ({year}, {report})[/bold blue]")
