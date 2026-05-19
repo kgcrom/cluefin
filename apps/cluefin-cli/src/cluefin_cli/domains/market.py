@@ -45,9 +45,22 @@ class MarketService:
         return items
 
     def _fetch_provider(self, *, provider: str, category: MarketCategory, limit: int) -> list[MarketRankItem]:
-        adapter = self.kiwoom_provider if provider == "kiwoom" else self.kis_provider
-        method_name = f"fetch_market_{category}"
-        method = getattr(adapter, method_name, None)
-        if method is None:
-            raise NotImplementedError(f"{provider} does not support market {category}")
-        return method(limit=limit)
+        if provider == "kis":
+            if category == "volume":
+                return self.kis_provider.fetch_market_volume(limit=limit)
+            if category == "ranking":
+                return self.kis_provider.fetch_market_ranking(limit=limit)
+            if category == "sector":
+                return self.kis_provider.fetch_market_sector(limit=limit)
+
+        if provider == "kiwoom":
+            if category == "volume":
+                return self.kiwoom_provider.fetch_market_volume(limit=limit)
+            if category == "ranking":
+                return self.kiwoom_provider.fetch_market_ranking(limit=limit)
+            if category == "theme":
+                return self.kiwoom_provider.fetch_market_theme(limit=limit)
+            if category == "sector":
+                return self.kiwoom_provider.fetch_market_sector(limit=limit)
+
+        raise NotImplementedError(f"{provider} does not support market {category}")
