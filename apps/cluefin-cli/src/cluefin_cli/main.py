@@ -2,6 +2,7 @@ import click
 from rich.console import Console
 
 from cluefin_cli.commands.chart import chart_command
+from cluefin_cli.commands.describe import describe_command
 from cluefin_cli.commands.fundamental_analysis import fundamental_analysis
 from cluefin_cli.commands.market import market_command
 from cluefin_cli.commands.news import news_command
@@ -37,6 +38,7 @@ def cli(ctx: click.Context, debug: bool, json_output: bool):
                 data={
                     "app": "cluefin-cli",
                     "commands": ["statements", "chart", "news", "trading-flow", "market"],
+                    "discovery_commands": ["describe"],
                     "deprecated_commands": ["ta", "fa", "xbrl"],
                 },
                 meta={"version": "0.1.0"},
@@ -56,6 +58,7 @@ cli.add_command(news_command)
 cli.add_command(chart_command)
 cli.add_command(trading_flow_command)
 cli.add_command(market_command)
+cli.add_command(describe_command)
 
 
 if __name__ == "__main__":
