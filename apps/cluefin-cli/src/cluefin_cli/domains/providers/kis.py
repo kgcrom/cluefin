@@ -7,6 +7,7 @@ from typing import Any
 
 from cluefin_cli.domains.models import (
     FinancialMetric,
+    MarketRankItem,
     NewsHeadline,
     OhlcvPoint,
     OhlcvSeries,
@@ -125,6 +126,63 @@ class KisProvider(BrokerProvider):
             totals=self._totals(rows),
         )
 
+    def fetch_market_volume(self, *, limit: int = 20) -> list[MarketRankItem]:
+        response = self.client.domestic_ranking_analysis.get_trading_volume_rank(
+            "J",
+            "20171",
+            "0000",
+            "0",
+            "0",
+            "111111111",
+            "0000000000",
+            "",
+            "",
+            "",
+            "",
+        )
+        return [
+            self._market_item(item, source="kis", category="volume", value_field="acml_vol")
+            for item in getattr(response.body, "output", [])[:limit]
+        ]
+
+    def fetch_market_ranking(self, *, limit: int = 20) -> list[MarketRankItem]:
+        response = self.client.domestic_ranking_analysis.get_stock_fluctuation_rank(
+            "",
+            "J",
+            "20170",
+            "0000",
+            "0",
+            "0",
+            "0",
+            "",
+            "",
+            "",
+            "0",
+            "0",
+            "0",
+            "",
+        )
+        return [
+            self._market_item(item, source="kis", category="ranking", value_field="stck_prpr")
+            for item in getattr(response.body, "output", [])[:limit]
+        ]
+
+    def fetch_market_sector(self, *, limit: int = 20) -> list[MarketRankItem]:
+        response = self.client.domestic_issue_other.get_sector_all_quote_by_category("U", "0001", "20214", "K", "0")
+        return [
+            MarketRankItem(
+                source="kis",
+                category="sector",
+                rank=index + 1,
+                stock_code=getattr(item, "bstp_cls_code", None),
+                stock_name=getattr(item, "hts_kor_isnm", None),
+                value=getattr(item, "bstp_nmix_prpr", None),
+                change_rate=getattr(item, "bstp_nmix_prdy_ctrt", None),
+                raw=self._raw_dict(item),
+            )
+            for index, item in enumerate(getattr(response.body, "output2", [])[:limit])
+        ]
+
     @staticmethod
     def _extract_output(response: Any) -> list[Any]:
         output = getattr(getattr(response, "body", response), "output", [])
@@ -193,3 +251,31 @@ class KisProvider(BrokerProvider):
                     continue
                 totals[key] = totals.get(key, 0.0) + float(value)
         return totals
+
+    @classmethod
+    def _market_item(cls, item: Any, *, source: str, category: str, value_field: str) -> MarketRankItem:
+        return MarketRankItem(
+            source=source,
+            category=category,
+            rank=cls._to_int(getattr(item, "data_rank", None)),
+            stock_code=getattr(item, "mksc_shrn_iscd", None) or getattr(item, "stck_shrn_iscd", None),
+            stock_name=getattr(item, "hts_kor_isnm", None),
+            value=getattr(item, value_field, None),
+            change_rate=getattr(item, "prdy_ctrt", None),
+            raw=cls._raw_dict(item),
+        )
+
+    @staticmethod
+    def _to_int(value: Any) -> int | None:
+        if value in {None, ""}:
+            return None
+        try:
+            return int(str(value).replace(",", "").strip())
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _raw_dict(item: Any) -> dict[str, Any]:
+        if hasattr(item, "model_dump"):
+            return item.model_dump()
+        return dict(getattr(item, "__dict__", {}))

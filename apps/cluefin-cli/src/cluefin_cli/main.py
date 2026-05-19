@@ -3,6 +3,7 @@ from rich.console import Console
 
 from cluefin_cli.commands.chart import chart_command
 from cluefin_cli.commands.fundamental_analysis import fundamental_analysis
+from cluefin_cli.commands.market import market_command
 from cluefin_cli.commands.news import news_command
 from cluefin_cli.commands.statements import statements_command
 from cluefin_cli.commands.technical_analysis import technical_analysis
@@ -54,6 +55,7 @@ cli.add_command(statements_command)
 cli.add_command(news_command)
 cli.add_command(chart_command)
 cli.add_command(trading_flow_command)
+cli.add_command(market_command)
 
 
 if __name__ == "__main__":

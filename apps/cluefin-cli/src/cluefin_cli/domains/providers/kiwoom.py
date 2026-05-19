@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Any
 
-from cluefin_cli.domains.models import OhlcvPoint, OhlcvSeries, TradingFlowSnapshot
+from cluefin_cli.domains.models import MarketRankItem, OhlcvPoint, OhlcvSeries, TradingFlowSnapshot
 from cluefin_cli.domains.providers.base import BrokerProvider
 
 
@@ -67,6 +67,47 @@ class KiwoomProvider(BrokerProvider):
             totals=self._totals(rows),
         )
 
+    def fetch_market_volume(self, *, limit: int = 20) -> list[MarketRankItem]:
+        response = self.client.rank_info.get_top_current_day_trading_volume(
+            "000", "1", "4", "0", "0", "0", "0", "0", "1"
+        )
+        return [
+            self._market_item(item, source="kiwoom", category="volume", rank=index + 1, value_field="trde_qty")
+            for index, item in enumerate(getattr(response.body, "tdy_trde_qty_upper", [])[:limit])
+        ]
+
+    def fetch_market_ranking(self, *, limit: int = 20) -> list[MarketRankItem]:
+        response = self.client.rank_info.get_top_percentage_change_from_previous_day(
+            "000", "1", "0000", "4", "0", "1", "0", "0", "1"
+        )
+        return [
+            self._market_item(item, source="kiwoom", category="ranking", rank=index + 1, value_field="cur_prc")
+            for index, item in enumerate(getattr(response.body, "pred_pre_flu_rt_upper", [])[:limit])
+        ]
+
+    def fetch_market_theme(self, *, limit: int = 20) -> list[MarketRankItem]:
+        response = self.client.theme.get_theme_group("0", "1", "", "1", "3")
+        return [
+            MarketRankItem(
+                source="kiwoom",
+                category="theme",
+                rank=index + 1,
+                stock_code=getattr(item, "thema_grp_cd", None),
+                stock_name=getattr(item, "thema_nm", None),
+                value=getattr(item, "dt_prft_rt", None) or getattr(item, "flu_rt", None),
+                change_rate=getattr(item, "flu_rt", None),
+                raw=self._raw_dict(item),
+            )
+            for index, item in enumerate(getattr(response.body, "thema_grp", [])[:limit])
+        ]
+
+    def fetch_market_sector(self, *, limit: int = 20) -> list[MarketRankItem]:
+        response = self.client.sector.get_all_industry_index("001")
+        return [
+            self._market_item(item, source="kiwoom", category="sector", rank=index + 1, value_field="cur_prc")
+            for index, item in enumerate(getattr(response.body, "all_inds_idex", [])[:limit])
+        ]
+
     @classmethod
     def _ohlcv_from_daily(cls, item: Any) -> OhlcvPoint:
         return OhlcvPoint(
@@ -108,3 +149,39 @@ class KiwoomProvider(BrokerProvider):
                     continue
                 totals[key] = totals.get(key, 0.0) + float(value)
         return totals
+
+    @classmethod
+    def _market_item(
+        cls,
+        item: Any,
+        *,
+        source: str,
+        category: str,
+        rank: int,
+        value_field: str,
+    ) -> MarketRankItem:
+        return MarketRankItem(
+            source=source,
+            category=category,
+            rank=cls._to_int(getattr(item, "now_rank", None)) or rank,
+            stock_code=getattr(item, "stk_cd", None),
+            stock_name=getattr(item, "stk_nm", None),
+            value=getattr(item, value_field, None),
+            change_rate=getattr(item, "flu_rt", None),
+            raw=cls._raw_dict(item),
+        )
+
+    @staticmethod
+    def _to_int(value: Any) -> int | None:
+        if value in {None, ""}:
+            return None
+        try:
+            return int(str(value).replace(",", "").strip())
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _raw_dict(item: Any) -> dict[str, Any]:
+        if hasattr(item, "model_dump"):
+            return item.model_dump()
+        return dict(getattr(item, "__dict__", {}))
