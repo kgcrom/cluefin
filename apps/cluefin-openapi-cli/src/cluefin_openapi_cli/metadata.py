@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from typing import Any
 
@@ -149,3 +150,74 @@ def get_command_metadata(*, broker: str, category: str, name: str) -> CommandMet
         tags=tuple(tags),
         required_credentials=_BROKER_CREDENTIALS.get(broker, ()),
     )
+
+
+def _sample_value(field_name: str, schema: dict[str, Any]) -> Any:
+    if "default" in schema:
+        return schema["default"]
+    if "enum" in schema and schema["enum"]:
+        return schema["enum"][0]
+
+    schema_type = schema.get("type", "string")
+    if schema_type == "integer":
+        return 1
+    if schema_type == "number":
+        return 1.0
+    if schema_type == "boolean":
+        return False
+    if schema_type == "array":
+        return []
+
+    lowered = field_name.lower()
+    if "date" in lowered or lowered.endswith("_dt") or lowered.endswith("ymd"):
+        return "20250101"
+    if "corp_code" in lowered:
+        return "00126380"
+    if "stock_code" in lowered or "code" in lowered or "iscd" in lowered:
+        return "005930"
+    if "market" in lowered:
+        return "J"
+    return "value"
+
+
+def build_command_examples(path_segments: tuple[str, ...], parameters: dict[str, Any]) -> tuple[dict[str, Any], ...]:
+    """Build one JSON-first executable command skeleton from a command schema."""
+
+    command = " ".join(("uv run cluefin-openapi-cli", *path_segments))
+    properties = parameters.get("properties", {})
+    required = parameters.get("required", [])
+    sample_params = {field: _sample_value(field, properties.get(field, {})) for field in required}
+
+    if sample_params:
+        params_json = json.dumps(sample_params, ensure_ascii=False, separators=(",", ":"))
+        command = f"{command} --params-json '{params_json}' --json"
+    else:
+        command = f"{command} --json"
+
+    return (
+        {
+            "description": "Run this command with JSON output.",
+            "command": command,
+        },
+    )
+
+
+def build_agent_notes(*, broker: str, category: str, name: str, required_credentials: tuple[str, ...]) -> str:
+    """Build concise command-use guidance for agents."""
+
+    credential_note = ", ".join(required_credentials) if required_credentials else "configured broker credentials"
+    base = f"Read-only {broker.upper()} command. Use --json for machine-readable output. Requires {credential_note}."
+
+    if category == "chart":
+        return f"{base} Use chart output as provider-normalized market data before calculating technical indicators."
+    if category == "financial":
+        return f"{base} Use for statements and financial ratios; confirm fiscal period fields in the response."
+    if category == "schedule":
+        return f"{base} Use for corporate-action and market-calendar event discovery."
+    if category in {"analysis", "program"} or "investor" in name:
+        return f"{base} Use for trading-flow analysis; check date and market parameters before comparing providers."
+    if category == "ranking":
+        return f"{base} Use for market screening; ranking criteria are provider-specific."
+    if category == "market" and name == "announcement":
+        return f"{base} Use with DART disclosure search when a disclosure/news workflow needs cross-provider context."
+    return base

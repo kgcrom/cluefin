@@ -317,7 +317,7 @@ Completion Rule:
 
 ### Phase 5: Examples and Agent Notes
 
-Status: `pending`
+Status: `completed`
 
 Tasks:
 

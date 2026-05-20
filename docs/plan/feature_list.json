@@ -165,7 +165,7 @@
     {
       "id": "phase-5",
       "title": "Examples and agent notes",
-      "status": "pending",
+      "status": "completed",
       "scope": [
         "examples in describe JSON",
         "agent_notes in describe JSON",
@@ -175,22 +175,22 @@
         {
           "id": "phase-5-task-1",
           "title": "Add executable example skeletons to openapi metadata",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-5-task-2",
           "title": "Add params-json examples to ta metadata",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-5-task-3",
           "title": "Update root/help JSON discovery usage",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-5-task-4",
           "title": "Add describe metadata tests",
-          "status": "pending"
+          "status": "completed"
         }
       ],
       "verification": [

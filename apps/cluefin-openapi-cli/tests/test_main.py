@@ -19,6 +19,13 @@ class FakeRegistry:
                 returns={"type": "object"},
                 domains=("quote", "market"),
                 tags=("current-price",),
+                examples=(
+                    {
+                        "description": "Run current price.",
+                        "command": 'uv run cluefin-openapi-cli kis stock current-price --params-json \'{"stock_code":"005930"}\' --json',
+                    },
+                ),
+                agent_notes="Use --json for machine-readable current-price output.",
                 executor=lambda params: {"params": params, "source": "kis"},
             ),
             CommandSpec(
@@ -160,8 +167,9 @@ def test_describe_returns_command_metadata() -> None:
     assert command["domains"] == ["quote", "market"]
     assert command["tags"] == ["current-price"]
     assert command["use_cases"] == []
-    assert command["examples"] == []
-    assert command["agent_notes"] is None
+    assert command["examples"]
+    assert "cluefin-openapi-cli kis stock current-price" in command["examples"][0]["command"]
+    assert command["agent_notes"] == "Use --json for machine-readable current-price output."
     assert command["required_credentials"] == []
     assert command["side_effect"] == "read"
 
@@ -177,6 +185,8 @@ def test_root_help_returns_usage_payload() -> None:
 
     assert result.exit_code == 0
     assert '"usage"' in result.stdout
+    assert "domains [--json]" in result.stdout
+    assert "list [--domain DOMAIN] [--tag TAG]" in result.stdout
 
 
 def test_broker_help_lists_categories() -> None:

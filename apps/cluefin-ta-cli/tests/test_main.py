@@ -55,7 +55,7 @@ def test_describe_returns_command_metadata() -> None:
     assert command["use_cases"]
     assert command["examples"]
     assert "--params-json" in command["examples"][0]["command"]
-    assert command["agent_notes"]
+    assert "ordered oldest to newest" in command["agent_notes"]
 
 
 def test_ta_help_lists_commands() -> None:
@@ -64,6 +64,14 @@ def test_ta_help_lists_commands() -> None:
     assert result.exit_code == 0
     assert '"commands"' in result.stdout
     assert '"sma"' in result.stdout
+
+
+def test_root_help_mentions_discovery_commands() -> None:
+    result = run_cli(["--help", "--json"])
+
+    assert result.exit_code == 0
+    assert "domains [--json]" in result.stdout
+    assert "list [--domain DOMAIN] [--tag TAG]" in result.stdout
 
 
 def test_leaf_command_merges_flags_and_params_json() -> None:

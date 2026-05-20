@@ -8,7 +8,7 @@ from cluefin_openapi import BrokerClientFactory
 from cluefin_openapi_cli.handlers.dart import _ALL_HANDLERS as DART_HANDLERS
 from cluefin_openapi_cli.handlers.kis import get_kis_handlers
 from cluefin_openapi_cli.handlers.kiwoom import get_kiwoom_handlers
-from cluefin_openapi_cli.metadata import get_command_metadata
+from cluefin_openapi_cli.metadata import build_agent_notes, build_command_examples, get_command_metadata
 
 
 @dataclass(frozen=True, slots=True)
@@ -148,6 +148,13 @@ def build_cli_registry() -> dict[tuple[str, ...], CommandSpec]:
             raise ValueError(f"Duplicate CLI path detected: {' '.join(path_segments)}")
 
         metadata = get_command_metadata(broker=schema.broker, category=category, name=command_name)
+        examples = metadata.examples or build_command_examples(path_segments, schema.parameters)
+        agent_notes = metadata.agent_notes or build_agent_notes(
+            broker=schema.broker,
+            category=category,
+            name=command_name,
+            required_credentials=metadata.required_credentials,
+        )
 
         registry[path_segments] = CommandSpec(
             broker=schema.broker,
@@ -160,8 +167,8 @@ def build_cli_registry() -> dict[tuple[str, ...], CommandSpec]:
             domains=metadata.domains,
             tags=metadata.tags,
             use_cases=metadata.use_cases,
-            examples=metadata.examples,
-            agent_notes=metadata.agent_notes,
+            examples=examples,
+            agent_notes=agent_notes,
             required_credentials=metadata.required_credentials,
             side_effect=metadata.side_effect,
             executor=handler,

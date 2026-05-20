@@ -52,8 +52,8 @@ def test_cli_registry_commands_expose_agent_metadata() -> None:
     assert command.domains
     assert command.tags
     assert command.use_cases == ()
-    assert command.examples == ()
-    assert command.agent_notes is None
+    assert command.examples
+    assert command.agent_notes
     assert command.required_credentials == ("KIS_APP_KEY", "KIS_SECRET_KEY")
     assert command.side_effect == "read"
 
@@ -63,8 +63,20 @@ def test_cli_registry_all_commands_have_domain_tag_and_credentials() -> None:
 
     assert all(command.domains for command in registry.values())
     assert all(command.tags for command in registry.values())
+    assert all(command.examples for command in registry.values())
+    assert all(command.agent_notes for command in registry.values())
     assert all(command.required_credentials for command in registry.values())
     assert {command.side_effect for command in registry.values()} == {"read"}
+
+
+def test_cli_registry_examples_are_json_first_command_skeletons() -> None:
+    registry = build_cli_registry()
+    command = registry[("kis", "stock", "current-price")]
+    example = command.examples[0]["command"]
+
+    assert example.startswith("uv run cluefin-openapi-cli kis stock current-price")
+    assert "--json" in example
+    assert "--params-json" in example
 
 
 def test_rpc_registry_filters_by_domain_and_tag() -> None:
