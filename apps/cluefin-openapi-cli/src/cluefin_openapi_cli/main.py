@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from cluefin_openapi_cli.output import render_output, stdout_is_tty, to_jsonable
+from cluefin_openapi_cli.recipes import get_recipe, recipe_summaries
 from cluefin_openapi_cli.registry import CommandSpec, get_registry
 
 
@@ -231,7 +232,7 @@ def _run_root(argv: list[str]) -> None:
         "app": "cluefin-openapi-cli",
         "interactive": stdout_is_tty(),
         "brokers": list(registry.iter_brokers()),
-        "commands": ["list", "describe", "domains", "tags"],
+        "commands": ["list", "describe", "domains", "tags", "recipes", "recipe"],
     }
     if bool(options.get("help", False)):
         payload["usage"] = [
@@ -241,6 +242,8 @@ def _run_root(argv: list[str]) -> None:
             "cluefin-openapi-cli describe dart <name> [--json]",
             "cluefin-openapi-cli domains [--json]",
             "cluefin-openapi-cli tags [--json]",
+            "cluefin-openapi-cli recipes [--json]",
+            "cluefin-openapi-cli recipe <name> [--json]",
             "cluefin-openapi-cli <broker> <category> <name> [--params-json JSON] [schema options] [--json]",
             "cluefin-openapi-cli dart <name> [--params-json JSON] [schema options] [--json]",
         ]
@@ -280,6 +283,26 @@ def _run_tags(argv: list[str]) -> None:
     if positional:
         raise CliError("`tags` does not accept positional arguments.", exit_code=2)
     render_output(_discovery_payload("tags"), force_json=bool(options.get("json", False)))
+
+
+def _run_recipes(argv: list[str]) -> None:
+    positional, options = _parse_named_options(argv)
+    if positional:
+        raise CliError("`recipes` does not accept positional arguments.", exit_code=2)
+    summaries = recipe_summaries()
+    render_output({"recipes": summaries, "count": len(summaries)}, force_json=bool(options.get("json", False)))
+
+
+def _run_recipe(argv: list[str]) -> None:
+    positional, options = _parse_named_options(argv)
+    if len(positional) != 1:
+        raise CliError("Usage: recipe <name>.", exit_code=2)
+
+    recipe = get_recipe(positional[0])
+    if recipe is None:
+        raise CliError(f"Unknown recipe `{positional[0]}`.", exit_code=2)
+
+    render_output({"recipe": to_jsonable(recipe)}, force_json=bool(options.get("json", False)))
 
 
 def _run_describe(argv: list[str]) -> None:
@@ -395,6 +418,12 @@ def dispatch(argv: list[str] | None = None) -> None:
         return
     if command == "tags":
         _run_tags(args[1:])
+        return
+    if command == "recipes":
+        _run_recipes(args[1:])
+        return
+    if command == "recipe":
+        _run_recipe(args[1:])
         return
 
     _run_dynamic(args)

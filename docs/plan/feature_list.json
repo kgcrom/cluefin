@@ -203,7 +203,7 @@
     {
       "id": "phase-6",
       "title": "Workflow recipes",
-      "status": "pending",
+      "status": "completed",
       "scope": [
         "openapi recipe metadata",
         "recipes --json command",
@@ -214,22 +214,22 @@
         {
           "id": "phase-6-task-1",
           "title": "Add recipes module",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-6-task-2",
           "title": "Add recipes list/detail commands",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-6-task-3",
           "title": "Add initial recipes",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-6-task-4",
           "title": "Add recipe reference tests",
-          "status": "pending"
+          "status": "completed"
         }
       ],
       "initial_recipes": [

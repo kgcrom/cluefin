@@ -156,6 +156,26 @@ def test_domains_and_tags_return_discovery_catalogs() -> None:
     assert '"name": "ohlcv"' in tags.stdout
 
 
+def test_recipes_and_recipe_return_workflow_metadata() -> None:
+    recipes = run_cli(["recipes", "--json"])
+    recipe = run_cli(["recipe", "stock-research", "--json"])
+
+    assert recipes.exit_code == 0
+    assert '"name": "stock-research"' in recipes.stdout
+    assert '"step_count"' in recipes.stdout
+    assert recipe.exit_code == 0
+    assert '"title": "Stock Research"' in recipe.stdout
+    assert '"command"' in recipe.stdout
+    assert '"kis"' in recipe.stdout
+
+
+def test_unknown_recipe_exits_2() -> None:
+    result = run_cli(["recipe", "missing", "--json"])
+
+    assert result.exit_code == 2
+    assert "Unknown recipe" in result.stdout
+
+
 def test_describe_returns_command_metadata() -> None:
     result = run_cli(["describe", "kis", "stock", "current-price", "--json"])
 
@@ -187,6 +207,8 @@ def test_root_help_returns_usage_payload() -> None:
     assert '"usage"' in result.stdout
     assert "domains [--json]" in result.stdout
     assert "list [--domain DOMAIN] [--tag TAG]" in result.stdout
+    assert "recipes [--json]" in result.stdout
+    assert "recipe <name> [--json]" in result.stdout
 
 
 def test_broker_help_lists_categories() -> None:

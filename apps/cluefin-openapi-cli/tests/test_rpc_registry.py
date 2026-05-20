@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from cluefin_openapi_cli.recipes import list_recipes, validate_recipe_commands
 from cluefin_openapi_cli.registry import RpcRegistry, build_cli_registry
 
 
@@ -103,6 +104,15 @@ def test_cli_registry_maps_representative_domains_and_tags() -> None:
     assert "ohlcv" in registry[("kis", "chart", "period")].tags
     assert "announcement" in registry[("kis", "market", "announcement")].tags
     assert "theme-group" in registry[("kiwoom", "theme", "group")].tags
+
+
+def test_recipe_command_references_exist_in_registry() -> None:
+    registry = RpcRegistry(client_factory=_FakeFactory())
+
+    missing = validate_recipe_commands(registry)
+
+    assert list_recipes()
+    assert missing == []
 
 
 def test_rpc_registry_resolves_real_command_path() -> None:
