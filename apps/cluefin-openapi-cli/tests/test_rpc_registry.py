@@ -67,6 +67,18 @@ def test_cli_registry_all_commands_have_domain_tag_and_credentials() -> None:
     assert {command.side_effect for command in registry.values()} == {"read"}
 
 
+def test_rpc_registry_filters_by_domain_and_tag() -> None:
+    registry = RpcRegistry(client_factory=_FakeFactory())
+
+    chart_commands = registry.list_commands(domain="chart")
+    ohlcv_commands = registry.list_commands(tag="ohlcv")
+
+    assert chart_commands
+    assert all("chart" in command.domains for command in chart_commands)
+    assert ohlcv_commands
+    assert all("ohlcv" in command.tags for command in ohlcv_commands)
+
+
 def test_cli_registry_maps_representative_domains_and_tags() -> None:
     registry = build_cli_registry()
 

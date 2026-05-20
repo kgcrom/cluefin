@@ -46,8 +46,10 @@ class RegistryProtocol(Protocol):
         *,
         broker: str | None = None,
         category: str | None = None,
+        domain: str | None = None,
+        tag: str | None = None,
     ) -> list[CommandSpec]:
-        """Return commands filtered by broker and category."""
+        """Return commands filtered by broker, category, domain, and tag."""
 
     def get_command(self, broker: str, category: str, name: str) -> CommandSpec | None:
         """Return one command definition when available."""
@@ -70,6 +72,8 @@ class EmptyRegistry:
         *,
         broker: str | None = None,
         category: str | None = None,
+        domain: str | None = None,
+        tag: str | None = None,
     ) -> list[CommandSpec]:
         return []
 
@@ -173,12 +177,23 @@ class RpcRegistry:
         self._client_factory = client_factory or BrokerClientFactory()
         self._commands = build_cli_registry()
 
-    def list_commands(self, *, broker: str | None = None, category: str | None = None) -> list[CommandSpec]:
+    def list_commands(
+        self,
+        *,
+        broker: str | None = None,
+        category: str | None = None,
+        domain: str | None = None,
+        tag: str | None = None,
+    ) -> list[CommandSpec]:
         commands = list(self._commands.values())
         if broker is not None:
             commands = [command for command in commands if command.broker == broker]
         if category is not None:
             commands = [command for command in commands if command.category == category]
+        if domain is not None:
+            commands = [command for command in commands if domain in command.domains]
+        if tag is not None:
+            commands = [command for command in commands if tag in command.tags]
         return sorted(commands, key=lambda command: command.path_segments)
 
     def get_command(self, broker: str, category: str, name: str) -> CommandSpec | None:

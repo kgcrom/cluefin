@@ -277,7 +277,7 @@ Completion Rule:
 
 ### Phase 4: Domain/Tag Discovery Commands
 
-Status: `pending`
+Status: `completed`
 
 Tasks:
 

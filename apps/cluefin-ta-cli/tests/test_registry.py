@@ -60,6 +60,18 @@ def test_all_commands_have_agent_metadata() -> None:
     assert all(command.agent_notes for command in commands)
 
 
+def test_registry_filters_by_domain_and_tag() -> None:
+    registry = Registry()
+
+    assert [command.name for command in registry.list_commands(category="ta", domain="risk-metric")] == ["mdd"]
+    assert {command.name for command in registry.list_commands(category="ta", tag="moving-average")} == {
+        "bbands",
+        "ema",
+        "macd",
+        "sma",
+    }
+
+
 def test_representative_ta_tags() -> None:
     registry = Registry()
 

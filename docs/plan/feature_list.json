@@ -122,7 +122,7 @@
     {
       "id": "phase-4",
       "title": "Domain and tag discovery commands",
-      "status": "pending",
+      "status": "completed",
       "scope": [
         "list --domain and list --tag filters",
         "domains --json command",
@@ -132,27 +132,27 @@
         {
           "id": "phase-4-task-1",
           "title": "Add openapi list domain/tag filters",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-4-task-2",
           "title": "Add ta list domain/tag filters",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-4-task-3",
           "title": "Add openapi domains/tags commands",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-4-task-4",
           "title": "Add ta domains/tags commands",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-4-task-5",
           "title": "Add CLI JSON discovery tests",
-          "status": "pending"
+          "status": "completed"
         }
       ],
       "verification": [

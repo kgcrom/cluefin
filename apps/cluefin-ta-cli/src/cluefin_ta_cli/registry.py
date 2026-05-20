@@ -59,10 +59,20 @@ class Registry:
     def __init__(self) -> None:
         self._commands = build_registry()
 
-    def list_commands(self, *, category: str | None = None) -> list[CommandSpec]:
+    def list_commands(
+        self,
+        *,
+        category: str | None = None,
+        domain: str | None = None,
+        tag: str | None = None,
+    ) -> list[CommandSpec]:
         commands = list(self._commands.values())
         if category is not None:
             commands = [command for command in commands if command.category == category]
+        if domain is not None:
+            commands = [command for command in commands if domain in command.domains]
+        if tag is not None:
+            commands = [command for command in commands if tag in command.tags]
         return sorted(commands, key=lambda command: command.path_segments)
 
     def resolve_command(self, path_segments: tuple[str, ...]) -> CommandSpec | None:

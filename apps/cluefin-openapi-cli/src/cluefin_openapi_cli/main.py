@@ -73,14 +73,34 @@ def _emit_error(exc: CliError, *, force_json: bool) -> None:
     _write_stderr(exc.message)
 
 
-def _list_payload(broker: str | None = None, category: str | None = None) -> dict[str, Any]:
+def _list_payload(
+    broker: str | None = None,
+    category: str | None = None,
+    domain: str | None = None,
+    tag: str | None = None,
+) -> dict[str, Any]:
     registry = get_registry()
-    commands = registry.list_commands(broker=broker, category=category)
+    commands = registry.list_commands(broker=broker, category=category, domain=domain, tag=tag)
     return {
         "broker": broker,
         "category": category,
+        "domain": domain,
+        "tag": tag,
         "count": len(commands),
         "commands": [to_jsonable(_command_summary(command)) for command in commands],
+    }
+
+
+def _discovery_payload(kind: str) -> dict[str, Any]:
+    registry = get_registry()
+    commands = registry.list_commands()
+    values = sorted({value for command in commands for value in getattr(command, kind)})
+    return {
+        kind: [
+            {"name": value, "command_count": sum(value in getattr(command, kind) for command in commands)}
+            for value in values
+        ],
+        "count": len(values),
     }
 
 
@@ -211,13 +231,16 @@ def _run_root(argv: list[str]) -> None:
         "app": "cluefin-openapi-cli",
         "interactive": stdout_is_tty(),
         "brokers": list(registry.iter_brokers()),
-        "commands": ["list", "describe"],
+        "commands": ["list", "describe", "domains", "tags"],
     }
     if bool(options.get("help", False)):
         payload["usage"] = [
             "cluefin-openapi-cli list [--broker BROKER] [--category CATEGORY] [--json]",
+            "cluefin-openapi-cli list [--domain DOMAIN] [--tag TAG] [--json]",
             "cluefin-openapi-cli describe <broker> <category> <name> [--json]",
             "cluefin-openapi-cli describe dart <name> [--json]",
+            "cluefin-openapi-cli domains [--json]",
+            "cluefin-openapi-cli tags [--json]",
             "cluefin-openapi-cli <broker> <category> <name> [--params-json JSON] [schema options] [--json]",
             "cluefin-openapi-cli dart <name> [--params-json JSON] [schema options] [--json]",
         ]
@@ -231,14 +254,32 @@ def _run_list(argv: list[str]) -> None:
 
     broker = options.get("broker")
     category = options.get("category")
+    domain = options.get("domain")
+    tag = options.get("tag")
     force_json = bool(options.get("json", False))
     render_output(
         _list_payload(
             broker=broker if isinstance(broker, str) else None,
             category=category if isinstance(category, str) else None,
+            domain=domain if isinstance(domain, str) else None,
+            tag=tag if isinstance(tag, str) else None,
         ),
         force_json=force_json,
     )
+
+
+def _run_domains(argv: list[str]) -> None:
+    positional, options = _parse_named_options(argv)
+    if positional:
+        raise CliError("`domains` does not accept positional arguments.", exit_code=2)
+    render_output(_discovery_payload("domains"), force_json=bool(options.get("json", False)))
+
+
+def _run_tags(argv: list[str]) -> None:
+    positional, options = _parse_named_options(argv)
+    if positional:
+        raise CliError("`tags` does not accept positional arguments.", exit_code=2)
+    render_output(_discovery_payload("tags"), force_json=bool(options.get("json", False)))
 
 
 def _run_describe(argv: list[str]) -> None:
@@ -348,6 +389,12 @@ def dispatch(argv: list[str] | None = None) -> None:
         return
     if command == "describe":
         _run_describe(args[1:])
+        return
+    if command == "domains":
+        _run_domains(args[1:])
+        return
+    if command == "tags":
+        _run_tags(args[1:])
         return
 
     _run_dynamic(args)

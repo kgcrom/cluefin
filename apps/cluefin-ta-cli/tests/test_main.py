@@ -20,6 +20,28 @@ def test_list_returns_all_commands() -> None:
     assert '"count": 11' in result.stdout
 
 
+def test_list_filters_by_domain_and_tag() -> None:
+    domain_result = run_cli(["list", "--domain", "risk-metric", "--json"])
+    tag_result = run_cli(["list", "--tag", "moving-average", "--json"])
+
+    assert domain_result.exit_code == 0
+    assert '"domain": "risk-metric"' in domain_result.stdout
+    assert '"qualified_name": "ta.mdd"' in domain_result.stdout
+    assert tag_result.exit_code == 0
+    assert '"tag": "moving-average"' in tag_result.stdout
+    assert '"qualified_name": "ta.sma"' in tag_result.stdout
+
+
+def test_domains_and_tags_return_discovery_catalogs() -> None:
+    domains = run_cli(["domains", "--json"])
+    tags = run_cli(["tags", "--json"])
+
+    assert domains.exit_code == 0
+    assert '"name": "technical-indicator"' in domains.stdout
+    assert tags.exit_code == 0
+    assert '"name": "momentum"' in tags.stdout
+
+
 def test_describe_returns_command_metadata() -> None:
     result = run_cli(["describe", "ta", "sma", "--json"])
 
