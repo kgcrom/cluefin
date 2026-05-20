@@ -45,17 +45,40 @@ def test_cli_registry_keeps_existing_command_surface() -> None:
     assert len(registry) == len(set(registry))
 
 
-def test_cli_registry_commands_expose_metadata_defaults() -> None:
+def test_cli_registry_commands_expose_agent_metadata() -> None:
     registry = build_cli_registry()
     command = registry[("kis", "stock", "current-price")]
 
-    assert command.domains == ()
-    assert command.tags == ()
+    assert command.domains
+    assert command.tags
     assert command.use_cases == ()
     assert command.examples == ()
     assert command.agent_notes is None
-    assert command.required_credentials == ()
+    assert command.required_credentials == ("KIS_APP_KEY", "KIS_SECRET_KEY")
     assert command.side_effect == "read"
+
+
+def test_cli_registry_all_commands_have_domain_tag_and_credentials() -> None:
+    registry = build_cli_registry()
+
+    assert all(command.domains for command in registry.values())
+    assert all(command.tags for command in registry.values())
+    assert all(command.required_credentials for command in registry.values())
+    assert {command.side_effect for command in registry.values()} == {"read"}
+
+
+def test_cli_registry_maps_representative_domains_and_tags() -> None:
+    registry = build_cli_registry()
+
+    assert "chart" in registry[("kis", "chart", "period")].domains
+    assert {"news", "market"}.issubset(registry[("kis", "market", "announcement")].domains)
+    assert "corporate-actions" in registry[("kis", "schedule", "dividend")].domains
+    assert {"theme", "market"}.issubset(registry[("kiwoom", "theme", "group")].domains)
+    assert {"news", "statements"}.issubset(registry[("dart", "disclosure-search")].domains)
+
+    assert "ohlcv" in registry[("kis", "chart", "period")].tags
+    assert "announcement" in registry[("kis", "market", "announcement")].tags
+    assert "theme-group" in registry[("kiwoom", "theme", "group")].tags
 
 
 def test_rpc_registry_resolves_real_command_path() -> None:

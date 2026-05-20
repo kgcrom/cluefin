@@ -8,6 +8,7 @@ from cluefin_openapi import BrokerClientFactory
 from cluefin_openapi_cli.handlers.dart import _ALL_HANDLERS as DART_HANDLERS
 from cluefin_openapi_cli.handlers.kis import get_kis_handlers
 from cluefin_openapi_cli.handlers.kiwoom import get_kiwoom_handlers
+from cluefin_openapi_cli.metadata import get_command_metadata
 
 
 @dataclass(frozen=True, slots=True)
@@ -142,6 +143,8 @@ def build_cli_registry() -> dict[tuple[str, ...], CommandSpec]:
         if path_segments in registry:
             raise ValueError(f"Duplicate CLI path detected: {' '.join(path_segments)}")
 
+        metadata = get_command_metadata(broker=schema.broker, category=category, name=command_name)
+
         registry[path_segments] = CommandSpec(
             broker=schema.broker,
             category=category,
@@ -150,6 +153,13 @@ def build_cli_registry() -> dict[tuple[str, ...], CommandSpec]:
             path_segments=path_segments,
             parameters=schema.parameters,
             returns=schema.returns,
+            domains=metadata.domains,
+            tags=metadata.tags,
+            use_cases=metadata.use_cases,
+            examples=metadata.examples,
+            agent_notes=metadata.agent_notes,
+            required_credentials=metadata.required_credentials,
+            side_effect=metadata.side_effect,
             executor=handler,
         )
 

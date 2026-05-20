@@ -53,7 +53,7 @@
     {
       "id": "phase-2",
       "title": "cluefin-openapi-cli domain and tag metadata",
-      "status": "pending",
+      "status": "completed",
       "scope": [
         "metadata.py with rule and override mapping",
         "183 openapi commands covered by at least one domain and tag",
@@ -63,22 +63,22 @@
         {
           "id": "phase-2-task-1",
           "title": "Add openapi metadata module",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-2-task-2",
           "title": "Add default broker/category metadata rules",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-2-task-3",
           "title": "Add command-level overrides for ambiguous APIs",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-2-task-4",
           "title": "Add all-command domain/tag coverage tests",
-          "status": "pending"
+          "status": "completed"
         }
       ],
       "verification": [

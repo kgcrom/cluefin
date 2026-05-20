@@ -210,7 +210,7 @@ Completion Rule:
 
 ### Phase 2: cluefin-openapi-cli Domain/Tag Metadata
 
-Status: `pending`
+Status: `completed`
 
 Tasks:
 
