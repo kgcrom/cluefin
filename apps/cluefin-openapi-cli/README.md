@@ -29,30 +29,51 @@ CLI는 현재 작업 디렉터리의 `.env`를 자동으로 읽습니다. 같은
 
 ### 1. Discovery
 
-전체 command 또는 broker/category별 command를 탐색합니다.
+전체 command, broker/category, domain/tag별 command를 탐색합니다.
 
 ```bash
 uv run cluefin-openapi-cli list --json
 uv run cluefin-openapi-cli list --broker kis --category stock --json
+uv run cluefin-openapi-cli list --domain chart --json
+uv run cluefin-openapi-cli list --tag ohlcv --json
+uv run cluefin-openapi-cli domains --json
+uv run cluefin-openapi-cli tags --json
 ```
+
+`category`는 provider SDK 구조이고, `domain`은 Agent 업무 의도입니다. 예를 들어 `kis chart period`는 category가 `chart`이고 domain도 `chart`지만, 투자자 수급성 API는 provider별 category가 달라도 `trading-flow` domain으로 함께 찾을 수 있습니다.
 
 ### 2. Describe
 
-단일 command의 설명, 입력 schema, required 필드, help payload를 확인합니다.
+단일 command의 설명, 입력 schema, required 필드, domain/tag, examples, agent_notes, help payload를 확인합니다.
 
 ```bash
 uv run cluefin-openapi-cli describe kis stock current-price --json
 uv run cluefin-openapi-cli kis stock current-price --help --json
 ```
 
-### 3. Command Path
+Agent는 `describe --json`의 `examples[0].command`를 실행 skeleton으로 사용하고, `agent_notes`를 provider별 주의사항으로 참고할 수 있습니다.
+
+### 3. Workflow Recipes
+
+대표 업무 흐름은 recipe metadata로 탐색합니다. Recipe는 실행기가 아니라 여러 command를 조합하기 위한 JSON guide입니다.
+
+```bash
+uv run cluefin-openapi-cli recipes --json
+uv run cluefin-openapi-cli recipe stock-research --json
+uv run cluefin-openapi-cli recipe technical-analysis --json
+uv run cluefin-openapi-cli recipe market-scan --json
+uv run cluefin-openapi-cli recipe corporate-actions --json
+uv run cluefin-openapi-cli recipe disclosure-monitoring --json
+```
+
+### 4. Command Path
 
 broker-first path 규칙은 아래와 같습니다.
 
 - `kis <category> <name>`
 - `kiwoom <category> <name>`
 - `dart <name>`
-- `list`, `describe`는 meta command
+- `list`, `describe`, `domains`, `tags`, `recipes`, `recipe`는 meta command
 
 예시:
 
@@ -101,6 +122,16 @@ uv run cluefin-openapi-cli kis stock current-price --help --json
 
 ## 예시
 
+Agent discovery:
+
+```bash
+uv run cluefin-openapi-cli domains --json
+uv run cluefin-openapi-cli tags --json
+uv run cluefin-openapi-cli list --domain trading-flow --json
+uv run cluefin-openapi-cli list --tag dividend --json
+uv run cluefin-openapi-cli recipe stock-research --json
+```
+
 KIS:
 
 ```bash
@@ -126,6 +157,8 @@ uv run cluefin-openapi-cli dart company-overview --corp-code 00126380 --json
 - CLI 내부 registry가 command metadata와 executor set을 직접 관리
 - 실제 broker client 생성은 `cluefin_openapi.client_factory`를 사용
 - KIS, Kiwoom은 토큰 캐시를 사용하고, DART는 stateless client로 동작
+- Agent integration은 이 CLI의 JSON discovery를 직접 사용합니다
+- `cluefin-cli` 삭제 또는 정리는 별도 후속 작업이며, 이 CLI는 wrapper 없이 독립적으로 사용됩니다
 
 ## 주의사항
 

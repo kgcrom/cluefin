@@ -17,27 +17,33 @@ uv run cluefin-ta-cli --help --json
 
 ### 1. Discovery
 
-전체 command를 탐색합니다.
+전체 command 또는 domain/tag별 command를 탐색합니다.
 
 ```bash
 uv run cluefin-ta-cli list --json
+uv run cluefin-ta-cli list --domain technical-indicator --json
+uv run cluefin-ta-cli list --tag momentum --json
+uv run cluefin-ta-cli domains --json
+uv run cluefin-ta-cli tags --json
 ```
 
 ### 2. Describe
 
-단일 command의 설명, 입력 schema, required 필드, help payload를 확인합니다.
+단일 command의 설명, 입력 schema, required 필드, domain/tag, examples, agent_notes, help payload를 확인합니다.
 
 ```bash
 uv run cluefin-ta-cli describe ta sma --json
 uv run cluefin-ta-cli ta sma --help --json
 ```
 
+Agent는 `describe --json`의 `examples[0].command`를 실행 skeleton으로 사용하고, `agent_notes`에서 입력 배열 조건과 warm-up 구간의 `null` 반환 가능성을 확인할 수 있습니다.
+
 ### 3. Command Path
 
 TA command path 규칙은 아래와 같습니다.
 
 - `ta <name>`
-- `list`, `describe`는 meta command
+- `list`, `describe`, `domains`, `tags`는 meta command
 
 예시:
 
@@ -79,7 +85,22 @@ uv run cluefin-ta-cli ta sma --params-json '{"close":[100,101,102,103,104]}' --t
 uv run cluefin-ta-cli --help --json
 uv run cluefin-ta-cli ta --help --json
 uv run cluefin-ta-cli ta sma --help --json
+uv run cluefin-ta-cli domains --json
+uv run cluefin-ta-cli tags --json
 ```
+
+## Agent Workflow
+
+`cluefin-openapi-cli`에서 OHLCV 데이터를 조회한 뒤, 필요한 배열만 추출해 `cluefin-ta-cli`에 전달합니다.
+
+```bash
+uv run cluefin-openapi-cli list --domain chart --json
+uv run cluefin-ta-cli list --tag moving-average --json
+uv run cluefin-ta-cli describe ta rsi --json
+uv run cluefin-ta-cli ta rsi --params-json '{"close":[100,101,102,103,104]}' --json
+```
+
+`cluefin-cli` 삭제 또는 정리는 별도 후속 작업입니다. Agent integration은 이 CLI의 JSON discovery를 직접 사용할 수 있습니다.
 
 ## 지원 명령
 

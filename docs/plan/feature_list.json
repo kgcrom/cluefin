@@ -1,6 +1,6 @@
 {
   "project": "agent-friendly-cli-discovery",
-  "status": "pending",
+  "status": "completed",
   "updated_at": "2026-05-21",
   "completion_policy": {
     "phase_end_commands": [
@@ -248,7 +248,7 @@
     {
       "id": "phase-7",
       "title": "Documentation and migration guidance",
-      "status": "pending",
+      "status": "completed",
       "scope": [
         "openapi CLI README discovery docs",
         "ta CLI README discovery docs",
@@ -259,22 +259,22 @@
         {
           "id": "phase-7-task-1",
           "title": "Update cluefin-openapi-cli README",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-7-task-2",
           "title": "Update cluefin-ta-cli README",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-7-task-3",
           "title": "Add agent workflow examples",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-7-task-4",
           "title": "Add README smoke tests",
-          "status": "pending"
+          "status": "completed"
         }
       ],
       "verification": [
