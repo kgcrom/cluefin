@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from cluefin_openapi_cli.main import run_cli
 from cluefin_openapi_cli.registry import CommandSpec, set_registry_provider
 
@@ -109,7 +111,17 @@ def test_describe_returns_command_metadata() -> None:
     result = run_cli(["describe", "kis", "stock", "current-price", "--json"])
 
     assert result.exit_code == 0
-    assert '"qualified_name": "kis.stock.current-price"' in result.stdout
+    payload = json.loads(result.stdout)
+    command = payload["command"]
+
+    assert command["qualified_name"] == "kis.stock.current-price"
+    assert command["domains"] == []
+    assert command["tags"] == []
+    assert command["use_cases"] == []
+    assert command["examples"] == []
+    assert command["agent_notes"] is None
+    assert command["required_credentials"] == []
+    assert command["side_effect"] == "read"
 
 
 def test_describe_missing_command_exits_2() -> None:

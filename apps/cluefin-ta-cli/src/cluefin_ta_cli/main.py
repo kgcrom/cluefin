@@ -35,6 +35,11 @@ def _command_summary(command: CommandSpec) -> dict[str, Any]:
         "description": command.description,
         "parameters": command.parameters,
         "returns": command.returns,
+        "domains": list(command.domains),
+        "tags": list(command.tags),
+        "use_cases": list(command.use_cases),
+        "examples": list(command.examples),
+        "agent_notes": command.agent_notes,
         "has_executor": command.executor is not None,
     }
 

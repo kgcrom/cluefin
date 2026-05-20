@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from cluefin_ta_cli.main import run_cli
 
 
@@ -22,7 +24,15 @@ def test_describe_returns_command_metadata() -> None:
     result = run_cli(["describe", "ta", "sma", "--json"])
 
     assert result.exit_code == 0
-    assert '"qualified_name": "ta.sma"' in result.stdout
+    payload = json.loads(result.stdout)
+    command = payload["command"]
+
+    assert command["qualified_name"] == "ta.sma"
+    assert command["domains"] == []
+    assert command["tags"] == []
+    assert command["use_cases"] == []
+    assert command["examples"] == []
+    assert command["agent_notes"] is None
 
 
 def test_ta_help_lists_commands() -> None:

@@ -45,6 +45,19 @@ def test_cli_registry_keeps_existing_command_surface() -> None:
     assert len(registry) == len(set(registry))
 
 
+def test_cli_registry_commands_expose_metadata_defaults() -> None:
+    registry = build_cli_registry()
+    command = registry[("kis", "stock", "current-price")]
+
+    assert command.domains == ()
+    assert command.tags == ()
+    assert command.use_cases == ()
+    assert command.examples == ()
+    assert command.agent_notes is None
+    assert command.required_credentials == ()
+    assert command.side_effect == "read"
+
+
 def test_rpc_registry_resolves_real_command_path() -> None:
     registry = RpcRegistry(client_factory=_FakeFactory())
     command = registry.resolve_command(("dart", "company-overview"))

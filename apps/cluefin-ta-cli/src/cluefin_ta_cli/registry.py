@@ -35,6 +35,11 @@ class CommandSpec:
     path_segments: tuple[str, ...]
     parameters: dict[str, Any] = field(default_factory=dict)
     returns: dict[str, Any] = field(default_factory=dict)
+    domains: tuple[str, ...] = ()
+    tags: tuple[str, ...] = ()
+    use_cases: tuple[str, ...] = ()
+    examples: tuple[dict[str, Any], ...] = ()
+    agent_notes: str | None = None
     executor: Callable[[dict[str, Any]], Any] | None = None
 
     @property

@@ -1,0 +1,288 @@
+{
+  "project": "agent-friendly-cli-discovery",
+  "status": "pending",
+  "updated_at": "2026-05-21",
+  "completion_policy": {
+    "phase_end_commands": [
+      "uvx ruff format .",
+      "uvx ruff check ."
+    ],
+    "requires_tests": true,
+    "requires_test_execution": true,
+    "commit_rule": "Run /commit only after phase tests, uvx ruff format ., and uvx ruff check . all pass."
+  },
+  "phases": [
+    {
+      "id": "phase-1",
+      "title": "CommandSpec metadata foundation",
+      "status": "completed",
+      "scope": [
+        "cluefin-openapi-cli CommandSpec metadata fields",
+        "cluefin-ta-cli CommandSpec metadata fields",
+        "describe/list JSON summary metadata output"
+      ],
+      "tasks": [
+        {
+          "id": "phase-1-task-1",
+          "title": "Extend openapi CommandSpec",
+          "status": "completed"
+        },
+        {
+          "id": "phase-1-task-2",
+          "title": "Extend ta CommandSpec",
+          "status": "completed"
+        },
+        {
+          "id": "phase-1-task-3",
+          "title": "Add metadata fields to command summaries",
+          "status": "completed"
+        },
+        {
+          "id": "phase-1-task-4",
+          "title": "Preserve existing command counts and JSON outputs",
+          "status": "completed"
+        }
+      ],
+      "verification": [
+        "uv run pytest apps/cluefin-openapi-cli/tests -v",
+        "uv run pytest apps/cluefin-ta-cli/tests -v",
+        "uvx ruff format .",
+        "uvx ruff check ."
+      ]
+    },
+    {
+      "id": "phase-2",
+      "title": "cluefin-openapi-cli domain and tag metadata",
+      "status": "pending",
+      "scope": [
+        "metadata.py with rule and override mapping",
+        "183 openapi commands covered by at least one domain and tag",
+        "required credentials and read side effect metadata"
+      ],
+      "tasks": [
+        {
+          "id": "phase-2-task-1",
+          "title": "Add openapi metadata module",
+          "status": "pending"
+        },
+        {
+          "id": "phase-2-task-2",
+          "title": "Add default broker/category metadata rules",
+          "status": "pending"
+        },
+        {
+          "id": "phase-2-task-3",
+          "title": "Add command-level overrides for ambiguous APIs",
+          "status": "pending"
+        },
+        {
+          "id": "phase-2-task-4",
+          "title": "Add all-command domain/tag coverage tests",
+          "status": "pending"
+        }
+      ],
+      "verification": [
+        "uv run pytest apps/cluefin-openapi-cli/tests -v",
+        "uvx ruff format .",
+        "uvx ruff check ."
+      ]
+    },
+    {
+      "id": "phase-3",
+      "title": "cluefin-ta-cli domain and tag metadata",
+      "status": "pending",
+      "scope": [
+        "metadata.py for 11 TA commands",
+        "technical-indicator, risk-metric, portfolio-metric domains",
+        "TA input requirements in agent notes"
+      ],
+      "tasks": [
+        {
+          "id": "phase-3-task-1",
+          "title": "Add ta metadata module",
+          "status": "pending"
+        },
+        {
+          "id": "phase-3-task-2",
+          "title": "Add metadata for all 11 TA commands",
+          "status": "pending"
+        },
+        {
+          "id": "phase-3-task-3",
+          "title": "Add TA metadata coverage tests",
+          "status": "pending"
+        }
+      ],
+      "verification": [
+        "uv run pytest apps/cluefin-ta-cli/tests -v",
+        "uvx ruff format .",
+        "uvx ruff check ."
+      ]
+    },
+    {
+      "id": "phase-4",
+      "title": "Domain and tag discovery commands",
+      "status": "pending",
+      "scope": [
+        "list --domain and list --tag filters",
+        "domains --json command",
+        "tags --json command"
+      ],
+      "tasks": [
+        {
+          "id": "phase-4-task-1",
+          "title": "Add openapi list domain/tag filters",
+          "status": "pending"
+        },
+        {
+          "id": "phase-4-task-2",
+          "title": "Add ta list domain/tag filters",
+          "status": "pending"
+        },
+        {
+          "id": "phase-4-task-3",
+          "title": "Add openapi domains/tags commands",
+          "status": "pending"
+        },
+        {
+          "id": "phase-4-task-4",
+          "title": "Add ta domains/tags commands",
+          "status": "pending"
+        },
+        {
+          "id": "phase-4-task-5",
+          "title": "Add CLI JSON discovery tests",
+          "status": "pending"
+        }
+      ],
+      "verification": [
+        "uv run pytest apps/cluefin-openapi-cli/tests -v",
+        "uv run pytest apps/cluefin-ta-cli/tests -v",
+        "uvx ruff format .",
+        "uvx ruff check ."
+      ]
+    },
+    {
+      "id": "phase-5",
+      "title": "Examples and agent notes",
+      "status": "pending",
+      "scope": [
+        "examples in describe JSON",
+        "agent_notes in describe JSON",
+        "root/help discovery usage updates"
+      ],
+      "tasks": [
+        {
+          "id": "phase-5-task-1",
+          "title": "Add executable example skeletons to openapi metadata",
+          "status": "pending"
+        },
+        {
+          "id": "phase-5-task-2",
+          "title": "Add params-json examples to ta metadata",
+          "status": "pending"
+        },
+        {
+          "id": "phase-5-task-3",
+          "title": "Update root/help JSON discovery usage",
+          "status": "pending"
+        },
+        {
+          "id": "phase-5-task-4",
+          "title": "Add describe metadata tests",
+          "status": "pending"
+        }
+      ],
+      "verification": [
+        "uv run pytest apps/cluefin-openapi-cli/tests -v",
+        "uv run pytest apps/cluefin-ta-cli/tests -v",
+        "uvx ruff format .",
+        "uvx ruff check ."
+      ]
+    },
+    {
+      "id": "phase-6",
+      "title": "Workflow recipes",
+      "status": "pending",
+      "scope": [
+        "openapi recipe metadata",
+        "recipes --json command",
+        "recipe <name> --json command",
+        "recipe command reference validation"
+      ],
+      "tasks": [
+        {
+          "id": "phase-6-task-1",
+          "title": "Add recipes module",
+          "status": "pending"
+        },
+        {
+          "id": "phase-6-task-2",
+          "title": "Add recipes list/detail commands",
+          "status": "pending"
+        },
+        {
+          "id": "phase-6-task-3",
+          "title": "Add initial recipes",
+          "status": "pending"
+        },
+        {
+          "id": "phase-6-task-4",
+          "title": "Add recipe reference tests",
+          "status": "pending"
+        }
+      ],
+      "initial_recipes": [
+        "stock-research",
+        "technical-analysis",
+        "market-scan",
+        "corporate-actions",
+        "disclosure-monitoring"
+      ],
+      "verification": [
+        "uv run pytest apps/cluefin-openapi-cli/tests -v",
+        "uvx ruff format .",
+        "uvx ruff check ."
+      ]
+    },
+    {
+      "id": "phase-7",
+      "title": "Documentation and migration guidance",
+      "status": "pending",
+      "scope": [
+        "openapi CLI README discovery docs",
+        "ta CLI README discovery docs",
+        "agent workflow examples",
+        "cluefin-cli deletion deferred note"
+      ],
+      "tasks": [
+        {
+          "id": "phase-7-task-1",
+          "title": "Update cluefin-openapi-cli README",
+          "status": "pending"
+        },
+        {
+          "id": "phase-7-task-2",
+          "title": "Update cluefin-ta-cli README",
+          "status": "pending"
+        },
+        {
+          "id": "phase-7-task-3",
+          "title": "Add agent workflow examples",
+          "status": "pending"
+        },
+        {
+          "id": "phase-7-task-4",
+          "title": "Add README smoke tests",
+          "status": "pending"
+        }
+      ],
+      "verification": [
+        "uv run pytest apps/cluefin-openapi-cli/tests -v",
+        "uv run pytest apps/cluefin-ta-cli/tests -v",
+        "uvx ruff format .",
+        "uvx ruff check ."
+      ]
+    }
+  ]
+}

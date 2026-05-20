@@ -35,6 +35,19 @@ def test_command_spec_qualified_name() -> None:
     assert spec.description == "Simple Moving Average."
 
 
+def test_command_spec_exposes_metadata_defaults() -> None:
+    registry = Registry()
+
+    spec = registry.resolve_command(("ta", "sma"))
+
+    assert spec is not None
+    assert spec.domains == ()
+    assert spec.tags == ()
+    assert spec.use_cases == ()
+    assert spec.examples == ()
+    assert spec.agent_notes is None
+
+
 def test_registry_paths_are_unique() -> None:
     registry = build_registry()
 
