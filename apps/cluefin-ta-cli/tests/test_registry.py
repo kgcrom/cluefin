@@ -35,17 +35,42 @@ def test_command_spec_qualified_name() -> None:
     assert spec.description == "Simple Moving Average."
 
 
-def test_command_spec_exposes_metadata_defaults() -> None:
+def test_command_spec_exposes_agent_metadata() -> None:
     registry = Registry()
 
     spec = registry.resolve_command(("ta", "sma"))
 
     assert spec is not None
-    assert spec.domains == ()
-    assert spec.tags == ()
-    assert spec.use_cases == ()
-    assert spec.examples == ()
-    assert spec.agent_notes is None
+    assert spec.domains == ("technical-indicator",)
+    assert spec.tags == ("moving-average", "trend")
+    assert spec.use_cases
+    assert spec.examples
+    assert spec.agent_notes
+
+
+def test_all_commands_have_agent_metadata() -> None:
+    registry = Registry()
+
+    commands = registry.list_commands(category="ta")
+
+    assert all(command.domains for command in commands)
+    assert all(command.tags for command in commands)
+    assert all(command.use_cases for command in commands)
+    assert all(command.examples for command in commands)
+    assert all(command.agent_notes for command in commands)
+
+
+def test_representative_ta_tags() -> None:
+    registry = Registry()
+
+    assert {"moving-average", "trend"}.issubset(registry.resolve_command(("ta", "sma")).tags)
+    assert {"moving-average", "trend"}.issubset(registry.resolve_command(("ta", "ema")).tags)
+    assert "momentum" in registry.resolve_command(("ta", "rsi")).tags
+    assert "momentum" in registry.resolve_command(("ta", "macd")).tags
+    assert "momentum" in registry.resolve_command(("ta", "stoch")).tags
+    assert "trend" in registry.resolve_command(("ta", "adx")).tags
+    assert "portfolio-risk" in registry.resolve_command(("ta", "mdd")).tags
+    assert "portfolio-risk" in registry.resolve_command(("ta", "sharpe")).tags
 
 
 def test_registry_paths_are_unique() -> None:

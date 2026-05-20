@@ -28,11 +28,12 @@ def test_describe_returns_command_metadata() -> None:
     command = payload["command"]
 
     assert command["qualified_name"] == "ta.sma"
-    assert command["domains"] == []
-    assert command["tags"] == []
-    assert command["use_cases"] == []
-    assert command["examples"] == []
-    assert command["agent_notes"] is None
+    assert command["domains"] == ["technical-indicator"]
+    assert command["tags"] == ["moving-average", "trend"]
+    assert command["use_cases"]
+    assert command["examples"]
+    assert "--params-json" in command["examples"][0]["command"]
+    assert command["agent_notes"]
 
 
 def test_ta_help_lists_commands() -> None:

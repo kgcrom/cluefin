@@ -90,7 +90,7 @@
     {
       "id": "phase-3",
       "title": "cluefin-ta-cli domain and tag metadata",
-      "status": "pending",
+      "status": "completed",
       "scope": [
         "metadata.py for 11 TA commands",
         "technical-indicator, risk-metric, portfolio-metric domains",
@@ -100,17 +100,17 @@
         {
           "id": "phase-3-task-1",
           "title": "Add ta metadata module",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-3-task-2",
           "title": "Add metadata for all 11 TA commands",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-3-task-3",
           "title": "Add TA metadata coverage tests",
-          "status": "pending"
+          "status": "completed"
         }
       ],
       "verification": [

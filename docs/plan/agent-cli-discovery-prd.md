@@ -245,7 +245,7 @@ Completion Rule:
 
 ### Phase 3: cluefin-ta-cli Domain/Tag Metadata
 
-Status: `pending`
+Status: `completed`
 
 Tasks:
 

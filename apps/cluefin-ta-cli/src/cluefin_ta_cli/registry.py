@@ -5,6 +5,8 @@ from typing import Any, Callable
 
 import numpy as np
 
+from cluefin_ta_cli.metadata import get_command_metadata
+
 
 def _to_array(data: list[float]) -> np.ndarray:
     """Convert a list of numbers to a numpy float64 array."""
@@ -405,6 +407,7 @@ def build_registry() -> dict[tuple[str, ...], CommandSpec]:
 
     registry: dict[tuple[str, ...], CommandSpec] = {}
     for definition, executor in command_definitions:
+        metadata = get_command_metadata(definition["name"])
         spec = CommandSpec(
             category=definition["category"],
             name=definition["name"],
@@ -412,6 +415,11 @@ def build_registry() -> dict[tuple[str, ...], CommandSpec]:
             path_segments=definition["path_segments"],
             parameters=definition["parameters"],
             returns=definition["returns"],
+            domains=metadata.domains,
+            tags=metadata.tags,
+            use_cases=metadata.use_cases,
+            examples=metadata.examples,
+            agent_notes=metadata.agent_notes,
             executor=executor,
         )
         if spec.path_segments in registry:
