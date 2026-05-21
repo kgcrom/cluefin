@@ -36,8 +36,276 @@ _BROKER_CREDENTIALS: dict[str, tuple[str, ...]] = {
     "kiwoom": ("KIWOOM_APP_KEY", "KIWOOM_SECRET_KEY"),
 }
 
-_DOMAIN_TAXONOMY: dict[str, TaxonomyMetadata] = {}
-_TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {}
+_DOMAIN_TAXONOMY: dict[str, TaxonomyMetadata] = {
+    "chart": TaxonomyMetadata(
+        name="chart",
+        description="Price, volume, and OHLCV time-series lookup commands.",
+        when_to_use="Use before technical analysis, price trend review, or volume analysis.",
+        avoid_when="Use cluefin-ta-cli technical-indicator commands when OHLCV arrays are already available.",
+        related_tags=("ohlcv", "daily", "minute", "tick"),
+    ),
+    "corporate-actions": TaxonomyMetadata(
+        name="corporate-actions",
+        description="Dividend, capital change, merger, split, IPO, listing, and meeting event commands.",
+        when_to_use="Use when an agent needs issuer event schedules or corporate-action monitoring.",
+        avoid_when="Use news or statements domains when the task needs disclosure text or financial statement values.",
+        related_tags=(
+            "dividend",
+            "ipo",
+            "capital-increase",
+            "capital-reduction",
+            "merger-split",
+            "shareholder-meeting",
+        ),
+    ),
+    "etf": TaxonomyMetadata(
+        name="etf",
+        description="ETF quote, holdings, NAV, and execution data commands.",
+        when_to_use="Use for ETF research, ETF market scans, or component stock lookups.",
+        avoid_when="Use quote or chart domains for regular stock quote and OHLCV tasks.",
+        related_tags=("current-price", "daily"),
+    ),
+    "market": TaxonomyMetadata(
+        name="market",
+        description="Market-wide scan, ranking, schedule, and summary commands.",
+        when_to_use="Use when the task starts from a market universe rather than one known stock.",
+        avoid_when="Use quote or statements domains when the task is already focused on one issuer.",
+        related_tags=("ranking", "volume-rank", "market-cap", "market-calendar"),
+    ),
+    "market-calendar": TaxonomyMetadata(
+        name="market-calendar",
+        description="Trading calendar, business day, holiday, and dated market-event commands.",
+        when_to_use="Use to validate trading dates or discover dated market and issuer events.",
+        avoid_when="Use corporate-actions for issuer action details and market for broad scans.",
+        related_tags=("market-calendar", "announcement"),
+    ),
+    "news": TaxonomyMetadata(
+        name="news",
+        description="Market announcement and DART disclosure discovery commands.",
+        when_to_use="Use for title-level news, formal disclosures, and disclosure monitoring workflows.",
+        avoid_when="Use statements when the task needs normalized financial values rather than filing discovery.",
+        related_tags=("announcement", "disclosure"),
+    ),
+    "quote": TaxonomyMetadata(
+        name="quote",
+        description="Current price, order book, execution, and stock identity lookup commands.",
+        when_to_use="Use for latest stock state, quote snapshots, and immediate market microstructure context.",
+        avoid_when="Use chart when historical OHLCV series are required.",
+        related_tags=("current-price", "order-book", "conclusion", "overtime"),
+    ),
+    "sector": TaxonomyMetadata(
+        name="sector",
+        description="Sector and industry index commands.",
+        when_to_use="Use for sector context, sector trend checks, or market scan grouping.",
+        avoid_when="Use theme when the grouping is thematic rather than exchange sector based.",
+        related_tags=("sector-index", "daily", "minute"),
+    ),
+    "statements": TaxonomyMetadata(
+        name="statements",
+        description="Financial statement, financial ratio, company overview, and shareholder commands.",
+        when_to_use="Use for fundamental analysis, issuer financials, ratios, and ownership context.",
+        avoid_when="Use news for disclosure search or quote for current market pricing.",
+        related_tags=("financial-statement", "financial-ratio", "shareholder", "disclosure"),
+    ),
+    "theme": TaxonomyMetadata(
+        name="theme",
+        description="Theme group and theme constituent commands.",
+        when_to_use="Use for thematic market scans and group membership discovery.",
+        avoid_when="Use sector for exchange sector or industry index analysis.",
+        related_tags=("theme-group",),
+    ),
+    "trading-flow": TaxonomyMetadata(
+        name="trading-flow",
+        description="Investor, foreigner, institution, brokerage, short-selling, and program trading commands.",
+        when_to_use="Use when a task asks who is buying or selling, or needs supply/demand context.",
+        avoid_when="Use chart for price series or quote for current price snapshots.",
+        related_tags=("foreign", "institution", "program-trading", "short-selling", "credit"),
+    ),
+}
+
+_TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {
+    "announcement": TaxonomyMetadata(
+        name="announcement",
+        description="Market announcement and event title data.",
+        when_to_use="Use to discover recent market notices or schedule announcements.",
+        related_domains=("news", "market-calendar", "corporate-actions"),
+    ),
+    "capital-increase": TaxonomyMetadata(
+        name="capital-increase",
+        description="Paid-in capital increase schedule or decision data.",
+        when_to_use="Use when tracking equity issuance or capital raise events.",
+        related_domains=("corporate-actions",),
+    ),
+    "capital-reduction": TaxonomyMetadata(
+        name="capital-reduction",
+        description="Capital reduction and reverse split schedule data.",
+        when_to_use="Use when tracking capital structure reductions or reverse split events.",
+        related_domains=("corporate-actions",),
+    ),
+    "conclusion": TaxonomyMetadata(
+        name="conclusion",
+        description="Execution or trade conclusion data.",
+        when_to_use="Use for recent executed trade details and microstructure checks.",
+        related_domains=("quote",),
+    ),
+    "credit": TaxonomyMetadata(
+        name="credit",
+        description="Margin, credit, or loan-related market data.",
+        when_to_use="Use when supply/demand analysis needs credit balance or margin-tradable context.",
+        related_domains=("trading-flow", "market"),
+    ),
+    "current-price": TaxonomyMetadata(
+        name="current-price",
+        description="Latest quote or current price snapshot.",
+        when_to_use="Use as the first lookup for current market state of a stock or ETF.",
+        related_domains=("quote", "etf"),
+    ),
+    "daily": TaxonomyMetadata(
+        name="daily",
+        description="Daily interval series or daily event data.",
+        when_to_use="Use for day-level chart, sector, ETF, and trading-flow analysis.",
+        related_domains=("chart", "sector", "etf"),
+    ),
+    "disclosure": TaxonomyMetadata(
+        name="disclosure",
+        description="Formal DART disclosure or disclosure-linked company data.",
+        when_to_use="Use to find filings, issuer details, and disclosure-backed records.",
+        related_domains=("news", "statements"),
+    ),
+    "dividend": TaxonomyMetadata(
+        name="dividend",
+        description="Cash dividend or stock dividend schedule and decision data.",
+        when_to_use="Use for income, payout, corporate-action, and event monitoring tasks.",
+        related_domains=("corporate-actions",),
+    ),
+    "financial-ratio": TaxonomyMetadata(
+        name="financial-ratio",
+        description="Profitability, stability, growth, valuation, and other financial ratios.",
+        when_to_use="Use after statement lookup when comparing issuer fundamentals.",
+        related_domains=("statements",),
+    ),
+    "financial-statement": TaxonomyMetadata(
+        name="financial-statement",
+        description="Balance sheet, income statement, and related financial statement data.",
+        when_to_use="Use for fundamental analysis and statement-driven research.",
+        related_domains=("statements",),
+    ),
+    "foreign": TaxonomyMetadata(
+        name="foreign",
+        description="Foreign investor or foreign brokerage trading data.",
+        when_to_use="Use when analyzing foreign buying, selling, ownership, or flow.",
+        related_domains=("trading-flow", "market"),
+    ),
+    "institution": TaxonomyMetadata(
+        name="institution",
+        description="Institutional investor trading data.",
+        when_to_use="Use when analyzing institution-driven supply and demand.",
+        related_domains=("trading-flow", "market"),
+    ),
+    "ipo": TaxonomyMetadata(
+        name="ipo",
+        description="IPO subscription and listing schedule data.",
+        when_to_use="Use for new listing and public offering event workflows.",
+        related_domains=("corporate-actions", "market-calendar"),
+    ),
+    "market-calendar": TaxonomyMetadata(
+        name="market-calendar",
+        description="Holiday, business day, and date-based market schedule data.",
+        when_to_use="Use to validate tradable dates or discover market calendar events.",
+        related_domains=("market-calendar", "market"),
+    ),
+    "market-cap": TaxonomyMetadata(
+        name="market-cap",
+        description="Market capitalization or market value ranking data.",
+        when_to_use="Use for size-based market screening and ranking tasks.",
+        related_domains=("market",),
+    ),
+    "merger-split": TaxonomyMetadata(
+        name="merger-split",
+        description="Merger, split, and par value change event data.",
+        when_to_use="Use for issuer restructuring and corporate-action monitoring.",
+        related_domains=("corporate-actions",),
+    ),
+    "minute": TaxonomyMetadata(
+        name="minute",
+        description="Minute interval price or index data.",
+        when_to_use="Use for intraday chart analysis and short-horizon market context.",
+        related_domains=("chart", "sector"),
+    ),
+    "ohlcv": TaxonomyMetadata(
+        name="ohlcv",
+        description="Open, high, low, close, and volume price series data.",
+        when_to_use="Use to collect source arrays for technical indicators and price/volume analysis.",
+        avoid_when="Use cluefin-ta-cli tags such as moving-average or momentum when OHLCV arrays are already available.",
+        related_domains=("chart",),
+    ),
+    "order-book": TaxonomyMetadata(
+        name="order-book",
+        description="Bid/ask order book and quote depth data.",
+        when_to_use="Use for current liquidity and market microstructure context.",
+        related_domains=("quote",),
+    ),
+    "overtime": TaxonomyMetadata(
+        name="overtime",
+        description="After-hours or overtime trading data.",
+        when_to_use="Use when the task specifically involves off-regular-session prices or execution.",
+        related_domains=("quote",),
+    ),
+    "program-trading": TaxonomyMetadata(
+        name="program-trading",
+        description="Program trading summary, cumulative, arbitrage, or by-stock flow data.",
+        when_to_use="Use when supply/demand analysis needs program trading context.",
+        related_domains=("trading-flow", "market"),
+    ),
+    "ranking": TaxonomyMetadata(
+        name="ranking",
+        description="Provider ranking outputs for market screening.",
+        when_to_use="Use to find candidate stocks by a provider-defined ranking criterion.",
+        related_domains=("market",),
+    ),
+    "sector-index": TaxonomyMetadata(
+        name="sector-index",
+        description="Sector or industry index price and time-series data.",
+        when_to_use="Use when comparing a stock against sector-level movement.",
+        related_domains=("sector", "market"),
+    ),
+    "shareholder": TaxonomyMetadata(
+        name="shareholder",
+        description="Major shareholder or ownership-related issuer data.",
+        when_to_use="Use for ownership, governance, and shareholder context.",
+        related_domains=("statements",),
+    ),
+    "shareholder-meeting": TaxonomyMetadata(
+        name="shareholder-meeting",
+        description="Shareholder meeting schedule data.",
+        when_to_use="Use for governance event monitoring and calendar workflows.",
+        related_domains=("corporate-actions", "market-calendar"),
+    ),
+    "short-selling": TaxonomyMetadata(
+        name="short-selling",
+        description="Short selling, stock loan, or loanable stock data.",
+        when_to_use="Use when bearish positioning or lending context is relevant.",
+        related_domains=("trading-flow", "market"),
+    ),
+    "theme-group": TaxonomyMetadata(
+        name="theme-group",
+        description="Theme group list or theme constituent data.",
+        when_to_use="Use for thematic screening and theme membership discovery.",
+        related_domains=("theme", "market"),
+    ),
+    "tick": TaxonomyMetadata(
+        name="tick",
+        description="Tick interval price or index data.",
+        when_to_use="Use for high-frequency or execution-level chart analysis.",
+        related_domains=("chart",),
+    ),
+    "volume-rank": TaxonomyMetadata(
+        name="volume-rank",
+        description="Trading volume ranking or volume renewal data.",
+        when_to_use="Use for liquidity, unusual volume, and market scan workflows.",
+        related_domains=("market",),
+    ),
+}
 
 _CATEGORY_DEFAULTS: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
     "analysis": (("trading-flow", "market"), ("foreign", "institution")),
@@ -159,6 +427,13 @@ def build_taxonomy_entry(*, kind: str, name: str, command_count: int, app_name: 
         "example_filter": f"uv run {app_name} list --{filter_name} {name} --json",
         "command_count": command_count,
     }
+
+
+def missing_taxonomy_names(*, kind: str, names: set[str]) -> set[str]:
+    """Return taxonomy names that do not have explicit metadata."""
+
+    catalog = _DOMAIN_TAXONOMY if kind == "domains" else _TAG_TAXONOMY
+    return names - set(catalog)
 
 
 def get_command_metadata(*, broker: str, category: str, name: str) -> CommandMetadata:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from cluefin_openapi_cli.metadata import missing_taxonomy_names
 from cluefin_openapi_cli.recipes import list_recipes, validate_recipe_commands
 from cluefin_openapi_cli.registry import RpcRegistry, build_cli_registry
 
@@ -68,6 +69,15 @@ def test_cli_registry_all_commands_have_domain_tag_and_credentials() -> None:
     assert all(command.agent_notes for command in registry.values())
     assert all(command.required_credentials for command in registry.values())
     assert {command.side_effect for command in registry.values()} == {"read"}
+
+
+def test_openapi_taxonomy_catalog_covers_all_real_domains_and_tags() -> None:
+    registry = build_cli_registry()
+    domains = {domain for command in registry.values() for domain in command.domains}
+    tags = {tag for command in registry.values() for tag in command.tags}
+
+    assert missing_taxonomy_names(kind="domains", names=domains) == set()
+    assert missing_taxonomy_names(kind="tags", names=tags) == set()
 
 
 def test_cli_registry_examples_are_json_first_command_skeletons() -> None:

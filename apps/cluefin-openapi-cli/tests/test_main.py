@@ -153,15 +153,16 @@ def test_domains_and_tags_return_discovery_catalogs() -> None:
     domains_payload = json.loads(domains.stdout)
     chart_domain = next(item for item in domains_payload["domains"] if item["name"] == "chart")
     assert chart_domain["command_count"] == 1
-    assert chart_domain["description"]
-    assert chart_domain["when_to_use"]
+    assert "OHLCV" in chart_domain["description"]
+    assert "technical analysis" in chart_domain["when_to_use"]
+    assert "ohlcv" in chart_domain["related_tags"]
     assert chart_domain["example_filter"] == "uv run cluefin-openapi-cli list --domain chart --json"
     assert tags.exit_code == 0
     tags_payload = json.loads(tags.stdout)
     ohlcv_tag = next(item for item in tags_payload["tags"] if item["name"] == "ohlcv")
-    assert ohlcv_tag["description"]
-    assert ohlcv_tag["when_to_use"]
-    assert "related_domains" in ohlcv_tag
+    assert "Open, high, low, close" in ohlcv_tag["description"]
+    assert "technical indicators" in ohlcv_tag["when_to_use"]
+    assert "chart" in ohlcv_tag["related_domains"]
     assert ohlcv_tag["example_filter"] == "uv run cluefin-openapi-cli list --tag ohlcv --json"
 
 

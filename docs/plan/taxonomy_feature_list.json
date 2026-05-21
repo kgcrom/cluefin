@@ -54,7 +54,7 @@
     {
       "id": "phase-2",
       "title": "OpenAPI domain and tag descriptions",
-      "status": "pending",
+      "status": "completed",
       "scope": [
         "OpenAPI domain descriptions",
         "OpenAPI tag descriptions",
@@ -65,22 +65,22 @@
         {
           "id": "phase-2-task-1",
           "title": "Add descriptions for OpenAPI domains",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-2-task-2",
           "title": "Add descriptions for OpenAPI tags",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-2-task-3",
           "title": "Add related taxonomy mappings",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-2-task-4",
           "title": "Add OpenAPI taxonomy coverage tests",
-          "status": "pending"
+          "status": "completed"
         }
       ],
       "verification": [
