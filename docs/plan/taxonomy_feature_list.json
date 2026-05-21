@@ -1,6 +1,6 @@
 {
   "project": "agent-cli-taxonomy-discovery",
-  "status": "pending",
+  "status": "completed",
   "updated_at": "2026-05-21",
   "completion_policy": {
     "phase_end_commands": [
@@ -130,7 +130,7 @@
     {
       "id": "phase-4",
       "title": "Agent-focused response tests and docs",
-      "status": "pending",
+      "status": "completed",
       "scope": [
         "README enhanced taxonomy examples",
         "README smoke tests",
@@ -141,22 +141,22 @@
         {
           "id": "phase-4-task-1",
           "title": "Update OpenAPI CLI README examples",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-4-task-2",
           "title": "Update TA CLI README examples",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-4-task-3",
           "title": "Document domains/tags/recipes differences",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-4-task-4",
           "title": "Add or extend README smoke tests",
-          "status": "pending"
+          "status": "completed"
         }
       ],
       "verification": [

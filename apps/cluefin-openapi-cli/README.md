@@ -42,6 +42,28 @@ uv run cluefin-openapi-cli tags --json
 
 `category`는 provider SDK 구조이고, `domain`은 Agent 업무 의도입니다. 예를 들어 `kis chart period`는 category가 `chart`이고 domain도 `chart`지만, 투자자 수급성 API는 provider별 category가 달라도 `trading-flow` domain으로 함께 찾을 수 있습니다.
 
+Agent용 분류 기준:
+
+- `domains`: 업무 영역입니다. 예: `chart`, `statements`, `trading-flow`.
+- `tags`: 세부 기능 또는 데이터 특성입니다. 예: `ohlcv`, `dividend`, `program-trading`.
+- `recipes`: 여러 command를 조합하는 workflow guide입니다. Recipe는 command 실행기가 아니라 탐색 순서와 조합 의도를 설명합니다.
+
+`domains --json`, `tags --json`는 `name`, `command_count`뿐 아니라 `description`, `when_to_use`, `avoid_when`, `related_domains`, `related_tags`, `example_filter`를 포함합니다. Agent는 `example_filter`를 그대로 다음 탐색 명령으로 사용할 수 있습니다.
+
+예시 taxonomy 응답:
+
+```json
+{
+  "name": "chart",
+  "description": "Price, volume, and OHLCV time-series lookup commands.",
+  "when_to_use": "Use before technical analysis, price trend review, or volume analysis.",
+  "avoid_when": "Use cluefin-ta-cli technical-indicator commands when OHLCV arrays are already available.",
+  "related_tags": ["ohlcv", "daily", "minute", "tick"],
+  "example_filter": "uv run cluefin-openapi-cli list --domain chart --json",
+  "command_count": 8
+}
+```
+
 ### 2. Describe
 
 단일 command의 설명, 입력 schema, required 필드, domain/tag, examples, agent_notes, help payload를 확인합니다.
