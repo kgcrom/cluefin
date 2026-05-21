@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from cluefin_ta_cli.metadata import missing_taxonomy_names
 from cluefin_ta_cli.registry import Registry, build_registry
 
 
@@ -58,6 +59,17 @@ def test_all_commands_have_agent_metadata() -> None:
     assert all(command.use_cases for command in commands)
     assert all(command.examples for command in commands)
     assert all(command.agent_notes for command in commands)
+
+
+def test_ta_taxonomy_catalog_covers_all_real_domains_and_tags() -> None:
+    registry = Registry()
+
+    commands = registry.list_commands(category="ta")
+    domains = {domain for command in commands for domain in command.domains}
+    tags = {tag for command in commands for tag in command.tags}
+
+    assert missing_taxonomy_names(kind="domains", names=domains) == set()
+    assert missing_taxonomy_names(kind="tags", names=tags) == set()
 
 
 def test_registry_filters_by_domain_and_tag() -> None:

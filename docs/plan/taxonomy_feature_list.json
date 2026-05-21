@@ -92,7 +92,7 @@
     {
       "id": "phase-3",
       "title": "TA domain and tag descriptions",
-      "status": "pending",
+      "status": "completed",
       "scope": [
         "TA domain descriptions",
         "TA tag descriptions",
@@ -103,22 +103,22 @@
         {
           "id": "phase-3-task-1",
           "title": "Add descriptions for TA domains",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-3-task-2",
           "title": "Add descriptions for TA tags",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-3-task-3",
           "title": "Add TA usage and avoid guidance",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "phase-3-task-4",
           "title": "Add TA taxonomy coverage tests",
-          "status": "pending"
+          "status": "completed"
         }
       ],
       "verification": [

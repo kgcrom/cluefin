@@ -274,7 +274,7 @@ Completion Rule:
 
 ### Phase 3: TA Domain/Tag Descriptions
 
-Status: `pending`
+Status: `completed`
 
 Tasks:
 
