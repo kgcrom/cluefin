@@ -150,10 +150,19 @@ def test_domains_and_tags_return_discovery_catalogs() -> None:
     tags = run_cli(["tags", "--json"])
 
     assert domains.exit_code == 0
-    assert '"name": "chart"' in domains.stdout
-    assert '"command_count": 1' in domains.stdout
+    domains_payload = json.loads(domains.stdout)
+    chart_domain = next(item for item in domains_payload["domains"] if item["name"] == "chart")
+    assert chart_domain["command_count"] == 1
+    assert chart_domain["description"]
+    assert chart_domain["when_to_use"]
+    assert chart_domain["example_filter"] == "uv run cluefin-openapi-cli list --domain chart --json"
     assert tags.exit_code == 0
-    assert '"name": "ohlcv"' in tags.stdout
+    tags_payload = json.loads(tags.stdout)
+    ohlcv_tag = next(item for item in tags_payload["tags"] if item["name"] == "ohlcv")
+    assert ohlcv_tag["description"]
+    assert ohlcv_tag["when_to_use"]
+    assert "related_domains" in ohlcv_tag
+    assert ohlcv_tag["example_filter"] == "uv run cluefin-openapi-cli list --tag ohlcv --json"
 
 
 def test_recipes_and_recipe_return_workflow_metadata() -> None:

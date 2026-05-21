@@ -18,11 +18,26 @@ class CommandMetadata:
     side_effect: str = "read"
 
 
+@dataclass(frozen=True, slots=True)
+class TaxonomyMetadata:
+    """Agent-facing explanation for one domain or tag."""
+
+    name: str
+    description: str
+    when_to_use: str
+    avoid_when: str | None = None
+    related_domains: tuple[str, ...] = ()
+    related_tags: tuple[str, ...] = ()
+
+
 _BROKER_CREDENTIALS: dict[str, tuple[str, ...]] = {
     "dart": ("DART_AUTH_KEY",),
     "kis": ("KIS_APP_KEY", "KIS_SECRET_KEY"),
     "kiwoom": ("KIWOOM_APP_KEY", "KIWOOM_SECRET_KEY"),
 }
+
+_DOMAIN_TAXONOMY: dict[str, TaxonomyMetadata] = {}
+_TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {}
 
 _CATEGORY_DEFAULTS: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
     "analysis": (("trading-flow", "market"), ("foreign", "institution")),
@@ -117,6 +132,33 @@ def _append_unique(values: list[str], new_values: tuple[str, ...]) -> None:
     for value in new_values:
         if value not in values:
             values.append(value)
+
+
+def _generic_taxonomy(kind: str, name: str) -> TaxonomyMetadata:
+    label = "domain" if kind == "domains" else "tag"
+    return TaxonomyMetadata(
+        name=name,
+        description=f"Agent discovery {label} for `{name}` commands.",
+        when_to_use=f"Use when a task needs commands classified by `{name}`.",
+    )
+
+
+def build_taxonomy_entry(*, kind: str, name: str, command_count: int, app_name: str) -> dict[str, Any]:
+    """Build a JSON-safe taxonomy discovery entry."""
+
+    catalog = _DOMAIN_TAXONOMY if kind == "domains" else _TAG_TAXONOMY
+    item = catalog.get(name, _generic_taxonomy(kind, name))
+    filter_name = "domain" if kind == "domains" else "tag"
+    return {
+        "name": item.name,
+        "description": item.description,
+        "when_to_use": item.when_to_use,
+        "avoid_when": item.avoid_when,
+        "related_domains": list(item.related_domains),
+        "related_tags": list(item.related_tags),
+        "example_filter": f"uv run {app_name} list --{filter_name} {name} --json",
+        "command_count": command_count,
+    }
 
 
 def get_command_metadata(*, broker: str, category: str, name: str) -> CommandMetadata:

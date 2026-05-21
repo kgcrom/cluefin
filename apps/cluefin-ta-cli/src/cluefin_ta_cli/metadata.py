@@ -15,6 +15,18 @@ class CommandMetadata:
     agent_notes: str
 
 
+@dataclass(frozen=True, slots=True)
+class TaxonomyMetadata:
+    """Agent-facing explanation for one domain or tag."""
+
+    name: str
+    description: str
+    when_to_use: str
+    avoid_when: str | None = None
+    related_domains: tuple[str, ...] = ()
+    related_tags: tuple[str, ...] = ()
+
+
 def _example(name: str, params_json: str) -> tuple[dict[str, Any], ...]:
     return (
         {
@@ -27,6 +39,9 @@ def _example(name: str, params_json: str) -> tuple[dict[str, Any], ...]:
 _COMMON_PRICE_NOTE = (
     "Supply price arrays through --params-json. Indicator warm-up periods can return null values in JSON output."
 )
+
+_DOMAIN_TAXONOMY: dict[str, TaxonomyMetadata] = {}
+_TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {}
 
 _METADATA: dict[str, CommandMetadata] = {
     "adx": CommandMetadata(
@@ -116,3 +131,30 @@ def get_command_metadata(name: str) -> CommandMetadata:
     """Return discovery metadata for a TA command name."""
 
     return _METADATA[name]
+
+
+def _generic_taxonomy(kind: str, name: str) -> TaxonomyMetadata:
+    label = "domain" if kind == "domains" else "tag"
+    return TaxonomyMetadata(
+        name=name,
+        description=f"Agent discovery {label} for `{name}` commands.",
+        when_to_use=f"Use when a task needs commands classified by `{name}`.",
+    )
+
+
+def build_taxonomy_entry(*, kind: str, name: str, command_count: int, app_name: str) -> dict[str, Any]:
+    """Build a JSON-safe taxonomy discovery entry."""
+
+    catalog = _DOMAIN_TAXONOMY if kind == "domains" else _TAG_TAXONOMY
+    item = catalog.get(name, _generic_taxonomy(kind, name))
+    filter_name = "domain" if kind == "domains" else "tag"
+    return {
+        "name": item.name,
+        "description": item.description,
+        "when_to_use": item.when_to_use,
+        "avoid_when": item.avoid_when,
+        "related_domains": list(item.related_domains),
+        "related_tags": list(item.related_tags),
+        "example_filter": f"uv run {app_name} list --{filter_name} {name} --json",
+        "command_count": command_count,
+    }

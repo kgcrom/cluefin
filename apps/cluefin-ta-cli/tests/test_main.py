@@ -37,9 +37,18 @@ def test_domains_and_tags_return_discovery_catalogs() -> None:
     tags = run_cli(["tags", "--json"])
 
     assert domains.exit_code == 0
-    assert '"name": "technical-indicator"' in domains.stdout
+    domains_payload = json.loads(domains.stdout)
+    indicator_domain = next(item for item in domains_payload["domains"] if item["name"] == "technical-indicator")
+    assert indicator_domain["description"]
+    assert indicator_domain["when_to_use"]
+    assert indicator_domain["example_filter"] == "uv run cluefin-ta-cli list --domain technical-indicator --json"
     assert tags.exit_code == 0
-    assert '"name": "momentum"' in tags.stdout
+    tags_payload = json.loads(tags.stdout)
+    momentum_tag = next(item for item in tags_payload["tags"] if item["name"] == "momentum")
+    assert momentum_tag["description"]
+    assert momentum_tag["when_to_use"]
+    assert "related_domains" in momentum_tag
+    assert momentum_tag["example_filter"] == "uv run cluefin-ta-cli list --tag momentum --json"
 
 
 def test_describe_returns_command_metadata() -> None:

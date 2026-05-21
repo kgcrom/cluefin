@@ -7,6 +7,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass
 from typing import Any
 
+from cluefin_openapi_cli.metadata import build_taxonomy_entry
 from cluefin_openapi_cli.output import render_output, stdout_is_tty, to_jsonable
 from cluefin_openapi_cli.recipes import get_recipe, recipe_summaries
 from cluefin_openapi_cli.registry import CommandSpec, get_registry
@@ -98,7 +99,12 @@ def _discovery_payload(kind: str) -> dict[str, Any]:
     values = sorted({value for command in commands for value in getattr(command, kind)})
     return {
         kind: [
-            {"name": value, "command_count": sum(value in getattr(command, kind) for command in commands)}
+            build_taxonomy_entry(
+                kind=kind,
+                name=value,
+                command_count=sum(value in getattr(command, kind) for command in commands),
+                app_name="cluefin-openapi-cli",
+            )
             for value in values
         ],
         "count": len(values),
