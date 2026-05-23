@@ -8,6 +8,7 @@ from cluefin_openapi import BrokerClientFactory
 from cluefin_openapi_cli.handlers.dart import _ALL_HANDLERS as DART_HANDLERS
 from cluefin_openapi_cli.handlers.kis import get_kis_handlers
 from cluefin_openapi_cli.handlers.kiwoom import get_kiwoom_handlers
+from cluefin_openapi_cli.metadata import build_agent_notes, build_command_examples, get_command_metadata
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,6 +22,13 @@ class CommandSpec:
     path_segments: tuple[str, ...]
     parameters: dict[str, Any] = field(default_factory=dict)
     returns: dict[str, Any] = field(default_factory=dict)
+    domains: tuple[str, ...] = ()
+    tags: tuple[str, ...] = ()
+    use_cases: tuple[str, ...] = ()
+    examples: tuple[dict[str, Any], ...] = ()
+    agent_notes: str | None = None
+    required_credentials: tuple[str, ...] = ()
+    side_effect: str = "read"
     executor: Callable[[dict[str, Any], Any], Any] | None = None
 
     @property
@@ -38,8 +46,10 @@ class RegistryProtocol(Protocol):
         *,
         broker: str | None = None,
         category: str | None = None,
+        domain: str | None = None,
+        tag: str | None = None,
     ) -> list[CommandSpec]:
-        """Return commands filtered by broker and category."""
+        """Return commands filtered by broker, category, domain, and tag."""
 
     def get_command(self, broker: str, category: str, name: str) -> CommandSpec | None:
         """Return one command definition when available."""
@@ -62,6 +72,8 @@ class EmptyRegistry:
         *,
         broker: str | None = None,
         category: str | None = None,
+        domain: str | None = None,
+        tag: str | None = None,
     ) -> list[CommandSpec]:
         return []
 
@@ -135,6 +147,15 @@ def build_cli_registry() -> dict[tuple[str, ...], CommandSpec]:
         if path_segments in registry:
             raise ValueError(f"Duplicate CLI path detected: {' '.join(path_segments)}")
 
+        metadata = get_command_metadata(broker=schema.broker, category=category, name=command_name)
+        examples = metadata.examples or build_command_examples(path_segments, schema.parameters)
+        agent_notes = metadata.agent_notes or build_agent_notes(
+            broker=schema.broker,
+            category=category,
+            name=command_name,
+            required_credentials=metadata.required_credentials,
+        )
+
         registry[path_segments] = CommandSpec(
             broker=schema.broker,
             category=category,
@@ -143,6 +164,13 @@ def build_cli_registry() -> dict[tuple[str, ...], CommandSpec]:
             path_segments=path_segments,
             parameters=schema.parameters,
             returns=schema.returns,
+            domains=metadata.domains,
+            tags=metadata.tags,
+            use_cases=metadata.use_cases,
+            examples=examples,
+            agent_notes=agent_notes,
+            required_credentials=metadata.required_credentials,
+            side_effect=metadata.side_effect,
             executor=handler,
         )
 
@@ -156,12 +184,23 @@ class RpcRegistry:
         self._client_factory = client_factory or BrokerClientFactory()
         self._commands = build_cli_registry()
 
-    def list_commands(self, *, broker: str | None = None, category: str | None = None) -> list[CommandSpec]:
+    def list_commands(
+        self,
+        *,
+        broker: str | None = None,
+        category: str | None = None,
+        domain: str | None = None,
+        tag: str | None = None,
+    ) -> list[CommandSpec]:
         commands = list(self._commands.values())
         if broker is not None:
             commands = [command for command in commands if command.broker == broker]
         if category is not None:
             commands = [command for command in commands if command.category == category]
+        if domain is not None:
+            commands = [command for command in commands if domain in command.domains]
+        if tag is not None:
+            commands = [command for command in commands if tag in command.tags]
         return sorted(commands, key=lambda command: command.path_segments)
 
     def get_command(self, broker: str, category: str, name: str) -> CommandSpec | None:

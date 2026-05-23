@@ -7,7 +7,9 @@ from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass
 from typing import Any
 
+from cluefin_openapi_cli.metadata import build_taxonomy_entry
 from cluefin_openapi_cli.output import render_output, stdout_is_tty, to_jsonable
+from cluefin_openapi_cli.recipes import get_recipe, recipe_summaries
 from cluefin_openapi_cli.registry import CommandSpec, get_registry
 
 
@@ -36,6 +38,13 @@ def _command_summary(command: CommandSpec) -> dict[str, Any]:
         "description": command.description,
         "parameters": command.parameters,
         "returns": command.returns,
+        "domains": list(command.domains),
+        "tags": list(command.tags),
+        "use_cases": list(command.use_cases),
+        "examples": list(command.examples),
+        "agent_notes": command.agent_notes,
+        "required_credentials": list(command.required_credentials),
+        "side_effect": command.side_effect,
         "has_executor": command.executor is not None,
     }
 
@@ -66,14 +75,39 @@ def _emit_error(exc: CliError, *, force_json: bool) -> None:
     _write_stderr(exc.message)
 
 
-def _list_payload(broker: str | None = None, category: str | None = None) -> dict[str, Any]:
+def _list_payload(
+    broker: str | None = None,
+    category: str | None = None,
+    domain: str | None = None,
+    tag: str | None = None,
+) -> dict[str, Any]:
     registry = get_registry()
-    commands = registry.list_commands(broker=broker, category=category)
+    commands = registry.list_commands(broker=broker, category=category, domain=domain, tag=tag)
     return {
         "broker": broker,
         "category": category,
+        "domain": domain,
+        "tag": tag,
         "count": len(commands),
         "commands": [to_jsonable(_command_summary(command)) for command in commands],
+    }
+
+
+def _discovery_payload(kind: str) -> dict[str, Any]:
+    registry = get_registry()
+    commands = registry.list_commands()
+    values = sorted({value for command in commands for value in getattr(command, kind)})
+    return {
+        kind: [
+            build_taxonomy_entry(
+                kind=kind,
+                name=value,
+                command_count=sum(value in getattr(command, kind) for command in commands),
+                app_name="cluefin-openapi-cli",
+            )
+            for value in values
+        ],
+        "count": len(values),
     }
 
 
@@ -204,13 +238,18 @@ def _run_root(argv: list[str]) -> None:
         "app": "cluefin-openapi-cli",
         "interactive": stdout_is_tty(),
         "brokers": list(registry.iter_brokers()),
-        "commands": ["list", "describe"],
+        "commands": ["list", "describe", "domains", "tags", "recipes", "recipe"],
     }
     if bool(options.get("help", False)):
         payload["usage"] = [
             "cluefin-openapi-cli list [--broker BROKER] [--category CATEGORY] [--json]",
+            "cluefin-openapi-cli list [--domain DOMAIN] [--tag TAG] [--json]",
             "cluefin-openapi-cli describe <broker> <category> <name> [--json]",
             "cluefin-openapi-cli describe dart <name> [--json]",
+            "cluefin-openapi-cli domains [--json]",
+            "cluefin-openapi-cli tags [--json]",
+            "cluefin-openapi-cli recipes [--json]",
+            "cluefin-openapi-cli recipe <name> [--json]",
             "cluefin-openapi-cli <broker> <category> <name> [--params-json JSON] [schema options] [--json]",
             "cluefin-openapi-cli dart <name> [--params-json JSON] [schema options] [--json]",
         ]
@@ -224,14 +263,52 @@ def _run_list(argv: list[str]) -> None:
 
     broker = options.get("broker")
     category = options.get("category")
+    domain = options.get("domain")
+    tag = options.get("tag")
     force_json = bool(options.get("json", False))
     render_output(
         _list_payload(
             broker=broker if isinstance(broker, str) else None,
             category=category if isinstance(category, str) else None,
+            domain=domain if isinstance(domain, str) else None,
+            tag=tag if isinstance(tag, str) else None,
         ),
         force_json=force_json,
     )
+
+
+def _run_domains(argv: list[str]) -> None:
+    positional, options = _parse_named_options(argv)
+    if positional:
+        raise CliError("`domains` does not accept positional arguments.", exit_code=2)
+    render_output(_discovery_payload("domains"), force_json=bool(options.get("json", False)))
+
+
+def _run_tags(argv: list[str]) -> None:
+    positional, options = _parse_named_options(argv)
+    if positional:
+        raise CliError("`tags` does not accept positional arguments.", exit_code=2)
+    render_output(_discovery_payload("tags"), force_json=bool(options.get("json", False)))
+
+
+def _run_recipes(argv: list[str]) -> None:
+    positional, options = _parse_named_options(argv)
+    if positional:
+        raise CliError("`recipes` does not accept positional arguments.", exit_code=2)
+    summaries = recipe_summaries()
+    render_output({"recipes": summaries, "count": len(summaries)}, force_json=bool(options.get("json", False)))
+
+
+def _run_recipe(argv: list[str]) -> None:
+    positional, options = _parse_named_options(argv)
+    if len(positional) != 1:
+        raise CliError("Usage: recipe <name>.", exit_code=2)
+
+    recipe = get_recipe(positional[0])
+    if recipe is None:
+        raise CliError(f"Unknown recipe `{positional[0]}`.", exit_code=2)
+
+    render_output({"recipe": to_jsonable(recipe)}, force_json=bool(options.get("json", False)))
 
 
 def _run_describe(argv: list[str]) -> None:
@@ -341,6 +418,18 @@ def dispatch(argv: list[str] | None = None) -> None:
         return
     if command == "describe":
         _run_describe(args[1:])
+        return
+    if command == "domains":
+        _run_domains(args[1:])
+        return
+    if command == "tags":
+        _run_tags(args[1:])
+        return
+    if command == "recipes":
+        _run_recipes(args[1:])
+        return
+    if command == "recipe":
+        _run_recipe(args[1:])
         return
 
     _run_dynamic(args)

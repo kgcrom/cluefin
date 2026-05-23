@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from cluefin_openapi_cli.metadata import missing_taxonomy_names
+from cluefin_openapi_cli.recipes import list_recipes, validate_recipe_commands
 from cluefin_openapi_cli.registry import RpcRegistry, build_cli_registry
 
 
@@ -43,6 +45,84 @@ def test_cli_registry_keeps_existing_command_surface() -> None:
     assert ("kiwoom", "chart", "tick") in registry
     assert ("dart", "company-overview") in registry
     assert len(registry) == len(set(registry))
+
+
+def test_cli_registry_commands_expose_agent_metadata() -> None:
+    registry = build_cli_registry()
+    command = registry[("kis", "stock", "current-price")]
+
+    assert command.domains
+    assert command.tags
+    assert command.use_cases == ()
+    assert command.examples
+    assert command.agent_notes
+    assert command.required_credentials == ("KIS_APP_KEY", "KIS_SECRET_KEY")
+    assert command.side_effect == "read"
+
+
+def test_cli_registry_all_commands_have_domain_tag_and_credentials() -> None:
+    registry = build_cli_registry()
+
+    assert all(command.domains for command in registry.values())
+    assert all(command.tags for command in registry.values())
+    assert all(command.examples for command in registry.values())
+    assert all(command.agent_notes for command in registry.values())
+    assert all(command.required_credentials for command in registry.values())
+    assert {command.side_effect for command in registry.values()} == {"read"}
+
+
+def test_openapi_taxonomy_catalog_covers_all_real_domains_and_tags() -> None:
+    registry = build_cli_registry()
+    domains = {domain for command in registry.values() for domain in command.domains}
+    tags = {tag for command in registry.values() for tag in command.tags}
+
+    assert missing_taxonomy_names(kind="domains", names=domains) == set()
+    assert missing_taxonomy_names(kind="tags", names=tags) == set()
+
+
+def test_cli_registry_examples_are_json_first_command_skeletons() -> None:
+    registry = build_cli_registry()
+    command = registry[("kis", "stock", "current-price")]
+    example = command.examples[0]["command"]
+
+    assert example.startswith("uv run cluefin-openapi-cli kis stock current-price")
+    assert "--json" in example
+    assert "--params-json" in example
+
+
+def test_rpc_registry_filters_by_domain_and_tag() -> None:
+    registry = RpcRegistry(client_factory=_FakeFactory())
+
+    chart_commands = registry.list_commands(domain="chart")
+    ohlcv_commands = registry.list_commands(tag="ohlcv")
+
+    assert chart_commands
+    assert all("chart" in command.domains for command in chart_commands)
+    assert ohlcv_commands
+    assert all("ohlcv" in command.tags for command in ohlcv_commands)
+
+
+def test_cli_registry_maps_representative_domains_and_tags() -> None:
+    registry = build_cli_registry()
+
+    assert "chart" in registry[("kis", "chart", "period")].domains
+    assert {"news", "market"}.issubset(registry[("kis", "market", "announcement")].domains)
+    assert "corporate-actions" in registry[("kis", "schedule", "dividend")].domains
+    assert {"theme", "market"}.issubset(registry[("kiwoom", "theme", "group")].domains)
+    assert {"news", "statements"}.issubset(registry[("dart", "disclosure-search")].domains)
+
+    assert "ohlcv" in registry[("kis", "chart", "period")].tags
+    assert "announcement" in registry[("kis", "market", "announcement")].tags
+    assert "theme-group" in registry[("kiwoom", "theme", "group")].tags
+
+
+def test_recipe_command_references_exist_in_registry() -> None:
+    registry = RpcRegistry(client_factory=_FakeFactory())
+
+    missing = validate_recipe_commands(registry)
+
+    assert list_recipes()
+    assert missing == []
 
 
 def test_rpc_registry_resolves_real_command_path() -> None:

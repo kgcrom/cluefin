@@ -7,6 +7,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass
 from typing import Any
 
+from cluefin_ta_cli.metadata import build_taxonomy_entry
 from cluefin_ta_cli.output import render_output, stdout_is_tty, to_jsonable
 from cluefin_ta_cli.registry import CommandSpec, Registry
 
@@ -35,6 +36,11 @@ def _command_summary(command: CommandSpec) -> dict[str, Any]:
         "description": command.description,
         "parameters": command.parameters,
         "returns": command.returns,
+        "domains": list(command.domains),
+        "tags": list(command.tags),
+        "use_cases": list(command.use_cases),
+        "examples": list(command.examples),
+        "agent_notes": command.agent_notes,
         "has_executor": command.executor is not None,
     }
 
@@ -89,6 +95,24 @@ def _parse_named_options(argv: list[str]) -> tuple[list[str], dict[str, str | bo
         index += 2
 
     return positional, options
+
+
+def _discovery_payload(kind: str) -> dict[str, Any]:
+    registry = Registry()
+    commands = registry.list_commands(category="ta")
+    values = sorted({value for command in commands for value in getattr(command, kind)})
+    return {
+        kind: [
+            build_taxonomy_entry(
+                kind=kind,
+                name=value,
+                command_count=sum(value in getattr(command, kind) for command in commands),
+                app_name="cluefin-ta-cli",
+            )
+            for value in values
+        ],
+        "count": len(values),
+    }
 
 
 def _load_params_json(raw: str | None) -> dict[str, Any]:
@@ -196,12 +220,15 @@ def _run_root(argv: list[str]) -> None:
         "app": "cluefin-ta-cli",
         "interactive": stdout_is_tty(),
         "categories": ["ta"],
-        "commands": ["list", "describe"],
+        "commands": ["list", "describe", "domains", "tags"],
     }
     if bool(options.get("help", False)):
         payload["usage"] = [
             "cluefin-ta-cli list [--json]",
+            "cluefin-ta-cli list [--domain DOMAIN] [--tag TAG] [--json]",
             "cluefin-ta-cli describe ta <name> [--json]",
+            "cluefin-ta-cli domains [--json]",
+            "cluefin-ta-cli tags [--json]",
             "cluefin-ta-cli ta [--help] [--json]",
             "cluefin-ta-cli ta <name> [--params-json JSON] [schema options] [--json]",
         ]
@@ -214,16 +241,38 @@ def _run_list(argv: list[str]) -> None:
         raise CliError("`list` does not accept positional arguments.", exit_code=2)
 
     force_json = bool(options.get("json", False))
+    domain = options.get("domain")
+    tag = options.get("tag")
     registry = Registry()
-    commands = registry.list_commands(category="ta")
+    commands = registry.list_commands(
+        category="ta",
+        domain=domain if isinstance(domain, str) else None,
+        tag=tag if isinstance(tag, str) else None,
+    )
     render_output(
         {
             "category": "ta",
+            "domain": domain if isinstance(domain, str) else None,
+            "tag": tag if isinstance(tag, str) else None,
             "count": len(commands),
             "commands": [to_jsonable(_command_summary(command)) for command in commands],
         },
         force_json=force_json,
     )
+
+
+def _run_domains(argv: list[str]) -> None:
+    positional, options = _parse_named_options(argv)
+    if positional:
+        raise CliError("`domains` does not accept positional arguments.", exit_code=2)
+    render_output(_discovery_payload("domains"), force_json=bool(options.get("json", False)))
+
+
+def _run_tags(argv: list[str]) -> None:
+    positional, options = _parse_named_options(argv)
+    if positional:
+        raise CliError("`tags` does not accept positional arguments.", exit_code=2)
+    render_output(_discovery_payload("tags"), force_json=bool(options.get("json", False)))
 
 
 def _run_describe(argv: list[str]) -> None:
@@ -299,6 +348,12 @@ def dispatch(argv: list[str] | None = None) -> None:
         return
     if command == "describe":
         _run_describe(args[1:])
+        return
+    if command == "domains":
+        _run_domains(args[1:])
+        return
+    if command == "tags":
+        _run_tags(args[1:])
         return
 
     _run_dynamic(args)

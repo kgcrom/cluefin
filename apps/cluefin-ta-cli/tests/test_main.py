@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from cluefin_ta_cli.main import run_cli
 
 
@@ -18,11 +20,53 @@ def test_list_returns_all_commands() -> None:
     assert '"count": 11' in result.stdout
 
 
+def test_list_filters_by_domain_and_tag() -> None:
+    domain_result = run_cli(["list", "--domain", "risk-metric", "--json"])
+    tag_result = run_cli(["list", "--tag", "moving-average", "--json"])
+
+    assert domain_result.exit_code == 0
+    assert '"domain": "risk-metric"' in domain_result.stdout
+    assert '"qualified_name": "ta.mdd"' in domain_result.stdout
+    assert tag_result.exit_code == 0
+    assert '"tag": "moving-average"' in tag_result.stdout
+    assert '"qualified_name": "ta.sma"' in tag_result.stdout
+
+
+def test_domains_and_tags_return_discovery_catalogs() -> None:
+    domains = run_cli(["domains", "--json"])
+    tags = run_cli(["tags", "--json"])
+
+    assert domains.exit_code == 0
+    domains_payload = json.loads(domains.stdout)
+    indicator_domain = next(item for item in domains_payload["domains"] if item["name"] == "technical-indicator")
+    assert "OHLCV" in indicator_domain["description"]
+    assert "chart data" in indicator_domain["when_to_use"]
+    assert "portfolio-metric" in indicator_domain["avoid_when"]
+    assert "momentum" in indicator_domain["related_tags"]
+    assert indicator_domain["example_filter"] == "uv run cluefin-ta-cli list --domain technical-indicator --json"
+    assert tags.exit_code == 0
+    tags_payload = json.loads(tags.stdout)
+    moving_average_tag = next(item for item in tags_payload["tags"] if item["name"] == "moving-average")
+    assert "smooth close prices" in moving_average_tag["description"]
+    assert "SMA" in moving_average_tag["when_to_use"]
+    assert moving_average_tag["related_domains"] == ["technical-indicator"]
+    assert moving_average_tag["example_filter"] == "uv run cluefin-ta-cli list --tag moving-average --json"
+
+
 def test_describe_returns_command_metadata() -> None:
     result = run_cli(["describe", "ta", "sma", "--json"])
 
     assert result.exit_code == 0
-    assert '"qualified_name": "ta.sma"' in result.stdout
+    payload = json.loads(result.stdout)
+    command = payload["command"]
+
+    assert command["qualified_name"] == "ta.sma"
+    assert command["domains"] == ["technical-indicator"]
+    assert command["tags"] == ["moving-average", "trend"]
+    assert command["use_cases"]
+    assert command["examples"]
+    assert "--params-json" in command["examples"][0]["command"]
+    assert "ordered oldest to newest" in command["agent_notes"]
 
 
 def test_ta_help_lists_commands() -> None:
@@ -31,6 +75,14 @@ def test_ta_help_lists_commands() -> None:
     assert result.exit_code == 0
     assert '"commands"' in result.stdout
     assert '"sma"' in result.stdout
+
+
+def test_root_help_mentions_discovery_commands() -> None:
+    result = run_cli(["--help", "--json"])
+
+    assert result.exit_code == 0
+    assert "domains [--json]" in result.stdout
+    assert "list [--domain DOMAIN] [--tag TAG]" in result.stdout
 
 
 def test_leaf_command_merges_flags_and_params_json() -> None:

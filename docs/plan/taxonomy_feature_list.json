@@ -1,0 +1,170 @@
+{
+  "project": "agent-cli-taxonomy-discovery",
+  "status": "completed",
+  "updated_at": "2026-05-21",
+  "completion_policy": {
+    "phase_end_commands": [
+      "uvx ruff format .",
+      "uvx ruff check ."
+    ],
+    "requires_tests": true,
+    "requires_test_execution": true,
+    "commit_rule": "Run /commit only after phase tests, uvx ruff format ., and uvx ruff check . all pass."
+  },
+  "phases": [
+    {
+      "id": "phase-1",
+      "title": "Taxonomy metadata foundation",
+      "status": "completed",
+      "scope": [
+        "OpenAPI CLI taxonomy item schema",
+        "TA CLI taxonomy item schema",
+        "domains/tags JSON response expansion",
+        "backward-compatible name and command_count fields"
+      ],
+      "tasks": [
+        {
+          "id": "phase-1-task-1",
+          "title": "Add OpenAPI taxonomy metadata shape",
+          "status": "completed"
+        },
+        {
+          "id": "phase-1-task-2",
+          "title": "Add TA taxonomy metadata shape",
+          "status": "completed"
+        },
+        {
+          "id": "phase-1-task-3",
+          "title": "Expand domains/tags response fields",
+          "status": "completed"
+        },
+        {
+          "id": "phase-1-task-4",
+          "title": "Add backward compatibility tests",
+          "status": "completed"
+        }
+      ],
+      "verification": [
+        "uv run pytest apps/cluefin-openapi-cli/tests -v",
+        "uv run pytest apps/cluefin-ta-cli/tests -v",
+        "uvx ruff format .",
+        "uvx ruff check ."
+      ]
+    },
+    {
+      "id": "phase-2",
+      "title": "OpenAPI domain and tag descriptions",
+      "status": "completed",
+      "scope": [
+        "OpenAPI domain descriptions",
+        "OpenAPI tag descriptions",
+        "related_tags and related_domains",
+        "all actual OpenAPI domains/tags covered"
+      ],
+      "tasks": [
+        {
+          "id": "phase-2-task-1",
+          "title": "Add descriptions for OpenAPI domains",
+          "status": "completed"
+        },
+        {
+          "id": "phase-2-task-2",
+          "title": "Add descriptions for OpenAPI tags",
+          "status": "completed"
+        },
+        {
+          "id": "phase-2-task-3",
+          "title": "Add related taxonomy mappings",
+          "status": "completed"
+        },
+        {
+          "id": "phase-2-task-4",
+          "title": "Add OpenAPI taxonomy coverage tests",
+          "status": "completed"
+        }
+      ],
+      "verification": [
+        "uv run pytest apps/cluefin-openapi-cli/tests -v",
+        "uvx ruff format .",
+        "uvx ruff check ."
+      ]
+    },
+    {
+      "id": "phase-3",
+      "title": "TA domain and tag descriptions",
+      "status": "completed",
+      "scope": [
+        "TA domain descriptions",
+        "TA tag descriptions",
+        "technical-indicator/risk-metric/portfolio-metric distinction",
+        "all actual TA domains/tags covered"
+      ],
+      "tasks": [
+        {
+          "id": "phase-3-task-1",
+          "title": "Add descriptions for TA domains",
+          "status": "completed"
+        },
+        {
+          "id": "phase-3-task-2",
+          "title": "Add descriptions for TA tags",
+          "status": "completed"
+        },
+        {
+          "id": "phase-3-task-3",
+          "title": "Add TA usage and avoid guidance",
+          "status": "completed"
+        },
+        {
+          "id": "phase-3-task-4",
+          "title": "Add TA taxonomy coverage tests",
+          "status": "completed"
+        }
+      ],
+      "verification": [
+        "uv run pytest apps/cluefin-ta-cli/tests -v",
+        "uvx ruff format .",
+        "uvx ruff check ."
+      ]
+    },
+    {
+      "id": "phase-4",
+      "title": "Agent-focused response tests and docs",
+      "status": "completed",
+      "scope": [
+        "README enhanced taxonomy examples",
+        "README smoke tests",
+        "domains/tags/recipes role guidance",
+        "taxonomy and recipe consistency check"
+      ],
+      "tasks": [
+        {
+          "id": "phase-4-task-1",
+          "title": "Update OpenAPI CLI README examples",
+          "status": "completed"
+        },
+        {
+          "id": "phase-4-task-2",
+          "title": "Update TA CLI README examples",
+          "status": "completed"
+        },
+        {
+          "id": "phase-4-task-3",
+          "title": "Document domains/tags/recipes differences",
+          "status": "completed"
+        },
+        {
+          "id": "phase-4-task-4",
+          "title": "Add or extend README smoke tests",
+          "status": "completed"
+        }
+      ],
+      "verification": [
+        "uv run pytest apps/cluefin-openapi-cli/tests -v",
+        "uv run pytest apps/cluefin-ta-cli/tests -v",
+        "uvx ruff format .",
+        "uvx ruff check ."
+      ]
+    }
+  ]
+}

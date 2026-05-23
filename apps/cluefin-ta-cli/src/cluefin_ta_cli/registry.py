@@ -5,6 +5,8 @@ from typing import Any, Callable
 
 import numpy as np
 
+from cluefin_ta_cli.metadata import get_command_metadata
+
 
 def _to_array(data: list[float]) -> np.ndarray:
     """Convert a list of numbers to a numpy float64 array."""
@@ -35,6 +37,11 @@ class CommandSpec:
     path_segments: tuple[str, ...]
     parameters: dict[str, Any] = field(default_factory=dict)
     returns: dict[str, Any] = field(default_factory=dict)
+    domains: tuple[str, ...] = ()
+    tags: tuple[str, ...] = ()
+    use_cases: tuple[str, ...] = ()
+    examples: tuple[dict[str, Any], ...] = ()
+    agent_notes: str | None = None
     executor: Callable[[dict[str, Any]], Any] | None = None
 
     @property
@@ -52,10 +59,20 @@ class Registry:
     def __init__(self) -> None:
         self._commands = build_registry()
 
-    def list_commands(self, *, category: str | None = None) -> list[CommandSpec]:
+    def list_commands(
+        self,
+        *,
+        category: str | None = None,
+        domain: str | None = None,
+        tag: str | None = None,
+    ) -> list[CommandSpec]:
         commands = list(self._commands.values())
         if category is not None:
             commands = [command for command in commands if command.category == category]
+        if domain is not None:
+            commands = [command for command in commands if domain in command.domains]
+        if tag is not None:
+            commands = [command for command in commands if tag in command.tags]
         return sorted(commands, key=lambda command: command.path_segments)
 
     def resolve_command(self, path_segments: tuple[str, ...]) -> CommandSpec | None:
@@ -400,6 +417,7 @@ def build_registry() -> dict[tuple[str, ...], CommandSpec]:
 
     registry: dict[tuple[str, ...], CommandSpec] = {}
     for definition, executor in command_definitions:
+        metadata = get_command_metadata(definition["name"])
         spec = CommandSpec(
             category=definition["category"],
             name=definition["name"],
@@ -407,6 +425,11 @@ def build_registry() -> dict[tuple[str, ...], CommandSpec]:
             path_segments=definition["path_segments"],
             parameters=definition["parameters"],
             returns=definition["returns"],
+            domains=metadata.domains,
+            tags=metadata.tags,
+            use_cases=metadata.use_cases,
+            examples=metadata.examples,
+            agent_notes=metadata.agent_notes,
             executor=executor,
         )
         if spec.path_segments in registry:

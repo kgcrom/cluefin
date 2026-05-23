@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from cluefin_openapi_cli.main import run_cli
 from cluefin_openapi_cli.registry import CommandSpec, set_registry_provider
 
@@ -15,6 +17,15 @@ class FakeRegistry:
                 path_segments=("kis", "stock", "current-price"),
                 parameters={"type": "object"},
                 returns={"type": "object"},
+                domains=("quote", "market"),
+                tags=("current-price",),
+                examples=(
+                    {
+                        "description": "Run current price.",
+                        "command": 'uv run cluefin-openapi-cli kis stock current-price --params-json \'{"stock_code":"005930"}\' --json',
+                    },
+                ),
+                agent_notes="Use --json for machine-readable current-price output.",
                 executor=lambda params: {"params": params, "source": "kis"},
             ),
             CommandSpec(
@@ -25,6 +36,8 @@ class FakeRegistry:
                 path_segments=("kiwoom", "chart", "tick"),
                 parameters={"type": "object"},
                 returns={"type": "object"},
+                domains=("chart",),
+                tags=("tick", "ohlcv"),
             ),
             CommandSpec(
                 broker="dart",
@@ -38,6 +51,8 @@ class FakeRegistry:
                     "required": ["corp_code"],
                 },
                 returns={"type": "object"},
+                domains=("statements",),
+                tags=("disclosure",),
                 executor=lambda params: {"corp_code": params["corp_code"]},
             ),
             CommandSpec(
@@ -48,16 +63,29 @@ class FakeRegistry:
                 path_segments=("dart", "failing-command"),
                 parameters={"type": "object"},
                 returns={"type": "object"},
+                domains=("news",),
+                tags=("disclosure",),
                 executor=lambda params: (_ for _ in ()).throw(RuntimeError("broker unavailable")),
             ),
         ]
 
-    def list_commands(self, *, broker: str | None = None, category: str | None = None):
+    def list_commands(
+        self,
+        *,
+        broker: str | None = None,
+        category: str | None = None,
+        domain: str | None = None,
+        tag: str | None = None,
+    ):
         commands = self._commands
         if broker is not None:
             commands = [command for command in commands if command.broker == broker]
         if category is not None:
             commands = [command for command in commands if command.category == category]
+        if domain is not None:
+            commands = [command for command in commands if domain in command.domains]
+        if tag is not None:
+            commands = [command for command in commands if tag in command.tags]
         return commands
 
     def get_command(self, broker: str, category: str, name: str):
@@ -105,11 +133,75 @@ def test_list_filters_registry_and_emits_json() -> None:
     assert '"count": 1' in result.stdout
 
 
+def test_list_filters_by_domain_and_tag() -> None:
+    domain_result = run_cli(["list", "--domain", "chart", "--json"])
+    tag_result = run_cli(["list", "--tag", "current-price", "--json"])
+
+    assert domain_result.exit_code == 0
+    assert '"domain": "chart"' in domain_result.stdout
+    assert '"qualified_name": "kiwoom.chart.tick"' in domain_result.stdout
+    assert tag_result.exit_code == 0
+    assert '"tag": "current-price"' in tag_result.stdout
+    assert '"qualified_name": "kis.stock.current-price"' in tag_result.stdout
+
+
+def test_domains_and_tags_return_discovery_catalogs() -> None:
+    domains = run_cli(["domains", "--json"])
+    tags = run_cli(["tags", "--json"])
+
+    assert domains.exit_code == 0
+    domains_payload = json.loads(domains.stdout)
+    chart_domain = next(item for item in domains_payload["domains"] if item["name"] == "chart")
+    assert chart_domain["command_count"] == 1
+    assert "OHLCV" in chart_domain["description"]
+    assert "technical analysis" in chart_domain["when_to_use"]
+    assert "ohlcv" in chart_domain["related_tags"]
+    assert chart_domain["example_filter"] == "uv run cluefin-openapi-cli list --domain chart --json"
+    assert tags.exit_code == 0
+    tags_payload = json.loads(tags.stdout)
+    ohlcv_tag = next(item for item in tags_payload["tags"] if item["name"] == "ohlcv")
+    assert "Open, high, low, close" in ohlcv_tag["description"]
+    assert "technical indicators" in ohlcv_tag["when_to_use"]
+    assert "chart" in ohlcv_tag["related_domains"]
+    assert ohlcv_tag["example_filter"] == "uv run cluefin-openapi-cli list --tag ohlcv --json"
+
+
+def test_recipes_and_recipe_return_workflow_metadata() -> None:
+    recipes = run_cli(["recipes", "--json"])
+    recipe = run_cli(["recipe", "stock-research", "--json"])
+
+    assert recipes.exit_code == 0
+    assert '"name": "stock-research"' in recipes.stdout
+    assert '"step_count"' in recipes.stdout
+    assert recipe.exit_code == 0
+    assert '"title": "Stock Research"' in recipe.stdout
+    assert '"command"' in recipe.stdout
+    assert '"kis"' in recipe.stdout
+
+
+def test_unknown_recipe_exits_2() -> None:
+    result = run_cli(["recipe", "missing", "--json"])
+
+    assert result.exit_code == 2
+    assert "Unknown recipe" in result.stdout
+
+
 def test_describe_returns_command_metadata() -> None:
     result = run_cli(["describe", "kis", "stock", "current-price", "--json"])
 
     assert result.exit_code == 0
-    assert '"qualified_name": "kis.stock.current-price"' in result.stdout
+    payload = json.loads(result.stdout)
+    command = payload["command"]
+
+    assert command["qualified_name"] == "kis.stock.current-price"
+    assert command["domains"] == ["quote", "market"]
+    assert command["tags"] == ["current-price"]
+    assert command["use_cases"] == []
+    assert command["examples"]
+    assert "cluefin-openapi-cli kis stock current-price" in command["examples"][0]["command"]
+    assert command["agent_notes"] == "Use --json for machine-readable current-price output."
+    assert command["required_credentials"] == []
+    assert command["side_effect"] == "read"
 
 
 def test_describe_missing_command_exits_2() -> None:
@@ -123,6 +215,10 @@ def test_root_help_returns_usage_payload() -> None:
 
     assert result.exit_code == 0
     assert '"usage"' in result.stdout
+    assert "domains [--json]" in result.stdout
+    assert "list [--domain DOMAIN] [--tag TAG]" in result.stdout
+    assert "recipes [--json]" in result.stdout
+    assert "recipe <name> [--json]" in result.stdout
 
 
 def test_broker_help_lists_categories() -> None:
