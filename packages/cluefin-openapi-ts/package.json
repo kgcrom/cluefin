@@ -1,6 +1,6 @@
 {
   "name": "cluefin-openapi",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "TypeScript OpenAPI client for KIS and Kiwoom",
   "license": "MIT",
   "author": "kgcrom",
