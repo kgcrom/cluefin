@@ -6,6 +6,7 @@ import pytest
 
 from cluefin_openapi.kis import _domestic_stock_info as domestic_stock_info_module
 from cluefin_openapi.kis._domestic_stock_info import DomesticStockInfo
+from cluefin_openapi.kis._domestic_stock_info_types import StockBasicInfoItem
 
 
 def load_domestic_stock_info_cases():
@@ -102,3 +103,12 @@ def test_domestic_stock_info_builds_request(
     assert len(captured_instances) == 1
     assert result.body is captured_instances[0]
     assert captured_instances[0].kwargs == response_payload
+
+
+def test_stock_basic_info_accepts_five_digit_ocr_no():
+    stock_basic_info = {field_name: "" for field_name in StockBasicInfoItem.model_fields}
+    stock_basic_info["ocr_no"] = "01147"
+
+    result = StockBasicInfoItem.model_validate(stock_basic_info)
+
+    assert result.ocr_no == "01147"
