@@ -71,8 +71,10 @@ class PublicDisclosure:
         """
         if bgn_de is None and end_de is None:
             # DART defaults to an empty result when no date range is provided.
+            # Without corp_code, DART rejects search periods longer than 3 months;
+            # use an inclusive range safely under that limit.
             today = date.today()
-            bgn_de = (today - timedelta(days=90)).strftime("%Y%m%d")
+            bgn_de = (today - timedelta(days=89)).strftime("%Y%m%d")
             end_de = today.strftime("%Y%m%d")
 
         params = {

@@ -1,10 +1,12 @@
 import io
 import zipfile
+from datetime import date
 from pathlib import Path
 
 import pytest
 import requests_mock
 
+import cluefin_openapi.dart._public_disclosure as public_disclosure_module
 from cluefin_openapi.dart._client import Client
 from cluefin_openapi.dart._exceptions import DartAPIError
 from cluefin_openapi.dart._public_disclosure import PublicDisclosure
@@ -80,6 +82,43 @@ def test_public_disclosure_search_rejects_non_mapping(client: Client, monkeypatc
 
     with pytest.raises(TypeError):
         service.public_disclosure_search()
+
+
+def test_public_disclosure_search_defaults_to_dart_safe_date_range(
+    client: Client,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FixedDate(date):
+        @classmethod
+        def today(cls) -> date:
+            return cls(2026, 5, 23)
+
+    expected_payload = {
+        "status": "000",
+        "message": "정상",
+        "page_no": "1",
+        "page_count": "10",
+        "total_count": "0",
+        "total_page": "1",
+        "list": [],
+    }
+
+    monkeypatch.setattr(public_disclosure_module, "date", FixedDate)
+    service = PublicDisclosure(client)
+
+    with requests_mock.Mocker() as mock_requests:
+        mock_requests.get(
+            "https://opendart.fss.or.kr/api/list.json",
+            json=expected_payload,
+            status_code=200,
+        )
+
+        service.public_disclosure_search()
+
+        last_request = mock_requests.last_request
+        assert last_request is not None
+        assert last_request.qs["bgn_de"] == ["20260223"]
+        assert last_request.qs["end_de"] == ["20260523"]
 
 
 def test_company_overview_returns_model(client: Client) -> None:
