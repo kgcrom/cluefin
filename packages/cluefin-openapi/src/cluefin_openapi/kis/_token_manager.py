@@ -1,5 +1,6 @@
 """Token manager for KIS API authentication with local caching."""
 
+import hashlib
 from datetime import datetime, timedelta
 from pathlib import Path
 from tempfile import gettempdir
@@ -31,17 +32,38 @@ class TokenManager:
         """Return a writable fallback cache directory for token storage."""
         return Path(gettempdir()) / "cluefin-openapi"
 
-    def __init__(self, cache_dir: Optional[str] = None):
+    @staticmethod
+    def _cache_file_name(env: Optional[str], app_key: Optional[str]) -> str:
+        """Build an environment- and credential-scoped cache file name.
+
+        Tokens are not interchangeable between the real (prod) and mock (dev)
+        servers, nor between different app keys. Scoping the cache file prevents
+        a token minted for one environment/credential from being reused against
+        another (which the server rejects with EGW00123 "기간이 만료된 token").
+        """
+        parts = []
+        if env:
+            parts.append(env)
+        if app_key:
+            parts.append(hashlib.sha256(app_key.encode()).hexdigest()[:8])
+        suffix = ("_" + "_".join(parts)) if parts else ""
+        return f".kis_token_cache{suffix}.json"
+
+    def __init__(self, cache_dir: Optional[str] = None, env: Optional[str] = None, app_key: Optional[str] = None):
         """Initialize token manager.
 
         Args:
             cache_dir: Directory to store token cache. Defaults to a writable cache directory.
+            env: Target environment ("dev" or "prod"). Scopes the cache file so
+                dev and prod tokens are never mixed.
+            app_key: KIS app key. Scopes the cache file so different credentials
+                do not share a token.
         """
         if cache_dir is None:
             cache_dir = str(self._default_cache_dir())
 
         self.cache_dir = Path(cache_dir)
-        self.cache_file = self.cache_dir / ".kis_token_cache.json"
+        self.cache_file = self.cache_dir / self._cache_file_name(env, app_key)
 
         # In-memory cache
         self._token_cache: Optional[TokenResponse] = None

@@ -23,7 +23,7 @@ class Auth:
         self.app_key = app_key
         self.secret_key = secret_key
         self.env = env
-        self.token_manager = token_manager or TokenManager(cache_dir=cache_dir)
+        self.token_manager = token_manager or TokenManager(cache_dir=cache_dir, env=env, app_key=app_key)
         self._token_data: Optional[TokenResponse] = None
 
         if env == "prod":
