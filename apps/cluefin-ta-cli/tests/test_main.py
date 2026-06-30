@@ -163,3 +163,54 @@ def test_nan_is_serialized_as_null() -> None:
 
     assert result.exit_code == 0
     assert "null" in result.stdout
+
+
+def test_unknown_top_level_command_exits_2() -> None:
+    result = run_cli(["nope"])
+
+    assert result.exit_code == 2
+    assert "Unknown top-level command" in result.stdout
+
+
+def test_ta_without_name_exits_2() -> None:
+    result = run_cli(["ta"])
+
+    assert result.exit_code == 2
+    assert "Usage" in result.stdout
+
+
+def test_ta_with_extra_positional_exits_2() -> None:
+    result = run_cli(["ta", "sma", "extra"])
+
+    assert result.exit_code == 2
+    assert "Unexpected positional" in result.stdout
+
+
+def test_ta_unknown_command_path_exits_2() -> None:
+    result = run_cli(["ta", "does-not-exist"])
+
+    assert result.exit_code == 2
+    assert "Unknown command path" in result.stdout
+
+
+def test_ta_leaf_help_renders_options() -> None:
+    result = run_cli(["ta", "sma", "--help", "--json"])
+
+    assert result.exit_code == 0
+    assert '"command"' in result.stdout
+    assert '"options"' in result.stdout
+
+
+def test_ta_leaf_executes_with_params_json() -> None:
+    closes = [float(100 + (i % 5)) for i in range(40)]
+    result = run_cli(["ta", "sma", "--params-json", json.dumps({"close": closes, "timeperiod": 5}), "--json"])
+
+    assert result.exit_code == 0
+    assert '"values"' in result.stdout
+
+
+def test_option_without_value_exits_2() -> None:
+    result = run_cli(["ta", "sma", "--timeperiod"])
+
+    assert result.exit_code == 2
+    assert "requires a value" in result.stdout
