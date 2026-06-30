@@ -26,7 +26,6 @@ uv 워크스페이스 모노레포:
 
 | 패키지 | 설명 |
 |--------|------|
-| [cluefin-etf](packages/cluefin-etf/) | KODEX/TIGER/RISE/ACE/SOL/Kiwoom ETF 목록·상세·구성종목 조회 |
 | [cluefin-openapi](packages/cluefin-openapi/) | 키움/KIS/DART Python API 클라이언트 (Pydantic, 속도 제한, 인증) |
 | [cluefin-openapi-ts](packages/cluefin-openapi-ts/) | KIS/키움 TypeScript API 클라이언트 (Node 20+, Zod, ESM/CJS) |
 | [cluefin-ta](packages/cluefin-ta/) | 순수 Python 기술적 분석 (TA-Lib 호환, 150+ 지표) |

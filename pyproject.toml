@@ -7,7 +7,6 @@ requires-python = ">=3.10"
 
 [tool.uv.workspace]
 members = [
-    "packages/cluefin-etf",
     "packages/cluefin-openapi",
     "packages/cluefin-ta",
     "packages/cluefin-xbrl",
@@ -29,7 +28,6 @@ dev = [
 ]
 
 [tool.uv.sources]
-cluefin-etf = { workspace = true }
 cluefin-openapi = { workspace = true }
 cluefin-ta = { workspace = true }
 cluefin-xbrl = { workspace = true }
@@ -61,7 +59,6 @@ markers = [
 ]
 addopts = "-ra --import-mode=importlib"
 testpaths = [
-    "packages/cluefin-etf/tests",
     "packages/cluefin-openapi/tests",
     "packages/cluefin-ta/tests",
     "packages/cluefin-xbrl/tests",
@@ -73,7 +70,6 @@ testpaths = [
 
 [tool.coverage.run]
 source = [
-    "packages/cluefin-etf/src",
     "packages/cluefin-openapi/src",
     "packages/cluefin-ta/src",
     "packages/cluefin-xbrl/src",
