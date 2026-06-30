@@ -126,3 +126,38 @@ class XbrlDocument(BaseModel):
     entity_id: Optional[str] = None
     reporting_period_end: Optional[date] = None
     taxonomy: Optional[TaxonomyInfo] = None
+
+
+class NoteLineItem(BaseModel):
+    """A single line item in a financial statement note, with dimensional context."""
+
+    concept_local_name: str
+    concept_qname: str
+    label_ko: Optional[str] = None
+    label_en: Optional[str] = None
+    value: Optional[Decimal] = None
+    unit: Optional[str] = None
+    period: Optional[XbrlPeriod] = None
+    depth: int = 0
+    order: float = 0.0
+    is_abstract: bool = False
+    dimensions: dict[str, str] = {}
+
+
+class NoteSection(BaseModel):
+    """A structured financial statement note (disclosure)."""
+
+    role_code: str
+    role_uri: str
+    title: Optional[str] = None
+    is_consolidated: bool = True
+    line_items: list[NoteLineItem] = []
+    periods: list[XbrlPeriod] = []
+
+
+class ParsedNotes(BaseModel):
+    """Collection of parsed financial statement notes."""
+
+    source_file: str
+    entity_id: Optional[str] = None
+    notes: dict[str, NoteSection] = {}
