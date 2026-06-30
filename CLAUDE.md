@@ -5,7 +5,6 @@
 Cluefin is a Korean market analysis monorepo.
 
 - `packages/cluefin-openapi`: Kiwoom, KIS, DART clients
-- `packages/cluefin-etf`: ETF provider list/detail/holdings lookup
 - `packages/cluefin-ta`: technical indicators
 - `packages/cluefin-xbrl`: XBRL / DART statement parsing
 - `packages/cluefin-openapi-ts`: TypeScript OpenAPI client
