@@ -11,11 +11,13 @@ class DartAPIError(Exception):
         message: str,
         status_code: Optional[int] = None,
         response_data: Optional[Dict[str, Any]] = None,
+        request_context: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(message)
         self.message = message
         self.status_code = status_code
         self.response_data = response_data
+        self.request_context = request_context or {}
 
     def __str__(self) -> str:
         if self.status_code:
@@ -31,8 +33,9 @@ class DartAuthenticationError(DartAPIError):
         message: str = "Authentication failed - invalid or expired token",
         status_code: int = 401,
         response_data: Optional[Dict[str, Any]] = None,
+        request_context: Optional[Dict[str, Any]] = None,
     ):
-        super().__init__(message, status_code, response_data)
+        super().__init__(message, status_code, response_data, request_context)
 
 
 class DartAuthorizationError(DartAPIError):
@@ -43,8 +46,9 @@ class DartAuthorizationError(DartAPIError):
         message: str = "Access forbidden - insufficient permissions",
         status_code: int = 403,
         response_data: Optional[Dict[str, Any]] = None,
+        request_context: Optional[Dict[str, Any]] = None,
     ):
-        super().__init__(message, status_code, response_data)
+        super().__init__(message, status_code, response_data, request_context)
 
 
 class DartClientError(DartAPIError):
@@ -55,8 +59,9 @@ class DartClientError(DartAPIError):
         message: str,
         status_code: int,
         response_data: Optional[Dict[str, Any]] = None,
+        request_context: Optional[Dict[str, Any]] = None,
     ):
-        super().__init__(message, status_code, response_data)
+        super().__init__(message, status_code, response_data, request_context)
 
 
 class DartServerError(DartAPIError):
@@ -67,8 +72,9 @@ class DartServerError(DartAPIError):
         message: str,
         status_code: int,
         response_data: Optional[Dict[str, Any]] = None,
+        request_context: Optional[Dict[str, Any]] = None,
     ):
-        super().__init__(message, status_code, response_data)
+        super().__init__(message, status_code, response_data, request_context)
 
 
 class DartRateLimitError(DartAPIError):
@@ -79,9 +85,10 @@ class DartRateLimitError(DartAPIError):
         message: str,
         status_code: Optional[int] = 429,
         response_data: Optional[Dict[str, Any]] = None,
+        request_context: Optional[Dict[str, Any]] = None,
         retry_after: Optional[int] = None,
     ):
-        super().__init__(message, status_code, response_data)
+        super().__init__(message, status_code, response_data, request_context)
         self.retry_after = retry_after
 
 
@@ -93,8 +100,9 @@ class DartTimeoutError(DartAPIError):
         message: str = "Request timeout",
         status_code: Optional[int] = None,
         response_data: Optional[Dict[str, Any]] = None,
+        request_context: Optional[Dict[str, Any]] = None,
     ):
-        super().__init__(message, status_code, response_data)
+        super().__init__(message, status_code, response_data, request_context)
 
 
 class DartNetworkError(DartAPIError):
@@ -105,5 +113,6 @@ class DartNetworkError(DartAPIError):
         message: str = "Network connection failed",
         status_code: Optional[int] = None,
         response_data: Optional[Dict[str, Any]] = None,
+        request_context: Optional[Dict[str, Any]] = None,
     ):
-        super().__init__(message, status_code, response_data)
+        super().__init__(message, status_code, response_data, request_context)
