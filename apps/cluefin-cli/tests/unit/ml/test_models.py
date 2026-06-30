@@ -112,14 +112,25 @@ def test_save_model_writes_file(tmp_path) -> None:
     assert path.exists() and path.stat().st_size > 0
 
 
-def test_load_model_raises_on_readonly_booster(tmp_path) -> None:
-    # Known limitation: load_model assigns to LightGBM's read-only `booster_`
-    # attribute, which raises. Asserting current behaviour pins the bug.
+def test_save_and_load_round_trip_preserves_predictions(tmp_path) -> None:
     X, y = _dataset()
     predictor = StockPredictor({"n_estimators": 20})
     predictor.train(X, y)
-    path = str(tmp_path / "model.txt")
+    path = str(tmp_path / "model.joblib")
     predictor.save_model(path)
 
-    with pytest.raises(AttributeError):
-        StockPredictor({"n_estimators": 20}).load_model(path)
+    loaded = StockPredictor()
+    loaded.load_model(path)
+    assert loaded.is_trained is True
+
+    # Reloaded model reproduces the original predictions and exposes importances.
+    original_preds, _ = predictor.predict(X.head(10))
+    reloaded_preds, reloaded_probs = loaded.predict(X.head(10))
+    np.testing.assert_array_equal(original_preds, reloaded_preds)
+    assert reloaded_probs.shape == (10, 2)
+    assert loaded.get_feature_importance(top_n=3).shape[0] == 3
+
+
+def test_load_model_raises_on_missing_file(tmp_path) -> None:
+    with pytest.raises(FileNotFoundError):
+        StockPredictor().load_model(str(tmp_path / "does-not-exist.joblib"))

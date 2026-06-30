@@ -7,6 +7,7 @@ for stock price prediction and classification.
 
 from typing import Any, Dict, Optional, Tuple
 
+import joblib
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
@@ -291,6 +292,9 @@ class StockPredictor:
         """
         Save the trained model to disk.
 
+        Persists the fitted scikit-learn estimator (and feature importances) via
+        joblib so that ``predict``/``predict_proba`` remain available after load.
+
         Args:
             filepath: Path to save the model
         """
@@ -298,7 +302,14 @@ class StockPredictor:
             raise ValueError("Model must be trained before saving")
 
         try:
-            self.model.booster_.save_model(filepath)
+            joblib.dump(
+                {
+                    "model": self.model,
+                    "model_params": self.model_params,
+                    "feature_importance": self.feature_importance,
+                },
+                filepath,
+            )
             logger.info(f"Model saved to {filepath}")
 
         except Exception as e:
@@ -313,8 +324,10 @@ class StockPredictor:
             filepath: Path to load the model from
         """
         try:
-            self.model = lgb.LGBMClassifier(**self.model_params)
-            self.model.booster_ = lgb.Booster(model_file=filepath)
+            payload = joblib.load(filepath)
+            self.model = payload["model"]
+            self.model_params = payload.get("model_params", self.model_params)
+            self.feature_importance = payload.get("feature_importance")
             self.is_trained = True
             logger.info(f"Model loaded from {filepath}")
 
