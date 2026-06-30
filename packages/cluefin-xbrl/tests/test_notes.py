@@ -16,6 +16,7 @@ from cluefin_xbrl._types import (
     XbrlFact,
     XbrlPeriod,
 )
+from cluefin_xbrl.notes import _identify_note_role
 
 
 class TestNoteModels:
@@ -45,3 +46,20 @@ class TestNoteModels:
         parsed = ParsedNotes(source_file="x.xbrl")
         assert parsed.notes == {}
         assert parsed.entity_id is None
+
+
+class TestIdentifyNoteRole:
+    def test_consolidated_note(self):
+        assert _identify_note_role("http://dart.fss.or.kr/role/ifrs/ias_19_role-D834480") == ("D834480", True)
+
+    def test_separate_note(self):
+        assert _identify_note_role("http://dart.fss.or.kr/role/ifrs/ias_19_role-D834485") == ("D834485", False)
+
+    def test_statement_role_is_not_note(self):
+        assert _identify_note_role("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D210000") is None
+
+    def test_doc_role_is_not_note(self):
+        assert _identify_note_role("http://dart.fss.or.kr/role/ifrs/dart-gcd_2024-06-30_role-D999001") is None
+
+    def test_generic_role_is_not_note(self):
+        assert _identify_note_role("http://example.com/role/SomeOtherRole") is None
