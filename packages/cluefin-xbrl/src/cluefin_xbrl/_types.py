@@ -108,14 +108,20 @@ class FinancialStatement(BaseModel):
     linkrole: str
     line_items: list[StatementLineItem] = []
     periods: list[XbrlPeriod] = []
+    is_consolidated: bool = True
 
 
 class ParsedFinancialStatements(BaseModel):
-    """Collection of parsed financial statements."""
+    """Collection of parsed financial statements.
+
+    ``statements`` holds consolidated (연결) statements keyed by type code (BS/IS/CIS/CF/SCE);
+    ``separate_statements`` holds the separate (별도) statements with the same keys.
+    """
 
     source_file: str
     entity_id: Optional[str] = None
     statements: dict[str, FinancialStatement] = {}
+    separate_statements: dict[str, FinancialStatement] = {}
 
 
 class XbrlDocument(BaseModel):
