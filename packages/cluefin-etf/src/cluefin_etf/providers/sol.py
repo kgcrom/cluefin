@@ -14,7 +14,7 @@ from cluefin_etf.providers._sol_holdings import (
     sol_holdings_work_date,
 )
 from cluefin_etf.providers._sol_list import parse_sol_list_items, sol_to_summary
-from cluefin_etf.providers._sol_models import SolEtfListItem
+from cluefin_etf.providers._sol_models import SolEtfListItem  # noqa: F401
 
 
 class SolProvider(EtfProvider):

@@ -48,10 +48,12 @@ extend-exclude = ["*.json", "*.ipynb"]
 docstring-code-format = true
 [tool.ruff.lint]
 select = ["E", "F", "W", "B", "Q", "I", "ASYNC", "T20"]
-ignore = ["F401", "E501"]
+ignore = ["E501"]
 
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**" = ["T201"]
+# __init__.py re-exports modules without using them in-file; that is intentional, not dead code.
+"**/__init__.py" = ["F401"]
 
 [tool.pytest.ini_options]
 markers = [

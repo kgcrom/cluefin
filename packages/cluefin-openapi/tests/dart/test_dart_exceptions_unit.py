@@ -1,5 +1,3 @@
-import pytest
-
 from cluefin_openapi.dart._exceptions import (
     DartAPIError,
     DartAuthenticationError,

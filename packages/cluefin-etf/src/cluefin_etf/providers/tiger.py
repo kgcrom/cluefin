@@ -13,7 +13,7 @@ from cluefin_etf.providers._tiger_holdings import (
     validate_tiger_holdings_page,
 )
 from cluefin_etf.providers._tiger_list import parse_tiger_list_html, tiger_search_item
-from cluefin_etf.providers._tiger_models import TigerEtfListItem, TigerHoldingItem
+from cluefin_etf.providers._tiger_models import TigerEtfListItem, TigerHoldingItem  # noqa: F401
 
 
 class TigerProvider(EtfProvider):

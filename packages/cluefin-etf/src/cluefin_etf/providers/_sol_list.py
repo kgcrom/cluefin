@@ -7,7 +7,6 @@ from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 
 from cluefin_etf._models import EtfSummary, ProviderName
-from cluefin_etf.providers._parsing import normalize_space
 from cluefin_etf.providers._sol_models import SolEtfListItem
 
 

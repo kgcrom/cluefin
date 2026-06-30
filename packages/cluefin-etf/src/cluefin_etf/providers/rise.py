@@ -7,7 +7,7 @@ from cluefin_etf._provider import EtfProvider
 from cluefin_etf.providers._rise_detail import looks_like_rise_ticker, parse_rise_detail_html
 from cluefin_etf.providers._rise_holdings import parse_rise_holdings_html
 from cluefin_etf.providers._rise_list import parse_rise_list_html, rise_list_total_count
-from cluefin_etf.providers._rise_models import RiseEtfListItem, RiseHoldingItem
+from cluefin_etf.providers._rise_models import RiseEtfListItem, RiseHoldingItem  # noqa: F401
 
 
 class RiseProvider(EtfProvider):
