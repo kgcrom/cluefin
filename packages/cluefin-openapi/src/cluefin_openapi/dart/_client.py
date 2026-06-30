@@ -1,4 +1,3 @@
-import time
 from typing import Dict, Optional
 
 import requests
@@ -69,97 +68,80 @@ class Client(BaseHttpClient):
         """Make a GET request and return JSON with rate limiting and retry."""
         return self._request(path, params=params, return_json=True)
 
-    def _request(self, path: str, *, params: Optional[Dict] = None, return_json: bool = True):
-        """Internal request method with rate limiting and retry logic."""
-        # Apply rate limiting
-        if not self._rate_limiter.wait_for_tokens(timeout=self.timeout):
-            raise DartRateLimitError(
-                "Rate limit timeout - could not acquire token within timeout period",
-                status_code=None,
+    def _dispatch_dart(self, response: requests.Response) -> Optional[Exception]:
+        """Map a non-200 HTTP response to the appropriate DART exception.
+
+        Returns an Exception to raise, or None to accept the response (200 path
+        is handled by the shared loop before this is called).
+        """
+        if response.status_code == 401:
+            return DartAuthenticationError(
+                "Authentication failed - invalid or expired token",
+                status_code=response.status_code,
+                response_data=self._safe_json(response),
+            )
+        elif response.status_code == 403:
+            return DartAuthorizationError(
+                "Access forbidden - insufficient permissions",
+                status_code=response.status_code,
+                response_data=self._safe_json(response),
+            )
+        elif response.status_code == 429:
+            # Terminal 429 (called only on final retry by _execute_with_retry)
+            return DartRateLimitError(
+                f"Rate limit exceeded after {self.max_retries} retries",
+                status_code=response.status_code,
+                response_data=self._safe_json(response),
+                retry_after=self._get_retry_after(response),
+            )
+        elif 500 <= response.status_code < 600:
+            # Terminal 5xx (called only on final retry by _execute_with_retry)
+            return DartServerError(
+                f"Server error: {response.text}",
+                status_code=response.status_code,
+                response_data=self._safe_json(response),
+            )
+        elif 400 <= response.status_code < 500:
+            return DartClientError(
+                f"Client error: {response.text}",
+                status_code=response.status_code,
+                response_data=self._safe_json(response),
+            )
+        else:
+            return DartAPIError(
+                f"Unexpected error: {response.status_code}",
+                status_code=response.status_code,
+                response_data=self._safe_json(response),
             )
 
+    def _request(self, path: str, *, params: Optional[Dict] = None, return_json: bool = True):
+        """Internal request method with rate limiting and retry logic."""
         url = self.base_url + path
         if params is None:
             params = {}
         params["crtfc_key"] = self.auth_key
 
-        for attempt in range(self.max_retries + 1):
-            try:
-                response = self._session.get(url, params=params, timeout=self.timeout)
+        request_context = {"url": url, "path": path, "method": "GET", "params": params}
 
-                # Handle different HTTP status codes
-                if response.status_code == 200:
-                    return response.json() if return_json else response.content
-                elif response.status_code == 401:
-                    raise DartAuthenticationError(
-                        "Authentication failed - invalid or expired token",
-                        status_code=response.status_code,
-                        response_data=self._safe_json(response),
-                    )
-                elif response.status_code == 403:
-                    raise DartAuthorizationError(
-                        "Access forbidden - insufficient permissions",
-                        status_code=response.status_code,
-                        response_data=self._safe_json(response),
-                    )
-                elif response.status_code == 429:
-                    retry_after = self._get_retry_after(response)
-                    if attempt < self.max_retries:
-                        wait_time = retry_after or (2**attempt)
-                        time.sleep(wait_time)
-                        continue
-                    else:
-                        raise DartRateLimitError(
-                            f"Rate limit exceeded after {self.max_retries} retries",
-                            status_code=response.status_code,
-                            response_data=self._safe_json(response),
-                            retry_after=retry_after,
-                        )
-                elif 400 <= response.status_code < 500:
-                    raise DartClientError(
-                        f"Client error: {response.text}",
-                        status_code=response.status_code,
-                        response_data=self._safe_json(response),
-                    )
-                elif 500 <= response.status_code < 600:
-                    if attempt < self.max_retries:
-                        wait_time = 2**attempt
-                        time.sleep(wait_time)
-                        continue
-                    else:
-                        raise DartServerError(
-                            f"Server error: {response.text}",
-                            status_code=response.status_code,
-                            response_data=self._safe_json(response),
-                        )
-                else:
-                    raise DartAPIError(
-                        f"Unexpected error: {response.status_code}",
-                        status_code=response.status_code,
-                        response_data=self._safe_json(response),
-                    )
-
-            except requests.exceptions.Timeout as e:
-                if attempt < self.max_retries:
-                    wait_time = 2**attempt
-                    time.sleep(wait_time)
-                    continue
-                else:
-                    raise DartTimeoutError(f"Request timeout after {self.max_retries} retries") from e
-
-            except requests.exceptions.ConnectionError as e:
-                if attempt < self.max_retries:
-                    wait_time = 2**attempt
-                    time.sleep(wait_time)
-                    continue
-                else:
-                    raise DartNetworkError(f"Network connection failed: {str(e)}") from e
-
-            except requests.exceptions.RequestException as e:
-                raise DartNetworkError(f"Request failed: {str(e)}") from e
-
-        # This should never be reached, but just in case
-        raise DartAPIError("Maximum retries exceeded")
+        response = self._execute_with_retry(
+            send_fn=lambda: self._session.get(url, params=params, timeout=self.timeout),
+            rate_limiter=self._rate_limiter,
+            timeout=self.timeout,
+            max_retries=self.max_retries,
+            request_context=request_context,
+            dispatch=self._dispatch_dart,
+            rate_limit_error=lambda: DartRateLimitError(
+                "Rate limit timeout - could not acquire token within timeout period",
+                status_code=None,
+            ),
+            timeout_error=lambda e: DartTimeoutError(f"Request timeout after {self.max_retries} retries"),
+            network_error=lambda e: (
+                DartNetworkError(f"Network connection failed: {str(e)}")
+                if isinstance(e, requests.exceptions.ConnectionError)
+                else DartNetworkError(f"Request failed: {str(e)}")
+            ),
+        )
+        return response.json() if return_json else response.content
 
     def close(self):
         """Close the HTTP session."""
