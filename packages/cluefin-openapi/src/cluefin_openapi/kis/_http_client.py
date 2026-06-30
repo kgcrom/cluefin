@@ -9,6 +9,7 @@ import requests
 from loguru import logger
 from pydantic import SecretStr
 
+from cluefin_openapi._http_base import BaseHttpClient
 from cluefin_openapi._rate_limiter import TokenBucket
 
 from ._exceptions import (
@@ -23,7 +24,7 @@ from ._exceptions import (
 )
 
 
-class HttpClient(object):
+class HttpClient(BaseHttpClient):
     def __init__(
         self,
         token: str,
@@ -148,23 +149,6 @@ class HttpClient(object):
         merged_headers["custtype"] = "P"  # P: 개인, C: 법인
         merged_headers.update(headers)  # Merge custom headers (e.g., tr_id)
         return merged_headers
-
-    def _safe_json(self, response: requests.Response) -> Optional[Dict]:
-        """Safely parse JSON response, returning None if parsing fails."""
-        try:
-            return response.json()
-        except (ValueError, json.JSONDecodeError):
-            return None
-
-    def _get_retry_after(self, response: requests.Response) -> Optional[int]:
-        """Extract retry-after value from response headers."""
-        retry_after = response.headers.get("Retry-After")
-        if retry_after:
-            try:
-                return int(retry_after)
-            except ValueError:
-                pass
-        return None
 
     def _sanitize_request_context(self, request_context: dict) -> dict:
         """Keep only non-secret request metadata for debugging."""

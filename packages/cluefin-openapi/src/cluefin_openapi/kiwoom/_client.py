@@ -5,6 +5,7 @@ from typing import Dict, List, Literal, Optional, Tuple
 import requests
 from loguru import logger
 
+from cluefin_openapi._http_base import BaseHttpClient
 from cluefin_openapi._rate_limiter import TokenBucket
 
 from ._cache import SimpleCache, create_cache_key
@@ -39,7 +40,7 @@ class MockResponse:
         return self.content.decode()
 
 
-class Client(object):
+class Client(BaseHttpClient):
     def __init__(
         self,
         token: str,
@@ -312,23 +313,6 @@ class Client(object):
 
         # This should never be reached, but just in case
         raise KiwoomAPIError("Maximum retries exceeded", request_context=request_context)
-
-    def _safe_json(self, response: requests.Response) -> Optional[Dict]:
-        """Safely parse JSON response, returning None if parsing fails."""
-        try:
-            return response.json()
-        except (ValueError, json.JSONDecodeError):
-            return None
-
-    def _get_retry_after(self, response: requests.Response) -> Optional[int]:
-        """Extract retry-after value from response headers."""
-        retry_after = response.headers.get("Retry-After")
-        if retry_after:
-            try:
-                return int(retry_after)
-            except ValueError:
-                pass
-        return None
 
     def close(self):
         """Close the HTTP session."""

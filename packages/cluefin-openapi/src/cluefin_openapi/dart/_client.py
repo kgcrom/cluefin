@@ -3,6 +3,7 @@ from typing import Dict, Optional
 
 import requests
 
+from cluefin_openapi._http_base import BaseHttpClient
 from cluefin_openapi._rate_limiter import TokenBucket
 
 from ._exceptions import (
@@ -17,7 +18,7 @@ from ._exceptions import (
 )
 
 
-class Client(object):
+class Client(BaseHttpClient):
     def __init__(
         self,
         auth_key: str,
@@ -159,23 +160,6 @@ class Client(object):
 
         # This should never be reached, but just in case
         raise DartAPIError("Maximum retries exceeded")
-
-    def _safe_json(self, response) -> Optional[Dict]:
-        """Safely parse JSON response, returning None if parsing fails."""
-        try:
-            return response.json()
-        except (ValueError, requests.exceptions.JSONDecodeError):
-            return None
-
-    def _get_retry_after(self, response: requests.Response) -> Optional[int]:
-        """Extract retry-after value from response headers."""
-        retry_after = response.headers.get("Retry-After")
-        if retry_after:
-            try:
-                return int(retry_after)
-            except ValueError:
-                pass
-        return None
 
     def close(self):
         """Close the HTTP session."""
