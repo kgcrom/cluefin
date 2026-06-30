@@ -60,6 +60,40 @@ def _make_parsed_statements() -> ParsedFinancialStatements:
     )
 
 
+def _make_parsed_with_separate() -> ParsedFinancialStatements:
+    """ParsedFinancialStatements with both consolidated and separate BS."""
+    period = XbrlPeriod(period_type=PeriodType.INSTANT, instant="2024-12-31")
+
+    def _bs(label_ko: str, consolidated: bool) -> FinancialStatement:
+        return FinancialStatement(
+            statement_type=StatementType.BS,
+            linkrole="http://example.com/BS",
+            line_items=[
+                StatementLineItem(
+                    concept_local_name="Assets",
+                    concept_qname="ifrs-full:Assets",
+                    label_ko=label_ko,
+                    label_en="Total Assets",
+                    value=Decimal("100000000000"),
+                    unit="KRW",
+                    period=period,
+                    depth=0,
+                    order=1.0,
+                    is_abstract=False,
+                )
+            ],
+            periods=[period],
+            is_consolidated=consolidated,
+        )
+
+    return ParsedFinancialStatements(
+        source_file="test.xbrl",
+        entity_id="00126380",
+        statements={"BS": _bs("연결자산총계", True)},
+        separate_statements={"BS": _bs("별도자산총계", False)},
+    )
+
+
 class TestXbrlAnalysisCommand:
     @patch("cluefin_cli.commands.xbrl_analysis.XbrlStatementFetcher")
     @patch("cluefin_cli.commands.xbrl_analysis.DomesticFundamentalDataFetcher")
@@ -138,6 +172,63 @@ class TestXbrlAnalysisCommand:
 
         assert result.exit_code == 0
         assert "자산총계" in result.output
+
+    @patch("cluefin_cli.commands.xbrl_analysis.XbrlStatementFetcher")
+    @patch("cluefin_cli.commands.xbrl_analysis.DomesticFundamentalDataFetcher")
+    def test_xbrl_analysis_separate_flag_shows_separate(self, mock_fundamental_cls, mock_xbrl_cls):
+        mock_fundamental = MagicMock()
+        mock_fundamental.get_corp_code = AsyncMock(return_value="00126380")
+        mock_fundamental_cls.return_value = mock_fundamental
+
+        mock_xbrl = MagicMock()
+        mock_xbrl.find_rcept_no.return_value = "20240401000123"
+        mock_xbrl.fetch_statements.return_value = _make_parsed_with_separate()
+        mock_xbrl_cls.return_value = mock_xbrl
+
+        runner = CliRunner()
+        result = runner.invoke(xbrl_analysis, ["005930", "--year", "2024", "--separate"])
+
+        assert result.exit_code == 0
+        assert "별도자산총계" in result.output
+        assert "연결자산총계" not in result.output
+
+    @patch("cluefin_cli.commands.xbrl_analysis.XbrlStatementFetcher")
+    @patch("cluefin_cli.commands.xbrl_analysis.DomesticFundamentalDataFetcher")
+    def test_xbrl_analysis_consolidated_is_default(self, mock_fundamental_cls, mock_xbrl_cls):
+        mock_fundamental = MagicMock()
+        mock_fundamental.get_corp_code = AsyncMock(return_value="00126380")
+        mock_fundamental_cls.return_value = mock_fundamental
+
+        mock_xbrl = MagicMock()
+        mock_xbrl.find_rcept_no.return_value = "20240401000123"
+        mock_xbrl.fetch_statements.return_value = _make_parsed_with_separate()
+        mock_xbrl_cls.return_value = mock_xbrl
+
+        runner = CliRunner()
+        result = runner.invoke(xbrl_analysis, ["005930", "--year", "2024"])
+
+        assert result.exit_code == 0
+        assert "연결자산총계" in result.output
+        assert "별도자산총계" not in result.output
+
+    @patch("cluefin_cli.commands.xbrl_analysis.XbrlStatementFetcher")
+    @patch("cluefin_cli.commands.xbrl_analysis.DomesticFundamentalDataFetcher")
+    def test_xbrl_analysis_separate_flag_empty(self, mock_fundamental_cls, mock_xbrl_cls):
+        mock_fundamental = MagicMock()
+        mock_fundamental.get_corp_code = AsyncMock(return_value="00126380")
+        mock_fundamental_cls.return_value = mock_fundamental
+
+        mock_xbrl = MagicMock()
+        mock_xbrl.find_rcept_no.return_value = "20240401000123"
+        # fixture has no separate_statements
+        mock_xbrl.fetch_statements.return_value = _make_parsed_statements()
+        mock_xbrl_cls.return_value = mock_xbrl
+
+        runner = CliRunner()
+        result = runner.invoke(xbrl_analysis, ["005930", "--year", "2024", "--separate"])
+
+        assert result.exit_code == 0
+        assert "No separate financial statements found" in result.output
 
 
 class TestXbrlStatementFetcher:

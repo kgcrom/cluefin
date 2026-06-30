@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from cluefin_xbrl._types import (
     FinancialStatement,
     ParsedFinancialStatements,
@@ -32,6 +34,8 @@ _STATEMENT_TYPE_PATTERNS: dict[str, StatementType] = {
     "role-D61": StatementType.SCE,
 }
 
+_ROLE_CODE_PATTERN = re.compile(r"role-(D\d+)")
+
 
 def extract_financial_statements(doc: XbrlDocument) -> ParsedFinancialStatements:
     """Extract structured financial statements from a parsed XBRL document.
@@ -55,11 +59,15 @@ def extract_financial_statements(doc: XbrlDocument) -> ParsedFinancialStatements
         facts_by_concept.setdefault(fact.concept_local_name, []).append(fact)
 
     statements: dict[str, FinancialStatement] = {}
+    separate_statements: dict[str, FinancialStatement] = {}
 
     for linkrole, roots in doc.taxonomy.presentation_trees.items():
         stmt_type = _identify_statement_type(linkrole)
         if stmt_type is None:
             continue
+
+        is_consolidated = _is_consolidated_role(linkrole)
+        target = statements if is_consolidated else separate_statements
 
         line_items = _flatten_presentation_tree(roots, facts_by_concept, doc.taxonomy.labels)
 
@@ -72,20 +80,35 @@ def extract_financial_statements(doc: XbrlDocument) -> ParsedFinancialStatements
                     seen_periods.add(period_key)
                     periods.append(item.period)
 
-        # Keep first match per type (consolidated roles come before separate roles)
-        if stmt_type.value not in statements:
-            statements[stmt_type.value] = FinancialStatement(
+        # Keep first match per type within each (consolidated / separate) group
+        if stmt_type.value not in target:
+            target[stmt_type.value] = FinancialStatement(
                 statement_type=stmt_type,
                 linkrole=linkrole,
                 line_items=line_items,
                 periods=periods,
+                is_consolidated=is_consolidated,
             )
 
     return ParsedFinancialStatements(
         source_file=doc.source_file,
         entity_id=doc.entity_id,
         statements=statements,
+        separate_statements=separate_statements,
     )
+
+
+def _is_consolidated_role(linkrole: str) -> bool:
+    """Determine whether a statement linkrole is consolidated (연결) or separate (별도).
+
+    By DART convention the role code's trailing digit distinguishes the two: a code ending
+    in ``5`` is the separate statement, anything else (e.g. ending in ``0``) is consolidated.
+    Roles without a ``D``-code (generic IFRS roles) default to consolidated.
+    """
+    match = _ROLE_CODE_PATTERN.search(linkrole)
+    if match is None:
+        return True
+    return not match.group(1).endswith("5")
 
 
 def _identify_statement_type(linkrole: str) -> StatementType | None:

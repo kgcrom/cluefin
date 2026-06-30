@@ -45,14 +45,22 @@ STATEMENT_TYPE_LABELS: dict[str, str] = {
     default=None,
     help="Filter to a specific statement type. Show all if not set.",
 )
-def xbrl_analysis(stock_code: str, year: str, report: str, statement_type: str | None) -> None:
+@click.option(
+    "--consolidated/--separate",
+    "consolidated",
+    default=True,
+    show_default=True,
+    help="Show consolidated (연결) or separate (별도) financial statements.",
+)
+def xbrl_analysis(stock_code: str, year: str, report: str, statement_type: str | None, consolidated: bool) -> None:
     """Analyse XBRL financial statements for a given stock code."""
     reprt_code = REPORT_CODE_MAP[report.lower()]
 
-    console.print(f"[bold blue]XBRL Analysis for {stock_code} ({year}, {report})[/bold blue]")
+    basis = "consolidated" if consolidated else "separate"
+    console.print(f"[bold blue]XBRL Analysis for {stock_code} ({year}, {report}, {basis})[/bold blue]")
 
     try:
-        asyncio.run(_perform_xbrl_analysis(stock_code, year, reprt_code, statement_type))
+        asyncio.run(_perform_xbrl_analysis(stock_code, year, reprt_code, statement_type, consolidated))
     except Exception as exc:
         console.print(f"[red]Error during XBRL analysis: {exc}[/red]")
         logger.exception(f"XBRL analysis failed for {stock_code}")
@@ -63,6 +71,7 @@ async def _perform_xbrl_analysis(
     year: str,
     reprt_code: str,
     statement_type: str | None,
+    consolidated: bool,
 ) -> None:
     fundamental_fetcher = DomesticFundamentalDataFetcher()
     corp_code = await fundamental_fetcher.get_corp_code(stock_code)
@@ -78,21 +87,24 @@ async def _perform_xbrl_analysis(
     console.print(f"[dim]Downloading XBRL (rcept_no={rcept_no})...[/dim]")
     result = xbrl_fetcher.fetch_statements(corp_code, rcept_no, reprt_code)
 
-    if not result.statements:
-        console.print("[yellow]No financial statements found in the XBRL data.[/yellow]")
+    basis = "consolidated" if consolidated else "separate"
+    statements = result.statements if consolidated else result.separate_statements
+
+    if not statements:
+        console.print(f"[yellow]No {basis} financial statements found in the XBRL data.[/yellow]")
         return
 
     target_type = statement_type.upper() if statement_type else None
     displayed = False
 
-    for stmt_key, stmt in result.statements.items():
+    for stmt_key, stmt in statements.items():
         if target_type and stmt_key != target_type:
             continue
         _display_statement(stmt_key, stmt)
         displayed = True
 
     if not displayed and target_type:
-        available = ", ".join(result.statements.keys())
+        available = ", ".join(statements.keys())
         console.print(f"[yellow]Statement type '{target_type}' not found. Available: {available}[/yellow]")
 
 
