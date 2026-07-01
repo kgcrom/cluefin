@@ -3,7 +3,6 @@ from __future__ import annotations
 from decimal import Decimal
 from types import SimpleNamespace
 
-import pytest
 from click.testing import CliRunner
 
 import cluefin_cli.commands.fundamental_analysis as fa
