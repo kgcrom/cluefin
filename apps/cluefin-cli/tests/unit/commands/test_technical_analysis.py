@@ -2,13 +2,16 @@ from __future__ import annotations
 
 import asyncio
 from types import SimpleNamespace
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import cluefin_ta
 import numpy as np
 import pandas as pd
+from click.testing import CliRunner
 
+import cluefin_cli.commands.technical_analysis as ta
 from cluefin_cli.commands.technical_analysis import (
+    _analyze_stock,
     _display_basic_feature_importance,
     _display_company_info,
     _display_ml_model_summary,
@@ -17,6 +20,7 @@ from cluefin_cli.commands.technical_analysis import (
     _display_technical_indicators,
     _display_trading_trend,
     _perform_ml_analysis,
+    technical_analysis,
 )
 
 
@@ -312,3 +316,154 @@ def test_display_regime_analysis_hmm_generic_error(monkeypatch) -> None:
 def test_display_regime_analysis_outer_exception_on_missing_column() -> None:
     stock_data = pd.DataFrame({"low": [1.0, 2.0], "close": [1.5, 2.5]})
     _display_regime_analysis(stock_data, {})
+
+
+# ---------------------------------------------------------------------------
+# _analyze_stock
+# ---------------------------------------------------------------------------
+
+
+class _FakeDataFetcher:
+    def __init__(self, stock_data, basic_data=None, trading_trend=None):
+        self._stock_data = stock_data
+        self._basic_data = basic_data if basic_data is not None else pd.DataFrame()
+        self._trading_trend = trading_trend if trading_trend is not None else {}
+
+    async def get_basic_data(self, stock_code):
+        return self._basic_data
+
+    async def get_stock_data(self, stock_code, period):
+        return self._stock_data
+
+    async def get_trading_trend(self, stock_code):
+        return self._trading_trend
+
+
+def test_analyze_stock_basic_flow(monkeypatch) -> None:
+    stock_data = _make_stock_data(60)
+    monkeypatch.setattr(ta, "DomesticDataFetcher", lambda: _FakeDataFetcher(stock_data))
+    chart_renderer = MagicMock()
+    monkeypatch.setattr(ta, "ChartRenderer", lambda: chart_renderer)
+    ml_analysis_mock = AsyncMock()
+    monkeypatch.setattr(ta, "_perform_ml_analysis", ml_analysis_mock)
+    regime_mock = MagicMock()
+    monkeypatch.setattr(ta, "_display_regime_analysis", regime_mock)
+
+    asyncio.run(
+        _analyze_stock(
+            "005930",
+            chart=False,
+            ml_predict=False,
+            feature_importance=False,
+            shap_analysis=False,
+            regime_analysis=False,
+        )
+    )
+
+    chart_renderer.render_stock_chart.assert_not_called()
+    ml_analysis_mock.assert_not_called()
+    regime_mock.assert_not_called()
+
+
+def test_analyze_stock_insufficient_data_disables_ml(monkeypatch) -> None:
+    stock_data = _make_stock_data(10)
+    monkeypatch.setattr(ta, "DomesticDataFetcher", lambda: _FakeDataFetcher(stock_data))
+    monkeypatch.setattr(ta, "ChartRenderer", lambda: MagicMock())
+    ml_analysis_mock = AsyncMock()
+    monkeypatch.setattr(ta, "_perform_ml_analysis", ml_analysis_mock)
+
+    asyncio.run(
+        _analyze_stock(
+            "005930", chart=False, ml_predict=True, feature_importance=False, shap_analysis=False, regime_analysis=False
+        )
+    )
+
+    ml_analysis_mock.assert_not_called()
+
+
+def test_analyze_stock_feature_importance_forces_ml_predict(monkeypatch) -> None:
+    stock_data = _make_stock_data(60)
+    monkeypatch.setattr(ta, "DomesticDataFetcher", lambda: _FakeDataFetcher(stock_data))
+    monkeypatch.setattr(ta, "ChartRenderer", lambda: MagicMock())
+    ml_analysis_mock = AsyncMock()
+    monkeypatch.setattr(ta, "_perform_ml_analysis", ml_analysis_mock)
+
+    asyncio.run(
+        _analyze_stock(
+            "005930", chart=False, ml_predict=False, feature_importance=True, shap_analysis=False, regime_analysis=False
+        )
+    )
+
+    ml_analysis_mock.assert_called_once()
+    args, _ = ml_analysis_mock.call_args
+    assert args[4] is True  # show_feature_importance forced on
+
+
+def test_analyze_stock_chart_enabled(monkeypatch) -> None:
+    stock_data = _make_stock_data(60)
+    monkeypatch.setattr(ta, "DomesticDataFetcher", lambda: _FakeDataFetcher(stock_data))
+    chart_renderer = MagicMock()
+    monkeypatch.setattr(ta, "ChartRenderer", lambda: chart_renderer)
+
+    asyncio.run(
+        _analyze_stock(
+            "005930", chart=True, ml_predict=False, feature_importance=False, shap_analysis=False, regime_analysis=False
+        )
+    )
+
+    chart_renderer.render_stock_chart.assert_called_once()
+
+
+def test_analyze_stock_regime_analysis_enabled(monkeypatch) -> None:
+    stock_data = _make_stock_data(60)
+    monkeypatch.setattr(ta, "DomesticDataFetcher", lambda: _FakeDataFetcher(stock_data))
+    monkeypatch.setattr(ta, "ChartRenderer", lambda: MagicMock())
+    regime_mock = MagicMock()
+    monkeypatch.setattr(ta, "_display_regime_analysis", regime_mock)
+
+    asyncio.run(
+        _analyze_stock(
+            "005930", chart=False, ml_predict=False, feature_importance=False, shap_analysis=False, regime_analysis=True
+        )
+    )
+
+    regime_mock.assert_called_once()
+
+
+def test_analyze_stock_ml_predict_enabled(monkeypatch) -> None:
+    stock_data = _make_stock_data(60)
+    monkeypatch.setattr(ta, "DomesticDataFetcher", lambda: _FakeDataFetcher(stock_data))
+    monkeypatch.setattr(ta, "ChartRenderer", lambda: MagicMock())
+    ml_analysis_mock = AsyncMock()
+    monkeypatch.setattr(ta, "_perform_ml_analysis", ml_analysis_mock)
+
+    asyncio.run(
+        _analyze_stock(
+            "005930", chart=False, ml_predict=True, feature_importance=False, shap_analysis=False, regime_analysis=False
+        )
+    )
+
+    ml_analysis_mock.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# technical_analysis command
+# ---------------------------------------------------------------------------
+
+
+def test_technical_analysis_command_success(monkeypatch) -> None:
+    fake_analyze = AsyncMock()
+    monkeypatch.setattr(ta, "_analyze_stock", fake_analyze)
+    result = CliRunner().invoke(technical_analysis, ["005930"])
+    assert result.exit_code == 0
+    fake_analyze.assert_called_once()
+
+
+def test_technical_analysis_command_handles_errors(monkeypatch) -> None:
+    async def _boom(*args, **kwargs):
+        raise RuntimeError("data fetch failed")
+
+    monkeypatch.setattr(ta, "_analyze_stock", _boom)
+    result = CliRunner().invoke(technical_analysis, ["005930"])
+    assert result.exit_code == 0
+    assert "Error" in result.output
