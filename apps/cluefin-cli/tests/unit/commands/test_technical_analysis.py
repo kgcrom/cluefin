@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pandas as pd
 
 from cluefin_cli.commands.technical_analysis import (
+    _display_basic_feature_importance,
     _display_company_info,
+    _display_ml_model_summary,
     _display_stock_info,
     _display_technical_indicators,
     _display_trading_trend,
@@ -104,3 +108,64 @@ def test_display_technical_indicators_full() -> None:
         }
     )
     _display_technical_indicators(indicators)
+
+
+# ---------------------------------------------------------------------------
+# _display_basic_feature_importance
+# ---------------------------------------------------------------------------
+
+
+def test_display_basic_feature_importance_success() -> None:
+    importance = pd.Series({"rsi": 0.5, "macd": 0.3, "sma_20": 0.2})
+    predictor = SimpleNamespace(model=SimpleNamespace(get_feature_importance=lambda top_n=15: importance))
+    _display_basic_feature_importance(predictor, ["rsi", "macd", "sma_20"])
+
+
+def test_display_basic_feature_importance_error() -> None:
+    def _boom(top_n=15):
+        raise RuntimeError("model not fitted")
+
+    predictor = SimpleNamespace(model=SimpleNamespace(get_feature_importance=_boom))
+    _display_basic_feature_importance(predictor, ["rsi"])
+
+
+# ---------------------------------------------------------------------------
+# _display_ml_model_summary
+# ---------------------------------------------------------------------------
+
+
+def test_display_ml_model_summary_good_and_excellent() -> None:
+    metrics = {
+        "val_accuracy": 0.72,
+        "val_precision": 0.65,
+        "val_recall": 0.60,
+        "val_f1": 0.62,
+        "val_auc": 0.75,
+    }
+    _display_ml_model_summary(metrics, n_features=42)
+
+
+def test_display_ml_model_summary_fair_and_good() -> None:
+    metrics = {
+        "val_accuracy": 0.58,
+        "val_precision": 0.55,
+        "val_recall": 0.50,
+        "val_f1": 0.52,
+        "val_auc": 0.65,
+    }
+    _display_ml_model_summary(metrics, n_features=20)
+
+
+def test_display_ml_model_summary_poor_and_fair() -> None:
+    metrics = {
+        "val_accuracy": 0.50,
+        "val_precision": 0.40,
+        "val_recall": 0.35,
+        "val_f1": 0.37,
+        "val_auc": 0.50,
+    }
+    _display_ml_model_summary(metrics, n_features=10)
+
+
+def test_display_ml_model_summary_error() -> None:
+    _display_ml_model_summary(None, n_features=0)
