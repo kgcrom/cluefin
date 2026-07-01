@@ -57,7 +57,7 @@ Agent용 분류 기준:
   "name": "chart",
   "description": "Price, volume, and OHLCV time-series lookup commands.",
   "when_to_use": "Use before technical analysis, price trend review, or volume analysis.",
-  "avoid_when": "Use cluefin-ta-cli technical-indicator commands when OHLCV arrays are already available.",
+  "avoid_when": "Use `cluefin-cli ta <stock_code>` when a full technical-indicator report is already sufficient.",
   "related_tags": ["ohlcv", "daily", "minute", "tick"],
   "example_filter": "uv run cluefin-openapi-cli list --domain chart --json",
   "command_count": 8

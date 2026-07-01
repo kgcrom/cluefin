@@ -1,5 +1,6 @@
 from typing import Any, Dict
 
+import cluefin_ta as talib
 import pandas as pd
 
 
@@ -54,11 +55,38 @@ class TechnicalAnalyzer:
 
         # Volume indicators
         result["volume_sma"] = self._sma(data["volume"], 20)
+        result["obv"] = talib.OBV(data["close"].values, data["volume"].values)
+
+        # Trend strength and volatility
+        result["adx"] = talib.ADX(data["high"].values, data["low"].values, data["close"].values, timeperiod=14)
+        result["atr"] = talib.ATR(data["high"].values, data["low"].values, data["close"].values, timeperiod=14)
 
         # Support and Resistance levels
         result = self._calculate_support_resistance(result)
 
         return result
+
+    def calculate_risk_metrics(self, data: pd.DataFrame) -> Dict[str, float]:
+        """
+        Calculate whole-window risk metrics (Maximum Drawdown, Sharpe Ratio).
+
+        These are single scalar statistics over the full return series, not
+        per-row indicators, so they are kept out of calculate_all()'s DataFrame.
+
+        Args:
+            data: DataFrame with OHLCV data
+
+        Returns:
+            Dict with "mdd" and "sharpe" scalar values, or empty if not enough data
+        """
+        returns = data["close"].pct_change().dropna()
+        if len(returns) < 2:
+            return {}
+
+        return {
+            "mdd": talib.MDD(returns.values),
+            "sharpe": talib.SHARPE(returns.values),
+        }
 
     def _sma(self, series: pd.Series, period: int) -> pd.Series:
         """Calculate Simple Moving Average."""
