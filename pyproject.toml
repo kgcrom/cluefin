@@ -12,7 +12,6 @@ members = [
     "packages/cluefin-xbrl",
     "apps/cluefin-cli",
     "apps/cluefin-openapi-cli",
-    "apps/cluefin-ta-cli",
     "apps/cluefin-desk",
 ]
 
@@ -33,7 +32,6 @@ cluefin-ta = { workspace = true }
 cluefin-xbrl = { workspace = true }
 cluefin-cli = { workspace = true }
 cluefin-openapi-cli = { workspace = true }
-cluefin-ta-cli = { workspace = true }
 cluefin-desk = { workspace = true }
 
 [tool.ruff]
@@ -64,7 +62,6 @@ testpaths = [
     "packages/cluefin-xbrl/tests",
     "apps/cluefin-cli/tests",
     "apps/cluefin-openapi-cli/tests",
-    "apps/cluefin-ta-cli/tests",
     "apps/cluefin-desk/tests",
 ]
 
@@ -75,7 +72,6 @@ source = [
     "packages/cluefin-xbrl/src",
     "apps/cluefin-cli/src",
     "apps/cluefin-openapi-cli/src",
-    "apps/cluefin-ta-cli/src",
     "apps/cluefin-desk/src",
 ]
 omit = [

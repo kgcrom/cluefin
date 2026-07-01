@@ -77,7 +77,7 @@ _RECIPES: tuple[WorkflowRecipe, ...] = (
                 title="Fetch daily OHLCV",
                 command=("kis", "chart", "period"),
                 purpose="Retrieve period chart data suitable for daily indicators.",
-                agent_notes="Feed close/high/low/volume arrays into cluefin-ta-cli commands such as sma, rsi, macd, or atr.",
+                agent_notes="Run `cluefin-cli ta <stock_code>` for the corresponding technical-indicator report (SMA/EMA/RSI/MACD/Bollinger/Stochastic/ADX/ATR/OBV plus risk metrics).",
             ),
             RecipeStep(
                 title="Fetch intraday OHLCV",
@@ -92,7 +92,7 @@ _RECIPES: tuple[WorkflowRecipe, ...] = (
                 agent_notes="Normalize provider response shape before TA calculation.",
             ),
         ),
-        agent_notes="Recipes do not run TA indicators directly; use cluefin-ta-cli after collecting OHLCV arrays.",
+        agent_notes="Recipes do not run TA indicators directly; use `cluefin-cli ta <stock_code>` after collecting OHLCV arrays.",
     ),
     WorkflowRecipe(
         name="market-scan",

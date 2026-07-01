@@ -16,6 +16,7 @@ from cluefin_cli.commands.technical_analysis import (
     _display_company_info,
     _display_ml_model_summary,
     _display_regime_analysis,
+    _display_risk_metrics,
     _display_stock_info,
     _display_technical_indicators,
     _display_trading_trend,
@@ -467,3 +468,17 @@ def test_technical_analysis_command_handles_errors(monkeypatch) -> None:
     result = CliRunner().invoke(technical_analysis, ["005930"])
     assert result.exit_code == 0
     assert "Error" in result.output
+
+
+# ---------------------------------------------------------------------------
+# _display_risk_metrics
+# ---------------------------------------------------------------------------
+
+
+def test_display_risk_metrics_empty() -> None:
+    _display_risk_metrics({})
+
+
+def test_display_risk_metrics_with_values() -> None:
+    _display_risk_metrics({"mdd": 0.25, "sharpe": 1.5})
+    _display_risk_metrics({"mdd": 0.05, "sharpe": -0.5})
