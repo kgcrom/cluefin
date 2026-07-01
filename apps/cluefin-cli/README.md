@@ -35,7 +35,7 @@
 
 ### **🤖 머신러닝 예측**
 - **LightGBM 기반 분류** - 익일 가격 움직임에 대한 이진 예측
-- **150개 이상의 기술적 지표** - cluefin-ta를 사용한 향상된 피처 엔지니어링
+- **cluefin-ta 기반 피처 엔지니어링** - 45개 기술적 지표에 래그·롤링 파생 피처를 더해 학습 피처 구성
 - **SHAP 모델 해석가능성** - 예측을 주도하는 피처 이해
 - **피처 중요도 분석** - 가격 움직임에 영향을 미치는 주요 요소 식별
 - **시계열 교차검증** - 시계열 데이터를 위한 적절한 검증
@@ -171,6 +171,33 @@ cluefin-cli fa 005930 --year 2023 --report annual
 cluefin-cli fa 005930 --max-shareholders 3
 ```
 
+### `xbrl` 명령어
+
+DART XBRL 재무제표를 조회하여 재무상태표·손익계산서 등을 표 형태로 출력합니다.
+
+```bash
+cluefin-cli xbrl [OPTIONS] STOCK_CODE
+```
+
+#### 인수
+- `STOCK_CODE` - 한국 주식 코드 (예: 삼성전자는 `005930`)
+
+#### 옵션
+- `--year` - 조회할 사업연도 (기본값: 전년도)
+- `--report` - DART 보고서 구분 (`annual`, `half`, `q1`, `q3`, 기본값: `annual`)
+- `--statement-type` - 특정 재무제표만 표시 (`BS`, `IS`, `CIS`, `CF`, `SCE`, 미지정 시 전체)
+- `--help` - 명령어 도움말 표시
+
+#### 예제
+
+```bash
+# 삼성전자 전체 재무제표 (전년도 사업보고서)
+cluefin-cli xbrl 005930
+
+# 2023 사업보고서의 손익계산서만 조회
+cluefin-cli xbrl 005930 --year 2023 --report annual --statement-type IS
+```
+
 ## 📈 지원 종목
 
 CLI는 KOSPI와 KOSDAQ에서 거래되는 모든 한국 주식을 지원합니다. 다음은 인기 종목 예시입니다:
@@ -285,31 +312,29 @@ apps/cluefin-cli/
 │   ├── commands/                 # CLI 명령어 구현
 │   │   ├── analysis/             # 기술적 분석 모듈
 │   │   │   └── indicators.py     # 기술적 지표 계산
-│   │   ├── technical_analysis.py # 메인 TA 명령어 (Click 기반)
-│   │   ├── fundamental_analysis.py # 펀더멘털 분석 명령어
-│   │   └── import_cmd.py         # 데이터 임포트 명령어
+│   │   ├── technical_analysis.py # ta 명령어 (Click 기반)
+│   │   ├── fundamental_analysis.py # fa 펀더멘털 분석 명령어
+│   │   └── xbrl_analysis.py      # xbrl 재무제표 분석 명령어
 │   ├── config/                   # 애플리케이션 설정
+│   │   ├── logging.py            # 로깅 설정
 │   │   └── settings.py           # Pydantic 설정 관리
 │   ├── data/                     # 데이터 레이어 추상화
-│   │   ├── duckdb_manager.py     # DuckDB 데이터베이스 관리
 │   │   ├── fetcher.py            # cluefin-openapi에서 데이터 조회
-│   │   ├── importer.py           # 주식 차트 데이터 임포터
-│   │   ├── industry_importer.py  # 업종 코드 임포터
-│   │   └── industry_chart_importer.py # 업종 차트 데이터 임포터
+│   │   ├── fundamentals.py       # DART 펀더멘털 데이터 조회
+│   │   └── xbrl.py               # XBRL 재무제표 데이터 조회
 │   ├── display/                  # 터미널 시각화
-│   │   └── charts.py             # ASCII 차트 렌더링 (plotext)
+│   │   ├── charts.py             # ASCII 차트 렌더링 (plotext)
+│   │   └── tui/                  # 터미널 UI 컴포넌트
 │   ├── ml/                       # 🤖 머신러닝 파이프라인
 │   │   ├── diagnostics.py        # 모델 성능 평가
 │   │   ├── explainer.py          # SHAP 기반 모델 해석가능성
-│   │   ├── feature_engineering.py  # cluefin-ta 피처 생성 (150+ 지표)
+│   │   ├── feature_engineering.py  # cluefin-ta 피처 생성 (45개 지표 기반)
 │   │   ├── models.py             # LightGBM 분류기 구현
 │   │   └── predictor.py          # 완전한 ML 예측 파이프라인
 │   ├── utils/                    # 공유 유틸리티
 │   │   └── formatters.py         # 한국 통화 및 텍스트 포맷팅
 │   └── main.py                   # CLI 진입점 및 Click 앱
 ├── tests/unit/                   # 단위 테스트 모음
-│   ├── commands/                 # 명령어 테스트
-│   └── ml/                       # ML 파이프라인 및 모델 테스트
 ├── pyproject.toml               # 패키지 의존성 및 설정
 └── README.md                    # 이 문서
 ```
@@ -351,7 +376,7 @@ cluefin-cli ta 005930 --ml-predict --shap-analysis
 
 ML 예측 시스템은 정교한 파이프라인을 사용합니다:
 
-1. **피처 엔지니어링** (150+ 피처)
+1. **피처 엔지니어링**
    - cluefin-ta 기술적 지표 (RSI, MACD, 볼린저 밴드 등)
    - 커스텀 가격 기반 피처 (비율, 변동성, 모멘텀)
    - 시간적 패턴을 위한 래그 피처

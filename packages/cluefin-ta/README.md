@@ -96,7 +96,7 @@ states, trans_probs, means = REGIME_HMM(returns, n_states=3)
 
 ## 지원 함수
 
-총 **39개** 기술 분석 함수 지원
+총 **45개** 기술 분석 함수 지원
 
 ### Overlap Studies (이동평균) - 7개
 

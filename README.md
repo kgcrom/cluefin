@@ -5,7 +5,7 @@
 [![CI Pipeline](https://github.com/kgcrom/cluefin/actions/workflows/ci.yml/badge.svg)](https://github.com/kgcrom/cluefin/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/kgcrom/cluefin)](LICENSE)
 
-한국 금융 투자 분석 툴킷. 키움/KIS/DART API 클라이언트, ETF provider 조회, 기술적 분석, ML 예측을 제공합니다.
+한국 금융 투자 분석 툴킷. 키움/KIS/DART API 클라이언트, 기술적 분석, ML 예측을 제공합니다.
 
 > 이 프로젝트는 교육 및 연구 목적으로만 제공됩니다. 금융 자문을 구성하지 않으며 어떤 결과도 보장하지 않습니다.
 
@@ -28,7 +28,7 @@ uv 워크스페이스 모노레포:
 |--------|------|
 | [cluefin-openapi](packages/cluefin-openapi/) | 키움/KIS/DART Python API 클라이언트 (Pydantic, 속도 제한, 인증) |
 | [cluefin-openapi-ts](packages/cluefin-openapi-ts/) | KIS/키움 TypeScript API 클라이언트 (Node 20+, Zod, ESM/CJS) |
-| [cluefin-ta](packages/cluefin-ta/) | 순수 Python 기술적 분석 (TA-Lib 호환, 150+ 지표) |
+| [cluefin-ta](packages/cluefin-ta/) | 순수 Python 기술적 분석 (TA-Lib 호환, 45개 지표) |
 | [cluefin-xbrl](packages/cluefin-xbrl/) | DART XBRL 재무제표 파서 |
 | [cluefin-cli](apps/cluefin-cli/) | Rich 기반 CLI (기술적 분석, LightGBM + SHAP 예측) |
 | [cluefin-openapi-cli](apps/cluefin-openapi-cli/) | Agent-friendly broker CLI (`list`, `describe`, broker-first command path) |
