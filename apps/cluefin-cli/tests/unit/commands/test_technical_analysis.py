@@ -4,12 +4,15 @@ import asyncio
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
+import cluefin_ta
+import numpy as np
 import pandas as pd
 
 from cluefin_cli.commands.technical_analysis import (
     _display_basic_feature_importance,
     _display_company_info,
     _display_ml_model_summary,
+    _display_regime_analysis,
     _display_stock_info,
     _display_technical_indicators,
     _display_trading_trend,
@@ -260,3 +263,52 @@ def test_perform_ml_analysis_handles_errors() -> None:
         )
     )
     predictor.train_model.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# _display_regime_analysis
+# ---------------------------------------------------------------------------
+
+
+def _fake_regime_hmm_success(returns, n_states=3, random_state=42):
+    hmm_states = np.array([2.0] * len(returns))
+    transition_probs = np.array(
+        [
+            [0.7, 0.2, 0.1],
+            [0.2, 0.6, 0.2],
+            [0.1, 0.2, 0.7],
+        ]
+    )
+    state_means = np.array([-0.01, 0.0, 0.02])
+    return hmm_states, transition_probs, state_means
+
+
+def test_display_regime_analysis_full_with_hmm_success(monkeypatch) -> None:
+    stock_data = _make_stock_data(300)
+    monkeypatch.setattr(cluefin_ta, "REGIME_HMM", _fake_regime_hmm_success)
+    _display_regime_analysis(stock_data, {})
+
+
+def test_display_regime_analysis_hmm_import_error(monkeypatch) -> None:
+    stock_data = _make_stock_data(300)
+
+    def _boom(*args, **kwargs):
+        raise ImportError("hmmlearn not installed")
+
+    monkeypatch.setattr(cluefin_ta, "REGIME_HMM", _boom)
+    _display_regime_analysis(stock_data, {})
+
+
+def test_display_regime_analysis_hmm_generic_error(monkeypatch) -> None:
+    stock_data = _make_stock_data(300)
+
+    def _boom(*args, **kwargs):
+        raise RuntimeError("HMM fit failed")
+
+    monkeypatch.setattr(cluefin_ta, "REGIME_HMM", _boom)
+    _display_regime_analysis(stock_data, {})
+
+
+def test_display_regime_analysis_outer_exception_on_missing_column() -> None:
+    stock_data = pd.DataFrame({"low": [1.0, 2.0], "close": [1.5, 2.5]})
+    _display_regime_analysis(stock_data, {})
