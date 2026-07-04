@@ -40,7 +40,6 @@ class BaseHttpClient:
         timeout_error: Callable[[Exception], Exception],
         network_error: Callable[[Exception], Exception],
         on_response: Optional[Callable[[requests.Response, dict], None]] = None,
-        retry_after_provider: Optional[Callable[[requests.Response], Optional[int]]] = None,
     ) -> requests.Response:
         """Shared rate-limit pre-flight, attempt loop, status dispatch, and backoff.
 
@@ -59,7 +58,8 @@ class BaseHttpClient:
         dispatch:
             Called with the response for every non-200 status. Returns an Exception
             to raise (immediately for 4xx/unexpected, or on final retry for 429/5xx),
-            or None to accept the response and return it.
+            or None to accept the response and return it. The None-accepts contract
+            applies uniformly, including terminal 429/5xx responses.
         rate_limit_error:
             Factory () -> Exception raised when the token bucket times out.
         timeout_error:
@@ -69,14 +69,9 @@ class BaseHttpClient:
             RequestException.
         on_response:
             Optional hook called on every received response before status branching.
-        retry_after_provider:
-            Optional callable to extract Retry-After from a 429 response;
-            defaults to self._get_retry_after.
         """
         if not rate_limiter.wait_for_tokens(timeout=timeout):
             raise rate_limit_error()
-
-        _retry_after_fn = retry_after_provider if retry_after_provider is not None else self._get_retry_after
 
         for attempt in range(max_retries + 1):
             try:
@@ -88,25 +83,21 @@ class BaseHttpClient:
                 if response.status_code == 200:
                     return response
                 elif response.status_code == 429:
-                    retry_after = _retry_after_fn(response)
+                    retry_after = self._get_retry_after(response)
                     if attempt < max_retries:
                         wait_time = retry_after or (2**attempt)
                         time.sleep(wait_time)
                         continue
-                    else:
-                        raise dispatch(response)
                 elif 500 <= response.status_code < 600:
                     if attempt < max_retries:
                         wait_time = 2**attempt
                         time.sleep(wait_time)
                         continue
-                    else:
-                        raise dispatch(response)
-                else:
-                    exc = dispatch(response)
-                    if exc is not None:
-                        raise exc
-                    return response
+
+                exc = dispatch(response)
+                if exc is not None:
+                    raise exc
+                return response
 
             except requests.exceptions.Timeout as e:
                 if attempt < max_retries:

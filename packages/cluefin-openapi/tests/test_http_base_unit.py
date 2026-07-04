@@ -92,6 +92,27 @@ def test_5xx_retries_then_dispatches(monkeypatch):
     assert calls["n"] == 3  # initial + 2 retries
 
 
+def test_terminal_5xx_with_none_dispatch_returns_response(monkeypatch):
+    import time as _time_mod
+
+    monkeypatch.setattr(_time_mod, "sleep", lambda s: None)
+    rl = TokenBucket(capacity=5, refill_rate=100.0)
+    with rm_mod.Mocker() as m:
+        m.get("https://x.test/p", status_code=503, text="degraded")
+        resp = _Dummy()._execute_with_retry(
+            lambda: requests.get("https://x.test/p"),
+            rate_limiter=rl,
+            timeout=5,
+            max_retries=1,
+            request_context={"path": "/p"},
+            dispatch=lambda r: None,  # accept even terminal 5xx
+            rate_limit_error=lambda: _Boom(),
+            timeout_error=lambda e: _Boom(),
+            network_error=lambda e: _Boom(),
+        )
+    assert resp.status_code == 503
+
+
 def test_on_response_called_each_attempt():
     seen = []
     rl = TokenBucket(capacity=5, refill_rate=100.0)
