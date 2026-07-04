@@ -230,6 +230,11 @@ class Client(BaseHttpClient):
             }
         )
 
+        if self.debug:
+            logger.debug(f"Making POST request to {url}")
+            logger.debug(f"Body: {body}")
+            logger.debug(f"Rate limiter tokens available: {self._rate_limiter.available_tokens:.2f}")
+
         response = self._execute_with_retry(
             send_fn=lambda: self._session.post(
                 url=url,
@@ -237,6 +242,7 @@ class Client(BaseHttpClient):
                 data=json.dumps(body),
                 timeout=self.timeout,
             ),
+            debug=self.debug,
             rate_limiter=self._rate_limiter,
             timeout=self.timeout,
             max_retries=self.max_retries,

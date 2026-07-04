@@ -5,6 +5,7 @@ import time
 from typing import Callable, Dict, Optional
 
 import requests
+from loguru import logger
 
 
 class BaseHttpClient:
@@ -61,6 +62,7 @@ class BaseHttpClient:
         timeout_error: Callable[[Exception], Exception],
         network_error: Callable[[Exception], Exception],
         on_response: Optional[Callable[[requests.Response, dict], None]] = None,
+        debug: bool = False,
     ) -> requests.Response:
         """Shared rate-limit pre-flight, attempt loop, status dispatch, and backoff.
 
@@ -92,13 +94,20 @@ class BaseHttpClient:
             RequestException.
         on_response:
             Optional hook called on every received response before status branching.
+        debug:
+            When True, log per-attempt response status/duration at DEBUG level.
+            Retry WARNINGs are always emitted regardless of this flag.
         """
         if not rate_limiter.wait_for_tokens(timeout=timeout):
             raise rate_limit_error()
 
         for attempt in range(max_retries + 1):
             try:
+                start_time = time.time()
                 response = send_fn()
+                if debug:
+                    duration = time.time() - start_time
+                    logger.debug(f"Response received in {duration:.3f}s - Status: {response.status_code}")
 
                 if on_response is not None:
                     on_response(response, request_context)
@@ -109,11 +118,13 @@ class BaseHttpClient:
                     retry_after = self._get_retry_after(response)
                     if attempt < max_retries:
                         wait_time = retry_after or (2**attempt)
+                        logger.warning(f"Rate limit hit, waiting {wait_time}s before retry {attempt + 1}/{max_retries}")
                         time.sleep(wait_time)
                         continue
                 elif 500 <= response.status_code < 600:
                     if attempt < max_retries:
                         wait_time = 2**attempt
+                        logger.warning(f"Server error {response.status_code}, retrying in {wait_time}s")
                         time.sleep(wait_time)
                         continue
 
@@ -125,6 +136,7 @@ class BaseHttpClient:
             except requests.exceptions.Timeout as e:
                 if attempt < max_retries:
                     wait_time = 2**attempt
+                    logger.warning(f"Request timeout, retrying in {wait_time}s")
                     time.sleep(wait_time)
                     continue
                 else:
@@ -132,6 +144,7 @@ class BaseHttpClient:
             except requests.exceptions.ConnectionError as e:
                 if attempt < max_retries:
                     wait_time = 2**attempt
+                    logger.warning(f"Connection error, retrying in {wait_time}s")
                     time.sleep(wait_time)
                     continue
                 else:
