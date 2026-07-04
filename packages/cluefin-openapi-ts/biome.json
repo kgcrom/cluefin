@@ -7,7 +7,7 @@
     "lineWidth": 120
   },
   "files": {
-    "includes": ["src/**", "tests/**", "scripts/**", "*.json", "*.md", "*.toml"]
+    "includes": ["src/**", "tests/**", "scripts/**", "*.json", "*.md", "*.toml", "*.config.ts"]
   },
   "linter": {
     "enabled": true,

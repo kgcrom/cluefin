@@ -275,3 +275,76 @@ def test_leaf_command_reports_executor_failure_as_json_error() -> None:
     assert '"error"' in result.stdout
     assert "dart.failing-command" in result.stdout
     assert "broker unavailable" in result.stdout
+
+
+def test_unknown_top_level_command_exits_2() -> None:
+    result = run_cli(["nope"])
+
+    assert result.exit_code == 2
+    assert "Unknown top-level command" in result.stdout
+
+
+def test_broker_category_help_lists_commands() -> None:
+    result = run_cli(["kis", "stock", "--help", "--json"])
+
+    assert result.exit_code == 0
+    assert '"category": "stock"' in result.stdout
+    assert '"current-price"' in result.stdout
+
+
+def test_dart_help_lists_commands() -> None:
+    result = run_cli(["dart", "--help", "--json"])
+
+    assert result.exit_code == 0
+    assert '"broker": "dart"' in result.stdout
+    assert '"commands"' in result.stdout
+
+
+def test_dart_without_name_exits_2() -> None:
+    result = run_cli(["dart"])
+
+    assert result.exit_code == 2
+    assert "Usage" in result.stdout
+
+
+def test_broker_without_enough_positionals_exits_2() -> None:
+    result = run_cli(["kis", "stock"])
+
+    assert result.exit_code == 2
+    assert "Usage" in result.stdout
+
+
+def test_unknown_command_path_exits_2() -> None:
+    result = run_cli(["kis", "stock", "does-not-exist"])
+
+    assert result.exit_code == 2
+    assert "Unknown command path" in result.stdout
+
+
+def test_leaf_help_renders_options() -> None:
+    result = run_cli(["kis", "stock", "current-price", "--help", "--json"])
+
+    assert result.exit_code == 0
+    assert '"command"' in result.stdout
+    assert '"options"' in result.stdout
+
+
+def test_describe_without_args_exits_2() -> None:
+    result = run_cli(["describe"])
+
+    assert result.exit_code == 2
+    assert "Usage" in result.stdout
+
+
+def test_describe_with_bad_arity_exits_2() -> None:
+    result = run_cli(["describe", "kis", "stock", "extra", "more"])
+
+    assert result.exit_code == 2
+    assert "Usage" in result.stdout
+
+
+def test_recipe_without_name_exits_2() -> None:
+    result = run_cli(["recipe"])
+
+    assert result.exit_code == 2
+    assert "Usage" in result.stdout
