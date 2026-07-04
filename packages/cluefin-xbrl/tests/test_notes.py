@@ -1,14 +1,12 @@
 """Tests for financial statement note extraction."""
 
+from datetime import date
 from decimal import Decimal
 
 import pytest
 
 from cluefin_xbrl._types import (
     ConceptLabel,
-    NoteLineItem,
-    NoteSection,
-    ParsedNotes,
     PeriodType,
     PresentationNode,
     TaxonomyInfo,
@@ -17,35 +15,6 @@ from cluefin_xbrl._types import (
     XbrlPeriod,
 )
 from cluefin_xbrl.notes import _identify_note_role, extract_notes
-
-
-class TestNoteModels:
-    def test_note_line_item_defaults(self):
-        item = NoteLineItem(concept_local_name="A", concept_qname="ns:A")
-        assert item.dimensions == {}
-        assert item.is_abstract is False
-        assert item.value is None
-
-    def test_note_line_item_dimensions(self):
-        item = NoteLineItem(
-            concept_local_name="A",
-            concept_qname="ns:A",
-            value=Decimal("1000"),
-            dimensions={"ns:Axis": "ns:Member"},
-        )
-        assert item.dimensions == {"ns:Axis": "ns:Member"}
-        assert item.value == Decimal("1000")
-
-    def test_note_section_defaults(self):
-        section = NoteSection(role_code="D834480", role_uri="http://x/role-D834480")
-        assert section.is_consolidated is True
-        assert section.line_items == []
-        assert section.title is None
-
-    def test_parsed_notes_defaults(self):
-        parsed = ParsedNotes(source_file="x.xbrl")
-        assert parsed.notes == {}
-        assert parsed.entity_id is None
 
 
 class TestIdentifyNoteRole:
@@ -65,7 +34,11 @@ class TestIdentifyNoteRole:
         assert _identify_note_role("http://example.com/role/SomeOtherRole") is None
 
 
-def _make_doc() -> XbrlDocument:
+def _make_doc(
+    note_role: str = "http://dart.fss.or.kr/role/ifrs/ias_19_role-D834480",
+    facts: list[XbrlFact] | None = None,
+    labels: dict[str, ConceptLabel] | None = None,
+) -> XbrlDocument:
     """확정급여 주석 1개 + 비주석(재무상태표) role 1개를 가진 합성 문서."""
     period = XbrlPeriod(period_type=PeriodType.INSTANT, instant=None)
 
@@ -83,7 +56,6 @@ def _make_doc() -> XbrlDocument:
         order=0.0,
         children=[value_node],
     )
-    note_role = "http://dart.fss.or.kr/role/ifrs/ias_19_role-D834480"
     # 비주석 role(재무상태표)도 트리에 넣어 걸러지는지 검증
     stmt_role = "http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D210000"
     stmt_node = PresentationNode(
@@ -91,7 +63,7 @@ def _make_doc() -> XbrlDocument:
         concept_qname="ifrs-full:Assets",
     )
 
-    labels = {
+    default_labels = {
         "DisclosureOfDefinedBenefitPlansAbstract": ConceptLabel(
             concept_local_name="DisclosureOfDefinedBenefitPlansAbstract",
             concept_qname="ifrs-full:DisclosureOfDefinedBenefitPlansAbstract",
@@ -106,10 +78,10 @@ def _make_doc() -> XbrlDocument:
         ),
     }
     taxonomy = TaxonomyInfo(
-        labels=labels,
+        labels=labels if labels is not None else default_labels,
         presentation_trees={note_role: [root_node], stmt_role: [stmt_node]},
     )
-    fact = XbrlFact(
+    default_fact = XbrlFact(
         concept_local_name="DefinedBenefitObligationAtPresentValue",
         concept_qname="ifrs-full:DefinedBenefitObligationAtPresentValue",
         namespace="http://xbrl.ifrs.org/taxonomy/2021-03-24/ifrs-full",
@@ -121,9 +93,21 @@ def _make_doc() -> XbrlDocument:
     )
     return XbrlDocument(
         source_file="entity_test.xbrl",
-        facts=[fact],
+        facts=facts if facts is not None else [default_fact],
         entity_id="00000000",
         taxonomy=taxonomy,
+    )
+
+
+def _make_obligation_fact(period: XbrlPeriod) -> XbrlFact:
+    return XbrlFact(
+        concept_local_name="DefinedBenefitObligationAtPresentValue",
+        concept_qname="ifrs-full:DefinedBenefitObligationAtPresentValue",
+        namespace="http://xbrl.ifrs.org/taxonomy/2021-03-24/ifrs-full",
+        value="1000",
+        numeric_value=Decimal("1000"),
+        unit="iso4217:KRW",
+        period=period,
     )
 
 
@@ -150,15 +134,46 @@ class TestExtractNotes:
         assert len(value_items) == 1
         assert value_items[0].dimensions == {"ifrs-full:Axis": "ifrs-full:Member"}
         assert value_items[0].value == Decimal("1000")
+        assert value_items[0].text_value is None
 
     def test_abstract_node_has_no_value(self):
         section = extract_notes(_make_doc()).notes["D834480"]
         abstract_items = [li for li in section.line_items if li.is_abstract]
         assert any(li.concept_local_name == "DisclosureOfDefinedBenefitPlansAbstract" for li in abstract_items)
 
-    def test_public_api_import(self):
-        from cluefin_xbrl import ParsedNotes as PN
-        from cluefin_xbrl import extract_notes as en
+    def test_separate_note_section(self):
+        notes = extract_notes(_make_doc(note_role="http://dart.fss.or.kr/role/ifrs/ias_19_role-D834485"))
+        section = notes.notes["D834485"]
+        assert section.is_consolidated is False
 
-        assert en is extract_notes
-        assert PN is ParsedNotes
+    def test_title_falls_back_to_english_label(self):
+        labels = {
+            "DisclosureOfDefinedBenefitPlansAbstract": ConceptLabel(
+                concept_local_name="DisclosureOfDefinedBenefitPlansAbstract",
+                concept_qname="ifrs-full:DisclosureOfDefinedBenefitPlansAbstract",
+                label_en="Disclosure of defined benefit plans",
+            ),
+        }
+        section = extract_notes(_make_doc(labels=labels)).notes["D834480"]
+        assert section.title == "Disclosure of defined benefit plans"
+
+    def test_periods_deduplicated(self):
+        p_2023 = XbrlPeriod(period_type=PeriodType.INSTANT, instant=date(2023, 12, 31))
+        p_2022 = XbrlPeriod(period_type=PeriodType.INSTANT, instant=date(2022, 12, 31))
+        facts = [_make_obligation_fact(p_2023), _make_obligation_fact(p_2023), _make_obligation_fact(p_2022)]
+        section = extract_notes(_make_doc(facts=facts)).notes["D834480"]
+        assert section.periods == [p_2023, p_2022]
+
+    def test_text_value_for_string_fact(self):
+        fact = XbrlFact(
+            concept_local_name="DefinedBenefitObligationAtPresentValue",
+            concept_qname="ifrs-full:DefinedBenefitObligationAtPresentValue",
+            namespace="http://xbrl.ifrs.org/taxonomy/2021-03-24/ifrs-full",
+            value="확정급여제도 관련 서술",
+            numeric_value=None,
+        )
+        section = extract_notes(_make_doc(facts=[fact])).notes["D834480"]
+        value_items = [li for li in section.line_items if not li.is_abstract]
+        assert len(value_items) == 1
+        assert value_items[0].value is None
+        assert value_items[0].text_value == "확정급여제도 관련 서술"

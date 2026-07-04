@@ -2,6 +2,7 @@
 <xsd:schema
     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
     xmlns:xbrli="http://www.xbrl.org/2003/instance"
+    xmlns:xbrldt="http://xbrl.org/2005/xbrldt"
     xmlns:link="http://www.xbrl.org/2003/linkbase"
     xmlns:xlink="http://www.w3.org/1999/xlink"
     xmlns:sample="http://example.com/sample"
@@ -10,6 +11,8 @@
 
     <xsd:import namespace="http://www.xbrl.org/2003/instance"
                 schemaLocation="http://www.xbrl.org/2003/xbrl-instance-2003-12-31.xsd"/>
+    <xsd:import namespace="http://xbrl.org/2005/xbrldt"
+                schemaLocation="http://www.xbrl.org/2005/xbrldt-2005.xsd"/>
 
     <xsd:annotation>
         <xsd:appinfo>
@@ -44,5 +47,32 @@
     <xsd:element name="Revenue" id="sample_Revenue"
                  substitutionGroup="xbrli:item" type="xbrli:monetaryItemType"
                  xbrli:periodType="duration" nillable="true"/>
+
+    <xsd:element name="Liabilities" id="sample_Liabilities"
+                 substitutionGroup="xbrli:item" type="xbrli:monetaryItemType"
+                 xbrli:periodType="instant" nillable="true"/>
+
+    <xsd:element name="EarningsPerShare" id="sample_EarningsPerShare"
+                 substitutionGroup="xbrli:item" type="xbrli:decimalItemType"
+                 xbrli:periodType="duration" nillable="true"/>
+
+    <xsd:element name="AuditorName" id="sample_AuditorName"
+                 substitutionGroup="xbrli:item" type="xbrli:stringItemType"
+                 xbrli:periodType="duration" nillable="true"/>
+
+    <xsd:element name="SegmentAxis" id="sample_SegmentAxis"
+                 substitutionGroup="xbrldt:dimensionItem" type="xbrli:stringItemType"
+                 xbrli:periodType="duration" abstract="true" nillable="true"/>
+
+    <xsd:element name="SeoulMember" id="sample_SeoulMember"
+                 substitutionGroup="xbrli:item" type="xbrli:stringItemType"
+                 xbrli:periodType="duration" abstract="true" nillable="true"/>
+
+    <xsd:element name="RegionAxis" id="sample_RegionAxis"
+                 substitutionGroup="xbrldt:dimensionItem" type="xbrli:stringItemType"
+                 xbrli:periodType="duration" abstract="true" nillable="true"
+                 xbrldt:typedDomainRef="#sample_RegionDomain"/>
+
+    <xsd:element name="RegionDomain" id="sample_RegionDomain" type="xsd:string"/>
 
 </xsd:schema>

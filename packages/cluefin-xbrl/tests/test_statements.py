@@ -185,6 +185,38 @@ def _make_doc_with_separate() -> XbrlDocument:
     return XbrlDocument(source_file="x.xbrl", facts=[fact], entity_id="00000000", taxonomy=taxonomy)
 
 
+class TestFirstMatchPerType:
+    def test_keeps_first_linkrole_per_type(self):
+        """같은 유형(BS)의 linkrole이 둘이면 먼저 순회된 것만 유지된다."""
+        node_a = PresentationNode(concept_local_name="Assets", concept_qname="ifrs-full:Assets")
+        node_b = PresentationNode(concept_local_name="Equity", concept_qname="ifrs-full:Equity")
+        role_a = "http://dart.fss.or.kr/role/ifrs/dart_role-D210000"
+        role_b = "http://example.com/role/StatementOfFinancialPosition"
+        taxonomy = TaxonomyInfo(presentation_trees={role_a: [node_a], role_b: [node_b]})
+        doc = XbrlDocument(source_file="x.xbrl", facts=[], taxonomy=taxonomy)
+
+        result = extract_financial_statements(doc)
+
+        assert list(result.statements.keys()) == ["BS"]
+        assert result.statements["BS"].linkrole == role_a
+
+
+class TestStatementToDictsWithoutPeriod:
+    def test_abstract_item_has_no_period_keys(self):
+        node = PresentationNode(concept_local_name="AssetsAbstract", concept_qname="ifrs-full:AssetsAbstract")
+        role = "http://example.com/role/StatementOfFinancialPosition"
+        taxonomy = TaxonomyInfo(presentation_trees={role: [node]})
+        doc = XbrlDocument(source_file="x.xbrl", facts=[], taxonomy=taxonomy)
+
+        bs = extract_financial_statements(doc).statements["BS"]
+        dicts = statement_to_dicts(bs)
+
+        assert len(dicts) == 1
+        assert dicts[0]["is_abstract"] is True
+        assert dicts[0]["value"] is None
+        assert "period_type" not in dicts[0]
+
+
 class TestSeparateStatements:
     def test_consolidated_in_statements(self):
         result = extract_financial_statements(_make_doc_with_separate())
