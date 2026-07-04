@@ -27,6 +27,27 @@ class BaseHttpClient:
                 pass
         return None
 
+    def _sanitize_request_context(self, request_context: dict) -> dict:
+        """Keep only non-secret request metadata (drops headers with credentials).
+
+        Idempotent: applying it to an already-sanitized dict is a no-op.
+        """
+        headers = request_context.get("headers", {})
+        sanitized = {
+            "method": request_context.get("method"),
+            "path": request_context.get("path"),
+            "url": request_context.get("url"),
+            "tr_id": headers.get("tr_id")
+            or headers.get("TR_ID")
+            or headers.get("api-id")
+            or request_context.get("tr_id"),
+        }
+        if "params" in request_context:
+            sanitized["params"] = request_context["params"]
+        if "body" in request_context:
+            sanitized["body"] = request_context["body"]
+        return sanitized
+
     def _execute_with_retry(
         self,
         send_fn: Callable[[], requests.Response],
@@ -54,7 +75,9 @@ class BaseHttpClient:
         max_retries:
             Number of retries beyond the first attempt (total attempts = max_retries+1).
         request_context:
-            Already-redacted dict describing the request (for side-effect hooks).
+            Redacted request metadata; it flows into exception attributes and
+            side-effect hooks, so callers must not put secrets in it (build it
+            via _sanitize_request_context or pre-redact secret params).
         dispatch:
             Called with the response for every non-200 status. Returns an Exception
             to raise (immediately for 4xx/unexpected, or on final retry for 429/5xx),

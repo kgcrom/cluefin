@@ -220,13 +220,15 @@ class Client(BaseHttpClient):
         merged_headers = headers.copy()
         merged_headers["Authorization"] = f"Bearer {self.token}"
 
-        request_context = {
-            "url": url,
-            "path": path,
-            "method": "POST",
-            "headers": merged_headers,
-            "body": body,
-        }
+        request_context = self._sanitize_request_context(
+            {
+                "url": url,
+                "path": path,
+                "method": "POST",
+                "headers": merged_headers,
+                "body": body,
+            }
+        )
 
         response = self._execute_with_retry(
             send_fn=lambda: self._session.post(

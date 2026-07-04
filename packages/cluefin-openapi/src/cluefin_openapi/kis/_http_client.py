@@ -150,21 +150,6 @@ class HttpClient(BaseHttpClient):
         merged_headers.update(headers)  # Merge custom headers (e.g., tr_id)
         return merged_headers
 
-    def _sanitize_request_context(self, request_context: dict) -> dict:
-        """Keep only non-secret request metadata for debugging."""
-        headers = request_context.get("headers", {})
-        sanitized = {
-            "method": request_context.get("method"),
-            "path": request_context.get("path"),
-            "url": request_context.get("url"),
-            "tr_id": headers.get("tr_id") or headers.get("TR_ID"),
-        }
-        if "params" in request_context:
-            sanitized["params"] = request_context["params"]
-        if "body" in request_context:
-            sanitized["body"] = request_context["body"]
-        return sanitized
-
     def _serialize_payload(self, payload: Any) -> str:
         """Serialize payload for previews and debug artifacts."""
         if isinstance(payload, (dict, list)):
@@ -308,13 +293,15 @@ class HttpClient(BaseHttpClient):
         """Make a GET request with rate limiting, retry, and error handling."""
         url = self.base_url + path
         merged_headers = self._build_headers(headers)
-        request_context = {
-            "url": url,
-            "path": path,
-            "method": "GET",
-            "headers": merged_headers,
-            "params": params,
-        }
+        request_context = self._sanitize_request_context(
+            {
+                "url": url,
+                "path": path,
+                "method": "GET",
+                "headers": merged_headers,
+                "params": params,
+            }
+        )
         self._last_response_debug = None
 
         if self.debug:
@@ -355,13 +342,15 @@ class HttpClient(BaseHttpClient):
         """Make a POST request with rate limiting, retry, and error handling."""
         url = self.base_url + path
         merged_headers = self._build_headers(headers)
-        request_context = {
-            "url": url,
-            "path": path,
-            "method": "POST",
-            "headers": merged_headers,
-            "body": body,
-        }
+        request_context = self._sanitize_request_context(
+            {
+                "url": url,
+                "path": path,
+                "method": "POST",
+                "headers": merged_headers,
+                "body": body,
+            }
+        )
         self._last_response_debug = None
 
         if self.debug:
