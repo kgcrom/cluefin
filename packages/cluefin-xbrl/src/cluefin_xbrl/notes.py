@@ -109,6 +109,7 @@ def _collect_note_line_items(
                     label_ko=label_ko,
                     label_en=label_en,
                     value=fact.numeric_value,
+                    text_value=fact.value if fact.numeric_value is None else None,
                     unit=fact.unit,
                     period=fact.period,
                     depth=node.depth,

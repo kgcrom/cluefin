@@ -135,13 +135,18 @@ class XbrlDocument(BaseModel):
 
 
 class NoteLineItem(BaseModel):
-    """A single line item in a financial statement note, with dimensional context."""
+    """A single line item in a financial statement note, with dimensional context.
+
+    ``value`` holds numeric facts; ``text_value`` holds non-numeric facts
+    (short narrative strings, dates, etc.) that would otherwise be lost.
+    """
 
     concept_local_name: str
     concept_qname: str
     label_ko: Optional[str] = None
     label_en: Optional[str] = None
     value: Optional[Decimal] = None
+    text_value: Optional[str] = None
     unit: Optional[str] = None
     period: Optional[XbrlPeriod] = None
     depth: int = 0
