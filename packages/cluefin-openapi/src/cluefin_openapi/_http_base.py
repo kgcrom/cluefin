@@ -49,6 +49,43 @@ class BaseHttpClient:
             sanitized["body"] = request_context["body"]
         return sanitized
 
+    def _dispatch_by_status(
+        self,
+        response: requests.Response,
+        request_context: dict,
+        error_types: Dict[str, type],
+    ) -> Optional[Exception]:
+        """Map a non-200 response to a typed exception via a per-client class table.
+
+        error_types keys: "validation" (400), "auth" (401), "authz" (403),
+        "rate_limit" (429), "server" (5xx), "api" (fallback). Exception classes
+        must accept (message, status_code=, response_data=, request_context=);
+        the rate-limit class additionally accepts retry_after=. Reads
+        self.max_retries from the mixing-in client.
+        """
+        sc = response.status_code
+        common = {
+            "status_code": sc,
+            "response_data": self._safe_json(response),
+            "request_context": request_context,
+        }
+        if sc == 400:
+            return error_types["validation"](f"Bad request: {response.text}", **common)
+        elif sc == 401:
+            return error_types["auth"]("Authentication failed - invalid or expired token", **common)
+        elif sc == 403:
+            return error_types["authz"]("Access forbidden - insufficient permissions", **common)
+        elif sc == 429:
+            return error_types["rate_limit"](
+                f"Rate limit exceeded after {self.max_retries} retries",
+                retry_after=self._get_retry_after(response),
+                **common,
+            )
+        elif 500 <= sc < 600:
+            return error_types["server"](f"Server error: {response.text}", **common)
+        else:
+            return error_types["api"](f"Unexpected status code {sc}: {response.text}", **common)
+
     def _execute_with_retry(
         self,
         send_fn: Callable[[], requests.Response],
@@ -59,8 +96,8 @@ class BaseHttpClient:
         request_context: dict,
         dispatch: Callable[[requests.Response], Optional[Exception]],
         rate_limit_error: Callable[[], Exception],
-        timeout_error: Callable[[Exception], Exception],
-        network_error: Callable[[Exception], Exception],
+        timeout_error_cls: type,
+        network_error_cls: type,
         on_response: Optional[Callable[[requests.Response, dict], None]] = None,
         debug: bool = False,
     ) -> requests.Response:
@@ -87,11 +124,12 @@ class BaseHttpClient:
             applies uniformly, including terminal 429/5xx responses.
         rate_limit_error:
             Factory () -> Exception raised when the token bucket times out.
-        timeout_error:
-            Factory (e) -> Exception raised on requests.Timeout exhaustion.
-        network_error:
-            Factory (e) -> Exception raised on ConnectionError exhaustion or
-            RequestException.
+        timeout_error_cls:
+            Exception class raised on requests.Timeout exhaustion; constructed
+            with (message, request_context=).
+        network_error_cls:
+            Exception class raised on ConnectionError exhaustion or
+            RequestException; constructed with (message, request_context=).
         on_response:
             Optional hook called on every received response before status branching.
         debug:
@@ -140,7 +178,10 @@ class BaseHttpClient:
                     time.sleep(wait_time)
                     continue
                 else:
-                    raise timeout_error(e) from e
+                    raise timeout_error_cls(
+                        f"Request timeout after {max_retries} retries",
+                        request_context=request_context,
+                    ) from e
             except requests.exceptions.ConnectionError as e:
                 if attempt < max_retries:
                     wait_time = 2**attempt
@@ -148,9 +189,15 @@ class BaseHttpClient:
                     time.sleep(wait_time)
                     continue
                 else:
-                    raise network_error(e) from e
+                    raise network_error_cls(
+                        f"Network connection failed: {str(e)}",
+                        request_context=request_context,
+                    ) from e
             except requests.exceptions.RequestException as e:
-                raise network_error(e) from e
+                raise network_error_cls(
+                    f"Request failed: {str(e)}",
+                    request_context=request_context,
+                ) from e
 
         # Should not be reached, but kept as a safety net
-        raise network_error(RuntimeError("Maximum retries exceeded"))
+        raise network_error_cls("Request failed: Maximum retries exceeded", request_context=request_context)

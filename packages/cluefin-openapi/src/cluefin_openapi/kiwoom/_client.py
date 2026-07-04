@@ -149,58 +149,14 @@ class Client(BaseHttpClient):
 
         return DomesticTheme(self)
 
-    def _dispatch_kiwoom(self, response: requests.Response, request_context: dict):
-        """Map Kiwoom HTTP status codes to typed exceptions.
-
-        Returns an Exception for non-200 responses (caller raises it), or None for 200.
-        For 429/5xx the base loop calls this only on the final attempt.
-        """
-        sc = response.status_code
-        if sc == 200:
-            return None
-        elif sc == 400:
-            return KiwoomValidationError(
-                f"Bad request: {response.text}",
-                status_code=sc,
-                response_data=self._safe_json(response),
-                request_context=request_context,
-            )
-        elif sc == 401:
-            return KiwoomAuthenticationError(
-                "Authentication failed - invalid or expired token",
-                status_code=sc,
-                response_data=self._safe_json(response),
-                request_context=request_context,
-            )
-        elif sc == 403:
-            return KiwoomAuthorizationError(
-                "Access forbidden - insufficient permissions",
-                status_code=sc,
-                response_data=self._safe_json(response),
-                request_context=request_context,
-            )
-        elif sc == 429:
-            return KiwoomRateLimitError(
-                f"Rate limit exceeded after {self.max_retries} retries",
-                status_code=sc,
-                response_data=self._safe_json(response),
-                request_context=request_context,
-                retry_after=self._get_retry_after(response),
-            )
-        elif 500 <= sc < 600:
-            return KiwoomServerError(
-                f"Server error: {response.text}",
-                status_code=sc,
-                response_data=self._safe_json(response),
-                request_context=request_context,
-            )
-        else:
-            return KiwoomAPIError(
-                f"Unexpected status code {sc}: {response.text}",
-                status_code=sc,
-                response_data=self._safe_json(response),
-                request_context=request_context,
-            )
+    _ERROR_TYPES = {
+        "validation": KiwoomValidationError,
+        "auth": KiwoomAuthenticationError,
+        "authz": KiwoomAuthorizationError,
+        "rate_limit": KiwoomRateLimitError,
+        "server": KiwoomServerError,
+        "api": KiwoomAPIError,
+    }
 
     def _post(self, path: str, headers: Dict[str, str], body: Dict[str, str], use_cache: bool = True):
         """Make a POST request with improved error handling and logging."""
@@ -247,26 +203,13 @@ class Client(BaseHttpClient):
             timeout=self.timeout,
             max_retries=self.max_retries,
             request_context=request_context,
-            dispatch=lambda resp: self._dispatch_kiwoom(resp, request_context),
+            dispatch=lambda resp: self._dispatch_by_status(resp, request_context, self._ERROR_TYPES),
             rate_limit_error=lambda: KiwoomRateLimitError(
                 "Rate limit timeout - could not acquire token within timeout period",
                 request_context={"url": url, "path": path},
             ),
-            timeout_error=lambda e: KiwoomTimeoutError(
-                f"Request timeout after {self.max_retries} retries",
-                request_context=request_context,
-            ),
-            network_error=lambda e: (
-                KiwoomNetworkError(
-                    f"Network connection failed: {str(e)}",
-                    request_context=request_context,
-                )
-                if isinstance(e, requests.exceptions.ConnectionError)
-                else KiwoomNetworkError(
-                    f"Request failed: {str(e)}",
-                    request_context=request_context,
-                )
-            ),
+            timeout_error_cls=KiwoomTimeoutError,
+            network_error_cls=KiwoomNetworkError,
         )
 
         # Cache successful 200 responses

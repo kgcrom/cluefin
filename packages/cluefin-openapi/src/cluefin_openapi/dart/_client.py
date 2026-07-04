@@ -72,7 +72,9 @@ class Client(BaseHttpClient):
         """Map a non-200 HTTP response to the appropriate DART exception.
 
         Returns an Exception to raise, or None to accept the response (200 path
-        is handled by the shared loop before this is called).
+        is handled by the shared loop before this is called). Kept separate from
+        the shared _dispatch_by_status: DART has no 400/validation split and its
+        message wording differs ("Client error:", "Unexpected error:").
         """
         if response.status_code == 401:
             return DartAuthenticationError(
@@ -148,15 +150,8 @@ class Client(BaseHttpClient):
                 status_code=None,
                 request_context={"url": url, "path": path},
             ),
-            timeout_error=lambda e: DartTimeoutError(
-                f"Request timeout after {self.max_retries} retries",
-                request_context=request_context,
-            ),
-            network_error=lambda e: (
-                DartNetworkError(f"Network connection failed: {str(e)}", request_context=request_context)
-                if isinstance(e, requests.exceptions.ConnectionError)
-                else DartNetworkError(f"Request failed: {str(e)}", request_context=request_context)
-            ),
+            timeout_error_cls=DartTimeoutError,
+            network_error_cls=DartNetworkError,
         )
         return response.json() if return_json else response.content
 

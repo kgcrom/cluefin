@@ -42,7 +42,9 @@ def test_get_retry_after_none_when_absent_or_bad():
 
 
 class _Boom(Exception):
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args)
+        self.request_context = kwargs.get("request_context")
 
 
 def _run(client, adapter_setup):
@@ -61,8 +63,8 @@ def _run(client, adapter_setup):
             request_context={"path": "/p"},
             dispatch=lambda r: None if r.status_code == 200 else _Boom(),
             rate_limit_error=lambda: _Boom(),
-            timeout_error=lambda e: _Boom(),
-            network_error=lambda e: _Boom(),
+            timeout_error_cls=_Boom,
+            network_error_cls=_Boom,
         )
 
 
@@ -115,8 +117,8 @@ def test_5xx_retry_emits_warning_log(monkeypatch):
                 request_context={"path": "/p"},
                 dispatch=lambda r: None if r.status_code == 200 else _Boom(),
                 rate_limit_error=lambda: _Boom(),
-                timeout_error=lambda e: _Boom(),
-                network_error=lambda e: _Boom(),
+                timeout_error_cls=_Boom,
+                network_error_cls=_Boom,
             )
     finally:
         _logger.remove(sink_id)
@@ -138,8 +140,8 @@ def test_terminal_5xx_with_none_dispatch_returns_response(monkeypatch):
             request_context={"path": "/p"},
             dispatch=lambda r: None,  # accept even terminal 5xx
             rate_limit_error=lambda: _Boom(),
-            timeout_error=lambda e: _Boom(),
-            network_error=lambda e: _Boom(),
+            timeout_error_cls=_Boom,
+            network_error_cls=_Boom,
         )
     assert resp.status_code == 503
 
@@ -157,8 +159,8 @@ def test_on_response_called_each_attempt():
             request_context={"path": "/p"},
             dispatch=lambda r: None,
             rate_limit_error=lambda: _Boom(),
-            timeout_error=lambda e: _Boom(),
-            network_error=lambda e: _Boom(),
+            timeout_error_cls=_Boom,
+            network_error_cls=_Boom,
             on_response=lambda resp, ctx: seen.append(resp.status_code),
         )
     assert seen == [200]

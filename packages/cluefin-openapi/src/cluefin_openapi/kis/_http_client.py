@@ -235,162 +235,77 @@ class HttpClient(BaseHttpClient):
         lines.append(self._last_response_debug["preview"])
         return "\n".join(lines)
 
-    def _dispatch_kis(self, response: requests.Response, request_context: dict) -> Optional[Exception]:
-        """Map KIS HTTP status codes to typed exceptions.
+    _ERROR_TYPES = {
+        "validation": KISValidationError,
+        "auth": KISAuthenticationError,
+        "authz": KISAuthorizationError,
+        "rate_limit": KISRateLimitError,
+        "server": KISServerError,
+        "api": KISAPIError,
+    }
 
-        Returns an Exception for non-200 responses (caller raises it), or None for 200.
-        For 429/5xx the base loop calls this only on the final attempt.
-        """
-        sc = response.status_code
-        if sc == 200:
-            return None
-        elif sc == 400:
-            return KISValidationError(
-                f"Bad request: {response.text}",
-                status_code=sc,
-                response_data=self._safe_json(response),
-                request_context=request_context,
-            )
-        elif sc == 401:
-            return KISAuthenticationError(
-                "Authentication failed - invalid or expired token",
-                status_code=sc,
-                response_data=self._safe_json(response),
-                request_context=request_context,
-            )
-        elif sc == 403:
-            return KISAuthorizationError(
-                "Access forbidden - insufficient permissions",
-                status_code=sc,
-                response_data=self._safe_json(response),
-                request_context=request_context,
-            )
-        elif sc == 429:
-            return KISRateLimitError(
-                f"Rate limit exceeded after {self.max_retries} retries",
-                status_code=sc,
-                response_data=self._safe_json(response),
-                request_context=request_context,
-                retry_after=self._get_retry_after(response),
-            )
-        elif 500 <= sc < 600:
-            return KISServerError(
-                f"Server error: {response.text}",
-                status_code=sc,
-                response_data=self._safe_json(response),
-                request_context=request_context,
-            )
+    def _request(
+        self,
+        method: Literal["GET", "POST"],
+        path: str,
+        headers: dict,
+        *,
+        params: Optional[dict] = None,
+        body: Optional[dict] = None,
+    ) -> requests.Response:
+        """Shared GET/POST implementation with rate limiting, retry, and error handling."""
+        url = self.base_url + path
+        merged_headers = self._build_headers(headers)
+        raw_context = {"url": url, "path": path, "method": method, "headers": merged_headers}
+        if params is not None:
+            raw_context["params"] = params
+        if body is not None:
+            raw_context["body"] = body
+        request_context = self._sanitize_request_context(raw_context)
+        self._last_response_debug = None
+
+        if self.debug:
+            logger.debug(f"{method} {url}")
+            if params is not None:
+                logger.debug(f"Params: {params}")
+            if body is not None:
+                logger.debug(f"Body: {body}")
+            logger.debug(f"Rate limiter tokens available: {self._rate_limiter.available_tokens:.2f}")
+
+        if method == "GET":
+
+            def send_fn():
+                return self._session.get(url, headers=merged_headers, params=params, timeout=self.timeout)
         else:
-            return KISAPIError(
-                f"Unexpected status code {sc}: {response.text}",
-                status_code=sc,
-                response_data=self._safe_json(response),
-                request_context=request_context,
-            )
+
+            def send_fn():
+                return self._session.post(url, headers=merged_headers, json=body, timeout=self.timeout)
+
+        return self._execute_with_retry(
+            send_fn=send_fn,
+            debug=self.debug,
+            rate_limiter=self._rate_limiter,
+            timeout=self.timeout,
+            max_retries=self.max_retries,
+            request_context=request_context,
+            dispatch=lambda resp: self._dispatch_by_status(resp, request_context, self._ERROR_TYPES),
+            rate_limit_error=lambda: KISRateLimitError(
+                "Rate limit timeout - could not acquire token within timeout period",
+                request_context={"url": url, "path": path},
+            ),
+            timeout_error_cls=KISTimeoutError,
+            network_error_cls=KISNetworkError,
+            on_response=lambda resp, ctx: self._record_last_response(resp, ctx),
+        )
 
     # TODO 법인은 추후 필요해지면 구현
     def _get(self, path: str, headers: dict, params: dict) -> requests.Response:
         """Make a GET request with rate limiting, retry, and error handling."""
-        url = self.base_url + path
-        merged_headers = self._build_headers(headers)
-        request_context = self._sanitize_request_context(
-            {
-                "url": url,
-                "path": path,
-                "method": "GET",
-                "headers": merged_headers,
-                "params": params,
-            }
-        )
-        self._last_response_debug = None
+        return self._request("GET", path, headers, params=params)
 
-        if self.debug:
-            logger.debug(f"GET {url}")
-            logger.debug(f"Params: {params}")
-            logger.debug(f"Rate limiter tokens available: {self._rate_limiter.available_tokens:.2f}")
-
-        response = self._execute_with_retry(
-            send_fn=lambda: self._session.get(url, headers=merged_headers, params=params, timeout=self.timeout),
-            debug=self.debug,
-            rate_limiter=self._rate_limiter,
-            timeout=self.timeout,
-            max_retries=self.max_retries,
-            request_context=request_context,
-            dispatch=lambda resp: self._dispatch_kis(resp, request_context),
-            rate_limit_error=lambda: KISRateLimitError(
-                "Rate limit timeout - could not acquire token within timeout period",
-                request_context={"url": url, "path": path},
-            ),
-            timeout_error=lambda e: KISTimeoutError(
-                f"Request timeout after {self.max_retries} retries",
-                request_context=request_context,
-            ),
-            network_error=lambda e: (
-                KISNetworkError(
-                    f"Network connection failed: {str(e)}",
-                    request_context=request_context,
-                )
-                if isinstance(e, requests.exceptions.ConnectionError)
-                else KISNetworkError(
-                    f"Request failed: {str(e)}",
-                    request_context=request_context,
-                )
-            ),
-            on_response=lambda resp, ctx: self._record_last_response(resp, ctx),
-        )
-        return response
-
-    # TODO 법인은 추후 필요해지면 구현
     def _post(self, path: str, headers: dict, body: dict) -> requests.Response:
         """Make a POST request with rate limiting, retry, and error handling."""
-        url = self.base_url + path
-        merged_headers = self._build_headers(headers)
-        request_context = self._sanitize_request_context(
-            {
-                "url": url,
-                "path": path,
-                "method": "POST",
-                "headers": merged_headers,
-                "body": body,
-            }
-        )
-        self._last_response_debug = None
-
-        if self.debug:
-            logger.debug(f"POST {url}")
-            logger.debug(f"Body: {body}")
-            logger.debug(f"Rate limiter tokens available: {self._rate_limiter.available_tokens:.2f}")
-
-        response = self._execute_with_retry(
-            send_fn=lambda: self._session.post(url, headers=merged_headers, json=body, timeout=self.timeout),
-            debug=self.debug,
-            rate_limiter=self._rate_limiter,
-            timeout=self.timeout,
-            max_retries=self.max_retries,
-            request_context=request_context,
-            dispatch=lambda resp: self._dispatch_kis(resp, request_context),
-            rate_limit_error=lambda: KISRateLimitError(
-                "Rate limit timeout - could not acquire token within timeout period",
-                request_context={"url": url, "path": path},
-            ),
-            timeout_error=lambda e: KISTimeoutError(
-                f"Request timeout after {self.max_retries} retries",
-                request_context=request_context,
-            ),
-            network_error=lambda e: (
-                KISNetworkError(
-                    f"Network connection failed: {str(e)}",
-                    request_context=request_context,
-                )
-                if isinstance(e, requests.exceptions.ConnectionError)
-                else KISNetworkError(
-                    f"Request failed: {str(e)}",
-                    request_context=request_context,
-                )
-            ),
-            on_response=lambda resp, ctx: self._record_last_response(resp, ctx),
-        )
-        return response
+        return self._request("POST", path, headers, body=body)
 
     def close(self):
         """Close the HTTP session."""
