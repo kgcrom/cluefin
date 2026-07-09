@@ -92,14 +92,20 @@ cluefin-cli ta 005930 --ml-predict --feature-importance
 # 🔍 상세 SHAP 분석 포함
 cluefin-cli ta 005930 --ml-predict --shap-analysis
 
+# 📉 시장 국면 분석 포함
+cluefin-cli ta 005930 --regime-analysis
+
 # 🚀 전체 분석 (모든 기능)
-cluefin-cli ta 005930 --chart --ml-predict --shap-analysis
+cluefin-cli ta 005930 --chart --ml-predict --shap-analysis --regime-analysis
 
 # 📘 펀더멘털 분석 (DART)
 cluefin-cli fa 005930
 
 # 📘 2023 사업보고서 기준 펀더멘털 분석 (상위 3명 주주)
 cluefin-cli fa 005930 --year 2023 --report annual --max-shareholders 3
+
+# 📑 XBRL 재무제표 + 주석 전체 파싱
+cluefin-cli xbrl 005930 --year 2024
 ```
 
 ## 명령어 참조
@@ -120,6 +126,7 @@ cluefin-cli ta [OPTIONS] STOCK_CODE
 - `-m, --ml-predict` - ML 기반 가격 예측 포함 🤖
 - `-f, --feature-importance` - 기본 피처 중요도 표시 (--ml-predict 필요) 📊
 - `-s, --shap-analysis` - 설명이 포함된 상세 SHAP 분석 표시 (--ml-predict 필요) 🔍
+- `-r, --regime-analysis` - 시장 국면 분석 표시 (Bull/Bear/Sideways, 변동성, HMM) 📉
 - `--help` - 명령어 도움말 표시
 
 #### 예제
@@ -140,8 +147,11 @@ cluefin-cli ta 051910 --ml-predict --feature-importance
 # 삼성바이오로직스 ML + 상세 SHAP 분석
 cluefin-cli ta 207940 --ml-predict --shap-analysis
 
+# NAVER 시장 국면 분석
+cluefin-cli ta 035420 --regime-analysis
+
 # LG에너지솔루션 - 전체 분석
-cluefin-cli ta 373220 --chart --ml-predict --shap-analysis
+cluefin-cli ta 373220 --chart --ml-predict --shap-analysis --regime-analysis
 ```
 
 ### `fa` 명령어
@@ -169,6 +179,44 @@ cluefin-cli fa 005930 --year 2023 --report annual
 
 # 상위 3명의 주요 주주만 확인
 cluefin-cli fa 005930 --max-shareholders 3
+```
+
+### `xbrl` 명령어
+
+DART XBRL 원문을 내려받아 `cluefin-xbrl` 파서가 추출할 수 있는 모든 데이터를 보여줍니다.
+문서 개요, 재무제표(연결/별도), 그리고 **주석(disclosure notes)** 까지 함께 출력합니다.
+
+```bash
+cluefin-cli xbrl [OPTIONS] STOCK_CODE
+```
+
+#### 인수
+- `STOCK_CODE` - 한국 주식 코드 (예: 삼성전자는 `005930`)
+
+#### 옵션
+- `--year` - 조회할 사업연도 (기본값: 전년도)
+- `--report` - 공시 보고서 구분 (`annual`, `half`, `q1`, `q3`)
+- `--section` - 출력할 영역 (`all`, `overview`, `statements`, `notes`, 기본값: `all`)
+- `--statement-type` - 특정 재무제표만 표시 (`BS`, `IS`, `CIS`, `CF`, `SCE`)
+- `--note` - 특정 주석만 표시 (role 코드 예: `D810000` 또는 제목 일부)
+- `--consolidated / --separate` - 연결 또는 별도 기준 (기본값: 연결)
+- `--max-rows` - 주석당 최대 표시 행 수 (`0`이면 전체 표시, 기본값: 60)
+- `--help` - 명령어 도움말 표시
+
+#### 예제
+
+```bash
+# 삼성전자 2024 사업보고서 전체 파싱 결과 (재무제표 + 주석)
+cluefin-cli xbrl 005930 --year 2024
+
+# 주석만, 별도 기준으로 조회
+cluefin-cli xbrl 005930 --year 2024 --separate --section notes
+
+# 재무상태표만 조회
+cluefin-cli xbrl 005930 --year 2024 --section statements --statement-type BS
+
+# 특정 주석(role 코드)만 전체 행 표시
+cluefin-cli xbrl 005930 --year 2024 --section notes --note D810000 --max-rows 0
 ```
 
 ## 📈 지원 종목

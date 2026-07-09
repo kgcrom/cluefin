@@ -3,13 +3,21 @@
 from __future__ import annotations
 
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
 from cluefin_openapi.dart._client import Client as DartClient
 from cluefin_openapi.dart._periodic_report_financial_statement import PeriodicReportFinancialStatement
 from cluefin_openapi.dart._public_disclosure import PublicDisclosure
-from cluefin_xbrl import ParsedFinancialStatements, extract_financial_statements, parse_xbrl_directory
+from cluefin_xbrl import (
+    ParsedFinancialStatements,
+    ParsedNotes,
+    XbrlDocument,
+    extract_financial_statements,
+    extract_notes,
+    parse_xbrl_directory,
+)
 
 from cluefin_cli.config.settings import settings
 
@@ -19,6 +27,21 @@ REPORT_CODE_MAP: dict[str, str] = {
     "q1": "11013",
     "q3": "11014",
 }
+
+
+@dataclass
+class XbrlBundle:
+    """All data parseable from a single XBRL filing.
+
+    Bundles the raw parsed document together with the structured financial
+    statements and the disclosure notes (주석) extracted from it, so a single
+    download/parse pass exposes everything ``cluefin-xbrl`` can produce.
+    """
+
+    document: XbrlDocument
+    statements: ParsedFinancialStatements
+    notes: ParsedNotes
+
 
 # Report name must contain the type keyword AND the period-end marker (YYYY.MM)
 # to distinguish Q1 (03) from Q3 (09) quarterly reports.
@@ -41,13 +64,16 @@ class XbrlStatementFetcher:
         self._public_disclosure = PublicDisclosure(self._client)
         self._financial_statement = PeriodicReportFinancialStatement(self._client)
 
-    def fetch_statements(
+    def fetch(
         self,
         corp_code: str,
         rcept_no: str,
         reprt_code: Literal["11011", "11012", "11013", "11014"],
-    ) -> ParsedFinancialStatements:
-        """Download XBRL ZIP from DART, parse, and extract financial statements.
+    ) -> XbrlBundle:
+        """Download XBRL ZIP from DART, parse it, and extract everything.
+
+        A single download/parse pass yields the raw document, the structured
+        financial statements, and the disclosure notes (주석).
 
         Args:
             corp_code: DART corporate code (8 digits).
@@ -55,7 +81,7 @@ class XbrlStatementFetcher:
             reprt_code: Report code.
 
         Returns:
-            ParsedFinancialStatements with structured data.
+            XbrlBundle with the document, statements, and notes.
         """
         dest = Path(tempfile.mkdtemp(prefix="cluefin_xbrl_"))
         xbrl_dir = self._financial_statement.download_financial_statement_xbrl(
@@ -65,7 +91,9 @@ class XbrlStatementFetcher:
             overwrite=True,
         )
         doc = parse_xbrl_directory(xbrl_dir, include_taxonomy=True)
-        return extract_financial_statements(doc)
+        statements = extract_financial_statements(doc)
+        notes = extract_notes(doc)
+        return XbrlBundle(document=doc, statements=statements, notes=notes)
 
     def find_rcept_no(
         self,

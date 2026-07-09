@@ -6,14 +6,88 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from click.testing import CliRunner
 from cluefin_xbrl import (
     FinancialStatement,
+    NoteLineItem,
+    NoteSection,
     ParsedFinancialStatements,
+    ParsedNotes,
     PeriodType,
     StatementLineItem,
     StatementType,
+    XbrlDocument,
     XbrlPeriod,
 )
 
 from cluefin_cli.commands.xbrl_analysis import xbrl_analysis
+from cluefin_cli.data.xbrl import XbrlBundle
+
+
+def _make_bundle(
+    statements: ParsedFinancialStatements,
+    notes: ParsedNotes | None = None,
+) -> XbrlBundle:
+    """Wrap statements (and optional notes) into an XbrlBundle for the fetcher mock."""
+    document = XbrlDocument(
+        source_file="test.xbrl",
+        facts=[],
+        entity_id=statements.entity_id,
+        reporting_period_end=None,
+    )
+    return XbrlBundle(
+        document=document,
+        statements=statements,
+        notes=notes or ParsedNotes(source_file="test.xbrl", entity_id=statements.entity_id, notes={}),
+    )
+
+
+def _make_parsed_notes() -> ParsedNotes:
+    """Build a ParsedNotes fixture with one consolidated and one separate note."""
+    period = XbrlPeriod(period_type=PeriodType.INSTANT, instant="2024-12-31")
+
+    cons = NoteSection(
+        role_code="D810000",
+        role_uri="http://example.com/role-D810000",
+        title="일반사항",
+        is_consolidated=True,
+        line_items=[
+            NoteLineItem(
+                concept_local_name="EntityName",
+                concept_qname="dart:EntityName",
+                label_ko="회사명",
+                text_value="삼성전자주식회사",
+                period=period,
+            ),
+            NoteLineItem(
+                concept_local_name="NumberOfEmployees",
+                concept_qname="dart:NumberOfEmployees",
+                label_ko="종업원수",
+                value=Decimal("120000"),
+                period=period,
+                dimensions={"dart:SegmentAxis": "dart:DomesticMember"},
+            ),
+        ],
+        periods=[period],
+    )
+    sep = NoteSection(
+        role_code="D810005",
+        role_uri="http://example.com/role-D810005",
+        title="별도일반사항",
+        is_consolidated=False,
+        line_items=[
+            NoteLineItem(
+                concept_local_name="EntityName",
+                concept_qname="dart:EntityName",
+                label_ko="회사명",
+                text_value="삼성전자별도",
+                period=period,
+            ),
+        ],
+        periods=[period],
+    )
+    return ParsedNotes(
+        source_file="test.xbrl",
+        entity_id="00126380",
+        notes={"D810000": cons, "D810005": sep},
+    )
 
 
 def _make_parsed_statements() -> ParsedFinancialStatements:
@@ -104,7 +178,7 @@ class TestXbrlAnalysisCommand:
 
         mock_xbrl = MagicMock()
         mock_xbrl.find_rcept_no.return_value = "20240401000123"
-        mock_xbrl.fetch_statements.return_value = _make_parsed_statements()
+        mock_xbrl.fetch.return_value = _make_bundle(_make_parsed_statements())
         mock_xbrl_cls.return_value = mock_xbrl
 
         runner = CliRunner()
@@ -116,7 +190,7 @@ class TestXbrlAnalysisCommand:
         assert "유동자산" in result.output
 
         mock_xbrl.find_rcept_no.assert_called_once_with("00126380", "2024", "11011")
-        mock_xbrl.fetch_statements.assert_called_once_with("00126380", "20240401000123", "11011")
+        mock_xbrl.fetch.assert_called_once_with("00126380", "20240401000123", "11011")
 
     @patch("cluefin_cli.commands.xbrl_analysis.XbrlStatementFetcher")
     @patch("cluefin_cli.commands.xbrl_analysis.DomesticFundamentalDataFetcher")
@@ -134,7 +208,7 @@ class TestXbrlAnalysisCommand:
 
         assert result.exit_code == 0
         assert "No report filing found" in result.output
-        mock_xbrl.fetch_statements.assert_not_called()
+        mock_xbrl.fetch.assert_not_called()
 
     @patch("cluefin_cli.commands.xbrl_analysis.XbrlStatementFetcher")
     @patch("cluefin_cli.commands.xbrl_analysis.DomesticFundamentalDataFetcher")
@@ -145,7 +219,7 @@ class TestXbrlAnalysisCommand:
 
         mock_xbrl = MagicMock()
         mock_xbrl.find_rcept_no.return_value = "20240401000123"
-        mock_xbrl.fetch_statements.return_value = _make_parsed_statements()
+        mock_xbrl.fetch.return_value = _make_bundle(_make_parsed_statements())
         mock_xbrl_cls.return_value = mock_xbrl
 
         runner = CliRunner()
@@ -164,7 +238,7 @@ class TestXbrlAnalysisCommand:
 
         mock_xbrl = MagicMock()
         mock_xbrl.find_rcept_no.return_value = "20240401000123"
-        mock_xbrl.fetch_statements.return_value = _make_parsed_statements()
+        mock_xbrl.fetch.return_value = _make_bundle(_make_parsed_statements())
         mock_xbrl_cls.return_value = mock_xbrl
 
         runner = CliRunner()
@@ -182,7 +256,7 @@ class TestXbrlAnalysisCommand:
 
         mock_xbrl = MagicMock()
         mock_xbrl.find_rcept_no.return_value = "20240401000123"
-        mock_xbrl.fetch_statements.return_value = _make_parsed_with_separate()
+        mock_xbrl.fetch.return_value = _make_bundle(_make_parsed_with_separate())
         mock_xbrl_cls.return_value = mock_xbrl
 
         runner = CliRunner()
@@ -201,7 +275,7 @@ class TestXbrlAnalysisCommand:
 
         mock_xbrl = MagicMock()
         mock_xbrl.find_rcept_no.return_value = "20240401000123"
-        mock_xbrl.fetch_statements.return_value = _make_parsed_with_separate()
+        mock_xbrl.fetch.return_value = _make_bundle(_make_parsed_with_separate())
         mock_xbrl_cls.return_value = mock_xbrl
 
         runner = CliRunner()
@@ -221,7 +295,7 @@ class TestXbrlAnalysisCommand:
         mock_xbrl = MagicMock()
         mock_xbrl.find_rcept_no.return_value = "20240401000123"
         # fixture has no separate_statements
-        mock_xbrl.fetch_statements.return_value = _make_parsed_statements()
+        mock_xbrl.fetch.return_value = _make_bundle(_make_parsed_statements())
         mock_xbrl_cls.return_value = mock_xbrl
 
         runner = CliRunner()
@@ -229,6 +303,71 @@ class TestXbrlAnalysisCommand:
 
         assert result.exit_code == 0
         assert "No separate financial statements found" in result.output
+
+    @patch("cluefin_cli.commands.xbrl_analysis.XbrlStatementFetcher")
+    @patch("cluefin_cli.commands.xbrl_analysis.DomesticFundamentalDataFetcher")
+    def test_xbrl_analysis_shows_notes(self, mock_fundamental_cls, mock_xbrl_cls):
+        mock_fundamental = MagicMock()
+        mock_fundamental.get_corp_code = AsyncMock(return_value="00126380")
+        mock_fundamental_cls.return_value = mock_fundamental
+
+        mock_xbrl = MagicMock()
+        mock_xbrl.find_rcept_no.return_value = "20240401000123"
+        mock_xbrl.fetch.return_value = _make_bundle(_make_parsed_statements(), _make_parsed_notes())
+        mock_xbrl_cls.return_value = mock_xbrl
+
+        runner = CliRunner()
+        result = runner.invoke(
+            xbrl_analysis, ["005930", "--year", "2024", "--section", "notes"], env={"COLUMNS": "220"}
+        )
+
+        assert result.exit_code == 0
+        assert "Disclosure Notes" in result.output
+        assert "D810000" in result.output
+        assert "종업원수" in result.output
+        # consolidated note text shown, separate one not (default --consolidated)
+        assert "별도일반사항" not in result.output
+
+    @patch("cluefin_cli.commands.xbrl_analysis.XbrlStatementFetcher")
+    @patch("cluefin_cli.commands.xbrl_analysis.DomesticFundamentalDataFetcher")
+    def test_xbrl_analysis_separate_notes(self, mock_fundamental_cls, mock_xbrl_cls):
+        mock_fundamental = MagicMock()
+        mock_fundamental.get_corp_code = AsyncMock(return_value="00126380")
+        mock_fundamental_cls.return_value = mock_fundamental
+
+        mock_xbrl = MagicMock()
+        mock_xbrl.find_rcept_no.return_value = "20240401000123"
+        mock_xbrl.fetch.return_value = _make_bundle(_make_parsed_statements(), _make_parsed_notes())
+        mock_xbrl_cls.return_value = mock_xbrl
+
+        runner = CliRunner()
+        result = runner.invoke(
+            xbrl_analysis, ["005930", "--year", "2024", "--separate", "--section", "notes"], env={"COLUMNS": "220"}
+        )
+
+        assert result.exit_code == 0
+        assert "별도일반사항" in result.output
+        assert "일반사항" in result.output
+
+    @patch("cluefin_cli.commands.xbrl_analysis.XbrlStatementFetcher")
+    @patch("cluefin_cli.commands.xbrl_analysis.DomesticFundamentalDataFetcher")
+    def test_xbrl_analysis_overview_section(self, mock_fundamental_cls, mock_xbrl_cls):
+        mock_fundamental = MagicMock()
+        mock_fundamental.get_corp_code = AsyncMock(return_value="00126380")
+        mock_fundamental_cls.return_value = mock_fundamental
+
+        mock_xbrl = MagicMock()
+        mock_xbrl.find_rcept_no.return_value = "20240401000123"
+        mock_xbrl.fetch.return_value = _make_bundle(_make_parsed_statements(), _make_parsed_notes())
+        mock_xbrl_cls.return_value = mock_xbrl
+
+        runner = CliRunner()
+        result = runner.invoke(xbrl_analysis, ["005930", "--year", "2024", "--section", "overview"])
+
+        assert result.exit_code == 0
+        assert "Document Overview" in result.output
+        # section=overview must not render statement/notes details
+        assert "자산총계" not in result.output
 
 
 class TestXbrlStatementFetcher:
