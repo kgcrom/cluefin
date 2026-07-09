@@ -164,6 +164,30 @@ class TestExtractNotes:
         section = extract_notes(_make_doc(facts=facts)).notes["D834480"]
         assert section.periods == [p_2023, p_2022]
 
+    def test_consolidation_axis_filters_facts(self):
+        """연결 주석에는 연결 fact만, 별도 주석에는 별도 fact만 매칭된다."""
+        cons_axis = "ifrs-full:ConsolidatedAndSeparateFinancialStatementsAxis"
+
+        def _fact(value: str, member: str) -> XbrlFact:
+            return XbrlFact(
+                concept_local_name="DefinedBenefitObligationAtPresentValue",
+                concept_qname="ifrs-full:DefinedBenefitObligationAtPresentValue",
+                namespace="http://xbrl.ifrs.org/taxonomy/2021-03-24/ifrs-full",
+                value=value,
+                numeric_value=Decimal(value),
+                dimensions={cons_axis: member, "ifrs-full:Axis": "ifrs-full:Member"},
+            )
+
+        facts = [
+            _fact("1000", "ifrs-full:ConsolidatedMember"),
+            _fact("700", "ifrs-full:SeparateMember"),
+        ]
+        section = extract_notes(_make_doc(facts=facts)).notes["D834480"]
+        value_items = [li for li in section.line_items if not li.is_abstract]
+        assert [li.value for li in value_items] == [Decimal("1000")]
+        # 연결/별도 축은 섹션의 is_consolidated로 대체되므로 dimensions에서 제거된다
+        assert value_items[0].dimensions == {"ifrs-full:Axis": "ifrs-full:Member"}
+
     def test_text_value_for_string_fact(self):
         fact = XbrlFact(
             concept_local_name="DefinedBenefitObligationAtPresentValue",

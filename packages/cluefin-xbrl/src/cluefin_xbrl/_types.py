@@ -87,7 +87,12 @@ class StatementType(str, Enum):
 
 
 class StatementLineItem(BaseModel):
-    """A single line item in a financial statement."""
+    """A single line item in a financial statement.
+
+    ``dimensions`` holds the statement-intrinsic dimensional context (e.g. the
+    equity component axis on a statement of changes in equity). The
+    consolidated/separate axis is resolved at extraction time and not repeated here.
+    """
 
     concept_local_name: str
     concept_qname: str
@@ -99,6 +104,7 @@ class StatementLineItem(BaseModel):
     depth: int = 0
     order: float = 0.0
     is_abstract: bool = False
+    dimensions: dict[str, str] = {}
 
 
 class FinancialStatement(BaseModel):

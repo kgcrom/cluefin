@@ -13,8 +13,28 @@ from cluefin_xbrl._types import (
     XbrlFact,
     XbrlPeriod,
 )
+from cluefin_xbrl.statements import _CONSOLIDATION_AXIS, _SEPARATE_MEMBER, _local_name
 
 _NOTE_ROLE_PATTERN = re.compile(r"role-(D8\d+)")
+
+
+def _match_note_fact(fact: XbrlFact, is_consolidated: bool) -> dict[str, str] | None:
+    """Decide whether a fact belongs to a note of the given basis.
+
+    Returns the fact's dimensions with the consolidation axis removed (it is
+    redundant with the section's ``is_consolidated`` flag) when the fact matches,
+    or None when it belongs to the other basis. Facts without the consolidation
+    axis match either basis.
+    """
+    dims: dict[str, str] = {}
+    for axis, member in fact.dimensions.items():
+        if _local_name(axis) == _CONSOLIDATION_AXIS:
+            fact_is_separate = _local_name(member) == _SEPARATE_MEMBER
+            if fact_is_separate == is_consolidated:
+                return None
+        else:
+            dims[axis] = member
+    return dims
 
 
 def extract_notes(doc: XbrlDocument) -> ParsedNotes:
@@ -46,7 +66,7 @@ def extract_notes(doc: XbrlDocument) -> ParsedNotes:
             continue
         role_code, is_consolidated = identified
 
-        line_items = _flatten_note_tree(roots, facts_by_concept, doc.taxonomy.labels)
+        line_items = _flatten_note_tree(roots, facts_by_concept, doc.taxonomy.labels, is_consolidated)
 
         periods: list[XbrlPeriod] = []
         seen_periods: set[str] = set()
@@ -79,11 +99,12 @@ def _flatten_note_tree(
     roots: list[PresentationNode],
     facts_by_concept: dict[str, list[XbrlFact]],
     labels: dict[str, object],
+    is_consolidated: bool,
 ) -> list[NoteLineItem]:
     """Flatten a note presentation tree and match with facts to create line items."""
     items: list[NoteLineItem] = []
     for root in roots:
-        _collect_note_line_items(root, facts_by_concept, labels, items)
+        _collect_note_line_items(root, facts_by_concept, labels, is_consolidated, items)
     return items
 
 
@@ -91,17 +112,23 @@ def _collect_note_line_items(
     node: PresentationNode,
     facts_by_concept: dict[str, list[XbrlFact]],
     labels: dict[str, object],
+    is_consolidated: bool,
     items: list[NoteLineItem],
 ) -> None:
     """Recursively collect note line items, preserving dimensions, from a presentation node."""
-    concept_facts = facts_by_concept.get(node.concept_local_name, [])
     label = labels.get(node.concept_local_name)
 
     label_ko = label.label_ko if label is not None and hasattr(label, "label_ko") else None
     label_en = label.label_en if label is not None and hasattr(label, "label_en") else None
 
-    if concept_facts:
-        for fact in concept_facts:
+    matched: list[tuple[XbrlFact, dict[str, str]]] = []
+    for fact in facts_by_concept.get(node.concept_local_name, []):
+        dims = _match_note_fact(fact, is_consolidated)
+        if dims is not None:
+            matched.append((fact, dims))
+
+    if matched:
+        for fact, dims in matched:
             items.append(
                 NoteLineItem(
                     concept_local_name=node.concept_local_name,
@@ -115,7 +142,7 @@ def _collect_note_line_items(
                     depth=node.depth,
                     order=node.order,
                     is_abstract=False,
-                    dimensions=dict(fact.dimensions),
+                    dimensions=dims,
                 )
             )
     else:
@@ -132,7 +159,7 @@ def _collect_note_line_items(
         )
 
     for child in node.children:
-        _collect_note_line_items(child, facts_by_concept, labels, items)
+        _collect_note_line_items(child, facts_by_concept, labels, is_consolidated, items)
 
 
 def _identify_note_role(linkrole: str) -> tuple[str, bool] | None:
