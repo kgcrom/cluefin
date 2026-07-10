@@ -79,6 +79,7 @@ poetry.lock
 
 # Claude Code AI assistant configuration and memory
 .claude/
+CLAUDE.local.md
 
 .ruff_cache/
 .uv-cache/

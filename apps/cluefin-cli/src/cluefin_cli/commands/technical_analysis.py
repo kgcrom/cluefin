@@ -102,12 +102,14 @@ async def _analyze_stock(
     # Calculate technical indicators
     console.print("[yellow]Calculating technical indicators...[/yellow]")
     indicators = technical_analyzer.calculate_all(stock_data)
+    risk_metrics = technical_analyzer.calculate_risk_metrics(stock_data)
 
     # Display results
     _display_company_info(stock_code, basic_data)
     _display_stock_info(stock_code, stock_data)
     _display_trading_trend(trading_trend_data)
     _display_technical_indicators(indicators)
+    _display_risk_metrics(risk_metrics)
 
     # Display regime analysis if requested
     if regime_analysis:
@@ -696,5 +698,48 @@ def _display_technical_indicators(indicators):
         current_price = indicators["close"].iloc[-1] if "close" in indicators else 0
         signal = "Above MA240" if current_price > sma_240 else "Below MA240"
         table.add_row("SMA (240)", format_currency(sma_240), signal)
+
+    # ADX (Trend Strength)
+    if "adx" in indicators and not pd.isna(indicators["adx"].iloc[-1]):
+        adx = indicators["adx"].iloc[-1]
+        signal = "Strong Trend" if adx > 25 else "Weak Trend" if adx < 20 else "Moderate Trend"
+        table.add_row("ADX (14)", f"{adx:.2f}", signal)
+
+    # ATR (Volatility)
+    if "atr" in indicators and not pd.isna(indicators["atr"].iloc[-1]):
+        atr = indicators["atr"].iloc[-1]
+        current_price = indicators["close"].iloc[-1] if "close" in indicators else 0
+        atr_pct = (atr / current_price * 100) if current_price else 0
+        table.add_row("ATR (14)", format_currency(atr), f"{atr_pct:.2f}% of price")
+
+    # OBV (Volume Trend)
+    if "obv" in indicators and len(indicators) >= 2 and not pd.isna(indicators["obv"].iloc[-1]):
+        obv = indicators["obv"].iloc[-1]
+        obv_prev = indicators["obv"].iloc[-2]
+        signal = "Rising" if obv > obv_prev else "Falling" if obv < obv_prev else "Flat"
+        table.add_row("OBV", format_number(obv), signal)
+
+    console.print(table)
+
+
+def _display_risk_metrics(risk_metrics: Dict[str, float]):
+    """Display whole-window risk metrics (Maximum Drawdown, Sharpe Ratio)."""
+    if not risk_metrics:
+        return
+
+    table = Table(title="Risk Metrics")
+    table.add_column("Metric", style="cyan")
+    table.add_column("Value", style="magenta")
+    table.add_column("Signal", style="green")
+
+    mdd = risk_metrics.get("mdd")
+    if mdd is not None:
+        signal = "High Drawdown" if mdd > 0.2 else "Moderate Drawdown" if mdd > 0.1 else "Low Drawdown"
+        table.add_row("Max Drawdown", f"{mdd * 100:.2f}%", signal)
+
+    sharpe = risk_metrics.get("sharpe")
+    if sharpe is not None:
+        signal = "Good Risk-Adjusted Return" if sharpe > 1 else "Poor Risk-Adjusted Return" if sharpe < 0 else "Fair"
+        table.add_row("Sharpe Ratio", f"{sharpe:.2f}", signal)
 
     console.print(table)

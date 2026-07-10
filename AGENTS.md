@@ -7,13 +7,11 @@ Cluefin is a research-oriented toolkit for Korean financial markets. The Python 
 ## Repository Layout
 
 - `packages/cluefin-openapi`: Kiwoom, KIS, and DART Python clients
-- `packages/cluefin-etf`: ETF provider list, detail, and holdings lookups
 - `packages/cluefin-ta`: technical analysis indicators
 - `packages/cluefin-xbrl`: DART XBRL parsing
 - `packages/cluefin-openapi-ts`: TypeScript OpenAPI client, Node 20+
 - `apps/cluefin-cli`: user-facing CLI
 - `apps/cluefin-openapi-cli`: broker command CLI
-- `apps/cluefin-ta-cli`: TA command CLI
 - `apps/cluefin-desk`: TUI dashboard
 
 Keep reusable libraries under `packages/` and runnable tools under `apps/`. Do not restructure the workspace unless a task explicitly asks for it.
