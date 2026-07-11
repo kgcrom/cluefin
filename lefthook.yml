@@ -3,7 +3,7 @@ pre-commit:
   commands:
     python-lint:
       glob: "*.py"
-      run: uv run ruff format --check {staged_files} && uv run ruff check {staged_files}
+      run: uv run ruff format --check {staged_files} && uv run ruff check --no-fix {staged_files}
     node-lint:
       glob: "*.{ts,tsx,js}"
       root: "packages/cluefin-openapi-ts/"

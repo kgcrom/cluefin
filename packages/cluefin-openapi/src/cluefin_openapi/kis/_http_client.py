@@ -9,6 +9,7 @@ import requests
 from loguru import logger
 from pydantic import SecretStr
 
+from cluefin_openapi._http_base import BaseHttpClient
 from cluefin_openapi._rate_limiter import TokenBucket
 
 from ._exceptions import (
@@ -23,7 +24,7 @@ from ._exceptions import (
 )
 
 
-class HttpClient(object):
+class HttpClient(BaseHttpClient):
     def __init__(
         self,
         token: str,
@@ -149,38 +150,6 @@ class HttpClient(object):
         merged_headers.update(headers)  # Merge custom headers (e.g., tr_id)
         return merged_headers
 
-    def _safe_json(self, response: requests.Response) -> Optional[Dict]:
-        """Safely parse JSON response, returning None if parsing fails."""
-        try:
-            return response.json()
-        except (ValueError, json.JSONDecodeError):
-            return None
-
-    def _get_retry_after(self, response: requests.Response) -> Optional[int]:
-        """Extract retry-after value from response headers."""
-        retry_after = response.headers.get("Retry-After")
-        if retry_after:
-            try:
-                return int(retry_after)
-            except ValueError:
-                pass
-        return None
-
-    def _sanitize_request_context(self, request_context: dict) -> dict:
-        """Keep only non-secret request metadata for debugging."""
-        headers = request_context.get("headers", {})
-        sanitized = {
-            "method": request_context.get("method"),
-            "path": request_context.get("path"),
-            "url": request_context.get("url"),
-            "tr_id": headers.get("tr_id") or headers.get("TR_ID"),
-        }
-        if "params" in request_context:
-            sanitized["params"] = request_context["params"]
-        if "body" in request_context:
-            sanitized["body"] = request_context["body"]
-        return sanitized
-
     def _serialize_payload(self, payload: Any) -> str:
         """Serialize payload for previews and debug artifacts."""
         if isinstance(payload, (dict, list)):
@@ -266,277 +235,77 @@ class HttpClient(object):
         lines.append(self._last_response_debug["preview"])
         return "\n".join(lines)
 
+    _ERROR_TYPES = {
+        "validation": KISValidationError,
+        "auth": KISAuthenticationError,
+        "authz": KISAuthorizationError,
+        "rate_limit": KISRateLimitError,
+        "server": KISServerError,
+        "api": KISAPIError,
+    }
+
+    def _request(
+        self,
+        method: Literal["GET", "POST"],
+        path: str,
+        headers: dict,
+        *,
+        params: Optional[dict] = None,
+        body: Optional[dict] = None,
+    ) -> requests.Response:
+        """Shared GET/POST implementation with rate limiting, retry, and error handling."""
+        url = self.base_url + path
+        merged_headers = self._build_headers(headers)
+        raw_context = {"url": url, "path": path, "method": method, "headers": merged_headers}
+        if params is not None:
+            raw_context["params"] = params
+        if body is not None:
+            raw_context["body"] = body
+        request_context = self._sanitize_request_context(raw_context)
+        self._last_response_debug = None
+
+        if self.debug:
+            logger.debug(f"{method} {url}")
+            if params is not None:
+                logger.debug(f"Params: {params}")
+            if body is not None:
+                logger.debug(f"Body: {body}")
+            logger.debug(f"Rate limiter tokens available: {self._rate_limiter.available_tokens:.2f}")
+
+        if method == "GET":
+
+            def send_fn():
+                return self._session.get(url, headers=merged_headers, params=params, timeout=self.timeout)
+        else:
+
+            def send_fn():
+                return self._session.post(url, headers=merged_headers, json=body, timeout=self.timeout)
+
+        return self._execute_with_retry(
+            send_fn=send_fn,
+            debug=self.debug,
+            rate_limiter=self._rate_limiter,
+            timeout=self.timeout,
+            max_retries=self.max_retries,
+            request_context=request_context,
+            dispatch=lambda resp: self._dispatch_by_status(resp, request_context, self._ERROR_TYPES),
+            rate_limit_error=lambda: KISRateLimitError(
+                "Rate limit timeout - could not acquire token within timeout period",
+                request_context={"url": url, "path": path},
+            ),
+            timeout_error_cls=KISTimeoutError,
+            network_error_cls=KISNetworkError,
+            on_response=lambda resp, ctx: self._record_last_response(resp, ctx),
+        )
+
     # TODO 법인은 추후 필요해지면 구현
     def _get(self, path: str, headers: dict, params: dict) -> requests.Response:
         """Make a GET request with rate limiting, retry, and error handling."""
-        # Apply rate limiting
-        if not self._rate_limiter.wait_for_tokens(timeout=self.timeout):
-            raise KISRateLimitError(
-                "Rate limit timeout - could not acquire token within timeout period",
-                request_context={"url": f"{self.base_url}{path}", "path": path},
-            )
+        return self._request("GET", path, headers, params=params)
 
-        url = self.base_url + path
-        merged_headers = self._build_headers(headers)
-
-        if self.debug:
-            logger.debug(f"GET {url}")
-            logger.debug(f"Headers: {merged_headers}")
-            logger.debug(f"Params: {params}")
-            logger.debug(f"Rate limiter tokens available: {self._rate_limiter.available_tokens:.2f}")
-
-        request_context = {
-            "url": url,
-            "path": path,
-            "method": "GET",
-            "headers": merged_headers,
-            "params": params,
-        }
-        self._last_response_debug = None
-
-        for attempt in range(self.max_retries + 1):
-            try:
-                start_time = time.time()
-
-                response = self._session.get(url, headers=merged_headers, params=params, timeout=self.timeout)
-
-                duration = time.time() - start_time
-
-                if self.debug:
-                    logger.debug(f"Response received in {duration:.3f}s - Status: {response.status_code}")
-                    logger.debug(f"Response Headers: {response.headers}")
-                    logger.debug(f"Response Body: {response.text}")
-
-                self._record_last_response(response, request_context)
-
-                # Handle different HTTP status codes
-                if response.status_code == 200:
-                    return response
-                elif response.status_code == 400:
-                    raise KISValidationError(
-                        f"Bad request: {response.text}",
-                        status_code=response.status_code,
-                        response_data=self._safe_json(response),
-                        request_context=request_context,
-                    )
-                elif response.status_code == 401:
-                    raise KISAuthenticationError(
-                        "Authentication failed - invalid or expired token",
-                        status_code=response.status_code,
-                        response_data=self._safe_json(response),
-                        request_context=request_context,
-                    )
-                elif response.status_code == 403:
-                    raise KISAuthorizationError(
-                        "Access forbidden - insufficient permissions",
-                        status_code=response.status_code,
-                        response_data=self._safe_json(response),
-                        request_context=request_context,
-                    )
-                elif response.status_code == 429:
-                    retry_after = self._get_retry_after(response)
-                    if attempt < self.max_retries:
-                        wait_time = retry_after or (2**attempt)
-                        logger.warning(
-                            f"Rate limit hit, waiting {wait_time}s before retry {attempt + 1}/{self.max_retries}"
-                        )
-                        time.sleep(wait_time)
-                        continue
-                    else:
-                        raise KISRateLimitError(
-                            f"Rate limit exceeded after {self.max_retries} retries",
-                            status_code=response.status_code,
-                            response_data=self._safe_json(response),
-                            request_context=request_context,
-                            retry_after=retry_after,
-                        )
-                elif 500 <= response.status_code < 600:
-                    if attempt < self.max_retries:
-                        wait_time = 2**attempt
-                        logger.warning(f"Server error {response.status_code}, retrying in {wait_time}s")
-                        time.sleep(wait_time)
-                        continue
-                    else:
-                        raise KISServerError(
-                            f"Server error: {response.text}",
-                            status_code=response.status_code,
-                            response_data=self._safe_json(response),
-                            request_context=request_context,
-                        )
-                else:
-                    raise KISAPIError(
-                        f"Unexpected status code {response.status_code}: {response.text}",
-                        status_code=response.status_code,
-                        response_data=self._safe_json(response),
-                        request_context=request_context,
-                    )
-
-            except requests.exceptions.Timeout as e:
-                if attempt < self.max_retries:
-                    wait_time = 2**attempt
-                    logger.warning(f"Request timeout, retrying in {wait_time}s")
-                    time.sleep(wait_time)
-                    continue
-                else:
-                    raise KISTimeoutError(
-                        f"Request timeout after {self.max_retries} retries",
-                        request_context=request_context,
-                    ) from e
-            except requests.exceptions.ConnectionError as e:
-                if attempt < self.max_retries:
-                    wait_time = 2**attempt
-                    logger.warning(f"Connection error, retrying in {wait_time}s")
-                    time.sleep(wait_time)
-                    continue
-                else:
-                    raise KISNetworkError(
-                        f"Network connection failed: {str(e)}",
-                        request_context=request_context,
-                    ) from e
-            except requests.exceptions.RequestException as e:
-                raise KISNetworkError(
-                    f"Request failed: {str(e)}",
-                    request_context=request_context,
-                ) from e
-
-        # This should never be reached, but just in case
-        raise KISAPIError("Maximum retries exceeded", request_context=request_context)
-
-    # TODO 법인은 추후 필요해지면 구현
     def _post(self, path: str, headers: dict, body: dict) -> requests.Response:
         """Make a POST request with rate limiting, retry, and error handling."""
-        # Apply rate limiting
-        if not self._rate_limiter.wait_for_tokens(timeout=self.timeout):
-            raise KISRateLimitError(
-                "Rate limit timeout - could not acquire token within timeout period",
-                request_context={"url": f"{self.base_url}{path}", "path": path},
-            )
-
-        url = self.base_url + path
-        merged_headers = self._build_headers(headers)
-
-        if self.debug:
-            logger.debug(f"POST {url}")
-            logger.debug(f"Headers: {merged_headers}")
-            logger.debug(f"Body: {body}")
-            logger.debug(f"Rate limiter tokens available: {self._rate_limiter.available_tokens:.2f}")
-
-        request_context = {
-            "url": url,
-            "path": path,
-            "method": "POST",
-            "headers": merged_headers,
-            "body": body,
-        }
-        self._last_response_debug = None
-
-        for attempt in range(self.max_retries + 1):
-            try:
-                start_time = time.time()
-
-                response = self._session.post(url, headers=merged_headers, json=body, timeout=self.timeout)
-
-                duration = time.time() - start_time
-
-                if self.debug:
-                    logger.debug(f"Response received in {duration:.3f}s - Status: {response.status_code}")
-                    logger.debug(f"Response Headers: {response.headers}")
-                    logger.debug(f"Response Body: {response.text}")
-
-                self._record_last_response(response, request_context)
-
-                # Handle different HTTP status codes
-                if response.status_code == 200:
-                    return response
-                elif response.status_code == 400:
-                    raise KISValidationError(
-                        f"Bad request: {response.text}",
-                        status_code=response.status_code,
-                        response_data=self._safe_json(response),
-                        request_context=request_context,
-                    )
-                elif response.status_code == 401:
-                    raise KISAuthenticationError(
-                        "Authentication failed - invalid or expired token",
-                        status_code=response.status_code,
-                        response_data=self._safe_json(response),
-                        request_context=request_context,
-                    )
-                elif response.status_code == 403:
-                    raise KISAuthorizationError(
-                        "Access forbidden - insufficient permissions",
-                        status_code=response.status_code,
-                        response_data=self._safe_json(response),
-                        request_context=request_context,
-                    )
-                elif response.status_code == 429:
-                    retry_after = self._get_retry_after(response)
-                    if attempt < self.max_retries:
-                        wait_time = retry_after or (2**attempt)
-                        logger.warning(
-                            f"Rate limit hit, waiting {wait_time}s before retry {attempt + 1}/{self.max_retries}"
-                        )
-                        time.sleep(wait_time)
-                        continue
-                    else:
-                        raise KISRateLimitError(
-                            f"Rate limit exceeded after {self.max_retries} retries",
-                            status_code=response.status_code,
-                            response_data=self._safe_json(response),
-                            request_context=request_context,
-                            retry_after=retry_after,
-                        )
-                elif 500 <= response.status_code < 600:
-                    if attempt < self.max_retries:
-                        wait_time = 2**attempt
-                        logger.warning(f"Server error {response.status_code}, retrying in {wait_time}s")
-                        time.sleep(wait_time)
-                        continue
-                    else:
-                        raise KISServerError(
-                            f"Server error: {response.text}",
-                            status_code=response.status_code,
-                            response_data=self._safe_json(response),
-                            request_context=request_context,
-                        )
-                else:
-                    raise KISAPIError(
-                        f"Unexpected status code {response.status_code}: {response.text}",
-                        status_code=response.status_code,
-                        response_data=self._safe_json(response),
-                        request_context=request_context,
-                    )
-
-            except requests.exceptions.Timeout as e:
-                if attempt < self.max_retries:
-                    wait_time = 2**attempt
-                    logger.warning(f"Request timeout, retrying in {wait_time}s")
-                    time.sleep(wait_time)
-                    continue
-                else:
-                    raise KISTimeoutError(
-                        f"Request timeout after {self.max_retries} retries",
-                        request_context=request_context,
-                    ) from e
-            except requests.exceptions.ConnectionError as e:
-                if attempt < self.max_retries:
-                    wait_time = 2**attempt
-                    logger.warning(f"Connection error, retrying in {wait_time}s")
-                    time.sleep(wait_time)
-                    continue
-                else:
-                    raise KISNetworkError(
-                        f"Network connection failed: {str(e)}",
-                        request_context=request_context,
-                    ) from e
-            except requests.exceptions.RequestException as e:
-                raise KISNetworkError(
-                    f"Request failed: {str(e)}",
-                    request_context=request_context,
-                ) from e
-
-        # This should never be reached, but just in case
-        raise KISAPIError("Maximum retries exceeded", request_context=request_context)
+        return self._request("POST", path, headers, body=body)
 
     def close(self):
         """Close the HTTP session."""

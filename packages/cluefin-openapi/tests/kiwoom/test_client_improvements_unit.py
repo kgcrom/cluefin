@@ -159,6 +159,8 @@ def test_validation_error(client):
 
         assert exc_info.value.status_code == 400
         assert "Bad request" in str(exc_info.value)
+        assert "headers" not in exc_info.value.request_context  # no credentials on exceptions
+        assert exc_info.value.request_context["path"] == "/test"
 
 
 def test_rate_limit_error_no_retry(client):
