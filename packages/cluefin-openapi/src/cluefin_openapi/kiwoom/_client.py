@@ -149,6 +149,66 @@ class Client(object):
 
         return DomesticTheme(self)
 
+    @property
+    def overseas_account(self):
+        from ._overseas_account import OverseasAccount
+
+        return OverseasAccount(self)
+
+    @property
+    def overseas_chart(self):
+        from ._overseas_chart import OverseasChart
+
+        return OverseasChart(self)
+
+    @property
+    def overseas_exchange(self):
+        from ._overseas_exchange import OverseasExchange
+
+        return OverseasExchange(self)
+
+    @property
+    def overseas_investment_info(self):
+        from ._overseas_investment_info import OverseasInvestmentInfo
+
+        return OverseasInvestmentInfo(self)
+
+    @property
+    def overseas_market_condition(self):
+        from ._overseas_market_condition import OverseasMarketCondition
+
+        return OverseasMarketCondition(self)
+
+    @property
+    def overseas_order(self):
+        from ._overseas_order import OverseasOrder
+
+        return OverseasOrder(self)
+
+    @property
+    def overseas_rank_info(self):
+        from ._overseas_rank_info import OverseasRankInfo
+
+        return OverseasRankInfo(self)
+
+    @property
+    def overseas_sector(self):
+        from ._overseas_sector import OverseasSector
+
+        return OverseasSector(self)
+
+    @property
+    def overseas_stock_info(self):
+        from ._overseas_stock_info import OverseasStockInfo
+
+        return OverseasStockInfo(self)
+
+    @property
+    def overseas_watchlist(self):
+        from ._overseas_watchlist import OverseasWatchlist
+
+        return OverseasWatchlist(self)
+
     def _post(self, path: str, headers: Dict[str, str], body: Dict[str, str], use_cache: bool = True):
         """Make a POST request with improved error handling and logging."""
         # Check cache first if enabled
