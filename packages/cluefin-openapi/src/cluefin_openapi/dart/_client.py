@@ -125,8 +125,8 @@ class Client(BaseHttpClient):
     def _request(self, path: str, *, params: Optional[Dict] = None, return_json: bool = True):
         """Internal request method with rate limiting and retry logic."""
         url = self.base_url + path
-        if params is None:
-            params = {}
+        # Copy so the auth secret is never written back into the caller's dict
+        params = dict(params) if params else {}
         params["crtfc_key"] = self.auth_key
 
         # crtfc_key is the auth secret — redact it in the context that flows

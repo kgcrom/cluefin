@@ -146,6 +146,116 @@ def test_terminal_5xx_with_none_dispatch_returns_response(monkeypatch):
     assert resp.status_code == 503
 
 
+class _TimeoutBoom(_Boom):
+    pass
+
+
+class _NetBoom(_Boom):
+    pass
+
+
+def _run_raising(exc_to_raise, monkeypatch, max_retries=2):
+    """Build a runner whose send_fn always raises; returns (run, attempts)."""
+    import time as _time_mod
+
+    monkeypatch.setattr(_time_mod, "sleep", lambda s: None)
+    attempts = {"n": 0}
+
+    def send():
+        attempts["n"] += 1
+        raise exc_to_raise
+
+    rl = TokenBucket(capacity=5, refill_rate=100.0)
+
+    def run():
+        _Dummy()._execute_with_retry(
+            send,
+            rate_limiter=rl,
+            timeout=5,
+            max_retries=max_retries,
+            request_context={"path": "/p"},
+            dispatch=lambda r: None,
+            rate_limit_error=lambda: _Boom(),
+            timeout_error_cls=_TimeoutBoom,
+            network_error_cls=_NetBoom,
+        )
+
+    return run, attempts
+
+
+def test_timeout_retries_then_raises_timeout_error(monkeypatch):
+    run, attempts = _run_raising(requests.exceptions.Timeout(), monkeypatch)
+    with pytest.raises(_TimeoutBoom) as exc_info:
+        run()
+    assert attempts["n"] == 3  # initial + 2 retries
+    assert exc_info.value.request_context == {"path": "/p"}
+
+
+def test_connection_error_retries_then_raises_network_error(monkeypatch):
+    run, attempts = _run_raising(requests.exceptions.ConnectionError("refused"), monkeypatch)
+    with pytest.raises(_NetBoom) as exc_info:
+        run()
+    assert attempts["n"] == 3  # initial + 2 retries
+    assert exc_info.value.request_context == {"path": "/p"}
+
+
+def test_request_exception_raises_immediately_without_retry(monkeypatch):
+    run, attempts = _run_raising(requests.exceptions.RequestException("bad"), monkeypatch)
+    with pytest.raises(_NetBoom):
+        run()
+    assert attempts["n"] == 1  # no retry for generic RequestException
+
+
+def test_rate_limiter_preflight_failure_raises_before_sending():
+    class _NoTokens:
+        def wait_for_tokens(self, timeout):
+            return False
+
+    sent = []
+    with pytest.raises(_Boom):
+        _Dummy()._execute_with_retry(
+            lambda: sent.append(1),
+            rate_limiter=_NoTokens(),
+            timeout=5,
+            max_retries=2,
+            request_context={"path": "/p"},
+            dispatch=lambda r: None,
+            rate_limit_error=lambda: _Boom(),
+            timeout_error_cls=_TimeoutBoom,
+            network_error_cls=_NetBoom,
+        )
+    assert sent == []  # send_fn never called
+
+
+def test_429_retry_honors_retry_after_header(monkeypatch):
+    import time as _time_mod
+
+    sleeps = []
+    monkeypatch.setattr(_time_mod, "sleep", lambda s: sleeps.append(s))
+    rl = TokenBucket(capacity=5, refill_rate=100.0)
+    with rm_mod.Mocker() as m:
+        m.get(
+            "https://x.test/p",
+            [
+                {"status_code": 429, "text": "slow down", "headers": {"Retry-After": "7"}},
+                {"status_code": 200, "text": "ok"},
+            ],
+        )
+        resp = _Dummy()._execute_with_retry(
+            lambda: requests.get("https://x.test/p"),
+            rate_limiter=rl,
+            timeout=5,
+            max_retries=2,
+            request_context={"path": "/p"},
+            dispatch=lambda r: None if r.status_code == 200 else _Boom(),
+            rate_limit_error=lambda: _Boom(),
+            timeout_error_cls=_TimeoutBoom,
+            network_error_cls=_NetBoom,
+        )
+    assert resp.status_code == 200
+    assert sleeps == [7]  # Retry-After wins over exponential backoff
+
+
 def test_on_response_called_each_attempt():
     seen = []
     rl = TokenBucket(capacity=5, refill_rate=100.0)

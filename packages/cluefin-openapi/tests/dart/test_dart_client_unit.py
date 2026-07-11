@@ -141,6 +141,19 @@ class TestAuthenticationErrors:
             # the real key must still be sent on the wire
             assert m.request_history[0].qs["crtfc_key"] == ["test-auth-key"]
 
+    def test_request_does_not_mutate_caller_params(self, client: Client):
+        with requests_mock.Mocker() as m:
+            m.get(
+                "https://opendart.fss.or.kr/api/test",
+                json={"status": "000"},
+                status_code=200,
+            )
+
+            caller_params = {"corp_code": "005930"}
+            client._get("/api/test", params=caller_params)
+
+            assert caller_params == {"corp_code": "005930"}  # no crtfc_key written back
+
 
 class TestRateLimitHandling:
     """Tests for rate limit handling."""

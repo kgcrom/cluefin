@@ -212,8 +212,8 @@ class Client(BaseHttpClient):
             network_error_cls=KiwoomNetworkError,
         )
 
-        # Cache successful 200 responses
-        if self._cache and use_cache and cache_key:
+        # Cache successful 200 responses (dispatch may accept non-200 without raising)
+        if self._cache and use_cache and cache_key and response.status_code == 200:
             cached_response = MockResponse(
                 status_code=response.status_code,
                 headers=dict(response.headers),
