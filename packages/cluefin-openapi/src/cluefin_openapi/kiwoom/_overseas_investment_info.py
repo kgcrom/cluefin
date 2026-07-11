@@ -17,14 +17,14 @@ class OverseasInvestmentInfo:
 
     def get_research(
         self,
-        body: dict[str, str],
+        qry_tp: Literal["", "0", "1"] = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasInvestmentInfoResearch]:
         """미국주식 리서치(미국주식/ETF) (usa24300)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            qry_tp (Literal["", "0", "1"], optional): 주식/ETF 구분. 0:미국주식,1:글로벌ETF. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -38,6 +38,9 @@ class OverseasInvestmentInfo:
             "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "usa24300",
+        }
+        body = {
+            "qry_tp": qry_tp,
         }
 
         response = self.client._post(self.path, headers, body)

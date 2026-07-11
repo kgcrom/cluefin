@@ -18,14 +18,12 @@ class OverseasWatchlist:
 
     def get_watchlist_group_list(
         self,
-        body: dict[str, str],
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasWatchlistGroupList]:
         """미국주식 관심종목 그룹 리스트 조회 (usa20200)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -40,6 +38,7 @@ class OverseasWatchlist:
             "next-key": next_key,
             "api-id": "usa20200",
         }
+        body: dict[str, str] = {}
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -51,14 +50,14 @@ class OverseasWatchlist:
 
     def get_watchlist_group_detail(
         self,
-        body: dict[str, str],
+        arn_grp_id: str = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasWatchlistGroupDetail]:
         """미국주식 관심종목 그룹 상세 조회 (usa20201)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            arn_grp_id (str, optional): 그룹SEQ. usa20200 응답 결과의 gcod값을 입력. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -72,6 +71,9 @@ class OverseasWatchlist:
             "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "usa20201",
+        }
+        body = {
+            "arn_grp_id": arn_grp_id,
         }
 
         response = self.client._post(self.path, headers, body)

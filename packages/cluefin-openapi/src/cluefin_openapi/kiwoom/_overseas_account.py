@@ -44,14 +44,16 @@ class OverseasAccount:
 
     def get_daily_account_profit_rate(
         self,
-        body: dict[str, str],
+        from_dt: str,
+        to: str,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountDailyProfitRate]:
         """미국주식 일별계좌수익률현황 (usa21670)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            from_dt (str): from 일자. YYYYMMDD
+            to (str): to 일자. YYYYMMDD
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -66,6 +68,10 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "usa21670",
         }
+        body = {
+            "from": from_dt,
+            "to": to,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -77,14 +83,16 @@ class OverseasAccount:
 
     def get_monthly_account_profit_rate(
         self,
-        body: dict[str, str],
+        from_dt: str,
+        to: str,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountMonthlyProfitRate]:
         """미국주식 월별계좌수익률현황 (usa21680)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            from_dt (str): from 년월. YYYYMM
+            to (str): to 년월. YYYYMM
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -99,6 +107,10 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "usa21680",
         }
+        body = {
+            "from": from_dt,
+            "to": to,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -110,14 +122,16 @@ class OverseasAccount:
 
     def get_yearly_account_profit_rate(
         self,
-        body: dict[str, str],
+        from_dt: str,
+        to: str,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountYearlyProfitRate]:
         """미국주식 연도별계좌수익률현황 (usa21690)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            from_dt (str): from 년도. YYYY
+            to (str): to 년도. YYYY
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -132,6 +146,10 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "usa21690",
         }
+        body = {
+            "from": from_dt,
+            "to": to,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -143,14 +161,20 @@ class OverseasAccount:
 
     def get_daily_stock_profit_rate(
         self,
-        body: dict[str, str],
+        from_dt: str,
+        to: str,
+        stk_cd: str,
+        stex_tp: Literal["", "NA", "ND", "NY"] = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountDailyStockProfitRate]:
         """미국주식 일별종목수익률현황 (usa21730)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            from_dt (str): from 일자. YYYYMMDD
+            to (str): to 일자. YYYYMMDD
+            stk_cd (str): 종목코드
+            stex_tp (Literal["", "NA", "ND", "NY"], optional): 거래소구분. NA: AMEX, ND: NASDAQ, NY: NYSE. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -165,6 +189,12 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "usa21730",
         }
+        body = {
+            "from": from_dt,
+            "to": to,
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -176,14 +206,20 @@ class OverseasAccount:
 
     def get_monthly_stock_profit_rate(
         self,
-        body: dict[str, str],
+        from_dt: str,
+        to: str,
+        stk_cd: str,
+        stex_tp: Literal["", "NA", "ND", "NY"] = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountMonthlyStockProfitRate]:
         """미국주식 월별종목수익률현황 (usa21731)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            from_dt (str): from 년월. YYYYMM
+            to (str): to 년월. YYYYMM
+            stk_cd (str): 종목코드
+            stex_tp (Literal["", "NA", "ND", "NY"], optional): 거래소구분. NA: AMEX, ND: NASDAQ, NY: NYSE. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -198,6 +234,12 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "usa21731",
         }
+        body = {
+            "from": from_dt,
+            "to": to,
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -209,14 +251,20 @@ class OverseasAccount:
 
     def get_yearly_stock_profit_rate(
         self,
-        body: dict[str, str],
+        from_dt: str,
+        to: str,
+        stk_cd: str,
+        stex_tp: Literal["", "NA", "ND", "NY"] = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountYearlyStockProfitRate]:
         """미국주식 연도별종목수익률현황 (usa21732)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            from_dt (str): from 년도. YYYY
+            to (str): to 년도. YYYY
+            stk_cd (str): 종목코드
+            stex_tp (Literal["", "NA", "ND", "NY"], optional): 거래소구분. NA: AMEX, ND: NASDAQ, NY: NYSE. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -231,6 +279,12 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "usa21732",
         }
+        body = {
+            "from": from_dt,
+            "to": to,
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -242,14 +296,20 @@ class OverseasAccount:
 
     def get_ledger_unfilled_orders(
         self,
-        body: dict[str, str],
+        ord_dt: str = "",
+        slby_tp: Literal["", "0", "1", "2"] = "",
+        stex_tp: Literal["", "ND", "NY", "NA"] = "",
+        stk_cd: str = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountLedgerUnfilledOrders]:
         """미국주식 원장 미체결 (ust21050)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            ord_dt (str, optional): 주문일자. 미입력시 오늘 날짜로 조회. Defaults to "".
+            slby_tp (Literal["", "0", "1", "2"], optional): 매도매수구분. 0:전체(기본값),1:매도,2:매수. Defaults to "".
+            stex_tp (Literal["", "ND", "NY", "NA"], optional): 거래소구분. 미입력시 전체, ND:NASDAQ,NY:NYSE,NA:AMEX. Defaults to "".
+            stk_cd (str, optional): 종목코드. 미입력시 전체. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -264,6 +324,12 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "ust21050",
         }
+        body = {
+            "ord_dt": ord_dt,
+            "slby_tp": slby_tp,
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -275,14 +341,16 @@ class OverseasAccount:
 
     def get_ledger_balance(
         self,
-        body: dict[str, str],
+        stex_tp: Literal["", "ND", "NY", "NA"] = "",
+        stk_cd: str = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountLedgerBalance]:
         """미국주식 원장잔고확인 (ust21070)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            stex_tp (Literal["", "ND", "NY", "NA"], optional): 거래소구분. ND:NASDAQ,NY:NYSE,NA:AMEX. Defaults to "".
+            stk_cd (str, optional): 종목코드. 미입력시 전체. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -297,6 +365,10 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "ust21070",
         }
+        body = {
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -308,14 +380,24 @@ class OverseasAccount:
 
     def get_transaction_history(
         self,
-        body: dict[str, str],
+        strt_dt: str = "",
+        end_dt: str = "",
+        tp: Literal["", "0", "1", "2", "3", "4", "5", "6", "7", "8", "F", "M", "G", "H", "I", "J", "K"] = "",
+        stex_tp: Literal["", "ND", "NY", "NA"] = "",
+        stk_cd: str = "",
+        krw_repl_skip_yn: Literal["", "Y", "N"] = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountTransactionHistory]:
         """미국주식 거래내역 (ust21100)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            strt_dt (str, optional): 시작일자. YYYYMMDD. Defaults to "".
+            end_dt (str, optional): 종료일자. YYYYMMDD. Defaults to "".
+            tp (Literal, optional): 구분. 0:전체,1:입출금,2:입출고,3:매매,4:매수,5:매도,F:환전, M:입출금+환전(매체전용), G:환전매수, H:환전매도, I:환전정산입금, J:환전정산출금, 6:입금, 7:출금 8:배당금입금 K:환전+환전정산입출금. Defaults to "".
+            stex_tp (Literal["", "ND", "NY", "NA"], optional): 거래소구분. ND:NASDAQ,NY:NYSE,NA:AMEX. Defaults to "".
+            stk_cd (str, optional): 종목코드. Defaults to "".
+            krw_repl_skip_yn (Literal["", "Y", "N"], optional): 원화대용입출금제외여부. Y:제외,N:비제외. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -330,6 +412,14 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "ust21100",
         }
+        body = {
+            "strt_dt": strt_dt,
+            "end_dt": end_dt,
+            "tp": tp,
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+            "krw_repl_skip_yn": krw_repl_skip_yn,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -341,14 +431,12 @@ class OverseasAccount:
 
     def get_deposit(
         self,
-        body: dict[str, str],
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountDeposit]:
         """해외주식 예수금 (ust21110)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -363,6 +451,7 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "ust21110",
         }
+        body: dict[str, str] = {}
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -374,14 +463,12 @@ class OverseasAccount:
 
     def get_krw_withdrawable_amount(
         self,
-        body: dict[str, str],
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountKrwWithdrawableAmount]:
         """원화출금가능 금액 조회(원화대용 포함) (ust21111)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -396,6 +483,7 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "ust21111",
         }
+        body: dict[str, str] = {}
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -407,14 +495,16 @@ class OverseasAccount:
 
     def get_deposit_and_securities_valuation_by_currency(
         self,
-        body: dict[str, str],
+        cmsn_incl_tp: Literal["", "0", "1"] = "",
+        exrt_tp: Literal["", "0", "1", "2"] = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountDepositAndSecuritiesValuationByCurrency]:
         """통화별 예수금 및 증권 평가금현황 (ust21120)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            cmsn_incl_tp (Literal["", "0", "1"], optional): 수수료포함구분. 0:미포함,1:포함. Defaults to "".
+            exrt_tp (Literal["", "0", "1", "2"], optional): 환율구분. 0:기준환율,1:계좌적용환율,2:전일최종환율. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -429,6 +519,10 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "ust21120",
         }
+        body = {
+            "cmsn_incl_tp": cmsn_incl_tp,
+            "exrt_tp": exrt_tp,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -440,14 +534,16 @@ class OverseasAccount:
 
     def get_ledger_valuation_amount(
         self,
-        body: dict[str, str],
+        cmsn_incl_tp: Literal["", "0", "1"] = "",
+        exrt_tp: Literal["", "0", "1", "2"] = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountLedgerValuationAmount]:
         """해외증권 원장 평가금액현황 (ust21121)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            cmsn_incl_tp (Literal["", "0", "1"], optional): 수수료포함구분. 0:미포함,1:포함. Defaults to "".
+            exrt_tp (Literal["", "0", "1", "2"], optional): 환율구분. 0:기준환율,1:계좌적용환율,2:전일최종환율. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -462,6 +558,10 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "ust21121",
         }
+        body = {
+            "cmsn_incl_tp": cmsn_incl_tp,
+            "exrt_tp": exrt_tp,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -473,14 +573,14 @@ class OverseasAccount:
 
     def get_valuation_amount_by_date(
         self,
-        body: dict[str, str],
+        base_dt: str,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountValuationAmountByDate]:
         """해외증권 특정일 평가금액 (ust21131)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            base_dt (str): 기준일자. YYYYMMDD
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -495,6 +595,9 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "ust21131",
         }
+        body = {
+            "base_dt": base_dt,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -506,14 +609,14 @@ class OverseasAccount:
 
     def get_deposit_and_securities_valuation_by_currency_on_date(
         self,
-        body: dict[str, str],
+        base_dt: str,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountDepositAndSecuritiesValuationByCurrencyByDate]:
         """특정일 통화별 예수금 및 증권 평가금 (ust21132)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            base_dt (str): 기준일자. YYYYMMDD
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -528,6 +631,9 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "ust21132",
         }
+        body = {
+            "base_dt": base_dt,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -539,14 +645,26 @@ class OverseasAccount:
 
     def get_daily_order_execution_history(
         self,
-        body: dict[str, str],
+        query_tp: Literal["1", "2", "3", "4", "5", "6"],
+        slby_tp: Literal["0", "1", "2"],
+        ord_dt: str = "",
+        stex_tp: Literal["", "ND", "NY", "NA"] = "",
+        stk_cd: str = "",
+        oppo_trde_tp: Literal["", "%", "0", "1"] = "",
+        fr_ord_no: str = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountDailyOrderExecutionHistory]:
         """미국주식 일별 주문체결내역 (ust21150)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            query_tp (Literal["1", "2", "3", "4", "5", "6"]): 조회구분. 1:주문순,2:주문역순,3:미체결주문순,4:미체결역순,5:체결주문순,6:체결역순
+            slby_tp (Literal["0", "1", "2"]): 매도수구분. 0:전체,1:매도,2:매수
+            ord_dt (str, optional): 주문일자. 미입력시 오늘 날짜로 조회. Defaults to "".
+            stex_tp (Literal["", "ND", "NY", "NA"], optional): 거래소구분. ND:NASDAQ,NY:NYSE,NA:AMEX. Defaults to "".
+            stk_cd (str, optional): 종목코드. 미입력시 전체. Defaults to "".
+            oppo_trde_tp (Literal["", "%", "0", "1"], optional): 반대매매구분. %:전체,0:일반,1:반대매매. Defaults to "".
+            fr_ord_no (str, optional): 시작주문번호. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -561,6 +679,15 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "ust21150",
         }
+        body = {
+            "ord_dt": ord_dt,
+            "query_tp": query_tp,
+            "slby_tp": slby_tp,
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+            "oppo_trde_tp": oppo_trde_tp,
+            "fr_ord_no": fr_ord_no,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -572,14 +699,12 @@ class OverseasAccount:
 
     def get_deposit_detail(
         self,
-        body: dict[str, str],
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountDepositDetail]:
         """미국주식 예수금 상세 (ust21160)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -594,6 +719,7 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "ust21160",
         }
+        body: dict[str, str] = {}
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -605,14 +731,14 @@ class OverseasAccount:
 
     def get_today_realized_profit_loss_by_stock(
         self,
-        body: dict[str, str],
+        fc_krw_tp: Literal["0", "1"],
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountTodayRealizedProfitLossByStock]:
         """미국주식 당일 종목별 실현손익 (ust21170)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            fc_krw_tp (Literal["0", "1"]): 외화원화구분. 0:외화,1:원화
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -627,6 +753,9 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "ust21170",
         }
+        body = {
+            "fc_krw_tp": fc_krw_tp,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -638,14 +767,24 @@ class OverseasAccount:
 
     def get_order_history_by_period(
         self,
-        body: dict[str, str],
+        strt_dt: str,
+        end_dt: str,
+        slby_tp: Literal["", "0", "1", "2"] = "",
+        stex_tp: Literal["", "ND", "NY", "NA"] = "",
+        stk_cd: str = "",
+        oppo_trde_tp: Literal["", "%", "0", "1"] = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountOrderHistoryByPeriod]:
         """미국주식 기간별 주문내역 (ust21180)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            strt_dt (str): 시작주문일자. YYYYMMDD
+            end_dt (str): 종료주문일자. YYYYMMDD
+            slby_tp (Literal["", "0", "1", "2"], optional): 매도수구분. 0:전체(기본값),1:매도,2:매수. Defaults to "".
+            stex_tp (Literal["", "ND", "NY", "NA"], optional): 거래소구분. ND:NASDAQ,NY:NYSE,NA:AMEX. Defaults to "".
+            stk_cd (str, optional): 종목코드. 미입력시 전체. Defaults to "".
+            oppo_trde_tp (Literal["", "%", "0", "1"], optional): 반대매매구분. %:전체,0:일반,1:반대매매. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -660,6 +799,14 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "ust21180",
         }
+        body = {
+            "strt_dt": strt_dt,
+            "end_dt": end_dt,
+            "slby_tp": slby_tp,
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+            "oppo_trde_tp": oppo_trde_tp,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -671,14 +818,18 @@ class OverseasAccount:
 
     def get_today_order_execution(
         self,
-        body: dict[str, str],
+        slby_tp: Literal["", "0", "1", "2"] = "",
+        stex_tp: Literal["", "ND", "NY", "NA"] = "",
+        stk_cd: str = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountTodayOrderExecution]:
         """미국주식 당일 주문체결 확인 (ust21510)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            slby_tp (Literal["", "0", "1", "2"], optional): 매도매수구분. 0:전체,1:매도,2:매수. Defaults to "".
+            stex_tp (Literal["", "ND", "NY", "NA"], optional): 거래소구분. 종목코드 입력시. Defaults to "".
+            stk_cd (str, optional): 종목코드. 미입력시 전체. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -693,6 +844,11 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "ust21510",
         }
+        body = {
+            "slby_tp": slby_tp,
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -704,14 +860,18 @@ class OverseasAccount:
 
     def get_realized_profit_loss(
         self,
-        body: dict[str, str],
+        strt_dt: str = "",
+        end_dt: str = "",
+        fc_krw_tp: Literal["", "0", "1"] = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountRealizedProfitLoss]:
         """미국주식 실현손익 (ust21530)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            strt_dt (str, optional): 시작일자. YYYYMMDD. Defaults to "".
+            end_dt (str, optional): 종료일자. YYYYMMDD. Defaults to "".
+            fc_krw_tp (Literal["", "0", "1"], optional): 외화원화구분. 0:외화,1:원화. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -726,6 +886,11 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "ust21530",
         }
+        body = {
+            "strt_dt": strt_dt,
+            "end_dt": end_dt,
+            "fc_krw_tp": fc_krw_tp,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -737,14 +902,18 @@ class OverseasAccount:
 
     def get_today_trading(
         self,
-        body: dict[str, str],
+        qry_tp: Literal["0", "1"],
+        fc_krw_tp: Literal["0", "1"],
+        base_dt: str = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountTodayTrading]:
         """미국주식 당일매매 (ust21610)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            qry_tp (Literal["0", "1"]): 조회구분. 0:당일매수에대한당일매도,1:당일매도전체
+            fc_krw_tp (Literal["0", "1"]): 외화원화구분. 0:외화,1:원화
+            base_dt (str, optional): 기준일자. YYYYMMDD. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -759,6 +928,11 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "ust21610",
         }
+        body = {
+            "base_dt": base_dt,
+            "qry_tp": qry_tp,
+            "fc_krw_tp": fc_krw_tp,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -770,14 +944,18 @@ class OverseasAccount:
 
     def get_today_trading_summary(
         self,
-        body: dict[str, str],
+        fc_krw_tp: Literal["0", "1"],
+        stex_tp: Literal["", "NA", "ND", "NY"] = "",
+        stk_cd: str = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountTodayTradingSummary]:
         """미국주식 당일매매정리 (ust21620)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            fc_krw_tp (Literal["0", "1"]): 외화원화구분. 0:외화,1:원화
+            stex_tp (Literal["", "NA", "ND", "NY"], optional): 거래소구분. NA:AMEX, ND:NASDAQ, NY:NYSE. Defaults to "".
+            stk_cd (str, optional): 종목코드. 기본값 전체. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -792,6 +970,11 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "ust21620",
         }
+        body = {
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+            "fc_krw_tp": fc_krw_tp,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -803,14 +986,18 @@ class OverseasAccount:
 
     def get_today_realized_profit_loss(
         self,
-        body: dict[str, str],
+        fc_krw_tp: Literal["0", "1"],
+        stex_tp: Literal["", "ND", "NY", "NA"] = "",
+        stk_cd: str = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountTodayRealizedProfitLoss]:
         """미국주식 당일 실현손익 (ust21630)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            fc_krw_tp (Literal["0", "1"]): 외화원화구분. 0:외화,1:원화
+            stex_tp (Literal["", "ND", "NY", "NA"], optional): 거래소구분. ND:NASDAQ,NY:NYSE,NA:AMEX. Defaults to "".
+            stk_cd (str, optional): 종목코드. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -825,6 +1012,11 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "ust21630",
         }
+        body = {
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+            "fc_krw_tp": fc_krw_tp,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -836,14 +1028,20 @@ class OverseasAccount:
 
     def get_daily_realized_profit_loss_by_stock(
         self,
-        body: dict[str, str],
+        cntr_dt: str,
+        fc_krw_tp: Literal["0", "1"],
+        stex_tp: Literal["", "ND", "NY", "NA"] = "",
+        stk_cd: str = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountDailyRealizedProfitLossByStock]:
         """미국주식 일별 종목별 실현손익 (ust21640)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            cntr_dt (str): 체결일자. YYYYMMDD
+            fc_krw_tp (Literal["0", "1"]): 외화원화구분. 0:외화,1:원화
+            stex_tp (Literal["", "ND", "NY", "NA"], optional): 거래소구분. ND:NASDAQ,NY:NYSE,NA:AMEX. Defaults to "".
+            stk_cd (str, optional): 종목코드. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -858,6 +1056,12 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "ust21640",
         }
+        body = {
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+            "cntr_dt": cntr_dt,
+            "fc_krw_tp": fc_krw_tp,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -869,14 +1073,16 @@ class OverseasAccount:
 
     def get_profit_rate_by_period(
         self,
-        body: dict[str, str],
+        fr_dt: str = "",
+        to_dt: str = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountProfitRateByPeriod]:
         """미국주식 기간별 수익률 현황 (ust21650)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            fr_dt (str, optional): 조회시작일자. YYYYMMDD. Defaults to "".
+            to_dt (str, optional): 조회종료일자. YYYYMMDD. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -891,6 +1097,10 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "ust21650",
         }
+        body = {
+            "fr_dt": fr_dt,
+            "to_dt": to_dt,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -902,14 +1112,16 @@ class OverseasAccount:
 
     def get_daily_realized_profit_loss(
         self,
-        body: dict[str, str],
+        strt_dt: str = "",
+        end_dt: str = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountDailyRealizedProfitLoss]:
         """미국주식 일별 실현손익 (ust21660)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            strt_dt (str, optional): 시작일자. YYYYMMDD. Defaults to "".
+            end_dt (str, optional): 종료일자. YYYYMMDD. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -924,6 +1136,10 @@ class OverseasAccount:
             "next-key": next_key,
             "api-id": "ust21660",
         }
+        body = {
+            "strt_dt": strt_dt,
+            "end_dt": end_dt,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -935,14 +1151,16 @@ class OverseasAccount:
 
     def get_monthly_realized_profit_loss(
         self,
-        body: dict[str, str],
+        strt_dt: str = "",
+        end_dt: str = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountMonthlyRealizedProfitLoss]:
         """미국주식 월별 실현손익 (ust21661)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            strt_dt (str, optional): 시작일자. YYYYMM. Defaults to "".
+            end_dt (str, optional): 종료일자. YYYYMM. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -956,6 +1174,10 @@ class OverseasAccount:
             "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "ust21661",
+        }
+        body = {
+            "strt_dt": strt_dt,
+            "end_dt": end_dt,
         }
 
         response = self.client._post(self.path, headers, body)

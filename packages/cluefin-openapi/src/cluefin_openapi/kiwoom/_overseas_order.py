@@ -21,14 +21,22 @@ class OverseasOrder:
 
     def request_buy_order(
         self,
-        body: dict[str, str],
+        stex_tp: Literal["NA", "ND", "NY"],
+        stk_cd: str,
+        ord_qty: str,
+        trde_tp: Literal["00", "03", "26", "27", "30", "36", "37"],
+        ord_uv: str = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasOrderBuy]:
         """미국주식 매수 주문 (ust20000)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            stex_tp (Literal["NA", "ND", "NY"]): 거래소구분. NA: AMEX, ND: NASDAQ, NY: NYSE
+            stk_cd (str): 종목코드
+            ord_qty (str): 주문수량
+            trde_tp (Literal["00", "03", "26", "27", "30", "36", "37"]): 해외매매구분. 00:지정가,03:시장가,26:VWAP지정가,27:TWAP지정가,30:LOC,36:VWAP시장가,37:TWAP시장가
+            ord_uv (str, optional): 주문단가. trde_tp가 00(지정가),30(LOC)...인 경우 필수 입력, 그 외 시장가 거래유형 설정 시 입력 값은 빈 값 처리. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -43,6 +51,13 @@ class OverseasOrder:
             "next-key": next_key,
             "api-id": "ust20000",
         }
+        body = {
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+            "ord_qty": ord_qty,
+            "ord_uv": ord_uv,
+            "trde_tp": trde_tp,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -54,14 +69,24 @@ class OverseasOrder:
 
     def request_sell_order(
         self,
-        body: dict[str, str],
+        stk_cd: str,
+        stex_tp: Literal["NA", "ND", "NY"],
+        ord_qty: str,
+        trde_tp: Literal["00", "03", "26", "27", "30", "33", "34", "35", "36", "37"],
+        ord_uv: str = "",
+        stop_pric: str = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasOrderSell]:
         """미국주식 매도 주문 (ust20001)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            stk_cd (str): 종목코드
+            stex_tp (Literal["NA", "ND", "NY"]): 거래소구분. NA: AMEX, ND: NASDAQ, NY: NYSE
+            ord_qty (str): 주문수량
+            trde_tp (Literal["00", "03", "26", "27", "30", "33", "34", "35", "36", "37"]): 매매구분. 00:지정가,03:시장가,26:VWAP지정가,27:TWAP지정가,30:LOC,33:MOC,34:STOP LIMIT,35:STOP,36:VWAP시장가,37:TWAP시장가
+            ord_uv (str, optional): 주문단가. trde_tp가 00(지정가),30(LOC)...인 경우 필수 입력, 그 외 시장가 거래유형 설정 시 입력 값은 빈 값 처리. Defaults to "".
+            stop_pric (str, optional): STOP가격. trde_tp가 34(STOP LIMIT) 또는 35(STOP)인 경우 필수 입력, 그 외 거래유형(지정가,시장가 등) 설정 시 입력 값은 무시되거나 빈 값처리. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -76,6 +101,14 @@ class OverseasOrder:
             "next-key": next_key,
             "api-id": "ust20001",
         }
+        body = {
+            "stk_cd": stk_cd,
+            "stex_tp": stex_tp,
+            "ord_qty": ord_qty,
+            "ord_uv": ord_uv,
+            "stop_pric": stop_pric,
+            "trde_tp": trde_tp,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -87,14 +120,22 @@ class OverseasOrder:
 
     def request_modify_order(
         self,
-        body: dict[str, str],
+        orig_ord_no: str,
+        stex_tp: Literal["NA", "ND", "NY"],
+        stk_cd: str,
+        mdfy_uv: str = "",
+        stop_pric: str = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasOrderModify]:
         """미국주식 정정 주문 (ust20002)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            orig_ord_no (str): 원주문번호. 주문 요청 응답 결과로 받은 ord_no를 설정
+            stex_tp (Literal["NA", "ND", "NY"]): 거래소구분. NA: AMEX, ND: NASDAQ, NY: NYSE
+            stk_cd (str): 종목코드
+            mdfy_uv (str, optional): 정정단가. Defaults to "".
+            stop_pric (str, optional): STOP가격. 원주문 trde_tp가 34(STOP LIMIT) 또는 35(STOP)인 경우 필수 입력, 그 외 거래유형(지정가 등) 설정 시 입력 값은 무시되거나 빈 값처리. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -109,6 +150,13 @@ class OverseasOrder:
             "next-key": next_key,
             "api-id": "ust20002",
         }
+        body = {
+            "orig_ord_no": orig_ord_no,
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+            "mdfy_uv": mdfy_uv,
+            "stop_pric": stop_pric,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -120,14 +168,18 @@ class OverseasOrder:
 
     def request_cancel_order(
         self,
-        body: dict[str, str],
+        orig_ord_no: str,
+        stex_tp: Literal["NA", "ND", "NY"],
+        stk_cd: str,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasOrderCancel]:
         """미국주식 취소 주문 (ust20003)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            orig_ord_no (str): 원주문번호. 주문 요청 응답 결과로 받은 ord_no를 설정
+            stex_tp (Literal["NA", "ND", "NY"]): 거래소구분. NA: AMEX, ND: NASDAQ, NY: NYSE
+            stk_cd (str): 종목코드
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -142,6 +194,11 @@ class OverseasOrder:
             "next-key": next_key,
             "api-id": "ust20003",
         }
+        body = {
+            "orig_ord_no": orig_ord_no,
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -153,14 +210,18 @@ class OverseasOrder:
 
     def get_orderable_quantity(
         self,
-        body: dict[str, str],
+        stk_cd: str,
+        uv: str,
+        stex_tp: Literal["", "NA", "ND", "NY"] = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasOrderOrderableQuantity]:
         """미국주식 주문가능수량(종목/증거금률별) (ust31490)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            stk_cd (str): 종목코드
+            uv (str): 매수가격
+            stex_tp (Literal["", "NA", "ND", "NY"], optional): 거래소구분. NA:AMEX, ND:NASDAQ, NY:NYSE. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -174,6 +235,11 @@ class OverseasOrder:
             "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "ust31490",
+        }
+        body = {
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+            "uv": uv,
         }
 
         response = self.client._post(self.path, headers, body)

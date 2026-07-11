@@ -23,14 +23,22 @@ class OverseasChart:
 
     def get_tick_chart(
         self,
-        body: dict[str, str],
+        stex_tp: Literal["NA", "ND", "NY"],
+        stk_cd: str,
+        tic_scope: str = "",
+        upd_stkpc_tp: Literal["", "0", "1"] = "",
+        exrt_appl_tp: Literal["", "0", "1"] = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasChartTick]:
         """미국주식 틱 차트 (usa06010)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            stex_tp (Literal["NA", "ND", "NY"]): 거래소구분. NA:AMEX,ND:NASDAQ,NY:NYSE
+            stk_cd (str): 종목코드
+            tic_scope (str, optional): 틱범위. Defaults to "".
+            upd_stkpc_tp (Literal["", "0", "1"], optional): 수정주가구분. 0:미적용,1:적용. Defaults to "".
+            exrt_appl_tp (Literal["", "0", "1"], optional): 환율적용구분. 0:미적용,1:적용. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -45,6 +53,13 @@ class OverseasChart:
             "next-key": next_key,
             "api-id": "usa06010",
         }
+        body = {
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+            "tic_scope": tic_scope,
+            "upd_stkpc_tp": upd_stkpc_tp,
+            "exrt_appl_tp": exrt_appl_tp,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -56,14 +71,24 @@ class OverseasChart:
 
     def get_minute_chart(
         self,
-        body: dict[str, str],
+        stex_tp: Literal["NA", "ND", "NY"],
+        stk_cd: str = "",
+        strt_dt: str = "",
+        tic_scope: str = "",
+        upd_stkpc_tp: Literal["", "0", "1"] = "",
+        exrt_appl_tp: Literal["", "0", "1"] = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasChartMinute]:
         """미국주식 분 차트 (usa06011)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            stex_tp (Literal["NA", "ND", "NY"]): 거래소구분. NA:AMEX,ND:NASDAQ,NY:NYSE
+            stk_cd (str, optional): 종목코드. Defaults to "".
+            strt_dt (str, optional): 시작일자. YYYYMMDD. Defaults to "".
+            tic_scope (str, optional): XX분봉. Defaults to "".
+            upd_stkpc_tp (Literal["", "0", "1"], optional): 수정주가구분. 0:미적용,1:적용. Defaults to "".
+            exrt_appl_tp (Literal["", "0", "1"], optional): 환율적용구분. 0:미적용,1:적용. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -78,6 +103,14 @@ class OverseasChart:
             "next-key": next_key,
             "api-id": "usa06011",
         }
+        body = {
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+            "strt_dt": strt_dt,
+            "tic_scope": tic_scope,
+            "upd_stkpc_tp": upd_stkpc_tp,
+            "exrt_appl_tp": exrt_appl_tp,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -89,14 +122,22 @@ class OverseasChart:
 
     def get_daily_chart(
         self,
-        body: dict[str, str],
+        stex_tp: Literal["NA", "ND", "NY"],
+        stk_cd: str = "",
+        strt_dt: str = "",
+        upd_stkpc_tp: Literal["", "0", "1"] = "",
+        exrt_appl_tp: Literal["", "0", "1"] = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasChartDaily]:
         """미국주식 일 차트 (usa06012)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            stex_tp (Literal["NA", "ND", "NY"]): 거래소구분. NA:AMEX,ND:NASDAQ,NY:NYSE
+            stk_cd (str, optional): 종목코드. Defaults to "".
+            strt_dt (str, optional): 시작일자. YYYYMMDD. Defaults to "".
+            upd_stkpc_tp (Literal["", "0", "1"], optional): 수정주가구분. 0:미적용,1:적용. Defaults to "".
+            exrt_appl_tp (Literal["", "0", "1"], optional): 환율적용구분. 0:미적용,1:적용. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -111,6 +152,13 @@ class OverseasChart:
             "next-key": next_key,
             "api-id": "usa06012",
         }
+        body = {
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+            "strt_dt": strt_dt,
+            "upd_stkpc_tp": upd_stkpc_tp,
+            "exrt_appl_tp": exrt_appl_tp,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -122,14 +170,22 @@ class OverseasChart:
 
     def get_weekly_chart(
         self,
-        body: dict[str, str],
+        stex_tp: Literal["NA", "ND", "NY"],
+        stk_cd: str = "",
+        strt_dt: str = "",
+        upd_stkpc_tp: Literal["", "0", "1"] = "",
+        exrt_appl_tp: Literal["", "0", "1"] = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasChartWeekly]:
         """미국주식 주 차트 (usa06013)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            stex_tp (Literal["NA", "ND", "NY"]): 거래소구분. NA:AMEX,ND:NASDAQ,NY:NYSE
+            stk_cd (str, optional): 종목코드. Defaults to "".
+            strt_dt (str, optional): 시작일자. YYYYMMDD. Defaults to "".
+            upd_stkpc_tp (Literal["", "0", "1"], optional): 수정주가구분. 0:미적용,1:적용. Defaults to "".
+            exrt_appl_tp (Literal["", "0", "1"], optional): 환율적용구분. 0:미적용,1:적용. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -144,6 +200,13 @@ class OverseasChart:
             "next-key": next_key,
             "api-id": "usa06013",
         }
+        body = {
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+            "strt_dt": strt_dt,
+            "upd_stkpc_tp": upd_stkpc_tp,
+            "exrt_appl_tp": exrt_appl_tp,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -155,14 +218,22 @@ class OverseasChart:
 
     def get_monthly_chart(
         self,
-        body: dict[str, str],
+        stex_tp: Literal["NA", "ND", "NY"],
+        stk_cd: str = "",
+        strt_dt: str = "",
+        upd_stkpc_tp: Literal["", "0", "1"] = "",
+        exrt_appl_tp: Literal["", "0", "1"] = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasChartMonthly]:
         """미국주식 월 차트 (usa06014)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            stex_tp (Literal["NA", "ND", "NY"]): 거래소구분. NA:AMEX,ND:NASDAQ,NY:NYSE
+            stk_cd (str, optional): 종목코드. Defaults to "".
+            strt_dt (str, optional): 시작일자. YYYYMMDD. Defaults to "".
+            upd_stkpc_tp (Literal["", "0", "1"], optional): 수정주가구분. 0:미적용,1:적용. Defaults to "".
+            exrt_appl_tp (Literal["", "0", "1"], optional): 환율적용구분. 0:미적용,1:적용. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -177,6 +248,13 @@ class OverseasChart:
             "next-key": next_key,
             "api-id": "usa06014",
         }
+        body = {
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+            "strt_dt": strt_dt,
+            "upd_stkpc_tp": upd_stkpc_tp,
+            "exrt_appl_tp": exrt_appl_tp,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -188,14 +266,22 @@ class OverseasChart:
 
     def get_yearly_chart(
         self,
-        body: dict[str, str],
+        stex_tp: Literal["NA", "ND", "NY"],
+        stk_cd: str = "",
+        strt_dt: str = "",
+        upd_stkpc_tp: Literal["", "0", "1"] = "",
+        exrt_appl_tp: Literal["", "0", "1"] = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasChartYearly]:
         """미국주식 년 차트 (usa06015)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            stex_tp (Literal["NA", "ND", "NY"]): 거래소구분. NA:AMEX,ND:NASDAQ,NY:NYSE
+            stk_cd (str, optional): 종목코드. Defaults to "".
+            strt_dt (str, optional): 시작일자. YYYYMMDD. Defaults to "".
+            upd_stkpc_tp (Literal["", "0", "1"], optional): 수정주가구분. 0:미적용,1:적용. Defaults to "".
+            exrt_appl_tp (Literal["", "0", "1"], optional): 환율적용구분. 0:미적용,1:적용. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -210,6 +296,13 @@ class OverseasChart:
             "next-key": next_key,
             "api-id": "usa06015",
         }
+        body = {
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+            "strt_dt": strt_dt,
+            "upd_stkpc_tp": upd_stkpc_tp,
+            "exrt_appl_tp": exrt_appl_tp,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -221,14 +314,22 @@ class OverseasChart:
 
     def get_quarterly_chart(
         self,
-        body: dict[str, str],
+        stex_tp: Literal["NA", "ND", "NY"],
+        stk_cd: str = "",
+        strt_dt: str = "",
+        upd_stkpc_tp: Literal["", "0", "1"] = "",
+        exrt_appl_tp: Literal["", "0", "1"] = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasChartQuarterly]:
         """미국주식 분기 차트 (usa06016)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            stex_tp (Literal["NA", "ND", "NY"]): 거래소구분. NA:AMEX,ND:NASDAQ,NY:NYSE
+            stk_cd (str, optional): 종목코드. Defaults to "".
+            strt_dt (str, optional): 시작일자. YYYYMMDD. Defaults to "".
+            upd_stkpc_tp (Literal["", "0", "1"], optional): 수정주가구분. 0:미적용,1:적용. Defaults to "".
+            exrt_appl_tp (Literal["", "0", "1"], optional): 환율적용구분. 0:미적용,1:적용. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -242,6 +343,13 @@ class OverseasChart:
             "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "usa06016",
+        }
+        body = {
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+            "strt_dt": strt_dt,
+            "upd_stkpc_tp": upd_stkpc_tp,
+            "exrt_appl_tp": exrt_appl_tp,
         }
 
         response = self.client._post(self.path, headers, body)

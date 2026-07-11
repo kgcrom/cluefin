@@ -21,14 +21,16 @@ class OverseasMarketCondition:
 
     def get_current_price_stock_info(
         self,
-        body: dict[str, str],
+        stex_tp: Literal["NA", "ND", "NY"],
+        stk_cd: str,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasMarketConditionCurrentPriceStockInfo]:
         """미국주식 현재가 종목정보 (usa20100)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            stex_tp (Literal["NA", "ND", "NY"]): 거래소구분. NA: AMEX, ND: NASDAQ, NY: NYSE
+            stk_cd (str): 종목코드
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -43,6 +45,10 @@ class OverseasMarketCondition:
             "next-key": next_key,
             "api-id": "usa20100",
         }
+        body = {
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -54,14 +60,16 @@ class OverseasMarketCondition:
 
     def get_current_price_ten_quotes(
         self,
-        body: dict[str, str],
+        stex_tp: Literal["NA", "ND", "NY"],
+        stk_cd: str,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasMarketConditionCurrentPriceTenQuotes]:
         """미국주식 현재가 10호가 (usa20101)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            stex_tp (Literal["NA", "ND", "NY"]): 거래소구분. NA: AMEX, ND: NASDAQ, NY: NYSE
+            stk_cd (str): 종목코드
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -76,6 +84,10 @@ class OverseasMarketCondition:
             "next-key": next_key,
             "api-id": "usa20101",
         }
+        body = {
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -87,14 +99,16 @@ class OverseasMarketCondition:
 
     def get_detailed_execution_history(
         self,
-        body: dict[str, str],
+        stex_tp: Literal["NA", "ND", "NY"],
+        stk_cd: str,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasMarketConditionDetailedExecutionHistory]:
         """미국주식 상세 체결내역 (usa20150)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            stex_tp (Literal["NA", "ND", "NY"]): 거래소구분. NA:AMEX,ND:NASDAQ,NY:NYSE
+            stk_cd (str): 종목코드
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -109,6 +123,10 @@ class OverseasMarketCondition:
             "next-key": next_key,
             "api-id": "usa20150",
         }
+        body = {
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -120,14 +138,18 @@ class OverseasMarketCondition:
 
     def get_daily_execution_history(
         self,
-        body: dict[str, str],
+        stex_tp: Literal["NA", "ND", "NY"],
+        stk_cd: str,
+        base_dt: str = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasMarketConditionDailyExecutionHistory]:
         """미국주식 일별 체결내역 (usa20151)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            stex_tp (Literal["NA", "ND", "NY"]): 거래소구분. NA:AMEX,ND:NASDAQ,NY:NYSE
+            stk_cd (str): 종목코드
+            base_dt (str, optional): 기준일자. 기준일자 이전 내역 조회. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -142,6 +164,11 @@ class OverseasMarketCondition:
             "next-key": next_key,
             "api-id": "usa20151",
         }
+        body = {
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+            "base_dt": base_dt,
+        }
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -153,14 +180,18 @@ class OverseasMarketCondition:
 
     def get_daily_stock_price(
         self,
-        body: dict[str, str],
+        stex_tp: Literal["", "NA", "ND", "NY"] = "",
+        stk_cd: str = "",
+        base_dt: str = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasMarketConditionDailyStockPrice]:
         """미국주식 일별주가 (usa20590)
 
         Args:
-            body (dict[str, str]): 요청 파라미터. TODO: API 문서 확정 후 개별 인자로 교체
+            stex_tp (Literal["", "NA", "ND", "NY"], optional): 거래소구분. NA:AMEX,ND:NASDAQ,NY:NYSE. Defaults to "".
+            stk_cd (str, optional): 종목코드. Defaults to "".
+            base_dt (str, optional): 기준일자. 기준일자 이전 내역 조회. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -174,6 +205,11 @@ class OverseasMarketCondition:
             "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "usa20590",
+        }
+        body = {
+            "stex_tp": stex_tp,
+            "stk_cd": stk_cd,
+            "base_dt": base_dt,
         }
 
         response = self.client._post(self.path, headers, body)
