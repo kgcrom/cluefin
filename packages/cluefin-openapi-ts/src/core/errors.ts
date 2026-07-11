@@ -3,12 +3,15 @@ export interface ApiErrorDetails {
   responseData?: unknown;
   requestContext?: Record<string, unknown> | undefined;
   retryAfter?: number | undefined;
+  errorCode?: number | string | undefined;
 }
 
 export class ApiError extends Error {
   public readonly statusCode?: number | undefined;
   public readonly responseData?: unknown;
   public readonly requestContext?: Record<string, unknown> | undefined;
+  /** Broker-reported error code (e.g. Kiwoom body return_code), when available. */
+  public readonly errorCode?: number | string | undefined;
 
   public constructor(message: string, details: ApiErrorDetails = {}) {
     super(message);
@@ -16,6 +19,7 @@ export class ApiError extends Error {
     this.statusCode = details.statusCode;
     this.responseData = details.responseData;
     this.requestContext = details.requestContext;
+    this.errorCode = details.errorCode;
   }
 }
 

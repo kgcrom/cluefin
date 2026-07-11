@@ -18,6 +18,7 @@ import {
   KiwoomValidationError,
 } from '../core/errors';
 import { BaseHttpClient } from '../core/http';
+import { consoleLogger, type Logger } from '../core/logger';
 import type { ApiEnv, ApiResponse, KiwoomEndpointDefinition } from '../core/types';
 import { createInputSchema, kiwoomEnvelopeSchema } from '../core/validation';
 import { DomesticAccount } from './domestic-account';
@@ -30,6 +31,7 @@ import { DomesticRankInfo } from './domestic-rank-info';
 import { DomesticSector } from './domestic-sector';
 import { DomesticStockInfo } from './domestic-stock-info';
 import { DomesticTheme } from './domestic-theme';
+import { parseKiwoomReturnCode, resolveKiwoomError } from './error-codes';
 
 export interface KiwoomClientOptions {
   token: string;
@@ -40,6 +42,8 @@ export interface KiwoomClientOptions {
   rateLimitRequestsPerSecond?: number;
   rateLimitBurst?: number;
   fetchImpl?: typeof fetch;
+  /** Sink for API error logs. Defaults to the console; pass `silentLogger` to mute. */
+  logger?: Logger;
 }
 
 const getBaseUrl = (env: ApiEnv): string => (env === 'prod' ? 'https://api.kiwoom.com' : 'https://mockapi.kiwoom.com');
@@ -47,7 +51,16 @@ const getBaseUrl = (env: ApiEnv): string => (env === 'prod' ? 'https://api.kiwoo
 const stringifyParam = (value: unknown): string => (typeof value === 'string' ? value : String(value));
 
 const mapKiwoomError = (error: unknown): never => {
-  if (error instanceof KiwoomApiError) {
+  if (
+    error instanceof KiwoomApiError ||
+    error instanceof KiwoomValidationError ||
+    error instanceof KiwoomAuthenticationError ||
+    error instanceof KiwoomAuthorizationError ||
+    error instanceof KiwoomRateLimitError ||
+    error instanceof KiwoomServerError ||
+    error instanceof KiwoomTimeoutError ||
+    error instanceof KiwoomNetworkError
+  ) {
     throw error;
   }
   if (error instanceof ApiValidationError) {
@@ -77,10 +90,33 @@ const mapKiwoomError = (error: unknown): never => {
   throw new KiwoomApiError(error instanceof Error ? error.message : 'Unknown Kiwoom client error');
 };
 
+// HTTP-status errors from the base client may still carry an API 서버 오류코드 in
+// the body; prefer that code's typed error, mirroring the Python client.
+const enrichWithReturnCode = (error: unknown, requestContext: Record<string, unknown>): unknown => {
+  if (!(error instanceof ApiError) || error.errorCode !== undefined) {
+    return error;
+  }
+  const body = error.responseData;
+  if (typeof body !== 'object' || body === null) {
+    return error;
+  }
+  const returnCode = parseKiwoomReturnCode((body as Record<string, unknown>).return_code);
+  if (returnCode === undefined || returnCode === 0) {
+    return error;
+  }
+  const returnMsg = (body as Record<string, unknown>).return_msg;
+  return resolveKiwoomError(returnCode, typeof returnMsg === 'string' ? returnMsg : undefined, {
+    statusCode: error.statusCode,
+    responseData: body,
+    requestContext,
+  });
+};
+
 export class KiwoomClient {
   private readonly baseUrl: string;
   private readonly http: BaseHttpClient;
   private readonly token: string;
+  private readonly logger: Logger;
 
   private domesticAccountInstance?: DomesticAccount;
   private domesticChartInstance?: DomesticChart;
@@ -97,6 +133,7 @@ export class KiwoomClient {
     const env = options.env ?? 'dev';
     this.baseUrl = getBaseUrl(env);
     this.token = options.token;
+    this.logger = options.logger ?? consoleLogger;
     this.http = new BaseHttpClient(
       {
         timeoutMs: options.timeoutMs ?? 30_000,
@@ -230,7 +267,18 @@ export class KiwoomClient {
       });
 
       const rawJson = await response.json();
-      kiwoomEnvelopeSchema.parse(rawJson);
+      const envelope = kiwoomEnvelopeSchema.parse(rawJson);
+
+      // Kiwoom can report API 서버 오류코드 in the body of an HTTP 200 response.
+      const returnCode = parseKiwoomReturnCode(envelope.return_code);
+      if (returnCode !== undefined && returnCode !== 0) {
+        throw resolveKiwoomError(returnCode, envelope.return_msg, {
+          statusCode: response.status,
+          responseData: rawJson,
+          requestContext: { apiId: definition.apiId, path: definition.path },
+        });
+      }
+
       if (definition.responseSchema) {
         definition.responseSchema.parse(rawJson);
       }
@@ -240,7 +288,14 @@ export class KiwoomClient {
         body: camelizeKeys(rawJson),
       };
     } catch (error) {
-      return mapKiwoomError(error);
+      const enriched = enrichWithReturnCode(error, { apiId: definition.apiId, path: definition.path });
+      this.logger.error('Kiwoom API request failed', {
+        apiId: definition.apiId,
+        path: definition.path,
+        message: enriched instanceof Error ? enriched.message : String(enriched),
+        ...(enriched instanceof ApiError && enriched.errorCode !== undefined ? { returnCode: enriched.errorCode } : {}),
+      });
+      return mapKiwoomError(enriched);
     }
   }
 }
