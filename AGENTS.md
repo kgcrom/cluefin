@@ -1,82 +1,64 @@
 # AGENTS.md
 
-## Project
+Cluefin is a research toolkit for Korean financial markets. The Python side is a `uv`
+workspace; `packages/cluefin-openapi-ts` is a separate TypeScript client in the same repo.
+This file records only things that aren't obvious from reading the code — layout, tooling,
+and command lists are discoverable, so they're not repeated here.
 
-Cluefin is a research-oriented toolkit for Korean financial markets. The Python side is a `uv` workspace; the TypeScript OpenAPI client is a separate package under the same repo.
+## Secrets
 
-## Repository Layout
+- Real credentials live in `.env` (and `.env.test`) at the repo root — **never echo, print,
+  or commit their values**.
+- For setup, copy a `*.env.sample` (e.g. `packages/cluefin-openapi/.env.sample`,
+  `apps/cluefin-cli/.env.sample`) to `.env`.
 
-- `packages/cluefin-openapi`: Kiwoom, KIS, and DART Python clients
-- `packages/cluefin-ta`: technical analysis indicators
-- `packages/cluefin-xbrl`: DART XBRL parsing
-- `packages/cluefin-openapi-ts`: TypeScript OpenAPI client, Node 20+
-- `apps/cluefin-cli`: user-facing CLI
-- `apps/cluefin-openapi-cli`: broker command CLI
-- `apps/cluefin-desk`: TUI dashboard
+## Testing policy
 
-Keep reusable libraries under `packages/` and runnable tools under `apps/`. Do not restructure the workspace unless a task explicitly asks for it.
+- Unit tests use mocks and hit no network. Real API keys are used **only** for tests marked
+  `integration`.
+- Markers: `integration`, `realtime` (requires market hours, 09:00–15:30 KST), `slow`.
+- Fast local check: `uv run pytest -m "not integration and not slow"`.
 
-## Working Rules
+## Environment gotchas
 
-- Use `uv run` for Python commands.
-- Target Python 3.10+.
-- Set API keys in `.env`; do not commit local credentials or token caches.
-- On macOS, install LightGBM with `brew install lightgbm`.
-- Leave unrelated worktree changes alone.
+- macOS needs `brew install lightgbm`; TA-Lib requires its C library as a system dep.
+- Git hooks run via **lefthook** (`uv run lefthook install`) — not the `pre-commit` framework.
 
-## Verification
+## Broker CLI discovery
 
-Prefer fast local verification before broader checks:
-
-```bash
-uv run pytest -m "not integration and not slow"
-uv run ruff format . --check
-uv run ruff check .
-```
-
-For all non-integration tests:
-
-```bash
-uv run pytest -m "not integration"
-```
-
-For the TypeScript package:
-
-```bash
-cd packages/cluefin-openapi-ts
-npm run check
-npm run typecheck
-npm run test:unit
-```
-
-## Broker CLI Discovery
-
-For broker command discovery, prefer JSON-friendly commands:
+Prefer the JSON output when discovering broker commands:
 
 ```bash
 uv run cluefin-openapi-cli list --json
 uv run cluefin-openapi-cli describe <broker> <category> <method> --json
-uv run cluefin-openapi-cli describe dart <method> --json
 ```
 
-## Local Agent Files
+## Commits & PRs
 
-- `.entire/` is local Entire state and is ignored by git.
-- `.codex/` may be needed for local Codex hooks, but do not commit it unless the task explicitly asks to make Codex/Entire hooks part of the project workflow.
-- Do not add repo-local `.pi/` or `SYSTEM.md` files unless a task explicitly asks for Pi package/runtime customization.
+- Conventional Commits with **Korean** messages: `type(scope): 설명`.
+- Fill out `.github/PULL_REQUEST_TEMPLATE.md` when opening a PR.
 
-## Common Commands
+## Local agent files
 
-```bash
-uv sync --all-packages
-uv run lefthook install
-uv run ruff format .
-uv run ruff check . --fix
-```
+- `.entire/` is local Entire state and is git-ignored.
+- Don't commit `.codex/`, or add repo-local `.pi/` / `SYSTEM.md`, unless a task explicitly
+  asks to make those part of the project workflow.
 
-## Quick Usage
+## Kiwoom 미국주식 (overseas)
 
-```bash
-uv run cluefin-cli ta 005930
-uv run cluefin-cli ta 005930 --chart --ml-predict --shap-analysis
-```
+The active US-stock work (branch `feat/kiwoom-overseas`) is **Python-only** — the
+`cluefin-openapi-ts` package is out of scope (its `overseas-*` files are KIS, not Kiwoom).
+
+- **Modules** (under `packages/cluefin-openapi/src/cluefin_openapi/kiwoom/`): each category is
+  a pair — `_overseas_<category>.py` (impl class `Overseas<Category>`) and
+  `_overseas_<category>_types.py` (Pydantic v2 models `Overseas<Category><Thing>` that inherit
+  `(BaseModel, KiwoomHttpBody)`, set `ConfigDict(title="미국주식 …")`, and name fields by the
+  raw Kiwoom field codes). Mirrors the existing `_domestic_*` set.
+- **Client wiring** (`_client.py`): no separate client — lazy `@property` accessors on the
+  single `Client`, with `overseas_`-prefixed names (`overseas_account`, `overseas_order`, …).
+  `_overseas_condition_search` and `_overseas_realtime` exist but are **not yet wired**
+  (WebSocket/streaming, in progress) and are unit-test-only.
+- **Tests** (`packages/cluefin-openapi/tests/kiwoom/`): `test_overseas_<category>_unit.py`
+  (table-driven via `_helpers.py` `EndpointCase` / `run_post_case`, no marker) plus
+  `test_overseas_<category>_integration.py` (`@pytest.mark.integration`, using the `client`
+  fixture in `conftest.py` that skips when `KIWOOM_*` env is absent).
