@@ -159,6 +159,7 @@ def test_get_raises_typed_errors(client: HttpClient, requests_mock, status_code,
         client._get("/uapi/error", headers={"tr_id": "TR"}, params={"p": "v"})
 
     assert exc_info.value.request_context["method"] == "GET"
+    assert "headers" not in exc_info.value.request_context  # no credentials on exceptions
     if status_code == 429:
         assert exc_info.value.retry_after == 7
 
@@ -243,6 +244,7 @@ def test_post_raises_typed_errors(client: HttpClient, requests_mock, status_code
         client._post("/uapi/post-error", headers={"tr_id": "TR"}, body={"p": "v"})
 
     assert exc_info.value.request_context["method"] == "POST"
+    assert "headers" not in exc_info.value.request_context  # no credentials on exceptions
     if status_code == 429:
         assert exc_info.value.retry_after == 5
 

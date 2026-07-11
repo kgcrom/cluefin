@@ -123,6 +123,37 @@ class TestAuthenticationErrors:
 
             assert exc_info.value.status_code == 400
 
+    def test_error_request_context_redacts_auth_key(self, client: Client):
+        with requests_mock.Mocker() as m:
+            m.get(
+                "https://opendart.fss.or.kr/api/test",
+                text="Bad Request",
+                status_code=400,
+            )
+
+            with pytest.raises(DartClientError) as exc_info:
+                client._get("/api/test", params={"corp_code": "005930"})
+
+            ctx = exc_info.value.request_context
+            assert ctx["path"] == "/api/test"
+            assert ctx["params"]["corp_code"] == "005930"
+            assert ctx["params"]["crtfc_key"] == "***"
+            # the real key must still be sent on the wire
+            assert m.request_history[0].qs["crtfc_key"] == ["test-auth-key"]
+
+    def test_request_does_not_mutate_caller_params(self, client: Client):
+        with requests_mock.Mocker() as m:
+            m.get(
+                "https://opendart.fss.or.kr/api/test",
+                json={"status": "000"},
+                status_code=200,
+            )
+
+            caller_params = {"corp_code": "005930"}
+            client._get("/api/test", params=caller_params)
+
+            assert caller_params == {"corp_code": "005930"}  # no crtfc_key written back
+
 
 class TestRateLimitHandling:
     """Tests for rate limit handling."""

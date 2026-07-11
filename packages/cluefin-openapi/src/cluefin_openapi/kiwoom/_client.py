@@ -1,10 +1,10 @@
 import json
-import time
 from typing import Dict, List, Literal, Optional, Tuple
 
 import requests
 from loguru import logger
 
+from cluefin_openapi._http_base import BaseHttpClient
 from cluefin_openapi._rate_limiter import TokenBucket
 
 from ._cache import SimpleCache, create_cache_key
@@ -39,7 +39,7 @@ class MockResponse:
         return self.content.decode()
 
 
-class Client(object):
+class Client(BaseHttpClient):
     def __init__(
         self,
         token: str,
@@ -209,9 +209,18 @@ class Client(object):
 
         return OverseasWatchlist(self)
 
+    _ERROR_TYPES = {
+        "validation": KiwoomValidationError,
+        "auth": KiwoomAuthenticationError,
+        "authz": KiwoomAuthorizationError,
+        "rate_limit": KiwoomRateLimitError,
+        "server": KiwoomServerError,
+        "api": KiwoomAPIError,
+    }
+
     def _post(self, path: str, headers: Dict[str, str], body: Dict[str, str], use_cache: bool = True):
         """Make a POST request with improved error handling and logging."""
-        # Check cache first if enabled
+        # Check cache first if enabled — short-circuit BEFORE rate-limiting/HTTP
         cache_key = None
         if self._cache and use_cache:
             cache_key = create_cache_key(f"{self.url}{path}", headers, body)
@@ -221,174 +230,61 @@ class Client(object):
                     logger.debug(f"Cache hit for {path}")
                 return cached_response
 
-        # Apply rate limiting
-        if not self._rate_limiter.wait_for_tokens(timeout=self.timeout):
-            raise KiwoomRateLimitError(
-                "Rate limit timeout - could not acquire token within timeout period",
-                request_context={"url": f"{self.url}{path}", "path": path},
-            )
-
         url = f"{self.url}{path}"
 
         # Merge headers with authentication
         merged_headers = headers.copy()
         merged_headers["Authorization"] = f"Bearer {self.token}"
 
-        # Log request details in debug mode
+        request_context = self._sanitize_request_context(
+            {
+                "url": url,
+                "path": path,
+                "method": "POST",
+                "headers": merged_headers,
+                "body": body,
+            }
+        )
+
         if self.debug:
             logger.debug(f"Making POST request to {url}")
-            logger.debug(f"Headers: {merged_headers}")
             logger.debug(f"Body: {body}")
             logger.debug(f"Rate limiter tokens available: {self._rate_limiter.available_tokens:.2f}")
 
-        request_context = {
-            "url": url,
-            "path": path,
-            "method": "POST",
-            "headers": merged_headers,
-            "body": body,
-        }
+        response = self._execute_with_retry(
+            send_fn=lambda: self._session.post(
+                url=url,
+                headers=merged_headers,
+                data=json.dumps(body),
+                timeout=self.timeout,
+            ),
+            debug=self.debug,
+            rate_limiter=self._rate_limiter,
+            timeout=self.timeout,
+            max_retries=self.max_retries,
+            request_context=request_context,
+            dispatch=lambda resp: self._dispatch_by_status(resp, request_context, self._ERROR_TYPES),
+            rate_limit_error=lambda: KiwoomRateLimitError(
+                "Rate limit timeout - could not acquire token within timeout period",
+                request_context={"url": url, "path": path},
+            ),
+            timeout_error_cls=KiwoomTimeoutError,
+            network_error_cls=KiwoomNetworkError,
+        )
 
-        for attempt in range(self.max_retries + 1):
-            try:
-                start_time = time.time()
+        # Cache successful 200 responses (dispatch may accept non-200 without raising)
+        if self._cache and use_cache and cache_key and response.status_code == 200:
+            cached_response = MockResponse(
+                status_code=response.status_code,
+                headers=dict(response.headers),
+                content=response.content,
+                json_data=self._safe_json(response),
+            )
+            self._cache.set(cache_key, cached_response)
+            if self.debug:
+                logger.debug(f"Cached response for {path}")
 
-                response = self._session.post(
-                    url=url,
-                    headers=merged_headers,
-                    data=json.dumps(body),
-                    timeout=self.timeout,
-                )
-
-                duration = time.time() - start_time
-
-                # Log response details in debug mode
-                if self.debug:
-                    logger.debug(f"Response received in {duration:.3f}s - Status: {response.status_code}")
-                    logger.debug(f"Response headers: {dict(response.headers)}")
-
-                # Handle different HTTP status codes
-                if response.status_code == 200:
-                    # Cache successful responses if caching is enabled
-                    if self._cache and use_cache and cache_key:
-                        # Create a mock response object to cache
-                        cached_response = MockResponse(
-                            status_code=response.status_code,
-                            headers=dict(response.headers),
-                            content=response.content,
-                            json_data=self._safe_json(response),
-                        )
-                        self._cache.set(cache_key, cached_response)
-                        if self.debug:
-                            logger.debug(f"Cached response for {path}")
-
-                    return response
-                elif response.status_code == 400:
-                    raise KiwoomValidationError(
-                        f"Bad request: {response.text}",
-                        status_code=response.status_code,
-                        response_data=self._safe_json(response),
-                        request_context=request_context,
-                    )
-                elif response.status_code == 401:
-                    raise KiwoomAuthenticationError(
-                        "Authentication failed - invalid or expired token",
-                        status_code=response.status_code,
-                        response_data=self._safe_json(response),
-                        request_context=request_context,
-                    )
-                elif response.status_code == 403:
-                    raise KiwoomAuthorizationError(
-                        "Access forbidden - insufficient permissions",
-                        status_code=response.status_code,
-                        response_data=self._safe_json(response),
-                        request_context=request_context,
-                    )
-                elif response.status_code == 429:
-                    retry_after = self._get_retry_after(response)
-                    if attempt < self.max_retries:
-                        wait_time = retry_after or (2**attempt)
-                        logger.warning(
-                            f"Rate limit hit, waiting {wait_time}s before retry {attempt + 1}/{self.max_retries}"
-                        )
-                        time.sleep(wait_time)
-                        continue
-                    else:
-                        raise KiwoomRateLimitError(
-                            f"Rate limit exceeded after {self.max_retries} retries",
-                            status_code=response.status_code,
-                            response_data=self._safe_json(response),
-                            request_context=request_context,
-                            retry_after=retry_after,
-                        )
-                elif 500 <= response.status_code < 600:
-                    if attempt < self.max_retries:
-                        wait_time = 2**attempt
-                        logger.warning(f"Server error {response.status_code}, retrying in {wait_time}s")
-                        time.sleep(wait_time)
-                        continue
-                    else:
-                        raise KiwoomServerError(
-                            f"Server error: {response.text}",
-                            status_code=response.status_code,
-                            response_data=self._safe_json(response),
-                            request_context=request_context,
-                        )
-                else:
-                    raise KiwoomAPIError(
-                        f"Unexpected status code {response.status_code}: {response.text}",
-                        status_code=response.status_code,
-                        response_data=self._safe_json(response),
-                        request_context=request_context,
-                    )
-
-            except requests.exceptions.Timeout as e:
-                if attempt < self.max_retries:
-                    wait_time = 2**attempt
-                    logger.warning(f"Request timeout, retrying in {wait_time}s")
-                    time.sleep(wait_time)
-                    continue
-                else:
-                    raise KiwoomTimeoutError(
-                        f"Request timeout after {self.max_retries} retries",
-                        request_context=request_context,
-                    ) from e
-            except requests.exceptions.ConnectionError as e:
-                if attempt < self.max_retries:
-                    wait_time = 2**attempt
-                    logger.warning(f"Connection error, retrying in {wait_time}s")
-                    time.sleep(wait_time)
-                    continue
-                else:
-                    raise KiwoomNetworkError(
-                        f"Network connection failed: {str(e)}",
-                        request_context=request_context,
-                    ) from e
-            except requests.exceptions.RequestException as e:
-                raise KiwoomNetworkError(
-                    f"Request failed: {str(e)}",
-                    request_context=request_context,
-                ) from e
-
-        # This should never be reached, but just in case
-        raise KiwoomAPIError("Maximum retries exceeded", request_context=request_context)
-
-    def _safe_json(self, response: requests.Response) -> Optional[Dict]:
-        """Safely parse JSON response, returning None if parsing fails."""
-        try:
-            return response.json()
-        except (ValueError, json.JSONDecodeError):
-            return None
-
-    def _get_retry_after(self, response: requests.Response) -> Optional[int]:
-        """Extract retry-after value from response headers."""
-        retry_after = response.headers.get("Retry-After")
-        if retry_after:
-            try:
-                return int(retry_after)
-            except ValueError:
-                pass
-        return None
+        return response
 
     def close(self):
         """Close the HTTP session."""
