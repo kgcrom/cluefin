@@ -2,6 +2,7 @@
 
 from ._auth import Auth
 from ._client import Client
+from ._error_codes import KIWOOM_ERROR_CODES, error_type_for_code, resolve_kiwoom_error
 from ._exceptions import (
     KiwoomAPIError,
     KiwoomAuthenticationError,
@@ -14,6 +15,7 @@ from ._exceptions import (
 )
 
 __all__ = [
+    "KIWOOM_ERROR_CODES",
     "Auth",
     "Client",
     "KiwoomAPIError",
@@ -24,6 +26,8 @@ __all__ = [
     "KiwoomServerError",
     "KiwoomTimeoutError",
     "KiwoomValidationError",
+    "error_type_for_code",
+    "resolve_kiwoom_error",
 ]
 
 
