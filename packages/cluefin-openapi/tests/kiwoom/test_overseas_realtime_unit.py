@@ -1,8 +1,9 @@
 """미국주식 실시간 시세(웹소켓) 메시지 모델 unit 테스트.
 
 F4/F5/FE/FT 4개 TR은 웹소켓 API이므로 HTTP 클라이언트 테스트(run_post_case)를 적용할 수
-없고, 클라이언트 구현도 아직 stub(``_overseas_realtime.py``)이다. 따라서 등록/해지 요청
-프레임과 TR별 응답(values) 프레임의 pydantic 직렬화/역직렬화만 검증한다.
+없다. 등록/해지 요청 프레임과 TR별 응답(values) 프레임의 pydantic 직렬화/역직렬화를
+검증한다. ``OverseasRealtime`` 도메인 래퍼의 등록/해지 송신·프레임 파싱 동작은
+``test_overseas_realtime_ws_unit.py``에서 검증한다.
 """
 
 import pytest

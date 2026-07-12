@@ -1,9 +1,9 @@
 """미국주식 조건검색(웹소켓) 메시지 모델 unit 테스트.
 
 usa20280/usa20281/usa20290/usa20291 4개 TR은 웹소켓 API이므로 HTTP 클라이언트
-테스트(run_post_case)를 적용할 수 없고, 클라이언트 구현도 아직 stub
-(``_overseas_condition_search.py``)이다. 따라서 요청 모델의 wire 포맷 dump와 응답
-모델의 field/alias 매핑만 검증한다.
+테스트(run_post_case)를 적용할 수 없다. 여기서는 요청 모델의 wire 포맷 dump와 응답
+모델의 field/alias 매핑을 검증한다. ``OverseasConditionSearch`` 도메인 래퍼의 요청
+송신·응답 파싱 동작은 ``test_overseas_condition_search_ws_unit.py``에서 검증한다.
 """
 
 import pytest
