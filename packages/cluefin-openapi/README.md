@@ -12,6 +12,8 @@
 
 - **계좌 정보 조회**: 잔고, 보유종목, 수익률 등 계좌 관련 정보
 - **국내/해외 주식 정보**: 실시간 시세, 종목 정보, 기업 정보
+- **키움 미국주식 API**: 계좌, 주문, 시세, 차트, 순위정보 등 미국주식 전용 카테고리 (`client.overseas_*`)
+- **웹소켓 조건검색·실시간 시세**: 국내/미국 조건검색식 조회·요청·실시간 등록, 실시간 시세 구독
 - **차트 데이터 및 분석**: 일/주/월 차트, 기술적 지표, 시계열 데이터
 - **ETF, 섹터, 테마**: ETF 정보, 업종별 정보, 테마별 종목 분류
 - **시장 상황 모니터링**: 시장 지수, 거래량, 시장 동향
@@ -238,6 +240,34 @@ overseas_price = kis_client.overseas_basic_quote.get_inquire_price(
 logger.info(f"해외 주식 현재가: {overseas_price}")
 ```
 
+## 🔌 키움 웹소켓 사용 예제 (조건검색·실시간 시세)
+
+키움 웹소켓 기능은 HTTP `Client`와 별개로 비동기(`asyncio`)로 동작합니다.
+`KiwoomWebSocketClient`가 LOGIN/PING을 처리하며, `market` 파라미터로 국내(`"domestic"`)/미국(`"overseas"`) 엔드포인트를 선택합니다.
+
+```python
+import asyncio
+from cluefin_openapi.kiwoom._socket_client import KiwoomWebSocketClient
+from cluefin_openapi.kiwoom._domestic_condition_search import DomesticConditionSearch
+
+async def main():
+    # 국내주식 조건검색 (미국주식은 market="overseas" + OverseasConditionSearch)
+    async with KiwoomWebSocketClient(token=token.get_token(), env="dev", market="domestic") as ws:
+        condition = DomesticConditionSearch(ws)
+
+        # 조건검색식 목록 조회
+        condition_list = await condition.get_condition_search_list()
+
+        # 첫 번째 조건검색식으로 검색 요청
+        seq = condition_list.data[0].seq
+        result = await condition.request_condition_search(seq=seq)
+        print(result)
+
+asyncio.run(main())
+```
+
+실시간 시세는 같은 방식으로 `DomesticRealtime`(국내) / `OverseasRealtime`(미국) 클래스를 사용해 `register`/`remove`로 구독을 관리합니다.
+
 ## 🔧 구성 옵션
 
 ### 로깅 설정
@@ -264,16 +294,24 @@ logger.add("kiwoom_api.log", level="INFO", rotation="10 MB")
 
 ```python
 from loguru import logger
-from cluefin_openapi.kiwoom._exceptions import KiwoomAPIError
+from cluefin_openapi.kiwoom._exceptions import KiwoomAPIError, KiwoomRateLimitError
 
 try:
-    response = client.account.get_inquire_balance()
+    response = client.account.get_daily_stock_realized_profit_loss_by_date("005930", "20250630")
+except KiwoomRateLimitError as e:
+    logger.info(f"요청 제한 초과, 재시도 대기: {e.retry_after}")
 except KiwoomAPIError as e:
     logger.info(f"API 에러: {e.message}")
-    logger.info(f"에러 코드: {e.error_code}")
+    logger.info(f"HTTP 상태 코드: {e.status_code}")
+    logger.info(f"응답 데이터: {e.response_data}")
 except Exception as e:
     logger.info(f"일반 에러: {str(e)}")
 ```
+
+키움 API 서버가 응답 본문에 `return_code`를 내려주면, 라이브러리가 `_error_codes.py`의
+`KIWOOM_ERROR_CODES` 매핑으로 에러 메시지를 해석하고 코드 성격에 맞는 예외 클래스
+(`KiwoomValidationError`, `KiwoomAuthenticationError`, `KiwoomRateLimitError`,
+`KiwoomServerError` 등 `KiwoomAPIError` 하위 클래스)를 발생시킵니다.
 
 ### 한국투자증권 API 에러 처리
 
@@ -288,17 +326,19 @@ try:
     )
 except KISAPIError as e:
     logger.error(f"KIS API 에러: {e.message}")
-    logger.error(f"에러 코드: {e.error_code}")
+    logger.error(f"HTTP 상태 코드: {e.status_code}")
 except Exception as e:
     logger.error(f"일반 에러: {str(e)}")
 ```
 
 ### 일반적인 에러 시나리오
 
-**키움증권 API 에러 코드:**
-- `40010000`: 잘못된 요청 형식
-- `40080000`: 토큰 만료
-- `50010000`: 서버 내부 오류
+**키움증권 API 서버 오류코드 (`return_code`):**
+- `1501`: API ID가 Null이거나 값이 없습니다
+- `1700`: 허용된 API 요청 개수를 초과하였습니다
+- `8005`: Token이 유효하지 않습니다
+
+전체 목록은 `cluefin_openapi.kiwoom._error_codes`의 `KIWOOM_ERROR_CODES`를 참고하세요.
 
 **한국투자증권 API 에러 코드:**
 - `EGW00001`: 잘못된 요청 형식

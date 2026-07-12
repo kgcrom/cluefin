@@ -7,15 +7,20 @@ Python(`cluefin-openapi`)과 TypeScript(`cluefin-openapi-ts`) 간 KIS REST API �
 | 모듈 | Python 엔드포인트 | TypeScript 엔드포인트 | 상태 |
 | --- | ---: | ---: | --- |
 | 국내주식 REST (6개 도메인) | 135 | 135 | 100% 일치 |
-| Kiwoom 전체 (10개 도메인) | 134 | 134 | 100% 일치 |
+| Kiwoom 국내 REST (10개 도메인) | 134 | 134 | 100% 일치 |
+| Kiwoom 미국주식 REST (10개 도메인) | 121 | - | Python 전용 (TS 미구현) |
+| Kiwoom 웹소켓 (국내/미국 조건검색·실시간) | 4개 클래스 | - | Python 전용 (TS 미구현) |
 | `OverseasBasicQuote` - 해외주식 시세 | 13 | 13 | 100% 일치 (신규 추가) |
 | `OnmarketBondBasicQuote` - 장내채권 시세 | 8 | 8 | 100% 일치 (신규 추가) |
 | `DomesticRealtimeQuote` - 국내 실시간 | 6 | - | 미구현 (WebSocket) |
 | `OverseasRealtimeQuote` - 해외 실시간 | - | - | 미구현 (WebSocket) |
 | `OnmarketBondRealtimeQuote` - 채권 실시간 | - | - | 미구현 (WebSocket) |
-| **REST 합계** | **290** | **290** | **100%** |
+| **REST 합계 (양쪽 구현 스코프)** | **290** | **290** | **100%** |
 
-> REST 엔드포인트 기준 Python과 TypeScript는 완전히 동일한 커버리지를 달성.
+> 양쪽 모두 구현된 REST 스코프(KIS + Kiwoom 국내) 기준으로는 Python과 TypeScript가 동일한
+> 커버리지를 달성. 단, Kiwoom 미국주식 REST(10개 도메인, 121개 엔드포인트)와 Kiwoom 웹소켓
+> (`DomesticConditionSearch`/`DomesticRealtime`/`OverseasConditionSearch`/`OverseasRealtime`)은
+> Python(`cluefin-openapi`)에만 구현되어 있어 전체 기준으로는 Python이 TS를 초과.
 
 ---
 

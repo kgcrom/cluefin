@@ -44,10 +44,10 @@ uv run cluefin-openapi-cli describe <broker> <category> <method> --json
 - Don't commit `.codex/`, or add repo-local `.pi/` / `SYSTEM.md`, unless a task explicitly
   asks to make those part of the project workflow.
 
-## Kiwoom 미국주식 (overseas)
+## Kiwoom 미국주식 (overseas) · 웹소켓
 
-The active US-stock work (branch `feat/kiwoom-overseas`) is **Python-only** — the
-`cluefin-openapi-ts` package is out of scope (its `overseas-*` files are KIS, not Kiwoom).
+Kiwoom US-stock support is **Python-only** — the `cluefin-openapi-ts` package is out of
+scope (its `overseas-*` files are KIS, not Kiwoom).
 
 - **Modules** (under `packages/cluefin-openapi/src/cluefin_openapi/kiwoom/`): each category is
   a pair — `_overseas_<category>.py` (impl class `Overseas<Category>`) and
@@ -56,11 +56,13 @@ The active US-stock work (branch `feat/kiwoom-overseas`) is **Python-only** — 
   raw Kiwoom field codes). Mirrors the existing `_domestic_*` set.
 - **Client wiring** (`_client.py`): no separate client — lazy `@property` accessors on the
   single `Client`, with `overseas_`-prefixed names (`overseas_account`, `overseas_order`, …).
-- **WebSocket** (`_overseas_condition_search`, `_overseas_realtime`): async, not on the HTTP
-  `Client`. `_socket_client.py`'s `KiwoomWebSocketClient` is a shared raw-asyncio (no extra
-  dep) client for `wss://…:10000/api/us/websocket` that handles LOGIN/PING; the two domain
-  classes take it in their ctor and send JSON frames (REG/REMOVE, GCNSRLST/GCNSRREQ/GCNSRCLR)
-  + parse responses. Mirrors the `kis/_socket_client.py` pattern.
+- **WebSocket** (`_domestic_condition_search`, `_domestic_realtime`,
+  `_overseas_condition_search`, `_overseas_realtime`): async, not on the HTTP `Client`.
+  `_socket_client.py`'s `KiwoomWebSocketClient` is a shared raw-asyncio (no extra dep) client
+  that handles LOGIN/PING; `market="domestic"|"overseas"` selects
+  `wss://…:10000/api/dostk/websocket` vs `…/api/us/websocket`. The domain classes take it in
+  their ctor and send JSON frames (REG/REMOVE, CNSRLST/CNSRREQ/CNSRCLR — overseas uses the
+  GCNSR* variants) + parse responses. Mirrors the `kis/_socket_client.py` pattern.
 - **Tests** (`packages/cluefin-openapi/tests/kiwoom/`): `test_overseas_<category>_unit.py`
   (table-driven via `_helpers.py` `EndpointCase` / `run_post_case`, no marker) plus
   `test_overseas_<category>_integration.py` (`@pytest.mark.integration`, using the `client`
