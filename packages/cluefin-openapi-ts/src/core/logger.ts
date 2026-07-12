@@ -5,9 +5,15 @@ export interface Logger {
 }
 
 export const consoleLogger: Logger = {
-  debug: (message, context) => console.debug(message, context ?? ''),
-  warn: (message, context) => console.warn(message, context ?? ''),
-  error: (message, context) => console.error(message, context ?? ''),
+  debug: (message, context) => {
+    console.debug(message, context ?? '');
+  },
+  warn: (message, context) => {
+    console.warn(message, context ?? '');
+  },
+  error: (message, context) => {
+    console.error(message, context ?? '');
+  },
 };
 
 export const silentLogger: Logger = {

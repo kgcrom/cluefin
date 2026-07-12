@@ -16,7 +16,7 @@ import {
  * for both token endpoints and TR endpoints. Placeholders `{?}` are filled by
  * the server in `return_msg`; these entries serve as fallbacks.
  */
-export const KIWOOM_ERROR_CODES: Readonly<Record<number, string>> = {
+export const KIWOOM_ERROR_CODES: Readonly<Partial<Record<number, string>>> = {
   1501: 'API ID가 Null이거나 값이 없습니다',
   1504: '해당 URI에서는 지원하는 API ID가 아닙니다. API ID={?}, URI={?}',
   1505: '해당 API ID는 존재하지 않습니다. API ID={?}',
