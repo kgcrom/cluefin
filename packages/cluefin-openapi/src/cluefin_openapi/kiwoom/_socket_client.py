@@ -1,12 +1,15 @@
-"""미국주식 실시간 WebSocket 클라이언트.
+"""키움 실시간 WebSocket 클라이언트.
 
-실시간 시세(``_overseas_realtime``)와 조건검색(``_overseas_condition_search``)이 공유하는
-저수준 WebSocket 클라이언트다. Python 표준 라이브러리(asyncio)만 사용하며 외부 의존성을
-추가하지 않는다 (KIS ``_socket_client``와 동일한 방식).
+미국주식 실시간 시세(``_overseas_realtime``)/조건검색(``_overseas_condition_search``)과
+국내주식 조건검색(``_domestic_condition_search``)이 공유하는 저수준 WebSocket 클라이언트다.
+Python 표준 라이브러리(asyncio)만 사용하며 외부 의존성을 추가하지 않는다
+(KIS ``_socket_client``와 동일한 방식).
 
-WebSocket URL:
-- 운영: wss://api.kiwoom.com:10000/api/us/websocket
-- 모의투자: wss://mockapi.kiwoom.com:10000/api/us/websocket
+WebSocket URL은 ``market``으로 국내(dostk)/미국(us) 엔드포인트를 선택한다:
+- 미국 운영: wss://api.kiwoom.com:10000/api/us/websocket
+- 미국 모의투자: wss://mockapi.kiwoom.com:10000/api/us/websocket
+- 국내 운영: wss://api.kiwoom.com:10000/api/dostk/websocket
+- 국내 모의투자: wss://mockapi.kiwoom.com:10000/api/dostk/websocket (KRX만 지원)
 
 프로토콜 (JSON 텍스트 프레임):
 - 접속 후 ``{"trnm": "LOGIN", "token": <access_token>}`` 전송 → LOGIN 응답(return_code) 수신
@@ -44,28 +47,37 @@ class KiwoomWebSocketMessage:
 
 
 class KiwoomWebSocketClient:
-    """미국주식 실시간 WebSocket 클라이언트.
+    """키움 실시간 WebSocket 클라이언트.
 
     LOGIN 인증과 PING/PONG 유지는 이 클라이언트가 처리하고, 그 외 프레임은 이벤트 큐로
-    전달한다. ``OverseasRealtime``/``OverseasConditionSearch``가 이 클라이언트를 감싸
-    도메인별 요청 프레임을 송신하고 응답을 파싱한다.
+    전달한다. ``OverseasRealtime``/``OverseasConditionSearch``/``DomesticConditionSearch``가
+    이 클라이언트를 감싸 도메인별 요청 프레임을 송신하고 응답을 파싱한다. 접속 URL은
+    ``market``으로 국내(dostk)/미국(us) 엔드포인트를 선택한다.
 
     Example:
         ```python
+        # 미국주식 조건검색
         async with KiwoomWebSocketClient(token="...", env="prod") as ws:
             await ws.send({"trnm": "GCNSRLST"})
             message = await ws.recv()
             print(message.trnm, message.body)
+
+        # 국내주식 조건검색
+        async with KiwoomWebSocketClient(token="...", env="prod", market="domestic") as ws:
+            await ws.send({"trnm": "CNSRLST"})
+            message = await ws.recv()
         ```
     """
 
-    WS_URL_PROD = "wss://api.kiwoom.com:10000/api/us/websocket"
-    WS_URL_DEV = "wss://mockapi.kiwoom.com:10000/api/us/websocket"
+    WS_HOST_PROD = "wss://api.kiwoom.com:10000"
+    WS_HOST_DEV = "wss://mockapi.kiwoom.com:10000"
+    WS_PATH = {"domestic": "/api/dostk/websocket", "overseas": "/api/us/websocket"}
 
     def __init__(
         self,
         token: str,
         env: Literal["dev", "prod"] = "prod",
+        market: Literal["domestic", "overseas"] = "overseas",
         debug: bool = False,
         queue_maxsize: int = 1000,
         rate_limit_requests_per_second: float = 5.0,
@@ -76,6 +88,7 @@ class KiwoomWebSocketClient:
         Args:
             token: 접근토큰 (LOGIN 프레임에 사용).
             env: 환경. "prod":운영, "dev":모의투자.
+            market: 시장. "overseas":미국주식(us), "domestic":국내주식(dostk).
             debug: 디버그 로깅 활성화 여부.
             queue_maxsize: 이벤트 큐 최대 크기 (0이면 무제한).
             rate_limit_requests_per_second: 송신 rate limit.
@@ -83,9 +96,11 @@ class KiwoomWebSocketClient:
         """
         self.token = token
         self.env = env
+        self.market = market
         self.debug = debug
 
-        self._ws_url = self.WS_URL_PROD if env == "prod" else self.WS_URL_DEV
+        host = self.WS_HOST_PROD if env == "prod" else self.WS_HOST_DEV
+        self._ws_url = f"{host}{self.WS_PATH[market]}"
         self._event_queue: "asyncio.Queue[KiwoomWebSocketMessage]" = asyncio.Queue(maxsize=queue_maxsize)
         self._reader: Optional[asyncio.StreamReader] = None
         self._writer: Optional[asyncio.StreamWriter] = None
