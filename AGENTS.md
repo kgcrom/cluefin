@@ -56,8 +56,11 @@ The active US-stock work (branch `feat/kiwoom-overseas`) is **Python-only** — 
   raw Kiwoom field codes). Mirrors the existing `_domestic_*` set.
 - **Client wiring** (`_client.py`): no separate client — lazy `@property` accessors on the
   single `Client`, with `overseas_`-prefixed names (`overseas_account`, `overseas_order`, …).
-  `_overseas_condition_search` and `_overseas_realtime` exist but are **not yet wired**
-  (WebSocket/streaming, in progress) and are unit-test-only.
+- **WebSocket** (`_overseas_condition_search`, `_overseas_realtime`): async, not on the HTTP
+  `Client`. `_socket_client.py`'s `KiwoomWebSocketClient` is a shared raw-asyncio (no extra
+  dep) client for `wss://…:10000/api/us/websocket` that handles LOGIN/PING; the two domain
+  classes take it in their ctor and send JSON frames (REG/REMOVE, GCNSRLST/GCNSRREQ/GCNSRCLR)
+  + parse responses. Mirrors the `kis/_socket_client.py` pattern.
 - **Tests** (`packages/cluefin-openapi/tests/kiwoom/`): `test_overseas_<category>_unit.py`
   (table-driven via `_helpers.py` `EndpointCase` / `run_post_case`, no marker) plus
   `test_overseas_<category>_integration.py` (`@pytest.mark.integration`, using the `client`
