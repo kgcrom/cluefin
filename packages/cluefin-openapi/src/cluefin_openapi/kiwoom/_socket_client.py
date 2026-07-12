@@ -321,7 +321,7 @@ class KiwoomWebSocketClient:
 
         # SHA1은 RFC 6455 WebSocket 프로토콜에서 요구하는 것으로 보안 용도가 아니다.
         expected_accept = base64.b64encode(
-            hashlib.sha1(
+            hashlib.sha1(  # nosemgrep
                 (ws_key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode(),
                 usedforsecurity=False,
             ).digest()
