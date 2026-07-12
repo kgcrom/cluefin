@@ -2,6 +2,7 @@ export type { KiwoomAuthOptions, KiwoomTokenResponse } from './auth';
 export { KiwoomAuth } from './auth';
 export type { KiwoomClientOptions } from './client';
 export { KiwoomClient } from './client';
+export { KIWOOM_ERROR_CODES, parseKiwoomReturnCode, resolveKiwoomError } from './error-codes';
 export type {
   AccountCurrentDayStatusResponse,
   AccountEvaluationBalanceDetailsResponse,

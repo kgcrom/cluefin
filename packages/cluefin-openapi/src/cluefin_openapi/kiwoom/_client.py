@@ -8,6 +8,7 @@ from cluefin_openapi._http_base import BaseHttpClient
 from cluefin_openapi._rate_limiter import TokenBucket
 
 from ._cache import SimpleCache, create_cache_key
+from ._error_codes import parse_return_code, resolve_kiwoom_error
 from ._exceptions import (
     KiwoomAPIError,
     KiwoomAuthenticationError,
@@ -83,11 +84,10 @@ class Client(BaseHttpClient):
         # Initialize cache if enabled
         self._cache = SimpleCache(default_ttl=cache_ttl) if enable_caching else None
 
-        # Configure logging
+        # Configure logging. Debug chatter is already gated behind `if self.debug`,
+        # so the namespace stays enabled to keep API error/warning logs visible.
         if self.debug:
             logger.enable("cluefin_openapi.kiwoom")
-        else:
-            logger.disable("cluefin_openapi.kiwoom")
 
     @property
     def account(self):
@@ -158,6 +158,42 @@ class Client(BaseHttpClient):
         "api": KiwoomAPIError,
     }
 
+    def _error_from_return_code(self, response, request_context: dict) -> Optional[KiwoomAPIError]:
+        """Map a non-zero body return_code (API 서버 오류코드) to a typed exception.
+
+        Returns None when the body has no return_code or reports success (0).
+        The resolved error is logged before being returned.
+        """
+        data = self._safe_json(response)
+        if not isinstance(data, dict):
+            return None
+        return_code = parse_return_code(data.get("return_code"))
+        if return_code is None or return_code == 0:
+            return None
+
+        exc = resolve_kiwoom_error(
+            return_code,
+            return_msg=data.get("return_msg"),
+            status_code=response.status_code,
+            response_data=data,
+            request_context=request_context,
+        )
+        logger.error(
+            "Kiwoom API error (return_code={}, api-id={}, path={}): {}",
+            return_code,
+            request_context.get("tr_id"),
+            request_context.get("path"),
+            data.get("return_msg") or exc.message,
+        )
+        return exc
+
+    def _dispatch_kiwoom(self, response, request_context: dict) -> Optional[Exception]:
+        """Prefer body return_code resolution, then fall back to HTTP status dispatch."""
+        exc = self._error_from_return_code(response, request_context)
+        if exc is not None:
+            return exc
+        return self._dispatch_by_status(response, request_context, self._ERROR_TYPES)
+
     def _post(self, path: str, headers: Dict[str, str], body: Dict[str, str], use_cache: bool = True):
         """Make a POST request with improved error handling and logging."""
         # Check cache first if enabled — short-circuit BEFORE rate-limiting/HTTP
@@ -203,7 +239,7 @@ class Client(BaseHttpClient):
             timeout=self.timeout,
             max_retries=self.max_retries,
             request_context=request_context,
-            dispatch=lambda resp: self._dispatch_by_status(resp, request_context, self._ERROR_TYPES),
+            dispatch=lambda resp: self._dispatch_kiwoom(resp, request_context),
             rate_limit_error=lambda: KiwoomRateLimitError(
                 "Rate limit timeout - could not acquire token within timeout period",
                 request_context={"url": url, "path": path},
@@ -211,6 +247,11 @@ class Client(BaseHttpClient):
             timeout_error_cls=KiwoomTimeoutError,
             network_error_cls=KiwoomNetworkError,
         )
+
+        # Kiwoom can report API 서버 오류코드 in the body of an HTTP 200 response
+        error = self._error_from_return_code(response, request_context)
+        if error is not None:
+            raise error
 
         # Cache successful 200 responses (dispatch may accept non-200 without raising)
         if self._cache and use_cache and cache_key and response.status_code == 200:

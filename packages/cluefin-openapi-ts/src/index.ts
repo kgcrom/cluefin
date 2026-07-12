@@ -24,6 +24,8 @@ export {
   KiwoomTimeoutError,
   KiwoomValidationError,
 } from './core/errors';
+export type { Logger } from './core/logger';
+export { consoleLogger, silentLogger } from './core/logger';
 export type {
   ApiEnv,
   ApiResponse,

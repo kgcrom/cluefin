@@ -9,10 +9,34 @@ from __future__ import annotations
 from typing import Literal, Optional
 
 import requests
+from loguru import logger
 from pydantic import SecretStr
 
 from ._auth_types import TokenResponse
+from ._error_codes import KIWOOM_ERROR_CODES, parse_return_code
 from ._token_manager import TokenManager
+
+
+def _log_error_body(response: requests.Response, endpoint: str) -> None:
+    """Log the Kiwoom 오류코드 (body return_code/return_msg) of a failed response."""
+    if response.ok:
+        return
+    try:
+        data = response.json()
+    except ValueError:
+        data = None
+    if isinstance(data, dict):
+        return_code = parse_return_code(data.get("return_code"))
+        message = data.get("return_msg") or (KIWOOM_ERROR_CODES.get(return_code) if return_code else None)
+        logger.error(
+            "Kiwoom auth request failed ({}): status={}, return_code={}, message={}",
+            endpoint,
+            response.status_code,
+            return_code,
+            message,
+        )
+    else:
+        logger.error("Kiwoom auth request failed ({}): status={}", endpoint, response.status_code)
 
 
 class Auth:
@@ -78,6 +102,7 @@ class Auth:
         }
 
         response = requests.post(f"{self.url}/oauth2/token", headers=headers, json=data)
+        _log_error_body(response, "oauth2/token")
         response.raise_for_status()
 
         token_data = TokenResponse(**response.json())
@@ -103,6 +128,7 @@ class Auth:
         data = {"appkey": self.app_key, "secretkey": self.secret_key.get_secret_value(), "token": token}
 
         response = requests.post(f"{self.url}/oauth2/revoke", headers=headers, json=data)
+        _log_error_body(response, "oauth2/revoke")
         response.raise_for_status()
 
         return True

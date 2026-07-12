@@ -6,6 +6,10 @@ from typing import Any, Dict, Optional
 class KiwoomAPIError(Exception):
     """Base exception for all Kiwoom API errors."""
 
+    # Kiwoom server error code (body return_code), set when the error originates
+    # from a documented API 서버 오류코드 (see _error_codes.py).
+    return_code: Optional[int] = None
+
     def __init__(
         self,
         message: str,
