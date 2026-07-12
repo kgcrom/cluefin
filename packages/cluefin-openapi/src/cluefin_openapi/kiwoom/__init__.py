@@ -2,6 +2,8 @@
 
 from ._auth import Auth
 from ._client import Client
+from ._domestic_condition_search import DomesticConditionSearch
+from ._domestic_realtime import DomesticRealtime
 from ._error_codes import KIWOOM_ERROR_CODES, error_type_for_code, resolve_kiwoom_error
 from ._exceptions import (
     KiwoomAPIError,
@@ -21,6 +23,8 @@ __all__ = [
     "KIWOOM_ERROR_CODES",
     "Auth",
     "Client",
+    "DomesticConditionSearch",
+    "DomesticRealtime",
     "KiwoomAPIError",
     "KiwoomAuthenticationError",
     "KiwoomAuthorizationError",
