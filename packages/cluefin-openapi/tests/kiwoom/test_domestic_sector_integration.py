@@ -16,10 +16,10 @@ from cluefin_openapi.kiwoom._domestic_sector_types import (
 @pytest.mark.integration
 def test_get_industry_program(client: Client):
     # Test parameters
-    stk_code = "005930"  # Example sector code
+    stk_cd = "005930"  # 종목코드 (ka10010은 업종코드가 아닌 종목코드를 받는다)
 
     # Make the API call
-    response = client.sector.get_industry_program(stk_code=stk_code)
+    response = client.sector.get_industry_program(stk_cd=stk_cd)
 
     # Verify response structure
     assert response is not None

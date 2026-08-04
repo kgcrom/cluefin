@@ -21,12 +21,12 @@ class DomesticSector:
         self.path = "/api/dostk/sect"
 
     def get_industry_program(
-        self, stk_code: str, cont_yn: Literal["Y", "N"] = "N", next_key: str = ""
+        self, stk_cd: str, cont_yn: Literal["Y", "N"] = "N", next_key: str = ""
     ) -> KiwoomHttpResponse[DomesticSectorIndustryProgram]:
         """업종프로그램요청
 
         Args:
-            stk_code (str): 업종코드
+            stk_cd (str): 종목코드
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -42,7 +42,7 @@ class DomesticSector:
             "next-key": next_key,
             "api-id": "ka10010",
         }
-        body = {"stk_code": stk_code}
+        body = {"stk_cd": stk_cd}
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:

@@ -62,7 +62,6 @@ class Auth:
     ) -> None:
         self.app_key = app_key
         self.secret_key = secret_key
-        self.token_manager = token_manager or TokenManager(cache_dir=cache_dir)
 
         if env == "dev":
             self.url = "https://mockapi.kiwoom.com"
@@ -70,6 +69,11 @@ class Auth:
             self.url = "https://api.kiwoom.com"
         else:
             raise ValueError("Invalid environment. Must be either 'dev' or 'prod'.")
+
+        self.env = env
+        # 캐시 파일을 env/app_key로 분리한다. 공유하면 모의투자 토큰이 실전 요청에 재사용되어
+        # "8031:투자구분(실전/모의)이 달라서 Token를 사용할수가 없습니다" 오류가 난다.
+        self.token_manager = token_manager or TokenManager(cache_dir=cache_dir, env=env, app_key=app_key)
 
     def generate_token(self) -> TokenResponse:
         """Generate a new access token.

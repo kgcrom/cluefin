@@ -171,3 +171,27 @@ def test_concurrent_writes_keep_cache_readable(temp_cache_dir):
     reloaded = TokenManager(cache_dir=temp_cache_dir)
     assert reloaded._token_cache is not None
     assert reloaded._token_cache.get_token() in {"token_a", "token_b"}
+
+
+def test_cache_file_is_scoped_by_env_and_app_key(temp_cache_dir):
+    dev = TokenManager(cache_dir=temp_cache_dir, env="dev", app_key="mock-key")
+    prod = TokenManager(cache_dir=temp_cache_dir, env="prod", app_key="real-key")
+    other_key = TokenManager(cache_dir=temp_cache_dir, env="prod", app_key="another-key")
+
+    assert dev.cache_file.name.startswith(".kiwoom_token_cache_dev_")
+    assert prod.cache_file.name.startswith(".kiwoom_token_cache_prod_")
+    assert len({dev.cache_file, prod.cache_file, other_key.cache_file}) == 3
+    # 앱키 원문이 파일명에 노출되지 않아야 한다.
+    assert "real-key" not in prod.cache_file.name
+
+
+def test_dev_token_is_not_reused_for_prod(temp_cache_dir, valid_token):
+    """모의투자 토큰이 실전 요청에 재사용되면 서버가 8031로 거부한다."""
+    dev = TokenManager(cache_dir=temp_cache_dir, env="dev", app_key="mock-key")
+    dev._save_token(valid_token)
+
+    prod = TokenManager(cache_dir=temp_cache_dir, env="prod", app_key="real-key")
+
+    assert prod._token_cache is None
+    generated = TokenResponse(token="prod_token", token_type="Bearer", expires_dt=datetime.now() + timedelta(hours=12))
+    assert prod.get_or_generate(lambda: generated) is generated

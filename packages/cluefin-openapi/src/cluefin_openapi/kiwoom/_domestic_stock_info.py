@@ -737,10 +737,10 @@ class DomesticStockInfo:
         trde_prica_tp: Literal["0", "1"],
         motn_drc: Literal["0", "1", "2"],
         stex_tp: Literal["1", "2"],
-        min_trde_qty: str = "",
-        max_trde_qty: str = "",
-        min_trde_prica: str = "",
-        max_trde_prica: str = "",
+        min_trde_qty: str = "0",
+        max_trde_qty: str = "100000000",
+        min_trde_prica: str = "0",
+        max_trde_prica: str = "100000000",
         stk_cd: str = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
@@ -756,10 +756,13 @@ class DomesticStockInfo:
             trde_price_tp (Literal["0", "1"]): 거래대금구분 (0:사용안함, 1:사용)
             motn_drc (Literal["0", "1", "2"]): 발동방향 (0:전체, 1:상승, 2:하락)
             stex_tp (Literal["1", "2"]): 거래소구분 (1:KRX, 2:NXT 3.통합)
-            min_trde_qty (str): 최소거래량 (12자리, 0 주 이상, 거래량구분이 1일때만 입력(공백허용))
-            max_trde_qty (str): 최대거래량 (12자리, 100000000 주 이하, 거래량구분이 1일때만 입력(공백허용))
-            min_trde_prica (str): 최소거래대금 (10자리, 0 백만원 이상, 거래대금구분 1일때만 입력(공백허용))
-            max_trde_prica (str): 최대거래대금 (10자리, 100000000 백만원 이하, 거래대금구분 1일때만 입력(공백허용))
+            min_trde_qty (str): 최소거래량 (12자리, 0 주 이상). Defaults to "0".
+                키움 문서 Description에 "(공백허용)"으로 적혀 있으나 실제 서버는 Required=Y대로 동작해
+                빈 문자열을 보내면 "1511:필수입력 파라미터=min_trde_qty" 오류가 난다. 거래량구분이 "0"
+                (사용안함)일 때도 마찬가지이므로 미사용 시에도 전체 범위값을 그대로 보낸다.
+            max_trde_qty (str): 최대거래량 (12자리, 100000000 주 이하). Defaults to "100000000".
+            min_trde_prica (str): 최소거래대금 (10자리, 0 백만원 이상). Defaults to "0".
+            max_trde_prica (str): 최대거래대금 (10자리, 100000000 백만원 이하). Defaults to "100000000".
             stk_cd (str, optional): 종목코드 (20자리, 거래소별 종목코드 (KRX:039490,NXT:039490_NX,SOR:039490_AL) 공백입력시 시장구분으로 설정한 전체종목조회)
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
