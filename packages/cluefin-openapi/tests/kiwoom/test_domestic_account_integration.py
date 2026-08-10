@@ -29,6 +29,8 @@ from cluefin_openapi.kiwoom._domestic_account_types import (
     DomesticAccountUnexecutedSplitOrderDetails,
 )
 
+from ._integration_helpers import real_account_only
+
 
 @pytest.mark.integration
 def test_get_daily_stock_realized_profit_loss_by_date(client: Client):
@@ -111,6 +113,7 @@ def test_get_deposit_balance_details(client: Client):
 
 
 @pytest.mark.integration
+@real_account_only("kt00002", "RC9000:모의투자에서는 해당업무가 제공되지 않습니다")
 def test_get_daily_estimated_deposit_asset_balance(client: Client):
     response = client.account.get_daily_estimated_deposit_asset_balance("20240601", "20240630")
 
@@ -135,6 +138,7 @@ def test_get_account_evaluation_status(client: Client):
 
 
 @pytest.mark.integration
+@real_account_only("kt00005", "RC9000:모의투자에서는 해당업무가 제공되지 않습니다")
 def test_get_execution_balance(client: Client):
     response = client.account.get_execution_balance("KRX")
 
@@ -178,6 +182,7 @@ def test_get_account_order_execution_status(client: Client):
 
 
 @pytest.mark.integration
+@real_account_only("kt00010", "RC7006:모의투자 조회실패")
 def test_get_available_withdrawal_amount(client: Client):
     response = client.account.get_available_withdrawal_amount(
         io_amt="1000000", stk_cd="005930", trde_tp="1", trde_qty="10", uv="50000", exp_buy_unp="60000"
@@ -196,6 +201,7 @@ def test_get_available_order_quantity_by_margin_rate(client: Client):
 
 
 @pytest.mark.integration
+@real_account_only("kt00012", "RC9000:모의투자에서는 해당업무가 제공되지 않습니다")
 def test_get_available_order_quantity_by_margin_loan_stock(client: Client):
     response = client.account.get_available_order_quantity_by_margin_loan_stock(stk_cd="005930", uv="50000")
 
@@ -212,6 +218,7 @@ def test_get_margin_details(client: Client):
 
 
 @pytest.mark.integration
+@real_account_only("kt00015", "RC9000:모의투자에서는 해당업무가 제공되지 않습니다")
 def test_get_consignment_comprehensive_transaction_history(client: Client):
     response = client.account.get_consignment_comprehensive_transaction_history(
         strt_dt="20240601",
@@ -229,6 +236,7 @@ def test_get_consignment_comprehensive_transaction_history(client: Client):
 
 
 @pytest.mark.integration
+@real_account_only("kt00016", "RC9000:모의투자에서는 해당업무가 제공되지 않습니다")
 def test_get_daily_account_profit_rate_details(client: Client):
     response = client.account.get_daily_account_profit_rate_details(fr_dt="20240601", to_dt="20240630")
 
@@ -237,6 +245,7 @@ def test_get_daily_account_profit_rate_details(client: Client):
 
 
 @pytest.mark.integration
+@real_account_only("kt00017", "RC9000:모의투자에서는 해당업무가 제공되지 않습니다")
 def test_get_account_current_day_status(client: Client):
     response = client.account.get_account_current_day_status()
 

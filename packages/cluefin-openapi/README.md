@@ -381,6 +381,25 @@ uv run pytest packages/cluefin-openapi/tests/kiwoom/test_auth_unit.py -v
 uv run pytest --cov=cluefin_openapi --cov-report=html
 ```
 
+### Kiwoom 실계좌 전용(`real_account_only`) 테스트 실행
+
+모의투자에서 제공되지 않는 API 테스트는 `real_account_only` 데코레이터로 skip 처리되어 있습니다.
+`KIWOOM_ENV=prod`(+ 실계좌 키)를 셸 환경변수로 주면 코드 수정 없이 skip이 자동으로 풀리고 실제 검증이 실행됩니다.
+
+> ⚠️ `KIWOOM_ENV=prod`로 전체 통합 테스트를 돌리면 안 됩니다. 주문 테스트(`test_*_order_integration.py`)는
+> 실제 주문이 접수되고, `test_request_exchange`(ust31302)는 실제 환전이 실행됩니다. 조회성 계좌 테스트만 골라서 실행하세요.
+
+```bash
+# 국내 계좌의 real_account_only 대상만
+KIWOOM_ENV=prod KIWOOM_APP_KEY=<실계좌키> KIWOOM_SECRET_KEY=<실계좌시크릿> \
+  uv run pytest packages/cluefin-openapi/tests/kiwoom/test_domestic_account_integration.py \
+  -m integration -k "estimated_deposit or execution_balance or withdrawal_amount or margin_loan_stock or consignment or profit_rate_details or current_day_status" -v
+
+# 해외 계좌 조회 계열
+KIWOOM_ENV=prod KIWOOM_APP_KEY=<실계좌키> KIWOOM_SECRET_KEY=<실계좌시크릿> \
+  uv run pytest packages/cluefin-openapi/tests/kiwoom/test_overseas_account_integration.py -m integration -v
+```
+
 ### KIS 통합 테스트 디버깅
 
 - 기본적으로 KIS integration 테스트 실패 시 raw 응답을 출력하지 않습니다.

@@ -3,6 +3,8 @@ import pytest
 from cluefin_openapi.kiwoom._client import Client
 from cluefin_openapi.kiwoom._exceptions import KiwoomAPIError
 
+from ._integration_helpers import skip_if_env_blocked
+
 TEST_STK_CD = "005930"
 
 
@@ -38,7 +40,7 @@ def pending_buy_order_no(client: Client) -> str:
             cond_uv="",
         )
     except KiwoomAPIError as e:
-        pytest.skip(f"매수주문 접수 불가 (모의투자 영업일/장 운영시간 아님): {e}")
+        skip_if_env_blocked(e)
 
     ord_no = response.body.ord_no
     assert ord_no, "매수주문 응답에 주문번호가 없다"
@@ -47,9 +49,13 @@ def pending_buy_order_no(client: Client) -> str:
 
 @pytest.mark.integration
 def test_request_buy_order(client: Client):
-    response = client.order.request_buy_order(
-        dmst_stex_tp="KRX", stk_cd=TEST_STK_CD, ord_qty="1", ord_uv="", trde_tp="3", cond_uv=""
-    )
+    try:
+        response = client.order.request_buy_order(
+            dmst_stex_tp="KRX", stk_cd=TEST_STK_CD, ord_qty="1", ord_uv="", trde_tp="3", cond_uv=""
+        )
+    except KiwoomAPIError as e:
+        skip_if_env_blocked(e)
+
     assert response is not None
     assert response.body is not None
     assert response.body.ord_no is not None
@@ -57,9 +63,13 @@ def test_request_buy_order(client: Client):
 
 @pytest.mark.integration
 def test_request_sell_order(client: Client):
-    response = client.order.request_sell_order(
-        dmst_stex_tp="KRX", stk_cd=TEST_STK_CD, ord_qty="1", ord_uv="", trde_tp="3", cond_uv=""
-    )
+    try:
+        response = client.order.request_sell_order(
+            dmst_stex_tp="KRX", stk_cd=TEST_STK_CD, ord_qty="1", ord_uv="", trde_tp="3", cond_uv=""
+        )
+    except KiwoomAPIError as e:
+        skip_if_env_blocked(e)
+
     assert response is not None
     assert response.body is not None
 
