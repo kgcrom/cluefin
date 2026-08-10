@@ -271,11 +271,9 @@ def test_get_volatility_control_event(client: Client):
         motn_tp="0",  # 전체
         skip_stk="000000000",  # 전종목포함 조회
         trde_qty_tp="0",  # 사용안함
-        min_trde_qty="",  # 공백허용
-        max_trde_qty="",  # 공백허용
         trde_prica_tp="0",  # 사용안함
-        min_trde_prica="",  # 공백허용
-        max_trde_prica="",  # 공백허용
+        # min/max_trde_qty, min/max_trde_prica는 기본값(전체 범위)을 그대로 사용한다.
+        # 빈 문자열을 넘기면 "1511:필수입력 파라미터=min_trde_qty" 오류가 나므로 기본값이 유효한지도 함께 검증한다.
         motn_drc="0",  # 전체
         stex_tp="1",  # KRX
     )

@@ -9,7 +9,7 @@ from cluefin_openapi.kiwoom._domestic_sector import DomesticSector
 from ._helpers import EndpointCase, run_post_case
 
 CALL_KWARGS = {
-    "get_industry_program": {"stk_code": "005930"},
+    "get_industry_program": {"stk_cd": "005930"},
     "get_industry_investor_net_buy": {
         "mrkt_tp": "0",
         "amt_qty_tp": "0",
