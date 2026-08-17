@@ -23,6 +23,7 @@ from cluefin_openapi.kiwoom._overseas_stock_info_types import (
     OverseasStockInfoSectorList,
     OverseasStockInfoStock,
     OverseasStockInfoStockList,
+    OverseasStockInfoStockMemo,
     OverseasStockInfoVolumeConcentrationEtf,
     OverseasStockInfoVolumeConcentrationStock,
     OverseasStockInfoVolumeRenewalEtf,
@@ -66,6 +67,16 @@ def test_get_stock(client: Client):
     assert response.headers is not None
     assert response.body is not None
     assert isinstance(response.body, OverseasStockInfoStock)
+
+
+@pytest.mark.integration
+def test_get_stock_memo(client: Client):
+    response = client.overseas_stock_info.get_stock_memo(input_list=[{"stex_tp": "ND", "stk_cd": "AAPL"}])
+
+    assert response is not None
+    assert response.headers is not None
+    assert response.body is not None
+    assert isinstance(response.body, OverseasStockInfoStockMemo)
 
 
 @pytest.mark.integration

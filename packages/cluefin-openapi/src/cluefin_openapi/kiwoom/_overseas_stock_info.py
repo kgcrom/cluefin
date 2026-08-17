@@ -27,6 +27,7 @@ from cluefin_openapi.kiwoom._overseas_stock_info_types import (
     OverseasStockInfoSectorList,
     OverseasStockInfoStock,
     OverseasStockInfoStockList,
+    OverseasStockInfoStockMemo,
     OverseasStockInfoVolumeConcentrationEtf,
     OverseasStockInfoVolumeConcentrationStock,
     OverseasStockInfoVolumeRenewalEtf,
@@ -235,6 +236,43 @@ class OverseasStockInfo:
 
         res_headers = KiwoomHttpHeader.model_validate(response.headers)
         res_body = OverseasStockInfoIndexList.model_validate(response.json())
+        return KiwoomHttpResponse(headers=res_headers, body=res_body)
+
+    def get_stock_memo(
+        self,
+        input_list: list[dict[str, str]] | None = None,
+        cont_yn: Literal["Y", "N"] = "N",
+        next_key: str = "",
+    ) -> KiwoomHttpResponse[OverseasStockInfoStockMemo]:
+        """미국주식 종목메모 조회 (usa10103)
+
+        Args:
+            input_list (list[dict[str, str]] | None, optional): 요청종목코드리스트.
+                [{'stex_tp':'거래소구분','stk_cd':'종목코드'},...]. Defaults to None.
+            cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
+            next_key (str, optional): 다음키. Defaults to "".
+
+        Returns:
+            KiwoomHttpResponse[OverseasStockInfoStockMemo]: 미국주식 종목메모 조회 응답
+        """
+        headers = {
+            "Content-Type": "application/json;charset=UTF-8",
+            "Accept": "application/json",
+            "Authorization": f"Bearer {self.client.token}",
+            "cont-yn": cont_yn,
+            "next-key": next_key,
+            "api-id": "usa10103",
+        }
+        body = {
+            "input_list": input_list if input_list is not None else [],
+        }
+
+        response = self.client._post(self.path, headers, body)
+        if response.status_code != 200:
+            raise Exception(f"Error fetching stock memo: {response.text}")
+
+        res_headers = KiwoomHttpHeader.model_validate(response.headers)
+        res_body = OverseasStockInfoStockMemo.model_validate(response.json())
         return KiwoomHttpResponse(headers=res_headers, body=res_body)
 
     def get_etf_etn_list(
