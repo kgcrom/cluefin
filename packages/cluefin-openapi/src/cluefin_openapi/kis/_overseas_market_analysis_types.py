@@ -1,6 +1,6 @@
 from typing import Sequence
 
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 
 from cluefin_openapi.kis._model import KisHttpBody
 
@@ -79,7 +79,8 @@ class StockBuyExecutionStrengthTopItem2(BaseModel):
     rsym: str = Field(title="실시간조회심볼", max_length=16)
     excd: str = Field(title="거래소코드", max_length=4)
     symb: str = Field(title="종목코드", max_length=16)
-    name: str = Field(title="종목명", max_length=48)
+    # 공식 문서는 knam/enam으로 표기하지만 실서버 응답 키는 name/ename — 둘 다 수용
+    name: str = Field(validation_alias=AliasChoices("name", "knam"), title="종목명", max_length=48)
     last: str = Field(title="현재가", max_length=12)
     sign: str = Field(title="기호", max_length=1)
     diff: str = Field(title="대비", max_length=12)
@@ -89,7 +90,7 @@ class StockBuyExecutionStrengthTopItem2(BaseModel):
     pbid: str = Field(title="매수호가", max_length=12)
     tpow: str = Field(title="당일체결강도", max_length=10)
     powx: str = Field(title="체결강도", max_length=10)
-    ename: str = Field(title="영문종목명", max_length=48)
+    ename: str = Field(validation_alias=AliasChoices("ename", "enam"), title="영문종목명", max_length=48)
     e_ordyn: str = Field(title="매매가능", max_length=2)
 
 

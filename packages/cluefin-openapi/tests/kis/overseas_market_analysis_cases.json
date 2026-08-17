@@ -2,12 +2,12 @@
     {
         "method_name": "get_stock_price_fluctuation",
         "response_model_attr": "StockPriceFluctuation",
-        "endpoint": "/uapi/overseas-stock/v1/ranking/price-fluctuation",
+        "endpoint": "/uapi/overseas-stock/v1/ranking/price-fluct",
         "method": "GET",
         "call_kwargs": {
             "excd": "NAS",
             "gubn": "1",
-            "mixn": "3",
+            "minx": "3",
             "vol_rang": "0"
         },
         "expected_headers": {
@@ -18,7 +18,7 @@
             "AUTH": "",
             "EXCD": "NAS",
             "GUBN": "1",
-            "MIXN": "3",
+            "MINX": "3",
             "VOL_RANG": "0"
         },
         "response_payload": {
@@ -44,7 +44,7 @@
             "keyb": "",
             "auth": "",
             "excd": "NYS",
-            "mixn": "4",
+            "minx": "4",
             "vol_rang": "1"
         },
         "expected_headers": {
@@ -54,7 +54,6 @@
             "KEYB": "",
             "AUTH": "",
             "EXCD": "NYS",
-            "MIXN": "4",
             "MINX": "4",
             "VOL_RANG": "1"
         },
@@ -95,13 +94,28 @@
         },
         "response_payload": {
             "rt_cd": "0",
-            "output": [
+            "output1": {
+                "zdiv": "4",
+                "stat": "장중",
+                "nrec": "2"
+            },
+            "output2": [
                 {
-                    "rsym": "MSFT",
+                    "rsym": "DNASMSFT",
+                    "excd": "NAS",
                     "symb": "MSFT",
-                    "rsym_name": "Microsoft Corp",
-                    "last": "380.25",
-                    "rate": "125.5"
+                    "name": "마이크로소프트",
+                    "last": "380.2500",
+                    "sign": "2",
+                    "diff": "1.2500",
+                    "rate": "0.33",
+                    "tvol": "1234567",
+                    "pask": "380.3000",
+                    "pbid": "380.2000",
+                    "tpow": "120.5",
+                    "powx": "118.2",
+                    "ename": "MICROSOFT CORP",
+                    "e_ordyn": "○"
                 }
             ]
         }

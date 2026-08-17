@@ -5,6 +5,7 @@
         "endpoint": "/uapi/overseas-stock/v1/trading/order",
         "method": "POST",
         "call_kwargs": {
+            "tr_id": "TTTT1002U",
             "cano": "12345678",
             "acnt_prdt_cd": "01",
             "ovrs_excg_cd": "NASD",
@@ -24,6 +25,7 @@
             "ORD_QTY": "10",
             "OVRS_ORD_UNPR": "150.50",
             "ORD_DVSN": "00",
+            "ORD_SVR_DVSN_CD": "0",
             "START_TIME": "",
             "END_TIME": "",
             "ALGO_ORD_TMD_DVSN_CD": ""
@@ -43,6 +45,7 @@
         "endpoint": "/uapi/overseas-stock/v1/trading/order-rvsecncl",
         "method": "POST",
         "call_kwargs": {
+            "tr_id": "TTTT1004U",
             "cano": "12345678",
             "acnt_prdt_cd": "01",
             "ovrs_excg_cd": "NASD",
@@ -81,6 +84,7 @@
         "endpoint": "/uapi/overseas-stock/v1/trading/order-resv",
         "method": "POST",
         "call_kwargs": {
+            "tr_id": "TTTT3014U",
             "cano": "12345678",
             "acnt_prdt_cd": "01",
             "pdno": "JPY00001",
@@ -122,6 +126,7 @@
         "endpoint": "/uapi/overseas-stock/v1/trading/order-resv-ccnl",
         "method": "POST",
         "call_kwargs": {
+            "tr_id": "TTTT3017U",
             "cano": "12345678",
             "acnt_prdt_cd": "01",
             "rsyn_ord_rcit_dt": "20240101",
@@ -149,6 +154,7 @@
         "endpoint": "/uapi/overseas-stock/v1/trading/inquire-psamount",
         "method": "GET",
         "call_kwargs": {
+            "tr_id": "TTTS3007R",
             "cano": "12345678",
             "acnt_prdt_cd": "01",
             "ovrs_excg_cd": "NASD",
@@ -215,6 +221,7 @@
         "endpoint": "/uapi/overseas-stock/v1/trading/inquire-balance",
         "method": "GET",
         "call_kwargs": {
+            "tr_id": "TTTS3012R",
             "cano": "12345678",
             "acnt_prdt_cd": "01",
             "ovrs_excg_cd": "NASD",
@@ -255,6 +262,7 @@
         "endpoint": "/uapi/overseas-stock/v1/trading/inquire-ccnl",
         "method": "GET",
         "call_kwargs": {
+            "tr_id": "TTTS3035R",
             "cano": "12345678",
             "acnt_prdt_cd": "01",
             "pdno": "%",
@@ -305,6 +313,7 @@
         "endpoint": "/uapi/overseas-stock/v1/trading/inquire-present-balance",
         "method": "GET",
         "call_kwargs": {
+            "tr_id": "CTRP6504R",
             "cano": "12345678",
             "acnt_prdt_cd": "01",
             "wcrc_frcr_dvsn_cd": "01",
@@ -338,7 +347,10 @@
                     "tot_evlu_amt": "1505000",
                     "deposit": "500000"
                 }
-            ]
+            ],
+            "output3": {
+                "tot_asst_amt": "1505000"
+            }
         }
     },
     {
@@ -347,6 +359,7 @@
         "endpoint": "/uapi/overseas-stock/v1/trading/order-resv-list",
         "method": "GET",
         "call_kwargs": {
+            "tr_id": "TTTT3039R",
             "cano": "12345678",
             "acnt_prdt_cd": "01",
             "inqr_strt_dt": "20240101",
@@ -371,11 +384,13 @@
         },
         "response_payload": {
             "rt_cd": "0",
-            "output": {
-                "rsvn_odno": "RES001",
-                "pdno": "AAPL",
-                "ft_ord_qty": "100"
-            },
+            "output": [
+                {
+                    "rsvn_odno": "RES001",
+                    "pdno": "AAPL",
+                    "ft_ord_qty": "100"
+                }
+            ],
             "ctx_area_fk200": "0",
             "ctx_area_nk200": ""
         }
@@ -416,7 +431,10 @@
                     "tot_deposit": "500000",
                     "tot_evlu_amt": "1505000"
                 }
-            ]
+            ],
+            "output3": {
+                "tot_dncl_amt": "500000"
+            }
         }
     },
     {
@@ -451,7 +469,7 @@
         },
         "response_payload": {
             "rt_cd": "0",
-            "output": [
+            "output1": [
                 {
                     "trad_dt": "20240115",
                     "pdno": "AAPL",
@@ -460,6 +478,10 @@
                     "trad_amt": "1505000"
                 }
             ],
+            "output2": {
+                "frcr_buy_amt_smtl": "1505000",
+                "frcr_sll_amt_smtl": "0"
+            },
             "ctx_area_fk100": "0",
             "ctx_area_nk100": ""
         }
@@ -498,7 +520,7 @@
         },
         "response_payload": {
             "rt_cd": "0",
-            "output": [
+            "output1": [
                 {
                     "pdno": "AAPL",
                     "pft_loss_amt": "50000",
@@ -545,6 +567,7 @@
         "endpoint": "/uapi/overseas-stock/v1/trading/daytime-order",
         "method": "POST",
         "call_kwargs": {
+            "tr_id": "TTTS6036U",
             "cano": "12345678",
             "acnt_prdt_cd": "01",
             "ovrs_excg_cd": "NYSE",
@@ -622,7 +645,7 @@
         "call_kwargs": {
             "trad_dt": "20240115",
             "cano": "12345678",
-            "acno_prdt_cd": "01"
+            "acnt_prdt_cd": "01"
         },
         "expected_headers": {
             "tr_id": "TTTS6058R"
@@ -630,7 +653,7 @@
         "expected_body": {
             "TRAD_DT": "20240115",
             "CANO": "12345678",
-            "ACNO_PRDT_CD": "01",
+            "ACNT_PRDT_CD": "01",
             "CTX_AREA_NK200": "",
             "CTX_AREA_FK200": ""
         },
@@ -681,12 +704,10 @@
                     "ccld_amt": "7525000"
                 }
             ],
-            "output2": [
-                {
-                    "tot_ccld_qty": "50",
-                    "tot_ccld_amt": "7525000"
-                }
-            ],
+            "output2": {
+                "tot_ccld_qty": "50",
+                "tot_ccld_amt": "7525000"
+            },
             "ctx_area_nk200": "",
             "ctx_area_fk200": "0"
         }

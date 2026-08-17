@@ -7,10 +7,15 @@ from cluefin_openapi.kis._model import KisHttpBody
 
 class StockQuoteCurrentItem(BaseModel):
     krx_fwdg_ord_orgno: str = Field(
-        title="한국거래소전송주문조직번호", max_length=5, description="주문시 한국투자증권 시스템에서 지정된 영업점코드"
+        title="한국거래소전송주문조직번호",
+        max_length=5,
+        alias="KRX_FWDG_ORD_ORGNO",
+        description="주문시 한국투자증권 시스템에서 지정된 영업점코드",
     )
-    odno: str = Field(title="주문번호", max_length=10, description="주문시 한국투자증권 시스템에서 채번된 주문번호")
-    ord_tmd: str = Field(title="주문시각", max_length=6, description="주문시각(시분초HHMMSS)")
+    odno: str = Field(
+        title="주문번호", max_length=10, alias="ODNO", description="주문시 한국투자증권 시스템에서 채번된 주문번호"
+    )
+    ord_tmd: str = Field(title="주문시각", max_length=6, alias="ORD_TMD", description="주문시각(시분초HHMMSS)")
 
 
 class StockQuoteCurrent(BaseModel, KisHttpBody):
@@ -39,19 +44,22 @@ class StockQuoteCorrection(BaseModel, KisHttpBody):
 
 
 class StockReserveQuoteItem(BaseModel):
-    odno: str = Field(
+    odno: Optional[str] = Field(
+        default=None,
         title="한국거래소전송주문조직번호",
         max_length=10,
         alias="ODNO",
         description="tr_id가 TTTT3016U(미국 예약 매도 주문) / TTTT3014U(미국 예약 매수 주문)인 경우만 출력",
     )
-    rsvn_ord_rcit_dt: str = Field(
+    rsvn_ord_rcit_dt: Optional[str] = Field(
+        default=None,
         title="예약주문접수일자",
         max_length=8,
         alias="RSVN_ORD_RCIT_DT",
         description="tr_id가 TTTS3013U(중국/홍콩/일본/베트남 예약 주문)인 경우만 출력",
     )
-    ovrs_rsvn_odno: str = Field(
+    ovrs_rsvn_odno: Optional[str] = Field(
+        default=None,
         title="해외예약주문번호",
         max_length=10,
         alias="OVRS_RSVN_ODNO",
@@ -361,6 +369,9 @@ class CurrentBalanceByConclusionItem2(BaseModel):
     frcr_evlu_amt2: str = Field(title="출금가능원화금액", max_length=29, description="출금가능한 원화금액")
     acpl_cstd_crcy_yn: str = Field(title="현지보관통화여부", max_length=1)
     nxdy_frcr_drwg_psbl_amt: str = Field(title="익일외화출금가능금액", max_length=31)
+
+
+class CurrentBalanceByConclusionItem3(BaseModel):
     pchs_amt_smtl: str = Field(
         title="매입금액합계", max_length=19, description="해외유가증권 매수금액의 원화 환산 금액"
     )
@@ -395,6 +406,7 @@ class CurrentBalanceByConclusion(BaseModel, KisHttpBody):
 
     output1: Sequence[CurrentBalanceByConclusionItem1] = Field(default_factory=list)
     output2: Sequence[CurrentBalanceByConclusionItem2] = Field(default_factory=list)
+    output3: CurrentBalanceByConclusionItem3 = Field(title="응답상세3")
 
 
 class ReserveOrdersItem(BaseModel):
@@ -405,7 +417,7 @@ class ReserveOrdersItem(BaseModel):
     ord_gno_brno: Optional[str] = Field(title="주문채번지점번호", max_length=5)
     odno: Optional[str] = Field(title="주문번호", max_length=10)
     sll_buy_dvsn_cd: Optional[str] = Field(title="매도매수구분코드", max_length=2)
-    sll_buy_dvsn_name: Optional[str] = Field(title="매도매수구분명", max_length=4)
+    sll_buy_dvsn_cd_name: Optional[str] = Field(title="매도매수구분명", max_length=4)
     ovrs_rsvn_ord_stat_cd: Optional[str] = Field(title="해외예약주문상태코드", max_length=2)
     ovrs_rsvn_ord_stat_cd_name: Optional[str] = Field(title="해외예약주문상태코드명", max_length=60)
     pdno: Optional[str] = Field(title="상품번호", max_length=12)
@@ -433,7 +445,7 @@ class ReserveOrders(BaseModel, KisHttpBody):
 
     ctx_area_fk200: str = Field(title="연속조회검색조건200", max_length=200)
     ctx_area_nk200: str = Field(title="연속조회키200", max_length=200)
-    output: ReserveOrdersItem = Field(title="응답상세")
+    output: Sequence[ReserveOrdersItem] = Field(default_factory=list)
 
 
 class BalanceBySettlementItem1(BaseModel):
@@ -469,6 +481,9 @@ class BalanceBySettlementItem2(BaseModel):
     frcr_dncl_amt_2: str = Field(title="외화예수금액2", max_length=236)
     frst_bltn_exrt: str = Field(title="최초고시환율", max_length=238)
     frcr_evlu_amt2: str = Field(title="외화평가금액2", max_length=236)
+
+
+class BalanceBySettlementItem3(BaseModel):
     pchs_amt_smtl_amt: str = Field(title="매입금액합계금액", max_length=19)
     tot_evlu_pfls_amt: str = Field(title="총평가손익금액", max_length=238)
     evlu_erng_rt1: str = Field(title="평가수익율1", max_length=201)
@@ -485,6 +500,7 @@ class BalanceBySettlement(BaseModel, KisHttpBody):
 
     output1: Sequence[BalanceBySettlementItem1] = Field(default_factory=list)
     output2: Sequence[BalanceBySettlementItem2] = Field(default_factory=list)
+    output3: BalanceBySettlementItem3 = Field(title="응답상세3")
 
 
 class DailyTransactionHistoryItem(BaseModel):
@@ -511,7 +527,9 @@ class DailyTransactionHistoryItem(BaseModel):
     erlm_exrt: str = Field(title="등록환율", max_length=238)
     loan_dvsn_cd: str = Field(title="대출구분코드", max_length=2)
     loan_dvsn_name: str = Field(title="대출구분명", max_length=60)
-    output2: str = Field(title="응답상세")
+
+
+class DailyTransactionHistoryItem2(BaseModel):
     frcr_buy_amt_smtl: str = Field(title="외화매수금액합계", max_length=236)
     frcr_sll_amt_smtl: str = Field(title="외화매도금액합계", max_length=236)
     dmst_fee_smtl: str = Field(title="국내수수료합계", max_length=256)
@@ -521,9 +539,10 @@ class DailyTransactionHistoryItem(BaseModel):
 class DailyTransactionHistory(BaseModel, KisHttpBody):
     """해외주식 일별거래내역"""
 
-    ctx_area_fk200: str = Field(title="연속조회검색조건200", max_length=200)
-    ctx_area_nk200: str = Field(title="연속조회키200", max_length=200)
-    output: Sequence[DailyTransactionHistoryItem] = Field(default_factory=list)
+    ctx_area_fk100: str = Field(title="연속조회검색조건100", max_length=100)
+    ctx_area_nk100: str = Field(title="연속조회키100", max_length=100)
+    output1: Sequence[DailyTransactionHistoryItem] = Field(default_factory=list)
+    output2: DailyTransactionHistoryItem2 = Field(title="응답상세2")
 
 
 class PeriodProfitLossItem1(BaseModel):
@@ -577,7 +596,7 @@ class PeriodProfitLossItem2(BaseModel):
 class PeriodProfitLoss(BaseModel, KisHttpBody):
     """해외주식 기간손익"""
 
-    output: Sequence[PeriodProfitLossItem1] = Field(default_factory=list)
+    output1: Sequence[PeriodProfitLossItem1] = Field(default_factory=list)
     output2: PeriodProfitLossItem2 = Field(title="응답상세2")
 
 
@@ -603,10 +622,15 @@ class MarginAggregate(BaseModel, KisHttpBody):
 
 class OrderAfterDayTimeItem(BaseModel):
     krx_fwdg_ord_orgno: str = Field(
-        title="한국거래소전송주문조직번호", max_length=5, description="주문시 한국투자증권 시스템에서 지정된 영업점코드"
+        title="한국거래소전송주문조직번호",
+        max_length=5,
+        alias="KRX_FWDG_ORD_ORGNO",
+        description="주문시 한국투자증권 시스템에서 지정된 영업점코드",
     )
-    odno: str = Field(title="주문번호", max_length=10, description="주문시 한국투자증권 시스템에서 채번된 주문번호")
-    ord_tmd: str = Field(title="주문시각", max_length=6, description="주문시각(시분초HHMMSS)")
+    odno: str = Field(
+        title="주문번호", max_length=10, alias="ODNO", description="주문시 한국투자증권 시스템에서 채번된 주문번호"
+    )
+    ord_tmd: str = Field(title="주문시각", max_length=6, alias="ORD_TMD", description="주문시각(시분초HHMMSS)")
 
 
 class OrderAfterDayTime(BaseModel, KisHttpBody):
@@ -617,10 +641,15 @@ class OrderAfterDayTime(BaseModel, KisHttpBody):
 
 class CorrectAfterDayTimeItem(BaseModel):
     krx_fwdg_ord_orgno: str = Field(
-        title="한국거래소전송주문조직번호", max_length=5, description="주문시 한국투자증권 시스템에서 지정된 영업점코드"
+        title="한국거래소전송주문조직번호",
+        max_length=5,
+        alias="KRX_FWDG_ORD_ORGNO",
+        description="주문시 한국투자증권 시스템에서 지정된 영업점코드",
     )
-    odno: str = Field(title="주문번호", max_length=10, description="주문시 한국투자증권 시스템에서 채번된 주문번호")
-    ord_tmd: str = Field(title="주문시각", max_length=6, description="주문시각(시분초HHMMSS)")
+    odno: str = Field(
+        title="주문번호", max_length=10, alias="ODNO", description="주문시 한국투자증권 시스템에서 채번된 주문번호"
+    )
+    ord_tmd: str = Field(title="주문시각", max_length=6, alias="ORD_TMD", description="주문시각(시분초HHMMSS)")
 
 
 class CorrectAfterDayTime(BaseModel, KisHttpBody):
@@ -639,16 +668,13 @@ class LimitOrderNumberItem(BaseModel):
     splt_buy_attr_name: str = Field(title="분할매수속성명", max_length=60)
     ft_ccld_qty: str = Field(title="FT체결수량", max_length=4)
     ord_gno_brno: Optional[str] = Field(title="주문채번지점번호", max_length=5)
-    rt_cd: str = Field(title="성공 실패 여부", max_length=1, description="0 : 성공 0 이외의 값 : 실패")
-    msg_cd: str = Field(title="응답코드", max_length=8)
-    msg1: str = Field(title="응답메세지", max_length=80)
-    ctx_area_fk200: str = Field(title="연속조회검색조건200", max_length=200)
-    ctx_area_nk200: str = Field(title="연속조회키200", max_length=200)
 
 
 class LimitOrderNumber(BaseModel, KisHttpBody):
     """해외주식 지정가주문번호조회"""
 
+    ctx_area_fk200: str = Field(title="연속조회검색조건200", max_length=200)
+    ctx_area_nk200: str = Field(title="연속조회키200", max_length=200)
     output: Sequence[LimitOrderNumberItem] = Field(default_factory=list)
 
 
@@ -682,4 +708,4 @@ class LimitOrderExecutionHistory(BaseModel, KisHttpBody):
     """해외주식 지정가체결내역조회"""
 
     output1: Sequence[LimitOrderConclusionHistoryItem1] = Field(default_factory=list)
-    output2: Sequence[LimitOrderConclusionHistoryItem2] = Field(alias="output3", default_factory=list)
+    output2: LimitOrderConclusionHistoryItem2 = Field(title="응답상세2")
