@@ -14,8 +14,7 @@
             "fid_trgt_exls_cls_code": "0000000000",
             "fid_input_price_1": "",
             "fid_input_price_2": "",
-            "fid_vol_cnt": "",
-            "fid_input_date_1": ""
+            "fid_vol_cnt": ""
         },
         "expected_headers": {
             "tr_id": "FHPST01710000"
@@ -30,8 +29,7 @@
             "FID_TRGT_EXLS_CLS_CODE": "0000000000",
             "FID_INPUT_PRICE_1": "",
             "FID_INPUT_PRICE_2": "",
-            "FID_VOL_CNT": "",
-            "FID_INPUT_DATE_1": ""
+            "FID_VOL_CNT": ""
         },
         "response_payload": {
             "rt_cd": "0",
@@ -454,6 +452,163 @@
                 {
                     "mrkt_div_cls_code": "J",
                     "mksc_shrn_iscd": "005930"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_dividend_yield_top",
+        "response_model_attr": "StockDividendYieldTop",
+        "endpoint": "/uapi/domestic-stock/v1/ranking/dividend-rate",
+        "method": "GET",
+        "call_kwargs": {
+            "cts_area": "",
+            "gb1": "0",
+            "upjong": "0001",
+            "gb2": "0",
+            "gb3": "1",
+            "f_dt": "20240101",
+            "t_dt": "20241231",
+            "gb4": "0"
+        },
+        "expected_headers": {
+            "tr_id": "HHKDB13470100"
+        },
+        "expected_body": {
+            "CTS_AREA": "",
+            "GB1": "0",
+            "UPJONG": "0001",
+            "GB2": "0",
+            "GB3": "1",
+            "F_DT": "20240101",
+            "T_DT": "20241231",
+            "GB4": "0"
+        },
+        "response_payload": {
+            "rt_cd": "0",
+            "msg_cd": "MCA00000",
+            "msg1": "정상처리 되었습니다.",
+            "output1": [
+                {
+                    "rank": "1",
+                    "sht_cd": "005930",
+                    "isin_name": "삼성전자",
+                    "record_date": "20241231",
+                    "per_sto_divi_amt": "361",
+                    "divi_rate": "2.5",
+                    "divi_kind": "1"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_credit_balance_top",
+        "response_model_attr": "StockCreditBalanceTop",
+        "endpoint": "/uapi/domestic-stock/v1/ranking/credit-balance",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_scr_div_code": "11701",
+            "fid_input_iscd": "0000",
+            "fid_option": "2",
+            "fid_cond_mrkt_div_code": "J",
+            "fid_rank_sort_cls_code": "0"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST17010000"
+        },
+        "expected_body": {
+            "FID_COND_SCR_DIV_CODE": "11701",
+            "FID_INPUT_ISCD": "0000",
+            "FID_OPTION": "2",
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_RANK_SORT_CLS_CODE": "0"
+        },
+        "response_payload": {
+            "rt_cd": "0",
+            "msg_cd": "MCA00000",
+            "msg1": "정상처리 되었습니다.",
+            "output1": [
+                {
+                    "bstp_cls_code": "001",
+                    "hts_kor_isnm": "종합",
+                    "stnd_date1": "20241231",
+                    "stnd_date2": "20241230"
+                }
+            ],
+            "output2": [
+                {
+                    "mksc_shrn_iscd": "005930",
+                    "hts_kor_isnm": "삼성전자",
+                    "stck_prpr": "70000",
+                    "prdy_vrss": "1000",
+                    "prdy_vrss_sign": "2",
+                    "prdy_ctrt": "1.43",
+                    "acml_vol": "10000000",
+                    "whol_loan_rmnd_stcn": "1000000",
+                    "whol_loan_rmnd_amt": "70000000000",
+                    "whol_loan_rmnd_rate": "1.5",
+                    "whol_stln_rmnd_stcn": "500000",
+                    "whol_stln_rmnd_amt": "35000000000",
+                    "whol_stln_rmnd_rate": "0.8",
+                    "nday_vrss_loan_rmnd_inrt": "2.1",
+                    "nday_vrss_stln_rmnd_inrt": "1.1"
+                }
+            ]
+        }
+    },
+    {
+        "method_name": "get_stock_short_selling_top",
+        "response_model_attr": "StockShortSellingTop",
+        "endpoint": "/uapi/domestic-stock/v1/ranking/short-sale",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_aply_rang_vol": "",
+            "fid_cond_mrkt_div_code": "J",
+            "fid_cond_scr_div_code": "20482",
+            "fid_input_iscd": "0000",
+            "fid_period_div_code": "D",
+            "fid_input_cnt_1": "0",
+            "fid_trgt_exls_cls_code": "",
+            "fid_trgt_cls_code": "",
+            "fid_aply_rang_prc_1": "",
+            "fid_aply_rang_prc_2": ""
+        },
+        "expected_headers": {
+            "tr_id": "FHPST04820000"
+        },
+        "expected_body": {
+            "FID_APLY_RANG_VOL": "",
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_COND_SCR_DIV_CODE": "20482",
+            "FID_INPUT_ISCD": "0000",
+            "FID_PERIOD_DIV_CODE": "D",
+            "FID_INPUT_CNT_1": "0",
+            "FID_TRGT_EXLS_CLS_CODE": "",
+            "FID_TRGT_CLS_CODE": "",
+            "FID_APLY_RANG_PRC_1": "",
+            "FID_APLY_RANG_PRC_2": ""
+        },
+        "response_payload": {
+            "rt_cd": "0",
+            "msg_cd": "MCA00000",
+            "msg1": "정상처리 되었습니다.",
+            "output": [
+                {
+                    "mksc_shrn_iscd": "005930",
+                    "hts_kor_isnm": "삼성전자",
+                    "stck_prpr": "70000",
+                    "prdy_vrss": "1000",
+                    "prdy_vrss_sign": "2",
+                    "prdy_ctrt": "1.43",
+                    "acml_vol": "10000000",
+                    "acml_tr_pbmn": "700000000000",
+                    "ssts_cntg_qty": "50000",
+                    "ssts_vol_rlim": "0.5",
+                    "ssts_tr_pbmn": "3500000000",
+                    "ssts_tr_pbmn_rlim": "0.5",
+                    "stnd_date1": "20241231",
+                    "stnd_date2": "20241230",
+                    "avrg_prc": "69500"
                 }
             ]
         }

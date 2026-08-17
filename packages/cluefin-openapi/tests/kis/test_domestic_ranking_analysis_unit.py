@@ -11,11 +11,14 @@ from cluefin_openapi.kis import _domestic_ranking_analysis as ranking_analysis_m
 from cluefin_openapi.kis._domestic_ranking_analysis import DomesticRankingAnalysis
 from cluefin_openapi.kis._domestic_ranking_analysis_types import (
     HtsInquiryTop20,
+    StockCreditBalanceTop,
+    StockDividendYieldTop,
     StockFinanceRatioRank,
     StockFluctuationRank,
     StockHogaQuantityRank,
     StockMarketCapTop,
     StockProfitabilityIndicatorRank,
+    StockShortSellingTop,
     StockTimeHogaRank,
     TradingVolumeRank,
 )
@@ -30,6 +33,9 @@ RESPONSE_MODELS = {
     "StockFinanceRatioRank": StockFinanceRatioRank,
     "StockTimeHogaRank": StockTimeHogaRank,
     "HtsInquiryTop20": HtsInquiryTop20,
+    "StockDividendYieldTop": StockDividendYieldTop,
+    "StockCreditBalanceTop": StockCreditBalanceTop,
+    "StockShortSellingTop": StockShortSellingTop,
 }
 
 
@@ -224,7 +230,6 @@ def test_get_trading_volume_rank_detailed():
         fid_input_price_1="",
         fid_input_price_2="",
         fid_vol_cnt="",
-        fid_input_date_1="",
     )
 
     # Verify
@@ -244,7 +249,6 @@ def test_get_trading_volume_rank_detailed():
             "FID_INPUT_PRICE_1": "",
             "FID_INPUT_PRICE_2": "",
             "FID_VOL_CNT": "",
-            "FID_INPUT_DATE_1": "",
         },
     )
 

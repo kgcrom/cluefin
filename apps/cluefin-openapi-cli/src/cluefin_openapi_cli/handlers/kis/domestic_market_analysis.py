@@ -183,12 +183,20 @@ def handle_kis_watchlist_stocks_by_group(params: dict, session) -> dict:
     parameters={
         "type": "object",
         "properties": {
-            "user_id": {"type": "string", "description": "HTS user ID"},
-            "group_code": {"type": "string", "description": "Interest group code"},
-            "interest_type": {"type": "string", "description": "Interest type code (default 1)"},
-            "etc_cls_code": {"type": "string", "description": "FID etc classification code (default 4)"},
+            "market_code": {"type": "string", "description": "FID market division code (default V)"},
+            "screen_code": {"type": "string", "description": "FID screen division code (default 16449)"},
+            "stock_code": {
+                "type": "string",
+                "description": "Input code: 0000 all, 0001 KOSPI, 1001 KOSDAQ (default 0000)",
+            },
+            "div_cls_code": {"type": "string", "description": "0: sort by quantity, 1: sort by amount (default 0)"},
+            "rank_sort_code": {"type": "string", "description": "0: net buy top, 1: net sell top (default 0)"},
+            "etc_cls_code": {
+                "type": "string",
+                "description": "0: all, 1: foreign, 2: institution, 3: etc (default 0)",
+            },
         },
-        "required": ["user_id", "group_code"],
+        "required": [],
     },
     returns={"type": "object"},
     category="analysis",
@@ -197,14 +205,12 @@ def handle_kis_watchlist_stocks_by_group(params: dict, session) -> dict:
 def handle_kis_institutional_foreign_aggregate(params: dict, session) -> dict:
     kis = session.get_kis()
     response = kis.domestic_market_analysis.get_institutional_foreign_trading_aggregate(
-        type_=params.get("interest_type", "1"),
-        user_id=params["user_id"],
-        data_rank="",
-        inter_grp_code=params["group_code"],
-        inter_grp_name="",
-        hts_kor_isnm="",
-        cntg_cls_code="",
-        fid_etc_cls_code=params.get("etc_cls_code", "4"),
+        fid_cond_mrkt_div_code=params.get("market_code", "V"),
+        fid_cond_scr_div_code=params.get("screen_code", "16449"),
+        fid_input_iscd=params.get("stock_code", "0000"),
+        fid_div_cls_code=params.get("div_cls_code", "0"),
+        fid_rank_sort_cls_code=params.get("rank_sort_code", "0"),
+        fid_etc_cls_code=params.get("etc_cls_code", "0"),
     )
     return {"data": extract_output(response, "output")}
 

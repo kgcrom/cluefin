@@ -217,86 +217,25 @@ class StockBalance(BaseModel, KisHttpBody):
     output2: Sequence[StockBalanceItem2] = Field(default_factory=list)
 
 
-class BuyTradableInquiryItem1(BaseModel):
-    pdno: str = Field(title="상품번호", description="종목번호(뒤 6자리만 해당)", max_length=12)
-    prdt_name: str = Field(title="상품명", description="종목명", max_length=60)
-    trad_dvsn_name: str = Field(title="매매구분명", description="매수매도구분", max_length=60)
-    bfdy_buy_qty: str = Field(title="전일매수수량", max_length=10)
-    bfdy_sll_qty: str = Field(title="전일매도수량", max_length=10)
-    thdt_buyqty: str = Field(title="금일매수수량", max_length=10)
-    thdt_sll_qty: str = Field(title="금일매도수량", max_length=10)
-    hldg_qty: str = Field(title="보유수량", max_length=19)
-    ord_psbl_qty: str = Field(title="주문가능수량", max_length=10)
-    pchs_avg_pric: str = Field(title="매입평균가격", description="매입금액 / 보유수량", max_length=22)
-    pchs_amt: str = Field(title="매입금액", max_length=19)
-    prpr: str = Field(title="현재가", max_length=19)
-    evlu_amt: str = Field(title="평가금액", max_length=19)
-    evlu_pfls_amt: str = Field(title="평가손익금액", description="평가금액 - 매입금액", max_length=19)
-    evlu_pfls_rt: str = Field(title="평가손익율", max_length=9)
-    evlu_erng_rt: str = Field(title="평가수익율", description="미사용항목(0으로 출력)", max_length=31)
-    loan_dt: str = Field(
-        title="대출일자", description="INQR_DVSN(조회구분)을 01(대출일별)로 설정해야 값이 나옴", max_length=8
-    )
-    loan_amt: str = Field(title="대출금액", max_length=19)
-    stln_slng_chgs: str = Field(title="대주매각대금", max_length=19)
-    expd_dt: str = Field(title="만기일자", max_length=8)
-    fltt_rt: str = Field(title="등락율", max_length=31)
-    bfdy_cprs_icdc: str = Field(title="전일대비증감", max_length=19)
-    item_mgna_rt_name: str = Field(title="종목증거금율명", max_length=20)
-    grta_rt_name: str = Field(title="보증금율명", max_length=20)
-    sbst_pric: str = Field(
-        title="대용가격", description="증권매매의 위탁보증금으로서 현금 대신에 사용되는 유가증권 가격", max_length=19
-    )
-    stck_loan_unpr: str = Field(title="주식대출단가", max_length=22)
-
-
-class BuyTradableInquiryItem2(BaseModel):
-    dnca_tot_amt: str = Field(title="예수금총금액", description="예수금", max_length=19)
-    nxdy_excc_amt: str = Field(title="익일정산금액", description="D+1 예수금", max_length=19)
-    prvs_rcdl_excc_amt: str = Field(title="가수도정산금액", description="D+2 예수금", max_length=19)
+class BuyTradableInquiryItem(BaseModel):
+    ord_psbl_cash: str = Field(title="주문가능현금", max_length=19)
+    ord_psbl_sbst: str = Field(title="주문가능대용", max_length=19)
+    ruse_psbl_amt: str = Field(title="재사용가능금액", max_length=19)
+    fund_rpch_chgs: str = Field(title="펀드환매대금", max_length=19)
+    psbl_qty_calc_unpr: str = Field(title="가능수량계산단가", max_length=19)
+    nrcvb_buy_amt: str = Field(title="미수없는매수금액", max_length=19)
+    nrcvb_buy_qty: str = Field(title="미수없는매수수량", max_length=10)
+    max_buy_amt: str = Field(title="최대매수금액", max_length=19)
+    max_buy_qty: str = Field(title="최대매수수량", max_length=10)
     cma_evlu_amt: str = Field(title="CMA평가금액", max_length=19)
-    bfdy_buy_amt: str = Field(title="전일매수금액", max_length=19)
-    thdt_buy_amt: str = Field(title="금일매수금액", max_length=19)
-    nxdy_auto_rdpt_amt: str = Field(title="익일자동상환금액", max_length=19)
-    bfdy_sll_amt: str = Field(title="전일매도금액", max_length=19)
-    thdt_sll_amt: str = Field(title="금일매도금액", max_length=19)
-    d2_auto_rdpt_amt: str = Field(title="D+2자동상환금액", max_length=19)
-    bfdy_tlex_amt: str = Field(title="전일제비용금액", max_length=19)
-    thdt_tlex_amt: str = Field(title="금일제비용금액", max_length=19)
-    tot_loan_amt: str = Field(title="총대출금액", max_length=19)
-    scts_evlu_amt: str = Field(title="유가평가금액", max_length=19)
-    tot_evlu_amt: str = Field(title="총평가금액", description="유가증권 평가금액 합계금액 + D+2 예수금", max_length=19)
-    nass_amt: str = Field(title="순자산금액", max_length=19)
-    fncg_gld_auto_rdpt_yn: str = Field(
-        title="융자금자동상환여부",
-        description="보유현금에 대한 융자금만 차감여부 신용융자 매수체결 시점에서는 융자비율을 매매대금 100%로 계산 하였다가 수도결제일에 보증금에 해당하는 금액을 고객의 현금으로 충당하여 융자금을 감소시키는 업무",
-        max_length=1,
-    )
-    pchs_amt_smtl_amt: str = Field(title="매입금액합계금액", max_length=19)
-    evlu_amt_smtl_amt: str = Field(title="평가금액합계금액", description="유가증권 평가금액 합계금액", max_length=19)
-    evlu_pfls_smtl_amt: str = Field(title="평가손익합계금액", max_length=19)
-    tot_stln_slng_chgs: str = Field(title="총대주매각대금", max_length=19)
-    bfdy_tot_asst_evlu_amt: str = Field(title="전일총자산평가금액", max_length=19)
-    asst_icdc_amt: str = Field(title="자산증감액", max_length=19)
-    asst_icdc_erng_rt: str = Field(title="자산증감수익율", description="데이터 미제공", max_length=31)
+    ovrs_re_use_amt_wcrc: str = Field(title="해외재사용금액원화", max_length=19)
+    ord_psbl_frcr_amt_wcrc: str = Field(title="주문가능외화금액원화", max_length=19)
 
 
 class BuyTradableInquiry(BaseModel, KisHttpBody):
     """매수가능조회 응답"""
 
-    ctx_area_fk100: str = Field(
-        title="연속조회검색조건100",
-        description="공란 : 최초 조회시는 이전 조회 Output CTX_AREA_FK100 값 : 다음페이지 조회시(2번째부터)",
-        max_length=100,
-    )
-    ctx_area_nk100: str = Field(
-        title="연속조회키100",
-        description="공란 : 최초 조회시 이전 조회 Output CTX_AREA_NK100 값 : 다음페이지 조회시(2번째부터)",
-        max_length=100,
-    )
-
-    output1: Sequence[BuyTradableInquiryItem1] = Field(default_factory=list)
-    output2: Sequence[BuyTradableInquiryItem2] = Field(default_factory=list)
+    output: BuyTradableInquiryItem
 
 
 class SellTradableInquiryItem(BaseModel):

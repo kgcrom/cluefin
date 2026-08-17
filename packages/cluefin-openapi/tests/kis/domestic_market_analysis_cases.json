@@ -238,6 +238,47 @@
         }
     },
     {
+        "method_name": "get_buy_sell_volume_by_stock_daily",
+        "response_model_attr": "BuySellVolumeByStockDaily",
+        "endpoint": "/uapi/domestic-stock/v1/quotations/inquire-daily-trade-volume",
+        "method": "GET",
+        "call_kwargs": {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": "005930",
+            "fid_input_date_1": "20250101",
+            "fid_input_date_2": "20250115",
+            "fid_period_div_code": "D"
+        },
+        "expected_headers": {
+            "tr_id": "FHKST03010800"
+        },
+        "expected_body": {
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_INPUT_ISCD": "005930",
+            "FID_INPUT_DATE_1": "20250101",
+            "FID_INPUT_DATE_2": "20250115",
+            "FID_PERIOD_DIV_CODE": "D",
+            "FID_COND_MRKT_DIV_CODE_1": "J",
+            "FID_INPUT_ISCD_1": "005930"
+        },
+        "response_payload": {
+            "rt_cd": "0",
+            "output1": [
+                {
+                    "shnu_cnqn_smtn": "10000",
+                    "seln_cnqn_smtn": "9000"
+                }
+            ],
+            "output2": [
+                {
+                    "stck_bsop_date": "20250115",
+                    "total_seln_qty": "9000",
+                    "total_shnu_qty": "10000"
+                }
+            ]
+        }
+    },
+    {
         "method_name": "get_program_trading_trend_by_stock_intraday",
         "response_model_attr": "ProgramTradingTrendByStockIntraday",
         "endpoint": "/uapi/domestic-stock/v1/quotations/program-trade-by-stock",

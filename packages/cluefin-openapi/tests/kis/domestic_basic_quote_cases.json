@@ -463,7 +463,7 @@
     },
     {
         "method_name": "get_stock_daily_minute_chart",
-        "response_model_attr": "DomesticStockTodayMinuteChart",
+        "response_model_attr": "DomesticStockDailyMinuteChart",
         "endpoint": "/uapi/domestic-stock/v1/quotations/inquire-time-dailychartprice",
         "method": "GET",
         "call_kwargs": {
