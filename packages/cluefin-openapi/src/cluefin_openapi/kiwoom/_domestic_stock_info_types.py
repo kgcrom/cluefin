@@ -178,7 +178,7 @@ class DomesticStockInfoDailyTradingDetailsItem(BaseModel):
     frgn: str = Field(default="", description="외국계", max_length=20)
     crd_remn_rt: str = Field(default="", description="신용잔고율", max_length=20)
     prm: str = Field(default="", description="프로그램", max_length=20)
-    bf_mkrt_trde_qty: str = Field(default="", description="장전거래대금", max_length=20)
+    bf_mkrt_trde_prica: str = Field(default="", description="장전거래대금", max_length=20)
     bf_mkrt_trde_prica_wght: str = Field(default="", description="장전거래대금비중", max_length=20)
     opmr_trde_prica: str = Field(default="", description="장중거래대금", max_length=20)
     opmr_trde_prica_wght: str = Field(default="", description="장중거래대금비중", max_length=20)
@@ -298,7 +298,7 @@ class DomesticStockInfoTradingVolumeRenewalItem(BaseModel):
 class DomesticStockInfoTradingVolumeRenewal(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="거래량갱신요청 응답")
 
-    trde_qty_updt: List[DomesticStockInfoPriceVolatilityItem] = Field(
+    trde_qty_updt: List[DomesticStockInfoTradingVolumeRenewalItem] = Field(
         default_factory=list, description="거래량 갱신", max_length=1000
     )
 
@@ -363,7 +363,7 @@ class DomesticStockInfoChangeRateFromOpenItem(BaseModel):
 class DomesticStockInfoChangeRateFromOpen(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="시가대비등락률요청 응답")
 
-    open_pric_pre_flu_rt: List[DomesticStockInfoHighPerItem] = Field(
+    open_pric_pre_flu_rt: List[DomesticStockInfoChangeRateFromOpenItem] = Field(
         default_factory=list, description="시가대비등락률", max_length=1000
     )
 
@@ -525,7 +525,7 @@ class DomesticStockInfoTotalInstitutionalInvestorByStockItem(BaseModel):
 class DomesticStockInfoTotalInstitutionalInvestorByStock(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="종목별투자자기관별합계요청 응답")
 
-    stk_invsr_orgn_tot: List[DomesticStockInfoInstitutionalInvestorByStockItem] = Field(
+    stk_invsr_orgn_tot: List[DomesticStockInfoTotalInstitutionalInvestorByStockItem] = Field(
         default_factory=list, description="종목별 투자자 기관 합계", max_length=1000
     )
 
@@ -548,7 +548,7 @@ class DomesticStockInfoDailyPreviousDayConclusionItem(BaseModel):
 class DomesticStockInfoDailyPreviousDayConclusion(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="당일전일체결요청 응답")
 
-    tdy_pred_cntr_qty: List[DomesticStockInfoDailyPreviousDayExecutionVolumeItem] = Field(
+    tdy_pred_cntr: List[DomesticStockInfoDailyPreviousDayConclusionItem] = Field(
         default_factory=list, description="당일 전일 체결", max_length=1000
     )
 
@@ -741,7 +741,7 @@ class DomesticStockInfoProgramTradingStatusByStockItem(BaseModel):
 class DomesticStockInfoProgramTradingStatusByStock(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="종목별프로그램매매현황요청 응답")
 
-    stk_prm_trde_prst: List[DomesticStockInfoTop50ProgramNetBuyItem] = Field(
+    stk_prm_trde_prst: List[DomesticStockInfoProgramTradingStatusByStockItem] = Field(
         default_factory=list, description="종목별 프로그램 매매 현황", max_length=1000
     )
     tot_1: str = Field(default="", description="매수체결수량합계", max_length=20)

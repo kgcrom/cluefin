@@ -16,6 +16,7 @@ from cluefin_openapi.kiwoom._domestic_rank_info_types import (
     DomesticRankInfoTopForeignAccountGroupTrading,
     DomesticRankInfoTopForeignerInstitutionTrading,
     DomesticRankInfoTopForeignerPeriodTrading,
+    DomesticRankInfoTopIntradayTradingByInvestor,
     DomesticRankInfoTopLimitExhaustionRateForeigner,
     DomesticRankInfoTopMarginRatio,
     DomesticRankInfoTopNetBuyTraderRanking,
@@ -295,3 +296,15 @@ def test_get_top_foreigner_institution_trading(client: Client):
     )
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoTopForeignerInstitutionTrading)
+
+
+@pytest.mark.integration
+def test_get_top_intraday_trading_by_investor(client: Client):
+    response = client.rank_info.get_top_intraday_trading_by_investor(
+        trde_tp="1",
+        mrkt_tp="000",
+        orgn_tp="9000",
+        amt_qty_tp="1",
+    )
+    assert response is not None
+    assert isinstance(response.body, DomesticRankInfoTopIntradayTradingByInvestor)

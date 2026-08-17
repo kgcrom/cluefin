@@ -192,39 +192,14 @@ class DomesticChartStockTickItem(BaseModel):
         description="저가",
         max_length=20,
     )
-    upd_stkpc_tp: str = Field(
+    pred_pre: str = Field(
         default="",
-        description="수정주가구분",
+        description="전일대비",
         max_length=20,
     )
-    upd_rt: str = Field(
+    pred_pre_sig: str = Field(
         default="",
-        description="수정비율",
-        max_length=20,
-    )
-    bic_inds_tp: str = Field(
-        default="",
-        description="대업종구분",
-        max_length=20,
-    )
-    sm_inds_tp: str = Field(
-        default="",
-        description="소업종구분",
-        max_length=20,
-    )
-    stk_infr: str = Field(
-        default="",
-        description="종목정보",
-        max_length=20,
-    )
-    upd_stkpc_event: str = Field(
-        default="",
-        description="수정주가이벤트",
-        max_length=20,
-    )
-    pred_close_pric: str = Field(
-        default="",
-        description="전일종가",
+        description="전일대비 기호",
         max_length=20,
     )
 
@@ -276,39 +251,14 @@ class DomesticChartStockMinuteItem(BaseModel):
         description="저가",
         max_length=20,
     )
-    upd_stkpc_tp: str = Field(
+    pred_pre: str = Field(
         default="",
-        description="수정주가구분",
+        description="전일대비",
         max_length=20,
     )
-    upd_rt: str = Field(
+    pred_pre_sig: str = Field(
         default="",
-        description="수정비율",
-        max_length=20,
-    )
-    bic_inds_tp: str = Field(
-        default="",
-        description="대업종구분",
-        max_length=20,
-    )
-    sm_inds_tp: str = Field(
-        default="",
-        description="소업종구분",
-        max_length=20,
-    )
-    stk_infr: str = Field(
-        default="",
-        description="종목정보",
-        max_length=20,
-    )
-    upd_stkpc_event: str = Field(
-        default="",
-        description="수정주가이벤트",
-        max_length=20,
-    )
-    pred_close_pric: str = Field(
-        default="",
-        description="전일종가",
+        description="전일대비 기호",
         max_length=20,
     )
 
@@ -448,24 +398,14 @@ class DomesticChartIndustryTickItem(BaseModel):
         description="저가",
         max_length=20,
     )
-    bic_inds_tp: str = Field(
+    pred_pre: str = Field(
         default="",
-        description="대업종구분",
+        description="전일대비",
         max_length=20,
     )
-    sm_inds_tp: str = Field(
+    pred_pre_sig: str = Field(
         default="",
-        description="소업종구분",
-        max_length=20,
-    )
-    stk_infr: str = Field(
-        default="",
-        description="종목정보",
-        max_length=20,
-    )
-    pred_close_pric: str = Field(
-        default="",
-        description="전일종가",
+        description="전일대비 기호",
         max_length=20,
     )
 
@@ -516,24 +456,19 @@ class DomesticChartIndustryMinuteItem(BaseModel):
         description="저가",
         max_length=20,
     )
-    bic_inds_tp: str = Field(
+    acc_trde_qty: str = Field(
         default="",
-        description="대업종구분",
+        description="누적거래량",
         max_length=20,
     )
-    sm_inds_tp: str = Field(
+    pred_pre: str = Field(
         default="",
-        description="소업종구분",
+        description="전일대비",
         max_length=20,
     )
-    stk_infr: str = Field(
+    pred_pre_sig: str = Field(
         default="",
-        description="종목정보",
-        max_length=20,
-    )
-    pred_close_pric: str = Field(
-        default="",
-        description="전일종가",
+        description="전일대비 기호",
         max_length=20,
     )
 
@@ -586,26 +521,6 @@ class DomesticChartIndustryDailyItem(BaseModel):
     trde_prica: str = Field(
         default="",
         description="거래대금",
-        max_length=20,
-    )
-    bic_inds_tp: str = Field(
-        default="",
-        description="대업종구분",
-        max_length=20,
-    )
-    sm_inds_tp: str = Field(
-        default="",
-        description="소업종구분",
-        max_length=20,
-    )
-    stk_infr: str = Field(
-        default="",
-        description="종목정보",
-        max_length=20,
-    )
-    pred_close_pric: str = Field(
-        default="",
-        description="전일종가",
         max_length=20,
     )
 
@@ -661,26 +576,6 @@ class DomesticChartIndustryWeeklyItem(BaseModel):
         description="거래대금",
         max_length=20,
     )
-    bic_inds_tp: str = Field(
-        default="",
-        description="대업종구분",
-        max_length=20,
-    )
-    sm_inds_tp: str = Field(
-        default="",
-        description="소업종구분",
-        max_length=20,
-    )
-    stk_infr: str = Field(
-        default="",
-        description="종목정보",
-        max_length=20,
-    )
-    pred_close_pric: str = Field(
-        default="",
-        description="전일종가",
-        max_length=20,
-    )
 
 
 class DomesticChartIndustryWeekly(BaseModel, KiwoomHttpBody):
@@ -734,26 +629,6 @@ class DomesticChartIndustryMonthlyItem(BaseModel):
         description="거래대금",
         max_length=20,
     )
-    bic_inds_tp: str = Field(
-        default="",
-        description="대업종구분",
-        max_length=20,
-    )
-    sm_inds_tp: str = Field(
-        default="",
-        description="소업종구분",
-        max_length=20,
-    )
-    stk_infr: str = Field(
-        default="",
-        description="종목정보",
-        max_length=20,
-    )
-    pred_close_pric: str = Field(
-        default="",
-        description="전일종가",
-        max_length=20,
-    )
 
 
 class DomesticChartIndustryMonthly(BaseModel, KiwoomHttpBody):
@@ -805,26 +680,6 @@ class DomesticChartIndustryYearlyItem(BaseModel):
     trde_prica: str = Field(
         default="",
         description="거래대금",
-        max_length=20,
-    )
-    bic_inds_tp: str = Field(
-        default="",
-        description="대업종구분",
-        max_length=20,
-    )
-    sm_inds_tp: str = Field(
-        default="",
-        description="소업종구분",
-        max_length=20,
-    )
-    stk_infr: str = Field(
-        default="",
-        description="종목정보",
-        max_length=20,
-    )
-    pred_close_pric: str = Field(
-        default="",
-        description="전일종가",
         max_length=20,
     )
 

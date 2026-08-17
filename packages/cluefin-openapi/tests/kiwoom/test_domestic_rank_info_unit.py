@@ -176,6 +176,12 @@ CALL_KWARGS: Dict[str, Dict[str, str]] = {
         "qry_dt_tp": "0",
         "stex_tp": "1",
     },
+    "get_top_intraday_trading_by_investor": {
+        "trde_tp": "1",
+        "mrkt_tp": "000",
+        "orgn_tp": "9000",
+        "amt_qty_tp": "1",
+    },
 }
 
 

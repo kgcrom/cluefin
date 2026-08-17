@@ -25,7 +25,6 @@ class DomesticOrderModify(BaseModel, KiwoomHttpBody):
 
     ord_no: str = Field(default="", title="주문번호", max_length=7)
     base_orig_ord_no: str = Field(default="", title="모주문번호", max_length=7, description="정정할 원주문번호")
-    stk_cd: str = Field(default="", title="종목코드", max_length=12)
     mdfy_qty: str = Field(default="", title="정정수량", max_length=12, description="정정할 수량")
     dmst_stex_tp: str = Field(default="", title="국내거래소구분", max_length=3, description="KRX, NXT, SOR 중 하나")
 

@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 
 from cluefin_openapi.kiwoom._client import Client
 from cluefin_openapi.kiwoom._domestic_chart_types import (
@@ -168,6 +168,7 @@ class DomesticChart:
         stk_cd: str,
         tic_scope: str,
         upd_stkpc_tp: str = "0",
+        base_dt: Optional[str] = None,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticChartStockMinute]:
@@ -177,6 +178,7 @@ class DomesticChart:
             stk_cd (str): 종목코드 (KRX:039490,NXT:039490_NX,SOR:039490_AL)
             tic_scope (str): 틱범위 (1:1분, 3:3분, 5:5분, 10:10분, 15:15분, 30:30분, 45:45분, 60:60분)
             upd_stkpc_tp (str, optional): 수정주가구분. Defaults to "0".
+            base_dt (Optional[str], optional): 기준일자 (YYYYMMDD). Defaults to None.
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -196,6 +198,9 @@ class DomesticChart:
             "tic_scope": tic_scope,
             "upd_stkpc_tp": upd_stkpc_tp,
         }
+
+        if base_dt is not None:
+            body["base_dt"] = base_dt
 
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
@@ -405,6 +410,7 @@ class DomesticChart:
         self,
         inds_cd: str,
         tic_scope: str,
+        base_dt: Optional[str] = None,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticChartIndustryMinute]:
@@ -412,7 +418,8 @@ class DomesticChart:
 
         Args:
             inds_cd (str): 업종코드 (001:종합(KOSPI), 002:대형주, 003:중형주, 004:소형주, 101:종합(KOSDAQ), 201:KOSPI200, 302:KOSTAR, 701: KRX100)
-            tic_scope (str): 틱범위 (1:1틱, 3:3틱, 5:5틱, 10:10틱, 30:30틱)
+            tic_scope (str): 틱범위 (1:1분, 3:3분, 5:5분, 10:10분, 15:15분, 30:30분, 45:45분, 60:60분)
+            base_dt (Optional[str], optional): 기준일자 (YYYYMMDD). Defaults to None.
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -431,6 +438,10 @@ class DomesticChart:
             "inds_cd": inds_cd,
             "tic_scope": tic_scope,
         }
+
+        if base_dt is not None:
+            body["base_dt"] = base_dt
+
         response = self.client._post(self.path, headers, body)
         if response.status_code != 200:
             raise Exception(f"Error fetching industry minute chart: {response.text}")
