@@ -319,25 +319,4 @@ describe('Kiwoom DomesticMarketCondition', () => {
       programTradingTrendByStockAndDateItemSchema,
     );
   });
-
-  it('getTopIntradayTradingByInvestor', async () => {
-    const client = await getKiwoomClient();
-    const res = await client.domesticMarketCondition.getTopIntradayTradingByInvestor({
-      trdeTp: '1',
-      mrktTp: '000',
-      orgnTp: '9000',
-      amtQtyTp: '1',
-      invsr: '0',
-      frgnAll: '0',
-      smtmNetprpsTp: '0',
-      stexTp: '1',
-    });
-    assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      intradayTradingByInvestorResponseSchema,
-      'opmrInvsrTrde',
-      intradayTradingByInvestorItemSchema,
-    );
-  });
 });

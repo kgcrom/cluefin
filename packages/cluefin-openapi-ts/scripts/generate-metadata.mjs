@@ -18,6 +18,7 @@ const resolveWithinRoot = (rootDir, relativePath) => {
 
 const toCamelCase = (value) =>
   value
+    .replace(/_+$/, '') // 파이썬 예약어 회피용 트레일링 언더스코어 (예: next_)
     .replace(/[-_]+([a-zA-Z0-9])/g, (_, captured) => captured.toUpperCase())
     .replace(/^[A-Z]/, (first) => first.toLowerCase());
 
@@ -118,6 +119,7 @@ const parseSignatureParams = (signature) => {
     const isRequired = rawDefault === undefined;
     const parameter = {
       name: toCamelCase(name),
+      snakeName: name,
       required: isRequired,
     };
 
@@ -184,8 +186,72 @@ const parseDictFromBlock = (block, variableName) => {
     return [];
   }
 
-  const pairs = [...content.matchAll(/["']([^"']+)["']\s*:\s*([a-zA-Z_][a-zA-Z0-9_]*)/g)];
-  return pairs.map((entry) => ({ key: entry[1], value: entry[2] }));
+  const entries = [];
+  for (const rawPiece of splitTopLevel(content)) {
+    const piece = rawPiece
+      .split('\n')
+      .filter((line) => !line.trim().startsWith('#'))
+      .join('\n')
+      .trim();
+    const match = piece.match(/^["']([^"']+)["']\s*:\s*([\s\S]+)$/);
+    if (!match) {
+      continue;
+    }
+    entries.push({ key: match[1], expression: match[2].trim() });
+  }
+  return entries;
+};
+
+// dict 리터럴 밖에서 조건부로 넣는 항목: `body["key"] = value` / `params["key"] = value`
+const parseDictAssignments = (block, variableName) => {
+  const pattern = new RegExp(`${variableName}\\[["']([^"']+)["']\\]\\s*=\\s*([^\\n]+)`, 'g');
+  return [...block.matchAll(pattern)].map((entry) => ({ key: entry[1], expression: entry[2].trim() }));
+};
+
+const IDENTIFIER_ONLY = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+const STRING_LITERAL = /^["']([^"']*)["']$/;
+
+// dict 엔트리(key: expression)를 requestMap 쌍과 추가 params로 분해한다.
+// - 값이 kwarg 식별자면 그대로 매핑
+// - 값이 문자열 리터럴이면: 같은 이름의 kwarg가 있으면 그 kwarg로 매핑, 없으면
+//   상수 기본값을 가진 선택 파라미터를 합성해 매핑 (예: KIS의 "CTX_AREA_NK30": "")
+// - 그 외 표현식이면 표현식 안에서 가장 긴 kwarg 이름을 찾아 매핑
+const resolveDictEntries = (entries, signatureParams, context) => {
+  const paramNames = new Set(signatureParams.map((p) => p.name));
+  const mappings = [];
+  const syntheticParams = [];
+
+  for (const { key, expression } of entries) {
+    if (IDENTIFIER_ONLY.test(expression)) {
+      mappings.push([key, toCamelCase(expression)]);
+      continue;
+    }
+
+    const literalMatch = expression.match(STRING_LITERAL);
+    if (literalMatch) {
+      const camelKey = toCamelCase(key.toLowerCase());
+      if (!paramNames.has(camelKey)) {
+        syntheticParams.push({ name: camelKey, required: false, defaultValue: literalMatch[1] });
+        paramNames.add(camelKey);
+      }
+      mappings.push([key, camelKey]);
+      continue;
+    }
+
+    // 복합 표현식: 표현식 안에 등장하는 시그니처 kwarg 중 가장 긴 것을 채택
+    const candidates = signatureParams
+      .map((p) => p.snakeName)
+      .filter((snake) => new RegExp(`\\b${snake}\\b`).test(expression))
+      .sort((a, b) => b.length - a.length);
+    if (candidates.length > 0) {
+      mappings.push([key, toCamelCase(candidates[0])]);
+      continue;
+    }
+
+    console.warn(`  [warn] ${context}: could not resolve dict value for key "${key}" (${expression.slice(0, 60)})`);
+  }
+
+  return { mappings, syntheticParams };
 };
 
 const extractMethods = (source) => {
@@ -210,7 +276,26 @@ const extractMethods = (source) => {
   return methods;
 };
 
-const buildKisMetadata = (sourceRelativePath) => {
+// 파이썬 소스에서 정규식으로 못 뽑는 케이스(f-string 루프 등)의 수동 보정.
+// 재생성해도 유지되도록 여기에 둔다. symbolName.methodName -> 추가 requestMap 엔트리
+const MANUAL_REQUEST_MAP_OVERRIDES = {
+  // 관심종목(멀티종목) 시세조회: 슬롯 1~30을 헬퍼+루프로 조립해 dict 리터럴이 없다
+  'domesticMarketAnalysisEndpoints.getWatchlistMultiQuote': Object.fromEntries(
+    Array.from({ length: 30 }, (_, i) => i + 1).flatMap((slot) => [
+      [`FID_COND_MRKT_DIV_CODE_${slot}`, `fidCondMrktDivCode${slot}`],
+      [`FID_INPUT_ISCD_${slot}`, `fidInputIscd${slot}`],
+    ]),
+  ),
+};
+
+const stripInternalFields = (params) => params.map(({ snakeName, ...rest }) => rest);
+
+const applyOverrides = (symbolName, methodName, requestMap) => {
+  const override = MANUAL_REQUEST_MAP_OVERRIDES[`${symbolName}.${methodName}`];
+  return override ? { ...requestMap, ...override } : requestMap;
+};
+
+const buildKisMetadata = (sourceRelativePath, symbolName) => {
   const sourcePath = resolveWithinRoot(workspaceRoot, sourceRelativePath);
   const source = fs.readFileSync(sourcePath, 'utf8');
   const methods = extractMethods(source);
@@ -220,22 +305,25 @@ const buildKisMetadata = (sourceRelativePath) => {
     const getPathMatch = method.block.match(/_get\(\s*["']([^"']+)["']/);
     const postPathMatch = method.block.match(/_post\(\s*["']([^"']+)["']/);
     const endpointPath = getPathMatch?.[1] ?? postPathMatch?.[1] ?? '';
-    const requestPairs = parseDictFromBlock(method.block, 'params').concat(parseDictFromBlock(method.block, 'body'));
-
-    const requestMap = Object.fromEntries(requestPairs.map((pair) => [pair.key, toCamelCase(pair.value)]));
+    const signatureParams = parseSignatureParams(method.signature);
+    const entries = parseDictFromBlock(method.block, 'params')
+      .concat(parseDictFromBlock(method.block, 'body'))
+      .concat(parseDictAssignments(method.block, 'params'))
+      .concat(parseDictAssignments(method.block, 'body'));
+    const { mappings, syntheticParams } = resolveDictEntries(entries, signatureParams, method.methodName);
 
     return {
       methodName: method.methodName,
       method: postPathMatch ? 'POST' : 'GET',
       path: endpointPath,
       trId,
-      requestMap,
-      params: parseSignatureParams(method.signature),
+      requestMap: applyOverrides(symbolName, method.methodName, Object.fromEntries(mappings)),
+      params: stripInternalFields(signatureParams).concat(syntheticParams),
     };
   });
 };
 
-const buildKiwoomMetadata = (sourceRelativePath) => {
+const buildKiwoomMetadata = (sourceRelativePath, symbolName) => {
   const sourcePath = resolveWithinRoot(workspaceRoot, sourceRelativePath);
   const source = fs.readFileSync(sourcePath, 'utf8');
   const methods = extractMethods(source);
@@ -243,23 +331,25 @@ const buildKiwoomMetadata = (sourceRelativePath) => {
 
   return methods.map((method) => {
     const apiId = (method.block.match(/["']api-id["']\s*:\s*["']([^"']+)["']/) || [])[1] ?? '';
-    const bodyPairs = parseDictFromBlock(method.block, 'body');
+    const signatureParams = parseSignatureParams(method.signature);
+    const bodyEntries = parseDictFromBlock(method.block, 'body').concat(parseDictAssignments(method.block, 'body'));
+    const { mappings, syntheticParams } = resolveDictEntries(bodyEntries, signatureParams, method.methodName);
     const headerPairs = parseDictFromBlock(method.block, 'headers');
 
-    const bodyMap = Object.fromEntries(bodyPairs.map((pair) => [pair.key, toCamelCase(pair.value)]));
     const headerParamMap = Object.fromEntries(
       headerPairs
         .filter((pair) => ['cont-yn', 'cond-yn', 'con-yn', 'next-key'].includes(pair.key))
-        .map((pair) => [pair.key, toCamelCase(pair.value)]),
+        .filter((pair) => IDENTIFIER_ONLY.test(pair.expression))
+        .map((pair) => [pair.key, toCamelCase(pair.expression)]),
     );
 
     return {
       methodName: method.methodName,
       path: classPath,
       apiId,
-      bodyMap,
+      bodyMap: applyOverrides(symbolName, method.methodName, Object.fromEntries(mappings)),
       headerParamMap,
-      params: parseSignatureParams(method.signature),
+      params: stripInternalFields(signatureParams).concat(syntheticParams),
     };
   });
 };
@@ -403,7 +493,10 @@ const tasks = [
 ];
 
 for (const task of tasks) {
-  const data = task.kind === 'kis' ? buildKisMetadata(task.sourcePath) : buildKiwoomMetadata(task.sourcePath);
+  const data =
+    task.kind === 'kis'
+      ? buildKisMetadata(task.sourcePath, task.symbolName)
+      : buildKiwoomMetadata(task.sourcePath, task.symbolName);
   const importType = task.kind === 'kis' ? 'KisEndpointDefinition' : 'KiwoomEndpointDefinition';
   writeTs(task.targetPath, task.symbolName, importType, data);
   console.log(`${task.symbolName}: ${data.length}`);

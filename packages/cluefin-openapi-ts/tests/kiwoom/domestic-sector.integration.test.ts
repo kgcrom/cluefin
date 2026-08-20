@@ -28,7 +28,7 @@ describe('Kiwoom DomesticSector', () => {
   setupKiwoomRateLimit();
   it('getIndustryProgram', async () => {
     const client = await getKiwoomClient();
-    const res = await client.domesticSector.getIndustryProgram({ stkCode: '001' });
+    const res = await client.domesticSector.getIndustryProgram({ stkCd: '001' });
     assertKiwoomResponse(res);
     assertResponseShape(res.body, industryProgramResponseSchema);
   });

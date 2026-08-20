@@ -139,6 +139,7 @@ export const domesticChartEndpoints: KiwoomEndpointDefinition[] = [
       stk_cd: 'stkCd',
       tic_scope: 'ticScope',
       upd_stkpc_tp: 'updStkpcTp',
+      base_dt: 'baseDt',
     },
     headerParamMap: {
       'cont-yn': 'contYn',
@@ -157,6 +158,10 @@ export const domesticChartEndpoints: KiwoomEndpointDefinition[] = [
         name: 'updStkpcTp',
         required: false,
         defaultValue: '0',
+      },
+      {
+        name: 'baseDt',
+        required: false,
       },
       {
         name: 'contYn',
@@ -362,6 +367,7 @@ export const domesticChartEndpoints: KiwoomEndpointDefinition[] = [
     bodyMap: {
       inds_cd: 'indsCd',
       tic_scope: 'ticScope',
+      base_dt: 'baseDt',
     },
     headerParamMap: {
       'cont-yn': 'contYn',
@@ -375,6 +381,10 @@ export const domesticChartEndpoints: KiwoomEndpointDefinition[] = [
       {
         name: 'ticScope',
         required: true,
+      },
+      {
+        name: 'baseDt',
+        required: false,
       },
       {
         name: 'contYn',

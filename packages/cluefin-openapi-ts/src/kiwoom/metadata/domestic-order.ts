@@ -10,6 +10,8 @@ export const domesticOrderEndpoints: KiwoomEndpointDefinition[] = [
       stk_cd: 'stkCd',
       ord_qty: 'ordQty',
       trde_tp: 'trdeTp',
+      ord_uv: 'ordUv',
+      cond_uv: 'condUv',
     },
     headerParamMap: {
       'cont-yn': 'contYn',
@@ -61,6 +63,8 @@ export const domesticOrderEndpoints: KiwoomEndpointDefinition[] = [
       stk_cd: 'stkCd',
       ord_qty: 'ordQty',
       trde_tp: 'trdeTp',
+      ord_uv: 'ordUv',
+      cond_uv: 'condUv',
     },
     headerParamMap: {
       'cont-yn': 'contYn',
@@ -113,6 +117,7 @@ export const domesticOrderEndpoints: KiwoomEndpointDefinition[] = [
       stk_cd: 'stkCd',
       mdfy_qty: 'mdfyQty',
       mdfy_uv: 'mdfyUv',
+      mdfy_cond_uv: 'mdfyCondUv',
     },
     headerParamMap: {
       'cont-yn': 'contYn',

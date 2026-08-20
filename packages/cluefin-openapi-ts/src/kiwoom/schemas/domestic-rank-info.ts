@@ -611,6 +611,25 @@ export const topForeignerInstitutionTradingResponseSchema = z
   })
   .passthrough();
 
+// ── ka10065: 장중투자자별매매상위 ──
+
+export const topIntradayTradingByInvestorItemSchema = z
+  .object({
+    stk_cd: s(),
+    stk_nm: s(),
+    sel_qty: s(),
+    buy_qty: s(),
+    netslmt: s(),
+  })
+  .passthrough();
+
+export const topIntradayTradingByInvestorResponseSchema = z
+  .object({
+    ...envelope,
+    opmr_invsr_trde_upper: z.array(topIntradayTradingByInvestorItemSchema).default([]),
+  })
+  .passthrough();
+
 // ── Response Types ──
 
 export type TopRemainingOrderQuantityResponse = CamelizeKeys<z.infer<typeof topRemainingOrderQuantityResponseSchema>>;
@@ -661,6 +680,9 @@ export type AfterHoursSinglePriceChangeRateRankingResponse = CamelizeKeys<
 export type TopForeignerInstitutionTradingResponse = CamelizeKeys<
   z.infer<typeof topForeignerInstitutionTradingResponseSchema>
 >;
+export type TopIntradayTradingByInvestorResponse = CamelizeKeys<
+  z.infer<typeof topIntradayTradingByInvestorResponseSchema>
+>;
 
 // ── Response Map ──
 
@@ -687,4 +709,5 @@ export interface DomesticRankInfoResponseMap {
   getSameNetBuySellRanking: SameNetBuySellRankingResponse;
   getAfterHoursSinglePriceChangeRateRanking: AfterHoursSinglePriceChangeRateRankingResponse;
   getTopForeignerInstitutionTrading: TopForeignerInstitutionTradingResponse;
+  getTopIntradayTradingByInvestor: TopIntradayTradingByInvestorResponse;
 }

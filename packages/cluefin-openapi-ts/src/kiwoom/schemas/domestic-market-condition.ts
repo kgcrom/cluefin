@@ -766,10 +766,6 @@ export type ProgramTradingTrendByDateResponse = CamelizeKeys<z.infer<typeof prog
 export type ProgramTradingTrendByStockAndDateResponse = CamelizeKeys<
   z.infer<typeof programTradingTrendByStockAndDateResponseSchema>
 >;
-export type TopIntradayTradingByInvestorResponse = CamelizeKeys<
-  z.infer<typeof intradayTradingByInvestorResponseSchema>
->;
-
 // ── Response Map ──
 
 export interface DomesticMarketConditionResponseMap {
@@ -793,5 +789,4 @@ export interface DomesticMarketConditionResponseMap {
   getProgramTradingTrendByStockAndTime: ProgramTradingTrendByStockAndTimeResponse;
   getProgramTradingTrendByDate: ProgramTradingTrendByDateResponse;
   getProgramTradingTrendByStockAndDate: ProgramTradingTrendByStockAndDateResponse;
-  getTopIntradayTradingByInvestor: TopIntradayTradingByInvestorResponse;
 }

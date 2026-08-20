@@ -27,7 +27,7 @@ const hasZodDependency = async (): Promise<boolean> => {
 test('Kiwoom metadata should expose expected endpoint count', () => {
   expect(domesticChartEndpoints.length).toBe(14);
   expect(domesticStockInfoEndpoints.length).toBe(28);
-  expect(domesticRankInfoEndpoints.length).toBe(22);
+  expect(domesticRankInfoEndpoints.length).toBe(23);
 });
 
 test('Kiwoom endpoint metadata should map request path, headers, and body', async () => {
