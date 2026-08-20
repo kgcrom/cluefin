@@ -546,7 +546,7 @@ def handle_kis_stock_closing_expected_price(params: dict, session) -> dict:
     response = kis.domestic_basic_quote.get_stock_closing_expected_price(
         params["sort_code"], params["sector_code"], params["classification"]
     )
-    return {"data": extract_output(response, "output1")}
+    return {"data": extract_output(response, "output")}
 
 
 # ---------------------------------------------------------------------------

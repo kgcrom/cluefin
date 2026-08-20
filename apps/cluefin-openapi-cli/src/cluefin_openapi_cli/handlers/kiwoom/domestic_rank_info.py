@@ -1074,53 +1074,6 @@ def handle_kiwoom_after_hours_single_price_change(params: dict, session) -> dict
 
 
 # ---------------------------------------------------------------------------
-# Top Foreigner Limit Exhaustion Rate
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="ranking.foreigner_limit_rate",
-    description="Get top stocks by foreigner limit exhaustion rate.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "market_type": {
-                "type": "string",
-                "enum": ["000", "001", "101"],
-                "description": "Market (000:all, 001:KOSPI, 101:KOSDAQ)",
-            },
-            "dt": {
-                "type": "string",
-                "enum": ["0", "1", "5", "10", "20", "60"],
-                "description": "Period (0:today, 1:prev day, 5/10/20/60 days)",
-            },
-            "exchange_type": {
-                "type": "string",
-                "enum": ["1", "2", "3"],
-                "description": "Exchange (1:KRX, 2:NXT, 3:Combined). Default 1.",
-            },
-            "cont_yn": {"type": "string", "enum": ["Y", "N"], "description": "Continuation flag. Default N."},
-            "next_key": {"type": "string", "description": "Continuation key. Default empty."},
-        },
-        "required": ["market_type", "dt"],
-    },
-    returns={"type": "object"},
-    category="ranking",
-    broker="kiwoom",
-)
-def handle_kiwoom_foreigner_limit_exhaustion_rate(params: dict, session) -> dict:
-    kiwoom = session.get_kiwoom()
-    response = kiwoom.rank_info.get_top_foreigner_limit_exhaustion_rate(
-        mrkt_tp=params["market_type"],
-        dt=params["dt"],
-        stex_tp=params.get("exchange_type", "1"),
-        cont_yn=params.get("cont_yn", "N"),
-        next_key=params.get("next_key", ""),
-    )
-    return extract_body(response)
-
-
-# ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
 
@@ -1145,7 +1098,6 @@ _ALL_HANDLERS = [
     handle_kiwoom_same_net_buy_sell,
     handle_kiwoom_intraday_trading_by_investor,
     handle_kiwoom_after_hours_single_price_change,
-    handle_kiwoom_foreigner_limit_exhaustion_rate,
 ]
 
 

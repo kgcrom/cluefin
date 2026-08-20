@@ -15,7 +15,8 @@ class _Dumpable:
 
 class _Response:
     def __init__(self, method_name: str) -> None:
-        self.body = type("Body", (), {"output": _Dumpable(method_name)})()
+        dumpable = _Dumpable(method_name)
+        self.body = type("Body", (), {"output": dumpable, "output1": dumpable, "output2": dumpable})()
 
 
 class _Recorder:
@@ -85,7 +86,9 @@ def test_kis_market_analysis_handlers_call_underlying_client(handler) -> None:
     recorder = _Recorder()
     result = handler(_params_for(handler), _Session(recorder))
 
-    assert result == {"data": {"value": recorder.calls[0][0]}}
+    expected = {"value": recorder.calls[0][0]}
+    assert result["data"] == expected
+    assert all(value == expected for value in result.values())
     assert len(recorder.calls) == 1
 
 

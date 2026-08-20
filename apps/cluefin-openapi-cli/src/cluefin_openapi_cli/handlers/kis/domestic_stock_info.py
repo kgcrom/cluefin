@@ -451,7 +451,7 @@ def handle_kis_ksd_dividend_decision(params: dict, session) -> dict:
         params.get("stock_code", ""),
         params.get("high_gb", ""),
     )
-    return {"data": extract_output(response, "output")}
+    return {"data": extract_output(response, "output1")}
 
 
 # ---------------------------------------------------------------------------

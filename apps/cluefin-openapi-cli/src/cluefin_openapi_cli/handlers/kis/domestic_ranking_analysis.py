@@ -753,7 +753,7 @@ def handle_kis_dividend_yield_top(params: dict, session) -> dict:
         t_dt=params["end_date"],
         gb4=params.get("settlement_type", "0"),
     )
-    return {"data": extract_output(response, "output")}
+    return {"data": extract_output(response, "output1")}
 
 
 # ---------------------------------------------------------------------------
@@ -847,7 +847,10 @@ def handle_kis_credit_balance_top(params: dict, session) -> dict:
         fid_cond_mrkt_div_code=params["market"],
         fid_rank_sort_cls_code=params["sort_by"],
     )
-    return {"data": extract_output(response, "output")}
+    return {
+        "summary": extract_output(response, "output1"),
+        "data": extract_output(response, "output2"),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -940,7 +943,10 @@ def handle_kis_after_hours_volume_rank(params: dict, session) -> dict:
         fid_trgt_cls_code=params.get("target_cls", ""),
         fid_trgt_exls_cls_code=params.get("target_exclude_cls", ""),
     )
-    return {"data": extract_output(response, "output")}
+    return {
+        "summary": extract_output(response, "output1"),
+        "data": extract_output(response, "output2"),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -963,7 +969,7 @@ def handle_kis_after_hours_volume_rank(params: dict, session) -> dict:
 def handle_kis_hts_inquiry_top_20(params: dict, session) -> dict:
     kis = session.get_kis()
     response = kis.domestic_ranking_analysis.get_hts_inquiry_top_20()
-    return {"data": extract_output(response, "output")}
+    return {"data": extract_output(response, "output1")}
 
 
 # ---------------------------------------------------------------------------
