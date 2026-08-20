@@ -64,7 +64,7 @@ class DomesticRankInfoRapidlyIncreasingTotalSellOrdersItem(BaseModel):
 class DomesticRankInfoRapidlyIncreasingTotalSellOrders(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="잔량율급증요청 응답")
 
-    req_rt_sdnin: list[DomesticRankInfoRapidlyIncreasingRemainingOrderQuantityItem] = Field(
+    req_rt_sdnin: list[DomesticRankInfoRapidlyIncreasingTotalSellOrdersItem] = Field(
         default_factory=list, title="잔량율급증요청"
     )
 
@@ -158,7 +158,7 @@ class DomesticRankInfoTopCurrentDayTradingVolumeItem(BaseModel):
     bf_mkrt_trde_qty: str = Field(default="", title="장전거래량", max_length=20)
     bf_mkrt_pred_rt: str = Field(default="", title="장전전일비", max_length=20)
     bf_mkrt_trde_rt: str = Field(default="", title="장전거래회전율", max_length=20)
-    bf_mkrt_pred_rt: str = Field(default="", title="장전거래금액", max_length=20)
+    bf_mkrt_trde_amt: str = Field(default="", title="장전거래금액", max_length=20)
 
 
 class DomesticRankInfoTopCurrentDayTradingVolume(BaseModel, KiwoomHttpBody):
@@ -353,6 +353,9 @@ class DomesticRankInfoTopSecuritiesFirmTradingItem(BaseModel):
     netprps: str = Field(default="", title="순매수", max_length=20)
     buy_trde_qty: str = Field(default="", title="매수거래량", max_length=20)
     sel_trde_qty: str = Field(default="", title="매도거래량", max_length=20)
+    netprps_amt: str = Field(default="", title="순매수금액", max_length=20)
+    buy_amt: str = Field(default="", title="매수금액", max_length=20)
+    sell_amt: str = Field(default="", title="매도금액", max_length=20)
 
 
 class DomesticRankInfoTopSecuritiesFirmTrading(BaseModel, KiwoomHttpBody):
@@ -464,7 +467,7 @@ class DomesticRankInfoSameNetBuySellRankingItem(BaseModel):
     rank: str = Field(default="", title="순위", max_length=20)
     stk_nm: str = Field(default="", title="종목명", max_length=40)
     cur_prc: str = Field(default="", title="현재가", max_length=20)
-    pred_pre_sig: str = Field(default="", title="전일대비기호", max_length=20)
+    pre_sig: str = Field(default="", title="대비기호", max_length=20)
     pred_pre: str = Field(default="", title="전일대비", max_length=20)
     flu_rt: str = Field(default="", title="등락률", max_length=20)
     acc_trde_qty: str = Field(default="", title="누적거래량", max_length=20)
@@ -474,9 +477,6 @@ class DomesticRankInfoSameNetBuySellRankingItem(BaseModel):
     for_nettrde_qty: str = Field(default="", title="외인순매매수량", max_length=20)
     for_nettrde_amt: str = Field(default="", title="외인순매매금액", max_length=20)
     for_nettrde_avg_pric: str = Field(default="", title="외인순매매평균가", max_length=20)
-    for_nettrde_qty: str = Field(default="", title="순매매수량", max_length=20)
-    for_nettrde_amt: str = Field(default="", title="순매매금액", max_length=20)
-    for_nettrde_avg_pric: str = Field(default="", title="순매매평균가", max_length=20)
     nettrde_qty: str = Field(default="", title="순매매수량", max_length=20)
     nettrde_amt: str = Field(default="", title="순매매금액", max_length=20)
 
@@ -537,4 +537,20 @@ class DomesticRankInfoTopForeignerInstitutionTrading(BaseModel, KiwoomHttpBody):
 
     frgnr_orgn_trde_upper: list[DomesticRankInfoTopForeignerInstitutionTradingItem] = Field(
         default_factory=list, title="외국인기관매매상위"
+    )
+
+
+class DomesticRankInfoTopIntradayTradingByInvestorItem(BaseModel):
+    stk_cd: str = Field(default="", title="종목코드", max_length=20)
+    stk_nm: str = Field(default="", title="종목명", max_length=40)
+    sel_qty: str = Field(default="", title="매도금액/매도량", max_length=20)
+    buy_qty: str = Field(default="", title="매수금액/매수량", max_length=20)
+    netslmt: str = Field(default="", title="순매수/순매도", max_length=20)
+
+
+class DomesticRankInfoTopIntradayTradingByInvestor(BaseModel, KiwoomHttpBody):
+    model_config = ConfigDict(title="장중투자자별매매상위요청 응답")
+
+    opmr_invsr_trde_upper: list[DomesticRankInfoTopIntradayTradingByInvestorItem] = Field(
+        default_factory=list, title="장중투자자별매매상위"
     )

@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 
 from cluefin_openapi.kiwoom._client import Client
 from cluefin_openapi.kiwoom._domestic_rank_info_types import (
@@ -16,6 +16,7 @@ from cluefin_openapi.kiwoom._domestic_rank_info_types import (
     DomesticRankInfoTopForeignAccountGroupTrading,
     DomesticRankInfoTopForeignerInstitutionTrading,
     DomesticRankInfoTopForeignerPeriodTrading,
+    DomesticRankInfoTopIntradayTradingByInvestor,
     DomesticRankInfoTopLimitExhaustionRateForeigner,
     DomesticRankInfoTopMarginRatio,
     DomesticRankInfoTopNetBuyTraderRanking,
@@ -1450,4 +1451,59 @@ class DomesticRankInfo:
             raise Exception(f"Error fetching top foreigner institution trading: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
         body = DomesticRankInfoTopForeignerInstitutionTrading.model_validate(response.json())
+        return KiwoomHttpResponse(headers=headers, body=body)
+
+    def get_top_intraday_trading_by_investor(
+        self,
+        trde_tp: Literal["1", "2"],
+        mrkt_tp: Literal["000", "001", "101"],
+        orgn_tp: Literal["9000", "9100", "1000", "3000", "5000", "4000", "2000", "6000", "7000", "7100", "9999"],
+        amt_qty_tp: Optional[Literal["1", "2"]] = None,
+        cont_yn: Literal["Y", "N"] = "N",
+        next_key: str = "",
+    ) -> KiwoomHttpResponse[DomesticRankInfoTopIntradayTradingByInvestor]:
+        """장중투자자별매매상위요청 (ka10065)
+
+        Args:
+            trde_tp (Literal["1", "2"]): 매매구분 (1:순매수, 2:순매도)
+            mrkt_tp (Literal["000", "001", "101"]): 시장구분 (000:전체, 001:코스피, 101:코스닥)
+            orgn_tp (Literal[...]): 기관구분
+                - "9000": 외국인
+                - "9100": 외국계
+                - "1000": 금융투자
+                - "3000": 투신
+                - "5000": 기타금융
+                - "4000": 은행
+                - "2000": 보험
+                - "6000": 연기금
+                - "7000": 국가
+                - "7100": 기타법인
+                - "9999": 기관계
+            amt_qty_tp (Optional[Literal["1", "2"]], optional): 금액수량구분 (1:금액, 2:수량). Defaults to None.
+            cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
+            next_key (str, optional): 다음 페이지 키. Defaults to "".
+
+        Returns:
+            KiwoomHttpResponse[DomesticRankInfoTopIntradayTradingByInvestor]: 장중투자자별매매상위 데이터
+        """
+        headers = {
+            "Content-Type": "application/json;charset=UTF-8",
+            "Accept": "application/json",
+            "Authorization": f"Bearer {self.client.token}",
+            "cont-yn": cont_yn,
+            "next-key": next_key,
+            "api-id": "ka10065",
+        }
+        body = {
+            "trde_tp": trde_tp,
+            "mrkt_tp": mrkt_tp,
+            "orgn_tp": orgn_tp,
+        }
+        if amt_qty_tp is not None:
+            body["amt_qty_tp"] = amt_qty_tp
+        response = self.client._post(self.path, headers, body)
+        if response.status_code != 200:
+            raise Exception(f"Error fetching top intraday trading by investor: {response.text}")
+        headers = KiwoomHttpHeader.model_validate(response.headers)
+        body = DomesticRankInfoTopIntradayTradingByInvestor.model_validate(response.json())
         return KiwoomHttpResponse(headers=headers, body=body)

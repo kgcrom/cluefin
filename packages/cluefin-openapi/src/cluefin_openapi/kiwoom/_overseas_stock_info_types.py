@@ -80,6 +80,19 @@ class OverseasStockInfoIndexList(BaseModel, KiwoomHttpBody):
     )
 
 
+class OverseasStockInfoStockMemoItem(BaseModel):
+    stex_tp: str = Field(default="", description="거래소구분. NA: AMEX, ND: NASDAQ, NY: NYSE")
+    stk_cd: str = Field(default="", description="종목코드")
+    memo: str = Field(default="", description="메모내용")
+
+
+class OverseasStockInfoStockMemo(BaseModel, KiwoomHttpBody):
+    model_config = ConfigDict(title="미국주식 종목메모 조회 응답")
+
+    rtcd: str = Field(default="", description="처리결과")
+    result_list: list[OverseasStockInfoStockMemoItem] = Field(default_factory=list, description="결과리스트")
+
+
 class OverseasStockInfoEtfEtnListItem(BaseModel):
     stex_tp: str = Field(default="", description="거래소구분")
     code: str = Field(default="", description="종목코드")

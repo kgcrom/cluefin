@@ -12,6 +12,7 @@ CALL_KWARGS = {
     "get_exchange_list": {"stk_cd": "AAPL"},
     "get_stock_list": {"stex_tp": "ND"},
     "get_stock": {"stk_cd": "AAPL", "stex_tp": "ND"},
+    "get_stock_memo": {"input_list": [{"stex_tp": "ND", "stk_cd": "AAPL"}]},
     "get_sector_list": {"gubun": "%"},
     "get_index_list": {"index_qry_tp": "NQ"},
     "get_etf_etn_list": {"stex_tp": "ND"},

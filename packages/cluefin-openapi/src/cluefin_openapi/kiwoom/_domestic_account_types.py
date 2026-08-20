@@ -337,7 +337,7 @@ class DomesticAccountDepositBalanceDetails(BaseModel, KiwoomHttpBody):
     nrpy_loan: str = Field(default="", description="미상환융자금", max_length=15)
     loan_sum: str = Field(default="", description="융자금합계", max_length=15)
     ls_sum: str = Field(default="", description="대주금합계", max_length=15)
-    crd_grnt_ch: str = Field(default="", description="신용담보비율", max_length=15, alias="crd_grnt_rt")
+    crd_grnt_rt: str = Field(default="", description="신용담보비율", max_length=15)
     mdstrm_usfe: str = Field(default="", description="중도이용료", max_length=15)
     min_ord_alow_yn: str = Field(default="", description="최소주문가능금액", max_length=15)
     loan_remn_evlt_amt: str = Field(default="", description="대출총평가금액", max_length=15)
@@ -349,6 +349,12 @@ class DomesticAccountDepositBalanceDetails(BaseModel, KiwoomHttpBody):
     d1_out_rep_mor: str = Field(default="", description="d+1미수변제소요금", max_length=15)
     d1_sel_exct_amt: str = Field(default="", description="d+1매도정산금", max_length=15)
     d1_pymn_alow_amt: str = Field(default="", description="d+1출금가능금액", max_length=15)
+    d2_entra: str = Field(default="", description="d+2추정예수금", max_length=15)
+    d2_slby_exct_amt: str = Field(default="", description="d+2매도매수정산금", max_length=15)
+    d2_buy_exct_amt: str = Field(default="", description="d+2매수정산금", max_length=15)
+    d2_out_rep_mor: str = Field(default="", description="d+2미수변제소요금", max_length=15)
+    d2_sel_exct_amt: str = Field(default="", description="d+2매도정산금", max_length=15)
+    d2_pymn_alow_amt: str = Field(default="", description="d+2출금가능금액", max_length=15)
     stk_ord_allow_amt_50: str = Field(
         default="", description="50%종목주문가능금액", max_length=15, alias="50stk_ord_alow_amt"
     )
@@ -478,7 +484,7 @@ class DomesticAccountExecutionBalance(BaseModel, KiwoomHttpBody):
     ord_alow_amt_100: str = Field(default="", description="100%주문가능금액", max_length=12, alias="100ord_alow_amt")
     crd_loan_tot: str = Field(default="", description="신용융자합계", max_length=12)
     crd_loan_ls_tot: str = Field(default="", description="신용융자대주합계", max_length=12)
-    crd_grnt_rt: str = Field(default="", description="신용담보비율", max_length=12, alias="crd_grnt_ch")
+    crd_grnt_rt: str = Field(default="", description="신용담보비율", max_length=12)
     dpst_grnt_use_amt_amt: str = Field(default="", description="예탁담보대출금액", max_length=12)
     grnt_loan_amt: str = Field(default="", description="매도담보대출금액", max_length=12)
     stk_cntr_remn: list[DomesticAccountExecutionBalanceItem] = Field(
@@ -522,36 +528,33 @@ class DomesticAccountOrderExecutionDetails(BaseModel, KiwoomHttpBody):
 
 
 class DomesticAccountNextDaySettlementDetailsItem(BaseModel):
-    ord_no: str = Field(default="", description="주문번호", max_length=7)
+    seq: str = Field(default="", description="일련번호", max_length=7)
     stk_cd: str = Field(default="", description="종목번호", max_length=12)
-    trde_tp: str = Field(default="", description="매매구분", max_length=20)
-    crd_tp: str = Field(default="", description="신용구분", max_length=20)
-    ord_qty: str = Field(default="", description="주문수량", max_length=10)
-    ord_uv: str = Field(default="", description="주문단가", max_length=10)
-    cnfm_qty: str = Field(default="", description="확인수량", max_length=10)
-    acpt_tp: str = Field(default="", description="접수구분", max_length=20)
-    rsrv_tp: str = Field(default="", description="반대여부", max_length=20)
-    ord_tm: str = Field(default="", description="주문시간", max_length=8)
-    ori_ord: str = Field(default="", description="원주문", max_length=7)
-    stk_nm: str = Field(default="", description="종목명", max_length=40)
-    io_tp_nm: str = Field(default="", description="주문구분", max_length=20)
     loan_dt: str = Field(default="", description="대출일", max_length=8)
-    cntr_qty: str = Field(default="", description="체결수량", max_length=10)
-    cntr_uv: str = Field(default="", description="체결단가", max_length=10)
-    ord_remnq: str = Field(default="", description="주문잔량", max_length=10)
-    comm_ord_tp: str = Field(default="", description="통신구분", max_length=20)
-    mdfy_cncl: str = Field(default="", description="정정취소", max_length=20)
-    cnfm_tm: str = Field(default="", description="확인시간", max_length=8)
-    dmst_stex_tp: str = Field(default="", description="국내거래소구분", max_length=8)
-    cond_uv: str = Field(default="", description="스톱가", max_length=10)
+    qty: str = Field(default="", description="수량", max_length=12)
+    engg_amt: str = Field(default="", description="약정금액", max_length=12)
+    cmsn: str = Field(default="", description="수수료", max_length=12)
+    incm_tax: str = Field(default="", description="소득세", max_length=12)
+    rstx: str = Field(default="", description="농특세", max_length=12)
+    stk_nm: str = Field(default="", description="종목명", max_length=40)
+    sell_tp: str = Field(default="", description="매도수구분", max_length=10)
+    unp: str = Field(default="", description="단가", max_length=12)
+    exct_amt: str = Field(default="", description="정산금액", max_length=12)
+    trde_tax: str = Field(default="", description="거래세", max_length=12)
+    resi_tax: str = Field(default="", description="주민세", max_length=12)
+    crd_tp: str = Field(default="", description="신용구분", max_length=20)
 
 
 class DomesticAccountNextDaySettlementDetails(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="계좌별익일결제예정내역요청 응답")
 
-    acnt_ord_cntr_prps_dtl: list[DomesticAccountOrderExecutionDetailsItem] = Field(
+    trde_dt: str = Field(default="", description="매매일자", max_length=8)
+    setl_dt: str = Field(default="", description="결제일자", max_length=8)
+    sell_amt_sum: str = Field(default="", description="매도정산합", max_length=12)
+    buy_amt_sum: str = Field(default="", description="매수정산합", max_length=12)
+    acnt_nxdy_setl_frcs_prps_array: list[DomesticAccountNextDaySettlementDetailsItem] = Field(
         default_factory=list,
-        description="계좌별주문체결내역상세",
+        description="계좌별익일결제예정내역배열",
     )
 
 
@@ -586,9 +589,9 @@ class DomesticAccountOrderExecutionStatus(BaseModel, KiwoomHttpBody):
     sell_grntl_engg_amt: str = Field(default="", description="매도약정금액", max_length=12)
     buy_engg_amt: str = Field(default="", description="매수약정금액", max_length=12)
     engg_amt: str = Field(default="", description="약정금액", max_length=12)
-    acnt_ord_cntr_prst: list[DomesticAccountOrderExecutionStatusItem] = Field(
+    acnt_ord_cntr_prst_array: list[DomesticAccountOrderExecutionStatusItem] = Field(
         default_factory=list,
-        description="계좌별주문체결현황",
+        description="계좌별주문체결현황배열",
     )
 
 
@@ -607,9 +610,9 @@ class DomesticAccountAvailableWithdrawalAmount(BaseModel, KiwoomHttpBody):
     profa_60ord_alowq: str = Field(default="", description="증거금60%주문가능수량", max_length=10)
     profa_rdex_60ord_alow_amt: str = Field(default="", description="증거금감면60%주문가능금액", max_length=12)
     profa_rdex_60ord_alowq: str = Field(default="", description="증거금감면60%주문가능수량", max_length=10)
-    prfa_100ord_allow_amt: str = Field(default="", description="증거금100%주문가능금액", max_length=12)
+    profa_100ord_alow_amt: str = Field(default="", description="증거금100%주문가능금액", max_length=12)
     profa_100ord_alowq: str = Field(default="", description="증거금100%주문가능수량", max_length=10)
-    pred_reu_allowa: str = Field(default="", description="전일재사용가능금액", max_length=12)
+    pred_reu_alowa: str = Field(default="", description="전일재사용가능금액", max_length=12)
     tdy_reu_alowa: str = Field(default="", description="금일재사용가능금액", max_length=12)
     entr: str = Field(default="", description="예수금", max_length=12)
     repl_amt: str = Field(default="", description="대용금", max_length=12)
@@ -655,8 +658,8 @@ class DomesticAccountAvailableOrderQuantityByMarginRate(BaseModel, KiwoomHttpBod
     profa_100ord_alowq: str = Field(default="", description="증거금100%주문가능수량", max_length=12)
     profa_100pred_reu_amt: str = Field(default="", description="증거금100%전일재사용금액", max_length=12)
     profa_100tdy_reu_amt: str = Field(default="", description="증거금100%금일재사용금액", max_length=12)
-    min_ord_allow_amt: str = Field(default="", description="미수불가주문가능금액", max_length=12)
-    min_ord_allowq: str = Field(default="", description="미수불가주문가능수량", max_length=12)
+    min_ord_alow_amt: str = Field(default="", description="미수불가주문가능금액", max_length=12)
+    min_ord_alowq: str = Field(default="", description="미수불가주문가능수량", max_length=12)
     min_pred_reu_amt: str = Field(default="", description="미수불가전일재사용금액", max_length=12)
     min_tdy_reu_amt: str = Field(default="", description="미수불가금일재사용금액", max_length=12)
     entr: str = Field(default="", description="예수금", max_length=12)

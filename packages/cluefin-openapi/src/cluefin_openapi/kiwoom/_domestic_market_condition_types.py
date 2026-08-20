@@ -369,6 +369,13 @@ class DomesticMarketConditionIntradayTradingByInvestorItem(BaseModel):
     pred_pre: str = Field(default="", description="전일대비", max_length=20)
     flu_rt: str = Field(default="", description="등락율", max_length=20)
     acc_trde_qty: str = Field(default="", description="누적거래량", max_length=20)
+    netprps_amt: str = Field(default="", description="순매수금액", max_length=20)
+    prev_netprps_amt: str = Field(default="", description="이전순매수금액", max_length=20)
+    buy_amt: str = Field(default="", description="매수금액", max_length=20)
+    netprps_amt_irds: str = Field(default="", description="순매수금액증감", max_length=20)
+    buy_amt_irds: str = Field(default="", description="매수금액증감", max_length=20)
+    sell_amt: str = Field(default="", description="매도금액", max_length=20)
+    sell_amt_irds: str = Field(default="", description="매도금액증감", max_length=20)
     netprps_qty: str = Field(default="", description="순매수수량", max_length=20)
     prev_pot_netprps_qty: str = Field(default="", description="이전시점순매수수량", max_length=20)
     netprps_irds: str = Field(default="", description="순매수증감", max_length=20)
@@ -669,20 +676,4 @@ class DomesticMarketConditionProgramTradingTrendByStockAndDate(BaseModel, Kiwoom
 
     stk_daly_prm_trde_trnsn: list[DomesticMarketConditionProgramTradingTrendByStockAndDateItem] = Field(
         default_factory=list, description="종목일별프로그램매매추이"
-    )
-
-
-class DomesticMarketConditionTopIntradayTradingByInvestorItem(BaseModel):
-    stk_cd: str = Field(default="", title="종목코드", max_length=20)
-    stk_nm: str = Field(default="", title="종목명", max_length=40)
-    sel_qty: str = Field(default="", title="매도량", max_length=20)
-    buy_qty: str = Field(default="", title="매수량", max_length=20)
-    netslmt: str = Field(default="", title="순매도", max_length=20)
-
-
-class DomesticMarketConditionTopIntradayTradingByInvestor(BaseModel, KiwoomHttpBody):
-    model_config = ConfigDict(title="장중투자자별매매상위요청 응답")
-
-    opmr_invsr_trde_upper: list[DomesticMarketConditionTopIntradayTradingByInvestorItem] = Field(
-        default_factory=list, title="장중투자자별매매상위"
     )

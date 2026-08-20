@@ -963,6 +963,7 @@ class DomesticAccount:
         stk_cd: Optional[str] = None,
         crnc_cd: Optional[str] = None,
         frgn_stex_code: Optional[str] = None,
+        qry_sort_tp: Optional[str] = None,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticAccountConsignmentComprehensiveTransactionHistory]:
@@ -977,6 +978,7 @@ class DomesticAccount:
             stk_cd (Optional[str], optional): 종목코드. Defaults to None.
             crnc_cd (Optional[str], optional): 통화코드. Defaults to None.
             frgn_stex_code (Optional[str], optional): 해외거래소코드. Defaults to None.
+            qry_sort_tp (Optional[str], optional): 조회정렬구분 (1:최근거래순, 2:과거거래순, 미입력시 과거거래순). Defaults to None.
             cont_yn (Literal["Y", "N"], optional): 연속 조회 여부. Defaults to "N".
             next_key (str, optional): 다음 키. Defaults to "".
 
@@ -1008,6 +1010,9 @@ class DomesticAccount:
 
         if frgn_stex_code is not None:
             body["frgn_stex_code"] = frgn_stex_code
+
+        if qry_sort_tp is not None:
+            body["qry_sort_tp"] = qry_sort_tp
 
         response = self.client._post(self.path, headers, body)
 

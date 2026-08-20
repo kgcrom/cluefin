@@ -172,7 +172,6 @@ class DomesticEtfHourlyExecutionV2(BaseModel, KiwoomHttpBody):
 
 
 class DomesticEtfHourlyTrendV2Item(BaseModel):
-    cntr_tm: str = Field(default="", description="체결시간", max_length=20)
     cur_prc: str = Field(default="", description="현재가", max_length=20)
     pre_sig: str = Field(default="", description="대비기호", max_length=20)
     pred_pre: str = Field(default="", description="전일대비", max_length=20)

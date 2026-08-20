@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 
 from cluefin_openapi.kiwoom._domestic_stock_info_types import (
     DomesticStockInfoBasic,
@@ -991,6 +991,7 @@ class DomesticStockInfo:
         stk_cd: str,
         tdy_pred: Literal["1", "2"],
         tic_min: str = "0",
+        tm: Optional[str] = None,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticStockInfoDailyPreviousDayConclusion]:
@@ -999,7 +1000,8 @@ class DomesticStockInfo:
         Args:
             stk_cd (str): 종목코드 (KRX:039490,NXT:039490_NX,SOR:039490_AL)
             tdy_pred (Literal["1", "2"]): 당일전일 (1:당일, 2:전일)
-            tic_min (str, optional): 틱분구분. Defaults to "0".
+            tic_min (str, optional): 틱분구분 (0:틱, 1:분). Defaults to "0".
+            tm (Optional[str], optional): 조회시간 4자리 (예: 0900, 1430). 빈값 입력 시 현재시간. Defaults to None.
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -1020,6 +1022,10 @@ class DomesticStockInfo:
             "tdy_pred": tdy_pred,
             "tic_min": tic_min,
         }
+
+        if tm is not None:
+            body["tm"] = tm
+
         response = self.client._post(self.path, headers, body)
 
         if response.status_code != 200:
