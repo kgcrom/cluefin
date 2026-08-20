@@ -2,6 +2,7 @@ import { describe, test } from 'vitest';
 import {
   getBreakingNewsTitleItemSchema,
   getBreakingNewsTitleResponseSchema,
+  getNewsAggregateTitleItemSchema,
   getNewsAggregateTitleResponseSchema,
   getStockBuyExecutionStrengthTopOutput2ItemSchema,
   getStockBuyExecutionStrengthTopResponseSchema,
@@ -266,7 +267,7 @@ describe('KIS OverseasMarketAnalysis', () => {
       cts: '',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getNewsAggregateTitleResponseSchema);
+    assertResponseShape(res.body, getNewsAggregateTitleResponseSchema, 'outblock1', getNewsAggregateTitleItemSchema);
   });
 
   it('getStockRightsAggregate', async () => {

@@ -18,6 +18,7 @@ import {
   getForeignInstitutionalEstimateByStockResponseSchema,
   getForeignNetBuyTrendByStockItemSchema,
   getForeignNetBuyTrendByStockResponseSchema,
+  getInstitutionalForeignTradingAggregateItemSchema,
   getInstitutionalForeignTradingAggregateResponseSchema,
   getInvestorTradingTrendByMarketDailyItemSchema,
   getInvestorTradingTrendByMarketDailyResponseSchema,
@@ -543,6 +544,11 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidEtcClsCode: '0',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getInstitutionalForeignTradingAggregateResponseSchema);
+    assertResponseShape(
+      res.body,
+      getInstitutionalForeignTradingAggregateResponseSchema,
+      'output',
+      getInstitutionalForeignTradingAggregateItemSchema,
+    );
   });
 });

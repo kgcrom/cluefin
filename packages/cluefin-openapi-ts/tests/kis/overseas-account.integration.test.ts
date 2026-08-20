@@ -2,22 +2,27 @@ import { describe, test } from 'vitest';
 import {
   getBalanceBySettlementOutput1ItemSchema,
   getBalanceBySettlementOutput2ItemSchema,
+  getBalanceBySettlementOutput3ItemSchema,
   getBalanceBySettlementResponseSchema,
   getBuyTradableAmountResponseSchema,
   getCurrentBalanceByConclusionOutput1ItemSchema,
   getCurrentBalanceByConclusionOutput2ItemSchema,
+  getCurrentBalanceByConclusionOutput3ItemSchema,
   getCurrentBalanceByConclusionResponseSchema,
-  getDailyTransactionHistoryItemSchema,
+  getDailyTransactionHistoryOutput1ItemSchema,
+  getDailyTransactionHistoryOutput2ItemSchema,
   getDailyTransactionHistoryResponseSchema,
   getLimitOrderExecutionHistoryOutput1ItemSchema,
-  getLimitOrderExecutionHistoryOutput3ItemSchema,
+  getLimitOrderExecutionHistoryOutput2ItemSchema,
   getLimitOrderExecutionHistoryResponseSchema,
   getLimitOrderNumberItemSchema,
   getLimitOrderNumberResponseSchema,
   getMarginAggregateItemSchema,
   getMarginAggregateResponseSchema,
-  getPeriodProfitLossOutputItemSchema,
+  getPeriodProfitLossOutput1ItemSchema,
+  getPeriodProfitLossOutput2ItemSchema,
   getPeriodProfitLossResponseSchema,
+  getReserveOrdersItemSchema,
   getReserveOrdersResponseSchema,
   getStockBalanceOutput1ItemSchema,
   getStockBalanceResponseSchema,
@@ -133,6 +138,12 @@ describe('KIS OverseasAccount', () => {
       'output2',
       getCurrentBalanceByConclusionOutput2ItemSchema,
     );
+    assertResponseShape(
+      res.body,
+      getCurrentBalanceByConclusionResponseSchema,
+      'output3',
+      getCurrentBalanceByConclusionOutput3ItemSchema,
+    );
   });
 
   it('getReserveOrders', async () => {
@@ -148,7 +159,7 @@ describe('KIS OverseasAccount', () => {
       ovrsExcgCd: 'NASD',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getReserveOrdersResponseSchema);
+    assertResponseShape(res.body, getReserveOrdersResponseSchema, 'output', getReserveOrdersItemSchema);
   });
 
   it('getBalanceBySettlement', async () => {
@@ -174,6 +185,12 @@ describe('KIS OverseasAccount', () => {
       'output2',
       getBalanceBySettlementOutput2ItemSchema,
     );
+    assertResponseShape(
+      res.body,
+      getBalanceBySettlementResponseSchema,
+      'output3',
+      getBalanceBySettlementOutput3ItemSchema,
+    );
   });
 
   it('getDailyTransactionHistory', async () => {
@@ -192,8 +209,14 @@ describe('KIS OverseasAccount', () => {
     assertResponseShape(
       res.body,
       getDailyTransactionHistoryResponseSchema,
-      'output',
-      getDailyTransactionHistoryItemSchema,
+      'output1',
+      getDailyTransactionHistoryOutput1ItemSchema,
+    );
+    assertResponseShape(
+      res.body,
+      getDailyTransactionHistoryResponseSchema,
+      'output2',
+      getDailyTransactionHistoryOutput2ItemSchema,
     );
   });
 
@@ -212,7 +235,8 @@ describe('KIS OverseasAccount', () => {
     });
     assertKisResponse(res);
     assertResponseShape(res.body, getPeriodProfitLossResponseSchema);
-    assertResponseShape(res.body, getPeriodProfitLossResponseSchema, 'output', getPeriodProfitLossOutputItemSchema);
+    assertResponseShape(res.body, getPeriodProfitLossResponseSchema, 'output1', getPeriodProfitLossOutput1ItemSchema);
+    assertResponseShape(res.body, getPeriodProfitLossResponseSchema, 'output2', getPeriodProfitLossOutput2ItemSchema);
   });
 
   it('getMarginAggregate', async () => {
@@ -255,8 +279,8 @@ describe('KIS OverseasAccount', () => {
     assertResponseShape(
       res.body,
       getLimitOrderExecutionHistoryResponseSchema,
-      'output3',
-      getLimitOrderExecutionHistoryOutput3ItemSchema,
+      'output2',
+      getLimitOrderExecutionHistoryOutput2ItemSchema,
     );
   });
 });

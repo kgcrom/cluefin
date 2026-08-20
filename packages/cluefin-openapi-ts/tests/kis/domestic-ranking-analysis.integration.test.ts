@@ -6,7 +6,8 @@ import {
   getStockAfterHoursFluctuationRankResponseSchema,
   getStockAfterHoursVolumeRankOutput2ItemSchema,
   getStockAfterHoursVolumeRankResponseSchema,
-  getStockCreditBalanceTopItemSchema,
+  getStockCreditBalanceTopOutput1ItemSchema,
+  getStockCreditBalanceTopOutput2ItemSchema,
   getStockCreditBalanceTopResponseSchema,
   getStockDisparityIndexRankItemSchema,
   getStockDisparityIndexRankResponseSchema,
@@ -459,7 +460,18 @@ describe('KIS DomesticRankingAnalysis', () => {
       fidRankSortClsCode: '0',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getStockCreditBalanceTopResponseSchema, 'output', getStockCreditBalanceTopItemSchema);
+    assertResponseShape(
+      res.body,
+      getStockCreditBalanceTopResponseSchema,
+      'output1',
+      getStockCreditBalanceTopOutput1ItemSchema,
+    );
+    assertResponseShape(
+      res.body,
+      getStockCreditBalanceTopResponseSchema,
+      'output2',
+      getStockCreditBalanceTopOutput2ItemSchema,
+    );
   });
 
   it('getStockDividendYieldTop', async () => {

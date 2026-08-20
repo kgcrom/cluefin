@@ -452,10 +452,27 @@ export const getStockPeriodRightsInquiryResponseSchema = z
 
 // ── getNewsAggregateTitle: News Aggregate Title ──
 
+export const getNewsAggregateTitleItemSchema = z
+  .object({
+    info_gb: s(),
+    news_key: s(),
+    data_dt: s(),
+    data_tm: s(),
+    class_cd: s(),
+    class_name: s(),
+    source: s(),
+    nation_cd: s(),
+    exchange_cd: s(),
+    symb: s(),
+    symb_name: s(),
+    title: s(),
+  })
+  .passthrough();
+
 export const getNewsAggregateTitleResponseSchema = z
   .object({
     ...kisEnvelope,
-    outblock1: s(),
+    outblock1: z.array(getNewsAggregateTitleItemSchema).default([]),
   })
   .passthrough();
 
