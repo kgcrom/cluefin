@@ -214,14 +214,7 @@ export const etfHourlyExecutionV2ResponseSchema = z
 // ── ka40010: ETF시간대별추이V2 ──
 
 export const etfHourlyTrendV2ItemSchema = z
-  .object({
-    cntr_tm: s(),
-    cur_prc: s(),
-    pre_sig: s(),
-    pred_pre: s(),
-    trde_qty: s(),
-    for_netprps: s(),
-  })
+  .object({ cur_prc: s(), pre_sig: s(), pred_pre: s(), trde_qty: s(), for_netprps: s() })
   .passthrough();
 
 export const etfHourlyTrendV2ResponseSchema = z

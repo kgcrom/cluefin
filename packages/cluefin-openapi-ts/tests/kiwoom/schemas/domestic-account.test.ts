@@ -119,7 +119,7 @@ describe('domestic-account response schemas', () => {
 
     it('kt00009: accountOrderExecutionStatus', () => {
       const result = accountOrderExecutionStatusResponseSchema.parse(minimalEnvelope);
-      expect(result.acnt_ord_cntr_prst).toEqual([]);
+      expect(result.acnt_ord_cntr_prst_array).toEqual([]);
     });
 
     it('kt00010: availableWithdrawalAmount', () => {
