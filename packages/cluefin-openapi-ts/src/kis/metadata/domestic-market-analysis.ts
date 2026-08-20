@@ -139,235 +139,235 @@ export const domesticMarketAnalysisEndpoints: KisEndpointDefinition[] = [
       },
       {
         name: 'fidCondMrktDivCode2',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd2',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode3',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd3',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode4',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd4',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode5',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd5',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode6',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd6',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode7',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd7',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode8',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd8',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode9',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd9',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode10',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd10',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode11',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd11',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode12',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd12',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode13',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd13',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode14',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd14',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode15',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd15',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode16',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd16',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode17',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd17',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode18',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd18',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode19',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd19',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode20',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd20',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode21',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd21',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode22',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd22',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode23',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd23',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode24',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd24',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode25',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd25',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode26',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd26',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode27',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd27',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode28',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd28',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode29',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd29',
-        required: true,
+        required: false,
       },
       {
         name: 'fidCondMrktDivCode30',
-        required: true,
+        required: false,
       },
       {
         name: 'fidInputIscd30',
-        required: true,
+        required: false,
       },
     ],
   },
@@ -377,7 +377,7 @@ export const domesticMarketAnalysisEndpoints: KisEndpointDefinition[] = [
     path: '/uapi/domestic-stock/v1/quotations/intstock-stocklist-by-group',
     trId: 'HHKCM113004C6',
     requestMap: {
-      TYPE: 'type_',
+      TYPE: 'type',
       USER_ID: 'userId',
       DATA_RANK: 'dataRank',
       INTER_GRP_CODE: 'interGrpCode',
@@ -388,7 +388,7 @@ export const domesticMarketAnalysisEndpoints: KisEndpointDefinition[] = [
     },
     params: [
       {
-        name: 'type_',
+        name: 'type',
         required: true,
       },
       {
@@ -424,45 +424,35 @@ export const domesticMarketAnalysisEndpoints: KisEndpointDefinition[] = [
   {
     methodName: 'getInstitutionalForeignTradingAggregate',
     method: 'GET',
-    path: '/uapi/domestic-stock/v1/quotations/intstock-stocklist-by-group',
-    trId: 'HHKCM113004C6',
+    path: '/uapi/domestic-stock/v1/quotations/foreign-institution-total',
+    trId: 'FHPTJ04400000',
     requestMap: {
-      TYPE: 'type_',
-      USER_ID: 'userId',
-      DATA_RANK: 'dataRank',
-      INTER_GRP_CODE: 'interGrpCode',
-      INTER_GRP_NAME: 'interGrpName',
-      HTS_KOR_ISNM: 'htsKorIsnm',
-      CNTG_CLS_CODE: 'cntgClsCode',
+      FID_COND_MRKT_DIV_CODE: 'fidCondMrktDivCode',
+      FID_COND_SCR_DIV_CODE: 'fidCondScrDivCode',
+      FID_INPUT_ISCD: 'fidInputIscd',
+      FID_DIV_CLS_CODE: 'fidDivClsCode',
+      FID_RANK_SORT_CLS_CODE: 'fidRankSortClsCode',
       FID_ETC_CLS_CODE: 'fidEtcClsCode',
     },
     params: [
       {
-        name: 'type_',
+        name: 'fidCondMrktDivCode',
         required: true,
       },
       {
-        name: 'userId',
+        name: 'fidCondScrDivCode',
         required: true,
       },
       {
-        name: 'dataRank',
+        name: 'fidInputIscd',
         required: true,
       },
       {
-        name: 'interGrpCode',
+        name: 'fidDivClsCode',
         required: true,
       },
       {
-        name: 'interGrpName',
-        required: true,
-      },
-      {
-        name: 'htsKorIsnm',
-        required: true,
-      },
-      {
-        name: 'cntgClsCode',
+        name: 'fidRankSortClsCode',
         required: true,
       },
       {
@@ -485,14 +475,6 @@ export const domesticMarketAnalysisEndpoints: KisEndpointDefinition[] = [
     },
     params: [
       {
-        name: 'fidCondMrktDivCode',
-        required: true,
-      },
-      {
-        name: 'fidCondScrDivCode',
-        required: true,
-      },
-      {
         name: 'fidInputIscd',
         required: true,
       },
@@ -503,6 +485,16 @@ export const domesticMarketAnalysisEndpoints: KisEndpointDefinition[] = [
       {
         name: 'fidRankSortClsCode2',
         required: true,
+      },
+      {
+        name: 'fidCondMrktDivCode',
+        required: false,
+        defaultValue: 'J',
+      },
+      {
+        name: 'fidCondScrDivCode',
+        required: false,
+        defaultValue: '16441',
       },
     ],
   },
@@ -534,7 +526,7 @@ export const domesticMarketAnalysisEndpoints: KisEndpointDefinition[] = [
       {
         name: 'fidOrgAdjPrc',
         required: false,
-        defaultValue: '0',
+        defaultValue: '',
       },
       {
         name: 'fidEtcClsCode',

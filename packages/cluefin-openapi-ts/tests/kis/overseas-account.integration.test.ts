@@ -43,6 +43,7 @@ describe('KIS OverseasAccount', () => {
   it('getBuyTradableAmount', async () => {
     const client = await getKisClient();
     const res = await client.overseasAccount.getBuyTradableAmount({
+      trId: 'TTTS3007R',
       cano: KIS_CANO,
       acntPrdtCd: KIS_ACNT_PRDT_CD,
       ovrsExcgCd: 'NASD',
@@ -56,6 +57,7 @@ describe('KIS OverseasAccount', () => {
   it('getStockBalance', async () => {
     const client = await getKisClient();
     const res = await client.overseasAccount.getStockBalance({
+      trId: 'TTTS3012R',
       cano: KIS_CANO,
       acntPrdtCd: KIS_ACNT_PRDT_CD,
       ovrsExcgCd: 'NASD',
@@ -86,6 +88,7 @@ describe('KIS OverseasAccount', () => {
   it('getStockConclusionHistory', async () => {
     const client = await getKisClient();
     const res = await client.overseasAccount.getStockConclusionHistory({
+      trId: 'TTTS3035R',
       cano: KIS_CANO,
       acntPrdtCd: KIS_ACNT_PRDT_CD,
       pdno: '%',
@@ -108,6 +111,7 @@ describe('KIS OverseasAccount', () => {
   it('getCurrentBalanceByConclusion', async () => {
     const client = await getKisClient();
     const res = await client.overseasAccount.getCurrentBalanceByConclusion({
+      trId: 'CTRP6504R',
       cano: KIS_CANO,
       acntPrdtCd: KIS_ACNT_PRDT_CD,
       wcrcFrcrDvsnCd: '02',
@@ -134,6 +138,7 @@ describe('KIS OverseasAccount', () => {
   it('getReserveOrders', async () => {
     const client = await getKisClient();
     const res = await client.overseasAccount.getReserveOrders({
+      trId: 'TTTT3039R',
       cano: KIS_CANO,
       acntPrdtCd: KIS_ACNT_PRDT_CD,
       inqrStrtDt: ONE_MONTH_AGO,
@@ -225,7 +230,7 @@ describe('KIS OverseasAccount', () => {
     const res = await client.overseasAccount.getLimitOrderNumber({
       tradDt: TODAY,
       cano: KIS_CANO,
-      acnoPrdtCd: KIS_ACNT_PRDT_CD,
+      acntPrdtCd: KIS_ACNT_PRDT_CD,
     });
     assertKisResponse(res);
     assertResponseShape(res.body, getLimitOrderNumberResponseSchema, 'output', getLimitOrderNumberItemSchema);

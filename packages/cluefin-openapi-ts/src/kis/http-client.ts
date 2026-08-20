@@ -200,6 +200,10 @@ export class KisHttpClient {
   public async invokeEndpoint(definition: KisEndpointDefinition, input: Record<string, unknown>): Promise<ApiResponse> {
     try {
       const parsedInput = createInputSchema(definition.params).parse(input);
+      // tr_id·tr_cont·custtype은 쿼리/바디가 아니라 헤더로 나가는 per-call 파라미터
+      const trId = definition.trId ?? (typeof parsedInput.trId === 'string' ? parsedInput.trId : undefined);
+      const trCont = typeof parsedInput.trCont === 'string' ? parsedInput.trCont : undefined;
+      const custtype = typeof parsedInput.custtype === 'string' ? parsedInput.custtype : undefined;
       const mappedRequest = Object.fromEntries(
         Object.entries(definition.requestMap)
           .map(([apiKey, inputKey]) => {
@@ -222,8 +226,9 @@ export class KisHttpClient {
           authorization: `Bearer ${this.token}`,
           appkey: this.appKey,
           appsecret: this.secretKey,
-          custtype: 'P',
-          ...(definition.trId ? { tr_id: definition.trId } : {}),
+          custtype: custtype ?? 'P',
+          ...(trId ? { tr_id: trId } : {}),
+          ...(trCont !== undefined ? { tr_cont: trCont } : {}),
         },
       };
       if (definition.method === 'GET') {

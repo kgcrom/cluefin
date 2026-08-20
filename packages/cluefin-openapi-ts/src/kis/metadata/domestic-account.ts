@@ -68,6 +68,7 @@ export const domesticAccountEndpoints: KisEndpointDefinition[] = [
       CANO: 'cano',
       ACNT_PRDT_CD: 'acntPrdtCd',
       PDNO: 'pdno',
+      SLL_TYPE: 'sllType',
       CRDT_TYPE: 'crdtType',
       LOAN_DT: 'loanDt',
       ORD_DVSN: 'ordDvsn',
@@ -180,6 +181,11 @@ export const domesticAccountEndpoints: KisEndpointDefinition[] = [
       {
         name: 'cndtPric',
         required: false,
+      },
+      {
+        name: 'sllType',
+        required: false,
+        defaultValue: '',
       },
     ],
   },
@@ -394,8 +400,11 @@ export const domesticAccountEndpoints: KisEndpointDefinition[] = [
       CANO: 'cano',
       ACNT_PRDT_CD: 'acntPrdtCd',
       AFHR_FLPR_YN: 'afhrFlprYn',
+      OFL_YN: 'oflYn',
       INQR_DVSN: 'inqrDvsn',
+      UNPR_DVSN: 'unprDvsn',
       FUND_STTL_ICLD_YN: 'fundSttlIcldYn',
+      FNCG_AMT_AUTO_RDPT_YN: 'fncgAmtAutoRdptYn',
       PRCS_DVSN: 'prcsDvsn',
       CTX_AREA_FK100: 'ctxAreaFk100',
       CTX_AREA_NK100: 'ctxAreaNk100',
@@ -444,6 +453,21 @@ export const domesticAccountEndpoints: KisEndpointDefinition[] = [
         required: false,
         defaultValue: '',
       },
+      {
+        name: 'oflYn',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'unprDvsn',
+        required: false,
+        defaultValue: '01',
+      },
+      {
+        name: 'fncgAmtAutoRdptYn',
+        required: false,
+        defaultValue: 'N',
+      },
     ],
   },
   {
@@ -453,20 +477,15 @@ export const domesticAccountEndpoints: KisEndpointDefinition[] = [
     requestMap: {
       CANO: 'cano',
       ACNT_PRDT_CD: 'acntPrdtCd',
-      AFHR_FLPR_YN: 'afhrFlprYn',
-      INQR_DVSN: 'inqrDvsn',
-      FUND_STTL_ICLD_YN: 'fundSttlIcldYn',
-      PRCS_DVSN: 'prcsDvsn',
-      CTX_AREA_FK100: 'ctxAreaFk100',
-      CTX_AREA_NK100: 'ctxAreaNk100',
+      PDNO: 'pdno',
+      ORD_UNPR: 'ordUnpr',
+      ORD_DVSN: 'ordDvsn',
+      CMA_EVLU_AMT_ICLD_YN: 'cmaEvluAmtIcldYn',
+      OVRS_ICLD_YN: 'ovrsIcldYn',
     },
     params: [
       {
         name: 'trId',
-        required: true,
-      },
-      {
-        name: 'trCont',
         required: true,
       },
       {
@@ -478,30 +497,24 @@ export const domesticAccountEndpoints: KisEndpointDefinition[] = [
         required: true,
       },
       {
-        name: 'afhrFlprYn',
+        name: 'pdno',
         required: true,
       },
       {
-        name: 'inqrDvsn',
+        name: 'ordUnpr',
         required: true,
       },
       {
-        name: 'fundSttlIcldYn',
+        name: 'ordDvsn',
         required: true,
       },
       {
-        name: 'prcsDvsn',
+        name: 'cmaEvluAmtIcldYn',
         required: true,
       },
       {
-        name: 'ctxAreaFk100',
-        required: false,
-        defaultValue: '',
-      },
-      {
-        name: 'ctxAreaNk100',
-        required: false,
-        defaultValue: '',
+        name: 'ovrsIcldYn',
+        required: true,
       },
     ],
   },
@@ -652,6 +665,7 @@ export const domesticAccountEndpoints: KisEndpointDefinition[] = [
     requestMap: {
       CANO: 'cano',
       ACNT_PRDT_CD: 'acntPrdtCd',
+      PDNO: 'pdno',
       RSVN_ORD_SEQ: 'rsvnOrdSeq',
       ORD_QTY: 'ordQty',
       ORD_UNPR: 'ordUnpr',
@@ -675,6 +689,10 @@ export const domesticAccountEndpoints: KisEndpointDefinition[] = [
       },
       {
         name: 'acntPrdtCd',
+        required: true,
+      },
+      {
+        name: 'pdno',
         required: true,
       },
       {
@@ -732,6 +750,7 @@ export const domesticAccountEndpoints: KisEndpointDefinition[] = [
       RSVN_ORD_ORD_DT: 'rsvnOrdOrdDt',
       RSVN_ORD_END_DT: 'rsvnOrdEndDt',
       RSVN_ORD_SEQ: 'rsvnOrdSeq',
+      TMNL_MDIA_KIND_CD: 'tmnlMdiaKindCd',
       CANO: 'cano',
       ACNT_PRDT_CD: 'acntPrdtCd',
       PRCS_DVSN_CD: 'prcsDvsnCd',
@@ -756,6 +775,10 @@ export const domesticAccountEndpoints: KisEndpointDefinition[] = [
       },
       {
         name: 'rsvnOrdSeq',
+        required: true,
+      },
+      {
+        name: 'tmnlMdiaKindCd',
         required: true,
       },
       {
@@ -939,7 +962,7 @@ export const domesticAccountEndpoints: KisEndpointDefinition[] = [
     requestMap: {
       CANO: 'cano',
       ACNT_PRDT_CD: 'acntPrdtCd',
-      USER_DVSN_CD: 'userDvsnCd',
+      ACCA_DVSN_CD: 'accaDvsnCd',
     },
     params: [
       {
@@ -952,7 +975,7 @@ export const domesticAccountEndpoints: KisEndpointDefinition[] = [
         defaultValue: '29',
       },
       {
-        name: 'userDvsnCd',
+        name: 'accaDvsnCd',
         required: false,
         defaultValue: '00',
       },
@@ -966,7 +989,7 @@ export const domesticAccountEndpoints: KisEndpointDefinition[] = [
     requestMap: {
       CANO: 'cano',
       ACNT_PRDT_CD: 'acntPrdtCd',
-      USER_DVSN_CD: 'userDvsnCd',
+      ACCA_DVSN_CD: 'accaDvsnCd',
       INQR_DVSN: 'inqrDvsn',
       CTX_AREA_FK100: 'ctxAreaFk100',
       CTX_AREA_NK100: 'ctxAreaNk100',
@@ -990,7 +1013,7 @@ export const domesticAccountEndpoints: KisEndpointDefinition[] = [
         defaultValue: '29',
       },
       {
-        name: 'userDvsnCd',
+        name: 'accaDvsnCd',
         required: false,
         defaultValue: '00',
       },

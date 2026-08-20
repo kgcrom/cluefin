@@ -70,7 +70,6 @@ describe('KIS DomesticRankingAnalysis', () => {
       fidInputPrice1: '0',
       fidInputPrice2: '0',
       fidVolCnt: '0',
-      fidInputDate1: '',
     });
     assertKisResponse(res);
     assertResponseShape(res.body, getTradingVolumeRankResponseSchema, 'output', getTradingVolumeRankItemSchema);

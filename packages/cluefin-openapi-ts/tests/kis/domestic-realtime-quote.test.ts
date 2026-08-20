@@ -125,6 +125,9 @@ const sampleOrderbookData: string[] = [
   '100',
   '-200',
   '00',
+  '70050',
+  '3000',
+  '1',
 ];
 
 const sampleExecutionNotificationData: string[] = [
@@ -291,7 +294,7 @@ describe('parseOrderbookData', () => {
     expect(result[0]?.acmlVol).toBe('5000000');
   });
 
-  it('should parse batched records (10 x 59)', () => {
+  it('should parse batched records (10 x 62)', () => {
     const batched: string[] = [];
     for (let i = 0; i < 10; i++) {
       const record = [...sampleOrderbookData];
@@ -314,12 +317,12 @@ describe('parseOrderbookData', () => {
 
   it('should throw on insufficient fields', () => {
     expect(() => DomesticRealtimeQuote.parseOrderbookData(['005930', '093000', '0'])).toThrow(
-      'Expected at least 59 fields, got 3',
+      'Expected at least 62 fields, got 3',
     );
   });
 
   it('should throw on empty data', () => {
-    expect(() => DomesticRealtimeQuote.parseOrderbookData([])).toThrow('Expected at least 59 fields, got 0');
+    expect(() => DomesticRealtimeQuote.parseOrderbookData([])).toThrow('Expected at least 62 fields, got 0');
   });
 });
 
@@ -379,8 +382,8 @@ describe('Field name constants', () => {
     expect(EXECUTION_FIELD_NAMES).toHaveLength(46);
   });
 
-  it('ORDERBOOK_FIELD_NAMES should have 59 entries', () => {
-    expect(ORDERBOOK_FIELD_NAMES).toHaveLength(59);
+  it('ORDERBOOK_FIELD_NAMES should have 62 entries', () => {
+    expect(ORDERBOOK_FIELD_NAMES).toHaveLength(62);
   });
 
   it('EXECUTION_NOTIFICATION_FIELD_NAMES should have 26 entries', () => {
