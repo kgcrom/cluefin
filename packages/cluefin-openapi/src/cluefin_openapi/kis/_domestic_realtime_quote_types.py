@@ -103,7 +103,7 @@ class DomesticRealtimeOrderbookItem(BaseModel):
     """국내주식 실시간호가 (KRX) - H0STASP0.
 
     WebSocket 메시지의 데이터 부분을 파싱한 모델입니다.
-    데이터는 "^" 구분자로 59개 필드가 구분되어 전달됩니다.
+    데이터는 "^" 구분자로 62개 필드가 구분되어 전달됩니다.
     """
 
     mksc_shrn_iscd: str = Field(title="유가증권 단축 종목코드")
@@ -165,6 +165,10 @@ class DomesticRealtimeOrderbookItem(BaseModel):
     ovtm_total_askp_icdc: str = Field(title="시간외 총 매도호가 증감")
     ovtm_total_bidp_icdc: str = Field(title="시간외 총 매수호가 증감")
     stck_deal_cls_code: str = Field(title="주식 매매 구분 코드")
+    # 아래 3개는 중간가 도입으로 추가된 필드 — 구형(59필드) 전문도 파싱되도록 기본값 유지
+    mid_prc: str = Field(default="", title="중간가")
+    midp_total_rsqn: str = Field(default="", title="중간가잔량합계수량")
+    midp_cls_code: str = Field(default="", title="중간가 매수매도 구분")
 
 
 # 필드 순서 리스트 (WebSocket 데이터 파싱용) - 체결가
@@ -278,6 +282,9 @@ ORDERBOOK_FIELD_NAMES: list[str] = [
     "ovtm_total_askp_icdc",
     "ovtm_total_bidp_icdc",
     "stck_deal_cls_code",
+    "mid_prc",
+    "midp_total_rsqn",
+    "midp_cls_code",
 ]
 
 # 필드 순서 리스트 (WebSocket 데이터 파싱용) - 실시간체결통보

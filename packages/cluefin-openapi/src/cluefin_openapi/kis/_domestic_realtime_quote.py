@@ -190,32 +190,31 @@ class DomesticRealtimeQuote:
         The API may send batched updates (multiple records concatenated).
         This method parses ALL records and returns them as a list.
 
-        Note: The API may return extra fields beyond the documented 59 fields.
-        This parser will use the first 59 fields per record and ignore any extras.
+        Note: The API may return extra fields beyond the documented 62 fields.
+        This parser will use the first 62 fields per record and ignore any extras.
         This provides forward compatibility with future API schema changes.
 
         Args:
             data: List of string values from WebSocket message.
-                  - Single record: 59+ fields
-                  - Batched: N×59+ fields
-                  - With schema changes: 62+ per record (forward compatible)
+                  - Single record: 62+ fields
+                  - Batched: N×62+ fields
 
         Returns:
             List of parsed DomesticRealtimeOrderbookItem models.
             Always returns a list, even for single records.
 
         Raises:
-            ValueError: If data has insufficient fields (< 59)
+            ValueError: If data has insufficient fields (< 62)
 
         Example:
             ```python
-            # Single record with extra fields
-            data = [...] * 62  # 62 fields (59 used, 3 ignored)
+            # Single record
+            data = [...] * 62  # 62 fields
             items = parse_orderbook_data(data)
             assert len(items) == 1
 
             # Batched records
-            data = [...] * (10 * 59)  # 590 fields = 10 records
+            data = [...] * (10 * 62)  # 620 fields = 10 records
             items = parse_orderbook_data(data)
             assert len(items) == 10
             ```

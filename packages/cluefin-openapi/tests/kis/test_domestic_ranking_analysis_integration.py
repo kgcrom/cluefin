@@ -26,7 +26,6 @@ def test_get_trading_volume_rank(client: HttpClient):
             fid_input_price_1="",  # 가격~
             fid_input_price_2="",  # ~가격
             fid_vol_cnt="",  # 거래량~
-            fid_input_date_1="",  # 공란 입력
         )
 
         # Verify response type

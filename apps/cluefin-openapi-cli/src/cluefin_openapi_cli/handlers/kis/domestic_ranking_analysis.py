@@ -45,7 +45,6 @@ def handle_kis_trading_volume_rank(params: dict, session) -> dict:
         fid_input_price_1=params.get("price_min", ""),
         fid_input_price_2=params.get("price_max", ""),
         fid_vol_cnt=params.get("volume_min", ""),
-        fid_input_date_1=params.get("date", ""),
     )
     return {"data": extract_output(response, "output")}
 

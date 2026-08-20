@@ -277,7 +277,7 @@ class TestExecutionFieldNames:
 
 @pytest.fixture
 def sample_orderbook_data() -> list[str]:
-    """Generate sample orderbook data (59 fields)."""
+    """Generate sample orderbook data (62 fields)."""
     return [
         "005930",  # mksc_shrn_iscd
         "093000",  # bsop_hour
@@ -338,6 +338,9 @@ def sample_orderbook_data() -> list[str]:
         "100",  # ovtm_total_askp_icdc
         "-200",  # ovtm_total_bidp_icdc
         "00",  # stck_deal_cls_code
+        "70050",  # mid_prc
+        "12345",  # midp_total_rsqn
+        "0",  # midp_cls_code
     ]
 
 
@@ -400,17 +403,17 @@ class TestParseOrderbookData:
         with pytest.raises(ValueError) as exc_info:
             DomesticRealtimeQuote.parse_orderbook_data(short_data)
 
-        assert "Expected at least 59 fields, got 3" in str(exc_info.value)
+        assert "Expected at least 62 fields, got 3" in str(exc_info.value)
 
     def test_parse_orderbook_data_empty_list_raises_error(self):
         """Test that empty list raises ValueError."""
         with pytest.raises(ValueError) as exc_info:
             DomesticRealtimeQuote.parse_orderbook_data([])
 
-        assert "Expected at least 59 fields, got 0" in str(exc_info.value)
+        assert "Expected at least 62 fields, got 0" in str(exc_info.value)
 
     def test_parse_orderbook_data_batched_10_records(self, sample_orderbook_data):
-        """Test parsing 10 batched orderbook records (10 × 59 = 590 fields)."""
+        """Test parsing 10 batched orderbook records (10 × 62 = 620 fields)."""
         batched_data = []
         for i in range(10):
             record = sample_orderbook_data.copy()
@@ -427,23 +430,24 @@ class TestParseOrderbookData:
             assert item.askp1 == str(70100 + i * 10)
 
     def test_parse_orderbook_data_single_record_with_extra_fields(self, sample_orderbook_data):
-        """Test single record with 62 fields (59 + 3 extra) - forward compatibility."""
-        # Simulate API returning 62 fields (actual case mentioned in docs)
+        """Test single record with 65 fields (62 + 3 extra) - forward compatibility."""
+        # Simulate API returning extra fields beyond the documented 62
         data = sample_orderbook_data + ["extra1", "extra2", "extra3"]
 
         result = DomesticRealtimeQuote.parse_orderbook_data(data)
 
         assert isinstance(result, list)
         assert len(result) == 1
-        # Extra fields should be ignored, first 59 used
+        # Extra fields should be ignored, first 62 used
         assert result[0].mksc_shrn_iscd == "005930"
         assert result[0].stck_deal_cls_code == "00"
+        assert result[0].midp_cls_code == "0"
 
     def test_parse_orderbook_data_batched_with_extra_fields_per_record(self):
-        """Test batched records where each has extra fields."""
-        # 5 records × 62 fields per record (59 + 3 extras) = 310 total
-        # Should parse floor(310 / 59) = 5 complete records
-        data = ["value"] * (5 * 62)
+        """Test batched records with trailing extra fields."""
+        # 5 records × 62 fields + 3 trailing extras = 313 total
+        # Should parse floor(313 / 62) = 5 complete records
+        data = ["value"] * (5 * 62 + 3)
 
         result = DomesticRealtimeQuote.parse_orderbook_data(data)
 
@@ -456,9 +460,9 @@ class TestDomesticRealtimeOrderbookItem:
     """Test DomesticRealtimeOrderbookItem Pydantic model."""
 
     def test_model_field_count(self):
-        """Test that model has exactly 59 fields."""
-        assert len(ORDERBOOK_FIELD_NAMES) == 59
-        assert len(DomesticRealtimeOrderbookItem.model_fields) == 59
+        """Test that model has exactly 62 fields."""
+        assert len(ORDERBOOK_FIELD_NAMES) == 62
+        assert len(DomesticRealtimeOrderbookItem.model_fields) == 62
 
     def test_model_validation_from_dict(self, sample_orderbook_data):
         """Test model can be created from dictionary."""
@@ -478,16 +482,16 @@ class TestDomesticRealtimeOrderbookItem:
         assert item.mksc_shrn_iscd == "005930"
 
         # Last field
-        assert ORDERBOOK_FIELD_NAMES[58] == "stck_deal_cls_code"
-        assert item.stck_deal_cls_code == "00"
+        assert ORDERBOOK_FIELD_NAMES[61] == "midp_cls_code"
+        assert item.midp_cls_code == "0"
 
 
 class TestOrderbookFieldNames:
     """Test ORDERBOOK_FIELD_NAMES constant."""
 
     def test_field_names_count(self):
-        """Test that field names list has 59 entries."""
-        assert len(ORDERBOOK_FIELD_NAMES) == 59
+        """Test that field names list has 62 entries."""
+        assert len(ORDERBOOK_FIELD_NAMES) == 62
 
     def test_field_names_all_strings(self):
         """Test that all field names are strings."""

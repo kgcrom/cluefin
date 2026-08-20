@@ -481,51 +481,42 @@ class DomesticAccount:
 
     def get_buy_tradable_inquiry(
         self,
-        tr_id: Literal["TTTC0802R", "VTTC0802R"],
-        tr_cont: Literal["", "N"],
+        tr_id: Literal["TTTC8908R", "VTTC8908R"],
         cano: str,
         acnt_prdt_cd: str,
-        afhr_flpr_yn: Literal["N", "Y", "X"],
-        inqr_dvsn: Literal["01", "02"],
-        fund_sttl_icld_yn: Literal["N", "Y"],
-        prcs_dvsn: Literal["00", "01"],
-        ctx_area_fk100: str = "",
-        ctx_area_nk100: str = "",
+        pdno: str,
+        ord_unpr: str,
+        ord_dvsn: Literal["00", "01", "02", "03", "04", "05", "06", "07"],
+        cma_evlu_amt_icld_yn: Literal["Y", "N"],
+        ovrs_icld_yn: Literal["Y", "N"],
     ) -> KisHttpResponse[BuyTradableInquiry]:
         """
         매수가능조회
 
         Args:
             tr_id: TR ID
-            tr_cont: 연속 거래 여부, (공백 : 초기 조회, N : 다음 데이터 조회 (output header의 tr_cont가 M일 경우)
             cano: 종합계좌번호
             acnt_prdt_cd: 계좌상품코드
-            afhr_flpr_yn: 시간외단일가, 거래소여부
-            inqr_dvsn: 조회구분
-            fund_sttl_icld_yn: 펀드결제분포함여부
-            prcs_dvsn: 처리구분
-            ctx_area_fk100: 연속조회검색조건100, '공란 : 최초 조회시는 이전 조회 Output CTX_AREA_FK100 값 : 다음페이지 조회시(2번째부터)'
-            ctx_area_nk100: 연속조회키100, '공란 : 최초 조회시 이전 조회 Output CTX_AREA_NK100 값 : 다음페이지 조회시(2번째부터)'
+            pdno: 종목코드(6자리) , ETN의 경우 7자리 입력
+            ord_unpr: 주문단가, 주문단가 시장가 주문시, "0"으로 입력
+            ord_dvsn: 주문구분
+            cma_evlu_amt_icld_yn: CMA평가금액포함여부 (Y/N)
+            ovrs_icld_yn: 해외포함여부 (Y/N)
 
         Returns:
             KisHttpResponse[BuyTradableInquiry]: 매수가능조회 응답 객체
         """
         headers = {
             "tr_id": tr_id,
-            "tr_cont": tr_cont,
         }
         params = {
             "CANO": cano,
             "ACNT_PRDT_CD": acnt_prdt_cd,
-            "AFHR_FLPR_YN": afhr_flpr_yn,
-            "OFL_YN": "",
-            "INQR_DVSN": inqr_dvsn,
-            "UNPR_DVSN": "01",
-            "FUND_STTL_ICLD_YN": fund_sttl_icld_yn,
-            "FNCG_AMT_AUTO_RDPT_YN": "N",
-            "PRCS_DVSN": prcs_dvsn,
-            "CTX_AREA_FK100": ctx_area_fk100,
-            "CTX_AREA_NK100": ctx_area_nk100,
+            "PDNO": pdno,
+            "ORD_UNPR": ord_unpr,
+            "ORD_DVSN": ord_dvsn,
+            "CMA_EVLU_AMT_ICLD_YN": cma_evlu_amt_icld_yn,
+            "OVRS_ICLD_YN": ovrs_icld_yn,
         }
 
         response = self.client._get(
@@ -688,6 +679,7 @@ class DomesticAccount:
         tr_id: Literal["CTSC0009U", "CTSC0013U"],
         cano: str,
         acnt_prdt_cd: str,
+        pdno: str,
         rsvn_ord_seq: str,
         ord_qty: str,
         ord_unpr: str,
@@ -707,6 +699,7 @@ class DomesticAccount:
             tr_id: TR ID (예약취소): CTSC0009U, (예약정정): CTSC0013U
             cano: 종합계좌번호
             acnt_prdt_cd: 계좌상품코드
+            pdno: 종목코드(6자리)
             rsvn_ord_seq: 예약주문순번
             ord_qty: 주문수량
             ord_unpr: 주문단가, 주문단가 시장가 주문시, "0"으로 입력
@@ -728,6 +721,7 @@ class DomesticAccount:
         body = {
             "CANO": cano,
             "ACNT_PRDT_CD": acnt_prdt_cd,
+            "PDNO": pdno,
             "RSVN_ORD_SEQ": rsvn_ord_seq,
             "ORD_QTY": ord_qty,
             "ORD_UNPR": ord_unpr,
@@ -753,6 +747,7 @@ class DomesticAccount:
         rsvn_ord_ord_dt: str,
         rsvn_ord_end_dt: str,
         rsvn_ord_seq: str,
+        tmnl_mdia_kind_cd: str,
         cano: str,
         acnt_prdt_cd: str,
         prcs_dvsn_cd: Literal["0", "1", "2"],
@@ -770,6 +765,7 @@ class DomesticAccount:
             rsvn_ord_ord_dt: 예약주문시작일자, YYYYMMDD
             rsvn_ord_end_dt: 예약주문종료일자, YYYYMMDD
             rsvn_ord_seq: 예약주문순번
+            tmnl_mdia_kind_cd: 단말매체종류코드
             cano: 종합계좌번호
             acnt_prdt_cd: 계좌상품코드
             prcs_dvsn_cd: 처리구분코드 (0: 전체 1: 처리내역 2: 미처리내역)
@@ -790,6 +786,7 @@ class DomesticAccount:
             "RSVN_ORD_ORD_DT": rsvn_ord_ord_dt,
             "RSVN_ORD_END_DT": rsvn_ord_end_dt,
             "RSVN_ORD_SEQ": rsvn_ord_seq,
+            "TMNL_MDIA_KIND_CD": tmnl_mdia_kind_cd,
             "CANO": cano,
             "ACNT_PRDT_CD": acnt_prdt_cd,
             "PRCS_DVSN_CD": prcs_dvsn_cd,
@@ -945,7 +942,7 @@ class DomesticAccount:
         self,
         cano: str,
         acnt_prdt_cd: str = "29",
-        user_dvsn_cd: str = "00",
+        acca_dvsn_cd: str = "00",
     ) -> KisHttpResponse[PensionReserveDepositInquiry]:
         """
         퇴직연금 예수금조회
@@ -953,7 +950,7 @@ class DomesticAccount:
         Args:
             cano: 종합계좌번호
             acnt_prdt_cd: 계좌상품코드, 기본값 "29"
-            user_dvsn_cd: 사용자구분코드, 기본값 "00"
+            acca_dvsn_cd: 적립금구분코드, 기본값 "00"
 
         Returns:
             KisHttpResponse[PensionReserveDepositInquiry]: 퇴직연금 예수금조회 응답 객체
@@ -964,7 +961,7 @@ class DomesticAccount:
         params = {
             "CANO": cano,
             "ACNT_PRDT_CD": acnt_prdt_cd,
-            "USER_DVSN_CD": user_dvsn_cd,
+            "ACCA_DVSN_CD": acca_dvsn_cd,
         }
         response = self.client._get(
             "/uapi/domestic-stock/v1/trading/pension/inquire-deposit", headers=headers, params=params
@@ -981,7 +978,7 @@ class DomesticAccount:
         ctx_area_fk100: str,
         ctx_area_nk100: str,
         acnt_prdt_cd: str = "29",
-        user_dvsn_cd: str = "00",
+        acca_dvsn_cd: str = "00",
         inqr_dvsn: Literal["00"] = "00",
     ) -> KisHttpResponse[PensionBalanceInquiry]:
         """
@@ -992,7 +989,7 @@ class DomesticAccount:
             ctx_area_fk100: 연속조회검색조건100, '공란 : 최초 조회시는 이전 조회 Output CTX_AREA_FK100 값 : 다음페이지 조회시(2번째부터)'
             ctx_area_nk100: 연속조회키100, '공란 : 최초 조회시 이전 조회 Output CTX_AREA_NK100 값 : 다음페이지 조회시(2번째부터)'
             acnt_prdt_cd: 계좌상품코드, 기본값 "29"
-            user_dvsn_cd: 사용자구분코드, 기본값 "00"
+            acca_dvsn_cd: 적립금구분코드, 기본값 "00"
             inqr_dvsn: 조회구분, 기본값 "00"
 
         Returns:
@@ -1004,7 +1001,7 @@ class DomesticAccount:
         params = {
             "CANO": cano,
             "ACNT_PRDT_CD": acnt_prdt_cd,
-            "USER_DVSN_CD": user_dvsn_cd,
+            "ACCA_DVSN_CD": acca_dvsn_cd,
             "INQR_DVSN": inqr_dvsn,
             "CTX_AREA_FK100": ctx_area_fk100,
             "CTX_AREA_NK100": ctx_area_nk100,

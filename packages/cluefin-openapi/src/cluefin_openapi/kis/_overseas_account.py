@@ -1,3 +1,5 @@
+from typing import Literal
+
 from cluefin_openapi.kis._http_client import HttpClient
 from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 from cluefin_openapi.kis._overseas_account_types import (
@@ -38,6 +40,32 @@ class OverseasAccount:
 
     def request_stock_order(
         self,
+        tr_id: Literal[
+            "TTTT1002U",
+            "TTTT1006U",
+            "TTTS1002U",
+            "TTTS1001U",
+            "TTTS0202U",
+            "TTTS1005U",
+            "TTTS0305U",
+            "TTTS0304U",
+            "TTTS0308U",
+            "TTTS0307U",
+            "TTTS0311U",
+            "TTTS0310U",
+            "VTTT1002U",
+            "VTTT1001U",
+            "VTTS1002U",
+            "VTTS1001U",
+            "VTTS0202U",
+            "VTTS1005U",
+            "VTTS0305U",
+            "VTTS0304U",
+            "VTTS0308U",
+            "VTTS0307U",
+            "VTTS0311U",
+            "VTTS0310U",
+        ],
         cano: str,
         acnt_prdt_cd: str,
         ovrs_excg_cd: str,
@@ -45,6 +73,7 @@ class OverseasAccount:
         ord_qty: str,
         ovrs_ord_unpr: str,
         ord_dvsn: str,
+        ord_svr_dvsn_cd: str = "0",
         start_time: str = "",
         end_time: str = "",
         algo_ord_tmd_dvsn_cd: str = "",
@@ -52,6 +81,10 @@ class OverseasAccount:
         """해외주식 주문
 
         Args:
+            tr_id: TR ID (미국매수: TTTT1002U, 미국매도: TTTT1006U, 홍콩매수: TTTS1002U, 홍콩매도: TTTS1001U,
+                상해매수: TTTS0202U, 상해매도: TTTS1005U, 심천매수: TTTS0305U, 심천매도: TTTS0304U,
+                일본매수: TTTS0308U, 일본매도: TTTS0307U, 베트남매수: TTTS0311U, 베트남매도: TTTS0310U.
+                모의투자는 V로 시작하는 동일 코드(단, 미국매도는 VTTT1001U))
             cano (str): 종합계좌번호 (8자리)
             acnt_prdt_cd (str): 계좌상품코드 (2자리)
             ovrs_excg_cd (str): 해외거래소코드 (NASD: 나스닥, NYSE: 뉴욕, AMEX: 아멕스, SEHK: 홍콩, SHAA: 중국상해, SZAA: 중국심천, TKSE: 일본, HASE: 베트남 하노이, VNSE: 베트남 호치민)
@@ -59,6 +92,7 @@ class OverseasAccount:
             ord_qty (str): 주문수량
             ovrs_ord_unpr (str): 해외주문단가
             ord_dvsn (str): 주문구분 (00: 지정가, 31: MOO, 32: LOO, 33: MOC, 34: LOC, 35: TWAP, 36: VWAP)
+            ord_svr_dvsn_cd (str): 주문서버구분코드 (기본값 "0")
             start_time (str): 시작시간 (HHMMSS, TWAP/VWAP 주문유형인 경우 사용)
             end_time (str): 종료시간 (HHMMSS, TWAP/VWAP 주문유형인 경우 사용)
             algo_ord_tmd_dvsn_cd (str): 알고리즘주문시간구분코드 (00: 분할주문 시간 직접입력, 02: 정규장 종료시까지)
@@ -67,7 +101,7 @@ class OverseasAccount:
             KisHttpResponse[StockQuoteCurrent]: 해외주식 주문 응답 객체
         """
         headers = {
-            "tr_id": "TTTT1002U",
+            "tr_id": tr_id,
         }
         body = {
             "CANO": cano,
@@ -77,6 +111,7 @@ class OverseasAccount:
             "ORD_QTY": ord_qty,
             "OVRS_ORD_UNPR": ovrs_ord_unpr,
             "ORD_DVSN": ord_dvsn,
+            "ORD_SVR_DVSN_CD": ord_svr_dvsn_cd,
             "START_TIME": start_time,
             "END_TIME": end_time,
             "ALGO_ORD_TMD_DVSN_CD": algo_ord_tmd_dvsn_cd,
@@ -90,6 +125,7 @@ class OverseasAccount:
 
     def request_stock_quote_correction(
         self,
+        tr_id: Literal["TTTT1004U", "VTTT1004U"],
         cano: str,
         acnt_prdt_cd: str,
         ovrs_excg_cd: str,
@@ -104,6 +140,7 @@ class OverseasAccount:
         """해외주식 정정취소주문
 
         Args:
+            tr_id: TR ID (미국 정정·취소: TTTT1004U, 모의투자: VTTT1004U)
             cano (str): 종합계좌번호 (8자리)
             acnt_prdt_cd (str): 계좌상품코드 (2자리)
             ovrs_excg_cd (str): 해외거래소코드 (NASD: 나스닥, NYSE: 뉴욕, AMEX: 아멕스, SEHK: 홍콩, SHAA: 중국상해, SZAA: 중국심천, TKSE: 일본, HASE: 베트남 하노이, VNSE: 베트남 호치민)
@@ -119,7 +156,7 @@ class OverseasAccount:
             StockQuoteCorrection: 해외주식 정정취소주문 응답 객체
         """
         headers = {
-            "tr_id": "TTTT1004U",
+            "tr_id": tr_id,
         }
         body = {
             "CANO": cano,
@@ -146,6 +183,7 @@ class OverseasAccount:
 
     def request_stock_reserve_quote(
         self,
+        tr_id: Literal["TTTT3014U", "TTTT3016U", "TTTS3013U", "VTTT3014U", "VTTT3016U", "VTTS3013U"],
         cano: str,
         acnt_prdt_cd: str,
         pdno: str,
@@ -164,6 +202,8 @@ class OverseasAccount:
         """해외주식 예약주문접수
 
         Args:
+            tr_id: TR ID (미국예약매수: TTTT3014U, 미국예약매도: TTTT3016U, 중국/홍콩/일본/베트남 예약주문: TTTS3013U,
+                모의투자: VTTT3014U/VTTT3016U/VTTS3013U)
             cano (str): 종합계좌번호 (8자리)
             acnt_prdt_cd (str): 계좌상품코드 (2자리)
             pdno (str): 상품번호
@@ -183,7 +223,7 @@ class OverseasAccount:
             StockReserveQuote: 해외주식 예약주문접수 응답 객체
         """
         headers = {
-            "tr_id": "TTTT3014U",
+            "tr_id": tr_id,
         }
         body = {
             "CANO": cano,
@@ -210,6 +250,7 @@ class OverseasAccount:
 
     def request_stock_reserve_quote_correction(
         self,
+        tr_id: Literal["TTTT3017U", "VTTT3017U"],
         cano: str,
         acnt_prdt_cd: str,
         rsyn_ord_rcit_dt: str,
@@ -218,6 +259,7 @@ class OverseasAccount:
         """해외주식 예약주문접수취소
 
         Args:
+            tr_id: TR ID (미국 예약주문 취소접수: TTTT3017U, 모의투자: VTTT3017U. 아시아 국가는 미제공)
             cano (str): 종합계좌번호 (8자리)
             acnt_prdt_cd (str): 계좌상품코드 (2자리)
             rsyn_ord_rcit_dt (str): 해외주문접수일자
@@ -227,7 +269,7 @@ class OverseasAccount:
             StockReserveQuoteCorrection: 해외주식 예약주문접수취소 응답 객체
         """
         headers = {
-            "tr_id": "TTTT3017U",
+            "tr_id": tr_id,
         }
         body = {
             "CANO": cano,
@@ -248,6 +290,7 @@ class OverseasAccount:
 
     def get_buy_tradable_amount(
         self,
+        tr_id: Literal["TTTS3007R", "VTTS3007R"],
         cano: str,
         acnt_prdt_cd: str,
         ovrs_excg_cd: str,
@@ -257,6 +300,7 @@ class OverseasAccount:
         """해외주식 매수가능금액조회
 
         Args:
+            tr_id: TR ID (실전: TTTS3007R, 모의투자: VTTS3007R)
             cano (str): 종합계좌번호 (8자리)
             acnt_prdt_cd (str): 계좌상품코드 (2자리)
             ovrs_excg_cd (str): 해외거래소코드 (NASD: 나스닥, NYSE: 뉴욕, AMEX: 아멕스, SEHK: 홍콩, SHAA: 중국상해, SZAA: 중국심천, TKSE: 일본, HASE: 하노이거래소, VNSE: 호치민거래소)
@@ -267,7 +311,7 @@ class OverseasAccount:
             BuyTradableAmount: 해외주식 매수가능금액조회 응답 객체
         """
         headers = {
-            "tr_id": "TTTS3007R",
+            "tr_id": tr_id,
         }
         params = {
             "CANO": cano,
@@ -333,6 +377,7 @@ class OverseasAccount:
 
     def get_stock_balance(
         self,
+        tr_id: Literal["TTTS3012R", "VTTS3012R"],
         cano: str,
         acnt_prdt_cd: str,
         ovrs_excg_cd: str,
@@ -343,6 +388,7 @@ class OverseasAccount:
         """해외주식 잔고
 
         Args:
+            tr_id: TR ID (실전: TTTS3012R, 모의투자: VTTS3012R)
             cano (str): 종합계좌번호 (8자리)
             acnt_prdt_cd (str): 계좌상품코드 (2자리)
             ovrs_excg_cd (str): 해외거래소코드 (NASD: 미국전체, NAS: 나스닥, NYSE: 뉴욕, AMEX: 아멕스, SEHK: 홍콩, SHAA: 중국상해, SZAA: 중국심천, TKSE: 일본, HASE: 베트남 하노이, VNSE: 베트남 호치민)
@@ -354,7 +400,7 @@ class OverseasAccount:
             StockBalance: 해외주식 잔고 응답 객체
         """
         headers = {
-            "tr_id": "TTTS3012R",
+            "tr_id": tr_id,
         }
         params = {
             "CANO": cano,
@@ -377,6 +423,7 @@ class OverseasAccount:
 
     def get_stock_conclusion_history(
         self,
+        tr_id: Literal["TTTS3035R", "VTTS3035R"],
         cano: str,
         acnt_prdt_cd: str,
         pdno: str,
@@ -395,6 +442,7 @@ class OverseasAccount:
         """해외주식 주문체결내역
 
         Args:
+            tr_id: TR ID (실전: TTTS3035R, 모의투자: VTTS3035R)
             cano (str): 종합계좌번호 (8자리)
             acnt_prdt_cd (str): 계좌상품코드 (2자리)
             pdno (str): 상품번호 (전종목일 경우 "%", 모의투자계좌의 경우 ""만 가능)
@@ -414,7 +462,7 @@ class OverseasAccount:
             StockConclusionHistory: 해외주식 주문체결내역 응답 객체
         """
         headers = {
-            "tr_id": "TTTS3035R",
+            "tr_id": tr_id,
         }
         params = {
             "CANO": cano,
@@ -445,6 +493,7 @@ class OverseasAccount:
 
     def get_current_balance_by_conclusion(
         self,
+        tr_id: Literal["CTRP6504R", "VTRP6504R"],
         cano: str,
         acnt_prdt_cd: str,
         wcrc_frcr_dvsn_cd: str,
@@ -455,6 +504,7 @@ class OverseasAccount:
         """해외주식 체결기준현재잔고
 
         Args:
+            tr_id: TR ID (실전: CTRP6504R, 모의투자: VTRP6504R)
             cano (str): 종합계좌번호 (8자리)
             acnt_prdt_cd (str): 계좌상품코드 (2자리)
             wcrc_frcr_dvsn_cd (str): 원화외화구분코드 (01: 원화, 02: 외화)
@@ -466,7 +516,7 @@ class OverseasAccount:
             CurrentBalanceByConclusion: 해외주식 체결기준현재잔고 응답 객체
         """
         headers = {
-            "tr_id": "CTRP6504R",
+            "tr_id": tr_id,
         }
         params = {
             "CANO": cano,
@@ -489,6 +539,7 @@ class OverseasAccount:
 
     def get_reserve_orders(
         self,
+        tr_id: Literal["TTTT3039R", "TTTS3014R"],
         cano: str,
         acnt_prdt_cd: str,
         inqr_strt_dt: str,
@@ -502,6 +553,7 @@ class OverseasAccount:
         """해외주식 예약주문조회
 
         Args:
+            tr_id: TR ID (미국: TTTT3039R, 일본/중국/홍콩/베트남: TTTS3014R. 모의투자 미지원)
             cano (str): 종합계좌번호 (8자리)
             acnt_prdt_cd (str): 계좌상품코드 (2자리)
             inqr_strt_dt (str): 조회시작일자 (YYYYMMDD)
@@ -516,7 +568,7 @@ class OverseasAccount:
             ReserveOrders: 해외주식 예약주문조회 응답 객체
         """
         headers = {
-            "tr_id": "TTTT3039R",
+            "tr_id": tr_id,
         }
         params = {
             "CANO": cano,
@@ -730,6 +782,7 @@ class OverseasAccount:
 
     def request_order_after_day_time(
         self,
+        tr_id: Literal["TTTS6036U", "TTTS6037U"],
         cano: str,
         acnt_prdt_cd: str,
         ovrs_excg_cd: str,
@@ -744,6 +797,7 @@ class OverseasAccount:
         """해외주식 미국주간주문
 
         Args:
+            tr_id: TR ID (주간매수: TTTS6036U, 주간매도: TTTS6037U. 모의투자 미지원)
             cano (str): 종합계좌번호 (8자리)
             acnt_prdt_cd (str): 계좌상품코드 (2자리)
             ovrs_excg_cd (str): 해외거래소코드 (NASD: 나스닥, NYSE: 뉴욕, AMEX: 아멕스)
@@ -759,7 +813,7 @@ class OverseasAccount:
             OrderAfterDayTime: 해외주식 미국주간주문 응답 객체
         """
         headers = {
-            "tr_id": "TTTS6036U",
+            "tr_id": tr_id,
         }
         body = {
             "CANO": cano,
@@ -847,7 +901,7 @@ class OverseasAccount:
         self,
         trad_dt: str,
         cano: str,
-        acno_prdt_cd: str,
+        acnt_prdt_cd: str,
         ctx_area_nk200: str = "",
         ctx_area_fk200: str = "",
     ) -> KisHttpResponse[LimitOrderNumber]:
@@ -856,7 +910,7 @@ class OverseasAccount:
         Args:
             trad_dt (str): 거래일자 (YYYYMMDD)
             cano (str): 계좌번호 (종합계좌번호 8자리)
-            acno_prdt_cd (str): 계좌상품코드 (2자리, 주식계좌는 01)
+            acnt_prdt_cd (str): 계좌상품코드 (2자리, 주식계좌는 01)
             ctx_area_nk200 (str): 연속조회키200 (최초 조회시 공란)
             ctx_area_fk200 (str): 연속조회조건200 (최초 조회시 공란)
 
@@ -869,7 +923,7 @@ class OverseasAccount:
         params = {
             "TRAD_DT": trad_dt,
             "CANO": cano,
-            "ACNO_PRDT_CD": acno_prdt_cd,
+            "ACNT_PRDT_CD": acnt_prdt_cd,
             "CTX_AREA_NK200": ctx_area_nk200,
             "CTX_AREA_FK200": ctx_area_fk200,
         }

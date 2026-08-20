@@ -37,7 +37,7 @@ class OverseasMarketAnalysis:
         self,
         excd: str,
         gubn: str,
-        mixn: str,
+        minx: str,
         vol_rang: str,
     ) -> KisHttpResponse[StockPriceFluctuation]:
         """
@@ -46,7 +46,7 @@ class OverseasMarketAnalysis:
         Args:
             excd (str): 거래소코드 (NYS: 뉴욕, NAS: 나스닥, AMS: 아멕스, HKS: 홍콩, SHS: 상해, SZS: 심천, HSX: 호치민, HNX: 하노이, TSE: 도쿄)
             gubn (str): 급등/급락구분 (0: 급락, 1: 급등)
-            mixn (str): N분전콤보값 (0: 1분전, 1: 2분전, 2: 3분전, 3: 5분전, 4: 10분전, 5: 15분전, 6: 20분전, 7: 30분전, 8: 60분전, 9: 120분전)
+            minx (str): N분전콤보값 (0: 1분전, 1: 2분전, 2: 3분전, 3: 5분전, 4: 10분전, 5: 15분전, 6: 20분전, 7: 30분전, 8: 60분전, 9: 120분전)
             vol_rang (str): 거래량조건 (0: 전체, 1: 1백주이상, 2: 1천주이상, 3: 1만주이상, 4: 10만주이상, 5: 100만주이상, 6: 1000만주이상)
 
         Returns:
@@ -60,10 +60,10 @@ class OverseasMarketAnalysis:
             "AUTH": "",
             "EXCD": excd,
             "GUBN": gubn,
-            "MIXN": mixn,
+            "MINX": minx,
             "VOL_RANG": vol_rang,
         }
-        response = self.client._get("/uapi/overseas-stock/v1/ranking/price-fluctuation", headers=headers, params=params)
+        response = self.client._get("/uapi/overseas-stock/v1/ranking/price-fluct", headers=headers, params=params)
         response_data = response.json()
         self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
@@ -75,9 +75,8 @@ class OverseasMarketAnalysis:
         keyb: str,
         auth: str,
         excd: str,
-        mixn: str,
+        minx: str,
         vol_rang: str,
-        minx: str | None = None,
     ) -> KisHttpResponse[StockVolumeSurge]:
         """
         해외주식 거래량급증
@@ -86,9 +85,8 @@ class OverseasMarketAnalysis:
             keyb (str): NEXT KEY BUFF (공백)
             auth (str): 사용자권한정보 (공백)
             excd (str): 거래소코드 (NYS: 뉴욕, NAS: 나스닥, AMS: 아멕스, HKS: 홍콩, SHS: 상해, SZS: 심천, HSX: 호치민, HNX: 하노이, TSE: 도쿄)
-            mixn (str): N분전콤보값 (0: 1분전, 1: 2분전, 2: 3분전, 3: 5분전, 4: 10분전, 5: 15분전, 6: 20분전, 7: 30분전, 8: 60분전, 9: 120분전)
+            minx (str): N분전콤보값 (0: 1분전, 1: 2분전, 2: 3분전, 3: 5분전, 4: 10분전, 5: 15분전, 6: 20분전, 7: 30분전, 8: 60분전, 9: 120분전)
             vol_rang (str): 거래량조건 (0: 전체, 1: 1백주이상, 2: 1천주이상, 3: 1만주이상, 4: 10만주이상, 5: 100만주이상, 6: 1000만주이상)
-            minx (str | None): 분 기준(MINX). 미지정 시 mixn 값을 사용
 
         Returns:
             StockVolumeSurge: 해외주식 거래량급증 응답 객체
@@ -100,8 +98,7 @@ class OverseasMarketAnalysis:
             "KEYB": keyb,
             "AUTH": auth,
             "EXCD": excd,
-            "MIXN": mixn,
-            "MINX": mixn if minx is None else minx,
+            "MINX": minx,
             "VOL_RANG": vol_rang,
         }
         response = self.client._get("/uapi/overseas-stock/v1/ranking/volume-surge", headers=headers, params=params)
@@ -126,7 +123,7 @@ class OverseasMarketAnalysis:
             keyb (str): NEXT KEY BUFF (공백)
             auth (str): 사용자권한정보 (공백)
             excd (str): 거래소코드 (NYS: 뉴욕, NAS: 나스닥, AMS: 아멕스, HKS: 홍콩, SHS: 상해, SZS: 심천, HSX: 호치민, HNX: 하노이, TSE: 도쿄)
-            nday (str): N일자값 (0: 1분전, 1: 2분전, 2: 3분전, 3: 5분전, 4: 10분전, 5: 15분전, 6: 20분전, 7: 30분전, 8: 60분전, 9: 120분전)
+            nday (str): N일자값 (0: 당일, 1: 2일, 2: 3일, 3: 5일, 4: 10일, 5: 20일전, 6: 30일, 7: 60일, 8: 120일, 9: 1년)
             vol_rang (str): 거래량조건 (0: 전체, 1: 1백주이상, 2: 1천주이상, 3: 1만주이상, 4: 10만주이상, 5: 100만주이상, 6: 1000만주이상)
 
         Returns:

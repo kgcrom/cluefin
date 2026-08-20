@@ -169,7 +169,7 @@ class InstitutionalForeignTradingAggregateItem(BaseModel):
 class InstitutionalForeignTradingAggregate(BaseModel, KisHttpBody):
     """국내기관_외국인 매매종목가집계"""
 
-    output: InstitutionalForeignTradingAggregateItem = Field(title="응답상세")
+    output: Sequence[InstitutionalForeignTradingAggregateItem] = Field(default_factory=list)
 
 
 class ForeignBrokerageTradingAggregateItem(BaseModel):

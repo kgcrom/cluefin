@@ -303,33 +303,26 @@
         "endpoint": "/uapi/domestic-stock/v1/trading/inquire-psbl-order",
         "method": "GET",
         "call_kwargs": {
-            "tr_id": "TTTC0802R",
-            "tr_cont": "",
+            "tr_id": "TTTC8908R",
             "cano": "12345678",
             "acnt_prdt_cd": "01",
-            "afhr_flpr_yn": "N",
-            "inqr_dvsn": "01",
-            "fund_sttl_icld_yn": "N",
-            "prcs_dvsn": "00",
-            "ctx_area_fk100": "",
-            "ctx_area_nk100": ""
+            "pdno": "005930",
+            "ord_unpr": "70000",
+            "ord_dvsn": "00",
+            "cma_evlu_amt_icld_yn": "N",
+            "ovrs_icld_yn": "N"
         },
         "expected_headers": {
-            "tr_id": "TTTC0802R",
-            "tr_cont": ""
+            "tr_id": "TTTC8908R"
         },
         "expected_body": {
             "CANO": "12345678",
             "ACNT_PRDT_CD": "01",
-            "AFHR_FLPR_YN": "N",
-            "OFL_YN": "",
-            "INQR_DVSN": "01",
-            "UNPR_DVSN": "01",
-            "FUND_STTL_ICLD_YN": "N",
-            "FNCG_AMT_AUTO_RDPT_YN": "N",
-            "PRCS_DVSN": "00",
-            "CTX_AREA_FK100": "",
-            "CTX_AREA_NK100": ""
+            "PDNO": "005930",
+            "ORD_UNPR": "70000",
+            "ORD_DVSN": "00",
+            "CMA_EVLU_AMT_ICLD_YN": "N",
+            "OVRS_ICLD_YN": "N"
         },
         "response_payload": {
             "rt_cd": "0",
@@ -345,7 +338,6 @@
                 "max_buy_qty": "71",
                 "cma_evlu_amt": "0",
                 "ovrs_re_use_amt_wcrc": "0",
-                "ord_psbl_frcr_amt": "0",
                 "ord_psbl_frcr_amt_wcrc": "0"
             }
         }
@@ -587,6 +579,7 @@
             "tr_id": "CTSC0013U",
             "cano": "12345678",
             "acnt_prdt_cd": "01",
+            "pdno": "005930",
             "rsvn_ord_seq": "0000001234",
             "ord_qty": "50",
             "ord_unpr": "75000",
@@ -605,6 +598,7 @@
         "expected_body": {
             "CANO": "12345678",
             "ACNT_PRDT_CD": "01",
+            "PDNO": "005930",
             "RSVN_ORD_SEQ": "0000001234",
             "ORD_QTY": "50",
             "ORD_UNPR": "75000",
@@ -636,6 +630,7 @@
             "rsvn_ord_ord_dt": "20250101",
             "rsvn_ord_end_dt": "20251231",
             "rsvn_ord_seq": "",
+            "tmnl_mdia_kind_cd": "10",
             "cano": "12345678",
             "acnt_prdt_cd": "01",
             "prcs_dvsn_cd": "0",
@@ -653,6 +648,7 @@
             "RSVN_ORD_ORD_DT": "20250101",
             "RSVN_ORD_END_DT": "20251231",
             "RSVN_ORD_SEQ": "",
+            "TMNL_MDIA_KIND_CD": "10",
             "CANO": "12345678",
             "ACNT_PRDT_CD": "01",
             "PRCS_DVSN_CD": "0",
@@ -825,7 +821,7 @@
         "call_kwargs": {
             "cano": "12345678",
             "acnt_prdt_cd": "29",
-            "user_dvsn_cd": "00"
+            "acca_dvsn_cd": "00"
         },
         "expected_headers": {
             "tr_id": "TTTC0506R"
@@ -833,7 +829,7 @@
         "expected_body": {
             "CANO": "12345678",
             "ACNT_PRDT_CD": "29",
-            "USER_DVSN_CD": "00"
+            "ACCA_DVSN_CD": "00"
         },
         "response_payload": {
             "rt_cd": "0",
@@ -853,7 +849,7 @@
             "ctx_area_fk100": "",
             "ctx_area_nk100": "",
             "acnt_prdt_cd": "29",
-            "user_dvsn_cd": "00",
+            "acca_dvsn_cd": "00",
             "inqr_dvsn": "00"
         },
         "expected_headers": {
@@ -862,7 +858,7 @@
         "expected_body": {
             "CANO": "12345678",
             "ACNT_PRDT_CD": "29",
-            "USER_DVSN_CD": "00",
+            "ACCA_DVSN_CD": "00",
             "INQR_DVSN": "00",
             "CTX_AREA_FK100": "",
             "CTX_AREA_NK100": ""

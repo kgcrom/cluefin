@@ -441,46 +441,40 @@ class DomesticMarketAnalysis:
 
     def get_institutional_foreign_trading_aggregate(
         self,
-        type_: str,
-        user_id: str,
-        data_rank: str,
-        inter_grp_code: str,
-        inter_grp_name: str,
-        hts_kor_isnm: str,
-        cntg_cls_code: str,
+        fid_cond_mrkt_div_code: str,
+        fid_cond_scr_div_code: str,
+        fid_input_iscd: str,
+        fid_div_cls_code: str,
+        fid_rank_sort_cls_code: str,
         fid_etc_cls_code: str,
     ) -> KisHttpResponse[InstitutionalForeignTradingAggregate]:
         """
         국내기관_외국인 매매종목가집계
 
         Args:
-            type_ (str): 관심종목구분코드 (Unique key: 1)
-            user_id (str): 사용자 ID (HTS_ID 입력)
-            data_rank (str): 데이터 순위 (공백)
-            inter_grp_code (str): 관심 그룹 코드 (관심그룹 조회 결과의 그룹 값 입력)
-            inter_grp_name (str): 관심 그룹 명 (공백)
-            hts_kor_isnm (str): HTS 한글 종목명 (공백)
-            cntg_cls_code (str): 체결 구분 코드 (공백)
-            fid_etc_cls_code (str): 기타 구분 코드 (Unique key: 4)
+            fid_cond_mrkt_div_code (str): 조건 시장 분류 코드 (V)
+            fid_cond_scr_div_code (str): 조건 화면 분류 코드 (16449)
+            fid_input_iscd (str): 입력 종목코드 (0000:전체, 0001:코스피, 1001:코스닥, 이외 업종코드)
+            fid_div_cls_code (str): 분류 구분 코드 (0:수량정열, 1:금액정열)
+            fid_rank_sort_cls_code (str): 순위 정렬 구분 코드 (0:순매수상위, 1:순매도상위)
+            fid_etc_cls_code (str): 기타 구분 정렬 (0:전체, 1:외국인, 2:기관계, 3:기타)
 
         Returns:
             KisHttpResponse[InstitutionalForeignTradingAggregate]: 국내기관_외국인 매매종목가집계 응답 객체
         """
         headers = {
-            "tr_id": "HHKCM113004C6",
+            "tr_id": "FHPTJ04400000",
         }
         params = {
-            "TYPE": type_,
-            "USER_ID": user_id,
-            "DATA_RANK": data_rank,
-            "INTER_GRP_CODE": inter_grp_code,
-            "INTER_GRP_NAME": inter_grp_name,
-            "HTS_KOR_ISNM": hts_kor_isnm,
-            "CNTG_CLS_CODE": cntg_cls_code,
+            "FID_COND_MRKT_DIV_CODE": fid_cond_mrkt_div_code,
+            "FID_COND_SCR_DIV_CODE": fid_cond_scr_div_code,
+            "FID_INPUT_ISCD": fid_input_iscd,
+            "FID_DIV_CLS_CODE": fid_div_cls_code,
+            "FID_RANK_SORT_CLS_CODE": fid_rank_sort_cls_code,
             "FID_ETC_CLS_CODE": fid_etc_cls_code,
         }
         response = self.client._get(
-            "/uapi/domestic-stock/v1/quotations/intstock-stocklist-by-group", headers=headers, params=params
+            "/uapi/domestic-stock/v1/quotations/foreign-institution-total", headers=headers, params=params
         )
         response_data = response.json()
         self._check_response_error(response_data)
@@ -870,6 +864,7 @@ class DomesticMarketAnalysis:
         headers = {
             "tr_id": "FHKST03010800",
         }
+        # 공식 문서에는 _1 파라미터가 없지만 실서버는 누락 시 OPSQ2001(INPUT FIELD NOT FOUND)로 거절함
         params = {
             "FID_COND_MRKT_DIV_CODE": fid_cond_mrkt_div_code,
             "FID_INPUT_ISCD": fid_input_iscd,

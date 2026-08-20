@@ -393,7 +393,7 @@ class StockDividendYieldTopItem(BaseModel):
 class StockDividendYieldTop(BaseModel, KisHttpBody):
     """국내주식 배당률 상위"""
 
-    output: Sequence[StockDividendYieldTopItem] = Field(default_factory=list)
+    output1: Sequence[StockDividendYieldTopItem] = Field(default_factory=list)
 
 
 class StockLargeExecutionCountTopItem(BaseModel):
@@ -416,7 +416,39 @@ class StockLargeExecutionCountTop(BaseModel, KisHttpBody):
     output: Sequence[StockLargeExecutionCountTopItem] = Field(default_factory=list)
 
 
-class StockCreditBalanceTopItem(BaseModel):
+class StockCreditBalanceTopItem1(BaseModel):
+    bstp_cls_code: str = Field(title="업종 구분 코드", max_length=10)
+    hts_kor_isnm: str = Field(title="HTS 한글 종목명", max_length=40)
+    stnd_date1: str = Field(title="기준 일자1", max_length=8)
+    stnd_date2: str = Field(title="기준 일자2", max_length=8)
+
+
+class StockCreditBalanceTopItem2(BaseModel):
+    mksc_shrn_iscd: str = Field(title="유가증권 단축 종목코드", max_length=9)
+    hts_kor_isnm: str = Field(title="HTS 한글 종목명", max_length=40)
+    stck_prpr: str = Field(title="주식 현재가", max_length=10)
+    prdy_vrss: str = Field(title="전일 대비", max_length=10)
+    prdy_vrss_sign: str = Field(title="전일 대비 부호", max_length=1)
+    prdy_ctrt: str = Field(title="전일 대비율", max_length=82)
+    acml_vol: str = Field(title="누적 거래량", max_length=18)
+    whol_loan_rmnd_stcn: str = Field(title="전체 융자 잔고 주수", max_length=18)
+    whol_loan_rmnd_amt: str = Field(title="전체 융자 잔고 금액", max_length=18)
+    whol_loan_rmnd_rate: str = Field(title="전체 융자 잔고 비율", max_length=62)
+    whol_stln_rmnd_stcn: str = Field(title="전체 대주 잔고 주수", max_length=18)
+    whol_stln_rmnd_amt: str = Field(title="전체 대주 잔고 금액", max_length=18)
+    whol_stln_rmnd_rate: str = Field(title="전체 대주 잔고 비율", max_length=62)
+    nday_vrss_loan_rmnd_inrt: str = Field(title="N일 대비 융자 잔고 증가율", max_length=84)
+    nday_vrss_stln_rmnd_inrt: str = Field(title="N일 대비 대주 잔고 증가율", max_length=84)
+
+
+class StockCreditBalanceTop(BaseModel, KisHttpBody):
+    """국내주식 신용잔고 상위"""
+
+    output1: Sequence[StockCreditBalanceTopItem1] = Field(default_factory=list)
+    output2: Sequence[StockCreditBalanceTopItem2] = Field(default_factory=list)
+
+
+class StockShortSellingTopItem(BaseModel):
     mksc_shrn_iscd: str = Field(title="유가증권 단축 종목코드", max_length=9)
     hts_kor_isnm: str = Field(title="HTS 한글 종목명", max_length=40)
     stck_prpr: str = Field(title="주식 현재가", max_length=10)
@@ -434,49 +466,10 @@ class StockCreditBalanceTopItem(BaseModel):
     avrg_prc: str = Field(title="평균가격", max_length=11)
 
 
-class StockCreditBalanceTop(BaseModel, KisHttpBody):
-    """국내주식 신용잔고 상위"""
-
-    output: Sequence[StockCreditBalanceTopItem] = Field(default_factory=list)
-
-
-class StockShortSellingTopItem1(BaseModel):
-    ovtm_untp_uplm_issu_cnt: str = Field(title="시간외 단일가 상한 종목 수", max_length=7)
-    ovtm_untp_ascn_issu_cnt: str = Field(title="시간외 단일가 상승 종목 수", max_length=7)
-    ovtm_untp_stnr_issu_cnt: str = Field(title="시간외 단일가 보합 종목 수", max_length=7)
-    ovtm_untp_lslm_issu_cnt: str = Field(title="시간외 단일가 하한 종목 수", max_length=7)
-    ovtm_untp_down_issu_cnt: str = Field(title="시간외 단일가 하락 종목 수", max_length=7)
-    ovtm_untp_acml_vol: str = Field(title="시간외 단일가 누적 거래량", max_length=19)
-    ovtm_untp_acml_tr_pbmn: str = Field(title="시간외 단일가 누적 거래대금", max_length=19)
-    ovtm_untp_exch_vol: str = Field(title="시간외 단일가 거래소 거래량", max_length=18)
-    ovtm_untp_exch_tr_pbmn: str = Field(title="시간외 단일가 거래소 거래대금", max_length=18)
-    ovtm_untp_kosdaq_vol: str = Field(title="시간외 단일가 KOSDAQ 거래량", max_length=18)
-    ovtm_untp_kosdaq_tr_pbmn: str = Field(title="시간외 단일가 KOSDAQ 거래대금", max_length=18)
-
-
-class StockShortSellingTopItem2(BaseModel):
-    mksc_shrn_iscd: str = Field(title="유가증권 단축 종목코드", max_length=9)
-    hts_kor_isnm: str = Field(title="HTS 한글 종목명", max_length=40)
-    ovtm_untp_prpr: str = Field(title="시간외 단일가 현재가", max_length=10)
-    ovtm_untp_prdy_vrss: str = Field(title="시간외 단일가 전일 대비", max_length=10)
-    ovtm_untp_prdy_vrss_sign: str = Field(title="시간외 단일가 전일 대비 부호", max_length=1)
-    ovtm_untp_prdy_ctrt: str = Field(title="시간외 단일가 전일 대비율", max_length=82)
-    ovtm_untp_askp1: str = Field(title="시간외 단일가 매도호가1", max_length=10)
-    ovtm_untp_seln_rsqn: str = Field(title="시간외 단일가 매도 잔량", max_length=12)
-    ovtm_untp_bidp1: str = Field(title="시간외 단일가 매수호가1", max_length=10)
-    ovtm_untp_shnu_rsqn: str = Field(title="시간외 단일가 매수 잔량", max_length=12)
-    ovtm_untp_vol: str = Field(title="시간외 단일가 거래량", max_length=18)
-    ovtm_vrss_acml_vol_rlim: str = Field(title="시간외 대비 누적 거래량 비중", max_length=52)
-    stck_prpr: str = Field(title="주식 현재가", max_length=10)
-    acml_vol: str = Field(title="누적 거래량", max_length=18)
-    bidp: str = Field(title="매수호가", max_length=10)
-    askp: str = Field(title="매도호가", max_length=10)
-
-
 class StockShortSellingTop(BaseModel, KisHttpBody):
     """국내주식 공매도 상위종목"""
 
-    output: Sequence[StockCreditBalanceTopItem] = Field(default_factory=list)
+    output: Sequence[StockShortSellingTopItem] = Field(default_factory=list)
 
 
 class StockAfterHoursFluctuationRankItem1(BaseModel):

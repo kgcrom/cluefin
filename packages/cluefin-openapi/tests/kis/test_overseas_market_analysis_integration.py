@@ -93,7 +93,7 @@ def test_get_stock_volume_surge_nasdaq(client: HttpClient, common_params):
         keyb=common_params["keyb"],
         auth=common_params["auth"],
         excd="NAS",  # NASDAQ
-        mixn="3",  # 5 minutes ago
+        minx="3",  # 5 minutes ago
         vol_rang=common_params["vol_rang"],
     )
 
@@ -108,7 +108,7 @@ def test_get_stock_volume_surge_tse(client: HttpClient, common_params):
         keyb=common_params["keyb"],
         auth=common_params["auth"],
         excd="TSE",  # Tokyo
-        mixn="4",  # 10 minutes ago
+        minx="4",  # 10 minutes ago
         vol_rang="2",  # 1000+ shares
     )
 
@@ -624,12 +624,10 @@ def test_market_cap_rank_multiple_exchanges(client: HttpClient, exchange_code, e
 def test_invalid_exchange_code(client: HttpClient):
     """Test handling of invalid exchange code."""
     try:
-        response = client.overseas_market_analysis.get_stock_price_rise_fall(
-            keyb="",
-            auth="",
+        response = client.overseas_market_analysis.get_stock_price_fluctuation(
             excd="INVALID",  # Invalid exchange code
             gubn="1",
-            mixn="3",
+            minx="3",
             vol_rang="0",
         )
         # If no exception, check for error in response

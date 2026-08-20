@@ -1,6 +1,6 @@
 from typing import Any, Literal, Optional, Sequence
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import AliasChoices, BaseModel, Field, field_validator
 
 from cluefin_openapi.kis._model import KisHttpBody
 
@@ -458,8 +458,11 @@ class DomesticStockPeriodQuoteItem1(BaseModel):
     per: str = Field(title="PER", max_length=11)
     eps: str = Field(title="EPS", max_length=14)
     pbr: str = Field(title="PBR", max_length=11)
+    # 실서버는 오타 난 키("itewhol_loan_rmnd_ratem name")를 반환하고 공식 문서는 "itewhol_loan_rmnd_ratem"로 표기 — 둘 다 수용
     itewhol_loan_rmnd_rate: str = Field(
-        alias="itewhol_loan_rmnd_ratem name", title="전체 융자 잔고 비율", max_length=13
+        validation_alias=AliasChoices("itewhol_loan_rmnd_ratem name", "itewhol_loan_rmnd_ratem"),
+        title="전체 융자 잔고 비율",
+        max_length=13,
     )
 
 

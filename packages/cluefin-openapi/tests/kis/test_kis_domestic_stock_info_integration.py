@@ -298,7 +298,8 @@ def test_get_ksd_paid_in_capital_increase_schedule(client: HttpClient, date_rang
     )
 
     assert response is not None
-    assert hasattr(response.body, "output1")
+    # 이 API만 예외적으로 응답 컨테이너가 output1이 아닌 output
+    assert hasattr(response.body, "output")
 
 
 @pytest.mark.integration

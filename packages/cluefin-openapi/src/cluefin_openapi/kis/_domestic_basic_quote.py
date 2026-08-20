@@ -17,6 +17,7 @@ from cluefin_openapi.kis._domestic_basic_quote_types import (
     DomesticStockCurrentPriceMember,
     DomesticStockCurrentPriceOvertimeConclusion,
     DomesticStockCurrentPriceTimeItemConclusion,
+    DomesticStockDailyMinuteChart,
     DomesticStockOvertimeAskingPrice,
     DomesticStockOvertimeCurrentPrice,
     DomesticStockPeriodQuote,
@@ -329,7 +330,7 @@ class DomesticBasicQuote:
         fid_input_date_1: str,
         fid_pw_data_incu_yn: Literal["N", "Y"],
         fid_fake_tick_incu_yn: Literal["", "N", "Y"] = "",
-    ) -> KisHttpResponse[DomesticStockTodayMinuteChart]:
+    ) -> KisHttpResponse[DomesticStockDailyMinuteChart]:
         """
         주식일별분봉조회
 
@@ -342,7 +343,7 @@ class DomesticBasicQuote:
             fid_fake_tick_incu_yn (str): 허봉 포함 여부, N:허봉미포함, Y:허봉포함, 공백 필수 입력
 
         Returns:
-            KisHttpResponse[DomesticStockTodayMinuteChart]: 주식일별분봉조회
+            KisHttpResponse[DomesticStockDailyMinuteChart]: 주식일별분봉조회
         """
         headers = {
             "tr_id": "FHKST03010230",
@@ -361,7 +362,7 @@ class DomesticBasicQuote:
         response_data = response.json()
         self._check_response_error(response_data)
         header = KisHttpHeader.model_validate(response.headers)
-        body = DomesticStockTodayMinuteChart.model_validate(response_data)
+        body = DomesticStockDailyMinuteChart.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_current_price_time_item_conclusion(
@@ -471,7 +472,7 @@ class DomesticBasicQuote:
         Returns:
             KisHttpResponse[DomesticStockOvertimeCurrentPrice]: 국내주식 시간외현재가
         """
-        heders = {
+        headers = {
             "tr_id": "FHPST02300000",
         }
         params = {
@@ -479,7 +480,7 @@ class DomesticBasicQuote:
             "FID_INPUT_ISCD": fid_input_iscd,
         }
         response = self.client._get(
-            "/uapi/domestic-stock/v1/quotations/inquire-overtime-price", headers=heders, params=params
+            "/uapi/domestic-stock/v1/quotations/inquire-overtime-price", headers=headers, params=params
         )
         response_data = response.json()
         self._check_response_error(response_data)

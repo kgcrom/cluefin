@@ -52,7 +52,6 @@ class DomesticRankingAnalysis:
         fid_input_price_1: str,
         fid_input_price_2: str,
         fid_vol_cnt: str,
-        fid_input_date_1: str,
     ) -> KisHttpResponse[TradingVolumeRank]:
         """
         거래량순위
@@ -68,7 +67,6 @@ class DomesticRankingAnalysis:
             fid_input_price_1 (str): 입력 가격1 (가격~, 전체 조회시 공란)
             fid_input_price_2 (str): 입력 가격2 (~가격, 전체 조회시 공란)
             fid_vol_cnt (str): 거래량 수 (거래량~, 전체 조회시 공란)
-            fid_input_date_1 (str): 입력 날짜1 (공란 입력)
 
         Returns:
             TradingVolumeRank: 거래량순위 응답 객체
@@ -87,7 +85,6 @@ class DomesticRankingAnalysis:
             "FID_INPUT_PRICE_1": fid_input_price_1,
             "FID_INPUT_PRICE_2": fid_input_price_2,
             "FID_VOL_CNT": fid_vol_cnt,
-            "FID_INPUT_DATE_1": fid_input_date_1,
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/volume-rank", headers=headers, params=params)
         response_data = response.json()
