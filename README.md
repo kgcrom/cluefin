@@ -12,7 +12,7 @@
 ## 빠른 시작
 
 ```bash
-brew install lightgbm          # macOS 시스템 의존성
+brew install lightgbm ta-lib   # macOS 시스템 의존성
 git clone https://github.com/kgcrom/cluefin.git && cd cluefin
 uv sync --all-packages
 cp apps/cluefin-cli/.env.sample .env  # API 키 설정
@@ -38,7 +38,7 @@ uv 워크스페이스 모노레포:
 
 ```bash
 uv run lefthook install                        # Git hooks 설정 (최초 1회)
-uv run pytest -m "not integration"             # 단위 테스트
+uv run pytest -m "not integration and not slow"  # 단위 테스트 (빠른 로컬 체크)
 uv run pytest -m integration                   # 통합 테스트 (API 키 또는 외부 provider 사이트 의존)
 uv run ruff format . && uv run ruff check . --fix  # 린트
 ```
@@ -55,9 +55,9 @@ npm run check && npm run test:unit
 
 | Hook | 대상 | 실행 내용 |
 |------|------|-----------|
-| pre-commit | `*.py` | ruff format + check |
+| pre-commit | `*.py` | ruff format --check + ruff check (자동 수정 없음) |
 | pre-commit | `*.{ts,tsx,js}` | biome check |
-| pre-push | `*.py` | pytest (단위 테스트) |
+| pre-push | `*.py` | pytest (integration·slow 제외) |
 | pre-push | `*.{ts,tsx,js}` | vitest (단위 테스트) |
 
 ### npm 배포 (cluefin-openapi-ts)
