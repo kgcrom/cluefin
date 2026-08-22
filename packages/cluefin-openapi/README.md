@@ -383,21 +383,41 @@ logger.info(f"주문번호: {order.body.output_0.orr_no}")
 ### NH PLUG 실시간 시세 (웹소켓)
 
 `SocketClient`는 비동기(`asyncio`)로 동작하며, `tr_cd`/`tr_key` 기반으로 구독합니다.
-`market`으로 국내(`"kr"`)/해외(`"gb"`) 엔드포인트를 선택하고, 해외는 운영 전용입니다.
+`market`으로 국내(`"kr"`, `:7070`)/해외(`"gb"`, `:7080`) 엔드포인트를 선택합니다
+(`env="dev"`는 `market`과 무관하게 모의투자 단일 주소 `:17070`을 씁니다).
+
+`tr_cd`는 REST 엔드포인트가 아니라 **웹소켓 전용 실시간 채널 코드**입니다.
+정본은 각 자산군 `openapi.json`의 `x-realtime-channels[].tr_cd` 입니다.
+
+| 자산군 | tr_cd | 채널 | tr_key |
+|---|---|---|---|
+| 국내 | `mc` / `mb` / `ma` | 체결가 · 호가 · 예상체결 (통합시세) | 종목코드 |
+| 국내 | `oc` / `ob` / `oa` | 체결가 · 호가 · 예상체결 (KRX) | 종목코드 |
+| 국내 | `nc` / `nb` / `na` | 체결가 · 호가 · 예상체결 (NXT) | 종목코드 |
+| 국내 | `d2` / `d3` | 체결통보 · 주문내역통보 | 사용자ID |
+| 해외 | `RC` / `RH` | 실시간 체결가 · 호가 (유료시세 약정 필요) | 종목코드 |
+| 해외 | `rc` / `rh` | 지연 체결가 · 호가 (미국·중국만) | 종목코드 |
+| 해외 | `d0` / `d1` | 체결통보 · 주문내역통보 | 사용자ID |
+
+> ⚠️ 해외 채널 코드는 **대소문자로 실시간/지연이 갈립니다**(`RC`=실시간 유료, `rc`=지연).
+> 전체 목록(회원사·프로그램매매·시간외 등)은 위 `x-realtime-channels`를 참고하세요.
 
 ```python
 import asyncio
 from cluefin_openapi.nhplug import SocketClient
 
 async def main():
-    # 국내 실시간 (해외는 market="gb" + env="prod")
+    # 국내 실시간 체결가(통합시세) — 해외는 market="gb" + env="prod" + tr_cd="rc" 등
     async with SocketClient(token=token.access_token, env="dev", market="kr") as ws:
-        await ws.subscribe(tr_cd="<TR코드>", tr_key="005930")
+        await ws.subscribe(tr_cd="mc", tr_key="005930")
         async for event in ws.events():
-            print(event)
+            if event.event_type == "data":
+                print(event.tr_cd, event.data)
 
 asyncio.run(main())
 ```
+
+체결·주문내역 통보(`d2`/`d3`, `d0`/`d1`)는 종목코드가 아니라 **사용자ID**를 `tr_key`로 넘깁니다.
 
 세션이 남아 끊기지 않을 때는 `nhplug_client.common.close_websocket_session()`으로 정리합니다.
 
