@@ -129,6 +129,26 @@ class TestGetBuyableAmount:
         assert response.body.output_0 is None
         assert response.body.rsp_cd == "00000"
 
+    def test_accepts_mock_success_code_xa102(self, client):
+        # 실측(moapi): 모의투자 성공 시 rsp_cd="XA102" 를 내려준다.
+        with requests_mock.Mocker() as m:
+            m.post(
+                BUYABLE_AMOUNT_URL,
+                json={**BUYABLE_AMOUNT_OK_BODY, "rsp_cd": "XA102", "rsp_msg": "모의투자 조회가 완료되었습니다"},
+            )
+            response = client.overseas_stock_inquiry.get_buyable_amount(
+                act_no="50051036881",
+                pcs_dit="1",
+                fc_sec_trd_nat_cd="200",
+                iem_cd="AAPL",
+                wtm_cur_knd_cd="1",
+                oss_orr_knd_cd="1",
+                ahi_nmn_pr_tp_cd="03",
+            )
+
+        assert response.body.rsp_cd == "XA102"
+        assert response.body.output_0.wtm_cur_cd == "USD"
+
     def test_raises_on_failing_rsp_cd(self, client):
         with requests_mock.Mocker() as m:
             m.post(BUYABLE_AMOUNT_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
