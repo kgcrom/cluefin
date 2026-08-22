@@ -3,7 +3,7 @@ from typing import Optional
 from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
 from cluefin_openapi.nhplug._http_client import HttpClient
 from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
-from cluefin_openapi.nhplug._overseas_stock_order_types import OverseasStockOrderBuy
+from cluefin_openapi.nhplug._overseas_stock_order_types import OverseasStockOrderBuy, OverseasStockOrderSell
 
 
 class OverseasStockOrder:
@@ -67,3 +67,42 @@ class OverseasStockOrder:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockOrderBuy.model_validate(data))
+
+    def sell(
+        self,
+        act_no: str,
+        fc_sec_trd_nat_cd: str,
+        iem_cd: str,
+        orr_qty: int,
+        ahi_nmn_pr_tp_cd: str,
+        fc_orr_uit_pr: Optional[float] = None,
+    ) -> NHPlugHttpResponse[OverseasStockOrderSell]:
+        """해외주식 주문매도 (`POST /gbstock/order/v1/sell`).
+
+        Args:
+            act_no: 계좌번호. `/n2/acctinfo` 의 acct_no 사용.
+            fc_sec_trd_nat_cd: 외화증권거래국가코드 (200.미국 070.일본 120.홍콩 160.상해 170.심천)
+            iem_cd: 티커종목코드 (예: AAPL)
+            orr_qty: 주문수량
+            ahi_nmn_pr_tp_cd: 현물호가유형코드. 매수 유형에 더해 15.STOP(시장가)
+                16.STOP LIMIT(지정가) 사용 가능.
+            fc_orr_uit_pr: 외화주문단가 (소수점 2자리). 호가유형 00,11,12,16,61,62,63 이면 필수.
+
+        Returns:
+            NHPlugHttpResponse[OverseasStockOrderSell]: 주문번호(`orr_no`) 포함 접수 결과
+        """
+        body = {
+            "act_no": act_no,
+            "fc_sec_trd_nat_cd": fc_sec_trd_nat_cd,
+            "iem_cd": iem_cd,
+            "orr_qty": orr_qty,
+            "ahi_nmn_pr_tp_cd": ahi_nmn_pr_tp_cd,
+        }
+        if fc_orr_uit_pr is not None:
+            body["fc_orr_uit_pr"] = fc_orr_uit_pr
+
+        response = self.client.post("/gbstock/order/v1/sell", body=body)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=OverseasStockOrderSell.model_validate(data))

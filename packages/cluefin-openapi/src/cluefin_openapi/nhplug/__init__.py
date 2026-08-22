@@ -21,7 +21,11 @@ from cluefin_openapi.nhplug._exceptions import (
 from cluefin_openapi.nhplug._http_client import HttpClient
 from cluefin_openapi.nhplug._model import NHPlugHttpBody, NHPlugHttpHeader, NHPlugHttpResponse, NHPlugMessage
 from cluefin_openapi.nhplug._overseas_stock_order import OverseasStockOrder
-from cluefin_openapi.nhplug._overseas_stock_order_types import OverseasStockOrderBuy, OverseasStockOrderOutput
+from cluefin_openapi.nhplug._overseas_stock_order_types import (
+    OverseasStockOrderBuy,
+    OverseasStockOrderOutput,
+    OverseasStockOrderSell,
+)
 from cluefin_openapi.nhplug._socket_client import SocketClient, SubscriptionType, WebSocketEvent, WebSocketMessage
 from cluefin_openapi.nhplug._token_manager import TokenManager
 
@@ -46,6 +50,7 @@ __all__ = [
     "OverseasStockOrder",
     "OverseasStockOrderBuy",
     "OverseasStockOrderOutput",
+    "OverseasStockOrderSell",
     "SocketClient",
     "SubscriptionType",
     "TokenManager",
