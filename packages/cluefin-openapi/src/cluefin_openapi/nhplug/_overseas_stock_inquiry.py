@@ -6,6 +6,7 @@ from cluefin_openapi.nhplug._overseas_stock_inquiry_types import (
     OverseasStockBalance,
     OverseasStockBuyableAmount,
     OverseasStockDailyTransaction,
+    OverseasStockMargin,
     OverseasStockPeriodPnl,
     OverseasStockPeriodPnlDetail,
     OverseasStockReservedInquiry,
@@ -395,3 +396,31 @@ class OverseasStockInquiry:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockPeriodPnlDetail.model_validate(data))
+
+    def get_margin_by_currency(
+        self,
+        act_no: str,
+        cts: Optional[str] = None,
+    ) -> NHPlugHttpResponse[OverseasStockMargin]:
+        """해외증거금 통화별조회 (`POST /gbstock/inquiry/v1/margin`).
+
+        계좌의 통화별 해외주식 증거금 목록(`Output_0`)을 조회하는 API 이다.
+        응답 블록은 데이터가 있을 때만 내려온다.
+
+        Args:
+            act_no: 계좌번호 (길이 11). `/n2/acctinfo` 의 acct_no 사용
+                (운영은 acct_type=01·02, 모의투자는 03 계좌만 유효).
+            cts: 연속거래키. 이전 응답 헤더의 `cts` 값을 그대로 전달하면 다음 페이지를 받는다.
+
+        Returns:
+            NHPlugHttpResponse[OverseasStockMargin]: 통화별 증거금 목록(`Output_0`) 조회 결과
+        """
+        body: dict = {
+            "act_no": act_no,
+        }
+
+        response = self.client.post("/gbstock/inquiry/v1/margin", body=body, cts=cts)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=OverseasStockMargin.model_validate(data))

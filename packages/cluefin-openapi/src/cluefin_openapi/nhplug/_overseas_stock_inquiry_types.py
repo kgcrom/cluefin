@@ -474,3 +474,44 @@ class OverseasStockPeriodPnlDetail(BaseModel):
         default=None, alias="Output_0", description="기간손익 상세 조회 결과 목록"
     )
     message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
+
+
+class OverseasStockMarginItem(BaseModel):
+    """해외증거금 통화별조회 결과 항목 (`Output_0` 배열 원소)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    cur_cd: str | None = Field(default=None, description="통화코드 / 길이 14 / KRW.KRW USD.USD CNY.CNY HKD.HKD JPY.JPY")
+    dca: int | None = Field(default=None, description="예수금 / 길이 18")
+    orr_wtm: int | None = Field(default=None, description="주문증거금 / 길이 18")
+    ect_mgg_amt: int | None = Field(default=None, description="기타담보금액 / 길이 18")
+    drn_pbl_amt: int | None = Field(default=None, description="출금가능금액 / 길이 18")
+    fc_dca: float | None = Field(default=None, description="외화예수금 / 길이 15.3")
+    fc_mgg_amt: float | None = Field(default=None, description="외화담보금액 / 길이 15.3")
+    ect_mgg_fc_amt: float | None = Field(default=None, description="기타담보외화금액 / 길이 15.3")
+    fc_drn_pbl_amt: float | None = Field(default=None, description="외화출금가능금액 / 길이 15.3")
+    sby_bse_xcg_rt: float | None = Field(default=None, description="매매기준환율 / 길이 12.6")
+    fc_rba: float | None = Field(default=None, description="외화미수금 / 길이 18.3")
+    rba: int | None = Field(default=None, description="미수금 / 길이 18")
+    fc_rvb_odu_fee: float | None = Field(default=None, description="외화미수연체료 / 길이 18.3")
+    rvb_odu_fee: int | None = Field(default=None, description="미수연체료 / 길이 18")
+    stl_af_dca: int | None = Field(default=None, description="결제후예수금 / 길이 18")
+    stl_af_drn_pbl_amt: int | None = Field(default=None, description="결제후출금가능금액 / 길이 18")
+    stl_af_fc_dca: float | None = Field(default=None, description="결제후외화예수금 / 길이 15.3")
+    stl_af_fc_drn_pbl_amt: float | None = Field(default=None, description="결제후외화출금가능금액 / 길이 15.3")
+
+
+class OverseasStockMargin(BaseModel):
+    """해외증거금 통화별조회 (`POST /gbstock/inquiry/v1/margin`) 응답.
+
+    응답 블록은 데이터가 있을 때만 내려오므로 모두 Optional.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    rsp_cd: str | None = Field(default=None, description="응답코드")
+    rsp_msg: str | None = Field(default=None, description="응답메시지")
+    output_0: list[OverseasStockMarginItem] | None = Field(
+        default=None, alias="Output_0", description="해외증거금 통화별조회 결과 목록"
+    )
+    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")

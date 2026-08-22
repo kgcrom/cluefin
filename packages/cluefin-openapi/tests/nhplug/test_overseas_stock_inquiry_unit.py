@@ -17,6 +17,7 @@ RESERVED_ORDERS_URL = f"{BASE_DEV}/gbstock/inquiry/v1/reservedInquiry"
 DAILY_TRANSACTIONS_URL = f"{BASE_DEV}/gbstock/inquiry/v1/dailyTransaction"
 PERIOD_PNL_URL = f"{BASE_DEV}/gbstock/inquiry/v1/periodPnl"
 PERIOD_PNL_DETAIL_URL = f"{BASE_DEV}/gbstock/inquiry/v1/periodPnlDetail"
+MARGIN_URL = f"{BASE_DEV}/gbstock/inquiry/v1/margin"
 
 ORDER_EXECUTIONS_OK_BODY = {
     "Output_0": [
@@ -391,6 +392,53 @@ PERIOD_PNL_DETAIL_OK_BODY = {
             "fc_rzt_pls": 73.25,
             "fc_rzt_pft_rt": 4.65,
         }
+    ],
+    "message": {"msg_code": "0000", "usr_msg": "정상 처리되었습니다."},
+}
+
+
+MARGIN_OK_BODY = {
+    "Output_0": [
+        {
+            "cur_cd": "USD",
+            "dca": 10000,
+            "orr_wtm": 500,
+            "ect_mgg_amt": 0,
+            "drn_pbl_amt": 9500,
+            "fc_dca": 10000.5,
+            "fc_mgg_amt": 0.0,
+            "ect_mgg_fc_amt": 0.0,
+            "fc_drn_pbl_amt": 9500.25,
+            "sby_bse_xcg_rt": 1330.5,
+            "fc_rba": 0.0,
+            "rba": 0,
+            "fc_rvb_odu_fee": 0.0,
+            "rvb_odu_fee": 0,
+            "stl_af_dca": 10000,
+            "stl_af_drn_pbl_amt": 9500,
+            "stl_af_fc_dca": 10000.5,
+            "stl_af_fc_drn_pbl_amt": 9500.25,
+        },
+        {
+            "cur_cd": "JPY",
+            "dca": 900000,
+            "orr_wtm": 50000,
+            "ect_mgg_amt": 0,
+            "drn_pbl_amt": 850000,
+            "fc_dca": 900000.0,
+            "fc_mgg_amt": 0.0,
+            "ect_mgg_fc_amt": 0.0,
+            "fc_drn_pbl_amt": 850000.0,
+            "sby_bse_xcg_rt": 9.05,
+            "fc_rba": 0.0,
+            "rba": 0,
+            "fc_rvb_odu_fee": 0.0,
+            "rvb_odu_fee": 0,
+            "stl_af_dca": 900000,
+            "stl_af_drn_pbl_amt": 850000,
+            "stl_af_fc_dca": 900000.0,
+            "stl_af_fc_drn_pbl_amt": 850000.0,
+        },
     ],
     "message": {"msg_code": "0000", "usr_msg": "정상 처리되었습니다."},
 }
@@ -1084,4 +1132,59 @@ class TestGetPeriodPnlDetail:
                     orr_dt="20260821",
                     fc_sec_trd_nat_cd="200",
                     trd_cur_cd="USD",
+                )
+
+
+class TestGetMarginByCurrency:
+    def test_sends_input_envelope(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(MARGIN_URL, json=MARGIN_OK_BODY)
+            client.overseas_stock_inquiry.get_margin_by_currency(
+                act_no="50051036881",
+            )
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "act_no": "50051036881",
+            }
+        }
+
+    def test_parses_margin_response(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(MARGIN_URL, json=MARGIN_OK_BODY, headers={"cts_flag": "N"})
+            response = client.overseas_stock_inquiry.get_margin_by_currency(
+                act_no="50051036881",
+            )
+
+        assert response.body.output_0 is not None
+        assert len(response.body.output_0) == 2
+        first, second = response.body.output_0
+        assert first.cur_cd == "USD"
+        assert first.dca == 10000
+        assert first.fc_drn_pbl_amt == 9500.25
+        assert second.cur_cd == "JPY"
+        assert second.sby_bse_xcg_rt == 9.05
+        assert response.body.message.usr_msg == "정상 처리되었습니다."
+        assert response.header.cts_flag == "N"
+
+    def test_sends_cts_header_for_continuation(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(MARGIN_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
+            response = client.overseas_stock_inquiry.get_margin_by_currency(
+                act_no="50051036881",
+                cts="CTS_TOKEN_1",
+            )
+
+        sent_headers = m.request_history[0].headers
+        assert sent_headers["cts"] == "CTS_TOKEN_1"
+        assert sent_headers["cts_flag"] == "Y"
+        assert response.body.output_0 is None
+        assert response.body.rsp_cd == "00000"
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(MARGIN_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
+            with pytest.raises(NHPlugAPIError, match="40310"):
+                client.overseas_stock_inquiry.get_margin_by_currency(
+                    act_no="50051036881",
                 )
