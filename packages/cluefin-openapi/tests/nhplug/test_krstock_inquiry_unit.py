@@ -868,3 +868,55 @@ class TestRightsHeld:
             )
             with pytest.raises(NHPlugAPIError, match="IGW40018"):
                 client.krstock_inquiry.rights_held(act_no="00000000000")
+
+
+RIGHTS_SCHEDULED_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "조회가 완료되었습니다.",
+    "message": None,
+    "Output_0": [
+        {
+            "iem_cd": "005930",
+            "iem_nm": "삼성전자",
+            "rit_tp_cd": "01",
+            "aloc_qty": 10,
+        }
+    ],
+}
+
+
+class TestRightsScheduled:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/inquiry/v1/rightsScheduled",
+                json=RIGHTS_SCHEDULED_BODY,
+                headers={"cts_flag": "N"},
+            )
+            response = client.krstock_inquiry.rights_scheduled(act_no="50051036881")
+
+        assert json.loads(m.request_history[0].text) == {"Input_0": {"act_no": "50051036881"}}
+        assert response.body.rsp_cd == "00000"
+        # Output_0 이 rightsHeld 와 달리 바로 배열이다.
+        assert isinstance(response.body.output_0, list)
+        assert len(response.body.output_0) == 1
+        assert response.body.output_0[0].iem_cd == "005930"
+        assert response.header.cts_flag == "N"
+
+    def test_passes_cts_to_request_headers(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/inquiry/v1/rightsScheduled", json=RIGHTS_SCHEDULED_BODY)
+            client.krstock_inquiry.rights_scheduled(act_no="50051036881", cts="NEXT-KEY")
+
+        request = m.request_history[0]
+        assert request.headers["cts"] == "NEXT-KEY"
+        assert request.headers["cts_flag"] == "Y"
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/inquiry/v1/rightsScheduled",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_inquiry.rights_scheduled(act_no="00000000000")

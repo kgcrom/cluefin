@@ -12,6 +12,7 @@ from cluefin_openapi.nhplug._krstock_inquiry_types import (
     KrStockInquiryRealizedPnl,
     KrStockInquiryReservedInquiry,
     KrStockInquiryRightsHeld,
+    KrStockInquiryRightsScheduled,
     KrStockInquirySellableQuantity,
     KrStockInquiryTradingPnl,
 )
@@ -476,3 +477,28 @@ class KrStockInquiry:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryRightsHeld.model_validate(data))
+
+    def rights_scheduled(
+        self,
+        act_no: str,
+        cts: Optional[str] = None,
+    ) -> NHPlugHttpResponse[KrStockInquiryRightsScheduled]:
+        """기간별계좌권리현황조회예정 (`POST /krstock/inquiry/v1/rightsScheduled`).
+
+        rightsHeld 와 달리 입력이 `act_no` 하나뿐이고(시작일자·권리유형코드 필터가
+        없다), 응답도 `Output_0` 하나뿐이며 그 `Output_0` 자체가 배열이다(rightsHeld
+        는 `Output_0`이 조회조건 객체 + `Output_1`이 배열). 연속조회를 지원하는
+        조회 API 다 — 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 다음 호출의 `cts`
+        인자로 전달해 이어받는다.
+
+        Args:
+            act_no: 권리계좌번호 (`/n2/acctinfo` 의 acct_no — 운영은 acct_type
+                01·02, 모의투자는 03 계좌만 유효)
+            cts: 연속거래키. 이전 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 전달.
+        """
+        body = self._drop_none({"act_no": act_no})
+        response = self.client.post("/krstock/inquiry/v1/rightsScheduled", body=body, cts=cts)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=KrStockInquiryRightsScheduled.model_validate(data))

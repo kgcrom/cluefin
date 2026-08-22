@@ -59,6 +59,19 @@ def test_rights_held(client: HttpClient, krstock_account: str):
 
 
 @pytest.mark.integration
+@real_account_only("/krstock/inquiry/v1/rightsScheduled", "19999: 모의투자에서는 해당업무가 제공되지 않습니다")
+def test_rights_scheduled(client: HttpClient, krstock_account: str):
+    """기간별계좌권리현황조회예정. rightsHeld 가 모의에서 19999(미지원)였으므로 같은
+    결과가 예상되지만, 실측으로 확인한다 — 19999 가 아니면 이 사실을 보고에 반영해야 한다."""
+    try:
+        response = client.krstock_inquiry.rights_scheduled(act_no=krstock_account)
+    except NHPlugAPIError as e:
+        skip_if_env_blocked(e)
+
+    assert response.body.rsp_cd in SUCCESS_RSP_CODES
+
+
+@pytest.mark.integration
 def test_balance(client: HttpClient, krstock_account: str):
     """주식잔고조회. 조회 API 라 성공을 기대한다."""
     try:

@@ -810,6 +810,46 @@ class KrStockInquiryRightsHeld(NHPlugAssetHttpBody):
     )
 
 
+class KrStockInquiryRightsScheduledOutput(BaseModel):
+    """기간별계좌권리현황조회예정 예정 권리 상세 (Output_0 배열의 각 항목)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    iem_cd: str | None = Field(default=None, description="종목코드 / 길이 12")
+    iem_nm: str | None = Field(default=None, description="종목명 / 길이 50")
+    rit_tp_cd: str | None = Field(
+        default=None,
+        description=(
+            "권리유형코드 / 길이 2 / _.전체 01.배당 02.유상 03.무상 04.매수청구 05.신주인수권증서 "
+            "06.뮤추얼 07.ETF분배금 08.선박펀드 09.투융자펀드 10.해외자원개발펀드 11.Ritz(부동산신탁) "
+            "12.ELS상환 13.DLS상환 14.ELW만기결제 15.기타청산 16.전환/상환 17.ETN분배금 21.흡수합병 "
+            "22.회사분할 등 (전체 코드 목록은 스펙 참고, 문자·숫자 혼용 코드 다수)"
+        ),
+    )
+    rit_tp_nm: str | None = Field(default=None, description="권리유형명 / 길이 50")
+    aloc_qty: int | None = Field(default=None, description="배정수량 / 길이 18")
+    aloc_rt: float | None = Field(default=None, description="배정비율 / 길이 15.12")
+    xgt_dt: str | None = Field(default=None, description="권리락일자 / 길이 8")
+    bse_dt: str | None = Field(default=None, description="기준일자 / 길이 8")
+    rit_erc_end_dt: str | None = Field(default=None, description="권리행사종료일자 / 길이 8")
+    ltg_dt: str | None = Field(default=None, description="상장일자 / 길이 8")
+    rit_erc_pr: int | None = Field(default=None, description="권리행사가격 / 길이 18")
+
+
+class KrStockInquiryRightsScheduled(NHPlugAssetHttpBody):
+    """기간별계좌권리현황조회예정 (`POST /krstock/inquiry/v1/rightsScheduled`) 응답.
+
+    rightsHeld 와 달리 응답 블록이 `Output_0` 하나뿐이고 그 `Output_0` 자체가
+    배열이다(rightsHeld 는 `Output_0`이 조회조건 객체, `Output_1`이 배열). 입력도
+    `act_no` 하나뿐 — `sta_dt`/`rit_tp_cd` 필터가 없다. 연속조회는 지원한다 —
+    응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 다음 호출에 전달해 이어받는다.
+    """
+
+    output_0: list[KrStockInquiryRightsScheduledOutput] | None = Field(
+        default=None, alias="Output_0", description="예정 권리 상세 목록"
+    )
+
+
 class KrStockInquiryReservedInquiry(NHPlugAssetHttpBody):
     """주식예약주문조회 (`POST /krstock/inquiry/v1/reservedInquiry`) 응답.
 
