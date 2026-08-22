@@ -7,6 +7,7 @@ from cluefin_openapi.nhplug._overseas_stock_order_types import (
     OverseasStockOrderBuy,
     OverseasStockOrderCancel,
     OverseasStockOrderModify,
+    OverseasStockOrderReservedSubmit,
     OverseasStockOrderSell,
 )
 
@@ -187,3 +188,77 @@ class OverseasStockOrder:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockOrderCancel.model_validate(data))
+
+    def submit_reserved(
+        self,
+        act_no: str,
+        fc_sec_trd_nat_cd: str,
+        iem_cd: str,
+        oss_sby_dit_cd: str,
+        orr_qty: int,
+        nmn_pr_tp_cd: str,
+        fc_orr_uit_pr: Optional[float] = None,
+        oss_orr_knd_cd: Optional[str] = None,
+        ose_ivs_sgy_cd: Optional[str] = None,
+        bkg_orr_tp_cd: Optional[str] = None,
+        bkg_orr_sta_dt: Optional[str] = None,
+        bkg_orr_end_dt: Optional[str] = None,
+        wtm_cur_knd_cd: Optional[str] = None,
+        fc_stop_orr_bse_pr: Optional[float] = None,
+        orr_pdt_dit_cd: Optional[str] = None,
+        lon_dt: Optional[str] = None,
+        cfd_lon_cd: Optional[str] = None,
+    ) -> NHPlugHttpResponse[OverseasStockOrderReservedSubmit]:
+        """해외주식 예약주문접수 (`POST /gbstock/order/v1/reservedSubmit`).
+
+        Args:
+            act_no: 계좌번호. `/n2/acctinfo` 의 acct_no 사용.
+            fc_sec_trd_nat_cd: 외화증권거래국가코드 (200.미국 070.일본 120.홍콩 160.상해 170.심천)
+            iem_cd: 티커종목코드 (예: AAPL)
+            oss_sby_dit_cd: 해외매매구분코드 (1.매도 2.매수)
+            orr_qty: 주문수량
+            nmn_pr_tp_cd: 호가유형코드 (00.지정가 03.시장가 61.프리마켓 11.LOO 12.LOC
+                13.MOO 14.MOC 15.STOP 16.STOP LIMIT TW/VW.TWAP·VWAP(시장가) TL/VL.TWAP·VWAP(지정가))
+            fc_orr_uit_pr: 외화주문단가 (소수점 2자리)
+            oss_orr_knd_cd: 해외주문종류코드 (1.GTS주문 2.기타자동주문)
+            ose_ivs_sgy_cd: 해외투자전략코드 (0.일반 1.VWAP 2.TWAP — VWAP·TWAP 은 미국만)
+            bkg_orr_tp_cd: 예약주문유형코드 (1.일반예약 2.잔량주문 3.지정수량주문)
+            bkg_orr_sta_dt: 예약주문시작일자 (YYYYMMDD)
+            bkg_orr_end_dt: 예약주문종료일자 (YYYYMMDD)
+            wtm_cur_knd_cd: 증거금통화종류코드 (1.거래국가통화 2.원화)
+            fc_stop_orr_bse_pr: 외화STOP주문기준가격. 호가유형 15.STOP, 16.STOP LIMIT 일 때만 입력.
+            orr_pdt_dit_cd: 주문상품구분코드 (00.해당없음 02.교체예약주문 03.미국Stop예약주문)
+            lon_dt: 대출일자 (YYYYMMDD)
+            cfd_lon_cd: 신용대출코드 (00.현금 19.해외주식담보대출)
+
+        Returns:
+            NHPlugHttpResponse[OverseasStockOrderReservedSubmit]: 예약접수주문번호(`bkg_rtn_orr_no`) 포함 결과
+        """
+        body: dict = {
+            "act_no": act_no,
+            "fc_sec_trd_nat_cd": fc_sec_trd_nat_cd,
+            "iem_cd": iem_cd,
+            "oss_sby_dit_cd": oss_sby_dit_cd,
+            "orr_qty": orr_qty,
+            "nmn_pr_tp_cd": nmn_pr_tp_cd,
+        }
+        optional_fields = {
+            "fc_orr_uit_pr": fc_orr_uit_pr,
+            "oss_orr_knd_cd": oss_orr_knd_cd,
+            "ose_ivs_sgy_cd": ose_ivs_sgy_cd,
+            "bkg_orr_tp_cd": bkg_orr_tp_cd,
+            "bkg_orr_sta_dt": bkg_orr_sta_dt,
+            "bkg_orr_end_dt": bkg_orr_end_dt,
+            "wtm_cur_knd_cd": wtm_cur_knd_cd,
+            "fc_stop_orr_bse_pr": fc_stop_orr_bse_pr,
+            "orr_pdt_dit_cd": orr_pdt_dit_cd,
+            "lon_dt": lon_dt,
+            "cfd_lon_cd": cfd_lon_cd,
+        }
+        body.update({k: v for k, v in optional_fields.items() if v is not None})
+
+        response = self.client.post("/gbstock/order/v1/reservedSubmit", body=body)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=OverseasStockOrderReservedSubmit.model_validate(data))

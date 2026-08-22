@@ -26,7 +26,9 @@ from cluefin_openapi.nhplug._overseas_stock_order_types import (
     OverseasStockOrderCancel,
     OverseasStockOrderModify,
     OverseasStockOrderOutput,
+    OverseasStockOrderReservedSubmit,
     OverseasStockOrderSell,
+    OverseasStockReservedSubmitOutput,
 )
 from cluefin_openapi.nhplug._socket_client import SocketClient, SubscriptionType, WebSocketEvent, WebSocketMessage
 from cluefin_openapi.nhplug._token_manager import TokenManager
@@ -54,7 +56,9 @@ __all__ = [
     "OverseasStockOrderCancel",
     "OverseasStockOrderModify",
     "OverseasStockOrderOutput",
+    "OverseasStockOrderReservedSubmit",
     "OverseasStockOrderSell",
+    "OverseasStockReservedSubmitOutput",
     "SocketClient",
     "SubscriptionType",
     "TokenManager",

@@ -14,6 +14,7 @@ BUY_URL = f"{BASE_DEV}/gbstock/order/v1/buy"
 SELL_URL = f"{BASE_DEV}/gbstock/order/v1/sell"
 MODIFY_URL = f"{BASE_DEV}/gbstock/order/v1/modify"
 CANCEL_URL = f"{BASE_DEV}/gbstock/order/v1/cancel"
+RESERVED_SUBMIT_URL = f"{BASE_DEV}/gbstock/order/v1/reservedSubmit"
 
 ORDER_OK_BODY = {
     "Output_0": {"amn_tab_cd": "0001", "orr_no": 12345},
@@ -297,4 +298,79 @@ class TestCancel:
                     fc_sec_trd_nat_cd="200",
                     iem_cd="AAPL",
                     all_pat_dit_cd="1",
+                )
+
+
+class TestSubmitReserved:
+    def test_sends_required_fields_only(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(RESERVED_SUBMIT_URL, json={"Output_0": {"bkg_rtn_orr_no": 777}})
+            client.overseas_stock_order.submit_reserved(
+                act_no="50051036881",
+                fc_sec_trd_nat_cd="200",
+                iem_cd="AAPL",
+                oss_sby_dit_cd="2",
+                orr_qty=1,
+                nmn_pr_tp_cd="03",
+            )
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "act_no": "50051036881",
+                "fc_sec_trd_nat_cd": "200",
+                "iem_cd": "AAPL",
+                "oss_sby_dit_cd": "2",
+                "orr_qty": 1,
+                "nmn_pr_tp_cd": "03",
+            }
+        }
+
+    def test_sends_optional_fields_when_given(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(RESERVED_SUBMIT_URL, json={"Output_0": {"bkg_rtn_orr_no": 777}})
+            client.overseas_stock_order.submit_reserved(
+                act_no="50051036881",
+                fc_sec_trd_nat_cd="200",
+                iem_cd="AAPL",
+                oss_sby_dit_cd="2",
+                orr_qty=1,
+                nmn_pr_tp_cd="16",
+                fc_orr_uit_pr=150.0,
+                fc_stop_orr_bse_pr=148.5,
+                bkg_orr_sta_dt="20260824",
+                bkg_orr_end_dt="20260828",
+            )
+
+        sent = json.loads(m.request_history[0].text)["Input_0"]
+        assert sent["fc_orr_uit_pr"] == 150.0
+        assert sent["fc_stop_orr_bse_pr"] == 148.5
+        assert sent["bkg_orr_sta_dt"] == "20260824"
+        assert sent["bkg_orr_end_dt"] == "20260828"
+        assert "lon_dt" not in sent
+
+    def test_parses_reserved_order_no(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(RESERVED_SUBMIT_URL, json={"Output_0": {"bkg_rtn_orr_no": 777}})
+            response = client.overseas_stock_order.submit_reserved(
+                act_no="50051036881",
+                fc_sec_trd_nat_cd="200",
+                iem_cd="AAPL",
+                oss_sby_dit_cd="2",
+                orr_qty=1,
+                nmn_pr_tp_cd="03",
+            )
+
+        assert response.body.output_0.bkg_rtn_orr_no == 777
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(RESERVED_SUBMIT_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
+            with pytest.raises(NHPlugAPIError, match="40310"):
+                client.overseas_stock_order.submit_reserved(
+                    act_no="50051036881",
+                    fc_sec_trd_nat_cd="200",
+                    iem_cd="AAPL",
+                    oss_sby_dit_cd="2",
+                    orr_qty=1,
+                    nmn_pr_tp_cd="03",
                 )
