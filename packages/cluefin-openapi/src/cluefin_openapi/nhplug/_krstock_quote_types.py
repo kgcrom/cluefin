@@ -274,3 +274,84 @@ class KrStockQuoteCurrentPrice(NHPlugAssetHttpBody):
         alias="Output_2",
         description="예상체결/ECN 정보 (스펙은 Array, 실제 예시는 Object — 둘 다 허용)",
     )
+
+
+class KrStockQuoteCurrentExecutionTickOutput(BaseModel):
+    """주식현재가 체결 시간대별 체결 상세 (Output_0 배열의 각 항목)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    bsop_hour: str | None = Field(default=None, description="시간 / 길이 8")
+    stck_prpr: int | None = Field(default=None, description="현재가 / 길이 8")
+    prdy_vrss_sign: str | None = Field(
+        default=None,
+        description="등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)",
+    )
+    prdy_vrss: int | None = Field(default=None, description="등락폭 / 길이 8")
+    prdy_ctrt: float | None = Field(default=None, description="등락률 / 길이 5.2")
+    cntg_vol: int | None = Field(default=None, description="변동거래량 / 길이 12")
+    shnu_cntg_smtn: int | None = Field(default=None, description="누적매수체결량 / 길이 12")
+    bidrate: float | None = Field(default=None, description="당일매수비중 / 길이 5.2")
+    seln_cntg_smtn: int | None = Field(default=None, description="누적매도체결량 / 길이 12")
+    askrate: float | None = Field(default=None, description="당일매도비중 / 길이 5.2")
+    stnr_cntg_smtn: int | None = Field(default=None, description="누적보합체결량 / 길이 12")
+    uncrate: float | None = Field(default=None, description="당일보합비중 / 길이 5.2")
+    cttr: float | None = Field(default=None, description="체결강도 / 길이 6.2")
+    askp: int | None = Field(default=None, description="매도호가 / 길이 8")
+    bidp: int | None = Field(default=None, description="매수호가 / 길이 8")
+    acml_vol: int | None = Field(default=None, description="전체거래량 / 길이 12")
+    filler: str | None = Field(default=None, description="filler / 길이 30")
+
+
+class KrStockQuoteCurrentExecutionSummaryOutput(BaseModel):
+    """주식현재가 체결 종목 종합 정보 (Output_1)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    iem_cd: str | None = Field(default=None, description="종목코드 / 길이 6")
+    iem_nm: str | None = Field(default=None, description="KOR_종목명 / 길이 40")
+    # 아래 수치류 필드는 스펙상 string 이지만, currentPrice(balance/dailyPnl 포함)에서
+    # 반복 확인된 "합계/가격류가 string 으로 명세되지만 실서버는 int 로 응답" 패턴과
+    # 동일한 이름 규칙(vol/su/prc 계열)이라 선제적으로 int|str 로 완화한다.
+    toffervol: int | str | None = Field(default=None, description="누적매도가체결량 / 길이 12")
+    tbidvol: int | str | None = Field(default=None, description="누적매수가체결량 / 길이 12")
+    tbovol: int | str | None = Field(default=None, description="누적보합가체결량 / 길이 12")
+    toffersu: int | str | None = Field(default=None, description="누적매도가체결건수 / 길이 10")
+    tbidsu: int | str | None = Field(default=None, description="누적매수가체결건수 / 길이 10")
+    tbosu: int | str | None = Field(default=None, description="누적보합가체결건수 / 길이 10")
+    stck_prpr: int | None = Field(default=None, description="현재가 / 길이 8")
+    prdy_vrss_sign: str | None = Field(
+        default=None,
+        description="등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)",
+    )
+    prdy_vrss: int | None = Field(default=None, description="등락폭 / 길이 8")
+    acml_vol: int | None = Field(default=None, description="전체거래량 / 길이 12")
+    stck_oprc: int | str | None = Field(default=None, description="시가 / 길이 8")
+    stck_hgpr: int | str | None = Field(default=None, description="고가 / 길이 8")
+    stck_lwpr: int | str | None = Field(default=None, description="저가 / 길이 8")
+    askp: int | None = Field(default=None, description="매도호가 / 길이 8")
+    bidp: int | None = Field(default=None, description="매수호가 / 길이 8")
+    cttr: float | None = Field(default=None, description="체결강도 / 길이 6.2")
+    new_volume: int | str | None = Field(default=None, description="신규거래량 / 길이 12")
+    stck_prdy_clpr: int | str | None = Field(
+        default=None, description="전일종가 / 길이 8 / 기준가 혹은 전일종가 기준가 우선 셋팅"
+    )
+    filler: str | None = Field(default=None, description="filler / 길이 30")
+    ctsz20: str | None = Field(default=None, description="CTSz20 / 길이 20")
+    nextbutton: str | None = Field(default=None, description="NEXTBUTTON / 길이 1")
+
+
+class KrStockQuoteCurrentExecution(NHPlugAssetHttpBody):
+    """주식현재가 체결 (`POST /krstock/quote/v1/currentExecution`) 응답.
+
+    시세 조회 API 라 계좌번호가 필요 없다. 스펙에 `CtsHeader` 파라미터가 없어
+    연속조회를 지원하지 않는다(단건 조회). currentPrice 와 달리 `Output_0` 이 곧바로
+    배열이고 `Output_1` 이 단일 종합 객체다(반대로 뒤집힌 구조).
+    """
+
+    output_0: list[KrStockQuoteCurrentExecutionTickOutput] | None = Field(
+        default=None, alias="Output_0", description="시간대별 체결 상세 목록"
+    )
+    output_1: KrStockQuoteCurrentExecutionSummaryOutput | None = Field(
+        default=None, alias="Output_1", description="종목 종합 정보"
+    )

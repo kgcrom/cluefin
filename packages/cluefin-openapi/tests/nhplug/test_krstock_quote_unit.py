@@ -78,3 +78,61 @@ class TestCurrentPrice:
             )
             with pytest.raises(NHPlugAPIError, match="IGW40018"):
                 client.krstock_quote.current_price(market_cd="KRX", iem_cd="999999")
+
+
+CURRENT_EXECUTION_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "조회가 완료되었습니다.",
+    "message": None,
+    "Output_0": [
+        {
+            "bsop_hour": "153000",
+            "stck_prpr": 281500,
+            "cntg_vol": 10,
+        }
+    ],
+    "Output_1": {
+        "iem_cd": "005930",
+        "iem_nm": "삼성전자",
+        "stck_prpr": 281500,
+        "toffervol": 12345,
+        "stck_oprc": 280000,
+    },
+}
+
+
+class TestCurrentExecution:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/quote/v1/currentExecution", json=CURRENT_EXECUTION_BODY)
+            response = client.krstock_quote.current_execution(market_cd="KRX", iem_cd="005930")
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "market_cd": "KRX",
+                "iem_cd": "005930",
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        assert len(response.body.output_0) == 1
+        assert response.body.output_0[0].cntg_vol == 10
+        assert response.body.output_1.iem_cd == "005930"
+        # toffervol 은 스펙상 string 이지만 int 로도 와야 검증되게 완화했다.
+        assert response.body.output_1.toffervol == 12345
+
+    def test_market_order_omits_none_params(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/quote/v1/currentExecution", json=CURRENT_EXECUTION_BODY)
+            client.krstock_quote.current_execution(market_cd="KRX", iem_cd="005930")
+
+        sent = json.loads(m.request_history[0].text)["Input_0"]
+        assert "array_cnt" not in sent
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/currentExecution",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_quote.current_execution(market_cd="KRX", iem_cd="999999")

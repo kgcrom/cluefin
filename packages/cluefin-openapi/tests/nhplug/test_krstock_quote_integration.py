@@ -26,3 +26,14 @@ def test_current_price(client: HttpClient):
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
     assert response.body.output_0 is not None
     assert response.body.output_0.stck_prpr is not None
+
+
+@pytest.mark.integration
+def test_current_execution(client: HttpClient):
+    """주식현재가 체결. 계좌번호 없이 성공을 기대한다."""
+    try:
+        response = client.krstock_quote.current_execution(market_cd="KRX", iem_cd=TEST_IEM_CD)
+    except NHPlugAPIError as e:
+        skip_if_env_blocked(e)
+
+    assert response.body.rsp_cd in SUCCESS_RSP_CODES
