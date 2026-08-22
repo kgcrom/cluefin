@@ -594,11 +594,21 @@
         },
         "response_payload": {
             "rt_cd": "0",
-            "output": [
+            "output1": [
                 {
+                    "record_date": "20240301",
                     "sht_cd": "005930",
-                    "sht_nm": "삼성전자",
-                    "capin_date": "20240301"
+                    "isin_name": "삼성전자",
+                    "tot_issue_stk_qty": "5969782550",
+                    "issue_stk_qty": "1000000",
+                    "fix_rate": "0.05",
+                    "disc_rate": "20",
+                    "fix_price": "50000",
+                    "right_dt": "20240215",
+                    "sub_term_ft": "20240301",
+                    "sub_term": "20240301~20240305",
+                    "list_date": "20240320",
+                    "stk_kind": "01"
                 }
             ]
         }

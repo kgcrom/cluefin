@@ -753,7 +753,7 @@ def handle_kis_dividend_yield_top(params: dict, session) -> dict:
         t_dt=params["end_date"],
         gb4=params.get("settlement_type", "0"),
     )
-    return {"data": extract_output(response, "output1")}
+    return {"data": extract_output(response, "output")}
 
 
 # ---------------------------------------------------------------------------
