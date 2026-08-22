@@ -20,6 +20,7 @@
 - **계좌 정보 조회**: 잔고, 보유종목, 수익률 등 계좌 관련 정보
 - **국내/해외 주식 정보**: 실시간 시세, 종목 정보, 기업 정보
 - **키움 미국주식 API**: 계좌, 주문, 시세, 차트, 순위정보 등 미국주식 전용 카테고리 (`client.overseas_*`)
+- **NH투자증권 PLUG API**: 국내주식(krstock) 31종 · 해외주식(gbstock) 18종 REST — 주문/조회/시세 카테고리
 - **웹소켓 조건검색·실시간 시세**: 국내/미국 조건검색식 조회·요청·실시간 등록, 실시간 시세 구독
 - **차트 데이터 및 분석**: 일/주/월 차트, 기술적 지표, 시계열 데이터
 - **ETF, 섹터, 테마**: ETF 정보, 업종별 정보, 테마별 종목 분류
@@ -44,7 +45,7 @@ pip install cluefin-openapi
 ## 🎯 왜 cluefin-openapi인가요?
 
 ### 통합된 인터페이스
-키움증권, 한국투자증권(KIS), DART 등 여러 금융 OpenAPI를 하나의 Python 인터페이스로 통합하여 제공합니다.
+키움증권, 한국투자증권(KIS), NH투자증권(PLUG), DART 등 여러 금융 OpenAPI를 하나의 Python 인터페이스로 통합하여 제공합니다.
 
 ### 개발 시간 단축
 복잡한 금융 API 통합 작업을 대신 처리하여, 투자 도구 개발에 집중할 수 있습니다.
@@ -72,11 +73,21 @@ Pydantic을 활용한 강력한 타입 검증으로 런타임 에러를 방지�
 2. API 사용 신청 및 승인 대기
 3. APP_KEY 및 SECRET_KEY 발급 받기
 
-### 3. 환경 변수 설정
+### 3. NH투자증권 PLUG API 신청
+
+1. [NH투자증권 PLUG 사이트](https://www.nhplug.com/)에서 계정 생성 (나무증권 사용자는 [N2 PLUG](https://www.n2plug.com/))
+2. API 사용 신청 및 승인 대기
+3. APP_KEY 및 SECRET_KEY 발급 받기
+
+> 토큰 발급(`/oauth2/token`)은 **운영 도메인 전용**입니다(모의투자 엔드포인트 없음).
+> 발급받은 토큰 하나로 운영·모의투자 호출을 모두 처리하므로, `Auth.generate()`의
+> 파일 캐시 경로를 반드시 사용하세요. 불필요한 재발급은 계좌 보안 알림을 유발합니다.
+
+### 4. 환경 변수 설정
 
 ```bash
 # 워크스페이스 루트 디렉토리에서
-cp apps/cluefin-cli/.env.sample .env
+cp packages/cluefin-openapi/.env.sample .env
 
 # .env 파일 수정 (워크스페이스 루트에 생성)
 
@@ -89,6 +100,13 @@ KIWOOM_ENV=dev # options: prod | dev(default)
 KIS_APP_KEY=your_kis_app_key_here
 KIS_SECRET_KEY=your_kis_secret_key_here
 KIS_ENV=dev # options: prod | dev(default)
+
+# NH투자증권 PLUG API 키 설정 (토큰 기반 인증)
+NHPLUG_APP_KEY=your_nhplug_app_key_here
+NHPLUG_SECRET_KEY=your_nhplug_secret_key_here
+# NHPLUG_ENV는 조회·주문 도메인만 선택합니다 (prod: api.nhplug.com, dev: moapi.nhplug.com 모의투자).
+# 토큰 발급은 env와 무관하게 항상 운영 도메인을 씁니다.
+NHPLUG_ENV=dev # options: prod | dev(default)
 
 # 금융감독원 DART API 키 설정
 DART_AUTH_KEY=your_dart_auth_key_here
@@ -190,6 +208,34 @@ kis_client = KISClient(
 logger.info(f"kis_client => ${kis_client}")
 ```
 
+```python
+# NH투자증권 PLUG
+from loguru import logger
+import os
+from pydantic import SecretStr
+import dotenv
+from cluefin_openapi.nhplug import Auth as NHPlugAuth, HttpClient as NHPlugClient
+
+# 인증 설정
+dotenv.load_dotenv(dotenv_path=".env")
+
+# 토큰 생성 (파일 캐시 우선 — 만료 전까지 실제 발급은 1회)
+auth = NHPlugAuth(
+    app_key=os.getenv("NHPLUG_APP_KEY"),
+    secret_key=SecretStr(os.getenv("NHPLUG_SECRET_KEY")),
+)
+token = auth.generate()
+
+# 클라이언트 초기화 (env는 조회·주문 도메인만 결정)
+nhplug_client = NHPlugClient(
+    token=token.access_token,
+    app_key=os.getenv("NHPLUG_APP_KEY"),
+    secret_key=SecretStr(os.getenv("NHPLUG_SECRET_KEY")),
+    env="dev",  # 모의투자: "dev", 운영: "prod"
+)
+logger.info(f"nhplug_client => ${nhplug_client}")
+```
+
 ## 📊 KIS API 사용 예제
 
 ### 국내 주식 시세 조회
@@ -246,6 +292,134 @@ overseas_price = kis_client.overseas_basic_quote.get_inquire_price(
 )
 logger.info(f"해외 주식 현재가: {overseas_price}")
 ```
+
+## 🏦 NH PLUG API 사용 예제
+
+모든 호출은 `POST` + JSON 바디이며, 요청 파라미터는 `Input_0` 봉투로 감싸 전송됩니다.
+응답은 `rsp_cd`/`rsp_msg` + `Output_N` 봉투이고, 연속조회는 `cts` 인자로 처리합니다.
+
+카테고리는 `common`(계좌·실시간 세션), 국내주식 `krstock_order`/`krstock_inquiry`/`krstock_quote`,
+해외주식 `overseas_stock_order`/`overseas_stock_inquiry`/`overseas_stock_quote` 입니다.
+
+### 계좌 목록 조회
+
+```python
+from loguru import logger
+
+# 계좌번호는 모든 조회·주문 API의 act_no 로 사용합니다.
+# 운영은 acct_type=01·02, 모의투자는 03 계좌만 유효합니다.
+accounts = nhplug_client.common.get_account_list()
+for account in accounts.body.output_0 or []:
+    logger.info(f"{account.acct_no} (acct_type={account.acct_type})")
+```
+
+### 국내주식 시세·잔고 조회
+
+```python
+# 주식현재가 시세 — 시세 API는 계좌번호가 필요 없습니다.
+current = nhplug_client.krstock_quote.current_price(market_cd="KRX", iem_cd="005930")
+logger.info(f"현재가: {current.body.output_0.stck_prpr}")
+
+# 주식 잔고 조회
+balance = nhplug_client.krstock_inquiry.balance(
+    act_no="12345678901",
+    bnc_bse_cd="1",      # 잔고기준코드: 주식관련 총 평가(체결기준)
+    ltg_aot_dit_cd="1",  # 상장폐지구분코드: 상장종목
+    aet_bse="1",         # 자산기준: 순자산
+    qut_dit_cd="UNT",    # 시세구분코드: 통합시세
+)
+logger.info(f"잔고: {balance.body}")
+```
+
+### 해외주식 조회·시세
+
+```python
+# 해외주식 잔고 (요약 Output_0 + 종목별 Output_1)
+balance = nhplug_client.overseas_stock_inquiry.balance(
+    act_no="12345678901",
+    qut_iqr_dit_cd="9",       # 전체
+    fc_sec_trd_nat_cd="200",  # 미국
+    cur_cd="KRW",             # 전체
+)
+logger.info(f"평가금액합계: {balance.body.output_0.eal_amt_sum}")
+
+# 해외주식 매수가능금액 조회
+buyable = nhplug_client.overseas_stock_inquiry.buyable_amount(
+    act_no="12345678901",
+    pcs_dit="1",              # 매수가능금액조회
+    fc_sec_trd_nat_cd="200",  # 미국
+    iem_cd="AAPL",
+    wtm_cur_knd_cd="2",       # 원화
+    oss_orr_knd_cd="1",       # GTS(미국시장주문)
+    ahi_nmn_pr_tp_cd="03",    # 시장가
+)
+logger.info(f"매수가능: {buyable.body.output_0}")
+
+# 해외주식 현재가상세 — 종목명은 iem_nm 을 읽습니다(스펙의 kor_name 은 실서버 미사용)
+price = nhplug_client.overseas_stock_quote.current(iem_cd="AAPL")
+logger.info(f"{price.body.output_0.iem_nm}: {price.body.output_0.trdprc}")
+```
+
+> ⚠️ 해외주식 시세 4종(`/gbstock/quote/v1/*`)은 **모의투자에서 제공되지 않습니다**.
+> `NHPLUG_ENV=dev`로 호출하면 `IGW40019`가 반환되며, `current`의 경우
+> "종목코드(iem_cd)를 확인해주세요"라는 (실제 원인과 무관한) 메시지로 거부됩니다.
+
+### 해외주식 주문
+
+```python
+# ⚠️ env="prod"는 실제 주문이 접수됩니다. 검증은 모의투자(env="dev")로 하세요.
+order = nhplug_client.overseas_stock_order.buy(
+    act_no="12345678901",
+    fc_sec_trd_nat_cd="200",  # 미국
+    iem_cd="AAPL",
+    orr_qty=1,
+    ahi_nmn_pr_tp_cd="00",    # 지정가
+    wtm_cur_knd_cd="2",       # 원화
+    fc_orr_uit_pr=300.00,     # 지정가 유형이면 필수
+)
+logger.info(f"주문번호: {order.body.output_0.orr_no}")
+```
+
+### NH PLUG 실시간 시세 (웹소켓)
+
+`SocketClient`는 비동기(`asyncio`)로 동작하며, `tr_cd`/`tr_key` 기반으로 구독합니다.
+`market`으로 국내(`"kr"`, `:7070`)/해외(`"gb"`, `:7080`) 엔드포인트를 선택합니다
+(`env="dev"`는 `market`과 무관하게 모의투자 단일 주소 `:17070`을 씁니다).
+
+`tr_cd`는 REST 엔드포인트가 아니라 **웹소켓 전용 실시간 채널 코드**입니다.
+정본은 각 자산군 `openapi.json`의 `x-realtime-channels[].tr_cd` 입니다.
+
+| 자산군 | tr_cd | 채널 | tr_key |
+|---|---|---|---|
+| 국내 | `mc` / `mb` / `ma` | 체결가 · 호가 · 예상체결 (통합시세) | 종목코드 |
+| 국내 | `oc` / `ob` / `oa` | 체결가 · 호가 · 예상체결 (KRX) | 종목코드 |
+| 국내 | `nc` / `nb` / `na` | 체결가 · 호가 · 예상체결 (NXT) | 종목코드 |
+| 국내 | `d2` / `d3` | 체결통보 · 주문내역통보 | 사용자ID |
+| 해외 | `RC` / `RH` | 실시간 체결가 · 호가 (유료시세 약정 필요) | 종목코드 |
+| 해외 | `rc` / `rh` | 지연 체결가 · 호가 (미국·중국만) | 종목코드 |
+| 해외 | `d0` / `d1` | 체결통보 · 주문내역통보 | 사용자ID |
+
+> ⚠️ 해외 채널 코드는 **대소문자로 실시간/지연이 갈립니다**(`RC`=실시간 유료, `rc`=지연).
+> 전체 목록(회원사·프로그램매매·시간외 등)은 위 `x-realtime-channels`를 참고하세요.
+
+```python
+import asyncio
+from cluefin_openapi.nhplug import SocketClient
+
+async def main():
+    # 국내 실시간 체결가(통합시세) — 해외는 market="gb" + env="prod" + tr_cd="rc" 등
+    async with SocketClient(token=token.access_token, env="dev", market="kr") as ws:
+        await ws.subscribe(tr_cd="mc", tr_key="005930")
+        async for event in ws.events():
+            if event.event_type == "data":
+                print(event.tr_cd, event.data)
+
+asyncio.run(main())
+```
+
+체결·주문내역 통보(`d2`/`d3`, `d0`/`d1`)는 종목코드가 아니라 **사용자ID**를 `tr_key`로 넘깁니다.
+
+세션이 남아 끊기지 않을 때는 `nhplug_client.common.close_websocket_session()`으로 정리합니다.
 
 ## 🔌 키움 웹소켓 사용 예제 (조건검색·실시간 시세)
 
@@ -338,6 +512,31 @@ except Exception as e:
     logger.error(f"일반 에러: {str(e)}")
 ```
 
+### NH투자증권 PLUG API 에러 처리
+
+NH PLUG는 **HTTP 200이어도 응답 본문 `rsp_cd`가 실패**일 수 있습니다. 각 카테고리가
+본문 코드를 먼저 검사해 실패면 `NHPlugAPIError`를 던지므로, 200을 성공으로 가정하면 안 됩니다.
+
+```python
+from loguru import logger
+from cluefin_openapi.nhplug import NHPlugAPIError, NHPlugRateLimitError, NHPlugValidationError
+
+try:
+    response = nhplug_client.overseas_stock_inquiry.margin(act_no="12345678901")
+except NHPlugValidationError as e:
+    # 입력 오류는 HTTP 400 + rsp_cd(IGW…) 형태로 옵니다
+    logger.error(f"입력 오류: {e.message}")
+except NHPlugRateLimitError as e:
+    logger.error(f"요청 제한 초과: {e.message}")
+except NHPlugAPIError as e:
+    logger.error(f"API 에러: {e.message}")
+    logger.error(f"응답 데이터: {e.response_data}")
+```
+
+성공으로 취급하는 본문 코드는 `nhplug._model.SUCCESS_RSP_CODES`로 관리합니다.
+문서상 성공은 `00000` 뿐이지만, 모의투자 서버는 일부 조회 API 성공에 `XA102`
+("모의투자 조회가 완료되었습니다")를 반환하므로 함께 포함되어 있습니다.
+
 ### 일반적인 에러 시나리오
 
 **키움증권 API 서버 오류코드 (`return_code`):**
@@ -352,6 +551,13 @@ except Exception as e:
 - `EGW00123`: API 키 오류
 - `EGW00201`: 토큰 만료 - 토큰 재생성 필요 (1분 간격 제한)
 - `40000000`: 서버 내부 오류
+
+**NH투자증권 PLUG API 에러 코드 (`rsp_cd`):**
+- `00000`: 성공 / `XA102`: 성공(모의투자 조회)
+- `IGW40018`, `IGW40019`: 입력값 오류 — 단, `IGW40019`는 "모의투자 미지원"을 뜻할 때도 있습니다
+- `14100`: 모의투자 영업일이 아닙니다
+- `19999`: 모의투자에서는 해당업무가 제공되지 않습니다
+- `IGW50025`: 일시적인 오류 (열린 실시간 세션이 없을 때의 세션해제 응답)
 
 ## 🧪 테스트
 
@@ -371,6 +577,10 @@ KIS_DEBUG_ON_FAILURE=1 uv run pytest packages/cluefin-openapi/tests/kis/ -m "int
 # Kiwoom 통합 테스트는 .env.test의 KIWOOM_ENV(dev|prod)를 사용
 # - KIWOOM_ENV=dev  -> mockapi 키 사용
 # - KIWOOM_ENV=prod -> 실서버 키 사용
+
+# NH PLUG 통합 테스트도 .env.test의 NHPLUG_ENV(dev|prod)를 사용
+# 모의투자 미지원 API는 real_account_only 로 자동 skip 됩니다
+uv run pytest packages/cluefin-openapi/tests/nhplug/ -m "integration"
 
 # 권한/샌드박스 환경에서 uv 캐시 접근 오류가 나면
 # (예: ".../.cache/uv/... Operation not permitted")
@@ -436,6 +646,9 @@ packages/cluefin-openapi/
 │   ├── dart/                      # 금융감독원 DART 공시 클라이언트
 │   ├── kiwoom/                    # 키움증권 API 클라이언트
 │   ├── kis/                       # 한국투자증권 API 클라이언트
+│   ├── nhplug/                    # NH투자증권 PLUG API 클라이언트
+│   │   ├── _krstock_*.py         # 국내주식 주문/조회/시세
+│   │   └── _overseas_stock_*.py  # 해외주식 주문/조회/시세
 │   └── __init__.py
 ├── tests/                        # 테스트 스위트
 │   ├── kiwoom/                   # 키움증권 API 테스트
@@ -443,6 +656,9 @@ packages/cluefin-openapi/
 │   │   └── test_*_integration.py # 통합 테스트 (@pytest.mark.integration)
 │   ├── kis/                       # 한국투자증권 API 테스트
 │   │   ├── test_*_unit.py        # 단위 테스트 (Mock 사용, JSON 테스트 케이스)
+│   │   └── test_*_integration.py # 통합 테스트 (@pytest.mark.integration)
+│   ├── nhplug/                    # NH투자증권 PLUG API 테스트
+│   │   ├── test_*_unit.py        # 단위 테스트 (requests_mock 사용)
 │   │   └── test_*_integration.py # 통합 테스트 (@pytest.mark.integration)
 │   └── dart/                      # Dart API 테스트
 │       ├── test_*_unit.py        # 단위 테스트
@@ -501,9 +717,10 @@ uv run ruff check packages/cluefin-openapi/
 
 - [키움증권 OpenAPI 포털](https://openapi.kiwoom.com/)
 - [한국투자증권 OpenAPI 포털](https://apiportal.koreainvestment.com/)
+- [NH투자증권 PLUG 포털](https://www.nhplug.com/) ([N2 PLUG](https://www.n2plug.com/))
 - [금융감독원 OpenAPI 포털](https://opendart.fss.or.kr/)
 
 ---
 
-> ⚠️ **투자 주의사항**: 이 프로젝트는 키움증권, 한국투자증권과 공식적으로 연관되지 않습니다.
+> ⚠️ **투자 주의사항**: 이 프로젝트는 키움증권, 한국투자증권, NH투자증권과 공식적으로 연관되지 않습니다.
 > 투자는 신중하게 하시고, 모든 투자 손실에 대한 책임은 투자자 본인에게 있습니다.

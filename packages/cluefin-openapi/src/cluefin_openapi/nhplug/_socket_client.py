@@ -72,7 +72,8 @@ class SocketClient:
         token = auth.generate()
 
         async with SocketClient(token=token.access_token) as client:
-            await client.subscribe("<채널코드>", "005930")
+            # "mc" = 국내주식 실시간체결가(통합시세). 해외는 market="gb" + "rc"/"RC" 등
+            await client.subscribe("mc", "005930")
 
             async for event in client.events():
                 if event.event_type == "data":
@@ -417,8 +418,13 @@ class SocketClient:
         """Subscribe to real-time data.
 
         Args:
-            tr_cd: 채널 코드 (각 자산군 openapi.json 의 `x-realtime-channels[].tr_cd`)
-            tr_key: 구독 키 (종목코드·사용자ID 등)
+            tr_cd: 실시간 채널 코드 (REST 경로가 아니라 웹소켓 전용 코드 — 정본은 각
+                자산군 openapi.json 의 `x-realtime-channels[].tr_cd`). 국내는
+                체결가/호가/예상체결이 통합시세 mc/mb/ma · KRX oc/ob/oa · NXT nc/nb/na,
+                통보는 d2(체결)·d3(주문내역). 해외는 체결가/호가가 실시간 RC/RH(유료시세
+                약정 필요)·지연 rc/rh(미국·중국만), 통보는 d0(체결)·d1(주문내역).
+                해외는 대소문자로 실시간/지연이 갈리므로 주의할 것.
+            tr_key: 구독 키. 시세 채널은 종목코드, 체결·주문내역 통보 채널은 사용자ID.
 
         Raises:
             NHPlugAPIError: If subscription fails

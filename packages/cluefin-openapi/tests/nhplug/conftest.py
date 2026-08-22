@@ -42,12 +42,12 @@ def client(auth) -> HttpClient:
     )
 
 
-@pytest.fixture(scope="module")
-def krstock_account(client) -> str:
+def _account_for_env(client) -> str:
     """호출 환경과 acct_type 이 맞는 계좌번호.
 
-    모의투자(dev)는 03 계좌만, 운영(prod)은 01·02 계좌만 유효하다.
-    같은 계좌번호가 여러 행으로 내려올 수 있어 첫 매칭을 쓴다.
+    모의투자(dev)는 03 계좌만, 운영(prod)은 01·02 계좌만 유효하다. 이 조건은
+    krstock·gbstock 이 동일하다. 같은 계좌번호가 여러 행으로 내려올 수 있어
+    첫 매칭을 쓴다.
     """
     wanted = ("03",) if client.env == "dev" else ("01", "02")
     accounts = client.common.get_account_list().body.output_0 or []
@@ -55,6 +55,18 @@ def krstock_account(client) -> str:
         if account.acct_type in wanted:
             return account.acct_no
     pytest.skip(f"{client.env} 환경에 맞는 계좌(acct_type {wanted})가 없다")
+
+
+@pytest.fixture(scope="module")
+def krstock_account(client) -> str:
+    """국내주식 조회·주문에 쓸 계좌번호."""
+    return _account_for_env(client)
+
+
+@pytest.fixture(scope="module")
+def gbstock_account(client) -> str:
+    """해외주식 조회·주문에 쓸 계좌번호."""
+    return _account_for_env(client)
 
 
 @pytest.fixture(autouse=True)

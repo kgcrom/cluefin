@@ -110,6 +110,27 @@ class HttpClient(BaseHttpClient):
 
         return KrStockQuote(self)
 
+    @property
+    def overseas_stock_order(self):
+        """해외주식 주문"""
+        from ._overseas_stock_order import OverseasStockOrder
+
+        return OverseasStockOrder(self)
+
+    @property
+    def overseas_stock_inquiry(self):
+        """해외주식 조회"""
+        from ._overseas_stock_inquiry import OverseasStockInquiry
+
+        return OverseasStockInquiry(self)
+
+    @property
+    def overseas_stock_quote(self):
+        """해외주식 시세"""
+        from ._overseas_stock_quote import OverseasStockQuote
+
+        return OverseasStockQuote(self)
+
     def post(
         self,
         path: str,
