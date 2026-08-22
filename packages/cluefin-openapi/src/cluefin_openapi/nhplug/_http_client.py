@@ -90,6 +90,27 @@ class HttpClient(BaseHttpClient):
         return Common(self)
 
     @property
+    def krstock_order(self):
+        """국내주식 주문"""
+        from ._krstock_order import KrStockOrder
+
+        return KrStockOrder(self)
+
+    @property
+    def krstock_inquiry(self):
+        """국내주식 조회"""
+        from ._krstock_inquiry import KrStockInquiry
+
+        return KrStockInquiry(self)
+
+    @property
+    def krstock_quote(self):
+        """국내주식 시세"""
+        from ._krstock_quote import KrStockQuote
+
+        return KrStockQuote(self)
+
+    @property
     def overseas_stock_order(self):
         """해외주식 주문"""
         from ._overseas_stock_order import OverseasStockOrder

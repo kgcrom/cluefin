@@ -1,0 +1,701 @@
+"""Unit tests for NH PLUG krstock quote APIs."""
+
+import json
+
+import pytest
+import requests_mock
+
+from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
+from cluefin_openapi.nhplug._http_client import HttpClient
+
+BASE_PROD = "https://api.nhplug.com:8443"
+
+CURRENT_PRICE_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "조회가 완료되었습니다.",
+    "message": None,
+    "Output_0": {
+        "iem_cd": "005930",
+        "iem_nm": "*삼성전자",
+        "stck_prpr": 281500,
+        "prdy_vrss_sign": "2",
+    },
+    "Output_1": [
+        {
+            "bsop_hour": "153000",
+            "stck_prpr": 281500,
+            "acml_vol": 12345678,
+        }
+    ],
+    "Output_2": {
+        "cncc_aspr_code": "1",
+        "antc_cnpr": "281500",
+    },
+}
+
+
+@pytest.fixture
+def client() -> HttpClient:
+    return HttpClient(token="TOKEN", app_key="test-app-key", secret_key="test-secret", env="prod")
+
+
+class TestCurrentPrice:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/quote/v1/currentPrice", json=CURRENT_PRICE_BODY)
+            response = client.krstock_quote.current_price(market_cd="KRX", iem_cd="005930")
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "market_cd": "KRX",
+                "iem_cd": "005930",
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        assert response.body.output_0.stck_prpr == 281500
+        assert response.body.output_0.iem_nm == "*삼성전자"
+        assert len(response.body.output_1) == 1
+        assert response.body.output_1[0].bsop_hour == "153000"
+        # Output_2 은 스펙상 Array 지만 예시 응답은 Object — Object 로 온 케이스를 검증한다.
+        assert not isinstance(response.body.output_2, list)
+        assert response.body.output_2.cncc_aspr_code == "1"
+
+    def test_parses_body_without_output_blocks(self, client):
+        # Output_N 블록은 데이터가 있을 때만 내려온다.
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/quote/v1/currentPrice", json={"rsp_cd": "00000", "rsp_msg": "ok"})
+            response = client.krstock_quote.current_price(market_cd="KRX", iem_cd="005930")
+
+        assert response.body.output_0 is None
+        assert response.body.output_1 is None
+        assert response.body.output_2 is None
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/currentPrice",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_quote.current_price(market_cd="KRX", iem_cd="999999")
+
+
+CURRENT_EXECUTION_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "조회가 완료되었습니다.",
+    "message": None,
+    "Output_0": [
+        {
+            "bsop_hour": "153000",
+            "stck_prpr": 281500,
+            "cntg_vol": 10,
+        }
+    ],
+    "Output_1": {
+        "iem_cd": "005930",
+        "iem_nm": "삼성전자",
+        "stck_prpr": 281500,
+        "toffervol": 12345,
+        "stck_oprc": 280000,
+    },
+}
+
+
+class TestCurrentExecution:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/quote/v1/currentExecution", json=CURRENT_EXECUTION_BODY)
+            response = client.krstock_quote.current_execution(market_cd="KRX", iem_cd="005930")
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "market_cd": "KRX",
+                "iem_cd": "005930",
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        assert len(response.body.output_0) == 1
+        assert response.body.output_0[0].cntg_vol == 10
+        assert response.body.output_1.iem_cd == "005930"
+        # toffervol 은 스펙상 string 이지만 int 로도 와야 검증되게 완화했다.
+        assert response.body.output_1.toffervol == 12345
+
+    def test_market_order_omits_none_params(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/quote/v1/currentExecution", json=CURRENT_EXECUTION_BODY)
+            client.krstock_quote.current_execution(market_cd="KRX", iem_cd="005930")
+
+        sent = json.loads(m.request_history[0].text)["Input_0"]
+        assert "array_cnt" not in sent
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/currentExecution",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_quote.current_execution(market_cd="KRX", iem_cd="999999")
+
+
+CURRENT_DAILY_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "조회가 완료되었습니다.",
+    "message": None,
+    "Output_0": [
+        {
+            "bsop_date": "20260821",
+            "stck_oprc": 280000,
+            "stck_hgpr": 282000,
+            "stck_lwpr": 279000,
+            "stck_clpr": 281500,
+            "acml_vol": 12345678,
+        }
+    ],
+}
+
+
+class TestCurrentDaily:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/quote/v1/currentDaily", json=CURRENT_DAILY_BODY)
+            response = client.krstock_quote.current_daily(market_cd="KRX", iem_cd="005930")
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "market_cd": "KRX",
+                "iem_cd": "005930",
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        assert len(response.body.output_0) == 1
+        # 스펙은 stck_clpr 등을 string 으로 명세하지만 int 로도 와야 검증되게 완화했다.
+        assert response.body.output_0[0].stck_clpr == 281500
+        assert response.body.output_0[0].bsop_date == "20260821"
+
+    def test_market_order_omits_none_params(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/quote/v1/currentDaily", json=CURRENT_DAILY_BODY)
+            client.krstock_quote.current_daily(market_cd="KRX", iem_cd="005930")
+
+        sent = json.loads(m.request_history[0].text)["Input_0"]
+        assert "array_cnt" not in sent
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/currentDaily",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_quote.current_daily(market_cd="KRX", iem_cd="999999")
+
+
+CURRENT_INVESTOR_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "조회가 완료되었습니다.",
+    "message": None,
+    "Output_0": [
+        {
+            "bsop_date1": "20260821",
+            "stck_prpr": 281500,
+            "prdy_vrss_sign": "2",
+            "prdy_vrss": 10500,
+            "prdy_ctrt": 3.87,
+            "acml_vol": 27746471.0,
+            "for_rate": 51.2,
+            "frgn_ntby_qty": 12345.0,
+            "person": -5000.0,
+        }
+    ],
+}
+
+
+class TestCurrentInvestor:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/quote/v1/currentInvestor", json=CURRENT_INVESTOR_BODY)
+            response = client.krstock_quote.current_investor(market_cd="KRX", iem_cd="005930", array_cnt="10")
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "market_cd": "KRX",
+                "iem_cd": "005930",
+                "array_cnt": "10",
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        assert len(response.body.output_0) == 1
+        assert response.body.output_0[0].stck_prpr == 281500
+        assert response.body.output_0[0].frgn_ntby_qty == 12345.0
+
+    def test_parses_body_without_output_block(self, client):
+        # Output_N 블록은 데이터가 있을 때만 내려온다.
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/currentInvestor",
+                json={"rsp_cd": "00000", "rsp_msg": "ok"},
+            )
+            response = client.krstock_quote.current_investor(market_cd="KRX", iem_cd="005930", array_cnt="10")
+
+        assert response.body.output_0 is None
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/currentInvestor",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_quote.current_investor(market_cd="KRX", iem_cd="999999", array_cnt="10")
+
+
+PERIOD_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "조회가 완료되었습니다.",
+    "message": None,
+    "Output_0": {
+        "iem_cd": "005930",
+        "iem_nm": "삼성전자",
+        "stck_prpr": "281500",
+    },
+    "Output_1": [
+        {
+            "bsop_date": "20260821",
+            "stck_oprc": "280000",
+            "stck_hgpr": "282000",
+            "stck_lwpr": "279000",
+            "stck_prpr": "281500",
+            "vol": "12345678",
+        }
+    ],
+}
+
+
+class TestPeriod:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/quote/v1/period", json=PERIOD_BODY)
+            response = client.krstock_quote.period(market_cd="KRX", iem_cd="005930", gubun="1")
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "market_cd": "KRX",
+                "iem_cd": "005930",
+                "gubun": "1",
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        # Output_0 은 스펙상 Array 지만 예시 응답은 Object — Object 로 온 케이스를 검증한다.
+        assert not isinstance(response.body.output_0, list)
+        assert response.body.output_0.iem_cd == "005930"
+        assert len(response.body.output_1) == 1
+        assert response.body.output_1[0].stck_prpr == "281500"
+
+    def test_market_order_omits_none_params(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/quote/v1/period", json=PERIOD_BODY)
+            client.krstock_quote.period(market_cd="KRX", iem_cd="005930")
+
+        sent = json.loads(m.request_history[0].text)["Input_0"]
+        assert "gubun" not in sent
+        assert "edate" not in sent
+        assert "array_cnt" not in sent
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/period",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_quote.period(market_cd="KRX", iem_cd="999999")
+
+
+AFTER_HOURS_CURRENT_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "조회가 완료되었습니다.",
+    "message": None,
+    "Output_0": {
+        "iem_cd": "005930",
+        "iem_nm": "삼성전자",
+        "stck_prpr": 281500,
+        "ovtm_untp_prpr": 282000,
+        "ovtm_untp_vol": 12345,
+    },
+    "Output_1": {
+        "bsop_date": "20260821",
+        "acml_vol": "27746471",
+        "stck_prpr": 281500,
+        "total_askp_rsqn": 1000,
+        "total_bidp_rsqn": 2000,
+    },
+}
+
+
+class TestAfterHoursCurrent:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/quote/v1/afterHoursCurrent", json=AFTER_HOURS_CURRENT_BODY)
+            response = client.krstock_quote.after_hours_current(iem_cd="005930")
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "iem_cd": "005930",
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        assert response.body.output_0.iem_cd == "005930"
+        assert response.body.output_0.ovtm_untp_prpr == 282000
+        assert response.body.output_1.acml_vol == "27746471"
+        assert response.body.output_1.total_askp_rsqn == 1000
+
+    def test_parses_body_without_output_blocks(self, client):
+        # Output_N 블록은 데이터가 있을 때만 내려온다.
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/afterHoursCurrent",
+                json={"rsp_cd": "00000", "rsp_msg": "ok"},
+            )
+            response = client.krstock_quote.after_hours_current(iem_cd="005930")
+
+        assert response.body.output_0 is None
+        assert response.body.output_1 is None
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/afterHoursCurrent",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_quote.after_hours_current(iem_cd="999999")
+
+
+CURRENT_AFTER_HOURS_DAILY_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "조회가 완료되었습니다.",
+    "message": None,
+    "Output_0": [
+        {
+            "qry_date": "20260821",
+            "qry_time": "180000",
+            "shrn_iscd": "005930",
+            "hts_kor_isnm": "삼성전자",
+            "stck_prpr": "282000",
+            "prdy_vrss_sign": "2",
+        }
+    ],
+    "Output_1": [
+        {
+            "prdy_ctrt": "3.87",
+            "acml_vol": "27746471",
+            "acml_tr_pbmn": "7703213942500",
+            "prdy_vol": "0",
+        }
+    ],
+}
+
+
+class TestCurrentAfterHoursDaily:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/quote/v1/currentAfterHoursDaily", json=CURRENT_AFTER_HOURS_DAILY_BODY)
+            response = client.krstock_quote.current_after_hours_daily(
+                iem_cd="005930", date="20260821", array_cnt="10", maxavg="5", gubun="1"
+            )
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "iem_cd": "005930",
+                "date": "20260821",
+                "array_cnt": "10",
+                "maxavg": "5",
+                "gubun": "1",
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        assert len(response.body.output_0) == 1
+        assert response.body.output_0[0].shrn_iscd == "005930"
+        assert len(response.body.output_1) == 1
+        assert response.body.output_1[0].acml_vol == "27746471"
+
+    def test_parses_body_without_output_blocks(self, client):
+        # Output_N 블록은 데이터가 있을 때만 내려온다.
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/currentAfterHoursDaily",
+                json={"rsp_cd": "00000", "rsp_msg": "ok"},
+            )
+            response = client.krstock_quote.current_after_hours_daily(
+                iem_cd="005930", date="20260821", array_cnt="10", maxavg="5", gubun="1"
+            )
+
+        assert response.body.output_0 is None
+        assert response.body.output_1 is None
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/currentAfterHoursDaily",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_quote.current_after_hours_daily(
+                    iem_cd="999999", date="20260821", array_cnt="10", maxavg="5", gubun="1"
+                )
+
+
+CURRENT_AFTER_HOURS_EXECUTION_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "조회가 완료되었습니다.",
+    "message": None,
+    "Output_0": [
+        {
+            "iem_cd": "005930",
+            "bsop_hour": "180000",
+            "open": 282000,
+            "high": 282500,
+            "low": 281500,
+            "stck_prpr": 282000,
+            "prdy_vrss_sign": "2",
+            "prdy_vrss": 500,
+            "prdy_ctrt": 0.18,
+            "acml_vol": 12345.0,
+            "cntg_vol": 100.0,
+            "cntg_tr_pbmn": 28200000.0,
+            "askp1": 282500,
+            "bidp1": 282000,
+        }
+    ],
+}
+
+
+class TestCurrentAfterHoursExecution:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/quote/v1/currentAfterHoursExecution", json=CURRENT_AFTER_HOURS_EXECUTION_BODY)
+            response = client.krstock_quote.current_after_hours_execution(iem_cd="005930")
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "iem_cd": "005930",
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        assert len(response.body.output_0) == 1
+        assert response.body.output_0[0].stck_prpr == 282000
+        assert response.body.output_0[0].acml_vol == 12345.0
+
+    def test_parses_body_without_output_block(self, client):
+        # Output_N 블록은 데이터가 있을 때만 내려온다.
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/currentAfterHoursExecution",
+                json={"rsp_cd": "00000", "rsp_msg": "ok"},
+            )
+            response = client.krstock_quote.current_after_hours_execution(iem_cd="005930")
+
+        assert response.body.output_0 is None
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/currentAfterHoursExecution",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_quote.current_after_hours_execution(iem_cd="999999")
+
+
+AFTER_HOURS_EXPECTED_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "조회가 완료되었습니다.",
+    "message": None,
+    "Output_0": [
+        {
+            "iem_cd": "005930",
+            "bsop_hour": "180000",
+            "stck_prpr": 282000,
+            "prdy_vrss_sign": "2",
+            "prdy_vrss": 500,
+            "prdy_ctrt": 0.18,
+            "cntg_vol": 12345.0,
+            "askp1": 282500,
+            "bidp1": 282000,
+            "askp_rsqn1": 100.0,
+            "bidp_rsqn1": 200.0,
+        }
+    ],
+}
+
+
+class TestAfterHoursExpected:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/quote/v1/afterHoursExpected", json=AFTER_HOURS_EXPECTED_BODY)
+            response = client.krstock_quote.after_hours_expected(iem_cd="005930")
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "iem_cd": "005930",
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        assert len(response.body.output_0) == 1
+        assert response.body.output_0[0].stck_prpr == 282000
+        assert response.body.output_0[0].cntg_vol == 12345.0
+
+    def test_parses_body_without_output_block(self, client):
+        # Output_N 블록은 데이터가 있을 때만 내려온다.
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/afterHoursExpected",
+                json={"rsp_cd": "00000", "rsp_msg": "ok"},
+            )
+            response = client.krstock_quote.after_hours_expected(iem_cd="005930")
+
+        assert response.body.output_0 is None
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/afterHoursExpected",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_quote.after_hours_expected(iem_cd="999999")
+
+
+ETF_CURRENT_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "조회가 완료되었습니다.",
+    "message": None,
+    "Output_0": {
+        "iem_cd": "069500",
+        "iem_nm": "KODEX 200",
+        "stck_prpr": 35000,
+        "acml_vol": 1234567,
+    },
+    "Output_1": [
+        {
+            "bsop_hour": "153000",
+            "stck_prpr": 35000,
+            "acml_vol": 1234567,
+        }
+    ],
+    "Output_2": {
+        "aspr_cls_code": "0",
+        "antc_cnpr": "35000",
+    },
+    "Output_3": {
+        "bu12": "1",
+        "itmt_last_nav": "35001.23",
+    },
+    "Output_4": {
+        "bstp_cls_code": "001",
+        "prpr_nmix": "2700.50",
+    },
+}
+
+
+class TestEtfCurrent:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/quote/v1/etfCurrent", json=ETF_CURRENT_BODY)
+            response = client.krstock_quote.etf_current(iem_cd="069500")
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "iem_cd": "069500",
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        assert response.body.output_0.iem_nm == "KODEX 200"
+        assert len(response.body.output_1) == 1
+        assert response.body.output_1[0].stck_prpr == 35000
+        assert response.body.output_2.antc_cnpr == "35000"
+        assert response.body.output_3.itmt_last_nav == "35001.23"
+        assert response.body.output_4.prpr_nmix == "2700.50"
+
+    def test_parses_body_without_output_blocks(self, client):
+        # Output_N 블록은 데이터가 있을 때만 내려온다.
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/etfCurrent",
+                json={"rsp_cd": "00000", "rsp_msg": "ok"},
+            )
+            response = client.krstock_quote.etf_current(iem_cd="069500")
+
+        assert response.body.output_0 is None
+        assert response.body.output_1 is None
+        assert response.body.output_2 is None
+        assert response.body.output_3 is None
+        assert response.body.output_4 is None
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/etfCurrent",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_quote.etf_current(iem_cd="999999")
+
+
+ETF_COMPONENTS_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "조회가 완료되었습니다.",
+    "message": None,
+    "Output_0": [
+        {
+            "iem_cd": "005930",
+            "iem_nm": "삼성전자",
+            "stck_prpr": 281500,
+            "prdy_vrss_sign": "2",
+            "prdy_vrss": 10500,
+            "prdy_ctrt": 3.87,
+            "cu_unit": 12.0,
+            "totprice": 3378000,
+            "vol": 25.5,
+            "vltn_amt": 3378000,
+        }
+    ],
+}
+
+
+class TestEtfComponents:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/quote/v1/etfComponents", json=ETF_COMPONENTS_BODY)
+            response = client.krstock_quote.etf_components(iem_cd="069500")
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "iem_cd": "069500",
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        assert len(response.body.output_0) == 1
+        assert response.body.output_0[0].iem_nm == "삼성전자"
+        assert response.body.output_0[0].vol == 25.5
+
+    def test_parses_body_without_output_block(self, client):
+        # Output_N 블록은 데이터가 있을 때만 내려온다.
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/etfComponents",
+                json={"rsp_cd": "00000", "rsp_msg": "ok"},
+            )
+            response = client.krstock_quote.etf_components(iem_cd="069500")
+
+        assert response.body.output_0 is None
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/etfComponents",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_quote.etf_components(iem_cd="999999")
