@@ -36,3 +36,14 @@ class OverseasStockOrderSell(BaseModel):
     rsp_msg: str | None = Field(default=None, description="응답메시지")
     output_0: OverseasStockOrderOutput | None = Field(default=None, alias="Output_0", description="주문 접수 결과")
     message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
+
+
+class OverseasStockOrderModify(BaseModel):
+    """해외주식 정정취소주문정정 (`POST /gbstock/order/v1/modify`) 응답."""
+
+    model_config = ConfigDict(extra="allow")
+
+    rsp_cd: str | None = Field(default=None, description="응답코드")
+    rsp_msg: str | None = Field(default=None, description="응답메시지")
+    output_0: OverseasStockOrderOutput | None = Field(default=None, alias="Output_0", description="주문 접수 결과")
+    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")

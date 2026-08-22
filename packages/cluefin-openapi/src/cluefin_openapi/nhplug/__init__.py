@@ -23,6 +23,7 @@ from cluefin_openapi.nhplug._model import NHPlugHttpBody, NHPlugHttpHeader, NHPl
 from cluefin_openapi.nhplug._overseas_stock_order import OverseasStockOrder
 from cluefin_openapi.nhplug._overseas_stock_order_types import (
     OverseasStockOrderBuy,
+    OverseasStockOrderModify,
     OverseasStockOrderOutput,
     OverseasStockOrderSell,
 )
@@ -49,6 +50,7 @@ __all__ = [
     "NHPlugValidationError",
     "OverseasStockOrder",
     "OverseasStockOrderBuy",
+    "OverseasStockOrderModify",
     "OverseasStockOrderOutput",
     "OverseasStockOrderSell",
     "SocketClient",

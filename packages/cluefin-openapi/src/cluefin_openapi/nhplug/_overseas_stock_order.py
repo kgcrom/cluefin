@@ -3,7 +3,11 @@ from typing import Optional
 from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
 from cluefin_openapi.nhplug._http_client import HttpClient
 from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
-from cluefin_openapi.nhplug._overseas_stock_order_types import OverseasStockOrderBuy, OverseasStockOrderSell
+from cluefin_openapi.nhplug._overseas_stock_order_types import (
+    OverseasStockOrderBuy,
+    OverseasStockOrderModify,
+    OverseasStockOrderSell,
+)
 
 
 class OverseasStockOrder:
@@ -106,3 +110,41 @@ class OverseasStockOrder:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockOrderSell.model_validate(data))
+
+    def modify(
+        self,
+        act_no: str,
+        fc_sec_trd_nat_cd: str,
+        iem_cd: str,
+        org_orr_no: int,
+        fc_orr_uit_pr: float,
+        fc_stop_orr_bse_pr: Optional[float] = None,
+    ) -> NHPlugHttpResponse[OverseasStockOrderModify]:
+        """해외주식 정정취소주문정정 (`POST /gbstock/order/v1/modify`).
+
+        Args:
+            act_no: 계좌번호. `/n2/acctinfo` 의 acct_no 사용.
+            fc_sec_trd_nat_cd: 외화증권거래국가코드 (200.미국 070.일본 120.홍콩 160.상해 170.심천)
+            iem_cd: 티커종목코드 (예: AAPL)
+            org_orr_no: 원주문번호 (정정대상 주문번호)
+            fc_orr_uit_pr: 외화주문단가 (소수점 2자리)
+            fc_stop_orr_bse_pr: 외화STOP주문기준가격. 호가유형 15.STOP, 16.STOP LIMIT 일 때만 입력.
+
+        Returns:
+            NHPlugHttpResponse[OverseasStockOrderModify]: 주문번호(`orr_no`) 포함 접수 결과
+        """
+        body = {
+            "act_no": act_no,
+            "fc_sec_trd_nat_cd": fc_sec_trd_nat_cd,
+            "iem_cd": iem_cd,
+            "org_orr_no": org_orr_no,
+            "fc_orr_uit_pr": fc_orr_uit_pr,
+        }
+        if fc_stop_orr_bse_pr is not None:
+            body["fc_stop_orr_bse_pr"] = fc_stop_orr_bse_pr
+
+        response = self.client.post("/gbstock/order/v1/modify", body=body)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=OverseasStockOrderModify.model_validate(data))

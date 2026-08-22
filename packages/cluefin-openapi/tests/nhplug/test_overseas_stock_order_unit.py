@@ -12,6 +12,7 @@ BASE_DEV = "https://moapi.nhplug.com:8443"
 
 BUY_URL = f"{BASE_DEV}/gbstock/order/v1/buy"
 SELL_URL = f"{BASE_DEV}/gbstock/order/v1/sell"
+MODIFY_URL = f"{BASE_DEV}/gbstock/order/v1/modify"
 
 ORDER_OK_BODY = {
     "Output_0": {"amn_tab_cd": "0001", "orr_no": 12345},
@@ -171,4 +172,66 @@ class TestSell:
                     iem_cd="AAPL",
                     orr_qty=2,
                     ahi_nmn_pr_tp_cd="03",
+                )
+
+
+class TestModify:
+    def test_sends_input_envelope(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(MODIFY_URL, json=ORDER_OK_BODY)
+            client.overseas_stock_order.modify(
+                act_no="50051036881",
+                fc_sec_trd_nat_cd="200",
+                iem_cd="AAPL",
+                org_orr_no=12345,
+                fc_orr_uit_pr=149.5,
+            )
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "act_no": "50051036881",
+                "fc_sec_trd_nat_cd": "200",
+                "iem_cd": "AAPL",
+                "org_orr_no": 12345,
+                "fc_orr_uit_pr": 149.5,
+            }
+        }
+
+    def test_sends_stop_base_price_when_given(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(MODIFY_URL, json=ORDER_OK_BODY)
+            client.overseas_stock_order.modify(
+                act_no="50051036881",
+                fc_sec_trd_nat_cd="200",
+                iem_cd="AAPL",
+                org_orr_no=12345,
+                fc_orr_uit_pr=149.5,
+                fc_stop_orr_bse_pr=148.0,
+            )
+
+        assert json.loads(m.request_history[0].text)["Input_0"]["fc_stop_orr_bse_pr"] == 148.0
+
+    def test_parses_order_response(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(MODIFY_URL, json=ORDER_OK_BODY)
+            response = client.overseas_stock_order.modify(
+                act_no="50051036881",
+                fc_sec_trd_nat_cd="200",
+                iem_cd="AAPL",
+                org_orr_no=12345,
+                fc_orr_uit_pr=149.5,
+            )
+
+        assert response.body.output_0.orr_no == 12345
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(MODIFY_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
+            with pytest.raises(NHPlugAPIError, match="40310"):
+                client.overseas_stock_order.modify(
+                    act_no="50051036881",
+                    fc_sec_trd_nat_cd="200",
+                    iem_cd="AAPL",
+                    org_orr_no=12345,
+                    fc_orr_uit_pr=149.5,
                 )
