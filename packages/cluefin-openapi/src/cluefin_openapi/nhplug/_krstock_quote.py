@@ -2,7 +2,11 @@ from typing import Any, Dict, Literal, Optional
 
 from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
 from cluefin_openapi.nhplug._http_client import HttpClient
-from cluefin_openapi.nhplug._krstock_quote_types import KrStockQuoteCurrentExecution, KrStockQuoteCurrentPrice
+from cluefin_openapi.nhplug._krstock_quote_types import (
+    KrStockQuoteCurrentDaily,
+    KrStockQuoteCurrentExecution,
+    KrStockQuoteCurrentPrice,
+)
 from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES, NHPlugHttpHeader, NHPlugHttpResponse
 
 
@@ -88,3 +92,34 @@ class KrStockQuote:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuoteCurrentExecution.model_validate(data))
+
+    def current_daily(
+        self,
+        market_cd: Literal["KRX", "NXT", "UNT"],
+        iem_cd: str,
+        array_cnt: Optional[str] = None,
+    ) -> NHPlugHttpResponse[KrStockQuoteCurrentDaily]:
+        """주식현재가 일자별 (`POST /krstock/quote/v1/currentDaily`).
+
+        `market_cd`/`iem_cd` 가 required, `array_cnt`(읽을갯수)는 선택이다. 계좌번호가
+        필요 없는 시세 조회 API 다. 스펙에 `CtsHeader` 파라미터가 없어 연속조회를
+        지원하지 않는다(다른 조회 API 와 달리 `cts` 인자가 없다). 응답 블록은
+        `Output_0` 하나뿐이고 그 자체가 배열이다.
+
+        Args:
+            market_cd: 시장구분코드 (KRX/NXT/UNT)
+            iem_cd: 종목코드 (예: 005930)
+            array_cnt: 읽을갯수 (Output_0 일별 시세 목록의 조회 건수)
+        """
+        body = self._drop_none(
+            {
+                "market_cd": market_cd,
+                "iem_cd": iem_cd,
+                "array_cnt": array_cnt,
+            }
+        )
+        response = self.client.post("/krstock/quote/v1/currentDaily", body=body)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=KrStockQuoteCurrentDaily.model_validate(data))

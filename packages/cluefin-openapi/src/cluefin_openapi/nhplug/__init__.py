@@ -72,6 +72,8 @@ from cluefin_openapi.nhplug._krstock_order_types import (
 )
 from cluefin_openapi.nhplug._krstock_quote import KrStockQuote
 from cluefin_openapi.nhplug._krstock_quote_types import (
+    KrStockQuoteCurrentDaily,
+    KrStockQuoteCurrentDailyOutput,
     KrStockQuoteCurrentExecution,
     KrStockQuoteCurrentExecutionSummaryOutput,
     KrStockQuoteCurrentExecutionTickOutput,
@@ -144,6 +146,8 @@ __all__ = [
     "KrStockOrderReservedOrder",
     "KrStockOrderReservedOrderOutput",
     "KrStockQuote",
+    "KrStockQuoteCurrentDaily",
+    "KrStockQuoteCurrentDailyOutput",
     "KrStockQuoteCurrentExecution",
     "KrStockQuoteCurrentExecutionSummaryOutput",
     "KrStockQuoteCurrentExecutionTickOutput",

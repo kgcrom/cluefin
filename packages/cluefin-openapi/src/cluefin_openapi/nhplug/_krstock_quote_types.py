@@ -355,3 +355,46 @@ class KrStockQuoteCurrentExecution(NHPlugAssetHttpBody):
     output_1: KrStockQuoteCurrentExecutionSummaryOutput | None = Field(
         default=None, alias="Output_1", description="종목 종합 정보"
     )
+
+
+class KrStockQuoteCurrentDailyOutput(BaseModel):
+    """주식현재가 일자별 일별 시세 상세 (Output_0 배열의 각 항목).
+
+    스펙은 이 블록의 모든 필드를 string 으로 선언한다. currentPrice/currentExecution
+    에서 반복 확인된 "수치류 필드가 string 으로 명세되지만 실서버는 int/float 로
+    응답" 패턴이 여기서도 실측 확인됐다(2026-08-22, 005930) — 확인된 필드만
+    int|float|str 로 완화했다(날짜·코드·filler 류는 실제로도 string 이라 그대로 둠).
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    bsop_date: str | None = Field(default=None, description="일자 / 길이 8 / YY/MM/DD")
+    stck_oprc: int | str | None = Field(default=None, description="시가 / 길이 9")
+    stck_hgpr: int | str | None = Field(default=None, description="고가 / 길이 9")
+    stck_lwpr: int | str | None = Field(default=None, description="저가 / 길이 9")
+    stck_clpr: int | str | None = Field(default=None, description="종가 / 길이 9")
+    prdy_vrss_sign: str | None = Field(default=None, description="FILLER / 길이 1")
+    prdy_vrss: int | str | None = Field(default=None, description="등락폭 / 길이 9")
+    prdy_ctrt: float | str | None = Field(default=None, description="등락률 / 길이 5.2")
+    acml_vol: int | str | None = Field(default=None, description="거래량 / 길이 12")
+    acml_tr_pbmn: int | str | None = Field(default=None, description="거래대금 / 길이 18")
+    high_date: str | None = Field(default=None, description="고가일 / 길이 8")
+    low_date: str | None = Field(default=None, description="저가일 / 길이 8")
+    vol_prdy_rt: float | str | None = Field(default=None, description="거래량전일비 / 길이 6.2")
+    cttr: float | str | None = Field(default=None, description="체결강도 / 길이 6.2")
+    filler: str | None = Field(default=None, description="FILLER / 길이 43")
+    next_key: str | None = Field(default=None, description="NEXT_KEY / 길이 12")
+    nextbutton: str | None = Field(default=None, description="NEXTBUTTON / 길이 1")
+
+
+class KrStockQuoteCurrentDaily(NHPlugAssetHttpBody):
+    """주식현재가 일자별 (`POST /krstock/quote/v1/currentDaily`) 응답.
+
+    시세 조회 API 라 계좌번호가 필요 없다. 스펙에 `CtsHeader` 파라미터가 없어
+    연속조회를 지원하지 않는다(단건 조회). 응답 블록은 `Output_0` 하나뿐이고
+    그 자체가 배열이다(currentExecution 의 `Output_0` 과 같은 모양).
+    """
+
+    output_0: list[KrStockQuoteCurrentDailyOutput] | None = Field(
+        default=None, alias="Output_0", description="일별 시세 상세 목록"
+    )
