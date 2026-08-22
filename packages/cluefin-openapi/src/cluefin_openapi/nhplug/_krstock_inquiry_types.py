@@ -560,6 +560,60 @@ class KrStockInquiryAssetStatus(NHPlugAssetHttpBody):
     )
 
 
+class KrStockInquiryDailyPnlAccountOutput(BaseModel):
+    """실현손익일별합산조회 계좌 종합 정보 (Output_0)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    act_fnm: str | None = Field(default=None, description="계좌성명 / 길이 40")
+    # 스펙은 string 으로 명세하지만 실측(2026-08-22, 모의)에는 int 로 온다 — balance 의
+    # orr_pbl_amt1 과 같은 divergence. int|str Union 으로 두 표현을 모두 허용한다.
+    byn_cst_sum: int | str | None = Field(default=None, description="매수대금합계1 / 길이 18")
+    sll_cst_sum: int | str | None = Field(default=None, description="매도대금합계1 / 길이 18")
+    pls_amt_sum: int | None = Field(default=None, description="손익금액합계 / 길이 15")
+    acl_sdr_xps: int | None = Field(default=None, description="누적제비용 / 길이 18")
+
+
+class KrStockInquiryDailyPnlOutput(BaseModel):
+    """실현손익일별합산조회 일별 상세 (Output_1 배열의 각 항목)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    sby_dt: str | None = Field(default=None, description="매매일자 / 길이 8")
+    byn_qty: float | None = Field(default=None, description="매수수량 / 길이 18.6")
+    byn_amt: int | None = Field(default=None, description="매수금액 / 길이 18")
+    byn_fee: int | None = Field(default=None, description="매수수수료 / 길이 18")
+    byn_amt_sum: int | None = Field(default=None, description="매수금액합계 / 길이 18")
+    sll_qty: float | None = Field(default=None, description="매도수량 / 길이 18.6")
+    sll_amt: int | None = Field(default=None, description="매도금액 / 길이 18")
+    sll_tax_sum: int | None = Field(default=None, description="매도세금합계 / 길이 18")
+    sll_amt_sum: int | None = Field(default=None, description="매도금액합계 / 길이 18")
+    pls_amt: int | None = Field(default=None, description="손익금액 / 길이 18")
+    pft_rt: float | None = Field(default=None, description="수익율 / 길이 15.9")
+    iem_mlf_cd: str | None = Field(
+        default=None,
+        description=(
+            "종목중분류코드 / 길이 5 / 01001.주식 01002.DR 01003.투자회사 01004.신주인수권증권 "
+            "01005.상장REITS 01006.신주인수권증서 01007.ETF 01008.상장수익증권"
+        ),
+    )
+
+
+class KrStockInquiryDailyPnl(NHPlugAssetHttpBody):
+    """실현손익일별합산조회 (`POST /krstock/inquiry/v1/dailyPnl`) 응답.
+
+    연속조회를 지원한다 — 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 다음 호출에
+    전달해 이어받는다.
+    """
+
+    output_0: KrStockInquiryDailyPnlAccountOutput | None = Field(
+        default=None, alias="Output_0", description="계좌 종합 정보"
+    )
+    output_1: list[KrStockInquiryDailyPnlOutput] | None = Field(
+        default=None, alias="Output_1", description="일별 실현손익 상세 목록"
+    )
+
+
 class KrStockInquiryReservedInquiry(NHPlugAssetHttpBody):
     """주식예약주문조회 (`POST /krstock/inquiry/v1/reservedInquiry`) 응답.
 

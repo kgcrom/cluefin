@@ -4,7 +4,7 @@
 시간·영업일 제약이 없어 휴일에도 성공해야 한다(2026-08-22 raw 호출 실측 확인).
 """
 
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 
@@ -101,6 +101,22 @@ def test_reserved_inquiry(client: HttpClient, krstock_account: str):
             act_no=krstock_account,
             sby_dit_cd="0",  # 전체
             bkg_orr_tp_cd="0",  # 전체
+        )
+    except NHPlugAPIError as e:
+        skip_if_env_blocked(e)
+
+    assert response.body.rsp_cd in SUCCESS_RSP_CODES
+
+
+@pytest.mark.integration
+def test_daily_pnl(client: HttpClient, krstock_account: str):
+    """실현손익일별합산조회. 최근 한 달(오늘 포함) 범위로 조회 — 조회 API 라 성공을 기대한다."""
+    today = date.today()
+    try:
+        response = client.krstock_inquiry.daily_pnl(
+            act_no=krstock_account,
+            iqr_sta_dt=(today - timedelta(days=30)).strftime("%Y%m%d"),
+            iqr_end_dt=today.strftime("%Y%m%d"),
         )
     except NHPlugAPIError as e:
         skip_if_env_blocked(e)

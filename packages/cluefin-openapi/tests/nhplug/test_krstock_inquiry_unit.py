@@ -572,3 +572,92 @@ class TestAssetStatus:
                     aet_bse="1",
                     qut_dit_cd="UNT",
                 )
+
+
+DAILY_PNL_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "조회가 완료되었습니다.",
+    "message": None,
+    "Output_0": {
+        "act_fnm": "홍길동",
+        "pls_amt_sum": 10000,
+        "acl_sdr_xps": 500,
+    },
+    "Output_1": [
+        {
+            "sby_dt": "20260810",
+            "byn_qty": 1.0,
+            "byn_amt": 70000,
+            "sll_amt": 71000,
+            "pls_amt": 1000,
+        }
+    ],
+}
+
+
+class TestDailyPnl:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/inquiry/v1/dailyPnl",
+                json=DAILY_PNL_BODY,
+                headers={"cts_flag": "N"},
+            )
+            response = client.krstock_inquiry.daily_pnl(
+                act_no="50051036881",
+                iqr_sta_dt="20260723",
+                iqr_end_dt="20260822",
+            )
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "act_no": "50051036881",
+                "iqr_sta_dt": "20260723",
+                "iqr_end_dt": "20260822",
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        assert response.body.output_0.act_fnm == "홍길동"
+        assert response.body.output_0.pls_amt_sum == 10000
+        assert len(response.body.output_1) == 1
+        assert response.body.output_1[0].sby_dt == "20260810"
+        assert response.header.cts_flag == "N"
+
+    def test_market_order_omits_none_params(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/inquiry/v1/dailyPnl", json=DAILY_PNL_BODY)
+            client.krstock_inquiry.daily_pnl(
+                act_no="50051036881",
+                iqr_sta_dt="20260723",
+                iqr_end_dt="20260822",
+            )
+
+        sent = json.loads(m.request_history[0].text)["Input_0"]
+        assert "iem_cd" not in sent
+
+    def test_passes_cts_to_request_headers(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/inquiry/v1/dailyPnl", json=DAILY_PNL_BODY)
+            client.krstock_inquiry.daily_pnl(
+                act_no="50051036881",
+                iqr_sta_dt="20260723",
+                iqr_end_dt="20260822",
+                cts="NEXT-KEY",
+            )
+
+        request = m.request_history[0]
+        assert request.headers["cts"] == "NEXT-KEY"
+        assert request.headers["cts_flag"] == "Y"
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/inquiry/v1/dailyPnl",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_inquiry.daily_pnl(
+                    act_no="00000000000",
+                    iqr_sta_dt="20260723",
+                    iqr_end_dt="20260822",
+                )
