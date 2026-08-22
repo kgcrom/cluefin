@@ -106,3 +106,14 @@ def test_current_after_hours_daily(client: HttpClient):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+
+
+@pytest.mark.integration
+def test_current_after_hours_execution(client: HttpClient):
+    """주식현재가 시간외시간별체결. 계좌번호 없이 성공을 기대한다."""
+    try:
+        response = client.krstock_quote.current_after_hours_execution(iem_cd=TEST_IEM_CD)
+    except NHPlugAPIError as e:
+        skip_if_env_blocked(e)
+
+    assert response.body.rsp_cd in SUCCESS_RSP_CODES
