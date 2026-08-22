@@ -721,3 +721,54 @@ class KrStockQuoteAfterHoursCurrent(NHPlugAssetHttpBody):
     output_1: KrStockQuoteAfterHoursCurrentRegularOutput | None = Field(
         default=None, alias="Output_1", description="정규장 종합 정보"
     )
+
+
+class KrStockQuoteCurrentAfterHoursDailyTickOutput(BaseModel):
+    """주식현재가 시간외일자별주가 시간외 체결 상세 (Output_0 배열의 각 항목).
+
+    스펙의 필드명과 description 이 서로 어긋나 있다(예: `shrn_iscd` 설명이
+    "고가"). 원문 description 을 그대로 보존한다.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    qry_date: str | None = Field(default=None, description="일자 / 길이 8")
+    qry_time: str | None = Field(default=None, description="시가 / 길이 6")
+    shrn_iscd: str | None = Field(default=None, description="고가 / 길이 9")
+    hts_kor_isnm: str | None = Field(default=None, description="저가 / 길이 41")
+    stck_prpr: str | None = Field(default=None, description="락구분 / 길이 10")
+    prdy_vrss_sign: str | None = Field(default=None, description="Filler / 길이 1")
+
+
+class KrStockQuoteCurrentAfterHoursDailyOutput(BaseModel):
+    """주식현재가 시간외일자별주가 종합 상세 (Output_1 배열의 각 항목).
+
+    스펙은 4개 필드 모두 string 으로 선언하지만, 2026-08-22 실측(005930)에서
+    `acml_vol`/`acml_tr_pbmn` 이 실제로는 int 로 내려오는 것을 확인해
+    `int|str` 로 완화했다(`prdy_ctrt`/`prdy_vol` 은 실측에서도 문자열이라
+    스펙 그대로 둠).
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    prdy_ctrt: str | None = Field(default=None, description="현재가 / 길이 5")
+    acml_vol: int | str | None = Field(default=None, description="거래량 / 길이 12")
+    acml_tr_pbmn: int | str | None = Field(default=None, description="거래대금 / 길이 18")
+    prdy_vol: str | None = Field(default=None, description="Filler / 길이 12")
+
+
+class KrStockQuoteCurrentAfterHoursDaily(NHPlugAssetHttpBody):
+    """주식현재가 시간외일자별주가 (`POST /krstock/quote/v1/currentAfterHoursDaily`) 응답.
+
+    시세 조회 API 라 계좌번호가 필요 없다. 스펙에 `CtsHeader` 파라미터가 없어
+    연속조회를 지원하지 않는다(단건 조회). 입력은 `market_cd` 없이 `iem_cd` 외
+    `date`/`array_cnt`/`maxavg`/`gubun` 이 전부 required 다(다른 quote API 와
+    달리 선택 필드가 없다). `Output_0`/`Output_1` 모두 배열이다.
+    """
+
+    output_0: list[KrStockQuoteCurrentAfterHoursDailyTickOutput] | None = Field(
+        default=None, alias="Output_0", description="시간외 체결 상세 목록"
+    )
+    output_1: list[KrStockQuoteCurrentAfterHoursDailyOutput] | None = Field(
+        default=None, alias="Output_1", description="종합 상세 목록"
+    )

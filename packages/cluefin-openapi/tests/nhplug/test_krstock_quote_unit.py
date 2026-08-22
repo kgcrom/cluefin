@@ -370,3 +370,77 @@ class TestAfterHoursCurrent:
             )
             with pytest.raises(NHPlugAPIError, match="IGW40018"):
                 client.krstock_quote.after_hours_current(iem_cd="999999")
+
+
+CURRENT_AFTER_HOURS_DAILY_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "조회가 완료되었습니다.",
+    "message": None,
+    "Output_0": [
+        {
+            "qry_date": "20260821",
+            "qry_time": "180000",
+            "shrn_iscd": "005930",
+            "hts_kor_isnm": "삼성전자",
+            "stck_prpr": "282000",
+            "prdy_vrss_sign": "2",
+        }
+    ],
+    "Output_1": [
+        {
+            "prdy_ctrt": "3.87",
+            "acml_vol": "27746471",
+            "acml_tr_pbmn": "7703213942500",
+            "prdy_vol": "0",
+        }
+    ],
+}
+
+
+class TestCurrentAfterHoursDaily:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/quote/v1/currentAfterHoursDaily", json=CURRENT_AFTER_HOURS_DAILY_BODY)
+            response = client.krstock_quote.current_after_hours_daily(
+                iem_cd="005930", date="20260821", array_cnt="10", maxavg="5", gubun="1"
+            )
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "iem_cd": "005930",
+                "date": "20260821",
+                "array_cnt": "10",
+                "maxavg": "5",
+                "gubun": "1",
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        assert len(response.body.output_0) == 1
+        assert response.body.output_0[0].shrn_iscd == "005930"
+        assert len(response.body.output_1) == 1
+        assert response.body.output_1[0].acml_vol == "27746471"
+
+    def test_parses_body_without_output_blocks(self, client):
+        # Output_N 블록은 데이터가 있을 때만 내려온다.
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/currentAfterHoursDaily",
+                json={"rsp_cd": "00000", "rsp_msg": "ok"},
+            )
+            response = client.krstock_quote.current_after_hours_daily(
+                iem_cd="005930", date="20260821", array_cnt="10", maxavg="5", gubun="1"
+            )
+
+        assert response.body.output_0 is None
+        assert response.body.output_1 is None
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/currentAfterHoursDaily",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_quote.current_after_hours_daily(
+                    iem_cd="999999", date="20260821", array_cnt="10", maxavg="5", gubun="1"
+                )

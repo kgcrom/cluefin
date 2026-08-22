@@ -4,6 +4,7 @@ from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
 from cluefin_openapi.nhplug._http_client import HttpClient
 from cluefin_openapi.nhplug._krstock_quote_types import (
     KrStockQuoteAfterHoursCurrent,
+    KrStockQuoteCurrentAfterHoursDaily,
     KrStockQuoteCurrentDaily,
     KrStockQuoteCurrentExecution,
     KrStockQuoteCurrentInvestor,
@@ -251,3 +252,41 @@ class KrStockQuote:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuoteAfterHoursCurrent.model_validate(data))
+
+    def current_after_hours_daily(
+        self,
+        iem_cd: str,
+        date: str,
+        array_cnt: str,
+        maxavg: str,
+        gubun: str,
+    ) -> NHPlugHttpResponse[KrStockQuoteCurrentAfterHoursDaily]:
+        """주식현재가 시간외일자별주가 (`POST /krstock/quote/v1/currentAfterHoursDaily`).
+
+        스펙상 5개 입력 필드(`iem_cd`/`date`/`array_cnt`/`maxavg`/`gubun`)가 모두
+        required 다 — 다른 quote API 와 달리 선택 필드가 없고 `market_cd` 도 없다.
+        계좌번호가 필요 없는 시세 조회 API 다. 스펙에 `CtsHeader` 파라미터가 없어
+        연속조회를 지원하지 않는다(다른 조회 API 와 달리 `cts` 인자가 없다).
+        `Output_0`/`Output_1` 모두 배열이다.
+
+        Args:
+            iem_cd: 종목코드 (예: 005930)
+            date: 일자 (YYYYMMDD)
+            array_cnt: 읽을갯수
+            maxavg: 최대이평
+            gubun: 구분 (1.정규장 2.정규장+시간외단일가 이외.정규장+당일시간외단일가)
+        """
+        body = self._drop_none(
+            {
+                "iem_cd": iem_cd,
+                "date": date,
+                "array_cnt": array_cnt,
+                "maxavg": maxavg,
+                "gubun": gubun,
+            }
+        )
+        response = self.client.post("/krstock/quote/v1/currentAfterHoursDaily", body=body)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=KrStockQuoteCurrentAfterHoursDaily.model_validate(data))
