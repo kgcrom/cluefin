@@ -185,6 +185,36 @@ def test_modify_order(client: HttpClient, krstock_account: str, krstock_pending_
 
 
 @pytest.mark.integration
+@real_account_only("/krstock/order/v1/reservedOrder", "19999: 모의투자에서는 해당업무가 제공되지 않습니다")
+def test_reserved_order(client: HttpClient, krstock_account: str):
+    """지정가 예약주문(다음 영업일 매수) 접수.
+
+    이 테스트는 접수된 예약주문을 취소하지 않는다 — 성공하면 다음 작업(reservedCancel)의
+    통합테스트가 이 주문을 취소 대상으로 재사용할 수 있게 남겨둔다.
+    """
+    price = _unfillable_buy_price(client, TEST_IEM_CD)
+    try:
+        response = client.krstock_order.reserved_order(
+            act_no=krstock_account,
+            iem_cd=TEST_IEM_CD,
+            sby_dit_cd="2",  # 매수
+            frs_sba_orr_yn="N",
+            nmn_pr_tp_cd="01",  # 지정가
+            cfd_lon_cd="00",  # 일반거래(현금)
+            orr_qty=1,
+            orr_uit_pr=price,
+            bkg_orr_tp_cd="1",  # 일반예약
+            bkg_orr_enf_tp_cd="1",  # 일반
+            rmt_mkt_cd="KRX",
+        )
+    except NHPlugAPIError as e:
+        skip_if_env_blocked(e)
+
+    assert response.body.output_0 is not None
+    assert response.body.output_0.bkg_orr_no is not None
+
+
+@pytest.mark.integration
 def test_cancel_order(client: HttpClient, krstock_account: str, krstock_pending_buy_order: dict):
     """미체결 매수주문(krstock_pending_buy_order)을 취소한다.
 

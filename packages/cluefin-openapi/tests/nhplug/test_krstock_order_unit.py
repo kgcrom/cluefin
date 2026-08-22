@@ -431,3 +431,103 @@ class TestCancel:
                     iem_cd="005930",
                     cor_qty=1,
                 )
+
+
+RESERVED_ORDER_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "정상 처리되었습니다.",
+    "message": None,
+    "Output_0": {
+        "bkg_orr_no": 98765,
+        "act_no": "50051036881",
+        "iem_cd": "005930",
+        "sby_dit_cd": "2",
+        "orr_qty": "1",
+        "orr_uit_pr": "49000",
+        "pwd": "********",
+    },
+}
+
+
+class TestReservedOrder:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/order/v1/reservedOrder", json=RESERVED_ORDER_BODY)
+            response = client.krstock_order.reserved_order(
+                act_no="50051036881",
+                iem_cd="005930",
+                sby_dit_cd="2",
+                frs_sba_orr_yn="N",
+                nmn_pr_tp_cd="01",
+                cfd_lon_cd="00",
+                orr_qty=1,
+                orr_uit_pr=49000,
+                bkg_orr_tp_cd="1",
+                bkg_orr_enf_tp_cd="1",
+                rmt_mkt_cd="KRX",
+            )
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "act_no": "50051036881",
+                "iem_cd": "005930",
+                "sby_dit_cd": "2",
+                "frs_sba_orr_yn": "N",
+                "nmn_pr_tp_cd": "01",
+                "cfd_lon_cd": "00",
+                "orr_qty": 1,
+                "orr_uit_pr": 49000,
+                "bkg_orr_tp_cd": "1",
+                "bkg_orr_enf_tp_cd": "1",
+                "rmt_mkt_cd": "KRX",
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        assert response.body.output_0.bkg_orr_no == 98765
+        assert response.body.output_0.pwd == "********"
+
+    def test_optional_fields_omitted_when_none(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/order/v1/reservedOrder", json=RESERVED_ORDER_BODY)
+            client.krstock_order.reserved_order(
+                act_no="50051036881",
+                iem_cd="005930",
+                sby_dit_cd="2",
+                frs_sba_orr_yn="N",
+                nmn_pr_tp_cd="05",
+                cfd_lon_cd="00",
+                orr_qty=1,
+                orr_uit_pr=0,
+                bkg_orr_tp_cd="1",
+                bkg_orr_enf_tp_cd="1",
+                rmt_mkt_cd="KRX",
+            )
+
+        sent = json.loads(m.request_history[0].text)["Input_0"]
+        assert "lon_dt" not in sent
+        assert "bkg_orr_sta_dt" not in sent
+        assert "bkg_orr_end_dt" not in sent
+        assert "end_pr_cmp_ftw_amt" not in sent
+        assert "orr_pr_rge_hlm_pr" not in sent
+        assert "orr_pr_rge_llm_pr" not in sent
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/order/v1/reservedOrder",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_order.reserved_order(
+                    act_no="00000000000",
+                    iem_cd="005930",
+                    sby_dit_cd="2",
+                    frs_sba_orr_yn="N",
+                    nmn_pr_tp_cd="05",
+                    cfd_lon_cd="00",
+                    orr_qty=1,
+                    orr_uit_pr=0,
+                    bkg_orr_tp_cd="1",
+                    bkg_orr_enf_tp_cd="1",
+                    rmt_mkt_cd="KRX",
+                )

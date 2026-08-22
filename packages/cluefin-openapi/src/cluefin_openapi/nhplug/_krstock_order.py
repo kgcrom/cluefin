@@ -9,6 +9,7 @@ from cluefin_openapi.nhplug._krstock_order_types import (
     KrStockOrderCreditBuy,
     KrStockOrderCreditSell,
     KrStockOrderModify,
+    KrStockOrderReservedOrder,
 )
 from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
 
@@ -38,6 +39,27 @@ CreditLoanCode = Literal[
     "03",  # 유통대주
     "04",  # 자기대주
     "10",  # 매입자금대출
+]
+
+# 예약주문 호가유형코드 (reservedOrder 의 nmn_pr_tp_cd) — QuoteTypeCode 와 코드 집합·명칭이 다르다.
+ReservedQuoteTypeCode = Literal[
+    "01",  # 지정가
+    "05",  # 시장가
+    "06",  # 조건부지정가
+    "09",  # 자기주식
+    "61",  # 장전시간외
+]
+
+# 예약주문 신용대출코드 (reservedOrder 의 cfd_lon_cd) — CreditLoanCode 와 코드 집합이 다르다.
+ReservedCreditLoanCode = Literal[
+    "00",  # 일반거래
+    "01",  # 유통융자
+    "02",  # 자기융자
+    "03",  # 유통대주
+    "04",  # 자기대주
+    "10",  # 매입자금대출
+    "11",  # 매도담보대출
+    "12",  # 주식담보대출
 ]
 
 
@@ -365,3 +387,80 @@ class KrStockOrder:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockOrderCancel.model_validate(data))
+
+    def reserved_order(
+        self,
+        act_no: str,
+        iem_cd: str,
+        sby_dit_cd: Literal["1", "2"],
+        frs_sba_orr_yn: Literal["Y", "N"],
+        nmn_pr_tp_cd: ReservedQuoteTypeCode,
+        cfd_lon_cd: ReservedCreditLoanCode,
+        orr_qty: int,
+        orr_uit_pr: int,
+        bkg_orr_tp_cd: Literal["1", "2", "3"],
+        bkg_orr_enf_tp_cd: Literal["1", "2"],
+        rmt_mkt_cd: Literal["KRX", "NXT"],
+        lon_dt: Optional[str] = None,
+        bkg_orr_sta_dt: Optional[str] = None,
+        bkg_orr_end_dt: Optional[str] = None,
+        end_pr_cmp_ftw_amt: Optional[int] = None,
+        orr_pr_rge_hlm_pr: Optional[int] = None,
+        orr_pr_rge_llm_pr: Optional[int] = None,
+    ) -> NHPlugHttpResponse[KrStockOrderReservedOrder]:
+        """주식예약주문 (`POST /krstock/order/v1/reservedOrder`).
+
+        cashBuy/creditBuy 계열과는 호가유형코드·신용대출코드 코드 집합이 다르다
+        (`ReservedQuoteTypeCode`/`ReservedCreditLoanCode` 참고). `rmt_mkt_cd` 도 SOR 를
+        지원하지 않고 KRX/NXT 만 허용한다.
+
+        Args:
+            act_no: 계좌번호 (`/n2/acctinfo` 의 acct_no — 운영은 acct_type 01·02,
+                모의투자는 03 계좌만 유효)
+            iem_cd: 종목코드 (예: 005940)
+            sby_dit_cd: 매매구분코드 (1.매도 2.매수)
+            frs_sba_orr_yn: 선물대용주문여부 (Y.예 N.아니오)
+            nmn_pr_tp_cd: 호가유형코드 (01.지정가 05.시장가 06.조건부지정가 09.자기주식
+                61.장전시간외)
+            cfd_lon_cd: 신용대출코드 (00.일반거래 01.유통융자 02.자기융자 03.유통대주
+                04.자기대주 10.매입자금대출 11.매도담보대출 12.주식담보대출)
+            orr_qty: 주문수량
+            orr_uit_pr: 주문단가
+            bkg_orr_tp_cd: 예약주문유형코드 (1.일반예약 2.잔량주문 3.지정수량주문)
+            bkg_orr_enf_tp_cd: 예약주문집행유형코드 (1.일반 2.기준가격대비)
+            rmt_mkt_cd: 요청시장코드 (KRX/NXT — SOR 미지원)
+            lon_dt: 대출일자 (YYYYMMDD)
+            bkg_orr_sta_dt: 예약주문시작일자 (YYYYMMDD, 예약주문유형코드가 "2"·"3"일
+                때, 최대 30일)
+            bkg_orr_end_dt: 예약주문종료일자 (YYYYMMDD, 예약주문유형코드가 "2"·"3"일
+                때, 최대 30일)
+            end_pr_cmp_ftw_amt: 종가대비등락폭금액 (예약주문집행유형코드가 "2"일 때)
+            orr_pr_rge_hlm_pr: 주문가격범위상한가 (예약주문집행유형코드가 "2"일 때)
+            orr_pr_rge_llm_pr: 주문가격범위하한가 (예약주문집행유형코드가 "2"일 때)
+        """
+        body = self._drop_none(
+            {
+                "act_no": act_no,
+                "iem_cd": iem_cd,
+                "sby_dit_cd": sby_dit_cd,
+                "frs_sba_orr_yn": frs_sba_orr_yn,
+                "nmn_pr_tp_cd": nmn_pr_tp_cd,
+                "cfd_lon_cd": cfd_lon_cd,
+                "lon_dt": lon_dt,
+                "orr_qty": orr_qty,
+                "orr_uit_pr": orr_uit_pr,
+                "bkg_orr_tp_cd": bkg_orr_tp_cd,
+                "bkg_orr_sta_dt": bkg_orr_sta_dt,
+                "bkg_orr_end_dt": bkg_orr_end_dt,
+                "bkg_orr_enf_tp_cd": bkg_orr_enf_tp_cd,
+                "end_pr_cmp_ftw_amt": end_pr_cmp_ftw_amt,
+                "orr_pr_rge_hlm_pr": orr_pr_rge_hlm_pr,
+                "orr_pr_rge_llm_pr": orr_pr_rge_llm_pr,
+                "rmt_mkt_cd": rmt_mkt_cd,
+            }
+        )
+        response = self.client.post("/krstock/order/v1/reservedOrder", body=body)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=KrStockOrderReservedOrder.model_validate(data))

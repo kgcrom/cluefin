@@ -69,3 +69,39 @@ class KrStockOrderCancel(NHPlugAssetHttpBody):
     """주식주문(정정취소) 취소 (`POST /krstock/order/v1/cancel`) 응답."""
 
     output_0: KrStockOrderAmendedOutput | None = Field(default=None, alias="Output_0", description="취소 접수 결과")
+
+
+class KrStockOrderReservedOrderOutput(BaseModel):
+    """주식예약주문 접수 결과 — 신규·정정취소 계열과 달리 전용 스키마(입력값 표시 위주)다."""
+
+    model_config = ConfigDict(extra="allow")
+
+    bkg_orr_no: int | None = Field(default=None, description="예약주문번호 / 길이 10 / 예약 접수된 번호")
+    act_no: str | None = Field(default=None, description="계좌번호 / 길이 11 / 입력값 표시")
+    iem_cd: str | None = Field(default=None, description="종목코드 / 길이 12 / 입력값 표시")
+    sby_dit_cd: str | None = Field(default=None, description="매매구분코드 / 길이 1 / 입력값 표시 (1.매도 2.매수)")
+    frs_sba_orr_yn: str | None = Field(default=None, description="선물대용주문여부 / 길이 1 / 입력값 표시")
+    nmn_pr_tp_cd: str | None = Field(default=None, description="호가유형코드 / 길이 2 / 입력값 표시")
+    cfd_lon_cd: str | None = Field(default=None, description="신용대출코드 / 길이 2 / 입력값 표시")
+    lon_dt: str | None = Field(default=None, description="대출일자 / 길이 8 / 입력값 표시 (YYYYMMDD)")
+    orr_qty: str | None = Field(default=None, description="주문수량 / 길이 18 / 입력값 표시")
+    orr_uit_pr: str | None = Field(default=None, description="주문단가 / 길이 18 / 입력값 표시")
+    aca_tel_no: str | None = Field(default=None, description="연락처전화번호 / 길이 20 / 입력값 표시 — 개인정보")
+    bkg_orr_tp_cd: str | None = Field(default=None, description="예약주문유형코드 / 길이 1 / 입력값 표시")
+    bkg_orr_sta_dt: str | None = Field(default=None, description="예약주문시작일자 / 길이 8 / 입력값 표시 (YYYYMMDD)")
+    bkg_orr_end_dt: str | None = Field(default=None, description="예약주문종료일자 / 길이 8 / 입력값 표시 (YYYYMMDD)")
+    bkg_orr_enf_tp_cd: str | None = Field(default=None, description="예약주문집행유형코드 / 길이 1 / 입력값 표시")
+    end_pr_cmp_ftw_amt: str | None = Field(default=None, description="종가대비등락폭금액 / 길이 18 / 입력값 표시")
+    orr_pr_rge_hlm_pr: str | None = Field(default=None, description="주문가격범위상한가 / 길이 18 / 입력값 표시")
+    orr_pr_rge_llm_pr: str | None = Field(default=None, description="주문가격범위하한가 / 길이 18 / 입력값 표시")
+    pwd: str | None = Field(
+        default=None, description="비밀번호 / 길이 8 / 입력값 표시 — 민감정보(계좌 비밀번호), 로그·출력에 남기지 말 것"
+    )
+
+
+class KrStockOrderReservedOrder(NHPlugAssetHttpBody):
+    """주식예약주문 (`POST /krstock/order/v1/reservedOrder`) 응답."""
+
+    output_0: KrStockOrderReservedOrderOutput | None = Field(
+        default=None, alias="Output_0", description="예약주문 접수 결과"
+    )
