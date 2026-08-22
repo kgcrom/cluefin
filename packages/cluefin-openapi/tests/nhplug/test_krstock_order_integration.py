@@ -15,6 +15,56 @@ from ._integration_helpers import real_account_only, skip_if_env_blocked
 TEST_IEM_CD = "005930"  # 삼성전자
 
 
+def _unfillable_buy_price(client: HttpClient, iem_cd: str) -> int:
+    """체결되지 않을 만큼 낮으면서 1,000원 배수로 내림한 매수 지정가를 계산한다.
+
+    시세(krstock/quote) 카테고리가 아직 정식 메서드로 구현되지 않아 raw `client.post`
+    로 현재가(`/krstock/quote/v1/currentPrice`)를 직접 호출한다 — 시세 카테고리 구현 후
+    정식 메서드(예: `client.krstock_quote.current_price(...)`)로 교체할 것.
+    """
+    response = client.post(
+        "/krstock/quote/v1/currentPrice",
+        body={"market_cd": "KRX", "iem_cd": iem_cd},
+    )
+    data = response.json()
+    output_0 = data.get("Output_0") or {}
+    stck_prpr = output_0.get("stck_prpr")
+    if not stck_prpr:
+        pytest.skip(f"현재가 조회 실패로 미체결 지정가를 만들 수 없다: [{data.get('rsp_cd')}] {data.get('rsp_msg')}")
+    base = abs(int(stck_prpr))
+    price = (int(base * 0.8) // 1000) * 1000
+    if price <= 0:
+        pytest.skip(f"기준가가 너무 낮아 미체결 지정가를 만들 수 없다: {stck_prpr}")
+    return price
+
+
+@pytest.fixture
+def krstock_pending_buy_order(client: HttpClient, krstock_account: str) -> dict:
+    """정정 대상이 될 미체결 매수주문을 실제로 접수하고 원주문 식별자를 반환한다.
+
+    modify 입력이 요구하는 원주문 식별자는 `org_mkt_orr_no`(원시장주문번호) 하나뿐이며,
+    신규주문 응답의 `mkt_orr_no` 를 그대로 사용한다.
+    """
+    price = _unfillable_buy_price(client, TEST_IEM_CD)
+    try:
+        response = client.krstock_order.cash_buy(
+            act_no=krstock_account,
+            iem_cd=TEST_IEM_CD,
+            orr_qty=1,
+            nmn_pr_tp_cd="01",  # 보통가(지정가) — 시장가는 즉시 체결되어 정정 대상이 될 수 없다
+            rmt_mkt_cd="KRX",
+            sor_mkt_sli_yn="N",
+            orr_pr=price,
+        )
+    except NHPlugAPIError as e:
+        skip_if_env_blocked(e)
+
+    output_0 = response.body.output_0
+    if output_0 is None or not output_0.mkt_orr_no:
+        pytest.skip("매수주문 응답에 시장주문번호가 없다")
+    return {"mkt_orr_no": output_0.mkt_orr_no, "orr_pr": price}
+
+
 @pytest.mark.integration
 def test_cash_buy_market_order(client: HttpClient, krstock_account: str):
     """시장가 1주 매수 접수. 모의투자 계좌라 실손실은 없다."""
@@ -101,6 +151,29 @@ def test_cash_sell_market_order(client: HttpClient, krstock_account: str):
             iem_cd=TEST_IEM_CD,
             orr_qty=1,
             nmn_pr_tp_cd="05",  # 시장가
+            rmt_mkt_cd="KRX",
+            sor_mkt_sli_yn="N",
+        )
+    except NHPlugAPIError as e:
+        skip_if_env_blocked(e)
+
+    assert response.body.output_0 is not None
+    assert response.body.output_0.mkt_orr_no is not None
+
+
+@pytest.mark.integration
+def test_modify_order(client: HttpClient, krstock_account: str, krstock_pending_buy_order: dict):
+    """미체결 매수주문(krstock_pending_buy_order)을 다른 미체결 가격으로 정정한다."""
+    new_price = max(krstock_pending_buy_order["orr_pr"] - 1000, 1000)
+    try:
+        response = client.krstock_order.modify(
+            act_no=krstock_account,
+            org_mkt_orr_no=krstock_pending_buy_order["mkt_orr_no"],
+            all_pat_dit_cd="1",  # 전체(전량)
+            iem_cd=TEST_IEM_CD,
+            cor_qty=1,
+            cor_pr=new_price,
+            sop_cnd_pr=0,  # 원주문이 스톱지정가(16)가 아니므로 사용되지 않음 — required 라 0 전송
             rmt_mkt_cd="KRX",
             sor_mkt_sli_yn="N",
         )

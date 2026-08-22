@@ -21,10 +21,12 @@ from cluefin_openapi.nhplug._exceptions import (
 from cluefin_openapi.nhplug._http_client import HttpClient
 from cluefin_openapi.nhplug._krstock_order import KrStockOrder
 from cluefin_openapi.nhplug._krstock_order_types import (
+    KrStockOrderAmendedOutput,
     KrStockOrderCashBuy,
     KrStockOrderCashSell,
     KrStockOrderCreditBuy,
     KrStockOrderCreditSell,
+    KrStockOrderModify,
     KrStockOrderPlacedOutput,
 )
 from cluefin_openapi.nhplug._model import (
@@ -44,10 +46,12 @@ __all__ = [
     "Common",
     "HttpClient",
     "KrStockOrder",
+    "KrStockOrderAmendedOutput",
     "KrStockOrderCashBuy",
     "KrStockOrderCashSell",
     "KrStockOrderCreditBuy",
     "KrStockOrderCreditSell",
+    "KrStockOrderModify",
     "KrStockOrderPlacedOutput",
     "NHPlugAPIError",
     "NHPlugAssetHttpBody",

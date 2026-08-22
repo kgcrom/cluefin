@@ -7,6 +7,7 @@ from cluefin_openapi.nhplug._krstock_order_types import (
     KrStockOrderCashSell,
     KrStockOrderCreditBuy,
     KrStockOrderCreditSell,
+    KrStockOrderModify,
 )
 from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
 
@@ -275,3 +276,53 @@ class KrStockOrder:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockOrderCreditSell.model_validate(data))
+
+    def modify(
+        self,
+        act_no: str,
+        org_mkt_orr_no: int,
+        all_pat_dit_cd: Literal["1", "2"],
+        iem_cd: str,
+        cor_qty: int,
+        cor_pr: float,
+        sop_cnd_pr: float,
+        rmt_mkt_cd: Literal["SOR", "KRX", "NXT"],
+        sor_mkt_sli_yn: Literal["Y", "N"],
+    ) -> NHPlugHttpResponse[KrStockOrderModify]:
+        """주식주문(정정취소) 정정 (`POST /krstock/order/v1/modify`).
+
+        스펙상 9개 입력 필드가 모두 required 다. 원주문 식별자는 `org_mkt_orr_no`
+        (원시장주문번호, 신규주문 응답의 mkt_orr_no) 하나뿐이다.
+
+        Args:
+            act_no: 계좌번호 (`/n2/acctinfo` 의 acct_no — 운영은 acct_type 01·02,
+                모의투자는 03 계좌만 유효)
+            org_mkt_orr_no: 원시장주문번호 (정정 대상 원주문의 mkt_orr_no)
+            all_pat_dit_cd: 전체일부구분코드 (1.전체(전량) 2.일부(잔량))
+            iem_cd: 종목코드 (예: 005940)
+            cor_qty: 정정수량 (전체일부구분코드 "2.일부(잔량)"인 경우 셋팅)
+            cor_pr: 정정가격
+            sop_cnd_pr: 정지조건가격 (원주문의 호가유형코드 16.스톱지정가일 때만 의미가
+                있음 — KRX 는 효력발생 전으로만 수정 가능, NXT 는 원주문의 스톱지정가 그대로 입력)
+            rmt_mkt_cd: 요청시장코드 (원주문과 동일하게 입력, SOR/KRX/NXT)
+            sor_mkt_sli_yn: SOR시장분할여부 (원주문과 동일하게 입력, SOR 일 경우에만
+                Y/N 선택, KRX/NXT 면 N)
+        """
+        body = self._drop_none(
+            {
+                "act_no": act_no,
+                "org_mkt_orr_no": org_mkt_orr_no,
+                "all_pat_dit_cd": all_pat_dit_cd,
+                "iem_cd": iem_cd,
+                "cor_qty": cor_qty,
+                "cor_pr": cor_pr,
+                "sop_cnd_pr": sop_cnd_pr,
+                "rmt_mkt_cd": rmt_mkt_cd,
+                "sor_mkt_sli_yn": sor_mkt_sli_yn,
+            }
+        )
+        response = self.client.post("/krstock/order/v1/modify", body=body)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=KrStockOrderModify.model_validate(data))

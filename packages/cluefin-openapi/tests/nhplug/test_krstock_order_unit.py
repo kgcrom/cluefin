@@ -281,3 +281,86 @@ class TestCreditSell:
                     rmt_mkt_cd="KRX",
                     sor_mkt_sli_yn="N",
                 )
+
+
+MODIFY_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "정상 처리되었습니다.",
+    "message": None,
+    "Output_0": {
+        "orr_gno_tab_cd": "0001",
+        "mkt_orr_no": 12345,
+        "can_orr_qty1": 1,
+    },
+}
+
+
+class TestModify:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/order/v1/modify", json=MODIFY_BODY)
+            response = client.krstock_order.modify(
+                act_no="50051036881",
+                org_mkt_orr_no=12345,
+                all_pat_dit_cd="1",
+                iem_cd="005930",
+                cor_qty=1,
+                cor_pr=49000,
+                sop_cnd_pr=0,
+                rmt_mkt_cd="KRX",
+                sor_mkt_sli_yn="N",
+            )
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "act_no": "50051036881",
+                "org_mkt_orr_no": 12345,
+                "all_pat_dit_cd": "1",
+                "iem_cd": "005930",
+                "cor_qty": 1,
+                "cor_pr": 49000,
+                "sop_cnd_pr": 0,
+                "rmt_mkt_cd": "KRX",
+                "sor_mkt_sli_yn": "N",
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        assert response.body.output_0.mkt_orr_no == 12345
+        assert response.body.output_0.orr_gno_tab_cd == "0001"
+
+    def test_parses_body_without_output_block(self, client):
+        # Output_N 블록은 데이터가 있을 때만 내려온다.
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/order/v1/modify", json={"rsp_cd": "00000", "rsp_msg": "ok"})
+            response = client.krstock_order.modify(
+                act_no="50051036881",
+                org_mkt_orr_no=12345,
+                all_pat_dit_cd="1",
+                iem_cd="005930",
+                cor_qty=1,
+                cor_pr=49000,
+                sop_cnd_pr=0,
+                rmt_mkt_cd="KRX",
+                sor_mkt_sli_yn="N",
+            )
+
+        assert response.body.output_0 is None
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/order/v1/modify",
+                json={"rsp_cd": "IGW40032", "rsp_msg": "원주문번호가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40032"):
+                client.krstock_order.modify(
+                    act_no="50051036881",
+                    org_mkt_orr_no=99999,
+                    all_pat_dit_cd="1",
+                    iem_cd="005930",
+                    cor_qty=1,
+                    cor_pr=49000,
+                    sop_cnd_pr=0,
+                    rmt_mkt_cd="KRX",
+                    sor_mkt_sli_yn="N",
+                )
