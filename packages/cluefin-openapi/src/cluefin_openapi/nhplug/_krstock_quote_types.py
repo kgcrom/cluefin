@@ -848,3 +848,309 @@ class KrStockQuoteAfterHoursExpected(NHPlugAssetHttpBody):
     output_0: list[KrStockQuoteAfterHoursExpectedOutput] | None = Field(
         default=None, alias="Output_0", description="시간외 시간별 예상체결 상세 목록"
     )
+
+
+class KrStockQuoteEtfCurrentOutput(BaseModel):
+    """ETF/ETN 현재가 종합 정보 (Output_0)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    iem_cd: str | None = Field(default=None, description="종목코드 / 길이 6")
+    iem_nm: str | None = Field(default=None, description="종목명 / 길이 41")
+    stck_prpr: int | None = Field(default=None, description="현재가 / 길이 10")
+    prdy_vrss_sign: str | None = Field(
+        default=None,
+        description="등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)",
+    )
+    prdy_vrss: int | None = Field(default=None, description="등락폭 / 길이 10")
+    prdy_ctrt: float | None = Field(default=None, description="등락률 / 길이 5.2")
+    askp: int | None = Field(default=None, description="매도호가 / 길이 10")
+    bidp: int | None = Field(default=None, description="매수호가 / 길이 10")
+    acml_vol: int | None = Field(default=None, description="거래량 / 길이 12")
+    acml_rate: float | None = Field(default=None, description="거래비율 / 길이 6.2")
+    yu_rate: float | None = Field(default=None, description="유동주회전율 / 길이 5.2")
+    acml_tr_pbmn: int | None = Field(default=None, description="거래대금 / 길이 12")
+    stck_mxpr: int | None = Field(default=None, description="상한가 / 길이 10")
+    stck_hgpr: int | None = Field(default=None, description="고가 / 길이 10")
+    stck_oprc: int | None = Field(default=None, description="시가 / 길이 10")
+    oprc_sign: str | None = Field(
+        default=None,
+        description="시가대비부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)",
+    )
+    oprc_vrss: int | None = Field(default=None, description="시가대비등락폭 / 길이 10")
+    stck_lwpr: int | None = Field(default=None, description="저가 / 길이 10")
+    stck_llam: int | None = Field(default=None, description="하한가 / 길이 10")
+    bsop_hour: str | None = Field(default=None, description="호가시간 / 길이 8")
+    askp1: int | None = Field(default=None, description="매도1호가 / 길이 10")
+    askp2: int | None = Field(default=None, description="매도2호가 / 길이 10")
+    askp3: int | None = Field(default=None, description="매도3호가 / 길이 10")
+    askp4: int | None = Field(default=None, description="매도4호가 / 길이 10")
+    askp5: int | None = Field(default=None, description="매도5호가 / 길이 10")
+    askp6: int | None = Field(default=None, description="매도6호가 / 길이 10")
+    askp7: int | None = Field(default=None, description="매도7호가 / 길이 10")
+    askp8: int | None = Field(default=None, description="매도8호가 / 길이 10")
+    askp9: int | None = Field(default=None, description="매도9호가 / 길이 10")
+    askp10: int | None = Field(default=None, description="매도10호가 / 길이 10")
+    bidp1: int | None = Field(default=None, description="매수1호가 / 길이 10")
+    bidp2: int | None = Field(default=None, description="매수2호가 / 길이 10")
+    bidp3: int | None = Field(default=None, description="매수3호가 / 길이 10")
+    bidp4: int | None = Field(default=None, description="매수4호가 / 길이 10")
+    bidp5: int | None = Field(default=None, description="매수5호가 / 길이 10")
+    bidp6: int | None = Field(default=None, description="매수6호가 / 길이 10")
+    bidp7: int | None = Field(default=None, description="매수7호가 / 길이 10")
+    bidp8: int | None = Field(default=None, description="매수8호가 / 길이 10")
+    bidp9: int | None = Field(default=None, description="매수9호가 / 길이 10")
+    bidp10: int | None = Field(default=None, description="매수10호가 / 길이 10")
+    askp_rsqn1: int | None = Field(default=None, description="매도1호가잔량 / 길이 12")
+    askp_rsqn2: int | None = Field(default=None, description="매도2호가잔량 / 길이 12")
+    askp_rsqn3: int | None = Field(default=None, description="매도3호가잔량 / 길이 12")
+    askp_rsqn4: int | None = Field(default=None, description="매도4호가잔량 / 길이 12")
+    askp_rsqn5: int | None = Field(default=None, description="매도5호가잔량 / 길이 12")
+    askp_rsqn6: int | None = Field(default=None, description="매도6호가잔량 / 길이 12")
+    askp_rsqn7: int | None = Field(default=None, description="매도7호가잔량 / 길이 12")
+    askp_rsqn8: int | None = Field(default=None, description="매도8호가잔량 / 길이 12")
+    askp_rsqn9: int | None = Field(default=None, description="매도9호가잔량 / 길이 12")
+    askp_rsqn10: int | None = Field(default=None, description="매도10호가잔량 / 길이 12")
+    bidp_rsqn1: int | None = Field(default=None, description="매수1호가잔량 / 길이 12")
+    bidp_rsqn2: int | None = Field(default=None, description="매수2호가잔량 / 길이 12")
+    bidp_rsqn3: int | None = Field(default=None, description="매수3호가잔량 / 길이 12")
+    bidp_rsqn4: int | None = Field(default=None, description="매수4호가잔량 / 길이 12")
+    bidp_rsqn5: int | None = Field(default=None, description="매수5호가잔량 / 길이 12")
+    bidp_rsqn6: int | None = Field(default=None, description="매수6호가잔량 / 길이 12")
+    bidp_rsqn7: int | None = Field(default=None, description="매수7호가잔량 / 길이 12")
+    bidp_rsqn8: int | None = Field(default=None, description="매수8호가잔량 / 길이 12")
+    bidp_rsqn9: int | None = Field(default=None, description="매수9호가잔량 / 길이 12")
+    bidp_rsqn10: int | None = Field(default=None, description="매수10호가잔량 / 길이 12")
+    total_askp_rsqn: int | None = Field(default=None, description="총매도호가잔량 / 길이 12")
+    total_bidp_rsqn: int | None = Field(default=None, description="총매수호가잔량 / 길이 12")
+    ovtm_askp_rsqn: int | None = Field(default=None, description="시간외매도잔량 / 길이 12")
+    ovtm_bidp_rsqn: int | None = Field(default=None, description="시간외매수잔량 / 길이 12")
+    pvt_scnd_dmrs: int | None = Field(default=None, description="피벗2차저항 / 길이 10")
+    pvt_frst_dmrs: int | None = Field(default=None, description="피벗1차저항 / 길이 10")
+    pvt_pont_val: int | None = Field(default=None, description="피벗가 / 길이 10")
+    pvt_frst_dmsp: int | None = Field(default=None, description="피벗1차지지 / 길이 10")
+    pvt_scnd_dmsp: int | None = Field(default=None, description="피벗2차지지 / 길이 10")
+    mrkt_div_code: str | None = Field(default=None, description="코스닥코스피구분 / 길이 6")
+    bstp_cls_code: str | None = Field(default=None, description="지수코드 / 길이 6")
+    bstp_kor_isnm: str | None = Field(default=None, description="업종명 / 길이 40")
+    cap_size: str | None = Field(default=None, description="자본금규모 / 길이 6")
+    stac_month: str | None = Field(default=None, description="결산월 / 길이 16")
+    market1: str | None = Field(default=None, description="시장조치1 / 길이 16")
+    market2: str | None = Field(default=None, description="시장조치2 / 길이 16")
+    market3: str | None = Field(default=None, description="시장조치3 / 길이 16")
+    market4: str | None = Field(default=None, description="시장조치4 / 길이 16")
+    market5: str | None = Field(default=None, description="시장조치5 / 길이 16")
+    market6: str | None = Field(default=None, description="시장조치6 / 길이 16")
+    cb_text: str | None = Field(default=None, description="CB구분 / 길이 6")
+    stck_fcam: int | None = Field(default=None, description="액면가 / 길이 10")
+    prdy_clpr_title: str | None = Field(default=None, description="전일종가타이틀 / 길이 12")
+    prdy_clpr: int | None = Field(default=None, description="전일종가 / 길이 10")
+    stck_sspr: int | None = Field(default=None, description="대용가 / 길이 10")
+    gongprice: int | None = Field(default=None, description="공모가 / 길이 10")
+    d5_hgpr: int | None = Field(default=None, description="5일고가 / 길이 10")
+    d5_lwpr: int | None = Field(default=None, description="5일저가 / 길이 10")
+    d20_hgpr: int | None = Field(default=None, description="20일고가 / 길이 10")
+    d20_lwpr: int | None = Field(default=None, description="20일저가 / 길이 10")
+    w52_hgpr: int | None = Field(default=None, description="52주최고가 / 길이 10")
+    w52_lwpr: int | None = Field(default=None, description="52주최저가 / 길이 10")
+    move_stcn: int | None = Field(default=None, description="유동주식수 / 길이 12")
+    lstn_stcn1: int | None = Field(default=None, description="상장주식수_천주 / 길이 12")
+    hts_avls: int | None = Field(default=None, description="시가총액 / 길이 12")
+    cntg_hour: str | None = Field(default=None, description="시간 / 길이 5")
+    seln_mbcr_no1: str | None = Field(default=None, description="매도거래원1 / 길이 6")
+    shnu_mbcr_no1: str | None = Field(default=None, description="매수거래원1 / 길이 6")
+    seln_acml_vol1: int | None = Field(default=None, description="매도거래량1 / 길이 12")
+    shnu_acml_vol1: int | None = Field(default=None, description="매수거래량1 / 길이 12")
+    seln_mbcr_no2: str | None = Field(default=None, description="매도거래원2 / 길이 6")
+    shnu_mbcr_no2: str | None = Field(default=None, description="매수거래원2 / 길이 6")
+    seln_acml_vol2: int | None = Field(default=None, description="매도거래량2 / 길이 12")
+    shnu_acml_vol2: int | None = Field(default=None, description="매수거래량2 / 길이 12")
+    seln_mbcr_no3: str | None = Field(default=None, description="매도거래원3 / 길이 6")
+    shnu_mbcr_no3: str | None = Field(default=None, description="매수거래원3 / 길이 6")
+    seln_acml_vol3: int | None = Field(default=None, description="매도거래량3 / 길이 12")
+    shnu_acml_vol3: int | None = Field(default=None, description="매수거래량3 / 길이 12")
+    seln_mbcr_no4: str | None = Field(default=None, description="매도거래원4 / 길이 6")
+    shnu_mbcr_no4: str | None = Field(default=None, description="매수거래원4 / 길이 6")
+    seln_acml_vol4: int | None = Field(default=None, description="매도거래량4 / 길이 12")
+    shnu_acml_vol4: int | None = Field(default=None, description="매수거래량4 / 길이 12")
+    seln_mbcr_no5: str | None = Field(default=None, description="매도거래원5 / 길이 6")
+    shnu_mbcr_no5: str | None = Field(default=None, description="매수거래원5 / 길이 6")
+    seln_acml_vol5: int | None = Field(default=None, description="매도거래량5 / 길이 12")
+    shnu_acml_vol5: int | None = Field(default=None, description="매수거래량5 / 길이 12")
+    seln_frgn_vol: int | None = Field(default=None, description="매도외국인거래량 / 길이 12")
+    shnu_frgn_vol: int | None = Field(default=None, description="매수외국인거래량 / 길이 12")
+    frgn_hour: str | None = Field(default=None, description="외국인시간 / 길이 6")
+    for_rate: float | None = Field(default=None, description="외국인지분율 / 길이 5.2")
+    settdate: str | None = Field(default=None, description="결제일 / 길이 4")
+    crate: float | None = Field(default=None, description="잔고비율(%) / 길이 5.2")
+    yudate: str | None = Field(default=None, description="유상기준일 / 길이 4")
+    mudate: str | None = Field(default=None, description="무상기준일 / 길이 4")
+    yurate: float | None = Field(default=None, description="유상배정비율 / 길이 5.2")
+    murate: float | None = Field(default=None, description="무상배정비율 / 길이 5.2")
+    lstn_date: str | None = Field(default=None, description="상장일 / 길이 8")
+    lstn_stcn: int | None = Field(default=None, description="상장주식수_주 / 길이 12")
+    total_seln_qty: int | None = Field(default=None, description="전체거래원매도합 / 길이 12")
+    total_shnu_qty: int | None = Field(default=None, description="전체거래원매수합 / 길이 12")
+    new_volume: int | None = Field(default=None, description="신규거래량 / 길이 12")
+
+
+class KrStockQuoteEtfCurrentTickOutput(BaseModel):
+    """ETF/ETN 시간대별 체결 상세 (Output_1 배열의 각 항목).
+
+    스펙은 `cntg_vol` 을 string 으로 선언하지만, 2026-08-22 실측(069500)에서
+    실제로는 int 로 내려오는 것을 확인해 `int|str` 로 완화했다.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    bsop_hour: str | None = Field(default=None, description="호가시간 / 길이 8")
+    stck_prpr: int | None = Field(default=None, description="현재가 / 길이 10")
+    prdy_vrss_sign: str | None = Field(
+        default=None,
+        description="등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)",
+    )
+    prdy_vrss: int | None = Field(default=None, description="등락폭 / 길이 10")
+    askp: int | None = Field(default=None, description="매도호가 / 길이 10")
+    bidp: int | None = Field(default=None, description="매수호가 / 길이 10")
+    cntg_vol: int | str | None = Field(default=None, description="변동거래량 / 길이 12")
+    acml_vol: int | None = Field(default=None, description="거래량 / 길이 12")
+
+
+class KrStockQuoteEtfCurrentExpectedOutput(BaseModel):
+    """ETF/ETN 예상체결 정보 (Output_2).
+
+    스펙은 6개 필드 모두 string 으로 선언하지만, 2026-08-22 실측(069500)에서
+    `antc_cnpr`/`antc_vrss`/`antc_ctrt`/`antc_vol` 이 실제로는 int/float 로
+    내려오는 것을 확인해 완화했다(`aspr_cls_code`/`antc_sign` 은 실측에서도
+    문자열이라 스펙 그대로 둠).
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    aspr_cls_code: str | None = Field(default=None, description="동시호가구분 / 길이 1 / 1.동시호가 이외 정규시장")
+    antc_cnpr: int | str | None = Field(default=None, description="예상체결가 / 길이 10")
+    antc_sign: str | None = Field(
+        default=None,
+        description="예상체결부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)",
+    )
+    antc_vrss: int | str | None = Field(default=None, description="예상체결등락폭 / 길이 10")
+    antc_ctrt: float | str | None = Field(default=None, description="예상체결등락률 / 길이 5.2")
+    antc_vol: int | str | None = Field(default=None, description="예상체결수량 / 길이 12")
+
+
+class KrStockQuoteEtfCurrentNavOutput(BaseModel):
+    """ETF/ETN NAV·괴리율·LP 잔량 상세 (Output_3, 공식 스펙 문서에는 없고 예시 응답에만 존재).
+
+    스펙은 32개 필드 모두 string 으로 선언하지만, 2026-08-22 실측(069500)에서
+    아래 27개 필드가 실제로는 int/float 로 내려오는 것을 확인해 완화했다
+    (`bu12`/`nav_sign`/`dprt_sign`/`clon_cls_code`/`txtn_type_code` 는 실측에서도
+    문자열이라 스펙 그대로 둠).
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    bu12: str | None = Field(default=None, description="ETF구분 / 길이 1")
+    itmt_last_nav: float | str | None = Field(default=None, description="장중/최종NAV / 길이 10.2")
+    nav_sign: str | None = Field(
+        default=None,
+        description="NAV등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)",
+    )
+    nav_vrss: float | str | None = Field(default=None, description="NAV등락폭 / 길이 10.2")
+    prdy_last_nav: float | str | None = Field(default=None, description="전일NAV / 길이 10.2")
+    dprt: float | str | None = Field(default=None, description="괴리율 / 길이 10.2")
+    dprt_sign: str | None = Field(
+        default=None,
+        description="괴리율부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)",
+    )
+    cnfg_cnt: int | str | None = Field(default=None, description="구성종목수 / 길이 10")
+    totvalue: int | str | None = Field(default=None, description="순자산총액(억원) / 길이 12")
+    trc_errt: float | str | None = Field(default=None, description="추적오차율 / 길이 10.2")
+    lp_askp_rsqn1: int | str | None = Field(default=None, description="LP매도호가잔량1 / 길이 12")
+    lp_askp_rsqn2: int | str | None = Field(default=None, description="LP매도호가잔량2 / 길이 12")
+    lp_askp_rsqn3: int | str | None = Field(default=None, description="LP매도호가잔량3 / 길이 12")
+    lp_askp_rsqn4: int | str | None = Field(default=None, description="LP매도호가잔량4 / 길이 12")
+    lp_askp_rsqn5: int | str | None = Field(default=None, description="LP매도호가잔량5 / 길이 12")
+    lp_askp_rsqn6: int | str | None = Field(default=None, description="LP매도호가잔량6 / 길이 12")
+    lp_askp_rsqn7: int | str | None = Field(default=None, description="LP매도호가잔량7 / 길이 12")
+    lp_askp_rsqn8: int | str | None = Field(default=None, description="LP매도호가잔량8 / 길이 12")
+    lp_askp_rsqn9: int | str | None = Field(default=None, description="LP매도호가잔량9 / 길이 12")
+    lp_askp_rsqn10: int | str | None = Field(default=None, description="LP매도호가잔량10 / 길이 12")
+    lp_bidp_rsqn1: int | str | None = Field(default=None, description="LP매수호가잔량1 / 길이 12")
+    lp_bidp_rsqn2: int | str | None = Field(default=None, description="LP매수호가잔량2 / 길이 12")
+    lp_bidp_rsqn3: int | str | None = Field(default=None, description="LP매수호가잔량3 / 길이 12")
+    lp_bidp_rsqn4: int | str | None = Field(default=None, description="LP매수호가잔량4 / 길이 12")
+    lp_bidp_rsqn5: int | str | None = Field(default=None, description="LP매수호가잔량5 / 길이 12")
+    lp_bidp_rsqn6: int | str | None = Field(default=None, description="LP매수호가잔량6 / 길이 12")
+    lp_bidp_rsqn7: int | str | None = Field(default=None, description="LP매수호가잔량7 / 길이 12")
+    lp_bidp_rsqn8: int | str | None = Field(default=None, description="LP매수호가잔량8 / 길이 12")
+    lp_bidp_rsqn9: int | str | None = Field(default=None, description="LP매수호가잔량9 / 길이 12")
+    lp_bidp_rsqn10: int | str | None = Field(default=None, description="LP매수호가잔량10 / 길이 12")
+    clon_cls_code: str | None = Field(default=None, description="ETF복제방법구분코드 / 길이 12")
+    txtn_type_code: str | None = Field(default=None, description="ETF과세유형코드 / 길이 18")
+
+
+class KrStockQuoteEtfCurrentIndexOutput(BaseModel):
+    """ETF/ETN 기초지수 상세 (Output_4, 공식 스펙 문서에는 없고 예시 응답에만 존재).
+
+    스펙은 `prdy_vrss` 를 int(등락폭)로 선언하지만 2026-08-22 실측(069500)에서
+    소수부가 있는 float(15.27)로 내려와 `float` 로 정정했다. `prpr_nmix`·
+    `ubjisu`·`ubchange`·`ovrs_nmix`·`ovrs_vrss` 는 스펙상 string 이지만 실제로는
+    int/float 로 내려와 `int|float|str` 로 완화했다(나머지 필드는 실측에서도
+    문자열이라 스펙 그대로 둠).
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    bstp_cls_code: str | None = Field(default=None, description="지수코드 / 길이 6")
+    bstp_kor_isnm: str | None = Field(default=None, description="업종명 / 길이 40")
+    prpr_nmix: float | str | None = Field(default=None, description="지수 / 길이 10.2")
+    prdy_vrss_sign: str | None = Field(
+        default=None,
+        description="등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)",
+    )
+    prdy_vrss: float | None = Field(
+        default=None, description="등락폭 / 길이 10 (스펙은 int 지만 실측은 소수부 있는 float)"
+    )
+    ubjiid: str | None = Field(default=None, description="채권지수코드 / 길이 6")
+    ubjiid2: str | None = Field(default=None, description="채권지수세부코드 / 길이 1")
+    ubjisu: int | float | str | None = Field(default=None, description="채권지수 / 길이 10.4")
+    ubsign: str | None = Field(
+        default=None,
+        description="채권등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)",
+    )
+    ubchange: int | float | str | None = Field(default=None, description="채권등락폭 / 길이 10.4")
+    symbol: str | None = Field(default=None, description="해외지수심볼 / 길이 12")
+    ovrs_nmix: int | float | str | None = Field(default=None, description="해외지수 / 길이 10.2")
+    ovrs_sign: str | None = Field(
+        default=None,
+        description="해외지수등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)",
+    )
+    ovrs_vrss: int | float | str | None = Field(default=None, description="해외지수등락폭 / 길이 10.2")
+    jisukpgubun: str | None = Field(default=None, description="지수거래소구분 / 길이 1 / 1.코스피 2.코스닥")
+
+
+class KrStockQuoteEtfCurrent(NHPlugAssetHttpBody):
+    """ETF/ETN 현재가 (`POST /krstock/quote/v1/etfCurrent`) 응답.
+
+    시세 조회 API 라 계좌번호가 필요 없다. 스펙에 `CtsHeader` 파라미터가 없어
+    연속조회를 지원하지 않는다(단건 조회). 입력은 `iem_cd` 하나뿐이다(market_cd
+    없음). `Output_3`/`Output_4` 는 스펙 문서에는 없고 예시 응답에만 존재한다
+    (spec 의 x-schema-warning 이 명시) — 두 블록 모두 필드가 전부 string 으로
+    선언돼 있어 그대로 반영했다.
+    """
+
+    output_0: KrStockQuoteEtfCurrentOutput | None = Field(
+        default=None, alias="Output_0", description="ETF/ETN 현재가 종합 정보"
+    )
+    output_1: list[KrStockQuoteEtfCurrentTickOutput] | None = Field(
+        default=None, alias="Output_1", description="시간대별 체결 상세 목록"
+    )
+    output_2: KrStockQuoteEtfCurrentExpectedOutput | None = Field(
+        default=None, alias="Output_2", description="예상체결 정보"
+    )
+    output_3: KrStockQuoteEtfCurrentNavOutput | None = Field(
+        default=None, alias="Output_3", description="NAV·괴리율·LP 잔량 상세 (스펙 문서 미기재, 예시 응답에만 존재)"
+    )
+    output_4: KrStockQuoteEtfCurrentIndexOutput | None = Field(
+        default=None, alias="Output_4", description="기초지수 상세 (스펙 문서 미기재, 예시 응답에만 존재)"
+    )

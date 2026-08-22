@@ -15,6 +15,7 @@ from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES
 from ._integration_helpers import skip_if_env_blocked
 
 TEST_IEM_CD = "005930"  # 삼성전자
+TEST_ETF_IEM_CD = "069500"  # KODEX 200
 
 
 @pytest.mark.integration
@@ -124,6 +125,17 @@ def test_after_hours_expected(client: HttpClient):
     """주식현재가 시간외시간별예상. 계좌번호 없이 성공을 기대한다."""
     try:
         response = client.krstock_quote.after_hours_expected(iem_cd=TEST_IEM_CD)
+    except NHPlugAPIError as e:
+        skip_if_env_blocked(e)
+
+    assert response.body.rsp_cd in SUCCESS_RSP_CODES
+
+
+@pytest.mark.integration
+def test_etf_current(client: HttpClient):
+    """ETF/ETN 현재가. 대표 ETF(KODEX 200, 069500) 기준 — 계좌번호 없이 성공을 기대한다."""
+    try:
+        response = client.krstock_quote.etf_current(iem_cd=TEST_ETF_IEM_CD)
     except NHPlugAPIError as e:
         skip_if_env_blocked(e)
 

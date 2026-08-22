@@ -11,6 +11,7 @@ from cluefin_openapi.nhplug._krstock_quote_types import (
     KrStockQuoteCurrentExecution,
     KrStockQuoteCurrentInvestor,
     KrStockQuoteCurrentPrice,
+    KrStockQuoteEtfCurrent,
     KrStockQuotePeriod,
 )
 from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES, NHPlugHttpHeader, NHPlugHttpResponse
@@ -335,3 +336,25 @@ class KrStockQuote:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuoteAfterHoursExpected.model_validate(data))
+
+    def etf_current(
+        self,
+        iem_cd: str,
+    ) -> NHPlugHttpResponse[KrStockQuoteEtfCurrent]:
+        """ETF/ETN 현재가 (`POST /krstock/quote/v1/etfCurrent`).
+
+        입력이 `iem_cd` 하나뿐이다(market_cd 없음). 계좌번호가 필요 없는 시세
+        조회 API 다. 스펙에 `CtsHeader` 파라미터가 없어 연속조회를 지원하지
+        않는다(다른 조회 API 와 달리 `cts` 인자가 없다). `Output_3`/`Output_4`
+        는 공식 스펙 문서에는 없고 예시 응답에만 존재하는 블록이다(spec 의
+        x-schema-warning 이 명시).
+
+        Args:
+            iem_cd: 종목코드 (예: 069500 = KODEX 200)
+        """
+        body = self._drop_none({"iem_cd": iem_cd})
+        response = self.client.post("/krstock/quote/v1/etfCurrent", body=body)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=KrStockQuoteEtfCurrent.model_validate(data))
