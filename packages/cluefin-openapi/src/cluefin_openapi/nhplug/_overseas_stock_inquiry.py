@@ -6,6 +6,7 @@ from cluefin_openapi.nhplug._overseas_stock_inquiry_types import (
     OverseasStockBalance,
     OverseasStockBuyableAmount,
     OverseasStockDailyTransaction,
+    OverseasStockPeriodPnl,
     OverseasStockReservedInquiry,
     OverseasStockUnexecuted,
 )
@@ -293,3 +294,55 @@ class OverseasStockInquiry:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockDailyTransaction.model_validate(data))
+
+    def get_period_pnl(
+        self,
+        act_no: str,
+        iqr_dit: str,
+        sta_orr_dt: str,
+        end_orr_dt: str,
+        iem_cd: Optional[str] = None,
+        trd_cur_cd: Optional[str] = None,
+        fc_sec_trd_nat_cd: Optional[str] = None,
+        cts: Optional[str] = None,
+    ) -> NHPlugHttpResponse[OverseasStockPeriodPnl]:
+        """해외주식 기간손익 (`POST /gbstock/inquiry/v1/periodPnl`).
+
+        조회기간 내 계좌의 해외주식 기간별 손익 요약(`Output_0`)과 주문일자별
+        손익 목록(`Output_1`)을 조회하는 API 이다. 응답 블록은 데이터가 있을
+        때만 내려온다.
+
+        Args:
+            act_no: 계좌번호 (길이 11). `/n2/acctinfo` 의 acct_no 사용
+                (운영은 acct_type=01·02, 모의투자는 03 계좌만 유효).
+            iqr_dit: 조회구분 (길이 1) (1.거래통화기준 2.원화기준)
+            sta_orr_dt: 시작주문일자 (길이 8) (YYYYMMDD)
+            end_orr_dt: 종료주문일자 (길이 8) (YYYYMMDD)
+            iem_cd: 티커종목코드 (길이 12). 예: 미국주식 APPLE인 경우 AAPL
+            trd_cur_cd: 거래통화코드 (길이 3) (KRW.KRW USD.USD CNY.CNY HKD.HKD JPY.JPY)
+            fc_sec_trd_nat_cd: 외화증권거래국가코드 (길이 3) (000.전체 200.미국 070.일본
+                120.홍콩 160.상해 170.심천)
+            cts: 연속거래키. 이전 응답 헤더의 `cts` 값을 그대로 전달하면 다음 페이지를 받는다.
+
+        Returns:
+            NHPlugHttpResponse[OverseasStockPeriodPnl]: 기간손익 요약(`Output_0`) 및
+                주문일자별 손익 목록(`Output_1`) 조회 결과
+        """
+        body: dict = {
+            "act_no": act_no,
+            "iqr_dit": iqr_dit,
+            "sta_orr_dt": sta_orr_dt,
+            "end_orr_dt": end_orr_dt,
+        }
+        optional_fields = {
+            "iem_cd": iem_cd,
+            "trd_cur_cd": trd_cur_cd,
+            "fc_sec_trd_nat_cd": fc_sec_trd_nat_cd,
+        }
+        body.update({k: v for k, v in optional_fields.items() if v is not None})
+
+        response = self.client.post("/gbstock/inquiry/v1/periodPnl", body=body, cts=cts)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=OverseasStockPeriodPnl.model_validate(data))

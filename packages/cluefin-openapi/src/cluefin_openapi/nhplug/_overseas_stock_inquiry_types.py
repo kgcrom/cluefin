@@ -376,3 +376,65 @@ class OverseasStockDailyTransaction(BaseModel):
         default=None, alias="Output_1", description="일별거래내역 조회 결과 요약"
     )
     message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
+
+
+class OverseasStockPeriodPnlOutput(BaseModel):
+    """해외주식 기간손익 조회 결과 요약 (`Output_0`)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    act_fnm: str | None = Field(default=None, description="계좌성명 / 길이 40")
+    byn_qty_sum: int | None = Field(default=None, description="매수수량합계 / 길이 15")
+    fc_byn_amt_sum: float | None = Field(default=None, description="외화매수금액합계 / 길이 18.3")
+    sll_qty_sum: int | None = Field(default=None, description="매도수량합계 / 길이 15")
+    fc_sll_amt_sum: float | None = Field(default=None, description="외화매도금액합계 / 길이 18.3")
+    fc_sby_pls_sum: float | None = Field(default=None, description="외화매매손익합계 / 길이 15.3")
+    fc_sby_pft_rt: float | None = Field(default=None, description="외화매매수익율 / 길이 15.9")
+    fc_sdr_xps_sum: float | None = Field(default=None, description="외화제비용합계 / 길이 15.3")
+    fc_rzt_pls_sum: float | None = Field(default=None, description="외화실현손익합계 / 길이 15.3")
+    fc_rzt_pft_rt: float | None = Field(default=None, description="외화실현수익율 / 길이 15.9")
+
+
+class OverseasStockPeriodPnlItem(BaseModel):
+    """해외주식 기간손익 조회 결과 항목 (`Output_1` 배열 원소)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    orr_dt: str | None = Field(default=None, description="주문일자 / 길이 8 / YYYYMMDD")
+    fc_sec_trd_nat_cd: str | None = Field(
+        default=None, description="외화증권거래국가코드 / 길이 3 / 200.미국 070.일본 120.홍콩 160.상해 170.심천"
+    )
+    fc_sec_trd_nat_nm: str | None = Field(default=None, description="외화증권거래국가명 / 길이 50")
+    trd_cur_cd: str | None = Field(
+        default=None, description="거래통화코드 / 길이 3 / KRW.KRW USD.USD CNY.CNY HKD.HKD JPY.JPY"
+    )
+    byn_qty: int | None = Field(default=None, description="매수수량 / 길이 18")
+    byn_uit_pr: float | None = Field(default=None, description="매수단가 / 길이 15.3")
+    fc_byn_amt1: float | None = Field(default=None, description="외화매수금액1 / 길이 15.3")
+    sll_qty: int | None = Field(default=None, description="매도수량 / 길이 18")
+    sll_uit_pr: float | None = Field(default=None, description="매도단가 / 길이 15.3")
+    fc_sll_amt: float | None = Field(default=None, description="외화매도금액 / 길이 15.3")
+    fc_sby_pls: float | None = Field(default=None, description="외화매매손익 / 길이 15.3")
+    fc_sby_pft_rt: float | None = Field(default=None, description="외화매매수익율 / 길이 15.9")
+    fc_sdr_xps: float | None = Field(default=None, description="외화제비용 / 길이 15.3")
+    fc_rzt_pls: float | None = Field(default=None, description="외화실현손익 / 길이 15.3")
+    fc_rzt_pft_rt: float | None = Field(default=None, description="외화실현수익율 / 길이 15.9")
+
+
+class OverseasStockPeriodPnl(BaseModel):
+    """해외주식 기간손익 조회 (`POST /gbstock/inquiry/v1/periodPnl`) 응답.
+
+    응답 블록은 데이터가 있을 때만 내려오므로 모두 Optional.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    rsp_cd: str | None = Field(default=None, description="응답코드")
+    rsp_msg: str | None = Field(default=None, description="응답메시지")
+    output_0: OverseasStockPeriodPnlOutput | None = Field(
+        default=None, alias="Output_0", description="기간손익 조회 결과 요약"
+    )
+    output_1: list[OverseasStockPeriodPnlItem] | None = Field(
+        default=None, alias="Output_1", description="기간손익 조회 결과 목록"
+    )
+    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
