@@ -16,6 +16,22 @@ from ._integration_helpers import real_account_only, skip_if_env_blocked
 
 
 @pytest.mark.integration
+def test_asset_status(client: HttpClient, krstock_account: str):
+    """투자계좌자산현황조회. 조회 API 라 성공을 기대한다."""
+    try:
+        response = client.krstock_inquiry.asset_status(
+            act_no=krstock_account,
+            eal_aly_cd="2",  # 시가평가
+            aet_bse="1",  # 순자산
+            qut_dit_cd="UNT",  # 통합시세
+        )
+    except NHPlugAPIError as e:
+        skip_if_env_blocked(e)
+
+    assert response.body.rsp_cd in SUCCESS_RSP_CODES
+
+
+@pytest.mark.integration
 def test_balance(client: HttpClient, krstock_account: str):
     """주식잔고조회. 조회 API 라 성공을 기대한다."""
     try:

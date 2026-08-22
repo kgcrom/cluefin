@@ -3,6 +3,7 @@ from typing import Any, Dict, Literal, Optional
 from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
 from cluefin_openapi.nhplug._http_client import HttpClient
 from cluefin_openapi.nhplug._krstock_inquiry_types import (
+    KrStockInquiryAssetStatus,
     KrStockInquiryBalance,
     KrStockInquiryBuyableQuantity,
     KrStockInquiryDailyOrderExecution,
@@ -310,3 +311,39 @@ class KrStockInquiry:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryRealizedPnl.model_validate(data))
+
+    def asset_status(
+        self,
+        act_no: str,
+        eal_aly_cd: Literal["1", "2"],
+        aet_bse: Literal["1", "2"],
+        qut_dit_cd: Literal["UNT", "KRX", "NXT"],
+        cts: Optional[str] = None,
+    ) -> NHPlugHttpResponse[KrStockInquiryAssetStatus]:
+        """투자계좌자산현황조회 (`POST /krstock/inquiry/v1/assetStatus`).
+
+        스펙상 4개 입력 필드가 모두 required 다. 연속조회를 지원하는 조회 API 다 —
+        응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 다음 호출의 `cts` 인자로 전달해
+        이어받는다.
+
+        Args:
+            act_no: 계좌번호 (`/n2/acctinfo` 의 acct_no — 운영은 acct_type 01·02,
+                모의투자는 03 계좌만 유효)
+            eal_aly_cd: 평가적용코드 (1.장부가평가 2.시가평가)
+            aet_bse: 자산기준 (1.순자산 2.총자산)
+            qut_dit_cd: 시세구분코드 (UNT.통합시세 KRX.KRX시세 NXT.NXT시세)
+            cts: 연속거래키. 이전 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 전달.
+        """
+        body = self._drop_none(
+            {
+                "act_no": act_no,
+                "eal_aly_cd": eal_aly_cd,
+                "aet_bse": aet_bse,
+                "qut_dit_cd": qut_dit_cd,
+            }
+        )
+        response = self.client.post("/krstock/inquiry/v1/assetStatus", body=body, cts=cts)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=KrStockInquiryAssetStatus.model_validate(data))

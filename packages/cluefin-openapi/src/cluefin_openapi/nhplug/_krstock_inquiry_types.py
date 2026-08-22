@@ -466,6 +466,100 @@ class KrStockInquiryRealizedPnl(NHPlugAssetHttpBody):
     )
 
 
+class KrStockInquiryAssetStatusAccountOutput(BaseModel):
+    """투자계좌자산현황조회 계좌 종합 정보 (Output_0)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    cus_fnm: str | None = Field(default=None, description="고객성명 / 길이 40")
+    rnm_cfm_no: str | None = Field(default=None, description="실명확인번호 / 길이 13")
+    ctc_tp_cd_nm: str | None = Field(default=None, description="약정유형코드명 / 길이 20")
+    act_amn_tab_cd: str | None = Field(default=None, description="계좌관리팀점코드 / 길이 4")
+    act_pdt_llf_cd: str | None = Field(default=None, description="계좌상품대분류코드 / 길이 2")
+    amn_emp_fnm: str | None = Field(default=None, description="관리사원성명 / 길이 40")
+    dca: int | None = Field(default=None, description="예수금 / 길이 18 / 예수금")
+    nxt_dd_dca: int | None = Field(default=None, description="익일예수금 / 길이 15 / D+1 예수금")
+    nxt2_dd_dca: int | None = Field(default=None, description="익익일예수금 / 길이 18 / D+2 예수금")
+    krw_tsl_fc_dca: int | None = Field(default=None, description="원화환산외화예수금 / 길이 18")
+    krw_tsl_fc_mgg_amt: int | None = Field(default=None, description="원화환산외화담보금액 / 길이 18")
+    krw_tsl_fc_orr_pbl_amt: int | None = Field(default=None, description="원화환산외화주문가능금액 / 길이 18")
+    drn_pbl_amt: int | None = Field(default=None, description="출금가능금액 / 길이 18")
+    fnn_amt: int | None = Field(default=None, description="융자금액 / 길이 18")
+    mgg_rt: float | None = Field(default=None, description="담보비율 / 길이 15.3")
+    stk_orr_pbl_amt: int | None = Field(default=None, description="주식주문가능금액 / 길이 18")
+    tot_aet_amt: int | None = Field(default=None, description="총자산금액 / 길이 18")
+    nas_amt: int | None = Field(default=None, description="순자산금액 / 길이 18")
+    tot_byn_amt: int | None = Field(default=None, description="총매수금액 / 길이 18")
+    tot_eal_amt: int | None = Field(default=None, description="총평가금액 / 길이 18")
+    tot_eal_pls_amt: int | None = Field(default=None, description="총평가손익금액 / 길이 18")
+    pft_rt: float | None = Field(default=None, description="수익율 / 길이 15.9")
+    rba: int | None = Field(default=None, description="미수금 / 길이 18")
+    int_ny_pmt_amt: int | None = Field(default=None, description="이자미납부금액 / 길이 18")
+    ect_lga: int | None = Field(default=None, description="기타대여금 / 길이 18")
+    lon_amt: int | None = Field(default=None, description="대출금액 / 길이 18")
+    sba_amt: int | None = Field(default=None, description="대용금액 / 길이 18")
+    fnc_pdt_orr_pbl_amt: int | None = Field(default=None, description="금융상품주문가능금액 / 길이 18")
+    ny_rdp_amt: int | None = Field(default=None, description="미상환금액 / 길이 18")
+    cfd_pdt_tp_nm: str | None = Field(default=None, description="신용상품유형명 / 길이 20")
+    act_atv_tp_cd_nm: str | None = Field(default=None, description="계좌활동유형코드명 / 길이 50")
+    slo_amt: int | None = Field(default=None, description="대주금액 / 길이 18")
+    csh_wtm: int | None = Field(default=None, description="현금증거금 / 길이 18")
+    fnd_sll_stl_xpn_amt: float | None = Field(default=None, description="펀드매도결제예정금액 / 길이 18.3")
+    sbi_dca: int | None = Field(default=None, description="청약예수금 / 길이 18")
+    ima_wtm: int | None = Field(default=None, description="IMA증거금 / 길이 18")
+
+
+class KrStockInquiryAssetStatusOutput(BaseModel):
+    """투자계좌자산현황조회 보유 종목별 상세 (Output_1 배열의 각 항목)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    iem_mlf_nm: str | None = Field(default=None, description="종목중분류명 / 길이 50")
+    iem_nm: str | None = Field(default=None, description="종목명 / 길이 60")
+    iem_cd: str | None = Field(default=None, description="종목코드 / 길이 12")
+    bnc_tp_dit_cd_nm: str | None = Field(default=None, description="잔고유형구분코드명 / 길이 50")
+    itg_bnc_qty: float | None = Field(default=None, description="통합잔고수량 / 길이 21.6")
+    phs_pr: float | None = Field(default=None, description="매입가격 / 길이 15.2")
+    now_pr: float | None = Field(default=None, description="현재가격 / 길이 15.2")
+    byn_amt: int | None = Field(default=None, description="매수금액 / 길이 18")
+    eal_amt: int | None = Field(default=None, description="평가금액 / 길이 18")
+    eal_pls_amt: int | None = Field(default=None, description="평가손익금액 / 길이 18")
+    sll_pls_amt: float | None = Field(default=None, description="매도손익금액 / 길이 15.3")
+    pft_rt: float | None = Field(default=None, description="수익율 / 길이 15.9")
+    int_rt: float | None = Field(default=None, description="이자율 / 길이 11.8")
+    byn_dt: str | None = Field(default=None, description="매수일자 / 길이 8")
+    xrn_dt: str | None = Field(default=None, description="만기일자 / 길이 8")
+    lon_xrn_dt: str | None = Field(default=None, description="대출만기일자 / 길이 8")
+    syn_ttn_dit_cd: str | None = Field(default=None, description="종합과세구분코드 / 길이 1")
+    syn_ttn_dit_cd_nm: str | None = Field(default=None, description="종합과세구분코드명 / 길이 50")
+    crm_aet_cfc_cd: str | None = Field(default=None, description="CRM자산분류코드 / 길이 2")
+    iem_mlf_cd: str | None = Field(default=None, description="종목중분류코드 / 길이 5")
+    byn_cim_qty: int | None = Field(default=None, description="매수청구수량 / 길이 18")
+    rth_qty: int | None = Field(default=None, description="실물수량 / 길이 18")
+    ctc_int_rt: float | None = Field(default=None, description="약정이자율 / 길이 11.8")
+    lon_bnc_amt: int | None = Field(default=None, description="대출잔고금액 / 길이 18")
+    cur_cd: str | None = Field(default=None, description="통화코드 / 길이 3")
+    fc_sec_trd_nat_cd: str | None = Field(default=None, description="외화증권거래국가코드 / 길이 3")
+    nat_cd_nm: str | None = Field(default=None, description="국가코드명 / 길이 40")
+    itg_bnc_tp_cd: str | None = Field(default=None, description="통합잔고유형코드 / 길이 3")
+    tck_iem_cd: str | None = Field(default=None, description="티커종목코드 / 길이 12")
+
+
+class KrStockInquiryAssetStatus(NHPlugAssetHttpBody):
+    """투자계좌자산현황조회 (`POST /krstock/inquiry/v1/assetStatus`) 응답.
+
+    연속조회를 지원한다 — 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 다음 호출에
+    전달해 이어받는다.
+    """
+
+    output_0: KrStockInquiryAssetStatusAccountOutput | None = Field(
+        default=None, alias="Output_0", description="계좌 종합 정보"
+    )
+    output_1: list[KrStockInquiryAssetStatusOutput] | None = Field(
+        default=None, alias="Output_1", description="보유 종목별 상세 목록"
+    )
+
+
 class KrStockInquiryReservedInquiry(NHPlugAssetHttpBody):
     """주식예약주문조회 (`POST /krstock/inquiry/v1/reservedInquiry`) 응답.
 

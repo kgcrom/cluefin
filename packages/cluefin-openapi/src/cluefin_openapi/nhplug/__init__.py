@@ -21,6 +21,9 @@ from cluefin_openapi.nhplug._exceptions import (
 from cluefin_openapi.nhplug._http_client import HttpClient
 from cluefin_openapi.nhplug._krstock_inquiry import KrStockInquiry
 from cluefin_openapi.nhplug._krstock_inquiry_types import (
+    KrStockInquiryAssetStatus,
+    KrStockInquiryAssetStatusAccountOutput,
+    KrStockInquiryAssetStatusOutput,
     KrStockInquiryBalance,
     KrStockInquiryBalanceAccountOutput,
     KrStockInquiryBalanceHoldingOutput,
@@ -70,6 +73,9 @@ __all__ = [
     "Common",
     "HttpClient",
     "KrStockInquiry",
+    "KrStockInquiryAssetStatus",
+    "KrStockInquiryAssetStatusAccountOutput",
+    "KrStockInquiryAssetStatusOutput",
     "KrStockInquiryBalance",
     "KrStockInquiryBalanceAccountOutput",
     "KrStockInquiryBalanceHoldingOutput",

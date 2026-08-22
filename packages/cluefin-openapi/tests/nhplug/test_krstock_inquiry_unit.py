@@ -489,3 +489,86 @@ class TestRealizedPnl:
                     fee_dit_cd="1",
                     qut_dit_cd="UNT",
                 )
+
+
+ASSET_STATUS_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "조회가 완료되었습니다.",
+    "message": None,
+    "Output_0": {
+        "cus_fnm": "홍길동",
+        "dca": 1000000,
+        "tot_aet_amt": 5200000,
+        "nas_amt": 5000000,
+    },
+    "Output_1": [
+        {
+            "iem_nm": "삼성전자",
+            "iem_cd": "005930",
+            "itg_bnc_qty": 10.0,
+            "phs_pr": 70000.0,
+            "now_pr": 71000.0,
+            "eal_amt": 710000,
+        }
+    ],
+}
+
+
+class TestAssetStatus:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/inquiry/v1/assetStatus",
+                json=ASSET_STATUS_BODY,
+                headers={"cts_flag": "N"},
+            )
+            response = client.krstock_inquiry.asset_status(
+                act_no="50051036881",
+                eal_aly_cd="2",
+                aet_bse="1",
+                qut_dit_cd="UNT",
+            )
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "act_no": "50051036881",
+                "eal_aly_cd": "2",
+                "aet_bse": "1",
+                "qut_dit_cd": "UNT",
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        assert response.body.output_0.cus_fnm == "홍길동"
+        assert response.body.output_0.tot_aet_amt == 5200000
+        assert len(response.body.output_1) == 1
+        assert response.body.output_1[0].iem_cd == "005930"
+        assert response.header.cts_flag == "N"
+
+    def test_passes_cts_to_request_headers(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/inquiry/v1/assetStatus", json=ASSET_STATUS_BODY)
+            client.krstock_inquiry.asset_status(
+                act_no="50051036881",
+                eal_aly_cd="2",
+                aet_bse="1",
+                qut_dit_cd="UNT",
+                cts="NEXT-KEY",
+            )
+
+        request = m.request_history[0]
+        assert request.headers["cts"] == "NEXT-KEY"
+        assert request.headers["cts_flag"] == "Y"
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/inquiry/v1/assetStatus",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_inquiry.asset_status(
+                    act_no="00000000000",
+                    eal_aly_cd="2",
+                    aet_bse="1",
+                    qut_dit_cd="UNT",
+                )
