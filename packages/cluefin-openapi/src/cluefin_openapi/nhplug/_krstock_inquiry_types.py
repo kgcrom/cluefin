@@ -614,6 +614,78 @@ class KrStockInquiryDailyPnl(NHPlugAssetHttpBody):
     )
 
 
+class KrStockInquiryTradingPnlAccountOutput(BaseModel):
+    """종목별실현손익현황조회 계좌 합계 정보 (Output_0)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    iem_cd: str | None = Field(default=None, description="종목코드 / 길이 12")
+    byn_qty: float | None = Field(default=None, description="매수수량 / 길이 18.6")
+    byn_uit_pr: float | None = Field(default=None, description="매수단가 / 길이 15.3")
+    byn_fee: int | None = Field(default=None, description="매수수수료 / 길이 18")
+    byn_cnt: int | None = Field(default=None, description="매수건수 / 길이 18")
+    byn_amt: int | None = Field(default=None, description="매수금액 / 길이 18")
+    sll_qty: float | None = Field(default=None, description="매도수량 / 길이 18.6")
+    sll_uit_pr: float | None = Field(default=None, description="매도단가 / 길이 15.3")
+    sll_tax_sum: int | None = Field(default=None, description="매도세금합계 / 길이 18")
+    sll_cnt: int | None = Field(default=None, description="매도건수 / 길이 18")
+    sll_amt: int | None = Field(default=None, description="매도금액 / 길이 18")
+    sll_abk_amt: int | None = Field(default=None, description="매도장부금액 / 길이 18")
+    pls_amt: int | None = Field(default=None, description="손익금액 / 길이 18")
+    pft_rt: float | None = Field(default=None, description="수익율 / 길이 15.9")
+    # 스펙은 string 으로 명세하지만 dailyPnl 의 byn_cst_sum/sll_cst_sum 과 같은
+    # "합계" 계열 필드에서 실측 int divergence 가 반복 확인됐다 — int|str Union 으로
+    # 선제 완화한다(2026-08-22).
+    fee_sum: int | str | None = Field(default=None, description="수수료합계 / 길이 18")
+    tax_sum: int | str | None = Field(default=None, description="세금합계 / 길이 18")
+
+
+class KrStockInquiryTradingPnlOutput(BaseModel):
+    """종목별실현손익현황조회 종목별 상세 (Output_1 배열의 각 항목)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    iem_cd: str | None = Field(default=None, description="종목코드 / 길이 12")
+    iem_nm: str | None = Field(default=None, description="종목명 / 길이 60")
+    byn_qty: float | None = Field(default=None, description="매수수량 / 길이 18.6")
+    byn_uit_pr: float | None = Field(default=None, description="매수단가 / 길이 15.3")
+    byn_fee: int | None = Field(default=None, description="매수수수료 / 길이 18")
+    byn_cnt: int | None = Field(default=None, description="매수건수 / 길이 18")
+    byn_amt: int | None = Field(default=None, description="매수금액 / 길이 18")
+    sll_qty: float | None = Field(default=None, description="매도수량 / 길이 18.6")
+    sll_uit_pr: float | None = Field(default=None, description="매도단가 / 길이 15.3")
+    sll_tax_sum: int | None = Field(default=None, description="매도세금합계 / 길이 18")
+    sll_cnt: int | None = Field(default=None, description="매도건수 / 길이 18")
+    sll_amt: int | None = Field(default=None, description="매도금액 / 길이 18")
+    sll_abk_amt: int | None = Field(default=None, description="매도장부금액 / 길이 18")
+    pls_amt: int | None = Field(default=None, description="손익금액 / 길이 18")
+    pft_rt: float | None = Field(default=None, description="수익율 / 길이 15.9")
+    fee_sum: int | str | None = Field(default=None, description="수수료합계 / 길이 18")
+    tax_sum: int | str | None = Field(default=None, description="세금합계 / 길이 18")
+    iem_mlf_cd: str | None = Field(
+        default=None,
+        description=(
+            "종목중분류코드 / 길이 5 / 01001.주식 01002.DR 01003.투자회사 01004.신주인수권증권 "
+            "01005.상장REITS 01006.신주인수권증서 01007.ETF 01008.상장수익증권"
+        ),
+    )
+
+
+class KrStockInquiryTradingPnl(NHPlugAssetHttpBody):
+    """종목별실현손익현황조회 (`POST /krstock/inquiry/v1/tradingPnl`) 응답.
+
+    연속조회를 지원한다 — 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 다음 호출에
+    전달해 이어받는다.
+    """
+
+    output_0: KrStockInquiryTradingPnlAccountOutput | None = Field(
+        default=None, alias="Output_0", description="계좌 합계 정보"
+    )
+    output_1: list[KrStockInquiryTradingPnlOutput] | None = Field(
+        default=None, alias="Output_1", description="종목별 실현손익 상세 목록"
+    )
+
+
 class KrStockInquiryReservedInquiry(NHPlugAssetHttpBody):
     """주식예약주문조회 (`POST /krstock/inquiry/v1/reservedInquiry`) 응답.
 

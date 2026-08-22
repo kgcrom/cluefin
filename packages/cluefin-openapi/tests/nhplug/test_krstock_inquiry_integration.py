@@ -141,6 +141,22 @@ def test_realized_pnl(client: HttpClient, krstock_account: str):
 
 
 @pytest.mark.integration
+def test_trading_pnl(client: HttpClient, krstock_account: str):
+    """종목별실현손익현황조회. 최근 한 달(오늘 포함) 범위로 조회 — 조회 API 라 성공을 기대한다."""
+    today = date.today()
+    try:
+        response = client.krstock_inquiry.trading_pnl(
+            act_no=krstock_account,
+            iqr_sta_dt=(today - timedelta(days=30)).strftime("%Y%m%d"),
+            iqr_end_dt=today.strftime("%Y%m%d"),
+        )
+    except NHPlugAPIError as e:
+        skip_if_env_blocked(e)
+
+    assert response.body.rsp_cd in SUCCESS_RSP_CODES
+
+
+@pytest.mark.integration
 def test_sellable_quantity(client: HttpClient, krstock_account: str):
     """매도가능수량조회 (005930, 현금/신용 잔고).
 

@@ -11,6 +11,7 @@ from cluefin_openapi.nhplug._krstock_inquiry_types import (
     KrStockInquiryRealizedPnl,
     KrStockInquiryReservedInquiry,
     KrStockInquirySellableQuantity,
+    KrStockInquiryTradingPnl,
 )
 from cluefin_openapi.nhplug._krstock_order import CreditLoanCode, QuoteTypeCode, ReservedCreditLoanCode
 from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES, NHPlugHttpHeader, NHPlugHttpResponse
@@ -383,3 +384,36 @@ class KrStockInquiry:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryDailyPnl.model_validate(data))
+
+    def trading_pnl(
+        self,
+        act_no: str,
+        iqr_sta_dt: str,
+        iqr_end_dt: str,
+        cts: Optional[str] = None,
+    ) -> NHPlugHttpResponse[KrStockInquiryTradingPnl]:
+        """종목별실현손익현황조회 (`POST /krstock/inquiry/v1/tradingPnl`).
+
+        스펙상 3개 입력 필드가 모두 required 다(dailyPnl 과 달리 iem_cd 입력이 없다).
+        연속조회를 지원하는 조회 API 다 — 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을
+        다음 호출의 `cts` 인자로 전달해 이어받는다.
+
+        Args:
+            act_no: 계좌번호 (`/n2/acctinfo` 의 acct_no — 운영은 acct_type 01·02,
+                모의투자는 03 계좌만 유효)
+            iqr_sta_dt: 조회시작일자 (YYYYMMDD)
+            iqr_end_dt: 조회종료일자 (YYYYMMDD)
+            cts: 연속거래키. 이전 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 전달.
+        """
+        body = self._drop_none(
+            {
+                "act_no": act_no,
+                "iqr_sta_dt": iqr_sta_dt,
+                "iqr_end_dt": iqr_end_dt,
+            }
+        )
+        response = self.client.post("/krstock/inquiry/v1/tradingPnl", body=body, cts=cts)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=KrStockInquiryTradingPnl.model_validate(data))
