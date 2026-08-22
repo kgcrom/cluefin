@@ -13,6 +13,7 @@ BASE_DEV = "https://moapi.nhplug.com:8443"
 CURRENT_PRICE_URL = f"{BASE_DEV}/gbstock/quote/v1/current"
 EXECUTION_TREND_URL = f"{BASE_DEV}/gbstock/quote/v1/executionTrend"
 PERIOD_PRICE_URL = f"{BASE_DEV}/gbstock/quote/v1/period"
+SYMBOL_INDEX_FX_PERIOD_URL = f"{BASE_DEV}/gbstock/quote/v1/symbolIndexFxPeriod"
 
 PERIOD_PRICE_OK_BODY = {
     "Output_0": [
@@ -75,6 +76,54 @@ PERIOD_PRICE_OK_BODY = {
             "movalue": 22755.0,
             "netchng_cls": "2",
             "bsop_date": "20260821",
+        }
+    ],
+    "message": {"msg_code": "0000", "usr_msg": "정상 처리되었습니다."},
+}
+
+SYMBOL_INDEX_FX_PERIOD_OK_BODY = {
+    "Output_0": {
+        "qry_date": "20260821",
+        "qry_time": "153000",
+        "data_code": "4",
+        "iem_cd": "SPX",
+        "hts_kor_isnm": "S&P500",
+        "ovrs_prpr": 5620.35,
+        "prdy_vrss_sign": "2",
+        "prdy_vrss": 12.5,
+        "prdy_ctrt": 0.22,
+        "acml_vol": 2345678,
+        "acml_tr_pbmn": 123456789.0,
+        "prdy_clpr": 5607.85,
+        "ovrs_oprc": 5610.0,
+        "ovrs_hgpr": 5625.0,
+        "ovrs_lwpr": 5605.5,
+        "prdy_oprc": 5600.0,
+        "prdy_hgpr": 5615.0,
+        "prdy_lwpr": 5590.0,
+        "prdy_prpr": 5607.85,
+        "tdw_ovrs_oprc": 5590.0,
+        "tdw_ovrs_hgpr": 5630.0,
+        "tdw_ovrs_lwpr": 5580.0,
+        "tdm_ovrs_oprc": 5500.0,
+        "tdm_ovrs_hgpr": 5650.0,
+        "tdm_ovrs_lwpr": 5450.0,
+        "localtime": "20260821090000",
+        "bsop_date": "20260821",
+        "base_ptr": "2",
+        "ctsz30": "000000000000000000000000000001",
+        "lasttickcount": "00001",
+        "send_cnt": "0000001",
+    },
+    "Output_1": [
+        {
+            "bsop_date": "20260821",
+            "bsop_time": "153000",
+            "ovrs_oprc": 5610.0,
+            "ovrs_hgpr": 5625.0,
+            "ovrs_lwpr": 5605.5,
+            "ovrs_prpr": 5620.35,
+            "vol": 2345678,
         }
     ],
     "message": {"msg_code": "0000", "usr_msg": "정상 처리되었습니다."},
@@ -414,4 +463,131 @@ class TestGetPeriodPrice:
                     xtick="0001",
                     today_cls="1",
                     market_cls="1",
+                )
+
+
+class TestGetSymbolIndexFxPeriodPrice:
+    def test_sends_input_envelope(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(SYMBOL_INDEX_FX_PERIOD_URL, json=SYMBOL_INDEX_FX_PERIOD_OK_BODY)
+            client.overseas_stock_quote.get_symbol_index_fx_period_price(
+                iem_cd="SPX",
+                end_dt="20260821",
+                array_cnt="0100",
+                maxavg="005",
+                gubun="1",
+                today_cls="0",
+                xtick="001",
+            )
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "iem_cd": "SPX",
+                "end_dt": "20260821",
+                "array_cnt": "0100",
+                "maxavg": "005",
+                "gubun": "1",
+                "today_cls": "0",
+                "xtick": "001",
+            }
+        }
+
+    def test_omits_optional_fields_when_none(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(SYMBOL_INDEX_FX_PERIOD_URL, json=SYMBOL_INDEX_FX_PERIOD_OK_BODY)
+            client.overseas_stock_quote.get_symbol_index_fx_period_price(
+                iem_cd="SPX",
+                end_dt="20260821",
+                array_cnt="0100",
+                maxavg="005",
+                gubun="1",
+                today_cls="0",
+            )
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "iem_cd": "SPX",
+                "end_dt": "20260821",
+                "array_cnt": "0100",
+                "maxavg": "005",
+                "gubun": "1",
+                "today_cls": "0",
+            }
+        }
+
+    def test_parses_symbol_index_fx_period_response(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(SYMBOL_INDEX_FX_PERIOD_URL, json=SYMBOL_INDEX_FX_PERIOD_OK_BODY, headers={"cts_flag": "N"})
+            response = client.overseas_stock_quote.get_symbol_index_fx_period_price(
+                iem_cd="SPX",
+                end_dt="20260821",
+                array_cnt="0100",
+                maxavg="005",
+                gubun="1",
+                today_cls="0",
+            )
+
+        assert response.body.output_0 is not None
+        assert response.body.output_0.iem_cd == "SPX"
+        assert response.body.output_0.qry_date == "20260821"
+        assert response.body.output_0.ovrs_prpr == 5620.35
+        assert response.body.output_0.acml_vol == 2345678
+        assert response.body.output_0.prdy_vrss == 12.5
+
+        assert response.body.output_1 is not None
+        assert len(response.body.output_1) == 1
+        item1 = response.body.output_1[0]
+        assert item1.bsop_date == "20260821"
+        assert item1.ovrs_prpr == 5620.35
+        assert item1.vol == 2345678
+
+        assert response.body.message.usr_msg == "정상 처리되었습니다."
+        assert response.header.cts_flag == "N"
+
+    def test_parses_response_without_output_block(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(SYMBOL_INDEX_FX_PERIOD_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
+            response = client.overseas_stock_quote.get_symbol_index_fx_period_price(
+                iem_cd="SPX",
+                end_dt="20260821",
+                array_cnt="0100",
+                maxavg="005",
+                gubun="1",
+                today_cls="0",
+            )
+
+        assert response.body.output_0 is None
+        assert response.body.output_1 is None
+        assert response.body.rsp_cd == "00000"
+
+    def test_sends_cts_header_for_continuation(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(SYMBOL_INDEX_FX_PERIOD_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
+            response = client.overseas_stock_quote.get_symbol_index_fx_period_price(
+                iem_cd="SPX",
+                end_dt="20260821",
+                array_cnt="0100",
+                maxavg="005",
+                gubun="1",
+                today_cls="0",
+                cts="CTS_TOKEN_1",
+            )
+
+        sent_headers = m.request_history[0].headers
+        assert sent_headers["cts"] == "CTS_TOKEN_1"
+        assert sent_headers["cts_flag"] == "Y"
+        assert response.body.output_0 is None
+        assert response.body.rsp_cd == "00000"
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(SYMBOL_INDEX_FX_PERIOD_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
+            with pytest.raises(NHPlugAPIError, match="40310"):
+                client.overseas_stock_quote.get_symbol_index_fx_period_price(
+                    iem_cd="SPX",
+                    end_dt="20260821",
+                    array_cnt="0100",
+                    maxavg="005",
+                    gubun="1",
+                    today_cls="0",
                 )

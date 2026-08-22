@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from cluefin_openapi.nhplug._model import NHPlugMessage
 
@@ -250,6 +250,91 @@ class OverseasStockPeriodPrice(BaseModel):
     )
     output_1: list[OverseasStockPeriodPriceOutput1Item] | None = Field(
         default=None, alias="Output_1", description="해외주식 기간별시세(개별종목) 변동거래량 조회 결과"
+    )
+    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
+
+
+class OverseasStockSymbolIndexFxPeriodOutput0(BaseModel):
+    """해외주식 기간별시세(지수·환율) 조회 결과 (`Output_0`)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    # 실서버(2026-08-22)는 값 없는 숫자 필드를 빈 문자열("")로 내려준다.
+    @field_validator("*", mode="before")
+    @classmethod
+    def _empty_str_to_none(cls, v):
+        return None if v == "" else v
+
+    qry_date: str | None = Field(default=None, description="조회날짜 / 길이 8 / YYYYMMDD")
+    qry_time: str | None = Field(default=None, description="조회시간 / 길이 6 / HHMMSS")
+    data_code: str | None = Field(default=None, description="해외종목타입 / 길이 1")
+    iem_cd: str | None = Field(default=None, description="SYMBOL / 길이 14")
+    hts_kor_isnm: str | None = Field(default=None, description="종목명 / 길이 40")
+    ovrs_prpr: float | None = Field(default=None, description="현재가 / 길이 10")
+    prdy_vrss_sign: str | None = Field(
+        default=None,
+        description=("등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)"),
+    )
+    prdy_vrss: float | None = Field(default=None, description="대비 / 길이 10")
+    prdy_ctrt: float | None = Field(default=None, description="대비율 / 길이 10")
+    acml_vol: int | None = Field(default=None, description="거래량 / 길이 15")
+    acml_tr_pbmn: float | None = Field(default=None, description="거래대금 / 길이 18")
+    prdy_clpr: float | None = Field(default=None, description="전일종가 / 길이 10")
+    ovrs_oprc: float | None = Field(default=None, description="시가 / 길이 10")
+    ovrs_hgpr: float | None = Field(default=None, description="고가 / 길이 10")
+    ovrs_lwpr: float | None = Field(default=None, description="저가 / 길이 10")
+    prdy_oprc: float | None = Field(default=None, description="전일시가 / 길이 10")
+    prdy_hgpr: float | None = Field(default=None, description="전일고가 / 길이 10")
+    prdy_lwpr: float | None = Field(default=None, description="전일저가 / 길이 10")
+    prdy_prpr: float | None = Field(default=None, description="전일종가 / 길이 10")
+    tdw_ovrs_oprc: float | None = Field(default=None, description="이번주시가 / 길이 10")
+    tdw_ovrs_hgpr: float | None = Field(default=None, description="이번주고가 / 길이 10")
+    tdw_ovrs_lwpr: float | None = Field(default=None, description="이번주저가 / 길이 10")
+    tdm_ovrs_oprc: float | None = Field(default=None, description="이번달시가 / 길이 10")
+    tdm_ovrs_hgpr: float | None = Field(default=None, description="이번달고가 / 길이 10")
+    tdm_ovrs_lwpr: float | None = Field(default=None, description="이번달저가 / 길이 10")
+    localtime: str | None = Field(default=None, description="현지시간 / 길이 14")
+    bsop_date: str | None = Field(default=None, description="영업일 / 길이 8")
+    base_ptr: str | None = Field(default=None, description="소수점자리수 / 길이 1")
+    ctsz30: str | None = Field(default=None, description="이전키 / 길이 30")
+    lasttickcount: str | None = Field(default=None, description="마지막N틱봉의틱묶음갯수 / 길이 5")
+    send_cnt: str | None = Field(default=None, description="전송레코드건수 / 길이 7")
+
+
+class OverseasStockSymbolIndexFxPeriodOutput1Item(BaseModel):
+    """해외주식 기간별시세(지수·환율) 조회 결과 (`Output_1`) 항목."""
+
+    model_config = ConfigDict(extra="allow")
+
+    @field_validator("*", mode="before")
+    @classmethod
+    def _empty_str_to_none(cls, v):
+        return None if v == "" else v
+
+    bsop_date: str | None = Field(default=None, description="영업일 / 길이 8")
+    bsop_time: str | None = Field(default=None, description="시간 / 길이 6 / HHmmSS")
+    ovrs_oprc: float | None = Field(default=None, description="시가 / 길이 10")
+    ovrs_hgpr: float | None = Field(default=None, description="고가 / 길이 10")
+    ovrs_lwpr: float | None = Field(default=None, description="저가 / 길이 10")
+    ovrs_prpr: float | None = Field(default=None, description="현재가 / 길이 10")
+    vol: int | None = Field(default=None, description="거래량 / 길이 12")
+
+
+class OverseasStockSymbolIndexFxPeriod(BaseModel):
+    """해외주식 기간별시세(지수·환율) (`POST /gbstock/quote/v1/symbolIndexFxPeriod`) 응답.
+
+    응답 블록은 데이터가 있을 때만 내려오므로 모두 Optional.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    rsp_cd: str | None = Field(default=None, description="응답코드")
+    rsp_msg: str | None = Field(default=None, description="응답메시지")
+    output_0: OverseasStockSymbolIndexFxPeriodOutput0 | None = Field(
+        default=None, alias="Output_0", description="해외주식 기간별시세(지수·환율) 조회 결과"
+    )
+    output_1: list[OverseasStockSymbolIndexFxPeriodOutput1Item] | None = Field(
+        default=None, alias="Output_1", description="해외주식 기간별시세(지수·환율) 시세 목록"
     )
     message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
 

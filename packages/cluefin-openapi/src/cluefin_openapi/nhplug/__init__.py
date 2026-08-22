@@ -63,6 +63,9 @@ from cluefin_openapi.nhplug._overseas_stock_quote_types import (
     OverseasStockPeriodPrice,
     OverseasStockPeriodPriceOutput0Item,
     OverseasStockPeriodPriceOutput1Item,
+    OverseasStockSymbolIndexFxPeriod,
+    OverseasStockSymbolIndexFxPeriodOutput0,
+    OverseasStockSymbolIndexFxPeriodOutput1Item,
 )
 from cluefin_openapi.nhplug._socket_client import SocketClient, SubscriptionType, WebSocketEvent, WebSocketMessage
 from cluefin_openapi.nhplug._token_manager import TokenManager
@@ -121,6 +124,9 @@ __all__ = [
     "OverseasStockReservedInquiry",
     "OverseasStockReservedInquiryItem",
     "OverseasStockReservedSubmitOutput",
+    "OverseasStockSymbolIndexFxPeriod",
+    "OverseasStockSymbolIndexFxPeriodOutput0",
+    "OverseasStockSymbolIndexFxPeriodOutput1Item",
     "OverseasStockUnexecuted",
     "OverseasStockUnexecutedItem",
     "SocketClient",

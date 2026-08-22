@@ -6,6 +6,7 @@ from cluefin_openapi.nhplug._overseas_stock_quote_types import (
     OverseasStockCurrentPrice,
     OverseasStockExecutionTrend,
     OverseasStockPeriodPrice,
+    OverseasStockSymbolIndexFxPeriod,
 )
 from cluefin_openapi.nhplug._response import check_response_error
 
@@ -134,3 +135,56 @@ class OverseasStockQuote:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockPeriodPrice.model_validate(data))
+
+    def get_symbol_index_fx_period_price(
+        self,
+        iem_cd: str,
+        end_dt: str,
+        array_cnt: str,
+        maxavg: str,
+        gubun: str,
+        today_cls: str,
+        xtick: Optional[str] = None,
+        scale_change: Optional[str] = None,
+        cts: Optional[str] = None,
+    ) -> NHPlugHttpResponse[OverseasStockSymbolIndexFxPeriod]:
+        """해외주식 기간별시세(지수·환율) (`POST /gbstock/quote/v1/symbolIndexFxPeriod`).
+
+        해외 지수·환율의 기간별 시세를 조회하는 API 이다. `iem_cd` 에는 지수코드/환율코드를
+        입력한다(개별종목 아님). 개별종목 조회는 `/gbstock/quote/v1/period` 를 사용해야 한다.
+        응답 블록은 데이터가 있을 때만 내려오므로 존재 여부를 먼저 확인해야 한다.
+
+        시세 API 는 모의투자(moapi) 미지원 — 운영 도메인 전용 (실측 IGW40019).
+
+        Args:
+            iem_cd: SYMBOL (길이 14). 지수코드/환율코드
+            end_dt: 검색종료일 (길이 8, YYYYMMDD)
+            array_cnt: 조회건수 (길이 4). 개별종목 API 의 count 와 필드명이 다름
+            maxavg: 최대이평 (길이 3)
+            gubun: 조회구분 (길이 1). 1.일 2.주 3.월 — 틱·분은 지원하지 않음
+            today_cls: 당일조회 (길이 1). 1.당일만조회(분/초/틱에서 사용) 0.전체조회
+            xtick: 조회단위 (길이 3). 주기구분 일인 경우 001, 분/초/틱에서는 별도 설정 가능
+            scale_change: 단위변경 (길이 1). Output_1에만 적용 1.거래량천단위 그외.단주
+            cts: 연속거래키. 이전 응답 헤더의 `cts` 값을 그대로 전달하면 다음 페이지를 받는다.
+
+        Returns:
+            NHPlugHttpResponse[OverseasStockSymbolIndexFxPeriod]: 기간별시세 조회 결과(`Output_0`, `Output_1`)
+        """
+        body: dict = {
+            "iem_cd": iem_cd,
+            "end_dt": end_dt,
+            "array_cnt": array_cnt,
+            "maxavg": maxavg,
+            "gubun": gubun,
+            "today_cls": today_cls,
+        }
+        if xtick is not None:
+            body["xtick"] = xtick
+        if scale_change is not None:
+            body["scale_change"] = scale_change
+
+        response = self.client.post("/gbstock/quote/v1/symbolIndexFxPeriod", body=body, cts=cts)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=OverseasStockSymbolIndexFxPeriod.model_validate(data))
