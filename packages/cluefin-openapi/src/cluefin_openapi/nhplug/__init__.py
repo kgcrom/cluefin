@@ -70,6 +70,13 @@ from cluefin_openapi.nhplug._krstock_order_types import (
     KrStockOrderReservedOrder,
     KrStockOrderReservedOrderOutput,
 )
+from cluefin_openapi.nhplug._krstock_quote import KrStockQuote
+from cluefin_openapi.nhplug._krstock_quote_types import (
+    KrStockQuoteCurrentPrice,
+    KrStockQuoteCurrentPriceExpectedOutput,
+    KrStockQuoteCurrentPriceOutput,
+    KrStockQuoteCurrentPriceTickOutput,
+)
 from cluefin_openapi.nhplug._model import (
     NHPlugAssetHttpBody,
     NHPlugHttpBody,
@@ -133,6 +140,11 @@ __all__ = [
     "KrStockOrderReservedCancelOutput",
     "KrStockOrderReservedOrder",
     "KrStockOrderReservedOrderOutput",
+    "KrStockQuote",
+    "KrStockQuoteCurrentPrice",
+    "KrStockQuoteCurrentPriceExpectedOutput",
+    "KrStockQuoteCurrentPriceOutput",
+    "KrStockQuoteCurrentPriceTickOutput",
     "NHPlugAPIError",
     "NHPlugAssetHttpBody",
     "NHPlugAuthenticationError",

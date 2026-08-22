@@ -16,21 +16,16 @@ TEST_IEM_CD = "005930"  # 삼성전자
 
 
 def _unfillable_buy_price(client: HttpClient, iem_cd: str) -> int:
-    """체결되지 않을 만큼 낮으면서 1,000원 배수로 내림한 매수 지정가를 계산한다.
+    """체결되지 않을 만큼 낮으면서 1,000원 배수로 내림한 매수 지정가를 계산한다."""
+    try:
+        response = client.krstock_quote.current_price(market_cd="KRX", iem_cd=iem_cd)
+    except NHPlugAPIError as e:
+        pytest.skip(f"현재가 조회 실패로 미체결 지정가를 만들 수 없다: {e}")
 
-    시세(krstock/quote) 카테고리가 아직 정식 메서드로 구현되지 않아 raw `client.post`
-    로 현재가(`/krstock/quote/v1/currentPrice`)를 직접 호출한다 — 시세 카테고리 구현 후
-    정식 메서드(예: `client.krstock_quote.current_price(...)`)로 교체할 것.
-    """
-    response = client.post(
-        "/krstock/quote/v1/currentPrice",
-        body={"market_cd": "KRX", "iem_cd": iem_cd},
-    )
-    data = response.json()
-    output_0 = data.get("Output_0") or {}
-    stck_prpr = output_0.get("stck_prpr")
+    output_0 = response.body.output_0
+    stck_prpr = output_0.stck_prpr if output_0 else None
     if not stck_prpr:
-        pytest.skip(f"현재가 조회 실패로 미체결 지정가를 만들 수 없다: [{data.get('rsp_cd')}] {data.get('rsp_msg')}")
+        pytest.skip("현재가 조회 응답에 stck_prpr 이 없어 미체결 지정가를 만들 수 없다")
     base = abs(int(stck_prpr))
     price = (int(base * 0.8) // 1000) * 1000
     if price <= 0:

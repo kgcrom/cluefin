@@ -1,0 +1,276 @@
+from pydantic import BaseModel, ConfigDict, Field
+
+from cluefin_openapi.nhplug._model import NHPlugAssetHttpBody
+
+
+class KrStockQuoteCurrentPriceOutput(BaseModel):
+    """주식현재가 시세 종합 정보 (Output_0)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    iem_cd: str | None = Field(default=None, description="종목코드 / 길이 6")
+    iem_nm: str | None = Field(default=None, description="종목명 / 길이 41")
+    stck_prpr: int | None = Field(default=None, description="현재가 / 길이 10")
+    prdy_vrss_sign: str | None = Field(
+        default=None,
+        description="등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)",
+    )
+    prdy_vrss: int | None = Field(default=None, description="등락폭 / 길이 10")
+    prdy_ctrt: float | None = Field(default=None, description="등락률 / 길이 5.2")
+    askp: int | None = Field(default=None, description="매도호가 / 길이 10")
+    bidp: int | None = Field(default=None, description="매수호가 / 길이 10")
+    acml_vol: int | None = Field(default=None, description="거래량 / 길이 12")
+    vol_rate: float | None = Field(default=None, description="거래비율 / 길이 6.2")
+    move_rate: float | None = Field(default=None, description="유동주회전율 / 길이 6.2")
+    acml_tr_pbmn: int | None = Field(default=None, description="거래대금 / 길이 18")
+    stck_mxpr: int | None = Field(default=None, description="상한가 / 길이 10")
+    stck_hgpr: int | None = Field(default=None, description="고가 / 길이 10")
+    stck_oprc: int | None = Field(default=None, description="시가 / 길이 10")
+    stck_oprc_sign: str | None = Field(default=None, description="시가대비부호 / 길이 1")
+    stck_oprc_vrss: int | None = Field(default=None, description="시가대비등락폭 / 길이 10")
+    stck_lwpr: int | None = Field(default=None, description="저가 / 길이 10")
+    stck_llam: int | None = Field(default=None, description="하한가 / 길이 10")
+    hoga_bsop_hour: str | None = Field(default=None, description="호가시간 / 길이 8")
+    askp1: int | None = Field(default=None, description="매도호가1 / 길이 10")
+    askp2: int | None = Field(default=None, description="매도호가2 / 길이 10")
+    askp3: int | None = Field(default=None, description="매도호가3 / 길이 10")
+    askp4: int | None = Field(default=None, description="매도호가4 / 길이 10")
+    askp5: int | None = Field(default=None, description="매도호가5 / 길이 10")
+    askp6: int | None = Field(default=None, description="매도호가6 / 길이 10")
+    askp7: int | None = Field(default=None, description="매도호가7 / 길이 10")
+    askp8: int | None = Field(default=None, description="매도호가8 / 길이 10")
+    askp9: int | None = Field(default=None, description="매도호가9 / 길이 10")
+    askp10: int | None = Field(default=None, description="매도호가10 / 길이 10")
+    bidp1: int | None = Field(default=None, description="매수호가1 / 길이 10")
+    bidp2: int | None = Field(default=None, description="매수호가2 / 길이 10")
+    bidp3: int | None = Field(default=None, description="매수호가3 / 길이 10")
+    bidp4: int | None = Field(default=None, description="매수호가4 / 길이 10")
+    bidp5: int | None = Field(default=None, description="매수호가5 / 길이 10")
+    bidp6: int | None = Field(default=None, description="매수호가6 / 길이 10")
+    bidp7: int | None = Field(default=None, description="매수호가7 / 길이 10")
+    bidp8: int | None = Field(default=None, description="매수호가8 / 길이 10")
+    bidp9: int | None = Field(default=None, description="매수호가9 / 길이 10")
+    bidp10: int | None = Field(default=None, description="매수호가10 / 길이 10")
+    askp_rsqn1: int | None = Field(default=None, description="매도호가잔량1 / 길이 12")
+    askp_rsqn2: int | None = Field(default=None, description="매도호가잔량2 / 길이 12")
+    askp_rsqn3: int | None = Field(default=None, description="매도호가잔량3 / 길이 12")
+    askp_rsqn4: int | None = Field(default=None, description="매도호가잔량4 / 길이 12")
+    askp_rsqn5: int | None = Field(default=None, description="매도호가잔량5 / 길이 12")
+    askp_rsqn6: int | None = Field(default=None, description="매도호가잔량6 / 길이 12")
+    askp_rsqn7: int | None = Field(default=None, description="매도호가잔량7 / 길이 12")
+    askp_rsqn8: int | None = Field(default=None, description="매도호가잔량8 / 길이 12")
+    askp_rsqn9: int | None = Field(default=None, description="매도호가잔량9 / 길이 12")
+    askp_rsqn10: int | None = Field(default=None, description="매도호가잔량10 / 길이 12")
+    bidp_rsqn1: int | None = Field(default=None, description="매수호가잔량1 / 길이 12")
+    bidp_rsqn2: int | None = Field(default=None, description="매수호가잔량2 / 길이 12")
+    bidp_rsqn3: int | None = Field(default=None, description="매수호가잔량3 / 길이 12")
+    bidp_rsqn4: int | None = Field(default=None, description="매수호가잔량4 / 길이 12")
+    bidp_rsqn5: int | None = Field(default=None, description="매수호가잔량5 / 길이 12")
+    bidp_rsqn6: int | None = Field(default=None, description="매수호가잔량6 / 길이 12")
+    bidp_rsqn7: int | None = Field(default=None, description="매수호가잔량7 / 길이 12")
+    bidp_rsqn8: int | None = Field(default=None, description="매수호가잔량8 / 길이 12")
+    bidp_rsqn9: int | None = Field(default=None, description="매수호가잔량9 / 길이 12")
+    bidp_rsqn10: int | None = Field(default=None, description="매수호가잔량10 / 길이 12")
+    total_askp_rsqn: int | None = Field(default=None, description="총매도잔량 / 길이 12")
+    total_bidp_rsqn: int | None = Field(default=None, description="총매수잔량 / 길이 12")
+    ovtm_askp_rsqn: int | None = Field(default=None, description="시간외매도잔량 / 길이 12")
+    ovtm_bidp_rsqn: int | None = Field(default=None, description="시간외매수잔량 / 길이 12")
+    pvt_scnd_dmrs: int | None = Field(default=None, description="피봇2차저항 / 길이 10")
+    pvt_frst_dmrs: int | None = Field(default=None, description="피봇1차저항 / 길이 10")
+    pvt_pont_val: int | None = Field(default=None, description="피봇가 / 길이 10")
+    pvt_frst_dmsp: int | None = Field(default=None, description="피봇1차지지 / 길이 10")
+    pvt_scnd_dmsp: int | None = Field(default=None, description="피봇2차지지 / 길이 10")
+    mrkt_div_isnm: str | None = Field(default=None, description="코스피코스닥구분 / 길이 6")
+    bstp_kor_isnm: str | None = Field(default=None, description="업종명 / 길이 40")
+    bstp_cls_code: str | None = Field(default=None, description="업종코드 / 길이 6")
+    avls_scal_isnm: str | None = Field(default=None, description="자본금규모 / 길이 6")
+    stac_month: str | None = Field(default=None, description="결산월 / 길이 16")
+    market1: str | None = Field(default=None, description="시장조치1 / 길이 16")
+    market2: str | None = Field(default=None, description="시장조치2 / 길이 16")
+    market3: str | None = Field(default=None, description="시장조치3 / 길이 16")
+    market4: str | None = Field(default=None, description="시장조치4 / 길이 16")
+    market5: str | None = Field(default=None, description="시장조치5 / 길이 16")
+    market6: str | None = Field(default=None, description="시장조치6 / 길이 16")
+    cb_text: str | None = Field(default=None, description="CB구분 / 길이 6")
+    stck_fcam: int | None = Field(default=None, description="액면가 / 길이 10")
+    prdy_clpr_title: str | None = Field(default=None, description="전일종가타이틀 / 길이 12")
+    stck_prdy_clpr: int | None = Field(default=None, description="전일종가 / 길이 10")
+    stck_sspr: int | None = Field(default=None, description="대용가 / 길이 10")
+    gongprice: int | None = Field(default=None, description="공모가 / 길이 7")
+    d5_hgpr: int | None = Field(default=None, description="5일고가 / 길이 10")
+    d5_lwpr: int | None = Field(default=None, description="5일저가 / 길이 10")
+    d20_hgpr: int | None = Field(default=None, description="20일고가 / 길이 10")
+    d20_lwpr: int | None = Field(default=None, description="20일저가 / 길이 10")
+    w52_hgpr: int | None = Field(default=None, description="52주최고가 / 길이 10")
+    w52_hgpr_date: str | None = Field(default=None, description="52주최고가일 / 길이 4")
+    w52_lwpr: int | None = Field(default=None, description="52주최저가 / 길이 10")
+    w52_lwpr_date: str | None = Field(default=None, description="52주최저가일 / 길이 4")
+    move_stcn: int | None = Field(default=None, description="유동주식수 / 길이 12")
+    lstn_stcn_unit3: int | None = Field(default=None, description="상장주식수 / 길이 12")
+    hts_avls: int | None = Field(default=None, description="시가총액 / 길이 12")
+    memb_bsop_hour: str | None = Field(default=None, description="시간 / 길이 5")
+    seln_mbcr_name1: str | None = Field(default=None, description="매도거래원1 / 길이 6")
+    shnu_mbcr_name1: str | None = Field(default=None, description="매수거래원1 / 길이 6")
+    seln_qty1: int | None = Field(default=None, description="매도거래량1 / 길이 12")
+    shnu_qty1: int | None = Field(default=None, description="매수거래량1 / 길이 12")
+    seln_mbcr_name2: str | None = Field(default=None, description="매도거래원2 / 길이 6")
+    shnu_mbcr_name2: str | None = Field(default=None, description="매수거래원2 / 길이 6")
+    seln_qty2: int | None = Field(default=None, description="매도거래량2 / 길이 12")
+    shnu_qty2: int | None = Field(default=None, description="매수거래량2 / 길이 12")
+    seln_mbcr_name3: str | None = Field(default=None, description="매도거래원3 / 길이 6")
+    shnu_mbcr_name3: str | None = Field(default=None, description="매수거래원3 / 길이 6")
+    seln_qty3: int | None = Field(default=None, description="매도거래량3 / 길이 12")
+    shnu_qty3: int | None = Field(default=None, description="매수거래량3 / 길이 12")
+    seln_mbcr_name4: str | None = Field(default=None, description="매도거래원4 / 길이 6")
+    shnu_mbcr_name4: str | None = Field(default=None, description="매수거래원4 / 길이 6")
+    seln_qty4: int | None = Field(default=None, description="매도거래량4 / 길이 12")
+    shnu_qty4: int | None = Field(default=None, description="매수거래량4 / 길이 12")
+    seln_mbcr_name5: str | None = Field(default=None, description="매도거래원5 / 길이 6")
+    shnu_mbcr_name5: str | None = Field(default=None, description="매수거래원5 / 길이 6")
+    seln_qty5: int | None = Field(default=None, description="매도거래량5 / 길이 12")
+    shnu_qty5: int | None = Field(default=None, description="매수거래량5 / 길이 12")
+    glob_seln_qty: int | None = Field(default=None, description="매도외국인거래량 / 길이 12")
+    glob_shnu_qty: int | None = Field(default=None, description="매수외국인거래량 / 길이 12")
+    for_hour: str | None = Field(default=None, description="외국인시간 / 길이 6")
+    for_rate: float | None = Field(default=None, description="외국인지분율 / 길이 5.2")
+    crdt_stlm_date: str | None = Field(default=None, description="결제일 / 길이 4")
+    crdt_rmnd_rate: float | None = Field(default=None, description="잔고비율(%) / 길이 5.2")
+    yu_date: str | None = Field(default=None, description="유상기준일 / 길이 4")
+    mu_date: str | None = Field(default=None, description="무상기준일 / 길이 4")
+    yu_rate: float | None = Field(default=None, description="유상배정비율 / 길이 5.2")
+    mu_rate: float | None = Field(default=None, description="무상배정비율 / 길이 5.2")
+    frgn_ntby_vol: float | None = Field(default=None, description="외국인변동주수 / 길이 10.0")
+    jasa: str | None = Field(default=None, description="자사주 / 길이 1")
+    stck_lstn_date: str | None = Field(default=None, description="상장일 / 길이 8")
+    dae_rate: float | None = Field(default=None, description="대주주지분율 / 길이 5.2")
+    dae_date: str | None = Field(default=None, description="대주주지분일자 / 길이 6")
+    filler: str | None = Field(default=None, description="FILLER / 길이 1")
+    deposit_gb: str | None = Field(default=None, description="증거금율 / 길이 1")
+    cpfn: int | None = Field(default=None, description="자본금 / 길이 12")
+    total_seln_qty: int | None = Field(default=None, description="전체거래원매도합 / 길이 12")
+    total_shnu_qty: int | None = Field(default=None, description="전체거래원매수합 / 길이 12")
+    detour_gb: str | None = Field(default=None, description="우회상장여부 / 길이 1")
+    scrt_grp_isnm: str | None = Field(default=None, description="증권구분 / 길이 6")
+    crdt_deal_date: str | None = Field(default=None, description="공여율기준일 / 길이 4")
+    crdt_loan_gvrt: float | None = Field(default=None, description="공여율(%) / 길이 5.2")
+    per: float | None = Field(default=None, description="PER / 길이 5.2")
+    hando_gb: str | None = Field(default=None, description="종목별신용한도 / 길이 1")
+    wghn_avrg_prc: int | None = Field(default=None, description="가중가 / 길이 10")
+    lstn_stcn_unit0: int | None = Field(default=None, description="상장주식수_주 / 길이 12")
+    add_lstn_stcn: int | None = Field(default=None, description="추가상장주수 / 길이 12")
+    gicomment: str | None = Field(default=None, description="종목comment / 길이 100")
+    prdy_vol: int | None = Field(default=None, description="전일거래량 / 길이 12")
+    pre_prdy_sign: str | None = Field(default=None, description="전일대비등락부호 / 길이 1")
+    pre_prdy_vrss: int | None = Field(default=None, description="전일대비등락폭 / 길이 10")
+    stck_dryy_hgpr: int | None = Field(default=None, description="연종최고가 / 길이 10")
+    dryy_hgpr_date: str | None = Field(default=None, description="연중최고가일 / 길이 4")
+    stck_dryy_lwpr: int | None = Field(default=None, description="연중최저가 / 길이 10")
+    dryy_lwpr_date: str | None = Field(default=None, description="연중최저가일 / 길이 4")
+    frgn_hldn_qty: float | None = Field(default=None, description="외국인보유주식수 / 길이 15")
+    issu_limt_rate: float | None = Field(default=None, description="외국인한도율(%) / 길이 5.2")
+    frml_mrkt_unit: float | None = Field(default=None, description="매매수량단위 / 길이 5")
+    comp_cls_code: str | None = Field(default=None, description="경쟁대량방향구분 / 길이 1")
+    largem_gb: str | None = Field(default=None, description="대량매매구분 / 길이 1")
+    pbr: float | None = Field(default=None, description="PBR / 길이 5.2")
+    dmrs_val: int | None = Field(default=None, description="디저항값 / 길이 7")
+    dmsp_val: int | None = Field(default=None, description="디지지값 / 길이 7")
+    prdy_tr_pbmn: int | None = Field(default=None, description="전일거래대금 / 길이 12")
+    vi_antc_sdpr: int | None = Field(default=None, description="VI기준가 / 길이 10")
+    vi_antc_mxpr: int | None = Field(default=None, description="VI상승발동가 / 길이 10")
+    vi_antc_llam: int | None = Field(default=None, description="VI하락발동가 / 길이 10")
+    invt_epmd_yn: str | None = Field(default=None, description="투자유의종목여부 / 길이 1")
+    uplm_qty: int | None = Field(default=None, description="상한수량 / 길이 12")
+    short_over_code: str | None = Field(
+        default=None, description="단기과열구분코드 / 길이 1 / 1.단기과열예고 2.단기과열지정 3.단기과열연장"
+    )
+    mrkt_alrm_code: str | None = Field(
+        default=None,
+        description="투자주의경고구분코드 / 길이 1 / 1.투자주의 2.투자경고 3.투자주의>투자위험예고 4.투자경고투자위험예고 5.투자위험",
+    )
+    sltr_yn: str | None = Field(default=None, description="정리매매여부 / 길이 1 / Y.정리매매종목")
+    crd_rt_grd_nm: str | None = Field(default=None, description="담보유지비율(%) / 길이 6")
+    mid_prc: int | None = Field(default=None, description="중간가 / 길이 10")
+    midp_total_askp_rsqn: int | None = Field(default=None, description="매도중간가잔량합계수량 / 길이 12")
+    midp_total_bidp_rsqn: int | None = Field(default=None, description="매수중간가잔량합계수량 / 길이 12")
+    nxt_mid_prc: int | None = Field(default=None, description="nxt중간가 / 길이 10")
+    nxt_midp_total_askp_rsqn: int | None = Field(default=None, description="nxt매도중간가잔량합계수량 / 길이 12")
+    nxt_midp_total_bidp_rsqn: int | None = Field(default=None, description="nxt매수중간가잔량합계수량 / 길이 12")
+    marg_grad_cls_code: str | None = Field(default=None, description="증거금등급구분코드 / 길이 1")
+
+
+class KrStockQuoteCurrentPriceTickOutput(BaseModel):
+    """주식현재가 시세 시간대별 체결 (Output_1 배열의 각 항목)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    bsop_hour: str | None = Field(default=None, description="시간 / 길이 8")
+    stck_prpr: int | None = Field(default=None, description="현재가 / 길이 10")
+    prdy_vrss_sign: str | None = Field(
+        default=None,
+        description="등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)",
+    )
+    prdy_vrss: int | None = Field(default=None, description="등락폭 / 길이 10")
+    askp: int | None = Field(default=None, description="매도호가 / 길이 10")
+    bidp: int | None = Field(default=None, description="매수호가 / 길이 10")
+    # 스펙은 string 으로 명세하지만 실측(2026-08-22)에는 int 로 온다 — balance/dailyPnl
+    # 의 "합계"류 필드와 같은 divergence. int|str Union 으로 완화한다.
+    cntg_vol: int | str | None = Field(default=None, description="변동거래량 / 길이 12")
+    acml_vol: int | None = Field(default=None, description="거래량 / 길이 12")
+
+
+class KrStockQuoteCurrentPriceExpectedOutput(BaseModel):
+    """주식현재가 시세 예상체결/ECN 정보 (Output_2).
+
+    스펙은 Output_2 를 Array 로 선언하지만 스펙 자체의 x-schema-warning 이 예시
+    응답은 Object 라고 명시한다 — `KrStockQuoteCurrentPrice.output_2` 에서
+    object/array 둘 다 허용하는 Union 으로 받는다.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    # 아래 수치류 필드는 스펙상 모두 string 이지만 실측(2026-08-22)에는 int/float 로
+    # 온다 — Output_2 가 스펙 선언(Array)과 달리 Object 로 오는 것과 같은 종류의
+    # 명세 오차다. int|float|str Union 으로 완화한다.
+    cncc_aspr_code: str | None = Field(default=None, description="동시호가구분 / 길이 1 / 1.동시호가 이외 정규시장")
+    antc_cnpr: int | float | str | None = Field(default=None, description="예상체결가 / 길이 10")
+    antc_cntg_sign: str | None = Field(
+        default=None,
+        description="예상체결부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)",
+    )
+    antc_cntg_vrss: int | float | str | None = Field(default=None, description="예상체결등락폭 / 길이 10")
+    antc_prdy_ctrt: int | float | str | None = Field(default=None, description="예상체결등락률 / 길이 5.2")
+    antc_vol: int | float | str | None = Field(default=None, description="예상체결수량 / 길이 12")
+    chkdata: str | None = Field(default=None, description="ECN정보유무구분 / 길이 1")
+    ovtm_untp_prpr: int | float | str | None = Field(default=None, description="ECN전일종가 / 길이 10")
+    ovtm_untp_sign: str | None = Field(default=None, description="ECN부호 / 길이 1")
+    ovtm_untp_vrss: int | float | str | None = Field(default=None, description="ECN등락폭 / 길이 10")
+    ovtm_untp_ctrt: int | float | str | None = Field(default=None, description="ECN등락률 / 길이 5.2")
+    ovtm_untp_vol: int | float | str | None = Field(default=None, description="ECN체결수량 / 길이 12")
+    ovtm_antc_sign: str | None = Field(
+        default=None,
+        description="ECN대비예상체결부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)",
+    )
+    ovtm_antc_vrss: int | float | str | None = Field(default=None, description="ECN대비예상체결등락폭 / 길이 10")
+    ovtm_antc_ctrt: int | float | str | None = Field(default=None, description="ECN대비예상체결등락률 / 길이 5.2")
+    scoring: int | float | str | None = Field(default=None, description="종합스코어링 / 길이 6.2")
+    vi_type_code: str | None = Field(default=None, description="VI거래중지여부 / 길이 1 / 1.VI발동 N.그외")
+
+
+class KrStockQuoteCurrentPrice(NHPlugAssetHttpBody):
+    """주식현재가 시세 (`POST /krstock/quote/v1/currentPrice`) 응답.
+
+    시세 조회 API 라 계좌번호가 필요 없다. 스펙에 `CtsHeader` 파라미터가 없어
+    연속조회를 지원하지 않는다(단건 조회).
+    """
+
+    output_0: KrStockQuoteCurrentPriceOutput | None = Field(
+        default=None, alias="Output_0", description="현재가 종합 정보"
+    )
+    output_1: list[KrStockQuoteCurrentPriceTickOutput] | None = Field(
+        default=None, alias="Output_1", description="시간대별 체결 목록"
+    )
+    output_2: list[KrStockQuoteCurrentPriceExpectedOutput] | KrStockQuoteCurrentPriceExpectedOutput | None = Field(
+        default=None,
+        alias="Output_2",
+        description="예상체결/ECN 정보 (스펙은 Array, 실제 예시는 Object — 둘 다 허용)",
+    )
