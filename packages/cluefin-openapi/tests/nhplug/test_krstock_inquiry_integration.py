@@ -51,3 +51,24 @@ def test_daily_order_execution(client: HttpClient, krstock_account: str):
 
     # 모의서버는 성공에 XA102("모의투자 조회가 완료되었습니다")를 반환한다 (2026-08-22 실측).
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+
+
+@pytest.mark.integration
+def test_buyable_quantity(client: HttpClient, krstock_account: str):
+    """매수가능수량조회 (005930, 현금).
+
+    nmn_pr_tp_cd="05"(시장가)를 사용해 orr_pr(주문가격) 입력을 피한다 — 스펙상
+    orr_pr 은 지정가 계열일 때만 의미가 있고, 시장가에는 필요 없다(고정 가격을
+    임의로 넣지 않기 위함).
+    """
+    try:
+        response = client.krstock_inquiry.buyable_quantity(
+            act_no=krstock_account,
+            iem_cd="005930",
+            ost_dit_cd="1",  # 현금
+            nmn_pr_tp_cd="05",  # 시장가 — orr_pr 불필요
+        )
+    except NHPlugAPIError as e:
+        skip_if_env_blocked(e)
+
+    assert response.body.rsp_cd in SUCCESS_RSP_CODES

@@ -187,3 +187,78 @@ class TestDailyOrderExecution:
             )
 
         assert response.body.rsp_cd == "XA102"
+
+
+BUYABLE_QUANTITY_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "조회가 완료되었습니다.",
+    "message": None,
+    "Output_0": {
+        "dca": 1000000,
+        "max_pbl_amt": 990000,
+        "max_pbl_qty": 14,
+        "csh_orr_pbl_amt": 990000,
+        "csh_orr_pbl_qty": 14,
+        "orr_pr": "71000",
+    },
+}
+
+
+class TestBuyableQuantity:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/inquiry/v1/buyableQuantity",
+                json=BUYABLE_QUANTITY_BODY,
+                headers={"cts_flag": "N"},
+            )
+            response = client.krstock_inquiry.buyable_quantity(
+                act_no="50051036881",
+                iem_cd="005930",
+                ost_dit_cd="1",
+                nmn_pr_tp_cd="01",
+                orr_pr=71000,
+            )
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "ost_dit_cd": "1",
+                "act_no": "50051036881",
+                "iem_cd": "005930",
+                "nmn_pr_tp_cd": "01",
+                "orr_pr": 71000,
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        assert response.body.output_0.max_pbl_qty == 14
+        assert response.body.output_0.csh_orr_pbl_amt == 990000
+        assert response.header.cts_flag == "N"
+
+    def test_passes_cts_to_request_headers(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/inquiry/v1/buyableQuantity", json=BUYABLE_QUANTITY_BODY)
+            client.krstock_inquiry.buyable_quantity(
+                act_no="50051036881",
+                iem_cd="005930",
+                ost_dit_cd="1",
+                nmn_pr_tp_cd="05",
+                cts="NEXT-KEY",
+            )
+
+        request = m.request_history[0]
+        assert request.headers["cts"] == "NEXT-KEY"
+        assert request.headers["cts_flag"] == "Y"
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/inquiry/v1/buyableQuantity",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_inquiry.buyable_quantity(
+                    act_no="00000000000",
+                    iem_cd="005930",
+                    ost_dit_cd="1",
+                    nmn_pr_tp_cd="05",
+                )

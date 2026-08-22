@@ -172,3 +172,90 @@ class KrStockInquiryDailyOrderExecution(NHPlugAssetHttpBody):
     output_1: list[KrStockInquiryDailyOrderExecutionOutput] | None = Field(
         default=None, alias="Output_1", description="주문·체결 상세 목록"
     )
+
+
+class KrStockInquiryBuyableQuantityOutput(BaseModel):
+    """매수가능수량조회 결과 (Output_0)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    sll_ctc_amt1: str | None = Field(default=None, description="매도약정금액1 / 길이 18 / 전일 매도 약정금액")
+    byn_ctc_amt1: str | None = Field(default=None, description="매수약정금액1 / 길이 18 / 전일 매수 약정금액")
+    sdr_xps1: str | None = Field(default=None, description="제비용1 / 길이 18 / 전일 제비용")
+    dca: int | None = Field(default=None, description="예수금 / 길이 18 / 당일 예수금")
+    sll_ctc_amt: str | None = Field(default=None, description="매도약정금액 / 길이 18 / 당일 매도 약정금액")
+    ost_byn_ctc_amt: str | None = Field(default=None, description="매수약정금액 / 길이 18 / 당일 매수 약정금액")
+    sdr_xps: str | None = Field(default=None, description="제비용 / 길이 18 / 당일 제비용")
+    nxt_dd_dca: int | None = Field(default=None, description="익일예수금 / 길이 18 / D+1 예수금")
+    nxt2_dd_dca: int | None = Field(default=None, description="익익일예수금 / 길이 18 / D+2 예수금")
+    byn_ny_cns_orr_amt: str | None = Field(
+        default=None, description="매수미체결주문금액 / 길이 18 / D+2 매수미체결 주문금액"
+    )
+    ost_fee: int | None = Field(default=None, description="수수료 / 길이 18 / D+2 수수료")
+    max_pbl_amt: int | None = Field(
+        default=None, description="최대가능금액 / 길이 18 / 조회구분 1. 현금 선택시 출력 최대(미수) 가능금액"
+    )
+    max_pbl_qty: int | None = Field(default=None, description="최대가능수량 / 길이 18 / 최대(미수) 가능수량")
+    rvb_orn_max_pbl_fee: int | None = Field(
+        default=None, description="미수발생최대가능수수료 / 길이 18 / 최대(미수) 수수료"
+    )
+    csh_orr_pbl_amt: int | None = Field(
+        default=None, description="현금주문가능금액 / 길이 18 / 미수 미발생 현금 가능금액"
+    )
+    csh_orr_pbl_qty: int | None = Field(
+        default=None, description="현금주문가능수량 / 길이 18 / 미수 미발생 현금 가능수량"
+    )
+    ost_fee1: int | None = Field(default=None, description="수수료1 / 길이 18 / 미수 미발생 현금 수수료")
+    cfd_rvb_orr_pbl_amt: int | None = Field(
+        default=None,
+        description="신용미수주문가능금액 / 길이 18 / 조회구분 2. 신용(융자대주) 선택시 출력 최대주문가능 매수주문 주문가능금액",
+    )
+    cfd_rvb_orr_pbl_qty: int | None = Field(
+        default=None, description="신용미수주문가능수량 / 길이 18 / 최대주문가능 매수주문 주문가능수량"
+    )
+    cfd_max_pbl_fee: int | None = Field(
+        default=None, description="신용최대가능수수료 / 길이 18 / 최대주문가능 매수주문 수수료"
+    )
+    cfd_orr_pbl_amt: int | None = Field(
+        default=None, description="신용주문가능금액 / 길이 18 / 미수미발생 매수주문 주문가능금액"
+    )
+    cfd_orr_pbl_qty: int | None = Field(
+        default=None, description="신용주문가능수량 / 길이 18 / 미수미발생 매수주문 주문가능수량"
+    )
+    ost_fee2: int | None = Field(default=None, description="수수료2 / 길이 18 / 미수미발생 매수주문 수수료")
+    lmt_amt: int | None = Field(default=None, description="한도금액 / 길이 18 / 미수 미발생 현금 개인한도금액")
+    use_lmt_amt: int | None = Field(default=None, description="사용한도금액 / 길이 18 / 미수 미발생 현금 시용한도")
+    rmn_lmt: int | None = Field(default=None, description="잔여한도 / 길이 18 / 미수 미발생 현금 잔여한도")
+    use_pbl_sba_amt: int | None = Field(
+        default=None, description="사용가능대용금액 / 길이 18 / 미수 미발생 현금 사용가능대용(종가)"
+    )
+    use_pbl_csh: int | None = Field(default=None, description="사용가능현금 / 길이 18 / 미수 미발생 현금 사용가능현금")
+    orr_pbl_amt1: int | None = Field(
+        default=None, description="주문가능금액1 / 길이 18 / 미수 미발생 현금 주문가능(한도적용전)"
+    )
+    lon_lmt_amt: int | None = Field(
+        default=None, description="대출한도금액 / 길이 18 / 조회구분 3.매입자금대출 선택시 출력 대출한도"
+    )
+    lmt_use_amt: int | None = Field(default=None, description="한도사용금액 / 길이 18 / 한도사용금액")
+    rmn_lmt1: int | None = Field(default=None, description="잔여한도1 / 길이 18 / 잔여한도")
+    orr_pbl_sba_amt: int | None = Field(default=None, description="주문가능대용금액 / 길이 18 / 주문가능대용")
+    orr_pbl_amt2: int | None = Field(default=None, description="주문가능금액2 / 길이 18 / 주문가능금액(한도적용전)")
+    orr_pbl_amt3: int | None = Field(default=None, description="주문가능금액3 / 길이 18 / 주문가능금액(한도적용)")
+    orr_pbl_qty: int | None = Field(default=None, description="주문가능수량 / 길이 18 / 주문가능수량")
+    ost_fee3: int | None = Field(default=None, description="수수료3 / 길이 18 / 수수료")
+    int_rt: float | None = Field(default=None, description="이자율 / 길이 11.8 / 이자율")
+    orr_pr: str | None = Field(default=None, description="주문가격 / 길이 18")
+    rp_eal_amt: str | None = Field(default=None, description="RP평가금액 / 길이 18 / CMA 평가금")
+    ny_stl_qty: str | None = Field(default=None, description="미결제수량 / 길이 21.6")
+
+
+class KrStockInquiryBuyableQuantity(NHPlugAssetHttpBody):
+    """매수가능수량조회 (`POST /krstock/inquiry/v1/buyableQuantity`) 응답.
+
+    연속조회를 지원한다 — 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 다음 호출에
+    전달해 이어받는다.
+    """
+
+    output_0: KrStockInquiryBuyableQuantityOutput | None = Field(
+        default=None, alias="Output_0", description="매수가능수량 조회 결과"
+    )
