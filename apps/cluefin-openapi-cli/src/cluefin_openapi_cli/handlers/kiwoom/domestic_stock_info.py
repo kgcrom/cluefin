@@ -857,6 +857,15 @@ def handle_kiwoom_total_institutional_by_stock(params: dict, session) -> dict:
                 "enum": ["1", "2"],
                 "description": "Day type (1:today, 2:prev day)",
             },
+            "tic_min": {
+                "type": "string",
+                "enum": ["0", "1"],
+                "description": "Interval type (0:tick, 1:minute). Default 0.",
+            },
+            "tm": {
+                "type": "string",
+                "description": "Query time as HHMM (e.g. 0900, 1430). Empty uses current time.",
+            },
             "cont_yn": {"type": "string", "enum": ["Y", "N"], "description": "Continuation flag. Default N."},
             "next_key": {"type": "string", "description": "Continuation key. Default empty."},
         },
@@ -871,6 +880,8 @@ def handle_kiwoom_prev_day_conclusion(params: dict, session) -> dict:
     response = kiwoom.stock_info.get_daily_previous_day_conclusion(
         stk_cd=params["stock_code"],
         tdy_pred=params["tdy_pred"],
+        tic_min=params.get("tic_min", "0"),
+        tm=params.get("tm"),
         cont_yn=params.get("cont_yn", "N"),
         next_key=params.get("next_key", ""),
     )

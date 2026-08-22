@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import ast
 import inspect
 import typing
 from functools import lru_cache
@@ -143,3 +144,40 @@ def test_handler_matches_real_client_contract(spec):
                 f"{model.__name__}에 없는 필드 `{field}`를 읽는다 "
                 f"(실제 필드: {sorted(model.model_fields)})"
             )
+
+
+def _params_keys_read(fn) -> set[str]:
+    """핸들러 소스에서 params["x"] / params.get("x", …)로 읽는 키를 수집한다."""
+    tree = ast.parse(inspect.getsource(fn))
+    keys: set[str] = set()
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Subscript)
+            and isinstance(node.value, ast.Name)
+            and node.value.id == "params"
+            and isinstance(node.slice, ast.Constant)
+        ):
+            keys.add(node.slice.value)
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "get"
+            and isinstance(node.func.value, ast.Name)
+            and node.func.value.id == "params"
+            and node.args
+            and isinstance(node.args[0], ast.Constant)
+        ):
+            keys.add(node.args[0].value)
+    return keys
+
+
+@pytest.mark.parametrize("spec", _ALL_COMMANDS, ids=lambda spec: spec.qualified_name)
+def test_handler_reads_only_declared_params(spec):
+    """핸들러가 읽는 params 키는 모두 스키마에 선언되어야 한다.
+
+    스키마에 없는 키는 describe/--help에 노출되지 않아 agent가 존재 자체를
+    알 수 없는 숨은 파라미터가 된다.
+    """
+    declared = set(spec.parameters.get("properties", {}))
+    hidden = _params_keys_read(spec.executor) - declared
+    assert not hidden, f"{spec.qualified_name}: 스키마에 선언되지 않은 params 키 {sorted(hidden)}"
