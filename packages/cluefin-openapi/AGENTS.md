@@ -31,6 +31,23 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   official KIS/Kiwoom doc portals (Kiwoom's POST doc endpoints are blocked by AhnLab
   Eversafe; only GET works). Read it before re-deriving that.
 
+## NH PLUG (nhplug)
+
+- Token issuance (`/oauth2/token`) is **live-domain only** (no mock endpoint), rate-limited
+  to 1/sec server-side, and every unnecessary re-issue triggers a security alert on the
+  account — always go through `Auth.generate()` (TokenManager cache), never call the raw
+  endpoint in loops or retries. On 429, retry with the SAME token.
+- One token serves both live (`api.nhplug.com`) and mock (`moapi.nhplug.com`) calls, which
+  is why the nhplug token cache is scoped by app_key only (no env) — don't "fix" it to
+  match kis/kiwoom.
+- `TokenManager` is now a **third** copy (kis/kiwoom/nhplug) — mirror cache-behavior
+  changes by hand in all three. nhplug deliberately has no `MAX_CACHE_AGE` (no early
+  server-side invalidation) and computes expiry from `cached_at + expires_in`.
+- The portal spec backend is KIS-portal-style JSON: `/api/apis/public/api-list/{groupId}`
+  → `/api/apis/guide/tr/{apiId}` → `/api/apis/guide/tr/property/{trId}` (no auth needed).
+  Asset-class specs are also public at `https://www.nhplug.com/openapi-docs/<slug>/openapi.json`
+  (the declared source of truth; slugs: common·krstock·gbstock·krfuture·gbfuture·krbond·krgold).
+
 ## Kiwoom scope
 
 - Kiwoom US-stock (overseas) support is **Python-only**; the sibling `cluefin-openapi-ts`

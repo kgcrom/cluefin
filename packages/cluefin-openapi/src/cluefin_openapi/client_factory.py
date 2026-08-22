@@ -14,8 +14,10 @@ from cluefin_openapi.kis._auth import Auth as KisAuth
 from cluefin_openapi.kis._http_client import HttpClient as KisHttpClient
 from cluefin_openapi.kiwoom._auth import Auth as KiwoomAuth
 from cluefin_openapi.kiwoom._client import Client as KiwoomClient
+from cluefin_openapi.nhplug._auth import Auth as NHPlugAuth
+from cluefin_openapi.nhplug._http_client import HttpClient as NHPlugHttpClient
 
-BrokerName = Literal["kis", "kiwoom", "dart"]
+BrokerName = Literal["kis", "kiwoom", "dart", "nhplug"]
 BrokerEnv = Literal["dev", "prod"]
 
 __all__ = ["BrokerClientConfig", "BrokerClientFactory", "create_broker_client"]
@@ -32,6 +34,9 @@ class BrokerClientConfig:
     kiwoom_secret_key: Optional[str] = None
     kiwoom_env: BrokerEnv = "dev"
     dart_auth_key: Optional[str] = None
+    nhplug_app_key: Optional[str] = None
+    nhplug_secret_key: Optional[str] = None
+    nhplug_env: BrokerEnv = "dev"
     cache_dir: Optional[str] = None
     debug: bool = False
 
@@ -46,6 +51,9 @@ class BrokerClientConfig:
             kiwoom_secret_key=env.get("KIWOOM_SECRET_KEY"),
             kiwoom_env=env.get("KIWOOM_ENV", "dev").lower(),
             dart_auth_key=env.get("DART_AUTH_KEY"),
+            nhplug_app_key=env.get("NHPLUG_APP_KEY"),
+            nhplug_secret_key=env.get("NHPLUG_SECRET_KEY"),
+            nhplug_env=env.get("NHPLUG_ENV", "dev").lower(),
             cache_dir=env.get("CLUEFIN_OPENAPI_CACHE_DIR"),
             debug=env.get("CLUEFIN_OPENAPI_DEBUG", "0").lower() in {"1", "true", "yes", "on"},
         )
@@ -101,6 +109,8 @@ class BrokerClientFactory:
             return self.create_kiwoom()
         if broker == "dart":
             return self.create_dart()
+        if broker == "nhplug":
+            return self.create_nhplug()
         raise ValueError(f"Unknown broker: {broker}")
 
     def create_kis(self) -> KisHttpClient:
@@ -135,6 +145,24 @@ class BrokerClientFactory:
         return KiwoomClient(
             token=token.get_token(),
             env=self.config.kiwoom_env,
+            debug=self.config.debug,
+        )
+
+    def create_nhplug(self) -> NHPlugHttpClient:
+        if not self.config.nhplug_app_key or not self.config.nhplug_secret_key:
+            raise ValueError("NH PLUG credentials not configured (nhplug_app_key, nhplug_secret_key)")
+
+        auth = NHPlugAuth(
+            app_key=self.config.nhplug_app_key,
+            secret_key=SecretStr(self.config.nhplug_secret_key),
+            cache_dir=self.config.resolved_cache_dir(),
+        )
+        token = auth.generate()
+        return NHPlugHttpClient(
+            token=token.get_token(),
+            app_key=self.config.nhplug_app_key,
+            secret_key=SecretStr(self.config.nhplug_secret_key),
+            env=self.config.nhplug_env,
             debug=self.config.debug,
         )
 
