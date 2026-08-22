@@ -7,6 +7,7 @@ from cluefin_openapi.nhplug._krstock_quote_types import (
     KrStockQuoteCurrentExecution,
     KrStockQuoteCurrentInvestor,
     KrStockQuoteCurrentPrice,
+    KrStockQuotePeriod,
 )
 from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES, NHPlugHttpHeader, NHPlugHttpResponse
 
@@ -156,3 +157,74 @@ class KrStockQuote:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuoteCurrentInvestor.model_validate(data))
+
+    def period(
+        self,
+        market_cd: Literal["KRX", "NXT", "UNT"],
+        iem_cd: str,
+        mrkt_div_cls_code: Optional[Literal["1", "4", "A", "E", "T"]] = None,
+        edate: Optional[str] = None,
+        array_cnt: Optional[str] = None,
+        maxavg: Optional[str] = None,
+        gubun: Optional[Literal["1", "2", "3", "4", "5", "6", "7"]] = None,
+        xtick: Optional[str] = None,
+        today_cls_code: Optional[Literal["0", "1"]] = None,
+        fake_tick: Optional[Literal["0", "1"]] = None,
+        sur_flag: Optional[Literal["0", "1"]] = None,
+        sur_gb_day_cnt: Optional[str] = None,
+        sur_bf_end_time: Optional[str] = None,
+        out1_scale_change: Optional[Literal["0", "1", "2"]] = None,
+        out2_scale_change: Optional[Literal["0", "1", "2"]] = None,
+    ) -> NHPlugHttpResponse[KrStockQuotePeriod]:
+        """국내주식기간별시세(일/주/월/년) (`POST /krstock/quote/v1/period`).
+
+        `market_cd`/`iem_cd` 만 required 다. 계좌번호가 필요 없는 시세 조회 API 다.
+        스펙에 `CtsHeader` 파라미터가 없어 연속조회를 지원하지 않는다(다른 조회
+        API 와 달리 `cts` 인자가 없다). `Output_0` 은 스펙상 Array 로 선언되지만
+        예시 응답은 Object 다(양쪽 다 허용). `Output_1` 이 실제 주기별(일/주/월/년)
+        봉 데이터 배열이다.
+
+        Args:
+            market_cd: 시장구분코드 (KRX/NXT/UNT)
+            iem_cd: 단축종목코드 (예: 005930)
+            mrkt_div_cls_code: 시장분류구분코드 (1.거래소 4.코스닥 A.ETN E.ELW T.K-OTC)
+            edate: 종료일 (YYYYMMDD)
+            array_cnt: 읽을건수
+            maxavg: 최대이평
+            gubun: 주기구분 (1.일 2.주 3.월 4.년 5.분 6.초 7.틱)
+            xtick: 분구분 (분/초/틱일 때 입력)
+            today_cls_code: 당일조회구분 (1.당일만조회 0.전체조회, 분/초/틱에서 사용)
+            fake_tick: 거래량0봉제외여부 (0.허봉+실봉 1.실봉)
+            sur_flag: 복기구분플래그 (0.복기사용안함 1.복기처리사용함)
+            sur_gb_day_cnt: 복기시작n일전 (sur_flag="1"일 때만 의미, 예: 00.D당일
+                01.D-1일전 02.D-2일전)
+            sur_bf_end_time: 복기시작전종료시각 (HHmmSS, sur_flag="1"일 때)
+            out1_scale_change: Out1단위변경 (0.변경안함 1.거래량천단위·거래대금백만단위
+                2.거래량단주·거래대금만백만단위)
+            out2_scale_change: Out2단위변경 (0.변경안함 1.거래량천단위·거래대금백만단위
+                2.거래량단주·거래대금만백만단위)
+        """
+        body = self._drop_none(
+            {
+                "market_cd": market_cd,
+                "iem_cd": iem_cd,
+                "mrkt_div_cls_code": mrkt_div_cls_code,
+                "edate": edate,
+                "array_cnt": array_cnt,
+                "maxavg": maxavg,
+                "gubun": gubun,
+                "xtick": xtick,
+                "today_cls_code": today_cls_code,
+                "fake_tick": fake_tick,
+                "sur_flag": sur_flag,
+                "sur_gb_day_cnt": sur_gb_day_cnt,
+                "sur_bf_end_time": sur_bf_end_time,
+                "out1_scale_change": out1_scale_change,
+                "out2_scale_change": out2_scale_change,
+            }
+        )
+        response = self.client.post("/krstock/quote/v1/period", body=body)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=KrStockQuotePeriod.model_validate(data))

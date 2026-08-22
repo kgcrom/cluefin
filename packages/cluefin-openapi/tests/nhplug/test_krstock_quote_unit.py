@@ -248,3 +248,65 @@ class TestCurrentInvestor:
             )
             with pytest.raises(NHPlugAPIError, match="IGW40018"):
                 client.krstock_quote.current_investor(market_cd="KRX", iem_cd="999999", array_cnt="10")
+
+
+PERIOD_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "조회가 완료되었습니다.",
+    "message": None,
+    "Output_0": {
+        "iem_cd": "005930",
+        "iem_nm": "삼성전자",
+        "stck_prpr": "281500",
+    },
+    "Output_1": [
+        {
+            "bsop_date": "20260821",
+            "stck_oprc": "280000",
+            "stck_hgpr": "282000",
+            "stck_lwpr": "279000",
+            "stck_prpr": "281500",
+            "vol": "12345678",
+        }
+    ],
+}
+
+
+class TestPeriod:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/quote/v1/period", json=PERIOD_BODY)
+            response = client.krstock_quote.period(market_cd="KRX", iem_cd="005930", gubun="1")
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "market_cd": "KRX",
+                "iem_cd": "005930",
+                "gubun": "1",
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        # Output_0 은 스펙상 Array 지만 예시 응답은 Object — Object 로 온 케이스를 검증한다.
+        assert not isinstance(response.body.output_0, list)
+        assert response.body.output_0.iem_cd == "005930"
+        assert len(response.body.output_1) == 1
+        assert response.body.output_1[0].stck_prpr == "281500"
+
+    def test_market_order_omits_none_params(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/quote/v1/period", json=PERIOD_BODY)
+            client.krstock_quote.period(market_cd="KRX", iem_cd="005930")
+
+        sent = json.loads(m.request_history[0].text)["Input_0"]
+        assert "gubun" not in sent
+        assert "edate" not in sent
+        assert "array_cnt" not in sent
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/period",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_quote.period(market_cd="KRX", iem_cd="999999")

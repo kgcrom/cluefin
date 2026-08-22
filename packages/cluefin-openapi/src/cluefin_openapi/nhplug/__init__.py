@@ -83,6 +83,9 @@ from cluefin_openapi.nhplug._krstock_quote_types import (
     KrStockQuoteCurrentPriceExpectedOutput,
     KrStockQuoteCurrentPriceOutput,
     KrStockQuoteCurrentPriceTickOutput,
+    KrStockQuotePeriod,
+    KrStockQuotePeriodBarOutput,
+    KrStockQuotePeriodOutput,
 )
 from cluefin_openapi.nhplug._model import (
     NHPlugAssetHttpBody,
@@ -159,6 +162,9 @@ __all__ = [
     "KrStockQuoteCurrentPriceExpectedOutput",
     "KrStockQuoteCurrentPriceOutput",
     "KrStockQuoteCurrentPriceTickOutput",
+    "KrStockQuotePeriod",
+    "KrStockQuotePeriodBarOutput",
+    "KrStockQuotePeriodOutput",
     "NHPlugAPIError",
     "NHPlugAssetHttpBody",
     "NHPlugAuthenticationError",

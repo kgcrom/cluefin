@@ -437,3 +437,132 @@ class KrStockQuoteCurrentInvestor(NHPlugAssetHttpBody):
     output_0: list[KrStockQuoteCurrentInvestorOutput] | None = Field(
         default=None, alias="Output_0", description="투자자별 거래현황 상세 목록"
     )
+
+
+class KrStockQuotePeriodOutput(BaseModel):
+    """국내주식기간별시세(일/주/월/년) 종합 정보 (Output_0)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    qry_date: str | None = Field(default=None, description="조회날짜 / 길이 8 / YYYYMMDD")
+    qry_time: str | None = Field(default=None, description="조회시간 / 길이 6 / HHmmSS")
+    iem_cd: str | None = Field(default=None, description="단축종목코드 / 길이 9")
+    iem_nm: str | None = Field(default=None, description="한글종목명 / 길이 41")
+    stck_prpr: str | None = Field(default=None, description="현재가 / 길이 10")
+    prdy_vrss_sign: str | None = Field(
+        default=None,
+        description="전일대비부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)",
+    )
+    prdy_vrss: str | None = Field(default=None, description="전일대비 / 길이 10")
+    prdy_ctrt: str | None = Field(default=None, description="전일대비율 / 길이 5 / float 5.2")
+    acml_vol: str | None = Field(default=None, description="누적거래량 / 길이 12")
+    acml_tr_pbmn: str | None = Field(default=None, description="누적거래대금 / 길이 18")
+    prdy_vol: str | None = Field(default=None, description="전일거래량 / 길이 12")
+    prdy_vol_rate: str | None = Field(default=None, description="거래량전일비 / 길이 15 / float 15.2")
+    vol_rate: str | None = Field(default=None, description="거래량회전율 / 길이 10 / float 10.5")
+    cttr: str | None = Field(default=None, description="체결강도 / 길이 6 / float 6.2")
+    prdy_cttr: str | None = Field(default=None, description="전일체결강도 / 길이 6 / float 6.2")
+    askp: str | None = Field(default=None, description="매도호가 / 길이 10")
+    bidp: str | None = Field(default=None, description="매수호가 / 길이 10")
+    askp_rsqn1: str | None = Field(default=None, description="매도1호가잔량 / 길이 12")
+    bidp_rsqn1: str | None = Field(default=None, description="매수1호가잔량 / 길이 12")
+    stck_mxpr: str | None = Field(default=None, description="상한가 / 길이 10")
+    stck_llam: str | None = Field(default=None, description="하한가 / 길이 10")
+    stck_oprc: str | None = Field(default=None, description="시가 / 길이 10")
+    stck_hgpr: str | None = Field(default=None, description="고가 / 길이 10")
+    stck_lwpr: str | None = Field(default=None, description="저가 / 길이 10")
+    lstn_stcn: str | None = Field(default=None, description="상장주수 / 길이 12")
+    hts_avls: str | None = Field(default=None, description="시가총액 / 길이 10 / 억단위")
+    dae_rate: str | None = Field(default=None, description="대주주지분율 / 길이 5 / float 5.2")
+    per: str | None = Field(default=None, description="PER / 길이 5 / float 5.2")
+    pbr: str | None = Field(default=None, description="PBR / 길이 5 / float 5.2")
+    eps: str | None = Field(default=None, description="EPS / 길이 9")
+    bps: str | None = Field(default=None, description="BPS / 길이 10")
+    prdy_oprc: str | None = Field(default=None, description="전일시가 / 길이 10")
+    prdy_high: str | None = Field(default=None, description="전일고가 / 길이 10")
+    prdy_low: str | None = Field(default=None, description="전일저가 / 길이 10")
+    prdy_clpr: str | None = Field(default=None, description="전일종가 / 길이 10")
+    tdw_oprc: str | None = Field(default=None, description="이번주시가 / 길이 10")
+    tdw_high: str | None = Field(default=None, description="이번주고가 / 길이 10")
+    tdw_low: str | None = Field(default=None, description="이번주저가 / 길이 10")
+    tdm_oprc: str | None = Field(default=None, description="이번달시가 / 길이 10")
+    tdm_high: str | None = Field(default=None, description="이번달고가 / 길이 10")
+    tdm_low: str | None = Field(default=None, description="이번달저가 / 길이 10")
+    vi_sttc_mxpr: str | None = Field(default=None, description="VI정적발동상승 / 길이 10")
+    vi_sttc_llam: str | None = Field(default=None, description="VI정적발동하락 / 길이 10")
+    start_time: str | None = Field(default=None, description="장시작시간 / 길이 6 / HHmmSS")
+    end_time: str | None = Field(default=None, description="장마감시간 / 길이 6 / HHmmSS")
+    bsop_date: str | None = Field(default=None, description="영업일 / 길이 8")
+    stck_sdpr: str | None = Field(default=None, description="주식기준가 / 길이 10")
+    stck_fcam: str | None = Field(default=None, description="주식액면가 / 길이 10")
+    bstp_kor_isnm: str | None = Field(default=None, description="업종한글명 / 길이 40")
+    bstp_cls_code: str | None = Field(default=None, description="업종코드 / 길이 6")
+    exchange_prpr: str | None = Field(default=None, description="달러환율 / 길이 8")
+    ctsz30: str | None = Field(default=None, description="연속조회키 / 길이 30")
+    lasttickcount: str | None = Field(default=None, description="마지막N틱봉의틱묶음갯수 / 길이 5 / 최근봉마지막틱갯수")
+    send_cnt: str | None = Field(default=None, description="전송레코드건수 / 길이 5")
+    pre_tr_sta_hour: str | None = Field(default=None, description="프리마켓시작시간 / 길이 6 / NXT/UNT프리마켓시작시간")
+    pre_tr_fin_hour: str | None = Field(default=None, description="프리마켓종료시간 / 길이 6 / NXT/UNT프리마켓종료시간")
+    main_tr_sta_hour: str | None = Field(
+        default=None, description="메인마겟시작시간 / 길이 6 / NXT/UNT메인마켓시작시간"
+    )
+    main_tr_fin_hour: str | None = Field(
+        default=None, description="메인마겟종료시간 / 길이 6 / NXT/UNT메인마켓종료시간"
+    )
+    aft_tr_sta_hour: str | None = Field(
+        default=None, description="에프터마겟시작시간 / 길이 6 / NXT/UNT에프터마켓시작시간"
+    )
+    aft_tr_fin_hour: str | None = Field(
+        default=None, description="에프터마겟종료시간 / 길이 6 / NXT/UNT에프터마켓종료시간"
+    )
+    cncc_aspr_sta_hour: str | None = Field(
+        default=None, description="정규장마감전동시호가 / 길이 6 / KRX/UNT종료전동시호가시작시간"
+    )
+
+
+class KrStockQuotePeriodBarOutput(BaseModel):
+    """국내주식기간별시세(일/주/월/년) 주기별 봉 상세 (Output_1 배열의 각 항목)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    bsop_date: str | None = Field(default=None, description="영업일 / 길이 8")
+    bsop_time: str | None = Field(default=None, description="시간 / 길이 6 / HHmmSS")
+    stck_sdpr: str | None = Field(default=None, description="주식기준가 / 길이 10")
+    stck_oprc: str | None = Field(default=None, description="시가 / 길이 10")
+    stck_hgpr: str | None = Field(default=None, description="고가 / 길이 10")
+    stck_lwpr: str | None = Field(default=None, description="저가 / 길이 10")
+    stck_prpr: str | None = Field(default=None, description="현재가 / 길이 10")
+    vol: str | None = Field(default=None, description="거래량 / 길이 15")
+    tr_pbmn: str | None = Field(default=None, description="거래대금 / 길이 18")
+    flng_cls_code: str | None = Field(
+        default=None,
+        description="락구분코드 / 길이 2 / 01.권리락 02.배당락 03.분배락 04.권배락 05.중간배당락 06.권리중간배당락 07.권리분기배당락 99.기타",
+    )
+    prtt_rate: str | None = Field(default=None, description="락비율 / 길이 8 / float 8.2")
+    news_cnt: str | None = Field(default=None, description="뉴스건수 / 길이 3 / 일간일때만처리")
+    updownmark: str | None = Field(default=None, description="상하한가표시 / 길이 1 / 0.기본 1.상한 4.하한")
+    fcam_mod_cls_code: str | None = Field(
+        default=None,
+        description="액면가변경구분코드 / 길이 2 / 00.해당없음 01.액면분할 02.액면병합 03.주식분할 04.주식병합 99.기타",
+    )
+    vol_prtt_rate: str | None = Field(default=None, description="거래량수정비율 / 길이 2")
+
+
+class KrStockQuotePeriod(NHPlugAssetHttpBody):
+    """국내주식기간별시세(일/주/월/년) (`POST /krstock/quote/v1/period`) 응답.
+
+    시세 조회 API 라 계좌번호가 필요 없다. 스펙에 `CtsHeader` 파라미터가 없어
+    연속조회를 지원하지 않는다(단건 조회). 스펙은 `Output_0` 을 Array 로 선언하지만
+    스펙 자체의 x-schema-warning 이 예시 응답은 Object 라고 명시한다 —
+    object/array 둘 다 허용하는 Union 으로 받는다. `Output_1` 은 주기별(일/주/월/년)
+    봉 상세 배열이다.
+    """
+
+    output_0: list[KrStockQuotePeriodOutput] | KrStockQuotePeriodOutput | None = Field(
+        default=None,
+        alias="Output_0",
+        description="종합 정보 (스펙은 Array, 실제 예시는 Object — 둘 다 허용)",
+    )
+    output_1: list[KrStockQuotePeriodBarOutput] | None = Field(
+        default=None, alias="Output_1", description="주기별 봉 상세 목록"
+    )
