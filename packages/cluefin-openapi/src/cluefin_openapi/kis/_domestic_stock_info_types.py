@@ -457,7 +457,8 @@ class KsdPaidInCapitalIncreaseScheduleItem(BaseModel):
 class KsdPaidInCapitalIncreaseSchedule(BaseModel, KisHttpBody):
     """예탁원정보(유상증자일정)"""
 
-    output: Sequence[KsdPaidInCapitalIncreaseScheduleItem] = Field(default_factory=list)
+    # 공식 문서는 output이지만 실서버는 output1로 응답한다(실측).
+    output1: Sequence[KsdPaidInCapitalIncreaseScheduleItem] = Field(default_factory=list)
 
 
 class KsdStockDividendScheduleItem(BaseModel):

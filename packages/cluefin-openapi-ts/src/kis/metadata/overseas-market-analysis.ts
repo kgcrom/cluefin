@@ -4,12 +4,14 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
   {
     methodName: 'getStockPriceFluctuation',
     method: 'GET',
-    path: '/uapi/overseas-stock/v1/ranking/price-fluctuation',
+    path: '/uapi/overseas-stock/v1/ranking/price-fluct',
     trId: 'HHDFS76260000',
     requestMap: {
+      KEYB: 'keyb',
+      AUTH: 'auth',
       EXCD: 'excd',
       GUBN: 'gubn',
-      MIXN: 'mixn',
+      MINX: 'minx',
       VOL_RANG: 'volRang',
     },
     params: [
@@ -22,12 +24,22 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
         required: true,
       },
       {
-        name: 'mixn',
+        name: 'minx',
         required: true,
       },
       {
         name: 'volRang',
         required: true,
+      },
+      {
+        name: 'keyb',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'auth',
+        required: false,
+        defaultValue: '',
       },
     ],
   },
@@ -40,36 +52,29 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
       KEYB: 'keyb',
       AUTH: 'auth',
       EXCD: 'excd',
-      MIXN: 'mixn',
-      MINX: 'mixn',
+      MINX: 'minx',
       VOL_RANG: 'volRang',
     },
     params: [
       {
         name: 'keyb',
-        required: false,
-        defaultValue: '',
+        required: true,
       },
       {
         name: 'auth',
-        required: false,
-        defaultValue: '',
+        required: true,
       },
       {
         name: 'excd',
         required: true,
       },
       {
-        name: 'mixn',
+        name: 'minx',
         required: true,
       },
       {
         name: 'volRang',
         required: true,
-      },
-      {
-        name: 'minx',
-        required: false,
       },
     ],
   },
@@ -88,13 +93,11 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
     params: [
       {
         name: 'keyb',
-        required: false,
-        defaultValue: '',
+        required: true,
       },
       {
         name: 'auth',
-        required: false,
-        defaultValue: '',
+        required: true,
       },
       {
         name: 'excd',
@@ -126,13 +129,11 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
     params: [
       {
         name: 'keyb',
-        required: false,
-        defaultValue: '',
+        required: true,
       },
       {
         name: 'auth',
-        required: false,
-        defaultValue: '',
+        required: true,
       },
       {
         name: 'excd',
@@ -169,13 +170,11 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
     params: [
       {
         name: 'keyb',
-        required: false,
-        defaultValue: '',
+        required: true,
       },
       {
         name: 'auth',
-        required: false,
-        defaultValue: '',
+        required: true,
       },
       {
         name: 'excd',
@@ -216,13 +215,11 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
     params: [
       {
         name: 'keyb',
-        required: false,
-        defaultValue: '',
+        required: true,
       },
       {
         name: 'auth',
-        required: false,
-        defaultValue: '',
+        required: true,
       },
       {
         name: 'excd',
@@ -263,13 +260,11 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
     params: [
       {
         name: 'keyb',
-        required: false,
-        defaultValue: '',
+        required: true,
       },
       {
         name: 'auth',
-        required: false,
-        defaultValue: '',
+        required: true,
       },
       {
         name: 'excd',
@@ -308,13 +303,11 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
     params: [
       {
         name: 'keyb',
-        required: false,
-        defaultValue: '',
+        required: true,
       },
       {
         name: 'auth',
-        required: false,
-        defaultValue: '',
+        required: true,
       },
       {
         name: 'excd',
@@ -345,13 +338,11 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
     params: [
       {
         name: 'keyb',
-        required: false,
-        defaultValue: '',
+        required: true,
       },
       {
         name: 'auth',
-        required: false,
-        defaultValue: '',
+        required: true,
       },
       {
         name: 'excd',
@@ -382,13 +373,11 @@ export const overseasMarketAnalysisEndpoints: KisEndpointDefinition[] = [
     params: [
       {
         name: 'keyb',
-        required: false,
-        defaultValue: '',
+        required: true,
       },
       {
         name: 'auth',
-        required: false,
-        defaultValue: '',
+        required: true,
       },
       {
         name: 'excd',

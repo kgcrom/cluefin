@@ -29,6 +29,8 @@ import {
   topForeignerInstitutionTradingResponseSchema,
   topForeignerPeriodTradingItemSchema,
   topForeignerPeriodTradingResponseSchema,
+  topIntradayTradingByInvestorItemSchema,
+  topIntradayTradingByInvestorResponseSchema,
   topLimitExhaustionRateForeignerItemSchema,
   topLimitExhaustionRateForeignerResponseSchema,
   topMarginRatioItemSchema,
@@ -449,6 +451,23 @@ describe('Kiwoom DomesticRankInfo', () => {
       topForeignerInstitutionTradingResponseSchema,
       'frgnrOrgnTrdeUpper',
       topForeignerInstitutionTradingItemSchema,
+    );
+  });
+
+  it('getTopIntradayTradingByInvestor', async () => {
+    const client = await getKiwoomClient();
+    const res = await client.domesticRankInfo.getTopIntradayTradingByInvestor({
+      trdeTp: '1',
+      mrktTp: '000',
+      orgnTp: '9000',
+      amtQtyTp: '1',
+    });
+    assertKiwoomResponse(res);
+    assertResponseShape(
+      res.body,
+      topIntradayTradingByInvestorResponseSchema,
+      'opmrInvsrTrdeUpper',
+      topIntradayTradingByInvestorItemSchema,
     );
   });
 });

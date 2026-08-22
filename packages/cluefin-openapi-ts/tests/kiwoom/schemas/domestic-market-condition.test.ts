@@ -293,7 +293,7 @@ describe('domestic-market-condition response schemas', () => {
       expect(item.dt).toBe('');
       expect(item.cur_prc).toBe('');
       expect(item.cntr_str).toBe('');
-      expect(item.cntr_str5min).toBe('');
+      expect(item.cntr_str_5min).toBe('');
     });
 
     it('defaults numeric return_code', () => {

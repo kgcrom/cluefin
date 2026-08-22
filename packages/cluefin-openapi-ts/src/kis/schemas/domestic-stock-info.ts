@@ -531,6 +531,7 @@ export const getKsdPaidInCapitalIncreaseScheduleItemSchema = z
 export const getKsdPaidInCapitalIncreaseScheduleResponseSchema = z
   .object({
     ...kisEnvelope,
+    // 공식 문서는 output으로 표기하지만 실서버는 output1로 반환함 (2026-08 실측)
     output1: z.array(getKsdPaidInCapitalIncreaseScheduleItemSchema).default([]),
   })
   .passthrough();

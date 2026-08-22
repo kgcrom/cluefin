@@ -477,6 +477,7 @@ export const getStockDividendYieldTopItemSchema = z
 export const getStockDividendYieldTopResponseSchema = z
   .object({
     ...kisEnvelope,
+    // 공식 문서는 output1로 표기하지만 실서버는 output으로 반환함 (2026-08 실측)
     output: z.array(getStockDividendYieldTopItemSchema).default([]),
   })
   .passthrough();
@@ -528,10 +529,40 @@ export const getStockCreditBalanceTopItemSchema = z
   })
   .passthrough();
 
+export const getStockCreditBalanceTopOutput1ItemSchema = z
+  .object({
+    bstp_cls_code: s(),
+    hts_kor_isnm: s(),
+    stnd_date1: s(),
+    stnd_date2: s(),
+  })
+  .passthrough();
+
+export const getStockCreditBalanceTopOutput2ItemSchema = z
+  .object({
+    mksc_shrn_iscd: s(),
+    hts_kor_isnm: s(),
+    stck_prpr: s(),
+    prdy_vrss: s(),
+    prdy_vrss_sign: s(),
+    prdy_ctrt: s(),
+    acml_vol: s(),
+    whol_loan_rmnd_stcn: s(),
+    whol_loan_rmnd_amt: s(),
+    whol_loan_rmnd_rate: s(),
+    whol_stln_rmnd_stcn: s(),
+    whol_stln_rmnd_amt: s(),
+    whol_stln_rmnd_rate: s(),
+    nday_vrss_loan_rmnd_inrt: s(),
+    nday_vrss_stln_rmnd_inrt: s(),
+  })
+  .passthrough();
+
 export const getStockCreditBalanceTopResponseSchema = z
   .object({
     ...kisEnvelope,
-    output: z.array(getStockCreditBalanceTopItemSchema).default([]),
+    output1: z.array(getStockCreditBalanceTopOutput1ItemSchema).default([]),
+    output2: z.array(getStockCreditBalanceTopOutput2ItemSchema).default([]),
   })
   .passthrough();
 

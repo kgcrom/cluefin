@@ -13,22 +13,22 @@ const envelope = {
 
 export const themeGroupItemSchema = z
   .object({
-    themaGrpCd: s(),
-    themaNm: s(),
-    stkNum: s(),
-    fluSig: s(),
-    fluRt: s(),
-    risingStkNum: s(),
-    fallStkNum: s(),
-    dtPrftRt: s(),
-    mainStk: s(),
+    thema_grp_cd: s(),
+    thema_nm: s(),
+    stk_num: s(),
+    flu_sig: s(),
+    flu_rt: s(),
+    rising_stk_num: s(),
+    fall_stk_num: s(),
+    dt_prft_rt: s(),
+    main_stk: s(),
   })
   .passthrough();
 
 export const themeGroupResponseSchema = z
   .object({
     ...envelope,
-    themaGrp: z.array(themeGroupItemSchema).default([]),
+    thema_grp: z.array(themeGroupItemSchema).default([]),
   })
   .passthrough();
 
@@ -36,27 +36,27 @@ export const themeGroupResponseSchema = z
 
 export const themeGroupStocksItemSchema = z
   .object({
-    stkCd: s(),
-    stkNm: s(),
-    curPrc: s(),
-    fluSig: s(),
-    predPre: s(),
-    fluRt: s(),
-    accTrdeQty: s(),
-    selBid: s(),
-    selReq: s(),
-    buyBid: s(),
-    buyReq: s(),
-    dtPrftRtN: s(),
+    stk_cd: s(),
+    stk_nm: s(),
+    cur_prc: s(),
+    flu_sig: s(),
+    pred_pre: s(),
+    flu_rt: s(),
+    acc_trde_qty: s(),
+    sel_bid: s(),
+    sel_req: s(),
+    buy_bid: s(),
+    buy_req: s(),
+    dt_prft_rt_n: s(),
   })
   .passthrough();
 
 export const themeGroupStocksResponseSchema = z
   .object({
     ...envelope,
-    fluRt: s(),
-    dtPrftRt: s(),
-    themaCompStk: z.array(themeGroupStocksItemSchema).default([]),
+    flu_rt: s(),
+    dt_prft_rt: s(),
+    thema_comp_stk: z.array(themeGroupStocksItemSchema).default([]),
   })
   .passthrough();
 

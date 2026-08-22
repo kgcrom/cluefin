@@ -97,9 +97,10 @@ export const stockMinuteItemSchema = z
     open_pric: s(),
     high_pric: s(),
     low_pric: s(),
-    acc_trde_qty: s(),
     pred_pre: s(),
     pred_pre_sig: s(),
+    // 공식 문서에 없지만 실서버가 반환함 (2026-08 실측)
+    acc_trde_qty: s(),
   })
   .passthrough();
 

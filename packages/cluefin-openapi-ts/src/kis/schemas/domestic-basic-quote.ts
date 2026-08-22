@@ -477,7 +477,9 @@ export const getStockPeriodQuoteOutput1ItemSchema = z
     per: s(),
     eps: s(),
     pbr: s(),
-    itewhol_loan_rmnd_rate: s(),
+    // 실서버는 오타 난 키("itewhol_loan_rmnd_ratem name")를 반환하고 공식 문서는 "itewhol_loan_rmnd_ratem"로 표기 — 둘 다 수용
+    'itewhol_loan_rmnd_ratem name': s(),
+    itewhol_loan_rmnd_ratem: s(),
   })
   .passthrough();
 

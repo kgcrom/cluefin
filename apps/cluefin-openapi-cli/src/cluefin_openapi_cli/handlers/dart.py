@@ -18,9 +18,28 @@ from cluefin_openapi_cli.handlers._base import DispatcherProtocol, rpc_method
             "pblntf_ty": {
                 "type": "string",
                 "enum": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
-                "description": "Disclosure type (A:periodic, B:major, etc.)",
+                "description": "Disclosure type (A:periodic, B:major-report, C:issuance, D:ownership, "
+                "E:other, F:external-audit, G:fund, H:asset-securitization, I:exchange, J:fair-trade)",
             },
-            "corp_cls": {"type": "string", "enum": ["Y", "K", "N", "E"], "description": "Corp class"},
+            "pblntf_detail_ty": {
+                "type": "string",
+                "description": "Disclosure detail type code (per DART docs). Ignored when pblntf_ty is A.",
+            },
+            "corp_cls": {
+                "type": "string",
+                "enum": ["Y", "K", "N", "E"],
+                "description": "Corp class (Y:KOSPI, K:KOSDAQ, N:KONEX, E:other)",
+            },
+            "sort": {
+                "type": "string",
+                "enum": ["date", "crp", "rpt"],
+                "description": "Sort key (date:received-date, crp:company-name, rpt:report-name)",
+            },
+            "sort_mth": {
+                "type": "string",
+                "enum": ["asc", "desc"],
+                "description": "Sort order (asc, desc)",
+            },
             "page_no": {"type": "integer", "description": "Page number"},
             "page_count": {"type": "integer", "description": "Items per page (1-100)"},
         },
@@ -32,7 +51,19 @@ from cluefin_openapi_cli.handlers._base import DispatcherProtocol, rpc_method
 def handle_disclosure_search(params: dict, session) -> dict:
     dart = session.get_dart()
     kwargs = {}
-    for key in ["corp_code", "bgn_de", "end_de", "last_reprt_at", "pblntf_ty", "corp_cls", "page_no", "page_count"]:
+    for key in [
+        "corp_code",
+        "bgn_de",
+        "end_de",
+        "last_reprt_at",
+        "pblntf_ty",
+        "pblntf_detail_ty",
+        "corp_cls",
+        "sort",
+        "sort_mth",
+        "page_no",
+        "page_count",
+    ]:
         if key in params:
             kwargs[key] = params[key]
     result = dart.public_disclosure.public_disclosure_search(**kwargs)

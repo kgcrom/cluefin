@@ -18,6 +18,7 @@ import {
   getForeignInstitutionalEstimateByStockResponseSchema,
   getForeignNetBuyTrendByStockItemSchema,
   getForeignNetBuyTrendByStockResponseSchema,
+  getInstitutionalForeignTradingAggregateItemSchema,
   getInstitutionalForeignTradingAggregateResponseSchema,
   getInvestorTradingTrendByMarketDailyItemSchema,
   getInvestorTradingTrendByMarketDailyResponseSchema,
@@ -532,19 +533,22 @@ describe('KIS DomesticMarketAnalysis', () => {
     );
   });
 
-  itWithUserId('getInstitutionalForeignTradingAggregate', async () => {
+  it('getInstitutionalForeignTradingAggregate', async () => {
     const client = await getKisClient();
     const res = await client.domesticMarketAnalysis.getInstitutionalForeignTradingAggregate({
-      type: '0',
-      userId,
-      dataRank: '',
-      interGrpCode: '',
-      interGrpName: '',
-      htsKorIsnm: '',
-      cntgClsCode: '',
-      fidEtcClsCode: '',
+      fidCondMrktDivCode: 'V',
+      fidCondScrDivCode: '16449',
+      fidInputIscd: '0000',
+      fidDivClsCode: '0',
+      fidRankSortClsCode: '0',
+      fidEtcClsCode: '0',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getInstitutionalForeignTradingAggregateResponseSchema);
+    assertResponseShape(
+      res.body,
+      getInstitutionalForeignTradingAggregateResponseSchema,
+      'output',
+      getInstitutionalForeignTradingAggregateItemSchema,
+    );
   });
 });

@@ -135,7 +135,12 @@ test('KIS endpoint metadata should map request path, headers, and query/body', a
       }
 
       expect(latest.url.pathname).toBe(endpoint.path);
-      expect((latest.init.headers as Record<string, string>).tr_id).toBe(endpoint.trId);
+      // 정적 trId가 없는 엔드포인트는 입력의 trId가 헤더로 나가야 한다
+      const expectedTrId = endpoint.trId ?? (input.trId as string | undefined);
+      expect((latest.init.headers as Record<string, string>).tr_id).toBe(expectedTrId);
+      if (input.trCont !== undefined) {
+        expect((latest.init.headers as Record<string, string>).tr_cont).toBe(input.trCont);
+      }
 
       for (const [apiKey, inputName] of Object.entries(endpoint.requestMap)) {
         const expected = String(input[inputName]);

@@ -74,36 +74,36 @@ export const stockTradingMemberResponseSchema = z
     base_pric: s(),
     pred_pre: s(),
     flu_rt: s(),
-    sel_trde_ori_nm1: s(),
-    sel_trde_ori1: s(),
-    sel_trde_qty1: s(),
-    buy_trde_ori_nm1: s(),
-    buy_trde_ori1: s(),
-    buy_trde_qty1: s(),
-    sel_trde_ori_nm2: s(),
-    sel_trde_ori2: s(),
-    sel_trde_qty2: s(),
-    buy_trde_ori_nm2: s(),
-    buy_trde_ori2: s(),
-    buy_trde_qty2: s(),
-    sel_trde_ori_nm3: s(),
-    sel_trde_ori3: s(),
-    sel_trde_qty3: s(),
-    buy_trde_ori_nm3: s(),
-    buy_trde_ori3: s(),
-    buy_trde_qty3: s(),
-    sel_trde_ori_nm4: s(),
-    sel_trde_ori4: s(),
-    sel_trde_qty4: s(),
-    buy_trde_ori_nm4: s(),
-    buy_trde_ori4: s(),
-    buy_trde_qty4: s(),
-    sel_trde_ori_nm5: s(),
-    sel_trde_ori5: s(),
-    sel_trde_qty5: s(),
-    buy_trde_ori_nm5: s(),
-    buy_trde_ori5: s(),
-    buy_trde_qty5: s(),
+    sel_trde_ori_nm_1: s(),
+    sel_trde_ori_1: s(),
+    sel_trde_qty_1: s(),
+    buy_trde_ori_nm_1: s(),
+    buy_trde_ori_1: s(),
+    buy_trde_qty_1: s(),
+    sel_trde_ori_nm_2: s(),
+    sel_trde_ori_2: s(),
+    sel_trde_qty_2: s(),
+    buy_trde_ori_nm_2: s(),
+    buy_trde_ori_2: s(),
+    buy_trde_qty_2: s(),
+    sel_trde_ori_nm_3: s(),
+    sel_trde_ori_3: s(),
+    sel_trde_qty_3: s(),
+    buy_trde_ori_nm_3: s(),
+    buy_trde_ori_3: s(),
+    buy_trde_qty_3: s(),
+    sel_trde_ori_nm_4: s(),
+    sel_trde_ori_4: s(),
+    sel_trde_qty_4: s(),
+    buy_trde_ori_nm_4: s(),
+    buy_trde_ori_4: s(),
+    buy_trde_qty_4: s(),
+    sel_trde_ori_nm_5: s(),
+    sel_trde_ori_5: s(),
+    sel_trde_qty_5: s(),
+    buy_trde_ori_nm_5: s(),
+    buy_trde_ori_5: s(),
+    buy_trde_qty_5: s(),
   })
   .passthrough();
 
@@ -176,7 +176,7 @@ export const dailyTradingDetailsItemSchema = z
     opmr_trde_wght: s(),
     af_mkrt_trde_qty: s(),
     af_mkrt_trde_wght: s(),
-    tot3: s(),
+    tot_3: s(),
     prid_trde_qty: s(),
     cntr_str: s(),
     for_poss: s(),
@@ -213,7 +213,6 @@ export const newHighLowPriceItemSchema = z
     pred_pre_sig: s(),
     pred_pre: s(),
     flu_rt: s(),
-    now_trde_qty: s(),
   })
   .passthrough();
 
@@ -234,7 +233,6 @@ export const upperLowerLimitPriceItemSchema = z
     pred_pre_sig: s(),
     pred_pre: s(),
     flu_rt: s(),
-    now_trde_qty: s(),
   })
   .passthrough();
 
@@ -255,7 +253,6 @@ export const highLowPriceApproachItemSchema = z
     pred_pre_sig: s(),
     pred_pre: s(),
     flu_rt: s(),
-    now_trde_qty: s(),
   })
   .passthrough();
 
@@ -270,13 +267,17 @@ export const highLowPriceApproachResponseSchema = z
 
 export const priceVolatilityItemSchema = z
   .object({
+    stk_cls: s(),
     stk_cd: s(),
     stk_nm: s(),
     cur_prc: s(),
     pred_pre_sig: s(),
     pred_pre: s(),
     flu_rt: s(),
-    now_trde_qty: s(),
+    base_pric: s(),
+    base_pre: s(),
+    trde_qty: s(),
+    jmp_rt: s(),
   })
   .passthrough();
 
@@ -418,7 +419,6 @@ export const tradingMemberInstantVolumeItemSchema = z
     pred_pre_sig: s(),
     pred_pre: s(),
     flu_rt: s(),
-    now_trde_qty: s(),
   })
   .passthrough();
 
@@ -486,10 +486,7 @@ export const dailyTradingItemsByInvestorItemSchema = z
     stk_cd: s(),
     stk_nm: s(),
     cur_prc: s(),
-    pred_pre_sig: s(),
     pred_pre: s(),
-    flu_rt: s(),
-    now_trde_qty: s(),
   })
   .passthrough();
 
@@ -670,18 +667,19 @@ export const stockInfoSummaryItemSchema = z
   .object({
     code: s(),
     name: s(),
-    list_count: s(),
-    audit_info: s(),
-    reg_day: s(),
-    last_price: s(),
+    listCount: s(),
+    auditInfo: s(),
+    regDay: s(),
+    lastPrice: s(),
     state: s(),
-    market_code: s(),
-    market_name: s(),
-    up_name: s(),
-    up_size_name: s(),
-    company_class_name: s(),
-    order_warning: s(),
-    nxt_enable: s(),
+    marketCode: s(),
+    marketName: s(),
+    upName: s(),
+    upSizeName: s(),
+    companyClassName: s(),
+    orderWarning: s(),
+    nxtEnable: s(),
+    // 공식 문서에 없지만 실서버가 반환함 (2026-08 실측)
     kind: s(),
   })
   .passthrough();
@@ -700,18 +698,19 @@ export const stockInfoV1ResponseSchema = z
     ...envelope,
     code: s(),
     name: s(),
-    list_count: s(),
-    audit_info: s(),
-    reg_day: s(),
-    last_price: s(),
+    listCount: s(),
+    auditInfo: s(),
+    regDay: s(),
+    lastPrice: s(),
     state: s(),
-    market_code: s(),
-    market_name: s(),
-    up_name: s(),
-    up_size_name: s(),
-    company_class_name: s(),
-    order_warning: s(),
-    nxt_enable: s(),
+    marketCode: s(),
+    marketName: s(),
+    upName: s(),
+    upSizeName: s(),
+    companyClassName: s(),
+    orderWarning: s(),
+    nxtEnable: s(),
+    // 공식 문서에 없지만 실서버가 반환함 (2026-08 실측)
     kind: s(),
   })
   .passthrough();
@@ -720,7 +719,7 @@ export const stockInfoV1ResponseSchema = z
 
 export const industryCodeItemSchema = z
   .object({
-    market_code: s(),
+    marketCode: s(),
     code: s(),
     name: s(),
     group: s(),
@@ -758,17 +757,15 @@ export const top50ProgramNetBuyItemSchema = z
     stk_cd: s(),
     stk_nm: s(),
     cur_prc: s(),
-    pred_pre_sig: s(),
     pred_pre: s(),
     flu_rt: s(),
-    now_trde_qty: s(),
   })
   .passthrough();
 
 export const top50ProgramNetBuyResponseSchema = z
   .object({
     ...envelope,
-    prm_netprps_upper50: z.array(top50ProgramNetBuyItemSchema).default([]),
+    prm_netprps_upper_50: z.array(top50ProgramNetBuyItemSchema).default([]),
   })
   .passthrough();
 
@@ -793,12 +790,12 @@ export const programTradingStatusByStockItemSchema = z
 export const programTradingStatusByStockResponseSchema = z
   .object({
     ...envelope,
-    tot1: s(),
-    tot2: s(),
-    tot3: s(),
-    tot4: s(),
-    tot5: s(),
-    tot6: s(),
+    tot_1: s(),
+    tot_2: s(),
+    tot_3: s(),
+    tot_4: s(),
+    tot_5: s(),
+    tot_6: s(),
     stk_prm_trde_prst: z.array(programTradingStatusByStockItemSchema).default([]),
   })
   .passthrough();

@@ -170,13 +170,13 @@ describe('domestic-stock-info response schemas', () => {
 
     it('ka90003: top50ProgramNetBuy', () => {
       const result = top50ProgramNetBuyResponseSchema.parse(minimalEnvelope);
-      expect(result.prm_netprps_upper50).toEqual([]);
+      expect(result.prm_netprps_upper_50).toEqual([]);
     });
 
     it('ka90004: programTradingStatusByStock', () => {
       const result = programTradingStatusByStockResponseSchema.parse(minimalEnvelope);
       expect(result.stk_prm_trde_prst).toEqual([]);
-      expect(result.tot1).toBe('');
+      expect(result.tot_1).toBe('');
     });
   });
 

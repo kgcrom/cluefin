@@ -17,7 +17,6 @@ export const domesticRankingAnalysisEndpoints: KisEndpointDefinition[] = [
       FID_INPUT_PRICE_1: 'fidInputPrice1',
       FID_INPUT_PRICE_2: 'fidInputPrice2',
       FID_VOL_CNT: 'fidVolCnt',
-      FID_INPUT_DATE_1: 'fidInputDate1',
     },
     params: [
       {
@@ -58,10 +57,6 @@ export const domesticRankingAnalysisEndpoints: KisEndpointDefinition[] = [
       },
       {
         name: 'fidVolCnt',
-        required: true,
-      },
-      {
-        name: 'fidInputDate1',
         required: true,
       },
     ],
@@ -1040,7 +1035,7 @@ export const domesticRankingAnalysisEndpoints: KisEndpointDefinition[] = [
     methodName: 'getStockLargeExecutionCountTop',
     method: 'GET',
     path: '/uapi/domestic-stock/v1/ranking/bulk-trans-num',
-    trId: 'HHKST1909000C0',
+    trId: 'FHKST190900C0',
     requestMap: {
       fid_aply_rang_prc_2: 'fidAplyRangPrc2',
       fid_cond_mrkt_div_code: 'fidCondMrktDivCode',

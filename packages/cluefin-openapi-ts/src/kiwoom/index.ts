@@ -88,7 +88,6 @@ export type {
   StockPriceResponse,
   StockQuoteByDateResponse,
   StockQuoteResponse,
-  TopIntradayTradingByInvestorResponse,
 } from './schemas/domestic-market-condition';
 export type {
   AfterHoursSinglePriceChangeRateRankingResponse,
@@ -106,6 +105,7 @@ export type {
   TopForeignAccountGroupTradingResponse,
   TopForeignerInstitutionTradingResponse,
   TopForeignerPeriodTradingResponse,
+  TopIntradayTradingByInvestorResponse,
   TopLimitExhaustionRateForeignerResponse,
   TopMarginRatioResponse,
   TopNetBuyTraderRankingResponse,

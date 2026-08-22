@@ -531,7 +531,7 @@ def handle_kis_holiday_inquiry(params: dict, session) -> dict:
 def handle_kis_futures_business_day_inquiry(params: dict, session) -> dict:
     kis = session.get_kis()
     response = kis.domestic_issue_other.get_futures_business_day_inquiry()
-    return {"data": extract_output(response, "output")}
+    return {"data": extract_output(response, "output1")}
 
 
 # ---------------------------------------------------------------------------

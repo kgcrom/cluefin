@@ -117,6 +117,8 @@ export const onmarketBondBasicQuoteEndpoints: KisEndpointDefinition[] = [
       PDNO: 'pdno',
       PRDT_TYPE_CD: 'prdtTypeCd',
       VRFC_KIND_CD: 'vrfcKindCd',
+      CTX_AREA_NK30: 'ctxAreaNk30',
+      CTX_AREA_FK100: 'ctxAreaFk100',
     },
     params: [
       {
@@ -146,6 +148,16 @@ export const onmarketBondBasicQuoteEndpoints: KisEndpointDefinition[] = [
         name: 'custtype',
         required: false,
         defaultValue: 'P',
+      },
+      {
+        name: 'ctxAreaNk30',
+        required: false,
+        defaultValue: '',
+      },
+      {
+        name: 'ctxAreaFk100',
+        required: false,
+        defaultValue: '',
       },
     ],
   },

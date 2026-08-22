@@ -2,22 +2,27 @@ import { describe, test } from 'vitest';
 import {
   getBalanceBySettlementOutput1ItemSchema,
   getBalanceBySettlementOutput2ItemSchema,
+  getBalanceBySettlementOutput3ItemSchema,
   getBalanceBySettlementResponseSchema,
   getBuyTradableAmountResponseSchema,
   getCurrentBalanceByConclusionOutput1ItemSchema,
   getCurrentBalanceByConclusionOutput2ItemSchema,
+  getCurrentBalanceByConclusionOutput3ItemSchema,
   getCurrentBalanceByConclusionResponseSchema,
-  getDailyTransactionHistoryItemSchema,
+  getDailyTransactionHistoryOutput1ItemSchema,
+  getDailyTransactionHistoryOutput2ItemSchema,
   getDailyTransactionHistoryResponseSchema,
   getLimitOrderExecutionHistoryOutput1ItemSchema,
-  getLimitOrderExecutionHistoryOutput3ItemSchema,
+  getLimitOrderExecutionHistoryOutput2ItemSchema,
   getLimitOrderExecutionHistoryResponseSchema,
   getLimitOrderNumberItemSchema,
   getLimitOrderNumberResponseSchema,
   getMarginAggregateItemSchema,
   getMarginAggregateResponseSchema,
-  getPeriodProfitLossOutputItemSchema,
+  getPeriodProfitLossOutput1ItemSchema,
+  getPeriodProfitLossOutput2ItemSchema,
   getPeriodProfitLossResponseSchema,
+  getReserveOrdersItemSchema,
   getReserveOrdersResponseSchema,
   getStockBalanceOutput1ItemSchema,
   getStockBalanceResponseSchema,
@@ -43,6 +48,7 @@ describe('KIS OverseasAccount', () => {
   it('getBuyTradableAmount', async () => {
     const client = await getKisClient();
     const res = await client.overseasAccount.getBuyTradableAmount({
+      trId: 'TTTS3007R',
       cano: KIS_CANO,
       acntPrdtCd: KIS_ACNT_PRDT_CD,
       ovrsExcgCd: 'NASD',
@@ -56,6 +62,7 @@ describe('KIS OverseasAccount', () => {
   it('getStockBalance', async () => {
     const client = await getKisClient();
     const res = await client.overseasAccount.getStockBalance({
+      trId: 'TTTS3012R',
       cano: KIS_CANO,
       acntPrdtCd: KIS_ACNT_PRDT_CD,
       ovrsExcgCd: 'NASD',
@@ -86,6 +93,7 @@ describe('KIS OverseasAccount', () => {
   it('getStockConclusionHistory', async () => {
     const client = await getKisClient();
     const res = await client.overseasAccount.getStockConclusionHistory({
+      trId: 'TTTS3035R',
       cano: KIS_CANO,
       acntPrdtCd: KIS_ACNT_PRDT_CD,
       pdno: '%',
@@ -108,6 +116,7 @@ describe('KIS OverseasAccount', () => {
   it('getCurrentBalanceByConclusion', async () => {
     const client = await getKisClient();
     const res = await client.overseasAccount.getCurrentBalanceByConclusion({
+      trId: 'CTRP6504R',
       cano: KIS_CANO,
       acntPrdtCd: KIS_ACNT_PRDT_CD,
       wcrcFrcrDvsnCd: '02',
@@ -129,11 +138,18 @@ describe('KIS OverseasAccount', () => {
       'output2',
       getCurrentBalanceByConclusionOutput2ItemSchema,
     );
+    assertResponseShape(
+      res.body,
+      getCurrentBalanceByConclusionResponseSchema,
+      'output3',
+      getCurrentBalanceByConclusionOutput3ItemSchema,
+    );
   });
 
   it('getReserveOrders', async () => {
     const client = await getKisClient();
     const res = await client.overseasAccount.getReserveOrders({
+      trId: 'TTTT3039R',
       cano: KIS_CANO,
       acntPrdtCd: KIS_ACNT_PRDT_CD,
       inqrStrtDt: ONE_MONTH_AGO,
@@ -143,7 +159,7 @@ describe('KIS OverseasAccount', () => {
       ovrsExcgCd: 'NASD',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getReserveOrdersResponseSchema);
+    assertResponseShape(res.body, getReserveOrdersResponseSchema, 'output', getReserveOrdersItemSchema);
   });
 
   it('getBalanceBySettlement', async () => {
@@ -169,6 +185,12 @@ describe('KIS OverseasAccount', () => {
       'output2',
       getBalanceBySettlementOutput2ItemSchema,
     );
+    assertResponseShape(
+      res.body,
+      getBalanceBySettlementResponseSchema,
+      'output3',
+      getBalanceBySettlementOutput3ItemSchema,
+    );
   });
 
   it('getDailyTransactionHistory', async () => {
@@ -187,8 +209,14 @@ describe('KIS OverseasAccount', () => {
     assertResponseShape(
       res.body,
       getDailyTransactionHistoryResponseSchema,
-      'output',
-      getDailyTransactionHistoryItemSchema,
+      'output1',
+      getDailyTransactionHistoryOutput1ItemSchema,
+    );
+    assertResponseShape(
+      res.body,
+      getDailyTransactionHistoryResponseSchema,
+      'output2',
+      getDailyTransactionHistoryOutput2ItemSchema,
     );
   });
 
@@ -207,7 +235,8 @@ describe('KIS OverseasAccount', () => {
     });
     assertKisResponse(res);
     assertResponseShape(res.body, getPeriodProfitLossResponseSchema);
-    assertResponseShape(res.body, getPeriodProfitLossResponseSchema, 'output', getPeriodProfitLossOutputItemSchema);
+    assertResponseShape(res.body, getPeriodProfitLossResponseSchema, 'output1', getPeriodProfitLossOutput1ItemSchema);
+    assertResponseShape(res.body, getPeriodProfitLossResponseSchema, 'output2', getPeriodProfitLossOutput2ItemSchema);
   });
 
   it('getMarginAggregate', async () => {
@@ -225,7 +254,7 @@ describe('KIS OverseasAccount', () => {
     const res = await client.overseasAccount.getLimitOrderNumber({
       tradDt: TODAY,
       cano: KIS_CANO,
-      acnoPrdtCd: KIS_ACNT_PRDT_CD,
+      acntPrdtCd: KIS_ACNT_PRDT_CD,
     });
     assertKisResponse(res);
     assertResponseShape(res.body, getLimitOrderNumberResponseSchema, 'output', getLimitOrderNumberItemSchema);
@@ -250,8 +279,8 @@ describe('KIS OverseasAccount', () => {
     assertResponseShape(
       res.body,
       getLimitOrderExecutionHistoryResponseSchema,
-      'output3',
-      getLimitOrderExecutionHistoryOutput3ItemSchema,
+      'output2',
+      getLimitOrderExecutionHistoryOutput2ItemSchema,
     );
   });
 });

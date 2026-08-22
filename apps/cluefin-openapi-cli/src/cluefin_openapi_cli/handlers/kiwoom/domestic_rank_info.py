@@ -272,21 +272,41 @@ def handle_kiwoom_increasing_volume(params: dict, session) -> dict:
             },
             "trde_qty_cnd": {
                 "type": "string",
-                "description": "Volume condition. Default 0000.",
+                "enum": ["0000", "0010", "0050", "0100", "0150", "0200", "0300", "0500", "1000"],
+                "description": "Volume filter in shares (0000:all, 0010:10k+, 0050:50k+, 0100:100k+, "
+                "0150:150k+, 0200:200k+, 0300:300k+, 0500:500k+, 1000:1M+). Default 0000.",
             },
-            "stk_cnd": {"type": "string", "description": "Stock condition. Default 0."},
+            "stk_cnd": {
+                "type": "string",
+                "enum": ["0", "1", "4", "3", "5", "6", "7", "8", "9", "11", "12", "13", "14", "15", "16"],
+                "description": "Stock condition (0:all, 1:excl-managed, 4:excl-managed+preferred, "
+                "3:excl-preferred, 5:excl-margin100, 6:margin100-only, 7:margin40-only, 8:margin30-only, "
+                "9:margin20-only, 11:excl-liquidation, 12:margin50-only, 13:margin60-only, 14:excl-ETF, "
+                "15:excl-SPAC, 16:excl-ETF+ETN). Default 0.",
+            },
             "crd_cnd": {
                 "type": "string",
                 "enum": ["0", "1", "2", "3", "4", "9"],
-                "description": "Credit condition. Default 0.",
+                "description": "Credit condition (0:all, 1:margin-loan-A, 2:margin-loan-B, 3:margin-loan-C, "
+                "4:margin-loan-D, 9:margin-loan-all). Default 0.",
             },
             "updown_incls": {
                 "type": "string",
                 "enum": ["0", "1"],
                 "description": "Include upper/lower limit (0:no, 1:yes). Default 0.",
             },
-            "pric_cnd": {"type": "string", "description": "Price condition. Default 0."},
-            "trde_prica_cnd": {"type": "string", "description": "Trade amount condition. Default 0."},
+            "pric_cnd": {
+                "type": "string",
+                "enum": ["0", "1", "2", "3", "4", "5", "8", "10"],
+                "description": "Price filter in KRW (0:all, 1:<1k, 2:1k-2k, 3:2k-5k, 4:5k-10k, 5:10k+, "
+                "8:1k+, 10:<10k). Default 0.",
+            },
+            "trde_prica_cnd": {
+                "type": "string",
+                "enum": ["0", "3", "5", "10", "30", "50", "100", "300", "500", "1000", "3000", "5000"],
+                "description": "Trade amount filter in KRW 10-millions (0:all, 3:30M+, 5:50M+, 10:100M+, "
+                "30:300M+, 50:500M+, 100:1B+, 300:3B+, 500:5B+, 1000:10B+, 3000:30B+, 5000:50B+). Default 0.",
+            },
             "exchange_type": {
                 "type": "string",
                 "enum": ["1", "2"],
@@ -337,12 +357,36 @@ def handle_kiwoom_pct_change_from_prev(params: dict, session) -> dict:
             },
             "sort_tp": {
                 "type": "string",
-                "description": "Sort type (1-8). Default 1.",
+                "enum": ["1", "2", "3", "4", "5", "6", "7", "8"],
+                "description": "Sort (1:gain-rate, 2:gain-amount, 3:flat, 4:loss-rate, 5:loss-amount, "
+                "6:conclusion-volume, 7:upper-limit, 8:lower-limit). Default 1.",
             },
-            "trde_qty_cnd": {"type": "string", "description": "Volume condition. Default 0."},
-            "stk_cnd": {"type": "string", "description": "Stock condition. Default 0."},
-            "crd_cnd": {"type": "string", "description": "Credit condition. Default 0."},
-            "pric_cnd": {"type": "string", "description": "Price condition. Default 0."},
+            "trde_qty_cnd": {
+                "type": "string",
+                "enum": ["0", "1", "3", "5", "10", "50", "100"],
+                "description": "Volume filter in 1000 shares (0:all, 1:1k+, 3:3k+, 5:5k+, 10:10k+, "
+                "50:50k+, 100:100k+). Default 0.",
+            },
+            "stk_cnd": {
+                "type": "string",
+                "enum": ["0", "1", "3", "4", "5", "6", "7", "8", "9", "11", "12", "13", "14", "15", "16"],
+                "description": "Stock condition (0:all, 1:excl-managed, 3:excl-preferred, "
+                "4:excl-managed+preferred, 5:excl-margin100, 6:margin100-only, 7:margin40-only, "
+                "8:margin30-only, 9:margin20-only, 11:excl-liquidation, 12:margin50-only, 13:margin60-only, "
+                "14:excl-ETF, 15:excl-SPAC, 16:excl-ETF+ETN). Default 0.",
+            },
+            "crd_cnd": {
+                "type": "string",
+                "enum": ["0", "1", "2", "3", "4", "8", "9"],
+                "description": "Credit condition (0:all, 1:margin-loan-A, 2:margin-loan-B, 3:margin-loan-C, "
+                "4:margin-loan-D, 8:stock-loan, 9:margin-loan-all). Default 0.",
+            },
+            "pric_cnd": {
+                "type": "string",
+                "enum": ["0", "1", "2", "3", "4", "5", "8", "10"],
+                "description": "Price filter in KRW (0:all, 1:<1k, 2:1k-2k, 3:2k-5k, 4:5k-10k, 5:10k+, "
+                "8:1k+, 10:<10k). Default 0.",
+            },
             "exchange_type": {
                 "type": "string",
                 "enum": ["1", "2"],
@@ -1001,7 +1045,14 @@ def handle_kiwoom_same_net_buy_sell(params: dict, session) -> dict:
                     "7100",
                     "9999",
                 ],
-                "description": "Investor type (9000:foreigner, 9100:foreign firm, 1000:securities, etc.)",
+                "description": "Investor type (9000:foreigner, 9100:foreign-firm, 1000:financial-investment, "
+                "3000:investment-trust, 5000:other-financial, 4000:bank, 2000:insurance, "
+                "6000:pension-fund, 7000:government, 7100:other-corporation, 9999:institution-total)",
+            },
+            "amt_qty_tp": {
+                "type": "string",
+                "enum": ["1", "2"],
+                "description": "Rank by amount or quantity (1:amount, 2:quantity)",
             },
             "cont_yn": {"type": "string", "enum": ["Y", "N"], "description": "Continuation flag. Default N."},
             "next_key": {"type": "string", "description": "Continuation key. Default empty."},
@@ -1018,6 +1069,7 @@ def handle_kiwoom_intraday_trading_by_investor(params: dict, session) -> dict:
         trde_tp=params["trde_tp"],
         mrkt_tp=params["market_type"],
         orgn_tp=params["orgn_tp"],
+        amt_qty_tp=params.get("amt_qty_tp"),
         cont_yn=params.get("cont_yn", "N"),
         next_key=params.get("next_key", ""),
     )
@@ -1074,53 +1126,6 @@ def handle_kiwoom_after_hours_single_price_change(params: dict, session) -> dict
 
 
 # ---------------------------------------------------------------------------
-# Top Foreigner Limit Exhaustion Rate
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="ranking.foreigner_limit_rate",
-    description="Get top stocks by foreigner limit exhaustion rate.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "market_type": {
-                "type": "string",
-                "enum": ["000", "001", "101"],
-                "description": "Market (000:all, 001:KOSPI, 101:KOSDAQ)",
-            },
-            "dt": {
-                "type": "string",
-                "enum": ["0", "1", "5", "10", "20", "60"],
-                "description": "Period (0:today, 1:prev day, 5/10/20/60 days)",
-            },
-            "exchange_type": {
-                "type": "string",
-                "enum": ["1", "2", "3"],
-                "description": "Exchange (1:KRX, 2:NXT, 3:Combined). Default 1.",
-            },
-            "cont_yn": {"type": "string", "enum": ["Y", "N"], "description": "Continuation flag. Default N."},
-            "next_key": {"type": "string", "description": "Continuation key. Default empty."},
-        },
-        "required": ["market_type", "dt"],
-    },
-    returns={"type": "object"},
-    category="ranking",
-    broker="kiwoom",
-)
-def handle_kiwoom_foreigner_limit_exhaustion_rate(params: dict, session) -> dict:
-    kiwoom = session.get_kiwoom()
-    response = kiwoom.rank_info.get_top_foreigner_limit_exhaustion_rate(
-        mrkt_tp=params["market_type"],
-        dt=params["dt"],
-        stex_tp=params.get("exchange_type", "1"),
-        cont_yn=params.get("cont_yn", "N"),
-        next_key=params.get("next_key", ""),
-    )
-    return extract_body(response)
-
-
-# ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
 
@@ -1145,7 +1150,6 @@ _ALL_HANDLERS = [
     handle_kiwoom_same_net_buy_sell,
     handle_kiwoom_intraday_trading_by_investor,
     handle_kiwoom_after_hours_single_price_change,
-    handle_kiwoom_foreigner_limit_exhaustion_rate,
 ]
 
 

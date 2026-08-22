@@ -32,6 +32,7 @@ export const overseasBasicQuoteEndpoints: KisEndpointDefinition[] = [
     path: '/uapi/overseas-price/v1/quotations/inquire-asking-price',
     trId: 'HHDFS76200100',
     requestMap: {
+      AUTH: 'auth',
       EXCD: 'excd',
       SYMB: 'symb',
     },

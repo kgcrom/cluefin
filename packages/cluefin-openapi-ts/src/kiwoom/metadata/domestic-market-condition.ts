@@ -746,73 +746,6 @@ export const domesticMarketConditionEndpoints: KiwoomEndpointDefinition[] = [
       },
     ],
   },
-  {
-    methodName: 'getTopIntradayTradingByInvestor',
-    path: '/api/dostk/mrkcond',
-    apiId: 'ka10063',
-    bodyMap: {
-      trde_tp: 'trdeTp',
-      mrkt_tp: 'mrktTp',
-      orgn_tp: 'orgnTp',
-      amt_qty_tp: 'amtQtyTp',
-      invsr: 'invsr',
-      frgn_all: 'frgnAll',
-      smtm_netprps_tp: 'smtmNetprpsTp',
-      stex_tp: 'stexTp',
-    },
-    headerParamMap: {
-      'cont-yn': 'contYn',
-      'next-key': 'nextKey',
-    },
-    params: [
-      {
-        name: 'trdeTp',
-        required: true,
-      },
-      {
-        name: 'mrktTp',
-        required: true,
-      },
-      {
-        name: 'orgnTp',
-        required: true,
-      },
-      {
-        name: 'amtQtyTp',
-        required: true,
-      },
-      {
-        name: 'invsr',
-        required: false,
-        defaultValue: '0',
-      },
-      {
-        name: 'frgnAll',
-        required: false,
-        defaultValue: '0',
-      },
-      {
-        name: 'smtmNetprpsTp',
-        required: false,
-        defaultValue: '0',
-      },
-      {
-        name: 'stexTp',
-        required: false,
-        defaultValue: '1',
-      },
-      {
-        name: 'contYn',
-        required: false,
-        defaultValue: 'N',
-      },
-      {
-        name: 'nextKey',
-        required: false,
-        defaultValue: '',
-      },
-    ],
-  },
 ];
 
 export type DomesticMarketConditionMethodName =
@@ -835,5 +768,4 @@ export type DomesticMarketConditionMethodName =
   | 'getProgramTradingCumulativeTrend'
   | 'getProgramTradingTrendByStockAndTime'
   | 'getProgramTradingTrendByDate'
-  | 'getProgramTradingTrendByStockAndDate'
-  | 'getTopIntradayTradingByInvestor';
+  | 'getProgramTradingTrendByStockAndDate';

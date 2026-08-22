@@ -393,7 +393,8 @@ class StockDividendYieldTopItem(BaseModel):
 class StockDividendYieldTop(BaseModel, KisHttpBody):
     """국내주식 배당률 상위"""
 
-    output1: Sequence[StockDividendYieldTopItem] = Field(default_factory=list)
+    # 공식 문서는 output1이지만 실서버는 output으로 응답한다(실측).
+    output: Sequence[StockDividendYieldTopItem] = Field(default_factory=list)
 
 
 class StockLargeExecutionCountTopItem(BaseModel):

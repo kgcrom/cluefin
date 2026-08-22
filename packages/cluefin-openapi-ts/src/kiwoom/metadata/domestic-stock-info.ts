@@ -753,6 +753,7 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
       max_trde_prica: 'maxTrdePrica',
       motn_drc: 'motnDrc',
       stex_tp: 'stexTp',
+      stk_cd: 'stkCd',
     },
     headerParamMap: {
       'con-yn': 'contYn',
@@ -794,22 +795,22 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
       {
         name: 'minTrdeQty',
         required: false,
-        defaultValue: '',
+        defaultValue: '0',
       },
       {
         name: 'maxTrdeQty',
         required: false,
-        defaultValue: '',
+        defaultValue: '100000000',
       },
       {
         name: 'minTrdePrica',
         required: false,
-        defaultValue: '',
+        defaultValue: '0',
       },
       {
         name: 'maxTrdePrica',
         required: false,
-        defaultValue: '',
+        defaultValue: '100000000',
       },
       {
         name: 'stkCd',
@@ -1023,6 +1024,7 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
       stk_cd: 'stkCd',
       tdy_pred: 'tdyPred',
       tic_min: 'ticMin',
+      tm: 'tm',
     },
     headerParamMap: {
       'cont-yn': 'contYn',
@@ -1041,6 +1043,10 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
         name: 'ticMin',
         required: false,
         defaultValue: '0',
+      },
+      {
+        name: 'tm',
+        required: false,
       },
       {
         name: 'contYn',

@@ -2,6 +2,7 @@ import { describe, test } from 'vitest';
 import {
   getBreakingNewsTitleItemSchema,
   getBreakingNewsTitleResponseSchema,
+  getNewsAggregateTitleItemSchema,
   getNewsAggregateTitleResponseSchema,
   getStockBuyExecutionStrengthTopOutput2ItemSchema,
   getStockBuyExecutionStrengthTopResponseSchema,
@@ -42,13 +43,12 @@ import {
 const it = runIntegration ? test : test.skip;
 
 describe('KIS OverseasMarketAnalysis', () => {
-  // TODO: KIS API 이슈로 비활성화 — Python 참조 코드에서도 동일하게 주석 처리됨 (404 반환)
-  test.skip('getStockPriceFluctuation', async () => {
+  it('getStockPriceFluctuation', async () => {
     const client = await getKisClient();
     const res = await client.overseasMarketAnalysis.getStockPriceFluctuation({
       excd: 'NAS',
       gubn: '1',
-      mixn: '0',
+      minx: '0',
       volRang: '0',
     });
     assertKisResponse(res);
@@ -64,6 +64,8 @@ describe('KIS OverseasMarketAnalysis', () => {
   it('getStockMarketCapRank', async () => {
     const client = await getKisClient();
     const res = await client.overseasMarketAnalysis.getStockMarketCapRank({
+      keyb: '',
+      auth: '',
       excd: 'NAS',
       volRang: '0',
     });
@@ -80,6 +82,8 @@ describe('KIS OverseasMarketAnalysis', () => {
   it('getStockTradingVolumeRank', async () => {
     const client = await getKisClient();
     const res = await client.overseasMarketAnalysis.getStockTradingVolumeRank({
+      keyb: '',
+      auth: '',
       excd: 'NAS',
       nday: '0',
       prc1: '0',
@@ -100,9 +104,10 @@ describe('KIS OverseasMarketAnalysis', () => {
     const client = await getKisClient();
     const res = await client.overseasMarketAnalysis.getStockVolumeSurge({
       excd: 'NAS',
-      mixn: '0',
-      volRang: '0',
+      keyb: '',
+      auth: '',
       minx: '0',
+      volRang: '0',
     });
     assertKisResponse(res);
     assertResponseShape(res.body, getStockVolumeSurgeResponseSchema);
@@ -112,6 +117,8 @@ describe('KIS OverseasMarketAnalysis', () => {
   it('getStockBuyExecutionStrengthTop', async () => {
     const client = await getKisClient();
     const res = await client.overseasMarketAnalysis.getStockBuyExecutionStrengthTop({
+      keyb: '',
+      auth: '',
       excd: 'NAS',
       nday: '0',
       volRang: '0',
@@ -129,6 +136,8 @@ describe('KIS OverseasMarketAnalysis', () => {
   it('getStockRiseDeclineRate', async () => {
     const client = await getKisClient();
     const res = await client.overseasMarketAnalysis.getStockRiseDeclineRate({
+      keyb: '',
+      auth: '',
       excd: 'NAS',
       gubn: '0',
       nday: '0',
@@ -147,6 +156,8 @@ describe('KIS OverseasMarketAnalysis', () => {
   it('getStockNewHighLowPrice', async () => {
     const client = await getKisClient();
     const res = await client.overseasMarketAnalysis.getStockNewHighLowPrice({
+      keyb: '',
+      auth: '',
       excd: 'NAS',
       gubn: '0',
       gubn2: '0',
@@ -166,6 +177,8 @@ describe('KIS OverseasMarketAnalysis', () => {
   it('getStockTradingAmountRank', async () => {
     const client = await getKisClient();
     const res = await client.overseasMarketAnalysis.getStockTradingAmountRank({
+      keyb: '',
+      auth: '',
       excd: 'NAS',
       nday: '0',
       volRang: '0',
@@ -185,6 +198,8 @@ describe('KIS OverseasMarketAnalysis', () => {
   it('getStockTradingIncreaseRateRank', async () => {
     const client = await getKisClient();
     const res = await client.overseasMarketAnalysis.getStockTradingIncreaseRateRank({
+      keyb: '',
+      auth: '',
       excd: 'NAS',
       nday: '0',
       volRang: '0',
@@ -202,6 +217,8 @@ describe('KIS OverseasMarketAnalysis', () => {
   it('getStockTradingTurnoverRateRank', async () => {
     const client = await getKisClient();
     const res = await client.overseasMarketAnalysis.getStockTradingTurnoverRateRank({
+      keyb: '',
+      auth: '',
       excd: 'NAS',
       nday: '0',
       volRang: '0',
@@ -250,7 +267,7 @@ describe('KIS OverseasMarketAnalysis', () => {
       cts: '',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getNewsAggregateTitleResponseSchema);
+    assertResponseShape(res.body, getNewsAggregateTitleResponseSchema, 'outblock1', getNewsAggregateTitleItemSchema);
   });
 
   it('getStockRightsAggregate', async () => {

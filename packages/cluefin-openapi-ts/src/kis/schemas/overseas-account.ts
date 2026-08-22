@@ -14,9 +14,9 @@ const kisEnvelope = {
 
 export const requestStockOrderItemSchema = z
   .object({
-    krx_fwdg_ord_orgno: s(),
-    odno: s(),
-    ord_tmd: s(),
+    KRX_FWDG_ORD_ORGNO: s(),
+    ODNO: s(),
+    ORD_TMD: s(),
   })
   .passthrough();
 
@@ -31,9 +31,9 @@ export const requestStockOrderResponseSchema = z
 
 export const requestStockQuoteCorrectionItemSchema = z
   .object({
-    krx_fwdg_ord_orgno: s(),
-    odno: s(),
-    ord_tmd: s(),
+    KRX_FWDG_ORD_ORGNO: s(),
+    ODNO: s(),
+    ORD_TMD: s(),
   })
   .passthrough();
 
@@ -48,9 +48,9 @@ export const requestStockQuoteCorrectionResponseSchema = z
 
 export const requestStockReserveQuoteItemSchema = z
   .object({
-    odno: s(),
-    rsvn_ord_rcit_dt: s(),
-    ovrs_rsvn_odno: s(),
+    ODNO: s(),
+    RSVN_ORD_RCIT_DT: s(),
+    OVRS_RSVN_ODNO: s(),
   })
   .passthrough();
 
@@ -65,7 +65,7 @@ export const requestStockReserveQuoteResponseSchema = z
 
 export const requestStockReserveQuoteCorrectionItemSchema = z
   .object({
-    ovrs_rsvn_odno: s(),
+    OVRS_RSVN_ODNO: s(),
   })
   .passthrough();
 
@@ -293,6 +293,11 @@ export const getCurrentBalanceByConclusionOutput2ItemSchema = z
     frcr_evlu_amt2: s(),
     acpl_cstd_crcy_yn: s(),
     nxdy_frcr_drwg_psbl_amt: s(),
+  })
+  .passthrough();
+
+export const getCurrentBalanceByConclusionOutput3ItemSchema = z
+  .object({
     pchs_amt_smtl: s(),
     evlu_amt_smtl: s(),
     evlu_pfls_amt_smtl: s(),
@@ -322,6 +327,7 @@ export const getCurrentBalanceByConclusionResponseSchema = z
     ...kisEnvelope,
     output1: z.array(getCurrentBalanceByConclusionOutput1ItemSchema).default([]),
     output2: z.array(getCurrentBalanceByConclusionOutput2ItemSchema).default([]),
+    output3: getCurrentBalanceByConclusionOutput3ItemSchema.optional(),
   })
   .passthrough();
 
@@ -336,7 +342,6 @@ export const getReserveOrdersItemSchema = z
     ord_gno_brno: z.string().optional(),
     odno: z.string().optional(),
     sll_buy_dvsn_cd: z.string().optional(),
-    sll_buy_dvsn_name: z.string().optional(),
     ovrs_rsvn_ord_stat_cd: z.string().optional(),
     ovrs_rsvn_ord_stat_cd_name: z.string().optional(),
     pdno: z.string().optional(),
@@ -361,7 +366,7 @@ export const getReserveOrdersResponseSchema = z
     ...kisEnvelope,
     ctx_area_fk200: s(),
     ctx_area_nk200: s(),
-    output: getReserveOrdersItemSchema.optional(),
+    output: z.array(getReserveOrdersItemSchema).default([]),
   })
   .passthrough();
 
@@ -403,6 +408,11 @@ export const getBalanceBySettlementOutput2ItemSchema = z
     frcr_dncl_amt_2: s(),
     frst_bltn_exrt: s(),
     frcr_evlu_amt2: s(),
+  })
+  .passthrough();
+
+export const getBalanceBySettlementOutput3ItemSchema = z
+  .object({
     pchs_amt_smtl_amt: s(),
     tot_evlu_pfls_amt: s(),
     evlu_erng_rt1: s(),
@@ -420,6 +430,7 @@ export const getBalanceBySettlementResponseSchema = z
     ...kisEnvelope,
     output1: z.array(getBalanceBySettlementOutput1ItemSchema).default([]),
     output2: z.array(getBalanceBySettlementOutput2ItemSchema).default([]),
+    output3: getBalanceBySettlementOutput3ItemSchema.optional(),
   })
   .passthrough();
 
@@ -458,12 +469,48 @@ export const getDailyTransactionHistoryItemSchema = z
   })
   .passthrough();
 
+export const getDailyTransactionHistoryOutput1ItemSchema = z
+  .object({
+    trad_dt: s(),
+    sttl_dt: s(),
+    sll_buy_dvsn_cd: s(),
+    sll_buy_dvsn_name: s(),
+    pdno: s(),
+    ovrs_item_name: s(),
+    ccld_qty: s(),
+    amt_unit_ccld_qty: s(),
+    ft_ccld_unpr2: s(),
+    ovrs_stck_ccld_unpr: s(),
+    tr_frcr_amt2: s(),
+    tr_amt: s(),
+    frcr_excc_amt_1: s(),
+    wcrc_excc_amt: s(),
+    dmst_frcr_fee1: s(),
+    frcr_fee1: s(),
+    dmst_wcrc_fee: s(),
+    ovrs_wcrc_fee: s(),
+    crcy_cd: s(),
+    std_pdno: s(),
+    erlm_exrt: s(),
+    loan_dvsn_cd: s(),
+    loan_dvsn_name: s(),
+  })
+  .passthrough();
+
+export const getDailyTransactionHistoryOutput2ItemSchema = z
+  .object({
+    frcr_buy_amt_smtl: s(),
+    frcr_sll_amt_smtl: s(),
+    dmst_fee_smtl: s(),
+    ovrs_fee_smtl: s(),
+  })
+  .passthrough();
+
 export const getDailyTransactionHistoryResponseSchema = z
   .object({
     ...kisEnvelope,
-    ctx_area_fk200: s(),
-    ctx_area_nk200: s(),
-    output: z.array(getDailyTransactionHistoryItemSchema).default([]),
+    output1: z.array(getDailyTransactionHistoryOutput1ItemSchema).default([]),
+    output2: getDailyTransactionHistoryOutput2ItemSchema.optional(),
   })
   .passthrough();
 
@@ -501,11 +548,30 @@ export const getPeriodProfitLossOutput2ItemSchema = z
   })
   .passthrough();
 
+export const getPeriodProfitLossOutput1ItemSchema = z
+  .object({
+    trad_day: s(),
+    ovrs_pdno: s(),
+    ovrs_item_name: s(),
+    slcl_qty: s(),
+    pchs_avg_pric: s(),
+    frcr_pchs_amt1: s(),
+    avg_sll_unpr: s(),
+    frcr_sll_amt_smtl1: s(),
+    stck_sll_tlex: s(),
+    ovrs_rlzt_pfls_amt: s(),
+    pftrt: s(),
+    exrt: s(),
+    ovrs_excg_cd: s(),
+    frst_bltn_exrt: s(),
+  })
+  .passthrough();
+
 export const getPeriodProfitLossResponseSchema = z
   .object({
     ...kisEnvelope,
-    output: z.array(getPeriodProfitLossOutputItemSchema).default([]),
     output2: getPeriodProfitLossOutput2ItemSchema.optional(),
+    output1: z.array(getPeriodProfitLossOutput1ItemSchema).default([]),
   })
   .passthrough();
 
@@ -538,9 +604,9 @@ export const getMarginAggregateResponseSchema = z
 
 export const requestOrderAfterDayTimeItemSchema = z
   .object({
-    krx_fwdg_ord_orgno: s(),
-    odno: s(),
-    ord_tmd: s(),
+    KRX_FWDG_ORD_ORGNO: s(),
+    ODNO: s(),
+    ORD_TMD: s(),
   })
   .passthrough();
 
@@ -555,9 +621,9 @@ export const requestOrderAfterDayTimeResponseSchema = z
 
 export const cancelCorrectAfterDayTimeItemSchema = z
   .object({
-    krx_fwdg_ord_orgno: s(),
-    odno: s(),
-    ord_tmd: s(),
+    KRX_FWDG_ORD_ORGNO: s(),
+    ODNO: s(),
+    ORD_TMD: s(),
   })
   .passthrough();
 
@@ -584,8 +650,6 @@ export const getLimitOrderNumberItemSchema = z
     rt_cd: s(),
     msg_cd: s(),
     msg1: s(),
-    ctx_area_fk200: s(),
-    ctx_area_nk200: s(),
   })
   .passthrough();
 
@@ -628,11 +692,29 @@ export const getLimitOrderExecutionHistoryOutput3ItemSchema = z
   })
   .passthrough();
 
+export const getLimitOrderExecutionHistoryOutput2ItemSchema = z
+  .object({
+    odno: s(),
+    trad_dvsn_name: s(),
+    pdno: s(),
+    item_name: s(),
+    ft_ord_qty: s(),
+    ft_ord_unpr3: s(),
+    ord_tmd: s(),
+    splt_buy_attr_name: s(),
+    ft_ccld_qty: s(),
+    tr_crcy: s(),
+    ft_ccld_unpr3: s(),
+    ft_ccld_amt3: s(),
+    ccld_cnt: s(),
+  })
+  .passthrough();
+
 export const getLimitOrderExecutionHistoryResponseSchema = z
   .object({
     ...kisEnvelope,
     output1: z.array(getLimitOrderExecutionHistoryOutput1ItemSchema).default([]),
-    output3: z.array(getLimitOrderExecutionHistoryOutput3ItemSchema).default([]),
+    output2: getLimitOrderExecutionHistoryOutput2ItemSchema.optional(),
   })
   .passthrough();
 

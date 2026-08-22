@@ -222,15 +222,24 @@ describe('Kiwoom DomesticAccount', () => {
     assertKiwoomResponse(res);
   });
 
-  // kt00010: 장 마감 시간대에 uv(단가) 값이 하한가 미만이면 에러 반환.
-  // returnCode !== 0 이면 스키마 검증을 건너뛴다.
+  // kt00010: 파이썬 통합 테스트와 동일한 입력 조합.
+  // 하드코딩 단가가 당일 가격밴드(상·하한가)를 벗어나면 서버가 2000 에러를 던지므로 그 경우는 skip.
   it('getAvailableWithdrawalAmount', async () => {
     const client = await getKiwoomClient();
-    const res = await client.domesticAccount.getAvailableWithdrawalAmount({
-      stkCd: SAMSUNG,
-      trdeTp: '2',
-      uv: '100000',
-    });
+    let res: Awaited<ReturnType<typeof client.domesticAccount.getAvailableWithdrawalAmount>>;
+    try {
+      res = await client.domesticAccount.getAvailableWithdrawalAmount({
+        ioAmt: '1000000',
+        stkCd: SAMSUNG,
+        trdeTp: '1',
+        trdeQty: '10',
+        uv: '50000',
+        expBuyUnp: '60000',
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('[2000]')) return;
+      throw error;
+    }
     if (res.body.returnCode !== 0) return;
     assertResponseShape(res.body, availableWithdrawalAmountResponseSchema);
   });

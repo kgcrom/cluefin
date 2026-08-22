@@ -287,6 +287,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
     bodyMap: {
       ottks_tp: 'ottksTp',
       ch_crd_tp: 'chCrdTp',
+      base_dt: 'baseDt',
     },
     headerParamMap: {
       'con-yn': 'contYn',
@@ -567,6 +568,9 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       sell_tp: 'sellTp',
       qry_tp: 'qryTp',
       dmst_stex_tp: 'dmstStexTp',
+      ord_dt: 'ordDt',
+      stk_cd: 'stkCd',
+      fr_ord_no: 'frOrdNo',
     },
     headerParamMap: {
       'con-yn': 'contYn',
@@ -625,6 +629,9 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       stk_cd: 'stkCd',
       trde_tp: 'trdeTp',
       uv: 'uv',
+      io_amt: 'ioAmt',
+      trde_qty: 'trdeQty',
+      exp_buy_unp: 'expBuyUnp',
     },
     headerParamMap: {
       'con-yn': 'contYn',
@@ -673,6 +680,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
     apiId: 'kt00011',
     bodyMap: {
       stk_cd: 'stkCd',
+      uv: 'uv',
     },
     headerParamMap: {
       'con-yn': 'contYn',
@@ -705,6 +713,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
     apiId: 'kt00012',
     bodyMap: {
       stk_cd: 'stkCd',
+      uv: 'uv',
     },
     headerParamMap: {
       'con-yn': 'contYn',
@@ -763,6 +772,10 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       tp: 'tp',
       gds_tp: 'gdsTp',
       dmst_stex_tp: 'dmstStexTp',
+      stk_cd: 'stkCd',
+      crnc_cd: 'crncCd',
+      frgn_stex_code: 'frgnStexCode',
+      qry_sort_tp: 'qrySortTp',
     },
     headerParamMap: {
       'con-yn': 'contYn',
@@ -799,6 +812,10 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       },
       {
         name: 'frgnStexCode',
+        required: false,
+      },
+      {
+        name: 'qrySortTp',
         required: false,
       },
       {

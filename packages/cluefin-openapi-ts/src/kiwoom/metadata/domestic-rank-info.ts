@@ -177,6 +177,7 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
       stk_cnd: 'stkCnd',
       pric_tp: 'pricTp',
       stex_tp: 'stexTp',
+      tm: 'tm',
     },
     headerParamMap: {
       'cont-yn': 'contYn',
@@ -1065,6 +1066,7 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
       amt_qty_tp: 'amtQtyTp',
       qry_dt_tp: 'qryDtTp',
       stex_tp: 'stexTp',
+      date: 'date',
     },
     headerParamMap: {
       'cont-yn': 'contYn',
@@ -1104,6 +1106,49 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
       },
     ],
   },
+  {
+    methodName: 'getTopIntradayTradingByInvestor',
+    path: '/api/dostk/rkinfo',
+    apiId: 'ka10065',
+    bodyMap: {
+      trde_tp: 'trdeTp',
+      mrkt_tp: 'mrktTp',
+      orgn_tp: 'orgnTp',
+      amt_qty_tp: 'amtQtyTp',
+    },
+    headerParamMap: {
+      'cont-yn': 'contYn',
+      'next-key': 'nextKey',
+    },
+    params: [
+      {
+        name: 'trdeTp',
+        required: true,
+      },
+      {
+        name: 'mrktTp',
+        required: true,
+      },
+      {
+        name: 'orgnTp',
+        required: true,
+      },
+      {
+        name: 'amtQtyTp',
+        required: false,
+      },
+      {
+        name: 'contYn',
+        required: false,
+        defaultValue: 'N',
+      },
+      {
+        name: 'nextKey',
+        required: false,
+        defaultValue: '',
+      },
+    ],
+  },
 ];
 
 export type DomesticRankInfoMethodName =
@@ -1128,4 +1173,5 @@ export type DomesticRankInfoMethodName =
   | 'getTopCurrentDayDeviationSources'
   | 'getSameNetBuySellRanking'
   | 'getAfterHoursSinglePriceChangeRateRanking'
-  | 'getTopForeignerInstitutionTrading';
+  | 'getTopForeignerInstitutionTrading'
+  | 'getTopIntradayTradingByInvestor';

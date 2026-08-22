@@ -26,7 +26,7 @@ def handle_kis_condition_search_list(params: dict, session) -> dict:
     response = kis.domestic_market_analysis.get_condition_search_list(
         user_id=params["user_id"],
     )
-    return {"data": extract_output(response, "output")}
+    return {"data": extract_output(response, "output2")}
 
 
 # ---------------------------------------------------------------------------
@@ -55,7 +55,7 @@ def handle_kis_condition_search_result(params: dict, session) -> dict:
         user_id=params["user_id"],
         seq=params["seq"],
     )
-    return {"data": extract_output(response, "output")}
+    return {"data": extract_output(response, "output2")}
 
 
 # ---------------------------------------------------------------------------
@@ -86,7 +86,7 @@ def handle_kis_watchlist_groups(params: dict, session) -> dict:
         fid_etc_cls_code=params.get("etc_cls_code", "00"),
         user_id=params["user_id"],
     )
-    return {"data": extract_output(response, "output")}
+    return {"data": extract_output(response, "output2")}
 
 
 # ---------------------------------------------------------------------------
@@ -169,7 +169,10 @@ def handle_kis_watchlist_stocks_by_group(params: dict, session) -> dict:
         cntg_cls_code="",
         fid_etc_cls_code=params.get("etc_cls_code", "4"),
     )
-    return {"data": extract_output(response, "output")}
+    return {
+        "summary": extract_output(response, "output1"),
+        "data": extract_output(response, "output2"),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -383,7 +386,10 @@ def handle_kis_member_trend_tick(params: dict, session) -> dict:
         fid_mrkt_cls_code=params.get("market_cls_code", ""),
         fid_vol_cnt=params.get("volume_min", ""),
     )
-    return {"data": extract_output(response, "output")}
+    return {
+        "summary": extract_output(response, "output1"),
+        "data": extract_output(response, "output2"),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -410,7 +416,7 @@ def handle_kis_foreign_institutional_estimate(params: dict, session) -> dict:
     response = kis.domestic_market_analysis.get_foreign_institutional_estimate_by_stock(
         mksc_shrn_iscd=params["stock_code"],
     )
-    return {"data": extract_output(response, "output")}
+    return {"data": extract_output(response, "output2")}
 
 
 # ---------------------------------------------------------------------------
@@ -449,7 +455,10 @@ def handle_kis_buy_sell_volume_by_stock_daily(params: dict, session) -> dict:
         fid_input_date_2=params["end_date"],
         fid_period_div_code=params.get("period", "D"),
     )
-    return {"data": extract_output(response, "output")}
+    return {
+        "summary": extract_output(response, "output1"),
+        "data": extract_output(response, "output2"),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -486,7 +495,7 @@ def handle_kis_program_investor_trend_today(params: dict, session) -> dict:
         exch_div_cls_code=params["exchange_code"],
         mrkt_div_cls_code=params["market_code"],
     )
-    return {"data": extract_output(response, "output")}
+    return {"data": extract_output(response, "output1")}
 
 
 # ---------------------------------------------------------------------------
@@ -521,7 +530,10 @@ def handle_kis_expected_price_trend(params: dict, session) -> dict:
         fid_cond_mrkt_div_code=params.get("market", "J"),
         fid_input_iscd=params["stock_code"],
     )
-    return {"data": extract_output(response, "output")}
+    return {
+        "summary": extract_output(response, "output1"),
+        "data": extract_output(response, "output2"),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -554,7 +566,10 @@ def handle_kis_short_selling_trend_daily(params: dict, session) -> dict:
         fid_input_iscd=params["stock_code"],
         fid_input_date_1=params.get("start_date", ""),
     )
-    return {"data": extract_output(response, "output")}
+    return {
+        "summary": extract_output(response, "output1"),
+        "data": extract_output(response, "output2"),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -704,7 +719,7 @@ def handle_kis_stock_loan_trend_daily(params: dict, session) -> dict:
         end_date=params["end_date"],
         cts=params.get("cts", ""),
     )
-    return {"data": extract_output(response, "output")}
+    return {"data": extract_output(response, "output1")}
 
 
 # ---------------------------------------------------------------------------
@@ -789,7 +804,10 @@ def handle_kis_resistance_level_trading_weight(params: dict, session) -> dict:
         fid_cond_scr_div_code="20113",
         fid_input_hour_1=params.get("hour", ""),
     )
-    return {"data": extract_output(response, "output")}
+    return {
+        "summary": extract_output(response, "output1"),
+        "data": extract_output(response, "output2"),
+    }
 
 
 # ---------------------------------------------------------------------------

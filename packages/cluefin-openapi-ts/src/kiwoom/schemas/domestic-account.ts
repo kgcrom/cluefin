@@ -506,7 +506,6 @@ export const executionBalanceResponseSchema = z
     '100ord_alow_amt': s(),
     crd_loan_tot: s(),
     crd_loan_ls_tot: s(),
-    crd_grnt_ch: s(),
     dpst_grnt_use_amt_amt: s(),
     grnt_loan_amt: s(),
     stk_cntr_remn: z.array(executionBalanceItemSchema).default([]),
@@ -553,28 +552,21 @@ export const accountOrderExecutionDetailsResponseSchema = z
 
 export const accountNextDaySettlementDetailsItemSchema = z
   .object({
-    ord_no: s(),
+    seq: s(),
     stk_cd: s(),
-    trde_tp: s(),
-    crd_tp: s(),
-    ord_qty: s(),
-    ord_uv: s(),
-    cnfm_qty: s(),
-    acpt_tp: s(),
-    rsrv_tp: s(),
-    ord_tm: s(),
-    ori_ord: s(),
-    stk_nm: s(),
-    io_tp_nm: s(),
     loan_dt: s(),
-    cntr_qty: s(),
-    cntr_uv: s(),
-    ord_remnq: s(),
-    comm_ord_tp: s(),
-    mdfy_cncl: s(),
-    cnfm_tm: s(),
-    dmst_stex_tp: s(),
-    cond_uv: s(),
+    qty: s(),
+    engg_amt: s(),
+    cmsn: s(),
+    incm_tax: s(),
+    rstx: s(),
+    stk_nm: s(),
+    sell_tp: s(),
+    unp: s(),
+    exct_amt: s(),
+    trde_tax: s(),
+    resi_tax: s(),
+    crd_tp: s(),
   })
   .passthrough();
 
@@ -618,13 +610,40 @@ export const accountOrderExecutionStatusItemSchema = z
   })
   .passthrough();
 
+export const accountOrderExecutionStatusAcntOrdCntrPrstArrayItemSchema = z
+  .object({
+    stk_bond_tp: s(),
+    ord_no: s(),
+    stk_cd: s(),
+    trde_tp: s(),
+    io_tp_nm: s(),
+    ord_qty: s(),
+    ord_uv: s(),
+    cnfm_qty: s(),
+    rsrv_oppo: s(),
+    cntr_no: s(),
+    acpt_tp: s(),
+    orig_ord_no: s(),
+    stk_nm: s(),
+    setl_tp: s(),
+    crd_deal_tp: s(),
+    cntr_qty: s(),
+    cntr_uv: s(),
+    comm_ord_tp: s(),
+    mdfy_cncl_tp: s(),
+    cntr_tm: s(),
+    dmst_stex_tp: s(),
+    cond_uv: s(),
+  })
+  .passthrough();
+
 export const accountOrderExecutionStatusResponseSchema = z
   .object({
     ...envelope,
     sell_grntl_engg_amt: s(),
     buy_engg_amt: s(),
     engg_amt: s(),
-    acnt_ord_cntr_prst: z.array(accountOrderExecutionStatusItemSchema).default([]),
+    acnt_ord_cntr_prst_array: z.array(accountOrderExecutionStatusAcntOrdCntrPrstArrayItemSchema).default([]),
   })
   .passthrough();
 

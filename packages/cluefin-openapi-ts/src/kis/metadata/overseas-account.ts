@@ -5,7 +5,6 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
     methodName: 'requestStockOrder',
     method: 'POST',
     path: '/uapi/overseas-stock/v1/trading/order',
-    trId: 'TTTT1002U',
     requestMap: {
       CANO: 'cano',
       ACNT_PRDT_CD: 'acntPrdtCd',
@@ -14,11 +13,16 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       ORD_QTY: 'ordQty',
       OVRS_ORD_UNPR: 'ovrsOrdUnpr',
       ORD_DVSN: 'ordDvsn',
+      ORD_SVR_DVSN_CD: 'ordSvrDvsnCd',
       START_TIME: 'startTime',
       END_TIME: 'endTime',
       ALGO_ORD_TMD_DVSN_CD: 'algoOrdTmdDvsnCd',
     },
     params: [
+      {
+        name: 'trId',
+        required: true,
+      },
       {
         name: 'cano',
         required: true,
@@ -48,6 +52,11 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
         required: true,
       },
       {
+        name: 'ordSvrDvsnCd',
+        required: false,
+        defaultValue: '0',
+      },
+      {
         name: 'startTime',
         required: false,
         defaultValue: '',
@@ -68,7 +77,6 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
     methodName: 'requestStockQuoteCorrection',
     method: 'POST',
     path: '/uapi/overseas-stock/v1/trading/order-rvsecncl',
-    trId: 'TTTT1004U',
     requestMap: {
       CANO: 'cano',
       ACNT_PRDT_CD: 'acntPrdtCd',
@@ -82,6 +90,10 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       ORD_SVR_DVSN_CD: 'ordSvrDvsnCd',
     },
     params: [
+      {
+        name: 'trId',
+        required: true,
+      },
       {
         name: 'cano',
         required: true,
@@ -130,7 +142,6 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
     methodName: 'requestStockReserveQuote',
     method: 'POST',
     path: '/uapi/overseas-stock/v1/trading/order-resv',
-    trId: 'TTTT3014U',
     requestMap: {
       CANO: 'cano',
       ACNT_PRDT_CD: 'acntPrdtCd',
@@ -148,6 +159,10 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       ALGO_ORD_TMD_DVSN_CD: 'algoOrdTmdDvsnCd',
     },
     params: [
+      {
+        name: 'trId',
+        required: true,
+      },
       {
         name: 'cano',
         required: true,
@@ -217,7 +232,6 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
     methodName: 'requestStockReserveQuoteCorrection',
     method: 'POST',
     path: '/uapi/overseas-stock/v1/trading/order-resv-ccnl',
-    trId: 'TTTT3017U',
     requestMap: {
       CANO: 'cano',
       ACNT_PRDT_CD: 'acntPrdtCd',
@@ -225,6 +239,10 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       OVRS_RSVN_ODNO: 'ovrsRsvnOdno',
     },
     params: [
+      {
+        name: 'trId',
+        required: true,
+      },
       {
         name: 'cano',
         required: true,
@@ -247,7 +265,6 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
     methodName: 'getBuyTradableAmount',
     method: 'GET',
     path: '/uapi/overseas-stock/v1/trading/inquire-psamount',
-    trId: 'TTTS3007R',
     requestMap: {
       CANO: 'cano',
       ACNT_PRDT_CD: 'acntPrdtCd',
@@ -256,6 +273,10 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       ITEM_CD: 'itemCd',
     },
     params: [
+      {
+        name: 'trId',
+        required: true,
+      },
       {
         name: 'cano',
         required: true,
@@ -324,7 +345,6 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
     methodName: 'getStockBalance',
     method: 'GET',
     path: '/uapi/overseas-stock/v1/trading/inquire-balance',
-    trId: 'TTTS3012R',
     requestMap: {
       CANO: 'cano',
       ACNT_PRDT_CD: 'acntPrdtCd',
@@ -334,6 +354,10 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       CTX_AREA_NK200: 'ctxAreaNk200',
     },
     params: [
+      {
+        name: 'trId',
+        required: true,
+      },
       {
         name: 'cano',
         required: true,
@@ -366,7 +390,6 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
     methodName: 'getStockConclusionHistory',
     method: 'GET',
     path: '/uapi/overseas-stock/v1/trading/inquire-ccnl',
-    trId: 'TTTS3035R',
     requestMap: {
       CANO: 'cano',
       ACNT_PRDT_CD: 'acntPrdtCd',
@@ -384,6 +407,10 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       CTX_AREA_FK200: 'ctxAreaFk200',
     },
     params: [
+      {
+        name: 'trId',
+        required: true,
+      },
       {
         name: 'cano',
         required: true,
@@ -451,7 +478,6 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
     methodName: 'getCurrentBalanceByConclusion',
     method: 'GET',
     path: '/uapi/overseas-stock/v1/trading/inquire-present-balance',
-    trId: 'CTRP6504R',
     requestMap: {
       CANO: 'cano',
       ACNT_PRDT_CD: 'acntPrdtCd',
@@ -461,6 +487,10 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       INQR_DVSN_CD: 'inqrDvsnCd',
     },
     params: [
+      {
+        name: 'trId',
+        required: true,
+      },
       {
         name: 'cano',
         required: true,
@@ -491,7 +521,6 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
     methodName: 'getReserveOrders',
     method: 'GET',
     path: '/uapi/overseas-stock/v1/trading/order-resv-list',
-    trId: 'TTTT3039R',
     requestMap: {
       CANO: 'cano',
       ACNT_PRDT_CD: 'acntPrdtCd',
@@ -504,6 +533,10 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       CTX_AREA_NK200: 'ctxAreaNk200',
     },
     params: [
+      {
+        name: 'trId',
+        required: true,
+      },
       {
         name: 'cano',
         required: true,
@@ -732,7 +765,6 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
     methodName: 'requestOrderAfterDayTime',
     method: 'POST',
     path: '/uapi/overseas-stock/v1/trading/daytime-order',
-    trId: 'TTTS6036U',
     requestMap: {
       CANO: 'cano',
       ACNT_PRDT_CD: 'acntPrdtCd',
@@ -746,6 +778,10 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
       ORD_DVSN: 'ordDvsn',
     },
     params: [
+      {
+        name: 'trId',
+        required: true,
+      },
       {
         name: 'cano',
         required: true,
@@ -867,7 +903,7 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
     requestMap: {
       TRAD_DT: 'tradDt',
       CANO: 'cano',
-      ACNO_PRDT_CD: 'acnoPrdtCd',
+      ACNT_PRDT_CD: 'acntPrdtCd',
       CTX_AREA_NK200: 'ctxAreaNk200',
       CTX_AREA_FK200: 'ctxAreaFk200',
     },
@@ -881,7 +917,7 @@ export const overseasAccountEndpoints: KisEndpointDefinition[] = [
         required: true,
       },
       {
-        name: 'acnoPrdtCd',
+        name: 'acntPrdtCd',
         required: true,
       },
       {

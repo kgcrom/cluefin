@@ -50,7 +50,7 @@ export const EXECUTION_FIELD_NAMES = [
   'viStndPrc',
 ] as const;
 
-// 호가 필드 (59개)
+// 호가 필드 (62개)
 export const ORDERBOOK_FIELD_NAMES = [
   'mkscShrnIscd',
   'bsopHour',
@@ -111,6 +111,9 @@ export const ORDERBOOK_FIELD_NAMES = [
   'ovtmTotalAskpIcdc',
   'ovtmTotalBidpIcdc',
   'stckDealClsCode',
+  'midPrc',
+  'midpTotalRsqn',
+  'midpClsCode',
 ] as const;
 
 // 체결통보 필드 (26개)
@@ -253,6 +256,9 @@ export const domesticRealtimeOrderbookSchema = z.object({
   ovtmTotalAskpIcdc: z.string(),
   ovtmTotalBidpIcdc: z.string(),
   stckDealClsCode: z.string(),
+  midPrc: z.string(),
+  midpTotalRsqn: z.string(),
+  midpClsCode: z.string(),
 });
 
 export const domesticRealtimeExecutionNotificationSchema = z.object({
