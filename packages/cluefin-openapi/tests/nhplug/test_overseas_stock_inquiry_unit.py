@@ -16,6 +16,7 @@ BALANCE_URL = f"{BASE_DEV}/gbstock/inquiry/v1/balance"
 RESERVED_ORDERS_URL = f"{BASE_DEV}/gbstock/inquiry/v1/reservedInquiry"
 DAILY_TRANSACTIONS_URL = f"{BASE_DEV}/gbstock/inquiry/v1/dailyTransaction"
 PERIOD_PNL_URL = f"{BASE_DEV}/gbstock/inquiry/v1/periodPnl"
+PERIOD_PNL_DETAIL_URL = f"{BASE_DEV}/gbstock/inquiry/v1/periodPnlDetail"
 
 ORDER_EXECUTIONS_OK_BODY = {
     "Output_0": [
@@ -356,6 +357,28 @@ PERIOD_PNL_OK_BODY = {
             "fc_sec_trd_nat_cd": "200",
             "fc_sec_trd_nat_nm": "미국",
             "trd_cur_cd": "USD",
+            "byn_qty": 10,
+            "byn_uit_pr": 150.25,
+            "fc_byn_amt1": 1502.5,
+            "sll_qty": 10,
+            "sll_uit_pr": 157.5,
+            "fc_sll_amt": 1575.0,
+            "fc_sby_pls": 74.75,
+            "fc_sby_pft_rt": 4.98,
+            "fc_sdr_xps": 1.5,
+            "fc_rzt_pls": 73.25,
+            "fc_rzt_pft_rt": 4.65,
+        }
+    ],
+    "message": {"msg_code": "0000", "usr_msg": "정상 처리되었습니다."},
+}
+
+
+PERIOD_PNL_DETAIL_OK_BODY = {
+    "Output_0": [
+        {
+            "iem_cd": "AAPL",
+            "iem_nm": "애플",
             "byn_qty": 10,
             "byn_uit_pr": 150.25,
             "fc_byn_amt1": 1502.5,
@@ -971,4 +994,94 @@ class TestGetPeriodPnl:
                     iqr_dit="1",
                     sta_orr_dt="20260801",
                     end_orr_dt="20260821",
+                )
+
+
+class TestGetPeriodPnlDetail:
+    def test_sends_input_envelope(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(PERIOD_PNL_DETAIL_URL, json=PERIOD_PNL_DETAIL_OK_BODY)
+            client.overseas_stock_inquiry.get_period_pnl_detail(
+                act_no="50051036881",
+                iqr_dit="1",
+                orr_dt="20260821",
+                fc_sec_trd_nat_cd="200",
+                trd_cur_cd="USD",
+                iem_cd="AAPL",
+            )
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "act_no": "50051036881",
+                "iqr_dit": "1",
+                "orr_dt": "20260821",
+                "fc_sec_trd_nat_cd": "200",
+                "trd_cur_cd": "USD",
+                "iem_cd": "AAPL",
+            }
+        }
+
+    def test_omits_optional_fields_when_not_given(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(PERIOD_PNL_DETAIL_URL, json=PERIOD_PNL_DETAIL_OK_BODY)
+            client.overseas_stock_inquiry.get_period_pnl_detail(
+                act_no="50051036881",
+                iqr_dit="1",
+                orr_dt="20260821",
+                fc_sec_trd_nat_cd="200",
+                trd_cur_cd="USD",
+            )
+
+        sent = json.loads(m.request_history[0].text)["Input_0"]
+        assert "iem_cd" not in sent
+
+    def test_parses_period_pnl_detail_response(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(PERIOD_PNL_DETAIL_URL, json=PERIOD_PNL_DETAIL_OK_BODY, headers={"cts_flag": "N"})
+            response = client.overseas_stock_inquiry.get_period_pnl_detail(
+                act_no="50051036881",
+                iqr_dit="1",
+                orr_dt="20260821",
+                fc_sec_trd_nat_cd="200",
+                trd_cur_cd="USD",
+            )
+
+        assert response.body.output_0 is not None
+        assert len(response.body.output_0) == 1
+        item = response.body.output_0[0]
+        assert item.iem_cd == "AAPL"
+        assert item.byn_qty == 10
+        assert item.fc_sby_pls == 74.75
+        assert item.fc_rzt_pft_rt == 4.65
+        assert response.body.message.usr_msg == "정상 처리되었습니다."
+        assert response.header.cts_flag == "N"
+
+    def test_sends_cts_header_for_continuation(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(PERIOD_PNL_DETAIL_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
+            response = client.overseas_stock_inquiry.get_period_pnl_detail(
+                act_no="50051036881",
+                iqr_dit="1",
+                orr_dt="20260821",
+                fc_sec_trd_nat_cd="200",
+                trd_cur_cd="USD",
+                cts="CTS_TOKEN_1",
+            )
+
+        sent_headers = m.request_history[0].headers
+        assert sent_headers["cts"] == "CTS_TOKEN_1"
+        assert sent_headers["cts_flag"] == "Y"
+        assert response.body.output_0 is None
+        assert response.body.rsp_cd == "00000"
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(PERIOD_PNL_DETAIL_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
+            with pytest.raises(NHPlugAPIError, match="40310"):
+                client.overseas_stock_inquiry.get_period_pnl_detail(
+                    act_no="50051036881",
+                    iqr_dit="1",
+                    orr_dt="20260821",
+                    fc_sec_trd_nat_cd="200",
+                    trd_cur_cd="USD",
                 )
