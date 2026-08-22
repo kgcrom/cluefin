@@ -143,3 +143,72 @@ class TestCashSell:
                     rmt_mkt_cd="KRX",
                     sor_mkt_sli_yn="N",
                 )
+
+
+class TestCreditBuy:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/order/v1/creditBuy", json=CASH_BUY_BODY)
+            response = client.krstock_order.credit_buy(
+                act_no="50051036881",
+                iem_cd="005930",
+                orr_qty=1,
+                nmn_pr_tp_cd="01",
+                cfd_lon_cd="01",
+                rmt_mkt_cd="KRX",
+                sor_mkt_sli_yn="N",
+                orr_pr=50000,
+            )
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "act_no": "50051036881",
+                "iem_cd": "005930",
+                "orr_qty": 1,
+                "orr_pr": 50000,
+                "nmn_pr_tp_cd": "01",
+                "orr_cnd_dit_cd": "00",
+                "cfd_lon_cd": "01",
+                "rmt_mkt_cd": "KRX",
+                "sor_mkt_sli_yn": "N",
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        assert response.body.output_0.mkt_orr_no == 12345
+        assert response.body.output_0.orr_gno_tab_cd == "0001"
+
+    def test_market_order_omits_none_params(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/order/v1/creditBuy", json=CASH_BUY_BODY)
+            client.krstock_order.credit_buy(
+                act_no="50051036881",
+                iem_cd="005930",
+                orr_qty=1,
+                nmn_pr_tp_cd="05",
+                cfd_lon_cd="03",
+                rmt_mkt_cd="KRX",
+                sor_mkt_sli_yn="N",
+            )
+
+        sent = json.loads(m.request_history[0].text)["Input_0"]
+        assert "orr_pr" not in sent
+        assert "orr_amt" not in sent
+        assert "lon_dt" not in sent
+        assert "sop_cnd_pr" not in sent
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/order/v1/creditBuy",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_order.credit_buy(
+                    act_no="00000000000",
+                    iem_cd="005930",
+                    orr_qty=1,
+                    nmn_pr_tp_cd="05",
+                    cfd_lon_cd="01",
+                    rmt_mkt_cd="KRX",
+                    sor_mkt_sli_yn="N",
+                )

@@ -29,3 +29,9 @@ class KrStockOrderCashSell(NHPlugAssetHttpBody):
     """주식주문(현금) 매도 (`POST /krstock/order/v1/cashSell`) 응답."""
 
     output_0: KrStockOrderPlacedOutput | None = Field(default=None, alias="Output_0", description="주문 접수 결과")
+
+
+class KrStockOrderCreditBuy(NHPlugAssetHttpBody):
+    """주식주문(신용) 매수 (`POST /krstock/order/v1/creditBuy`) 응답."""
+
+    output_0: KrStockOrderPlacedOutput | None = Field(default=None, alias="Output_0", description="주문 접수 결과")

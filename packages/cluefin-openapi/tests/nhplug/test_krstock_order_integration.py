@@ -10,7 +10,7 @@ import pytest
 from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
 from cluefin_openapi.nhplug._http_client import HttpClient
 
-from ._integration_helpers import skip_if_env_blocked
+from ._integration_helpers import real_account_only, skip_if_env_blocked
 
 TEST_IEM_CD = "005930"  # 삼성전자
 
@@ -24,6 +24,33 @@ def test_cash_buy_market_order(client: HttpClient, krstock_account: str):
             iem_cd=TEST_IEM_CD,
             orr_qty=1,
             nmn_pr_tp_cd="05",  # 시장가
+            rmt_mkt_cd="KRX",
+            sor_mkt_sli_yn="N",
+        )
+    except NHPlugAPIError as e:
+        skip_if_env_blocked(e)
+
+    assert response.body.output_0 is not None
+    assert response.body.output_0.mkt_orr_no is not None
+
+
+@pytest.mark.integration
+@real_account_only("/krstock/order/v1/creditBuy", "19999: 모의투자에서는 해당업무가 제공되지 않습니다")
+def test_credit_buy_market_order(client: HttpClient, krstock_account: str):
+    """시장가 1주 신용 매수 접수. 운영에서만 검증 가능 — 실제 신용주문이 체결된다.
+
+    cfd_lon_cd="01"(유통융자)을 사용한다 — 스펙 설명의 신용대출코드 목록(01.유통융자
+    02.자기융자 03.유통대주 04.자기대주 10.매입자금대출) 중 신규 매수 신용거래의
+    가장 기본 형태(융자·유통물)이고, lon_dt(대출일자)는 스펙상 03·04(대주)일 때만
+    필수라 01을 쓰면 추가 입력 없이 호출할 수 있다.
+    """
+    try:
+        response = client.krstock_order.credit_buy(
+            act_no=krstock_account,
+            iem_cd=TEST_IEM_CD,
+            orr_qty=1,
+            nmn_pr_tp_cd="05",  # 시장가
+            cfd_lon_cd="01",  # 유통융자 — lon_dt 불필요
             rmt_mkt_cd="KRX",
             sor_mkt_sli_yn="N",
         )

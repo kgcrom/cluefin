@@ -23,6 +23,7 @@ from cluefin_openapi.nhplug._krstock_order import KrStockOrder
 from cluefin_openapi.nhplug._krstock_order_types import (
     KrStockOrderCashBuy,
     KrStockOrderCashSell,
+    KrStockOrderCreditBuy,
     KrStockOrderPlacedOutput,
 )
 from cluefin_openapi.nhplug._model import (
@@ -44,6 +45,7 @@ __all__ = [
     "KrStockOrder",
     "KrStockOrderCashBuy",
     "KrStockOrderCashSell",
+    "KrStockOrderCreditBuy",
     "KrStockOrderPlacedOutput",
     "NHPlugAPIError",
     "NHPlugAssetHttpBody",
