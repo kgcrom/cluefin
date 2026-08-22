@@ -21,6 +21,24 @@ class NHPlugHttpBody(BaseModel):
     rsp_msg: str = Field(description="응답메시지")
 
 
+class NHPlugMessage(BaseModel):
+    """공통 응답 메시지 봉투 (`components.schemas.Message`).
+
+    gbstock 등 자산군 API 응답에 `message` 블록으로 내려온다.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    msg_code: str | None = Field(default=None, description="메시지코드")
+    usr_msg: str | None = Field(default=None, description="사용자메시지")
+    msg_lv_code: str | None = Field(default=None, description="메시지레벨코드")
+    dvlp_msg_yn: str | None = Field(default=None, description="개발메시지여부")
+    svc_nm: str | None = Field(default=None, description="서비스명")
+    func_nm: str | None = Field(default=None, description="함수명")
+    line_no: str | None = Field(default=None, description="라인번호")
+    dvlp_msg: str | None = Field(default=None, description="개발메시지")
+
+
 class NHPlugHttpHeader(BaseModel):
     """응답 헤더 중 클라이언트가 사용하는 값."""
 
