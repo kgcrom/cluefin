@@ -105,3 +105,41 @@ class TestCashBuy:
                     rmt_mkt_cd="KRX",
                     sor_mkt_sli_yn="N",
                 )
+
+
+class TestCashSell:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/order/v1/cashSell", json=CASH_BUY_BODY)
+            response = client.krstock_order.cash_sell(
+                act_no="50051036881",
+                iem_cd="005930",
+                orr_qty=1,
+                nmn_pr_tp_cd="01",
+                rmt_mkt_cd="KRX",
+                sor_mkt_sli_yn="N",
+                orr_pr=50000,
+            )
+
+        sent = json.loads(m.request_history[0].text)["Input_0"]
+        assert sent["iem_cd"] == "005930"
+        assert sent["orr_pr"] == 50000
+        assert "orr_amt" not in sent
+        assert response.body.output_0.mkt_orr_no == 12345
+
+    def test_raises_on_failing_rsp_cd_kept_as_env_code(self, client):
+        # 주문 거부(휴일 등)는 HTTP 200 + rsp_cd 로 온다 (2026-08-22 실측: 14100).
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/order/v1/cashSell",
+                json={"rsp_cd": "14100", "rsp_msg": "모의투자 영업일이 아닙니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="14100"):
+                client.krstock_order.cash_sell(
+                    act_no="50051036881",
+                    iem_cd="005930",
+                    orr_qty=1,
+                    nmn_pr_tp_cd="05",
+                    rmt_mkt_cd="KRX",
+                    sor_mkt_sli_yn="N",
+                )

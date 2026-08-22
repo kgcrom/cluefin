@@ -3,7 +3,9 @@ from pydantic import BaseModel, ConfigDict, Field
 from cluefin_openapi.nhplug._model import NHPlugAssetHttpBody
 
 
-class KrStockOrderCashBuyOutput(BaseModel):
+class KrStockOrderPlacedOutput(BaseModel):
+    """신규 주문(현금·신용 매수/매도) 공통 접수 결과 — 스펙상 4개 API 의 Output_0 이 동일하다."""
+
     model_config = ConfigDict(extra="allow")
 
     orr_gno_tab_cd: str | None = Field(default=None, description="주문채번팀점코드 / 길이 4")
@@ -20,4 +22,10 @@ class KrStockOrderCashBuyOutput(BaseModel):
 class KrStockOrderCashBuy(NHPlugAssetHttpBody):
     """주식주문(현금) 매수 (`POST /krstock/order/v1/cashBuy`) 응답."""
 
-    output_0: KrStockOrderCashBuyOutput | None = Field(default=None, alias="Output_0", description="주문 접수 결과")
+    output_0: KrStockOrderPlacedOutput | None = Field(default=None, alias="Output_0", description="주문 접수 결과")
+
+
+class KrStockOrderCashSell(NHPlugAssetHttpBody):
+    """주식주문(현금) 매도 (`POST /krstock/order/v1/cashSell`) 응답."""
+
+    output_0: KrStockOrderPlacedOutput | None = Field(default=None, alias="Output_0", description="주문 접수 결과")

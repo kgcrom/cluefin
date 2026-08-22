@@ -32,3 +32,23 @@ def test_cash_buy_market_order(client: HttpClient, krstock_account: str):
 
     assert response.body.output_0 is not None
     assert response.body.output_0.mkt_orr_no is not None
+
+
+@pytest.mark.integration
+def test_cash_sell_market_order(client: HttpClient, krstock_account: str):
+    """시장가 1주 매도 접수. 보유 잔고가 없으면 거부 코드가 나올 수 있다 —
+    그 코드도 환경 제약이므로 실측 후 ENV_BLOCKED_CODES 에 등록한다."""
+    try:
+        response = client.krstock_order.cash_sell(
+            act_no=krstock_account,
+            iem_cd=TEST_IEM_CD,
+            orr_qty=1,
+            nmn_pr_tp_cd="05",  # 시장가
+            rmt_mkt_cd="KRX",
+            sor_mkt_sli_yn="N",
+        )
+    except NHPlugAPIError as e:
+        skip_if_env_blocked(e)
+
+    assert response.body.output_0 is not None
+    assert response.body.output_0.mkt_orr_no is not None
