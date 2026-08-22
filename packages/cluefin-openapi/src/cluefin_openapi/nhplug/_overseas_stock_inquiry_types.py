@@ -187,6 +187,93 @@ class OverseasStockBalanceItem(BaseModel):
     xrn_dt: str | None = Field(default=None, description="만기일자 / 길이 8")
 
 
+class OverseasStockReservedInquiryItem(BaseModel):
+    """해외주식 예약주문조회 결과 항목 (`Output_0` 배열 원소)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    fc_mkt_dit_cd: str | None = Field(
+        default=None, description="외화시장구분코드 / 길이 3 / 200.미국 070.일본 120.홍콩 160.상해 170.심천"
+    )
+    bkg_orr_dt: str | None = Field(default=None, description="예약주문일자 / 길이 8 / YYYYMMDD")
+    act_no: str | None = Field(default=None, description="계좌번호 / 길이 11")
+    cus_fnm: str | None = Field(default=None, description="고객성명 / 길이 40")
+    iem_cd: str | None = Field(default=None, description="티커종목코드 / 길이 12")
+    iem_nm: str | None = Field(default=None, description="종목명 / 길이 60")
+    cur_cd: str | None = Field(default=None, description="통화코드 / 길이 3 / KRW.KRW USD.USD CNY.CNY HKD.HKD JPY.JPY")
+    sby_dit_cd: str | None = Field(default=None, description="매매구분코드 / 길이 1 / 1.매도 2.매수")
+    sby_dit_nm: str | None = Field(default=None, description="매매구분명 / 길이 4")
+    orr_qty: int | None = Field(default=None, description="주문수량 / 길이 18")
+    orr_pr: float | None = Field(default=None, description="주문가격 / 길이 15.6")
+    cns_qty: int | None = Field(default=None, description="체결수량 / 길이 18")
+    cns_pr: float | None = Field(default=None, description="체결가격 / 길이 15.6")
+    bkg_orr_can_yn: str | None = Field(default=None, description="예약주문취소여부 / 길이 1")
+    orr_can_dit_nm: str | None = Field(default=None, description="주문취소구분명 / 길이 50")
+    bkg_orr_rtn_dt: str | None = Field(default=None, description="예약주문접수일자 / 길이 8 / YYYYMMDD")
+    bkg_orr_rtn_tm: str | None = Field(default=None, description="예약주문접수시각 / 길이 8")
+    rgs_tab_cd: str | None = Field(default=None, description="등록팀점코드 / 길이 4")
+    rgs_emp_no: str | None = Field(default=None, description="등록사원번호 / 길이 6")
+    rgs_emp_fnm: str | None = Field(default=None, description="등록사원성명 / 길이 40")
+    cct_dt: str | None = Field(default=None, description="해지일자 / 길이 8 / YYYYMMDD")
+    cct_tm: str | None = Field(default=None, description="해지시각 / 길이 8")
+    cct_emp_no: str | None = Field(default=None, description="해지사원번호 / 길이 6")
+    cct_emp_fnm: str | None = Field(default=None, description="해지사원성명 / 길이 40")
+    bkg_rtn_orr_no: int | None = Field(default=None, description="예약접수주문번호 / 길이 10")
+    orr_sno: int | None = Field(default=None, description="주문일련번호 / 길이 10")
+    ost_orr_mdi: str | None = Field(default=None, description="주문매체 / 길이 2")
+    orr_cpl_yn: str | None = Field(default=None, description="주문완료여부 / 길이 1")
+    ost_pcs_cd: str | None = Field(default=None, description="처리코드 / 길이 5")
+    pcs_msg_cts: str | None = Field(default=None, description="처리메시지내용 / 길이 300")
+    aca_tel_no: str | None = Field(default=None, description="연락처전화번호 / 길이 20")
+    ahi_nmn_pr_tp_cd: str | None = Field(default=None, description="현물호가유형코드 / 길이 2")
+    ahi_nmn_pr_tp_cd_nm: str | None = Field(default=None, description="현물호가유형코드명 / 길이 20")
+    oss_orr_knd_cd_nm: str | None = Field(default=None, description="해외증권주문종류코드명 / 길이 20")
+    ivs_sgy_cd_nm: str | None = Field(default=None, description="투자전략코드명 / 길이 10")
+    fc_csh_wtm: float | None = Field(default=None, description="외화현금증거금 / 길이 15.3")
+    fc_csh_wtm_fee: float | None = Field(default=None, description="외화현금증거금수수료 / 길이 15.3")
+    fc_csh_wtm_tax_amt: float | None = Field(default=None, description="외화현금증거금세금금액 / 길이 15.3")
+    fc_csh_wtm_trd_tax: float | None = Field(default=None, description="외화현금증거금거래세 / 길이 15.3")
+    fc_mkt_dit_cd_nm: str | None = Field(default=None, description="외화시장구분코드명 / 길이 50")
+    bkg_orr_tp_cd: str | None = Field(
+        default=None,
+        description=(
+            "예약주문유형코드 / 길이 1 / 1.\t일반예약주문 / 2.\t잔량기준기간예약주문 / "
+            "3.\t수량기준기간예약주문 / 4.\t증거금징수 예약"
+        ),
+    )
+    bkg_orr_tp_cd_nm: str | None = Field(default=None, description="예약주문유형코드명 / 길이 50")
+    orr_enf_sta_dt: str | None = Field(default=None, description="주문집행시작일자 / 길이 8 / YYYYMMDD")
+    orr_enf_end_dt: str | None = Field(default=None, description="주문집행종료일자 / 길이 8 / YYYYMMDD")
+    acl_cns_qty: int | None = Field(default=None, description="누적체결수량 / 길이 18")
+    lst_orr_enf_dt: str | None = Field(default=None, description="최종주문집행일자 / 길이 8 / YYYYMMDD")
+    rmn_qty: int | None = Field(default=None, description="잔여수량 / 길이 18")
+    wtm_cur_knd_cd: str | None = Field(
+        default=None, description="증거금통화종류코드 / 길이 1 / 1.거래국가통화 2.원화 3.기타통화"
+    )
+    cd_nm: str | None = Field(default=None, description="코드명 / 길이 50")
+    fc_stop_orr_bse_pr: float | None = Field(default=None, description="외화STOP주문기준가격 / 길이 15.6")
+    orr_pdt_dit_cd: str | None = Field(default=None, description="주문상품구분코드 / 길이 2")
+    cfd_lon_cd: str | None = Field(default=None, description="신용대출코드 / 길이 2")
+    cfd_lon_cd_nm: str | None = Field(default=None, description="신용대출코드명 / 길이 40")
+    lon_dt: str | None = Field(default=None, description="대출일자 / 길이 8 / YYYYMMDD")
+
+
+class OverseasStockReservedInquiry(BaseModel):
+    """해외주식 예약주문조회 (`POST /gbstock/inquiry/v1/reservedInquiry`) 응답.
+
+    응답 블록은 데이터가 있을 때만 내려오므로 모두 Optional.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    rsp_cd: str | None = Field(default=None, description="응답코드")
+    rsp_msg: str | None = Field(default=None, description="응답메시지")
+    output_0: list[OverseasStockReservedInquiryItem] | None = Field(
+        default=None, alias="Output_0", description="예약주문내역 조회 결과"
+    )
+    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
+
+
 class OverseasStockBalance(BaseModel):
     """해외주식 잔고조회 (`POST /gbstock/inquiry/v1/balance`) 응답.
 

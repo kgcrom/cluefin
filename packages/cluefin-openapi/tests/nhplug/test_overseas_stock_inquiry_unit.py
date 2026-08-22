@@ -13,6 +13,7 @@ BASE_DEV = "https://moapi.nhplug.com:8443"
 BUYABLE_AMOUNT_URL = f"{BASE_DEV}/gbstock/inquiry/v1/buyableAmount"
 ORDER_EXECUTIONS_URL = f"{BASE_DEV}/gbstock/inquiry/v1/unexecuted"
 BALANCE_URL = f"{BASE_DEV}/gbstock/inquiry/v1/balance"
+RESERVED_ORDERS_URL = f"{BASE_DEV}/gbstock/inquiry/v1/reservedInquiry"
 
 ORDER_EXECUTIONS_OK_BODY = {
     "Output_0": [
@@ -203,6 +204,69 @@ BALANCE_OK_BODY = {
             "lon_dt": "",
             "xrn_dt": "",
         },
+    ],
+    "message": {"msg_code": "0000", "usr_msg": "정상 처리되었습니다."},
+}
+
+
+RESERVED_ORDERS_OK_BODY = {
+    "Output_0": [
+        {
+            "fc_mkt_dit_cd": "200",
+            "bkg_orr_dt": "20260821",
+            "act_no": "50051036881",
+            "cus_fnm": "홍길동",
+            "iem_cd": "AAPL",
+            "iem_nm": "애플",
+            "cur_cd": "USD",
+            "sby_dit_cd": "2",
+            "sby_dit_nm": "매수",
+            "orr_qty": 10,
+            "orr_pr": 150.25,
+            "cns_qty": 10,
+            "cns_pr": 150.25,
+            "bkg_orr_can_yn": "7",
+            "orr_can_dit_nm": "완료",
+            "bkg_orr_rtn_dt": "20260821",
+            "bkg_orr_rtn_tm": "090000",
+            "rgs_tab_cd": "0001",
+            "rgs_emp_no": "000001",
+            "rgs_emp_fnm": "김직원",
+            "cct_dt": "",
+            "cct_tm": "",
+            "cct_emp_no": "",
+            "cct_emp_fnm": "",
+            "bkg_rtn_orr_no": 1234567890,
+            "orr_sno": 1,
+            "ost_orr_mdi": "01",
+            "orr_cpl_yn": "Y",
+            "ost_pcs_cd": "00000",
+            "pcs_msg_cts": "정상처리",
+            "aca_tel_no": "01000000000",
+            "ahi_nmn_pr_tp_cd": "00",
+            "ahi_nmn_pr_tp_cd_nm": "지정가",
+            "oss_orr_knd_cd_nm": "GTS(미국시장주문)",
+            "ivs_sgy_cd_nm": "",
+            "fc_csh_wtm": 0.0,
+            "fc_csh_wtm_fee": 0.0,
+            "fc_csh_wtm_tax_amt": 0.0,
+            "fc_csh_wtm_trd_tax": 0.0,
+            "fc_mkt_dit_cd_nm": "미국",
+            "bkg_orr_tp_cd": "1",
+            "bkg_orr_tp_cd_nm": "일반예약주문",
+            "orr_enf_sta_dt": "20260821",
+            "orr_enf_end_dt": "20260821",
+            "acl_cns_qty": 10,
+            "lst_orr_enf_dt": "20260821",
+            "rmn_qty": 0,
+            "wtm_cur_knd_cd": "1",
+            "cd_nm": "",
+            "fc_stop_orr_bse_pr": 0.0,
+            "orr_pdt_dit_cd": "00",
+            "cfd_lon_cd": "00",
+            "cfd_lon_cd_nm": "일반거래",
+            "lon_dt": "",
+        }
     ],
     "message": {"msg_code": "0000", "usr_msg": "정상 처리되었습니다."},
 }
@@ -507,4 +571,112 @@ class TestGetBalance:
                     qut_iqr_dit_cd="1",
                     fc_sec_trd_nat_cd="200",
                     cur_cd="USD",
+                )
+
+
+class TestGetReservedOrders:
+    def test_sends_input_envelope(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(RESERVED_ORDERS_URL, json=RESERVED_ORDERS_OK_BODY)
+            client.overseas_stock_inquiry.get_reserved_orders(
+                fc_mkt_dit_cd="200",
+                bkg_orr_dt="20260821",
+                act_no="50051036881",
+                sby_dit_cd="0",
+                bkg_orr_can_yn="0",
+                oss_orr_knd_cd="0",
+                bkg_orr_tp_cd="0",
+                wtm_cur_knd_cd="0",
+                iem_cd="AAPL",
+            )
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "fc_mkt_dit_cd": "200",
+                "bkg_orr_dt": "20260821",
+                "act_no": "50051036881",
+                "sby_dit_cd": "0",
+                "bkg_orr_can_yn": "0",
+                "oss_orr_knd_cd": "0",
+                "bkg_orr_tp_cd": "0",
+                "wtm_cur_knd_cd": "0",
+                "iem_cd": "AAPL",
+            }
+        }
+
+    def test_omits_optional_fields_when_not_given(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(RESERVED_ORDERS_URL, json=RESERVED_ORDERS_OK_BODY)
+            client.overseas_stock_inquiry.get_reserved_orders(
+                fc_mkt_dit_cd="200",
+                bkg_orr_dt="20260821",
+                act_no="50051036881",
+                sby_dit_cd="0",
+                bkg_orr_can_yn="0",
+                oss_orr_knd_cd="0",
+                bkg_orr_tp_cd="0",
+                wtm_cur_knd_cd="0",
+            )
+
+        sent = json.loads(m.request_history[0].text)["Input_0"]
+        assert "iem_cd" not in sent
+
+    def test_parses_reserved_orders_response(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(RESERVED_ORDERS_URL, json=RESERVED_ORDERS_OK_BODY, headers={"cts_flag": "N"})
+            response = client.overseas_stock_inquiry.get_reserved_orders(
+                fc_mkt_dit_cd="200",
+                bkg_orr_dt="20260821",
+                act_no="50051036881",
+                sby_dit_cd="0",
+                bkg_orr_can_yn="0",
+                oss_orr_knd_cd="0",
+                bkg_orr_tp_cd="0",
+                wtm_cur_knd_cd="0",
+            )
+
+        assert response.body.output_0 is not None
+        assert len(response.body.output_0) == 1
+        item = response.body.output_0[0]
+        assert item.iem_cd == "AAPL"
+        assert item.orr_qty == 10
+        assert item.cns_pr == 150.25
+        assert item.bkg_rtn_orr_no == 1234567890
+        assert response.body.message.usr_msg == "정상 처리되었습니다."
+        assert response.header.cts_flag == "N"
+
+    def test_sends_cts_header_for_continuation(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(RESERVED_ORDERS_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
+            response = client.overseas_stock_inquiry.get_reserved_orders(
+                fc_mkt_dit_cd="200",
+                bkg_orr_dt="20260821",
+                act_no="50051036881",
+                sby_dit_cd="0",
+                bkg_orr_can_yn="0",
+                oss_orr_knd_cd="0",
+                bkg_orr_tp_cd="0",
+                wtm_cur_knd_cd="0",
+                cts="CTS_TOKEN_1",
+            )
+
+        sent_headers = m.request_history[0].headers
+        assert sent_headers["cts"] == "CTS_TOKEN_1"
+        assert sent_headers["cts_flag"] == "Y"
+        assert response.body.output_0 is None
+        assert response.body.rsp_cd == "00000"
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(RESERVED_ORDERS_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
+            with pytest.raises(NHPlugAPIError, match="40310"):
+                client.overseas_stock_inquiry.get_reserved_orders(
+                    fc_mkt_dit_cd="200",
+                    bkg_orr_dt="20260821",
+                    act_no="50051036881",
+                    sby_dit_cd="0",
+                    bkg_orr_can_yn="0",
+                    oss_orr_knd_cd="0",
+                    bkg_orr_tp_cd="0",
+                    wtm_cur_knd_cd="0",
                 )

@@ -5,6 +5,7 @@ from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
 from cluefin_openapi.nhplug._overseas_stock_inquiry_types import (
     OverseasStockBalance,
     OverseasStockBuyableAmount,
+    OverseasStockReservedInquiry,
     OverseasStockUnexecuted,
 )
 from cluefin_openapi.nhplug._response import check_response_error
@@ -181,3 +182,63 @@ class OverseasStockInquiry:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockBalance.model_validate(data))
+
+    def get_reserved_orders(
+        self,
+        fc_mkt_dit_cd: str,
+        bkg_orr_dt: str,
+        act_no: str,
+        sby_dit_cd: str,
+        bkg_orr_can_yn: str,
+        oss_orr_knd_cd: str,
+        bkg_orr_tp_cd: str,
+        wtm_cur_knd_cd: str,
+        iem_cd: Optional[str] = None,
+        cts: Optional[str] = None,
+    ) -> NHPlugHttpResponse[OverseasStockReservedInquiry]:
+        """해외주식 예약주문조회 (`POST /gbstock/inquiry/v1/reservedInquiry`).
+
+        해외주식 예약주문내역을 조회하는 API 이다. 응답 블록은 데이터가 있을
+        때만 내려온다.
+
+        Args:
+            fc_mkt_dit_cd: 외화시장구분코드 (길이 3) (000.전체 200.미국 070.일본 120.홍콩
+                160.상해 170.심천)
+            bkg_orr_dt: 예약주문일자 (길이 8) (YYYYMMDD)
+            act_no: 계좌번호 (길이 11). `/n2/acctinfo` 의 acct_no 사용
+                (운영은 acct_type=01·02, 모의투자는 03 계좌만 유효).
+            sby_dit_cd: 매매구분코드 (길이 1) (0.전체 1.매도 2.매수)
+            bkg_orr_can_yn: 예약주문취소여부 (길이 1) (0.전체 1.접수 2.취소 3.주문전송
+                4.주문확인 5.실행거부 6.실행거부(현지) 7.완료)
+            oss_orr_knd_cd: 해외증권주문종류코드 (길이 1) (0.전체 1.GTS(미국시장주문)
+                2.기타자동 3.기타수동)
+            bkg_orr_tp_cd: 예약주문유형코드 (길이 1) (0.전체 1.일반예약 2.기간잔량
+                3.기간지정 4.증거금징수)
+            wtm_cur_knd_cd: 증거금통화종류코드 (길이 1) (0.전체 1.거래국가통화 2.원화)
+            iem_cd: 티커종목코드 (길이 12). 예: 미국주식 APPLE인 경우 AAPL
+            cts: 연속거래키. 이전 응답 헤더의 `cts` 값을 그대로 전달하면 다음 페이지를 받는다.
+
+        Returns:
+            NHPlugHttpResponse[OverseasStockReservedInquiry]: 예약주문내역
+                목록(`Output_0`) 조회 결과
+        """
+        body: dict = {
+            "fc_mkt_dit_cd": fc_mkt_dit_cd,
+            "bkg_orr_dt": bkg_orr_dt,
+            "act_no": act_no,
+            "sby_dit_cd": sby_dit_cd,
+            "bkg_orr_can_yn": bkg_orr_can_yn,
+            "oss_orr_knd_cd": oss_orr_knd_cd,
+            "bkg_orr_tp_cd": bkg_orr_tp_cd,
+            "wtm_cur_knd_cd": wtm_cur_knd_cd,
+        }
+        optional_fields = {
+            "iem_cd": iem_cd,
+        }
+        body.update({k: v for k, v in optional_fields.items() if v is not None})
+
+        response = self.client.post("/gbstock/inquiry/v1/reservedInquiry", body=body, cts=cts)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=OverseasStockReservedInquiry.model_validate(data))

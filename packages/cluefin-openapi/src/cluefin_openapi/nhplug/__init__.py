@@ -27,6 +27,8 @@ from cluefin_openapi.nhplug._overseas_stock_inquiry_types import (
     OverseasStockBalanceOutput,
     OverseasStockBuyableAmount,
     OverseasStockBuyableAmountOutput,
+    OverseasStockReservedInquiry,
+    OverseasStockReservedInquiryItem,
     OverseasStockUnexecuted,
     OverseasStockUnexecutedItem,
 )
@@ -78,6 +80,8 @@ __all__ = [
     "OverseasStockOrderReservedSubmit",
     "OverseasStockOrderSell",
     "OverseasStockReservedCancelOutput",
+    "OverseasStockReservedInquiry",
+    "OverseasStockReservedInquiryItem",
     "OverseasStockReservedSubmitOutput",
     "OverseasStockUnexecuted",
     "OverseasStockUnexecutedItem",
