@@ -44,6 +44,21 @@ def test_integrated_margin(client: HttpClient, krstock_account: str):
 
 
 @pytest.mark.integration
+@real_account_only("/krstock/inquiry/v1/rightsHeld", "19999: 모의투자에서는 해당업무가 제공되지 않습니다")
+def test_rights_held(client: HttpClient, krstock_account: str):
+    """기간별계좌권리현황조회보유. 최근 한 달(오늘 포함) 범위로 조회 — 조회 API 라 성공을 기대한다."""
+    try:
+        response = client.krstock_inquiry.rights_held(
+            act_no=krstock_account,
+            sta_dt=(date.today() - timedelta(days=30)).strftime("%Y%m%d"),
+        )
+    except NHPlugAPIError as e:
+        skip_if_env_blocked(e)
+
+    assert response.body.rsp_cd in SUCCESS_RSP_CODES
+
+
+@pytest.mark.integration
 def test_balance(client: HttpClient, krstock_account: str):
     """주식잔고조회. 조회 API 라 성공을 기대한다."""
     try:

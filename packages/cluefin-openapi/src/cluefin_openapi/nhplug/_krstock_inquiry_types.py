@@ -745,6 +745,71 @@ class KrStockInquiryIntegratedMargin(NHPlugAssetHttpBody):
     )
 
 
+class KrStockInquiryRightsHeldHeaderOutput(BaseModel):
+    """기간별계좌권리현황조회보유 조회 조건 정보 (Output_0)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    sta_dt: str | None = Field(default=None, description="시작일자 / 길이 8 / YYYYMMDD")
+
+
+class KrStockInquiryRightsHeldOutput(BaseModel):
+    """기간별계좌권리현황조회보유 보유 권리 상세 (Output_1 배열의 각 항목)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    iem_cd: str | None = Field(default=None, description="종목코드 / 길이 12")
+    bse_dt: str | None = Field(default=None, description="기준일자 / 길이 8 / YYYYMMDD")
+    rit_tp_cd: str | None = Field(
+        default=None,
+        description=(
+            "권리유형코드 / 길이 2 / _.해당사항없음 01.배당 02.유상 03.무상 04.매수청구 "
+            "05.신주인수권증서 06.뮤추얼 07.ETF분배금 08.선박펀드 09.투융자펀드 10.해외자원개발펀드 "
+            "11.Ritz(부동산신탁) 12.ELS상환 13.DLS상환 14.ELW만기결제 15.기타청산 16.전환/상환 "
+            "17.ETN분배금 21.흡수합병 22.회사분할 23.주식교환 24.자본감소 25.액면분할 26.액면병합 "
+            "27.종목변경 등 (전체 코드 목록은 스펙 참고, 문자·숫자 혼용 코드 다수)"
+        ),
+    )
+    hld_qty: int | None = Field(default=None, description="보유수량 / 길이 18")
+    aloc_bse_pr: int | None = Field(default=None, description="배정기준가격 / 길이 18")
+    req_amt: int | None = Field(default=None, description="신청금액 / 길이 18")
+    aloc_amt_pym_dt: str | None = Field(default=None, description="배정금액지급일자 / 길이 8 / YYYYMMDD")
+    ltg_dt: str | None = Field(default=None, description="상장일자 / 길이 8 / YYYYMMDD")
+    req_yn: str | None = Field(default=None, description="신청여부 / 길이 1")
+    iem_nm: str | None = Field(default=None, description="종목명 / 길이 50")
+    ldg_brw_dit_cd: str | None = Field(
+        default=None,
+        description="대여차입구분코드 / 길이 2 / 01.차입 02.대여(주식) 03.대여풀 04.대여(채권) 05.대여(해외주식) 06.대여(해외채권)",
+    )
+    cln_dit_cd: str | None = Field(default=None, description="유통구분코드 / 길이 2 / 01.일반 02.유통금융 03.유통대주")
+    aloc_qty: int | None = Field(default=None, description="배정수량 / 길이 18")
+    req_end_dt: str | None = Field(default=None, description="신청종료일자 / 길이 8 / YYYYMMDD")
+    req_qty: int | None = Field(default=None, description="신청수량 / 길이 18")
+    rit_aloc_amt: int | None = Field(default=None, description="권리배정금액 / 길이 18")
+    ltg_iem_cd: str | None = Field(default=None, description="상장종목코드 / 길이 12")
+    pcs_yn: str | None = Field(default=None, description="처리여부 / 길이 1")
+    hdd_yn: str | None = Field(default=None, description="고배당여부 / 길이 1")
+    bkg_sta_dt: str | None = Field(default=None, description="예약시작일자 / 길이 8 / YYYYMMDD")
+    bkg_end_dt: str | None = Field(default=None, description="예약종료일자 / 길이 8 / YYYYMMDD")
+    rrs_itn_rtn_end_dt: str | None = Field(default=None, description="반대의사접수종료일자 / 길이 8 / YYYYMMDD")
+    byn_cim_rtn_end_dt: str | None = Field(default=None, description="매수청구접수종료일자 / 길이 8 / YYYYMMDD")
+
+
+class KrStockInquiryRightsHeld(NHPlugAssetHttpBody):
+    """기간별계좌권리현황조회보유 (`POST /krstock/inquiry/v1/rightsHeld`) 응답.
+
+    연속조회를 지원한다 — 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 다음 호출에
+    전달해 이어받는다.
+    """
+
+    output_0: KrStockInquiryRightsHeldHeaderOutput | None = Field(
+        default=None, alias="Output_0", description="조회 조건 정보"
+    )
+    output_1: list[KrStockInquiryRightsHeldOutput] | None = Field(
+        default=None, alias="Output_1", description="보유 권리 상세 목록"
+    )
+
+
 class KrStockInquiryReservedInquiry(NHPlugAssetHttpBody):
     """주식예약주문조회 (`POST /krstock/inquiry/v1/reservedInquiry`) 응답.
 

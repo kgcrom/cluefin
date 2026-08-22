@@ -11,6 +11,7 @@ from cluefin_openapi.nhplug._krstock_inquiry_types import (
     KrStockInquiryIntegratedMargin,
     KrStockInquiryRealizedPnl,
     KrStockInquiryReservedInquiry,
+    KrStockInquiryRightsHeld,
     KrStockInquirySellableQuantity,
     KrStockInquiryTradingPnl,
 )
@@ -441,3 +442,37 @@ class KrStockInquiry:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryIntegratedMargin.model_validate(data))
+
+    def rights_held(
+        self,
+        act_no: str,
+        sta_dt: Optional[str] = None,
+        rit_tp_cd: Optional[str] = None,
+        cts: Optional[str] = None,
+    ) -> NHPlugHttpResponse[KrStockInquiryRightsHeld]:
+        """기간별계좌권리현황조회보유 (`POST /krstock/inquiry/v1/rightsHeld`).
+
+        스펙상 필수 입력은 `act_no` 뿐이다(종료일자 입력 자체가 없다 — "기간별"이라는
+        이름과 달리 시작일자만 받는다). 연속조회를 지원하는 조회 API 다 — 응답 헤더
+        `cts_flag` 가 "Y" 면 그 `cts` 값을 다음 호출의 `cts` 인자로 전달해 이어받는다.
+
+        Args:
+            act_no: 권리계좌번호 (`/n2/acctinfo` 의 acct_no — 운영은 acct_type
+                01·02, 모의투자는 03 계좌만 유효)
+            sta_dt: 시작일자 (YYYYMMDD)
+            rit_tp_cd: 권리유형코드 (01.배당 02.유상 03.무상 등 — 코드가 많고
+                문자·숫자 혼용이라 Literal 로 강제하지 않음, 생략하면 전체)
+            cts: 연속거래키. 이전 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 전달.
+        """
+        body = self._drop_none(
+            {
+                "sta_dt": sta_dt,
+                "act_no": act_no,
+                "rit_tp_cd": rit_tp_cd,
+            }
+        )
+        response = self.client.post("/krstock/inquiry/v1/rightsHeld", body=body, cts=cts)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=KrStockInquiryRightsHeld.model_validate(data))
