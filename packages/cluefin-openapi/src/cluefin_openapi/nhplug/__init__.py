@@ -54,6 +54,11 @@ from cluefin_openapi.nhplug._overseas_stock_order_types import (
     OverseasStockReservedCancelOutput,
     OverseasStockReservedSubmitOutput,
 )
+from cluefin_openapi.nhplug._overseas_stock_quote import OverseasStockQuote
+from cluefin_openapi.nhplug._overseas_stock_quote_types import (
+    OverseasStockCurrentPrice,
+    OverseasStockCurrentPriceItem,
+)
 from cluefin_openapi.nhplug._socket_client import SocketClient, SubscriptionType, WebSocketEvent, WebSocketMessage
 from cluefin_openapi.nhplug._token_manager import TokenManager
 
@@ -80,6 +85,8 @@ __all__ = [
     "OverseasStockBalanceOutput",
     "OverseasStockBuyableAmount",
     "OverseasStockBuyableAmountOutput",
+    "OverseasStockCurrentPrice",
+    "OverseasStockCurrentPriceItem",
     "OverseasStockDailyTransaction",
     "OverseasStockDailyTransactionItem",
     "OverseasStockDailyTransactionSummary",
@@ -99,6 +106,7 @@ __all__ = [
     "OverseasStockPeriodPnlDetailItem",
     "OverseasStockPeriodPnlItem",
     "OverseasStockPeriodPnlOutput",
+    "OverseasStockQuote",
     "OverseasStockReservedCancelOutput",
     "OverseasStockReservedInquiry",
     "OverseasStockReservedInquiryItem",

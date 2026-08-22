@@ -103,6 +103,13 @@ class HttpClient(BaseHttpClient):
 
         return OverseasStockInquiry(self)
 
+    @property
+    def overseas_stock_quote(self):
+        """해외주식 시세"""
+        from ._overseas_stock_quote import OverseasStockQuote
+
+        return OverseasStockQuote(self)
+
     def post(
         self,
         path: str,
