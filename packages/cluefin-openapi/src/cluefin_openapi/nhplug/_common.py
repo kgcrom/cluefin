@@ -3,7 +3,7 @@ from typing import Optional
 from cluefin_openapi.nhplug._common_types import AccountList, WebsocketCloseResponse
 from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
 from cluefin_openapi.nhplug._http_client import HttpClient
-from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
+from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES, NHPlugHttpHeader, NHPlugHttpResponse
 
 
 class Common:
@@ -18,7 +18,7 @@ class Common:
     def _check_response_error(self, response_data: dict) -> None:
         """HTTP 200 이어도 body rsp_cd 가 실패일 수 있으므로 여기서 확인한다."""
         rsp_cd = response_data.get("rsp_cd")
-        if rsp_cd is not None and rsp_cd != "00000":
+        if rsp_cd is not None and rsp_cd not in SUCCESS_RSP_CODES:
             raise NHPlugAPIError(
                 f"API error {rsp_cd}: {response_data.get('rsp_msg', '')}",
                 status_code=200,

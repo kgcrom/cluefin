@@ -2,8 +2,11 @@ from typing import Any, Dict, Literal, Optional
 
 from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
 from cluefin_openapi.nhplug._http_client import HttpClient
-from cluefin_openapi.nhplug._krstock_inquiry_types import KrStockInquiryBalance
-from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
+from cluefin_openapi.nhplug._krstock_inquiry_types import (
+    KrStockInquiryBalance,
+    KrStockInquiryDailyOrderExecution,
+)
+from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES, NHPlugHttpHeader, NHPlugHttpResponse
 
 
 class KrStockInquiry:
@@ -18,7 +21,7 @@ class KrStockInquiry:
     def _check_response_error(self, response_data: dict) -> None:
         """HTTP 200 이어도 body rsp_cd 가 실패일 수 있으므로 여기서 확인한다."""
         rsp_cd = response_data.get("rsp_cd")
-        if rsp_cd is not None and rsp_cd != "00000":
+        if rsp_cd is not None and rsp_cd not in SUCCESS_RSP_CODES:
             raise NHPlugAPIError(
                 f"API error {rsp_cd}: {response_data.get('rsp_msg', '')}",
                 status_code=200,
@@ -68,3 +71,41 @@ class KrStockInquiry:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryBalance.model_validate(data))
+
+    def daily_order_execution(
+        self,
+        act_no: str,
+        orr_dt: str,
+        ost_cns_dit: Literal["0", "1", "2"],
+        itg_orr_no: Optional[int] = None,
+        orr_mkt_cd: Optional[Literal["00", "01", "02", "03", "06"]] = None,
+        cts: Optional[str] = None,
+    ) -> NHPlugHttpResponse[KrStockInquiryDailyOrderExecution]:
+        """주식일별주문체결조회 (`POST /krstock/inquiry/v1/dailyOrderExecution`).
+
+        연속조회를 지원하는 조회 API 다 — 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을
+        다음 호출의 `cts` 인자로 전달해 이어받는다.
+
+        Args:
+            act_no: 계좌번호 (`/n2/acctinfo` 의 acct_no — 운영은 acct_type 01·02,
+                모의투자는 03 계좌만 유효)
+            orr_dt: 주문일자 (YYYYMMDD)
+            ost_cns_dit: 체결구분 (0.전체 1.미체결 2.체결)
+            itg_orr_no: 통합주문번호 (특정 주문만 조회할 때)
+            orr_mkt_cd: 주문시장코드 (00.전체 01.거래소주식 02.코스닥 03.K-OTC 06.코넥스)
+            cts: 연속거래키. 이전 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 전달.
+        """
+        body = self._drop_none(
+            {
+                "orr_dt": orr_dt,
+                "act_no": act_no,
+                "itg_orr_no": itg_orr_no,
+                "orr_mkt_cd": orr_mkt_cd,
+                "ost_cns_dit": ost_cns_dit,
+            }
+        )
+        response = self.client.post("/krstock/inquiry/v1/dailyOrderExecution", body=body, cts=cts)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=KrStockInquiryDailyOrderExecution.model_validate(data))

@@ -102,3 +102,73 @@ class KrStockInquiryBalance(NHPlugAssetHttpBody):
     output_1: list[KrStockInquiryBalanceHoldingOutput] | None = Field(
         default=None, alias="Output_1", description="보유 종목별 상세 목록"
     )
+
+
+class KrStockInquiryDailyOrderExecutionCustomerOutput(BaseModel):
+    """주식일별주문체결조회 고객 정보 (Output_0).
+
+    스펙은 Output_0 을 Object 로 선언하지만 스펙 자체의 x-schema-warning 이 예시
+    응답은 Array 라고 명시한다 — `KrStockInquiryDailyOrderExecution.output_0` 에서
+    object/array 둘 다 허용하는 Union 으로 받는다.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    cus_fnm: str | None = Field(default=None, description="고객성명 / 길이 40")
+
+
+class KrStockInquiryDailyOrderExecutionOutput(BaseModel):
+    """주식일별주문체결조회 주문·체결 상세 (Output_1 배열의 각 항목)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    itg_orr_no: int | None = Field(default=None, description="통합주문번호 / 길이 11")
+    orr_mkt_cd_nm: str | None = Field(default=None, description="주문시장코드명 / 길이 50")
+    mo_itg_orr_no: str | None = Field(default=None, description="모통합주문번호 / 길이 11")
+    org_itg_orr_no: int | None = Field(default=None, description="원통합주문번호 / 길이 11")
+    iem_cd: str | None = Field(default=None, description="종목코드 / 길이 12")
+    iem_nm: str | None = Field(default=None, description="종목명 / 길이 50")
+    sby_dit_cd_nm: str | None = Field(default=None, description="매매구분코드명 / 길이 50")
+    cor_can_dit_cd_nm: str | None = Field(default=None, description="정정취소구분코드명 / 길이 4")
+    lon_dt: str | None = Field(default=None, description="대출일자 / 길이 8")
+    cfd_lon_cd: str | None = Field(
+        default=None,
+        description="신용대출코드 / 길이 20 / 00.일반거래 01.유통융자 02.자기융자 03.유통대주 04.자기대주 10.매입자금대출",
+    )
+    nmn_pr_tp_cd_nm: str | None = Field(default=None, description="호가유형코드명 / 길이 30")
+    orr_cnd_dit_cd_nm: str | None = Field(default=None, description="주문조건구분코드명 / 길이 60")
+    orr_qty: int | None = Field(default=None, description="주문수량 / 길이 19")
+    orr_pr: float | None = Field(default=None, description="주문가격 / 길이 15.3")
+    tot_cns_qty: int | None = Field(default=None, description="총체결수량 / 길이 23")
+    cns_avg_uit_pr: float | None = Field(default=None, description="체결평균단가 / 길이 15.3")
+    cns_amt: int | None = Field(default=None, description="체결금액 / 길이 16")
+    cns_cnt: int | None = Field(default=None, description="체결건수 / 길이 19")
+    ny_cns_qty: int | None = Field(default=None, description="미체결수량 / 길이 23")
+    cor_qty: str | None = Field(default=None, description="정정수량 / 길이 19")
+    can_qty: int | None = Field(default=None, description="취소수량 / 길이 19")
+    orr_tm: str | None = Field(default=None, description="주문시각 / 길이 9")
+    orr_mdi: str | None = Field(default=None, description="주문매체 / 길이 20")
+    bnd_byn_dt: str | None = Field(default=None, description="채권매수일자 / 길이 8")
+    syn_ttn_dit_cd_nm: str | None = Field(default=None, description="종합과세구분코드명 / 길이 50")
+    orr_rjt_rsn_cd_nm: str | None = Field(default=None, description="주문거부사유코드명 / 길이 4")
+    pcs_emp_no: str | None = Field(default=None, description="처리사원번호 / 길이 6")
+    rmt_mkt_cd: str | None = Field(default=None, description="요청시장코드 / 길이 3 / SOR/KRX/NXT")
+    sor_mkt_sli_yn: str | None = Field(default=None, description="SOR시장분할여부 / 길이 1 / Y.분할 N.미분할")
+    krx_lnt_opi_sec_co_cd: str | None = Field(default=None, description="거래소대량상대증권회사코드 / 길이 5")
+    krx_lnt_opi_act_no: str | None = Field(default=None, description="거래소대량상대계좌번호 / 길이 12")
+    krx_lnt_cnf_cpl_hur: str | None = Field(default=None, description="거래소대량협의완료시간 / 길이 9")
+
+
+class KrStockInquiryDailyOrderExecution(NHPlugAssetHttpBody):
+    """주식일별주문체결조회 (`POST /krstock/inquiry/v1/dailyOrderExecution`) 응답.
+
+    연속조회를 지원한다 — 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 다음 호출에
+    전달해 이어받는다.
+    """
+
+    output_0: (
+        list[KrStockInquiryDailyOrderExecutionCustomerOutput] | KrStockInquiryDailyOrderExecutionCustomerOutput | None
+    ) = Field(default=None, alias="Output_0", description="고객 정보 (스펙은 Object, 실제 예시는 Array — 둘 다 허용)")
+    output_1: list[KrStockInquiryDailyOrderExecutionOutput] | None = Field(
+        default=None, alias="Output_1", description="주문·체결 상세 목록"
+    )

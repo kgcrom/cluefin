@@ -12,7 +12,7 @@ from cluefin_openapi.nhplug._krstock_order_types import (
     KrStockOrderReservedCancel,
     KrStockOrderReservedOrder,
 )
-from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
+from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES, NHPlugHttpHeader, NHPlugHttpResponse
 
 # 호가유형코드 (nmn_pr_tp_cd)
 QuoteTypeCode = Literal[
@@ -77,7 +77,7 @@ class KrStockOrder:
     def _check_response_error(self, response_data: dict) -> None:
         """HTTP 200 이어도 body rsp_cd 가 실패일 수 있으므로 여기서 확인한다."""
         rsp_cd = response_data.get("rsp_cd")
-        if rsp_cd is not None and rsp_cd != "00000":
+        if rsp_cd is not None and rsp_cd not in SUCCESS_RSP_CODES:
             raise NHPlugAPIError(
                 f"API error {rsp_cd}: {response_data.get('rsp_msg', '')}",
                 status_code=200,

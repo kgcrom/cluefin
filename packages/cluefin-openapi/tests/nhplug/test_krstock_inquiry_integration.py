@@ -4,10 +4,13 @@
 시간·영업일 제약이 없어 휴일에도 성공해야 한다(2026-08-22 raw 호출 실측 확인).
 """
 
+from datetime import date
+
 import pytest
 
 from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
 from cluefin_openapi.nhplug._http_client import HttpClient
+from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES
 
 from ._integration_helpers import skip_if_env_blocked
 
@@ -26,5 +29,25 @@ def test_balance(client: HttpClient, krstock_account: str):
     except NHPlugAPIError as e:
         skip_if_env_blocked(e)
 
-    assert response.body.rsp_cd == "00000"
+    assert response.body.rsp_cd in SUCCESS_RSP_CODES
     assert response.header.cts_flag is not None
+
+
+@pytest.mark.integration
+def test_daily_order_execution(client: HttpClient, krstock_account: str):
+    """주식일별주문체결조회. 오늘 날짜로 조회 — 주문 이력이 없어도 조회 자체는 성공한다.
+
+    Output_0/Output_1 은 데이터가 있을 때만 내려오므로(스펙 설명) 존재를 단정하지
+    않고 rsp_cd 위주로 검증한다.
+    """
+    try:
+        response = client.krstock_inquiry.daily_order_execution(
+            act_no=krstock_account,
+            orr_dt=date.today().strftime("%Y%m%d"),
+            ost_cns_dit="0",  # 전체
+        )
+    except NHPlugAPIError as e:
+        skip_if_env_blocked(e)
+
+    # 모의서버는 성공에 XA102("모의투자 조회가 완료되었습니다")를 반환한다 (2026-08-22 실측).
+    assert response.body.rsp_cd in SUCCESS_RSP_CODES

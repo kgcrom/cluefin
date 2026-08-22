@@ -7,6 +7,11 @@ from pydantic import BaseModel, ConfigDict, Field
 # 봉투 형태가 갈리므로 BaseModel 로 바운드한다.
 T_NHPlugHttpBody = TypeVar("T_NHPlugHttpBody", bound=BaseModel)
 
+# body rsp_cd 중 성공을 뜻하는 코드. 문서상 성공은 00000 뿐이지만, 모의투자 서버는
+# 일부 조회 API 성공에 XA102("모의투자 조회가 완료되었습니다")를 반환한다
+# (2026-08-22 dailyOrderExecution 실측). 새 성공 코드가 실측되면 여기에 추가한다.
+SUCCESS_RSP_CODES: tuple[str, ...] = ("00000", "XA102")
+
 
 class NHPlugHttpBody(BaseModel):
     """공통 응답 봉투.
