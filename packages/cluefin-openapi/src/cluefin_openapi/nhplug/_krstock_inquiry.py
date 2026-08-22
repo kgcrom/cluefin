@@ -6,6 +6,7 @@ from cluefin_openapi.nhplug._krstock_inquiry_types import (
     KrStockInquiryBalance,
     KrStockInquiryBuyableQuantity,
     KrStockInquiryDailyOrderExecution,
+    KrStockInquiryRealizedPnl,
     KrStockInquiryReservedInquiry,
     KrStockInquirySellableQuantity,
 )
@@ -273,3 +274,39 @@ class KrStockInquiry:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryReservedInquiry.model_validate(data))
+
+    def realized_pnl(
+        self,
+        act_no: str,
+        iqr_dit_cd1: Literal["0", "1", "2"],
+        fee_dit_cd: Literal["1", "2"],
+        qut_dit_cd: Literal["UNT", "KRX", "NXT"],
+        cts: Optional[str] = None,
+    ) -> NHPlugHttpResponse[KrStockInquiryRealizedPnl]:
+        """주식잔고조회_실현손익 (`POST /krstock/inquiry/v1/realizedPnl`).
+
+        스펙상 4개 입력 필드가 모두 required 다. 연속조회를 지원하는 조회 API 다 —
+        응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 다음 호출의 `cts` 인자로 전달해
+        이어받는다.
+
+        Args:
+            act_no: 계좌번호 (`/n2/acctinfo` 의 acct_no — 운영은 acct_type 01·02,
+                모의투자는 03 계좌만 유효)
+            iqr_dit_cd1: 조회구분코드1 (0.전체 1.잔고종목 2.당일매매)
+            fee_dit_cd: 수수료구분코드 (1.온라인 2.영업점)
+            qut_dit_cd: 시세구분코드 (UNT.통합시세 KRX.KRX시세 NXT.NXT시세)
+            cts: 연속거래키. 이전 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 전달.
+        """
+        body = self._drop_none(
+            {
+                "act_no": act_no,
+                "iqr_dit_cd1": iqr_dit_cd1,
+                "fee_dit_cd": fee_dit_cd,
+                "qut_dit_cd": qut_dit_cd,
+            }
+        )
+        response = self.client.post("/krstock/inquiry/v1/realizedPnl", body=body, cts=cts)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=KrStockInquiryRealizedPnl.model_validate(data))

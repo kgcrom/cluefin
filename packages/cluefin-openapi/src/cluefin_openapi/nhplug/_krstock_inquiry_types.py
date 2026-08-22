@@ -365,6 +365,107 @@ class KrStockInquiryReservedInquiryOutput(BaseModel):
     rmt_mkt_cd: str | None = Field(default=None, description="요청시장코드 / 길이 3")
 
 
+class KrStockInquiryRealizedPnlAccountOutput(BaseModel):
+    """주식잔고조회_실현손익 계좌 종합 정보 (Output_0)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    cus_fnm: str | None = Field(default=None, description="고객성명 / 길이 40")
+    rnm_cfm_no: str | None = Field(default=None, description="실명확인번호 / 길이 13")
+    act_atv_tp_dtl_cd: str | None = Field(default=None, description="계좌활동유형세부코드 / 길이 3")
+    act_amn_tab_cd: str | None = Field(default=None, description="계좌관리팀점코드 / 길이 4")
+    act_pdt_llf_cd: str | None = Field(default=None, description="계좌상품대분류코드 / 길이 2")
+    tdy_dca: int | None = Field(default=None, description="금일예수금 / 길이 18 / 예수금")
+    nxt_dd_dca: int | None = Field(default=None, description="익일예수금 / 길이 18 / D+1 예수금")
+    nxt2_dd_dca: int | None = Field(default=None, description="익익일예수금 / 길이 18 / D+2 예수금")
+    orr_pbl_amt1: int | None = Field(default=None, description="주문가능금액1 / 길이 18 / 100% 주문가능금액")
+    orr_pbl_amt2: int | None = Field(default=None, description="주문가능금액2 / 길이 18 / 20% 주문가능금액")
+    orr_pbl_amt3: int | None = Field(default=None, description="주문가능금액3 / 길이 18 / 30% 주문가능금액")
+    orr_pbl_amt4: int | None = Field(default=None, description="주문가능금액4 / 길이 18 / 40% 주문가능금액")
+    csh_wtm: int | None = Field(default=None, description="현금증거금 / 길이 18")
+    sba_wtm: int | None = Field(default=None, description="대용증거금 / 길이 18")
+    tdt_byn_amt: int | None = Field(default=None, description="당일매수금액 / 길이 18")
+    tdt_sll_amt: int | None = Field(default=None, description="당일매도금액 / 길이 18")
+    sdr_xps: int | None = Field(default=None, description="제비용 / 길이 18 / 당일매매제비용")
+    sby_pls_amt: int | None = Field(default=None, description="매매손익금액 / 길이 18 / 당일매매손익")
+    eal_amt_sum: int | None = Field(default=None, description="평가금액합계 / 길이 18")
+    eal_pls_amt: int | None = Field(default=None, description="평가손익금액 / 길이 18")
+    sll_edn_amt: int | None = Field(default=None, description="매도증거금액 / 길이 18 / (-)대용")
+    aet_amt: int | None = Field(default=None, description="자산금액 / 길이 18 / D+2 자산금액")
+    aet_drs_amt: int | None = Field(default=None, description="자산감소금액 / 길이 18 / 전체매도후자산")
+    pft_rt1: float | None = Field(default=None, description="수익율1 / 길이 15.9 / 총수익률")
+    pft_rt2: float | None = Field(default=None, description="수익율2 / 길이 15.9 / 당일실현수익률")
+    bf_dd_eal_amt2: int | None = Field(default=None, description="전일평가금액2 / 길이 18 / 전일잔고평가금액")
+    eal_pls2: int | None = Field(default=None, description="평가손익2 / 길이 18 / 전일대비손익")
+    pft_rt3: float | None = Field(default=None, description="수익율3 / 길이 15.9 / 전일대비수익률")
+    pna_sum_amt: int | None = Field(default=None, description="원금합계금액 / 길이 18 / 당일매도매입총원금")
+    phs_tal: int | None = Field(default=None, description="매입총액 / 길이 18 / 잔고매입총액")
+    aet_par_tal: int | None = Field(default=None, description="자산액면총액 / 길이 18 / 실자산금액")
+    sdr_xps2: int | None = Field(default=None, description="제비용2 / 길이 18 / 매도제비용합")
+    sby_wtm_aly_cd_nm: str | None = Field(default=None, description="매매증거금적용코드명 / 길이 50 / 계좌증거금율")
+    pft_rt10: float | None = Field(default=None, description="수익율10 / 길이 15.9 / 잔고평가수익률")
+
+
+class KrStockInquiryRealizedPnlOutput(BaseModel):
+    """주식잔고조회_실현손익 종목별 상세 (Output_1 배열의 각 항목)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    iem_nm: str | None = Field(default=None, description="종목명 / 길이 60")
+    iem_cd: str | None = Field(default=None, description="종목코드 / 길이 12")
+    itg_bnc_qty: float | None = Field(default=None, description="통합잔고수량 / 길이 18.3")
+    orr_pbl_qty: int | None = Field(default=None, description="주문가능수량 / 길이 18")
+    bf_dd_byn_qty: int | None = Field(default=None, description="전일매수수량 / 길이 18")
+    bf_dd_sll_qty: int | None = Field(default=None, description="전일매도수량 / 길이 18")
+    tdt_byn_qty: int | None = Field(default=None, description="당일매수수량 / 길이 18")
+    tdt_sll_qty: int | None = Field(default=None, description="당일매도수량 / 길이 18")
+    avg_phs_uit_pr: int | None = Field(default=None, description="평균매입단가 / 길이 18")
+    sll_uit_pr: int | None = Field(default=None, description="매도단가 / 길이 18")
+    phs_amt: int | None = Field(default=None, description="매입금액 / 길이 18")
+    rzt_pls_amt: int | None = Field(default=None, description="실현손익금액 / 길이 18")
+    sdr_xps: int | None = Field(default=None, description="제비용 / 길이 18 / 당일매매제비용")
+    rzt_pft_sby_pls_amt: int | None = Field(default=None, description="실현수익매매손익금액 / 길이 18")
+    ost_phs_amt_pna: int | None = Field(default=None, description="매입금액원금 / 길이 18")
+    eal_pls: int | None = Field(default=None, description="평가손익 / 길이 18")
+    now_pr: int | None = Field(default=None, description="현재가격 / 길이 15")
+    pft_rt: float | None = Field(default=None, description="수익율 / 길이 15.9")
+    sdr_xps1: int | None = Field(default=None, description="제비용1 / 길이 15 / 매도제비용")
+    pft_rt7: float | None = Field(default=None, description="수익율7 / 길이 15.9 / 당일실현수익률")
+    pft_rt6: float | None = Field(default=None, description="수익율6 / 길이 15.9 / 평가수익률")
+    pft_rt2: float | None = Field(default=None, description="수익율2 / 길이 15.9 / 당일실현수익률")
+    bnc_tp_dit_cd_nm: str | None = Field(default=None, description="잔고유형구분코드명 / 길이 50")
+    lon_dt: str | None = Field(default=None, description="대출일자 / 길이 8")
+    bf_dd_end_pr: int | None = Field(default=None, description="전일종가 / 길이 18")
+    bf_dd_bnc_amt: int | None = Field(default=None, description="전일잔고금액 / 길이 18")
+    bf_dd_cmp_ind_amt: int | None = Field(default=None, description="전일대비증감금액 / 길이 18")
+    bf_dd_cmp_ind_rt: float | None = Field(default=None, description="전일대비증감율 / 길이 8.3")
+    stl_bnc_qty: int | None = Field(default=None, description="결제잔고수량 / 길이 18")
+    avg_uit_pr1: int | None = Field(default=None, description="평균단가1 / 길이 15")
+    xrn_dt: str | None = Field(default=None, description="만기일자 / 길이 8")
+    dit_nm1: str | None = Field(default=None, description="구분명1 / 길이 10")
+    bf_dd_sll_amt: int | None = Field(default=None, description="전일매도금액 / 길이 18")
+    tdy_sll_amt: int | None = Field(default=None, description="금일매도금액 / 길이 18")
+    bf_dd_byn_amt: int | None = Field(default=None, description="전일매수금액 / 길이 18")
+    tdy_byn_amt: int | None = Field(default=None, description="금일매수금액 / 길이 18")
+    sll_pna: int | None = Field(default=None, description="매도원금 / 길이 18")
+    bnc_eal_amt: int | None = Field(default=None, description="잔고평가금액 / 길이 18")
+
+
+class KrStockInquiryRealizedPnl(NHPlugAssetHttpBody):
+    """주식잔고조회_실현손익 (`POST /krstock/inquiry/v1/realizedPnl`) 응답.
+
+    연속조회를 지원한다 — 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 다음 호출에
+    전달해 이어받는다.
+    """
+
+    output_0: KrStockInquiryRealizedPnlAccountOutput | None = Field(
+        default=None, alias="Output_0", description="계좌 종합 정보"
+    )
+    output_1: list[KrStockInquiryRealizedPnlOutput] | None = Field(
+        default=None, alias="Output_1", description="종목별 실현손익 상세 목록"
+    )
+
+
 class KrStockInquiryReservedInquiry(NHPlugAssetHttpBody):
     """주식예약주문조회 (`POST /krstock/inquiry/v1/reservedInquiry`) 응답.
 

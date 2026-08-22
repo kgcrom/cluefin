@@ -93,6 +93,22 @@ def test_reserved_inquiry(client: HttpClient, krstock_account: str):
 
 
 @pytest.mark.integration
+def test_realized_pnl(client: HttpClient, krstock_account: str):
+    """주식잔고조회_실현손익. 조회 API 라 성공을 기대한다."""
+    try:
+        response = client.krstock_inquiry.realized_pnl(
+            act_no=krstock_account,
+            iqr_dit_cd1="0",  # 전체
+            fee_dit_cd="1",  # 온라인
+            qut_dit_cd="UNT",  # 통합시세
+        )
+    except NHPlugAPIError as e:
+        skip_if_env_blocked(e)
+
+    assert response.body.rsp_cd in SUCCESS_RSP_CODES
+
+
+@pytest.mark.integration
 def test_sellable_quantity(client: HttpClient, krstock_account: str):
     """매도가능수량조회 (005930, 현금/신용 잔고).
 
