@@ -96,6 +96,13 @@ class HttpClient(BaseHttpClient):
 
         return OverseasStockOrder(self)
 
+    @property
+    def overseas_stock_inquiry(self):
+        """해외주식 조회"""
+        from ._overseas_stock_inquiry import OverseasStockInquiry
+
+        return OverseasStockInquiry(self)
+
     def post(
         self,
         path: str,
