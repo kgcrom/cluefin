@@ -140,3 +140,14 @@ def test_etf_current(client: HttpClient):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+
+
+@pytest.mark.integration
+def test_etf_components(client: HttpClient):
+    """ETF 구성종목시세. 대표 ETF(KODEX 200, 069500) 기준 — 계좌번호 없이 성공을 기대한다."""
+    try:
+        response = client.krstock_quote.etf_components(iem_cd=TEST_ETF_IEM_CD)
+    except NHPlugAPIError as e:
+        skip_if_env_blocked(e)
+
+    assert response.body.rsp_cd in SUCCESS_RSP_CODES

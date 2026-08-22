@@ -1154,3 +1154,37 @@ class KrStockQuoteEtfCurrent(NHPlugAssetHttpBody):
     output_4: KrStockQuoteEtfCurrentIndexOutput | None = Field(
         default=None, alias="Output_4", description="기초지수 상세 (스펙 문서 미기재, 예시 응답에만 존재)"
     )
+
+
+class KrStockQuoteEtfComponentsOutput(BaseModel):
+    """ETF 구성종목시세 상세 (Output_0 배열의 각 항목)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    iem_cd: str | None = Field(default=None, description="종목코드 / 길이 12")
+    iem_nm: str | None = Field(default=None, description="종목명 / 길이 40")
+    stck_prpr: int | None = Field(default=None, description="현재가 / 길이 7")
+    prdy_vrss_sign: str | None = Field(
+        default=None,
+        description="등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)",
+    )
+    prdy_vrss: int | None = Field(default=None, description="등락폭 / 길이 6")
+    prdy_ctrt: float | None = Field(default=None, description="등락률 / 길이 6.2")
+    cu_unit: float | None = Field(default=None, description="1CU단위증권수(주) / 길이 18.2")
+    totprice: int | None = Field(default=None, description="평가금액2 / 길이 12")
+    vol: float | None = Field(default=None, description="비중 / 길이 6.2")
+    vltn_amt: float | None = Field(default=None, description="평가금액 / 길이 18.0")
+    filler: str | None = Field(default=None, description="Filler / 길이 30")
+
+
+class KrStockQuoteEtfComponents(NHPlugAssetHttpBody):
+    """ETF 구성종목시세 (`POST /krstock/quote/v1/etfComponents`) 응답.
+
+    시세 조회 API 라 계좌번호가 필요 없다. 스펙에 `CtsHeader` 파라미터가 없어
+    연속조회를 지원하지 않는다(단건 조회). 입력은 `iem_cd` 하나뿐이다(market_cd
+    없음). `Output_0` 하나만 있고 배열이다(구성종목 목록).
+    """
+
+    output_0: list[KrStockQuoteEtfComponentsOutput] | None = Field(
+        default=None, alias="Output_0", description="구성종목 상세 목록"
+    )

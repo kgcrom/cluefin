@@ -641,3 +641,61 @@ class TestEtfCurrent:
             )
             with pytest.raises(NHPlugAPIError, match="IGW40018"):
                 client.krstock_quote.etf_current(iem_cd="999999")
+
+
+ETF_COMPONENTS_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "조회가 완료되었습니다.",
+    "message": None,
+    "Output_0": [
+        {
+            "iem_cd": "005930",
+            "iem_nm": "삼성전자",
+            "stck_prpr": 281500,
+            "prdy_vrss_sign": "2",
+            "prdy_vrss": 10500,
+            "prdy_ctrt": 3.87,
+            "cu_unit": 12.0,
+            "totprice": 3378000,
+            "vol": 25.5,
+            "vltn_amt": 3378000,
+        }
+    ],
+}
+
+
+class TestEtfComponents:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/quote/v1/etfComponents", json=ETF_COMPONENTS_BODY)
+            response = client.krstock_quote.etf_components(iem_cd="069500")
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "iem_cd": "069500",
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        assert len(response.body.output_0) == 1
+        assert response.body.output_0[0].iem_nm == "삼성전자"
+        assert response.body.output_0[0].vol == 25.5
+
+    def test_parses_body_without_output_block(self, client):
+        # Output_N 블록은 데이터가 있을 때만 내려온다.
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/etfComponents",
+                json={"rsp_cd": "00000", "rsp_msg": "ok"},
+            )
+            response = client.krstock_quote.etf_components(iem_cd="069500")
+
+        assert response.body.output_0 is None
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/etfComponents",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_quote.etf_components(iem_cd="999999")
