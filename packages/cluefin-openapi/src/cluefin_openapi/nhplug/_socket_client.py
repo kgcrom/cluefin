@@ -229,7 +229,7 @@ class SocketClient:
 
         # Verify Sec-WebSocket-Accept (SHA1 is required by RFC 6455 WebSocket protocol)
         expected_accept = base64.b64encode(
-            hashlib.sha1(
+            hashlib.sha1(  # nosemgrep
                 (ws_key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode(),
                 usedforsecurity=False,
             ).digest()
