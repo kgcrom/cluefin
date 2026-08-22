@@ -14,6 +14,7 @@ BUYABLE_AMOUNT_URL = f"{BASE_DEV}/gbstock/inquiry/v1/buyableAmount"
 ORDER_EXECUTIONS_URL = f"{BASE_DEV}/gbstock/inquiry/v1/unexecuted"
 BALANCE_URL = f"{BASE_DEV}/gbstock/inquiry/v1/balance"
 RESERVED_ORDERS_URL = f"{BASE_DEV}/gbstock/inquiry/v1/reservedInquiry"
+DAILY_TRANSACTIONS_URL = f"{BASE_DEV}/gbstock/inquiry/v1/dailyTransaction"
 
 ORDER_EXECUTIONS_OK_BODY = {
     "Output_0": [
@@ -268,6 +269,69 @@ RESERVED_ORDERS_OK_BODY = {
             "lon_dt": "",
         }
     ],
+    "message": {"msg_code": "0000", "usr_msg": "정상 처리되었습니다."},
+}
+
+
+DAILY_TRANSACTIONS_OK_BODY = {
+    "Output_0": [
+        {
+            "trd_dt": "20260821",
+            "trd_sno": 1,
+            "act_trd_tp_nm": "매수",
+            "sps_cd_nm": "해외주식매수",
+            "iem_krl_nm": "애플",
+            "iem_cd": "AAPL",
+            "trd_qty": 10.0,
+            "trd_uit_pr": 150.25,
+            "cur_cd_nm": "달러",
+            "aly_xcg_rt": 1330.5,
+            "trd_bf_bnc_qty": 0.0,
+            "trd_af_bnc_qty": 10.0,
+            "fc_trd_amt": 1502.5,
+            "krw_trd_amt": 1999576,
+            "trd_af_fc_dca": 8497.5,
+            "trd_af_dca": 11305192,
+            "trd_af_fc_mgg_amt": 0.0,
+            "trd_af_krw_mgg_amt": 0,
+            "abd_sdr_xps_fc_amt": 0.0,
+            "tsl_mgg_amt": 0.0,
+            "ose_fee": 1.5,
+            "dmt_fee": 0,
+            "icm_tax": 0.0,
+            "rsd_tax": 0.0,
+            "rgs_cuc_mdi_cd_nm": "HTS",
+            "rgs_tm": "13024500",
+            "rgs_tab_cd": "0001",
+            "rgs_emp_no": "000001",
+            "oss_iem_cd": "AAPL",
+            "oss_iem_nm": "APPLE INC",
+            "trd_bf_fc_dca": 10000.0,
+            "trd_bf_dca": 13300000,
+            "oss_stm_tax": 0.0,
+            "fc_tsl_txa": 0.0,
+            "fc_amt": 1502.5,
+            "krw_amt": 1999576.0,
+            "fc_tax_sum": 0.0,
+            "tax_sum": 0,
+            "fc_icm_tax": 0.0,
+            "fc_rsd_tax": 0.0,
+            "fc_sas_amt": 0.0,
+            "krw_sas_amt": 0,
+            "tsl_cmu_txa": 0,
+            "fc_trd_dit_cd": "05",
+            "ral_trd_dt": "20260821",
+        }
+    ],
+    "Output_1": {
+        "cus_fnm": "홍길동",
+        "rnm_cfm_no": "1234567890123",
+        "rpm_tal": 10000000,
+        "drn_tal": 0,
+        "amt_sum": 1999576,
+        "tax_sum_amt": 0,
+        "fee_sum_amt": 2000,
+    },
     "message": {"msg_code": "0000", "usr_msg": "정상 처리되었습니다."},
 }
 
@@ -679,4 +743,100 @@ class TestGetReservedOrders:
                     oss_orr_knd_cd="0",
                     bkg_orr_tp_cd="0",
                     wtm_cur_knd_cd="0",
+                )
+
+
+class TestGetDailyTransactions:
+    def test_sends_input_envelope(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(DAILY_TRANSACTIONS_URL, json=DAILY_TRANSACTIONS_OK_BODY)
+            client.overseas_stock_inquiry.get_daily_transactions(
+                act_no="50051036881",
+                iqr_sta_dt="20260801",
+                iqr_end_dt="20260821",
+                act_trd_cfc_cd="00",
+                iem_mlf_cd="00001",
+                iem_cd="AAPL",
+            )
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "act_no": "50051036881",
+                "iqr_sta_dt": "20260801",
+                "iqr_end_dt": "20260821",
+                "act_trd_cfc_cd": "00",
+                "iem_mlf_cd": "00001",
+                "iem_cd": "AAPL",
+            }
+        }
+
+    def test_omits_optional_fields_when_not_given(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(DAILY_TRANSACTIONS_URL, json=DAILY_TRANSACTIONS_OK_BODY)
+            client.overseas_stock_inquiry.get_daily_transactions(
+                act_no="50051036881",
+                iqr_sta_dt="20260801",
+                iqr_end_dt="20260821",
+                act_trd_cfc_cd="00",
+                iem_mlf_cd="00001",
+            )
+
+        sent = json.loads(m.request_history[0].text)["Input_0"]
+        assert "iem_cd" not in sent
+
+    def test_parses_daily_transactions_response(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(DAILY_TRANSACTIONS_URL, json=DAILY_TRANSACTIONS_OK_BODY, headers={"cts_flag": "N"})
+            response = client.overseas_stock_inquiry.get_daily_transactions(
+                act_no="50051036881",
+                iqr_sta_dt="20260801",
+                iqr_end_dt="20260821",
+                act_trd_cfc_cd="00",
+                iem_mlf_cd="00001",
+            )
+
+        assert response.body.output_0 is not None
+        assert len(response.body.output_0) == 1
+        item = response.body.output_0[0]
+        assert item.trd_dt == "20260821"
+        assert item.iem_cd == "AAPL"
+        assert item.trd_qty == 10.0
+        assert item.krw_trd_amt == 1999576
+
+        assert response.body.output_1 is not None
+        assert response.body.output_1.cus_fnm == "홍길동"
+        assert response.body.output_1.amt_sum == 1999576
+
+        assert response.body.message.usr_msg == "정상 처리되었습니다."
+        assert response.header.cts_flag == "N"
+
+    def test_sends_cts_header_for_continuation(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(DAILY_TRANSACTIONS_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
+            response = client.overseas_stock_inquiry.get_daily_transactions(
+                act_no="50051036881",
+                iqr_sta_dt="20260801",
+                iqr_end_dt="20260821",
+                act_trd_cfc_cd="00",
+                iem_mlf_cd="00001",
+                cts="CTS_TOKEN_1",
+            )
+
+        sent_headers = m.request_history[0].headers
+        assert sent_headers["cts"] == "CTS_TOKEN_1"
+        assert sent_headers["cts_flag"] == "Y"
+        assert response.body.output_0 is None
+        assert response.body.output_1 is None
+        assert response.body.rsp_cd == "00000"
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(DAILY_TRANSACTIONS_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
+            with pytest.raises(NHPlugAPIError, match="40310"):
+                client.overseas_stock_inquiry.get_daily_transactions(
+                    act_no="50051036881",
+                    iqr_sta_dt="20260801",
+                    iqr_end_dt="20260821",
+                    act_trd_cfc_cd="00",
+                    iem_mlf_cd="00001",
                 )

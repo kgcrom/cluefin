@@ -291,3 +291,88 @@ class OverseasStockBalance(BaseModel):
         default=None, alias="Output_1", description="잔고 종목별 조회 결과"
     )
     message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
+
+
+class OverseasStockDailyTransactionItem(BaseModel):
+    """해외주식 일별거래내역 조회 결과 항목 (`Output_0` 배열 원소)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    trd_dt: str | None = Field(default=None, description="거래일자 / 길이 8")
+    trd_sno: int | None = Field(default=None, description="거래일련번호 / 길이 5")
+    act_trd_tp_nm: str | None = Field(default=None, description="계좌거래유형명 / 길이 50")
+    sps_cd_nm: str | None = Field(default=None, description="적요코드명 / 길이 50")
+    iem_krl_nm: str | None = Field(default=None, description="종목한글명 / 길이 60")
+    iem_cd: str | None = Field(default=None, description="종목코드 / 길이 12")
+    trd_qty: float | None = Field(default=None, description="거래수량 / 길이 21.6")
+    trd_uit_pr: float | None = Field(default=None, description="거래단가 / 길이 18.6")
+    cur_cd_nm: str | None = Field(default=None, description="통화코드명 / 길이 50")
+    aly_xcg_rt: float | None = Field(default=None, description="적용환율 / 길이 12.6")
+    trd_bf_bnc_qty: float | None = Field(default=None, description="거래전잔고수량 / 길이 21.6")
+    trd_af_bnc_qty: float | None = Field(default=None, description="거래후잔고수량 / 길이 21.6")
+    fc_trd_amt: float | None = Field(default=None, description="외화거래금액 / 길이 18.2")
+    krw_trd_amt: int | None = Field(default=None, description="원화거래금액 / 길이 18")
+    trd_af_fc_dca: float | None = Field(default=None, description="거래후외화예수금 / 길이 18.2")
+    trd_af_dca: int | None = Field(default=None, description="거래후예수금 / 길이 18")
+    trd_af_fc_mgg_amt: float | None = Field(default=None, description="거래후외화담보금액 / 길이 18.2")
+    trd_af_krw_mgg_amt: int | None = Field(default=None, description="거래후원화담보금액 / 길이 18")
+    abd_sdr_xps_fc_amt: float | None = Field(default=None, description="국외제비용외화금액 / 길이 18.2")
+    tsl_mgg_amt: float | None = Field(default=None, description="환산담보금액 / 길이 18.2")
+    ose_fee: float | None = Field(default=None, description="해외수수료 / 길이 18.2")
+    dmt_fee: int | None = Field(default=None, description="국내수수료 / 길이 18")
+    icm_tax: float | None = Field(default=None, description="소득세 / 길이 18.2")
+    rsd_tax: float | None = Field(default=None, description="주민세 / 길이 18.2")
+    rgs_cuc_mdi_cd_nm: str | None = Field(default=None, description="등록통신매체코드명 / 길이 40")
+    rgs_tm: str | None = Field(default=None, description="등록시각 / 길이 8")
+    rgs_tab_cd: str | None = Field(default=None, description="등록팀점코드 / 길이 4")
+    rgs_emp_no: str | None = Field(default=None, description="등록사원번호 / 길이 6")
+    oss_iem_cd: str | None = Field(default=None, description="해외증권종목코드 / 길이 12")
+    oss_iem_nm: str | None = Field(default=None, description="해외증권종목명 / 길이 60")
+    trd_bf_fc_dca: float | None = Field(default=None, description="거래전외화예수금 / 길이 15.3")
+    trd_bf_dca: int | None = Field(default=None, description="거래전예수금 / 길이 18")
+    oss_stm_tax: float | None = Field(default=None, description="해외증권인지세 / 길이 15.3")
+    fc_tsl_txa: float | None = Field(default=None, description="외화환산세액 / 길이 15.3")
+    fc_amt: float | None = Field(default=None, description="외화금액 / 길이 15.3")
+    krw_amt: float | None = Field(default=None, description="원화금액 / 길이 15.3")
+    fc_tax_sum: float | None = Field(default=None, description="외화세금합계 / 길이 15.3")
+    tax_sum: int | None = Field(default=None, description="세금합계 / 길이 18")
+    fc_icm_tax: float | None = Field(default=None, description="외화소득세 / 길이 15.3")
+    fc_rsd_tax: float | None = Field(default=None, description="외화주민세 / 길이 15.3")
+    fc_sas_amt: float | None = Field(default=None, description="외화과세표준금액 / 길이 15.3")
+    krw_sas_amt: int | None = Field(default=None, description="원화과세표준금액 / 길이 18")
+    tsl_cmu_txa: int | None = Field(default=None, description="환산산출세액 / 길이 18")
+    fc_trd_dit_cd: str | None = Field(default=None, description="외화거래구분코드 / 길이 2")
+    ral_trd_dt: str | None = Field(default=None, description="실거래일자 / 길이 8")
+
+
+class OverseasStockDailyTransactionSummary(BaseModel):
+    """해외주식 일별거래내역 조회 결과 요약 (`Output_1`)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    cus_fnm: str | None = Field(default=None, description="고객성명 / 길이 40")
+    rnm_cfm_no: str | None = Field(default=None, description="실명확인번호 / 길이 13")
+    rpm_tal: int | None = Field(default=None, description="입금총액 / 길이 18")
+    drn_tal: int | None = Field(default=None, description="출금총액 / 길이 18")
+    amt_sum: int | None = Field(default=None, description="금액합계 / 길이 18")
+    tax_sum_amt: int | None = Field(default=None, description="세금합계금액 / 길이 18")
+    fee_sum_amt: int | None = Field(default=None, description="수수료합계금액 / 길이 18")
+
+
+class OverseasStockDailyTransaction(BaseModel):
+    """해외주식 일별거래내역 조회 (`POST /gbstock/inquiry/v1/dailyTransaction`) 응답.
+
+    응답 블록은 데이터가 있을 때만 내려오므로 모두 Optional.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    rsp_cd: str | None = Field(default=None, description="응답코드")
+    rsp_msg: str | None = Field(default=None, description="응답메시지")
+    output_0: list[OverseasStockDailyTransactionItem] | None = Field(
+        default=None, alias="Output_0", description="일별거래내역 조회 결과"
+    )
+    output_1: OverseasStockDailyTransactionSummary | None = Field(
+        default=None, alias="Output_1", description="일별거래내역 조회 결과 요약"
+    )
+    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")

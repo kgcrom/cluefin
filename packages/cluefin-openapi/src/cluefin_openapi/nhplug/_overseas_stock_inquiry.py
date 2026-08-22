@@ -5,6 +5,7 @@ from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
 from cluefin_openapi.nhplug._overseas_stock_inquiry_types import (
     OverseasStockBalance,
     OverseasStockBuyableAmount,
+    OverseasStockDailyTransaction,
     OverseasStockReservedInquiry,
     OverseasStockUnexecuted,
 )
@@ -242,3 +243,53 @@ class OverseasStockInquiry:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockReservedInquiry.model_validate(data))
+
+    def get_daily_transactions(
+        self,
+        act_no: str,
+        iqr_sta_dt: str,
+        iqr_end_dt: str,
+        act_trd_cfc_cd: str,
+        iem_mlf_cd: str,
+        iem_cd: Optional[str] = None,
+        cts: Optional[str] = None,
+    ) -> NHPlugHttpResponse[OverseasStockDailyTransaction]:
+        """해외주식 일별거래내역 (`POST /gbstock/inquiry/v1/dailyTransaction`).
+
+        조회기간 내 계좌의 해외주식 거래내역 목록(`Output_0`)과 거래내역
+        요약(`Output_1`)을 조회하는 API 이다. 응답 블록은 데이터가 있을
+        때만 내려온다.
+
+        Args:
+            act_no: 계좌번호 (길이 11). `/n2/acctinfo` 의 acct_no 사용
+                (운영은 acct_type=01·02, 모의투자는 03 계좌만 유효).
+            iqr_sta_dt: 조회시작일자 (길이 8) (YYYYMMDD)
+            iqr_end_dt: 조회종료일자 (길이 8) (YYYYMMDD)
+            act_trd_cfc_cd: 계좌거래분류코드 (길이 2) (00.전체 01.입금 02.출금 03.입고
+                04.출고 05.매수 06.매도)
+            iem_mlf_cd: 종목중분류코드 (길이 5) (00001.외화주식 00002.외화채권
+                00003.외화Warrant 00004.외화수익증권 00005.해외수익증권)
+            iem_cd: 종목코드 (길이 12). 예: 미국주식 APPLE인 경우 AAPL
+            cts: 연속거래키. 이전 응답 헤더의 `cts` 값을 그대로 전달하면 다음 페이지를 받는다.
+
+        Returns:
+            NHPlugHttpResponse[OverseasStockDailyTransaction]: 일별거래내역
+                목록(`Output_0`) 및 요약(`Output_1`) 조회 결과
+        """
+        body: dict = {
+            "act_no": act_no,
+            "iqr_sta_dt": iqr_sta_dt,
+            "iqr_end_dt": iqr_end_dt,
+            "act_trd_cfc_cd": act_trd_cfc_cd,
+            "iem_mlf_cd": iem_mlf_cd,
+        }
+        optional_fields = {
+            "iem_cd": iem_cd,
+        }
+        body.update({k: v for k, v in optional_fields.items() if v is not None})
+
+        response = self.client.post("/gbstock/inquiry/v1/dailyTransaction", body=body, cts=cts)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=OverseasStockDailyTransaction.model_validate(data))
