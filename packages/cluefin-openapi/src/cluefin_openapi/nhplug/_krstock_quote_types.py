@@ -398,3 +398,42 @@ class KrStockQuoteCurrentDaily(NHPlugAssetHttpBody):
     output_0: list[KrStockQuoteCurrentDailyOutput] | None = Field(
         default=None, alias="Output_0", description="일별 시세 상세 목록"
     )
+
+
+class KrStockQuoteCurrentInvestorOutput(BaseModel):
+    """주식현재가 투자자 투자자별 거래현황 상세 (Output_0 배열의 각 항목)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    bsop_date1: str | None = Field(default=None, description="거래일자 / 길이 8 / YYYYMMDD")
+    bsop_date2: str | None = Field(default=None, description="거래일자 / 길이 8 / YYMMDD00")
+    stck_prpr: int | None = Field(default=None, description="종가 / 길이 7")
+    prdy_vrss_sign: str | None = Field(
+        default=None,
+        description="등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)",
+    )
+    prdy_vrss: int | None = Field(default=None, description="등락폭 / 길이 6")
+    prdy_ctrt: float | None = Field(default=None, description="등락률 / 길이 5.2")
+    acml_vol: float | None = Field(default=None, description="거래량 / 길이 10")
+    for_rate: float | None = Field(default=None, description="외국인지분율 / 길이 5.2")
+    frgn_ntby_qty: float | None = Field(default=None, description="외국인순매수량 / 길이 10")
+    person: float | None = Field(default=None, description="개인투자자순매수량 / 길이 10")
+    gigwan: float | None = Field(default=None, description="기관계투자자순매수량 / 길이 10")
+    invest: float | None = Field(default=None, description="외국인투자자순매수량 / 길이 10")
+    account: float | None = Field(default=None, description="거래원순매수량 / 길이 10")
+    program: float | None = Field(default=None, description="프로그램 / 길이 10")
+    jasaz10: str | None = Field(default=None, description="자사주 / 길이 10")
+    filler: str | None = Field(default=None, description="FILLER / 길이 30")
+
+
+class KrStockQuoteCurrentInvestor(NHPlugAssetHttpBody):
+    """주식현재가 투자자 (`POST /krstock/quote/v1/currentInvestor`) 응답.
+
+    시세 조회 API 라 계좌번호가 필요 없다. 스펙에 `CtsHeader` 파라미터가 없어
+    연속조회를 지원하지 않는다(단건 조회). 응답 블록은 `Output_0` 하나뿐이고
+    그 자체가 배열이다.
+    """
+
+    output_0: list[KrStockQuoteCurrentInvestorOutput] | None = Field(
+        default=None, alias="Output_0", description="투자자별 거래현황 상세 목록"
+    )

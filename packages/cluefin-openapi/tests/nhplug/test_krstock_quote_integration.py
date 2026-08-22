@@ -48,3 +48,14 @@ def test_current_daily(client: HttpClient):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+
+
+@pytest.mark.integration
+def test_current_investor(client: HttpClient):
+    """주식현재가 투자자. 계좌번호 없이 성공을 기대한다."""
+    try:
+        response = client.krstock_quote.current_investor(market_cd="KRX", iem_cd=TEST_IEM_CD, array_cnt="10")
+    except NHPlugAPIError as e:
+        skip_if_env_blocked(e)
+
+    assert response.body.rsp_cd in SUCCESS_RSP_CODES
