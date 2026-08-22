@@ -182,3 +182,25 @@ def test_modify_order(client: HttpClient, krstock_account: str, krstock_pending_
 
     assert response.body.output_0 is not None
     assert response.body.output_0.mkt_orr_no is not None
+
+
+@pytest.mark.integration
+def test_cancel_order(client: HttpClient, krstock_account: str, krstock_pending_buy_order: dict):
+    """미체결 매수주문(krstock_pending_buy_order)을 취소한다.
+
+    cancel 입력은 modify 와 달리 `cor_pr`·`sop_cnd_pr`·`rmt_mkt_cd`·`sor_mkt_sli_yn` 이
+    없다 — 취소에는 가격·시장 정보가 필요 없다.
+    """
+    try:
+        response = client.krstock_order.cancel(
+            act_no=krstock_account,
+            org_mkt_orr_no=krstock_pending_buy_order["mkt_orr_no"],
+            all_pat_dit_cd="1",  # 전체(전량)
+            iem_cd=TEST_IEM_CD,
+            cor_qty=1,
+        )
+    except NHPlugAPIError as e:
+        skip_if_env_blocked(e)
+
+    assert response.body.output_0 is not None
+    assert response.body.output_0.mkt_orr_no is not None

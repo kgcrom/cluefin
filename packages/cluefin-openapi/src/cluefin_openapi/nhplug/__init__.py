@@ -22,6 +22,7 @@ from cluefin_openapi.nhplug._http_client import HttpClient
 from cluefin_openapi.nhplug._krstock_order import KrStockOrder
 from cluefin_openapi.nhplug._krstock_order_types import (
     KrStockOrderAmendedOutput,
+    KrStockOrderCancel,
     KrStockOrderCashBuy,
     KrStockOrderCashSell,
     KrStockOrderCreditBuy,
@@ -47,6 +48,7 @@ __all__ = [
     "HttpClient",
     "KrStockOrder",
     "KrStockOrderAmendedOutput",
+    "KrStockOrderCancel",
     "KrStockOrderCashBuy",
     "KrStockOrderCashSell",
     "KrStockOrderCreditBuy",

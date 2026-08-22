@@ -3,6 +3,7 @@ from typing import Any, Dict, Literal, Optional
 from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
 from cluefin_openapi.nhplug._http_client import HttpClient
 from cluefin_openapi.nhplug._krstock_order_types import (
+    KrStockOrderCancel,
     KrStockOrderCashBuy,
     KrStockOrderCashSell,
     KrStockOrderCreditBuy,
@@ -326,3 +327,41 @@ class KrStockOrder:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockOrderModify.model_validate(data))
+
+    def cancel(
+        self,
+        act_no: str,
+        org_mkt_orr_no: int,
+        all_pat_dit_cd: Literal["1", "2"],
+        iem_cd: str,
+        cor_qty: int,
+    ) -> NHPlugHttpResponse[KrStockOrderCancel]:
+        """주식주문(정정취소) 취소 (`POST /krstock/order/v1/cancel`).
+
+        스펙상 5개 입력 필드가 모두 required 다. modify 와 달리 `cor_pr`·`sop_cnd_pr`·
+        `rmt_mkt_cd`·`sor_mkt_sli_yn` 은 스펙에 존재하지 않는다(취소는 가격·시장 정보가
+        필요 없다). 원주문 식별자는 `org_mkt_orr_no`(원시장주문번호, 신규주문 응답의
+        mkt_orr_no) 하나뿐이다.
+
+        Args:
+            act_no: 계좌번호 (`/n2/acctinfo` 의 acct_no — 운영은 acct_type 01·02,
+                모의투자는 03 계좌만 유효)
+            org_mkt_orr_no: 원시장주문번호 (취소 대상 원주문의 mkt_orr_no)
+            all_pat_dit_cd: 전체일부구분코드 (1.전체(전량) 2.일부(잔량))
+            iem_cd: 종목코드 (예: 005940)
+            cor_qty: 정정수량 (전체일부구분코드 "2.일부(잔량)"인 경우 셋팅)
+        """
+        body = self._drop_none(
+            {
+                "act_no": act_no,
+                "org_mkt_orr_no": org_mkt_orr_no,
+                "all_pat_dit_cd": all_pat_dit_cd,
+                "iem_cd": iem_cd,
+                "cor_qty": cor_qty,
+            }
+        )
+        response = self.client.post("/krstock/order/v1/cancel", body=body)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=KrStockOrderCancel.model_validate(data))

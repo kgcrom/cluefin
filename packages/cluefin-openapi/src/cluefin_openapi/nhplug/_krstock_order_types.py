@@ -63,3 +63,9 @@ class KrStockOrderModify(NHPlugAssetHttpBody):
     """주식주문(정정취소) 정정 (`POST /krstock/order/v1/modify`) 응답."""
 
     output_0: KrStockOrderAmendedOutput | None = Field(default=None, alias="Output_0", description="정정 접수 결과")
+
+
+class KrStockOrderCancel(NHPlugAssetHttpBody):
+    """주식주문(정정취소) 취소 (`POST /krstock/order/v1/cancel`) 응답."""
+
+    output_0: KrStockOrderAmendedOutput | None = Field(default=None, alias="Output_0", description="취소 접수 결과")
