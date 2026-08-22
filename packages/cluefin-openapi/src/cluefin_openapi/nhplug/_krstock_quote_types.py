@@ -811,3 +811,40 @@ class KrStockQuoteCurrentAfterHoursExecution(NHPlugAssetHttpBody):
     output_0: list[KrStockQuoteCurrentAfterHoursExecutionOutput] | None = Field(
         default=None, alias="Output_0", description="시간외 시간별 체결 상세 목록"
     )
+
+
+class KrStockQuoteAfterHoursExpectedOutput(BaseModel):
+    """주식현재가 시간외시간별예상 상세 (Output_0 배열의 각 항목)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    iem_cd: str | None = Field(default=None, description="종목코드 / 길이 6")
+    bsop_hour: str | None = Field(default=None, description="시간 / 길이 8")
+    stck_prpr: int | None = Field(default=None, description="현재가 / 길이 9")
+    prdy_vrss_sign: str | None = Field(
+        default=None,
+        description="등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)",
+    )
+    prdy_vrss: int | None = Field(default=None, description="등락폭 / 길이 9")
+    prdy_ctrt: float | None = Field(default=None, description="등락률 / 길이 5.2")
+    cntg_vol: float | None = Field(default=None, description="거래량 / 길이 10")
+    askp1: int | None = Field(default=None, description="매도호가 / 길이 9")
+    bidp1: int | None = Field(default=None, description="매수호가 / 길이 9")
+    askp_rsqn1: float | None = Field(default=None, description="매도잔량 / 길이 10")
+    bidp_rsqn1: float | None = Field(default=None, description="매수잔량 / 길이 10")
+    filler: str | None = Field(default=None, description="Filler / 길이 30")
+
+
+class KrStockQuoteAfterHoursExpected(NHPlugAssetHttpBody):
+    """주식현재가 시간외시간별예상 (`POST /krstock/quote/v1/afterHoursExpected`) 응답.
+
+    시세 조회 API 라 계좌번호가 필요 없다. 스펙에 `CtsHeader` 파라미터가 없어
+    연속조회를 지원하지 않는다(단건 조회). 입력은 `iem_cd` 하나뿐이다(market_cd
+    없음 — afterHoursCurrent/currentAfterHoursDaily/currentAfterHoursExecution
+    과 같은 패턴). `Output_0` 하나만 있고 배열이다. currentAfterHoursExecution
+    과 구조가 거의 같다(예상체결가 버전).
+    """
+
+    output_0: list[KrStockQuoteAfterHoursExpectedOutput] | None = Field(
+        default=None, alias="Output_0", description="시간외 시간별 예상체결 상세 목록"
+    )

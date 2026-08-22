@@ -506,3 +506,62 @@ class TestCurrentAfterHoursExecution:
             )
             with pytest.raises(NHPlugAPIError, match="IGW40018"):
                 client.krstock_quote.current_after_hours_execution(iem_cd="999999")
+
+
+AFTER_HOURS_EXPECTED_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "조회가 완료되었습니다.",
+    "message": None,
+    "Output_0": [
+        {
+            "iem_cd": "005930",
+            "bsop_hour": "180000",
+            "stck_prpr": 282000,
+            "prdy_vrss_sign": "2",
+            "prdy_vrss": 500,
+            "prdy_ctrt": 0.18,
+            "cntg_vol": 12345.0,
+            "askp1": 282500,
+            "bidp1": 282000,
+            "askp_rsqn1": 100.0,
+            "bidp_rsqn1": 200.0,
+        }
+    ],
+}
+
+
+class TestAfterHoursExpected:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/quote/v1/afterHoursExpected", json=AFTER_HOURS_EXPECTED_BODY)
+            response = client.krstock_quote.after_hours_expected(iem_cd="005930")
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "iem_cd": "005930",
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        assert len(response.body.output_0) == 1
+        assert response.body.output_0[0].stck_prpr == 282000
+        assert response.body.output_0[0].cntg_vol == 12345.0
+
+    def test_parses_body_without_output_block(self, client):
+        # Output_N 블록은 데이터가 있을 때만 내려온다.
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/afterHoursExpected",
+                json={"rsp_cd": "00000", "rsp_msg": "ok"},
+            )
+            response = client.krstock_quote.after_hours_expected(iem_cd="005930")
+
+        assert response.body.output_0 is None
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/quote/v1/afterHoursExpected",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_quote.after_hours_expected(iem_cd="999999")
