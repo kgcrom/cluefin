@@ -566,3 +566,158 @@ class KrStockQuotePeriod(NHPlugAssetHttpBody):
     output_1: list[KrStockQuotePeriodBarOutput] | None = Field(
         default=None, alias="Output_1", description="주기별 봉 상세 목록"
     )
+
+
+class KrStockQuoteAfterHoursCurrentOutput(BaseModel):
+    """국내주식 시간외현재가 시간외 단일가 종합 정보 (Output_0)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    iem_cd: str | None = Field(default=None, description="종목코드 / 길이 6")
+    iem_nm: str | None = Field(default=None, description="종목명 / 길이 41")
+    mrkt_cls_code: str | None = Field(default=None, description="시장구분 / 길이 1")
+    trht_yn: str | None = Field(default=None, description="거래구분 / 길이 1")
+    mkop_cls_code: str | None = Field(default=None, description="장구분 / 길이 1")
+    stck_prpr: int | None = Field(default=None, description="정규장종가 / 길이 10")
+    ovtm_untp_sdpr: int | None = Field(default=None, description="기준가 / 길이 10")
+    ovtm_untp_mxpr: int | None = Field(default=None, description="상한가 / 길이 10")
+    ovtm_untp_llam: int | None = Field(default=None, description="하한가 / 길이 10")
+    ovtm_cntg_hour: str | None = Field(default=None, description="체결시간 / 길이 8")
+    ovtm_untp_prpr: int | None = Field(default=None, description="체결가 / 길이 10")
+    prdy_vrss_sign: str | None = Field(
+        default=None,
+        description="체결등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)",
+    )
+    ovtm_prdy_vrss: int | None = Field(default=None, description="체결등락폭 / 길이 10")
+    ovtm_prdy_ctrt: float | None = Field(default=None, description="체결등락률 / 길이 5.2")
+    ovtm_untp_oprc: int | None = Field(default=None, description="시가 / 길이 10")
+    ovtm_untp_hgpr: int | None = Field(default=None, description="고가 / 길이 10")
+    ovtm_untp_lwpr: int | None = Field(default=None, description="저가 / 길이 10")
+    ovtm_untp_vol: int | None = Field(default=None, description="거래량 / 길이 12")
+    ovtm_tr_pbmn: int | None = Field(default=None, description="거래대금 / 길이 12")
+    ovtm_untp_askp: int | None = Field(default=None, description="매도호가 / 길이 10")
+    ovtm_untp_bidp: int | None = Field(default=None, description="매수호가 / 길이 10")
+    ovtm_bsop_hour: str | None = Field(default=None, description="호가시간 / 길이 8")
+    ovtm_untp_askp1: int | None = Field(default=None, description="매도1차선호가 / 길이 10")
+    ovtm_untp_askp2: int | None = Field(default=None, description="매도2차선호가 / 길이 10")
+    ovtm_untp_askp3: int | None = Field(default=None, description="매도3차선호가 / 길이 10")
+    ovtm_untp_askp4: int | None = Field(default=None, description="매도4차선호가 / 길이 10")
+    ovtm_untp_askp5: int | None = Field(default=None, description="매도5차선호가 / 길이 10")
+    ovtm_untp_askp6: int | None = Field(default=None, description="매도6차선호가 / 길이 10")
+    ovtm_untp_askp7: int | None = Field(default=None, description="매도7차선호가 / 길이 10")
+    ovtm_untp_askp8: int | None = Field(default=None, description="매도8차선호가 / 길이 10")
+    ovtm_untp_askp9: int | None = Field(default=None, description="매도9차선호가 / 길이 10")
+    ovtm_untp_askp10: int | None = Field(default=None, description="매도10차선호가 / 길이 10")
+    ovtm_untp_bidp1: int | None = Field(default=None, description="매수1차선호가 / 길이 10")
+    ovtm_untp_bidp2: int | None = Field(default=None, description="매수2차선호가 / 길이 10")
+    ovtm_untp_bidp3: int | None = Field(default=None, description="매수3차선호가 / 길이 10")
+    ovtm_untp_bidp4: int | None = Field(default=None, description="매수4차선호가 / 길이 10")
+    ovtm_untp_bidp5: int | None = Field(default=None, description="매수5차선호가 / 길이 10")
+    ovtm_untp_bidp6: int | None = Field(default=None, description="매수6차선호가 / 길이 10")
+    ovtm_untp_bidp7: int | None = Field(default=None, description="매수7차선호가 / 길이 10")
+    ovtm_untp_bidp8: int | None = Field(default=None, description="매수8차선호가 / 길이 10")
+    ovtm_untp_bidp9: int | None = Field(default=None, description="매수9차선호가 / 길이 10")
+    ovtm_untp_bidp10: int | None = Field(default=None, description="매수10차선호가 / 길이 10")
+    ovtm_askp_rsqn1: int | None = Field(default=None, description="매도1차선잔량 / 길이 12")
+    ovtm_askp_rsqn2: int | None = Field(default=None, description="매도2차선잔량 / 길이 12")
+    ovtm_askp_rsqn3: int | None = Field(default=None, description="매도3차선잔량 / 길이 12")
+    ovtm_askp_rsqn4: int | None = Field(default=None, description="매도4차선잔량 / 길이 12")
+    ovtm_askp_rsqn5: int | None = Field(default=None, description="매도5차선잔량 / 길이 12")
+    ovtm_askp_rsqn6: int | None = Field(default=None, description="매도6차선잔량 / 길이 12")
+    ovtm_askp_rsqn7: int | None = Field(default=None, description="매도7차선잔량 / 길이 12")
+    ovtm_askp_rsqn8: int | None = Field(default=None, description="매도8차선잔량 / 길이 12")
+    ovtm_askp_rsqn9: int | None = Field(default=None, description="매도9차선잔량 / 길이 12")
+    ovtm_askp_rsqn10: int | None = Field(default=None, description="매도10차선잔량 / 길이 12")
+    ovtm_bidp_rsqn1: int | None = Field(default=None, description="매수1차선잔량 / 길이 12")
+    ovtm_bidp_rsqn2: int | None = Field(default=None, description="매수2차선잔량 / 길이 12")
+    ovtm_bidp_rsqn3: int | None = Field(default=None, description="매수3차선잔량 / 길이 12")
+    ovtm_bidp_rsqn4: int | None = Field(default=None, description="매수4차선잔량 / 길이 12")
+    ovtm_bidp_rsqn5: int | None = Field(default=None, description="매수5차선잔량 / 길이 12")
+    ovtm_bidp_rsqn6: int | None = Field(default=None, description="매수6차선잔량 / 길이 12")
+    ovtm_bidp_rsqn7: int | None = Field(default=None, description="매수7차선잔량 / 길이 12")
+    ovtm_bidp_rsqn8: int | None = Field(default=None, description="매수8차선잔량 / 길이 12")
+    ovtm_bidp_rsqn9: int | None = Field(default=None, description="매수9차선잔량 / 길이 12")
+    ovtm_bidp_rsqn10: int | None = Field(default=None, description="매수10차선잔량 / 길이 12")
+    total_askp_rsqn: int | None = Field(default=None, description="매도잔량합 / 길이 12")
+    total_bidp_rsqn: int | None = Field(default=None, description="매수잔량합 / 길이 12")
+    ecn_dongsi: str | None = Field(default=None, description="동시구분 / 길이 1 / 1.동시호가 이외 정규시장")
+    ovtm_antc_cnpr: int | None = Field(default=None, description="예상체결가 / 길이 10")
+    antc_vrss_sign: str | None = Field(
+        default=None,
+        description="예상체결부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)",
+    )
+    antc_cntg_vrss: int | None = Field(default=None, description="예상체결등락폭 / 길이 10")
+    antc_cntg_ctrt: float | None = Field(default=None, description="예상체결등락률 / 길이 5.2")
+    antc_vol: int | None = Field(default=None, description="예상체결수량 / 길이 12")
+    antc_tr_pbmn: int | None = Field(default=None, description="예상대금 / 길이 12")
+    item_info: str | None = Field(default=None, description="종목정보 / 길이 28")
+    ivs_hed_yn: str | None = Field(default=None, description="투자유의종목여부 / 길이 1 / Y.투자유의종목")
+    short_ovh_gb: str | None = Field(
+        default=None, description="단기과열구분코드 / 길이 1 / 1.단기과열예고 2.단기과열지정 3.단기과열연장"
+    )
+    alert_gb: str | None = Field(
+        default=None,
+        description="투자주의경고구분코드 / 길이 1 / 1.투자주의 2.투자경고 3.투자주의>투자위험예고 4.투자경고투자위험예고 5.투자위험",
+    )
+    jungri_yn: str | None = Field(default=None, description="정리매매여부 / 길이 1 / Y.정리매매종목")
+
+
+class KrStockQuoteAfterHoursCurrentRegularOutput(BaseModel):
+    """국내주식 시간외현재가 정규장 종합 정보 (Output_1).
+
+    스펙은 대부분 필드를 string 으로 선언하지만, 2026-08-22 실측(005930)에서
+    아래 19개 필드가 실제로는 int/float 로 내려오는 것을 확인해 `int|float|str`
+    로 완화했다(다른 필드는 실측에서도 문자열로 와서 스펙 그대로 둠).
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    bsop_date: str | None = Field(default=None, description="일자 / 길이 8")
+    acml_vol: int | str | None = Field(default=None, description="거래량 / 길이 12")
+    vol_rate: float | str | None = Field(default=None, description="거래량전일비 / 길이 6.2")
+    acml_tr_pbmn: int | str | None = Field(default=None, description="거래대금 / 길이 12")
+    stck_oprc: int | str | None = Field(default=None, description="시가 / 길이 10")
+    stck_hgpr: int | str | None = Field(default=None, description="고가 / 길이 10")
+    stck_lwpr: int | str | None = Field(default=None, description="저가 / 길이 10")
+    stck_prpr: int | None = Field(default=None, description="정규장종가 / 길이 10")
+    stck_mxpr: int | str | None = Field(default=None, description="상한가 / 길이 10")
+    stck_llam: int | str | None = Field(default=None, description="하한가 / 길이 10")
+    stck_fcam: int | str | None = Field(default=None, description="액면가 / 길이 10")
+    askp: int | str | None = Field(default=None, description="매도호가 / 길이 10")
+    bidp: int | str | None = Field(default=None, description="매수호가 / 길이 10")
+    askp_rsqn: int | str | None = Field(default=None, description="매도잔량 / 길이 12")
+    bidp_rsqn: int | str | None = Field(default=None, description="매수잔량 / 길이 12")
+    total_askp_rsqn: int | None = Field(default=None, description="매도잔량합 / 길이 12")
+    total_bidp_rsqn: int | None = Field(default=None, description="매수잔량합 / 길이 12")
+    ovtm_askp_rsqn: int | str | None = Field(default=None, description="시간외매도잔량 / 길이 12")
+    ovtm_bidp_rsqn: int | str | None = Field(default=None, description="시간외매수잔량 / 길이 12")
+    frgn_hour: str | None = Field(default=None, description="외국인시간 / 길이 6")
+    for_rate: float | str | None = Field(default=None, description="외국인지분율 / 길이 5.2")
+    prdy_vrss_sign: str | None = Field(
+        default=None,
+        description="체결등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)",
+    )
+    prdy_vrss: int | str | None = Field(default=None, description="등락폭 / 길이 10")
+    prdy_ctrt: float | str | None = Field(default=None, description="등락률 / 길이 5.2")
+    sosokz6: str | None = Field(default=None, description="코스피구분 / 길이 6")
+    bstp_kor_isnm: str | None = Field(default=None, description="업종명 / 길이 40")
+    bstp_cls_code: str | None = Field(default=None, description="업종코드 / 길이 6")
+    cap_size: str | None = Field(default=None, description="자본금규모 / 길이 6")
+    new_volume: int | str | None = Field(default=None, description="신규거래량 / 길이 12")
+
+
+class KrStockQuoteAfterHoursCurrent(NHPlugAssetHttpBody):
+    """국내주식 시간외현재가 (`POST /krstock/quote/v1/afterHoursCurrent`) 응답.
+
+    시세 조회 API 라 계좌번호가 필요 없다. 스펙에 `CtsHeader` 파라미터가 없어
+    연속조회를 지원하지 않는다(단건 조회). 입력은 `iem_cd` 하나뿐이다(market_cd
+    없음 — 다른 quote API 와 다르다). `Output_0` 은 시간외 단일가 종합 정보,
+    `Output_1` 은 정규장 종합 정보로 둘 다 단일 객체다(배열 아님).
+    """
+
+    output_0: KrStockQuoteAfterHoursCurrentOutput | None = Field(
+        default=None, alias="Output_0", description="시간외 단일가 종합 정보"
+    )
+    output_1: KrStockQuoteAfterHoursCurrentRegularOutput | None = Field(
+        default=None, alias="Output_1", description="정규장 종합 정보"
+    )

@@ -3,6 +3,7 @@ from typing import Any, Dict, Literal, Optional
 from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
 from cluefin_openapi.nhplug._http_client import HttpClient
 from cluefin_openapi.nhplug._krstock_quote_types import (
+    KrStockQuoteAfterHoursCurrent,
     KrStockQuoteCurrentDaily,
     KrStockQuoteCurrentExecution,
     KrStockQuoteCurrentInvestor,
@@ -228,3 +229,25 @@ class KrStockQuote:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuotePeriod.model_validate(data))
+
+    def after_hours_current(
+        self,
+        iem_cd: str,
+    ) -> NHPlugHttpResponse[KrStockQuoteAfterHoursCurrent]:
+        """국내주식 시간외현재가 (`POST /krstock/quote/v1/afterHoursCurrent`).
+
+        입력이 `iem_cd` 하나뿐이다 — 다른 quote API 와 달리 `market_cd` 가 없다.
+        계좌번호가 필요 없는 시세 조회 API 다. 스펙에 `CtsHeader` 파라미터가 없어
+        연속조회를 지원하지 않는다(다른 조회 API 와 달리 `cts` 인자가 없다).
+        `Output_0`(시간외 단일가 종합)/`Output_1`(정규장 종합) 모두 단일 객체다
+        (배열 아님).
+
+        Args:
+            iem_cd: 종목코드 (예: 005930)
+        """
+        body = self._drop_none({"iem_cd": iem_cd})
+        response = self.client.post("/krstock/quote/v1/afterHoursCurrent", body=body)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=KrStockQuoteAfterHoursCurrent.model_validate(data))
