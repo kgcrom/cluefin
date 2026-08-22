@@ -42,6 +42,21 @@ def client(auth) -> HttpClient:
     )
 
 
+@pytest.fixture(scope="module")
+def krstock_account(client) -> str:
+    """호출 환경과 acct_type 이 맞는 계좌번호.
+
+    모의투자(dev)는 03 계좌만, 운영(prod)은 01·02 계좌만 유효하다.
+    같은 계좌번호가 여러 행으로 내려올 수 있어 첫 매칭을 쓴다.
+    """
+    wanted = ("03",) if client.env == "dev" else ("01", "02")
+    accounts = client.common.get_account_list().body.output_0 or []
+    for account in accounts:
+        if account.acct_type in wanted:
+            return account.acct_no
+    pytest.skip(f"{client.env} 환경에 맞는 계좌(acct_type {wanted})가 없다")
+
+
 @pytest.fixture(autouse=True)
 def _nhplug_api_rate_limit(request):
     """Rate-limit guard: wait 1 second before each integration test."""

@@ -89,6 +89,13 @@ class HttpClient(BaseHttpClient):
 
         return Common(self)
 
+    @property
+    def krstock_order(self):
+        """국내주식 주문"""
+        from ._krstock_order import KrStockOrder
+
+        return KrStockOrder(self)
+
     def post(
         self,
         path: str,

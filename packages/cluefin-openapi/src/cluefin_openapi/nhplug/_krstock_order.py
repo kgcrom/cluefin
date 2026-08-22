@@ -1,0 +1,102 @@
+from typing import Any, Dict, Literal, Optional
+
+from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
+from cluefin_openapi.nhplug._http_client import HttpClient
+from cluefin_openapi.nhplug._krstock_order_types import KrStockOrderCashBuy
+from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
+
+# 호가유형코드 (nmn_pr_tp_cd)
+QuoteTypeCode = Literal[
+    "01",  # 보통가
+    "05",  # 시장가
+    "06",  # 조건부지정가
+    "09",  # 자기주식
+    "10",  # S-OPTION자기주식
+    "11",  # 금전신탁자기주식
+    "12",  # 최유리지정가
+    "13",  # 최우선지정가
+    "16",  # 스톱지정가
+    "17",  # 중간가
+    "61",  # 장전시간외
+    "71",  # 장후시간외
+    "81",  # 시간외단일가
+    "91",  # 장전시간외경쟁대량
+    "92",  # 장중경쟁대량
+]
+
+
+class KrStockOrder:
+    """국내주식 주문.
+
+    스펙 정본: https://www.nhplug.com/openapi-docs/krstock/openapi.json
+    운영(prod)은 주문이 실제 체결된다 — 테스트·검증은 모의투자(dev)로.
+    """
+
+    def __init__(self, client: HttpClient):
+        self.client = client
+
+    def _check_response_error(self, response_data: dict) -> None:
+        """HTTP 200 이어도 body rsp_cd 가 실패일 수 있으므로 여기서 확인한다."""
+        rsp_cd = response_data.get("rsp_cd")
+        if rsp_cd is not None and rsp_cd != "00000":
+            raise NHPlugAPIError(
+                f"API error {rsp_cd}: {response_data.get('rsp_msg', '')}",
+                status_code=200,
+                response_data=response_data,
+            )
+
+    @staticmethod
+    def _drop_none(body: Dict[str, Any]) -> Dict[str, Any]:
+        """선택 파라미터는 값이 있을 때만 전송한다."""
+        return {k: v for k, v in body.items() if v is not None}
+
+    def cash_buy(
+        self,
+        act_no: str,
+        iem_cd: str,
+        orr_qty: int,
+        nmn_pr_tp_cd: QuoteTypeCode,
+        rmt_mkt_cd: Literal["SOR", "KRX", "NXT"],
+        sor_mkt_sli_yn: Literal["Y", "N"],
+        orr_cnd_dit_cd: Literal["00", "01", "02"] = "00",
+        ssl_nmn_pr_dit_cd: Literal["00", "01", "02", "99"] = "00",
+        orr_pr: Optional[float] = None,
+        orr_amt: Optional[int] = None,
+        sop_cnd_pr: Optional[float] = None,
+    ) -> NHPlugHttpResponse[KrStockOrderCashBuy]:
+        """주식주문(현금) 매수 (`POST /krstock/order/v1/cashBuy`).
+
+        Args:
+            act_no: 계좌번호 (`/n2/acctinfo` 의 acct_no — 운영은 acct_type 01·02,
+                모의투자는 03 계좌만 유효)
+            iem_cd: 종목코드 (예: 005940)
+            orr_qty: 주문수량
+            nmn_pr_tp_cd: 호가유형코드 (01.보통가 05.시장가 16.스톱지정가 등)
+            rmt_mkt_cd: 요청시장코드 (SOR/KRX/NXT)
+            sor_mkt_sli_yn: SOR시장분할여부 (SOR 일 경우에만 Y/N 선택, KRX/NXT 면 N)
+            orr_cnd_dit_cd: 주문조건구분코드 (00.없음 01.IOC 02.FOK)
+            ssl_nmn_pr_dit_cd: 공매도호가구분코드 (00.정상 01.차입주식매도 02.기타공매도 99.권리공매도)
+            orr_pr: 주문가격 (지정가 계열일 때)
+            orr_amt: 주문금액
+            sop_cnd_pr: 정지조건가격 (호가유형코드 16.스톱지정가일 때만 입력)
+        """
+        body = self._drop_none(
+            {
+                "act_no": act_no,
+                "iem_cd": iem_cd,
+                "orr_qty": orr_qty,
+                "orr_pr": orr_pr,
+                "orr_amt": orr_amt,
+                "nmn_pr_tp_cd": nmn_pr_tp_cd,
+                "orr_cnd_dit_cd": orr_cnd_dit_cd,
+                "ssl_nmn_pr_dit_cd": ssl_nmn_pr_dit_cd,
+                "sop_cnd_pr": sop_cnd_pr,
+                "rmt_mkt_cd": rmt_mkt_cd,
+                "sor_mkt_sli_yn": sor_mkt_sli_yn,
+            }
+        )
+        response = self.client.post("/krstock/order/v1/cashBuy", body=body)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=KrStockOrderCashBuy.model_validate(data))
