@@ -2,7 +2,7 @@ from typing import Optional
 
 from cluefin_openapi.nhplug._http_client import HttpClient
 from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
-from cluefin_openapi.nhplug._overseas_stock_inquiry_types import OverseasStockBuyableAmount
+from cluefin_openapi.nhplug._overseas_stock_inquiry_types import OverseasStockBuyableAmount, OverseasStockUnexecuted
 from cluefin_openapi.nhplug._response import check_response_error
 
 
@@ -82,3 +82,53 @@ class OverseasStockInquiry:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockBuyableAmount.model_validate(data))
+
+    def get_order_executions(
+        self,
+        orr_dt: str,
+        act_no: str,
+        oss_sby_dit_cd: str,
+        sot_dit: str,
+        ost_cns_dit: str,
+        iem_cd: Optional[str] = None,
+        orr_no: Optional[int] = None,
+        cts: Optional[str] = None,
+    ) -> NHPlugHttpResponse[OverseasStockUnexecuted]:
+        """해외주식 주문체결내역 (`POST /gbstock/inquiry/v1/unexecuted`).
+
+        주문별 체결수량·체결가격·미체결주문수량을 포함한 주문·체결 내역 조회
+        API 이다. URI 의 `unexecuted` 는 서버 경로일 뿐이며, 실제로는 체결·
+        미체결 내역을 모두 반환한다 (주문 접수 API 아님, 조회 전용).
+
+        Args:
+            orr_dt: 주문일자 (길이 8)
+            act_no: 계좌번호 (길이 11). `/n2/acctinfo` 의 acct_no 사용
+                (운영은 acct_type=01·02, 모의투자는 03 계좌만 유효).
+            oss_sby_dit_cd: 해외증권매매구분코드 (길이 1) (0.전체 1.매도 2.매수)
+            sot_dit: 정렬구분 (길이 1) (0.주문번호순 1.주문번호역순)
+            ost_cns_dit: 체결구분 (길이 1) (0.전체 1.체결 2.미체결)
+            iem_cd: 티커종목코드 (길이 12). 예: 미국주식 APPLE인 경우 AAPL
+            orr_no: 주문번호 (길이 10)
+            cts: 연속거래키. 이전 응답 헤더의 `cts` 값을 그대로 전달하면 다음 페이지를 받는다.
+
+        Returns:
+            NHPlugHttpResponse[OverseasStockUnexecuted]: 주문·체결 내역 목록(`Output_0`)
+        """
+        body: dict = {
+            "orr_dt": orr_dt,
+            "act_no": act_no,
+            "oss_sby_dit_cd": oss_sby_dit_cd,
+            "sot_dit": sot_dit,
+            "ost_cns_dit": ost_cns_dit,
+        }
+        optional_fields = {
+            "iem_cd": iem_cd,
+            "orr_no": orr_no,
+        }
+        body.update({k: v for k, v in optional_fields.items() if v is not None})
+
+        response = self.client.post("/gbstock/inquiry/v1/unexecuted", body=body, cts=cts)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=OverseasStockUnexecuted.model_validate(data))

@@ -45,3 +45,69 @@ class OverseasStockBuyableAmount(BaseModel):
         default=None, alias="Output_0", description="매수가능금액·수량 조회 결과"
     )
     message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
+
+
+class OverseasStockUnexecutedItem(BaseModel):
+    """해외주식 주문체결내역 조회 결과 항목 (`Output_0` 배열 원소)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    rgs_tm: str | None = Field(default=None, description="등록시각 / 길이 8")
+    oss_orr_knd_cd: str | None = Field(default=None, description="해외증권주문종류코드 / 길이 1")
+    orr_knd_nm: str | None = Field(default=None, description="주문종류명 / 길이 10")
+    orr_no: int | None = Field(default=None, description="주문번호 / 길이 10")
+    org_orr_no: int | None = Field(default=None, description="원주문번호 / 길이 10")
+    oss_sby_dit_cd: str | None = Field(default=None, description="해외증권매매구분코드 / 길이 1")
+    sby_dit_nm: str | None = Field(default=None, description="매매구분명 / 길이 4")
+    fc_sec_trd_nat_cd: str | None = Field(default=None, description="외화증권거래국가코드 / 길이 3")
+    mkt_dit_cd_nm: str | None = Field(default=None, description="시장구분코드명 / 길이 50")
+    iem_cd: str | None = Field(default=None, description="종목코드 / 길이 12")
+    iem_nm: str | None = Field(default=None, description="종목명 / 길이 60")
+    orr_qty: int | None = Field(default=None, description="주문수량 / 길이 18")
+    fc_orr_uit_pr: float | None = Field(default=None, description="외화주문단가 / 길이 15.6")
+    cns_qty: int | None = Field(default=None, description="체결수량 / 길이 18")
+    cns_pr: float | None = Field(default=None, description="체결가격 / 길이 15.6")
+    ny_cns_orr_qty: int | None = Field(default=None, description="미체결주문수량 / 길이 18")
+    cor_can_dit_cd: str | None = Field(default=None, description="정정취소구분코드 / 길이 1")
+    cor_can_dit_nm: str | None = Field(default=None, description="정정취소구분명 / 길이 4")
+    cor_qty: int | None = Field(default=None, description="정정수량 / 길이 18")
+    can_qty: int | None = Field(default=None, description="취소수량 / 길이 18")
+    oss_ato_orr_sts_cd: str | None = Field(default=None, description="해외증권자동주문상태코드 / 길이 1")
+    orr_sts_nm: str | None = Field(default=None, description="주문상태명 / 길이 6")
+    oms_cus_orr_no: str | None = Field(default=None, description="OMS고객주문번호 / 길이 40")
+    rjt_rsn_cts: str | None = Field(default=None, description="거부사유내용 / 길이 500")
+    ivs_nat_krx_dit_cd: str | None = Field(default=None, description="투자국가거래소구분코드 / 길이 4")
+    fix_sgy_tgt_sgy_nm: str | None = Field(default=None, description="FIX전략타겟전략명 / 길이 10")
+    fix_orr_pcs_mtd_cd: str | None = Field(default=None, description="FIX주문처리방법코드 / 길이 1")
+    orr_pcs_mtd_cd_nm: str | None = Field(default=None, description="주문처리방법코드명 / 길이 40")
+    rut_orr_krx_cd: str | None = Field(default=None, description="로이터주문거래소코드 / 길이 3")
+    hts_usr_id: str | None = Field(default=None, description="HTS사용자ID / 길이 8")
+    usr_ip_adr: str | None = Field(default=None, description="사용자IP주소 / 길이 32")
+    cuc_mdi_cd: str | None = Field(default=None, description="통신매체코드 / 길이 2")
+    cuc_mdi_cd_nm: str | None = Field(default=None, description="통신매체코드명 / 길이 50")
+    ahi_nmn_pr_tp_cd: str | None = Field(default=None, description="현물호가유형코드 / 길이 2")
+    ahi_nmn_pr_tp_cd_nm: str | None = Field(default=None, description="현물호가유형코드명 / 길이 20")
+    fc_stop_orr_bse_pr: float | None = Field(default=None, description="외화STOP주문기준가격 / 길이 15.6")
+    orr_pdt_dit_cd: str | None = Field(default=None, description="주문상품구분코드 / 길이 2")
+    orr_dt: str | None = Field(default=None, description="주문일자 / 길이 8")
+    csh_wtm_rt: float | None = Field(default=None, description="현금증거금율 / 길이 8.5")
+    cfd_lon_cd: str | None = Field(default=None, description="신용대출코드 / 길이 2")
+    cfd_lon_cd_nm: str | None = Field(default=None, description="신용대출코드명 / 길이 40")
+    lon_dt: str | None = Field(default=None, description="대출일자 / 길이 8")
+
+
+class OverseasStockUnexecuted(BaseModel):
+    """해외주식 주문체결내역 조회 (`POST /gbstock/inquiry/v1/unexecuted`) 응답.
+
+    URI 의 `unexecuted` 는 서버 경로일 뿐이며, 실제로는 체결·미체결 내역을
+    모두 반환한다. 응답 블록은 데이터가 있을 때만 내려오므로 모두 Optional.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    rsp_cd: str | None = Field(default=None, description="응답코드")
+    rsp_msg: str | None = Field(default=None, description="응답메시지")
+    output_0: list[OverseasStockUnexecutedItem] | None = Field(
+        default=None, alias="Output_0", description="주문체결내역 조회 결과"
+    )
+    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")

@@ -11,6 +11,57 @@ from cluefin_openapi.nhplug._http_client import HttpClient
 BASE_DEV = "https://moapi.nhplug.com:8443"
 
 BUYABLE_AMOUNT_URL = f"{BASE_DEV}/gbstock/inquiry/v1/buyableAmount"
+ORDER_EXECUTIONS_URL = f"{BASE_DEV}/gbstock/inquiry/v1/unexecuted"
+
+ORDER_EXECUTIONS_OK_BODY = {
+    "Output_0": [
+        {
+            "rgs_tm": "13024500",
+            "oss_orr_knd_cd": "1",
+            "orr_knd_nm": "지정가",
+            "orr_no": 123456789,
+            "org_orr_no": 0,
+            "oss_sby_dit_cd": "2",
+            "sby_dit_nm": "매수",
+            "fc_sec_trd_nat_cd": "200",
+            "mkt_dit_cd_nm": "나스닥",
+            "iem_cd": "AAPL",
+            "iem_nm": "애플",
+            "orr_qty": 10,
+            "fc_orr_uit_pr": 150.25,
+            "cns_qty": 10,
+            "cns_pr": 150.25,
+            "ny_cns_orr_qty": 0,
+            "cor_can_dit_cd": "0",
+            "cor_can_dit_nm": "정상",
+            "cor_qty": 0,
+            "can_qty": 0,
+            "oss_ato_orr_sts_cd": "1",
+            "orr_sts_nm": "체결",
+            "oms_cus_orr_no": "OMS0001",
+            "rjt_rsn_cts": "",
+            "ivs_nat_krx_dit_cd": "US",
+            "fix_sgy_tgt_sgy_nm": "",
+            "fix_orr_pcs_mtd_cd": "1",
+            "orr_pcs_mtd_cd_nm": "일반",
+            "rut_orr_krx_cd": "NAS",
+            "hts_usr_id": "USER0001",
+            "usr_ip_adr": "127.0.0.1",
+            "cuc_mdi_cd": "01",
+            "cuc_mdi_cd_nm": "HTS",
+            "ahi_nmn_pr_tp_cd": "00",
+            "ahi_nmn_pr_tp_cd_nm": "지정가",
+            "fc_stop_orr_bse_pr": 0.0,
+            "orr_pdt_dit_cd": "01",
+            "orr_dt": "20260821",
+            "csh_wtm_rt": 0.25,
+            "cfd_lon_cd": "00",
+            "cfd_lon_cd_nm": "현금",
+            "lon_dt": "",
+        }
+    ],
+    "message": {"msg_code": "0000", "usr_msg": "정상 처리되었습니다."},
+}
 
 BUYABLE_AMOUNT_OK_BODY = {
     "Output_0": {
@@ -161,4 +212,95 @@ class TestGetBuyableAmount:
                     wtm_cur_knd_cd="1",
                     oss_orr_knd_cd="1",
                     ahi_nmn_pr_tp_cd="03",
+                )
+
+
+class TestGetOrderExecutions:
+    def test_sends_input_envelope(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(ORDER_EXECUTIONS_URL, json=ORDER_EXECUTIONS_OK_BODY)
+            client.overseas_stock_inquiry.get_order_executions(
+                orr_dt="20260821",
+                act_no="50051036881",
+                oss_sby_dit_cd="0",
+                sot_dit="0",
+                ost_cns_dit="0",
+                iem_cd="AAPL",
+            )
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "orr_dt": "20260821",
+                "act_no": "50051036881",
+                "oss_sby_dit_cd": "0",
+                "sot_dit": "0",
+                "ost_cns_dit": "0",
+                "iem_cd": "AAPL",
+            }
+        }
+
+    def test_omits_optional_fields_when_not_given(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(ORDER_EXECUTIONS_URL, json=ORDER_EXECUTIONS_OK_BODY)
+            client.overseas_stock_inquiry.get_order_executions(
+                orr_dt="20260821",
+                act_no="50051036881",
+                oss_sby_dit_cd="0",
+                sot_dit="0",
+                ost_cns_dit="0",
+            )
+
+        sent = json.loads(m.request_history[0].text)["Input_0"]
+        assert "iem_cd" not in sent
+        assert "orr_no" not in sent
+
+    def test_parses_order_executions_response(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(ORDER_EXECUTIONS_URL, json=ORDER_EXECUTIONS_OK_BODY, headers={"cts_flag": "N"})
+            response = client.overseas_stock_inquiry.get_order_executions(
+                orr_dt="20260821",
+                act_no="50051036881",
+                oss_sby_dit_cd="0",
+                sot_dit="0",
+                ost_cns_dit="0",
+            )
+
+        assert response.body.output_0 is not None
+        assert len(response.body.output_0) == 1
+        item = response.body.output_0[0]
+        assert item.orr_no == 123456789
+        assert item.iem_cd == "AAPL"
+        assert item.cns_qty == 10
+        assert item.cns_pr == 150.25
+        assert response.body.message.usr_msg == "정상 처리되었습니다."
+        assert response.header.cts_flag == "N"
+
+    def test_sends_cts_header_for_continuation(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(ORDER_EXECUTIONS_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
+            response = client.overseas_stock_inquiry.get_order_executions(
+                orr_dt="20260821",
+                act_no="50051036881",
+                oss_sby_dit_cd="0",
+                sot_dit="0",
+                ost_cns_dit="0",
+                cts="CTS_TOKEN_1",
+            )
+
+        sent_headers = m.request_history[0].headers
+        assert sent_headers["cts"] == "CTS_TOKEN_1"
+        assert sent_headers["cts_flag"] == "Y"
+        assert response.body.output_0 is None
+        assert response.body.rsp_cd == "00000"
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(ORDER_EXECUTIONS_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
+            with pytest.raises(NHPlugAPIError, match="40310"):
+                client.overseas_stock_inquiry.get_order_executions(
+                    orr_dt="20260821",
+                    act_no="50051036881",
+                    oss_sby_dit_cd="0",
+                    sot_dit="0",
+                    ost_cns_dit="0",
                 )
