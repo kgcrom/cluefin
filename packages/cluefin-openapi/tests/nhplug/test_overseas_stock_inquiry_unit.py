@@ -449,11 +449,11 @@ def client() -> HttpClient:
     return HttpClient(token="TOKEN", app_key="test-app-key", secret_key="test-secret", env="dev")
 
 
-class TestGetBuyableAmount:
+class TestBuyableAmount:
     def test_sends_input_envelope(self, client):
         with requests_mock.Mocker() as m:
             m.post(BUYABLE_AMOUNT_URL, json=BUYABLE_AMOUNT_OK_BODY)
-            client.overseas_stock_inquiry.get_buyable_amount(
+            client.overseas_stock_inquiry.buyable_amount(
                 act_no="50051036881",
                 pcs_dit="1",
                 fc_sec_trd_nat_cd="200",
@@ -480,7 +480,7 @@ class TestGetBuyableAmount:
     def test_omits_optional_fields_when_not_given(self, client):
         with requests_mock.Mocker() as m:
             m.post(BUYABLE_AMOUNT_URL, json=BUYABLE_AMOUNT_OK_BODY)
-            client.overseas_stock_inquiry.get_buyable_amount(
+            client.overseas_stock_inquiry.buyable_amount(
                 act_no="50051036881",
                 pcs_dit="2",
                 fc_sec_trd_nat_cd="200",
@@ -498,7 +498,7 @@ class TestGetBuyableAmount:
     def test_parses_buyable_amount_response(self, client):
         with requests_mock.Mocker() as m:
             m.post(BUYABLE_AMOUNT_URL, json=BUYABLE_AMOUNT_OK_BODY, headers={"cts_flag": "N"})
-            response = client.overseas_stock_inquiry.get_buyable_amount(
+            response = client.overseas_stock_inquiry.buyable_amount(
                 act_no="50051036881",
                 pcs_dit="1",
                 fc_sec_trd_nat_cd="200",
@@ -517,7 +517,7 @@ class TestGetBuyableAmount:
     def test_sends_cts_header_for_continuation(self, client):
         with requests_mock.Mocker() as m:
             m.post(BUYABLE_AMOUNT_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
-            response = client.overseas_stock_inquiry.get_buyable_amount(
+            response = client.overseas_stock_inquiry.buyable_amount(
                 act_no="50051036881",
                 pcs_dit="1",
                 fc_sec_trd_nat_cd="200",
@@ -541,7 +541,7 @@ class TestGetBuyableAmount:
                 BUYABLE_AMOUNT_URL,
                 json={**BUYABLE_AMOUNT_OK_BODY, "rsp_cd": "XA102", "rsp_msg": "모의투자 조회가 완료되었습니다"},
             )
-            response = client.overseas_stock_inquiry.get_buyable_amount(
+            response = client.overseas_stock_inquiry.buyable_amount(
                 act_no="50051036881",
                 pcs_dit="1",
                 fc_sec_trd_nat_cd="200",
@@ -558,7 +558,7 @@ class TestGetBuyableAmount:
         with requests_mock.Mocker() as m:
             m.post(BUYABLE_AMOUNT_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
             with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_inquiry.get_buyable_amount(
+                client.overseas_stock_inquiry.buyable_amount(
                     act_no="50051036881",
                     pcs_dit="1",
                     fc_sec_trd_nat_cd="200",
@@ -569,11 +569,11 @@ class TestGetBuyableAmount:
                 )
 
 
-class TestGetOrderExecutions:
+class TestUnexecuted:
     def test_sends_input_envelope(self, client):
         with requests_mock.Mocker() as m:
             m.post(ORDER_EXECUTIONS_URL, json=ORDER_EXECUTIONS_OK_BODY)
-            client.overseas_stock_inquiry.get_order_executions(
+            client.overseas_stock_inquiry.unexecuted(
                 orr_dt="20260821",
                 act_no="50051036881",
                 oss_sby_dit_cd="0",
@@ -596,7 +596,7 @@ class TestGetOrderExecutions:
     def test_omits_optional_fields_when_not_given(self, client):
         with requests_mock.Mocker() as m:
             m.post(ORDER_EXECUTIONS_URL, json=ORDER_EXECUTIONS_OK_BODY)
-            client.overseas_stock_inquiry.get_order_executions(
+            client.overseas_stock_inquiry.unexecuted(
                 orr_dt="20260821",
                 act_no="50051036881",
                 oss_sby_dit_cd="0",
@@ -611,7 +611,7 @@ class TestGetOrderExecutions:
     def test_parses_order_executions_response(self, client):
         with requests_mock.Mocker() as m:
             m.post(ORDER_EXECUTIONS_URL, json=ORDER_EXECUTIONS_OK_BODY, headers={"cts_flag": "N"})
-            response = client.overseas_stock_inquiry.get_order_executions(
+            response = client.overseas_stock_inquiry.unexecuted(
                 orr_dt="20260821",
                 act_no="50051036881",
                 oss_sby_dit_cd="0",
@@ -632,7 +632,7 @@ class TestGetOrderExecutions:
     def test_sends_cts_header_for_continuation(self, client):
         with requests_mock.Mocker() as m:
             m.post(ORDER_EXECUTIONS_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
-            response = client.overseas_stock_inquiry.get_order_executions(
+            response = client.overseas_stock_inquiry.unexecuted(
                 orr_dt="20260821",
                 act_no="50051036881",
                 oss_sby_dit_cd="0",
@@ -651,7 +651,7 @@ class TestGetOrderExecutions:
         with requests_mock.Mocker() as m:
             m.post(ORDER_EXECUTIONS_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
             with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_inquiry.get_order_executions(
+                client.overseas_stock_inquiry.unexecuted(
                     orr_dt="20260821",
                     act_no="50051036881",
                     oss_sby_dit_cd="0",
@@ -660,11 +660,11 @@ class TestGetOrderExecutions:
                 )
 
 
-class TestGetBalance:
+class TestBalance:
     def test_sends_input_envelope(self, client):
         with requests_mock.Mocker() as m:
             m.post(BALANCE_URL, json=BALANCE_OK_BODY)
-            client.overseas_stock_inquiry.get_balance(
+            client.overseas_stock_inquiry.balance(
                 act_no="50051036881",
                 qut_iqr_dit_cd="1",
                 fc_sec_trd_nat_cd="200",
@@ -685,7 +685,7 @@ class TestGetBalance:
     def test_omits_optional_fields_when_not_given(self, client):
         with requests_mock.Mocker() as m:
             m.post(BALANCE_URL, json=BALANCE_OK_BODY)
-            client.overseas_stock_inquiry.get_balance(
+            client.overseas_stock_inquiry.balance(
                 act_no="50051036881",
                 qut_iqr_dit_cd="1",
                 fc_sec_trd_nat_cd="200",
@@ -698,7 +698,7 @@ class TestGetBalance:
     def test_parses_balance_response(self, client):
         with requests_mock.Mocker() as m:
             m.post(BALANCE_URL, json=BALANCE_OK_BODY, headers={"cts_flag": "N"})
-            response = client.overseas_stock_inquiry.get_balance(
+            response = client.overseas_stock_inquiry.balance(
                 act_no="50051036881",
                 qut_iqr_dit_cd="1",
                 fc_sec_trd_nat_cd="200",
@@ -723,7 +723,7 @@ class TestGetBalance:
     def test_parses_response_without_output_blocks(self, client):
         with requests_mock.Mocker() as m:
             m.post(BALANCE_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
-            response = client.overseas_stock_inquiry.get_balance(
+            response = client.overseas_stock_inquiry.balance(
                 act_no="50051036881",
                 qut_iqr_dit_cd="1",
                 fc_sec_trd_nat_cd="200",
@@ -738,7 +738,7 @@ class TestGetBalance:
         with requests_mock.Mocker() as m:
             m.post(BALANCE_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
             with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_inquiry.get_balance(
+                client.overseas_stock_inquiry.balance(
                     act_no="50051036881",
                     qut_iqr_dit_cd="1",
                     fc_sec_trd_nat_cd="200",
@@ -746,11 +746,11 @@ class TestGetBalance:
                 )
 
 
-class TestGetReservedOrders:
+class TestReservedInquiry:
     def test_sends_input_envelope(self, client):
         with requests_mock.Mocker() as m:
             m.post(RESERVED_ORDERS_URL, json=RESERVED_ORDERS_OK_BODY)
-            client.overseas_stock_inquiry.get_reserved_orders(
+            client.overseas_stock_inquiry.reserved_inquiry(
                 fc_mkt_dit_cd="200",
                 bkg_orr_dt="20260821",
                 act_no="50051036881",
@@ -779,7 +779,7 @@ class TestGetReservedOrders:
     def test_omits_optional_fields_when_not_given(self, client):
         with requests_mock.Mocker() as m:
             m.post(RESERVED_ORDERS_URL, json=RESERVED_ORDERS_OK_BODY)
-            client.overseas_stock_inquiry.get_reserved_orders(
+            client.overseas_stock_inquiry.reserved_inquiry(
                 fc_mkt_dit_cd="200",
                 bkg_orr_dt="20260821",
                 act_no="50051036881",
@@ -796,7 +796,7 @@ class TestGetReservedOrders:
     def test_parses_reserved_orders_response(self, client):
         with requests_mock.Mocker() as m:
             m.post(RESERVED_ORDERS_URL, json=RESERVED_ORDERS_OK_BODY, headers={"cts_flag": "N"})
-            response = client.overseas_stock_inquiry.get_reserved_orders(
+            response = client.overseas_stock_inquiry.reserved_inquiry(
                 fc_mkt_dit_cd="200",
                 bkg_orr_dt="20260821",
                 act_no="50051036881",
@@ -820,7 +820,7 @@ class TestGetReservedOrders:
     def test_sends_cts_header_for_continuation(self, client):
         with requests_mock.Mocker() as m:
             m.post(RESERVED_ORDERS_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
-            response = client.overseas_stock_inquiry.get_reserved_orders(
+            response = client.overseas_stock_inquiry.reserved_inquiry(
                 fc_mkt_dit_cd="200",
                 bkg_orr_dt="20260821",
                 act_no="50051036881",
@@ -842,7 +842,7 @@ class TestGetReservedOrders:
         with requests_mock.Mocker() as m:
             m.post(RESERVED_ORDERS_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
             with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_inquiry.get_reserved_orders(
+                client.overseas_stock_inquiry.reserved_inquiry(
                     fc_mkt_dit_cd="200",
                     bkg_orr_dt="20260821",
                     act_no="50051036881",
@@ -854,11 +854,11 @@ class TestGetReservedOrders:
                 )
 
 
-class TestGetDailyTransactions:
+class TestDailyTransaction:
     def test_sends_input_envelope(self, client):
         with requests_mock.Mocker() as m:
             m.post(DAILY_TRANSACTIONS_URL, json=DAILY_TRANSACTIONS_OK_BODY)
-            client.overseas_stock_inquiry.get_daily_transactions(
+            client.overseas_stock_inquiry.daily_transaction(
                 act_no="50051036881",
                 iqr_sta_dt="20260801",
                 iqr_end_dt="20260821",
@@ -881,7 +881,7 @@ class TestGetDailyTransactions:
     def test_omits_optional_fields_when_not_given(self, client):
         with requests_mock.Mocker() as m:
             m.post(DAILY_TRANSACTIONS_URL, json=DAILY_TRANSACTIONS_OK_BODY)
-            client.overseas_stock_inquiry.get_daily_transactions(
+            client.overseas_stock_inquiry.daily_transaction(
                 act_no="50051036881",
                 iqr_sta_dt="20260801",
                 iqr_end_dt="20260821",
@@ -895,7 +895,7 @@ class TestGetDailyTransactions:
     def test_parses_daily_transactions_response(self, client):
         with requests_mock.Mocker() as m:
             m.post(DAILY_TRANSACTIONS_URL, json=DAILY_TRANSACTIONS_OK_BODY, headers={"cts_flag": "N"})
-            response = client.overseas_stock_inquiry.get_daily_transactions(
+            response = client.overseas_stock_inquiry.daily_transaction(
                 act_no="50051036881",
                 iqr_sta_dt="20260801",
                 iqr_end_dt="20260821",
@@ -921,7 +921,7 @@ class TestGetDailyTransactions:
     def test_sends_cts_header_for_continuation(self, client):
         with requests_mock.Mocker() as m:
             m.post(DAILY_TRANSACTIONS_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
-            response = client.overseas_stock_inquiry.get_daily_transactions(
+            response = client.overseas_stock_inquiry.daily_transaction(
                 act_no="50051036881",
                 iqr_sta_dt="20260801",
                 iqr_end_dt="20260821",
@@ -941,7 +941,7 @@ class TestGetDailyTransactions:
         with requests_mock.Mocker() as m:
             m.post(DAILY_TRANSACTIONS_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
             with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_inquiry.get_daily_transactions(
+                client.overseas_stock_inquiry.daily_transaction(
                     act_no="50051036881",
                     iqr_sta_dt="20260801",
                     iqr_end_dt="20260821",
@@ -950,11 +950,11 @@ class TestGetDailyTransactions:
                 )
 
 
-class TestGetPeriodPnl:
+class TestPeriodPnl:
     def test_sends_input_envelope(self, client):
         with requests_mock.Mocker() as m:
             m.post(PERIOD_PNL_URL, json=PERIOD_PNL_OK_BODY)
-            client.overseas_stock_inquiry.get_period_pnl(
+            client.overseas_stock_inquiry.period_pnl(
                 act_no="50051036881",
                 iqr_dit="1",
                 sta_orr_dt="20260801",
@@ -979,7 +979,7 @@ class TestGetPeriodPnl:
     def test_omits_optional_fields_when_not_given(self, client):
         with requests_mock.Mocker() as m:
             m.post(PERIOD_PNL_URL, json=PERIOD_PNL_OK_BODY)
-            client.overseas_stock_inquiry.get_period_pnl(
+            client.overseas_stock_inquiry.period_pnl(
                 act_no="50051036881",
                 iqr_dit="1",
                 sta_orr_dt="20260801",
@@ -994,7 +994,7 @@ class TestGetPeriodPnl:
     def test_parses_period_pnl_response(self, client):
         with requests_mock.Mocker() as m:
             m.post(PERIOD_PNL_URL, json=PERIOD_PNL_OK_BODY, headers={"cts_flag": "N"})
-            response = client.overseas_stock_inquiry.get_period_pnl(
+            response = client.overseas_stock_inquiry.period_pnl(
                 act_no="50051036881",
                 iqr_dit="1",
                 sta_orr_dt="20260801",
@@ -1018,7 +1018,7 @@ class TestGetPeriodPnl:
     def test_sends_cts_header_for_continuation(self, client):
         with requests_mock.Mocker() as m:
             m.post(PERIOD_PNL_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
-            response = client.overseas_stock_inquiry.get_period_pnl(
+            response = client.overseas_stock_inquiry.period_pnl(
                 act_no="50051036881",
                 iqr_dit="1",
                 sta_orr_dt="20260801",
@@ -1037,7 +1037,7 @@ class TestGetPeriodPnl:
         with requests_mock.Mocker() as m:
             m.post(PERIOD_PNL_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
             with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_inquiry.get_period_pnl(
+                client.overseas_stock_inquiry.period_pnl(
                     act_no="50051036881",
                     iqr_dit="1",
                     sta_orr_dt="20260801",
@@ -1045,11 +1045,11 @@ class TestGetPeriodPnl:
                 )
 
 
-class TestGetPeriodPnlDetail:
+class TestPeriodPnlDetail:
     def test_sends_input_envelope(self, client):
         with requests_mock.Mocker() as m:
             m.post(PERIOD_PNL_DETAIL_URL, json=PERIOD_PNL_DETAIL_OK_BODY)
-            client.overseas_stock_inquiry.get_period_pnl_detail(
+            client.overseas_stock_inquiry.period_pnl_detail(
                 act_no="50051036881",
                 iqr_dit="1",
                 orr_dt="20260821",
@@ -1072,7 +1072,7 @@ class TestGetPeriodPnlDetail:
     def test_omits_optional_fields_when_not_given(self, client):
         with requests_mock.Mocker() as m:
             m.post(PERIOD_PNL_DETAIL_URL, json=PERIOD_PNL_DETAIL_OK_BODY)
-            client.overseas_stock_inquiry.get_period_pnl_detail(
+            client.overseas_stock_inquiry.period_pnl_detail(
                 act_no="50051036881",
                 iqr_dit="1",
                 orr_dt="20260821",
@@ -1086,7 +1086,7 @@ class TestGetPeriodPnlDetail:
     def test_parses_period_pnl_detail_response(self, client):
         with requests_mock.Mocker() as m:
             m.post(PERIOD_PNL_DETAIL_URL, json=PERIOD_PNL_DETAIL_OK_BODY, headers={"cts_flag": "N"})
-            response = client.overseas_stock_inquiry.get_period_pnl_detail(
+            response = client.overseas_stock_inquiry.period_pnl_detail(
                 act_no="50051036881",
                 iqr_dit="1",
                 orr_dt="20260821",
@@ -1107,7 +1107,7 @@ class TestGetPeriodPnlDetail:
     def test_sends_cts_header_for_continuation(self, client):
         with requests_mock.Mocker() as m:
             m.post(PERIOD_PNL_DETAIL_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
-            response = client.overseas_stock_inquiry.get_period_pnl_detail(
+            response = client.overseas_stock_inquiry.period_pnl_detail(
                 act_no="50051036881",
                 iqr_dit="1",
                 orr_dt="20260821",
@@ -1126,7 +1126,7 @@ class TestGetPeriodPnlDetail:
         with requests_mock.Mocker() as m:
             m.post(PERIOD_PNL_DETAIL_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
             with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_inquiry.get_period_pnl_detail(
+                client.overseas_stock_inquiry.period_pnl_detail(
                     act_no="50051036881",
                     iqr_dit="1",
                     orr_dt="20260821",
@@ -1135,11 +1135,11 @@ class TestGetPeriodPnlDetail:
                 )
 
 
-class TestGetMarginByCurrency:
+class TestMargin:
     def test_sends_input_envelope(self, client):
         with requests_mock.Mocker() as m:
             m.post(MARGIN_URL, json=MARGIN_OK_BODY)
-            client.overseas_stock_inquiry.get_margin_by_currency(
+            client.overseas_stock_inquiry.margin(
                 act_no="50051036881",
             )
 
@@ -1152,7 +1152,7 @@ class TestGetMarginByCurrency:
     def test_parses_margin_response(self, client):
         with requests_mock.Mocker() as m:
             m.post(MARGIN_URL, json=MARGIN_OK_BODY, headers={"cts_flag": "N"})
-            response = client.overseas_stock_inquiry.get_margin_by_currency(
+            response = client.overseas_stock_inquiry.margin(
                 act_no="50051036881",
             )
 
@@ -1170,7 +1170,7 @@ class TestGetMarginByCurrency:
     def test_sends_cts_header_for_continuation(self, client):
         with requests_mock.Mocker() as m:
             m.post(MARGIN_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
-            response = client.overseas_stock_inquiry.get_margin_by_currency(
+            response = client.overseas_stock_inquiry.margin(
                 act_no="50051036881",
                 cts="CTS_TOKEN_1",
             )
@@ -1185,6 +1185,6 @@ class TestGetMarginByCurrency:
         with requests_mock.Mocker() as m:
             m.post(MARGIN_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
             with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_inquiry.get_margin_by_currency(
+                client.overseas_stock_inquiry.margin(
                     act_no="50051036881",
                 )

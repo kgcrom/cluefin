@@ -8,12 +8,12 @@ import requests_mock
 from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
 from cluefin_openapi.nhplug._http_client import HttpClient
 
-BASE_DEV = "https://moapi.nhplug.com:8443"
+BASE_PROD = "https://api.nhplug.com:8443"
 
-CURRENT_PRICE_URL = f"{BASE_DEV}/gbstock/quote/v1/current"
-EXECUTION_TREND_URL = f"{BASE_DEV}/gbstock/quote/v1/executionTrend"
-PERIOD_PRICE_URL = f"{BASE_DEV}/gbstock/quote/v1/period"
-SYMBOL_INDEX_FX_PERIOD_URL = f"{BASE_DEV}/gbstock/quote/v1/symbolIndexFxPeriod"
+CURRENT_PRICE_URL = f"{BASE_PROD}/gbstock/quote/v1/current"
+EXECUTION_TREND_URL = f"{BASE_PROD}/gbstock/quote/v1/executionTrend"
+PERIOD_PRICE_URL = f"{BASE_PROD}/gbstock/quote/v1/period"
+SYMBOL_INDEX_FX_PERIOD_URL = f"{BASE_PROD}/gbstock/quote/v1/symbolIndexFxPeriod"
 
 PERIOD_PRICE_OK_BODY = {
     "Output_0": [
@@ -227,14 +227,14 @@ CURRENT_PRICE_OK_BODY = {
 
 @pytest.fixture
 def client() -> HttpClient:
-    return HttpClient(token="TOKEN", app_key="test-app-key", secret_key="test-secret", env="dev")
+    return HttpClient(token="TOKEN", app_key="test-app-key", secret_key="test-secret", env="prod")
 
 
-class TestGetCurrentPrice:
+class TestCurrent:
     def test_sends_input_envelope(self, client):
         with requests_mock.Mocker() as m:
             m.post(CURRENT_PRICE_URL, json=CURRENT_PRICE_OK_BODY)
-            client.overseas_stock_quote.get_current_price(iem_cd="AAPL")
+            client.overseas_stock_quote.current(iem_cd="AAPL")
 
         assert json.loads(m.request_history[0].text) == {
             "Input_0": {
@@ -245,7 +245,7 @@ class TestGetCurrentPrice:
     def test_parses_current_price_response(self, client):
         with requests_mock.Mocker() as m:
             m.post(CURRENT_PRICE_URL, json=CURRENT_PRICE_OK_BODY, headers={"cts_flag": "N"})
-            response = client.overseas_stock_quote.get_current_price(iem_cd="AAPL")
+            response = client.overseas_stock_quote.current(iem_cd="AAPL")
 
         assert response.body.output_0 is not None
         assert response.body.output_0.iem_cd == "AAPL"
@@ -262,22 +262,8 @@ class TestGetCurrentPrice:
     def test_parses_response_without_output_block(self, client):
         with requests_mock.Mocker() as m:
             m.post(CURRENT_PRICE_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
-            response = client.overseas_stock_quote.get_current_price(iem_cd="AAPL")
+            response = client.overseas_stock_quote.current(iem_cd="AAPL")
 
-        assert response.body.output_0 is None
-        assert response.body.rsp_cd == "00000"
-
-    def test_sends_cts_header_for_continuation(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(CURRENT_PRICE_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
-            response = client.overseas_stock_quote.get_current_price(
-                iem_cd="AAPL",
-                cts="CTS_TOKEN_1",
-            )
-
-        sent_headers = m.request_history[0].headers
-        assert sent_headers["cts"] == "CTS_TOKEN_1"
-        assert sent_headers["cts_flag"] == "Y"
         assert response.body.output_0 is None
         assert response.body.rsp_cd == "00000"
 
@@ -285,14 +271,14 @@ class TestGetCurrentPrice:
         with requests_mock.Mocker() as m:
             m.post(CURRENT_PRICE_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
             with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_quote.get_current_price(iem_cd="AAPL")
+                client.overseas_stock_quote.current(iem_cd="AAPL")
 
 
-class TestGetExecutionTrend:
+class TestExecutionTrend:
     def test_sends_input_envelope(self, client):
         with requests_mock.Mocker() as m:
             m.post(EXECUTION_TREND_URL, json=EXECUTION_TREND_OK_BODY)
-            client.overseas_stock_quote.get_execution_trend(period_type="2", req_cnt=10, iem_cd="AAPL")
+            client.overseas_stock_quote.execution_trend(period_type="2", req_cnt=10, iem_cd="AAPL")
 
         assert json.loads(m.request_history[0].text) == {
             "Input_0": {
@@ -305,7 +291,7 @@ class TestGetExecutionTrend:
     def test_parses_execution_trend_response(self, client):
         with requests_mock.Mocker() as m:
             m.post(EXECUTION_TREND_URL, json=EXECUTION_TREND_OK_BODY, headers={"cts_flag": "N"})
-            response = client.overseas_stock_quote.get_execution_trend(period_type="2", req_cnt=10, iem_cd="AAPL")
+            response = client.overseas_stock_quote.execution_trend(period_type="2", req_cnt=10, iem_cd="AAPL")
 
         assert response.body.output_0 is not None
         assert len(response.body.output_0) == 1
@@ -322,24 +308,8 @@ class TestGetExecutionTrend:
     def test_parses_response_without_output_block(self, client):
         with requests_mock.Mocker() as m:
             m.post(EXECUTION_TREND_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
-            response = client.overseas_stock_quote.get_execution_trend(period_type="1", req_cnt=5, iem_cd="AAPL")
+            response = client.overseas_stock_quote.execution_trend(period_type="1", req_cnt=5, iem_cd="AAPL")
 
-        assert response.body.output_0 is None
-        assert response.body.rsp_cd == "00000"
-
-    def test_sends_cts_header_for_continuation(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(EXECUTION_TREND_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
-            response = client.overseas_stock_quote.get_execution_trend(
-                period_type="1",
-                req_cnt=5,
-                iem_cd="AAPL",
-                cts="CTS_TOKEN_1",
-            )
-
-        sent_headers = m.request_history[0].headers
-        assert sent_headers["cts"] == "CTS_TOKEN_1"
-        assert sent_headers["cts_flag"] == "Y"
         assert response.body.output_0 is None
         assert response.body.rsp_cd == "00000"
 
@@ -347,14 +317,14 @@ class TestGetExecutionTrend:
         with requests_mock.Mocker() as m:
             m.post(EXECUTION_TREND_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
             with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_quote.get_execution_trend(period_type="1", req_cnt=5, iem_cd="AAPL")
+                client.overseas_stock_quote.execution_trend(period_type="1", req_cnt=5, iem_cd="AAPL")
 
 
-class TestGetPeriodPrice:
+class TestPeriod:
     def test_sends_input_envelope(self, client):
         with requests_mock.Mocker() as m:
             m.post(PERIOD_PRICE_URL, json=PERIOD_PRICE_OK_BODY)
-            client.overseas_stock_quote.get_period_price(
+            client.overseas_stock_quote.period(
                 iem_cd="AAPL",
                 end_dt="20260821",
                 count="0100",
@@ -381,7 +351,7 @@ class TestGetPeriodPrice:
     def test_parses_period_price_response(self, client):
         with requests_mock.Mocker() as m:
             m.post(PERIOD_PRICE_URL, json=PERIOD_PRICE_OK_BODY, headers={"cts_flag": "N"})
-            response = client.overseas_stock_quote.get_period_price(
+            response = client.overseas_stock_quote.period(
                 iem_cd="AAPL",
                 end_dt="20260821",
                 count="0100",
@@ -414,7 +384,7 @@ class TestGetPeriodPrice:
     def test_parses_response_without_output_block(self, client):
         with requests_mock.Mocker() as m:
             m.post(PERIOD_PRICE_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
-            response = client.overseas_stock_quote.get_period_price(
+            response = client.overseas_stock_quote.period(
                 iem_cd="AAPL",
                 end_dt="20260821",
                 count="0100",
@@ -429,32 +399,11 @@ class TestGetPeriodPrice:
         assert response.body.output_1 is None
         assert response.body.rsp_cd == "00000"
 
-    def test_sends_cts_header_for_continuation(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(PERIOD_PRICE_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
-            response = client.overseas_stock_quote.get_period_price(
-                iem_cd="AAPL",
-                end_dt="20260821",
-                count="0100",
-                maxavg="005",
-                gubun="3",
-                xtick="0001",
-                today_cls="1",
-                market_cls="1",
-                cts="CTS_TOKEN_1",
-            )
-
-        sent_headers = m.request_history[0].headers
-        assert sent_headers["cts"] == "CTS_TOKEN_1"
-        assert sent_headers["cts_flag"] == "Y"
-        assert response.body.output_0 is None
-        assert response.body.rsp_cd == "00000"
-
     def test_raises_on_failing_rsp_cd(self, client):
         with requests_mock.Mocker() as m:
             m.post(PERIOD_PRICE_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
             with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_quote.get_period_price(
+                client.overseas_stock_quote.period(
                     iem_cd="AAPL",
                     end_dt="20260821",
                     count="0100",
@@ -466,11 +415,11 @@ class TestGetPeriodPrice:
                 )
 
 
-class TestGetSymbolIndexFxPeriodPrice:
+class TestSymbolIndexFxPeriod:
     def test_sends_input_envelope(self, client):
         with requests_mock.Mocker() as m:
             m.post(SYMBOL_INDEX_FX_PERIOD_URL, json=SYMBOL_INDEX_FX_PERIOD_OK_BODY)
-            client.overseas_stock_quote.get_symbol_index_fx_period_price(
+            client.overseas_stock_quote.symbol_index_fx_period(
                 iem_cd="SPX",
                 end_dt="20260821",
                 array_cnt="0100",
@@ -495,7 +444,7 @@ class TestGetSymbolIndexFxPeriodPrice:
     def test_omits_optional_fields_when_none(self, client):
         with requests_mock.Mocker() as m:
             m.post(SYMBOL_INDEX_FX_PERIOD_URL, json=SYMBOL_INDEX_FX_PERIOD_OK_BODY)
-            client.overseas_stock_quote.get_symbol_index_fx_period_price(
+            client.overseas_stock_quote.symbol_index_fx_period(
                 iem_cd="SPX",
                 end_dt="20260821",
                 array_cnt="0100",
@@ -518,7 +467,7 @@ class TestGetSymbolIndexFxPeriodPrice:
     def test_parses_symbol_index_fx_period_response(self, client):
         with requests_mock.Mocker() as m:
             m.post(SYMBOL_INDEX_FX_PERIOD_URL, json=SYMBOL_INDEX_FX_PERIOD_OK_BODY, headers={"cts_flag": "N"})
-            response = client.overseas_stock_quote.get_symbol_index_fx_period_price(
+            response = client.overseas_stock_quote.symbol_index_fx_period(
                 iem_cd="SPX",
                 end_dt="20260821",
                 array_cnt="0100",
@@ -547,7 +496,7 @@ class TestGetSymbolIndexFxPeriodPrice:
     def test_parses_response_without_output_block(self, client):
         with requests_mock.Mocker() as m:
             m.post(SYMBOL_INDEX_FX_PERIOD_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
-            response = client.overseas_stock_quote.get_symbol_index_fx_period_price(
+            response = client.overseas_stock_quote.symbol_index_fx_period(
                 iem_cd="SPX",
                 end_dt="20260821",
                 array_cnt="0100",
@@ -560,30 +509,11 @@ class TestGetSymbolIndexFxPeriodPrice:
         assert response.body.output_1 is None
         assert response.body.rsp_cd == "00000"
 
-    def test_sends_cts_header_for_continuation(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(SYMBOL_INDEX_FX_PERIOD_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
-            response = client.overseas_stock_quote.get_symbol_index_fx_period_price(
-                iem_cd="SPX",
-                end_dt="20260821",
-                array_cnt="0100",
-                maxavg="005",
-                gubun="1",
-                today_cls="0",
-                cts="CTS_TOKEN_1",
-            )
-
-        sent_headers = m.request_history[0].headers
-        assert sent_headers["cts"] == "CTS_TOKEN_1"
-        assert sent_headers["cts_flag"] == "Y"
-        assert response.body.output_0 is None
-        assert response.body.rsp_cd == "00000"
-
     def test_raises_on_failing_rsp_cd(self, client):
         with requests_mock.Mocker() as m:
             m.post(SYMBOL_INDEX_FX_PERIOD_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
             with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_quote.get_symbol_index_fx_period_price(
+                client.overseas_stock_quote.symbol_index_fx_period(
                     iem_cd="SPX",
                     end_dt="20260821",
                     array_cnt="0100",

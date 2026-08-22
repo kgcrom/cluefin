@@ -1,9 +1,9 @@
 from pydantic import BaseModel, ConfigDict, Field
 
-from cluefin_openapi.nhplug._model import NHPlugMessage
+from cluefin_openapi.nhplug._model import NHPlugAssetHttpBody
 
 
-class OverseasStockBuyableAmountOutput(BaseModel):
+class OverseasStockInquiryBuyableAmountOutput(BaseModel):
     """해외주식 매수가능금액·수량 조회 결과 (`Output_0`)."""
 
     model_config = ConfigDict(extra="allow")
@@ -30,24 +30,19 @@ class OverseasStockBuyableAmountOutput(BaseModel):
     csh_wtm_rt: float | None = Field(default=None, description="현금증거금율 / 길이 8.5")
 
 
-class OverseasStockBuyableAmount(BaseModel):
+class OverseasStockInquiryBuyableAmount(NHPlugAssetHttpBody):
     """해외주식 매수가능금액·수량 조회 (`POST /gbstock/inquiry/v1/buyableAmount`) 응답.
 
     gbstock 스펙의 응답 봉투는 `Output_0` + `message` 이며 rsp_cd/rsp_msg 가
     명시돼 있지 않다. 블록은 데이터가 있을 때만 내려오므로 모두 Optional.
     """
 
-    model_config = ConfigDict(extra="allow")
-
-    rsp_cd: str | None = Field(default=None, description="응답코드")
-    rsp_msg: str | None = Field(default=None, description="응답메시지")
-    output_0: OverseasStockBuyableAmountOutput | None = Field(
+    output_0: OverseasStockInquiryBuyableAmountOutput | None = Field(
         default=None, alias="Output_0", description="매수가능금액·수량 조회 결과"
     )
-    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
 
 
-class OverseasStockUnexecutedItem(BaseModel):
+class OverseasStockInquiryUnexecutedOutput(BaseModel):
     """해외주식 주문체결내역 조회 결과 항목 (`Output_0` 배열 원소)."""
 
     model_config = ConfigDict(extra="allow")
@@ -96,24 +91,19 @@ class OverseasStockUnexecutedItem(BaseModel):
     lon_dt: str | None = Field(default=None, description="대출일자 / 길이 8")
 
 
-class OverseasStockUnexecuted(BaseModel):
+class OverseasStockInquiryUnexecuted(NHPlugAssetHttpBody):
     """해외주식 주문체결내역 조회 (`POST /gbstock/inquiry/v1/unexecuted`) 응답.
 
     URI 의 `unexecuted` 는 서버 경로일 뿐이며, 실제로는 체결·미체결 내역을
     모두 반환한다. 응답 블록은 데이터가 있을 때만 내려오므로 모두 Optional.
     """
 
-    model_config = ConfigDict(extra="allow")
-
-    rsp_cd: str | None = Field(default=None, description="응답코드")
-    rsp_msg: str | None = Field(default=None, description="응답메시지")
-    output_0: list[OverseasStockUnexecutedItem] | None = Field(
+    output_0: list[OverseasStockInquiryUnexecutedOutput] | None = Field(
         default=None, alias="Output_0", description="주문체결내역 조회 결과"
     )
-    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
 
 
-class OverseasStockBalanceOutput(BaseModel):
+class OverseasStockInquiryBalanceAccountOutput(BaseModel):
     """해외주식 잔고조회 결과 (`Output_0`)."""
 
     model_config = ConfigDict(extra="allow")
@@ -136,7 +126,7 @@ class OverseasStockBalanceOutput(BaseModel):
     ptps_ttn_amt1: float | None = Field(default=None, description="PTP과세금액1 / 길이 15.3")
 
 
-class OverseasStockBalanceItem(BaseModel):
+class OverseasStockInquiryBalanceHoldingOutput(BaseModel):
     """해외주식 잔고조회 결과 항목 (`Output_1` 배열 원소)."""
 
     model_config = ConfigDict(extra="allow")
@@ -187,7 +177,7 @@ class OverseasStockBalanceItem(BaseModel):
     xrn_dt: str | None = Field(default=None, description="만기일자 / 길이 8")
 
 
-class OverseasStockReservedInquiryItem(BaseModel):
+class OverseasStockInquiryReservedInquiryOutput(BaseModel):
     """해외주식 예약주문조회 결과 항목 (`Output_0` 배열 원소)."""
 
     model_config = ConfigDict(extra="allow")
@@ -258,42 +248,32 @@ class OverseasStockReservedInquiryItem(BaseModel):
     lon_dt: str | None = Field(default=None, description="대출일자 / 길이 8 / YYYYMMDD")
 
 
-class OverseasStockReservedInquiry(BaseModel):
+class OverseasStockInquiryReservedInquiry(NHPlugAssetHttpBody):
     """해외주식 예약주문조회 (`POST /gbstock/inquiry/v1/reservedInquiry`) 응답.
 
     응답 블록은 데이터가 있을 때만 내려오므로 모두 Optional.
     """
 
-    model_config = ConfigDict(extra="allow")
-
-    rsp_cd: str | None = Field(default=None, description="응답코드")
-    rsp_msg: str | None = Field(default=None, description="응답메시지")
-    output_0: list[OverseasStockReservedInquiryItem] | None = Field(
+    output_0: list[OverseasStockInquiryReservedInquiryOutput] | None = Field(
         default=None, alias="Output_0", description="예약주문내역 조회 결과"
     )
-    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
 
 
-class OverseasStockBalance(BaseModel):
+class OverseasStockInquiryBalance(NHPlugAssetHttpBody):
     """해외주식 잔고조회 (`POST /gbstock/inquiry/v1/balance`) 응답.
 
     응답 블록은 데이터가 있을 때만 내려오므로 모두 Optional.
     """
 
-    model_config = ConfigDict(extra="allow")
-
-    rsp_cd: str | None = Field(default=None, description="응답코드")
-    rsp_msg: str | None = Field(default=None, description="응답메시지")
-    output_0: OverseasStockBalanceOutput | None = Field(
+    output_0: OverseasStockInquiryBalanceAccountOutput | None = Field(
         default=None, alias="Output_0", description="잔고 요약 조회 결과"
     )
-    output_1: list[OverseasStockBalanceItem] | None = Field(
+    output_1: list[OverseasStockInquiryBalanceHoldingOutput] | None = Field(
         default=None, alias="Output_1", description="잔고 종목별 조회 결과"
     )
-    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
 
 
-class OverseasStockDailyTransactionItem(BaseModel):
+class OverseasStockInquiryDailyTransactionOutput(BaseModel):
     """해외주식 일별거래내역 조회 결과 항목 (`Output_0` 배열 원소)."""
 
     model_config = ConfigDict(extra="allow")
@@ -345,7 +325,7 @@ class OverseasStockDailyTransactionItem(BaseModel):
     ral_trd_dt: str | None = Field(default=None, description="실거래일자 / 길이 8")
 
 
-class OverseasStockDailyTransactionSummary(BaseModel):
+class OverseasStockInquiryDailyTransactionSummaryOutput(BaseModel):
     """해외주식 일별거래내역 조회 결과 요약 (`Output_1`)."""
 
     model_config = ConfigDict(extra="allow")
@@ -359,26 +339,21 @@ class OverseasStockDailyTransactionSummary(BaseModel):
     fee_sum_amt: int | None = Field(default=None, description="수수료합계금액 / 길이 18")
 
 
-class OverseasStockDailyTransaction(BaseModel):
+class OverseasStockInquiryDailyTransaction(NHPlugAssetHttpBody):
     """해외주식 일별거래내역 조회 (`POST /gbstock/inquiry/v1/dailyTransaction`) 응답.
 
     응답 블록은 데이터가 있을 때만 내려오므로 모두 Optional.
     """
 
-    model_config = ConfigDict(extra="allow")
-
-    rsp_cd: str | None = Field(default=None, description="응답코드")
-    rsp_msg: str | None = Field(default=None, description="응답메시지")
-    output_0: list[OverseasStockDailyTransactionItem] | None = Field(
+    output_0: list[OverseasStockInquiryDailyTransactionOutput] | None = Field(
         default=None, alias="Output_0", description="일별거래내역 조회 결과"
     )
-    output_1: OverseasStockDailyTransactionSummary | None = Field(
+    output_1: OverseasStockInquiryDailyTransactionSummaryOutput | None = Field(
         default=None, alias="Output_1", description="일별거래내역 조회 결과 요약"
     )
-    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
 
 
-class OverseasStockPeriodPnlOutput(BaseModel):
+class OverseasStockInquiryPeriodPnlSummaryOutput(BaseModel):
     """해외주식 기간손익 조회 결과 요약 (`Output_0`)."""
 
     model_config = ConfigDict(extra="allow")
@@ -395,7 +370,7 @@ class OverseasStockPeriodPnlOutput(BaseModel):
     fc_rzt_pft_rt: float | None = Field(default=None, description="외화실현수익율 / 길이 15.9")
 
 
-class OverseasStockPeriodPnlItem(BaseModel):
+class OverseasStockInquiryPeriodPnlDailyOutput(BaseModel):
     """해외주식 기간손익 조회 결과 항목 (`Output_1` 배열 원소)."""
 
     model_config = ConfigDict(extra="allow")
@@ -421,26 +396,21 @@ class OverseasStockPeriodPnlItem(BaseModel):
     fc_rzt_pft_rt: float | None = Field(default=None, description="외화실현수익율 / 길이 15.9")
 
 
-class OverseasStockPeriodPnl(BaseModel):
+class OverseasStockInquiryPeriodPnl(NHPlugAssetHttpBody):
     """해외주식 기간손익 조회 (`POST /gbstock/inquiry/v1/periodPnl`) 응답.
 
     응답 블록은 데이터가 있을 때만 내려오므로 모두 Optional.
     """
 
-    model_config = ConfigDict(extra="allow")
-
-    rsp_cd: str | None = Field(default=None, description="응답코드")
-    rsp_msg: str | None = Field(default=None, description="응답메시지")
-    output_0: OverseasStockPeriodPnlOutput | None = Field(
+    output_0: OverseasStockInquiryPeriodPnlSummaryOutput | None = Field(
         default=None, alias="Output_0", description="기간손익 조회 결과 요약"
     )
-    output_1: list[OverseasStockPeriodPnlItem] | None = Field(
+    output_1: list[OverseasStockInquiryPeriodPnlDailyOutput] | None = Field(
         default=None, alias="Output_1", description="기간손익 조회 결과 목록"
     )
-    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
 
 
-class OverseasStockPeriodPnlDetailItem(BaseModel):
+class OverseasStockInquiryPeriodPnlDetailOutput(BaseModel):
     """해외주식 기간손익 상세 조회 결과 항목 (`Output_0` 배열 원소)."""
 
     model_config = ConfigDict(extra="allow")
@@ -460,23 +430,18 @@ class OverseasStockPeriodPnlDetailItem(BaseModel):
     fc_rzt_pft_rt: float | None = Field(default=None, description="외화실현수익율 / 길이 15.9")
 
 
-class OverseasStockPeriodPnlDetail(BaseModel):
+class OverseasStockInquiryPeriodPnlDetail(NHPlugAssetHttpBody):
     """해외주식 기간손익 상세 조회 (`POST /gbstock/inquiry/v1/periodPnlDetail`) 응답.
 
     응답 블록은 데이터가 있을 때만 내려오므로 모두 Optional.
     """
 
-    model_config = ConfigDict(extra="allow")
-
-    rsp_cd: str | None = Field(default=None, description="응답코드")
-    rsp_msg: str | None = Field(default=None, description="응답메시지")
-    output_0: list[OverseasStockPeriodPnlDetailItem] | None = Field(
+    output_0: list[OverseasStockInquiryPeriodPnlDetailOutput] | None = Field(
         default=None, alias="Output_0", description="기간손익 상세 조회 결과 목록"
     )
-    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
 
 
-class OverseasStockMarginItem(BaseModel):
+class OverseasStockInquiryMarginOutput(BaseModel):
     """해외증거금 통화별조회 결과 항목 (`Output_0` 배열 원소)."""
 
     model_config = ConfigDict(extra="allow")
@@ -501,17 +466,12 @@ class OverseasStockMarginItem(BaseModel):
     stl_af_fc_drn_pbl_amt: float | None = Field(default=None, description="결제후외화출금가능금액 / 길이 15.3")
 
 
-class OverseasStockMargin(BaseModel):
+class OverseasStockInquiryMargin(NHPlugAssetHttpBody):
     """해외증거금 통화별조회 (`POST /gbstock/inquiry/v1/margin`) 응답.
 
     응답 블록은 데이터가 있을 때만 내려오므로 모두 Optional.
     """
 
-    model_config = ConfigDict(extra="allow")
-
-    rsp_cd: str | None = Field(default=None, description="응답코드")
-    rsp_msg: str | None = Field(default=None, description="응답메시지")
-    output_0: list[OverseasStockMarginItem] | None = Field(
+    output_0: list[OverseasStockInquiryMarginOutput] | None = Field(
         default=None, alias="Output_0", description="해외증거금 통화별조회 결과 목록"
     )
-    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")

@@ -1,15 +1,18 @@
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from cluefin_openapi.nhplug._model import NHPlugMessage
+from cluefin_openapi.nhplug._model import NHPlugAssetHttpBody
 
 
-class OverseasStockCurrentPriceItem(BaseModel):
+class OverseasStockQuoteCurrentPriceOutput(BaseModel):
     """해외주식 현재가상세 조회 결과 (`Output_0`)."""
 
     model_config = ConfigDict(extra="allow")
 
     iem_cd: str | None = Field(default=None, description="종목코드 / 길이 15")
-    kor_name: str | None = Field(default=None, description="종목명 / 길이 40")
+    kor_name: str | None = Field(
+        default=None, description="종목명 / 길이 40 / 스펙상 필드 (실서버는 iem_nm 로 내려준다)"
+    )
+    iem_nm: str | None = Field(default=None, description="종목명 / 길이 40 / 실서버 실측 필드 (2026-08-22 운영 확인)")
     industry_code: str | None = Field(default=None, description="업종코드 / 길이 4")
     industry_name: str | None = Field(default=None, description="업종명 / 길이 100")
     trdprc: float | None = Field(default=None, description="현재가 / 길이 17")
@@ -114,7 +117,7 @@ class OverseasStockCurrentPriceItem(BaseModel):
     normal_low: float | None = Field(default=None, description="정규장저가 / 길이 17")
 
 
-class OverseasStockExecutionTrendItem(BaseModel):
+class OverseasStockQuoteExecutionTrendOutput(BaseModel):
     """해외주식 체결추이 조회 결과 (`Output_0`) 항목."""
 
     model_config = ConfigDict(extra="allow")
@@ -144,23 +147,18 @@ class OverseasStockExecutionTrendItem(BaseModel):
     ctsz18: str | None = Field(default=None, description="CTSz18 / 길이 18")
 
 
-class OverseasStockExecutionTrend(BaseModel):
+class OverseasStockQuoteExecutionTrend(NHPlugAssetHttpBody):
     """해외주식 체결추이 (`POST /gbstock/quote/v1/executionTrend`) 응답.
 
     응답 블록은 데이터가 있을 때만 내려오므로 모두 Optional.
     """
 
-    model_config = ConfigDict(extra="allow")
-
-    rsp_cd: str | None = Field(default=None, description="응답코드")
-    rsp_msg: str | None = Field(default=None, description="응답메시지")
-    output_0: list[OverseasStockExecutionTrendItem] | None = Field(
+    output_0: list[OverseasStockQuoteExecutionTrendOutput] | None = Field(
         default=None, alias="Output_0", description="해외주식 체결추이 조회 결과"
     )
-    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
 
 
-class OverseasStockPeriodPriceOutput0Item(BaseModel):
+class OverseasStockQuotePeriodPriceOutput(BaseModel):
     """해외주식 기간별시세(개별종목) 조회 결과 (`Output_0`) 항목."""
 
     model_config = ConfigDict(extra="allow")
@@ -168,7 +166,10 @@ class OverseasStockPeriodPriceOutput0Item(BaseModel):
     date: str | None = Field(default=None, description="조회날짜 / 길이 8 / YYYYMMDD")
     time: str | None = Field(default=None, description="조회시간 / 길이 6 / HHMMSS")
     iem_cd: str | None = Field(default=None, description="종목코드 / 길이 15")
-    kor_name: str | None = Field(default=None, description="종목명 / 길이 40")
+    kor_name: str | None = Field(
+        default=None, description="종목명 / 길이 40 / 스펙상 필드 (실서버는 iem_nm 로 내려준다)"
+    )
+    iem_nm: str | None = Field(default=None, description="종목명 / 길이 40 / 실서버 실측 필드 (2026-08-22 운영 확인)")
     trdprc: float | None = Field(default=None, description="현재가 / 길이 17")
     netchng_cls: str | None = Field(
         default=None,
@@ -214,7 +215,7 @@ class OverseasStockPeriodPriceOutput0Item(BaseModel):
     r_base_prc: float | None = Field(default=None, description="직전정규장기준가 / 길이 17")
 
 
-class OverseasStockPeriodPriceOutput1Item(BaseModel):
+class OverseasStockQuotePeriodPriceVolumeOutput(BaseModel):
     """해외주식 기간별시세(개별종목) 조회 결과 (`Output_1`) 항목."""
 
     model_config = ConfigDict(extra="allow")
@@ -235,26 +236,21 @@ class OverseasStockPeriodPriceOutput1Item(BaseModel):
     bsop_date: str | None = Field(default=None, description="영업일 / 길이 8 / YYYYMMDD")
 
 
-class OverseasStockPeriodPrice(BaseModel):
+class OverseasStockQuotePeriodPrice(NHPlugAssetHttpBody):
     """해외주식 기간별시세(개별종목) (`POST /gbstock/quote/v1/period`) 응답.
 
     응답 블록은 데이터가 있을 때만 내려오므로 모두 Optional.
     """
 
-    model_config = ConfigDict(extra="allow")
-
-    rsp_cd: str | None = Field(default=None, description="응답코드")
-    rsp_msg: str | None = Field(default=None, description="응답메시지")
-    output_0: list[OverseasStockPeriodPriceOutput0Item] | None = Field(
+    output_0: list[OverseasStockQuotePeriodPriceOutput] | None = Field(
         default=None, alias="Output_0", description="해외주식 기간별시세(개별종목) 조회 결과"
     )
-    output_1: list[OverseasStockPeriodPriceOutput1Item] | None = Field(
+    output_1: list[OverseasStockQuotePeriodPriceVolumeOutput] | None = Field(
         default=None, alias="Output_1", description="해외주식 기간별시세(개별종목) 변동거래량 조회 결과"
     )
-    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
 
 
-class OverseasStockSymbolIndexFxPeriodOutput0(BaseModel):
+class OverseasStockQuoteSymbolIndexFxPeriodOutput(BaseModel):
     """해외주식 기간별시세(지수·환율) 조회 결과 (`Output_0`)."""
 
     model_config = ConfigDict(extra="allow")
@@ -269,7 +265,10 @@ class OverseasStockSymbolIndexFxPeriodOutput0(BaseModel):
     qry_time: str | None = Field(default=None, description="조회시간 / 길이 6 / HHMMSS")
     data_code: str | None = Field(default=None, description="해외종목타입 / 길이 1")
     iem_cd: str | None = Field(default=None, description="SYMBOL / 길이 14")
-    hts_kor_isnm: str | None = Field(default=None, description="종목명 / 길이 40")
+    hts_kor_isnm: str | None = Field(
+        default=None, description="종목명 / 길이 40 / 스펙상 필드 (실서버는 iem_nm 로 내려준다)"
+    )
+    iem_nm: str | None = Field(default=None, description="종목명 / 길이 40 / 실서버 실측 필드 (2026-08-22 운영 확인)")
     ovrs_prpr: float | None = Field(default=None, description="현재가 / 길이 10")
     prdy_vrss_sign: str | None = Field(
         default=None,
@@ -301,7 +300,7 @@ class OverseasStockSymbolIndexFxPeriodOutput0(BaseModel):
     send_cnt: str | None = Field(default=None, description="전송레코드건수 / 길이 7")
 
 
-class OverseasStockSymbolIndexFxPeriodOutput1Item(BaseModel):
+class OverseasStockQuoteSymbolIndexFxPeriodBarOutput(BaseModel):
     """해외주식 기간별시세(지수·환율) 조회 결과 (`Output_1`) 항목."""
 
     model_config = ConfigDict(extra="allow")
@@ -320,36 +319,26 @@ class OverseasStockSymbolIndexFxPeriodOutput1Item(BaseModel):
     vol: int | None = Field(default=None, description="거래량 / 길이 12")
 
 
-class OverseasStockSymbolIndexFxPeriod(BaseModel):
+class OverseasStockQuoteSymbolIndexFxPeriod(NHPlugAssetHttpBody):
     """해외주식 기간별시세(지수·환율) (`POST /gbstock/quote/v1/symbolIndexFxPeriod`) 응답.
 
     응답 블록은 데이터가 있을 때만 내려오므로 모두 Optional.
     """
 
-    model_config = ConfigDict(extra="allow")
-
-    rsp_cd: str | None = Field(default=None, description="응답코드")
-    rsp_msg: str | None = Field(default=None, description="응답메시지")
-    output_0: OverseasStockSymbolIndexFxPeriodOutput0 | None = Field(
+    output_0: OverseasStockQuoteSymbolIndexFxPeriodOutput | None = Field(
         default=None, alias="Output_0", description="해외주식 기간별시세(지수·환율) 조회 결과"
     )
-    output_1: list[OverseasStockSymbolIndexFxPeriodOutput1Item] | None = Field(
+    output_1: list[OverseasStockQuoteSymbolIndexFxPeriodBarOutput] | None = Field(
         default=None, alias="Output_1", description="해외주식 기간별시세(지수·환율) 시세 목록"
     )
-    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
 
 
-class OverseasStockCurrentPrice(BaseModel):
+class OverseasStockQuoteCurrentPrice(NHPlugAssetHttpBody):
     """해외주식 현재가상세 (`POST /gbstock/quote/v1/current`) 응답.
 
     응답 블록은 데이터가 있을 때만 내려오므로 모두 Optional.
     """
 
-    model_config = ConfigDict(extra="allow")
-
-    rsp_cd: str | None = Field(default=None, description="응답코드")
-    rsp_msg: str | None = Field(default=None, description="응답메시지")
-    output_0: OverseasStockCurrentPriceItem | None = Field(
+    output_0: OverseasStockQuoteCurrentPriceOutput | None = Field(
         default=None, alias="Output_0", description="해외주식 현재가상세 조회 결과"
     )
-    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")

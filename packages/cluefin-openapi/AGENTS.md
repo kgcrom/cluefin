@@ -43,6 +43,12 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - `TokenManager` is now a **third** copy (kis/kiwoom/nhplug) — mirror cache-behavior
   changes by hand in all three. nhplug deliberately has no `MAX_CACHE_AGE` (no early
   server-side invalidation) and computes expiry from `cached_at + expires_in`.
+- All four gbstock 시세 APIs (`/gbstock/quote/v1/*`) are **live-domain only**. moapi rejects
+  `current` with `IGW40019 "종목코드(iem_cd)를 확인해주세요"` for every ticker format —
+  a misleading message that means "not provided on mock", not a bad code (2026-08-22 실측).
+- gbstock quote responses return the stock name as `iem_nm`, while the spec declares
+  `kor_name` (`current`, `period`) / `hts_kor_isnm` (`symbolIndexFxPeriod`). Both are
+  modelled; read `iem_nm`.
 - The portal spec backend is KIS-portal-style JSON: `/api/apis/public/api-list/{groupId}`
   → `/api/apis/guide/tr/{apiId}` → `/api/apis/guide/tr/property/{trId}` (no auth needed).
   Asset-class specs are also public at `https://www.nhplug.com/openapi-docs/<slug>/openapi.json`

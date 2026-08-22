@@ -302,11 +302,11 @@ class TestCancel:
                 )
 
 
-class TestSubmitReserved:
+class TestReservedSubmit:
     def test_sends_required_fields_only(self, client):
         with requests_mock.Mocker() as m:
             m.post(RESERVED_SUBMIT_URL, json={"Output_0": {"bkg_rtn_orr_no": 777}})
-            client.overseas_stock_order.submit_reserved(
+            client.overseas_stock_order.reserved_submit(
                 act_no="50051036881",
                 fc_sec_trd_nat_cd="200",
                 iem_cd="AAPL",
@@ -329,7 +329,7 @@ class TestSubmitReserved:
     def test_sends_optional_fields_when_given(self, client):
         with requests_mock.Mocker() as m:
             m.post(RESERVED_SUBMIT_URL, json={"Output_0": {"bkg_rtn_orr_no": 777}})
-            client.overseas_stock_order.submit_reserved(
+            client.overseas_stock_order.reserved_submit(
                 act_no="50051036881",
                 fc_sec_trd_nat_cd="200",
                 iem_cd="AAPL",
@@ -352,7 +352,7 @@ class TestSubmitReserved:
     def test_parses_reserved_order_no(self, client):
         with requests_mock.Mocker() as m:
             m.post(RESERVED_SUBMIT_URL, json={"Output_0": {"bkg_rtn_orr_no": 777}})
-            response = client.overseas_stock_order.submit_reserved(
+            response = client.overseas_stock_order.reserved_submit(
                 act_no="50051036881",
                 fc_sec_trd_nat_cd="200",
                 iem_cd="AAPL",
@@ -367,7 +367,7 @@ class TestSubmitReserved:
         with requests_mock.Mocker() as m:
             m.post(RESERVED_SUBMIT_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
             with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_order.submit_reserved(
+                client.overseas_stock_order.reserved_submit(
                     act_no="50051036881",
                     fc_sec_trd_nat_cd="200",
                     iem_cd="AAPL",
@@ -377,11 +377,11 @@ class TestSubmitReserved:
                 )
 
 
-class TestCancelReserved:
+class TestReservedCancel:
     def test_sends_input_envelope(self, client):
         with requests_mock.Mocker() as m:
             m.post(RESERVED_CANCEL_URL, json={"Output_0": {"wrk_rlt_cd": "00000"}})
-            client.overseas_stock_order.cancel_reserved(
+            client.overseas_stock_order.reserved_cancel(
                 act_no="50051036881",
                 fc_mkt_dit_cd="200",
                 bkg_orr_dt="20260824",
@@ -402,7 +402,7 @@ class TestCancelReserved:
     def test_parses_work_result_code(self, client):
         with requests_mock.Mocker() as m:
             m.post(RESERVED_CANCEL_URL, json={"Output_0": {"wrk_rlt_cd": "00000"}})
-            response = client.overseas_stock_order.cancel_reserved(
+            response = client.overseas_stock_order.reserved_cancel(
                 act_no="50051036881",
                 fc_mkt_dit_cd="200",
                 bkg_orr_dt="20260824",
@@ -415,7 +415,7 @@ class TestCancelReserved:
         with requests_mock.Mocker() as m:
             m.post(RESERVED_CANCEL_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
             with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_order.cancel_reserved(
+                client.overseas_stock_order.reserved_cancel(
                     act_no="50051036881",
                     fc_mkt_dit_cd="200",
                     bkg_orr_dt="20260824",

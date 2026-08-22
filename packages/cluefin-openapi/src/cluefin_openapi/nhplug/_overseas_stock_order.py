@@ -1,7 +1,8 @@
-from typing import Optional
+from typing import Any, Dict, Literal, Optional
 
+from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
 from cluefin_openapi.nhplug._http_client import HttpClient
-from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
+from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES, NHPlugHttpHeader, NHPlugHttpResponse
 from cluefin_openapi.nhplug._overseas_stock_order_types import (
     OverseasStockOrderBuy,
     OverseasStockOrderCancel,
@@ -10,30 +11,102 @@ from cluefin_openapi.nhplug._overseas_stock_order_types import (
     OverseasStockOrderReservedSubmit,
     OverseasStockOrderSell,
 )
-from cluefin_openapi.nhplug._response import check_response_error
+
+# 외화증권거래국가코드 (fc_sec_trd_nat_cd) / 외화시장구분코드 (fc_mkt_dit_cd)
+ForeignTradeNationCode = Literal[
+    "200",  # 미국
+    "070",  # 일본
+    "120",  # 홍콩
+    "160",  # 상해
+    "170",  # 심천
+]
+
+# 현물호가유형코드 (buy·sell 의 ahi_nmn_pr_tp_cd)
+SpotQuoteTypeCode = Literal[
+    "00",  # 지정가
+    "03",  # 시장가
+    "11",  # LOO(장개시 지정가)
+    "12",  # LOC(장마감 지정가)
+    "13",  # MOO(장개시 시장가)
+    "14",  # MOC(장마감 시장가)
+    "15",  # STOP(시장가) — 매도만
+    "16",  # STOP LIMIT(지정가) — 매도만
+    "61",  # 프리마켓(지정가)
+    "62",  # 애프터마켓(지정가)
+    "63",  # 주간거래(지정가)
+    "TW",  # TWAP(시장가)
+    "VW",  # VWAP(시장가)
+    "TL",  # TWAP(지정가)
+    "VL",  # VWAP(지정가)
+]
+
+# 예약주문 호가유형코드 (reservedSubmit 의 nmn_pr_tp_cd) — SpotQuoteTypeCode 와 달리
+# 애프터마켓(62)·주간거래(63)를 지원하지 않는다.
+ReservedQuoteTypeCode = Literal[
+    "00",  # 지정가
+    "03",  # 시장가
+    "11",  # LOO(장개시 지정가)
+    "12",  # LOC(장마감 지정가)
+    "13",  # MOO(장개시 시장가)
+    "14",  # MOC(장마감 시장가)
+    "15",  # STOP(시장가)
+    "16",  # STOP LIMIT(지정가)
+    "61",  # 프리마켓(지정가)
+    "TW",  # TWAP(시장가)
+    "VW",  # VWAP(시장가)
+    "TL",  # TWAP(지정가)
+    "VL",  # VWAP(지정가)
+]
+
+# 신용대출코드 (cfd_lon_cd)
+CreditLoanCode = Literal[
+    "00",  # 현금
+    "19",  # 해외주식담보대출
+]
+
+# 주문상품구분코드 (orr_pdt_dit_cd)
+OrderProductCode = Literal[
+    "00",  # 해당없음
+    "02",  # 교체예약주문
+    "03",  # 미국Stop예약주문
+]
 
 
 class OverseasStockOrder:
     """해외주식 주문 (gbstock order).
 
     스펙 정본: https://www.nhplug.com/openapi-docs/gbstock/openapi.json
+    운영(prod)은 주문이 실제 체결된다 — 테스트·검증은 모의투자(dev)로.
     모의투자(dev)는 acct_type=03 계좌, 운영(prod)은 01·02 계좌만 유효하다.
+    스펙에 `CtsHeader` 파라미터가 없어 주문 API 는 연속조회를 지원하지 않는다.
     """
 
     def __init__(self, client: HttpClient):
         self.client = client
 
     def _check_response_error(self, response_data: dict) -> None:
-        check_response_error(response_data)
+        """HTTP 200 이어도 body rsp_cd 가 실패일 수 있으므로 여기서 확인한다."""
+        rsp_cd = response_data.get("rsp_cd")
+        if rsp_cd is not None and rsp_cd not in SUCCESS_RSP_CODES:
+            raise NHPlugAPIError(
+                f"API error {rsp_cd}: {response_data.get('rsp_msg', '')}",
+                status_code=200,
+                response_data=response_data,
+            )
+
+    @staticmethod
+    def _drop_none(body: Dict[str, Any]) -> Dict[str, Any]:
+        """선택 파라미터는 값이 있을 때만 전송한다."""
+        return {k: v for k, v in body.items() if v is not None}
 
     def buy(
         self,
         act_no: str,
-        fc_sec_trd_nat_cd: str,
+        fc_sec_trd_nat_cd: ForeignTradeNationCode,
         iem_cd: str,
         orr_qty: int,
-        ahi_nmn_pr_tp_cd: str,
-        wtm_cur_knd_cd: str,
+        ahi_nmn_pr_tp_cd: SpotQuoteTypeCode,
+        wtm_cur_knd_cd: Literal["1", "2"],
         fc_orr_uit_pr: Optional[float] = None,
     ) -> NHPlugHttpResponse[OverseasStockOrderBuy]:
         """해외주식 주문매수 (`POST /gbstock/order/v1/buy`).
@@ -51,16 +124,17 @@ class OverseasStockOrder:
         Returns:
             NHPlugHttpResponse[OverseasStockOrderBuy]: 주문번호(`orr_no`) 포함 접수 결과
         """
-        body = {
-            "act_no": act_no,
-            "fc_sec_trd_nat_cd": fc_sec_trd_nat_cd,
-            "iem_cd": iem_cd,
-            "orr_qty": orr_qty,
-            "ahi_nmn_pr_tp_cd": ahi_nmn_pr_tp_cd,
-            "wtm_cur_knd_cd": wtm_cur_knd_cd,
-        }
-        if fc_orr_uit_pr is not None:
-            body["fc_orr_uit_pr"] = fc_orr_uit_pr
+        body = self._drop_none(
+            {
+                "act_no": act_no,
+                "fc_sec_trd_nat_cd": fc_sec_trd_nat_cd,
+                "iem_cd": iem_cd,
+                "orr_qty": orr_qty,
+                "ahi_nmn_pr_tp_cd": ahi_nmn_pr_tp_cd,
+                "wtm_cur_knd_cd": wtm_cur_knd_cd,
+                "fc_orr_uit_pr": fc_orr_uit_pr,
+            }
+        )
 
         response = self.client.post("/gbstock/order/v1/buy", body=body)
         data = response.json()
@@ -71,10 +145,10 @@ class OverseasStockOrder:
     def sell(
         self,
         act_no: str,
-        fc_sec_trd_nat_cd: str,
+        fc_sec_trd_nat_cd: ForeignTradeNationCode,
         iem_cd: str,
         orr_qty: int,
-        ahi_nmn_pr_tp_cd: str,
+        ahi_nmn_pr_tp_cd: SpotQuoteTypeCode,
         fc_orr_uit_pr: Optional[float] = None,
     ) -> NHPlugHttpResponse[OverseasStockOrderSell]:
         """해외주식 주문매도 (`POST /gbstock/order/v1/sell`).
@@ -91,15 +165,16 @@ class OverseasStockOrder:
         Returns:
             NHPlugHttpResponse[OverseasStockOrderSell]: 주문번호(`orr_no`) 포함 접수 결과
         """
-        body = {
-            "act_no": act_no,
-            "fc_sec_trd_nat_cd": fc_sec_trd_nat_cd,
-            "iem_cd": iem_cd,
-            "orr_qty": orr_qty,
-            "ahi_nmn_pr_tp_cd": ahi_nmn_pr_tp_cd,
-        }
-        if fc_orr_uit_pr is not None:
-            body["fc_orr_uit_pr"] = fc_orr_uit_pr
+        body = self._drop_none(
+            {
+                "act_no": act_no,
+                "fc_sec_trd_nat_cd": fc_sec_trd_nat_cd,
+                "iem_cd": iem_cd,
+                "orr_qty": orr_qty,
+                "ahi_nmn_pr_tp_cd": ahi_nmn_pr_tp_cd,
+                "fc_orr_uit_pr": fc_orr_uit_pr,
+            }
+        )
 
         response = self.client.post("/gbstock/order/v1/sell", body=body)
         data = response.json()
@@ -110,7 +185,7 @@ class OverseasStockOrder:
     def modify(
         self,
         act_no: str,
-        fc_sec_trd_nat_cd: str,
+        fc_sec_trd_nat_cd: ForeignTradeNationCode,
         iem_cd: str,
         org_orr_no: int,
         fc_orr_uit_pr: float,
@@ -129,15 +204,16 @@ class OverseasStockOrder:
         Returns:
             NHPlugHttpResponse[OverseasStockOrderModify]: 주문번호(`orr_no`) 포함 접수 결과
         """
-        body = {
-            "act_no": act_no,
-            "fc_sec_trd_nat_cd": fc_sec_trd_nat_cd,
-            "iem_cd": iem_cd,
-            "org_orr_no": org_orr_no,
-            "fc_orr_uit_pr": fc_orr_uit_pr,
-        }
-        if fc_stop_orr_bse_pr is not None:
-            body["fc_stop_orr_bse_pr"] = fc_stop_orr_bse_pr
+        body = self._drop_none(
+            {
+                "act_no": act_no,
+                "fc_sec_trd_nat_cd": fc_sec_trd_nat_cd,
+                "iem_cd": iem_cd,
+                "org_orr_no": org_orr_no,
+                "fc_orr_uit_pr": fc_orr_uit_pr,
+                "fc_stop_orr_bse_pr": fc_stop_orr_bse_pr,
+            }
+        )
 
         response = self.client.post("/gbstock/order/v1/modify", body=body)
         data = response.json()
@@ -149,9 +225,9 @@ class OverseasStockOrder:
         self,
         act_no: str,
         org_orr_no: int,
-        fc_sec_trd_nat_cd: str,
+        fc_sec_trd_nat_cd: ForeignTradeNationCode,
         iem_cd: str,
-        all_pat_dit_cd: str,
+        all_pat_dit_cd: Literal["1", "2"],
         can_qty: Optional[int] = None,
     ) -> NHPlugHttpResponse[OverseasStockOrderCancel]:
         """해외주식 정정취소주문취소 (`POST /gbstock/order/v1/cancel`).
@@ -167,15 +243,16 @@ class OverseasStockOrder:
         Returns:
             NHPlugHttpResponse[OverseasStockOrderCancel]: 주문번호(`orr_no`) 포함 접수 결과
         """
-        body = {
-            "act_no": act_no,
-            "org_orr_no": org_orr_no,
-            "fc_sec_trd_nat_cd": fc_sec_trd_nat_cd,
-            "iem_cd": iem_cd,
-            "all_pat_dit_cd": all_pat_dit_cd,
-        }
-        if can_qty is not None:
-            body["can_qty"] = can_qty
+        body = self._drop_none(
+            {
+                "act_no": act_no,
+                "org_orr_no": org_orr_no,
+                "fc_sec_trd_nat_cd": fc_sec_trd_nat_cd,
+                "iem_cd": iem_cd,
+                "all_pat_dit_cd": all_pat_dit_cd,
+                "can_qty": can_qty,
+            }
+        )
 
         response = self.client.post("/gbstock/order/v1/cancel", body=body)
         data = response.json()
@@ -183,25 +260,25 @@ class OverseasStockOrder:
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockOrderCancel.model_validate(data))
 
-    def submit_reserved(
+    def reserved_submit(
         self,
         act_no: str,
-        fc_sec_trd_nat_cd: str,
+        fc_sec_trd_nat_cd: ForeignTradeNationCode,
         iem_cd: str,
-        oss_sby_dit_cd: str,
+        oss_sby_dit_cd: Literal["1", "2"],
         orr_qty: int,
-        nmn_pr_tp_cd: str,
+        nmn_pr_tp_cd: ReservedQuoteTypeCode,
         fc_orr_uit_pr: Optional[float] = None,
-        oss_orr_knd_cd: Optional[str] = None,
-        ose_ivs_sgy_cd: Optional[str] = None,
-        bkg_orr_tp_cd: Optional[str] = None,
+        oss_orr_knd_cd: Optional[Literal["1", "2"]] = None,
+        ose_ivs_sgy_cd: Optional[Literal["0", "1", "2"]] = None,
+        bkg_orr_tp_cd: Optional[Literal["1", "2", "3"]] = None,
         bkg_orr_sta_dt: Optional[str] = None,
         bkg_orr_end_dt: Optional[str] = None,
-        wtm_cur_knd_cd: Optional[str] = None,
+        wtm_cur_knd_cd: Optional[Literal["1", "2"]] = None,
         fc_stop_orr_bse_pr: Optional[float] = None,
-        orr_pdt_dit_cd: Optional[str] = None,
+        orr_pdt_dit_cd: Optional[OrderProductCode] = None,
         lon_dt: Optional[str] = None,
-        cfd_lon_cd: Optional[str] = None,
+        cfd_lon_cd: Optional[CreditLoanCode] = None,
     ) -> NHPlugHttpResponse[OverseasStockOrderReservedSubmit]:
         """해외주식 예약주문접수 (`POST /gbstock/order/v1/reservedSubmit`).
 
@@ -228,28 +305,27 @@ class OverseasStockOrder:
         Returns:
             NHPlugHttpResponse[OverseasStockOrderReservedSubmit]: 예약접수주문번호(`bkg_rtn_orr_no`) 포함 결과
         """
-        body: dict = {
-            "act_no": act_no,
-            "fc_sec_trd_nat_cd": fc_sec_trd_nat_cd,
-            "iem_cd": iem_cd,
-            "oss_sby_dit_cd": oss_sby_dit_cd,
-            "orr_qty": orr_qty,
-            "nmn_pr_tp_cd": nmn_pr_tp_cd,
-        }
-        optional_fields = {
-            "fc_orr_uit_pr": fc_orr_uit_pr,
-            "oss_orr_knd_cd": oss_orr_knd_cd,
-            "ose_ivs_sgy_cd": ose_ivs_sgy_cd,
-            "bkg_orr_tp_cd": bkg_orr_tp_cd,
-            "bkg_orr_sta_dt": bkg_orr_sta_dt,
-            "bkg_orr_end_dt": bkg_orr_end_dt,
-            "wtm_cur_knd_cd": wtm_cur_knd_cd,
-            "fc_stop_orr_bse_pr": fc_stop_orr_bse_pr,
-            "orr_pdt_dit_cd": orr_pdt_dit_cd,
-            "lon_dt": lon_dt,
-            "cfd_lon_cd": cfd_lon_cd,
-        }
-        body.update({k: v for k, v in optional_fields.items() if v is not None})
+        body = self._drop_none(
+            {
+                "act_no": act_no,
+                "fc_sec_trd_nat_cd": fc_sec_trd_nat_cd,
+                "iem_cd": iem_cd,
+                "oss_sby_dit_cd": oss_sby_dit_cd,
+                "orr_qty": orr_qty,
+                "nmn_pr_tp_cd": nmn_pr_tp_cd,
+                "fc_orr_uit_pr": fc_orr_uit_pr,
+                "oss_orr_knd_cd": oss_orr_knd_cd,
+                "ose_ivs_sgy_cd": ose_ivs_sgy_cd,
+                "bkg_orr_tp_cd": bkg_orr_tp_cd,
+                "bkg_orr_sta_dt": bkg_orr_sta_dt,
+                "bkg_orr_end_dt": bkg_orr_end_dt,
+                "wtm_cur_knd_cd": wtm_cur_knd_cd,
+                "fc_stop_orr_bse_pr": fc_stop_orr_bse_pr,
+                "orr_pdt_dit_cd": orr_pdt_dit_cd,
+                "lon_dt": lon_dt,
+                "cfd_lon_cd": cfd_lon_cd,
+            }
+        )
 
         response = self.client.post("/gbstock/order/v1/reservedSubmit", body=body)
         data = response.json()
@@ -257,14 +333,14 @@ class OverseasStockOrder:
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockOrderReservedSubmit.model_validate(data))
 
-    def cancel_reserved(
+    def reserved_cancel(
         self,
         act_no: str,
-        fc_mkt_dit_cd: str,
+        fc_mkt_dit_cd: ForeignTradeNationCode,
         bkg_orr_dt: str,
         bkg_rtn_orr_no: int,
         iem_cd: Optional[str] = None,
-        orr_pdt_dit_cd: Optional[str] = None,
+        orr_pdt_dit_cd: Optional[OrderProductCode] = None,
     ) -> NHPlugHttpResponse[OverseasStockOrderReservedCancel]:
         """해외주식 예약주문접수취소 (`POST /gbstock/order/v1/reservedCancel`).
 
@@ -279,16 +355,16 @@ class OverseasStockOrder:
         Returns:
             NHPlugHttpResponse[OverseasStockOrderReservedCancel]: 작업결과코드(`wrk_rlt_cd`) 포함 결과
         """
-        body = {
-            "act_no": act_no,
-            "fc_mkt_dit_cd": fc_mkt_dit_cd,
-            "bkg_orr_dt": bkg_orr_dt,
-            "bkg_rtn_orr_no": bkg_rtn_orr_no,
-        }
-        if iem_cd is not None:
-            body["iem_cd"] = iem_cd
-        if orr_pdt_dit_cd is not None:
-            body["orr_pdt_dit_cd"] = orr_pdt_dit_cd
+        body = self._drop_none(
+            {
+                "act_no": act_no,
+                "fc_mkt_dit_cd": fc_mkt_dit_cd,
+                "bkg_orr_dt": bkg_orr_dt,
+                "bkg_rtn_orr_no": bkg_rtn_orr_no,
+                "iem_cd": iem_cd,
+                "orr_pdt_dit_cd": orr_pdt_dit_cd,
+            }
+        )
 
         response = self.client.post("/gbstock/order/v1/reservedCancel", body=body)
         data = response.json()

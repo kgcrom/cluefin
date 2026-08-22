@@ -1,18 +1,58 @@
-from typing import Optional
+from typing import Any, Dict, Literal, Optional
 
+from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
 from cluefin_openapi.nhplug._http_client import HttpClient
-from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
+from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES, NHPlugHttpHeader, NHPlugHttpResponse
 from cluefin_openapi.nhplug._overseas_stock_inquiry_types import (
-    OverseasStockBalance,
-    OverseasStockBuyableAmount,
-    OverseasStockDailyTransaction,
-    OverseasStockMargin,
-    OverseasStockPeriodPnl,
-    OverseasStockPeriodPnlDetail,
-    OverseasStockReservedInquiry,
-    OverseasStockUnexecuted,
+    OverseasStockInquiryBalance,
+    OverseasStockInquiryBuyableAmount,
+    OverseasStockInquiryDailyTransaction,
+    OverseasStockInquiryMargin,
+    OverseasStockInquiryPeriodPnl,
+    OverseasStockInquiryPeriodPnlDetail,
+    OverseasStockInquiryReservedInquiry,
+    OverseasStockInquiryUnexecuted,
 )
-from cluefin_openapi.nhplug._response import check_response_error
+
+# 외화증권거래국가코드 (fc_sec_trd_nat_cd)
+ForeignTradeNationCode = Literal[
+    "200",  # 미국
+    "070",  # 일본
+    "120",  # 홍콩
+    "160",  # 상해
+    "170",  # 심천
+]
+
+# 전체(000)를 허용하는 국가코드 — periodPnl 의 fc_sec_trd_nat_cd, reservedInquiry 의 fc_mkt_dit_cd.
+ForeignTradeNationCodeWithAll = Literal["000", "200", "070", "120", "160", "170"]
+
+# 거래통화코드 (trd_cur_cd) / 통화코드 (cur_cd) — balance 에서 KRW 는 "전체"를 뜻한다.
+TradeCurrencyCode = Literal["KRW", "USD", "CNY", "HKD", "JPY"]
+
+# 현물호가유형코드 (ahi_nmn_pr_tp_cd) — 주문 API 와 코드 집합이 같다.
+SpotQuoteTypeCode = Literal[
+    "00",  # 지정가
+    "03",  # 시장가
+    "11",  # LOO(장개시 지정가)
+    "12",  # LOC(장마감 지정가)
+    "13",  # MOO(장개시 시장가)
+    "14",  # MOC(장마감 시장가)
+    "15",  # STOP(시장가)
+    "16",  # STOP LIMIT(지정가)
+    "61",  # 프리마켓(지정가)
+    "62",  # 애프터마켓(지정가)
+    "63",  # 주간거래(지정가)
+    "TW",  # TWAP(시장가)
+    "VW",  # VWAP(시장가)
+    "TL",  # TWAP(지정가)
+    "VL",  # VWAP(지정가)
+]
+
+# 신용대출코드 (cfd_lon_cd)
+CreditLoanCode = Literal[
+    "00",  # 현금
+    "19",  # 해외주식담보대출
+]
 
 
 class OverseasStockInquiry:
@@ -25,22 +65,34 @@ class OverseasStockInquiry:
         self.client = client
 
     def _check_response_error(self, response_data: dict) -> None:
-        check_response_error(response_data)
+        """HTTP 200 이어도 body rsp_cd 가 실패일 수 있으므로 여기서 확인한다."""
+        rsp_cd = response_data.get("rsp_cd")
+        if rsp_cd is not None and rsp_cd not in SUCCESS_RSP_CODES:
+            raise NHPlugAPIError(
+                f"API error {rsp_cd}: {response_data.get('rsp_msg', '')}",
+                status_code=200,
+                response_data=response_data,
+            )
 
-    def get_buyable_amount(
+    @staticmethod
+    def _drop_none(body: Dict[str, Any]) -> Dict[str, Any]:
+        """선택 파라미터는 값이 있을 때만 전송한다."""
+        return {k: v for k, v in body.items() if v is not None}
+
+    def buyable_amount(
         self,
         act_no: str,
-        pcs_dit: str,
-        fc_sec_trd_nat_cd: str,
+        pcs_dit: Literal["1", "2", "3", "4", "5"],
+        fc_sec_trd_nat_cd: ForeignTradeNationCode,
         iem_cd: str,
-        wtm_cur_knd_cd: str,
-        oss_orr_knd_cd: str,
-        ahi_nmn_pr_tp_cd: str,
+        wtm_cur_knd_cd: Literal["1", "2", "3", "4"],
+        oss_orr_knd_cd: Literal["1", "2", "3"],
+        ahi_nmn_pr_tp_cd: SpotQuoteTypeCode,
         fc_orr_uit_pr: Optional[float] = None,
-        cfd_lon_cd: Optional[str] = None,
+        cfd_lon_cd: Optional[CreditLoanCode] = None,
         lon_dt: Optional[str] = None,
         cts: Optional[str] = None,
-    ) -> NHPlugHttpResponse[OverseasStockBuyableAmount]:
+    ) -> NHPlugHttpResponse[OverseasStockInquiryBuyableAmount]:
         """해외주식 매수가능금액·수량 조회 (`POST /gbstock/inquiry/v1/buyableAmount`).
 
         처리구분(`pcs_dit`)으로 매수·매도를 모두 조회한다. 국내주식은
@@ -67,42 +119,41 @@ class OverseasStockInquiry:
             cts: 연속거래키. 이전 응답 헤더의 `cts` 값을 그대로 전달하면 다음 페이지를 받는다.
 
         Returns:
-            NHPlugHttpResponse[OverseasStockBuyableAmount]: 매수가능금액·수량(`orr_pbl_amt`,
+            NHPlugHttpResponse[OverseasStockInquiryBuyableAmount]: 매수가능금액·수량(`orr_pbl_amt`,
                 `byn_pbl_qty` 등) 및 매도가능수량(`sll_pbl_qty` 등) 조회 결과
         """
-        body: dict = {
-            "act_no": act_no,
-            "pcs_dit": pcs_dit,
-            "fc_sec_trd_nat_cd": fc_sec_trd_nat_cd,
-            "iem_cd": iem_cd,
-            "wtm_cur_knd_cd": wtm_cur_knd_cd,
-            "oss_orr_knd_cd": oss_orr_knd_cd,
-            "ahi_nmn_pr_tp_cd": ahi_nmn_pr_tp_cd,
-        }
-        optional_fields = {
-            "fc_orr_uit_pr": fc_orr_uit_pr,
-            "cfd_lon_cd": cfd_lon_cd,
-            "lon_dt": lon_dt,
-        }
-        body.update({k: v for k, v in optional_fields.items() if v is not None})
+        body = self._drop_none(
+            {
+                "act_no": act_no,
+                "pcs_dit": pcs_dit,
+                "fc_sec_trd_nat_cd": fc_sec_trd_nat_cd,
+                "iem_cd": iem_cd,
+                "wtm_cur_knd_cd": wtm_cur_knd_cd,
+                "oss_orr_knd_cd": oss_orr_knd_cd,
+                "ahi_nmn_pr_tp_cd": ahi_nmn_pr_tp_cd,
+                "fc_orr_uit_pr": fc_orr_uit_pr,
+                "cfd_lon_cd": cfd_lon_cd,
+                "lon_dt": lon_dt,
+            }
+        )
 
         response = self.client.post("/gbstock/inquiry/v1/buyableAmount", body=body, cts=cts)
         data = response.json()
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
-        return NHPlugHttpResponse(header=header, body=OverseasStockBuyableAmount.model_validate(data))
+        return NHPlugHttpResponse(header=header, body=OverseasStockInquiryBuyableAmount.model_validate(data))
 
-    def get_order_executions(
+    def unexecuted(
         self,
         orr_dt: str,
         act_no: str,
-        oss_sby_dit_cd: str,
-        sot_dit: str,
-        ost_cns_dit: str,
+        oss_sby_dit_cd: Literal["0", "1", "2"],
+        sot_dit: Literal["0", "1"],
+        ost_cns_dit: Literal["0", "1", "2"],
         iem_cd: Optional[str] = None,
         orr_no: Optional[int] = None,
         cts: Optional[str] = None,
-    ) -> NHPlugHttpResponse[OverseasStockUnexecuted]:
+    ) -> NHPlugHttpResponse[OverseasStockInquiryUnexecuted]:
         """해외주식 주문체결내역 (`POST /gbstock/inquiry/v1/unexecuted`).
 
         주문별 체결수량·체결가격·미체결주문수량을 포함한 주문·체결 내역 조회
@@ -121,36 +172,35 @@ class OverseasStockInquiry:
             cts: 연속거래키. 이전 응답 헤더의 `cts` 값을 그대로 전달하면 다음 페이지를 받는다.
 
         Returns:
-            NHPlugHttpResponse[OverseasStockUnexecuted]: 주문·체결 내역 목록(`Output_0`)
+            NHPlugHttpResponse[OverseasStockInquiryUnexecuted]: 주문·체결 내역 목록(`Output_0`)
         """
-        body: dict = {
-            "orr_dt": orr_dt,
-            "act_no": act_no,
-            "oss_sby_dit_cd": oss_sby_dit_cd,
-            "sot_dit": sot_dit,
-            "ost_cns_dit": ost_cns_dit,
-        }
-        optional_fields = {
-            "iem_cd": iem_cd,
-            "orr_no": orr_no,
-        }
-        body.update({k: v for k, v in optional_fields.items() if v is not None})
+        body = self._drop_none(
+            {
+                "orr_dt": orr_dt,
+                "act_no": act_no,
+                "oss_sby_dit_cd": oss_sby_dit_cd,
+                "sot_dit": sot_dit,
+                "ost_cns_dit": ost_cns_dit,
+                "iem_cd": iem_cd,
+                "orr_no": orr_no,
+            }
+        )
 
         response = self.client.post("/gbstock/inquiry/v1/unexecuted", body=body, cts=cts)
         data = response.json()
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
-        return NHPlugHttpResponse(header=header, body=OverseasStockUnexecuted.model_validate(data))
+        return NHPlugHttpResponse(header=header, body=OverseasStockInquiryUnexecuted.model_validate(data))
 
-    def get_balance(
+    def balance(
         self,
         act_no: str,
-        qut_iqr_dit_cd: str,
-        fc_sec_trd_nat_cd: str,
-        cur_cd: str,
-        xns_dit_cd: Optional[str] = None,
+        qut_iqr_dit_cd: Literal["1", "9"],
+        fc_sec_trd_nat_cd: ForeignTradeNationCode,
+        cur_cd: TradeCurrencyCode,
+        xns_dit_cd: Optional[Literal["0", "1"]] = None,
         cts: Optional[str] = None,
-    ) -> NHPlugHttpResponse[OverseasStockBalance]:
+    ) -> NHPlugHttpResponse[OverseasStockInquiryBalance]:
         """해외주식 잔고 (`POST /gbstock/inquiry/v1/balance`).
 
         계좌의 해외주식 잔고 요약(`Output_0`)과 종목별 잔고 목록(`Output_1`)을
@@ -167,39 +217,38 @@ class OverseasStockInquiry:
             cts: 연속거래키. 이전 응답 헤더의 `cts` 값을 그대로 전달하면 다음 페이지를 받는다.
 
         Returns:
-            NHPlugHttpResponse[OverseasStockBalance]: 잔고 요약(`Output_0`) 및
+            NHPlugHttpResponse[OverseasStockInquiryBalance]: 잔고 요약(`Output_0`) 및
                 종목별 잔고 목록(`Output_1`) 조회 결과
         """
-        body: dict = {
-            "act_no": act_no,
-            "qut_iqr_dit_cd": qut_iqr_dit_cd,
-            "fc_sec_trd_nat_cd": fc_sec_trd_nat_cd,
-            "cur_cd": cur_cd,
-        }
-        optional_fields = {
-            "xns_dit_cd": xns_dit_cd,
-        }
-        body.update({k: v for k, v in optional_fields.items() if v is not None})
+        body = self._drop_none(
+            {
+                "act_no": act_no,
+                "qut_iqr_dit_cd": qut_iqr_dit_cd,
+                "fc_sec_trd_nat_cd": fc_sec_trd_nat_cd,
+                "cur_cd": cur_cd,
+                "xns_dit_cd": xns_dit_cd,
+            }
+        )
 
         response = self.client.post("/gbstock/inquiry/v1/balance", body=body, cts=cts)
         data = response.json()
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
-        return NHPlugHttpResponse(header=header, body=OverseasStockBalance.model_validate(data))
+        return NHPlugHttpResponse(header=header, body=OverseasStockInquiryBalance.model_validate(data))
 
-    def get_reserved_orders(
+    def reserved_inquiry(
         self,
-        fc_mkt_dit_cd: str,
+        fc_mkt_dit_cd: ForeignTradeNationCodeWithAll,
         bkg_orr_dt: str,
         act_no: str,
-        sby_dit_cd: str,
-        bkg_orr_can_yn: str,
-        oss_orr_knd_cd: str,
-        bkg_orr_tp_cd: str,
-        wtm_cur_knd_cd: str,
+        sby_dit_cd: Literal["0", "1", "2"],
+        bkg_orr_can_yn: Literal["0", "1", "2", "3", "4", "5", "6", "7"],
+        oss_orr_knd_cd: Literal["0", "1", "2", "3"],
+        bkg_orr_tp_cd: Literal["0", "1", "2", "3", "4"],
+        wtm_cur_knd_cd: Literal["0", "1", "2"],
         iem_cd: Optional[str] = None,
         cts: Optional[str] = None,
-    ) -> NHPlugHttpResponse[OverseasStockReservedInquiry]:
+    ) -> NHPlugHttpResponse[OverseasStockInquiryReservedInquiry]:
         """해외주식 예약주문조회 (`POST /gbstock/inquiry/v1/reservedInquiry`).
 
         해외주식 예약주문내역을 조회하는 API 이다. 응답 블록은 데이터가 있을
@@ -223,40 +272,39 @@ class OverseasStockInquiry:
             cts: 연속거래키. 이전 응답 헤더의 `cts` 값을 그대로 전달하면 다음 페이지를 받는다.
 
         Returns:
-            NHPlugHttpResponse[OverseasStockReservedInquiry]: 예약주문내역
+            NHPlugHttpResponse[OverseasStockInquiryReservedInquiry]: 예약주문내역
                 목록(`Output_0`) 조회 결과
         """
-        body: dict = {
-            "fc_mkt_dit_cd": fc_mkt_dit_cd,
-            "bkg_orr_dt": bkg_orr_dt,
-            "act_no": act_no,
-            "sby_dit_cd": sby_dit_cd,
-            "bkg_orr_can_yn": bkg_orr_can_yn,
-            "oss_orr_knd_cd": oss_orr_knd_cd,
-            "bkg_orr_tp_cd": bkg_orr_tp_cd,
-            "wtm_cur_knd_cd": wtm_cur_knd_cd,
-        }
-        optional_fields = {
-            "iem_cd": iem_cd,
-        }
-        body.update({k: v for k, v in optional_fields.items() if v is not None})
+        body = self._drop_none(
+            {
+                "fc_mkt_dit_cd": fc_mkt_dit_cd,
+                "bkg_orr_dt": bkg_orr_dt,
+                "act_no": act_no,
+                "sby_dit_cd": sby_dit_cd,
+                "bkg_orr_can_yn": bkg_orr_can_yn,
+                "oss_orr_knd_cd": oss_orr_knd_cd,
+                "bkg_orr_tp_cd": bkg_orr_tp_cd,
+                "wtm_cur_knd_cd": wtm_cur_knd_cd,
+                "iem_cd": iem_cd,
+            }
+        )
 
         response = self.client.post("/gbstock/inquiry/v1/reservedInquiry", body=body, cts=cts)
         data = response.json()
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
-        return NHPlugHttpResponse(header=header, body=OverseasStockReservedInquiry.model_validate(data))
+        return NHPlugHttpResponse(header=header, body=OverseasStockInquiryReservedInquiry.model_validate(data))
 
-    def get_daily_transactions(
+    def daily_transaction(
         self,
         act_no: str,
         iqr_sta_dt: str,
         iqr_end_dt: str,
-        act_trd_cfc_cd: str,
-        iem_mlf_cd: str,
+        act_trd_cfc_cd: Literal["00", "01", "02", "03", "04", "05", "06"],
+        iem_mlf_cd: Literal["00001", "00002", "00003", "00004", "00005"],
         iem_cd: Optional[str] = None,
         cts: Optional[str] = None,
-    ) -> NHPlugHttpResponse[OverseasStockDailyTransaction]:
+    ) -> NHPlugHttpResponse[OverseasStockInquiryDailyTransaction]:
         """해외주식 일별거래내역 (`POST /gbstock/inquiry/v1/dailyTransaction`).
 
         조회기간 내 계좌의 해외주식 거래내역 목록(`Output_0`)과 거래내역
@@ -276,38 +324,37 @@ class OverseasStockInquiry:
             cts: 연속거래키. 이전 응답 헤더의 `cts` 값을 그대로 전달하면 다음 페이지를 받는다.
 
         Returns:
-            NHPlugHttpResponse[OverseasStockDailyTransaction]: 일별거래내역
+            NHPlugHttpResponse[OverseasStockInquiryDailyTransaction]: 일별거래내역
                 목록(`Output_0`) 및 요약(`Output_1`) 조회 결과
         """
-        body: dict = {
-            "act_no": act_no,
-            "iqr_sta_dt": iqr_sta_dt,
-            "iqr_end_dt": iqr_end_dt,
-            "act_trd_cfc_cd": act_trd_cfc_cd,
-            "iem_mlf_cd": iem_mlf_cd,
-        }
-        optional_fields = {
-            "iem_cd": iem_cd,
-        }
-        body.update({k: v for k, v in optional_fields.items() if v is not None})
+        body = self._drop_none(
+            {
+                "act_no": act_no,
+                "iqr_sta_dt": iqr_sta_dt,
+                "iqr_end_dt": iqr_end_dt,
+                "act_trd_cfc_cd": act_trd_cfc_cd,
+                "iem_mlf_cd": iem_mlf_cd,
+                "iem_cd": iem_cd,
+            }
+        )
 
         response = self.client.post("/gbstock/inquiry/v1/dailyTransaction", body=body, cts=cts)
         data = response.json()
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
-        return NHPlugHttpResponse(header=header, body=OverseasStockDailyTransaction.model_validate(data))
+        return NHPlugHttpResponse(header=header, body=OverseasStockInquiryDailyTransaction.model_validate(data))
 
-    def get_period_pnl(
+    def period_pnl(
         self,
         act_no: str,
-        iqr_dit: str,
+        iqr_dit: Literal["1", "2"],
         sta_orr_dt: str,
         end_orr_dt: str,
         iem_cd: Optional[str] = None,
-        trd_cur_cd: Optional[str] = None,
-        fc_sec_trd_nat_cd: Optional[str] = None,
+        trd_cur_cd: Optional[TradeCurrencyCode] = None,
+        fc_sec_trd_nat_cd: Optional[ForeignTradeNationCodeWithAll] = None,
         cts: Optional[str] = None,
-    ) -> NHPlugHttpResponse[OverseasStockPeriodPnl]:
+    ) -> NHPlugHttpResponse[OverseasStockInquiryPeriodPnl]:
         """해외주식 기간손익 (`POST /gbstock/inquiry/v1/periodPnl`).
 
         조회기간 내 계좌의 해외주식 기간별 손익 요약(`Output_0`)과 주문일자별
@@ -327,38 +374,37 @@ class OverseasStockInquiry:
             cts: 연속거래키. 이전 응답 헤더의 `cts` 값을 그대로 전달하면 다음 페이지를 받는다.
 
         Returns:
-            NHPlugHttpResponse[OverseasStockPeriodPnl]: 기간손익 요약(`Output_0`) 및
+            NHPlugHttpResponse[OverseasStockInquiryPeriodPnl]: 기간손익 요약(`Output_0`) 및
                 주문일자별 손익 목록(`Output_1`) 조회 결과
         """
-        body: dict = {
-            "act_no": act_no,
-            "iqr_dit": iqr_dit,
-            "sta_orr_dt": sta_orr_dt,
-            "end_orr_dt": end_orr_dt,
-        }
-        optional_fields = {
-            "iem_cd": iem_cd,
-            "trd_cur_cd": trd_cur_cd,
-            "fc_sec_trd_nat_cd": fc_sec_trd_nat_cd,
-        }
-        body.update({k: v for k, v in optional_fields.items() if v is not None})
+        body = self._drop_none(
+            {
+                "act_no": act_no,
+                "iqr_dit": iqr_dit,
+                "sta_orr_dt": sta_orr_dt,
+                "end_orr_dt": end_orr_dt,
+                "iem_cd": iem_cd,
+                "trd_cur_cd": trd_cur_cd,
+                "fc_sec_trd_nat_cd": fc_sec_trd_nat_cd,
+            }
+        )
 
         response = self.client.post("/gbstock/inquiry/v1/periodPnl", body=body, cts=cts)
         data = response.json()
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
-        return NHPlugHttpResponse(header=header, body=OverseasStockPeriodPnl.model_validate(data))
+        return NHPlugHttpResponse(header=header, body=OverseasStockInquiryPeriodPnl.model_validate(data))
 
-    def get_period_pnl_detail(
+    def period_pnl_detail(
         self,
         act_no: str,
-        iqr_dit: str,
+        iqr_dit: Literal["1", "2"],
         orr_dt: str,
-        fc_sec_trd_nat_cd: str,
-        trd_cur_cd: str,
+        fc_sec_trd_nat_cd: ForeignTradeNationCode,
+        trd_cur_cd: TradeCurrencyCode,
         iem_cd: Optional[str] = None,
         cts: Optional[str] = None,
-    ) -> NHPlugHttpResponse[OverseasStockPeriodPnlDetail]:
+    ) -> NHPlugHttpResponse[OverseasStockInquiryPeriodPnlDetail]:
         """해외주식 기간손익 상세 (`POST /gbstock/inquiry/v1/periodPnlDetail`).
 
         지정한 주문일자의 종목별 해외주식 손익 상세 목록(`Output_0`)을 조회하는
@@ -376,32 +422,31 @@ class OverseasStockInquiry:
             cts: 연속거래키. 이전 응답 헤더의 `cts` 값을 그대로 전달하면 다음 페이지를 받는다.
 
         Returns:
-            NHPlugHttpResponse[OverseasStockPeriodPnlDetail]: 기간손익 상세
+            NHPlugHttpResponse[OverseasStockInquiryPeriodPnlDetail]: 기간손익 상세
                 목록(`Output_0`) 조회 결과
         """
-        body: dict = {
-            "act_no": act_no,
-            "iqr_dit": iqr_dit,
-            "orr_dt": orr_dt,
-            "fc_sec_trd_nat_cd": fc_sec_trd_nat_cd,
-            "trd_cur_cd": trd_cur_cd,
-        }
-        optional_fields = {
-            "iem_cd": iem_cd,
-        }
-        body.update({k: v for k, v in optional_fields.items() if v is not None})
+        body = self._drop_none(
+            {
+                "act_no": act_no,
+                "iqr_dit": iqr_dit,
+                "orr_dt": orr_dt,
+                "fc_sec_trd_nat_cd": fc_sec_trd_nat_cd,
+                "trd_cur_cd": trd_cur_cd,
+                "iem_cd": iem_cd,
+            }
+        )
 
         response = self.client.post("/gbstock/inquiry/v1/periodPnlDetail", body=body, cts=cts)
         data = response.json()
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
-        return NHPlugHttpResponse(header=header, body=OverseasStockPeriodPnlDetail.model_validate(data))
+        return NHPlugHttpResponse(header=header, body=OverseasStockInquiryPeriodPnlDetail.model_validate(data))
 
-    def get_margin_by_currency(
+    def margin(
         self,
         act_no: str,
         cts: Optional[str] = None,
-    ) -> NHPlugHttpResponse[OverseasStockMargin]:
+    ) -> NHPlugHttpResponse[OverseasStockInquiryMargin]:
         """해외증거금 통화별조회 (`POST /gbstock/inquiry/v1/margin`).
 
         계좌의 통화별 해외주식 증거금 목록(`Output_0`)을 조회하는 API 이다.
@@ -413,14 +458,12 @@ class OverseasStockInquiry:
             cts: 연속거래키. 이전 응답 헤더의 `cts` 값을 그대로 전달하면 다음 페이지를 받는다.
 
         Returns:
-            NHPlugHttpResponse[OverseasStockMargin]: 통화별 증거금 목록(`Output_0`) 조회 결과
+            NHPlugHttpResponse[OverseasStockInquiryMargin]: 통화별 증거금 목록(`Output_0`) 조회 결과
         """
-        body: dict = {
-            "act_no": act_no,
-        }
+        body = self._drop_none({"act_no": act_no})
 
         response = self.client.post("/gbstock/inquiry/v1/margin", body=body, cts=cts)
         data = response.json()
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
-        return NHPlugHttpResponse(header=header, body=OverseasStockMargin.model_validate(data))
+        return NHPlugHttpResponse(header=header, body=OverseasStockInquiryMargin.model_validate(data))

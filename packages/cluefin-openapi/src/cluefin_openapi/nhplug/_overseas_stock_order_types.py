@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict, Field
 
-from cluefin_openapi.nhplug._model import NHPlugMessage
+from cluefin_openapi.nhplug._model import NHPlugAssetHttpBody
 
 
 class OverseasStockOrderOutput(BaseModel):
@@ -12,55 +12,35 @@ class OverseasStockOrderOutput(BaseModel):
     orr_no: int | None = Field(default=None, description="주문번호 / 길이 10")
 
 
-class OverseasStockOrderBuy(BaseModel):
+class OverseasStockOrderBuy(NHPlugAssetHttpBody):
     """해외주식 주문매수 (`POST /gbstock/order/v1/buy`) 응답.
 
     gbstock 스펙의 응답 봉투는 `Output_0` + `message` 이며 rsp_cd/rsp_msg 가
     명시돼 있지 않다. 블록은 데이터가 있을 때만 내려오므로 모두 Optional.
     """
 
-    model_config = ConfigDict(extra="allow")
-
-    rsp_cd: str | None = Field(default=None, description="응답코드")
-    rsp_msg: str | None = Field(default=None, description="응답메시지")
     output_0: OverseasStockOrderOutput | None = Field(default=None, alias="Output_0", description="주문 접수 결과")
-    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
 
 
-class OverseasStockOrderSell(BaseModel):
+class OverseasStockOrderSell(NHPlugAssetHttpBody):
     """해외주식 주문매도 (`POST /gbstock/order/v1/sell`) 응답."""
 
-    model_config = ConfigDict(extra="allow")
-
-    rsp_cd: str | None = Field(default=None, description="응답코드")
-    rsp_msg: str | None = Field(default=None, description="응답메시지")
     output_0: OverseasStockOrderOutput | None = Field(default=None, alias="Output_0", description="주문 접수 결과")
-    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
 
 
-class OverseasStockOrderModify(BaseModel):
+class OverseasStockOrderModify(NHPlugAssetHttpBody):
     """해외주식 정정취소주문정정 (`POST /gbstock/order/v1/modify`) 응답."""
 
-    model_config = ConfigDict(extra="allow")
-
-    rsp_cd: str | None = Field(default=None, description="응답코드")
-    rsp_msg: str | None = Field(default=None, description="응답메시지")
     output_0: OverseasStockOrderOutput | None = Field(default=None, alias="Output_0", description="주문 접수 결과")
-    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
 
 
-class OverseasStockOrderCancel(BaseModel):
+class OverseasStockOrderCancel(NHPlugAssetHttpBody):
     """해외주식 정정취소주문취소 (`POST /gbstock/order/v1/cancel`) 응답."""
 
-    model_config = ConfigDict(extra="allow")
-
-    rsp_cd: str | None = Field(default=None, description="응답코드")
-    rsp_msg: str | None = Field(default=None, description="응답메시지")
     output_0: OverseasStockOrderOutput | None = Field(default=None, alias="Output_0", description="주문 접수 결과")
-    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
 
 
-class OverseasStockReservedSubmitOutput(BaseModel):
+class OverseasStockOrderReservedSubmitOutput(BaseModel):
     """예약주문접수 결과 (`Output_0`)."""
 
     model_config = ConfigDict(extra="allow")
@@ -68,20 +48,15 @@ class OverseasStockReservedSubmitOutput(BaseModel):
     bkg_rtn_orr_no: int | None = Field(default=None, description="예약접수주문번호 / 길이 10")
 
 
-class OverseasStockOrderReservedSubmit(BaseModel):
+class OverseasStockOrderReservedSubmit(NHPlugAssetHttpBody):
     """해외주식 예약주문접수 (`POST /gbstock/order/v1/reservedSubmit`) 응답."""
 
-    model_config = ConfigDict(extra="allow")
-
-    rsp_cd: str | None = Field(default=None, description="응답코드")
-    rsp_msg: str | None = Field(default=None, description="응답메시지")
-    output_0: OverseasStockReservedSubmitOutput | None = Field(
+    output_0: OverseasStockOrderReservedSubmitOutput | None = Field(
         default=None, alias="Output_0", description="예약주문접수 결과"
     )
-    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
 
 
-class OverseasStockReservedCancelOutput(BaseModel):
+class OverseasStockOrderReservedCancelOutput(BaseModel):
     """예약주문접수취소 결과 (`Output_0`)."""
 
     model_config = ConfigDict(extra="allow")
@@ -89,14 +64,9 @@ class OverseasStockReservedCancelOutput(BaseModel):
     wrk_rlt_cd: str | None = Field(default=None, description="작업결과코드 / 길이 5")
 
 
-class OverseasStockOrderReservedCancel(BaseModel):
+class OverseasStockOrderReservedCancel(NHPlugAssetHttpBody):
     """해외주식 예약주문접수취소 (`POST /gbstock/order/v1/reservedCancel`) 응답."""
 
-    model_config = ConfigDict(extra="allow")
-
-    rsp_cd: str | None = Field(default=None, description="응답코드")
-    rsp_msg: str | None = Field(default=None, description="응답메시지")
-    output_0: OverseasStockReservedCancelOutput | None = Field(
+    output_0: OverseasStockOrderReservedCancelOutput | None = Field(
         default=None, alias="Output_0", description="예약주문접수취소 결과"
     )
-    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
