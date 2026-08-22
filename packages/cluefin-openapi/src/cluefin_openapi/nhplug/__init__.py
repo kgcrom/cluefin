@@ -19,6 +19,12 @@ from cluefin_openapi.nhplug._exceptions import (
     NHPlugValidationError,
 )
 from cluefin_openapi.nhplug._http_client import HttpClient
+from cluefin_openapi.nhplug._krstock_inquiry import KrStockInquiry
+from cluefin_openapi.nhplug._krstock_inquiry_types import (
+    KrStockInquiryBalance,
+    KrStockInquiryBalanceAccountOutput,
+    KrStockInquiryBalanceHoldingOutput,
+)
 from cluefin_openapi.nhplug._krstock_order import KrStockOrder
 from cluefin_openapi.nhplug._krstock_order_types import (
     KrStockOrderAmendedOutput,
@@ -50,6 +56,10 @@ __all__ = [
     "Auth",
     "Common",
     "HttpClient",
+    "KrStockInquiry",
+    "KrStockInquiryBalance",
+    "KrStockInquiryBalanceAccountOutput",
+    "KrStockInquiryBalanceHoldingOutput",
     "KrStockOrder",
     "KrStockOrderAmendedOutput",
     "KrStockOrderCancel",

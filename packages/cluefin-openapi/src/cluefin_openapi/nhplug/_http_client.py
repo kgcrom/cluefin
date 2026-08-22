@@ -96,6 +96,13 @@ class HttpClient(BaseHttpClient):
 
         return KrStockOrder(self)
 
+    @property
+    def krstock_inquiry(self):
+        """국내주식 조회"""
+        from ._krstock_inquiry import KrStockInquiry
+
+        return KrStockInquiry(self)
+
     def post(
         self,
         path: str,
