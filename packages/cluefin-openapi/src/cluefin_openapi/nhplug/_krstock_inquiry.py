@@ -6,9 +6,10 @@ from cluefin_openapi.nhplug._krstock_inquiry_types import (
     KrStockInquiryBalance,
     KrStockInquiryBuyableQuantity,
     KrStockInquiryDailyOrderExecution,
+    KrStockInquiryReservedInquiry,
     KrStockInquirySellableQuantity,
 )
-from cluefin_openapi.nhplug._krstock_order import CreditLoanCode, QuoteTypeCode
+from cluefin_openapi.nhplug._krstock_order import CreditLoanCode, QuoteTypeCode, ReservedCreditLoanCode
 from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES, NHPlugHttpHeader, NHPlugHttpResponse
 
 # 매도가능수량조회(sellableQuantity)의 신용대출코드 — buyableQuantity/신규주문 계열과
@@ -19,6 +20,23 @@ SellableCreditLoanCode = Literal[
     "02",  # 자기융자
     "03",  # 유통대주
     "04",  # 자기대주
+]
+
+# 예약주문조회(reservedInquiry)의 매매구분코드 — reserved_order/reserved_cancel 의
+# sby_dit_cd("1"/"2")와 달리 "0.전체"가 있다.
+ReservedInquiryTradeTypeCode = Literal[
+    "0",  # 전체
+    "1",  # 매도
+    "2",  # 매수
+]
+
+# 예약주문조회(reservedInquiry)의 예약주문유형코드 — reserved_order/reserved_cancel 의
+# bkg_orr_tp_cd("1"/"2"/"3")와 달리 "0.전체"가 있다.
+ReservedInquiryOrderTypeCode = Literal[
+    "0",  # 전체
+    "1",  # 일반예약(현금/대출예약)
+    "2",  # 기간예약(잔량예약)
+    "3",  # 기간예약(수량예약)
 ]
 
 
@@ -204,3 +222,54 @@ class KrStockInquiry:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquirySellableQuantity.model_validate(data))
+
+    def reserved_inquiry(
+        self,
+        act_no: str,
+        sby_dit_cd: ReservedInquiryTradeTypeCode,
+        bkg_orr_tp_cd: ReservedInquiryOrderTypeCode,
+        bkg_orr_rtn_dt: Optional[str] = None,
+        iem_cd: Optional[str] = None,
+        cfd_lon_cd: Optional[ReservedCreditLoanCode] = None,
+        bkg_orr_can_dit_cd: Optional[Literal["0", "1", "2"]] = None,
+        cts: Optional[str] = None,
+    ) -> NHPlugHttpResponse[KrStockInquiryReservedInquiry]:
+        """주식예약주문조회 (`POST /krstock/inquiry/v1/reservedInquiry`).
+
+        연속조회를 지원하는 조회 API 다 — 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을
+        다음 호출의 `cts` 인자로 전달해 이어받는다. 입력의 `sby_dit_cd`(0.전체/1.매도/
+        2.매수)·`bkg_orr_tp_cd`(0.전체/1.일반예약/2.기간예약(잔량)/3.기간예약(수량))는
+        `reserved_order`/`reserved_cancel` 이 쓰는 코드 집합과 다르다(그쪽엔 "0.전체"가
+        없다) — 이 메서드 전용 Literal 을 쓴다. `cfd_lon_cd` 는 `reserved_order` 와
+        코드 집합이 같아 `ReservedCreditLoanCode` 를 재사용한다.
+
+        Args:
+            act_no: 계좌번호 (`/n2/acctinfo` 의 acct_no — 운영은 acct_type 01·02,
+                모의투자는 03 계좌만 유효, 조회구분 "2"일 때 필요)
+            sby_dit_cd: 매매구분코드 (0.전체 1.매도 2.매수)
+            bkg_orr_tp_cd: 예약주문유형코드 (0.전체 1.일반예약(현금/대출예약)
+                2.기간예약(잔량예약) 3.기간예약(수량예약))
+            bkg_orr_rtn_dt: 예약주문접수일자 (YYYYMMDD)
+            iem_cd: 종목코드 (예: 005940)
+            cfd_lon_cd: 신용대출코드 (00.일반거래 01.유통융자 02.자기융자 03.유통대주
+                04.자기대주 10.매입자금대출 11.매도담보대출 12.주식담보대출)
+            bkg_orr_can_dit_cd: 예약주문취소구분코드 (0.잔존주문 1.본인취소 2.직원취소,
+                생략하면 전체)
+            cts: 연속거래키. 이전 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 전달.
+        """
+        body = self._drop_none(
+            {
+                "bkg_orr_rtn_dt": bkg_orr_rtn_dt,
+                "act_no": act_no,
+                "iem_cd": iem_cd,
+                "sby_dit_cd": sby_dit_cd,
+                "cfd_lon_cd": cfd_lon_cd,
+                "bkg_orr_tp_cd": bkg_orr_tp_cd,
+                "bkg_orr_can_dit_cd": bkg_orr_can_dit_cd,
+            }
+        )
+        response = self.client.post("/krstock/inquiry/v1/reservedInquiry", body=body, cts=cts)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=KrStockInquiryReservedInquiry.model_validate(data))

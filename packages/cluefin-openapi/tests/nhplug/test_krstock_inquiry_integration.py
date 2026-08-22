@@ -12,7 +12,7 @@ from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
 from cluefin_openapi.nhplug._http_client import HttpClient
 from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES
 
-from ._integration_helpers import skip_if_env_blocked
+from ._integration_helpers import real_account_only, skip_if_env_blocked
 
 
 @pytest.mark.integration
@@ -67,6 +67,24 @@ def test_buyable_quantity(client: HttpClient, krstock_account: str):
             iem_cd="005930",
             ost_dit_cd="1",  # 현금
             nmn_pr_tp_cd="05",  # 시장가 — orr_pr 불필요
+        )
+    except NHPlugAPIError as e:
+        skip_if_env_blocked(e)
+
+    assert response.body.rsp_cd in SUCCESS_RSP_CODES
+
+
+@pytest.mark.integration
+@real_account_only("/krstock/inquiry/v1/reservedInquiry", "19999: 모의투자에서는 해당업무가 제공되지 않습니다")
+def test_reserved_inquiry(client: HttpClient, krstock_account: str):
+    """주식예약주문조회. reservedOrder 접수가 모의 미지원이라 목록은 비어있을 것으로
+    예상하지만, 조회 자체의 성공/미지원 여부가 관전 포인트라 실측 결과 그대로
+    검증한다(rsp_cd 위주, Output_1 존재는 단정하지 않음)."""
+    try:
+        response = client.krstock_inquiry.reserved_inquiry(
+            act_no=krstock_account,
+            sby_dit_cd="0",  # 전체
+            bkg_orr_tp_cd="0",  # 전체
         )
     except NHPlugAPIError as e:
         skip_if_env_blocked(e)

@@ -307,3 +307,74 @@ class KrStockInquirySellableQuantity(NHPlugAssetHttpBody):
     output_0: KrStockInquirySellableQuantityOutput | None = Field(
         default=None, alias="Output_0", description="매도가능수량 조회 결과"
     )
+
+
+class KrStockInquiryReservedInquiryHeaderOutput(BaseModel):
+    """주식예약주문조회 팀점 정보 (Output_0)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    tab_nm: str | None = Field(default=None, description="팀점명 / 길이 50")
+    bkg_orr_rtn_dt: str | None = Field(default=None, description="예약주문접수일자 / 길이 8")
+
+
+class KrStockInquiryReservedInquiryOutput(BaseModel):
+    """주식예약주문조회 예약주문 내역 (Output_1 배열의 각 항목)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    act_no: str | None = Field(default=None, description="계좌번호 / 길이 11")
+    cus_fnm: str | None = Field(default=None, description="고객성명 / 길이 40")
+    amn_tab_nm: str | None = Field(default=None, description="관리팀점명 / 길이 50")
+    act_pdt_nm: str | None = Field(default=None, description="계좌상품명 / 길이 60")
+    iem_cd: str | None = Field(default=None, description="종목코드 / 길이 12")
+    iem_nm: str | None = Field(default=None, description="종목명 / 길이 60")
+    sby_dit_cd_nm: str | None = Field(default=None, description="매매구분코드명 / 길이 50")
+    nmn_pr_tp_cd_nm: str | None = Field(default=None, description="호가유형코드명 / 길이 30")
+    cfd_lon_cd_nm: str | None = Field(default=None, description="신용대출코드명 / 길이 40")
+    lon_dt: str | None = Field(default=None, description="대출일자 / 길이 8")
+    orr_qty: int | None = Field(default=None, description="주문수량 / 길이 18")
+    orr_pr: int | None = Field(default=None, description="주문가격 / 길이 18")
+    acl_cns_qty: int | None = Field(default=None, description="누적체결수량 / 길이 18")
+    orr_enf_sta_dt: str | None = Field(default=None, description="주문집행시작일자 / 길이 8")
+    orr_enf_end_dt: str | None = Field(default=None, description="주문집행종료일자 / 길이 8")
+    lst_orr_enf_dt: str | None = Field(default=None, description="최종주문집행일자 / 길이 8")
+    bkg_orr_tp_cd_nm: str | None = Field(default=None, description="예약주문유형코드명 / 길이 50")
+    bkg_orr_enf_tp_cd_nm: str | None = Field(default=None, description="예약주문집행유형코드명 / 길이 60")
+    end_pr_cmp_ftw_amt: int | None = Field(default=None, description="종가대비등락폭금액 / 길이 18")
+    orr_pr_rge_hlm_pr: int | None = Field(default=None, description="주문가격범위상한가 / 길이 18")
+    orr_pr_rge_llm_pr: int | None = Field(default=None, description="주문가격범위하한가 / 길이 18")
+    bkg_orr_can_dit_cd_nm: str | None = Field(default=None, description="예약주문취소구분코드명 / 길이 50")
+    rgs_dt: str | None = Field(default=None, description="등록일자 / 길이 8")
+    rgs_tm: str | None = Field(default=None, description="등록시각 / 길이 8")
+    rgs_emp_no: str | None = Field(default=None, description="등록사원번호 / 길이 6")
+    can_dt: str | None = Field(default=None, description="취소일자 / 길이 8")
+    can_tm: str | None = Field(default=None, description="취소시각 / 길이 8")
+    can_emp_no: str | None = Field(default=None, description="취소사원번호 / 길이 6")
+    bkg_orr_rtn_dt: str | None = Field(default=None, description="예약주문접수일자 / 길이 8")
+    bkg_rtn_orr_no: int | None = Field(default=None, description="예약접수주문번호 / 길이 10")
+    sby_dit_cd: str | None = Field(
+        default=None,
+        description=(
+            "매매구분코드 / 길이 1 / 1.현금매도 2.현금매수 3.대용매도 4.신용매도 5.신용매수 6.대출매도 "
+            "7.대출매수 (입력의 매매구분코드(0.전체/1.매도/2.매수)와는 다른 코드 집합)"
+        ),
+    )
+    stk_now_pr: int | None = Field(default=None, description="주식현재가격 / 길이 18")
+    te_bkg_orr_ssp_yn: str | None = Field(default=None, description="기간예약주문중단여부 / 길이 1")
+    rmt_mkt_cd: str | None = Field(default=None, description="요청시장코드 / 길이 3")
+
+
+class KrStockInquiryReservedInquiry(NHPlugAssetHttpBody):
+    """주식예약주문조회 (`POST /krstock/inquiry/v1/reservedInquiry`) 응답.
+
+    연속조회를 지원한다 — 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 다음 호출에
+    전달해 이어받는다.
+    """
+
+    output_0: KrStockInquiryReservedInquiryHeaderOutput | None = Field(
+        default=None, alias="Output_0", description="팀점 정보"
+    )
+    output_1: list[KrStockInquiryReservedInquiryOutput] | None = Field(
+        default=None, alias="Output_1", description="예약주문 내역 목록"
+    )

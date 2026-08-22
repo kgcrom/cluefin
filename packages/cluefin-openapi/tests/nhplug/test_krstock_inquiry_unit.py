@@ -331,3 +331,79 @@ class TestSellableQuantity:
                     iem_cd="005930",
                     cfd_lon_cd="00",
                 )
+
+
+RESERVED_INQUIRY_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "조회가 완료되었습니다.",
+    "message": None,
+    "Output_0": {
+        "tab_nm": "본점",
+        "bkg_orr_rtn_dt": "20260822",
+    },
+    "Output_1": [
+        {
+            "act_no": "50051036881",
+            "iem_cd": "005930",
+            "iem_nm": "삼성전자",
+            "orr_qty": 1,
+            "orr_pr": 71000,
+            "bkg_rtn_orr_no": 98765,
+        }
+    ],
+}
+
+
+class TestReservedInquiry:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/inquiry/v1/reservedInquiry",
+                json=RESERVED_INQUIRY_BODY,
+                headers={"cts_flag": "N"},
+            )
+            response = client.krstock_inquiry.reserved_inquiry(
+                act_no="50051036881",
+                sby_dit_cd="0",
+                bkg_orr_tp_cd="0",
+            )
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "act_no": "50051036881",
+                "sby_dit_cd": "0",
+                "bkg_orr_tp_cd": "0",
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        assert response.body.output_0.tab_nm == "본점"
+        assert len(response.body.output_1) == 1
+        assert response.body.output_1[0].bkg_rtn_orr_no == 98765
+        assert response.header.cts_flag == "N"
+
+    def test_passes_cts_to_request_headers(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/inquiry/v1/reservedInquiry", json=RESERVED_INQUIRY_BODY)
+            client.krstock_inquiry.reserved_inquiry(
+                act_no="50051036881",
+                sby_dit_cd="0",
+                bkg_orr_tp_cd="0",
+                cts="NEXT-KEY",
+            )
+
+        request = m.request_history[0]
+        assert request.headers["cts"] == "NEXT-KEY"
+        assert request.headers["cts_flag"] == "Y"
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/inquiry/v1/reservedInquiry",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_inquiry.reserved_inquiry(
+                    act_no="00000000000",
+                    sby_dit_cd="0",
+                    bkg_orr_tp_cd="0",
+                )
