@@ -32,6 +32,18 @@ def test_asset_status(client: HttpClient, krstock_account: str):
 
 
 @pytest.mark.integration
+@real_account_only("/krstock/inquiry/v1/integratedMargin", "19999: 모의투자에서는 해당업무가 제공되지 않습니다")
+def test_integrated_margin(client: HttpClient, krstock_account: str):
+    """주식통합증거금 현황. 조회 API 라 성공을 기대한다."""
+    try:
+        response = client.krstock_inquiry.integrated_margin(act_no=krstock_account)
+    except NHPlugAPIError as e:
+        skip_if_env_blocked(e)
+
+    assert response.body.rsp_cd in SUCCESS_RSP_CODES
+
+
+@pytest.mark.integration
 def test_balance(client: HttpClient, krstock_account: str):
     """주식잔고조회. 조회 API 라 성공을 기대한다."""
     try:

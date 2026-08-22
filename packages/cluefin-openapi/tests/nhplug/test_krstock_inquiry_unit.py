@@ -739,3 +739,59 @@ class TestTradingPnl:
                     iqr_sta_dt="20260723",
                     iqr_end_dt="20260822",
                 )
+
+
+INTEGRATED_MARGIN_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "조회가 완료되었습니다.",
+    "message": None,
+    "Output_0": {
+        "cro_sby_act_yn": "N",
+        "lmt_amt": 1000000,
+        "lmt_use_amt": 0,
+        "rmn_lmt_amt": 1000000,
+    },
+    "Output_1": [
+        {
+            "cur_cd": "USD",
+            "fc_dca": 100.0,
+            "fc_orr_pbl_amt": 100.0,
+        }
+    ],
+}
+
+
+class TestIntegratedMargin:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/inquiry/v1/integratedMargin",
+                json=INTEGRATED_MARGIN_BODY,
+                headers={"cts_flag": "N"},
+            )
+            response = client.krstock_inquiry.integrated_margin(act_no="50051036881")
+
+        assert json.loads(m.request_history[0].text) == {"Input_0": {"act_no": "50051036881"}}
+        assert response.body.rsp_cd == "00000"
+        assert response.body.output_0.rmn_lmt_amt == 1000000
+        assert len(response.body.output_1) == 1
+        assert response.body.output_1[0].cur_cd == "USD"
+        assert response.header.cts_flag == "N"
+
+    def test_passes_cts_to_request_headers(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/inquiry/v1/integratedMargin", json=INTEGRATED_MARGIN_BODY)
+            client.krstock_inquiry.integrated_margin(act_no="50051036881", cts="NEXT-KEY")
+
+        request = m.request_history[0]
+        assert request.headers["cts"] == "NEXT-KEY"
+        assert request.headers["cts_flag"] == "Y"
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/inquiry/v1/integratedMargin",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_inquiry.integrated_margin(act_no="00000000000")

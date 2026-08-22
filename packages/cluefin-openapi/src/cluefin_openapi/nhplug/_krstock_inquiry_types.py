@@ -686,6 +686,65 @@ class KrStockInquiryTradingPnl(NHPlugAssetHttpBody):
     )
 
 
+class KrStockInquiryIntegratedMarginAccountOutput(BaseModel):
+    """주식통합증거금 현황 계좌 한도 정보 (Output_0)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    fc_orr_pbl_amt3: float | None = Field(default=None, description="외화주문가능금액3 / 길이 15.3 / 주문가능금액")
+    cro_sby_stl_amt: int | None = Field(default=None, description="교차매매결제금액 / 길이 18 / 결제금(원)")
+    cro_sby_act_yn: str | None = Field(default=None, description="교차매매계좌여부 / 길이 1 / 약정여부")
+    lmt_amt: int | None = Field(default=None, description="한도금액 / 길이 18 / 한도금액(원)")
+    lmt_use_amt: int | None = Field(default=None, description="한도사용금액 / 길이 18 / 한도사용금액(원)")
+    rmn_lmt_amt: int | None = Field(default=None, description="잔여한도금액 / 길이 18 / 한도잔여금액(원)")
+
+
+class KrStockInquiryIntegratedMarginOutput(BaseModel):
+    """주식통합증거금 현황 통화별 상세 (Output_1 배열의 각 항목)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    cur_cd: str | None = Field(default=None, description="통화코드 / 길이 3")
+    fc_dca: float | None = Field(default=None, description="외화예수금 / 길이 15.3")
+    fc_mgg_amt: float | None = Field(default=None, description="외화담보금액 / 길이 15.3")
+    ose_trd_tax: float | None = Field(default=None, description="해외거래세 / 길이 15.3")
+    fc_ato_re_sby_obj_amt: float | None = Field(
+        default=None, description="외화자동재매매대상금액 / 길이 15.3 / 매도금액"
+    )
+    fc_orr_pbl_amt: float | None = Field(
+        default=None, description="외화주문가능금액 / 길이 15.3 / 자국통화 주문가능금액"
+    )
+    aly_xcg_rt: float | None = Field(default=None, description="적용환율 / 길이 12.6")
+    orr_pbl_amt_csh: int | None = Field(default=None, description="주문가능금액현금 / 길이 18")
+    cnv_rt: float | None = Field(default=None, description="전환비율 / 길이 11.8 / 통합증거금 통화간 전환비율")
+    krw_tsl_cro_pbl_amt: int | None = Field(
+        default=None, description="원화환산교차가능금액 / 길이 18 / 타국통화 통합증거금 가능금액(원)"
+    )
+    trd_cur_cro_pbl_amt: float | None = Field(
+        default=None, description="거래통화교차가능금액 / 길이 15.3 / 타국통화 주문가능금액"
+    )
+    fc_orr_pbl_amt1: float | None = Field(default=None, description="외화주문가능금액1 / 길이 15.3 / 주문가능금액")
+    fc_orr_pbl_amt2: float | None = Field(default=None, description="외화주문가능금액2 / 길이 15.3 / 가능금액")
+    trd_cur_cro_use_amt: float | None = Field(default=None, description="거래통화교차사용금액 / 길이 15.3 / 사용금액")
+
+
+class KrStockInquiryIntegratedMargin(NHPlugAssetHttpBody):
+    """주식통합증거금 현황 (`POST /krstock/inquiry/v1/integratedMargin`) 응답.
+
+    연속조회를 지원한다 — 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 다음 호출에
+    전달해 이어받는다. 스펙상 금액류 필드는 모두 number/integer 로 선언돼 있어
+    (balance/dailyPnl/tradingPnl 의 "합계" 필드처럼 string 으로 명세된 필드가 없음)
+    int|str 완화가 필요하지 않았다.
+    """
+
+    output_0: KrStockInquiryIntegratedMarginAccountOutput | None = Field(
+        default=None, alias="Output_0", description="계좌 한도 정보"
+    )
+    output_1: list[KrStockInquiryIntegratedMarginOutput] | None = Field(
+        default=None, alias="Output_1", description="통화별 상세 목록"
+    )
+
+
 class KrStockInquiryReservedInquiry(NHPlugAssetHttpBody):
     """주식예약주문조회 (`POST /krstock/inquiry/v1/reservedInquiry`) 응답.
 
