@@ -15,6 +15,7 @@ SELL_URL = f"{BASE_DEV}/gbstock/order/v1/sell"
 MODIFY_URL = f"{BASE_DEV}/gbstock/order/v1/modify"
 CANCEL_URL = f"{BASE_DEV}/gbstock/order/v1/cancel"
 RESERVED_SUBMIT_URL = f"{BASE_DEV}/gbstock/order/v1/reservedSubmit"
+RESERVED_CANCEL_URL = f"{BASE_DEV}/gbstock/order/v1/reservedCancel"
 
 ORDER_OK_BODY = {
     "Output_0": {"amn_tab_cd": "0001", "orr_no": 12345},
@@ -373,4 +374,50 @@ class TestSubmitReserved:
                     oss_sby_dit_cd="2",
                     orr_qty=1,
                     nmn_pr_tp_cd="03",
+                )
+
+
+class TestCancelReserved:
+    def test_sends_input_envelope(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(RESERVED_CANCEL_URL, json={"Output_0": {"wrk_rlt_cd": "00000"}})
+            client.overseas_stock_order.cancel_reserved(
+                act_no="50051036881",
+                fc_mkt_dit_cd="200",
+                bkg_orr_dt="20260824",
+                bkg_rtn_orr_no=777,
+                iem_cd="AAPL",
+            )
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "act_no": "50051036881",
+                "fc_mkt_dit_cd": "200",
+                "bkg_orr_dt": "20260824",
+                "bkg_rtn_orr_no": 777,
+                "iem_cd": "AAPL",
+            }
+        }
+
+    def test_parses_work_result_code(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(RESERVED_CANCEL_URL, json={"Output_0": {"wrk_rlt_cd": "00000"}})
+            response = client.overseas_stock_order.cancel_reserved(
+                act_no="50051036881",
+                fc_mkt_dit_cd="200",
+                bkg_orr_dt="20260824",
+                bkg_rtn_orr_no=777,
+            )
+
+        assert response.body.output_0.wrk_rlt_cd == "00000"
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(RESERVED_CANCEL_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
+            with pytest.raises(NHPlugAPIError, match="40310"):
+                client.overseas_stock_order.cancel_reserved(
+                    act_no="50051036881",
+                    fc_mkt_dit_cd="200",
+                    bkg_orr_dt="20260824",
+                    bkg_rtn_orr_no=777,
                 )

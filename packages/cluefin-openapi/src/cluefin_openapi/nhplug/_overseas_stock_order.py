@@ -7,6 +7,7 @@ from cluefin_openapi.nhplug._overseas_stock_order_types import (
     OverseasStockOrderBuy,
     OverseasStockOrderCancel,
     OverseasStockOrderModify,
+    OverseasStockOrderReservedCancel,
     OverseasStockOrderReservedSubmit,
     OverseasStockOrderSell,
 )
@@ -262,3 +263,42 @@ class OverseasStockOrder:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockOrderReservedSubmit.model_validate(data))
+
+    def cancel_reserved(
+        self,
+        act_no: str,
+        fc_mkt_dit_cd: str,
+        bkg_orr_dt: str,
+        bkg_rtn_orr_no: int,
+        iem_cd: Optional[str] = None,
+        orr_pdt_dit_cd: Optional[str] = None,
+    ) -> NHPlugHttpResponse[OverseasStockOrderReservedCancel]:
+        """해외주식 예약주문접수취소 (`POST /gbstock/order/v1/reservedCancel`).
+
+        Args:
+            act_no: 계좌번호. `/n2/acctinfo` 의 acct_no 사용.
+            fc_mkt_dit_cd: 외화시장구분코드 (200.미국 070.일본 120.홍콩 160.상해 170.심천)
+            bkg_orr_dt: 예약주문일자 (YYYYMMDD)
+            bkg_rtn_orr_no: 예약접수주문번호 (reservedSubmit 응답의 `bkg_rtn_orr_no`)
+            iem_cd: 티커종목코드 (예: AAPL)
+            orr_pdt_dit_cd: 주문상품구분코드 (00.해당없음 02.교체예약주문 03.미국Stop예약주문)
+
+        Returns:
+            NHPlugHttpResponse[OverseasStockOrderReservedCancel]: 작업결과코드(`wrk_rlt_cd`) 포함 결과
+        """
+        body = {
+            "act_no": act_no,
+            "fc_mkt_dit_cd": fc_mkt_dit_cd,
+            "bkg_orr_dt": bkg_orr_dt,
+            "bkg_rtn_orr_no": bkg_rtn_orr_no,
+        }
+        if iem_cd is not None:
+            body["iem_cd"] = iem_cd
+        if orr_pdt_dit_cd is not None:
+            body["orr_pdt_dit_cd"] = orr_pdt_dit_cd
+
+        response = self.client.post("/gbstock/order/v1/reservedCancel", body=body)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=OverseasStockOrderReservedCancel.model_validate(data))
