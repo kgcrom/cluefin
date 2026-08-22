@@ -5,6 +5,7 @@ from cluefin_openapi.nhplug._http_client import HttpClient
 from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
 from cluefin_openapi.nhplug._overseas_stock_order_types import (
     OverseasStockOrderBuy,
+    OverseasStockOrderCancel,
     OverseasStockOrderModify,
     OverseasStockOrderSell,
 )
@@ -148,3 +149,41 @@ class OverseasStockOrder:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockOrderModify.model_validate(data))
+
+    def cancel(
+        self,
+        act_no: str,
+        org_orr_no: int,
+        fc_sec_trd_nat_cd: str,
+        iem_cd: str,
+        all_pat_dit_cd: str,
+        can_qty: Optional[int] = None,
+    ) -> NHPlugHttpResponse[OverseasStockOrderCancel]:
+        """해외주식 정정취소주문취소 (`POST /gbstock/order/v1/cancel`).
+
+        Args:
+            act_no: 계좌번호. `/n2/acctinfo` 의 acct_no 사용.
+            org_orr_no: 원주문번호 (취소대상 주문번호)
+            fc_sec_trd_nat_cd: 외화증권거래국가코드 (200.미국 070.일본 120.홍콩 160.상해 170.심천)
+            iem_cd: 티커종목코드 (예: AAPL)
+            all_pat_dit_cd: 전체일부구분코드 (1: 전체, 2: 일부)
+            can_qty: 취소수량. 일부취소(all_pat_dit_cd=2)일 때 입력.
+
+        Returns:
+            NHPlugHttpResponse[OverseasStockOrderCancel]: 주문번호(`orr_no`) 포함 접수 결과
+        """
+        body = {
+            "act_no": act_no,
+            "org_orr_no": org_orr_no,
+            "fc_sec_trd_nat_cd": fc_sec_trd_nat_cd,
+            "iem_cd": iem_cd,
+            "all_pat_dit_cd": all_pat_dit_cd,
+        }
+        if can_qty is not None:
+            body["can_qty"] = can_qty
+
+        response = self.client.post("/gbstock/order/v1/cancel", body=body)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=OverseasStockOrderCancel.model_validate(data))
