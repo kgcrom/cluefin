@@ -6,9 +6,20 @@ from cluefin_openapi.nhplug._krstock_inquiry_types import (
     KrStockInquiryBalance,
     KrStockInquiryBuyableQuantity,
     KrStockInquiryDailyOrderExecution,
+    KrStockInquirySellableQuantity,
 )
 from cluefin_openapi.nhplug._krstock_order import CreditLoanCode, QuoteTypeCode
 from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES, NHPlugHttpHeader, NHPlugHttpResponse
+
+# 매도가능수량조회(sellableQuantity)의 신용대출코드 — buyableQuantity/신규주문 계열과
+# 코드 집합이 다르다(00.일반거래 포함, 01~04 만 유효 — 10 이상은 스펙에 없음).
+SellableCreditLoanCode = Literal[
+    "00",  # 일반거래
+    "01",  # 유통융자
+    "02",  # 자기융자
+    "03",  # 유통대주
+    "04",  # 자기대주
+]
 
 
 class KrStockInquiry:
@@ -157,3 +168,39 @@ class KrStockInquiry:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryBuyableQuantity.model_validate(data))
+
+    def sellable_quantity(
+        self,
+        act_no: str,
+        iem_cd: str,
+        cfd_lon_cd: SellableCreditLoanCode,
+        lon_dt: Optional[str] = None,
+        cts: Optional[str] = None,
+    ) -> NHPlugHttpResponse[KrStockInquirySellableQuantity]:
+        """매도가능수량조회 (`POST /krstock/inquiry/v1/sellableQuantity`).
+
+        연속조회를 지원하는 조회 API 다 — 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을
+        다음 호출의 `cts` 인자로 전달해 이어받는다.
+
+        Args:
+            act_no: 계좌번호 (`/n2/acctinfo` 의 acct_no — 운영은 acct_type 01·02,
+                모의투자는 03 계좌만 유효)
+            iem_cd: 종목코드 (예: 005940)
+            cfd_lon_cd: 신용대출코드 (00.일반거래 01.유통융자 02.자기융자 03.유통대주
+                04.자기대주)
+            lon_dt: 대출일자 (신용대출코드가 "01.유통융자"일 때, YYYYMMDD)
+            cts: 연속거래키. 이전 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 전달.
+        """
+        body = self._drop_none(
+            {
+                "act_no": act_no,
+                "iem_cd": iem_cd,
+                "lon_dt": lon_dt,
+                "cfd_lon_cd": cfd_lon_cd,
+            }
+        )
+        response = self.client.post("/krstock/inquiry/v1/sellableQuantity", body=body, cts=cts)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=KrStockInquirySellableQuantity.model_validate(data))

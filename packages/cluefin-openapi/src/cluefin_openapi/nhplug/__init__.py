@@ -29,6 +29,8 @@ from cluefin_openapi.nhplug._krstock_inquiry_types import (
     KrStockInquiryDailyOrderExecution,
     KrStockInquiryDailyOrderExecutionCustomerOutput,
     KrStockInquiryDailyOrderExecutionOutput,
+    KrStockInquirySellableQuantity,
+    KrStockInquirySellableQuantityOutput,
 )
 from cluefin_openapi.nhplug._krstock_order import KrStockOrder
 from cluefin_openapi.nhplug._krstock_order_types import (
@@ -70,6 +72,8 @@ __all__ = [
     "KrStockInquiryDailyOrderExecution",
     "KrStockInquiryDailyOrderExecutionCustomerOutput",
     "KrStockInquiryDailyOrderExecutionOutput",
+    "KrStockInquirySellableQuantity",
+    "KrStockInquirySellableQuantityOutput",
     "KrStockOrder",
     "KrStockOrderAmendedOutput",
     "KrStockOrderCancel",

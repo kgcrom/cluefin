@@ -262,3 +262,72 @@ class TestBuyableQuantity:
                     ost_dit_cd="1",
                     nmn_pr_tp_cd="05",
                 )
+
+
+SELLABLE_QUANTITY_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "조회가 완료되었습니다.",
+    "message": None,
+    "Output_0": {
+        "cus_fnm": "홍길동",
+        "ost_dit_cd": "1",
+        "iem_cd": "005930",
+        "iem_nm": "삼성전자",
+        "bnc_qty": 10,
+        "sll_pbl_qty": 10.0,
+    },
+}
+
+
+class TestSellableQuantity:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/inquiry/v1/sellableQuantity",
+                json=SELLABLE_QUANTITY_BODY,
+                headers={"cts_flag": "N"},
+            )
+            response = client.krstock_inquiry.sellable_quantity(
+                act_no="50051036881",
+                iem_cd="005930",
+                cfd_lon_cd="00",
+            )
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "act_no": "50051036881",
+                "iem_cd": "005930",
+                "cfd_lon_cd": "00",
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        assert response.body.output_0.iem_cd == "005930"
+        assert response.body.output_0.sll_pbl_qty == 10.0
+        assert response.header.cts_flag == "N"
+
+    def test_passes_cts_to_request_headers(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/inquiry/v1/sellableQuantity", json=SELLABLE_QUANTITY_BODY)
+            client.krstock_inquiry.sellable_quantity(
+                act_no="50051036881",
+                iem_cd="005930",
+                cfd_lon_cd="00",
+                cts="NEXT-KEY",
+            )
+
+        request = m.request_history[0]
+        assert request.headers["cts"] == "NEXT-KEY"
+        assert request.headers["cts_flag"] == "Y"
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/inquiry/v1/sellableQuantity",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_inquiry.sellable_quantity(
+                    act_no="00000000000",
+                    iem_cd="005930",
+                    cfd_lon_cd="00",
+                )

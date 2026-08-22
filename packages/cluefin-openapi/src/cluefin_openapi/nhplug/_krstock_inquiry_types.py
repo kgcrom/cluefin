@@ -259,3 +259,51 @@ class KrStockInquiryBuyableQuantity(NHPlugAssetHttpBody):
     output_0: KrStockInquiryBuyableQuantityOutput | None = Field(
         default=None, alias="Output_0", description="매수가능수량 조회 결과"
     )
+
+
+class KrStockInquirySellableQuantityOutput(BaseModel):
+    """매도가능수량조회 결과 (Output_0)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    cus_fnm: str | None = Field(default=None, description="고객성명 / 길이 40")
+    ost_dit_cd: str | None = Field(default=None, description="구분코드 / 길이 1 / 1.현금 또는 신용 2.대출")
+    dit_nm: str | None = Field(default=None, description="구분명 / 길이 20")
+    iem_cd: str | None = Field(default=None, description="종목코드 / 길이 12")
+    iem_nm: str | None = Field(default=None, description="종목명 / 길이 60")
+    lon_dt: str | None = Field(default=None, description="대출일자 / 길이 8")
+    cfd_lon_cd: str | None = Field(
+        default=None,
+        description=(
+            "신용대출코드 / 길이 2 / 00.현금 01.유통융자 02.자기융자 03.유통대주 04.자기대주 "
+            "10.매입자금대출 11.매도담보대출 12.주식담보대출 13.채권담보대출 14.ELS/DLS담보대출 "
+            "15.수익증권대출 16.수익환매대출 17.청약자금대출 18.ELS/DLS환매담보대출 19.해외주식담보대출 "
+            "20.해외주식매도담보대출 99.종합담보대출 _.해당사항없음"
+        ),
+    )
+    cfd_lon_cd_nm: str | None = Field(default=None, description="신용대출코드명 / 길이 40")
+    ttn_tp_cd: str | None = Field(
+        default=None,
+        description="과세유형코드 / 길이 2 / 01.일반과세 02.비과세 03.세금우대 04.소액부징수 _.해당사항없음",
+    )
+    ttn_tp_cd_nm: str | None = Field(default=None, description="과세유형코드명 / 길이 40")
+    bnc_qty: int | None = Field(default=None, description="잔고수량 / 길이 18")
+    sll_ny_stl_qty: str | None = Field(default=None, description="매도미결제수량 / 길이 18.0")
+    byn_ny_stl_qty: str | None = Field(default=None, description="매수미결제수량 / 길이 18.0")
+    tdt_sll_ny_cns_qty: float | None = Field(default=None, description="당일매도미체결수량 / 길이 18.0")
+    sll_pbl_qty: float | None = Field(
+        default=None, description="매도가능수량 / 길이 18.0 / 장중(08:00-15:00)까지는 수량단위미만 절사"
+    )
+    phs_uit_pr: str | None = Field(default=None, description="매입단가 / 길이 18.0")
+
+
+class KrStockInquirySellableQuantity(NHPlugAssetHttpBody):
+    """매도가능수량조회 (`POST /krstock/inquiry/v1/sellableQuantity`) 응답.
+
+    연속조회를 지원한다 — 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 다음 호출에
+    전달해 이어받는다.
+    """
+
+    output_0: KrStockInquirySellableQuantityOutput | None = Field(
+        default=None, alias="Output_0", description="매도가능수량 조회 결과"
+    )

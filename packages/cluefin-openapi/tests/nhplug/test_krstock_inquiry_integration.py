@@ -72,3 +72,23 @@ def test_buyable_quantity(client: HttpClient, krstock_account: str):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+
+
+@pytest.mark.integration
+def test_sellable_quantity(client: HttpClient, krstock_account: str):
+    """매도가능수량조회 (005930, 현금/신용 잔고).
+
+    cfd_lon_cd="00"(일반거래=현금)을 사용한다 — 스펙 설명의 신용대출코드 목록 중
+    보유 잔고 유무와 무관하게 항상 유효한 가장 기본 형태다. 보유 잔고가 없어
+    매도가능수량이 0이어도 조회 자체는 성공할 것으로 예상한다.
+    """
+    try:
+        response = client.krstock_inquiry.sellable_quantity(
+            act_no=krstock_account,
+            iem_cd="005930",
+            cfd_lon_cd="00",  # 일반거래(현금)
+        )
+    except NHPlugAPIError as e:
+        skip_if_env_blocked(e)
+
+    assert response.body.rsp_cd in SUCCESS_RSP_CODES
