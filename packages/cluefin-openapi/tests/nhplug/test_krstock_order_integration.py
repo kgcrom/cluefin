@@ -215,6 +215,36 @@ def test_reserved_order(client: HttpClient, krstock_account: str):
 
 
 @pytest.mark.integration
+@real_account_only(
+    "/krstock/order/v1/reservedCancel",
+    "19999: 모의투자에서는 해당업무가 제공되지 않습니다(reservedOrder 실측 기준 추정)",
+)
+def test_reserved_cancel(client: HttpClient, krstock_account: str):
+    """예약주문취소. reservedOrder 자체가 모의투자에서 미지원(19999 실측)이라 취소 대상이 될
+    예약주문을 모의에서 만들 수 없다 — 존재하지 않는 bkg_orr_no 로 임의 호출하지 않고 처음부터
+    real_account_only 로 막는다.
+
+    운영에서 검증할 때는: 1) `reserved_order(...)` 로 예약주문을 접수해 응답의 `bkg_orr_no` 를
+    얻고, 2) 그 `bkg_orr_no` 로 이 메서드를 호출해 취소한다. 두 호출의 `sby_dit_cd`·
+    `bkg_orr_tp_cd`·`rmt_mkt_cd` 는 원예약주문과 동일해야 한다.
+    """
+    try:
+        response = client.krstock_order.reserved_cancel(
+            act_no=krstock_account,
+            sby_dit_cd="2",  # 매수 — 원예약주문과 동일하게
+            iem_cd=TEST_IEM_CD,
+            bkg_orr_no=0,  # 운영 검증 시 reserved_order 응답의 bkg_orr_no 로 교체
+            bkg_orr_tp_cd="1",  # 일반예약 — 원예약주문과 동일하게
+            rmt_mkt_cd="KRX",
+        )
+    except NHPlugAPIError as e:
+        skip_if_env_blocked(e)
+
+    assert response.body.output_0 is not None
+    assert response.body.output_0.bkg_orr_no is not None
+
+
+@pytest.mark.integration
 def test_cancel_order(client: HttpClient, krstock_account: str, krstock_pending_buy_order: dict):
     """미체결 매수주문(krstock_pending_buy_order)을 취소한다.
 

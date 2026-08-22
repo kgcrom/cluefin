@@ -105,3 +105,24 @@ class KrStockOrderReservedOrder(NHPlugAssetHttpBody):
     output_0: KrStockOrderReservedOrderOutput | None = Field(
         default=None, alias="Output_0", description="예약주문 접수 결과"
     )
+
+
+class KrStockOrderReservedCancelOutput(BaseModel):
+    """주식예약주문취소 접수 결과 — 신규·정정취소·예약주문 계열과 다른 전용 스키마(입력값 표시)다."""
+
+    model_config = ConfigDict(extra="allow")
+
+    act_no: str | None = Field(default=None, description="계좌번호 / 길이 11 / 입력값 표시")
+    sby_dit_cd: str | None = Field(default=None, description="매매구분코드 / 길이 1 / 입력값 표시 (1.매도 2.매수)")
+    iem_cd: str | None = Field(default=None, description="종목코드 / 길이 12 / 입력값 표시")
+    bkg_orr_no: int | None = Field(default=None, description="예약주문번호 / 길이 10 / 입력값 표시")
+    bkg_orr_tp_cd: str | None = Field(default=None, description="예약주문유형코드 / 길이 1 / 입력값 표시")
+    bkg_rtn_dt: str | None = Field(default=None, description="예약접수일자 / 길이 8 / 입력값 표시 (YYYYMMDD)")
+
+
+class KrStockOrderReservedCancel(NHPlugAssetHttpBody):
+    """주식예약주문취소 (`POST /krstock/order/v1/reservedCancel`) 응답."""
+
+    output_0: KrStockOrderReservedCancelOutput | None = Field(
+        default=None, alias="Output_0", description="예약주문취소 접수 결과"
+    )

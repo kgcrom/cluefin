@@ -9,6 +9,7 @@ from cluefin_openapi.nhplug._krstock_order_types import (
     KrStockOrderCreditBuy,
     KrStockOrderCreditSell,
     KrStockOrderModify,
+    KrStockOrderReservedCancel,
     KrStockOrderReservedOrder,
 )
 from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
@@ -464,3 +465,46 @@ class KrStockOrder:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockOrderReservedOrder.model_validate(data))
+
+    def reserved_cancel(
+        self,
+        act_no: str,
+        sby_dit_cd: Literal["1", "2"],
+        iem_cd: str,
+        bkg_orr_no: int,
+        bkg_orr_tp_cd: Literal["1", "2", "3"],
+        rmt_mkt_cd: Literal["KRX", "NXT"],
+        bkg_rtn_dt: Optional[str] = None,
+    ) -> NHPlugHttpResponse[KrStockOrderReservedCancel]:
+        """주식예약주문취소 (`POST /krstock/order/v1/reservedCancel`).
+
+        원예약주문 식별자는 `bkg_orr_no`(예약주문번호, reservedOrder 응답의 bkg_orr_no)다.
+        `rmt_mkt_cd` 는 reservedOrder 와 동일하게 SOR 를 지원하지 않고 KRX/NXT 만 허용한다.
+
+        Args:
+            act_no: 계좌번호 (`/n2/acctinfo` 의 acct_no — 운영은 acct_type 01·02,
+                모의투자는 03 계좌만 유효)
+            sby_dit_cd: 매매구분코드 (1.매도 2.매수, 원예약주문과 동일하게 입력)
+            iem_cd: 종목코드 (예: 005940)
+            bkg_orr_no: 예약주문번호 (취소 대상 원예약주문의 bkg_orr_no)
+            bkg_orr_tp_cd: 예약주문유형코드 (1.일반예약 2.잔량주문 3.지정수량주문,
+                원예약주문과 동일하게 입력)
+            rmt_mkt_cd: 요청시장코드 (KRX/NXT — SOR 미지원)
+            bkg_rtn_dt: 예약접수일자 (YYYYMMDD, 예약주문유형코드가 "2"·"3"일 때)
+        """
+        body = self._drop_none(
+            {
+                "act_no": act_no,
+                "sby_dit_cd": sby_dit_cd,
+                "iem_cd": iem_cd,
+                "bkg_orr_no": bkg_orr_no,
+                "bkg_orr_tp_cd": bkg_orr_tp_cd,
+                "bkg_rtn_dt": bkg_rtn_dt,
+                "rmt_mkt_cd": rmt_mkt_cd,
+            }
+        )
+        response = self.client.post("/krstock/order/v1/reservedCancel", body=body)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=KrStockOrderReservedCancel.model_validate(data))

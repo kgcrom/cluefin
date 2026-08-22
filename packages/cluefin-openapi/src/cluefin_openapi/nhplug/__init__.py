@@ -29,6 +29,8 @@ from cluefin_openapi.nhplug._krstock_order_types import (
     KrStockOrderCreditSell,
     KrStockOrderModify,
     KrStockOrderPlacedOutput,
+    KrStockOrderReservedCancel,
+    KrStockOrderReservedCancelOutput,
     KrStockOrderReservedOrder,
     KrStockOrderReservedOrderOutput,
 )
@@ -57,6 +59,8 @@ __all__ = [
     "KrStockOrderCreditSell",
     "KrStockOrderModify",
     "KrStockOrderPlacedOutput",
+    "KrStockOrderReservedCancel",
+    "KrStockOrderReservedCancelOutput",
     "KrStockOrderReservedOrder",
     "KrStockOrderReservedOrderOutput",
     "NHPlugAPIError",

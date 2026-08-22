@@ -531,3 +531,76 @@ class TestReservedOrder:
                     bkg_orr_enf_tp_cd="1",
                     rmt_mkt_cd="KRX",
                 )
+
+
+RESERVED_CANCEL_BODY = {
+    "rsp_cd": "00000",
+    "rsp_msg": "정상 처리되었습니다.",
+    "message": None,
+    "Output_0": {
+        "act_no": "50051036881",
+        "sby_dit_cd": "2",
+        "iem_cd": "005930",
+        "bkg_orr_no": 98765,
+        "bkg_orr_tp_cd": "1",
+    },
+}
+
+
+class TestReservedCancel:
+    def test_sends_input_envelope_and_parses_output(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/order/v1/reservedCancel", json=RESERVED_CANCEL_BODY)
+            response = client.krstock_order.reserved_cancel(
+                act_no="50051036881",
+                sby_dit_cd="2",
+                iem_cd="005930",
+                bkg_orr_no=98765,
+                bkg_orr_tp_cd="1",
+                rmt_mkt_cd="KRX",
+            )
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "act_no": "50051036881",
+                "sby_dit_cd": "2",
+                "iem_cd": "005930",
+                "bkg_orr_no": 98765,
+                "bkg_orr_tp_cd": "1",
+                "rmt_mkt_cd": "KRX",
+            }
+        }
+        assert response.body.rsp_cd == "00000"
+        assert response.body.output_0.bkg_orr_no == 98765
+        assert response.body.output_0.act_no == "50051036881"
+
+    def test_optional_field_omitted_when_none(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/krstock/order/v1/reservedCancel", json=RESERVED_CANCEL_BODY)
+            client.krstock_order.reserved_cancel(
+                act_no="50051036881",
+                sby_dit_cd="2",
+                iem_cd="005930",
+                bkg_orr_no=98765,
+                bkg_orr_tp_cd="1",
+                rmt_mkt_cd="KRX",
+            )
+
+        sent = json.loads(m.request_history[0].text)["Input_0"]
+        assert "bkg_rtn_dt" not in sent
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/order/v1/reservedCancel",
+                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
+            )
+            with pytest.raises(NHPlugAPIError, match="IGW40018"):
+                client.krstock_order.reserved_cancel(
+                    act_no="00000000000",
+                    sby_dit_cd="2",
+                    iem_cd="005930",
+                    bkg_orr_no=99999,
+                    bkg_orr_tp_cd="1",
+                    rmt_mkt_cd="KRX",
+                )
