@@ -22,6 +22,9 @@ from cluefin_openapi.nhplug._http_client import HttpClient
 from cluefin_openapi.nhplug._model import NHPlugHttpBody, NHPlugHttpHeader, NHPlugHttpResponse, NHPlugMessage
 from cluefin_openapi.nhplug._overseas_stock_inquiry import OverseasStockInquiry
 from cluefin_openapi.nhplug._overseas_stock_inquiry_types import (
+    OverseasStockBalance,
+    OverseasStockBalanceItem,
+    OverseasStockBalanceOutput,
     OverseasStockBuyableAmount,
     OverseasStockBuyableAmountOutput,
     OverseasStockUnexecuted,
@@ -60,6 +63,9 @@ __all__ = [
     "NHPlugServerError",
     "NHPlugTimeoutError",
     "NHPlugValidationError",
+    "OverseasStockBalance",
+    "OverseasStockBalanceItem",
+    "OverseasStockBalanceOutput",
     "OverseasStockBuyableAmount",
     "OverseasStockBuyableAmountOutput",
     "OverseasStockInquiry",

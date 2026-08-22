@@ -2,7 +2,11 @@ from typing import Optional
 
 from cluefin_openapi.nhplug._http_client import HttpClient
 from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
-from cluefin_openapi.nhplug._overseas_stock_inquiry_types import OverseasStockBuyableAmount, OverseasStockUnexecuted
+from cluefin_openapi.nhplug._overseas_stock_inquiry_types import (
+    OverseasStockBalance,
+    OverseasStockBuyableAmount,
+    OverseasStockUnexecuted,
+)
 from cluefin_openapi.nhplug._response import check_response_error
 
 
@@ -132,3 +136,48 @@ class OverseasStockInquiry:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockUnexecuted.model_validate(data))
+
+    def get_balance(
+        self,
+        act_no: str,
+        qut_iqr_dit_cd: str,
+        fc_sec_trd_nat_cd: str,
+        cur_cd: str,
+        xns_dit_cd: Optional[str] = None,
+        cts: Optional[str] = None,
+    ) -> NHPlugHttpResponse[OverseasStockBalance]:
+        """해외주식 잔고 (`POST /gbstock/inquiry/v1/balance`).
+
+        계좌의 해외주식 잔고 요약(`Output_0`)과 종목별 잔고 목록(`Output_1`)을
+        조회하는 API 이다. 응답 블록은 데이터가 있을 때만 내려온다.
+
+        Args:
+            act_no: 계좌번호 (길이 11). `/n2/acctinfo` 의 acct_no 사용
+                (운영은 acct_type=01·02, 모의투자는 03 계좌만 유효).
+            qut_iqr_dit_cd: 시세조회구분코드 (길이 1) (1.정규장 9.전체)
+            fc_sec_trd_nat_cd: 외화증권거래국가코드 (길이 3) (200.미국 070.일본 120.홍콩
+                160.상해 170.심천)
+            cur_cd: 통화코드 (길이 3) (KRW.전체 USD.USD CNY.CNY HKD.HKD JPY.JPY)
+            xns_dit_cd: 비용구분코드 (길이 1) (0.미포함 1.포함)
+            cts: 연속거래키. 이전 응답 헤더의 `cts` 값을 그대로 전달하면 다음 페이지를 받는다.
+
+        Returns:
+            NHPlugHttpResponse[OverseasStockBalance]: 잔고 요약(`Output_0`) 및
+                종목별 잔고 목록(`Output_1`) 조회 결과
+        """
+        body: dict = {
+            "act_no": act_no,
+            "qut_iqr_dit_cd": qut_iqr_dit_cd,
+            "fc_sec_trd_nat_cd": fc_sec_trd_nat_cd,
+            "cur_cd": cur_cd,
+        }
+        optional_fields = {
+            "xns_dit_cd": xns_dit_cd,
+        }
+        body.update({k: v for k, v in optional_fields.items() if v is not None})
+
+        response = self.client.post("/gbstock/inquiry/v1/balance", body=body, cts=cts)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=OverseasStockBalance.model_validate(data))

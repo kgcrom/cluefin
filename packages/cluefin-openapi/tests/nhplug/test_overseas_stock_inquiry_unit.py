@@ -12,6 +12,7 @@ BASE_DEV = "https://moapi.nhplug.com:8443"
 
 BUYABLE_AMOUNT_URL = f"{BASE_DEV}/gbstock/inquiry/v1/buyableAmount"
 ORDER_EXECUTIONS_URL = f"{BASE_DEV}/gbstock/inquiry/v1/unexecuted"
+BALANCE_URL = f"{BASE_DEV}/gbstock/inquiry/v1/balance"
 
 ORDER_EXECUTIONS_OK_BODY = {
     "Output_0": [
@@ -86,6 +87,123 @@ BUYABLE_AMOUNT_OK_BODY = {
         "max_pbl_qty": 63,
         "csh_wtm_rt": 0.25,
     },
+    "message": {"msg_code": "0000", "usr_msg": "정상 처리되었습니다."},
+}
+
+
+BALANCE_OK_BODY = {
+    "Output_0": {
+        "abk_amt": 10000000,
+        "eal_amt_sum": 10500000,
+        "eal_pls_sum_amt": 500000,
+        "krw_pft_rt": 5.0,
+        "krw_dca": 1000000,
+        "krw_ny_stl_xcl_amt": 0,
+        "tot_aet_amt": 11500000,
+        "fc_abk_amt": 7500.5,
+        "fc_eal_amt": 7875.75,
+        "fc_eal_pls_amt": 375.25,
+        "pft_rt": 5.0,
+        "fc_dca": 750.0,
+        "fc_ny_stl_xcl_amt": 0.0,
+        "fc_aet_amt": 8625.75,
+        "ptps_ttn_amt": 0.0,
+        "ptps_ttn_amt1": 0.0,
+    },
+    "Output_1": [
+        {
+            "fc_sec_trd_nat_cd": "200",
+            "fc_sec_trd_nat_nm": "미국",
+            "iem_cd": "AAPL",
+            "oss_iem_eng_nm": "APPLE INC",
+            "iem_nm": "애플",
+            "cns_bse_bnc_qty": 10,
+            "sll_cns_qty": 0,
+            "byn_cns_qty": 10,
+            "sll_pbl_qty1": 10,
+            "fc_abk_amt": 1500.25,
+            "krw_abk_amt1": 2000000,
+            "fc_phs_uit_pr": 150.025,
+            "phs_uit_pr": 200000,
+            "fc_sec_end_pr": 157.5,
+            "end_pr": 210000,
+            "fc_eal_amt": 1575.0,
+            "krw_eal_amt": 2100000,
+            "fc_eal_pls_amt": 74.75,
+            "krw_eal_pls_amt": 100000,
+            "eal_pft_rt": 4.98,
+            "eal_pft_rt1": 4.98,
+            "cur_cd": "USD",
+            "phs_xcg_rt": 1330.5,
+            "tdt_sby_bse_xcg_rt": 1332.0,
+            "fc_mkt_dit_cd": "200",
+            "fc_sll_pls_amt": 0.0,
+            "krw_sll_pls_amt": 0,
+            "fc_sll_pft_rt": 0.0,
+            "krw_sll_pft_rt": 0.0,
+            "fc_cns_bse_phs_xps": 1500.25,
+            "krw_cns_bse_phs_xps": 2000000,
+            "fc_avg_phs_pr": 150.025,
+            "krw_avg_phs_pr": 200000,
+            "fc_fee": 1.5,
+            "krw_fee": 2000,
+            "fc_tax_amt": 0.5,
+            "krw_tax_amt": 700,
+            "fc_pls_qtr_phs_pr": 150.5,
+            "krw_pls_qtr_phs_pr": 200500,
+            "sby_fee_rt": 0.001,
+            "fc_stk_lws_sby_fee": 0.5,
+            "cfd_lon_cd_nm": "현금",
+            "lon_dt": "",
+            "xrn_dt": "",
+        },
+        {
+            "fc_sec_trd_nat_cd": "070",
+            "fc_sec_trd_nat_nm": "일본",
+            "iem_cd": "7203",
+            "oss_iem_eng_nm": "TOYOTA MOTOR CORP",
+            "iem_nm": "토요타자동차",
+            "cns_bse_bnc_qty": 5,
+            "sll_cns_qty": 0,
+            "byn_cns_qty": 5,
+            "sll_pbl_qty1": 5,
+            "fc_abk_amt": 100000.0,
+            "krw_abk_amt1": 900000,
+            "fc_phs_uit_pr": 20000.0,
+            "phs_uit_pr": 180000,
+            "fc_sec_end_pr": 21000.0,
+            "end_pr": 189000,
+            "fc_eal_amt": 105000.0,
+            "krw_eal_amt": 945000,
+            "fc_eal_pls_amt": 5000.0,
+            "krw_eal_pls_amt": 45000,
+            "eal_pft_rt": 5.0,
+            "eal_pft_rt1": 5.0,
+            "cur_cd": "JPY",
+            "phs_xcg_rt": 9.0,
+            "tdt_sby_bse_xcg_rt": 9.05,
+            "fc_mkt_dit_cd": "070",
+            "fc_sll_pls_amt": 0.0,
+            "krw_sll_pls_amt": 0,
+            "fc_sll_pft_rt": 0.0,
+            "krw_sll_pft_rt": 0.0,
+            "fc_cns_bse_phs_xps": 100000.0,
+            "krw_cns_bse_phs_xps": 900000,
+            "fc_avg_phs_pr": 20000.0,
+            "krw_avg_phs_pr": 180000,
+            "fc_fee": 100.0,
+            "krw_fee": 900,
+            "fc_tax_amt": 50.0,
+            "krw_tax_amt": 450,
+            "fc_pls_qtr_phs_pr": 20050.0,
+            "krw_pls_qtr_phs_pr": 180450,
+            "sby_fee_rt": 0.001,
+            "fc_stk_lws_sby_fee": 50.0,
+            "cfd_lon_cd_nm": "현금",
+            "lon_dt": "",
+            "xrn_dt": "",
+        },
+    ],
     "message": {"msg_code": "0000", "usr_msg": "정상 처리되었습니다."},
 }
 
@@ -303,4 +421,90 @@ class TestGetOrderExecutions:
                     oss_sby_dit_cd="0",
                     sot_dit="0",
                     ost_cns_dit="0",
+                )
+
+
+class TestGetBalance:
+    def test_sends_input_envelope(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(BALANCE_URL, json=BALANCE_OK_BODY)
+            client.overseas_stock_inquiry.get_balance(
+                act_no="50051036881",
+                qut_iqr_dit_cd="1",
+                fc_sec_trd_nat_cd="200",
+                cur_cd="USD",
+                xns_dit_cd="0",
+            )
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "act_no": "50051036881",
+                "qut_iqr_dit_cd": "1",
+                "fc_sec_trd_nat_cd": "200",
+                "cur_cd": "USD",
+                "xns_dit_cd": "0",
+            }
+        }
+
+    def test_omits_optional_fields_when_not_given(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(BALANCE_URL, json=BALANCE_OK_BODY)
+            client.overseas_stock_inquiry.get_balance(
+                act_no="50051036881",
+                qut_iqr_dit_cd="1",
+                fc_sec_trd_nat_cd="200",
+                cur_cd="USD",
+            )
+
+        sent = json.loads(m.request_history[0].text)["Input_0"]
+        assert "xns_dit_cd" not in sent
+
+    def test_parses_balance_response(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(BALANCE_URL, json=BALANCE_OK_BODY, headers={"cts_flag": "N"})
+            response = client.overseas_stock_inquiry.get_balance(
+                act_no="50051036881",
+                qut_iqr_dit_cd="1",
+                fc_sec_trd_nat_cd="200",
+                cur_cd="USD",
+            )
+
+        assert response.body.output_0 is not None
+        assert response.body.output_0.tot_aet_amt == 11500000
+        assert response.body.output_0.krw_pft_rt == 5.0
+
+        assert response.body.output_1 is not None
+        assert len(response.body.output_1) == 2
+        first, second = response.body.output_1
+        assert first.iem_cd == "AAPL"
+        assert first.krw_eal_amt == 2100000
+        assert second.iem_cd == "7203"
+        assert second.cur_cd == "JPY"
+
+        assert response.body.message.usr_msg == "정상 처리되었습니다."
+        assert response.header.cts_flag == "N"
+
+    def test_parses_response_without_output_blocks(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(BALANCE_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
+            response = client.overseas_stock_inquiry.get_balance(
+                act_no="50051036881",
+                qut_iqr_dit_cd="1",
+                fc_sec_trd_nat_cd="200",
+                cur_cd="USD",
+            )
+
+        assert response.body.output_0 is None
+        assert response.body.output_1 is None
+        assert response.body.rsp_cd == "00000"
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(BALANCE_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
+            with pytest.raises(NHPlugAPIError, match="40310"):
+                client.overseas_stock_inquiry.get_balance(
+                    act_no="50051036881",
+                    qut_iqr_dit_cd="1",
+                    fc_sec_trd_nat_cd="200",
+                    cur_cd="USD",
                 )

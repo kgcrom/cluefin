@@ -111,3 +111,96 @@ class OverseasStockUnexecuted(BaseModel):
         default=None, alias="Output_0", description="주문체결내역 조회 결과"
     )
     message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
+
+
+class OverseasStockBalanceOutput(BaseModel):
+    """해외주식 잔고조회 결과 (`Output_0`)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    abk_amt: int | None = Field(default=None, description="장부금액 / 길이 18")
+    eal_amt_sum: int | None = Field(default=None, description="평가금액합계 / 길이 18")
+    eal_pls_sum_amt: int | None = Field(default=None, description="평가손익합계금액 / 길이 18")
+    krw_pft_rt: float | None = Field(default=None, description="원화수익율 / 길이 15.9")
+    krw_dca: int | None = Field(default=None, description="원화예수금 / 길이 18")
+    krw_ny_stl_xcl_amt: int | None = Field(default=None, description="원화미결제정산금액 / 길이 18")
+    tot_aet_amt: int | None = Field(default=None, description="총자산금액 / 길이 18")
+    fc_abk_amt: float | None = Field(default=None, description="외화장부금액 / 길이 15.3")
+    fc_eal_amt: float | None = Field(default=None, description="외화평가금액 / 길이 15.3")
+    fc_eal_pls_amt: float | None = Field(default=None, description="외화평가손익금액 / 길이 15.3")
+    pft_rt: float | None = Field(default=None, description="수익율 / 길이 15.9")
+    fc_dca: float | None = Field(default=None, description="외화예수금 / 길이 15.3")
+    fc_ny_stl_xcl_amt: float | None = Field(default=None, description="외화미결제정산금액 / 길이 15.3")
+    fc_aet_amt: float | None = Field(default=None, description="외화자산금액 / 길이 15.3")
+    ptps_ttn_amt: float | None = Field(default=None, description="PTP과세금액 / 길이 15.3")
+    ptps_ttn_amt1: float | None = Field(default=None, description="PTP과세금액1 / 길이 15.3")
+
+
+class OverseasStockBalanceItem(BaseModel):
+    """해외주식 잔고조회 결과 항목 (`Output_1` 배열 원소)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    fc_sec_trd_nat_cd: str | None = Field(default=None, description="외화증권거래국가코드 / 길이 3")
+    fc_sec_trd_nat_nm: str | None = Field(default=None, description="외화증권거래국가명 / 길이 50")
+    iem_cd: str | None = Field(default=None, description="종목코드 / 길이 12")
+    oss_iem_eng_nm: str | None = Field(default=None, description="해외증권종목영문명 / 길이 60")
+    iem_nm: str | None = Field(default=None, description="외화증권한글명 / 길이 60")
+    cns_bse_bnc_qty: int | None = Field(default=None, description="체결기준잔고수량 / 길이 18")
+    sll_cns_qty: int | None = Field(default=None, description="매도체결수량 / 길이 18")
+    byn_cns_qty: int | None = Field(default=None, description="매수체결수량 / 길이 18")
+    sll_pbl_qty1: int | None = Field(default=None, description="매도가능수량1 / 길이 18")
+    fc_abk_amt: float | None = Field(default=None, description="외화장부금액 / 길이 15.3")
+    krw_abk_amt1: int | None = Field(default=None, description="원화장부금액1 / 길이 18")
+    fc_phs_uit_pr: float | None = Field(default=None, description="외화매입단가 / 길이 15.6")
+    phs_uit_pr: int | None = Field(default=None, description="매입단가 / 길이 15")
+    fc_sec_end_pr: float | None = Field(default=None, description="외화증권종가 / 길이 15.6")
+    end_pr: int | None = Field(default=None, description="종가 / 길이 15")
+    fc_eal_amt: float | None = Field(default=None, description="외화평가금액 / 길이 15.3")
+    krw_eal_amt: int | None = Field(default=None, description="원화평가금액 / 길이 18")
+    fc_eal_pls_amt: float | None = Field(default=None, description="외화평가손익금액 / 길이 15.3")
+    krw_eal_pls_amt: int | None = Field(default=None, description="원화평가손익금액 / 길이 18")
+    eal_pft_rt: float | None = Field(default=None, description="평가수익율 / 길이 15.9")
+    eal_pft_rt1: float | None = Field(default=None, description="평가수익율1 / 길이 15.9")
+    cur_cd: str | None = Field(default=None, description="통화코드 / 길이 3")
+    phs_xcg_rt: float | None = Field(default=None, description="매입환율 / 길이 13.6")
+    tdt_sby_bse_xcg_rt: float | None = Field(default=None, description="당일매매기준환율 / 길이 12.6")
+    fc_mkt_dit_cd: str | None = Field(default=None, description="외화시장구분코드 / 길이 3")
+    fc_sll_pls_amt: float | None = Field(default=None, description="외화매도손익금액 / 길이 15.3")
+    krw_sll_pls_amt: int | None = Field(default=None, description="원화매도손익금액 / 길이 18")
+    fc_sll_pft_rt: float | None = Field(default=None, description="외화매도수익율 / 길이 15.9")
+    krw_sll_pft_rt: float | None = Field(default=None, description="원화매도수익율 / 길이 15.9")
+    fc_cns_bse_phs_xps: float | None = Field(default=None, description="외화체결기준매입비 / 길이 15.3")
+    krw_cns_bse_phs_xps: int | None = Field(default=None, description="원화체결기준매입비 / 길이 18")
+    fc_avg_phs_pr: float | None = Field(default=None, description="외화평균매입가격 / 길이 15.6")
+    krw_avg_phs_pr: int | None = Field(default=None, description="원화평균매입가격 / 길이 18")
+    fc_fee: float | None = Field(default=None, description="외화수수료 / 길이 15.3")
+    krw_fee: int | None = Field(default=None, description="원화수수료 / 길이 18")
+    fc_tax_amt: float | None = Field(default=None, description="외화세금금액 / 길이 15.3")
+    krw_tax_amt: int | None = Field(default=None, description="원화세금금액 / 길이 18")
+    fc_pls_qtr_phs_pr: float | None = Field(default=None, description="외화손익분기매입가격 / 길이 15.6")
+    krw_pls_qtr_phs_pr: int | None = Field(default=None, description="원화손익분기매입가격 / 길이 18")
+    sby_fee_rt: float | None = Field(default=None, description="매매수수료율 / 길이 15.9")
+    fc_stk_lws_sby_fee: float | None = Field(default=None, description="외화주식최저매매수수료 / 길이 15.3")
+    cfd_lon_cd_nm: str | None = Field(default=None, description="신용대출코드명 / 길이 8")
+    lon_dt: str | None = Field(default=None, description="대출일자 / 길이 8")
+    xrn_dt: str | None = Field(default=None, description="만기일자 / 길이 8")
+
+
+class OverseasStockBalance(BaseModel):
+    """해외주식 잔고조회 (`POST /gbstock/inquiry/v1/balance`) 응답.
+
+    응답 블록은 데이터가 있을 때만 내려오므로 모두 Optional.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    rsp_cd: str | None = Field(default=None, description="응답코드")
+    rsp_msg: str | None = Field(default=None, description="응답메시지")
+    output_0: OverseasStockBalanceOutput | None = Field(
+        default=None, alias="Output_0", description="잔고 요약 조회 결과"
+    )
+    output_1: list[OverseasStockBalanceItem] | None = Field(
+        default=None, alias="Output_1", description="잔고 종목별 조회 결과"
+    )
+    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
