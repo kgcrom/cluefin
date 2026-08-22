@@ -2,7 +2,10 @@ from typing import Optional
 
 from cluefin_openapi.nhplug._http_client import HttpClient
 from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
-from cluefin_openapi.nhplug._overseas_stock_quote_types import OverseasStockCurrentPrice
+from cluefin_openapi.nhplug._overseas_stock_quote_types import (
+    OverseasStockCurrentPrice,
+    OverseasStockExecutionTrend,
+)
 from cluefin_openapi.nhplug._response import check_response_error
 
 
@@ -44,3 +47,38 @@ class OverseasStockQuote:
         self._check_response_error(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockCurrentPrice.model_validate(data))
+
+    def get_execution_trend(
+        self,
+        period_type: str,
+        req_cnt: int,
+        iem_cd: str,
+        cts: Optional[str] = None,
+    ) -> NHPlugHttpResponse[OverseasStockExecutionTrend]:
+        """해외주식 체결추이 (`POST /gbstock/quote/v1/executionTrend`).
+
+        해외주식 변동거래량을 조회하는 API 이다. 응답 블록은 데이터가 있을 때만
+        내려오므로 존재 여부를 먼저 확인해야 한다.
+
+        시세 API 는 모의투자(moapi) 미지원 — 운영 도메인 전용 (실측 IGW40019).
+
+        Args:
+            period_type: 기간구분 (길이 1). 1.시간별 2.일별
+            req_cnt: 요청건수 (길이 4)
+            iem_cd: 종목코드 (길이 15). 예: 미국주식 APPLE인 경우 AAPL
+            cts: 연속거래키. 이전 응답 헤더의 `cts` 값을 그대로 전달하면 다음 페이지를 받는다.
+
+        Returns:
+            NHPlugHttpResponse[OverseasStockExecutionTrend]: 체결추이 조회 결과(`Output_0`)
+        """
+        body: dict = {
+            "period_type": period_type,
+            "req_cnt": req_cnt,
+            "iem_cd": iem_cd,
+        }
+
+        response = self.client.post("/gbstock/quote/v1/executionTrend", body=body, cts=cts)
+        data = response.json()
+        self._check_response_error(data)
+        header = NHPlugHttpHeader.model_validate(dict(response.headers))
+        return NHPlugHttpResponse(header=header, body=OverseasStockExecutionTrend.model_validate(data))

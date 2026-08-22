@@ -11,6 +11,33 @@ from cluefin_openapi.nhplug._http_client import HttpClient
 BASE_DEV = "https://moapi.nhplug.com:8443"
 
 CURRENT_PRICE_URL = f"{BASE_DEV}/gbstock/quote/v1/current"
+EXECUTION_TREND_URL = f"{BASE_DEV}/gbstock/quote/v1/executionTrend"
+
+EXECUTION_TREND_OK_BODY = {
+    "Output_0": [
+        {
+            "iem_cd": "AAPL",
+            "trade_date": "20260821",
+            "trade_time": "153000",
+            "trdprc": 227.55,
+            "netchng_cls": "2",
+            "netchng": 1.25,
+            "pctchng": 0.55,
+            "turnover": 10251345000.0,
+            "fill_size": 100,
+            "acvol": 45123456,
+            "open_prc": 226.5,
+            "high": 228.0,
+            "low": 225.75,
+            "best_ask1": 227.6,
+            "best_bid1": 227.5,
+            "cont_rate": 105.3,
+            "nextbutton": "0",
+            "ctsz18": "000000000000000001",
+        }
+    ],
+    "message": {"msg_code": "0000", "usr_msg": "정상 처리되었습니다."},
+}
 
 CURRENT_PRICE_OK_BODY = {
     "Output_0": {
@@ -143,3 +170,65 @@ class TestGetCurrentPrice:
             m.post(CURRENT_PRICE_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
             with pytest.raises(NHPlugAPIError, match="40310"):
                 client.overseas_stock_quote.get_current_price(iem_cd="AAPL")
+
+
+class TestGetExecutionTrend:
+    def test_sends_input_envelope(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(EXECUTION_TREND_URL, json=EXECUTION_TREND_OK_BODY)
+            client.overseas_stock_quote.get_execution_trend(period_type="2", req_cnt=10, iem_cd="AAPL")
+
+        assert json.loads(m.request_history[0].text) == {
+            "Input_0": {
+                "period_type": "2",
+                "req_cnt": 10,
+                "iem_cd": "AAPL",
+            }
+        }
+
+    def test_parses_execution_trend_response(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(EXECUTION_TREND_URL, json=EXECUTION_TREND_OK_BODY, headers={"cts_flag": "N"})
+            response = client.overseas_stock_quote.get_execution_trend(period_type="2", req_cnt=10, iem_cd="AAPL")
+
+        assert response.body.output_0 is not None
+        assert len(response.body.output_0) == 1
+        item = response.body.output_0[0]
+        assert item.iem_cd == "AAPL"
+        assert item.trade_date == "20260821"
+        assert item.trdprc == 227.55
+        assert item.fill_size == 100
+        assert item.acvol == 45123456
+        assert item.cont_rate == 105.3
+        assert response.body.message.usr_msg == "정상 처리되었습니다."
+        assert response.header.cts_flag == "N"
+
+    def test_parses_response_without_output_block(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(EXECUTION_TREND_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
+            response = client.overseas_stock_quote.get_execution_trend(period_type="1", req_cnt=5, iem_cd="AAPL")
+
+        assert response.body.output_0 is None
+        assert response.body.rsp_cd == "00000"
+
+    def test_sends_cts_header_for_continuation(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(EXECUTION_TREND_URL, json={"rsp_cd": "00000", "rsp_msg": "정상"})
+            response = client.overseas_stock_quote.get_execution_trend(
+                period_type="1",
+                req_cnt=5,
+                iem_cd="AAPL",
+                cts="CTS_TOKEN_1",
+            )
+
+        sent_headers = m.request_history[0].headers
+        assert sent_headers["cts"] == "CTS_TOKEN_1"
+        assert sent_headers["cts_flag"] == "Y"
+        assert response.body.output_0 is None
+        assert response.body.rsp_cd == "00000"
+
+    def test_raises_on_failing_rsp_cd(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(EXECUTION_TREND_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
+            with pytest.raises(NHPlugAPIError, match="40310"):
+                client.overseas_stock_quote.get_execution_trend(period_type="1", req_cnt=5, iem_cd="AAPL")

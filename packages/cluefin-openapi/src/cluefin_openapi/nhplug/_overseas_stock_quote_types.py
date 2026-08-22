@@ -114,6 +114,52 @@ class OverseasStockCurrentPriceItem(BaseModel):
     normal_low: float | None = Field(default=None, description="정규장저가 / 길이 17")
 
 
+class OverseasStockExecutionTrendItem(BaseModel):
+    """해외주식 체결추이 조회 결과 (`Output_0`) 항목."""
+
+    model_config = ConfigDict(extra="allow")
+
+    iem_cd: str | None = Field(default=None, description="종목코드 / 길이 15")
+    trade_date: str | None = Field(default=None, description="체결일자 / 길이 8 / YYYYMMDD")
+    trade_time: str | None = Field(default=None, description="체결시간 / 길이 6 / HHMMSS")
+    trdprc: float | None = Field(default=None, description="체결가 / 길이 17")
+    netchng_cls: str | None = Field(
+        default=None,
+        description=(
+            "전일대비구분 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)"
+        ),
+    )
+    netchng: float | None = Field(default=None, description="전일대비가 / 길이 17")
+    pctchng: float | None = Field(default=None, description="전일대비율 / 길이 8")
+    turnover: float | None = Field(default=None, description="거래대금 / 길이 17")
+    fill_size: int | None = Field(default=None, description="변동량 / 길이 15")
+    acvol: int | None = Field(default=None, description="체결량 / 길이 15")
+    open_prc: float | None = Field(default=None, description="시가 / 길이 17")
+    high: float | None = Field(default=None, description="고가 / 길이 17")
+    low: float | None = Field(default=None, description="저가 / 길이 17")
+    best_ask1: float | None = Field(default=None, description="매도1호가 / 길이 17")
+    best_bid1: float | None = Field(default=None, description="매수1호가 / 길이 17")
+    cont_rate: float | None = Field(default=None, description="당일체결강도 / 길이 8")
+    nextbutton: str | None = Field(default=None, description="NEXTBUTTON / 길이 1")
+    ctsz18: str | None = Field(default=None, description="CTSz18 / 길이 18")
+
+
+class OverseasStockExecutionTrend(BaseModel):
+    """해외주식 체결추이 (`POST /gbstock/quote/v1/executionTrend`) 응답.
+
+    응답 블록은 데이터가 있을 때만 내려오므로 모두 Optional.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    rsp_cd: str | None = Field(default=None, description="응답코드")
+    rsp_msg: str | None = Field(default=None, description="응답메시지")
+    output_0: list[OverseasStockExecutionTrendItem] | None = Field(
+        default=None, alias="Output_0", description="해외주식 체결추이 조회 결과"
+    )
+    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
+
+
 class OverseasStockCurrentPrice(BaseModel):
     """해외주식 현재가상세 (`POST /gbstock/quote/v1/current`) 응답.
 

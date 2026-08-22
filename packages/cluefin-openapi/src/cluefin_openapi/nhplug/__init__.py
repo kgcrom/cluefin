@@ -58,6 +58,8 @@ from cluefin_openapi.nhplug._overseas_stock_quote import OverseasStockQuote
 from cluefin_openapi.nhplug._overseas_stock_quote_types import (
     OverseasStockCurrentPrice,
     OverseasStockCurrentPriceItem,
+    OverseasStockExecutionTrend,
+    OverseasStockExecutionTrendItem,
 )
 from cluefin_openapi.nhplug._socket_client import SocketClient, SubscriptionType, WebSocketEvent, WebSocketMessage
 from cluefin_openapi.nhplug._token_manager import TokenManager
@@ -90,6 +92,8 @@ __all__ = [
     "OverseasStockDailyTransaction",
     "OverseasStockDailyTransactionItem",
     "OverseasStockDailyTransactionSummary",
+    "OverseasStockExecutionTrend",
+    "OverseasStockExecutionTrendItem",
     "OverseasStockInquiry",
     "OverseasStockMargin",
     "OverseasStockMarginItem",
