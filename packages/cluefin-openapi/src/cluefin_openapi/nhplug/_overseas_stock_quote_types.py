@@ -160,6 +160,100 @@ class OverseasStockExecutionTrend(BaseModel):
     message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
 
 
+class OverseasStockPeriodPriceOutput0Item(BaseModel):
+    """해외주식 기간별시세(개별종목) 조회 결과 (`Output_0`) 항목."""
+
+    model_config = ConfigDict(extra="allow")
+
+    date: str | None = Field(default=None, description="조회날짜 / 길이 8 / YYYYMMDD")
+    time: str | None = Field(default=None, description="조회시간 / 길이 6 / HHMMSS")
+    iem_cd: str | None = Field(default=None, description="종목코드 / 길이 15")
+    kor_name: str | None = Field(default=None, description="종목명 / 길이 40")
+    trdprc: float | None = Field(default=None, description="현재가 / 길이 17")
+    netchng_cls: str | None = Field(
+        default=None,
+        description=("등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)"),
+    )
+    netchng: float | None = Field(default=None, description="대비 / 길이 17")
+    pctchng: float | None = Field(default=None, description="대비율 / 길이 8")
+    acvol: float | None = Field(default=None, description="거래량 / 길이 15")
+    turnover: float | None = Field(default=None, description="거래대금 / 길이 15")
+    open_prc: float | None = Field(default=None, description="시가 / 길이 17")
+    high: float | None = Field(default=None, description="고가 / 길이 17")
+    low: float | None = Field(default=None, description="저가 / 길이 17")
+    per: float | None = Field(default=None, description="PER / 길이 11")
+    pbr: float | None = Field(default=None, description="PBR / 길이 11")
+    eps: float | None = Field(default=None, description="EPS / 길이 14")
+    list_num: float | None = Field(default=None, description="상장주수 / 길이 18")
+    list_amt: float | None = Field(default=None, description="시가총액 / 길이 18")
+    hst_open_prc: float | None = Field(default=None, description="전일시가 / 길이 17")
+    hst_high: float | None = Field(default=None, description="전일고가 / 길이 17")
+    hst_low: float | None = Field(default=None, description="전일저가 / 길이 17")
+    hst_trdprc: float | None = Field(default=None, description="전일종가 / 길이 17")
+    hst_acvol: float | None = Field(default=None, description="전일거래량 / 길이 18")
+    hst_acvol_rate: float | None = Field(default=None, description="전일거래량대비 / 길이 18")
+    best_ask: float | None = Field(default=None, description="매도호가 / 길이 17")
+    best_bid: float | None = Field(default=None, description="매수호가 / 길이 17")
+    week_open_prc: float | None = Field(default=None, description="이번주시가 / 길이 17")
+    week_high: float | None = Field(default=None, description="이번주고가 / 길이 17")
+    week_low: float | None = Field(default=None, description="이번주저가 / 길이 17")
+    mon_open_prc: float | None = Field(default=None, description="이번달시가 / 길이 17")
+    mon_high: float | None = Field(default=None, description="이번달고가 / 길이 17")
+    mon_low: float | None = Field(default=None, description="이번달저가 / 길이 17")
+    market_start_time: str | None = Field(default=None, description="장시작시간 / 길이 6 / HHMMSS")
+    market_end_time: str | None = Field(default=None, description="장마감시간 / 길이 6 / HHMMSS")
+    bsop_date: str | None = Field(default=None, description="영업일 / 길이 8 / YYYYMMDD")
+    fx_rate: float | None = Field(default=None, description="환율 / 길이 10")
+    trading_cls: str | None = Field(default=None, description="실시간구분 / 길이 1")
+    decimal: str | None = Field(default=None, description="소수점 / 길이 1")
+    base_prc: float | None = Field(default=None, description="기준가 / 길이 17")
+    ctsz16: str | None = Field(default=None, description="검색키 / 길이 16")
+    tick_cnt: str | None = Field(default=None, description="마지막틱봉갯수 / 길이 5")
+    count: str | None = Field(default=None, description="조회건수 / 길이 4")
+    marketperiod_cls: str | None = Field(default=None, description="현재시장구분 / 길이 1")
+    r_base_prc: float | None = Field(default=None, description="직전정규장기준가 / 길이 17")
+
+
+class OverseasStockPeriodPriceOutput1Item(BaseModel):
+    """해외주식 기간별시세(개별종목) 조회 결과 (`Output_1`) 항목."""
+
+    model_config = ConfigDict(extra="allow")
+
+    trade_date: str | None = Field(default=None, description="체결일자 / 길이 8 / YYYYMMDD")
+    trade_time: str | None = Field(default=None, description="체결시간 / 길이 6 / HHmmSS")
+    open_prc: float | None = Field(default=None, description="시가 / 길이 17")
+    high: float | None = Field(default=None, description="고가 / 길이 17")
+    low: float | None = Field(default=None, description="저가 / 길이 17")
+    # 스펙은 string 이지만 실서버(2026-08-22)는 숫자로 내려준다.
+    close_prc: float | None = Field(default=None, description="종가 / 길이 17")
+    movolume: int | None = Field(default=None, description="변동거래량 / 길이 15")
+    movalue: float | None = Field(default=None, description="변동거래대금 / 길이 17")
+    netchng_cls: str | None = Field(
+        default=None,
+        description=("등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)"),
+    )
+    bsop_date: str | None = Field(default=None, description="영업일 / 길이 8 / YYYYMMDD")
+
+
+class OverseasStockPeriodPrice(BaseModel):
+    """해외주식 기간별시세(개별종목) (`POST /gbstock/quote/v1/period`) 응답.
+
+    응답 블록은 데이터가 있을 때만 내려오므로 모두 Optional.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    rsp_cd: str | None = Field(default=None, description="응답코드")
+    rsp_msg: str | None = Field(default=None, description="응답메시지")
+    output_0: list[OverseasStockPeriodPriceOutput0Item] | None = Field(
+        default=None, alias="Output_0", description="해외주식 기간별시세(개별종목) 조회 결과"
+    )
+    output_1: list[OverseasStockPeriodPriceOutput1Item] | None = Field(
+        default=None, alias="Output_1", description="해외주식 기간별시세(개별종목) 변동거래량 조회 결과"
+    )
+    message: NHPlugMessage | None = Field(default=None, description="공통 응답 메시지 봉투")
+
+
 class OverseasStockCurrentPrice(BaseModel):
     """해외주식 현재가상세 (`POST /gbstock/quote/v1/current`) 응답.
 
