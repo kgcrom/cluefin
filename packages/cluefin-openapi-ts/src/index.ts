@@ -23,6 +23,14 @@ export {
   KiwoomServerError,
   KiwoomTimeoutError,
   KiwoomValidationError,
+  NhplugApiError,
+  NhplugAuthenticationError,
+  NhplugAuthorizationError,
+  NhplugNetworkError,
+  NhplugRateLimitError,
+  NhplugServerError,
+  NhplugTimeoutError,
+  NhplugValidationError,
 } from './core/errors';
 export type { Logger } from './core/logger';
 export { consoleLogger, silentLogger } from './core/logger';
@@ -32,6 +40,7 @@ export type {
   EndpointParamDefinition,
   KisEndpointDefinition,
   KiwoomEndpointDefinition,
+  NhplugEndpointDefinition,
   RateLimitOptions,
 } from './core/types';
 export type {
@@ -47,3 +56,4 @@ export { BaseWebSocketClient } from './core/websocket';
 
 export * from './kis';
 export * from './kiwoom';
+export * from './nhplug';

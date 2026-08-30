@@ -354,6 +354,33 @@ const buildKiwoomMetadata = (sourceRelativePath, symbolName) => {
   });
 };
 
+const buildNhplugMetadata = (sourceRelativePath, symbolName) => {
+  const sourcePath = resolveWithinRoot(workspaceRoot, sourceRelativePath);
+  const source = fs.readFileSync(sourcePath, 'utf8');
+  const methods = extractMethods(source);
+
+  return methods.map((method) => {
+    // 키움은 클래스 레벨 self.path 하나를 쓰지만, NH PLUG 는 호출마다 경로를 넘긴다.
+    const endpointPath = (method.block.match(/client\.post\(\s*["']([^"']+)["']/) || [])[1] ?? '';
+    const signatureParams = parseSignatureParams(method.signature);
+    const bodyEntries = parseDictFromBlock(method.block, 'body').concat(parseDictAssignments(method.block, 'body'));
+    const { mappings, syntheticParams } = resolveDictEntries(bodyEntries, signatureParams, method.methodName);
+
+    if (!endpointPath) {
+      console.warn(`  [warn] ${symbolName}.${method.methodName}: could not extract endpoint path`);
+    }
+
+    return {
+      methodName: method.methodName,
+      path: endpointPath,
+      bodyMap: applyOverrides(symbolName, method.methodName, Object.fromEntries(mappings)),
+      // 연속조회는 시그니처에 cts kwarg 가 있는지로 판단한다 (헤더는 클라이언트가 조립).
+      supportsCts: /\bcts\b/.test(method.signature),
+      params: stripInternalFields(signatureParams).concat(syntheticParams),
+    };
+  });
+};
+
 const toPascalCase = (camel) => camel.charAt(0).toUpperCase() + camel.slice(1);
 
 const writeTs = (targetRelativePath, symbolName, importPath, data) => {
@@ -490,14 +517,65 @@ const tasks = [
     symbolName: 'domesticOrderEndpoints',
     kind: 'kiwoom',
   },
+  {
+    sourcePath: 'packages/cluefin-openapi/src/cluefin_openapi/nhplug/_common.py',
+    targetPath: 'packages/cluefin-openapi-ts/src/nhplug/metadata/common.ts',
+    symbolName: 'commonEndpoints',
+    kind: 'nhplug',
+  },
+  {
+    sourcePath: 'packages/cluefin-openapi/src/cluefin_openapi/nhplug/_krstock_order.py',
+    targetPath: 'packages/cluefin-openapi-ts/src/nhplug/metadata/krstock-order.ts',
+    symbolName: 'krstockOrderEndpoints',
+    kind: 'nhplug',
+  },
+  {
+    sourcePath: 'packages/cluefin-openapi/src/cluefin_openapi/nhplug/_krstock_inquiry.py',
+    targetPath: 'packages/cluefin-openapi-ts/src/nhplug/metadata/krstock-inquiry.ts',
+    symbolName: 'krstockInquiryEndpoints',
+    kind: 'nhplug',
+  },
+  {
+    sourcePath: 'packages/cluefin-openapi/src/cluefin_openapi/nhplug/_krstock_quote.py',
+    targetPath: 'packages/cluefin-openapi-ts/src/nhplug/metadata/krstock-quote.ts',
+    symbolName: 'krstockQuoteEndpoints',
+    kind: 'nhplug',
+  },
+  {
+    sourcePath: 'packages/cluefin-openapi/src/cluefin_openapi/nhplug/_overseas_stock_order.py',
+    targetPath: 'packages/cluefin-openapi-ts/src/nhplug/metadata/overseas-stock-order.ts',
+    symbolName: 'overseasStockOrderEndpoints',
+    kind: 'nhplug',
+  },
+  {
+    sourcePath: 'packages/cluefin-openapi/src/cluefin_openapi/nhplug/_overseas_stock_inquiry.py',
+    targetPath: 'packages/cluefin-openapi-ts/src/nhplug/metadata/overseas-stock-inquiry.ts',
+    symbolName: 'overseasStockInquiryEndpoints',
+    kind: 'nhplug',
+  },
+  {
+    sourcePath: 'packages/cluefin-openapi/src/cluefin_openapi/nhplug/_overseas_stock_quote.py',
+    targetPath: 'packages/cluefin-openapi-ts/src/nhplug/metadata/overseas-stock-quote.ts',
+    symbolName: 'overseasStockQuoteEndpoints',
+    kind: 'nhplug',
+  },
 ];
 
+const builders = {
+  kis: buildKisMetadata,
+  kiwoom: buildKiwoomMetadata,
+  nhplug: buildNhplugMetadata,
+};
+
+const importTypes = {
+  kis: 'KisEndpointDefinition',
+  kiwoom: 'KiwoomEndpointDefinition',
+  nhplug: 'NhplugEndpointDefinition',
+};
+
 for (const task of tasks) {
-  const data =
-    task.kind === 'kis'
-      ? buildKisMetadata(task.sourcePath, task.symbolName)
-      : buildKiwoomMetadata(task.sourcePath, task.symbolName);
-  const importType = task.kind === 'kis' ? 'KisEndpointDefinition' : 'KiwoomEndpointDefinition';
+  const data = builders[task.kind](task.sourcePath, task.symbolName);
+  const importType = importTypes[task.kind];
   writeTs(task.targetPath, task.symbolName, importType, data);
   console.log(`${task.symbolName}: ${data.length}`);
 }

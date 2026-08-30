@@ -104,6 +104,40 @@ const kiwoomDomains = [
   { className: 'KiwoomDomesticTheme', metadataPath: 'src/kiwoom/metadata/domestic-theme.ts', prop: 'domesticTheme' },
 ];
 
+const nhplugDomains = [
+  { className: 'NhplugCommon', metadataPath: 'src/nhplug/metadata/common.ts', prop: 'common' },
+  {
+    className: 'NhplugKrstockOrder',
+    metadataPath: 'src/nhplug/metadata/krstock-order.ts',
+    prop: 'krstockOrder',
+  },
+  {
+    className: 'NhplugKrstockInquiry',
+    metadataPath: 'src/nhplug/metadata/krstock-inquiry.ts',
+    prop: 'krstockInquiry',
+  },
+  {
+    className: 'NhplugKrstockQuote',
+    metadataPath: 'src/nhplug/metadata/krstock-quote.ts',
+    prop: 'krstockQuote',
+  },
+  {
+    className: 'NhplugOverseasStockOrder',
+    metadataPath: 'src/nhplug/metadata/overseas-stock-order.ts',
+    prop: 'overseasStockOrder',
+  },
+  {
+    className: 'NhplugOverseasStockInquiry',
+    metadataPath: 'src/nhplug/metadata/overseas-stock-inquiry.ts',
+    prop: 'overseasStockInquiry',
+  },
+  {
+    className: 'NhplugOverseasStockQuote',
+    metadataPath: 'src/nhplug/metadata/overseas-stock-quote.ts',
+    prop: 'overseasStockQuote',
+  },
+];
+
 const kisDomainDecls = kisDomains
   .map((d) => renderDomainClass(d.className, extractMethodNames(d.metadataPath)))
   .join('\n\n');
@@ -112,8 +146,13 @@ const kiwoomDomainDecls = kiwoomDomains
   .map((d) => renderDomainClass(d.className, extractMethodNames(d.metadataPath)))
   .join('\n\n');
 
+const nhplugDomainDecls = nhplugDomains
+  .map((d) => renderDomainClass(d.className, extractMethodNames(d.metadataPath)))
+  .join('\n\n');
+
 const kisClientProps = kisDomains.map((d) => `  readonly ${d.prop}: ${d.className};`).join('\n');
 const kiwoomClientProps = kiwoomDomains.map((d) => `  readonly ${d.prop}: ${d.className};`).join('\n');
+const nhplugClientProps = nhplugDomains.map((d) => `  readonly ${d.prop}: ${d.className};`).join('\n');
 
 const content = `export type ApiEnv = 'dev' | 'prod';
 
@@ -148,6 +187,14 @@ export interface KiwoomEndpointDefinition {
   apiId: string;
   bodyMap: Record<string, string>;
   headerParamMap: Record<string, string>;
+  params: EndpointParamDefinition[];
+}
+
+export interface NhplugEndpointDefinition {
+  methodName: string;
+  path: string;
+  bodyMap: Record<string, string>;
+  supportsCts: boolean;
   params: EndpointParamDefinition[];
 }
 
@@ -190,6 +237,15 @@ export class KiwoomServerError extends ApiServerError {}
 export class KiwoomNetworkError extends ApiNetworkError {}
 export class KiwoomTimeoutError extends ApiTimeoutError {}
 export class KiwoomRateLimitError extends ApiRateLimitError {}
+
+export class NhplugApiError extends ApiError {}
+export class NhplugAuthenticationError extends ApiAuthenticationError {}
+export class NhplugAuthorizationError extends ApiAuthorizationError {}
+export class NhplugValidationError extends ApiValidationError {}
+export class NhplugServerError extends ApiServerError {}
+export class NhplugNetworkError extends ApiNetworkError {}
+export class NhplugTimeoutError extends ApiTimeoutError {}
+export class NhplugRateLimitError extends ApiRateLimitError {}
 
 export interface TokenCacheEntry {
   accessToken: string;
@@ -292,6 +348,26 @@ ${kiwoomDomainDecls}
 export class KiwoomClient {
   constructor(options: KiwoomClientOptions);
 ${kiwoomClientProps}
+}
+
+export interface NhplugClientOptions {
+  token: string;
+  appKey: string;
+  secretKey: string;
+  env?: ApiEnv;
+  debug?: boolean;
+  timeoutMs?: number;
+  maxRetries?: number;
+  rateLimitRequestsPerSecond?: number;
+  rateLimitBurst?: number;
+  fetchImpl?: typeof fetch;
+}
+
+${nhplugDomainDecls}
+
+export class NhplugClient {
+  constructor(options: NhplugClientOptions);
+${nhplugClientProps}
 }
 `;
 

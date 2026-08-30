@@ -56,3 +56,12 @@ export class KiwoomServerError extends ApiServerError {}
 export class KiwoomNetworkError extends ApiNetworkError {}
 export class KiwoomTimeoutError extends ApiTimeoutError {}
 export class KiwoomRateLimitError extends ApiRateLimitError {}
+
+export class NhplugApiError extends ApiError {}
+export class NhplugAuthenticationError extends ApiAuthenticationError {}
+export class NhplugAuthorizationError extends ApiAuthorizationError {}
+export class NhplugValidationError extends ApiValidationError {}
+export class NhplugServerError extends ApiServerError {}
+export class NhplugNetworkError extends ApiNetworkError {}
+export class NhplugTimeoutError extends ApiTimeoutError {}
+export class NhplugRateLimitError extends ApiRateLimitError {}
