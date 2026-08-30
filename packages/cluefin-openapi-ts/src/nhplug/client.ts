@@ -214,6 +214,7 @@ export class NhplugClient {
       const body = Object.fromEntries(
         Object.entries(definition.bodyMap)
           .map(([apiKey, inputKey]) => {
+            // eslint-disable-next-line security/detect-object-injection -- inputKey comes from internal endpoint metadata.
             const value = parsedInput[inputKey];
             if (value === undefined || value === null) {
               return null;

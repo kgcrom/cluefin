@@ -15,8 +15,8 @@ const jsonResponse = (body: unknown): Response =>
 
 describe('README NH PLUG samples', () => {
   it('quick start: NhplugAuth.generate() -> NhplugClient -> 계좌목록 -> 국내주식 현재가', async () => {
-    const appKey = 'app-key';
-    const secretKey = 'secret-key';
+    const credentials = { appKey: 'app-key', secretKey: 'secret-key' } as const;
+    const { appKey, secretKey } = credentials;
 
     const fetchMock: typeof fetch = async (input) => {
       const url = String(input);

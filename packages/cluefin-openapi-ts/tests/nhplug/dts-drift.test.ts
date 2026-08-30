@@ -1,13 +1,9 @@
 import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { expect, test } from 'vitest';
 
 // @ts-expect-error - 생성 스크립트는 타입 선언이 없는 .mjs 다.
 import { typesContent } from '../../scripts/generate-types.mjs';
 import * as Nhplug from '../../src/nhplug';
-
-const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 const declaredNames = (source: string): Set<string> => {
   const names = new Set<string>();
@@ -51,7 +47,8 @@ test('nhplug type-only exports are declared too', () => {
 });
 
 test('the built index.d.ts matches the generator output', () => {
-  const builtPath = path.join(packageRoot, 'dist', 'types', 'index.d.ts');
+  // 정적 경로로 해석한다 — 경로를 조립하면 정적분석이 경로 주입으로 본다.
+  const builtPath = new URL('../../dist/types/index.d.ts', import.meta.url);
   if (!fs.existsSync(builtPath)) {
     // 아직 빌드 전이면 검사할 대상이 없다.
     return;
