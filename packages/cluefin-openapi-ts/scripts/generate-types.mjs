@@ -8,8 +8,6 @@ const packageRoot = path.resolve(scriptDir, '..');
 const typesDir = path.join(packageRoot, 'dist', 'types');
 const typesPath = path.join(typesDir, 'index.d.ts');
 
-fs.mkdirSync(typesDir, { recursive: true });
-
 const extractMethodNames = (metadataRelPath) => {
   const fullPath = path.join(packageRoot, metadataRelPath);
   const source = fs.readFileSync(fullPath, 'utf8');
@@ -164,6 +162,85 @@ export interface ApiResponse<TBody = Record<string, unknown>> {
 export interface RateLimitOptions {
   requestsPerSecond: number;
   burst: number;
+}
+
+export interface Logger {
+  debug(message: string, context?: Record<string, unknown>): void;
+  warn(message: string, context?: Record<string, unknown>): void;
+  error(message: string, context?: Record<string, unknown>): void;
+}
+
+export const consoleLogger: Logger;
+export const silentLogger: Logger;
+
+export type SubscriptionType = '1' | '2';
+export type MessageType = 'PINGPONG' | 'DATA' | 'SYSTEM';
+export type WebSocketEventType =
+  | 'data'
+  | 'connected'
+  | 'disconnected'
+  | 'error'
+  | 'subscribed'
+  | 'unsubscribed'
+  | 'system';
+
+export interface WebSocketMessage {
+  messageType: MessageType;
+  trId?: string | undefined;
+  trKey?: string | undefined;
+  data?: string[] | undefined;
+  body?: Record<string, unknown> | undefined;
+  raw: string;
+  encrypted: boolean;
+}
+
+export interface WebSocketEvent {
+  eventType: WebSocketEventType;
+  trId?: string;
+  trKey?: string;
+  data?: { values: string[]; encrypted: boolean };
+  body?: Record<string, unknown>;
+  error?: Error;
+  raw?: string;
+}
+
+export interface BaseWebSocketClientOptions {
+  url: string;
+  rateLimitBurst: number;
+  rateLimitRequestsPerSecond: number;
+}
+
+export interface BaseWebSocketClientEvents {
+  data: [event: WebSocketEvent];
+  connected: [event: WebSocketEvent];
+  disconnected: [event: WebSocketEvent];
+  error: [event: WebSocketEvent];
+  subscribed: [event: WebSocketEvent];
+  unsubscribed: [event: WebSocketEvent];
+  system: [event: WebSocketEvent];
+}
+
+export class BaseWebSocketClient {
+  constructor(options: BaseWebSocketClientOptions);
+  readonly connected: boolean;
+  readonly subscriptions: Map<string, string>;
+  connect(): void;
+  close(): void;
+  subscribe(trId: string, trKey: string): Promise<void>;
+  unsubscribe(trId: string, trKey: string): Promise<void>;
+  parseMessage(raw: string): WebSocketMessage;
+  on<K extends keyof BaseWebSocketClientEvents>(
+    eventType: K,
+    listener: (...args: BaseWebSocketClientEvents[K]) => void,
+  ): this;
+  once<K extends keyof BaseWebSocketClientEvents>(
+    eventType: K,
+    listener: (...args: BaseWebSocketClientEvents[K]) => void,
+  ): this;
+  off<K extends keyof BaseWebSocketClientEvents>(
+    eventType: K,
+    listener: (...args: BaseWebSocketClientEvents[K]) => void,
+  ): this;
 }
 
 export interface EndpointParamDefinition {
@@ -350,6 +427,69 @@ export class KiwoomClient {
 ${kiwoomClientProps}
 }
 
+export const NHPLUG_AUTH_BASE_URL: string;
+
+export interface NhplugTokenCacheEntry {
+  accessToken: string;
+  scope: string;
+  tokenType: string;
+  expiresIn: number;
+  cachedAt: string;
+}
+
+export interface NhplugTokenCacheStore {
+  get(): Promise<NhplugTokenCacheEntry | null>;
+  set(entry: NhplugTokenCacheEntry): Promise<void>;
+  clear(): Promise<void>;
+}
+
+export class NhplugMemoryTokenCacheStore implements NhplugTokenCacheStore {
+  get(): Promise<NhplugTokenCacheEntry | null>;
+  set(entry: NhplugTokenCacheEntry): Promise<void>;
+  clear(): Promise<void>;
+}
+
+export class NhplugFileTokenCacheStore implements NhplugTokenCacheStore {
+  constructor(filePath: string);
+  get(): Promise<NhplugTokenCacheEntry | null>;
+  set(entry: NhplugTokenCacheEntry): Promise<void>;
+  clear(): Promise<void>;
+}
+
+export function nhplugTokenCacheFileName(appKey?: string): string;
+
+export interface NhplugAuthOptions {
+  appKey: string;
+  secretKey: string;
+  tokenCacheStore?: NhplugTokenCacheStore;
+  fetchImpl?: typeof fetch;
+}
+
+export interface NhplugTokenResponse {
+  accessToken: string;
+  scope: string;
+  tokenType: string;
+  expiresIn: number;
+}
+
+export interface NhplugTokenRevokeResponse {
+  code?: string | number | undefined;
+  message?: string | undefined;
+  errorCode?: string | undefined;
+  errorDescription?: string | undefined;
+}
+
+export class NhplugAuth {
+  constructor(options: NhplugAuthOptions);
+  generate(): Promise<NhplugTokenResponse>;
+  revoke(
+    token?: string,
+    tokenTypeHint?: 'access_token' | 'refresh_token',
+  ): Promise<NhplugTokenRevokeResponse>;
+}
+
+export const NHPLUG_SUCCESS_RSP_CODES: readonly string[];
+
 export interface NhplugClientOptions {
   token: string;
   appKey: string;
@@ -361,6 +501,11 @@ export interface NhplugClientOptions {
   rateLimitRequestsPerSecond?: number;
   rateLimitBurst?: number;
   fetchImpl?: typeof fetch;
+  logger?: Logger;
+}
+
+export declare class NhplugDomainBase {
+  constructor(client: NhplugClient, endpoints: readonly NhplugEndpointDefinition[]);
 }
 
 ${nhplugDomainDecls}
@@ -368,8 +513,34 @@ ${nhplugDomainDecls}
 export class NhplugClient {
   constructor(options: NhplugClientOptions);
 ${nhplugClientProps}
+  invokeEndpoint(definition: NhplugEndpointDefinition, input: Record<string, unknown>): Promise<ApiResponse>;
+}
+
+export type NhplugMarket = 'kr' | 'gb';
+
+export interface NhplugSocketClientOptions {
+  token: string;
+  env?: ApiEnv;
+  market?: NhplugMarket;
+  rateLimitRequestsPerSecond?: number;
+  rateLimitBurst?: number;
+}
+
+export function getNhplugSocketUrl(env: ApiEnv, market: NhplugMarket): string;
+
+export class NhplugSocketClient extends BaseWebSocketClient {
+  constructor(options: NhplugSocketClientOptions);
+  readonly env: ApiEnv;
+  readonly market: NhplugMarket;
 }
 `;
 
-fs.writeFileSync(typesPath, content, 'utf8');
-console.log(`Wrote ${path.relative(packageRoot, typesPath)}`);
+/** 생성될 `dist/types/index.d.ts` 본문. 드리프트 테스트가 빌드 없이 검사할 수 있도록 export 한다. */
+export const typesContent = content;
+
+// 스크립트로 직접 실행될 때만 파일을 쓴다 (테스트에서 import 해도 dist 를 건드리지 않도록).
+if (process.argv[1] && path.resolve(process.argv[1]) === scriptPath) {
+  fs.mkdirSync(typesDir, { recursive: true });
+  fs.writeFileSync(typesPath, content, 'utf8');
+  console.log(`Wrote ${path.relative(packageRoot, typesPath)}`);
+}
