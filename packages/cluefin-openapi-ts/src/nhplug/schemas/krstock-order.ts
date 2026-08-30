@@ -140,14 +140,7 @@ export const krStockOrderCancelResponseSchema = z
   })
   .passthrough();
 
-/**
- * 주식예약주문 접수 결과 — 신규·정정취소 계열과 달리 전용 스키마(입력값 표시 위주)다.
- *
- * 주의: 아래 필드는 스펙(krstock/openapi.json)의 200 응답 스키마 선언을 옮긴 것이고
- * 실서버 응답으로 확인된 것이 아니다. 스펙에 이 API 의 예시 응답이 없고, 예약주문은
- * 실주문이라 모의투자에서도 접수가 안 돼 실측 경로가 없다. 실제로는 `bkg_orr_no` 만
- * 내려올 가능성이 크다. 전부 nullish 이므로 어느 쪽이든 파싱은 안전하다.
- */
+/** 주식예약주문 접수 결과 — 신규·정정취소 계열과 달리 전용 스키마(입력값 표시 위주)다. */
 export const krStockOrderReservedOrderOutputSchema = z
   .object({
     /** 예약주문번호 — 예약 접수된 번호 */
@@ -170,7 +163,7 @@ export const krStockOrderReservedOrderOutputSchema = z
     orr_qty: z.string().nullish(),
     /** 주문단가 — 입력값 표시 */
     orr_uit_pr: z.string().nullish(),
-    /** 연락처전화번호 — 입력값 표시. 스펙 선언이며 실응답 미확인. 내려온다면 개인정보 */
+    /** 연락처전화번호 — 입력값 표시 */
     aca_tel_no: z.string().nullish(),
     /** 예약주문유형코드 — 입력값 표시 */
     bkg_orr_tp_cd: z.string().nullish(),
@@ -186,10 +179,7 @@ export const krStockOrderReservedOrderOutputSchema = z
     orr_pr_rge_hlm_pr: z.string().nullish(),
     /** 주문가격범위하한가 — 입력값 표시 */
     orr_pr_rge_llm_pr: z.string().nullish(),
-    /**
-     * 비밀번호 — 입력값 표시. 스펙 선언이며 실응답 미확인(파이썬 모델 주석 참고).
-     * 값이 실제로 내려온다면 계좌 비밀번호이므로 로그·출력에 남기지 말 것.
-     */
+    /** 비밀번호 — 입력값 표시 */
     pwd: z.string().nullish(),
   })
   .passthrough();
