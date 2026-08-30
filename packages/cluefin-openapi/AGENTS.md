@@ -73,3 +73,6 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   module-level `skipif`s read `KIWOOM_ENV` during collection.
 - Both integration suites add an autouse `time.sleep(1)` between tests on top of the
   in-client rate limiter; the limiter alone is not enough against live throttling.
+- `examples/*.ipynb` 노트북은 커밋 전에 output·execution_count 를 지운다 (출력에 계좌번호가
+  섞인다). 워크스페이스 루트에서:
+  `uv run --with jupyter jupyter nbconvert --clear-output --inplace packages/cluefin-openapi/examples/<노트북>.ipynb`

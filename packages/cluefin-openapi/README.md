@@ -559,6 +559,17 @@ except NHPlugAPIError as e:
 - `19999`: 모의투자에서는 해당업무가 제공되지 않습니다
 - `IGW50025`: 일시적인 오류 (열린 실시간 세션이 없을 때의 세션해제 응답)
 
+## 📓 예제 노트북
+
+`examples/` 디렉토리에 클라이언트를 실제로 호출해 보는 Jupyter 노트북이 있습니다.
+
+```bash
+# 워크스페이스 루트에서 실행 — .env.test 의 자격증명을 사용합니다
+uv run --with jupyter jupyter lab packages/cluefin-openapi/examples/nhplug_quickstart.ipynb
+```
+
+- `nhplug_quickstart.ipynb` — NH PLUG 인증 → 계좌 조회 → 국내/해외 시세·잔고 조회. `NHPLUG_ENV=dev`(모의투자) 기준이며, **`prod` 는 실계좌**이므로 주문 셀은 주석 처리되어 있습니다.
+
 ## 🧪 테스트
 
 ```bash
