@@ -15,6 +15,69 @@ const extractMethodNames = (metadataRelPath) => {
   return matches.map((m) => m[1]);
 };
 
+/**
+ * 실시간시세 metadata 소스에서 필드명 배열·Zod 스키마·`z.infer` 별칭을 뽑아 낸다.
+ * 스키마 제네릭을 손으로 적는 대신 소스에서 생성해 드리프트를 막는다.
+ */
+const extractRealtimeMetadata = (metadataRelPath) => {
+  const source = fs.readFileSync(path.join(packageRoot, metadataRelPath), 'utf8');
+
+  const fieldNameConsts = [
+    ...source.matchAll(/export const ([A-Z0-9_]+_FIELD_NAMES) = \[([\s\S]*?)\n\] as const;/g),
+  ].map((m) => ({ name: m[1], fields: [...m[2].matchAll(/'([^']+)'/g)].map((f) => f[1]) }));
+
+  const schemas = [...source.matchAll(/export const ([A-Za-z0-9_]+Schema) = z\.object\(\{([\s\S]*?)\n\}\);/g)].map(
+    (m) => {
+      const body = m[2];
+      const keys = [...body.matchAll(/^ {2}([A-Za-z0-9_]+): z\.string\(\),$/gm)].map((k) => k[1]);
+      const lines = body.split('\n').filter((line) => line.trim() !== '' && !line.trim().startsWith('//'));
+      if (keys.length !== lines.length) {
+        // 전부 z.string() 이라는 전제가 깨지면 선언이 조용히 틀어지므로 즉시 실패시킨다.
+        throw new Error(
+          `${metadataRelPath}: ${m[1]} 에 z.string() 이 아닌 필드가 있다 (${keys.length}/${lines.length}).`,
+        );
+      }
+      return { name: m[1], keys };
+    },
+  );
+
+  const itemTypes = [...source.matchAll(/export type ([A-Za-z0-9_]+) = z\.infer<typeof ([A-Za-z0-9_]+)>;/g)].map(
+    (m) => ({
+      itemName: m[1],
+      schemaName: m[2],
+    }),
+  );
+
+  return { fieldNameConsts, schemas, itemTypes };
+};
+
+const renderRealtimeMetadataDecls = (metadataRelPaths) => {
+  const blocks = [];
+  for (const relPath of metadataRelPaths) {
+    const { fieldNameConsts, schemas, itemTypes } = extractRealtimeMetadata(relPath);
+
+    for (const { name, fields } of fieldNameConsts) {
+      const tuple = fields.map((f) => `'${f}'`).join(', ');
+      blocks.push(`export declare const ${name}: readonly [${tuple}];`);
+    }
+
+    const schemaByName = new Map(schemas.map((s) => [s.name, s]));
+    for (const { itemName, schemaName } of itemTypes) {
+      const schema = schemaByName.get(schemaName);
+      if (!schema) {
+        throw new Error(`${relPath}: ${schemaName} 의 z.object 정의를 찾지 못했다.`);
+      }
+      const props = schema.keys.map((k) => `  ${k}: string;`).join('\n');
+      blocks.push(`export interface ${itemName} {\n${props}\n}`);
+      blocks.push(`export declare const ${schemaName}: RealtimeSchema<${itemName}>;`);
+    }
+  }
+  return blocks.join('\n\n');
+};
+
+const renderMethodNameUnion = (typeName, methods) =>
+  `export type ${typeName} =\n${methods.map((m) => `  | '${m}'`).join('\n')};`;
+
 const renderDomainClass = (className, methods) => {
   const methodLines = methods.map((m) => `  ${m}(input: Record<string, unknown>): Promise<ApiResponse>;`).join('\n');
   return `export declare class ${className} {\n${methodLines}\n}`;
@@ -151,6 +214,21 @@ const nhplugDomainDecls = nhplugDomains
 const kisClientProps = kisDomains.map((d) => `  readonly ${d.prop}: ${d.className};`).join('\n');
 const kiwoomClientProps = kiwoomDomains.map((d) => `  readonly ${d.prop}: ${d.className};`).join('\n');
 const nhplugClientProps = nhplugDomains.map((d) => `  readonly ${d.prop}: ${d.className};`).join('\n');
+
+const kisRealtimeMetadataDecls = renderRealtimeMetadataDecls([
+  'src/kis/metadata/domestic-realtime-quote.ts',
+  'src/kis/metadata/overseas-realtime-quote.ts',
+  'src/kis/metadata/onmarket-bond-realtime-quote.ts',
+]);
+
+const overseasAccountMethodNameUnion = renderMethodNameUnion(
+  'OverseasAccountMethodName',
+  extractMethodNames('src/kis/metadata/overseas-account.ts'),
+);
+const overseasMarketAnalysisMethodNameUnion = renderMethodNameUnion(
+  'OverseasMarketAnalysisMethodName',
+  extractMethodNames('src/kis/metadata/overseas-market-analysis.ts'),
+);
 
 const content = `export type ApiEnv = 'dev' | 'prod';
 
@@ -390,6 +468,99 @@ export class KisHttpClient {
 ${kisClientProps}
 }
 
+export class FileTokenCacheStore implements TokenCacheStore {
+  constructor(filePath: string);
+  get(): Promise<TokenCacheEntry | null>;
+  set(entry: TokenCacheEntry): Promise<void>;
+  clear(): Promise<void>;
+}
+
+export interface KisSocketClientOptions {
+  approvalKey: string;
+  appKey: string;
+  secretKey: string;
+  env?: ApiEnv;
+  rateLimitRequestsPerSecond?: number;
+  rateLimitBurst?: number;
+}
+
+export class KisSocketClient extends BaseWebSocketClient {
+  constructor(options: KisSocketClientOptions);
+  readonly env: ApiEnv;
+}
+
+${overseasAccountMethodNameUnion}
+
+export declare const overseasAccountEndpoints: KisEndpointDefinition[];
+
+${overseasMarketAnalysisMethodNameUnion}
+
+export declare const overseasMarketAnalysisEndpoints: KisEndpointDefinition[];
+
+/**
+ * 실시간시세 Zod 스키마의 공개 표면.
+ * zod 의 \`z.ZodObject<...>\` 제네릭을 그대로 옮겨 적는 대신, 소비자가 실제로 쓰는
+ * parse/safeParse 와 그 결과 타입만 노출한다.
+ */
+export interface RealtimeSchema<T> {
+  parse(input: unknown): T;
+  safeParse(input: unknown): { success: true; data: T } | { success: false; error: unknown };
+}
+
+${kisRealtimeMetadataDecls}
+
+export class DomesticRealtimeQuote {
+  static readonly TR_ID_EXECUTION: 'H0UNCNT0';
+  static readonly TR_ID_ORDERBOOK: 'H0STASP0';
+  static readonly TR_ID_EXECUTION_NOTIFICATION: 'H0STCNI0';
+  constructor(socketClient: KisSocketClient);
+  subscribeExecution(stockCode: string): Promise<void>;
+  unsubscribeExecution(stockCode: string): Promise<void>;
+  static parseExecutionData(data: string[]): DomesticRealtimeExecutionItem[];
+  subscribeOrderbook(stockCode: string): Promise<void>;
+  unsubscribeOrderbook(stockCode: string): Promise<void>;
+  static parseOrderbookData(data: string[]): DomesticRealtimeOrderbookItem[];
+  subscribeExecutionNotification(htsId: string): Promise<void>;
+  unsubscribeExecutionNotification(htsId: string): Promise<void>;
+  static parseExecutionNotificationData(data: string[]): DomesticRealtimeExecutionNotificationItem[];
+}
+
+export class OverseasRealtimeQuote {
+  static readonly TR_ID_ORDERBOOK: 'HDFSASP0';
+  static readonly TR_ID_EXECUTION: 'HDFSCNT0';
+  static readonly TR_ID_DELAYED_ORDERBOOK: 'HDFSASP1';
+  static readonly TR_ID_EXECUTION_NOTIFICATION: 'H0GSCNI0';
+  constructor(socketClient: KisSocketClient);
+  subscribeOrderbook(stockCode: string, marketCode: string, serviceType?: string): Promise<void>;
+  unsubscribeOrderbook(stockCode: string, marketCode: string, serviceType?: string): Promise<void>;
+  static parseOrderbookData(data: string[]): OverseasRealtimeOrderbookItem[];
+  subscribeExecution(trKey: string): Promise<void>;
+  unsubscribeExecution(trKey: string): Promise<void>;
+  static parseExecutionData(data: string[]): OverseasRealtimeExecutionItem[];
+  subscribeDelayedOrderbook(trKey: string): Promise<void>;
+  unsubscribeDelayedOrderbook(trKey: string): Promise<void>;
+  static parseDelayedOrderbookData(data: string[]): OverseasRealtimeDelayedOrderbookItem[];
+  subscribeExecutionNotification(htsId: string): Promise<void>;
+  unsubscribeExecutionNotification(htsId: string): Promise<void>;
+  static parseExecutionNotificationData(data: string[]): OverseasRealtimeExecutionNotificationItem[];
+}
+
+export class OnmarketBondRealtimeQuote {
+  static readonly TR_ID_BOND_EXECUTION: 'H0BJCNT0';
+  static readonly TR_ID_BOND_ORDERBOOK: 'H0BJASP0';
+  static readonly TR_ID_BOND_INDEX_EXECUTION: 'H0BICNT0';
+  constructor(socketClient: KisSocketClient);
+  subscribeBondExecution(bondCode: string): Promise<void>;
+  unsubscribeBondExecution(bondCode: string): Promise<void>;
+  static parseBondExecutionData(data: string[]): BondRealtimeExecutionItem[];
+  subscribeBondOrderbook(bondCode: string): Promise<void>;
+  unsubscribeBondOrderbook(bondCode: string): Promise<void>;
+  static parseBondOrderbookData(data: string[]): BondRealtimeOrderbookItem[];
+  subscribeBondIndexExecution(indexCode: string): Promise<void>;
+  unsubscribeBondIndexExecution(indexCode: string): Promise<void>;
+  static parseBondIndexExecutionData(data: string[]): BondRealtimeIndexExecutionItem[];
+}
+
 export interface KiwoomAuthOptions {
   appKey: string;
   secretKey: string;
@@ -426,6 +597,22 @@ export class KiwoomClient {
   constructor(options: KiwoomClientOptions);
 ${kiwoomClientProps}
 }
+
+export declare const KIWOOM_ERROR_CODES: Readonly<Partial<Record<number, string>>>;
+
+export declare function parseKiwoomReturnCode(value: unknown): number | undefined;
+
+export declare function resolveKiwoomError(
+  returnCode: number,
+  returnMsg?: string | undefined,
+  details?: {
+    statusCode?: number | undefined;
+    responseData?: unknown;
+    requestContext?: Record<string, unknown> | undefined;
+    retryAfter?: number | undefined;
+    errorCode?: number | string | undefined;
+  },
+): ApiError;
 
 export const NHPLUG_AUTH_BASE_URL: string;
 
