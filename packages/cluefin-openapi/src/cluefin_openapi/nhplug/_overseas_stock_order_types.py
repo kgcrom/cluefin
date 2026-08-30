@@ -15,8 +15,7 @@ class OverseasStockOrderOutput(BaseModel):
 class OverseasStockOrderBuy(NHPlugAssetHttpBody):
     """해외주식 주문매수 (`POST /gbstock/order/v1/buy`) 응답.
 
-    gbstock 스펙의 응답 봉투는 `Output_0` + `message` 이며 rsp_cd/rsp_msg 가
-    명시돼 있지 않다. 블록은 데이터가 있을 때만 내려오므로 모두 Optional.
+    블록은 데이터가 있을 때만 내려오므로 모두 Optional.
     """
 
     output_0: OverseasStockOrderOutput | None = Field(default=None, alias="Output_0", description="주문 접수 결과")

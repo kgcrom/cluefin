@@ -52,7 +52,7 @@ export const overseasStockQuoteCurrentPriceOutputSchema = z
     industry_code: str(), // 업종코드
     industry_name: str(), // 업종명
     trdprc: num(), // 현재가
-    netchng_cls: str(), // 전일대비구분 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)
+    netchng_cls: str(), // 전일대비구분 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)
     netchng: num(), // 전일대비
     pctchng: num(), // 전일대비율
     open_prc: num(), // 시가
@@ -170,7 +170,7 @@ export const overseasStockQuoteExecutionTrendOutputSchema = z
     trade_date: str(), // 체결일자 / YYYYMMDD
     trade_time: str(), // 체결시간 / HHMMSS
     trdprc: num(), // 체결가
-    netchng_cls: str(), // 전일대비구분 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)
+    netchng_cls: str(), // 전일대비구분 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)
     netchng: num(), // 전일대비가
     pctchng: num(), // 전일대비율
     turnover: num(), // 거래대금
@@ -210,7 +210,7 @@ export const overseasStockQuotePeriodPriceOutputSchema = z
     kor_name: str(), // 종목명 / 스펙상 필드 (실서버는 iem_nm 로 내려준다)
     iem_nm: str(), // 종목명 / 실서버 실측 필드 (2026-08-22 운영 확인)
     trdprc: num(), // 현재가
-    netchng_cls: str(), // 등락부호 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)
+    netchng_cls: str(), // 등락부호 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)
     netchng: num(), // 대비
     pctchng: num(), // 대비율
     acvol: num(), // 거래량
@@ -264,7 +264,7 @@ export const overseasStockQuotePeriodPriceVolumeOutputSchema = z
     close_prc: num(), // 종가
     movolume: num(), // 변동거래량
     movalue: num(), // 변동거래대금
-    netchng_cls: str(), // 등락부호 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)
+    netchng_cls: str(), // 등락부호 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)
     bsop_date: str(), // 영업일 / YYYYMMDD
   })
   .passthrough();
@@ -295,7 +295,7 @@ export const overseasStockQuoteSymbolIndexFxPeriodOutputSchema = z
     hts_kor_isnm: str(), // 종목명 / 스펙상 필드 (실서버는 iem_nm 로 내려준다)
     iem_nm: str(), // 종목명 / 실서버 실측 필드 (2026-08-22 운영 확인)
     ovrs_prpr: num(), // 현재가
-    prdy_vrss_sign: str(), // 등락부호 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)
+    prdy_vrss_sign: str(), // 등락부호 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)
     prdy_vrss: num(), // 대비
     prdy_ctrt: num(), // 대비율
     acml_vol: num(), // 거래량

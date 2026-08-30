@@ -13,11 +13,7 @@ class AccountItem(BaseModel):
 
 
 class AccountList(BaseModel):
-    """계좌 목록 조회 (`POST /n2/acctinfo`) 응답.
-
-    이 API 의 응답 예시에는 rsp_cd/rsp_msg 없이 Output_0 만 내려오는 경우가
-    있어 봉투 필드를 Optional 로 둔다.
-    """
+    """계좌 목록 조회 (`POST /n2/acctinfo`) 응답."""
 
     model_config = ConfigDict(extra="allow")
 

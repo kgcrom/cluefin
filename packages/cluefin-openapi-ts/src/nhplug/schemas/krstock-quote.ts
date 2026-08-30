@@ -47,7 +47,7 @@ export const krStockQuoteCurrentPriceOutputSchema = z
     iem_nm: z.string().nullish(),
     /** 현재가 */
     stck_prpr: num.nullish(),
-    /** 등락부호 — 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세) */
+    /** 등락부호 — 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세) */
     prdy_vrss_sign: z.string().nullish(),
     /** 등락폭 */
     prdy_vrss: num.nullish(),
@@ -411,7 +411,7 @@ export const krStockQuoteCurrentPriceTickOutputSchema = z
     bsop_hour: z.string().nullish(),
     /** 현재가 */
     stck_prpr: num.nullish(),
-    /** 등락부호 — 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세) */
+    /** 등락부호 — 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세) */
     prdy_vrss_sign: z.string().nullish(),
     /** 등락폭 */
     prdy_vrss: num.nullish(),
@@ -433,7 +433,7 @@ export const krStockQuoteCurrentPriceExpectedOutputSchema = z
     cncc_aspr_code: z.string().nullish(),
     /** 예상체결가 */
     antc_cnpr: z.union([z.string(), num, num]).nullish(),
-    /** 예상체결부호 — 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세) */
+    /** 예상체결부호 — 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세) */
     antc_cntg_sign: z.string().nullish(),
     /** 예상체결등락폭 */
     antc_cntg_vrss: z.union([z.string(), num, num]).nullish(),
@@ -453,7 +453,7 @@ export const krStockQuoteCurrentPriceExpectedOutputSchema = z
     ovtm_untp_ctrt: z.union([z.string(), num, num]).nullish(),
     /** ECN체결수량 */
     ovtm_untp_vol: z.union([z.string(), num, num]).nullish(),
-    /** ECN대비예상체결부호 — 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세) */
+    /** ECN대비예상체결부호 — 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세) */
     ovtm_antc_sign: z.string().nullish(),
     /** ECN대비예상체결등락폭 */
     ovtm_antc_vrss: z.union([z.string(), num, num]).nullish(),
@@ -488,7 +488,7 @@ export const krStockQuoteCurrentExecutionTickOutputSchema = z
     bsop_hour: z.string().nullish(),
     /** 현재가 */
     stck_prpr: num.nullish(),
-    /** 등락부호 — 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세) */
+    /** 등락부호 — 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세) */
     prdy_vrss_sign: z.string().nullish(),
     /** 등락폭 */
     prdy_vrss: num.nullish(),
@@ -542,7 +542,7 @@ export const krStockQuoteCurrentExecutionSummaryOutputSchema = z
     tbosu: z.union([z.string(), num]).nullish(),
     /** 현재가 */
     stck_prpr: num.nullish(),
-    /** 등락부호 — 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세) */
+    /** 등락부호 — 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세) */
     prdy_vrss_sign: z.string().nullish(),
     /** 등락폭 */
     prdy_vrss: num.nullish(),
@@ -642,7 +642,7 @@ export const krStockQuoteCurrentInvestorOutputSchema = z
     bsop_date2: z.string().nullish(),
     /** 종가 */
     stck_prpr: num.nullish(),
-    /** 등락부호 — 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세) */
+    /** 등락부호 — 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세) */
     prdy_vrss_sign: z.string().nullish(),
     /** 등락폭 */
     prdy_vrss: num.nullish(),
@@ -880,7 +880,7 @@ export const krStockQuoteAfterHoursCurrentOutputSchema = z
     ovtm_cntg_hour: z.string().nullish(),
     /** 체결가 */
     ovtm_untp_prpr: num.nullish(),
-    /** 체결등락부호 — 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세) */
+    /** 체결등락부호 — 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세) */
     prdy_vrss_sign: z.string().nullish(),
     /** 체결등락폭 */
     ovtm_prdy_vrss: num.nullish(),
@@ -1058,7 +1058,7 @@ export const krStockQuoteAfterHoursCurrentRegularOutputSchema = z
     frgn_hour: z.string().nullish(),
     /** 외국인지분율 */
     for_rate: z.union([z.string(), num]).nullish(),
-    /** 체결등락부호 — 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세) */
+    /** 체결등락부호 — 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세) */
     prdy_vrss_sign: z.string().nullish(),
     /** 등락폭 */
     prdy_vrss: z.union([z.string(), num]).nullish(),
@@ -1146,7 +1146,7 @@ export const krStockQuoteCurrentAfterHoursExecutionOutputSchema = z
     low: num.nullish(),
     /** 현재가 */
     stck_prpr: num.nullish(),
-    /** 등락부호 — 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세) */
+    /** 등락부호 — 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세) */
     prdy_vrss_sign: z.string().nullish(),
     /** 등락폭 */
     prdy_vrss: num.nullish(),
@@ -1185,7 +1185,7 @@ export const krStockQuoteAfterHoursExpectedOutputSchema = z
     bsop_hour: z.string().nullish(),
     /** 현재가 */
     stck_prpr: num.nullish(),
-    /** 등락부호 — 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세) */
+    /** 등락부호 — 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세) */
     prdy_vrss_sign: z.string().nullish(),
     /** 등락폭 */
     prdy_vrss: num.nullish(),

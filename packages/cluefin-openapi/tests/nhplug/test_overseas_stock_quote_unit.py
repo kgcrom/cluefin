@@ -521,3 +521,41 @@ class TestSymbolIndexFxPeriod:
                     gubun="1",
                     today_cls="0",
                 )
+
+
+class TestFieldDescriptions:
+    def test_price_change_sign_legend_spells_보합(self):
+        import inspect
+
+        from pydantic import BaseModel
+
+        from cluefin_openapi.nhplug import _overseas_stock_quote_types as types_module
+
+        legends = []
+        for _, model in inspect.getmembers(types_module, inspect.isclass):
+            if not (issubclass(model, BaseModel) and model.__module__ == types_module.__name__):
+                continue
+            for field in model.model_fields.values():
+                description = field.description or ""
+                assert "보함" not in description
+                if "리버스(기세)" in description:
+                    legends.append(description)
+
+        assert legends
+        for legend in legends:
+            assert legend.endswith("1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)")
+
+
+class TestSpecDeclaredNumericTypes:
+    def test_acvol_types_follow_spec_per_block(self):
+        from cluefin_openapi.nhplug._overseas_stock_quote_types import (
+            OverseasStockQuoteCurrentPriceOutput,
+            OverseasStockQuoteExecutionTrendOutput,
+            OverseasStockQuotePeriodPriceOutput,
+        )
+
+        assert OverseasStockQuotePeriodPriceOutput(acvol="1234").acvol == 1234.0
+        assert isinstance(OverseasStockQuotePeriodPriceOutput(acvol="1234").acvol, float)
+        assert isinstance(OverseasStockQuoteExecutionTrendOutput(acvol="1234").acvol, int)
+        assert isinstance(OverseasStockQuoteCurrentPriceOutput(acvol="1234").acvol, int)
+        assert isinstance(OverseasStockQuoteCurrentPriceOutput(normal_acvol="1234").normal_acvol, float)
