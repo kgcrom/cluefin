@@ -5,6 +5,9 @@ import { expect, test } from 'vitest';
 import { typesContent } from '../../scripts/generate-types.mjs';
 import * as Nhplug from '../../src/nhplug';
 
+// vitest 는 패키지 루트를 cwd 로 실행한다. 경로를 조립하지 않고 리터럴로 둔다.
+const BUILT_DTS = 'dist/types/index.d.ts';
+
 const declaredNames = (source: string): Set<string> => {
   const names = new Set<string>();
   const pattern =
@@ -47,11 +50,9 @@ test('nhplug type-only exports are declared too', () => {
 });
 
 test('the built index.d.ts matches the generator output', () => {
-  // 정적 경로로 해석한다 — 경로를 조립하면 정적분석이 경로 주입으로 본다.
-  const builtPath = new URL('../../dist/types/index.d.ts', import.meta.url);
-  if (!fs.existsSync(builtPath)) {
+  if (!fs.existsSync(BUILT_DTS)) {
     // 아직 빌드 전이면 검사할 대상이 없다.
     return;
   }
-  expect(fs.readFileSync(builtPath, 'utf8')).toBe(typesContent);
+  expect(fs.readFileSync(BUILT_DTS, 'utf8')).toBe(typesContent);
 });
