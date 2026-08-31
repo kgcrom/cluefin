@@ -1,4 +1,4 @@
-import { camelizeKeys, normalizeHeaders } from '../core/case-convert';
+import { camelizeKeys, normalizeHeaders } from '../core/case-convert.js';
 import {
   ApiAuthenticationError,
   ApiAuthorizationError,
@@ -16,22 +16,22 @@ import {
   KiwoomServerError,
   KiwoomTimeoutError,
   KiwoomValidationError,
-} from '../core/errors';
-import { BaseHttpClient } from '../core/http';
-import { consoleLogger, type Logger } from '../core/logger';
-import type { ApiEnv, ApiResponse, KiwoomEndpointDefinition } from '../core/types';
-import { createInputSchema, kiwoomEnvelopeSchema } from '../core/validation';
-import { DomesticAccount } from './domestic-account';
-import { DomesticChart } from './domestic-chart';
-import { DomesticETF } from './domestic-etf';
-import { DomesticForeign } from './domestic-foreign';
-import { DomesticMarketCondition } from './domestic-market-condition';
-import { DomesticOrder } from './domestic-order';
-import { DomesticRankInfo } from './domestic-rank-info';
-import { DomesticSector } from './domestic-sector';
-import { DomesticStockInfo } from './domestic-stock-info';
-import { DomesticTheme } from './domestic-theme';
-import { parseKiwoomReturnCode, resolveKiwoomError } from './error-codes';
+} from '../core/errors.js';
+import { BaseHttpClient } from '../core/http.js';
+import { consoleLogger, type Logger } from '../core/logger.js';
+import type { ApiEnv, ApiResponse, KiwoomEndpointDefinition } from '../core/types.js';
+import { createInputSchema, kiwoomEnvelopeSchema } from '../core/validation.js';
+import { DomesticAccount } from './domestic-account.js';
+import { DomesticChart } from './domestic-chart.js';
+import { DomesticETF } from './domestic-etf.js';
+import { DomesticForeign } from './domestic-foreign.js';
+import { DomesticMarketCondition } from './domestic-market-condition.js';
+import { DomesticOrder } from './domestic-order.js';
+import { DomesticRankInfo } from './domestic-rank-info.js';
+import { DomesticSector } from './domestic-sector.js';
+import { DomesticStockInfo } from './domestic-stock-info.js';
+import { DomesticTheme } from './domestic-theme.js';
+import { parseKiwoomReturnCode, resolveKiwoomError } from './error-codes.js';
 
 export interface KiwoomClientOptions {
   token: string;

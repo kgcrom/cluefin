@@ -7,7 +7,7 @@ import {
   KiwoomRateLimitError,
   KiwoomServerError,
   KiwoomValidationError,
-} from '../core/errors';
+} from '../core/errors.js';
 
 /**
  * Kiwoom API 서버 오류코드 registry.

@@ -1,7 +1,7 @@
-import type { DomainMethods } from '../core/types';
-import type { KiwoomClient } from './client';
-import { KiwoomDomainBase } from './domain-base';
-import { type DomesticEtfMethodName, domesticEtfEndpoints } from './metadata/domestic-etf';
+import type { DomainMethods } from '../core/types.js';
+import type { KiwoomClient } from './client.js';
+import { KiwoomDomainBase } from './domain-base.js';
+import { type DomesticEtfMethodName, domesticEtfEndpoints } from './metadata/domestic-etf.js';
 
 export type DomesticETF = KiwoomDomainBase & DomainMethods<DomesticEtfMethodName>;
 export const DomesticETF = class DomesticETF extends KiwoomDomainBase {

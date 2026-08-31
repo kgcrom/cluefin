@@ -1,10 +1,10 @@
-import type { DomainMethods } from '../core/types';
-import { KisDomainBase } from './domain-base';
-import type { KisHttpClient } from './http-client';
+import type { DomainMethods } from '../core/types.js';
+import { KisDomainBase } from './domain-base.js';
+import type { KisHttpClient } from './http-client.js';
 import {
   type OnmarketBondBasicQuoteMethodName,
   onmarketBondBasicQuoteEndpoints,
-} from './metadata/onmarket-bond-basic-quote';
+} from './metadata/onmarket-bond-basic-quote.js';
 
 export type OnmarketBondBasicQuote = KisDomainBase & DomainMethods<OnmarketBondBasicQuoteMethodName>;
 export const OnmarketBondBasicQuote = class OnmarketBondBasicQuote extends KisDomainBase {

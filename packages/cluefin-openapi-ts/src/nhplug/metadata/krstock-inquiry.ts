@@ -1,4 +1,4 @@
-import type { NhplugEndpointDefinition } from '../../core/types';
+import type { NhplugEndpointDefinition } from '../../core/types.js';
 
 export const krstockInquiryEndpoints: NhplugEndpointDefinition[] = [
   {

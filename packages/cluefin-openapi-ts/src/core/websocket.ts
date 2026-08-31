@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 import WebSocket from 'ws';
-import { TokenBucket } from './rate-limiter';
+import { TokenBucket } from './rate-limiter.js';
 
 export type SubscriptionType = '1' | '2';
 export type MessageType = 'PINGPONG' | 'DATA' | 'SYSTEM';

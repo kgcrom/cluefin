@@ -1,8 +1,8 @@
-import type { DomainMethods } from '../core/types';
-import type { KiwoomClient } from './client';
-import { KiwoomDomainBase } from './domain-base';
-import { type DomesticAccountMethodName, domesticAccountEndpoints } from './metadata/domestic-account';
-import type { DomesticAccountResponseMap } from './schemas/domestic-account';
+import type { DomainMethods } from '../core/types.js';
+import type { KiwoomClient } from './client.js';
+import { KiwoomDomainBase } from './domain-base.js';
+import { type DomesticAccountMethodName, domesticAccountEndpoints } from './metadata/domestic-account.js';
+import type { DomesticAccountResponseMap } from './schemas/domestic-account.js';
 
 export type DomesticAccount = KiwoomDomainBase & DomainMethods<DomesticAccountMethodName, DomesticAccountResponseMap>;
 export const DomesticAccount = class DomesticAccount extends KiwoomDomainBase {

@@ -1,7 +1,7 @@
-import type { DomainMethods } from '../core/types';
-import { KisDomainBase } from './domain-base';
-import type { KisHttpClient } from './http-client';
-import { type OverseasAccountMethodName, overseasAccountEndpoints } from './metadata/overseas-account';
+import type { DomainMethods } from '../core/types.js';
+import { KisDomainBase } from './domain-base.js';
+import type { KisHttpClient } from './http-client.js';
+import { type OverseasAccountMethodName, overseasAccountEndpoints } from './metadata/overseas-account.js';
 
 export type OverseasAccount = KisDomainBase & DomainMethods<OverseasAccountMethodName>;
 export const OverseasAccount = class OverseasAccount extends KisDomainBase {

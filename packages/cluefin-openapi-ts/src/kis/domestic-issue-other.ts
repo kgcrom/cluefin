@@ -1,7 +1,7 @@
-import type { DomainMethods } from '../core/types';
-import { KisDomainBase } from './domain-base';
-import type { KisHttpClient } from './http-client';
-import { type DomesticIssueOtherMethodName, domesticIssueOtherEndpoints } from './metadata/domestic-issue-other';
+import type { DomainMethods } from '../core/types.js';
+import { KisDomainBase } from './domain-base.js';
+import type { KisHttpClient } from './http-client.js';
+import { type DomesticIssueOtherMethodName, domesticIssueOtherEndpoints } from './metadata/domestic-issue-other.js';
 
 export type DomesticIssueOther = KisDomainBase & DomainMethods<DomesticIssueOtherMethodName>;
 export const DomesticIssueOther = class DomesticIssueOther extends KisDomainBase {

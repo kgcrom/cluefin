@@ -1,7 +1,7 @@
-import type { DomainMethods } from '../core/types';
-import { KisDomainBase } from './domain-base';
-import type { KisHttpClient } from './http-client';
-import { type DomesticStockInfoMethodName, domesticStockInfoEndpoints } from './metadata/domestic-stock-info';
+import type { DomainMethods } from '../core/types.js';
+import { KisDomainBase } from './domain-base.js';
+import type { KisHttpClient } from './http-client.js';
+import { type DomesticStockInfoMethodName, domesticStockInfoEndpoints } from './metadata/domestic-stock-info.js';
 
 export type DomesticStockInfo = KisDomainBase & DomainMethods<DomesticStockInfoMethodName>;
 export const DomesticStockInfo = class DomesticStockInfo extends KisDomainBase {

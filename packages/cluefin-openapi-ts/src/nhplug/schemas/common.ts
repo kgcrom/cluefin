@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { CamelizeKeys } from '../../core/types';
+import type { CamelizeKeys } from '../../core/types.js';
 
 /** 공통 응답 봉투 (`rsp_cd`/`rsp_msg`). */
 const commonEnvelope = {

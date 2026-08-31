@@ -1,5 +1,5 @@
-import type { ApiEnv } from '../core/types';
-import { BaseWebSocketClient, type SubscriptionType, type WebSocketMessage } from '../core/websocket';
+import type { ApiEnv } from '../core/types.js';
+import { BaseWebSocketClient, type SubscriptionType, type WebSocketMessage } from '../core/websocket.js';
 
 /**
  * WebSocket URLs (정본은 각 자산군 openapi.json 의 `x-environments`).

@@ -5,8 +5,8 @@ import {
   EXECUTION_FIELD_NAMES,
   EXECUTION_NOTIFICATION_FIELD_NAMES,
   ORDERBOOK_FIELD_NAMES,
-} from './metadata/domestic-realtime-quote';
-import type { KisSocketClient } from './socket-client';
+} from './metadata/domestic-realtime-quote.js';
+import type { KisSocketClient } from './socket-client.js';
 
 const TR_ID_EXECUTION = 'H0UNCNT0';
 const TR_ID_ORDERBOOK = 'H0STASP0';

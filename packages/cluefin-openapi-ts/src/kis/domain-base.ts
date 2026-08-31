@@ -1,5 +1,5 @@
-import type { ApiResponse, KisEndpointDefinition } from '../core/types';
-import type { KisHttpClient } from './http-client';
+import type { ApiResponse, KisEndpointDefinition } from '../core/types.js';
+import type { KisHttpClient } from './http-client.js';
 
 export class KisDomainBase {
   public constructor(

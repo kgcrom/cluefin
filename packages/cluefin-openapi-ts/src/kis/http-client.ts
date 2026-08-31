@@ -1,4 +1,4 @@
-import { camelizeKeys, normalizeHeaders } from '../core/case-convert';
+import { camelizeKeys, normalizeHeaders } from '../core/case-convert.js';
 import {
   ApiAuthenticationError,
   ApiAuthorizationError,
@@ -16,20 +16,20 @@ import {
   KisServerError,
   KisTimeoutError,
   KisValidationError,
-} from '../core/errors';
-import { BaseHttpClient } from '../core/http';
-import type { ApiEnv, ApiResponse, KisEndpointDefinition } from '../core/types';
-import { createInputSchema, kisEnvelopeSchema } from '../core/validation';
-import { DomesticAccount } from './domestic-account';
-import { DomesticBasicQuote } from './domestic-basic-quote';
-import { DomesticIssueOther } from './domestic-issue-other';
-import { DomesticMarketAnalysis } from './domestic-market-analysis';
-import { DomesticRankingAnalysis } from './domestic-ranking-analysis';
-import { DomesticStockInfo } from './domestic-stock-info';
-import { OnmarketBondBasicQuote } from './onmarket-bond-basic-quote';
-import { OverseasAccount } from './overseas-account';
-import { OverseasBasicQuote } from './overseas-basic-quote';
-import { OverseasMarketAnalysis } from './overseas-market-analysis';
+} from '../core/errors.js';
+import { BaseHttpClient } from '../core/http.js';
+import type { ApiEnv, ApiResponse, KisEndpointDefinition } from '../core/types.js';
+import { createInputSchema, kisEnvelopeSchema } from '../core/validation.js';
+import { DomesticAccount } from './domestic-account.js';
+import { DomesticBasicQuote } from './domestic-basic-quote.js';
+import { DomesticIssueOther } from './domestic-issue-other.js';
+import { DomesticMarketAnalysis } from './domestic-market-analysis.js';
+import { DomesticRankingAnalysis } from './domestic-ranking-analysis.js';
+import { DomesticStockInfo } from './domestic-stock-info.js';
+import { OnmarketBondBasicQuote } from './onmarket-bond-basic-quote.js';
+import { OverseasAccount } from './overseas-account.js';
+import { OverseasBasicQuote } from './overseas-basic-quote.js';
+import { OverseasMarketAnalysis } from './overseas-market-analysis.js';
 
 export interface KisHttpClientOptions {
   token: string;
@@ -217,7 +217,7 @@ export class KisHttpClient {
           .filter((entry): entry is [string, string] => entry !== null),
       );
 
-      const requestOptions: import('../core/types').HttpRequestOptions = {
+      const requestOptions: import('../core/types.js').HttpRequestOptions = {
         method: definition.method,
         url: `${this.baseUrl}${definition.path}`,
         headers: {

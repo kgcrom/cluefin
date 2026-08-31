@@ -1,6 +1,6 @@
-import { camelizeKeys } from '../core/case-convert';
-import { KiwoomApiError, KiwoomAuthenticationError, KiwoomServerError, KiwoomValidationError } from '../core/errors';
-import type { ApiEnv } from '../core/types';
+import { camelizeKeys } from '../core/case-convert.js';
+import { KiwoomApiError, KiwoomAuthenticationError, KiwoomServerError, KiwoomValidationError } from '../core/errors.js';
+import type { ApiEnv } from '../core/types.js';
 
 export interface KiwoomAuthOptions {
   appKey: string;

@@ -1,8 +1,8 @@
-import type { DomainMethods } from '../core/types';
-import type { NhplugClient } from './client';
-import { NhplugDomainBase } from './domain-base';
-import { type CommonMethodName, commonEndpoints } from './metadata/common';
-import type { CommonResponseMap } from './schemas/common';
+import type { DomainMethods } from '../core/types.js';
+import type { NhplugClient } from './client.js';
+import { NhplugDomainBase } from './domain-base.js';
+import { type CommonMethodName, commonEndpoints } from './metadata/common.js';
+import type { CommonResponseMap } from './schemas/common.js';
 
 export type NhplugCommon = NhplugDomainBase & DomainMethods<CommonMethodName, CommonResponseMap>;
 export const NhplugCommon = class NhplugCommon extends NhplugDomainBase {

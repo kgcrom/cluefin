@@ -1,8 +1,8 @@
-import type { DomainMethods } from '../core/types';
-import type { KiwoomClient } from './client';
-import { KiwoomDomainBase } from './domain-base';
-import { type DomesticRankInfoMethodName, domesticRankInfoEndpoints } from './metadata/domestic-rank-info';
-import type { DomesticRankInfoResponseMap } from './schemas/domestic-rank-info';
+import type { DomainMethods } from '../core/types.js';
+import type { KiwoomClient } from './client.js';
+import { KiwoomDomainBase } from './domain-base.js';
+import { type DomesticRankInfoMethodName, domesticRankInfoEndpoints } from './metadata/domestic-rank-info.js';
+import type { DomesticRankInfoResponseMap } from './schemas/domestic-rank-info.js';
 
 export type DomesticRankInfo = KiwoomDomainBase &
   DomainMethods<DomesticRankInfoMethodName, DomesticRankInfoResponseMap>;

@@ -1,4 +1,4 @@
-import type { RetryOptions } from './types';
+import type { RetryOptions } from './types.js';
 
 export const isRetryableStatus = (status: number): boolean => status === 429 || (status >= 500 && status <= 599);
 

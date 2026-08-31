@@ -1,8 +1,8 @@
-import type { DomainMethods } from '../core/types';
-import type { NhplugClient } from './client';
-import { NhplugDomainBase } from './domain-base';
-import { type KrstockInquiryMethodName, krstockInquiryEndpoints } from './metadata/krstock-inquiry';
-import type { KrstockInquiryResponseMap } from './schemas/krstock-inquiry';
+import type { DomainMethods } from '../core/types.js';
+import type { NhplugClient } from './client.js';
+import { NhplugDomainBase } from './domain-base.js';
+import { type KrstockInquiryMethodName, krstockInquiryEndpoints } from './metadata/krstock-inquiry.js';
+import type { KrstockInquiryResponseMap } from './schemas/krstock-inquiry.js';
 
 export type NhplugKrstockInquiry = NhplugDomainBase &
   DomainMethods<KrstockInquiryMethodName, KrstockInquiryResponseMap>;
