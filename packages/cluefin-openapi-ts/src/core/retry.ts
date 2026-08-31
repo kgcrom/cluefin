@@ -17,7 +17,8 @@ const secureRandomInt = (maxExclusive: number): number => {
 
   const values = new Uint32Array(1);
   globalThis.crypto.getRandomValues(values);
-  const randomValue = values[0] ?? 0;
+  // 구조분해 기본값 — noUncheckedIndexedAccess 아래서 values[0] 은 number|undefined 다.
+  const [randomValue = 0] = values;
   return Math.floor((randomValue / U32_RANGE) * maxExclusive);
 };
 

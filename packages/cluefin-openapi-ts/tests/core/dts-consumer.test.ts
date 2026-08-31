@@ -1,7 +1,5 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import { beforeAll, describe, expect, test } from 'vitest';
 
@@ -22,16 +20,15 @@ import * as Nhplug from '../../src/nhplug';
  *   2. 벤더 배럴의 런타임 export 가 선언 표면에 전부 있는가(엔트리 배럴 누락 방지).
  */
 
-const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const declarationEntry = path.join(packageRoot, 'dist', 'types', 'index.d.ts');
-const consumerDir = path.join(packageRoot, 'tests', 'fixtures', 'dts-consumer');
+// vitest 는 패키지 루트를 cwd 로 실행한다. 경로를 조립하지 않고 리터럴로 둔다.
+const DECLARATION_ENTRY = 'dist/types/index.d.ts';
 const consumerProjects = [
-  { mode: 'Bundler', project: path.join(consumerDir, 'tsconfig.json') },
-  { mode: 'NodeNext', project: path.join(consumerDir, 'tsconfig.nodenext.json') },
+  { mode: 'Bundler', project: 'tests/fixtures/dts-consumer/tsconfig.json' },
+  { mode: 'NodeNext', project: 'tests/fixtures/dts-consumer/tsconfig.nodenext.json' },
 ] as const;
 
 const buildDeclarations = (): void => {
-  execFileSync('npx', ['tsc', '-p', 'tsconfig.build.json'], { cwd: packageRoot, stdio: 'pipe' });
+  execFileSync('npx', ['tsc', '-p', 'tsconfig.build.json'], { stdio: 'pipe' });
 };
 
 const exportedNames = (entry: string): Set<string> => {
@@ -56,23 +53,23 @@ const exportedNames = (entry: string): Set<string> => {
 
 beforeAll(() => {
   // 빌드 산출물이 없으면 검사할 대상이 없다 — 스킵하지 말고 직접 뽑는다(1~2초).
-  if (!fs.existsSync(declarationEntry)) {
+  if (!fs.existsSync(DECLARATION_ENTRY)) {
     buildDeclarations();
   }
 }, 120_000);
 
 test('package.json 의 types 엔트리가 실제로 존재한다', () => {
-  const pkg = JSON.parse(fs.readFileSync(path.join(packageRoot, 'package.json'), 'utf8'));
+  const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
   expect(pkg.types).toBe('./dist/types/index.d.ts');
   expect(pkg.exports['.'].types).toBe('./dist/types/index.d.ts');
-  expect(fs.existsSync(declarationEntry)).toBe(true);
+  expect(fs.existsSync(DECLARATION_ENTRY)).toBe(true);
 });
 
 test.each(consumerProjects)('소비자 픽스처가 배포될 선언만으로 컴파일된다 — moduleResolution $mode', ({ project }) => {
   let output = '';
   let failed = false;
   try {
-    execFileSync('npx', ['tsc', '-p', project], { cwd: packageRoot, stdio: 'pipe' });
+    execFileSync('npx', ['tsc', '-p', project], { stdio: 'pipe' });
   } catch (error) {
     failed = true;
     const err = error as { stdout?: Buffer; stderr?: Buffer };
@@ -97,7 +94,7 @@ describe.each([
   { name: 'nhplug', barrel: Nhplug as Record<string, unknown> },
 ])('$name barrel', ({ barrel }) => {
   test('런타임 export 가 전부 선언 표면에 있다', () => {
-    const declared = exportedNames(declarationEntry);
+    const declared = exportedNames(DECLARATION_ENTRY);
     const runtimeExports = Object.keys(barrel).sort();
     expect(runtimeExports.length).toBeGreaterThan(0);
 
