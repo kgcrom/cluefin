@@ -3,7 +3,7 @@ import asyncio
 from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import DataTable, Header, Static, TabbedContent, TabPane
 
@@ -42,7 +42,9 @@ class StockDetailScreen(Screen):
             with TabPane("매매원", id="tab-broker"):
                 yield Static("Loading broker data...", id="broker-detail-content")
             with TabPane("수급", id="tab-supply"):
-                yield Static("Loading supply/demand data...", id="supply-detail-content")
+                with VerticalScroll():
+                    yield Static("Loading supply/demand data...", id="supply-detail-content")
+                    yield Static("", id="kis-supply-content")
         yield NavFooter(id="nav-footer")
 
     def on_mount(self) -> None:
@@ -102,6 +104,7 @@ class StockDetailScreen(Screen):
         self._load_investor_data()
         self._load_broker_data()
         self._load_supply_data()
+        self._load_kis_supply_data()
 
     def _load_investor_data(self) -> None:
         try:
@@ -200,6 +203,50 @@ class StockDetailScreen(Screen):
             from loguru import logger
 
             logger.error(f"Failed to load supply data: {e}")
+
+    def _load_kis_supply_data(self) -> None:
+        """KIS enrichment for the 수급 tab: per-type daily net buy + 락 events.
+
+        Skipped entirely (panel stays empty) when KIS keys are not configured;
+        a lookup failure must not take down the Kiwoom half of the tab.
+        """
+        fetcher = self.app.fetcher
+        if not fetcher.has_kis:
+            return
+
+        try:
+            trend_df = fetcher.get_investor_trend_daily(self.stock_code, days=10)
+            actions_df = fetcher.get_corporate_actions(self.stock_code)
+
+            def _update():
+                lines = []
+                if not trend_df.empty:
+                    lines += [
+                        "",
+                        "[bold]투자자별 일별 순매수 (KIS, 주)[/bold]",
+                        "",
+                        f"{'일자':<11s} {'개인':>12s} {'외국인':>12s} {'기관계':>12s} {'연기금':>12s}",
+                        "-" * 64,
+                    ]
+                    for date, row in trend_df.sort_index(ascending=False).iterrows():
+                        lines.append(
+                            f"{date.strftime('%Y-%m-%d'):<11s} {row['개인']:>12,.0f} "
+                            f"{row['외국인']:>12,.0f} {row['기관계']:>12,.0f} {row['연기금']:>12,.0f}"
+                        )
+                if not actions_df.empty:
+                    lines += ["", "[bold]최근 권리락/배당락 (KIS)[/bold]", ""]
+                    for date, row in actions_df.sort_index(ascending=False).iterrows():
+                        lines.append(f"  {date.strftime('%Y-%m-%d')}  {row['event']}")
+
+                if lines:
+                    panel = self.query_one("#kis-supply-content", Static)
+                    panel.update("\n".join(lines))
+
+            self.app.call_from_thread(_update)
+        except Exception as e:
+            from loguru import logger
+
+            logger.error(f"Failed to load KIS supply data: {e}")
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

@@ -23,6 +23,8 @@ class FinancialAnalysisScreen(Screen):
         yield Header(show_clock=True)
         yield Static(f"{self.stock_code} — 재무 분석  [Esc·뒤로]", id="financial-title-bar")
         with TabbedContent(id="financial-tabs"):
+            with TabPane("KIS 재무", id="tab-kis-financial"):
+                yield Static("Loading KIS financials...", id="kis-financial-content")
             with TabPane("재무제표", id="tab-statement"):
                 yield Static("Loading financial statements...", id="financial-statement-content")
             with TabPane("공시목록", id="tab-disclosure"):
@@ -51,8 +53,66 @@ class FinancialAnalysisScreen(Screen):
 
     @work(thread=True)
     def load_all_data(self) -> None:
+        self._load_kis_financials()
         self._load_disclosure_list()
         self._load_major_shareholders()
+
+    def _load_kis_financials(self) -> None:
+        """KIS 재무비율·손익계산서 시계열. 진행연도 누적(YTD) 행이 연간 행과 섞여
+        내려오므로 기간을 그대로 보여주고 라벨로만 구분한다."""
+        fetcher = self.app.fetcher
+        if not fetcher.has_kis:
+
+            def _show_missing_kis_key():
+                panel = self.query_one("#kis-financial-content", Static)
+                panel.update(
+                    "KIS API keys not configured.\nSet KIS_APP_KEY / KIS_SECRET_KEY in .env to use KIS financials."
+                )
+
+            self.app.call_from_thread(_show_missing_kis_key)
+            return
+
+        try:
+            ratios = fetcher.get_financial_ratio_series(self.stock_code)
+            statements = fetcher.get_income_statement_series(self.stock_code)
+
+            def _update():
+                lines = []
+                if statements:
+                    lines += [
+                        "[bold]손익계산서 (KIS, 년 시리즈 — 최신 행은 진행연도 누적일 수 있음)[/bold]",
+                        "",
+                        f"{'결산':>8s} {'매출액':>14s} {'영업이익':>14s} {'당기순이익':>14s}",
+                        "-" * 56,
+                    ]
+                    for item in statements[:8]:
+                        lines.append(
+                            f"{item.stac_yymm:>8s} {item.sale_account:>14s} {item.bsop_prti:>14s} {item.thtr_ntin:>14s}"
+                        )
+                if ratios:
+                    lines += [
+                        "",
+                        "[bold]재무비율 (KIS)[/bold]",
+                        "",
+                        f"{'결산':>8s} {'ROE':>8s} {'부채비율':>10s} {'유보율':>12s} {'매출성장':>10s}",
+                        "-" * 56,
+                    ]
+                    for item in ratios[:8]:
+                        lines.append(
+                            f"{item.stac_yymm:>8s} {item.roe_val:>8s} {item.lblt_rate:>10s} "
+                            f"{item.rsrv_rate:>12s} {item.grs:>10s}"
+                        )
+                if not lines:
+                    lines = ["No KIS financial data available (ETF/ETN and some names have none)."]
+
+                panel = self.query_one("#kis-financial-content", Static)
+                panel.update("\n".join(lines))
+
+            self.app.call_from_thread(_update)
+        except Exception as e:
+            from loguru import logger
+
+            logger.error(f"Failed to load KIS financials: {e}")
 
     def _load_disclosure_list(self) -> None:
         dart_client = self.app.dart_client

@@ -3,10 +3,12 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from cluefin_openapi.kis._auth import Auth as KisAuth
+from cluefin_openapi.kis._exceptions import KISAPIError
 from cluefin_openapi.kis._http_client import HttpClient as KisClient
 from cluefin_openapi.kiwoom._auth import Auth as KiwoomAuth
 from cluefin_openapi.kiwoom._client import Client as KiwoomClient
-from pydantic import SecretStr
+from loguru import logger
+from pydantic import SecretStr, ValidationError
 
 from cluefin_desk.config.settings import settings
 
@@ -79,6 +81,17 @@ class DomesticDataFetcher:
     # ──────────────────────────────────────
 
     async def get_basic_data(self, stock_code: str) -> pd.DataFrame:
+        """Fetch basic company data — KIS when configured, Kiwoom otherwise.
+
+        Both paths return the same widget-facing keys (stock_name, market_cap,
+        per/pbr/roe/eps/bps, sector_name, market_name); the KIS path adds price,
+        52-week, supply/demand and financial columns on top.
+        """
+        if self.has_kis:
+            return self._get_basic_data_kis(stock_code)
+        return self._get_basic_data_kiwoom(stock_code)
+
+    def _get_basic_data_kiwoom(self, stock_code: str) -> pd.DataFrame:
         stock_info = self.kiwoom_client.stock_info.get_stock_info(stock_code)
         stock_info_v1 = self.kiwoom_client.stock_info.get_stock_info_v1(stock_code)
 
@@ -98,6 +111,288 @@ class DomesticDataFetcher:
             "market_name": info_v1.marketName,
         }
         return pd.DataFrame([merged_data])
+
+    def _get_basic_data_kis(self, stock_code: str) -> pd.DataFrame:
+        # 주식현재가 시세 (FHKST01010100) carries the valuation/price block; 주식기본조회
+        # (CTPF1002R) carries the identity block (name, listing date, 업종) that the
+        # quote response leaves out.
+        price = self.kis_client.domestic_basic_quote.get_stock_current_price(
+            fid_cond_mrkt_div_code="J",
+            fid_input_iscd=stock_code,
+        ).body.output
+        product = self.kis_client.domestic_stock_info.get_stock_basic_info(
+            prdt_type_cd="300",
+            pdno=stock_code,
+        ).body.output
+
+        merged_data: Dict[str, Any] = {"stock_code": stock_code}
+
+        if price is not None:
+            merged_data.update(
+                {
+                    "market_name": price.rprs_mrkt_kor_name,
+                    "industry_name": price.bstp_kor_isnm,
+                    "settlement_month": price.stac_month,
+                    "current_price": price.stck_prpr,
+                    "price_change": price.prdy_vrss,
+                    "price_change_rate": price.prdy_ctrt,
+                    "market_cap": price.hts_avls,
+                    "per": price.per,
+                    "pbr": price.pbr,
+                    "eps": price.eps,
+                    "bps": price.bps,
+                    "listed_shares": price.lstn_stcn,
+                    "turnover_ratio": price.vol_tnrt,
+                    "foreign_exhaustion_rate": price.hts_frgn_ehrt,
+                    "credit_ratio": price.whol_loan_rmnd_rate,
+                    "52_week_high": price.w52_hgpr,
+                    "52_week_high_date": price.w52_hgpr_date,
+                    "52_week_low": price.w52_lwpr,
+                    "52_week_low_date": price.w52_lwpr_date,
+                }
+            )
+
+        if product is not None:
+            merged_data.update(
+                {
+                    "stock_name": product.prdt_abrv_name or product.prdt_name,
+                    "registration_day": product.scts_mket_lstg_dt or product.kosdaq_mket_lstg_dt,
+                    "sector_name": product.idx_bztp_mcls_cd_name,
+                    "sector_detail_name": product.idx_bztp_scls_cd_name,
+                    "state": self._describe_state(product.admn_item_yn, product.tr_stop_yn),
+                }
+            )
+
+        merged_data.update(
+            self._fetch_financial_metrics(stock_code, settlement_month=merged_data.get("settlement_month"))
+        )
+
+        return pd.DataFrame([merged_data])
+
+    def _fetch_financial_metrics(self, stock_code: str, settlement_month: Optional[str] = None) -> Dict[str, Any]:
+        """Fill in the profitability/scale figures the quote response omits.
+
+        KIS 재무비율 (FHKST66430300) and 손익계산서 (FHKST66430200) cover ROE, 매출액,
+        영업이익 and 당기순이익. Neither exists for ETF/ETN, so a failure here degrades
+        to "no financial rows" rather than failing the whole lookup.
+
+        `fid_div_cls_code="0"` is documented as 년(annual) but the live series leads with
+        the *in-progress* fiscal year's cumulative figures. Reporting that row as annual
+        inflates ROE and every growth rate, so the completed year is used for the
+        headline numbers and the cumulative row is surfaced separately as YTD.
+        """
+        metrics: Dict[str, Any] = {}
+
+        annual_ratio, ytd_ratio = self._split_annual_and_ytd(
+            self.get_financial_ratio_series(stock_code), settlement_month
+        )
+        if annual_ratio is not None:
+            metrics.update(
+                {
+                    "financial_period": annual_ratio.stac_yymm,
+                    "roe": annual_ratio.roe_val,
+                    "revenue_growth_rate": annual_ratio.grs,
+                    "operating_profit_growth_rate": annual_ratio.bsop_prfi_inrt,
+                    "net_profit_growth_rate": annual_ratio.ntin_inrt,
+                    "debt_ratio": annual_ratio.lblt_rate,
+                    "reserve_ratio": annual_ratio.rsrv_rate,
+                }
+            )
+        if ytd_ratio is not None:
+            metrics.update(
+                {
+                    "ytd_period": ytd_ratio.stac_yymm,
+                    "ytd_roe": ytd_ratio.roe_val,
+                    "ytd_debt_ratio": ytd_ratio.lblt_rate,
+                }
+            )
+
+        annual_statement, ytd_statement = self._split_annual_and_ytd(
+            self.get_income_statement_series(stock_code), settlement_month
+        )
+        if annual_statement is not None:
+            metrics.update(
+                {
+                    "financial_period": annual_statement.stac_yymm,
+                    "revenue": annual_statement.sale_account,
+                    "operating_profit": annual_statement.bsop_prti,
+                    "net_profit": annual_statement.thtr_ntin,
+                }
+            )
+        if ytd_statement is not None:
+            metrics.update(
+                {
+                    "ytd_period": ytd_statement.stac_yymm,
+                    "ytd_revenue": ytd_statement.sale_account,
+                    "ytd_operating_profit": ytd_statement.bsop_prti,
+                    "ytd_net_profit": ytd_statement.thtr_ntin,
+                }
+            )
+
+        return metrics
+
+    def get_financial_ratio_series(self, stock_code: str) -> list:
+        """KIS 재무비율 series (년 단위 + 진행연도 누적 행), newest first on live.
+
+        Degrades to [] for ETF/ETN and other names with no financial rows.
+        """
+        try:
+            return (
+                self.kis_client.domestic_stock_info.get_financial_ratio(
+                    fid_div_cls_code="0",
+                    fid_cond_mrkt_div_code="J",
+                    fid_input_iscd=stock_code,
+                ).body.output
+                or []
+            )
+        except (KISAPIError, ValidationError) as exc:
+            logger.debug(f"financial ratio unavailable for {stock_code}: {exc}")
+            return []
+
+    def get_income_statement_series(self, stock_code: str) -> list:
+        """KIS 손익계산서 series (년 단위 + 진행연도 누적 행), newest first on live.
+
+        Degrades to [] for ETF/ETN and other names with no financial rows.
+        """
+        try:
+            return (
+                self.kis_client.domestic_stock_info.get_income_statement(
+                    fid_div_cls_code="0",
+                    fid_cond_mrkt_div_code="J",
+                    fid_input_iscd=stock_code,
+                ).body.output
+                or []
+            )
+        except (KISAPIError, ValidationError) as exc:
+            logger.debug(f"income statement unavailable for {stock_code}: {exc}")
+            return []
+
+    @staticmethod
+    def _split_annual_and_ytd(items, settlement_month: Optional[str]):
+        """Split the KIS "년" series into (completed fiscal year, in-progress cumulative).
+
+        A row belongs to a completed year when its 결산 년월 ends on the company's
+        settlement month. Without a usable settlement month there is nothing to compare
+        against, so the newest row is treated as annual and no YTD row is reported.
+        """
+        if not items:
+            return None, None
+
+        ordered = sorted(items, key=lambda item: item.stac_yymm, reverse=True)
+        if not settlement_month:
+            return ordered[0], None
+
+        month = str(settlement_month).zfill(2)
+        annual = next((item for item in ordered if item.stac_yymm[4:] == month), None)
+        if annual is None:
+            return ordered[0], None
+
+        ytd = ordered[0] if ordered[0].stac_yymm != annual.stac_yymm else None
+        return annual, ytd
+
+    @staticmethod
+    def _describe_state(admin_issue_yn: str, trading_halt_yn: str) -> str:
+        """Summarise the KIS admin/halt flags the way Kiwoom's `state` field read."""
+        flags = []
+        if admin_issue_yn == "Y":
+            flags.append("관리종목")
+        if trading_halt_yn == "Y":
+            flags.append("거래정지")
+        return " / ".join(flags) if flags else "정상"
+
+    _CORPORATE_ACTION_LABELS = {
+        "01": "권리락",
+        "02": "배당락",
+        "03": "분배락",
+        "04": "권배락",
+        "05": "중간배당락",
+        "06": "권리중간배당락",
+        "07": "권리분기배당락",
+    }
+
+    def get_corporate_actions(self, stock_code: str, days: int = 100) -> pd.DataFrame:
+        """Fetch 권리락/배당락 events for the recent sessions.
+
+        Kiwoom's 일봉차트 carries no 락 구분, so this comes from KIS 기간별시세
+        (`FHKST03010100`), which tags each bar with 락구분코드 and 분할비율.
+        KIS caps this response at the 100 most recent bars regardless of the
+        requested range.
+        """
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+
+        try:
+            bars = self.kis_client.domestic_basic_quote.get_stock_period_quote(
+                fid_cond_mrkt_div_code="J",
+                fid_input_iscd=stock_code,
+                fid_input_date_1=start_date.strftime("%Y%m%d"),
+                fid_input_date_2=end_date.strftime("%Y%m%d"),
+                fid_period_div_code="D",
+                fid_org_adj_prc="0",
+            ).body.output2
+        except (KISAPIError, ValidationError) as exc:
+            logger.debug(f"period quote unavailable for {stock_code}: {exc}")
+            return pd.DataFrame()
+
+        rows = [
+            {
+                "date": pd.to_datetime(bar.stck_bsop_date),
+                "event": self._CORPORATE_ACTION_LABELS.get(bar.flng_cls_code, bar.flng_cls_code),
+                "split_ratio": self._safe_float(bar.prtt_rate),
+            }
+            for bar in bars
+            if bar.flng_cls_code and bar.flng_cls_code != "00"
+        ]
+        if not rows:
+            return pd.DataFrame()
+
+        return pd.DataFrame(rows).set_index("date").sort_index()
+
+    # KIS 종목별 투자자매매동향(일별) breaks 기관 down into 8 sub-categories that
+    # Kiwoom's 기간 누적 endpoint lumps together.
+    _INVESTOR_COLUMNS = (
+        ("개인", "prsn_ntby_qty"),
+        ("외국인", "frgn_ntby_qty"),
+        ("기관계", "orgn_ntby_qty"),
+        ("금융투자", "scrt_ntby_qty"),
+        ("투신", "ivtr_ntby_qty"),
+        ("사모펀드", "pe_fund_ntby_vol"),
+        ("은행", "bank_ntby_qty"),
+        ("보험", "insu_ntby_qty"),
+        ("연기금", "fund_ntby_qty"),
+        ("기타법인", "etc_corp_ntby_vol"),
+    )
+
+    def get_investor_trend_daily(self, stock_code: str, days: int = 20) -> pd.DataFrame:
+        """Fetch the daily net-buy quantity per investor type (KIS).
+
+        Returns a DataFrame indexed by date, one column per investor type;
+        empty when KIS has no rows (or the lookup degrades).
+        """
+        base_date = datetime.now().strftime("%Y%m%d")
+
+        try:
+            items = self.kis_client.domestic_market_analysis.get_investor_trading_trend_by_stock_daily(
+                fid_cond_mrkt_div_code="J",
+                fid_input_iscd=stock_code,
+                fid_input_date_1=base_date,
+            ).body.output2
+        except (KISAPIError, ValidationError) as exc:
+            logger.debug(f"daily investor trend unavailable for {stock_code}: {exc}")
+            return pd.DataFrame()
+
+        rows = [
+            {
+                "date": pd.to_datetime(item.stck_bsop_date),
+                **{label: self._safe_float(getattr(item, field)) for label, field in self._INVESTOR_COLUMNS},
+            }
+            for item in items
+        ]
+        if not rows:
+            return pd.DataFrame()
+
+        df = pd.DataFrame(rows).set_index("date").sort_index()
+        return df.tail(days)
 
     async def get_stock_data(self, stock_code: str) -> pd.DataFrame:
         parsed_date = datetime.now().strftime("%Y%m%d")
