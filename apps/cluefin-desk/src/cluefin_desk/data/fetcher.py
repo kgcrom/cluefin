@@ -394,6 +394,253 @@ class DomesticDataFetcher:
         df = pd.DataFrame(rows).set_index("date").sort_index()
         return df.tail(days)
 
+    # ──────────────────────────────────────
+    # KIS: 투자의견 (stock detail)
+    # ──────────────────────────────────────
+
+    def get_investment_opinions(self, stock_code: str, months: int = 6) -> list:
+        """증권사 리서치 투자의견 — Kiwoom/DART 에 대응 API 가 없는 KIS 고유 데이터.
+
+        Items carry 의견(invt_opnn)·이전의견·증권사명(mbcr_name)·목표가(hts_goal_prc)·
+        괴리율(dprt). Degrades to [] when the name has no coverage.
+        """
+        end = datetime.now()
+        start = end - timedelta(days=months * 30)
+        try:
+            return (
+                self.kis_client.domestic_stock_info.get_investment_opinion(
+                    fid_cond_mrkt_div_code="J",
+                    fid_cond_scr_div_code="16633",
+                    fid_input_iscd=stock_code,
+                    fid_input_date_1=start.strftime("%Y%m%d"),
+                    fid_input_date_2=end.strftime("%Y%m%d"),
+                ).body.output
+                or []
+            )
+        except (KISAPIError, ValidationError) as exc:
+            logger.debug(f"investment opinion unavailable for {stock_code}: {exc}")
+            return []
+
+    # ──────────────────────────────────────
+    # KIS: 종목 수급 추이 (stock detail 수급 탭)
+    # ──────────────────────────────────────
+
+    def get_short_selling_trend(self, stock_code: str, days: int = 30) -> list:
+        """공매도 일별 추이 (KIS). Items: stck_bsop_date, ssts_cntg_qty(공매도량),
+        ssts_vol_rlim(비중), acml_ssts_cntg_qty(누적)."""
+        end = datetime.now()
+        start = end - timedelta(days=days)
+        try:
+            return (
+                self.kis_client.domestic_market_analysis.get_short_selling_trend_daily(
+                    fid_input_date_2=end.strftime("%Y%m%d"),
+                    fid_cond_mrkt_div_code="J",
+                    fid_input_iscd=stock_code,
+                    fid_input_date_1=start.strftime("%Y%m%d"),
+                ).body.output2
+                or []
+            )
+        except (KISAPIError, ValidationError) as exc:
+            logger.debug(f"short selling trend unavailable for {stock_code}: {exc}")
+            return []
+
+    def get_credit_balance_trend(self, stock_code: str) -> list:
+        """신용잔고 일별 추이 (KIS). Items: deal_date, whol_loan_rmnd_stcn(융자잔고),
+        whol_loan_rmnd_rate(잔고비율)."""
+        try:
+            return (
+                self.kis_client.domestic_market_analysis.get_credit_balance_trend_daily(
+                    fid_cond_mrkt_div_code="J",
+                    fid_cond_scr_div_code="20476",
+                    fid_input_iscd=stock_code,
+                    fid_input_date_1=datetime.now().strftime("%Y%m%d"),
+                ).body.output
+                or []
+            )
+        except (KISAPIError, ValidationError) as exc:
+            logger.debug(f"credit balance trend unavailable for {stock_code}: {exc}")
+            return []
+
+    def get_program_trading_trend(self, stock_code: str) -> list:
+        """종목별 프로그램매매 일별 추이 (KIS). Items: stck_bsop_date,
+        whol_smtn_ntby_qty(순매수량), whol_smtn_ntby_tr_pbmn(순매수대금)."""
+        try:
+            return (
+                self.kis_client.domestic_market_analysis.get_program_trading_trend_by_stock_daily(
+                    fid_cond_mrkt_div_code="J",
+                    fid_input_iscd=stock_code,
+                    fid_input_date_1="",  # empty = 오늘 기준
+                ).body.output
+                or []
+            )
+        except (KISAPIError, ValidationError) as exc:
+            logger.debug(f"program trading trend unavailable for {stock_code}: {exc}")
+            return []
+
+    # ──────────────────────────────────────
+    # KIS: 시장 수급·자금 (market overview)
+    # ──────────────────────────────────────
+
+    def get_market_investor_trend_daily(self, market: str = "KSP", days: int = 30) -> list:
+        """시장 전체 투자자별 일별 순매수 (KIS). market: KSP(코스피)/KSQ(코스닥).
+        Items: stck_bsop_date, bstp_nmix_prpr(지수), prsn/frgn/orgn_ntby_qty."""
+        end = datetime.now()
+        start = end - timedelta(days=days)
+        sector_code = "0001" if market == "KSP" else "1001"
+        try:
+            return (
+                self.kis_client.domestic_market_analysis.get_investor_trading_trend_by_market_daily(
+                    fid_cond_mrkt_div_code="U",
+                    fid_input_iscd=sector_code,
+                    fid_input_date_1=start.strftime("%Y%m%d"),
+                    fid_input_iscd_1=market,
+                    fid_input_date_2=end.strftime("%Y%m%d"),
+                    fid_input_iscd_2=sector_code,
+                ).body.output
+                or []
+            )
+        except (KISAPIError, ValidationError) as exc:
+            logger.debug(f"market investor trend unavailable for {market}: {exc}")
+            return []
+
+    def get_market_fund_summary(self) -> list:
+        """시장 자금 동향 (KIS): 고객예탁금·신용융자잔고·펀드 자금 등 일별 시계열."""
+        try:
+            return (
+                self.kis_client.domestic_market_analysis.get_market_fund_summary(
+                    fid_input_date_1=datetime.now().strftime("%Y%m%d"),
+                ).body.output
+                or []
+            )
+        except (KISAPIError, ValidationError) as exc:
+            logger.debug(f"market fund summary unavailable: {exc}")
+            return []
+
+    # ──────────────────────────────────────
+    # KIS: 랭킹 (screening)
+    # ──────────────────────────────────────
+
+    def get_dividend_yield_top(self, market: str = "1") -> list:
+        """배당수익률 상위 (KIS). market: 0 전체, 1 코스피, 2 코스피200, 3 코스닥.
+        기준일은 최근 1년 결산·현금배당."""
+        end = datetime.now()
+        start = end - timedelta(days=365)
+        try:
+            return (
+                self.kis_client.domestic_ranking_analysis.get_stock_dividend_yield_top(
+                    cts_area="",
+                    gb1=market,
+                    upjong="0001",  # 종합
+                    gb2="0",  # 전체
+                    gb3="2",  # 현금배당
+                    f_dt=start.strftime("%Y%m%d"),
+                    t_dt=end.strftime("%Y%m%d"),
+                    gb4="0",  # 전체(결산+중간)
+                ).body.output
+                or []
+            )
+        except (KISAPIError, ValidationError) as exc:
+            logger.debug(f"dividend yield top unavailable: {exc}")
+            return []
+
+    def get_short_selling_top(self, market: str = "0001") -> list:
+        """공매도 상위 (KIS, 당일). market: 0000 전체, 0001 코스피, 1001 코스닥."""
+        try:
+            return (
+                self.kis_client.domestic_ranking_analysis.get_stock_short_selling_top(
+                    fid_aply_rang_vol="",
+                    fid_cond_mrkt_div_code="J",
+                    fid_cond_scr_div_code="20482",
+                    fid_input_iscd=market,
+                    fid_period_div_code="D",
+                    fid_input_cnt_1="0",  # 1일
+                    fid_trgt_exls_cls_code="",
+                    fid_trgt_cls_code="",
+                    fid_aply_rang_prc_1="",
+                    fid_aply_rang_prc_2="",
+                ).body.output
+                or []
+            )
+        except (KISAPIError, ValidationError) as exc:
+            logger.debug(f"short selling top unavailable: {exc}")
+            return []
+
+    def get_credit_balance_top(self, market: str = "0001") -> list:
+        """신용잔고 상위 (KIS, 잔고비율순). market: 0000 전체, 0001 거래소, 1001 코스닥."""
+        try:
+            return (
+                self.kis_client.domestic_ranking_analysis.get_stock_credit_balance_top(
+                    fid_cond_scr_div_code="11701",
+                    fid_input_iscd=market,
+                    fid_option="7",  # 증가율 기간(일)
+                    fid_cond_mrkt_div_code="J",
+                    fid_rank_sort_cls_code="0",  # 잔고비율상위
+                ).body.output2
+                or []
+            )
+        except (KISAPIError, ValidationError) as exc:
+            logger.debug(f"credit balance top unavailable: {exc}")
+            return []
+
+    def get_disparity_index_rank(self, market: str = "0001", hour: str = "20") -> list:
+        """이격도 상위 (KIS). hour: 이동평균 기준(5/10/20/60/120)."""
+        try:
+            return (
+                self.kis_client.domestic_ranking_analysis.get_stock_disparity_index_rank(
+                    fid_input_price_2="",
+                    fid_cond_mrkt_div_code="J",
+                    fid_cond_scr_div_code="20178",
+                    fid_div_cls_code="0",
+                    fid_rank_sort_cls_code="0",  # 이격도상위순
+                    fid_hour_cls_code=hour,
+                    fid_input_iscd=market,
+                    fid_trgt_cls_code="0",
+                    fid_trgt_exls_cls_code="0",
+                    fid_input_price_1="",
+                    fid_vol_cnt="",
+                ).body.output
+                or []
+            )
+        except (KISAPIError, ValidationError) as exc:
+            logger.debug(f"disparity index rank unavailable: {exc}")
+            return []
+
+    # ──────────────────────────────────────
+    # KIS: ETF (etf analysis)
+    # ──────────────────────────────────────
+
+    def get_etf_nav_daily_trend(self, stk_cd: str, days: int = 30) -> list:
+        """ETF NAV 대비 일별 추이 (KIS). Items: stck_bsop_date, stck_clpr, nav,
+        dprt(괴리율)."""
+        end = datetime.now()
+        start = end - timedelta(days=days)
+        try:
+            return (
+                self.kis_client.domestic_basic_quote.get_etf_nav_comparison_daily_trend(
+                    fid_input_iscd=stk_cd,
+                    fid_input_date_1=start.strftime("%Y%m%d"),
+                    fid_input_date_2=end.strftime("%Y%m%d"),
+                ).body.output
+                or []
+            )
+        except (KISAPIError, ValidationError) as exc:
+            logger.debug(f"etf nav trend unavailable for {stk_cd}: {exc}")
+            return []
+
+    def get_etf_component_prices(self, stk_cd: str) -> list:
+        """ETF 구성종목 시세 (KIS). Items: stck_shrn_iscd, hts_kor_isnm, stck_prpr,
+        prdy_ctrt, etf_cnfg_issu_rlim(구성비중)."""
+        try:
+            return (
+                self.kis_client.domestic_basic_quote.get_etf_component_stock_price(
+                    fid_input_iscd=stk_cd,
+                ).body.output2
+                or []
+            )
+        except (KISAPIError, ValidationError) as exc:
+            logger.debug(f"etf components unavailable for {stk_cd}: {exc}")
+            return []
+
     async def get_stock_data(self, stock_code: str) -> pd.DataFrame:
         parsed_date = datetime.now().strftime("%Y%m%d")
         max_pages = 3

@@ -19,6 +19,11 @@ TAB_CONFIG = [
     ("신고가", "tab-newhigh", "table-newhigh"),
     ("급등/급락", "tab-volatility", "table-volatility"),
     ("신용잔", "tab-margin", "table-margin"),
+    # KIS-backed tabs — stay empty without KIS keys
+    ("배당수익률", "tab-dividend", "table-dividend"),
+    ("공매도", "tab-short", "table-short"),
+    ("신용상위", "tab-credit", "table-credit"),
+    ("이격도", "tab-disparity", "table-disparity"),
 ]
 
 
@@ -63,6 +68,10 @@ class ScreeningScreen(Screen):
             ("table-newhigh", screener.get_new_high_price),
             ("table-volatility", screener.get_price_volatility),
             ("table-margin", screener.get_top_margin_ratio),
+            ("table-dividend", screener.get_dividend_yield_top),
+            ("table-short", screener.get_short_selling_top),
+            ("table-credit", screener.get_credit_balance_top),
+            ("table-disparity", screener.get_disparity_index_top),
         ]
 
         for table_id, loader_fn in loaders:

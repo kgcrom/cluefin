@@ -31,6 +31,9 @@ class MarketOverviewScreen(Screen):
             with Horizontal(id="top-movers-container"):
                 yield Static("Loading...", id="top-gainers-panel")
                 yield Static("Loading...", id="top-losers-panel")
+            with Horizontal(id="kis-market-container"):
+                yield Static("", id="kis-investor-panel")
+                yield Static("", id="kis-fund-panel")
         yield NavFooter(active_screen_key="1")
 
     def on_mount(self) -> None:
@@ -61,6 +64,7 @@ class MarketOverviewScreen(Screen):
     def load_all_data(self) -> None:
         self._load_sector_data("001")
         self._load_top_movers()
+        self._load_kis_market_data()
 
     @work(thread=True)
     def _reload_sector_data(self, inds_cd: str) -> None:
@@ -147,6 +151,47 @@ class MarketOverviewScreen(Screen):
             from loguru import logger
 
             logger.error(f"Failed to load top movers: {e}")
+
+    def _load_kis_market_data(self) -> None:
+        """KIS 시장 수급·자금 패널. KIS 키가 없으면 빈 채로 둔다."""
+        fetcher = self.app.fetcher
+        if not fetcher.has_kis:
+            return
+
+        try:
+            investors = fetcher.get_market_investor_trend_daily(market="KSP")
+            funds = fetcher.get_market_fund_summary()
+
+            def _update():
+                if investors:
+                    lines = [
+                        "[bold]코스피 투자자별 순매수 (KIS, 주)[/bold]",
+                        f"{'일자':<10s} {'개인':>12s} {'외국인':>12s} {'기관':>12s}",
+                    ]
+                    for item in investors[:5]:
+                        lines.append(
+                            f"{item.stck_bsop_date:<10s} {item.prsn_ntby_qty:>12s} "
+                            f"{item.frgn_ntby_qty:>12s} {item.orgn_ntby_qty:>12s}"
+                        )
+                    self.query_one("#kis-investor-panel", Static).update("\n".join(lines))
+
+                if funds:
+                    lines = [
+                        "[bold]시장 자금 동향 (KIS, 억원)[/bold]",
+                        f"{'일자':<10s} {'예탁금':>12s} {'신용융자':>12s} {'MMF':>12s}",
+                    ]
+                    for item in funds[:5]:
+                        lines.append(
+                            f"{item.bsop_date:<10s} {item.cust_dpmn_amt:>12s} "
+                            f"{item.crdt_loan_rmnd:>12s} {item.mmf_amt:>12s}"
+                        )
+                    self.query_one("#kis-fund-panel", Static).update("\n".join(lines))
+
+            self.app.call_from_thread(_update)
+        except Exception as e:
+            from loguru import logger
+
+            logger.error(f"Failed to load KIS market data: {e}")
 
     def action_refresh(self) -> None:
         self.load_all_data()

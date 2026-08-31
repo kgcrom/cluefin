@@ -257,6 +257,83 @@ class TestInvestorTrendDaily:
         assert fetcher.get_investor_trend_daily("005930").empty
 
 
+class TestKisPhase2Wrappers:
+    """Param mapping + degrade behavior for the Phase-2 KIS wrappers."""
+
+    def _fetcher(self, monkeypatch):
+        fetcher = _make_fetcher(monkeypatch, kis_app_key="k", kis_secret_key="s")
+        return fetcher, _install_kis_mock(fetcher)
+
+    def test_investment_opinions_params_and_degrade(self, monkeypatch):
+        fetcher, kis = self._fetcher(monkeypatch)
+        kis.domestic_stock_info.get_investment_opinion.return_value.body.output = [SimpleNamespace(invt_opnn="매수")]
+
+        rows = fetcher.get_investment_opinions("005930")
+
+        assert rows[0].invt_opnn == "매수"
+        kwargs = kis.domestic_stock_info.get_investment_opinion.call_args.kwargs
+        assert kwargs["fid_input_iscd"] == "005930"
+        assert kwargs["fid_cond_scr_div_code"] == "16633"
+        assert kwargs["fid_input_date_1"] < kwargs["fid_input_date_2"]
+
+        kis.domestic_stock_info.get_investment_opinion.side_effect = KISAPIError("none")
+        assert fetcher.get_investment_opinions("005930") == []
+
+    def test_stock_supply_trends_degrade_to_empty(self, monkeypatch):
+        fetcher, kis = self._fetcher(monkeypatch)
+        kis.domestic_market_analysis.get_short_selling_trend_daily.side_effect = KISAPIError("x")
+        kis.domestic_market_analysis.get_credit_balance_trend_daily.side_effect = KISAPIError("x")
+        kis.domestic_market_analysis.get_program_trading_trend_by_stock_daily.side_effect = KISAPIError("x")
+
+        assert fetcher.get_short_selling_trend("005930") == []
+        assert fetcher.get_credit_balance_trend("005930") == []
+        assert fetcher.get_program_trading_trend("005930") == []
+
+    def test_market_investor_trend_maps_market_to_sector_code(self, monkeypatch):
+        fetcher, kis = self._fetcher(monkeypatch)
+        kis.domestic_market_analysis.get_investor_trading_trend_by_market_daily.return_value.body.output = []
+
+        fetcher.get_market_investor_trend_daily(market="KSQ")
+        kwargs = kis.domestic_market_analysis.get_investor_trading_trend_by_market_daily.call_args.kwargs
+        assert kwargs["fid_input_iscd"] == "1001"
+        assert kwargs["fid_input_iscd_1"] == "KSQ"
+
+        fetcher.get_market_investor_trend_daily(market="KSP")
+        kwargs = kis.domestic_market_analysis.get_investor_trading_trend_by_market_daily.call_args.kwargs
+        assert kwargs["fid_input_iscd"] == "0001"
+
+    def test_dividend_yield_top_uses_one_year_window(self, monkeypatch):
+        fetcher, kis = self._fetcher(monkeypatch)
+        kis.domestic_ranking_analysis.get_stock_dividend_yield_top.return_value.body.output = []
+
+        fetcher.get_dividend_yield_top()
+        kwargs = kis.domestic_ranking_analysis.get_stock_dividend_yield_top.call_args.kwargs
+        assert kwargs["gb3"] == "2"  # 현금배당
+        assert kwargs["f_dt"] < kwargs["t_dt"]
+
+    def test_credit_balance_top_reads_output2(self, monkeypatch):
+        fetcher, kis = self._fetcher(monkeypatch)
+        kis.domestic_ranking_analysis.get_stock_credit_balance_top.return_value.body.output2 = [
+            SimpleNamespace(hts_kor_isnm="삼성전자")
+        ]
+        assert fetcher.get_credit_balance_top()[0].hts_kor_isnm == "삼성전자"
+
+    def test_etf_nav_trend_and_components(self, monkeypatch):
+        fetcher, kis = self._fetcher(monkeypatch)
+        kis.domestic_basic_quote.get_etf_nav_comparison_daily_trend.return_value.body.output = [
+            SimpleNamespace(dprt="0.05")
+        ]
+        kis.domestic_basic_quote.get_etf_component_stock_price.return_value.body.output2 = [
+            SimpleNamespace(hts_kor_isnm="삼성전자")
+        ]
+
+        assert fetcher.get_etf_nav_daily_trend("069500")[0].dprt == "0.05"
+        assert fetcher.get_etf_component_prices("069500")[0].hts_kor_isnm == "삼성전자"
+
+        kis.domestic_basic_quote.get_etf_nav_comparison_daily_trend.side_effect = KISAPIError("x")
+        assert fetcher.get_etf_nav_daily_trend("069500") == []
+
+
 class TestCorporateActions:
     def _bar(self, date, code, ratio="0.00"):
         return SimpleNamespace(stck_bsop_date=date, flng_cls_code=code, prtt_rate=ratio)

@@ -45,6 +45,8 @@ class StockDetailScreen(Screen):
                 with VerticalScroll():
                     yield Static("Loading supply/demand data...", id="supply-detail-content")
                     yield Static("", id="kis-supply-content")
+            with TabPane("투자의견", id="tab-opinion"):
+                yield Static("Loading investment opinions...", id="opinion-detail-content")
         yield NavFooter(id="nav-footer")
 
     def on_mount(self) -> None:
@@ -105,6 +107,7 @@ class StockDetailScreen(Screen):
         self._load_broker_data()
         self._load_supply_data()
         self._load_kis_supply_data()
+        self._load_kis_opinion_data()
 
     def _load_investor_data(self) -> None:
         try:
@@ -217,6 +220,9 @@ class StockDetailScreen(Screen):
         try:
             trend_df = fetcher.get_investor_trend_daily(self.stock_code, days=10)
             actions_df = fetcher.get_corporate_actions(self.stock_code)
+            short_rows = fetcher.get_short_selling_trend(self.stock_code)
+            credit_rows = fetcher.get_credit_balance_trend(self.stock_code)
+            program_rows = fetcher.get_program_trading_trend(self.stock_code)
 
             def _update():
                 lines = []
@@ -233,6 +239,47 @@ class StockDetailScreen(Screen):
                             f"{date.strftime('%Y-%m-%d'):<11s} {row['개인']:>12,.0f} "
                             f"{row['외국인']:>12,.0f} {row['기관계']:>12,.0f} {row['연기금']:>12,.0f}"
                         )
+                if short_rows:
+                    lines += [
+                        "",
+                        "[bold]공매도 추이 (KIS)[/bold]",
+                        "",
+                        f"{'일자':<10s} {'공매도량':>12s} {'비중':>8s} {'누적':>14s}",
+                        "-" * 50,
+                    ]
+                    for item in short_rows[:5]:
+                        lines.append(
+                            f"{item.stck_bsop_date:<10s} {item.ssts_cntg_qty:>12s} "
+                            f"{item.ssts_vol_rlim:>7s}% {item.acml_ssts_cntg_qty:>14s}"
+                        )
+
+                if credit_rows:
+                    lines += [
+                        "",
+                        "[bold]신용잔고 추이 (KIS)[/bold]",
+                        "",
+                        f"{'일자':<10s} {'융자잔고':>14s} {'잔고비율':>8s}",
+                        "-" * 38,
+                    ]
+                    for item in credit_rows[:5]:
+                        lines.append(
+                            f"{item.deal_date:<10s} {item.whol_loan_rmnd_stcn:>14s} {item.whol_loan_rmnd_rate:>7s}%"
+                        )
+
+                if program_rows:
+                    lines += [
+                        "",
+                        "[bold]프로그램매매 추이 (KIS)[/bold]",
+                        "",
+                        f"{'일자':<10s} {'순매수량':>12s} {'순매수대금':>14s}",
+                        "-" * 40,
+                    ]
+                    for item in program_rows[:5]:
+                        lines.append(
+                            f"{item.stck_bsop_date:<10s} {item.whol_smtn_ntby_qty:>12s} "
+                            f"{item.whol_smtn_ntby_tr_pbmn:>14s}"
+                        )
+
                 if not actions_df.empty:
                     lines += ["", "[bold]최근 권리락/배당락 (KIS)[/bold]", ""]
                     for date, row in actions_df.sort_index(ascending=False).iterrows():
@@ -247,6 +294,46 @@ class StockDetailScreen(Screen):
             from loguru import logger
 
             logger.error(f"Failed to load KIS supply data: {e}")
+
+    def _load_kis_opinion_data(self) -> None:
+        """증권사 투자의견 탭 (KIS 전용 — Kiwoom/DART 에 대응 데이터가 없다)."""
+        fetcher = self.app.fetcher
+        if not fetcher.has_kis:
+
+            def _show_missing():
+                panel = self.query_one("#opinion-detail-content", Static)
+                panel.update("KIS API keys not configured.\nSet KIS_APP_KEY / KIS_SECRET_KEY in .env to see 투자의견.")
+
+            self.app.call_from_thread(_show_missing)
+            return
+
+        try:
+            opinions = fetcher.get_investment_opinions(self.stock_code)
+
+            def _update():
+                if not opinions:
+                    lines = ["최근 6개월 내 증권사 투자의견이 없습니다."]
+                else:
+                    lines = [
+                        "[bold]증권사 투자의견 (KIS, 최근 6개월)[/bold]",
+                        "",
+                        f"{'일자':<10s} {'증권사':<10s} {'의견':<8s} {'이전의견':<8s} {'목표가':>10s} {'괴리율':>8s}",
+                        "-" * 62,
+                    ]
+                    for item in opinions[:20]:
+                        lines.append(
+                            f"{item.stck_bsop_date:<10s} {item.mbcr_name:<10s} {item.invt_opnn:<8s} "
+                            f"{item.rgbf_invt_opnn:<8s} {item.hts_goal_prc:>10s} {item.dprt:>7s}%"
+                        )
+
+                panel = self.query_one("#opinion-detail-content", Static)
+                panel.update("\n".join(lines))
+
+            self.app.call_from_thread(_update)
+        except Exception as e:
+            from loguru import logger
+
+            logger.error(f"Failed to load investment opinions: {e}")
 
     def action_go_back(self) -> None:
         self.app.pop_screen()
