@@ -20,6 +20,7 @@ class StockDetailScreen(Screen):
         Binding("escape", "go_back", "Back"),
         Binding("r", "refresh", "Refresh"),
         Binding("f", "financial", "Financial"),
+        Binding("m", "run_ml", "ML예측"),
     ]
 
     def __init__(self, stock_code: str):
@@ -47,6 +48,11 @@ class StockDetailScreen(Screen):
                     yield Static("", id="kis-supply-content")
             with TabPane("투자의견", id="tab-opinion"):
                 yield Static("Loading investment opinions...", id="opinion-detail-content")
+            with TabPane("ML예측", id="tab-ml"):
+                yield Static(
+                    "M 키를 누르면 익일 등락 예측을 실행합니다.\n(LightGBM 인메모리 학습 — 수 초에서 수십 초 걸립니다)",
+                    id="ml-detail-content",
+                )
         yield NavFooter(id="nav-footer")
 
     def on_mount(self) -> None:
@@ -334,6 +340,84 @@ class StockDetailScreen(Screen):
             from loguru import logger
 
             logger.error(f"Failed to load investment opinions: {e}")
+
+    def action_run_ml(self) -> None:
+        panel = self.query_one("#ml-detail-content", Static)
+        panel.update("모델 학습 중... (LightGBM, 인메모리 재학습)")
+        self._run_ml_prediction()
+
+    @work(thread=True, exclusive=True, group="ml-predict")
+    def _run_ml_prediction(self) -> None:
+        """cli --ml-predict 이식: 매 실행마다 인메모리로 학습→예측한다.
+
+        rich Console 을 쓰는 predictor.display_* 는 TUI 를 깨뜨리므로 호출하지
+        않고 결과 dict/metrics 만 받아 Static 으로 렌더링한다.
+        """
+        try:
+            from cluefin_desk.ml import StockMLPredictor
+            from cluefin_desk.ml.indicators import TechnicalAnalyzer
+
+            fetcher = self.app.fetcher
+            loop = asyncio.new_event_loop()
+            try:
+                stock_df = loop.run_until_complete(fetcher.get_stock_data(self.stock_code))
+            finally:
+                loop.close()
+
+            if len(stock_df) < 30:
+
+                def _too_short():
+                    self.query_one("#ml-detail-content", Static).update(
+                        f"예측 불가: 일봉 {len(stock_df)}개 — 최소 30개가 필요합니다."
+                    )
+
+                self.app.call_from_thread(_too_short)
+                return
+
+            indicators = TechnicalAnalyzer().calculate_all(stock_df)
+
+            predictor = StockMLPredictor()
+            prepared_df, _ = predictor.prepare_data(stock_df, indicators)
+            metrics = predictor.train_model(prepared_df)
+            result = predictor.predict(stock_df, indicators)
+            importance = predictor.model.get_feature_importance(top_n=10)
+
+            def _update():
+                signal = result["signal"]
+                signal_str = f"[red]▲ {signal}[/red]" if signal == "BUY" else f"[blue]▼ {signal}[/blue]"
+                lines = [
+                    f"[bold]익일 등락 예측 (LightGBM) — {self.stock_code}[/bold]",
+                    "",
+                    f"시그널: {signal_str}   신뢰도: {result['confidence']:.1%}",
+                    f"상승 확률: {result['probability_up']:.1%}   하락 확률: {result['probability_down']:.1%}",
+                    "",
+                    "[bold]학습 성능 (검증셋)[/bold]",
+                ]
+                for key in ("accuracy", "precision", "recall", "f1", "roc_auc"):
+                    if key in metrics:
+                        lines.append(f"  {key}: {metrics[key]:.4f}")
+
+                if importance is not None and len(importance) > 0:
+                    lines += ["", "[bold]피처 중요도 상위 10[/bold]"]
+                    max_imp = float(importance.iloc[0]) or 1.0
+                    for name, value in importance.items():
+                        bar = "█" * max(1, int(float(value) / max_imp * 20))
+                        lines.append(f"  {name:<28s} {bar} {float(value):.0f}")
+
+                lines += ["", "[dim]참고용 통계 모델입니다 — 투자 판단의 근거가 아닙니다.[/dim]"]
+                self.query_one("#ml-detail-content", Static).update("\n".join(lines))
+
+            self.app.call_from_thread(_update)
+        except Exception as e:
+            from loguru import logger
+
+            logger.error(f"ML prediction failed: {e}")
+            err_msg = str(e)
+
+            def _update_err():
+                self.query_one("#ml-detail-content", Static).update(f"ML 예측 실패: {err_msg}")
+
+            self.app.call_from_thread(_update_err)
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

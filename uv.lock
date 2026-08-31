@@ -326,6 +326,8 @@ dependencies = [
     { name = "cluefin-openapi" },
     { name = "cluefin-ta" },
     { name = "cluefin-xbrl" },
+    { name = "imbalanced-learn" },
+    { name = "lightgbm" },
     { name = "loguru" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
@@ -333,6 +335,10 @@ dependencies = [
     { name = "plotext" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
+    { name = "rich" },
+    { name = "scikit-learn", version = "1.7.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "scikit-learn", version = "1.8.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "shap" },
     { name = "textual" },
 ]
 
@@ -341,12 +347,17 @@ requires-dist = [
     { name = "cluefin-openapi", editable = "packages/cluefin-openapi" },
     { name = "cluefin-ta", editable = "packages/cluefin-ta" },
     { name = "cluefin-xbrl", editable = "packages/cluefin-xbrl" },
+    { name = "imbalanced-learn", specifier = ">=0.14.0" },
+    { name = "lightgbm", specifier = ">=4.0.0,<5.0.0" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "numpy", specifier = ">=1.24.0" },
     { name = "pandas", specifier = ">=2.0.0" },
     { name = "plotext", specifier = ">=5.2.8" },
     { name = "pydantic", specifier = ">=2.12.0,<3.0.0" },
     { name = "pydantic-settings", specifier = ">=2.14.2" },
+    { name = "rich", specifier = ">=13.7.0" },
+    { name = "scikit-learn", specifier = ">=1.3.0,<2.0.0" },
+    { name = "shap", specifier = ">=0.47.2,<1.0.0" },
     { name = "textual", specifier = ">=1.0.0" },
 ]
 
