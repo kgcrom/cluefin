@@ -1,0 +1,14 @@
+{
+  // 번들러(Vite/webpack/tsup 등) 소비자 관점. 확장자 없는 상대 지정자도 통과하므로
+  // 이 설정만으로는 NodeNext 회귀를 잡지 못한다 — `tsconfig.nodenext.json` 과 **쌍으로** 돌린다.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": []
+  },
+  "include": ["consumer.ts"]
+}

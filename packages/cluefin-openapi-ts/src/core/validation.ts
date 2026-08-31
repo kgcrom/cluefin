@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { EndpointParamDefinition } from './types';
+import type { EndpointParamDefinition } from './types.js';
 
 const flexibleScalar = z.union([z.string(), z.number(), z.boolean()]);
 

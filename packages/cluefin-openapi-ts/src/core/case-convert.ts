@@ -1,4 +1,4 @@
-import type { JsonArray, JsonObject } from './types';
+import type { JsonArray, JsonObject } from './types.js';
 
 const CAMEL_SEGMENT = /[-_]+([a-zA-Z0-9])/g;
 

@@ -1,5 +1,5 @@
-import type { ApiResponse, NhplugEndpointDefinition } from '../core/types';
-import type { NhplugClient } from './client';
+import type { ApiResponse, NhplugEndpointDefinition } from '../core/types.js';
+import type { NhplugClient } from './client.js';
 
 export class NhplugDomainBase {
   public constructor(

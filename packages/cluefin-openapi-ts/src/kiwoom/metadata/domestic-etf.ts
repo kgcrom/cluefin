@@ -1,4 +1,4 @@
-import type { KiwoomEndpointDefinition } from '../../core/types';
+import type { KiwoomEndpointDefinition } from '../../core/types.js';
 
 export const domesticEtfEndpoints: KiwoomEndpointDefinition[] = [
   {

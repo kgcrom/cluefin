@@ -5,8 +5,8 @@ import {
   NhplugNetworkError,
   NhplugServerError,
   NhplugValidationError,
-} from '../core/errors';
-import { MemoryTokenCacheStore, type TokenCacheEntry, type TokenCacheStore } from './token-cache';
+} from '../core/errors.js';
+import { MemoryTokenCacheStore, type TokenCacheEntry, type TokenCacheStore } from './token-cache.js';
 
 const tokenResponseSchema = z.object({
   access_token: z.string(),

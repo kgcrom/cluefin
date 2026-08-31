@@ -1,4 +1,4 @@
-import type { KisEndpointDefinition } from '../../core/types';
+import type { KisEndpointDefinition } from '../../core/types.js';
 
 export const domesticAccountEndpoints: KisEndpointDefinition[] = [
   {

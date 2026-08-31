@@ -1,8 +1,8 @@
-import type { DomainMethods } from '../core/types';
-import type { NhplugClient } from './client';
-import { NhplugDomainBase } from './domain-base';
-import { type OverseasStockQuoteMethodName, overseasStockQuoteEndpoints } from './metadata/overseas-stock-quote';
-import type { OverseasStockQuoteResponseMap } from './schemas/overseas-stock-quote';
+import type { DomainMethods } from '../core/types.js';
+import type { NhplugClient } from './client.js';
+import { NhplugDomainBase } from './domain-base.js';
+import { type OverseasStockQuoteMethodName, overseasStockQuoteEndpoints } from './metadata/overseas-stock-quote.js';
+import type { OverseasStockQuoteResponseMap } from './schemas/overseas-stock-quote.js';
 
 /** NH PLUG 해외주식(gbstock) 시세 API (`/gbstock/quote/v1/*`). */
 export type NhplugOverseasStockQuote = NhplugDomainBase &

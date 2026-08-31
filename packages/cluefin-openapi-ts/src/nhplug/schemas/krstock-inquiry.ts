@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { CamelizeKeys } from '../../core/types';
+import type { CamelizeKeys } from '../../core/types.js';
 
 const messageSchema = z
   .object({

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { CamelizeKeys } from '../../core/types';
+import type { CamelizeKeys } from '../../core/types.js';
 
 /**
  * NH PLUG 해외주식(시세) 응답 스키마.

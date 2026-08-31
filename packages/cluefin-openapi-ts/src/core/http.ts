@@ -7,10 +7,10 @@ import {
   ApiServerError,
   ApiTimeoutError,
   ApiValidationError,
-} from './errors';
-import { TokenBucket } from './rate-limiter';
-import { isRetryableError, withRetry } from './retry';
-import type { FetchLike, HttpClientOptions, HttpRequestOptions } from './types';
+} from './errors.js';
+import { TokenBucket } from './rate-limiter.js';
+import { isRetryableError, withRetry } from './retry.js';
+import type { FetchLike, HttpClientOptions, HttpRequestOptions } from './types.js';
 
 const getRetryAfter = (response: Response): number | undefined => {
   const raw = response.headers.get('retry-after');
@@ -84,7 +84,7 @@ export class BaseHttpClient {
             });
           }
           if (response.status === 429) {
-            const rateLimitDetails: import('./errors').ApiErrorDetails = {
+            const rateLimitDetails: import('./errors.js').ApiErrorDetails = {
               statusCode: response.status,
               responseData: await this.safeJson(response),
             };

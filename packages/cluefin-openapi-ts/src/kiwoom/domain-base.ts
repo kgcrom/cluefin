@@ -1,5 +1,5 @@
-import type { ApiResponse, KiwoomEndpointDefinition } from '../core/types';
-import type { KiwoomClient } from './client';
+import type { ApiResponse, KiwoomEndpointDefinition } from '../core/types.js';
+import type { KiwoomClient } from './client.js';
 
 export class KiwoomDomainBase {
   public constructor(

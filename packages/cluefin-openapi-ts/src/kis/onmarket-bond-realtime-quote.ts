@@ -5,8 +5,8 @@ import {
   type BondRealtimeExecutionItem,
   type BondRealtimeIndexExecutionItem,
   type BondRealtimeOrderbookItem,
-} from './metadata/onmarket-bond-realtime-quote';
-import type { KisSocketClient } from './socket-client';
+} from './metadata/onmarket-bond-realtime-quote.js';
+import type { KisSocketClient } from './socket-client.js';
 
 const TR_ID_BOND_EXECUTION = 'H0BJCNT0';
 const TR_ID_BOND_ORDERBOOK = 'H0BJASP0';

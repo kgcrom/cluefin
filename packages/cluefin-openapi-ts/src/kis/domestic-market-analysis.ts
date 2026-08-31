@@ -1,10 +1,10 @@
-import type { DomainMethods } from '../core/types';
-import { KisDomainBase } from './domain-base';
-import type { KisHttpClient } from './http-client';
+import type { DomainMethods } from '../core/types.js';
+import { KisDomainBase } from './domain-base.js';
+import type { KisHttpClient } from './http-client.js';
 import {
   type DomesticMarketAnalysisMethodName,
   domesticMarketAnalysisEndpoints,
-} from './metadata/domestic-market-analysis';
+} from './metadata/domestic-market-analysis.js';
 
 export type DomesticMarketAnalysis = KisDomainBase & DomainMethods<DomesticMarketAnalysisMethodName>;
 export const DomesticMarketAnalysis = class DomesticMarketAnalysis extends KisDomainBase {

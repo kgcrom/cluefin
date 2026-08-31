@@ -1,8 +1,8 @@
-export type { KiwoomAuthOptions, KiwoomTokenResponse } from './auth';
-export { KiwoomAuth } from './auth';
-export type { KiwoomClientOptions } from './client';
-export { KiwoomClient } from './client';
-export { KIWOOM_ERROR_CODES, parseKiwoomReturnCode, resolveKiwoomError } from './error-codes';
+export type { KiwoomAuthOptions, KiwoomTokenResponse } from './auth.js';
+export { KiwoomAuth } from './auth.js';
+export type { KiwoomClientOptions } from './client.js';
+export { KiwoomClient } from './client.js';
+export { KIWOOM_ERROR_CODES, parseKiwoomReturnCode, resolveKiwoomError } from './error-codes.js';
 export type {
   AccountCurrentDayStatusResponse,
   AccountEvaluationBalanceDetailsResponse,
@@ -30,7 +30,7 @@ export type {
   MarginDetailsResponse,
   UnexecutedResponse,
   UnexecutedSplitOrderDetailsResponse,
-} from './schemas/domestic-account';
+} from './schemas/domestic-account.js';
 export type {
   DomesticChartResponseMap,
   IndividualStockInstitutionalChartResponse,
@@ -47,7 +47,7 @@ export type {
   StockTickResponse,
   StockWeeklyResponse,
   StockYearlyResponse,
-} from './schemas/domestic-chart';
+} from './schemas/domestic-chart.js';
 export type {
   DomesticEtfResponseMap,
   EtfDailyExecutionResponse,
@@ -59,13 +59,13 @@ export type {
   EtfHourlyTrendV2Response,
   EtfItemInfoResponse,
   EtfReturnRateResponse,
-} from './schemas/domestic-etf';
+} from './schemas/domestic-etf.js';
 export type {
   ConsecutiveNetBuySellStatusByInstitutionForeignerResponse,
   DomesticForeignResponseMap,
   ForeignInvestorTradingTrendByStockResponse,
   StockInstitutionResponse,
-} from './schemas/domestic-foreign';
+} from './schemas/domestic-foreign.js';
 export type {
   AfterHoursSinglePriceResponse,
   AfterMarketTradingByInvestorResponse,
@@ -88,7 +88,7 @@ export type {
   StockPriceResponse,
   StockQuoteByDateResponse,
   StockQuoteResponse,
-} from './schemas/domestic-market-condition';
+} from './schemas/domestic-market-condition.js';
 export type {
   AfterHoursSinglePriceChangeRateRankingResponse,
   DomesticRankInfoResponseMap,
@@ -114,7 +114,7 @@ export type {
   TopRemainingOrderQuantityResponse,
   TopSecuritiesFirmTradingResponse,
   TopTransactionValueResponse,
-} from './schemas/domestic-rank-info';
+} from './schemas/domestic-rank-info.js';
 export type {
   AllIndustryIndexResponse,
   DailyIndustryCurrentPriceResponse,
@@ -123,7 +123,7 @@ export type {
   IndustryInvestorNetBuyResponse,
   IndustryPriceBySectorResponse,
   IndustryProgramResponse,
-} from './schemas/domestic-sector';
+} from './schemas/domestic-sector.js';
 export type {
   ChangeRateFromOpenResponse,
   DailyPreviousDayConclusionResponse,
@@ -154,9 +154,9 @@ export type {
   TradingVolumeRenewalResponse,
   UpperLowerLimitPriceResponse,
   VolatilityControlEventResponse,
-} from './schemas/domestic-stock-info';
+} from './schemas/domestic-stock-info.js';
 export type {
   DomesticThemeResponseMap,
   ThemeGroupResponse,
   ThemeGroupStocksResponse,
-} from './schemas/domestic-theme';
+} from './schemas/domestic-theme.js';

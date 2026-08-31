@@ -7,8 +7,8 @@ import {
   type OverseasRealtimeExecutionItem,
   type OverseasRealtimeExecutionNotificationItem,
   type OverseasRealtimeOrderbookItem,
-} from './metadata/overseas-realtime-quote';
-import type { KisSocketClient } from './socket-client';
+} from './metadata/overseas-realtime-quote.js';
+import type { KisSocketClient } from './socket-client.js';
 
 const TR_ID_ORDERBOOK = 'HDFSASP0';
 const TR_ID_EXECUTION = 'HDFSCNT0';

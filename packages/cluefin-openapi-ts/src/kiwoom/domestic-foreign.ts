@@ -1,8 +1,8 @@
-import type { DomainMethods } from '../core/types';
-import type { KiwoomClient } from './client';
-import { KiwoomDomainBase } from './domain-base';
-import { type DomesticForeignMethodName, domesticForeignEndpoints } from './metadata/domestic-foreign';
-import type { DomesticForeignResponseMap } from './schemas/domestic-foreign';
+import type { DomainMethods } from '../core/types.js';
+import type { KiwoomClient } from './client.js';
+import { KiwoomDomainBase } from './domain-base.js';
+import { type DomesticForeignMethodName, domesticForeignEndpoints } from './metadata/domestic-foreign.js';
+import type { DomesticForeignResponseMap } from './schemas/domestic-foreign.js';
 
 export type DomesticForeign = KiwoomDomainBase & DomainMethods<DomesticForeignMethodName, DomesticForeignResponseMap>;
 export const DomesticForeign = class DomesticForeign extends KiwoomDomainBase {

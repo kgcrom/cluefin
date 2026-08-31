@@ -31,9 +31,9 @@ export {
   NhplugServerError,
   NhplugTimeoutError,
   NhplugValidationError,
-} from './core/errors';
-export type { Logger } from './core/logger';
-export { consoleLogger, silentLogger } from './core/logger';
+} from './core/errors.js';
+export type { Logger } from './core/logger.js';
+export { consoleLogger, silentLogger } from './core/logger.js';
 export type {
   ApiEnv,
   ApiResponse,
@@ -42,7 +42,7 @@ export type {
   KiwoomEndpointDefinition,
   NhplugEndpointDefinition,
   RateLimitOptions,
-} from './core/types';
+} from './core/types.js';
 export type {
   BaseWebSocketClientEvents,
   BaseWebSocketClientOptions,
@@ -51,9 +51,9 @@ export type {
   WebSocketEvent,
   WebSocketEventType,
   WebSocketMessage,
-} from './core/websocket';
-export { BaseWebSocketClient } from './core/websocket';
+} from './core/websocket.js';
+export { BaseWebSocketClient } from './core/websocket.js';
 
-export * from './kis';
-export * from './kiwoom';
-export * from './nhplug';
+export * from './kis/index.js';
+export * from './kiwoom/index.js';
+export * from './nhplug/index.js';

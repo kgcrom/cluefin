@@ -1,4 +1,4 @@
-import { camelizeKeys, normalizeHeaders } from '../core/case-convert';
+import { camelizeKeys, normalizeHeaders } from '../core/case-convert.js';
 import {
   ApiAuthenticationError,
   ApiAuthorizationError,
@@ -16,18 +16,18 @@ import {
   NhplugServerError,
   NhplugTimeoutError,
   NhplugValidationError,
-} from '../core/errors';
-import { BaseHttpClient } from '../core/http';
-import { consoleLogger, type Logger } from '../core/logger';
-import type { ApiEnv, ApiResponse, NhplugEndpointDefinition } from '../core/types';
-import { createInputSchema, nhplugEnvelopeSchema } from '../core/validation';
-import { NhplugCommon } from './common';
-import { NhplugKrstockInquiry } from './krstock-inquiry';
-import { NhplugKrstockOrder } from './krstock-order';
-import { NhplugKrstockQuote } from './krstock-quote';
-import { NhplugOverseasStockInquiry } from './overseas-stock-inquiry';
-import { NhplugOverseasStockOrder } from './overseas-stock-order';
-import { NhplugOverseasStockQuote } from './overseas-stock-quote';
+} from '../core/errors.js';
+import { BaseHttpClient } from '../core/http.js';
+import { consoleLogger, type Logger } from '../core/logger.js';
+import type { ApiEnv, ApiResponse, NhplugEndpointDefinition } from '../core/types.js';
+import { createInputSchema, nhplugEnvelopeSchema } from '../core/validation.js';
+import { NhplugCommon } from './common.js';
+import { NhplugKrstockInquiry } from './krstock-inquiry.js';
+import { NhplugKrstockOrder } from './krstock-order.js';
+import { NhplugKrstockQuote } from './krstock-quote.js';
+import { NhplugOverseasStockInquiry } from './overseas-stock-inquiry.js';
+import { NhplugOverseasStockOrder } from './overseas-stock-order.js';
+import { NhplugOverseasStockQuote } from './overseas-stock-quote.js';
 
 /**
  * body `rsp_cd` 중 성공을 뜻하는 코드.

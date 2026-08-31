@@ -1,11 +1,11 @@
-import type { DomainMethods } from '../core/types';
-import type { KiwoomClient } from './client';
-import { KiwoomDomainBase } from './domain-base';
+import type { DomainMethods } from '../core/types.js';
+import type { KiwoomClient } from './client.js';
+import { KiwoomDomainBase } from './domain-base.js';
 import {
   type DomesticMarketConditionMethodName,
   domesticMarketConditionEndpoints,
-} from './metadata/domestic-market-condition';
-import type { DomesticMarketConditionResponseMap } from './schemas/domestic-market-condition';
+} from './metadata/domestic-market-condition.js';
+import type { DomesticMarketConditionResponseMap } from './schemas/domestic-market-condition.js';
 
 export type DomesticMarketCondition = KiwoomDomainBase &
   DomainMethods<DomesticMarketConditionMethodName, DomesticMarketConditionResponseMap>;

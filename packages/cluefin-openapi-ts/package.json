@@ -1,6 +1,6 @@
 {
   "name": "cluefin-openapi",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "TypeScript OpenAPI client for KIS and Kiwoom",
   "license": "MIT",
   "author": "kgcrom",
@@ -39,7 +39,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "generate:metadata": "node ./scripts/generate-metadata.mjs",
-    "build:types": "node ./scripts/generate-types.mjs",
+    "build:types": "tsc -p tsconfig.build.json",
     "build:js": "tsdown --config ./tsdown.config.ts",
     "build": "npm run clean && npm run build:types && npm run build:js",
     "format": "biome format --write .",
@@ -47,7 +47,7 @@
     "lint": "biome lint .",
     "lint:fix": "biome lint --write .",
     "check": "biome check .",
-    "typecheck": "tsdown --config ./tsdown.config.ts --silent",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit && tsdown --config ./tsdown.config.ts --silent",
     "test:unit": "vitest run --config ./vitest.config.ts",
     "test:coverage": "vitest run --config ./vitest.config.ts --coverage",
     "test:integration": "CLUEFIN_OPENAPI_TS_RUN_INTEGRATION=1 vitest run --config ./vitest.integration.config.ts",
