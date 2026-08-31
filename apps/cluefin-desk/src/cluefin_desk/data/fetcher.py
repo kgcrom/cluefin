@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
+from cluefin_openapi.kis._auth import Auth as KisAuth
+from cluefin_openapi.kis._http_client import HttpClient as KisClient
 from cluefin_openapi.kiwoom._auth import Auth as KiwoomAuth
 from cluefin_openapi.kiwoom._client import Client as KiwoomClient
 from pydantic import SecretStr
@@ -10,7 +12,12 @@ from cluefin_desk.config.settings import settings
 
 
 class DomesticDataFetcher:
-    """Handles domestic stock data fetching from Kiwoom Securities API."""
+    """Handles domestic stock data fetching from Kiwoom and KIS APIs.
+
+    Kiwoom stays the primary source and authenticates eagerly at startup
+    (existing behavior). KIS is optional enrichment: the client is built
+    lazily on first use, so users without KIS keys keep every Kiwoom screen.
+    """
 
     @staticmethod
     def _safe_float(value: str) -> float:
@@ -37,6 +44,35 @@ class DomesticDataFetcher:
             token=token.get_token(),
             env=settings.kiwoom_env,
         )
+        self._kis_client: Optional[KisClient] = None
+
+    @property
+    def kis_client(self) -> KisClient:
+        """Build (once) the KIS client, generating a token on first use."""
+        if self._kis_client is None:
+            if not settings.kis_app_key:
+                raise ValueError("KIS_APP_KEY environment variable is required")
+            if not settings.kis_secret_key:
+                raise ValueError("KIS_SECRET_KEY environment variable is required")
+
+            auth = KisAuth(
+                app_key=settings.kis_app_key,
+                secret_key=SecretStr(settings.kis_secret_key),
+                env=settings.kis_env,
+            )
+            token = auth.generate()
+            self._kis_client = KisClient(
+                token=token.get_token(),
+                app_key=settings.kis_app_key,
+                secret_key=SecretStr(settings.kis_secret_key),
+                env=settings.kis_env,
+            )
+        return self._kis_client
+
+    @property
+    def has_kis(self) -> bool:
+        """True when KIS credentials are configured (client may not be built yet)."""
+        return bool(settings.kis_app_key and settings.kis_secret_key)
 
     # ──────────────────────────────────────
     # Basic stock data
