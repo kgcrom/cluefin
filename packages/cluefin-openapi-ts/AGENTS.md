@@ -35,11 +35,18 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - `dist/types/index.d.ts` is **string-templated by hand**, not emitted by `tsc`. Domain
   classes come from metadata, but everything else (auth, token cache, socket client,
   standalone consts) has to be typed out literally in `scripts/generate-types.mjs` — it
-  silently under-declares otherwise. `tests/nhplug/dts-drift.test.ts` guards the nhplug
-  surface by diffing the generator output against the runtime exports of
-  `src/nhplug/index.ts`; there is no equivalent guard for KIS/Kiwoom, and the KIS side is
-  in fact still missing `KisSocketClient`, `KisSocketClientOptions`, `FileTokenCacheStore`
-  and the KIS realtime-quote helpers.
+  silently under-declares otherwise. `tests/core/dts-drift.test.ts` guards all three
+  vendors by diffing the generator output against the runtime exports of
+  `src/kis/index.ts`, `src/kiwoom/index.ts` and `src/nhplug/index.ts` — add a barrel
+  export without a declaration and it fails, naming the missing symbols.
+- The KIS realtime declarations (`*_FIELD_NAMES` literal tuples, `*RealtimeQuote` item
+  interfaces, and the `RealtimeSchema<T>` handles for the Zod schemas) are **parsed out of
+  `src/kis/metadata/*-realtime-quote.ts`** by the generator, which assumes every schema
+  field is a bare `z.string()` and throws if that stops being true. The schemas are
+  declared as `RealtimeSchema<Item>` (parse/safeParse only), not as `z.ZodObject<...>`.
+- Kiwoom's `schemas/*` response types (~200 `export type` names in `src/kiwoom/index.ts`)
+  are still undeclared — the drift test only enforces an explicit allowlist of type-only
+  exports per vendor.
 
 ## Tooling surprises
 
