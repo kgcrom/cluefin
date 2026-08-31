@@ -22,6 +22,12 @@ class TestExtractLabels:
         assert labels["Revenue"].label_ko == "수익(매출액)"
         assert labels["Revenue"].label_en == "Revenue"
 
+    def test_standard_label_wins_over_terse(self, sample_xbrl_path):
+        # 픽스처의 Assets에는 표준 레이블("자산총계")과 terse 레이블("자산")이 모두 있다.
+        doc = parse_xbrl_file(sample_xbrl_path, include_taxonomy=True)
+
+        assert doc.taxonomy.labels["Assets"].label_ko == "자산총계"
+
     def test_concept_qname_preserved(self, sample_xbrl_path):
         doc = parse_xbrl_file(sample_xbrl_path, include_taxonomy=True)
 

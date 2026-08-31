@@ -4,6 +4,8 @@
     xmlns:link="http://www.xbrl.org/2003/linkbase"
     xmlns:xlink="http://www.w3.org/1999/xlink"
     xmlns:iso4217="http://www.xbrl.org/2003/iso4217"
+    xmlns:xbrldi="http://xbrl.org/2006/xbrldi"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns:sample="http://example.com/sample">
 
     <link:schemaRef xlink:type="simple" xlink:href="sample.xsd"/>
@@ -27,12 +29,43 @@
         </xbrli:period>
     </xbrli:context>
 
+    <xbrli:context id="ctx_duration_2023_seoul">
+        <xbrli:entity>
+            <xbrli:identifier scheme="http://www.dart.fss.or.kr">00126380</xbrli:identifier>
+        </xbrli:entity>
+        <xbrli:period>
+            <xbrli:startDate>2023-01-01</xbrli:startDate>
+            <xbrli:endDate>2023-12-31</xbrli:endDate>
+        </xbrli:period>
+        <xbrli:scenario>
+            <xbrldi:explicitMember dimension="sample:SegmentAxis">sample:SeoulMember</xbrldi:explicitMember>
+            <xbrldi:typedMember dimension="sample:RegionAxis">
+                <sample:RegionDomain>Seoul</sample:RegionDomain>
+            </xbrldi:typedMember>
+        </xbrli:scenario>
+    </xbrli:context>
+
     <xbrli:unit id="KRW">
         <xbrli:measure>iso4217:KRW</xbrli:measure>
+    </xbrli:unit>
+
+    <xbrli:unit id="KRW_per_share">
+        <xbrli:divide>
+            <xbrli:unitNumerator>
+                <xbrli:measure>iso4217:KRW</xbrli:measure>
+            </xbrli:unitNumerator>
+            <xbrli:unitDenominator>
+                <xbrli:measure>xbrli:shares</xbrli:measure>
+            </xbrli:unitDenominator>
+        </xbrli:divide>
     </xbrli:unit>
 
     <sample:Assets contextRef="ctx_instant_20231231" unitRef="KRW" decimals="-6">1000000000000</sample:Assets>
     <sample:Equity contextRef="ctx_instant_20231231" unitRef="KRW" decimals="-6">500000000000</sample:Equity>
     <sample:Revenue contextRef="ctx_duration_2023" unitRef="KRW" decimals="-6">300000000000</sample:Revenue>
+    <sample:Revenue contextRef="ctx_duration_2023_seoul" unitRef="KRW" decimals="-6">100000000000</sample:Revenue>
+    <sample:Liabilities contextRef="ctx_instant_20231231" unitRef="KRW" xsi:nil="true"/>
+    <sample:EarningsPerShare contextRef="ctx_duration_2023" unitRef="KRW_per_share" decimals="2">1234.56</sample:EarningsPerShare>
+    <sample:AuditorName contextRef="ctx_duration_2023">삼일회계법인</sample:AuditorName>
 
 </xbrli:xbrl>

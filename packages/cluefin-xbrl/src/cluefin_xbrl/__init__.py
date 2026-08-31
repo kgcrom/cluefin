@@ -5,7 +5,10 @@ __version__ = "0.1.0"
 from cluefin_xbrl._types import (
     ConceptLabel,
     FinancialStatement,
+    NoteLineItem,
+    NoteSection,
     ParsedFinancialStatements,
+    ParsedNotes,
     PeriodType,
     PresentationNode,
     StatementLineItem,
@@ -15,6 +18,7 @@ from cluefin_xbrl._types import (
     XbrlFact,
     XbrlPeriod,
 )
+from cluefin_xbrl.notes import extract_notes
 from cluefin_xbrl.parser import XbrlParseError, parse_xbrl_directory, parse_xbrl_file
 from cluefin_xbrl.statements import extract_financial_statements, statement_to_dicts
 from cluefin_xbrl.taxonomy import extract_taxonomy
@@ -22,7 +26,10 @@ from cluefin_xbrl.taxonomy import extract_taxonomy
 __all__ = [
     "ConceptLabel",
     "FinancialStatement",
+    "NoteLineItem",
+    "NoteSection",
     "ParsedFinancialStatements",
+    "ParsedNotes",
     "PeriodType",
     "PresentationNode",
     "StatementLineItem",
@@ -33,6 +40,7 @@ __all__ = [
     "XbrlParseError",
     "XbrlPeriod",
     "extract_financial_statements",
+    "extract_notes",
     "extract_taxonomy",
     "parse_xbrl_directory",
     "parse_xbrl_file",
