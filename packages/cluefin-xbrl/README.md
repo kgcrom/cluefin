@@ -41,6 +41,15 @@ for statement_type, statement in parsed.statements.items():
     rows = statement_to_dicts(statement)  # list[dict]
 ```
 
+## 예제 노트북
+
+`examples/` 에 DART 에서 사업보고서 XBRL 을 내려받아 삼성전자·현대차의 본표와 주석을 분석하는 Jupyter 노트북이 있습니다.
+
+```bash
+# 워크스페이스 루트에서 실행 — .env.test 의 DART_AUTH_KEY 를 사용합니다
+uv run --with jupyter jupyter lab packages/cluefin-xbrl/examples/xbrl_analysis.ipynb
+```
+
 ## 주요 API
 
 | 함수 | 설명 |
