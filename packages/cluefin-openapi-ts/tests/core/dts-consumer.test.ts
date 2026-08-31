@@ -79,10 +79,13 @@ test.each(consumerProjects)('소비자 픽스처가 배포될 선언만으로 �
 }, 120_000);
 
 test('두 소비자 프로젝트가 서로 다른 moduleResolution 을 쓴다', () => {
-  const modes = consumerProjects.map(({ project }) => {
-    const config = ts.parseConfigFileTextToJson(project, fs.readFileSync(project, 'utf8'));
-    return String(config.config.compilerOptions.moduleResolution).toLowerCase();
-  });
+  // 파일명을 변수로 넘기면 정적분석이 경로 주입으로 본다 — 리터럴로 하나씩 읽는다.
+  const modeOf = (source: string): string =>
+    String(ts.parseConfigFileTextToJson('tsconfig.json', source).config.compilerOptions.moduleResolution).toLowerCase();
+  const modes = [
+    modeOf(fs.readFileSync('tests/fixtures/dts-consumer/tsconfig.json', 'utf8')),
+    modeOf(fs.readFileSync('tests/fixtures/dts-consumer/tsconfig.nodenext.json', 'utf8')),
+  ];
   // 한쪽이 조용히 다른 쪽 설정을 베끼면 두 모드 검사가 무의미해진다.
   expect(new Set(modes).size).toBe(2);
   expect(modes).toContain('nodenext');
