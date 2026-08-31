@@ -105,10 +105,17 @@ test('declared *_FIELD_NAMES literal tuples match the runtime arrays', () => {
   const fieldNameConsts = Object.entries(Kis).filter(([name]) => name.endsWith('_FIELD_NAMES'));
   expect(fieldNameConsts.length).toBeGreaterThan(0);
 
+  const source = typesContent as string;
   for (const [name, value] of fieldNameConsts) {
-    const match = new RegExp(`export declare const ${name}: readonly \\[(.*?)\\];`).exec(typesContent as string);
-    expect(match, `${name} 이 리터럴 튜플로 선언되지 않았다.`).not.toBeNull();
-    const declaredFields = (match?.[1] ?? '').split(', ').map((f) => f.slice(1, -1));
+    // 정규식을 조립하지 않고 문자열로 찾는다 — 동적 RegExp 는 정적분석이 걸고 넘어진다.
+    const prefix = `export declare const ${name}: readonly [`;
+    const start = source.indexOf(prefix);
+    expect(start, `${name} 이 리터럴 튜플로 선언되지 않았다.`).toBeGreaterThanOrEqual(0);
+    const end = source.indexOf('];', start);
+    const declaredFields = source
+      .slice(start + prefix.length, end)
+      .split(', ')
+      .map((f) => f.slice(1, -1));
     expect(declaredFields, name).toEqual(value as readonly string[]);
   }
 });
