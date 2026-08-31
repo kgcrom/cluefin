@@ -4,10 +4,16 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 
 ## Scope boundary (easy to get wrong)
 
-- The Kiwoom side implements **domestic endpoints only**. Kiwoom US-stock REST and all
-  Kiwoom WebSocket support are Python-only (sibling `cluefin-openapi`) and out of scope
-  here. The `src/kis/overseas-*` files are **KIS** overseas-stock APIs and *are* in
-  scope — don't confuse the two.
+- "해외/overseas" means three different things here, and only one of them is out of scope:
+  - `src/kis/overseas-*` — **KIS** overseas stock. In scope.
+  - `src/nhplug/overseas-stock-*` — **NH PLUG gbstock** (`/gbstock/...`). In scope, REST +
+    WebSocket. The class/file names say "overseas", the paths and the vendor docs say
+    "gbstock" — same thing.
+  - **Kiwoom** US stock. Out of scope: the Kiwoom side implements domestic endpoints only,
+    and Kiwoom US-stock REST plus all Kiwoom WebSocket support are Python-only (sibling
+    `cluefin-openapi`).
+- NH PLUG's other asset classes (krfuture·gbfuture·krbond·krgold) have public specs but are
+  not ported here — only common·krstock·gbstock are.
 
 ## Coupling to the Python sibling
 
@@ -20,8 +26,20 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - The KIS token cache JSON (`<repo>/data/.kis_token_cache.json`) is **shared with the
   Python package** — same file, same snake_case format — because KIS allows only 1
   token generation per minute. Don't change the format on one side only.
+- The nhplug token cache file is **also shared with Python**, but is scoped by **app_key
+  only** (`nhplugTokenCacheFileName`), not by env — one NH token is issued on the live
+  domain and used for both live and mock calls. The KIS store is env-scoped. Don't
+  "unify" the two schemes; changing either breaks cache sharing with Python.
 - Endpoint-count tests hardcode totals (`tests/core/endpoint-count.test.ts`, KIS
   contract tests); bump them whenever metadata changes.
+- `dist/types/index.d.ts` is **string-templated by hand**, not emitted by `tsc`. Domain
+  classes come from metadata, but everything else (auth, token cache, socket client,
+  standalone consts) has to be typed out literally in `scripts/generate-types.mjs` — it
+  silently under-declares otherwise. `tests/nhplug/dts-drift.test.ts` guards the nhplug
+  surface by diffing the generator output against the runtime exports of
+  `src/nhplug/index.ts`; there is no equivalent guard for KIS/Kiwoom, and the KIS side is
+  in fact still missing `KisSocketClient`, `KisSocketClientOptions`, `FileTokenCacheStore`
+  and the KIS realtime-quote helpers.
 
 ## Tooling surprises
 
@@ -31,6 +49,17 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   responses. A new field must be handled with this asymmetry in mind.
 - KIS `custtype` is hardcoded to `'P'` (personal) in the HTTP and socket clients —
   corporate-account calls aren't possible without changing that.
+- `CamelizeKeys` in `src/core/types.ts` deliberately wraps its key mapping in
+  `Uncapitalize` because the runtime `toCamelCase` lowercases the first character. This is
+  invisible for KIS/Kiwoom (lowercase snake_case wire keys) and only shows up on NH PLUG's
+  capitalized envelope keys (`Output_0` → `output0`). Dropping it silently desyncs the
+  declared response types from the values actually returned.
+- nhplug treats **both** `00000` and `XA102` as success (`SUCCESS_RSP_CODES`) — the mock
+  server answers some successful inquiries with `XA102`, so a 00000-only check reports
+  false failures. Keep the list identical to Python's `_model.SUCCESS_RSP_CODES`.
+- An nhplug HTTP 200 can still carry a failing `rsp_cd`; the failure check lives in
+  `NhplugClient.invokeEndpoint` after the HTTP layer, so HTTP-level retry/rate-limit logic
+  never sees those errors.
 
 ## Integration tests
 
@@ -43,5 +72,8 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 ## Stale docs
 
 - `docs/api-coverage-gap.md` is a snapshot: its "미구현" rows for KIS realtime quotes
-  are outdated (those files exist now). The README's KIS quick-start calls
-  `auth.generateToken()`, but the real method is `generate()` — don't copy it verbatim.
+  are outdated (those files exist now), and it predates NH PLUG entirely.
+- (The README's KIS quick-start used to call a non-existent `auth.generateToken()`; it now
+  correctly says `generate()`. Note that Kiwoom really does use `generateToken()`/
+  `revokeToken()` while KIS and NH PLUG use `generate()`/`revoke()` — the asymmetry is
+  real, not a typo.)

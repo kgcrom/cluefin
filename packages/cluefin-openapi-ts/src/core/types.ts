@@ -6,10 +6,13 @@ type CamelCase<S extends string> = S extends `${infer P}_${infer Q}${infer R}`
   ? `${P}${Uppercase<Q>}${CamelCase<R>}`
   : S;
 
+// 런타임 `toCamelCase` 는 변환 후 첫 글자를 낮춘다(`Output_0` → `output0`). 타입 쪽도
+// `Uncapitalize` 로 같은 규칙을 적용해야 한다 — 와이어 키가 대문자로 시작하는 NH PLUG
+// 봉투에서만 드러나는 차이이고, 소문자 snake_case 를 쓰는 KIS·키움에는 영향이 없다.
 export type CamelizeKeys<T> = T extends (infer U)[]
   ? CamelizeKeys<U>[]
   : T extends Record<string, unknown>
-    ? { [K in keyof T as K extends string ? CamelCase<K> : K]: CamelizeKeys<T[K]> }
+    ? { [K in keyof T as K extends string ? Uncapitalize<CamelCase<K>> : K]: CamelizeKeys<T[K]> }
     : T;
 
 export interface ApiResponse<TBody = Record<string, unknown>> {
@@ -58,6 +61,14 @@ export interface KiwoomEndpointDefinition extends EndpointBaseDefinition {
   apiId: string;
   bodyMap: Record<string, string>;
   headerParamMap: Record<string, string>;
+  responseSchema?: z.ZodTypeAny;
+}
+
+export interface NhplugEndpointDefinition extends EndpointBaseDefinition {
+  path: string;
+  bodyMap: Record<string, string>;
+  /** 연속조회(페이지네이션) 지원 여부. true 인 경우에만 `cts`/`cts_flag` 요청 헤더를 붙인다. */
+  supportsCts: boolean;
   responseSchema?: z.ZodTypeAny;
 }
 

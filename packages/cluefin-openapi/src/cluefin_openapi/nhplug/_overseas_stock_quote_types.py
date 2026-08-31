@@ -19,7 +19,7 @@ class OverseasStockQuoteCurrentPriceOutput(BaseModel):
     netchng_cls: str | None = Field(
         default=None,
         description=(
-            "전일대비구분 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)"
+            "전일대비구분 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)"
         ),
     )
     netchng: float | None = Field(default=None, description="전일대비 / 길이 17")
@@ -129,7 +129,7 @@ class OverseasStockQuoteExecutionTrendOutput(BaseModel):
     netchng_cls: str | None = Field(
         default=None,
         description=(
-            "전일대비구분 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)"
+            "전일대비구분 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)"
         ),
     )
     netchng: float | None = Field(default=None, description="전일대비가 / 길이 17")
@@ -173,7 +173,7 @@ class OverseasStockQuotePeriodPriceOutput(BaseModel):
     trdprc: float | None = Field(default=None, description="현재가 / 길이 17")
     netchng_cls: str | None = Field(
         default=None,
-        description=("등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)"),
+        description=("등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)"),
     )
     netchng: float | None = Field(default=None, description="대비 / 길이 17")
     pctchng: float | None = Field(default=None, description="대비율 / 길이 8")
@@ -231,7 +231,7 @@ class OverseasStockQuotePeriodPriceVolumeOutput(BaseModel):
     movalue: float | None = Field(default=None, description="변동거래대금 / 길이 17")
     netchng_cls: str | None = Field(
         default=None,
-        description=("등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)"),
+        description=("등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)"),
     )
     bsop_date: str | None = Field(default=None, description="영업일 / 길이 8 / YYYYMMDD")
 
@@ -272,7 +272,7 @@ class OverseasStockQuoteSymbolIndexFxPeriodOutput(BaseModel):
     ovrs_prpr: float | None = Field(default=None, description="현재가 / 길이 10")
     prdy_vrss_sign: str | None = Field(
         default=None,
-        description=("등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)"),
+        description=("등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)"),
     )
     prdy_vrss: float | None = Field(default=None, description="대비 / 길이 10")
     prdy_ctrt: float | None = Field(default=None, description="대비율 / 길이 10")

@@ -86,7 +86,7 @@ class KrStockOrderReservedOrderOutput(BaseModel):
     lon_dt: str | None = Field(default=None, description="대출일자 / 길이 8 / 입력값 표시 (YYYYMMDD)")
     orr_qty: str | None = Field(default=None, description="주문수량 / 길이 18 / 입력값 표시")
     orr_uit_pr: str | None = Field(default=None, description="주문단가 / 길이 18 / 입력값 표시")
-    aca_tel_no: str | None = Field(default=None, description="연락처전화번호 / 길이 20 / 입력값 표시 — 개인정보")
+    aca_tel_no: str | None = Field(default=None, description="연락처전화번호 / 길이 20 / 입력값 표시")
     bkg_orr_tp_cd: str | None = Field(default=None, description="예약주문유형코드 / 길이 1 / 입력값 표시")
     bkg_orr_sta_dt: str | None = Field(default=None, description="예약주문시작일자 / 길이 8 / 입력값 표시 (YYYYMMDD)")
     bkg_orr_end_dt: str | None = Field(default=None, description="예약주문종료일자 / 길이 8 / 입력값 표시 (YYYYMMDD)")
@@ -94,9 +94,7 @@ class KrStockOrderReservedOrderOutput(BaseModel):
     end_pr_cmp_ftw_amt: str | None = Field(default=None, description="종가대비등락폭금액 / 길이 18 / 입력값 표시")
     orr_pr_rge_hlm_pr: str | None = Field(default=None, description="주문가격범위상한가 / 길이 18 / 입력값 표시")
     orr_pr_rge_llm_pr: str | None = Field(default=None, description="주문가격범위하한가 / 길이 18 / 입력값 표시")
-    pwd: str | None = Field(
-        default=None, description="비밀번호 / 길이 8 / 입력값 표시 — 민감정보(계좌 비밀번호), 로그·출력에 남기지 말 것"
-    )
+    pwd: str | None = Field(default=None, description="비밀번호 / 길이 8 / 입력값 표시")
 
 
 class KrStockOrderReservedOrder(NHPlugAssetHttpBody):

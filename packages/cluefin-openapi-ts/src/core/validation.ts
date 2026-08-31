@@ -36,3 +36,14 @@ export const kiwoomEnvelopeSchema = z
     return_msg: z.string().optional(),
   })
   .passthrough();
+
+// NH PLUG 응답 봉투. 스펙(자산군 openapi.json)은 `message` 블록을 명세하지만 실서버는
+// null 을 내려주고 `rsp_cd`/`rsp_msg` 로 응답하므로 셋 다 optional 로 둔다.
+// `Output_0`, `Output_1`… 블록은 API 마다 객체/배열이 달라 passthrough 로 통과시킨다.
+export const nhplugEnvelopeSchema = z
+  .object({
+    rsp_cd: z.string().optional(),
+    rsp_msg: z.string().optional(),
+    message: z.unknown().optional(),
+  })
+  .passthrough();

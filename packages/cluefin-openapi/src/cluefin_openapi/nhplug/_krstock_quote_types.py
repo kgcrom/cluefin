@@ -13,7 +13,7 @@ class KrStockQuoteCurrentPriceOutput(BaseModel):
     stck_prpr: int | None = Field(default=None, description="현재가 / 길이 10")
     prdy_vrss_sign: str | None = Field(
         default=None,
-        description="등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)",
+        description="등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)",
     )
     prdy_vrss: int | None = Field(default=None, description="등락폭 / 길이 10")
     prdy_ctrt: float | None = Field(default=None, description="등락률 / 길이 5.2")
@@ -207,7 +207,7 @@ class KrStockQuoteCurrentPriceTickOutput(BaseModel):
     stck_prpr: int | None = Field(default=None, description="현재가 / 길이 10")
     prdy_vrss_sign: str | None = Field(
         default=None,
-        description="등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)",
+        description="등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)",
     )
     prdy_vrss: int | None = Field(default=None, description="등락폭 / 길이 10")
     askp: int | None = Field(default=None, description="매도호가 / 길이 10")
@@ -235,7 +235,7 @@ class KrStockQuoteCurrentPriceExpectedOutput(BaseModel):
     antc_cnpr: int | float | str | None = Field(default=None, description="예상체결가 / 길이 10")
     antc_cntg_sign: str | None = Field(
         default=None,
-        description="예상체결부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)",
+        description="예상체결부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)",
     )
     antc_cntg_vrss: int | float | str | None = Field(default=None, description="예상체결등락폭 / 길이 10")
     antc_prdy_ctrt: int | float | str | None = Field(default=None, description="예상체결등락률 / 길이 5.2")
@@ -248,7 +248,7 @@ class KrStockQuoteCurrentPriceExpectedOutput(BaseModel):
     ovtm_untp_vol: int | float | str | None = Field(default=None, description="ECN체결수량 / 길이 12")
     ovtm_antc_sign: str | None = Field(
         default=None,
-        description="ECN대비예상체결부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)",
+        description="ECN대비예상체결부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)",
     )
     ovtm_antc_vrss: int | float | str | None = Field(default=None, description="ECN대비예상체결등락폭 / 길이 10")
     ovtm_antc_ctrt: int | float | str | None = Field(default=None, description="ECN대비예상체결등락률 / 길이 5.2")
@@ -285,7 +285,7 @@ class KrStockQuoteCurrentExecutionTickOutput(BaseModel):
     stck_prpr: int | None = Field(default=None, description="현재가 / 길이 8")
     prdy_vrss_sign: str | None = Field(
         default=None,
-        description="등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)",
+        description="등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)",
     )
     prdy_vrss: int | None = Field(default=None, description="등락폭 / 길이 8")
     prdy_ctrt: float | None = Field(default=None, description="등락률 / 길이 5.2")
@@ -322,7 +322,7 @@ class KrStockQuoteCurrentExecutionSummaryOutput(BaseModel):
     stck_prpr: int | None = Field(default=None, description="현재가 / 길이 8")
     prdy_vrss_sign: str | None = Field(
         default=None,
-        description="등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)",
+        description="등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)",
     )
     prdy_vrss: int | None = Field(default=None, description="등락폭 / 길이 8")
     acml_vol: int | None = Field(default=None, description="전체거래량 / 길이 12")
@@ -410,7 +410,7 @@ class KrStockQuoteCurrentInvestorOutput(BaseModel):
     stck_prpr: int | None = Field(default=None, description="종가 / 길이 7")
     prdy_vrss_sign: str | None = Field(
         default=None,
-        description="등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)",
+        description="등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)",
     )
     prdy_vrss: int | None = Field(default=None, description="등락폭 / 길이 6")
     prdy_ctrt: float | None = Field(default=None, description="등락률 / 길이 5.2")
@@ -586,7 +586,7 @@ class KrStockQuoteAfterHoursCurrentOutput(BaseModel):
     ovtm_untp_prpr: int | None = Field(default=None, description="체결가 / 길이 10")
     prdy_vrss_sign: str | None = Field(
         default=None,
-        description="체결등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)",
+        description="체결등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)",
     )
     ovtm_prdy_vrss: int | None = Field(default=None, description="체결등락폭 / 길이 10")
     ovtm_prdy_ctrt: float | None = Field(default=None, description="체결등락률 / 길이 5.2")
@@ -695,7 +695,7 @@ class KrStockQuoteAfterHoursCurrentRegularOutput(BaseModel):
     for_rate: float | str | None = Field(default=None, description="외국인지분율 / 길이 5.2")
     prdy_vrss_sign: str | None = Field(
         default=None,
-        description="체결등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)",
+        description="체결등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)",
     )
     prdy_vrss: int | str | None = Field(default=None, description="등락폭 / 길이 10")
     prdy_ctrt: float | str | None = Field(default=None, description="등락률 / 길이 5.2")
@@ -724,11 +724,7 @@ class KrStockQuoteAfterHoursCurrent(NHPlugAssetHttpBody):
 
 
 class KrStockQuoteCurrentAfterHoursDailyTickOutput(BaseModel):
-    """주식현재가 시간외일자별주가 시간외 체결 상세 (Output_0 배열의 각 항목).
-
-    스펙의 필드명과 description 이 서로 어긋나 있다(예: `shrn_iscd` 설명이
-    "고가"). 원문 description 을 그대로 보존한다.
-    """
+    """주식현재가 시간외일자별주가 시간외 체결 상세 (Output_0 배열의 각 항목)."""
 
     model_config = ConfigDict(extra="allow")
 
@@ -787,7 +783,7 @@ class KrStockQuoteCurrentAfterHoursExecutionOutput(BaseModel):
     stck_prpr: int | None = Field(default=None, description="현재가 / 길이 9")
     prdy_vrss_sign: str | None = Field(
         default=None,
-        description="등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)",
+        description="등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)",
     )
     prdy_vrss: int | None = Field(default=None, description="등락폭 / 길이 9")
     prdy_ctrt: float | None = Field(default=None, description="등락률 / 길이 5.2")
@@ -823,7 +819,7 @@ class KrStockQuoteAfterHoursExpectedOutput(BaseModel):
     stck_prpr: int | None = Field(default=None, description="현재가 / 길이 9")
     prdy_vrss_sign: str | None = Field(
         default=None,
-        description="등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보함+리버스(기세)",
+        description="등락부호 / 길이 1 / 1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)",
     )
     prdy_vrss: int | None = Field(default=None, description="등락폭 / 길이 9")
     prdy_ctrt: float | None = Field(default=None, description="등락률 / 길이 5.2")

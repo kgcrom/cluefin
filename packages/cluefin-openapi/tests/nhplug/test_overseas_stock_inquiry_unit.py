@@ -1188,3 +1188,46 @@ class TestMargin:
                 client.overseas_stock_inquiry.margin(
                     act_no="50051036881",
                 )
+
+
+class TestSpecDeclaredNumericTypes:
+    def test_balance_holding_splits_fc_float_and_krw_int(self):
+        from cluefin_openapi.nhplug._overseas_stock_inquiry_types import OverseasStockInquiryBalanceHoldingOutput
+
+        holding = OverseasStockInquiryBalanceHoldingOutput(
+            fc_abk_amt="1234.567",
+            krw_abk_amt1="1234",
+            fc_phs_uit_pr="12.345678",
+            phs_uit_pr="12",
+            fc_sec_end_pr="99.5",
+            end_pr="99",
+        )
+        assert holding.fc_abk_amt == 1234.567
+        assert isinstance(holding.krw_abk_amt1, int)
+        assert isinstance(holding.phs_uit_pr, int)
+        assert isinstance(holding.end_pr, int)
+        assert isinstance(holding.fc_phs_uit_pr, float)
+        assert isinstance(holding.fc_sec_end_pr, float)
+
+    def test_daily_transaction_quantities_keep_decimals(self):
+        from cluefin_openapi.nhplug._overseas_stock_inquiry_types import OverseasStockInquiryDailyTransactionOutput
+
+        row = OverseasStockInquiryDailyTransactionOutput(
+            trd_qty="1.5",
+            trd_bf_bnc_qty="2.5",
+            trd_af_bnc_qty="4.0",
+        )
+        assert (row.trd_qty, row.trd_bf_bnc_qty, row.trd_af_bnc_qty) == (1.5, 2.5, 4.0)
+
+    def test_margin_cur_cd_description_matches_spec(self):
+        from cluefin_openapi.nhplug._overseas_stock_inquiry_types import (
+            OverseasStockInquiryMarginOutput,
+            OverseasStockInquiryReservedInquiryOutput,
+        )
+
+        assert OverseasStockInquiryMarginOutput.model_fields["cur_cd"].description == (
+            "통화코드 / 길이 14 / KRW.KRW USD.USD CNY.CNY HKD.HKD JPY.JPY"
+        )
+        assert OverseasStockInquiryReservedInquiryOutput.model_fields["cur_cd"].description == (
+            "통화코드 / 길이 3 / KRW.KRW USD.USD CNY.CNY HKD.HKD JPY.JPY"
+        )

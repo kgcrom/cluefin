@@ -4,12 +4,22 @@ import { TokenBucket } from './rate-limiter';
 
 export type SubscriptionType = '1' | '2';
 export type MessageType = 'PINGPONG' | 'DATA' | 'SYSTEM';
-export type WebSocketEventType = 'data' | 'connected' | 'disconnected' | 'error' | 'subscribed' | 'unsubscribed';
+export type WebSocketEventType =
+  | 'data'
+  | 'connected'
+  | 'disconnected'
+  | 'error'
+  | 'subscribed'
+  | 'unsubscribed'
+  | 'system';
 
 export interface WebSocketMessage {
   messageType: MessageType;
   trId?: string | undefined;
+  trKey?: string | undefined;
   data?: string[] | undefined;
+  /** JSON 푸시를 쓰는 벤더(NH PLUG)용 파싱된 body. 파이프 포맷(KIS)에서는 비어 있다. */
+  body?: Record<string, unknown> | undefined;
   raw: string;
   encrypted: boolean;
 }
@@ -19,6 +29,8 @@ export interface WebSocketEvent {
   trId?: string;
   trKey?: string;
   data?: { values: string[]; encrypted: boolean };
+  /** JSON 푸시를 쓰는 벤더(NH PLUG)용 응답 body. */
+  body?: Record<string, unknown>;
   error?: Error;
   raw?: string;
 }
@@ -36,6 +48,7 @@ export interface BaseWebSocketClientEvents {
   error: [event: WebSocketEvent];
   subscribed: [event: WebSocketEvent];
   unsubscribed: [event: WebSocketEvent];
+  system: [event: WebSocketEvent];
 }
 
 export class BaseWebSocketClient extends EventEmitter {
@@ -131,7 +144,7 @@ export class BaseWebSocketClient extends EventEmitter {
     throw new Error('buildSubscriptionMessage must be implemented by subclass');
   }
 
-  private handleMessage(raw: string): void {
+  protected handleMessage(raw: string): void {
     const message = this.parseMessage(raw);
 
     if (message.messageType === 'PINGPONG') {
@@ -169,7 +182,7 @@ export class BaseWebSocketClient extends EventEmitter {
     return { messageType: 'SYSTEM', raw, encrypted: false };
   }
 
-  private emitEvent(event: WebSocketEvent): void {
+  protected emitEvent(event: WebSocketEvent): void {
     this.emit(event.eventType, event);
   }
 }
