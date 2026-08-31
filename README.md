@@ -15,7 +15,7 @@
 brew install lightgbm ta-lib   # macOS 시스템 의존성
 git clone https://github.com/kgcrom/cluefin.git && cd cluefin
 uv sync --all-packages
-cp apps/cluefin-cli/.env.sample .env  # API 키 설정
+cp packages/cluefin-openapi/.env.sample .env  # API 키 설정
 ```
 
 **사전 요구사항**: [uv](https://github.com/astral-sh/uv), Python 3.10+
@@ -30,9 +30,8 @@ uv 워크스페이스 모노레포:
 | [cluefin-openapi-ts](packages/cluefin-openapi-ts/) | KIS/키움 TypeScript API 클라이언트 (Node 20+, Zod, ESM/CJS) |
 | [cluefin-ta](packages/cluefin-ta/) | 순수 Python 기술적 분석 (TA-Lib 호환, 45개 지표) |
 | [cluefin-xbrl](packages/cluefin-xbrl/) | DART XBRL 재무제표 파서 |
-| [cluefin-cli](apps/cluefin-cli/) | Rich 기반 CLI (기술적 분석, LightGBM + SHAP 예측) |
 | [cluefin-openapi-cli](apps/cluefin-openapi-cli/) | Agent-friendly broker CLI (`list`, `describe`, broker-first command path) |
-| [cluefin-desk](apps/cluefin-desk/) | TUI 대시보드 |
+| [cluefin-desk](apps/cluefin-desk/) | TUI 대시보드 (기술적 분석, KIS·DART·XBRL 재무, LightGBM + SHAP 예측) |
 
 ## 개발
 
