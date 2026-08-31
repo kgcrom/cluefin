@@ -171,7 +171,7 @@ class FinancialAnalysisScreen(Screen):
                 corp_code=corp_code,
                 page_count=20,
             )
-            items = response.body.result.list
+            items = response.result.list
             if not items:
                 return
 
@@ -490,7 +490,7 @@ class FinancialAnalysisScreen(Screen):
         """Find DART corp_code from stock_code."""
         try:
             corp_list = dart_client.public_disclosure.corp_code()
-            for item in corp_list.body.result:
+            for item in corp_list.result.list or []:
                 if item.stock_code == self.stock_code:
                     return item.corp_code
         except Exception as e:
