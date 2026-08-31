@@ -1,0 +1,20 @@
+{
+  // NodeNext 소비자 관점. `module` 도 같이 NodeNext 여야 한다 — moduleResolution 만
+  // 바꾸면 TS 가 조합을 거부한다.
+  //
+  // `skipLibCheck` 를 **끄는 것이 이 설정의 핵심**이다. 확장자 없는 상대 import 는
+  // 선언 파일 안에서 TS2834 로 잡히는데, skipLibCheck 가 켜져 있으면 그게 통째로
+  // 묵살되고 소비자가 실제로 import 한 이름에 대해서만 TS2305 가 뒤늦게 뜬다.
+  // 끄면 픽스처가 건드리지 않는 선언 파일까지 전수 검사된다.
+  // 그래서 `types` 도 `["node"]` — 선언 트리가 `node:events` 등을 참조한다.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "skipLibCheck": false,
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["consumer.ts"]
+}
