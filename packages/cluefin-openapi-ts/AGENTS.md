@@ -18,11 +18,8 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 ## Coupling to the Python sibling
 
 - `generate:metadata` regex-parses `packages/cluefin-openapi`'s Python source to produce
-  the TS metadata files, and `build:types` string-templates `index.d.ts` from that
-  metadata. Nothing re-runs these automatically: when the Python package's endpoints
-  change, re-run both or the TS side silently goes stale. New domain classes must also
-  be added to the arrays inside `scripts/generate-types.mjs` or they won't appear in
-  the published `.d.ts`.
+  the TS metadata files. Nothing re-runs it automatically: when the Python package's
+  endpoints change, re-run it or the TS side silently goes stale.
 - The KIS token cache JSON (`<repo>/data/.kis_token_cache.json`) is **shared with the
   Python package** — same file, same snake_case format — because KIS allows only 1
   token generation per minute. Don't change the format on one side only.
@@ -32,26 +29,48 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   "unify" the two schemes; changing either breaks cache sharing with Python.
 - Endpoint-count tests hardcode totals (`tests/core/endpoint-count.test.ts`, KIS
   contract tests); bump them whenever metadata changes.
-- `dist/types/index.d.ts` is **string-templated by hand**, not emitted by `tsc`. Domain
-  classes come from metadata, but everything else (auth, token cache, socket client,
-  standalone consts) has to be typed out literally in `scripts/generate-types.mjs` — it
-  silently under-declares otherwise. `tests/core/dts-drift.test.ts` guards all three
-  vendors by diffing the generator output against the runtime exports of
-  `src/kis/index.ts`, `src/kiwoom/index.ts` and `src/nhplug/index.ts` — add a barrel
-  export without a declaration and it fails, naming the missing symbols.
-- The KIS realtime declarations (`*_FIELD_NAMES` literal tuples, `*RealtimeQuote` item
-  interfaces, and the `RealtimeSchema<T>` handles for the Zod schemas) are **parsed out of
-  `src/kis/metadata/*-realtime-quote.ts`** by the generator, which assumes every schema
-  field is a bare `z.string()` and throws if that stops being true. The schemas are
-  declared as `RealtimeSchema<Item>` (parse/safeParse only), not as `z.ZodObject<...>`.
-- Kiwoom's `schemas/*` response types (~200 `export type` names in `src/kiwoom/index.ts`)
-  are still undeclared — the drift test only enforces an explicit allowlist of type-only
-  exports per vendor.
+
+## Declaration output (`dist/types`)
+
+- `build:types` is `tsc -p tsconfig.build.json` — a real `--emitDeclarationOnly` pass over
+  `src` only. It emits a 112-file tree mirroring `src`; `dist/types/index.d.ts` is the
+  entry and re-exports the rest. There is **no** hand-written declaration template any
+  more (`scripts/generate-types.mjs` is gone; `scripts/generate-metadata.mjs` stays).
+- `tsconfig.build.json` turns off `declarationMap`/`sourceMap` that the base config sets —
+  turning them back on doubles the shipped file count with maps pointing at absent `src`.
+- The base `tsconfig.json` includes `tests`, which has ~61 pre-existing type errors. They
+  don't block the build because `tsconfig.build.json` includes `src` only. `npm run
+  typecheck` therefore runs `tsc -p tsconfig.build.json --noEmit` (src) **and** tsdown.
+- **Relative specifiers in `src` must carry an explicit `.js` extension** (`./core/errors.js`,
+  and `./kis/index.js` for a directory barrel — never `./kis.js`). `tsc` copies specifiers
+  into the emitted declarations verbatim, and extensionless ones are illegal under
+  `moduleResolution: node16`/`nodenext`: the consumer gets TS2834 on the `.d.ts` and then
+  TS2305 for *every* imported name. vitest and tsdown both resolve `./foo.js` → `foo.ts`,
+  so this costs nothing at build/test time. `tests/` may stay extensionless.
+- `tests/core/dts-consumer.test.ts` compiles `tests/fixtures/dts-consumer/consumer.ts`,
+  which imports by package name (`cluefin-openapi`) so it goes through `package.json`'s
+  `exports["."].types`. That fixture is excluded from the root `tsconfig.json` — it only
+  resolves after a build. The test builds `dist/types` itself if it's missing.
+  It compiles the fixture **twice**, under `tsconfig.json` (Bundler) and
+  `tsconfig.nodenext.json` (NodeNext) — a single-mode check is exactly how the
+  extensionless-specifier regression above shipped past review once. The NodeNext project
+  deliberately sets `skipLibCheck: false` (that is what surfaces TS2834 across all 112
+  declaration files rather than only on names the fixture happens to import), which in
+  turn needs `types: ["node"]`. Don't "simplify" either setting.
+- `npx @arethetypeswrong/cli --pack` reports **`node16 (from CJS)`: Masquerading as ESM**.
+  Pre-existing, not caused by the declaration migration (verified by running it against
+  the pre-migration commit): the package is `"type": "module"` with a dual ESM/CJS build
+  but a single `types` field, so `require` gets an ESM-flavoured `.d.ts`. Fixing it means
+  emitting a `.d.cts` and adding `exports.require.types` — a distribution-shape change.
+- **KIS `schemas/*` (166 names) are emitted but unreachable**: `src/kis/index.ts` re-exports
+  zero schema modules, while `src/kiwoom/index.ts` re-exports 9 and `src/nhplug/index.ts` 7.
+  Consumers can't `import type { GetStockCurrentPriceResponse }`. Fixing that is a barrel
+  change, not a build change (measured: no name collisions with the current surface).
 
 ## Tooling surprises
 
-- `npm run typecheck` runs the tsdown bundler, not `tsc --noEmit` — type errors surface
-  as bundler errors, and this is what `publish:check` gates on.
+- `npm run typecheck` runs `tsc -p tsconfig.build.json --noEmit` and then the tsdown
+  bundler; `publish:check` gates on it.
 - Wire format is snake_case (Zod schemas match the wire); the public API auto-camelCases
   responses. A new field must be handled with this asymmetry in mind.
 - KIS `custtype` is hardcoded to `'P'` (personal) in the HTTP and socket clients —
