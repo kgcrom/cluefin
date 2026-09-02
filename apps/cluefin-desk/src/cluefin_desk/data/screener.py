@@ -183,3 +183,92 @@ class StockScreener:
         except Exception as e:
             logger.error(f"Failed to fetch margin ratio: {e}")
             return []
+
+    # ──────────────────────────────────────
+    # KIS-backed rankings (empty without KIS keys)
+    # ──────────────────────────────────────
+
+    def get_dividend_yield_top(self) -> List[ScreeningItem]:
+        """배당수익률 상위 (KIS). 시세 없이 배당 정보만 내려오는 랭킹이라
+        current_price/volume 은 비운다. extra = 배당수익률(%)."""
+        if not self.fetcher.has_kis:
+            return []
+        try:
+            return [
+                ScreeningItem(
+                    rank=idx + 1,
+                    stock_code=item.sht_cd,
+                    stock_name=item.isin_name,
+                    current_price="-",
+                    change_rate="",
+                    volume="-",
+                    extra=item.divi_rate,
+                )
+                for idx, item in enumerate(self.fetcher.get_dividend_yield_top())
+            ]
+        except Exception as e:
+            logger.error(f"Failed to fetch dividend yield top: {e}")
+            return []
+
+    def get_short_selling_top(self) -> List[ScreeningItem]:
+        """공매도 상위 (KIS, 당일). extra = 공매도 거래량 비중(%)."""
+        if not self.fetcher.has_kis:
+            return []
+        try:
+            return [
+                ScreeningItem(
+                    rank=idx + 1,
+                    stock_code=item.mksc_shrn_iscd,
+                    stock_name=item.hts_kor_isnm,
+                    current_price=item.stck_prpr,
+                    change_rate=item.prdy_ctrt,
+                    volume=item.acml_vol,
+                    extra=item.ssts_vol_rlim,
+                )
+                for idx, item in enumerate(self.fetcher.get_short_selling_top())
+            ]
+        except Exception as e:
+            logger.error(f"Failed to fetch short selling top: {e}")
+            return []
+
+    def get_credit_balance_top(self) -> List[ScreeningItem]:
+        """신용잔고 상위 (KIS, 잔고비율순). extra = 융자잔고비율(%)."""
+        if not self.fetcher.has_kis:
+            return []
+        try:
+            return [
+                ScreeningItem(
+                    rank=idx + 1,
+                    stock_code=item.mksc_shrn_iscd,
+                    stock_name=item.hts_kor_isnm,
+                    current_price=item.stck_prpr,
+                    change_rate=item.prdy_ctrt,
+                    volume=item.acml_vol,
+                    extra=item.whol_loan_rmnd_rate,
+                )
+                for idx, item in enumerate(self.fetcher.get_credit_balance_top())
+            ]
+        except Exception as e:
+            logger.error(f"Failed to fetch credit balance top: {e}")
+            return []
+
+    def get_disparity_index_top(self) -> List[ScreeningItem]:
+        """이격도(20일) 상위 (KIS). extra = 20일 이격도."""
+        if not self.fetcher.has_kis:
+            return []
+        try:
+            return [
+                ScreeningItem(
+                    rank=idx + 1,
+                    stock_code=item.mksc_shrn_iscd,
+                    stock_name=item.hts_kor_isnm,
+                    current_price=item.stck_prpr,
+                    change_rate=item.prdy_ctrt,
+                    volume=item.acml_vol,
+                    extra=item.d20_dsrt,
+                )
+                for idx, item in enumerate(self.fetcher.get_disparity_index_rank())
+            ]
+        except Exception as e:
+            logger.error(f"Failed to fetch disparity index top: {e}")
+            return []

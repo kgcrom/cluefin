@@ -27,7 +27,12 @@ def extract_taxonomy(model_xbrl: ModelXbrl) -> TaxonomyInfo:
 
 
 def _extract_labels(model_xbrl: ModelXbrl) -> dict[str, ConceptLabel]:
-    """Extract Korean and English labels from the concept-label relationship set."""
+    """Extract Korean and English labels from the concept-label relationship set.
+
+    A concept can carry multiple label roles (standard/terse/total/...). The standard
+    label role wins; otherwise the first label seen per language is kept, so the result
+    does not depend on relationship iteration order.
+    """
     from arelle import XbrlConst
 
     label_rels: ModelRelationshipSet = model_xbrl.relationshipSet(XbrlConst.conceptLabel)
@@ -40,16 +45,21 @@ def _extract_labels(model_xbrl: ModelXbrl) -> dict[str, ConceptLabel]:
 
         label_ko = None
         label_en = None
+        ko_is_standard = False
+        en_is_standard = False
 
         for rel in rels:
             label_obj = rel.toModelObject
             if label_obj is None:
                 continue
+            is_standard = label_obj.role == XbrlConst.standardLabel
             lang = label_obj.xmlLang
-            if lang == "ko":
+            if lang == "ko" and (label_ko is None or (is_standard and not ko_is_standard)):
                 label_ko = label_obj.text
-            elif lang == "en":
+                ko_is_standard = is_standard
+            elif lang == "en" and (label_en is None or (is_standard and not en_is_standard)):
                 label_en = label_obj.text
+                en_is_standard = is_standard
 
         if label_ko is not None or label_en is not None:
             local_name = qname.localName

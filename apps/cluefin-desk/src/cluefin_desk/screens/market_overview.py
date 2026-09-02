@@ -5,6 +5,7 @@ from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import DataTable, Header, Select, Static
 
+from cluefin_desk.formatting import pad
 from cluefin_desk.widgets.market_overview import MarketOverviewBar
 from cluefin_desk.widgets.nav_bar import NavBar
 from cluefin_desk.widgets.nav_footer import NavFooter
@@ -31,6 +32,9 @@ class MarketOverviewScreen(Screen):
             with Horizontal(id="top-movers-container"):
                 yield Static("Loading...", id="top-gainers-panel")
                 yield Static("Loading...", id="top-losers-panel")
+            with Horizontal(id="kis-market-container"):
+                yield Static("Loading...", id="kis-investor-panel")
+                yield Static("Loading...", id="kis-fund-panel")
         yield NavFooter(active_screen_key="1")
 
     def on_mount(self) -> None:
@@ -57,10 +61,12 @@ class MarketOverviewScreen(Screen):
         ]:
             table.add_column(label, key=label, width=width)
 
-    @work(thread=True)
+    # `r` 연타로 워커가 겹치면 같은 패널에 두 응답이 번갈아 써진다 — 최신 것만 남긴다.
+    @work(thread=True, exclusive=True, group="market-load")
     def load_all_data(self) -> None:
         self._load_sector_data("001")
         self._load_top_movers()
+        self._load_kis_market_data()
 
     @work(thread=True)
     def _reload_sector_data(self, inds_cd: str) -> None:
@@ -111,6 +117,32 @@ class MarketOverviewScreen(Screen):
 
             logger.error(f"Failed to load sector data: {e}")
 
+    @staticmethod
+    def _format_mover_lines(title: str, items, positive: bool) -> list[str]:
+        """급등/급락 패널 한 줄씩. 종목명은 한글(두 칸)이라 `pad` 로 셀 폭을 맞춘다 —
+        f-string 정렬은 글자 수 기준이어서 현재가·등락률 컬럼이 줄마다 어긋난다."""
+        color = "red" if positive else "blue"
+        arrow = "\u25b2" if positive else "\u25bc"
+        lines = [f"[bold {color}]{arrow} {title}[/bold {color}]"]
+        if not items:
+            lines.append("  데이터 없음")
+            return lines
+        for item in items[:5]:
+            try:
+                rate = float(item.change_rate) if item.change_rate else 0.0
+            except (ValueError, TypeError):
+                rate = 0.0
+            try:
+                price_str = f"{int(float(item.current_price)):,}"
+            except (ValueError, TypeError):
+                price_str = item.current_price or "-"
+            sign = "+" if rate > 0 else ""
+            rate_str = pad(f"{sign}{rate:.2f}%", 8, align="right")
+            lines.append(
+                f"  {pad(item.stock_name, 16)} {pad(price_str, 10, align='right')}  [{color}]{rate_str}[/{color}]"
+            )
+        return lines
+
     def _load_top_movers(self) -> None:
         try:
             screener = self.app.screener
@@ -118,35 +150,108 @@ class MarketOverviewScreen(Screen):
             losers = screener.get_top_losers()
 
             def _update():
-                # Top Gainers
-                lines = ["[bold red]\u25b2 \uae09\ub4f1 (Top Gainers)[/bold red]"]
-                for item in gainers[:5]:
-                    rate = float(item.change_rate) if item.change_rate else 0.0
-                    try:
-                        price_str = f"{int(float(item.current_price)):,}"
-                    except (ValueError, TypeError):
-                        price_str = item.current_price
-                    lines.append(f"  {item.stock_name:<10s} {price_str:>10s}  [red]+{rate:.2f}%[/red]")
-                panel = self.query_one("#top-gainers-panel", Static)
-                panel.update("\n".join(lines))
-
-                # Top Losers
-                lines = ["[bold blue]\u25bc \uae09\ub77d (Top Losers)[/bold blue]"]
-                for item in losers[:5]:
-                    rate = float(item.change_rate) if item.change_rate else 0.0
-                    try:
-                        price_str = f"{int(float(item.current_price)):,}"
-                    except (ValueError, TypeError):
-                        price_str = item.current_price
-                    lines.append(f"  {item.stock_name:<10s} {price_str:>10s}  [blue]{rate:.2f}%[/blue]")
-                panel = self.query_one("#top-losers-panel", Static)
-                panel.update("\n".join(lines))
+                self.query_one("#top-gainers-panel", Static).update(
+                    "\n".join(self._format_mover_lines("급등 (Top Gainers)", gainers, positive=True))
+                )
+                self.query_one("#top-losers-panel", Static).update(
+                    "\n".join(self._format_mover_lines("급락 (Top Losers)", losers, positive=False))
+                )
 
             self.app.call_from_thread(_update)
         except Exception as e:
             from loguru import logger
 
             logger.error(f"Failed to load top movers: {e}")
+            err_msg = str(e)
+
+            def _update_error():
+                # 실패를 로그에만 남기면 두 패널이 영구히 "Loading..." 으로 남는다.
+                for selector, title in (
+                    ("#top-gainers-panel", "급등 (Top Gainers)"),
+                    ("#top-losers-panel", "급락 (Top Losers)"),
+                ):
+                    self.query_one(selector, Static).update(f"[bold]{title}[/bold]\n\n  로드 실패: {err_msg}")
+
+            self.app.call_from_thread(_update_error)
+
+    @staticmethod
+    def _fmt_amount(value) -> str:
+        try:
+            return f"{int(float(value)):,}"
+        except (ValueError, TypeError):
+            return str(value) if value else "-"
+
+    @staticmethod
+    def _format_kis_investor_lines(investors) -> list[str]:
+        """코스피 투자자별 순매수. KIS 는 조회 시작일부터 오름차순으로 주므로
+        최근 날짜가 위로 오게 정렬한 뒤 5일만 보인다."""
+        lines = ["[bold]코스피 투자자별 순매수 (KIS, 주)[/bold]"]
+        if not investors:
+            lines.append("  데이터 없음")
+            return lines
+        lines.append(
+            f"{pad('일자', 10)} {pad('개인', 12, 'right')} {pad('외국인', 12, 'right')} {pad('기관', 12, 'right')}"
+        )
+        ordered = sorted(investors, key=lambda i: i.stck_bsop_date, reverse=True)
+        for item in ordered[:5]:
+            lines.append(
+                f"{pad(item.stck_bsop_date, 10)} "
+                f"{pad(MarketOverviewScreen._fmt_amount(item.prsn_ntby_qty), 12, 'right')} "
+                f"{pad(MarketOverviewScreen._fmt_amount(item.frgn_ntby_qty), 12, 'right')} "
+                f"{pad(MarketOverviewScreen._fmt_amount(item.orgn_ntby_qty), 12, 'right')}"
+            )
+        return lines
+
+    @staticmethod
+    def _format_kis_fund_lines(funds) -> list[str]:
+        lines = ["[bold]시장 자금 동향 (KIS, 억원)[/bold]"]
+        if not funds:
+            lines.append("  데이터 없음")
+            return lines
+        lines.append(
+            f"{pad('일자', 10)} {pad('예탁금', 12, 'right')} {pad('신용융자', 12, 'right')} {pad('MMF', 12, 'right')}"
+        )
+        ordered = sorted(funds, key=lambda i: i.bsop_date, reverse=True)
+        for item in ordered[:5]:
+            lines.append(
+                f"{pad(item.bsop_date, 10)} "
+                f"{pad(MarketOverviewScreen._fmt_amount(item.cust_dpmn_amt), 12, 'right')} "
+                f"{pad(MarketOverviewScreen._fmt_amount(item.crdt_loan_rmnd), 12, 'right')} "
+                f"{pad(MarketOverviewScreen._fmt_amount(item.mmf_amt), 12, 'right')}"
+            )
+        return lines
+
+    def _set_panel(self, selector: str, text: str) -> None:
+        def _apply():
+            self.query_one(selector, Static).update(text)
+
+        self.app.call_from_thread(_apply)
+
+    def _load_kis_market_data(self) -> None:
+        """KIS 시장 수급·자금 패널. 키가 없거나 실패해도 패널에 그 사실을 남긴다 —
+        빈 문자열로 두면 자리만 차지한 채 "안 보이는" 패널이 된다."""
+        fetcher = self.app.fetcher
+        if not fetcher.has_kis:
+            self._set_panel("#kis-investor-panel", "[bold]코스피 투자자별 순매수 (KIS)[/bold]\n  KIS 키 없음")
+            self._set_panel("#kis-fund-panel", "[bold]시장 자금 동향 (KIS)[/bold]\n  KIS 키 없음")
+            return
+
+        for selector, label, fetch, fmt in (
+            (
+                "#kis-investor-panel",
+                "투자자별 순매수",
+                lambda: fetcher.get_market_investor_trend_daily(market="KSP"),
+                self._format_kis_investor_lines,
+            ),
+            ("#kis-fund-panel", "시장 자금 동향", fetcher.get_market_fund_summary, self._format_kis_fund_lines),
+        ):
+            try:
+                self._set_panel(selector, "\n".join(fmt(fetch())))
+            except Exception as e:
+                from loguru import logger
+
+                logger.error(f"Failed to load KIS {label}: {e}")
+                self._set_panel(selector, f"[bold]{label} (KIS)[/bold]\n  로드 실패: {e}")
 
     def action_refresh(self) -> None:
         self.load_all_data()

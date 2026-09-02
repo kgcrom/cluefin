@@ -31,7 +31,6 @@ body:
       options:
         - cluefin-openapi
         - cluefin-ta
-        - cluefin-cli
         - cluefin-desk
         - cluefin-xbrl
     validations:

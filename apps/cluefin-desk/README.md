@@ -19,3 +19,4 @@ cluefin-desk
 ## Requirements
 
 - Kiwoom API keys (`KIWOOM_APP_KEY`, `KIWOOM_SECRET_KEY`)
+- KIS API keys (`KIS_APP_KEY`, `KIS_SECRET_KEY`) — optional; KIS-backed panels are skipped without them

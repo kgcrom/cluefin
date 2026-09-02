@@ -19,6 +19,11 @@ TAB_CONFIG = [
     ("신고가", "tab-newhigh", "table-newhigh"),
     ("급등/급락", "tab-volatility", "table-volatility"),
     ("신용잔", "tab-margin", "table-margin"),
+    # KIS-backed tabs — stay empty without KIS keys
+    ("배당수익률", "tab-dividend", "table-dividend"),
+    ("공매도", "tab-short", "table-short"),
+    ("신용상위", "tab-credit", "table-credit"),
+    ("이격도", "tab-disparity", "table-disparity"),
 ]
 
 
@@ -47,31 +52,51 @@ class ScreeningScreen(Screen):
         nav.set_active("2")
         self.load_all_data()
 
-    @work(thread=True)
+    # 12개 탭을 한 스레드에서 차례로 돌리면 KIS 탭 4개는 키움 8건 + KIS 인증이 끝난 뒤에야
+    # 채워져, 탭을 눌렀을 때 그제서야 조회하는 것처럼 보인다. 소스별로 워커를 나눠
+    # 동시에 미리 채운다. 각 그룹은 exclusive — `r` 연타로 겹치는 워커는 최신만 남긴다.
     def load_all_data(self) -> None:
-        self._load_screening_data()
+        self._load_kiwoom_tabs()
+        self._load_kis_tabs()
 
-    def _load_screening_data(self) -> None:
+    @work(thread=True, exclusive=True, group="screening-load-kiwoom")
+    def _load_kiwoom_tabs(self) -> None:
         screener = self.app.screener
+        self._fill_tables(
+            [
+                ("table-gainers", screener.get_top_gainers),
+                ("table-losers", screener.get_top_losers),
+                ("table-volume", screener.get_top_volume),
+                ("table-value", screener.get_top_value),
+                ("table-foreigner", screener.get_top_foreigner_net_buy),
+                ("table-newhigh", screener.get_new_high_price),
+                ("table-volatility", screener.get_price_volatility),
+                ("table-margin", screener.get_top_margin_ratio),
+            ]
+        )
 
-        loaders = [
-            ("table-gainers", screener.get_top_gainers),
-            ("table-losers", screener.get_top_losers),
-            ("table-volume", screener.get_top_volume),
-            ("table-value", screener.get_top_value),
-            ("table-foreigner", screener.get_top_foreigner_net_buy),
-            ("table-newhigh", screener.get_new_high_price),
-            ("table-volatility", screener.get_price_volatility),
-            ("table-margin", screener.get_top_margin_ratio),
-        ]
+    @work(thread=True, exclusive=True, group="screening-load-kis")
+    def _load_kis_tabs(self) -> None:
+        screener = self.app.screener
+        self._fill_tables(
+            [
+                ("table-dividend", screener.get_dividend_yield_top),
+                ("table-short", screener.get_short_selling_top),
+                ("table-credit", screener.get_credit_balance_top),
+                ("table-disparity", screener.get_disparity_index_top),
+            ]
+        )
 
+    def _fill_tables(self, loaders) -> None:
         for table_id, loader_fn in loaders:
             try:
                 data = loader_fn()
                 table = self.query_one(f"#{table_id}", StockScreeningTable)
                 self.app.call_from_thread(table.load_data, data)
-            except Exception:
-                pass
+            except Exception as e:
+                from loguru import logger
+
+                logger.error(f"Failed to load {table_id}: {e}")
 
     def action_refresh(self) -> None:
         self.load_all_data()

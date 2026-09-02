@@ -24,7 +24,6 @@
 - [ ] cluefin-openapi
 - [ ] cluefin-ta
 - [ ] cluefin-xbrl
-- [ ] cluefin-cli
 - [ ] cluefin-desk
 - [ ] 루트 프로젝트 설정
 

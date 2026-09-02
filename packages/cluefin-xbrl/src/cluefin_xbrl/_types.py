@@ -87,7 +87,12 @@ class StatementType(str, Enum):
 
 
 class StatementLineItem(BaseModel):
-    """A single line item in a financial statement."""
+    """A single line item in a financial statement.
+
+    ``dimensions`` holds the statement-intrinsic dimensional context (e.g. the
+    equity component axis on a statement of changes in equity). The
+    consolidated/separate axis is resolved at extraction time and not repeated here.
+    """
 
     concept_local_name: str
     concept_qname: str
@@ -99,6 +104,7 @@ class StatementLineItem(BaseModel):
     depth: int = 0
     order: float = 0.0
     is_abstract: bool = False
+    dimensions: dict[str, str] = {}
 
 
 class FinancialStatement(BaseModel):
@@ -108,14 +114,20 @@ class FinancialStatement(BaseModel):
     linkrole: str
     line_items: list[StatementLineItem] = []
     periods: list[XbrlPeriod] = []
+    is_consolidated: bool = True
 
 
 class ParsedFinancialStatements(BaseModel):
-    """Collection of parsed financial statements."""
+    """Collection of parsed financial statements.
+
+    ``statements`` holds consolidated (연결) statements keyed by type code (BS/IS/CIS/CF/SCE);
+    ``separate_statements`` holds the separate (별도) statements with the same keys.
+    """
 
     source_file: str
     entity_id: Optional[str] = None
     statements: dict[str, FinancialStatement] = {}
+    separate_statements: dict[str, FinancialStatement] = {}
 
 
 class XbrlDocument(BaseModel):
@@ -126,3 +138,43 @@ class XbrlDocument(BaseModel):
     entity_id: Optional[str] = None
     reporting_period_end: Optional[date] = None
     taxonomy: Optional[TaxonomyInfo] = None
+
+
+class NoteLineItem(BaseModel):
+    """A single line item in a financial statement note, with dimensional context.
+
+    ``value`` holds numeric facts; ``text_value`` holds non-numeric facts
+    (short narrative strings, dates, etc.) that would otherwise be lost.
+    """
+
+    concept_local_name: str
+    concept_qname: str
+    label_ko: Optional[str] = None
+    label_en: Optional[str] = None
+    value: Optional[Decimal] = None
+    text_value: Optional[str] = None
+    unit: Optional[str] = None
+    period: Optional[XbrlPeriod] = None
+    depth: int = 0
+    order: float = 0.0
+    is_abstract: bool = False
+    dimensions: dict[str, str] = {}
+
+
+class NoteSection(BaseModel):
+    """A structured financial statement note (disclosure)."""
+
+    role_code: str
+    role_uri: str
+    title: Optional[str] = None
+    is_consolidated: bool = True
+    line_items: list[NoteLineItem] = []
+    periods: list[XbrlPeriod] = []
+
+
+class ParsedNotes(BaseModel):
+    """Collection of parsed financial statement notes."""
+
+    source_file: str
+    entity_id: Optional[str] = None
+    notes: dict[str, NoteSection] = {}

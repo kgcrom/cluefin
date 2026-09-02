@@ -3,7 +3,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical
 from textual.screen import Screen
-from textual.widgets import DataTable, Header
+from textual.widgets import DataTable, Header, Static
 
 from cluefin_desk.widgets.market_overview import MarketOverviewBar
 from cluefin_desk.widgets.nav_bar import NavBar
@@ -16,6 +16,7 @@ class EtfAnalysisScreen(Screen):
     BINDINGS = [
         Binding("r", "refresh", "Refresh"),
         Binding("enter", "select_etf", "Detail"),
+        Binding("n", "nav_detail", "NAV(KIS)"),
         Binding("escape", "go_back", "Back"),
         Binding("q", "quit", "Quit"),
     ]
@@ -26,6 +27,7 @@ class EtfAnalysisScreen(Screen):
         yield MarketOverviewBar(id="market-bar")
         with Vertical(id="etf-content"):
             yield DataTable(id="etf-price-table")
+            yield Static("", id="etf-kis-panel")
         yield NavFooter(active_screen_key="4")
 
     def on_mount(self) -> None:
@@ -50,7 +52,8 @@ class EtfAnalysisScreen(Screen):
         ]:
             tbl.add_column(label, key=label, width=width)
 
-    @work(thread=True)
+    # `r` 연타로 워커가 겹치면 같은 패널에 두 응답이 번갈아 써진다 — 최신 것만 남긴다.
+    @work(thread=True, exclusive=True, group="etf-load")
     def load_all_data(self) -> None:
         self._load_etf_prices()
 
@@ -120,6 +123,59 @@ class EtfAnalysisScreen(Screen):
                 from cluefin_desk.screens.stock_detail import StockDetailScreen
 
                 self.app.push_screen(StockDetailScreen(stock_code=stock_code))
+
+    def action_nav_detail(self) -> None:
+        tbl = self.query_one("#etf-price-table", DataTable)
+        if tbl.cursor_row is not None and tbl.row_count > 0:
+            row_key, _ = tbl.coordinate_to_cell_key(tbl.cursor_coordinate)
+            stock_code = str(row_key.value)
+            if stock_code:
+                self._load_kis_nav_detail(stock_code)
+
+    @work(thread=True)
+    def _load_kis_nav_detail(self, stock_code: str) -> None:
+        """선택 ETF 의 KIS NAV 괴리 추이 + 구성종목 상위. KIS 키가 없으면 안내만."""
+        fetcher = self.app.fetcher
+        if not fetcher.has_kis:
+
+            def _show_missing():
+                self.query_one("#etf-kis-panel", Static).update(
+                    "KIS API keys not configured — NAV 상세는 KIS_APP_KEY 설정 후 사용 가능합니다."
+                )
+
+            self.app.call_from_thread(_show_missing)
+            return
+
+        try:
+            nav_rows = fetcher.get_etf_nav_daily_trend(stock_code, days=30)
+            components = fetcher.get_etf_component_prices(stock_code)
+
+            def _update():
+                lines = [f"[bold]{stock_code} — NAV 괴리 추이 (KIS)[/bold]"]
+                if nav_rows:
+                    lines.append(f"{'일자':<10s} {'종가':>10s} {'NAV':>12s} {'괴리율':>8s}")
+                    for item in nav_rows[:10]:
+                        lines.append(
+                            f"{item.stck_bsop_date:<10s} {item.stck_clpr:>10s} {item.nav:>12s} {item.dprt:>8s}%"
+                        )
+                else:
+                    lines.append("NAV 데이터 없음")
+
+                if components:
+                    lines += ["", "[bold]구성종목 상위 (비중순, KIS)[/bold]"]
+                    for item in components[:10]:
+                        lines.append(
+                            f"  {item.hts_kor_isnm:<16s} {item.stck_prpr:>10s} "
+                            f"({item.prdy_ctrt}%)  비중 {item.etf_cnfg_issu_rlim}%"
+                        )
+
+                self.query_one("#etf-kis-panel", Static).update("\n".join(lines))
+
+            self.app.call_from_thread(_update)
+        except Exception as e:
+            from loguru import logger
+
+            logger.error(f"Failed to load KIS NAV detail: {e}")
 
     def action_go_back(self) -> None:
         self.app.action_switch_screen("1")

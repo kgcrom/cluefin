@@ -28,6 +28,9 @@ its non-obvious constraints.
 
 - Conventional Commits with **Korean** messages: `type(scope): 설명`.
 - When discovering broker commands, prefer `cluefin-openapi-cli`'s `--json` output.
+- `packages/*/examples/*.ipynb` 노트북은 커밋 전에 output·execution_count 를 지운다
+  (출력에 계좌번호가 섞일 수 있다):
+  `uv run --with jupyter jupyter nbconvert --clear-output --inplace <노트북>.ipynb`
 
 ## Local agent files
 

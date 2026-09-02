@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cluefin-desk 이관 상태</title>
+<style>
+  .viz-root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page:           #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --grid:           #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --series-1:       #2a78d6;
+    --series-1-wash:  rgba(42,120,214,0.10);
+    --good:           #0ca30c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --page:           #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --grid:           #2c2c2a;
+      --baseline:       #383835;
+      --border:         rgba(255,255,255,0.10);
+      --series-1:       #3987e5;
+      --series-1-wash:  rgba(57,135,229,0.14);
+      --good:           #0ca30c;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --page:           #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --grid:           #2c2c2a;
+    --baseline:       #383835;
+    --border:         rgba(255,255,255,0.10);
+    --series-1:       #3987e5;
+    --series-1-wash:  rgba(57,135,229,0.14);
+    --good:           #0ca30c;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--text-primary);
+  }
+  .viz-root {
+    background: var(--page);
+    color: var(--text-primary);
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 32px 20px 64px;
+    line-height: 1.5;
+  }
+
+  header.page-head { margin-bottom: 28px; }
+  h1 { font-size: 24px; font-weight: 650; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .sub { color: var(--text-secondary); font-size: 14px; margin: 0; }
+  .meta { color: var(--text-muted); font-size: 12.5px; margin: 8px 0 0; }
+
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  h2 { font-size: 15px; font-weight: 650; margin: 0 0 4px; }
+  .card-sub { color: var(--text-secondary); font-size: 13px; margin: 0 0 18px; }
+
+  /* ---- hero figure ---- */
+  .hero { display: flex; flex-wrap: wrap; align-items: baseline; gap: 14px; }
+  .hero-value {
+    font-size: 56px; font-weight: 650; line-height: 1;
+    letter-spacing: -0.02em; color: var(--text-primary);
+  }
+  .hero-unit { font-size: 16px; color: var(--text-secondary); }
+  .hero-note { color: var(--text-secondary); font-size: 13.5px; margin: 14px 0 0; max-width: 72ch; }
+
+  /* ---- KPI row ---- */
+  .kpi-row {
+    display: grid; gap: 14px; margin-bottom: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  }
+  .tile {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .tile-label { font-size: 12.5px; color: var(--text-secondary); margin: 0 0 8px; }
+  .tile-value { font-size: 28px; font-weight: 650; line-height: 1.1; letter-spacing: -0.01em; }
+  .tile-delta { font-size: 12.5px; margin-top: 6px; color: var(--text-secondary); }
+  .tile-delta .up { color: var(--good); font-weight: 600; }
+
+  /* ---- horizontal bar chart ---- */
+  .chart { position: relative; }
+  .rows { display: flex; flex-direction: column; gap: 12px; }
+  .row { display: grid; grid-template-columns: 200px 1fr; align-items: center; gap: 12px; }
+  .row-label {
+    font-size: 12.5px; color: var(--text-secondary);
+    overflow-wrap: anywhere;
+  }
+  .track { position: relative; height: 24px; display: flex; align-items: center; }
+  .bar-hit {
+    position: absolute; inset: -4px 0; /* hit target taller than the 14px mark */
+    background: none; border: 0; padding: 0; margin: 0;
+    width: 100%; cursor: default;
+  }
+  .bar-hit:focus-visible { outline: 2px solid var(--series-1); outline-offset: 2px; border-radius: 4px; }
+  .bar {
+    height: 14px; background: var(--series-1);
+    border-radius: 0 4px 4px 0;  /* 4px rounded data-end, square at the baseline */
+    transition: filter 120ms ease;
+    min-width: 2px;
+  }
+  .row:hover .bar, .bar-hit:focus-visible ~ .bar-wrap .bar { filter: brightness(1.12); }
+  .bar-wrap { display: flex; align-items: center; gap: 8px; width: 100%; }
+  .bar-value { font-size: 12.5px; color: var(--text-primary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .fixed-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; color: var(--good); font-weight: 600;
+  }
+  .zero-dot { width: 2px; height: 14px; background: var(--baseline); }
+
+  .axis {
+    position: relative; height: 22px; margin-top: 10px;
+    margin-left: 212px; border-top: 1px solid var(--baseline);
+  }
+  .axis span {
+    position: absolute; top: 5px; transform: translateX(-50%);
+    font-size: 11.5px; color: var(--text-muted); font-variant-numeric: tabular-nums;
+  }
+  .gridlines { position: absolute; inset: 0 0 32px 212px; pointer-events: none; }
+  .gridlines i { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--grid); }
+
+  /* ---- status matrix ---- */
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--grid); }
+  th { font-size: 12px; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .state { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .state .glyph { font-size: 13px; width: 1em; text-align: center; }
+  .state.done { color: var(--good); font-weight: 600; }
+  .state.partial { color: var(--text-secondary); }
+  .state.none { color: var(--text-muted); }
+  .scroll-x { overflow-x: auto; }
+
+  /* ---- tooltip ---- */
+  .tip {
+    position: fixed; z-index: 10; pointer-events: none;
+    background: var(--surface-1); color: var(--text-primary);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 10px; font-size: 12.5px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.14);
+    opacity: 0; transition: opacity 90ms ease;
+  }
+  .tip[data-show="1"] { opacity: 1; }
+  .tip-value { font-size: 15px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .tip-label { color: var(--text-secondary); display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+  .tip-key { width: 12px; height: 2px; background: var(--series-1); border-radius: 1px; flex: none; }
+
+  footer.notes { color: var(--text-muted); font-size: 12px; margin-top: 8px; }
+  footer.notes code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11.5px; background: var(--series-1-wash); padding: 1px 4px; border-radius: 3px;
+  }
+  @media (max-width: 620px) {
+    .row { grid-template-columns: 130px 1fr; }
+    .axis, .gridlines { margin-left: 142px; }
+    .gridlines { inset: 0 0 32px 142px; }
+    .hero-value { font-size: 44px; }
+  }
+</style>
+</head>
+<body>
+<div class="viz-root">
+
+  <header class="page-head">
+    <h1>cluefin-desk 이관 상태 — 테스트와 남은 위험</h1>
+    <p class="sub">feat/desk-kis 브랜치. 테마 탭 <code>string_too_long</code> 오류를 고친 뒤 측정.</p>
+    <p class="meta">측정 2026-09-02 · 모든 수치는 리포지토리에서 직접 센 값 (계산 방법은 맨 아래)</p>
+  </header>
+
+  <section class="card">
+    <h2>응답 모델에 남아 있는 길이 제약</h2>
+    <p class="card-sub">오늘 테마 화면을 죽인 것과 같은 종류의 <code>max_length</code> 선언 수</p>
+    <div class="hero">
+      <div class="hero-value" id="hero-value">6,207</div>
+      <div class="hero-unit">곳 (kiwoom 2,329 · kis 3,753 · dart 125 · nhplug 0)</div>
+    </div>
+    <p class="hero-note">
+      문서 스펙을 <strong>응답</strong> 모델에 박아 넣은 제약이라, 실서버가 더 긴 정상 값을 주면
+      pydantic이 항목 하나가 아니라 응답 전체를 거부한다. 오늘은 20자를 넘는 테마명 하나가
+      테마 목록 57건 전부를 날렸다. 이번에 <span class="fixed-chip">✓ 테마 타입 파일</span>만
+      제거했고, 나머지는 그대로 남아 있다.
+    </p>
+  </section>
+
+  <div class="kpi-row">
+    <div class="tile">
+      <p class="tile-label">desk 단위 테스트</p>
+      <div class="tile-value">147</div>
+      <div class="tile-delta"><span class="up">+59</span> vs 이관 완료 시점 88</div>
+    </div>
+    <div class="tile">
+      <p class="tile-label">리포 전체 통과</p>
+      <div class="tile-value">2,465</div>
+      <div class="tile-delta">integration·realtime 614건 제외</div>
+    </div>
+    <div class="tile">
+      <p class="tile-label">Pilot 하네스가 있는 화면</p>
+      <div class="tile-value">3 / 7</div>
+      <div class="tile-delta">테마 · 종목 상세 · 재무분석</div>
+    </div>
+    <div class="tile">
+      <p class="tile-label">키움 국내 타입 파일</p>
+      <div class="tile-value">2,329</div>
+      <div class="tile-delta">제약이 남은 파일 9개</div>
+    </div>
+  </div>
+
+  <section class="card">
+    <h2>키움 국내 타입 파일별 남은 길이 제약</h2>
+    <p class="card-sub">파일 하나에서 긴 값 하나가 오면 그 TR을 쓰는 화면 전체가 빈다 — 큰 파일이 먼저 위험하다</p>
+    <div class="chart" id="chart-kiwoom"></div>
+  </section>
+
+  <section class="card">
+    <h2>화면별 자동 검증 상태</h2>
+    <p class="card-sub">
+      실패 표시 = 로그가 아니라 화면에 오류가 뜨는가 · Pilot = 화면을 띄우는 테스트가 있는가 ·
+      실서버 = 실제 응답으로 확인했는가
+    </p>
+    <div class="scroll-x">
+      <table>
+        <thead>
+          <tr><th>화면</th><th>실패 표시</th><th>Pilot 테스트</th><th>실서버 확인</th></tr>
+        </thead>
+        <tbody id="matrix-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>이번에 추가된 테스트 59개</h2>
+    <p class="card-sub">파일별 개수 — 포매터 단위 테스트와 화면을 띄우는 Pilot 테스트</p>
+    <div class="chart" id="chart-tests"></div>
+  </section>
+
+  <section class="card">
+    <h2>표로 보기</h2>
+    <p class="card-sub">위 두 차트의 모든 값</p>
+    <div class="scroll-x">
+      <table>
+        <thead>
+          <tr><th>항목</th><th>분류</th><th class="num">값</th></tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="notes">
+    <p>계산 방법 —
+      길이 제약: <code>grep -rh "max_length" packages/cluefin-openapi/src/cluefin_openapi/&lt;broker&gt;/ | wc -l</code> ·
+      테스트 수: <code>uv run pytest apps/cluefin-desk/tests -q</code> (147),
+      <code>uv run pytest -m "not integration and not realtime" -q</code> (2,465),
+      파일별은 <code>--co -q</code> 수집 개수 · 이관 완료 시점 88 = 147 − 새 파일 59.
+    </p>
+    <p>맥락과 남은 작업 목록은 같은 폴더의 <code>desk-kis-migration-handoff.md</code> 에 있다.</p>
+  </footer>
+
+  <div class="tip" id="tip" role="status" aria-live="polite">
+    <div class="tip-value"></div>
+    <div class="tip-label"><span class="tip-key"></span><span class="tip-name"></span></div>
+  </div>
+</div>
+
+<script>
+const KIWOOM_FILES = [
+  { label: "_domestic_account_types",          value: 668 },
+  { label: "_domestic_market_condition_types", value: 479 },
+  { label: "_domestic_stock_info_types",       value: 475 },
+  { label: "_domestic_rank_info_types",        value: 299 },
+  { label: "_domestic_chart_types",            value: 137 },
+  { label: "_domestic_sector_types",           value: 122 },
+  { label: "_domestic_etf_types",              value: 101 },
+  { label: "_domestic_foreign_types",          value:  37 },
+  { label: "_domestic_order_types",            value:  11 },
+  { label: "_domestic_theme_types",            value:   0, fixed: true },
+];
+
+const NEW_TESTS = [
+  { label: "test_financial_analysis",        value: 27 },
+  { label: "test_stock_detail",              value: 13 },
+  { label: "test_financial_analysis_screen", value:  8 },
+  { label: "test_theme_sector",              value:  6 },
+  { label: "test_formatting",                value:  5 },
+];
+
+const SCREENS = [
+  { name: "화면 1 · 시장(MKT)",   guard: ["partial", "급등·급락만"], pilot: ["none", "없음"], live: ["none", "미확인"] },
+  { name: "화면 2 · 랭킹(RANK)",  guard: ["none", "없음"],          pilot: ["none", "없음"], live: ["none", "미확인"] },
+  { name: "화면 3 · 테마(THEME)", guard: ["done", "적용"],          pilot: ["done", "있음"], live: ["done", "오류 재현→수정"] },
+  { name: "화면 4 · ETF",         guard: ["none", "없음"],          pilot: ["none", "없음"], live: ["none", "미확인"] },
+  { name: "화면 5 · 투자자(INV)", guard: ["done", "적용"],          pilot: ["none", "없음"], live: ["none", "미확인"] },
+  { name: "종목 상세",            guard: ["done", "적용"],          pilot: ["done", "있음"], live: ["none", "미확인"] },
+  { name: "재무분석 (F)",         guard: ["done", "적용"],          pilot: ["done", "있음"], live: ["partial", "일부(corp_code)"] },
+];
+
+const GLYPH = { done: "✓", partial: "◐", none: "—" };
+const fmt = (n) => n.toLocaleString("ko-KR");
+const tip = document.getElementById("tip");
+
+function showTip(name, value, unit, event) {
+  tip.querySelector(".tip-value").textContent = fmt(value) + unit;
+  tip.querySelector(".tip-name").textContent = name;
+  tip.dataset.show = "1";
+  moveTip(event);
+}
+function moveTip(event) {
+  const rect = event.currentTarget.getBoundingClientRect();
+  const x = event.clientX ? event.clientX + 14 : rect.right + 14;
+  const y = (event.clientY ? event.clientY : rect.top + rect.height / 2) - 10;
+  tip.style.left = Math.min(x, window.innerWidth - tip.offsetWidth - 12) + "px";
+  tip.style.top = Math.max(8, y - tip.offsetHeight) + "px";
+}
+function hideTip() { tip.dataset.show = "0"; }
+
+function ticksFor(max) {
+  const step = max > 300 ? 200 : 10;
+  let top = Math.ceil(max / step) * step;
+  // keep headroom so the tip label never runs past the plot area
+  if (max / top > 0.85) top += step;
+  const out = [];
+  for (let v = 0; v <= top; v += step) out.push(v);
+  return { ticks: out, top };
+}
+
+function renderBars(mountId, data, unit) {
+  const mount = document.getElementById(mountId);
+  const max = Math.max(...data.map((d) => d.value));
+  const { ticks, top } = ticksFor(max);
+
+  const grid = document.createElement("div");
+  grid.className = "gridlines";
+  ticks.forEach((v) => {
+    if (v === 0) return;
+    const i = document.createElement("i");
+    i.style.left = (v / top) * 100 + "%";
+    grid.appendChild(i);
+  });
+  mount.appendChild(grid);
+
+  const rows = document.createElement("div");
+  rows.className = "rows";
+
+  data.forEach((d) => {
+    const row = document.createElement("div");
+    row.className = "row";
+
+    const label = document.createElement("div");
+    label.className = "row-label";
+    label.textContent = d.label;
+    row.appendChild(label);
+
+    const track = document.createElement("div");
+    track.className = "track";
+
+    const hit = document.createElement("button");
+    hit.className = "bar-hit";
+    hit.type = "button";
+    hit.setAttribute("aria-label", d.label + " " + fmt(d.value) + unit);
+    hit.addEventListener("pointerenter", (e) => showTip(d.label, d.value, unit, e));
+    hit.addEventListener("pointermove", moveTip);
+    hit.addEventListener("pointerleave", hideTip);
+    hit.addEventListener("focus", (e) => showTip(d.label, d.value, unit, e));
+    hit.addEventListener("blur", hideTip);
+    track.appendChild(hit);
+
+    const wrap = document.createElement("div");
+    wrap.className = "bar-wrap";
+
+    if (d.value === 0) {
+      const dot = document.createElement("div");
+      dot.className = "zero-dot";
+      wrap.appendChild(dot);
+    } else {
+      const bar = document.createElement("div");
+      bar.className = "bar";
+      bar.style.width = "calc(" + (d.value / top) * 100 + "% - 2px)";
+      wrap.appendChild(bar);
+    }
+
+    const value = document.createElement("div");
+    value.className = "bar-value";
+    value.textContent = fmt(d.value);
+    wrap.appendChild(value);
+
+    if (d.fixed) {
+      const chip = document.createElement("span");
+      chip.className = "fixed-chip";
+      chip.textContent = "✓ 이번에 제거";
+      wrap.appendChild(chip);
+    }
+
+    track.appendChild(wrap);
+    row.appendChild(track);
+    rows.appendChild(row);
+  });
+
+  mount.appendChild(rows);
+
+  const axis = document.createElement("div");
+  axis.className = "axis";
+  ticks.forEach((v) => {
+    const s = document.createElement("span");
+    s.style.left = (v / top) * 100 + "%";
+    s.textContent = fmt(v);
+    axis.appendChild(s);
+  });
+  mount.appendChild(axis);
+}
+
+function renderMatrix() {
+  const body = document.getElementById("matrix-body");
+  SCREENS.forEach((s) => {
+    const tr = document.createElement("tr");
+    const name = document.createElement("td");
+    name.textContent = s.name;
+    tr.appendChild(name);
+
+    ["guard", "pilot", "live"].forEach((key) => {
+      const [state, text] = s[key];
+      const td = document.createElement("td");
+      const span = document.createElement("span");
+      span.className = "state " + state;
+      const glyph = document.createElement("span");
+      glyph.className = "glyph";
+      glyph.textContent = GLYPH[state];
+      span.appendChild(glyph);
+      span.appendChild(document.createTextNode(text));
+      td.appendChild(span);
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+}
+
+function renderTable() {
+  const body = document.getElementById("table-body");
+  const add = (label, group, value) => {
+    const tr = document.createElement("tr");
+    [label, group].forEach((t) => {
+      const td = document.createElement("td");
+      td.textContent = t;
+      tr.appendChild(td);
+    });
+    const num = document.createElement("td");
+    num.className = "num";
+    num.textContent = fmt(value);
+    tr.appendChild(num);
+    body.appendChild(tr);
+  };
+  KIWOOM_FILES.forEach((d) => add(d.label, "키움 길이 제약", d.value));
+  [["kis", 3753], ["kiwoom", 2329], ["dart", 125], ["nhplug", 0]].forEach(([n, v]) =>
+    add(n, "브로커별 길이 제약 합계", v));
+  NEW_TESTS.forEach((d) => add(d.label, "새 테스트", d.value));
+  add("desk 단위 테스트 (현재)", "테스트 합계", 147);
+  add("desk 단위 테스트 (이관 완료 시점)", "테스트 합계", 88);
+  add("리포 전체 통과", "테스트 합계", 2465);
+}
+
+renderBars("chart-kiwoom", KIWOOM_FILES, "곳");
+renderBars("chart-tests", NEW_TESTS, "개");
+renderMatrix();
+renderTable();
+</script>
+</body>
+</html>

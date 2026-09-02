@@ -94,6 +94,15 @@ states, trans_probs, means = REGIME_HMM(returns, n_states=3)
 # states: 0=약세, 1=중립, 2=강세
 ```
 
+## 예제 노트북
+
+`examples/` 에 실제 시세로 지표·차트·해석·ML 피처 흐름을 따라가는 Jupyter 노트북이 있습니다.
+
+```bash
+# 워크스페이스 루트에서 실행 — .env.test 의 KIS 자격증명을 사용합니다
+uv run --with jupyter jupyter lab packages/cluefin-ta/examples/ta_quickstart.ipynb
+```
+
 ## 지원 함수
 
 총 **45개** 기술 분석 함수 지원

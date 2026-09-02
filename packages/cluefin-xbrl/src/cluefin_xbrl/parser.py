@@ -127,6 +127,8 @@ def _extract_facts(model_xbrl: ModelXbrl) -> list[XbrlFact]:
             for dim_qname, dim_value in context.qnameDims.items():
                 if dim_value.isExplicit:
                     dimensions[str(dim_qname)] = str(dim_value.memberQname)
+                elif dim_value.isTyped and dim_value.typedMember is not None:
+                    dimensions[str(dim_qname)] = dim_value.typedMember.stringValue
 
         unit_str = None
         if fact.unit is not None:
