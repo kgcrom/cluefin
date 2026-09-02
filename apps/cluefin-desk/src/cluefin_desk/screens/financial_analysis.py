@@ -11,6 +11,7 @@ from textual.screen import Screen
 from textual.widgets import DataTable, Header, Static, TabbedContent, TabPane
 
 from cluefin_desk.formatting import pad
+from cluefin_desk.screens._guard import screen_gone
 from cluefin_desk.widgets.nav_footer import NavFooter
 
 
@@ -102,6 +103,8 @@ class FinancialAnalysisScreen(Screen):
         try:
             corp_code = self._get_corp_code(dart_client)
         except Exception as e:
+            if screen_gone(self, e):
+                return
             from loguru import logger
 
             logger.error(f"Failed to resolve corp_code for {self.stock_code}: {e}")
@@ -127,6 +130,8 @@ class FinancialAnalysisScreen(Screen):
         try:
             fn(*args)
         except Exception as e:
+            if screen_gone(self, e):
+                return
             from loguru import logger
 
             logger.error(f"Failed to load {label}: {e}")

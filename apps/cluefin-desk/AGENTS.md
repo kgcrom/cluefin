@@ -33,6 +33,10 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   (that is what unit tests exercise — the loaders themselves only do I/O).
 - Screen-level `load_all_data` workers are `exclusive=True` with their own `group`;
   without it, `r` mashing runs overlapping workers into the same panels.
+- Every worker-side `except Exception as e:` starts with `if screen_gone(self, e): return`
+  (`screens/_guard.py`). Switching screens mid-load detaches the old screen, and its
+  worker then raises `NoActiveAppError` — an *empty-message* exception — on `self.app`;
+  without the guard that cancellation is logged as `Failed to load …: ` with no reason.
 - DART 정기보고서 조회는 `_fetch_with_year_fallback` 로 직전 사업연도부터 뒤로 물러난다
   — 사업보고서는 사업연도 종료 후 90일 안에 제출되므로 연초에는 직전 연도 것이 없다.
   데이터가 없을 때 DART 는 예외가 아니라 status 013 + `list=None` 로 200 을 준다.
@@ -41,9 +45,10 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 
 ## Testing
 
-- TUI 하네스가 있다: `tests/unit/test_financial_analysis_screen.py`,
-  `tests/unit/test_stock_detail.py`. 화면을 띄우는 테스트는 `CluefinDeskApp` 대신
-  그 파일들의 `HarnessApp`(App 서브클래스 + fake fetcher/dart client)을 쓴다 —
+- TUI 하네스가 7화면 전부에 있다: `tests/unit/test_<screen>.py` (market_overview ·
+  screening · theme_sector · etf_analysis · investor_flow · stock_detail ·
+  financial_analysis_screen). 화면을 띄우는 테스트는 `CluefinDeskApp` 대신
+  그 파일들의 `HarnessApp`(App 서브클래스 + fake fetcher/screener/dart client)을 쓴다 —
   `CluefinDeskApp.__init__` 은 생성만으로 실계좌 인증을 때린다. 같은 이유로 테스트에서
   실제 `DomesticDataFetcher` 를 만들면 cwd 의 `.env` 로 라이브 인증이 나간다.
 - 패널 텍스트는 `str(widget.content)` 로 읽는다 (textual 8 의 Static 에는
