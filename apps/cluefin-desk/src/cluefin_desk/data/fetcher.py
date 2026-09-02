@@ -787,7 +787,8 @@ class DomesticDataFetcher:
             inds_cd=inds_cd,
         )
 
-    def get_industry_price_by_sector(self, mrkt_tp: str = "0001", inds_cd: str = "001"):
+    def get_industry_price_by_sector(self, mrkt_tp: str = "0", inds_cd: str = "001"):
+        """업종별주가 (ka20002). mrkt_tp 는 코스피 0 / 코스닥 1 / 코스피200 2 — 한 자리."""
         return self.kiwoom_client.sector.get_industry_price_by_sector(
             mrkt_tp=mrkt_tp,
             inds_cd=inds_cd,
@@ -800,7 +801,10 @@ class DomesticDataFetcher:
             inds_cd=inds_cd,
         )
 
-    def get_industry_investor_net_buy(self, mrkt_tp: str = "0001", amt_qty_tp: str = "1"):
+    def get_industry_investor_net_buy(self, mrkt_tp: str = "0", amt_qty_tp: str = "1"):
+        """업종별투자자순매수 (ka10051). mrkt_tp 는 코스피 0 / 코스닥 1 — "0001" 을 주면
+        서버가 코스닥으로 해석한다 (2026-09-02 실측). cur_prc·pred_pre·flu_rt 는 소수점을
+        뺀 100배 정수로 온다 (`-210` = -2.10%)."""
         return self.kiwoom_client.sector.get_industry_investor_net_buy(
             mrkt_tp=mrkt_tp,
             amt_qty_tp=amt_qty_tp,

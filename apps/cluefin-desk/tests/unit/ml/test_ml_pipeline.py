@@ -10,7 +10,6 @@ work correctly together.
 import sys
 import warnings
 from datetime import datetime
-from pathlib import Path
 from typing import Dict
 
 import numpy as np
@@ -18,9 +17,6 @@ import pandas as pd
 from loguru import logger
 from rich.console import Console
 from rich.panel import Panel
-
-# Add the apps/cluefin-cli/src directory to Python path for imports
-sys.path.append(str(Path(__file__).resolve().parents[3] / "src"))
 
 from cluefin_desk.ml import StockMLPredictor
 

@@ -176,6 +176,7 @@ Screen {
 }
 
 #sector-investor-table {
+    width: 66;
     height: 1fr;
     border: solid $primary;
 }
@@ -200,8 +201,14 @@ Screen {
 }
 
 #supply-detail-content {
-    height: 1fr;
+    height: auto;
     padding: 1;
+}
+
+#theme-status {
+    height: auto;
+    padding: 0 1;
+    color: $text-muted;
 }
 
 /* Financial Analysis Screen */
@@ -210,8 +217,18 @@ Screen {
 }
 
 #financial-statement-content {
-    height: 1fr;
+    height: auto;
     padding: 1;
+}
+
+#dividend-content {
+    height: auto;
+    padding: 1;
+}
+
+#disclosure-status {
+    height: auto;
+    padding: 0 1;
 }
 
 #disclosure-list-content {
@@ -219,11 +236,56 @@ Screen {
 }
 
 #major-shareholder-content {
-    height: 1fr;
+    height: auto;
     padding: 1;
 }
 
 #share-change-content {
-    height: 1fr;
+    height: auto;
     padding: 1;
+}
+
+/* Market Overview — KIS 수급·자금 패널.
+   높이/테두리를 안 주면 1fr 컨테이너 안의 맨 Static 두 개가 되어 어디까지가 패널인지
+   보이지 않는다. */
+#kis-market-container {
+    layout: horizontal;
+    height: 9;
+}
+
+#kis-investor-panel {
+    width: 1fr;
+    height: 1fr;
+    border: solid $secondary;
+    padding: 0 1;
+}
+
+#kis-fund-panel {
+    width: 1fr;
+    height: 1fr;
+    border: solid $accent;
+    padding: 0 1;
+}
+
+/* Investor Flow — 업종 선택 → 구성 종목 */
+#sector-market-select {
+    height: 3;
+    margin: 0 1;
+}
+
+#sector-investor-container {
+    layout: horizontal;
+    height: 1fr;
+}
+
+#sector-stocks-table {
+    width: 1fr;
+    height: 1fr;
+    border: solid $secondary;
+}
+
+#sector-status {
+    height: auto;
+    padding: 0 1;
+    color: $text-muted;
 }

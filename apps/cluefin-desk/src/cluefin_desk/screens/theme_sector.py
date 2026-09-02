@@ -34,6 +34,7 @@ class ThemeSectorScreen(Screen):
                     with Horizontal(id="theme-content"):
                         yield DataTable(id="theme-group-list")
                         yield DataTable(id="theme-stocks-table")
+                    yield Static("", id="theme-status")
                 with TabPane("업종", id="tab-sector"):
                     with Horizontal(id="sector-content"):
                         yield DataTable(id="sector-list")
@@ -74,73 +75,82 @@ class ThemeSectorScreen(Screen):
         for label, width in [("업종명", 18), ("등락률", 8), ("상승", 5), ("하락", 5)]:
             tbl.add_column(label, key=label, width=width)
 
-    @work(thread=True)
+    # `r` 연타로 워커가 겹치면 같은 패널에 두 응답이 번갈아 써진다 — 최신 것만 남긴다.
+    @work(thread=True, exclusive=True, group="theme-load")
     def load_all_data(self) -> None:
-        self._load_theme_groups()
-        self._load_sector_list()
+        self._guarded("#theme-status", "테마 목록", self._load_theme_groups)
+        self._guarded("#sector-chart-panel", "업종 목록", self._load_sector_list)
+
+    def _guarded(self, selector: str, label: str, fn, *args) -> None:
+        """탭 하나가 실패해도 나머지는 계속 로드하고, 실패는 화면에 남긴다 —
+        로그에만 남기면 표가 빈 채로 멈춰 있어 사용자는 원인을 알 수 없다."""
+        try:
+            fn(*args)
+        except Exception as e:
+            from loguru import logger
+
+            logger.error(f"Failed to load {label}: {e}")
+            self._set_status(selector, f"{label} 로딩 실패: {e}")
+
+    def _set_status(self, selector: str, text: str) -> None:
+        def _apply():
+            self.query_one(selector, Static).update(text)
+
+        self.app.call_from_thread(_apply)
 
     def _load_theme_groups(self) -> None:
-        try:
-            fetcher = self.app.fetcher
-            response = fetcher.get_theme_group()
-            items = response.body.thema_grp
-            if not items:
-                return
+        fetcher = self.app.fetcher
+        items = fetcher.get_theme_group().body.thema_grp or []
+        if not items:
+            self._set_status("#theme-status", "테마 데이터 없음")
+            return
 
-            self._theme_groups = items
+        self._theme_groups = items
 
-            def _update():
-                tbl = self.query_one("#theme-group-list", DataTable)
-                tbl.clear()
-                for item in items[:50]:
-                    rate = float(item.flu_rt) if item.flu_rt and item.flu_rt != "-" else 0.0
-                    if rate > 0:
-                        rate_str = f"[red]+{rate:.1f}%[/red]"
-                    elif rate < 0:
-                        rate_str = f"[blue]{rate:.1f}%[/blue]"
-                    else:
-                        rate_str = f"{rate:.1f}%"
-                    tbl.add_row(
-                        item.thema_nm,
-                        rate_str,
-                        item.stk_num,
-                        key=item.thema_grp_cd,
-                    )
+        def _update():
+            tbl = self.query_one("#theme-group-list", DataTable)
+            tbl.clear()
+            for item in items[:50]:
+                rate = float(item.flu_rt) if item.flu_rt and item.flu_rt != "-" else 0.0
+                if rate > 0:
+                    rate_str = f"[red]+{rate:.1f}%[/red]"
+                elif rate < 0:
+                    rate_str = f"[blue]{rate:.1f}%[/blue]"
+                else:
+                    rate_str = f"{rate:.1f}%"
+                tbl.add_row(
+                    item.thema_nm,
+                    rate_str,
+                    item.stk_num,
+                    key=item.thema_grp_cd,
+                )
+            self.query_one("#theme-status", Static).update(f"테마 {len(items)}건 — 행을 고르면 구성종목이 뜬다")
 
-            self.app.call_from_thread(_update)
-        except Exception as e:
-            from loguru import logger
-
-            logger.error(f"Failed to load theme groups: {e}")
+        self.app.call_from_thread(_update)
 
     def _load_sector_list(self) -> None:
-        try:
-            fetcher = self.app.fetcher
-            response = fetcher.get_all_industry_index()
-            items = response.body.all_inds_idex
-            if not items:
-                return
+        fetcher = self.app.fetcher
+        items = fetcher.get_all_industry_index().body.all_inds_idex or []
+        if not items:
+            self._set_status("#sector-chart-panel", "업종 데이터 없음")
+            return
 
-            def _update():
-                tbl = self.query_one("#sector-list", DataTable)
-                tbl.clear()
-                for item in items[:30]:
-                    rate = float(item.flu_rt) if item.flu_rt and item.flu_rt != "-" else 0.0
-                    if rate > 0:
-                        rate_str = f"[red]+{rate:.2f}%[/red]"
-                    elif rate < 0:
-                        rate_str = f"[blue]{rate:.2f}%[/blue]"
-                    else:
-                        rate_str = f"{rate:.2f}%"
-                    rising = item.rising if hasattr(item, "rising") else "-"
-                    fall = item.fall if hasattr(item, "fall") else "-"
-                    tbl.add_row(item.stk_nm, rate_str, rising, fall, key=item.stk_cd)
+        def _update():
+            tbl = self.query_one("#sector-list", DataTable)
+            tbl.clear()
+            for item in items[:30]:
+                rate = float(item.flu_rt) if item.flu_rt and item.flu_rt != "-" else 0.0
+                if rate > 0:
+                    rate_str = f"[red]+{rate:.2f}%[/red]"
+                elif rate < 0:
+                    rate_str = f"[blue]{rate:.2f}%[/blue]"
+                else:
+                    rate_str = f"{rate:.2f}%"
+                rising = item.rising if hasattr(item, "rising") else "-"
+                fall = item.fall if hasattr(item, "fall") else "-"
+                tbl.add_row(item.stk_nm, rate_str, rising, fall, key=item.stk_cd)
 
-            self.app.call_from_thread(_update)
-        except Exception as e:
-            from loguru import logger
-
-            logger.error(f"Failed to load sector list: {e}")
+        self.app.call_from_thread(_update)
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         table_id = event.data_table.id
@@ -189,6 +199,7 @@ class ThemeSectorScreen(Screen):
             from loguru import logger
 
             logger.error(f"Failed to load theme stocks: {e}")
+            self._set_status("#theme-status", f"테마 구성종목 로딩 실패: {e}")
 
     @work(thread=True)
     def _load_sector_detail(self, sector_code: str) -> None:
@@ -218,6 +229,7 @@ class ThemeSectorScreen(Screen):
             from loguru import logger
 
             logger.error(f"Failed to load sector detail: {e}")
+            self._set_status("#sector-chart-panel", f"업종 상세 로딩 실패: {e}")
 
     def action_refresh(self) -> None:
         self.load_all_data()

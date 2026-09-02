@@ -9,9 +9,6 @@ This script tests the Phase 1 improvements to the ML prediction system:
 - Improved logging and error handling
 """
 
-import sys
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
 from loguru import logger
@@ -19,10 +16,6 @@ from loguru import logger
 from cluefin_desk.ml.diagnostics import MLDiagnostics
 from cluefin_desk.ml.feature_engineering import FeatureEngineer
 from cluefin_desk.ml.predictor import StockMLPredictor
-
-# Add the src directory to Python path
-src_path = Path(__file__).parent / "apps" / "cluefin-cli" / "src"
-sys.path.insert(0, str(src_path))
 
 
 def create_test_data():

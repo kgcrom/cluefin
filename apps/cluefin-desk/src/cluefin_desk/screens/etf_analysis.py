@@ -52,7 +52,8 @@ class EtfAnalysisScreen(Screen):
         ]:
             tbl.add_column(label, key=label, width=width)
 
-    @work(thread=True)
+    # `r` 연타로 워커가 겹치면 같은 패널에 두 응답이 번갈아 써진다 — 최신 것만 남긴다.
+    @work(thread=True, exclusive=True, group="etf-load")
     def load_all_data(self) -> None:
         self._load_etf_prices()
 
