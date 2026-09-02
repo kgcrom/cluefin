@@ -24,8 +24,8 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 
 ## Tests that break on unrelated-looking changes
 
-- `test_rpc_registry.py` hardcodes the total command count (`len(registry) == 183`) —
-  bump it when adding/removing any handler.
+- `test_rpc_registry.py` hardcodes the total command count — bump it when adding or
+  removing any handler.
 - New auto-derived domains/tags must also be added to `_DOMAIN_TAXONOMY`/`_TAG_TAXONOMY`
   or the taxonomy-coverage test fails.
 - Recipe → command references are validated only by a test, not at runtime; renaming a

@@ -40,9 +40,8 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - One token serves both live (`api.nhplug.com`) and mock (`moapi.nhplug.com`) calls, which
   is why the nhplug token cache is scoped by app_key only (no env) — don't "fix" it to
   match kis/kiwoom.
-- `TokenManager` is now a **third** copy (kis/kiwoom/nhplug) — mirror cache-behavior
-  changes by hand in all three. nhplug deliberately has no `MAX_CACHE_AGE` (no early
-  server-side invalidation) and computes expiry from `cached_at + expires_in`.
+- nhplug's `TokenManager` deliberately has no `MAX_CACHE_AGE` (no early server-side
+  invalidation) and computes expiry from `cached_at + expires_in`.
 - All four gbstock 시세 APIs (`/gbstock/quote/v1/*`) are **live-domain only**. moapi rejects
   `current` with `IGW40019 "종목코드(iem_cd)를 확인해주세요"` for every ticker format —
   a misleading message that means "not provided on mock", not a bad code (2026-08-22 실측).
@@ -61,8 +60,8 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 
 ## Conventions that are easy to mis-infer
 
-- The two `TokenManager` classes (kis/kiwoom) are copy-pasted, not shared — mirror
-  cache-behavior changes by hand in both.
+- The three `TokenManager` classes (kis/kiwoom/nhplug) are copy-pasted, not shared —
+  mirror cache-behavior changes by hand in all three.
 - Unit-test styles are per-broker and not interchangeable: Kiwoom uses the table-driven
   `EndpointCase`/`run_post_case` harness (`tests/kiwoom/_helpers.py`), KIS uses JSON
   fixture case files (`tests/kis/*_cases.json`).
