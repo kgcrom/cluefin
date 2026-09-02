@@ -5,6 +5,7 @@ from textual.containers import Vertical
 from textual.screen import Screen
 from textual.widgets import DataTable, Header, Static, TabbedContent, TabPane
 
+from cluefin_desk.screens._guard import screen_gone
 from cluefin_desk.widgets.market_overview import MarketOverviewBar
 from cluefin_desk.widgets.nav_bar import NavBar
 from cluefin_desk.widgets.nav_footer import NavFooter
@@ -105,6 +106,8 @@ class ScreeningScreen(Screen):
                 # 구분할 수 없다 — 원인은 로그(ERROR) 에 남는다
                 self._set_status(table_id, self._status_text(len(data)))
             except Exception as e:
+                if screen_gone(self, e):
+                    return
                 from loguru import logger
 
                 logger.error(f"Failed to load {table_id}: {e}")

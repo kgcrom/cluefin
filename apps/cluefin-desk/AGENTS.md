@@ -33,6 +33,10 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   (that is what unit tests exercise — the loaders themselves only do I/O).
 - Screen-level `load_all_data` workers are `exclusive=True` with their own `group`;
   without it, `r` mashing runs overlapping workers into the same panels.
+- Every worker-side `except Exception as e:` starts with `if screen_gone(self, e): return`
+  (`screens/_guard.py`). Switching screens mid-load detaches the old screen, and its
+  worker then raises `NoActiveAppError` — an *empty-message* exception — on `self.app`;
+  without the guard that cancellation is logged as `Failed to load …: ` with no reason.
 - DART 정기보고서 조회는 `_fetch_with_year_fallback` 로 직전 사업연도부터 뒤로 물러난다
   — 사업보고서는 사업연도 종료 후 90일 안에 제출되므로 연초에는 직전 연도 것이 없다.
   데이터가 없을 때 DART 는 예외가 아니라 status 013 + `list=None` 로 200 을 준다.

@@ -7,6 +7,7 @@ from textual.screen import Screen
 from textual.widgets import DataTable, Header, Select, Static
 
 from cluefin_desk.formatting import pad
+from cluefin_desk.screens._guard import screen_gone
 from cluefin_desk.widgets.market_overview import MarketOverviewBar
 from cluefin_desk.widgets.nav_bar import NavBar
 from cluefin_desk.widgets.nav_footer import NavFooter
@@ -136,6 +137,8 @@ class InvestorFlowScreen(Screen):
 
             self.app.call_from_thread(_update)
         except Exception as e:
+            if screen_gone(self, e):
+                return
             logger.error(f"Failed to load foreign net buy: {e}")
             err_msg = str(e)
 
@@ -172,6 +175,8 @@ class InvestorFlowScreen(Screen):
 
             self.app.call_from_thread(_update)
         except Exception as e:
+            if screen_gone(self, e):
+                return
             logger.error(f"Failed to load institutional net buy: {e}")
             err_msg = str(e)
 
@@ -208,6 +213,8 @@ class InvestorFlowScreen(Screen):
 
             self.app.call_from_thread(_update)
         except Exception as e:
+            if screen_gone(self, e):
+                return
             logger.error(f"Failed to load program trading: {e}")
 
     @staticmethod
@@ -283,6 +290,8 @@ class InvestorFlowScreen(Screen):
 
             self.app.call_from_thread(_update)
         except Exception as e:
+            if screen_gone(self, e):
+                return
             logger.error(f"Failed to load sector investor: {e}")
             self._set_status(f"업종별 투자자 순매수 로딩 실패: {e}")
 
@@ -318,6 +327,8 @@ class InvestorFlowScreen(Screen):
 
             self.app.call_from_thread(_update)
         except Exception as e:
+            if screen_gone(self, e):
+                return
             logger.error(f"Failed to load sector stocks: {e}")
             self._set_status(f"업종 {inds_cd} 구성 종목 로딩 실패: {e}")
 

@@ -8,6 +8,7 @@ from textual.screen import Screen
 from textual.widgets import DataTable, Header, Static, TabbedContent, TabPane
 
 from cluefin_desk.formatting import pad
+from cluefin_desk.screens._guard import screen_gone
 from cluefin_desk.widgets.company_info import CompanyInfoWidget
 from cluefin_desk.widgets.indicator_panel import IndicatorPanel
 from cluefin_desk.widgets.nav_footer import NavFooter
@@ -91,6 +92,8 @@ class StockDetailScreen(Screen):
         try:
             fn()
         except Exception as e:
+            if screen_gone(self, e):
+                return
             from loguru import logger
 
             logger.error(f"Failed to load {label}: {e}")
@@ -399,6 +402,8 @@ class StockDetailScreen(Screen):
 
             self.app.call_from_thread(_update)
         except Exception as e:
+            if screen_gone(self, e):
+                return
             from loguru import logger
 
             logger.error(f"ML prediction failed: {e}")

@@ -6,6 +6,7 @@ from textual.screen import Screen
 from textual.widgets import DataTable, Header, Static
 
 from cluefin_desk.formatting import pad
+from cluefin_desk.screens._guard import screen_gone
 from cluefin_desk.widgets.market_overview import MarketOverviewBar
 from cluefin_desk.widgets.nav_bar import NavBar
 from cluefin_desk.widgets.nav_footer import NavFooter
@@ -67,6 +68,8 @@ class EtfAnalysisScreen(Screen):
         try:
             fn(*args)
         except Exception as e:
+            if screen_gone(self, e):
+                return
             from loguru import logger
 
             logger.error(f"Failed to load {label}: {e}")

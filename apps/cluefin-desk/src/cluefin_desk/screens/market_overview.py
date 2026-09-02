@@ -6,6 +6,7 @@ from textual.screen import Screen
 from textual.widgets import DataTable, Header, Select, Static
 
 from cluefin_desk.formatting import pad
+from cluefin_desk.screens._guard import screen_gone
 from cluefin_desk.widgets.market_overview import MarketOverviewBar
 from cluefin_desk.widgets.nav_bar import NavBar
 from cluefin_desk.widgets.nav_footer import NavFooter
@@ -113,6 +114,8 @@ class MarketOverviewScreen(Screen):
 
             self.app.call_from_thread(_update)
         except Exception as e:
+            if screen_gone(self, e):
+                return
             from loguru import logger
 
             logger.error(f"Failed to load sector data: {e}")
@@ -159,6 +162,8 @@ class MarketOverviewScreen(Screen):
 
             self.app.call_from_thread(_update)
         except Exception as e:
+            if screen_gone(self, e):
+                return
             from loguru import logger
 
             logger.error(f"Failed to load top movers: {e}")
@@ -248,6 +253,8 @@ class MarketOverviewScreen(Screen):
             try:
                 self._set_panel(selector, "\n".join(fmt(fetch())))
             except Exception as e:
+                if screen_gone(self, e):
+                    return
                 from loguru import logger
 
                 logger.error(f"Failed to load KIS {label}: {e}")
