@@ -421,6 +421,33 @@ class DomesticDataFetcher:
             logger.debug(f"investment opinion unavailable for {stock_code}: {exc}")
             return []
 
+    def get_stock_news(self, stock_code: str) -> list:
+        """종목 뉴스·공시 제목 (KIS 종합 시황/공시, FHKST01011800) — Kiwoom/DART 에는
+        종목 단위 뉴스 피드가 없다. 한 페이지 40건, 최신순.
+
+        `fid_input_iscd` 는 "관련 종목" 필터다: iscd1~10 어딘가에 해당 종목이 태깅된
+        기사가 오고 일부는 연관 기사다 (2026-09-02 실측: 40건 중 28건 직접 태깅).
+        Items: data_dt·data_tm, dorg(제공사명), hts_pbnt_titl_cntt(제목),
+        news_ofer_entp_code(F/G/H/I/N 이면 공시). 나머지 공백 파라미터는 문서상 필수.
+        """
+        try:
+            return (
+                self.kis_client.domestic_issue_other.get_market_announcement_schedule(
+                    fid_news_ofer_entp_code="",
+                    fid_cond_mrkt_cls_code="",
+                    fid_input_iscd=stock_code,
+                    fid_titl_cntt="",
+                    fid_input_date_1="",
+                    fid_input_hour_1="",
+                    fid_rank_sort_cls_code="",
+                    fid_input_srno="",
+                ).body.output
+                or []
+            )
+        except (KISAPIError, ValidationError) as exc:
+            logger.debug(f"stock news unavailable for {stock_code}: {exc}")
+            return []
+
     # ──────────────────────────────────────
     # KIS: 종목 수급 추이 (stock detail 수급 탭)
     # ──────────────────────────────────────

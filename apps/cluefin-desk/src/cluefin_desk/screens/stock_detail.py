@@ -49,6 +49,9 @@ class StockDetailScreen(Screen):
                     yield Static("", id="kis-supply-content")
             with TabPane("투자의견", id="tab-opinion"):
                 yield Static("Loading investment opinions...", id="opinion-detail-content")
+            with TabPane("뉴스", id="tab-news"):
+                with VerticalScroll():
+                    yield Static("Loading news...", id="news-detail-content")
             with TabPane("ML예측", id="tab-ml"):
                 yield Static(
                     "M 키를 누르면 익일 등락 예측을 실행합니다.\n(LightGBM 인메모리 학습 — 수 초에서 수십 초 걸립니다)",
@@ -84,6 +87,7 @@ class StockDetailScreen(Screen):
         self._guarded("#supply-detail-content", "신용거래", self._load_supply_data)
         self._guarded("#kis-supply-content", "KIS 수급", self._load_kis_supply_data)
         self._guarded("#opinion-detail-content", "투자의견", self._load_kis_opinion_data)
+        self._guarded("#news-detail-content", "뉴스", self._load_kis_news_data)
 
     def _guarded(self, selector: str | None, label: str, fn) -> None:
         """탭 하나가 실패해도 나머지는 계속 로드하고, 실패는 그 탭에 남긴다.
@@ -328,6 +332,51 @@ class StockDetailScreen(Screen):
                 f"{pad(item.stck_bsop_date, 10)} {pad(item.mbcr_name, 12)} {pad(item.invt_opnn, 8)} "
                 f"{pad(item.rgbf_invt_opnn, 10)} {pad(item.hts_goal_prc, 10, 'right')} "
                 f"{pad((item.dprt or '-') + '%', 8, 'right')}"
+            )
+        return lines
+
+    def _load_kis_news_data(self) -> None:
+        """종목 뉴스·공시 제목 탭 (KIS 전용)."""
+        fetcher = self.app.fetcher
+        if not fetcher.has_kis:
+            self._update_panel(
+                "#news-detail-content",
+                ["KIS API keys not configured.", "Set KIS_APP_KEY / KIS_SECRET_KEY in .env to see 뉴스."],
+            )
+            return
+
+        items = fetcher.get_stock_news(self.stock_code)
+        self._update_panel("#news-detail-content", self._format_news_lines(items))
+
+    # 뉴스 제공업체 코드 중 공시 채널 — F 장내공시, G 코스닥공시, H 프리보드공시, I 기타공시, N 코넥스공시.
+    # 뉴스와 공시가 한 피드로 오므로 이 코드로만 둘을 구분할 수 있다.
+    _DISCLOSURE_PROVIDER_CODES = frozenset("FGHIN")
+
+    @staticmethod
+    def _format_news_when(data_dt: str | None, data_tm: str | None) -> str:
+        """YYYYMMDD + HHMMSS → 'MM-DD HH:MM'. 형식이 어긋나면 원문을 그대로 둔다."""
+        dt, tm = data_dt or "", data_tm or ""
+        if len(dt) == 8 and len(tm) >= 4:
+            return f"{dt[4:6]}-{dt[6:8]} {tm[:2]}:{tm[2:4]}"
+        return f"{dt} {tm}".strip() or "-"
+
+    @classmethod
+    def _format_news_lines(cls, items) -> list[str]:
+        items = list(items or [])
+        if not items:
+            return ["최근 뉴스·공시가 없습니다."]
+
+        lines = [
+            "[bold]뉴스·공시 (KIS, 최신순)[/bold]",
+            "",
+            f"{pad('일시', 12)} {pad('제공', 14)} 제목",
+            "-" * 80,
+        ]
+        for item in items[:40]:
+            tag = r"[cyan]\[공시][/cyan] " if item.news_ofer_entp_code in cls._DISCLOSURE_PROVIDER_CODES else ""
+            lines.append(
+                f"{pad(cls._format_news_when(item.data_dt, item.data_tm), 12)} "
+                f"{pad(item.dorg or '-', 14)} {tag}{item.hts_pbnt_titl_cntt or '-'}"
             )
         return lines
 
