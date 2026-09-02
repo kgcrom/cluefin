@@ -19,7 +19,7 @@ def test_readme_mentions_agent_discovery_commands() -> None:
     assert "recipes --json" in content
     assert "recipe stock-research --json" in content
     assert "agent_notes" in content
-    assert "cluefin-cli" in content
+    assert "cluefin-ta" in content
     assert "`domains`: 업무 영역" in content
     assert "`tags`: 세부 기능" in content
     assert "`recipes`: 여러 command를 조합하는 workflow guide" in content
