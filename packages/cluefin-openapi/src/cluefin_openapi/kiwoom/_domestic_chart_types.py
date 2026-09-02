@@ -9,87 +9,70 @@ class DomesticChartIndividualStockInstitutionalItem(BaseModel):
     dt: str = Field(
         default="",
         description="일자 (YYYYMMDD)",
-        max_length=20,
     )
     cur_prc: str = Field(
         default="",
         description="현재가",
-        max_length=20,
     )
     pred_pre: str = Field(
         default="",
         description="전일대비",
-        max_length=20,
     )
     acc_trde_prica: str = Field(
         default="",
         description="누적거래대금",
-        max_length=20,
     )
     ind_invsr: str = Field(
         default="",
         description="개인투자자",
-        max_length=20,
     )
     frgnr_invsr: str = Field(
         default="",
         description="외국인투자자",
-        max_length=20,
     )
     orgn: str = Field(
         default="",
         description="기관계",
-        max_length=20,
     )
     fnnc_invt: str = Field(
         default="",
         description="금융투자",
-        max_length=20,
     )
     insrnc: str = Field(
         default="",
         description="보험",
-        max_length=20,
     )
     invtrt: str = Field(
         default="",
         description="투신",
-        max_length=20,
     )
     etc_fnnc: str = Field(
         default="",
         description="기타금융",
-        max_length=20,
     )
     bank: str = Field(
         default="",
         description="은행",
-        max_length=20,
     )
     penfnd_etc: str = Field(
         default="",
         description="연기금등",
-        max_length=20,
     )
     samo_fund: str = Field(
         default="",
         description="사모펀드",
-        max_length=20,
     )
     natn: str = Field(
         default="",
         description="국가",
-        max_length=20,
     )
     etc_corp: str = Field(
         default="",
         description="기타법인",
-        max_length=20,
     )
     natfor: str = Field(
         default="",
         description="내외국인",
-        max_length=20,
     )
 
 
@@ -107,47 +90,38 @@ class DomesticChartIntradayInvestorTradingItem(BaseModel):
     tm: str = Field(
         default="",
         description="시간",
-        max_length=20,
     )
     frgnr_invsr: str = Field(
         default="",
         description="외국인투자자",
-        max_length=20,
     )
     orgn: str = Field(
         default="",
         description="기관계",
-        max_length=20,
     )
     invtrt: str = Field(
         default="",
         description="투신",
-        max_length=20,
     )
     insrnc: str = Field(
         default="",
         description="보험",
-        max_length=20,
     )
     bank: str = Field(
         default="",
         description="은행",
-        max_length=20,
     )
     penfnd_etc: str = Field(
         default="",
         description="연기금등",
-        max_length=20,
     )
     etc_corp: str = Field(
         default="",
         description="기타법인",
-        max_length=20,
     )
     natn: str = Field(
         default="",
         description="국가",
-        max_length=20,
     )
 
 
@@ -165,42 +139,34 @@ class DomesticChartStockTickItem(BaseModel):
     cur_prc: str = Field(
         default="",
         description="현재가",
-        max_length=20,
     )
     trde_qty: str = Field(
         default="",
         description="거래량",
-        max_length=20,
     )
     cntr_tm: str = Field(
         default="",
         description="체결시간",
-        max_length=20,
     )
     open_pric: str = Field(
         default="",
         description="시가",
-        max_length=20,
     )
     high_pric: str = Field(
         default="",
         description="고가",
-        max_length=20,
     )
     low_pric: str = Field(
         default="",
         description="저가",
-        max_length=20,
     )
     pred_pre: str = Field(
         default="",
         description="전일대비",
-        max_length=20,
     )
     pred_pre_sig: str = Field(
         default="",
         description="전일대비 기호",
-        max_length=20,
     )
 
 
@@ -211,7 +177,6 @@ class DomesticChartStockTick(BaseModel, KiwoomHttpBody):
     last_tic_cnt: str = Field(
         default="",
         description="마지막틱갯수",
-        max_length=20,
     )
     stk_tic_chart_qry: list[DomesticChartStockTickItem] = Field(
         default_factory=list,
@@ -224,42 +189,34 @@ class DomesticChartStockMinuteItem(BaseModel):
     cur_prc: str = Field(
         default="",
         description="현재가",
-        max_length=20,
     )
     trde_qty: str = Field(
         default="",
         description="거래량",
-        max_length=20,
     )
     cntr_tm: str = Field(
         default="",
         description="체결시간",
-        max_length=20,
     )
     open_pric: str = Field(
         default="",
         description="시가",
-        max_length=20,
     )
     high_pric: str = Field(
         default="",
         description="고가",
-        max_length=20,
     )
     low_pric: str = Field(
         default="",
         description="저가",
-        max_length=20,
     )
     pred_pre: str = Field(
         default="",
         description="전일대비",
-        max_length=20,
     )
     pred_pre_sig: str = Field(
         default="",
         description="전일대비 기호",
-        max_length=20,
     )
 
 
@@ -275,16 +232,16 @@ class DomesticChartStockMinute(BaseModel, KiwoomHttpBody):
 
 
 class DomesticChartStockDailyItem(BaseModel):
-    dt: str = Field(description="일자 (YYYYMMDD)", max_length=20)
-    cur_prc: str = Field(description="현재가", max_length=20)
-    trde_qty: str = Field(description="거래량", max_length=20)
-    trde_prica: str = Field(description="거래대금", max_length=20)
-    open_pric: str = Field(description="시가", max_length=20)
-    high_pric: str = Field(description="고가", max_length=20)
-    low_pric: str = Field(description="저가", max_length=20)
-    pred_pre: str = Field(description="전일대비", max_length=20)
-    pred_pre_sig: str = Field(description="전일대비부호", max_length=20)
-    trde_tern_rt: str = Field(description="거래전환율", max_length=20)
+    dt: str = Field(description="일자 (YYYYMMDD)")
+    cur_prc: str = Field(description="현재가")
+    trde_qty: str = Field(description="거래량")
+    trde_prica: str = Field(description="거래대금")
+    open_pric: str = Field(description="시가")
+    high_pric: str = Field(description="고가")
+    low_pric: str = Field(description="저가")
+    pred_pre: str = Field(description="전일대비")
+    pred_pre_sig: str = Field(description="전일대비부호")
+    trde_tern_rt: str = Field(description="거래전환율")
 
 
 class DomesticChartStockDaily(BaseModel, KiwoomHttpBody):
@@ -299,16 +256,16 @@ class DomesticChartStockDaily(BaseModel, KiwoomHttpBody):
 
 
 class DomesticChartStockWeeklyItem(BaseModel):
-    dt: str = Field(description="일자 (YYYYMMDD)", max_length=20)
-    cur_prc: str = Field(description="현재가", max_length=20)
-    trde_qty: str = Field(description="거래량", max_length=20)
-    trde_prica: str = Field(description="거래대금", max_length=20)
-    open_pric: str = Field(description="시가", max_length=20)
-    high_pric: str = Field(description="고가", max_length=20)
-    low_pric: str = Field(description="저가", max_length=20)
-    pred_pre: str = Field(description="전일대비", max_length=20)
-    pred_pre_sig: str = Field(description="전일대비부호", max_length=20)
-    trde_tern_rt: str = Field(description="거래전환율", max_length=20)
+    dt: str = Field(description="일자 (YYYYMMDD)")
+    cur_prc: str = Field(description="현재가")
+    trde_qty: str = Field(description="거래량")
+    trde_prica: str = Field(description="거래대금")
+    open_pric: str = Field(description="시가")
+    high_pric: str = Field(description="고가")
+    low_pric: str = Field(description="저가")
+    pred_pre: str = Field(description="전일대비")
+    pred_pre_sig: str = Field(description="전일대비부호")
+    trde_tern_rt: str = Field(description="거래전환율")
 
 
 class DomesticChartStockWeekly(BaseModel, KiwoomHttpBody):
@@ -323,16 +280,16 @@ class DomesticChartStockWeekly(BaseModel, KiwoomHttpBody):
 
 
 class DomesticChartStockMonthlyItem(BaseModel):
-    dt: str = Field(description="일자 (YYYYMMDD)", max_length=20)
-    cur_prc: str = Field(description="현재가", max_length=20)
-    trde_qty: str = Field(description="거래량", max_length=20)
-    trde_prica: str = Field(description="거래대금", max_length=20)
-    open_pric: str = Field(description="시가", max_length=20)
-    high_pric: str = Field(description="고가", max_length=20)
-    low_pric: str = Field(description="저가", max_length=20)
-    pred_pre: str = Field(description="전일대비", max_length=20)
-    pred_pre_sig: str = Field(description="전일대비부호", max_length=20)
-    trde_tern_rt: str = Field(description="거래전환율", max_length=20)
+    dt: str = Field(description="일자 (YYYYMMDD)")
+    cur_prc: str = Field(description="현재가")
+    trde_qty: str = Field(description="거래량")
+    trde_prica: str = Field(description="거래대금")
+    open_pric: str = Field(description="시가")
+    high_pric: str = Field(description="고가")
+    low_pric: str = Field(description="저가")
+    pred_pre: str = Field(description="전일대비")
+    pred_pre_sig: str = Field(description="전일대비부호")
+    trde_tern_rt: str = Field(description="거래전환율")
 
 
 class DomesticChartStockMonthly(BaseModel, KiwoomHttpBody):
@@ -347,13 +304,13 @@ class DomesticChartStockMonthly(BaseModel, KiwoomHttpBody):
 
 
 class DomesticChartStockYearlyItem(BaseModel):
-    dt: str = Field(description="일자 (YYYYMMDD)", max_length=20)
-    cur_prc: str = Field(description="현재가", max_length=20)
-    trde_qty: str = Field(description="거래량", max_length=20)
-    trde_prica: str = Field(description="거래대금", max_length=20)
-    open_pric: str = Field(description="시가", max_length=20)
-    high_pric: str = Field(description="고가", max_length=20)
-    low_pric: str = Field(description="저가", max_length=20)
+    dt: str = Field(description="일자 (YYYYMMDD)")
+    cur_prc: str = Field(description="현재가")
+    trde_qty: str = Field(description="거래량")
+    trde_prica: str = Field(description="거래대금")
+    open_pric: str = Field(description="시가")
+    high_pric: str = Field(description="고가")
+    low_pric: str = Field(description="저가")
 
 
 class DomesticChartStockYearly(BaseModel, KiwoomHttpBody):
@@ -371,42 +328,34 @@ class DomesticChartIndustryTickItem(BaseModel):
     cur_prc: str = Field(
         default="",
         description="현재가",
-        max_length=20,
     )
     trde_qty: str = Field(
         default="",
         description="거래량",
-        max_length=20,
     )
     cntr_tm: str = Field(
         default="",
         description="체결시간",
-        max_length=20,
     )
     open_pric: str = Field(
         default="",
         description="시가",
-        max_length=20,
     )
     high_pric: str = Field(
         default="",
         description="고가",
-        max_length=20,
     )
     low_pric: str = Field(
         default="",
         description="저가",
-        max_length=20,
     )
     pred_pre: str = Field(
         default="",
         description="전일대비",
-        max_length=20,
     )
     pred_pre_sig: str = Field(
         default="",
         description="전일대비 기호",
-        max_length=20,
     )
 
 
@@ -416,7 +365,6 @@ class DomesticChartIndustryTick(BaseModel, KiwoomHttpBody):
     inds_cd: str = Field(
         default="",
         description="업종코드",
-        max_length=20,
     )
     inds_tic_chart_qry: list[DomesticChartIndustryTickItem] = Field(
         default_factory=list,
@@ -429,47 +377,38 @@ class DomesticChartIndustryMinuteItem(BaseModel):
     cur_prc: str = Field(
         default="",
         description="현재가",
-        max_length=20,
     )
     trde_qty: str = Field(
         default="",
         description="거래량",
-        max_length=20,
     )
     cntr_tm: str = Field(
         default="",
         description="체결시간",
-        max_length=20,
     )
     open_pric: str = Field(
         default="",
         description="시가",
-        max_length=20,
     )
     high_pric: str = Field(
         default="",
         description="고가",
-        max_length=20,
     )
     low_pric: str = Field(
         default="",
         description="저가",
-        max_length=20,
     )
     acc_trde_qty: str = Field(
         default="",
         description="누적거래량",
-        max_length=20,
     )
     pred_pre: str = Field(
         default="",
         description="전일대비",
-        max_length=20,
     )
     pred_pre_sig: str = Field(
         default="",
         description="전일대비 기호",
-        max_length=20,
     )
 
 
@@ -478,7 +417,6 @@ class DomesticChartIndustryMinute(BaseModel, KiwoomHttpBody):
     inds_cd: str = Field(
         default="",
         description="업종코드",
-        max_length=20,
     )
     inds_min_pole_qry: list[DomesticChartIndustryMinuteItem] = Field(
         default_factory=list,
@@ -491,37 +429,30 @@ class DomesticChartIndustryDailyItem(BaseModel):
     cur_prc: str = Field(
         default="",
         description="현재가",
-        max_length=20,
     )
     trde_qty: str = Field(
         default="",
         description="거래량",
-        max_length=20,
     )
     dt: str = Field(
         default="",
         description="일자 (YYYYMMDD)",
-        max_length=20,
     )
     open_pric: str = Field(
         default="",
         description="시가",
-        max_length=20,
     )
     high_pric: str = Field(
         default="",
         description="고가",
-        max_length=20,
     )
     low_pric: str = Field(
         default="",
         description="저가",
-        max_length=20,
     )
     trde_prica: str = Field(
         default="",
         description="거래대금",
-        max_length=20,
     )
 
 
@@ -531,7 +462,6 @@ class DomesticChartIndustryDaily(BaseModel, KiwoomHttpBody):
     inds_cd: str = Field(
         default="",
         description="업종코드",
-        max_length=20,
     )
     inds_dt_pole_qry: list[DomesticChartIndustryDailyItem] = Field(
         default_factory=list,
@@ -544,37 +474,30 @@ class DomesticChartIndustryWeeklyItem(BaseModel):
     cur_prc: str = Field(
         default="",
         description="현재가",
-        max_length=20,
     )
     trde_qty: str = Field(
         default="",
         description="거래량",
-        max_length=20,
     )
     dt: str = Field(
         default="",
         description="일자 (YYYYMMDD)",
-        max_length=20,
     )
     open_pric: str = Field(
         default="",
         description="시가",
-        max_length=20,
     )
     high_pric: str = Field(
         default="",
         description="고가",
-        max_length=20,
     )
     low_pric: str = Field(
         default="",
         description="저가",
-        max_length=20,
     )
     trde_prica: str = Field(
         default="",
         description="거래대금",
-        max_length=20,
     )
 
 
@@ -584,7 +507,6 @@ class DomesticChartIndustryWeekly(BaseModel, KiwoomHttpBody):
     inds_cd: str = Field(
         default="",
         description="업종코드",
-        max_length=20,
     )
     inds_stk_pole_qry: list[DomesticChartIndustryWeeklyItem] = Field(
         default_factory=list,
@@ -597,37 +519,30 @@ class DomesticChartIndustryMonthlyItem(BaseModel):
     cur_prc: str = Field(
         default="",
         description="현재가",
-        max_length=20,
     )
     trde_qty: str = Field(
         default="",
         description="거래량",
-        max_length=20,
     )
     dt: str = Field(
         default="",
         description="일자 (YYYYMMDD)",
-        max_length=20,
     )
     open_pric: str = Field(
         default="",
         description="시가",
-        max_length=20,
     )
     high_pric: str = Field(
         default="",
         description="고가",
-        max_length=20,
     )
     low_pric: str = Field(
         default="",
         description="저가",
-        max_length=20,
     )
     trde_prica: str = Field(
         default="",
         description="거래대금",
-        max_length=20,
     )
 
 
@@ -637,7 +552,6 @@ class DomesticChartIndustryMonthly(BaseModel, KiwoomHttpBody):
     inds_cd: str = Field(
         default="",
         description="업종코드",
-        max_length=20,
     )
     inds_mth_pole_qry: list[DomesticChartIndustryMonthlyItem] = Field(
         default_factory=list,
@@ -650,37 +564,30 @@ class DomesticChartIndustryYearlyItem(BaseModel):
     cur_prc: str = Field(
         default="",
         description="현재가",
-        max_length=20,
     )
     trde_qty: str = Field(
         default="",
         description="거래량",
-        max_length=20,
     )
     dt: str = Field(
         default="",
         description="일자 (YYYYMMDD)",
-        max_length=20,
     )
     open_pric: str = Field(
         default="",
         description="시가",
-        max_length=20,
     )
     high_pric: str = Field(
         default="",
         description="고가",
-        max_length=20,
     )
     low_pric: str = Field(
         default="",
         description="저가",
-        max_length=20,
     )
     trde_prica: str = Field(
         default="",
         description="거래대금",
-        max_length=20,
     )
 
 
@@ -690,7 +597,6 @@ class DomesticChartIndustryYearly(BaseModel, KiwoomHttpBody):
     inds_cd: str = Field(
         default="",
         description="업종코드",
-        max_length=20,
     )
     inds_yr_pole_qry: list[DomesticChartIndustryYearlyItem] = Field(
         default_factory=list,

@@ -8,9 +8,9 @@ from cluefin_openapi.dart._model import DartHttpBody
 class LargeHoldingReportItem(BaseModel):
     model_config = ConfigDict(title="주식등의 대량보유 상황보고 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
+    rcept_no: str = Field(description="접수번호(14자리)")
     rcept_dt: str = Field(description="공시 접수일자(YYYYMMDD)")
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
     corp_name: str = Field(description="공시대상회사의 종목명(상장사) 또는 법인명(기타법인)")
     report_tp: str = Field(description="보고구분")
     repror: str = Field(description="대표보고자명")
@@ -30,11 +30,11 @@ class LargeHoldingReport(BaseModel, DartHttpBody[LargeHoldingReportItem]):
 class ExecutiveMajorShareholderOwnershipReportItem(BaseModel):
     model_config = ConfigDict(title="임원·주요주주 소유보고 항목", populate_by_name=True)
 
-    rcept_no: str = Field(description="접수번호(14자리)", max_length=14)
+    rcept_no: str = Field(description="접수번호(14자리)")
     rcept_dt: str = Field(
         description="공시 접수일자(YYYYMMDD)",
     )
-    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)", max_length=8)
+    corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
     corp_name: str = Field(
         description="회사명",
     )
