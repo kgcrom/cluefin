@@ -5,8 +5,8 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 ## Scope
 
 - This package is a **pure local-file parser** — it never talks to DART. The download
-  path (ZIP fetch + unzip) lives in cluefin-cli / cluefin-openapi's dart module. A
-  missing download function here is intentional, not a gap.
+  path (ZIP fetch + unzip) lives in cluefin-openapi's dart module. A missing download
+  function here is intentional, not a gap.
 
 ## DART/Arelle quirks baked into the code
 
@@ -28,5 +28,3 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   real-looking DART entity ids). There is no tooling to regenerate them from a live
   filing; realistic test data must be hand-crafted or manually trimmed from a download.
 - `tests/__init__.py` was deliberately deleted to fix a pytest collision — don't re-add.
-- Notes-extraction / consolidated-vs-separate filtering work already exists on the
-  unmerged branch `feat/xbrl-extract-notes-design`; check it before building either.
