@@ -3,7 +3,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical
 from textual.screen import Screen
-from textual.widgets import DataTable, Header, TabbedContent, TabPane
+from textual.widgets import DataTable, Header, Static, TabbedContent, TabPane
 
 from cluefin_desk.widgets.market_overview import MarketOverviewBar
 from cluefin_desk.widgets.nav_bar import NavBar
@@ -26,6 +26,8 @@ TAB_CONFIG = [
     ("이격도", "tab-disparity", "table-disparity"),
 ]
 
+KIS_TABLE_IDS = frozenset({"table-dividend", "table-short", "table-credit", "table-disparity"})
+
 
 class ScreeningScreen(Screen):
     """Screen 2: Rankings with 8 tabs."""
@@ -45,6 +47,8 @@ class ScreeningScreen(Screen):
                 for tab_label, tab_id, table_id in TAB_CONFIG:
                     with TabPane(tab_label, id=tab_id):
                         yield StockScreeningTable(id=table_id)
+                        # 표만 있으면 빈 표가 "데이터 없음·키 없음·실패" 중 무엇인지 알 수 없다
+                        yield Static("Loading...", id=f"status-{table_id}", classes="tab-status")
         yield NavFooter(active_screen_key="2")
 
     def on_mount(self) -> None:
@@ -88,15 +92,33 @@ class ScreeningScreen(Screen):
         )
 
     def _fill_tables(self, loaders) -> None:
+        has_kis = self.app.fetcher.has_kis
         for table_id, loader_fn in loaders:
+            if table_id in KIS_TABLE_IDS and not has_kis:
+                self._set_status(table_id, "KIS 키 없음 — KIS_APP_KEY / KIS_SECRET_KEY 설정 후 사용 가능")
+                continue
             try:
                 data = loader_fn()
                 table = self.query_one(f"#{table_id}", StockScreeningTable)
                 self.app.call_from_thread(table.load_data, data)
+                # screener 는 조회 실패를 삼키고 [] 를 주므로, 빈 표는 "없음" 과 "실패" 를
+                # 구분할 수 없다 — 원인은 로그(ERROR) 에 남는다
+                self._set_status(table_id, self._status_text(len(data)))
             except Exception as e:
                 from loguru import logger
 
                 logger.error(f"Failed to load {table_id}: {e}")
+                self._set_status(table_id, f"로딩 실패: {e}")
+
+    @staticmethod
+    def _status_text(count: int) -> str:
+        return f"{count}건" if count else "데이터 없음 (조회 실패면 로그에 원인이 남는다)"
+
+    def _set_status(self, table_id: str, text: str) -> None:
+        def _apply():
+            self.query_one(f"#status-{table_id}", Static).update(text)
+
+        self.app.call_from_thread(_apply)
 
     def action_refresh(self) -> None:
         self.load_all_data()
