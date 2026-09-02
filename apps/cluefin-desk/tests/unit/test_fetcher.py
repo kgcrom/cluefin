@@ -279,6 +279,23 @@ class TestKisPhase2Wrappers:
         kis.domestic_stock_info.get_investment_opinion.side_effect = KISAPIError("none")
         assert fetcher.get_investment_opinions("005930") == []
 
+    def test_stock_news_filters_by_code_and_degrades(self, monkeypatch):
+        fetcher, kis = self._fetcher(monkeypatch)
+        api = kis.domestic_issue_other.get_market_announcement_schedule
+        api.return_value.body.output = [SimpleNamespace(hts_pbnt_titl_cntt="삼성전자, 신규 공장")]
+
+        rows = fetcher.get_stock_news("005930")
+
+        assert rows[0].hts_pbnt_titl_cntt == "삼성전자, 신규 공장"
+        kwargs = api.call_args.kwargs
+        assert kwargs["fid_input_iscd"] == "005930"
+        # 문서상 "공백 필수" 인 파라미터들 — 값을 넣으면 빈 응답이 온다
+        for key in ("fid_news_ofer_entp_code", "fid_cond_mrkt_cls_code", "fid_titl_cntt", "fid_rank_sort_cls_code"):
+            assert kwargs[key] == ""
+
+        api.side_effect = KISAPIError("none")
+        assert fetcher.get_stock_news("005930") == []
+
     def test_stock_supply_trends_degrade_to_empty(self, monkeypatch):
         fetcher, kis = self._fetcher(monkeypatch)
         kis.domestic_market_analysis.get_short_selling_trend_daily.side_effect = KISAPIError("x")

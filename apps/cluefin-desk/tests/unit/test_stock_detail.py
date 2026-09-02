@@ -80,6 +80,36 @@ class TestFormatOpinionLines:
         assert "None" not in text
 
 
+def _news_item(title="TCL, 삼성전자 제소", provider="9", dorg="뉴스핌", dt="20260902", tm="212221"):
+    return SimpleNamespace(data_dt=dt, data_tm=tm, dorg=dorg, hts_pbnt_titl_cntt=title, news_ofer_entp_code=provider)
+
+
+class TestFormatNewsLines:
+    def test_empty_says_so(self):
+        assert StockDetailScreen._format_news_lines(None) == ["최근 뉴스·공시가 없습니다."]
+
+    def test_row_has_compact_time_provider_and_title(self):
+        text = "\n".join(StockDetailScreen._format_news_lines([_news_item()]))
+        assert "09-02 21:22" in text
+        assert "뉴스핌" in text
+        assert "TCL, 삼성전자 제소" in text
+
+    def test_disclosure_provider_codes_get_a_tag(self):
+        """뉴스와 공시가 한 피드로 온다 — 제공업체 코드 F/G/H/I/N 만 공시다."""
+        lines = StockDetailScreen._format_news_lines(
+            [
+                _news_item(provider="F", dorg="거래소", title="주요사항보고서"),
+                _news_item(provider="2", dorg="한국경제신문"),
+            ]
+        )
+        assert "[공시]" in lines[4] and "주요사항보고서" in lines[4]
+        assert "[공시]" not in lines[5]
+
+    def test_malformed_timestamp_falls_back_to_raw(self):
+        assert StockDetailScreen._format_news_when("2026", None) == "2026"
+        assert StockDetailScreen._format_news_when(None, None) == "-"
+
+
 def _kis_supply_args(**overrides):
     args = {
         "trend_df": pd.DataFrame(),
@@ -186,6 +216,9 @@ class FakeFetcher:
     def get_program_trading_trend(self, stock_code):
         return []
 
+    def get_stock_news(self, stock_code):
+        return [_news_item(), _news_item(provider="F", dorg="거래소", title="기업설명회(IR) 개최 안내")]
+
     def get_investment_opinions(self, stock_code):
         return [
             SimpleNamespace(
@@ -237,6 +270,7 @@ class TestStockDetailScreen:
                 "#broker-detail-content",
                 "#supply-detail-content",
                 "#opinion-detail-content",
+                "#news-detail-content",
             ):
                 assert "Loading" not in _panel_text(screen, selector), f"{selector} 가 Loading 에서 멈췄다"
 
@@ -250,6 +284,8 @@ class TestStockDetailScreen:
             assert "신용거래 추이" in _panel_text(screen, "#supply-detail-content")
             assert "투자자별 일별 순매수" in _panel_text(screen, "#kis-supply-content")
             assert "미래에셋증권" in _panel_text(screen, "#opinion-detail-content")
+            news = _panel_text(screen, "#news-detail-content")
+            assert "TCL, 삼성전자 제소" in news and "[공시]" in news
 
     async def test_one_failing_tab_does_not_block_the_others(self):
         app = HarnessApp(FakeFetcher(broker_error=True))
@@ -265,5 +301,6 @@ class TestStockDetailScreen:
         async with app.run_test() as pilot:
             screen = await _loaded(app, pilot)
             assert "KIS_APP_KEY" in _panel_text(screen, "#opinion-detail-content")
+            assert "KIS_APP_KEY" in _panel_text(screen, "#news-detail-content")
             assert _panel_text(screen, "#kis-supply-content") == ""
             assert "신용거래 추이" in _panel_text(screen, "#supply-detail-content")
