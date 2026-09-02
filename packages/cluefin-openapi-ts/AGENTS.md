@@ -33,9 +33,9 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 ## Declaration output (`dist/types`)
 
 - `build:types` is `tsc -p tsconfig.build.json` — a real `--emitDeclarationOnly` pass over
-  `src` only. It emits a 112-file tree mirroring `src`; `dist/types/index.d.ts` is the
-  entry and re-exports the rest. There is **no** hand-written declaration template any
-  more (`scripts/generate-types.mjs` is gone; `scripts/generate-metadata.mjs` stays).
+  `src` only. It emits a tree mirroring `src`; `dist/types/index.d.ts` is the entry and
+  re-exports the rest. Declarations come from `tsc`, not from a template — the only
+  generator script is `scripts/generate-metadata.mjs`.
 - `tsconfig.build.json` turns off `declarationMap`/`sourceMap` that the base config sets —
   turning them back on doubles the shipped file count with maps pointing at absent `src`.
 - The base `tsconfig.json` includes `tests`, which has ~61 pre-existing type errors. They
@@ -52,15 +52,14 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   `exports["."].types`. That fixture is excluded from the root `tsconfig.json` — it only
   resolves after a build. The test builds `dist/types` itself if it's missing.
   It compiles the fixture **twice**, under `tsconfig.json` (Bundler) and
-  `tsconfig.nodenext.json` (NodeNext) — a single-mode check is exactly how the
-  extensionless-specifier regression above shipped past review once. The NodeNext project
+  `tsconfig.nodenext.json` (NodeNext) — a Bundler-only check cannot see the
+  extensionless-specifier failure described above. The NodeNext project
   deliberately sets `skipLibCheck: false` (that is what surfaces TS2834 across all 112
   declaration files rather than only on names the fixture happens to import), which in
   turn needs `types: ["node"]`. Don't "simplify" either setting.
 - `npx @arethetypeswrong/cli --pack` reports **`node16 (from CJS)`: Masquerading as ESM**.
-  Pre-existing, not caused by the declaration migration (verified by running it against
-  the pre-migration commit): the package is `"type": "module"` with a dual ESM/CJS build
-  but a single `types` field, so `require` gets an ESM-flavoured `.d.ts`. Fixing it means
+  Known and accepted: the package is `"type": "module"` with a dual ESM/CJS build but a
+  single `types` field, so `require` gets an ESM-flavoured `.d.ts`. Fixing it means
   emitting a `.d.cts` and adding `exports.require.types` — a distribution-shape change.
 - **KIS `schemas/*` (166 names) are emitted but unreachable**: `src/kis/index.ts` re-exports
   zero schema modules, while `src/kiwoom/index.ts` re-exports 9 and `src/nhplug/index.ts` 7.
@@ -75,6 +74,8 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   responses. A new field must be handled with this asymmetry in mind.
 - KIS `custtype` is hardcoded to `'P'` (personal) in the HTTP and socket clients —
   corporate-account calls aren't possible without changing that.
+- Kiwoom's auth API is `generateToken()`/`revokeToken()`, while KIS and NH PLUG use
+  `generate()`/`revoke()` — the asymmetry is real, not a typo.
 - `CamelizeKeys` in `src/core/types.ts` deliberately wraps its key mapping in
   `Uncapitalize` because the runtime `toCamelCase` lowercases the first character. This is
   invisible for KIS/Kiwoom (lowercase snake_case wire keys) and only shows up on NH PLUG's
@@ -99,7 +100,3 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 
 - `docs/api-coverage-gap.md` is a snapshot: its "미구현" rows for KIS realtime quotes
   are outdated (those files exist now), and it predates NH PLUG entirely.
-- (The README's KIS quick-start used to call a non-existent `auth.generateToken()`; it now
-  correctly says `generate()`. Note that Kiwoom really does use `generateToken()`/
-  `revokeToken()` while KIS and NH PLUG use `generate()`/`revoke()` — the asymmetry is
-  real, not a typo.)
