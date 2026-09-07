@@ -245,8 +245,10 @@ class DomesticDataFetcher:
                 ).body.output
                 or []
             )
+        # ValidationError 도 [] 로 강등되면 화면은 '데이터 없음'과 구분하지 못한다(#94 이전에
+        # max_length 가 실서버 값을 거부한 사례). 로그에서라도 구분되게 warning 으로 남긴다.
         except (KISAPIError, ValidationError) as exc:
-            logger.debug(f"financial ratio unavailable for {stock_code}: {exc}")
+            logger.warning(f"financial ratio unavailable for {stock_code}: {exc}")
             return []
 
     def get_income_statement_series(self, stock_code: str) -> list:
@@ -264,7 +266,7 @@ class DomesticDataFetcher:
                 or []
             )
         except (KISAPIError, ValidationError) as exc:
-            logger.debug(f"income statement unavailable for {stock_code}: {exc}")
+            logger.warning(f"income statement unavailable for {stock_code}: {exc}")
             return []
 
     @staticmethod
@@ -331,7 +333,7 @@ class DomesticDataFetcher:
                 fid_org_adj_prc="0",
             ).body.output2
         except (KISAPIError, ValidationError) as exc:
-            logger.debug(f"period quote unavailable for {stock_code}: {exc}")
+            logger.warning(f"period quote unavailable for {stock_code}: {exc}")
             return pd.DataFrame()
 
         rows = [
@@ -378,7 +380,7 @@ class DomesticDataFetcher:
                 fid_input_date_1=base_date,
             ).body.output2
         except (KISAPIError, ValidationError) as exc:
-            logger.debug(f"daily investor trend unavailable for {stock_code}: {exc}")
+            logger.warning(f"daily investor trend unavailable for {stock_code}: {exc}")
             return pd.DataFrame()
 
         rows = [
@@ -418,7 +420,7 @@ class DomesticDataFetcher:
                 or []
             )
         except (KISAPIError, ValidationError) as exc:
-            logger.debug(f"investment opinion unavailable for {stock_code}: {exc}")
+            logger.warning(f"investment opinion unavailable for {stock_code}: {exc}")
             return []
 
     def get_stock_news(self, stock_code: str) -> list:
@@ -445,7 +447,7 @@ class DomesticDataFetcher:
                 or []
             )
         except (KISAPIError, ValidationError) as exc:
-            logger.debug(f"stock news unavailable for {stock_code}: {exc}")
+            logger.warning(f"stock news unavailable for {stock_code}: {exc}")
             return []
 
     # ──────────────────────────────────────
@@ -468,7 +470,7 @@ class DomesticDataFetcher:
                 or []
             )
         except (KISAPIError, ValidationError) as exc:
-            logger.debug(f"short selling trend unavailable for {stock_code}: {exc}")
+            logger.warning(f"short selling trend unavailable for {stock_code}: {exc}")
             return []
 
     def get_credit_balance_trend(self, stock_code: str) -> list:
@@ -485,7 +487,7 @@ class DomesticDataFetcher:
                 or []
             )
         except (KISAPIError, ValidationError) as exc:
-            logger.debug(f"credit balance trend unavailable for {stock_code}: {exc}")
+            logger.warning(f"credit balance trend unavailable for {stock_code}: {exc}")
             return []
 
     def get_program_trading_trend(self, stock_code: str) -> list:
@@ -501,7 +503,7 @@ class DomesticDataFetcher:
                 or []
             )
         except (KISAPIError, ValidationError) as exc:
-            logger.debug(f"program trading trend unavailable for {stock_code}: {exc}")
+            logger.warning(f"program trading trend unavailable for {stock_code}: {exc}")
             return []
 
     # ──────────────────────────────────────
@@ -527,7 +529,7 @@ class DomesticDataFetcher:
                 or []
             )
         except (KISAPIError, ValidationError) as exc:
-            logger.debug(f"market investor trend unavailable for {market}: {exc}")
+            logger.warning(f"market investor trend unavailable for {market}: {exc}")
             return []
 
     def get_market_fund_summary(self) -> list:
@@ -540,7 +542,7 @@ class DomesticDataFetcher:
                 or []
             )
         except (KISAPIError, ValidationError) as exc:
-            logger.debug(f"market fund summary unavailable: {exc}")
+            logger.warning(f"market fund summary unavailable: {exc}")
             return []
 
     # ──────────────────────────────────────
@@ -567,7 +569,7 @@ class DomesticDataFetcher:
                 or []
             )
         except (KISAPIError, ValidationError) as exc:
-            logger.debug(f"dividend yield top unavailable: {exc}")
+            logger.warning(f"dividend yield top unavailable: {exc}")
             return []
 
     def get_short_selling_top(self, market: str = "0001") -> list:
@@ -589,7 +591,7 @@ class DomesticDataFetcher:
                 or []
             )
         except (KISAPIError, ValidationError) as exc:
-            logger.debug(f"short selling top unavailable: {exc}")
+            logger.warning(f"short selling top unavailable: {exc}")
             return []
 
     def get_credit_balance_top(self, market: str = "0001") -> list:
@@ -606,7 +608,7 @@ class DomesticDataFetcher:
                 or []
             )
         except (KISAPIError, ValidationError) as exc:
-            logger.debug(f"credit balance top unavailable: {exc}")
+            logger.warning(f"credit balance top unavailable: {exc}")
             return []
 
     def get_disparity_index_rank(self, market: str = "0001", hour: str = "20") -> list:
@@ -629,7 +631,7 @@ class DomesticDataFetcher:
                 or []
             )
         except (KISAPIError, ValidationError) as exc:
-            logger.debug(f"disparity index rank unavailable: {exc}")
+            logger.warning(f"disparity index rank unavailable: {exc}")
             return []
 
     # ──────────────────────────────────────
@@ -651,7 +653,7 @@ class DomesticDataFetcher:
                 or []
             )
         except (KISAPIError, ValidationError) as exc:
-            logger.debug(f"etf nav trend unavailable for {stk_cd}: {exc}")
+            logger.warning(f"etf nav trend unavailable for {stk_cd}: {exc}")
             return []
 
     def get_etf_component_prices(self, stk_cd: str) -> list:
@@ -665,7 +667,7 @@ class DomesticDataFetcher:
                 or []
             )
         except (KISAPIError, ValidationError) as exc:
-            logger.debug(f"etf components unavailable for {stk_cd}: {exc}")
+            logger.warning(f"etf components unavailable for {stk_cd}: {exc}")
             return []
 
     async def get_stock_data(self, stock_code: str) -> pd.DataFrame:
