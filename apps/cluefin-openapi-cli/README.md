@@ -57,7 +57,7 @@ Agent용 분류 기준:
   "name": "chart",
   "description": "Price, volume, and OHLCV time-series lookup commands.",
   "when_to_use": "Use before technical analysis, price trend review, or volume analysis.",
-  "avoid_when": "Use `cluefin-cli ta <stock_code>` when a full technical-indicator report is already sufficient.",
+  "avoid_when": "Skip when OHLCV arrays are already in hand; compute indicators from them with the cluefin-ta package.",
   "related_tags": ["ohlcv", "daily", "minute", "tick"],
   "example_filter": "uv run cluefin-openapi-cli list --domain chart --json",
   "command_count": 8
@@ -180,7 +180,6 @@ uv run cluefin-openapi-cli dart company-overview --corp-code 00126380 --json
 - 실제 broker client 생성은 `cluefin_openapi.client_factory`를 사용
 - KIS, Kiwoom은 토큰 캐시를 사용하고, DART는 stateless client로 동작
 - Agent integration은 이 CLI의 JSON discovery를 직접 사용합니다
-- `cluefin-cli` 삭제 또는 정리는 별도 후속 작업이며, 이 CLI는 wrapper 없이 독립적으로 사용됩니다
 
 ## 주의사항
 

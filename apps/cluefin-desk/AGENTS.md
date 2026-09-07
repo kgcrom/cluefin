@@ -30,11 +30,11 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 ## Panel conventions
 
 - A tab that fails must say so **in that tab**. Loaders that only `logger.error(...)`
-  leave the panel on its `Loading ...` placeholder forever, which reads as a hang — the
-  bug class that shipped in the cli→desk port. `financial_analysis` /  `stock_detail`
-  show the pattern: a `_guarded(selector, label, fn)` wrapper per tab, `_update_panel`
-  for the write, and pure `_format_*_lines(...)` staticmethods that return `list[str]`
-  (that is what unit tests exercise — the loaders themselves only do I/O).
+  leave the panel on its `Loading ...` placeholder forever, which reads as a hang.
+  `financial_analysis` / `stock_detail` show the pattern: a `_guarded(selector, label, fn)`
+  wrapper per tab, `_update_panel` for the write, and pure `_format_*_lines(...)`
+  staticmethods that return `list[str]` (that is what unit tests exercise — the loaders
+  themselves only do I/O).
 - Screen-level `load_all_data` workers are `exclusive=True` with their own `group`;
   without it, `r` mashing runs overlapping workers into the same panels.
 - Worker-side UI helpers live in `screens/_guard.py`: wrap each loader in
