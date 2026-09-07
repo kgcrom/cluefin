@@ -21,7 +21,7 @@ _DISCLOSURE_PROVIDER_CODES = frozenset("FGHIN")
 
 
 class StockDetailScreen(Screen):
-    """Screen 6: Stock detail with 4 tabs (chart, investor, broker, supply-demand)."""
+    """Screen 6: Stock detail with 7 tabs (차트·투자자·매매원·수급·투자의견·뉴스·ML예측)."""
 
     BINDINGS = [
         Binding("escape", "go_back", "Back"),
