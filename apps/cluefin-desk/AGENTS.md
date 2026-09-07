@@ -22,6 +22,10 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - I/O uses `@work(thread=True)` workers with `self.app.call_from_thread(...)` for UI
   updates — not `async/await`, even though some fetcher methods are declared `async`.
   Check call sites before extending those.
+- KIS 랭킹 조회의 `fid_cond_scr_div_code` 등 화면코드는 KIS 포털이 요구하는 고정 키다
+  (`data/fetcher.py`). 통합테스트 값과 다르게 바꾸면 오류 없이 빈 응답이 온다.
+- KIS 재무 시계열은 문서와 달리 진행연도 누적 행이 맨 앞에 온다(실측).
+  `_split_annual_and_ytd` 를 우회해 첫 행을 연간으로 쓰면 ROE·성장률이 부풀려진다.
 
 ## Panel conventions
 
