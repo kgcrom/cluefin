@@ -31,9 +31,3 @@ its non-obvious constraints.
 - `packages/*/examples/*.ipynb` 노트북은 커밋 전에 output·execution_count 를 지운다
   (출력에 계좌번호가 섞일 수 있다):
   `uv run --with jupyter jupyter nbconvert --clear-output --inplace <노트북>.ipynb`
-
-## Local agent files
-
-- `.entire/` is local Entire state and is git-ignored.
-- Don't commit `.codex/`, or add repo-local `.pi/` / `SYSTEM.md`, unless a task explicitly
-  asks to make those part of the project workflow.
