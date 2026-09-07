@@ -22,6 +22,10 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - I/O uses `@work(thread=True)` workers with `self.app.call_from_thread(...)` for UI
   updates — not `async/await`, even though some fetcher methods are declared `async`.
   Check call sites before extending those.
+- KIS 랭킹 조회의 `fid_cond_scr_div_code` 등 화면코드는 KIS 포털이 요구하는 고정 키다
+  (`data/fetcher.py`). 통합테스트 값과 다르게 바꾸면 오류 없이 빈 응답이 온다.
+- KIS 재무 시계열은 문서와 달리 진행연도 누적 행이 맨 앞에 온다(실측).
+  `_split_annual_and_ytd` 를 우회해 첫 행을 연간으로 쓰면 ROE·성장률이 부풀려진다.
 
 ## Panel conventions
 
@@ -33,6 +37,13 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   themselves only do I/O).
 - Screen-level `load_all_data` workers are `exclusive=True` with their own `group`;
   without it, `r` mashing runs overlapping workers into the same panels.
+- Worker-side UI helpers live in `screens/_guard.py`: wrap each loader in
+  `guarded(self, selector, label, fn, *args)` (logs + shows `… 로딩 실패` in the panel) and
+  update a `Static` with `set_text(self, selector, text)`. Any hand-written
+  `except Exception as e:` in a worker must start with `if screen_gone(self, e): return`.
+  Switching screens mid-load detaches the old screen, and its worker then raises
+  `NoActiveAppError` — an *empty-message* exception — on `self.app`; without the guard
+  that cancellation is logged as `Failed to load …: ` with no reason.
 - DART 정기보고서 조회는 `_fetch_with_year_fallback` 로 직전 사업연도부터 뒤로 물러난다
   — 사업보고서는 사업연도 종료 후 90일 안에 제출되므로 연초에는 직전 연도 것이 없다.
   데이터가 없을 때 DART 는 예외가 아니라 status 013 + `list=None` 로 200 을 준다.
@@ -41,9 +52,10 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 
 ## Testing
 
-- TUI 하네스가 있다: `tests/unit/test_financial_analysis_screen.py`,
-  `tests/unit/test_stock_detail.py`. 화면을 띄우는 테스트는 `CluefinDeskApp` 대신
-  그 파일들의 `HarnessApp`(App 서브클래스 + fake fetcher/dart client)을 쓴다 —
+- TUI 하네스가 7화면 전부에 있다: `tests/unit/test_<screen>.py` (market_overview ·
+  screening · theme_sector · etf_analysis · investor_flow · stock_detail ·
+  financial_analysis_screen). 화면을 띄우는 테스트는 `CluefinDeskApp` 대신
+  그 파일들의 `HarnessApp`(App 서브클래스 + fake fetcher/screener/dart client)을 쓴다 —
   `CluefinDeskApp.__init__` 은 생성만으로 실계좌 인증을 때린다. 같은 이유로 테스트에서
   실제 `DomesticDataFetcher` 를 만들면 cwd 의 `.env` 로 라이브 인증이 나간다.
 - 패널 텍스트는 `str(widget.content)` 로 읽는다 (textual 8 의 Static 에는

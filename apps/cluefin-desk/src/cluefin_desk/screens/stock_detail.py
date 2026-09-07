@@ -9,6 +9,7 @@ from textual.screen import Screen
 from textual.widgets import DataTable, Header, Static, TabbedContent, TabPane
 
 from cluefin_desk.formatting import pad
+from cluefin_desk.screens._guard import guarded, screen_gone, set_text
 from cluefin_desk.widgets.company_info import CompanyInfoWidget
 from cluefin_desk.widgets.indicator_panel import IndicatorPanel
 from cluefin_desk.widgets.nav_footer import NavFooter
@@ -86,33 +87,16 @@ class StockDetailScreen(Screen):
     # `r` 연타로 워커가 겹치면 같은 패널에 두 응답이 번갈아 써진다 — 최신 것만 남긴다.
     @work(thread=True, exclusive=True, group="detail-load")
     def load_detail_data(self) -> None:
-        self._guarded("#detail-title-bar", "종목 기본정보", self._load_basic_and_chart)
-        self._guarded(None, "투자자", self._load_investor_data)
-        self._guarded("#broker-detail-content", "매매원", self._load_broker_data)
-        self._guarded("#supply-detail-content", "신용거래", self._load_supply_data)
-        self._guarded("#kis-supply-content", "KIS 수급", self._load_kis_supply_data)
-        self._guarded("#opinion-detail-content", "투자의견", self._load_kis_opinion_data)
-        self._guarded("#news-detail-content", "뉴스", self._load_kis_news_data)
-
-    def _guarded(self, selector: str | None, label: str, fn) -> None:
-        """탭 하나가 실패해도 나머지는 계속 로드하고, 실패는 그 탭에 남긴다.
-        selector 가 None 인 탭(테이블만 있는 탭)은 로그만 남긴다."""
-        try:
-            fn()
-        except Exception as e:
-            from loguru import logger
-
-            logger.error(f"Failed to load {label}: {e}")
-            if selector is not None:
-                self._update_panel(selector, [f"{label} 로딩 실패: {e}"])
+        guarded(self, "#detail-title-bar", "종목 기본정보", self._load_basic_and_chart)
+        guarded(self, None, "투자자", self._load_investor_data)
+        guarded(self, "#broker-detail-content", "매매원", self._load_broker_data)
+        guarded(self, "#supply-detail-content", "신용거래", self._load_supply_data)
+        guarded(self, "#kis-supply-content", "KIS 수급", self._load_kis_supply_data)
+        guarded(self, "#opinion-detail-content", "투자의견", self._load_kis_opinion_data)
+        guarded(self, "#news-detail-content", "뉴스", self._load_kis_news_data)
 
     def _update_panel(self, selector: str, lines) -> None:
-        text = "\n".join(lines)
-
-        def _apply():
-            self.query_one(selector, Static).update(text)
-
-        self.app.call_from_thread(_apply)
+        set_text(self, selector, "\n".join(lines))
 
     def _load_basic_and_chart(self) -> None:
         fetcher = self.app.fetcher
@@ -451,6 +435,8 @@ class StockDetailScreen(Screen):
 
             self.app.call_from_thread(_update)
         except Exception as e:
+            if screen_gone(self, e):
+                return
             from loguru import logger
 
             logger.error(f"ML prediction failed: {e}")

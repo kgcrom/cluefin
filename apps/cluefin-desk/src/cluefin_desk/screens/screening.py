@@ -3,8 +3,9 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical
 from textual.screen import Screen
-from textual.widgets import DataTable, Header, TabbedContent, TabPane
+from textual.widgets import DataTable, Header, Static, TabbedContent, TabPane
 
+from cluefin_desk.screens._guard import screen_gone, set_text
 from cluefin_desk.widgets.market_overview import MarketOverviewBar
 from cluefin_desk.widgets.nav_bar import NavBar
 from cluefin_desk.widgets.nav_footer import NavFooter
@@ -45,6 +46,8 @@ class ScreeningScreen(Screen):
                 for tab_label, tab_id, table_id in TAB_CONFIG:
                     with TabPane(tab_label, id=tab_id):
                         yield StockScreeningTable(id=table_id)
+                        # 표만 있으면 빈 표가 "데이터 없음·키 없음·실패" 중 무엇인지 알 수 없다
+                        yield Static("Loading...", id=f"status-{table_id}", classes="tab-status")
         yield NavFooter(active_screen_key="2")
 
     def on_mount(self) -> None:
@@ -78,14 +81,17 @@ class ScreeningScreen(Screen):
     @work(thread=True, exclusive=True, group="screening-load-kis")
     def _load_kis_tabs(self) -> None:
         screener = self.app.screener
-        self._fill_tables(
-            [
-                ("table-dividend", screener.get_dividend_yield_top),
-                ("table-short", screener.get_short_selling_top),
-                ("table-credit", screener.get_credit_balance_top),
-                ("table-disparity", screener.get_disparity_index_top),
-            ]
-        )
+        loaders = [
+            ("table-dividend", screener.get_dividend_yield_top),
+            ("table-short", screener.get_short_selling_top),
+            ("table-credit", screener.get_credit_balance_top),
+            ("table-disparity", screener.get_disparity_index_top),
+        ]
+        if not self.app.fetcher.has_kis:
+            for table_id, _ in loaders:
+                set_text(self, f"#status-{table_id}", "KIS 키 없음 — KIS_APP_KEY / KIS_SECRET_KEY 설정 후 사용 가능")
+            return
+        self._fill_tables(loaders)
 
     def _fill_tables(self, loaders) -> None:
         for table_id, loader_fn in loaders:
@@ -93,10 +99,17 @@ class ScreeningScreen(Screen):
                 data = loader_fn()
                 table = self.query_one(f"#{table_id}", StockScreeningTable)
                 self.app.call_from_thread(table.load_data, data)
+                # screener 는 조회 실패를 삼키고 [] 를 주므로, 빈 표는 "없음" 과 "실패" 를
+                # 구분할 수 없다 — 원인은 로그(ERROR) 에 남는다
+                status = f"{len(data)}건" if data else "데이터 없음 (조회 실패면 로그에 원인이 남는다)"
+                set_text(self, f"#status-{table_id}", status)
             except Exception as e:
+                if screen_gone(self, e):
+                    return
                 from loguru import logger
 
                 logger.error(f"Failed to load {table_id}: {e}")
+                set_text(self, f"#status-{table_id}", f"로딩 실패: {e}")
 
     def action_refresh(self) -> None:
         self.load_all_data()

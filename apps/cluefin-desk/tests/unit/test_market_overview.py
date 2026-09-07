@@ -4,10 +4,12 @@
 "안 보이는" 상태였고, 투자자 순매수는 KIS 가 오름차순으로 줘 한 달 전 5일이 보였다.
 """
 
+import threading
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from loguru import logger
 from rich.cells import cell_len
 from textual.app import App
 from textual.widgets import Static
@@ -149,3 +151,59 @@ class TestMarketOverviewScreen:
             screen = await _loaded(app, pilot)
             assert "로드 실패: KIS 500" in _text(screen, "#kis-fund-panel")
             assert "21,879" in _text(screen, "#kis-investor-panel")
+
+
+class SlowKisFetcher(FakeFetcher):
+    """KIS 투자자 순매수 응답을 이벤트로 잡아둔다 — 화면을 갈아탄 뒤에 도착시키기 위해."""
+
+    def __init__(self):
+        super().__init__()
+        self.release = threading.Event()
+
+    def get_market_investor_trend_daily(self, market="KSP"):
+        self.release.wait(5)
+        return super().get_market_investor_trend_daily(market)
+
+
+class AnyTabScreener:
+    """갈아탄 랭킹 화면이 부르는 로더 12개를 전부 빈 목록으로 받아준다 —
+    시장 화면용 FakeScreener 의 항목엔 랭킹 표가 요구하는 volume 이 없다."""
+
+    def __getattr__(self, name):
+        return lambda *args, **kwargs: []
+
+
+class SwitchingHarnessApp(HarnessApp):
+    """실제 앱의 '2' 키 경로 — 기존 화면을 pop 하고 새 화면을 push."""
+
+    def switch_away(self):
+        from cluefin_desk.screens.screening import ScreeningScreen
+
+        while len(self.screen_stack) > 1:
+            self.pop_screen()
+        self._current_screen_key = "2"
+        self.push_screen(ScreeningScreen())
+
+
+@pytest.mark.asyncio
+async def test_switching_screen_mid_load_is_not_logged_as_failure():
+    """2026-09-02 실측: KIS 패널 로딩 중 화면을 바꾸면 내려간 화면의 워커가 self.app 을
+    만지며 NoActiveAppError(메시지 없음)를 내고, 이것이 "Failed to load KIS 투자자별
+    순매수: " 라는 원인 없는 ERROR 로 찍혔다. 취소는 조용히 끝나야 한다."""
+    errors = []
+    sink = logger.add(lambda m: errors.append(m.record["message"]), level="ERROR")
+    fetcher = SlowKisFetcher()
+    app = SwitchingHarnessApp(fetcher, AnyTabScreener())
+    try:
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            await pilot.pause(0.2)
+            app.switch_away()
+            await pilot.pause(0.2)
+            fetcher.release.set()
+            await pilot.pause(0.5)
+            await app.workers.wait_for_complete()
+            await pilot.pause(0.2)
+    finally:
+        logger.remove(sink)
+    assert errors == [], errors

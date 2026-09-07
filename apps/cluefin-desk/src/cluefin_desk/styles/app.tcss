@@ -26,6 +26,12 @@ Screen {
     height: 1fr;
 }
 
+#screening-tabs .tab-status {
+    height: auto;
+    padding: 0 1;
+    color: $text-muted;
+}
+
 /* Stock Detail Screen */
 #detail-container {
     layout: horizontal;
@@ -139,6 +145,19 @@ Screen {
 #etf-price-table {
     height: 2fr;
     border: solid $primary;
+}
+
+#etf-status {
+    height: auto;
+    padding: 0 1;
+    color: $text-muted;
+}
+
+/* NAV 패널 — 테두리가 없으면 표 아래 맨 Static 이라 어디까지가 패널인지 보이지 않는다 */
+#etf-kis-panel {
+    height: 1fr;
+    border: solid $secondary;
+    padding: 0 1;
 }
 
 #etf-return-table {
