@@ -16,13 +16,13 @@ members = [
 
 [dependency-groups]
 dev = [
-    "coverage>=7.10.1",
-    "lefthook>=2.1.3",
-    "pytest>=9.0.3",
-    "pytest-asyncio>=0.25.0",
-    "python-dotenv>=1.2.2",
+    "coverage>=7.15.4",
+    "lefthook>=2.1.11",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "python-dotenv>=1.2.3",
     "requests-mock>=1.12.1",
-    "ruff>=0.12.3",
+    "ruff>=0.16.4",
 ]
 
 [tool.uv.sources]
