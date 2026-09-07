@@ -12,27 +12,13 @@ from textual.widgets import Static
 
 import cluefin_desk
 from cluefin_desk.data.screener import ScreeningItem
-from cluefin_desk.screens.screening import KIS_TABLE_IDS, TAB_CONFIG, ScreeningScreen
+from cluefin_desk.screens.screening import TAB_CONFIG, ScreeningScreen
 from cluefin_desk.widgets.stock_table import StockScreeningTable
 
 ALL_TABLE_IDS = [table_id for _, _, table_id in TAB_CONFIG]
+# 화면의 `_load_kis_tabs` 가 맡는 4개 — KIS 키가 없으면 이 표들만 안내 문구가 떠야 한다
+KIS_TABLE_IDS = ["table-dividend", "table-short", "table-credit", "table-disparity"]
 KIWOOM_TABLE_IDS = [t for t in ALL_TABLE_IDS if t not in KIS_TABLE_IDS]
-
-# screener 메서드명 ↔ 표 id — 화면의 매핑과 같아야 한다
-LOADERS = {
-    "table-gainers": "get_top_gainers",
-    "table-losers": "get_top_losers",
-    "table-volume": "get_top_volume",
-    "table-value": "get_top_value",
-    "table-foreigner": "get_top_foreigner_net_buy",
-    "table-newhigh": "get_new_high_price",
-    "table-volatility": "get_price_volatility",
-    "table-margin": "get_top_margin_ratio",
-    "table-dividend": "get_dividend_yield_top",
-    "table-short": "get_short_selling_top",
-    "table-credit": "get_credit_balance_top",
-    "table-disparity": "get_disparity_index_top",
-}
 
 
 def _item(rank=1, code="005930", name="삼성전자"):
@@ -42,19 +28,17 @@ def _item(rank=1, code="005930", name="삼성전자"):
 
 
 class FakeScreener:
-    """모든 로더가 같은 1행을 준다. `empty`/`failing` 으로 특정 표만 비우거나 터뜨린다."""
+    """어떤 로더를 불러도 같은 1행을 준다. screener 메서드명으로 특정 로더만 비우거나 터뜨린다."""
 
     def __init__(self, empty=(), failing=()):
         self._empty = set(empty)
         self._failing = set(failing)
-        for table_id, method in LOADERS.items():
-            setattr(self, method, self._loader_for(table_id))
 
-    def _loader_for(self, table_id):
+    def __getattr__(self, method):
         def _load():
-            if table_id in self._failing:
-                raise RuntimeError(f"{table_id} 조회 실패")
-            return [] if table_id in self._empty else [_item()]
+            if method in self._failing:
+                raise RuntimeError(f"{method} 조회 실패")
+            return [] if method in self._empty else [_item()]
 
         return _load
 
@@ -115,29 +99,23 @@ class TestScreeningScreen:
                 assert _rows(screen, table_id) == 0
             for table_id in KIWOOM_TABLE_IDS:
                 assert _rows(screen, table_id) == 1, table_id
+                assert _status(screen, table_id) == "1건", table_id
 
     async def test_empty_result_is_labelled_not_silent(self):
-        app = HarnessApp(FakeScreener(empty={"table-newhigh"}))
+        app = HarnessApp(FakeScreener(empty={"get_new_high_price"}))
         async with app.run_test() as pilot:
             screen = await _loaded(app, pilot)
             assert _rows(screen, "table-newhigh") == 0
             assert "데이터 없음" in _status(screen, "table-newhigh")
 
     async def test_one_failing_tab_does_not_block_the_rest(self):
-        app = HarnessApp(FakeScreener(failing={"table-volume"}))
+        app = HarnessApp(FakeScreener(failing={"get_top_volume"}))
         async with app.run_test() as pilot:
             screen = await _loaded(app, pilot)
             status = _status(screen, "table-volume")
-            assert "로딩 실패" in status and "table-volume 조회 실패" in status
+            assert "로딩 실패" in status and "get_top_volume 조회 실패" in status
             # 같은 워커(키움 그룹)의 뒤 탭들도 채워진다
             assert _rows(screen, "table-value") == 1
             assert _rows(screen, "table-margin") == 1
             # 다른 워커(KIS 그룹)도 영향 없다
             assert _rows(screen, "table-dividend") == 1
-
-    async def test_no_status_is_left_loading(self):
-        app = HarnessApp(FakeScreener(), FakeFetcher(has_kis=False))
-        async with app.run_test() as pilot:
-            screen = await _loaded(app, pilot)
-            for table_id in ALL_TABLE_IDS:
-                assert "Loading" not in _status(screen, table_id), table_id

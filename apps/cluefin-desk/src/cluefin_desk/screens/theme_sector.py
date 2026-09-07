@@ -5,7 +5,7 @@ from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import DataTable, Header, Static, TabbedContent, TabPane
 
-from cluefin_desk.screens._guard import screen_gone
+from cluefin_desk.screens._guard import guarded, screen_gone, set_text
 from cluefin_desk.widgets.market_overview import MarketOverviewBar
 from cluefin_desk.widgets.nav_bar import NavBar
 from cluefin_desk.widgets.nav_footer import NavFooter
@@ -79,33 +79,14 @@ class ThemeSectorScreen(Screen):
     # `r` 연타로 워커가 겹치면 같은 패널에 두 응답이 번갈아 써진다 — 최신 것만 남긴다.
     @work(thread=True, exclusive=True, group="theme-load")
     def load_all_data(self) -> None:
-        self._guarded("#theme-status", "테마 목록", self._load_theme_groups)
-        self._guarded("#sector-chart-panel", "업종 목록", self._load_sector_list)
-
-    def _guarded(self, selector: str, label: str, fn, *args) -> None:
-        """탭 하나가 실패해도 나머지는 계속 로드하고, 실패는 화면에 남긴다 —
-        로그에만 남기면 표가 빈 채로 멈춰 있어 사용자는 원인을 알 수 없다."""
-        try:
-            fn(*args)
-        except Exception as e:
-            if screen_gone(self, e):
-                return
-            from loguru import logger
-
-            logger.error(f"Failed to load {label}: {e}")
-            self._set_status(selector, f"{label} 로딩 실패: {e}")
-
-    def _set_status(self, selector: str, text: str) -> None:
-        def _apply():
-            self.query_one(selector, Static).update(text)
-
-        self.app.call_from_thread(_apply)
+        guarded(self, "#theme-status", "테마 목록", self._load_theme_groups)
+        guarded(self, "#sector-chart-panel", "업종 목록", self._load_sector_list)
 
     def _load_theme_groups(self) -> None:
         fetcher = self.app.fetcher
         items = fetcher.get_theme_group().body.thema_grp or []
         if not items:
-            self._set_status("#theme-status", "테마 데이터 없음")
+            set_text(self, "#theme-status", "테마 데이터 없음")
             return
 
         self._theme_groups = items
@@ -135,7 +116,7 @@ class ThemeSectorScreen(Screen):
         fetcher = self.app.fetcher
         items = fetcher.get_all_industry_index().body.all_inds_idex or []
         if not items:
-            self._set_status("#sector-chart-panel", "업종 데이터 없음")
+            set_text(self, "#sector-chart-panel", "업종 데이터 없음")
             return
 
         def _update():
@@ -204,7 +185,7 @@ class ThemeSectorScreen(Screen):
             from loguru import logger
 
             logger.error(f"Failed to load theme stocks: {e}")
-            self._set_status("#theme-status", f"테마 구성종목 로딩 실패: {e}")
+            set_text(self, "#theme-status", f"테마 구성종목 로딩 실패: {e}")
 
     @work(thread=True)
     def _load_sector_detail(self, sector_code: str) -> None:
@@ -236,7 +217,7 @@ class ThemeSectorScreen(Screen):
             from loguru import logger
 
             logger.error(f"Failed to load sector detail: {e}")
-            self._set_status("#sector-chart-panel", f"업종 상세 로딩 실패: {e}")
+            set_text(self, "#sector-chart-panel", f"업종 상세 로딩 실패: {e}")
 
     def action_refresh(self) -> None:
         self.load_all_data()

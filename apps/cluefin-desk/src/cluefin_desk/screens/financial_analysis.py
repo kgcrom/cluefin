@@ -11,7 +11,7 @@ from textual.screen import Screen
 from textual.widgets import DataTable, Header, Static, TabbedContent, TabPane
 
 from cluefin_desk.formatting import pad
-from cluefin_desk.screens._guard import screen_gone
+from cluefin_desk.screens._guard import guarded, screen_gone, set_text
 from cluefin_desk.widgets.nav_footer import NavFooter
 
 
@@ -91,7 +91,7 @@ class FinancialAnalysisScreen(Screen):
     # `r` 연타로 워커가 겹치면 같은 패널에 두 응답이 번갈아 써진다 — 최신 것만 남긴다.
     @work(thread=True, exclusive=True, group="financial-load")
     def load_all_data(self) -> None:
-        self._guarded("#kis-financial-content", "KIS 재무", self._load_kis_financials)
+        guarded(self, "#kis-financial-content", "KIS 재무", self._load_kis_financials)
 
         dart_client = self.app.dart_client
         if dart_client is None:
@@ -117,33 +117,16 @@ class FinancialAnalysisScreen(Screen):
             )
             return
 
-        self._guarded("#disclosure-status", "공시목록", self._load_disclosure_list, dart_client, corp_code)
-        self._guarded("#financial-statement-content", "재무제표", self._load_dart_statements, dart_client, corp_code)
-        self._guarded("#dividend-content", "배당", self._load_dividend_info, dart_client, corp_code)
-        self._guarded("#major-shareholder-content", "주요주주", self._load_major_shareholders, dart_client, corp_code)
-        self._guarded("#share-change-content", "주식변동", self._load_share_change, dart_client, corp_code)
+        guarded(self, "#disclosure-status", "공시목록", self._load_disclosure_list, dart_client, corp_code)
+        guarded(self, "#financial-statement-content", "재무제표", self._load_dart_statements, dart_client, corp_code)
+        guarded(self, "#dividend-content", "배당", self._load_dividend_info, dart_client, corp_code)
+        guarded(self, "#major-shareholder-content", "주요주주", self._load_major_shareholders, dart_client, corp_code)
+        guarded(self, "#share-change-content", "주식변동", self._load_share_change, dart_client, corp_code)
         # XBRL download+parse is the slowest step — keep it last in the worker.
-        self._guarded("#xbrl-content", "XBRL", self._load_xbrl, dart_client, corp_code)
-
-    def _guarded(self, selector: str, label: str, fn: Callable[..., None], *args) -> None:
-        """Run one tab loader; a failure must show up in that tab, not only in the log."""
-        try:
-            fn(*args)
-        except Exception as e:
-            if screen_gone(self, e):
-                return
-            from loguru import logger
-
-            logger.error(f"Failed to load {label}: {e}")
-            self._update_panel(selector, [f"{label} 로딩 실패: {e}"])
+        guarded(self, "#xbrl-content", "XBRL", self._load_xbrl, dart_client, corp_code)
 
     def _update_panel(self, selector: str, lines: Sequence[str]) -> None:
-        text = "\n".join(lines)
-
-        def _apply():
-            self.query_one(selector, Static).update(text)
-
-        self.app.call_from_thread(_apply)
+        set_text(self, selector, "\n".join(lines))
 
     def _show_dart_unavailable(self, message: str) -> None:
         def _apply():

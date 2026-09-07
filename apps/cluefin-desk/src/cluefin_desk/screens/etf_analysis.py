@@ -6,7 +6,7 @@ from textual.screen import Screen
 from textual.widgets import DataTable, Header, Static
 
 from cluefin_desk.formatting import pad
-from cluefin_desk.screens._guard import screen_gone
+from cluefin_desk.screens._guard import guarded, set_text
 from cluefin_desk.widgets.market_overview import MarketOverviewBar
 from cluefin_desk.widgets.nav_bar import NavBar
 from cluefin_desk.widgets.nav_footer import NavFooter
@@ -61,25 +61,7 @@ class EtfAnalysisScreen(Screen):
     # `r` 연타로 워커가 겹치면 같은 패널에 두 응답이 번갈아 써진다 — 최신 것만 남긴다.
     @work(thread=True, exclusive=True, group="etf-load")
     def load_all_data(self) -> None:
-        self._guarded("#etf-status", "ETF 시세", self._load_etf_prices)
-
-    def _guarded(self, selector: str, label: str, fn, *args) -> None:
-        """실패를 로그에만 남기면 표가 빈 채로 멈춰 있어 사용자는 원인을 알 수 없다."""
-        try:
-            fn(*args)
-        except Exception as e:
-            if screen_gone(self, e):
-                return
-            from loguru import logger
-
-            logger.error(f"Failed to load {label}: {e}")
-            self._set_text(selector, f"{label} 로딩 실패: {e}")
-
-    def _set_text(self, selector: str, text: str) -> None:
-        def _apply():
-            self.query_one(selector, Static).update(text)
-
-        self.app.call_from_thread(_apply)
+        guarded(self, "#etf-status", "ETF 시세", self._load_etf_prices)
 
     def _load_etf_prices(self) -> None:
         fetcher = self.app.fetcher
@@ -156,18 +138,18 @@ class EtfAnalysisScreen(Screen):
         """선택 ETF 의 KIS NAV 괴리 추이 + 구성종목 상위. KIS 키가 없으면 안내만."""
         fetcher = self.app.fetcher
         if not fetcher.has_kis:
-            self._set_text(
-                "#etf-kis-panel", "KIS API keys not configured — NAV 상세는 KIS_APP_KEY 설정 후 사용 가능합니다."
+            set_text(
+                self, "#etf-kis-panel", "KIS API keys not configured — NAV 상세는 KIS_APP_KEY 설정 후 사용 가능합니다."
             )
             return
 
-        self._guarded("#etf-kis-panel", f"{stock_code} NAV 상세", self._fetch_and_show_nav, stock_code)
+        guarded(self, "#etf-kis-panel", f"{stock_code} NAV 상세", self._fetch_and_show_nav, stock_code)
 
     def _fetch_and_show_nav(self, stock_code: str) -> None:
         fetcher = self.app.fetcher
         nav_rows = fetcher.get_etf_nav_daily_trend(stock_code, days=30)
         components = fetcher.get_etf_component_prices(stock_code)
-        self._set_text("#etf-kis-panel", "\n".join(self._format_nav_lines(stock_code, nav_rows, components)))
+        set_text(self, "#etf-kis-panel", "\n".join(self._format_nav_lines(stock_code, nav_rows, components)))
 
     @staticmethod
     def _format_nav_lines(stock_code: str, nav_rows, components) -> list[str]:

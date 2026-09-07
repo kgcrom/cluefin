@@ -5,7 +5,7 @@ from textual.containers import Vertical
 from textual.screen import Screen
 from textual.widgets import DataTable, Header, Static, TabbedContent, TabPane
 
-from cluefin_desk.screens._guard import screen_gone
+from cluefin_desk.screens._guard import screen_gone, set_text
 from cluefin_desk.widgets.market_overview import MarketOverviewBar
 from cluefin_desk.widgets.nav_bar import NavBar
 from cluefin_desk.widgets.nav_footer import NavFooter
@@ -26,8 +26,6 @@ TAB_CONFIG = [
     ("신용상위", "tab-credit", "table-credit"),
     ("이격도", "tab-disparity", "table-disparity"),
 ]
-
-KIS_TABLE_IDS = frozenset({"table-dividend", "table-short", "table-credit", "table-disparity"})
 
 
 class ScreeningScreen(Screen):
@@ -83,45 +81,35 @@ class ScreeningScreen(Screen):
     @work(thread=True, exclusive=True, group="screening-load-kis")
     def _load_kis_tabs(self) -> None:
         screener = self.app.screener
-        self._fill_tables(
-            [
-                ("table-dividend", screener.get_dividend_yield_top),
-                ("table-short", screener.get_short_selling_top),
-                ("table-credit", screener.get_credit_balance_top),
-                ("table-disparity", screener.get_disparity_index_top),
-            ]
-        )
+        loaders = [
+            ("table-dividend", screener.get_dividend_yield_top),
+            ("table-short", screener.get_short_selling_top),
+            ("table-credit", screener.get_credit_balance_top),
+            ("table-disparity", screener.get_disparity_index_top),
+        ]
+        if not self.app.fetcher.has_kis:
+            for table_id, _ in loaders:
+                set_text(self, f"#status-{table_id}", "KIS 키 없음 — KIS_APP_KEY / KIS_SECRET_KEY 설정 후 사용 가능")
+            return
+        self._fill_tables(loaders)
 
     def _fill_tables(self, loaders) -> None:
-        has_kis = self.app.fetcher.has_kis
         for table_id, loader_fn in loaders:
-            if table_id in KIS_TABLE_IDS and not has_kis:
-                self._set_status(table_id, "KIS 키 없음 — KIS_APP_KEY / KIS_SECRET_KEY 설정 후 사용 가능")
-                continue
             try:
                 data = loader_fn()
                 table = self.query_one(f"#{table_id}", StockScreeningTable)
                 self.app.call_from_thread(table.load_data, data)
                 # screener 는 조회 실패를 삼키고 [] 를 주므로, 빈 표는 "없음" 과 "실패" 를
                 # 구분할 수 없다 — 원인은 로그(ERROR) 에 남는다
-                self._set_status(table_id, self._status_text(len(data)))
+                status = f"{len(data)}건" if data else "데이터 없음 (조회 실패면 로그에 원인이 남는다)"
+                set_text(self, f"#status-{table_id}", status)
             except Exception as e:
                 if screen_gone(self, e):
                     return
                 from loguru import logger
 
                 logger.error(f"Failed to load {table_id}: {e}")
-                self._set_status(table_id, f"로딩 실패: {e}")
-
-    @staticmethod
-    def _status_text(count: int) -> str:
-        return f"{count}건" if count else "데이터 없음 (조회 실패면 로그에 원인이 남는다)"
-
-    def _set_status(self, table_id: str, text: str) -> None:
-        def _apply():
-            self.query_one(f"#status-{table_id}", Static).update(text)
-
-        self.app.call_from_thread(_apply)
+                set_text(self, f"#status-{table_id}", f"로딩 실패: {e}")
 
     def action_refresh(self) -> None:
         self.load_all_data()

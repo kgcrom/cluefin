@@ -7,7 +7,7 @@ from textual.screen import Screen
 from textual.widgets import DataTable, Header, Select, Static
 
 from cluefin_desk.formatting import pad
-from cluefin_desk.screens._guard import screen_gone
+from cluefin_desk.screens._guard import screen_gone, set_text
 from cluefin_desk.widgets.market_overview import MarketOverviewBar
 from cluefin_desk.widgets.nav_bar import NavBar
 from cluefin_desk.widgets.nav_footer import NavFooter
@@ -260,12 +260,6 @@ class InvestorFlowScreen(Screen):
             InvestorFlowScreen._fmt_signed_int(item.ind_netprps),
         )
 
-    def _set_status(self, text: str) -> None:
-        def _apply():
-            self.query_one("#sector-status", Static).update(text)
-
-        self.app.call_from_thread(_apply)
-
     def _load_sector_investor(self, mrkt_tp: str = "0") -> None:
         market_label = dict((code, name) for name, code in SECTOR_MARKETS).get(mrkt_tp, mrkt_tp)
         try:
@@ -275,7 +269,7 @@ class InvestorFlowScreen(Screen):
             items = response.body.inds_netprps
             logger.debug(f"[INV] sector investor items count: {len(items)}")
             if not items:
-                self._set_status(f"{market_label} 업종별 투자자 순매수 데이터 없음")
+                set_text(self, "#sector-status", f"{market_label} 업종별 투자자 순매수 데이터 없음")
                 return
 
             def _update():
@@ -293,7 +287,7 @@ class InvestorFlowScreen(Screen):
             if screen_gone(self, e):
                 return
             logger.error(f"Failed to load sector investor: {e}")
-            self._set_status(f"업종별 투자자 순매수 로딩 실패: {e}")
+            set_text(self, "#sector-status", f"업종별 투자자 순매수 로딩 실패: {e}")
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         # DataTable 이 Enter 를 먼저 먹으므로 Screen 의 `enter` 바인딩은 표에 포커스가 있을 때
@@ -309,7 +303,7 @@ class InvestorFlowScreen(Screen):
 
     @work(thread=True, exclusive=True, group="investor-sector-stocks")
     def _load_sector_stocks(self, mrkt_tp: str, inds_cd: str) -> None:
-        self._set_status(f"업종 {inds_cd} 구성 종목 조회 중...")
+        set_text(self, "#sector-status", f"업종 {inds_cd} 구성 종목 조회 중...")
         try:
             response = self.app.fetcher.get_industry_price_by_sector(mrkt_tp=mrkt_tp, inds_cd=inds_cd)
             items = response.body.inds_stkpc or []
@@ -330,7 +324,7 @@ class InvestorFlowScreen(Screen):
             if screen_gone(self, e):
                 return
             logger.error(f"Failed to load sector stocks: {e}")
-            self._set_status(f"업종 {inds_cd} 구성 종목 로딩 실패: {e}")
+            set_text(self, "#sector-status", f"업종 {inds_cd} 구성 종목 로딩 실패: {e}")
 
     @staticmethod
     def _format_sector_stock_row(item) -> tuple[str, str, str, str, str]:

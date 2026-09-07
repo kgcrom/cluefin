@@ -6,7 +6,7 @@ from textual.screen import Screen
 from textual.widgets import DataTable, Header, Select, Static
 
 from cluefin_desk.formatting import pad
-from cluefin_desk.screens._guard import screen_gone
+from cluefin_desk.screens._guard import screen_gone, set_text
 from cluefin_desk.widgets.market_overview import MarketOverviewBar
 from cluefin_desk.widgets.nav_bar import NavBar
 from cluefin_desk.widgets.nav_footer import NavFooter
@@ -226,19 +226,13 @@ class MarketOverviewScreen(Screen):
             )
         return lines
 
-    def _set_panel(self, selector: str, text: str) -> None:
-        def _apply():
-            self.query_one(selector, Static).update(text)
-
-        self.app.call_from_thread(_apply)
-
     def _load_kis_market_data(self) -> None:
         """KIS 시장 수급·자금 패널. 키가 없거나 실패해도 패널에 그 사실을 남긴다 —
         빈 문자열로 두면 자리만 차지한 채 "안 보이는" 패널이 된다."""
         fetcher = self.app.fetcher
         if not fetcher.has_kis:
-            self._set_panel("#kis-investor-panel", "[bold]코스피 투자자별 순매수 (KIS)[/bold]\n  KIS 키 없음")
-            self._set_panel("#kis-fund-panel", "[bold]시장 자금 동향 (KIS)[/bold]\n  KIS 키 없음")
+            set_text(self, "#kis-investor-panel", "[bold]코스피 투자자별 순매수 (KIS)[/bold]\n  KIS 키 없음")
+            set_text(self, "#kis-fund-panel", "[bold]시장 자금 동향 (KIS)[/bold]\n  KIS 키 없음")
             return
 
         for selector, label, fetch, fmt in (
@@ -251,14 +245,14 @@ class MarketOverviewScreen(Screen):
             ("#kis-fund-panel", "시장 자금 동향", fetcher.get_market_fund_summary, self._format_kis_fund_lines),
         ):
             try:
-                self._set_panel(selector, "\n".join(fmt(fetch())))
+                set_text(self, selector, "\n".join(fmt(fetch())))
             except Exception as e:
                 if screen_gone(self, e):
                     return
                 from loguru import logger
 
                 logger.error(f"Failed to load KIS {label}: {e}")
-                self._set_panel(selector, f"[bold]{label} (KIS)[/bold]\n  로드 실패: {e}")
+                set_text(self, selector, f"[bold]{label} (KIS)[/bold]\n  로드 실패: {e}")
 
     def action_refresh(self) -> None:
         self.load_all_data()
