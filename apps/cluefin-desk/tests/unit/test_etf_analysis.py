@@ -8,6 +8,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from rich.text import Text
 from textual.app import App
 from textual.widgets import DataTable, Static
 
@@ -57,6 +58,12 @@ class TestFormatNavLines:
         assert "069500 — NAV 괴리 추이" in text
         assert "20260901" in text and "0.12%" in text
         assert "구성종목 상위" in text and "삼성전자" in text and "비중 31.2%" in text
+
+    def test_bracketed_component_name_survives_markup(self):
+        comp = _component()
+        comp.hts_kor_isnm = "[k]종목"
+        text = Text.from_markup("\n".join(EtfAnalysisScreen._format_nav_lines("069500", [], [comp]))).plain
+        assert "[k]종목" in text
 
     def test_empty_sections_say_so(self):
         text = "\n".join(EtfAnalysisScreen._format_nav_lines("069500", [], None))

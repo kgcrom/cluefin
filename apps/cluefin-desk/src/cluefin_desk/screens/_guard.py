@@ -1,5 +1,6 @@
 """워커 스레드에서 UI 를 만지는 공통 도우미 — 실패는 화면에 남기고, 화면 전환은 취소로 본다."""
 
+from rich.markup import escape
 from textual.message_pump import NoActiveAppError
 from textual.widgets import Static
 
@@ -39,4 +40,5 @@ def guarded(screen, selector: str | None, label: str, fn, *args) -> None:
 
         logger.error(f"Failed to load {label}: {e}")
         if selector is not None:
-            set_text(screen, selector, f"{label} 로딩 실패: {e}")
+            # 예외 메시지에는 pydantic 의 "[type=...]" 처럼 태그로 읽히는 대괄호가 흔하다.
+            set_text(screen, selector, f"{label} 로딩 실패: {escape(str(e))}")

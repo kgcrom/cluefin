@@ -1,3 +1,4 @@
+from rich.markup import escape
 from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -142,7 +143,7 @@ class MarketOverviewScreen(Screen):
             sign = "+" if rate > 0 else ""
             rate_str = pad(f"{sign}{rate:.2f}%", 8, align="right")
             lines.append(
-                f"  {pad(item.stock_name, 16)} {pad(price_str, 10, align='right')}  [{color}]{rate_str}[/{color}]"
+                f"  {pad(escape(item.stock_name or '-'), 16)} {pad(price_str, 10, align='right')}  [{color}]{rate_str}[/{color}]"
             )
         return lines
 
@@ -167,7 +168,7 @@ class MarketOverviewScreen(Screen):
             from loguru import logger
 
             logger.error(f"Failed to load top movers: {e}")
-            err_msg = str(e)
+            err_msg = escape(str(e))
 
             def _update_error():
                 # 실패를 로그에만 남기면 두 패널이 영구히 "Loading..." 으로 남는다.
@@ -252,7 +253,7 @@ class MarketOverviewScreen(Screen):
                 from loguru import logger
 
                 logger.error(f"Failed to load KIS {label}: {e}")
-                set_text(self, selector, f"[bold]{label} (KIS)[/bold]\n  로드 실패: {e}")
+                set_text(self, selector, f"[bold]{label} (KIS)[/bold]\n  로드 실패: {escape(str(e))}")
 
     def action_refresh(self) -> None:
         self.load_all_data()

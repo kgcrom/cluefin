@@ -11,6 +11,7 @@ from types import SimpleNamespace
 import pytest
 from loguru import logger
 from rich.cells import cell_len
+from rich.text import Text
 from textual.app import App
 from textual.widgets import Static
 
@@ -51,6 +52,10 @@ class TestMoverLines:
 
     def test_empty_says_so(self):
         assert MarketOverviewScreen._format_mover_lines("급등", [], positive=True)[1].strip() == "데이터 없음"
+
+    def test_bracketed_stock_name_survives_markup(self):
+        lines = MarketOverviewScreen._format_mover_lines("급등", [_mover("[a]종목", "10", "1.0")], positive=True)
+        assert "[a]종목" in Text.from_markup(lines[1]).plain
 
 
 class TestKisLines:
