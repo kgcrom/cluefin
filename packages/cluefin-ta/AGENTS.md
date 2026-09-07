@@ -24,6 +24,6 @@ AGENTS.md for repo-wide rules.
 ## Stale docs
 
 - The package README still advertises Numba acceleration and its benchmark table;
-  Numba support was removed (#26). Don't trust README performance claims — verify
+  Numba support was removed. Don't trust README performance claims — verify
   against `pyproject.toml` and `_core/`. Leftover `__pycache__` bytecode also references
   deleted modules (`dow`, `numba_impl`); the source tree is the truth.

@@ -41,7 +41,7 @@ _DOMAIN_TAXONOMY: dict[str, TaxonomyMetadata] = {
         name="chart",
         description="Price, volume, and OHLCV time-series lookup commands.",
         when_to_use="Use before technical analysis, price trend review, or volume analysis.",
-        avoid_when="Use `cluefin-cli ta <stock_code>` when a full technical-indicator report is already sufficient.",
+        avoid_when="Skip when OHLCV arrays are already in hand; compute indicators from them with the cluefin-ta package.",
         related_tags=("ohlcv", "daily", "minute", "tick"),
     ),
     "corporate-actions": TaxonomyMetadata(
@@ -236,7 +236,7 @@ _TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {
         name="ohlcv",
         description="Open, high, low, close, and volume price series data.",
         when_to_use="Use to collect source arrays for technical indicators and price/volume analysis.",
-        avoid_when="Use `cluefin-cli ta <stock_code>` when OHLCV arrays are already available and a full report is enough.",
+        avoid_when="Skip when OHLCV arrays are already available; compute indicators with the cluefin-ta package instead of re-fetching.",
         related_domains=("chart",),
     ),
     "order-book": TaxonomyMetadata(
