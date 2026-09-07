@@ -9,6 +9,7 @@ from types import SimpleNamespace
 
 import pandas as pd
 import pytest
+from rich.text import Text
 from textual.app import App
 from textual.widgets import DataTable, Static
 
@@ -104,6 +105,15 @@ class TestFormatNewsLines:
         )
         assert "[공시]" in lines[4] and "주요사항보고서" in lines[4]
         assert "[공시]" not in lines[5]
+
+    def test_bracketed_title_is_not_eaten_as_markup(self):
+        """KIS 제목에는 "[fnRASSI]", "[e공시]" 같은 접두어가 흔하다 — Rich 태그로 해석되면 사라진다."""
+        lines = StockDetailScreen._format_news_lines(
+            [_news_item(title="[fnRASSI]삼성전자, 3.2% 상승"), _news_item(title="실적 [/전망] 상향")]
+        )
+        rendered = [Text.from_markup(line).plain for line in lines]
+        assert "[fnRASSI]삼성전자, 3.2% 상승" in rendered[4]
+        assert "실적 [/전망] 상향" in rendered[5]
 
     def test_malformed_timestamp_falls_back_to_raw(self):
         assert StockDetailScreen._format_news_when("2026", None) == "2026"

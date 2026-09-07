@@ -1,5 +1,6 @@
 import asyncio
 
+from rich.markup import escape
 from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -12,6 +13,10 @@ from cluefin_desk.widgets.company_info import CompanyInfoWidget
 from cluefin_desk.widgets.indicator_panel import IndicatorPanel
 from cluefin_desk.widgets.nav_footer import NavFooter
 from cluefin_desk.widgets.price_chart import PriceChartWidget
+
+# KIS 뉴스 제공업체 코드 중 공시 채널 — F 장내공시, G 코스닥공시, H 프리보드공시, I 기타공시, N 코넥스공시.
+# 뉴스와 공시가 한 피드로 오므로 이 코드로만 둘을 구분할 수 있다.
+_DISCLOSURE_PROVIDER_CODES = frozenset("FGHIN")
 
 
 class StockDetailScreen(Screen):
@@ -348,10 +353,6 @@ class StockDetailScreen(Screen):
         items = fetcher.get_stock_news(self.stock_code)
         self._update_panel("#news-detail-content", self._format_news_lines(items))
 
-    # 뉴스 제공업체 코드 중 공시 채널 — F 장내공시, G 코스닥공시, H 프리보드공시, I 기타공시, N 코넥스공시.
-    # 뉴스와 공시가 한 피드로 오므로 이 코드로만 둘을 구분할 수 있다.
-    _DISCLOSURE_PROVIDER_CODES = frozenset("FGHIN")
-
     @staticmethod
     def _format_news_when(data_dt: str | None, data_tm: str | None) -> str:
         """YYYYMMDD + HHMMSS → 'MM-DD HH:MM'. 형식이 어긋나면 원문을 그대로 둔다."""
@@ -360,8 +361,8 @@ class StockDetailScreen(Screen):
             return f"{dt[4:6]}-{dt[6:8]} {tm[:2]}:{tm[2:4]}"
         return f"{dt} {tm}".strip() or "-"
 
-    @classmethod
-    def _format_news_lines(cls, items) -> list[str]:
+    @staticmethod
+    def _format_news_lines(items) -> list[str]:
         items = list(items or [])
         if not items:
             return ["최근 뉴스·공시가 없습니다."]
@@ -373,10 +374,12 @@ class StockDetailScreen(Screen):
             "-" * 80,
         ]
         for item in items[:40]:
-            tag = r"[cyan]\[공시][/cyan] " if item.news_ofer_entp_code in cls._DISCLOSURE_PROVIDER_CODES else ""
+            tag = r"[cyan]\[공시][/cyan] " if item.news_ofer_entp_code in _DISCLOSURE_PROVIDER_CODES else ""
+            # 제목은 Rich 마크업으로 해석되면 안 된다 — "[fnRASSI]" 같은 접두어는 태그로 먹혀 사라지고,
+            # "[/...]" 는 MarkupError 로 탭 전체를 실패시킨다.
+            when = StockDetailScreen._format_news_when(item.data_dt, item.data_tm)
             lines.append(
-                f"{pad(cls._format_news_when(item.data_dt, item.data_tm), 12)} "
-                f"{pad(item.dorg or '-', 14)} {tag}{item.hts_pbnt_titl_cntt or '-'}"
+                f"{pad(when, 12)} {pad(escape(item.dorg or '-'), 14)} {tag}{escape(item.hts_pbnt_titl_cntt or '-')}"
             )
         return lines
 
