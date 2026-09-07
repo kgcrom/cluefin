@@ -54,8 +54,8 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   It compiles the fixture **twice**, under `tsconfig.json` (Bundler) and
   `tsconfig.nodenext.json` (NodeNext) — a Bundler-only check cannot see the
   extensionless-specifier failure described above. The NodeNext project
-  deliberately sets `skipLibCheck: false` (that is what surfaces TS2834 across all 112
-  declaration files rather than only on names the fixture happens to import), which in
+  deliberately sets `skipLibCheck: false` (that is what surfaces TS2834 across every
+  emitted declaration file rather than only on names the fixture happens to import), which in
   turn needs `types: ["node"]`. Don't "simplify" either setting.
 - `npx @arethetypeswrong/cli --pack` reports **`node16 (from CJS)`: Masquerading as ESM**.
   Known and accepted: the package is `"type": "module"` with a dual ESM/CJS build but a

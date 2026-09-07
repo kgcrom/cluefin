@@ -19,7 +19,6 @@ def test_readme_mentions_agent_discovery_commands() -> None:
     assert "recipes --json" in content
     assert "recipe stock-research --json" in content
     assert "agent_notes" in content
-    assert "cluefin-ta" in content
     assert "`domains`: 업무 영역" in content
     assert "`tags`: 세부 기능" in content
     assert "`recipes`: 여러 command를 조합하는 workflow guide" in content
@@ -44,6 +43,17 @@ def test_readme_discovery_examples_execute() -> None:
         result = run_cli(argv)
         assert result.exit_code == 0, argv
         assert result.stdout.strip().startswith("{"), argv
+
+
+def test_agent_guidance_does_not_point_at_deleted_commands() -> None:
+    """README 와 discovery JSON(avoid_when/agent_notes)은 에이전트가 그대로 따르는 안내다.
+    cluefin-cli 는 desk 로 흡수돼 삭제됐다 — 다시 등장하면 에이전트를 실패 경로로 보낸다."""
+    set_registry_provider(RpcRegistry)
+    assert "cluefin-cli" not in README.read_text(encoding="utf-8")
+    # `recipes --json` 은 요약만 낸다 — agent_notes 는 레시피 상세에만 있다
+    recipe_names = [r["name"] for r in json.loads(run_cli(["recipes", "--json"]).stdout)["recipes"]]
+    for argv in [["domains", "--json"], ["tags", "--json"], *(["recipe", n, "--json"] for n in recipe_names)]:
+        assert "cluefin-cli" not in run_cli(argv).stdout, argv
 
 
 def test_readme_taxonomy_examples_match_json_shape() -> None:
