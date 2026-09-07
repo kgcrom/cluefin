@@ -8,7 +8,14 @@ from cluefin_openapi import BrokerClientFactory
 from cluefin_openapi_cli.handlers.dart import _ALL_HANDLERS as DART_HANDLERS
 from cluefin_openapi_cli.handlers.kis import get_kis_handlers
 from cluefin_openapi_cli.handlers.kiwoom import get_kiwoom_handlers
-from cluefin_openapi_cli.metadata import build_agent_notes, build_command_examples, get_command_metadata
+from cluefin_openapi_cli.metadata import (
+    broker_rank,
+    broker_role_name,
+    build_agent_notes,
+    build_command_examples,
+    get_command_metadata,
+    kis_alternatives_for,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,6 +36,8 @@ class CommandSpec:
     agent_notes: str | None = None
     required_credentials: tuple[str, ...] = ()
     side_effect: str = "read"
+    broker_role: str = "primary"
+    kis_alternatives: tuple[str, ...] = ()
     executor: Callable[[dict[str, Any], Any], Any] | None = None
 
     @property
@@ -149,11 +158,14 @@ def build_cli_registry() -> dict[tuple[str, ...], CommandSpec]:
 
         metadata = get_command_metadata(broker=schema.broker, category=category, name=command_name)
         examples = metadata.examples or build_command_examples(path_segments, schema.parameters)
+        qualified_name = ".".join(path_segments)
+        kis_alternatives = kis_alternatives_for(qualified_name)
         agent_notes = metadata.agent_notes or build_agent_notes(
             broker=schema.broker,
             category=category,
             name=command_name,
             required_credentials=metadata.required_credentials,
+            kis_alternatives=kis_alternatives,
         )
 
         registry[path_segments] = CommandSpec(
@@ -171,6 +183,8 @@ def build_cli_registry() -> dict[tuple[str, ...], CommandSpec]:
             agent_notes=agent_notes,
             required_credentials=metadata.required_credentials,
             side_effect=metadata.side_effect,
+            broker_role=broker_role_name(schema.broker),
+            kis_alternatives=kis_alternatives,
             executor=handler,
         )
 
@@ -201,7 +215,7 @@ class RpcRegistry:
             commands = [command for command in commands if domain in command.domains]
         if tag is not None:
             commands = [command for command in commands if tag in command.tags]
-        return sorted(commands, key=lambda command: command.path_segments)
+        return sorted(commands, key=lambda command: (broker_rank(command.broker), command.path_segments))
 
     def get_command(self, broker: str, category: str, name: str) -> CommandSpec | None:
         return self.resolve_command((broker, category, name))
@@ -210,7 +224,7 @@ class RpcRegistry:
         return self._commands.get(path_segments)
 
     def iter_brokers(self) -> Iterable[str]:
-        return sorted({command.broker for command in self._commands.values()})
+        return sorted({command.broker for command in self._commands.values()}, key=broker_rank)
 
     def invoke_command(self, command: CommandSpec, params: dict[str, Any]) -> Any:
         if command.executor is None:

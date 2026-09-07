@@ -30,11 +30,123 @@ class TaxonomyMetadata:
     related_tags: tuple[str, ...] = ()
 
 
+@dataclass(frozen=True, slots=True)
+class BrokerRole:
+    """Which role a broker plays in the agent-facing surface."""
+
+    name: str
+    role: str
+    rank: int
+    description: str
+    when_to_use: str
+    credentials: tuple[str, ...]
+    env_var: str | None = None
+
+
 _BROKER_CREDENTIALS: dict[str, tuple[str, ...]] = {
     "dart": ("DART_AUTH_KEY",),
     "kis": ("KIS_APP_KEY", "KIS_SECRET_KEY"),
     "kiwoom": ("KIWOOM_APP_KEY", "KIWOOM_SECRET_KEY"),
 }
+
+BROKER_ROLES: dict[str, BrokerRole] = {
+    "kis": BrokerRole(
+        name="kis",
+        role="primary",
+        rank=0,
+        description="Korea Investment & Securities. Default source for quotes, charts, rankings, financials, "
+        "sector indices, ETF data, corporate-action schedules, and the market calendar.",
+        when_to_use="Start here for every task. Only fall back to another broker when `list --broker kis` "
+        "has no command for the data you need.",
+        credentials=_BROKER_CREDENTIALS["kis"],
+        env_var="KIS_ENV",
+    ),
+    "kiwoom": BrokerRole(
+        name="kiwoom",
+        role="auxiliary",
+        rank=1,
+        description="Kiwoom Securities. Fills KIS gaps: theme groups, sector constituents, tick charts, "
+        "program-trading detail, member (brokerage) flow, ETF intraday, and screening lists KIS lacks.",
+        when_to_use="Use when a kiwoom command has an empty `kis_alternatives` list, or when the KIS "
+        "equivalent returned no usable data. When `kis_alternatives` is non-empty, call the KIS command first.",
+        credentials=_BROKER_CREDENTIALS["kiwoom"],
+        env_var="KIWOOM_ENV",
+    ),
+    "dart": BrokerRole(
+        name="dart",
+        role="reference",
+        rank=2,
+        description="DART (FSS disclosure system). Formal filings, corp-code lookup, company overview, "
+        "and major-shareholder data. Not a market-data source.",
+        when_to_use="Use for disclosure text, filing search, and issuer registry data that no broker provides.",
+        credentials=_BROKER_CREDENTIALS["dart"],
+    ),
+}
+
+BROKER_ORDER: tuple[str, ...] = tuple(sorted(BROKER_ROLES, key=lambda name: BROKER_ROLES[name].rank))
+
+
+def broker_rank(broker: str) -> int:
+    role = BROKER_ROLES.get(broker)
+    return role.rank if role is not None else len(BROKER_ROLES)
+
+
+def broker_role_name(broker: str) -> str:
+    role = BROKER_ROLES.get(broker)
+    return role.role if role is not None else "unknown"
+
+
+# Kiwoom command → KIS commands that cover the same question. An auxiliary command with
+# an empty tuple here is Kiwoom-only and is the intended reason to call Kiwoom at all.
+# Validated against the live registry by tests/test_agent_surface.py.
+KIWOOM_KIS_ALTERNATIVES: dict[str, tuple[str, ...]] = {
+    "kiwoom.analysis.daily-institutional": ("kis.analysis.investor-by-market-daily",),
+    "kiwoom.analysis.foreign-institution": ("kis.analysis.institutional-foreign",),
+    "kiwoom.analysis.foreign-net-buy": ("kis.analysis.institutional-foreign",),
+    "kiwoom.analysis.institutional": ("kis.analysis.institutional-foreign",),
+    "kiwoom.analysis.institutional-trend": ("kis.analysis.institutional-foreign",),
+    "kiwoom.analysis.intraday-investor": ("kis.analysis.investor-by-market-intraday",),
+    "kiwoom.analysis.member-trend": ("kis.analysis.member-trend-tick",),
+    "kiwoom.etf.daily-execution": ("kis.etf.daily",),
+    "kiwoom.etf.full-price": ("kis.etf.current-price",),
+    "kiwoom.etf.hourly": ("kis.etf.nav-trend",),
+    "kiwoom.etf.hourly-v2": ("kis.etf.nav-trend",),
+    "kiwoom.etf.return-rate": ("kis.etf.daily",),
+    "kiwoom.program.by-stock-daily": ("kis.program.investor-trend",),
+    "kiwoom.program.by-stock-intraday": ("kis.program.investor-trend",),
+    "kiwoom.program.cumulative": ("kis.program.investor-trend",),
+    "kiwoom.program.summary-daily": ("kis.program.investor-trend",),
+    "kiwoom.program.summary-intraday": ("kis.program.investor-trend",),
+    "kiwoom.ranking.after-hours": ("kis.ranking.after-hours-volume",),
+    "kiwoom.ranking.expected-conclusion": ("kis.ranking.expected-execution",),
+    "kiwoom.ranking.foreigner-period": ("kis.analysis.foreign-brokerage",),
+    "kiwoom.ranking.increasing-order": ("kis.ranking.hoga-quantity",),
+    "kiwoom.ranking.increasing-volume": ("kis.ranking.volume",),
+    "kiwoom.ranking.prev-day-volume": ("kis.ranking.volume",),
+    "kiwoom.ranking.remaining-order": ("kis.ranking.hoga-quantity",),
+    "kiwoom.ranking.transaction-value": ("kis.ranking.volume",),
+    "kiwoom.sector.all-index": ("kis.sector.current-index",),
+    "kiwoom.stock.basic-v1": ("kis.stock.basic-info", "kis.stock.current-price"),
+    "kiwoom.stock.credit-trend": ("kis.ranking.credit",),
+    "kiwoom.stock.daily-price": ("kis.chart.daily",),
+    "kiwoom.stock.execution-intensity-date": ("kis.ranking.execution-strength",),
+    "kiwoom.stock.execution-intensity-time": ("kis.ranking.execution-strength",),
+    "kiwoom.stock.high-per": ("kis.ranking.market-value",),
+    "kiwoom.stock.interest-indicator": ("kis.analysis.watchlist-multi-quote",),
+    "kiwoom.stock.investor": ("kis.analysis.investor-by-market-daily",),
+    "kiwoom.stock.member": ("kis.analysis.member-trend-tick",),
+    "kiwoom.stock.order-book-by-date": ("kis.stock.order-book",),
+    "kiwoom.stock.overtime-price": ("kis.stock.overtime-daily",),
+    "kiwoom.stock.prev-day-conclusion": ("kis.stock.conclusion",),
+    "kiwoom.stock.total-institutional": ("kis.analysis.institutional-foreign",),
+    "kiwoom.stock.upper-lower-limit": ("kis.analysis.limit-price-stocks",),
+    "kiwoom.stock.volume-renewal": ("kis.ranking.volume",),
+}
+
+
+def kis_alternatives_for(qualified_name: str) -> tuple[str, ...]:
+    return KIWOOM_KIS_ALTERNATIVES.get(qualified_name, ())
+
 
 _DOMAIN_TAXONOMY: dict[str, TaxonomyMetadata] = {
     "chart": TaxonomyMetadata(
@@ -519,11 +631,24 @@ def build_command_examples(path_segments: tuple[str, ...], parameters: dict[str,
     )
 
 
-def build_agent_notes(*, broker: str, category: str, name: str, required_credentials: tuple[str, ...]) -> str:
+def build_agent_notes(
+    *,
+    broker: str,
+    category: str,
+    name: str,
+    required_credentials: tuple[str, ...],
+    kis_alternatives: tuple[str, ...] = (),
+) -> str:
     """Build concise command-use guidance for agents."""
 
     credential_note = ", ".join(required_credentials) if required_credentials else "configured broker credentials"
     base = f"Read-only {broker.upper()} command. Use --json for machine-readable output. Requires {credential_note}."
+    if broker_role_name(broker) == "auxiliary":
+        if kis_alternatives:
+            preferred = ", ".join(kis_alternatives)
+            base = f"Auxiliary-broker command. Prefer the primary KIS command first: {preferred}. {base}"
+        else:
+            base = f"Auxiliary-broker command with no KIS equivalent; this is the intended use of Kiwoom. {base}"
 
     if category == "chart":
         return f"{base} Use chart output as provider-normalized market data before calculating technical indicators."
