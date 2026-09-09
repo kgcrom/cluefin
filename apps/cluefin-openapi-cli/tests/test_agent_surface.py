@@ -325,10 +325,9 @@ def test_classify_pydantic_response_parse_error() -> None:
         a: int
         b: str
 
-    try:
+    with pytest.raises(ValidationError) as exc_info:
         Model.model_validate({})
-    except ValidationError as exc:
-        error = classify_exception(exc, command="kis.stock.current-price", broker="kis")
+    error = classify_exception(exc_info.value, command="kis.stock.current-price", broker="kis")
 
     assert error.exit_code == EXIT_BROKER
     assert error.error_type == "ResponseParseError"
