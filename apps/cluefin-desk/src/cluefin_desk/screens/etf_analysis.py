@@ -1,3 +1,4 @@
+from rich.markup import escape
 from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -171,7 +172,7 @@ class EtfAnalysisScreen(Screen):
             lines += ["", "[bold]구성종목 상위 (비중순, KIS)[/bold]"]
             for item in components[:10]:
                 lines.append(
-                    f"  {pad(item.hts_kor_isnm, 16)} {pad(item.stck_prpr, 10, 'right')} "
+                    f"  {pad(escape(item.hts_kor_isnm or '-'), 16)} {pad(item.stck_prpr, 10, 'right')} "
                     f"({item.prdy_ctrt}%)  비중 {item.etf_cnfg_issu_rlim}%"
                 )
         else:

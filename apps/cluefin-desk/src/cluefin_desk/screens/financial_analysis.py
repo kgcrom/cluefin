@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Callable, Iterable, Sequence
 
+from rich.markup import escape
 from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -237,7 +238,7 @@ class FinancialAnalysisScreen(Screen):
             self.query_one("#disclosure-status", Static).update("" if items else "최근 공시가 없습니다.")
             if items:
                 title = self.query_one("#financial-title-bar", Static)
-                title.update(f"[bold]{items[0].corp_name}[/bold] ({self.stock_code}) — 재무 분석  [Esc·뒤로]")
+                title.update(f"[bold]{escape(items[0].corp_name)}[/bold] ({self.stock_code}) — 재무 분석  [Esc·뒤로]")
 
         self.app.call_from_thread(_update_disclosure_table)
 
@@ -309,7 +310,7 @@ class FinancialAnalysisScreen(Screen):
             lines.append("-" * 54)
             for item in selected:
                 lines.append(
-                    f"{pad(item.account_nm, 14)} {pad(item.thstrm_amount or '-', 18, 'right')} "
+                    f"{pad(escape(item.account_nm), 14)} {pad(item.thstrm_amount or '-', 18, 'right')} "
                     f"{pad(item.frmtrm_amount or '-', 18, 'right')}"
                 )
         else:
@@ -319,7 +320,7 @@ class FinancialAnalysisScreen(Screen):
         if indicators:
             lines += ["", "[bold]주요 재무지표 (DART)[/bold]", ""]
             for category, name, value in indicators:
-                lines.append(f"  [{category}] {name}: {value}")
+                lines.append(f"  [{category}] {escape(name)}: {escape(str(value))}")
         return lines
 
     def _load_dividend_info(self, dart_client, corp_code: str) -> None:
@@ -346,7 +347,7 @@ class FinancialAnalysisScreen(Screen):
             "-" * 76,
         ]
         for item in items[:20]:
-            label = (item.se or "-") + (f" ({item.stock_knd})" if item.stock_knd else "")
+            label = escape((item.se or "-") + (f" ({item.stock_knd})" if item.stock_knd else ""))
             lines.append(
                 f"{pad(label, 28)} {pad(item.thstrm or '-', 14, 'right')} "
                 f"{pad(item.frmtrm or '-', 14, 'right')} {pad(item.lwfr or '-', 14, 'right')}"
@@ -382,7 +383,7 @@ class FinancialAnalysisScreen(Screen):
         ]
         for item in items[:20]:
             lines.append(
-                f"{pad(item.nm, 20)} {pad(item.relate or '-', 12)} "
+                f"{pad(escape(item.nm or '-'), 20)} {pad(escape(item.relate or '-'), 12)} "
                 f"{pad(item.trmend_posesn_stock_co or '-', 16, 'right')} "
                 f"{pad((item.trmend_posesn_stock_qota_rt or '-') + '%', 8, 'right')}"
             )
@@ -433,7 +434,7 @@ class FinancialAnalysisScreen(Screen):
             ]
             for item in totals[:10]:
                 lines.append(
-                    f"{pad(item.se, 14)} {pad(item.istc_totqy or '-', 18, 'right')} "
+                    f"{pad(escape(item.se or '-'), 14)} {pad(item.istc_totqy or '-', 18, 'right')} "
                     f"{pad(item.tesstk_co or '-', 16, 'right')} {pad(item.distb_stock_co or '-', 18, 'right')}"
                 )
 
@@ -449,8 +450,8 @@ class FinancialAnalysisScreen(Screen):
             ]
             for item in changes[:20]:
                 lines.append(
-                    f"{pad(item.isu_dcrs_de, 12)} {pad(item.isu_dcrs_stle, 16)} "
-                    f"{pad(item.isu_dcrs_stock_knd, 12)} {pad(item.isu_dcrs_qy or '-', 16, 'right')} "
+                    f"{pad(item.isu_dcrs_de, 12)} {pad(escape(item.isu_dcrs_stle or '-'), 16)} "
+                    f"{pad(escape(item.isu_dcrs_stock_knd or '-'), 12)} {pad(item.isu_dcrs_qy or '-', 16, 'right')} "
                     f"{pad(item.isu_dcrs_mstvdv_amount or '-', 14, 'right')}"
                 )
         else:
@@ -518,7 +519,7 @@ class FinancialAnalysisScreen(Screen):
             lines += ["", f"[bold cyan]{cls._XBRL_STATEMENT_LABELS.get(stmt_key, stmt_key)}[/bold cyan]"]
             for item in stmt.line_items[:25]:
                 indent = "  " * item.depth
-                label = item.label_ko or item.concept_local_name
+                label = escape(item.label_ko or item.concept_local_name)
                 if item.is_abstract:
                     lines.append(f"{indent}[bold]{label}[/bold]")
                 else:
@@ -533,7 +534,7 @@ class FinancialAnalysisScreen(Screen):
         if notes:
             lines += ["", f"[bold cyan]주석 목차 ({len(notes)}건)[/bold cyan]"]
             for note in notes[:30]:
-                lines.append(f"  {note.role_code}  {note.title or '-'}  ({len(note.line_items)} items)")
+                lines.append(f"  {note.role_code}  {escape(note.title or '-')}  ({len(note.line_items)} items)")
         return lines
 
     def _find_corp_code(self, dart_client) -> str | None:

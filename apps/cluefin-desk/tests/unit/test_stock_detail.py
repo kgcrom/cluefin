@@ -40,6 +40,15 @@ class TestFormatBrokerLines:
         assert "매수사1" in text and "매도사5" in text
 
 
+class TestFormatBrokerMarkup:
+    def test_bracketed_names_survive_markup(self):
+        body = _broker_body()
+        body.stk_nm = "[kr]테스트"
+        body.buy_trde_ori_nm_1 = "[jp]모간"
+        rendered = Text.from_markup("\n".join(StockDetailScreen._format_broker_lines(body))).plain
+        assert "[kr]테스트" in rendered and "[jp]모간" in rendered
+
+
 class TestFormatMarginLines:
     def test_empty_says_so(self):
         assert StockDetailScreen._format_margin_lines([]) == ["신용거래 추이 데이터 없음"]
@@ -79,6 +88,19 @@ class TestFormatOpinionLines:
         )
         text = "\n".join(StockDetailScreen._format_opinion_lines([item]))
         assert "None" not in text
+
+    def test_bracketed_broker_name_survives_markup(self):
+        """증권사명도 뉴스 제목과 같은 경로로 마크업에 들어간다 — 소문자 대괄호는 태그로 먹힌다."""
+        item = SimpleNamespace(
+            stck_bsop_date="20260220",
+            mbcr_name="[nh]투자증권",
+            invt_opnn="[/매수]",
+            rgbf_invt_opnn="-",
+            hts_goal_prc="95,000",
+            dprt=None,
+        )
+        rendered = Text.from_markup("\n".join(StockDetailScreen._format_opinion_lines([item]))).plain
+        assert "[nh]투자증권" in rendered and "[/매수]" in rendered
 
 
 def _news_item(title="TCL, 삼성전자 제소", provider="9", dorg="뉴스핌", dt="20260902", tm="212221"):

@@ -21,7 +21,7 @@ _DISCLOSURE_PROVIDER_CODES = frozenset("FGHIN")
 
 
 class StockDetailScreen(Screen):
-    """Screen 6: Stock detail with 4 tabs (chart, investor, broker, supply-demand)."""
+    """Screen 6: Stock detail with 7 tabs (차트·투자자·매매원·수급·투자의견·뉴스·ML예측)."""
 
     BINDINGS = [
         Binding("escape", "go_back", "Back"),
@@ -116,7 +116,7 @@ class StockDetailScreen(Screen):
             if not basic_df.empty:
                 row = basic_df.iloc[0]
                 title.update(
-                    f"[bold]{row.get('stock_name', 'N/A')}[/bold] ({self.stock_code})  "
+                    f"[bold]{escape(str(row.get('stock_name', 'N/A')))}[/bold] ({self.stock_code})  "
                     f"{row.get('market_name', '')}  [F\u00b7재무] [Esc\u00b7뒤로]"
                 )
 
@@ -167,7 +167,7 @@ class StockDetailScreen(Screen):
     @staticmethod
     def _format_broker_lines(body) -> list[str]:
         lines = [
-            f"[bold]매매원 현황 — {body.stk_nm} ({body.stk_cd})[/bold]",
+            f"[bold]매매원 현황 — {escape(str(body.stk_nm))} ({body.stk_cd})[/bold]",
             f"현재가: {body.cur_prc}  등락률: {body.flu_rt}%",
         ]
         for title, prefix in [("매수 상위", "buy"), ("매도 상위", "sel")]:
@@ -175,7 +175,7 @@ class StockDetailScreen(Screen):
             for i in range(1, 6):
                 nm = getattr(body, f"{prefix}_trde_ori_nm_{i}", "-")
                 qty = getattr(body, f"{prefix}_trde_qty_{i}", "-")
-                lines.append(f"  {i}. {pad(nm, 16)}  {pad(qty, 12, 'right')}")
+                lines.append(f"  {i}. {pad(escape(str(nm)), 16)}  {pad(qty, 12, 'right')}")
         return lines
 
     def _load_supply_data(self) -> None:
@@ -286,7 +286,7 @@ class StockDetailScreen(Screen):
         if not actions_df.empty:
             lines += ["", "[bold]최근 권리락/배당락 (KIS)[/bold]", ""]
             for date, row in actions_df.sort_index(ascending=False).iterrows():
-                lines.append(f"  {date.strftime('%Y-%m-%d')}  {row['event']}")
+                lines.append(f"  {date.strftime('%Y-%m-%d')}  {escape(str(row['event']))}")
 
         return lines
 
@@ -318,8 +318,10 @@ class StockDetailScreen(Screen):
         ]
         for item in opinions[:20]:
             lines.append(
-                f"{pad(item.stck_bsop_date, 10)} {pad(item.mbcr_name, 12)} {pad(item.invt_opnn, 8)} "
-                f"{pad(item.rgbf_invt_opnn, 10)} {pad(item.hts_goal_prc, 10, 'right')} "
+                # 증권사명·의견은 외부 문자열 — 뉴스 제목과 같은 이유로 마크업 이스케이프.
+                f"{pad(item.stck_bsop_date, 10)} {pad(escape(item.mbcr_name or '-'), 12)} "
+                f"{pad(escape(item.invt_opnn or '-'), 8)} {pad(escape(item.rgbf_invt_opnn or '-'), 10)} "
+                f"{pad(item.hts_goal_prc, 10, 'right')} "
                 f"{pad((item.dprt or '-') + '%', 8, 'right')}"
             )
         return lines

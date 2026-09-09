@@ -6,6 +6,8 @@
 from datetime import datetime
 from types import SimpleNamespace
 
+from rich.text import Text
+
 from cluefin_desk.screens.financial_analysis import FinancialAnalysisScreen
 
 
@@ -134,6 +136,13 @@ class TestFormatShareholderLines:
         text = "\n".join(FinancialAnalysisScreen._format_shareholder_lines([item], "2025"))
         assert "이재용" in text
         assert "1.63%" in text
+
+    def test_bracketed_name_survives_markup(self):
+        item = SimpleNamespace(
+            nm="[x]펀드", relate="[/특별관계자]", trmend_posesn_stock_co="1", trmend_posesn_stock_qota_rt="1"
+        )
+        text = Text.from_markup("\n".join(FinancialAnalysisScreen._format_shareholder_lines([item], "2025"))).plain
+        assert "[x]펀드" in text and "[/특별관계자]" in text
 
     def test_missing_relation_renders_as_dash(self):
         item = SimpleNamespace(nm="홍길동", relate=None, trmend_posesn_stock_co=None, trmend_posesn_stock_qota_rt=None)
