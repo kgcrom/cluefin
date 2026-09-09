@@ -7,6 +7,7 @@ from cluefin_openapi_cli.main import run_cli
 from cluefin_openapi_cli.registry import RpcRegistry, set_registry_provider
 
 README = Path("apps/cluefin-openapi-cli/README.md")
+SKILL = Path("apps/cluefin-openapi-cli/SKILL.md")
 
 
 def test_readme_mentions_agent_discovery_commands() -> None:
@@ -31,6 +32,12 @@ def test_readme_mentions_agent_discovery_commands() -> None:
 def test_readme_discovery_examples_execute() -> None:
     set_registry_provider(RpcRegistry)
     examples = [
+        ["brokers", "--json"],
+        ["list", "--broker", "kis", "--json"],
+        ["list", "--query", "theme", "--json"],
+        ["list", "--full", "--json"],
+        ["schema", "kis", "stock", "current-price", "--json"],
+        ["kis", "stock", "current-price", "--stock-code", "005930", "--dry-run", "--json"],
         ["list", "--domain", "chart", "--json"],
         ["list", "--tag", "ohlcv", "--json"],
         ["domains", "--json"],
@@ -71,3 +78,20 @@ def test_readme_taxonomy_examples_match_json_shape() -> None:
     assert chart["example_filter"] == "uv run cluefin-openapi-cli list --domain chart --json"
     assert ohlcv["related_domains"] == ["chart"]
     assert ohlcv["example_filter"] == "uv run cluefin-openapi-cli list --tag ohlcv --json"
+
+
+def test_readme_and_skill_document_roles_dry_run_and_exit_codes() -> None:
+    readme = README.read_text(encoding="utf-8")
+    skill = SKILL.read_text(encoding="utf-8")
+
+    for text in (readme, skill):
+        assert "primary" in text and "auxiliary" in text
+        assert "kis_alternatives" in text
+        assert "--dry-run" in text
+        assert "--fields" in text
+        assert "brokers --json" in text
+        assert "schema kis stock current-price --json" in text
+        assert "retryable" in text
+    assert "| 5 |" in readme  # exit-code table
+    assert skill.startswith("---\nname: cluefin-openapi-cli\n")
+    assert "cluefin-cli" not in skill
