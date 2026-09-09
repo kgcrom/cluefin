@@ -95,8 +95,3 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - They run serialized (separate vitest config, single fork, 180s timeout) to respect
   live rate limits; don't fold them into the parallel unit config.
 - KIS account tests need `KIS_CANO`; without it they skip silently rather than fail.
-
-## Stale docs
-
-- `docs/api-coverage-gap.md` is a snapshot: its "미구현" rows for KIS realtime quotes
-  are outdated (those files exist now), and it predates NH PLUG entirely.
