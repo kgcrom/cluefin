@@ -334,3 +334,49 @@ def test_classify_pydantic_response_parse_error() -> None:
     assert error.data["fields"] == ["a", "b"]
     assert error.data["model"] == "Model"
     assert "field errors" in error.message
+
+
+def test_limit_is_advertised_as_a_global_option() -> None:
+    code, payload = _json(["schema", "kis", "stock", "current-price", "--json"])
+
+    assert code == 0
+    assert any(row["flag"].startswith("--limit") for row in payload["global_options"])
+
+
+def test_unfiltered_list_full_is_truncated_but_reports_the_real_total() -> None:
+    code, payload = _json(["list", "--full", "--json"])
+
+    assert code == 0
+    assert payload["count"] == 182
+    assert payload["returned"] == 25
+    assert payload["truncated"] is True
+    assert "--limit 0" in payload["hint"]
+
+
+def test_explicit_limit_zero_restores_every_row() -> None:
+    _, payload = _json(["list", "--full", "--limit", "0", "--json"])
+
+    assert payload["returned"] == 182
+    assert "truncated" not in payload
+
+
+def test_filtered_list_full_is_not_truncated() -> None:
+    _, payload = _json(["list", "--full", "--domain", "chart", "--json"])
+
+    assert payload["returned"] == payload["count"]
+    assert "truncated" not in payload
+
+
+def test_empty_query_points_the_agent_at_search() -> None:
+    _, payload = _json(["list", "--query", "zzzz-nonexistent", "--json"])
+
+    assert payload["count"] == 0
+    assert "search" in payload["hint"]
+
+
+def test_search_is_part_of_the_agent_surface() -> None:
+    code, payload = _json(["--help", "--json"])
+
+    assert code == 0
+    assert "search" in payload["commands"]
+    assert any("search" in line for line in payload["usage"])

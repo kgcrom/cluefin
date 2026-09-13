@@ -40,8 +40,9 @@ DART_AUTH_KEY=...
 ## Agent 워크플로
 
 ```bash
+uv run cluefin-openapi-cli search 외국인 순매수 --json                    # 0. 자연어 → 순위가 매겨진 후보 (권장 시작점)
 uv run cluefin-openapi-cli brokers --json                              # 1. 역할·설정 상태·Kiwoom 전용 목록
-uv run cluefin-openapi-cli list --broker kis --json                    # 2. 후보 command (brief)
+uv run cluefin-openapi-cli list --broker kis --domain chart --json     # 2. 후보 command (brief)
 uv run cluefin-openapi-cli schema kis stock current-price --json       # 3. parameter JSON Schema + 호출 예시
 uv run cluefin-openapi-cli kis stock current-price --stock-code 005930 --dry-run --json   # 4. 로컬 검증
 uv run cluefin-openapi-cli kis stock current-price --stock-code 005930 --fields current_price,per --json  # 5. 실행
@@ -50,18 +51,33 @@ uv run cluefin-openapi-cli kis stock current-price --stock-code 005930 --fields 
 ### 1. Discovery
 
 ```bash
+uv run cluefin-openapi-cli search 외국인 순매수 상위 종목 --json
+uv run cluefin-openapi-cli search dividend schedule --limit 5 --compact
+uv run cluefin-openapi-cli search 재무제표 --broker kis --json
 uv run cluefin-openapi-cli brokers --json
-uv run cluefin-openapi-cli list --json
 uv run cluefin-openapi-cli list --broker kis --category stock --json
 uv run cluefin-openapi-cli list --domain chart --json
 uv run cluefin-openapi-cli list --tag ohlcv --json
+uv run cluefin-openapi-cli list --tag screening --json
 uv run cluefin-openapi-cli list --query theme --json
-uv run cluefin-openapi-cli list --full --json
+uv run cluefin-openapi-cli list --full --domain chart --json
 uv run cluefin-openapi-cli domains --json
 uv run cluefin-openapi-cli tags --json
+uv run cluefin-openapi-cli kis --help --json
+uv run cluefin-openapi-cli kis chart --help --json
 ```
 
+`search`는 자연어 작업 설명을 받아 BM25F로 **순위를 매긴 후보 command**를 돌려줍니다. 기본 8건, 약 3KB로 항상 첫 호출로 쓸 만큼 쌉니다. 한국어 질의는 `metadata.QUERY_ALIASES`가 영어 색인 용어로 확장합니다(코퍼스는 전부 영어입니다). 각 row에는 그대로 실행 가능한 `next`(해당 command의 `schema` 호출)가 붙습니다. 결과가 없거나 `confidence`가 `low`면 빈 배열 대신 `fallback`(`did_you_mean`, `nearest_domains`, `nearest_tags`, `recipes`, `next`)이 들어옵니다 — `search`는 막다른 빈 결과를 주지 않습니다.
+
+`list --query`는 `qualified_name`·`description`에 대한 **리터럴 부분 문자열 필터**입니다. 자연어·한국어 질의에는 `search`를, 정확한 문자열 필터링에는 `list --query`를 씁니다.
+
 `list`는 기본이 **brief**입니다. 한 row에 `qualified_name`, `broker_role`, `description`, `domains`, `tags`, `required`(필수 parameter 이름), `kis_alternatives`만 담아 182개 command 전체가 100KB 이하로 떨어집니다. parameter 전체가 필요하면 `--full`을 주거나, 특정 command만 `schema`로 봅니다. 정렬은 항상 kis → kiwoom → dart 입니다.
+
+`--full`을 필터 없이 부르면 상위 25개만 반환하고 `count`(전체)·`returned`·`truncated: true`·`hint`를 함께 냅니다. 전체가 필요하면 `--limit 0`을 명시합니다.
+
+`domains`·`tags`는 category에서 자동 파생되지 않고 **command마다 직접 부여**됩니다(`metadata.COMMAND_TAXONOMY`). 따라서 `--tag`·`--domain` 필터는 실제로 좁혀지며, 잘 알려진 개념은 `--query`보다 이쪽이 정확합니다.
+
+`<broker> --help`는 category마다 `description`·`when_to_use`·실제 command에서 계산한 `domains`/`tags`·바로 실행 가능한 `list_command`를 냅니다. `<broker> <category> --help`는 그 category의 command를 설명과 함께 냅니다. 모든 meta command도 `--help`를 받습니다.
 
 `category`는 provider SDK 구조이고, `domain`은 Agent 업무 의도입니다. 예를 들어 `kis chart period`는 category가 `chart`이고 domain도 `chart`지만, 투자자 수급성 API는 provider별 category가 달라도 `trading-flow` domain으로 함께 찾을 수 있습니다.
 
@@ -83,7 +99,7 @@ Agent용 분류 기준:
   "avoid_when": "Skip when OHLCV arrays are already in hand; compute indicators from them with the cluefin-ta package.",
   "related_tags": ["ohlcv", "daily", "minute", "tick"],
   "example_filter": "uv run cluefin-openapi-cli list --domain chart --json",
-  "command_count": 8
+  "command_count": 15
 }
 ```
 
@@ -122,7 +138,7 @@ uv run cluefin-openapi-cli recipe disclosure-monitoring --json
 - `kis <category> <name>`
 - `kiwoom <category> <name>`
 - `dart <name>`
-- `brokers`, `list`, `describe`, `schema`, `domains`, `tags`, `recipes`, `recipe`는 meta command
+- `search`, `brokers`, `list`, `describe`, `schema`, `domains`, `tags`, `recipes`, `recipe`는 meta command
 
 ```bash
 uv run cluefin-openapi-cli kis stock current-price --stock-code 005930 --json
@@ -163,10 +179,12 @@ uv run cluefin-openapi-cli kis stock current-price --stock-code 005930 --dry-run
 - `--json`: 항상 JSON. stdout이 TTY가 아니면 기본값
 - `--compact`: 한 줄 JSON. agent 컨텍스트에 가장 저렴
 - `--fields a,b.c`: 결과 field mask. 최상위 키 또는 점 경로. 리스트 값이면 각 요소에 적용. 없는 키는 조용히 생략되므로 반환 키를 확인할 것
+- `--limit N`: 결과 배열을 N행으로 자름. `--fields`(열 마스킹) 다음에 적용됩니다. 실제로 잘린 경우에만 `_truncated`에 `limit`과 `path`·`returned`·`total`이 붙습니다. 최상위가 리스트면 `{"items": [...], "_truncated": {...}}`로 감쌉니다 — 잘렸을 때만 shape이 바뀝니다. `0`이면 제한 없음. broker command에는 암묵 기본값이 없습니다(20행짜리 일봉은 유효한 20일 차트처럼 보이므로 조용히 자르지 않습니다)
 - client 라이브러리의 DEBUG/INFO 로그는 stderr에서 숨김. `CLUEFIN_OPENAPI_DEBUG=1`이면 표시
 
 ```bash
 uv run cluefin-openapi-cli kis stock current-price --stock-code 005930 --fields stock_code,current_price,per --compact
+uv run cluefin-openapi-cli kis chart daily --stock-code 005930 --fields output.stck_bsop_date,output.stck_clpr --limit 20 --compact
 uv run cluefin-openapi-cli kiwoom theme group --query-type 0 --date-type 10 --theme-name "" \
   --fluctuation-type 1 --exchange-type 1 --fields thema_grp.thema_grp_cd,thema_grp.thema_nm --json
 ```
@@ -209,6 +227,7 @@ src/cluefin_openapi_cli/
 ├── validation.py   네트워크 호출 전 로컬 검증(required/enum/pattern/범위)과 문자열 하드닝
 ├── errors.py       exit code 계약(EXIT_CODES)과 broker 예외 → CliError 분류(classify_exception)
 ├── output.py       JSON 직렬화, --compact, --fields 마스킹
+├── search.py       자연어 query → BM25F 순위 command 후보. 한국어 alias 확장·fallback
 ├── recipes.py      여러 command를 엮는 workflow guide
 └── handlers/
     ├── _base.py    @rpc_method 데코레이터, KIS/Kiwoom 응답 추출 헬퍼
@@ -236,7 +255,8 @@ command 하나는 handler 함수에 붙은 `@rpc_method(name="stock.current_pric
 - `test_agent_surface.py`: role·alternatives·schema·dry-run·검증·field mask·exit code 분류
 - `test_cli_contract.py`: 182개 command 전부 `schema`가 유효하고 `invoke.dry_run` 예시가 실제로 exit 0으로 통과하는지, README 코드 블록의 명령이 실행되는지
 - `test_handler_client_contract.py`: handler가 호출하는 client 메서드·응답 필드가 실제 `cluefin-openapi`에 존재하는지
-- `test_rpc_registry.py`: command 수(182)·metadata 완결성·taxonomy 커버리지
+- `test_rpc_registry.py`: command 수(182)·metadata 완결성·taxonomy 커버리지·`COMMAND_TAXONOMY` 전수 대응·필터 선택도
+- `test_search.py`: 한국어/영어 질의 recall, 순위, fallback, alias 동기화, 인덱스 캐싱
 
 ## 동작 원칙
 

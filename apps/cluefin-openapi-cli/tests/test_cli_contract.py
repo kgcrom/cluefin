@@ -22,7 +22,7 @@ from cluefin_openapi_cli.registry import EmptyRegistry, RpcRegistry, build_cli_r
 
 README = Path("apps/cluefin-openapi-cli/README.md")
 SKILL = Path("apps/cluefin-openapi-cli/SKILL.md")
-META = {"brokers", "list", "describe", "schema", "domains", "tags", "recipes", "recipe"}
+META = {"search", "brokers", "list", "describe", "schema", "domains", "tags", "recipes", "recipe"}
 
 
 class _ExplodingFactory:
@@ -134,10 +134,10 @@ def _drop_fields_value(argv: list[str]) -> list[str]:
         if skip:
             skip = False
             continue
-        if token == "--fields":
+        if token in {"--fields", "--limit"}:
             skip = True
             continue
-        if token in {"--json", "--compact"} or token.startswith("--fields="):
+        if token in {"--json", "--compact"} or token.startswith(("--fields=", "--limit=")):
             continue
         out.append(token)
     return out

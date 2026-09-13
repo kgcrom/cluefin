@@ -20,6 +20,14 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - KIS = primary, Kiwoom = auxiliary, DART = reference — defined once in
   `metadata.BROKER_ROLES`. Ordering everywhere (`list`, `brokers`, `iter_brokers`) comes
   from `broker_rank`, not from alphabetical sorting.
+- `metadata.COMMAND_TAXONOMY` is the authoritative domain/tag source, keyed by qualified
+  name and **hand-authored for all 182 commands**. `_CATEGORY_DEFAULTS` survives only as
+  an unreachable fallback — `test_every_command_has_hand_authored_taxonomy` fails in both
+  directions, so a new command or a rename breaks CI rather than silently inheriting a
+  category default. Do not reintroduce keyword-derived tags: matching is additive with no
+  removal rule, which is what put `current-price` on 56/182 commands before.
+- `metadata.CATEGORY_INFO` supplies the per-category prose for `<broker> --help`; the
+  `domains`/`tags` shown there are a union over the real commands, not the seed values.
 - `metadata.KIWOOM_KIS_ALTERNATIVES` is a hand-maintained map; a Kiwoom command missing
   from it is *declared* Kiwoom-only and shows up in `brokers --json` →
   `kiwoom_only_commands`. When adding a Kiwoom handler that overlaps KIS, add the entry
@@ -56,12 +64,35 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 
 - `test_rpc_registry.py` hardcodes the total command count — bump it when adding or
   removing any handler.
-- New auto-derived domains/tags must also be added to `_DOMAIN_TAXONOMY`/`_TAG_TAXONOMY`
-  or the taxonomy-coverage test fails.
+- A domain/tag used in `COMMAND_TAXONOMY` must also exist in `_DOMAIN_TAXONOMY`/
+  `_TAG_TAXONOMY` or the taxonomy-coverage test fails.
+- `test_taxonomy_filters_are_selective` puts a floor under filter precision (≥110 distinct
+  `(domains, tags)` signatures, no tag on more than 50 commands). Retagging that collapses
+  commands back into one bucket fails it.
 - Recipe → command references are validated only by a test, not at runtime; renaming a
   command path silently breaks recipes until tests run.
 - `test_readme_smoke.py` does literal substring assertions against `README.md` and
   `SKILL.md` — keep the example/taxonomy strings in sync with `metadata.py` text.
 - `list` is **brief** by default (`_command_brief`); `--full` restores the old
   per-command `parameters`. Tests and agents that need parameters must use `--full` or
-  `schema`.
+  `schema`. An **unfiltered** `list --full` is capped at 25 rows (`_UNFILTERED_FULL_LIMIT`)
+  and reports `count`/`returned`/`truncated`; `--limit 0` restores every row. It truncates
+  rather than refuses because README/SKILL assertions require it to exit 0.
+- `test_readme_smoke.py` also pins the `command_count` printed in the README's taxonomy
+  example against the live `domains --json`, so retagging commands can fail it.
+
+## search is a ranker, `list --query` is a filter
+
+- These are deliberately separate primitives. `test_agent_surface.py` asserts that
+  `list --full --query "theme group"` returns **only** matching names — redirecting
+  `--query` into the scorer breaks that by construction.
+- The corpus is 100% English, so Hangul never enters the index. Korean reaches it only
+  through `metadata.QUERY_ALIASES` expansion, and alias values are run through the same
+  `tokenize()` as documents — a raw plural like `securities` would otherwise never match
+  the indexed stem `securitie`. `test_search.py` fails on any alias expansion that
+  reaches nothing.
+- The BM25F index is cached on the **registry object identity**; `set_registry_provider`
+  swaps registries between tests and an unkeyed cache would serve a stale index.
+- `tests/test_cli_contract.py` has a `META` set — a new meta command must be added there
+  or its documented examples get re-run as network commands and silently stop being
+  verified offline.
