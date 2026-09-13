@@ -142,3 +142,51 @@ def test_rpc_registry_invokes_real_executor_with_fake_client() -> None:
     result = registry.invoke_command(command, {"corp_code": "00126380"})
 
     assert result == {"corp_code": "00126380"}
+
+
+def test_every_command_has_hand_authored_taxonomy() -> None:
+    """Domains/tags are authored per command, not derived from the category.
+
+    Both directions matter: a new command must not silently inherit a category default,
+    and a renamed or removed command must not leave a stale row behind.
+    """
+
+    from cluefin_openapi_cli.metadata import COMMAND_TAXONOMY
+
+    paths = {".".join(path) for path in build_cli_registry()}
+
+    assert paths - set(COMMAND_TAXONOMY) == set(), "command(s) missing from COMMAND_TAXONOMY"
+    assert set(COMMAND_TAXONOMY) - paths == set(), "stale COMMAND_TAXONOMY row(s)"
+
+
+def test_taxonomy_filters_are_selective() -> None:
+    """Guard the precision won by authoring: --tag/--domain must actually narrow."""
+
+    from collections import Counter
+
+    registry = build_cli_registry()
+    signatures = {(command.domains, command.tags) for command in registry.values()}
+    tag_sizes = Counter(tag for command in registry.values() for tag in command.tags)
+
+    # Category-derived taxonomy produced 66 signatures with current-price on 56/182.
+    assert len(signatures) >= 110, len(signatures)
+    assert max(tag_sizes.values()) <= 50, tag_sizes.most_common(3)
+
+
+def test_condition_search_is_not_mistagged_as_investor_flow() -> None:
+    """The clearest case of the old category-default bug."""
+
+    registry = build_cli_registry()
+    command = registry[("kis", "analysis", "condition-search-list")]
+
+    assert command.tags == ("screening", "condition-search")
+    assert "foreign" not in command.tags
+
+
+def test_every_live_category_is_described() -> None:
+    from cluefin_openapi_cli.metadata import CATEGORY_INFO
+
+    registry = build_cli_registry()
+    categories = {command.category for command in registry.values() if command.broker != "dart"}
+
+    assert categories - set(CATEGORY_INFO) == set()

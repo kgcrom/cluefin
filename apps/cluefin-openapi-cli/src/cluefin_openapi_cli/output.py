@@ -109,6 +109,55 @@ def select_fields(data: Any, fields: list[str]) -> Any:
     return result
 
 
+_MAX_LIMIT_DEPTH = 6
+
+
+def limit_rows(data: Any, limit: int) -> tuple[Any, list[dict[str, Any]]]:
+    """Truncate every list in a JSON-safe payload to ``limit`` items.
+
+    Returns ``(data, notes)`` where each note is ``{"path", "returned", "total"}`` using
+    the same dotted-path vocabulary ``select_fields`` uses, so an agent only ever has to
+    learn one path syntax. ``limit <= 0`` means "no limit" and returns the payload as-is.
+    Only lists that were actually longer than ``limit`` produce a note.
+    """
+
+    if limit <= 0:
+        return data, []
+
+    notes: list[dict[str, Any]] = []
+
+    def walk(value: Any, path: str, depth: int) -> Any:
+        if depth > _MAX_LIMIT_DEPTH:
+            return value
+        if isinstance(value, list):
+            total = len(value)
+            trimmed = value[:limit] if total > limit else value
+            if total > limit:
+                notes.append({"path": path or "(root)", "returned": len(trimmed), "total": total})
+            return [walk(item, path, depth + 1) for item in trimmed]
+        if isinstance(value, dict):
+            return {key: walk(item, f"{path}.{key}" if path else key, depth + 1) for key, item in value.items()}
+        return value
+
+    return walk(data, "", 0), notes
+
+
+def attach_truncation(data: Any, limit: int, notes: list[dict[str, Any]]) -> Any:
+    """Make truncation visible to the agent, never silent.
+
+    A dict payload gains a ``_truncated`` sibling key. A top-level list is wrapped as
+    ``{"items": [...], "_truncated": {...}}`` — the shape only changes when something was
+    actually cut, so untruncated calls keep their original shape.
+    """
+
+    if not notes:
+        return data
+    summary = {"limit": limit, "paths": notes}
+    if isinstance(data, dict):
+        return {**data, "_truncated": summary}
+    return {"items": data, "_truncated": summary}
+
+
 def render_output(
     payload: Any,
     *,

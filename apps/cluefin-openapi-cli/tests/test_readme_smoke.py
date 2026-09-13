@@ -79,6 +79,10 @@ def test_readme_taxonomy_examples_match_json_shape() -> None:
     assert ohlcv["related_domains"] == ["chart"]
     assert ohlcv["example_filter"] == "uv run cluefin-openapi-cli list --tag ohlcv --json"
 
+    # The README prints this entry verbatim; keep its command_count honest.
+    readme = Path("apps/cluefin-openapi-cli/README.md").read_text(encoding="utf-8")
+    assert f'"command_count": {chart["command_count"]}' in readme
+
 
 def test_readme_and_skill_document_roles_dry_run_and_exit_codes() -> None:
     readme = README.read_text(encoding="utf-8")

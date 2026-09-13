@@ -348,3 +348,33 @@ def test_recipe_without_name_exits_2() -> None:
 
     assert result.exit_code == 2
     assert "Usage" in result.stdout
+
+
+def test_every_meta_command_answers_help() -> None:
+    from cluefin_openapi_cli.main import META_COMMANDS
+
+    for name in META_COMMANDS:
+        result = run_cli([name, "--help", "--json"])
+        assert result.exit_code == 0, (name, result.stdout)
+        assert '"usage"' in result.stdout, name
+
+
+def test_broker_help_categories_are_described_objects() -> None:
+    import json
+
+    result = run_cli(["kis", "--help", "--json"])
+    payload = json.loads(result.stdout)
+    first = payload["categories"][0]
+
+    assert first["description"]
+    assert first["when_to_use"]
+    assert run_cli(first["list_command"].split()[3:]).exit_code == 0
+
+
+def test_category_help_rows_carry_description_and_tags() -> None:
+    import json
+
+    payload = json.loads(run_cli(["kis", "chart", "--help", "--json"]).stdout)
+
+    assert payload["description"]
+    assert all(row["description"] and row["tags"] for row in payload["commands"])

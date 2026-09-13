@@ -198,6 +198,13 @@ _DOMAIN_TAXONOMY: dict[str, TaxonomyMetadata] = {
         avoid_when="Use statements when the task needs normalized financial values rather than filing discovery.",
         related_tags=("announcement", "disclosure"),
     ),
+    "reference": TaxonomyMetadata(
+        name="reference",
+        description="Static registries: instrument identity, product master, member firms, industry codes, and eligibility lists.",
+        when_to_use="Use to resolve a code, confirm an instrument exists, or list what is tradable/loanable before a real query.",
+        avoid_when="Use quote for live price state; these lists describe what exists, not what it is doing now.",
+        related_tags=("reference-list", "broker-flow", "short-selling", "credit"),
+    ),
     "quote": TaxonomyMetadata(
         name="quote",
         description="Current price, order book, execution, and stock identity lookup commands.",
@@ -236,6 +243,107 @@ _DOMAIN_TAXONOMY: dict[str, TaxonomyMetadata] = {
 }
 
 _TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {
+    "screening": TaxonomyMetadata(
+        name="screening",
+        description="Commands that return a filtered or ranked slice of the market rather than one known stock.",
+        when_to_use="Use when the task starts from a condition ('stocks that ...') instead of a stock code.",
+        avoid_when="Use ranking when you want a standard top-N list by a single criterion.",
+        related_domains=("market",),
+    ),
+    "condition-search": TaxonomyMetadata(
+        name="condition-search",
+        description="Saved HTS condition-search definitions and their results.",
+        when_to_use="Use to run a user's pre-saved screening condition; requires a user id.",
+        related_domains=("market",),
+    ),
+    "watchlist": TaxonomyMetadata(
+        name="watchlist",
+        description="Watchlist (관심종목) group membership and multi-stock quote lookup.",
+        when_to_use="Use to read a user's watchlist groups or quote many stocks in one call.",
+        related_domains=("quote", "market"),
+    ),
+    "broker-flow": TaxonomyMetadata(
+        name="broker-flow",
+        description="Trading by securities firm / member company (거래원·회원사).",
+        when_to_use="Use when the question is which brokerage is buying or selling, not which investor type.",
+        avoid_when="Use foreign or institution for investor-type flow.",
+        related_domains=("trading-flow", "market"),
+    ),
+    "analyst-opinion": TaxonomyMetadata(
+        name="analyst-opinion",
+        description="Sell-side investment opinions and target prices.",
+        when_to_use="Use for analyst ratings on a stock, optionally broken down by brokerage.",
+        related_domains=("statements",),
+    ),
+    "earnings-estimate": TaxonomyMetadata(
+        name="earnings-estimate",
+        description="Forward earnings and foreign/institutional estimates.",
+        when_to_use="Use for forward-looking figures rather than reported statements.",
+        avoid_when="Use financial-statement for reported results.",
+        related_domains=("statements", "trading-flow"),
+    ),
+    "valuation": TaxonomyMetadata(
+        name="valuation",
+        description="PER, PBR, PCR, PSR, EPS and ROE based screens.",
+        when_to_use="Use to rank or screen by valuation multiples.",
+        related_domains=("market", "statements"),
+    ),
+    "nav": TaxonomyMetadata(
+        name="nav",
+        description="ETF/ETN net asset value and NAV-vs-price tracking.",
+        when_to_use="Use for ETF NAV levels, premium/discount, and return tracking.",
+        related_domains=("etf",),
+    ),
+    "etf-holdings": TaxonomyMetadata(
+        name="etf-holdings",
+        description="ETF component stocks (PDF) and their weights.",
+        when_to_use="Use to see what an ETF actually holds.",
+        related_domains=("etf",),
+    ),
+    "reference-list": TaxonomyMetadata(
+        name="reference-list",
+        description="Static master lists: instruments, member firms, industry codes, eligibility.",
+        when_to_use="Use to resolve or enumerate codes before a data query.",
+        avoid_when="Use current-price for live state.",
+        related_domains=("reference", "market"),
+    ),
+    "volatility": TaxonomyMetadata(
+        name="volatility",
+        description="Rapid price movement, VI triggers, and upper/lower limit states.",
+        when_to_use="Use to find stocks moving abnormally fast or halted for volatility.",
+        related_domains=("market", "quote"),
+    ),
+    "expected-price": TaxonomyMetadata(
+        name="expected-price",
+        description="Pre-open, closing-auction, and after-hours expected execution prices.",
+        when_to_use="Use for indicative prices outside continuous trading.",
+        avoid_when="Use current-price during continuous session hours.",
+        related_domains=("quote", "market"),
+    ),
+    "investor-interest": TaxonomyMetadata(
+        name="investor-interest",
+        description="Retail attention proxies: HTS inquiry counts, watchlist registrations, sentiment.",
+        when_to_use="Use to gauge how much attention a stock is getting, independent of price.",
+        related_domains=("market",),
+    ),
+    "price-level": TaxonomyMetadata(
+        name="price-level",
+        description="Support/resistance, disparity, new high/low, and supply-concentration price zones.",
+        when_to_use="Use to locate meaningful price levels for a stock.",
+        related_domains=("quote", "market"),
+    ),
+    "execution-strength": TaxonomyMetadata(
+        name="execution-strength",
+        description="Execution strength (체결강도) and trading weight by execution amount.",
+        when_to_use="Use to judge buying vs selling pressure inside executions.",
+        related_domains=("quote",),
+    ),
+    "market-breadth": TaxonomyMetadata(
+        name="market-breadth",
+        description="Market-wide fund flow and interest-rate summary context.",
+        when_to_use="Use for macro/market-level context rather than a single stock.",
+        related_domains=("market",),
+    ),
     "announcement": TaxonomyMetadata(
         name="announcement",
         description="Market announcement and event title data.",
@@ -419,6 +527,246 @@ _TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {
     ),
 }
 
+
+@dataclass(frozen=True, slots=True)
+class CommandTaxonomy:
+    """Hand-authored discovery taxonomy for one command.
+
+    Keyed by qualified name — the same identity recipes, `kis_alternatives`, and the
+    tests already use. Authored per command rather than derived from the category,
+    because a category default is wrong for every command in the category that is not
+    the category's typical case, and there is no rule that can remove a wrong default.
+    """
+
+    domains: tuple[str, ...]
+    tags: tuple[str, ...]
+    keywords: tuple[str, ...] = ()
+
+
+COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
+    "kis.analysis.after-hours-expected": CommandTaxonomy(
+        ("market", "quote"), ("expected-price", "overtime", "screening")
+    ),
+    "kis.analysis.buy-sell-volume-daily": CommandTaxonomy(("trading-flow",), ("foreign", "institution", "daily")),
+    "kis.analysis.condition-search-list": CommandTaxonomy(("market",), ("screening", "condition-search")),
+    "kis.analysis.condition-search-result": CommandTaxonomy(("market",), ("screening", "condition-search")),
+    "kis.analysis.expected-price-trend": CommandTaxonomy(("quote",), ("expected-price",)),
+    "kis.analysis.foreign-brokerage": CommandTaxonomy(
+        ("trading-flow", "market"), ("foreign", "broker-flow", "ranking")
+    ),
+    "kis.analysis.foreign-institutional-estimate": CommandTaxonomy(
+        ("trading-flow",), ("foreign", "institution", "earnings-estimate")
+    ),
+    "kis.analysis.institutional-foreign": CommandTaxonomy(("trading-flow",), ("foreign", "institution")),
+    "kis.analysis.investor-by-market-daily": CommandTaxonomy(
+        ("trading-flow", "market"), ("foreign", "institution", "daily")
+    ),
+    "kis.analysis.investor-by-market-intraday": CommandTaxonomy(
+        ("trading-flow", "market"), ("foreign", "institution", "minute")
+    ),
+    "kis.analysis.limit-price-stocks": CommandTaxonomy(("market",), ("screening", "volatility")),
+    "kis.analysis.market-fund-summary": CommandTaxonomy(("market",), ("market-breadth",)),
+    "kis.analysis.member-trend-tick": CommandTaxonomy(("trading-flow",), ("broker-flow", "tick")),
+    "kis.analysis.resistance-level": CommandTaxonomy(("quote",), ("price-level", "execution-strength")),
+    "kis.analysis.short-selling-trend": CommandTaxonomy(("trading-flow",), ("short-selling", "daily")),
+    "kis.analysis.stock-loan-trend": CommandTaxonomy(("trading-flow",), ("short-selling", "daily")),
+    "kis.analysis.trading-weight": CommandTaxonomy(("quote",), ("price-level", "execution-strength")),
+    "kis.analysis.watchlist-groups": CommandTaxonomy(("quote",), ("watchlist",)),
+    "kis.analysis.watchlist-multi-quote": CommandTaxonomy(("quote",), ("watchlist", "current-price")),
+    "kis.analysis.watchlist-stocks": CommandTaxonomy(("quote",), ("watchlist",)),
+    "kis.chart.daily": CommandTaxonomy(("chart",), ("ohlcv", "daily")),
+    "kis.chart.daily-minute": CommandTaxonomy(("chart",), ("ohlcv", "minute", "daily")),
+    "kis.chart.minute": CommandTaxonomy(("chart",), ("ohlcv", "minute")),
+    "kis.chart.period": CommandTaxonomy(("chart",), ("ohlcv", "daily")),
+    "kis.etf.component-stocks": CommandTaxonomy(("etf",), ("etf-holdings",)),
+    "kis.etf.current-price": CommandTaxonomy(("etf", "quote"), ("current-price", "nav")),
+    "kis.etf.daily": CommandTaxonomy(("etf", "chart"), ("nav", "daily")),
+    "kis.etf.nav-trend": CommandTaxonomy(("etf",), ("nav",)),
+    "kis.financial.balance-sheet": CommandTaxonomy(("statements",), ("financial-statement",)),
+    "kis.financial.growth": CommandTaxonomy(("statements",), ("financial-ratio",)),
+    "kis.financial.income-statement": CommandTaxonomy(("statements",), ("financial-statement",)),
+    "kis.financial.other-key": CommandTaxonomy(("statements",), ("financial-ratio",)),
+    "kis.financial.profitability": CommandTaxonomy(("statements",), ("financial-ratio",)),
+    "kis.financial.ratio": CommandTaxonomy(("statements",), ("financial-ratio",)),
+    "kis.financial.stability": CommandTaxonomy(("statements",), ("financial-ratio",)),
+    "kis.market.announcement": CommandTaxonomy(("news", "market"), ("announcement", "disclosure")),
+    "kis.market.futures-business-day": CommandTaxonomy(("market-calendar", "market"), ("market-calendar",)),
+    "kis.market.holiday": CommandTaxonomy(("market-calendar", "market"), ("market-calendar",)),
+    "kis.market.interest-rate": CommandTaxonomy(("market",), ("market-breadth",)),
+    "kis.program.investor-trend": CommandTaxonomy(("trading-flow", "market"), ("program-trading",)),
+    "kis.ranking.after-hours-volume": CommandTaxonomy(("market",), ("ranking", "volume-rank", "overtime")),
+    "kis.ranking.credit": CommandTaxonomy(("market",), ("ranking", "credit")),
+    "kis.ranking.disparity": CommandTaxonomy(("market",), ("ranking", "price-level")),
+    "kis.ranking.dividend-yield": CommandTaxonomy(("market", "corporate-actions"), ("ranking", "dividend")),
+    "kis.ranking.execution-strength": CommandTaxonomy(("market",), ("ranking", "execution-strength")),
+    "kis.ranking.expected-execution": CommandTaxonomy(("market",), ("ranking", "expected-price")),
+    "kis.ranking.finance-ratio": CommandTaxonomy(("market", "statements"), ("ranking", "financial-ratio")),
+    "kis.ranking.hoga-quantity": CommandTaxonomy(("market",), ("ranking", "order-book")),
+    "kis.ranking.hts-inquiry": CommandTaxonomy(("market",), ("ranking", "investor-interest")),
+    "kis.ranking.large-execution": CommandTaxonomy(("market",), ("ranking", "conclusion")),
+    "kis.ranking.market-cap": CommandTaxonomy(("market",), ("ranking", "market-cap")),
+    "kis.ranking.market-value": CommandTaxonomy(("market", "statements"), ("ranking", "valuation")),
+    "kis.ranking.new-high-low": CommandTaxonomy(("market",), ("ranking", "price-level")),
+    "kis.ranking.preferred-stock": CommandTaxonomy(("market",), ("ranking", "price-level")),
+    "kis.ranking.profitability": CommandTaxonomy(("market", "statements"), ("ranking", "financial-ratio")),
+    "kis.ranking.proprietary": CommandTaxonomy(("market", "trading-flow"), ("ranking", "institution")),
+    "kis.ranking.short-selling": CommandTaxonomy(("market", "trading-flow"), ("ranking", "short-selling")),
+    "kis.ranking.time-hoga": CommandTaxonomy(("market",), ("ranking", "order-book", "overtime")),
+    "kis.ranking.volume": CommandTaxonomy(("market",), ("ranking", "volume-rank")),
+    "kis.ranking.watchlist": CommandTaxonomy(("market",), ("ranking", "investor-interest", "watchlist")),
+    "kis.schedule.bonus-issue": CommandTaxonomy(("corporate-actions", "market-calendar"), ("dividend", "announcement")),
+    "kis.schedule.capital-increase": CommandTaxonomy(
+        ("corporate-actions", "market-calendar"), ("capital-increase", "announcement")
+    ),
+    "kis.schedule.capital-reduction": CommandTaxonomy(
+        ("corporate-actions", "market-calendar"), ("capital-reduction", "announcement")
+    ),
+    "kis.schedule.deposit": CommandTaxonomy(("corporate-actions", "market-calendar"), ("announcement",)),
+    "kis.schedule.dividend": CommandTaxonomy(("corporate-actions", "market-calendar"), ("dividend", "announcement")),
+    "kis.schedule.forfeited-share": CommandTaxonomy(
+        ("corporate-actions", "market-calendar"), ("capital-increase", "announcement")
+    ),
+    "kis.schedule.ipo-subscription": CommandTaxonomy(("corporate-actions", "market-calendar"), ("ipo", "announcement")),
+    "kis.schedule.listing": CommandTaxonomy(("corporate-actions", "market-calendar"), ("ipo", "announcement")),
+    "kis.schedule.merger-split": CommandTaxonomy(
+        ("corporate-actions", "market-calendar"), ("merger-split", "announcement")
+    ),
+    "kis.schedule.par-value-change": CommandTaxonomy(
+        ("corporate-actions", "market-calendar"), ("merger-split", "announcement")
+    ),
+    "kis.schedule.shareholder-meeting": CommandTaxonomy(
+        ("corporate-actions", "market-calendar"), ("shareholder-meeting", "announcement")
+    ),
+    "kis.schedule.stock-dividend": CommandTaxonomy(
+        ("corporate-actions", "market-calendar"), ("dividend", "announcement")
+    ),
+    "kis.sector.current-index": CommandTaxonomy(("sector",), ("sector-index", "current-price")),
+    "kis.sector.daily": CommandTaxonomy(("sector", "chart"), ("sector-index", "daily", "ohlcv")),
+    "kis.sector.expected-index-all": CommandTaxonomy(("sector",), ("sector-index", "expected-price")),
+    "kis.sector.expected-index-trend": CommandTaxonomy(("sector",), ("sector-index", "expected-price")),
+    "kis.sector.minute": CommandTaxonomy(("sector", "chart"), ("sector-index", "minute", "ohlcv")),
+    "kis.sector.period": CommandTaxonomy(("sector", "chart"), ("sector-index", "daily", "ohlcv")),
+    "kis.sector.time-minute": CommandTaxonomy(("sector",), ("sector-index", "minute")),
+    "kis.sector.time-second": CommandTaxonomy(("sector",), ("sector-index", "tick")),
+    "kis.stock.basic-info": CommandTaxonomy(("reference", "quote"), ("reference-list",)),
+    "kis.stock.closing-expected": CommandTaxonomy(("market",), ("screening", "expected-price", "ranking")),
+    "kis.stock.conclusion": CommandTaxonomy(("quote",), ("conclusion", "tick")),
+    "kis.stock.current-price": CommandTaxonomy(("quote",), ("current-price",)),
+    "kis.stock.current-price-extended": CommandTaxonomy(("quote",), ("current-price", "volatility", "credit")),
+    "kis.stock.estimated-earnings": CommandTaxonomy(("statements",), ("earnings-estimate",)),
+    "kis.stock.investment-opinion": CommandTaxonomy(("statements",), ("analyst-opinion",)),
+    "kis.stock.investment-opinion-by-brokerage": CommandTaxonomy(("statements",), ("analyst-opinion", "broker-flow")),
+    "kis.stock.loanable": CommandTaxonomy(("reference", "trading-flow"), ("reference-list", "short-selling")),
+    "kis.stock.margin-tradable": CommandTaxonomy(("reference", "trading-flow"), ("reference-list", "credit")),
+    "kis.stock.order-book": CommandTaxonomy(("quote",), ("order-book", "expected-price")),
+    "kis.stock.overtime-conclusion": CommandTaxonomy(("quote",), ("conclusion", "overtime")),
+    "kis.stock.overtime-daily": CommandTaxonomy(("quote", "chart"), ("overtime", "daily")),
+    "kis.stock.overtime-order-book": CommandTaxonomy(("quote",), ("order-book", "overtime")),
+    "kis.stock.product-info": CommandTaxonomy(("reference",), ("reference-list",)),
+    "kis.stock.time-conclusion": CommandTaxonomy(("quote",), ("conclusion", "minute")),
+    "kiwoom.analysis.after-market-investor": CommandTaxonomy(
+        ("trading-flow", "market"), ("foreign", "institution", "overtime")
+    ),
+    "kiwoom.analysis.daily-institutional": CommandTaxonomy(("trading-flow",), ("institution", "daily")),
+    "kiwoom.analysis.foreign-consecutive": CommandTaxonomy(
+        ("trading-flow", "market"), ("foreign", "institution", "ranking")
+    ),
+    "kiwoom.analysis.foreign-institution": CommandTaxonomy(("trading-flow",), ("foreign", "institution")),
+    "kiwoom.analysis.foreign-net-buy": CommandTaxonomy(("trading-flow",), ("foreign",)),
+    "kiwoom.analysis.institutional": CommandTaxonomy(("trading-flow",), ("institution", "daily")),
+    "kiwoom.analysis.institutional-trend": CommandTaxonomy(("trading-flow",), ("institution", "foreign", "daily")),
+    "kiwoom.analysis.intraday-investor": CommandTaxonomy(
+        ("trading-flow", "market"), ("foreign", "institution", "minute")
+    ),
+    "kiwoom.analysis.member-trend": CommandTaxonomy(("trading-flow",), ("broker-flow",)),
+    "kiwoom.chart.industry-tick": CommandTaxonomy(("chart", "sector"), ("ohlcv", "tick", "sector-index")),
+    "kiwoom.chart.institutional": CommandTaxonomy(("chart", "trading-flow"), ("institution", "daily")),
+    "kiwoom.chart.intraday-investor": CommandTaxonomy(("chart", "trading-flow"), ("foreign", "institution", "minute")),
+    "kiwoom.chart.tick": CommandTaxonomy(("chart",), ("ohlcv", "tick")),
+    "kiwoom.etf.daily-execution": CommandTaxonomy(("etf",), ("conclusion", "daily")),
+    "kiwoom.etf.full-price": CommandTaxonomy(("etf", "market"), ("current-price", "screening")),
+    "kiwoom.etf.hourly": CommandTaxonomy(("etf",), ("nav", "minute")),
+    "kiwoom.etf.hourly-execution": CommandTaxonomy(("etf",), ("conclusion", "minute")),
+    "kiwoom.etf.hourly-execution-v2": CommandTaxonomy(("etf",), ("conclusion", "minute")),
+    "kiwoom.etf.hourly-v2": CommandTaxonomy(("etf",), ("nav", "minute")),
+    "kiwoom.etf.return-rate": CommandTaxonomy(("etf",), ("nav",)),
+    "kiwoom.market.warrant-price": CommandTaxonomy(
+        ("corporate-actions", "quote"), ("capital-increase", "current-price")
+    ),
+    "kiwoom.program.arbitrage-balance": CommandTaxonomy(("trading-flow", "market"), ("program-trading",)),
+    "kiwoom.program.by-stock-daily": CommandTaxonomy(("trading-flow",), ("program-trading", "daily")),
+    "kiwoom.program.by-stock-intraday": CommandTaxonomy(("trading-flow",), ("program-trading", "minute")),
+    "kiwoom.program.cumulative": CommandTaxonomy(("trading-flow", "market"), ("program-trading",)),
+    "kiwoom.program.summary-daily": CommandTaxonomy(("trading-flow", "market"), ("program-trading", "daily")),
+    "kiwoom.program.summary-intraday": CommandTaxonomy(("trading-flow", "market"), ("program-trading", "minute")),
+    "kiwoom.ranking.after-hours": CommandTaxonomy(("market",), ("ranking", "overtime")),
+    "kiwoom.ranking.consecutive-foreign": CommandTaxonomy(("market", "trading-flow"), ("ranking", "foreign")),
+    "kiwoom.ranking.deviation-sources": CommandTaxonomy(("market", "trading-flow"), ("ranking", "broker-flow")),
+    "kiwoom.ranking.expected-conclusion": CommandTaxonomy(("market",), ("ranking", "expected-price")),
+    "kiwoom.ranking.fluctuation": CommandTaxonomy(("market",), ("ranking", "volatility")),
+    "kiwoom.ranking.foreign-account": CommandTaxonomy(("market", "trading-flow"), ("ranking", "foreign")),
+    "kiwoom.ranking.foreign-limit": CommandTaxonomy(("market", "trading-flow"), ("ranking", "foreign")),
+    "kiwoom.ranking.foreigner-period": CommandTaxonomy(("market", "trading-flow"), ("ranking", "foreign")),
+    "kiwoom.ranking.increasing-order": CommandTaxonomy(("market",), ("ranking", "order-book")),
+    "kiwoom.ranking.increasing-sell": CommandTaxonomy(("market",), ("ranking", "order-book")),
+    "kiwoom.ranking.increasing-volume": CommandTaxonomy(("market",), ("ranking", "volume-rank")),
+    "kiwoom.ranking.intraday-investor": CommandTaxonomy(
+        ("market", "trading-flow"), ("ranking", "foreign", "institution")
+    ),
+    "kiwoom.ranking.major-traders": CommandTaxonomy(("market", "trading-flow"), ("ranking", "broker-flow")),
+    "kiwoom.ranking.net-buy-trader": CommandTaxonomy(("market", "trading-flow"), ("ranking", "broker-flow")),
+    "kiwoom.ranking.prev-day-volume": CommandTaxonomy(("market",), ("ranking", "volume-rank")),
+    "kiwoom.ranking.remaining-order": CommandTaxonomy(("market",), ("ranking", "order-book")),
+    "kiwoom.ranking.same-net-buy-sell": CommandTaxonomy(
+        ("market", "trading-flow"), ("ranking", "foreign", "institution")
+    ),
+    "kiwoom.ranking.securities-firm": CommandTaxonomy(("market", "trading-flow"), ("ranking", "broker-flow")),
+    "kiwoom.ranking.securities-firm-by-stock": CommandTaxonomy(("market", "trading-flow"), ("ranking", "broker-flow")),
+    "kiwoom.ranking.transaction-value": CommandTaxonomy(("market",), ("ranking", "volume-rank")),
+    "kiwoom.sector.all-index": CommandTaxonomy(("sector",), ("sector-index",)),
+    "kiwoom.sector.investor-net-buy": CommandTaxonomy(
+        ("sector", "trading-flow"), ("sector-index", "foreign", "institution")
+    ),
+    "kiwoom.sector.program": CommandTaxonomy(("sector", "trading-flow"), ("sector-index", "program-trading")),
+    "kiwoom.sector.stocks": CommandTaxonomy(("sector", "market"), ("sector-index", "screening")),
+    "kiwoom.stock.basic-v1": CommandTaxonomy(("quote", "reference"), ("current-price", "reference-list")),
+    "kiwoom.stock.change-from-open": CommandTaxonomy(("market",), ("screening", "ranking", "volatility")),
+    "kiwoom.stock.credit-trend": CommandTaxonomy(("trading-flow",), ("credit", "daily")),
+    "kiwoom.stock.daily-details": CommandTaxonomy(("quote", "chart"), ("daily", "conclusion")),
+    "kiwoom.stock.daily-price": CommandTaxonomy(("chart", "quote"), ("ohlcv", "daily")),
+    "kiwoom.stock.execution-intensity-date": CommandTaxonomy(("quote",), ("execution-strength", "daily")),
+    "kiwoom.stock.execution-intensity-time": CommandTaxonomy(("quote",), ("execution-strength", "minute")),
+    "kiwoom.stock.high-per": CommandTaxonomy(("market", "statements"), ("ranking", "valuation")),
+    "kiwoom.stock.industry-code": CommandTaxonomy(("reference", "sector"), ("reference-list", "sector-index")),
+    "kiwoom.stock.interest-indicator": CommandTaxonomy(("quote",), ("watchlist", "current-price")),
+    "kiwoom.stock.investor": CommandTaxonomy(("market", "trading-flow"), ("ranking", "foreign", "institution")),
+    "kiwoom.stock.member": CommandTaxonomy(("trading-flow",), ("broker-flow",)),
+    "kiwoom.stock.member-company": CommandTaxonomy(("reference",), ("reference-list", "broker-flow")),
+    "kiwoom.stock.member-instant-volume": CommandTaxonomy(("trading-flow",), ("broker-flow", "minute")),
+    "kiwoom.stock.member-supply-demand": CommandTaxonomy(("trading-flow",), ("broker-flow",)),
+    "kiwoom.stock.order-book-by-date": CommandTaxonomy(("quote",), ("order-book", "daily")),
+    "kiwoom.stock.overtime-price": CommandTaxonomy(("quote",), ("overtime", "current-price")),
+    "kiwoom.stock.prev-day-conclusion": CommandTaxonomy(("quote",), ("conclusion", "daily")),
+    "kiwoom.stock.prev-day-volume": CommandTaxonomy(("quote",), ("conclusion", "volume-rank", "daily")),
+    "kiwoom.stock.price-volatility": CommandTaxonomy(("market",), ("screening", "volatility")),
+    "kiwoom.stock.program-net-buy-top50": CommandTaxonomy(("market", "trading-flow"), ("ranking", "program-trading")),
+    "kiwoom.stock.program-trading": CommandTaxonomy(("trading-flow", "market"), ("program-trading",)),
+    "kiwoom.stock.sentiment": CommandTaxonomy(("quote", "market"), ("investor-interest",)),
+    "kiwoom.stock.summary": CommandTaxonomy(("reference", "market"), ("reference-list", "screening")),
+    "kiwoom.stock.supply-demand": CommandTaxonomy(("market", "trading-flow"), ("screening", "price-level")),
+    "kiwoom.stock.total-institutional": CommandTaxonomy(("trading-flow",), ("institution",)),
+    "kiwoom.stock.upper-lower-limit": CommandTaxonomy(("market",), ("screening", "volatility")),
+    "kiwoom.stock.vi-status": CommandTaxonomy(("market",), ("screening", "volatility")),
+    "kiwoom.stock.volume-renewal": CommandTaxonomy(("market",), ("screening", "volume-rank")),
+    "kiwoom.theme.group": CommandTaxonomy(("theme", "market"), ("theme-group",)),
+    "kiwoom.theme.group-stocks": CommandTaxonomy(("theme", "market"), ("theme-group", "screening")),
+    "dart.company-overview": CommandTaxonomy(("statements", "reference"), ("disclosure", "shareholder")),
+    "dart.corp-code-lookup": CommandTaxonomy(("reference",), ("reference-list", "disclosure")),
+    "dart.disclosure-search": CommandTaxonomy(("news", "statements"), ("disclosure",)),
+    "dart.major-shareholder": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
+}
+
+
 _CATEGORY_DEFAULTS: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
     "analysis": (("trading-flow", "market"), ("foreign", "institution")),
     "chart": (("chart",), ("ohlcv",)),
@@ -434,84 +782,196 @@ _CATEGORY_DEFAULTS: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
     "theme": (("theme", "market"), ("theme-group",)),
 }
 
-_COMMAND_OVERRIDES: dict[tuple[str, str, str], tuple[tuple[str, ...], tuple[str, ...]]] = {
-    ("dart", "dart", "disclosure-search"): (("news", "statements"), ("disclosure",)),
-    ("dart", "dart", "company-overview"): (("statements",), ("disclosure", "shareholder")),
-    ("dart", "dart", "corp-code-lookup"): (("market",), ("disclosure",)),
-    ("dart", "dart", "major-shareholder"): (("statements",), ("shareholder", "disclosure")),
-    ("kis", "market", "announcement"): (("news", "market"), ("announcement", "disclosure")),
-    ("kis", "market", "holiday"): (("market-calendar", "market"), ("market-calendar",)),
-    ("kis", "market", "futures-business-day"): (("market-calendar", "market"), ("market-calendar",)),
-    ("kis", "schedule", "dividend"): (("corporate-actions",), ("dividend", "announcement")),
-    ("kiwoom", "theme", "group"): (("theme", "market"), ("theme-group",)),
+
+@dataclass(frozen=True, slots=True)
+class CategoryInfo:
+    """Agent-facing explanation for one provider SDK category.
+
+    `domains`/`tags` here are the category *seed* values; the authoritative per-command
+    taxonomy lives in `COMMAND_TAXONOMY`. Broker help computes its domain/tag union from
+    the real commands so it reflects the authored truth, not this seed.
+    """
+
+    name: str
+    description: str
+    when_to_use: str
+    domains: tuple[str, ...]
+    tags: tuple[str, ...]
+
+
+CATEGORY_INFO: dict[str, CategoryInfo] = {
+    "analysis": CategoryInfo(
+        name="analysis",
+        description="Investor supply/demand, screening, watchlists, and market-state analysis.",
+        when_to_use="Use when the question is who is trading, or to screen the market by a condition.",
+        domains=_CATEGORY_DEFAULTS["analysis"][0],
+        tags=_CATEGORY_DEFAULTS["analysis"][1],
+    ),
+    "chart": CategoryInfo(
+        name="chart",
+        description="Historical OHLCV time series at tick, minute, daily, and period granularity.",
+        when_to_use="Use before any technical analysis; compute indicators from the returned arrays with cluefin-ta.",
+        domains=_CATEGORY_DEFAULTS["chart"][0],
+        tags=_CATEGORY_DEFAULTS["chart"][1],
+    ),
+    "dart": CategoryInfo(
+        name="dart",
+        description="Regulatory disclosure filings, corporate codes, and shareholder records.",
+        when_to_use="Use for the filed source document or to resolve a corp_code; not a price source.",
+        domains=_CATEGORY_DEFAULTS["dart"][0],
+        tags=_CATEGORY_DEFAULTS["dart"][1],
+    ),
+    "etf": CategoryInfo(
+        name="etf",
+        description="ETF and ETN pricing, NAV tracking, returns, and component holdings.",
+        when_to_use="Use for ETF-specific state; a plain equity quote belongs in stock.",
+        domains=_CATEGORY_DEFAULTS["etf"][0],
+        tags=_CATEGORY_DEFAULTS["etf"][1],
+    ),
+    "financial": CategoryInfo(
+        name="financial",
+        description="Reported financial statements and derived ratios.",
+        when_to_use="Use for balance sheet, income statement, and profitability/stability/growth ratios.",
+        domains=_CATEGORY_DEFAULTS["financial"][0],
+        tags=_CATEGORY_DEFAULTS["financial"][1],
+    ),
+    "market": CategoryInfo(
+        name="market",
+        description="Market-wide context: announcements, holidays, business days, and rates.",
+        when_to_use="Use for calendar checks and market-level background, not per-stock data.",
+        domains=_CATEGORY_DEFAULTS["market"][0],
+        tags=_CATEGORY_DEFAULTS["market"][1],
+    ),
+    "program": CategoryInfo(
+        name="program",
+        description="Program (basket/arbitrage) trading flow.",
+        when_to_use="Use when the question is specifically about program trading rather than investor type.",
+        domains=_CATEGORY_DEFAULTS["program"][0],
+        tags=_CATEGORY_DEFAULTS["program"][1],
+    ),
+    "ranking": CategoryInfo(
+        name="ranking",
+        description="Top-N market screens ordered by a single criterion.",
+        when_to_use="Use to find candidates across the market; each command pairs ranking with its criterion tag.",
+        domains=_CATEGORY_DEFAULTS["ranking"][0],
+        tags=_CATEGORY_DEFAULTS["ranking"][1],
+    ),
+    "schedule": CategoryInfo(
+        name="schedule",
+        description="Corporate action calendars from KSD: dividends, issuance, listings, meetings.",
+        when_to_use="Use for dated corporate events over a start/end date range.",
+        domains=_CATEGORY_DEFAULTS["schedule"][0],
+        tags=_CATEGORY_DEFAULTS["schedule"][1],
+    ),
+    "sector": CategoryInfo(
+        name="sector",
+        description="Sector and industry index levels, history, and constituents.",
+        when_to_use="Use for sector context or to group a market scan by industry.",
+        domains=_CATEGORY_DEFAULTS["sector"][0],
+        tags=_CATEGORY_DEFAULTS["sector"][1],
+    ),
+    "stock": CategoryInfo(
+        name="stock",
+        description="Single-stock quotes, order book, executions, identity, and eligibility lists.",
+        when_to_use="Use when you already know the stock code and want its current state or reference data.",
+        domains=_CATEGORY_DEFAULTS["stock"][0],
+        tags=_CATEGORY_DEFAULTS["stock"][1],
+    ),
+    "theme": CategoryInfo(
+        name="theme",
+        description="Theme groups and their member stocks.",
+        when_to_use="Use to explore thematic baskets; Kiwoom-only, KIS has no theme command.",
+        domains=_CATEGORY_DEFAULTS["theme"][0],
+        tags=_CATEGORY_DEFAULTS["theme"][1],
+    ),
 }
 
-_TAG_KEYWORDS: tuple[tuple[str, tuple[str, ...]], ...] = (
-    ("daily", ("daily",)),
-    ("minute", ("minute",)),
-    ("tick", ("tick",)),
-    ("current-price", ("current-price",)),
-    ("order-book", ("order-book",)),
-    ("conclusion", ("conclusion",)),
-    ("overtime", ("overtime",)),
-    ("balance-sheet", ("financial-statement",)),
-    ("income-statement", ("financial-statement",)),
-    ("ratio", ("financial-ratio",)),
-    ("profitability", ("financial-ratio",)),
-    ("stability", ("financial-ratio",)),
-    ("growth", ("financial-ratio",)),
-    ("dividend", ("dividend",)),
-    ("shareholder", ("shareholder",)),
-    ("foreign", ("foreign",)),
-    ("foreigner", ("foreign",)),
-    ("institution", ("institution",)),
-    ("investor", ("foreign", "institution")),
-    ("program", ("program-trading",)),
-    ("volume", ("volume-rank",)),
-    ("market-cap", ("market-cap",)),
-    ("market-value", ("market-cap",)),
-    ("short-selling", ("short-selling",)),
-    ("loan", ("short-selling",)),
-    ("credit", ("credit",)),
-    ("sector", ("sector-index",)),
-    ("industry", ("sector-index",)),
-    ("theme", ("theme-group",)),
-    ("ipo", ("ipo",)),
-    ("capital-increase", ("capital-increase",)),
-    ("capital-reduction", ("capital-reduction",)),
-    ("merger-split", ("merger-split",)),
-    ("shareholder-meeting", ("shareholder-meeting",)),
+
+def category_info(category: str) -> CategoryInfo | None:
+    """Return the agent-facing description for a category, if one is authored."""
+
+    return CATEGORY_INFO.get(category)
+
+
+#: Query-expansion aliases for `search`. Key = a surface form an agent actually types
+#: (Korean, or English jargon that appears nowhere in the command text); value = tokens
+#: that really occur in the indexed corpus. Scanned longest-key-first so `순매수` wins
+#: over `매수`. Every command description is English, so Korean queries reach the index
+#: only through this table.
+QUERY_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("외국인", ("foreign", "foreigner")),
+    ("기관", ("institution", "institutional")),
+    ("수급", ("investor", "trend", "institution", "foreign")),
+    ("순매수", ("net", "buy")),
+    ("순매도", ("net", "sell")),
+    ("매매동향", ("trading", "trend", "investor")),
+    ("프로그램매매", ("program", "trading")),
+    ("재무제표", ("financial", "statement", "balance", "sheet", "income")),
+    ("재무비율", ("financial", "ratio", "profitability", "stability", "growth")),
+    ("손익계산서", ("income", "statement")),
+    ("대차대조표", ("balance", "sheet")),
+    ("배당", ("dividend", "yield")),
+    ("차트", ("chart", "ohlcv", "price", "history")),
+    ("분봉", ("minute", "chart")),
+    ("일봉", ("daily", "chart")),
+    ("주봉", ("weekly", "period", "chart")),
+    ("월봉", ("monthly", "period", "chart")),
+    ("틱", ("tick", "chart")),
+    ("시세", ("current", "price", "quote")),
+    ("현재가", ("current", "price")),
+    ("호가", ("order", "book", "bid", "ask")),
+    ("체결", ("conclusion", "execution")),
+    ("거래량", ("volume",)),
+    ("거래대금", ("transaction", "value", "amount")),
+    ("순위", ("ranking", "rank", "top")),
+    ("상위", ("top", "ranking")),
+    ("테마", ("theme", "group")),
+    ("업종", ("sector", "industry", "index")),
+    ("지수", ("index", "sector")),
+    ("공시", ("disclosure", "dart", "announcement")),
+    ("공매도", ("short", "selling")),
+    ("신용", ("credit", "margin", "loan")),
+    ("대출", ("loan", "loanable")),
+    ("시가총액", ("market", "cap", "value")),
+    ("증자", ("capital", "increase")),
+    ("감자", ("capital", "reduction")),
+    ("합병", ("merger", "split")),
+    ("상장", ("listing", "ipo", "subscription")),
+    ("주주총회", ("shareholder", "meeting")),
+    ("최대주주", ("major", "shareholder")),
+    ("휴장일", ("holiday", "calendar", "business", "day")),
+    ("종목", ("stock",)),
+    ("종목정보", ("stock", "basic", "info")),
+    ("회원사", ("member", "securities", "firm", "brokerage")),
+    ("거래원", ("member", "securities", "firm")),
+    ("상한가", ("upper", "limit")),
+    ("하한가", ("lower", "limit")),
+    ("etf", ("etf", "nav")),
+    ("관심종목", ("watchlist", "interest")),
+    ("조건검색", ("condition", "search")),
+    ("구성종목", ("component", "stock", "holdings")),
+    ("체결강도", ("execution", "strength", "intensity")),
+    ("투자의견", ("investment", "opinion", "analyst")),
+    ("목표주가", ("investment", "opinion", "estimate")),
+    ("실적", ("earnings", "estimate", "income")),
+    ("지지선", ("resistance", "level")),
+    ("저항선", ("resistance", "level")),
+    ("변동성", ("volatility", "fluctuation")),
+    ("급등", ("rapid", "rise", "fluctuation")),
+    ("급락", ("rapid", "fall", "fluctuation")),
+    ("예상체결", ("expected", "conclusion", "price")),
+    # English jargon with no literal match anywhere in the corpus.
+    ("moving average", ("chart", "daily", "ohlcv", "period")),
+    ("rsi", ("chart", "daily", "ohlcv")),
+    ("macd", ("chart", "daily", "ohlcv")),
+    ("bollinger", ("chart", "daily", "ohlcv")),
+    ("candlestick", ("chart", "daily", "ohlcv")),
+    ("technical", ("chart", "daily", "ohlcv")),
+    ("valuation", ("per", "pbr", "market", "value", "ratio")),
+    ("supply demand", ("investor", "institution", "foreign", "trend")),
+    ("screener", ("condition", "search", "ranking")),
+    ("screening", ("condition", "search", "ranking")),
 )
-
-_DOMAIN_KEYWORDS: tuple[tuple[str, tuple[str, ...]], ...] = (
-    ("announcement", ("news",)),
-    ("disclosure", ("news",)),
-    ("financial", ("statements",)),
-    ("balance-sheet", ("statements",)),
-    ("income-statement", ("statements",)),
-    ("ratio", ("statements",)),
-    ("dividend", ("corporate-actions",)),
-    ("shareholder", ("statements",)),
-    ("foreign", ("trading-flow",)),
-    ("foreigner", ("trading-flow",)),
-    ("institution", ("trading-flow",)),
-    ("investor", ("trading-flow",)),
-    ("program", ("trading-flow",)),
-    ("sector", ("sector",)),
-    ("industry", ("sector",)),
-    ("theme", ("theme",)),
-    ("ipo", ("corporate-actions",)),
-    ("capital", ("corporate-actions",)),
-    ("merger", ("corporate-actions",)),
-    ("split", ("corporate-actions",)),
-    ("meeting", ("corporate-actions",)),
-)
-
-
-def _append_unique(values: list[str], new_values: tuple[str, ...]) -> None:
-    for value in new_values:
-        if value not in values:
-            values.append(value)
 
 
 def _generic_taxonomy(kind: str, name: str) -> TaxonomyMetadata:
@@ -548,35 +1008,23 @@ def missing_taxonomy_names(*, kind: str, names: set[str]) -> set[str]:
     return names - set(catalog)
 
 
-def get_command_metadata(*, broker: str, category: str, name: str) -> CommandMetadata:
+def category_defaults(category: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Seed domains/tags for a category. Fallback only — see `COMMAND_TAXONOMY`."""
+
+    return _CATEGORY_DEFAULTS.get(category, (("market",), ("ranking",)))
+
+
+def get_command_metadata(*, broker: str, category: str, name: str, qualified_name: str) -> CommandMetadata:
     """Return domain/tag metadata for a generated CLI command."""
 
-    domains: list[str] = []
-    tags: list[str] = []
-
-    default_domains, default_tags = _CATEGORY_DEFAULTS.get(category, (("market",), ("ranking",)))
-    _append_unique(domains, default_domains)
-    _append_unique(tags, default_tags)
-
-    override = _COMMAND_OVERRIDES.get((broker, category, name))
-    if override is not None:
-        override_domains, override_tags = override
-        domains = []
-        tags = []
-        _append_unique(domains, override_domains)
-        _append_unique(tags, override_tags)
-
-    haystack = f"{broker}.{category}.{name}"
-    for keyword, keyword_domains in _DOMAIN_KEYWORDS:
-        if keyword in haystack:
-            _append_unique(domains, keyword_domains)
-    for keyword, keyword_tags in _TAG_KEYWORDS:
-        if keyword in haystack:
-            _append_unique(tags, keyword_tags)
+    entry = COMMAND_TAXONOMY.get(qualified_name)
+    if entry is None:
+        default_domains, default_tags = category_defaults(category)
+        entry = CommandTaxonomy(default_domains, default_tags)
 
     return CommandMetadata(
-        domains=tuple(domains),
-        tags=tuple(tags),
+        domains=entry.domains,
+        tags=entry.tags,
         required_credentials=_BROKER_CREDENTIALS.get(broker, ()),
     )
 

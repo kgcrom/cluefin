@@ -156,9 +156,14 @@ def build_cli_registry() -> dict[tuple[str, ...], CommandSpec]:
         if path_segments in registry:
             raise ValueError(f"Duplicate CLI path detected: {' '.join(path_segments)}")
 
-        metadata = get_command_metadata(broker=schema.broker, category=category, name=command_name)
-        examples = metadata.examples or build_command_examples(path_segments, schema.parameters)
         qualified_name = ".".join(path_segments)
+        metadata = get_command_metadata(
+            broker=schema.broker,
+            category=category,
+            name=command_name,
+            qualified_name=qualified_name,
+        )
+        examples = metadata.examples or build_command_examples(path_segments, schema.parameters)
         kis_alternatives = kis_alternatives_for(qualified_name)
         agent_notes = metadata.agent_notes or build_agent_notes(
             broker=schema.broker,

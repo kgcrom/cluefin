@@ -13,16 +13,143 @@ from cluefin_openapi_cli.errors import (
     CliError,
     classify_exception,
 )
-from cluefin_openapi_cli.metadata import BROKER_ORDER, BROKER_ROLES, broker_rank, build_taxonomy_entry
-from cluefin_openapi_cli.output import render_output, select_fields, stdout_is_tty, to_jsonable
+from cluefin_openapi_cli.metadata import (
+    BROKER_ORDER,
+    BROKER_ROLES,
+    broker_rank,
+    build_taxonomy_entry,
+    category_info,
+)
+from cluefin_openapi_cli.output import (
+    attach_truncation,
+    limit_rows,
+    render_output,
+    select_fields,
+    stdout_is_tty,
+    to_jsonable,
+)
 from cluefin_openapi_cli.recipes import get_recipe, recipe_summaries
 from cluefin_openapi_cli.registry import CommandSpec, get_registry
+from cluefin_openapi_cli.search import search_commands
 
 __all__ = ["CLIResult", "CliError", "dispatch", "main", "run_cli"]
 
 APP_NAME = "cluefin-openapi-cli"
-META_COMMANDS = ("brokers", "list", "describe", "schema", "domains", "tags", "recipes", "recipe")
-_BOOL_FLAGS = {"json", "help", "dry_run", "full", "compact"}
+META_COMMANDS = ("search", "brokers", "list", "describe", "schema", "domains", "tags", "recipes", "recipe")
+_BOOL_FLAGS = {"json", "help", "dry_run", "full", "compact", "explain"}
+
+# Per-meta-command help. `usage` is the single source of truth for the root `--help`
+# listing too (`_run_root`), so the two can never drift apart.
+_META_HELP: dict[str, dict[str, Any]] = {
+    "search": {
+        "description": (
+            "Ranked natural-language lookup over every command. Accepts Korean or English task "
+            "descriptions and returns a short shortlist. Use this before `list`."
+        ),
+        "usage": [
+            f"{APP_NAME} search <text...> [--limit N] [--broker B] [--domain D] [--tag T] [--json]",
+        ],
+        "options": [
+            {"flag": "--limit N", "meaning": f"How many candidates to return (default {8}, max 50)."},
+            {"flag": "--broker B", "meaning": "Restrict candidates to one broker."},
+            {"flag": "--domain D", "meaning": "Restrict candidates to one domain."},
+            {"flag": "--tag T", "meaning": "Restrict candidates to one tag."},
+            {"flag": "--category C", "meaning": "Restrict candidates to one category."},
+            {"flag": "--full", "meaning": "Full rows including parameters instead of brief rows."},
+            {"flag": "--explain", "meaning": "Include per-term score contributions."},
+        ],
+        "examples": [
+            f"uv run {APP_NAME} search 외국인 순매수 상위 종목 --json",
+            f"uv run {APP_NAME} search dividend schedule --limit 5 --compact",
+        ],
+        "notes": [
+            "Never returns an empty result: a miss carries `fallback` with runnable next steps.",
+            "Each row carries `next`, the `schema` call for that command.",
+        ],
+    },
+    "brokers": {
+        "description": "Broker roles, command counts, and whether each broker's credentials are configured.",
+        "usage": [f"{APP_NAME} brokers [--json]"],
+        "options": [],
+        "examples": [f"uv run {APP_NAME} brokers --json"],
+        "notes": ["`credentials.configured` is a boolean; secret values are never echoed."],
+    },
+    "list": {
+        "description": "Catalog of broker commands. Brief rows by default; filterable by broker, category, domain, or tag.",
+        "usage": [
+            f"{APP_NAME} list [--broker BROKER] [--category CATEGORY] [--json]",
+            f"{APP_NAME} list [--domain DOMAIN] [--tag TAG] [--query TEXT] [--full] [--json]",
+        ],
+        "options": [
+            {"flag": "--broker B", "meaning": "Restrict to one broker (kis, kiwoom, dart)."},
+            {"flag": "--category C", "meaning": "Restrict to one provider SDK category."},
+            {"flag": "--domain D", "meaning": "Restrict to one agent-intent domain; see `domains`."},
+            {"flag": "--tag T", "meaning": "Restrict to one capability tag; see `tags`."},
+            {"flag": "--query TEXT", "meaning": "Literal substring filter on name and description."},
+            {"flag": "--full", "meaning": "Full per-command rows including parameters (large)."},
+        ],
+        "examples": [
+            f"uv run {APP_NAME} list --broker kis --domain chart --json",
+            f"uv run {APP_NAME} list --tag dividend --json",
+        ],
+        "notes": ["Always filter. An unfiltered `list` is the whole catalog."],
+    },
+    "describe": {
+        "description": "Discovery-oriented detail for one command: metadata, use cases, and examples.",
+        "usage": [
+            f"{APP_NAME} describe <broker> <category> <name> [--json]",
+            f"{APP_NAME} describe dart <name> [--json]",
+        ],
+        "options": [],
+        "examples": [f"uv run {APP_NAME} describe kis stock current-price --json"],
+        "notes": ["Use `schema` instead when you are about to call the command."],
+    },
+    "schema": {
+        "description": "Execution contract for one command: JSON Schema, per-parameter flags, and runnable invoke strings.",
+        "usage": [
+            f"{APP_NAME} schema <broker> <category> <name> [--json]",
+            f"{APP_NAME} schema dart <name> [--json]",
+        ],
+        "options": [],
+        "examples": [f"uv run {APP_NAME} schema kis stock current-price --json"],
+        "notes": ["`invoke.dry_run` is runnable as-is; `enum` and `pattern` are enforced locally."],
+    },
+    "domains": {
+        "description": "Agent-intent domains with when_to_use, avoid_when, and a runnable example_filter.",
+        "usage": [f"{APP_NAME} domains [--json]"],
+        "options": [],
+        "examples": [f"uv run {APP_NAME} domains --json"],
+        "notes": [],
+    },
+    "tags": {
+        "description": "Capability tags with when_to_use, avoid_when, and a runnable example_filter.",
+        "usage": [f"{APP_NAME} tags [--json]"],
+        "options": [],
+        "examples": [f"uv run {APP_NAME} tags --json"],
+        "notes": [],
+    },
+    "recipes": {
+        "description": "Multi-step workflow guides that combine several commands.",
+        "usage": [f"{APP_NAME} recipes [--json]"],
+        "options": [],
+        "examples": [f"uv run {APP_NAME} recipes --json"],
+        "notes": ["Recipes describe an order of exploration; they do not execute commands."],
+    },
+    "recipe": {
+        "description": "One workflow guide, step by step.",
+        "usage": [f"{APP_NAME} recipe <name> [--json]"],
+        "options": [],
+        "examples": [f"uv run {APP_NAME} recipe stock-research --json"],
+        "notes": [],
+    },
+}
+
+# Usage lines for the dynamic broker commands, appended after the meta-command lines.
+_DYNAMIC_USAGE = (
+    f"{APP_NAME} <broker> <category> <name> [--params-json JSON] [schema options] "
+    "[--dry-run] [--fields a,b] [--compact] [--json]",
+    f"{APP_NAME} dart <name> [--params-json JSON] [schema options] [--dry-run] [--fields a,b] [--compact] [--json]",
+)
 
 
 @dataclass(slots=True)
@@ -151,6 +278,10 @@ def _global_option_rows() -> list[dict[str, str]]:
         {"flag": "--json", "meaning": "Force JSON output (default when stdout is not a TTY)."},
         {"flag": "--compact", "meaning": "Single-line JSON; cheapest to read back into context."},
         {"flag": "--fields a,b.c", "meaning": "Field mask on the result: top-level keys or dotted paths."},
+        {
+            "flag": "--limit N",
+            "meaning": "Cap every result array at N rows; adds `_truncated` when data was cut. 0 = no limit.",
+        },
         {"flag": "--params-json '{...}'", "meaning": "Whole parameter object; flags override its keys."},
         {"flag": "--dry-run", "meaning": "Validate locally and echo the resolved request; no network call."},
         {"flag": "--help", "meaning": "Command help as JSON."},
@@ -209,6 +340,10 @@ def _brokers_payload() -> dict[str, Any]:
     return {"brokers": rows, "count": len(rows), "order": [row["name"] for row in rows]}
 
 
+#: Rows returned by an unfiltered `list --full`, which is otherwise ~67k tokens.
+_UNFILTERED_FULL_LIMIT = 25
+
+
 def _list_payload(
     *,
     broker: str | None,
@@ -217,6 +352,7 @@ def _list_payload(
     tag: str | None,
     query: str | None,
     full: bool,
+    limit: int | None = None,
 ) -> dict[str, Any]:
     registry = get_registry()
     commands = registry.list_commands(broker=broker, category=category, domain=domain, tag=tag)
@@ -228,17 +364,40 @@ def _list_payload(
             if needle in command.qualified_name.lower() or needle in command.description.lower()
         ]
     commands = sorted(commands, key=lambda command: (broker_rank(command.broker), command.path_segments))
+    total = len(commands)
+
+    narrowed = any(value is not None for value in (broker, category, domain, tag, query))
+    effective = limit
+    if effective is None and full and not narrowed:
+        effective = _UNFILTERED_FULL_LIMIT
+    if effective is not None and effective > 0:
+        commands = commands[:effective]
+
     builder = _command_summary if full else _command_brief
-    return {
+    payload: dict[str, Any] = {
         "broker": broker,
         "category": category,
         "domain": domain,
         "tag": tag,
         "query": query,
         "detail": "full" if full else "brief",
-        "count": len(commands),
+        "count": total,
+        "returned": len(commands),
         "commands": [to_jsonable(builder(command)) for command in commands],
     }
+    if len(commands) < total:
+        payload["truncated"] = True
+        payload["hint"] = (
+            f"{total} commands matched; {len(commands)} returned. "
+            "Narrow with --broker/--domain/--tag/--query, or pass --limit 0 for all rows."
+        )
+    if query:
+        payload.setdefault(
+            "hint",
+            "`--query` is a literal substring filter. For a natural-language or Korean task "
+            "description use `search <text>`.",
+        )
+    return payload
 
 
 def _discovery_payload(kind: str) -> dict[str, Any]:
@@ -370,7 +529,7 @@ def _merge_params(command: CommandSpec, options: dict[str, str | bool]) -> tuple
 
     force_json = bool(options.pop("json", False))
     help_requested = bool(options.pop("help", False))
-    for key in ("compact", "fields", "dry_run", "full"):
+    for key in ("compact", "fields", "dry_run", "full", "limit"):
         options.pop(key, None)
     params_json = options.pop("params_json", None)
     if params_json is not None and not isinstance(params_json, str):
@@ -418,6 +577,23 @@ def _parse_fields(raw: str | bool | None) -> list[str]:
     return [part.strip() for part in raw.split(",") if part.strip()]
 
 
+def _parse_limit(raw: str | bool | None) -> int | None:
+    """Parse ``--limit N``. ``None`` means the flag was absent; ``0`` means no limit."""
+
+    if raw is None or raw is False:
+        return None
+    if raw is True:
+        raise CliError("`--limit` requires an integer value.", exit_code=EXIT_USAGE)
+    try:
+        return int(str(raw).strip())
+    except ValueError as exc:
+        raise CliError(
+            f"`--limit` requires an integer value, got `{raw}`.",
+            exit_code=EXIT_USAGE,
+            hint="Use `--limit 20`, or `--limit 0` for no limit.",
+        ) from exc
+
+
 # ---------------------------------------------------------------------------
 # Meta commands
 # ---------------------------------------------------------------------------
@@ -445,24 +621,136 @@ def _run_root(argv: list[str]) -> None:
         "exit_codes": {str(code): meaning for code, meaning in EXIT_CODES.items()},
     }
     if bool(options.get("help", False)):
-        payload["usage"] = [
-            f"{APP_NAME} brokers [--json]",
-            f"{APP_NAME} list [--broker BROKER] [--category CATEGORY] [--json]",
-            f"{APP_NAME} list [--domain DOMAIN] [--tag TAG] [--query TEXT] [--full] [--json]",
-            f"{APP_NAME} describe <broker> <category> <name> [--json]",
-            f"{APP_NAME} describe dart <name> [--json]",
-            f"{APP_NAME} schema <broker> <category> <name> [--json]",
-            f"{APP_NAME} schema dart <name> [--json]",
-            f"{APP_NAME} domains [--json]",
-            f"{APP_NAME} tags [--json]",
-            f"{APP_NAME} recipes [--json]",
-            f"{APP_NAME} recipe <name> [--json]",
-            f"{APP_NAME} <broker> <category> <name> [--params-json JSON] [schema options] "
-            "[--dry-run] [--fields a,b] [--compact] [--json]",
-            f"{APP_NAME} dart <name> [--params-json JSON] [schema options] [--dry-run] [--fields a,b] [--compact] [--json]",
-        ]
+        payload["usage"] = _all_usage_lines()
         payload["global_options"] = _global_option_rows()
     render_output(payload, force_json=force_json, compact=bool(options.get("compact", False)))
+
+
+def _all_usage_lines() -> list[str]:
+    """Every usage line, meta commands first, built from the one `_META_HELP` table."""
+
+    lines: list[str] = []
+    for name in META_COMMANDS:
+        lines.extend(_META_HELP[name]["usage"])
+    lines.extend(_DYNAMIC_USAGE)
+    return lines
+
+
+def _help_requested(argv: list[str]) -> bool:
+    return any(token == "--help" or token.startswith("--help=") or token == "-h" for token in argv)
+
+
+def _render_meta_help(name: str, argv: list[str]) -> None:
+    """Render help for one meta command. Keeps every runner free of help handling."""
+
+    entry = _META_HELP[name]
+    _, options = _parse_named_options([token for token in argv if token not in {"--help", "-h"}])
+    payload = {
+        "command": name,
+        "description": entry["description"],
+        "usage": list(entry["usage"]),
+        "options": list(entry["options"]),
+        "global_options": _global_option_rows(),
+        "examples": list(entry["examples"]),
+        "notes": list(entry["notes"]),
+    }
+    render_output(
+        payload,
+        force_json=bool(options.get("json", False)),
+        compact=bool(options.get("compact", False)),
+    )
+
+
+_SEARCH_DEFAULT_LIMIT = 8
+_SEARCH_MAX_LIMIT = 50
+
+
+def _search_payload(
+    *,
+    query: str,
+    limit: int,
+    broker: str | None,
+    domain: str | None,
+    tag: str | None,
+    category: str | None,
+    full: bool,
+    explain: bool,
+) -> dict[str, Any]:
+    registry = get_registry()
+    result = search_commands(
+        registry,
+        query,
+        limit=limit,
+        broker=broker,
+        domain=domain,
+        tag=tag,
+        category=category,
+        explain=explain,
+    )
+    builder = _command_summary if full else _command_brief
+    rows = []
+    for hit in result.hits:
+        row = to_jsonable(builder(hit.command))
+        row["score"] = hit.score
+        row["relative"] = hit.relative
+        row["matched"] = list(hit.matched)
+        row["next"] = f"uv run {APP_NAME} schema {' '.join(hit.command.path_segments)} --json"
+        rows.append(row)
+
+    payload: dict[str, Any] = {
+        "query": query,
+        "expanded": list(result.expanded),
+        "unmatched_terms": list(result.unmatched_terms),
+        "filters": {"broker": broker, "domain": domain, "tag": tag, "category": category},
+        "limit": limit,
+        "confidence": result.confidence,
+        "count": len(rows),
+        "commands": rows,
+    }
+    if result.fallback is not None:
+        payload["fallback"] = result.fallback
+    if explain and result.per_term:
+        payload["scoring"] = {"model": "bm25f", "per_term": result.per_term}
+    return payload
+
+
+def _run_search(argv: list[str]) -> None:
+    positional, options = _parse_named_options(argv)
+    query_option = _str_option(options, "query")
+    query = " ".join([*positional, *([query_option] if query_option else [])]).strip()
+    if not query:
+        raise CliError(
+            "`search` needs a query.",
+            exit_code=EXIT_USAGE,
+            hint=f"Try `{APP_NAME} search 외국인 순매수 --json`.",
+        )
+
+    registry = get_registry()
+    broker = _str_option(options, "broker")
+    if broker is not None and broker not in set(registry.iter_brokers()):
+        raise CliError(
+            f"Unknown broker `{broker}`.",
+            exit_code=EXIT_USAGE,
+            data={"allowed": list(registry.iter_brokers())},
+        )
+
+    raw_limit = _parse_limit(options.get("limit"))
+    limit = _SEARCH_DEFAULT_LIMIT if raw_limit is None else max(1, min(raw_limit, _SEARCH_MAX_LIMIT))
+
+    render_output(
+        _search_payload(
+            query=query,
+            limit=limit,
+            broker=broker,
+            domain=_str_option(options, "domain"),
+            tag=_str_option(options, "tag"),
+            category=_str_option(options, "category"),
+            full=bool(options.get("full", False)),
+            explain=bool(options.get("explain", False)),
+        ),
+        force_json=bool(options.get("json", False)),
+        compact=bool(options.get("compact", False)),
+    )
 
 
 def _run_brokers(argv: list[str]) -> None:
@@ -503,6 +791,7 @@ def _run_list(argv: list[str]) -> None:
             tag=_str_option(options, "tag"),
             query=_str_option(options, "query"),
             full=bool(options.get("full", False)),
+            limit=_parse_limit(options.get("limit")),
         ),
         force_json=bool(options.get("json", False)),
         compact=bool(options.get("compact", False)),
@@ -599,35 +888,73 @@ def _render_broker_help(broker: str, positional: list[str], *, force_json: bool)
     if broker == "dart":
         if positional:
             return False
+        commands = registry.list_commands(broker=broker)
         render_output(
             {
                 "broker": broker,
                 "role": BROKER_ROLES[broker].role,
-                "commands": [command.name for command in registry.list_commands(broker=broker)],
+                "description": BROKER_ROLES[broker].description,
+                "command_count": len(commands),
+                "commands": [
+                    {
+                        "name": command.name,
+                        "description": command.description,
+                        "required": _required_fields(command),
+                        "domains": list(command.domains),
+                        "tags": list(command.tags),
+                    }
+                    for command in commands
+                ],
             },
             force_json=force_json,
         )
         return True
 
     if not positional:
+        commands = registry.list_commands(broker=broker)
+        categories = []
+        for name in sorted({command.category for command in commands}):
+            in_category = [command for command in commands if command.category == name]
+            info = category_info(name)
+            row: dict[str, Any] = {"name": name, "command_count": len(in_category)}
+            if info is not None:
+                row["description"] = info.description
+                row["when_to_use"] = info.when_to_use
+            # Union over the real commands, so this reflects the authored taxonomy.
+            row["domains"] = sorted({d for command in in_category for d in command.domains})
+            row["tags"] = sorted({t for command in in_category for t in command.tags})
+            row["list_command"] = f"uv run {APP_NAME} list --broker {broker} --category {name} --json"
+            categories.append(row)
         render_output(
             {
                 "broker": broker,
                 "role": BROKER_ROLES[broker].role if broker in BROKER_ROLES else "unknown",
-                "categories": sorted({command.category for command in registry.list_commands(broker=broker)}),
+                "description": BROKER_ROLES[broker].description if broker in BROKER_ROLES else None,
+                "command_count": len(commands),
+                "categories": categories,
             },
             force_json=force_json,
         )
         return True
     if len(positional) == 1:
-        render_output(
+        in_category = registry.list_commands(broker=broker, category=positional[0])
+        info = category_info(positional[0])
+        payload: dict[str, Any] = {"broker": broker, "category": positional[0]}
+        if info is not None:
+            payload["description"] = info.description
+            payload["when_to_use"] = info.when_to_use
+        payload["command_count"] = len(in_category)
+        payload["commands"] = [
             {
-                "broker": broker,
-                "category": positional[0],
-                "commands": [command.name for command in registry.list_commands(broker=broker, category=positional[0])],
-            },
-            force_json=force_json,
-        )
+                "name": command.name,
+                "description": command.description,
+                "required": _required_fields(command),
+                "domains": list(command.domains),
+                "tags": list(command.tags),
+            }
+            for command in in_category
+        ]
+        render_output(payload, force_json=force_json)
         return True
     return False
 
@@ -696,6 +1023,7 @@ def _run_dynamic(argv: list[str]) -> None:
     compact = bool(options.pop("compact", False))
     fields = _parse_fields(options.pop("fields", None))
     dry_run = bool(options.pop("dry_run", False))
+    limit = _parse_limit(options.pop("limit", None))
 
     force_json, params = _merge_params(command, options)
 
@@ -714,6 +1042,9 @@ def _run_dynamic(argv: list[str]) -> None:
     data = to_jsonable(result)
     if fields:
         data = select_fields(data, fields)
+    if limit is not None:
+        data, notes = limit_rows(data, limit)
+        data = attach_truncation(data, limit, notes)
     render_output(data, force_json=force_json, compact=compact)
 
 
@@ -743,6 +1074,7 @@ def dispatch(argv: list[str] | None = None) -> None:
         return
 
     runners = {
+        "search": _run_search,
         "brokers": _run_brokers,
         "list": _run_list,
         "describe": _run_describe,
@@ -754,7 +1086,11 @@ def dispatch(argv: list[str] | None = None) -> None:
     }
     runner = runners.get(args[0])
     if runner is not None:
-        runner(args[1:])
+        rest = args[1:]
+        if _help_requested(rest):
+            _render_meta_help(args[0], rest)
+            return
+        runner(rest)
         return
 
     _run_dynamic(args)
