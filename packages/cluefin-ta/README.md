@@ -10,7 +10,6 @@ TA-Lib 호환 API를 제공하는 순수 Python 기술적 분석 라이브러리
 
 - **간편한 설치**: `pip install`만으로 설치 가능 (brew/apt 시스템 의존성 불필요)
 - **TA-Lib 호환 API**: 기존 TA-Lib 코드를 최소한의 변경으로 마이그레이션
-- **선택적 Numba 가속**: Numba 설치 시 평균 ~238배 성능 향상
 - **포트폴리오 메트릭**: TA-Lib에 없는 MDD, Sharpe, Sortino 등 추가 제공
 - **시장 레짐 감지**: 이동평균, 변동성, HMM 기반 시장 상태 분류
 
@@ -19,9 +18,6 @@ TA-Lib 호환 API를 제공하는 순수 Python 기술적 분석 라이브러리
 ```bash
 # 기본 설치 (NumPy만 의존)
 pip install cluefin-ta
-
-# Numba 가속 포함 설치 (선택)
-pip install cluefin-ta[numba]
 ```
 
 ## 사용법
@@ -187,23 +183,7 @@ uv run --with jupyter jupyter lab packages/cluefin-ta/examples/ta_quickstart.ipy
 | `REGIME_HMM_RETURNS(close)` | HMM 레짐 감지용 수익률 계산 |
 | `REGIME_HMM(returns, n_states=3, ...)` | 은닉 마르코프 모델 기반 레짐 감지 |
 
-## 성능
-
-Numba 설치 시 루프 기반 함수가 JIT 컴파일되어 성능 향상:
-
-| 함수 | NumPy (ms) | Numba (ms) | 성능 향상 |
-|------|-----------|-----------|----------|
-| EMA Loop | 1.506 | 0.015 | 101x |
-| Rolling Std | 44.574 | 0.144 | 310x |
-| Rolling MinMax | 20.467 | 0.061 | 333x |
-| True Range | 3.635 | 0.012 | 310x |
-| OBV | 2.187 | 0.009 | 254x |
-| A/D | 4.067 | 0.034 | 120x |
-
-*n=10,000 데이터 기준, 평균 238배 성능 향상*
-
 ## 요구사항
 
 - **필수**: `numpy>=1.20.0`
-- **선택**: `numba>=0.56.0` (성능 향상)
 - **선택**: `hmmlearn` (HMM 레짐 감지용, `uv add --optional hmm hmmlearn`)

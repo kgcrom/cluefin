@@ -20,10 +20,3 @@ AGENTS.md for repo-wide rules.
   Only `test_pattern.py` / `test_portfolio.py` run without it (no ta-lib counterpart).
 - `hmmlearn` looks like the same kind of optional dep but *is* skip-guarded — don't
   copy the ta-lib import style for new optional deps.
-
-## Stale docs
-
-- The package README still advertises Numba acceleration and its benchmark table;
-  Numba support was removed. Don't trust README performance claims — verify
-  against `pyproject.toml` and `_core/`. Leftover `__pycache__` bytecode also references
-  deleted modules (`dow`, `numba_impl`); the source tree is the truth.
