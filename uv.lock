@@ -309,12 +309,14 @@ version = "0.1.0"
 source = { editable = "apps/cluefin-openapi-cli" }
 dependencies = [
     { name = "cluefin-openapi" },
+    { name = "cluefin-ta" },
     { name = "pydantic" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "cluefin-openapi", editable = "packages/cluefin-openapi" },
+    { name = "cluefin-ta", editable = "packages/cluefin-ta" },
     { name = "pydantic", specifier = ">=2.12.0,<3.0.0" },
 ]
 
