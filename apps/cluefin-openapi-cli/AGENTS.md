@@ -21,11 +21,11 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   `metadata.BROKER_ROLES`. Ordering everywhere (`list`, `brokers`, `iter_brokers`) comes
   from `broker_rank`, not from alphabetical sorting.
 - `metadata.COMMAND_TAXONOMY` is the authoritative domain/tag source, keyed by qualified
-  name and **hand-authored for all 182 commands**. `_CATEGORY_DEFAULTS` survives only as
+  name and **hand-authored for every command**. `_CATEGORY_DEFAULTS` survives only as
   an unreachable fallback — `test_every_command_has_hand_authored_taxonomy` fails in both
   directions, so a new command or a rename breaks CI rather than silently inheriting a
   category default. Do not reintroduce keyword-derived tags: matching is additive with no
-  removal rule, which is what put `current-price` on 56/182 commands before.
+  removal rule, so tags only ever get noisier.
 - `metadata.CATEGORY_INFO` supplies the per-category prose for `<broker> --help`; the
   `domains`/`tags` shown there are a union over the real commands, not the seed values.
 - `metadata.KIWOOM_KIS_ALTERNATIVES` is a hand-maintained map; a Kiwoom command missing

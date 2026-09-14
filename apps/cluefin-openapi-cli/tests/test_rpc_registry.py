@@ -168,7 +168,7 @@ def test_taxonomy_filters_are_selective() -> None:
     signatures = {(command.domains, command.tags) for command in registry.values()}
     tag_sizes = Counter(tag for command in registry.values() for tag in command.tags)
 
-    # Category-derived taxonomy produced 66 signatures with current-price on 56/182.
+    # Floors under filter precision: a retag that collapses commands into one bucket fails.
     assert len(signatures) >= 110, len(signatures)
     assert max(tag_sizes.values()) <= 50, tag_sizes.most_common(3)
 

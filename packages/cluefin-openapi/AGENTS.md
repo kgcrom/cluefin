@@ -20,9 +20,8 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   docs state field lengths, but the live servers exceed them (2026-09-02: a Kiwoom ka90001
   theme name over 20 chars made pydantic reject the *whole* response with
   `string_too_long`, blanking the desk theme screen). A constraint on a response can only
-  reject good data. All 6,200-odd occurrences were removed;
-  `tests/test_response_models_unit.py` fails if one comes back. `json_schema_extra`
-  metadata is fine — it doesn't validate.
+  reject good data; `tests/test_response_models_unit.py` fails if one comes back.
+  `json_schema_extra` metadata is fine — it doesn't validate.
 
 ## Broker server behavior the code can't show
 
