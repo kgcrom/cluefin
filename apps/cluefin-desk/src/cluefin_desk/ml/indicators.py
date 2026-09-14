@@ -1,5 +1,3 @@
-from typing import Any, Dict
-
 import cluefin_ta as talib
 import pandas as pd
 
@@ -66,28 +64,6 @@ class TechnicalAnalyzer:
 
         return result
 
-    def calculate_risk_metrics(self, data: pd.DataFrame) -> Dict[str, float]:
-        """
-        Calculate whole-window risk metrics (Maximum Drawdown, Sharpe Ratio).
-
-        These are single scalar statistics over the full return series, not
-        per-row indicators, so they are kept out of calculate_all()'s DataFrame.
-
-        Args:
-            data: DataFrame with OHLCV data
-
-        Returns:
-            Dict with "mdd" and "sharpe" scalar values, or empty if not enough data
-        """
-        returns = data["close"].pct_change().dropna()
-        if len(returns) < 2:
-            return {}
-
-        return {
-            "mdd": talib.MDD(returns.values),
-            "sharpe": talib.SHARPE(returns.values),
-        }
-
     def _sma(self, series: pd.Series, period: int) -> pd.Series:
         """Calculate Simple Moving Average."""
         return series.rolling(window=period).mean()
@@ -130,81 +106,3 @@ class TechnicalAnalyzer:
         data["support"] = low_rolling
 
         return data
-
-    def get_signals(self, data: pd.DataFrame) -> Dict[str, Any]:
-        """
-        Generate trading signals based on technical indicators.
-
-        Args:
-            data: DataFrame with calculated indicators
-
-        Returns:
-            Dict with trading signals and recommendations
-        """
-        if data.empty or len(data) < 2:
-            return {}
-
-        latest = data.iloc[-1]
-        previous = data.iloc[-2]
-
-        signals = {"overall_signal": "NEUTRAL", "strength": 0.0, "signals": []}
-
-        score = 0
-        max_score = 0
-
-        # RSI signals
-        if not pd.isna(latest["rsi"]):
-            max_score += 1
-            if latest["rsi"] < 30:
-                signals["signals"].append("RSI oversold - potential buy signal")
-                score += 1
-            elif latest["rsi"] > 70:
-                signals["signals"].append("RSI overbought - potential sell signal")
-                score -= 1
-            elif 30 <= latest["rsi"] <= 70:
-                score += 0.5
-
-        # MACD signals
-        if not pd.isna(latest["macd"]) and not pd.isna(latest["macd_signal"]):
-            max_score += 1
-            if latest["macd"] > latest["macd_signal"] and previous["macd"] <= previous["macd_signal"]:
-                signals["signals"].append("MACD bullish crossover")
-                score += 1
-            elif latest["macd"] < latest["macd_signal"] and previous["macd"] >= previous["macd_signal"]:
-                signals["signals"].append("MACD bearish crossover")
-                score -= 1
-            elif latest["macd"] > latest["macd_signal"]:
-                score += 0.5
-
-        # Moving Average signals
-        if not pd.isna(latest["sma_20"]) and not pd.isna(latest["sma_50"]):
-            max_score += 1
-            if latest["close"] > latest["sma_20"] > latest["sma_50"]:
-                signals["signals"].append("Price above moving averages - bullish trend")
-                score += 1
-            elif latest["close"] < latest["sma_20"] < latest["sma_50"]:
-                signals["signals"].append("Price below moving averages - bearish trend")
-                score -= 1
-
-        # Bollinger Bands signals
-        if not pd.isna(latest["bb_lower"]) and not pd.isna(latest["bb_upper"]):
-            max_score += 1
-            if latest["close"] <= latest["bb_lower"]:
-                signals["signals"].append("Price at lower Bollinger Band - potential bounce")
-                score += 0.5
-            elif latest["close"] >= latest["bb_upper"]:
-                signals["signals"].append("Price at upper Bollinger Band - potential pullback")
-                score -= 0.5
-
-        # Calculate overall signal
-        if max_score > 0:
-            signals["strength"] = score / max_score
-
-            if signals["strength"] > 0.6:
-                signals["overall_signal"] = "BUY"
-            elif signals["strength"] < -0.6:
-                signals["overall_signal"] = "SELL"
-            else:
-                signals["overall_signal"] = "NEUTRAL"
-
-        return signals
