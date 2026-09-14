@@ -513,6 +513,16 @@ _TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {
         when_to_use="Use for thematic screening and theme membership discovery.",
         related_domains=("theme", "market"),
     ),
+    "technical-indicator": TaxonomyMetadata(
+        name="technical-indicator",
+        description="Computed indicator readings and signal rules rather than raw price rows.",
+        when_to_use=(
+            "Use when the question is what the indicators say. The CLI computes them in-process and "
+            "returns final values only, so no OHLCV table has to be read into context."
+        ),
+        avoid_when="Use the ohlcv tag when the raw candle series itself is the deliverable.",
+        related_domains=("chart",),
+    ),
     "tick": TaxonomyMetadata(
         name="tick",
         description="Tick interval price or index data.",
@@ -578,6 +588,7 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
     "kis.chart.daily-minute": CommandTaxonomy(("chart",), ("ohlcv", "minute", "daily")),
     "kis.chart.minute": CommandTaxonomy(("chart",), ("ohlcv", "minute")),
     "kis.chart.period": CommandTaxonomy(("chart",), ("ohlcv", "daily")),
+    "kis.chart.technical": CommandTaxonomy(("chart",), ("technical-indicator", "daily")),
     "kis.etf.component-stocks": CommandTaxonomy(("etf",), ("etf-holdings",)),
     "kis.etf.current-price": CommandTaxonomy(("etf", "quote"), ("current-price", "nav")),
     "kis.etf.daily": CommandTaxonomy(("etf", "chart"), ("nav", "daily")),
@@ -1098,6 +1109,13 @@ def build_agent_notes(
         else:
             base = f"Auxiliary-broker command with no KIS equivalent; this is the intended use of Kiwoom. {base}"
 
+    if category == "chart" and name == "technical":
+        return (
+            f"{base} This command computes rather than passing a response through: it fetches the daily candles "
+            "itself and returns final indicator values and signal rule votes, never the candle series. Prefer it "
+            "over fetching OHLCV and reasoning over the rows. The two signal families (trend, mean_reversion) are "
+            "reported separately and routinely disagree on a strong trend — read both, plus the per-rule reasons."
+        )
     if category == "chart":
         return f"{base} Use chart output as provider-normalized market data before calculating technical indicators."
     if category == "financial":
