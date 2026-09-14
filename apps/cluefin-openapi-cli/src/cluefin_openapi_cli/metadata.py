@@ -153,7 +153,7 @@ _DOMAIN_TAXONOMY: dict[str, TaxonomyMetadata] = {
         name="chart",
         description="Price, volume, and OHLCV time-series lookup commands.",
         when_to_use="Use before technical analysis, price trend review, or volume analysis.",
-        avoid_when="Skip when OHLCV arrays are already in hand; compute indicators from them with the cluefin-ta package.",
+        avoid_when="Skip when the question is what the indicators say rather than what the prices were — `kis chart technical` computes them and returns readings instead of rows.",
         related_tags=("ohlcv", "daily", "minute", "tick"),
     ),
     "corporate-actions": TaxonomyMetadata(
@@ -456,7 +456,7 @@ _TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {
         name="ohlcv",
         description="Open, high, low, close, and volume price series data.",
         when_to_use="Use to collect source arrays for technical indicators and price/volume analysis.",
-        avoid_when="Skip when OHLCV arrays are already available; compute indicators with the cluefin-ta package instead of re-fetching.",
+        avoid_when="Skip when only indicator readings are needed; `kis chart technical` computes them in-process, so no candle series has to be read at all.",
         related_domains=("chart",),
     ),
     "order-book": TaxonomyMetadata(
@@ -821,7 +821,7 @@ CATEGORY_INFO: dict[str, CategoryInfo] = {
     "chart": CategoryInfo(
         name="chart",
         description="Historical OHLCV time series at tick, minute, daily, and period granularity.",
-        when_to_use="Use before any technical analysis; compute indicators from the returned arrays with cluefin-ta.",
+        when_to_use="Use when the raw price/volume rows are the deliverable. For indicator readings, `kis chart technical` computes them and returns values only.",
         domains=_CATEGORY_DEFAULTS["chart"][0],
         tags=_CATEGORY_DEFAULTS["chart"][1],
     ),
