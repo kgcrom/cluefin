@@ -21,7 +21,11 @@ its non-obvious constraints.
 
 ## Environment gotchas
 
-- macOS system deps: `brew install lightgbm ta-lib`.
+- macOS system deps: `brew install lightgbm ta-lib`. `lightgbm` is a runtime dep of
+  `cluefin-desk`; the C `ta-lib` is **only** needed to run `cluefin-ta`'s parity tests
+  (they `import talib` at module level with no skip guard). No app imports `talib`, and
+  `cluefin-ta` itself is pure Python — skip the `ta-lib` install if you are not running
+  those tests.
 - Git hooks run via **lefthook** (`uv run lefthook install`) — not the `pre-commit` framework.
 
 ## Conventions
