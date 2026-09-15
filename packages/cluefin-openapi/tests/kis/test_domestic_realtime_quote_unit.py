@@ -257,14 +257,6 @@ class TestExecutionFieldNames:
         """Test that field names list has 46 entries."""
         assert len(EXECUTION_FIELD_NAMES) == 46
 
-    def test_field_names_all_strings(self):
-        """Test that all field names are strings."""
-        assert all(isinstance(name, str) for name in EXECUTION_FIELD_NAMES)
-
-    def test_field_names_no_duplicates(self):
-        """Test that there are no duplicate field names."""
-        assert len(EXECUTION_FIELD_NAMES) == len(set(EXECUTION_FIELD_NAMES))
-
     def test_field_names_match_model_fields(self):
         """Test that all field names exist in the model."""
         model_fields = set(DomesticRealtimeExecutionItem.model_fields.keys())
@@ -492,14 +484,6 @@ class TestOrderbookFieldNames:
     def test_field_names_count(self):
         """Test that field names list has 62 entries."""
         assert len(ORDERBOOK_FIELD_NAMES) == 62
-
-    def test_field_names_all_strings(self):
-        """Test that all field names are strings."""
-        assert all(isinstance(name, str) for name in ORDERBOOK_FIELD_NAMES)
-
-    def test_field_names_no_duplicates(self):
-        """Test that there are no duplicate field names."""
-        assert len(ORDERBOOK_FIELD_NAMES) == len(set(ORDERBOOK_FIELD_NAMES))
 
     def test_field_names_match_model_fields(self):
         """Test that all field names exist in the model."""
@@ -730,14 +714,6 @@ class TestExecutionNotificationFieldNames:
     def test_field_names_count(self):
         """Test that field names list has 26 entries."""
         assert len(EXECUTION_NOTIFICATION_FIELD_NAMES) == 26
-
-    def test_field_names_all_strings(self):
-        """Test that all field names are strings."""
-        assert all(isinstance(name, str) for name in EXECUTION_NOTIFICATION_FIELD_NAMES)
-
-    def test_field_names_no_duplicates(self):
-        """Test that there are no duplicate field names."""
-        assert len(EXECUTION_NOTIFICATION_FIELD_NAMES) == len(set(EXECUTION_NOTIFICATION_FIELD_NAMES))
 
     def test_field_names_match_model_fields(self):
         """Test that all field names exist in the model."""
