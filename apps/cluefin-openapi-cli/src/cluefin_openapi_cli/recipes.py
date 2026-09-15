@@ -69,15 +69,25 @@ _RECIPES: tuple[WorkflowRecipe, ...] = (
     WorkflowRecipe(
         name="technical-analysis",
         title="Technical Analysis",
-        description="Collect chart data for downstream technical indicator calculation.",
-        domains=("chart", "technical-indicator"),
-        tags=("ohlcv", "daily", "minute"),
+        description="Read technical indicator signals for one stock, or collect the raw chart data behind them.",
+        domains=("chart",),
+        tags=("technical-indicator", "ohlcv", "daily", "minute"),
         steps=(
+            RecipeStep(
+                title="Read the indicators",
+                command=("kis", "chart", "technical"),
+                purpose="Get indicator readings and signal rules for one stock in a single call.",
+                agent_notes=(
+                    "Start here. The CLI fetches the candles and computes in-process, so the reply is a few dozen "
+                    "numbers rather than a few hundred rows. Only fall through to the chart commands below when the "
+                    "rows themselves are the deliverable."
+                ),
+            ),
             RecipeStep(
                 title="Fetch daily OHLCV",
                 command=("kis", "chart", "period"),
                 purpose="Retrieve period chart data suitable for daily indicators.",
-                agent_notes="Compute SMA/EMA/RSI/MACD/Bollinger/Stochastic/ADX/ATR/OBV from the returned OHLCV arrays with the cluefin-ta package; the CLI has no indicator command.",
+                agent_notes="Use this when the candle rows themselves are needed. For indicator readings alone, `kis chart technical` fetches and computes in one call and returns no rows.",
             ),
             RecipeStep(
                 title="Fetch intraday OHLCV",
@@ -92,7 +102,7 @@ _RECIPES: tuple[WorkflowRecipe, ...] = (
                 agent_notes="Normalize provider response shape before TA calculation.",
             ),
         ),
-        agent_notes="Recipes do not run TA indicators; compute them with the cluefin-ta package after collecting OHLCV arrays.",
+        agent_notes="Start with `kis chart technical`: it returns SMA/RSI/MACD/Bollinger/Stochastic/ADX/ATR/OBV readings plus signal rules without putting a candle series in context. Fall back to these chart commands when the rows themselves are needed.",
     ),
     WorkflowRecipe(
         name="market-scan",

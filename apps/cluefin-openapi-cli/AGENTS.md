@@ -21,11 +21,11 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   `metadata.BROKER_ROLES`. Ordering everywhere (`list`, `brokers`, `iter_brokers`) comes
   from `broker_rank`, not from alphabetical sorting.
 - `metadata.COMMAND_TAXONOMY` is the authoritative domain/tag source, keyed by qualified
-  name and **hand-authored for all 182 commands**. `_CATEGORY_DEFAULTS` survives only as
+  name and **hand-authored for every command**. `_CATEGORY_DEFAULTS` survives only as
   an unreachable fallback — `test_every_command_has_hand_authored_taxonomy` fails in both
   directions, so a new command or a rename breaks CI rather than silently inheriting a
   category default. Do not reintroduce keyword-derived tags: matching is additive with no
-  removal rule, which is what put `current-price` on 56/182 commands before.
+  removal rule, so tags only ever get noisier.
 - `metadata.CATEGORY_INFO` supplies the per-category prose for `<broker> --help`; the
   `domains`/`tags` shown there are a union over the real commands, not the seed values.
 - `metadata.KIWOOM_KIS_ALTERNATIVES` is a hand-maintained map; a Kiwoom command missing
@@ -59,6 +59,39 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   lands the command in the wrong path.
 - A `category` missing from `_CATEGORY_DEFAULTS` in `metadata.py` silently falls back to
   domain `market` / tag `ranking` instead of erroring — add an entry for new categories.
+
+## `kis chart technical` computes; every other command passes through
+
+- It is the **only** command that does not hand a client response straight back. It pages
+  `chart.period` itself (`ohlcv.fetch_kis_daily_series`), computes via `indicators.py`, and
+  returns readings only — the candle series never reaches the caller, which is the whole
+  reason it exists. `_handler_fakes.assert_calls_client_once` therefore does not describe
+  it: `test_kis_basic_quote_handlers.py` excludes it and `test_kis_technical_handler.py`
+  covers it instead. `test_handler_client_contract.py` swallows `CliError` for the same
+  reason — its probe returns `None` for every output field, which this handler correctly
+  treats as an empty response.
+- **`adj_price` polarity is inverted between the two KIS chart endpoints** —
+  `chart.daily` is `0:unadjusted, 1:adjusted`, `chart.period` is `0:adjusted, 1:original`.
+  Always go through `ohlcv.adj_price_flag(endpoint, adjusted=...)`; a raw "0"/"1" silently
+  mixes price bases.
+- **`ohlcv` parses missing values to NaN, never 0.0** (unlike desk's `_safe_float`), and
+  takes the magnitude of every Kiwoom price — Kiwoom signs some responses (`cur_prc` is
+  `"-270406"` on down days) and prices cannot be negative, so this is correct either way
+  and needs no live call to settle.
+- Minute bars are not daily bars with a finer stamp: KIS minute responses have **no**
+  `stck_clpr` and no per-bar `acml_vol` (that field is the running day total on `output1`).
+  `from_kis_minute` reads `stck_prpr`/`cntg_vol`.
+- **Signals are reported as two families, never one score.** `macd`/`ma_stack` are
+  trend-following and `rsi`/`bbands`/`stoch` are mean-reverting; averaging all five
+  cancels out precisely when the reading is strongest (a sustained rise and a sustained
+  collapse both score 0.0). Do not collapse them back into a single BUY/SELL.
+- Signal aggregation stays in the CLI on purpose. `cluefin-ta`'s contract is ta-lib
+  parity, and a BUY/SELL score has no ta-lib counterpart to be parity-tested against —
+  moving it there breaks that package's only invariant. Only new *indicators* belong in
+  `cluefin-ta`.
+- Numbers will **not** match `cluefin-desk`: desk's pandas `ewm(span=N)` has no warm-up
+  gap, while `cluefin-ta` follows ta-lib's SMA-seeded EMA with `N-1` leading NaNs.
+  `cluefin-ta` is the reference here.
 
 ## Tests that break on unrelated-looking changes
 

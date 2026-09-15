@@ -27,6 +27,18 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - KIS 재무 시계열은 문서와 달리 진행연도 누적 행이 맨 앞에 온다(실측).
   `_split_annual_and_ytd` 를 우회해 첫 행을 연간으로 쓰면 ROE·성장률이 부풀려진다.
 
+## 지표 → ML 피처 경로
+
+- `TechnicalAnalyzer.calculate_all` 은 호출자가 `screens/stock_detail.py` 하나뿐이고
+  **이를 실행하는 테스트가 없다.** 산출 DataFrame 은 `predictor.prepare_data`/`predict` 의
+  `indicators` 인자로 그대로 흘러간다 — 선언은 `Dict` 인데 DataFrame 을 넘기며
+  `DataFrame.items()` 가 `(컬럼, Series)` 를 내주는 덕에 동작한다.
+- `ml/feature_engineering.create_talib_features` 가 그중 14개 컬럼을 자기 talib 버전으로
+  덮어쓴다. 실제 모델 피처로 살아남는 것은 `sma_50`·`sma_120`·`sma_240`·`rsi`·
+  `macd_histogram`·`adx`·`resistance`·`support` 8개뿐이다. **컬럼 이름을 바꾸면 테스트는
+  하나도 안 깨지고 모델 피처 벡터만 조용히 바뀐다.**
+- `resistance`/`support` 는 행이 20개 이상일 때만 붙는다 — 행 수에 따라 출력 스키마가 달라진다.
+
 ## Panel conventions
 
 - A tab that fails must say so **in that tab**. Loaders that only `logger.error(...)`

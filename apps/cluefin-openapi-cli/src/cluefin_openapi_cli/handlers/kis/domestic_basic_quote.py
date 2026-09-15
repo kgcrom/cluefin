@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from cluefin_openapi_cli.errors import EXIT_BROKER, CliError
 from cluefin_openapi_cli.handlers._base import DispatcherProtocol, extract_output, rpc_method
+from cluefin_openapi_cli.indicators import MIN_CANDLES, analyze
+from cluefin_openapi_cli.ohlcv import fetch_kis_daily_series
 
 # ---------------------------------------------------------------------------
 # Stock Current Price
@@ -665,6 +668,90 @@ def handle_kis_etf_nav_comparison_daily(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Technical Analysis
+# ---------------------------------------------------------------------------
+
+_TECHNICAL_DEFAULT_COUNT = 120
+_TECHNICAL_MAX_COUNT = 600
+
+
+@rpc_method(
+    name="chart.technical",
+    description=(
+        "Compute technical indicators and signal readings for a stock from daily OHLCV. "
+        "Returns final indicator values and rule votes only, not the candle series."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "stock_code": {"type": "string", "description": "6-digit stock code", "pattern": "^[0-9]{6}$"},
+            "market": {
+                "type": "string",
+                "enum": ["J", "NX", "UN"],
+                "description": "Market code (J:KRX, NX:NXT, UN:Combined). Default J.",
+            },
+            "count": {
+                "type": "integer",
+                "minimum": MIN_CANDLES,
+                "maximum": _TECHNICAL_MAX_COUNT,
+                "description": (
+                    f"Daily candles to analyze. Default {_TECHNICAL_DEFAULT_COUNT}, minimum {MIN_CANDLES} "
+                    "(the SMA(60) warm-up). More candles cost more broker calls, not more output."
+                ),
+            },
+            "end_date": {
+                "type": "string",
+                "description": "Analyze as of this date (YYYYMMDD). Default today.",
+                "pattern": "^[0-9]{8}$",
+            },
+            "adjusted": {
+                "type": "boolean",
+                "description": "Use adjusted prices (default true). False returns original prices.",
+            },
+        },
+        "required": ["stock_code"],
+    },
+    returns={"type": "object"},
+    category="chart",
+    broker="kis",
+)
+def handle_kis_chart_technical(params: dict, session) -> dict:
+    """Fetch daily candles and return indicator readings rather than the candles.
+
+    This is the one command in the registry that computes instead of passing a client
+    response through. That is the entire point: a caller asking "what is RSI doing"
+    otherwise has to pull several hundred OHLCV rows through its own context to find
+    out. Everything here beyond the fetch lives in `ohlcv` and `indicators`.
+    """
+
+    kis = session.get_kis()
+    count = int(params.get("count", _TECHNICAL_DEFAULT_COUNT))
+    series = fetch_kis_daily_series(
+        kis,
+        params["stock_code"],
+        count=count,
+        market=params.get("market", "J"),
+        end_date=params.get("end_date"),
+        adjusted=params.get("adjusted", True),
+    )
+
+    if len(series) < MIN_CANDLES:
+        raise CliError(
+            f"Only {len(series)} daily candles available for {params['stock_code']}; "
+            f"indicators need at least {MIN_CANDLES}.",
+            exit_code=EXIT_BROKER,
+            error_type="InsufficientHistory",
+            data={"stock_code": params["stock_code"], "candles": len(series), "required": MIN_CANDLES},
+            hint=(
+                "The code may be newly listed, suspended, or wrong. Check `kis stock basic-info`, "
+                "or widen the window with an earlier --end-date."
+            ),
+        )
+
+    return analyze(series)
+
+
+# ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
 
@@ -686,6 +773,7 @@ _ALL_HANDLERS = [
     handle_kis_etf_component_stock_price,
     handle_kis_etf_nav_comparison_trend,
     handle_kis_etf_nav_comparison_daily,
+    handle_kis_chart_technical,
 ]
 
 

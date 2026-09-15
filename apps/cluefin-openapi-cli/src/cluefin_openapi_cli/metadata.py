@@ -153,7 +153,7 @@ _DOMAIN_TAXONOMY: dict[str, TaxonomyMetadata] = {
         name="chart",
         description="Price, volume, and OHLCV time-series lookup commands.",
         when_to_use="Use before technical analysis, price trend review, or volume analysis.",
-        avoid_when="Skip when OHLCV arrays are already in hand; compute indicators from them with the cluefin-ta package.",
+        avoid_when="Skip when the question is what the indicators say rather than what the prices were — `kis chart technical` computes them and returns readings instead of rows.",
         related_tags=("ohlcv", "daily", "minute", "tick"),
     ),
     "corporate-actions": TaxonomyMetadata(
@@ -456,7 +456,7 @@ _TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {
         name="ohlcv",
         description="Open, high, low, close, and volume price series data.",
         when_to_use="Use to collect source arrays for technical indicators and price/volume analysis.",
-        avoid_when="Skip when OHLCV arrays are already available; compute indicators with the cluefin-ta package instead of re-fetching.",
+        avoid_when="Skip when only indicator readings are needed; `kis chart technical` computes them in-process, so no candle series has to be read at all.",
         related_domains=("chart",),
     ),
     "order-book": TaxonomyMetadata(
@@ -512,6 +512,16 @@ _TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {
         description="Theme group list or theme constituent data.",
         when_to_use="Use for thematic screening and theme membership discovery.",
         related_domains=("theme", "market"),
+    ),
+    "technical-indicator": TaxonomyMetadata(
+        name="technical-indicator",
+        description="Computed indicator readings and signal rules rather than raw price rows.",
+        when_to_use=(
+            "Use when the question is what the indicators say. The CLI computes them in-process and "
+            "returns final values only, so no OHLCV table has to be read into context."
+        ),
+        avoid_when="Use the ohlcv tag when the raw candle series itself is the deliverable.",
+        related_domains=("chart",),
     ),
     "tick": TaxonomyMetadata(
         name="tick",
@@ -578,6 +588,7 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
     "kis.chart.daily-minute": CommandTaxonomy(("chart",), ("ohlcv", "minute", "daily")),
     "kis.chart.minute": CommandTaxonomy(("chart",), ("ohlcv", "minute")),
     "kis.chart.period": CommandTaxonomy(("chart",), ("ohlcv", "daily")),
+    "kis.chart.technical": CommandTaxonomy(("chart",), ("technical-indicator", "daily")),
     "kis.etf.component-stocks": CommandTaxonomy(("etf",), ("etf-holdings",)),
     "kis.etf.current-price": CommandTaxonomy(("etf", "quote"), ("current-price", "nav")),
     "kis.etf.daily": CommandTaxonomy(("etf", "chart"), ("nav", "daily")),
@@ -810,7 +821,7 @@ CATEGORY_INFO: dict[str, CategoryInfo] = {
     "chart": CategoryInfo(
         name="chart",
         description="Historical OHLCV time series at tick, minute, daily, and period granularity.",
-        when_to_use="Use before any technical analysis; compute indicators from the returned arrays with cluefin-ta.",
+        when_to_use="Use when the raw price/volume rows are the deliverable. For indicator readings, `kis chart technical` computes them and returns values only.",
         domains=_CATEGORY_DEFAULTS["chart"][0],
         tags=_CATEGORY_DEFAULTS["chart"][1],
     ),
@@ -1098,6 +1109,13 @@ def build_agent_notes(
         else:
             base = f"Auxiliary-broker command with no KIS equivalent; this is the intended use of Kiwoom. {base}"
 
+    if category == "chart" and name == "technical":
+        return (
+            f"{base} This command computes rather than passing a response through: it fetches the daily candles "
+            "itself and returns final indicator values and signal rule votes, never the candle series. Prefer it "
+            "over fetching OHLCV and reasoning over the rows. The two signal families (trend, mean_reversion) are "
+            "reported separately and routinely disagree on a strong trend — read both, plus the per-rule reasons."
+        )
     if category == "chart":
         return f"{base} Use chart output as provider-normalized market data before calculating technical indicators."
     if category == "financial":

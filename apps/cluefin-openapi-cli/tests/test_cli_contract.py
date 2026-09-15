@@ -1,6 +1,6 @@
 """전체 command 표면의 기계적 계약 검증.
 
-- 182개 command 모두 `schema`가 유효한 JSON Schema를 내고, 그 안의 `invoke.dry_run`
+- 모든 command가 `schema`가 유효한 JSON Schema를 내고, 그 안의 `invoke.dry_run`
   예시 문자열이 그대로 실행돼 exit 0 이어야 한다 (예시가 깨지면 agent 가 첫 호출부터 실패한다).
 - 모든 command 의 dry-run 은 broker client 를 만들지 않아야 한다.
 - README 코드 블록의 `uv run cluefin-openapi-cli ...` 중 네트워크가 필요 없는 것(meta command,
