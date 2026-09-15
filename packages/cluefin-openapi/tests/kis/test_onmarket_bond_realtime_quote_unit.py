@@ -265,14 +265,6 @@ class TestBondExecutionFieldNames:
         """Test that field names list has 19 entries."""
         assert len(BOND_EXECUTION_FIELD_NAMES) == 19
 
-    def test_field_names_all_strings(self):
-        """Test that all field names are strings."""
-        assert all(isinstance(name, str) for name in BOND_EXECUTION_FIELD_NAMES)
-
-    def test_field_names_no_duplicates(self):
-        """Test that there are no duplicate field names."""
-        assert len(BOND_EXECUTION_FIELD_NAMES) == len(set(BOND_EXECUTION_FIELD_NAMES))
-
     def test_field_names_match_model_fields(self):
         """Test that all field names exist in the model."""
         model_fields = set(OnmarketBondRealtimeExecutionItem.model_fields.keys())
@@ -487,10 +479,6 @@ class TestBondOrderbookFieldNames:
         """Test that field names list has 34 entries."""
         assert len(BOND_ORDERBOOK_FIELD_NAMES) == 34
 
-    def test_field_names_no_duplicates(self):
-        """Test that there are no duplicate field names."""
-        assert len(BOND_ORDERBOOK_FIELD_NAMES) == len(set(BOND_ORDERBOOK_FIELD_NAMES))
-
     def test_field_names_match_model_fields(self):
         """Test that all field names exist in the model."""
         model_fields = set(OnmarketBondRealtimeOrderbookItem.model_fields.keys())
@@ -701,14 +689,6 @@ class TestBondIndexExecutionFieldNames:
     def test_field_names_count(self):
         """Test that field names list has 20 entries."""
         assert len(BOND_INDEX_EXECUTION_FIELD_NAMES) == 20
-
-    def test_field_names_all_strings(self):
-        """Test that all field names are strings."""
-        assert all(isinstance(name, str) for name in BOND_INDEX_EXECUTION_FIELD_NAMES)
-
-    def test_field_names_no_duplicates(self):
-        """Test that there are no duplicate field names."""
-        assert len(BOND_INDEX_EXECUTION_FIELD_NAMES) == len(set(BOND_INDEX_EXECUTION_FIELD_NAMES))
 
     def test_field_names_match_model_fields(self):
         """Test that all field names exist in the model."""

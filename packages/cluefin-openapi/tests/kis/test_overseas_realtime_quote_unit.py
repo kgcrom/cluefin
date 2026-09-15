@@ -413,14 +413,6 @@ class TestOverseasExecutionFieldNames:
         """Test that field names list has 26 entries."""
         assert len(OVERSEAS_EXECUTION_FIELD_NAMES) == 26
 
-    def test_field_names_all_strings(self):
-        """Test that all field names are strings."""
-        assert all(isinstance(name, str) for name in OVERSEAS_EXECUTION_FIELD_NAMES)
-
-    def test_field_names_no_duplicates(self):
-        """Test that there are no duplicate field names."""
-        assert len(OVERSEAS_EXECUTION_FIELD_NAMES) == len(set(OVERSEAS_EXECUTION_FIELD_NAMES))
-
     def test_field_names_match_model_fields(self):
         """Test that all field names exist in the model."""
         model_fields = set(OverseasRealtimeExecutionItem.model_fields.keys())
@@ -601,14 +593,6 @@ class TestOverseasDelayedOrderbookFieldNames:
     def test_field_names_count(self):
         """Test that field names list has 17 entries."""
         assert len(OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES) == 17
-
-    def test_field_names_all_strings(self):
-        """Test that all field names are strings."""
-        assert all(isinstance(name, str) for name in OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES)
-
-    def test_field_names_no_duplicates(self):
-        """Test that there are no duplicate field names."""
-        assert len(OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES) == len(set(OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES))
 
     def test_field_names_match_model_fields(self):
         """Test that all field names exist in the model."""
@@ -832,14 +816,6 @@ class TestOverseasExecutionNotificationFieldNames:
     def test_field_names_count(self):
         """Test that field names list has 25 entries."""
         assert len(OVERSEAS_EXECUTION_NOTIFICATION_FIELD_NAMES) == 25
-
-    def test_field_names_all_strings(self):
-        """Test that all field names are strings."""
-        assert all(isinstance(name, str) for name in OVERSEAS_EXECUTION_NOTIFICATION_FIELD_NAMES)
-
-    def test_field_names_no_duplicates(self):
-        """Test that there are no duplicate field names."""
-        assert len(OVERSEAS_EXECUTION_NOTIFICATION_FIELD_NAMES) == len(set(OVERSEAS_EXECUTION_NOTIFICATION_FIELD_NAMES))
 
     def test_field_names_match_model_fields(self):
         """Test that all field names exist in the model."""

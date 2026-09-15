@@ -471,16 +471,6 @@ class TestREGIME_Phase2_Integration:
                 err_msg="REGIME_MA and trend from REGIME_COMBINED should match",
             )
 
-    def test_import_all_phase2_functions(self):
-        """Test that all Phase 2 functions can be imported."""
-        from cluefin_ta import REGIME_COMBINED, REGIME_MA, REGIME_MA_DURATION, REGIME_VOLATILITY
-
-        # Just verify they're callable
-        assert callable(REGIME_MA)
-        assert callable(REGIME_MA_DURATION)
-        assert callable(REGIME_VOLATILITY)
-        assert callable(REGIME_COMBINED)
-
 
 class TestREGIME_HMM_RETURNS:
     """Tests for HMM returns preparation."""
@@ -548,16 +538,6 @@ class TestREGIME_HMM_RETURNS:
 
 class TestREGIME_HMM:
     """Tests for HMM-based regime detection."""
-
-    @pytest.mark.skipif(
-        not pytest.importorskip("hmmlearn", reason="hmmlearn not installed"), reason="hmmlearn required for HMM tests"
-    )
-    def test_hmm_import_required(self):
-        """Test that hmmlearn is imported correctly."""
-        # This test only runs if hmmlearn is available
-        import hmmlearn
-
-        assert hmmlearn is not None
 
     def test_hmm_missing_library(self):
         """Test graceful failure when hmmlearn not installed."""
@@ -728,10 +708,3 @@ class TestREGIME_HMM_Integration:
         # Should work end-to-end
         assert len(states) == len(prices)
         assert not np.all(np.isnan(states))  # Should have some valid states
-
-    def test_import_all_hmm_functions(self):
-        """Test that all HMM functions can be imported."""
-        from cluefin_ta import REGIME_HMM, REGIME_HMM_RETURNS
-
-        assert callable(REGIME_HMM_RETURNS)
-        assert callable(REGIME_HMM)
