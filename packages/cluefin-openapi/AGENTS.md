@@ -22,6 +22,10 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   `string_too_long`, blanking the desk theme screen). A constraint on a response can only
   reject good data; `tests/test_response_models_unit.py` fails if one comes back.
   `json_schema_extra` metadata is fine — it doesn't validate.
+- **DART 응답 본문은 `DartHttpBody.parse()` 가 채우는 `result` 안에만 있다.** 모델
+  최상위에 `list` 같은 필드를 선언해도 parse() 는 건드리지 않아 항상 기본값(빈 리스트)이
+  남고, 읽는 쪽은 예외 없이 0건을 받는다. `UniqueNumber` 가 실제로 그랬다 — 실서버는
+  119,313행을 돌려주는데 CLI 는 빈 목록을 내보내고 있었다. 행은 `result.list` 로 읽는다.
 
 ## Broker server behavior the code can't show
 
