@@ -5,7 +5,7 @@ Handlers follow one of two response shapes:
 - Kiwoom handlers call ``extract_body(response)`` → ``response.body.model_dump()``.
 - KIS handlers call ``extract_output(response, "output*")`` → ``response.body.output*.model_dump()``.
 - DART handlers use the client return value directly (``result.model_dump()`` /
-  ``result.list``), without a ``.body`` wrapper.
+  ``result.result.list``), without a ``.body`` wrapper.
 
 ``FakeSession`` records every client call and returns a flexible ``_Result`` that
 satisfies all three shapes, so a single fake drives the parametrized tests for
@@ -81,25 +81,33 @@ class _Body:
         raise AttributeError(name)
 
 
+class _DartResult:
+    """Stands in for DART's ``result`` envelope, which carries the ``list`` rows."""
+
+    def __init__(self, output_value: Any = _PRESENT) -> None:
+        self._output_value = output_value
+
+    @property
+    def list(self) -> list[_Record]:
+        if self._output_value is None:
+            return []
+        return [_Record(), _Record()]
+
+
 class _Result:
     """Return value of a faked client method.
 
-    Supports ``.body`` (KIS/Kiwoom), ``.model_dump()`` and ``.list`` (DART).
+    Supports ``.body`` (KIS/Kiwoom), ``.model_dump()`` and ``.result.list`` (DART).
     """
 
     def __init__(self, method: str, output_value: Any = _PRESENT) -> None:
         self._method = method
         self._output_value = output_value
         self.body = _Body(method, output_value)
+        self.result = _DartResult(output_value)
 
     def model_dump(self) -> dict[str, str]:
         return {"method": self._method}
-
-    @property
-    def list(self) -> list[_Body]:
-        if self._output_value is None:
-            return []
-        return [_Body(self._method)]
 
 
 class _MethodRecorder:

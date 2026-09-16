@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -125,10 +125,11 @@ class UniqueNumberItem(BaseModel):
 
 
 class UniqueNumber(BaseModel, DartHttpBody):
-    model_config = ConfigDict(title="공시대상회사 고유번호 목록", populate_by_name=True)
+    """공시대상회사 고유번호 목록.
 
-    list: List[UniqueNumberItem] = Field(
-        default_factory=list,
-        alias="list",
-        description="공시대상회사 고유번호 목록",
-    )
+    항목은 ``DartHttpBody.parse()`` 가 채우는 ``result.list`` 에 담긴다. 과거에는
+    최상위에도 ``list`` 필드를 선언했으나 parse()가 채우지 않아 항상 비어 있었고,
+    이를 읽는 쪽이 조용히 0건을 받는 문제가 있어 제거했다.
+    """
+
+    model_config = ConfigDict(title="공시대상회사 고유번호 목록", populate_by_name=True)
