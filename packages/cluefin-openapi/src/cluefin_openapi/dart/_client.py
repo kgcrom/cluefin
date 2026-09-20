@@ -60,6 +60,12 @@ class Client(BaseHttpClient):
 
         return PeriodicReportKeyInformation(self)
 
+    @property
+    def share_disclosure_comprehensive(self):
+        from ._share_disclosure_comprehensive import ShareDisclosureComprehensive
+
+        return ShareDisclosureComprehensive(self)
+
     def _get_bytes(self, path: str, *, params: Optional[Dict] = None):
         """Make a GET request and return raw bytes with rate limiting and retry."""
         return self._request(path, params=params, return_json=False)
