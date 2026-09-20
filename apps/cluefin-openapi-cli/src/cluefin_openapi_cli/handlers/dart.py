@@ -164,6 +164,109 @@ def handle_corp_code_lookup(params: dict, session) -> dict:
     }
 
 
+def _digits(value) -> str:
+    """Keep only digits; DART returns rcept_dt as `2026-09-09` here but `20260909` elsewhere."""
+    return "".join(ch for ch in _clean(value) if ch.isdigit())
+
+
+def _collect_share_rows(result, params: dict) -> dict:
+    """Filter, sort and cap a share-disclosure list into the standard response shape.
+
+    Both share-disclosure endpoints take only ``corp_code`` and return the company's
+    full reporting history, so date filtering and capping happen here. Rows come back
+    newest first, which keeps ``max_rows`` from dropping the recent ones.
+    """
+    rows = list(getattr(getattr(result, "result", None), "list", None) or [])
+
+    since = _digits(params.get("since"))
+    until = _digits(params.get("until"))
+    reporter = _clean(params.get("reporter")).lower()
+
+    matched = []
+    for row in rows:
+        rcept_dt = _digits(getattr(row, "rcept_dt", None))
+        if since and rcept_dt and rcept_dt < since:
+            continue
+        if until and rcept_dt and rcept_dt > until:
+            continue
+        if reporter and reporter not in _clean(getattr(row, "repror", None)).lower():
+            continue
+        matched.append(row)
+
+    matched.sort(key=lambda row: _digits(getattr(row, "rcept_dt", None)), reverse=True)
+
+    try:
+        max_rows = int(params.get("max_rows", _CORP_CODE_DEFAULT_LIMIT))
+    except (TypeError, ValueError):
+        max_rows = _CORP_CODE_DEFAULT_LIMIT
+    if max_rows < 0:
+        max_rows = _CORP_CODE_DEFAULT_LIMIT
+
+    page = matched if max_rows == 0 else matched[:max_rows]
+    data = [row.model_dump() if hasattr(row, "model_dump") else {} for row in page]
+    return {
+        "total": len(matched),
+        "returned": len(data),
+        "truncated": len(data) < len(matched),
+        "data": data,
+    }
+
+
+_SHARE_DISCLOSURE_FILTERS = {
+    "corp_code": {"type": "string", "description": "Corporate unique code (8 digits)"},
+    "since": {"type": "string", "description": "Keep reports filed on or after this date (YYYYMMDD)"},
+    "until": {"type": "string", "description": "Keep reports filed on or before this date (YYYYMMDD)"},
+    "reporter": {"type": "string", "description": "Reporter name, case-insensitive substring match"},
+    "max_rows": {
+        "type": "integer",
+        "description": "Max rows returned, newest first. Default 100, 0 = no cap. "
+        "Named max_rows because --limit is a global CLI option and never reaches handlers.",
+    },
+}
+
+
+@rpc_method(
+    name="dart.large_holding_report",
+    description=(
+        "Get 5%-rule large holding reports (주식등의 대량보유상황보고) for one company: who crossed "
+        "or moved a 5%+ stake, by how much, and why. Returns the full history, newest first."
+    ),
+    parameters={
+        "type": "object",
+        "properties": dict(_SHARE_DISCLOSURE_FILTERS),
+        "required": ["corp_code"],
+    },
+    returns={"type": "object"},
+    category="dart",
+    broker="dart",
+)
+def handle_large_holding_report(params: dict, session) -> dict:
+    dart = session.get_dart()
+    result = dart.share_disclosure_comprehensive.large_holding_report(params["corp_code"])
+    return _collect_share_rows(result, params)
+
+
+@rpc_method(
+    name="dart.executive_ownership_report",
+    description=(
+        "Get executive and major-shareholder ownership reports (임원·주요주주 특정증권등 소유상황보고) "
+        "for one company, including share-count and stake changes. Returns the full history, newest first."
+    ),
+    parameters={
+        "type": "object",
+        "properties": dict(_SHARE_DISCLOSURE_FILTERS),
+        "required": ["corp_code"],
+    },
+    returns={"type": "object"},
+    category="dart",
+    broker="dart",
+)
+def handle_executive_ownership_report(params: dict, session) -> dict:
+    dart = session.get_dart()
+    result = dart.share_disclosure_comprehensive.executive_major_shareholder_ownership_report(params["corp_code"])
+    return _collect_share_rows(result, params)
+
+
 @rpc_method(
     name="dart.major_shareholder",
     description="Get major shareholder status from periodic report.",
@@ -202,6 +305,8 @@ _ALL_HANDLERS = [
     handle_disclosure_search,
     handle_company_overview,
     handle_corp_code_lookup,
+    handle_large_holding_report,
+    handle_executive_ownership_report,
     handle_major_shareholder,
 ]
 
