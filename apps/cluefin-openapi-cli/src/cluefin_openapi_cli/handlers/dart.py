@@ -90,7 +90,7 @@ def handle_company_overview(params: dict, session) -> dict:
     return dump_model(result)
 
 
-_CORP_CODE_DEFAULT_LIMIT = 100
+_DEFAULT_MAX_ROWS = 100
 
 
 def _clean(value) -> str:
@@ -101,10 +101,10 @@ def _clean(value) -> str:
 def _max_rows(params: dict) -> int:
     """Row cap from params. Anything unusable falls back to the default; 0 means no cap."""
     try:
-        max_rows = int(params.get("max_rows", _CORP_CODE_DEFAULT_LIMIT))
+        max_rows = int(params.get("max_rows", _DEFAULT_MAX_ROWS))
     except (TypeError, ValueError):
-        return _CORP_CODE_DEFAULT_LIMIT
-    return _CORP_CODE_DEFAULT_LIMIT if max_rows < 0 else max_rows
+        return _DEFAULT_MAX_ROWS
+    return _DEFAULT_MAX_ROWS if max_rows < 0 else max_rows
 
 
 def _paged_response(matched: list, params: dict) -> dict:
@@ -154,7 +154,15 @@ def handle_corp_code_lookup(params: dict, session) -> dict:
     # Items live under the DART result envelope. UniqueNumber also declares a top-level
     # `list` field that parse() never fills, so reading that one yields zero rows.
     items = getattr(getattr(result, "result", None), "list", None) or []
+    return _paged_response(_filter_corp_codes(items, params), params)
 
+
+def _filter_corp_codes(items, params: dict) -> list:
+    """Apply the corp-code-lookup filters. Pure: takes rows in, gives matching rows out.
+
+    ``corp_code``/``stock_code`` match exactly after stripping the padding DART puts on
+    unlisted stock codes; ``corp_name`` is a case-insensitive substring match.
+    """
     corp_code = _clean(params.get("corp_code"))
     stock_code = _clean(params.get("stock_code"))
     corp_name = _clean(params.get("corp_name")).lower()
@@ -172,8 +180,7 @@ def handle_corp_code_lookup(params: dict, session) -> dict:
         if listed_only and not item_stock_code:
             continue
         matched.append(item)
-
-    return _paged_response(matched, params)
+    return matched
 
 
 def _digits(value) -> str:
@@ -188,8 +195,16 @@ def _collect_share_rows(result, params: dict) -> dict:
     full reporting history, so date filtering and capping happen here. Rows come back
     newest first, which keeps ``max_rows`` from dropping the recent ones.
     """
-    rows = list(getattr(getattr(result, "result", None), "list", None) or [])
+    rows = getattr(getattr(result, "result", None), "list", None) or []
+    return _paged_response(_filter_share_rows(rows, params), params)
 
+
+def _filter_share_rows(rows, params: dict) -> list:
+    """Apply the share-disclosure filters and sort newest first. Pure: rows in, rows out.
+
+    ``since``/``until`` are inclusive and compared on digits only, so ``2026-09-09`` and
+    ``20260909`` both work. Rows without a receipt date pass the date filters.
+    """
     since = _digits(params.get("since"))
     until = _digits(params.get("until"))
     reporter = _clean(params.get("reporter")).lower()
@@ -206,8 +221,7 @@ def _collect_share_rows(result, params: dict) -> dict:
         matched.append(row)
 
     matched.sort(key=lambda row: _digits(getattr(row, "rcept_dt", None)), reverse=True)
-
-    return _paged_response(matched, params)
+    return matched
 
 
 _SHARE_DISCLOSURE_FILTERS = {
