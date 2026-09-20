@@ -116,7 +116,6 @@ def build_fallback(
     filtered: bool,
     candidate_count: int,
 ) -> dict[str, Any]:
-
     nearest_domains = _taxonomy_rows(index, "domains", _taxonomy_scores(index, scored, "domains"))
     nearest_tags = _taxonomy_rows(index, "tags", _taxonomy_scores(index, scored, "tags"))
 

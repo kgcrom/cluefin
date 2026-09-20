@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from cluefin_openapi_cli.metadata import missing_taxonomy_names
 from cluefin_openapi_cli.recipes import list_recipes, validate_recipe_commands
 from cluefin_openapi_cli.registry import RpcRegistry, build_cli_registry
@@ -60,14 +62,18 @@ def test_cli_registry_commands_expose_agent_metadata() -> None:
     assert command.side_effect == "read"
 
 
-def test_cli_registry_all_commands_have_domain_tag_and_credentials() -> None:
+@pytest.mark.parametrize("attribute", ["domains", "tags", "examples", "agent_notes", "required_credentials"])
+def test_cli_registry_all_commands_have_domain_tag_and_credentials(attribute: str) -> None:
     registry = build_cli_registry()
 
-    assert all(command.domains for command in registry.values())
-    assert all(command.tags for command in registry.values())
-    assert all(command.examples for command in registry.values())
-    assert all(command.agent_notes for command in registry.values())
-    assert all(command.required_credentials for command in registry.values())
+    # Name the offenders: `all(...)` only ever reported False.
+    missing = [name for name, command in registry.items() if not getattr(command, attribute)]
+    assert missing == []
+
+
+def test_cli_registry_is_read_only() -> None:
+    registry = build_cli_registry()
+
     assert {command.side_effect for command in registry.values()} == {"read"}
 
 
