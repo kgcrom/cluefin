@@ -45,6 +45,17 @@ class TestClientInitialization:
         assert client._rate_limiter.refill_rate == 2.0
 
 
+class TestServiceAccessors:
+    """Every DART service module must be reachable through a Client property."""
+
+    def test_service_properties_bind_the_client(self, client: Client):
+        from cluefin_openapi.dart._periodic_report_financial_statement import PeriodicReportFinancialStatement
+
+        service = client.periodic_report_financial_statement
+        assert isinstance(service, PeriodicReportFinancialStatement)
+        assert service.client is client
+
+
 class TestSuccessfulRequests:
     """Tests for successful request handling."""
 
