@@ -25,6 +25,11 @@ def extract_body(response):
     return response.body.model_dump() if hasattr(response.body, "model_dump") else {}
 
 
+def dump_model(obj) -> dict:
+    """모델 객체를 dict 로. DART 응답은 `body` 래퍼가 없어 `extract_body` 를 쓸 수 없다."""
+    return obj.model_dump() if hasattr(obj, "model_dump") else {}
+
+
 @dataclass
 class MethodSchema:
     name: str

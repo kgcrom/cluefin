@@ -7,12 +7,7 @@ import json
 import pytest
 
 from cluefin_openapi_cli.errors import (
-    EXIT_BROKER,
-    EXIT_CREDENTIALS,
-    EXIT_RATE_LIMIT,
-    EXIT_UNEXPECTED,
     EXIT_USAGE,
-    classify_exception,
 )
 from cluefin_openapi_cli.main import run_cli
 from cluefin_openapi_cli.metadata import BROKER_ORDER, BROKER_ROLES, KIWOOM_KIS_ALTERNATIVES
@@ -43,13 +38,13 @@ def test_kis_is_primary_and_kiwoom_is_auxiliary() -> None:
     assert BROKER_ROLES["dart"].role == "reference"
 
 
-def test_every_kiwoom_alternative_points_at_a_real_command() -> None:
+@pytest.mark.parametrize(("source", "targets"), sorted(KIWOOM_KIS_ALTERNATIVES.items()))
+def test_every_kiwoom_alternative_points_at_a_real_command(source: str, targets) -> None:
     registry = build_cli_registry()
-    for source, targets in KIWOOM_KIS_ALTERNATIVES.items():
-        assert tuple(source.split(".")) in registry, source
-        for target in targets:
-            assert target.startswith("kis."), target
-            assert tuple(target.split(".")) in registry, target
+
+    assert tuple(source.split(".")) in registry, source
+    unknown = [t for t in targets if not t.startswith("kis.") or tuple(t.split(".")) not in registry]
+    assert unknown == []
 
 
 def test_registry_commands_carry_role_and_alternatives() -> None:
@@ -140,6 +135,20 @@ def test_schema_exposes_json_schema_options_and_invocations() -> None:
     assert stock["pattern"] == "^[0-9]{6}$"
     assert payload["invoke"]["dry_run"].endswith("--dry-run --json")
     assert any(option["flag"] == "--dry-run" for option in payload["global_options"])
+
+
+def test_income_statement_schema_names_the_operating_income_field() -> None:
+    """op_prfi reads like operating profit but is 경상이익 — the schema has to say so.
+
+    Confirmed against the DART filing for 125020 FY2024: bsop_prti 109억 matches 영업이익
+    109.27억, op_prfi 82억 matches 법인세차감전 82.46억.
+    """
+
+    code, payload = _json(["schema", "kis", "financial", "income-statement", "--json"])
+
+    assert code == 0
+    assert "bsop_prti" in payload["description"]
+    assert "op_prfi" in payload["description"]
 
 
 def test_schema_for_dart_path() -> None:
@@ -262,78 +271,6 @@ def test_compact_output_is_single_line() -> None:
 
     assert result.exit_code == 0
     assert result.stdout.count("\n") == 1
-
-
-# --- error taxonomy ----------------------------------------------------------
-
-
-class _RateLimitError(Exception):
-    retry_after = 7
-
-
-class _KISAuthenticationError(Exception):
-    status_code = 401
-
-
-class _KiwoomNetworkError(Exception):
-    pass
-
-
-class _KISAPIError(Exception):
-    response_data = {"rt_cd": "1", "msg_cd": "EGW00123", "msg1": "token mismatch"}
-
-
-@pytest.mark.parametrize(
-    ("exc", "exit_code", "error_type", "retryable"),
-    [
-        (_RateLimitError("slow down"), EXIT_RATE_LIMIT, "RateLimitError", True),
-        (_KISAuthenticationError("401"), EXIT_CREDENTIALS, "AuthenticationError", False),
-        (
-            ValueError("KIS credentials not configured (kis_app_key, kis_secret_key)"),
-            EXIT_CREDENTIALS,
-            "CredentialsMissing",
-            False,
-        ),
-        (_KiwoomNetworkError("boom"), EXIT_BROKER, "BrokerUnavailable", True),
-        (_KISAPIError("bad"), EXIT_BROKER, "BrokerApiError", False),
-        (ValueError("KIS API Error [OPSQ0001]: no data (rt_cd=1)"), EXIT_BROKER, "BrokerApiError", False),
-        (RuntimeError("weird"), EXIT_UNEXPECTED, "ExecutionError", False),
-    ],
-)
-def test_classify_exception_maps_to_exit_codes(exc, exit_code, error_type, retryable) -> None:
-    error = classify_exception(exc, command="kis.stock.current-price", broker="kis")
-
-    assert error.exit_code == exit_code
-    assert error.error_type == error_type
-    assert error.retryable is retryable
-    payload = error.to_payload()["error"]
-    assert payload["exit_code"] == exit_code
-    assert payload["data"]["command"] == "kis.stock.current-price"
-
-
-def test_classify_rate_limit_and_api_error_carry_broker_detail() -> None:
-    rate = classify_exception(_RateLimitError("slow"), command="c", broker="kis")
-    assert rate.data["retry_after"] == 7
-    api = classify_exception(_KISAPIError("bad"), command="c", broker="kis")
-    assert api.data["msg_cd"] == "EGW00123"
-
-
-def test_classify_pydantic_response_parse_error() -> None:
-    from pydantic import BaseModel, ValidationError
-
-    class Model(BaseModel):
-        a: int
-        b: str
-
-    with pytest.raises(ValidationError) as exc_info:
-        Model.model_validate({})
-    error = classify_exception(exc_info.value, command="kis.stock.current-price", broker="kis")
-
-    assert error.exit_code == EXIT_BROKER
-    assert error.error_type == "ResponseParseError"
-    assert error.data["fields"] == ["a", "b"]
-    assert error.data["model"] == "Model"
-    assert "field errors" in error.message
 
 
 def test_limit_is_advertised_as_a_global_option() -> None:

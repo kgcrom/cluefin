@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from cluefin_openapi_cli.handlers._base import DispatcherProtocol, rpc_method
+from cluefin_openapi_cli.handlers._base import DispatcherProtocol, dump_model, rpc_method
 
 
 @rpc_method(
@@ -67,7 +67,7 @@ def handle_disclosure_search(params: dict, session) -> dict:
         if key in params:
             kwargs[key] = params[key]
     result = dart.public_disclosure.public_disclosure_search(**kwargs)
-    return result.model_dump() if hasattr(result, "model_dump") else {}
+    return dump_model(result)
 
 
 @rpc_method(
@@ -87,7 +87,7 @@ def handle_disclosure_search(params: dict, session) -> dict:
 def handle_company_overview(params: dict, session) -> dict:
     dart = session.get_dart()
     result = dart.public_disclosure.company_overview(params["corp_code"])
-    return result.model_dump() if hasattr(result, "model_dump") else {}
+    return dump_model(result)
 
 
 _CORP_CODE_DEFAULT_LIMIT = 100
@@ -96,6 +96,32 @@ _CORP_CODE_DEFAULT_LIMIT = 100
 def _clean(value) -> str:
     """Normalize an XML-sourced field; DART pads unlisted stock codes with spaces."""
     return str(value).strip() if value is not None else ""
+
+
+def _max_rows(params: dict) -> int:
+    """Row cap from params. Anything unusable falls back to the default; 0 means no cap."""
+    try:
+        max_rows = int(params.get("max_rows", _CORP_CODE_DEFAULT_LIMIT))
+    except (TypeError, ValueError):
+        return _CORP_CODE_DEFAULT_LIMIT
+    return _CORP_CODE_DEFAULT_LIMIT if max_rows < 0 else max_rows
+
+
+def _paged_response(matched: list, params: dict) -> dict:
+    """Cap ``matched`` and shape it like the ``list --full`` truncation contract.
+
+    Callers that need a specific row order must sort before calling: the cap keeps the
+    head of the list, so the ordering decides which rows survive.
+    """
+    max_rows = _max_rows(params)
+    page = matched if max_rows == 0 else matched[:max_rows]
+    data = [dump_model(row) for row in page]
+    return {
+        "total": len(matched),
+        "returned": len(data),
+        "truncated": len(data) < len(matched),
+        "data": data,
+    }
 
 
 @rpc_method(
@@ -147,21 +173,7 @@ def handle_corp_code_lookup(params: dict, session) -> dict:
             continue
         matched.append(item)
 
-    try:
-        max_rows = int(params.get("max_rows", _CORP_CODE_DEFAULT_LIMIT))
-    except (TypeError, ValueError):
-        max_rows = _CORP_CODE_DEFAULT_LIMIT
-    if max_rows < 0:
-        max_rows = _CORP_CODE_DEFAULT_LIMIT
-
-    page = matched if max_rows == 0 else matched[:max_rows]
-    data = [item.model_dump() if hasattr(item, "model_dump") else {} for item in page]
-    return {
-        "total": len(matched),
-        "returned": len(data),
-        "truncated": len(data) < len(matched),
-        "data": data,
-    }
+    return _paged_response(matched, params)
 
 
 def _digits(value) -> str:
@@ -195,21 +207,7 @@ def _collect_share_rows(result, params: dict) -> dict:
 
     matched.sort(key=lambda row: _digits(getattr(row, "rcept_dt", None)), reverse=True)
 
-    try:
-        max_rows = int(params.get("max_rows", _CORP_CODE_DEFAULT_LIMIT))
-    except (TypeError, ValueError):
-        max_rows = _CORP_CODE_DEFAULT_LIMIT
-    if max_rows < 0:
-        max_rows = _CORP_CODE_DEFAULT_LIMIT
-
-    page = matched if max_rows == 0 else matched[:max_rows]
-    data = [row.model_dump() if hasattr(row, "model_dump") else {} for row in page]
-    return {
-        "total": len(matched),
-        "returned": len(data),
-        "truncated": len(data) < len(matched),
-        "data": data,
-    }
+    return _paged_response(matched, params)
 
 
 _SHARE_DISCLOSURE_FILTERS = {
@@ -304,7 +302,7 @@ def handle_financial_major_accounts(params: dict, session) -> dict:
         bsns_year=params["bsns_year"],
         reprt_code=params["reprt_code"],
     )
-    return result.model_dump() if hasattr(result, "model_dump") else {}
+    return dump_model(result)
 
 
 @rpc_method(
@@ -338,7 +336,7 @@ def handle_financial_full_statements(params: dict, session) -> dict:
         reprt_code=params["reprt_code"],
         fs_div=params.get("fs_div", "CFS"),
     )
-    return result.model_dump() if hasattr(result, "model_dump") else {}
+    return dump_model(result)
 
 
 @rpc_method(
@@ -372,7 +370,7 @@ def handle_financial_major_indicators(params: dict, session) -> dict:
         reprt_code=params["reprt_code"],
         idx_cl_code=params["idx_cl_code"],
     )
-    return result.model_dump() if hasattr(result, "model_dump") else {}
+    return dump_model(result)
 
 
 @rpc_method(
@@ -402,7 +400,7 @@ def handle_major_shareholder(params: dict, session) -> dict:
         bsns_year=params["bsns_year"],
         reprt_code=params["reprt_code"],
     )
-    return result.model_dump() if hasattr(result, "model_dump") else {}
+    return dump_model(result)
 
 
 # ---------------------------------------------------------------------------

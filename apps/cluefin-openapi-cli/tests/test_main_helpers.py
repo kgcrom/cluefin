@@ -2,13 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from cluefin_openapi_cli.main import (
-    CliError,
-    _coerce_value,
-    _load_params_json,
-    _merge_params,
-    _render_leaf_help,
-)
+from cluefin_openapi_cli.cliargs import _coerce_value, _load_params_json, _merge_params
+from cluefin_openapi_cli.errors import CliError
+from cluefin_openapi_cli.payloads import _render_leaf_help
 from cluefin_openapi_cli.registry import CommandSpec
 
 

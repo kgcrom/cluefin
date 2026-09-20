@@ -14,6 +14,18 @@ from typing import Any
 _FORBIDDEN_CHARS = {"%": "pre-URL-encoded text", "?": "embedded query string", "#": "URL fragment"}
 _TRAVERSAL = re.compile(r"(^|[\\/])\.\.($|[\\/])")
 
+# schema type -> (accepted types, rejected types, hint). `bool` is an `int` in Python, so
+# the numeric rules reject it explicitly. Only the container rules carry a hint, and those
+# deliberately leave `value` out of the issue payload.
+_TYPE_RULES: dict[str, tuple[tuple[type, ...], tuple[type, ...], str | None]] = {
+    "string": ((str,), (), None),
+    "integer": ((int,), (bool,), None),
+    "number": ((int, float), (bool,), None),
+    "boolean": ((bool,), (), None),
+    "array": ((list,), (), "Use --params-json for arrays."),
+    "object": ((dict,), (), "Use --params-json for objects."),
+}
+
 
 @dataclass(slots=True)
 class ValidationIssue:
@@ -82,29 +94,33 @@ def _walk_strings(path: str, value: Any, report: ValidationReport) -> None:
             _walk_strings(f"{path}[{index}]", item, report)
 
 
+def _check_type(name: str, value: Any, schema_type: Any, report: ValidationReport) -> bool:
+    """Report a JSON-Schema type mismatch. Returns True when the value is the wrong type.
+
+    An unknown (or absent) type falls through to the enum/pattern/bounds rules, which is
+    what the per-type `if` chain this replaces did.
+    """
+    rule = _TYPE_RULES.get(schema_type)
+    if rule is None:
+        return False
+    allowed, rejected, hint = rule
+    if isinstance(value, allowed) and not isinstance(value, rejected):
+        return False
+    # Only the container types carry a hint, and those omit `value` from the payload.
+    report.add(
+        ValidationIssue(
+            name,
+            f"expected {schema_type}, got {type(value).__name__}",
+            value=None if hint else value,
+            hint=hint,
+        )
+    )
+    return True
+
+
 def _check_scalar(name: str, value: Any, schema: dict[str, Any], report: ValidationReport) -> None:
     schema_type = schema.get("type")
-    if schema_type == "string" and not isinstance(value, str):
-        report.add(ValidationIssue(name, f"expected string, got {type(value).__name__}", value=value))
-        return
-    if schema_type == "integer" and (isinstance(value, bool) or not isinstance(value, int)):
-        report.add(ValidationIssue(name, f"expected integer, got {type(value).__name__}", value=value))
-        return
-    if schema_type == "number" and (isinstance(value, bool) or not isinstance(value, (int, float))):
-        report.add(ValidationIssue(name, f"expected number, got {type(value).__name__}", value=value))
-        return
-    if schema_type == "boolean" and not isinstance(value, bool):
-        report.add(ValidationIssue(name, f"expected boolean, got {type(value).__name__}", value=value))
-        return
-    if schema_type == "array" and not isinstance(value, list):
-        report.add(
-            ValidationIssue(name, f"expected array, got {type(value).__name__}", hint="Use --params-json for arrays.")
-        )
-        return
-    if schema_type == "object" and not isinstance(value, dict):
-        report.add(
-            ValidationIssue(name, f"expected object, got {type(value).__name__}", hint="Use --params-json for objects.")
-        )
+    if _check_type(name, value, schema_type, report):
         return
 
     enum = schema.get("enum")

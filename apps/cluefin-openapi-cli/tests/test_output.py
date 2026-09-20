@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from cluefin_openapi_cli.main import _command_summary
 from cluefin_openapi_cli.output import dump_json, render_output, to_jsonable
+from cluefin_openapi_cli.payloads import _command_summary
 from cluefin_openapi_cli.registry import CommandSpec
 
 

@@ -972,7 +972,15 @@ QUERY_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("체결강도", ("execution", "strength", "intensity")),
     ("투자의견", ("investment", "opinion", "analyst")),
     ("목표주가", ("investment", "opinion", "estimate")),
-    ("실적", ("earnings", "estimate", "income")),
+    # 실적 질의는 추정(kis estimated-earnings)과 보고된 원문(dart financial-*) 둘 다를
+    # 뜻한다. 보고된 쪽을 빼면 반기·분기 실적을 가진 유일한 명령이 후보에서 사라진다.
+    ("실적", ("earnings", "estimate", "income", "financial", "statement", "account")),
+    ("매출액", ("revenue", "sale", "income", "statement", "account")),
+    ("매출", ("revenue", "sale", "income", "statement", "account")),
+    ("영업이익", ("operating", "income", "profit", "statement", "account")),
+    ("순이익", ("net", "income", "profit", "statement", "account")),
+    ("반기", ("half", "year", "periodic", "report", "statement")),
+    ("분기", ("quarterly", "periodic", "report", "statement")),
     ("지지선", ("resistance", "level")),
     ("저항선", ("resistance", "level")),
     ("변동성", ("volatility", "fluctuation")),
@@ -1048,6 +1056,20 @@ def get_command_metadata(*, broker: str, category: str, name: str, qualified_nam
     )
 
 
+# Scalar samples per schema type. `array` stays out: it must hand back a fresh list every
+# call, and a module-level [] would be shared by every caller.
+_TYPE_SAMPLES: dict[str, Any] = {"integer": 1, "number": 1.0, "boolean": False}
+
+# (substring match, suffix match, sample) — the order is the priority, so `corp_code`
+# has to come before the generic `code` rule.
+_NAME_SAMPLES: tuple[tuple[tuple[str, ...], tuple[str, ...], str], ...] = (
+    (("date",), ("_dt", "ymd"), "20250101"),
+    (("corp_code",), (), "00126380"),
+    (("stock_code", "code", "iscd"), (), "005930"),
+    (("market",), (), "J"),
+)
+
+
 def _sample_value(field_name: str, schema: dict[str, Any]) -> Any:
     if "default" in schema:
         return schema["default"]
@@ -1055,24 +1077,16 @@ def _sample_value(field_name: str, schema: dict[str, Any]) -> Any:
         return schema["enum"][0]
 
     schema_type = schema.get("type", "string")
-    if schema_type == "integer":
-        return 1
-    if schema_type == "number":
-        return 1.0
-    if schema_type == "boolean":
-        return False
     if schema_type == "array":
         return []
+    # `False` is a legitimate sample, so membership decides, not truthiness.
+    if schema_type in _TYPE_SAMPLES:
+        return _TYPE_SAMPLES[schema_type]
 
     lowered = field_name.lower()
-    if "date" in lowered or lowered.endswith("_dt") or lowered.endswith("ymd"):
-        return "20250101"
-    if "corp_code" in lowered:
-        return "00126380"
-    if "stock_code" in lowered or "code" in lowered or "iscd" in lowered:
-        return "005930"
-    if "market" in lowered:
-        return "J"
+    for parts, suffixes, sample in _NAME_SAMPLES:
+        if any(part in lowered for part in parts) or lowered.endswith(suffixes):
+            return sample
     return "value"
 
 
