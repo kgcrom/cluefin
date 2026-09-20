@@ -107,6 +107,22 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - 불리언 파라미터는 값을 받아야 한다 — `--listed-only true`. 플래그처럼 값 없이 주면
   exit 2 (`Option --listed-only requires a value.`).
 
+## `dart financial-*` 가 최신 실적의 기본 경로다
+
+- `kis financial *` 의 `--div-cls-code 1` 은 파라미터가 정상 전달되지만 **종목에 따라
+  연간 행만 온다** (2026-09-20 실측: 삼성전자는 202606·202603 분기 행이 오고,
+  티씨머티리얼즈 125020 은 FY2024 연간까지만 온다 — DART 에는 FY2025 사업보고서와
+  2026 반기보고서가 이미 있는데도). 코드 버그가 아니라 KIS 의 소형주 커버리지다.
+  스키마 설명이 이 사실을 안내하므로 문구를 줄이지 말 것.
+- DART 주요계정의 손익 행은 **분기 보고서에서 `thstrm_amount` 가 해당 분기 단독,
+  `thstrm_add_amount` 가 연초 누적**이다 (1분기는 둘이 같은 값, 사업보고서와
+  재무상태표 행은 누적이 `None`). 반기 실적을 전년과 비교할 때 `thstrm_amount` 를
+  쓰면 성장률이 절반 가까이 틀어진다. `frmtrm_add_amount` 가 전년 동기 누적이다.
+- 주요계정 응답에는 `fs_div` 파라미터가 없고 회사가 제출한 기준(연결·개별)이 그대로
+  온다. 연결재무제표가 없는 회사는 OFS 행만 온다. 전체 재무제표만 `fs_div` 를 받는다.
+- 복수회사 조회와 XBRL 원문 다운로드는 일부러 뺐다 — 배열 입력과 파일 쓰기가
+  "read 패스스루" 계약과 맞지 않는다.
+
 ## Tests that break on unrelated-looking changes
 
 - `test_rpc_registry.py` hardcodes the total command count — bump it when adding or
