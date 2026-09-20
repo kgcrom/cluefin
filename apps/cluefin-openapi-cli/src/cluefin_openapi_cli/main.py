@@ -21,7 +21,6 @@ from cluefin_openapi_cli.errors import (
 )
 from cluefin_openapi_cli.metadata import (
     BROKER_ROLES,
-    category_info,
 )
 from cluefin_openapi_cli.output import (
     attach_truncation,
@@ -41,8 +40,8 @@ from cluefin_openapi_cli.payloads import (
     _dry_run_payload,
     _global_option_rows,
     _list_payload,
+    _render_broker_help,
     _render_leaf_help,
-    _required_fields,
     _schema_payload,
     _search_payload,
 )
@@ -416,82 +415,6 @@ def _run_schema(argv: list[str]) -> None:
 # ---------------------------------------------------------------------------
 # Broker commands
 # ---------------------------------------------------------------------------
-
-
-def _render_broker_help(broker: str, positional: list[str], *, force_json: bool) -> bool:
-    registry = get_registry()
-    if broker == "dart":
-        if positional:
-            return False
-        commands = registry.list_commands(broker=broker)
-        render_output(
-            {
-                "broker": broker,
-                "role": BROKER_ROLES[broker].role,
-                "description": BROKER_ROLES[broker].description,
-                "command_count": len(commands),
-                "commands": [
-                    {
-                        "name": command.name,
-                        "description": command.description,
-                        "required": _required_fields(command),
-                        "domains": list(command.domains),
-                        "tags": list(command.tags),
-                    }
-                    for command in commands
-                ],
-            },
-            force_json=force_json,
-        )
-        return True
-
-    if not positional:
-        commands = registry.list_commands(broker=broker)
-        categories = []
-        for name in sorted({command.category for command in commands}):
-            in_category = [command for command in commands if command.category == name]
-            info = category_info(name)
-            row: dict[str, Any] = {"name": name, "command_count": len(in_category)}
-            if info is not None:
-                row["description"] = info.description
-                row["when_to_use"] = info.when_to_use
-            # Union over the real commands, so this reflects the authored taxonomy.
-            row["domains"] = sorted({d for command in in_category for d in command.domains})
-            row["tags"] = sorted({t for command in in_category for t in command.tags})
-            row["list_command"] = f"uv run {APP_NAME} list --broker {broker} --category {name} --json"
-            categories.append(row)
-        render_output(
-            {
-                "broker": broker,
-                "role": BROKER_ROLES[broker].role if broker in BROKER_ROLES else "unknown",
-                "description": BROKER_ROLES[broker].description if broker in BROKER_ROLES else None,
-                "command_count": len(commands),
-                "categories": categories,
-            },
-            force_json=force_json,
-        )
-        return True
-    if len(positional) == 1:
-        in_category = registry.list_commands(broker=broker, category=positional[0])
-        info = category_info(positional[0])
-        payload: dict[str, Any] = {"broker": broker, "category": positional[0]}
-        if info is not None:
-            payload["description"] = info.description
-            payload["when_to_use"] = info.when_to_use
-        payload["command_count"] = len(in_category)
-        payload["commands"] = [
-            {
-                "name": command.name,
-                "description": command.description,
-                "required": _required_fields(command),
-                "domains": list(command.domains),
-                "tags": list(command.tags),
-            }
-            for command in in_category
-        ]
-        render_output(payload, force_json=force_json)
-        return True
-    return False
 
 
 def _run_dynamic(argv: list[str]) -> None:

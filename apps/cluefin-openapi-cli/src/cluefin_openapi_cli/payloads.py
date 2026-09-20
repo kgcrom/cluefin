@@ -15,6 +15,7 @@ from cluefin_openapi_cli.metadata import (
     BROKER_ROLES,
     broker_rank,
     build_taxonomy_entry,
+    category_info,
 )
 from cluefin_openapi_cli.output import render_output, to_jsonable
 from cluefin_openapi_cli.registry import CommandSpec, get_registry
@@ -364,3 +365,80 @@ def _render_leaf_help(command: CommandSpec, *, force_json: bool) -> None:
         },
         force_json=force_json,
     )
+
+
+def _broker_role_fields(broker: str) -> dict[str, Any]:
+    """`role`/`description` for a broker, in the order the help payload prints them."""
+    role = BROKER_ROLES.get(broker)
+    return {
+        "role": role.role if role is not None else "unknown",
+        "description": role.description if role is not None else None,
+    }
+
+
+def _category_fields(name: str) -> dict[str, Any]:
+    """`description`/`when_to_use` for a category, or nothing when it is not authored."""
+    info = category_info(name)
+    if info is None:
+        return {}
+    return {"description": info.description, "when_to_use": info.when_to_use}
+
+
+def _help_command_row(command: CommandSpec) -> dict[str, Any]:
+    return {
+        "name": command.name,
+        "description": command.description,
+        "required": _required_fields(command),
+        "domains": list(command.domains),
+        "tags": list(command.tags),
+    }
+
+
+def _render_broker_help(broker: str, positional: list[str], *, force_json: bool) -> bool:
+    registry = get_registry()
+    if broker == "dart":
+        if positional:
+            return False
+        commands = registry.list_commands(broker=broker)
+        render_output(
+            {
+                "broker": broker,
+                **_broker_role_fields(broker),
+                "command_count": len(commands),
+                "commands": [_help_command_row(command) for command in commands],
+            },
+            force_json=force_json,
+        )
+        return True
+
+    if not positional:
+        commands = registry.list_commands(broker=broker)
+        categories = []
+        for name in sorted({command.category for command in commands}):
+            in_category = [command for command in commands if command.category == name]
+            row: dict[str, Any] = {"name": name, "command_count": len(in_category)}
+            row.update(_category_fields(name))
+            # Union over the real commands, so this reflects the authored taxonomy.
+            row["domains"] = sorted({d for command in in_category for d in command.domains})
+            row["tags"] = sorted({t for command in in_category for t in command.tags})
+            row["list_command"] = f"uv run {APP_NAME} list --broker {broker} --category {name} --json"
+            categories.append(row)
+        render_output(
+            {
+                "broker": broker,
+                **_broker_role_fields(broker),
+                "command_count": len(commands),
+                "categories": categories,
+            },
+            force_json=force_json,
+        )
+        return True
+    if len(positional) == 1:
+        in_category = registry.list_commands(broker=broker, category=positional[0])
+        payload: dict[str, Any] = {"broker": broker, "category": positional[0]}
+        payload.update(_category_fields(positional[0]))
+        payload["command_count"] = len(in_category)
+        payload["commands"] = [_help_command_row(command) for command in in_category]
+        render_output(payload, force_json=force_json)
+        return True
+    return False
