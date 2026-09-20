@@ -274,8 +274,9 @@ _PERIODIC_REPORT_KEY = {
         "type": "string",
         "enum": ["11013", "11012", "11014", "11011"],
         "description": "Report code (11013:Q1, 11012:H1, 11014:Q3, 11011:Annual). "
-        "Income-statement rows of an H1/Q3 report carry the quarter in thstrm_amount and "
-        "the year-to-date sum in thstrm_add_amount; annual and Q1 reports fill only thstrm_amount.",
+        "In quarterly reports income-statement rows carry that single quarter in thstrm_amount and "
+        "the year-to-date sum in thstrm_add_amount (equal for Q1); annual reports and balance-sheet "
+        "rows fill only thstrm_amount. Use the *_add_amount fields to compare a half-year with prior years.",
     },
 }
 
