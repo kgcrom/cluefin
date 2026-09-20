@@ -2,6 +2,13 @@ from __future__ import annotations
 
 from cluefin_openapi_cli.handlers._base import DispatcherProtocol, extract_output, rpc_method
 
+# Appended to every financial command's div_cls_code description.
+_QUARTERLY_COVERAGE_NOTE = (
+    " Quarterly rows exist only for stocks KIS covers in depth; small caps may return annual "
+    "rows regardless, lagging the latest DART filing. Use dart financial-major-accounts "
+    "when the newest period is missing."
+)
+
 # ---------------------------------------------------------------------------
 # kis.stock_info.product_basic_info
 # ---------------------------------------------------------------------------
@@ -95,10 +102,7 @@ def handle_kis_stock_basic_info(params: dict, session) -> dict:
             "div_cls_code": {
                 "type": "string",
                 "enum": ["0", "1"],
-                "description": "Period type (0:annual, 1:quarterly). Default 0."
-                " Quarterly rows exist only for stocks KIS covers in depth; small caps may return annual "
-                "rows regardless, lagging the latest DART filing. Use dart financial-major-accounts "
-                "when the newest period is missing.",
+                "description": "Period type (0:annual, 1:quarterly). Default 0." + _QUARTERLY_COVERAGE_NOTE,
             },
         },
         "required": ["stock_code"],
@@ -142,10 +146,7 @@ def handle_kis_balance_sheet(params: dict, session) -> dict:
             "div_cls_code": {
                 "type": "string",
                 "enum": ["0", "1"],
-                "description": "Period type (0:annual, 1:quarterly cumulative). Default 0."
-                " Quarterly rows exist only for stocks KIS covers in depth; small caps may return annual "
-                "rows regardless, lagging the latest DART filing. Use dart financial-major-accounts "
-                "when the newest period is missing.",
+                "description": "Period type (0:annual, 1:quarterly cumulative). Default 0." + _QUARTERLY_COVERAGE_NOTE,
             },
         },
         "required": ["stock_code"],
@@ -184,10 +185,7 @@ def handle_kis_income_statement(params: dict, session) -> dict:
             "div_cls_code": {
                 "type": "string",
                 "enum": ["0", "1"],
-                "description": "Period type (0:annual, 1:quarterly). Default 0."
-                " Quarterly rows exist only for stocks KIS covers in depth; small caps may return annual "
-                "rows regardless, lagging the latest DART filing. Use dart financial-major-accounts "
-                "when the newest period is missing.",
+                "description": "Period type (0:annual, 1:quarterly). Default 0." + _QUARTERLY_COVERAGE_NOTE,
             },
         },
         "required": ["stock_code"],
@@ -226,10 +224,7 @@ def handle_kis_financial_ratio(params: dict, session) -> dict:
             "div_cls_code": {
                 "type": "string",
                 "enum": ["0", "1"],
-                "description": "Period type (0:annual, 1:quarterly). Default 0."
-                " Quarterly rows exist only for stocks KIS covers in depth; small caps may return annual "
-                "rows regardless, lagging the latest DART filing. Use dart financial-major-accounts "
-                "when the newest period is missing.",
+                "description": "Period type (0:annual, 1:quarterly). Default 0." + _QUARTERLY_COVERAGE_NOTE,
             },
         },
         "required": ["stock_code"],
@@ -268,10 +263,7 @@ def handle_kis_profitability_ratio(params: dict, session) -> dict:
             "div_cls_code": {
                 "type": "string",
                 "enum": ["0", "1"],
-                "description": "Period type (0:annual, 1:quarterly). Default 0."
-                " Quarterly rows exist only for stocks KIS covers in depth; small caps may return annual "
-                "rows regardless, lagging the latest DART filing. Use dart financial-major-accounts "
-                "when the newest period is missing.",
+                "description": "Period type (0:annual, 1:quarterly). Default 0." + _QUARTERLY_COVERAGE_NOTE,
             },
         },
         "required": ["stock_code"],
@@ -310,10 +302,7 @@ def handle_kis_other_key_ratio(params: dict, session) -> dict:
             "div_cls_code": {
                 "type": "string",
                 "enum": ["0", "1"],
-                "description": "Period type (0:annual, 1:quarterly). Default 0."
-                " Quarterly rows exist only for stocks KIS covers in depth; small caps may return annual "
-                "rows regardless, lagging the latest DART filing. Use dart financial-major-accounts "
-                "when the newest period is missing.",
+                "description": "Period type (0:annual, 1:quarterly). Default 0." + _QUARTERLY_COVERAGE_NOTE,
             },
         },
         "required": ["stock_code"],
@@ -352,10 +341,7 @@ def handle_kis_stability_ratio(params: dict, session) -> dict:
             "div_cls_code": {
                 "type": "string",
                 "enum": ["0", "1"],
-                "description": "Period type (0:annual, 1:quarterly). Default 0."
-                " Quarterly rows exist only for stocks KIS covers in depth; small caps may return annual "
-                "rows regardless, lagging the latest DART filing. Use dart financial-major-accounts "
-                "when the newest period is missing.",
+                "description": "Period type (0:annual, 1:quarterly). Default 0." + _QUARTERLY_COVERAGE_NOTE,
             },
         },
         "required": ["stock_code"],

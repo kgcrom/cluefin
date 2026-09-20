@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import Any, Generic, Literal, Type, TypeVar
 
-from loguru import logger
 from pydantic import BaseModel, Field, ValidationError
 
 from cluefin_openapi.kis._exceptions import KISValidationError
@@ -35,7 +34,11 @@ class KisHttpBody:
 
 
 def validate_kis_response(model_cls: Type[T], data: Any) -> T:
-    """model_validate() 호출 시 ValidationError를 KISValidationError로 변환하여 상세 에러 정보를 제공한다."""
+    """model_validate() 호출 시 ValidationError를 KISValidationError로 변환하여 상세 에러 정보를 제공한다.
+
+    로그는 남기지 않는다. 원문은 예외의 ``response_data`` 로 전달되며, 잡아서 처리하는 호출부까지
+    에러 로그가 찍히거나 계좌 응답의 원문이 로그에 남는 일을 막기 위해서다.
+    """
     try:
         return model_cls.model_validate(data)
     except ValidationError as e:
@@ -46,7 +49,6 @@ def validate_kis_response(model_cls: Type[T], data: Any) -> T:
             )
         detail_str = "\n".join(error_details)
         msg = f"{model_cls.__name__} validation failed ({len(e.errors())} error(s)):\n{detail_str}"
-        logger.error(f"{msg}\nraw response: {data}")
         raise KISValidationError(message=msg, response_data=data) from e
 
 
