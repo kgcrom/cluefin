@@ -93,6 +93,20 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   gap, while `cluefin-ta` follows ta-lib's SMA-seeded EMA with `N-1` leading NaNs.
   `cluefin-ta` is the reference here.
 
+## `dart corp-code-lookup` 은 전체 색인을 받아 클라이언트에서 거른다
+
+- DART 의 corpCode.xml 에는 검색 파라미터가 없다. 어떤 필터를 줘도 **매번 전체 색인
+  (2026-09-17 실측 119,313행) 을 내려받아** 핸들러가 메모리에서 거른다. 필터는 호출량을
+  줄이지 않으므로 반복 조회는 호출부에서 캐시할 일이다 (desk 의 `_get_corp_code` 가
+  화면당 한 번으로 메모이즈하는 이유).
+- 상한 파라미터가 `max_rows` 인 것은 `--limit` 이 전역 CLI 옵션이라 핸들러 params 까지
+  전달되지 않기 때문이다. 기본 100행, `--max-rows 0` 이면 전량. 응답의
+  `total`/`returned`/`truncated` 는 `list --full` 의 절단 규약과 같은 모양이다.
+- `stock_code` 는 비상장사에서 공백 문자열로 채워져 오므로 비교 전에 `_clean()` 으로
+  strip 한다. `listed_only` 도 "값이 있다"가 아니라 "strip 후 비어 있지 않다"로 판정한다.
+- 불리언 파라미터는 값을 받아야 한다 — `--listed-only true`. 플래그처럼 값 없이 주면
+  exit 2 (`Option --listed-only requires a value.`).
+
 ## Tests that break on unrelated-looking changes
 
 - `test_rpc_registry.py` hardcodes the total command count — bump it when adding or

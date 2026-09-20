@@ -90,10 +90,34 @@ def handle_company_overview(params: dict, session) -> dict:
     return result.model_dump() if hasattr(result, "model_dump") else {}
 
 
+_CORP_CODE_DEFAULT_LIMIT = 100
+
+
+def _clean(value) -> str:
+    """Normalize an XML-sourced field; DART pads unlisted stock codes with spaces."""
+    return str(value).strip() if value is not None else ""
+
+
 @rpc_method(
     name="dart.corp_code_lookup",
-    description="Download DART corporate code list. Returns all registered companies.",
-    parameters={"type": "object", "properties": {}},
+    description=(
+        "Look up DART corporate codes. The full list is ~120k rows, so filter by corp_code, "
+        "stock_code or corp_name; output is capped at 100 rows unless max_rows says otherwise."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "corp_code": {"type": "string", "description": "Exact corporate unique code (8 digits)"},
+            "stock_code": {"type": "string", "description": "Exact listed stock code (6 digits), e.g. 020000"},
+            "corp_name": {"type": "string", "description": "Company name, case-insensitive substring match"},
+            "listed_only": {"type": "boolean", "description": "Keep only companies with a stock code. Default false."},
+            "max_rows": {
+                "type": "integer",
+                "description": "Max rows returned. Default 100, 0 = no cap. "
+                "Named max_rows because --limit is a global CLI option and never reaches handlers.",
+            },
+        },
+    },
     returns={"type": "object"},
     category="dart",
     broker="dart",
@@ -101,11 +125,43 @@ def handle_company_overview(params: dict, session) -> dict:
 def handle_corp_code_lookup(params: dict, session) -> dict:
     dart = session.get_dart()
     result = dart.public_disclosure.corp_code()
-    items = result.list if hasattr(result, "list") else []
-    data = []
-    for item in items or []:
-        data.append(item.model_dump() if hasattr(item, "model_dump") else {})
-    return {"total": len(data), "data": data}
+    # Items live under the DART result envelope. UniqueNumber also declares a top-level
+    # `list` field that parse() never fills, so reading that one yields zero rows.
+    items = getattr(getattr(result, "result", None), "list", None) or []
+
+    corp_code = _clean(params.get("corp_code"))
+    stock_code = _clean(params.get("stock_code"))
+    corp_name = _clean(params.get("corp_name")).lower()
+    listed_only = bool(params.get("listed_only", False))
+
+    matched = []
+    for item in items:
+        item_stock_code = _clean(getattr(item, "stock_code", None))
+        if corp_code and _clean(getattr(item, "corp_code", None)) != corp_code:
+            continue
+        if stock_code and item_stock_code != stock_code:
+            continue
+        if corp_name and corp_name not in _clean(getattr(item, "corp_name", None)).lower():
+            continue
+        if listed_only and not item_stock_code:
+            continue
+        matched.append(item)
+
+    try:
+        max_rows = int(params.get("max_rows", _CORP_CODE_DEFAULT_LIMIT))
+    except (TypeError, ValueError):
+        max_rows = _CORP_CODE_DEFAULT_LIMIT
+    if max_rows < 0:
+        max_rows = _CORP_CODE_DEFAULT_LIMIT
+
+    page = matched if max_rows == 0 else matched[:max_rows]
+    data = [item.model_dump() if hasattr(item, "model_dump") else {} for item in page]
+    return {
+        "total": len(matched),
+        "returned": len(data),
+        "truncated": len(data) < len(matched),
+        "data": data,
+    }
 
 
 @rpc_method(

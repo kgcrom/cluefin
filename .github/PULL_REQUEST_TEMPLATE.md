@@ -22,6 +22,7 @@
 <!-- 변경된 패키지를 선택해주세요 -->
 
 - [ ] cluefin-openapi
+- [ ] cluefin-openapi-cli
 - [ ] cluefin-ta
 - [ ] cluefin-xbrl
 - [ ] cluefin-desk
