@@ -1,8 +1,12 @@
 from dataclasses import dataclass
-from typing import Generic, Literal, TypeVar
+from typing import Any, Generic, Literal, Type, TypeVar
 
-from pydantic import BaseModel, Field
+from loguru import logger
+from pydantic import BaseModel, Field, ValidationError
 
+from cluefin_openapi.kis._exceptions import KISValidationError
+
+T = TypeVar("T")
 T_KisHttpBody = TypeVar("T_KisHttpBody", bound="KisHttpBody")
 
 
@@ -28,6 +32,22 @@ class KisHttpBody:
     )
     msg_cd: str = Field(description="응답코드")
     msg1: str = Field(description="응답메세지")
+
+
+def validate_kis_response(model_cls: Type[T], data: Any) -> T:
+    """model_validate() 호출 시 ValidationError를 KISValidationError로 변환하여 상세 에러 정보를 제공한다."""
+    try:
+        return model_cls.model_validate(data)
+    except ValidationError as e:
+        error_details = []
+        for err in e.errors():
+            error_details.append(
+                f"  loc={err['loc']}, msg={err['msg']}, type={err['type']}, input={err.get('input')!r}"
+            )
+        detail_str = "\n".join(error_details)
+        msg = f"{model_cls.__name__} validation failed ({len(e.errors())} error(s)):\n{detail_str}"
+        logger.error(f"{msg}\nraw response: {data}")
+        raise KISValidationError(message=msg, response_data=data) from e
 
 
 @dataclass

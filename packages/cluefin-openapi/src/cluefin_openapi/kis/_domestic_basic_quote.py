@@ -24,7 +24,7 @@ from cluefin_openapi.kis._domestic_basic_quote_types import (
     DomesticStockTodayMinuteChart,
 )
 from cluefin_openapi.kis._http_client import HttpClient
-from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
+from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse, validate_kis_response
 
 
 class DomesticBasicQuote:
@@ -66,8 +66,8 @@ class DomesticBasicQuote:
         response = self.client._get("/uapi/domestic-stock/v1/quotations/inquire-price", headers=headers, params=params)
         response_data = response.json()
         self._check_response_error(response_data)
-        header = KisHttpHeader.model_validate(response.headers)
-        body = DomesticStockCurrentPrice.model_validate(response_data)
+        header = validate_kis_response(KisHttpHeader, response.headers)
+        body = validate_kis_response(DomesticStockCurrentPrice, response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_current_price_2(
@@ -95,8 +95,8 @@ class DomesticBasicQuote:
         )
         response_data = response.json()
         self._check_response_error(response_data)
-        header = KisHttpHeader.model_validate(response.headers)
-        body = DomesticStockCurrentPrice2.model_validate(response_data)
+        header = validate_kis_response(KisHttpHeader, response.headers)
+        body = validate_kis_response(DomesticStockCurrentPrice2, response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_current_price_conclusion(
@@ -122,8 +122,8 @@ class DomesticBasicQuote:
         response = self.client._get("/uapi/domestic-stock/v1/quotations/inquire-ccnl", headers=headers, params=params)
         response_data = response.json()
         self._check_response_error(response_data)
-        header = KisHttpHeader.model_validate(response.headers)
-        body = DomesticStockCurrentPriceConclusion.model_validate(response_data)
+        header = validate_kis_response(KisHttpHeader, response.headers)
+        body = validate_kis_response(DomesticStockCurrentPriceConclusion, response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_current_price_daily(
@@ -159,8 +159,8 @@ class DomesticBasicQuote:
         )
         response_data = response.json()
         self._check_response_error(response_data)
-        header = KisHttpHeader.model_validate(response.headers)
-        body = DomesticStockCurrentPriceDaily.model_validate(response_data)
+        header = validate_kis_response(KisHttpHeader, response.headers)
+        body = validate_kis_response(DomesticStockCurrentPriceDaily, response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_current_price_asking_expected_conclusion(
@@ -188,8 +188,8 @@ class DomesticBasicQuote:
         )
         response_data = response.json()
         self._check_response_error(response_data)
-        header = KisHttpHeader.model_validate(response.headers)
-        body = DomesticStockCurrentPriceAskingExpectedConclusion.model_validate(response_data)
+        header = validate_kis_response(KisHttpHeader, response.headers)
+        body = validate_kis_response(DomesticStockCurrentPriceAskingExpectedConclusion, response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_current_price_investor(
@@ -217,8 +217,8 @@ class DomesticBasicQuote:
         )
         response_data = response.json()
         self._check_response_error(response_data)
-        header = KisHttpHeader.model_validate(response.headers)
-        body = DomesticStockCurrentPriceInvestor.model_validate(response_data)
+        header = validate_kis_response(KisHttpHeader, response.headers)
+        body = validate_kis_response(DomesticStockCurrentPriceInvestor, response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_current_price_member(
@@ -235,8 +235,8 @@ class DomesticBasicQuote:
         response = self.client._get("/uapi/domestic-stock/v1/quotations/inquire-member", headers=headers, params=params)
         response_data = response.json()
         self._check_response_error(response_data)
-        header = KisHttpHeader.model_validate(response.headers)
-        body = DomesticStockCurrentPriceMember.model_validate(response_data)
+        header = validate_kis_response(KisHttpHeader, response.headers)
+        body = validate_kis_response(DomesticStockCurrentPriceMember, response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_period_quote(
@@ -278,8 +278,8 @@ class DomesticBasicQuote:
         )
         response_data = response.json()
         self._check_response_error(response_data)
-        header = KisHttpHeader.model_validate(response.headers)
-        body = DomesticStockPeriodQuote.model_validate(response_data)
+        header = validate_kis_response(KisHttpHeader, response.headers)
+        body = validate_kis_response(DomesticStockPeriodQuote, response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_today_minute_chart(
@@ -318,8 +318,8 @@ class DomesticBasicQuote:
         )
         response_data = response.json()
         self._check_response_error(response_data)
-        header = KisHttpHeader.model_validate(response.headers)
-        body = DomesticStockTodayMinuteChart.model_validate(response_data)
+        header = validate_kis_response(KisHttpHeader, response.headers)
+        body = validate_kis_response(DomesticStockTodayMinuteChart, response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_daily_minute_chart(
@@ -361,8 +361,8 @@ class DomesticBasicQuote:
         )
         response_data = response.json()
         self._check_response_error(response_data)
-        header = KisHttpHeader.model_validate(response.headers)
-        body = DomesticStockDailyMinuteChart.model_validate(response_data)
+        header = validate_kis_response(KisHttpHeader, response.headers)
+        body = validate_kis_response(DomesticStockDailyMinuteChart, response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_current_price_time_item_conclusion(
@@ -395,8 +395,8 @@ class DomesticBasicQuote:
         )
         response_data = response.json()
         self._check_response_error(response_data)
-        header = KisHttpHeader.model_validate(response.headers)
-        body = DomesticStockCurrentPriceTimeItemConclusion.model_validate(response_data)
+        header = validate_kis_response(KisHttpHeader, response.headers)
+        body = validate_kis_response(DomesticStockCurrentPriceTimeItemConclusion, response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_current_price_daily_overtime_price(
@@ -426,8 +426,8 @@ class DomesticBasicQuote:
         )
         response_data = response.json()
         self._check_response_error(response_data)
-        header = KisHttpHeader.model_validate(response.headers)
-        body = DomesticStockCurrentPriceDailyOvertimePrice.model_validate(response_data)
+        header = validate_kis_response(KisHttpHeader, response.headers)
+        body = validate_kis_response(DomesticStockCurrentPriceDailyOvertimePrice, response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_current_price_overtime_conclusion(
@@ -456,8 +456,8 @@ class DomesticBasicQuote:
         )
         response_data = response.json()
         self._check_response_error(response_data)
-        header = KisHttpHeader.model_validate(response.headers)
-        body = DomesticStockCurrentPriceOvertimeConclusion.model_validate(response_data)
+        header = validate_kis_response(KisHttpHeader, response.headers)
+        body = validate_kis_response(DomesticStockCurrentPriceOvertimeConclusion, response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_overtime_current_price(
@@ -484,8 +484,8 @@ class DomesticBasicQuote:
         )
         response_data = response.json()
         self._check_response_error(response_data)
-        header = KisHttpHeader.model_validate(response.headers)
-        body = DomesticStockOvertimeCurrentPrice.model_validate(response_data)
+        header = validate_kis_response(KisHttpHeader, response.headers)
+        body = validate_kis_response(DomesticStockOvertimeCurrentPrice, response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_overtime_asking_price(
@@ -513,8 +513,8 @@ class DomesticBasicQuote:
         )
         response_data = response.json()
         self._check_response_error(response_data)
-        header = KisHttpHeader.model_validate(response.headers)
-        body = DomesticStockOvertimeAskingPrice.model_validate(response_data)
+        header = validate_kis_response(KisHttpHeader, response.headers)
+        body = validate_kis_response(DomesticStockOvertimeAskingPrice, response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_stock_closing_expected_price(
@@ -553,8 +553,8 @@ class DomesticBasicQuote:
         )
         response_data = response.json()
         self._check_response_error(response_data)
-        header = KisHttpHeader.model_validate(response.headers)
-        body = DomesticStockClosingExpectedPrice.model_validate(response_data)
+        header = validate_kis_response(KisHttpHeader, response.headers)
+        body = validate_kis_response(DomesticStockClosingExpectedPrice, response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_etfetn_current_price(
@@ -580,8 +580,8 @@ class DomesticBasicQuote:
         response = self.client._get("/uapi/etfetn/v1/quotations/inquire-price", headers=headers, params=params)
         response_data = response.json()
         self._check_response_error(response_data)
-        header = KisHttpHeader.model_validate(response.headers)
-        body = DomesticEtfEtnCurrentPrice.model_validate(response_data)
+        header = validate_kis_response(KisHttpHeader, response.headers)
+        body = validate_kis_response(DomesticEtfEtnCurrentPrice, response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_etf_component_stock_price(
@@ -616,8 +616,8 @@ class DomesticBasicQuote:
         )
         response_data = response.json()
         self._check_response_error(response_data)
-        header = KisHttpHeader.model_validate(response.headers)
-        body = DomesticEtfComponentStockPrice.model_validate(response_data)
+        header = validate_kis_response(KisHttpHeader, response.headers)
+        body = validate_kis_response(DomesticEtfComponentStockPrice, response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_etf_nav_comparison_trend(
@@ -643,8 +643,8 @@ class DomesticBasicQuote:
         response = self.client._get("/uapi/etfetn/v1/quotations/nav-comparison-trend", headers=headers, params=params)
         response_data = response.json()
         self._check_response_error(response_data)
-        header = KisHttpHeader.model_validate(response.headers)
-        body = DomesticEtfNavComparisonTrend.model_validate(response_data)
+        header = validate_kis_response(KisHttpHeader, response.headers)
+        body = validate_kis_response(DomesticEtfNavComparisonTrend, response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_etf_nav_comparison_daily_trend(
@@ -680,8 +680,8 @@ class DomesticBasicQuote:
         )
         response_data = response.json()
         self._check_response_error(response_data)
-        header = KisHttpHeader.model_validate(response.headers)
-        body = DomesticEtfNavComparisonDailyTrend.model_validate(response_data)
+        header = validate_kis_response(KisHttpHeader, response.headers)
+        body = validate_kis_response(DomesticEtfNavComparisonDailyTrend, response_data)
         return KisHttpResponse(header=header, body=body)
 
     def get_etf_nav_comparison_time_trend(
@@ -714,6 +714,6 @@ class DomesticBasicQuote:
         )
         response_data = response.json()
         self._check_response_error(response_data)
-        header = KisHttpHeader.model_validate(response.headers)
-        body = DomesticEtfNavComparisonTimeTrend.model_validate(response_data)
+        header = validate_kis_response(KisHttpHeader, response.headers)
+        body = validate_kis_response(DomesticEtfNavComparisonTimeTrend, response_data)
         return KisHttpResponse(header=header, body=body)

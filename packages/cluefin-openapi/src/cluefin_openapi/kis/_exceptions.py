@@ -54,7 +54,10 @@ class KISRateLimitError(KISAPIError):
 
 
 class KISValidationError(KISAPIError):
-    """Raised when request validation fails (400 Bad Request)."""
+    """Raised when request validation fails (400 Bad Request) or API response parsing fails.
+
+    response_data contains the raw API response that caused the validation failure.
+    """
 
     pass
 
