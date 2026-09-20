@@ -33,6 +33,7 @@ _SAMPLE_VALUES = {
     "bsns_year": "2024",
     "reprt_code": "11011",
     "corp_code": "00126380",
+    "idx_cl_code": "M210000",
     "hour": "1",
 }
 

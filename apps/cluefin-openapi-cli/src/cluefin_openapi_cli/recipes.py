@@ -49,7 +49,8 @@ _RECIPES: tuple[WorkflowRecipe, ...] = (
                 title="Get financial statement",
                 command=("kis", "financial", "balance-sheet"),
                 purpose="Fetch statement context before ratios or valuation notes.",
-                agent_notes="Follow with income-statement or ratio commands when deeper financial context is needed.",
+                agent_notes="Follow with income-statement or ratio commands when deeper financial context is needed. "
+                "KIS rows may stop at last year's annual report; use the latest-earnings recipe for the newest period.",
             ),
             RecipeStep(
                 title="Search disclosures",
@@ -165,6 +166,36 @@ _RECIPES: tuple[WorkflowRecipe, ...] = (
             ),
         ),
         agent_notes="Corporate-action APIs are event oriented; always include date windows where the schema supports them.",
+    ),
+    WorkflowRecipe(
+        name="latest-earnings",
+        title="Latest Earnings",
+        description="Read the newest reported half-year or quarterly results of one stock from the DART filing itself.",
+        domains=("statements", "news"),
+        tags=("financial-statement", "disclosure"),
+        steps=(
+            RecipeStep(
+                title="Resolve corp_code",
+                command=("dart", "corp-code-lookup"),
+                purpose="Map the 6-digit stock code to the 8-digit DART corp_code.",
+                agent_notes="Pass --stock-code; every DART report command needs corp_code, not the stock code.",
+            ),
+            RecipeStep(
+                title="Find the newest periodic report",
+                command=("dart", "disclosure-search"),
+                purpose="See which business year and report type (annual, H1, Q1, Q3) was filed most recently.",
+                agent_notes="Use --pblntf-ty A with --corp-code and a recent --bgn-de; the report name tells you the reprt_code to use next.",
+            ),
+            RecipeStep(
+                title="Read major accounts",
+                command=("dart", "financial-major-accounts"),
+                purpose="Get revenue, operating income and net income straight from that report.",
+                agent_notes="In quarterly reports thstrm_amount is the single quarter and thstrm_add_amount the year-to-date "
+                "sum; compare year-to-date against frmtrm_add_amount, never against the annual row.",
+            ),
+        ),
+        agent_notes="Prefer this over kis financial commands whenever the question is about the most recent period; "
+        "KIS returns annual rows for many small caps and lags the filing.",
     ),
     WorkflowRecipe(
         name="disclosure-monitoring",

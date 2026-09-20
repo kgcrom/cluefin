@@ -267,6 +267,114 @@ def handle_executive_ownership_report(params: dict, session) -> dict:
     return _collect_share_rows(result, params)
 
 
+_PERIODIC_REPORT_KEY = {
+    "corp_code": {"type": "string", "description": "Corporate unique code (8 digits, from dart corp-code-lookup)"},
+    "bsns_year": {"type": "string", "description": "Business year (4 digits, e.g. 2025)"},
+    "reprt_code": {
+        "type": "string",
+        "enum": ["11013", "11012", "11014", "11011"],
+        "description": "Report code (11013:Q1, 11012:H1, 11014:Q3, 11011:Annual). "
+        "In quarterly reports income-statement rows carry that single quarter in thstrm_amount and "
+        "the year-to-date sum in thstrm_add_amount (equal for Q1); annual reports and balance-sheet "
+        "rows fill only thstrm_amount. Use the *_add_amount fields to compare a half-year with prior years.",
+    },
+}
+
+
+@rpc_method(
+    name="dart.financial_major_accounts",
+    description=(
+        "Get the major accounts (revenue, operating income, net income, total assets/equity, ...) "
+        "of one company's periodic report (단일회사 주요계정). Cheapest way to read the latest "
+        "reported results, including half-year and quarterly reports KIS financial commands do not expose."
+    ),
+    parameters={
+        "type": "object",
+        "properties": dict(_PERIODIC_REPORT_KEY),
+        "required": ["corp_code", "bsns_year", "reprt_code"],
+    },
+    returns={"type": "object"},
+    category="dart",
+    broker="dart",
+)
+def handle_financial_major_accounts(params: dict, session) -> dict:
+    dart = session.get_dart()
+    result = dart.periodic_report_financial_statement.get_single_company_major_accounts(
+        corp_code=params["corp_code"],
+        bsns_year=params["bsns_year"],
+        reprt_code=params["reprt_code"],
+    )
+    return result.model_dump() if hasattr(result, "model_dump") else {}
+
+
+@rpc_method(
+    name="dart.financial_full_statements",
+    description=(
+        "Get every line item of one company's financial statements (단일회사 전체 재무제표): "
+        "balance sheet, income statement, comprehensive income, cash flow and equity changes, "
+        "with XBRL account ids. Large; prefer financial-major-accounts unless a specific line is needed."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            **_PERIODIC_REPORT_KEY,
+            "fs_div": {
+                "type": "string",
+                "enum": ["CFS", "OFS"],
+                "description": "Statement basis (CFS:consolidated, OFS:separate). Default CFS.",
+            },
+        },
+        "required": ["corp_code", "bsns_year", "reprt_code"],
+    },
+    returns={"type": "object"},
+    category="dart",
+    broker="dart",
+)
+def handle_financial_full_statements(params: dict, session) -> dict:
+    dart = session.get_dart()
+    result = dart.periodic_report_financial_statement.get_single_company_full_statements(
+        corp_code=params["corp_code"],
+        bsns_year=params["bsns_year"],
+        reprt_code=params["reprt_code"],
+        fs_div=params.get("fs_div", "CFS"),
+    )
+    return result.model_dump() if hasattr(result, "model_dump") else {}
+
+
+@rpc_method(
+    name="dart.financial_major_indicators",
+    description=(
+        "Get one company's major financial indicators (단일회사 주요 재무지표) for one indicator "
+        "class: profitability, stability, growth or activity ratios as reported in the periodic report."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            **_PERIODIC_REPORT_KEY,
+            "idx_cl_code": {
+                "type": "string",
+                "enum": ["M210000", "M220000", "M230000", "M240000"],
+                "description": "Indicator class (M210000:profitability, M220000:stability, "
+                "M230000:growth, M240000:activity)",
+            },
+        },
+        "required": ["corp_code", "bsns_year", "reprt_code", "idx_cl_code"],
+    },
+    returns={"type": "object"},
+    category="dart",
+    broker="dart",
+)
+def handle_financial_major_indicators(params: dict, session) -> dict:
+    dart = session.get_dart()
+    result = dart.periodic_report_financial_statement.get_single_company_major_indicators(
+        corp_code=params["corp_code"],
+        bsns_year=params["bsns_year"],
+        reprt_code=params["reprt_code"],
+        idx_cl_code=params["idx_cl_code"],
+    )
+    return result.model_dump() if hasattr(result, "model_dump") else {}
+
+
 @rpc_method(
     name="dart.major_shareholder",
     description="Get major shareholder status from periodic report.",
@@ -308,6 +416,9 @@ _ALL_HANDLERS = [
     handle_large_holding_report,
     handle_executive_ownership_report,
     handle_major_shareholder,
+    handle_financial_major_accounts,
+    handle_financial_full_statements,
+    handle_financial_major_indicators,
 ]
 
 
