@@ -196,6 +196,23 @@ def build_cli_registry() -> dict[tuple[str, ...], CommandSpec]:
     return registry
 
 
+def _matches(
+    command: CommandSpec,
+    *,
+    broker: str | None,
+    category: str | None,
+    domain: str | None,
+    tag: str | None,
+) -> bool:
+    """A None filter matches everything, so the four filters AND together."""
+    return (
+        (broker is None or command.broker == broker)
+        and (category is None or command.category == category)
+        and (domain is None or domain in command.domains)
+        and (tag is None or tag in command.tags)
+    )
+
+
 class RpcRegistry:
     """CLI command registry with broker metadata and executors."""
 
@@ -211,15 +228,11 @@ class RpcRegistry:
         domain: str | None = None,
         tag: str | None = None,
     ) -> list[CommandSpec]:
-        commands = list(self._commands.values())
-        if broker is not None:
-            commands = [command for command in commands if command.broker == broker]
-        if category is not None:
-            commands = [command for command in commands if command.category == category]
-        if domain is not None:
-            commands = [command for command in commands if domain in command.domains]
-        if tag is not None:
-            commands = [command for command in commands if tag in command.tags]
+        commands = [
+            command
+            for command in self._commands.values()
+            if _matches(command, broker=broker, category=category, domain=domain, tag=tag)
+        ]
         return sorted(commands, key=lambda command: (broker_rank(command.broker), command.path_segments))
 
     def get_command(self, broker: str, category: str, name: str) -> CommandSpec | None:
