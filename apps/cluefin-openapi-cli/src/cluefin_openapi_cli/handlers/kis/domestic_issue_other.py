@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from cluefin_openapi_cli.handlers._base import DispatcherProtocol, extract_output, rpc_method
 
 # ---------------------------------------------------------------------------
@@ -362,10 +364,62 @@ def handle_kis_expected_index_all(params: dict, session) -> dict:
 # kis.issue_other.interest_rate_summary
 # ---------------------------------------------------------------------------
 
+# 2026-09-20 실측: output1/output2 의 의미는 div_cls_code 에 따라 달라진다.
+#   "0"/공백 → 양쪽 모두 국내 19종, "1" → output1 해외 7종 + output2 국내(뒤 8종만, 블록 깨짐),
+#   "2" → output1 에 국내 19 + 해외 7 이 온전히 온다.
+# 그래서 배열 이름이 아니라 자료코드 접두어로 국내/해외를 가른다.
+_INTEREST_RATE_DIV_ALL = "2"
+_INTEREST_RATE_DOMESTIC_PREFIX = "Y01"
+_INTEREST_RATE_FOREIGN_PREFIX = "Y02"
+_INTEREST_RATE_CODE = re.compile(r"^Y0\d{3}$")
+
+
+def _interest_rate_rows(response, field: str) -> list[dict]:
+    rows = extract_output(response, field)
+    return [row for row in rows if isinstance(row, dict)] if isinstance(rows, list) else []
+
+
+def _split_interest_rates(rows: list[dict]) -> dict[str, list[dict]]:
+    """자료코드로 국내/해외를 가르고, 깨진 행과 중복 행을 걸러낸다.
+
+    div_cls_code="1" 의 output2 앞부분은 KIS 가 종목명 자리에 자료코드를 담아 보내는
+    깨진 블록이고(값은 같은 배열 뒤쪽에 정상 형태로 다시 온다), output2 는 전일대비율을
+    prdy_ctrt 대신 bstp_nmix_prdy_ctrt 로 실어 보낸다. 두 배열을 합쳐 자료코드로
+    중복을 제거하고 전일대비율 키를 prdy_ctrt 로 맞춘다.
+    """
+    grouped: dict[str, list[dict]] = {"domestic": [], "foreign": []}
+    seen: set[str] = set()
+
+    for row in rows:
+        code = str(row.get("bcdt_code", ""))
+        if _INTEREST_RATE_CODE.match(str(row.get("hts_kor_isnm", ""))):
+            continue  # 종목명 자리에 코드가 온 깨진 행
+        if code in seen:
+            continue
+        if code.startswith(_INTEREST_RATE_DOMESTIC_PREFIX):
+            group = "domestic"
+        elif code.startswith(_INTEREST_RATE_FOREIGN_PREFIX):
+            group = "foreign"
+        else:
+            continue
+        seen.add(code)
+        grouped[group].append(_normalize_interest_rate_row(row))
+
+    return grouped
+
+
+def _normalize_interest_rate_row(row: dict) -> dict:
+    """output2 의 bstp_nmix_prdy_ctrt 를 output1 과 같은 prdy_ctrt 로 맞춘다."""
+    if "prdy_ctrt" in row or "bstp_nmix_prdy_ctrt" not in row:
+        return row
+    normalized = dict(row)
+    normalized["prdy_ctrt"] = normalized.pop("bstp_nmix_prdy_ctrt")
+    return normalized
+
 
 @rpc_method(
     name="market.interest_rate",
-    description="Get interest rate summary (domestic bonds/rates).",
+    description="Get interest rate summary, split into domestic/foreign by data code.",
     parameters={
         "type": "object",
         "properties": {
@@ -379,7 +433,10 @@ def handle_kis_expected_index_all(params: dict, session) -> dict:
             },
             "div_cls_code": {
                 "type": "string",
-                "description": "Classification code (1:foreign interest rate indicators). Default 1.",
+                "description": (
+                    "Classification code (0/blank:domestic only, 1:foreign indicators, "
+                    "2:domestic + foreign). Default 2."
+                ),
             },
             "div_cls_code1": {
                 "type": "string",
@@ -397,13 +454,11 @@ def handle_kis_interest_rate_summary(params: dict, session) -> dict:
     response = kis.domestic_issue_other.get_interest_rate_summary(
         params.get("market", "I"),
         params.get("cond_scr_div_code", "20702"),
-        params.get("div_cls_code", "1"),
+        params.get("div_cls_code", _INTEREST_RATE_DIV_ALL),
         params.get("div_cls_code1", ""),
     )
-    return {
-        "domestic": extract_output(response, "output1"),
-        "foreign": extract_output(response, "output2"),
-    }
+    rows = _interest_rate_rows(response, "output1") + _interest_rate_rows(response, "output2")
+    return _split_interest_rates(rows)
 
 
 # ---------------------------------------------------------------------------

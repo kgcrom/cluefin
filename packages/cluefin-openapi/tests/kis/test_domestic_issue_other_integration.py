@@ -228,7 +228,7 @@ def test_get_interest_rate_summary(client: HttpClient):
         response = client.domestic_issue_other.get_interest_rate_summary(
             fid_cond_mrkt_div_code="I",  # Unique key: I
             fid_cond_scr_div_code="20702",  # Unique key: 20702
-            fid_div_cls_code="1",  # 1:해외금리지표
+            fid_div_cls_code="2",  # 0/공백:국내, 1:해외지표, 2:국내+해외 (2026-09-20 실측)
             fid_div_cls_code1="",  # 공백:전체
         )
 
@@ -236,6 +236,12 @@ def test_get_interest_rate_summary(client: HttpClient):
         assert response is not None
         assert hasattr(response.body, "rt_cd")
         assert hasattr(response.body, "msg_cd")
+
+        # div_cls_code="2" 는 output1 하나에 국내(Y01xx)와 해외(Y02xx)를 함께 싣는다.
+        # "1" 로 부르면 국내가 output2 로 가면서 앞부분 행의 필드가 밀려 온다.
+        codes = [item.bcdt_code for item in response.body.output1]
+        assert any(code.startswith("Y01") for code in codes)
+        assert any(code.startswith("Y02") for code in codes)
 
     except Exception as e:
         pytest.fail(f"get_interest_rate_summary failed: {e}")
