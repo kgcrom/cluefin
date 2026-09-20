@@ -83,3 +83,22 @@ def test_share_disclosure_max_rows_caps_rows_and_flags_truncation() -> None:
     session = FakeSession()
     capped = handlers.handle_large_holding_report({"corp_code": "x", "max_rows": 1}, session)
     assert capped["total"] == 2 and capped["returned"] == 1 and capped["truncated"] is True
+
+
+def test_financial_statement_handlers_forward_the_report_key() -> None:
+    session = FakeSession()
+    key = {"corp_code": "00381756", "bsns_year": "2026", "reprt_code": "11012"}
+    handlers.handle_financial_major_accounts(key, session)
+    handlers.handle_financial_full_statements(key, session)
+    handlers.handle_financial_major_indicators({**key, "idx_cl_code": "M210000"}, session)
+
+    assert [sub for sub, _, _, _ in session.calls] == ["periodic_report_financial_statement"] * 3
+    assert [method for _, method, _, _ in session.calls] == [
+        "get_single_company_major_accounts",
+        "get_single_company_full_statements",
+        "get_single_company_major_indicators",
+    ]
+    assert session.calls[0][3] == key
+    # fs_div defaults to consolidated so the agent never has to know the DART code.
+    assert session.calls[1][3] == {**key, "fs_div": "CFS"}
+    assert session.calls[2][3] == {**key, "idx_cl_code": "M210000"}
