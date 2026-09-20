@@ -52,3 +52,34 @@ def test_corp_code_lookup_limit_caps_rows_and_flags_truncation() -> None:
 
     uncapped = handlers.handle_corp_code_lookup({"max_rows": 0}, session)
     assert uncapped["returned"] == 2 and uncapped["truncated"] is False
+
+
+def test_share_disclosure_handlers_use_the_share_disclosure_client() -> None:
+    session = FakeSession()
+    handlers.handle_large_holding_report({"corp_code": "00188089"}, session)
+    handlers.handle_executive_ownership_report({"corp_code": "00188089"}, session)
+    subs = [sub for sub, _, _, _ in session.calls]
+    methods = [method for _, method, _, _ in session.calls]
+    assert subs == ["share_disclosure_comprehensive"] * 2
+    assert methods == ["large_holding_report", "executive_major_shareholder_ownership_report"]
+
+
+def test_share_disclosure_date_filters_drop_out_of_range_rows() -> None:
+    session = FakeSession()
+    # Faked rows report rcept_dt "1", so any real date bound filters them out.
+    assert handlers.handle_large_holding_report({"corp_code": "x", "since": "20260101"}, session)["total"] == 0
+    assert handlers.handle_large_holding_report({"corp_code": "x", "until": "20200101"}, session)["total"] == 2
+    assert handlers.handle_large_holding_report({"corp_code": "x", "reporter": "국민연금"}, session)["total"] == 0
+    assert handlers.handle_large_holding_report({"corp_code": "x"}, session)["total"] == 2
+
+
+def test_share_disclosure_handles_empty_list() -> None:
+    session = FakeSession(output_value=None)
+    result = handlers.handle_executive_ownership_report({"corp_code": "x"}, session)
+    assert result == {"total": 0, "returned": 0, "truncated": False, "data": []}
+
+
+def test_share_disclosure_max_rows_caps_rows_and_flags_truncation() -> None:
+    session = FakeSession()
+    capped = handlers.handle_large_holding_report({"corp_code": "x", "max_rows": 1}, session)
+    assert capped["total"] == 2 and capped["returned"] == 1 and capped["truncated"] is True

@@ -774,6 +774,8 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
     "dart.company-overview": CommandTaxonomy(("statements", "reference"), ("disclosure", "shareholder")),
     "dart.corp-code-lookup": CommandTaxonomy(("reference",), ("reference-list", "disclosure")),
     "dart.disclosure-search": CommandTaxonomy(("news", "statements"), ("disclosure",)),
+    "dart.executive-ownership-report": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
+    "dart.large-holding-report": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
     "dart.major-shareholder": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
 }
 
