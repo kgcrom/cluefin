@@ -122,7 +122,12 @@ def handle_kis_balance_sheet(params: dict, session) -> dict:
 
 @rpc_method(
     name="financial.income_statement",
-    description="Get income statement data.",
+    description=(
+        "Get income statement data. Two response fields are named against their meaning: "
+        "bsop_prti is 영업이익 (operating income) and op_prfi is 경상이익 (pre-tax ordinary income), "
+        "not operating profit; 당기순이익 is thtr_ntin. A field KIS does not supply comes back as "
+        "99.99, which is a placeholder and not a value."
+    ),
     parameters={
         "type": "object",
         "properties": {
