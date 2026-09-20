@@ -142,6 +142,20 @@ def test_schema_exposes_json_schema_options_and_invocations() -> None:
     assert any(option["flag"] == "--dry-run" for option in payload["global_options"])
 
 
+def test_income_statement_schema_names_the_operating_income_field() -> None:
+    """op_prfi reads like operating profit but is 경상이익 — the schema has to say so.
+
+    Confirmed against the DART filing for 125020 FY2024: bsop_prti 109억 matches 영업이익
+    109.27억, op_prfi 82억 matches 법인세차감전 82.46억.
+    """
+
+    code, payload = _json(["schema", "kis", "financial", "income-statement", "--json"])
+
+    assert code == 0
+    assert "bsop_prti" in payload["description"]
+    assert "op_prfi" in payload["description"]
+
+
 def test_schema_for_dart_path() -> None:
     code, payload = _json(["schema", "dart", "company-overview", "--json"])
 
