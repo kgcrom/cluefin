@@ -34,6 +34,9 @@ RECALL_CASES = [
     ("공매도", "short-selling"),
     ("체결강도", "execution-intensity"),
     ("etf 구성종목", "kis.etf.component-stocks"),
+    ("반기 실적", "dart.financial-major-accounts"),
+    ("매출액 영업이익", "dart.financial-major-accounts"),
+    ("분기 순이익", "dart.financial-major-accounts"),
 ]
 
 
