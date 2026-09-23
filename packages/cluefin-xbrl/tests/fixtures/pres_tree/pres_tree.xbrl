@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xbrli:xbrl
+    xmlns:xbrli="http://www.xbrl.org/2003/instance"
+    xmlns:link="http://www.xbrl.org/2003/linkbase"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:iso4217="http://www.xbrl.org/2003/iso4217"
+    xmlns:pt="http://example.com/pres_tree">
+
+    <link:schemaRef xlink:type="simple" xlink:href="pres_tree.xsd"/>
+
+    <xbrli:context id="ctx_instant">
+        <xbrli:entity>
+            <xbrli:identifier scheme="http://www.dart.fss.or.kr">00000001</xbrli:identifier>
+        </xbrli:entity>
+        <xbrli:period>
+            <xbrli:instant>2023-12-31</xbrli:instant>
+        </xbrli:period>
+    </xbrli:context>
+
+    <xbrli:unit id="KRW">
+        <xbrli:measure>iso4217:KRW</xbrli:measure>
+    </xbrli:unit>
+
+    <pt:Root contextRef="ctx_instant" unitRef="KRW" decimals="-6">1</pt:Root>
+
+</xbrli:xbrl>

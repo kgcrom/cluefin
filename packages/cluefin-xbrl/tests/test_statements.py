@@ -18,95 +18,77 @@ from cluefin_xbrl.parser import parse_xbrl_file
 from cluefin_xbrl.statements import (
     _identify_statement_type,
     _is_consolidated_role,
+    _local_name,
     extract_financial_statements,
     statement_to_dicts,
 )
 
+_LOCAL_NAME_CASES = [
+    pytest.param("ifrs-full:Assets", "Assets", id="colon_separator"),
+    pytest.param("http://xbrl.ifrs.org/taxonomy/2021-03-24/ifrs-full#Assets", "Assets", id="hash_separator"),
+    pytest.param("http://xbrl.ifrs.org/taxonomy/2021-03-24/ifrs-full/Assets", "Assets", id="slash_separator"),
+    pytest.param("Assets", "Assets", id="no_separator"),
+]
+
+
+class TestLocalName:
+    @pytest.mark.parametrize("qname, expected", _LOCAL_NAME_CASES)
+    def test_local_name(self, qname, expected):
+        assert _local_name(qname) == expected
+
+
+_IDENTIFY_STATEMENT_TYPE_CASES = [
+    pytest.param("http://example.com/role/StatementOfFinancialPosition", StatementType.BS, id="financial_position"),
+    pytest.param("http://example.com/role/IncomeStatement", StatementType.IS, id="income_statement"),
+    pytest.param("http://example.com/role/ProfitOrLoss", StatementType.IS, id="profit_or_loss"),
+    pytest.param("http://example.com/role/ComprehensiveIncome", StatementType.CIS, id="comprehensive_income"),
+    pytest.param("http://example.com/role/CashFlow", StatementType.CF, id="cash_flow"),
+    pytest.param("http://example.com/role/ChangesInEquity", StatementType.SCE, id="changes_in_equity"),
+    pytest.param("http://example.com/role/SomeOtherRole", None, id="unknown_role"),
+    pytest.param("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D210000", StatementType.BS, id="dart_role_bs"),
+    pytest.param(
+        "http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D210005",
+        StatementType.BS,
+        id="dart_role_bs_separate",
+    ),
+    pytest.param("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D310000", StatementType.IS, id="dart_role_is"),
+    pytest.param("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D410000", StatementType.CIS, id="dart_role_cis"),
+    pytest.param("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D520000", StatementType.CF, id="dart_role_cf"),
+    pytest.param("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D610000", StatementType.SCE, id="dart_role_sce"),
+    pytest.param("http://dart.fss.or.kr/role/ifrs/ias_10_role-D815000", None, id="dart_note_role_no_match"),
+    pytest.param(
+        "http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D220000",
+        StatementType.BS,
+        id="dart_role_bs_liquidity_order",
+    ),
+    pytest.param(
+        "http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D320000",
+        StatementType.IS,
+        id="dart_role_is_by_nature",
+    ),
+    pytest.param(
+        "http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D420000",
+        StatementType.CIS,
+        id="dart_role_cis_pretax",
+    ),
+    pytest.param(
+        # 네이버 등은 손익계산서를 단일 포괄손익계산서(D43xxxx)로 공시한다.
+        "http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D431410",
+        StatementType.CIS,
+        id="dart_role_single_comprehensive_income",
+    ),
+    pytest.param(
+        "http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D510000",
+        StatementType.CF,
+        id="dart_role_cf_direct",
+    ),
+]
+
 
 class TestIdentifyStatementType:
-    def test_financial_position(self):
-        assert _identify_statement_type("http://example.com/role/StatementOfFinancialPosition") == StatementType.BS
-
-    def test_income_statement(self):
-        assert _identify_statement_type("http://example.com/role/IncomeStatement") == StatementType.IS
-
-    def test_profit_or_loss(self):
-        assert _identify_statement_type("http://example.com/role/ProfitOrLoss") == StatementType.IS
-
-    def test_comprehensive_income(self):
-        assert _identify_statement_type("http://example.com/role/ComprehensiveIncome") == StatementType.CIS
-
-    def test_cash_flow(self):
-        assert _identify_statement_type("http://example.com/role/CashFlow") == StatementType.CF
-
-    def test_changes_in_equity(self):
-        assert _identify_statement_type("http://example.com/role/ChangesInEquity") == StatementType.SCE
-
-    def test_unknown_role(self):
-        assert _identify_statement_type("http://example.com/role/SomeOtherRole") is None
-
-    def test_dart_role_bs(self):
-        assert (
-            _identify_statement_type("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D210000") == StatementType.BS
-        )
-
-    def test_dart_role_bs_separate(self):
-        assert (
-            _identify_statement_type("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D210005") == StatementType.BS
-        )
-
-    def test_dart_role_is(self):
-        assert (
-            _identify_statement_type("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D310000") == StatementType.IS
-        )
-
-    def test_dart_role_cis(self):
-        assert (
-            _identify_statement_type("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D410000")
-            == StatementType.CIS
-        )
-
-    def test_dart_role_cf(self):
-        assert (
-            _identify_statement_type("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D520000") == StatementType.CF
-        )
-
-    def test_dart_role_sce(self):
-        assert (
-            _identify_statement_type("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D610000")
-            == StatementType.SCE
-        )
-
-    def test_dart_note_role_no_match(self):
-        assert _identify_statement_type("http://dart.fss.or.kr/role/ifrs/ias_10_role-D815000") is None
-
-    def test_dart_role_bs_liquidity_order(self):
-        assert (
-            _identify_statement_type("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D220000") == StatementType.BS
-        )
-
-    def test_dart_role_is_by_nature(self):
-        assert (
-            _identify_statement_type("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D320000") == StatementType.IS
-        )
-
-    def test_dart_role_cis_pretax(self):
-        assert (
-            _identify_statement_type("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D420000")
-            == StatementType.CIS
-        )
-
-    def test_dart_role_single_comprehensive_income(self):
-        """네이버 등은 손익계산서를 단일 포괄손익계산서(D43xxxx)로 공시한다."""
-        assert (
-            _identify_statement_type("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D431410")
-            == StatementType.CIS
-        )
-
-    def test_dart_role_cf_direct(self):
-        assert (
-            _identify_statement_type("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D510000") == StatementType.CF
-        )
+    @pytest.mark.parametrize("linkrole, expected", _IDENTIFY_STATEMENT_TYPE_CASES)
+    def test_identify_statement_type(self, linkrole, expected):
+        assert _identify_statement_type(linkrole) == expected
 
 
 class TestExtractFinancialStatements:
@@ -183,13 +165,15 @@ class TestIsConsolidatedRole:
     def test_generic_defaults_consolidated(self):
         assert _is_consolidated_role("http://example.com/role/StatementOfFinancialPosition") is True
 
+    def test_other_trailing_digit_defaults_consolidated(self):
+        """0/5로 끝나지 않는 D-code(D210003)는 관측된 DART 동작상 연결로 취급된다."""
+        assert _is_consolidated_role("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D210003") is True
 
-def _make_doc_with_separate() -> XbrlDocument:
+
+def _make_doc_with_separate(dart_role_bs_consolidated, dart_role_bs_separate, make_xbrl_fact) -> XbrlDocument:
     """연결(D210000) + 별도(D210005) 재무상태표를 가진 합성 문서."""
     consol_node = PresentationNode(concept_local_name="Assets", concept_qname="ifrs-full:Assets")
     sep_node = PresentationNode(concept_local_name="Assets", concept_qname="ifrs-full:Assets")
-    consol_role = "http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D210000"
-    sep_role = "http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D210005"
     labels = {
         "Assets": ConceptLabel(
             concept_local_name="Assets",
@@ -200,16 +184,9 @@ def _make_doc_with_separate() -> XbrlDocument:
     }
     taxonomy = TaxonomyInfo(
         labels=labels,
-        presentation_trees={consol_role: [consol_node], sep_role: [sep_node]},
+        presentation_trees={dart_role_bs_consolidated: [consol_node], dart_role_bs_separate: [sep_node]},
     )
-    fact = XbrlFact(
-        concept_local_name="Assets",
-        concept_qname="ifrs-full:Assets",
-        namespace="http://xbrl.ifrs.org/taxonomy/2021-03-24/ifrs-full",
-        value="1000",
-        numeric_value=Decimal("1000"),
-        period=XbrlPeriod(period_type=PeriodType.INSTANT),
-    )
+    fact = make_xbrl_fact(value="1000")
     return XbrlDocument(source_file="x.xbrl", facts=[fact], entity_id="00000000", taxonomy=taxonomy)
 
 
@@ -244,31 +221,28 @@ class TestStatementToDictsWithoutPeriod:
         assert dicts[0]["value"] is None
         assert "period_type" not in dicts[0]
 
+    def test_concept_without_label_has_no_labels(self):
+        """라벨링크에 없는 concept은 label_ko/label_en이 모두 None이다."""
+        node = PresentationNode(concept_local_name="Unlabeled", concept_qname="ifrs-full:Unlabeled")
+        role = "http://example.com/role/StatementOfFinancialPosition"
+        taxonomy = TaxonomyInfo(presentation_trees={role: [node]})
+        doc = XbrlDocument(source_file="x.xbrl", facts=[], taxonomy=taxonomy)
 
-_CONS_AXIS = "ifrs-full:ConsolidatedAndSeparateFinancialStatementsAxis"
+        bs = extract_financial_statements(doc).statements["BS"]
 
-
-def _make_assets_fact(value: str, dimensions: dict[str, str]) -> XbrlFact:
-    return XbrlFact(
-        concept_local_name="Assets",
-        concept_qname="ifrs-full:Assets",
-        namespace="http://xbrl.ifrs.org/taxonomy/2021-03-24/ifrs-full",
-        value=value,
-        numeric_value=Decimal(value),
-        period=XbrlPeriod(period_type=PeriodType.INSTANT),
-        dimensions=dimensions,
-    )
+        assert bs.line_items[0].label_ko is None
+        assert bs.line_items[0].label_en is None
 
 
-def _make_doc_with_dimensional_facts(facts: list[XbrlFact]) -> XbrlDocument:
+def _make_doc_with_dimensional_facts(
+    facts: list[XbrlFact], dart_role_bs_consolidated, dart_role_bs_separate
+) -> XbrlDocument:
     """연결(D210000) + 별도(D210005) 재무상태표 트리에 임의 fact들을 붙인 합성 문서."""
-    consol_role = "http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D210000"
-    sep_role = "http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D210005"
     node = PresentationNode(concept_local_name="Assets", concept_qname="ifrs-full:Assets")
     taxonomy = TaxonomyInfo(
         presentation_trees={
-            consol_role: [node.model_copy(deep=True)],
-            sep_role: [node.model_copy(deep=True)],
+            dart_role_bs_consolidated: [node.model_copy(deep=True)],
+            dart_role_bs_separate: [node.model_copy(deep=True)],
         },
     )
     return XbrlDocument(source_file="x.xbrl", facts=facts, entity_id="00000000", taxonomy=taxonomy)
@@ -277,51 +251,77 @@ def _make_doc_with_dimensional_facts(facts: list[XbrlFact]) -> XbrlDocument:
 class TestConsolidationFactFiltering:
     """DART instance 문서는 fact에 연결/별도 축을 달아 구분하므로 본표 추출 시 이를 필터링해야 한다."""
 
-    def test_facts_split_by_consolidation_member(self):
+    def test_facts_split_by_consolidation_member(
+        self, consolidated_axis, dart_role_bs_consolidated, dart_role_bs_separate, make_xbrl_fact
+    ):
         facts = [
-            _make_assets_fact("1000", {_CONS_AXIS: "ifrs-full:ConsolidatedMember"}),
-            _make_assets_fact("700", {_CONS_AXIS: "ifrs-full:SeparateMember"}),
+            make_xbrl_fact(value="1000", dimensions={consolidated_axis: "ifrs-full:ConsolidatedMember"}),
+            make_xbrl_fact(value="700", dimensions={consolidated_axis: "ifrs-full:SeparateMember"}),
         ]
-        result = extract_financial_statements(_make_doc_with_dimensional_facts(facts))
+        doc = _make_doc_with_dimensional_facts(facts, dart_role_bs_consolidated, dart_role_bs_separate)
+        result = extract_financial_statements(doc)
 
         cons_values = [i.value for i in result.statements["BS"].line_items if not i.is_abstract]
         sep_values = [i.value for i in result.separate_statements["BS"].line_items if not i.is_abstract]
         assert cons_values == [Decimal("1000")]
         assert sep_values == [Decimal("700")]
 
-    def test_fact_without_axis_matches_both_bases(self):
-        facts = [_make_assets_fact("1000", {})]
-        result = extract_financial_statements(_make_doc_with_dimensional_facts(facts))
+    def test_fact_without_axis_matches_both_bases(
+        self, dart_role_bs_consolidated, dart_role_bs_separate, make_xbrl_fact
+    ):
+        facts = [make_xbrl_fact(value="1000")]
+        doc = _make_doc_with_dimensional_facts(facts, dart_role_bs_consolidated, dart_role_bs_separate)
+        result = extract_financial_statements(doc)
 
         assert [i.value for i in result.statements["BS"].line_items] == [Decimal("1000")]
         assert [i.value for i in result.separate_statements["BS"].line_items] == [Decimal("1000")]
 
-    def test_note_level_dimensions_excluded_from_statement(self):
+    def test_note_level_dimensions_excluded_from_statement(
+        self, consolidated_axis, dart_role_bs_consolidated, dart_role_bs_separate, make_xbrl_fact
+    ):
         """부문 등 주석용 축이 붙은 fact는 본표에서 제외된다."""
         facts = [
-            _make_assets_fact("1000", {_CONS_AXIS: "ifrs-full:ConsolidatedMember"}),
-            _make_assets_fact(
-                "300",
-                {
-                    _CONS_AXIS: "ifrs-full:ConsolidatedMember",
+            make_xbrl_fact(value="1000", dimensions={consolidated_axis: "ifrs-full:ConsolidatedMember"}),
+            make_xbrl_fact(
+                value="300",
+                dimensions={
+                    consolidated_axis: "ifrs-full:ConsolidatedMember",
                     "ifrs-full:SegmentsAxis": "entity:VehicleMember",
                 },
             ),
         ]
-        result = extract_financial_statements(_make_doc_with_dimensional_facts(facts))
+        doc = _make_doc_with_dimensional_facts(facts, dart_role_bs_consolidated, dart_role_bs_separate)
+        result = extract_financial_statements(doc)
 
         values = [i.value for i in result.statements["BS"].line_items if not i.is_abstract]
         assert values == [Decimal("1000")]
 
-    def test_only_dimensional_facts_yield_abstract_item(self):
-        facts = [_make_assets_fact("300", {"ifrs-full:SegmentsAxis": "entity:VehicleMember"})]
-        result = extract_financial_statements(_make_doc_with_dimensional_facts(facts))
+    def test_only_dimensional_facts_yield_abstract_item(
+        self, dart_role_bs_consolidated, dart_role_bs_separate, make_xbrl_fact
+    ):
+        facts = [make_xbrl_fact(value="300", dimensions={"ifrs-full:SegmentsAxis": "entity:VehicleMember"})]
+        doc = _make_doc_with_dimensional_facts(facts, dart_role_bs_consolidated, dart_role_bs_separate)
+        result = extract_financial_statements(doc)
 
         items = result.statements["BS"].line_items
         assert len(items) == 1
         assert items[0].is_abstract is True
 
-    def test_sce_keeps_equity_component_axis(self):
+    def test_unrecognized_consolidation_member_treated_as_consolidated(
+        self, consolidated_axis, dart_role_bs_consolidated, dart_role_bs_separate, make_xbrl_fact
+    ):
+        """ConsolidatedMember/SeparateMember 어느 쪽도 아닌 멤버는 관측된 현재 동작상
+        연결(consolidated) 쪽에만 매칭되고 별도 쪽에서는 제외된다."""
+        facts = [make_xbrl_fact(value="1000", dimensions={consolidated_axis: "ifrs-full:SomeOtherMember"})]
+        doc = _make_doc_with_dimensional_facts(facts, dart_role_bs_consolidated, dart_role_bs_separate)
+        result = extract_financial_statements(doc)
+
+        cons_values = [i.value for i in result.statements["BS"].line_items if not i.is_abstract]
+        sep_values = [i.value for i in result.separate_statements["BS"].line_items if not i.is_abstract]
+        assert cons_values == [Decimal("1000")]
+        assert sep_values == []
+
+    def test_sce_keeps_equity_component_axis(self, consolidated_axis):
         """자본변동표의 자본구성요소 축은 본질적 컬럼이므로 유지되고 dimensions에 남는다."""
         sce_role = "http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D610000"
         node = PresentationNode(concept_local_name="Equity", concept_qname="ifrs-full:Equity")
@@ -334,7 +334,7 @@ class TestConsolidationFactFiltering:
             numeric_value=Decimal("500"),
             period=XbrlPeriod(period_type=PeriodType.INSTANT),
             dimensions={
-                _CONS_AXIS: "ifrs-full:ConsolidatedMember",
+                consolidated_axis: "ifrs-full:ConsolidatedMember",
                 "ifrs-full:ComponentsOfEquityAxis": "ifrs-full:IssuedCapitalMember",
             },
         )
@@ -347,13 +347,15 @@ class TestConsolidationFactFiltering:
 
 
 class TestSeparateStatements:
-    def test_consolidated_in_statements(self):
-        result = extract_financial_statements(_make_doc_with_separate())
+    def test_consolidated_in_statements(self, dart_role_bs_consolidated, dart_role_bs_separate, make_xbrl_fact):
+        doc = _make_doc_with_separate(dart_role_bs_consolidated, dart_role_bs_separate, make_xbrl_fact)
+        result = extract_financial_statements(doc)
         assert "BS" in result.statements
         assert result.statements["BS"].is_consolidated is True
 
-    def test_separate_in_separate_statements(self):
-        result = extract_financial_statements(_make_doc_with_separate())
+    def test_separate_in_separate_statements(self, dart_role_bs_consolidated, dart_role_bs_separate, make_xbrl_fact):
+        doc = _make_doc_with_separate(dart_role_bs_consolidated, dart_role_bs_separate, make_xbrl_fact)
+        result = extract_financial_statements(doc)
         assert "BS" in result.separate_statements
         assert result.separate_statements["BS"].is_consolidated is False
 
