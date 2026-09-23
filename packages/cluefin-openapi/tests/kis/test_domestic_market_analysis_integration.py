@@ -80,20 +80,16 @@ def test_get_watchlist_groups(client: HttpClient):
 @pytest.mark.integration
 def test_get_watchlist_multi_quote(client: HttpClient):
     """Test watchlist multi-stock quote inquiry."""
-    try:
-        # Query for Samsung Electronics (005930) only
-        response = client.domestic_market_analysis.get_watchlist_multi_quote(
-            fid_cond_mrkt_div_code_1="J",
-            fid_input_iscd_1="005930",  # Samsung Electronics
-        )
+    # Query for Samsung Electronics (005930) only
+    response = client.domestic_market_analysis.get_watchlist_multi_quote(
+        fid_cond_mrkt_div_code_1="J",
+        fid_input_iscd_1="005930",  # Samsung Electronics
+    )
 
-        # Verify response type
-        assert response is not None
-        assert hasattr(response.body, "rt_cd")
-        assert hasattr(response.body, "msg_cd")
-
-    except Exception as e:
-        pytest.fail(f"get_watchlist_multi_quote failed: {e}")
+    # Verify response type
+    assert response is not None
+    assert hasattr(response.body, "rt_cd")
+    assert hasattr(response.body, "msg_cd")
 
 
 # ==================== Investor Trading Trend APIs ====================
@@ -102,60 +98,48 @@ def test_get_watchlist_multi_quote(client: HttpClient):
 @pytest.mark.integration
 def test_get_investor_trading_trend_by_stock_daily(client: HttpClient):
     """Test investor trading trend by stock (daily)."""
-    try:
-        response = client.domestic_market_analysis.get_investor_trading_trend_by_stock_daily(
-            fid_cond_mrkt_div_code="J",  # Market: J
-            fid_input_iscd="005930",  # Samsung Electronics
-            fid_input_date_1="20251001",
-        )
+    response = client.domestic_market_analysis.get_investor_trading_trend_by_stock_daily(
+        fid_cond_mrkt_div_code="J",  # Market: J
+        fid_input_iscd="005930",  # Samsung Electronics
+        fid_input_date_1="20251001",
+    )
 
-        # Verify response type
-        assert response is not None
-        assert hasattr(response.body, "rt_cd")
-        assert hasattr(response.body, "msg_cd")
-
-    except Exception as e:
-        pytest.fail(f"get_investor_trading_trend_by_stock_daily failed: {e}")
+    # Verify response type
+    assert response is not None
+    assert hasattr(response.body, "rt_cd")
+    assert hasattr(response.body, "msg_cd")
 
 
 @pytest.mark.integration
 def test_get_investor_trading_trend_by_market_intraday(client: HttpClient):
     """Test investor trading trend by market (intraday)."""
-    try:
-        response = client.domestic_market_analysis.get_investor_trading_trend_by_market_intraday(
-            fid_input_iscd="KSP",  # KSP:KOSPI, KSQ:KOSDAQ
-            fid_input_iscd_2="0001",  # Sector code (0001:KOSPI Total)
-        )
+    response = client.domestic_market_analysis.get_investor_trading_trend_by_market_intraday(
+        fid_input_iscd="KSP",  # KSP:KOSPI, KSQ:KOSDAQ
+        fid_input_iscd_2="0001",  # Sector code (0001:KOSPI Total)
+    )
 
-        # Verify response type
-        assert response is not None
-        assert hasattr(response.body, "rt_cd")
-        assert hasattr(response.body, "msg_cd")
-
-    except Exception as e:
-        pytest.fail(f"get_investor_trading_trend_by_market_intraday failed: {e}")
+    # Verify response type
+    assert response is not None
+    assert hasattr(response.body, "rt_cd")
+    assert hasattr(response.body, "msg_cd")
 
 
 @pytest.mark.integration
 def test_get_investor_trading_trend_by_market_daily(client: HttpClient):
     """Test investor trading trend by market (daily)."""
-    try:
-        response = client.domestic_market_analysis.get_investor_trading_trend_by_market_daily(
-            fid_cond_mrkt_div_code="U",  # U:Sector
-            fid_input_iscd="0001",  # Sector classification code
-            fid_input_date_1="20240701",  # Date
-            fid_input_iscd_1="KSP",  # KSP:KOSPI, KSQ:KOSDAQ
-            fid_input_date_2="20240701",  # Same as date_1
-            fid_input_iscd_2="0001",  # Sector classification code
-        )
+    response = client.domestic_market_analysis.get_investor_trading_trend_by_market_daily(
+        fid_cond_mrkt_div_code="U",  # U:Sector
+        fid_input_iscd="0001",  # Sector classification code
+        fid_input_date_1="20240701",  # Date
+        fid_input_iscd_1="KSP",  # KSP:KOSPI, KSQ:KOSDAQ
+        fid_input_date_2="20240701",  # Same as date_1
+        fid_input_iscd_2="0001",  # Sector classification code
+    )
 
-        # Verify response type
-        assert response is not None
-        assert hasattr(response.body, "rt_cd")
-        assert hasattr(response.body, "msg_cd")
-
-    except Exception as e:
-        pytest.fail(f"get_investor_trading_trend_by_market_daily failed: {e}")
+    # Verify response type
+    assert response is not None
+    assert hasattr(response.body, "rt_cd")
+    assert hasattr(response.body, "msg_cd")
 
 
 # ==================== Foreign/Member Trading APIs ====================
@@ -164,100 +148,80 @@ def test_get_investor_trading_trend_by_market_daily(client: HttpClient):
 @pytest.mark.integration
 def test_get_foreign_brokerage_trading_aggregate(client: HttpClient):
     """Test foreign brokerage trading aggregate."""
-    try:
-        response = client.domestic_market_analysis.get_foreign_brokerage_trading_aggregate(
-            fid_input_iscd="0000",  # 0000:All, 0001:KOSPI, 1001:KOSDAQ
-            fid_rank_sort_cls_code="0",  # 0:Net buy, 1:Net sell
-            fid_rank_sort_cls_code_2="0",
-        )
+    response = client.domestic_market_analysis.get_foreign_brokerage_trading_aggregate(
+        fid_input_iscd="0000",  # 0000:All, 0001:KOSPI, 1001:KOSDAQ
+        fid_rank_sort_cls_code="0",  # 0:Net buy, 1:Net sell
+        fid_rank_sort_cls_code_2="0",
+    )
 
-        # Verify response type
-        assert response is not None
-        assert hasattr(response.body, "rt_cd")
-        assert hasattr(response.body, "msg_cd")
-
-    except Exception as e:
-        pytest.fail(f"get_foreign_brokerage_trading_aggregate failed: {e}")
+    # Verify response type
+    assert response is not None
+    assert hasattr(response.body, "rt_cd")
+    assert hasattr(response.body, "msg_cd")
 
 
 @pytest.mark.integration
 def test_get_foreign_net_buy_trend_by_stock(client: HttpClient):
     """Test foreign net buy trend by stock."""
-    try:
-        response = client.domestic_market_analysis.get_foreign_net_buy_trend_by_stock(
-            fid_input_iscd="005930",  # Samsung Electronics
-            fid_input_iscd_2="99999",  # 99999:All foreign brokerages
-            fid_cond_mrkt_div_code="J",  # J:KRX
-        )
+    response = client.domestic_market_analysis.get_foreign_net_buy_trend_by_stock(
+        fid_input_iscd="005930",  # Samsung Electronics
+        fid_input_iscd_2="99999",  # 99999:All foreign brokerages
+        fid_cond_mrkt_div_code="J",  # J:KRX
+    )
 
-        # Verify response type
-        assert response is not None
-        assert hasattr(response.body, "rt_cd")
-        assert hasattr(response.body, "msg_cd")
-
-    except Exception as e:
-        pytest.fail(f"get_foreign_net_buy_trend_by_stock failed: {e}")
+    # Verify response type
+    assert response is not None
+    assert hasattr(response.body, "rt_cd")
+    assert hasattr(response.body, "msg_cd")
 
 
 @pytest.mark.integration
 def test_get_member_trading_trend_tick(client: HttpClient):
     """Test member trading trend (tick)."""
-    try:
-        response = client.domestic_market_analysis.get_member_trading_trend_tick(
-            fid_cond_scr_div_code="20432",  # Primary key
-            fid_cond_mrkt_div_code="J",  # J:Fixed
-            fid_input_iscd="005930",  # Samsung Electronics
-            fid_input_iscd_2="99999",  # 99999:All members
-            fid_mrkt_cls_code="",  # Empty when using fid_input_iscd
-            fid_vol_cnt="",  # Empty for all volumes
-        )
+    response = client.domestic_market_analysis.get_member_trading_trend_tick(
+        fid_cond_scr_div_code="20432",  # Primary key
+        fid_cond_mrkt_div_code="J",  # J:Fixed
+        fid_input_iscd="005930",  # Samsung Electronics
+        fid_input_iscd_2="99999",  # 99999:All members
+        fid_mrkt_cls_code="",  # Empty when using fid_input_iscd
+        fid_vol_cnt="",  # Empty for all volumes
+    )
 
-        # Verify response type
-        assert response is not None
-        assert hasattr(response.body, "rt_cd")
-        assert hasattr(response.body, "msg_cd")
-
-    except Exception as e:
-        pytest.fail(f"get_member_trading_trend_tick failed: {e}")
+    # Verify response type
+    assert response is not None
+    assert hasattr(response.body, "rt_cd")
+    assert hasattr(response.body, "msg_cd")
 
 
 @pytest.mark.integration
 def test_get_member_trading_trend_by_stock(client: HttpClient):
     """Test member trading trend by stock."""
-    try:
-        response = client.domestic_market_analysis.get_member_trading_trend_by_stock(
-            fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
-            fid_input_iscd="005930",  # Samsung Electronics
-            fid_input_iscd_2="",  # Member code (empty for all)
-            fid_input_date_1="20240701",  # From date
-            fid_input_date_2="20240731",  # To date
-            fid_sctn_cls_code="",  # Empty
-        )
+    response = client.domestic_market_analysis.get_member_trading_trend_by_stock(
+        fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
+        fid_input_iscd="005930",  # Samsung Electronics
+        fid_input_iscd_2="",  # Member code (empty for all)
+        fid_input_date_1="20240701",  # From date
+        fid_input_date_2="20240731",  # To date
+        fid_sctn_cls_code="",  # Empty
+    )
 
-        # Verify response type
-        assert response is not None
-        assert hasattr(response.body, "rt_cd")
-        assert hasattr(response.body, "msg_cd")
-
-    except Exception as e:
-        pytest.fail(f"get_member_trading_trend_by_stock failed: {e}")
+    # Verify response type
+    assert response is not None
+    assert hasattr(response.body, "rt_cd")
+    assert hasattr(response.body, "msg_cd")
 
 
 @pytest.mark.integration
 def test_get_foreign_institutional_estimate_by_stock(client: HttpClient):
     """Test foreign/institutional estimate by stock."""
-    try:
-        response = client.domestic_market_analysis.get_foreign_institutional_estimate_by_stock(
-            mksc_shrn_iscd="005930"  # Samsung Electronics
-        )
+    response = client.domestic_market_analysis.get_foreign_institutional_estimate_by_stock(
+        mksc_shrn_iscd="005930"  # Samsung Electronics
+    )
 
-        # Verify response type
-        assert response is not None
-        assert hasattr(response.body, "rt_cd")
-        assert hasattr(response.body, "msg_cd")
-
-    except Exception as e:
-        pytest.fail(f"get_foreign_institutional_estimate_by_stock failed: {e}")
+    # Verify response type
+    assert response is not None
+    assert hasattr(response.body, "rt_cd")
+    assert hasattr(response.body, "msg_cd")
 
 
 # ==================== Program Trading APIs ====================
@@ -266,98 +230,78 @@ def test_get_foreign_institutional_estimate_by_stock(client: HttpClient):
 @pytest.mark.integration
 def test_get_program_trading_trend_by_stock_intraday(client: HttpClient):
     """Test program trading trend by stock (intraday)."""
-    try:
-        response = client.domestic_market_analysis.get_program_trading_trend_by_stock_intraday(
-            fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
-            fid_input_iscd="005930",  # Samsung Electronics
-        )
+    response = client.domestic_market_analysis.get_program_trading_trend_by_stock_intraday(
+        fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
+        fid_input_iscd="005930",  # Samsung Electronics
+    )
 
-        # Verify response type
-        assert response is not None
-        assert hasattr(response.body, "rt_cd")
-        assert hasattr(response.body, "msg_cd")
-
-    except Exception as e:
-        pytest.fail(f"get_program_trading_trend_by_stock_intraday failed: {e}")
+    # Verify response type
+    assert response is not None
+    assert hasattr(response.body, "rt_cd")
+    assert hasattr(response.body, "msg_cd")
 
 
 @pytest.mark.integration
 def test_get_program_trading_trend_by_stock_daily(client: HttpClient):
     """Test program trading trend by stock (daily)."""
-    try:
-        response = client.domestic_market_analysis.get_program_trading_trend_by_stock_daily(
-            fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
-            fid_input_iscd="005930",  # Samsung Electronics
-            fid_input_date_1="",  # Empty for today
-        )
+    response = client.domestic_market_analysis.get_program_trading_trend_by_stock_daily(
+        fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
+        fid_input_iscd="005930",  # Samsung Electronics
+        fid_input_date_1="",  # Empty for today
+    )
 
-        # Verify response type
-        assert response is not None
-        assert hasattr(response.body, "rt_cd")
-        assert hasattr(response.body, "msg_cd")
-
-    except Exception as e:
-        pytest.fail(f"get_program_trading_trend_by_stock_daily failed: {e}")
+    # Verify response type
+    assert response is not None
+    assert hasattr(response.body, "rt_cd")
+    assert hasattr(response.body, "msg_cd")
 
 
 @pytest.mark.integration
 def test_get_program_trading_summary_intraday(client: HttpClient):
     """Test program trading summary (intraday)."""
-    try:
-        response = client.domestic_market_analysis.get_program_trading_summary_intraday(
-            fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
-            fid_mrkt_cls_code="K",  # K:KOSPI, Q:KOSDAQ
-            fid_sctn_cls_code="",  # Empty
-            fid_input_iscd="",  # Empty
-            fid_cond_mrkt_div_code1="",  # Empty
-            fid_input_hour_1="",  # Empty
-        )
+    response = client.domestic_market_analysis.get_program_trading_summary_intraday(
+        fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
+        fid_mrkt_cls_code="K",  # K:KOSPI, Q:KOSDAQ
+        fid_sctn_cls_code="",  # Empty
+        fid_input_iscd="",  # Empty
+        fid_cond_mrkt_div_code1="",  # Empty
+        fid_input_hour_1="",  # Empty
+    )
 
-        # Verify response type
-        assert response is not None
-        assert hasattr(response.body, "rt_cd")
-        assert hasattr(response.body, "msg_cd")
-
-    except Exception as e:
-        pytest.fail(f"get_program_trading_summary_intraday failed: {e}")
+    # Verify response type
+    assert response is not None
+    assert hasattr(response.body, "rt_cd")
+    assert hasattr(response.body, "msg_cd")
 
 
 @pytest.mark.integration
 def test_get_program_trading_summary_daily(client: HttpClient):
     """Test program trading summary (daily)."""
-    try:
-        response = client.domestic_market_analysis.get_program_trading_summary_daily(
-            fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
-            fid_mrkt_cls_code="K",  # K:KOSPI, Q:KOSDAQ
-            fid_input_date_1="",  # Empty (8 months max)
-            fid_input_date_2="",  # Empty
-        )
+    response = client.domestic_market_analysis.get_program_trading_summary_daily(
+        fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
+        fid_mrkt_cls_code="K",  # K:KOSPI, Q:KOSDAQ
+        fid_input_date_1="",  # Empty (8 months max)
+        fid_input_date_2="",  # Empty
+    )
 
-        # Verify response type
-        assert response is not None
-        assert hasattr(response.body, "rt_cd")
-        assert hasattr(response.body, "msg_cd")
-
-    except Exception as e:
-        pytest.fail(f"get_program_trading_summary_daily failed: {e}")
+    # Verify response type
+    assert response is not None
+    assert hasattr(response.body, "rt_cd")
+    assert hasattr(response.body, "msg_cd")
 
 
 @pytest.mark.integration
 def test_get_program_trading_investor_trend_today(client: HttpClient):
     """Test program trading investor trend (today)."""
-    try:
-        response = client.domestic_market_analysis.get_program_trading_investor_trend_today(
-            exch_div_cls_code="J",  # J:KRX, NX:NXT, UN:Integrated
-            mrkt_div_cls_code="1",  # 1:KOSPI, 4:KOSDAQ
-        )
+    response = client.domestic_market_analysis.get_program_trading_investor_trend_today(
+        exch_div_cls_code="J",  # J:KRX, NX:NXT, UN:Integrated
+        mrkt_div_cls_code="1",  # 1:KOSPI, 4:KOSDAQ
+    )
 
-        # Verify response type
-        assert response is not None
-        assert hasattr(response.body, "rt_cd")
-        assert hasattr(response.body, "msg_cd")
-
-    except Exception as e:
-        pytest.fail(f"get_program_trading_investor_trend_today failed: {e}")
+    # Verify response type
+    assert response is not None
+    assert hasattr(response.body, "rt_cd")
+    assert hasattr(response.body, "msg_cd")
 
 
 # ==================== Market Analysis APIs ====================
@@ -366,205 +310,165 @@ def test_get_program_trading_investor_trend_today(client: HttpClient):
 @pytest.mark.integration
 def test_get_buy_sell_volume_by_stock_daily(client: HttpClient):
     """Test buy/sell volume by stock (daily)."""
-    try:
-        response = client.domestic_market_analysis.get_buy_sell_volume_by_stock_daily(
-            fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
-            fid_input_iscd="005930",  # Samsung Electronics
-            fid_input_date_1="20240701",  # From date
-            fid_input_date_2="20240731",  # To date
-            fid_period_div_code="D",  # D:Daily
-        )
+    response = client.domestic_market_analysis.get_buy_sell_volume_by_stock_daily(
+        fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
+        fid_input_iscd="005930",  # Samsung Electronics
+        fid_input_date_1="20240701",  # From date
+        fid_input_date_2="20240731",  # To date
+        fid_period_div_code="D",  # D:Daily
+    )
 
-        # Verify response type
-        assert response is not None
-        assert hasattr(response.body, "rt_cd")
-        assert hasattr(response.body, "msg_cd")
-
-    except Exception as e:
-        pytest.fail(f"get_buy_sell_volume_by_stock_daily failed: {e}")
+    # Verify response type
+    assert response is not None
+    assert hasattr(response.body, "rt_cd")
+    assert hasattr(response.body, "msg_cd")
 
 
 @pytest.mark.integration
 def test_get_credit_balance_trend_daily(client: HttpClient):
     """Test credit balance trend (daily)."""
-    try:
-        response = client.domestic_market_analysis.get_credit_balance_trend_daily(
-            fid_cond_mrkt_div_code="J",  # J:Stock
-            fid_cond_scr_div_code="20476",  # Unique key
-            fid_input_iscd="005930",  # Samsung Electronics
-            fid_input_date_1="20240701",  # Settlement date
-        )
+    response = client.domestic_market_analysis.get_credit_balance_trend_daily(
+        fid_cond_mrkt_div_code="J",  # J:Stock
+        fid_cond_scr_div_code="20476",  # Unique key
+        fid_input_iscd="005930",  # Samsung Electronics
+        fid_input_date_1="20240701",  # Settlement date
+    )
 
-        # Verify response type
-        assert response is not None
-        assert hasattr(response.body, "rt_cd")
-        assert hasattr(response.body, "msg_cd")
-
-    except Exception as e:
-        pytest.fail(f"get_credit_balance_trend_daily failed: {e}")
+    # Verify response type
+    assert response is not None
+    assert hasattr(response.body, "rt_cd")
+    assert hasattr(response.body, "msg_cd")
 
 
 @pytest.mark.integration
 def test_get_expected_price_trend(client: HttpClient):
     """Test expected price trend."""
-    try:
-        response = client.domestic_market_analysis.get_expected_price_trend(
-            fid_mkop_cls_code="0",  # 0:All, 4:Exclude zero volume
-            fid_cond_mrkt_div_code="J",  # J:Stock
-            fid_input_iscd="005930",  # Samsung Electronics
-        )
+    response = client.domestic_market_analysis.get_expected_price_trend(
+        fid_mkop_cls_code="0",  # 0:All, 4:Exclude zero volume
+        fid_cond_mrkt_div_code="J",  # J:Stock
+        fid_input_iscd="005930",  # Samsung Electronics
+    )
 
-        # Verify response type
-        assert response is not None
-        assert hasattr(response.body, "rt_cd")
-        assert hasattr(response.body, "msg_cd")
-
-    except Exception as e:
-        pytest.fail(f"get_expected_price_trend failed: {e}")
+    # Verify response type
+    assert response is not None
+    assert hasattr(response.body, "rt_cd")
+    assert hasattr(response.body, "msg_cd")
 
 
 @pytest.mark.integration
 def test_get_short_selling_trend_daily(client: HttpClient):
     """Test short selling trend (daily)."""
-    try:
-        response = client.domestic_market_analysis.get_short_selling_trend_daily(
-            fid_input_date_2="20240731",  # To date
-            fid_cond_mrkt_div_code="J",  # J:Stock
-            fid_input_iscd="005930",  # Samsung Electronics
-            fid_input_date_1="20240701",  # From date
-        )
+    response = client.domestic_market_analysis.get_short_selling_trend_daily(
+        fid_input_date_2="20240731",  # To date
+        fid_cond_mrkt_div_code="J",  # J:Stock
+        fid_input_iscd="005930",  # Samsung Electronics
+        fid_input_date_1="20240701",  # From date
+    )
 
-        # Verify response type
-        assert response is not None
-        assert hasattr(response.body, "rt_cd")
-        assert hasattr(response.body, "msg_cd")
-
-    except Exception as e:
-        pytest.fail(f"get_short_selling_trend_daily failed: {e}")
+    # Verify response type
+    assert response is not None
+    assert hasattr(response.body, "rt_cd")
+    assert hasattr(response.body, "msg_cd")
 
 
 @pytest.mark.integration
 def test_get_after_hours_expected_fluctuation(client: HttpClient):
     """Test after hours expected fluctuation."""
-    try:
-        response = client.domestic_market_analysis.get_after_hours_expected_fluctuation(
-            fid_cond_mrkt_div_code="J",  # J:Stock
-            fid_cond_scr_div_code="11186",  # Unique key
-            fid_input_iscd="0000",  # 0000:All, 0001:KOSPI, 1001:KOSDAQ
-            fid_rank_sort_cls_code="0",  # 0:Rise rate, 1:Rise amount, etc.
-            fid_div_cls_code="0",  # 0:All, 1:Managed, etc.
-            fid_input_price_1="",  # Empty
-            fid_input_price_2="",  # Empty
-            fid_input_vol_1="",  # Empty
-        )
+    response = client.domestic_market_analysis.get_after_hours_expected_fluctuation(
+        fid_cond_mrkt_div_code="J",  # J:Stock
+        fid_cond_scr_div_code="11186",  # Unique key
+        fid_input_iscd="0000",  # 0000:All, 0001:KOSPI, 1001:KOSDAQ
+        fid_rank_sort_cls_code="0",  # 0:Rise rate, 1:Rise amount, etc.
+        fid_div_cls_code="0",  # 0:All, 1:Managed, etc.
+        fid_input_price_1="",  # Empty
+        fid_input_price_2="",  # Empty
+        fid_input_vol_1="",  # Empty
+    )
 
-        # Verify response type
-        assert response is not None
-        assert hasattr(response.body, "rt_cd")
-        assert hasattr(response.body, "msg_cd")
-
-    except Exception as e:
-        pytest.fail(f"get_after_hours_expected_fluctuation failed: {e}")
+    # Verify response type
+    assert response is not None
+    assert hasattr(response.body, "rt_cd")
+    assert hasattr(response.body, "msg_cd")
 
 
 @pytest.mark.integration
 def test_get_trading_weight_by_amount(client: HttpClient):
     """Test trading weight by amount."""
-    try:
-        response = client.domestic_market_analysis.get_trading_weight_by_amount(
-            fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
-            fid_cond_scr_div_code="11119",  # Unique key
-            fid_input_iscd="005930",  # Samsung Electronics
-        )
+    response = client.domestic_market_analysis.get_trading_weight_by_amount(
+        fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
+        fid_cond_scr_div_code="11119",  # Unique key
+        fid_input_iscd="005930",  # Samsung Electronics
+    )
 
-        # Verify response type
-        assert response is not None
-        assert hasattr(response.body, "rt_cd")
-        assert hasattr(response.body, "msg_cd")
-
-    except Exception as e:
-        pytest.fail(f"get_trading_weight_by_amount failed: {e}")
+    # Verify response type
+    assert response is not None
+    assert hasattr(response.body, "rt_cd")
+    assert hasattr(response.body, "msg_cd")
 
 
 @pytest.mark.integration
 def test_get_market_fund_summary(client: HttpClient):
     """Test market fund summary."""
-    try:
-        response = client.domestic_market_analysis.get_market_fund_summary(
-            fid_input_date_1="20240701"  # Date
-        )
+    response = client.domestic_market_analysis.get_market_fund_summary(
+        fid_input_date_1="20240701"  # Date
+    )
 
-        # Verify response type
-        assert response is not None
-        assert hasattr(response.body, "rt_cd")
-        assert hasattr(response.body, "msg_cd")
-
-    except Exception as e:
-        pytest.fail(f"get_market_fund_summary failed: {e}")
+    # Verify response type
+    assert response is not None
+    assert hasattr(response.body, "rt_cd")
+    assert hasattr(response.body, "msg_cd")
 
 
 @pytest.mark.integration
 def test_get_stock_loan_trend_daily(client: HttpClient):
     """Test stock loan trend (daily)."""
-    try:
-        response = client.domestic_market_analysis.get_stock_loan_trend_daily(
-            mrkt_div_cls_code="3",  # 1:KOSPI, 2:KOSDAQ, 3:Stock
-            mksc_shrn_iscd="005930",  # Samsung Electronics
-            start_date="20240701",  # From date
-            end_date="20240731",  # To date
-            cts="",  # Empty for first call
-        )
+    response = client.domestic_market_analysis.get_stock_loan_trend_daily(
+        mrkt_div_cls_code="3",  # 1:KOSPI, 2:KOSDAQ, 3:Stock
+        mksc_shrn_iscd="005930",  # Samsung Electronics
+        start_date="20240701",  # From date
+        end_date="20240731",  # To date
+        cts="",  # Empty for first call
+    )
 
-        # Verify response type
-        assert response is not None
-        assert hasattr(response.body, "rt_cd")
-        assert hasattr(response.body, "msg_cd")
-
-    except Exception as e:
-        pytest.fail(f"get_stock_loan_trend_daily failed: {e}")
+    # Verify response type
+    assert response is not None
+    assert hasattr(response.body, "rt_cd")
+    assert hasattr(response.body, "msg_cd")
 
 
 @pytest.mark.integration
 def test_get_limit_price_stocks(client: HttpClient):
     """Test limit price stocks (upper/lower limit)."""
-    try:
-        response = client.domestic_market_analysis.get_limit_price_stocks(
-            fid_cond_mrkt_div_code="J",  # J:Market
-            fid_cond_scr_div_code="11300",  # Unique key
-            fid_prc_cls_code="0",  # 0:Upper, 1:Lower
-            fid_div_cls_code="0",  # 0:At limit, 1-6:Near limit percentages
-            fid_input_iscd="0000",  # 0000:All, 0001:KOSPI, 1001:KOSDAQ
-            fid_trgt_cls_code="",  # Empty
-            fid_trgt_exls_cls_code="",  # Empty
-            fid_input_price_1="",  # Empty
-            fid_input_price_2="",  # Empty
-            fid_vol_cnt="",  # Empty
-        )
+    response = client.domestic_market_analysis.get_limit_price_stocks(
+        fid_cond_mrkt_div_code="J",  # J:Market
+        fid_cond_scr_div_code="11300",  # Unique key
+        fid_prc_cls_code="0",  # 0:Upper, 1:Lower
+        fid_div_cls_code="0",  # 0:At limit, 1-6:Near limit percentages
+        fid_input_iscd="0000",  # 0000:All, 0001:KOSPI, 1001:KOSDAQ
+        fid_trgt_cls_code="",  # Empty
+        fid_trgt_exls_cls_code="",  # Empty
+        fid_input_price_1="",  # Empty
+        fid_input_price_2="",  # Empty
+        fid_vol_cnt="",  # Empty
+    )
 
-        # Verify response type
-        assert response is not None
-        assert hasattr(response.body, "rt_cd")
-        assert hasattr(response.body, "msg_cd")
-
-    except Exception as e:
-        pytest.fail(f"get_limit_price_stocks failed: {e}")
+    # Verify response type
+    assert response is not None
+    assert hasattr(response.body, "rt_cd")
+    assert hasattr(response.body, "msg_cd")
 
 
 @pytest.mark.integration
 def test_get_resistance_level_trading_weight(client: HttpClient):
     """Test resistance level trading weight."""
-    try:
-        response = client.domestic_market_analysis.get_resistance_level_trading_weight(
-            fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
-            fid_input_iscd="005930",  # Samsung Electronics
-            fid_cond_scr_div_code="20113",  # Unique key
-            fid_input_hour_1="",  # Empty
-        )
+    response = client.domestic_market_analysis.get_resistance_level_trading_weight(
+        fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
+        fid_input_iscd="005930",  # Samsung Electronics
+        fid_cond_scr_div_code="20113",  # Unique key
+        fid_input_hour_1="",  # Empty
+    )
 
-        # Verify response type
-        assert response is not None
-        assert hasattr(response.body, "rt_cd")
-        assert hasattr(response.body, "msg_cd")
-
-    except Exception as e:
-        pytest.fail(f"get_resistance_level_trading_weight failed: {e}")
+    # Verify response type
+    assert response is not None
+    assert hasattr(response.body, "rt_cd")
+    assert hasattr(response.body, "msg_cd")
