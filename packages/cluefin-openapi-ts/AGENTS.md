@@ -27,10 +27,16 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   `TokenManager._cache_file_name` (env + first 8 hex chars of `sha256(app_key)`) byte for
   byte. Don't change the format, the directory, or the naming rule on one side only —
   mirror any change to `_cache_file_name` here too.
-- The nhplug token cache file is **also shared with Python**, but is scoped by **app_key
-  only** (`nhplugTokenCacheFileName`), not by env — one NH token is issued on the live
-  domain and used for both live and mock calls. The KIS store is env-scoped. Don't
-  "unify" the two schemes; changing either breaks cache sharing with Python.
+- All three brokers (KIS, Kiwoom, nhplug) share their token cache **files** with Python
+  under the same `<tmpdir>/cluefin-openapi/` directory, each using Python's own naming
+  rule (`kisTokenCacheFileName` / `kiwoomTokenCacheFileName` / `nhplugTokenCacheFileName`
+  in each broker's `token-cache.ts`, mirroring that broker's `TokenManager._cache_file_name`
+  byte for byte) and JSON shape. The nhplug token cache file is scoped by **app_key only**
+  (one NH token is issued on the live domain and used for both live and mock calls); the
+  KIS and Kiwoom stores are env-scoped (`env` + `sha256(app_key)[:8]`). Don't "unify" the
+  schemes across brokers — each mirrors its own Python `TokenManager`, and changing a
+  Python `_cache_file_name` or cache JSON shape means updating the matching TS file by
+  hand (nothing enforces this automatically).
 - Endpoint-count tests hardcode totals (`tests/core/endpoint-count.test.ts`, KIS
   contract tests); bump them whenever metadata changes.
 

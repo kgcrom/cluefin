@@ -160,3 +160,13 @@ export type {
   ThemeGroupResponse,
   ThemeGroupStocksResponse,
 } from './schemas/domestic-theme.js';
+// KIS 쪽과 이름이 겹치므로 루트 배럴에서는 Kiwoom 접두사를 붙여 내보낸다.
+export type {
+  TokenCacheEntry as KiwoomTokenCacheEntry,
+  TokenCacheStore as KiwoomTokenCacheStore,
+} from './token-cache.js';
+export {
+  FileTokenCacheStore as KiwoomFileTokenCacheStore,
+  kiwoomTokenCacheFileName,
+  MemoryTokenCacheStore as KiwoomMemoryTokenCacheStore,
+} from './token-cache.js';

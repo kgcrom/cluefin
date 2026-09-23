@@ -85,7 +85,9 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 ## Conventions that are easy to mis-infer
 
 - The three `TokenManager` classes (kis/kiwoom/nhplug) are copy-pasted, not shared —
-  mirror cache-behavior changes by hand in all three.
+  mirror cache-behavior changes by hand in all three. The sibling `cluefin-openapi-ts`
+  package's `token-cache.ts` per broker also mirrors each `_cache_file_name`/cache JSON
+  shape to share the same cache files — mirror changes there too, by hand.
 - Unit-test styles are per-broker and not interchangeable: Kiwoom uses the table-driven
   `EndpointCase`/`run_post_case` harness (`tests/kiwoom/_helpers.py`), KIS uses JSON
   fixture case files (`tests/kis/*_cases.json`).

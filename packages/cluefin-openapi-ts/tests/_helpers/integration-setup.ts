@@ -11,6 +11,10 @@ import { KisHttpClient } from '../../src/kis/http-client';
 import { FileTokenCacheStore, kisTokenCacheFileName } from '../../src/kis/token-cache';
 import { KiwoomAuth } from '../../src/kiwoom/auth';
 import { KiwoomClient } from '../../src/kiwoom/client';
+import {
+  FileTokenCacheStore as KiwoomFileTokenCacheStore,
+  kiwoomTokenCacheFileName,
+} from '../../src/kiwoom/token-cache';
 import { NhplugAuth } from '../../src/nhplug/auth';
 import { NhplugClient, SUCCESS_RSP_CODES } from '../../src/nhplug/client';
 import {
@@ -89,7 +93,11 @@ export function getKiwoomClient(): Promise<KiwoomClient> {
         throw new Error('KIWOOM_APP_KEY and KIWOOM_SECRET_KEY are required');
       }
       const env = process.env.KIWOOM_ENV === 'prod' ? 'prod' : 'dev';
-      const auth = new KiwoomAuth({ appKey, secretKey, env });
+      // Share token cache with Python cluefin-openapi (same tmpdir/file-naming scheme as KIS/nhplug).
+      const cacheDir = process.env.KIWOOM_TOKEN_CACHE_DIR ?? path.join(os.tmpdir(), 'cluefin-openapi');
+      mkdirSync(cacheDir, { recursive: true });
+      const tokenCacheStore = new KiwoomFileTokenCacheStore(path.join(cacheDir, kiwoomTokenCacheFileName(env, appKey)));
+      const auth = new KiwoomAuth({ appKey, secretKey, env, tokenCacheStore });
       const tokenResponse = await auth.generateToken();
       return new KiwoomClient({ token: tokenResponse.token, env });
     })();
