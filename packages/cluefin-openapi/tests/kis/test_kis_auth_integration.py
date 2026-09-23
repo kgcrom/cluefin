@@ -4,6 +4,8 @@ These tests require actual API credentials and network access.
 They should be run against the sandbox environment for safety.
 """
 
+import os
+
 import pytest
 import requests
 from pydantic import SecretStr
@@ -60,6 +62,10 @@ def test_approval_request_dev_environment(auth_dev):
 
 
 @pytest.mark.integration
+@pytest.mark.skipif(
+    os.getenv("KIS_TEST_REVOKE") != "1",
+    reason="폐기하면 Python·TS 가 공유하는 토큰 캐시가 무효가 되어 재발급(1분 1회 제한)이 강제됨 — KIS_TEST_REVOKE=1 로 명시 실행",
+)
 def test_full_auth_workflow_dev_environment(auth_dev):
     """Test complete authentication workflow in dev environment."""
     # Step 1: Generate or reuse a token while respecting the rate limit.
