@@ -22,15 +22,16 @@ class TestOBV:
         np.testing.assert_allclose(actual, expected, rtol=1e-10)
 
     def test_obv_cumulative(self, sample_ohlcv):
-        """Verify OBV is cumulative."""
+        """Verify OBV is the cumulative sum of sign(close change) * volume."""
         close = sample_ohlcv["close"]
         volume = sample_ohlcv["volume"]
 
         result = OBV(close, volume)
 
-        # OBV should be cumulative sum of signed volume
-        # Check that the last value is reasonable
-        assert result[-1] != 0  # Should not be zero for random data
+        signed_volume = np.sign(np.diff(close)) * volume[1:]
+        expected = np.concatenate(([volume[0]], volume[0] + np.cumsum(signed_volume)))
+
+        np.testing.assert_allclose(result, expected, rtol=1e-10)
 
     def test_obv_up_day(self):
         """Test OBV increases on up days."""
@@ -69,7 +70,7 @@ class TestAD:
         np.testing.assert_allclose(actual, expected, rtol=1e-10)
 
     def test_ad_cumulative(self, sample_ohlcv):
-        """Verify AD is cumulative."""
+        """Verify AD is the cumulative sum of per-bar money flow volume."""
         high = sample_ohlcv["high"]
         low = sample_ohlcv["low"]
         close = sample_ohlcv["close"]
@@ -77,9 +78,11 @@ class TestAD:
 
         result = AD(high, low, close, volume)
 
-        # AD should be cumulative
-        # Each value depends on all previous values
-        assert len(result) == len(close)
+        mfm = ((close - low) - (high - close)) / (high - low)
+        money_flow_volume = mfm * volume
+        expected = np.cumsum(money_flow_volume)
+
+        np.testing.assert_allclose(result, expected, rtol=1e-10)
 
     def test_ad_mfm_calculation(self):
         """Test Money Flow Multiplier calculation."""

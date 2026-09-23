@@ -3,6 +3,7 @@ Tests for momentum indicators (RSI, MACD, STOCH, STOCHF, WILLR, MOM, ROC, CCI, M
 """
 
 import numpy as np
+import pytest
 import talib
 
 from cluefin_ta import ADX, CCI, MACD, MFI, MOM, ROC, RSI, STOCH, STOCHF, WILLR
@@ -33,13 +34,25 @@ class TestRSI:
         result = RSI(short_data, timeperiod=14)
         assert np.all(np.isnan(result))
 
+    @pytest.mark.xfail(
+        strict=True,
+        reason=(
+            "Parity bug (not fixed here per task scope): when avg_gain == avg_loss == 0 "
+            "(no price change at all), ta-lib's RSI returns 0.0, but cluefin_ta.RSI returns "
+            "100.0 because it treats avg_loss == 0 as 'always up' regardless of avg_gain. "
+            "See cluefin_ta.momentum.RSI lines checking `if avg_loss == 0` / "
+            "`if smoothed_losses[i - 1] == 0`."
+        ),
+    )
     def test_rsi_constant_prices(self, constant_data):
-        """Test RSI with constant prices (no change)."""
-        result = RSI(constant_data, timeperiod=14)
-        # When there's no price change, RSI should be 50 or undefined
-        # With constant prices, all changes are 0, so RSI is undefined or neutral
-        # ta-lib returns NaN for constant prices
-        _ = result[~np.isnan(result)]  # Just verify it doesn't raise
+        """Test RSI with constant prices (no change) matches ta-lib exactly."""
+        timeperiod = 14
+        expected = talib.RSI(constant_data, timeperiod=timeperiod)
+        actual = RSI(constant_data, timeperiod=timeperiod)
+
+        np.testing.assert_array_equal(np.isnan(actual), np.isnan(expected))
+        mask = ~np.isnan(expected)
+        np.testing.assert_allclose(actual[mask], expected[mask], rtol=1e-10)
 
 
 class TestMACD:
@@ -80,6 +93,8 @@ class TestMACD:
         macd, signal, hist = MACD(short_data)
         # All should be NaN for short array
         assert np.all(np.isnan(macd))
+        assert np.all(np.isnan(signal))
+        assert np.all(np.isnan(hist))
 
 
 class TestSTOCH:
