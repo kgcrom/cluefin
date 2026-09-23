@@ -2,6 +2,8 @@
 
 import threading
 
+import pytest
+
 import cluefin_openapi._rate_limiter as rate_limiter_module
 from cluefin_openapi import TokenBucket
 from cluefin_openapi._rate_limiter import TokenBucket as TokenBucketDirect
@@ -314,3 +316,51 @@ class TestTokenBucketEdgeCases:
         tokens = bucket.available_tokens
         # Should have accumulated ~0.5 tokens
         assert 0.3 <= tokens <= 0.7
+
+    def test_refill_no_op_when_elapsed_is_zero(self, monkeypatch):
+        """_refill must not touch tokens/last_refill when elapsed == 0 (clock has not moved)."""
+        install_fake_clock(monkeypatch)
+        bucket = TokenBucket(capacity=10, refill_rate=5.0)
+        bucket.consume(tokens=4)
+        last_refill_before = bucket.last_refill
+
+        # No clock.advance(): "now" equals last_refill, so elapsed == 0.
+        tokens_after = bucket.available_tokens
+
+        assert tokens_after == 6.0
+        assert bucket.last_refill == last_refill_before
+
+    def test_refill_no_op_when_elapsed_is_negative(self, monkeypatch):
+        """A clock that moves backwards must not shrink tokens or move last_refill forward."""
+        clock = install_fake_clock(monkeypatch)
+        bucket = TokenBucket(capacity=10, refill_rate=5.0)
+        bucket.consume(tokens=4)
+        last_refill_before = bucket.last_refill
+
+        clock.advance(-1.0)  # simulate a backwards clock jump
+        tokens_after = bucket.available_tokens
+
+        assert tokens_after == 6.0
+        assert bucket.last_refill == last_refill_before
+
+    def test_consume_negative_tokens_currently_adds_tokens(self):
+        """Locks down current (arguably surprising) behavior: consume() with a
+        negative token count passes the `self.tokens >= tokens` check trivially
+        and then *increases* the bucket's tokens via `self.tokens -= tokens`."""
+        bucket = TokenBucket(capacity=10, refill_rate=1.0)
+        bucket.consume(tokens=5)
+        assert bucket.tokens == 5.0
+
+        result = bucket.consume(tokens=-3)
+
+        assert result is True
+        assert bucket.tokens == pytest.approx(8.0, abs=0.01)
+
+    def test_consume_more_than_capacity_fails_without_mutating_state(self):
+        """Requesting more tokens than the bucket's capacity can ever hold always fails."""
+        bucket = TokenBucket(capacity=5, refill_rate=1.0)
+
+        result = bucket.consume(tokens=100)
+
+        assert result is False
+        assert bucket.tokens == 5.0

@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from cluefin_openapi.client_factory import BrokerClientConfig, BrokerClientFactory
+import pytest
+
+from cluefin_openapi.client_factory import (
+    BrokerClientConfig,
+    BrokerClientFactory,
+    _load_dotenv_file,
+)
 
 
 def test_config_from_env(monkeypatch):
@@ -180,3 +186,137 @@ def test_factory_creates_dart_client_without_cache(monkeypatch):
 
     assert captured["dart_client"]["auth_key"] == "dart-key"
     assert client is not None
+
+
+def test_factory_creates_nhplug_client_with_cache_dir(monkeypatch):
+    captured = {}
+
+    class FakeNHPlugAuth:
+        def __init__(self, app_key, secret_key, cache_dir=None):
+            captured["nhplug_auth"] = {
+                "app_key": app_key,
+                "secret_key": secret_key.get_secret_value(),
+                "cache_dir": cache_dir,
+            }
+
+        def generate(self):
+            return _FakeToken("nhplug-token")
+
+    class FakeNHPlugClient:
+        def __init__(self, token, app_key, secret_key, env, debug=False):
+            captured["nhplug_client"] = {
+                "token": token,
+                "app_key": app_key,
+                "secret_key": secret_key.get_secret_value(),
+                "env": env,
+                "debug": debug,
+            }
+
+    monkeypatch.setattr("cluefin_openapi.client_factory.NHPlugAuth", FakeNHPlugAuth)
+    monkeypatch.setattr("cluefin_openapi.client_factory.NHPlugHttpClient", FakeNHPlugClient)
+
+    factory = BrokerClientFactory(
+        BrokerClientConfig(
+            nhplug_app_key="nhplug-app",
+            nhplug_secret_key="nhplug-secret",
+            nhplug_env="prod",
+            cache_dir="/tmp/cluefin-cache",
+            debug=True,
+        )
+    )
+
+    client = factory.create_nhplug()
+
+    assert captured["nhplug_auth"]["cache_dir"] == "/tmp/cluefin-cache"
+    assert captured["nhplug_client"]["token"] == "nhplug-token"
+    assert captured["nhplug_client"]["env"] == "prod"
+    assert captured["nhplug_client"]["debug"] is True
+    assert client is not None
+
+
+def test_create_dispatches_to_the_matching_create_method(monkeypatch):
+    factory = BrokerClientFactory(BrokerClientConfig())
+    calls = []
+    monkeypatch.setattr(factory, "create_kis", lambda: calls.append("kis") or "kis-client")
+    monkeypatch.setattr(factory, "create_kiwoom", lambda: calls.append("kiwoom") or "kiwoom-client")
+    monkeypatch.setattr(factory, "create_dart", lambda: calls.append("dart") or "dart-client")
+    monkeypatch.setattr(factory, "create_nhplug", lambda: calls.append("nhplug") or "nhplug-client")
+
+    assert factory.create("kis") == "kis-client"
+    assert factory.create("kiwoom") == "kiwoom-client"
+    assert factory.create("dart") == "dart-client"
+    assert factory.create("nhplug") == "nhplug-client"
+    assert calls == ["kis", "kiwoom", "dart", "nhplug"]
+
+
+def test_create_raises_value_error_for_unknown_broker():
+    factory = BrokerClientFactory(BrokerClientConfig())
+
+    with pytest.raises(ValueError, match="Unknown broker"):
+        factory.create("upbit")  # type: ignore[arg-type]
+
+
+def test_resolved_cache_dir_expands_home(monkeypatch):
+    monkeypatch.setenv("HOME", "/home/tester")
+    config = BrokerClientConfig(cache_dir="~/cluefin-cache")
+
+    assert config.resolved_cache_dir() == "/home/tester/cluefin-cache"
+
+
+def test_resolved_cache_dir_none_when_unset():
+    config = BrokerClientConfig()
+
+    assert config.resolved_cache_dir() is None
+
+
+def test_load_dotenv_file_missing_returns_empty(tmp_path):
+    assert _load_dotenv_file(tmp_path / "does-not-exist.env") == {}
+
+
+def test_load_dotenv_file_skips_comments_and_blank_lines(tmp_path):
+    path = tmp_path / ".env"
+    path.write_text(
+        "\n# a comment\nKIS_APP_KEY=value1\n\n  \nDART_AUTH_KEY=value2\n",
+        encoding="utf-8",
+    )
+
+    assert _load_dotenv_file(path) == {"KIS_APP_KEY": "value1", "DART_AUTH_KEY": "value2"}
+
+
+def test_load_dotenv_file_strips_matching_quotes(tmp_path):
+    path = tmp_path / ".env"
+    path.write_text(
+        "DOUBLE_QUOTED=\"hello world\"\nSINGLE_QUOTED='hello world'\nUNQUOTED=plain\n",
+        encoding="utf-8",
+    )
+
+    values = _load_dotenv_file(path)
+
+    assert values["DOUBLE_QUOTED"] == "hello world"
+    assert values["SINGLE_QUOTED"] == "hello world"
+    assert values["UNQUOTED"] == "plain"
+
+
+def test_load_dotenv_file_value_containing_equals_sign(tmp_path):
+    path = tmp_path / ".env"
+    # partition splits on the FIRST "=", so everything after it (including more
+    # "=" signs) belongs to the value.
+    path.write_text("CONNECTION_STRING=key=abc123&other=def456\n", encoding="utf-8")
+
+    values = _load_dotenv_file(path)
+
+    assert values["CONNECTION_STRING"] == "key=abc123&other=def456"
+
+
+def test_load_dotenv_file_lines_without_equals_are_ignored(tmp_path):
+    path = tmp_path / ".env"
+    path.write_text("this line has no equals sign\nVALID_KEY=valid_value\n", encoding="utf-8")
+
+    assert _load_dotenv_file(path) == {"VALID_KEY": "valid_value"}
+
+
+def test_load_dotenv_file_blank_key_is_skipped(tmp_path):
+    path = tmp_path / ".env"
+    path.write_text("=value-with-no-key\nREAL_KEY=real_value\n", encoding="utf-8")
+
+    assert _load_dotenv_file(path) == {"REAL_KEY": "real_value"}
