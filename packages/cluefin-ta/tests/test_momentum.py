@@ -3,7 +3,6 @@ Tests for momentum indicators (RSI, MACD, STOCH, STOCHF, WILLR, MOM, ROC, CCI, M
 """
 
 import numpy as np
-import pytest
 import talib
 
 from cluefin_ta import ADX, CCI, MACD, MFI, MOM, ROC, RSI, STOCH, STOCHF, WILLR
@@ -41,18 +40,8 @@ class TestRSI:
         actual = RSI(empty, timeperiod=14)
         assert len(actual) == len(expected) == 0
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "Parity bug (not fixed here per task scope): when avg_gain == avg_loss == 0 "
-            "(no price change at all), ta-lib's RSI returns 0.0, but cluefin_ta.RSI returns "
-            "100.0 because it treats avg_loss == 0 as 'always up' regardless of avg_gain. "
-            "See cluefin_ta.momentum.RSI lines checking `if avg_loss == 0` / "
-            "`if smoothed_losses[i - 1] == 0`."
-        ),
-    )
     def test_rsi_constant_prices(self, constant_data):
-        """Test RSI with constant prices (no change) matches ta-lib exactly."""
+        """Test RSI with constant prices (no change) matches ta-lib exactly (0, not 100)."""
         timeperiod = 14
         expected = talib.RSI(constant_data, timeperiod=timeperiod)
         actual = RSI(constant_data, timeperiod=timeperiod)
@@ -60,6 +49,13 @@ class TestRSI:
         np.testing.assert_array_equal(np.isnan(actual), np.isnan(expected))
         mask = ~np.isnan(expected)
         np.testing.assert_allclose(actual[mask], expected[mask], rtol=1e-10)
+
+    def test_rsi_flat_then_rising(self):
+        """Flat prices followed by a rise exercise the Wilder-smoothed zero branch."""
+        close = np.r_[np.full(20, 10.0), np.arange(10.0, 20.0)]
+        expected = talib.RSI(close, timeperiod=14)
+        actual = RSI(close, timeperiod=14)
+        np.testing.assert_allclose(actual, expected, rtol=1e-10, equal_nan=True)
 
 
 class TestMACD:
