@@ -12,18 +12,13 @@ import {
 } from '../../src/core/errors';
 import { BaseHttpClient } from '../../src/core/http';
 import type { FetchLike, HttpClientOptions } from '../../src/core/types';
+import { jsonResponse } from '../_helpers/fetch-mock';
 
 const clientOptions: HttpClientOptions = {
   timeoutMs: 50,
   retry: { maxRetries: 0, baseDelayMs: 1 },
   rateLimit: { requestsPerSecond: 1_000, burst: 1_000 },
 };
-
-const jsonResponse = (body: unknown, status = 200, headers?: HeadersInit): Response =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { 'content-type': 'application/json', ...headers },
-  });
 
 describe('BaseHttpClient', () => {
   it('serializes query and body values before calling fetch', async () => {
