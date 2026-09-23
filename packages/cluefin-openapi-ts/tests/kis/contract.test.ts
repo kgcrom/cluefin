@@ -1,6 +1,10 @@
 import { expect, test } from 'vitest';
 
+import { domesticAccountEndpoints } from '../../src/kis/metadata/domestic-account';
 import { domesticBasicQuoteEndpoints } from '../../src/kis/metadata/domestic-basic-quote';
+import { domesticIssueOtherEndpoints } from '../../src/kis/metadata/domestic-issue-other';
+import { domesticMarketAnalysisEndpoints } from '../../src/kis/metadata/domestic-market-analysis';
+import { domesticRankingAnalysisEndpoints } from '../../src/kis/metadata/domestic-ranking-analysis';
 import { domesticStockInfoEndpoints } from '../../src/kis/metadata/domestic-stock-info';
 import { onmarketBondBasicQuoteEndpoints } from '../../src/kis/metadata/onmarket-bond-basic-quote';
 import { overseasAccountEndpoints } from '../../src/kis/metadata/overseas-account';
@@ -34,6 +38,10 @@ test('KIS metadata should expose expected endpoint count', () => {
   expect(overseasBasicQuoteEndpoints.length).toBe(13);
   expect(overseasMarketAnalysisEndpoints.length).toBe(15);
   expect(onmarketBondBasicQuoteEndpoints.length).toBe(8);
+  expect(domesticIssueOtherEndpoints.length).toBe(14);
+  expect(domesticMarketAnalysisEndpoints.length).toBe(29);
+  expect(domesticRankingAnalysisEndpoints.length).toBe(22);
+  expect(domesticAccountEndpoints.length).toBe(23);
 });
 
 test('KIS endpoint metadata should map request path, headers, and query/body', async () => {
@@ -116,6 +124,34 @@ test('KIS endpoint metadata should map request path, headers, and query/body', a
         (input: Record<string, unknown>) => Promise<unknown>
       >,
       defs: onmarketBondBasicQuoteEndpoints,
+    },
+    {
+      instance: client.domesticIssueOther as unknown as Record<
+        string,
+        (input: Record<string, unknown>) => Promise<unknown>
+      >,
+      defs: domesticIssueOtherEndpoints,
+    },
+    {
+      instance: client.domesticMarketAnalysis as unknown as Record<
+        string,
+        (input: Record<string, unknown>) => Promise<unknown>
+      >,
+      defs: domesticMarketAnalysisEndpoints,
+    },
+    {
+      instance: client.domesticRankingAnalysis as unknown as Record<
+        string,
+        (input: Record<string, unknown>) => Promise<unknown>
+      >,
+      defs: domesticRankingAnalysisEndpoints,
+    },
+    {
+      instance: client.domesticAccount as unknown as Record<
+        string,
+        (input: Record<string, unknown>) => Promise<unknown>
+      >,
+      defs: domesticAccountEndpoints,
     },
   ];
 
