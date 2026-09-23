@@ -30,12 +30,17 @@ import {
   getKiwoomClient,
   ONE_MONTH_AGO,
   runIntegration,
+  runKiwoomLiveOnlyIntegration,
   SAMSUNG,
   setupKiwoomRateLimit,
   TODAY,
 } from '../_helpers/integration-setup';
 
 const it = runIntegration ? test : test.skip;
+// kt00002/kt00015/kt00016/kt00017: 모의투자에서 "[2000](RC9000:모의투자에서는 해당업무가
+// 제공되지 않습니다.)" 로 영구 실패한다 (파이썬 `real_account_only` 와 동일 TR·동일 근거).
+// 실계좌(KIWOOM_ENV=prod)에서만 실행한다.
+const itLiveOnly = runKiwoomLiveOnlyIntegration ? test : test.skip;
 
 describe('Kiwoom DomesticAccount', () => {
   setupKiwoomRateLimit();
@@ -139,7 +144,7 @@ describe('Kiwoom DomesticAccount', () => {
     assertResponseShape(res.body, depositBalanceDetailsResponseSchema, 'stkEntrPrst');
   });
 
-  it('getDailyEstimatedDepositAssetBalance', async () => {
+  itLiveOnly('getDailyEstimatedDepositAssetBalance', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticAccount.getDailyEstimatedDepositAssetBalance({
       startDt: ONE_MONTH_AGO,
@@ -270,7 +275,7 @@ describe('Kiwoom DomesticAccount', () => {
     assertResponseShape(res.body, marginDetailsResponseSchema);
   });
 
-  it('getConsignmentComprehensiveTransactionHistory', async () => {
+  itLiveOnly('getConsignmentComprehensiveTransactionHistory', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticAccount.getConsignmentComprehensiveTransactionHistory({
       strtDt: ONE_MONTH_AGO,
@@ -283,7 +288,7 @@ describe('Kiwoom DomesticAccount', () => {
     assertResponseShape(res.body, consignmentComprehensiveTransactionHistoryResponseSchema, 'trstOvrlTrdePrpsArray');
   });
 
-  it('getDailyAccountProfitRateDetails', async () => {
+  itLiveOnly('getDailyAccountProfitRateDetails', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticAccount.getDailyAccountProfitRateDetails({
       frDt: ONE_MONTH_AGO,
@@ -293,7 +298,7 @@ describe('Kiwoom DomesticAccount', () => {
     assertResponseShape(res.body, dailyAccountProfitRateDetailsResponseSchema);
   });
 
-  it('getAccountCurrentDayStatus', async () => {
+  itLiveOnly('getAccountCurrentDayStatus', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticAccount.getAccountCurrentDayStatus({});
     assertKiwoomResponse(res);
