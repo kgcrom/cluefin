@@ -103,19 +103,6 @@ class TestBuy:
         assert response.body.output_0 is None
         assert response.body.rsp_cd == "00000"
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(BUY_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
-            with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_order.buy(
-                    act_no="50051036881",
-                    fc_sec_trd_nat_cd="200",
-                    iem_cd="AAPL",
-                    orr_qty=1,
-                    ahi_nmn_pr_tp_cd="03",
-                    wtm_cur_knd_cd="1",
-                )
-
 
 class TestSell:
     def test_sends_input_envelope(self, client):
@@ -167,18 +154,6 @@ class TestSell:
 
         assert response.body.output_0.orr_no == 12345
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(SELL_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
-            with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_order.sell(
-                    act_no="50051036881",
-                    fc_sec_trd_nat_cd="200",
-                    iem_cd="AAPL",
-                    orr_qty=2,
-                    ahi_nmn_pr_tp_cd="03",
-                )
-
 
 class TestModify:
     def test_sends_input_envelope(self, client):
@@ -229,18 +204,6 @@ class TestModify:
 
         assert response.body.output_0.orr_no == 12345
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(MODIFY_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
-            with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_order.modify(
-                    act_no="50051036881",
-                    fc_sec_trd_nat_cd="200",
-                    iem_cd="AAPL",
-                    org_orr_no=12345,
-                    fc_orr_uit_pr=149.5,
-                )
-
 
 class TestCancel:
     def test_sends_input_envelope_for_full_cancel(self, client):
@@ -290,18 +253,6 @@ class TestCancel:
             )
 
         assert response.body.output_0.orr_no == 12345
-
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(CANCEL_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
-            with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_order.cancel(
-                    act_no="50051036881",
-                    org_orr_no=12345,
-                    fc_sec_trd_nat_cd="200",
-                    iem_cd="AAPL",
-                    all_pat_dit_cd="1",
-                )
 
 
 class TestReservedSubmit:
@@ -365,19 +316,6 @@ class TestReservedSubmit:
 
         assert response.body.output_0.bkg_rtn_orr_no == 777
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(RESERVED_SUBMIT_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
-            with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_order.reserved_submit(
-                    act_no="50051036881",
-                    fc_sec_trd_nat_cd="200",
-                    iem_cd="AAPL",
-                    oss_sby_dit_cd="2",
-                    orr_qty=1,
-                    nmn_pr_tp_cd="03",
-                )
-
 
 class TestReservedCancel:
     def test_sends_input_envelope(self, client):
@@ -413,13 +351,81 @@ class TestReservedCancel:
 
         assert response.body.output_0.wrk_rlt_cd == "00000"
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(RESERVED_CANCEL_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
-            with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_order.reserved_cancel(
-                    act_no="50051036881",
-                    fc_mkt_dit_cd="200",
-                    bkg_orr_dt="20260824",
-                    bkg_rtn_orr_no=777,
-                )
+
+FAILING_RSP_CD_CASES = [
+    pytest.param(
+        BUY_URL,
+        lambda client: client.overseas_stock_order.buy(
+            act_no="50051036881",
+            fc_sec_trd_nat_cd="200",
+            iem_cd="AAPL",
+            orr_qty=1,
+            ahi_nmn_pr_tp_cd="03",
+            wtm_cur_knd_cd="1",
+        ),
+        id="buy",
+    ),
+    pytest.param(
+        SELL_URL,
+        lambda client: client.overseas_stock_order.sell(
+            act_no="50051036881",
+            fc_sec_trd_nat_cd="200",
+            iem_cd="AAPL",
+            orr_qty=2,
+            ahi_nmn_pr_tp_cd="03",
+        ),
+        id="sell",
+    ),
+    pytest.param(
+        MODIFY_URL,
+        lambda client: client.overseas_stock_order.modify(
+            act_no="50051036881",
+            fc_sec_trd_nat_cd="200",
+            iem_cd="AAPL",
+            org_orr_no=12345,
+            fc_orr_uit_pr=149.5,
+        ),
+        id="modify",
+    ),
+    pytest.param(
+        CANCEL_URL,
+        lambda client: client.overseas_stock_order.cancel(
+            act_no="50051036881",
+            org_orr_no=12345,
+            fc_sec_trd_nat_cd="200",
+            iem_cd="AAPL",
+            all_pat_dit_cd="1",
+        ),
+        id="cancel",
+    ),
+    pytest.param(
+        RESERVED_SUBMIT_URL,
+        lambda client: client.overseas_stock_order.reserved_submit(
+            act_no="50051036881",
+            fc_sec_trd_nat_cd="200",
+            iem_cd="AAPL",
+            oss_sby_dit_cd="2",
+            orr_qty=1,
+            nmn_pr_tp_cd="03",
+        ),
+        id="reserved_submit",
+    ),
+    pytest.param(
+        RESERVED_CANCEL_URL,
+        lambda client: client.overseas_stock_order.reserved_cancel(
+            act_no="50051036881",
+            fc_mkt_dit_cd="200",
+            bkg_orr_dt="20260824",
+            bkg_rtn_orr_no=777,
+        ),
+        id="reserved_cancel",
+    ),
+]
+
+
+@pytest.mark.parametrize("endpoint, call", FAILING_RSP_CD_CASES)
+def test_raises_on_failing_rsp_cd(client, endpoint, call):
+    with requests_mock.Mocker() as m:
+        m.post(endpoint, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
+        with pytest.raises(NHPlugAPIError, match="40310"):
+            call(client)
