@@ -1,5 +1,3 @@
-import inspect
-import re
 from typing import Dict
 
 import pytest
@@ -7,7 +5,7 @@ import pytest
 from cluefin_openapi.kiwoom import _domestic_rank_info as rank_info_module
 from cluefin_openapi.kiwoom._domestic_rank_info import DomesticRankInfo
 
-from ._helpers import EndpointCase, run_post_case
+from ._helpers import EndpointCase, method_metadata, run_post_case
 
 
 def payload(name: str) -> Dict[str, str]:
@@ -185,19 +183,9 @@ CALL_KWARGS: Dict[str, Dict[str, str]] = {
 }
 
 
-def method_metadata(method_name: str) -> tuple[str, str]:
-    method = getattr(DomesticRankInfo, method_name)
-    source = inspect.getsource(method)
-    api_id_match = re.search(r'"api-id":\s*"([^"]+)"', source)
-    model_match = re.search(r"= (DomesticRankInfo\w+)\.model_validate", source)
-    if not api_id_match or not model_match:
-        raise ValueError(f"Could not extract metadata for {method_name}")
-    return api_id_match.group(1), model_match.group(1)
-
-
 RANK_CASES = []
 for method_name, kwargs in CALL_KWARGS.items():
-    api_id, model_attr = method_metadata(method_name)
+    api_id, model_attr = method_metadata(DomesticRankInfo, method_name)
     case_name = method_name.removeprefix("get_")
     RANK_CASES.append(
         EndpointCase(

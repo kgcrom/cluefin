@@ -1,7 +1,30 @@
 import inspect
+import re
 from dataclasses import dataclass, field
 from typing import Any, Dict
 from unittest.mock import Mock
+
+DEFAULT_BASE_HEADERS: Dict[str, str] = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+}
+
+
+def method_metadata(cls: type, method_name: str) -> tuple[str, str]:
+    """Extract the ``api-id`` and response-model attribute name from a method's source.
+
+    Looks for a literal ``"api-id": "..."`` header assignment and a
+    ``<ModelName>.model_validate(`` call inside ``cls.<method_name>``'s source.
+    """
+    method = getattr(cls, method_name)
+    source = inspect.getsource(method)
+    api_id_match = re.search(r'"api-id":\s*"([^"]+)"', source)
+    # The response-body model is validated last (headers are validated first via
+    # KiwoomHttpHeader.model_validate), so take the final match, not the first.
+    model_matches = re.findall(r"(\w+)\.model_validate\(", source)
+    if not api_id_match or not model_matches:
+        raise ValueError(f"Could not extract metadata for {method_name}")
+    return api_id_match.group(1), model_matches[-1]
 
 
 @dataclass
@@ -45,8 +68,10 @@ def run_post_case(
     module,
     api_cls,
     case: EndpointCase,
-    base_headers: Dict[str, str],
+    base_headers: Dict[str, str] | None = None,
 ):
+    if base_headers is None:
+        base_headers = DEFAULT_BASE_HEADERS
     client = Mock()
     client.token = "test_token"
     response_next_key = case.next_key if case.next_key is not None else ""

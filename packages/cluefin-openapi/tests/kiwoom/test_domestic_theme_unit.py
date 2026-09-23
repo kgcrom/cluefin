@@ -1,29 +1,18 @@
-import inspect
-import re
-
 import pytest
 
 from cluefin_openapi.kiwoom import _domestic_theme as theme_module
 from cluefin_openapi.kiwoom._domestic_theme import DomesticTheme
 from cluefin_openapi.kiwoom._domestic_theme_types import DomesticThemeGroup, DomesticThemeGroupStocks
 
-from ._helpers import EndpointCase, run_post_case
+from ._helpers import EndpointCase, method_metadata, run_post_case
 
 
 def payload(name: str):
     return {"return_code": 0, "return_msg": "OK", "endpoint": name}
 
 
-def method_metadata(method_name: str) -> tuple[str, str]:
-    method = getattr(DomesticTheme, method_name)
-    source = inspect.getsource(method)
-    api_id = re.search(r'"api-id":\s*"([^"]+)"', source).group(1)
-    model_attr = re.search(r"= (DomesticTheme\w+)\.model_validate", source).group(1)
-    return api_id, model_attr
-
-
-theme_group_api, theme_group_model = method_metadata("get_theme_group")
-theme_group_stocks_api, theme_group_stocks_model = method_metadata("get_theme_group_stocks")
+theme_group_api, theme_group_model = method_metadata(DomesticTheme, "get_theme_group")
+theme_group_stocks_api, theme_group_stocks_model = method_metadata(DomesticTheme, "get_theme_group_stocks")
 
 THEME_CASES = [
     EndpointCase(
@@ -76,10 +65,6 @@ def test_domestic_theme_requests(monkeypatch, case: EndpointCase):
         theme_module,
         DomesticTheme,
         case,
-        base_headers={
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        },
     )
 
 

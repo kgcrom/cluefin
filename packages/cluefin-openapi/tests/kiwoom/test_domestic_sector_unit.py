@@ -1,12 +1,9 @@
-import inspect
-import re
-
 import pytest
 
 from cluefin_openapi.kiwoom import _domestic_sector as sector_module
 from cluefin_openapi.kiwoom._domestic_sector import DomesticSector
 
-from ._helpers import EndpointCase, run_post_case
+from ._helpers import EndpointCase, method_metadata, run_post_case
 
 CALL_KWARGS = {
     "get_industry_program": {"stk_cd": "005930"},
@@ -39,17 +36,9 @@ def payload(name: str):
     return {"return_code": 0, "return_msg": "OK", "endpoint": name}
 
 
-def method_metadata(method_name: str) -> tuple[str, str]:
-    method = getattr(DomesticSector, method_name)
-    source = inspect.getsource(method)
-    api_id = re.search(r'"api-id":\s*"([^"]+)"', source).group(1)
-    model_attr = re.search(r"= (DomesticSector\w+)\.model_validate", source).group(1)
-    return api_id, model_attr
-
-
 SECTOR_CASES = []
 for method_name, kwargs in CALL_KWARGS.items():
-    api_id, model_attr = method_metadata(method_name)
+    api_id, model_attr = method_metadata(DomesticSector, method_name)
     case_name = method_name.removeprefix("get_")
     SECTOR_CASES.append(
         EndpointCase(

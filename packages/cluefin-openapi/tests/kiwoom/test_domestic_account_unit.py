@@ -1,12 +1,9 @@
-import inspect
-import re
-
 import pytest
 
 from cluefin_openapi.kiwoom import _domestic_account as account_module
 from cluefin_openapi.kiwoom._domestic_account import DomesticAccount
 
-from ._helpers import EndpointCase, run_post_case
+from ._helpers import EndpointCase, method_metadata, run_post_case
 
 
 def payload(name: str):
@@ -105,20 +102,12 @@ CALL_KWARGS = {
 }
 
 
-def method_metadata(method_name: str) -> tuple[str, str]:
-    method = getattr(DomesticAccount, method_name)
-    source = inspect.getsource(method)
-    api_id = re.search(r'"api-id":\s*"([^"]+)"', source).group(1)
-    model_attr = re.search(r"= (DomesticAccount\w+)\.model_validate", source).group(1)
-    return api_id, model_attr
-
-
 ACCOUNT_CASES = []
 for method_name in sorted(CALL_KWARGS):
     raw_kwargs = dict(CALL_KWARGS[method_name])
     cont_value = raw_kwargs.pop("cont_yn", "N")
     next_key = raw_kwargs.pop("next_key", "")
-    api_id, model_attr = method_metadata(method_name)
+    api_id, model_attr = method_metadata(DomesticAccount, method_name)
     ACCOUNT_CASES.append(
         EndpointCase(
             name=method_name.removeprefix("get_"),
@@ -142,8 +131,4 @@ def test_domestic_account_requests(monkeypatch, case: EndpointCase):
         account_module,
         DomesticAccount,
         case,
-        base_headers={
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        },
     )

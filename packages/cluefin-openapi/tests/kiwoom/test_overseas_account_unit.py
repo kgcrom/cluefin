@@ -1,12 +1,9 @@
-import inspect
-import re
-
 import pytest
 
 from cluefin_openapi.kiwoom import _overseas_account as overseas_account_module
 from cluefin_openapi.kiwoom._overseas_account import OverseasAccount
 
-from ._helpers import EndpointCase, run_post_case
+from ._helpers import EndpointCase, method_metadata, run_post_case
 
 CALL_KWARGS = {
     "get_daily_account_profit_rate": {"from_dt": "20240102", "to": "20240131"},
@@ -117,17 +114,9 @@ def payload(name: str):
     return {"return_code": 0, "return_msg": "OK", "endpoint": name}
 
 
-def method_metadata(method_name: str) -> tuple[str, str]:
-    method = getattr(OverseasAccount, method_name)
-    source = inspect.getsource(method)
-    api_id = re.search(r'"api-id":\s*"([^"]+)"', source).group(1)
-    model_attr = re.search(r"= (OverseasAccount\w+)\.model_validate", source).group(1)
-    return api_id, model_attr
-
-
 ACCOUNT_CASES = []
 for method_name, kwargs in CALL_KWARGS.items():
-    api_id, model_attr = method_metadata(method_name)
+    api_id, model_attr = method_metadata(OverseasAccount, method_name)
     case_name = method_name.removeprefix("get_")
     ACCOUNT_CASES.append(
         EndpointCase(

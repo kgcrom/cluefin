@@ -1,12 +1,9 @@
-import inspect
-import re
-
 import pytest
 
 from cluefin_openapi.kiwoom import _overseas_sector as overseas_sector_module
 from cluefin_openapi.kiwoom._overseas_sector import OverseasSector
 
-from ._helpers import EndpointCase, run_post_case
+from ._helpers import EndpointCase, method_metadata, run_post_case
 
 CALL_KWARGS = {
     "get_industry_period_profit_rate": {"stex_tp": "3", "inds_cd": "000"},
@@ -18,17 +15,9 @@ def payload(name: str):
     return {"return_code": 0, "return_msg": "OK", "endpoint": name}
 
 
-def method_metadata(method_name: str) -> tuple[str, str]:
-    method = getattr(OverseasSector, method_name)
-    source = inspect.getsource(method)
-    api_id = re.search(r'"api-id":\s*"([^"]+)"', source).group(1)
-    model_attr = re.search(r"res_body = (\w+)\.model_validate", source).group(1)
-    return api_id, model_attr
-
-
 SECTOR_CASES = []
 for method_name, kwargs in CALL_KWARGS.items():
-    api_id, model_attr = method_metadata(method_name)
+    api_id, model_attr = method_metadata(OverseasSector, method_name)
     case_name = method_name.removeprefix("get_")
     SECTOR_CASES.append(
         EndpointCase(
