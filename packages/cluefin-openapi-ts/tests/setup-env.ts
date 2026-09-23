@@ -76,5 +76,3 @@ export const loadProjectRootEnv = (
 
   return loadedKeys;
 };
-
-loadProjectRootEnv();

@@ -30,8 +30,11 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   schemes across brokers — each mirrors its own Python `TokenManager`, and changing a
   Python `_cache_file_name` or cache JSON shape means updating the matching TS file by
   hand (nothing enforces this automatically). Because the file is shared, a revoke in
-  either language kills the token the other is reusing — the KIS/NH revoke integration
-  tests only run with `KIS_TEST_REVOKE=1` / `NHPLUG_TEST_REVOKE=1`.
+  either language kills the token the other is reusing — the revoke integration tests only
+  run with `KIS_TEST_REVOKE=1` / `KIWOOM_TEST_REVOKE=1` / `NHPLUG_TEST_REVOKE=1`. Kiwoom
+  returns the *same* token on re-issue while one is valid, so even a test that never reads
+  the cache file revokes the shared token (2026-09-23: every later run failed with `8005`).
+  Neither side re-issues on `8005` — a revoked cached token sticks until `MAX_CACHE_AGE`.
 - Cache files go through `src/core/token-file.ts`: `cached_at` is naive local time with no
   `Z`/offset (`localIsoNow`) — Python 3.10's `fromisoformat` rejects `Z`, and the Python
   `TokenManager` then keeps the token but silently drops its 6h max-age check. Writes are

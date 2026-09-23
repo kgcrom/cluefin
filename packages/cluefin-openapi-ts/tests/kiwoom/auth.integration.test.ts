@@ -4,12 +4,16 @@ import { KiwoomAuth } from '../../src/kiwoom/auth';
 import { setupKiwoomRateLimit } from '../_helpers/integration-setup';
 
 const runIntegration = process.env.CLUEFIN_OPENAPI_TS_RUN_INTEGRATION === '1';
-const integrationTest = runIntegration ? test : test.skip;
+// Kiwoom hands back the SAME token while one is still valid, so revoking here also kills the
+// token cached in the shared (Python/TS) cache file — every later run then fails with 8005
+// until the cache ages out. Opt in explicitly, like KIS_TEST_REVOKE / NHPLUG_TEST_REVOKE.
+const runRevoke = runIntegration && process.env.KIWOOM_TEST_REVOKE === '1';
+const integrationTest = runRevoke ? test : test.skip;
 
 describe('KiwoomAuth', () => {
   setupKiwoomRateLimit();
 
-  integrationTest('KiwoomAuth integration should generate and revoke token', async () => {
+  integrationTest('KiwoomAuth integration should generate and revoke token (KIWOOM_TEST_REVOKE=1)', async () => {
     const appKey = process.env.KIWOOM_APP_KEY;
     const secretKey = process.env.KIWOOM_SECRET_KEY;
     if (!appKey || !secretKey) {

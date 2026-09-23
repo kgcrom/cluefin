@@ -84,6 +84,17 @@ export function getKisClient(): Promise<KisHttpClient> {
   return g.__kisClientPromise as Promise<KisHttpClient>;
 }
 
+/** 테스트가 붙을 키움 환경. dev = 모의투자, prod = 실계좌. */
+export const KIWOOM_ENV: ApiEnv = process.env.KIWOOM_ENV === 'prod' ? 'prod' : 'dev';
+
+/**
+ * 모의투자(KIWOOM_ENV=dev)에서 영구적으로 제공되지 않는 API 용 게이트.
+ *
+ * 파이썬 `_integration_helpers.real_account_only` 와 같은 의미다 — 실계좌
+ * (`KIWOOM_ENV=prod`)에서만 실행된다.
+ */
+export const runKiwoomLiveOnlyIntegration = runIntegration && KIWOOM_ENV === 'prod';
+
 export function getKiwoomClient(): Promise<KiwoomClient> {
   if (!g.__kiwoomClientPromise) {
     g.__kiwoomClientPromise = (async () => {
