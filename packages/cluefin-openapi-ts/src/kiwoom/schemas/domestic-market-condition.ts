@@ -523,60 +523,6 @@ export const dailyStockPriceResponseSchema = z
   })
   .passthrough();
 
-// ── ka10087: 시간외단일가 ──
-
-export const afterHoursSinglePriceResponseSchema = z
-  .object({
-    ...envelope,
-    bid_req_base_tm: s(),
-    ovt_sigpric_sel_bid_jub_pre_5: s(),
-    ovt_sigpric_sel_bid_jub_pre_4: s(),
-    ovt_sigpric_sel_bid_jub_pre_3: s(),
-    ovt_sigpric_sel_bid_jub_pre_2: s(),
-    ovt_sigpric_sel_bid_jub_pre_1: s(),
-    ovt_sigpric_sel_bid_qty_5: s(),
-    ovt_sigpric_sel_bid_qty_4: s(),
-    ovt_sigpric_sel_bid_qty_3: s(),
-    ovt_sigpric_sel_bid_qty_2: s(),
-    ovt_sigpric_sel_bid_qty_1: s(),
-    ovt_sigpric_sel_bid_5: s(),
-    ovt_sigpric_sel_bid_4: s(),
-    ovt_sigpric_sel_bid_3: s(),
-    ovt_sigpric_sel_bid_2: s(),
-    ovt_sigpric_sel_bid_1: s(),
-    ovt_sigpric_buy_bid_1: s(),
-    ovt_sigpric_buy_bid_2: s(),
-    ovt_sigpric_buy_bid_3: s(),
-    ovt_sigpric_buy_bid_4: s(),
-    ovt_sigpric_buy_bid_5: s(),
-    ovt_sigpric_buy_bid_qty_1: s(),
-    ovt_sigpric_buy_bid_qty_2: s(),
-    ovt_sigpric_buy_bid_qty_3: s(),
-    ovt_sigpric_buy_bid_qty_4: s(),
-    ovt_sigpric_buy_bid_qty_5: s(),
-    ovt_sigpric_buy_bid_jub_pre_1: s(),
-    ovt_sigpric_buy_bid_jub_pre_2: s(),
-    ovt_sigpric_buy_bid_jub_pre_3: s(),
-    ovt_sigpric_buy_bid_jub_pre_4: s(),
-    ovt_sigpric_buy_bid_jub_pre_5: s(),
-    ovt_sigpric_sel_bid_tot_req: s(),
-    ovt_sigpric_buy_bid_tot_req: s(),
-    sel_bid_tot_req_jub_pre: s(),
-    sel_bid_tot_req: s(),
-    buy_bid_tot_req: s(),
-    buy_bid_tot_req_jub_pre: s(),
-    ovt_sel_bid_tot_req_jub_pre: s(),
-    ovt_sel_bid_tot_req: s(),
-    ovt_buy_bid_tot_req: s(),
-    ovt_buy_bid_tot_req_jub_pre: s(),
-    ovt_sigpric_cur_prc: s(),
-    ovt_sigpric_pred_pre_sig: s(),
-    ovt_sigpric_pred_pre: s(),
-    ovt_sigpric_flu_rt: s(),
-    ovt_sigpric_acc_trde_qty: s(),
-  })
-  .passthrough();
-
 // ── ka90005/ka90010: 프로그램매매추이(시간별/일별) ──
 
 export const programTradingTrendItemSchema = z
@@ -751,7 +697,6 @@ export type SecuritiesFirmTradingTrendByStockResponse = CamelizeKeys<
   z.infer<typeof securitiesFirmTradingTrendByStockResponseSchema>
 >;
 export type DailyStockPriceResponse = CamelizeKeys<z.infer<typeof dailyStockPriceResponseSchema>>;
-export type AfterHoursSinglePriceResponse = CamelizeKeys<z.infer<typeof afterHoursSinglePriceResponseSchema>>;
 export type ProgramTradingTrendByTimeResponse = CamelizeKeys<z.infer<typeof programTradingTrendByTimeResponseSchema>>;
 export type ProgramTradingArbitrageBalanceTrendResponse = CamelizeKeys<
   z.infer<typeof programTradingArbitrageBalanceTrendResponseSchema>
@@ -782,7 +727,6 @@ export interface DomesticMarketConditionResponseMap {
   getAfterMarketTradingByInvestor: AfterMarketTradingByInvestorResponse;
   getSecuritiesFirmTradingTrendByStock: SecuritiesFirmTradingTrendByStockResponse;
   getDailyStockPrice: DailyStockPriceResponse;
-  getAfterHoursSinglePrice: AfterHoursSinglePriceResponse;
   getProgramTradingTrendByTime: ProgramTradingTrendByTimeResponse;
   getProgramTradingArbitrageBalanceTrend: ProgramTradingArbitrageBalanceTrendResponse;
   getProgramTradingCumulativeTrend: ProgramTradingCumulativeTrendResponse;

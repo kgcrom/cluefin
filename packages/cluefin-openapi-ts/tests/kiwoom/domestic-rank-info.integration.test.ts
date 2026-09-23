@@ -1,8 +1,6 @@
 import { describe, test } from 'vitest';
 
 import {
-  afterHoursSinglePriceChangeRateRankingItemSchema,
-  afterHoursSinglePriceChangeRateRankingResponseSchema,
   rapidlyIncreasingRemainingOrderQuantityItemSchema,
   rapidlyIncreasingRemainingOrderQuantityResponseSchema,
   rapidlyIncreasingTotalSellOrdersItemSchema,
@@ -415,25 +413,6 @@ describe('Kiwoom DomesticRankInfo', () => {
       sameNetBuySellRankingResponseSchema,
       'eqlNettrdeRank',
       sameNetBuySellRankingItemSchema,
-    );
-  });
-
-  it('getAfterHoursSinglePriceChangeRateRanking', async () => {
-    const client = await getKiwoomClient();
-    const res = await client.domesticRankInfo.getAfterHoursSinglePriceChangeRateRanking({
-      mrktTp: '0',
-      sortBase: '0',
-      stkCnd: '0',
-      trdeQtyCnd: '0',
-      crdCnd: '0',
-      trdePrica: '0',
-    });
-    assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      afterHoursSinglePriceChangeRateRankingResponseSchema,
-      'ovtSigpricFluRtRank',
-      afterHoursSinglePriceChangeRateRankingItemSchema,
     );
   });
 

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  afterHoursSinglePriceChangeRateRankingResponseSchema,
   rapidlyIncreasingRemainingOrderQuantityResponseSchema,
   rapidlyIncreasingTotalSellOrdersResponseSchema,
   rapidlyIncreasingTradingVolumeResponseSchema,
@@ -133,11 +132,6 @@ describe('domestic-rank-info response schemas', () => {
     it('ka10062: sameNetBuySellRanking', () => {
       const result = sameNetBuySellRankingResponseSchema.parse(minimalEnvelope);
       expect(result.eql_nettrde_rank).toEqual([]);
-    });
-
-    it('ka10098: afterHoursSinglePriceChangeRateRanking', () => {
-      const result = afterHoursSinglePriceChangeRateRankingResponseSchema.parse(minimalEnvelope);
-      expect(result.ovt_sigpric_flu_rt_rank).toEqual([]);
     });
 
     it('ka90009: topForeignerInstitutionTrading', () => {

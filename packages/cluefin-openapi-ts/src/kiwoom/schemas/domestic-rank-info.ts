@@ -551,33 +551,6 @@ export const sameNetBuySellRankingResponseSchema = z
   })
   .passthrough();
 
-// ── ka10098: 시간외단일가등락율순위 ──
-
-export const afterHoursSinglePriceChangeRateRankingItemSchema = z
-  .object({
-    rank: s(),
-    stk_cd: s(),
-    stk_nm: s(),
-    cur_prc: s(),
-    pred_pre_sig: s(),
-    pred_pre: s(),
-    flu_rt: s(),
-    sel_tot_req: s(),
-    buy_tot_req: s(),
-    acc_trde_qty: s(),
-    acc_trde_prica: s(),
-    tdy_close_pric: s(),
-    tdy_close_pric_flu_rt: s(),
-  })
-  .passthrough();
-
-export const afterHoursSinglePriceChangeRateRankingResponseSchema = z
-  .object({
-    ...envelope,
-    ovt_sigpric_flu_rt_rank: z.array(afterHoursSinglePriceChangeRateRankingItemSchema).default([]),
-  })
-  .passthrough();
-
 // ── ka90009: 외국인기관매매상위 ──
 
 export const topForeignerInstitutionTradingItemSchema = z
@@ -675,9 +648,6 @@ export type TopCurrentDayDeviationSourcesResponse = CamelizeKeys<
   z.infer<typeof topCurrentDayDeviationSourcesResponseSchema>
 >;
 export type SameNetBuySellRankingResponse = CamelizeKeys<z.infer<typeof sameNetBuySellRankingResponseSchema>>;
-export type AfterHoursSinglePriceChangeRateRankingResponse = CamelizeKeys<
-  z.infer<typeof afterHoursSinglePriceChangeRateRankingResponseSchema>
->;
 export type TopForeignerInstitutionTradingResponse = CamelizeKeys<
   z.infer<typeof topForeignerInstitutionTradingResponseSchema>
 >;
@@ -708,7 +678,6 @@ export interface DomesticRankInfoResponseMap {
   getTopNetBuyTraderRanking: TopNetBuyTraderRankingResponse;
   getTopCurrentDayDeviationSources: TopCurrentDayDeviationSourcesResponse;
   getSameNetBuySellRanking: SameNetBuySellRankingResponse;
-  getAfterHoursSinglePriceChangeRateRanking: AfterHoursSinglePriceChangeRateRankingResponse;
   getTopForeignerInstitutionTrading: TopForeignerInstitutionTradingResponse;
   getTopIntradayTradingByInvestor: TopIntradayTradingByInvestorResponse;
 }

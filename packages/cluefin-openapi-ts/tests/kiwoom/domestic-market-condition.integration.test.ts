@@ -1,7 +1,6 @@
 import { describe, test } from 'vitest';
 
 import {
-  afterHoursSinglePriceResponseSchema,
   afterMarketTradingByInvestorItemSchema,
   afterMarketTradingByInvestorResponseSchema,
   dailyInstitutionalTradingItemsItemSchema,
@@ -219,15 +218,6 @@ describe('Kiwoom DomesticMarketCondition', () => {
     });
     assertKiwoomResponse(res);
     assertResponseShape(res.body, dailyStockPriceResponseSchema, 'dalyStkpc', dailyStockPriceItemSchema);
-  });
-
-  it('getAfterHoursSinglePrice', async () => {
-    const client = await getKiwoomClient();
-    const res = await client.domesticMarketCondition.getAfterHoursSinglePrice({
-      stkCd: SAMSUNG,
-    });
-    assertKiwoomResponse(res);
-    assertResponseShape(res.body, afterHoursSinglePriceResponseSchema);
   });
 
   it('getProgramTradingTrendByTime', async () => {
