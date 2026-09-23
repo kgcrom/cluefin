@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<link:linkbase
+    xmlns:link="http://www.xbrl.org/2003/linkbase"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.xbrl.org/2003/linkbase http://www.xbrl.org/2003/xbrl-linkbase-2003-12-31.xsd">
+
+    <link:roleRef roleURI="http://example.com/role/PresTreeRole"
+                  xlink:type="simple"
+                  xlink:href="pres_tree.xsd#PresTreeRole"/>
+
+    <link:presentationLink xlink:type="extended"
+                           xlink:role="http://example.com/role/PresTreeRole">
+        <link:loc xlink:type="locator" xlink:href="pres_tree.xsd#pt_Root" xlink:label="loc_Root"/>
+        <link:loc xlink:type="locator" xlink:href="pres_tree.xsd#pt_ChildA" xlink:label="loc_ChildA"/>
+        <link:loc xlink:type="locator" xlink:href="pres_tree.xsd#pt_ChildB" xlink:label="loc_ChildB"/>
+        <link:loc xlink:type="locator" xlink:href="pres_tree.xsd#pt_ChildC" xlink:label="loc_ChildC"/>
+        <link:loc xlink:type="locator" xlink:href="pres_tree.xsd#pt_Grandchild" xlink:label="loc_Grandchild"/>
+
+        <!-- Three siblings under Root, deliberately out of order to verify sort-by-order. -->
+        <link:presentationArc xlink:type="arc"
+                              xlink:arcrole="http://www.xbrl.org/2003/arcrole/parent-child"
+                              xlink:from="loc_Root" xlink:to="loc_ChildA"
+                              order="2.0"/>
+        <link:presentationArc xlink:type="arc"
+                              xlink:arcrole="http://www.xbrl.org/2003/arcrole/parent-child"
+                              xlink:from="loc_Root" xlink:to="loc_ChildB"
+                              order="1.0"/>
+        <link:presentationArc xlink:type="arc"
+                              xlink:arcrole="http://www.xbrl.org/2003/arcrole/parent-child"
+                              xlink:from="loc_Root" xlink:to="loc_ChildC"
+                              order="3.0"/>
+
+        <!-- Grandchild under ChildB, to exercise depth >= 2. -->
+        <link:presentationArc xlink:type="arc"
+                              xlink:arcrole="http://www.xbrl.org/2003/arcrole/parent-child"
+                              xlink:from="loc_ChildB" xlink:to="loc_Grandchild"
+                              order="1.0"/>
+    </link:presentationLink>
+</link:linkbase>

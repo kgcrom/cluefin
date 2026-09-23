@@ -18,9 +18,24 @@ from cluefin_xbrl.parser import parse_xbrl_file
 from cluefin_xbrl.statements import (
     _identify_statement_type,
     _is_consolidated_role,
+    _local_name,
     extract_financial_statements,
     statement_to_dicts,
 )
+
+_LOCAL_NAME_CASES = [
+    pytest.param("ifrs-full:Assets", "Assets", id="colon_separator"),
+    pytest.param("http://xbrl.ifrs.org/taxonomy/2021-03-24/ifrs-full#Assets", "Assets", id="hash_separator"),
+    pytest.param("http://xbrl.ifrs.org/taxonomy/2021-03-24/ifrs-full/Assets", "Assets", id="slash_separator"),
+    pytest.param("Assets", "Assets", id="no_separator"),
+]
+
+
+class TestLocalName:
+    @pytest.mark.parametrize("qname, expected", _LOCAL_NAME_CASES)
+    def test_local_name(self, qname, expected):
+        assert _local_name(qname) == expected
+
 
 _IDENTIFY_STATEMENT_TYPE_CASES = [
     pytest.param("http://example.com/role/StatementOfFinancialPosition", StatementType.BS, id="financial_position"),
@@ -150,6 +165,10 @@ class TestIsConsolidatedRole:
     def test_generic_defaults_consolidated(self):
         assert _is_consolidated_role("http://example.com/role/StatementOfFinancialPosition") is True
 
+    def test_other_trailing_digit_defaults_consolidated(self):
+        """0/5로 끝나지 않는 D-code(D210003)는 관측된 DART 동작상 연결로 취급된다."""
+        assert _is_consolidated_role("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D210003") is True
+
 
 def _make_doc_with_separate(dart_role_bs_consolidated, dart_role_bs_separate, make_xbrl_fact) -> XbrlDocument:
     """연결(D210000) + 별도(D210005) 재무상태표를 가진 합성 문서."""
@@ -201,6 +220,18 @@ class TestStatementToDictsWithoutPeriod:
         assert dicts[0]["is_abstract"] is True
         assert dicts[0]["value"] is None
         assert "period_type" not in dicts[0]
+
+    def test_concept_without_label_has_no_labels(self):
+        """라벨링크에 없는 concept은 label_ko/label_en이 모두 None이다."""
+        node = PresentationNode(concept_local_name="Unlabeled", concept_qname="ifrs-full:Unlabeled")
+        role = "http://example.com/role/StatementOfFinancialPosition"
+        taxonomy = TaxonomyInfo(presentation_trees={role: [node]})
+        doc = XbrlDocument(source_file="x.xbrl", facts=[], taxonomy=taxonomy)
+
+        bs = extract_financial_statements(doc).statements["BS"]
+
+        assert bs.line_items[0].label_ko is None
+        assert bs.line_items[0].label_en is None
 
 
 def _make_doc_with_dimensional_facts(
@@ -275,6 +306,20 @@ class TestConsolidationFactFiltering:
         items = result.statements["BS"].line_items
         assert len(items) == 1
         assert items[0].is_abstract is True
+
+    def test_unrecognized_consolidation_member_treated_as_consolidated(
+        self, consolidated_axis, dart_role_bs_consolidated, dart_role_bs_separate, make_xbrl_fact
+    ):
+        """ConsolidatedMember/SeparateMember 어느 쪽도 아닌 멤버는 관측된 현재 동작상
+        연결(consolidated) 쪽에만 매칭되고 별도 쪽에서는 제외된다."""
+        facts = [make_xbrl_fact(value="1000", dimensions={consolidated_axis: "ifrs-full:SomeOtherMember"})]
+        doc = _make_doc_with_dimensional_facts(facts, dart_role_bs_consolidated, dart_role_bs_separate)
+        result = extract_financial_statements(doc)
+
+        cons_values = [i.value for i in result.statements["BS"].line_items if not i.is_abstract]
+        sep_values = [i.value for i in result.separate_statements["BS"].line_items if not i.is_abstract]
+        assert cons_values == [Decimal("1000")]
+        assert sep_values == []
 
     def test_sce_keeps_equity_component_axis(self, consolidated_axis):
         """자본변동표의 자본구성요소 축은 본질적 컬럼이므로 유지되고 dimensions에 남는다."""

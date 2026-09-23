@@ -198,3 +198,27 @@ class TestExtractNotes:
         assert len(value_items) == 1
         assert value_items[0].value is None
         assert value_items[0].text_value == "확정급여제도 관련 서술"
+
+    def test_concept_without_label_has_no_labels(self, dart_role_bs_consolidated):
+        """라벨링크에 없는 concept은 label_ko/label_en이 모두 None이다."""
+        section = extract_notes(_make_doc(dart_role_bs_consolidated, labels={})).notes["D834480"]
+        abstract_item = next(li for li in section.line_items if li.is_abstract)
+        assert abstract_item.label_ko is None
+        assert abstract_item.label_en is None
+
+    def test_unrecognized_consolidation_member_treated_as_consolidated(
+        self, consolidated_axis, dart_role_bs_consolidated, make_xbrl_fact
+    ):
+        """ConsolidatedMember/SeparateMember 어느 쪽도 아닌 멤버는 관측된 현재 동작상
+        연결(consolidated) 쪽에 매칭된다 (SeparateMember가 아니면 연결로 취급)."""
+        fact = make_xbrl_fact(
+            concept_local_name="DefinedBenefitObligationAtPresentValue",
+            concept_qname="ifrs-full:DefinedBenefitObligationAtPresentValue",
+            value="1000",
+            dimensions={consolidated_axis: "ifrs-full:SomeOtherMember"},
+        )
+        # D834480(is_consolidated=True) 주석에 매칭되며, 연결/별도 축은 dimensions에서 제거된다.
+        section = extract_notes(_make_doc(dart_role_bs_consolidated, facts=[fact])).notes["D834480"]
+        value_items = [li for li in section.line_items if not li.is_abstract]
+        assert [li.value for li in value_items] == [Decimal("1000")]
+        assert value_items[0].dimensions == {}

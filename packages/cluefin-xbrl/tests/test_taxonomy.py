@@ -66,3 +66,29 @@ class TestExtractPresentationTrees:
     def test_without_taxonomy(self, sample_xbrl_path):
         doc = parse_xbrl_file(sample_xbrl_path, include_taxonomy=False)
         assert doc.taxonomy is None
+
+
+class TestBuildPresentationNodeDepthAndOrder:
+    """전용 합성 픽스처(pres_tree)로 3형제 정렬과 깊이 2 이상의 손자 노드를 검증한다."""
+
+    def test_three_siblings_sorted_by_order(self, fixtures_dir):
+        doc = parse_xbrl_file(fixtures_dir / "pres_tree" / "pres_tree.xbrl", include_taxonomy=True)
+
+        role = "http://example.com/role/PresTreeRole"
+        root = doc.taxonomy.presentation_trees[role][0]
+
+        assert [c.concept_local_name for c in root.children] == ["ChildB", "ChildA", "ChildC"]
+        assert [c.order for c in root.children] == [1.0, 2.0, 3.0]
+
+    def test_grandchild_has_depth_two(self, fixtures_dir):
+        doc = parse_xbrl_file(fixtures_dir / "pres_tree" / "pres_tree.xbrl", include_taxonomy=True)
+
+        role = "http://example.com/role/PresTreeRole"
+        root = doc.taxonomy.presentation_trees[role][0]
+        child_b = next(c for c in root.children if c.concept_local_name == "ChildB")
+
+        assert len(child_b.children) == 1
+        grandchild = child_b.children[0]
+        assert grandchild.concept_local_name == "Grandchild"
+        assert grandchild.depth == 2
+        assert grandchild.order == 1.0

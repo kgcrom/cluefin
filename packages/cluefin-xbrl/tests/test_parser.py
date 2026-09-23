@@ -1,5 +1,6 @@
 """Tests for XBRL parser."""
 
+import shutil
 from datetime import date, datetime
 from decimal import Decimal
 
@@ -127,6 +128,18 @@ class TestParseXbrlDirectory:
     def test_directory_not_found(self, tmp_path):
         with pytest.raises(FileNotFoundError):
             parse_xbrl_directory(tmp_path / "nonexistent")
+
+    def test_multiple_xbrl_files_picks_sorted_first(self, fixtures_dir, tmp_path):
+        """디렉토리에 .xbrl 파일이 여러 개면 이름순으로 정렬해 첫 번째만 파싱한다."""
+        for name in ("sample.xsd", "sample_lab-ko.xml", "sample_lab-en.xml", "sample_pre.xml"):
+            shutil.copy(fixtures_dir / name, tmp_path / name)
+        # "aaa_first.xbrl" < "zzz_second.xbrl" 이름순 정렬로 first가 선택되어야 한다.
+        shutil.copy(fixtures_dir / "sample.xbrl", tmp_path / "aaa_first.xbrl")
+        shutil.copy(fixtures_dir / "sample.xbrl", tmp_path / "zzz_second.xbrl")
+
+        doc = parse_xbrl_directory(tmp_path)
+
+        assert doc.source_file.endswith("aaa_first.xbrl")
 
 
 class TestExclusiveToDate:

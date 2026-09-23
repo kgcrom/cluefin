@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:xbrli="http://www.xbrl.org/2003/instance"
+    xmlns:link="http://www.xbrl.org/2003/linkbase"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:pt="http://example.com/pres_tree"
+    targetNamespace="http://example.com/pres_tree"
+    elementFormDefault="qualified">
+
+    <xsd:import namespace="http://www.xbrl.org/2003/instance"
+                schemaLocation="http://www.xbrl.org/2003/xbrl-instance-2003-12-31.xsd"/>
+
+    <xsd:annotation>
+        <xsd:appinfo>
+            <link:linkbaseRef xlink:type="simple"
+                              xlink:href="pres_tree_pre.xml"
+                              xlink:role="http://www.xbrl.org/2003/role/presentationLinkbaseRef"
+                              xlink:arcrole="http://www.w3.org/1999/xlink/properties/linkbase"/>
+            <link:roleType id="PresTreeRole"
+                           roleURI="http://example.com/role/PresTreeRole">
+                <link:definition>Presentation tree depth/order fixture</link:definition>
+                <link:usedOn>link:presentationLink</link:usedOn>
+            </link:roleType>
+        </xsd:appinfo>
+    </xsd:annotation>
+
+    <xsd:element name="Root" id="pt_Root"
+                 substitutionGroup="xbrli:item" type="xbrli:monetaryItemType"
+                 xbrli:periodType="instant" nillable="true"/>
+
+    <xsd:element name="ChildA" id="pt_ChildA"
+                 substitutionGroup="xbrli:item" type="xbrli:monetaryItemType"
+                 xbrli:periodType="instant" nillable="true"/>
+
+    <xsd:element name="ChildB" id="pt_ChildB"
+                 substitutionGroup="xbrli:item" type="xbrli:monetaryItemType"
+                 xbrli:periodType="instant" nillable="true"/>
+
+    <xsd:element name="ChildC" id="pt_ChildC"
+                 substitutionGroup="xbrli:item" type="xbrli:monetaryItemType"
+                 xbrli:periodType="instant" nillable="true"/>
+
+    <xsd:element name="Grandchild" id="pt_Grandchild"
+                 substitutionGroup="xbrli:item" type="xbrli:monetaryItemType"
+                 xbrli:periodType="instant" nillable="true"/>
+
+</xsd:schema>
