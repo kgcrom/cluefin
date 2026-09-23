@@ -1,5 +1,4 @@
 import inspect
-import re
 
 import pytest
 
@@ -7,6 +6,7 @@ from cluefin_openapi.kiwoom import _domestic_stock_info as stock_info_module
 from cluefin_openapi.kiwoom._domestic_stock_info import DomesticStockInfo
 
 from ._helpers import EndpointCase, run_post_case
+from ._helpers import method_metadata as _shared_method_metadata
 
 
 def payload(name: str):
@@ -175,10 +175,8 @@ CALL_KWARGS = {
 
 
 def method_metadata(method_name: str) -> tuple[str, str, str]:
-    method = getattr(DomesticStockInfo, method_name)
-    source = inspect.getsource(method)
-    api_id = re.search(r'"api-id":\s*"([^"]+)"', source).group(1)
-    model_attr = re.search(r"= (DomesticStockInfo\w+)\.model_validate", source).group(1)
+    api_id, model_attr = _shared_method_metadata(DomesticStockInfo, method_name)
+    source = inspect.getsource(getattr(DomesticStockInfo, method_name))
     if '"con-yn"' in source:
         cont_key = "con-yn"
     elif '"cond-yn"' in source:
@@ -217,8 +215,4 @@ def test_domestic_stock_info_requests(monkeypatch, case: EndpointCase):
         stock_info_module,
         DomesticStockInfo,
         case,
-        base_headers={
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        },
     )

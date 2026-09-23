@@ -1,12 +1,9 @@
-import inspect
-import re
-
 import pytest
 
 from cluefin_openapi.kiwoom import _overseas_exchange as overseas_exchange_module
 from cluefin_openapi.kiwoom._overseas_exchange import OverseasExchange
 
-from ._helpers import EndpointCase, run_post_case
+from ._helpers import EndpointCase, method_metadata, run_post_case
 
 CALL_KWARGS = {
     "get_estimated_exchange_amount": {"exch_tp": "1", "fc_exmn_amt": "10"},
@@ -19,17 +16,9 @@ def payload(name: str):
     return {"return_code": 0, "return_msg": "OK", "endpoint": name}
 
 
-def method_metadata(method_name: str) -> tuple[str, str]:
-    method = getattr(OverseasExchange, method_name)
-    source = inspect.getsource(method)
-    api_id = re.search(r'"api-id":\s*"([^"]+)"', source).group(1)
-    model_attr = re.search(r"res_body = (\w+)\.model_validate", source).group(1)
-    return api_id, model_attr
-
-
 EXCHANGE_CASES = []
 for method_name, kwargs in CALL_KWARGS.items():
-    api_id, model_attr = method_metadata(method_name)
+    api_id, model_attr = method_metadata(OverseasExchange, method_name)
     case_name = method_name.removeprefix("get_").removeprefix("request_")
     EXCHANGE_CASES.append(
         EndpointCase(

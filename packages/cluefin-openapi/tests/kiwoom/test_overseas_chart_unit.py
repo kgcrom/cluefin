@@ -1,12 +1,9 @@
-import inspect
-import re
-
 import pytest
 
 from cluefin_openapi.kiwoom import _overseas_chart as overseas_chart_module
 from cluefin_openapi.kiwoom._overseas_chart import OverseasChart
 
-from ._helpers import EndpointCase, run_post_case
+from ._helpers import EndpointCase, method_metadata, run_post_case
 
 CALL_KWARGS = {
     "get_tick_chart": {
@@ -66,17 +63,9 @@ def payload(name: str):
     return {"return_code": 0, "return_msg": "OK", "endpoint": name}
 
 
-def method_metadata(method_name: str) -> tuple[str, str]:
-    method = getattr(OverseasChart, method_name)
-    source = inspect.getsource(method)
-    api_id = re.search(r'"api-id":\s*"([^"]+)"', source).group(1)
-    model_attr = re.search(r"= (OverseasChart\w+)\.model_validate", source).group(1)
-    return api_id, model_attr
-
-
 CHART_CASES = []
 for method_name, kwargs in CALL_KWARGS.items():
-    api_id, model_attr = method_metadata(method_name)
+    api_id, model_attr = method_metadata(OverseasChart, method_name)
     case_name = method_name.removeprefix("get_")
     CHART_CASES.append(
         EndpointCase(

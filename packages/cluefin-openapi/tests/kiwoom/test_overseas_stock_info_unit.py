@@ -1,12 +1,9 @@
-import inspect
-import re
-
 import pytest
 
 from cluefin_openapi.kiwoom import _overseas_stock_info as overseas_stock_info_module
 from cluefin_openapi.kiwoom._overseas_stock_info import OverseasStockInfo
 
-from ._helpers import EndpointCase, run_post_case
+from ._helpers import EndpointCase, method_metadata, run_post_case
 
 CALL_KWARGS = {
     "get_exchange_list": {"stk_cd": "AAPL"},
@@ -272,17 +269,9 @@ def payload(name: str):
     return {"return_code": 0, "return_msg": "OK", "endpoint": name}
 
 
-def method_metadata(method_name: str) -> tuple[str, str]:
-    method = getattr(OverseasStockInfo, method_name)
-    source = inspect.getsource(method)
-    api_id = re.search(r'"api-id":\s*"([^"]+)"', source).group(1)
-    model_attr = re.search(r"= (OverseasStockInfo\w+)\.model_validate", source).group(1)
-    return api_id, model_attr
-
-
 STOCK_INFO_CASES = []
 for method_name, kwargs in CALL_KWARGS.items():
-    api_id, model_attr = method_metadata(method_name)
+    api_id, model_attr = method_metadata(OverseasStockInfo, method_name)
     case_name = method_name.removeprefix("get_")
     STOCK_INFO_CASES.append(
         EndpointCase(

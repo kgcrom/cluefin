@@ -109,8 +109,4 @@ def test_domestic_order_requests(monkeypatch, case: EndpointCase):
         domestic_order_module,
         DomesticOrder,
         case,
-        base_headers={
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        },
     )
