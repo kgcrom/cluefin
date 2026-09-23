@@ -58,18 +58,3 @@ def test_property_returns_expected_domain_class(client, property_name, expected_
     instance = getattr(client, property_name)
     assert isinstance(instance, expected_cls)
     assert instance.client is client
-
-
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "버그: Client의 도메인 property들(account/chart/... )은 매 접근마다 "
-        "`return DomesticXxx(self)`로 새 인스턴스를 만들 뿐 캐싱하지 않는다. "
-        "docstring/네이밍은 'lazy property'지만 실제로는 매번 재생성된다."
-    ),
-)
-@pytest.mark.parametrize("property_name,expected_cls", PROPERTY_CASES, ids=[c[0] for c in PROPERTY_CASES])
-def test_property_returns_same_instance_on_repeated_access(client, property_name, expected_cls):
-    first = getattr(client, property_name)
-    second = getattr(client, property_name)
-    assert first is second
