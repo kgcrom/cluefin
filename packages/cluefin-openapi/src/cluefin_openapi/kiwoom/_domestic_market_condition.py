@@ -2,7 +2,6 @@ from typing import Literal
 
 from cluefin_openapi.kiwoom._client import Client
 from cluefin_openapi.kiwoom._domestic_market_condition_types import (
-    DomesticMarketConditionAfterHoursSinglePrice,
     DomesticMarketConditionAfterMarketTradingByInvestor,
     DomesticMarketConditionDailyInstitutionalTrading,
     DomesticMarketConditionDailyStockPrice,
@@ -589,44 +588,6 @@ class DomesticMarketCondition:
         headers = KiwoomHttpHeader.model_validate(response.headers)
         body = DomesticMarketConditionDailyStockPrice.model_validate(response.json())
         return KiwoomHttpResponse[DomesticMarketConditionDailyStockPrice](
-            headers=headers,
-            body=body,
-        )
-
-    def get_after_hours_single_price(
-        self,
-        stk_cd: str,
-        cont_yn: Literal["Y", "N"] = "N",
-        next_key: str = "",
-    ) -> KiwoomHttpResponse[DomesticMarketConditionAfterHoursSinglePrice]:
-        """
-        시간외단일가요청
-
-        Args:
-            stk_cd (str): 종목코드 (거래소별 종목코드, 예: KRX:039490, NXT:039490_NX, SOR:039490_AL)
-            cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
-            next_key (str, optional): 다음키. Defaults to "".
-
-        Returns:
-            KiwoomHttpResponse[DomesticMarketConditionAfterHoursSinglePrice]: 시간외 단일가 데이터
-        """
-        headers = {
-            "Content-Type": "application/json;charset=UTF-8",
-            "Accept": "application/json",
-            "Authorization": f"Bearer {self.client.token}",
-            "cont-yn": cont_yn,
-            "next-key": next_key,
-            "api-id": "ka10087",
-        }
-        body = {
-            "stk_cd": stk_cd,
-        }
-        response = self.client._post(self.path, headers, body)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching after hours single price: {response.text}")
-        headers = KiwoomHttpHeader.model_validate(response.headers)
-        body = DomesticMarketConditionAfterHoursSinglePrice.model_validate(response.json())
-        return KiwoomHttpResponse[DomesticMarketConditionAfterHoursSinglePrice](
             headers=headers,
             body=body,
         )

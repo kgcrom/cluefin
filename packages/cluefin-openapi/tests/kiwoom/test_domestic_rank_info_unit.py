@@ -160,14 +160,6 @@ CALL_KWARGS: Dict[str, Dict[str, str]] = {
         "unit_tp": "1",
         "stex_tp": "1",
     },
-    "get_after_hours_single_price_change_rate_ranking": {
-        "mrkt_tp": "000",
-        "sort_base": "5",
-        "stk_cnd": "0",
-        "trde_qty_cnd": "0",
-        "crd_cnd": "0",
-        "trde_prica": "0",
-    },
     "get_top_foreigner_institution_trading": {
         "mrkt_tp": "001",
         "amt_qty_tp": "1",

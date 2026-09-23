@@ -2,7 +2,6 @@ import pytest
 
 from cluefin_openapi.kiwoom._client import Client
 from cluefin_openapi.kiwoom._domestic_market_condition_types import (
-    DomesticMarketConditionAfterHoursSinglePrice,
     DomesticMarketConditionAfterMarketTradingByInvestor,
     DomesticMarketConditionDailyInstitutionalTrading,
     DomesticMarketConditionDailyStockPrice,
@@ -152,15 +151,6 @@ def test_get_daily_stock_price(client: Client):
     assert response.body is not None
 
     assert isinstance(response.body, DomesticMarketConditionDailyStockPrice)
-
-
-@pytest.mark.integration
-def test_get_after_hours_single_price(client: Client):
-    response = client.market_conditions.get_after_hours_single_price("039490")
-
-    assert response is not None
-    assert response.body is not None
-    assert isinstance(response.body, DomesticMarketConditionAfterHoursSinglePrice)
 
 
 @pytest.mark.integration

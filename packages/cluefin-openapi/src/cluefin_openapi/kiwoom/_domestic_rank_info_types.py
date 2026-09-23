@@ -489,30 +489,6 @@ class DomesticRankInfoSameNetBuySellRanking(BaseModel, KiwoomHttpBody):
     )
 
 
-class DomesticRankInfoAfterHoursSinglePriceChangeRateRankingItem(BaseModel):
-    rank: str = Field(default="", title="순위")
-    stk_cd: str = Field(default="", title="종목코드")
-    stk_nm: str = Field(default="", title="종목명")
-    cur_prc: str = Field(default="", title="현재가")
-    pred_pre_sig: str = Field(default="", title="전일대비기호")
-    pred_pre: str = Field(default="", title="전일대비")
-    flu_rt: str = Field(default="", title="등락률")
-    sel_tot_req: str = Field(default="", title="매도총잔량")
-    buy_tot_req: str = Field(default="", title="매수총잔량")
-    acc_trde_qty: str = Field(default="", title="누적거래량")
-    acc_trde_prica: str = Field(default="", title="누적거래대금")
-    tdy_close_pric: str = Field(default="", title="당일종가")
-    tdy_close_pric_flu_rt: str = Field(default="", title="당일종가등락률")
-
-
-class DomesticRankInfoAfterHoursSinglePriceChangeRateRanking(BaseModel, KiwoomHttpBody):
-    model_config = ConfigDict(title="시간외단일가등락율순위요청 응답")
-
-    ovt_sigpric_flu_rt_rank: list[DomesticRankInfoAfterHoursSinglePriceChangeRateRankingItem] = Field(
-        default_factory=list, title="시간외단일가등락율순위"
-    )
-
-
 class DomesticRankInfoTopForeignerInstitutionTradingItem(BaseModel):
     for_netslmt_stk_cd: str = Field(default="", title="외인순매도종목코드")
     for_netslmt_stk_nm: str = Field(default="", title="외인순매도종목명")

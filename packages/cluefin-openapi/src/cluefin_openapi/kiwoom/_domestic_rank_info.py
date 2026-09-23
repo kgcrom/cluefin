@@ -2,7 +2,6 @@ from typing import Literal, Optional
 
 from cluefin_openapi.kiwoom._client import Client
 from cluefin_openapi.kiwoom._domestic_rank_info_types import (
-    DomesticRankInfoAfterHoursSinglePriceChangeRateRanking,
     DomesticRankInfoRapidlyIncreasingRemainingOrderQuantity,
     DomesticRankInfoRapidlyIncreasingTotalSellOrders,
     DomesticRankInfoRapidlyIncreasingTradingVolume,
@@ -1314,92 +1313,6 @@ class DomesticRankInfo:
             raise Exception(f"Error fetching same net buy/sell ranking: {response.text}")
         headers = KiwoomHttpHeader.model_validate(response.headers)
         body = DomesticRankInfoSameNetBuySellRanking.model_validate(response.json())
-        return KiwoomHttpResponse(headers=headers, body=body)
-
-    def get_after_hours_single_price_change_rate_ranking(
-        self,
-        mrkt_tp: Literal["000", "001", "101"],
-        sort_base: Literal["1", "2", "3", "4", "5"],
-        stk_cnd: Literal["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "12", "13", "14", "15", "16", "17"],
-        trde_qty_cnd: Literal["0", "10", "50", "100", "500", "1000", "5000", "10000"],
-        crd_cnd: Literal["0", "9", "1", "2", "3", "4", "8", "5"],
-        trde_prica: Literal["0", "5", "10", "30", "50", "100", "300", "500", "1000", "3000", "5000"],
-        cont_yn: Literal["Y", "N"] = "N",
-        next_key: str = "",
-    ) -> KiwoomHttpResponse[DomesticRankInfoAfterHoursSinglePriceChangeRateRanking]:
-        """시간외단일가등락률순위요청
-
-        Args:
-            mrkt_tp (Literal["000", "001", "101"]): 시장구분 (전체: '000', 코스피: '001', 코스닥: '101')
-            sort_base (Literal["1", "2", "3", "4", "5"]): 정렬기준
-                - 1: 상승률
-                - 2: 상승폭
-                - 3: 하락률
-                - 4: 하락폭
-                - 5: 보합
-            stk_cnd (Literal["0","1","2","3","4","5","6","7","8","9","12","13","14","15","16","17"]): 종목조건
-                - "0": 전체조회
-                - "1": 관리종목제외
-                - "2": 정리매매종목제외
-                - "3": 우선주제외
-                - "4": 관리종목우선주제외
-                - "5": 증100제외
-                - "6": 증100만보기
-                - "7": 증40만보기
-                - "8": 증30만보기
-                - "9": 증20만보기
-                - "12": 증50만보기
-                - "13": 증60만보기
-                - "14": ETF제외
-                - "15": 스팩제외
-                - "16": ETF+ETN제외
-                - "17": ETN제외
-            trde_qty_cnd (Literal["0","10","50","100","500","1000","5000","10000"]): 거래량조건
-                - "0": 전체조회
-                - "10": 백주이상
-                - "50": 5백주이상
-                - "100": 천주이상
-                - "500": 5천주이상
-                - "1000": 만주이상
-                - "5000": 5만주이상
-                - "10000": 10만주이상
-            crd_cnd (Literal["0","9","1","2","3","4","8","5"]): 신용조건
-                - "0": 전체조회
-                - "9": 신용융자전체
-                - "1": 신용융자A군
-                - "2": 신용융자B군
-                - "3": 신용융자C군
-                - "4": 신용융자D군
-                - "8": 신용대주
-                - "5": 신용한도초과제외
-            trde_prica (Literal["0","5","10","30","50","100","300","500","1000","3000","5000"]): 거래대금
-            cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to 'N'.
-            next_key (str, optional): 다음 페이지 키. Defaults to "".
-
-        Returns:
-            KiwoomHttpResponse[DomesticRankInfoAfterHoursSinglePriceChangeRateRanking]: 시간외단일가등락률순위요청 결과
-        """
-        headers = {
-            "Content-Type": "application/json;charset=UTF-8",
-            "Accept": "application/json",
-            "Authorization": f"Bearer {self.client.token}",
-            "cont-yn": cont_yn,
-            "next-key": next_key,
-            "api-id": "ka10098",
-        }
-        body = {
-            "mrkt_tp": mrkt_tp,
-            "sort_base": sort_base,
-            "stk_cnd": stk_cnd,
-            "trde_qty_cnd": trde_qty_cnd,
-            "crd_cnd": crd_cnd,
-            "trde_prica": trde_prica,
-        }
-        response = self.client._post(self.path, headers, body)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching after hours single price change rate ranking: {response.text}")
-        headers = KiwoomHttpHeader.model_validate(response.headers)
-        body = DomesticRankInfoAfterHoursSinglePriceChangeRateRanking.model_validate(response.json())
         return KiwoomHttpResponse(headers=headers, body=body)
 
     def get_top_foreigner_institution_trading(

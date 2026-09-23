@@ -45,6 +45,9 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   is why token caches are scoped by env/app_key.
 - Kiwoom occasionally removes TRs from its official docs while the API keeps working
   (e.g. ka10009). On integration failures, check the docs list before debugging code.
+- ka10087·ka10098 were removed from both the docs and the live server on 2026-09-23
+  (`1504:해당 URI에서는 지원하는 API ID가 아닙니다`) — unlike ka10009, so a `1504` for
+  these means the TR is gone, not just undocumented. Removed from the codebase.
 - **KIS 금리종합(`comp-interest`, FHPST07020000)은 `FID_DIV_CLS_CODE` 에 따라 배열의 의미가
   바뀐다** (2026-09-20 실측). 문서는 `1:해외금리지표` 만 적어 두었지만 실제로는
   `0`/공백 → output1·output2 모두 국내 19종, `1` → output1 해외 7종 + output2 국내(뒤 8종만,

@@ -456,37 +456,6 @@ def handle_kiwoom_daily_stock_price(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# After Hours Single Price
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="stock.overtime_price",
-    description="Get after-hours single price data for a stock.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "stock_code": {"type": "string", "description": "Stock code (e.g. 039490)"},
-            "cont_yn": {"type": "string", "enum": ["Y", "N"], "description": "Continuation flag. Default N."},
-            "next_key": {"type": "string", "description": "Pagination key. Default empty."},
-        },
-        "required": ["stock_code"],
-    },
-    returns={"type": "object"},
-    category="stock",
-    broker="kiwoom",
-)
-def handle_kiwoom_after_hours_single_price(params: dict, session) -> dict:
-    kiwoom = session.get_kiwoom()
-    response = kiwoom.market_conditions.get_after_hours_single_price(
-        params["stock_code"],
-        cont_yn=params.get("cont_yn", "N"),
-        next_key=params.get("next_key", ""),
-    )
-    return extract_body(response)
-
-
-# ---------------------------------------------------------------------------
 # Program Trading Trend by Time
 # ---------------------------------------------------------------------------
 
@@ -776,7 +745,6 @@ _ALL_HANDLERS = [
     handle_kiwoom_after_market_trading_by_investor,
     handle_kiwoom_securities_firm_trend,
     handle_kiwoom_daily_stock_price,
-    handle_kiwoom_after_hours_single_price,
     handle_kiwoom_program_trading_trend_by_time,
     handle_kiwoom_program_arbitrage_balance,
     handle_kiwoom_program_cumulative,
