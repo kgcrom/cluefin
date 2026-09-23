@@ -3,6 +3,11 @@
  *
  * 시세 조회 API 는 계좌번호가 필요 없다 — 계좌 게이팅을 하지 않는다.
  * 휴일에도 조회된다 (파이썬 스위트 2026-08-22 실측 확인).
+ *
+ * **11종 모두 운영 도메인 전용이다.** 모의투자(moapi)는 `IGW40023`
+ * ("모의투자에서는 제공하지 않는 API입니다. 실전투자 환경을 이용해주세요.")로
+ * 거부한다 (2026-09-23 실측, 파이썬 스위트와 동일). 따라서 `NHPLUG_ENV=prod` 에서만
+ * 실행되고, 모의투자에서는 통째로 skip 된다.
  */
 import { describe, test } from 'vitest';
 
@@ -26,17 +31,18 @@ import {
   getNhplugClient,
   NHPLUG_TEST_ETF_IEM_CD,
   NHPLUG_TEST_IEM_CD,
-  runNhplugIntegration,
+  runNhplugLiveOnlyIntegration,
   setupNhplugRateLimit,
   TODAY,
 } from '../_helpers/integration-setup';
 
-const it = runNhplugIntegration ? test : test.skip;
+/** 모의투자에서는 제공되지 않는다 (IGW40023). 운영(NHPLUG_ENV=prod)에서만 검증 가능. */
+const liveOnlyIt = runNhplugLiveOnlyIntegration ? test : test.skip;
 
-describe('Nhplug KrstockQuote', () => {
+describe('Nhplug KrstockQuote (운영 전용)', () => {
   setupNhplugRateLimit();
 
-  it('currentPrice', async (ctx) => {
+  liveOnlyIt('currentPrice', async (ctx) => {
     const client = await getNhplugClient();
     const res = await callNhplug(ctx, () =>
       client.krstockQuote.currentPrice({ marketCd: 'KRX', iemCd: NHPLUG_TEST_IEM_CD }),
@@ -45,7 +51,7 @@ describe('Nhplug KrstockQuote', () => {
     assertNhplugResponseShape(res.body, krStockQuoteCurrentPriceResponseSchema);
   });
 
-  it('currentExecution', async (ctx) => {
+  liveOnlyIt('currentExecution', async (ctx) => {
     const client = await getNhplugClient();
     const res = await callNhplug(ctx, () =>
       client.krstockQuote.currentExecution({ marketCd: 'KRX', iemCd: NHPLUG_TEST_IEM_CD }),
@@ -54,7 +60,7 @@ describe('Nhplug KrstockQuote', () => {
     assertNhplugResponseShape(res.body, krStockQuoteCurrentExecutionResponseSchema);
   });
 
-  it('currentDaily', async (ctx) => {
+  liveOnlyIt('currentDaily', async (ctx) => {
     const client = await getNhplugClient();
     const res = await callNhplug(ctx, () =>
       client.krstockQuote.currentDaily({ marketCd: 'KRX', iemCd: NHPLUG_TEST_IEM_CD }),
@@ -63,7 +69,7 @@ describe('Nhplug KrstockQuote', () => {
     assertNhplugResponseShape(res.body, krStockQuoteCurrentDailyResponseSchema);
   });
 
-  it('currentInvestor', async (ctx) => {
+  liveOnlyIt('currentInvestor', async (ctx) => {
     const client = await getNhplugClient();
     const res = await callNhplug(ctx, () =>
       client.krstockQuote.currentInvestor({ marketCd: 'KRX', iemCd: NHPLUG_TEST_IEM_CD, arrayCnt: '10' }),
@@ -72,7 +78,7 @@ describe('Nhplug KrstockQuote', () => {
     assertNhplugResponseShape(res.body, krStockQuoteCurrentInvestorResponseSchema);
   });
 
-  it('period', async (ctx) => {
+  liveOnlyIt('period', async (ctx) => {
     const client = await getNhplugClient();
     const res = await callNhplug(ctx, () =>
       client.krstockQuote.period({
@@ -87,14 +93,14 @@ describe('Nhplug KrstockQuote', () => {
     assertNhplugResponseShape(res.body, krStockQuotePeriodResponseSchema);
   });
 
-  it('afterHoursCurrent', async (ctx) => {
+  liveOnlyIt('afterHoursCurrent', async (ctx) => {
     const client = await getNhplugClient();
     const res = await callNhplug(ctx, () => client.krstockQuote.afterHoursCurrent({ iemCd: NHPLUG_TEST_IEM_CD }));
     assertNhplugResponse(res);
     assertNhplugResponseShape(res.body, krStockQuoteAfterHoursCurrentResponseSchema);
   });
 
-  it('currentAfterHoursDaily', async (ctx) => {
+  liveOnlyIt('currentAfterHoursDaily', async (ctx) => {
     const client = await getNhplugClient();
     const res = await callNhplug(ctx, () =>
       client.krstockQuote.currentAfterHoursDaily({
@@ -109,7 +115,7 @@ describe('Nhplug KrstockQuote', () => {
     assertNhplugResponseShape(res.body, krStockQuoteCurrentAfterHoursDailyResponseSchema);
   });
 
-  it('currentAfterHoursExecution', async (ctx) => {
+  liveOnlyIt('currentAfterHoursExecution', async (ctx) => {
     const client = await getNhplugClient();
     const res = await callNhplug(ctx, () =>
       client.krstockQuote.currentAfterHoursExecution({ iemCd: NHPLUG_TEST_IEM_CD }),
@@ -118,21 +124,21 @@ describe('Nhplug KrstockQuote', () => {
     assertNhplugResponseShape(res.body, krStockQuoteCurrentAfterHoursExecutionResponseSchema);
   });
 
-  it('afterHoursExpected', async (ctx) => {
+  liveOnlyIt('afterHoursExpected', async (ctx) => {
     const client = await getNhplugClient();
     const res = await callNhplug(ctx, () => client.krstockQuote.afterHoursExpected({ iemCd: NHPLUG_TEST_IEM_CD }));
     assertNhplugResponse(res);
     assertNhplugResponseShape(res.body, krStockQuoteAfterHoursExpectedResponseSchema);
   });
 
-  it('etfCurrent', async (ctx) => {
+  liveOnlyIt('etfCurrent', async (ctx) => {
     const client = await getNhplugClient();
     const res = await callNhplug(ctx, () => client.krstockQuote.etfCurrent({ iemCd: NHPLUG_TEST_ETF_IEM_CD }));
     assertNhplugResponse(res);
     assertNhplugResponseShape(res.body, krStockQuoteEtfCurrentResponseSchema);
   });
 
-  it('etfComponents', async (ctx) => {
+  liveOnlyIt('etfComponents', async (ctx) => {
     const client = await getNhplugClient();
     const res = await callNhplug(ctx, () => client.krstockQuote.etfComponents({ iemCd: NHPLUG_TEST_ETF_IEM_CD }));
     assertNhplugResponse(res);

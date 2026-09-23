@@ -58,19 +58,23 @@ def test_get_account_list(client):
 def test_close_websocket_session(client):
     """실시간(Websocket) 세션해제 (`POST /websocket/close/session`).
 
-    문서와 달리 실서버(운영·모의 동일)는 열린 세션이 없으면 500 +
-    `IGW50025`("서버에서 일시적인 오류")를 반환한다 (2026-08-22 실측).
-    세션이 있을 때의 정상 응답과 세션 없음의 IGW50025 둘 다 허용한다.
+    문서와 달리 실서버(운영·모의 동일)는 열린 세션이 없으면 실패 응답을 반환한다.
+    2026-08-22 실측으로는 500 + `IGW50025`("서버에서 일시적인 오류")였지만,
+    2026-09-23 재실측에서는 HTTP 200 + body `rsp_cd="10000"`
+    ("연결된 세션이 존재하지 않습니다")로 왔다 — 서버측 에러 포맷이 바뀐 것으로 보인다.
+    세션이 있을 때의 정상 응답과, 세션 없음을 뜻하는 두 포맷을 모두 허용한다.
     """
-    from cluefin_openapi.nhplug._exceptions import NHPlugServerError
+    from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
+
+    NO_SESSION_CODES = ("IGW50025", "10000")
 
     try:
         response = client.common.close_websocket_session()
         assert response.body.rsp_cd is not None
         assert response.body.rsp_msg is not None
-    except NHPlugServerError as e:
+    except NHPlugAPIError as e:
         assert e.response_data is not None
-        assert e.response_data.get("rsp_cd") == "IGW50025"
+        assert e.response_data.get("rsp_cd") in NO_SESSION_CODES
 
 
 @pytest.mark.integration
