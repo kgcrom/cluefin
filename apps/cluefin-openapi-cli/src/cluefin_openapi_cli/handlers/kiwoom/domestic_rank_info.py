@@ -1077,55 +1077,6 @@ def handle_kiwoom_intraday_trading_by_investor(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# After Hours Single Price Change Rate Ranking
-# ---------------------------------------------------------------------------
-
-
-@rpc_method(
-    name="ranking.after_hours",
-    description="Get after-hours single price change rate ranking.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "market_type": {
-                "type": "string",
-                "enum": ["000", "001", "101"],
-                "description": "Market (000:all, 001:KOSPI, 101:KOSDAQ)",
-            },
-            "sort_base": {
-                "type": "string",
-                "enum": ["1", "2", "3", "4", "5"],
-                "description": "Sort (1:gain rate, 2:gain amount, 3:loss rate, 4:loss amount, 5:flat)",
-            },
-            "stk_cnd": {"type": "string", "description": "Stock condition. Default 0."},
-            "trde_qty_cnd": {"type": "string", "description": "Volume condition. Default 0."},
-            "crd_cnd": {"type": "string", "description": "Credit condition. Default 0."},
-            "trde_prica": {"type": "string", "description": "Trade amount filter. Default 0."},
-            "cont_yn": {"type": "string", "enum": ["Y", "N"], "description": "Continuation flag. Default N."},
-            "next_key": {"type": "string", "description": "Continuation key. Default empty."},
-        },
-        "required": ["market_type", "sort_base"],
-    },
-    returns={"type": "object"},
-    category="ranking",
-    broker="kiwoom",
-)
-def handle_kiwoom_after_hours_single_price_change(params: dict, session) -> dict:
-    kiwoom = session.get_kiwoom()
-    response = kiwoom.rank_info.get_after_hours_single_price_change_rate_ranking(
-        mrkt_tp=params["market_type"],
-        sort_base=params["sort_base"],
-        stk_cnd=params.get("stk_cnd", "0"),
-        trde_qty_cnd=params.get("trde_qty_cnd", "0"),
-        crd_cnd=params.get("crd_cnd", "0"),
-        trde_prica=params.get("trde_prica", "0"),
-        cont_yn=params.get("cont_yn", "N"),
-        next_key=params.get("next_key", ""),
-    )
-    return extract_body(response)
-
-
-# ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
 
@@ -1149,7 +1100,6 @@ _ALL_HANDLERS = [
     handle_kiwoom_current_day_deviation_sources,
     handle_kiwoom_same_net_buy_sell,
     handle_kiwoom_intraday_trading_by_investor,
-    handle_kiwoom_after_hours_single_price_change,
 ]
 
 

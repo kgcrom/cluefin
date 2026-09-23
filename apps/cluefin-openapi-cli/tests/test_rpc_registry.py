@@ -42,7 +42,7 @@ def test_rpc_registry_lists_real_commands() -> None:
 def test_cli_registry_keeps_existing_command_surface() -> None:
     registry = build_cli_registry()
 
-    assert len(registry) == 188
+    assert len(registry) == 186
     assert ("kis", "stock", "current-price") in registry
     assert ("kiwoom", "chart", "tick") in registry
     assert ("dart", "company-overview") in registry

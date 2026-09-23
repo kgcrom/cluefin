@@ -67,7 +67,6 @@ export type {
   StockInstitutionResponse,
 } from './schemas/domestic-foreign.js';
 export type {
-  AfterHoursSinglePriceResponse,
   AfterMarketTradingByInvestorResponse,
   DailyInstitutionalTradingItemsResponse,
   DailyStockPriceResponse,
@@ -90,7 +89,6 @@ export type {
   StockQuoteResponse,
 } from './schemas/domestic-market-condition.js';
 export type {
-  AfterHoursSinglePriceChangeRateRankingResponse,
   DomesticRankInfoResponseMap,
   RapidlyIncreasingRemainingOrderQuantityResponse,
   RapidlyIncreasingTotalSellOrdersResponse,

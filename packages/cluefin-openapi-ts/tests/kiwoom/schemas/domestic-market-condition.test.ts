@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  afterHoursSinglePriceResponseSchema,
   afterMarketTradingByInvestorResponseSchema,
   dailyInstitutionalTradingItemsResponseSchema,
   dailyStockPriceResponseSchema,
@@ -98,12 +97,6 @@ describe('domestic-market-condition response schemas', () => {
     it('ka10086: dailyStockPrice', () => {
       const result = dailyStockPriceResponseSchema.parse(minimalEnvelope);
       expect(result.daly_stkpc).toEqual([]);
-    });
-
-    it('ka10087: afterHoursSinglePrice', () => {
-      const result = afterHoursSinglePriceResponseSchema.parse(minimalEnvelope);
-      expect(result.bid_req_base_tm).toBe('');
-      expect(result.ovt_sigpric_cur_prc).toBe('');
     });
 
     it('ka90005: programTradingTrendByTime', () => {

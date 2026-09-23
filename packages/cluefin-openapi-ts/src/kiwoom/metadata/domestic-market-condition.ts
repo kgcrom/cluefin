@@ -471,34 +471,6 @@ export const domesticMarketConditionEndpoints: KiwoomEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'getAfterHoursSinglePrice',
-    path: '/api/dostk/mrkcond',
-    apiId: 'ka10087',
-    bodyMap: {
-      stk_cd: 'stkCd',
-    },
-    headerParamMap: {
-      'cont-yn': 'contYn',
-      'next-key': 'nextKey',
-    },
-    params: [
-      {
-        name: 'stkCd',
-        required: true,
-      },
-      {
-        name: 'contYn',
-        required: false,
-        defaultValue: 'N',
-      },
-      {
-        name: 'nextKey',
-        required: false,
-        defaultValue: '',
-      },
-    ],
-  },
-  {
     methodName: 'getProgramTradingTrendByTime',
     path: '/api/dostk/mrkcond',
     apiId: 'ka90005',
@@ -762,7 +734,6 @@ export type DomesticMarketConditionMethodName =
   | 'getAfterMarketTradingByInvestor'
   | 'getSecuritiesFirmTradingTrendByStock'
   | 'getDailyStockPrice'
-  | 'getAfterHoursSinglePrice'
   | 'getProgramTradingTrendByTime'
   | 'getProgramTradingArbitrageBalanceTrend'
   | 'getProgramTradingCumulativeTrend'

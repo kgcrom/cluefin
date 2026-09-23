@@ -43,12 +43,6 @@ MARKET_CASES = [
             "DomesticMarketConditionExecutionIntensityTrendByDate",
             "ka10047",
         ),
-        (
-            "after_hours_single_price",
-            "get_after_hours_single_price",
-            "DomesticMarketConditionAfterHoursSinglePrice",
-            "ka10087",
-        ),
     ]
 ]
 

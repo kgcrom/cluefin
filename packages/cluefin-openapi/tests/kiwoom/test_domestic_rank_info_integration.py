@@ -2,7 +2,6 @@ import pytest
 
 from cluefin_openapi.kiwoom._client import Client
 from cluefin_openapi.kiwoom._domestic_rank_info_types import (
-    DomesticRankInfoAfterHoursSinglePriceChangeRateRanking,
     DomesticRankInfoRapidlyIncreasingRemainingOrderQuantity,
     DomesticRankInfoRapidlyIncreasingTotalSellOrders,
     DomesticRankInfoRapidlyIncreasingTradingVolume,
@@ -272,21 +271,6 @@ def test_get_same_net_buy_sell_ranking(client: Client):
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoSameNetBuySellRanking)
     assert len(response.body.eql_nettrde_rank) > 0
-
-
-@pytest.mark.integration
-def test_get_after_hours_single_price_change_rate_ranking(client: Client):
-    response = client.rank_info.get_after_hours_single_price_change_rate_ranking(
-        mrkt_tp="000",
-        sort_base="5",
-        stk_cnd="0",
-        trde_qty_cnd="0",
-        crd_cnd="0",
-        trde_prica="0",
-    )
-    assert response is not None
-    assert isinstance(response.body, DomesticRankInfoAfterHoursSinglePriceChangeRateRanking)
-    assert len(response.body.ovt_sigpric_flu_rt_rank) > 0
 
 
 @pytest.mark.integration

@@ -1005,59 +1005,6 @@ export const domesticRankInfoEndpoints: KiwoomEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'getAfterHoursSinglePriceChangeRateRanking',
-    path: '/api/dostk/rkinfo',
-    apiId: 'ka10098',
-    bodyMap: {
-      mrkt_tp: 'mrktTp',
-      sort_base: 'sortBase',
-      stk_cnd: 'stkCnd',
-      trde_qty_cnd: 'trdeQtyCnd',
-      crd_cnd: 'crdCnd',
-      trde_prica: 'trdePrica',
-    },
-    headerParamMap: {
-      'cont-yn': 'contYn',
-      'next-key': 'nextKey',
-    },
-    params: [
-      {
-        name: 'mrktTp',
-        required: true,
-      },
-      {
-        name: 'sortBase',
-        required: true,
-      },
-      {
-        name: 'stkCnd',
-        required: true,
-      },
-      {
-        name: 'trdeQtyCnd',
-        required: true,
-      },
-      {
-        name: 'crdCnd',
-        required: true,
-      },
-      {
-        name: 'trdePrica',
-        required: true,
-      },
-      {
-        name: 'contYn',
-        required: false,
-        defaultValue: 'N',
-      },
-      {
-        name: 'nextKey',
-        required: false,
-        defaultValue: '',
-      },
-    ],
-  },
-  {
     methodName: 'getTopForeignerInstitutionTrading',
     path: '/api/dostk/rkinfo',
     apiId: 'ka90009',
@@ -1172,6 +1119,5 @@ export type DomesticRankInfoMethodName =
   | 'getTopNetBuyTraderRanking'
   | 'getTopCurrentDayDeviationSources'
   | 'getSameNetBuySellRanking'
-  | 'getAfterHoursSinglePriceChangeRateRanking'
   | 'getTopForeignerInstitutionTrading'
   | 'getTopIntradayTradingByInvestor';
