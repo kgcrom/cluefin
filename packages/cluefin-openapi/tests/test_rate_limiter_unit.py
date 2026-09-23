@@ -254,65 +254,21 @@ class TestTokenBucketThreadSafety:
 
 
 class TestTokenBucketUseCases:
-    """Tests for common TokenBucket use cases."""
+    """Tests for a broker-style rate limiting use case (deterministic)."""
 
-    def test_kis_rate_limiting_scenario(self):
-        """Test rate limiting scenario similar to KIS API usage."""
-        # KIS API typically allows ~10 requests/second
-        bucket = TokenBucket(capacity=20, refill_rate=10.0)
-
-        # Burst of requests should succeed
-        for _ in range(15):
-            assert bucket.consume() is True
-
-        # Remaining capacity check
-        assert bucket.available_tokens < 6
-
-    def test_dart_rate_limiting_scenario(self, monkeypatch):
-        """Test rate limiting scenario similar to DART API usage."""
-        install_fake_clock(monkeypatch)
-        # DART API might have lower limits
-        bucket = TokenBucket(capacity=5, refill_rate=1.0)
-
-        # Small burst should succeed
-        for _ in range(5):
-            assert bucket.consume() is True
-
-        # Next request should wait
-        result = bucket.wait_for_tokens(tokens=1, timeout=0.5)
-        # Might succeed or fail depending on timing
-        assert isinstance(result, bool)
-
-    def test_krx_rate_limiting_scenario(self):
-        """Test rate limiting scenario similar to KRX API usage."""
-        bucket = TokenBucket(capacity=10, refill_rate=5.0)
-
-        # Moderate burst
-        for _ in range(8):
-            assert bucket.consume() is True
-
-        # Should have some tokens left
-        assert bucket.available_tokens >= 1
-
-    def test_kiwoom_rate_limiting_scenario(self, monkeypatch):
-        """Test rate limiting scenario matching existing Kiwoom implementation."""
+    def test_burst_then_wait_for_refill(self, monkeypatch):
+        """A burst that empties the bucket, then wait_for_tokens gets a token after refill."""
         clock = install_fake_clock(monkeypatch)
-        # Match default values from Kiwoom client
         bucket = TokenBucket(capacity=20, refill_rate=10.0)
 
-        # Should start with full bucket
         assert bucket.available_tokens == 20.0
 
-        # Large burst should be allowed
         for _ in range(20):
             assert bucket.consume() is True
 
-        # Bucket should be empty
         assert bucket.available_tokens < 1
 
-        # wait_for_tokens with timeout should work
         result = bucket.wait_for_tokens(tokens=1, timeout=0.2)
-        # Should get a token after ~0.1 seconds
         assert result is True
         assert clock.sleeps == [0.1]
 

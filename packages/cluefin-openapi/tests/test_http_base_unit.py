@@ -19,6 +19,24 @@ def _resp(body: bytes, headers=None, status=200):
     return r
 
 
+@pytest.fixture
+def rl():
+    """A fast-refilling TokenBucket shared by most _execute_with_retry tests."""
+    return TokenBucket(capacity=5, refill_rate=100.0)
+
+
+def _retry_kwargs(**overrides):
+    """Common dispatch/error_cls kwargs for _execute_with_retry, with per-test overrides."""
+    kwargs = dict(
+        dispatch=lambda r: None if r.status_code == 200 else _Boom(),
+        rate_limit_error=lambda: _Boom(),
+        timeout_error_cls=_Boom,
+        network_error_cls=_Boom,
+    )
+    kwargs.update(overrides)
+    return kwargs
+
+
 def test_safe_json_parses_object():
     assert _Dummy()._safe_json(_resp(b'{"a": 1}')) == {"a": 1}
 
@@ -48,7 +66,7 @@ class _Boom(Exception):
 
 
 def _run(client, adapter_setup):
-    rl = TokenBucket(capacity=5, refill_rate=100.0)
+    bucket = TokenBucket(capacity=5, refill_rate=100.0)
     with rm_mod.Mocker() as m:
         adapter_setup(m)
 
@@ -57,14 +75,11 @@ def _run(client, adapter_setup):
 
         return client._execute_with_retry(
             send,
-            rate_limiter=rl,
+            rate_limiter=bucket,
             timeout=5,
             max_retries=2,
             request_context={"path": "/p"},
-            dispatch=lambda r: None if r.status_code == 200 else _Boom(),
-            rate_limit_error=lambda: _Boom(),
-            timeout_error_cls=_Boom,
-            network_error_cls=_Boom,
+            **_retry_kwargs(),
         )
 
 
@@ -94,7 +109,7 @@ def test_5xx_retries_then_dispatches(monkeypatch):
     assert calls["n"] == 3  # initial + 2 retries
 
 
-def test_5xx_retry_emits_warning_log(monkeypatch):
+def test_5xx_retry_emits_warning_log(monkeypatch, rl):
     import time as _time_mod
 
     from loguru import logger as _logger
@@ -103,7 +118,6 @@ def test_5xx_retry_emits_warning_log(monkeypatch):
     records = []
     sink_id = _logger.add(lambda msg: records.append(str(msg)), level="WARNING")
     try:
-        rl = TokenBucket(capacity=5, refill_rate=100.0)
         with rm_mod.Mocker() as m:
             m.get(
                 "https://x.test/p",
@@ -115,21 +129,17 @@ def test_5xx_retry_emits_warning_log(monkeypatch):
                 timeout=5,
                 max_retries=2,
                 request_context={"path": "/p"},
-                dispatch=lambda r: None if r.status_code == 200 else _Boom(),
-                rate_limit_error=lambda: _Boom(),
-                timeout_error_cls=_Boom,
-                network_error_cls=_Boom,
+                **_retry_kwargs(),
             )
     finally:
         _logger.remove(sink_id)
     assert any("Server error 500, retrying" in r for r in records)
 
 
-def test_terminal_5xx_with_none_dispatch_returns_response(monkeypatch):
+def test_terminal_5xx_with_none_dispatch_returns_response(monkeypatch, rl):
     import time as _time_mod
 
     monkeypatch.setattr(_time_mod, "sleep", lambda s: None)
-    rl = TokenBucket(capacity=5, refill_rate=100.0)
     with rm_mod.Mocker() as m:
         m.get("https://x.test/p", status_code=503, text="degraded")
         resp = _Dummy()._execute_with_retry(
@@ -138,10 +148,7 @@ def test_terminal_5xx_with_none_dispatch_returns_response(monkeypatch):
             timeout=5,
             max_retries=1,
             request_context={"path": "/p"},
-            dispatch=lambda r: None,  # accept even terminal 5xx
-            rate_limit_error=lambda: _Boom(),
-            timeout_error_cls=_Boom,
-            network_error_cls=_Boom,
+            **_retry_kwargs(dispatch=lambda r: None),  # accept even terminal 5xx
         )
     assert resp.status_code == 503
 
@@ -165,19 +172,20 @@ def _run_raising(exc_to_raise, monkeypatch, max_retries=2):
         attempts["n"] += 1
         raise exc_to_raise
 
-    rl = TokenBucket(capacity=5, refill_rate=100.0)
+    bucket = TokenBucket(capacity=5, refill_rate=100.0)
 
     def run():
         _Dummy()._execute_with_retry(
             send,
-            rate_limiter=rl,
+            rate_limiter=bucket,
             timeout=5,
             max_retries=max_retries,
             request_context={"path": "/p"},
-            dispatch=lambda r: None,
-            rate_limit_error=lambda: _Boom(),
-            timeout_error_cls=_TimeoutBoom,
-            network_error_cls=_NetBoom,
+            **_retry_kwargs(
+                dispatch=lambda r: None,
+                timeout_error_cls=_TimeoutBoom,
+                network_error_cls=_NetBoom,
+            ),
         )
 
     return run, attempts
@@ -219,20 +227,20 @@ def test_rate_limiter_preflight_failure_raises_before_sending():
             timeout=5,
             max_retries=2,
             request_context={"path": "/p"},
-            dispatch=lambda r: None,
-            rate_limit_error=lambda: _Boom(),
-            timeout_error_cls=_TimeoutBoom,
-            network_error_cls=_NetBoom,
+            **_retry_kwargs(
+                dispatch=lambda r: None,
+                timeout_error_cls=_TimeoutBoom,
+                network_error_cls=_NetBoom,
+            ),
         )
     assert sent == []  # send_fn never called
 
 
-def test_429_retry_honors_retry_after_header(monkeypatch):
+def test_429_retry_honors_retry_after_header(monkeypatch, rl):
     import time as _time_mod
 
     sleeps = []
     monkeypatch.setattr(_time_mod, "sleep", lambda s: sleeps.append(s))
-    rl = TokenBucket(capacity=5, refill_rate=100.0)
     with rm_mod.Mocker() as m:
         m.get(
             "https://x.test/p",
@@ -247,18 +255,14 @@ def test_429_retry_honors_retry_after_header(monkeypatch):
             timeout=5,
             max_retries=2,
             request_context={"path": "/p"},
-            dispatch=lambda r: None if r.status_code == 200 else _Boom(),
-            rate_limit_error=lambda: _Boom(),
-            timeout_error_cls=_TimeoutBoom,
-            network_error_cls=_NetBoom,
+            **_retry_kwargs(timeout_error_cls=_TimeoutBoom, network_error_cls=_NetBoom),
         )
     assert resp.status_code == 200
     assert sleeps == [7]  # Retry-After wins over exponential backoff
 
 
-def test_on_response_called_each_attempt():
+def test_on_response_called_each_attempt(rl):
     seen = []
-    rl = TokenBucket(capacity=5, refill_rate=100.0)
     with rm_mod.Mocker() as m:
         m.get("https://x.test/p", status_code=200, text="ok")
         _Dummy()._execute_with_retry(
@@ -267,10 +271,7 @@ def test_on_response_called_each_attempt():
             timeout=5,
             max_retries=2,
             request_context={"path": "/p"},
-            dispatch=lambda r: None,
-            rate_limit_error=lambda: _Boom(),
-            timeout_error_cls=_Boom,
-            network_error_cls=_Boom,
+            **_retry_kwargs(dispatch=lambda r: None),
             on_response=lambda resp, ctx: seen.append(resp.status_code),
         )
     assert seen == [200]

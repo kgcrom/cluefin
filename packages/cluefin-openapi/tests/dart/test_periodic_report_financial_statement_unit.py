@@ -1,12 +1,12 @@
 import io
-import types
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal, Mapping, Type, Union, get_args, get_origin
+from typing import Any, Literal, Mapping, Type
 
 import pytest
 import requests_mock
+from _helpers import build_payload as _build_payload
 from pydantic import BaseModel
 
 from cluefin_openapi.dart._client import Client
@@ -119,36 +119,7 @@ METHOD_CASES = [
 
 
 def build_payload(item_type: Type[BaseModel], overrides: dict[str, Any] | None = None) -> dict[str, Any]:
-    overrides = overrides or {}
-    list_item: dict[str, Any] = {}
-    for name, field in item_type.model_fields.items():
-        if name in overrides:
-            list_item[name] = overrides[name]
-            continue
-        list_item[name] = _default_value(field.annotation, name)
-    return {
-        "status": "000",
-        "message": "정상적으로 처리되었습니다",
-        "list": [list_item],
-    }
-
-
-def _default_value(annotation: Any, field_name: str) -> Any:
-    origin = get_origin(annotation)
-    if origin is None:
-        if annotation is int:
-            return 1
-        if annotation is float:
-            return 1.0
-        return f"{field_name}-value"
-    if origin is Literal:
-        return get_args(annotation)[0]
-    if origin in (types.UnionType, Union):
-        args = [arg for arg in get_args(annotation) if arg is not type(None)]
-        if not args:
-            return None
-        return _default_value(args[0], field_name)
-    return f"{field_name}-value"
+    return _build_payload(item_type, overrides=overrides)
 
 
 def assert_query_params(request, expected: dict[str, str]) -> None:
