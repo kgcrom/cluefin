@@ -86,46 +86,34 @@ def socket_client_params(auth_dev, approval_key):
 @pytest.mark.asyncio
 async def test_websocket_connection(socket_client_params):
     """Test WebSocket connection to KIS prod server."""
-    try:
-        async with SocketClient(**socket_client_params) as client:
-            assert client.connected is True
+    async with SocketClient(**socket_client_params) as client:
+        assert client.connected is True
 
-        assert client.connected is False
-
-    except Exception as e:
-        pytest.fail(f"WebSocket connection failed: {e}")
+    assert client.connected is False
 
 
 @pytest.mark.asyncio
 async def test_subscribe_execution(socket_client_params):
     """Test subscribing to real-time bond execution data."""
-    try:
-        async with SocketClient(**socket_client_params) as client:
-            realtime = OnmarketBondRealtimeQuote(client)
+    async with SocketClient(**socket_client_params) as client:
+        realtime = OnmarketBondRealtimeQuote(client)
 
-            await realtime.subscribe_execution(BOND_CODE)
+        await realtime.subscribe_execution(BOND_CODE)
 
-            assert f"H0BJCNT0:{BOND_CODE}" in client.subscriptions
-
-    except Exception as e:
-        pytest.fail(f"Subscription failed: {e}")
+        assert f"H0BJCNT0:{BOND_CODE}" in client.subscriptions
 
 
 @pytest.mark.asyncio
 async def test_unsubscribe_execution(socket_client_params):
     """Test unsubscribing from real-time bond execution data."""
-    try:
-        async with SocketClient(**socket_client_params) as client:
-            realtime = OnmarketBondRealtimeQuote(client)
+    async with SocketClient(**socket_client_params) as client:
+        realtime = OnmarketBondRealtimeQuote(client)
 
-            await realtime.subscribe_execution(BOND_CODE)
-            assert f"H0BJCNT0:{BOND_CODE}" in client.subscriptions
+        await realtime.subscribe_execution(BOND_CODE)
+        assert f"H0BJCNT0:{BOND_CODE}" in client.subscriptions
 
-            await realtime.unsubscribe_execution(BOND_CODE)
-            assert f"H0BJCNT0:{BOND_CODE}" not in client.subscriptions
-
-    except Exception as e:
-        pytest.fail(f"Unsubscription failed: {e}")
+        await realtime.unsubscribe_execution(BOND_CODE)
+        assert f"H0BJCNT0:{BOND_CODE}" not in client.subscriptions
 
 
 @pytest.mark.asyncio
@@ -134,76 +122,68 @@ async def test_receive_execution_data(socket_client_params):
 
     Note: This test may timeout outside market hours when no data is being sent.
     """
-    try:
-        async with SocketClient(**socket_client_params) as client:
-            realtime = OnmarketBondRealtimeQuote(client)
+    async with SocketClient(**socket_client_params) as client:
+        realtime = OnmarketBondRealtimeQuote(client)
 
-            await realtime.subscribe_execution(BOND_CODE)
+        await realtime.subscribe_execution(BOND_CODE)
 
-            data_received = False
-            timeout = 30
+        data_received = False
+        timeout = 30
 
-            async def receive_data():
-                nonlocal data_received
-                async for event in client.events():
-                    if event.event_type == "data" and event.tr_id == OnmarketBondRealtimeQuote.TR_ID_EXECUTION:
-                        executions = realtime.parse_execution_data(event.data["values"])
+        async def receive_data():
+            nonlocal data_received
+            async for event in client.events():
+                if event.event_type == "data" and event.tr_id == OnmarketBondRealtimeQuote.TR_ID_EXECUTION:
+                    executions = realtime.parse_execution_data(event.data["values"])
 
-                        assert isinstance(executions, list)
-                        assert len(executions) >= 1
-                        execution = executions[0]
+                    assert isinstance(executions, list)
+                    assert len(executions) >= 1
+                    execution = executions[0]
 
-                        assert isinstance(execution, OnmarketBondRealtimeExecutionItem)
-                        assert execution.stnd_iscd != ""
-                        assert execution.stck_prpr != ""
-                        assert execution.bond_cntg_ert != ""
+                    assert isinstance(execution, OnmarketBondRealtimeExecutionItem)
+                    assert execution.stnd_iscd != ""
+                    assert execution.stck_prpr != ""
+                    assert execution.bond_cntg_ert != ""
 
-                        data_received = True
-                        return
+                    data_received = True
+                    return
 
-            try:
-                await asyncio.wait_for(receive_data(), timeout=timeout)
-            except asyncio.TimeoutError:
-                pytest.skip(
-                    f"No bond execution data received within {timeout}s. "
-                    "This may be expected outside market hours (9:00-15:30 KST)."
-                )
+        try:
+            await asyncio.wait_for(receive_data(), timeout=timeout)
+        except asyncio.TimeoutError:
+            pytest.skip(
+                f"No bond execution data received within {timeout}s. "
+                "This may be expected outside market hours (9:00-15:30 KST)."
+            )
 
-            assert data_received is True
-
-    except Exception as e:
-        pytest.fail(f"Data reception failed: {e}")
+        assert data_received is True
 
 
 @pytest.mark.asyncio
 async def test_subscription_events(socket_client_params):
     """Test that execution subscription events are emitted correctly."""
-    try:
-        async with SocketClient(**socket_client_params) as client:
-            realtime = OnmarketBondRealtimeQuote(client)
+    async with SocketClient(**socket_client_params) as client:
+        realtime = OnmarketBondRealtimeQuote(client)
 
-            await realtime.subscribe_execution(BOND_CODE)
+        await realtime.subscribe_execution(BOND_CODE)
 
-            subscribed_event_found = False
+        subscribed_event_found = False
 
-            async def check_events():
-                nonlocal subscribed_event_found
-                async for event in client.events():
-                    if event.event_type == "subscribed":
-                        assert event.tr_id == "H0BJCNT0"
-                        assert event.tr_key == BOND_CODE
-                        subscribed_event_found = True
-                        return
+        async def check_events():
+            nonlocal subscribed_event_found
+            async for event in client.events():
+                if event.event_type == "subscribed":
+                    assert event.tr_id == "H0BJCNT0"
+                    assert event.tr_key == BOND_CODE
+                    subscribed_event_found = True
+                    return
 
-            try:
-                await asyncio.wait_for(check_events(), timeout=5)
-            except asyncio.TimeoutError:
-                pass
+        try:
+            await asyncio.wait_for(check_events(), timeout=5)
+        except asyncio.TimeoutError:
+            pass
 
-            assert subscribed_event_found is True
-
-    except Exception as e:
-        pytest.fail(f"Subscription event test failed: {e}")
+        assert subscribed_event_found is True
 
 
 # ===== Orderbook (H0BJASP0) Integration Tests =====
@@ -212,33 +192,25 @@ async def test_subscription_events(socket_client_params):
 @pytest.mark.asyncio
 async def test_subscribe_orderbook(socket_client_params):
     """Test subscribing to real-time bond orderbook data."""
-    try:
-        async with SocketClient(**socket_client_params) as client:
-            realtime = OnmarketBondRealtimeQuote(client)
+    async with SocketClient(**socket_client_params) as client:
+        realtime = OnmarketBondRealtimeQuote(client)
 
-            await realtime.subscribe_orderbook(BOND_CODE)
+        await realtime.subscribe_orderbook(BOND_CODE)
 
-            assert f"H0BJASP0:{BOND_CODE}" in client.subscriptions
-
-    except Exception as e:
-        pytest.fail(f"Orderbook subscription failed: {e}")
+        assert f"H0BJASP0:{BOND_CODE}" in client.subscriptions
 
 
 @pytest.mark.asyncio
 async def test_unsubscribe_orderbook(socket_client_params):
     """Test unsubscribing from real-time bond orderbook data."""
-    try:
-        async with SocketClient(**socket_client_params) as client:
-            realtime = OnmarketBondRealtimeQuote(client)
+    async with SocketClient(**socket_client_params) as client:
+        realtime = OnmarketBondRealtimeQuote(client)
 
-            await realtime.subscribe_orderbook(BOND_CODE)
-            assert f"H0BJASP0:{BOND_CODE}" in client.subscriptions
+        await realtime.subscribe_orderbook(BOND_CODE)
+        assert f"H0BJASP0:{BOND_CODE}" in client.subscriptions
 
-            await realtime.unsubscribe_orderbook(BOND_CODE)
-            assert f"H0BJASP0:{BOND_CODE}" not in client.subscriptions
-
-    except Exception as e:
-        pytest.fail(f"Orderbook unsubscription failed: {e}")
+        await realtime.unsubscribe_orderbook(BOND_CODE)
+        assert f"H0BJASP0:{BOND_CODE}" not in client.subscriptions
 
 
 @pytest.mark.asyncio
@@ -247,76 +219,68 @@ async def test_receive_orderbook_data(socket_client_params):
 
     Note: This test may timeout outside market hours when no data is being sent.
     """
-    try:
-        async with SocketClient(**socket_client_params) as client:
-            realtime = OnmarketBondRealtimeQuote(client)
+    async with SocketClient(**socket_client_params) as client:
+        realtime = OnmarketBondRealtimeQuote(client)
 
-            await realtime.subscribe_orderbook(BOND_CODE)
+        await realtime.subscribe_orderbook(BOND_CODE)
 
-            data_received = False
-            timeout = 30
+        data_received = False
+        timeout = 30
 
-            async def receive_data():
-                nonlocal data_received
-                async for event in client.events():
-                    if event.event_type == "data" and event.tr_id == OnmarketBondRealtimeQuote.TR_ID_ORDERBOOK:
-                        orderbooks = realtime.parse_orderbook_data(event.data["values"])
+        async def receive_data():
+            nonlocal data_received
+            async for event in client.events():
+                if event.event_type == "data" and event.tr_id == OnmarketBondRealtimeQuote.TR_ID_ORDERBOOK:
+                    orderbooks = realtime.parse_orderbook_data(event.data["values"])
 
-                        assert isinstance(orderbooks, list)
-                        assert len(orderbooks) >= 1
-                        orderbook = orderbooks[0]
+                    assert isinstance(orderbooks, list)
+                    assert len(orderbooks) >= 1
+                    orderbook = orderbooks[0]
 
-                        assert isinstance(orderbook, OnmarketBondRealtimeOrderbookItem)
-                        assert orderbook.stnd_iscd != ""
-                        assert orderbook.askp1 != ""
-                        assert orderbook.bidp1 != ""
+                    assert isinstance(orderbook, OnmarketBondRealtimeOrderbookItem)
+                    assert orderbook.stnd_iscd != ""
+                    assert orderbook.askp1 != ""
+                    assert orderbook.bidp1 != ""
 
-                        data_received = True
-                        return
+                    data_received = True
+                    return
 
-            try:
-                await asyncio.wait_for(receive_data(), timeout=timeout)
-            except asyncio.TimeoutError:
-                pytest.skip(
-                    f"No bond orderbook data received within {timeout}s. "
-                    "This may be expected outside market hours (9:00-15:30 KST)."
-                )
+        try:
+            await asyncio.wait_for(receive_data(), timeout=timeout)
+        except asyncio.TimeoutError:
+            pytest.skip(
+                f"No bond orderbook data received within {timeout}s. "
+                "This may be expected outside market hours (9:00-15:30 KST)."
+            )
 
-            assert data_received is True
-
-    except Exception as e:
-        pytest.fail(f"Orderbook data reception failed: {e}")
+        assert data_received is True
 
 
 @pytest.mark.asyncio
 async def test_orderbook_subscription_events(socket_client_params):
     """Test that orderbook subscription events are emitted correctly."""
-    try:
-        async with SocketClient(**socket_client_params) as client:
-            realtime = OnmarketBondRealtimeQuote(client)
+    async with SocketClient(**socket_client_params) as client:
+        realtime = OnmarketBondRealtimeQuote(client)
 
-            await realtime.subscribe_orderbook(BOND_CODE)
+        await realtime.subscribe_orderbook(BOND_CODE)
 
-            subscribed_event_found = False
+        subscribed_event_found = False
 
-            async def check_events():
-                nonlocal subscribed_event_found
-                async for event in client.events():
-                    if event.event_type == "subscribed":
-                        assert event.tr_id == "H0BJASP0"
-                        assert event.tr_key == BOND_CODE
-                        subscribed_event_found = True
-                        return
+        async def check_events():
+            nonlocal subscribed_event_found
+            async for event in client.events():
+                if event.event_type == "subscribed":
+                    assert event.tr_id == "H0BJASP0"
+                    assert event.tr_key == BOND_CODE
+                    subscribed_event_found = True
+                    return
 
-            try:
-                await asyncio.wait_for(check_events(), timeout=5)
-            except asyncio.TimeoutError:
-                pass
+        try:
+            await asyncio.wait_for(check_events(), timeout=5)
+        except asyncio.TimeoutError:
+            pass
 
-            assert subscribed_event_found is True
-
-    except Exception as e:
-        pytest.fail(f"Orderbook subscription event test failed: {e}")
+        assert subscribed_event_found is True
 
 
 # ===== Bond Index Execution (H0BICNT0) Integration Tests =====
@@ -325,33 +289,25 @@ async def test_orderbook_subscription_events(socket_client_params):
 @pytest.mark.asyncio
 async def test_subscribe_index_execution(socket_client_params):
     """Test subscribing to real-time bond index execution data."""
-    try:
-        async with SocketClient(**socket_client_params) as client:
-            realtime = OnmarketBondRealtimeQuote(client)
+    async with SocketClient(**socket_client_params) as client:
+        realtime = OnmarketBondRealtimeQuote(client)
 
-            await realtime.subscribe_index_execution(BOND_INDEX_CODE)
+        await realtime.subscribe_index_execution(BOND_INDEX_CODE)
 
-            assert f"H0BICNT0:{BOND_INDEX_CODE}" in client.subscriptions
-
-    except Exception as e:
-        pytest.fail(f"Index execution subscription failed: {e}")
+        assert f"H0BICNT0:{BOND_INDEX_CODE}" in client.subscriptions
 
 
 @pytest.mark.asyncio
 async def test_unsubscribe_index_execution(socket_client_params):
     """Test unsubscribing from real-time bond index execution data."""
-    try:
-        async with SocketClient(**socket_client_params) as client:
-            realtime = OnmarketBondRealtimeQuote(client)
+    async with SocketClient(**socket_client_params) as client:
+        realtime = OnmarketBondRealtimeQuote(client)
 
-            await realtime.subscribe_index_execution(BOND_INDEX_CODE)
-            assert f"H0BICNT0:{BOND_INDEX_CODE}" in client.subscriptions
+        await realtime.subscribe_index_execution(BOND_INDEX_CODE)
+        assert f"H0BICNT0:{BOND_INDEX_CODE}" in client.subscriptions
 
-            await realtime.unsubscribe_index_execution(BOND_INDEX_CODE)
-            assert f"H0BICNT0:{BOND_INDEX_CODE}" not in client.subscriptions
-
-    except Exception as e:
-        pytest.fail(f"Index execution unsubscription failed: {e}")
+        await realtime.unsubscribe_index_execution(BOND_INDEX_CODE)
+        assert f"H0BICNT0:{BOND_INDEX_CODE}" not in client.subscriptions
 
 
 @pytest.mark.asyncio
@@ -360,44 +316,40 @@ async def test_receive_index_execution_data(socket_client_params):
 
     Note: This test may timeout outside market hours when no data is being sent.
     """
-    try:
-        async with SocketClient(**socket_client_params) as client:
-            realtime = OnmarketBondRealtimeQuote(client)
+    async with SocketClient(**socket_client_params) as client:
+        realtime = OnmarketBondRealtimeQuote(client)
 
-            await realtime.subscribe_index_execution(BOND_INDEX_CODE)
+        await realtime.subscribe_index_execution(BOND_INDEX_CODE)
 
-            data_received = False
-            timeout = 30
+        data_received = False
+        timeout = 30
 
-            async def receive_data():
-                nonlocal data_received
-                async for event in client.events():
-                    if event.event_type == "data" and event.tr_id == OnmarketBondRealtimeQuote.TR_ID_INDEX_EXECUTION:
-                        index_data = realtime.parse_index_execution_data(event.data["values"])
+        async def receive_data():
+            nonlocal data_received
+            async for event in client.events():
+                if event.event_type == "data" and event.tr_id == OnmarketBondRealtimeQuote.TR_ID_INDEX_EXECUTION:
+                    index_data = realtime.parse_index_execution_data(event.data["values"])
 
-                        assert isinstance(index_data, list)
-                        assert len(index_data) >= 1
-                        item = index_data[0]
+                    assert isinstance(index_data, list)
+                    assert len(index_data) >= 1
+                    item = index_data[0]
 
-                        assert isinstance(item, OnmarketBondIndexRealtimeExecutionItem)
-                        assert item.nmix_id != ""
-                        assert item.totl_ernn_nmix != ""
+                    assert isinstance(item, OnmarketBondIndexRealtimeExecutionItem)
+                    assert item.nmix_id != ""
+                    assert item.totl_ernn_nmix != ""
 
-                        data_received = True
-                        return
+                    data_received = True
+                    return
 
-            try:
-                await asyncio.wait_for(receive_data(), timeout=timeout)
-            except asyncio.TimeoutError:
-                pytest.skip(
-                    f"No bond index execution data received within {timeout}s. "
-                    "This may be expected outside market hours (9:00-15:30 KST)."
-                )
+        try:
+            await asyncio.wait_for(receive_data(), timeout=timeout)
+        except asyncio.TimeoutError:
+            pytest.skip(
+                f"No bond index execution data received within {timeout}s. "
+                "This may be expected outside market hours (9:00-15:30 KST)."
+            )
 
-            assert data_received is True
-
-    except Exception as e:
-        pytest.fail(f"Index execution data reception failed: {e}")
+        assert data_received is True
 
 
 # ===== Combined Tests =====
@@ -406,51 +358,47 @@ async def test_receive_index_execution_data(socket_client_params):
 @pytest.mark.asyncio
 async def test_combined_execution_and_orderbook(socket_client_params):
     """Test subscribing to both execution and orderbook data simultaneously."""
-    try:
-        async with SocketClient(**socket_client_params) as client:
-            realtime = OnmarketBondRealtimeQuote(client)
+    async with SocketClient(**socket_client_params) as client:
+        realtime = OnmarketBondRealtimeQuote(client)
 
-            await realtime.subscribe_execution(BOND_CODE)
-            await asyncio.sleep(0.3)
-            await realtime.subscribe_orderbook(BOND_CODE)
+        await realtime.subscribe_execution(BOND_CODE)
+        await asyncio.sleep(0.3)
+        await realtime.subscribe_orderbook(BOND_CODE)
 
-            assert f"H0BJCNT0:{BOND_CODE}" in client.subscriptions
-            assert f"H0BJASP0:{BOND_CODE}" in client.subscriptions
+        assert f"H0BJCNT0:{BOND_CODE}" in client.subscriptions
+        assert f"H0BJASP0:{BOND_CODE}" in client.subscriptions
 
-            data_received = {"execution": False, "orderbook": False}
-            timeout = 30
+        data_received = {"execution": False, "orderbook": False}
+        timeout = 30
 
-            async def receive_data():
-                async for event in client.events():
-                    if event.event_type == "data":
-                        if event.tr_id == OnmarketBondRealtimeQuote.TR_ID_EXECUTION:
-                            executions = realtime.parse_execution_data(event.data["values"])
-                            assert isinstance(executions, list)
-                            assert len(executions) >= 1
-                            assert isinstance(executions[0], OnmarketBondRealtimeExecutionItem)
-                            data_received["execution"] = True
-                        elif event.tr_id == OnmarketBondRealtimeQuote.TR_ID_ORDERBOOK:
-                            orderbooks = realtime.parse_orderbook_data(event.data["values"])
-                            assert isinstance(orderbooks, list)
-                            assert len(orderbooks) >= 1
-                            assert isinstance(orderbooks[0], OnmarketBondRealtimeOrderbookItem)
-                            data_received["orderbook"] = True
+        async def receive_data():
+            async for event in client.events():
+                if event.event_type == "data":
+                    if event.tr_id == OnmarketBondRealtimeQuote.TR_ID_EXECUTION:
+                        executions = realtime.parse_execution_data(event.data["values"])
+                        assert isinstance(executions, list)
+                        assert len(executions) >= 1
+                        assert isinstance(executions[0], OnmarketBondRealtimeExecutionItem)
+                        data_received["execution"] = True
+                    elif event.tr_id == OnmarketBondRealtimeQuote.TR_ID_ORDERBOOK:
+                        orderbooks = realtime.parse_orderbook_data(event.data["values"])
+                        assert isinstance(orderbooks, list)
+                        assert len(orderbooks) >= 1
+                        assert isinstance(orderbooks[0], OnmarketBondRealtimeOrderbookItem)
+                        data_received["orderbook"] = True
 
-                        if data_received["execution"] or data_received["orderbook"]:
-                            return
+                    if data_received["execution"] or data_received["orderbook"]:
+                        return
 
-            try:
-                await asyncio.wait_for(receive_data(), timeout=timeout)
-            except asyncio.TimeoutError:
-                pytest.skip(
-                    f"No data received within {timeout}s. This may be expected outside market hours (9:00-15:30 KST)."
-                )
+        try:
+            await asyncio.wait_for(receive_data(), timeout=timeout)
+        except asyncio.TimeoutError:
+            pytest.skip(
+                f"No data received within {timeout}s. This may be expected outside market hours (9:00-15:30 KST)."
+            )
 
-            assert data_received["execution"] or data_received["orderbook"]
+        assert data_received["execution"] or data_received["orderbook"]
 
-            await realtime.unsubscribe_execution(BOND_CODE)
-            await realtime.unsubscribe_orderbook(BOND_CODE)
-            assert len(client.subscriptions) == 0
-
-    except Exception as e:
-        pytest.fail(f"Combined subscription test failed: {e}")
+        await realtime.unsubscribe_execution(BOND_CODE)
+        await realtime.unsubscribe_orderbook(BOND_CODE)
+        assert len(client.subscriptions) == 0

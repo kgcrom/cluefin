@@ -51,38 +51,6 @@ def handle_api_error(func):
     return wrapper
 
 
-# Stock Price Analysis Tests
-
-# TODO: Fix the API issue before enabling these tests
-
-# @pytest.mark.integration
-# def test_get_stock_price_rise_fall_nasdaq_rise(client):
-#     """Test stock price rise/fall for NASDAQ - rising stocks."""
-#     response = client.overseas_market_analysis.get_stock_price_rise_fall(
-#         excd="NAS",  # NASDAQ
-#         gubn="1",  # Rising
-#         mixn="3",  # 5 minutes ago
-#         vol_rang="0",
-#     )
-
-#     assert response is not None
-#     assert hasattr(response, 'output1')
-
-
-# @pytest.mark.integration
-# def test_get_stock_price_fluctuation_nyse_fall(client, common_params):
-#     """Test stock price fluctuation for NYSE - falling stocks."""
-#     response = client.overseas_market_analysis.get_stock_price_fluctuation(
-#         excd="NYS",  # NYSE
-#         gubn="0",  # Falling
-#         mixn="4",  # 10 minutes ago
-#         vol_rang="1"  # 100+ shares
-#     )
-
-#     assert response is not None
-#     assert hasattr(response, 'output1')
-
-
 # Volume Analysis Tests
 
 

@@ -136,29 +136,40 @@ def test_write_debug_artifact_ignores_os_errors(client: HttpClient, monkeypatch)
 
 
 @pytest.mark.parametrize(
-    ("status_code", "exception_type"),
+    ("method", "status_code", "exception_type"),
     [
-        (400, KISValidationError),
-        (401, KISAuthenticationError),
-        (403, KISAuthorizationError),
-        (429, KISRateLimitError),
-        (500, KISServerError),
-        (418, KISAPIError),
+        ("GET", 400, KISValidationError),
+        ("GET", 401, KISAuthenticationError),
+        ("GET", 403, KISAuthorizationError),
+        ("GET", 429, KISRateLimitError),
+        ("GET", 500, KISServerError),
+        ("GET", 418, KISAPIError),
+        ("POST", 400, KISValidationError),
+        ("POST", 401, KISAuthenticationError),
+        ("POST", 403, KISAuthorizationError),
+        ("POST", 429, KISRateLimitError),
+        ("POST", 500, KISServerError),
+        ("POST", 418, KISAPIError),
     ],
 )
-def test_get_raises_typed_errors(client: HttpClient, requests_mock, status_code, exception_type):
+def test_raises_typed_errors(client: HttpClient, requests_mock, method, status_code, exception_type):
     client.max_retries = 0
-    requests_mock.get(
-        "https://openapivts.koreainvestment.com:29443/uapi/error",
+    url = "https://openapivts.koreainvestment.com:29443/uapi/error"
+    register_mock = requests_mock.get if method == "GET" else requests_mock.post
+    register_mock(
+        url,
         status_code=status_code,
         headers={"Retry-After": "7"},
         json={"rt_cd": "1", "msg_cd": "ERR", "msg1": "error"},
     )
 
     with pytest.raises(exception_type) as exc_info:
-        client._get("/uapi/error", headers={"tr_id": "TR"}, params={"p": "v"})
+        if method == "GET":
+            client._get("/uapi/error", headers={"tr_id": "TR"}, params={"p": "v"})
+        else:
+            client._post("/uapi/error", headers={"tr_id": "TR"}, body={"p": "v"})
 
-    assert exc_info.value.request_context["method"] == "GET"
+    assert exc_info.value.request_context["method"] == method
     assert "headers" not in exc_info.value.request_context  # no credentials on exceptions
     if status_code == 429:
         assert exc_info.value.retry_after == 7
@@ -218,35 +229,6 @@ def test_post_success_records_debug(client: HttpClient, requests_mock):
 
     assert response.status_code == 200
     assert client.last_response_debug["request"]["body"] == {"ord": "1"}
-
-
-@pytest.mark.parametrize(
-    ("status_code", "exception_type"),
-    [
-        (400, KISValidationError),
-        (401, KISAuthenticationError),
-        (403, KISAuthorizationError),
-        (429, KISRateLimitError),
-        (500, KISServerError),
-        (418, KISAPIError),
-    ],
-)
-def test_post_raises_typed_errors(client: HttpClient, requests_mock, status_code, exception_type):
-    client.max_retries = 0
-    requests_mock.post(
-        "https://openapivts.koreainvestment.com:29443/uapi/post-error",
-        status_code=status_code,
-        headers={"Retry-After": "5"},
-        json={"rt_cd": "1", "msg_cd": "ERR", "msg1": "error"},
-    )
-
-    with pytest.raises(exception_type) as exc_info:
-        client._post("/uapi/post-error", headers={"tr_id": "TR"}, body={"p": "v"})
-
-    assert exc_info.value.request_context["method"] == "POST"
-    assert "headers" not in exc_info.value.request_context  # no credentials on exceptions
-    if status_code == 429:
-        assert exc_info.value.retry_after == 5
 
 
 @pytest.mark.parametrize(
