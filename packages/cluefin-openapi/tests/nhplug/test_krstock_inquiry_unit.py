@@ -84,21 +84,6 @@ class TestBalance:
         assert request.headers["cts"] == "NEXT-KEY"
         assert request.headers["cts_flag"] == "Y"
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/inquiry/v1/balance",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_inquiry.balance(
-                    act_no="00000000000",
-                    bnc_bse_cd="1",
-                    ltg_aot_dit_cd="1",
-                    aet_bse="1",
-                    qut_dit_cd="UNT",
-                )
-
 
 DAILY_ORDER_EXECUTION_BODY = {
     "rsp_cd": "00000",
@@ -160,19 +145,6 @@ class TestDailyOrderExecution:
         request = m.request_history[0]
         assert request.headers["cts"] == "NEXT-KEY"
         assert request.headers["cts_flag"] == "Y"
-
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/inquiry/v1/dailyOrderExecution",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_inquiry.daily_order_execution(
-                    act_no="00000000000",
-                    orr_dt="20260822",
-                    ost_cns_dit="0",
-                )
 
     def test_accepts_mock_success_code_xa102(self, client):
         # 모의서버는 조회 성공에 XA102("모의투자 조회가 완료되었습니다")를
@@ -251,20 +223,6 @@ class TestBuyableQuantity:
         assert request.headers["cts"] == "NEXT-KEY"
         assert request.headers["cts_flag"] == "Y"
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/inquiry/v1/buyableQuantity",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_inquiry.buyable_quantity(
-                    act_no="00000000000",
-                    iem_cd="005930",
-                    ost_dit_cd="1",
-                    nmn_pr_tp_cd="05",
-                )
-
 
 SELLABLE_QUANTITY_BODY = {
     "rsp_cd": "00000",
@@ -320,19 +278,6 @@ class TestSellableQuantity:
         request = m.request_history[0]
         assert request.headers["cts"] == "NEXT-KEY"
         assert request.headers["cts_flag"] == "Y"
-
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/inquiry/v1/sellableQuantity",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_inquiry.sellable_quantity(
-                    act_no="00000000000",
-                    iem_cd="005930",
-                    cfd_lon_cd="00",
-                )
 
 
 RESERVED_INQUIRY_BODY = {
@@ -396,19 +341,6 @@ class TestReservedInquiry:
         request = m.request_history[0]
         assert request.headers["cts"] == "NEXT-KEY"
         assert request.headers["cts_flag"] == "Y"
-
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/inquiry/v1/reservedInquiry",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_inquiry.reserved_inquiry(
-                    act_no="00000000000",
-                    sby_dit_cd="0",
-                    bkg_orr_tp_cd="0",
-                )
 
 
 REALIZED_PNL_BODY = {
@@ -478,20 +410,6 @@ class TestRealizedPnl:
         assert request.headers["cts"] == "NEXT-KEY"
         assert request.headers["cts_flag"] == "Y"
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/inquiry/v1/realizedPnl",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_inquiry.realized_pnl(
-                    act_no="00000000000",
-                    iqr_dit_cd1="0",
-                    fee_dit_cd="1",
-                    qut_dit_cd="UNT",
-                )
-
 
 ASSET_STATUS_BODY = {
     "rsp_cd": "00000",
@@ -560,20 +478,6 @@ class TestAssetStatus:
         request = m.request_history[0]
         assert request.headers["cts"] == "NEXT-KEY"
         assert request.headers["cts_flag"] == "Y"
-
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/inquiry/v1/assetStatus",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_inquiry.asset_status(
-                    act_no="00000000000",
-                    eal_aly_cd="2",
-                    aet_bse="1",
-                    qut_dit_cd="UNT",
-                )
 
 
 DAILY_PNL_BODY = {
@@ -651,19 +555,6 @@ class TestDailyPnl:
         assert request.headers["cts"] == "NEXT-KEY"
         assert request.headers["cts_flag"] == "Y"
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/inquiry/v1/dailyPnl",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_inquiry.daily_pnl(
-                    act_no="00000000000",
-                    iqr_sta_dt="20260723",
-                    iqr_end_dt="20260822",
-                )
-
 
 TRADING_PNL_BODY = {
     "rsp_cd": "00000",
@@ -729,19 +620,6 @@ class TestTradingPnl:
         assert request.headers["cts"] == "NEXT-KEY"
         assert request.headers["cts_flag"] == "Y"
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/inquiry/v1/tradingPnl",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_inquiry.trading_pnl(
-                    act_no="00000000000",
-                    iqr_sta_dt="20260723",
-                    iqr_end_dt="20260822",
-                )
-
 
 INTEGRATED_MARGIN_BODY = {
     "rsp_cd": "00000",
@@ -788,15 +666,6 @@ class TestIntegratedMargin:
         request = m.request_history[0]
         assert request.headers["cts"] == "NEXT-KEY"
         assert request.headers["cts_flag"] == "Y"
-
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/inquiry/v1/integratedMargin",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_inquiry.integrated_margin(act_no="00000000000")
 
 
 RIGHTS_HELD_BODY = {
@@ -862,15 +731,6 @@ class TestRightsHeld:
         assert request.headers["cts"] == "NEXT-KEY"
         assert request.headers["cts_flag"] == "Y"
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/inquiry/v1/rightsHeld",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_inquiry.rights_held(act_no="00000000000")
-
 
 RIGHTS_SCHEDULED_BODY = {
     "rsp_cd": "00000",
@@ -914,11 +774,88 @@ class TestRightsScheduled:
         assert request.headers["cts"] == "NEXT-KEY"
         assert request.headers["cts_flag"] == "Y"
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/inquiry/v1/rightsScheduled",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_inquiry.rights_scheduled(act_no="00000000000")
+
+FAILING_RSP_CD_CASES = [
+    pytest.param(
+        f"{BASE_PROD}/krstock/inquiry/v1/balance",
+        lambda client: client.krstock_inquiry.balance(
+            act_no="00000000000", bnc_bse_cd="1", ltg_aot_dit_cd="1", aet_bse="1", qut_dit_cd="UNT"
+        ),
+        id="balance",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/inquiry/v1/dailyOrderExecution",
+        lambda client: client.krstock_inquiry.daily_order_execution(
+            act_no="00000000000", orr_dt="20260822", ost_cns_dit="0"
+        ),
+        id="daily_order_execution",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/inquiry/v1/buyableQuantity",
+        lambda client: client.krstock_inquiry.buyable_quantity(
+            act_no="00000000000", iem_cd="005930", ost_dit_cd="1", nmn_pr_tp_cd="05"
+        ),
+        id="buyable_quantity",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/inquiry/v1/sellableQuantity",
+        lambda client: client.krstock_inquiry.sellable_quantity(act_no="00000000000", iem_cd="005930", cfd_lon_cd="00"),
+        id="sellable_quantity",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/inquiry/v1/reservedInquiry",
+        lambda client: client.krstock_inquiry.reserved_inquiry(act_no="00000000000", sby_dit_cd="0", bkg_orr_tp_cd="0"),
+        id="reserved_inquiry",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/inquiry/v1/realizedPnl",
+        lambda client: client.krstock_inquiry.realized_pnl(
+            act_no="00000000000", iqr_dit_cd1="0", fee_dit_cd="1", qut_dit_cd="UNT"
+        ),
+        id="realized_pnl",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/inquiry/v1/assetStatus",
+        lambda client: client.krstock_inquiry.asset_status(
+            act_no="00000000000", eal_aly_cd="2", aet_bse="1", qut_dit_cd="UNT"
+        ),
+        id="asset_status",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/inquiry/v1/dailyPnl",
+        lambda client: client.krstock_inquiry.daily_pnl(
+            act_no="00000000000", iqr_sta_dt="20260723", iqr_end_dt="20260822"
+        ),
+        id="daily_pnl",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/inquiry/v1/tradingPnl",
+        lambda client: client.krstock_inquiry.trading_pnl(
+            act_no="00000000000", iqr_sta_dt="20260723", iqr_end_dt="20260822"
+        ),
+        id="trading_pnl",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/inquiry/v1/integratedMargin",
+        lambda client: client.krstock_inquiry.integrated_margin(act_no="00000000000"),
+        id="integrated_margin",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/inquiry/v1/rightsHeld",
+        lambda client: client.krstock_inquiry.rights_held(act_no="00000000000"),
+        id="rights_held",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/inquiry/v1/rightsScheduled",
+        lambda client: client.krstock_inquiry.rights_scheduled(act_no="00000000000"),
+        id="rights_scheduled",
+    ),
+]
+
+
+@pytest.mark.parametrize("endpoint, call", FAILING_RSP_CD_CASES)
+def test_raises_on_failing_rsp_cd(client, endpoint, call):
+    with requests_mock.Mocker() as m:
+        m.post(endpoint, json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."})
+        with pytest.raises(NHPlugAPIError, match="IGW40018"):
+            call(client)

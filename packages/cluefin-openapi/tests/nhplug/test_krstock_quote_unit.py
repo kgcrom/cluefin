@@ -72,15 +72,6 @@ class TestCurrentPrice:
         assert response.body.output_1 is None
         assert response.body.output_2 is None
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/quote/v1/currentPrice",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_quote.current_price(market_cd="KRX", iem_cd="999999")
-
 
 CURRENT_EXECUTION_BODY = {
     "rsp_cd": "00000",
@@ -130,15 +121,6 @@ class TestCurrentExecution:
         sent = json.loads(m.request_history[0].text)["Input_0"]
         assert "array_cnt" not in sent
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/quote/v1/currentExecution",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_quote.current_execution(market_cd="KRX", iem_cd="999999")
-
 
 CURRENT_DAILY_BODY = {
     "rsp_cd": "00000",
@@ -182,15 +164,6 @@ class TestCurrentDaily:
 
         sent = json.loads(m.request_history[0].text)["Input_0"]
         assert "array_cnt" not in sent
-
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/quote/v1/currentDaily",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_quote.current_daily(market_cd="KRX", iem_cd="999999")
 
 
 CURRENT_INVESTOR_BODY = {
@@ -241,15 +214,6 @@ class TestCurrentInvestor:
             response = client.krstock_quote.current_investor(market_cd="KRX", iem_cd="005930", array_cnt="10")
 
         assert response.body.output_0 is None
-
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/quote/v1/currentInvestor",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_quote.current_investor(market_cd="KRX", iem_cd="999999", array_cnt="10")
 
 
 PERIOD_BODY = {
@@ -304,15 +268,6 @@ class TestPeriod:
         assert "edate" not in sent
         assert "array_cnt" not in sent
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/quote/v1/period",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_quote.period(market_cd="KRX", iem_cd="999999")
-
 
 AFTER_HOURS_CURRENT_BODY = {
     "rsp_cd": "00000",
@@ -363,15 +318,6 @@ class TestAfterHoursCurrent:
 
         assert response.body.output_0 is None
         assert response.body.output_1 is None
-
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/quote/v1/afterHoursCurrent",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_quote.after_hours_current(iem_cd="999999")
 
 
 CURRENT_AFTER_HOURS_DAILY_BODY = {
@@ -436,17 +382,6 @@ class TestCurrentAfterHoursDaily:
         assert response.body.output_0 is None
         assert response.body.output_1 is None
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/quote/v1/currentAfterHoursDaily",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_quote.current_after_hours_daily(
-                    iem_cd="999999", date="20260821", array_cnt="10", maxavg="5", gubun="1"
-                )
-
 
 CURRENT_AFTER_HOURS_EXECUTION_BODY = {
     "rsp_cd": "00000",
@@ -500,15 +435,6 @@ class TestCurrentAfterHoursExecution:
 
         assert response.body.output_0 is None
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/quote/v1/currentAfterHoursExecution",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_quote.current_after_hours_execution(iem_cd="999999")
-
 
 AFTER_HOURS_EXPECTED_BODY = {
     "rsp_cd": "00000",
@@ -558,15 +484,6 @@ class TestAfterHoursExpected:
             response = client.krstock_quote.after_hours_expected(iem_cd="005930")
 
         assert response.body.output_0 is None
-
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/quote/v1/afterHoursExpected",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_quote.after_hours_expected(iem_cd="999999")
 
 
 ETF_CURRENT_BODY = {
@@ -635,15 +552,6 @@ class TestEtfCurrent:
         assert response.body.output_3 is None
         assert response.body.output_4 is None
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/quote/v1/etfCurrent",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_quote.etf_current(iem_cd="999999")
-
 
 ETF_COMPONENTS_BODY = {
     "rsp_cd": "00000",
@@ -693,14 +601,74 @@ class TestEtfComponents:
 
         assert response.body.output_0 is None
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/quote/v1/etfComponents",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_quote.etf_components(iem_cd="999999")
+
+FAILING_RSP_CD_CASES = [
+    pytest.param(
+        f"{BASE_PROD}/krstock/quote/v1/currentPrice",
+        lambda client: client.krstock_quote.current_price(market_cd="KRX", iem_cd="999999"),
+        id="current_price",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/quote/v1/currentExecution",
+        lambda client: client.krstock_quote.current_execution(market_cd="KRX", iem_cd="999999"),
+        id="current_execution",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/quote/v1/currentDaily",
+        lambda client: client.krstock_quote.current_daily(market_cd="KRX", iem_cd="999999"),
+        id="current_daily",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/quote/v1/currentInvestor",
+        lambda client: client.krstock_quote.current_investor(market_cd="KRX", iem_cd="999999", array_cnt="10"),
+        id="current_investor",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/quote/v1/period",
+        lambda client: client.krstock_quote.period(market_cd="KRX", iem_cd="999999"),
+        id="period",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/quote/v1/afterHoursCurrent",
+        lambda client: client.krstock_quote.after_hours_current(iem_cd="999999"),
+        id="after_hours_current",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/quote/v1/currentAfterHoursDaily",
+        lambda client: client.krstock_quote.current_after_hours_daily(
+            iem_cd="999999", date="20260821", array_cnt="10", maxavg="5", gubun="1"
+        ),
+        id="current_after_hours_daily",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/quote/v1/currentAfterHoursExecution",
+        lambda client: client.krstock_quote.current_after_hours_execution(iem_cd="999999"),
+        id="current_after_hours_execution",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/quote/v1/afterHoursExpected",
+        lambda client: client.krstock_quote.after_hours_expected(iem_cd="999999"),
+        id="after_hours_expected",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/quote/v1/etfCurrent",
+        lambda client: client.krstock_quote.etf_current(iem_cd="999999"),
+        id="etf_current",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/quote/v1/etfComponents",
+        lambda client: client.krstock_quote.etf_components(iem_cd="999999"),
+        id="etf_components",
+    ),
+]
+
+
+@pytest.mark.parametrize("endpoint, call", FAILING_RSP_CD_CASES)
+def test_raises_on_failing_rsp_cd(client, endpoint, call):
+    with requests_mock.Mocker() as m:
+        m.post(endpoint, json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."})
+        with pytest.raises(NHPlugAPIError, match="IGW40018"):
+            call(client)
 
 
 class TestFieldDescriptions:

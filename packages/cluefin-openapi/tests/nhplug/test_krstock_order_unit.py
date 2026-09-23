@@ -92,22 +92,6 @@ class TestCashBuy:
 
         assert response.body.output_0 is None
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/order/v1/cashBuy",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_order.cash_buy(
-                    act_no="00000000000",
-                    iem_cd="005930",
-                    orr_qty=1,
-                    nmn_pr_tp_cd="05",
-                    rmt_mkt_cd="KRX",
-                    sor_mkt_sli_yn="N",
-                )
-
 
 class TestCashSell:
     def test_sends_input_envelope_and_parses_output(self, client):
@@ -198,23 +182,6 @@ class TestCreditBuy:
         assert "lon_dt" not in sent
         assert "sop_cnd_pr" not in sent
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/order/v1/creditBuy",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_order.credit_buy(
-                    act_no="00000000000",
-                    iem_cd="005930",
-                    orr_qty=1,
-                    nmn_pr_tp_cd="05",
-                    cfd_lon_cd="01",
-                    rmt_mkt_cd="KRX",
-                    sor_mkt_sli_yn="N",
-                )
-
 
 class TestCreditSell:
     def test_sends_input_envelope_and_parses_output(self, client):
@@ -266,23 +233,6 @@ class TestCreditSell:
         assert "orr_amt" not in sent
         assert "lon_dt" not in sent
         assert "sop_cnd_pr" not in sent
-
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/order/v1/creditSell",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_order.credit_sell(
-                    act_no="00000000000",
-                    iem_cd="005930",
-                    orr_qty=1,
-                    nmn_pr_tp_cd="05",
-                    cfd_lon_cd="01",
-                    rmt_mkt_cd="KRX",
-                    sor_mkt_sli_yn="N",
-                )
 
 
 MODIFY_BODY = {
@@ -348,25 +298,6 @@ class TestModify:
 
         assert response.body.output_0 is None
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/order/v1/modify",
-                json={"rsp_cd": "IGW40032", "rsp_msg": "원주문번호가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40032"):
-                client.krstock_order.modify(
-                    act_no="50051036881",
-                    org_mkt_orr_no=99999,
-                    all_pat_dit_cd="1",
-                    iem_cd="005930",
-                    cor_qty=1,
-                    cor_pr=49000,
-                    sop_cnd_pr=0,
-                    rmt_mkt_cd="KRX",
-                    sor_mkt_sli_yn="N",
-                )
-
 
 CANCEL_BODY = {
     "rsp_cd": "00000",
@@ -418,21 +349,6 @@ class TestCancel:
             )
 
         assert response.body.output_0 is None
-
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/order/v1/cancel",
-                json={"rsp_cd": "IGW40032", "rsp_msg": "원주문번호가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40032"):
-                client.krstock_order.cancel(
-                    act_no="50051036881",
-                    org_mkt_orr_no=99999,
-                    all_pat_dit_cd="1",
-                    iem_cd="005930",
-                    cor_qty=1,
-                )
 
 
 RESERVED_ORDER_BODY = {
@@ -513,27 +429,6 @@ class TestReservedOrder:
         assert "orr_pr_rge_hlm_pr" not in sent
         assert "orr_pr_rge_llm_pr" not in sent
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/order/v1/reservedOrder",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_order.reserved_order(
-                    act_no="00000000000",
-                    iem_cd="005930",
-                    sby_dit_cd="2",
-                    frs_sba_orr_yn="N",
-                    nmn_pr_tp_cd="05",
-                    cfd_lon_cd="00",
-                    orr_qty=1,
-                    orr_uit_pr=0,
-                    bkg_orr_tp_cd="1",
-                    bkg_orr_enf_tp_cd="1",
-                    rmt_mkt_cd="KRX",
-                )
-
 
 RESERVED_CANCEL_BODY = {
     "rsp_cd": "00000",
@@ -591,18 +486,121 @@ class TestReservedCancel:
         sent = json.loads(m.request_history[0].text)["Input_0"]
         assert "bkg_rtn_dt" not in sent
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(
-                f"{BASE_PROD}/krstock/order/v1/reservedCancel",
-                json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."},
-            )
-            with pytest.raises(NHPlugAPIError, match="IGW40018"):
-                client.krstock_order.reserved_cancel(
-                    act_no="00000000000",
-                    sby_dit_cd="2",
-                    iem_cd="005930",
-                    bkg_orr_no=99999,
-                    bkg_orr_tp_cd="1",
-                    rmt_mkt_cd="KRX",
-                )
+
+FAILING_RSP_CD_CASES = [
+    pytest.param(
+        f"{BASE_PROD}/krstock/order/v1/cashBuy",
+        lambda client: client.krstock_order.cash_buy(
+            act_no="00000000000",
+            iem_cd="005930",
+            orr_qty=1,
+            nmn_pr_tp_cd="05",
+            rmt_mkt_cd="KRX",
+            sor_mkt_sli_yn="N",
+        ),
+        "IGW40018",
+        "계좌정보가 존재하지 않습니다.",
+        id="cash_buy",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/order/v1/creditBuy",
+        lambda client: client.krstock_order.credit_buy(
+            act_no="00000000000",
+            iem_cd="005930",
+            orr_qty=1,
+            nmn_pr_tp_cd="05",
+            cfd_lon_cd="01",
+            rmt_mkt_cd="KRX",
+            sor_mkt_sli_yn="N",
+        ),
+        "IGW40018",
+        "계좌정보가 존재하지 않습니다.",
+        id="credit_buy",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/order/v1/creditSell",
+        lambda client: client.krstock_order.credit_sell(
+            act_no="00000000000",
+            iem_cd="005930",
+            orr_qty=1,
+            nmn_pr_tp_cd="05",
+            cfd_lon_cd="01",
+            rmt_mkt_cd="KRX",
+            sor_mkt_sli_yn="N",
+        ),
+        "IGW40018",
+        "계좌정보가 존재하지 않습니다.",
+        id="credit_sell",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/order/v1/modify",
+        lambda client: client.krstock_order.modify(
+            act_no="50051036881",
+            org_mkt_orr_no=99999,
+            all_pat_dit_cd="1",
+            iem_cd="005930",
+            cor_qty=1,
+            cor_pr=49000,
+            sop_cnd_pr=0,
+            rmt_mkt_cd="KRX",
+            sor_mkt_sli_yn="N",
+        ),
+        "IGW40032",
+        "원주문번호가 존재하지 않습니다.",
+        id="modify",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/order/v1/cancel",
+        lambda client: client.krstock_order.cancel(
+            act_no="50051036881",
+            org_mkt_orr_no=99999,
+            all_pat_dit_cd="1",
+            iem_cd="005930",
+            cor_qty=1,
+        ),
+        "IGW40032",
+        "원주문번호가 존재하지 않습니다.",
+        id="cancel",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/order/v1/reservedOrder",
+        lambda client: client.krstock_order.reserved_order(
+            act_no="00000000000",
+            iem_cd="005930",
+            sby_dit_cd="2",
+            frs_sba_orr_yn="N",
+            nmn_pr_tp_cd="05",
+            cfd_lon_cd="00",
+            orr_qty=1,
+            orr_uit_pr=0,
+            bkg_orr_tp_cd="1",
+            bkg_orr_enf_tp_cd="1",
+            rmt_mkt_cd="KRX",
+        ),
+        "IGW40018",
+        "계좌정보가 존재하지 않습니다.",
+        id="reserved_order",
+    ),
+    pytest.param(
+        f"{BASE_PROD}/krstock/order/v1/reservedCancel",
+        lambda client: client.krstock_order.reserved_cancel(
+            act_no="00000000000",
+            sby_dit_cd="2",
+            iem_cd="005930",
+            bkg_orr_no=99999,
+            bkg_orr_tp_cd="1",
+            rmt_mkt_cd="KRX",
+        ),
+        "IGW40018",
+        "계좌정보가 존재하지 않습니다.",
+        id="reserved_cancel",
+    ),
+]
+
+
+@pytest.mark.parametrize("endpoint, call, rsp_cd, rsp_msg", FAILING_RSP_CD_CASES)
+def test_raises_on_failing_rsp_cd(client, endpoint, call, rsp_cd, rsp_msg):
+    with requests_mock.Mocker() as m:
+        m.post(endpoint, json={"rsp_cd": rsp_cd, "rsp_msg": rsp_msg})
+        with pytest.raises(NHPlugAPIError, match=rsp_cd):
+            call(client)
