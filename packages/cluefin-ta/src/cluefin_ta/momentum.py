@@ -49,8 +49,10 @@ def RSI(close: np.ndarray, timeperiod: int = 14) -> np.ndarray:
     avg_gain = np.mean(gains[:timeperiod])
     avg_loss = np.mean(losses[:timeperiod])
 
-    # Calculate first RSI value
-    if avg_loss == 0:
+    # Calculate first RSI value (ta-lib returns 0 when there is no movement at all)
+    if avg_gain == 0 and avg_loss == 0:
+        result[timeperiod] = 0.0
+    elif avg_loss == 0:
         result[timeperiod] = 100.0
     else:
         rs = avg_gain / avg_loss
@@ -62,7 +64,9 @@ def RSI(close: np.ndarray, timeperiod: int = 14) -> np.ndarray:
 
     # Calculate RSI from smoothed values (starting from timeperiod+1)
     for i in range(timeperiod + 1, n):
-        if smoothed_losses[i - 1] == 0:
+        if smoothed_gains[i - 1] == 0 and smoothed_losses[i - 1] == 0:
+            result[i] = 0.0
+        elif smoothed_losses[i - 1] == 0:
             result[i] = 100.0
         else:
             rs = smoothed_gains[i - 1] / smoothed_losses[i - 1]

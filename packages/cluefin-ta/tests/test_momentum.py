@@ -33,13 +33,29 @@ class TestRSI:
         result = RSI(short_data, timeperiod=14)
         assert np.all(np.isnan(result))
 
+    def test_rsi_empty_array(self):
+        """Empty input: ta-lib returns an empty array, lock down the same behavior."""
+        empty = np.array([], dtype=np.float64)
+        expected = talib.RSI(empty, timeperiod=14)
+        actual = RSI(empty, timeperiod=14)
+        assert len(actual) == len(expected) == 0
+
     def test_rsi_constant_prices(self, constant_data):
-        """Test RSI with constant prices (no change)."""
-        result = RSI(constant_data, timeperiod=14)
-        # When there's no price change, RSI should be 50 or undefined
-        # With constant prices, all changes are 0, so RSI is undefined or neutral
-        # ta-lib returns NaN for constant prices
-        _ = result[~np.isnan(result)]  # Just verify it doesn't raise
+        """Test RSI with constant prices (no change) matches ta-lib exactly (0, not 100)."""
+        timeperiod = 14
+        expected = talib.RSI(constant_data, timeperiod=timeperiod)
+        actual = RSI(constant_data, timeperiod=timeperiod)
+
+        np.testing.assert_array_equal(np.isnan(actual), np.isnan(expected))
+        mask = ~np.isnan(expected)
+        np.testing.assert_allclose(actual[mask], expected[mask], rtol=1e-10)
+
+    def test_rsi_flat_then_rising(self):
+        """Flat prices followed by a rise exercise the Wilder-smoothed zero branch."""
+        close = np.r_[np.full(20, 10.0), np.arange(10.0, 20.0)]
+        expected = talib.RSI(close, timeperiod=14)
+        actual = RSI(close, timeperiod=14)
+        np.testing.assert_allclose(actual, expected, rtol=1e-10, equal_nan=True)
 
 
 class TestMACD:
@@ -80,6 +96,8 @@ class TestMACD:
         macd, signal, hist = MACD(short_data)
         # All should be NaN for short array
         assert np.all(np.isnan(macd))
+        assert np.all(np.isnan(signal))
+        assert np.all(np.isnan(hist))
 
 
 class TestSTOCH:

@@ -44,6 +44,30 @@ class TestTRANGE:
         result = TRANGE(high, low, close)
         assert np.isnan(result[0])
 
+    def test_trange_short_array_matches_talib(self):
+        """TRANGE has no lookback period; verify parity on a short (len 3) array."""
+        high = np.array([100.0, 101.0, 102.0])
+        low = np.array([99.0, 100.0, 101.0])
+        close = np.array([100.5, 101.5, 102.5])
+
+        expected = talib.TRANGE(high, low, close)
+        actual = TRANGE(high, low, close)
+
+        mask = ~np.isnan(expected)
+        np.testing.assert_array_equal(np.isnan(actual), np.isnan(expected))
+        np.testing.assert_allclose(actual[mask], expected[mask], rtol=1e-10)
+
+    def test_trange_length_one_matches_talib(self):
+        """Verify TRANGE parity on a single-bar array (all-NaN, no previous close)."""
+        high = np.array([100.0])
+        low = np.array([99.0])
+        close = np.array([100.5])
+
+        expected = talib.TRANGE(high, low, close)
+        actual = TRANGE(high, low, close)
+
+        np.testing.assert_array_equal(np.isnan(actual), np.isnan(expected))
+
 
 class TestATR:
     """Tests for Average True Range."""
@@ -86,6 +110,13 @@ class TestATR:
         # Value at timeperiod should not be NaN
         assert not np.isnan(result[timeperiod])
 
+    def test_atr_empty_array(self):
+        """Empty input: ta-lib returns an empty array, lock down the same behavior."""
+        empty = np.array([], dtype=np.float64)
+        expected = talib.ATR(empty, empty, empty, timeperiod=14)
+        actual = ATR(empty, empty, empty, timeperiod=14)
+        assert len(actual) == len(expected) == 0
+
 
 class TestNATR:
     """Tests for Normalized Average True Range."""
@@ -116,3 +147,25 @@ class TestNATR:
         mask = ~np.isnan(natr)
         expected_natr = (atr[mask] / close[mask]) * 100
         np.testing.assert_allclose(natr[mask], expected_natr, rtol=1e-10)
+
+    def test_natr_short_array_matches_talib(self):
+        """Test NATR with array shorter than timeperiod (all-NaN, per ta-lib)."""
+        high = np.array([100.0, 101.0, 102.0])
+        low = np.array([99.0, 100.0, 101.0])
+        close = np.array([100.5, 101.5, 102.5])
+
+        expected = talib.NATR(high, low, close, timeperiod=14)
+        actual = NATR(high, low, close, timeperiod=14)
+
+        np.testing.assert_array_equal(np.isnan(actual), np.isnan(expected))
+
+    def test_natr_length_one_matches_talib(self):
+        """Verify NATR parity on a single-bar array (all-NaN)."""
+        high = np.array([100.0])
+        low = np.array([99.0])
+        close = np.array([100.5])
+
+        expected = talib.NATR(high, low, close, timeperiod=14)
+        actual = NATR(high, low, close, timeperiod=14)
+
+        np.testing.assert_array_equal(np.isnan(actual), np.isnan(expected))

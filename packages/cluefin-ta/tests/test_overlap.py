@@ -3,9 +3,30 @@ Tests for overlap indicators (SMA, EMA, WMA, DEMA, TEMA, KAMA, BBANDS).
 """
 
 import numpy as np
+import pytest
 import talib
 
 from cluefin_ta import BBANDS, DEMA, EMA, KAMA, SMA, TEMA, WMA
+
+# (name, our func, timeperiod) for indicators whose NaN warm-up prefix is
+# exactly (timeperiod - 1) values, matching ta-lib's simple lookback convention.
+NAN_PREFIX_CASES = [
+    ("SMA", SMA, 20),
+    ("EMA", EMA, 12),
+    ("WMA", WMA, 20),
+    ("KAMA", KAMA, 30),
+]
+
+# (name, our func, timeperiod) for single-output overlap indicators, used to
+# verify they return an all-NaN result when the input is shorter than the lookback.
+SHORT_ARRAY_CASES = [
+    ("SMA", SMA, 10),
+    ("EMA", EMA, 10),
+    ("WMA", WMA, 10),
+    ("DEMA", DEMA, 10),
+    ("TEMA", TEMA, 10),
+    ("KAMA", KAMA, 10),
+]
 
 
 class TestSMA:
@@ -21,27 +42,19 @@ class TestSMA:
         mask = ~np.isnan(expected)
         np.testing.assert_allclose(actual[mask], expected[mask], rtol=1e-10)
 
-    def test_sma_nan_prefix(self, sample_close):
-        """Verify SMA has correct NaN prefix."""
-        timeperiod = 20
-        result = SMA(sample_close, timeperiod=timeperiod)
-
-        # First (timeperiod - 1) values should be NaN
-        assert np.all(np.isnan(result[: timeperiod - 1]))
-        # Value at index (timeperiod - 1) should not be NaN
-        assert not np.isnan(result[timeperiod - 1])
-
-    def test_sma_short_array(self, short_data):
-        """Test SMA with array shorter than timeperiod."""
-        result = SMA(short_data, timeperiod=10)
-        assert np.all(np.isnan(result))
-
     def test_sma_default_timeperiod(self, sample_close):
         """Test SMA with default timeperiod."""
         result = SMA(sample_close)
         expected = talib.SMA(sample_close, timeperiod=30)
         mask = ~np.isnan(expected)
         np.testing.assert_allclose(result[mask], expected[mask], rtol=1e-10)
+
+    def test_sma_empty_array(self):
+        """Empty input: ta-lib returns an empty array, lock down the same behavior."""
+        empty = np.array([], dtype=np.float64)
+        expected = talib.SMA(empty, timeperiod=20)
+        actual = SMA(empty, timeperiod=20)
+        assert len(actual) == len(expected) == 0
 
 
 class TestEMA:
@@ -56,21 +69,6 @@ class TestEMA:
         # Compare non-NaN values
         mask = ~np.isnan(expected)
         np.testing.assert_allclose(actual[mask], expected[mask], rtol=1e-10)
-
-    def test_ema_nan_prefix(self, sample_close):
-        """Verify EMA has correct NaN prefix."""
-        timeperiod = 12
-        result = EMA(sample_close, timeperiod=timeperiod)
-
-        # First (timeperiod - 1) values should be NaN
-        assert np.all(np.isnan(result[: timeperiod - 1]))
-        # Value at index (timeperiod - 1) should not be NaN
-        assert not np.isnan(result[timeperiod - 1])
-
-    def test_ema_short_array(self, short_data):
-        """Test EMA with array shorter than timeperiod."""
-        result = EMA(short_data, timeperiod=10)
-        assert np.all(np.isnan(result))
 
 
 class TestBBANDS:
@@ -112,6 +110,17 @@ class TestBBANDS:
         assert np.all(np.isnan(middle))
         assert np.all(np.isnan(lower))
 
+    def test_bbands_length_one_matches_talib(self):
+        """Verify BBANDS parity on a single-bar array (all-NaN, per ta-lib)."""
+        close = np.array([100.5])
+
+        expected_upper, expected_middle, expected_lower = talib.BBANDS(close, timeperiod=20)
+        actual_upper, actual_middle, actual_lower = BBANDS(close, timeperiod=20)
+
+        np.testing.assert_array_equal(actual_upper, expected_upper)
+        np.testing.assert_array_equal(actual_middle, expected_middle)
+        np.testing.assert_array_equal(actual_lower, expected_lower)
+
 
 class TestWMA:
     """Tests for Weighted Moving Average."""
@@ -124,19 +133,6 @@ class TestWMA:
 
         mask = ~np.isnan(expected)
         np.testing.assert_allclose(actual[mask], expected[mask], rtol=1e-10)
-
-    def test_wma_nan_prefix(self, sample_close):
-        """Verify WMA has correct NaN prefix."""
-        timeperiod = 20
-        result = WMA(sample_close, timeperiod=timeperiod)
-
-        assert np.all(np.isnan(result[: timeperiod - 1]))
-        assert not np.isnan(result[timeperiod - 1])
-
-    def test_wma_short_array(self, short_data):
-        """Test WMA with array shorter than timeperiod."""
-        result = WMA(short_data, timeperiod=10)
-        assert np.all(np.isnan(result))
 
 
 class TestDEMA:
@@ -151,11 +147,6 @@ class TestDEMA:
         mask = ~np.isnan(expected)
         np.testing.assert_allclose(actual[mask], expected[mask], rtol=1e-10)
 
-    def test_dema_short_array(self, short_data):
-        """Test DEMA with array shorter than timeperiod."""
-        result = DEMA(short_data, timeperiod=10)
-        assert np.all(np.isnan(result))
-
 
 class TestTEMA:
     """Tests for Triple Exponential Moving Average."""
@@ -168,11 +159,6 @@ class TestTEMA:
 
         mask = ~np.isnan(expected)
         np.testing.assert_allclose(actual[mask], expected[mask], rtol=1e-10)
-
-    def test_tema_short_array(self, short_data):
-        """Test TEMA with array shorter than timeperiod."""
-        result = TEMA(short_data, timeperiod=10)
-        assert np.all(np.isnan(result))
 
 
 class TestKAMA:
@@ -187,15 +173,18 @@ class TestKAMA:
         mask = ~np.isnan(expected)
         np.testing.assert_allclose(actual[mask], expected[mask], rtol=1e-6)
 
-    def test_kama_nan_prefix(self, sample_close):
-        """Verify KAMA has correct NaN prefix."""
-        timeperiod = 30
-        result = KAMA(sample_close, timeperiod=timeperiod)
 
-        assert np.all(np.isnan(result[: timeperiod - 1]))
-        assert not np.isnan(result[timeperiod - 1])
+@pytest.mark.parametrize("name,func,timeperiod", NAN_PREFIX_CASES, ids=[c[0] for c in NAN_PREFIX_CASES])
+def test_nan_prefix(name, func, timeperiod, sample_close):
+    """Verify each indicator's NaN warm-up prefix is exactly (timeperiod - 1) values."""
+    result = func(sample_close, timeperiod=timeperiod)
 
-    def test_kama_short_array(self, short_data):
-        """Test KAMA with array shorter than timeperiod."""
-        result = KAMA(short_data, timeperiod=10)
-        assert np.all(np.isnan(result))
+    assert np.all(np.isnan(result[: timeperiod - 1]))
+    assert not np.isnan(result[timeperiod - 1])
+
+
+@pytest.mark.parametrize("name,func,timeperiod", SHORT_ARRAY_CASES, ids=[c[0] for c in SHORT_ARRAY_CASES])
+def test_short_array(name, func, timeperiod, short_data):
+    """Test each indicator returns all-NaN when input is shorter than timeperiod."""
+    result = func(short_data, timeperiod=timeperiod)
+    assert np.all(np.isnan(result))
