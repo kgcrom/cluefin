@@ -186,6 +186,29 @@ class TestReceiveLoop:
         assert message.trnm == "B"
 
 
+class TestEvents:
+    @pytest.mark.asyncio
+    async def test_events_yields_queued_messages_in_order(self, client):
+        await client._emit(KiwoomWebSocketMessage(trnm="A"))
+        await client._emit(KiwoomWebSocketMessage(trnm="B"))
+        client._connected = True
+
+        received: list[str] = []
+        async for message in client.events():
+            received.append(message.trnm)
+            if len(received) == 2:
+                # 큐가 비었으니 연결을 끊어 제너레이터가 종료되도록 한다.
+                client._connected = False
+
+        assert received == ["A", "B"]
+
+    @pytest.mark.asyncio
+    async def test_events_terminates_immediately_when_disconnected_and_queue_empty(self, client):
+        client._connected = False
+        received = [message async for message in client.events()]
+        assert received == []
+
+
 class TestSend:
     @pytest.mark.asyncio
     async def test_send_serializes_pydantic_by_alias(self, client):
