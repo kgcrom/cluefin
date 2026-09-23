@@ -6,7 +6,6 @@ from typing import Any, Literal, Mapping, Type
 
 import pytest
 import requests_mock
-from _helpers import build_payload as _build_payload
 from pydantic import BaseModel
 
 from cluefin_openapi.dart._client import Client
@@ -26,6 +25,8 @@ from cluefin_openapi.dart._periodic_report_financial_statement_types import (
     XbrlTaxonomy,
     XbrlTaxonomyItem,
 )
+
+from ._helpers import build_payload as _build_payload
 
 BASE_URL = "https://opendart.fss.or.kr"
 AUTH_KEY = "test-auth-key"

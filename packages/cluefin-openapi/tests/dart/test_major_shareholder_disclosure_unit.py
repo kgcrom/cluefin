@@ -1,10 +1,11 @@
 import pytest
 import requests_mock
-from _helpers import build_payload
 
 from cluefin_openapi.dart import _major_shareholder_disclosure_types as types
 from cluefin_openapi.dart._client import Client
 from cluefin_openapi.dart._major_shareholder_disclosure import MajorShareholderDisclosure
+
+from ._helpers import build_payload
 
 BASE_URL = "https://opendart.fss.or.kr"
 AUTH_KEY = "test-auth-key"

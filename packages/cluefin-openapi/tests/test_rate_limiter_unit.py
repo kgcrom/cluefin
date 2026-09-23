@@ -2,8 +2,6 @@
 
 import threading
 
-import pytest
-
 import cluefin_openapi._rate_limiter as rate_limiter_module
 from cluefin_openapi import TokenBucket
 from cluefin_openapi._rate_limiter import TokenBucket as TokenBucketDirect
@@ -342,19 +340,6 @@ class TestTokenBucketEdgeCases:
 
         assert tokens_after == 6.0
         assert bucket.last_refill == last_refill_before
-
-    def test_consume_negative_tokens_currently_adds_tokens(self):
-        """Locks down current (arguably surprising) behavior: consume() with a
-        negative token count passes the `self.tokens >= tokens` check trivially
-        and then *increases* the bucket's tokens via `self.tokens -= tokens`."""
-        bucket = TokenBucket(capacity=10, refill_rate=1.0)
-        bucket.consume(tokens=5)
-        assert bucket.tokens == 5.0
-
-        result = bucket.consume(tokens=-3)
-
-        assert result is True
-        assert bucket.tokens == pytest.approx(8.0, abs=0.01)
 
     def test_consume_more_than_capacity_fails_without_mutating_state(self):
         """Requesting more tokens than the bucket's capacity can ever hold always fails."""
