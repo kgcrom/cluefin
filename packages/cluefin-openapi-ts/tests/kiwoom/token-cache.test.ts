@@ -5,25 +5,24 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   FileTokenCacheStore,
-  kisTokenCacheFileName,
+  kiwoomTokenCacheFileName,
   MemoryTokenCacheStore,
   type TokenCacheEntry,
-} from '../../src/kis/token-cache';
+} from '../../src/kiwoom/token-cache';
 
 const entry: TokenCacheEntry = {
-  accessToken: 'access-token',
+  token: 'access-token',
   tokenType: 'Bearer',
-  expiresIn: 86_400,
-  accessTokenTokenExpired: '2026-05-05T12:00:00Z',
-  cachedAt: '2026-05-04T12:00:00Z',
+  expiresDt: '2026-05-05T12:00:00',
+  cachedAt: '2026-05-04T12:00:00',
 };
 
 let tempDirs: string[] = [];
 
 const createCachePath = async (): Promise<string> => {
-  const dir = await mkdtemp(join(tmpdir(), 'cluefin-openapi-token-cache-'));
+  const dir = await mkdtemp(join(tmpdir(), 'cluefin-openapi-kiwoom-token-cache-'));
   tempDirs.push(dir);
-  return join(dir, 'kis-token-cache.json');
+  return join(dir, kiwoomTokenCacheFileName('dev', 'app-key'));
 };
 
 afterEach(async () => {
@@ -31,13 +30,13 @@ afterEach(async () => {
   tempDirs = [];
 });
 
-describe('kisTokenCacheFileName', () => {
+describe('kiwoomTokenCacheFileName', () => {
   it('matches the Python TokenManager._cache_file_name output', () => {
-    // uv run python -c "from cluefin_openapi.kis._token_manager import TokenManager as T; print(T._cache_file_name('prod','abc'))"
+    // uv run python -c "from cluefin_openapi.kiwoom._token_manager import TokenManager as T; print(T._cache_file_name('prod','abc'))"
     // sha256('abc')[:8] == 'ba7816bf'
-    expect(kisTokenCacheFileName('prod', 'abc')).toBe('.kis_token_cache_prod_ba7816bf.json');
-    expect(kisTokenCacheFileName('dev', 'abc')).toBe('.kis_token_cache_dev_ba7816bf.json');
-    expect(kisTokenCacheFileName()).toBe('.kis_token_cache.json');
+    expect(kiwoomTokenCacheFileName('prod', 'abc')).toBe('.kiwoom_token_cache_prod_ba7816bf.json');
+    expect(kiwoomTokenCacheFileName('dev', 'abc')).toBe('.kiwoom_token_cache_dev_ba7816bf.json');
+    expect(kiwoomTokenCacheFileName()).toBe('.kiwoom_token_cache.json');
   });
 });
 
@@ -46,10 +45,8 @@ describe('MemoryTokenCacheStore', () => {
     const store = new MemoryTokenCacheStore();
 
     expect(await store.get()).toBeNull();
-
     await store.set(entry);
     expect(await store.get()).toEqual(entry);
-
     await store.clear();
     expect(await store.get()).toBeNull();
   });
@@ -57,59 +54,54 @@ describe('MemoryTokenCacheStore', () => {
 
 describe('FileTokenCacheStore', () => {
   it('returns null when the cache file is missing', async () => {
-    const store = new FileTokenCacheStore(await createCachePath());
-
-    expect(await store.get()).toBeNull();
+    expect(await new FileTokenCacheStore(await createCachePath()).get()).toBeNull();
   });
 
-  it('reads the Python-compatible cache format with fallback values', async () => {
+  it('reads the JSON written by the Python TokenManager', async () => {
     const filePath = await createCachePath();
     await writeFile(
       filePath,
       JSON.stringify({
         token: {
-          access_token: 'cached-token',
-          access_token_token_expired: '2026-05-05T12:00:00Z',
+          expires_dt: '2026-05-05T12:00:00',
+          token_type: 'Bearer',
+          token: 'cached-token',
         },
+        cached_at: '2026-05-04T12:00:00',
       }),
       'utf-8',
     );
 
-    const store = new FileTokenCacheStore(filePath);
-
-    expect(await store.get()).toMatchObject({
-      accessToken: 'cached-token',
+    expect(await new FileTokenCacheStore(filePath).get()).toEqual({
+      token: 'cached-token',
       tokenType: 'Bearer',
-      expiresIn: 86_400,
-      accessTokenTokenExpired: '2026-05-05T12:00:00Z',
+      expiresDt: '2026-05-05T12:00:00',
+      cachedAt: '2026-05-04T12:00:00',
     });
-    expect((await store.get())?.cachedAt).toEqual(expect.any(String));
   });
 
   it('writes the Python-compatible cache format', async () => {
     const filePath = await createCachePath();
-    const store = new FileTokenCacheStore(filePath);
-
-    await store.set(entry);
+    await new FileTokenCacheStore(filePath).set(entry);
 
     expect(JSON.parse(await readFile(filePath, 'utf-8'))).toEqual({
       token: {
-        access_token: 'access-token',
+        expires_dt: '2026-05-05T12:00:00',
         token_type: 'Bearer',
-        expires_in: 86_400,
-        access_token_token_expired: '2026-05-05T12:00:00Z',
+        token: 'access-token',
       },
-      cached_at: '2026-05-04T12:00:00Z',
+      cached_at: '2026-05-04T12:00:00',
     });
   });
 
-  it('clears the cache file and ignores missing files', async () => {
+  it('round-trips its own written file', async () => {
     const filePath = await createCachePath();
     const store = new FileTokenCacheStore(filePath);
 
     await store.set(entry);
-    await store.clear();
+    expect(await store.get()).toEqual(entry);
 
+    await store.clear();
     expect(await store.get()).toBeNull();
     await expect(store.clear()).resolves.toBeUndefined();
   });

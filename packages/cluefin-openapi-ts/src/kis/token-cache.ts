@@ -1,3 +1,7 @@
+import { createHash } from 'node:crypto';
+
+import { writeJsonAtomic } from '../core/token-file.js';
+
 export interface TokenCacheEntry {
   accessToken: string;
   tokenType: string;
@@ -11,6 +15,22 @@ export interface TokenCacheStore {
   set(entry: TokenCacheEntry): Promise<void>;
   clear(): Promise<void>;
 }
+
+/**
+ * Build the env- and credential-scoped cache file name used by the Python TokenManager.
+ *
+ * KIS 토큰은 실전(prod)/모의(dev) 서버끼리, 그리고 서로 다른 app_key 끼리 호환되지
+ * 않는다 (`EGW00123` "기간이 만료된 token"). `cluefin_openapi.kis._token_manager
+ * .TokenManager._cache_file_name` 과 정확히 동일한 포맷이어야 파이썬·TS 가 같은
+ * 캐시 파일을 공유한다 — 한쪽만 바꾸지 말 것.
+ */
+export const kisTokenCacheFileName = (env?: string, appKey?: string): string => {
+  const parts: string[] = [];
+  if (env) parts.push(env);
+  if (appKey) parts.push(createHash('sha256').update(appKey, 'utf-8').digest('hex').slice(0, 8));
+  const suffix = parts.length > 0 ? `_${parts.join('_')}` : '';
+  return `.kis_token_cache${suffix}.json`;
+};
 
 export class MemoryTokenCacheStore implements TokenCacheStore {
   private cache: TokenCacheEntry | null = null;
@@ -70,7 +90,6 @@ export class FileTokenCacheStore implements TokenCacheStore {
   }
 
   public async set(entry: TokenCacheEntry): Promise<void> {
-    const fs = await import('node:fs/promises');
     const data = {
       token: {
         access_token: entry.accessToken,
@@ -80,7 +99,7 @@ export class FileTokenCacheStore implements TokenCacheStore {
       },
       cached_at: entry.cachedAt,
     };
-    await fs.writeFile(this.filePath, JSON.stringify(data, null, 2), 'utf-8');
+    await writeJsonAtomic(this.filePath, data);
   }
 
   public async clear(): Promise<void> {

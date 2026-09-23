@@ -6,6 +6,7 @@ import {
   NhplugServerError,
   NhplugValidationError,
 } from '../core/errors.js';
+import { localIsoNow } from '../core/token-file.js';
 import { MemoryTokenCacheStore, type TokenCacheEntry, type TokenCacheStore } from './token-cache.js';
 
 const tokenResponseSchema = z.object({
@@ -48,8 +49,6 @@ export interface NhplugTokenRevokeResponse {
   errorCode?: string | undefined;
   errorDescription?: string | undefined;
 }
-
-const nowIso = (): string => new Date().toISOString();
 
 // 캐시 만료 버퍼 1시간. 토큰 응답에 절대 만료시각이 없으므로 cachedAt + expiresIn 으로 계산한다.
 const EXPIRY_BUFFER_MS = 60 * 60 * 1000;
@@ -132,7 +131,7 @@ export class NhplugAuth {
       tokenType: parsed.token_type,
       expiresIn: Number(parsed.expires_in),
     };
-    await this.tokenCacheStore.set({ ...token, cachedAt: nowIso() });
+    await this.tokenCacheStore.set({ ...token, cachedAt: localIsoNow() });
     return token;
   }
 

@@ -56,4 +56,4 @@ export { OverseasRealtimeQuote } from './overseas-realtime-quote.js';
 export type { KisSocketClientOptions } from './socket-client.js';
 export { KisSocketClient } from './socket-client.js';
 export type { TokenCacheEntry, TokenCacheStore } from './token-cache.js';
-export { FileTokenCacheStore, MemoryTokenCacheStore } from './token-cache.js';
+export { FileTokenCacheStore, kisTokenCacheFileName, MemoryTokenCacheStore } from './token-cache.js';

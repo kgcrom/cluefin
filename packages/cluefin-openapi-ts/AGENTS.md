@@ -20,13 +20,22 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - `generate:metadata` regex-parses `packages/cluefin-openapi`'s Python source to produce
   the TS metadata files. Nothing re-runs it automatically: when the Python package's
   endpoints change, re-run it or the TS side silently goes stale.
-- The KIS token cache JSON (`<repo>/data/.kis_token_cache.json`) is **shared with the
-  Python package** — same file, same snake_case format — because KIS allows only 1
-  token generation per minute. Don't change the format on one side only.
-- The nhplug token cache file is **also shared with Python**, but is scoped by **app_key
-  only** (`nhplugTokenCacheFileName`), not by env — one NH token is issued on the live
-  domain and used for both live and mock calls. The KIS store is env-scoped. Don't
-  "unify" the two schemes; changing either breaks cache sharing with Python.
+- All three brokers (KIS, Kiwoom, nhplug) share their token cache **files** with Python
+  under the same `<tmpdir>/cluefin-openapi/` directory, each using Python's own naming
+  rule (`kisTokenCacheFileName` / `kiwoomTokenCacheFileName` / `nhplugTokenCacheFileName`
+  in each broker's `token-cache.ts`, mirroring that broker's `TokenManager._cache_file_name`
+  byte for byte) and JSON shape. The nhplug token cache file is scoped by **app_key only**
+  (one NH token is issued on the live domain and used for both live and mock calls); the
+  KIS and Kiwoom stores are env-scoped (`env` + `sha256(app_key)[:8]`). Don't "unify" the
+  schemes across brokers — each mirrors its own Python `TokenManager`, and changing a
+  Python `_cache_file_name` or cache JSON shape means updating the matching TS file by
+  hand (nothing enforces this automatically). Because the file is shared, a revoke in
+  either language kills the token the other is reusing — the KIS/NH revoke integration
+  tests only run with `KIS_TEST_REVOKE=1` / `NHPLUG_TEST_REVOKE=1`.
+- Cache files go through `src/core/token-file.ts`: `cached_at` is naive local time with no
+  `Z`/offset (`localIsoNow`) — Python 3.10's `fromisoformat` rejects `Z`, and the Python
+  `TokenManager` then keeps the token but silently drops its 6h max-age check. Writes are
+  0600 + atomic rename (`writeJsonAtomic`), matching Python's `write_json_atomic`.
 - Endpoint-count tests hardcode totals (`tests/core/endpoint-count.test.ts`, KIS
   contract tests); bump them whenever metadata changes.
 
