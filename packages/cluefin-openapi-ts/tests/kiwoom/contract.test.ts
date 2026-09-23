@@ -1,8 +1,15 @@
 import { expect, test } from 'vitest';
 
+import { domesticAccountEndpoints } from '../../src/kiwoom/metadata/domestic-account';
 import { domesticChartEndpoints } from '../../src/kiwoom/metadata/domestic-chart';
+import { domesticEtfEndpoints } from '../../src/kiwoom/metadata/domestic-etf';
+import { domesticForeignEndpoints } from '../../src/kiwoom/metadata/domestic-foreign';
+import { domesticMarketConditionEndpoints } from '../../src/kiwoom/metadata/domestic-market-condition';
+import { domesticOrderEndpoints } from '../../src/kiwoom/metadata/domestic-order';
 import { domesticRankInfoEndpoints } from '../../src/kiwoom/metadata/domestic-rank-info';
+import { domesticSectorEndpoints } from '../../src/kiwoom/metadata/domestic-sector';
 import { domesticStockInfoEndpoints } from '../../src/kiwoom/metadata/domestic-stock-info';
+import { domesticThemeEndpoints } from '../../src/kiwoom/metadata/domestic-theme';
 
 const sampleValue = (name: string, fallback?: unknown): string => {
   if (fallback !== undefined) {
@@ -28,6 +35,13 @@ test('Kiwoom metadata should expose expected endpoint count', () => {
   expect(domesticChartEndpoints.length).toBe(14);
   expect(domesticStockInfoEndpoints.length).toBe(28);
   expect(domesticRankInfoEndpoints.length).toBe(23);
+  expect(domesticAccountEndpoints.length).toBe(25);
+  expect(domesticEtfEndpoints.length).toBe(9);
+  expect(domesticForeignEndpoints.length).toBe(3);
+  expect(domesticMarketConditionEndpoints.length).toBe(20);
+  expect(domesticOrderEndpoints.length).toBe(4);
+  expect(domesticSectorEndpoints.length).toBe(6);
+  expect(domesticThemeEndpoints.length).toBe(2);
 });
 
 test('Kiwoom endpoint metadata should map request path, headers, and body', async () => {
@@ -83,6 +97,46 @@ test('Kiwoom endpoint metadata should map request path, headers, and body', asyn
         (input: Record<string, unknown>) => Promise<unknown>
       >,
       defs: domesticRankInfoEndpoints,
+    },
+    {
+      instance: client.domesticAccount as unknown as Record<
+        string,
+        (input: Record<string, unknown>) => Promise<unknown>
+      >,
+      defs: domesticAccountEndpoints,
+    },
+    {
+      instance: client.domesticEtf as unknown as Record<string, (input: Record<string, unknown>) => Promise<unknown>>,
+      defs: domesticEtfEndpoints,
+    },
+    {
+      instance: client.domesticForeign as unknown as Record<
+        string,
+        (input: Record<string, unknown>) => Promise<unknown>
+      >,
+      defs: domesticForeignEndpoints,
+    },
+    {
+      instance: client.domesticMarketCondition as unknown as Record<
+        string,
+        (input: Record<string, unknown>) => Promise<unknown>
+      >,
+      defs: domesticMarketConditionEndpoints,
+    },
+    {
+      instance: client.domesticOrder as unknown as Record<string, (input: Record<string, unknown>) => Promise<unknown>>,
+      defs: domesticOrderEndpoints,
+    },
+    {
+      instance: client.domesticSector as unknown as Record<
+        string,
+        (input: Record<string, unknown>) => Promise<unknown>
+      >,
+      defs: domesticSectorEndpoints,
+    },
+    {
+      instance: client.domesticTheme as unknown as Record<string, (input: Record<string, unknown>) => Promise<unknown>>,
+      defs: domesticThemeEndpoints,
     },
   ];
 

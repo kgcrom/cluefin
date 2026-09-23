@@ -9,11 +9,7 @@ import {
 } from '../../src/core/errors';
 import { KisAuth } from '../../src/kis/auth';
 import type { TokenCacheEntry, TokenCacheStore } from '../../src/kis/token-cache';
-
-interface FetchCall {
-  input: string;
-  init: RequestInit;
-}
+import { createFetchMock, jsonResponse } from '../_helpers/fetch-mock';
 
 class TestTokenCacheStore implements TokenCacheStore {
   public entry: TokenCacheEntry | null;
@@ -49,21 +45,6 @@ const cachedToken = (expiresAt = futureIso()): TokenCacheEntry => ({
   accessTokenTokenExpired: expiresAt,
   cachedAt: '2026-05-05T00:00:00Z',
 });
-
-const createFetchMock = (response: Response): { calls: FetchCall[]; fetchMock: typeof fetch } => {
-  const calls: FetchCall[] = [];
-  const fetchMock: typeof fetch = async (input, init) => {
-    calls.push({ input: String(input), init: init ?? {} });
-    return response;
-  };
-  return { calls, fetchMock };
-};
-
-const jsonResponse = (body: unknown, status = 200): Response =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { 'content-type': 'application/json' },
-  });
 
 const createTokenResponse = (): Response =>
   jsonResponse({

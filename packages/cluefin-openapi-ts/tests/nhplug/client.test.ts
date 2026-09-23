@@ -140,6 +140,16 @@ describe('NhplugClient.invokeEndpoint', () => {
     );
   });
 
+  it('calls fetch exactly once for a failing rsp_cd (no HTTP-level retry)', async () => {
+    const { calls, fetchMock } = createFetchMock(() => jsonResponse({ rsp_cd: '40010', rsp_msg: '계좌번호 오류' }));
+
+    await expect(createClient(fetchMock).invokeEndpoint(endpoint, { actNo: '1' })).rejects.toBeInstanceOf(
+      NhplugApiError,
+    );
+
+    expect(calls).toHaveLength(1);
+  });
+
   it('treats XA102 as success (모의투자 조회 완료 응답)', async () => {
     const { fetchMock } = createFetchMock(() =>
       jsonResponse({ rsp_cd: 'XA102', rsp_msg: '모의투자 조회가 완료되었습니다', Output_0: [{ act_no: '1' }] }),

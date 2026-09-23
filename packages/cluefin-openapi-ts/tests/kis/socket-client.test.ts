@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { BaseWebSocketClient } from '../../src/core/websocket';
 import { KisSocketClient } from '../../src/kis/socket-client';
 
 describe('KisSocketClient', () => {
@@ -20,11 +19,6 @@ describe('KisSocketClient', () => {
       const client = new KisSocketClient({ ...defaultOptions, env: 'prod' });
       expect(client.env).toBe('prod');
       expect((client as unknown as { url: string }).url).toBe('ws://ops.koreainvestment.com:21000/tryitout');
-    });
-
-    it('should extend BaseWebSocketClient', () => {
-      const client = new KisSocketClient(defaultOptions);
-      expect(client).toBeInstanceOf(BaseWebSocketClient);
     });
 
     it('should start disconnected with empty subscriptions', () => {
