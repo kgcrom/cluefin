@@ -34,6 +34,13 @@ class TestRSI:
         result = RSI(short_data, timeperiod=14)
         assert np.all(np.isnan(result))
 
+    def test_rsi_empty_array(self):
+        """Empty input: ta-lib returns an empty array, lock down the same behavior."""
+        empty = np.array([], dtype=np.float64)
+        expected = talib.RSI(empty, timeperiod=14)
+        actual = RSI(empty, timeperiod=14)
+        assert len(actual) == len(expected) == 0
+
     @pytest.mark.xfail(
         strict=True,
         reason=(

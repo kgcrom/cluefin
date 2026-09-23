@@ -53,6 +53,33 @@ class TestOBV:
         # On a down day, OBV should subtract volume
         assert result[1] == result[0] - volume[1]
 
+    def test_obv_short_array_matches_talib(self):
+        """OBV has no lookback period; verify parity on a short (len 3) array."""
+        close = np.array([100.5, 101.5, 100.0])
+        volume = np.array([1000.0, 2000.0, 3000.0])
+
+        expected = talib.OBV(close, volume)
+        actual = OBV(close, volume)
+
+        np.testing.assert_allclose(actual, expected, rtol=1e-10)
+
+    def test_obv_length_one_matches_talib(self):
+        """Verify OBV parity on a single-bar array."""
+        close = np.array([100.5])
+        volume = np.array([1000.0])
+
+        expected = talib.OBV(close, volume)
+        actual = OBV(close, volume)
+
+        np.testing.assert_allclose(actual, expected, rtol=1e-10)
+
+    def test_obv_empty_array(self):
+        """Empty input: ta-lib returns an empty array, lock down the same behavior."""
+        empty = np.array([], dtype=np.float64)
+        expected = talib.OBV(empty, empty)
+        actual = OBV(empty, empty)
+        assert len(actual) == len(expected) == 0
+
 
 class TestAD:
     """Tests for Accumulation/Distribution Line."""
@@ -110,6 +137,30 @@ class TestAD:
         # MFM = ((110-90) - (110-110)) / (110-90) = 20/20 = 1
         # Money Flow Volume = 1 * 1000 = 1000
         assert result[0] == 1000.0
+
+    def test_ad_short_array_matches_talib(self):
+        """AD has no lookback period; verify parity on a short (len 3) array."""
+        high = np.array([100.0, 101.0, 102.0])
+        low = np.array([99.0, 100.0, 101.0])
+        close = np.array([100.5, 101.5, 102.5])
+        volume = np.array([1000.0, 2000.0, 3000.0])
+
+        expected = talib.AD(high, low, close, volume)
+        actual = AD(high, low, close, volume)
+
+        np.testing.assert_allclose(actual, expected, rtol=1e-10)
+
+    def test_ad_length_one_matches_talib(self):
+        """Verify AD parity on a single-bar array."""
+        high = np.array([110.0])
+        low = np.array([90.0])
+        close = np.array([100.5])
+        volume = np.array([1000.0])
+
+        expected = talib.AD(high, low, close, volume)
+        actual = AD(high, low, close, volume)
+
+        np.testing.assert_allclose(actual, expected, rtol=1e-10)
 
 
 class TestADOSC:

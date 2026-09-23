@@ -174,6 +174,24 @@ class TestSORTINO:
         if np.any(returns < 0):
             assert sortino >= sharpe
 
+    def test_sortino_all_negative_below_risk_free(self):
+        """Test Sortino when every return is negative and below the risk-free rate."""
+        returns = np.array([-0.01, -0.02, -0.015, -0.03, -0.01])
+        risk_free = 0.0
+        periods_per_year = 252
+
+        sortino = SORTINO(returns, risk_free=risk_free, periods_per_year=periods_per_year)
+
+        excess_returns = returns - risk_free
+        mean_excess = np.mean(excess_returns)
+        negative_returns = excess_returns[excess_returns < 0]
+        downside_std = np.sqrt(np.mean(negative_returns**2))
+        expected = (mean_excess / downside_std) * np.sqrt(periods_per_year)
+
+        assert np.isfinite(sortino)
+        assert sortino < 0
+        np.testing.assert_allclose(sortino, expected, rtol=1e-10)
+
 
 class TestCALMAR:
     """Tests for Calmar Ratio."""

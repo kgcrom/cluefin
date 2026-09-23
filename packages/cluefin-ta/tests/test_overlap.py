@@ -49,6 +49,13 @@ class TestSMA:
         mask = ~np.isnan(expected)
         np.testing.assert_allclose(result[mask], expected[mask], rtol=1e-10)
 
+    def test_sma_empty_array(self):
+        """Empty input: ta-lib returns an empty array, lock down the same behavior."""
+        empty = np.array([], dtype=np.float64)
+        expected = talib.SMA(empty, timeperiod=20)
+        actual = SMA(empty, timeperiod=20)
+        assert len(actual) == len(expected) == 0
+
 
 class TestEMA:
     """Tests for Exponential Moving Average."""
@@ -102,6 +109,17 @@ class TestBBANDS:
         assert np.all(np.isnan(upper))
         assert np.all(np.isnan(middle))
         assert np.all(np.isnan(lower))
+
+    def test_bbands_length_one_matches_talib(self):
+        """Verify BBANDS parity on a single-bar array (all-NaN, per ta-lib)."""
+        close = np.array([100.5])
+
+        expected_upper, expected_middle, expected_lower = talib.BBANDS(close, timeperiod=20)
+        actual_upper, actual_middle, actual_lower = BBANDS(close, timeperiod=20)
+
+        np.testing.assert_array_equal(actual_upper, expected_upper)
+        np.testing.assert_array_equal(actual_middle, expected_middle)
+        np.testing.assert_array_equal(actual_lower, expected_lower)
 
 
 class TestWMA:
