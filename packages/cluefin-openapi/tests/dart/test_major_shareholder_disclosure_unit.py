@@ -1,9 +1,13 @@
 import pytest
+import requests_mock
+from _helpers import build_payload
 
 from cluefin_openapi.dart import _major_shareholder_disclosure_types as types
 from cluefin_openapi.dart._client import Client
 from cluefin_openapi.dart._major_shareholder_disclosure import MajorShareholderDisclosure
-from cluefin_openapi.dart._model import DartHttpBody
+
+BASE_URL = "https://opendart.fss.or.kr"
+AUTH_KEY = "test-auth-key"
 
 METHOD_SPECS = [
     (
@@ -227,7 +231,7 @@ METHOD_SPECS = [
 
 @pytest.fixture
 def client() -> Client:
-    return Client(auth_key="test-auth-key")
+    return Client(auth_key=AUTH_KEY)
 
 
 @pytest.mark.parametrize(
@@ -236,53 +240,37 @@ def client() -> Client:
 )
 def test_major_shareholder_disclosure_calls_expected_endpoint(
     client: Client,
-    monkeypatch: pytest.MonkeyPatch,
     method_name: str,
     endpoint: str,
     response_model,
     list_model,
 ) -> None:
     service = MajorShareholderDisclosure(client)
-    captured: dict[str, object] = {}
-    payload = {"result": {"status": "000", "message": "정상적으로 처리되었습니다"}}
+    payload = build_payload(list_model)
 
-    def fake_get(path: str, *, params: dict[str, str]) -> dict[str, dict[str, str]]:
-        captured["path"] = path
-        captured["params"] = params
-        return payload
+    with requests_mock.Mocker() as mock_requests:
+        mock_requests.get(f"{BASE_URL}{endpoint}", json=payload, status_code=200)
 
-    def fake_parse(
-        cls,
-        raw_payload: dict[str, object],
-        *,
-        list_model,
-        result_key: str = "result",
-    ):
-        captured["parse_cls"] = cls
-        captured["parse_payload"] = raw_payload
-        captured["list_model"] = list_model
-        captured["result_key"] = result_key
-        sentinel = object()
-        captured["sentinel"] = sentinel
-        return sentinel
+        method = getattr(service, method_name)
+        result = method("00126380", "20240101", "20240131")
 
-    monkeypatch.setattr(client, "_get", fake_get)
-    monkeypatch.setattr(DartHttpBody, "parse", classmethod(fake_parse))
+        assert isinstance(result, response_model)
+        assert result.result.status == "000"
+        assert result.result.message == "정상적으로 처리되었습니다"
+        assert result.result.list is not None
+        assert len(result.result.list) == 1
 
-    method = getattr(service, method_name)
-    result = method("00126380", "20240101", "20240131")
+        item = result.result.list[0]
+        assert isinstance(item, list_model)
+        payload_list = payload["list"]
+        assert item.model_dump(by_alias=True) == payload_list[0]
 
-    assert result is captured["sentinel"]
-    assert captured["path"] == endpoint
-    assert captured["params"] == {
-        "corp_code": "00126380",
-        "bgn_de": "20240101",
-        "end_de": "20240131",
-    }
-    assert captured["parse_cls"] is response_model
-    assert captured["parse_payload"] is payload
-    assert captured["list_model"] is list_model
-    assert captured["result_key"] == "result"
+        last_request = mock_requests.last_request
+        assert last_request is not None
+        assert last_request.qs["crtfc_key"] == [AUTH_KEY]
+        assert last_request.qs["corp_code"] == ["00126380"]
+        assert last_request.qs["bgn_de"] == ["20240101"]
+        assert last_request.qs["end_de"] == ["20240131"]
 
 
 @pytest.mark.parametrize("method_name", [spec[0] for spec in METHOD_SPECS])
