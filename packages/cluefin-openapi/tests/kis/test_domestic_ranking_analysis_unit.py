@@ -11,15 +11,26 @@ from cluefin_openapi.kis import _domestic_ranking_analysis as ranking_analysis_m
 from cluefin_openapi.kis._domestic_ranking_analysis import DomesticRankingAnalysis
 from cluefin_openapi.kis._domestic_ranking_analysis_types import (
     HtsInquiryTop20,
+    StockAfterHoursFluctuationRank,
+    StockAfterHoursVolumeRank,
     StockCreditBalanceTop,
+    StockDisparityIndexRank,
     StockDividendYieldTop,
+    StockExecutionStrengthTop,
+    StockExpectedExecutionRiseDeclineTop,
     StockFinanceRatioRank,
     StockFluctuationRank,
     StockHogaQuantityRank,
+    StockLargeExecutionCountTop,
     StockMarketCapTop,
+    StockMarketPriceRank,
+    StockNewHighLowApproachingTop,
+    StockPreferredStockRatioTop,
     StockProfitabilityIndicatorRank,
+    StockProprietaryTradingTop,
     StockShortSellingTop,
     StockTimeHogaRank,
+    StockWatchlistRegistrationTop,
     TradingVolumeRank,
 )
 from cluefin_openapi.kis._model import KisHttpResponse
@@ -36,6 +47,17 @@ RESPONSE_MODELS = {
     "StockDividendYieldTop": StockDividendYieldTop,
     "StockCreditBalanceTop": StockCreditBalanceTop,
     "StockShortSellingTop": StockShortSellingTop,
+    "StockPreferredStockRatioTop": StockPreferredStockRatioTop,
+    "StockDisparityIndexRank": StockDisparityIndexRank,
+    "StockMarketPriceRank": StockMarketPriceRank,
+    "StockExecutionStrengthTop": StockExecutionStrengthTop,
+    "StockWatchlistRegistrationTop": StockWatchlistRegistrationTop,
+    "StockExpectedExecutionRiseDeclineTop": StockExpectedExecutionRiseDeclineTop,
+    "StockProprietaryTradingTop": StockProprietaryTradingTop,
+    "StockNewHighLowApproachingTop": StockNewHighLowApproachingTop,
+    "StockLargeExecutionCountTop": StockLargeExecutionCountTop,
+    "StockAfterHoursFluctuationRank": StockAfterHoursFluctuationRank,
+    "StockAfterHoursVolumeRank": StockAfterHoursVolumeRank,
 }
 
 

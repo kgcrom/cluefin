@@ -1,616 +1,1080 @@
 [
-    {
-        "method_name": "get_trading_volume_rank",
-        "response_model_attr": "TradingVolumeRank",
-        "endpoint": "/uapi/domestic-stock/v1/quotations/volume-rank",
-        "method": "GET",
-        "call_kwargs": {
-            "fid_cond_mrkt_div_code": "J",
-            "fid_cond_scr_div_code": "20171",
-            "fid_input_iscd": "0000",
-            "fid_div_cls_code": "0",
-            "fid_blng_cls_code": "0",
-            "fid_trgt_cls_code": "111111111",
-            "fid_trgt_exls_cls_code": "0000000000",
-            "fid_input_price_1": "",
-            "fid_input_price_2": "",
-            "fid_vol_cnt": ""
-        },
-        "expected_headers": {
-            "tr_id": "FHPST01710000"
-        },
-        "expected_body": {
-            "FID_COND_MRKT_DIV_CODE": "J",
-            "FID_COND_SCR_DIV_CODE": "20171",
-            "FID_INPUT_ISCD": "0000",
-            "FID_DIV_CLS_CODE": "0",
-            "FID_BLNG_CLS_CODE": "0",
-            "FID_TRGT_CLS_CODE": "111111111",
-            "FID_TRGT_EXLS_CLS_CODE": "0000000000",
-            "FID_INPUT_PRICE_1": "",
-            "FID_INPUT_PRICE_2": "",
-            "FID_VOL_CNT": ""
-        },
-        "response_payload": {
-            "rt_cd": "0",
-            "msg_cd": "MCA00000",
-            "msg1": "정상처리 되었습니다.",
-            "output": [
-                {
-                    "hts_kor_isnm": "삼성전자",
-                    "mksc_shrn_iscd": "005930",
-                    "data_rank": "1",
-                    "stck_prpr": "70000",
-                    "prdy_vrss_sign": "2",
-                    "prdy_vrss": "1000",
-                    "prdy_ctrt": "1.43",
-                    "acml_vol": "10000000",
-                    "prdy_vol": "9500000",
-                    "lstn_stcn": "5969782550",
-                    "avrg_vol": "9000000",
-                    "n_befr_clpr_vrss_prpr_rate": "1.5",
-                    "vol_inrt": "5.26",
-                    "vol_tnrt": "0.17",
-                    "nday_vol_tnrt": "0.85",
-                    "avrg_tr_pbmn": "630000000000",
-                    "tr_pbmn_tnrt": "0.11",
-                    "nday_tr_pbmn_tnrt": "0.55",
-                    "acml_tr_pbmn": "700000000000"
-                }
-            ]
-        }
+  {
+    "method_name": "get_trading_volume_rank",
+    "response_model_attr": "TradingVolumeRank",
+    "endpoint": "/uapi/domestic-stock/v1/quotations/volume-rank",
+    "method": "GET",
+    "call_kwargs": {
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20171",
+      "fid_input_iscd": "0000",
+      "fid_div_cls_code": "0",
+      "fid_blng_cls_code": "0",
+      "fid_trgt_cls_code": "111111111",
+      "fid_trgt_exls_cls_code": "0000000000",
+      "fid_input_price_1": "",
+      "fid_input_price_2": "",
+      "fid_vol_cnt": ""
     },
-    {
-        "method_name": "get_stock_fluctuation_rank",
-        "response_model_attr": "StockFluctuationRank",
-        "endpoint": "/uapi/domestic-stock/v1/ranking/fluctuation",
-        "method": "GET",
-        "call_kwargs": {
-            "fid_rsfl_rate2": "",
-            "fid_cond_mrkt_div_code": "J",
-            "fid_cond_scr_div_code": "20170",
-            "fid_input_iscd": "0001",
-            "fid_rank_sort_cls_code": "0",
-            "fid_input_cnt_1": "0",
-            "fid_prc_cls_code": "0",
-            "fid_input_price_1": "",
-            "fid_input_price_2": "",
-            "fid_vol_cnt": "",
-            "fid_trgt_cls_code": "0",
-            "fid_trgt_exls_cls_code": "0",
-            "fid_div_cls_code": "0",
-            "fid_rsfl_rate1": ""
-        },
-        "expected_headers": {
-            "tr_id": "FHPST01700000"
-        },
-        "expected_body": {
-            "fid_rsfl_rate2": "",
-            "fid_cond_mrkt_div_code": "J",
-            "fid_cond_scr_div_code": "20170",
-            "fid_input_iscd": "0001",
-            "fid_rank_sort_cls_code": "0",
-            "fid_input_cnt_1": "0",
-            "fid_prc_cls_code": "0",
-            "fid_input_price_1": "",
-            "fid_input_price_2": "",
-            "fid_vol_cnt": "",
-            "fid_trgt_cls_code": "0",
-            "fid_trgt_exls_cls_code": "0",
-            "fid_div_cls_code": "0",
-            "fid_rsfl_rate1": ""
-        },
-        "response_payload": {
-            "rt_cd": "0",
-            "msg_cd": "MCA00000",
-            "msg1": "정상처리 되었습니다.",
-            "output": [
-                {
-                    "stck_shrn_iscd": "000660",
-                    "data_rank": "1",
-                    "hts_kor_isnm": "SK하이닉스",
-                    "stck_prpr": "120000",
-                    "prdy_vrss": "5000",
-                    "prdy_vrss_sign": "2",
-                    "prdy_ctrt": "4.35",
-                    "acml_vol": "5000000",
-                    "stck_hgpr": "121000",
-                    "hgpr_hour": "140000",
-                    "acml_hgpr_date": "20250115",
-                    "stck_lwpr": "119000",
-                    "lwpr_hour": "093000",
-                    "acml_lwpr_date": "20250115",
-                    "lwpr_vrss_prpr_rate": "0.84",
-                    "dsgt_date_clpr_vrss_prpr_rate": "4.35",
-                    "cnnt_ascn_dynu": "3",
-                    "hgpr_vrss_prpr_rate": "-0.83",
-                    "cnnt_down_dynu": "0",
-                    "oprc_vrss_prpr_sign": "2",
-                    "oprc_vrss_prpr": "1000",
-                    "oprc_vrss_prpr_rate": "0.84",
-                    "prd_rsfl": "5000",
-                    "prd_rsfl_rate": "4.35"
-                }
-            ]
-        }
+    "expected_headers": {
+      "tr_id": "FHPST01710000"
     },
-    {
-        "method_name": "get_stock_hoga_quantity_rank",
-        "response_model_attr": "StockHogaQuantityRank",
-        "endpoint": "/uapi/domestic-stock/v1/ranking/quote-balance",
-        "method": "GET",
-        "call_kwargs": {
-            "fid_vol_cnt": "",
-            "fid_cond_mrkt_div_code": "J",
-            "fid_cond_scr_div_code": "20172",
-            "fid_input_iscd": "0001",
-            "fid_rank_sort_cls_code": "0",
-            "fid_div_cls_code": "0",
-            "fid_trgt_cls_code": "0",
-            "fid_trgt_exls_cls_code": "0",
-            "fid_input_price_1": "",
-            "fid_input_price_2": ""
-        },
-        "expected_headers": {
-            "tr_id": "FHPST01720000"
-        },
-        "expected_body": {
-            "fid_vol_cnt": "",
-            "fid_cond_mrkt_div_code": "J",
-            "fid_cond_scr_div_code": "20172",
-            "fid_input_iscd": "0001",
-            "fid_rank_sort_cls_code": "0",
-            "fid_div_cls_code": "0",
-            "fid_trgt_cls_code": "0",
-            "fid_trgt_exls_cls_code": "0",
-            "fid_input_price_1": "",
-            "fid_input_price_2": ""
-        },
-        "response_payload": {
-            "rt_cd": "0",
-            "msg_cd": "MCA00000",
-            "msg1": "정상처리 되었습니다.",
-            "output": [
-                {
-                    "mksc_shrn_iscd": "005380",
-                    "data_rank": "1",
-                    "hts_kor_isnm": "현대차",
-                    "stck_prpr": "180000",
-                    "prdy_vrss": "2000",
-                    "prdy_vrss_sign": "2",
-                    "prdy_ctrt": "1.12",
-                    "acml_vol": "3000000",
-                    "total_askp_rsqn": "100000",
-                    "total_bidp_rsqn": "150000",
-                    "total_ntsl_bidp_rsqn": "50000",
-                    "shnu_rsqn_rate": "60.0",
-                    "seln_rsqn_rate": "40.0"
-                }
-            ]
-        }
+    "expected_body": {
+      "FID_COND_MRKT_DIV_CODE": "J",
+      "FID_COND_SCR_DIV_CODE": "20171",
+      "FID_INPUT_ISCD": "0000",
+      "FID_DIV_CLS_CODE": "0",
+      "FID_BLNG_CLS_CODE": "0",
+      "FID_TRGT_CLS_CODE": "111111111",
+      "FID_TRGT_EXLS_CLS_CODE": "0000000000",
+      "FID_INPUT_PRICE_1": "",
+      "FID_INPUT_PRICE_2": "",
+      "FID_VOL_CNT": ""
     },
-    {
-        "method_name": "get_stock_profitability_indicator_rank",
-        "response_model_attr": "StockProfitabilityIndicatorRank",
-        "endpoint": "/uapi/domestic-stock/v1/ranking/profit-asset-index",
-        "method": "GET",
-        "call_kwargs": {
-            "fid_cond_mrkt_div_code": "J",
-            "fid_trgt_cls_code": "0",
-            "fid_cond_scr_div_code": "20173",
-            "fid_input_iscd": "0001",
-            "fid_div_cls_code": "0",
-            "fid_input_price_1": "",
-            "fid_input_price_2": "",
-            "fid_vol_cnt": "",
-            "fid_input_option_1": "2024",
-            "fid_input_option_2": "3",
-            "fid_rank_sort_cls_code": "0",
-            "fid_blng_cls_code": "0",
-            "fid_trgt_exls_cls_code": "0"
-        },
-        "expected_headers": {
-            "tr_id": "FHPST01730000"
-        },
-        "expected_body": {
-            "fid_cond_mrkt_div_code": "J",
-            "fid_trgt_cls_code": "0",
-            "fid_cond_scr_div_code": "20173",
-            "fid_input_iscd": "0001",
-            "fid_div_cls_code": "0",
-            "fid_input_price_1": "",
-            "fid_input_price_2": "",
-            "fid_vol_cnt": "",
-            "fid_input_option_1": "2024",
-            "fid_input_option_2": "3",
-            "fid_rank_sort_cls_code": "0",
-            "fid_blng_cls_code": "0",
-            "fid_trgt_exls_cls_code": "0"
-        },
-        "response_payload": {
-            "rt_cd": "0",
-            "msg_cd": "MCA00000",
-            "msg1": "정상처리 되었습니다.",
-            "output": [
-                {
-                    "data_rank": "1",
-                    "hts_kor_isnm": "삼성전자",
-                    "prdy_vrss_sign": "2",
-                    "mksc_shrn_iscd": "005930",
-                    "stck_prpr": "70000",
-                    "prdy_vrss": "1000",
-                    "prdy_ctrt": "1.43",
-                    "acml_vol": "10000000",
-                    "sale_totl_prfi": "100000000000",
-                    "bsop_prti": "80000000000",
-                    "op_prfi": "75000000000",
-                    "thtr_ntin": "60000000000",
-                    "total_aset": "500000000000",
-                    "total_lblt": "200000000000",
-                    "total_cptl": "300000000000",
-                    "stac_month": "12",
-                    "stac_month_cls_code": "03",
-                    "iqry_csnu": "100"
-                }
-            ]
+    "response_payload": {
+      "rt_cd": "0",
+      "msg_cd": "MCA00000",
+      "msg1": "정상처리 되었습니다.",
+      "output": [
+        {
+          "hts_kor_isnm": "삼성전자",
+          "mksc_shrn_iscd": "005930",
+          "data_rank": "1",
+          "stck_prpr": "70000",
+          "prdy_vrss_sign": "2",
+          "prdy_vrss": "1000",
+          "prdy_ctrt": "1.43",
+          "acml_vol": "10000000",
+          "prdy_vol": "9500000",
+          "lstn_stcn": "5969782550",
+          "avrg_vol": "9000000",
+          "n_befr_clpr_vrss_prpr_rate": "1.5",
+          "vol_inrt": "5.26",
+          "vol_tnrt": "0.17",
+          "nday_vol_tnrt": "0.85",
+          "avrg_tr_pbmn": "630000000000",
+          "tr_pbmn_tnrt": "0.11",
+          "nday_tr_pbmn_tnrt": "0.55",
+          "acml_tr_pbmn": "700000000000"
         }
-    },
-    {
-        "method_name": "get_stock_market_cap_top",
-        "response_model_attr": "StockMarketCapTop",
-        "endpoint": "/uapi/domestic-stock/v1/ranking/market-cap",
-        "method": "GET",
-        "call_kwargs": {
-            "fid_input_price_2": "",
-            "fid_cond_mrkt_div_code": "J",
-            "fid_cond_scr_div_code": "20174",
-            "fid_div_cls_code": "0",
-            "fid_input_iscd": "0001",
-            "fid_trgt_cls_code": "0",
-            "fid_trgt_exls_cls_code": "0",
-            "fid_input_price_1": "",
-            "fid_vol_cnt": ""
-        },
-        "expected_headers": {
-            "tr_id": "FHPST01740000"
-        },
-        "expected_body": {
-            "fid_input_price_2": "",
-            "fid_cond_mrkt_div_code": "J",
-            "fid_cond_scr_div_code": "20174",
-            "fid_div_cls_code": "0",
-            "fid_input_iscd": "0001",
-            "fid_trgt_cls_code": "0",
-            "fid_trgt_exls_cls_code": "0",
-            "fid_input_price_1": "",
-            "fid_vol_cnt": ""
-        },
-        "response_payload": {
-            "rt_cd": "0",
-            "msg_cd": "MCA00000",
-            "msg1": "정상처리 되었습니다.",
-            "output": [
-                {
-                    "mksc_shrn_iscd": "005930",
-                    "data_rank": "1",
-                    "hts_kor_isnm": "삼성전자",
-                    "stck_prpr": "70000",
-                    "prdy_vrss": "1000",
-                    "prdy_vrss_sign": "2",
-                    "prdy_ctrt": "1.43",
-                    "acml_vol": "10000000",
-                    "lstn_stcn": "5969782550",
-                    "stck_avls": "417884778500000",
-                    "mrkt_whol_avls_rlim": "15.5"
-                }
-            ]
-        }
-    },
-    {
-        "method_name": "get_stock_finance_ratio_rank",
-        "response_model_attr": "StockFinanceRatioRank",
-        "endpoint": "/uapi/domestic-stock/v1/ranking/finance-ratio",
-        "method": "GET",
-        "call_kwargs": {
-            "fid_trgt_cls_code": "0",
-            "fid_cond_mrkt_div_code": "J",
-            "fid_cond_scr_div_code": "20175",
-            "fid_input_iscd": "0001",
-            "fid_div_cls_code": "0",
-            "fid_input_price_1": "",
-            "fid_input_price_2": "",
-            "fid_vol_cnt": "",
-            "fid_input_option_1": "2024",
-            "fid_input_option_2": "3",
-            "fid_rank_sort_cls_code": "7",
-            "fid_blng_cls_code": "0",
-            "fid_trgt_exls_cls_code": "0"
-        },
-        "expected_headers": {
-            "tr_id": "FHPST01750000"
-        },
-        "expected_body": {
-            "fid_trgt_cls_code": "0",
-            "fid_cond_mrkt_div_code": "J",
-            "fid_cond_scr_div_code": "20175",
-            "fid_input_iscd": "0001",
-            "fid_div_cls_code": "0",
-            "fid_input_price_1": "",
-            "fid_input_price_2": "",
-            "fid_vol_cnt": "",
-            "fid_input_option_1": "2024",
-            "fid_input_option_2": "3",
-            "fid_rank_sort_cls_code": "7",
-            "fid_blng_cls_code": "0",
-            "fid_trgt_exls_cls_code": "0"
-        },
-        "response_payload": {
-            "rt_cd": "0",
-            "msg_cd": "MCA00000",
-            "msg1": "정상처리 되었습니다.",
-            "output": [
-                {
-                    "data_rank": "1",
-                    "hts_kor_isnm": "삼성전자",
-                    "mksc_shrn_iscd": "005930",
-                    "stck_prpr": "70000",
-                    "prdy_vrss": "1000",
-                    "prdy_vrss_sign": "2",
-                    "prdy_ctrt": "1.43",
-                    "acml_vol": "10000000",
-                    "cptl_op_prfi": "15.0",
-                    "cptl_ntin_rate": "12.0",
-                    "sale_totl_rate": "40.0",
-                    "sale_ntin_rate": "25.0",
-                    "bis": "60.0",
-                    "lblt_rate": "66.67",
-                    "bram_depn": "5.0",
-                    "rsrv_rate": "300.0",
-                    "grs": "10.5",
-                    "op_prfi_inrt": "12.3",
-                    "bsop_prfi_inrt": "11.5",
-                    "ntin_inrt": "8.9",
-                    "equt_inrt": "7.2",
-                    "cptl_tnrt": "1.2",
-                    "sale_bond_tnrt": "8.5",
-                    "totl_aset_inrt": "6.5",
-                    "stac_month": "12",
-                    "stac_month_cls_code": "03",
-                    "iqry_csnu": "100"
-                }
-            ]
-        }
-    },
-    {
-        "method_name": "get_stock_time_hoga_rank",
-        "response_model_attr": "StockTimeHogaRank",
-        "endpoint": "/uapi/domestic-stock/v1/ranking/after-hour-balance",
-        "method": "GET",
-        "call_kwargs": {
-            "fid_input_price_1": "",
-            "fid_cond_mrkt_div_code": "J",
-            "fid_cond_scr_div_code": "20176",
-            "fid_rank_sort_cls_code": "1",
-            "fid_div_cls_code": "0",
-            "fid_input_iscd": "0001",
-            "fid_trgt_exls_cls_code": "0",
-            "fid_trgt_cls_code": "0",
-            "fid_vol_cnt": "",
-            "fid_input_price_2": ""
-        },
-        "expected_headers": {
-            "tr_id": "FHPST01760000"
-        },
-        "expected_body": {
-            "fid_input_price_1": "",
-            "fid_cond_mrkt_div_code": "J",
-            "fid_cond_scr_div_code": "20176",
-            "fid_rank_sort_cls_code": "1",
-            "fid_div_cls_code": "0",
-            "fid_input_iscd": "0001",
-            "fid_trgt_exls_cls_code": "0",
-            "fid_trgt_cls_code": "0",
-            "fid_vol_cnt": "",
-            "fid_input_price_2": ""
-        },
-        "response_payload": {
-            "rt_cd": "0",
-            "msg_cd": "MCA00000",
-            "msg1": "정상처리 되었습니다.",
-            "output": [
-                {
-                    "stck_shrn_iscd": "005930",
-                    "data_rank": "1",
-                    "hts_kor_isnm": "삼성전자",
-                    "stck_prpr": "70000",
-                    "prdy_vrss": "1000",
-                    "prdy_vrss_sign": "2",
-                    "prdy_ctrt": "1.43",
-                    "ovtm_total_askp_rsqn": "50000",
-                    "ovtm_total_bidp_rsqn": "60000",
-                    "mkob_otcp_vol": "20000",
-                    "mkfa_otcp_vol": "30000"
-                }
-            ]
-        }
-    },
-    {
-        "method_name": "get_hts_inquiry_top_20",
-        "response_model_attr": "HtsInquiryTop20",
-        "endpoint": "/uapi/domestic-stock/v1/ranking/hts-top-view",
-        "method": "GET",
-        "call_kwargs": {},
-        "expected_headers": {
-            "tr_id": "HHMCM000100C0"
-        },
-        "expected_body": {},
-        "response_payload": {
-            "rt_cd": "0",
-            "msg_cd": "MCA00000",
-            "msg1": "정상처리 되었습니다.",
-            "output1": [
-                {
-                    "mrkt_div_cls_code": "J",
-                    "mksc_shrn_iscd": "005930"
-                }
-            ]
-        }
-    },
-    {
-        "method_name": "get_stock_dividend_yield_top",
-        "response_model_attr": "StockDividendYieldTop",
-        "endpoint": "/uapi/domestic-stock/v1/ranking/dividend-rate",
-        "method": "GET",
-        "call_kwargs": {
-            "cts_area": "",
-            "gb1": "0",
-            "upjong": "0001",
-            "gb2": "0",
-            "gb3": "1",
-            "f_dt": "20240101",
-            "t_dt": "20241231",
-            "gb4": "0"
-        },
-        "expected_headers": {
-            "tr_id": "HHKDB13470100"
-        },
-        "expected_body": {
-            "CTS_AREA": "",
-            "GB1": "0",
-            "UPJONG": "0001",
-            "GB2": "0",
-            "GB3": "1",
-            "F_DT": "20240101",
-            "T_DT": "20241231",
-            "GB4": "0"
-        },
-        "response_payload": {
-            "rt_cd": "0",
-            "msg_cd": "MCA00000",
-            "msg1": "정상처리 되었습니다.",
-            "output": [
-                {
-                    "rank": "1",
-                    "sht_cd": "005930",
-                    "isin_name": "삼성전자",
-                    "record_date": "20241231",
-                    "per_sto_divi_amt": "361",
-                    "divi_rate": "2.5",
-                    "divi_kind": "1"
-                }
-            ]
-        }
-    },
-    {
-        "method_name": "get_stock_credit_balance_top",
-        "response_model_attr": "StockCreditBalanceTop",
-        "endpoint": "/uapi/domestic-stock/v1/ranking/credit-balance",
-        "method": "GET",
-        "call_kwargs": {
-            "fid_cond_scr_div_code": "11701",
-            "fid_input_iscd": "0000",
-            "fid_option": "2",
-            "fid_cond_mrkt_div_code": "J",
-            "fid_rank_sort_cls_code": "0"
-        },
-        "expected_headers": {
-            "tr_id": "FHKST17010000"
-        },
-        "expected_body": {
-            "FID_COND_SCR_DIV_CODE": "11701",
-            "FID_INPUT_ISCD": "0000",
-            "FID_OPTION": "2",
-            "FID_COND_MRKT_DIV_CODE": "J",
-            "FID_RANK_SORT_CLS_CODE": "0"
-        },
-        "response_payload": {
-            "rt_cd": "0",
-            "msg_cd": "MCA00000",
-            "msg1": "정상처리 되었습니다.",
-            "output1": [
-                {
-                    "bstp_cls_code": "001",
-                    "hts_kor_isnm": "종합",
-                    "stnd_date1": "20241231",
-                    "stnd_date2": "20241230"
-                }
-            ],
-            "output2": [
-                {
-                    "mksc_shrn_iscd": "005930",
-                    "hts_kor_isnm": "삼성전자",
-                    "stck_prpr": "70000",
-                    "prdy_vrss": "1000",
-                    "prdy_vrss_sign": "2",
-                    "prdy_ctrt": "1.43",
-                    "acml_vol": "10000000",
-                    "whol_loan_rmnd_stcn": "1000000",
-                    "whol_loan_rmnd_amt": "70000000000",
-                    "whol_loan_rmnd_rate": "1.5",
-                    "whol_stln_rmnd_stcn": "500000",
-                    "whol_stln_rmnd_amt": "35000000000",
-                    "whol_stln_rmnd_rate": "0.8",
-                    "nday_vrss_loan_rmnd_inrt": "2.1",
-                    "nday_vrss_stln_rmnd_inrt": "1.1"
-                }
-            ]
-        }
-    },
-    {
-        "method_name": "get_stock_short_selling_top",
-        "response_model_attr": "StockShortSellingTop",
-        "endpoint": "/uapi/domestic-stock/v1/ranking/short-sale",
-        "method": "GET",
-        "call_kwargs": {
-            "fid_aply_rang_vol": "",
-            "fid_cond_mrkt_div_code": "J",
-            "fid_cond_scr_div_code": "20482",
-            "fid_input_iscd": "0000",
-            "fid_period_div_code": "D",
-            "fid_input_cnt_1": "0",
-            "fid_trgt_exls_cls_code": "",
-            "fid_trgt_cls_code": "",
-            "fid_aply_rang_prc_1": "",
-            "fid_aply_rang_prc_2": ""
-        },
-        "expected_headers": {
-            "tr_id": "FHPST04820000"
-        },
-        "expected_body": {
-            "FID_APLY_RANG_VOL": "",
-            "FID_COND_MRKT_DIV_CODE": "J",
-            "FID_COND_SCR_DIV_CODE": "20482",
-            "FID_INPUT_ISCD": "0000",
-            "FID_PERIOD_DIV_CODE": "D",
-            "FID_INPUT_CNT_1": "0",
-            "FID_TRGT_EXLS_CLS_CODE": "",
-            "FID_TRGT_CLS_CODE": "",
-            "FID_APLY_RANG_PRC_1": "",
-            "FID_APLY_RANG_PRC_2": ""
-        },
-        "response_payload": {
-            "rt_cd": "0",
-            "msg_cd": "MCA00000",
-            "msg1": "정상처리 되었습니다.",
-            "output": [
-                {
-                    "mksc_shrn_iscd": "005930",
-                    "hts_kor_isnm": "삼성전자",
-                    "stck_prpr": "70000",
-                    "prdy_vrss": "1000",
-                    "prdy_vrss_sign": "2",
-                    "prdy_ctrt": "1.43",
-                    "acml_vol": "10000000",
-                    "acml_tr_pbmn": "700000000000",
-                    "ssts_cntg_qty": "50000",
-                    "ssts_vol_rlim": "0.5",
-                    "ssts_tr_pbmn": "3500000000",
-                    "ssts_tr_pbmn_rlim": "0.5",
-                    "stnd_date1": "20241231",
-                    "stnd_date2": "20241230",
-                    "avrg_prc": "69500"
-                }
-            ]
-        }
+      ]
     }
+  },
+  {
+    "method_name": "get_stock_fluctuation_rank",
+    "response_model_attr": "StockFluctuationRank",
+    "endpoint": "/uapi/domestic-stock/v1/ranking/fluctuation",
+    "method": "GET",
+    "call_kwargs": {
+      "fid_rsfl_rate2": "",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20170",
+      "fid_input_iscd": "0001",
+      "fid_rank_sort_cls_code": "0",
+      "fid_input_cnt_1": "0",
+      "fid_prc_cls_code": "0",
+      "fid_input_price_1": "",
+      "fid_input_price_2": "",
+      "fid_vol_cnt": "",
+      "fid_trgt_cls_code": "0",
+      "fid_trgt_exls_cls_code": "0",
+      "fid_div_cls_code": "0",
+      "fid_rsfl_rate1": ""
+    },
+    "expected_headers": {
+      "tr_id": "FHPST01700000"
+    },
+    "expected_body": {
+      "fid_rsfl_rate2": "",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20170",
+      "fid_input_iscd": "0001",
+      "fid_rank_sort_cls_code": "0",
+      "fid_input_cnt_1": "0",
+      "fid_prc_cls_code": "0",
+      "fid_input_price_1": "",
+      "fid_input_price_2": "",
+      "fid_vol_cnt": "",
+      "fid_trgt_cls_code": "0",
+      "fid_trgt_exls_cls_code": "0",
+      "fid_div_cls_code": "0",
+      "fid_rsfl_rate1": ""
+    },
+    "response_payload": {
+      "rt_cd": "0",
+      "msg_cd": "MCA00000",
+      "msg1": "정상처리 되었습니다.",
+      "output": [
+        {
+          "stck_shrn_iscd": "000660",
+          "data_rank": "1",
+          "hts_kor_isnm": "SK하이닉스",
+          "stck_prpr": "120000",
+          "prdy_vrss": "5000",
+          "prdy_vrss_sign": "2",
+          "prdy_ctrt": "4.35",
+          "acml_vol": "5000000",
+          "stck_hgpr": "121000",
+          "hgpr_hour": "140000",
+          "acml_hgpr_date": "20250115",
+          "stck_lwpr": "119000",
+          "lwpr_hour": "093000",
+          "acml_lwpr_date": "20250115",
+          "lwpr_vrss_prpr_rate": "0.84",
+          "dsgt_date_clpr_vrss_prpr_rate": "4.35",
+          "cnnt_ascn_dynu": "3",
+          "hgpr_vrss_prpr_rate": "-0.83",
+          "cnnt_down_dynu": "0",
+          "oprc_vrss_prpr_sign": "2",
+          "oprc_vrss_prpr": "1000",
+          "oprc_vrss_prpr_rate": "0.84",
+          "prd_rsfl": "5000",
+          "prd_rsfl_rate": "4.35"
+        }
+      ]
+    }
+  },
+  {
+    "method_name": "get_stock_hoga_quantity_rank",
+    "response_model_attr": "StockHogaQuantityRank",
+    "endpoint": "/uapi/domestic-stock/v1/ranking/quote-balance",
+    "method": "GET",
+    "call_kwargs": {
+      "fid_vol_cnt": "",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20172",
+      "fid_input_iscd": "0001",
+      "fid_rank_sort_cls_code": "0",
+      "fid_div_cls_code": "0",
+      "fid_trgt_cls_code": "0",
+      "fid_trgt_exls_cls_code": "0",
+      "fid_input_price_1": "",
+      "fid_input_price_2": ""
+    },
+    "expected_headers": {
+      "tr_id": "FHPST01720000"
+    },
+    "expected_body": {
+      "fid_vol_cnt": "",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20172",
+      "fid_input_iscd": "0001",
+      "fid_rank_sort_cls_code": "0",
+      "fid_div_cls_code": "0",
+      "fid_trgt_cls_code": "0",
+      "fid_trgt_exls_cls_code": "0",
+      "fid_input_price_1": "",
+      "fid_input_price_2": ""
+    },
+    "response_payload": {
+      "rt_cd": "0",
+      "msg_cd": "MCA00000",
+      "msg1": "정상처리 되었습니다.",
+      "output": [
+        {
+          "mksc_shrn_iscd": "005380",
+          "data_rank": "1",
+          "hts_kor_isnm": "현대차",
+          "stck_prpr": "180000",
+          "prdy_vrss": "2000",
+          "prdy_vrss_sign": "2",
+          "prdy_ctrt": "1.12",
+          "acml_vol": "3000000",
+          "total_askp_rsqn": "100000",
+          "total_bidp_rsqn": "150000",
+          "total_ntsl_bidp_rsqn": "50000",
+          "shnu_rsqn_rate": "60.0",
+          "seln_rsqn_rate": "40.0"
+        }
+      ]
+    }
+  },
+  {
+    "method_name": "get_stock_profitability_indicator_rank",
+    "response_model_attr": "StockProfitabilityIndicatorRank",
+    "endpoint": "/uapi/domestic-stock/v1/ranking/profit-asset-index",
+    "method": "GET",
+    "call_kwargs": {
+      "fid_cond_mrkt_div_code": "J",
+      "fid_trgt_cls_code": "0",
+      "fid_cond_scr_div_code": "20173",
+      "fid_input_iscd": "0001",
+      "fid_div_cls_code": "0",
+      "fid_input_price_1": "",
+      "fid_input_price_2": "",
+      "fid_vol_cnt": "",
+      "fid_input_option_1": "2024",
+      "fid_input_option_2": "3",
+      "fid_rank_sort_cls_code": "0",
+      "fid_blng_cls_code": "0",
+      "fid_trgt_exls_cls_code": "0"
+    },
+    "expected_headers": {
+      "tr_id": "FHPST01730000"
+    },
+    "expected_body": {
+      "fid_cond_mrkt_div_code": "J",
+      "fid_trgt_cls_code": "0",
+      "fid_cond_scr_div_code": "20173",
+      "fid_input_iscd": "0001",
+      "fid_div_cls_code": "0",
+      "fid_input_price_1": "",
+      "fid_input_price_2": "",
+      "fid_vol_cnt": "",
+      "fid_input_option_1": "2024",
+      "fid_input_option_2": "3",
+      "fid_rank_sort_cls_code": "0",
+      "fid_blng_cls_code": "0",
+      "fid_trgt_exls_cls_code": "0"
+    },
+    "response_payload": {
+      "rt_cd": "0",
+      "msg_cd": "MCA00000",
+      "msg1": "정상처리 되었습니다.",
+      "output": [
+        {
+          "data_rank": "1",
+          "hts_kor_isnm": "삼성전자",
+          "prdy_vrss_sign": "2",
+          "mksc_shrn_iscd": "005930",
+          "stck_prpr": "70000",
+          "prdy_vrss": "1000",
+          "prdy_ctrt": "1.43",
+          "acml_vol": "10000000",
+          "sale_totl_prfi": "100000000000",
+          "bsop_prti": "80000000000",
+          "op_prfi": "75000000000",
+          "thtr_ntin": "60000000000",
+          "total_aset": "500000000000",
+          "total_lblt": "200000000000",
+          "total_cptl": "300000000000",
+          "stac_month": "12",
+          "stac_month_cls_code": "03",
+          "iqry_csnu": "100"
+        }
+      ]
+    }
+  },
+  {
+    "method_name": "get_stock_market_cap_top",
+    "response_model_attr": "StockMarketCapTop",
+    "endpoint": "/uapi/domestic-stock/v1/ranking/market-cap",
+    "method": "GET",
+    "call_kwargs": {
+      "fid_input_price_2": "",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20174",
+      "fid_div_cls_code": "0",
+      "fid_input_iscd": "0001",
+      "fid_trgt_cls_code": "0",
+      "fid_trgt_exls_cls_code": "0",
+      "fid_input_price_1": "",
+      "fid_vol_cnt": ""
+    },
+    "expected_headers": {
+      "tr_id": "FHPST01740000"
+    },
+    "expected_body": {
+      "fid_input_price_2": "",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20174",
+      "fid_div_cls_code": "0",
+      "fid_input_iscd": "0001",
+      "fid_trgt_cls_code": "0",
+      "fid_trgt_exls_cls_code": "0",
+      "fid_input_price_1": "",
+      "fid_vol_cnt": ""
+    },
+    "response_payload": {
+      "rt_cd": "0",
+      "msg_cd": "MCA00000",
+      "msg1": "정상처리 되었습니다.",
+      "output": [
+        {
+          "mksc_shrn_iscd": "005930",
+          "data_rank": "1",
+          "hts_kor_isnm": "삼성전자",
+          "stck_prpr": "70000",
+          "prdy_vrss": "1000",
+          "prdy_vrss_sign": "2",
+          "prdy_ctrt": "1.43",
+          "acml_vol": "10000000",
+          "lstn_stcn": "5969782550",
+          "stck_avls": "417884778500000",
+          "mrkt_whol_avls_rlim": "15.5"
+        }
+      ]
+    }
+  },
+  {
+    "method_name": "get_stock_finance_ratio_rank",
+    "response_model_attr": "StockFinanceRatioRank",
+    "endpoint": "/uapi/domestic-stock/v1/ranking/finance-ratio",
+    "method": "GET",
+    "call_kwargs": {
+      "fid_trgt_cls_code": "0",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20175",
+      "fid_input_iscd": "0001",
+      "fid_div_cls_code": "0",
+      "fid_input_price_1": "",
+      "fid_input_price_2": "",
+      "fid_vol_cnt": "",
+      "fid_input_option_1": "2024",
+      "fid_input_option_2": "3",
+      "fid_rank_sort_cls_code": "7",
+      "fid_blng_cls_code": "0",
+      "fid_trgt_exls_cls_code": "0"
+    },
+    "expected_headers": {
+      "tr_id": "FHPST01750000"
+    },
+    "expected_body": {
+      "fid_trgt_cls_code": "0",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20175",
+      "fid_input_iscd": "0001",
+      "fid_div_cls_code": "0",
+      "fid_input_price_1": "",
+      "fid_input_price_2": "",
+      "fid_vol_cnt": "",
+      "fid_input_option_1": "2024",
+      "fid_input_option_2": "3",
+      "fid_rank_sort_cls_code": "7",
+      "fid_blng_cls_code": "0",
+      "fid_trgt_exls_cls_code": "0"
+    },
+    "response_payload": {
+      "rt_cd": "0",
+      "msg_cd": "MCA00000",
+      "msg1": "정상처리 되었습니다.",
+      "output": [
+        {
+          "data_rank": "1",
+          "hts_kor_isnm": "삼성전자",
+          "mksc_shrn_iscd": "005930",
+          "stck_prpr": "70000",
+          "prdy_vrss": "1000",
+          "prdy_vrss_sign": "2",
+          "prdy_ctrt": "1.43",
+          "acml_vol": "10000000",
+          "cptl_op_prfi": "15.0",
+          "cptl_ntin_rate": "12.0",
+          "sale_totl_rate": "40.0",
+          "sale_ntin_rate": "25.0",
+          "bis": "60.0",
+          "lblt_rate": "66.67",
+          "bram_depn": "5.0",
+          "rsrv_rate": "300.0",
+          "grs": "10.5",
+          "op_prfi_inrt": "12.3",
+          "bsop_prfi_inrt": "11.5",
+          "ntin_inrt": "8.9",
+          "equt_inrt": "7.2",
+          "cptl_tnrt": "1.2",
+          "sale_bond_tnrt": "8.5",
+          "totl_aset_inrt": "6.5",
+          "stac_month": "12",
+          "stac_month_cls_code": "03",
+          "iqry_csnu": "100"
+        }
+      ]
+    }
+  },
+  {
+    "method_name": "get_stock_time_hoga_rank",
+    "response_model_attr": "StockTimeHogaRank",
+    "endpoint": "/uapi/domestic-stock/v1/ranking/after-hour-balance",
+    "method": "GET",
+    "call_kwargs": {
+      "fid_input_price_1": "",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20176",
+      "fid_rank_sort_cls_code": "1",
+      "fid_div_cls_code": "0",
+      "fid_input_iscd": "0001",
+      "fid_trgt_exls_cls_code": "0",
+      "fid_trgt_cls_code": "0",
+      "fid_vol_cnt": "",
+      "fid_input_price_2": ""
+    },
+    "expected_headers": {
+      "tr_id": "FHPST01760000"
+    },
+    "expected_body": {
+      "fid_input_price_1": "",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20176",
+      "fid_rank_sort_cls_code": "1",
+      "fid_div_cls_code": "0",
+      "fid_input_iscd": "0001",
+      "fid_trgt_exls_cls_code": "0",
+      "fid_trgt_cls_code": "0",
+      "fid_vol_cnt": "",
+      "fid_input_price_2": ""
+    },
+    "response_payload": {
+      "rt_cd": "0",
+      "msg_cd": "MCA00000",
+      "msg1": "정상처리 되었습니다.",
+      "output": [
+        {
+          "stck_shrn_iscd": "005930",
+          "data_rank": "1",
+          "hts_kor_isnm": "삼성전자",
+          "stck_prpr": "70000",
+          "prdy_vrss": "1000",
+          "prdy_vrss_sign": "2",
+          "prdy_ctrt": "1.43",
+          "ovtm_total_askp_rsqn": "50000",
+          "ovtm_total_bidp_rsqn": "60000",
+          "mkob_otcp_vol": "20000",
+          "mkfa_otcp_vol": "30000"
+        }
+      ]
+    }
+  },
+  {
+    "method_name": "get_hts_inquiry_top_20",
+    "response_model_attr": "HtsInquiryTop20",
+    "endpoint": "/uapi/domestic-stock/v1/ranking/hts-top-view",
+    "method": "GET",
+    "call_kwargs": {},
+    "expected_headers": {
+      "tr_id": "HHMCM000100C0"
+    },
+    "expected_body": {},
+    "response_payload": {
+      "rt_cd": "0",
+      "msg_cd": "MCA00000",
+      "msg1": "정상처리 되었습니다.",
+      "output1": [
+        {
+          "mrkt_div_cls_code": "J",
+          "mksc_shrn_iscd": "005930"
+        }
+      ]
+    }
+  },
+  {
+    "method_name": "get_stock_dividend_yield_top",
+    "response_model_attr": "StockDividendYieldTop",
+    "endpoint": "/uapi/domestic-stock/v1/ranking/dividend-rate",
+    "method": "GET",
+    "call_kwargs": {
+      "cts_area": "",
+      "gb1": "0",
+      "upjong": "0001",
+      "gb2": "0",
+      "gb3": "1",
+      "f_dt": "20240101",
+      "t_dt": "20241231",
+      "gb4": "0"
+    },
+    "expected_headers": {
+      "tr_id": "HHKDB13470100"
+    },
+    "expected_body": {
+      "CTS_AREA": "",
+      "GB1": "0",
+      "UPJONG": "0001",
+      "GB2": "0",
+      "GB3": "1",
+      "F_DT": "20240101",
+      "T_DT": "20241231",
+      "GB4": "0"
+    },
+    "response_payload": {
+      "rt_cd": "0",
+      "msg_cd": "MCA00000",
+      "msg1": "정상처리 되었습니다.",
+      "output": [
+        {
+          "rank": "1",
+          "sht_cd": "005930",
+          "isin_name": "삼성전자",
+          "record_date": "20241231",
+          "per_sto_divi_amt": "361",
+          "divi_rate": "2.5",
+          "divi_kind": "1"
+        }
+      ]
+    }
+  },
+  {
+    "method_name": "get_stock_credit_balance_top",
+    "response_model_attr": "StockCreditBalanceTop",
+    "endpoint": "/uapi/domestic-stock/v1/ranking/credit-balance",
+    "method": "GET",
+    "call_kwargs": {
+      "fid_cond_scr_div_code": "11701",
+      "fid_input_iscd": "0000",
+      "fid_option": "2",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_rank_sort_cls_code": "0"
+    },
+    "expected_headers": {
+      "tr_id": "FHKST17010000"
+    },
+    "expected_body": {
+      "FID_COND_SCR_DIV_CODE": "11701",
+      "FID_INPUT_ISCD": "0000",
+      "FID_OPTION": "2",
+      "FID_COND_MRKT_DIV_CODE": "J",
+      "FID_RANK_SORT_CLS_CODE": "0"
+    },
+    "response_payload": {
+      "rt_cd": "0",
+      "msg_cd": "MCA00000",
+      "msg1": "정상처리 되었습니다.",
+      "output1": [
+        {
+          "bstp_cls_code": "001",
+          "hts_kor_isnm": "종합",
+          "stnd_date1": "20241231",
+          "stnd_date2": "20241230"
+        }
+      ],
+      "output2": [
+        {
+          "mksc_shrn_iscd": "005930",
+          "hts_kor_isnm": "삼성전자",
+          "stck_prpr": "70000",
+          "prdy_vrss": "1000",
+          "prdy_vrss_sign": "2",
+          "prdy_ctrt": "1.43",
+          "acml_vol": "10000000",
+          "whol_loan_rmnd_stcn": "1000000",
+          "whol_loan_rmnd_amt": "70000000000",
+          "whol_loan_rmnd_rate": "1.5",
+          "whol_stln_rmnd_stcn": "500000",
+          "whol_stln_rmnd_amt": "35000000000",
+          "whol_stln_rmnd_rate": "0.8",
+          "nday_vrss_loan_rmnd_inrt": "2.1",
+          "nday_vrss_stln_rmnd_inrt": "1.1"
+        }
+      ]
+    }
+  },
+  {
+    "method_name": "get_stock_short_selling_top",
+    "response_model_attr": "StockShortSellingTop",
+    "endpoint": "/uapi/domestic-stock/v1/ranking/short-sale",
+    "method": "GET",
+    "call_kwargs": {
+      "fid_aply_rang_vol": "",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20482",
+      "fid_input_iscd": "0000",
+      "fid_period_div_code": "D",
+      "fid_input_cnt_1": "0",
+      "fid_trgt_exls_cls_code": "",
+      "fid_trgt_cls_code": "",
+      "fid_aply_rang_prc_1": "",
+      "fid_aply_rang_prc_2": ""
+    },
+    "expected_headers": {
+      "tr_id": "FHPST04820000"
+    },
+    "expected_body": {
+      "FID_APLY_RANG_VOL": "",
+      "FID_COND_MRKT_DIV_CODE": "J",
+      "FID_COND_SCR_DIV_CODE": "20482",
+      "FID_INPUT_ISCD": "0000",
+      "FID_PERIOD_DIV_CODE": "D",
+      "FID_INPUT_CNT_1": "0",
+      "FID_TRGT_EXLS_CLS_CODE": "",
+      "FID_TRGT_CLS_CODE": "",
+      "FID_APLY_RANG_PRC_1": "",
+      "FID_APLY_RANG_PRC_2": ""
+    },
+    "response_payload": {
+      "rt_cd": "0",
+      "msg_cd": "MCA00000",
+      "msg1": "정상처리 되었습니다.",
+      "output": [
+        {
+          "mksc_shrn_iscd": "005930",
+          "hts_kor_isnm": "삼성전자",
+          "stck_prpr": "70000",
+          "prdy_vrss": "1000",
+          "prdy_vrss_sign": "2",
+          "prdy_ctrt": "1.43",
+          "acml_vol": "10000000",
+          "acml_tr_pbmn": "700000000000",
+          "ssts_cntg_qty": "50000",
+          "ssts_vol_rlim": "0.5",
+          "ssts_tr_pbmn": "3500000000",
+          "ssts_tr_pbmn_rlim": "0.5",
+          "stnd_date1": "20241231",
+          "stnd_date2": "20241230",
+          "avrg_prc": "69500"
+        }
+      ]
+    }
+  },
+  {
+    "method_name": "get_stock_preferred_stock_ratio_top",
+    "response_model_attr": "StockPreferredStockRatioTop",
+    "endpoint": "/uapi/domestic-stock/v1/ranking/prefer-disparate-ratio",
+    "method": "GET",
+    "call_kwargs": {
+      "fid_vol_cnt": "",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20177",
+      "fid_div_cls_code": "0",
+      "fid_input_iscd": "0000",
+      "fid_trgt_cls_code": "0",
+      "fid_trgt_exls_cls_code": "0",
+      "fid_input_price_1": "",
+      "fid_input_price_2": ""
+    },
+    "expected_headers": {
+      "tr_id": "FHPST01770000"
+    },
+    "expected_body": {
+      "fid_vol_cnt": "",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20177",
+      "fid_div_cls_code": "0",
+      "fid_input_iscd": "0000",
+      "fid_trgt_cls_code": "0",
+      "fid_trgt_exls_cls_code": "0",
+      "fid_input_price_1": "",
+      "fid_input_price_2": ""
+    },
+    "response_payload": {
+      "rt_cd": "0",
+      "msg_cd": "MCA00000",
+      "msg1": "정상처리 되었습니다.",
+      "output": []
+    }
+  },
+  {
+    "method_name": "get_stock_disparity_index_rank",
+    "response_model_attr": "StockDisparityIndexRank",
+    "endpoint": "/uapi/domestic-stock/v1/ranking/disparity",
+    "method": "GET",
+    "call_kwargs": {
+      "fid_input_price_2": "",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20178",
+      "fid_div_cls_code": "0",
+      "fid_rank_sort_cls_code": "0",
+      "fid_hour_cls_code": "20",
+      "fid_input_iscd": "0000",
+      "fid_trgt_cls_code": "0",
+      "fid_trgt_exls_cls_code": "0",
+      "fid_input_price_1": "",
+      "fid_vol_cnt": ""
+    },
+    "expected_headers": {
+      "tr_id": "FHPST01780000"
+    },
+    "expected_body": {
+      "fid_input_price_2": "",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20178",
+      "fid_div_cls_code": "0",
+      "fid_rank_sort_cls_code": "0",
+      "fid_hour_cls_code": "20",
+      "fid_input_iscd": "0000",
+      "fid_trgt_cls_code": "0",
+      "fid_trgt_exls_cls_code": "0",
+      "fid_input_price_1": "",
+      "fid_vol_cnt": ""
+    },
+    "response_payload": {
+      "rt_cd": "0",
+      "msg_cd": "MCA00000",
+      "msg1": "정상처리 되었습니다.",
+      "output": []
+    }
+  },
+  {
+    "method_name": "get_stock_market_price_rank",
+    "response_model_attr": "StockMarketPriceRank",
+    "endpoint": "/uapi/domestic-stock/v1/ranking/market-value",
+    "method": "GET",
+    "call_kwargs": {
+      "fid_trgt_cls_code": "0",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20179",
+      "fid_input_iscd": "0000",
+      "fid_div_cls_code": "0",
+      "fid_input_price_1": "",
+      "fid_input_price_2": "",
+      "fid_vol_cnt": "",
+      "fid_input_option_1": "2023",
+      "fid_input_option_2": "3",
+      "fid_rank_sort_cls_code": "23",
+      "fid_blng_cls_code": "0",
+      "fid_trgt_exls_cls_code": "0"
+    },
+    "expected_headers": {
+      "tr_id": "FHPST01790000"
+    },
+    "expected_body": {
+      "fid_trgt_cls_code": "0",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20179",
+      "fid_input_iscd": "0000",
+      "fid_div_cls_code": "0",
+      "fid_input_price_1": "",
+      "fid_input_price_2": "",
+      "fid_vol_cnt": "",
+      "fid_input_option_1": "2023",
+      "fid_input_option_2": "3",
+      "fid_rank_sort_cls_code": "23",
+      "fid_blng_cls_code": "0",
+      "fid_trgt_exls_cls_code": "0"
+    },
+    "response_payload": {
+      "rt_cd": "0",
+      "msg_cd": "MCA00000",
+      "msg1": "정상처리 되었습니다.",
+      "output": []
+    }
+  },
+  {
+    "method_name": "get_stock_execution_strength_top",
+    "response_model_attr": "StockExecutionStrengthTop",
+    "endpoint": "/uapi/domestic-stock/v1/ranking/volume-power",
+    "method": "GET",
+    "call_kwargs": {
+      "fid_trgt_exls_cls_code": "0",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20168",
+      "fid_input_iscd": "0000",
+      "fid_div_cls_code": "0",
+      "fid_input_price_1": "",
+      "fid_input_price_2": "",
+      "fid_vol_cnt": "",
+      "fid_trgt_cls_code": "0"
+    },
+    "expected_headers": {
+      "tr_id": "FHPST01680000"
+    },
+    "expected_body": {
+      "fid_trgt_exls_cls_code": "0",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20168",
+      "fid_input_iscd": "0000",
+      "fid_div_cls_code": "0",
+      "fid_input_price_1": "",
+      "fid_input_price_2": "",
+      "fid_vol_cnt": "",
+      "fid_trgt_cls_code": "0"
+    },
+    "response_payload": {
+      "rt_cd": "0",
+      "msg_cd": "MCA00000",
+      "msg1": "정상처리 되었습니다.",
+      "output": []
+    }
+  },
+  {
+    "method_name": "get_stock_watchlist_registration_top",
+    "response_model_attr": "StockWatchlistRegistrationTop",
+    "endpoint": "/uapi/domestic-stock/v1/ranking/top-interest-stock",
+    "method": "GET",
+    "call_kwargs": {
+      "fid_input_iscd_2": "000000",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20180",
+      "fid_input_iscd": "0000",
+      "fid_trgt_cls_code": "0",
+      "fid_trgt_exls_cls_code": "0",
+      "fid_input_price_1": "",
+      "fid_input_price_2": "",
+      "fid_vol_cnt": "",
+      "fid_div_cls_code": "0",
+      "fid_input_cnt_1": "1"
+    },
+    "expected_headers": {
+      "tr_id": "FHPST01800000"
+    },
+    "expected_body": {
+      "fid_input_iscd_2": "000000",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20180",
+      "fid_input_iscd": "0000",
+      "fid_trgt_cls_code": "0",
+      "fid_trgt_exls_cls_code": "0",
+      "fid_input_price_1": "",
+      "fid_input_price_2": "",
+      "fid_vol_cnt": "",
+      "fid_div_cls_code": "0",
+      "fid_input_cnt_1": "1"
+    },
+    "response_payload": {
+      "rt_cd": "0",
+      "msg_cd": "MCA00000",
+      "msg1": "정상처리 되었습니다.",
+      "output": []
+    }
+  },
+  {
+    "method_name": "get_stock_expected_execution_rise_decline_top",
+    "response_model_attr": "StockExpectedExecutionRiseDeclineTop",
+    "endpoint": "/uapi/domestic-stock/v1/ranking/exp-trans-updown",
+    "method": "GET",
+    "call_kwargs": {
+      "fid_rank_sort_cls_code": "0",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20182",
+      "fid_input_iscd": "0000",
+      "fid_div_cls_code": "0",
+      "fid_aply_rang_prc_1": "",
+      "fid_vol_cnt": "",
+      "fid_pbmn": "",
+      "fid_blng_cls_code": "0",
+      "fid_mkop_cls_code": "0"
+    },
+    "expected_headers": {
+      "tr_id": "FHPST01820000"
+    },
+    "expected_body": {
+      "fid_rank_sort_cls_code": "0",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20182",
+      "fid_input_iscd": "0000",
+      "fid_div_cls_code": "0",
+      "fid_aply_rang_prc_1": "",
+      "fid_vol_cnt": "",
+      "fid_pbmn": "",
+      "fid_blng_cls_code": "0",
+      "fid_mkop_cls_code": "0"
+    },
+    "response_payload": {
+      "rt_cd": "0",
+      "msg_cd": "MCA00000",
+      "msg1": "정상처리 되었습니다.",
+      "output": []
+    }
+  },
+  {
+    "method_name": "get_stock_proprietary_trading_top",
+    "response_model_attr": "StockProprietaryTradingTop",
+    "endpoint": "/uapi/domestic-stock/v1/ranking/traded-by-company",
+    "method": "GET",
+    "call_kwargs": {
+      "fid_trgt_exls_cls_code": "0",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20186",
+      "fid_div_cls_code": "0",
+      "fid_rank_sort_cls_code": "0",
+      "fid_input_date_1": "20260101",
+      "fid_input_date_2": "20260201",
+      "fid_input_iscd": "0000",
+      "fid_trgt_cls_code": "0",
+      "fid_aply_rang_vol": "0",
+      "fid_aply_rang_prc_2": "",
+      "fid_aply_rang_prc_1": ""
+    },
+    "expected_headers": {
+      "tr_id": "FHPST01860000"
+    },
+    "expected_body": {
+      "fid_trgt_exls_cls_code": "0",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20186",
+      "fid_div_cls_code": "0",
+      "fid_rank_sort_cls_code": "0",
+      "fid_input_date_1": "20260101",
+      "fid_input_date_2": "20260201",
+      "fid_input_iscd": "0000",
+      "fid_trgt_cls_code": "0",
+      "fid_aply_rang_vol": "0",
+      "fid_aply_rang_prc_2": "",
+      "fid_aply_rang_prc_1": ""
+    },
+    "response_payload": {
+      "rt_cd": "0",
+      "msg_cd": "MCA00000",
+      "msg1": "정상처리 되었습니다.",
+      "output": []
+    }
+  },
+  {
+    "method_name": "get_stock_new_high_low_approaching_top",
+    "response_model_attr": "StockNewHighLowApproachingTop",
+    "endpoint": "/uapi/domestic-stock/v1/ranking/near-new-highlow",
+    "method": "GET",
+    "call_kwargs": {
+      "fid_aply_rang_vol": "0",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20187",
+      "fid_div_cls_code": "0",
+      "fid_input_cnt_1": "0",
+      "fid_input_cnt_2": "0",
+      "fid_prc_cls_code": "0",
+      "fid_input_iscd": "0000",
+      "fid_trgt_cls_code": "0",
+      "fid_trgt_exls_cls_code": "0",
+      "fid_aply_rang_prc_1": "",
+      "fid_aply_rang_prc_2": ""
+    },
+    "expected_headers": {
+      "tr_id": "FHPST01870000"
+    },
+    "expected_body": {
+      "fid_aply_rang_vol": "0",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20187",
+      "fid_div_cls_code": "0",
+      "fid_input_cnt_1": "0",
+      "fid_input_cnt_2": "0",
+      "fid_prc_cls_code": "0",
+      "fid_input_iscd": "0000",
+      "fid_trgt_cls_code": "0",
+      "fid_trgt_exls_cls_code": "0",
+      "fid_aply_rang_prc_1": "",
+      "fid_aply_rang_prc_2": ""
+    },
+    "response_payload": {
+      "rt_cd": "0",
+      "msg_cd": "MCA00000",
+      "msg1": "정상처리 되었습니다.",
+      "output": []
+    }
+  },
+  {
+    "method_name": "get_stock_large_execution_count_top",
+    "response_model_attr": "StockLargeExecutionCountTop",
+    "endpoint": "/uapi/domestic-stock/v1/ranking/bulk-trans-num",
+    "method": "GET",
+    "call_kwargs": {
+      "fid_aply_rang_prc_2": "",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "11909",
+      "fid_input_iscd": "0000",
+      "fid_rank_sort_cls_code": "0",
+      "fid_div_cls_code": "0",
+      "fid_input_price_1": "",
+      "fid_aply_rang_prc_1": "",
+      "fid_input_iscd_2": "",
+      "fid_trgt_exls_cls_code": "0",
+      "fid_trgt_cls_code": "0",
+      "fid_vol_cnt": ""
+    },
+    "expected_headers": {
+      "tr_id": "FHKST190900C0"
+    },
+    "expected_body": {
+      "fid_aply_rang_prc_2": "",
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "11909",
+      "fid_input_iscd": "0000",
+      "fid_rank_sort_cls_code": "0",
+      "fid_div_cls_code": "0",
+      "fid_input_price_1": "",
+      "fid_aply_rang_prc_1": "",
+      "fid_input_iscd_2": "",
+      "fid_trgt_exls_cls_code": "0",
+      "fid_trgt_cls_code": "0",
+      "fid_vol_cnt": ""
+    },
+    "response_payload": {
+      "rt_cd": "0",
+      "msg_cd": "MCA00000",
+      "msg1": "정상처리 되었습니다.",
+      "output": []
+    }
+  },
+  {
+    "method_name": "get_stock_after_hours_fluctuation_rank",
+    "response_model_attr": "StockAfterHoursFluctuationRank",
+    "endpoint": "/uapi/domestic-stock/v1/ranking/overtime-fluctuation",
+    "method": "GET",
+    "call_kwargs": {
+      "fid_cond_mrkt_div_code": "J",
+      "fid_mrkt_cls_code": "",
+      "fid_cond_scr_div_code": "20234",
+      "fid_input_iscd": "0000",
+      "fid_div_cls_code": "2",
+      "fid_input_price_1": "",
+      "fid_input_price_2": "",
+      "fid_vol_cnt": "",
+      "fid_trgt_cls_code": "",
+      "fid_trgt_exls_cls_code": ""
+    },
+    "expected_headers": {
+      "tr_id": "FHPST02340000"
+    },
+    "expected_body": {
+      "FID_COND_MRKT_DIV_CODE": "J",
+      "FID_MRKT_CLS_CODE": "",
+      "FID_COND_SCR_DIV_CODE": "20234",
+      "FID_INPUT_ISCD": "0000",
+      "FID_DIV_CLS_CODE": "2",
+      "FID_INPUT_PRICE_1": "",
+      "FID_INPUT_PRICE_2": "",
+      "FID_VOL_CNT": "",
+      "FID_TRGT_CLS_CODE": "",
+      "FID_TRGT_EXLS_CLS_CODE": ""
+    },
+    "response_payload": {
+      "rt_cd": "0",
+      "msg_cd": "MCA00000",
+      "msg1": "정상처리 되었습니다.",
+      "output1": {
+        "ovtm_untp_uplm_issu_cnt": "0",
+        "ovtm_untp_ascn_issu_cnt": "0",
+        "ovtm_untp_stnr_issu_cnt": "0",
+        "ovtm_untp_lslm_issu_cnt": "0",
+        "ovtm_untp_down_issu_cnt": "0",
+        "ovtm_untp_acml_vol": "0",
+        "ovtm_untp_acml_tr_pbmn": "0",
+        "ovtm_untp_exch_vol": "0",
+        "ovtm_untp_exch_tr_pbmn": "0",
+        "ovtm_untp_kosdaq_vol": "0",
+        "ovtm_untp_kosdaq_tr_pbmn": "0"
+      },
+      "output2": []
+    }
+  },
+  {
+    "method_name": "get_stock_after_hours_volume_rank",
+    "response_model_attr": "StockAfterHoursVolumeRank",
+    "endpoint": "/uapi/domestic-stock/v1/ranking/overtime-volume",
+    "method": "GET",
+    "call_kwargs": {
+      "fid_cond_mrkt_div_code": "J",
+      "fid_cond_scr_div_code": "20235",
+      "fid_input_iscd": "0000",
+      "fid_rank_sort_cls_code": "2",
+      "fid_input_price_1": "",
+      "fid_input_price_2": "",
+      "fid_vol_cnt": "",
+      "fid_trgt_cls_code": "",
+      "fid_trgt_exls_cls_code": ""
+    },
+    "expected_headers": {
+      "tr_id": "FHPST02350000"
+    },
+    "expected_body": {
+      "FID_COND_MRKT_DIV_CODE": "J",
+      "FID_COND_SCR_DIV_CODE": "20235",
+      "FID_INPUT_ISCD": "0000",
+      "FID_RANK_SORT_CLS_CODE": "2",
+      "FID_INPUT_PRICE_1": "",
+      "FID_INPUT_PRICE_2": "",
+      "FID_VOL_CNT": "",
+      "FID_TRGT_CLS_CODE": "",
+      "FID_TRGT_EXLS_CLS_CODE": ""
+    },
+    "response_payload": {
+      "rt_cd": "0",
+      "msg_cd": "MCA00000",
+      "msg1": "정상처리 되었습니다.",
+      "output1": {
+        "ovtm_untp_exch_vol": "0",
+        "ovtm_untp_exch_tr_pbmn": "0",
+        "ovtm_untp_kosdaq_vol": "0",
+        "ovtm_untp_kosdaq_tr_pbmn": "0"
+      },
+      "output2": []
+    }
+  }
 ]
