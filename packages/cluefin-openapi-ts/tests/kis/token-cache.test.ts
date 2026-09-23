@@ -3,7 +3,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { FileTokenCacheStore, MemoryTokenCacheStore, type TokenCacheEntry } from '../../src/kis/token-cache';
+import {
+  FileTokenCacheStore,
+  kisTokenCacheFileName,
+  MemoryTokenCacheStore,
+  type TokenCacheEntry,
+} from '../../src/kis/token-cache';
 
 const entry: TokenCacheEntry = {
   accessToken: 'access-token',
@@ -24,6 +29,16 @@ const createCachePath = async (): Promise<string> => {
 afterEach(async () => {
   await Promise.all(tempDirs.map((dir) => rm(dir, { recursive: true, force: true })));
   tempDirs = [];
+});
+
+describe('kisTokenCacheFileName', () => {
+  it('matches the Python TokenManager._cache_file_name output', () => {
+    // uv run python -c "from cluefin_openapi.kis._token_manager import TokenManager as T; print(T._cache_file_name('prod','abc'))"
+    // sha256('abc')[:8] == 'ba7816bf'
+    expect(kisTokenCacheFileName('prod', 'abc')).toBe('.kis_token_cache_prod_ba7816bf.json');
+    expect(kisTokenCacheFileName('dev', 'abc')).toBe('.kis_token_cache_dev_ba7816bf.json');
+    expect(kisTokenCacheFileName()).toBe('.kis_token_cache.json');
+  });
 });
 
 describe('MemoryTokenCacheStore', () => {

@@ -20,9 +20,13 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - `generate:metadata` regex-parses `packages/cluefin-openapi`'s Python source to produce
   the TS metadata files. Nothing re-runs it automatically: when the Python package's
   endpoints change, re-run it or the TS side silently goes stale.
-- The KIS token cache JSON (`<repo>/data/.kis_token_cache.json`) is **shared with the
-  Python package** — same file, same snake_case format — because KIS allows only 1
-  token generation per minute. Don't change the format on one side only.
+- The KIS token cache JSON is **shared with the Python package** — same file, same
+  snake_case format — because KIS allows only 1 token generation per minute. The path is
+  `<tmpdir>/cluefin-openapi/<name>` (not `<repo>/data/...`) where `<name>` comes from
+  `kisTokenCacheFileName(env, appKey)` in `src/kis/token-cache.ts`, mirroring Python's
+  `TokenManager._cache_file_name` (env + first 8 hex chars of `sha256(app_key)`) byte for
+  byte. Don't change the format, the directory, or the naming rule on one side only —
+  mirror any change to `_cache_file_name` here too.
 - The nhplug token cache file is **also shared with Python**, but is scoped by **app_key
   only** (`nhplugTokenCacheFileName`), not by env — one NH token is issued on the live
   domain and used for both live and mock calls. The KIS store is env-scoped. Don't
