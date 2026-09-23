@@ -99,6 +99,10 @@ export class KiwoomAuth {
     }
 
     const token = camelizeKeys(await response.json()) as KiwoomTokenResponse;
+    // Kiwoom can answer HTTP 200 with a failing body (no token) — never cache that.
+    if (!token.token || !token.expiresDt) {
+      throw new KiwoomAuthenticationError('Kiwoom token response is missing token or expires_dt');
+    }
     await this.tokenCacheStore.set({
       token: token.token,
       tokenType: token.tokenType,

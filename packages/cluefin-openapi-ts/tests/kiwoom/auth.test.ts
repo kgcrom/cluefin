@@ -90,6 +90,15 @@ describe('KiwoomAuth', () => {
     }
   });
 
+  it('rejects an HTTP 200 response without a token and does not cache it', async () => {
+    const { fetchMock } = createFetchMock(jsonResponse({ return_code: 3, return_msg: '인증에 실패했습니다' }));
+    const tokenCacheStore = new MemoryTokenCacheStore();
+    const auth = new KiwoomAuth({ appKey: 'app-key', secretKey: 'secret-key', tokenCacheStore, fetchImpl: fetchMock });
+
+    await expect(auth.generateToken()).rejects.toBeInstanceOf(KiwoomAuthenticationError);
+    await expect(tokenCacheStore.get()).resolves.toBeNull();
+  });
+
   it('revokes a token with the expected request body', async () => {
     const { calls, fetchMock } = createFetchMock(jsonResponse({ ok: true }));
     const auth = new KiwoomAuth({ appKey: 'app-key', secretKey: 'secret-key', fetchImpl: fetchMock });

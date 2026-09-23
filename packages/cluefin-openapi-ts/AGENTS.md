@@ -20,13 +20,6 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - `generate:metadata` regex-parses `packages/cluefin-openapi`'s Python source to produce
   the TS metadata files. Nothing re-runs it automatically: when the Python package's
   endpoints change, re-run it or the TS side silently goes stale.
-- The KIS token cache JSON is **shared with the Python package** — same file, same
-  snake_case format — because KIS allows only 1 token generation per minute. The path is
-  `<tmpdir>/cluefin-openapi/<name>` (not `<repo>/data/...`) where `<name>` comes from
-  `kisTokenCacheFileName(env, appKey)` in `src/kis/token-cache.ts`, mirroring Python's
-  `TokenManager._cache_file_name` (env + first 8 hex chars of `sha256(app_key)`) byte for
-  byte. Don't change the format, the directory, or the naming rule on one side only —
-  mirror any change to `_cache_file_name` here too.
 - All three brokers (KIS, Kiwoom, nhplug) share their token cache **files** with Python
   under the same `<tmpdir>/cluefin-openapi/` directory, each using Python's own naming
   rule (`kisTokenCacheFileName` / `kiwoomTokenCacheFileName` / `nhplugTokenCacheFileName`
@@ -36,7 +29,9 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   KIS and Kiwoom stores are env-scoped (`env` + `sha256(app_key)[:8]`). Don't "unify" the
   schemes across brokers — each mirrors its own Python `TokenManager`, and changing a
   Python `_cache_file_name` or cache JSON shape means updating the matching TS file by
-  hand (nothing enforces this automatically).
+  hand (nothing enforces this automatically). Because the file is shared, a revoke in
+  either language kills the token the other is reusing — the KIS/NH revoke integration
+  tests only run with `KIS_TEST_REVOKE=1` / `NHPLUG_TEST_REVOKE=1`.
 - Endpoint-count tests hardcode totals (`tests/core/endpoint-count.test.ts`, KIS
   contract tests); bump them whenever metadata changes.
 
