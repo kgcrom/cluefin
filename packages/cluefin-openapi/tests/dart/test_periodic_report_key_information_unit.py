@@ -66,6 +66,8 @@ from cluefin_openapi.dart._periodic_report_key_information_types import (
     UnregisteredExecutiveCompensationItem,
 )
 
+from ._helpers import build_payload as _build_payload
+
 BASE_URL = "https://opendart.fss.or.kr"
 AUTH_KEY = "test-auth-key"
 BASE_PARAMS = {
@@ -285,36 +287,18 @@ METHOD_CASES = [
 ]
 
 
+_COMMON_ITEM_VALUES = {
+    "rcept_no": "20240101000000",
+    "corp_cls": "Y",
+    "corp_code": BASE_PARAMS["corp_code"],
+    "corp_name": "Sample Corp",
+    "bsns_year": BASE_PARAMS["bsns_year"],
+    "stlm_dt": "2024-12-31",
+}
+
+
 def build_payload(item_type: Type[BaseModel], overrides: dict[str, object] | None = None) -> dict[str, object]:
-    overrides = overrides or {}
-    common_values = {
-        "rcept_no": "20240101000000",
-        "corp_cls": "Y",
-        "corp_code": BASE_PARAMS["corp_code"],
-        "corp_name": "Sample Corp",
-        "bsns_year": BASE_PARAMS["bsns_year"],
-        "stlm_dt": "2024-12-31",
-    }
-    list_item: dict[str, object] = {}
-    for field_name, field in item_type.model_fields.items():
-        if field_name in overrides:
-            list_item[field_name] = overrides[field_name]
-            continue
-        if field_name in common_values:
-            list_item[field_name] = common_values[field_name]
-            continue
-        annotation = field.annotation
-        if annotation is int:
-            list_item[field_name] = 1
-        elif annotation is float:
-            list_item[field_name] = 1.0
-        else:
-            list_item[field_name] = f"{field_name}-value"
-    return {
-        "status": "000",
-        "message": "정상적으로 처리되었습니다",
-        "list": [list_item],
-    }
+    return _build_payload(item_type, overrides=overrides, common_values=_COMMON_ITEM_VALUES)
 
 
 @pytest.fixture

@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 import pytest
 import requests
 import requests_mock
+from pydantic import BaseModel
 
 from cluefin_openapi.dart._client import Client
 from cluefin_openapi.dart._exceptions import (
@@ -17,6 +18,7 @@ from cluefin_openapi.dart._exceptions import (
     DartServerError,
     DartTimeoutError,
 )
+from cluefin_openapi.dart._model import DartHttpBody
 
 
 @pytest.fixture
@@ -502,3 +504,25 @@ class TestZeroRetries:
                 client._get("/api/test")
 
             assert m.call_count == 1
+
+
+class _SampleItem(BaseModel):
+    name: str
+
+
+class TestNoDataStatusBody:
+    """Regression test locking down current behavior for a '013' (no data) body."""
+
+    def test_status_013_parses_without_exception_and_has_no_list(self, client: Client):
+        with requests_mock.Mocker() as m:
+            m.get(
+                "https://opendart.fss.or.kr/api/test",
+                json={"status": "013", "message": "조회된 데이타가 없습니다."},
+                status_code=200,
+            )
+
+            payload = client._get("/api/test")
+            body = DartHttpBody.parse(payload, list_model=_SampleItem)
+
+            assert body.result.status == "013"
+            assert body.result.list is None
