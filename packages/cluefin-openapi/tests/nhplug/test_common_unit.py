@@ -12,6 +12,8 @@ from cluefin_openapi.nhplug._exceptions import (
 )
 from cluefin_openapi.nhplug._http_client import HttpClient
 
+from ._unit_helpers import make_client
+
 BASE_PROD = "https://api.nhplug.com:8443"
 BASE_DEV = "https://moapi.nhplug.com:8443"
 
@@ -28,7 +30,7 @@ ACCTINFO_BODY = {
 
 @pytest.fixture
 def client() -> HttpClient:
-    return HttpClient(token="TOKEN", app_key="test-app-key", secret_key="test-secret", env="prod")
+    return make_client("prod")
 
 
 class TestHttpClient:
@@ -64,6 +66,7 @@ class TestHttpClient:
                 client.post("/n2/acctinfo")
 
     def test_post_retries_429_then_raises(self):
+        # AGENTS.md: 429 는 같은 토큰으로 재시도해야 한다 — 재발급은 보안 알림을 유발한다.
         client = HttpClient(token="t", app_key="k", secret_key="s", env="prod", max_retries=1)
         with requests_mock.Mocker() as m:
             m.post(f"{BASE_PROD}/n2/acctinfo", status_code=429, json={})
@@ -72,6 +75,10 @@ class TestHttpClient:
 
         # initial attempt + 1 retry
         assert m.call_count == 2
+        auth_headers = {request.headers["Authorization"] for request in m.request_history}
+        assert auth_headers == {"Bearer t"}
+        requested_paths = {request.path for request in m.request_history}
+        assert "/oauth2/token" not in requested_paths
 
 
 class TestGetAccountList:

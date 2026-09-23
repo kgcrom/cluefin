@@ -8,6 +8,8 @@ import requests_mock
 from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
 from cluefin_openapi.nhplug._http_client import HttpClient
 
+from ._unit_helpers import make_client
+
 BASE_DEV = "https://moapi.nhplug.com:8443"
 
 BUYABLE_AMOUNT_URL = f"{BASE_DEV}/gbstock/inquiry/v1/buyableAmount"
@@ -446,7 +448,7 @@ MARGIN_OK_BODY = {
 
 @pytest.fixture
 def client() -> HttpClient:
-    return HttpClient(token="TOKEN", app_key="test-app-key", secret_key="test-secret", env="dev")
+    return make_client("dev")
 
 
 class TestBuyableAmount:
@@ -554,20 +556,6 @@ class TestBuyableAmount:
         assert response.body.rsp_cd == "XA102"
         assert response.body.output_0.wtm_cur_cd == "USD"
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(BUYABLE_AMOUNT_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
-            with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_inquiry.buyable_amount(
-                    act_no="50051036881",
-                    pcs_dit="1",
-                    fc_sec_trd_nat_cd="200",
-                    iem_cd="AAPL",
-                    wtm_cur_knd_cd="1",
-                    oss_orr_knd_cd="1",
-                    ahi_nmn_pr_tp_cd="03",
-                )
-
 
 class TestUnexecuted:
     def test_sends_input_envelope(self, client):
@@ -647,18 +635,6 @@ class TestUnexecuted:
         assert response.body.output_0 is None
         assert response.body.rsp_cd == "00000"
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(ORDER_EXECUTIONS_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
-            with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_inquiry.unexecuted(
-                    orr_dt="20260821",
-                    act_no="50051036881",
-                    oss_sby_dit_cd="0",
-                    sot_dit="0",
-                    ost_cns_dit="0",
-                )
-
 
 class TestBalance:
     def test_sends_input_envelope(self, client):
@@ -733,17 +709,6 @@ class TestBalance:
         assert response.body.output_0 is None
         assert response.body.output_1 is None
         assert response.body.rsp_cd == "00000"
-
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(BALANCE_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
-            with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_inquiry.balance(
-                    act_no="50051036881",
-                    qut_iqr_dit_cd="1",
-                    fc_sec_trd_nat_cd="200",
-                    cur_cd="USD",
-                )
 
 
 class TestReservedInquiry:
@@ -838,21 +803,6 @@ class TestReservedInquiry:
         assert response.body.output_0 is None
         assert response.body.rsp_cd == "00000"
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(RESERVED_ORDERS_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
-            with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_inquiry.reserved_inquiry(
-                    fc_mkt_dit_cd="200",
-                    bkg_orr_dt="20260821",
-                    act_no="50051036881",
-                    sby_dit_cd="0",
-                    bkg_orr_can_yn="0",
-                    oss_orr_knd_cd="0",
-                    bkg_orr_tp_cd="0",
-                    wtm_cur_knd_cd="0",
-                )
-
 
 class TestDailyTransaction:
     def test_sends_input_envelope(self, client):
@@ -936,18 +886,6 @@ class TestDailyTransaction:
         assert response.body.output_0 is None
         assert response.body.output_1 is None
         assert response.body.rsp_cd == "00000"
-
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(DAILY_TRANSACTIONS_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
-            with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_inquiry.daily_transaction(
-                    act_no="50051036881",
-                    iqr_sta_dt="20260801",
-                    iqr_end_dt="20260821",
-                    act_trd_cfc_cd="00",
-                    iem_mlf_cd="00001",
-                )
 
 
 class TestPeriodPnl:
@@ -1033,17 +971,6 @@ class TestPeriodPnl:
         assert response.body.output_1 is None
         assert response.body.rsp_cd == "00000"
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(PERIOD_PNL_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
-            with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_inquiry.period_pnl(
-                    act_no="50051036881",
-                    iqr_dit="1",
-                    sta_orr_dt="20260801",
-                    end_orr_dt="20260821",
-                )
-
 
 class TestPeriodPnlDetail:
     def test_sends_input_envelope(self, client):
@@ -1122,18 +1049,6 @@ class TestPeriodPnlDetail:
         assert response.body.output_0 is None
         assert response.body.rsp_cd == "00000"
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(PERIOD_PNL_DETAIL_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
-            with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_inquiry.period_pnl_detail(
-                    act_no="50051036881",
-                    iqr_dit="1",
-                    orr_dt="20260821",
-                    fc_sec_trd_nat_cd="200",
-                    trd_cur_cd="USD",
-                )
-
 
 class TestMargin:
     def test_sends_input_envelope(self, client):
@@ -1181,13 +1096,102 @@ class TestMargin:
         assert response.body.output_0 is None
         assert response.body.rsp_cd == "00000"
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(MARGIN_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
-            with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_inquiry.margin(
-                    act_no="50051036881",
-                )
+
+FAILING_RSP_CD_CASES = [
+    pytest.param(
+        BUYABLE_AMOUNT_URL,
+        lambda client: client.overseas_stock_inquiry.buyable_amount(
+            act_no="50051036881",
+            pcs_dit="1",
+            fc_sec_trd_nat_cd="200",
+            iem_cd="AAPL",
+            wtm_cur_knd_cd="1",
+            oss_orr_knd_cd="1",
+            ahi_nmn_pr_tp_cd="03",
+        ),
+        id="buyable_amount",
+    ),
+    pytest.param(
+        ORDER_EXECUTIONS_URL,
+        lambda client: client.overseas_stock_inquiry.unexecuted(
+            orr_dt="20260821",
+            act_no="50051036881",
+            oss_sby_dit_cd="0",
+            sot_dit="0",
+            ost_cns_dit="0",
+        ),
+        id="unexecuted",
+    ),
+    pytest.param(
+        BALANCE_URL,
+        lambda client: client.overseas_stock_inquiry.balance(
+            act_no="50051036881",
+            qut_iqr_dit_cd="1",
+            fc_sec_trd_nat_cd="200",
+            cur_cd="USD",
+        ),
+        id="balance",
+    ),
+    pytest.param(
+        RESERVED_ORDERS_URL,
+        lambda client: client.overseas_stock_inquiry.reserved_inquiry(
+            fc_mkt_dit_cd="200",
+            bkg_orr_dt="20260821",
+            act_no="50051036881",
+            sby_dit_cd="0",
+            bkg_orr_can_yn="0",
+            oss_orr_knd_cd="0",
+            bkg_orr_tp_cd="0",
+            wtm_cur_knd_cd="0",
+        ),
+        id="reserved_inquiry",
+    ),
+    pytest.param(
+        DAILY_TRANSACTIONS_URL,
+        lambda client: client.overseas_stock_inquiry.daily_transaction(
+            act_no="50051036881",
+            iqr_sta_dt="20260801",
+            iqr_end_dt="20260821",
+            act_trd_cfc_cd="00",
+            iem_mlf_cd="00001",
+        ),
+        id="daily_transaction",
+    ),
+    pytest.param(
+        PERIOD_PNL_URL,
+        lambda client: client.overseas_stock_inquiry.period_pnl(
+            act_no="50051036881",
+            iqr_dit="1",
+            sta_orr_dt="20260801",
+            end_orr_dt="20260821",
+        ),
+        id="period_pnl",
+    ),
+    pytest.param(
+        PERIOD_PNL_DETAIL_URL,
+        lambda client: client.overseas_stock_inquiry.period_pnl_detail(
+            act_no="50051036881",
+            iqr_dit="1",
+            orr_dt="20260821",
+            fc_sec_trd_nat_cd="200",
+            trd_cur_cd="USD",
+        ),
+        id="period_pnl_detail",
+    ),
+    pytest.param(
+        MARGIN_URL,
+        lambda client: client.overseas_stock_inquiry.margin(act_no="50051036881"),
+        id="margin",
+    ),
+]
+
+
+@pytest.mark.parametrize("endpoint, call", FAILING_RSP_CD_CASES)
+def test_raises_on_failing_rsp_cd(client, endpoint, call):
+    with requests_mock.Mocker() as m:
+        m.post(endpoint, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
+        with pytest.raises(NHPlugAPIError, match="40310"):
+            call(client)
 
 
 class TestSpecDeclaredNumericTypes:

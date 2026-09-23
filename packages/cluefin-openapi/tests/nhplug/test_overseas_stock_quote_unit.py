@@ -8,6 +8,8 @@ import requests_mock
 from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
 from cluefin_openapi.nhplug._http_client import HttpClient
 
+from ._unit_helpers import make_client
+
 BASE_PROD = "https://api.nhplug.com:8443"
 
 CURRENT_PRICE_URL = f"{BASE_PROD}/gbstock/quote/v1/current"
@@ -227,7 +229,7 @@ CURRENT_PRICE_OK_BODY = {
 
 @pytest.fixture
 def client() -> HttpClient:
-    return HttpClient(token="TOKEN", app_key="test-app-key", secret_key="test-secret", env="prod")
+    return make_client("prod")
 
 
 class TestCurrent:
@@ -266,12 +268,6 @@ class TestCurrent:
 
         assert response.body.output_0 is None
         assert response.body.rsp_cd == "00000"
-
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(CURRENT_PRICE_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
-            with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_quote.current(iem_cd="AAPL")
 
 
 class TestExecutionTrend:
@@ -312,12 +308,6 @@ class TestExecutionTrend:
 
         assert response.body.output_0 is None
         assert response.body.rsp_cd == "00000"
-
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(EXECUTION_TREND_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
-            with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_quote.execution_trend(period_type="1", req_cnt=5, iem_cd="AAPL")
 
 
 class TestPeriod:
@@ -398,21 +388,6 @@ class TestPeriod:
         assert response.body.output_0 is None
         assert response.body.output_1 is None
         assert response.body.rsp_cd == "00000"
-
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(PERIOD_PRICE_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
-            with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_quote.period(
-                    iem_cd="AAPL",
-                    end_dt="20260821",
-                    count="0100",
-                    maxavg="005",
-                    gubun="3",
-                    xtick="0001",
-                    today_cls="1",
-                    market_cls="1",
-                )
 
 
 class TestSymbolIndexFxPeriod:
@@ -509,18 +484,53 @@ class TestSymbolIndexFxPeriod:
         assert response.body.output_1 is None
         assert response.body.rsp_cd == "00000"
 
-    def test_raises_on_failing_rsp_cd(self, client):
-        with requests_mock.Mocker() as m:
-            m.post(SYMBOL_INDEX_FX_PERIOD_URL, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
-            with pytest.raises(NHPlugAPIError, match="40310"):
-                client.overseas_stock_quote.symbol_index_fx_period(
-                    iem_cd="SPX",
-                    end_dt="20260821",
-                    array_cnt="0100",
-                    maxavg="005",
-                    gubun="1",
-                    today_cls="0",
-                )
+
+FAILING_RSP_CD_CASES = [
+    pytest.param(
+        CURRENT_PRICE_URL,
+        lambda client: client.overseas_stock_quote.current(iem_cd="AAPL"),
+        id="current",
+    ),
+    pytest.param(
+        EXECUTION_TREND_URL,
+        lambda client: client.overseas_stock_quote.execution_trend(period_type="1", req_cnt=5, iem_cd="AAPL"),
+        id="execution_trend",
+    ),
+    pytest.param(
+        PERIOD_PRICE_URL,
+        lambda client: client.overseas_stock_quote.period(
+            iem_cd="AAPL",
+            end_dt="20260821",
+            count="0100",
+            maxavg="005",
+            gubun="3",
+            xtick="0001",
+            today_cls="1",
+            market_cls="1",
+        ),
+        id="period",
+    ),
+    pytest.param(
+        SYMBOL_INDEX_FX_PERIOD_URL,
+        lambda client: client.overseas_stock_quote.symbol_index_fx_period(
+            iem_cd="SPX",
+            end_dt="20260821",
+            array_cnt="0100",
+            maxavg="005",
+            gubun="1",
+            today_cls="0",
+        ),
+        id="symbol_index_fx_period",
+    ),
+]
+
+
+@pytest.mark.parametrize("endpoint, call", FAILING_RSP_CD_CASES)
+def test_raises_on_failing_rsp_cd(client, endpoint, call):
+    with requests_mock.Mocker() as m:
+        m.post(endpoint, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})
+        with pytest.raises(NHPlugAPIError, match="40310"):
+            call(client)
 
 
 class TestFieldDescriptions:
