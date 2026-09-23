@@ -1,5 +1,6 @@
 import { camelizeKeys } from '../core/case-convert.js';
 import { KiwoomApiError, KiwoomAuthenticationError, KiwoomServerError, KiwoomValidationError } from '../core/errors.js';
+import { localIsoNow } from '../core/token-file.js';
 import type { ApiEnv } from '../core/types.js';
 import { MemoryTokenCacheStore, type TokenCacheEntry, type TokenCacheStore } from './token-cache.js';
 
@@ -22,8 +23,6 @@ const getBaseUrl = (env: ApiEnv): string => (env === 'prod' ? 'https://api.kiwoo
 // Python `TokenManager.EXPIRY_BUFFER` / `MAX_CACHE_AGE` — keep both sides in sync by hand.
 const EXPIRY_BUFFER_MS = 60 * 60 * 1000;
 const MAX_CACHE_AGE_MS = 6 * 60 * 60 * 1000;
-
-const nowIso = (): string => new Date().toISOString();
 
 /** Kiwoom wire format ("YYYYMMDDHHMMSS") -> the ISO string Python's `TokenResponse.model_dump(mode="json")`
  * writes to the cache file. Left untouched for anything already ISO-shaped (e.g. a value re-read from cache). */
@@ -107,7 +106,7 @@ export class KiwoomAuth {
       token: token.token,
       tokenType: token.tokenType,
       expiresDt: toIsoExpiresDt(token.expiresDt),
-      cachedAt: nowIso(),
+      cachedAt: localIsoNow(),
     });
     return token;
   }

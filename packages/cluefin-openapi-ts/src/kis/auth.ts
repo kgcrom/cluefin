@@ -6,6 +6,7 @@ import {
   KisServerError,
   KisValidationError,
 } from '../core/errors.js';
+import { localIsoNow } from '../core/token-file.js';
 import type { ApiEnv } from '../core/types.js';
 import { MemoryTokenCacheStore, type TokenCacheEntry, type TokenCacheStore } from './token-cache.js';
 
@@ -42,8 +43,6 @@ export interface KisApprovalResponse {
 const getBaseUrl = (env: ApiEnv): string =>
   env === 'prod' ? 'https://openapi.koreainvestment.com:9443' : 'https://openapivts.koreainvestment.com:29443';
 
-const nowIso = (): string => new Date().toISOString();
-
 const isTokenValid = (entry: TokenCacheEntry): boolean => {
   const expiry = new Date(entry.accessTokenTokenExpired).getTime();
   if (Number.isNaN(expiry)) {
@@ -58,7 +57,7 @@ const toTokenEntry = (input: KisTokenResponse): TokenCacheEntry => ({
   tokenType: input.tokenType,
   expiresIn: input.expiresIn,
   accessTokenTokenExpired: input.accessTokenTokenExpired,
-  cachedAt: nowIso(),
+  cachedAt: localIsoNow(),
 });
 
 export class KisAuth {

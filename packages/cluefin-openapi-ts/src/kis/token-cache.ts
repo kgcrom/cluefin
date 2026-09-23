@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
 
+import { writeJsonAtomic } from '../core/token-file.js';
+
 export interface TokenCacheEntry {
   accessToken: string;
   tokenType: string;
@@ -88,7 +90,6 @@ export class FileTokenCacheStore implements TokenCacheStore {
   }
 
   public async set(entry: TokenCacheEntry): Promise<void> {
-    const fs = await import('node:fs/promises');
     const data = {
       token: {
         access_token: entry.accessToken,
@@ -98,7 +99,7 @@ export class FileTokenCacheStore implements TokenCacheStore {
       },
       cached_at: entry.cachedAt,
     };
-    await fs.writeFile(this.filePath, JSON.stringify(data, null, 2), 'utf-8');
+    await writeJsonAtomic(this.filePath, data);
   }
 
   public async clear(): Promise<void> {

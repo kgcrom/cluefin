@@ -32,6 +32,10 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   hand (nothing enforces this automatically). Because the file is shared, a revoke in
   either language kills the token the other is reusing — the KIS/NH revoke integration
   tests only run with `KIS_TEST_REVOKE=1` / `NHPLUG_TEST_REVOKE=1`.
+- Cache files go through `src/core/token-file.ts`: `cached_at` is naive local time with no
+  `Z`/offset (`localIsoNow`) — Python 3.10's `fromisoformat` rejects `Z`, and the Python
+  `TokenManager` then keeps the token but silently drops its 6h max-age check. Writes are
+  0600 + atomic rename (`writeJsonAtomic`), matching Python's `write_json_atomic`.
 - Endpoint-count tests hardcode totals (`tests/core/endpoint-count.test.ts`, KIS
   contract tests); bump them whenever metadata changes.
 
