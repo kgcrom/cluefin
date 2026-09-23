@@ -12,6 +12,8 @@ from cluefin_openapi.nhplug._exceptions import (
 )
 from cluefin_openapi.nhplug._http_client import HttpClient
 
+from ._unit_helpers import make_client
+
 BASE_PROD = "https://api.nhplug.com:8443"
 BASE_DEV = "https://moapi.nhplug.com:8443"
 
@@ -28,7 +30,7 @@ ACCTINFO_BODY = {
 
 @pytest.fixture
 def client() -> HttpClient:
-    return HttpClient(token="TOKEN", app_key="test-app-key", secret_key="test-secret", env="prod")
+    return make_client("prod")
 
 
 class TestHttpClient:

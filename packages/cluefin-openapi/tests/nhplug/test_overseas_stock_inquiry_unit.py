@@ -8,6 +8,8 @@ import requests_mock
 from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
 from cluefin_openapi.nhplug._http_client import HttpClient
 
+from ._unit_helpers import make_client
+
 BASE_DEV = "https://moapi.nhplug.com:8443"
 
 BUYABLE_AMOUNT_URL = f"{BASE_DEV}/gbstock/inquiry/v1/buyableAmount"
@@ -446,7 +448,7 @@ MARGIN_OK_BODY = {
 
 @pytest.fixture
 def client() -> HttpClient:
-    return HttpClient(token="TOKEN", app_key="test-app-key", secret_key="test-secret", env="dev")
+    return make_client("dev")
 
 
 class TestBuyableAmount:
