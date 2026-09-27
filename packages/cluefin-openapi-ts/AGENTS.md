@@ -114,13 +114,20 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 
 - Gated by `CLUEFIN_OPENAPI_TS_RUN_INTEGRATION=1`; env loads root `.env.test` then
   `.env`, first-wins — an exported shell var silently shadows `.env.test`.
-- They run serialized (separate vitest config, single fork, 180s timeout) to respect
+- They run serialized (separate vitest config, one worker, 180s timeout) to respect
   live rate limits; don't fold them into the parallel unit config.
 - KIS account tests need `KIS_CANO`; without it they skip silently rather than fail.
 - KIS tests use `assertKisResponseShapeDeep` (`tests/_helpers/kis-response-shape.ts`), not
   `assertResponseShape`: the older helper only checks top-level keys plus the one block a call
   passes in, so item fields could drift unseen. nhplug tests use `assertNhplugMatchesSpec`
   (`tests/_helpers/nhplug-response-shape.ts`, keys + spec lengths, same rules as Python
-  `tests/nhplug/_response_shape.py`). Kiwoom tests still use the older helper.
-  An empty array passes the check vacuously — several KIS tests sent non-spec params and got
-  empty results. `KIS_SHAPE_REPORT_EMPTY=1` warns about empty blocks.
+  `tests/nhplug/_response_shape.py`). Kiwoom tests use `assertKiwoomSpecConformance`
+  (`tests/_helpers/kiwoom-spec-conformance.ts`): `getKiwoomClient()` wraps `fetchImpl` to record the
+  last wire request/response, and the helper checks every block plus request/response lengths
+  against `../cluefin-openapi/tests/kiwoom/spec_lengths.json` (shared with Python).
+  An empty array passes the check vacuously — many KIS and Kiwoom tests sent non-spec params and got
+  empty results. `KIS_SHAPE_REPORT_EMPTY=1` warns about empty KIS blocks; the Kiwoom helper always
+  warns (`[kiwoom-spec] … empty blocks`).
+- **Pass `--reporter=verbose` to see those warnings when `AI_AGENT` is set** (Claude Code and other
+  agents): vitest then picks its agent reporter, which hides console output from passing tests —
+  `silent: false` does not bring it back.

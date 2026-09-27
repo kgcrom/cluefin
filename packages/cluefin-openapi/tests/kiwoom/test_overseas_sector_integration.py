@@ -6,10 +6,13 @@ from cluefin_openapi.kiwoom._overseas_sector_types import (
     OverseasSectorIndustryPeriodProfitRate,
 )
 
+from ._spec_conformance import assert_spec_conformance
+
 
 @pytest.mark.integration
 def test_get_industry_period_profit_rate(client: Client):
     response = client.overseas_sector.get_industry_period_profit_rate(stex_tp="3", inds_cd="000")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -20,6 +23,7 @@ def test_get_industry_period_profit_rate(client: Client):
 @pytest.mark.integration
 def test_get_industry_fluctuation_rank(client: Client):
     response = client.overseas_sector.get_industry_fluctuation_rank(stex_tp="3", sort_tp="1", inds_cd="000")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None

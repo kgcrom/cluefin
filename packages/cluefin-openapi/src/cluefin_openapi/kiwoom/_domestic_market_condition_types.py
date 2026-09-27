@@ -280,6 +280,11 @@ class DomesticMarketConditionDailyInstitutionalTradingItem(BaseModel):
     stk_nm: str = Field(default="", description="종목명")
     netprps_qty: str = Field(default="", description="순매수수량")
     netprps_amt: str = Field(default="", description="순매수금액")
+    # 아래 4개는 공식 문서에 없지만 실서버가 반환함 (VENDOR_DOC_ERRATA.md)
+    prsm_avg_pric: str = Field(default="", description="추정평균가")
+    cur_prc: str = Field(default="", description="현재가")
+    avg_pric_pre: str = Field(default="", description="평균가대비")
+    pre_rt: str = Field(default="", description="대비율")
 
 
 class DomesticMarketConditionDailyInstitutionalTrading(BaseModel, KiwoomHttpBody):

@@ -12,6 +12,8 @@ from cluefin_openapi.kiwoom._domestic_sector_types import (
     DomesticSectorIndustryProgram,
 )
 
+from ._spec_conformance import assert_spec_conformance
+
 
 @pytest.mark.integration
 def test_get_industry_program(client: Client):
@@ -20,6 +22,7 @@ def test_get_industry_program(client: Client):
 
     # Make the API call
     response = client.sector.get_industry_program(stk_cd=stk_cd)
+    assert_spec_conformance(client, response)
 
     # Verify response structure
     assert response is not None
@@ -45,6 +48,7 @@ def test_get_industry_investor_net_buy(client: Client):
         base_dt=base_dt,
         stex_tp=stex_tp,
     )
+    assert_spec_conformance(client, response)
 
     # Verify response structure
     assert response is not None
@@ -63,6 +67,7 @@ def test_get_industry_current_price_success(client: Client):
 
     # Make the API call
     response = client.sector.get_industry_current_price(mrkt_tp=mrkt_tp, inds_cd=inds_cd)
+    assert_spec_conformance(client, response)
 
     # Verify response structure
     assert response is not None
@@ -82,6 +87,7 @@ def test_get_industry_price_by_sector_success(client: Client):
 
     # Make the API call
     response = client.sector.get_industry_price_by_sector(mrkt_tp=mrkt_tp, inds_cd=inds_cd, stex_tp=stex_tp)
+    assert_spec_conformance(client, response)
 
     # Verify response structure
     assert response is not None
@@ -98,6 +104,7 @@ def test_get_all_industry_index_success(client: Client):
     inds_cd = "001"  # Example industry code (KOSPI)
     # Make the API call
     response = client.sector.get_all_industry_index(inds_cd=inds_cd)
+    assert_spec_conformance(client, response)
 
     # Verify response structure
     assert response is not None
@@ -116,6 +123,7 @@ def test_get_daily_industry_current_price_success(client: Client):
 
     # Make the API call
     response = client.sector.get_daily_industry_current_price(mrkt_tp=mrkt_tp, inds_cd=inds_cd)
+    assert_spec_conformance(client, response)
 
     # Verify response structure
     assert response is not None

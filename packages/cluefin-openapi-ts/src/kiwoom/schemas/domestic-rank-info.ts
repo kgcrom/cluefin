@@ -406,6 +406,9 @@ export const topSecuritiesFirmTradingItemSchema = z
     netprps: s(),
     buy_trde_qty: s(),
     sel_trde_qty: s(),
+    netprps_amt: s(),
+    buy_amt: s(),
+    sell_amt: s(),
   })
   .passthrough();
 

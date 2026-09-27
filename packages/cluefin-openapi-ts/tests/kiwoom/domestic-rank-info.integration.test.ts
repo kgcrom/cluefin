@@ -1,54 +1,31 @@
 import { describe, test } from 'vitest';
 
 import {
-  rapidlyIncreasingRemainingOrderQuantityItemSchema,
   rapidlyIncreasingRemainingOrderQuantityResponseSchema,
-  rapidlyIncreasingTotalSellOrdersItemSchema,
   rapidlyIncreasingTotalSellOrdersResponseSchema,
-  rapidlyIncreasingTradingVolumeItemSchema,
   rapidlyIncreasingTradingVolumeResponseSchema,
-  sameNetBuySellRankingItemSchema,
   sameNetBuySellRankingResponseSchema,
-  stockSpecificSecuritiesFirmRankingItemSchema,
   stockSpecificSecuritiesFirmRankingResponseSchema,
-  topConsecutiveNetBuySellByForeignersItemSchema,
   topConsecutiveNetBuySellByForeignersResponseSchema,
-  topCurrentDayDeviationSourcesItemSchema,
   topCurrentDayDeviationSourcesResponseSchema,
-  topCurrentDayMajorTradersItemSchema,
   topCurrentDayMajorTradersResponseSchema,
-  topCurrentDayTradingVolumeItemSchema,
   topCurrentDayTradingVolumeResponseSchema,
-  topExpectedConclusionPercentageChangeItemSchema,
   topExpectedConclusionPercentageChangeResponseSchema,
-  topForeignAccountGroupTradingItemSchema,
   topForeignAccountGroupTradingResponseSchema,
-  topForeignerInstitutionTradingItemSchema,
   topForeignerInstitutionTradingResponseSchema,
-  topForeignerPeriodTradingItemSchema,
   topForeignerPeriodTradingResponseSchema,
-  topIntradayTradingByInvestorItemSchema,
   topIntradayTradingByInvestorResponseSchema,
-  topLimitExhaustionRateForeignerItemSchema,
   topLimitExhaustionRateForeignerResponseSchema,
-  topMarginRatioItemSchema,
   topMarginRatioResponseSchema,
-  topNetBuyTraderRankingItemSchema,
   topNetBuyTraderRankingResponseSchema,
-  topPercentageChangeFromPreviousDayItemSchema,
   topPercentageChangeFromPreviousDayResponseSchema,
-  topPreviousDayTradingVolumeItemSchema,
   topPreviousDayTradingVolumeResponseSchema,
-  topRemainingOrderQuantityItemSchema,
   topRemainingOrderQuantityResponseSchema,
-  topSecuritiesFirmTradingItemSchema,
   topSecuritiesFirmTradingResponseSchema,
-  topTransactionValueItemSchema,
   topTransactionValueResponseSchema,
 } from '../../src/kiwoom/schemas/domestic-rank-info';
 import {
   assertKiwoomResponse,
-  assertResponseShape,
   getKiwoomClient,
   ONE_MONTH_AGO,
   runIntegration,
@@ -56,6 +33,7 @@ import {
   setupKiwoomRateLimit,
   TODAY,
 } from '../_helpers/integration-setup';
+import { assertKiwoomSpecConformance } from '../_helpers/kiwoom-spec-conformance';
 
 const it = runIntegration ? test : test.skip;
 
@@ -64,87 +42,67 @@ describe('Kiwoom DomesticRankInfo', () => {
   it('getTopRemainingOrderQuantity', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticRankInfo.getTopRemainingOrderQuantity({
-      mrktTp: '0',
-      sortTp: '0',
-      trdeQtyTp: '0',
+      mrktTp: '001',
+      sortTp: '1',
+      trdeQtyTp: '0000',
       stkCnd: '0',
       crdCnd: '0',
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      topRemainingOrderQuantityResponseSchema,
-      'bidReqUpper',
-      topRemainingOrderQuantityItemSchema,
-    );
+    assertKiwoomSpecConformance(topRemainingOrderQuantityResponseSchema);
   });
 
   it('getRapidlyIncreasingRemainingOrderQuantity', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticRankInfo.getRapidlyIncreasingRemainingOrderQuantity({
-      mrktTp: '0',
-      trdeTp: '0',
-      sortTp: '0',
+      mrktTp: '001',
+      trdeTp: '1',
+      sortTp: '1',
       tmTp: '0',
-      trdeQtyTp: '0',
+      trdeQtyTp: '1',
       stkCnd: '0',
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      rapidlyIncreasingRemainingOrderQuantityResponseSchema,
-      'bidReqSdnin',
-      rapidlyIncreasingRemainingOrderQuantityItemSchema,
-    );
+    assertKiwoomSpecConformance(rapidlyIncreasingRemainingOrderQuantityResponseSchema);
   });
 
   it('getRapidlyIncreasingTotalSellOrders', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticRankInfo.getRapidlyIncreasingTotalSellOrders({
-      mrktTp: '0',
-      rtTp: '0',
+      mrktTp: '001',
+      rtTp: '1',
       tmTp: '0',
-      trdeQtyTp: '0',
+      trdeQtyTp: '5',
       stkCnd: '0',
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      rapidlyIncreasingTotalSellOrdersResponseSchema,
-      'reqRtSdnin',
-      rapidlyIncreasingTotalSellOrdersItemSchema,
-    );
+    assertKiwoomSpecConformance(rapidlyIncreasingTotalSellOrdersResponseSchema);
   });
 
   it('getRapidlyIncreasingTradingVolume', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticRankInfo.getRapidlyIncreasingTradingVolume({
-      mrktTp: '0',
-      sortTp: '0',
-      tmTp: '0',
-      trdeQtyTp: '0',
+      mrktTp: '000',
+      sortTp: '1',
+      tmTp: '2',
+      trdeQtyTp: '5',
       stkCnd: '0',
       pricTp: '0',
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      rapidlyIncreasingTradingVolumeResponseSchema,
-      'trdeQtySdnin',
-      rapidlyIncreasingTradingVolumeItemSchema,
-    );
+    assertKiwoomSpecConformance(rapidlyIncreasingTradingVolumeResponseSchema);
   });
 
   it('getTopPercentageChangeFromPreviousDay', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticRankInfo.getTopPercentageChangeFromPreviousDay({
-      mrktTp: '0',
+      mrktTp: '000',
       sortTp: '1',
-      trdeQtyCnd: '0',
+      trdeQtyCnd: '0000',
       stkCnd: '0',
       crdCnd: '0',
       updownIncls: '0',
@@ -153,19 +111,14 @@ describe('Kiwoom DomesticRankInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      topPercentageChangeFromPreviousDayResponseSchema,
-      'predPreFluRtUpper',
-      topPercentageChangeFromPreviousDayItemSchema,
-    );
+    assertKiwoomSpecConformance(topPercentageChangeFromPreviousDayResponseSchema);
   });
 
   it('getTopExpectedConclusionPercentageChange', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticRankInfo.getTopExpectedConclusionPercentageChange({
-      mrktTp: '0',
-      sortTp: '0',
+      mrktTp: '000',
+      sortTp: '1',
       trdeQtyCnd: '0',
       stkCnd: '0',
       crdCnd: '0',
@@ -173,18 +126,13 @@ describe('Kiwoom DomesticRankInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      topExpectedConclusionPercentageChangeResponseSchema,
-      'expCntrFluRtUpper',
-      topExpectedConclusionPercentageChangeItemSchema,
-    );
+    assertKiwoomSpecConformance(topExpectedConclusionPercentageChangeResponseSchema);
   });
 
   it('getTopCurrentDayTradingVolume', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticRankInfo.getTopCurrentDayTradingVolume({
-      mrktTp: '0',
+      mrktTp: '000',
       sortTp: '1',
       mangStkIncls: '0',
       crdTp: '0',
@@ -194,47 +142,37 @@ describe('Kiwoom DomesticRankInfo', () => {
       mrktOpenTp: '0',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      topCurrentDayTradingVolumeResponseSchema,
-      'tdyTrdeQtyUpper',
-      topCurrentDayTradingVolumeItemSchema,
-    );
+    assertKiwoomSpecConformance(topCurrentDayTradingVolumeResponseSchema);
   });
 
   it('getTopPreviousDayTradingVolume', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticRankInfo.getTopPreviousDayTradingVolume({
-      mrktTp: '0',
-      qryTp: '0',
+      mrktTp: '101',
+      qryTp: '1',
       rankStrt: '1',
       rankEnd: '50',
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      topPreviousDayTradingVolumeResponseSchema,
-      'predTrdeQtyUpper',
-      topPreviousDayTradingVolumeItemSchema,
-    );
+    assertKiwoomSpecConformance(topPreviousDayTradingVolumeResponseSchema);
   });
 
   it('getTopTransactionValue', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticRankInfo.getTopTransactionValue({
-      mrktTp: '0',
+      mrktTp: '001',
       mangStkIncls: '0',
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, topTransactionValueResponseSchema, 'trdePricaUpper', topTransactionValueItemSchema);
+    assertKiwoomSpecConformance(topTransactionValueResponseSchema);
   });
 
   it('getTopMarginRatio', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticRankInfo.getTopMarginRatio({
-      mrktTp: '0',
+      mrktTp: '000',
       trdeQtyTp: '0',
       stkCnd: '0',
       updownIncls: '0',
@@ -242,75 +180,55 @@ describe('Kiwoom DomesticRankInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, topMarginRatioResponseSchema, 'crdRtUpper', topMarginRatioItemSchema);
+    assertKiwoomSpecConformance(topMarginRatioResponseSchema);
   });
 
   it('getTopForeignerPeriodTrading', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticRankInfo.getTopForeignerPeriodTrading({
-      mrktTp: '0',
-      trdeTp: '0',
-      dt: TODAY,
+      mrktTp: '001',
+      trdeTp: '2',
+      dt: '0', // 기간 코드 — 날짜가 아니다
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      topForeignerPeriodTradingResponseSchema,
-      'forDtTrdeUpper',
-      topForeignerPeriodTradingItemSchema,
-    );
+    assertKiwoomSpecConformance(topForeignerPeriodTradingResponseSchema);
   });
 
   it('getTopConsecutiveNetBuySellByForeigners', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticRankInfo.getTopConsecutiveNetBuySellByForeigners({
-      mrktTp: '0',
-      trdeTp: '0',
+      mrktTp: '000',
+      trdeTp: '2',
       baseDtTp: '0',
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      topConsecutiveNetBuySellByForeignersResponseSchema,
-      'forContNettrdeUpper',
-      topConsecutiveNetBuySellByForeignersItemSchema,
-    );
+    assertKiwoomSpecConformance(topConsecutiveNetBuySellByForeignersResponseSchema);
   });
 
   it('getTopLimitExhaustionRateForeigner', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticRankInfo.getTopLimitExhaustionRateForeigner({
-      mrktTp: '0',
-      dt: TODAY,
+      mrktTp: '000',
+      dt: '0', // 기간 코드 — 날짜가 아니다
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      topLimitExhaustionRateForeignerResponseSchema,
-      'forLimitExhRtIncrsUpper',
-      topLimitExhaustionRateForeignerItemSchema,
-    );
+    assertKiwoomSpecConformance(topLimitExhaustionRateForeignerResponseSchema);
   });
 
   it('getTopForeignAccountGroupTrading', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticRankInfo.getTopForeignAccountGroupTrading({
-      mrktTp: '0',
-      dt: TODAY,
-      trdeTp: '0',
-      sortTp: '0',
+      mrktTp: '000',
+      dt: '0', // 기간 코드 — 날짜가 아니다
+      trdeTp: '1',
+      sortTp: '2',
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      topForeignAccountGroupTradingResponseSchema,
-      'frgnWicketTrdeUpper',
-      topForeignAccountGroupTradingItemSchema,
-    );
+    assertKiwoomSpecConformance(topForeignAccountGroupTradingResponseSchema);
   });
 
   it('getStockSpecificSecuritiesFirmRanking', async () => {
@@ -319,33 +237,23 @@ describe('Kiwoom DomesticRankInfo', () => {
       stkCd: SAMSUNG,
       strtDt: ONE_MONTH_AGO,
       endDt: TODAY,
-      qryTp: '0',
+      qryTp: '2',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      stockSpecificSecuritiesFirmRankingResponseSchema,
-      'stkSecRank',
-      stockSpecificSecuritiesFirmRankingItemSchema,
-    );
+    assertKiwoomSpecConformance(stockSpecificSecuritiesFirmRankingResponseSchema);
   });
 
   it('getTopSecuritiesFirmTrading', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticRankInfo.getTopSecuritiesFirmTrading({
-      mmcmCd: '0000',
+      mmcmCd: '001',
       trdeQtyTp: '0',
-      trdeTp: '0',
-      dt: TODAY,
+      trdeTp: '1',
+      dt: '1', // 기간 코드 — 날짜가 아니다
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      topSecuritiesFirmTradingResponseSchema,
-      'secTrdeUpper',
-      topSecuritiesFirmTradingItemSchema,
-    );
+    assertKiwoomSpecConformance(topSecuritiesFirmTradingResponseSchema);
   });
 
   it('getTopCurrentDayMajorTraders', async () => {
@@ -354,12 +262,7 @@ describe('Kiwoom DomesticRankInfo', () => {
       stkCd: SAMSUNG,
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      topCurrentDayMajorTradersResponseSchema,
-      'tdyMainTrdeOri',
-      topCurrentDayMajorTradersItemSchema,
-    );
+    assertKiwoomSpecConformance(topCurrentDayMajorTradersResponseSchema);
   });
 
   it('getTopNetBuyTraderRanking', async () => {
@@ -370,16 +273,11 @@ describe('Kiwoom DomesticRankInfo', () => {
       endDt: TODAY,
       qryDtTp: '0',
       potTp: '0',
-      dt: TODAY,
-      sortBase: '0',
+      dt: '5', // 기간 코드 — 날짜가 아니다
+      sortBase: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      topNetBuyTraderRankingResponseSchema,
-      'netprpsTrdeOriRank',
-      topNetBuyTraderRankingItemSchema,
-    );
+    assertKiwoomSpecConformance(topNetBuyTraderRankingResponseSchema);
   });
 
   it('getTopCurrentDayDeviationSources', async () => {
@@ -388,12 +286,7 @@ describe('Kiwoom DomesticRankInfo', () => {
       stkCd: SAMSUNG,
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      topCurrentDayDeviationSourcesResponseSchema,
-      'tdyUpperScesnOri',
-      topCurrentDayDeviationSourcesItemSchema,
-    );
+    assertKiwoomSpecConformance(topCurrentDayDeviationSourcesResponseSchema);
   });
 
   it('getSameNetBuySellRanking', async () => {
@@ -401,19 +294,14 @@ describe('Kiwoom DomesticRankInfo', () => {
     const res = await client.domesticRankInfo.getSameNetBuySellRanking({
       strtDt: ONE_MONTH_AGO,
       endDt: TODAY,
-      mrktTp: '0',
-      trdeTp: '0',
-      sortCnd: '0',
+      mrktTp: '000',
+      trdeTp: '1',
+      sortCnd: '1',
       unitTp: '1',
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      sameNetBuySellRankingResponseSchema,
-      'eqlNettrdeRank',
-      sameNetBuySellRankingItemSchema,
-    );
+    assertKiwoomSpecConformance(sameNetBuySellRankingResponseSchema);
   });
 
   it('getTopForeignerInstitutionTrading', async () => {
@@ -425,12 +313,11 @@ describe('Kiwoom DomesticRankInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      topForeignerInstitutionTradingResponseSchema,
-      'frgnrOrgnTrdeUpper',
-      topForeignerInstitutionTradingItemSchema,
-    );
+    // 실측: 종목명이 문서 Length 20 을 넘는다 — VENDOR_DOC_ERRATA.md. 어느 칸에 긴 이름이 올지는 날마다 다르다
+    const names = ['for_netslmt_stk_nm', 'for_netprps_stk_nm', 'orgn_netslmt_stk_nm', 'orgn_netprps_stk_nm'];
+    assertKiwoomSpecConformance(topForeignerInstitutionTradingResponseSchema, {
+      ignoreLength: names.map((n) => `frgnr_orgn_trde_upper.${n}`),
+    });
   });
 
   it('getTopIntradayTradingByInvestor', async () => {
@@ -442,11 +329,6 @@ describe('Kiwoom DomesticRankInfo', () => {
       amtQtyTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      topIntradayTradingByInvestorResponseSchema,
-      'opmrInvsrTrdeUpper',
-      topIntradayTradingByInvestorItemSchema,
-    );
+    assertKiwoomSpecConformance(topIntradayTradingByInvestorResponseSchema);
   });
 });

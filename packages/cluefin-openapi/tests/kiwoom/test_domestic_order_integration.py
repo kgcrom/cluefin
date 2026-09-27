@@ -4,6 +4,7 @@ from cluefin_openapi.kiwoom._client import Client
 from cluefin_openapi.kiwoom._exceptions import KiwoomAPIError
 
 from ._integration_helpers import skip_if_env_blocked
+from ._spec_conformance import assert_spec_conformance
 
 TEST_STK_CD = "005930"
 
@@ -84,6 +85,7 @@ def test_request_modify_order(client: Client, pending_buy_order_no: str):
         mdfy_uv=_unfillable_buy_price(client),
         mdfy_cond_uv="",
     )
+    assert_spec_conformance(client, response)
     assert response is not None
     assert response.body is not None
 
@@ -93,5 +95,6 @@ def test_request_cancel_order(client: Client, pending_buy_order_no: str):
     response = client.order.request_cancel_order(
         dmst_stex_tp="KRX", orig_ord_no=pending_buy_order_no, stk_cd=TEST_STK_CD, cncl_qty="1"
     )
+    assert_spec_conformance(client, response)
     assert response is not None
     assert response.body is not None

@@ -1,26 +1,21 @@
 import { describe, test } from 'vitest';
 
 import {
-  allIndustryIndexItemSchema,
   allIndustryIndexResponseSchema,
-  dailyIndustryCurrentPriceDailyItemSchema,
   dailyIndustryCurrentPriceResponseSchema,
   industryCurrentPriceResponseSchema,
-  industryCurrentPriceTimeItemSchema,
-  industryInvestorNetBuyItemSchema,
   industryInvestorNetBuyResponseSchema,
-  industryPriceBySectorItemSchema,
   industryPriceBySectorResponseSchema,
   industryProgramResponseSchema,
 } from '../../src/kiwoom/schemas/domestic-sector';
 import {
   assertKiwoomResponse,
-  assertResponseShape,
   getKiwoomClient,
   runIntegration,
   setupKiwoomRateLimit,
   TODAY,
 } from '../_helpers/integration-setup';
+import { assertKiwoomSpecConformance } from '../_helpers/kiwoom-spec-conformance';
 
 const it = runIntegration ? test : test.skip;
 
@@ -30,7 +25,7 @@ describe('Kiwoom DomesticSector', () => {
     const client = await getKiwoomClient();
     const res = await client.domesticSector.getIndustryProgram({ stkCd: '001' });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, industryProgramResponseSchema);
+    assertKiwoomSpecConformance(industryProgramResponseSchema);
   });
 
   it('getIndustryInvestorNetBuy', async () => {
@@ -42,12 +37,7 @@ describe('Kiwoom DomesticSector', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      industryInvestorNetBuyResponseSchema,
-      'indsNetprps',
-      industryInvestorNetBuyItemSchema,
-    );
+    assertKiwoomSpecConformance(industryInvestorNetBuyResponseSchema);
   });
 
   it('getIndustryCurrentPrice', async () => {
@@ -57,12 +47,7 @@ describe('Kiwoom DomesticSector', () => {
       indsCd: '001',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      industryCurrentPriceResponseSchema,
-      'indsCurPrcTm',
-      industryCurrentPriceTimeItemSchema,
-    );
+    assertKiwoomSpecConformance(industryCurrentPriceResponseSchema);
   });
 
   it('getIndustryPriceBySector', async () => {
@@ -73,14 +58,14 @@ describe('Kiwoom DomesticSector', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, industryPriceBySectorResponseSchema, 'indsStkpc', industryPriceBySectorItemSchema);
+    assertKiwoomSpecConformance(industryPriceBySectorResponseSchema);
   });
 
   it('getAllIndustryIndex', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticSector.getAllIndustryIndex({ indsCd: '001' });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, allIndustryIndexResponseSchema, 'allIndsIdex', allIndustryIndexItemSchema);
+    assertKiwoomSpecConformance(allIndustryIndexResponseSchema);
   });
 
   it('getDailyIndustryCurrentPrice', async () => {
@@ -90,11 +75,6 @@ describe('Kiwoom DomesticSector', () => {
       indsCd: '001',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      dailyIndustryCurrentPriceResponseSchema,
-      'indsCurPrcDalyRept',
-      dailyIndustryCurrentPriceDailyItemSchema,
-    );
+    assertKiwoomSpecConformance(dailyIndustryCurrentPriceResponseSchema);
   });
 });

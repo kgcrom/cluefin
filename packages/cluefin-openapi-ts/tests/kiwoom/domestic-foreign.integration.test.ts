@@ -1,21 +1,18 @@
 import { describe, test } from 'vitest';
 
 import {
-  consecutiveNetBuySellStatusByInstitutionForeignerItemSchema,
   consecutiveNetBuySellStatusByInstitutionForeignerResponseSchema,
-  foreignInvestorTradingTrendByStockItemSchema,
   foreignInvestorTradingTrendByStockResponseSchema,
   stockInstitutionResponseSchema,
 } from '../../src/kiwoom/schemas/domestic-foreign';
 import {
   assertKiwoomResponse,
-  assertResponseShape,
   getKiwoomClient,
   runIntegration,
   SAMSUNG,
   setupKiwoomRateLimit,
-  TODAY,
 } from '../_helpers/integration-setup';
+import { assertKiwoomSpecConformance } from '../_helpers/kiwoom-spec-conformance';
 
 const it = runIntegration ? test : test.skip;
 
@@ -25,36 +22,26 @@ describe('Kiwoom DomesticForeign', () => {
     const client = await getKiwoomClient();
     const res = await client.domesticForeign.getForeignInvestorTradingTrendByStock({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      foreignInvestorTradingTrendByStockResponseSchema,
-      'stkFrgnr',
-      foreignInvestorTradingTrendByStockItemSchema,
-    );
+    assertKiwoomSpecConformance(foreignInvestorTradingTrendByStockResponseSchema);
   });
 
   it('getStockInstitution', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticForeign.getStockInstitution({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, stockInstitutionResponseSchema);
+    assertKiwoomSpecConformance(stockInstitutionResponseSchema);
   });
 
   it('getConsecutiveNetBuySellStatusByInstitutionForeigner', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticForeign.getConsecutiveNetBuySellStatusByInstitutionForeigner({
-      dt: TODAY,
-      mrktTp: '0',
+      dt: '1', // 기간 코드 — 날짜가 아니다
+      mrktTp: '001',
       stkIndsTp: '0',
       amtQtyTp: '1',
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      consecutiveNetBuySellStatusByInstitutionForeignerResponseSchema,
-      'orgnFrgnrContTrdePrst',
-      consecutiveNetBuySellStatusByInstitutionForeignerItemSchema,
-    );
+    assertKiwoomSpecConformance(consecutiveNetBuySellStatusByInstitutionForeignerResponseSchema);
   });
 });

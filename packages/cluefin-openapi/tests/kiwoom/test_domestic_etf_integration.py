@@ -13,10 +13,13 @@ from cluefin_openapi.kiwoom._domestic_etf_types import (
     DomesticEtfReturnRate,
 )
 
+from ._spec_conformance import assert_spec_conformance
+
 
 @pytest.mark.integration
 def test_get_etf_return_rate(client: Client):
     response = client.etf.get_etf_return_rate("069500", "001", "0")
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticEtfReturnRate)
 
@@ -24,6 +27,7 @@ def test_get_etf_return_rate(client: Client):
 @pytest.mark.integration
 def test_get_etf_item_info(client: Client):
     response = client.etf.get_etf_item_info("069500")
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticEtfItemInfo)
 
@@ -31,6 +35,7 @@ def test_get_etf_item_info(client: Client):
 @pytest.mark.integration
 def test_get_etf_daily_trend(client: Client):
     response = client.etf.get_etf_daily_trend("069500")
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticEtfDailyTrend)
 
@@ -38,6 +43,7 @@ def test_get_etf_daily_trend(client: Client):
 @pytest.mark.integration
 def test_get_etf_full_price(client: Client):
     response = client.etf.get_etf_full_price("0", "0", "0000", "0", "0", "1")
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticEtfFullPrice)
 
@@ -45,6 +51,7 @@ def test_get_etf_full_price(client: Client):
 @pytest.mark.integration
 def test_get_etf_hourly_trend(client: Client):
     response = client.etf.get_etf_hourly_trend("069500")
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticEtfHourlyTrend)
 
@@ -52,6 +59,7 @@ def test_get_etf_hourly_trend(client: Client):
 @pytest.mark.integration
 def test_get_etf_hourly_execution(client: Client):
     response = client.etf.get_etf_hourly_execution("069500")
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticEtfHourlyExecution)
 
@@ -59,6 +67,7 @@ def test_get_etf_hourly_execution(client: Client):
 @pytest.mark.integration
 def test_get_etf_daily_execution(client: Client):
     response = client.etf.get_etf_daily_execution("069500")
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticEtfDailyExecution)
 
@@ -66,6 +75,7 @@ def test_get_etf_daily_execution(client: Client):
 @pytest.mark.integration
 def test_get_etf_hourly_execution_v2(client: Client):
     response = client.etf.get_etf_hourly_execution_v2("069500")
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticEtfHourlyExecutionV2)
 
@@ -73,5 +83,6 @@ def test_get_etf_hourly_execution_v2(client: Client):
 @pytest.mark.integration
 def test_get_etf_hourly_trend_v2(client: Client):
     response = client.etf.get_etf_hourly_trend_v2("069500")
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticEtfHourlyTrendV2)
