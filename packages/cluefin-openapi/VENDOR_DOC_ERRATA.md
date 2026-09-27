@@ -126,7 +126,7 @@
 | ka20007 업종주봉 | 요청 `base_dt` | 3 | 8 (Description 은 `YYYYMMDD`) | 2026-09-27 |
 | ka90009 외국인기관매매상위 | 응답 `frgnr_orgn_trde_upper.orgn_netslmt_stk_nm` (종목명 칸 4개 모두 같은 Length) | 20 | 25 | 2026-09-27 |
 
-정적 대조로만 확인한 같은 종류의 문서 모순 (Phase 3 이후 실측): ka10020 `trde_qty_tp`(4, 허용값 `00100`), ka10022·23 `trde_qty_tp`(1, `1000`),
+정적 대조로만 확인한 같은 종류의 문서 모순 (통합테스트가 짧은 허용값만 보내 서버 수용은 미확인): ka10020 `trde_qty_tp`(4, 허용값 `00100`), ka10022·23 `trde_qty_tp`(1, `1000`),
 ka10023 `stk_cnd`(1, `11`~`20`), ka10030 `mang_stk_incls`·`trde_qty_tp`·`trde_prica_tp`(1), ka10033 `trde_qty_tp`(3), ka10038 `dt`(2, `119`), ka10062 `unit_tp`(1, `1000`).
 
 ### 문서 표기 함정
