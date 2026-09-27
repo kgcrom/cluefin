@@ -401,6 +401,23 @@ export const krStockQuoteCurrentPriceOutputSchema = z
     nxt_midp_total_bidp_rsqn: num.nullish(),
     /** 증거금등급구분코드 */
     marg_grad_cls_code: z.string().nullish(),
+    // 스펙 260911 추가 — 실서버는 KRX·UNT 모두 키를 보낸다. nxt_vi_* 는 KRX 조회에서 0 (운영 2026-09-27)
+    /** 정규장마감종가 */
+    main_cls_prpr: num.nullish(),
+    /** 정규장마감등락부호 */
+    main_cls_vrss_sign: z.string().nullish(),
+    /** 정규장마감등락폭 */
+    main_cls_vrss: num.nullish(),
+    /** 정규장마감등락률 */
+    main_cls_ctrt: num.nullish(),
+    /** 장상태구분코드 */
+    market_status: z.string().nullish(),
+    /** NXT_VI기준가 */
+    nxt_vi_antc_sdpr: num.nullish(),
+    /** NXT_VI상승발동가 */
+    nxt_vi_antc_mxpr: num.nullish(),
+    /** NXT_VI하락발동가 */
+    nxt_vi_antc_llam: num.nullish(),
   })
   .passthrough();
 
@@ -506,8 +523,8 @@ export const krStockQuoteCurrentExecutionTickOutputSchema = z
     askrate: num.nullish(),
     /** 누적보합체결량 */
     stnr_cntg_smtn: num.nullish(),
-    /** 당일보합비중 */
-    uncrate: num.nullish(),
+    /** 당일보합비중 — 스펙은 `uncrate` 지만 실서버는 `unc_rate` (운영 2026-09-27) */
+    unc_rate: num.nullish(),
     /** 체결강도 */
     cttr: num.nullish(),
     /** 매도호가 */
@@ -1088,35 +1105,36 @@ export const krStockQuoteAfterHoursCurrentResponseSchema = z
   })
   .passthrough();
 
-/** 주식현재가 시간외일자별주가 시간외 체결 상세 (Output_0 배열의 각 항목). */
+/**
+ * 주식현재가 시간외일자별주가 일자별 시세 (Output_0 배열의 각 항목).
+ *
+ * 스펙의 필드 이름이 설명과 어긋나 있어(`qry_date`=일자, `qry_time`=시가 …) 실서버 이름으로 받는다
+ * (운영 2026-09-27, 파이썬 모델과 같음). 일자는 YYMMDD 6자리.
+ */
 export const krStockQuoteCurrentAfterHoursDailyTickOutputSchema = z
   .object({
     /** 일자 */
-    qry_date: z.string().nullish(),
+    bsop_date: z.string().nullish(),
     /** 시가 */
-    qry_time: z.string().nullish(),
+    stck_oprc: num.nullish(),
     /** 고가 */
-    shrn_iscd: z.string().nullish(),
+    stck_hgpr: num.nullish(),
     /** 저가 */
-    hts_kor_isnm: z.string().nullish(),
+    stck_lwpr: num.nullish(),
     /** 락구분 */
-    stck_prpr: z.string().nullish(),
-    /** Filler */
-    prdy_vrss_sign: z.string().nullish(),
+    nh_rights: z.string().nullish(),
   })
   .passthrough();
 
-/** 주식현재가 시간외일자별주가 종합 상세 (Output_1 배열의 각 항목). */
+/** 주식현재가 시간외일자별주가 종합 상세 (Output_1 배열의 각 항목). 스펙 `prdy_ctrt` 대신 `stck_prpr` 가 온다. */
 export const krStockQuoteCurrentAfterHoursDailyOutputSchema = z
   .object({
     /** 현재가 */
-    prdy_ctrt: z.string().nullish(),
+    stck_prpr: num.nullish(),
     /** 거래량 */
     acml_vol: z.union([z.string(), num]).nullish(),
     /** 거래대금 */
     acml_tr_pbmn: z.union([z.string(), num]).nullish(),
-    /** Filler */
-    prdy_vol: z.string().nullish(),
   })
   .passthrough();
 
