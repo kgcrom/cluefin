@@ -567,10 +567,10 @@ class DomesticStockInfo:
         mrkt_tp: Literal["000", "001", "101"],
         updown_incls: Literal["0", "1"],
         stk_cnd: Literal["0", "1", "4", "3", "5", "6", "7", "8", "9"],
-        crd_cnd: Literal["0", "1", "2", "3", "4", "9"],
+        crd_cnd: Literal["0", "1", "2", "3", "4", "7", "9"],
         trde_prica_cnd: Literal["0", "3", "5", "10", "30", "50", "100", "300", "500", "1000", "3000", "5000"],
         flu_cnd: Literal["1", "2"],
-        stex_tp: Literal["1", "2"],
+        stex_tp: Literal["1", "2", "3"],
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticStockInfoChangeRateFromOpen]:
@@ -582,10 +582,10 @@ class DomesticStockInfo:
             mrkt_tp (Literal["000", "001", "101"]): 시장구분 (000:전체, 001:코스피, 101:코스닥)
             updown_incls (Literal["0", "1"]): 상하한포함 (0:불 포함, 1:포함)
             stk_cnd (Literal["0", "1", "4", "3", "5", "6", "7", "8", "9"]): 종목조건 (0:전체조회, 1:관리종목제외, 4:우선주+관리주제외, 3:우선주제외, 5:증100제외, 6:증100만보기, 7:증40만보기, 8:증30만보기, 9:증20만보기)
-            crd_cnd (Literal["0", "1", "2", "3", "4", "9"]): 신용조건 (0:전체조회, 1:신용융자A군, 2:신용융자B군, 3:신용융자C군, 4:신용융자D군, 9:신용융자전체)
+            crd_cnd (Literal["0", "1", "2", "3", "4", "7", "9"]): 신용조건 (0:전체조회, 1:신용융자A군, 2:신용융자B군, 3:신용융자C군, 4:신용융자D군, 7:신용융자E군, 9:신용융자전체)
             trde_prica_cnd (Literal["0", "3", "5", "10", "30", "50", "100", "300", "500", "1000", "3000", "5000"]): 거래대금조건 (0:전체조회, 3:3천만원이상, 5:5천만원이상, 10:1억원이상, 30:3억원이상, 50:5억원이상, 100:10억원이상, 300:30억원이상, 500:50억원이상, 1000:100억원이상, 3000:300억원이상, 5000:500억원이상)
             flu_cnd (Literal["1", "2"]): 등락조건 (1:상위, 2:하위)
-            stex_tp (Literal["1", "2"]): 거래소구분 (1:KRX, 2:NXT)
+            stex_tp (Literal["1", "2", "3"]): 거래소구분 (1:KRX, 2:NXT, 3:통합)
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -686,7 +686,7 @@ class DomesticStockInfo:
         mrkt_tp: Literal["0", "1", "2", "3"],
         qty_tp: Literal["0", "1", "2", "3", "5", "10", "30", "50", "100"],
         pric_tp: Literal["0", "1", "8", "2", "3", "4", "5"],
-        stex_tp: Literal["1", "2"],
+        stex_tp: Literal["1", "2", "3"],
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticStockInfoTradingMemberInstantVolume]:
@@ -698,7 +698,7 @@ class DomesticStockInfo:
             mrkt_tp (Literal["0", "1", "2", "3"]): 시장구분 (1:코스피, 2:코스닥, 3:종목). Defaults to "0".
             qty_tp (Literal["0", "1", "2", "3", "5", "10", "30", "50", "100"]): 수량구분 (0:전체, 1:1000주, 2:2000주, 3:, 5:, 10:10000주, 30:30000주, 50:50000주, 100:100000주). Defaults to "0".
             pric_tp (Literal["0", "1", "8", "2", "3", "4", "5"]): 가격구분 (0:전체, 1:1천원 미만, 8:1천원 이상, 2:1천원 ~ 2천원, 3:2천원 ~ 5천원, 4:5천원 ~ 1만원, 5:1만원 이상). Defaults to "0".
-            stex_tp (Literal["1", "2"]): 거래소구분 (1:KRX, 2:NXT). Defaults to "1".
+            stex_tp (Literal["1", "2", "3"]): 거래소구분 (1:KRX, 2:NXT, 3:통합). Defaults to "1".
 
         Returns:
             KiwoomHttpResponse[DomesticStockInfoTradingMemberInstantVolume]: 거래원 순간 거래량 응답
@@ -736,7 +736,7 @@ class DomesticStockInfo:
         trde_qty_tp: Literal["0", "1"],
         trde_prica_tp: Literal["0", "1"],
         motn_drc: Literal["0", "1", "2"],
-        stex_tp: Literal["1", "2"],
+        stex_tp: Literal["1", "2", "3"],
         min_trde_qty: str = "0",
         max_trde_qty: str = "100000000",
         min_trde_prica: str = "0",
@@ -755,7 +755,7 @@ class DomesticStockInfo:
             trde_qty_tp (Literal["0", "1"]): 거래량구분 (0:사용안함, 1:사용)
             trde_price_tp (Literal["0", "1"]): 거래대금구분 (0:사용안함, 1:사용)
             motn_drc (Literal["0", "1", "2"]): 발동방향 (0:전체, 1:상승, 2:하락)
-            stex_tp (Literal["1", "2"]): 거래소구분 (1:KRX, 2:NXT 3.통합)
+            stex_tp (Literal["1", "2", "3"]): 거래소구분 (1:KRX, 2:NXT, 3:통합)
             min_trde_qty (str): 최소거래량 (12자리, 0 주 이상). Defaults to "0".
                 키움 문서 Description에 "(공백허용)"으로 적혀 있으나 실제 서버는 Required=Y대로 동작해
                 빈 문자열을 보내면 "1511:필수입력 파라미터=min_trde_qty" 오류가 난다. 거래량구분이 "0"
@@ -843,8 +843,10 @@ class DomesticStockInfo:
         end_dt: str,
         trde_tp: Literal["1", "2"],
         mrkt_tp: Literal["001", "101"],
-        invsr_tp: Literal["8000", "9000", "1000", "3000", "5000", "4000", "2000", "6000", "7000", "7100", "9999"],
-        stex_tp: Literal["1", "2"],
+        invsr_tp: Literal[
+            "8000", "9000", "1000", "3000", "3100", "5000", "4000", "2000", "6000", "7000", "7100", "9999"
+        ],
+        stex_tp: Literal["1", "2", "3"],
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticStockInfoDailyTradingItemsByInvestor]:
@@ -856,7 +858,7 @@ class DomesticStockInfo:
             trde_tp (Literal["1", "2"]): 매매구분 (1:순매도, 2:순매수)
             mrkt_tp (Literal["001", "101"]): 시장구분 (001:코스피, 101:코스닥)
             invsr_tp (str): 투자자구분 (8000:개인, 9000:외국인, 1000:금융투자, 3000:투신, 5000:기타금융, 4000:은행, 2000:보험, 6000:연기금, 7000:국가, 7100:기타법인, 9999:기관계)
-            stex_tp (Literal["1", "2"]): 거래소구분 (1:KRX, 2:NXT)
+            stex_tp (Literal["1", "2", "3"]): 거래소구분 (1:KRX, 2:NXT, 3:통합)
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -1215,7 +1217,7 @@ class DomesticStockInfo:
         trde_upper_tp: Literal["1", "2"],
         amt_qty_tp: Literal["1", "2"],
         mrkt_tp: str,
-        stex_tp: Literal["1", "2"],
+        stex_tp: Literal["1", "2", "3"],
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticStockInfoTop50ProgramNetBuy]:
@@ -1225,7 +1227,7 @@ class DomesticStockInfo:
             trde_upper_tp (Literal["1", "2"]): 매매상위구분 (1:순매도상위, 2:순매수상위)
             amt_qty_tp (Literal["1", "2"]): 금액수량구분 (1:금액, 2:수량)
             mrkt_tp (str): 시장구분 (10자리, P00101:코스피, P10102:코스닥)
-            stex_tp (Literal["1", "2"]): 거래소구분 (1:KRX, 2:NXT 3.통합). Defaults to "1".
+            stex_tp (Literal["1", "2", "3"]): 거래소구분 (1:KRX, 2:NXT, 3:통합). Defaults to "1".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -1259,7 +1261,7 @@ class DomesticStockInfo:
         self,
         dt: str,
         mrkt_tp: str,
-        stex_tp: Literal["1", "2"],
+        stex_tp: Literal["1", "2", "3"],
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticStockInfoProgramTradingStatusByStock]:
@@ -1268,7 +1270,7 @@ class DomesticStockInfo:
         Args:
             dt (str): 일자 (YYYYMMDD)
             mrkt_tp (str): 시장구분 (10자리, P00101:코스피, P10102:코스닥)
-            stex_tp (Literal["1", "2"]): 거래소구분 (1:KRX, 2:NXT 3.통합). Defaults to "1".
+            stex_tp (Literal["1", "2", "3"]): 거래소구분 (1:KRX, 2:NXT, 3:통합). Defaults to "1".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
