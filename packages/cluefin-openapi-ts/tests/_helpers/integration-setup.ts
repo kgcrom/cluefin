@@ -21,6 +21,7 @@ import {
   FileTokenCacheStore as NhplugFileTokenCacheStore,
   nhplugTokenCacheFileName,
 } from '../../src/nhplug/token-cache';
+import { kiwoomRecordingFetch } from './kiwoom-spec-conformance';
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -110,7 +111,8 @@ export function getKiwoomClient(): Promise<KiwoomClient> {
       const tokenCacheStore = new KiwoomFileTokenCacheStore(path.join(cacheDir, kiwoomTokenCacheFileName(env, appKey)));
       const auth = new KiwoomAuth({ appKey, secretKey, env, tokenCacheStore });
       const tokenResponse = await auth.generateToken();
-      return new KiwoomClient({ token: tokenResponse.token, env });
+      // assertKiwoomSpecConformance 가 마지막 요청·응답 원문을 읽는다
+      return new KiwoomClient({ token: tokenResponse.token, env, fetchImpl: kiwoomRecordingFetch });
     })();
   }
   return g.__kiwoomClientPromise as Promise<KiwoomClient>;
