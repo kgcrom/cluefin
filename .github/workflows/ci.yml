@@ -69,15 +69,7 @@ jobs:
       with:
         enable-cache: true
         cache-suffix: ${{ matrix.python-version }}
-
-    - name: Install TA-Lib C library
-      run: |
-        wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
-        tar -xzf ta-lib-0.4.0-src.tar.gz
-        cd ta-lib/
-        ./configure --prefix=/usr
-        make
-        sudo make install
+        python-version: ${{ matrix.python-version }}
 
     - name: Install dependencies
       run: |
@@ -127,15 +119,6 @@ jobs:
         with:
           enable-cache: true
           cache-suffix: coverage
-
-      - name: Install TA-Lib C library
-        run: |
-          wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
-          tar -xzf ta-lib-0.4.0-src.tar.gz
-          cd ta-lib/
-          ./configure --prefix=/usr
-          make
-          sudo make install
 
       - name: Install dependencies
         run: |
