@@ -33,25 +33,6 @@ function unwrap(schema: ZodLike): { kind: Kind; shape?: Record<string, ZodLike> 
 const rawKind = (value: unknown): Kind =>
   Array.isArray(value) ? 'array' : value && typeof value === 'object' ? 'object' : 'scalar';
 
-/** An object as-is, or an array's rows merged (rows can omit keys); keeps the first non-empty value per key. */
-function mergeRows(value: unknown): Record<string, unknown> {
-  const rows = Array.isArray(value) ? value : [value];
-  const merged: Record<string, unknown> = {};
-  for (const row of rows) {
-    if (!row || typeof row !== 'object' || Array.isArray(row)) continue;
-    for (const [key, item] of Object.entries(row)) {
-      const prev = merged[key];
-      const empty =
-        prev === undefined ||
-        prev === null ||
-        prev === '' ||
-        (typeof prev === 'object' && Object.keys(prev).length === 0);
-      if (empty) merged[key] = item;
-    }
-  }
-  return merged;
-}
-
 /** Every difference between a camelCased KIS body and its (snake_case) schema; empty means exact match. */
 export function kisResponseShapeDiff(
   body: Record<string, unknown>,
@@ -76,9 +57,12 @@ export function kisResponseShapeDiff(
       problems.push(`kind: ${label} is ${rawKind(value)} on the server, schema expects ${kind}`);
       continue;
     }
-    const merged = mergeRows(value);
-    if (Object.keys(merged).length === 0) continue; // 빈 배열·빈 객체는 키를 판정할 수 없다
-    problems.push(...kisResponseShapeDiff(merged, nested, `${label}.`));
+    // 배열은 모든 행의 키 합집합으로 본다 (행마다 빠지는 키가 있다). 블록은 한 단계만 내려간다 — 행 안에 블록을
+    // 둔 KIS 스키마는 없고, 생기면 안쪽 블록이 kind 불일치로 드러난다
+    const rows = (kind === 'array' ? value : [value]) as Record<string, unknown>[];
+    const keys = Object.fromEntries(rows.flatMap((row) => Object.keys(row)).map((k) => [k, null]));
+    if (Object.keys(keys).length === 0) continue; // 빈 배열·빈 객체는 키를 판정할 수 없다
+    problems.push(...kisResponseShapeDiff(keys, nested, `${label}.`));
   }
 
   for (const key of Object.keys(body).sort()) {
