@@ -139,7 +139,8 @@ const balance = await client.krstockInquiry.balance({
   종목코드와 무관하게 `IGW40019 "종목코드(iem_cd)를 확인해주세요"`로 거절되는데, 이는 잘못된
   종목코드가 아니라 "모의투자 미제공"이라는 뜻입니다.
 - HTTP 200이어도 본문 `rsp_cd`가 실패일 수 있어 클라이언트가 이를 검사합니다. 성공 코드는
-  `00000`과 `XA102`(모의투자 조회 완료) 두 가지입니다 (`NHPLUG_SUCCESS_RSP_CODES`).
+  `00000`·`XA102`(모의투자 조회 완료)·`00166`(운영 조회 완료)·`00221`(운영 주문가능수량 조회 완료)입니다
+  (`NHPLUG_SUCCESS_RSP_CODES`).
 
 #### 토큰 캐시
 

@@ -95,8 +95,9 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   invisible for KIS/Kiwoom (lowercase snake_case wire keys) and only shows up on NH PLUG's
   capitalized envelope keys (`Output_0` → `output0`). Dropping it silently desyncs the
   declared response types from the values actually returned.
-- nhplug treats **both** `00000` and `XA102` as success (`SUCCESS_RSP_CODES`) — the mock
-  server answers some successful inquiries with `XA102`, so a 00000-only check reports
+- nhplug treats `00000`, `XA102`, `00166` and `00221` as success (`SUCCESS_RSP_CODES`) — the
+  mock server answers some successful inquiries with `XA102` and the live server most account
+  inquiries with `00166` (`buyableQuantity`: `00221`), so a 00000-only check reports
   false failures. Keep the list identical to Python's `_model.SUCCESS_RSP_CODES`.
 - nhplug sends body values **as given** — unlike KIS/Kiwoom it must not stringify them: NH PLUG
   rejects a string where the spec says integer/number with `IGW40011` (2026-09-27). Pass numbers

@@ -40,5 +40,5 @@ test('root barrel exposes runtime exports from core, KIS, Kiwoom, and NH PLUG mo
   // NH PLUG 토큰 캐시는 KIS 와 이름이 겹쳐 Nhplug 접두사로 재수출한다.
   expect(Root.NhplugFileTokenCacheStore).toBe(NhplugFileTokenCacheStore);
   expect(Root.NhplugFileTokenCacheStore).not.toBe(FileTokenCacheStore);
-  expect(Root.NHPLUG_SUCCESS_RSP_CODES).toEqual(['00000', 'XA102']);
+  expect(Root.NHPLUG_SUCCESS_RSP_CODES).toEqual(['00000', 'XA102', '00166', '00221']);
 });

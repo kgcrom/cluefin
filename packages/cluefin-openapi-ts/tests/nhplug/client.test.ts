@@ -174,6 +174,17 @@ describe('NhplugClient.invokeEndpoint', () => {
     });
   });
 
+  it.each([
+    ['00166', '조회가 완료되었습니다.'],
+    ['00221', '계좌/종목별 주문가능수량/금액 조회가 완료되었습니다.'],
+  ])('treats live success code %s as success (운영 조회 완료 응답)', async (rspCd, rspMsg) => {
+    const { fetchMock } = createFetchMock(() => jsonResponse({ rsp_cd: rspCd, rsp_msg: rspMsg, Output_0: [] }));
+
+    const result = await createClient(fetchMock).invokeEndpoint(endpoint, { actNo: '1' });
+
+    expect(result.body).toEqual({ rspCd, rspMsg, output0: [] });
+  });
+
   it('maps transport errors onto the Nhplug error family', async () => {
     const { fetchMock } = createFetchMock(() => jsonResponse({ rsp_cd: '99999' }, 401));
 

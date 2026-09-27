@@ -32,12 +32,15 @@ import { NhplugOverseasStockQuote } from './overseas-stock-quote.js';
 /**
  * body `rsp_cd` 중 성공을 뜻하는 코드.
  *
- * 문서상 성공은 00000 뿐이지만, 모의투자 서버는 일부 조회 API 성공에
- * XA102("모의투자 조회가 완료되었습니다")를 반환한다 (2026-08-22 파이썬 실측).
+ * 문서상 성공은 00000 뿐이지만 실서버는 API 마다 다른 성공 코드를 준다.
  * 00000 만 성공으로 보면 정상 응답이 오탐되므로, 새 성공 코드가 실측되면 여기에 추가한다.
+ * - XA102 "모의투자 조회가 완료되었습니다" — 모의 조회 (2026-08-22 파이썬 실측)
+ * - 00166 "조회가 완료되었습니다" — 운영 계좌 조회 대부분 (2026-09-27 실측)
+ * - 00221 "계좌/종목별 주문가능수량/금액 조회가 완료되었습니다" — 운영 buyableQuantity (2026-09-27 실측)
+ *
  * 파이썬 `_model.SUCCESS_RSP_CODES` 와 같은 값을 유지할 것.
  */
-export const SUCCESS_RSP_CODES: readonly string[] = ['00000', 'XA102'];
+export const SUCCESS_RSP_CODES: readonly string[] = ['00000', 'XA102', '00166', '00221'];
 
 export interface NhplugClientOptions {
   token: string;
