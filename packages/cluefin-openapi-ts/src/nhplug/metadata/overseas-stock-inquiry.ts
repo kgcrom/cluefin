@@ -75,6 +75,7 @@ export const overseasStockInquiryEndpoints: NhplugEndpointDefinition[] = [
       ost_cns_dit: 'ostCnsDit',
       iem_cd: 'iemCd',
       orr_no: 'orrNo',
+      ove_qty_dit_cd: 'oveQtyDitCd',
     },
     supportsCts: true,
     params: [
@@ -104,6 +105,10 @@ export const overseasStockInquiryEndpoints: NhplugEndpointDefinition[] = [
       },
       {
         name: 'orrNo',
+        required: false,
+      },
+      {
+        name: 'oveQtyDitCd',
         required: false,
       },
       {

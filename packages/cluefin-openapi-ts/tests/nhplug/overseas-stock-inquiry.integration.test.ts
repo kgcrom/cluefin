@@ -22,17 +22,18 @@ import {
 } from '../../src/nhplug/schemas/overseas-stock-inquiry';
 import {
   assertNhplugResponse,
-  assertNhplugResponseShape,
   callNhplug,
   getNhplugClient,
   NHPLUG_TEST_GB_IEM_CD,
   NHPLUG_US_NATION_CD,
+  nhplugMockOmits,
   ONE_MONTH_AGO,
   requireNhplugAccount,
   runNhplugIntegration,
   setupNhplugRateLimit,
   TODAY,
 } from '../_helpers/integration-setup';
+import { assertNhplugMatchesSpec } from '../_helpers/nhplug-response-shape';
 
 const it = runNhplugIntegration ? test : test.skip;
 
@@ -51,7 +52,7 @@ describe('Nhplug OverseasStockInquiry', () => {
       }),
     );
     assertNhplugResponse(res);
-    assertNhplugResponseShape(res.body, overseasStockInquiryBalanceResponseSchema);
+    assertNhplugMatchesSpec('/gbstock/inquiry/v1/balance', res.body, overseasStockInquiryBalanceResponseSchema);
   });
 
   it('buyableAmount', async (ctx) => {
@@ -70,7 +71,11 @@ describe('Nhplug OverseasStockInquiry', () => {
       }),
     );
     assertNhplugResponse(res);
-    assertNhplugResponseShape(res.body, overseasStockInquiryBuyableAmountResponseSchema);
+    assertNhplugMatchesSpec(
+      '/gbstock/inquiry/v1/buyableAmount',
+      res.body,
+      overseasStockInquiryBuyableAmountResponseSchema,
+    );
   });
 
   it('unexecuted', async (ctx) => {
@@ -87,7 +92,7 @@ describe('Nhplug OverseasStockInquiry', () => {
       }),
     );
     assertNhplugResponse(res);
-    assertNhplugResponseShape(res.body, overseasStockInquiryUnexecutedResponseSchema);
+    assertNhplugMatchesSpec('/gbstock/inquiry/v1/unexecuted', res.body, overseasStockInquiryUnexecutedResponseSchema);
   });
 
   it('reservedInquiry', async (ctx) => {
@@ -107,7 +112,11 @@ describe('Nhplug OverseasStockInquiry', () => {
       }),
     );
     assertNhplugResponse(res);
-    assertNhplugResponseShape(res.body, overseasStockInquiryReservedInquiryResponseSchema);
+    assertNhplugMatchesSpec(
+      '/gbstock/inquiry/v1/reservedInquiry',
+      res.body,
+      overseasStockInquiryReservedInquiryResponseSchema,
+    );
   });
 
   it('dailyTransaction', async (ctx) => {
@@ -123,7 +132,12 @@ describe('Nhplug OverseasStockInquiry', () => {
       }),
     );
     assertNhplugResponse(res);
-    assertNhplugResponseShape(res.body, overseasStockInquiryDailyTransactionResponseSchema);
+    assertNhplugMatchesSpec(
+      '/gbstock/inquiry/v1/dailyTransaction',
+      res.body,
+      overseasStockInquiryDailyTransactionResponseSchema,
+      nhplugMockOmits('Output_1.cus_fnm', 'Output_1.rnm_cfm_no'),
+    );
   });
 
   it('periodPnl', async (ctx) => {
@@ -138,7 +152,12 @@ describe('Nhplug OverseasStockInquiry', () => {
       }),
     );
     assertNhplugResponse(res);
-    assertNhplugResponseShape(res.body, overseasStockInquiryPeriodPnlResponseSchema);
+    assertNhplugMatchesSpec(
+      '/gbstock/inquiry/v1/periodPnl',
+      res.body,
+      overseasStockInquiryPeriodPnlResponseSchema,
+      nhplugMockOmits('Output_0.act_fnm'),
+    );
   });
 
   it('periodPnlDetail', async (ctx) => {
@@ -155,7 +174,11 @@ describe('Nhplug OverseasStockInquiry', () => {
       }),
     );
     assertNhplugResponse(res);
-    assertNhplugResponseShape(res.body, overseasStockInquiryPeriodPnlDetailResponseSchema);
+    assertNhplugMatchesSpec(
+      '/gbstock/inquiry/v1/periodPnlDetail',
+      res.body,
+      overseasStockInquiryPeriodPnlDetailResponseSchema,
+    );
   });
 
   it('margin', async (ctx) => {
@@ -163,6 +186,6 @@ describe('Nhplug OverseasStockInquiry', () => {
     const actNo = await requireNhplugAccount(ctx);
     const res = await callNhplug(ctx, () => client.overseasStockInquiry.margin({ actNo }));
     assertNhplugResponse(res);
-    assertNhplugResponseShape(res.body, overseasStockInquiryMarginResponseSchema);
+    assertNhplugMatchesSpec('/gbstock/inquiry/v1/margin', res.body, overseasStockInquiryMarginResponseSchema);
   });
 });

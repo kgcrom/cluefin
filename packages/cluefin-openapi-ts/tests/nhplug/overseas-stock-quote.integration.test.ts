@@ -18,7 +18,6 @@ import {
 } from '../../src/nhplug/schemas/overseas-stock-quote';
 import {
   assertNhplugResponse,
-  assertNhplugResponseShape,
   callNhplug,
   getNhplugClient,
   NHPLUG_TEST_GB_IEM_CD,
@@ -27,6 +26,7 @@ import {
   setupNhplugRateLimit,
   TODAY,
 } from '../_helpers/integration-setup';
+import { assertNhplugMatchesSpec } from '../_helpers/nhplug-response-shape';
 
 /** 모의투자에서는 제공되지 않는다 (IGW40019). 운영(NHPLUG_ENV=prod)에서만 검증 가능. */
 const liveOnlyIt = runNhplugLiveOnlyIntegration ? test : test.skip;
@@ -38,7 +38,10 @@ describe('Nhplug OverseasStockQuote (운영 전용)', () => {
     const client = await getNhplugClient();
     const res = await callNhplug(ctx, () => client.overseasStockQuote.current({ iemCd: NHPLUG_TEST_GB_IEM_CD }));
     assertNhplugResponse(res);
-    assertNhplugResponseShape(res.body, overseasStockQuoteCurrentPriceResponseSchema);
+    // 실서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assertNhplugMatchesSpec('/gbstock/quote/v1/current', res.body, overseasStockQuoteCurrentPriceResponseSchema, [
+      'Output_0.kor_name',
+    ]);
   });
 
   liveOnlyIt('executionTrend', async (ctx) => {
@@ -46,12 +49,18 @@ describe('Nhplug OverseasStockQuote (운영 전용)', () => {
     const res = await callNhplug(ctx, () =>
       client.overseasStockQuote.executionTrend({
         periodType: '2', // 일별
-        reqCnt: '10',
+        reqCnt: 10, // 스펙 integer — 문자열이면 서버가 IGW40011(data type)로 거부한다 (운영 2026-09-27)
         iemCd: NHPLUG_TEST_GB_IEM_CD,
       }),
     );
     assertNhplugResponse(res);
-    assertNhplugResponseShape(res.body, overseasStockQuoteExecutionTrendResponseSchema);
+    // 실서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assertNhplugMatchesSpec(
+      '/gbstock/quote/v1/executionTrend',
+      res.body,
+      overseasStockQuoteExecutionTrendResponseSchema,
+      ['Output_0.nextbutton', 'Output_0.ctsz18'],
+    );
   });
 
   liveOnlyIt('period', async (ctx) => {
@@ -69,7 +78,11 @@ describe('Nhplug OverseasStockQuote (운영 전용)', () => {
       }),
     );
     assertNhplugResponse(res);
-    assertNhplugResponseShape(res.body, overseasStockQuotePeriodPriceResponseSchema);
+    // 실서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assertNhplugMatchesSpec('/gbstock/quote/v1/period', res.body, overseasStockQuotePeriodPriceResponseSchema, [
+      'Output_0.kor_name',
+      'Output_0.ctsz16',
+    ]);
   });
 
   liveOnlyIt('symbolIndexFxPeriod', async (ctx) => {
@@ -85,6 +98,19 @@ describe('Nhplug OverseasStockQuote (운영 전용)', () => {
       }),
     );
     assertNhplugResponse(res);
-    assertNhplugResponseShape(res.body, overseasStockQuoteSymbolIndexFxPeriodResponseSchema);
+    // 실서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assertNhplugMatchesSpec(
+      '/gbstock/quote/v1/symbolIndexFxPeriod',
+      res.body,
+      overseasStockQuoteSymbolIndexFxPeriodResponseSchema,
+      [
+        'Output_0.hts_kor_isnm',
+        'Output_0.localtime',
+        'Output_0.bsop_date',
+        'Output_0.base_ptr',
+        'Output_0.ctsz30',
+        'Output_0.lasttickcount',
+      ],
+    );
   });
 });
