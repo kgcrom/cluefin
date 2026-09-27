@@ -56,7 +56,10 @@ function unwrap(schema: ZodLike): { kind: Kind; shape?: Record<string, ZodLike> 
       current = def.innerType as ZodLike;
       continue;
     }
-    if (def.type === 'array') return { kind: 'array', shape: unwrap(def.element as ZodLike).shape };
+    if (def.type === 'array') {
+      const { shape } = unwrap(def.element as ZodLike);
+      return shape ? { kind: 'array', shape } : { kind: 'array' };
+    }
     if (def.type === 'object') return { kind: 'object', shape: def.shape as Record<string, ZodLike> };
     return { kind: 'scalar' };
   }
