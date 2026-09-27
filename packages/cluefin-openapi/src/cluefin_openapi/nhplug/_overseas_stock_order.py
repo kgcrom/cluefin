@@ -40,6 +40,23 @@ SpotQuoteTypeCode = Literal[
     "VL",  # VWAP(지정가)
 ]
 
+# buy 의 ahi_nmn_pr_tp_cd — 스펙상 STOP(15)·STOP LIMIT(16)은 매도 전용이라 매수 코드 목록에 없다.
+SpotBuyQuoteTypeCode = Literal[
+    "00",  # 지정가
+    "03",  # 시장가
+    "11",  # LOO(장개시 지정가)
+    "12",  # LOC(장마감 지정가)
+    "13",  # MOO(장개시 시장가)
+    "14",  # MOC(장마감 시장가)
+    "61",  # 프리마켓(지정가)
+    "62",  # 애프터마켓(지정가)
+    "63",  # 주간거래(지정가)
+    "TW",  # TWAP(시장가)
+    "VW",  # VWAP(시장가)
+    "TL",  # TWAP(지정가)
+    "VL",  # VWAP(지정가)
+]
+
 # 예약주문 호가유형코드 (reservedSubmit 의 nmn_pr_tp_cd) — SpotQuoteTypeCode 와 달리
 # 애프터마켓(62)·주간거래(63)를 지원하지 않는다.
 ReservedQuoteTypeCode = Literal[
@@ -105,7 +122,7 @@ class OverseasStockOrder:
         fc_sec_trd_nat_cd: ForeignTradeNationCode,
         iem_cd: str,
         orr_qty: int,
-        ahi_nmn_pr_tp_cd: SpotQuoteTypeCode,
+        ahi_nmn_pr_tp_cd: SpotBuyQuoteTypeCode,
         wtm_cur_knd_cd: Literal["1", "2"],
         fc_orr_uit_pr: Optional[float] = None,
     ) -> NHPlugHttpResponse[OverseasStockOrderBuy]:

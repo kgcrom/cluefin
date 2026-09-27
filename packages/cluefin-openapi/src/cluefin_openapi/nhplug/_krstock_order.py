@@ -97,7 +97,7 @@ class KrStockOrder:
         nmn_pr_tp_cd: QuoteTypeCode,
         rmt_mkt_cd: Literal["SOR", "KRX", "NXT"],
         sor_mkt_sli_yn: Literal["Y", "N"],
-        orr_cnd_dit_cd: Literal["00", "01", "02"] = "00",
+        orr_cnd_dit_cd: Literal["00", "01", "02", "05"] = "00",
         ssl_nmn_pr_dit_cd: Literal["00", "01", "02", "99"] = "00",
         orr_pr: Optional[float] = None,
         orr_amt: Optional[int] = None,
@@ -113,7 +113,7 @@ class KrStockOrder:
             nmn_pr_tp_cd: 호가유형코드 (01.보통가 05.시장가 16.스톱지정가 등)
             rmt_mkt_cd: 요청시장코드 (SOR/KRX/NXT)
             sor_mkt_sli_yn: SOR시장분할여부 (SOR 일 경우에만 Y/N 선택, KRX/NXT 면 N)
-            orr_cnd_dit_cd: 주문조건구분코드 (00.없음 01.IOC 02.FOK)
+            orr_cnd_dit_cd: 주문조건구분코드 (00.없음 01.IOC 02.FOK 05.GTP)
             ssl_nmn_pr_dit_cd: 공매도호가구분코드 (00.정상 01.차입주식매도 02.기타공매도 99.권리공매도)
             orr_pr: 주문가격 (지정가 계열일 때)
             orr_amt: 주문금액
@@ -148,7 +148,7 @@ class KrStockOrder:
         nmn_pr_tp_cd: QuoteTypeCode,
         rmt_mkt_cd: Literal["SOR", "KRX", "NXT"],
         sor_mkt_sli_yn: Literal["Y", "N"],
-        orr_cnd_dit_cd: Literal["00", "01", "02"] = "00",
+        orr_cnd_dit_cd: Literal["00", "01", "02", "05"] = "00",
         ssl_nmn_pr_dit_cd: Literal["00", "01", "02", "99"] = "00",
         orr_pr: Optional[float] = None,
         orr_amt: Optional[int] = None,
@@ -164,7 +164,7 @@ class KrStockOrder:
             nmn_pr_tp_cd: 호가유형코드 (01.보통가 05.시장가 16.스톱지정가 등)
             rmt_mkt_cd: 요청시장코드 (SOR/KRX/NXT)
             sor_mkt_sli_yn: SOR시장분할여부 (SOR 일 경우에만 Y/N 선택, KRX/NXT 면 N)
-            orr_cnd_dit_cd: 주문조건구분코드 (00.없음 01.IOC 02.FOK)
+            orr_cnd_dit_cd: 주문조건구분코드 (00.없음 01.IOC 02.FOK 05.GTP)
             ssl_nmn_pr_dit_cd: 공매도호가구분코드 (00.정상 01.차입주식매도 02.기타공매도 99.권리공매도)
             orr_pr: 주문가격 (지정가 계열일 때)
             orr_amt: 주문금액
@@ -200,7 +200,7 @@ class KrStockOrder:
         cfd_lon_cd: CreditLoanCode,
         rmt_mkt_cd: Literal["SOR", "KRX", "NXT"],
         sor_mkt_sli_yn: Literal["Y", "N"],
-        orr_cnd_dit_cd: Literal["00", "01", "02"] = "00",
+        orr_cnd_dit_cd: Literal["00", "01", "02", "05"] = "00",
         orr_pr: Optional[float] = None,
         orr_amt: Optional[int] = None,
         lon_dt: Optional[str] = None,
@@ -217,7 +217,7 @@ class KrStockOrder:
             cfd_lon_cd: 신용대출코드 (01.유통융자 02.자기융자 03.유통대주 04.자기대주 10.매입자금대출)
             rmt_mkt_cd: 요청시장코드 (SOR/KRX/NXT)
             sor_mkt_sli_yn: SOR시장분할여부 (SOR 일 경우에만 Y/N 선택, KRX/NXT 면 N)
-            orr_cnd_dit_cd: 주문조건구분코드 (00.없음 01.IOC 02.FOK)
+            orr_cnd_dit_cd: 주문조건구분코드 (00.없음 01.IOC 02.FOK 05.GTP)
             orr_pr: 주문가격 (지정가 계열일 때)
             orr_amt: 주문금액
             lon_dt: 대출일자 (신용대출코드 03.유통대주·04.자기대주일 경우 필수)
@@ -254,7 +254,7 @@ class KrStockOrder:
         cfd_lon_cd: CreditLoanCode,
         rmt_mkt_cd: Literal["SOR", "KRX", "NXT"],
         sor_mkt_sli_yn: Literal["Y", "N"],
-        orr_cnd_dit_cd: Literal["00", "01", "02"] = "00",
+        orr_cnd_dit_cd: Literal["00", "01", "02", "05"] = "00",
         orr_pr: Optional[float] = None,
         orr_amt: Optional[int] = None,
         lon_dt: Optional[str] = None,
@@ -273,7 +273,7 @@ class KrStockOrder:
             cfd_lon_cd: 신용대출코드 (01.유통융자 02.자기융자 03.유통대주 04.자기대주 10.매입자금대출)
             rmt_mkt_cd: 요청시장코드 (SOR/KRX/NXT)
             sor_mkt_sli_yn: SOR시장분할여부 (SOR 일 경우에만 Y/N 선택, KRX/NXT 면 N)
-            orr_cnd_dit_cd: 주문조건구분코드 (00.없음 01.IOC 02.FOK)
+            orr_cnd_dit_cd: 주문조건구분코드 (00.없음 01.IOC 02.FOK 05.GTP)
             orr_pr: 주문가격 (지정가 계열일 때)
             orr_amt: 주문금액
             lon_dt: 대출일자 (신용대출코드 03.유통대주·04.자기대주일 경우 필수)
@@ -357,11 +357,12 @@ class KrStockOrder:
         org_mkt_orr_no: int,
         all_pat_dit_cd: Literal["1", "2"],
         iem_cd: str,
-        cor_qty: int,
+        cor_qty: Optional[int] = None,
     ) -> NHPlugHttpResponse[KrStockOrderCancel]:
         """주식주문(정정취소) 취소 (`POST /krstock/order/v1/cancel`).
 
-        스펙상 5개 입력 필드가 모두 required 다. modify 와 달리 `cor_pr`·`sop_cnd_pr`·
+        스펙상 `cor_qty` 외 4개 입력 필드가 required 다. `cor_qty` 는 일부(잔량) 취소일 때만
+        보낸다 — 전량 취소(`all_pat_dit_cd="1"`)에는 필요 없다. modify 와 달리 `cor_pr`·`sop_cnd_pr`·
         `rmt_mkt_cd`·`sor_mkt_sli_yn` 은 스펙에 존재하지 않는다(취소는 가격·시장 정보가
         필요 없다). 원주문 식별자는 `org_mkt_orr_no`(원시장주문번호, 신규주문 응답의
         mkt_orr_no) 하나뿐이다.
@@ -398,7 +399,7 @@ class KrStockOrder:
         nmn_pr_tp_cd: ReservedQuoteTypeCode,
         cfd_lon_cd: ReservedCreditLoanCode,
         orr_qty: int,
-        orr_uit_pr: int,
+        orr_uit_pr: Optional[int],
         bkg_orr_tp_cd: Literal["1", "2", "3"],
         bkg_orr_enf_tp_cd: Literal["1", "2"],
         rmt_mkt_cd: Literal["KRX", "NXT"],
@@ -426,7 +427,7 @@ class KrStockOrder:
             cfd_lon_cd: 신용대출코드 (00.일반거래 01.유통융자 02.자기융자 03.유통대주
                 04.자기대주 10.매입자금대출 11.매도담보대출 12.주식담보대출)
             orr_qty: 주문수량
-            orr_uit_pr: 주문단가
+            orr_uit_pr: 주문단가. 스펙상 선택 — 단가가 없는 호가(시장가 등)면 None 을 넘기면 보내지 않는다.
             bkg_orr_tp_cd: 예약주문유형코드 (1.일반예약 2.잔량주문 3.지정수량주문)
             bkg_orr_enf_tp_cd: 예약주문집행유형코드 (1.일반 2.기준가격대비)
             rmt_mkt_cd: 요청시장코드 (KRX/NXT — SOR 미지원)
