@@ -8,6 +8,14 @@ import pytest
 
 from cluefin_openapi.kis._http_client import HttpClient
 
+from ._response_shape import assert_response_shape
+
+# 2026-09-27(일) 응답에 없었다. 휴장일이라 빠진 것인지 평일에 재확인 — kis-spec-audit-pending-live.md
+EXPECTED_INDEX_ALL_UNVERIFIED = (
+    "output1.prdy_vrss_sign",
+    "output1.bstp_cls_code",
+)
+
 # ==================== Sector Index APIs ====================
 
 
@@ -18,6 +26,7 @@ def test_get_sector_current_index(client: HttpClient):
         fid_cond_mrkt_div_code="U",
         fid_input_iscd="0001",  # 0001:코스피, 1001:코스닥, 2001:코스피200
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -35,6 +44,7 @@ def test_get_sector_daily_index(client: HttpClient):
         fid_input_iscd="0001",  # 0001:코스피, 1001:코스닥, 2001:코스피200
         fid_input_date_1="20240701",
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -49,6 +59,7 @@ def test_get_sector_time_index_second(client: HttpClient):
         fid_input_iscd="0001",  # 0001:거래소, 1001:코스닥, 2001:코스피200, 3003:KSQ150
         fid_cond_mrkt_div_code="U",  # 업종 U
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -64,6 +75,7 @@ def test_get_sector_time_index_minute(client: HttpClient):
         fid_input_iscd="0001",  # 0001:거래소, 1001:코스닥, 2001:코스피200, 3003:KSQ150
         fid_cond_mrkt_div_code="U",  # 업종 U
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -81,6 +93,7 @@ def test_get_sector_minute_inquiry(client: HttpClient):
         fid_input_hour_1="60",  # 30, 60:1분, 600:10분, 3600:1시간
         fid_pw_data_incu_yn="N",  # Y:과거, N:당일
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -98,6 +111,7 @@ def test_get_sector_period_quote(client: HttpClient):
         fid_input_date_2="20240531",
         fid_period_div_code="D",  # D:일봉, W:주봉, M:월봉, Y:년봉
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -115,6 +129,7 @@ def test_get_sector_all_quote_by_category(client: HttpClient):
         fid_mrkt_cls_code="K",  # K:거래소, Q:코스닥, K2:코스피200
         fid_blng_cls_code="0",  # 0:전업종, 1:기타구분, 2:자본금/벤처구분, 3:상업별/일반구분
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -134,6 +149,7 @@ def test_get_expected_index_trend(client: HttpClient):
         fid_input_iscd="0001",  # 0000:전체, 0001:코스피, 1001:코스닥, 2001:코스피200, 4001:KRX100
         fid_cond_mrkt_div_code="U",  # 주식 U
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -151,6 +167,7 @@ def test_get_expected_index_all(client: HttpClient):
         fid_input_iscd="0000",  # 0000:전체, 0001:거래소, 1001:코스닥, 2001:코스피200, 4001:KRX100
         fid_mkop_cls_code="1",  # 1:장시작전, 2:장마감
     )
+    assert_response_shape(client, response, ignore=EXPECTED_INDEX_ALL_UNVERIFIED)
 
     # Verify response type
     assert response is not None
@@ -174,6 +191,7 @@ def test_get_volatility_interruption_status(client: HttpClient):
         fid_trgt_cls_code="",
         fid_trgt_exls_cls_code="",
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -190,6 +208,7 @@ def test_get_interest_rate_summary(client: HttpClient):
         fid_div_cls_code="2",  # 0/공백:국내, 1:해외지표, 2:국내+해외 (2026-09-20 실측)
         fid_div_cls_code1="",  # 공백:전체
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -216,6 +235,7 @@ def test_get_market_announcement_schedule(client: HttpClient):
         fid_rank_sort_cls_code="",  # 공백 필수
         fid_input_srno="",  # 공백 필수
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -231,6 +251,7 @@ def test_get_holiday_inquiry(client: HttpClient):
         ctx_area_nk="",  # 공백으로 입력
         ctx_area_fk="",  # 공백으로 입력
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -242,6 +263,7 @@ def test_get_holiday_inquiry(client: HttpClient):
 def test_get_futures_business_day_inquiry(client: HttpClient):
     """Test futures business day inquiry."""
     response = client.domestic_issue_other.get_futures_business_day_inquiry()
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None

@@ -169,6 +169,8 @@ class SectorMinuteInquiry(BaseModel, KisHttpBody):
 
 class SectorPeriodQuoteItem1(BaseModel):
     prdy_vrss_sign: str = Field(title="전일 대비 부호")
+    # 문서 표에는 없고 예시와 실서버 응답에는 있다 (2026-09-27 실측)
+    bstp_nmix_prdy_vrss: str = Field(default="", title="업종 지수 전일 대비")
     bstp_nmix_prdy_ctrt: str = Field(title="업종 지수 전일 대비율")
     prdy_nmix: str = Field(title="전일 지수")
     acml_vol: str = Field(title="누적 거래량")
@@ -367,6 +369,22 @@ class MarketAnnouncementScheduleItem(BaseModel):
     iscd3: str = Field(title="종목 코드3")
     iscd4: str = Field(title="종목 코드4")
     iscd5: str = Field(title="종목 코드5")
+    # 문서 표에는 iscd1~5 만 있지만 예시와 실서버 응답에는 iscd6~10·kor_isnm1~10 도 있다 (2026-09-27 실측)
+    iscd6: str = Field(default="", title="종목 코드6")
+    iscd7: str = Field(default="", title="종목 코드7")
+    iscd8: str = Field(default="", title="종목 코드8")
+    iscd9: str = Field(default="", title="종목 코드9")
+    iscd10: str = Field(default="", title="종목 코드10")
+    kor_isnm1: str = Field(default="", title="한글 종목명1")
+    kor_isnm2: str = Field(default="", title="한글 종목명2")
+    kor_isnm3: str = Field(default="", title="한글 종목명3")
+    kor_isnm4: str = Field(default="", title="한글 종목명4")
+    kor_isnm5: str = Field(default="", title="한글 종목명5")
+    kor_isnm6: str = Field(default="", title="한글 종목명6")
+    kor_isnm7: str = Field(default="", title="한글 종목명7")
+    kor_isnm8: str = Field(default="", title="한글 종목명8")
+    kor_isnm9: str = Field(default="", title="한글 종목명9")
+    kor_isnm10: str = Field(default="", title="한글 종목명10")
 
 
 class MarketAnnouncementSchedule(BaseModel, KisHttpBody):
