@@ -19,7 +19,9 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 
 - `generate:metadata` regex-parses `packages/cluefin-openapi`'s Python source to produce
   the TS metadata files. Nothing re-runs it automatically: when the Python package's
-  endpoints change, re-run it or the TS side silently goes stale.
+  endpoints change, re-run it or the TS side silently goes stale. It writes unformatted
+  JSON — run `npm run format` right after, or every metadata file shows up in the diff.
+  A Python param counts as required when it has no default, even if typed `Optional`.
 - All three brokers (KIS, Kiwoom, nhplug) share their token cache **files** with Python
   under the same `<tmpdir>/cluefin-openapi/` directory, each using Python's own naming
   rule (`kisTokenCacheFileName` / `kiwoomTokenCacheFileName` / `nhplugTokenCacheFileName`
@@ -96,6 +98,9 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - nhplug treats **both** `00000` and `XA102` as success (`SUCCESS_RSP_CODES`) — the mock
   server answers some successful inquiries with `XA102`, so a 00000-only check reports
   false failures. Keep the list identical to Python's `_model.SUCCESS_RSP_CODES`.
+- nhplug sends body values **as given** — unlike KIS/Kiwoom it must not stringify them: NH PLUG
+  rejects a string where the spec says integer/number with `IGW40011` (2026-09-27). Pass numbers
+  for numeric fields (`reqCnt: 10`, not `'10'`).
 - An nhplug HTTP 200 can still carry a failing `rsp_cd`; the failure check lives in
   `NhplugClient.invokeEndpoint` after the HTTP layer, so HTTP-level retry/rate-limit logic
   never sees those errors.
@@ -109,6 +114,8 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - KIS account tests need `KIS_CANO`; without it they skip silently rather than fail.
 - KIS tests use `assertKisResponseShapeDeep` (`tests/_helpers/kis-response-shape.ts`), not
   `assertResponseShape`: the older helper only checks top-level keys plus the one block a call
-  passes in, so item fields could drift unseen. Kiwoom tests still use the older helper.
+  passes in, so item fields could drift unseen. nhplug tests use `assertNhplugMatchesSpec`
+  (`tests/_helpers/nhplug-response-shape.ts`, keys + spec lengths, same rules as Python
+  `tests/nhplug/_response_shape.py`). Kiwoom tests still use the older helper.
   An empty array passes the check vacuously — several KIS tests sent non-spec params and got
   empty results. `KIS_SHAPE_REPORT_EMPTY=1` warns about empty blocks.

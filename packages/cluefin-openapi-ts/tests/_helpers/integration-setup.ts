@@ -328,17 +328,3 @@ export function assertNhplugResponse(res: ApiResponse<unknown>): void {
   }
   expect(SUCCESS_RSP_CODES).toContain(body.rspCd);
 }
-
-/**
- * 응답 본문에 스키마에 없는 키가 섞이지 않았는지 확인한다.
- *
- * `Output_N` 블록은 데이터가 있을 때만 내려오므로(스펙 설명) 키 집합 완전 일치가 아니라
- * "실제 키 ⊆ 스키마 키" 부분집합으로 검증한다. 스키마에 없는 필드가 새로 내려오면
- * (= 모델 갱신이 필요하면) 실패한다.
- */
-export function assertNhplugResponseShape(body: unknown, responseSchema: z.ZodObject<z.ZodRawShape>): void {
-  const expectedKeys = new Set(Object.keys(responseSchema.shape).map(toCamelCase));
-  const actualKeys = Object.keys(body as Record<string, unknown>);
-  const unexpected = actualKeys.filter((key) => !expectedKeys.has(key)).sort();
-  expect(unexpected).toEqual([]);
-}

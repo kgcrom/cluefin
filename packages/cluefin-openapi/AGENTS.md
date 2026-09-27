@@ -70,12 +70,21 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   match kis/kiwoom.
 - nhplug's `TokenManager` deliberately has no `MAX_CACHE_AGE` (no early server-side
   invalidation) and computes expiry from `cached_at + expires_in`.
-- All four gbstock 시세 APIs (`/gbstock/quote/v1/*`) are **live-domain only**. moapi rejects
-  `current` with `IGW40019 "종목코드(iem_cd)를 확인해주세요"` for every ticker format —
-  a misleading message that means "not provided on mock", not a bad code (2026-08-22 실측).
-- gbstock quote responses return the stock name as `iem_nm`, while the spec declares
-  `kor_name` (`current`, `period`) / `hts_kor_isnm` (`symbolIndexFxPeriod`). Both are
-  modelled; read `iem_nm`.
+- All 시세 APIs (`/krstock/quote/*`, `/gbstock/quote/*`) are **live-domain only**. moapi rejects
+  them with `IGW40023`, or for gbstock `IGW40019 "종목코드(iem_cd)를 확인해주세요"` — a misleading
+  message that means "not provided on mock", not a bad code. Their integration tests only run
+  with `NHPLUG_ENV=prod`; run **only the quote files** that way — the order tests would place
+  real orders.
+- NH PLUG doc ≠ live server cases (spec field names off by one, fields the server omits, `"1E"`
+  sign codes, `iem_nm` instead of `kor_name`, strict request types) are in `VENDOR_DOC_ERRATA.md`.
+- NH PLUG integration tests check raw keys and spec lengths with `assert_matches_spec`
+  (`tests/nhplug/_response_shape.py`, TS `assertNhplugMatchesSpec`). Every model is
+  `extra="allow"`, so without it undeclared fields vanish into `model_extra` silently. Lengths
+  come from the spec snapshot `tests/nhplug/spec_lengths.json`; a confirmed over-length goes in
+  its `known_exceed` (shared with TS), a key the server omits in the call's `ignore` —
+  `mock_omits(...)` when only moapi omits it, so a prod run still checks it.
+- The WebSocket needs the path `/websocket` (`host:port` alone never upgrades), and the
+  notification channels (`d0`·`d1`·`d2`·`d3`…) are on :7070 even for gbstock — :7080 is quotes only.
 - The portal spec backend is KIS-portal-style JSON: `/api/apis/public/api-list/{groupId}`
   → `/api/apis/guide/tr/{apiId}` → `/api/apis/guide/tr/property/{trId}` (no auth needed).
   Asset-class specs are also public at `https://www.nhplug.com/openapi-docs/<slug>/openapi.json`

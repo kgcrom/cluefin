@@ -3,8 +3,8 @@ import { expect } from 'vitest';
 import type { z } from 'zod';
 import { toCamelCase } from '../../src/core/case-convert';
 
-// `assertNhplugResponseShape` 는 최상위 키의 초과분만 본다. 그래서 블록 안 필드가 서버와 달라도 통과했다.
-// 이 버전은 스키마를 따라 모든 배열·객체 블록을 내려가며 대조하고, 스펙 길이(`spec_lengths.json`)도 검사한다 —
+// 이전 헬퍼(assertNhplugResponseShape, 삭제)는 최상위 키의 초과분만 봐서 블록 안 필드가 서버와 달라도 통과했다.
+// 이 헬퍼는 스키마를 따라 모든 배열·객체 블록을 내려가며 대조하고, 스펙 길이(`spec_lengths.json`)도 검사한다 —
 // Python tests/nhplug/_response_shape.py 와 같은 규칙. `Output_N`·`message` 는 데이터가 있을 때만 오므로
 // 최상위에서 빠진 것은 문제로 보지 않는다 (잘못된 이름의 블록은 extra 로 드러난다).
 
@@ -29,10 +29,9 @@ function candidates(schema: ZodLike): { kind: Kind; shape?: Shape }[] {
     }
     if (def.type === 'union') return (def.options as ZodLike[]).flatMap(candidates);
     if (def.type === 'array') {
-      return candidates(def.element as ZodLike).map((item) => ({
-        kind: 'array' as const,
-        shape: item.shape,
-      }));
+      return candidates(def.element as ZodLike).map((item) =>
+        item.shape ? { kind: 'array' as const, shape: item.shape } : { kind: 'array' as const },
+      );
     }
     if (def.type === 'object') return [{ kind: 'object', shape: def.shape as Shape }];
     return [{ kind: 'scalar' }];
