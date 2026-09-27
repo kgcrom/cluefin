@@ -55,20 +55,20 @@ describe('NhplugSocketClient', () => {
   describe('URL selection across env x market', () => {
     it('uses the domestic prod URL for prod + kr', () => {
       const client = new NhplugSocketClient({ ...defaultOptions, env: 'prod', market: 'kr' });
-      expect(urlOf(client)).toBe('wss://api.nhplug.com:7070');
+      expect(urlOf(client)).toBe('wss://api.nhplug.com:7070/websocket');
     });
 
     it('uses the overseas prod URL for prod + gb', () => {
       const client = new NhplugSocketClient({ ...defaultOptions, env: 'prod', market: 'gb' });
-      expect(urlOf(client)).toBe('wss://api.nhplug.com:7080');
+      expect(urlOf(client)).toBe('wss://api.nhplug.com:7080/websocket');
     });
 
     it('uses the single moapi URL for dev regardless of market', () => {
       expect(urlOf(new NhplugSocketClient({ ...defaultOptions, env: 'dev', market: 'kr' }))).toBe(
-        'wss://moapi.nhplug.com:17070',
+        'wss://moapi.nhplug.com:17070/websocket',
       );
       expect(urlOf(new NhplugSocketClient({ ...defaultOptions, env: 'dev', market: 'gb' }))).toBe(
-        'wss://moapi.nhplug.com:17070',
+        'wss://moapi.nhplug.com:17070/websocket',
       );
     });
   });
