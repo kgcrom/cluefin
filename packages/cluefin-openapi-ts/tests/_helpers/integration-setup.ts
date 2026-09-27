@@ -180,6 +180,14 @@ export const runNhplugIntegration = runIntegration && !!process.env.NHPLUG_APP_K
  */
 export const runNhplugLiveOnlyIntegration = runNhplugIntegration && NHPLUG_ENV === 'prod';
 
+/**
+ * 모의 서버가 보내지 않는 스펙 필드 — `assertNhplugMatchesSpec` 의 `ignore` 에 넘긴다.
+ *
+ * 파이썬 `_integration_helpers.mock_omits` 와 같은 의미다. 운영에서 보내는지는 확인하지 못해
+ * 스키마에서 지우지 않고, 운영(`NHPLUG_ENV=prod`)에서는 그대로 검사한다 (VENDOR_DOC_ERRATA.md).
+ */
+export const nhplugMockOmits = (...fields: string[]): string[] => (NHPLUG_ENV === 'prod' ? [] : fields);
+
 /** 계좌번호를 직접 지정하고 싶을 때 쓰는 선택적 오버라이드. 없으면 `/n2/acctinfo` 로 찾는다. */
 export const NHPLUG_ACCOUNT_NO = process.env.NHPLUG_ACCOUNT_NO ?? '';
 

@@ -10,6 +10,7 @@ export const krstockInquiryEndpoints: NhplugEndpointDefinition[] = [
       ltg_aot_dit_cd: 'ltgAotDitCd',
       aet_bse: 'aetBse',
       qut_dit_cd: 'qutDitCd',
+      aly_qut_cd: 'alyQutCd',
     },
     supportsCts: true,
     params: [
@@ -32,6 +33,10 @@ export const krstockInquiryEndpoints: NhplugEndpointDefinition[] = [
       {
         name: 'qutDitCd',
         required: true,
+      },
+      {
+        name: 'alyQutCd',
+        required: false,
       },
       {
         name: 'cts',
@@ -214,6 +219,7 @@ export const krstockInquiryEndpoints: NhplugEndpointDefinition[] = [
       iqr_dit_cd1: 'iqrDitCd1',
       fee_dit_cd: 'feeDitCd',
       qut_dit_cd: 'qutDitCd',
+      aly_qut_cd: 'alyQutCd',
     },
     supportsCts: true,
     params: [
@@ -234,6 +240,10 @@ export const krstockInquiryEndpoints: NhplugEndpointDefinition[] = [
         required: true,
       },
       {
+        name: 'alyQutCd',
+        required: false,
+      },
+      {
         name: 'cts',
         required: false,
       },
@@ -247,6 +257,7 @@ export const krstockInquiryEndpoints: NhplugEndpointDefinition[] = [
       eal_aly_cd: 'ealAlyCd',
       aet_bse: 'aetBse',
       qut_dit_cd: 'qutDitCd',
+      aly_qut_cd: 'alyQutCd',
     },
     supportsCts: true,
     params: [
@@ -265,6 +276,10 @@ export const krstockInquiryEndpoints: NhplugEndpointDefinition[] = [
       {
         name: 'qutDitCd',
         required: true,
+      },
+      {
+        name: 'alyQutCd',
+        required: false,
       },
       {
         name: 'cts',
