@@ -33,6 +33,7 @@ jobs:
       uses: astral-sh/setup-uv@v10.2.0
       with:
         enable-cache: true
+        cache-suffix: lint
         
     - name: Install dependencies
       run: |
@@ -67,6 +68,7 @@ jobs:
       uses: astral-sh/setup-uv@v10.2.0
       with:
         enable-cache: true
+        cache-suffix: ${{ matrix.python-version }}
 
     - name: Install TA-Lib C library
       run: |
@@ -124,6 +126,7 @@ jobs:
         uses: astral-sh/setup-uv@v10.2.0
         with:
           enable-cache: true
+          cache-suffix: coverage
 
       - name: Install TA-Lib C library
         run: |
@@ -170,6 +173,7 @@ jobs:
       uses: astral-sh/setup-uv@v10.2.0
       with:
         enable-cache: true
+        cache-suffix: security
         
     - name: Install dependencies
       run: |
