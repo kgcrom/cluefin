@@ -152,6 +152,7 @@ class OverseasStockInquiry:
         ost_cns_dit: Literal["0", "1", "2"],
         iem_cd: Optional[str] = None,
         orr_no: Optional[int] = None,
+        ove_qty_dit_cd: Optional[str] = None,
         cts: Optional[str] = None,
     ) -> NHPlugHttpResponse[OverseasStockInquiryUnexecuted]:
         """해외주식 주문체결내역 (`POST /gbstock/inquiry/v1/unexecuted`).
@@ -169,6 +170,7 @@ class OverseasStockInquiry:
             ost_cns_dit: 체결구분 (길이 1) (0.전체 1.체결 2.미체결)
             iem_cd: 티커종목코드 (길이 12). 예: 미국주식 APPLE인 경우 AAPL
             orr_no: 주문번호 (길이 10)
+            ove_qty_dit_cd: 해외주식수량구분코드 (길이 1). 스펙 260911 추가, 허용값은 문서에 없다.
             cts: 연속거래키. 이전 응답 헤더의 `cts` 값을 그대로 전달하면 다음 페이지를 받는다.
 
         Returns:
@@ -183,6 +185,7 @@ class OverseasStockInquiry:
                 "ost_cns_dit": ost_cns_dit,
                 "iem_cd": iem_cd,
                 "orr_no": orr_no,
+                "ove_qty_dit_cd": ove_qty_dit_cd,
             }
         )
 

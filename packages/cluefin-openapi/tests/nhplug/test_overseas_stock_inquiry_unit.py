@@ -595,6 +595,22 @@ class TestUnexecuted:
         sent = json.loads(m.request_history[0].text)["Input_0"]
         assert "iem_cd" not in sent
         assert "orr_no" not in sent
+        assert "ove_qty_dit_cd" not in sent
+
+    def test_sends_ove_qty_dit_cd_when_given(self, client):
+        # 스펙 260911 에 추가된 선택 입력
+        with requests_mock.Mocker() as m:
+            m.post(ORDER_EXECUTIONS_URL, json=ORDER_EXECUTIONS_OK_BODY)
+            client.overseas_stock_inquiry.unexecuted(
+                orr_dt="20260821",
+                act_no="50051036881",
+                oss_sby_dit_cd="0",
+                sot_dit="0",
+                ost_cns_dit="0",
+                ove_qty_dit_cd="1",
+            )
+
+        assert json.loads(m.request_history[0].text)["Input_0"]["ove_qty_dit_cd"] == "1"
 
     def test_parses_order_executions_response(self, client):
         with requests_mock.Mocker() as m:

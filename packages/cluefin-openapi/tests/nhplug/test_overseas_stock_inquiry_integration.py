@@ -13,7 +13,8 @@ from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
 from cluefin_openapi.nhplug._http_client import HttpClient
 from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES
 
-from ._integration_helpers import skip_if_env_blocked
+from ._integration_helpers import mock_omits, skip_if_env_blocked
+from ._response_shape import assert_matches_spec
 
 TEST_IEM_CD = "AAPL"  # 애플
 US_NATION_CD = "200"  # 미국
@@ -33,6 +34,7 @@ def test_balance(client: HttpClient, gbstock_account: str):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    assert_matches_spec(client, response)
 
 
 @pytest.mark.integration
@@ -52,6 +54,7 @@ def test_buyable_amount(client: HttpClient, gbstock_account: str):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    assert_matches_spec(client, response)
 
 
 @pytest.mark.integration
@@ -69,6 +72,7 @@ def test_unexecuted(client: HttpClient, gbstock_account: str):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    assert_matches_spec(client, response)
 
 
 @pytest.mark.integration
@@ -89,6 +93,7 @@ def test_reserved_inquiry(client: HttpClient, gbstock_account: str):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    assert_matches_spec(client, response)
 
 
 @pytest.mark.integration
@@ -106,6 +111,15 @@ def test_daily_transaction(client: HttpClient, gbstock_account: str):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    # 모의 서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assert_matches_spec(
+        client,
+        response,
+        ignore=mock_omits(
+            "Output_1.cus_fnm",
+            "Output_1.rnm_cfm_no",
+        ),
+    )
 
 
 @pytest.mark.integration
@@ -122,6 +136,14 @@ def test_period_pnl(client: HttpClient, gbstock_account: str):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    # 모의 서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assert_matches_spec(
+        client,
+        response,
+        ignore=mock_omits(
+            "Output_0.act_fnm",
+        ),
+    )
 
 
 @pytest.mark.integration
@@ -139,6 +161,7 @@ def test_period_pnl_detail(client: HttpClient, gbstock_account: str):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    assert_matches_spec(client, response)
 
 
 @pytest.mark.integration
@@ -150,3 +173,4 @@ def test_margin(client: HttpClient, gbstock_account: str):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    assert_matches_spec(client, response)

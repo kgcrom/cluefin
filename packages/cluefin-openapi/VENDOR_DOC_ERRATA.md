@@ -123,6 +123,10 @@
 | 주식현재가 투자자 `currentInvestor` | Output_0 `jasaz10`·`filler` | 2026-09-27 운영 |
 | `period` | Output_0 `ctsz30`, Output_1 `vol_prtt_rate` | 2026-09-27 운영 |
 | ETF 구성종목 `etfComponents` | Output_0 `filler` | 2026-09-27 운영 |
+| 해외주식 현재가상세 `gbstock current` | Output_0 `kor_name` — 대신 `iem_nm` 을 보낸다 (2026-08-22 부터, 두 필드 모두 모델에 있음) | 2026-09-27 운영 |
+| 해외주식 체결추이 `executionTrend` | Output_0 `nextbutton`·`ctsz18` | 2026-09-27 운영 |
+| 해외주식 기간별시세 `gbstock period` | Output_0 `kor_name`(→ `iem_nm`)·`ctsz16` | 2026-09-27 운영 |
+| 해외 기간별시세(지수·환율) `symbolIndexFxPeriod` | Output_0 `hts_kor_isnm`(→ `iem_nm`)·`localtime`·`bsop_date`·`base_ptr`·`ctsz30`·`lasttickcount` | 2026-09-27 운영, SPX |
 
 모의 서버가 보내지 않는 스펙 필드:
 
@@ -138,16 +142,21 @@
 | `realizedPnl` | Output_0 `cus_fnm`·`rnm_cfm_no`·`act_atv_tp_dtl_cd`·`act_amn_tab_cd`·`act_pdt_llf_cd` | 2026-09-27 모의 |
 | 실현손익일별합산 `dailyPnl` | Output_0 `act_fnm` | 2026-09-27 모의 |
 | 종목별실현손익 `tradingPnl` | Output_0 `iem_cd`·`byn_uit_pr`·`sll_uit_pr`·`fee_sum`·`tax_sum` | 2026-09-27 모의 |
+| 해외주식 일별거래내역 `dailyTransaction` | Output_1 `cus_fnm`·`rnm_cfm_no` | 2026-09-27 모의 |
+| 해외주식 기간손익 `periodPnl` | Output_0 `act_fnm` | 2026-09-27 모의 |
 
 ### 서버 동작 (문서에 없는 것)
 
 - 응답 최상위에 스펙의 `message` 블록이 **키째 없다** (null 도 아님). 결과는 `rsp_cd`/`rsp_msg` 로 온다 (2026-09-27 모의).
 - 모의 조회 성공 코드에 `XA102`("모의투자 조회가 완료되었습니다")가 섞인다 (2026-08-22). 문서의 성공은 `00000` 뿐.
 - 모의 서버는 연속 호출에 `IGW42903`(HTTP 429, "API 호출 거래건수를 초과")을 준다. 1.5초 간격이면 통과 (2026-09-27).
+- **요청 필드 타입을 엄격히 검사한다.** 스펙이 integer/number 인 필드를 JSON 문자열로 보내면 `IGW40011`
+  ("req_cnt 길이나 data type을 확인하세요", HTTP 400)로 거부한다 (해외 체결추이 `req_cnt`, 운영 2026-09-27).
+  TS 클라이언트가 모든 값을 문자열로 바꿔 보내고 있었다 — 값을 받은 그대로 보내도록 수정.
 
 ### 길이
 
-2026-09-27 모의 조회 12종·계좌 목록에서 스펙 길이를 넘는 값은 없었다.
+2026-09-27 모의 조회(국내 12·해외 8)·계좌 목록과 운영 해외 시세 4종에서는 스펙 길이를 넘는 값이 없었다.
 
 | API | 필드 | 문서 길이 | 실제 | 실측 |
 |---|---|---|---|---|
