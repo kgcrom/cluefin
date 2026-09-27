@@ -517,20 +517,36 @@ except Exception as e:
 NH PLUG는 **HTTP 200이어도 응답 본문 `rsp_cd`가 실패**일 수 있습니다. 각 카테고리가
 본문 코드를 먼저 검사해 실패면 `NHPlugAPIError`를 던지므로, 200을 성공으로 가정하면 안 됩니다.
 
+뜻이 확인된 본문 코드는 전용 예외로 나뉘고(모두 `NHPlugAPIError` 하위), 어떤 예외든 `e.rsp_cd` 로
+코드를 바로 볼 수 있습니다.
+
+| 예외 | `rsp_cd` | 뜻 |
+|---|---|---|
+| `NHPlugNoDataError` | `13578`·`11512`·`16935` | 조회 결과 0건 (잔고·내역이 없는 계좌) |
+| `NHPlugMockUnsupportedError` | `19999` | 모의투자 미제공 업무 — 운영에서만 호출 가능 |
+| `NHPlugNotBusinessDayError` | `14100` | 영업일이 아님 |
+| `NHPlugAPIError` | 그 외 | 분류되지 않은 실패 |
+
 ```python
 from loguru import logger
-from cluefin_openapi.nhplug import NHPlugAPIError, NHPlugRateLimitError, NHPlugValidationError
+from cluefin_openapi.nhplug import (
+    NHPlugAPIError,
+    NHPlugNoDataError,
+    NHPlugRateLimitError,
+    NHPlugValidationError,
+)
 
 try:
-    response = nhplug_client.overseas_stock_inquiry.margin(act_no="12345678901")
+    response = nhplug_client.krstock_inquiry.sellable_quantity(act_no="12345678901", iem_cd="005930", cfd_lon_cd="00")
+except NHPlugNoDataError:
+    logger.info("매도 가능한 잔고 없음")
 except NHPlugValidationError as e:
     # 입력 오류는 HTTP 400 + rsp_cd(IGW…) 형태로 옵니다
-    logger.error(f"입력 오류: {e.message}")
+    logger.error(f"입력 오류 [{e.rsp_cd}]: {e.message}")
 except NHPlugRateLimitError as e:
     logger.error(f"요청 제한 초과: {e.message}")
 except NHPlugAPIError as e:
-    logger.error(f"API 에러: {e.message}")
-    logger.error(f"응답 데이터: {e.response_data}")
+    logger.error(f"API 에러 [{e.rsp_cd}]: {e.message}")
 ```
 
 성공으로 취급하는 본문 코드는 `nhplug._model.SUCCESS_RSP_CODES`로 관리합니다.
@@ -556,8 +572,9 @@ except NHPlugAPIError as e:
 **NH투자증권 PLUG API 에러 코드 (`rsp_cd`):**
 - `00000`: 성공 / `XA102`: 성공(모의투자 조회) / `00166`·`00221`: 성공(운영 조회)
 - `IGW40018`, `IGW40019`: 입력값 오류 — 단, `IGW40019`는 "모의투자 미지원"을 뜻할 때도 있습니다
-- `14100`: 모의투자 영업일이 아닙니다
-- `19999`: 모의투자에서는 해당업무가 제공되지 않습니다
+- `14100`: 모의투자 영업일이 아닙니다 (`NHPlugNotBusinessDayError`)
+- `19999`: 모의투자에서는 해당업무가 제공되지 않습니다 (`NHPlugMockUnsupportedError`)
+- `13578`·`11512`·`16935`: 조회 결과 없음 (`NHPlugNoDataError`)
 - `IGW50025`: 일시적인 오류 (열린 실시간 세션이 없을 때의 세션해제 응답)
 
 ## 📓 예제 노트북

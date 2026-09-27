@@ -1,6 +1,6 @@
 from typing import Any, Dict, Literal, Optional
 
-from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
+from cluefin_openapi.nhplug._exceptions import raise_for_rsp_cd
 from cluefin_openapi.nhplug._http_client import HttpClient
 from cluefin_openapi.nhplug._krstock_quote_types import (
     KrStockQuoteAfterHoursCurrent,
@@ -15,7 +15,7 @@ from cluefin_openapi.nhplug._krstock_quote_types import (
     KrStockQuoteEtfCurrent,
     KrStockQuotePeriod,
 )
-from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES, NHPlugHttpHeader, NHPlugHttpResponse
+from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
 
 
 class KrStockQuote:
@@ -27,16 +27,6 @@ class KrStockQuote:
 
     def __init__(self, client: HttpClient):
         self.client = client
-
-    def _check_response_error(self, response_data: dict) -> None:
-        """HTTP 200 이어도 body rsp_cd 가 실패일 수 있으므로 여기서 확인한다."""
-        rsp_cd = response_data.get("rsp_cd")
-        if rsp_cd is not None and rsp_cd not in SUCCESS_RSP_CODES:
-            raise NHPlugAPIError(
-                f"API error {rsp_cd}: {response_data.get('rsp_msg', '')}",
-                status_code=200,
-                response_data=response_data,
-            )
 
     @staticmethod
     def _drop_none(body: Dict[str, Any]) -> Dict[str, Any]:
@@ -66,7 +56,7 @@ class KrStockQuote:
         )
         response = self.client.post("/krstock/quote/v1/currentPrice", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuoteCurrentPrice.model_validate(data))
 
@@ -102,7 +92,7 @@ class KrStockQuote:
         )
         response = self.client.post("/krstock/quote/v1/currentExecution", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuoteCurrentExecution.model_validate(data))
 
@@ -138,7 +128,7 @@ class KrStockQuote:
         )
         response = self.client.post("/krstock/quote/v1/currentDaily", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuoteCurrentDaily.model_validate(data))
 
@@ -170,7 +160,7 @@ class KrStockQuote:
         )
         response = self.client.post("/krstock/quote/v1/currentInvestor", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuoteCurrentInvestor.model_validate(data))
 
@@ -246,7 +236,7 @@ class KrStockQuote:
         )
         response = self.client.post("/krstock/quote/v1/period", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuotePeriod.model_validate(data))
 
@@ -268,7 +258,7 @@ class KrStockQuote:
         body = self._drop_none({"iem_cd": iem_cd})
         response = self.client.post("/krstock/quote/v1/afterHoursCurrent", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuoteAfterHoursCurrent.model_validate(data))
 
@@ -306,7 +296,7 @@ class KrStockQuote:
         )
         response = self.client.post("/krstock/quote/v1/currentAfterHoursDaily", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuoteCurrentAfterHoursDaily.model_validate(data))
 
@@ -327,7 +317,7 @@ class KrStockQuote:
         body = self._drop_none({"iem_cd": iem_cd})
         response = self.client.post("/krstock/quote/v1/currentAfterHoursExecution", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuoteCurrentAfterHoursExecution.model_validate(data))
 
@@ -349,7 +339,7 @@ class KrStockQuote:
         body = self._drop_none({"iem_cd": iem_cd})
         response = self.client.post("/krstock/quote/v1/afterHoursExpected", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuoteAfterHoursExpected.model_validate(data))
 
@@ -371,7 +361,7 @@ class KrStockQuote:
         body = self._drop_none({"iem_cd": iem_cd})
         response = self.client.post("/krstock/quote/v1/etfCurrent", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuoteEtfCurrent.model_validate(data))
 
@@ -392,6 +382,6 @@ class KrStockQuote:
         body = self._drop_none({"iem_cd": iem_cd})
         response = self.client.post("/krstock/quote/v1/etfComponents", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuoteEtfComponents.model_validate(data))

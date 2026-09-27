@@ -75,6 +75,10 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   message that means "not provided on mock", not a bad code. Their integration tests only run
   with `NHPLUG_ENV=prod`; run **only the quote files** that way — the order tests would place
   real orders.
+- A failing body `rsp_cd` goes through one function, `_exceptions.raise_for_rsp_cd`: known codes
+  map to `NHPlugNoDataError` (empty result — **not** a request error), `NHPlugMockUnsupportedError`
+  and `NHPlugNotBusinessDayError`, all subclasses of `NHPlugAPIError`. Add a newly observed code to
+  the matching `*_RSP_CODES` tuple, and mirror it in TS `nhplug/client.ts`.
 - NH PLUG doc ≠ live server cases (spec field names off by one, fields the server omits, `"1E"`
   sign codes, `iem_nm` instead of `kor_name`, strict request types) are in `VENDOR_DOC_ERRATA.md`.
 - NH PLUG integration tests check raw keys and spec lengths with `assert_matches_spec`

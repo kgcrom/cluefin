@@ -13,7 +13,7 @@ from typing import NoReturn
 import dotenv
 import pytest
 
-from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
+from cluefin_openapi.nhplug._exceptions import NOT_BUSINESS_DAY_RSP_CODES, NHPlugAPIError
 
 # 모듈 임포트(= 테스트 수집) 시점에 로드해야 모듈 레벨 skipif 가 NHPLUG_ENV 를 볼 수 있다.
 dotenv.load_dotenv(dotenv_path=".env.test")
@@ -48,10 +48,8 @@ def real_account_only(api: str, error: str) -> pytest.MarkDecorator:
 
 # 장 운영시간·영업일·계좌 상태 때문에 지금은 검증할 수 없다는 뜻의 rsp_cd.
 # 입력 오류는 HTTP 400 + rsp_cd(IGW…)지만, 주문 거부는 HTTP 200 + rsp_cd 로 온다.
-# 코드는 실측하며 채운다.
-ENV_BLOCKED_CODES: tuple[str, ...] = (
-    "14100",  # 모의투자 영업일이 아닙니다 (2026-08-22 토요일 실측)
-)
+# 코드는 실측하며 채운다 — 영업일 코드는 클라이언트의 NOT_BUSINESS_DAY_RSP_CODES 를 쓴다.
+ENV_BLOCKED_CODES: tuple[str, ...] = NOT_BUSINESS_DAY_RSP_CODES
 
 
 def skip_if_env_blocked(e: NHPlugAPIError) -> NoReturn:

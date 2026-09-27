@@ -1,8 +1,8 @@
 from typing import Any, Dict, Literal, Optional
 
-from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
+from cluefin_openapi.nhplug._exceptions import raise_for_rsp_cd
 from cluefin_openapi.nhplug._http_client import HttpClient
-from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES, NHPlugHttpHeader, NHPlugHttpResponse
+from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
 from cluefin_openapi.nhplug._overseas_stock_order_types import (
     OverseasStockOrderBuy,
     OverseasStockOrderCancel,
@@ -101,16 +101,6 @@ class OverseasStockOrder:
     def __init__(self, client: HttpClient):
         self.client = client
 
-    def _check_response_error(self, response_data: dict) -> None:
-        """HTTP 200 이어도 body rsp_cd 가 실패일 수 있으므로 여기서 확인한다."""
-        rsp_cd = response_data.get("rsp_cd")
-        if rsp_cd is not None and rsp_cd not in SUCCESS_RSP_CODES:
-            raise NHPlugAPIError(
-                f"API error {rsp_cd}: {response_data.get('rsp_msg', '')}",
-                status_code=200,
-                response_data=response_data,
-            )
-
     @staticmethod
     def _drop_none(body: Dict[str, Any]) -> Dict[str, Any]:
         """선택 파라미터는 값이 있을 때만 전송한다."""
@@ -155,7 +145,7 @@ class OverseasStockOrder:
 
         response = self.client.post("/gbstock/order/v1/buy", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockOrderBuy.model_validate(data))
 
@@ -195,7 +185,7 @@ class OverseasStockOrder:
 
         response = self.client.post("/gbstock/order/v1/sell", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockOrderSell.model_validate(data))
 
@@ -234,7 +224,7 @@ class OverseasStockOrder:
 
         response = self.client.post("/gbstock/order/v1/modify", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockOrderModify.model_validate(data))
 
@@ -273,7 +263,7 @@ class OverseasStockOrder:
 
         response = self.client.post("/gbstock/order/v1/cancel", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockOrderCancel.model_validate(data))
 
@@ -346,7 +336,7 @@ class OverseasStockOrder:
 
         response = self.client.post("/gbstock/order/v1/reservedSubmit", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockOrderReservedSubmit.model_validate(data))
 
@@ -385,6 +375,6 @@ class OverseasStockOrder:
 
         response = self.client.post("/gbstock/order/v1/reservedCancel", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockOrderReservedCancel.model_validate(data))

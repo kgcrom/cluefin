@@ -1,6 +1,6 @@
 from typing import Any, Dict, Literal, Optional
 
-from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
+from cluefin_openapi.nhplug._exceptions import raise_for_rsp_cd
 from cluefin_openapi.nhplug._http_client import HttpClient
 from cluefin_openapi.nhplug._krstock_inquiry_types import (
     KrStockInquiryAssetStatus,
@@ -17,7 +17,7 @@ from cluefin_openapi.nhplug._krstock_inquiry_types import (
     KrStockInquiryTradingPnl,
 )
 from cluefin_openapi.nhplug._krstock_order import CreditLoanCode, QuoteTypeCode, ReservedCreditLoanCode
-from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES, NHPlugHttpHeader, NHPlugHttpResponse
+from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
 
 # 매도가능수량조회(sellableQuantity)의 신용대출코드 — buyableQuantity/신규주문 계열과
 # 코드 집합이 다르다(00.일반거래 포함, 01~04 만 유효 — 10 이상은 스펙에 없음).
@@ -55,16 +55,6 @@ class KrStockInquiry:
 
     def __init__(self, client: HttpClient):
         self.client = client
-
-    def _check_response_error(self, response_data: dict) -> None:
-        """HTTP 200 이어도 body rsp_cd 가 실패일 수 있으므로 여기서 확인한다."""
-        rsp_cd = response_data.get("rsp_cd")
-        if rsp_cd is not None and rsp_cd not in SUCCESS_RSP_CODES:
-            raise NHPlugAPIError(
-                f"API error {rsp_cd}: {response_data.get('rsp_msg', '')}",
-                status_code=200,
-                response_data=response_data,
-            )
 
     @staticmethod
     def _drop_none(body: Dict[str, Any]) -> Dict[str, Any]:
@@ -111,7 +101,7 @@ class KrStockInquiry:
         )
         response = self.client.post("/krstock/inquiry/v1/balance", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryBalance.model_validate(data))
 
@@ -149,7 +139,7 @@ class KrStockInquiry:
         )
         response = self.client.post("/krstock/inquiry/v1/dailyOrderExecution", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryDailyOrderExecution.model_validate(data))
 
@@ -195,7 +185,7 @@ class KrStockInquiry:
         )
         response = self.client.post("/krstock/inquiry/v1/buyableQuantity", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryBuyableQuantity.model_validate(data))
 
@@ -231,7 +221,7 @@ class KrStockInquiry:
         )
         response = self.client.post("/krstock/inquiry/v1/sellableQuantity", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquirySellableQuantity.model_validate(data))
 
@@ -282,7 +272,7 @@ class KrStockInquiry:
         )
         response = self.client.post("/krstock/inquiry/v1/reservedInquiry", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryReservedInquiry.model_validate(data))
 
@@ -323,7 +313,7 @@ class KrStockInquiry:
         )
         response = self.client.post("/krstock/inquiry/v1/realizedPnl", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryRealizedPnl.model_validate(data))
 
@@ -364,7 +354,7 @@ class KrStockInquiry:
         )
         response = self.client.post("/krstock/inquiry/v1/assetStatus", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryAssetStatus.model_validate(data))
 
@@ -399,7 +389,7 @@ class KrStockInquiry:
         )
         response = self.client.post("/krstock/inquiry/v1/dailyPnl", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryDailyPnl.model_validate(data))
 
@@ -432,7 +422,7 @@ class KrStockInquiry:
         )
         response = self.client.post("/krstock/inquiry/v1/tradingPnl", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryTradingPnl.model_validate(data))
 
@@ -455,7 +445,7 @@ class KrStockInquiry:
         body = self._drop_none({"act_no": act_no})
         response = self.client.post("/krstock/inquiry/v1/integratedMargin", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryIntegratedMargin.model_validate(data))
 
@@ -489,7 +479,7 @@ class KrStockInquiry:
         )
         response = self.client.post("/krstock/inquiry/v1/rightsHeld", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryRightsHeld.model_validate(data))
 
@@ -514,6 +504,6 @@ class KrStockInquiry:
         body = self._drop_none({"act_no": act_no})
         response = self.client.post("/krstock/inquiry/v1/rightsScheduled", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryRightsScheduled.model_validate(data))
