@@ -16,7 +16,12 @@ import {
   kiwoomTokenCacheFileName,
 } from '../../src/kiwoom/token-cache';
 import { NhplugAuth } from '../../src/nhplug/auth';
-import { NhplugClient, SUCCESS_RSP_CODES } from '../../src/nhplug/client';
+import {
+  NhplugClient,
+  NO_DATA_RSP_CODES,
+  NOT_BUSINESS_DAY_RSP_CODES,
+  SUCCESS_RSP_CODES,
+} from '../../src/nhplug/client';
 import {
   FileTokenCacheStore as NhplugFileTokenCacheStore,
   nhplugTokenCacheFileName,
@@ -199,11 +204,11 @@ export const NHPLUG_US_NATION_CD = '200'; // 미국
 
 /**
  * 장 운영시간·영업일·계좌 상태 때문에 "지금은" 검증할 수 없다는 뜻의 rsp_cd.
+ * 클라이언트의 분류를 그대로 쓴다 — 영업일 아님, 그리고 빈 결과(잔고·내역이 없는 계좌에서는
+ * 응답 형태를 검증할 수 없다. 데이터가 생기면 코드 수정 없이 검증이 재개된다).
  * 파이썬 `_integration_helpers.ENV_BLOCKED_CODES` 와 같은 값을 유지할 것.
  */
-const NHPLUG_ENV_BLOCKED_CODES: readonly string[] = [
-  '14100', // 모의투자 영업일이 아닙니다 (2026-08-22 실측)
-];
+const NHPLUG_ENV_BLOCKED_CODES: readonly string[] = [...NOT_BUSINESS_DAY_RSP_CODES, ...NO_DATA_RSP_CODES];
 
 /**
  * NH PLUG 클라이언트 (프로세스당 1개, 토큰은 파일 캐시 재사용).
@@ -301,7 +306,7 @@ export async function callNhplug<T>(
   } catch (error) {
     const { rspCd, rspMsg } = nhplugRspCode(error);
     if (NHPLUG_ENV_BLOCKED_CODES.includes(rspCd) || NHPLUG_ENV_BLOCKED_CODES.some((code) => rspMsg.includes(code))) {
-      ctx.skip(`장 운영시간/계좌 상태 때문에 검증 불가: [${rspCd}] ${rspMsg}`);
+      ctx.skip(`장 운영시간/계좌 상태(빈 결과 포함) 때문에 검증 불가: [${rspCd}] ${rspMsg}`);
     }
     throw error;
   }
@@ -310,8 +315,8 @@ export async function callNhplug<T>(
 /**
  * NH PLUG 응답 봉투 검증.
  *
- * 성공 코드는 `00000` 과 모의투자 조회 성공인 `XA102` 두 가지다 — `00000` 만
- * 성공으로 보면 모의 서버의 정상 응답이 오탐된다.
+ * 성공 코드는 `SUCCESS_RSP_CODES`(00000·XA102·00166·00221)다 — `00000` 만
+ * 성공으로 보면 모의·운영 서버의 정상 응답이 오탐된다.
  */
 export function assertNhplugResponse(res: ApiResponse<unknown>): void {
   expect(res).toBeDefined();
