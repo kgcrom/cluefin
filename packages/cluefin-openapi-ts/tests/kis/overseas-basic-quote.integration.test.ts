@@ -31,8 +31,12 @@ import {
   runIntegration,
   TODAY,
 } from '../_helpers/integration-setup';
+import { assertKisResponseShapeDeep } from '../_helpers/kis-response-shape';
 
 const it = runIntegration ? test : test.skip;
+
+// 문서 표에는 있지만 실서버가 보내지 않는다 — VENDOR_DOC_ERRATA.md KIS
+const PERIOD_PRICE_DOC_ONLY = ['output1.prdy_vol'];
 
 describe('KIS OverseasBasicQuote', () => {
   it('getStockCurrentPriceDetail', async () => {
@@ -43,7 +47,7 @@ describe('KIS OverseasBasicQuote', () => {
       symb: 'AAPL',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getStockCurrentPriceDetailResponseSchema);
+    assertKisResponseShapeDeep(res.body, getStockCurrentPriceDetailResponseSchema);
   });
 
   it('getStockPeriodQuote', async () => {
@@ -57,7 +61,7 @@ describe('KIS OverseasBasicQuote', () => {
       modp: '0',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getStockPeriodQuoteResponseSchema);
+    assertKisResponseShapeDeep(res.body, getStockPeriodQuoteResponseSchema);
     assertResponseShape(res.body, getStockPeriodQuoteResponseSchema, 'output2', getStockPeriodQuoteOutput2ItemSchema);
   });
 
@@ -68,7 +72,7 @@ describe('KIS OverseasBasicQuote', () => {
       pdno: 'AAPL',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getProductBaseInfoResponseSchema);
+    assertKisResponseShapeDeep(res.body, getProductBaseInfoResponseSchema);
   });
 
   it('getCurrentPriceFirstQuote', async () => {
@@ -78,7 +82,7 @@ describe('KIS OverseasBasicQuote', () => {
       symb: 'AAPL',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getCurrentPriceFirstQuoteResponseSchema);
+    assertKisResponseShapeDeep(res.body, getCurrentPriceFirstQuoteResponseSchema);
   });
 
   it('getStockCurrentPriceConclusion', async () => {
@@ -89,7 +93,7 @@ describe('KIS OverseasBasicQuote', () => {
       symb: 'AAPL',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getStockCurrentPriceConclusionResponseSchema);
+    assertKisResponseShapeDeep(res.body, getStockCurrentPriceConclusionResponseSchema);
   });
 
   it('getConclusionTrend', async () => {
@@ -102,7 +106,7 @@ describe('KIS OverseasBasicQuote', () => {
       symb: 'AAPL',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getConclusionTrendResponseSchema);
+    assertKisResponseShapeDeep(res.body, getConclusionTrendResponseSchema);
     assertResponseShape(res.body, getConclusionTrendResponseSchema, 'output2', getConclusionTrendOutput2ItemSchema);
   });
 
@@ -120,7 +124,7 @@ describe('KIS OverseasBasicQuote', () => {
       keyb: '',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getStockMinuteChartResponseSchema);
+    assertKisResponseShapeDeep(res.body, getStockMinuteChartResponseSchema);
     assertResponseShape(res.body, getStockMinuteChartResponseSchema, 'output2', getStockMinuteChartOutput2ItemSchema);
   });
 
@@ -133,7 +137,7 @@ describe('KIS OverseasBasicQuote', () => {
       fidPwDataIncuYn: 'N',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getIndexMinuteChartResponseSchema);
+    assertKisResponseShapeDeep(res.body, getIndexMinuteChartResponseSchema);
     assertResponseShape(res.body, getIndexMinuteChartResponseSchema, 'output2', getIndexMinuteChartOutput2ItemSchema);
   });
 
@@ -147,7 +151,7 @@ describe('KIS OverseasBasicQuote', () => {
       fidPeriodDivCode: 'D',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getItemIndexExchangePeriodPriceResponseSchema);
+    assertKisResponseShapeDeep(res.body, getItemIndexExchangePeriodPriceResponseSchema, PERIOD_PRICE_DOC_ONLY);
     assertResponseShape(
       res.body,
       getItemIndexExchangePeriodPriceResponseSchema,
@@ -163,7 +167,7 @@ describe('KIS OverseasBasicQuote', () => {
       excd: 'NAS',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, searchByConditionResponseSchema);
+    assertKisResponseShapeDeep(res.body, searchByConditionResponseSchema);
     assertResponseShape(res.body, searchByConditionResponseSchema, 'output2', searchByConditionOutput2ItemSchema);
   });
 
@@ -175,20 +179,24 @@ describe('KIS OverseasBasicQuote', () => {
       ctxAreaFk: '',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getSettlementDateResponseSchema);
     assertResponseShape(res.body, getSettlementDateResponseSchema, 'output', getSettlementDateItemSchema);
   });
 
   it('getSectorPrice', async () => {
     const client = await getKisClient();
+    // 스펙: ICOD 필수, 업종코드별조회(HHDFS76370100)로 얻은 값. 공백을 주면 빈 결과로 형태 검사가 비었다
+    const codes = await client.overseasBasicQuote.getSectorCodes({ auth: '', excd: 'NAS' });
+    const icod = (codes.body.output2 as { icod: string }[])[0]?.icod ?? '';
     const res = await client.overseasBasicQuote.getSectorPrice({
       keyb: '',
       auth: '',
       excd: 'NAS',
-      icod: '',
+      icod,
       volRang: '0',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getSectorPriceResponseSchema);
+    assertKisResponseShapeDeep(res.body, getSectorPriceResponseSchema);
     assertResponseShape(res.body, getSectorPriceResponseSchema, 'output2', getSectorPriceOutput2ItemSchema);
   });
 
@@ -199,7 +207,7 @@ describe('KIS OverseasBasicQuote', () => {
       excd: 'NAS',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getSectorCodesResponseSchema);
+    assertKisResponseShapeDeep(res.body, getSectorCodesResponseSchema);
     assertResponseShape(res.body, getSectorCodesResponseSchema, 'output2', getSectorCodesOutput2ItemSchema);
   });
 });

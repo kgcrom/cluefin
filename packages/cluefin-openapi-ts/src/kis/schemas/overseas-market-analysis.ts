@@ -380,6 +380,9 @@ export const getStockMarketCapRankOutput1ItemSchema = z
     crec: s(),
     trec: s(),
     nrec: s(),
+    // 문서 표·예시에 없지만 실서버가 보낸다 (2026-09-27 실측). 의미는 문서에 없다
+    curr: s(),
+    t_rate: s(),
   })
   .passthrough();
 
