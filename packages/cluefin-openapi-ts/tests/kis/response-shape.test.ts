@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { assertKisResponseShapeDeep, kisResponseShapeDiff } from '../_helpers/kis-response-shape';
 
@@ -66,5 +66,17 @@ describe('assertKisResponseShapeDeep', () => {
     const rows = [{ stckPrpr: '1', iscd1: 'a', iscd6: 'c' }];
     expect(() => assertKisResponseShapeDeep(body({ output1: rows }), schema)).toThrow();
     assertKisResponseShapeDeep(body({ output1: rows }), schema, ['output1.iscd6']);
+  });
+
+  it('warns about empty blocks when KIS_SHAPE_REPORT_EMPTY=1', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.stubEnv('KIS_SHAPE_REPORT_EMPTY', '1');
+    try {
+      assertKisResponseShapeDeep(body({ output1: [] }), schema);
+      expect(warn).toHaveBeenCalledWith('[kis-shape] empty blocks: output1');
+    } finally {
+      vi.unstubAllEnvs();
+      warn.mockRestore();
+    }
   });
 });

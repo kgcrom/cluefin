@@ -55,6 +55,7 @@ import {
   getTradingWeightByAmountResponseSchema,
   getWatchlistGroupsItemSchema,
   getWatchlistGroupsResponseSchema,
+  getWatchlistMultiQuoteResponseSchema,
   getWatchlistStocksByGroupOutput2ItemSchema,
   getWatchlistStocksByGroupResponseSchema,
 } from '../../src/kis/schemas/domestic-market-analysis';
@@ -67,6 +68,7 @@ import {
   SAMSUNG,
   TODAY,
 } from '../_helpers/integration-setup';
+import { assertKisResponseShapeDeep } from '../_helpers/kis-response-shape';
 
 const it = runIntegration ? test : test.skip;
 const userId = process.env.KIS_HTS_USER_ID;
@@ -84,6 +86,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputIscd2: '0001',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getInvestorTradingTrendByMarketDailyResponseSchema);
     assertResponseShape(
       res.body,
       getInvestorTradingTrendByMarketDailyResponseSchema,
@@ -99,6 +102,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputIscd2: '0001',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getInvestorTradingTrendByMarketIntradayResponseSchema);
     assertResponseShape(
       res.body,
       getInvestorTradingTrendByMarketIntradayResponseSchema,
@@ -117,7 +121,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidEtcClsCode: '',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getInvestorTradingTrendByStockDailyResponseSchema);
+    assertKisResponseShapeDeep(res.body, getInvestorTradingTrendByStockDailyResponseSchema);
     assertResponseShape(
       res.body,
       getInvestorTradingTrendByStockDailyResponseSchema,
@@ -134,7 +138,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidCondMrktDivCode: 'J',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getForeignNetBuyTrendByStockResponseSchema);
+    assertKisResponseShapeDeep(res.body, getForeignNetBuyTrendByStockResponseSchema);
     assertResponseShape(
       res.body,
       getForeignNetBuyTrendByStockResponseSchema,
@@ -153,6 +157,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidRankSortClsCode2: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getForeignBrokerageTradingAggregateResponseSchema);
     assertResponseShape(
       res.body,
       getForeignBrokerageTradingAggregateResponseSchema,
@@ -167,6 +172,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       mkscShrnIscd: SAMSUNG,
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getForeignInstitutionalEstimateByStockResponseSchema);
     assertResponseShape(
       res.body,
       getForeignInstitutionalEstimateByStockResponseSchema,
@@ -186,6 +192,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidSctnClsCode: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getMemberTradingTrendByStockResponseSchema);
     assertResponseShape(
       res.body,
       getMemberTradingTrendByStockResponseSchema,
@@ -205,6 +212,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidVolCnt: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getMemberTradingTrendTickResponseSchema);
     assertResponseShape(
       res.body,
       getMemberTradingTrendTickResponseSchema,
@@ -231,7 +239,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputIscd1: SAMSUNG,
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getBuySellVolumeByStockDailyResponseSchema);
+    assertKisResponseShapeDeep(res.body, getBuySellVolumeByStockDailyResponseSchema);
     assertResponseShape(
       res.body,
       getBuySellVolumeByStockDailyResponseSchema,
@@ -249,6 +257,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputDate1: ONE_MONTH_AGO,
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getCreditBalanceTrendDailyResponseSchema);
     assertResponseShape(
       res.body,
       getCreditBalanceTrendDailyResponseSchema,
@@ -267,18 +276,21 @@ describe('KIS DomesticMarketAnalysis', () => {
       cts: '',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getStockLoanTrendDailyResponseSchema);
     assertResponseShape(res.body, getStockLoanTrendDailyResponseSchema, 'output1', getStockLoanTrendDailyItemSchema);
   });
 
   it('getProgramTradingSummaryDaily', async () => {
     const client = await getKisClient();
     const res = await client.domesticMarketAnalysis.getProgramTradingSummaryDaily({
+      // 스펙: 시장은 K(코스피)/Q(코스닥), 날짜는 공백. '0' 을 주면 빈 결과가 와서 형태 검사가 비어 통과했다
       fidCondMrktDivCode: 'J',
-      fidMrktClsCode: '0',
-      fidInputDate1: ONE_MONTH_AGO,
-      fidInputDate2: TODAY,
+      fidMrktClsCode: 'K',
+      fidInputDate1: '',
+      fidInputDate2: '',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getProgramTradingSummaryDailyResponseSchema);
     assertResponseShape(
       res.body,
       getProgramTradingSummaryDailyResponseSchema,
@@ -298,6 +310,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputHour1: '155000',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getProgramTradingSummaryIntradayResponseSchema);
     assertResponseShape(
       res.body,
       getProgramTradingSummaryIntradayResponseSchema,
@@ -314,6 +327,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputDate1: ONE_MONTH_AGO,
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getProgramTradingTrendByStockDailyResponseSchema);
     assertResponseShape(
       res.body,
       getProgramTradingTrendByStockDailyResponseSchema,
@@ -329,6 +343,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputIscd: SAMSUNG,
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getProgramTradingTrendByStockIntradayResponseSchema);
     assertResponseShape(
       res.body,
       getProgramTradingTrendByStockIntradayResponseSchema,
@@ -344,6 +359,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       mrktDivClsCode: '1',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getProgramTradingInvestorTrendTodayResponseSchema);
     assertResponseShape(
       res.body,
       getProgramTradingInvestorTrendTodayResponseSchema,
@@ -361,7 +377,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputDate1: ONE_MONTH_AGO,
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getShortSellingTrendDailyResponseSchema);
+    assertKisResponseShapeDeep(res.body, getShortSellingTrendDailyResponseSchema);
     assertResponseShape(
       res.body,
       getShortSellingTrendDailyResponseSchema,
@@ -378,7 +394,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputIscd: SAMSUNG,
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getExpectedPriceTrendResponseSchema);
+    assertKisResponseShapeDeep(res.body, getExpectedPriceTrendResponseSchema);
     assertResponseShape(
       res.body,
       getExpectedPriceTrendResponseSchema,
@@ -400,6 +416,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputVol1: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getAfterHoursExpectedFluctuationResponseSchema);
     assertResponseShape(
       res.body,
       getAfterHoursExpectedFluctuationResponseSchema,
@@ -423,6 +440,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidVolCnt: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getLimitPriceStocksResponseSchema);
     assertResponseShape(res.body, getLimitPriceStocksResponseSchema, 'output', getLimitPriceStocksItemSchema);
   });
 
@@ -434,6 +452,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputIscd: SAMSUNG,
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getTradingWeightByAmountResponseSchema);
     assertResponseShape(res.body, getTradingWeightByAmountResponseSchema, 'output', getTradingWeightByAmountItemSchema);
   });
 
@@ -446,7 +465,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputHour1: '155000',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getResistanceLevelTradingWeightResponseSchema);
+    assertKisResponseShapeDeep(res.body, getResistanceLevelTradingWeightResponseSchema);
     assertResponseShape(
       res.body,
       getResistanceLevelTradingWeightResponseSchema,
@@ -461,6 +480,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidInputDate1: TODAY,
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getMarketFundSummaryResponseSchema);
     assertResponseShape(res.body, getMarketFundSummaryResponseSchema, 'output', getMarketFundSummaryItemSchema);
   });
 
@@ -473,6 +493,7 @@ describe('KIS DomesticMarketAnalysis', () => {
     }
     const res = await client.domesticMarketAnalysis.getWatchlistMultiQuote(params);
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getWatchlistMultiQuoteResponseSchema);
   });
 
   // userId 필요 엔드포인트
@@ -544,6 +565,7 @@ describe('KIS DomesticMarketAnalysis', () => {
       fidEtcClsCode: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getInstitutionalForeignTradingAggregateResponseSchema);
     assertResponseShape(
       res.body,
       getInstitutionalForeignTradingAggregateResponseSchema,

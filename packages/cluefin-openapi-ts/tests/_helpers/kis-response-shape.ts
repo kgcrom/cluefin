@@ -103,4 +103,13 @@ export function assertKisResponseShapeDeep(
     (p) => !ignored.has(p.split(' ')[1] ?? ''),
   );
   expect(problems).toEqual([]);
+
+  // 빈 배열은 항목 키를 판정할 수 없다. 요청값이 스펙과 달라 빈 결과가 온 채로 통과하는 경우가 있어
+  // (2026-09-27 시황·공시, 프로그램매매 일별) KIS_SHAPE_REPORT_EMPTY=1 로 어떤 블록이 비었는지 본다.
+  if (process.env.KIS_SHAPE_REPORT_EMPTY === '1') {
+    const empty = Object.entries(body)
+      .filter(([, v]) => Array.isArray(v) && v.length === 0)
+      .map(([k]) => k);
+    if (empty.length > 0) console.warn(`[kis-shape] empty blocks: ${empty.join(', ')}`);
+  }
 }

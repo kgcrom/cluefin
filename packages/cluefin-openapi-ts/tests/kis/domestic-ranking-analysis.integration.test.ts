@@ -54,6 +54,7 @@ import {
   runIntegration,
   TODAY,
 } from '../_helpers/integration-setup';
+import { assertKisResponseShapeDeep } from '../_helpers/kis-response-shape';
 
 const it = runIntegration ? test : test.skip;
 
@@ -73,6 +74,7 @@ describe('KIS DomesticRankingAnalysis', () => {
       fidVolCnt: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getTradingVolumeRankResponseSchema);
     assertResponseShape(res.body, getTradingVolumeRankResponseSchema, 'output', getTradingVolumeRankItemSchema);
   });
 
@@ -95,6 +97,7 @@ describe('KIS DomesticRankingAnalysis', () => {
       fidRsflRate1: '',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getStockFluctuationRankResponseSchema);
     assertResponseShape(res.body, getStockFluctuationRankResponseSchema, 'output', getStockFluctuationRankItemSchema);
   });
 
@@ -113,6 +116,7 @@ describe('KIS DomesticRankingAnalysis', () => {
       fidInputPrice2: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getStockHogaQuantityRankResponseSchema);
     assertResponseShape(res.body, getStockHogaQuantityRankResponseSchema, 'output', getStockHogaQuantityRankItemSchema);
   });
 
@@ -134,6 +138,7 @@ describe('KIS DomesticRankingAnalysis', () => {
       fidTrgtExlsClsCode: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getStockProfitabilityIndicatorRankResponseSchema);
     assertResponseShape(
       res.body,
       getStockProfitabilityIndicatorRankResponseSchema,
@@ -156,6 +161,7 @@ describe('KIS DomesticRankingAnalysis', () => {
       fidVolCnt: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getStockMarketCapTopResponseSchema);
     assertResponseShape(res.body, getStockMarketCapTopResponseSchema, 'output', getStockMarketCapTopItemSchema);
   });
 
@@ -177,6 +183,7 @@ describe('KIS DomesticRankingAnalysis', () => {
       fidTrgtExlsClsCode: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getStockFinanceRatioRankResponseSchema);
     assertResponseShape(res.body, getStockFinanceRatioRankResponseSchema, 'output', getStockFinanceRatioRankItemSchema);
   });
 
@@ -195,6 +202,7 @@ describe('KIS DomesticRankingAnalysis', () => {
       fidInputPrice2: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getStockTimeHogaRankResponseSchema);
     assertResponseShape(res.body, getStockTimeHogaRankResponseSchema, 'output', getStockTimeHogaRankItemSchema);
   });
 
@@ -212,6 +220,7 @@ describe('KIS DomesticRankingAnalysis', () => {
       fidInputPrice2: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getStockPreferredStockRatioTopResponseSchema);
     assertResponseShape(
       res.body,
       getStockPreferredStockRatioTopResponseSchema,
@@ -236,6 +245,7 @@ describe('KIS DomesticRankingAnalysis', () => {
       fidVolCnt: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getStockDisparityIndexRankResponseSchema);
     assertResponseShape(
       res.body,
       getStockDisparityIndexRankResponseSchema,
@@ -262,6 +272,7 @@ describe('KIS DomesticRankingAnalysis', () => {
       fidTrgtExlsClsCode: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getStockMarketPriceRankResponseSchema);
     assertResponseShape(res.body, getStockMarketPriceRankResponseSchema, 'output', getStockMarketPriceRankItemSchema);
   });
 
@@ -279,6 +290,7 @@ describe('KIS DomesticRankingAnalysis', () => {
       fidTrgtClsCode: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getStockExecutionStrengthTopResponseSchema);
     assertResponseShape(
       res.body,
       getStockExecutionStrengthTopResponseSchema,
@@ -303,6 +315,7 @@ describe('KIS DomesticRankingAnalysis', () => {
       fidInputCnt1: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getStockWatchlistRegistrationTopResponseSchema);
     assertResponseShape(
       res.body,
       getStockWatchlistRegistrationTopResponseSchema,
@@ -326,6 +339,7 @@ describe('KIS DomesticRankingAnalysis', () => {
       fidMkopClsCode: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getStockExpectedExecutionRiseDeclineTopResponseSchema);
     assertResponseShape(
       res.body,
       getStockExpectedExecutionRiseDeclineTopResponseSchema,
@@ -351,6 +365,7 @@ describe('KIS DomesticRankingAnalysis', () => {
       fidAplyRangPrc1: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getStockProprietaryTradingTopResponseSchema);
     assertResponseShape(
       res.body,
       getStockProprietaryTradingTopResponseSchema,
@@ -376,6 +391,7 @@ describe('KIS DomesticRankingAnalysis', () => {
       fidAplyRangPrc2: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getStockNewHighLowApproachingTopResponseSchema);
     assertResponseShape(
       res.body,
       getStockNewHighLowApproachingTopResponseSchema,
@@ -399,6 +415,7 @@ describe('KIS DomesticRankingAnalysis', () => {
       fidAplyRangPrc2: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getStockShortSellingTopResponseSchema);
     assertResponseShape(res.body, getStockShortSellingTopResponseSchema, 'output', getStockShortSellingTopItemSchema);
   });
 
@@ -417,7 +434,7 @@ describe('KIS DomesticRankingAnalysis', () => {
       fidTrgtExlsClsCode: '',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getStockAfterHoursFluctuationRankResponseSchema);
+    assertKisResponseShapeDeep(res.body, getStockAfterHoursFluctuationRankResponseSchema);
     assertResponseShape(
       res.body,
       getStockAfterHoursFluctuationRankResponseSchema,
@@ -440,7 +457,7 @@ describe('KIS DomesticRankingAnalysis', () => {
       fidTrgtExlsClsCode: '0',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getStockAfterHoursVolumeRankResponseSchema);
+    assertKisResponseShapeDeep(res.body, getStockAfterHoursVolumeRankResponseSchema);
     assertResponseShape(
       res.body,
       getStockAfterHoursVolumeRankResponseSchema,
@@ -449,8 +466,7 @@ describe('KIS DomesticRankingAnalysis', () => {
     );
   });
 
-  // HHKST17010000 tr_id는 API 구독 플랜에 따라 사용 불가할 수 있음
-  it.skip('getStockCreditBalanceTop', async () => {
+  it('getStockCreditBalanceTop', async () => {
     const client = await getKisClient();
     const res = await client.domesticRankingAnalysis.getStockCreditBalanceTop({
       fidCondScrDivCode: '11701',
@@ -460,6 +476,7 @@ describe('KIS DomesticRankingAnalysis', () => {
       fidRankSortClsCode: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getStockCreditBalanceTopResponseSchema);
     assertResponseShape(
       res.body,
       getStockCreditBalanceTopResponseSchema,
@@ -487,11 +504,11 @@ describe('KIS DomesticRankingAnalysis', () => {
       gb4: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getStockDividendYieldTopResponseSchema);
     assertResponseShape(res.body, getStockDividendYieldTopResponseSchema, 'output', getStockDividendYieldTopItemSchema);
   });
 
-  // HHKST1909000C0 tr_id는 API 구독 플랜에 따라 사용 불가할 수 있음
-  it.skip('getStockLargeExecutionCountTop', async () => {
+  it('getStockLargeExecutionCountTop', async () => {
     const client = await getKisClient();
     const res = await client.domesticRankingAnalysis.getStockLargeExecutionCountTop({
       fidAplyRangPrc2: '',
@@ -508,6 +525,7 @@ describe('KIS DomesticRankingAnalysis', () => {
       fidVolCnt: '',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getStockLargeExecutionCountTopResponseSchema);
     assertResponseShape(
       res.body,
       getStockLargeExecutionCountTopResponseSchema,
@@ -520,6 +538,7 @@ describe('KIS DomesticRankingAnalysis', () => {
     const client = await getKisClient();
     const res = await client.domesticRankingAnalysis.getHtsInquiryTop20({});
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getHtsInquiryTop20ResponseSchema);
     assertResponseShape(res.body, getHtsInquiryTop20ResponseSchema, 'output1', getHtsInquiryTop20ItemSchema);
   });
 });
