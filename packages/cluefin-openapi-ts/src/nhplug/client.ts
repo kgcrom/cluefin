@@ -213,15 +213,17 @@ export class NhplugClient {
 
       const body = Object.fromEntries(
         Object.entries(definition.bodyMap)
-          .map(([apiKey, inputKey]) => {
+          .map(([apiKey, inputKey]): [string, unknown] | null => {
             // eslint-disable-next-line security/detect-object-injection -- inputKey comes from internal endpoint metadata.
             const value = parsedInput[inputKey];
             if (value === undefined || value === null) {
               return null;
             }
-            return [apiKey, stringifyParam(value)];
+            // 값을 받은 그대로 보낸다 — 스펙이 integer/number 인 필드(req_cnt·orr_qty·orr_pr 등)를 문자열로
+            // 보내면 서버가 IGW40011("길이나 data type을 확인하세요")로 거부한다 (운영 2026-09-27 실측).
+            return [apiKey, value];
           })
-          .filter((entry): entry is [string, string] => entry !== null),
+          .filter((entry): entry is [string, unknown] => entry !== null),
       );
 
       // 연속조회: 이전 응답 헤더의 `cts` 값을 그대로 넘기면 다음 페이지를 받는다.

@@ -66,6 +66,16 @@ describe('NhplugClient.invokeEndpoint', () => {
     expect(readBody(calls[0])).toEqual({ Input_0: { actNo: '12345678901' } });
   });
 
+  it('keeps numeric params as JSON numbers', async () => {
+    // 스펙 integer 필드(req_cnt 등)를 문자열로 보내면 서버가 IGW40011 로 거부한다 (운영 2026-09-27)
+    const { calls, fetchMock } = createFetchMock(() => jsonResponse({ rsp_cd: '00000' }));
+    const client = createClient(fetchMock);
+
+    await client.invokeEndpoint(endpoint, { actNo: '12345678901', ordDt: 10 });
+
+    expect(readBody(calls[0])).toEqual({ Input_0: { actNo: '12345678901', ordDt: 10 } });
+  });
+
   it('sends the NH auth headers', async () => {
     const { calls, fetchMock } = createFetchMock(() => jsonResponse({ rsp_cd: '00000' }));
 
