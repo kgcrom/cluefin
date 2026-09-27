@@ -92,4 +92,38 @@
 
 ## NH PLUG
 
-아직 대조 전이다. 그동안의 실측 기록은 `AGENTS.md` 의 NH PLUG 절에 있다 — 대조할 때 이 절로 옮긴다.
+문서 출처: `https://www.nhplug.com/openapi-docs/<slug>/openapi.json` (krstock 기준 "API명세서 260911").
+길이 기준은 그 스냅샷 `tests/nhplug/spec_lengths.json` — 확인된 초과는 그 파일의 `known_exceed` 와 아래 "길이" 에 함께 적는다.
+모의(moapi)만 확인한 항목은 "모의" 로 표시한다. 테스트는 모의에서만 `mock_omits`/`nhplugMockOmits` 로 건너뛰고
+운영(`NHPLUG_ENV=prod`)에서는 그대로 검사한다 — 운영에서 확인되면 이 표를 고친다.
+
+### 요청 파라미터
+
+| API | 문서 | 실서버 | 실측 | 코드 |
+|---|---|---|---|---|
+| 주식잔고조회 `balance`·잔고조회_실현손익 `realizedPnl`·투자계좌자산현황 `assetStatus` | `aly_qut_cd`(적용시세코드) **필수** (260911 추가) | 생략해도 `00000`, 1·2 와 같은 형태 (보유 0 계좌라 값 차이는 미확인) | 2026-09-27 모의 | 선택 인자, 값이 있을 때만 전송 |
+
+### 응답 필드 (모의 서버가 보내지 않는 스펙 필드)
+
+모의 서버는 아래 필드를 키째 생략한다. 모델에서 지우지 않는다(운영 미확인).
+
+| API | 생략 필드 | 실측 |
+|---|---|---|
+| 계좌 목록 `/n2/acctinfo` | `cust_no` | 2026-09-27 모의 |
+| `assetStatus` | Output_0 `cus_fnm`·`rnm_cfm_no`·`ctc_tp_cd_nm`·`act_amn_tab_cd`·`act_pdt_llf_cd`·`amn_emp_fnm`·`ima_wtm` | 2026-09-27 모의 |
+| `balance` | Output_0 `fc_dca`·`fc_mgg_amt`·`fc_orr_pbl_amt`·`fnn_amt`·`rit_eal_amt`·`orr_pbl_amt`·`act_no` | 2026-09-27 모의 |
+| 매수가능수량 `buyableQuantity` | Output_0 `sll_ctc_amt(1)`·`byn_ctc_amt1`·`sdr_xps(1)`·`ost_byn_ctc_amt`·`byn_ny_cns_orr_amt`·`int_rt`·`orr_pr`·`rp_eal_amt`·`ny_stl_qty` | 2026-09-27 모의 |
+| 매도가능수량 `sellableQuantity` | Output_0 `cus_fnm`·`ost_dit_cd`·`cfd_lon_cd(_nm)`·`ttn_tp_cd(_nm)`·`sll_ny_stl_qty`·`byn_ny_stl_qty`·`phs_uit_pr` | 2026-09-27 모의 |
+| `realizedPnl` | Output_0 `cus_fnm`·`rnm_cfm_no`·`act_atv_tp_dtl_cd`·`act_amn_tab_cd`·`act_pdt_llf_cd` | 2026-09-27 모의 |
+| 실현손익일별합산 `dailyPnl` | Output_0 `act_fnm` | 2026-09-27 모의 |
+| 종목별실현손익 `tradingPnl` | Output_0 `iem_cd`·`byn_uit_pr`·`sll_uit_pr`·`fee_sum`·`tax_sum` | 2026-09-27 모의 |
+
+### 서버 동작 (문서에 없는 것)
+
+- 응답 최상위에 스펙의 `message` 블록이 **키째 없다** (null 도 아님). 결과는 `rsp_cd`/`rsp_msg` 로 온다 (2026-09-27 모의).
+- 모의 조회 성공 코드에 `XA102`("모의투자 조회가 완료되었습니다")가 섞인다 (2026-08-22). 문서의 성공은 `00000` 뿐.
+- 모의 서버는 연속 호출에 `IGW42903`(HTTP 429, "API 호출 거래건수를 초과")을 준다. 1.5초 간격이면 통과 (2026-09-27).
+
+### 길이
+
+2026-09-27 모의 조회 12종·계좌 목록에서 스펙 길이를 넘는 값은 없었다.

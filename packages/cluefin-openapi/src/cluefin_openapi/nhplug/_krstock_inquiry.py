@@ -78,6 +78,7 @@ class KrStockInquiry:
         ltg_aot_dit_cd: Literal["1", "9"],
         aet_bse: Literal["1", "2"],
         qut_dit_cd: Literal["UNT", "KRX", "NXT"],
+        aly_qut_cd: Optional[Literal["1", "2"]] = None,
         cts: Optional[str] = None,
     ) -> NHPlugHttpResponse[KrStockInquiryBalance]:
         """주식잔고조회 (`POST /krstock/inquiry/v1/balance`).
@@ -93,6 +94,9 @@ class KrStockInquiry:
             ltg_aot_dit_cd: 상장폐지구분코드 (1.상장종목 9.전체)
             aet_bse: 자산기준 (1.순자산 2.총자산)
             qut_dit_cd: 시세구분코드 (UNT.통합시세 KRX.KRX시세 NXT.NXT시세)
+            aly_qut_cd: 적용시세코드 (1.정규장 2.전체장(정규장,정규장외)). 스펙(260911)은 필수지만
+                서버는 생략도 받는다(모의 2026-09-27 실측, VENDOR_DOC_ERRATA.md) — 기존 호출을 깨지
+                않도록 선택 인자로 두고 값이 있을 때만 보낸다.
             cts: 연속거래키. 이전 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 전달.
         """
         body = self._drop_none(
@@ -102,6 +106,7 @@ class KrStockInquiry:
                 "ltg_aot_dit_cd": ltg_aot_dit_cd,
                 "aet_bse": aet_bse,
                 "qut_dit_cd": qut_dit_cd,
+                "aly_qut_cd": aly_qut_cd,
             }
         )
         response = self.client.post("/krstock/inquiry/v1/balance", body=body, cts=cts)
@@ -287,6 +292,7 @@ class KrStockInquiry:
         iqr_dit_cd1: Literal["0", "1", "2"],
         fee_dit_cd: Literal["1", "2"],
         qut_dit_cd: Literal["UNT", "KRX", "NXT"],
+        aly_qut_cd: Optional[Literal["1", "2"]] = None,
         cts: Optional[str] = None,
     ) -> NHPlugHttpResponse[KrStockInquiryRealizedPnl]:
         """주식잔고조회_실현손익 (`POST /krstock/inquiry/v1/realizedPnl`).
@@ -301,6 +307,9 @@ class KrStockInquiry:
             iqr_dit_cd1: 조회구분코드1 (0.전체 1.잔고종목 2.당일매매)
             fee_dit_cd: 수수료구분코드 (1.온라인 2.영업점)
             qut_dit_cd: 시세구분코드 (UNT.통합시세 KRX.KRX시세 NXT.NXT시세)
+            aly_qut_cd: 적용시세코드 (1.정규장 2.전체장(정규장,정규장외)). 스펙(260911)은 필수지만
+                서버는 생략도 받는다(모의 2026-09-27 실측, VENDOR_DOC_ERRATA.md) — 기존 호출을 깨지
+                않도록 선택 인자로 두고 값이 있을 때만 보낸다.
             cts: 연속거래키. 이전 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 전달.
         """
         body = self._drop_none(
@@ -309,6 +318,7 @@ class KrStockInquiry:
                 "iqr_dit_cd1": iqr_dit_cd1,
                 "fee_dit_cd": fee_dit_cd,
                 "qut_dit_cd": qut_dit_cd,
+                "aly_qut_cd": aly_qut_cd,
             }
         )
         response = self.client.post("/krstock/inquiry/v1/realizedPnl", body=body, cts=cts)
@@ -323,6 +333,7 @@ class KrStockInquiry:
         eal_aly_cd: Literal["1", "2"],
         aet_bse: Literal["1", "2"],
         qut_dit_cd: Literal["UNT", "KRX", "NXT"],
+        aly_qut_cd: Optional[Literal["1", "2"]] = None,
         cts: Optional[str] = None,
     ) -> NHPlugHttpResponse[KrStockInquiryAssetStatus]:
         """투자계좌자산현황조회 (`POST /krstock/inquiry/v1/assetStatus`).
@@ -337,6 +348,9 @@ class KrStockInquiry:
             eal_aly_cd: 평가적용코드 (1.장부가평가 2.시가평가)
             aet_bse: 자산기준 (1.순자산 2.총자산)
             qut_dit_cd: 시세구분코드 (UNT.통합시세 KRX.KRX시세 NXT.NXT시세)
+            aly_qut_cd: 적용시세코드 (1.정규장 2.전체장(정규장,정규장외)). 스펙(260911)은 필수지만
+                서버는 생략도 받는다(모의 2026-09-27 실측, VENDOR_DOC_ERRATA.md) — 기존 호출을 깨지
+                않도록 선택 인자로 두고 값이 있을 때만 보낸다.
             cts: 연속거래키. 이전 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 전달.
         """
         body = self._drop_none(
@@ -345,6 +359,7 @@ class KrStockInquiry:
                 "eal_aly_cd": eal_aly_cd,
                 "aet_bse": aet_bse,
                 "qut_dit_cd": qut_dit_cd,
+                "aly_qut_cd": aly_qut_cd,
             }
         )
         response = self.client.post("/krstock/inquiry/v1/assetStatus", body=body, cts=cts)

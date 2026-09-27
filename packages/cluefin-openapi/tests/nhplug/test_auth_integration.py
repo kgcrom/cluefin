@@ -20,6 +20,9 @@ from cluefin_openapi.nhplug._auth import Auth
 from cluefin_openapi.nhplug._auth_types import TokenResponse, TokenRevokeResponse
 from cluefin_openapi.nhplug._token_manager import TokenManager
 
+from ._integration_helpers import mock_omits
+from ._response_shape import assert_matches_spec
+
 
 @pytest.mark.integration
 def test_generate_token(auth):
@@ -52,6 +55,8 @@ def test_get_account_list(client):
     for account in response.body.output_0:
         assert account.acct_no
         assert account.acct_type in ("01", "02", "03")
+    # 모의 도메인은 스펙의 cust_no 를 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assert_matches_spec(client, response, ignore=mock_omits("cust_no"))
 
 
 @pytest.mark.integration

@@ -24,6 +24,15 @@ def nhplug_env() -> str:
     return os.getenv("NHPLUG_ENV", "dev").lower()
 
 
+def mock_omits(*fields: str) -> tuple[str, ...]:
+    """모의 서버가 보내지 않는 스펙 필드 — `assert_matches_spec(..., ignore=)` 에 넘긴다.
+
+    모의(moapi)는 스펙에 있는 필드 일부를 키째 생략한다 (VENDOR_DOC_ERRATA.md). 운영에서
+    보내는지는 확인하지 못했으므로 모델에서 지우지 않고, 운영(prod)에서는 그대로 검사한다.
+    """
+    return fields if nhplug_env() != "prod" else ()
+
+
 def real_account_only(api: str, error: str) -> pytest.MarkDecorator:
     """모의투자에서 제공되지 않는 API 를 운영 전용으로 표시한다.
 
