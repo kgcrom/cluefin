@@ -31,19 +31,19 @@ def test_asset_status(client: HttpClient, krstock_account: str):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
-    # 모의 서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    # 운영·모의 모두 이 스펙 필드들을 보내지 않는다. ima_wtm 은 모의만 뺀다 (VENDOR_DOC_ERRATA.md)
     assert_matches_spec(
         client,
         response,
-        ignore=mock_omits(
+        ignore=(
             "Output_0.cus_fnm",
             "Output_0.rnm_cfm_no",
             "Output_0.ctc_tp_cd_nm",
             "Output_0.act_amn_tab_cd",
             "Output_0.act_pdt_llf_cd",
             "Output_0.amn_emp_fnm",
-            "Output_0.ima_wtm",
-        ),
+        )
+        + mock_omits("Output_0.ima_wtm"),
     )
 
 
@@ -106,11 +106,11 @@ def test_balance(client: HttpClient, krstock_account: str):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
-    # 모의 서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    # 운영·모의 모두 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
     assert_matches_spec(
         client,
         response,
-        ignore=mock_omits(
+        ignore=(
             "Output_0.fc_dca",
             "Output_0.fc_mgg_amt",
             "Output_0.fc_orr_pbl_amt",
@@ -164,11 +164,11 @@ def test_buyable_quantity(client: HttpClient, krstock_account: str):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
-    # 모의 서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    # 운영·모의 모두 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
     assert_matches_spec(
         client,
         response,
-        ignore=mock_omits(
+        ignore=(
             "Output_0.sll_ctc_amt1",
             "Output_0.byn_ctc_amt1",
             "Output_0.sdr_xps1",
@@ -200,7 +200,8 @@ def test_reserved_inquiry(client: HttpClient, krstock_account: str):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
-    assert_matches_spec(client, response)
+    # 운영은 스펙의 tab_nm 을 보내지 않는다. 모의는 미제공이라 확인 못 함 (VENDOR_DOC_ERRATA.md)
+    assert_matches_spec(client, response, ignore=("Output_0.tab_nm",))
 
 
 @pytest.mark.integration
@@ -217,13 +218,11 @@ def test_daily_pnl(client: HttpClient, krstock_account: str):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
-    # 모의 서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    # 운영·모의 모두 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
     assert_matches_spec(
         client,
         response,
-        ignore=mock_omits(
-            "Output_0.act_fnm",
-        ),
+        ignore=("Output_0.act_fnm",),
     )
 
 
@@ -242,11 +241,11 @@ def test_realized_pnl(client: HttpClient, krstock_account: str):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
-    # 모의 서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    # 운영·모의 모두 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
     assert_matches_spec(
         client,
         response,
-        ignore=mock_omits(
+        ignore=(
             "Output_0.cus_fnm",
             "Output_0.rnm_cfm_no",
             "Output_0.act_atv_tp_dtl_cd",
@@ -270,11 +269,11 @@ def test_trading_pnl(client: HttpClient, krstock_account: str):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
-    # 모의 서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    # 운영·모의 모두 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
     assert_matches_spec(
         client,
         response,
-        ignore=mock_omits(
+        ignore=(
             "Output_0.iem_cd",
             "Output_0.byn_uit_pr",
             "Output_0.sll_uit_pr",
