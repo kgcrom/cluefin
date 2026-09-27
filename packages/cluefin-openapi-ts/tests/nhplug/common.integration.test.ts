@@ -14,7 +14,6 @@ import {
   assertNhplugResponse,
   callNhplug,
   getNhplugClient,
-  nhplugMockOmits,
   requireNhplugAccount,
   runNhplugIntegration,
   setupNhplugRateLimit,
@@ -31,7 +30,8 @@ describe('Nhplug Common', () => {
     const res = await callNhplug(ctx, () => client.common.getAccountList({}));
 
     assertNhplugResponse(res);
-    assertNhplugMatchesSpec('/n2/acctinfo', res.body, accountListResponseSchema, nhplugMockOmits('cust_no'));
+    // 운영·모의 모두 스펙의 cust_no 를 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assertNhplugMatchesSpec('/n2/acctinfo', res.body, accountListResponseSchema, ['cust_no']);
   });
 
   it('환경에 맞는 계좌(acctType)를 찾을 수 있다', async (ctx) => {

@@ -65,15 +65,16 @@ describe('Nhplug KrstockInquiry', () => {
       '/krstock/inquiry/v1/assetStatus',
       res.body,
       krStockInquiryAssetStatusResponseSchema,
-      nhplugMockOmits(
+      // 운영·모의 모두 이 스펙 필드들을 보내지 않는다. imaWtm 은 모의만 뺀다 (VENDOR_DOC_ERRATA.md)
+      [
         'Output_0.cus_fnm',
         'Output_0.rnm_cfm_no',
         'Output_0.ctc_tp_cd_nm',
         'Output_0.act_amn_tab_cd',
         'Output_0.act_pdt_llf_cd',
         'Output_0.amn_emp_fnm',
-        'Output_0.ima_wtm',
-      ),
+        ...nhplugMockOmits('Output_0.ima_wtm'),
+      ],
     );
   });
 
@@ -95,7 +96,8 @@ describe('Nhplug KrstockInquiry', () => {
       '/krstock/inquiry/v1/balance',
       res.body,
       krStockInquiryBalanceResponseSchema,
-      nhplugMockOmits(
+      // 운영·모의 모두 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+      [
         'Output_0.fc_dca',
         'Output_0.fc_mgg_amt',
         'Output_0.fc_orr_pbl_amt',
@@ -103,7 +105,7 @@ describe('Nhplug KrstockInquiry', () => {
         'Output_0.rit_eal_amt',
         'Output_0.orr_pbl_amt',
         'Output_0.act_no',
-      ),
+      ],
     );
     // 연속조회 플래그는 응답 헤더로 내려온다.
     expect(res.headers.ctsFlag).toBeDefined();
@@ -146,7 +148,8 @@ describe('Nhplug KrstockInquiry', () => {
       '/krstock/inquiry/v1/buyableQuantity',
       res.body,
       krStockInquiryBuyableQuantityResponseSchema,
-      nhplugMockOmits(
+      // 운영·모의 모두 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+      [
         'Output_0.sll_ctc_amt1',
         'Output_0.byn_ctc_amt1',
         'Output_0.sdr_xps1',
@@ -158,7 +161,7 @@ describe('Nhplug KrstockInquiry', () => {
         'Output_0.orr_pr',
         'Output_0.rp_eal_amt',
         'Output_0.ny_stl_qty',
-      ),
+      ],
     );
   });
 
@@ -209,13 +212,14 @@ describe('Nhplug KrstockInquiry', () => {
       '/krstock/inquiry/v1/realizedPnl',
       res.body,
       krStockInquiryRealizedPnlResponseSchema,
-      nhplugMockOmits(
+      // 운영·모의 모두 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+      [
         'Output_0.cus_fnm',
         'Output_0.rnm_cfm_no',
         'Output_0.act_atv_tp_dtl_cd',
         'Output_0.act_amn_tab_cd',
         'Output_0.act_pdt_llf_cd',
-      ),
+      ],
     );
   });
 
@@ -230,7 +234,8 @@ describe('Nhplug KrstockInquiry', () => {
       '/krstock/inquiry/v1/dailyPnl',
       res.body,
       krStockInquiryDailyPnlResponseSchema,
-      nhplugMockOmits('Output_0.act_fnm'),
+      // 운영·모의 모두 스펙의 act_fnm 을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+      ['Output_0.act_fnm'],
     );
   });
 
@@ -245,13 +250,8 @@ describe('Nhplug KrstockInquiry', () => {
       '/krstock/inquiry/v1/tradingPnl',
       res.body,
       krStockInquiryTradingPnlResponseSchema,
-      nhplugMockOmits(
-        'Output_0.iem_cd',
-        'Output_0.byn_uit_pr',
-        'Output_0.sll_uit_pr',
-        'Output_0.fee_sum',
-        'Output_0.tax_sum',
-      ),
+      // 운영·모의 모두 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+      ['Output_0.iem_cd', 'Output_0.byn_uit_pr', 'Output_0.sll_uit_pr', 'Output_0.fee_sum', 'Output_0.tax_sum'],
     );
   });
 
@@ -303,6 +303,8 @@ describe('Nhplug KrstockInquiry', () => {
       '/krstock/inquiry/v1/reservedInquiry',
       res.body,
       krStockInquiryReservedInquiryResponseSchema,
+      // 운영은 스펙의 tab_nm 을 보내지 않는다. 모의는 미제공이라 확인 못 함 (VENDOR_DOC_ERRATA.md)
+      ['Output_0.tab_nm'],
     );
   });
 });
