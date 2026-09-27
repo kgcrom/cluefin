@@ -104,7 +104,7 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 
 - Gated by `CLUEFIN_OPENAPI_TS_RUN_INTEGRATION=1`; env loads root `.env.test` then
   `.env`, first-wins — an exported shell var silently shadows `.env.test`.
-- They run serialized (separate vitest config, single fork, 180s timeout) to respect
+- They run serialized (separate vitest config, one worker, 180s timeout) to respect
   live rate limits; don't fold them into the parallel unit config.
 - KIS account tests need `KIS_CANO`; without it they skip silently rather than fail.
 - KIS tests use `assertKisResponseShapeDeep` (`tests/_helpers/kis-response-shape.ts`), not
