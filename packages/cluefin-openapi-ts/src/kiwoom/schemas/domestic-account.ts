@@ -506,6 +506,7 @@ export const executionBalanceResponseSchema = z
     '100ord_alow_amt': s(),
     crd_loan_tot: s(),
     crd_loan_ls_tot: s(),
+    crd_grnt_rt: s(),
     dpst_grnt_use_amt_amt: s(),
     grnt_loan_amt: s(),
     stk_cntr_remn: z.array(executionBalanceItemSchema).default([]),

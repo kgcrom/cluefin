@@ -6,6 +6,7 @@ from cluefin_openapi.kiwoom._client import Client
 from cluefin_openapi.kiwoom._exceptions import KiwoomAPIError
 
 from ._integration_helpers import real_account_only, skip_if_env_blocked
+from ._spec_conformance import assert_spec_conformance
 
 TEST_STEX_TP = "ND"  # NASDAQ
 TEST_STK_CD = "AAPL"
@@ -83,6 +84,7 @@ def test_request_modify_order(client: Client, pending_buy_order_no: str):
         stk_cd=TEST_STK_CD,
         mdfy_uv=_unfillable_buy_price(client),
     )
+    assert_spec_conformance(client, response)
     assert response is not None
     assert response.body is not None
 
@@ -92,6 +94,7 @@ def test_request_cancel_order(client: Client, pending_buy_order_no: str):
     response = client.overseas_order.request_cancel_order(
         orig_ord_no=pending_buy_order_no, stex_tp=TEST_STEX_TP, stk_cd=TEST_STK_CD
     )
+    assert_spec_conformance(client, response)
     assert response is not None
     assert response.body is not None
 
@@ -100,5 +103,6 @@ def test_request_cancel_order(client: Client, pending_buy_order_no: str):
 @real_account_only("ust31490", "RC9000:모의투자에서는 해당업무가 제공되지 않습니다")
 def test_get_orderable_quantity(client: Client):
     response = client.overseas_order.get_orderable_quantity(stk_cd=TEST_STK_CD, uv="1.00", stex_tp=TEST_STEX_TP)
+    assert_spec_conformance(client, response)
     assert response is not None
     assert response.body is not None

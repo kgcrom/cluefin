@@ -213,6 +213,12 @@ export const newHighLowPriceItemSchema = z
     pred_pre_sig: s(),
     pred_pre: s(),
     flu_rt: s(),
+    trde_qty: s(),
+    pred_trde_qty_pre_rt: s(),
+    sel_bid: s(),
+    buy_bid: s(),
+    high_pric: s(),
+    low_pric: s(),
   })
   .passthrough();
 
@@ -228,11 +234,19 @@ export const newHighLowPriceResponseSchema = z
 export const upperLowerLimitPriceItemSchema = z
   .object({
     stk_cd: s(),
+    stk_infr: s(),
     stk_nm: s(),
     cur_prc: s(),
     pred_pre_sig: s(),
     pred_pre: s(),
     flu_rt: s(),
+    trde_qty: s(),
+    pred_trde_qty: s(),
+    sel_req: s(),
+    sel_bid: s(),
+    buy_bid: s(),
+    buy_req: s(),
+    cnt: s(),
   })
   .passthrough();
 
@@ -253,6 +267,11 @@ export const highLowPriceApproachItemSchema = z
     pred_pre_sig: s(),
     pred_pre: s(),
     flu_rt: s(),
+    trde_qty: s(),
+    sel_bid: s(),
+    buy_bid: s(),
+    tdy_high_pric: s(),
+    tdy_low_pric: s(),
   })
   .passthrough();
 
@@ -413,8 +432,13 @@ export const tradingMemberSupplyDemandAnalysisResponseSchema = z
 
 export const tradingMemberInstantVolumeItemSchema = z
   .object({
+    tm: s(),
     stk_cd: s(),
     stk_nm: s(),
+    trde_ori_nm: s(),
+    tp: s(),
+    mont_trde_qty: s(),
+    acc_netprps: s(),
     cur_prc: s(),
     pred_pre_sig: s(),
     pred_pre: s(),
@@ -485,8 +509,15 @@ export const dailyTradingItemsByInvestorItemSchema = z
   .object({
     stk_cd: s(),
     stk_nm: s(),
+    netslmt_qty: s(),
+    netslmt_amt: s(),
+    prsm_avg_pric: s(),
     cur_prc: s(),
+    pre_sig: s(),
     pred_pre: s(),
+    avg_pric_pre: s(),
+    pre_rt: s(),
+    dt_trde_qty: s(),
   })
   .passthrough();
 
@@ -754,11 +785,17 @@ export const memberCompanyResponseSchema = z
 
 export const top50ProgramNetBuyItemSchema = z
   .object({
+    rank: s(),
     stk_cd: s(),
     stk_nm: s(),
     cur_prc: s(),
+    flu_sig: s(),
     pred_pre: s(),
     flu_rt: s(),
+    acc_trde_qty: s(),
+    prm_sell_amt: s(),
+    prm_buy_amt: s(),
+    prm_netprps_amt: s(),
   })
   .passthrough();
 

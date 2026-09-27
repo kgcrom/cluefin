@@ -2,31 +2,32 @@ import { describe, test } from 'vitest';
 
 import {
   accountCurrentDayStatusResponseSchema,
+  accountEvaluationBalanceDetailsResponseSchema,
+  accountEvaluationStatusResponseSchema,
   accountNextDaySettlementDetailsResponseSchema,
-  accountOrderExecutionDetailsItemSchema,
   accountOrderExecutionDetailsResponseSchema,
+  accountOrderExecutionStatusResponseSchema,
   accountProfitRateResponseSchema,
   availableOrderQuantityByMarginRateResponseSchema,
   availableWithdrawalAmountResponseSchema,
   consignmentComprehensiveTransactionHistoryResponseSchema,
   currentDayTradingJournalResponseSchema,
   dailyAccountProfitRateDetailsResponseSchema,
-  dailyEstimatedDepositAssetBalanceItemSchema,
   dailyEstimatedDepositAssetBalanceResponseSchema,
   dailyRealizedProfitLossDetailsResponseSchema,
-  dailyRealizedProfitLossItemSchema,
   dailyRealizedProfitLossResponseSchema,
   dailyStockRealizedProfitLossByDateResponseSchema,
   dailyStockRealizedProfitLossByPeriodResponseSchema,
   depositBalanceDetailsResponseSchema,
   estimatedAssetBalanceResponseSchema,
   executedResponseSchema,
+  executionBalanceResponseSchema,
   marginDetailsResponseSchema,
   unexecutedResponseSchema,
+  unexecutedSplitOrderDetailsResponseSchema,
 } from '../../src/kiwoom/schemas/domestic-account';
 import {
   assertKiwoomResponse,
-  assertResponseShape,
   getKiwoomClient,
   ONE_MONTH_AGO,
   runIntegration,
@@ -35,6 +36,7 @@ import {
   setupKiwoomRateLimit,
   TODAY,
 } from '../_helpers/integration-setup';
+import { assertKiwoomSpecConformance } from '../_helpers/kiwoom-spec-conformance';
 
 const it = runIntegration ? test : test.skip;
 // kt00002/kt00015/kt00016/kt00017: 모의투자에서 "[2000](RC9000:모의투자에서는 해당업무가
@@ -51,7 +53,7 @@ describe('Kiwoom DomesticAccount', () => {
       strtDt: ONE_MONTH_AGO,
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, dailyStockRealizedProfitLossByDateResponseSchema, 'dtStkDivRlztPl');
+    assertKiwoomSpecConformance(dailyStockRealizedProfitLossByDateResponseSchema);
   });
 
   it('getDailyStockRealizedProfitLossByPeriod', async () => {
@@ -62,7 +64,7 @@ describe('Kiwoom DomesticAccount', () => {
       endDt: TODAY,
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, dailyStockRealizedProfitLossByPeriodResponseSchema, 'dtStkRlztPl');
+    assertKiwoomSpecConformance(dailyStockRealizedProfitLossByPeriodResponseSchema);
   });
 
   it('getDailyRealizedProfitLoss', async () => {
@@ -72,7 +74,7 @@ describe('Kiwoom DomesticAccount', () => {
       endDt: TODAY,
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, dailyRealizedProfitLossResponseSchema, 'dtRlztPl', dailyRealizedProfitLossItemSchema);
+    assertKiwoomSpecConformance(dailyRealizedProfitLossResponseSchema);
   });
 
   it('getUnexecuted', async () => {
@@ -83,7 +85,7 @@ describe('Kiwoom DomesticAccount', () => {
       stexTp: '0',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, unexecutedResponseSchema, 'oso');
+    assertKiwoomSpecConformance(unexecutedResponseSchema);
   });
 
   it('getExecuted', async () => {
@@ -94,7 +96,7 @@ describe('Kiwoom DomesticAccount', () => {
       stexTp: '0',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, executedResponseSchema, 'cntr');
+    assertKiwoomSpecConformance(executedResponseSchema);
   });
 
   it('getDailyRealizedProfitLossDetails', async () => {
@@ -103,7 +105,7 @@ describe('Kiwoom DomesticAccount', () => {
       stkCd: SAMSUNG,
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, dailyRealizedProfitLossDetailsResponseSchema, 'tdyRlztPlDtl');
+    assertKiwoomSpecConformance(dailyRealizedProfitLossDetailsResponseSchema);
   });
 
   it('getAccountProfitRate', async () => {
@@ -112,27 +114,27 @@ describe('Kiwoom DomesticAccount', () => {
       stexTp: '0',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, accountProfitRateResponseSchema, 'acntPrftRt');
+    assertKiwoomSpecConformance(accountProfitRateResponseSchema);
   });
 
-  // ka10088: skip — 유효한 주문번호(ordNo)가 있어야만 조회 가능.
-  // 실제 분할주문이 존재하지 않으면 항상 에러를 반환한다.
-  test.skip('getUnexecutedSplitOrderDetails', async () => {
+  // ka10088: 없는 주문번호면 에러 없이 빈 목록이 온다 (2026-09-27 dev 실측 — 예전 주석은 "항상 에러" 였다)
+  it('getUnexecutedSplitOrderDetails', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticAccount.getUnexecutedSplitOrderDetails({
       ordNo: '0000000',
     });
     assertKiwoomResponse(res);
+    assertKiwoomSpecConformance(unexecutedSplitOrderDetailsResponseSchema);
   });
 
   it('getCurrentDayTradingJournal', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticAccount.getCurrentDayTradingJournal({
-      ottksTp: '0',
+      ottksTp: '1',
       chCrdTp: '0',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, currentDayTradingJournalResponseSchema, 'tdyTrdeDiary');
+    assertKiwoomSpecConformance(currentDayTradingJournalResponseSchema);
   });
 
   it('getDepositBalanceDetails', async () => {
@@ -141,7 +143,7 @@ describe('Kiwoom DomesticAccount', () => {
       qryTp: '2',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, depositBalanceDetailsResponseSchema, 'stkEntrPrst');
+    assertKiwoomSpecConformance(depositBalanceDetailsResponseSchema);
   });
 
   itLiveOnly('getDailyEstimatedDepositAssetBalance', async () => {
@@ -151,12 +153,7 @@ describe('Kiwoom DomesticAccount', () => {
       endDt: TODAY,
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      dailyEstimatedDepositAssetBalanceResponseSchema,
-      'dalyPrsmDpstAsetAmtPrst',
-      dailyEstimatedDepositAssetBalanceItemSchema,
-    );
+    assertKiwoomSpecConformance(dailyEstimatedDepositAssetBalanceResponseSchema);
   });
 
   it('getEstimatedAssetBalance', async () => {
@@ -165,66 +162,61 @@ describe('Kiwoom DomesticAccount', () => {
       qryTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, estimatedAssetBalanceResponseSchema);
+    assertKiwoomSpecConformance(estimatedAssetBalanceResponseSchema);
   });
 
-  // kt00004: skip — dmstStexTp 값과 무관하게 "501307:거래소구분을 확인해주십시오" 에러 반환.
-  // 모의투자 계좌에서는 지원하지 않는 것으로 추정.
-  test.skip('getAccountEvaluationStatus', async () => {
+  // kt00004: 예전 skip 사유(501307 거래소구분)는 문서에 없는 dmstStexTp 값 탓이었다 — 'KRX' 면 모의에서도 동작 (2026-09-27)
+  it('getAccountEvaluationStatus', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticAccount.getAccountEvaluationStatus({
       qryTp: '1',
-      dmstStexTp: '0',
+      dmstStexTp: 'KRX',
     });
     assertKiwoomResponse(res);
+    assertKiwoomSpecConformance(accountEvaluationStatusResponseSchema);
   });
 
-  // kt00005: skip — dmstStexTp 값과 무관하게 "501307:거래소구분을 확인해주십시오" 에러 반환.
-  // 모의투자 계좌에서는 지원하지 않는 것으로 추정.
-  test.skip('getExecutionBalance', async () => {
+  // kt00005: 모의투자 RC9000 (파이썬 real_account_only 와 동일)
+  itLiveOnly('getExecutionBalance', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticAccount.getExecutionBalance({
-      dmstStexTp: '0',
+      dmstStexTp: 'KRX',
     });
     assertKiwoomResponse(res);
+    assertKiwoomSpecConformance(executionBalanceResponseSchema);
   });
 
   it('getAccountOrderExecutionDetails', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticAccount.getAccountOrderExecutionDetails({
-      qryTp: '0',
+      qryTp: '1',
       stkBondTp: '0',
       sellTp: '0',
-      dmstStexTp: '0',
+      dmstStexTp: '%',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      accountOrderExecutionDetailsResponseSchema,
-      'acntOrdCntrPrpsDtl',
-      accountOrderExecutionDetailsItemSchema,
-    );
+    assertKiwoomSpecConformance(accountOrderExecutionDetailsResponseSchema);
   });
 
   it('getAccountNextDaySettlementDetails', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticAccount.getAccountNextDaySettlementDetails({});
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, accountNextDaySettlementDetailsResponseSchema, 'acntNxdySetlFrcsPrpsArray');
+    assertKiwoomSpecConformance(accountNextDaySettlementDetailsResponseSchema);
   });
 
-  // kt00009: skip — "501724:관련자료가없습니다" 에러 반환.
-  // 당일 주문 체결 내역이 없으면 에러로 응답하는 API 특성.
-  test.skip('getAccountOrderExecutionStatus', async () => {
+  // kt00009: 파이썬과 같은 입력이면 모의에서도 동작 (2026-09-27). 체결 내역이 없으면 목록이 빈다
+  it('getAccountOrderExecutionStatus', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticAccount.getAccountOrderExecutionStatus({
       stkBondTp: '0',
       mrktTp: '0',
       sellTp: '0',
       qryTp: '0',
-      dmstStexTp: '0',
+      dmstStexTp: '%',
     });
     assertKiwoomResponse(res);
+    assertKiwoomSpecConformance(accountOrderExecutionStatusResponseSchema);
   });
 
   // kt00010: 파이썬 통합 테스트와 동일한 입력 조합.
@@ -246,7 +238,7 @@ describe('Kiwoom DomesticAccount', () => {
       throw error;
     }
     if (res.body.returnCode !== 0) return;
-    assertResponseShape(res.body, availableWithdrawalAmountResponseSchema);
+    assertKiwoomSpecConformance(availableWithdrawalAmountResponseSchema);
   });
 
   it('getAvailableOrderQuantityByMarginRate', async () => {
@@ -255,7 +247,7 @@ describe('Kiwoom DomesticAccount', () => {
       stkCd: SAMSUNG,
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, availableOrderQuantityByMarginRateResponseSchema);
+    assertKiwoomSpecConformance(availableOrderQuantityByMarginRateResponseSchema);
   });
 
   // kt00012: skip — "503721:신용계좌만 조회가능합니다" 에러 반환.
@@ -272,7 +264,7 @@ describe('Kiwoom DomesticAccount', () => {
     const client = await getKiwoomClient();
     const res = await client.domesticAccount.getMarginDetails({});
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, marginDetailsResponseSchema);
+    assertKiwoomSpecConformance(marginDetailsResponseSchema);
   });
 
   itLiveOnly('getConsignmentComprehensiveTransactionHistory', async () => {
@@ -282,10 +274,10 @@ describe('Kiwoom DomesticAccount', () => {
       endDt: TODAY,
       tp: '0',
       gdsTp: '0',
-      dmstStexTp: '0',
+      dmstStexTp: '%',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, consignmentComprehensiveTransactionHistoryResponseSchema, 'trstOvrlTrdePrpsArray');
+    assertKiwoomSpecConformance(consignmentComprehensiveTransactionHistoryResponseSchema);
   });
 
   itLiveOnly('getDailyAccountProfitRateDetails', async () => {
@@ -295,24 +287,24 @@ describe('Kiwoom DomesticAccount', () => {
       toDt: TODAY,
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, dailyAccountProfitRateDetailsResponseSchema);
+    assertKiwoomSpecConformance(dailyAccountProfitRateDetailsResponseSchema);
   });
 
   itLiveOnly('getAccountCurrentDayStatus', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticAccount.getAccountCurrentDayStatus({});
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, accountCurrentDayStatusResponseSchema);
+    assertKiwoomSpecConformance(accountCurrentDayStatusResponseSchema);
   });
 
-  // kt00018: skip — dmstStexTp 값과 무관하게 "501307:거래소구분을 확인해주십시오" 에러 반환.
-  // 모의투자 계좌에서는 지원하지 않는 것으로 추정.
-  test.skip('getAccountEvaluationBalanceDetails', async () => {
+  // kt00018: 예전 skip 사유(501307)는 문서에 없는 dmstStexTp 값 탓이었다 — 'KRX' 면 모의에서도 동작 (2026-09-27)
+  it('getAccountEvaluationBalanceDetails', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticAccount.getAccountEvaluationBalanceDetails({
       qryTp: '1',
-      dmstStexTp: '0',
+      dmstStexTp: 'KRX',
     });
     assertKiwoomResponse(res);
+    assertKiwoomSpecConformance(accountEvaluationBalanceDetailsResponseSchema);
   });
 });

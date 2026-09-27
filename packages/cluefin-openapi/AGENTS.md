@@ -44,20 +44,28 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - Mixed dev/prod tokens are rejected server-side (Kiwoom `8031`, KIS `EGW00123`) — this
   is why token caches are scoped by env/app_key.
 - Kiwoom occasionally removes TRs from its official docs while the API keeps working
-  (e.g. ka10009). On integration failures, check the docs list before debugging code.
-- ka10087·ka10098 were removed from both the docs and the live server on 2026-09-23
-  (`1504:해당 URI에서는 지원하는 API ID가 아닙니다`) — unlike ka10009, so a `1504` for
-  these means the TR is gone, not just undocumented. Removed from the codebase.
-- **Broker doc ≠ live server cases live in `VENDOR_DOC_ERRATA.md`** (KIS: misnamed blocks, fields the
-  server omits or adds, wrong lengths, 금리종합 `FID_DIV_CLS_CODE`, 재무비율 누적행, 기간별시세 100봉 상한).
+  (e.g. ka10009), but a `1504:해당 URI에서는 지원하는 API ID가 아닙니다` means the TR is gone
+  from the server too (ka10087·ka10098, 2026-09-23). Check the docs list before debugging code.
+- **Broker doc ≠ live server cases live in `VENDOR_DOC_ERRATA.md`** (KIS and Kiwoom: misnamed blocks and
+  fields, fields the server omits or adds, wrong lengths, and server behavior the docs don't mention).
   Code follows the live server; check that file before "fixing" a model back to the docs, and add a row
   when you measure a new divergence.
-- KIS integration tests compare raw response keys with the model exactly (`tests/kis/_response_shape.py`
-  in Python, `assertKisResponseShapeDeep` in TS). A key the server omits on purpose goes in the call's
-  `ignore` with a comment pointing at the errata — don't loosen the helper.
+- Integration tests compare the raw response with the model exactly — KIS `tests/kis/_response_shape.py`
+  (TS `assertKisResponseShapeDeep`), Kiwoom `tests/kiwoom/_spec_conformance.py` (TS
+  `assertKiwoomSpecConformance`), which also checks request/response lengths against
+  `tests/kiwoom/spec_lengths.json` (a dump of the portal's Length column, shared by both languages).
+  A divergence already measured goes in the call's `ignore`/`ignore_length` with a comment pointing
+  at the errata — don't loosen the helpers. An empty block passes vacuously and only warns
+  (`EmptyBlockWarning`); run with `-W always::UserWarning` to see which ones.
+- **Kiwoom returns an empty result instead of an error for most bad inputs**, so a wrong request
+  passes a shape-only test. Found in the 2026-09-27 audit: `KRX:069500` (the `KRX:` in the stock-code
+  description is a format example, not a prefix), a date sent to a period field (`dt`: `5:5일…`),
+  positional args in the wrong order, non-doc codes like `'0'`. Use the portal's request example values.
 - The gitignored `CLAUDE.local.md` records the working procedure for scraping the
   official KIS/Kiwoom doc portals (Kiwoom's POST doc endpoints are blocked by AhnLab
-  Eversafe; only GET works). Read it before re-deriving that.
+  Eversafe; only GET works). Read it before re-deriving that. Kiwoom's contents URL is now
+  path-style `/guide/apiGuideContents/{jobTpCode}/{apiId}` (the query-string form returns a page with no TR list).
+  Save dumps with case-distinct filenames — realtime TRs `0g`/`0G`, `0u`/`0U` collide on macOS APFS.
 
 ## NH PLUG (nhplug)
 

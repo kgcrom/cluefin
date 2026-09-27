@@ -30,11 +30,13 @@ from cluefin_openapi.kiwoom._domestic_account_types import (
 )
 
 from ._integration_helpers import real_account_only
+from ._spec_conformance import assert_spec_conformance
 
 
 @pytest.mark.integration
 def test_get_daily_stock_realized_profit_loss_by_date(client: Client):
     response = client.account.get_daily_stock_realized_profit_loss_by_date("005930", "20250630")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountDailyStockRealizedProfitLossByDate)
@@ -43,6 +45,7 @@ def test_get_daily_stock_realized_profit_loss_by_date(client: Client):
 @pytest.mark.integration
 def test_get_daily_stock_realized_profit_loss_by_period(client: Client):
     response = client.account.get_daily_stock_realized_profit_loss_by_period("005930", "20240601", "20240630")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountDailyStockRealizedProfitLossByPeriod)
@@ -51,6 +54,7 @@ def test_get_daily_stock_realized_profit_loss_by_period(client: Client):
 @pytest.mark.integration
 def test_get_daily_realized_profit_loss(client: Client):
     response = client.account.get_daily_realized_profit_loss("20240601", "20240630")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountDailyRealizedProfitLoss)
@@ -58,7 +62,9 @@ def test_get_daily_realized_profit_loss(client: Client):
 
 @pytest.mark.integration
 def test_get_unexecuted(client: Client):
-    response = client.account.get_unexecuted("0", "0", "005930", "0")
+    # 위치 인자 순서가 시그니처와 달라 stex_tp 에 종목코드가 가고 있었다 — 문서 요청 예시값
+    response = client.account.get_unexecuted(all_stk_tp="1", trde_tp="0", stex_tp="0", stk_cd="005930")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountUnexecuted)
@@ -66,7 +72,9 @@ def test_get_unexecuted(client: Client):
 
 @pytest.mark.integration
 def test_get_executed(client: Client):
-    response = client.account.get_executed("005930", "0", "0", "0", "0")
+    # 위치 인자 순서가 시그니처와 달라 qry_tp 에 종목코드가 가고 있었다 — 문서 요청 예시값
+    response = client.account.get_executed(qry_tp="1", sell_tp="0", stex_tp="0", stk_cd="005930")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountExecuted)
@@ -75,6 +83,7 @@ def test_get_executed(client: Client):
 @pytest.mark.integration
 def test_get_daily_realized_profit_loss_details(client: Client):
     response = client.account.get_daily_realized_profit_loss_details("005930")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountDailyRealizedProfitLossDetails)
@@ -82,7 +91,9 @@ def test_get_daily_realized_profit_loss_details(client: Client):
 
 @pytest.mark.integration
 def test_get_account_profit_rate(client: Client):
-    response = client.account.get_account_profit_rate("20240601", "20240630", "1")
+    # stex_tp 하나만 받는 TR 에 날짜 두 개를 넘겨 cont_yn 에 날짜가 가고 있었다
+    response = client.account.get_account_profit_rate(stex_tp="0")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountProfitRate)
@@ -91,6 +102,7 @@ def test_get_account_profit_rate(client: Client):
 @pytest.mark.integration
 def test_get_unexecuted_split_order_details(client: Client):
     response = client.account.get_unexecuted_split_order_details("1234567890")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountUnexecutedSplitOrderDetails)
@@ -98,7 +110,9 @@ def test_get_unexecuted_split_order_details(client: Client):
 
 @pytest.mark.integration
 def test_get_current_day_trading_journal(client: Client):
-    response = client.account.get_current_day_trading_journal("20240630", "1", "0")
+    # 위치 인자 순서가 시그니처와 달라 ottks_tp 에 날짜가 가고 있었다. base_dt 공백 = 금일
+    response = client.account.get_current_day_trading_journal(ottks_tp="1", ch_crd_tp="0")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountCurrentDayTradingJournal)
@@ -107,6 +121,7 @@ def test_get_current_day_trading_journal(client: Client):
 @pytest.mark.integration
 def test_get_deposit_balance_details(client: Client):
     response = client.account.get_deposit_balance_details("3")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountDepositBalanceDetails)
@@ -116,6 +131,7 @@ def test_get_deposit_balance_details(client: Client):
 @real_account_only("kt00002", "RC9000:모의투자에서는 해당업무가 제공되지 않습니다")
 def test_get_daily_estimated_deposit_asset_balance(client: Client):
     response = client.account.get_daily_estimated_deposit_asset_balance("20240601", "20240630")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountDailyEstimatedDepositAssetBalance)
@@ -124,6 +140,7 @@ def test_get_daily_estimated_deposit_asset_balance(client: Client):
 @pytest.mark.integration
 def test_get_estimated_asset_balance(client: Client):
     response = client.account.get_estimated_asset_balance("0")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountEstimatedAssetBalance)
@@ -132,6 +149,7 @@ def test_get_estimated_asset_balance(client: Client):
 @pytest.mark.integration
 def test_get_account_evaluation_status(client: Client):
     response = client.account.get_account_evaluation_status("0", "KRX")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountEvaluationStatus)
@@ -141,6 +159,7 @@ def test_get_account_evaluation_status(client: Client):
 @real_account_only("kt00005", "RC9000:모의투자에서는 해당업무가 제공되지 않습니다")
 def test_get_execution_balance(client: Client):
     response = client.account.get_execution_balance("KRX")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountExecutionBalance)
@@ -151,6 +170,7 @@ def test_get_account_order_execution_details(client: Client):
     response = client.account.get_account_order_execution_details(
         ord_dt="20240630", qry_tp="1", stk_bond_tp="0", sell_tp="0", stk_cd="005930", fr_ord_no="0", dmst_stex_tp="%"
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountOrderExecutionDetails)
@@ -159,6 +179,7 @@ def test_get_account_order_execution_details(client: Client):
 @pytest.mark.integration
 def test_get_account_next_day_settlement_details(client: Client):
     response = client.account.get_account_next_day_settlement_details()
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountNextDaySettlementDetails)
@@ -176,6 +197,7 @@ def test_get_account_order_execution_status(client: Client):
         fr_ord_no="0",
         dmst_stex_tp="%",
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountOrderExecutionStatus)
@@ -187,6 +209,7 @@ def test_get_available_withdrawal_amount(client: Client):
     response = client.account.get_available_withdrawal_amount(
         io_amt="1000000", stk_cd="005930", trde_tp="1", trde_qty="10", uv="50000", exp_buy_unp="60000"
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountAvailableWithdrawalAmount)
@@ -195,6 +218,7 @@ def test_get_available_withdrawal_amount(client: Client):
 @pytest.mark.integration
 def test_get_available_order_quantity_by_margin_rate(client: Client):
     response = client.account.get_available_order_quantity_by_margin_rate(stk_cd="005930", uv="50000")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountAvailableOrderQuantityByMarginRate)
@@ -204,6 +228,7 @@ def test_get_available_order_quantity_by_margin_rate(client: Client):
 @real_account_only("kt00012", "RC9000:모의투자에서는 해당업무가 제공되지 않습니다")
 def test_get_available_order_quantity_by_margin_loan_stock(client: Client):
     response = client.account.get_available_order_quantity_by_margin_loan_stock(stk_cd="005930", uv="50000")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountAvailableOrderQuantityByMarginLoanStock)
@@ -212,6 +237,7 @@ def test_get_available_order_quantity_by_margin_loan_stock(client: Client):
 @pytest.mark.integration
 def test_get_margin_details(client: Client):
     response = client.account.get_margin_details()
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountMarginDetails)
@@ -230,6 +256,7 @@ def test_get_consignment_comprehensive_transaction_history(client: Client):
         frgn_stex_code="",
         dmst_stex_tp="%",
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountConsignmentComprehensiveTransactionHistory)
@@ -239,6 +266,7 @@ def test_get_consignment_comprehensive_transaction_history(client: Client):
 @real_account_only("kt00016", "RC9000:모의투자에서는 해당업무가 제공되지 않습니다")
 def test_get_daily_account_profit_rate_details(client: Client):
     response = client.account.get_daily_account_profit_rate_details(fr_dt="20240601", to_dt="20240630")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountDailyProfitRateDetails)
@@ -248,6 +276,7 @@ def test_get_daily_account_profit_rate_details(client: Client):
 @real_account_only("kt00017", "RC9000:모의투자에서는 해당업무가 제공되지 않습니다")
 def test_get_account_current_day_status(client: Client):
     response = client.account.get_account_current_day_status()
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountCurrentDayStatus)
@@ -256,6 +285,7 @@ def test_get_account_current_day_status(client: Client):
 @pytest.mark.integration
 def test_get_account_evaluation_balance_details(client: Client):
     response = client.account.get_account_evaluation_balance_details(qry_tp="1", dmst_stex_tp="KRX")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticAccountEvaluationBalanceDetails)

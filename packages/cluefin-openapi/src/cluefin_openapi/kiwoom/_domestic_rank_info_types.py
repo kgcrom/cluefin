@@ -506,6 +506,10 @@ class DomesticRankInfoTopForeignerInstitutionTradingItem(BaseModel):
     orgn_netprps_stk_nm: str = Field(default="", title="기관순매수종목명")
     orgn_netprps_amt: str = Field(default="", title="기관순매수금액")
     orgn_netprps_qty: str = Field(default="", title="기관순매수수량")
+    # 아래 3개는 공식 문서에 없지만 실서버가 반환함 (VENDOR_DOC_ERRATA.md). 의미는 미확인
+    pipe1: str = Field(default="", title="pipe1")
+    pipe2: str = Field(default="", title="pipe2")
+    pipe3: str = Field(default="", title="pipe3")
 
 
 class DomesticRankInfoTopForeignerInstitutionTrading(BaseModel, KiwoomHttpBody):

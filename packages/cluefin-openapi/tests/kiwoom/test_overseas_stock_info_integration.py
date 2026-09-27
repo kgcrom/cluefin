@@ -38,10 +38,13 @@ from cluefin_openapi.kiwoom._overseas_stock_info_types import (
     OverseasStockInfoYearlyFluctuationRateStock,
 )
 
+from ._spec_conformance import assert_spec_conformance
+
 
 @pytest.mark.integration
 def test_get_exchange_list(client: Client):
     response = client.overseas_stock_info.get_exchange_list(stk_cd="AAPL")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -52,6 +55,7 @@ def test_get_exchange_list(client: Client):
 @pytest.mark.integration
 def test_get_stock_list(client: Client):
     response = client.overseas_stock_info.get_stock_list(stex_tp="ND")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -62,6 +66,7 @@ def test_get_stock_list(client: Client):
 @pytest.mark.integration
 def test_get_stock(client: Client):
     response = client.overseas_stock_info.get_stock(stk_cd="AAPL", stex_tp="ND")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -72,6 +77,7 @@ def test_get_stock(client: Client):
 @pytest.mark.integration
 def test_get_stock_memo(client: Client):
     response = client.overseas_stock_info.get_stock_memo(input_list=[{"stex_tp": "ND", "stk_cd": "AAPL"}])
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -82,6 +88,7 @@ def test_get_stock_memo(client: Client):
 @pytest.mark.integration
 def test_get_sector_list(client: Client):
     response = client.overseas_stock_info.get_sector_list(gubun="%")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -92,6 +99,7 @@ def test_get_sector_list(client: Client):
 @pytest.mark.integration
 def test_get_index_list(client: Client):
     response = client.overseas_stock_info.get_index_list(index_qry_tp="NQ")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -102,6 +110,7 @@ def test_get_index_list(client: Client):
 @pytest.mark.integration
 def test_get_etf_etn_list(client: Client):
     response = client.overseas_stock_info.get_etf_etn_list(stex_tp="ND")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -112,6 +121,7 @@ def test_get_etf_etn_list(client: Client):
 @pytest.mark.integration
 def test_get_etf_category_list(client: Client):
     response = client.overseas_stock_info.get_etf_category_list(gubun="1")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -131,6 +141,7 @@ def test_get_volume_surge_stock(client: Client):
         trde_prica_cnd="0",
         trde_qty_tp="0",
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -150,6 +161,7 @@ def test_get_volume_surge_etf(client: Client):
         trde_prica_cnd="0",
         trde_qty_tp="0",
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -169,6 +181,7 @@ def test_get_price_by_range_stock(client: Client):
         pric_cnd2="",
         trde_prica_cnd="0",
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -188,6 +201,7 @@ def test_get_price_by_range_etf(client: Client):
         pric_cnd2="",
         trde_prica_cnd="0",
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -209,6 +223,7 @@ def test_get_price_surge_stock(client: Client):
         trde_qty_tp="0",
         trde_prica_cnd="0",
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -230,6 +245,7 @@ def test_get_price_surge_etf(client: Client):
         trde_qty_tp="0",
         trde_prica_cnd="0",
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -240,16 +256,17 @@ def test_get_price_surge_etf(client: Client):
 @pytest.mark.integration
 def test_get_price_surge_watchlist(client: Client):
     response = client.overseas_stock_info.get_price_surge_watchlist(
-        stex_tp="1",
-        stk_cd=[{"stex_tp": "ND", "stk_cd": "AAPL"}],
-        flu_tp="1",
-        tm_tp="1",
-        tm="5",
+        stex_tp="0",
+        stk_cd=[{"stex_tp": "NY", "stk_cd": "BA"}, {"stex_tp": "ND", "stk_cd": "AMGN"}],
+        flu_tp="2",
+        tm_tp="2",
+        tm="1",
         stk_cnd="0",
         pric_cnd="0",
         trde_qty_tp="0",
         trde_prica_cnd="0",
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -271,6 +288,7 @@ def test_get_high_low_approach_stock(client: Client):
         trde_pric_cnd_st="0",
         trde_qty_cnd_fr="0",
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -292,6 +310,7 @@ def test_get_high_low_approach_etf(client: Client):
         trde_pric_cnd_st="0",
         trde_qty_cnd_fr="0",
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -302,8 +321,8 @@ def test_get_high_low_approach_etf(client: Client):
 @pytest.mark.integration
 def test_get_high_low_approach_watchlist(client: Client):
     response = client.overseas_stock_info.get_high_low_approach_watchlist(
-        stex_tp="1",
-        stk_cd=[{"stex_tp": "ND", "stk_cd": "AAPL"}],
+        stex_tp="0",
+        stk_cd=[{"stex_tp": "NY", "stk_cd": "BA"}, {"stex_tp": "ND", "stk_cd": "AMGN"}],
         high_low_tp="1",
         alacc_rt="0.5",
         stk_cnd="0",
@@ -312,6 +331,7 @@ def test_get_high_low_approach_watchlist(client: Client):
         trde_pric_cnd_st="0",
         trde_qty_cnd_fr="0",
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -331,6 +351,7 @@ def test_get_volume_renewal_stock(client: Client):
         trde_prica_cnd="0",
         dt_tp="5",
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -350,6 +371,7 @@ def test_get_volume_renewal_etf(client: Client):
         trde_prica_cnd="0",
         dt_tp="5",
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -360,14 +382,15 @@ def test_get_volume_renewal_etf(client: Client):
 @pytest.mark.integration
 def test_get_volume_renewal_watchlist(client: Client):
     response = client.overseas_stock_info.get_volume_renewal_watchlist(
-        stex_tp="1",
-        stk_cd=[{"stex_tp": "ND", "stk_cd": "AAPL"}],
+        stex_tp="0",
+        stk_cd=[{"stex_tp": "NY", "stk_cd": "BA"}, {"stex_tp": "ND", "stk_cd": "AMGN"}],
         trde_qty_tp="0",
         stk_cnd="0",
         pric_cnd="0",
         trde_prica_cnd="0",
-        dt_tp="5",
+        dt_tp="10",
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -389,6 +412,7 @@ def test_get_new_high_low_stock(client: Client):
         trde_qty_tp="0",
         trde_prica_cnd="0",
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -410,6 +434,7 @@ def test_get_new_high_low_etf(client: Client):
         trde_qty_tp="0",
         trde_prica_cnd="0",
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -431,6 +456,8 @@ def test_get_gap_up_down_stock(client: Client):
         trde_prica_cnd="0",
         trde_qty_tp="0",
     )
+    # 실측: pre_high_pric 가 행이 아닌 최상위로 온다 — VENDOR_DOC_ERRATA.md
+    assert_spec_conformance(client, response, ignore=["result_list.pre_high_pric"])
 
     assert response is not None
     assert response.headers is not None
@@ -452,6 +479,8 @@ def test_get_gap_up_down_etf(client: Client):
         trde_prica_cnd="0",
         trde_qty_tp="0",
     )
+    # 실측: pre_high_pric 가 행이 아닌 최상위로 온다 — VENDOR_DOC_ERRATA.md
+    assert_spec_conformance(client, response, ignore=["result_list.pre_high_pric"])
 
     assert response is not None
     assert response.headers is not None
@@ -472,6 +501,7 @@ def test_get_remaining_ratio_surge_stock(client: Client):
         pric_cnd="0",
         trde_prica_cnd="0",
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -492,6 +522,7 @@ def test_get_remaining_ratio_surge_etf(client: Client):
         pric_cnd="0",
         trde_prica_cnd="0",
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -513,6 +544,7 @@ def test_get_volume_concentration_stock(client: Client):
         pric_cnd="0",
         trde_prica_cnd="0",
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -534,6 +566,7 @@ def test_get_volume_concentration_etf(client: Client):
         pric_cnd="0",
         trde_prica_cnd="0",
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -544,6 +577,7 @@ def test_get_volume_concentration_etf(client: Client):
 @pytest.mark.integration
 def test_get_yearly_fluctuation_rate_stock(client: Client):
     response = client.overseas_stock_info.get_yearly_fluctuation_rate_stock(stex_tp="ND", stk_cd="AAPL")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -554,6 +588,7 @@ def test_get_yearly_fluctuation_rate_stock(client: Client):
 @pytest.mark.integration
 def test_get_yearly_fluctuation_rate_by_sector(client: Client):
     response = client.overseas_stock_info.get_yearly_fluctuation_rate_by_sector(inds_cd="000", srch_yr="2024")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -566,6 +601,7 @@ def test_get_yearly_fluctuation_rate_by_etf_category(client: Client):
     response = client.overseas_stock_info.get_yearly_fluctuation_rate_by_etf_category(
         etf_cat1="", etf_cat2="", srch_yr="2024"
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -576,6 +612,7 @@ def test_get_yearly_fluctuation_rate_by_etf_category(client: Client):
 @pytest.mark.integration
 def test_get_yearly_fluctuation_rate_sector(client: Client):
     response = client.overseas_stock_info.get_yearly_fluctuation_rate_sector(inds_cd="000")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -586,6 +623,7 @@ def test_get_yearly_fluctuation_rate_sector(client: Client):
 @pytest.mark.integration
 def test_get_yearly_fluctuation_rate_etf(client: Client):
     response = client.overseas_stock_info.get_yearly_fluctuation_rate_etf(etf_cat1="", etf_cat2="")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None

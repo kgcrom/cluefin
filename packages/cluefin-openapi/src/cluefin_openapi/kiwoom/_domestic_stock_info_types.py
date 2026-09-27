@@ -630,6 +630,8 @@ class DomesticStockInfoSummaryItem(BaseModel):
         default="", description="투자유의종목여부"
     )  # 0: 해당없음, 2: 정리매매, 3: 단기과열, 4: 투자위험, 5: 투자경과, 1: ETF투자주의요망(ETF인 경우만 전달
     nxtEnable: str = Field(default="", description="NXT가능여부")  # Y: 가능
+    # 공식 문서에 없지만 실서버가 반환함 (VENDOR_DOC_ERRATA.md)
+    kind: str = Field(default="", description="종목 종류")
 
 
 class DomesticStockInfoSummary(BaseModel, KiwoomHttpBody):
@@ -657,6 +659,8 @@ class DomesticStockInfoBasicV1(BaseModel, KiwoomHttpBody):
         default="", description="투자유의종목여부"
     )  # 0: 해당없음, 2: 정리매매, 3: 단기과열, 4: 투자위험, 5: 투자경과, 1: ETF투자주의요망(ETF인 경우만 전달
     nxtEnable: str = Field(default="", description="NXT가능여부")  # Y: 가능
+    # 공식 문서에 없지만 실서버가 반환함 (VENDOR_DOC_ERRATA.md)
+    kind: str = Field(default="", description="종목 종류")
 
 
 class DomesticStockInfoIndustryCodeItem(BaseModel):

@@ -1,63 +1,37 @@
 import { describe, test } from 'vitest';
 
 import {
-  changeRateFromOpenItemSchema,
   changeRateFromOpenResponseSchema,
-  dailyPreviousDayConclusionItemSchema,
   dailyPreviousDayConclusionResponseSchema,
-  dailyPreviousDayExecutionVolumeItemSchema,
   dailyPreviousDayExecutionVolumeResponseSchema,
-  dailyTradingDetailsItemSchema,
   dailyTradingDetailsResponseSchema,
-  dailyTradingItemsByInvestorItemSchema,
   dailyTradingItemsByInvestorResponseSchema,
-  executionItemSchema,
   executionResponseSchema,
-  highLowPriceApproachItemSchema,
   highLowPriceApproachResponseSchema,
-  highPerItemSchema,
   highPerResponseSchema,
-  industryCodeItemSchema,
   industryCodeResponseSchema,
-  institutionalInvestorByStockItemSchema,
   institutionalInvestorByStockResponseSchema,
-  interestStockInfoItemSchema,
   interestStockInfoResponseSchema,
-  marginTradingTrendItemSchema,
   marginTradingTrendResponseSchema,
-  memberCompanyItemSchema,
   memberCompanyResponseSchema,
-  newHighLowPriceItemSchema,
   newHighLowPriceResponseSchema,
-  priceVolatilityItemSchema,
   priceVolatilityResponseSchema,
-  programTradingStatusByStockItemSchema,
   programTradingStatusByStockResponseSchema,
   stockInfoResponseSchema,
-  stockInfoSummaryItemSchema,
   stockInfoSummaryResponseSchema,
   stockInfoV1ResponseSchema,
   stockTradingMemberResponseSchema,
-  supplyDemandConcentrationItemSchema,
   supplyDemandConcentrationResponseSchema,
-  top50ProgramNetBuyItemSchema,
   top50ProgramNetBuyResponseSchema,
-  totalInstitutionalInvestorByStockItemSchema,
   totalInstitutionalInvestorByStockResponseSchema,
-  tradingMemberInstantVolumeItemSchema,
   tradingMemberInstantVolumeResponseSchema,
-  tradingMemberSupplyDemandAnalysisItemSchema,
   tradingMemberSupplyDemandAnalysisResponseSchema,
-  tradingVolumeRenewalItemSchema,
   tradingVolumeRenewalResponseSchema,
-  upperLowerLimitPriceItemSchema,
   upperLowerLimitPriceResponseSchema,
-  volatilityControlEventItemSchema,
   volatilityControlEventResponseSchema,
 } from '../../src/kiwoom/schemas/domestic-stock-info';
 import {
   assertKiwoomResponse,
-  assertResponseShape,
   getKiwoomClient,
   ONE_MONTH_AGO,
   runIntegration,
@@ -65,6 +39,7 @@ import {
   setupKiwoomRateLimit,
   TODAY,
 } from '../_helpers/integration-setup';
+import { assertKiwoomSpecConformance } from '../_helpers/kiwoom-spec-conformance';
 
 const it = runIntegration ? test : test.skip;
 
@@ -74,21 +49,21 @@ describe('Kiwoom DomesticStockInfo', () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getStockInfo({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, stockInfoResponseSchema);
+    assertKiwoomSpecConformance(stockInfoResponseSchema);
   });
 
   it('getStockTradingMember', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getStockTradingMember({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, stockTradingMemberResponseSchema);
+    assertKiwoomSpecConformance(stockTradingMemberResponseSchema);
   });
 
   it('getExecution', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getExecution({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, executionResponseSchema, 'cntrInfr', executionItemSchema);
+    assertKiwoomSpecConformance(executionResponseSchema);
   });
 
   it('getMarginTradingTrend', async () => {
@@ -96,10 +71,10 @@ describe('Kiwoom DomesticStockInfo', () => {
     const res = await client.domesticStockInfo.getMarginTradingTrend({
       stkCd: SAMSUNG,
       dt: TODAY,
-      qryTp: '0',
+      qryTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, marginTradingTrendResponseSchema, 'crdTrdeTrend', marginTradingTrendItemSchema);
+    assertKiwoomSpecConformance(marginTradingTrendResponseSchema);
   });
 
   it('getDailyTradingDetails', async () => {
@@ -109,70 +84,65 @@ describe('Kiwoom DomesticStockInfo', () => {
       strtDt: ONE_MONTH_AGO,
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, dailyTradingDetailsResponseSchema, 'dalyTrdeDtl', dailyTradingDetailsItemSchema);
+    assertKiwoomSpecConformance(dailyTradingDetailsResponseSchema);
   });
 
   it('getNewHighLowPrice', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getNewHighLowPrice({
-      mrktTp: '0',
-      ntlTp: '0',
-      highLowCloseTp: '0',
+      mrktTp: '001',
+      ntlTp: '1',
+      highLowCloseTp: '1',
       stkCnd: '0',
-      trdeQtyTp: '0',
+      trdeQtyTp: '00000',
       crdCnd: '0',
       updownIncls: '0',
-      dt: TODAY,
+      dt: '5', // 기간(일수) — 날짜가 아니다
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, newHighLowPriceResponseSchema, 'ntlPric', newHighLowPriceItemSchema);
+    assertKiwoomSpecConformance(newHighLowPriceResponseSchema);
   });
 
   it('getUpperLowerLimitPrice', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getUpperLowerLimitPrice({
-      mrktTp: '0',
-      updownTp: '0',
+      mrktTp: '001',
+      updownTp: '2', // 상승 — 상한(1)은 해당 종목이 없는 날이 많아 빈 결과로 통과했다
       sortTp: '0',
       stkCnd: '0',
-      trdeQtyTp: '0',
+      trdeQtyTp: '00000',
       crdCnd: '0',
       trdeGoldTp: '0',
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, upperLowerLimitPriceResponseSchema, 'updownPric', upperLowerLimitPriceItemSchema);
+    assertKiwoomSpecConformance(upperLowerLimitPriceResponseSchema);
   });
 
   it('getHighLowPriceApproach', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getHighLowPriceApproach({
-      highLowTp: '0',
-      alaccRt: '5',
-      mrktTp: '0',
-      trdeQtyTp: '0',
+      highLowTp: '1',
+      alaccRt: '05',
+      mrktTp: '001',
+      trdeQtyTp: '00000',
       stkCnd: '0',
       crdCnd: '0',
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      highLowPriceApproachResponseSchema,
-      'highLowPricAlacc',
-      highLowPriceApproachItemSchema,
-    );
+    assertKiwoomSpecConformance(highLowPriceApproachResponseSchema);
   });
 
   it('getPriceVolatility', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getPriceVolatility({
-      mrktTp: '0',
-      fluTp: '0',
-      tmTp: '0',
+      mrktTp: '000',
+      fluTp: '1',
+      tmTp: '1',
       tm: '5',
-      trdeQtyTp: '0',
+      trdeQtyTp: '00000',
       stkCnd: '0',
       crdCnd: '0',
       pricCnd: '0',
@@ -180,19 +150,20 @@ describe('Kiwoom DomesticStockInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, priceVolatilityResponseSchema, 'pricJmpflu', priceVolatilityItemSchema);
+    // 실측: 문서 Length 4 인데 문서 자신의 허용값이 5자("00000") — VENDOR_DOC_ERRATA.md
+    assertKiwoomSpecConformance(priceVolatilityResponseSchema, { ignoreLength: ['trde_qty_tp'] });
   });
 
   it('getTradingVolumeRenewal', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getTradingVolumeRenewal({
-      mrktTp: '0',
-      cycleTp: '0',
-      trdeQtyTp: '0',
+      mrktTp: '001',
+      cycleTp: '5',
+      trdeQtyTp: '5',
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, tradingVolumeRenewalResponseSchema, 'trdeQtyUpdt', tradingVolumeRenewalItemSchema);
+    assertKiwoomSpecConformance(tradingVolumeRenewalResponseSchema);
   });
 
   it('getSupplyDemandConcentration', async () => {
@@ -206,39 +177,35 @@ describe('Kiwoom DomesticStockInfo', () => {
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      supplyDemandConcentrationResponseSchema,
-      'prpsCnctr',
-      supplyDemandConcentrationItemSchema,
-    );
+    // 실측: 문서 Length 2 인데 문서 자신의 허용값이 3자("100") — VENDOR_DOC_ERRATA.md
+    assertKiwoomSpecConformance(supplyDemandConcentrationResponseSchema, { ignoreLength: ['cycle_tp'] });
   });
 
   it('getHighPer', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getHighPer({
-      pertp: '0',
+      pertp: '4',
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, highPerResponseSchema, 'highLowPer', highPerItemSchema);
+    assertKiwoomSpecConformance(highPerResponseSchema);
   });
 
   it('getChangeRateFromOpen', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getChangeRateFromOpen({
-      sortTp: '0',
-      trdeQtyCnd: '0',
-      mrktTp: '0',
+      sortTp: '1',
+      trdeQtyCnd: '0000',
+      mrktTp: '001',
       updownIncls: '0',
       stkCnd: '0',
       crdCnd: '0',
       trdePricaCnd: '0',
-      fluCnd: '0',
+      fluCnd: '1',
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, changeRateFromOpenResponseSchema, 'openPricPreFluRt', changeRateFromOpenItemSchema);
+    assertKiwoomSpecConformance(changeRateFromOpenResponseSchema);
   });
 
   it('getTradingMemberSupplyDemandAnalysis', async () => {
@@ -249,37 +216,27 @@ describe('Kiwoom DomesticStockInfo', () => {
       endDt: TODAY,
       qryDtTp: '0',
       potTp: '0',
-      dt: TODAY,
-      sortBase: '0',
-      mmcmCd: '0000',
+      dt: '10', // 기간(일수) — 날짜가 아니다
+      sortBase: '1',
+      mmcmCd: '001',
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      tradingMemberSupplyDemandAnalysisResponseSchema,
-      'trdeOriPrpsAnly',
-      tradingMemberSupplyDemandAnalysisItemSchema,
-    );
+    assertKiwoomSpecConformance(tradingMemberSupplyDemandAnalysisResponseSchema);
   });
 
   it('getTradingMemberInstantVolume', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getTradingMemberInstantVolume({
-      stkCd: SAMSUNG,
-      mmcmCd: '0000',
+      stkCd: '', // 문서 요청 예시값 — 종목 지정 시 빈 결과가 잦다
+      mmcmCd: '888',
       mrktTp: '0',
       qtyTp: '0',
       pricTp: '0',
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      tradingMemberInstantVolumeResponseSchema,
-      'trdeOriMontTrdeQty',
-      tradingMemberInstantVolumeItemSchema,
-    );
+    assertKiwoomSpecConformance(tradingMemberInstantVolumeResponseSchema);
   });
 
   it('getVolatilityControlEvent', async () => {
@@ -299,7 +256,7 @@ describe('Kiwoom DomesticStockInfo', () => {
       maxTrdePrica: '100000000',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, volatilityControlEventResponseSchema, 'motnStk', volatilityControlEventItemSchema);
+    assertKiwoomSpecConformance(volatilityControlEventResponseSchema);
   });
 
   it('getDailyPreviousDayExecutionVolume', async () => {
@@ -309,12 +266,7 @@ describe('Kiwoom DomesticStockInfo', () => {
       tdyPred: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      dailyPreviousDayExecutionVolumeResponseSchema,
-      'tdyPredCntrQty',
-      dailyPreviousDayExecutionVolumeItemSchema,
-    );
+    assertKiwoomSpecConformance(dailyPreviousDayExecutionVolumeResponseSchema);
   });
 
   it('getDailyTradingItemsByInvestor', async () => {
@@ -323,17 +275,12 @@ describe('Kiwoom DomesticStockInfo', () => {
       strtDt: ONE_MONTH_AGO,
       endDt: TODAY,
       trdeTp: '0',
-      mrktTp: '0',
-      invsrTp: '0',
+      mrktTp: '001',
+      invsrTp: '8000',
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      dailyTradingItemsByInvestorResponseSchema,
-      'invsrDalyTrdeStk',
-      dailyTradingItemsByInvestorItemSchema,
-    );
+    assertKiwoomSpecConformance(dailyTradingItemsByInvestorResponseSchema);
   });
 
   it('getInstitutionalInvestorByStock', async () => {
@@ -346,12 +293,7 @@ describe('Kiwoom DomesticStockInfo', () => {
       unitTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      institutionalInvestorByStockResponseSchema,
-      'stkInvsrOrgn',
-      institutionalInvestorByStockItemSchema,
-    );
+    assertKiwoomSpecConformance(institutionalInvestorByStockResponseSchema);
   });
 
   it('getTotalInstitutionalInvestorByStock', async () => {
@@ -365,12 +307,7 @@ describe('Kiwoom DomesticStockInfo', () => {
       unitTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      totalInstitutionalInvestorByStockResponseSchema,
-      'stkInvsrOrgnTot',
-      totalInstitutionalInvestorByStockItemSchema,
-    );
+    assertKiwoomSpecConformance(totalInstitutionalInvestorByStockResponseSchema);
   });
 
   it('getDailyPreviousDayConclusion', async () => {
@@ -381,74 +318,65 @@ describe('Kiwoom DomesticStockInfo', () => {
       ticMin: '0',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      dailyPreviousDayConclusionResponseSchema,
-      'tdyPredCntr',
-      dailyPreviousDayConclusionItemSchema,
-    );
+    assertKiwoomSpecConformance(dailyPreviousDayConclusionResponseSchema);
   });
 
   it('getInterestStockInfo', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getInterestStockInfo({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, interestStockInfoResponseSchema, 'atnStkInfr', interestStockInfoItemSchema);
+    assertKiwoomSpecConformance(interestStockInfoResponseSchema);
   });
 
   it('getStockInfoSummary', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getStockInfoSummary({ mrktTp: '0' });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, stockInfoSummaryResponseSchema, 'list', stockInfoSummaryItemSchema);
+    // 실측: 종목상태 state 가 문서 Length 20 을 넘는다 — VENDOR_DOC_ERRATA.md
+    assertKiwoomSpecConformance(stockInfoSummaryResponseSchema, { ignoreLength: ['list.state'] });
   });
 
   it('getStockInfoV1', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getStockInfoV1({ stkCd: SAMSUNG });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, stockInfoV1ResponseSchema);
+    assertKiwoomSpecConformance(stockInfoV1ResponseSchema);
   });
 
   it('getIndustryCode', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getIndustryCode({ mrktTp: '0' });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, industryCodeResponseSchema, 'list', industryCodeItemSchema);
+    assertKiwoomSpecConformance(industryCodeResponseSchema);
   });
 
   it('getMemberCompany', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getMemberCompany({});
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, memberCompanyResponseSchema, 'list', memberCompanyItemSchema);
+    assertKiwoomSpecConformance(memberCompanyResponseSchema);
   });
 
   it('getTop50ProgramNetBuy', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getTop50ProgramNetBuy({
-      trdeUpperTp: '0',
+      trdeUpperTp: '2',
       amtQtyTp: '1',
-      mrktTp: '0',
+      mrktTp: 'P00101',
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, top50ProgramNetBuyResponseSchema, 'prmNetprpsUpper50', top50ProgramNetBuyItemSchema);
+    assertKiwoomSpecConformance(top50ProgramNetBuyResponseSchema);
   });
 
   it('getProgramTradingStatusByStock', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticStockInfo.getProgramTradingStatusByStock({
       dt: TODAY,
-      mrktTp: '0',
+      mrktTp: 'P00101',
       stexTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      programTradingStatusByStockResponseSchema,
-      'stkPrmTrdePrst',
-      programTradingStatusByStockItemSchema,
-    );
+    assertKiwoomSpecConformance(programTradingStatusByStockResponseSchema);
   });
 });

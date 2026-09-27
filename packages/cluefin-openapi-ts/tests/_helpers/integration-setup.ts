@@ -21,6 +21,7 @@ import {
   FileTokenCacheStore as NhplugFileTokenCacheStore,
   nhplugTokenCacheFileName,
 } from '../../src/nhplug/token-cache';
+import { kiwoomRecordingFetch } from './kiwoom-spec-conformance';
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -55,6 +56,13 @@ const fmt = (d: Date): string => d.toISOString().slice(0, 10).replace(/-/g, '');
 
 export const TODAY = fmt(new Date());
 export const ONE_MONTH_AGO = fmt(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
+
+/** 오늘 이전의 가장 가까운 평일 — 주말에 TODAY 로 하루치를 조회하면 빈 결과로 통과한다. 공휴일은 못 거른다. */
+export const PREV_WEEKDAY = (() => {
+  const d = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  while (d.getUTCDay() === 0 || d.getUTCDay() === 6) d.setUTCDate(d.getUTCDate() - 1);
+  return fmt(d);
+})();
 
 const g = globalThis as Record<string, unknown>;
 
@@ -110,7 +118,8 @@ export function getKiwoomClient(): Promise<KiwoomClient> {
       const tokenCacheStore = new KiwoomFileTokenCacheStore(path.join(cacheDir, kiwoomTokenCacheFileName(env, appKey)));
       const auth = new KiwoomAuth({ appKey, secretKey, env, tokenCacheStore });
       const tokenResponse = await auth.generateToken();
-      return new KiwoomClient({ token: tokenResponse.token, env });
+      // assertKiwoomSpecConformance 가 마지막 요청·응답 원문을 읽는다
+      return new KiwoomClient({ token: tokenResponse.token, env, fetchImpl: kiwoomRecordingFetch });
     })();
   }
   return g.__kiwoomClientPromise as Promise<KiwoomClient>;

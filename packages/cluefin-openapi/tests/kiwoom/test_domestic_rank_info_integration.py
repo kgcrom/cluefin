@@ -26,12 +26,15 @@ from cluefin_openapi.kiwoom._domestic_rank_info_types import (
     DomesticRankInfoTopTransactionValue,
 )
 
+from ._spec_conformance import assert_spec_conformance
+
 
 @pytest.mark.integration
 def test_get_top_remaining_order_quantity(client: Client):
     response = client.rank_info.get_top_remaining_order_quantity(
         mrkt_tp="001", sort_tp="1", trde_qty_tp="0000", stk_cnd="0", crd_cnd="0", stex_tp="1"
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoTopRemainingOrderQuantity)
@@ -43,6 +46,7 @@ def test_get_rapidly_increasing_remaining_order_quantity(client: Client):
     response = client.rank_info.get_rapidly_increasing_remaining_order_quantity(
         mrkt_tp="001", trde_tp="1", sort_tp="1", tm_tp="30", trde_qty_tp="1", stk_cnd="0", stex_tp="1"
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoRapidlyIncreasingRemainingOrderQuantity)
@@ -54,6 +58,7 @@ def test_get_rapidly_increasing_total_sell_orders(client: Client):
     response = client.rank_info.get_rapidly_increasing_total_sell_orders(
         mrkt_tp="001", rt_tp="1", tm_tp="1", trde_qty_tp="5", stk_cnd="0", stex_tp="1"
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoRapidlyIncreasingTotalSellOrders)
@@ -65,6 +70,7 @@ def test_get_rapidly_increasing_trading_volume(client: Client):
     response = client.rank_info.get_rapidly_increasing_trading_volume(
         mrkt_tp="000", sort_tp="1", tm_tp="2", trde_qty_tp="5", stk_cnd="0", pric_tp="0", stex_tp="1"
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoRapidlyIncreasingTradingVolume)
@@ -84,6 +90,7 @@ def test_get_top_percentage_change_from_previous_day(client: Client):
         trde_prica_cnd="0",
         stex_tp="1",
     )
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoTopPercentageChangeFromPreviousDay)
     assert len(response.body.pred_pre_flu_rt_upper) > 0
@@ -100,6 +107,7 @@ def test_get_top_expected_conclusion_percentage_change(client: Client):
         pric_cnd="0",
         stex_tp="1",
     )
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoTopExpectedConclusionPercentageChange)
     assert len(response.body.exp_cntr_flu_rt_upper) > 0
@@ -118,6 +126,7 @@ def test_get_top_current_day_trading_volume(client: Client):
         mrkt_open_tp="0",
         stex_tp="1",
     )
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoTopCurrentDayTradingVolume)
     assert len(response.body.tdy_trde_qty_upper) > 0
@@ -128,6 +137,7 @@ def test_get_top_previous_day_trading_volume(client: Client):
     response = client.rank_info.get_top_previous_day_trading_volume(
         mrkt_tp="101", qry_tp="1", rank_strt="0", rank_end="10", stex_tp="1"
     )
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoTopPreviousDayTradingVolume)
     assert len(response.body.pred_trde_qty_upper) > 0
@@ -140,6 +150,7 @@ def test_get_top_transaction_value(client: Client):
         mang_stk_incls="0",
         stex_tp="1",
     )
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoTopTransactionValue)
     assert len(response.body.trde_prica_upper) > 0
@@ -155,6 +166,7 @@ def test_get_top_margin_ratio(client: Client):
         crd_cnd="0",
         stex_tp="1",
     )
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoTopMarginRatio)
     assert len(response.body.crd_rt_upper) > 0
@@ -168,6 +180,7 @@ def test_get_top_foreigner_period_trading(client: Client):
         dt="0",
         stex_tp="1",
     )
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoTopForeignerPeriodTrading)
     assert len(response.body.for_dt_trde_upper) > 0
@@ -181,6 +194,7 @@ def test_get_top_consecutive_net_buy_sell_by_foreigners(client: Client):
         base_dt_tp="1",
         stex_tp="1",
     )
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoTopConsecutiveNetBuySellByForeigners)
     assert len(response.body.for_cont_nettrde_upper) > 0
@@ -193,6 +207,7 @@ def test_get_top_limit_exhaustion_rate_foreigner(client: Client):
         dt="0",
         stex_tp="1",
     )
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoTopLimitExhaustionRateForeigner)
     assert len(response.body.for_limit_exh_rt_incrs_upper) > 0
@@ -203,6 +218,7 @@ def test_get_top_foreign_account_group_trading(client: Client):
     response = client.rank_info.get_top_foreign_account_group_trading(
         mrkt_tp="000", dt="0", trde_tp="1", sort_tp="2", stex_tp="1"
     )
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoTopForeignAccountGroupTrading)
     assert len(response.body.frgn_wicket_trde_upper) > 0
@@ -213,6 +229,7 @@ def test_get_stock_specific_securities_firm_ranking(client: Client):
     response = client.rank_info.get_stock_specific_securities_firm_ranking(
         stk_cd="005930", strt_dt="20250601", end_dt="20250602", qry_tp="2", dt="1"
     )
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoStockSpecificSecuritiesFirmRanking)
     assert response.body.rank_1 is not None
@@ -224,6 +241,7 @@ def test_get_top_securities_firm_trading(client: Client):
     response = client.rank_info.get_top_securities_firm_trading(
         mmcm_cd="001", trde_qty_tp="0", trde_tp="1", dt="1", stex_tp="1"
     )
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoTopSecuritiesFirmTrading)
     assert len(response.body.sec_trde_upper) > 0
@@ -232,6 +250,7 @@ def test_get_top_securities_firm_trading(client: Client):
 @pytest.mark.integration
 def test_get_top_current_day_major_traders(client: Client):
     response = client.rank_info.get_top_current_day_major_traders(stk_cd="005930")
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoTopCurrentDayMajorTraders)
     assert response.body.sel_trde_ori_1 is not None
@@ -242,6 +261,7 @@ def test_get_top_net_buy_trader_ranking(client: Client):
     response = client.rank_info.get_top_net_buy_trader_ranking(
         stk_cd="005930", strt_dt="20241031", end_dt="20241107", qry_dt_tp="0", pot_tp="0", dt="5", sort_base="1"
     )
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoTopNetBuyTraderRanking)
     assert len(response.body.netprps_trde_ori_rank) > 0
@@ -252,6 +272,7 @@ def test_get_top_current_day_deviation_sources(client: Client):
     response = client.rank_info.get_top_current_day_deviation_sources(
         stk_cd="005930",
     )
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoTopCurrentDayDeviationSources)
     assert len(response.body.tdy_upper_scesn_ori) > 0
@@ -268,6 +289,7 @@ def test_get_same_net_buy_sell_ranking(client: Client):
         unit_tp="1",
         stex_tp="1",
     )
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoSameNetBuySellRanking)
     assert len(response.body.eql_nettrde_rank) > 0
@@ -278,6 +300,10 @@ def test_get_top_foreigner_institution_trading(client: Client):
     response = client.rank_info.get_top_foreigner_institution_trading(
         mrkt_tp="001", amt_qty_tp="1", qry_dt_tp="0", stex_tp="1"
     )
+    # 실측: 종목명이 문서 Length 20 을 넘는다 (orgn_netslmt_stk_nm 25자) — VENDOR_DOC_ERRATA.md.
+    # 어느 칸에 긴 이름이 올지는 날마다 달라 종목명 네 칸을 함께 둔다
+    names = ("for_netslmt_stk_nm", "for_netprps_stk_nm", "orgn_netslmt_stk_nm", "orgn_netprps_stk_nm")
+    assert_spec_conformance(client, response, ignore_length=[f"frgnr_orgn_trde_upper.{n}" for n in names])
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoTopForeignerInstitutionTrading)
 
@@ -290,5 +316,6 @@ def test_get_top_intraday_trading_by_investor(client: Client):
         orgn_tp="9000",
         amt_qty_tp="1",
     )
+    assert_spec_conformance(client, response)
     assert response is not None
     assert isinstance(response.body, DomesticRankInfoTopIntradayTradingByInvestor)

@@ -94,10 +94,10 @@ class DomesticOrder:
             "28",
             "29",
             "30",
-            "3128",
-            "29",
-            "30",
             "31",
+            "40",
+            "46",
+            "47",
         ],
         ord_uv: Optional[str] = None,
         cond_uv: Optional[str] = None,
@@ -110,13 +110,13 @@ class DomesticOrder:
             dmst_stex_tp (str): 국내거래소구분 (KRX, NXT, SOR)
             stk_cd (str): 종목코드
             ord_qty (str): 주문수량
-            trde_tp (Literal["0", "3", "5", "81", "61", "62", "6", "7", "10", "13", "16", "20", "23", "26", "28", "29", "30", "31"]): 매매구분
+            trde_tp (Literal[...]): 매매구분
                 - "0": 보통
                 - "3": 시장가
                 - "5": 조건부지정가
                 - "81": 장마감후시간외
                 - "61": 장시작전시간외
-                - "62": 시간외단일가
+                - "62": 시간외단일가 (2026-09 문서 목록엔 없음)
                 - "6": 최유리지정가
                 - "7": 최우선지정가
                 - "10": 보통(IOC)
@@ -129,6 +129,9 @@ class DomesticOrder:
                 - "29": 중간가
                 - "30": 중간가(IOC)
                 - "31": 중간가(FOK)
+                - "40": 보통(GTP)
+                - "46": 최유리(GTP)
+                - "47": 최우선(GTP)
             ord_uv (str, optional): 주문단가. Defaults to None.
             cond_uv (str, optional): 조건단가. Defaults to None.
             cont_yn (Literal["Y", "N"], optional): 연속주문 여부. Defaults to "N".

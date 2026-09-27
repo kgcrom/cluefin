@@ -32,10 +32,13 @@ from cluefin_openapi.kiwoom._domestic_stock_info_types import (
     DomesticStockInfoVolatilityControlEvent,
 )
 
+from ._spec_conformance import assert_spec_conformance
+
 
 @pytest.mark.integration
 def test_get_stock_info(client: Client):
     response = client.stock_info.get_stock_info("005930")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -46,6 +49,7 @@ def test_get_stock_info(client: Client):
 @pytest.mark.integration
 def test_get_stock_trading_member(client: Client):
     response = client.stock_info.get_stock_trading_member("005930")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -56,6 +60,7 @@ def test_get_stock_trading_member(client: Client):
 @pytest.mark.integration
 def test_get_execution_info(client: Client):
     response = client.stock_info.get_execution("005930")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -66,6 +71,7 @@ def test_get_execution_info(client: Client):
 @pytest.mark.integration
 def test_get_margin_trading_trend(client: Client):
     response = client.stock_info.get_margin_trading_trend(stk_cd="005930", dt="20250701", qry_tp="1")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -76,6 +82,7 @@ def test_get_margin_trading_trend(client: Client):
 @pytest.mark.integration
 def test_get_daily_trading_details(client: Client):
     response = client.stock_info.get_daily_trading_details(stk_cd="005930", strt_dt="20250701")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -96,6 +103,7 @@ def test_get_new_high_low_price(client: Client):
         dt="5",  # 5일
         stex_tp="1",  # KRX
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -107,7 +115,7 @@ def test_get_new_high_low_price(client: Client):
 def test_get_upper_lower_limit_price(client: Client):
     response = client.stock_info.get_upper_lower_limit_price(
         mrkt_tp="001",  # KOSPI
-        updown_tp="1",  # 상한
+        updown_tp="2",  # 상승 — 상한(1)은 해당 종목이 없는 날이 많아 빈 결과로 통과했다
         sort_tp="1",  # 종목코드순
         stk_cnd="0",  # 전체조회
         trde_qty_tp="00000",  # 전체조회
@@ -115,6 +123,7 @@ def test_get_upper_lower_limit_price(client: Client):
         trde_gold_tp="0",  # 전체조회
         stex_tp="1",  # KRX
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -133,6 +142,7 @@ def test_get_high_low_price_approach(client: Client):
         crd_cnd="0",  # 전체조회
         stex_tp="1",  # KRX
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -154,6 +164,8 @@ def test_get_price_volatility(client: Client):
         updown_incls="1",  # 포함
         stex_tp="1",  # KRX
     )
+    # 실측: 문서 Length 4 인데 문서 자신의 허용값이 5자("00000") — VENDOR_DOC_ERRATA.md
+    assert_spec_conformance(client, response, ignore_length=["trde_qty_tp"])
 
     assert response is not None
     assert response.headers is not None
@@ -169,6 +181,7 @@ def test_get_trading_volume_renewal(client: Client):
         trde_qty_tp="5",  # 5천주이상
         stex_tp="1",  # KRX
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -186,6 +199,8 @@ def test_get_supply_demand_concentration(client: Client):
         cycle_tp="100",  # 100일
         stex_tp="1",  # KRX
     )
+    # 실측: 문서 Length 2 인데 문서 자신의 허용값이 3자("100") — VENDOR_DOC_ERRATA.md
+    assert_spec_conformance(client, response, ignore_length=["cycle_tp"])
 
     assert response is not None
     assert response.headers is not None
@@ -199,6 +214,7 @@ def test_get_high_per(client: Client):
         pertp="4",  # 고PER
         stex_tp="1",  # KRX
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -219,6 +235,7 @@ def test_get_change_rate_from_open(client: Client):
         flu_cnd="1",  # 상위
         stex_tp="1",  # KRX
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -239,6 +256,7 @@ def test_get_trading_member_supply_demand_analysis(client: Client):
         mmcm_cd="001",  # 회원사코드 (예시)
         stex_tp="1",  # KRX
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -249,13 +267,14 @@ def test_get_trading_member_supply_demand_analysis(client: Client):
 @pytest.mark.integration
 def test_get_trading_member_instant_volume(client: Client):
     response = client.stock_info.get_trading_member_instant_volume(
-        mmcm_cd="001",  # 회원사코드 (예시)
-        stk_cd="005930",  # 종목코드
+        mmcm_cd="888",  # 회원사코드 (문서 요청 예시값)
+        stk_cd="",  # 문서 요청 예시값 — 종목 지정 시 빈 결과가 잦다
         mrkt_tp="0",  # 전체
         qty_tp="0",  # 전체
         pric_tp="0",  # 전체
         stex_tp="1",  # KRX
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -277,6 +296,7 @@ def test_get_volatility_control_event(client: Client):
         motn_drc="0",  # 전체
         stex_tp="1",  # KRX
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -290,6 +310,7 @@ def test_get_daily_previous_day_execution_volume(client: Client):
         stk_cd="005930",  # 종목코드
         tdy_pred="1",  # 당일
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -307,6 +328,7 @@ def test_get_daily_trading_items_by_investor(client: Client):
         invsr_tp="8000",  # 개인
         stex_tp="1",  # KRX
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -323,6 +345,7 @@ def test_get_institutional_investor_by_stock(client: Client):
         trde_tp="0",  # 순매수
         unit_tp="1000",  # 천주
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -340,6 +363,7 @@ def test_get_total_institutional_investor_by_stock(client: Client):
         trde_tp="0",  # 순매수
         unit_tp="1000",  # 천주
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -353,6 +377,7 @@ def test_get_daily_previous_day_conclusion(client: Client):
         stk_cd="005930",  # 종목코드
         tdy_pred="1",  # 당일
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -365,6 +390,7 @@ def test_get_interest_stock_info(client: Client):
     response = client.stock_info.get_interest_stock_info(
         stk_cd="005930|000660",  # 여러 종목코드 입력시 | 로 구분
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -377,6 +403,8 @@ def test_get_stock_info_summary(client: Client):
     response = client.stock_info.get_stock_info_summary(
         mrkt_tp="0",  # KOSPI
     )
+    # 실측: 종목상태 state 가 문서 Length 20 을 넘는다 — VENDOR_DOC_ERRATA.md
+    assert_spec_conformance(client, response, ignore_length=["list.state"])
 
     assert response is not None
     assert response.headers is not None
@@ -389,6 +417,7 @@ def test_get_stock_info_v1(client: Client):
     response = client.stock_info.get_stock_info_v1(
         stk_cd="005930",  # 종목코드
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -401,6 +430,7 @@ def test_get_industry_code(client: Client):
     response = client.stock_info.get_industry_code(
         mrkt_tp="0",  # KOSPI
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -413,6 +443,7 @@ def test_get_industry_code(client: Client):
 @pytest.mark.integration
 def test_get_member_company(client: Client):
     response = client.stock_info.get_member_company()
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -430,6 +461,7 @@ def test_get_top_50_program_net_buy(client: Client):
         mrkt_tp="P00101",  # KOSPI
         stex_tp="1",  # KRX
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -444,6 +476,7 @@ def test_get_program_trading_status_by_stock(client: Client):
         mrkt_tp="P00101",  # KOSPI
         stex_tp="1",  # KRX
     )
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
