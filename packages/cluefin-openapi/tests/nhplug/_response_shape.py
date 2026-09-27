@@ -120,7 +120,7 @@ def value_length(value: Any, spec: str) -> str | None:
         whole, _, fraction = text.partition(".")
         whole = whole.lstrip("0") or "0"
         if len(whole) > total - frac or len(fraction) > frac:
-            return f"{len(whole)}.{len(fraction)}"
+            return f"{len(whole)}.{len(fraction)}"  # nosemgrep
         return None
     if isinstance(value, (int, float)):
         text = str(value).lstrip("+-")
