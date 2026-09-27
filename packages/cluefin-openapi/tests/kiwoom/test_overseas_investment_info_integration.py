@@ -5,10 +5,13 @@ from cluefin_openapi.kiwoom._overseas_investment_info_types import (
     OverseasInvestmentInfoResearch,
 )
 
+from ._spec_conformance import assert_spec_conformance
+
 
 @pytest.mark.integration
 def test_get_research(client: Client):
     response = client.overseas_investment_info.get_research(qry_tp="0")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 from pydantic.config import ConfigDict
 
 from cluefin_openapi.kiwoom._model import KiwoomHttpBody
@@ -56,6 +56,8 @@ class OverseasStockInfoSectorListItem(BaseModel):
     inds_cd: str = Field(default="", description="업종코드")
     inds_nm: str = Field(default="", description="업종명")
     inds_enm: str = Field(default="", description="업종영문명")
+    # 공식 문서에 없지만 실서버가 반환함 (VENDOR_DOC_ERRATA.md)
+    gubun: str = Field(default="", description="구분")
 
 
 class OverseasStockInfoSectorList(BaseModel, KiwoomHttpBody):
@@ -70,6 +72,8 @@ class OverseasStockInfoIndexListItem(BaseModel):
     index_cd: str = Field(default="", description="지수코드")
     index_nm: str = Field(default="", description="지수명")
     index_enm: str = Field(default="", description="지수영문명")
+    # 공식 문서에 없지만 실서버가 반환함 (VENDOR_DOC_ERRATA.md)
+    stex_tp: str = Field(default="", description="거래소구분")
 
 
 class OverseasStockInfoIndexList(BaseModel, KiwoomHttpBody):
@@ -95,7 +99,8 @@ class OverseasStockInfoStockMemo(BaseModel, KiwoomHttpBody):
 
 class OverseasStockInfoEtfEtnListItem(BaseModel):
     stex_tp: str = Field(default="", description="거래소구분")
-    code: str = Field(default="", description="종목코드")
+    # 문서는 code, 실서버는 stk_cd 로 보낸다 — 둘 다 받는다 (VENDOR_DOC_ERRATA.md)
+    code: str = Field(default="", description="종목코드", validation_alias=AliasChoices("code", "stk_cd"))
     cate1: str = Field(default="", description="카테고리1")
     cate2: str = Field(default="", description="카테고리2")
     etn: str = Field(default="", description="ETN여부")
@@ -514,6 +519,9 @@ class OverseasStockInfoGapUpDownStock(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="미국주식 갭상승/갭하락(주식/업종) 응답")
 
     result_list: list[OverseasStockInfoGapUpDownStockItem] = Field(default_factory=list, description="결과리스트")
+    # 문서는 행 안의 필드로 적었지만 실서버는 최상위에 하나만 보낸다 (VENDOR_DOC_ERRATA.md).
+    # 2026-09-27 dev 실측에선 행에 pre_high_pric 가 없었다
+    pre_high_pric: str = Field(default="", description="전일고가")
 
 
 class OverseasStockInfoGapUpDownEtfItem(BaseModel):
@@ -538,6 +546,9 @@ class OverseasStockInfoGapUpDownEtf(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="미국주식 갭상승/갭하락(ETF) 응답")
 
     result_list: list[OverseasStockInfoGapUpDownEtfItem] = Field(default_factory=list, description="결과리스트")
+    # 문서는 행 안의 필드로 적었지만 실서버는 최상위에 하나만 보낸다 (VENDOR_DOC_ERRATA.md).
+    # 2026-09-27 dev 실측에선 행에 pre_high_pric 가 없었다
+    pre_high_pric: str = Field(default="", description="전일고가")
 
 
 class OverseasStockInfoRemainingRatioSurgeStockItem(BaseModel):

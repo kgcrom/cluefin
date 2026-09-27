@@ -8,12 +8,14 @@ from cluefin_openapi.kiwoom._overseas_exchange_types import (
 )
 
 from ._integration_helpers import real_account_only
+from ._spec_conformance import assert_spec_conformance
 
 
 @pytest.mark.integration
 @real_account_only("ust31300", "RC9000:모의투자에서는 해당업무가 제공되지 않습니다")
 def test_get_estimated_exchange_amount(client: Client):
     response = client.overseas_exchange.get_estimated_exchange_amount(exch_tp="1", fc_exmn_amt="10")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -25,6 +27,7 @@ def test_get_estimated_exchange_amount(client: Client):
 @real_account_only("ust31301", "RC9000:모의투자에서는 해당업무가 제공되지 않습니다")
 def test_get_exchange_rate(client: Client):
     response = client.overseas_exchange.get_exchange_rate(exch_tp="1")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
@@ -38,6 +41,7 @@ def test_request_exchange(client: Client):
     # NOTE: ust31302 actually executes a currency exchange, so this test uses a
     # small amount to minimize impact.
     response = client.overseas_exchange.request_exchange(exch_tp="1", fc_exmn_amt="10")
+    assert_spec_conformance(client, response)
 
     assert response is not None
     assert response.headers is not None
