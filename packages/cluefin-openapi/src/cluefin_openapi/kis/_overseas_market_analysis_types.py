@@ -310,6 +310,9 @@ class StockMarketCapRankItem1(BaseModel):
     crec: str = Field(title="현재조회종목수")
     trec: str = Field(title="전체조회종목수")
     nrec: str = Field(title="RecordCount")
+    # 문서 표·예시에 없지만 실서버가 보낸다 (2026-09-27 실측). 의미는 문서에 없다
+    curr: str = Field(default="", title="통화")
+    t_rate: str = Field(default="", title="t_rate")
 
 
 class StockMarketCapRankItem2(BaseModel):

@@ -31,6 +31,15 @@
 | 금리 종합 `comp-interest` (FHPST07020000) | 표: output1 에 `bond_cntg_ert`·`bond_stnd_iscd`·`date_time`·`indicator_nm`·`prdy_vrss` | 안 보냄. `FID_DIV_CLS_CODE` 도 문서에 없는 `2` 만 온전한 값을 준다 (`AGENTS.md`) | 2026-09-20·27 | 모델에 없음 |
 | 프로그램매매 종합현황(일별) `comp-program-trade-daily` (FHPPG04600001) | 표: `whol_*` 순매수 계열 9개 없음 (`whol_smtn_ntby_qty` 등) / 예시: 있음 | 보냄 | 2026-09-27, K | 모델에 추가 |
 | 관심종목(멀티종목) 시세조회 `intstock-multprice` (FHKST11300006) | 표: output 이 object | array | 2026-09-27 | array |
+| 해외주식 현재가 10호가 `overseas-price/inquire-asking-price` (HHDFS76200100) | 표: output2 가 array | object 하나에 1~10호가 | 2026-09-27, NAS AAPL | object, 2~10호가 모델에 추가 |
+| 해외주식 체결추이 `overseas-price/inquire-ccnl` (HHDFS76200300) | 표: output1 `NREC`·`ZDIV` 대문자 | 소문자 `nrec`·`zdiv` | 2026-09-27 | 소문자 |
+| 해외지수·환율 기간별 시세 `overseas-price/inquire-daily-chartprice` (FHKST03030100) | 표: output1 에 `prdy_vol` | 안 보냄 | 2026-09-27 | 모델에 남기고 테스트 `ignore` |
+| 해외주식 상품기본정보 `search-info` (CTPF1702R) | 표: `etp_bast_lcls_cd`·`etp_bast_mcls_cd`·`etp_bast_scls_cd`·`sgle_item_lvrg_etp_yn` / 예시: 없음 | 보냄 | 2026-09-27 | 모델에 추가 |
+| 해외주식 시가총액순위 `ranking/market-cap` (HHDFS76350100) | output1 에 `curr`·`t_rate` 없음, output2 에 `*_org`(`last_org`·`diff_org`·`tomv_org`) 없음 | 보냄 | 2026-09-27 | 모델에 추가·있음 |
+| 해외주식 매수체결강도상위 `ranking/volume-power` (HHDFS76280000) | output2 `knam`·`enam` | `name`·`ename` | 2026-08 | 두 이름 모두 수용 |
+| 해외주식 거래회전율순위 `ranking/trade-turnover` (HHDFS76340000) | 표: output2 에 `n_tvol` | 안 보냄 | 2026-09-27 | 모델에 없음 |
+| 해외주식 분봉조회 `inquire-time-itemchartprice` (HHDFS76950200) | 표: output1 array·output2 object / 예시: 반대 | 예시대로 (output1 object, output2 array) | 2026-09-27 | 예시대로 |
+| 해외결제일자조회 `countries-holiday` (CTOS5011R), 기간별권리조회 `period-rights` (CTRGT011R), 담보대출가능종목 `colable-by-company` (CTLN4050R) | 표: 최상위 연속조회 키 `ctx_area_*` 없음 / 예시: 있음 | 보냄 | 2026-09-27 | 모델에 있음 |
 
 ### 길이
 
@@ -48,3 +57,5 @@
 | 종목별 프로그램매매추이(체결) `program-trade-by-stock` | 응답 `output.whol_ntby_tr_pbmn_icdc` | 10 | 11 | 2026-09-27 |
 | HTS조회상위20종목 `hts-top-view` | 응답 `output1.mksc_shrn_iscd` | 2 | 6 | 2026-09-27 |
 | 우선주 괴리율 상위 `prefer-disparate-ratio` | 응답 `output.hts_kor_isnm` / `prst_kor_isnm` / `prdy_ctrt` | 10 / 10 / 1 | 13 / 16 / 5 | 2026-09-27 |
+| 해외주식 업종별시세 `industry-theme` | 요청 `ICOD` | 1 | 3 (업종코드) | 2026-09-27 |
+| 해외주식 순위 8종 (`industry-theme`·`market-cap`·`new-highlow`·`trade-growth`·`trade-pbmn`·`trade-turnover`·`trade-vol`·`updown-rate`) | 응답 `output2.symb` | 1 | 최대 7 (티커) | 2026-09-27 |
