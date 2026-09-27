@@ -389,7 +389,8 @@ const writeTs = (targetRelativePath, symbolName, importPath, data) => {
   const methodNames = data.map((ep) => ep.methodName);
   const unionLiteral = methodNames.map((n) => `'${n}'`).join('\n  | ');
   const content =
-    `import type { ${importPath} } from '../../core/types';\n\n` +
+    // src 의 상대 specifier 는 .js 를 붙여야 한다 (AGENTS.md "Declaration output")
+    `import type { ${importPath} } from '../../core/types.js';\n\n` +
     `export const ${symbolName}: ${importPath}[] = ${JSON.stringify(data, null, 2)};\n\n` +
     `export type ${typeName} =\n  | ${unionLiteral};\n`;
   fs.mkdirSync(path.dirname(fullPath), { recursive: true });
