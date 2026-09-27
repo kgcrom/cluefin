@@ -1,44 +1,30 @@
 import { describe, test } from 'vitest';
 
 import {
-  individualStockInstitutionalChartItemSchema,
   individualStockInstitutionalChartResponseSchema,
-  industryDailyItemSchema,
   industryDailyResponseSchema,
-  industryMinuteItemSchema,
   industryMinuteResponseSchema,
-  industryMonthlyItemSchema,
   industryMonthlyResponseSchema,
-  industryTickItemSchema,
   industryTickResponseSchema,
-  industryWeeklyItemSchema,
   industryWeeklyResponseSchema,
-  industryYearlyItemSchema,
   industryYearlyResponseSchema,
-  intradayInvestorTradingItemSchema,
   intradayInvestorTradingResponseSchema,
-  stockDailyItemSchema,
   stockDailyResponseSchema,
-  stockMinuteItemSchema,
   stockMinuteResponseSchema,
-  stockMonthlyItemSchema,
   stockMonthlyResponseSchema,
-  stockTickItemSchema,
   stockTickResponseSchema,
-  stockWeeklyItemSchema,
   stockWeeklyResponseSchema,
-  stockYearlyItemSchema,
   stockYearlyResponseSchema,
 } from '../../src/kiwoom/schemas/domestic-chart';
 import {
   assertKiwoomResponse,
-  assertResponseShape,
   getKiwoomClient,
   runIntegration,
   SAMSUNG,
   setupKiwoomRateLimit,
   TODAY,
 } from '../_helpers/integration-setup';
+import { assertKiwoomSpecConformance } from '../_helpers/kiwoom-spec-conformance';
 
 const it = runIntegration ? test : test.skip;
 
@@ -54,112 +40,103 @@ describe('Kiwoom DomesticChart', () => {
       unitTp: '1',
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      individualStockInstitutionalChartResponseSchema,
-      'stkInvsrOrgnChart',
-      individualStockInstitutionalChartItemSchema,
-    );
+    assertKiwoomSpecConformance(individualStockInstitutionalChartResponseSchema);
   });
 
   it('getIntradayInvestorTrading', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticChart.getIntradayInvestorTrading({
-      mrktTp: '0',
+      mrktTp: '000',
       amtQtyTp: '1',
       trdeTp: '0',
       stkCd: SAMSUNG,
     });
     assertKiwoomResponse(res);
-    assertResponseShape(
-      res.body,
-      intradayInvestorTradingResponseSchema,
-      'opmrInvsrTrdeChart',
-      intradayInvestorTradingItemSchema,
-    );
+    assertKiwoomSpecConformance(intradayInvestorTradingResponseSchema);
   });
 
   it('getStockTick', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticChart.getStockTick({ stkCd: SAMSUNG, ticScope: '1' });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, stockTickResponseSchema, 'stkTicChartQry', stockTickItemSchema);
+    assertKiwoomSpecConformance(stockTickResponseSchema);
   });
 
   it('getStockMinute', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticChart.getStockMinute({ stkCd: SAMSUNG, ticScope: '1' });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, stockMinuteResponseSchema, 'stkMinPoleChartQry', stockMinuteItemSchema);
+    assertKiwoomSpecConformance(stockMinuteResponseSchema);
   });
 
   it('getStockDaily', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticChart.getStockDaily({ stkCd: SAMSUNG, baseDt: TODAY, updStkpcTp: '1' });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, stockDailyResponseSchema, 'stkDtPoleChartQry', stockDailyItemSchema);
+    assertKiwoomSpecConformance(stockDailyResponseSchema);
   });
 
   it('getStockWeekly', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticChart.getStockWeekly({ stkCd: SAMSUNG, baseDt: TODAY, updStkpcTp: '1' });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, stockWeeklyResponseSchema, 'stkStkPoleChartQry', stockWeeklyItemSchema);
+    assertKiwoomSpecConformance(stockWeeklyResponseSchema);
   });
 
   it('getStockMonthly', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticChart.getStockMonthly({ stkCd: SAMSUNG, baseDt: TODAY, updStkpcTp: '1' });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, stockMonthlyResponseSchema, 'stkMthPoleChartQry', stockMonthlyItemSchema);
+    assertKiwoomSpecConformance(stockMonthlyResponseSchema);
   });
 
   it('getStockYearly', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticChart.getStockYearly({ stkCd: SAMSUNG, baseDt: TODAY, updStkpcTp: '1' });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, stockYearlyResponseSchema, 'stkYrPoleChartQry', stockYearlyItemSchema);
+    assertKiwoomSpecConformance(stockYearlyResponseSchema);
   });
 
   it('getIndustryTick', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticChart.getIndustryTick({ indsCd: '001', ticScope: '1' });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, industryTickResponseSchema, 'indsTicChartQry', industryTickItemSchema);
+    assertKiwoomSpecConformance(industryTickResponseSchema);
   });
 
   it('getIndustryMinute', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticChart.getIndustryMinute({ indsCd: '001', ticScope: '1' });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, industryMinuteResponseSchema, 'indsMinPoleQry', industryMinuteItemSchema);
+    assertKiwoomSpecConformance(industryMinuteResponseSchema);
   });
 
   it('getIndustryDaily', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticChart.getIndustryDaily({ indsCd: '001', baseDt: TODAY });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, industryDailyResponseSchema, 'indsDtPoleQry', industryDailyItemSchema);
+    assertKiwoomSpecConformance(industryDailyResponseSchema);
   });
 
   it('getIndustryWeekly', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticChart.getIndustryWeekly({ indsCd: '001', baseDt: TODAY });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, industryWeeklyResponseSchema, 'indsStkPoleQry', industryWeeklyItemSchema);
+    // 실측: base_dt 는 YYYYMMDD 인데 문서 Length 가 3 — VENDOR_DOC_ERRATA.md
+    assertKiwoomSpecConformance(industryWeeklyResponseSchema, { ignoreLength: ['base_dt'] });
   });
 
   it('getIndustryMonthly', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticChart.getIndustryMonthly({ indsCd: '001', baseDt: TODAY });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, industryMonthlyResponseSchema, 'indsMthPoleQry', industryMonthlyItemSchema);
+    assertKiwoomSpecConformance(industryMonthlyResponseSchema);
   });
 
   it('getIndustryYearly', async () => {
     const client = await getKiwoomClient();
     const res = await client.domesticChart.getIndustryYearly({ indsCd: '001', baseDt: TODAY });
     assertKiwoomResponse(res);
-    assertResponseShape(res.body, industryYearlyResponseSchema, 'indsYrPoleQry', industryYearlyItemSchema);
+    assertKiwoomSpecConformance(industryYearlyResponseSchema);
   });
 });
