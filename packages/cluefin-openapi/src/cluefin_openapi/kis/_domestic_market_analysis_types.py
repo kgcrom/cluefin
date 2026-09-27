@@ -702,6 +702,16 @@ class ProgramTradingSummaryDailyItem(BaseModel):
     nabt_smtm_shun_vol_rate: str = Field(title="비차익 합계 매수 거래량 비율")
     whol_shun_tr_pbmn_rate: str = Field(title="전체 매수 거래대금 비율")
     nabt_entm_ntby_qty_rate: str = Field(title="비차익 위탁 순매수 수량 비율")
+    # 문서 표에는 없고 예시와 실서버 응답에는 있다 (2026-09-27 실측)
+    whol_smtn_ntby_qty: str = Field(default="", title="전체 합계 순매수 수량")
+    whol_smtn_ntby_tr_pbmn: str = Field(default="", title="전체 합계 순매수 거래 대금")
+    whol_ntby_qty_rate: str = Field(default="", title="전체 순매수 수량 비율")
+    whol_ntby_tr_pbmn_rate: str = Field(default="", title="전체 순매수 거래 대금 비율")
+    whol_onsl_ntby_qty: str = Field(default="", title="전체 자기 순매수 수량")
+    whol_onsl_ntby_qty_rate: str = Field(default="", title="전체 자기 순매수 수량 비율")
+    whol_onsl_ntby_tr_pbmn: str = Field(default="", title="전체 자기 순매수 거래 대금")
+    whol_onsl_ntby_tr_pbmn_rate: str = Field(default="", title="전체 자기 순매수 거래 대금 비율")
+    whol_entm_ntby_tr_pbmn_rate: str = Field(default="", title="전체 위탁 순매수 거래 대금 비율")
 
 
 class ProgramTradingSummaryDaily(BaseModel, KisHttpBody):

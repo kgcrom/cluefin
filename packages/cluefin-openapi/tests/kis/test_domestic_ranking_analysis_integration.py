@@ -8,6 +8,8 @@ import pytest
 
 from cluefin_openapi.kis._http_client import HttpClient
 
+from ._response_shape import assert_response_shape
+
 # ==================== Volume & Trading APIs ====================
 
 
@@ -26,6 +28,7 @@ def test_get_trading_volume_rank(client: HttpClient):
         fid_input_price_2="",  # ~가격
         fid_vol_cnt="",  # 거래량~
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -52,6 +55,7 @@ def test_get_stock_fluctuation_rank(client: HttpClient):
         fid_div_cls_code="0",  # 0:전체
         fid_rsfl_rate1="",  # 비율~
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -74,6 +78,7 @@ def test_get_stock_hoga_quantity_rank(client: HttpClient):
         fid_input_price_1="",  # 가격~
         fid_input_price_2="",  # ~가격
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -102,6 +107,7 @@ def test_get_stock_profitability_indicator_rank(client: HttpClient):
         fid_blng_cls_code="0",  # 0:전체
         fid_trgt_exls_cls_code="0",  # 0:전체
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -123,6 +129,7 @@ def test_get_stock_market_cap_top(client: HttpClient):
         fid_input_price_1="",  # 가격~
         fid_vol_cnt="",  # 거래량~
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -148,6 +155,7 @@ def test_get_stock_finance_ratio_rank(client: HttpClient):
         fid_blng_cls_code="0",
         fid_trgt_exls_cls_code="0",  # 0:전체
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -173,6 +181,7 @@ def test_get_stock_market_price_rank(client: HttpClient):
         fid_blng_cls_code="0",  # 0:전체
         fid_trgt_exls_cls_code="0",  # 0:전체
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -198,6 +207,7 @@ def test_get_stock_time_hoga_rank(client: HttpClient):
         fid_vol_cnt="",  # 거래량~
         fid_input_price_2="",  # ~가격
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -220,6 +230,7 @@ def test_get_stock_after_hours_fluctuation_rank(client: HttpClient):
         fid_trgt_cls_code="",  # 공백 입력
         fid_trgt_exls_cls_code="",  # 공백 입력
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -241,6 +252,7 @@ def test_get_stock_after_hours_volume_rank(client: HttpClient):
         fid_trgt_cls_code="",  # 공백
         fid_trgt_exls_cls_code="",  # 공백
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -265,6 +277,7 @@ def test_get_stock_preferred_stock_ratio_top(client: HttpClient):
         fid_input_price_1="",  # 가격~
         fid_input_price_2="",  # ~가격
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -288,6 +301,7 @@ def test_get_stock_disparity_index_rank(client: HttpClient):
         fid_input_price_1="",  # 가격~
         fid_vol_cnt="",  # 거래량~
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -309,6 +323,7 @@ def test_get_stock_execution_strength_top(client: HttpClient):
         fid_vol_cnt="",  # 거래량~
         fid_trgt_cls_code="0",  # 0:전체
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -332,6 +347,7 @@ def test_get_stock_watchlist_registration_top(client: HttpClient):
         fid_div_cls_code="0",  # 0:전체
         fid_input_cnt_1="1",  # 순위검색 입력값, 1:1위부터, 10:10위부터
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -354,6 +370,7 @@ def test_get_stock_expected_execution_rise_decline_top(client: HttpClient):
         fid_blng_cls_code="0",  # 0:전체
         fid_mkop_cls_code="0",  # 0:장전예상, 1:장마감예상
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -378,6 +395,7 @@ def test_get_stock_proprietary_trading_top(client: HttpClient):
         fid_aply_rang_prc_2="",  # ~가격
         fid_aply_rang_prc_1="",  # 가격~
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -402,6 +420,7 @@ def test_get_stock_new_high_low_approaching_top(client: HttpClient):
         fid_aply_rang_prc_1="",  # 가격~
         fid_aply_rang_prc_2="",  # ~가격
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -422,6 +441,7 @@ def test_get_stock_dividend_yield_top(client: HttpClient):
         t_dt="20241231",  # 기준일To (YYYYMMDD)
         gb4="0",  # 0:전체, 1:결산배당, 2:중간배당
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -446,6 +466,7 @@ def test_get_stock_large_execution_count_top(client: HttpClient):
         fid_trgt_cls_code="0",  # 0:전체
         fid_vol_cnt="",  # 거래량~
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -463,6 +484,7 @@ def test_get_stock_credit_balance_top(client: HttpClient):
         fid_cond_mrkt_div_code="J",  # 주식 J
         fid_rank_sort_cls_code="0",  # 융자: 0:잔고비율상위, 1:잔고수량상위, 2:잔고금액상위, 3:잔고비율증가상위, 4:잔고비율감소상위
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -485,6 +507,7 @@ def test_get_stock_short_selling_top(client: HttpClient):
         fid_aply_rang_prc_1="",  # 가격~
         fid_aply_rang_prc_2="",  # ~가격
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -496,6 +519,7 @@ def test_get_stock_short_selling_top(client: HttpClient):
 def test_get_hts_inquiry_top_20(client: HttpClient):
     """Test HTS inquiry top 20 stocks."""
     response = client.domestic_ranking_analysis.get_hts_inquiry_top_20()
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None

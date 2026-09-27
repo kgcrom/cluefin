@@ -10,6 +10,8 @@ import pytest
 
 from cluefin_openapi.kis._http_client import HttpClient
 
+from ._response_shape import assert_response_shape
+
 # ==================== Condition Search APIs ====================
 
 
@@ -85,6 +87,7 @@ def test_get_watchlist_multi_quote(client: HttpClient):
         fid_cond_mrkt_div_code_1="J",
         fid_input_iscd_1="005930",  # Samsung Electronics
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -103,6 +106,7 @@ def test_get_investor_trading_trend_by_stock_daily(client: HttpClient):
         fid_input_iscd="005930",  # Samsung Electronics
         fid_input_date_1="20251001",
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -117,6 +121,7 @@ def test_get_investor_trading_trend_by_market_intraday(client: HttpClient):
         fid_input_iscd="KSP",  # KSP:KOSPI, KSQ:KOSDAQ
         fid_input_iscd_2="0001",  # Sector code (0001:KOSPI Total)
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -135,6 +140,7 @@ def test_get_investor_trading_trend_by_market_daily(client: HttpClient):
         fid_input_date_2="20240701",  # Same as date_1
         fid_input_iscd_2="0001",  # Sector classification code
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -153,6 +159,7 @@ def test_get_foreign_brokerage_trading_aggregate(client: HttpClient):
         fid_rank_sort_cls_code="0",  # 0:Net buy, 1:Net sell
         fid_rank_sort_cls_code_2="0",
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -168,6 +175,7 @@ def test_get_foreign_net_buy_trend_by_stock(client: HttpClient):
         fid_input_iscd_2="99999",  # 99999:All foreign brokerages
         fid_cond_mrkt_div_code="J",  # J:KRX
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -186,6 +194,7 @@ def test_get_member_trading_trend_tick(client: HttpClient):
         fid_mrkt_cls_code="",  # Empty when using fid_input_iscd
         fid_vol_cnt="",  # Empty for all volumes
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -204,6 +213,7 @@ def test_get_member_trading_trend_by_stock(client: HttpClient):
         fid_input_date_2="20240731",  # To date
         fid_sctn_cls_code="",  # Empty
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -217,6 +227,7 @@ def test_get_foreign_institutional_estimate_by_stock(client: HttpClient):
     response = client.domestic_market_analysis.get_foreign_institutional_estimate_by_stock(
         mksc_shrn_iscd="005930"  # Samsung Electronics
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -234,6 +245,7 @@ def test_get_program_trading_trend_by_stock_intraday(client: HttpClient):
         fid_cond_mrkt_div_code="J",  # J:KRX, NX:NXT, UN:Integrated
         fid_input_iscd="005930",  # Samsung Electronics
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -249,6 +261,7 @@ def test_get_program_trading_trend_by_stock_daily(client: HttpClient):
         fid_input_iscd="005930",  # Samsung Electronics
         fid_input_date_1="",  # Empty for today
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -267,6 +280,7 @@ def test_get_program_trading_summary_intraday(client: HttpClient):
         fid_cond_mrkt_div_code1="",  # Empty
         fid_input_hour_1="",  # Empty
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -283,6 +297,7 @@ def test_get_program_trading_summary_daily(client: HttpClient):
         fid_input_date_1="",  # Empty (8 months max)
         fid_input_date_2="",  # Empty
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -297,6 +312,7 @@ def test_get_program_trading_investor_trend_today(client: HttpClient):
         exch_div_cls_code="J",  # J:KRX, NX:NXT, UN:Integrated
         mrkt_div_cls_code="1",  # 1:KOSPI, 4:KOSDAQ
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -317,6 +333,7 @@ def test_get_buy_sell_volume_by_stock_daily(client: HttpClient):
         fid_input_date_2="20240731",  # To date
         fid_period_div_code="D",  # D:Daily
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -333,6 +350,7 @@ def test_get_credit_balance_trend_daily(client: HttpClient):
         fid_input_iscd="005930",  # Samsung Electronics
         fid_input_date_1="20240701",  # Settlement date
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -348,6 +366,7 @@ def test_get_expected_price_trend(client: HttpClient):
         fid_cond_mrkt_div_code="J",  # J:Stock
         fid_input_iscd="005930",  # Samsung Electronics
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -364,6 +383,7 @@ def test_get_short_selling_trend_daily(client: HttpClient):
         fid_input_iscd="005930",  # Samsung Electronics
         fid_input_date_1="20240701",  # From date
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -384,6 +404,7 @@ def test_get_after_hours_expected_fluctuation(client: HttpClient):
         fid_input_price_2="",  # Empty
         fid_input_vol_1="",  # Empty
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -399,6 +420,7 @@ def test_get_trading_weight_by_amount(client: HttpClient):
         fid_cond_scr_div_code="11119",  # Unique key
         fid_input_iscd="005930",  # Samsung Electronics
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -412,6 +434,7 @@ def test_get_market_fund_summary(client: HttpClient):
     response = client.domestic_market_analysis.get_market_fund_summary(
         fid_input_date_1="20240701"  # Date
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -429,6 +452,7 @@ def test_get_stock_loan_trend_daily(client: HttpClient):
         end_date="20240731",  # To date
         cts="",  # Empty for first call
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -451,6 +475,7 @@ def test_get_limit_price_stocks(client: HttpClient):
         fid_input_price_2="",  # Empty
         fid_vol_cnt="",  # Empty
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -467,8 +492,47 @@ def test_get_resistance_level_trading_weight(client: HttpClient):
         fid_cond_scr_div_code="20113",  # Unique key
         fid_input_hour_1="",  # Empty
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
     assert hasattr(response.body, "rt_cd")
     assert hasattr(response.body, "msg_cd")
+
+
+@pytest.mark.integration
+def test_get_institutional_foreign_trading_aggregate(client: HttpClient):
+    """Test institutional/foreign trading aggregate (국내기관_외국인 매매종목가집계)."""
+    response = client.domestic_market_analysis.get_institutional_foreign_trading_aggregate(
+        fid_cond_mrkt_div_code="V",  # V(Default)
+        fid_cond_scr_div_code="16449",  # 16449(Default)
+        fid_input_iscd="0000",  # 0000:전체
+        fid_div_cls_code="0",  # 0:수량정열
+        fid_rank_sort_cls_code="0",  # 0:순매수상위
+        fid_etc_cls_code="0",  # 0:전체
+    )
+    assert_response_shape(client, response)
+
+
+@pytest.mark.integration
+@pytest.mark.skipif(not os.getenv("KIS_HTS_USER_ID"), reason="KIS_HTS_USER_ID not set")
+def test_get_watchlist_stocks_by_group(client: HttpClient):
+    """Test watchlist stocks by group (관심종목 그룹별 종목조회)."""
+    user_id = os.environ["KIS_HTS_USER_ID"]
+    groups = client.domestic_market_analysis.get_watchlist_groups(
+        interest_type="1", fid_etc_cls_code="00", user_id=user_id
+    )
+    if not groups.body.output2:
+        pytest.skip("no watchlist group for this HTS ID")
+
+    response = client.domestic_market_analysis.get_watchlist_stocks_by_group(
+        type_="1",  # Unique key(1)
+        user_id=user_id,
+        data_rank="",
+        inter_grp_code=groups.body.output2[0].inter_grp_code,
+        inter_grp_name="",
+        hts_kor_isnm="",
+        cntg_cls_code="",
+        fid_etc_cls_code="4",  # Unique key(4)
+    )
+    assert_response_shape(client, response)

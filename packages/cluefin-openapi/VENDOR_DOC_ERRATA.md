@@ -29,6 +29,8 @@
 | ETF 구성종목시세 `inquire-component-stock-price` (FHKST121600C0) | 표: `etf_cu_unit_scrt_cnt` 는 output1 에만 | output2 행에도 보냄 | 2026-09-27 | 모델에 있음 |
 | 국내휴장일조회 `chk-holiday` (CTCA0903R), 당사 대주가능 종목 `lendable-by-company` (CTSC2702R) | 표: 최상위 연속조회 키 `ctx_area_*` 없음 / 예시: 있음 | 보냄 | 2026-09-27 | 모델에 있음 |
 | 금리 종합 `comp-interest` (FHPST07020000) | 표: output1 에 `bond_cntg_ert`·`bond_stnd_iscd`·`date_time`·`indicator_nm`·`prdy_vrss` | 안 보냄. `FID_DIV_CLS_CODE` 도 문서에 없는 `2` 만 온전한 값을 준다 (`AGENTS.md`) | 2026-09-20·27 | 모델에 없음 |
+| 프로그램매매 종합현황(일별) `comp-program-trade-daily` (FHPPG04600001) | 표: `whol_*` 순매수 계열 9개 없음 (`whol_smtn_ntby_qty` 등) / 예시: 있음 | 보냄 | 2026-09-27, K | 모델에 추가 |
+| 관심종목(멀티종목) 시세조회 `intstock-multprice` (FHKST11300006) | 표: output 이 object | array | 2026-09-27 | array |
 
 ### 길이
 
@@ -42,3 +44,7 @@
 | 국내주식 종목추정실적 `estimate-perform` | 요청 `SHT_CD` | 2 | 6 (종목코드) | 2026-09-27 |
 | 국내주식 종목추정실적 `estimate-perform` | 응답 `output1.estdate` | 1 | 8 | 2026-09-27 |
 | 주식현재가 시세2 `inquire-price-2` | 응답 `output.bstp_cls_code` | 4 | 6 | 2026-09-27 |
+| 주식예상체결가 추이 `exp-price-trend` | 요청 `FID_INPUT_ISCD` | 5 | 6 (종목코드) | 2026-09-27 |
+| 종목별 프로그램매매추이(체결) `program-trade-by-stock` | 응답 `output.whol_ntby_tr_pbmn_icdc` | 10 | 11 | 2026-09-27 |
+| HTS조회상위20종목 `hts-top-view` | 응답 `output1.mksc_shrn_iscd` | 2 | 6 | 2026-09-27 |
+| 우선주 괴리율 상위 `prefer-disparate-ratio` | 응답 `output.hts_kor_isnm` / `prst_kor_isnm` / `prdy_ctrt` | 10 / 10 / 1 | 13 / 16 / 5 | 2026-09-27 |
