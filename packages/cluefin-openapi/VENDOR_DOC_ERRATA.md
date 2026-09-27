@@ -151,6 +151,9 @@
 
 - 응답 최상위에 스펙의 `message` 블록이 **키째 없다** (null 도 아님). 결과는 `rsp_cd`/`rsp_msg` 로 온다 (2026-09-27 모의).
 - 모의 조회 성공 코드에 `XA102`("모의투자 조회가 완료되었습니다")가 섞인다 (2026-08-22). 문서의 성공은 `00000` 뿐.
+- 운영 계좌 조회는 성공에 `00166`("조회가 완료되었습니다")을 준다 — 국내 `assetStatus`·`balance`·`realizedPnl`·
+  `dailyPnl`·`tradingPnl`·`integratedMargin`·`rightsHeld`·`reservedInquiry`, 해외 `balance`·`buyableAmount`·`margin`.
+  국내 `buyableQuantity` 는 `00221`("계좌/종목별 주문가능수량/금액 조회가 완료되었습니다") (2026-09-27 운영).
 - 모의 서버는 연속 호출에 `IGW42903`(HTTP 429, "API 호출 거래건수를 초과")을 준다. 1.5초 간격이면 통과 (2026-09-27).
 - **WebSocket 은 경로 `/websocket` 이 있어야 업그레이드된다** (문서 `protocol.connection` 에 적혀 있음).
   `wss://host:port/` 로는 응답이 없고 `/websocket` 만 `101` — 운영 7070·7080, 모의 17070 모두 (2026-09-27).

@@ -162,6 +162,28 @@ class TestDailyOrderExecution:
 
         assert response.body.rsp_cd == "XA102"
 
+    @pytest.mark.parametrize(
+        "rsp_cd, rsp_msg",
+        [
+            ("00166", "조회가 완료되었습니다."),
+            ("00221", "계좌/종목별 주문가능수량/금액 조회가 완료되었습니다."),
+        ],
+    )
+    def test_accepts_live_success_codes(self, client, rsp_cd, rsp_msg):
+        # 운영 서버는 계좌 조회 성공에 00166·00221 을 준다 (2026-09-27 실측) — 에러로 올리면 안 된다.
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/inquiry/v1/dailyOrderExecution",
+                json={"rsp_cd": rsp_cd, "rsp_msg": rsp_msg, "Output_0": []},
+            )
+            response = client.krstock_inquiry.daily_order_execution(
+                act_no="50051036881",
+                orr_dt="20260822",
+                ost_cns_dit="0",
+            )
+
+        assert response.body.rsp_cd == rsp_cd
+
 
 BUYABLE_QUANTITY_BODY = {
     "rsp_cd": "00000",
