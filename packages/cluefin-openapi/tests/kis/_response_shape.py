@@ -49,58 +49,41 @@ def _unwrap(annotation: Any) -> tuple[str, type[BaseModel] | None]:
     return "scalar", None
 
 
-def _raw_kind(value: Any) -> str:
-    if isinstance(value, list):
-        return "array"
-    if isinstance(value, dict):
-        return "object"
-    return "scalar"
-
-
-def _merge_rows(value: Any) -> dict[str, Any]:
-    """An object as-is, or an array's rows merged into one (rows can omit keys).
-
-    The first non-empty value per key is kept so blocks nested inside rows can be checked too.
-    """
-    rows = value if isinstance(value, list) else [value]
-    merged: dict[str, Any] = {}
-    for row in rows:
-        if not isinstance(row, dict):
-            continue
-        for key, item in row.items():
-            if merged.get(key) in (None, "", [], {}):
-                merged[key] = item
-    return merged
+_KINDS = {list: "array", dict: "object"}
 
 
 def response_shape_diff(raw: dict[str, Any], model: type[BaseModel], path: str = "") -> list[str]:
-    """Describe every difference between raw response keys and ``model``; empty means exact match."""
+    """Describe every difference between raw response keys and ``model``; empty means exact match.
+
+    Array blocks are compared over the union of all rows' keys (rows can omit keys). Only one level
+    of blocks is descended: no KIS model nests a block inside a row, and if one ever does, the inner
+    block shows up as a ``kind`` problem instead of passing silently.
+    """
     problems: list[str] = []
-    raw_keys = set(raw)
     claimed: set[str] = set()
 
     for name, field in model.model_fields.items():
         names = _wire_names(name, field)
         claimed.update(names)
-        present = next((n for n in names if n in raw_keys), None)
+        present = next((n for n in names if n in raw), None)
         label = f"{path}{names[0]}"
         if present is None:
             problems.append(f"missing: {label} (model declares it, server did not send it)")
             continue
 
         kind, nested = _unwrap(field.annotation)
-        value = raw[present]
+        actual = _KINDS.get(type(raw[present]), "scalar")
         if nested is None:
             continue
-        if _raw_kind(value) != kind:
-            problems.append(f"kind: {label} is {_raw_kind(value)} on the server, model expects {kind}")
+        if actual != kind:
+            problems.append(f"kind: {label} is {actual} on the server, model expects {kind}")
             continue
-        merged = _merge_rows(value)
-        if not merged:
-            continue  # 빈 배열·빈 객체는 키를 판정할 수 없다
-        problems.extend(response_shape_diff(merged, nested, f"{label}."))
+        rows = raw[present] if kind == "array" else [raw[present]]
+        keys = {key: None for row in rows for key in row}
+        if keys:  # 빈 배열·빈 객체는 키를 판정할 수 없다
+            problems.extend(response_shape_diff(keys, nested, f"{label}."))
 
-    for key in sorted(raw_keys - claimed):
+    for key in sorted(set(raw) - claimed):
         problems.append(f"extra: {path}{key} (server sent it, model does not declare it)")
     return problems
 
