@@ -13,6 +13,7 @@ from cluefin_openapi.nhplug._http_client import HttpClient
 from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES
 
 from ._integration_helpers import real_account_only, skip_if_env_blocked
+from ._response_shape import assert_matches_spec
 
 TEST_IEM_CD = "AAPL"  # 애플
 TEST_SYMBOL_CD = "SPX"  # S&P 500 지수
@@ -30,6 +31,12 @@ def test_current(client: HttpClient):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    # 실서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assert_matches_spec(
+        client,
+        response,
+        ignore=("Output_0.kor_name",),
+    )
 
 
 @pytest.mark.integration
@@ -46,6 +53,15 @@ def test_execution_trend(client: HttpClient):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    # 실서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assert_matches_spec(
+        client,
+        response,
+        ignore=(
+            "Output_0.nextbutton",
+            "Output_0.ctsz18",
+        ),
+    )
 
 
 @pytest.mark.integration
@@ -67,6 +83,15 @@ def test_period(client: HttpClient):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    # 실서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assert_matches_spec(
+        client,
+        response,
+        ignore=(
+            "Output_0.kor_name",
+            "Output_0.ctsz16",
+        ),
+    )
 
 
 @pytest.mark.integration
@@ -86,3 +111,16 @@ def test_symbol_index_fx_period(client: HttpClient):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    # 실서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assert_matches_spec(
+        client,
+        response,
+        ignore=(
+            "Output_0.hts_kor_isnm",
+            "Output_0.localtime",
+            "Output_0.bsop_date",
+            "Output_0.base_ptr",
+            "Output_0.ctsz30",
+            "Output_0.lasttickcount",
+        ),
+    )

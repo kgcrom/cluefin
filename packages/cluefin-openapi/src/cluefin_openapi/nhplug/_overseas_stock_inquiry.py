@@ -1,8 +1,8 @@
 from typing import Any, Dict, Literal, Optional
 
-from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
+from cluefin_openapi.nhplug._exceptions import raise_for_rsp_cd
 from cluefin_openapi.nhplug._http_client import HttpClient
-from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES, NHPlugHttpHeader, NHPlugHttpResponse
+from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
 from cluefin_openapi.nhplug._overseas_stock_inquiry_types import (
     OverseasStockInquiryBalance,
     OverseasStockInquiryBuyableAmount,
@@ -63,16 +63,6 @@ class OverseasStockInquiry:
 
     def __init__(self, client: HttpClient):
         self.client = client
-
-    def _check_response_error(self, response_data: dict) -> None:
-        """HTTP 200 이어도 body rsp_cd 가 실패일 수 있으므로 여기서 확인한다."""
-        rsp_cd = response_data.get("rsp_cd")
-        if rsp_cd is not None and rsp_cd not in SUCCESS_RSP_CODES:
-            raise NHPlugAPIError(
-                f"API error {rsp_cd}: {response_data.get('rsp_msg', '')}",
-                status_code=200,
-                response_data=response_data,
-            )
 
     @staticmethod
     def _drop_none(body: Dict[str, Any]) -> Dict[str, Any]:
@@ -139,7 +129,7 @@ class OverseasStockInquiry:
 
         response = self.client.post("/gbstock/inquiry/v1/buyableAmount", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockInquiryBuyableAmount.model_validate(data))
 
@@ -152,6 +142,7 @@ class OverseasStockInquiry:
         ost_cns_dit: Literal["0", "1", "2"],
         iem_cd: Optional[str] = None,
         orr_no: Optional[int] = None,
+        ove_qty_dit_cd: Optional[str] = None,
         cts: Optional[str] = None,
     ) -> NHPlugHttpResponse[OverseasStockInquiryUnexecuted]:
         """해외주식 주문체결내역 (`POST /gbstock/inquiry/v1/unexecuted`).
@@ -169,6 +160,7 @@ class OverseasStockInquiry:
             ost_cns_dit: 체결구분 (길이 1) (0.전체 1.체결 2.미체결)
             iem_cd: 티커종목코드 (길이 12). 예: 미국주식 APPLE인 경우 AAPL
             orr_no: 주문번호 (길이 10)
+            ove_qty_dit_cd: 해외주식수량구분코드 (길이 1). 스펙 260911 추가, 허용값은 문서에 없다.
             cts: 연속거래키. 이전 응답 헤더의 `cts` 값을 그대로 전달하면 다음 페이지를 받는다.
 
         Returns:
@@ -183,12 +175,13 @@ class OverseasStockInquiry:
                 "ost_cns_dit": ost_cns_dit,
                 "iem_cd": iem_cd,
                 "orr_no": orr_no,
+                "ove_qty_dit_cd": ove_qty_dit_cd,
             }
         )
 
         response = self.client.post("/gbstock/inquiry/v1/unexecuted", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockInquiryUnexecuted.model_validate(data))
 
@@ -232,7 +225,7 @@ class OverseasStockInquiry:
 
         response = self.client.post("/gbstock/inquiry/v1/balance", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockInquiryBalance.model_validate(data))
 
@@ -291,7 +284,7 @@ class OverseasStockInquiry:
 
         response = self.client.post("/gbstock/inquiry/v1/reservedInquiry", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockInquiryReservedInquiry.model_validate(data))
 
@@ -340,7 +333,7 @@ class OverseasStockInquiry:
 
         response = self.client.post("/gbstock/inquiry/v1/dailyTransaction", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockInquiryDailyTransaction.model_validate(data))
 
@@ -391,7 +384,7 @@ class OverseasStockInquiry:
 
         response = self.client.post("/gbstock/inquiry/v1/periodPnl", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockInquiryPeriodPnl.model_validate(data))
 
@@ -438,7 +431,7 @@ class OverseasStockInquiry:
 
         response = self.client.post("/gbstock/inquiry/v1/periodPnlDetail", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockInquiryPeriodPnlDetail.model_validate(data))
 
@@ -464,6 +457,6 @@ class OverseasStockInquiry:
 
         response = self.client.post("/gbstock/inquiry/v1/margin", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockInquiryMargin.model_validate(data))

@@ -11,7 +11,10 @@ import {
   NhplugApiError,
   NhplugAuthenticationError,
   NhplugAuthorizationError,
+  NhplugMockUnsupportedError,
   NhplugNetworkError,
+  NhplugNoDataError,
+  NhplugNotBusinessDayError,
   NhplugRateLimitError,
   NhplugServerError,
   NhplugTimeoutError,
@@ -32,12 +35,36 @@ import { NhplugOverseasStockQuote } from './overseas-stock-quote.js';
 /**
  * body `rsp_cd` 중 성공을 뜻하는 코드.
  *
- * 문서상 성공은 00000 뿐이지만, 모의투자 서버는 일부 조회 API 성공에
- * XA102("모의투자 조회가 완료되었습니다")를 반환한다 (2026-08-22 파이썬 실측).
+ * 문서상 성공은 00000 뿐이지만 실서버는 API 마다 다른 성공 코드를 준다.
  * 00000 만 성공으로 보면 정상 응답이 오탐되므로, 새 성공 코드가 실측되면 여기에 추가한다.
+ * - XA102 "모의투자 조회가 완료되었습니다" — 모의 조회 (2026-08-22 파이썬 실측)
+ * - 00166 "조회가 완료되었습니다" — 운영 계좌 조회 대부분 (2026-09-27 실측)
+ * - 00221 "계좌/종목별 주문가능수량/금액 조회가 완료되었습니다" — 운영 buyableQuantity (2026-09-27 실측)
+ *
  * 파이썬 `_model.SUCCESS_RSP_CODES` 와 같은 값을 유지할 것.
  */
-export const SUCCESS_RSP_CODES: readonly string[] = ['00000', 'XA102'];
+export const SUCCESS_RSP_CODES: readonly string[] = ['00000', 'XA102', '00166', '00221'];
+
+// HTTP 200 + body rsp_cd 실패 중 뜻이 확인된 코드. 모르는 코드는 NhplugApiError 로 던진다.
+// 새 코드가 실측되면 해당 갈래에 추가하고, 파이썬 `_exceptions.py` 의 같은 이름 튜플도 맞출 것.
+
+/** 조회 결과 0건 → `NhplugNoDataError` (2026-09-27 운영, 잔고·내역이 없는 계좌). */
+export const NO_DATA_RSP_CODES: readonly string[] = [
+  '13578', // 조회할 내역이 없습니다 — 국내 rightsScheduled, 해외 unexecuted 등
+  '11512', // 데이터가 존재하지 않습니다 — 국내 dailyOrderExecution
+  '16935', // 해당 잔고가 없습니다 — 국내 sellableQuantity
+];
+/** 모의투자 미제공 업무 → `NhplugMockUnsupportedError` (2026-09-27 모의, HTTP 200). */
+export const MOCK_UNSUPPORTED_RSP_CODES: readonly string[] = ['19999'];
+/** 영업일 아님 → `NhplugNotBusinessDayError` (2026-08-22 토요일 모의). */
+export const NOT_BUSINESS_DAY_RSP_CODES: readonly string[] = ['14100'];
+
+const rspCdErrorType = (rspCd: string): typeof NhplugApiError => {
+  if (NO_DATA_RSP_CODES.includes(rspCd)) return NhplugNoDataError;
+  if (MOCK_UNSUPPORTED_RSP_CODES.includes(rspCd)) return NhplugMockUnsupportedError;
+  if (NOT_BUSINESS_DAY_RSP_CODES.includes(rspCd)) return NhplugNotBusinessDayError;
+  return NhplugApiError;
+};
 
 export interface NhplugClientOptions {
   token: string;
@@ -213,15 +240,17 @@ export class NhplugClient {
 
       const body = Object.fromEntries(
         Object.entries(definition.bodyMap)
-          .map(([apiKey, inputKey]) => {
+          .map(([apiKey, inputKey]): [string, unknown] | null => {
             // eslint-disable-next-line security/detect-object-injection -- inputKey comes from internal endpoint metadata.
             const value = parsedInput[inputKey];
             if (value === undefined || value === null) {
               return null;
             }
-            return [apiKey, stringifyParam(value)];
+            // 값을 받은 그대로 보낸다 — 스펙이 integer/number 인 필드(req_cnt·orr_qty·orr_pr 등)를 문자열로
+            // 보내면 서버가 IGW40011("길이나 data type을 확인하세요")로 거부한다 (운영 2026-09-27 실측).
+            return [apiKey, value];
           })
-          .filter((entry): entry is [string, string] => entry !== null),
+          .filter((entry): entry is [string, unknown] => entry !== null),
       );
 
       // 연속조회: 이전 응답 헤더의 `cts` 값을 그대로 넘기면 다음 페이지를 받는다.
@@ -253,7 +282,8 @@ export class NhplugClient {
       // HTTP 200 이어도 body `rsp_cd` 가 실패일 수 있으므로 여기서 확인한다.
       const rspCd = envelope.rsp_cd;
       if (rspCd !== undefined && !SUCCESS_RSP_CODES.includes(rspCd)) {
-        throw new NhplugApiError(`API error ${rspCd}: ${envelope.rsp_msg ?? ''}`, {
+        const ErrorType = rspCdErrorType(rspCd);
+        throw new ErrorType(`API error ${rspCd}: ${envelope.rsp_msg ?? ''}`, {
           statusCode: response.status,
           responseData: rawJson,
           requestContext: { path: definition.path },

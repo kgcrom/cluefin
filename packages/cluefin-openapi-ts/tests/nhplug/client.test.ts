@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { NhplugApiError, NhplugAuthenticationError } from '../../src/core/errors';
+import {
+  NhplugApiError,
+  NhplugAuthenticationError,
+  NhplugMockUnsupportedError,
+  NhplugNoDataError,
+  NhplugNotBusinessDayError,
+} from '../../src/core/errors';
 import { silentLogger } from '../../src/core/logger';
 import type { NhplugEndpointDefinition } from '../../src/core/types';
 import { NhplugClient } from '../../src/nhplug/client';
@@ -64,6 +70,16 @@ describe('NhplugClient.invokeEndpoint', () => {
     expect(calls[0]?.url).toBe('https://moapi.nhplug.com:8443/n2/acctinfo');
     expect(calls[0]?.init.method).toBe('POST');
     expect(readBody(calls[0])).toEqual({ Input_0: { actNo: '12345678901' } });
+  });
+
+  it('keeps numeric params as JSON numbers', async () => {
+    // 스펙 integer 필드(req_cnt 등)를 문자열로 보내면 서버가 IGW40011 로 거부한다 (운영 2026-09-27)
+    const { calls, fetchMock } = createFetchMock(() => jsonResponse({ rsp_cd: '00000' }));
+    const client = createClient(fetchMock);
+
+    await client.invokeEndpoint(endpoint, { actNo: '12345678901', ordDt: 10 });
+
+    expect(readBody(calls[0])).toEqual({ Input_0: { actNo: '12345678901', ordDt: 10 } });
   });
 
   it('sends the NH auth headers', async () => {
@@ -140,6 +156,35 @@ describe('NhplugClient.invokeEndpoint', () => {
     );
   });
 
+  it.each([
+    ['13578', '조회할 내역이 없습니다.', NhplugNoDataError],
+    ['11512', '데이터가 존재하지 않습니다.', NhplugNoDataError],
+    ['16935', '해당 잔고가 없습니다.', NhplugNoDataError],
+    ['19999', '모의투자에서는 해당업무가 제공되지 않습니다.', NhplugMockUnsupportedError],
+    ['14100', '모의투자 영업일이 아닙니다.', NhplugNotBusinessDayError],
+  ])('raises a dedicated error for known rsp_cd %s', async (rspCd, rspMsg, ErrorType) => {
+    const { fetchMock } = createFetchMock(() => jsonResponse({ rsp_cd: rspCd, rsp_msg: rspMsg }));
+
+    const error = await createClient(fetchMock)
+      .invokeEndpoint(endpoint, { actNo: '1' })
+      .catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(ErrorType);
+    // 전용 에러도 NhplugApiError 하위라 기존 instanceof 검사가 그대로 잡는다.
+    expect(error).toBeInstanceOf(NhplugApiError);
+    expect(error).toMatchObject({ errorCode: rspCd, statusCode: 200, message: `API error ${rspCd}: ${rspMsg}` });
+  });
+
+  it('raises the base NhplugApiError for an unknown rsp_cd', async () => {
+    const { fetchMock } = createFetchMock(() => jsonResponse({ rsp_cd: '40010', rsp_msg: '계좌번호 오류' }));
+
+    const error = await createClient(fetchMock)
+      .invokeEndpoint(endpoint, { actNo: '1' })
+      .catch((e: unknown) => e);
+
+    expect((error as Error).constructor).toBe(NhplugApiError);
+  });
+
   it('calls fetch exactly once for a failing rsp_cd (no HTTP-level retry)', async () => {
     const { calls, fetchMock } = createFetchMock(() => jsonResponse({ rsp_cd: '40010', rsp_msg: '계좌번호 오류' }));
 
@@ -162,6 +207,17 @@ describe('NhplugClient.invokeEndpoint', () => {
       rspMsg: '모의투자 조회가 완료되었습니다',
       output0: [{ actNo: '1' }],
     });
+  });
+
+  it.each([
+    ['00166', '조회가 완료되었습니다.'],
+    ['00221', '계좌/종목별 주문가능수량/금액 조회가 완료되었습니다.'],
+  ])('treats live success code %s as success (운영 조회 완료 응답)', async (rspCd, rspMsg) => {
+    const { fetchMock } = createFetchMock(() => jsonResponse({ rsp_cd: rspCd, rsp_msg: rspMsg, Output_0: [] }));
+
+    const result = await createClient(fetchMock).invokeEndpoint(endpoint, { actNo: '1' });
+
+    expect(result.body).toEqual({ rspCd, rspMsg, output0: [] });
   });
 
   it('maps transport errors onto the Nhplug error family', async () => {

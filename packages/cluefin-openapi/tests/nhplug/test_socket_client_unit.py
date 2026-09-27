@@ -39,6 +39,21 @@ class TestSocketClientInit:
         client = SocketClient(token="t", env="dev", market="gb")
         assert client._ws_url == SocketClient.WS_URL_DEV
 
+    @pytest.mark.parametrize(
+        ("url", "expected"),
+        [
+            (SocketClient.WS_URL_PROD_KR, ("api.nhplug.com", 7070, "/websocket", True)),
+            (SocketClient.WS_URL_PROD_GB, ("api.nhplug.com", 7080, "/websocket", True)),
+            (SocketClient.WS_URL_DEV, ("moapi.nhplug.com", 17070, "/websocket", True)),
+        ],
+    )
+    def test_urls_carry_the_required_websocket_path(self, url, expected):
+        # 경로 /websocket 이 없으면 서버가 업그레이드하지 않는다 (운영·모의 2026-09-27 실측, 스펙 protocol.connection)
+        assert SocketClient._parse_ws_url(url) == expected
+
+    def test_parse_ws_url_defaults(self):
+        assert SocketClient._parse_ws_url("ws://localhost") == ("localhost", 80, "/", False)
+
 
 class TestParseMessage:
     def test_parses_data_message(self, socket_client):

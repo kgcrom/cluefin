@@ -1,9 +1,9 @@
 from typing import Optional
 
 from cluefin_openapi.nhplug._common_types import AccountList, WebsocketCloseResponse
-from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
+from cluefin_openapi.nhplug._exceptions import raise_for_rsp_cd
 from cluefin_openapi.nhplug._http_client import HttpClient
-from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES, NHPlugHttpHeader, NHPlugHttpResponse
+from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
 
 
 class Common:
@@ -14,16 +14,6 @@ class Common:
 
     def __init__(self, client: HttpClient):
         self.client = client
-
-    def _check_response_error(self, response_data: dict) -> None:
-        """HTTP 200 이어도 body rsp_cd 가 실패일 수 있으므로 여기서 확인한다."""
-        rsp_cd = response_data.get("rsp_cd")
-        if rsp_cd is not None and rsp_cd not in SUCCESS_RSP_CODES:
-            raise NHPlugAPIError(
-                f"API error {rsp_cd}: {response_data.get('rsp_msg', '')}",
-                status_code=200,
-                response_data=response_data,
-            )
 
     def get_account_list(self, cts: Optional[str] = None) -> NHPlugHttpResponse[AccountList]:
         """계좌 목록 조회 (`POST /n2/acctinfo`).
@@ -37,7 +27,7 @@ class Common:
         """
         response = self.client.post("/n2/acctinfo", cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         body = AccountList.model_validate(data)
         return NHPlugHttpResponse(header=header, body=body)
@@ -49,7 +39,7 @@ class Common:
         """
         response = self.client.post("/websocket/close/session")
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         body = WebsocketCloseResponse.model_validate(data)
         return NHPlugHttpResponse(header=header, body=body)

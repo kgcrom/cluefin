@@ -27,6 +27,7 @@ export const krstockQuoteEndpoints: NhplugEndpointDefinition[] = [
       market_cd: 'marketCd',
       iem_cd: 'iemCd',
       array_cnt: 'arrayCnt',
+      view_main_yn: 'viewMainYn',
     },
     supportsCts: false,
     params: [
@@ -42,6 +43,10 @@ export const krstockQuoteEndpoints: NhplugEndpointDefinition[] = [
         name: 'arrayCnt',
         required: false,
       },
+      {
+        name: 'viewMainYn',
+        required: false,
+      },
     ],
   },
   {
@@ -51,6 +56,7 @@ export const krstockQuoteEndpoints: NhplugEndpointDefinition[] = [
       market_cd: 'marketCd',
       iem_cd: 'iemCd',
       array_cnt: 'arrayCnt',
+      view_main_yn: 'viewMainYn',
     },
     supportsCts: false,
     params: [
@@ -64,6 +70,10 @@ export const krstockQuoteEndpoints: NhplugEndpointDefinition[] = [
       },
       {
         name: 'arrayCnt',
+        required: false,
+      },
+      {
+        name: 'viewMainYn',
         required: false,
       },
     ],
@@ -111,6 +121,7 @@ export const krstockQuoteEndpoints: NhplugEndpointDefinition[] = [
       sur_bf_end_time: 'surBfEndTime',
       out1_scale_change: 'out1ScaleChange',
       out2_scale_change: 'out2ScaleChange',
+      view_main_yn: 'viewMainYn',
     },
     supportsCts: false,
     params: [
@@ -172,6 +183,10 @@ export const krstockQuoteEndpoints: NhplugEndpointDefinition[] = [
       },
       {
         name: 'out2ScaleChange',
+        required: false,
+      },
+      {
+        name: 'viewMainYn',
         required: false,
       },
     ],

@@ -4,11 +4,13 @@ import { BaseWebSocketClient, type SubscriptionType, type WebSocketMessage } fro
 /**
  * WebSocket URLs (정본은 각 자산군 openapi.json 의 `x-environments`).
  *
- * 운영은 국내(7070)/해외(7080) 주소가 갈리고, 모의투자는 단일 주소(17070)다.
+ * 운영은 국내(7070)/해외(7080) 주소가 갈리고, 모의투자는 단일 주소(17070)다. 7080 은 해외 **시세**만 —
+ * 체결·주문 통보(d0·d1 등)는 해외도 7070 이다 (7080 이면 WSS10006).
+ * 경로 `/websocket` 이 필수다. 호스트:포트만으로는 서버가 업그레이드하지 않는다 (운영·모의 2026-09-27 실측).
  */
-const WS_URL_PROD_KR = 'wss://api.nhplug.com:7070';
-const WS_URL_PROD_GB = 'wss://api.nhplug.com:7080';
-const WS_URL_DEV = 'wss://moapi.nhplug.com:17070';
+const WS_URL_PROD_KR = 'wss://api.nhplug.com:7070/websocket';
+const WS_URL_PROD_GB = 'wss://api.nhplug.com:7080/websocket';
+const WS_URL_DEV = 'wss://moapi.nhplug.com:17070/websocket';
 
 /** 접속 대상 시장. `kr` = 국내, `gb` = 해외(운영 전용 주소). */
 export type NhplugMarket = 'kr' | 'gb';

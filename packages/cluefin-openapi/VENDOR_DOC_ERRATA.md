@@ -153,4 +153,96 @@ ka10023 `stk_cnd`(1, `11`~`20`), ka10030 `mang_stk_incls`·`trde_qty_tp`·`trde_
 
 ## NH PLUG
 
-아직 대조 전이다. 그동안의 실측 기록은 `AGENTS.md` 의 NH PLUG 절에 있다 — 대조할 때 이 절로 옮긴다.
+문서 출처: `https://www.nhplug.com/openapi-docs/<slug>/openapi.json` (krstock 기준 "API명세서 260911").
+길이 기준은 그 스냅샷 `tests/nhplug/spec_lengths.json` — 확인된 초과는 그 파일의 `known_exceed` 와 아래 "길이" 에 함께 적는다.
+모의(moapi)만 확인한 항목은 "모의" 로 표시한다. 테스트는 모의에서만 `mock_omits`/`nhplugMockOmits` 로 건너뛰고
+운영(`NHPLUG_ENV=prod`)에서는 그대로 검사한다 — 운영에서 확인되면 이 표를 고친다.
+
+### 요청 파라미터
+
+| API | 문서 | 실서버 | 실측 | 코드 |
+|---|---|---|---|---|
+| 주식잔고조회 `balance`·잔고조회_실현손익 `realizedPnl`·투자계좌자산현황 `assetStatus` | `aly_qut_cd`(적용시세코드) **필수** (260911 추가) | 생략해도 `00000`, 1·2 와 같은 형태 (보유 0 계좌라 값 차이는 미확인) | 2026-09-27 모의 | 선택 인자, 값이 있을 때만 전송 |
+| 주식현재가 체결 `currentExecution`·일자별 `currentDaily`·기간별 `period` | `view_main_yn`(정규장시세보기여부) **필수** (260911 추가) | 생략 = `N`(전체장)과 같은 값. `Y` 는 정규장 값만 (005930 일자별 종가·거래량이 달라짐) | 2026-09-27 운영 | 선택 인자, 값이 있을 때만 전송 |
+| 시세 전 API (`/krstock/quote/*`, `/gbstock/quote/*`) | 문서 머리말은 "모의투자·운영 모두 제공" | 모의는 `IGW40023`·`IGW40019` 로 거부. API 별 `x-available-env` 는 `live` 로 맞게 적혀 있다 | 2026-08-22·09-23 | 운영 전용 테스트 |
+| 국내 주문 호가유형 `nmn_pr_tp_cd` | 현금매수만 `81.시간외단일가` 가 목록에 없다 (현금매도·신용매수·신용매도·매수가능수량에는 있음) | 미확인 (주문 실호출 금지) | 2026-09-27 정적 | 문서끼리 불일치라 81 유지 |
+| 매수가능수량 `buyableQuantity` `cfd_lon_cd` | `01~04` 만 (신용매수·예약주문에는 `10.매입자금대출` 도 있음) | 미확인 | 2026-09-27 정적 | 문서끼리 불일치라 10 유지 |
+
+### 응답 필드
+
+| API | 문서 | 실서버 | 실측 | 코드 |
+|---|---|---|---|---|
+| 주식현재가 시간외일자별주가 `currentAfterHoursDaily` | 필드 **이름이 설명과 어긋남** — Output_0 `qry_date`(일자)·`qry_time`(시가)·`shrn_iscd`(고가)·`hts_kor_isnm`(저가)·`stck_prpr`(락구분)·`prdy_vrss_sign`(Filler), Output_1 `prdy_ctrt`(현재가)·`prdy_vol`(Filler) | 설명에 맞는 이름: Output_0 `bsop_date`(YYMMDD)·`stck_oprc`·`stck_hgpr`·`stck_lwpr`·`nh_rights`, Output_1 `stck_prpr`·`acml_vol`·`acml_tr_pbmn`. 스펙 이름은 한 번도 안 옴 | 2026-09-27 운영 | 실서버 이름으로 교체 |
+| 주식현재가 체결 `currentExecution` | Output_0 `uncrate` | `unc_rate` | 2026-09-27 운영 | `unc_rate` |
+| 주식현재가 시세 `currentPrice` | `main_cls_*`·`market_status` 는 "KRX PRE/AFTER", `nxt_vi_antc_*` 는 "UNT 조회 시" | 조건과 무관하게 KRX·UNT 모두 키를 보냄. `nxt_vi_*` 는 KRX 에서 0 | 2026-09-27 운영 (휴장일) | 모델에 추가 |
+
+실서버가 보내지 않는 스펙 필드 (운영). 채움·연속조회용으로 보이는 이름이 대부분이다. 모델에 두고 테스트 `ignore`:
+
+| API | 생략 필드 | 실측 |
+|---|---|---|
+| `currentPrice` | Output_0 `filler` | 2026-09-27 운영 |
+| `currentExecution` | Output_0 `filler`, Output_1 `filler`·`ctsz20`·`nextbutton` | 2026-09-27 운영 |
+| `currentDaily` | Output_0 `high_date`·`low_date`·`filler`·`next_key`·`nextbutton` | 2026-09-27 운영 |
+| 주식현재가 투자자 `currentInvestor` | Output_0 `jasaz10`·`filler` | 2026-09-27 운영 |
+| `period` | Output_0 `ctsz30`, Output_1 `vol_prtt_rate` | 2026-09-27 운영 |
+| ETF 구성종목 `etfComponents` | Output_0 `filler` | 2026-09-27 운영 |
+| 해외주식 현재가상세 `gbstock current` | Output_0 `kor_name` — 대신 `iem_nm` 을 보낸다 (2026-08-22 부터, 두 필드 모두 모델에 있음) | 2026-09-27 운영 |
+| 해외주식 체결추이 `executionTrend` | Output_0 `nextbutton`·`ctsz18` | 2026-09-27 운영 |
+| 해외주식 기간별시세 `gbstock period` | Output_0 `kor_name`(→ `iem_nm`)·`ctsz16` | 2026-09-27 운영 |
+| 해외 기간별시세(지수·환율) `symbolIndexFxPeriod` | Output_0 `hts_kor_isnm`(→ `iem_nm`)·`localtime`·`bsop_date`·`base_ptr`·`ctsz30`·`lasttickcount` | 2026-09-27 운영, SPX |
+| 계좌 목록 `/n2/acctinfo` | `cust_no` | 2026-09-27 운영·모의 |
+| `assetStatus` | Output_0 `cus_fnm`·`rnm_cfm_no`·`ctc_tp_cd_nm`·`act_amn_tab_cd`·`act_pdt_llf_cd`·`amn_emp_fnm` | 2026-09-27 운영·모의 |
+| `balance` | Output_0 `fc_dca`·`fc_mgg_amt`·`fc_orr_pbl_amt`·`fnn_amt`·`rit_eal_amt`·`orr_pbl_amt`·`act_no` | 2026-09-27 운영·모의 |
+| 매수가능수량 `buyableQuantity` | Output_0 `sll_ctc_amt(1)`·`byn_ctc_amt1`·`sdr_xps(1)`·`ost_byn_ctc_amt`·`byn_ny_cns_orr_amt`·`int_rt`·`orr_pr`·`rp_eal_amt`·`ny_stl_qty` | 2026-09-27 운영·모의 |
+| `realizedPnl` | Output_0 `cus_fnm`·`rnm_cfm_no`·`act_atv_tp_dtl_cd`·`act_amn_tab_cd`·`act_pdt_llf_cd` | 2026-09-27 운영·모의 |
+| 실현손익일별합산 `dailyPnl` | Output_0 `act_fnm` | 2026-09-27 운영·모의 |
+| 종목별실현손익 `tradingPnl` | Output_0 `iem_cd`·`byn_uit_pr`·`sll_uit_pr`·`fee_sum`·`tax_sum` | 2026-09-27 운영·모의 |
+| 주식예약주문조회 `reservedInquiry` | Output_0 `tab_nm` | 2026-09-27 운영 (모의 미제공) |
+
+모의 서버만 보내지 않는 스펙 필드:
+
+모의 서버는 아래 필드를 키째 생략한다. 모델에서 지우지 않고, 테스트는 `mock_omits` 로 운영에서만 검사한다.
+운영에서 확인하면 위 표로 옮긴다 — 계좌 조회 대부분은 2026-09-27 운영 실측으로 옮겼다.
+
+| API | 생략 필드 | 실측 |
+|---|---|---|
+| `assetStatus` | Output_0 `ima_wtm` — 운영은 보낸다 | 2026-09-27 모의·운영 |
+| 매도가능수량 `sellableQuantity` | Output_0 `cus_fnm`·`ost_dit_cd`·`cfd_lon_cd(_nm)`·`ttn_tp_cd(_nm)`·`sll_ny_stl_qty`·`byn_ny_stl_qty`·`phs_uit_pr` | 2026-09-27 모의 (운영은 잔고 없음 `16935` 이라 미확인) |
+| 해외주식 일별거래내역 `dailyTransaction` | Output_1 `cus_fnm`·`rnm_cfm_no` | 2026-09-27 모의 (운영은 빈 결과 `13578` 이라 미확인) |
+| 해외주식 기간손익 `periodPnl` | Output_0 `act_fnm` | 2026-09-27 모의 (운영은 빈 결과 `13578` 이라 미확인) |
+
+### 서버 동작 (문서에 없는 것)
+
+- 응답 최상위에 스펙의 `message` 블록이 **키째 없다** (null 도 아님). 결과는 `rsp_cd`/`rsp_msg` 로 온다 (2026-09-27 모의).
+- 모의 조회 성공 코드에 `XA102`("모의투자 조회가 완료되었습니다")가 섞인다 (2026-08-22). 문서의 성공은 `00000` 뿐.
+- 운영 계좌 조회는 성공에 `00166`("조회가 완료되었습니다")을 준다 — 국내 `assetStatus`·`balance`·`realizedPnl`·
+  `dailyPnl`·`tradingPnl`·`integratedMargin`·`rightsHeld`·`reservedInquiry`, 해외 `balance`·`buyableAmount`·`margin`.
+  국내 `buyableQuantity` 는 `00221`("계좌/종목별 주문가능수량/금액 조회가 완료되었습니다") (2026-09-27 운영).
+- **빈 결과는 성공 코드가 아니라 실패 코드로 온다** (HTTP 200, 2026-09-27 운영 — 잔고·거래내역이 없는 계좌).
+  `13578`("조회할 내역이 없습니다") — 국내 `rightsScheduled`, 해외 `unexecuted`·`reservedInquiry`·`dailyTransaction`·
+  `periodPnl`·`periodPnlDetail`. `11512`("데이터가 존재하지 않습니다") — 국내 `dailyOrderExecution`.
+  `16935`("해당 잔고가 없습니다") — 국내 `sellableQuantity`. 클라이언트는 `NHPlugNoDataError` 로 구분해 올린다.
+- 모의 미제공 업무의 `19999` 도 HTTP 200 본문으로 온다 (`integratedMargin`·`rightsHeld`, 2026-09-27 모의).
+- 모의 서버는 연속 호출에 `IGW42903`(HTTP 429, "API 호출 거래건수를 초과")을 준다. 1.5초 간격이면 통과 (2026-09-27).
+- **WebSocket 은 경로 `/websocket` 이 있어야 업그레이드된다** (문서 `protocol.connection` 에 적혀 있음).
+  `wss://host:port/` 로는 응답이 없고 `/websocket` 만 `101` — 운영 7070·7080, 모의 17070 모두 (2026-09-27).
+  Python·TS 소켓 클라이언트가 경로 없이 붙고 있어 **연결 자체가 안 됐다** — 문서 오류가 아니라 코드 버그, 수정.
+  문서의 "Python OpenSSL 기본 검증이 중간 CA 누락으로 실패" 는 macOS·Python 3.10 에서 재현되지 않았다.
+- 접근토큰폐기 `/oauth2/revoke` 응답: 필드 표는 `error_code`·`error_description`, 예시는 `code`·`message`.
+  성공은 예시 쪽으로 온다 — 모델은 네 필드를 모두 선택으로 둔다.
+- 웹소켓 세션해제 `/websocket/close/session`: 표는 `rsp_msg` 길이 2 — 실제 메시지는 한글 문장("연결된 세션이 존재하지 않습니다").
+- **요청 필드 타입을 엄격히 검사한다.** 스펙이 integer/number 인 필드를 JSON 문자열로 보내면 `IGW40011`
+  ("req_cnt 길이나 data type을 확인하세요", HTTP 400)로 거부한다 (해외 체결추이 `req_cnt`, 운영 2026-09-27).
+  TS 클라이언트가 모든 값을 문자열로 바꿔 보내고 있었다 — 값을 받은 그대로 보내도록 수정.
+
+### 길이
+
+2026-09-27 모의 조회(국내 12·해외 8)·계좌 목록과 운영 해외 시세 4종에서는 스펙 길이를 넘는 값이 없었다.
+
+| API | 필드 | 문서 길이 | 실제 | 실측 |
+|---|---|---|---|---|
+| 국내 시세 전 API (`/krstock/quote/*`) | 등락부호 `*_sign` (예: `prdy_vrss_sign`·`pre_prdy_sign`) | 1 (코드 1~9) | `"1E"` 처럼 2자리, 또는 빈 문자열 | 2026-09-27 운영 (휴장일) |
+| 국내주식 시간외현재가 `afterHoursCurrent` | Output_0 `mkop_cls_code` | 1 | 휴장일에 호출마다 다른 쓰레기 바이트 (`Z`·`-`·`t`·`\`·U+FFFD) | 2026-09-27 운영 |
+
+부호 필드는 길이 1 인 `*sign*` 전부를 `known_exceed` 에 올렸다 — 지금 빈 값인 필드도 같은 표기로 올 수 있어서다.
+`"1E"` 의 의미는 문서에 없다 (평일 장중 재확인 필요).

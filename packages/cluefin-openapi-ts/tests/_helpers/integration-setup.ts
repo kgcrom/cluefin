@@ -16,7 +16,12 @@ import {
   kiwoomTokenCacheFileName,
 } from '../../src/kiwoom/token-cache';
 import { NhplugAuth } from '../../src/nhplug/auth';
-import { NhplugClient, SUCCESS_RSP_CODES } from '../../src/nhplug/client';
+import {
+  NhplugClient,
+  NO_DATA_RSP_CODES,
+  NOT_BUSINESS_DAY_RSP_CODES,
+  SUCCESS_RSP_CODES,
+} from '../../src/nhplug/client';
 import {
   FileTokenCacheStore as NhplugFileTokenCacheStore,
   nhplugTokenCacheFileName,
@@ -189,6 +194,14 @@ export const runNhplugIntegration = runIntegration && !!process.env.NHPLUG_APP_K
  */
 export const runNhplugLiveOnlyIntegration = runNhplugIntegration && NHPLUG_ENV === 'prod';
 
+/**
+ * 모의 서버가 보내지 않는 스펙 필드 — `assertNhplugMatchesSpec` 의 `ignore` 에 넘긴다.
+ *
+ * 파이썬 `_integration_helpers.mock_omits` 와 같은 의미다. 운영에서 보내는지는 확인하지 못해
+ * 스키마에서 지우지 않고, 운영(`NHPLUG_ENV=prod`)에서는 그대로 검사한다 (VENDOR_DOC_ERRATA.md).
+ */
+export const nhplugMockOmits = (...fields: string[]): string[] => (NHPLUG_ENV === 'prod' ? [] : fields);
+
 /** 계좌번호를 직접 지정하고 싶을 때 쓰는 선택적 오버라이드. 없으면 `/n2/acctinfo` 로 찾는다. */
 export const NHPLUG_ACCOUNT_NO = process.env.NHPLUG_ACCOUNT_NO ?? '';
 
@@ -200,11 +213,11 @@ export const NHPLUG_US_NATION_CD = '200'; // 미국
 
 /**
  * 장 운영시간·영업일·계좌 상태 때문에 "지금은" 검증할 수 없다는 뜻의 rsp_cd.
+ * 클라이언트의 분류를 그대로 쓴다 — 영업일 아님, 그리고 빈 결과(잔고·내역이 없는 계좌에서는
+ * 응답 형태를 검증할 수 없다. 데이터가 생기면 코드 수정 없이 검증이 재개된다).
  * 파이썬 `_integration_helpers.ENV_BLOCKED_CODES` 와 같은 값을 유지할 것.
  */
-const NHPLUG_ENV_BLOCKED_CODES: readonly string[] = [
-  '14100', // 모의투자 영업일이 아닙니다 (2026-08-22 실측)
-];
+const NHPLUG_ENV_BLOCKED_CODES: readonly string[] = [...NOT_BUSINESS_DAY_RSP_CODES, ...NO_DATA_RSP_CODES];
 
 /**
  * NH PLUG 클라이언트 (프로세스당 1개, 토큰은 파일 캐시 재사용).
@@ -302,7 +315,7 @@ export async function callNhplug<T>(
   } catch (error) {
     const { rspCd, rspMsg } = nhplugRspCode(error);
     if (NHPLUG_ENV_BLOCKED_CODES.includes(rspCd) || NHPLUG_ENV_BLOCKED_CODES.some((code) => rspMsg.includes(code))) {
-      ctx.skip(`장 운영시간/계좌 상태 때문에 검증 불가: [${rspCd}] ${rspMsg}`);
+      ctx.skip(`장 운영시간/계좌 상태(빈 결과 포함) 때문에 검증 불가: [${rspCd}] ${rspMsg}`);
     }
     throw error;
   }
@@ -311,8 +324,8 @@ export async function callNhplug<T>(
 /**
  * NH PLUG 응답 봉투 검증.
  *
- * 성공 코드는 `00000` 과 모의투자 조회 성공인 `XA102` 두 가지다 — `00000` 만
- * 성공으로 보면 모의 서버의 정상 응답이 오탐된다.
+ * 성공 코드는 `SUCCESS_RSP_CODES`(00000·XA102·00166·00221)다 — `00000` 만
+ * 성공으로 보면 모의·운영 서버의 정상 응답이 오탐된다.
  */
 export function assertNhplugResponse(res: ApiResponse<unknown>): void {
   expect(res).toBeDefined();
@@ -328,18 +341,4 @@ export function assertNhplugResponse(res: ApiResponse<unknown>): void {
     console.error('NH PLUG Error Response:', JSON.stringify(res.body, null, 2));
   }
   expect(SUCCESS_RSP_CODES).toContain(body.rspCd);
-}
-
-/**
- * 응답 본문에 스키마에 없는 키가 섞이지 않았는지 확인한다.
- *
- * `Output_N` 블록은 데이터가 있을 때만 내려오므로(스펙 설명) 키 집합 완전 일치가 아니라
- * "실제 키 ⊆ 스키마 키" 부분집합으로 검증한다. 스키마에 없는 필드가 새로 내려오면
- * (= 모델 갱신이 필요하면) 실패한다.
- */
-export function assertNhplugResponseShape(body: unknown, responseSchema: z.ZodObject<z.ZodRawShape>): void {
-  const expectedKeys = new Set(Object.keys(responseSchema.shape).map(toCamelCase));
-  const actualKeys = Object.keys(body as Record<string, unknown>);
-  const unexpected = actualKeys.filter((key) => !expectedKeys.has(key)).sort();
-  expect(unexpected).toEqual([]);
 }

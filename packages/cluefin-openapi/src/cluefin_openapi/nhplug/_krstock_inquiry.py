@@ -1,6 +1,6 @@
 from typing import Any, Dict, Literal, Optional
 
-from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
+from cluefin_openapi.nhplug._exceptions import raise_for_rsp_cd
 from cluefin_openapi.nhplug._http_client import HttpClient
 from cluefin_openapi.nhplug._krstock_inquiry_types import (
     KrStockInquiryAssetStatus,
@@ -17,7 +17,7 @@ from cluefin_openapi.nhplug._krstock_inquiry_types import (
     KrStockInquiryTradingPnl,
 )
 from cluefin_openapi.nhplug._krstock_order import CreditLoanCode, QuoteTypeCode, ReservedCreditLoanCode
-from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES, NHPlugHttpHeader, NHPlugHttpResponse
+from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
 
 # 매도가능수량조회(sellableQuantity)의 신용대출코드 — buyableQuantity/신규주문 계열과
 # 코드 집합이 다르다(00.일반거래 포함, 01~04 만 유효 — 10 이상은 스펙에 없음).
@@ -56,16 +56,6 @@ class KrStockInquiry:
     def __init__(self, client: HttpClient):
         self.client = client
 
-    def _check_response_error(self, response_data: dict) -> None:
-        """HTTP 200 이어도 body rsp_cd 가 실패일 수 있으므로 여기서 확인한다."""
-        rsp_cd = response_data.get("rsp_cd")
-        if rsp_cd is not None and rsp_cd not in SUCCESS_RSP_CODES:
-            raise NHPlugAPIError(
-                f"API error {rsp_cd}: {response_data.get('rsp_msg', '')}",
-                status_code=200,
-                response_data=response_data,
-            )
-
     @staticmethod
     def _drop_none(body: Dict[str, Any]) -> Dict[str, Any]:
         """선택 파라미터는 값이 있을 때만 전송한다."""
@@ -78,6 +68,7 @@ class KrStockInquiry:
         ltg_aot_dit_cd: Literal["1", "9"],
         aet_bse: Literal["1", "2"],
         qut_dit_cd: Literal["UNT", "KRX", "NXT"],
+        aly_qut_cd: Optional[Literal["1", "2"]] = None,
         cts: Optional[str] = None,
     ) -> NHPlugHttpResponse[KrStockInquiryBalance]:
         """주식잔고조회 (`POST /krstock/inquiry/v1/balance`).
@@ -93,6 +84,9 @@ class KrStockInquiry:
             ltg_aot_dit_cd: 상장폐지구분코드 (1.상장종목 9.전체)
             aet_bse: 자산기준 (1.순자산 2.총자산)
             qut_dit_cd: 시세구분코드 (UNT.통합시세 KRX.KRX시세 NXT.NXT시세)
+            aly_qut_cd: 적용시세코드 (1.정규장 2.전체장(정규장,정규장외)). 스펙(260911)은 필수지만
+                서버는 생략도 받는다(모의 2026-09-27 실측, VENDOR_DOC_ERRATA.md) — 기존 호출을 깨지
+                않도록 선택 인자로 두고 값이 있을 때만 보낸다.
             cts: 연속거래키. 이전 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 전달.
         """
         body = self._drop_none(
@@ -102,11 +96,12 @@ class KrStockInquiry:
                 "ltg_aot_dit_cd": ltg_aot_dit_cd,
                 "aet_bse": aet_bse,
                 "qut_dit_cd": qut_dit_cd,
+                "aly_qut_cd": aly_qut_cd,
             }
         )
         response = self.client.post("/krstock/inquiry/v1/balance", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryBalance.model_validate(data))
 
@@ -144,7 +139,7 @@ class KrStockInquiry:
         )
         response = self.client.post("/krstock/inquiry/v1/dailyOrderExecution", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryDailyOrderExecution.model_validate(data))
 
@@ -190,7 +185,7 @@ class KrStockInquiry:
         )
         response = self.client.post("/krstock/inquiry/v1/buyableQuantity", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryBuyableQuantity.model_validate(data))
 
@@ -226,7 +221,7 @@ class KrStockInquiry:
         )
         response = self.client.post("/krstock/inquiry/v1/sellableQuantity", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquirySellableQuantity.model_validate(data))
 
@@ -277,7 +272,7 @@ class KrStockInquiry:
         )
         response = self.client.post("/krstock/inquiry/v1/reservedInquiry", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryReservedInquiry.model_validate(data))
 
@@ -287,6 +282,7 @@ class KrStockInquiry:
         iqr_dit_cd1: Literal["0", "1", "2"],
         fee_dit_cd: Literal["1", "2"],
         qut_dit_cd: Literal["UNT", "KRX", "NXT"],
+        aly_qut_cd: Optional[Literal["1", "2"]] = None,
         cts: Optional[str] = None,
     ) -> NHPlugHttpResponse[KrStockInquiryRealizedPnl]:
         """주식잔고조회_실현손익 (`POST /krstock/inquiry/v1/realizedPnl`).
@@ -301,6 +297,9 @@ class KrStockInquiry:
             iqr_dit_cd1: 조회구분코드1 (0.전체 1.잔고종목 2.당일매매)
             fee_dit_cd: 수수료구분코드 (1.온라인 2.영업점)
             qut_dit_cd: 시세구분코드 (UNT.통합시세 KRX.KRX시세 NXT.NXT시세)
+            aly_qut_cd: 적용시세코드 (1.정규장 2.전체장(정규장,정규장외)). 스펙(260911)은 필수지만
+                서버는 생략도 받는다(모의 2026-09-27 실측, VENDOR_DOC_ERRATA.md) — 기존 호출을 깨지
+                않도록 선택 인자로 두고 값이 있을 때만 보낸다.
             cts: 연속거래키. 이전 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 전달.
         """
         body = self._drop_none(
@@ -309,11 +308,12 @@ class KrStockInquiry:
                 "iqr_dit_cd1": iqr_dit_cd1,
                 "fee_dit_cd": fee_dit_cd,
                 "qut_dit_cd": qut_dit_cd,
+                "aly_qut_cd": aly_qut_cd,
             }
         )
         response = self.client.post("/krstock/inquiry/v1/realizedPnl", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryRealizedPnl.model_validate(data))
 
@@ -323,6 +323,7 @@ class KrStockInquiry:
         eal_aly_cd: Literal["1", "2"],
         aet_bse: Literal["1", "2"],
         qut_dit_cd: Literal["UNT", "KRX", "NXT"],
+        aly_qut_cd: Optional[Literal["1", "2"]] = None,
         cts: Optional[str] = None,
     ) -> NHPlugHttpResponse[KrStockInquiryAssetStatus]:
         """투자계좌자산현황조회 (`POST /krstock/inquiry/v1/assetStatus`).
@@ -337,6 +338,9 @@ class KrStockInquiry:
             eal_aly_cd: 평가적용코드 (1.장부가평가 2.시가평가)
             aet_bse: 자산기준 (1.순자산 2.총자산)
             qut_dit_cd: 시세구분코드 (UNT.통합시세 KRX.KRX시세 NXT.NXT시세)
+            aly_qut_cd: 적용시세코드 (1.정규장 2.전체장(정규장,정규장외)). 스펙(260911)은 필수지만
+                서버는 생략도 받는다(모의 2026-09-27 실측, VENDOR_DOC_ERRATA.md) — 기존 호출을 깨지
+                않도록 선택 인자로 두고 값이 있을 때만 보낸다.
             cts: 연속거래키. 이전 응답 헤더 `cts_flag` 가 "Y" 면 그 `cts` 값을 전달.
         """
         body = self._drop_none(
@@ -345,11 +349,12 @@ class KrStockInquiry:
                 "eal_aly_cd": eal_aly_cd,
                 "aet_bse": aet_bse,
                 "qut_dit_cd": qut_dit_cd,
+                "aly_qut_cd": aly_qut_cd,
             }
         )
         response = self.client.post("/krstock/inquiry/v1/assetStatus", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryAssetStatus.model_validate(data))
 
@@ -384,7 +389,7 @@ class KrStockInquiry:
         )
         response = self.client.post("/krstock/inquiry/v1/dailyPnl", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryDailyPnl.model_validate(data))
 
@@ -417,7 +422,7 @@ class KrStockInquiry:
         )
         response = self.client.post("/krstock/inquiry/v1/tradingPnl", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryTradingPnl.model_validate(data))
 
@@ -440,7 +445,7 @@ class KrStockInquiry:
         body = self._drop_none({"act_no": act_no})
         response = self.client.post("/krstock/inquiry/v1/integratedMargin", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryIntegratedMargin.model_validate(data))
 
@@ -474,7 +479,7 @@ class KrStockInquiry:
         )
         response = self.client.post("/krstock/inquiry/v1/rightsHeld", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryRightsHeld.model_validate(data))
 
@@ -499,6 +504,6 @@ class KrStockInquiry:
         body = self._drop_none({"act_no": act_no})
         response = self.client.post("/krstock/inquiry/v1/rightsScheduled", body=body, cts=cts)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockInquiryRightsScheduled.model_validate(data))

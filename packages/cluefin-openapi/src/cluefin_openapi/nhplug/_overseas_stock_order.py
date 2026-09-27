@@ -1,8 +1,8 @@
 from typing import Any, Dict, Literal, Optional
 
-from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
+from cluefin_openapi.nhplug._exceptions import raise_for_rsp_cd
 from cluefin_openapi.nhplug._http_client import HttpClient
-from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES, NHPlugHttpHeader, NHPlugHttpResponse
+from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
 from cluefin_openapi.nhplug._overseas_stock_order_types import (
     OverseasStockOrderBuy,
     OverseasStockOrderCancel,
@@ -31,6 +31,23 @@ SpotQuoteTypeCode = Literal[
     "14",  # MOC(장마감 시장가)
     "15",  # STOP(시장가) — 매도만
     "16",  # STOP LIMIT(지정가) — 매도만
+    "61",  # 프리마켓(지정가)
+    "62",  # 애프터마켓(지정가)
+    "63",  # 주간거래(지정가)
+    "TW",  # TWAP(시장가)
+    "VW",  # VWAP(시장가)
+    "TL",  # TWAP(지정가)
+    "VL",  # VWAP(지정가)
+]
+
+# buy 의 ahi_nmn_pr_tp_cd — 스펙상 STOP(15)·STOP LIMIT(16)은 매도 전용이라 매수 코드 목록에 없다.
+SpotBuyQuoteTypeCode = Literal[
+    "00",  # 지정가
+    "03",  # 시장가
+    "11",  # LOO(장개시 지정가)
+    "12",  # LOC(장마감 지정가)
+    "13",  # MOO(장개시 시장가)
+    "14",  # MOC(장마감 시장가)
     "61",  # 프리마켓(지정가)
     "62",  # 애프터마켓(지정가)
     "63",  # 주간거래(지정가)
@@ -84,16 +101,6 @@ class OverseasStockOrder:
     def __init__(self, client: HttpClient):
         self.client = client
 
-    def _check_response_error(self, response_data: dict) -> None:
-        """HTTP 200 이어도 body rsp_cd 가 실패일 수 있으므로 여기서 확인한다."""
-        rsp_cd = response_data.get("rsp_cd")
-        if rsp_cd is not None and rsp_cd not in SUCCESS_RSP_CODES:
-            raise NHPlugAPIError(
-                f"API error {rsp_cd}: {response_data.get('rsp_msg', '')}",
-                status_code=200,
-                response_data=response_data,
-            )
-
     @staticmethod
     def _drop_none(body: Dict[str, Any]) -> Dict[str, Any]:
         """선택 파라미터는 값이 있을 때만 전송한다."""
@@ -105,7 +112,7 @@ class OverseasStockOrder:
         fc_sec_trd_nat_cd: ForeignTradeNationCode,
         iem_cd: str,
         orr_qty: int,
-        ahi_nmn_pr_tp_cd: SpotQuoteTypeCode,
+        ahi_nmn_pr_tp_cd: SpotBuyQuoteTypeCode,
         wtm_cur_knd_cd: Literal["1", "2"],
         fc_orr_uit_pr: Optional[float] = None,
     ) -> NHPlugHttpResponse[OverseasStockOrderBuy]:
@@ -138,7 +145,7 @@ class OverseasStockOrder:
 
         response = self.client.post("/gbstock/order/v1/buy", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockOrderBuy.model_validate(data))
 
@@ -178,7 +185,7 @@ class OverseasStockOrder:
 
         response = self.client.post("/gbstock/order/v1/sell", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockOrderSell.model_validate(data))
 
@@ -217,7 +224,7 @@ class OverseasStockOrder:
 
         response = self.client.post("/gbstock/order/v1/modify", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockOrderModify.model_validate(data))
 
@@ -256,7 +263,7 @@ class OverseasStockOrder:
 
         response = self.client.post("/gbstock/order/v1/cancel", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockOrderCancel.model_validate(data))
 
@@ -329,7 +336,7 @@ class OverseasStockOrder:
 
         response = self.client.post("/gbstock/order/v1/reservedSubmit", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockOrderReservedSubmit.model_validate(data))
 
@@ -368,6 +375,6 @@ class OverseasStockOrder:
 
         response = self.client.post("/gbstock/order/v1/reservedCancel", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=OverseasStockOrderReservedCancel.model_validate(data))

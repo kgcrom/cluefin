@@ -357,7 +357,7 @@ export const krstockOrderEndpoints: NhplugEndpointDefinition[] = [
       },
       {
         name: 'corQty',
-        required: true,
+        required: false,
       },
     ],
   },

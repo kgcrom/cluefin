@@ -4,9 +4,9 @@ This module provides an async WebSocket client for NH PLUG real-time data
 using Python's standard library (asyncio), mirroring the KIS socket client.
 
 WebSocket URLs (정본은 각 자산군 openapi.json 의 `x-environments`):
-- 운영 국내: wss://api.nhplug.com:7070
-- 운영 해외: wss://api.nhplug.com:7080
-- 모의투자: wss://moapi.nhplug.com:17070
+- 운영 국내: wss://api.nhplug.com:7070/websocket (경로 필수)
+- 운영 해외: wss://api.nhplug.com:7080/websocket — 시세만. 체결·주문 통보(d0·d1 등)는 해외도 7070
+- 모의투자: wss://moapi.nhplug.com:17070/websocket
 
 인증은 REST 와 달리 구독 메시지 `header.token` 에 access token 만 전달한다
 (별도 approval key 없음). 서버 푸시는 평문 JSON 이며 heartbeat 는 필요 없다.
@@ -87,10 +87,11 @@ class SocketClient:
         event_queue: Queue for receiving WebSocket events
     """
 
-    # WebSocket URLs
-    WS_URL_PROD_KR = "wss://api.nhplug.com:7070"
-    WS_URL_PROD_GB = "wss://api.nhplug.com:7080"
-    WS_URL_DEV = "wss://moapi.nhplug.com:17070"
+    # WebSocket URLs — 경로 /websocket 이 필수다. 호스트:포트만으로는 서버가 업그레이드하지 않는다
+    # (운영·모의 2026-09-27 실측, 스펙 x-realtime-channels.protocol.connection).
+    WS_URL_PROD_KR = "wss://api.nhplug.com:7070/websocket"
+    WS_URL_PROD_GB = "wss://api.nhplug.com:7080/websocket"
+    WS_URL_DEV = "wss://moapi.nhplug.com:17070/websocket"
 
     def __init__(
         self,
@@ -151,32 +152,15 @@ class SocketClient:
             NHPlugNetworkError: If connection fails
         """
         try:
-            url = self._ws_url
-            if url.startswith("ws://"):
-                host_port = url[5:]
-                use_ssl = False
-            elif url.startswith("wss://"):
-                host_port = url[6:]
-                use_ssl = True
-            else:
-                raise ValueError(f"Invalid WebSocket URL: {url}")
-
-            if ":" in host_port:
-                host, port_str = host_port.split(":", 1)
-                if "/" in port_str:
-                    port_str = port_str.split("/")[0]
-                port = int(port_str)
-            else:
-                host = host_port.split("/")[0]
-                port = 443 if use_ssl else 80
+            host, port, path, use_ssl = self._parse_ws_url(self._ws_url)
 
             if self.debug:
-                logger.debug(f"Connecting to {host}:{port} (SSL: {use_ssl})")
+                logger.debug(f"Connecting to {host}:{port}{path} (SSL: {use_ssl})")
 
             ssl_context = ssl.create_default_context() if use_ssl else None
             self._reader, self._writer = await asyncio.open_connection(host, port, ssl=ssl_context)
 
-            await self._websocket_handshake(host, port)
+            await self._websocket_handshake(host, port, path)
 
             self._connected = True
 
@@ -190,12 +174,27 @@ class SocketClient:
         except Exception as e:
             raise NHPlugNetworkError(f"Failed to connect to WebSocket: {e}") from e
 
-    async def _websocket_handshake(self, host: str, port: int) -> None:
+    @staticmethod
+    def _parse_ws_url(url: str) -> tuple[str, int, str, bool]:
+        """Split a ws(s):// URL into (host, port, path, use_ssl)."""
+        if url.startswith("ws://"):
+            rest, use_ssl = url[5:], False
+        elif url.startswith("wss://"):
+            rest, use_ssl = url[6:], True
+        else:
+            raise ValueError(f"Invalid WebSocket URL: {url}")
+        host_port, slash, path = rest.partition("/")
+        host, _, port_str = host_port.partition(":")
+        port = int(port_str) if port_str else (443 if use_ssl else 80)
+        return host, port, slash + path or "/", use_ssl
+
+    async def _websocket_handshake(self, host: str, port: int, path: str) -> None:
         """Perform WebSocket handshake.
 
         Args:
             host: WebSocket server host
             port: WebSocket server port
+            path: Request path (NH PLUG requires /websocket)
         """
         import base64
         import hashlib
@@ -203,7 +202,6 @@ class SocketClient:
 
         ws_key = base64.b64encode(os.urandom(16)).decode()
 
-        path = "/"
         handshake = (
             f"GET {path} HTTP/1.1\r\n"
             f"Host: {host}:{port}\r\n"

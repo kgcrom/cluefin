@@ -162,6 +162,28 @@ class TestDailyOrderExecution:
 
         assert response.body.rsp_cd == "XA102"
 
+    @pytest.mark.parametrize(
+        "rsp_cd, rsp_msg",
+        [
+            ("00166", "조회가 완료되었습니다."),
+            ("00221", "계좌/종목별 주문가능수량/금액 조회가 완료되었습니다."),
+        ],
+    )
+    def test_accepts_live_success_codes(self, client, rsp_cd, rsp_msg):
+        # 운영 서버는 계좌 조회 성공에 00166·00221 을 준다 (2026-09-27 실측) — 에러로 올리면 안 된다.
+        with requests_mock.Mocker() as m:
+            m.post(
+                f"{BASE_PROD}/krstock/inquiry/v1/dailyOrderExecution",
+                json={"rsp_cd": rsp_cd, "rsp_msg": rsp_msg, "Output_0": []},
+            )
+            response = client.krstock_inquiry.daily_order_execution(
+                act_no="50051036881",
+                orr_dt="20260822",
+                ost_cns_dit="0",
+            )
+
+        assert response.body.rsp_cd == rsp_cd
+
 
 BUYABLE_QUANTITY_BODY = {
     "rsp_cd": "00000",
@@ -859,3 +881,40 @@ def test_raises_on_failing_rsp_cd(client, endpoint, call):
         m.post(endpoint, json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."})
         with pytest.raises(NHPlugAPIError, match="IGW40018"):
             call(client)
+
+
+ALY_QUT_CD_CASES = [
+    pytest.param(
+        "balance",
+        lambda client, **kw: client.krstock_inquiry.balance(
+            act_no="00000000000", bnc_bse_cd="1", ltg_aot_dit_cd="1", aet_bse="1", qut_dit_cd="UNT", **kw
+        ),
+        id="balance",
+    ),
+    pytest.param(
+        "realizedPnl",
+        lambda client, **kw: client.krstock_inquiry.realized_pnl(
+            act_no="00000000000", iqr_dit_cd1="0", fee_dit_cd="1", qut_dit_cd="UNT", **kw
+        ),
+        id="realized_pnl",
+    ),
+    pytest.param(
+        "assetStatus",
+        lambda client, **kw: client.krstock_inquiry.asset_status(
+            act_no="00000000000", eal_aly_cd="2", aet_bse="1", qut_dit_cd="UNT", **kw
+        ),
+        id="asset_status",
+    ),
+]
+
+
+@pytest.mark.parametrize("api, call", ALY_QUT_CD_CASES)
+def test_aly_qut_cd_is_sent_only_when_given(client, api, call):
+    """스펙(260911)은 aly_qut_cd 를 필수로 추가했지만 서버는 생략도 받는다 — 선택 인자, 값이 있을 때만 전송."""
+    with requests_mock.Mocker() as m:
+        m.post(f"{BASE_PROD}/krstock/inquiry/v1/{api}", json={"rsp_cd": "00000", "rsp_msg": "ok"})
+        call(client)
+        call(client, aly_qut_cd="1")
+
+    assert "aly_qut_cd" not in json.loads(m.request_history[0].text)["Input_0"]
+    assert json.loads(m.request_history[1].text)["Input_0"]["aly_qut_cd"] == "1"

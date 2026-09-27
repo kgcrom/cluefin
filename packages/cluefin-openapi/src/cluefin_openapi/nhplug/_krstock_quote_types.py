@@ -196,6 +196,16 @@ class KrStockQuoteCurrentPriceOutput(BaseModel):
     nxt_midp_total_askp_rsqn: int | None = Field(default=None, description="nxt매도중간가잔량합계수량 / 길이 12")
     nxt_midp_total_bidp_rsqn: int | None = Field(default=None, description="nxt매수중간가잔량합계수량 / 길이 12")
     marg_grad_cls_code: str | None = Field(default=None, description="증거금등급구분코드 / 길이 1")
+    # 스펙 260911 추가 — 문서는 "KRX PRE/AFTER"·"UNT 조회 시" 라지만 실서버는 KRX·UNT 모두 키를
+    # 보낸다. nxt_vi_* 는 KRX 조회에서 0 (운영 2026-09-27 실측, 휴장일).
+    main_cls_prpr: int | None = Field(default=None, description="정규장마감종가 / 길이 10")
+    main_cls_vrss_sign: str | None = Field(default=None, description="정규장마감등락부호 / 길이 1")
+    main_cls_vrss: int | None = Field(default=None, description="정규장마감등락폭 / 길이 10")
+    main_cls_ctrt: float | None = Field(default=None, description="정규장마감등락률 / 길이 5.2")
+    market_status: str | None = Field(default=None, description="장상태구분코드 / 길이 1")
+    nxt_vi_antc_sdpr: int | None = Field(default=None, description="NXT_VI기준가 / 길이 10")
+    nxt_vi_antc_mxpr: int | None = Field(default=None, description="NXT_VI상승발동가 / 길이 10")
+    nxt_vi_antc_llam: int | None = Field(default=None, description="NXT_VI하락발동가 / 길이 10")
 
 
 class KrStockQuoteCurrentPriceTickOutput(BaseModel):
@@ -295,7 +305,8 @@ class KrStockQuoteCurrentExecutionTickOutput(BaseModel):
     seln_cntg_smtn: int | None = Field(default=None, description="누적매도체결량 / 길이 12")
     askrate: float | None = Field(default=None, description="당일매도비중 / 길이 5.2")
     stnr_cntg_smtn: int | None = Field(default=None, description="누적보합체결량 / 길이 12")
-    uncrate: float | None = Field(default=None, description="당일보합비중 / 길이 5.2")
+    # 스펙은 `uncrate` 지만 실서버는 `unc_rate` (운영 2026-09-27 실측, VENDOR_DOC_ERRATA.md)
+    unc_rate: float | None = Field(default=None, description="당일보합비중 / 길이 5.2")
     cttr: float | None = Field(default=None, description="체결강도 / 길이 6.2")
     askp: int | None = Field(default=None, description="매도호가 / 길이 8")
     bidp: int | None = Field(default=None, description="매수호가 / 길이 8")
@@ -724,33 +735,34 @@ class KrStockQuoteAfterHoursCurrent(NHPlugAssetHttpBody):
 
 
 class KrStockQuoteCurrentAfterHoursDailyTickOutput(BaseModel):
-    """주식현재가 시간외일자별주가 시간외 체결 상세 (Output_0 배열의 각 항목)."""
+    """주식현재가 시간외일자별주가 일자별 시세 (Output_0 배열의 각 항목).
+
+    스펙의 필드 **이름**이 설명과 어긋나 있다 (`qry_date`=일자, `qry_time`=시가, `shrn_iscd`=고가 …).
+    실서버는 설명에 맞는 이름을 보내므로 그 이름으로 받는다 — 스펙 이름은 한 번도 오지 않는다
+    (운영 2026-09-27 실측, VENDOR_DOC_ERRATA.md). 일자는 YYMMDD 6자리로 온다.
+    """
 
     model_config = ConfigDict(extra="allow")
 
-    qry_date: str | None = Field(default=None, description="일자 / 길이 8")
-    qry_time: str | None = Field(default=None, description="시가 / 길이 6")
-    shrn_iscd: str | None = Field(default=None, description="고가 / 길이 9")
-    hts_kor_isnm: str | None = Field(default=None, description="저가 / 길이 41")
-    stck_prpr: str | None = Field(default=None, description="락구분 / 길이 10")
-    prdy_vrss_sign: str | None = Field(default=None, description="Filler / 길이 1")
+    bsop_date: str | None = Field(default=None, description="일자 / 길이 8")
+    stck_oprc: int | None = Field(default=None, description="시가 / 길이 6")
+    stck_hgpr: int | None = Field(default=None, description="고가 / 길이 9")
+    stck_lwpr: int | None = Field(default=None, description="저가 / 길이 41")
+    nh_rights: str | None = Field(default=None, description="락구분 / 길이 10")
 
 
 class KrStockQuoteCurrentAfterHoursDailyOutput(BaseModel):
     """주식현재가 시간외일자별주가 종합 상세 (Output_1 배열의 각 항목).
 
-    스펙은 4개 필드 모두 string 으로 선언하지만, 2026-08-22 실측(005930)에서
-    `acml_vol`/`acml_tr_pbmn` 이 실제로는 int 로 내려오는 것을 확인해
-    `int|str` 로 완화했다(`prdy_ctrt`/`prdy_vol` 은 실측에서도 문자열이라
-    스펙 그대로 둠).
+    Output_0 과 같은 스펙 이름 오류 — 스펙 `prdy_ctrt`(설명 "현재가") 대신 `stck_prpr` 가 온다
+    (운영 2026-09-27 실측). `acml_vol`/`acml_tr_pbmn` 은 스펙은 string 이지만 int 로 온다(2026-08-22).
     """
 
     model_config = ConfigDict(extra="allow")
 
-    prdy_ctrt: str | None = Field(default=None, description="현재가 / 길이 5")
+    stck_prpr: int | None = Field(default=None, description="현재가 / 길이 5")
     acml_vol: int | str | None = Field(default=None, description="거래량 / 길이 12")
     acml_tr_pbmn: int | str | None = Field(default=None, description="거래대금 / 길이 18")
-    prdy_vol: str | None = Field(default=None, description="Filler / 길이 12")
 
 
 class KrStockQuoteCurrentAfterHoursDaily(NHPlugAssetHttpBody):

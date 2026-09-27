@@ -34,7 +34,7 @@ const messageSchema = z
   .passthrough();
 
 const envelope = {
-  /** 응답코드 (00000·XA102: 성공) */
+  /** 응답코드 (성공 코드는 `SUCCESS_RSP_CODES`) */
   rsp_cd: str(),
   /** 응답메시지 */
   rsp_msg: str(),

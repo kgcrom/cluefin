@@ -1,6 +1,6 @@
 from typing import Any, Dict, Literal, Optional
 
-from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
+from cluefin_openapi.nhplug._exceptions import raise_for_rsp_cd
 from cluefin_openapi.nhplug._http_client import HttpClient
 from cluefin_openapi.nhplug._krstock_quote_types import (
     KrStockQuoteAfterHoursCurrent,
@@ -15,7 +15,7 @@ from cluefin_openapi.nhplug._krstock_quote_types import (
     KrStockQuoteEtfCurrent,
     KrStockQuotePeriod,
 )
-from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES, NHPlugHttpHeader, NHPlugHttpResponse
+from cluefin_openapi.nhplug._model import NHPlugHttpHeader, NHPlugHttpResponse
 
 
 class KrStockQuote:
@@ -27,16 +27,6 @@ class KrStockQuote:
 
     def __init__(self, client: HttpClient):
         self.client = client
-
-    def _check_response_error(self, response_data: dict) -> None:
-        """HTTP 200 이어도 body rsp_cd 가 실패일 수 있으므로 여기서 확인한다."""
-        rsp_cd = response_data.get("rsp_cd")
-        if rsp_cd is not None and rsp_cd not in SUCCESS_RSP_CODES:
-            raise NHPlugAPIError(
-                f"API error {rsp_cd}: {response_data.get('rsp_msg', '')}",
-                status_code=200,
-                response_data=response_data,
-            )
 
     @staticmethod
     def _drop_none(body: Dict[str, Any]) -> Dict[str, Any]:
@@ -66,7 +56,7 @@ class KrStockQuote:
         )
         response = self.client.post("/krstock/quote/v1/currentPrice", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuoteCurrentPrice.model_validate(data))
 
@@ -75,6 +65,7 @@ class KrStockQuote:
         market_cd: Literal["KRX", "NXT", "UNT"],
         iem_cd: str,
         array_cnt: Optional[str] = None,
+        view_main_yn: Optional[Literal["Y", "N"]] = None,
     ) -> NHPlugHttpResponse[KrStockQuoteCurrentExecution]:
         """주식현재가 체결 (`POST /krstock/quote/v1/currentExecution`).
 
@@ -87,17 +78,21 @@ class KrStockQuote:
             market_cd: 시장구분코드 (KRX/NXT/UNT)
             iem_cd: 종목코드 (예: 005930)
             array_cnt: 읽을갯수 (Output_0 시간대별 체결 목록의 조회 건수)
+            view_main_yn: 정규장시세보기여부 (Y.정규장 N.전체장(정규장,정규장외)). 스펙(260911)은
+                필수지만 서버는 생략을 N 으로 처리한다(운영 2026-09-27 실측, VENDOR_DOC_ERRATA.md) —
+                기존 호출을 깨지 않도록 선택 인자로 두고 값이 있을 때만 보낸다.
         """
         body = self._drop_none(
             {
                 "market_cd": market_cd,
                 "iem_cd": iem_cd,
                 "array_cnt": array_cnt,
+                "view_main_yn": view_main_yn,
             }
         )
         response = self.client.post("/krstock/quote/v1/currentExecution", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuoteCurrentExecution.model_validate(data))
 
@@ -106,6 +101,7 @@ class KrStockQuote:
         market_cd: Literal["KRX", "NXT", "UNT"],
         iem_cd: str,
         array_cnt: Optional[str] = None,
+        view_main_yn: Optional[Literal["Y", "N"]] = None,
     ) -> NHPlugHttpResponse[KrStockQuoteCurrentDaily]:
         """주식현재가 일자별 (`POST /krstock/quote/v1/currentDaily`).
 
@@ -118,17 +114,21 @@ class KrStockQuote:
             market_cd: 시장구분코드 (KRX/NXT/UNT)
             iem_cd: 종목코드 (예: 005930)
             array_cnt: 읽을갯수 (Output_0 일별 시세 목록의 조회 건수)
+            view_main_yn: 정규장시세보기여부 (Y.정규장 N.전체장(정규장,정규장외)). 스펙(260911)은
+                필수지만 서버는 생략을 N 으로 처리한다(운영 2026-09-27 실측, VENDOR_DOC_ERRATA.md) —
+                기존 호출을 깨지 않도록 선택 인자로 두고 값이 있을 때만 보낸다.
         """
         body = self._drop_none(
             {
                 "market_cd": market_cd,
                 "iem_cd": iem_cd,
                 "array_cnt": array_cnt,
+                "view_main_yn": view_main_yn,
             }
         )
         response = self.client.post("/krstock/quote/v1/currentDaily", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuoteCurrentDaily.model_validate(data))
 
@@ -160,7 +160,7 @@ class KrStockQuote:
         )
         response = self.client.post("/krstock/quote/v1/currentInvestor", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuoteCurrentInvestor.model_validate(data))
 
@@ -181,6 +181,7 @@ class KrStockQuote:
         sur_bf_end_time: Optional[str] = None,
         out1_scale_change: Optional[Literal["0", "1", "2"]] = None,
         out2_scale_change: Optional[Literal["0", "1", "2"]] = None,
+        view_main_yn: Optional[Literal["Y", "N"]] = None,
     ) -> NHPlugHttpResponse[KrStockQuotePeriod]:
         """국내주식기간별시세(일/주/월/년) (`POST /krstock/quote/v1/period`).
 
@@ -209,6 +210,9 @@ class KrStockQuote:
                 2.거래량단주·거래대금만백만단위)
             out2_scale_change: Out2단위변경 (0.변경안함 1.거래량천단위·거래대금백만단위
                 2.거래량단주·거래대금만백만단위)
+            view_main_yn: 정규장시세보기여부 (Y.정규장 N.전체장(정규장,정규장외)). 스펙(260911)은
+                필수지만 서버는 생략을 N 으로 처리한다(운영 2026-09-27 실측, VENDOR_DOC_ERRATA.md) —
+                기존 호출을 깨지 않도록 선택 인자로 두고 값이 있을 때만 보낸다.
         """
         body = self._drop_none(
             {
@@ -227,11 +231,12 @@ class KrStockQuote:
                 "sur_bf_end_time": sur_bf_end_time,
                 "out1_scale_change": out1_scale_change,
                 "out2_scale_change": out2_scale_change,
+                "view_main_yn": view_main_yn,
             }
         )
         response = self.client.post("/krstock/quote/v1/period", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuotePeriod.model_validate(data))
 
@@ -253,7 +258,7 @@ class KrStockQuote:
         body = self._drop_none({"iem_cd": iem_cd})
         response = self.client.post("/krstock/quote/v1/afterHoursCurrent", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuoteAfterHoursCurrent.model_validate(data))
 
@@ -291,7 +296,7 @@ class KrStockQuote:
         )
         response = self.client.post("/krstock/quote/v1/currentAfterHoursDaily", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuoteCurrentAfterHoursDaily.model_validate(data))
 
@@ -312,7 +317,7 @@ class KrStockQuote:
         body = self._drop_none({"iem_cd": iem_cd})
         response = self.client.post("/krstock/quote/v1/currentAfterHoursExecution", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuoteCurrentAfterHoursExecution.model_validate(data))
 
@@ -334,7 +339,7 @@ class KrStockQuote:
         body = self._drop_none({"iem_cd": iem_cd})
         response = self.client.post("/krstock/quote/v1/afterHoursExpected", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuoteAfterHoursExpected.model_validate(data))
 
@@ -356,7 +361,7 @@ class KrStockQuote:
         body = self._drop_none({"iem_cd": iem_cd})
         response = self.client.post("/krstock/quote/v1/etfCurrent", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuoteEtfCurrent.model_validate(data))
 
@@ -377,6 +382,6 @@ class KrStockQuote:
         body = self._drop_none({"iem_cd": iem_cd})
         response = self.client.post("/krstock/quote/v1/etfComponents", body=body)
         data = response.json()
-        self._check_response_error(data)
+        raise_for_rsp_cd(data)
         header = NHPlugHttpHeader.model_validate(dict(response.headers))
         return NHPlugHttpResponse(header=header, body=KrStockQuoteEtfComponents.model_validate(data))

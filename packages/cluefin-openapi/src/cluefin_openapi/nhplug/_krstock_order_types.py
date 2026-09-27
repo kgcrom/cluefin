@@ -9,14 +9,14 @@ class KrStockOrderPlacedOutput(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     orr_gno_tab_cd: str | None = Field(default=None, description="주문채번팀점코드 / 길이 4")
-    mkt_orr_no: int | None = Field(default=None, description="시장주문번호 / 정정·취소시 필요한 주문번호")
-    sor_fle_id: str | None = Field(default=None, description="SOR파일ID / 요청시장코드 SOR 경우에만 세팅")
-    sor_ant_rt1: float | None = Field(default=None, description="SOR배분비율1 (KRX) / SOR 경우에만 세팅")
-    sor_ant_rt2: float | None = Field(default=None, description="SOR배분비율2 (NXT) / SOR 경우에만 세팅")
-    orr_qty1: int | None = Field(default=None, description="주문수량1 (KRX)")
-    orr_qty2: int | None = Field(default=None, description="주문수량2 (NXT)")
-    anw_cld_mkt_orr_no1: int | None = Field(default=None, description="신규자시장주문번호1 (KRX)")
-    anw_cld_mkt_orr_no2: int | None = Field(default=None, description="신규자시장주문번호2 (NXT)")
+    mkt_orr_no: int | None = Field(default=None, description="시장주문번호 / 길이 10 / 정정·취소시 필요한 주문번호")
+    sor_fle_id: str | None = Field(default=None, description="SOR파일ID / 길이 20 / 요청시장코드 SOR 경우에만 세팅")
+    sor_ant_rt1: float | None = Field(default=None, description="SOR배분비율1 (KRX) / 길이 11.8 / SOR 경우에만 세팅")
+    sor_ant_rt2: float | None = Field(default=None, description="SOR배분비율2 (NXT) / 길이 11.8 / SOR 경우에만 세팅")
+    orr_qty1: int | None = Field(default=None, description="주문수량1 (KRX) / 길이 18")
+    orr_qty2: int | None = Field(default=None, description="주문수량2 (NXT) / 길이 18")
+    anw_cld_mkt_orr_no1: int | None = Field(default=None, description="신규자시장주문번호1 (KRX) / 길이 10")
+    anw_cld_mkt_orr_no2: int | None = Field(default=None, description="신규자시장주문번호2 (NXT) / 길이 10")
 
 
 class KrStockOrderCashBuy(NHPlugAssetHttpBody):
@@ -49,14 +49,18 @@ class KrStockOrderAmendedOutput(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     orr_gno_tab_cd: str | None = Field(default=None, description="주문채번팀점코드 / 길이 4")
-    mkt_orr_no: int | None = Field(default=None, description="시장주문번호 / 정정·취소시 필요한 주문번호")
-    sor_fle_id: str | None = Field(default=None, description="SOR파일ID / 요청시장코드 SOR 경우에만 세팅")
-    can_sor_ant_rt1: float | None = Field(default=None, description="취소SOR배분비율1 (KRX) / SOR 경우에만 세팅")
-    can_sor_ant_rt2: float | None = Field(default=None, description="취소SOR배분비율2 (NXT) / SOR 경우에만 세팅")
-    can_orr_qty1: int | None = Field(default=None, description="취소주문수량1 (KRX)")
-    can_orr_qty2: int | None = Field(default=None, description="취소주문수량2 (NXT)")
-    can_cld_mkt_orr_no1: int | None = Field(default=None, description="취소자시장주문번호1 (KRX)")
-    can_cld_mkt_orr_no2: int | None = Field(default=None, description="취소자시장주문번호2 (NXT)")
+    mkt_orr_no: int | None = Field(default=None, description="시장주문번호 / 길이 10 / 정정·취소시 필요한 주문번호")
+    sor_fle_id: str | None = Field(default=None, description="SOR파일ID / 길이 20 / 요청시장코드 SOR 경우에만 세팅")
+    can_sor_ant_rt1: float | None = Field(
+        default=None, description="취소SOR배분비율1 (KRX) / 길이 11.8 / SOR 경우에만 세팅"
+    )
+    can_sor_ant_rt2: float | None = Field(
+        default=None, description="취소SOR배분비율2 (NXT) / 길이 11.8 / SOR 경우에만 세팅"
+    )
+    can_orr_qty1: int | None = Field(default=None, description="취소주문수량1 (KRX) / 길이 18")
+    can_orr_qty2: int | None = Field(default=None, description="취소주문수량2 (NXT) / 길이 18")
+    can_cld_mkt_orr_no1: int | None = Field(default=None, description="취소자시장주문번호1 (KRX) / 길이 10")
+    can_cld_mkt_orr_no2: int | None = Field(default=None, description="취소자시장주문번호2 (NXT) / 길이 10")
 
 
 class KrStockOrderModify(NHPlugAssetHttpBody):

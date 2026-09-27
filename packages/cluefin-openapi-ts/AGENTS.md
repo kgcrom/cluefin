@@ -19,7 +19,9 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 
 - `generate:metadata` regex-parses `packages/cluefin-openapi`'s Python source to produce
   the TS metadata files. Nothing re-runs it automatically: when the Python package's
-  endpoints change, re-run it or the TS side silently goes stale.
+  endpoints change, re-run it or the TS side silently goes stale. It writes unformatted
+  JSON — run `npm run format` right after, or every metadata file shows up in the diff.
+  A Python param counts as required when it has no default, even if typed `Optional`.
 - All three brokers (KIS, Kiwoom, nhplug) share their token cache **files** with Python
   under the same `<tmpdir>/cluefin-openapi/` directory, each using Python's own naming
   rule (`kisTokenCacheFileName` / `kiwoomTokenCacheFileName` / `nhplugTokenCacheFileName`
@@ -93,9 +95,17 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   invisible for KIS/Kiwoom (lowercase snake_case wire keys) and only shows up on NH PLUG's
   capitalized envelope keys (`Output_0` → `output0`). Dropping it silently desyncs the
   declared response types from the values actually returned.
-- nhplug treats **both** `00000` and `XA102` as success (`SUCCESS_RSP_CODES`) — the mock
-  server answers some successful inquiries with `XA102`, so a 00000-only check reports
+- nhplug treats `00000`, `XA102`, `00166` and `00221` as success (`SUCCESS_RSP_CODES`) — the
+  mock server answers some successful inquiries with `XA102` and the live server most account
+  inquiries with `00166` (`buyableQuantity`: `00221`), so a 00000-only check reports
   false failures. Keep the list identical to Python's `_model.SUCCESS_RSP_CODES`.
+- A failing body `rsp_cd` in a known group throws `NhplugNoDataError` (empty result — not a request
+  error), `NhplugMockUnsupportedError` or `NhplugNotBusinessDayError`, all subclasses of
+  `NhplugApiError`. The code lists live next to `SUCCESS_RSP_CODES`; keep them identical to Python's
+  `_exceptions.*_RSP_CODES`.
+- nhplug sends body values **as given** — unlike KIS/Kiwoom it must not stringify them: NH PLUG
+  rejects a string where the spec says integer/number with `IGW40011` (2026-09-27). Pass numbers
+  for numeric fields (`reqCnt: 10`, not `'10'`).
 - An nhplug HTTP 200 can still carry a failing `rsp_cd`; the failure check lives in
   `NhplugClient.invokeEndpoint` after the HTTP layer, so HTTP-level retry/rate-limit logic
   never sees those errors.
@@ -109,7 +119,9 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - KIS account tests need `KIS_CANO`; without it they skip silently rather than fail.
 - KIS tests use `assertKisResponseShapeDeep` (`tests/_helpers/kis-response-shape.ts`), not
   `assertResponseShape`: the older helper only checks top-level keys plus the one block a call
-  passes in, so item fields could drift unseen. Kiwoom tests use `assertKiwoomSpecConformance`
+  passes in, so item fields could drift unseen. nhplug tests use `assertNhplugMatchesSpec`
+  (`tests/_helpers/nhplug-response-shape.ts`, keys + spec lengths, same rules as Python
+  `tests/nhplug/_response_shape.py`). Kiwoom tests use `assertKiwoomSpecConformance`
   (`tests/_helpers/kiwoom-spec-conformance.ts`): `getKiwoomClient()` wraps `fetchImpl` to record the
   last wire request/response, and the helper checks every block plus request/response lengths
   against `../cluefin-openapi/tests/kiwoom/spec_lengths.json` (shared with Python).

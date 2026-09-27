@@ -12,7 +12,8 @@ from cluefin_openapi.nhplug._exceptions import NHPlugAPIError
 from cluefin_openapi.nhplug._http_client import HttpClient
 from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES
 
-from ._integration_helpers import real_account_only, skip_if_env_blocked
+from ._integration_helpers import mock_omits, real_account_only, skip_if_env_blocked
+from ._response_shape import assert_matches_spec
 
 
 @pytest.mark.integration
@@ -24,11 +25,26 @@ def test_asset_status(client: HttpClient, krstock_account: str):
             eal_aly_cd="2",  # 시가평가
             aet_bse="1",  # 순자산
             qut_dit_cd="UNT",  # 통합시세
+            aly_qut_cd="2",  # 전체장 — 스펙 필수(260911 추가)
         )
     except NHPlugAPIError as e:
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    # 운영·모의 모두 이 스펙 필드들을 보내지 않는다. ima_wtm 은 모의만 뺀다 (VENDOR_DOC_ERRATA.md)
+    assert_matches_spec(
+        client,
+        response,
+        ignore=(
+            "Output_0.cus_fnm",
+            "Output_0.rnm_cfm_no",
+            "Output_0.ctc_tp_cd_nm",
+            "Output_0.act_amn_tab_cd",
+            "Output_0.act_pdt_llf_cd",
+            "Output_0.amn_emp_fnm",
+        )
+        + mock_omits("Output_0.ima_wtm"),
+    )
 
 
 @pytest.mark.integration
@@ -41,6 +57,7 @@ def test_integrated_margin(client: HttpClient, krstock_account: str):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    assert_matches_spec(client, response)
 
 
 @pytest.mark.integration
@@ -56,6 +73,7 @@ def test_rights_held(client: HttpClient, krstock_account: str):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    assert_matches_spec(client, response)
 
 
 @pytest.mark.integration
@@ -69,6 +87,7 @@ def test_rights_scheduled(client: HttpClient, krstock_account: str):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    assert_matches_spec(client, response)
 
 
 @pytest.mark.integration
@@ -81,11 +100,26 @@ def test_balance(client: HttpClient, krstock_account: str):
             ltg_aot_dit_cd="9",  # 전체
             aet_bse="1",  # 순자산
             qut_dit_cd="UNT",  # 통합시세
+            aly_qut_cd="2",  # 전체장 — 스펙 필수(260911 추가)
         )
     except NHPlugAPIError as e:
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    # 운영·모의 모두 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assert_matches_spec(
+        client,
+        response,
+        ignore=(
+            "Output_0.fc_dca",
+            "Output_0.fc_mgg_amt",
+            "Output_0.fc_orr_pbl_amt",
+            "Output_0.fnn_amt",
+            "Output_0.rit_eal_amt",
+            "Output_0.orr_pbl_amt",
+            "Output_0.act_no",
+        ),
+    )
     assert response.header.cts_flag is not None
 
 
@@ -101,12 +135,14 @@ def test_daily_order_execution(client: HttpClient, krstock_account: str):
             act_no=krstock_account,
             orr_dt=date.today().strftime("%Y%m%d"),
             ost_cns_dit="0",  # 전체
+            orr_mkt_cd="00",  # 전체 — 스펙 필수
         )
     except NHPlugAPIError as e:
         skip_if_env_blocked(e)
 
     # 모의서버는 성공에 XA102("모의투자 조회가 완료되었습니다")를 반환한다 (2026-08-22 실측).
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    assert_matches_spec(client, response)
 
 
 @pytest.mark.integration
@@ -128,6 +164,24 @@ def test_buyable_quantity(client: HttpClient, krstock_account: str):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    # 운영·모의 모두 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assert_matches_spec(
+        client,
+        response,
+        ignore=(
+            "Output_0.sll_ctc_amt1",
+            "Output_0.byn_ctc_amt1",
+            "Output_0.sdr_xps1",
+            "Output_0.sll_ctc_amt",
+            "Output_0.ost_byn_ctc_amt",
+            "Output_0.sdr_xps",
+            "Output_0.byn_ny_cns_orr_amt",
+            "Output_0.int_rt",
+            "Output_0.orr_pr",
+            "Output_0.rp_eal_amt",
+            "Output_0.ny_stl_qty",
+        ),
+    )
 
 
 @pytest.mark.integration
@@ -146,6 +200,8 @@ def test_reserved_inquiry(client: HttpClient, krstock_account: str):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    # 운영은 스펙의 tab_nm 을 보내지 않는다. 모의는 미제공이라 확인 못 함 (VENDOR_DOC_ERRATA.md)
+    assert_matches_spec(client, response, ignore=("Output_0.tab_nm",))
 
 
 @pytest.mark.integration
@@ -162,6 +218,12 @@ def test_daily_pnl(client: HttpClient, krstock_account: str):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    # 운영·모의 모두 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assert_matches_spec(
+        client,
+        response,
+        ignore=("Output_0.act_fnm",),
+    )
 
 
 @pytest.mark.integration
@@ -173,11 +235,24 @@ def test_realized_pnl(client: HttpClient, krstock_account: str):
             iqr_dit_cd1="0",  # 전체
             fee_dit_cd="1",  # 온라인
             qut_dit_cd="UNT",  # 통합시세
+            aly_qut_cd="2",  # 전체장 — 스펙 필수(260911 추가)
         )
     except NHPlugAPIError as e:
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    # 운영·모의 모두 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assert_matches_spec(
+        client,
+        response,
+        ignore=(
+            "Output_0.cus_fnm",
+            "Output_0.rnm_cfm_no",
+            "Output_0.act_atv_tp_dtl_cd",
+            "Output_0.act_amn_tab_cd",
+            "Output_0.act_pdt_llf_cd",
+        ),
+    )
 
 
 @pytest.mark.integration
@@ -194,6 +269,18 @@ def test_trading_pnl(client: HttpClient, krstock_account: str):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    # 운영·모의 모두 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assert_matches_spec(
+        client,
+        response,
+        ignore=(
+            "Output_0.iem_cd",
+            "Output_0.byn_uit_pr",
+            "Output_0.sll_uit_pr",
+            "Output_0.fee_sum",
+            "Output_0.tax_sum",
+        ),
+    )
 
 
 @pytest.mark.integration
@@ -214,3 +301,19 @@ def test_sellable_quantity(client: HttpClient, krstock_account: str):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    # 모의 서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assert_matches_spec(
+        client,
+        response,
+        ignore=mock_omits(
+            "Output_0.cus_fnm",
+            "Output_0.ost_dit_cd",
+            "Output_0.cfd_lon_cd",
+            "Output_0.cfd_lon_cd_nm",
+            "Output_0.ttn_tp_cd",
+            "Output_0.ttn_tp_cd_nm",
+            "Output_0.sll_ny_stl_qty",
+            "Output_0.byn_ny_stl_qty",
+            "Output_0.phs_uit_pr",
+        ),
+    )

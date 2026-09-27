@@ -34,12 +34,34 @@ def client(auth) -> HttpClient:
     """HttpClient with a valid token, targeting the env from NHPLUG_ENV."""
     env = cast(Literal["prod", "dev"], os.getenv("NHPLUG_ENV", "dev"))
     token_response = auth.generate()
-    return HttpClient(
+    client = HttpClient(
         token=token_response.access_token,
         app_key=auth.app_key,
         secret_key=auth.secret_key,
         env=env,
     )
+    _capture_exchanges(client)
+    return client
+
+
+def _capture_exchanges(client: HttpClient) -> None:
+    """마지막 요청 body 와 파싱한 응답을 `client.last_exchange` 에 남긴다 (`_response_shape.py` 가 읽는다).
+
+    운영 코드는 원문을 보관하지 않으므로 테스트에서만 `post` 를 감싼다. 계좌번호가 섞인 원문이라
+    출력하지 않는다.
+    """
+    post = client.post
+
+    def capturing_post(path, body=None, cts=None):
+        response = post(path, body=body, cts=cts)
+        try:
+            parsed = response.json()
+        except ValueError:
+            parsed = None
+        client.last_exchange = {"path": path, "request": dict(body or {}), "response": parsed}
+        return response
+
+    client.post = capturing_post
 
 
 def _account_for_env(client) -> str:

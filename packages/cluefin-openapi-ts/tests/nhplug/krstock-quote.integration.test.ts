@@ -26,7 +26,6 @@ import {
 } from '../../src/nhplug/schemas/krstock-quote';
 import {
   assertNhplugResponse,
-  assertNhplugResponseShape,
   callNhplug,
   getNhplugClient,
   NHPLUG_TEST_ETF_IEM_CD,
@@ -35,6 +34,7 @@ import {
   setupNhplugRateLimit,
   TODAY,
 } from '../_helpers/integration-setup';
+import { assertNhplugMatchesSpec } from '../_helpers/nhplug-response-shape';
 
 /** 모의투자에서는 제공되지 않는다 (IGW40023). 운영(NHPLUG_ENV=prod)에서만 검증 가능. */
 const liveOnlyIt = runNhplugLiveOnlyIntegration ? test : test.skip;
@@ -48,25 +48,55 @@ describe('Nhplug KrstockQuote (운영 전용)', () => {
       client.krstockQuote.currentPrice({ marketCd: 'KRX', iemCd: NHPLUG_TEST_IEM_CD }),
     );
     assertNhplugResponse(res);
-    assertNhplugResponseShape(res.body, krStockQuoteCurrentPriceResponseSchema);
+    // 실서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assertNhplugMatchesSpec('/krstock/quote/v1/currentPrice', res.body, krStockQuoteCurrentPriceResponseSchema, [
+      'Output_0.filler',
+    ]);
+  });
+
+  // 스펙상 nxt_vi_antc_* 는 통합시세(UNT) 조회에서만 값이 온다
+  liveOnlyIt('currentPrice (UNT)', async (ctx) => {
+    const client = await getNhplugClient();
+    const res = await callNhplug(ctx, () =>
+      client.krstockQuote.currentPrice({ marketCd: 'UNT', iemCd: NHPLUG_TEST_IEM_CD }),
+    );
+    assertNhplugResponse(res);
+    // 실서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assertNhplugMatchesSpec('/krstock/quote/v1/currentPrice', res.body, krStockQuoteCurrentPriceResponseSchema, [
+      'Output_0.filler',
+    ]);
   });
 
   liveOnlyIt('currentExecution', async (ctx) => {
     const client = await getNhplugClient();
     const res = await callNhplug(ctx, () =>
-      client.krstockQuote.currentExecution({ marketCd: 'KRX', iemCd: NHPLUG_TEST_IEM_CD }),
+      // viewMainYn: 전체장 — 스펙 필수(260911 추가)
+      client.krstockQuote.currentExecution({ marketCd: 'KRX', iemCd: NHPLUG_TEST_IEM_CD, viewMainYn: 'N' }),
     );
     assertNhplugResponse(res);
-    assertNhplugResponseShape(res.body, krStockQuoteCurrentExecutionResponseSchema);
+    // 실서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assertNhplugMatchesSpec(
+      '/krstock/quote/v1/currentExecution',
+      res.body,
+      krStockQuoteCurrentExecutionResponseSchema,
+      ['Output_0.filler', 'Output_1.filler', 'Output_1.ctsz20', 'Output_1.nextbutton'],
+    );
   });
 
   liveOnlyIt('currentDaily', async (ctx) => {
     const client = await getNhplugClient();
     const res = await callNhplug(ctx, () =>
-      client.krstockQuote.currentDaily({ marketCd: 'KRX', iemCd: NHPLUG_TEST_IEM_CD }),
+      client.krstockQuote.currentDaily({ marketCd: 'KRX', iemCd: NHPLUG_TEST_IEM_CD, viewMainYn: 'N' }),
     );
     assertNhplugResponse(res);
-    assertNhplugResponseShape(res.body, krStockQuoteCurrentDailyResponseSchema);
+    // 실서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assertNhplugMatchesSpec('/krstock/quote/v1/currentDaily', res.body, krStockQuoteCurrentDailyResponseSchema, [
+      'Output_0.high_date',
+      'Output_0.low_date',
+      'Output_0.filler',
+      'Output_0.next_key',
+      'Output_0.nextbutton',
+    ]);
   });
 
   liveOnlyIt('currentInvestor', async (ctx) => {
@@ -75,7 +105,11 @@ describe('Nhplug KrstockQuote (운영 전용)', () => {
       client.krstockQuote.currentInvestor({ marketCd: 'KRX', iemCd: NHPLUG_TEST_IEM_CD, arrayCnt: '10' }),
     );
     assertNhplugResponse(res);
-    assertNhplugResponseShape(res.body, krStockQuoteCurrentInvestorResponseSchema);
+    // 실서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assertNhplugMatchesSpec('/krstock/quote/v1/currentInvestor', res.body, krStockQuoteCurrentInvestorResponseSchema, [
+      'Output_0.jasaz10',
+      'Output_0.filler',
+    ]);
   });
 
   liveOnlyIt('period', async (ctx) => {
@@ -87,17 +121,26 @@ describe('Nhplug KrstockQuote (운영 전용)', () => {
         gubun: '1', // 일봉
         edate: TODAY,
         arrayCnt: '30', // 최근 한 달치
+        viewMainYn: 'N', // 전체장 — 스펙 필수(260911 추가)
       }),
     );
     assertNhplugResponse(res);
-    assertNhplugResponseShape(res.body, krStockQuotePeriodResponseSchema);
+    // 실서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assertNhplugMatchesSpec('/krstock/quote/v1/period', res.body, krStockQuotePeriodResponseSchema, [
+      'Output_0.ctsz30',
+      'Output_1.vol_prtt_rate',
+    ]);
   });
 
   liveOnlyIt('afterHoursCurrent', async (ctx) => {
     const client = await getNhplugClient();
     const res = await callNhplug(ctx, () => client.krstockQuote.afterHoursCurrent({ iemCd: NHPLUG_TEST_IEM_CD }));
     assertNhplugResponse(res);
-    assertNhplugResponseShape(res.body, krStockQuoteAfterHoursCurrentResponseSchema);
+    assertNhplugMatchesSpec(
+      '/krstock/quote/v1/afterHoursCurrent',
+      res.body,
+      krStockQuoteAfterHoursCurrentResponseSchema,
+    );
   });
 
   liveOnlyIt('currentAfterHoursDaily', async (ctx) => {
@@ -112,7 +155,11 @@ describe('Nhplug KrstockQuote (운영 전용)', () => {
       }),
     );
     assertNhplugResponse(res);
-    assertNhplugResponseShape(res.body, krStockQuoteCurrentAfterHoursDailyResponseSchema);
+    assertNhplugMatchesSpec(
+      '/krstock/quote/v1/currentAfterHoursDaily',
+      res.body,
+      krStockQuoteCurrentAfterHoursDailyResponseSchema,
+    );
   });
 
   liveOnlyIt('currentAfterHoursExecution', async (ctx) => {
@@ -121,27 +168,38 @@ describe('Nhplug KrstockQuote (운영 전용)', () => {
       client.krstockQuote.currentAfterHoursExecution({ iemCd: NHPLUG_TEST_IEM_CD }),
     );
     assertNhplugResponse(res);
-    assertNhplugResponseShape(res.body, krStockQuoteCurrentAfterHoursExecutionResponseSchema);
+    assertNhplugMatchesSpec(
+      '/krstock/quote/v1/currentAfterHoursExecution',
+      res.body,
+      krStockQuoteCurrentAfterHoursExecutionResponseSchema,
+    );
   });
 
   liveOnlyIt('afterHoursExpected', async (ctx) => {
     const client = await getNhplugClient();
     const res = await callNhplug(ctx, () => client.krstockQuote.afterHoursExpected({ iemCd: NHPLUG_TEST_IEM_CD }));
     assertNhplugResponse(res);
-    assertNhplugResponseShape(res.body, krStockQuoteAfterHoursExpectedResponseSchema);
+    assertNhplugMatchesSpec(
+      '/krstock/quote/v1/afterHoursExpected',
+      res.body,
+      krStockQuoteAfterHoursExpectedResponseSchema,
+    );
   });
 
   liveOnlyIt('etfCurrent', async (ctx) => {
     const client = await getNhplugClient();
     const res = await callNhplug(ctx, () => client.krstockQuote.etfCurrent({ iemCd: NHPLUG_TEST_ETF_IEM_CD }));
     assertNhplugResponse(res);
-    assertNhplugResponseShape(res.body, krStockQuoteEtfCurrentResponseSchema);
+    assertNhplugMatchesSpec('/krstock/quote/v1/etfCurrent', res.body, krStockQuoteEtfCurrentResponseSchema);
   });
 
   liveOnlyIt('etfComponents', async (ctx) => {
     const client = await getNhplugClient();
     const res = await callNhplug(ctx, () => client.krstockQuote.etfComponents({ iemCd: NHPLUG_TEST_ETF_IEM_CD }));
     assertNhplugResponse(res);
-    assertNhplugResponseShape(res.body, krStockQuoteEtfComponentsResponseSchema);
+    // 실서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assertNhplugMatchesSpec('/krstock/quote/v1/etfComponents', res.body, krStockQuoteEtfComponentsResponseSchema, [
+      'Output_0.filler',
+    ]);
   });
 });
