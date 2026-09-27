@@ -11,7 +11,10 @@ import {
   NhplugApiError,
   NhplugAuthenticationError,
   NhplugAuthorizationError,
+  NhplugMockUnsupportedError,
   NhplugNetworkError,
+  NhplugNoDataError,
+  NhplugNotBusinessDayError,
   NhplugRateLimitError,
   NhplugServerError,
   NhplugTimeoutError,
@@ -41,6 +44,27 @@ import { NhplugOverseasStockQuote } from './overseas-stock-quote.js';
  * 파이썬 `_model.SUCCESS_RSP_CODES` 와 같은 값을 유지할 것.
  */
 export const SUCCESS_RSP_CODES: readonly string[] = ['00000', 'XA102', '00166', '00221'];
+
+// HTTP 200 + body rsp_cd 실패 중 뜻이 확인된 코드. 모르는 코드는 NhplugApiError 로 던진다.
+// 새 코드가 실측되면 해당 갈래에 추가하고, 파이썬 `_exceptions.py` 의 같은 이름 튜플도 맞출 것.
+
+/** 조회 결과 0건 → `NhplugNoDataError` (2026-09-27 운영, 잔고·내역이 없는 계좌). */
+export const NO_DATA_RSP_CODES: readonly string[] = [
+  '13578', // 조회할 내역이 없습니다 — 국내 rightsScheduled, 해외 unexecuted 등
+  '11512', // 데이터가 존재하지 않습니다 — 국내 dailyOrderExecution
+  '16935', // 해당 잔고가 없습니다 — 국내 sellableQuantity
+];
+/** 모의투자 미제공 업무 → `NhplugMockUnsupportedError` (2026-09-27 모의, HTTP 200). */
+export const MOCK_UNSUPPORTED_RSP_CODES: readonly string[] = ['19999'];
+/** 영업일 아님 → `NhplugNotBusinessDayError` (2026-08-22 토요일 모의). */
+export const NOT_BUSINESS_DAY_RSP_CODES: readonly string[] = ['14100'];
+
+const rspCdErrorType = (rspCd: string): typeof NhplugApiError => {
+  if (NO_DATA_RSP_CODES.includes(rspCd)) return NhplugNoDataError;
+  if (MOCK_UNSUPPORTED_RSP_CODES.includes(rspCd)) return NhplugMockUnsupportedError;
+  if (NOT_BUSINESS_DAY_RSP_CODES.includes(rspCd)) return NhplugNotBusinessDayError;
+  return NhplugApiError;
+};
 
 export interface NhplugClientOptions {
   token: string;
@@ -258,7 +282,8 @@ export class NhplugClient {
       // HTTP 200 이어도 body `rsp_cd` 가 실패일 수 있으므로 여기서 확인한다.
       const rspCd = envelope.rsp_cd;
       if (rspCd !== undefined && !SUCCESS_RSP_CODES.includes(rspCd)) {
-        throw new NhplugApiError(`API error ${rspCd}: ${envelope.rsp_msg ?? ''}`, {
+        const ErrorType = rspCdErrorType(rspCd);
+        throw new ErrorType(`API error ${rspCd}: ${envelope.rsp_msg ?? ''}`, {
           statusCode: response.status,
           responseData: rawJson,
           requestContext: { path: definition.path },

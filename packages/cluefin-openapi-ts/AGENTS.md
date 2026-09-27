@@ -99,6 +99,10 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   mock server answers some successful inquiries with `XA102` and the live server most account
   inquiries with `00166` (`buyableQuantity`: `00221`), so a 00000-only check reports
   false failures. Keep the list identical to Python's `_model.SUCCESS_RSP_CODES`.
+- A failing body `rsp_cd` in a known group throws `NhplugNoDataError` (empty result — not a request
+  error), `NhplugMockUnsupportedError` or `NhplugNotBusinessDayError`, all subclasses of
+  `NhplugApiError`. The code lists live next to `SUCCESS_RSP_CODES`; keep them identical to Python's
+  `_exceptions.*_RSP_CODES`.
 - nhplug sends body values **as given** — unlike KIS/Kiwoom it must not stringify them: NH PLUG
   rejects a string where the spec says integer/number with `IGW40011` (2026-09-27). Pass numbers
   for numeric fields (`reqCnt: 10`, not `'10'`).

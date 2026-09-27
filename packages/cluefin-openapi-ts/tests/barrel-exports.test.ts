@@ -41,4 +41,8 @@ test('root barrel exposes runtime exports from core, KIS, Kiwoom, and NH PLUG mo
   expect(Root.NhplugFileTokenCacheStore).toBe(NhplugFileTokenCacheStore);
   expect(Root.NhplugFileTokenCacheStore).not.toBe(FileTokenCacheStore);
   expect(Root.NHPLUG_SUCCESS_RSP_CODES).toEqual(['00000', 'XA102', '00166', '00221']);
+  expect(Root.NHPLUG_NO_DATA_RSP_CODES).toEqual(['13578', '11512', '16935']);
+  expect(Root.NHPLUG_MOCK_UNSUPPORTED_RSP_CODES).toEqual(['19999']);
+  expect(Root.NHPLUG_NOT_BUSINESS_DAY_RSP_CODES).toEqual(['14100']);
+  expect(new Root.NhplugNoDataError('x')).toBeInstanceOf(Root.NhplugApiError);
 });

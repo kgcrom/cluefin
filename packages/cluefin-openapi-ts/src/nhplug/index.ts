@@ -1,7 +1,13 @@
 export type { NhplugAuthOptions, NhplugTokenResponse, NhplugTokenRevokeResponse } from './auth.js';
 export { NHPLUG_AUTH_BASE_URL, NhplugAuth } from './auth.js';
 export type { NhplugClientOptions } from './client.js';
-export { NhplugClient, SUCCESS_RSP_CODES as NHPLUG_SUCCESS_RSP_CODES } from './client.js';
+export {
+  MOCK_UNSUPPORTED_RSP_CODES as NHPLUG_MOCK_UNSUPPORTED_RSP_CODES,
+  NhplugClient,
+  NO_DATA_RSP_CODES as NHPLUG_NO_DATA_RSP_CODES,
+  NOT_BUSINESS_DAY_RSP_CODES as NHPLUG_NOT_BUSINESS_DAY_RSP_CODES,
+  SUCCESS_RSP_CODES as NHPLUG_SUCCESS_RSP_CODES,
+} from './client.js';
 export { NhplugCommon } from './common.js';
 export { NhplugDomainBase } from './domain-base.js';
 export { NhplugKrstockInquiry } from './krstock-inquiry.js';
