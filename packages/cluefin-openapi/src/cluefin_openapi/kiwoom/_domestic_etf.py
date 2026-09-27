@@ -122,7 +122,7 @@ class DomesticETF:
         self,
         txon_type: Literal["0", "1", "2", "3", "4", "5"],
         navpre: Literal["0", "1", "2"],
-        mngmcomp: Literal["0000", "3020", "3027", "3191", "3228", "3023", "3022", "9999"],
+        mngmcomp: Literal["0000", "3020", "3027", "3191", "3228", "3023", "3022", "9999", "3048", "3257"],
         txon_yn: Literal["0", "1", "2"],
         trace_idex: Literal["0"],
         stex_tp: Literal["1", "2", "3"],

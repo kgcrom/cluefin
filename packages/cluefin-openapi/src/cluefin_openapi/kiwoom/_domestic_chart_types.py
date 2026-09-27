@@ -218,6 +218,11 @@ class DomesticChartStockMinuteItem(BaseModel):
         default="",
         description="전일대비 기호",
     )
+    # 공식 문서에 없지만 실서버가 반환함 (VENDOR_DOC_ERRATA.md)
+    acc_trde_qty: str = Field(
+        default="",
+        description="누적거래량",
+    )
 
 
 class DomesticChartStockMinute(BaseModel, KiwoomHttpBody):
