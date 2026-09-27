@@ -74,11 +74,13 @@ class TestOBV:
         np.testing.assert_allclose(actual, expected, rtol=1e-10)
 
     def test_obv_empty_array(self):
-        """Empty input: ta-lib returns an empty array, lock down the same behavior."""
+        """Empty input returns an empty array.
+
+        ta-lib 을 기준값으로 부르지 않는다: C TA_OBV 는 길이 0 입력에서 버퍼 앞을 읽고 써
+        힙을 깨뜨리고, 뒤의 무관한 테스트가 free() abort 로 죽는다.
+        """
         empty = np.array([], dtype=np.float64)
-        expected = talib.OBV(empty, empty)
-        actual = OBV(empty, empty)
-        assert len(actual) == len(expected) == 0
+        assert len(OBV(empty, empty)) == 0
 
 
 class TestAD:
