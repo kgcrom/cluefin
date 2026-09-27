@@ -267,14 +267,14 @@ class ExpectedIndexTrend(BaseModel, KisHttpBody):
 class ExpectedIndexAllItem1(BaseModel):
     bstp_nmix_prpr: str = Field(title="업종 지수 현재가")
     bstp_nmix_prdy_vrss: str = Field(title="업종 지수 전일 대비")
-    # TODO(typo): 문서에는 required Y, 실제로는 Optional
+    # 문서는 필수로 적지만 2026-09-27(휴장일) 응답엔 없었다 — 평일 재확인 대기
     prdy_vrss_sign: Optional[str] = Field(default=None, title="전일 대비 부호")
     prdy_ctrt: str = Field(title="전일 대비율")
     acml_vol: str = Field(title="누적 거래량")
     ascn_issu_cnt: str = Field(title="상승 종목 수")
     down_issu_cnt: str = Field(title="하락 종목 수")
     stnr_issu_cnt: str = Field(title="보합 종목 수")
-    # TODO(typo): 문서에는 required Y, 실제로는 Optional
+    # 문서는 필수로 적지만 2026-09-27(휴장일) 응답엔 없었다 — 평일 재확인 대기
     bstp_cls_code: Optional[str] = Field(default=None, title="업종 구분 코드")
 
 
@@ -318,7 +318,7 @@ class VolatilityInterruptionStatusItem(BaseModel):
 class VolatilityInterruptionStatus(BaseModel, KisHttpBody):
     """변동성완화장치(VI) 현황 응답"""
 
-    # TODO(typo): 문서에는 object, 실제로는 list
+    # 문서 표는 object, 실서버는 list (2026-09-27 실측) — VENDOR_DOC_ERRATA.md
     output: Sequence[VolatilityInterruptionStatusItem] = Field(default_factory=list)
 
 
@@ -345,7 +345,7 @@ class InterestRateSummaryItem2(BaseModel):
 class InterestRateSummary(BaseModel, KisHttpBody):
     """금리 종합(국내채권/금리) 응답"""
 
-    # TODO(typo): 문서에는 object, 실제로는 list
+    # 문서 표는 object, 실서버는 list (2026-09-27 실측) — VENDOR_DOC_ERRATA.md
     output1: Sequence[InterestRateSummaryItem1] = Field(default_factory=list)
     output2: Sequence[InterestRateSummaryItem2] = Field(default_factory=list)
 
@@ -390,7 +390,7 @@ class MarketAnnouncementScheduleItem(BaseModel):
 class MarketAnnouncementSchedule(BaseModel, KisHttpBody):
     """종합 시황/공시(제목) 응답"""
 
-    # TODO(typo): 문서에는 object, 실제로는 list
+    # 문서 표는 object, 실서버는 list (2026-09-27 실측) — VENDOR_DOC_ERRATA.md
     output: Sequence[MarketAnnouncementScheduleItem] = Field(default_factory=list)
 
 
@@ -416,7 +416,7 @@ class HolidayInquiry(BaseModel, KisHttpBody):
 
     ctx_area_fk: str = Field(default="", title="연속조회검색조건")
     ctx_area_nk: str = Field(default="", title="연속조회키")
-    # TODO(typo): 문서에는 object, 실제로는 list
+    # 문서 표는 object, 실서버는 list (2026-09-27 실측) — VENDOR_DOC_ERRATA.md
     output: Sequence[HolidayInquiryItem] = Field(default_factory=list)
 
 

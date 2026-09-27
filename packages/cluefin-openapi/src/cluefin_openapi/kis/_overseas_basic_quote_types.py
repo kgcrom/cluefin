@@ -155,7 +155,7 @@ class CurrentPriceFirstQuote(BaseModel, KisHttpBody):
     """해외주식 현재가 1호가"""
 
     output1: CurrentPriceFirstQuoteItem1 = Field(title="응답상세1")
-    # TODO(typo): 문서는 list지만 실제로는 object
+    # 문서 표는 list, 예시·실서버는 object (2026-09-27 실측) — VENDOR_DOC_ERRATA.md
     output2: CurrentPriceFirstQuoteItem2 = Field(title="응답상세2")
     output3: CurrentPriceFirstQuoteItem3 = Field(title="응답상세3")
 
@@ -411,7 +411,7 @@ class SettlementDate(BaseModel, KisHttpBody):
 
     ctx_area_fk: str = Field(default="", title="연속조회검색조건")
     ctx_area_nk: str = Field(default="", title="연속조회키")
-    # TODO(typo): 문서는 object지만 실제로는 list
+    # 문서 표는 object, 실서버는 list (2026-09-27 실측) — VENDOR_DOC_ERRATA.md
     output: Sequence[SettlementDateItem] = Field(default_factory=list)
 
 

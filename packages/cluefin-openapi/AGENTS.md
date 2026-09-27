@@ -48,12 +48,13 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - ka10087·ka10098 were removed from both the docs and the live server on 2026-09-23
   (`1504:해당 URI에서는 지원하는 API ID가 아닙니다`) — unlike ka10009, so a `1504` for
   these means the TR is gone, not just undocumented. Removed from the codebase.
-- **KIS 금리종합(`comp-interest`, FHPST07020000)은 `FID_DIV_CLS_CODE` 에 따라 배열의 의미가
-  바뀐다** (2026-09-20 실측). 문서는 `1:해외금리지표` 만 적어 두었지만 실제로는
-  `0`/공백 → output1·output2 모두 국내 19종, `1` → output1 해외 7종 + output2 국내(뒤 8종만,
-  **앞 10행은 필드가 한두 칸씩 밀리고 한글도 깨진다**), `2` → output1 에 국내 19 + 해외 7 이
-  온전히 온다. 문서에 없는 값이지만 전체를 주는 것은 `2` 뿐이라 CLI 기본값으로 쓴다.
-  배열 이름은 믿을 수 없으니 국내/해외는 `bcdt_code` 접두어(`Y01`/`Y02`)로 가른다.
+- **Broker doc ≠ live server cases live in `VENDOR_DOC_ERRATA.md`** (KIS: misnamed blocks, fields the
+  server omits or adds, wrong lengths, 금리종합 `FID_DIV_CLS_CODE`, 재무비율 누적행, 기간별시세 100봉 상한).
+  Code follows the live server; check that file before "fixing" a model back to the docs, and add a row
+  when you measure a new divergence.
+- KIS integration tests compare raw response keys with the model exactly (`tests/kis/_response_shape.py`
+  in Python, `assertKisResponseShapeDeep` in TS). A key the server omits on purpose goes in the call's
+  `ignore` with a comment pointing at the errata — don't loosen the helper.
 - The gitignored `CLAUDE.local.md` records the working procedure for scraping the
   official KIS/Kiwoom doc portals (Kiwoom's POST doc endpoints are blocked by AhnLab
   Eversafe; only GET works). Read it before re-deriving that.

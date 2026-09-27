@@ -78,7 +78,7 @@ class DomesticStockCurrentPriceItem(BaseModel):
     stck_shrn_iscd: str = Field(title="주식 단축 종목코드")
     fcam_cnnm: str = Field(title="액면가 통화명")
     cpfn_cnnm: str = Field(title="자본금 통화명")
-    # TODO(typo) 존재하지 않는 필드임
+    # 문서 표에만 있고 실서버는 보내지 않는다 (2026-09-27 실측) — VENDOR_DOC_ERRATA.md
     # apprch_rate: str = Field(title="접근도")
     frgn_hldn_qty: str = Field(title="외국인 보유 수량")
     vi_cls_code: str = Field(title="VI적용구분코드")
@@ -562,7 +562,7 @@ class DomesticStockCurrentPriceTimeItemConclusionItem1(BaseModel):
 
 class DomesticStockCurrentPriceTimeItemConclusionItem2(BaseModel):
     stck_cntg_hour: str = Field(title="주식 체결 시간")
-    # TODO(typo) 문서에는 stck_pbpr 이라고 되어있으나, stck_prpr 오타로 보임
+    # 문서는 stck_pbpr 로 적지만 실서버 키는 stck_prpr (2026-09-27 실측) — VENDOR_DOC_ERRATA.md
     stck_prpr: str = Field(title="주식 현재가")
     prdy_vrss: str = Field(title="전일 대비")
     prdy_vrss_sign: str = Field(title="전일 대비 부호")
@@ -690,7 +690,7 @@ class DomesticStockOvertimeCurrentPriceItem(BaseModel):
     trht_yn: str = Field(title="거래정지 여부")
     vlnt_deal_cls_name: str = Field(title="임의 매매 구분 명")
     ovtm_untp_sdpr: str = Field(title="시간외 단일가 기준가")
-    # TODO(typo) 문서에는 required Y지만 실제로는 Optional, 한글명도 '시장 경구..'
+    # 문서는 필수로 적지만 실서버는 값이 없으면 키를 생략한다 (2026-09-27 실측) — VENDOR_DOC_ERRATA.md
     mrkt_warn_cls_name: Optional[str] = Field(title="시장 경고 구분 명", default=None)
     revl_issu_reas_name: Optional[str] = Field(title="재평가 종목 사유 명", default=None)
     insn_pbnt_yn: str = Field(title="불성실 공시 여부")
@@ -732,7 +732,7 @@ class DomesticStockOvertimeAskingPriceItem(BaseModel):
     ovtm_untp_askp_icdc1: str = Field(title="시간외 단일가 매도호가 증감1")
     ovtm_untp_askp_icdc2: str = Field(title="시간외 단일가 매도호가 증감2")
     ovtm_untp_askp_icdc3: str = Field(title="시간외 단일가 매도호가 증감3")
-    # TODO(typo): 문서에는 required Y지만 실제로는 Optional
+    # 문서는 10단계·필수로 적지만 실서버는 3단계까지만 보낸다 (2026-09-27 실측) — VENDOR_DOC_ERRATA.md
     ovtm_untp_askp_icdc4: Optional[str] = Field(title="시간외 단일가 매도호가 증감4", default=None)
     ovtm_untp_askp_icdc5: Optional[str] = Field(title="시간외 단일가 매도호가 증감5", default=None)
     ovtm_untp_askp_icdc6: Optional[str] = Field(title="시간외 단일가 매도호가 증감6", default=None)
@@ -788,7 +788,7 @@ class DomesticStockOvertimeAskingPriceItem(BaseModel):
 class DomesticStockOvertimeAskingPrice(BaseModel, KisHttpBody):
     """국내주식 시간외호가"""
 
-    # TODO(typo) output이 맞지만 문서에는 output1로 잘못 표기되어 있음.
+    # 문서 표는 output1, 예시·실서버는 output (2026-09-27 실측) — VENDOR_DOC_ERRATA.md
     output: Optional[DomesticStockOvertimeAskingPriceItem] = Field(default=None, title="응답상세")
 
 
@@ -834,7 +834,7 @@ class DomesticEtfEtnCurrentPriceItem(BaseModel):
     trc_errt: str = Field(title="추적 오차율")
     stck_sdpr: str = Field(title="주식 기준가")
     stck_sspr: str = Field(title="주식 대용가")
-    # TODO(typo) 존재하지 않는 필드가 문서에 포함되어 있음.
+    # 문서 표에만 있고 실서버는 보내지 않는다 (2026-09-27 실측) — VENDOR_DOC_ERRATA.md
     # nmix_ctrt: str = Field(title="지수 대비율")
     etf_crcl_stcn: str = Field(title="ETF 유통 주수")
     etf_ntas_ttam: str = Field(title="ETF 순자산 총액")

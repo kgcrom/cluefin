@@ -25,8 +25,10 @@
 | 주식현재가 시간대별체결 `inquire-time-itemconclusion` (FHPST01060000) | 표: output2 가 object, `stck_pbpr` / 예시: array | array, `stck_prpr` | 2026-09-27 | 모델은 array, `stck_prpr` |
 | 업종 분봉조회 `inquire-time-indexchartprice` (FHKUP03500200) | 표: `Output1`·`Output2` (대문자) | 소문자 `output1`·`output2` | 2026-09-27 | 소문자 |
 | 예탁원 유상증자일정 `ksdinfo/paidin-capin` (HHKDB669100C0) | 블록 `output` | `output1` | 2026-08-21 | `output1` |
+| 배당률 상위 `ranking/dividend-rate` (HHKDB13470100) | 블록 `output1` | `output` | 2026-08-21 | `output` |
 | ETF/ETN 현재가 `etfetn/inquire-price` (FHPST02400000) | 표: output 에 `nmix_ctrt` | 안 보냄 | 2026-09-27 | 모델에 없음 |
 | ETF 구성종목시세 `inquire-component-stock-price` (FHKST121600C0) | 표: `etf_cu_unit_scrt_cnt` 는 output1 에만 | output2 행에도 보냄 | 2026-09-27 | 모델에 있음 |
+| 변동성완화장치(VI) 현황 `inquire-vi-status` (FHPST01390000), 국내휴장일조회 `chk-holiday` (CTCA0903R), 해외결제일자 `countries-holiday` (CTOS5011R) | 표: output 이 object | array | 2026-09-27 | array |
 | 국내휴장일조회 `chk-holiday` (CTCA0903R), 당사 대주가능 종목 `lendable-by-company` (CTSC2702R) | 표: 최상위 연속조회 키 `ctx_area_*` 없음 / 예시: 있음 | 보냄 | 2026-09-27 | 모델에 있음 |
 | 금리 종합 `comp-interest` (FHPST07020000) | 표: output1 에 `bond_cntg_ert`·`bond_stnd_iscd`·`date_time`·`indicator_nm`·`prdy_vrss` | 안 보냄. `FID_DIV_CLS_CODE` 도 문서에 없는 `2` 만 온전한 값을 준다 (`AGENTS.md`) | 2026-09-20·27 | 모델에 없음 |
 | 프로그램매매 종합현황(일별) `comp-program-trade-daily` (FHPPG04600001) | 표: `whol_*` 순매수 계열 9개 없음 (`whol_smtn_ntby_qty` 등) / 예시: 있음 | 보냄 | 2026-09-27, K | 모델에 추가 |
@@ -41,6 +43,28 @@
 | 해외주식 분봉조회 `inquire-time-itemchartprice` (HHDFS76950200) | 표: output1 array·output2 object / 예시: 반대 | 예시대로 (output1 object, output2 array) | 2026-09-27 | 예시대로 |
 | 해외결제일자조회 `countries-holiday` (CTOS5011R), 기간별권리조회 `period-rights` (CTRGT011R), 담보대출가능종목 `colable-by-company` (CTLN4050R) | 표: 최상위 연속조회 키 `ctx_area_*` 없음 / 예시: 있음 | 보냄 | 2026-09-27 | 모델에 있음 |
 | 채권 실시간호가 `H0BJASP0` | 5호가 잔량 필드명 `askp_rsqn52`·`bidp_rsqn53` | 위치상 `askp_rsqn5`·`bidp_rsqn5` (오타) | 2026-09-27 정적 | `askp_rsqn5`·`bidp_rsqn5` |
+
+### 요청 파라미터
+
+| API (TR) | 문서 | 실서버 | 실측 | 코드 |
+|---|---|---|---|---|
+| 종목별일별매수매도체결량 `inquire-daily-trade-volume` (FHKST03010800) | `FID_COND_MRKT_DIV_CODE_1`·`FID_INPUT_ISCD_1` 없음 | 빠지면 `OPSQ2001`(INPUT FIELD NOT FOUND) 로 거절 | 2026-08 | 함께 보냄 |
+| 금리 종합 `comp-interest` | TR `(구) FHPST07020000 (신) HHPST070200C0`, 신규 TR 은 필수 `DATA_GB` | 구 TR 로 동작 중 | 2026-09-27 문서 확인 | 구 TR 유지 — 신 TR 전환은 별도 실측 후 |
+
+### 서버 동작 (문서에 없는 것)
+
+- **금리 종합(`comp-interest`, FHPST07020000)은 `FID_DIV_CLS_CODE` 에 따라 배열의 의미가 바뀐다** (2026-09-20 실측).
+  문서는 `1:해외금리지표` 만 적었지만 `0`/공백 → output1·output2 모두 국내 19종, `1` → output1 해외 7종 + output2 국내
+  (뒤 8종만, **앞 10행은 필드가 한두 칸씩 밀리고 한글도 깨진다**), `2` → output1 에 국내 19 + 해외 7 이 온전히 온다.
+  전체를 주는 것은 문서에 없는 `2` 뿐이라 CLI 기본값으로 쓴다. 배열 이름은 믿을 수 없으니 국내/해외는
+  `bcdt_code` 접두어(`Y01`/`Y02`)로 가른다.
+- **재무비율(FHKST66430300)·손익계산서(FHKST66430200)의 `fid_div_cls_code="0"`(년)은 진행 중 회계연도의 누적 행을
+  최신으로 얹어 준다** (2026-08-22, 202512 위에 202606). 최신 행을 연간으로 읽으면 ROE·증가율이 부풀려진다 —
+  결산월과 `stac_yymm` 뒷 2자리가 일치하는 행이 완결 연도다.
+- **국내주식기간별시세(FHKST03010100)는 요청 구간과 무관하게 최신 100봉에서 잘린다** (2026-08-22, 1년 반 요청 → 100건).
+  장기 일봉은 키움 ka10081 연속조회를 쓴다.
+- 실서버는 값이 없는 조건부 필드(시장경고·관리종목·락 구분명 등)의 **키를 아예 생략한다** — 위 "응답 필드" 의
+  현재가·시간외현재가 항목. 통합테스트는 이런 필드를 `ignore` 로 명시한다.
 
 ### 길이
 
@@ -61,3 +85,11 @@
 | 해외주식 업종별시세 `industry-theme` | 요청 `ICOD` | 1 | 3 (업종코드) | 2026-09-27 |
 | 장내채권 평균단가조회 `domestic-bond/avg-unit` | 응답 `output1.prdt_name` / `kis_unpr` / `avg_evlu_rf_unpr` | 1 / 8 / 3 | 13 / 14 / 4 | 2026-09-27 |
 | 해외주식 순위 8종 (`industry-theme`·`market-cap`·`new-highlow`·`trade-growth`·`trade-pbmn`·`trade-turnover`·`trade-vol`·`updown-rate`) | 응답 `output2.symb` | 1 | 최대 7 (티커) | 2026-09-27 |
+
+## Kiwoom
+
+아직 대조 전이다. 그동안의 실측 기록은 `AGENTS.md` 의 Kiwoom 항목에 있다 — 대조할 때 이 절로 옮긴다.
+
+## NH PLUG
+
+아직 대조 전이다. 그동안의 실측 기록은 `AGENTS.md` 의 NH PLUG 절에 있다 — 대조할 때 이 절로 옮긴다.

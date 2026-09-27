@@ -66,7 +66,7 @@ class WatchlistGroupsItem(BaseModel):
 class WatchlistGroups(BaseModel, KisHttpBody):
     """관심종목 그룹조회"""
 
-    # TODO(typo): 문서에는 object로 되어있으나, 실제로는 list
+    # 문서 표는 object, 예시는 list — HTS ID 가 없어 실측 대기
     output2: Sequence[WatchlistGroupsItem] = Field(default_factory=list)
 
 
@@ -105,7 +105,7 @@ class WatchlistMultiQuoteItem(BaseModel):
 class WatchlistMultiQuote(BaseModel, KisHttpBody):
     """관심종목(멀티종목) 시세조회"""
 
-    # TODO(typo): 문서에는 object로 되어있으나, 실제로는 list
+    # 문서 표는 object, 실서버는 list (2026-09-27 실측) — VENDOR_DOC_ERRATA.md
     output: Sequence[WatchlistMultiQuoteItem] = Field(default_factory=list)
 
 
