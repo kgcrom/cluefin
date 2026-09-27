@@ -62,6 +62,7 @@ import {
   SAMSUNG,
   TODAY,
 } from '../_helpers/integration-setup';
+import { assertKisResponseShapeDeep } from '../_helpers/kis-response-shape';
 
 const it = runIntegration ? test : test.skip;
 
@@ -73,7 +74,7 @@ describe('KIS DomesticStockInfo', () => {
       prdtTypeCd: '300',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getProductBasicInfoResponseSchema);
+    assertKisResponseShapeDeep(res.body, getProductBasicInfoResponseSchema);
   });
 
   it('getStockBasicInfo', async () => {
@@ -83,7 +84,7 @@ describe('KIS DomesticStockInfo', () => {
       pdno: SAMSUNG,
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getStockBasicInfoResponseSchema);
+    assertKisResponseShapeDeep(res.body, getStockBasicInfoResponseSchema);
   });
 
   it('getBalanceSheet', async () => {
@@ -94,6 +95,7 @@ describe('KIS DomesticStockInfo', () => {
       fidInputIscd: SAMSUNG,
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getBalanceSheetResponseSchema);
     assertResponseShape(res.body, getBalanceSheetResponseSchema, 'output', getBalanceSheetItemSchema);
   });
 
@@ -105,6 +107,7 @@ describe('KIS DomesticStockInfo', () => {
       fidInputIscd: SAMSUNG,
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getIncomeStatementResponseSchema);
     assertResponseShape(res.body, getIncomeStatementResponseSchema, 'output', getIncomeStatementItemSchema);
   });
 
@@ -116,6 +119,7 @@ describe('KIS DomesticStockInfo', () => {
       fidInputIscd: SAMSUNG,
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getFinancialRatioResponseSchema);
     assertResponseShape(res.body, getFinancialRatioResponseSchema, 'output', getFinancialRatioItemSchema);
   });
 
@@ -127,6 +131,7 @@ describe('KIS DomesticStockInfo', () => {
       fidCondMrktDivCode: 'J',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getProfitabilityRatioResponseSchema);
     assertResponseShape(res.body, getProfitabilityRatioResponseSchema, 'output', getProfitabilityRatioItemSchema);
   });
 
@@ -138,6 +143,7 @@ describe('KIS DomesticStockInfo', () => {
       fidCondMrktDivCode: 'J',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getOtherKeyRatioResponseSchema);
     assertResponseShape(res.body, getOtherKeyRatioResponseSchema, 'output', getOtherKeyRatioItemSchema);
   });
 
@@ -149,6 +155,7 @@ describe('KIS DomesticStockInfo', () => {
       fidCondMrktDivCode: 'J',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getStabilityRatioResponseSchema);
     assertResponseShape(res.body, getStabilityRatioResponseSchema, 'output', getStabilityRatioItemSchema);
   });
 
@@ -160,6 +167,7 @@ describe('KIS DomesticStockInfo', () => {
       fidCondMrktDivCode: 'J',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getGrowthRatioResponseSchema);
     assertResponseShape(res.body, getGrowthRatioResponseSchema, 'output', getGrowthRatioItemSchema);
   });
 
@@ -173,6 +181,7 @@ describe('KIS DomesticStockInfo', () => {
       fidCondMrktDivCode: 'J',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getMarginTradableStocksResponseSchema);
     assertResponseShape(res.body, getMarginTradableStocksResponseSchema, 'output', getMarginTradableStocksItemSchema);
   });
 
@@ -187,6 +196,7 @@ describe('KIS DomesticStockInfo', () => {
       highGb: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getKsdDividendDecisionResponseSchema);
     assertResponseShape(res.body, getKsdDividendDecisionResponseSchema, 'output1', getKsdDividendDecisionItemSchema);
   });
 
@@ -199,6 +209,7 @@ describe('KIS DomesticStockInfo', () => {
       cts: '',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getKsdStockDividendDecisionResponseSchema);
     assertResponseShape(
       res.body,
       getKsdStockDividendDecisionResponseSchema,
@@ -216,6 +227,7 @@ describe('KIS DomesticStockInfo', () => {
       shtCd: '',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getKsdMergerSplitDecisionResponseSchema);
     assertResponseShape(
       res.body,
       getKsdMergerSplitDecisionResponseSchema,
@@ -234,6 +246,7 @@ describe('KIS DomesticStockInfo', () => {
       marketGb: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getKsdParValueChangeDecisionResponseSchema);
     assertResponseShape(
       res.body,
       getKsdParValueChangeDecisionResponseSchema,
@@ -251,6 +264,7 @@ describe('KIS DomesticStockInfo', () => {
       shtCd: '',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getKsdCapitalReductionScheduleResponseSchema);
     assertResponseShape(
       res.body,
       getKsdCapitalReductionScheduleResponseSchema,
@@ -268,6 +282,7 @@ describe('KIS DomesticStockInfo', () => {
       cts: '',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getKsdListingInfoScheduleResponseSchema);
     assertResponseShape(
       res.body,
       getKsdListingInfoScheduleResponseSchema,
@@ -285,6 +300,7 @@ describe('KIS DomesticStockInfo', () => {
       tDt: TODAY,
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getKsdIpoSubscriptionScheduleResponseSchema);
     assertResponseShape(
       res.body,
       getKsdIpoSubscriptionScheduleResponseSchema,
@@ -302,6 +318,7 @@ describe('KIS DomesticStockInfo', () => {
       cts: '',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getKsdForfeitedShareScheduleResponseSchema);
     assertResponseShape(
       res.body,
       getKsdForfeitedShareScheduleResponseSchema,
@@ -319,6 +336,7 @@ describe('KIS DomesticStockInfo', () => {
       cts: '',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getKsdDepositScheduleResponseSchema);
     assertResponseShape(res.body, getKsdDepositScheduleResponseSchema, 'output1', getKsdDepositScheduleItemSchema);
   });
 
@@ -332,6 +350,7 @@ describe('KIS DomesticStockInfo', () => {
       shtCd: '',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getKsdPaidInCapitalIncreaseScheduleResponseSchema);
     assertResponseShape(
       res.body,
       getKsdPaidInCapitalIncreaseScheduleResponseSchema,
@@ -349,6 +368,7 @@ describe('KIS DomesticStockInfo', () => {
       shtCd: '',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getKsdStockDividendScheduleResponseSchema);
     assertResponseShape(
       res.body,
       getKsdStockDividendScheduleResponseSchema,
@@ -366,6 +386,7 @@ describe('KIS DomesticStockInfo', () => {
       shtCd: '',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getKsdShareholderMeetingScheduleResponseSchema);
     assertResponseShape(
       res.body,
       getKsdShareholderMeetingScheduleResponseSchema,
@@ -380,7 +401,7 @@ describe('KIS DomesticStockInfo', () => {
       shtCd: SAMSUNG,
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getEstimatedEarningsResponseSchema);
+    assertKisResponseShapeDeep(res.body, getEstimatedEarningsResponseSchema);
     assertResponseShape(res.body, getEstimatedEarningsResponseSchema, 'output2', getEstimatedEarningsOutput2ItemSchema);
     assertResponseShape(res.body, getEstimatedEarningsResponseSchema, 'output3', getEstimatedEarningsOutput3ItemSchema);
     assertResponseShape(res.body, getEstimatedEarningsResponseSchema, 'output4', getEstimatedEarningsOutput4ItemSchema);
@@ -397,7 +418,7 @@ describe('KIS DomesticStockInfo', () => {
       ctxAreaNk100: '',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getStockLoanableListResponseSchema);
+    assertKisResponseShapeDeep(res.body, getStockLoanableListResponseSchema);
     assertResponseShape(res.body, getStockLoanableListResponseSchema, 'output1', getStockLoanableListOutput1ItemSchema);
   });
 
@@ -411,6 +432,7 @@ describe('KIS DomesticStockInfo', () => {
       fidInputDate2: TODAY,
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getInvestmentOpinionResponseSchema);
     assertResponseShape(res.body, getInvestmentOpinionResponseSchema, 'output', getInvestmentOpinionItemSchema);
   });
 
@@ -425,6 +447,7 @@ describe('KIS DomesticStockInfo', () => {
       fidInputDate2: TODAY,
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getInvestmentOpinionByBrokerageResponseSchema);
     assertResponseShape(
       res.body,
       getInvestmentOpinionByBrokerageResponseSchema,
