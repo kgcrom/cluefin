@@ -108,7 +108,9 @@ def value_length(value: Any, spec: str) -> str | None:
 
     Numbers: the sign is not counted; "N.M" allows N-M integer digits and M fraction digits.
     Strings: CP949 byte length — the spec's lengths come from fixed-width CP949 records
-    (same encoding as the `.mst` instrument files), so a Korean character counts as 2.
+    (same encoding as the `.mst` instrument files), so a Korean character counts as 2. Counted as
+    "non-ASCII = 2", which equals CP949 for every encodable character and matches the TS helper
+    (Node has no CP949 encoder) for the rest — e.g. the U+FFFD garbage some fields carry.
     """
     if value is None or value == "" or isinstance(value, bool):
         return None
@@ -126,7 +128,7 @@ def value_length(value: Any, spec: str) -> str | None:
             text = text[:-2]
         size = len(text.replace(".", ""))
     else:
-        size = len(str(value).encode("cp949", errors="replace"))
+        size = sum(2 if ord(ch) > 0x7F else 1 for ch in str(value))
     return str(size) if size > int(spec) else None
 
 

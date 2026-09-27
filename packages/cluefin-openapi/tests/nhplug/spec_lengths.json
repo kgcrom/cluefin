@@ -1,6 +1,59 @@
 {
   "_source": "https://www.nhplug.com/openapi-docs/{common,krstock,gbstock}/openapi.json (krstock: API명세서 260911) 2026-09-27 스냅샷. 필드 description 의 '길이 N' / '길이 N.M'. 재생성은 스펙을 다시 받아 같은 규칙으로 — known_exceed 는 VENDOR_DOC_ERRATA.md 와 함께 손으로 관리",
-  "known_exceed": {},
+  "known_exceed": {
+    "/krstock/quote/v1/afterHoursCurrent": {
+      "Output_0.antc_vrss_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)",
+      "Output_0.mkop_cls_code": "휴장일에 호출마다 다른 쓰레기 바이트(U+FFFD 포함)가 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)",
+      "Output_0.prdy_vrss_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)",
+      "Output_1.prdy_vrss_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)"
+    },
+    "/krstock/quote/v1/afterHoursExpected": {
+      "Output_0.prdy_vrss_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)"
+    },
+    "/krstock/quote/v1/currentAfterHoursDaily": {
+      "Output_0.prdy_vrss_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)"
+    },
+    "/krstock/quote/v1/currentAfterHoursExecution": {
+      "Output_0.prdy_vrss_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)"
+    },
+    "/krstock/quote/v1/currentDaily": {
+      "Output_0.prdy_vrss_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)"
+    },
+    "/krstock/quote/v1/currentExecution": {
+      "Output_0.prdy_vrss_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)",
+      "Output_1.prdy_vrss_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)"
+    },
+    "/krstock/quote/v1/currentInvestor": {
+      "Output_0.prdy_vrss_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)"
+    },
+    "/krstock/quote/v1/currentPrice": {
+      "Output_0.main_cls_vrss_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)",
+      "Output_0.prdy_vrss_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)",
+      "Output_0.pre_prdy_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)",
+      "Output_0.stck_oprc_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)",
+      "Output_1.prdy_vrss_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)",
+      "Output_2.antc_cntg_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)",
+      "Output_2.ovtm_antc_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)",
+      "Output_2.ovtm_untp_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)"
+    },
+    "/krstock/quote/v1/etfComponents": {
+      "Output_0.prdy_vrss_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)"
+    },
+    "/krstock/quote/v1/etfCurrent": {
+      "Output_0.oprc_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)",
+      "Output_0.prdy_vrss_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)",
+      "Output_1.prdy_vrss_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)",
+      "Output_2.antc_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)",
+      "Output_3.dprt_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)",
+      "Output_3.nav_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)",
+      "Output_4.ovrs_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)",
+      "Output_4.prdy_vrss_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)",
+      "Output_4.ubsign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)"
+    },
+    "/krstock/quote/v1/period": {
+      "Output_0.prdy_vrss_sign": "등락부호가 '1E' 처럼 2자리로 온다 (운영 2026-09-27, VENDOR_DOC_ERRATA.md)"
+    }
+  },
   "lengths": {
     "/gbstock/inquiry/v1/balance": {
       "req": {

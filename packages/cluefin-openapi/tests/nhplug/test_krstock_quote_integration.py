@@ -17,6 +17,7 @@ from cluefin_openapi.nhplug._http_client import HttpClient
 from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES
 
 from ._integration_helpers import real_account_only, skip_if_env_blocked
+from ._response_shape import assert_matches_spec
 
 TEST_IEM_CD = "005930"  # 삼성전자
 TEST_ETF_IEM_CD = "069500"  # KODEX 200
@@ -34,8 +35,32 @@ def test_current_price(client: HttpClient):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    # 실서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assert_matches_spec(
+        client,
+        response,
+        ignore=("Output_0.filler",),
+    )
     assert response.body.output_0 is not None
     assert response.body.output_0.stck_prpr is not None
+
+
+@pytest.mark.integration
+@real_account_only("/krstock/quote/v1/currentPrice", _IGW40023)
+def test_current_price_unt(client: HttpClient):
+    """주식현재가 시세 — 통합시세(UNT). 스펙상 `nxt_vi_antc_*` 는 UNT 조회에서만 온다."""
+    try:
+        response = client.krstock_quote.current_price(market_cd="UNT", iem_cd=TEST_IEM_CD)
+    except NHPlugAPIError as e:
+        skip_if_env_blocked(e)
+
+    assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    # 실서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assert_matches_spec(
+        client,
+        response,
+        ignore=("Output_0.filler",),
+    )
 
 
 @pytest.mark.integration
@@ -43,11 +68,26 @@ def test_current_price(client: HttpClient):
 def test_current_execution(client: HttpClient):
     """주식현재가 체결. 계좌번호 없이 성공을 기대한다."""
     try:
-        response = client.krstock_quote.current_execution(market_cd="KRX", iem_cd=TEST_IEM_CD)
+        response = client.krstock_quote.current_execution(
+            market_cd="KRX",
+            iem_cd=TEST_IEM_CD,
+            view_main_yn="N",  # 전체장 — 스펙 필수(260911 추가)
+        )
     except NHPlugAPIError as e:
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    # 실서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assert_matches_spec(
+        client,
+        response,
+        ignore=(
+            "Output_0.filler",
+            "Output_1.filler",
+            "Output_1.ctsz20",
+            "Output_1.nextbutton",
+        ),
+    )
 
 
 @pytest.mark.integration
@@ -55,11 +95,27 @@ def test_current_execution(client: HttpClient):
 def test_current_daily(client: HttpClient):
     """주식현재가 일자별. 계좌번호 없이 성공을 기대한다."""
     try:
-        response = client.krstock_quote.current_daily(market_cd="KRX", iem_cd=TEST_IEM_CD)
+        response = client.krstock_quote.current_daily(
+            market_cd="KRX",
+            iem_cd=TEST_IEM_CD,
+            view_main_yn="N",  # 전체장 — 스펙 필수(260911 추가)
+        )
     except NHPlugAPIError as e:
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    # 실서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assert_matches_spec(
+        client,
+        response,
+        ignore=(
+            "Output_0.high_date",
+            "Output_0.low_date",
+            "Output_0.filler",
+            "Output_0.next_key",
+            "Output_0.nextbutton",
+        ),
+    )
 
 
 @pytest.mark.integration
@@ -72,6 +128,15 @@ def test_current_investor(client: HttpClient):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    # 실서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assert_matches_spec(
+        client,
+        response,
+        ignore=(
+            "Output_0.jasaz10",
+            "Output_0.filler",
+        ),
+    )
 
 
 @pytest.mark.integration
@@ -85,11 +150,21 @@ def test_period(client: HttpClient):
             gubun="1",  # 일봉
             edate=date.today().strftime("%Y%m%d"),
             array_cnt="30",  # 최근 한 달치
+            view_main_yn="N",  # 전체장 — 스펙 필수(260911 추가)
         )
     except NHPlugAPIError as e:
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    # 실서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assert_matches_spec(
+        client,
+        response,
+        ignore=(
+            "Output_0.ctsz30",
+            "Output_1.vol_prtt_rate",
+        ),
+    )
 
 
 @pytest.mark.integration
@@ -102,6 +177,7 @@ def test_after_hours_current(client: HttpClient):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    assert_matches_spec(client, response)
 
 
 @pytest.mark.integration
@@ -120,6 +196,7 @@ def test_current_after_hours_daily(client: HttpClient):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    assert_matches_spec(client, response)
 
 
 @pytest.mark.integration
@@ -132,6 +209,7 @@ def test_current_after_hours_execution(client: HttpClient):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    assert_matches_spec(client, response)
 
 
 @pytest.mark.integration
@@ -144,6 +222,7 @@ def test_after_hours_expected(client: HttpClient):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    assert_matches_spec(client, response)
 
 
 @pytest.mark.integration
@@ -156,6 +235,7 @@ def test_etf_current(client: HttpClient):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    assert_matches_spec(client, response)
 
 
 @pytest.mark.integration
@@ -168,3 +248,9 @@ def test_etf_components(client: HttpClient):
         skip_if_env_blocked(e)
 
     assert response.body.rsp_cd in SUCCESS_RSP_CODES
+    # 실서버는 이 스펙 필드들을 보내지 않는다 (VENDOR_DOC_ERRATA.md)
+    assert_matches_spec(
+        client,
+        response,
+        ignore=("Output_0.filler",),
+    )

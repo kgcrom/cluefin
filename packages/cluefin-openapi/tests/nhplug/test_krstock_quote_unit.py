@@ -324,24 +324,11 @@ CURRENT_AFTER_HOURS_DAILY_BODY = {
     "rsp_cd": "00000",
     "rsp_msg": "조회가 완료되었습니다.",
     "message": None,
+    # 스펙 이름(qry_date·prdy_ctrt …)이 아니라 실서버 이름 (운영 2026-09-27 실측)
     "Output_0": [
-        {
-            "qry_date": "20260821",
-            "qry_time": "180000",
-            "shrn_iscd": "005930",
-            "hts_kor_isnm": "삼성전자",
-            "stck_prpr": "282000",
-            "prdy_vrss_sign": "2",
-        }
+        {"bsop_date": "260923", "stck_oprc": 284500, "stck_hgpr": 286500, "stck_lwpr": 281000, "nh_rights": "0"}
     ],
-    "Output_1": [
-        {
-            "prdy_ctrt": "3.87",
-            "acml_vol": "27746471",
-            "acml_tr_pbmn": "7703213942500",
-            "prdy_vol": "0",
-        }
-    ],
+    "Output_1": [{"stck_prpr": 286500, "acml_vol": 19385053, "acml_tr_pbmn": 5504265}],
 }
 
 
@@ -364,9 +351,11 @@ class TestCurrentAfterHoursDaily:
         }
         assert response.body.rsp_cd == "00000"
         assert len(response.body.output_0) == 1
-        assert response.body.output_0[0].shrn_iscd == "005930"
+        assert response.body.output_0[0].bsop_date == "260923"
+        assert response.body.output_0[0].stck_hgpr == 286500
         assert len(response.body.output_1) == 1
-        assert response.body.output_1[0].acml_vol == "27746471"
+        assert response.body.output_1[0].stck_prpr == 286500
+        assert response.body.output_1[0].acml_vol == 19385053
 
     def test_parses_body_without_output_blocks(self, client):
         # Output_N 블록은 데이터가 있을 때만 내려온다.
@@ -671,6 +660,25 @@ def test_raises_on_failing_rsp_cd(client, endpoint, call):
             call(client)
 
 
+@pytest.mark.parametrize(
+    "api, call",
+    [
+        pytest.param("currentExecution", lambda c, **kw: c.krstock_quote.current_execution("KRX", "005930", **kw)),
+        pytest.param("currentDaily", lambda c, **kw: c.krstock_quote.current_daily("KRX", "005930", **kw)),
+        pytest.param("period", lambda c, **kw: c.krstock_quote.period("KRX", "005930", **kw)),
+    ],
+)
+def test_view_main_yn_is_sent_only_when_given(client, api, call):
+    """스펙(260911)은 view_main_yn 을 필수로 추가했지만 서버는 생략을 N 으로 처리한다 — 선택 인자."""
+    with requests_mock.Mocker() as m:
+        m.post(f"{BASE_PROD}/krstock/quote/v1/{api}", json={"rsp_cd": "00000", "rsp_msg": "ok"})
+        call(client)
+        call(client, view_main_yn="Y")
+
+    assert "view_main_yn" not in json.loads(m.request_history[0].text)["Input_0"]
+    assert json.loads(m.request_history[1].text)["Input_0"]["view_main_yn"] == "Y"
+
+
 class TestFieldDescriptions:
     def test_price_change_sign_legend_spells_보합(self):
         import inspect
@@ -693,15 +701,15 @@ class TestFieldDescriptions:
         for legend in legends:
             assert legend.endswith("1or6.상한가 2or7.상승 3or0.보합 4or8.하한 5or9.하락 그외.보합+리버스(기세)")
 
-    def test_after_hours_daily_tick_descriptions_match_spec(self):
+    def test_after_hours_daily_tick_uses_server_names_with_spec_descriptions(self):
+        # 스펙의 이름은 설명과 어긋나 있어(qry_date=일자, qry_time=시가 …) 실서버 이름에 스펙 설명을 붙였다.
         from cluefin_openapi.nhplug._krstock_quote_types import KrStockQuoteCurrentAfterHoursDailyTickOutput
 
         fields = KrStockQuoteCurrentAfterHoursDailyTickOutput.model_fields
         assert {name: field.description for name, field in fields.items()} == {
-            "qry_date": "일자 / 길이 8",
-            "qry_time": "시가 / 길이 6",
-            "shrn_iscd": "고가 / 길이 9",
-            "hts_kor_isnm": "저가 / 길이 41",
-            "stck_prpr": "락구분 / 길이 10",
-            "prdy_vrss_sign": "Filler / 길이 1",
+            "bsop_date": "일자 / 길이 8",
+            "stck_oprc": "시가 / 길이 6",
+            "stck_hgpr": "고가 / 길이 9",
+            "stck_lwpr": "저가 / 길이 41",
+            "nh_rights": "락구분 / 길이 10",
         }

@@ -102,8 +102,29 @@
 | API | 문서 | 실서버 | 실측 | 코드 |
 |---|---|---|---|---|
 | 주식잔고조회 `balance`·잔고조회_실현손익 `realizedPnl`·투자계좌자산현황 `assetStatus` | `aly_qut_cd`(적용시세코드) **필수** (260911 추가) | 생략해도 `00000`, 1·2 와 같은 형태 (보유 0 계좌라 값 차이는 미확인) | 2026-09-27 모의 | 선택 인자, 값이 있을 때만 전송 |
+| 주식현재가 체결 `currentExecution`·일자별 `currentDaily`·기간별 `period` | `view_main_yn`(정규장시세보기여부) **필수** (260911 추가) | 생략 = `N`(전체장)과 같은 값. `Y` 는 정규장 값만 (005930 일자별 종가·거래량이 달라짐) | 2026-09-27 운영 | 선택 인자, 값이 있을 때만 전송 |
+| 시세 전 API (`/krstock/quote/*`, `/gbstock/quote/*`) | 문서 머리말은 "모의투자·운영 모두 제공" | 모의는 `IGW40023`·`IGW40019` 로 거부. API 별 `x-available-env` 는 `live` 로 맞게 적혀 있다 | 2026-08-22·09-23 | 운영 전용 테스트 |
 
-### 응답 필드 (모의 서버가 보내지 않는 스펙 필드)
+### 응답 필드
+
+| API | 문서 | 실서버 | 실측 | 코드 |
+|---|---|---|---|---|
+| 주식현재가 시간외일자별주가 `currentAfterHoursDaily` | 필드 **이름이 설명과 어긋남** — Output_0 `qry_date`(일자)·`qry_time`(시가)·`shrn_iscd`(고가)·`hts_kor_isnm`(저가)·`stck_prpr`(락구분)·`prdy_vrss_sign`(Filler), Output_1 `prdy_ctrt`(현재가)·`prdy_vol`(Filler) | 설명에 맞는 이름: Output_0 `bsop_date`(YYMMDD)·`stck_oprc`·`stck_hgpr`·`stck_lwpr`·`nh_rights`, Output_1 `stck_prpr`·`acml_vol`·`acml_tr_pbmn`. 스펙 이름은 한 번도 안 옴 | 2026-09-27 운영 | 실서버 이름으로 교체 |
+| 주식현재가 체결 `currentExecution` | Output_0 `uncrate` | `unc_rate` | 2026-09-27 운영 | `unc_rate` |
+| 주식현재가 시세 `currentPrice` | `main_cls_*`·`market_status` 는 "KRX PRE/AFTER", `nxt_vi_antc_*` 는 "UNT 조회 시" | 조건과 무관하게 KRX·UNT 모두 키를 보냄. `nxt_vi_*` 는 KRX 에서 0 | 2026-09-27 운영 (휴장일) | 모델에 추가 |
+
+실서버가 보내지 않는 스펙 필드 (운영). 채움·연속조회용으로 보이는 이름이 대부분이다. 모델에 두고 테스트 `ignore`:
+
+| API | 생략 필드 | 실측 |
+|---|---|---|
+| `currentPrice` | Output_0 `filler` | 2026-09-27 운영 |
+| `currentExecution` | Output_0 `filler`, Output_1 `filler`·`ctsz20`·`nextbutton` | 2026-09-27 운영 |
+| `currentDaily` | Output_0 `high_date`·`low_date`·`filler`·`next_key`·`nextbutton` | 2026-09-27 운영 |
+| 주식현재가 투자자 `currentInvestor` | Output_0 `jasaz10`·`filler` | 2026-09-27 운영 |
+| `period` | Output_0 `ctsz30`, Output_1 `vol_prtt_rate` | 2026-09-27 운영 |
+| ETF 구성종목 `etfComponents` | Output_0 `filler` | 2026-09-27 운영 |
+
+모의 서버가 보내지 않는 스펙 필드:
 
 모의 서버는 아래 필드를 키째 생략한다. 모델에서 지우지 않는다(운영 미확인).
 
@@ -127,3 +148,11 @@
 ### 길이
 
 2026-09-27 모의 조회 12종·계좌 목록에서 스펙 길이를 넘는 값은 없었다.
+
+| API | 필드 | 문서 길이 | 실제 | 실측 |
+|---|---|---|---|---|
+| 국내 시세 전 API (`/krstock/quote/*`) | 등락부호 `*_sign` (예: `prdy_vrss_sign`·`pre_prdy_sign`) | 1 (코드 1~9) | `"1E"` 처럼 2자리, 또는 빈 문자열 | 2026-09-27 운영 (휴장일) |
+| 국내주식 시간외현재가 `afterHoursCurrent` | Output_0 `mkop_cls_code` | 1 | 휴장일에 호출마다 다른 쓰레기 바이트 (`Z`·`-`·`t`·`\`·U+FFFD) | 2026-09-27 운영 |
+
+부호 필드는 길이 1 인 `*sign*` 전부를 `known_exceed` 에 올렸다 — 지금 빈 값인 필드도 같은 표기로 올 수 있어서다.
+`"1E"` 의 의미는 문서에 없다 (평일 장중 재확인 필요).
