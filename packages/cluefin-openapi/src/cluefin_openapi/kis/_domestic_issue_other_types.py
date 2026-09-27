@@ -169,6 +169,8 @@ class SectorMinuteInquiry(BaseModel, KisHttpBody):
 
 class SectorPeriodQuoteItem1(BaseModel):
     prdy_vrss_sign: str = Field(title="전일 대비 부호")
+    # 문서 표에는 없고 예시와 실서버 응답에는 있다 (2026-09-27 실측)
+    bstp_nmix_prdy_vrss: str = Field(default="", title="업종 지수 전일 대비")
     bstp_nmix_prdy_ctrt: str = Field(title="업종 지수 전일 대비율")
     prdy_nmix: str = Field(title="전일 지수")
     acml_vol: str = Field(title="누적 거래량")
@@ -265,14 +267,14 @@ class ExpectedIndexTrend(BaseModel, KisHttpBody):
 class ExpectedIndexAllItem1(BaseModel):
     bstp_nmix_prpr: str = Field(title="업종 지수 현재가")
     bstp_nmix_prdy_vrss: str = Field(title="업종 지수 전일 대비")
-    # TODO(typo): 문서에는 required Y, 실제로는 Optional
+    # 문서는 필수로 적지만 2026-09-27(휴장일) 응답엔 없었다 — 평일 재확인 대기
     prdy_vrss_sign: Optional[str] = Field(default=None, title="전일 대비 부호")
     prdy_ctrt: str = Field(title="전일 대비율")
     acml_vol: str = Field(title="누적 거래량")
     ascn_issu_cnt: str = Field(title="상승 종목 수")
     down_issu_cnt: str = Field(title="하락 종목 수")
     stnr_issu_cnt: str = Field(title="보합 종목 수")
-    # TODO(typo): 문서에는 required Y, 실제로는 Optional
+    # 문서는 필수로 적지만 2026-09-27(휴장일) 응답엔 없었다 — 평일 재확인 대기
     bstp_cls_code: Optional[str] = Field(default=None, title="업종 구분 코드")
 
 
@@ -316,7 +318,7 @@ class VolatilityInterruptionStatusItem(BaseModel):
 class VolatilityInterruptionStatus(BaseModel, KisHttpBody):
     """변동성완화장치(VI) 현황 응답"""
 
-    # TODO(typo): 문서에는 object, 실제로는 list
+    # 문서 표는 object, 실서버는 list (2026-09-27 실측) — VENDOR_DOC_ERRATA.md
     output: Sequence[VolatilityInterruptionStatusItem] = Field(default_factory=list)
 
 
@@ -343,7 +345,7 @@ class InterestRateSummaryItem2(BaseModel):
 class InterestRateSummary(BaseModel, KisHttpBody):
     """금리 종합(국내채권/금리) 응답"""
 
-    # TODO(typo): 문서에는 object, 실제로는 list
+    # 문서 표는 object, 실서버는 list (2026-09-27 실측) — VENDOR_DOC_ERRATA.md
     output1: Sequence[InterestRateSummaryItem1] = Field(default_factory=list)
     output2: Sequence[InterestRateSummaryItem2] = Field(default_factory=list)
 
@@ -367,12 +369,28 @@ class MarketAnnouncementScheduleItem(BaseModel):
     iscd3: str = Field(title="종목 코드3")
     iscd4: str = Field(title="종목 코드4")
     iscd5: str = Field(title="종목 코드5")
+    # 문서 표에는 iscd1~5 만 있지만 예시와 실서버 응답에는 iscd6~10·kor_isnm1~10 도 있다 (2026-09-27 실측)
+    iscd6: str = Field(default="", title="종목 코드6")
+    iscd7: str = Field(default="", title="종목 코드7")
+    iscd8: str = Field(default="", title="종목 코드8")
+    iscd9: str = Field(default="", title="종목 코드9")
+    iscd10: str = Field(default="", title="종목 코드10")
+    kor_isnm1: str = Field(default="", title="한글 종목명1")
+    kor_isnm2: str = Field(default="", title="한글 종목명2")
+    kor_isnm3: str = Field(default="", title="한글 종목명3")
+    kor_isnm4: str = Field(default="", title="한글 종목명4")
+    kor_isnm5: str = Field(default="", title="한글 종목명5")
+    kor_isnm6: str = Field(default="", title="한글 종목명6")
+    kor_isnm7: str = Field(default="", title="한글 종목명7")
+    kor_isnm8: str = Field(default="", title="한글 종목명8")
+    kor_isnm9: str = Field(default="", title="한글 종목명9")
+    kor_isnm10: str = Field(default="", title="한글 종목명10")
 
 
 class MarketAnnouncementSchedule(BaseModel, KisHttpBody):
     """종합 시황/공시(제목) 응답"""
 
-    # TODO(typo): 문서에는 object, 실제로는 list
+    # 문서 표는 object, 실서버는 list (2026-09-27 실측) — VENDOR_DOC_ERRATA.md
     output: Sequence[MarketAnnouncementScheduleItem] = Field(default_factory=list)
 
 
@@ -398,7 +416,7 @@ class HolidayInquiry(BaseModel, KisHttpBody):
 
     ctx_area_fk: str = Field(default="", title="연속조회검색조건")
     ctx_area_nk: str = Field(default="", title="연속조회키")
-    # TODO(typo): 문서에는 object, 실제로는 list
+    # 문서 표는 object, 실서버는 list (2026-09-27 실측) — VENDOR_DOC_ERRATA.md
     output: Sequence[HolidayInquiryItem] = Field(default_factory=list)
 
 

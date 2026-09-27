@@ -206,6 +206,8 @@ export const getSectorMinuteInquiryResponseSchema = z
 export const getSectorPeriodQuoteOutput1ItemSchema = z
   .object({
     prdy_vrss_sign: s(),
+    // 문서 표에는 없고 예시와 실서버 응답에는 있다 (2026-09-27 실측)
+    bstp_nmix_prdy_vrss: s(),
     bstp_nmix_prdy_ctrt: s(),
     prdy_nmix: s(),
     acml_vol: s(),
@@ -432,6 +434,22 @@ export const getMarketAnnouncementScheduleItemSchema = z
     iscd3: s(),
     iscd4: s(),
     iscd5: s(),
+    // 문서 표에는 iscd1~5 만 있지만 예시와 실서버 응답에는 iscd6~10·kor_isnm1~10 도 있다 (2026-09-27 실측)
+    iscd6: s(),
+    iscd7: s(),
+    iscd8: s(),
+    iscd9: s(),
+    iscd10: s(),
+    kor_isnm1: s(),
+    kor_isnm2: s(),
+    kor_isnm3: s(),
+    kor_isnm4: s(),
+    kor_isnm5: s(),
+    kor_isnm6: s(),
+    kor_isnm7: s(),
+    kor_isnm8: s(),
+    kor_isnm9: s(),
+    kor_isnm10: s(),
   })
   .passthrough();
 

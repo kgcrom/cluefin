@@ -15,6 +15,8 @@ import pytest
 
 from cluefin_openapi.kis._http_client import HttpClient
 
+from ._response_shape import assert_response_shape
+
 
 @pytest.fixture(scope="module")
 def common_params():
@@ -64,6 +66,7 @@ def test_get_stock_volume_surge_nasdaq(client: HttpClient, common_params):
         minx="3",  # 5 minutes ago
         vol_rang=common_params["vol_rang"],
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -79,6 +82,7 @@ def test_get_stock_volume_surge_tse(client: HttpClient, common_params):
         minx="4",  # 10 minutes ago
         vol_rang="2",  # 1000+ shares
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -94,6 +98,7 @@ def test_get_stock_buy_execution_strength_top(client: HttpClient, common_params)
         nday="3",  # 5 minutes ago
         vol_rang=common_params["vol_rang"],
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -113,6 +118,7 @@ def test_get_stock_rise_decline_rate_rise(client: HttpClient, common_params):
         nday="0",  # Today
         vol_rang=common_params["vol_rang"],
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -129,6 +135,7 @@ def test_get_stock_rise_decline_rate_decline_5day(client: HttpClient, common_par
         nday="3",  # 5 days
         vol_rang="1",  # 100+ shares
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -146,6 +153,7 @@ def test_get_stock_new_high_low_price_high(client: HttpClient, common_params):
         nday="6",  # 52 weeks
         vol_rang=common_params["vol_rang"],
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -163,6 +171,7 @@ def test_get_stock_new_high_low_price_low(client: HttpClient, common_params):
         nday="4",  # 60 days
         vol_rang=common_params["vol_rang"],
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -183,6 +192,7 @@ def test_get_stock_trading_volume_rank_nasdaq(client: HttpClient, common_params)
         prc2="999999",  # Price to
         vol_rang=common_params["vol_rang"],
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -200,6 +210,7 @@ def test_get_stock_trading_volume_rank_with_price_filter(client: HttpClient, com
         prc2="100",  # Price to $100
         vol_rang="2",  # 1000+ shares
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -217,6 +228,7 @@ def test_get_stock_trading_amount_rank(client: HttpClient, common_params):
         prc1="0",
         prc2="999999",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -232,6 +244,7 @@ def test_get_stock_trading_increase_rate_rank(client: HttpClient, common_params)
         nday="3",  # 5 days
         vol_rang=common_params["vol_rang"],
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -247,6 +260,7 @@ def test_get_stock_trading_turnover_rate_rank(client: HttpClient, common_params)
         nday="0",  # Today
         vol_rang=common_params["vol_rang"],
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -264,6 +278,7 @@ def test_get_stock_market_cap_rank_nasdaq(client: HttpClient, common_params):
         excd="NAS",  # NASDAQ
         vol_rang=common_params["vol_rang"],
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -278,6 +293,7 @@ def test_get_stock_market_cap_rank_nyse(client: HttpClient, common_params):
         excd="NYS",  # NYSE
         vol_rang="1",  # 100+ shares
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -292,6 +308,7 @@ def test_get_stock_market_cap_rank_hks(client: HttpClient, common_params):
         excd="HKS",  # Hong Kong
         vol_rang=common_params["vol_rang"],
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -314,6 +331,7 @@ def test_get_stock_period_rights_inquiry_all(client: HttpClient, date_range):
         ctx_area_nk50="",
         ctx_area_fk50="",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output")
@@ -333,6 +351,7 @@ def test_get_stock_period_rights_inquiry_dividend(client: HttpClient, date_range
         ctx_area_nk50="",
         ctx_area_fk50="",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output")
@@ -351,6 +370,7 @@ def test_get_stock_rights_aggregate_us(client: HttpClient):
         st_ymd=start_dt,
         ed_ymd=end_dt,
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -368,6 +388,7 @@ def test_get_stock_rights_aggregate_hk(client: HttpClient):
         st_ymd=start_dt,
         ed_ymd=end_dt,
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -389,6 +410,7 @@ def test_get_news_aggregate_title_all(client: HttpClient):
         data_tm="",  # All times
         cts="",  # First page
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "outblock1")
@@ -407,6 +429,7 @@ def test_get_news_aggregate_title_us_only(client: HttpClient):
         data_tm="",
         cts="",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "outblock1")
@@ -426,6 +449,7 @@ def test_get_news_aggregate_title_specific_date(client: HttpClient):
         data_tm="",
         cts="",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "outblock1")
@@ -445,6 +469,7 @@ def test_get_breaking_news_title(client: HttpClient):
         fid_input_srno="",
         fid_cond_scr_div_code="11801",  # Screen code
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output")
@@ -470,6 +495,7 @@ def test_get_stock_collateral_loan_eligible_us_all(client: HttpClient):
         ctx_area_fk100="",
         ctx_area_nk100="",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -492,6 +518,7 @@ def test_get_stock_collateral_loan_eligible_us_specific(client: HttpClient):
         ctx_area_fk100="",
         ctx_area_nk100="",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -514,6 +541,7 @@ def test_get_stock_collateral_loan_eligible_hk(client: HttpClient):
         ctx_area_fk100="",
         ctx_area_nk100="",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -536,6 +564,7 @@ def test_get_stock_collateral_loan_eligible_china(client: HttpClient):
         ctx_area_fk100="",
         ctx_area_nk100="",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -580,6 +609,7 @@ def test_market_cap_rank_multiple_exchanges(client: HttpClient, exchange_code, e
     response = client.overseas_market_analysis.get_stock_market_cap_rank(
         keyb="", auth="", excd=exchange_code, vol_rang="0"
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")

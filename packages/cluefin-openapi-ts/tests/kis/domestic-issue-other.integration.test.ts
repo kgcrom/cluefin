@@ -37,8 +37,12 @@ import {
   runIntegration,
   TODAY,
 } from '../_helpers/integration-setup';
+import { assertKisResponseShapeDeep } from '../_helpers/kis-response-shape';
 
 const it = runIntegration ? test : test.skip;
+
+// 2026-09-27(일) 응답에 없었다. 휴장일이라 빠진 것인지 평일에 재확인 — kis-spec-audit-pending-live.md
+const EXPECTED_INDEX_ALL_UNVERIFIED = ['output1.bstp_cls_code'];
 
 describe('KIS DomesticIssueOther', () => {
   it('getSectorCurrentIndex', async () => {
@@ -48,7 +52,7 @@ describe('KIS DomesticIssueOther', () => {
       fidInputIscd: '0001',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getSectorCurrentIndexResponseSchema);
+    assertKisResponseShapeDeep(res.body, getSectorCurrentIndexResponseSchema);
   });
 
   it('getSectorDailyIndex', async () => {
@@ -60,7 +64,7 @@ describe('KIS DomesticIssueOther', () => {
       fidInputDate1: ONE_MONTH_AGO,
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getSectorDailyIndexResponseSchema);
+    assertKisResponseShapeDeep(res.body, getSectorDailyIndexResponseSchema);
     assertResponseShape(res.body, getSectorDailyIndexResponseSchema, 'output2', getSectorDailyIndexOutput2ItemSchema);
   });
 
@@ -71,6 +75,7 @@ describe('KIS DomesticIssueOther', () => {
       fidCondMrktDivCode: 'U',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getSectorTimeIndexSecondResponseSchema);
     assertResponseShape(res.body, getSectorTimeIndexSecondResponseSchema, 'output', getSectorTimeIndexSecondItemSchema);
   });
 
@@ -82,6 +87,7 @@ describe('KIS DomesticIssueOther', () => {
       fidCondMrktDivCode: 'U',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getSectorTimeIndexMinuteResponseSchema);
     assertResponseShape(res.body, getSectorTimeIndexMinuteResponseSchema, 'output', getSectorTimeIndexMinuteItemSchema);
   });
 
@@ -95,7 +101,7 @@ describe('KIS DomesticIssueOther', () => {
       fidPwDataIncuYn: 'Y',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getSectorMinuteInquiryResponseSchema);
+    assertKisResponseShapeDeep(res.body, getSectorMinuteInquiryResponseSchema);
     assertResponseShape(
       res.body,
       getSectorMinuteInquiryResponseSchema,
@@ -114,7 +120,7 @@ describe('KIS DomesticIssueOther', () => {
       fidPeriodDivCode: 'D',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getSectorPeriodQuoteResponseSchema);
+    assertKisResponseShapeDeep(res.body, getSectorPeriodQuoteResponseSchema);
     assertResponseShape(res.body, getSectorPeriodQuoteResponseSchema, 'output2', getSectorPeriodQuoteOutput2ItemSchema);
   });
 
@@ -128,7 +134,7 @@ describe('KIS DomesticIssueOther', () => {
       fidBlngClsCode: '0',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getSectorAllQuoteByCategoryResponseSchema);
+    assertKisResponseShapeDeep(res.body, getSectorAllQuoteByCategoryResponseSchema);
     assertResponseShape(
       res.body,
       getSectorAllQuoteByCategoryResponseSchema,
@@ -146,6 +152,7 @@ describe('KIS DomesticIssueOther', () => {
       fidCondMrktDivCode: 'U',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getExpectedIndexTrendResponseSchema);
     assertResponseShape(res.body, getExpectedIndexTrendResponseSchema, 'output', getExpectedIndexTrendItemSchema);
   });
 
@@ -159,7 +166,7 @@ describe('KIS DomesticIssueOther', () => {
       fidMkopClsCode: '0',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getExpectedIndexAllResponseSchema);
+    assertKisResponseShapeDeep(res.body, getExpectedIndexAllResponseSchema, EXPECTED_INDEX_ALL_UNVERIFIED);
     assertResponseShape(res.body, getExpectedIndexAllResponseSchema, 'output2', getExpectedIndexAllOutput2ItemSchema);
   });
 
@@ -176,6 +183,7 @@ describe('KIS DomesticIssueOther', () => {
       fidTrgtExlsClsCode: '0',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getVolatilityInterruptionStatusResponseSchema);
     assertResponseShape(
       res.body,
       getVolatilityInterruptionStatusResponseSchema,
@@ -193,7 +201,7 @@ describe('KIS DomesticIssueOther', () => {
       fidDivClsCode1: '',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getInterestRateSummaryResponseSchema);
+    assertKisResponseShapeDeep(res.body, getInterestRateSummaryResponseSchema);
     assertResponseShape(
       res.body,
       getInterestRateSummaryResponseSchema,
@@ -218,16 +226,18 @@ describe('KIS DomesticIssueOther', () => {
   it('getMarketAnnouncementSchedule', async () => {
     const client = await getKisClient();
     const res = await client.domesticIssueOther.getMarketAnnouncementSchedule({
+      // 스펙: 전부 "공백 필수" 이거나 공백=현재기준. 날짜·시간을 채우면 형식(00YYYYMMDD)이 달라 빈 결과가 온다
       fidNewsOferEntpCode: '',
-      fidCondMrktClsCode: '0',
-      fidInputIscd: '0000',
+      fidCondMrktClsCode: '',
+      fidInputIscd: '',
       fidTitlCntt: '',
-      fidInputDate1: TODAY,
-      fidInputHour1: '000000',
-      fidRankSortClsCode: '0',
+      fidInputDate1: '',
+      fidInputHour1: '',
+      fidRankSortClsCode: '',
       fidInputSrno: '',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getMarketAnnouncementScheduleResponseSchema);
     assertResponseShape(
       res.body,
       getMarketAnnouncementScheduleResponseSchema,
@@ -244,6 +254,7 @@ describe('KIS DomesticIssueOther', () => {
       ctxAreaFk: '',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getHolidayInquiryResponseSchema);
     assertResponseShape(res.body, getHolidayInquiryResponseSchema, 'output', getHolidayInquiryItemSchema);
   });
 
@@ -251,6 +262,7 @@ describe('KIS DomesticIssueOther', () => {
     const client = await getKisClient();
     const res = await client.domesticIssueOther.getFuturesBusinessDayInquiry({});
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getFuturesBusinessDayInquiryResponseSchema);
     assertResponseShape(
       res.body,
       getFuturesBusinessDayInquiryResponseSchema,

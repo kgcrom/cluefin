@@ -8,6 +8,44 @@ import pytest
 
 from cluefin_openapi.kis._http_client import HttpClient
 
+from ._response_shape import assert_response_shape
+
+# 실서버는 값이 없는 조건부 필드(경고·관리·락 구분 등)의 키를 아예 생략한다 — VENDOR_DOC_ERRATA.md KIS
+CURRENT_PRICE_OMITTED = (
+    "output.new_hgpr_lwpr_cls_code",
+    "output.mxpr_llam_cls_code",
+    "output.flng_cls_name",
+    "output.revl_issu_reas_name",
+    "output.mrkt_warn_cls_name",
+    "output.fcam_mod_cls_name",
+)
+
+# 실서버는 값이 없는 조건부 필드(경고·관리·락 구분 등)의 키를 아예 생략한다 — VENDOR_DOC_ERRATA.md KIS
+OVERTIME_PRICE_OMITTED = (
+    "output.mang_issu_cls_name",
+    "output.mrkt_warn_cls_name",
+    "output.revl_issu_reas_name",
+    "output.flng_cls_name",
+)
+
+# 문서는 시간외 단일가 호가 증감을 10단계로 적지만 실서버는 3단계까지만 보낸다 — VENDOR_DOC_ERRATA.md KIS
+OVERTIME_ASKING_OMITTED = (
+    "output.ovtm_untp_askp_icdc4",
+    "output.ovtm_untp_askp_icdc5",
+    "output.ovtm_untp_askp_icdc6",
+    "output.ovtm_untp_askp_icdc7",
+    "output.ovtm_untp_askp_icdc8",
+    "output.ovtm_untp_askp_icdc9",
+    "output.ovtm_untp_askp_icdc10",
+    "output.ovtm_untp_bidp_icdc4",
+    "output.ovtm_untp_bidp_icdc5",
+    "output.ovtm_untp_bidp_icdc6",
+    "output.ovtm_untp_bidp_icdc7",
+    "output.ovtm_untp_bidp_icdc8",
+    "output.ovtm_untp_bidp_icdc9",
+    "output.ovtm_untp_bidp_icdc10",
+)
+
 # ==================== Stock Current Price APIs ====================
 
 
@@ -24,6 +62,7 @@ def test_get_stock_current_price_variants(client: HttpClient, method_name: str, 
     response = getattr(client.domestic_basic_quote, method_name)(
         fid_cond_mrkt_div_code="J", fid_input_iscd=fid_input_iscd
     )
+    assert_response_shape(client, response, ignore=CURRENT_PRICE_OMITTED)
 
     assert response is not None
     assert hasattr(response.body, "rt_cd")
@@ -36,6 +75,7 @@ def test_get_stock_current_price_conclusion(client: HttpClient):
     response = client.domestic_basic_quote.get_stock_current_price_conclusion(
         fid_cond_mrkt_div_code="J", fid_input_iscd="005930"
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -53,6 +93,7 @@ def test_get_stock_current_price_daily(client: HttpClient):
         fid_period_div_code="D",
         fid_org_adj_prc="0",
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -66,6 +107,7 @@ def test_get_stock_current_price_asking_expected_conclusion(client: HttpClient):
     response = client.domestic_basic_quote.get_stock_current_price_asking_expected_conclusion(
         fid_cond_mrkt_div_code="J", fid_input_iscd="005930"
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -79,6 +121,7 @@ def test_get_stock_current_price_investor(client: HttpClient):
     response = client.domestic_basic_quote.get_stock_current_price_investor(
         fid_cond_mrkt_div_code="J", fid_input_iscd="005930"
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -92,6 +135,7 @@ def test_get_stock_current_price_member(client: HttpClient):
     response = client.domestic_basic_quote.get_stock_current_price_member(
         fid_cond_mrkt_div_code="J", fid_input_iscd="005930"
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -114,6 +158,7 @@ def test_get_stock_period_quote(client: HttpClient):
         fid_period_div_code="D",
         fid_org_adj_prc="0",
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -131,6 +176,7 @@ def test_get_stock_today_minute_chart(client: HttpClient):
         fid_pw_data_incu_yn="Y",
         fid_etc_cls_code="",
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -149,6 +195,7 @@ def test_get_stock_daily_minute_chart(client: HttpClient):
         fid_pw_data_incu_yn="Y",
         fid_fake_tick_incu_yn="",
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -162,6 +209,7 @@ def test_get_stock_current_price_time_item_conclusion(client: HttpClient):
     response = client.domestic_basic_quote.get_stock_current_price_time_item_conclusion(
         fid_cond_mrkt_div_code="J", fid_input_iscd="005930", fid_input_hour_1="090000"
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -178,6 +226,7 @@ def test_get_stock_current_price_daily_overtime_price(client: HttpClient):
     response = client.domestic_basic_quote.get_stock_current_price_daily_overtime_price(
         fid_cond_mrkt_div_code="J", fid_input_iscd="005930"
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -192,6 +241,7 @@ def test_get_stock_current_price_overtime_conclusion(client: HttpClient):
         fid_cond_mrkt_div_code="J",
         fid_input_iscd="005930",
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -205,6 +255,7 @@ def test_get_stock_overtime_current_price(client: HttpClient):
     response = client.domestic_basic_quote.get_stock_overtime_current_price(
         fid_cond_mrkt_div_code="J", fid_input_iscd="005930"
     )
+    assert_response_shape(client, response, ignore=OVERTIME_PRICE_OMITTED)
 
     # Verify response type
     assert response is not None
@@ -218,6 +269,7 @@ def test_get_stock_overtime_asking_price(client: HttpClient):
     response = client.domestic_basic_quote.get_stock_overtime_asking_price(
         fid_input_iscd="005930", fid_cond_mrkt_div_code="J"
     )
+    assert_response_shape(client, response, ignore=OVERTIME_ASKING_OMITTED)
 
     # Verify response type
     assert response is not None
@@ -238,6 +290,7 @@ def test_get_stock_closing_expected_price(client: HttpClient):
         fid_cond_mrkt_div_code="J",
         fid_cond_scr_div_code="11173",
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -252,6 +305,7 @@ def test_get_stock_closing_expected_price(client: HttpClient):
 def test_get_etfetn_current_price(client: HttpClient):
     """Test ETF/ETN current price (KODEX 200)."""
     response = client.domestic_basic_quote.get_etfetn_current_price(fid_input_iscd="069500", fid_cond_mrkt_div_code="J")
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -265,6 +319,7 @@ def test_get_etf_component_stock_price(client: HttpClient):
     response = client.domestic_basic_quote.get_etf_component_stock_price(
         fid_input_iscd="069500", fid_cond_mrkt_div_code="J", fid_cond_scr_div_code="11216"
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -278,6 +333,7 @@ def test_get_etf_nav_comparison_trend(client: HttpClient):
     response = client.domestic_basic_quote.get_etf_nav_comparison_trend(
         fid_input_iscd="069500",
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -294,6 +350,7 @@ def test_get_etf_nav_comparison_daily_trend(client: HttpClient):
         fid_input_date_2="20240731",
         fid_cond_mrkt_div_code="J",
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None
@@ -308,6 +365,7 @@ def test_get_etf_nav_comparison_time_trend(client: HttpClient):
         fid_hour_cls_code="60",
         fid_input_iscd="069500",
     )
+    assert_response_shape(client, response)
 
     # Verify response type
     assert response is not None

@@ -107,3 +107,8 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - They run serialized (separate vitest config, single fork, 180s timeout) to respect
   live rate limits; don't fold them into the parallel unit config.
 - KIS account tests need `KIS_CANO`; without it they skip silently rather than fail.
+- KIS tests use `assertKisResponseShapeDeep` (`tests/_helpers/kis-response-shape.ts`), not
+  `assertResponseShape`: the older helper only checks top-level keys plus the one block a call
+  passes in, so item fields could drift unseen. Kiwoom tests still use the older helper.
+  An empty array passes the check vacuously — several KIS tests sent non-spec params and got
+  empty results. `KIS_SHAPE_REPORT_EMPTY=1` warns about empty blocks.

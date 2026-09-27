@@ -14,6 +14,8 @@ import pytest
 
 from cluefin_openapi.kis._http_client import HttpClient
 
+from ._response_shape import assert_response_shape
+
 
 @pytest.mark.integration
 def test_get_product_basic_info(client: HttpClient):
@@ -23,6 +25,7 @@ def test_get_product_basic_info(client: HttpClient):
         pdno="005930",
         prdt_type_cd="300",  # Stock
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output")
@@ -36,6 +39,7 @@ def test_get_stock_basic_info(client: HttpClient):
         prdt_type_cd="300",  # Stock
         pdno="000660",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output")
@@ -49,6 +53,7 @@ def test_get_balance_sheet(client: HttpClient):
         fid_cond_mrkt_div_code="J",  # Stock market
         fid_input_iscd="005930",  # Samsung Electronics
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output")
@@ -62,6 +67,7 @@ def test_get_income_statement(client: HttpClient):
         fid_cond_mrkt_div_code="J",
         fid_input_iscd="005930",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output")
@@ -75,6 +81,7 @@ def test_get_financial_ratio(client: HttpClient):
         fid_cond_mrkt_div_code="J",
         fid_input_iscd="000660",  # SK Hynix
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output")
@@ -88,6 +95,7 @@ def test_get_profitability_ratio(client: HttpClient):
         fid_div_cls_code="0",  # Year
         fid_cond_mrkt_div_code="J",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output")
@@ -101,6 +109,7 @@ def test_get_other_key_ratio(client: HttpClient):
         fid_div_cls_code="0",  # Year
         fid_cond_mrkt_div_code="J",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output")
@@ -114,6 +123,7 @@ def test_get_stability_ratio(client: HttpClient):
         fid_div_cls_code="0",  # Year
         fid_cond_mrkt_div_code="J",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output")
@@ -127,6 +137,7 @@ def test_get_growth_ratio(client: HttpClient):
         fid_div_cls_code="0",  # Year
         fid_cond_mrkt_div_code="J",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output")
@@ -142,6 +153,7 @@ def test_get_margin_tradable_stocks(client: HttpClient):
         fid_cond_scr_div_code="20477",  # Screen code
         fid_cond_mrkt_div_code="J",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output")
@@ -158,6 +170,7 @@ def test_get_stock_loanable_list(client: HttpClient):
         ctx_area_fk200="",
         ctx_area_nk100="",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -184,6 +197,7 @@ def test_get_ksd_dividend_decision(client: HttpClient, date_range):
         sht_cd="",  # All stocks
         high_gb="",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -199,6 +213,7 @@ def test_get_ksd_stock_dividend_decision(client: HttpClient, date_range):
         f_dt=f_dt,
         cts="",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -214,6 +229,7 @@ def test_get_ksd_merger_split_decision(client: HttpClient, date_range):
         t_dt=t_dt,
         sht_cd="",  # All stocks
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -230,6 +246,7 @@ def test_get_ksd_par_value_change_decision(client: HttpClient, date_range):
         t_dt=t_dt,
         market_gb="0",  # All markets
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -240,6 +257,7 @@ def test_get_ksd_capital_reduction_schedule(client: HttpClient, date_range):
     """Test KSD capital reduction schedule retrieval."""
     f_dt, t_dt = date_range
     response = client.domestic_stock_info.get_ksd_capital_reduction_schedule(cts="", f_dt=f_dt, t_dt=t_dt, sht_cd="")
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -250,6 +268,7 @@ def test_get_ksd_listing_info_schedule(client: HttpClient, date_range):
     """Test KSD listing information schedule retrieval."""
     f_dt, t_dt = date_range
     response = client.domestic_stock_info.get_ksd_listing_info_schedule(sht_cd="", t_dt=t_dt, f_dt=f_dt, cts="")
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -260,6 +279,7 @@ def test_get_ksd_ipo_subscription_schedule(client: HttpClient, date_range):
     """Test KSD IPO subscription schedule retrieval."""
     f_dt, t_dt = date_range
     response = client.domestic_stock_info.get_ksd_ipo_subscription_schedule(sht_cd="", cts="", f_dt=f_dt, t_dt=t_dt)
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -270,6 +290,7 @@ def test_get_ksd_forfeited_share_schedule(client: HttpClient, date_range):
     """Test KSD forfeited share schedule retrieval."""
     f_dt, t_dt = date_range
     response = client.domestic_stock_info.get_ksd_forfeited_share_schedule(sht_cd="", t_dt=t_dt, f_dt=f_dt, cts="")
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -280,6 +301,7 @@ def test_get_ksd_deposit_schedule(client: HttpClient, date_range):
     """Test KSD deposit schedule retrieval."""
     f_dt, t_dt = date_range
     response = client.domestic_stock_info.get_ksd_deposit_schedule(t_dt=t_dt, sht_cd="", f_dt=f_dt, cts="")
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -296,6 +318,7 @@ def test_get_ksd_paid_in_capital_increase_schedule(client: HttpClient, date_rang
         t_dt=t_dt,
         sht_cd="",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -306,6 +329,7 @@ def test_get_ksd_stock_dividend_schedule(client: HttpClient, date_range):
     """Test KSD stock dividend schedule retrieval."""
     f_dt, t_dt = date_range
     response = client.domestic_stock_info.get_ksd_stock_dividend_schedule(cts="", f_dt=f_dt, t_dt=t_dt, sht_cd="")
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -316,6 +340,7 @@ def test_get_ksd_shareholder_meeting_schedule(client: HttpClient, date_range):
     """Test KSD shareholder meeting schedule retrieval."""
     f_dt, t_dt = date_range
     response = client.domestic_stock_info.get_ksd_shareholder_meeting_schedule(cts="", f_dt=f_dt, t_dt=t_dt, sht_cd="")
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -336,6 +361,7 @@ def test_get_estimated_earnings(client: HttpClient):
     response = client.domestic_stock_info.get_estimated_earnings(
         sht_cd="005930"  # Samsung Electronics
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -352,6 +378,7 @@ def test_get_investment_opinion(client: HttpClient, investment_date_range):
         fid_input_date_1=f_dt,
         fid_input_date_2=t_dt,
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output")
@@ -369,6 +396,7 @@ def test_get_investment_opinion_by_brokerage(client: HttpClient, investment_date
         fid_input_date_1=f_dt,
         fid_input_date_2=t_dt,
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output")

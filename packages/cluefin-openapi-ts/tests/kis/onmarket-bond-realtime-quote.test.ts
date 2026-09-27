@@ -38,39 +38,39 @@ const sampleBondExecutionData: string[] = [
   '1',
 ];
 
-// Sample orderbook data (34 fields)
+// Sample orderbook data (34 fields) — 스펙 순서: 호가 단계마다 매도/매수 수익률·가격·잔량 교차
 const sampleBondOrderbookData: string[] = [
   'KR1035010001',
   '100000',
   '3.250',
-  '3.260',
-  '3.270',
-  '3.280',
-  '3.290',
   '3.240',
-  '3.230',
-  '3.220',
-  '3.210',
-  '3.200',
   '10050',
-  '10060',
-  '10070',
-  '10080',
-  '10090',
   '10040',
-  '10030',
-  '10020',
-  '10010',
-  '10000',
   '5000',
-  '4000',
-  '3000',
-  '2000',
-  '1000',
   '6000',
-  '5000',
+  '3.260',
+  '3.230',
+  '10060',
+  '10030',
   '4000',
+  '5000',
+  '3.270',
+  '3.220',
+  '10070',
+  '10020',
   '3000',
+  '4000',
+  '3.280',
+  '3.210',
+  '10080',
+  '10010',
+  '2000',
+  '3000',
+  '3.290',
+  '3.200',
+  '10090',
+  '10000',
+  '1000',
   '2000',
   '15000',
   '20000',
@@ -257,6 +257,11 @@ describe('parseBondOrderbookData', () => {
     expect(result[0]?.bidpErt1).toBe('3.240');
     expect(result[0]?.askp1).toBe('10050');
     expect(result[0]?.bidp1).toBe('10040');
+    expect(result[0]?.askpRsqn1).toBe('5000');
+    expect(result[0]?.bidpRsqn1).toBe('6000');
+    expect(result[0]?.askpErt2).toBe('3.260');
+    expect(result[0]?.bidp5).toBe('10000');
+    expect(result[0]?.bidpRsqn5).toBe('2000');
     expect(result[0]?.totalAskpRsqn).toBe('15000');
     expect(result[0]?.totalBidpRsqn).toBe('20000');
   });

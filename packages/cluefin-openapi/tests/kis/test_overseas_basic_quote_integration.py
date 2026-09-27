@@ -14,6 +14,11 @@ import pytest
 
 from cluefin_openapi.kis._http_client import HttpClient
 
+from ._response_shape import assert_response_shape
+
+# 문서 표에는 있지만 실서버가 보내지 않는다 — VENDOR_DOC_ERRATA.md KIS
+PERIOD_PRICE_DOC_ONLY = ("output1.prdy_vol",)
+
 
 @pytest.mark.integration
 def test_get_stock_current_price_detail(client: HttpClient):
@@ -24,6 +29,7 @@ def test_get_stock_current_price_detail(client: HttpClient):
         excd="NAS",  # NASDAQ
         symb="TSLA",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output")
@@ -34,6 +40,7 @@ def test_get_current_price_first_quote(client: HttpClient):
     """Test current price first quote retrieval."""
     # Test with Apple (AAPL) on NASDAQ
     response = client.overseas_basic_quote.get_current_price_first_quote(auth="", excd="NAS", symb="AAPL")
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -44,6 +51,7 @@ def test_get_stock_current_price_conclusion(client: HttpClient):
     """Test current price conclusion retrieval."""
     # Test with Microsoft (MSFT) on NASDAQ
     response = client.overseas_basic_quote.get_stock_current_price_conclusion(auth="", excd="NAS", symb="MSFT")
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output")
@@ -60,6 +68,7 @@ def test_get_conclusion_trend(client: HttpClient):
         tday="1",  # Current day
         symb="NVDA",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -80,6 +89,7 @@ def test_get_stock_minute_chart(client: HttpClient):
         fill="",
         keyb="",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -95,6 +105,7 @@ def test_get_index_minute_chart(client: HttpClient):
         fid_hour_cls_code="0",  # Regular trading hours
         fid_pw_data_incu_yn="Y",  # Include past data
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -113,6 +124,7 @@ def test_get_stock_period_quote(client: HttpClient):
         modp="0",  # No adjustment for stock split
         keyb="",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -132,6 +144,7 @@ def test_get_item_index_exchange_period_price(client: HttpClient):
         fid_input_date_2=end_date,
         fid_period_div_code="D",  # Daily
     )
+    assert_response_shape(client, response, ignore=PERIOD_PRICE_DOC_ONLY)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -149,6 +162,7 @@ def test_search_by_condition(client: HttpClient):
         co_en_pricecur="500",  # End price: $500
         keyb="",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -162,6 +176,7 @@ def test_get_product_base_info(client: HttpClient):
         prdt_type_cd="512",  # US NASDAQ
         pdno="AAPL",
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output")
@@ -169,31 +184,20 @@ def test_get_product_base_info(client: HttpClient):
 
 @pytest.mark.integration
 def test_get_sector_price(client: HttpClient):
-    """Test sector price retrieval."""
-    # First get sector codes to use a valid sector code
-    codes_response = client.overseas_basic_quote.get_sector_codes(
+    """Test sector price retrieval with a sector code taken from get_sector_codes."""
+    # 예전 테스트는 없는 필드(body.output)를 확인해 항상 호출을 건너뛰었다. 업종코드는 output2 에 있다.
+    codes_response = client.overseas_basic_quote.get_sector_codes(auth="", excd="NAS")
+    if not codes_response.body.output2:
+        pytest.skip("no sector codes returned")
+
+    response = client.overseas_basic_quote.get_sector_price(
+        keyb="",
         auth="",
-        excd="NYS",  # New York Stock Exchange
+        excd="NAS",
+        icod=codes_response.body.output2[0].icod,
+        vol_rang="0",  # All volume ranges
     )
-
-    assert codes_response is not None
-
-    # If we got sector codes, test sector price with the first code
-    if hasattr(codes_response.body, "output") and codes_response.body.output:
-        # Get first sector code (this depends on the response structure)
-        # For now, we'll use a generic test
-        try:
-            response = client.overseas_basic_quote.get_sector_price(
-                keyb="",
-                auth="",
-                excd="NYS",
-                icod="0001",  # Sample sector code - may need adjustment
-                vol_rang="0",  # All volume ranges
-            )
-            assert response is not None
-        except Exception:
-            # If the sector code doesn't exist, that's ok for this test
-            pass
+    assert_response_shape(client, response)
 
 
 @pytest.mark.integration
@@ -204,6 +208,7 @@ def test_get_sector_codes(client: HttpClient):
         auth="",
         excd="NAS",  # NASDAQ
     )
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output1")
@@ -225,6 +230,7 @@ def test_get_settlement_date(client: HttpClient):
     trad_dt = datetime.now().strftime("%Y%m%d")
 
     response = client.overseas_basic_quote.get_settlement_date(trad_dt=trad_dt, ctx_area_nk="", ctx_area_fk="")
+    assert_response_shape(client, response)
 
     assert response is not None
     assert hasattr(response.body, "output")

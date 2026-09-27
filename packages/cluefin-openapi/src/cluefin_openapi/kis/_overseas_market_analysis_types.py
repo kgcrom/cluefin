@@ -310,6 +310,9 @@ class StockMarketCapRankItem1(BaseModel):
     crec: str = Field(title="현재조회종목수")
     trec: str = Field(title="전체조회종목수")
     nrec: str = Field(title="RecordCount")
+    # 문서 표·예시에 없지만 실서버가 보낸다 (2026-09-27 실측). 의미는 문서에 없다
+    curr: str = Field(default="", title="통화")
+    t_rate: str = Field(default="", title="t_rate")
 
 
 class StockMarketCapRankItem2(BaseModel):
@@ -438,7 +441,7 @@ class StockCollateralLoanEligible(BaseModel, KisHttpBody):
     ctx_area_fk100: str = Field(default="", title="연속조회검색조건100")
     ctx_area_nk100: str = Field(default="", title="연속조회키100")
     output1: Sequence[StockCollateralLoanEligibleItem1] = Field(default_factory=list)
-    # TODO(typo): 문서에는 list 형태로 나와있으나 실제로는 단일 객체
+    # 문서 표는 list, 실서버는 object (2026-09-27 실측) — VENDOR_DOC_ERRATA.md
     output2: StockCollateralLoanEligibleItem2 = Field(title="응답상세2")
 
 

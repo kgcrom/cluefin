@@ -589,6 +589,11 @@ class PeriodProfitSummaryItem2(BaseModel):
 class PeriodProfitSummary(BaseModel, KisHttpBody):
     """기간별순익별합산조회 응답"""
 
+    # 연속조회 키. 요청은 CTX_AREA_*100 을 받는데 응답 모델에 없어 다음 페이지를 조회할 수 없었다.
+    # 문서 예시 기준으로 추가 — 실측 전이라 없어도 깨지지 않게 기본값을 둔다.
+    ctx_area_fk100: str = Field(default="", title="연속조회검색조건100")
+    ctx_area_nk100: str = Field(default="", title="연속조회키100")
+
     output1: Sequence[PeriodProfitSummaryItem1] = Field(default_factory=list)
     output2: Sequence[PeriodProfitSummaryItem2] = Field(default_factory=list)
 
@@ -640,6 +645,11 @@ class PeriodTradingProfitStatusItem2(BaseModel):
 
 class PeriodTradingProfitStatus(BaseModel, KisHttpBody):
     """기간별매매순익현황조회 응답"""
+
+    # 연속조회 키. 요청은 CTX_AREA_*100 을 받는데 응답 모델에 없어 다음 페이지를 조회할 수 없었다.
+    # 문서 예시 기준으로 추가 — 실측 전이라 없어도 깨지지 않게 기본값을 둔다.
+    ctx_area_fk100: str = Field(default="", title="연속조회검색조건100")
+    ctx_area_nk100: str = Field(default="", title="연속조회키100")
 
     output1: Sequence[PeriodTradingProfitStatusItem1] = Field(default_factory=list)
     output2: Sequence[PeriodTradingProfitStatusItem2] = Field(default_factory=list)

@@ -342,6 +342,7 @@ export const getReserveOrdersItemSchema = z
     ord_gno_brno: z.string().optional(),
     odno: z.string().optional(),
     sll_buy_dvsn_cd: z.string().optional(),
+    sll_buy_dvsn_cd_name: z.string().optional(),
     ovrs_rsvn_ord_stat_cd: z.string().optional(),
     ovrs_rsvn_ord_stat_cd_name: z.string().optional(),
     pdno: z.string().optional(),
@@ -509,6 +510,8 @@ export const getDailyTransactionHistoryOutput2ItemSchema = z
 export const getDailyTransactionHistoryResponseSchema = z
   .object({
     ...kisEnvelope,
+    ctx_area_fk100: s(),
+    ctx_area_nk100: s(),
     output1: z.array(getDailyTransactionHistoryOutput1ItemSchema).default([]),
     output2: getDailyTransactionHistoryOutput2ItemSchema.optional(),
   })
@@ -647,15 +650,14 @@ export const getLimitOrderNumberItemSchema = z
     splt_buy_attr_name: s(),
     ft_ccld_qty: s(),
     ord_gno_brno: z.string().optional(),
-    rt_cd: s(),
-    msg_cd: s(),
-    msg1: s(),
   })
   .passthrough();
 
 export const getLimitOrderNumberResponseSchema = z
   .object({
     ...kisEnvelope,
+    ctx_area_fk200: s(),
+    ctx_area_nk200: s(),
     output: z.array(getLimitOrderNumberItemSchema).default([]),
   })
   .passthrough();

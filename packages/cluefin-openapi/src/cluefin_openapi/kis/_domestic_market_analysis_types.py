@@ -66,7 +66,7 @@ class WatchlistGroupsItem(BaseModel):
 class WatchlistGroups(BaseModel, KisHttpBody):
     """관심종목 그룹조회"""
 
-    # TODO(typo): 문서에는 object로 되어있으나, 실제로는 list
+    # 문서 표는 object, 예시는 list — HTS ID 가 없어 실측 대기
     output2: Sequence[WatchlistGroupsItem] = Field(default_factory=list)
 
 
@@ -105,7 +105,7 @@ class WatchlistMultiQuoteItem(BaseModel):
 class WatchlistMultiQuote(BaseModel, KisHttpBody):
     """관심종목(멀티종목) 시세조회"""
 
-    # TODO(typo): 문서에는 object로 되어있으나, 실제로는 list
+    # 문서 표는 object, 실서버는 list (2026-09-27 실측) — VENDOR_DOC_ERRATA.md
     output: Sequence[WatchlistMultiQuoteItem] = Field(default_factory=list)
 
 
@@ -702,6 +702,16 @@ class ProgramTradingSummaryDailyItem(BaseModel):
     nabt_smtm_shun_vol_rate: str = Field(title="비차익 합계 매수 거래량 비율")
     whol_shun_tr_pbmn_rate: str = Field(title="전체 매수 거래대금 비율")
     nabt_entm_ntby_qty_rate: str = Field(title="비차익 위탁 순매수 수량 비율")
+    # 문서 표에는 없고 예시와 실서버 응답에는 있다 (2026-09-27 실측)
+    whol_smtn_ntby_qty: str = Field(default="", title="전체 합계 순매수 수량")
+    whol_smtn_ntby_tr_pbmn: str = Field(default="", title="전체 합계 순매수 거래 대금")
+    whol_ntby_qty_rate: str = Field(default="", title="전체 순매수 수량 비율")
+    whol_ntby_tr_pbmn_rate: str = Field(default="", title="전체 순매수 거래 대금 비율")
+    whol_onsl_ntby_qty: str = Field(default="", title="전체 자기 순매수 수량")
+    whol_onsl_ntby_qty_rate: str = Field(default="", title="전체 자기 순매수 수량 비율")
+    whol_onsl_ntby_tr_pbmn: str = Field(default="", title="전체 자기 순매수 거래 대금")
+    whol_onsl_ntby_tr_pbmn_rate: str = Field(default="", title="전체 자기 순매수 거래 대금 비율")
+    whol_entm_ntby_tr_pbmn_rate: str = Field(default="", title="전체 위탁 순매수 거래 대금 비율")
 
 
 class ProgramTradingSummaryDaily(BaseModel, KisHttpBody):

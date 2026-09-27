@@ -800,6 +800,16 @@ export const getProgramTradingSummaryDailyItemSchema = z
     nabt_smtm_shun_vol_rate: s(),
     whol_shun_tr_pbmn_rate: s(),
     nabt_entm_ntby_qty_rate: s(),
+    // 문서 표에는 없고 예시와 실서버 응답에는 있다 (2026-09-27 실측)
+    whol_smtn_ntby_qty: s(),
+    whol_smtn_ntby_tr_pbmn: s(),
+    whol_ntby_qty_rate: s(),
+    whol_ntby_tr_pbmn_rate: s(),
+    whol_onsl_ntby_qty: s(),
+    whol_onsl_ntby_qty_rate: s(),
+    whol_onsl_ntby_tr_pbmn: s(),
+    whol_onsl_ntby_tr_pbmn_rate: s(),
+    whol_entm_ntby_tr_pbmn_rate: s(),
   })
   .passthrough();
 

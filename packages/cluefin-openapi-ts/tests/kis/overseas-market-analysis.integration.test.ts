@@ -39,6 +39,7 @@ import {
   runIntegration,
   TODAY,
 } from '../_helpers/integration-setup';
+import { assertKisResponseShapeDeep } from '../_helpers/kis-response-shape';
 
 const it = runIntegration ? test : test.skip;
 
@@ -52,7 +53,7 @@ describe('KIS OverseasMarketAnalysis', () => {
       volRang: '0',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getStockPriceFluctuationResponseSchema);
+    assertKisResponseShapeDeep(res.body, getStockPriceFluctuationResponseSchema);
     assertResponseShape(
       res.body,
       getStockPriceFluctuationResponseSchema,
@@ -70,7 +71,7 @@ describe('KIS OverseasMarketAnalysis', () => {
       volRang: '0',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getStockMarketCapRankResponseSchema);
+    assertKisResponseShapeDeep(res.body, getStockMarketCapRankResponseSchema);
     assertResponseShape(
       res.body,
       getStockMarketCapRankResponseSchema,
@@ -91,7 +92,7 @@ describe('KIS OverseasMarketAnalysis', () => {
       volRang: '0',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getStockTradingVolumeRankResponseSchema);
+    assertKisResponseShapeDeep(res.body, getStockTradingVolumeRankResponseSchema);
     assertResponseShape(
       res.body,
       getStockTradingVolumeRankResponseSchema,
@@ -110,7 +111,7 @@ describe('KIS OverseasMarketAnalysis', () => {
       volRang: '0',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getStockVolumeSurgeResponseSchema);
+    assertKisResponseShapeDeep(res.body, getStockVolumeSurgeResponseSchema);
     assertResponseShape(res.body, getStockVolumeSurgeResponseSchema, 'output2', getStockVolumeSurgeOutput2ItemSchema);
   });
 
@@ -124,7 +125,7 @@ describe('KIS OverseasMarketAnalysis', () => {
       volRang: '0',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getStockBuyExecutionStrengthTopResponseSchema);
+    assertKisResponseShapeDeep(res.body, getStockBuyExecutionStrengthTopResponseSchema);
     assertResponseShape(
       res.body,
       getStockBuyExecutionStrengthTopResponseSchema,
@@ -144,7 +145,7 @@ describe('KIS OverseasMarketAnalysis', () => {
       volRang: '0',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getStockRiseDeclineRateResponseSchema);
+    assertKisResponseShapeDeep(res.body, getStockRiseDeclineRateResponseSchema);
     assertResponseShape(
       res.body,
       getStockRiseDeclineRateResponseSchema,
@@ -165,7 +166,7 @@ describe('KIS OverseasMarketAnalysis', () => {
       volRang: '0',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getStockNewHighLowPriceResponseSchema);
+    assertKisResponseShapeDeep(res.body, getStockNewHighLowPriceResponseSchema);
     assertResponseShape(
       res.body,
       getStockNewHighLowPriceResponseSchema,
@@ -186,7 +187,7 @@ describe('KIS OverseasMarketAnalysis', () => {
       prc2: '9999999',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getStockTradingAmountRankResponseSchema);
+    assertKisResponseShapeDeep(res.body, getStockTradingAmountRankResponseSchema);
     assertResponseShape(
       res.body,
       getStockTradingAmountRankResponseSchema,
@@ -205,7 +206,7 @@ describe('KIS OverseasMarketAnalysis', () => {
       volRang: '0',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getStockTradingIncreaseRateRankResponseSchema);
+    assertKisResponseShapeDeep(res.body, getStockTradingIncreaseRateRankResponseSchema);
     assertResponseShape(
       res.body,
       getStockTradingIncreaseRateRankResponseSchema,
@@ -224,7 +225,7 @@ describe('KIS OverseasMarketAnalysis', () => {
       volRang: '0',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getStockTradingTurnoverRateRankResponseSchema);
+    assertKisResponseShapeDeep(res.body, getStockTradingTurnoverRateRankResponseSchema);
     assertResponseShape(
       res.body,
       getStockTradingTurnoverRateRankResponseSchema,
@@ -246,6 +247,7 @@ describe('KIS OverseasMarketAnalysis', () => {
       ctxAreaFk50: '',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getStockPeriodRightsInquiryResponseSchema);
     assertResponseShape(
       res.body,
       getStockPeriodRightsInquiryResponseSchema,
@@ -267,6 +269,7 @@ describe('KIS OverseasMarketAnalysis', () => {
       cts: '',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getNewsAggregateTitleResponseSchema);
     assertResponseShape(res.body, getNewsAggregateTitleResponseSchema, 'outblock1', getNewsAggregateTitleItemSchema);
   });
 
@@ -279,6 +282,7 @@ describe('KIS OverseasMarketAnalysis', () => {
       edYmd: TODAY,
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getStockRightsAggregateResponseSchema);
     assertResponseShape(res.body, getStockRightsAggregateResponseSchema, 'output1', getStockRightsAggregateItemSchema);
   });
 
@@ -299,7 +303,7 @@ describe('KIS OverseasMarketAnalysis', () => {
       ctxAreaNk100: '',
     });
     assertKisResponse(res);
-    assertResponseShape(res.body, getStockCollateralLoanEligibleResponseSchema);
+    assertKisResponseShapeDeep(res.body, getStockCollateralLoanEligibleResponseSchema);
     assertResponseShape(
       res.body,
       getStockCollateralLoanEligibleResponseSchema,
@@ -322,6 +326,7 @@ describe('KIS OverseasMarketAnalysis', () => {
       fidCondScrDivCode: 'N',
     });
     assertKisResponse(res);
+    assertKisResponseShapeDeep(res.body, getBreakingNewsTitleResponseSchema);
     assertResponseShape(res.body, getBreakingNewsTitleResponseSchema, 'output', getBreakingNewsTitleItemSchema);
   });
 });
