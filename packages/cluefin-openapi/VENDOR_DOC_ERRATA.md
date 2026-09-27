@@ -40,6 +40,7 @@
 | 해외주식 거래회전율순위 `ranking/trade-turnover` (HHDFS76340000) | 표: output2 에 `n_tvol` | 안 보냄 | 2026-09-27 | 모델에 없음 |
 | 해외주식 분봉조회 `inquire-time-itemchartprice` (HHDFS76950200) | 표: output1 array·output2 object / 예시: 반대 | 예시대로 (output1 object, output2 array) | 2026-09-27 | 예시대로 |
 | 해외결제일자조회 `countries-holiday` (CTOS5011R), 기간별권리조회 `period-rights` (CTRGT011R), 담보대출가능종목 `colable-by-company` (CTLN4050R) | 표: 최상위 연속조회 키 `ctx_area_*` 없음 / 예시: 있음 | 보냄 | 2026-09-27 | 모델에 있음 |
+| 채권 실시간호가 `H0BJASP0` | 5호가 잔량 필드명 `askp_rsqn52`·`bidp_rsqn53` | 위치상 `askp_rsqn5`·`bidp_rsqn5` (오타) | 2026-09-27 정적 | `askp_rsqn5`·`bidp_rsqn5` |
 
 ### 길이
 
@@ -58,4 +59,5 @@
 | HTS조회상위20종목 `hts-top-view` | 응답 `output1.mksc_shrn_iscd` | 2 | 6 | 2026-09-27 |
 | 우선주 괴리율 상위 `prefer-disparate-ratio` | 응답 `output.hts_kor_isnm` / `prst_kor_isnm` / `prdy_ctrt` | 10 / 10 / 1 | 13 / 16 / 5 | 2026-09-27 |
 | 해외주식 업종별시세 `industry-theme` | 요청 `ICOD` | 1 | 3 (업종코드) | 2026-09-27 |
+| 장내채권 평균단가조회 `domestic-bond/avg-unit` | 응답 `output1.prdt_name` / `kis_unpr` / `avg_evlu_rf_unpr` | 1 / 8 / 3 | 13 / 14 / 4 | 2026-09-27 |
 | 해외주식 순위 8종 (`industry-theme`·`market-cap`·`new-highlow`·`trade-growth`·`trade-pbmn`·`trade-turnover`·`trade-vol`·`updown-rate`) | 응답 `output2.symb` | 1 | 최대 7 (티커) | 2026-09-27 |
