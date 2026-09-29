@@ -24,6 +24,7 @@ jobs:
     permissions:
       contents: write
       id-token: write
+      actions: write
 
     steps:
       - name: Checkout code
@@ -80,3 +81,11 @@ jobs:
           git commit -m "release(openapi): v${{ steps.bump.outputs.new_version }}"
           git tag "cluefin-openapi/v${{ steps.bump.outputs.new_version }}"
           git push origin main --tags
+
+      # GITHUB_TOKEN 으로 한 push 는 CI 의 push 트리거를 발동시키지 않는다.
+      # 그대로 두면 main HEAD(릴리스 커밋)에 Codacy 커버리지가 없어 배지가 0% 가 되므로
+      # workflow_dispatch(GITHUB_TOKEN 으로도 발동됨)로 CI 를 직접 돌린다.
+      - name: Trigger CI on release commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ci.yml --ref main
