@@ -46,6 +46,13 @@ OVERTIME_ASKING_OMITTED = (
     "output.ovtm_untp_bidp_icdc10",
 )
 
+# 상장폐지 종목은 기간별시세 output1 을 0 으로 채우고 이 세 키를 보내지 않는다 — VENDOR_DOC_ERRATA.md KIS
+DELISTED_PERIOD_QUOTE_OMITTED = (
+    "output1.prdy_vrss_sign",
+    "output1.hts_kor_isnm",
+    "output1.stck_shrn_iscd",
+)
+
 # ==================== Stock Current Price APIs ====================
 
 
@@ -371,3 +378,26 @@ def test_get_etf_nav_comparison_time_trend(client: HttpClient):
     assert response is not None
     assert hasattr(response.body, "rt_cd")
     assert hasattr(response.body, "msg_cd")
+
+
+@pytest.mark.integration
+def test_get_stock_period_quote_delisted_stock(client: HttpClient):
+    """상장폐지 종목(117930 한진해운): output1 은 0 채움에 세 키가 없고 output2 캔들은 온다.
+
+    VENDOR_DOC_ERRATA.md KIS 참고 (2026-09-30 실측, 2016-08 일봉 22봉).
+    """
+    response = client.domestic_basic_quote.get_stock_period_quote(
+        fid_cond_mrkt_div_code="J",
+        fid_input_iscd="117930",
+        fid_input_date_1="20160801",
+        fid_input_date_2="20160831",
+        fid_period_div_code="D",
+        fid_org_adj_prc="0",
+    )
+    assert_response_shape(client, response, ignore=DELISTED_PERIOD_QUOTE_OMITTED)
+
+    assert response.body.output2, "delisted stock should still return candles in output2"
+    assert response.body.output1 is not None
+    assert response.body.output1.prdy_vrss_sign is None
+    assert response.body.output1.hts_kor_isnm is None
+    assert response.body.output1.stck_shrn_iscd is None
