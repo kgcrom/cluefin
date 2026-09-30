@@ -7,13 +7,7 @@ import tempfile
 from datetime import date
 from decimal import Decimal
 
-from cluefin_openapi_cli.errors import (
-    DART_REQUEST_LIMIT_STATUS,
-    EXIT_BROKER,
-    EXIT_USAGE,
-    CliError,
-    DartQuotaExceededAPIError,
-)
+from cluefin_openapi_cli.errors import DART_REQUEST_LIMIT_STATUS, EXIT_BROKER, CliError, DartQuotaExceededAPIError
 from cluefin_openapi_cli.handlers._base import DispatcherProtocol, dump_model, rpc_method
 
 
@@ -427,17 +421,8 @@ _AS_FILED_COLD_CACHE_HINT = (
 
 
 def _as_filed_statements(params: dict) -> list[str]:
-    """Requested statement types in canonical order; anything outside BS/IS/CIS/CF/SCE is a usage error."""
-    raw = params.get("statements", _AS_FILED_DEFAULT_STATEMENTS)
-    tokens = raw.split(",") if isinstance(raw, str) else []
-    invalid = [token for token in tokens if token not in _AS_FILED_STATEMENTS]
-    if invalid or not tokens:
-        raise CliError(
-            f"statements must be a comma-separated subset of {','.join(_AS_FILED_STATEMENTS)}",
-            exit_code=EXIT_USAGE,
-            error_type="ValidationError",
-            data={"statements": raw, "invalid": invalid},
-        )
+    """Requested statement types in canonical order. The schema pattern already rejected bad input."""
+    tokens = params.get("statements", _AS_FILED_DEFAULT_STATEMENTS).split(",")
     return [code for code in _AS_FILED_STATEMENTS if code in tokens]
 
 

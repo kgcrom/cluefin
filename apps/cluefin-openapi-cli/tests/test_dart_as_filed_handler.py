@@ -277,16 +277,6 @@ def test_client_errors_propagate_for_classification(install) -> None:
         _run(dart=_FakeDart(RuntimeError("boom")))
 
 
-@pytest.mark.parametrize("statements", ["", "XX", "BS,XX", "BS,", ",BS", "bs", "BS, IS"])
-def test_invalid_statements_is_exit_2(install, statements) -> None:
-    install(_doc(), _parsed("1"))
-    dart = _FakeDart()
-    with pytest.raises(CliError) as excinfo:
-        _run({"statements": statements}, dart=dart)
-    assert excinfo.value.exit_code == 2
-    assert dart.periodic_report_financial_statement.calls == []  # rejected before any download
-
-
 def test_statements_subset_and_canonical_order(install) -> None:
     install(_doc(), _parsed("1", consolidated=("CIS", "BS", "CF"), separate=("CIS", "BS", "CF")))
     result = _run({"statements": "CF,BS"})
