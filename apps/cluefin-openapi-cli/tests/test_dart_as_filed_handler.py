@@ -7,6 +7,7 @@ amendment 20250828000839, consolidated CIS `dart:OperatingIncomeLoss`.
 
 from __future__ import annotations
 
+import itertools
 import json
 import random
 from datetime import date
@@ -320,38 +321,66 @@ def test_company_without_consolidated_statements(install) -> None:
     assert result["missing"] == ["BS/consolidated", "CIS/consolidated"]
 
 
-def test_rows_are_sorted_deterministically_whatever_the_input_order(install) -> None:
+def test_period_columns_are_sorted_whatever_order_arelle_returns_them(install) -> None:
     base = _cis_items("28915427") + [
         _item("EquityComponent", "5", CURRENT, order=3.0, dims={"ComponentsOfEquityAxis": "B"}),
         _item("EquityComponent", "4", CURRENT, order=3.0, dims={"ComponentsOfEquityAxis": "A"}),
     ]
     expected = None
     for seed in range(6):
-        items = base[:]
-        random.Random(seed).shuffle(items)
+        # Node order is fixed by the presentation tree; only one node's facts come back shuffled.
+        items = []
+        for _, run in itertools.groupby(base, key=lambda i: i.concept_qname):
+            run = list(run)
+            random.Random(seed).shuffle(run)
+            items.extend(run)
         parsed = ParsedFinancialStatements(
             source_file="x", entity_id=CORP, statements={"CIS": _statement("CIS", items)}
         )
         install(_doc(), parsed)
         rows = _run({"statements": "CIS", "fs_div": "CFS"})["statements"]["CIS"]["consolidated"]
-        key = [(r["order"], r["concept"], r["end_date"], r["value"]) for r in rows]
+        key = [(r["concept"], r["end_date"], r["value"]) for r in rows]
         if expected is None:
             expected = key
         assert key == expected
 
-    assert [(o, c) for o, c, *_ in expected] == [
-        (1.0, "Revenue"),
-        (1.0, "Revenue"),
-        (2.0, "OperatingIncomeLoss"),
-        (2.0, "OperatingIncomeLoss"),
-        (2.0, "OperatingIncomeLoss"),
-        (3.0, "EquityComponent"),
-        (3.0, "EquityComponent"),
+    assert [c for c, *_ in expected] == [
+        "Revenue",
+        "Revenue",
+        "OperatingIncomeLoss",
+        "OperatingIncomeLoss",
+        "OperatingIncomeLoss",
+        "EquityComponent",
+        "EquityComponent",
     ]
     # Current period first, then older ones.
-    assert [e for o, c, e, v in expected if c == "OperatingIncomeLoss"] == ["2024-12-31", "2023-12-31", "2022-12-31"]
-    # Same order and period: dimensions break the tie (A before B).
-    assert [v for o, c, e, v in expected if c == "EquityComponent"] == ["4", "5"]
+    assert [e for c, e, v in expected if c == "OperatingIncomeLoss"] == ["2024-12-31", "2023-12-31", "2022-12-31"]
+    # Same period: dimensions break the tie (A before B).
+    assert [v for c, e, v in expected if c == "EquityComponent"] == ["4", "5"]
+
+
+def test_presentation_order_is_kept_across_parents(install) -> None:
+    # `order` is sibling-relative: both parents' first child has order 1.0. Sorting on it would
+    # pull CashAndCashEquivalents and PropertyPlantAndEquipment together.
+    items = [
+        _item("CurrentAssets", "10", CURRENT, order=1.0, label="유동자산"),
+        _item("CashAndCashEquivalents", "3", CURRENT, order=1.0, label="현금및현금성자산"),
+        _item("Inventories", "7", CURRENT, order=2.0, label="재고자산"),
+        _item("NoncurrentAssets", "20", CURRENT, order=2.0, label="비유동자산"),
+        _item("PropertyPlantAndEquipment", "20", CURRENT, order=1.0, label="유형자산"),
+    ]
+    parsed = ParsedFinancialStatements(source_file="x", entity_id=CORP, statements={"BS": _statement("BS", items)})
+    install(_doc(), parsed)
+
+    rows = _run({"statements": "BS", "fs_div": "CFS"})["statements"]["BS"]["consolidated"]
+
+    assert [r["concept"] for r in rows] == [
+        "CurrentAssets",
+        "CashAndCashEquivalents",
+        "Inventories",
+        "NoncurrentAssets",
+        "PropertyPlantAndEquipment",
+    ]
 
 
 def test_abstract_rows_are_skipped_and_none_value_stays_none(install) -> None:

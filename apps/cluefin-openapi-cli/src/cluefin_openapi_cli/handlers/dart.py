@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 import tempfile
 from datetime import date
 from decimal import Decimal
@@ -440,14 +441,12 @@ def _as_filed_statements(params: dict) -> list[str]:
     return [code for code in _AS_FILED_STATEMENTS if code in tokens]
 
 
-def _as_filed_sort_key(item) -> tuple:
-    """Presentation order, then newest period first, then dimensions: run-to-run stable."""
+def _as_filed_period_key(item) -> tuple:
+    """Newest period first, then dimensions: orders the facts of one presentation node."""
     period = item.period
     end = (period.end_date or period.instant) if period is not None else None
     start = period.start_date if period is not None else None
     return (
-        item.order,
-        item.concept_qname,
         end is None,
         -(end.toordinal() if end else 0),
         start is None,
@@ -461,9 +460,18 @@ def _iso(value: date | None) -> str | None:
 
 
 def _as_filed_rows(statement) -> list[dict]:
-    """Rows of one parsed statement. ``value`` stays an exact ``str(Decimal)`` (never float)."""
+    """Rows of one parsed statement. ``value`` stays an exact ``str(Decimal)`` (never float).
+
+    Line items come in presentation (depth-first) order, which is kept: ``order`` is only
+    relative to siblings, so sorting on it would interleave different parents' children.
+    Only the facts of one node, whose order Arelle does not fix, are sorted.
+    """
     rows = []
-    for item in sorted((i for i in statement.line_items if not i.is_abstract), key=_as_filed_sort_key):
+    shown = [i for i in statement.line_items if not i.is_abstract]
+    ordered = []
+    for _, node_items in itertools.groupby(shown, key=lambda i: i.concept_qname):
+        ordered.extend(sorted(node_items, key=_as_filed_period_key))
+    for item in ordered:
         period = item.period
         value: Decimal | None = item.value
         rows.append(
