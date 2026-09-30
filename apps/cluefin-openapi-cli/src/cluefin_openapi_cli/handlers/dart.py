@@ -435,6 +435,34 @@ def handle_major_shareholder(params: dict, session) -> dict:
     return dump_model(_checked(result))
 
 
+@rpc_method(
+    name="dart.share_count",
+    description=(
+        "Get the total number of shares (주식의 총수 현황) of one company's periodic report: issued, "
+        "treasury and outstanding share counts split by `se` (common / preferred / total). "
+        'Numbers arrive as comma strings such as "5,969,782,550" and missing values as "-". '
+        "Data is available from bsns_year 2015. Each row's `rcept_no` is the latest amended report, not the "
+        "original filing, so this cannot give the share count as first reported."
+    ),
+    parameters={
+        "type": "object",
+        "properties": dict(_PERIODIC_REPORT_KEY),
+        "required": ["corp_code", "bsns_year", "reprt_code"],
+    },
+    returns={"type": "object"},
+    category="dart",
+    broker="dart",
+)
+def handle_share_count(params: dict, session) -> dict:
+    dart = session.get_dart()
+    result = dart.periodic_report_key_information.get_total_number_of_shares(
+        corp_code=params["corp_code"],
+        bsns_year=params["bsns_year"],
+        reprt_code=params["reprt_code"],
+    )
+    return dump_model(_checked(result))
+
+
 # ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
@@ -446,6 +474,7 @@ _ALL_HANDLERS = [
     handle_large_holding_report,
     handle_executive_ownership_report,
     handle_major_shareholder,
+    handle_share_count,
     handle_financial_major_accounts,
     handle_financial_full_statements,
     handle_financial_major_indicators,

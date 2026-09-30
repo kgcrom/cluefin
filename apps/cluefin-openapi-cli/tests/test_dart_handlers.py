@@ -6,6 +6,7 @@ import pytest
 from _handler_fakes import FakeSession, assert_calls_client_once, assert_registers_all
 
 from cluefin_openapi_cli.handlers import dart as handlers
+from cluefin_openapi_cli.validation import validate_params
 
 
 @pytest.mark.parametrize("handler", handlers._ALL_HANDLERS, ids=lambda h: h._rpc_schema.name)
@@ -199,3 +200,23 @@ def test_json_path_status_020_is_classified_as_rate_limit() -> None:
 def test_json_path_other_statuses_pass_through(status: str) -> None:
     result = handlers.handle_financial_major_accounts(_MAJOR_ACCOUNTS_PARAMS, _major_accounts_session(status))
     assert result["result"]["status"] == status
+
+
+def test_share_count_forwards_the_report_key_unchanged() -> None:
+    session = FakeSession()
+    key = {"corp_code": "00126380", "bsns_year": "2025", "reprt_code": "11011"}
+    handlers.handle_share_count(key, session)
+    sub, method, _, kwargs = session.calls[0]
+    assert (sub, method) == ("periodic_report_key_information", "get_total_number_of_shares")
+    assert kwargs == key
+
+
+def test_share_count_schema_requires_the_report_key_and_enforces_reprt_code() -> None:
+    schema = handlers.handle_share_count._rpc_schema.parameters
+    assert set(schema["required"]) == {"corp_code", "bsns_year", "reprt_code"}
+
+    ok = {"corp_code": "00126380", "bsns_year": "2025", "reprt_code": "11011"}
+    assert validate_params(ok, schema).ok
+    for missing in ok:
+        assert not validate_params({k: v for k, v in ok.items() if k != missing}, schema).ok
+    assert not validate_params({**ok, "reprt_code": "99999"}, schema).ok
