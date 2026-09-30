@@ -97,7 +97,7 @@ def test_dart_request_limit_status_is_exit_5_with_daily_quota_hint() -> None:
 
     assert error.exit_code == EXIT_RATE_LIMIT
     assert error.error_type == "RateLimitError"
-    assert error.retryable is True
+    assert error.retryable is False
     assert error.data["status"] == "020"
     assert "daily" in (error.hint or "")
     assert "retry_after" not in error.data

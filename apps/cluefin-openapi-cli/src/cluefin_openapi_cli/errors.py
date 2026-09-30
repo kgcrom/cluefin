@@ -128,7 +128,7 @@ def classify_exception(exc: BaseException, *, command: str, broker: str) -> CliE
             exit_code=EXIT_RATE_LIMIT,
             data=data,
             error_type="RateLimitError",
-            retryable=True,
+            retryable=False,
             hint="DART daily request quota is exhausted (status 020). It resets daily; do not retry in a "
             "loop. Wait until the quota resets or use a different DART key.",
         )
