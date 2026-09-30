@@ -44,6 +44,13 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   `*AuthenticationError`, …) because kis/kiwoom/dart exception hierarchies are parallel
   copies. A pydantic `ValidationError` from response parsing is deliberately separated
   from broker `*ValidationError` (request rejected) — the former is `ResponseParseError`.
+- DART "request limit exceeded" (status `020`, daily quota) never arrives as `DartRateLimitError`
+  (that is only the local token-bucket timeout). It is a `status` in an HTTP 200 body: the XML
+  paths raise a generic `DartAPIError`, and the JSON paths parse it into a normal model without
+  raising. `classify_exception` maps a `*APIError` whose `response_data.status == "020"` to exit 5
+  (with a daily-quota hint), and `handlers/dart.py` `_checked()` raises
+  `errors.DartQuotaExceededAPIError` for the JSON models. Other non-`000` statuses (e.g. `013`
+  no data) are deliberately left as they were.
 - Validation (`validation.py`) runs *before* any client is created: enum, pattern,
   bounds, unknown fields, and string hardening (control chars, `..`, `%`, `?`, `#`) on
   every nested string. If a broker ever needs a literal `%`/`?`/`#` in a parameter, the
