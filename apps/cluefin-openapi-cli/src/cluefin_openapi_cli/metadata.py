@@ -772,6 +772,7 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
     "dart.disclosure-search": CommandTaxonomy(("news", "statements"), ("disclosure",)),
     "dart.executive-ownership-report": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
     "dart.financial-full-statements": CommandTaxonomy(("statements",), ("financial-statement", "disclosure")),
+    "dart.financial-as-filed": CommandTaxonomy(("statements",), ("financial-statement", "disclosure")),
     "dart.financial-major-accounts": CommandTaxonomy(("statements",), ("financial-statement", "disclosure")),
     "dart.financial-major-indicators": CommandTaxonomy(("statements",), ("financial-ratio", "disclosure")),
     "dart.large-holding-report": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
@@ -922,6 +923,10 @@ QUERY_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("재무제표", ("financial", "statement", "balance", "sheet", "income")),
     ("재무비율", ("financial", "ratio", "profitability", "stability", "growth")),
     ("손익계산서", ("income", "statement")),
+    ("원본 재무제표", ("as", "filed", "original", "financial", "statement")),
+    ("정정 전", ("as", "filed", "original", "amended")),
+    ("as filed", ("as", "filed", "original")),
+    ("정정공시", ("as", "filed", "amended", "original")),
     ("주요계정", ("major", "accounts", "financial")),
     ("재무지표", ("financial", "indicators", "ratio")),
     ("연결재무제표", ("consolidated", "financial", "statements")),
@@ -1067,6 +1072,7 @@ _TYPE_SAMPLES: dict[str, Any] = {"integer": 1, "number": 1.0, "boolean": False}
 _NAME_SAMPLES: tuple[tuple[tuple[str, ...], tuple[str, ...], str], ...] = (
     (("date",), ("_dt", "ymd"), "20250101"),
     (("corp_code",), (), "00126380"),
+    (("rcept_no",), (), "20250318001317"),
     (("stock_code", "code", "iscd"), (), "005930"),
     (("market",), (), "J"),
 )

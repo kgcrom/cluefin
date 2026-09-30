@@ -7,6 +7,7 @@ requires-python = ">=3.10"
 dependencies = [
     "cluefin-openapi",
     "cluefin-ta",
+    "cluefin-xbrl",
     "pydantic>=2.12.0,<3.0.0",
 ]
 
