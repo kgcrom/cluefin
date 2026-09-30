@@ -286,7 +286,7 @@ requires-dist = [
 
 [[package]]
 name = "cluefin-openapi"
-version = "0.8.0"
+version = "0.8.1"
 source = { editable = "packages/cluefin-openapi" }
 dependencies = [
     { name = "defusedxml" },
