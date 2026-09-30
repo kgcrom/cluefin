@@ -464,3 +464,18 @@ def test_cli_requires_corp_code(cli) -> None:
         ]
     )
     assert result.exit_code == 2
+
+
+def test_parser_output_never_reaches_stdout(install, monkeypatch, capsys) -> None:
+    # Arelle prints "[info] loaded …" on stdout, which would corrupt the JSON payload.
+    def chatty_parse(directory, *, include_taxonomy=False):
+        print("[info] loaded in 0.2 secs")
+        return _doc()
+
+    install(_doc(), _parsed("1"))
+    monkeypatch.setattr(cluefin_xbrl, "parse_xbrl_directory", chatty_parse)
+    _run()
+
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "[info] loaded" in captured.err

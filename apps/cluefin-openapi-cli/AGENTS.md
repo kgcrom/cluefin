@@ -144,6 +144,8 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - Arelle 은 콜드 캐시(`~/Library/Caches/Arelle`)에서 택소노미를 네트워크로 받아 첫 파싱이 최대 ~76초
   걸린다. 오프라인+콜드면 예외 없이 `facts == []` 문서가 오므로 핸들러가 facts 0·기간 없음을 exit 4 로
   올린다. 단위 테스트는 파서를 monkeypatch 해 네트워크를 타지 않는다.
+- Arelle 은 `[info] loaded …` 를 **stdout** 에 찍는다. 파싱 호출을 `redirect_stdout(sys.stderr)` 로 감싸지 않으면
+  JSON 출력이 깨진다 — 파서를 monkeypatch 하는 단위 테스트·핸들러를 직접 부르는 통합 테스트로는 안 보인다.
 - 회사에 따라 IS 키가 없고 손익이 CIS 에만 있다(노드메이슨), 연결재무제표가 없는 회사도 있다(티씨머티리얼즈).
   IS 를 CIS 로 합성하지 않고, 요청했지만 없는 것은 응답 `missing`(`"IS/consolidated"` 형식)에 적는다.
 
