@@ -8,8 +8,12 @@ from _handler_fakes import FakeSession, assert_calls_client_once, assert_registe
 from cluefin_openapi_cli.handlers import dart as handlers
 from cluefin_openapi_cli.validation import validate_params
 
+# financial-as-filed parses what the client downloaded instead of returning the response, so the
+# generic fake (which writes no XBRL file) cannot satisfy it; test_dart_as_filed_handler.py covers it.
+_PASS_THROUGH_HANDLERS = [h for h in handlers._ALL_HANDLERS if h is not handlers.handle_financial_as_filed]
 
-@pytest.mark.parametrize("handler", handlers._ALL_HANDLERS, ids=lambda h: h._rpc_schema.name)
+
+@pytest.mark.parametrize("handler", _PASS_THROUGH_HANDLERS, ids=lambda h: h._rpc_schema.name)
 def test_handler_calls_underlying_client(handler) -> None:
     assert_calls_client_once(handler)
 

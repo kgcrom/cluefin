@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from cluefin_openapi_cli.errors import DART_REQUEST_LIMIT_STATUS, DartQuotaExceededAPIError
+import itertools
+import tempfile
+from datetime import date
+from decimal import Decimal
+
+from cluefin_openapi_cli.errors import DART_REQUEST_LIMIT_STATUS, EXIT_BROKER, CliError, DartQuotaExceededAPIError
 from cluefin_openapi_cli.handlers._base import DispatcherProtocol, dump_model, rpc_method
 
 
@@ -405,6 +410,193 @@ def handle_financial_major_indicators(params: dict, session) -> dict:
     return dump_model(_checked(result))
 
 
+_AS_FILED_STATEMENTS = ("BS", "IS", "CIS", "CF", "SCE")
+_AS_FILED_DEFAULT_STATEMENTS = "BS,IS,CIS,CF"
+_AS_FILED_STATEMENTS_PATTERN = "^(BS|IS|CIS|CF|SCE)(,(BS|IS|CIS|CF|SCE))*$"
+_AS_FILED_BASES = (("CFS", "consolidated"), ("OFS", "separate"))
+_AS_FILED_COLD_CACHE_HINT = (
+    "Arelle downloads base taxonomies on a cold cache (~/Library/Caches/Arelle); offline with a cold "
+    "cache it silently yields an empty document. Check network access and retry."
+)
+
+
+def _as_filed_statements(params: dict) -> list[str]:
+    """Requested statement types in canonical order. The schema pattern already rejected bad input."""
+    tokens = params.get("statements", _AS_FILED_DEFAULT_STATEMENTS).split(",")
+    return [code for code in _AS_FILED_STATEMENTS if code in tokens]
+
+
+def _as_filed_period_key(item) -> tuple:
+    """Newest period first, then dimensions: orders the facts of one presentation node."""
+    period = item.period
+    end = (period.end_date or period.instant) if period is not None else None
+    start = period.start_date if period is not None else None
+    return (
+        end is None,
+        -(end.toordinal() if end else 0),
+        start is None,
+        -(start.toordinal() if start else 0),
+        sorted(item.dimensions.items()),
+    )
+
+
+def _iso(value: date | None) -> str | None:
+    return value.isoformat() if value is not None else None
+
+
+def _as_filed_rows(statement) -> list[dict]:
+    """Rows of one parsed statement. ``value`` stays an exact ``str(Decimal)`` (never float).
+
+    Line items come in presentation (depth-first) order, which is kept: ``order`` is only
+    relative to siblings, so sorting on it would interleave different parents' children.
+    Only the facts of one node, whose order Arelle does not fix, are sorted.
+    """
+    rows = []
+    shown = [i for i in statement.line_items if not i.is_abstract]
+    ordered = []
+    for _, node_items in itertools.groupby(shown, key=lambda i: i.concept_qname):
+        ordered.extend(sorted(node_items, key=_as_filed_period_key))
+    for item in ordered:
+        period = item.period
+        value: Decimal | None = item.value
+        rows.append(
+            {
+                "concept_qname": item.concept_qname,
+                "concept": item.concept_local_name,
+                "label_ko": item.label_ko,
+                "label_en": item.label_en,
+                "value": str(value) if value is not None else None,
+                "unit": item.unit,
+                "period_type": period.period_type.value if period is not None else None,
+                "instant": _iso(period.instant) if period is not None else None,
+                "start_date": _iso(period.start_date) if period is not None else None,
+                "end_date": _iso(period.end_date) if period is not None else None,
+                "dimensions": dict(item.dimensions),
+                "depth": item.depth,
+                "order": item.order,
+            }
+        )
+    return rows
+
+
+@rpc_method(
+    name="dart.financial_as_filed",
+    description=(
+        "Get one periodic report's financial statements as first filed, parsed from the report's XBRL "
+        "attachment by receipt number (rcept_no, from dart disclosure-search). The JSON APIs "
+        "(financial-major-accounts / financial-full-statements) return only the latest amended values; "
+        "this returns the values of the given filing, so an original and its amendment can be compared. "
+        "Nothing is written to disk. The first call on a cold Arelle taxonomy cache downloads base "
+        "taxonomies and can take ~1 minute (later calls ~1-5s). Rows include prior-period comparative "
+        "columns (period fields are kept); only the current-period column is the as-filed value for this "
+        "report, comparatives are restated values. Some filers have no IS: their income statement lives "
+        "only under CIS (do not expect IS); some have no consolidated statements. Requested statements "
+        "that the filing lacks are listed in `missing` as `<TYPE>/<basis>`, e.g. `IS/consolidated`."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "rcept_no": {
+                "type": "string",
+                "pattern": r"^\d{14}$",
+                "description": "Receipt number of the periodic report (14 digits), original or amendment",
+            },
+            "reprt_code": {
+                **_PERIODIC_REPORT_KEY["reprt_code"],
+                "description": "Report code (11013:Q1, 11012:H1, 11014:Q3, 11011:Annual). DART ignores it "
+                "for this endpoint, but the client requires it; the filing is identified by rcept_no.",
+            },
+            "corp_code": {
+                "type": "string",
+                "pattern": r"^\d{8}$",
+                "description": "Corporate unique code (8 digits). Required safety check: DART returns another "
+                "company's file for a wrong rcept_no, so the parsed entity must equal this value.",
+            },
+            "statements": {
+                "type": "string",
+                "pattern": _AS_FILED_STATEMENTS_PATTERN,
+                "default": _AS_FILED_DEFAULT_STATEMENTS,
+                "description": "Comma-separated subset of BS,IS,CIS,CF,SCE (balance sheet, income statement, "
+                "comprehensive income, cash flow, equity changes). Default BS,IS,CIS,CF.",
+            },
+            "fs_div": {
+                "type": "string",
+                "enum": ["CFS", "OFS", "both"],
+                "default": "both",
+                "description": "Statement basis (CFS:consolidated, OFS:separate, both). Default both.",
+            },
+        },
+        "required": ["rcept_no", "reprt_code", "corp_code"],
+    },
+    returns={"type": "object"},
+    category="dart",
+    broker="dart",
+)
+def handle_financial_as_filed(params: dict, session) -> dict:
+    requested = _as_filed_statements(params)
+    fs_div = params.get("fs_div", "both")
+    bases = [name for code, name in _AS_FILED_BASES if fs_div in (code, "both")]
+    rcept_no = params["rcept_no"]
+    corp_code = params["corp_code"]
+
+    # Heavy (Arelle): imported here so other commands do not pay for it at startup.
+    from cluefin_xbrl import XbrlParseError, extract_financial_statements, parse_xbrl_directory
+
+    dart = session.get_dart()
+    with tempfile.TemporaryDirectory(prefix="cluefin-as-filed-") as tmp:
+        dart.periodic_report_financial_statement.download_financial_statement_xbrl(
+            rcept_no, params["reprt_code"], destination=tmp
+        )
+        try:
+            doc = parse_xbrl_directory(tmp, include_taxonomy=True)
+            if doc.reporting_period_end is None or len(doc.facts) == 0:
+                raise CliError(
+                    "XBRL parsed to an empty document (no facts or no reporting period)",
+                    exit_code=EXIT_BROKER,
+                    error_type="ResponseParseError",
+                    data={"rcept_no": rcept_no, "facts": len(doc.facts)},
+                    hint=_AS_FILED_COLD_CACHE_HINT,
+                )
+            entity_id = (doc.entity_id or "").strip()
+            if entity_id != corp_code:
+                raise CliError(
+                    "XBRL belongs to a different company than corp_code (wrong rcept_no?)",
+                    exit_code=EXIT_BROKER,
+                    error_type="ResponseParseError",
+                    data={"rcept_no": rcept_no, "expected": corp_code, "actual": doc.entity_id},
+                )
+            parsed = extract_financial_statements(doc)
+        except (XbrlParseError, ValueError) as exc:
+            raise CliError(
+                f"Failed to parse XBRL: {exc}",
+                exit_code=EXIT_BROKER,
+                error_type="ResponseParseError",
+                data={"rcept_no": rcept_no, "exception": type(exc).__name__},
+                hint=_AS_FILED_COLD_CACHE_HINT,
+            ) from exc
+
+        statements: dict[str, dict[str, list[dict]]] = {}
+        missing: list[str] = []
+        by_basis = {"consolidated": parsed.statements, "separate": parsed.separate_statements}
+        for code in requested:
+            for basis in bases:
+                statement = by_basis[basis].get(code)
+                if statement is None:
+                    missing.append(f"{code}/{basis}")
+                    continue
+                statements.setdefault(code, {})[basis] = _as_filed_rows(statement)
+        reporting_period_end = doc.reporting_period_end.isoformat()
+
+    return {
+        "rcept_no": rcept_no,
+        "corp_code": corp_code,
+        "entity_id": entity_id,
+        "reporting_period_end": reporting_period_end,
+        "statements": statements,
+        "missing": missing,
+    }
+
+
 @rpc_method(
     name="dart.major_shareholder",
     description="Get major shareholder status from periodic report.",
@@ -478,6 +670,7 @@ _ALL_HANDLERS = [
     handle_financial_major_accounts,
     handle_financial_full_statements,
     handle_financial_major_indicators,
+    handle_financial_as_filed,
 ]
 
 

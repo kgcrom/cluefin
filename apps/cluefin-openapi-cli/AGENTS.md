@@ -67,9 +67,11 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - A `category` missing from `_CATEGORY_DEFAULTS` in `metadata.py` silently falls back to
   domain `market` / tag `ranking` instead of erroring — add an entry for new categories.
 
-## `kis chart technical` computes; every other command passes through
+## `kis chart technical` and `dart financial-as-filed` compute; every other command passes through
 
-- It is the **only** command that does not hand a client response straight back. It pages
+- `dart financial-as-filed` is the second non-pass-through command: it parses a downloaded XBRL
+  (see the `dart financial-*` section) and is excluded from the generic client-call tests the same way.
+- `kis chart technical` is the **only** command that computes from a paged series. It pages
   `chart.period` itself (`ohlcv.fetch_kis_daily_series`), computes via `indicators.py`, and
   returns readings only — the candle series never reaches the caller, which is the whole
   reason it exists. `_handler_fakes.assert_calls_client_once` therefore does not describe
@@ -130,8 +132,20 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - `dart share-count` 의 수치는 `"5,969,782,550"` 같은 콤마 문자열이고 결측은 `"-"` 로 온다. 패스스루라
   변환하지 않는다. 각 행의 `rcept_no` 는 원본이 아닌 최신 정정 보고서다 (2026-09-30 실측:
   노드메이슨 2024 사업보고서 4행 모두 정정 `20250828000839`). 원본 시점 주식수는 이 API로 얻을 수 없다.
-- 복수회사 조회와 XBRL 원문 다운로드는 일부러 뺐다 — 배열 입력과 파일 쓰기가
-  "read 패스스루" 계약과 맞지 않는다.
+- 복수회사 조회는 일부러 뺐다 — 배열 입력이 "read 패스스루" 계약과 맞지 않는다. XBRL 원문 파일도
+  여전히 내지 않는다(임시 디렉터리에 받아 파싱하고 지운다). 파싱된 행만 `financial-as-filed` 로 나간다.
+- JSON API(`financial-major-accounts`·`financial-full-statements`)는 **최신 정정본 값만** 준다.
+  노드메이슨(01328170) FY2024 연결 영업이익은 원본 20250318001317 이 28,915,427,
+  정정 20250828000839 가 -190,143,795 인데 JSON 은 후자만 준다. 접수 당시 값은
+  `financial-as-filed` (접수번호별 fnlttXbrl.xml) 로만 얻는다. 전기 열은 나중 보고서에서 재작성된
+  값이므로 당기 열만 as-filed 다.
+- 엉뚱한 `rcept_no` 는 오류 없이 **다른 회사의 유효한 ZIP** 을 돌려주고, `reprt_code` 는 서버가
+  무시한다. 그래서 `corp_code` 가 필수이고 파싱된 `entity_id` 와 다르면 exit 4 다.
+- Arelle 은 콜드 캐시(`~/Library/Caches/Arelle`)에서 택소노미를 네트워크로 받아 첫 파싱이 최대 ~76초
+  걸린다. 오프라인+콜드면 예외 없이 `facts == []` 문서가 오므로 핸들러가 facts 0·기간 없음을 exit 4 로
+  올린다. 단위 테스트는 파서를 monkeypatch 해 네트워크를 타지 않는다.
+- 회사에 따라 IS 키가 없고 손익이 CIS 에만 있다(노드메이슨), 연결재무제표가 없는 회사도 있다(티씨머티리얼즈).
+  IS 를 CIS 로 합성하지 않고, 요청했지만 없는 것은 응답 `missing`(`"IS/consolidated"` 형식)에 적는다.
 
 ## Tests that break on unrelated-looking changes
 
