@@ -427,15 +427,16 @@ class DomesticStockCurrentPriceMember(BaseModel, KisHttpBody):
 
 
 class DomesticStockPeriodQuoteItem1(BaseModel):
+    # 상장폐지 종목은 output1 을 0 으로 채우고 sign/종목명/단축코드 세 키를 아예 보내지 않는다(output2 캔들은 온다) — VENDOR_DOC_ERRATA.md KIS
     prdy_vrss: str = Field(title="전일 대비")
-    prdy_vrss_sign: str = Field(title="전일 대비 부호")
+    prdy_vrss_sign: Optional[str] = Field(default=None, title="전일 대비 부호")
     prdy_ctrt: str = Field(title="전일 대비율")
     stck_prdy_clpr: str = Field(title="주식 전일 종가")
     acml_vol: str = Field(title="누적 거래량")
     acml_tr_pbmn: str = Field(title="누적 거래 대금")
-    hts_kor_isnm: str = Field(title="HTS 한글 종목명")
+    hts_kor_isnm: Optional[str] = Field(default=None, title="HTS 한글 종목명")
     stck_prpr: str = Field(title="주식 현재가")
-    stck_shrn_iscd: str = Field(title="주식 단축 종목코드")
+    stck_shrn_iscd: Optional[str] = Field(default=None, title="주식 단축 종목코드")
     prdy_vol: str = Field(title="전일 거래량")
     stck_mxpr: str = Field(title="주식 상한가")
     stck_llam: str = Field(title="주식 하한가")

@@ -69,3 +69,67 @@ def test_get_stock_current_price_wraps_broken_header_in_kis_validation_error() -
 
     with pytest.raises(KISValidationError, match="KisHttpHeader validation failed"):
         DomesticBasicQuote(client).get_stock_current_price(fid_cond_mrkt_div_code="J", fid_input_iscd="005930")
+
+
+def test_get_stock_period_quote_parses_delisted_stock_with_missing_output1_keys() -> None:
+    """상장폐지 종목: output1 은 0 채움에 sign/종목명/단축코드 키가 없고 output2 캔들은 온다 (VENDOR_DOC_ERRATA.md)."""
+    zero_fields = (
+        "prdy_vrss prdy_ctrt stck_prdy_clpr acml_vol acml_tr_pbmn stck_prpr prdy_vol stck_mxpr stck_llam "
+        "stck_oprc stck_hgpr stck_lwpr stck_prdy_oprc stck_prdy_hgpr stck_prdy_lwpr askp bidp prdy_vrss_vol "
+        "vol_tnrt stck_fcam lstn_stcn cpfn hts_avls per eps pbr"
+    ).split()
+    output1 = {name: "0" for name in zero_fields}
+    output1["itewhol_loan_rmnd_ratem name"] = "0"
+    candle = {
+        "stck_bsop_date": "20160831",
+        "stck_clpr": "1000",
+        "stck_oprc": "990",
+        "stck_hgpr": "1010",
+        "stck_lwpr": "980",
+        "acml_vol": "12345",
+        "acml_tr_pbmn": "12345000",
+        "flng_cls_code": "00",
+        "prtt_rate": "0.00",
+        "mod_yn": "N",
+        "prdy_vrss_sign": "2",
+        "prdy_vrss": "10",
+        "revl_issu_reas": "00",
+    }
+    payload = {
+        "rt_cd": "0",
+        "msg_cd": "MCA00000",
+        "msg1": "정상처리 되었습니다.",
+        "output1": output1,
+        "output2": [candle, {**candle, "stck_bsop_date": "20160830"}],
+    }
+
+    response = DomesticBasicQuote(_mock_client(payload)).get_stock_period_quote(
+        fid_cond_mrkt_div_code="J",
+        fid_input_iscd="117930",
+        fid_input_date_1="20160801",
+        fid_input_date_2="20160831",
+        fid_period_div_code="D",
+        fid_org_adj_prc="0",
+    )
+
+    assert response.body.output1 is not None
+    assert response.body.output1.prdy_vrss_sign is None
+    assert response.body.output1.hts_kor_isnm is None
+    assert response.body.output1.stck_shrn_iscd is None
+    assert response.body.output1.stck_prpr == "0"
+    assert [c.stck_bsop_date for c in response.body.output2] == ["20160831", "20160830"]
+
+
+def test_get_stock_period_quote_still_rejects_other_missing_output1_keys() -> None:
+    """완화는 세 필드뿐이다 — 다른 output1 키가 빠지면 여전히 검증 실패."""
+    payload = {"rt_cd": "0", "msg_cd": "MCA00000", "msg1": "정상처리", "output1": {"prdy_vrss": "0"}, "output2": []}
+
+    with pytest.raises(KISValidationError):
+        DomesticBasicQuote(_mock_client(payload)).get_stock_period_quote(
+            fid_cond_mrkt_div_code="J",
+            fid_input_iscd="117930",
+            fid_input_date_1="20160801",
+            fid_input_date_2="20160831",
+            fid_period_div_code="D",
+            fid_org_adj_prc="0",
+        )
