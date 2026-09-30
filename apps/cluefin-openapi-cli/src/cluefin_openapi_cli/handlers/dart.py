@@ -441,8 +441,8 @@ def handle_major_shareholder(params: dict, session) -> dict:
         "Get the total number of shares (주식의 총수 현황) of one company's periodic report: issued, "
         "treasury and outstanding share counts split by `se` (common / preferred / total). "
         'Numbers arrive as comma strings such as "5,969,782,550" and missing values as "-". '
-        "Data is available from bsns_year 2015. Each row carries `rcept_no`; like the other DART JSON APIs "
-        "it may reflect the latest amended report rather than the original filing."
+        "Data is available from bsns_year 2015. Each row's `rcept_no` is the latest amended report, not the "
+        "original filing, so this cannot give the share count as first reported."
     ),
     parameters={
         "type": "object",
