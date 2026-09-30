@@ -213,7 +213,7 @@ uv run cluefin-openapi-cli kiwoom theme group --query-type 0 --date-type 10 --th
 | 2 | usage·검증 오류 | 인자를 고친다. `schema`를 다시 본다 |
 | 3 | 자격증명 누락·거부 | `.env`/환경변수 확인. 재시도 무의미 |
 | 4 | broker API·네트워크·타임아웃·응답 파싱 실패 | `retryable`이 true일 때만 한 번 재시도 |
-| 5 | broker rate limit | `data.retry_after`초(없으면 1초 이상) 대기 후 재시도 |
+| 5 | broker rate limit | `data.retry_after`초(없으면 1초 이상) 대기 후 재시도. 단 DART `data.status == "020"` 은 일일 한도라 반복 재시도 금지 |
 
 `error.type` 예: `ValidationError`, `CredentialsMissing`, `AuthenticationError`, `RateLimitError`, `BrokerUnavailable`, `BrokerApiError`, `BrokerRejectedRequest`, `ResponseParseError`(존재하지 않는 종목코드처럼 broker가 빈 응답을 준 경우), `ExecutionError`.
 

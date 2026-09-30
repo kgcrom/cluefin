@@ -84,3 +84,34 @@ def test_classify_pydantic_response_parse_error() -> None:
     assert error.data["fields"] == ["a", "b"]
     assert error.data["model"] == "Model"
     assert "field errors" in error.message
+
+
+class _DartAPIError(Exception):
+    def __init__(self, message: str, status: str) -> None:
+        super().__init__(message)
+        self.response_data = {"status": status, "message": message}
+
+
+def test_dart_request_limit_status_is_exit_5_with_daily_quota_hint() -> None:
+    error = classify_exception(_DartAPIError("요청 제한을 초과하였습니다.", "020"), command="dart.x", broker="dart")
+
+    assert error.exit_code == EXIT_RATE_LIMIT
+    assert error.error_type == "RateLimitError"
+    assert error.retryable is True
+    assert error.data["status"] == "020"
+    assert "daily" in (error.hint or "")
+    assert "retry_after" not in error.data
+
+
+def test_dart_other_status_keeps_generic_api_error_bucket() -> None:
+    error = classify_exception(_DartAPIError("조회된 데이타가 없습니다.", "013"), command="dart.x", broker="dart")
+
+    assert error.exit_code == EXIT_BROKER
+    assert error.error_type == "BrokerApiError"
+
+
+def test_status_020_on_non_api_error_class_is_not_rate_limited() -> None:
+    class _Odd(Exception):
+        response_data = {"status": "020"}
+
+    assert classify_exception(_Odd("x"), command="c", broker="dart").exit_code == EXIT_UNEXPECTED

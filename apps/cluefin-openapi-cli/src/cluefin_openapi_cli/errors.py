@@ -57,6 +57,40 @@ class CliError(Exception):
         return {"error": payload}
 
 
+DART_REQUEST_LIMIT_STATUS = "020"
+
+
+class DartQuotaExceededAPIError(Exception):
+    """Raised by DART handlers when a 200 body carries status 020 (request limit exceeded).
+
+    The name ends in ``APIError`` and ``response_data`` mirrors what the client puts on the
+    XML-path ``DartAPIError``, so both paths share one branch in ``classify_exception``.
+    """
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+        self.response_data = {"status": DART_REQUEST_LIMIT_STATUS, "message": message}
+
+
+def raise_if_dart_quota_exceeded(result: Any) -> None:
+    """Raise ``DartQuotaExceededAPIError`` if a DART response carries status 020.
+
+    DART reports quota exhaustion as HTTP 200 with ``status`` in the body, and the client
+    parses it into a normal model instead of raising. The status sits on the model itself
+    or under its ``result`` envelope depending on the endpoint. Other statuses (e.g. 013,
+    no data) are left alone on purpose.
+    """
+
+    for holder in (result, getattr(result, "result", None)):
+        status = getattr(holder, "status", None)
+        if status is None:
+            continue
+        if getattr(status, "value", status) == DART_REQUEST_LIMIT_STATUS:
+            message = getattr(holder, "message", None) or "DART request limit exceeded"
+            raise DartQuotaExceededAPIError(str(message))
+        return
+
+
 def _class_names(exc: BaseException) -> list[str]:
     return [klass.__name__ for klass in type(exc).__mro__]
 
@@ -83,6 +117,21 @@ def classify_exception(exc: BaseException, *, command: str, broker: str) -> CliE
     return_code = getattr(exc, "return_code", None)
     if return_code is not None:
         data["return_code"] = return_code
+
+    if any(name.endswith("APIError") for name in names) and (
+        isinstance(response_data, dict) and response_data.get("status") == DART_REQUEST_LIMIT_STATUS
+    ):
+        # DART status 020 is a daily quota (~20,000 calls), not a per-second throttle: it comes
+        # as a status in an HTTP 200 body, never as DartRateLimitError.
+        return CliError(
+            message,
+            exit_code=EXIT_RATE_LIMIT,
+            data=data,
+            error_type="RateLimitError",
+            retryable=True,
+            hint="DART daily request quota is exhausted (status 020). It resets daily; do not retry in a "
+            "loop. Wait until the quota resets or use a different DART key.",
+        )
 
     if any(name.endswith("RateLimitError") for name in names):
         retry_after = getattr(exc, "retry_after", None)

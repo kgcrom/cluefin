@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from cluefin_openapi_cli.errors import raise_if_dart_quota_exceeded
 from cluefin_openapi_cli.handlers._base import DispatcherProtocol, dump_model, rpc_method
 
 
@@ -67,7 +68,7 @@ def handle_disclosure_search(params: dict, session) -> dict:
         if key in params:
             kwargs[key] = params[key]
     result = dart.public_disclosure.public_disclosure_search(**kwargs)
-    return dump_model(result)
+    return dump_model(_checked(result))
 
 
 @rpc_method(
@@ -87,7 +88,13 @@ def handle_disclosure_search(params: dict, session) -> dict:
 def handle_company_overview(params: dict, session) -> dict:
     dart = session.get_dart()
     result = dart.public_disclosure.company_overview(params["corp_code"])
-    return dump_model(result)
+    return dump_model(_checked(result))
+
+
+def _checked(result):
+    """Pass a client result through, raising if DART answered 200 with status 020 (quota)."""
+    raise_if_dart_quota_exceeded(result)
+    return result
 
 
 _DEFAULT_MAX_ROWS = 100
@@ -153,7 +160,7 @@ def handle_corp_code_lookup(params: dict, session) -> dict:
     result = dart.public_disclosure.corp_code()
     # Items live under the DART result envelope. UniqueNumber also declares a top-level
     # `list` field that parse() never fills, so reading that one yields zero rows.
-    items = getattr(getattr(result, "result", None), "list", None) or []
+    items = getattr(getattr(_checked(result), "result", None), "list", None) or []
     return _paged_response(_filter_corp_codes(items, params), params)
 
 
@@ -195,7 +202,7 @@ def _collect_share_rows(result, params: dict) -> dict:
     full reporting history, so date filtering and capping happen here. Rows come back
     newest first, which keeps ``max_rows`` from dropping the recent ones.
     """
-    rows = getattr(getattr(result, "result", None), "list", None) or []
+    rows = getattr(getattr(_checked(result), "result", None), "list", None) or []
     return _paged_response(_filter_share_rows(rows, params), params)
 
 
@@ -316,7 +323,7 @@ def handle_financial_major_accounts(params: dict, session) -> dict:
         bsns_year=params["bsns_year"],
         reprt_code=params["reprt_code"],
     )
-    return dump_model(result)
+    return dump_model(_checked(result))
 
 
 @rpc_method(
@@ -350,7 +357,7 @@ def handle_financial_full_statements(params: dict, session) -> dict:
         reprt_code=params["reprt_code"],
         fs_div=params.get("fs_div", "CFS"),
     )
-    return dump_model(result)
+    return dump_model(_checked(result))
 
 
 @rpc_method(
@@ -384,7 +391,7 @@ def handle_financial_major_indicators(params: dict, session) -> dict:
         reprt_code=params["reprt_code"],
         idx_cl_code=params["idx_cl_code"],
     )
-    return dump_model(result)
+    return dump_model(_checked(result))
 
 
 @rpc_method(
@@ -414,7 +421,7 @@ def handle_major_shareholder(params: dict, session) -> dict:
         bsns_year=params["bsns_year"],
         reprt_code=params["reprt_code"],
     )
-    return dump_model(result)
+    return dump_model(_checked(result))
 
 
 # ---------------------------------------------------------------------------

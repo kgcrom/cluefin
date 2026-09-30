@@ -162,3 +162,40 @@ def test_financial_statement_handlers_forward_the_report_key() -> None:
     # fs_div defaults to consolidated so the agent never has to know the DART code.
     assert session.calls[1][3] == {**key, "fs_div": "CFS"}
     assert session.calls[2][3] == {**key, "idx_cl_code": "M210000"}
+
+
+def _major_accounts_session(status: str):
+    from cluefin_openapi.dart._periodic_report_financial_statement_types import (
+        SingleCompanyMajorAccount,
+        SingleCompanyMajorAccountItem,
+    )
+
+    model = SingleCompanyMajorAccount.parse(
+        {"status": status, "message": "m"}, list_model=SingleCompanyMajorAccountItem
+    )
+
+    class _Sub:
+        def get_single_company_major_accounts(self, *args, **kwargs):
+            return model
+
+    return SimpleNamespace(get_dart=lambda: SimpleNamespace(periodic_report_financial_statement=_Sub()))
+
+
+_MAJOR_ACCOUNTS_PARAMS = {"corp_code": "00126380", "bsns_year": "2025", "reprt_code": "11011"}
+
+
+def test_json_path_status_020_is_classified_as_rate_limit() -> None:
+    from cluefin_openapi_cli.errors import EXIT_RATE_LIMIT, classify_exception
+
+    with pytest.raises(Exception) as exc_info:
+        handlers.handle_financial_major_accounts(_MAJOR_ACCOUNTS_PARAMS, _major_accounts_session("020"))
+
+    error = classify_exception(exc_info.value, command="dart.financial-major-accounts", broker="dart")
+    assert error.exit_code == EXIT_RATE_LIMIT
+    assert error.data["status"] == "020"
+
+
+@pytest.mark.parametrize("status", ["000", "013"])
+def test_json_path_other_statuses_pass_through(status: str) -> None:
+    result = handlers.handle_financial_major_accounts(_MAJOR_ACCOUNTS_PARAMS, _major_accounts_session(status))
+    assert result["result"]["status"] == status
