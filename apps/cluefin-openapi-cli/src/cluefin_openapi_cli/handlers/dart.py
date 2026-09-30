@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import contextlib
 import itertools
+import sys
 import tempfile
 from datetime import date
 from decimal import Decimal
@@ -548,7 +550,9 @@ def handle_financial_as_filed(params: dict, session) -> dict:
             rcept_no, params["reprt_code"], destination=tmp
         )
         try:
-            doc = parse_xbrl_directory(tmp, include_taxonomy=True)
+            # Arelle logs "[info] loaded …" to stdout by default; stdout is the JSON channel.
+            with contextlib.redirect_stdout(sys.stderr):
+                doc = parse_xbrl_directory(tmp, include_taxonomy=True)
             if doc.reporting_period_end is None or len(doc.facts) == 0:
                 raise CliError(
                     "XBRL parsed to an empty document (no facts or no reporting period)",
