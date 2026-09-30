@@ -127,6 +127,8 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   쓰면 성장률이 절반 가까이 틀어진다. `frmtrm_add_amount` 가 전년 동기 누적이다.
 - 주요계정 응답에는 `fs_div` 파라미터가 없고 회사가 제출한 기준(연결·개별)이 그대로
   온다. 연결재무제표가 없는 회사는 OFS 행만 온다. 전체 재무제표만 `fs_div` 를 받는다.
+- `dart share-count` 의 수치는 `"5,969,782,550"` 같은 콤마 문자열이고 결측은 `"-"` 로 온다. 패스스루라
+  변환하지 않는다. 각 행의 `rcept_no` 가 원본이 아닌 최신 정정 보고서를 가리킬 수 있다 (미확정).
 - 복수회사 조회와 XBRL 원문 다운로드는 일부러 뺐다 — 배열 입력과 파일 쓰기가
   "read 패스스루" 계약과 맞지 않는다.
 

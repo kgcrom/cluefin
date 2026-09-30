@@ -776,6 +776,7 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
     "dart.financial-major-indicators": CommandTaxonomy(("statements",), ("financial-ratio", "disclosure")),
     "dart.large-holding-report": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
     "dart.major-shareholder": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
+    "dart.share-count": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
 }
 
 
@@ -954,6 +955,11 @@ QUERY_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("상장", ("listing", "ipo", "subscription")),
     ("주주총회", ("shareholder", "meeting")),
     ("최대주주", ("major", "shareholder")),
+    ("발행주식수", ("share", "count", "issued", "outstanding", "treasury")),
+    ("주식총수", ("share", "count", "issued", "outstanding", "treasury")),
+    ("유통주식", ("share", "count", "outstanding", "issued")),
+    ("자사주", ("treasury", "share", "count")),
+    ("자기주식", ("treasury", "share", "count")),
     ("휴장일", ("holiday", "calendar", "business", "day")),
     ("종목", ("stock",)),
     ("종목정보", ("stock", "basic", "info")),
