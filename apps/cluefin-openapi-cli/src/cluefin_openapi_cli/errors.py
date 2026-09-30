@@ -72,25 +72,6 @@ class DartQuotaExceededAPIError(Exception):
         self.response_data = {"status": DART_REQUEST_LIMIT_STATUS, "message": message}
 
 
-def raise_if_dart_quota_exceeded(result: Any) -> None:
-    """Raise ``DartQuotaExceededAPIError`` if a DART response carries status 020.
-
-    DART reports quota exhaustion as HTTP 200 with ``status`` in the body, and the client
-    parses it into a normal model instead of raising. The status sits on the model itself
-    or under its ``result`` envelope depending on the endpoint. Other statuses (e.g. 013,
-    no data) are left alone on purpose.
-    """
-
-    for holder in (result, getattr(result, "result", None)):
-        status = getattr(holder, "status", None)
-        if status is None:
-            continue
-        if getattr(status, "value", status) == DART_REQUEST_LIMIT_STATUS:
-            message = getattr(holder, "message", None) or "DART request limit exceeded"
-            raise DartQuotaExceededAPIError(str(message))
-        return
-
-
 def _class_names(exc: BaseException) -> list[str]:
     return [klass.__name__ for klass in type(exc).__mro__]
 

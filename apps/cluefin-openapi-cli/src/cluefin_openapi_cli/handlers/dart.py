@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from cluefin_openapi_cli.errors import raise_if_dart_quota_exceeded
+from cluefin_openapi_cli.errors import DART_REQUEST_LIMIT_STATUS, DartQuotaExceededAPIError
 from cluefin_openapi_cli.handlers._base import DispatcherProtocol, dump_model, rpc_method
 
 
@@ -92,8 +92,19 @@ def handle_company_overview(params: dict, session) -> dict:
 
 
 def _checked(result):
-    """Pass a client result through, raising if DART answered 200 with status 020 (quota)."""
-    raise_if_dart_quota_exceeded(result)
+    """Pass a client result through, raising if DART answered 200 with status 020 (quota).
+
+    The client parses that body into a normal model. The status sits on the model itself or
+    under its ``result`` envelope depending on the endpoint. Other statuses (e.g. 013, no
+    data) are left alone on purpose.
+    """
+    for holder in (result, getattr(result, "result", None)):
+        status = getattr(holder, "status", None)
+        if status is None:
+            continue
+        if getattr(status, "value", status) == DART_REQUEST_LIMIT_STATUS:
+            raise DartQuotaExceededAPIError(str(getattr(holder, "message", None) or "DART request limit exceeded"))
+        break
     return result
 
 
