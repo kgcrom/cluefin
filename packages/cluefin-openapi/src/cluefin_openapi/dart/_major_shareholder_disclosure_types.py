@@ -1190,7 +1190,7 @@ class CorporateLawDecisionItem(BaseModel):
     exevl_bs_rs: str = Field(description="외부평가에 관한 사항(근거 및 사유)")
     exevl_intn: str = Field(description="외부평가에 관한 사항(외부평가기관의 명칭)")
     exevl_pd: str = Field(description="외부평가에 관한 사항(외부평가 기간)")
-    exevl_op: str = Field(description="외부평가에 관한 사항(외부평가 의견)")
+    exevl_op: Optional[str] = Field(description="외부평가에 관한 사항(외부평가 의견)", default=None)
     mgnstk_ostk_cnt: str = Field(description="합병신주의 종류와 수(주)(보통주식)")
     mgnstk_cstk_cnt: str = Field(description="합병신주의 종류와 수(주)(종류주식)")
     mgptncmp_cmpnm: str = Field(description="합병상대회사(회사명)")
@@ -1313,7 +1313,7 @@ class CorporateDivisionDecision(BaseModel, DartHttpBody[CorporateDivisionDecisio
 class CorporateLawMethodDecisionItem(BaseModel):
     model_config = ConfigDict(title="회사분할합병 결정 항목")
 
-    recpt_no: str = Field(description="접수번호(14자리)")
+    rcept_no: str = Field(description="접수번호(14자리)")
     corp_cls: str = Field(description="법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타)")
     corp_code: str = Field(description="공시대상회사의 고유번호(8자리)")
     corp_name: str = Field(description="공시대상회사명")
