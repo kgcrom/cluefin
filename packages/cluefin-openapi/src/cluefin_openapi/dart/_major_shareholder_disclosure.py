@@ -70,6 +70,8 @@ from ._major_shareholder_disclosure_types import (
     TreasuryStockAcquisitionDisposalPlanItem,
     TreasuryStockDisposalDecision,
     TreasuryStockDisposalDecisionItem,
+    TreasuryStockTrustContractDecision,
+    TreasuryStockTrustContractDecisionItem,
     TreasuryStockTrustContractTerminationDecision,
     TreasuryStockTrustContractTerminationDecisionItem,
 )
@@ -691,7 +693,7 @@ class MajorShareholderDisclosure:
         corp_code: str,
         bgn_de: str,
         end_de: str,
-    ):
+    ) -> TreasuryStockTrustContractDecision:
         """
         자기주식취득 신탁계약 체결 결정 정보를 조회합니다.
 
@@ -701,7 +703,7 @@ class MajorShareholderDisclosure:
             end_de (str): 검색종료 접수일자(YYYYMMDD) ※ 2015년 이후 부터 정보제공
 
         Returns:
-            자기주식취득 신탁계약 체결 결정 응답
+            TreasuryStockTrustContractDecision: 자기주식취득 신탁계약 체결 결정 응답
         """
         params = {
             "corp_code": corp_code,
@@ -711,7 +713,7 @@ class MajorShareholderDisclosure:
         payload = self.client._get("/api/tsstkAqTrctrCnsDecsn.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"자기주식취득 신탁계약 체결 결정 응답이 올바르지 않습니다: {payload!r}")
-        return TreasuryStockAcquisitionDisposalPlan.parse(payload, list_model=TreasuryStockAcquisitionDisposalPlanItem)
+        return TreasuryStockTrustContractDecision.parse(payload, list_model=TreasuryStockTrustContractDecisionItem)
 
     def treasury_stock_trust_contract_termination_decision(
         self,
@@ -845,7 +847,7 @@ class MajorShareholderDisclosure:
             "bgn_de": bgn_de,
             "end_de": end_de,
         }
-        payload = self.client._get("/api/bsnTrfDecsn.json", params=params)
+        payload = self.client._get("/api/tgastTrfDecsn.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"유형자산 양도 결정 응답이 올바르지 않습니다: {payload!r}")
         return TangibleAssetTransferDecision.parse(payload, list_model=TangibleAssetTransferDecisionItem)

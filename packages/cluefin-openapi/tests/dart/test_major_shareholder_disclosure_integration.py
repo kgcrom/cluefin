@@ -76,6 +76,8 @@ from cluefin_openapi.dart._major_shareholder_disclosure_types import (
     TreasuryStockAcquisitionDisposalPlanItem,
     TreasuryStockDisposalDecision,
     TreasuryStockDisposalDecisionItem,
+    TreasuryStockTrustContractDecision,
+    TreasuryStockTrustContractDecisionItem,
     TreasuryStockTrustContractTerminationDecision,
     TreasuryStockTrustContractTerminationDecisionItem,
 )
@@ -309,3 +311,56 @@ def test_major_shareholder_disclosure_endpoints(
 
     if items and hasattr(items[0], "corp_code"):
         assert all(item.corp_code == default_query["corp_code"] for item in items)
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    ("method_name", "response_model", "item_model", "corp_code", "rcept_dt"),
+    [
+        # 2025 년 실제 공시 샘플 — 삼성전자 기본 조회는 013 이라 모델·경로 오류를 가린다.
+        (
+            "treasury_stock_trust_contract_decision",
+            TreasuryStockTrustContractDecision,
+            TreasuryStockTrustContractDecisionItem,
+            "00446901",
+            "20250331",
+        ),
+        (
+            "tangible_asset_transfer_decision",
+            TangibleAssetTransferDecision,
+            TangibleAssetTransferDecisionItem,
+            "00132725",
+            "20250325",
+        ),
+        (
+            "corporate_law_decision",
+            CorporateLawDecision,
+            CorporateLawDecisionItem,
+            "01204056",
+            "20250331",
+        ),
+        (
+            "corporate_law_method_decision",
+            CorporateLawMethodDecision,
+            CorporateLawMethodDecisionItem,
+            "00138792",
+            "20250116",
+        ),
+    ],
+)
+def test_major_shareholder_disclosure_real_samples(
+    service: MajorShareholderDisclosure,
+    method_name: str,
+    response_model,
+    item_model,
+    corp_code: str,
+    rcept_dt: str,
+) -> None:
+    time.sleep(1)
+
+    response = getattr(service, method_name)(corp_code=corp_code, bgn_de=rcept_dt, end_de=rcept_dt)
+
+    assert isinstance(response, response_model)
+    assert response.result.status == "000"
+    assert response.result.list
+    assert all(isinstance(item, item_model) for item in response.result.list)

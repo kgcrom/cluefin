@@ -146,8 +146,8 @@ METHOD_SPECS = [
     (
         "treasury_stock_trust_contract_decision",
         "/api/tsstkAqTrctrCnsDecsn.json",
-        types.TreasuryStockAcquisitionDisposalPlan,
-        types.TreasuryStockAcquisitionDisposalPlanItem,
+        types.TreasuryStockTrustContractDecision,
+        types.TreasuryStockTrustContractDecisionItem,
     ),
     (
         "treasury_stock_trust_contract_termination_decision",
@@ -175,7 +175,7 @@ METHOD_SPECS = [
     ),
     (
         "tangible_asset_transfer_decision",
-        "/api/bsnTrfDecsn.json",
+        "/api/tgastTrfDecsn.json",
         types.TangibleAssetTransferDecision,
         types.TangibleAssetTransferDecisionItem,
     ),
@@ -288,3 +288,25 @@ def test_major_shareholder_disclosure_rejects_non_mapping(
 
     with pytest.raises(TypeError):
         method("00126380", "20240101", "20240131")
+
+
+def test_major_shareholder_disclosure_endpoint_paths_are_unique() -> None:
+    """서로 다른 메서드가 같은 경로를 부르면 한쪽이 엉뚱한 공시를 돌려준다 (유형자산 양도 ↔ 영업양도 사례)."""
+    endpoints = [spec[1] for spec in METHOD_SPECS]
+
+    assert len(set(endpoints)) == len(endpoints)
+
+
+def test_corporate_law_decision_accepts_response_without_external_evaluation_opinion(client: Client) -> None:
+    """회사합병결정 실응답에는 exevl_op(외부평가 의견)가 없다 — 분할합병결정에만 있는 필드다."""
+    service = MajorShareholderDisclosure(client)
+    payload = build_payload(types.CorporateLawDecisionItem)
+    del payload["list"][0]["exevl_op"]
+
+    with requests_mock.Mocker() as mock_requests:
+        mock_requests.get(f"{BASE_URL}/api/cmpMgDecsn.json", json=payload, status_code=200)
+
+        result = service.corporate_law_decision("00126380", "20240101", "20240131")
+
+    assert result.result.list is not None
+    assert result.result.list[0].exevl_op is None
