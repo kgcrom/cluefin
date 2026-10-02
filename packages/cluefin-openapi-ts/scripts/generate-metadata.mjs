@@ -772,6 +772,13 @@ const dartCategories = [
     symbolName: 'shareDisclosureComprehensiveEndpoints',
     mapName: 'ShareDisclosureComprehensiveResponseMap',
   },
+  {
+    file: 'periodic_report_financial_statement',
+    out: 'periodic-report-financial-statement',
+    symbolName: 'periodicReportFinancialStatementEndpoints',
+    mapName: 'PeriodicReportFinancialStatementResponseMap',
+    // XBRL 원본파일은 ZIP 이라 응답 스키마가 없다 (바이너리 엔드포인트는 자동 제외).
+  },
 ];
 
 for (const category of dartCategories) {

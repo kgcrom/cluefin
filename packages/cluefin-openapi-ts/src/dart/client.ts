@@ -22,6 +22,7 @@ import { consoleLogger, type Logger } from '../core/logger.js';
 import type { ApiResponse, DartEndpointDefinition } from '../core/types.js';
 import { createInputSchema } from '../core/validation.js';
 import { isZip } from '../core/zip.js';
+import { PeriodicReportFinancialStatement } from './periodic-report-financial-statement.js';
 import { PublicDisclosure } from './public-disclosure.js';
 import { DartShareDisclosureComprehensive } from './share-disclosure-comprehensive.js';
 import { parseXmlStatus } from './xml.js';
@@ -96,6 +97,7 @@ export class DartClient {
 
   private publicDisclosureInstance?: PublicDisclosure;
   private shareDisclosureComprehensiveInstance?: DartShareDisclosureComprehensive;
+  private periodicReportFinancialStatementInstance?: PeriodicReportFinancialStatement;
 
   public constructor(options: DartClientOptions) {
     this.authKey = options.authKey;
@@ -129,6 +131,14 @@ export class DartClient {
       this.shareDisclosureComprehensiveInstance = new DartShareDisclosureComprehensive(this);
     }
     return this.shareDisclosureComprehensiveInstance;
+  }
+
+  /** 정기보고서 재무정보 (주요계정·전체 재무제표·주요지표·XBRL) */
+  public get periodicReportFinancialStatement(): PeriodicReportFinancialStatement {
+    if (!this.periodicReportFinancialStatementInstance) {
+      this.periodicReportFinancialStatementInstance = new PeriodicReportFinancialStatement(this);
+    }
+    return this.periodicReportFinancialStatementInstance;
   }
 
   /** JSON 엔드포인트 호출. 응답 키는 camelCase 로 바뀐다. */
