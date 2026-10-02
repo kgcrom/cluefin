@@ -3,6 +3,7 @@ import { silentLogger } from '../../src/core/logger';
 import type { DartEndpointDefinition } from '../../src/core/types';
 import { DartClient } from '../../src/dart/client';
 import { periodicReportFinancialStatementEndpoints } from '../../src/dart/metadata/periodic-report-financial-statement';
+import { periodicReportKeyInformationEndpoints } from '../../src/dart/metadata/periodic-report-key-information';
 import { publicDisclosureEndpoints } from '../../src/dart/metadata/public-disclosure';
 import { shareDisclosureComprehensiveEndpoints } from '../../src/dart/metadata/share-disclosure-comprehensive';
 
@@ -12,6 +13,7 @@ const categories: Array<[string, readonly DartEndpointDefinition[], number]> = [
   ['publicDisclosure', publicDisclosureEndpoints, 4],
   ['shareDisclosureComprehensive', shareDisclosureComprehensiveEndpoints, 2],
   ['periodicReportFinancialStatement', periodicReportFinancialStatementEndpoints, 7],
+  ['periodicReportKeyInformation', periodicReportKeyInformationEndpoints, 28],
 ];
 const allEndpoints = categories.flatMap(([, endpoints]) => endpoints);
 
@@ -20,8 +22,8 @@ describe('dart metadata', () => {
     expect(endpoints).toHaveLength(expected);
   });
 
-  it('has 13 endpoints in total', () => {
-    expect(allEndpoints).toHaveLength(13);
+  it('has 41 endpoints in total', () => {
+    expect(allEndpoints).toHaveLength(41);
   });
 
   it('gives every endpoint a unique name and an /api/ path', () => {

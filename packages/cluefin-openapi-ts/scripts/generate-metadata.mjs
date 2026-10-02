@@ -779,6 +779,12 @@ const dartCategories = [
     mapName: 'PeriodicReportFinancialStatementResponseMap',
     // XBRL 원본파일은 ZIP 이라 응답 스키마가 없다 (바이너리 엔드포인트는 자동 제외).
   },
+  {
+    file: 'periodic_report_key_information',
+    out: 'periodic-report-key-information',
+    symbolName: 'periodicReportKeyInformationEndpoints',
+    mapName: 'PeriodicReportKeyInformationResponseMap',
+  },
 ];
 
 for (const category of dartCategories) {
