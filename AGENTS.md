@@ -22,32 +22,32 @@ its non-obvious constraints.
 ## Codacy (PR check)
 
 The gate is **zero new issues of minor severity or above**; the complexity/duplication metrics are
-shown but don't fail it. `.codacy.yml` excludes `packages/cluefin-openapi-ts/scripts/**`.
+shown but don't fail it.
 
-### Run it locally before pushing (partial coverage)
+### How a failing check gets resolved (the loop that took 19 findings to 0)
 
-`CODACY_API_TOKEN`, `CODACY_ORGANIZATION_PROVIDER`, `CODACY_USERNAME`, `CODACY_PROJECT_NAME` are
-already exported in the maintainer's shell (CI uses the same names as secrets).
+1. `gh pr checks <N>` says `fail` and gives only a link; the web page needs a login. Don't stop there.
+2. The Codacy bot's **PR comment** has the counts by category and severity
+   (`gh pr view <N> --json comments`), e.g. "8 critical · 11 high" → Security 8 critical / 4 high,
+   ErrorProne 7 high. This tells you how bad it is, not where.
+3. The check run's **annotations** give every finding as `file:line: message` (command below). Severity
+   maps as `failure` = critical, `warning` = high/other — the 8 `failure`s matched the "8 critical".
+   Start with those.
+4. Group the findings by message, not by file: 19 findings were really four patterns (dynamic RegExp,
+   dynamic-key object access, "Unnecessary conditional", hardcoded password). Fix the pattern, not the line.
+5. Push, **wait for the new head's check run to get a conclusion**, read the annotations again. A fix can
+   expose the next layer (19 → 6: fixing only the dynamic *read* left the dynamic *assignment* flagged).
+   Repeat until `Your pull request is up to standards!`.
 
-```bash
-brew install codacy/codacy-cli-v2/codacy-cli-v2
-# The project's real rule set. Bare `codacy-cli init` uses defaults and finds almost nothing.
-# The rule download is large and often times out ("context deadline exceeded") — just rerun it.
-codacy-cli config reset --api-token "$CODACY_API_TOKEN" --provider "$CODACY_ORGANIZATION_PROVIDER" \
-  --organization "$CODACY_USERNAME" --repository "$CODACY_PROJECT_NAME"
-codacy-cli install                       # first run downloads runtimes/tools, ~2 min
-codacy-cli analyze --tool opengrep --format sarif -o /tmp/opengrep.sarif packages/cluefin-openapi-ts
-codacy-cli analyze --tool eslint   --format sarif -o /tmp/eslint.sarif   packages/cluefin-openapi-ts
-```
+### Don't bother reproducing it locally
 
-- It writes `.codacy/` into the repo — put it in `.git/info/exclude`, or run it in a throwaway
-  worktree. `analyze` takes **one** path (Trivy fails on several); without `--tool` it runs every
-  tool. Read the SARIF's `results[].locations[0].physicalLocation` for `file:line`.
-- **Coverage is partial — don't treat a clean local run as a pass.** Replaying PR #132's failing
-  commit, the local run caught only the 2 dynamic-`RegExp` findings (opengrep
-  `non-literal-regexp`) out of 19, plus an unrelated ESLint `no-undef` the server never reported.
-  The local ESLint config has no security / typescript-eslint plugins, so object-injection,
-  "Unnecessary conditional", hardcoded-password and generic-call findings only show up on the server.
+`codacy-cli` (Codacy's own local runner) was tried and removed (2026-10). Even with the project's
+real rule set (`config reset --api-token …`), running it on a branch the server had failed with 19
+findings reproduced only the 2 dynamic-`RegExp` ones: the CLI's ESLint config has no security /
+typescript-eslint plugins, so object-injection, "Unnecessary conditional", hardcoded-password and
+generic-call findings exist only on the server. It also pulls ~3 GB of runtimes and writes `.codacy/`
+into the repo. Push, read the server result below, and fix with the patterns at the bottom.
+`.codacy.yml` excludes `packages/cluefin-openapi-ts/scripts/**`.
 
 ### Read what the server found (ground truth)
 
@@ -59,6 +59,7 @@ sha=$(gh pr view <N> --json headRefOid -q .headRefOid)
 id=$(gh api repos/kgcrom/cluefin/commits/$sha/check-runs -q '.check_runs[]|select(.name|test("Codacy"))|.id')
 gh api "repos/kgcrom/cluefin/check-runs/$id/annotations?per_page=100" \
   -q '.[]|"\(.annotation_level) \(.path):\(.start_line) \(.message)"'
+# critical only: add  select(.annotation_level=="failure")|  before the string
 ```
 
 - Codacy's own API also answers with the same token:
@@ -72,16 +73,35 @@ gh api "repos/kgcrom/cluefin/check-runs/$id/annotations?per_page=100" \
 
 ### Recurring TypeScript findings and what actually fixes them
 
-- `// eslint-disable-next-line security/detect-object-injection` is **ignored** — restructure
-  instead: `Map.get`, iterate `Object.entries`, collect `[key, value]` pairs and
-  `Object.fromEntries` them. Both reads *and* assignments with a dynamic key are flagged, in tests too.
-- `new RegExp(variable)` is flagged critical (also reproduces locally) — scan with `indexOf`, or
-  use a literal regex.
-- "Unnecessary conditional" on `match[1] ?? ''` or `x !== undefined`: Codacy analyses without
-  `noUncheckedIndexedAccess`, so index access and destructured groups look non-nullable. Use
-  named groups with truthiness checks (`groups.name ? … : …`) rather than `??` on an index.
-- A string literal assigned to a name containing key/secret/password is reported as a hardcoded
-  password, even in tests — generate the dummy at runtime (`randomUUID()`).
+These came from the `src/dart` client (19 findings, then 6 after a first fix, then 0). The "after"
+shapes are in `src/dart/client.ts` and `src/dart/xml.ts`.
+
+- **Dynamic-key object access** (`security/detect-object-injection`, "Generic Object Injection Sink").
+  A `// eslint-disable-next-line security/detect-object-injection` comment is **ignored**, so
+  restructure. Reads *and* assignments are both flagged, in tests too.
+  - Before: building the query string from endpoint metadata with
+    `for (const [wireKey, inputKey] of Object.entries(queryMap)) query[wireKey] = String(parsed[inputKey])`.
+    Fixing only the read (`parsed[inputKey]`) still left `query[wireKey] = …` flagged.
+  - After: invert the map once (`new Map(inputKey → wireKey)`), walk `Object.entries(parsedInput)`,
+    push `[wireKey, String(value)]` into an array, then `Object.fromEntries(entries)`. The same applies
+    to the XML parser's per-item object (`item[tag] = …` became a `childEntry` helper returning
+    `[tag, text]`).
+  - Tests that called `service[methodName](input)` (method name from a table) were flagged as
+    "non-static data to retrieve and run functions". After: `new Map(Object.entries(service)).get(name)`
+    where only the existence/path is checked, and a table of call lambdas
+    (`(s) => s.getFoo(input)`) where the typed response is used.
+- **`new RegExp(variable)`** (critical; the only class the local CLI also reproduces). The XML helper
+  built a regex per call from the tag name, ``new RegExp(`<${tag}>…</${tag}>`)``. After: `indexOf` on the
+  opening and closing tag (`findElement`), and a literal regex only for the fixed child pattern.
+- **"Unnecessary conditional"** on `match[1] ?? ''`, `child[2] ?? ''`, `x !== undefined`. Codacy analyses
+  without `noUncheckedIndexedAccess`, so array/group access looks non-nullable and `??` looks dead
+  (while the repo's own tsconfig does flag the missing `?? ''`). After: named regex groups read with
+  truthiness (`if (groups.name) …`, `groups.body || ''`) instead of `??` or `!== undefined`; the
+  branching lives in a small helper so the loop body stays flat.
+- **Hardcoded password** on a test constant like `const AUTH_KEY = 'secret-auth-key-0123…'`
+  (a literal assigned to a name containing key/secret/password, even in tests). After: build the dummy
+  at runtime, `` `test-${randomUUID()}` `` — which also suits a test whose point is that the value must
+  never appear in errors or logs.
 
 ## Environment gotchas
 
