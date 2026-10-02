@@ -16,7 +16,7 @@ const u32 = (value: number): number[] => [
 ];
 
 /** 테스트용 최소 ZIP 생성기 (CRC 는 리더가 검증하지 않아 0 으로 둔다). */
-export const buildZip = (entries: readonly ZipEntry[]): Uint8Array => {
+export const buildZip = (entries: readonly ZipEntry[]): Uint8Array<ArrayBuffer> => {
   const encoder = new TextEncoder();
   const chunks: number[] = [];
   const central: number[] = [];

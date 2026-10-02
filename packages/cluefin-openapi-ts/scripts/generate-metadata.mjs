@@ -255,7 +255,8 @@ const resolveDictEntries = (entries, signatureParams, context) => {
 };
 
 const extractMethods = (source) => {
-  const methodRegex = /\n\s{4}def\s+([a-zA-Z0-9_]+)\s*\(([\s\S]*?)\)\s*(?:->[^\n:]+)?:\n([\s\S]*?)(?=\n\s{4}def\s+|$)/g;
+  const methodRegex =
+    /\n\s{4}def\s+([a-zA-Z0-9_]+)\s*\(([\s\S]*?)\)\s*(?:->\s*([^\n:]+))?:\n([\s\S]*?)(?=\n\s{4}def\s+|$)/g;
   const methods = [];
   let match = methodRegex.exec(source);
   while (match) {
@@ -269,7 +270,8 @@ const extractMethods = (source) => {
       snakeName,
       methodName: toCamelCase(snakeName),
       signature: match[2],
-      block: match[3],
+      returnType: match[3]?.trim(),
+      block: match[4],
     });
     match = methodRegex.exec(source);
   }
@@ -395,6 +397,197 @@ const writeTs = (targetRelativePath, symbolName, importPath, data) => {
     `export type ${typeName} =\n  | ${unionLiteral};\n`;
   fs.mkdirSync(path.dirname(fullPath), { recursive: true });
   fs.writeFileSync(fullPath, content);
+};
+
+// ── OpenDART ──────────────────────────────────────────────────────────────
+// 파이썬 dart 클라이언트는 토큰 없이 `crtfc_key` 쿼리로 GET 하고, 응답 모델은 별도
+// `_*_types.py`(pydantic) 에 있다. 메타데이터는 메서드 소스에서, zod 스키마는 types 에서 뽑는다.
+
+// 파일로 저장하기 위한 파이썬 전용 kwarg — 와이어 파라미터가 아니다 (TS 는 바이트를 반환한다).
+const DART_LOCAL_ONLY_PARAMS = new Set(['destination', 'overwrite']);
+
+const extractDartMethods = (source, symbolName) =>
+  extractMethods(source).map((method) => {
+    const pathMatch = method.block.match(/_get(_bytes)?\(\s*["']([^"']+)["']/);
+    const signatureParams = parseSignatureParams(method.signature).filter(
+      (param) => param.snakeName !== '*' && !DART_LOCAL_ONLY_PARAMS.has(param.snakeName),
+    );
+    const wireKeys = parseDictFromBlock(method.block, 'params')
+      .map((entry) => entry.key)
+      .filter((key) => key !== 'crtfc_key');
+
+    if (!pathMatch) {
+      console.warn(`  [warn] ${symbolName}.${method.methodName}: could not extract endpoint path`);
+    }
+    // dict 키가 시그니처 kwarg 와 어긋나면 queryMap 이 조용히 틀어지므로 알린다.
+    const signatureKeys = new Set(signatureParams.map((param) => param.snakeName));
+    for (const key of wireKeys) {
+      if (!signatureKeys.has(key)) {
+        console.warn(`  [warn] ${symbolName}.${method.methodName}: query key "${key}" is not a signature param`);
+      }
+    }
+
+    return {
+      ...method,
+      path: pathMatch?.[2] ?? '',
+      responseKind: pathMatch?.[1] ? 'binary' : 'json',
+      signatureParams,
+    };
+  });
+
+const buildDartMetadata = (sourceRelativePath, symbolName) => {
+  const source = fs.readFileSync(resolveWithinRoot(workspaceRoot, sourceRelativePath), 'utf8');
+  return extractDartMethods(source, symbolName).map((method) => ({
+    methodName: method.methodName,
+    path: method.path,
+    queryMap: Object.fromEntries(method.signatureParams.map((param) => [param.snakeName, param.name])),
+    responseKind: method.responseKind,
+    params: stripInternalFields(method.signatureParams),
+  }));
+};
+
+// 파이썬 문자열 리터럴(이어붙이기 포함) → 값. `description=("a" "b")` 형태를 지원한다.
+const pythonStrings = (expression) =>
+  [...expression.matchAll(/"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'/g)]
+    .map((m) => (m[1] ?? m[2]).replace(/\\(["'\\])/g, '$1'))
+    .join('');
+
+// `Field(` 이후의 괄호 균형 구간을 잘라낸다.
+const sliceBalanced = (text, openIndex) => {
+  let depth = 0;
+  let quote = '';
+  for (let i = openIndex; i < text.length; i += 1) {
+    const ch = text[i];
+    if (quote) {
+      if (ch === '\\') i += 1;
+      else if (ch === quote) quote = '';
+      continue;
+    }
+    if (ch === '"' || ch === "'") quote = ch;
+    else if (ch === '(') depth += 1;
+    else if (ch === ')') {
+      depth -= 1;
+      if (depth === 0) return text.slice(openIndex + 1, i);
+    }
+  }
+  return '';
+};
+
+const parseDartClasses = (source) => {
+  const headers = [...source.matchAll(/^class (\w+)\(([^)]*)\):/gm)];
+  return headers.map((header, index) => {
+    const body = source.slice(header.index + header[0].length, headers[index + 1]?.index ?? source.length);
+    const itemMatch = header[2].match(/DartHttpBody\[(\w+)\]/);
+    const title = (body.match(/title="([^"]*)"/) || [])[1] ?? header[1];
+    const fields = [];
+    for (const field of body.matchAll(/^ {4}(\w+): ([^=\n]+?) = Field\(/gm)) {
+      const args = sliceBalanced(body, field.index + field[0].length - 1);
+      const alias = (args.match(/alias\s*=\s*("(?:[^"\\]|\\.)*")/) || [])[1];
+      const description = args.match(/description\s*=\s*(\([^)]*\)|"(?:[^"\\]|\\.)*")/);
+      const annotation = field[2].trim();
+      fields.push({
+        name: field[1],
+        annotation,
+        nullable: /^Optional\[/.test(annotation) || /\bdefault\s*=\s*None\b/.test(args),
+        // alias 는 한글 라벨일 뿐 와이어 키가 아니다 (필드명이 와이어 키). description 이 없으면 라벨을 주석으로 쓴다.
+        comment: description ? pythonStrings(description[1]) : alias ? pythonStrings(alias) : '',
+      });
+    }
+    return { name: header[1], bases: header[2], item: itemMatch?.[1], title, fields };
+  });
+};
+
+const zodForAnnotation = (annotation, context) => {
+  const inner = annotation.replace(/^Optional\[(.*)\]$/, '$1').trim();
+  if (inner === 'str' || inner === 'DartStatusCode') return 'z.string()';
+  // pydantic 은 숫자 문자열("1000")도 int/float 로 강제변환하므로 와이어 값이 문자열일 수 있다.
+  if (inner === 'int' || inner === 'float') return 'dartNumeric';
+  throw new Error(`${context}: unsupported annotation "${annotation}"`);
+};
+
+const jsDoc = (text, indent) => {
+  const clean = text.replace(/\*\//g, '* /');
+  return clean ? `${indent}/** ${clean} */\n` : '';
+};
+
+// 모델 하나 → zod 객체. 일반 모델이면 그대로, 래퍼(DartHttpBody)면 봉투 + list.
+const zodObject = (model, itemSchemaName) => {
+  if (model.item) {
+    return `z.object({\n    ...dartEnvelope,\n    list: z.array(${itemSchemaName}).nullish(),\n  })`;
+  }
+  const lines = model.fields.map((field) => {
+    const zod = zodForAnnotation(field.annotation, `${model.name}.${field.name}`);
+    return `${jsDoc(field.comment, '    ')}    ${field.name}: ${zod}${field.nullable ? '.nullish()' : ''},`;
+  });
+  return `z.object({\n${lines.join('\n')}\n  })`;
+};
+
+const lowerFirst = (value) => value.charAt(0).toLowerCase() + value.slice(1);
+
+// 래퍼 응답 모델 이름 → 스키마/타입 이름
+const buildDartSchemas = ({ typesPath, endpointSources, targetRelativePath, mapName, excludeMethods = [] }) => {
+  const models = parseDartClasses(fs.readFileSync(resolveWithinRoot(workspaceRoot, typesPath), 'utf8'));
+  const byName = new Map(models.map((model) => [model.name, model]));
+  const methods = endpointSources.flatMap(({ sourcePath, symbolName }) =>
+    extractDartMethods(fs.readFileSync(resolveWithinRoot(workspaceRoot, sourcePath), 'utf8'), symbolName),
+  );
+
+  const used = [];
+  const mapEntries = [];
+  for (const method of methods) {
+    if (excludeMethods.includes(method.methodName) || method.responseKind === 'binary') continue;
+    const response = byName.get(method.returnType);
+    if (!response) {
+      console.warn(`  [warn] ${method.methodName}: response model "${method.returnType}" not found`);
+      continue;
+    }
+    const item = response.item ? byName.get(response.item) : undefined;
+    if (response.item && !item) throw new Error(`${response.name}: item model ${response.item} not found`);
+    used.push(response);
+    if (item) used.push(item);
+    mapEntries.push({ methodName: method.methodName, typeName: `${response.name}Response` });
+  }
+
+  const unique = [...new Map(used.map((model) => [model.name, model])).values()];
+  const blocks = [];
+  for (const model of unique) {
+    if (model.item) {
+      blocks.push(
+        `${jsDoc(model.title, '')}export const ${lowerFirst(model.name)}ResponseSchema = ${zodObject(model, `${lowerFirst(model.item)}Schema`)};\n`,
+      );
+    } else if (unique.some((other) => other.item === model.name)) {
+      blocks.push(`${jsDoc(model.title, '')}export const ${lowerFirst(model.name)}Schema = ${zodObject(model)};\n`);
+    } else {
+      // 래퍼 없이 단독으로 쓰이는 모델(예: 기업개황)은 응답 그 자체다.
+      blocks.push(
+        `${jsDoc(model.title, '')}export const ${lowerFirst(model.name)}ResponseSchema = ${zodObject(model)};\n`,
+      );
+    }
+  }
+
+  // 항목 스키마가 래퍼보다 먼저 선언돼야 한다 (const TDZ).
+  blocks.sort((a, b) => Number(/ResponseSchema =/.test(a)) - Number(/ResponseSchema =/.test(b)));
+
+  const typeLines = unique
+    .filter((model) => model.item || !unique.some((other) => other.item === model.name))
+    .map(
+      (model) =>
+        `export type ${model.name}Response = CamelizeKeys<z.infer<typeof ${lowerFirst(model.name)}ResponseSchema>>;`,
+    );
+  const mapLines = mapEntries.map((entry) => `  ${entry.methodName}: ${entry.typeName};`);
+
+  const body = blocks.join('\n');
+  const commonImports = ['dartEnvelope', 'dartNumeric'].filter((name) => body.includes(name));
+  const content =
+    `import { z } from 'zod';\n\n` +
+    `import type { CamelizeKeys } from '../../core/types.js';\n` +
+    (commonImports.length > 0 ? `import { ${commonImports.join(', ')} } from './common.js';\n` : '') +
+    `\n${body}\n// ── Response Types ──\n\n${typeLines.join('\n')}\n\n// ── Response Map ──\n\n` +
+    `export interface ${mapName} {\n${mapLines.join('\n')}\n}\n`;
+  const fullPath = resolveWithinRoot(workspaceRoot, targetRelativePath);
+  fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+  fs.writeFileSync(fullPath, content);
+  return mapEntries.length;
 };
 
 const tasks = [
@@ -562,16 +755,46 @@ const tasks = [
   },
 ];
 
+const dartSrc = 'packages/cluefin-openapi/src/cluefin_openapi/dart';
+const dartOut = 'packages/cluefin-openapi-ts/src/dart';
+const dartCategories = [
+  {
+    file: 'public_disclosure',
+    out: 'public-disclosure',
+    symbolName: 'publicDisclosureEndpoints',
+    mapName: 'PublicDisclosureResponseMap',
+    // 공시검색·원문·고유번호 응답은 도메인 클래스가 직접 가공한다 (고유번호는 XML 이라 스키마 대상이 아니다).
+    excludeMethods: ['corpCode'],
+  },
+  {
+    file: 'share_disclosure_comprehensive',
+    out: 'share-disclosure-comprehensive',
+    symbolName: 'shareDisclosureComprehensiveEndpoints',
+    mapName: 'ShareDisclosureComprehensiveResponseMap',
+  },
+];
+
+for (const category of dartCategories) {
+  tasks.push({
+    sourcePath: `${dartSrc}/_${category.file}.py`,
+    targetPath: `${dartOut}/metadata/${category.out}.ts`,
+    symbolName: category.symbolName,
+    kind: 'dart',
+  });
+}
+
 const builders = {
   kis: buildKisMetadata,
   kiwoom: buildKiwoomMetadata,
   nhplug: buildNhplugMetadata,
+  dart: buildDartMetadata,
 };
 
 const importTypes = {
   kis: 'KisEndpointDefinition',
   kiwoom: 'KiwoomEndpointDefinition',
   nhplug: 'NhplugEndpointDefinition',
+  dart: 'DartEndpointDefinition',
 };
 
 for (const task of tasks) {
@@ -579,4 +802,15 @@ for (const task of tasks) {
   const importType = importTypes[task.kind];
   writeTs(task.targetPath, task.symbolName, importType, data);
   console.log(`${task.symbolName}: ${data.length}`);
+}
+
+for (const category of dartCategories) {
+  const count = buildDartSchemas({
+    typesPath: `${dartSrc}/_${category.file}_types.py`,
+    endpointSources: [{ sourcePath: `${dartSrc}/_${category.file}.py`, symbolName: category.symbolName }],
+    targetRelativePath: `${dartOut}/schemas/${category.out}.ts`,
+    mapName: category.mapName,
+    excludeMethods: category.excludeMethods,
+  });
+  console.log(`${category.mapName}: ${count}`);
 }

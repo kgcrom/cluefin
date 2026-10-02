@@ -22,6 +22,8 @@ import { consoleLogger, type Logger } from '../core/logger.js';
 import type { ApiResponse, DartEndpointDefinition } from '../core/types.js';
 import { createInputSchema } from '../core/validation.js';
 import { isZip } from '../core/zip.js';
+import { PublicDisclosure } from './public-disclosure.js';
+import { DartShareDisclosureComprehensive } from './share-disclosure-comprehensive.js';
 import { parseXmlStatus } from './xml.js';
 
 export const DART_BASE_URL = 'https://opendart.fss.or.kr';
@@ -92,6 +94,9 @@ export class DartClient {
   private readonly authKey: string;
   private readonly logger: Logger;
 
+  private publicDisclosureInstance?: PublicDisclosure;
+  private shareDisclosureComprehensiveInstance?: DartShareDisclosureComprehensive;
+
   public constructor(options: DartClientOptions) {
     this.authKey = options.authKey;
     this.logger = options.logger ?? consoleLogger;
@@ -108,6 +113,22 @@ export class DartClient {
       },
       options.fetchImpl,
     );
+  }
+
+  /** 공시정보 (공시검색·기업개황·공시서류 원본·고유번호) */
+  public get publicDisclosure(): PublicDisclosure {
+    if (!this.publicDisclosureInstance) {
+      this.publicDisclosureInstance = new PublicDisclosure(this);
+    }
+    return this.publicDisclosureInstance;
+  }
+
+  /** 지분공시 종합정보 (대량보유 상황보고·임원/주요주주 소유보고) */
+  public get shareDisclosureComprehensive(): DartShareDisclosureComprehensive {
+    if (!this.shareDisclosureComprehensiveInstance) {
+      this.shareDisclosureComprehensiveInstance = new DartShareDisclosureComprehensive(this);
+    }
+    return this.shareDisclosureComprehensiveInstance;
   }
 
   /** JSON 엔드포인트 호출. 응답 키는 camelCase 로 바뀐다. */
