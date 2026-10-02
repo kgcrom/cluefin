@@ -72,6 +72,15 @@ export interface NhplugEndpointDefinition extends EndpointBaseDefinition {
   responseSchema?: z.ZodTypeAny;
 }
 
+export interface DartEndpointDefinition extends EndpointBaseDefinition {
+  path: string;
+  /** 쿼리스트링 키(와이어, snake_case) → 입력 파라미터 이름. `crtfc_key` 는 클라이언트가 붙인다. */
+  queryMap: Record<string, string>;
+  /** `json`: 본문이 JSON. `binary`: ZIP/XML 등 원문 바이트(에러는 XML `<result>` 로 올 수 있다). */
+  responseKind: 'json' | 'binary';
+  responseSchema?: z.ZodTypeAny;
+}
+
 export interface HttpClientOptions {
   timeoutMs: number;
   retry: RetryOptions;

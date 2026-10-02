@@ -7,6 +7,14 @@ export {
   ApiServerError,
   ApiTimeoutError,
   ApiValidationError,
+  DartApiError,
+  DartAuthenticationError,
+  DartAuthorizationError,
+  DartNetworkError,
+  DartRateLimitError,
+  DartServerError,
+  DartTimeoutError,
+  DartValidationError,
   KisApiError,
   KisAuthenticationError,
   KisAuthorizationError,
@@ -40,6 +48,7 @@ export { consoleLogger, silentLogger } from './core/logger.js';
 export type {
   ApiEnv,
   ApiResponse,
+  DartEndpointDefinition,
   EndpointParamDefinition,
   KisEndpointDefinition,
   KiwoomEndpointDefinition,
@@ -57,6 +66,7 @@ export type {
 } from './core/websocket.js';
 export { BaseWebSocketClient } from './core/websocket.js';
 
+export * from './dart/index.js';
 export * from './kis/index.js';
 export * from './kiwoom/index.js';
 export * from './nhplug/index.js';
