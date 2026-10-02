@@ -8,12 +8,17 @@
  * 루트 `tsconfig.json` 은 이 디렉터리를 exclude 한다 — 빌드 전에는 해석되지 않는다.
  */
 import type {
+  CorpCodeResponse,
+  DartXbrlFiles,
   DomesticAccountResponseMap,
   KrStockQuoteCurrentPriceResponse,
   NhplugTokenCacheEntry,
+  PublicDisclosureSearchResponse,
   StockInfoResponse,
 } from 'cluefin-openapi';
 import {
+  DartApiError,
+  DartClient,
   KisAuth,
   KisHttpClient,
   KisSocketClient,
@@ -49,10 +54,25 @@ declare const nhplugCache: NhplugFileTokenCacheStore;
 export const cachedToken: Promise<NhplugTokenCacheEntry | null> = nhplugCache.get();
 export const cachedAccessToken = async (): Promise<string | undefined> => (await nhplugCache.get())?.accessToken;
 
+// OpenDART: 도메인 getter·생성된 응답 타입·직접 정의한 반환 타입(고유번호/XBRL)이 소비자에게 보이는지.
+declare const dart: DartClient;
+export const dartSearch = dart.publicDisclosure.publicDisclosureSearch({ corpCode: '00126380' });
+export const dartDividend = dart.periodicReportKeyInformation.getDividendInformation;
+export const dartMajorReport = dart.majorShareholderDisclosure.corporateLawDecision;
+declare const search: PublicDisclosureSearchResponse;
+export const searchTotal: number | string | null | undefined = search.totalCount;
+export const firstReportName: string | undefined = search.list?.[0]?.reportNm;
+declare const corpCodes: CorpCodeResponse;
+export const firstStockCode: string | undefined = corpCodes.list[0]?.stockCode;
+declare const xbrl: DartXbrlFiles;
+export const xbrlFileNames: string[] = [...xbrl.keys()];
+export const dartErrorIsApiError: boolean = new DartApiError('x') instanceof Error;
+
 export const successCodes: readonly string[] = NHPLUG_SUCCESS_RSP_CODES;
 export const successCodeCount: number = NHPLUG_SUCCESS_RSP_CODES.length;
 
 export const runtimeClasses = [
+  DartClient,
   KisAuth,
   KisHttpClient,
   KisSocketClient,

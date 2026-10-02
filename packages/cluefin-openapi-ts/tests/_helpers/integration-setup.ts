@@ -6,6 +6,7 @@ import type { z } from 'zod';
 import { toCamelCase } from '../../src/core/case-convert';
 import { ApiError } from '../../src/core/errors';
 import type { ApiEnv, ApiResponse } from '../../src/core/types';
+import { DartClient } from '../../src/dart/client';
 import { KisAuth } from '../../src/kis/auth';
 import { KisHttpClient } from '../../src/kis/http-client';
 import { FileTokenCacheStore, kisTokenCacheFileName } from '../../src/kis/token-cache';
@@ -341,4 +342,28 @@ export function assertNhplugResponse(res: ApiResponse<unknown>): void {
     console.error('NH PLUG Error Response:', JSON.stringify(res.body, null, 2));
   }
   expect(SUCCESS_RSP_CODES).toContain(body.rspCd);
+}
+
+/** OpenDART 는 키 하나(`DART_AUTH_KEY`)만 있으면 되고 읽기 전용이라 별도 게이트가 없다. */
+export const runDartIntegration = runIntegration && !!process.env.DART_AUTH_KEY;
+
+/** 삼성전자 DART 고유번호 */
+export const DART_SAMSUNG_CORP_CODE = '00126380';
+
+/** DART 는 키당 일일 호출 한도가 있고 서버가 느려, 테스트마다 1초 쉰다 (파이썬 통합 스위트와 동일). */
+export function setupDartRateLimit(): void {
+  beforeEach(async () => {
+    await sleep(1000);
+  });
+}
+
+export function getDartClient(): DartClient {
+  if (!g.__dartClient) {
+    const authKey = process.env.DART_AUTH_KEY;
+    if (!authKey) {
+      throw new Error('DART_AUTH_KEY is required');
+    }
+    g.__dartClient = new DartClient({ authKey });
+  }
+  return g.__dartClient as DartClient;
 }

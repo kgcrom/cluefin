@@ -2,6 +2,8 @@ import { expect, test } from 'vitest';
 
 import * as Root from '../src';
 import { BaseWebSocketClient } from '../src/core/websocket';
+import * as Dart from '../src/dart';
+import { DartClient } from '../src/dart/client';
 import * as Kis from '../src/kis';
 import { KisAuth } from '../src/kis/auth';
 import { KisHttpClient } from '../src/kis/http-client';
@@ -17,6 +19,13 @@ import { FileTokenCacheStore as NhplugFileTokenCacheStore } from '../src/nhplug/
 
 test('root barrel exposes runtime exports from core, KIS, Kiwoom, and NH PLUG modules', () => {
   expect(Root.BaseWebSocketClient).toBe(BaseWebSocketClient);
+
+  expect(Root.DartClient).toBe(DartClient);
+  expect(Root.DartClient).toBe(Dart.DartClient);
+  expect(Root.PublicDisclosure).toBe(Dart.PublicDisclosure);
+  expect(Root.DART_SUCCESS_STATUS).toBe('000');
+  expect(new Root.DartRateLimitError('x')).toBeInstanceOf(Root.ApiRateLimitError);
+  expect(new Root.DartApiError('x')).toBeInstanceOf(Root.ApiError);
 
   expect(Root.KisAuth).toBe(KisAuth);
   expect(Root.KisAuth).toBe(Kis.KisAuth);

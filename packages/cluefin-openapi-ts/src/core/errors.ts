@@ -71,3 +71,12 @@ export class NhplugServerError extends ApiServerError {}
 export class NhplugNetworkError extends ApiNetworkError {}
 export class NhplugTimeoutError extends ApiTimeoutError {}
 export class NhplugRateLimitError extends ApiRateLimitError {}
+
+export class DartApiError extends ApiError {}
+export class DartAuthenticationError extends ApiAuthenticationError {}
+export class DartAuthorizationError extends ApiAuthorizationError {}
+export class DartValidationError extends ApiValidationError {}
+export class DartServerError extends ApiServerError {}
+export class DartNetworkError extends ApiNetworkError {}
+export class DartTimeoutError extends ApiTimeoutError {}
+export class DartRateLimitError extends ApiRateLimitError {}
