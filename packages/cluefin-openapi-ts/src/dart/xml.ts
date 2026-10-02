@@ -39,22 +39,31 @@ const findElement = (xml: string, tag: string, from: number): { body: string; ne
   return { body: xml.slice(start + open.length, end), next: end + close.length };
 };
 
+/** 자식 요소 하나 → `[태그, 텍스트]`. 값이 있는 요소(`<a>x</a>`)와 빈 요소(`<a/>`)를 모두 다룬다. */
+const childEntry = (match: RegExpMatchArray): [string, string] | undefined => {
+  const groups = match.groups;
+  if (!groups) {
+    return undefined;
+  }
+  if (groups.name) {
+    return [groups.name, decodeText(groups.body || '')];
+  }
+  if (groups.empty) {
+    return [groups.empty, ''];
+  }
+  return undefined;
+};
+
 /** `<tag>…</tag>` 반복을 `{ 자식태그: 텍스트 }` 배열로 바꾼다. 중첩 요소는 지원하지 않는다. */
 export const parseFlatXmlList = (xml: string, itemTag = 'list'): Record<string, string>[] => {
   const items: Record<string, string>[] = [];
   let from = 0;
   for (let found = findElement(xml, itemTag, from); found; found = findElement(xml, itemTag, from)) {
     from = found.next;
-    const item: Record<string, string> = {};
-    for (const child of found.body.matchAll(CHILD)) {
-      const { name, body, empty } = child.groups ?? {};
-      if (name !== undefined) {
-        item[name] = decodeText(body ?? '');
-      } else if (empty !== undefined) {
-        item[empty] = '';
-      }
-    }
-    items.push(item);
+    const entries = Array.from(found.body.matchAll(CHILD), childEntry).filter(
+      (entry): entry is [string, string] => entry !== undefined,
+    );
+    items.push(Object.fromEntries(entries));
   }
   return items;
 };

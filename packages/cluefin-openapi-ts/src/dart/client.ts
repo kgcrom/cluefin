@@ -196,16 +196,17 @@ export class DartClient {
   private async send(definition: DartEndpointDefinition, input: Record<string, unknown>): Promise<Response> {
     const parsedInput = createInputSchema(definition.params).parse(input);
 
-    // 입력 이름 → 와이어 키. 동적 프로퍼티 접근 없이 입력을 훑어 쿼리를 만든다.
+    // 입력 이름 → 와이어 키. 객체에 동적 키로 대입하지 않고 엔트리를 모아 한 번에 객체로 만든다.
     const wireKeyOf = new Map(Object.entries(definition.queryMap).map(([wireKey, inputKey]) => [inputKey, wireKey]));
-    const query: Record<string, string> = {};
+    const entries: Array<[string, string]> = [];
     for (const [inputKey, value] of Object.entries(parsedInput)) {
       const wireKey = wireKeyOf.get(inputKey);
       if (wireKey !== undefined && value !== undefined && value !== null) {
-        query[wireKey] = String(value);
+        entries.push([wireKey, String(value)]);
       }
     }
-    query.crtfc_key = this.authKey;
+    entries.push(['crtfc_key', this.authKey]);
+    const query = Object.fromEntries(entries);
 
     return this.http.request({
       method: 'GET',
