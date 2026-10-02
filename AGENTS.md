@@ -19,6 +19,33 @@ its non-obvious constraints.
   and hits no network.
 - `realtime`-marked tests require market hours (09:00–15:30 KST).
 
+## Codacy (PR check)
+
+- The gate is **zero new issues of minor severity or above**; complexity/duplication metrics
+  are shown but don't fail it. It runs on Codacy's servers, so it can't be reproduced locally
+  — read the findings, fix, push.
+- A failing `gh pr checks` only gives a link, and the Codacy web page needs a login. Read the
+  findings from GitHub instead — the PR comment has the summary, and the check run's
+  annotations have every finding as `file:line`:
+  ```bash
+  sha=$(gh pr view <N> --json headRefOid -q .headRefOid)
+  id=$(gh api repos/kgcrom/cluefin/commits/$sha/check-runs -q '.check_runs[]|select(.name|test("Codacy"))|.id')
+  gh api "repos/kgcrom/cluefin/check-runs/$id/annotations?per_page=100" \
+    -q '.[]|"\(.annotation_level) \(.path):\(.start_line) \(.message)"'
+  ```
+- Right after a push the check run for the new head has `conclusion: null` (and `gh pr checks`
+  may say "no checks reported"). That is "still analysing", not a pass — poll until the
+  conclusion is set before reading annotations.
+- TypeScript findings that recur and what actually fixes them:
+  - `// eslint-disable-next-line security/detect-object-injection` is **ignored** — restructure
+    instead (`Map.get`, iterate `Object.entries`, no `obj[dynamicKey]`, also in tests).
+  - `new RegExp(variable)` is flagged critical — scan with `indexOf`, or use a literal regex.
+  - "Unnecessary conditional" on `match[1] ?? ''`: Codacy analyses without
+    `noUncheckedIndexedAccess`, so index access looks non-nullable. Use named groups or
+    destructuring defaults rather than `??` on an index.
+  - A string literal assigned to a name containing key/secret/password is reported as a
+    hardcoded password, even in tests — generate the dummy at runtime.
+
 ## Environment gotchas
 
 - macOS system deps: `brew install lightgbm ta-lib`. `lightgbm` is a runtime dep of
