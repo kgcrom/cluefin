@@ -427,8 +427,12 @@ const extractDartMethods = (source, symbolName) =>
       }
     }
 
+    // 반환 타입 주석이 빠진 메서드가 있어(예: dissolution_occurrence) `return Model.parse(...)` 로 보완한다.
+    const returnType = method.returnType ?? method.block.match(/return\s+(\w+)\.(?:parse|model_validate)\(/)?.[1];
+
     return {
       ...method,
+      returnType,
       path: pathMatch?.[2] ?? '',
       responseKind: pathMatch?.[1] ? 'binary' : 'json',
       signatureParams,
@@ -784,6 +788,12 @@ const dartCategories = [
     out: 'periodic-report-key-information',
     symbolName: 'periodicReportKeyInformationEndpoints',
     mapName: 'PeriodicReportKeyInformationResponseMap',
+  },
+  {
+    file: 'major_shareholder_disclosure',
+    out: 'major-shareholder-disclosure',
+    symbolName: 'majorShareholderDisclosureEndpoints',
+    mapName: 'MajorShareholderDisclosureResponseMap',
   },
 ];
 

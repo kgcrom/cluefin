@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { silentLogger } from '../../src/core/logger';
 import type { DartEndpointDefinition } from '../../src/core/types';
 import { DartClient } from '../../src/dart/client';
+import { majorShareholderDisclosureEndpoints } from '../../src/dart/metadata/major-shareholder-disclosure';
 import { periodicReportFinancialStatementEndpoints } from '../../src/dart/metadata/periodic-report-financial-statement';
 import { periodicReportKeyInformationEndpoints } from '../../src/dart/metadata/periodic-report-key-information';
 import { publicDisclosureEndpoints } from '../../src/dart/metadata/public-disclosure';
@@ -14,6 +15,7 @@ const categories: Array<[string, readonly DartEndpointDefinition[], number]> = [
   ['shareDisclosureComprehensive', shareDisclosureComprehensiveEndpoints, 2],
   ['periodicReportFinancialStatement', periodicReportFinancialStatementEndpoints, 7],
   ['periodicReportKeyInformation', periodicReportKeyInformationEndpoints, 28],
+  ['majorShareholderDisclosure', majorShareholderDisclosureEndpoints, 36],
 ];
 const allEndpoints = categories.flatMap(([, endpoints]) => endpoints);
 
@@ -22,12 +24,14 @@ describe('dart metadata', () => {
     expect(endpoints).toHaveLength(expected);
   });
 
-  it('has 41 endpoints in total', () => {
-    expect(allEndpoints).toHaveLength(41);
+  it('has 77 endpoints in total', () => {
+    expect(allEndpoints).toHaveLength(77);
   });
 
   it('gives every endpoint a unique name and an /api/ path', () => {
     expect(new Set(allEndpoints.map((endpoint) => endpoint.methodName)).size).toBe(allEndpoints.length);
+    // 서로 다른 메서드가 같은 경로를 부르면 한쪽이 엉뚱한 공시를 돌려준다 (유형자산 양도 ↔ 영업양도 사례).
+    expect(new Set(allEndpoints.map((endpoint) => endpoint.path)).size).toBe(allEndpoints.length);
     for (const endpoint of allEndpoints) {
       expect(endpoint.path, endpoint.methodName).toMatch(/^\/api\/\w+\.(json|xml)$/);
       expect(endpoint.responseKind, endpoint.methodName).toBe(endpoint.path.endsWith('.xml') ? 'binary' : 'json');
