@@ -68,10 +68,11 @@ jobs:
       - name: Build package
         run: uv build --package cluefin-openapi
 
+      # Trusted Publishing(OIDC): PyPI 에 이 워크플로가 publisher 로 등록돼 있어(repo kgcrom/cluefin,
+      # workflow publish-openapi.yml, environment development) 장기 API 토큰(password)이 필요 없다.
+      # permissions 의 id-token: write 와 위 environment 이름이 등록값과 정확히 같아야 한다.
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
 
       - name: Commit version bump
         run: |

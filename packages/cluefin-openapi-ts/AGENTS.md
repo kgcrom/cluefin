@@ -138,6 +138,24 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   `NhplugClient.invokeEndpoint` after the HTTP layer, so HTTP-level retry/rate-limit logic
   never sees those errors.
 
+## Releasing (npm)
+
+- **The version bump is its own commit on `main`, after the feature PR is merged** —
+  `release(openapi-ts): vX.Y.Z`, touching only `package.json` + `package-lock.json`
+  (`npm version X.Y.Z --no-git-tag-version`). Not inside the feature PR (v0.6.0 onward; v0.3–0.5 rode
+  along in their PRs): an npm version can never be republished, so a number spent on code that then
+  changes in review is gone.
+- Gate before publishing: `npm run publish:check` (build, biome, typecheck, unit tests).
+- Publishing is `npm publish --access public` from this directory and needs the maintainer's
+  (`kgcrom`) npm login with 2FA, so an agent can't do it — ask the user to run `! npm login` and
+  `! cd packages/cluefin-openapi-ts && npm publish --access public`. The registry lags: `npm view`
+  can answer 404 / the old `latest` for several minutes after a successful publish.
+- **No git tags for the TS package** (v0.3.0–v0.7.0 have none). The existing `cluefin-openapi/v*` tags
+  belong to the Python package and are created by its publish workflow; the npm package shares that
+  name, so a TS tag would need a distinct prefix (e.g. `cluefin-openapi-ts/v…`).
+- The Python package is released separately by the `Publish cluefin-openapi` workflow, which bumps
+  its own version when dispatched — never edit `pyproject.toml`'s version by hand, that double-bumps.
+
 ## Integration tests
 
 - Gated by `CLUEFIN_OPENAPI_TS_RUN_INTEGRATION=1`; env loads root `.env.test` then
