@@ -7,11 +7,12 @@
 > 지연되거나 충분히 이루어지지 않았을 수 있습니다. 웹소켓 기능을 사용하거나 수정할 때는
 > 이 점을 감안하고, 가능하면 장중에 직접 동작을 확인해 주세요.
 
-한국투자증권(KIS)·키움증권·NH투자증권(PLUG) OpenAPI TypeScript 클라이언트.
+한국투자증권(KIS)·키움증권·NH투자증권(PLUG) 주문·시세 API와 금융감독원 OpenDART(공시·재무제표)를 한 패키지로.
 
 - **KIS**: 국내/해외주식·장내채권 REST API + 실시간 WebSocket 시세, 토큰 파일 캐시
 - **키움**: 국내주식 REST API (해외주식·WebSocket은 파이썬 패키지 `cluefin-openapi` 전용)
 - **NH PLUG**: 공통 2 + 국내주식 31 + 해외주식 18 = REST 51개 엔드포인트 + 실시간 WebSocket 시세
+- **OpenDART**: 공시검색·기업개황·재무제표·주요사항보고서 등 REST 77개 — 토큰 없이 키 하나로 상장사 전체 공시 조회
 - 요청/응답 Zod 검증, 응답 키 자동 camelCase 변환, 재시도·rate limit 내장
 
 ## 설치
@@ -35,10 +36,12 @@ KIWOOM_ENV=dev                 # dev(모의투자) | prod(실전)
 NHPLUG_APP_KEY=your_app_key
 NHPLUG_SECRET_KEY=your_secret_key
 NHPLUG_ENV=dev                 # dev(모의투자, moapi) | prod(운영, 실주문)
+
+DART_AUTH_KEY=your_auth_key    # OpenDART — 계좌 없이 발급, 주문 기능 없음(조회 전용)
 ```
 
 API 키 발급: [KIS](https://apiportal.koreainvestment.com/) / [키움](https://apiportal.kiwoom.com/) /
-[NH PLUG](https://www.nhplug.com/)
+[NH PLUG](https://www.nhplug.com/) / [OpenDART](https://opendart.fss.or.kr/)
 
 ## 빠른 시작
 
@@ -220,6 +223,63 @@ socket.connect();
 prod 전용)를 지원하며, 해외주식·장내채권도 같은 패턴으로 `OverseasRealtimeQuote`,
 `OnmarketBondRealtimeQuote`를 사용합니다.
 
+### OpenDART (공시·재무제표)
+
+계좌도 토큰도 필요 없습니다. 인증키 하나로 상장사 전체의 공시와 재무제표를 조회합니다 — 조회 전용이라 실수로 주문이 나갈 일도 없습니다.
+
+```ts
+import { DartClient } from 'cluefin-openapi';
+
+const dart = new DartClient({ authKey: process.env.DART_AUTH_KEY! });
+
+// 1) DART 는 종목코드가 아니라 고유번호(corpCode, 8자리)로 조회합니다. 먼저 변환하세요.
+//    전체 목록(5만+건)을 내려받으니 한 번만 받아 캐시해 두는 게 좋습니다.
+const { body: corps } = await dart.publicDisclosure.corpCode();
+const { corpCode } = corps.list.find((c) => c.stockCode === '005930')!; // '00126380'
+
+// 2) 최근 정기공시
+const { body: found } = await dart.publicDisclosure.publicDisclosureSearch({
+  corpCode,
+  pblntfTy: 'A', // A 정기공시 · B 주요사항보고 · D 지분공시 …
+  bgnDe: '20240101',
+  pageCount: 3,
+});
+for (const d of found.list ?? []) console.log(d.rceptDt, d.reportNm, d.rceptNo);
+// 20260310 사업보고서 (2025.12) 20260310002820
+
+// 3) 매출액 — reprtCode: 11011 사업보고서 · 11012 반기 · 11013 1분기 · 11014 3분기
+const { body: acc } = await dart.periodicReportFinancialStatement.getSingleCompanyMajorAccounts({
+  corpCode,
+  bsnsYear: '2024',
+  reprtCode: '11011',
+});
+const sales = acc.list?.find((a) => a.accountNm === '매출액' && a.fsDiv === 'CFS'); // CFS 연결 · OFS 별도
+console.log(sales?.thstrmAmount, sales?.frmtrmAmount); // 당기 · 전기 → '300,870,903,000,000' '258,935,494,000,000'
+```
+
+배당·최대주주·임원보수·감사의견 등은 `periodicReportKeyInformation`, 증자·자사주·합병 같은 사건성 공시는
+`majorShareholderDisclosure`에 있습니다. 모두 `(corpCode, bsnsYear, reprtCode)` 또는 `(corpCode, bgnDe, endDe)`를 받습니다.
+
+```ts
+// 공시 원문(XML)과 XBRL 원본 — 디스크에 쓰지 않고 바이트로 돌려줍니다.
+const doc = await dart.publicDisclosure.disclosureDocumentFile({ rceptNo: '20260310002820' });
+const xbrl = await dart.periodicReportFinancialStatement.downloadFinancialStatementXbrl({
+  rceptNo: '20260310002820',
+  reprtCode: '11011',
+});
+console.log(doc.body.length, [...xbrl.body.keys()]); // Map<파일명, Uint8Array> — .xbrl, .xsd, _lab-ko.xml …
+```
+
+#### 꼭 알아둘 것
+
+- **조회 결과가 없어도 에러가 아닙니다.** HTTP 200 본문의 `status`로 판단하세요 — `'000'` 정상, `'013'` 데이터 없음(`list` 없음),
+  `'020'` 요청 제한 초과. 전체 코드는 OpenDART 개발가이드의 "에러 및 메시지 설명"에 있습니다.
+- `publicDisclosureSearch`는 기간(`bgnDe`·`endDe`)을 생략하면 **최근 89일**을 조회합니다. `corpCode` 없이는 3개월을 넘길 수 없습니다.
+- 금액·수량은 **쉼표 섞인 문자열**(`'300,870,903,000,000'`)입니다. 계산 전에 변환하세요.
+- 키별 요청 제한(일반적으로 2만 건)을 넘으면 `status: '020'`이 옵니다. 클라이언트 기본 속도 제한은 초당 5건(버스트 10)이고
+  `rateLimitRequestsPerSecond`로 바꿉니다.
+- 인증키는 에러 메시지와 로그에서 `***`로 가려집니다.
+
 ## API 모듈
 
 ### KIS REST (`KisHttpClient`의 getter)
@@ -272,9 +332,19 @@ prod 전용)를 지원하며, 해외주식·장내채권도 같은 패턴으로 
 | `overseasStockInquiry` | 해외주식(gbstock) 조회 | 8 |
 | `overseasStockQuote` | 해외주식(gbstock) 시세 (**운영 전용**) | 4 |
 
+### OpenDART REST (`DartClient`의 getter)
+
+| 모듈 | 설명 | 엔드포인트 |
+|------|------|------|
+| `publicDisclosure` | 공시검색·기업개황·공시 원문·고유번호 | 4 |
+| `shareDisclosureComprehensive` | 대량보유 상황보고·임원/주요주주 소유보고 | 2 |
+| `periodicReportFinancialStatement` | 재무제표·주요지표·XBRL | 7 |
+| `periodicReportKeyInformation` | 배당·주주·임원·보수·감사 등 정기보고서 주요정보 | 28 |
+| `majorShareholderDisclosure` | 증자·자기주식·합병/분할 등 주요사항보고서 | 36 |
+
 ## 에러 처리
 
-KIS/키움/NH PLUG 각각 전용 에러 클래스 제공 (`ApiError` 상속):
+KIS/키움/NH PLUG/DART 각각 전용 에러 클래스 제공 (`ApiError` 상속, 예: `DartRateLimitError`):
 
 `Authentication` · `Authorization` · `Validation` · `Server` · `Network` · `Timeout` · `RateLimit`
 
@@ -298,4 +368,5 @@ npm run check             # biome lint + format
 npm run typecheck
 npm run test:unit
 npm run test:integration  # 실제 API 키 필요 (repo 루트 .env.test / .env 로드)
+npm run generate:metadata # 파이썬 패키지의 엔드포인트가 바뀌면 재실행 → npm run format
 ```

@@ -1,7 +1,7 @@
 {
   "name": "cluefin-openapi",
   "version": "0.6.0",
-  "description": "TypeScript OpenAPI client for KIS and Kiwoom",
+  "description": "TypeScript OpenAPI client for KIS, Kiwoom, NH PLUG and OpenDART",
   "license": "MIT",
   "author": "kgcrom",
   "repository": {
@@ -15,7 +15,11 @@
     "kis",
     "openapi",
     "trading",
-    "stock-market"
+    "stock-market",
+    "opendart",
+    "dart",
+    "disclosure",
+    "financial-statements"
   ],
   "type": "module",
   "engines": {

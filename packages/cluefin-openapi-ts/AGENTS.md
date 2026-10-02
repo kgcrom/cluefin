@@ -42,7 +42,35 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   `TokenManager` then keeps the token but silently drops its 6h max-age check. Writes are
   0600 + atomic rename (`writeJsonAtomic`), matching Python's `write_json_atomic`.
 - Endpoint-count tests hardcode totals (`tests/core/endpoint-count.test.ts`, KIS
-  contract tests); bump them whenever metadata changes.
+  contract tests, `tests/dart/metadata.test.ts`); bump them whenever metadata changes.
+
+## OpenDART (`src/dart`)
+
+- **Metadata *and* Zod schemas are generated** from the Python `dart/_*.py` + `_*_types.py`
+  (`generate:metadata`, then `npm run format`). Never hand-edit `src/dart/metadata|schemas`.
+  A method's response model comes from its return annotation, else from `return X.parse(...)`
+  (16 Python methods have no annotation).
+- **Fix Python, not the generator, when a response is wrong.** Python's own tests build fake
+  responses from its models and its integration tests accepted `013`, so wrong models/paths went
+  unseen (2026-10: wrong model for trust-contract, duplicated path for tangible-asset transfer, a
+  `recpt_no` typo, a required field the server never sends). Our integration tests attach
+  `responseSchema` to the call so a mismatch with live data throws — a failure there usually means
+  a Python bug. Python method names are misleading (`profit_revocation` = 소송등의제기); trust the
+  live check, not the name.
+- Auth is the `crtfc_key` query param (no token, no cache). The key is masked in errors/logs —
+  keep it out of `requestContext`.
+- A non-`000` body `status` is **returned, not thrown** (matches Python). Only binary endpoints
+  throw `DartApiError`, because their errors arrive as a small XML body. Don't add `NoData`-style
+  errors like nhplug.
+- Zod `int`/`float` fields are `number | string` on purpose: pydantic coerces numeric strings,
+  so the wire type is unknown. Don't tighten them without live proof.
+- ZIP/XML are hand-rolled (`src/core/zip.ts`, `src/dart/xml.ts`) to avoid dependencies: no ZIP64,
+  no encryption, flat `<list>` XML only. Binary endpoints return bytes / `Map`, never write files.
+- 주요사항보고서 are event-driven, so a fixed company returns only `013`. Its integration test uses
+  dated real filings in `tests/dart/fixtures/` (endpoints with no 2025 original are skipped);
+  `013` must not count as a pass there.
+- `PublicDisclosure` and `PeriodicReportFinancialStatement` are class + interface merges (custom
+  methods plus generated ones) — Biome's `noUnsafeDeclarationMerging` is off for this.
 
 ## Declaration output (`dist/types`)
 

@@ -22,6 +22,10 @@ test('root barrel exposes runtime exports from core, KIS, Kiwoom, and NH PLUG mo
 
   expect(Root.DartClient).toBe(DartClient);
   expect(Root.DartClient).toBe(Dart.DartClient);
+  expect(Root.PublicDisclosure).toBe(Dart.PublicDisclosure);
+  expect(Root.DART_SUCCESS_STATUS).toBe('000');
+  expect(new Root.DartRateLimitError('x')).toBeInstanceOf(Root.ApiRateLimitError);
+  expect(new Root.DartApiError('x')).toBeInstanceOf(Root.ApiError);
 
   expect(Root.KisAuth).toBe(KisAuth);
   expect(Root.KisAuth).toBe(Kis.KisAuth);
