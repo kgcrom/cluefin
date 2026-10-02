@@ -20,10 +20,9 @@ const setup = (body: unknown = { status: '000', message: '정상', list: [] }) =
 describe('periodicReportKeyInformation', () => {
   it('메타데이터의 모든 엔드포인트가 도메인 메서드로 노출된다', () => {
     const { service } = setup();
+    const methods = new Map(Object.entries(service));
     for (const endpoint of periodicReportKeyInformationEndpoints) {
-      expect(typeof (service as unknown as Record<string, unknown>)[endpoint.methodName], endpoint.methodName).toBe(
-        'function',
-      );
+      expect(typeof methods.get(endpoint.methodName), endpoint.methodName).toBe('function');
     }
   });
 
@@ -31,7 +30,7 @@ describe('periodicReportKeyInformation', () => {
     periodicReportKeyInformationEndpoints.map((endpoint) => [endpoint.methodName, endpoint.path] as const),
   )('%s 는 %s 를 corp_code·bsns_year·reprt_code 로 호출한다', async (methodName, path) => {
     const { urls, service } = setup();
-    const method = (service as unknown as Record<string, (input: unknown) => Promise<unknown>>)[methodName];
+    const method = new Map(Object.entries(service)).get(methodName);
 
     await method?.(INPUT);
 

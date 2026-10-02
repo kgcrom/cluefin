@@ -196,12 +196,13 @@ export class DartClient {
   private async send(definition: DartEndpointDefinition, input: Record<string, unknown>): Promise<Response> {
     const parsedInput = createInputSchema(definition.params).parse(input);
 
+    // 입력 이름 → 와이어 키. 동적 프로퍼티 접근 없이 입력을 훑어 쿼리를 만든다.
+    const wireKeyOf = new Map(Object.entries(definition.queryMap).map(([wireKey, inputKey]) => [inputKey, wireKey]));
     const query: Record<string, string> = {};
-    for (const [apiKey, inputKey] of Object.entries(definition.queryMap)) {
-      // eslint-disable-next-line security/detect-object-injection -- inputKey comes from internal endpoint metadata.
-      const value = parsedInput[inputKey];
-      if (value !== undefined && value !== null) {
-        query[apiKey] = String(value);
+    for (const [inputKey, value] of Object.entries(parsedInput)) {
+      const wireKey = wireKeyOf.get(inputKey);
+      if (wireKey !== undefined && value !== undefined && value !== null) {
+        query[wireKey] = String(value);
       }
     }
     query.crtfc_key = this.authKey;

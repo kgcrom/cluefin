@@ -98,7 +98,7 @@ export class PublicDisclosure extends DartDomainBase {
       if (!corpCode || !corpName) {
         continue;
       }
-      const item: CorpCodeItem = { corpCode, corpName, modifyDate: element.modify_date ?? '' };
+      const item: CorpCodeItem = { corpCode, corpName, modifyDate: element.modify_date || '' };
       const corpEngName = element.corp_eng_name || element.corp_name_eng;
       if (corpEngName) item.corpEngName = corpEngName;
       if (element.corp_cls) item.corpCls = element.corp_cls;

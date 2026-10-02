@@ -4,10 +4,17 @@ import { silentLogger } from '../../src/core/logger';
 import { DartClient } from '../../src/dart/client';
 
 describe('shareDisclosureComprehensive', () => {
+  type Service = DartClient['shareDisclosureComprehensive'];
+  const input = { corpCode: '00126380' };
+
   it.each([
-    ['largeHoldingReport', '/api/majorstock.json'],
-    ['executiveMajorShareholderOwnershipReport', '/api/elestock.json'],
-  ] as const)('%s 는 %s 를 corp_code 로 호출한다', async (method, path) => {
+    ['largeHoldingReport', '/api/majorstock.json', (s: Service) => s.largeHoldingReport(input)],
+    [
+      'executiveMajorShareholderOwnershipReport',
+      '/api/elestock.json',
+      (s: Service) => s.executiveMajorShareholderOwnershipReport(input),
+    ],
+  ] as const)('%s 는 %s 를 corp_code 로 호출한다', async (_method, path, call) => {
     const urls: URL[] = [];
     const fetchMock: typeof fetch = async (input) => {
       urls.push(new URL(String(input)));
@@ -17,7 +24,7 @@ describe('shareDisclosureComprehensive', () => {
     };
     const client = new DartClient({ authKey: 'key', fetchImpl: fetchMock, logger: silentLogger, maxRetries: 0 });
 
-    const response = await client.shareDisclosureComprehensive[method]({ corpCode: '00126380' });
+    const response = await call(client.shareDisclosureComprehensive);
 
     expect(urls[0]?.pathname).toBe(path);
     expect(Object.fromEntries(urls[0]?.searchParams ?? [])).toEqual({ corp_code: '00126380', crtfc_key: 'key' });

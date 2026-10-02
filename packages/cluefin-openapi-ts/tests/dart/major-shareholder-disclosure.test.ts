@@ -20,10 +20,9 @@ const setup = (body: unknown = { status: '000', message: '정상', list: [] }) =
 describe('majorShareholderDisclosure', () => {
   it('36개 엔드포인트가 모두 도메인 메서드로 노출된다', () => {
     const { service } = setup();
+    const methods = new Map(Object.entries(service));
     for (const endpoint of majorShareholderDisclosureEndpoints) {
-      expect(typeof (service as unknown as Record<string, unknown>)[endpoint.methodName], endpoint.methodName).toBe(
-        'function',
-      );
+      expect(typeof methods.get(endpoint.methodName), endpoint.methodName).toBe('function');
     }
   });
 
@@ -31,7 +30,7 @@ describe('majorShareholderDisclosure', () => {
     majorShareholderDisclosureEndpoints.map((endpoint) => [endpoint.methodName, endpoint.path] as const),
   )('%s 는 %s 를 corp_code·bgn_de·end_de 로 호출한다', async (methodName, path) => {
     const { urls, service } = setup();
-    const method = (service as unknown as Record<string, (input: unknown) => Promise<unknown>>)[methodName];
+    const method = new Map(Object.entries(service)).get(methodName);
 
     await method?.(INPUT);
 

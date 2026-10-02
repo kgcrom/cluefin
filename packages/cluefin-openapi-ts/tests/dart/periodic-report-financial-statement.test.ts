@@ -23,34 +23,51 @@ const ACCOUNT = { corpCode: '00126380', bsnsYear: '2024', reprtCode: '11011' };
 const ACCOUNT_WIRE = { corp_code: '00126380', bsns_year: '2024', reprt_code: '11011' };
 
 describe('periodicReportFinancialStatement JSON endpoints', () => {
+  type Service = ReturnType<typeof setup>['service'];
+
   it.each([
-    ['getSingleCompanyMajorAccounts', '/api/fnlttSinglAcnt.json', ACCOUNT, ACCOUNT_WIRE],
-    ['getMultiCompanyMajorAccounts', '/api/fnlttMultiAcnt.json', ACCOUNT, ACCOUNT_WIRE],
+    [
+      'getSingleCompanyMajorAccounts',
+      '/api/fnlttSinglAcnt.json',
+      (s: Service) => s.getSingleCompanyMajorAccounts(ACCOUNT),
+      ACCOUNT_WIRE,
+    ],
+    [
+      'getMultiCompanyMajorAccounts',
+      '/api/fnlttMultiAcnt.json',
+      (s: Service) => s.getMultiCompanyMajorAccounts(ACCOUNT),
+      ACCOUNT_WIRE,
+    ],
     [
       'getSingleCompanyFullStatements',
       '/api/fnlttSinglAcntAll.json',
-      { ...ACCOUNT, fsDiv: 'OFS' },
+      (s: Service) => s.getSingleCompanyFullStatements({ ...ACCOUNT, fsDiv: 'OFS' }),
       { ...ACCOUNT_WIRE, fs_div: 'OFS' },
     ],
     [
       'getSingleCompanyMajorIndicators',
       '/api/fnlttSinglIndx.json',
-      { ...ACCOUNT, idxClCode: 'M210000' },
+      (s: Service) => s.getSingleCompanyMajorIndicators({ ...ACCOUNT, idxClCode: 'M210000' }),
       { ...ACCOUNT_WIRE, idx_cl_code: 'M210000' },
     ],
     [
       'getMultiCompanyMajorIndicators',
       '/api/fnlttCmpnyIndx.json',
-      { ...ACCOUNT, idxClCode: 'M220000' },
+      (s: Service) => s.getMultiCompanyMajorIndicators({ ...ACCOUNT, idxClCode: 'M220000' }),
       { ...ACCOUNT_WIRE, idx_cl_code: 'M220000' },
     ],
-    ['getXbrlTaxonomy', '/api/xbrlTaxonomy.json', { sjDiv: 'BS1' }, { sj_div: 'BS1' }],
-  ] as const)('%s → %s', async (method, path, input, wire) => {
+    [
+      'getXbrlTaxonomy',
+      '/api/xbrlTaxonomy.json',
+      (s: Service) => s.getXbrlTaxonomy({ sjDiv: 'BS1' }),
+      { sj_div: 'BS1' },
+    ],
+  ] as const)('%s → %s', async (_method, path, call, wire) => {
     const { urls, service } = setup(() =>
       json({ status: '000', message: '정상', list: [{ account_nm: '매출액', thstrm_amount: '1,000', ord: 1 }] }),
     );
 
-    const response = await service[method](input);
+    const response = await call(service);
 
     expect(urls[0]?.pathname).toBe(path);
     expect(query(urls[0])).toEqual({ ...wire, crtfc_key: 'key' });

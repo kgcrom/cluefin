@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -32,7 +34,8 @@ const createFetchMock = (responder: (call: FetchCall, index: number) => Response
 const jsonResponse = (body: unknown, status = 200, headers: Record<string, string> = {}): Response =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', ...headers } });
 
-const AUTH_KEY = 'secret-auth-key-0123456789';
+// 누출 검사용 더미 값 — 하드코딩된 시크릿처럼 보이지 않도록 실행마다 새로 만든다.
+const AUTH_KEY = `test-${randomUUID()}`;
 
 const jsonEndpoint: DartEndpointDefinition = {
   methodName: 'companyOverview',
