@@ -21,30 +21,67 @@ its non-obvious constraints.
 
 ## Codacy (PR check)
 
-- The gate is **zero new issues of minor severity or above**; complexity/duplication metrics
-  are shown but don't fail it. It runs on Codacy's servers, so it can't be reproduced locally
-  — read the findings, fix, push.
-- A failing `gh pr checks` only gives a link, and the Codacy web page needs a login. Read the
-  findings from GitHub instead — the PR comment has the summary, and the check run's
-  annotations have every finding as `file:line`:
-  ```bash
-  sha=$(gh pr view <N> --json headRefOid -q .headRefOid)
-  id=$(gh api repos/kgcrom/cluefin/commits/$sha/check-runs -q '.check_runs[]|select(.name|test("Codacy"))|.id')
-  gh api "repos/kgcrom/cluefin/check-runs/$id/annotations?per_page=100" \
-    -q '.[]|"\(.annotation_level) \(.path):\(.start_line) \(.message)"'
-  ```
+The gate is **zero new issues of minor severity or above**; the complexity/duplication metrics are
+shown but don't fail it. `.codacy.yml` excludes `packages/cluefin-openapi-ts/scripts/**`.
+
+### Run it locally before pushing (partial coverage)
+
+`CODACY_API_TOKEN`, `CODACY_ORGANIZATION_PROVIDER`, `CODACY_USERNAME`, `CODACY_PROJECT_NAME` are
+already exported in the maintainer's shell (CI uses the same names as secrets).
+
+```bash
+brew install codacy/codacy-cli-v2/codacy-cli-v2
+# The project's real rule set. Bare `codacy-cli init` uses defaults and finds almost nothing.
+# The rule download is large and often times out ("context deadline exceeded") — just rerun it.
+codacy-cli config reset --api-token "$CODACY_API_TOKEN" --provider "$CODACY_ORGANIZATION_PROVIDER" \
+  --organization "$CODACY_USERNAME" --repository "$CODACY_PROJECT_NAME"
+codacy-cli install                       # first run downloads runtimes/tools, ~2 min
+codacy-cli analyze --tool opengrep --format sarif -o /tmp/opengrep.sarif packages/cluefin-openapi-ts
+codacy-cli analyze --tool eslint   --format sarif -o /tmp/eslint.sarif   packages/cluefin-openapi-ts
+```
+
+- It writes `.codacy/` into the repo — put it in `.git/info/exclude`, or run it in a throwaway
+  worktree. `analyze` takes **one** path (Trivy fails on several); without `--tool` it runs every
+  tool. Read the SARIF's `results[].locations[0].physicalLocation` for `file:line`.
+- **Coverage is partial — don't treat a clean local run as a pass.** Replaying PR #132's failing
+  commit, the local run caught only the 2 dynamic-`RegExp` findings (opengrep
+  `non-literal-regexp`) out of 19, plus an unrelated ESLint `no-undef` the server never reported.
+  The local ESLint config has no security / typescript-eslint plugins, so object-injection,
+  "Unnecessary conditional", hardcoded-password and generic-call findings only show up on the server.
+
+### Read what the server found (ground truth)
+
+A failing `gh pr checks` only gives a link and the Codacy web page needs a login. The PR comment has
+the summary; the check run's annotations have every finding as `file:line`:
+
+```bash
+sha=$(gh pr view <N> --json headRefOid -q .headRefOid)
+id=$(gh api repos/kgcrom/cluefin/commits/$sha/check-runs -q '.check_runs[]|select(.name|test("Codacy"))|.id')
+gh api "repos/kgcrom/cluefin/check-runs/$id/annotations?per_page=100" \
+  -q '.[]|"\(.annotation_level) \(.path):\(.start_line) \(.message)"'
+```
+
+- Codacy's own API also answers with the same token:
+  `GET https://app.codacy.com/api/v3/analysis/organizations/gh/kgcrom/repositories/cluefin/pull-requests/<N>/issues?status=new`
+  with header `api-token: $CODACY_API_TOKEN` (returns `{analyzed, data, pagination}`). `.../commits/<sha>/issues`
+  is a 404; `.../commits/<sha>/deltaStatistics` works. Item fields of `data` were not checked (empty
+  at the time).
 - Right after a push the check run for the new head has `conclusion: null` (and `gh pr checks`
   may say "no checks reported"). That is "still analysing", not a pass — poll until the
   conclusion is set before reading annotations.
-- TypeScript findings that recur and what actually fixes them:
-  - `// eslint-disable-next-line security/detect-object-injection` is **ignored** — restructure
-    instead (`Map.get`, iterate `Object.entries`, no `obj[dynamicKey]`, also in tests).
-  - `new RegExp(variable)` is flagged critical — scan with `indexOf`, or use a literal regex.
-  - "Unnecessary conditional" on `match[1] ?? ''`: Codacy analyses without
-    `noUncheckedIndexedAccess`, so index access looks non-nullable. Use named groups or
-    destructuring defaults rather than `??` on an index.
-  - A string literal assigned to a name containing key/secret/password is reported as a
-    hardcoded password, even in tests — generate the dummy at runtime.
+
+### Recurring TypeScript findings and what actually fixes them
+
+- `// eslint-disable-next-line security/detect-object-injection` is **ignored** — restructure
+  instead: `Map.get`, iterate `Object.entries`, collect `[key, value]` pairs and
+  `Object.fromEntries` them. Both reads *and* assignments with a dynamic key are flagged, in tests too.
+- `new RegExp(variable)` is flagged critical (also reproduces locally) — scan with `indexOf`, or
+  use a literal regex.
+- "Unnecessary conditional" on `match[1] ?? ''` or `x !== undefined`: Codacy analyses without
+  `noUncheckedIndexedAccess`, so index access and destructured groups look non-nullable. Use
+  named groups with truthiness checks (`groups.name ? … : …`) rather than `??` on an index.
+- A string literal assigned to a name containing key/secret/password is reported as a hardcoded
+  password, even in tests — generate the dummy at runtime (`randomUUID()`).
 
 ## Environment gotchas
 
