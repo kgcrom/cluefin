@@ -30,6 +30,7 @@ uv 워크스페이스 모노레포:
 | [cluefin-openapi-ts](packages/cluefin-openapi-ts/) | KIS/키움/NH PLUG TypeScript API 클라이언트 (Node 20+, Zod, ESM/CJS) |
 | [cluefin-ta](packages/cluefin-ta/) | 순수 Python 기술적 분석 (TA-Lib 호환, 45개 지표) |
 | [cluefin-xbrl](packages/cluefin-xbrl/) | DART XBRL 재무제표 파서 |
+| [cluefin-dart-notes](packages/cluefin-dart-notes/) | DART 공시 원문(dart4 XML) 파서 — 섹션·표·주석 노트 (XBRL에 없는 서술형 내용) |
 | [cluefin-openapi-cli](apps/cluefin-openapi-cli/) | Agent-friendly broker CLI (`list`, `describe`, broker-first command path) |
 | [cluefin-desk](apps/cluefin-desk/) | TUI 대시보드 (기술적 분석, KIS·DART·XBRL 재무, LightGBM + SHAP 예측) |
 

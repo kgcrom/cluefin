@@ -94,7 +94,7 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   mid-paragraph `N. title :` right after a sentence end (colon required — without it body text like
   "…입니다. 3. …" splits); mid-paragraph **bold run** starting with `N.` (no colon — an unlisted half-year
   report glues `…되었습니다.<SPAN USERMARK="B">16. 영업으로부터 창출된 현금</SPAN>당반기…`). Sub-numbers
-  (`2.1`, `가.`, `(1)`) never match because the title must start with a letter or `(`.
+  never match: `2.1` fails "a letter or `(` after `N.`", and `가.`/`(1)` have no `N.` at all.
 - Title end: the bold run end when there is one, else the first line up to a colon. Some audit reports
   glue title and body with **no markup at all** (`32. 보고기간후사건회사는 …`), so the line title is cut
   before common body starts (`회사는`, `주식회사`, `당기`, `보고기간말 현재`, `(1)`, `24.1` …). Adjacent bold
@@ -106,3 +106,5 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - Unit tests use **synthetic fragments only**. Don't commit real filings or name the companies used for
   review; integration tests read `CLUEFIN_DART_NOTES_TEST_DIR` (any directory of `*.xml`, searched
   recursively) and skip when it is unset.
+- `examples/dart_notes_analysis.ipynb` takes the company from `DART_CORP_CODE` on purpose (no company in the
+  file). Execute it with `--output-dir` outside the repo to check it, and commit it with outputs cleared.
