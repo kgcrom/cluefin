@@ -321,6 +321,131 @@ def test_disclosure_document_file_respects_overwrite_flag(
         assert last_request.qs["rcept_no"] == ["20240315001234"]
 
 
+def _zip_payload(entries: dict[str, bytes]) -> bytes:
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        for name, data in entries.items():
+            archive.writestr(name, data)
+    return buffer.getvalue()
+
+
+def test_disclosure_document_files_saves_every_xml_with_main_first(
+    client: Client,
+    tmp_path: Path,
+) -> None:
+    payload = _zip_payload(
+        {
+            "20240315001234_00761.xml": b"<DOCUMENT>consolidated audit</DOCUMENT>",
+            "20240315001234_00760.xml": b"<DOCUMENT>audit</DOCUMENT>",
+            "20240315001234.xml": b"<DOCUMENT>main</DOCUMENT>",
+            "readme.txt": b"ignored",
+        }
+    )
+    service = PublicDisclosure(client)
+
+    with requests_mock.Mocker() as mock_requests:
+        mock_requests.get("https://opendart.fss.or.kr/api/document.xml", content=payload)
+
+        saved = service.disclosure_document_files("20240315001234", destination=tmp_path / "out")
+
+        assert [path.name for path in saved] == [
+            "20240315001234.xml",
+            "20240315001234_00760.xml",
+            "20240315001234_00761.xml",
+        ]
+        assert saved[0].read_bytes() == b"<DOCUMENT>main</DOCUMENT>"
+        assert not (tmp_path / "out" / "readme.txt").exists()
+        last_request = mock_requests.last_request
+        assert last_request is not None
+        assert last_request.qs["rcept_no"] == ["20240315001234"]
+
+
+def test_disclosure_document_files_keeps_audit_only_zip_and_strips_leading_slash(
+    client: Client,
+    tmp_path: Path,
+) -> None:
+    payload = _zip_payload({"/20240315001234_00761.xml": b"<DOCUMENT>audit</DOCUMENT>"})
+    service = PublicDisclosure(client)
+
+    with requests_mock.Mocker() as mock_requests:
+        mock_requests.get("https://opendart.fss.or.kr/api/document.xml", content=payload)
+
+        saved = service.disclosure_document_files("20240315001234", destination=tmp_path)
+
+    assert saved == [tmp_path / "20240315001234_00761.xml"]
+    assert saved[0].read_bytes() == b"<DOCUMENT>audit</DOCUMENT>"
+
+
+def test_disclosure_document_files_saves_non_zip_payload_as_main(
+    client: Client,
+    tmp_path: Path,
+) -> None:
+    service = PublicDisclosure(client)
+
+    with requests_mock.Mocker() as mock_requests:
+        mock_requests.get("https://opendart.fss.or.kr/api/document.xml", content=b"<DOCUMENT>raw</DOCUMENT>")
+
+        saved = service.disclosure_document_files("20240315001234", destination=tmp_path)
+
+    assert saved == [tmp_path / "20240315001234.xml"]
+
+
+def test_disclosure_document_files_refuses_overwrite_before_writing_anything(
+    client: Client,
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "20240315001234_00760.xml").write_text("existing")
+    payload = _zip_payload(
+        {
+            "20240315001234.xml": b"<DOCUMENT>main</DOCUMENT>",
+            "20240315001234_00760.xml": b"<DOCUMENT>audit</DOCUMENT>",
+        }
+    )
+    service = PublicDisclosure(client)
+
+    with requests_mock.Mocker() as mock_requests:
+        mock_requests.get("https://opendart.fss.or.kr/api/document.xml", content=payload)
+
+        with pytest.raises(FileExistsError):
+            service.disclosure_document_files("20240315001234", destination=tmp_path)
+
+    assert not (tmp_path / "20240315001234.xml").exists()
+    assert (tmp_path / "20240315001234_00760.xml").read_text() == "existing"
+
+
+def test_disclosure_document_files_raises_on_zip_without_xml(
+    client: Client,
+    tmp_path: Path,
+) -> None:
+    service = PublicDisclosure(client)
+
+    with requests_mock.Mocker() as mock_requests:
+        mock_requests.get(
+            "https://opendart.fss.or.kr/api/document.xml",
+            content=_zip_payload({"readme.txt": b"x"}),
+        )
+
+        with pytest.raises(DartAPIError):
+            service.disclosure_document_files("20240315001234", destination=tmp_path)
+
+
+def test_disclosure_document_files_raises_on_dart_error(
+    client: Client,
+    tmp_path: Path,
+) -> None:
+    error_payload = "<result><status>014</status><message>파일이 존재하지 않습니다.</message></result>".encode()
+    service = PublicDisclosure(client)
+
+    with requests_mock.Mocker() as mock_requests:
+        mock_requests.get("https://opendart.fss.or.kr/api/document.xml", content=error_payload)
+
+        with pytest.raises(DartAPIError) as exc_info:
+            service.disclosure_document_files("00000000000000", destination=tmp_path)
+
+    assert "존재하지 않습니다" in str(exc_info.value)
+    assert list(tmp_path.iterdir()) == []
+
+
 def test_public_disclosure_search_passes_pblntf_params(client: Client) -> None:
     """pblntf_ty와 pblntf_detail_ty 파라미터가 올바르게 전달되는지 확인.
 

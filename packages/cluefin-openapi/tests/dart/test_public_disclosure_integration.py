@@ -101,6 +101,30 @@ def test_disclosure_document_file_integration(
 
 
 @pytest.mark.integration
+def test_disclosure_document_files_integration(
+    service: PublicDisclosure,
+    tmp_path,
+) -> None:
+    time.sleep(1)
+    search = service.public_disclosure_search(
+        corp_code="00126380",
+        pblntf_ty="A",
+        bgn_de="20250101",
+        end_de="20251231",
+        page_count=1,
+    )
+    items = search.result.list or []
+    assert items, "공시 검색 결과가 비어 있습니다."
+    rcept_no = items[0].rcept_no
+
+    time.sleep(1)
+    saved = service.disclosure_document_files(rcept_no, destination=tmp_path, overwrite=True)
+
+    assert saved[0].name == f"{rcept_no}.xml"
+    assert all(path.stat().st_size > 0 for path in saved)
+
+
+@pytest.mark.integration
 def test_public_disclosure_search_pblntf_ty_a_ignores_detail_type(service: PublicDisclosure) -> None:
     """pblntf_ty=A(정기공시) 지정 시 pblntf_detail_ty가 무시되는지 검증.
 

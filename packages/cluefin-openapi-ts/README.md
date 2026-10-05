@@ -268,6 +268,10 @@ const xbrl = await dart.periodicReportFinancialStatement.downloadFinancialStatem
   reprtCode: '11011',
 });
 console.log(doc.body.length, [...xbrl.body.keys()]); // Map<파일명, Uint8Array> — .xbrl, .xsd, _lab-ko.xml …
+
+// 원본 ZIP 의 XML 전부 — 본문이 첫 번째, 첨부 감사보고서(_00760·_00761)가 뒤에 온다.
+const files = await dart.publicDisclosure.disclosureDocumentFiles({ rceptNo: '20260310002820' });
+console.log([...files.body.keys()]); // ['20260310002820.xml', '20260310002820_00760.xml', …]
 ```
 
 #### 꼭 알아둘 것

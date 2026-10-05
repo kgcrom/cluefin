@@ -7,6 +7,9 @@ import { publicDisclosureEndpoints } from './metadata/public-disclosure.js';
 import type { PublicDisclosureResponseMap, PublicDisclosureSearchResponse } from './schemas/public-disclosure.js';
 import { parseFlatXmlList } from './xml.js';
 
+/** 공시서류 원본 ZIP 에서 푼 XML 들 (파일명 → 내용). 본문이 있으면 첫 번째다. */
+export type DartDocumentFiles = Map<string, Uint8Array>;
+
 export interface CorpCodeItem {
   corpCode: string;
   corpName: string;
@@ -29,22 +32,42 @@ const DEFAULT_SEARCH_WINDOW_DAYS = 89;
 const formatDate = (date: Date): string =>
   `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
 
-const firstXmlEntry = (zip: Uint8Array, label: string): Uint8Array => {
-  let files: Map<string, Uint8Array>;
+const unzip = (zip: Uint8Array, label: string): Map<string, Uint8Array> => {
   try {
-    files = readZip(zip);
+    return readZip(zip);
   } catch (error) {
     if (error instanceof ZipError) {
       throw new DartApiError(`${label} ZIP 파일을 읽을 수 없습니다: ${error.message}`);
     }
     throw error;
   }
-  for (const [name, data] of files) {
+};
+
+const firstXmlEntry = (zip: Uint8Array, label: string): Uint8Array => {
+  for (const [name, data] of unzip(zip, label)) {
     if (name.toLowerCase().endsWith('.xml')) {
       return data;
     }
   }
   throw new DartApiError(`${label} ZIP 파일에 XML 데이터가 포함되어있지 않습니다.`);
+};
+
+// ZIP 항목 이름이 `/` 로 시작하기도 한다(2016년 공시). 디렉터리 부분을 버리고 파일 이름만 쓴다.
+const baseName = (name: string): string => name.slice(name.lastIndexOf('/') + 1);
+
+const xmlEntries = (zip: Uint8Array, mainName: string): DartDocumentFiles => {
+  const entries: [string, Uint8Array][] = [];
+  for (const [name, data] of unzip(zip, '공시서류')) {
+    if (name.toLowerCase().endsWith('.xml')) {
+      entries.push([baseName(name), data]);
+    }
+  }
+  if (entries.length === 0) {
+    throw new DartApiError('공시서류 ZIP 파일에 XML 데이터가 포함되어있지 않습니다.');
+  }
+  const rank = (name: string): string => (name === mainName ? `0${name}` : `1${name}`);
+  entries.sort(([a], [b]) => rank(a).localeCompare(rank(b)));
+  return new Map(entries);
 };
 
 const isZipBytes = (bytes: Uint8Array): boolean =>
@@ -84,6 +107,21 @@ export class PublicDisclosure extends DartDomainBase {
       return response;
     }
     return { headers: response.headers, body: firstXmlEntry(response.body, '공시서류') };
+  }
+
+  /**
+   * 공시서류원본파일 — ZIP 에 든 XML 을 모두 `Map<파일명, 바이트>` 로 돌려준다.
+   * 본문(`<rceptNo>.xml`)이 있으면 첫 번째, 첨부 감사보고서(`_00760`·`_00761`)는 이름순으로 뒤에 온다.
+   * 감사보고서만 든 ZIP 도 있다. ZIP 이 아니면 받은 바이트를 본문 하나로 담는다.
+   */
+  public async disclosureDocumentFiles(input: Record<string, unknown>): Promise<ApiResponse<DartDocumentFiles>> {
+    const response = await this.invokeBinary('disclosureDocumentFile', input);
+    const rceptNo = typeof input.rceptNo === 'string' ? input.rceptNo : '';
+    const mainName = `${rceptNo}.xml`;
+    if (!isZipBytes(response.body)) {
+      return { headers: response.headers, body: new Map([[mainName, response.body]]) };
+    }
+    return { headers: response.headers, body: xmlEntries(response.body, mainName) };
   }
 
   /** 고유번호 — 공시대상회사 전체 목록 (수 MB 의 ZIP/XML 을 내려받아 파싱한다). */

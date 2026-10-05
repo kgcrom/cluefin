@@ -5,7 +5,7 @@ from __future__ import annotations
 import io
 import zipfile
 from datetime import date, timedelta
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import List, Literal, Mapping, Optional
 from xml.etree.ElementTree import Element
 
@@ -135,23 +135,7 @@ class PublicDisclosure:
         Returns:
             Path: 저장된 파일 경로
         """
-        params = {"rcept_no": rcept_no}
-        payload = self.client._get_bytes("/api/document.xml", params=params)
-        stripped = payload.lstrip()
-        # DART returns error details as small XML bodies even on binary endpoints.
-        if stripped.startswith(b"<"):
-            try:
-                root = fromstring(payload)
-            except ParseError:
-                root = None
-            if root is not None:
-                status = (root.findtext("status") or "").strip()
-                message = (root.findtext("message") or "").strip()
-                if status and status != DartStatusCode.SUCCESS:
-                    raise DartAPIError(
-                        message or "공시서류 원본파일 조회에 실패했습니다.",
-                        response_data={"status": status, "message": message},
-                    )
+        payload = self._get_document_payload(rcept_no)
 
         xml_bytes = payload
         buffer = io.BytesIO(payload)
@@ -179,6 +163,61 @@ class PublicDisclosure:
         destination_path.parent.mkdir(parents=True, exist_ok=True)
         destination_path.write_bytes(xml_bytes)
         return destination_path
+
+    def disclosure_document_files(
+        self,
+        rcept_no: str,
+        *,
+        destination: Path | str = Path("."),
+        overwrite: bool = False,
+    ) -> List[Path]:
+        """
+        공시서류원본파일 - 원본 ZIP에 든 XML을 모두 저장합니다.
+
+        정기보고서 ZIP에는 본문(`<rcept_no>.xml`)과 첨부 감사보고서(`<rcept_no>_00760.xml` 등)가 함께 들어 있고,
+        감사보고서만 든 ZIP도 있습니다. `disclosure_document_file`은 그중 첫 XML 하나만 저장합니다.
+
+        Args:
+            rcept_no (str): 접수번호(14자리)
+            destination (Path | str, optional): 저장할 폴더 경로. 기본값 현재 폴더.
+            overwrite (bool, optional): 이미 존재하는 파일을 덮어쓸지 여부. 기본값 False.
+
+        Returns:
+            List[Path]: 저장된 파일 경로. 본문이 있으면 첫 번째, 나머지는 이름순.
+        """
+        payload = self._get_document_payload(rcept_no)
+        entries = _xml_entries(payload, rcept_no)
+
+        destination_path = Path(destination).expanduser()
+        paths = [destination_path / name for name, _ in entries]
+        if not overwrite:
+            existing = next((path for path in paths if path.exists()), None)
+            if existing is not None:
+                raise FileExistsError(f"이미 존재하는 파일을 덮어쓸 수 없습니다: {existing}")
+
+        destination_path.mkdir(parents=True, exist_ok=True)
+        for path, (_, data) in zip(paths, entries, strict=True):
+            path.write_bytes(data)
+        return paths
+
+    def _get_document_payload(self, rcept_no: str) -> bytes:
+        payload = self.client._get_bytes("/api/document.xml", params={"rcept_no": rcept_no})
+        stripped = payload.lstrip()
+        # DART returns error details as small XML bodies even on binary endpoints.
+        if stripped.startswith(b"<"):
+            try:
+                root = fromstring(payload)
+            except ParseError:
+                root = None
+            if root is not None:
+                status = (root.findtext("status") or "").strip()
+                message = (root.findtext("message") or "").strip()
+                if status and status != DartStatusCode.SUCCESS:
+                    raise DartAPIError(
+                        message or "공시서류 원본파일 조회에 실패했습니다.",
+                        response_data={"status": status, "message": message},
+                    )
+        return payload
 
     def corp_code(self) -> UniqueNumber:
         """고유번호 - DART에 등록되어있는 공시대상회사의 고유번호,회사명,종목코드, 최근변경일자를 파일로 제공합니다."""
@@ -244,3 +283,30 @@ class PublicDisclosure:
     def _optional_xml_text(self, node: Element, tag: str) -> Optional[str]:
         value = self._xml_text(node, tag)
         return value or None
+
+
+def _xml_entries(payload: bytes, rcept_no: str) -> List[tuple[str, bytes]]:
+    """원본 ZIP의 XML 항목을 (파일 이름, 바이트)로 돌려준다. 본문을 첫 번째로 두고 나머지는 이름순이다.
+
+    항목 이름은 `/`로 시작하기도 해서(2016년 공시) 디렉터리 부분을 버리고 파일 이름만 쓴다.
+    ZIP이 아니면 받은 바이트를 본문 하나로 본다.
+    """
+    buffer = io.BytesIO(payload)
+    if not zipfile.is_zipfile(buffer):
+        return [(f"{rcept_no}.xml", payload)]
+
+    buffer.seek(0)
+    try:
+        with zipfile.ZipFile(buffer) as archive:
+            entries = {
+                PurePosixPath(info.filename).name: archive.read(info)
+                for info in archive.infolist()
+                if not info.is_dir() and info.filename.lower().endswith(".xml")
+            }
+    except zipfile.BadZipFile as exc:  # pragma: no cover - defensive guard
+        raise DartAPIError("공시서류 ZIP 파일이 손상되었습니다.") from exc
+    if not entries:
+        raise DartAPIError("공시서류 ZIP 파일에 XML 데이터가 포함되어있지 않습니다.")
+
+    main_name = f"{rcept_no}.xml"
+    return sorted(entries.items(), key=lambda item: (item[0] != main_name, item[0]))

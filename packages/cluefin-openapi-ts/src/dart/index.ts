@@ -5,7 +5,7 @@ export { MajorShareholderDisclosure } from './major-shareholder-disclosure.js';
 export type { DartXbrlFiles } from './periodic-report-financial-statement.js';
 export { PeriodicReportFinancialStatement } from './periodic-report-financial-statement.js';
 export { PeriodicReportKeyInformation } from './periodic-report-key-information.js';
-export type { CorpCodeItem, CorpCodeResponse } from './public-disclosure.js';
+export type { CorpCodeItem, CorpCodeResponse, DartDocumentFiles } from './public-disclosure.js';
 export { PublicDisclosure } from './public-disclosure.js';
 export type * from './schemas/major-shareholder-disclosure.js';
 export type * from './schemas/periodic-report-financial-statement.js';
