@@ -13,6 +13,9 @@ from typing import Protocol
 from cluefin_dart_notes.repair._report import RuleOutcome, SampleCollector
 from cluefin_dart_notes.repair._tags import KNOWN_TAGS
 
+# `&cr;`이 남기는 줄바꿈 표식. 원문에는 쓰이지 않는다(코퍼스 0건).
+LINE_BREAK = "\u2028"
+
 
 class RepairRule(Protocol):
     """원문 정리 규칙. `name`은 보고서에 남는 이름이고 `DartXmlRepairer.with_rule(before=…)`가 가리키는 이름이다."""
@@ -30,13 +33,16 @@ def _tag_alternation(tags: Iterable[str]) -> str:
 class ReplaceDartEntities:
     """DART 고유 엔티티(`&cr;` 등)를 숫자 문자 참조로 바꾼다.
 
-    리터럴 줄바꿈 대신 `&#10;`을 넣는다. 파싱 결과의 텍스트는 같고, 원문 줄 번호는 바뀌지 않는다.
+    `&cr;`은 기본적으로 U+2028(LINE SEPARATOR)이 된다. 원문 소스에는 태그 사이에 서식용 줄바꿈이 많아
+    (오래된 공시는 문단 4개 중 1개꼴) 일반 줄바꿈으로 바꾸면 `&cr;`의 줄바꿈과 구별할 수 없다.
+    텍스트 추출(`Paragraph`·`Cell`)은 U+2028만 줄바꿈으로 살리고 나머지 공백은 한 칸으로 줄인다.
+    값은 리터럴 대신 숫자 참조(`&#8232;`)로 넣어 원문 줄 번호를 바꾸지 않는다.
     """
 
     name = "dart-entities"
 
     def __init__(self, entities: Mapping[str, str] | None = None) -> None:
-        self.entities = dict(entities) if entities is not None else {"cr": "\n"}
+        self.entities = dict(entities) if entities is not None else {"cr": LINE_BREAK}
         names = "|".join(re.escape(name) for name in self.entities)
         self._pattern = re.compile(rf"&({names});") if names else None
 

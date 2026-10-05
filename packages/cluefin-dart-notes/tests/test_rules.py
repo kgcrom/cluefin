@@ -22,14 +22,14 @@ def assert_unparseable(xml: str) -> None:
 
 
 class TestReplaceDartEntities:
-    def test_cr_becomes_newline_without_changing_line_count(self):
+    def test_cr_becomes_line_separator_without_changing_line_count(self):
         raw = "<P>첫 줄&cr;&cr;둘째 줄</P>"
         assert_unparseable(raw)
 
         outcome = ReplaceDartEntities().apply(raw)
 
         assert outcome.count == 2
-        assert text_of(outcome.text) == "첫 줄\n\n둘째 줄"
+        assert text_of(outcome.text) == "첫 줄\u2028\u2028둘째 줄"
         assert outcome.text.count("\n") == raw.count("\n")
 
     def test_custom_entities(self):

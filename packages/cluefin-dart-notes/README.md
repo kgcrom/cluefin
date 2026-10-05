@@ -3,7 +3,7 @@
 DART 공시 원문(`document.xml`, dart4 XML)을 직접 파싱하는 패키지입니다. 정기보고서(사업·반기·분기)와 첨부
 감사보고서의 서술형 주석, "사업의 내용"처럼 XBRL에 없는 내용을 다루는 것이 목표입니다.
 
-지금은 원문 정리, 문서 메타, 섹션 트리까지 있습니다. 표·주석 해석은 이어서 추가합니다.
+지금은 원문 정리, 문서 메타, 섹션 트리, 문단·표 블록까지 있습니다. 주석을 노트 단위로 나누는 기능은 이어서 추가합니다.
 
 ## 문서와 섹션
 
@@ -21,6 +21,34 @@ notes = find_section(doc, assoc_code="D-0-3-3-0")  # 연결재무제표 주석
 overview_parts = find_sections(doc, assoc_code="D-0-1-*")  # glob 패턴
 same_notes = find_section(doc, title="연결재무제표 주석")  # 번호·공백 무시
 ```
+
+## 문단과 표
+
+`Section.blocks`는 섹션 본문을 문서 순서의 `Paragraph`·`Heading`·`Table`로 돌려줍니다(하위 섹션 내용 제외).
+
+```python
+import pandas as pd
+
+from cluefin_dart_notes import Heading, Paragraph, Table, parse_amount
+
+for block in notes.blocks:
+    if isinstance(block, Heading):  # 2024년 이후 상장사 주석은 노트마다 소제목이 붙는다
+        print("##", block.text)
+    elif isinstance(block, Paragraph):
+        print(block.text)
+    elif isinstance(block, Table) and block.bordered:
+        rows = block.to_rows()  # 병합 셀은 펼쳐서 반복
+        frame = pd.DataFrame(rows[1:], columns=rows[0])
+        print(block.caption, block.unit)  # "… (단위 : 백만원)", "백만원"
+
+parse_amount("(23,593,369)")  # Decimal('-23593369'). △·▲·- 도 음수, "-"·빈 셀은 None
+```
+
+- 레이아웃용 표(1×1 상자, 실제 표를 셀 안에 담은 래퍼)는 풀어서 안의 문단·표를 블록으로 꺼냅니다.
+- 단위는 바로 앞 캡션 표(기준일·단위가 적힌 작은 테두리 없는 표), 짧은 단위 문단, 표의 첫 행 순서로 찾습니다.
+  값을 환산하지는 않습니다.
+- 문단 텍스트의 줄바꿈은 원문의 `&cr;`·`BR`에서 온 것만 남고, 나머지 공백은 한 칸으로 줄입니다.
+  `Paragraph.bold_starts`는 굵은 글씨가 시작하는 위치입니다.
 
 섹션 코드(`AASSOCNOTE`)는 문서 종류마다 뜻이 다릅니다. 감사보고서의 `D-0-2-0-0`은 "외부감사 실시내용"입니다.
 그래서 `business_description`·`company_overview`는 정기보고서에서만 값을 돌려줍니다. 감사보고서는 `doc.summary`에
@@ -78,7 +106,7 @@ strict = DartXmlRepairer(strict=True)  # 위치 기반 수리 없이 첫 오류�
 
 | 이름 | 고치는 것 |
 |---|---|
-| `dart-entities` | DART 고유 엔티티 `&cr;` → 줄바꿈 |
+| `dart-entities` | DART 고유 엔티티 `&cr;` → 줄바꿈 표식 U+2028 (블록 텍스트에서 `\n`이 됨) |
 | `bare-ampersand` | 엔티티가 아닌 `&` → `&amp;` |
 | `unknown-tags` | 허용 목록(`KNOWN_TAGS`) 밖의 `<` → `&lt;` |
 | `attributes` | 여는 태그 속성의 여분 따옴표·중복 이름 |

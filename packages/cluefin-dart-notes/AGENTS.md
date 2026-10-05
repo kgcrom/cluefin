@@ -29,7 +29,11 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   top of `[기재정정]` filings) was found exactly this way. `EscapeUnknownTags` warns when an unknown name
   also appears as a closing tag; treat that warning as "add it to `KNOWN_TAGS`".
 - Rules must not add or remove newlines, so sample and parser-error line numbers match the raw file.
-  That is why `&cr;` becomes `&#10;`, not a literal newline.
+  That is why `&cr;` becomes a numeric reference, not a literal newline.
+- `&cr;` maps to **U+2028**, not `\n`: raw sources put formatting newlines between runs (1 in 4 paragraphs
+  in old filings — `주소 : ⏎ 경기도…` is one line), so a plain newline would be indistinguishable from a real
+  `&cr;` break. Block text keeps only U+2028 (and `BR`/paragraph boundaries in cells) as `\n`. Note `&cr;` is
+  sometimes a soft wrap mid-word in old filings (`선임&cr;되었습니다`); it is kept as-is.
 - expat error positions don't point at the culprit (`R&D</P>` reports the `<` of `</P>`; a fake Hangul
   tag reports the next closing tag). Columns are **characters, not bytes** (measured). `PositionalRepair`
   searches backwards by error kind, skips known tags and valid references, and refuses to escape a known
@@ -63,6 +67,20 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 
   Chapters I, VI, VIII, 【전문가의 확인】 and the 상세표 children have no code.
 - 11014 (3분기) has not been seen yet; 11013 matched 11012 in structure.
+
+## Blocks: what the heuristics are based on
+
+- `USERMARK` is a space-separated token list (`F-10` font size, `A-L` align, `BC0X…` background,
+  ` 0X…` colour). Bold is the token `B` exactly — substring matching would treat `BC0XDCDCDC` as bold.
+- Tables: `BORDER="1"` = data table. Layout tables (1×1, or holding a real table in a cell — the big
+  borderless wrappers of 2024+ filings) are unwrapped into their blocks. Pick a table's rows from
+  `TABLE > (THEAD|TBODY) > TR` only; `iter("TR")` also returns rows of nested tables.
+- Unit lookup order: caption table right before (borderless, ≤6 rows, ≤200 chars, contains "단위:"; notes
+  use 1–2 rows, statement title tables 3–5), else the last line of the previous paragraph if short (old
+  filings append "(단위: 주)" to an explanation paragraph), else the data table's own first row.
+  On the corpus this gives a unit to 79% of data tables and to 96% of numeric ones (7,233 of 7,506); the rest are
+  text tables or genuinely unitless. A caption table that no data table follows stays a block.
+- `TU` cells carry `AUNIT`/`AUNITVALUE`; `TE` cells carry `ACODE` (an XBRL-like item code).
 
 ## Testing
 

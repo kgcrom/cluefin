@@ -2,6 +2,8 @@
 
 __version__ = "0.1.0"
 
+from cluefin_dart_notes._amount import parse_amount
+from cluefin_dart_notes._blocks import Block, Cell, Heading, Paragraph, Table, extract_blocks, table_to_rows
 from cluefin_dart_notes._document import (
     AUDIT_REPORT_CODES,
     PERIODIC_REPORT_CODES,
@@ -31,6 +33,8 @@ from cluefin_dart_notes.repair import (
 
 __all__ = [
     "AUDIT_REPORT_CODES",
+    "Block",
+    "Cell",
     "DEFAULT_RULES",
     "KNOWN_TAGS",
     "PERIODIC_REPORT_CODES",
@@ -39,8 +43,10 @@ __all__ = [
     "DartXmlRepairer",
     "Decoder",
     "EscapeBareAmpersand",
+    "Heading",
     "EscapeUnknownTags",
     "NormalizeAttributes",
+    "Paragraph",
     "PositionalRepair",
     "RepairReport",
     "RepairResult",
@@ -49,10 +55,14 @@ __all__ = [
     "ReplaceDartEntities",
     "RuleOutcome",
     "Section",
+    "Table",
     "business_description",
     "company_overview",
+    "extract_blocks",
     "find_section",
     "find_sections",
     "load_document",
+    "parse_amount",
     "parse_document",
+    "table_to_rows",
 ]

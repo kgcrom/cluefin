@@ -5,10 +5,12 @@ from __future__ import annotations
 import re
 from collections.abc import Iterator, Mapping
 from dataclasses import dataclass, field
+from functools import cached_property
 from pathlib import Path
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
+from cluefin_dart_notes._blocks import Block, extract_blocks
 from cluefin_dart_notes.repair import DartXmlRepairer, RepairResult
 
 if TYPE_CHECKING:
@@ -54,6 +56,13 @@ class Section:
     is_correction: bool = False
     children: tuple[Section, ...] = field(default=(), repr=False)
     element: Element | None = field(default=None, repr=False)
+
+    @cached_property
+    def blocks(self) -> tuple[Block, ...]:
+        """이 섹션 본문의 문단·소제목·표(문서 순서). 섹션 제목과 하위 섹션의 내용은 들어가지 않는다."""
+        if self.element is None:
+            return ()
+        return tuple(extract_blocks(self.element))
 
     def iter(self) -> Iterator[Section]:
         """자기 자신과 모든 하위 섹션을 문서 순서로."""

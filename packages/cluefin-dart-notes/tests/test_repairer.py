@@ -39,7 +39,7 @@ def test_default_pipeline_parses_every_known_defect_without_fallback():
     assert root.findtext("DOCUMENT-NAME") == "반기보고서"
     paragraphs = ["".join(p.itertext()) for p in root.iter("P")]
     assert paragraphs == [
-        "R&D 비용과 S&P 등급\n다음 줄",
+        "R&D 비용과 S&P 등급\u2028다음 줄",
         "<시장 동향>",
         "< 국가별 등록 현황 >",
         "<Product Share Trend>",
