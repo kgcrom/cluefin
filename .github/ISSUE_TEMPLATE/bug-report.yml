@@ -33,6 +33,7 @@ body:
         - cluefin-ta
         - cluefin-desk
         - cluefin-xbrl
+        - cluefin-dart-notes
     validations:
       required: true
 

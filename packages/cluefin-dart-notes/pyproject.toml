@@ -1,0 +1,21 @@
+[project]
+name = "cluefin-dart-notes"
+version = "0.1.0"
+description = "DART disclosure document (dart4 XML) parser for sections, tables and notes"
+readme = "README.md"
+authors = [
+    { name = "Hangoo Kang", email = "kgcrom@hotmail.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "defusedxml>=0.7.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+extend = "../../pyproject.toml"
+include = ["src/**", "tests/**"]
+extend-exclude = ["*.xml"]
