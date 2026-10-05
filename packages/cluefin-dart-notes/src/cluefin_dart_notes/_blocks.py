@@ -23,8 +23,9 @@ _CAPTION_MAX_ROWS = 6
 _CAPTION_MAX_LENGTH = 200
 # 단위만 적힌 문단으로 볼 최대 길이. 긴 문단 안의 "단위:"는 표 단위가 아니다.
 _UNIT_PARAGRAPH_MAX_LENGTH = 40
-# 굵은 런의 시작 표식. 정규화가 끝나면 지우고 위치만 남긴다. 원문에는 쓰이지 않는다(사용자 영역 문자).
-_BOLD_MARK = ""
+# 굵은 런의 시작·끝 표식. 정규화가 끝나면 지우고 위치만 남긴다. 원문에는 쓰이지 않는다(사용자 영역 문자).
+_BOLD_START = "\ue000"
+_BOLD_END = "\ue001"
 
 
 @dataclass(frozen=True)
@@ -32,12 +33,12 @@ class Paragraph:
     """문단. `text`의 줄바꿈은 원문의 `&cr;`·`BR`에서 온 것만 남는다.
 
     Attributes:
-        bold_starts: 굵은 글씨(`USERMARK`의 `B`) 런이 시작하는 `text` 안의 위치. 문단 중간에 붙은 소제목을
-            찾는 데 쓴다(콜론 없이 앞 문장에 붙은 주석 제목 등).
+        bold_spans: 굵은 글씨(`USERMARK`의 `B`) 구간 `(시작, 끝)`. `text[시작:끝]`이 굵은 글자다. 문단 중간에
+            붙은 소제목과 그 끝을 찾는 데 쓴다(콜론 없이 앞 문장에 붙은 주석 제목 등). 이어진 구간은 합친다.
     """
 
     text: str
-    bold_starts: tuple[int, ...] = ()
+    bold_spans: tuple[tuple[int, int], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -153,7 +154,7 @@ def _is_bold(element: Element) -> bool:
 
 
 def _raw_text(element: Element, *, bold: bool) -> str:
-    """요소의 텍스트. 굵은 런이 시작하는 곳에 표식을 넣고, BR 과 (셀 안의) 둘째 이후 문단 앞에 줄바꿈을 넣는다."""
+    """요소의 텍스트. 굵은 런을 표식으로 감싸고, BR 과 (셀 안의) 둘째 이후 문단 앞에 줄바꿈을 넣는다."""
     is_bold = bold or _is_bold(element)
     parts = [element.text or ""]
     seen_paragraph = False
@@ -169,7 +170,7 @@ def _raw_text(element: Element, *, bold: bool) -> str:
         parts.append(child.tail or "")
     text = "".join(parts)
     if is_bold and not bold and text.strip():
-        return _BOLD_MARK + text
+        return f"{_BOLD_START}{text}{_BOLD_END}"
     return text
 
 
@@ -177,18 +178,23 @@ def _normalize(raw: str) -> str:
     return _normalize_with_marks(raw)[0]
 
 
-def _normalize_with_marks(raw: str) -> tuple[str, tuple[int, ...]]:
-    """공백을 한 칸으로 줄이고 `LINE_BREAK`만 `\n`으로 살린다(앞뒤 공백 제거). 굵은 표식은 지우고 위치를 돌려준다."""
-    if _BOLD_MARK not in raw:
+def _normalize_with_marks(raw: str) -> tuple[str, tuple[tuple[int, int], ...]]:
+    """공백을 한 칸으로 줄이고 `LINE_BREAK`만 `\n`으로 살린다(앞뒤 공백 제거). 굵은 표식은 지우고 구간을 돌려준다."""
+    if _BOLD_START not in raw:
         lines = (" ".join(part.split()) for part in raw.split(LINE_BREAK))
         return "\n".join(line for line in lines if line), ()
     out: list[str] = []
-    marks: list[int] = []
-    pending_mark = False
+    spans: list[tuple[int, int]] = []
+    span_start: int | None = None
+    pending_start = False
     gap = ""
     for char in raw:
-        if char == _BOLD_MARK:
-            pending_mark = True
+        if char == _BOLD_START:
+            pending_start = True
+        elif char == _BOLD_END:
+            if span_start is not None:
+                _add_span(spans, span_start, len(out))
+            span_start, pending_start = None, False
         elif char == LINE_BREAK:
             gap = "\n"
         elif char.isspace():
@@ -197,11 +203,18 @@ def _normalize_with_marks(raw: str) -> tuple[str, tuple[int, ...]]:
             if gap and out:
                 out.append(gap)
             gap = ""
-            if pending_mark:
-                marks.append(len(out))
-                pending_mark = False
+            if pending_start:
+                span_start, pending_start = len(out), False
             out.append(char)
-    return "".join(out), tuple(dict.fromkeys(marks))
+    return "".join(out), tuple(spans)
+
+
+def _add_span(spans: list[tuple[int, int]], start: int, end: int) -> None:
+    # 굵은 SPAN 두 개가 공백 하나를 사이에 두고 이어지면 한 구간으로 본다("16." + "영업 현금").
+    if spans and start <= spans[-1][1] + 1:
+        spans[-1] = (spans[-1][0], end)
+    else:
+        spans.append((start, end))
 
 
 # --- 표 -------------------------------------------------------------------
@@ -259,10 +272,10 @@ def _cell_blocks(cell: Element) -> Iterator[Block | _Caption]:
 
 
 def _inline_paragraph(parts: list[str]) -> Iterator[Paragraph]:
-    text, bold_starts = _normalize_with_marks("".join(parts))
+    text, bold_spans = _normalize_with_marks("".join(parts))
     parts.clear()
     if text:
-        yield Paragraph(text, bold_starts)
+        yield Paragraph(text, bold_spans)
 
 
 def _grid(rows: list[Element]) -> tuple[tuple[Cell | None, ...], ...]:

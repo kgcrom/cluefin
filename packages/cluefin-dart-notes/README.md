@@ -3,7 +3,27 @@
 DART 공시 원문(`document.xml`, dart4 XML)을 직접 파싱하는 패키지입니다. 정기보고서(사업·반기·분기)와 첨부
 감사보고서의 서술형 주석, "사업의 내용"처럼 XBRL에 없는 내용을 다루는 것이 목표입니다.
 
-지금은 원문 정리, 문서 메타, 섹션 트리, 문단·표 블록까지 있습니다. 주석을 노트 단위로 나누는 기능은 이어서 추가합니다.
+원문 정리, 문서 메타, 섹션 트리, 문단·표 블록, 주석의 노트 분할을 제공합니다.
+
+## 주석 노트
+
+```python
+from cluefin_dart_notes import extract_notes, notes_sections, split_notes
+
+for note in extract_notes(doc):  # 연결 주석 다음 별도 주석
+    print(note.basis, note.number, note.title)  # consolidated 7 유형자산
+    tables = [block for block in note.blocks if isinstance(block, Table) and block.bordered]
+
+for section, basis in notes_sections(doc):  # 진단이 필요할 때
+    result = split_notes(section, basis)
+    print(result.method, len(result.notes), result.warnings)  # sequence 32 ('4번 노트가 없습니다(5번으로 건너뜀).',)
+```
+
+- 2024년 이후 상장사 본문은 노트마다 소제목이 있어 그것으로 나눕니다(`method="heading"`). 번호는 문자열입니다
+  (`"9-1"`, `"6-A"`, `"9&10"`).
+- 소제목이 없는 문서(오래된 공시, 비상장사, 감사보고서)는 문단의 번호를 1, 2, 3… 순서로 따라가며 나눕니다
+  (`method="sequence"`). 문단 중간에 붙은 제목도 콜론이나 굵은 글씨로 찾습니다. 번호가 하나 빠지면 경고를 남기고
+  계속하고, 둘 이상 빠지면 거기서 멈추므로 "놓쳤을 수 있음" 경고를 확인하세요.
 
 ## 문서와 섹션
 
@@ -48,7 +68,7 @@ parse_amount("(23,593,369)")  # Decimal('-23593369'). △·▲·- 도 음수, "-
 - 단위는 바로 앞 캡션 표(기준일·단위가 적힌 작은 테두리 없는 표), 짧은 단위 문단, 표의 첫 행 순서로 찾습니다.
   값을 환산하지는 않습니다.
 - 문단 텍스트의 줄바꿈은 원문의 `&cr;`·`BR`에서 온 것만 남고, 나머지 공백은 한 칸으로 줄입니다.
-  `Paragraph.bold_starts`는 굵은 글씨가 시작하는 위치입니다.
+  `Paragraph.bold_spans`는 굵은 글씨 구간 `(시작, 끝)`입니다.
 
 섹션 코드(`AASSOCNOTE`)는 문서 종류마다 뜻이 다릅니다. 감사보고서의 `D-0-2-0-0`은 "외부감사 실시내용"입니다.
 그래서 `business_description`·`company_overview`는 정기보고서에서만 값을 돌려줍니다. 감사보고서는 `doc.summary`에

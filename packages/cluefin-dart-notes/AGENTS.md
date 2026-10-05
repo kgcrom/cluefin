@@ -82,6 +82,25 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   text tables or genuinely unitless. A caption table that no data table follows stays a block.
 - `TU` cells carry `AUNIT`/`AUNITVALUE`; `TE` cells carry `ACODE` (an XBRL-like item code).
 
+## Note splitting: why the rules are what they are
+
+- Method is chosen by **whether the notes section has numbered `Heading` blocks**, never by year: unlisted
+  filings from 2026 and every attached audit report have no per-note titles.
+- Sequence search accepts only the next number N or N+1. Every N+1 jump in the corpus was a number that
+  is genuinely absent from the filing (e.g. a separate-statement note numbering that skips 4 and 18), so
+  the skip is allowed and only warned. Two missing in a row stops the split; the "놓쳤을 수" warning
+  scans the last note for later numbers at paragraph start.
+- Candidates: paragraph start `N. title` (no colon needed — requiring one empties several filings);
+  mid-paragraph `N. title :` right after a sentence end (colon required — without it body text like
+  "…입니다. 3. …" splits); mid-paragraph **bold run** starting with `N.` (no colon — an unlisted half-year
+  report glues `…되었습니다.<SPAN USERMARK="B">16. 영업으로부터 창출된 현금</SPAN>당반기…`). Sub-numbers
+  (`2.1`, `가.`, `(1)`) never match because the title must start with a letter or `(`.
+- Title end: the bold run end when there is one, else the first line up to a colon. Some audit reports
+  glue title and body with **no markup at all** (`32. 보고기간후사건회사는 …`), so the line title is cut
+  before common body starts (`회사는`, `주식회사`, `당기`, `보고기간말 현재`, `(1)`, `24.1` …). Adjacent bold
+  runs merge, so the same cut also separates a bold note title from a bold sub-heading. Corpus result:
+  no sequence-mode title over 22 characters that isn't a real title.
+
 ## Testing
 
 - Unit tests use **synthetic fragments only**. Don't commit real filings or name the companies used for

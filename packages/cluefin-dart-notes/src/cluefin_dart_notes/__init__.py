@@ -13,6 +13,7 @@ from cluefin_dart_notes._document import (
     parse_document,
 )
 from cluefin_dart_notes._find import business_description, company_overview, find_section, find_sections
+from cluefin_dart_notes._notes import Note, NoteSplit, extract_notes, notes_sections, split_notes
 from cluefin_dart_notes.repair import (
     DEFAULT_RULES,
     KNOWN_TAGS,
@@ -37,6 +38,8 @@ __all__ = [
     "Cell",
     "DEFAULT_RULES",
     "KNOWN_TAGS",
+    "Note",
+    "NoteSplit",
     "PERIODIC_REPORT_CODES",
     "DartDocument",
     "DartXmlRepairError",
@@ -59,10 +62,13 @@ __all__ = [
     "business_description",
     "company_overview",
     "extract_blocks",
+    "extract_notes",
     "find_section",
     "find_sections",
     "load_document",
+    "notes_sections",
     "parse_amount",
     "parse_document",
+    "split_notes",
     "table_to_rows",
 ]

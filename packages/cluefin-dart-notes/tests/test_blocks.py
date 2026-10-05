@@ -35,17 +35,26 @@ class TestParagraphText:
 
         (paragraph,) = blocks
         assert paragraph.text == "반영되었습니다. 16. 영업 현금당기 중 내용입니다.배경색은 굵게가 아님"
-        assert paragraph.bold_starts == (paragraph.text.index("16."),)
+        start = paragraph.text.index("16.")
+        assert paragraph.bold_spans == ((start, start + len("16. 영업 현금")),)
 
     def test_bold_paragraph_and_nested_bold_count_once(self):
         (paragraph,) = blocks_of('<P USERMARK="B"><SPAN USERMARK="B">1. 일반사항</SPAN></P>')
 
-        assert paragraph.bold_starts == (0,)
+        assert paragraph.bold_spans == ((0, 7),)
+
+    def test_adjacent_bold_runs_merge(self):
+        (paragraph,) = blocks_of(
+            '<P><SPAN USERMARK="B">16.</SPAN> <SPAN USERMARK="B">영업 현금</SPAN>본문 <SPAN USERMARK="B">굵게</SPAN></P>'
+        )
+
+        assert paragraph.text == "16. 영업 현금본문 굵게"
+        assert [paragraph.text[a:b] for a, b in paragraph.bold_spans] == ["16. 영업 현금", "굵게"]
 
     def test_empty_bold_span_leaves_no_mark(self):
         (paragraph,) = blocks_of('<P>앞<SPAN USERMARK="B"> </SPAN>뒤</P>')
 
-        assert paragraph.bold_starts == ()
+        assert paragraph.bold_spans == ()
 
 
 class TestStructure:
@@ -163,7 +172,7 @@ class TestTables:
         )
 
         assert [type(b).__name__ for b in blocks] == ["Paragraph", "Paragraph", "Paragraph", "Table", "Paragraph"]
-        assert blocks[0] == Paragraph("안내 굵게", (3,))
+        assert blocks[0] == Paragraph("안내 굵게", ((3, 5),))
         assert [b.text for b in only(blocks, Paragraph)] == ["안내 굵게", "문단", "꼬리", "1×1 상자"]
         assert only(blocks, Table)[0].to_rows() == [["x", "1"]]
 
