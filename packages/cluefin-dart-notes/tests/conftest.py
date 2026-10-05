@@ -1,6 +1,11 @@
-"""합성 원문 문서. 실제 공시가 아니며, 관찰한 세대별 구조만 흉내 낸다."""
+"""합성 원문 문서(실제 공시가 아니며 관찰한 세대별 구조만 흉내 낸다)와 통합 테스트용 원문 디렉터리."""
+
+import os
+from pathlib import Path
 
 import pytest
+
+from cluefin_dart_notes import DartDocument, load_document
 
 # 2024년 이후 정기보고서: 메타가 루트 바로 아래, 사업의 내용·재무제표가 LIBRARY 안, 맨 앞에 정정신고 블록.
 PERIODIC_RECENT = """<?xml version="1.0" encoding="utf-8"?>
@@ -95,3 +100,20 @@ def periodic_legacy_bytes() -> bytes:
 @pytest.fixture
 def audit_report_bytes() -> bytes:
     return AUDIT_REPORT.encode("utf-8")
+
+
+@pytest.fixture(scope="session")
+def corpus_paths() -> list[Path]:
+    """`CLUEFIN_DART_NOTES_TEST_DIR` 아래의 원문 XML(하위 폴더 포함). 없으면 통합 테스트를 건너뛴다."""
+    directory = os.getenv("CLUEFIN_DART_NOTES_TEST_DIR")
+    if not directory:
+        pytest.skip("CLUEFIN_DART_NOTES_TEST_DIR is not set")
+    paths = sorted(Path(directory).rglob("*.xml"))
+    if not paths:
+        pytest.skip(f"no *.xml under {directory}")
+    return paths
+
+
+@pytest.fixture(scope="session")
+def corpus_documents(corpus_paths) -> list[DartDocument]:
+    return [load_document(path) for path in corpus_paths]

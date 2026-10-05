@@ -265,17 +265,17 @@ def _skip_colon(text: str, end: int) -> int:
 def _cut_long_title(text: str, end: int, start: int) -> int:
     """제목과 본문이 표시 없이 붙은 첫 줄("32. 보고기간후사건회사는 …")에서 제목 끝을 고른다.
 
-    원문(주로 감사보고서)에 경계 정보가 없어 본문이 흔히 시작하는 말 앞에서 자른다. 없으면 앞 40자 안의
-    마지막 공백·마침표에서 자른다.
+    원문(주로 감사보고서)에 경계 정보가 없어 본문이 흔히 시작하는 말 앞에서 자른다. 없는데 제목(번호 제외)이
+    40자를 넘으면 40자 안의 마지막 공백·마침표에서 자른다.
     """
     number_end = re.compile(r"\s*\d+\.\s*").match(text, start)
     title_start = number_end.end() if number_end else start
     marker = _BODY_START.search(text, title_start + 2, min(end, title_start + _MAX_TITLE_LENGTH))
     if marker:
         return marker.start()
-    if end - start <= _MAX_TITLE_LENGTH:
+    if end - title_start <= _MAX_TITLE_LENGTH:
         return end
-    limit = start + _MAX_TITLE_LENGTH
+    limit = title_start + _MAX_TITLE_LENGTH
     cut = max(text.rfind(" ", title_start, limit), text.rfind(".", title_start, limit))
     return cut if cut > 0 else limit
 

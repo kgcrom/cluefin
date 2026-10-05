@@ -51,6 +51,12 @@ class TestParagraphText:
         assert paragraph.text == "16. 영업 현금본문 굵게"
         assert [paragraph.text[a:b] for a, b in paragraph.bold_spans] == ["16. 영업 현금", "굵게"]
 
+    def test_cr_inside_bold_run_is_a_line_break(self):
+        (paragraph,) = blocks_of('<P><SPAN USERMARK="B">가. 명칭&cr;</SPAN>  본문</P>')
+
+        assert paragraph.text == "가. 명칭\n본문"
+        assert paragraph.bold_spans == ((0, 5),)
+
     def test_empty_bold_span_leaves_no_mark(self):
         (paragraph,) = blocks_of('<P>앞<SPAN USERMARK="B"> </SPAN>뒤</P>')
 
@@ -63,7 +69,7 @@ class TestStructure:
             "<P>머리말</P>"
             '<TABLE-GROUP><TITLE ATOC="Y" AASSOCNOTE="D-0-3-3-1" ATOCID="7">1. 일반사항 (연결)</TITLE>'
             "<P>노트 본문</P></TABLE-GROUP>"
-            "<PGBRK/><IMAGE>a.jpg</IMAGE>"
+            "<PGBRK/><IMAGE>a.jpg</IMAGE><TITLE> </TITLE>"
             "<SECTION-3><TITLE>하위</TITLE><P>하위 본문</P></SECTION-3>"
             "<LIBRARY><P>꼬리말</P></LIBRARY>"
         )
@@ -97,6 +103,11 @@ class TestTables:
         assert table.grid[0][1] is table.grid[0][2]
         assert table.grid[0][0].row_span == 2 and table.grid[0][0].is_header
         assert table.grid[2][1].acode == "ifrs_Revenue" and not table.grid[2][1].is_header
+
+    def test_invalid_span_values_count_as_one(self):
+        (table,) = blocks_of('<TABLE BORDER="1"><TR><TD COLSPAN="x">a</TD><TD ROWSPAN="0">b</TD></TR></TABLE>')
+
+        assert (table.n_rows, table.n_cols) == (1, 2)
 
     def test_ragged_rows_are_padded(self):
         (table,) = blocks_of('<TABLE BORDER="1"><TR><TD>a</TD><TD>b</TD></TR><TR><TD>c</TD></TR></TABLE>')
@@ -136,6 +147,26 @@ class TestTables:
 
         assert [b.unit for b in only(blocks, Table)] == ["백만원"]
 
+    def test_second_caption_replaces_the_first(self):
+        blocks = blocks_of(
+            '<TABLE BORDER="0"><TR><TD>(단위 : 원)</TD><TD>당기</TD></TR></TABLE>'
+            '<TABLE BORDER="0"><TR><TD>(단위 : 주)</TD><TD>전기</TD></TR></TABLE>'
+            '<TABLE BORDER="1"><TR><TD>a</TD><TD>1</TD></TR></TABLE>'
+        )
+
+        first, data = blocks
+        assert not first.bordered and first.unit is None
+        assert data.unit == "주"
+
+    def test_long_borderless_table_with_unit_is_not_a_caption(self):
+        long_text = "설명 " * 80  # 200자 초과
+        blocks = blocks_of(
+            f'<TABLE BORDER="0"><TR><TD>{long_text}(단위 : 원)</TD><TD>x</TD></TR></TABLE>'
+            '<TABLE BORDER="1"><TR><TD>a</TD><TD>1</TD></TR></TABLE>'
+        )
+
+        assert [(b.bordered, b.unit) for b in only(blocks, Table)] == [(False, None), (True, None)]
+
     def test_unattached_caption_table_stays_a_block(self):
         blocks = blocks_of(
             '<TABLE BORDER="0"><TR><TD>(단위 : 원)</TD><TD>x</TD></TR></TABLE><P>표가 아닌 문단</P>'
@@ -165,7 +196,7 @@ class TestTables:
 
     def test_layout_table_is_unwrapped(self):
         blocks = blocks_of(
-            '<TABLE BORDER="0"><TR><TD>안내 <SPAN USERMARK="B">굵게</SPAN><P>문단</P>꼬리'
+            '<TABLE BORDER="0"><TR><TD>안내 <SPAN USERMARK="B">굵게</SPAN><P>문단</P>꼬리<BR/>둘째 줄'
             '<TABLE BORDER="1"><TR><TD>x</TD><TD>1</TD></TR></TABLE></TD></TR></TABLE>'
             '<TABLE BORDER="1"><TR><TD><P>1×1 상자</P></TD></TR></TABLE>'
             '<TABLE BORDER="1"><TR><TD> </TD></TR></TABLE>'
@@ -173,7 +204,7 @@ class TestTables:
 
         assert [type(b).__name__ for b in blocks] == ["Paragraph", "Paragraph", "Paragraph", "Table", "Paragraph"]
         assert blocks[0] == Paragraph("안내 굵게", ((3, 5),))
-        assert [b.text for b in only(blocks, Paragraph)] == ["안내 굵게", "문단", "꼬리", "1×1 상자"]
+        assert [b.text for b in only(blocks, Paragraph)] == ["안내 굵게", "문단", "꼬리\n둘째 줄", "1×1 상자"]
         assert only(blocks, Table)[0].to_rows() == [["x", "1"]]
 
 

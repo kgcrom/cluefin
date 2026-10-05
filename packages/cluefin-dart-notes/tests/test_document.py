@@ -1,6 +1,8 @@
 from pathlib import Path
 
-from cluefin_dart_notes import DartDocument, load_document, parse_document
+import pytest
+
+from cluefin_dart_notes import DartDocument, DartXmlRepairer, DartXmlRepairError, Section, load_document, parse_document
 
 
 def test_recent_periodic_metadata(periodic_recent_bytes):
@@ -101,6 +103,15 @@ def test_document_code_falls_back_to_file_name_suffix(audit_report_bytes):
 
     assert document.document_code == "00761"
     assert document.rcept_no == "20260101000001"
+
+
+def test_custom_repairer_is_used(periodic_legacy_bytes):
+    with pytest.raises(DartXmlRepairError):
+        parse_document(periodic_legacy_bytes, repairer=DartXmlRepairer(rules=(), strict=True))
+
+
+def test_section_without_element_has_no_blocks():
+    assert Section("제목", None, None, None, 1).blocks == ()
 
 
 def test_unrecognized_file_name_is_ignored(periodic_recent_bytes):

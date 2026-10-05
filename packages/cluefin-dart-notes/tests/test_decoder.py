@@ -55,3 +55,12 @@ def test_undecodable_bytes_raise():
 def test_empty_candidates_are_rejected():
     with pytest.raises(ValueError):
         Decoder(candidates=())
+
+
+def test_unknown_declared_encoding_is_reported_as_mismatch():
+    raw = (DECLARATION.format("x-dart") + "<DOCUMENT/>").encode("utf-8")
+
+    result = Decoder().decode(raw)
+
+    assert result.report is not None
+    assert result.text.startswith(DECLARATION.format("utf-8"))

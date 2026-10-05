@@ -39,6 +39,16 @@ class TestSections:
         assert [(s.title, b) for s, b in notes_sections(consolidated_audit)] == [("주석", "consolidated")]
         assert [b for _, b in notes_sections(separate_audit)] == ["separate"]
 
+    def test_sections_without_codes_are_found_by_title_and_missing_ones_skipped(self):
+        raw = (
+            '<DOCUMENT><DOCUMENT-NAME ACODE="11011">사업보고서</DOCUMENT-NAME><BODY>'
+            "<SECTION-2><TITLE>3. 연결재무제표 주석</TITLE><P>1. 일반사항</P></SECTION-2></BODY></DOCUMENT>"
+        ).encode()
+
+        assert [(s.title, b) for s, b in notes_sections(parse_document(raw))] == [
+            ("3. 연결재무제표 주석", "consolidated")
+        ]
+
     def test_extract_notes_returns_both_bases(self):
         notes = extract_notes(parse_document(periodic("<P>1. 일반사항</P><P>2. 현금</P>")))
 
@@ -146,6 +156,20 @@ class TestSequenceMethod:
             ["(1) 보고기간말 현재 내용은 다음과 같습니다."],
         ]
 
+    def test_long_line_title_without_body_marker_is_cut_at_a_word(self):
+        result = consolidated(
+            "<P>1. 기타포괄손익공정가치측정금융자산과 상각후원가측정금융자산 및 파생상품 거래내역 요약표</P>"
+            "<P>2. 마흔 자 이하의 제목은 본문 표지가 없으면 그대로 둔다</P>"
+        )
+
+        first, second = result.notes
+        assert (
+            first.title == "기타포괄손익공정가치측정금융자산과 상각후원가측정금융자산 및 파생상품"
+        )  # 40자 안의 마지막 공백
+        assert texts(first) == ["거래내역 요약표"]
+        assert second.title == "마흔 자 이하의 제목은 본문 표지가 없으면 그대로 둔다"
+        assert second.blocks == ()
+
     def test_table_cells_are_not_candidates(self):
         result = consolidated(
             '<P>1. 일반사항</P><TABLE BORDER="1"><TR><TD>2. 당기순이익</TD><TD>57.18</TD></TR></TABLE><P>2. 현금</P>'
@@ -161,7 +185,9 @@ class TestSequenceMethod:
         assert result.warnings == ("2번 노트가 없습니다(3번으로 건너뜀).",)
 
     def test_two_missing_numbers_stop_the_split_and_are_warned(self):
-        result = consolidated("<P>1. 일반사항</P><P>4. 리스</P><P>5. 차입금</P>")
+        result = consolidated(
+            '<P>1. 일반사항</P><TABLE BORDER="1"><TR><TD>a</TD><TD>1</TD></TR></TABLE><P>4. 리스</P><P>5. 차입금</P>'
+        )
 
         assert [note.number for note in result.notes] == ["1"]
         assert len(result.warnings) == 1 and "놓쳤을 수" in result.warnings[0]

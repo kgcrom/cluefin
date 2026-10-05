@@ -1,30 +1,21 @@
 """실제 원문 디렉터리로 주석 분할을 확인한다. `CLUEFIN_DART_NOTES_TEST_DIR`가 없으면 건너뛴다."""
 
-import os
 from collections import Counter
-from pathlib import Path
 
 import pytest
 
-from cluefin_dart_notes import load_document, notes_sections, split_notes
+from cluefin_dart_notes import notes_sections, split_notes
 
 pytestmark = pytest.mark.integration
 
 
 @pytest.fixture(scope="module")
-def splits():
-    directory = os.getenv("CLUEFIN_DART_NOTES_TEST_DIR")
-    if not directory:
-        pytest.skip("CLUEFIN_DART_NOTES_TEST_DIR is not set")
-    paths = sorted(Path(directory).rglob("*.xml"))
-    if not paths:
-        pytest.skip(f"no *.xml under {directory}")
+def splits(corpus_documents):
     results = []
-    for path in paths:
-        document = load_document(path)
+    for document in corpus_documents:
         sections = notes_sections(document)
-        assert sections, path.name
-        results.extend((path.name, split_notes(section, basis)) for section, basis in sections)
+        assert sections, document.rcept_no
+        results.extend((document.rcept_no, split_notes(section, basis)) for section, basis in sections)
     return results
 
 

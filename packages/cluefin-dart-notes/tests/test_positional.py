@@ -75,3 +75,54 @@ def test_multibyte_columns_are_mapped_to_characters():
     text, _ = body_text(raw, fallback_only())
 
     assert text == "한글 한글 한글 R&D"
+
+
+def test_single_word_hangul_tag_fails_as_mismatch_and_is_fixed():
+    """`<기후변화>`는 올바른 XML 이름이라 태그로 읽히고, 닫는 `</P>`에서 "mismatched tag"로 실패한다."""
+    raw = "<DOCUMENT><P><기후변화><SPAN>본문</SPAN>줄<BR/>끝</P></DOCUMENT>"
+
+    text, result = body_text(raw, fallback_only())
+
+    assert text == "<기후변화>본문줄끝"
+    assert result.reports[-1].count == 1
+
+
+def test_mismatch_on_known_tag_is_not_fixed():
+    with pytest.raises(DartXmlRepairError, match="닫히지 않은 태그가 알려진 태그"):
+        fallback_only().parse("<DOCUMENT><P><SPAN>열린 채</P></DOCUMENT>".encode())
+
+
+def test_error_without_any_markup_nearby_is_not_fixed():
+    raw = "<DOCUMENT>" + "가" * 300 + "\x01</DOCUMENT>"
+
+    with pytest.raises(DartXmlRepairError, match="알려진 태그와 올바른 참조밖에"):
+        fallback_only(fallback=PositionalRepair(token_window=10)).parse(raw.encode())
+
+
+def test_comments_and_processing_instructions_are_skipped_when_searching_back():
+    text, _ = body_text("<DOCUMENT><P>R&D<!-- 메모 --></P></DOCUMENT>", fallback_only())
+
+    assert text == "R&D"
+
+
+def test_mismatch_beyond_the_window_is_not_fixed():
+    raw = "<DOCUMENT><P><기후변화>" + "본문" * 50 + "</P></DOCUMENT>"
+
+    with pytest.raises(DartXmlRepairError):
+        fallback_only(fallback=PositionalRepair(mismatch_window=20)).parse(raw.encode())
+
+
+def test_valid_reference_is_skipped_when_searching_back():
+    text, result = body_text("<DOCUMENT><P>A&B&amp;</P></DOCUMENT>", fallback_only())
+
+    assert text == "A&B&"
+    assert result.reports[-1].count == 1
+
+
+def test_positional_samples_are_capped():
+    raw = "<DOCUMENT><P>" + " ".join(f"A{i}&B" for i in range(7)) + "</P></DOCUMENT>"
+
+    _, result = body_text(raw, fallback_only())
+
+    assert result.reports[-1].count == 7
+    assert len(result.reports[-1].samples) == 5

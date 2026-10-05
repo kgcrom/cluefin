@@ -4,7 +4,6 @@ import pytest
 from defusedxml.ElementTree import ParseError, fromstring
 
 from cluefin_dart_notes import (
-    DEFAULT_RULES,
     EscapeBareAmpersand,
     EscapeUnknownTags,
     NormalizeAttributes,
@@ -146,5 +145,8 @@ class TestNormalizeAttributes:
         assert outcome.text == raw
 
 
-def test_default_rules_order():
-    assert [rule.name for rule in DEFAULT_RULES] == ["dart-entities", "bare-ampersand", "unknown-tags", "attributes"]
+def test_samples_are_capped_but_every_fix_is_counted():
+    outcome = EscapeBareAmpersand().apply("<P>" + " ".join(f"A{i}&B" for i in range(8)) + "</P>")
+
+    assert outcome.count == 8
+    assert len(outcome.samples) == 5

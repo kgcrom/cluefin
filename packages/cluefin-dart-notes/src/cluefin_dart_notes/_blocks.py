@@ -369,8 +369,6 @@ def _unit_paragraph(paragraph: Paragraph) -> str | None:
 
 def _first_row_unit(table: Table) -> str | None:
     """데이터 표의 첫 행이 단위 행("(단위: 천원)")인 경우."""
-    if not table.grid:
-        return None
     text = " ".join(cell.text for cell in _unique(table.grid[0]))
     return _find_unit(text) if len(text) <= _UNIT_PARAGRAPH_MAX_LENGTH * 2 else None
 
