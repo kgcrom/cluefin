@@ -103,6 +103,16 @@ shapes are in `src/dart/client.ts` and `src/dart/xml.ts`.
   at runtime, `` `test-${randomUUID()}` `` — which also suits a test whose point is that the value must
   never appear in errors or logs.
 
+### Python: any `import` from the stdlib `xml` package is a critical finding
+
+- Even a type-only import (`from xml.etree.ElementTree import Element` under `TYPE_CHECKING`) or
+  `xml.parsers.expat.errors` is flagged as XXE. After: a `Protocol` with the element methods you use
+  (`cluefin_dart_notes/_xml.py`), and literal values for expat constants.
+- Parse with `defusedxml` and keep it (decided 2026-10). The stdlib parser already refuses external
+  entities, but the bundled expat on 3.10–3.14 is 2.6.3, and Python's docs call < 2.7.2 possibly
+  vulnerable to entity-expansion and large-token DoS; `defusedxml` forbids entity declarations outright.
+  Its stable release is still 0.7.1 (0.8.0 stuck at rc since 2023-09) but it works on 3.10–3.14.
+
 ## Environment gotchas
 
 - macOS system deps: `brew install lightgbm ta-lib`. `lightgbm` is a runtime dep of

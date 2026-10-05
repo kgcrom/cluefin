@@ -1,6 +1,7 @@
 import logging
 
 import pytest
+from defusedxml import EntitiesForbidden
 from defusedxml.ElementTree import fromstring
 
 from cluefin_dart_notes import DartXmlRepairer, RuleOutcome
@@ -130,3 +131,11 @@ def test_without_rule():
     assert [rule.name for rule in repairer.rules] == ["dart-entities", "bare-ampersand", "unknown-tags"]
     with pytest.raises(ValueError):
         repairer.without_rule("attributes")
+
+
+def test_entity_declarations_are_refused():
+    """DART 원문에는 DOCTYPE 이 없다. 엔티티 선언이 든 입력은 정리·수리하지 않고 defusedxml 이 거부한다."""
+    raw = b'<!DOCTYPE DOCUMENT [<!ENTITY e SYSTEM "file:///etc/passwd">]><DOCUMENT>&e;</DOCUMENT>'
+
+    with pytest.raises(EntitiesForbidden):
+        DartXmlRepairer().parse(raw)
