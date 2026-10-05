@@ -10,6 +10,7 @@ members = [
     "packages/cluefin-openapi",
     "packages/cluefin-ta",
     "packages/cluefin-xbrl",
+    "packages/cluefin-dart-notes",
     "apps/cluefin-openapi-cli",
     "apps/cluefin-desk",
 ]
@@ -29,6 +30,7 @@ dev = [
 cluefin-openapi = { workspace = true }
 cluefin-ta = { workspace = true }
 cluefin-xbrl = { workspace = true }
+cluefin-dart-notes = { workspace = true }
 cluefin-openapi-cli = { workspace = true }
 cluefin-desk = { workspace = true }
 
@@ -59,6 +61,7 @@ testpaths = [
     "packages/cluefin-openapi/tests",
     "packages/cluefin-ta/tests",
     "packages/cluefin-xbrl/tests",
+    "packages/cluefin-dart-notes/tests",
     "apps/cluefin-openapi-cli/tests",
     "apps/cluefin-desk/tests",
 ]
@@ -68,6 +71,7 @@ source = [
     "packages/cluefin-openapi/src",
     "packages/cluefin-ta/src",
     "packages/cluefin-xbrl/src",
+    "packages/cluefin-dart-notes/src",
     "apps/cluefin-openapi-cli/src",
     "apps/cluefin-desk/src",
 ]
