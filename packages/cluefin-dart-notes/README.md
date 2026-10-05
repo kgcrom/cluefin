@@ -3,7 +3,28 @@
 DART 공시 원문(`document.xml`, dart4 XML)을 직접 파싱하는 패키지입니다. 정기보고서(사업·반기·분기)와 첨부
 감사보고서의 서술형 주석, "사업의 내용"처럼 XBRL에 없는 내용을 다루는 것이 목표입니다.
 
-지금은 **원문 정리** 단계만 있습니다. 섹션·표·주석 해석은 이어서 추가합니다.
+지금은 원문 정리, 문서 메타, 섹션 트리까지 있습니다. 표·주석 해석은 이어서 추가합니다.
+
+## 문서와 섹션
+
+```python
+from cluefin_dart_notes import business_description, find_section, find_sections, load_document
+
+doc = load_document("docs/20260814000000.xml")
+print(doc.document_name, doc.document_code, doc.company_name, doc.rcept_no)  # 반기보고서 11012 …
+
+for section in doc.iter_sections():  # 문서 순서, 장 → 절 → 항
+    print("  " * (section.level - 1), section.title, section.assoc_code)
+
+business = business_description(doc)  # II. 사업의 내용 (정기보고서만)
+notes = find_section(doc, assoc_code="D-0-3-3-0")  # 연결재무제표 주석
+overview_parts = find_sections(doc, assoc_code="D-0-1-*")  # glob 패턴
+same_notes = find_section(doc, title="연결재무제표 주석")  # 번호·공백 무시
+```
+
+섹션 코드(`AASSOCNOTE`)는 문서 종류마다 뜻이 다릅니다. 감사보고서의 `D-0-2-0-0`은 "외부감사 실시내용"입니다.
+그래서 `business_description`·`company_overview`는 정기보고서에서만 값을 돌려줍니다. 감사보고서는 `doc.summary`에
+감사인·감사의견·자산총액 같은 요약값(`SUMMARY/EXTRACTION`)이 있습니다.
 
 ## 원문 정리
 

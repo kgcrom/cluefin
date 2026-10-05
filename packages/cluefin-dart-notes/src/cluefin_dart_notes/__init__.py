@@ -2,6 +2,15 @@
 
 __version__ = "0.1.0"
 
+from cluefin_dart_notes._document import (
+    AUDIT_REPORT_CODES,
+    PERIODIC_REPORT_CODES,
+    DartDocument,
+    Section,
+    load_document,
+    parse_document,
+)
+from cluefin_dart_notes._find import business_description, company_overview, find_section, find_sections
 from cluefin_dart_notes.repair import (
     DEFAULT_RULES,
     KNOWN_TAGS,
@@ -21,8 +30,11 @@ from cluefin_dart_notes.repair import (
 )
 
 __all__ = [
+    "AUDIT_REPORT_CODES",
     "DEFAULT_RULES",
     "KNOWN_TAGS",
+    "PERIODIC_REPORT_CODES",
+    "DartDocument",
     "DartXmlRepairError",
     "DartXmlRepairer",
     "Decoder",
@@ -36,4 +48,11 @@ __all__ = [
     "RepairSample",
     "ReplaceDartEntities",
     "RuleOutcome",
+    "Section",
+    "business_description",
+    "company_overview",
+    "find_section",
+    "find_sections",
+    "load_document",
+    "parse_document",
 ]

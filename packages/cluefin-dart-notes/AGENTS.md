@@ -39,6 +39,31 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - With the current rules the whole corpus parses **without** the positional fallback. The integration
   test asserts that; if it starts failing, a new defect type has appeared — add a rule.
 
+## Document structure the code relies on (observed, 2017–2026)
+
+- Meta tags (`DOCUMENT-NAME` with `ACODE`, `FORMULA-VERSION`, `COMPANY-NAME` with `AREGCIK`) sit directly
+  under the root from 2022 filings, and inside `DOCUMENT-HEADER` before that. Every corpus file had them;
+  the file-name fallback (`<rcept_no>_00760.xml`) is only a safety net.
+- `ENG` and `ATOCID` on `TITLE` exist only from 2024 filings. `AASSOCNOTE` exists from 2017.
+- Sections hang off `BODY`, `SECTION-n`, and wrappers such as `LIBRARY` (business and financial
+  statement chapters live inside `LIBRARY`). `CORRECTION` is section-shaped (`TITLE` first) and sits in
+  `BODY > LIBRARY`; it is exposed as a level-1 `Section` with `is_correction=True`.
+- **Section codes are not globally unique and not stable across years.** Use only the stable ones for
+  lookups and scope helpers by document kind:
+
+  | code | periodic report (11011–11014) | audit report (00760/00761) |
+  |---|---|---|
+  | `D-0-1-*` | children of "I. 회사의 개요" (the chapter itself has **no** code) | `D-0-1-0-0` = 주석 |
+  | `D-0-2-0-0` | II. 사업의 내용 — stable in all filings | 외부감사 실시내용 |
+  | `D-0-3-3-0` / `D-0-3-5-0` | 연결재무제표 주석 / 재무제표 주석 — stable | — |
+  | `D-0-4-0-0` / `D-0-5-0-0` | 경영진단 / 감사의견 — **swapped** in the oldest filings | — |
+  | `D-0-1-5-0`, `D-0-3-6-0`, `D-0-10-0-0` | meaning changed between ~2018 and later filings | — |
+  | `L-0-2-n-L1` / `L-0-2-n-L2` | 사업의 내용 subsections; `L2` is the financial-industry template. Older filings have none | — |
+  | `D-0-0-0-0` / `D-0-0-1-0` | — | (첨부)재무제표 / 독립된 감사인의 감사보고서 |
+
+  Chapters I, VI, VIII, 【전문가의 확인】 and the 상세표 children have no code.
+- 11014 (3분기) has not been seen yet; 11013 matched 11012 in structure.
+
 ## Testing
 
 - Unit tests use **synthetic fragments only**. Don't commit real filings or name the companies used for

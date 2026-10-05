@@ -1,0 +1,68 @@
+import pytest
+
+from cluefin_dart_notes import business_description, company_overview, find_section, find_sections, parse_document
+from cluefin_dart_notes._find import title_key
+
+
+@pytest.fixture
+def recent(periodic_recent_bytes):
+    return parse_document(periodic_recent_bytes)
+
+
+def test_find_by_assoc_code(recent):
+    assert find_section(recent, assoc_code="D-0-3-3-0").title == "3. 연결재무제표 주석"
+    assert find_section(recent, assoc_code="D-9-9-9-9") is None
+
+
+def test_find_by_glob_pattern(recent):
+    assert [s.assoc_code for s in find_sections(recent, assoc_code="D-0-1-*")] == ["D-0-1-1-0", "D-0-1-2-0"]
+    assert [s.assoc_code for s in find_sections(recent, assoc_code="L-0-2-*")] == ["L-0-2-1-L1", "L-0-2-2-L1"]
+
+
+def test_find_by_title_ignores_number_and_spaces(recent):
+    assert find_section(recent, title="연결재무제표 주석").assoc_code == "D-0-3-3-0"
+    assert find_section(recent, title="회사의연혁").assoc_code == "D-0-1-2-0"
+    assert find_section(recent, title="증권의 발행을 통한 자금조달 실적").level == 3
+    # 같은 제목이면 장(I.)과 절(1.)이 모두 맞는다.
+    assert [s.level for s in find_sections(recent, title="회사의 개요")] == [1, 2]
+
+
+def test_find_with_both_conditions(recent):
+    assert [s.level for s in find_sections(recent, title="회사의 개요", assoc_code="D-0-1-1-0")] == [2]
+
+
+def test_find_requires_a_condition(recent):
+    with pytest.raises(ValueError):
+        find_sections(recent)
+
+
+@pytest.mark.parametrize(
+    ("title", "key"),
+    [
+        ("III. 재무에 관한 사항", "재무에관한사항"),
+        ("7-1. 실적", "실적"),
+        ("(첨부)연 결 재 무 제 표", "(첨부)연결재무제표"),
+    ],
+)
+def test_title_key(title, key):
+    assert title_key(title) == key
+
+
+def test_company_overview_finds_chapter_without_code(recent, periodic_legacy_bytes):
+    assert company_overview(recent).title == "I. 회사의 개요"
+    assert company_overview(parse_document(periodic_legacy_bytes)).title == "I. 회사의 개요"
+
+
+def test_business_description(recent, periodic_legacy_bytes):
+    assert business_description(recent).title == "II. 사업의 내용"
+    legacy = business_description(parse_document(periodic_legacy_bytes))
+    assert legacy.children == ()
+
+
+def test_helpers_skip_audit_reports_where_codes_mean_something_else(audit_report_bytes):
+    audit = parse_document(audit_report_bytes)
+
+    assert find_section(audit, assoc_code="D-0-2-0-0").title == "외부감사 실시내용"
+    assert business_description(audit) is None
+    assert company_overview(audit) is None
+    assert find_section(audit, title="주석").assoc_code == "D-0-1-0-0"
