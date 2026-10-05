@@ -62,7 +62,7 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   | `D-0-3-3-0` / `D-0-3-5-0` | 연결재무제표 주석 / 재무제표 주석 — stable | — |
   | `D-0-4-0-0` / `D-0-5-0-0` | 경영진단 / 감사의견 — **swapped** in the oldest filings | — |
   | `D-0-1-5-0`, `D-0-3-6-0`, `D-0-10-0-0` | meaning changed between ~2018 and later filings | — |
-  | `L-0-2-n-L1` / `L-0-2-n-L2` | 사업의 내용 subsections; `L2` is the financial-industry template. Older filings have none | — |
+  | `L-0-2-n-L1` / `L-0-2-n-L2` | 사업의 내용 subsections; `L2` is the financial-industry template. A company in both industries has **both sets** ("(제조서비스업)…", "(금융업)…") — use `business_overviews`/`find_sections`, not `find_section`. Older filings have none | — |
   | `D-0-0-0-0` / `D-0-0-1-0` | — | (첨부)재무제표 / 독립된 감사인의 감사보고서 |
 
   Chapters I, VI, VIII, 【전문가의 확인】 and the 상세표 children have no code.

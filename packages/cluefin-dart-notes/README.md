@@ -23,7 +23,7 @@ paths = PublicDisclosure(Client(auth_key="…")).disclosure_document_files("2026
 ## 문서와 섹션
 
 ```python
-from cluefin_dart_notes import business_description, find_section, find_sections, load_document
+from cluefin_dart_notes import business_description, business_overviews, find_section, find_sections, load_document
 
 doc = load_document("docs/20260814000000.xml")
 print(doc.document_name, doc.document_code, doc.company_name, doc.rcept_no)  # 반기보고서 11012 …
@@ -32,6 +32,7 @@ for section in doc.iter_sections():  # 문서 순서, 장 → 절 → 항
     print("  " * (section.level - 1), section.title, section.assoc_code)
 
 business = business_description(doc)  # II. 사업의 내용 (정기보고서만)
+overviews = business_overviews(doc)  # 업종 템플릿마다의 "사업의 개요" 전부 (제조서비스업·금융업 …)
 notes_section = find_section(doc, assoc_code="D-0-3-3-0")  # 연결재무제표 주석
 overview_parts = find_sections(doc, assoc_code="D-0-1-*")  # glob 패턴
 same_section = find_section(doc, title="연결재무제표 주석")  # 번호·공백 무시

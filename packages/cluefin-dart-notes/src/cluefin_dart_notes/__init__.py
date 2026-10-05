@@ -12,7 +12,13 @@ from cluefin_dart_notes._document import (
     load_document,
     parse_document,
 )
-from cluefin_dart_notes._find import business_description, company_overview, find_section, find_sections
+from cluefin_dart_notes._find import (
+    business_description,
+    business_overviews,
+    company_overview,
+    find_section,
+    find_sections,
+)
 from cluefin_dart_notes._notes import Note, NoteSplit, extract_notes, notes_sections, split_notes
 from cluefin_dart_notes.repair import (
     DEFAULT_RULES,
@@ -60,6 +66,7 @@ __all__ = [
     "Section",
     "Table",
     "business_description",
+    "business_overviews",
     "company_overview",
     "extract_blocks",
     "extract_notes",

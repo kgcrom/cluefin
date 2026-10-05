@@ -63,3 +63,22 @@ def business_description(document: DartDocument) -> Section | None:
     if not document.is_periodic_report:
         return None
     return find_section(document, assoc_code="D-0-2-0-0")
+
+
+def business_overviews(document: DartDocument) -> list[Section]:
+    """정기보고서의 "사업의 개요" 섹션을 업종 템플릿마다 모두(문서 순서).
+
+    여러 업종을 함께 하는 회사는 사업의 내용이 템플릿별로 따로 있다. 예: "(제조서비스업)사업의 개요"
+    (`L-0-2-1-L1`)와 "(금융업)사업의 개요"(`L-0-2-1-L2`). `find_section`은 그중 첫 번째만 돌려준다.
+    하위 섹션이 없는 오래된 공시는 "II. 사업의 내용" 장 하나를 돌려준다(장 본문에 개요가 바로 있다).
+    정기보고서가 아니면 빈 목록이다.
+    """
+    business = business_description(document)
+    if business is None:
+        return []
+    overviews = [
+        section for section in business.iter() if section.assoc_code and section.assoc_code.startswith("L-0-2-1-")
+    ]
+    if overviews:
+        return overviews
+    return [] if business.children else [business]

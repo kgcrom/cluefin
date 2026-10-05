@@ -4,7 +4,7 @@ from collections import Counter
 
 import pytest
 
-from cluefin_dart_notes import business_description, company_overview, find_section
+from cluefin_dart_notes import Paragraph, business_description, business_overviews, company_overview, find_section
 
 pytestmark = pytest.mark.integration
 
@@ -24,6 +24,9 @@ def test_periodic_reports_have_core_sections(corpus_documents):
         assert business_description(document) is not None, document.rcept_no
         assert find_section(document, assoc_code="D-0-3-3-0") is not None, document.rcept_no
         assert find_section(document, assoc_code="D-0-3-5-0") is not None, document.rcept_no
+        overviews = business_overviews(document)
+        assert overviews, document.rcept_no
+        assert all(any(isinstance(b, Paragraph) for b in s.blocks) for s in overviews), document.rcept_no
 
 
 def test_audit_reports_have_notes(corpus_documents):
