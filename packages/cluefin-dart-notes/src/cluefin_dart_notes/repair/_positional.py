@@ -5,14 +5,14 @@ from __future__ import annotations
 import re
 from collections import Counter
 from collections.abc import Iterable
-from xml.parsers.expat import errors as expat_errors
 
 from defusedxml.ElementTree import ParseError
 
 from cluefin_dart_notes.repair._report import DartXmlRepairError
 from cluefin_dart_notes.repair._tags import KNOWN_TAGS
 
-_TAG_MISMATCH = expat_errors.codes[expat_errors.XML_ERROR_TAG_MISMATCH]
+# expat 의 XML_ERROR_TAG_MISMATCH. 표준 `xml` 모듈을 import 하지 않으려고 값으로 둔다(_xml.py 참고).
+_TAG_MISMATCH = 7
 _TAG = re.compile(r"<(/?)([^\s<>/!?]+)[^<>]*?(/?)>")
 _NAME_AFTER_LT = re.compile(r"/?([^\s<>/]+)")
 _MARKUP = re.compile(r"[<&]")

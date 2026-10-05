@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Union
 from cluefin_dart_notes.repair._rules import LINE_BREAK
 
 if TYPE_CHECKING:
-    from xml.etree.ElementTree import Element
+    from cluefin_dart_notes._xml import Element
 
 _SECTION_TAGS = frozenset({"SECTION-1", "SECTION-2", "SECTION-3", "CORRECTION"})
 _CELL_TAGS = frozenset({"TD", "TH", "TE", "TU"})

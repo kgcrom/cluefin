@@ -21,7 +21,7 @@ from cluefin_dart_notes.repair._report import (
 from cluefin_dart_notes.repair._rules import DEFAULT_RULES, RepairRule
 
 if TYPE_CHECKING:
-    from xml.etree.ElementTree import Element
+    from cluefin_dart_notes._xml import Element
 
 logger = logging.getLogger(__name__)
 

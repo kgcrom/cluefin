@@ -14,7 +14,7 @@ from cluefin_dart_notes._blocks import Block, extract_blocks
 from cluefin_dart_notes.repair import DartXmlRepairer, RepairResult
 
 if TYPE_CHECKING:
-    from xml.etree.ElementTree import Element
+    from cluefin_dart_notes._xml import Element
 
 PERIODIC_REPORT_CODES = frozenset({"11011", "11012", "11013", "11014"})
 AUDIT_REPORT_CODES = frozenset({"00760", "00761"})
