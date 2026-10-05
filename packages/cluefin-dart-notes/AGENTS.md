@@ -106,5 +106,30 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - Unit tests use **synthetic fragments only**. Don't commit real filings or name the companies used for
   review; integration tests read `CLUEFIN_DART_NOTES_TEST_DIR` (any directory of `*.xml`, searched
   recursively) and skip when it is unset.
+- The review corpus is **not kept on disk** — only its list is, in the git-ignored
+  `.claude/plans/dart-notes-corpus-manifest.json` (`[{group, rcept_no, files}, …]`, top KOSPI/KOSDAQ and
+  unlisted filings). Rebuild it (~30 s, needs `DART_AUTH_KEY` in `.env.test`) before running the
+  integration tests, and delete it again afterwards:
+
+  ```bash
+  uv run python - <<'EOF'
+  import json, os, time
+  from pathlib import Path
+  import dotenv
+  from cluefin_openapi.dart._client import Client
+  from cluefin_openapi.dart._public_disclosure import PublicDisclosure
+
+  dotenv.load_dotenv(".env.test")
+  dart = PublicDisclosure(Client(auth_key=os.environ["DART_AUTH_KEY"]))
+  root = Path(".claude/plans/dart-notes-corpus")
+  for item in json.loads(Path(".claude/plans/dart-notes-corpus-manifest.json").read_text()):
+      time.sleep(0.5)  # DART rate limit
+      dart.disclosure_document_files(item["rcept_no"], destination=root / item["group"] / item["rcept_no"], overwrite=True)
+  EOF
+  CLUEFIN_DART_NOTES_TEST_DIR=.claude/plans/dart-notes-corpus uv run pytest packages/cluefin-dart-notes -m integration -q
+  ```
+
+  Without the manifest, any directory of downloaded filings works; mix generations (2017–2021,
+  2022–2023, 2024+), a quarterly report, an unlisted half-year report and an audit-report-only filing.
 - `examples/dart_notes_analysis.ipynb` takes the company from `DART_CORP_CODE` on purpose (no company in the
   file). Execute it with `--output-dir` outside the repo to check it, and commit it with outputs cleared.
