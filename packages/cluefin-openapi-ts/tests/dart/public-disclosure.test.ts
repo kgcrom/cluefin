@@ -139,6 +139,66 @@ describe('publicDisclosure.disclosureDocumentFile', () => {
   });
 });
 
+describe('publicDisclosure.disclosureDocumentFiles', () => {
+  const decode = (files: Map<string, Uint8Array>): [string, string][] =>
+    [...files].map(([name, data]) => [name, new TextDecoder().decode(data)]);
+
+  it('ZIP 의 XML 을 모두 돌려주고 본문을 첫 번째로 둔다', async () => {
+    const zip = buildZip([
+      { name: '20260101000001_00761.xml', data: '<DOCUMENT>연결감사</DOCUMENT>' },
+      { name: 'readme.txt', data: 'x' },
+      { name: '20260101000001_00760.xml', data: '<DOCUMENT>감사</DOCUMENT>' },
+      { name: '20260101000001.xml', data: '<DOCUMENT>본문</DOCUMENT>' },
+    ]);
+    const { calls, client } = setup(() => new Response(zip));
+
+    const response = await client.publicDisclosure.disclosureDocumentFiles({ rceptNo: '20260101000001' });
+
+    expect(calls[0]?.url.pathname).toBe('/api/document.xml');
+    expect(params(calls[0])).toEqual({ rcept_no: '20260101000001', crtfc_key: 'key' });
+    expect(decode(response.body)).toEqual([
+      ['20260101000001.xml', '<DOCUMENT>본문</DOCUMENT>'],
+      ['20260101000001_00760.xml', '<DOCUMENT>감사</DOCUMENT>'],
+      ['20260101000001_00761.xml', '<DOCUMENT>연결감사</DOCUMENT>'],
+    ]);
+  });
+
+  it('감사보고서만 든 ZIP 도 받고, 항목 이름 앞의 / 를 뗀다', async () => {
+    const zip = buildZip([{ name: '/20260101000001_00761.xml', data: '<DOCUMENT>연결감사</DOCUMENT>' }]);
+    const { client } = setup(() => new Response(zip));
+
+    const response = await client.publicDisclosure.disclosureDocumentFiles({ rceptNo: '20260101000001' });
+
+    expect([...response.body.keys()]).toEqual(['20260101000001_00761.xml']);
+  });
+
+  it('ZIP 이 아니면 받은 바이트를 본문 하나로 담는다', async () => {
+    const { client } = setup(() => new Response('<DOCUMENT>raw</DOCUMENT>'));
+
+    const response = await client.publicDisclosure.disclosureDocumentFiles({ rceptNo: '20260101000001' });
+
+    expect(decode(response.body)).toEqual([['20260101000001.xml', '<DOCUMENT>raw</DOCUMENT>']]);
+  });
+
+  it('XML 없는 ZIP 은 DartApiError', async () => {
+    const { client } = setup(() => new Response(buildZip([{ name: 'a.txt', data: 'x' }])));
+
+    await expect(client.publicDisclosure.disclosureDocumentFiles({ rceptNo: '1' })).rejects.toBeInstanceOf(
+      DartApiError,
+    );
+  });
+
+  it('에러 XML 은 DartApiError (errorCode 보존)', async () => {
+    const { client } = setup(
+      () => new Response('<result><status>014</status><message>파일이 존재하지 않습니다.</message></result>'),
+    );
+
+    await expect(client.publicDisclosure.disclosureDocumentFiles({ rceptNo: '1' })).rejects.toMatchObject({
+      errorCode: '014',
+    });
+  });
+});
+
 describe('publicDisclosure.corpCode', () => {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <result>

@@ -48,6 +48,26 @@ describe('Dart PublicDisclosure', () => {
     expect(new TextDecoder().decode(res.body.subarray(0, 200))).toContain('<');
   });
 
+  it('disclosureDocumentFiles', async () => {
+    const client = getDartClient();
+    const search = await client.publicDisclosure.publicDisclosureSearch({
+      corpCode: DART_SAMSUNG_CORP_CODE,
+      pblntfTy: 'A',
+      bgnDe: '20250101',
+      endDe: '20251231',
+      pageCount: 1,
+    });
+    const rceptNo = search.body.list?.[0]?.rceptNo;
+    expect(rceptNo).toBeTruthy();
+
+    const res = await client.publicDisclosure.disclosureDocumentFiles({ rceptNo });
+
+    expect([...res.body.keys()][0]).toBe(`${rceptNo}.xml`);
+    for (const data of res.body.values()) {
+      expect(data.length).toBeGreaterThan(1000);
+    }
+  });
+
   it('corpCode', async () => {
     const res = await getDartClient().publicDisclosure.corpCode();
 
