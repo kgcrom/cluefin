@@ -372,7 +372,7 @@ provides-extras = ["hmm"]
 dev = [
     { name = "hmmlearn", specifier = ">=0.3.0" },
     { name = "pytest", specifier = ">=7.0" },
-    { name = "ta-lib", specifier = ">=0.4.0" },
+    { name = "ta-lib", specifier = ">=0.6.0" },
 ]
 
 [[package]]

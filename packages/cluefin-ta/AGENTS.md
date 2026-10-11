@@ -23,9 +23,8 @@ AGENTS.md for repo-wide rules.
 
 ## Testing gotchas
 
-- Parity test modules import `talib` at module level with no skip guard: without the
-  TA-Lib **C library** installed, `pytest` fails at collection, not with clean skips.
-  Only `test_pattern.py` / `test_portfolio.py` / `test_regime.py` run without it (no
-  ta-lib counterpart).
-- `hmmlearn` looks like the same kind of optional dep but *is* skip-guarded — don't
-  copy the ta-lib import style for new optional deps.
+- Parity test modules `import talib` at module level on purpose: the `ta-lib>=0.6`
+  wheel bundles the C library, so the oracle is always installed with the dev group, and
+  a skip guard would only let CI pass with the parity checks silently gone.
+- `hmmlearn` *is* skip-guarded (`pytest.importorskip`) because it is an optional extra
+  of the package itself, not a test oracle.

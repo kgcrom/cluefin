@@ -1,8 +1,5 @@
 """
-Pure NumPy implementations of low-level technical analysis computations.
-
-These functions are used when Numba is not available.
-All functions are designed to match Numba-accelerated versions exactly.
+Low-level NumPy loops and rolling-window helpers shared by the indicator modules.
 """
 
 import numpy as np

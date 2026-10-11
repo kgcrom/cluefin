@@ -12,7 +12,7 @@
 ## 빠른 시작
 
 ```bash
-brew install lightgbm ta-lib   # macOS 시스템 의존성
+brew install lightgbm          # macOS 시스템 의존성
 git clone https://github.com/kgcrom/cluefin.git && cd cluefin
 uv sync --all-packages
 cp packages/cluefin-openapi/.env.sample .env  # API 키 설정

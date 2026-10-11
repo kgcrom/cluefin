@@ -17,7 +17,17 @@ Functions:
 import numpy as np
 
 from cluefin_ta._core import dx_loop, mfi_loop, rolling_minmax, wilder_smooth
-from cluefin_ta.overlap import EMA, _require_sma
+from cluefin_ta.overlap import EMA, SMA, _require_sma
+
+
+def _fast_k(high: np.ndarray, low: np.ndarray, close: np.ndarray, period: int) -> np.ndarray:
+    """Stochastic Fast %K, shared by STOCH and STOCHF. 50 (neutral) when the window has no range."""
+    highest_high, lowest_low = rolling_minmax(high, low, period)
+    span = highest_high - lowest_low
+    with np.errstate(divide="ignore", invalid="ignore"):
+        fastk = np.where(span != 0, 100.0 * (close - lowest_low) / span, 50.0)
+    fastk[: period - 1] = np.nan
+    return fastk
 
 
 def RSI(close: np.ndarray, timeperiod: int = 14) -> np.ndarray:
@@ -167,19 +177,7 @@ def STOCH(
     if n < fastk_period:
         return slowk, slowd
 
-    # Get rolling min/max
-    highest_high, lowest_low = rolling_minmax(high, low, fastk_period)
-
-    # Calculate Fast %K
-    fastk = np.full(n, np.nan)
-    for i in range(fastk_period - 1, n):
-        hh = highest_high[i]
-        ll = lowest_low[i]
-
-        if hh != ll:
-            fastk[i] = 100.0 * (close[i] - ll) / (hh - ll)
-        else:
-            fastk[i] = 50.0  # Neutral when no range
+    fastk = _fast_k(high, low, close, fastk_period)
 
     # Calculate Slow %K (SMA of Fast %K) - ta-lib starts from first valid fastk
     valid_start = fastk_period - 1
@@ -224,17 +222,12 @@ def WILLR(
     if n < timeperiod:
         return result
 
-    # Get rolling min/max
     highest_high, lowest_low = rolling_minmax(high, low, timeperiod)
-
-    for i in range(timeperiod - 1, n):
-        hh = highest_high[i]
-        ll = lowest_low[i]
-
-        if hh != ll:
-            result[i] = -100.0 * (hh - close[i]) / (hh - ll)
-        else:
-            result[i] = -50.0  # Neutral when no range
+    span = highest_high - lowest_low
+    with np.errstate(divide="ignore", invalid="ignore"):
+        # -50 (neutral) when the window has no range
+        result = np.where(span != 0, -100.0 * (highest_high - close) / span, -50.0)
+    result[: timeperiod - 1] = np.nan
 
     return result
 
@@ -276,18 +269,7 @@ def STOCHF(
     if n < fastk_period:
         return fastk, fastd
 
-    # Get rolling min/max
-    highest_high, lowest_low = rolling_minmax(high, low, fastk_period)
-
-    # Calculate Fast %K
-    for i in range(fastk_period - 1, n):
-        hh = highest_high[i]
-        ll = lowest_low[i]
-
-        if hh != ll:
-            fastk[i] = 100.0 * (close[i] - ll) / (hh - ll)
-        else:
-            fastk[i] = 50.0  # Neutral when no range
+    fastk = _fast_k(high, low, close, fastk_period)
 
     # Calculate Fast %D (SMA of Fast %K)
     valid_start = fastk_period - 1
@@ -389,8 +371,6 @@ def CCI(
     tp = (high + low + close) / 3.0
 
     # SMA of Typical Price
-    from cluefin_ta.overlap import SMA
-
     tp_sma = SMA(tp, timeperiod)
 
     # Mean Deviation (average of |TP - SMA(TP)|)
