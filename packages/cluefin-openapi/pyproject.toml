@@ -3,6 +3,7 @@ name = "cluefin-openapi"
 version = "0.8.2"
 description = "OpenAPI Client for Cluefin"
 readme = "README.md"
+license = "MIT"
 authors = [
     { name = "Hangoo Kang", email = "kgcrom@hotmail.com" }
 ]
