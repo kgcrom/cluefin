@@ -92,3 +92,12 @@ class TestBuildPresentationNodeDepthAndOrder:
         assert grandchild.concept_local_name == "Grandchild"
         assert grandchild.depth == 2
         assert grandchild.order == 1.0
+
+
+class TestRoleDefinitions:
+    def test_role_definition_is_extracted(self, sample_xbrl_path):
+        doc = parse_xbrl_file(sample_xbrl_path, include_taxonomy=True)
+
+        definitions = doc.taxonomy.role_definitions
+        role = next(uri for uri in definitions if uri.endswith("StatementOfFinancialPosition"))
+        assert definitions[role] == "Statement of Financial Position"
