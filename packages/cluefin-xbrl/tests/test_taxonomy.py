@@ -1,6 +1,11 @@
 """Tests for XBRL taxonomy label and presentation processing."""
 
+from types import SimpleNamespace
+
+from arelle import XbrlConst
+
 from cluefin_xbrl.parser import parse_xbrl_file
+from cluefin_xbrl.taxonomy import _build_presentation_node, _extract_labels
 
 
 class TestExtractLabels:
@@ -92,3 +97,43 @@ class TestBuildPresentationNodeDepthAndOrder:
         assert grandchild.concept_local_name == "Grandchild"
         assert grandchild.depth == 2
         assert grandchild.order == 1.0
+
+
+class _QName:
+    def __init__(self, local_name):
+        self.localName = local_name
+
+    def __str__(self):
+        return f"sample:{self.localName}"
+
+
+class TestDanglingRelationships:
+    """관계의 대상이 해석되지 않으면(toModelObject=None) 그 관계만 건너뛴다."""
+
+    def test_presentation_skips_unresolved_child(self):
+        root = SimpleNamespace(qname=_QName("Root"))
+        child = SimpleNamespace(qname=_QName("Child"))
+        rels_by_concept = {
+            "Root": [SimpleNamespace(order=2.0, toModelObject=child), SimpleNamespace(order=1.0, toModelObject=None)],
+            "Child": [],
+        }
+        rel_set = SimpleNamespace(fromModelObject=lambda concept: rels_by_concept[concept.qname.localName])
+
+        node = _build_presentation_node(rel_set, root, depth=0)
+
+        assert [c.concept_local_name for c in node.children] == ["Child"]
+        assert node.children[0].order == 2.0
+
+    def test_labels_skip_unresolved_label(self):
+        label = SimpleNamespace(role=XbrlConst.standardLabel, xmlLang="ko", text="자산")
+        rels = [SimpleNamespace(toModelObject=None), SimpleNamespace(toModelObject=label)]
+        label_rels = SimpleNamespace(fromModelObject=lambda concept: rels)
+        model_xbrl = SimpleNamespace(
+            relationshipSet=lambda arcrole: label_rels,
+            qnameConcepts={_QName("Assets"): object()},
+        )
+
+        labels = _extract_labels(model_xbrl)
+
+        assert labels["Assets"].label_ko == "자산"
+        assert labels["Assets"].label_en is None
