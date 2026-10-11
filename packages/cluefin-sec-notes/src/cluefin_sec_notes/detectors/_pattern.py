@@ -140,6 +140,8 @@ def _fill_gaps(context: DetectionContext, candidates: list[Candidate]) -> list[C
     for candidate in context.previous:
         if candidate.confidence <= PatternDetector.confidence:  # 검증 안 된 목차 링크 등은 빈자리로 본다
             continue
+        if candidate.ranges:  # 교차참조 색인처럼 구간이 정해진 Item은 문서 순서의 기준이 아니다
+            continue
         known[candidate.key] = min(candidate.block, known.get(candidate.key, candidate.block))
     chosen = []
     for key in dict.fromkeys(candidate.key for candidate in candidates):

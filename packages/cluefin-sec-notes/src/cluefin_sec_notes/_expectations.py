@@ -9,7 +9,8 @@ manifest 항목의 기대값 필드:
   (다음 Item 헤딩이 섞이지 않았는지).
 - `present`: `["1B", "2", …]` — 있기만 하면 되는 Item.
 - `known_bad`: `{"7": "이유"}` — 지금은 틀리는 것으로 알려진 Item. 틀리면 통과, **맞으면** `fixed`로 실패시킨다
-  (개선을 manifest에 반영하라는 신호). 반대로 기대값이 틀리면 `failed`(회귀).
+  (개선을 manifest에 반영하라는 신호. `scripts/draft_expectations.py --accept`로 반영한다). 반대로 기대값이 틀리면
+  `failed`(회귀).
 
 Item 키는 10-K는 번호(`"1A"`), Part마다 번호가 다시 시작하는 서식은 `"II:1A"`.
 
@@ -25,6 +26,9 @@ from cluefin_sec_notes._blocks import Table
 from cluefin_sec_notes._model import MISSING_ITEM, Item, ItemExtraction
 
 CHAR_TOLERANCE = 0.10
+# 수락할 때 `starts_with`로 적는 헤딩 길이와, 새로 쓰는 기대값 필드.
+_STARTS_WITH_CHARS = 60
+_LENGTH_FIELDS = frozenset({"starts_with", "chars", "min_chars", "max_chars"})
 # 스모크 불변식: Item 1A가 이보다 짧으면(참조 편입이 아니면) 경계를 의심한다. 소규모 보고회사는 "해당 없음" 한 줄이라 뺀다.
 MIN_RISK_FACTORS_CHARS = 1000
 _SMALLER_REPORTING = ("smaller reporting compan", "not required", "not applicable")
@@ -63,6 +67,30 @@ def check_expectations(extraction: ItemExtraction, entry: dict) -> list[ItemChec
         else:
             checks.append(ItemCheck(key, FAILED if problem else OK, problem))
     return checks
+
+
+def accept_items(extraction: ItemExtraction, entry: dict, keys: list[str]) -> list[str]:
+    """지금 추출 결과를 `keys` Item의 기대값으로 쓰고 `known_bad`·`present`에서 뺀다(고쳐진 known_bad 반영).
+
+    길이·시작 기대값(`starts_with`·`chars`·`min_chars`·`max_chars`)은 새로 쓰고 `excludes`·`incorporated`는 남긴다.
+    추출 결과에 없는 Item은 건너뛰고 그 키를 돌려준다.
+    """
+    items: dict[str, dict] = entry.setdefault("items", {})
+    known_bad: dict[str, str] = entry.get("known_bad", {})
+    skipped = []
+    for key in keys:
+        item = item_by_key(extraction, key)
+        if item is None:
+            skipped.append(key)
+            continue
+        kept = {name: value for name, value in items.get(key, {}).items() if name not in _LENGTH_FIELDS}
+        items[key] = {"starts_with": item.heading[:_STARTS_WITH_CHARS], "chars": len(item.text), **kept}
+        known_bad.pop(key, None)
+        if key in entry.get("present", ()):
+            entry["present"].remove(key)
+    if "known_bad" in entry and not known_bad:
+        del entry["known_bad"]
+    return skipped
 
 
 def _problem(item: Item | None, expectation: dict) -> str:

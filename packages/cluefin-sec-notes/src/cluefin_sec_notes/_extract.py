@@ -35,12 +35,13 @@ from cluefin_sec_notes._model import (
     ItemExtraction,
     ItemKey,
 )
+from cluefin_sec_notes._references import REFERENCE_BODY_MAX_CHARS, item_body, resolve_page_references
 from cluefin_sec_notes.detectors import DEFAULT_DETECTORS, DetectionContext, Detector
 
 _SIGNATURES = "signatures"
-# 참조 편입 문구. 본문이 이 길이 이하이고 문구가 있으면 Item 내용이 다른 문서(위임장, Exhibit 13 연차보고서,
-# 같은 문서의 F-페이지 등)에 있다는 뜻이다.
-_INCORPORATION_MAX_CHARS = 2500
+# 참조 편입 문구. 본문이 `REFERENCE_BODY_MAX_CHARS` 이하이고 문구가 있으면 Item 내용이 다른 문서(위임장,
+# Exhibit 13 연차보고서 등)에 있다는 뜻이다. 같은 문서의 쪽을 가리키면 `resolve_page_references`가 그 쪽을 붙이고
+# 참조 편입 표시를 거둔다.
 _INCORPORATION = re.compile(
     r"incorporated\s+(?:\w+\s+){0,3}?by\s+reference"
     r"|will\s+be\s+(?:included|set\s+forth|contained|presented)\s+in\s+.{0,120}?proxy\s+statement"
@@ -55,6 +56,8 @@ _MAX_TITLE_LINE = 150
 _STATED_OMISSION = re.compile(
     r"incorporated\s+(?:\w+\s+){0,3}?by\s+reference|omitted|general\s+instruction", re.IGNORECASE
 )
+# 헤딩을 담은 표로 볼 최대 행 수(글자 있는 행). "Item 1." | "Business"처럼 표로 짠 헤딩.
+_MAX_HEADING_ROWS = 3
 # Item 표기 행이 이만큼 있는 표는 목차다.
 _TOC_TABLE_ROWS = 3
 # Part 헤딩("PART II", "PART II — OTHER INFORMATION")으로 볼 최대 길이. Item 끝에 붙으면 잘라 낸다.
@@ -95,12 +98,19 @@ def extract_items(
     findings.extend(resolve_findings)
     findings.extend(_non_sequential(accepted, catalog))
     items = tuple(_mark_incorporated(item) for item in _build_items(document, catalog, accepted))
+    ranged = {key for key, candidate in accepted.items() if candidate.ranges}
+    items, reference_findings = resolve_page_references(document, catalog, items, skip=ranged)
+    findings.extend(reference_findings)
     findings.extend(_empty_items(document, catalog, items))
     missing = _missing(document, catalog, accepted)
     omitted = _omitted(context, missing)
     if not _is_amendment(document):
         for key in missing:
-            if key in omitted:
+            if key in context.absent:
+                findings.append(
+                    Finding(OMITTED_ITEM, f"{key} 본문이 이 문서에 없다({context.absent[key]})", severity=INFO, key=key)
+                )
+            elif key in omitted:
                 findings.append(Finding(OMITTED_ITEM, f"{key} 표기가 문서에 없다", severity=INFO, key=key))
             else:
                 findings.append(Finding(MISSING_ITEM, f"{key}을 찾지 못했다(문서에 표기는 있다)", key=key))
@@ -152,9 +162,10 @@ def _resolve(candidates: list[Candidate], catalog: FormCatalog) -> tuple[dict[It
 
 
 def _order_conflict(candidate: Candidate, accepted: dict[ItemKey, Candidate], catalog: FormCatalog) -> Candidate | None:
-    """신뢰도가 더 높은 채택 Item 중 카탈로그상 바로 앞·뒤 Item과 위치가 어긋나면 그 Item."""
+    """신뢰도가 더 높은 채택 Item 중 카탈로그상 바로 앞·뒤 Item과 위치가 어긋나면 그 Item. 구간을 탐지기가 정한
+    Item(교차참조 색인)은 문서 순서와 무관하게 놓이므로 기준으로 삼지 않는다."""
     position = _catalog_index(catalog, candidate.key)
-    stronger = [other for other in accepted.values() if other.confidence > candidate.confidence]
+    stronger = [other for other in accepted.values() if other.confidence > candidate.confidence and not other.ranges]
     before = [other for other in stronger if _catalog_index(catalog, other.key) < position]
     after = [other for other in stronger if _catalog_index(catalog, other.key) > position]
     previous = max(before, key=lambda other: _catalog_index(catalog, other.key), default=None)
@@ -167,9 +178,11 @@ def _order_conflict(candidate: Candidate, accepted: dict[ItemKey, Candidate], ca
 
 
 def _non_sequential(accepted: dict[ItemKey, Candidate], catalog: FormCatalog) -> list[Finding]:
-    # 결합 헤딩("Items 1 and 2")의 뒤쪽 Item은 앞쪽 Item 자리에 있는 것이 정상이라 빼고 본다.
+    # 결합 헤딩("Items 1 and 2")의 뒤쪽 Item은 앞쪽 Item 자리에 있는 것이 정상이라 빼고 본다. 구간을 탐지기가 정한
+    # 후보(교차참조 색인)는 순서와 무관하게 구간이 맞으므로 빼고 본다.
     first_at_block: dict[int, Candidate] = {}
-    for candidate in sorted(accepted.values(), key=lambda candidate: _catalog_index(catalog, candidate.key)):
+    headed = [candidate for candidate in accepted.values() if not candidate.ranges]
+    for candidate in sorted(headed, key=lambda candidate: _catalog_index(catalog, candidate.key)):
         first_at_block.setdefault(candidate.block, candidate)
     ordered = sorted(first_at_block.values(), key=lambda candidate: _catalog_index(catalog, candidate.key))
     for previous, current in zip(ordered, ordered[1:], strict=False):
@@ -193,13 +206,17 @@ def _catalog_index(catalog: FormCatalog, key: ItemKey) -> int:
 
 def _build_items(document: SecDocument, catalog: FormCatalog, accepted: dict[ItemKey, Candidate]) -> tuple[Item, ...]:
     ordered = sorted(accepted.values(), key=lambda candidate: (candidate.block, _catalog_index(catalog, candidate.key)))
-    starts = sorted({candidate.block for candidate in ordered})
+    # 구간이 정해진 후보는 다른 Item의 끝을 자르지 않는다.
+    starts = sorted({candidate.block for candidate in ordered if not candidate.ranges})
     last_start = starts[-1] if starts else 0
     end_of_items = _signatures(document, last_start)
     items = []
     for candidate in ordered:
-        later = [start for start in starts if start > candidate.block]
-        end = _trim_part_heading(document, candidate.block, later[0] if later else end_of_items)
+        if candidate.ranges:
+            end = candidate.ranges[0][1]
+        else:
+            later = [start for start in starts if start > candidate.block]
+            end = _trim_part_heading(document, candidate.block, later[0] if later else end_of_items)
         spec = catalog.spec(candidate.key.part, candidate.key.number)
         shared = tuple(other.key for other in ordered if other.block == candidate.block and other.key != candidate.key)
         items.append(
@@ -213,6 +230,7 @@ def _build_items(document: SecDocument, catalog: FormCatalog, accepted: dict[Ite
                 document=document,
                 evidence=candidate.evidence,
                 shared_with=shared,
+                ranges=candidate.ranges,
             )
         )
     return tuple(items)
@@ -231,9 +249,8 @@ def _trim_part_heading(document: SecDocument, start: int, end: int) -> int:
 
 
 def _mark_incorporated(item: Item) -> Item:
-    heading = item.heading
-    body = item.text[len(heading) :] if item.text.startswith(heading) else item.text
-    if len(body) <= _INCORPORATION_MAX_CHARS and _INCORPORATION.search(body):
+    body = item_body(item)
+    if len(body) <= REFERENCE_BODY_MAX_CHARS and _INCORPORATION.search(body):
         return replace(item, incorporated_by_reference=True)
     return item
 
@@ -275,18 +292,29 @@ def _missing(document: SecDocument, catalog: FormCatalog, accepted: dict[ItemKey
 
 
 def _omitted(context: DetectionContext, missing: tuple[ItemKey, ...]) -> tuple[ItemKey, ...]:
-    """목차 밖 어디에도 "Item N" 표기나 그 Item 제목만 있는 줄이 없는 Item. 목차에만 있으면 본문에서 뺀 것이다.
+    """공시가 본문이 없다고 밝힌 Item(`context.absent`)과, 목차 밖 어디에도 "Item N" 표기나 그 Item 제목만 있는 줄이
+    없는 Item. 목차에만 있으면 본문에서 뺀 것이다.
     본문 문장에 나오더라도 그 문장이 생략·참조 편입을 말하면("Items 10 through 14 … are incorporated by reference
     pursuant to General Instruction G") 생략이다."""
     if not missing:
         return ()
     document, catalog = context.document, context.catalog
-    texts = [
-        block_text(block)
+    stated = [key for key in missing if key in context.absent]
+    missing = tuple(key for key in missing if key not in context.absent)
+    kept = [
+        block
         for index, block in enumerate(document.blocks)
         if not context.is_excluded(index) and not _is_toc_table(block)
     ]
-    lines = {normalize_title(line) for text in texts for line in text.split("\n") if len(line) <= _MAX_TITLE_LINE}
+    texts = [block_text(block) for block in kept]
+    # 제목 줄은 문단과 헤딩을 담은 작은 표에서만 모은다. 데이터 표 칸의 "Other Information" 행은 헤딩이 아니다.
+    lines = {
+        normalize_title(line)
+        for block in kept
+        if _may_hold_heading(block)
+        for line in block_text(block).split("\n")
+        if len(line) <= _MAX_TITLE_LINE
+    }
     omitted = []
     for key in missing:
         mention = re.compile(rf"\bitems?\s*{re.escape(key.number)}(?![\dA-Za-z])", re.IGNORECASE)
@@ -295,7 +323,15 @@ def _omitted(context: DetectionContext, missing: tuple[ItemKey, ...]) -> tuple[I
         mentioned = any(mention.search(text) and not _STATED_OMISSION.search(text) for text in texts)
         if not mentioned and not (titles & lines):
             omitted.append(key)
-    return tuple(omitted)
+    return tuple(sorted({*stated, *omitted}, key=lambda key: _catalog_index(catalog, key)))
+
+
+def _may_hold_heading(block) -> bool:
+    if isinstance(block, Paragraph):
+        return True
+    return (
+        isinstance(block, Table) and sum(1 for row in block.rows if any(cell.text for cell in row)) <= _MAX_HEADING_ROWS
+    )
 
 
 def _is_toc_table(block) -> bool:

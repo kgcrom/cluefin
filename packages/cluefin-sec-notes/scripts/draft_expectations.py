@@ -5,6 +5,10 @@
 
     uv run python packages/cluefin-sec-notes/scripts/draft_expectations.py docs/plans/sec-notes-corpus/golden.json \
         --corpus ~/.cache/cluefin-sec-notes-corpus --only <접수번호>
+
+known_bad가 고쳐졌으면(`fixed`) 경계를 확인한 뒤 `--accept`로 지금 결과를 그 Item의 기대값으로 쓰고 known_bad에서 뺀다.
+
+    … draft_expectations.py docs/plans/sec-notes-corpus/golden.json --corpus … --accept <접수번호> 7 8
 """
 
 from __future__ import annotations
@@ -15,6 +19,7 @@ from pathlib import Path
 from _corpus import filing_path, read_manifest, write_manifest
 
 from cluefin_sec_notes import block_text, extract_items, load_filing
+from cluefin_sec_notes._expectations import accept_items
 
 # 사람이 경계를 확인해 시작 문장·길이를 적는 Item. 나머지는 있는지만 본다.
 CORE_ITEMS = ("1", "1A", "1C", "7", "7A", "8", "9A")
@@ -28,9 +33,15 @@ def main() -> None:
     parser.add_argument("--only", nargs="*", default=None, help="접수번호(일부)")
     parser.add_argument("--write", action="store_true", help="초안을 manifest에 쓴다")
     parser.add_argument("--core", action="store_true", help="핵심 Item만 보여 준다")
+    parser.add_argument(
+        "--accept", nargs="+", metavar=("ACCESSION", "ITEM"), help="지금 결과를 이 공시 Item들의 기대값으로 쓴다"
+    )
     args = parser.parse_args()
 
     entries = read_manifest(args.manifest)
+    if args.accept:
+        _accept(args, entries)
+        return
     for entry in entries:
         if args.only is not None and not any(token in entry["accession"] for token in args.only):
             continue
@@ -58,6 +69,22 @@ def main() -> None:
             entry["items"], entry["present"] = items, present
     if args.write:
         write_manifest(args.manifest, entries)
+
+
+def _accept(args: argparse.Namespace, entries: list[dict]) -> None:
+    accession, *keys = args.accept
+    if not keys:
+        raise SystemExit("--accept <접수번호> <Item…>")
+    entry = next((entry for entry in entries if entry["accession"] == accession), None)
+    if entry is None:
+        raise SystemExit(f"manifest에 없는 접수번호: {accession}")
+    document = load_filing(filing_path(args.corpus.expanduser(), entry), form=entry["form"])
+    skipped = accept_items(extract_items(document), entry, keys)
+    if skipped:
+        raise SystemExit(f"추출 결과에 없는 Item: {', '.join(skipped)} (manifest는 그대로)")
+    for key in keys:
+        print(f"{accession} {key}: {entry['items'][key]}")
+    write_manifest(args.manifest, entries)
 
 
 if __name__ == "__main__":

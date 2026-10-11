@@ -23,6 +23,10 @@ class ItemSpec:
         since: 이 Item이 생긴 기준일(보고 기간 말 기준). 그 전 공시에는 없어도 누락이 아니다.
         optional: 있어도 되고 없어도 되는 Item(예: 10-K Item 16 Form 10-K Summary).
         may_be_incorporated: 위임장(DEF 14A) 등에서 참조로 편입해 본문이 한 줄뿐인 것이 정상인 Item(Part III).
+        lists_documents: 본문이 다른 Item에 실린 문서의 목록이다(10-K Item 15). 쪽 참조("pages F-1 through F-30")를
+            이 Item의 본문 위치로 보지 않는다.
+        financial_statements: 재무제표 Item(10-K Item 8). 본문이 참조 몇 줄뿐이고 문서에 F-쪽이 따로 있으면, 쪽 번호를
+            적지 않았어도("appears following Item 15") F-쪽을 본문으로 본다.
     """
 
     part: str | None
@@ -32,6 +36,8 @@ class ItemSpec:
     since: date | None = None
     optional: bool = False
     may_be_incorporated: bool = False
+    lists_documents: bool = False
+    financial_statements: bool = False
 
     @property
     def titles(self) -> tuple[str, ...]:
@@ -107,7 +113,7 @@ FORM_10K = FormCatalog(
             "Quantitative and Qualitative Disclosures About Market Risk",
             "Quantitative and Qualitative Disclosures About Risk",
         ),
-        _item("II", "8", "Financial Statements and Supplementary Data"),
+        _item("II", "8", "Financial Statements and Supplementary Data", financial_statements=True),
         # SEC 서식에는 없고 일부 회사가 붙이는 Item(스모크 코퍼스에서 unknown_item으로 발견, 2개 연도에 반복).
         _item("II", "8A", "Unaudited Supplemental Presentation of Statements of Financial Condition", optional=True),
         _item("II", "9", "Changes in and Disagreements With Accountants on Accounting and Financial Disclosure"),
@@ -148,6 +154,7 @@ FORM_10K = FormCatalog(
             "Exhibits and Financial Statement Schedules",
             "Exhibits, Financial Statement Schedules",
             "Exhibits, Financial Statement Schedules, and Reports on Form 8-K",
+            lists_documents=True,
         ),
         _item("IV", "16", "Form 10-K Summary", since=date(2016, 6, 9), optional=True),
     ),
