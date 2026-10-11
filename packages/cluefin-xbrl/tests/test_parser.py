@@ -152,6 +152,14 @@ class TestParseXbrlFile:
         with pytest.raises(XbrlParseError, match="XBRL 인스턴스 문서가 아닙니다"):
             parse_xbrl_file(path)
 
+    def test_missing_referenced_file_raises(self, fixtures_dir, tmp_path):
+        """스키마가 가리키는 링크베이스를 못 읽으면 Arelle 은 로그만 남기지만, 여기서는 XbrlParseError 다."""
+        for name in ("sample.xbrl", "sample.xsd", "sample_lab-ko.xml", "sample_lab-en.xml"):
+            shutil.copy(fixtures_dir / name, tmp_path / name)
+
+        with pytest.raises(XbrlParseError, match=r"참조하는 파일을 읽지 못했습니다.*IOerror.*sample_pre\.xml"):
+            parse_xbrl_file(tmp_path / "sample.xbrl")
+
     def test_forever_period_extraction(self, fixtures_dir, tmp_path):
         for name in ("sample.xsd", "sample_lab-ko.xml", "sample_lab-en.xml", "sample_pre.xml"):
             shutil.copy(fixtures_dir / name, tmp_path / name)

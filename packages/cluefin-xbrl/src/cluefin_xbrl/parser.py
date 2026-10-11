@@ -28,6 +28,13 @@ _HEAD_BYTES = 8192
 # first 2KB in every filing checked (2011-2025). DART instances never use it. The CIK context scheme can't be
 # used instead: some filings put their contexts at the end of the file.
 _SEC_MARKER = b"xbrl.sec.gov/dei"
+# Arelle error codes meaning a file the instance references could not be read. Arelle only logs them and returns
+# the model without whatever that file defined. Measured 2026-10-11: none in 35 complete filings (SEC 2011-2025,
+# DART FY2011-2024), always present when a linkbase or taxonomy was missing. xmlSchema:valueError is left out: a
+# complete DART filing had it (a malformed value, not a missing file).
+_LOAD_FAILURE_CODES = frozenset({"IOerror", "xbrl:schemaImportMissing"})
+# How many unreadable files to name in the error message.
+_SHOWN_UNREADABLE = 3
 
 
 class XbrlParseError(Exception):
@@ -56,7 +63,8 @@ def parse_xbrl_file(
     Raises:
         FileNotFoundError: If the file does not exist.
         ValueError: If the file is an SEC instance and ``http_user_agent`` has no email.
-        XbrlParseError: If parsing fails.
+        XbrlParseError: If parsing fails, including when a file the instance references (a linkbase, the company
+            schema or a taxonomy Arelle could not download) cannot be read.
     """
     file_path = Path(path).resolve()
     if not file_path.exists():
@@ -148,8 +156,8 @@ def _require_sec_user_agent(user_agent: str | None, path: Path) -> str:
     """Same rule as cluefin-openapi's ``sec.Client``: a non-empty value with an email. Keep the two in step.
 
     Without it Arelle downloads the taxonomies with its default agent. That worked on 2026-10-11 but
-    www/data.sec.gov already reject such agents, and when the download fails Arelle only logs it and
-    returns an instance with most facts missing (Apple FY2023: 78 of 1,164).
+    www/data.sec.gov already reject such agents. A failed download is not an Arelle error (Apple FY2023 came back
+    with 78 of 1,164 facts); ``_raise_on_unreadable_files`` turns it into ``XbrlParseError``.
     """
     value = (user_agent or "").strip()
     if "@" not in value:
@@ -204,7 +212,24 @@ def _parse_with_session(path: Path, *, http_user_agent: str | None = None) -> Mo
                 raise XbrlParseError(f"XBRL 문서를 읽을 수 없습니다: {path} ({errors})")
             if document.type not in (Type.INSTANCE, Type.INLINEXBRL):
                 raise XbrlParseError(f"XBRL 인스턴스 문서가 아닙니다: {path}")
+            _raise_on_unreadable_files(model_xbrl, path)
             return model_xbrl
+
+
+def _raise_on_unreadable_files(model_xbrl: ModelXbrl, path: Path) -> None:
+    """Raise if Arelle could not read a file the instance references.
+
+    The facts still load, but labels, presentation or concept definitions from that file are gone (a DART ZIP
+    extracted without its subfolders, or an offline parse with a cold taxonomy cache).
+    """
+    codes = sorted({str(code) for code in model_xbrl.errors} & _LOAD_FAILURE_CODES)
+    if not codes:
+        return
+    unreadable = [uri for uri, blocked in model_xbrl.urlUnloadableDocs.items() if blocked]
+    shown = ", ".join(unreadable[:_SHOWN_UNREADABLE])
+    if len(unreadable) > _SHOWN_UNREADABLE:
+        shown += f" 외 {len(unreadable) - _SHOWN_UNREADABLE}개"
+    raise XbrlParseError(f"XBRL이 참조하는 파일을 읽지 못했습니다: {path} ({', '.join(codes)}: {shown})")
 
 
 def _extract_facts(model_xbrl: ModelXbrl) -> list[XbrlFact]:
