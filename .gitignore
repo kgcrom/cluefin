@@ -82,3 +82,6 @@ CLAUDE.local.md
 .uv-cache/
 data/
 
+
+# Plans / handoff docs (not committed)
+docs/plans/
