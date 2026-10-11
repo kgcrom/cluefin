@@ -20,6 +20,7 @@ Item 키는 10-K는 번호(`"1A"`), Part마다 번호가 다시 시작하는 서
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from cluefin_sec_notes._blocks import Table
@@ -32,6 +33,9 @@ _LENGTH_FIELDS = frozenset({"starts_with", "chars", "min_chars", "max_chars"})
 # 스모크 불변식: Item 1A가 이보다 짧으면(참조 편입이 아니면) 경계를 의심한다. 소규모 보고회사는 "해당 없음" 한 줄이라 뺀다.
 MIN_RISK_FACTORS_CHARS = 1000
 _SMALLER_REPORTING = ("smaller reporting compan", "not required", "not applicable")
+
+# 카탈로그 이름(`ItemExtraction.catalog`).
+_10K, _10Q, _8K = "10-K", "10-Q", "8-K"
 
 OK = "ok"
 FAILED = "failed"
@@ -116,8 +120,21 @@ def _problem(item: Item | None, expectation: dict) -> str:
     return ""
 
 
-def invariant_violations(extraction: ItemExtraction, *, part_scoped: bool = False) -> list[str]:
-    """기대값 없이 볼 수 있는 이상: 필수 Item 누락, 경고 코드, 너무 짧은 1A, 표 없는 Item 8."""
+def expectation_key(item: Item, *, part_scoped: bool) -> str:
+    """manifest 기대값 키: 10-K는 번호(`"1A"`), Part마다 번호가 다시 시작하는 서식은 `"II:1A"`."""
+    return f"{item.key.part}:{item.key.number}" if part_scoped else item.key.number
+
+
+def invariant_violations(extraction: ItemExtraction, *, sec_items: Sequence[str] | None = None) -> list[str]:
+    """기대값 없이 볼 수 있는 이상. 서식마다 다르다.
+
+    - 공통: 필수 Item 누락(`missing:…`), `missing_item` 외 경고 코드(`warning:…`).
+    - 10-K: 너무 짧은 1A(`short:1A`), 표 없는 Item 8(`no_table:8`).
+    - 10-Q: 표 없는 Part I Item 1(`no_table:I:1`).
+    - 8-K: 제출 이력의 Item 목록(`sec_items`)과 비교해 문서에서 못 찾은 것(`missing:2.02`), 목록에 없는데 찾은 것
+      (`extra:7.01`). 8-K 카탈로그는 전부 optional이라 공통 누락 검사는 아무것도 내지 않는다.
+    """
+    part_scoped = extraction.catalog == _10Q
     violations = set()
     for key in extraction.missing:
         if key not in extraction.omitted:
@@ -125,6 +142,26 @@ def invariant_violations(extraction: ItemExtraction, *, part_scoped: bool = Fals
     for finding in extraction.warnings:
         if finding.code != MISSING_ITEM:
             violations.add(f"warning:{finding.code}")
+    if extraction.catalog == _10K:
+        violations.update(_annual_report_violations(extraction))
+    elif part_scoped and _has_no_table(extraction.item("1", "I")):
+        violations.add("no_table:I:1")
+    elif extraction.catalog == _8K and sec_items is not None:
+        violations.update(sec_item_violations([item.key.number for item in extraction], sec_items))
+    return sorted(violations)
+
+
+def sec_item_violations(found: Sequence[str], sec_items: Sequence[str]) -> list[str]:
+    """8-K: 제출 이력의 Item 목록과 문서에서 찾은 Item 번호를 비교한다."""
+    expected = {number.strip().upper() for number in sec_items if number.strip()}
+    actual = {number.upper() for number in found}
+    return sorted(
+        [f"missing:{number}" for number in expected - actual] + [f"extra:{number}" for number in actual - expected]
+    )
+
+
+def _annual_report_violations(extraction: ItemExtraction) -> list[str]:
+    violations = []
     risk = extraction.item("1A")
     if (
         risk is not None
@@ -132,12 +169,15 @@ def invariant_violations(extraction: ItemExtraction, *, part_scoped: bool = Fals
         and len(risk.text) < MIN_RISK_FACTORS_CHARS
         and not any(phrase in risk.text.lower() for phrase in _SMALLER_REPORTING)
     ):
-        violations.add("short:1A")
-    statements = extraction.item("8")
-    if (
+        violations.append("short:1A")
+    if _has_no_table(extraction.item("8")):
+        violations.append("no_table:8")
+    return violations
+
+
+def _has_no_table(statements: Item | None) -> bool:
+    return (
         statements is not None
         and not statements.incorporated_by_reference
         and not any(isinstance(block, Table) for block in statements.blocks)
-    ):
-        violations.add("no_table:8")
-    return sorted(violations)
+    )

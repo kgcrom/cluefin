@@ -2,6 +2,7 @@
 
 - `CLUEFIN_SEC_NOTES_TEST_DIR`: 원문 폴더(`<form>/<accession>/<file>`). 없으면 통합 테스트를 건너뛴다.
 - `CLUEFIN_SEC_NOTES_MANIFEST_DIR`: `golden.json`, `smoke-*.json`이 있는 폴더. 기본값 `docs/plans/sec-notes-corpus`.
+- `CLUEFIN_SEC_NOTES_MANIFESTS`: 그 폴더에서 돌릴 manifest glob, 쉼표로 여럿(예: `golden.json,smoke-10k.json`). 기본값 전부.
   받는 법은 `scripts/fetch_corpus.py`.
 """
 
@@ -35,7 +36,9 @@ def _corpus_filings() -> list[CorpusFiling]:
         return []
     manifest_dir = Path(os.getenv("CLUEFIN_SEC_NOTES_MANIFEST_DIR", _REPO_ROOT / "docs" / "plans" / "sec-notes-corpus"))
     filings = []
-    for manifest in sorted(manifest_dir.glob("*.json")):
+    patterns = os.getenv("CLUEFIN_SEC_NOTES_MANIFESTS", "*.json").split(",")
+    manifests = sorted({manifest for pattern in patterns for manifest in manifest_dir.glob(pattern.strip())})
+    for manifest in manifests:
         for entry in json.loads(manifest.read_text()):
             folder = entry["form"].upper().replace("/", "_")
             path = Path(corpus).expanduser() / folder / entry["accession"] / entry["file"]

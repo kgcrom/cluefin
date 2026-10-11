@@ -43,7 +43,8 @@ def test_smoke_baseline_holds(corpus_filings):
         if "baseline" not in filing.entry:
             continue
         extraction = extract_items(load_filing(filing.path, form=filing.entry["form"]))
-        now, before = set(invariant_violations(extraction)), set(filing.entry["baseline"])
+        now = set(invariant_violations(extraction, sec_items=filing.entry.get("sec_items")))
+        before = set(filing.entry["baseline"])
         if now != before:
             problems.append(f"{filing.id} 새 위반 {sorted(now - before)} 사라진 위반 {sorted(before - now)}")
     assert not problems, "\n".join(problems)

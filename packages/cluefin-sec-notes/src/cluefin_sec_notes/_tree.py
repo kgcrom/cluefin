@@ -75,6 +75,9 @@ _IMPLICIT_CLOSERS: dict[str, tuple[frozenset[str], frozenset[str]]] = {
     "option": (frozenset({"option"}), frozenset({"select"}) | _DEFAULT_SCOPE),
 }
 _P_CLOSER = (frozenset({"p"}), _DEFAULT_SCOPE | frozenset({"button"}))
+# head 안에 올 수 있는 태그. 이 밖의 태그가 열리면 열린 head를 닫는다.
+_HEAD_CONTENT = frozenset({"head", "title", "meta", "link", "style", "script", "base", "noscript"})
+_HEAD_CLOSER = (frozenset({"head"}), frozenset({"html"}))
 # 끝 태그를 생략해도 되는 요소(HTML 명세).
 _OPTIONAL_END_TAGS = frozenset({"p", "li", "dt", "dd", "tr", "td", "th", "thead", "tbody", "tfoot", "option"})
 
@@ -151,6 +154,10 @@ class _TreeBuilder(HTMLParser):
         if self._is_unknown(tag):
             self.collector.unknown_tags[tag] += 1
             self._record(UNKNOWN_TAG, self.get_starttag_text() or tag)
+        if tag not in _HEAD_CONTENT:
+            # `</HEAD>` 없이 `<BODY>`나 본문 태그가 오면 브라우저는 head를 닫는다. 안 닫으면 head를 건너뛰는 선형화가
+            # 본문 전체를 버린다(2006년 8-K에서 블록 0개).
+            self._close_implicitly(tag, *_HEAD_CLOSER)
         if tag in _CLOSES_P:
             self._close_implicitly(tag, *_P_CLOSER)
         closer = _IMPLICIT_CLOSERS.get(tag)

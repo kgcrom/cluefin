@@ -10,9 +10,10 @@ from cluefin_sec_notes._catalog import FormCatalog, ItemSpec
 _ROMAN = r"(?:IV|V?I{1,3}|V)"
 # 줄 맨 앞의 "Part II", "PART II." 등. Item 표기 앞에 붙어 오기도 한다("Part II, Item 7").
 _PART = re.compile(rf"^\s*part\s+({_ROMAN})\b[\s.,:;—–-]*", re.IGNORECASE)
-# "Item 1A.", "ITEM 7A:", "Items 1 and 2.", "ITEMS 1. AND 2.", "Items 10, 11, 12, 13 and 14", "Item 2.02", "Item 9A(T)"
+# "Item 1A.", "ITEM 7A:", "Items 1 and 2.", "ITEMS 1. AND 2.", "Items 10, 11, 12, 13 and 14", "Item 2.02", "Item 9A(T)",
+# "Item 4T"(2008–2010 소규모 보고회사의 Controls and Procedures. 4와 같은 Item으로 읽는다).
 # 결합 표기는 정규식 하나로 반복시키지 않고(중첩 반복은 역추적이 폭발할 수 있다) 번호와 구분자를 차례로 읽는다.
-_NUMBER = r"\d{1,2}[A-D]?(?:\.\d{2})?(?:\(T\))?"
+_NUMBER = r"\d{1,2}[A-D]?(?:\.\d{2})?(?:\(T\)|(?-i:T))?"
 _ITEM_PREFIX = re.compile(r"\s*items?\s*", re.IGNORECASE)
 _ITEM_NUMBER = re.compile(_NUMBER, re.IGNORECASE)
 # 번호 사이: ", ", " and ", ". AND ", ", and ", " & ", " through ", " to ". 뒤에 "Item"이 다시 붙기도 한다.
@@ -50,10 +51,22 @@ def parse_item_label(text: str) -> ItemLabel | None:
     if prefix is None:
         return None
     numbers, position = _read_numbers(text, prefix.end())
-    if not numbers or (position < len(text) and (text[position].isalnum() or text[position] == "_")):
+    if not numbers or (position < len(text) and _continues_number(text, position)):
         return None
     position = _LABEL_END.match(text, position).end()
     return ItemLabel(part=part, numbers=numbers, rest=text[position:].strip())
+
+
+def _continues_number(text: str, position: int) -> bool:
+    """번호 바로 뒤 글자가 번호의 일부다("Item 10K"). "Item 7.01Regulation FD"처럼 대문자로 시작하는 낱말이 붙은
+    것은 띄어쓰기를 빠뜨린 제목이다."""
+    char = text[position]
+    if char == "_":
+        return True
+    if not char.isalnum():
+        return False
+    glued_title = char.isupper() and position + 1 < len(text) and text[position + 1].islower()
+    return not glued_title
 
 
 def parse_part(text: str) -> str | None:
@@ -70,7 +83,7 @@ def _read_numbers(text: str, position: int) -> tuple[tuple[str, ...], int]:
         match = _ITEM_NUMBER.match(text, position)
         if match is None:
             break
-        number = match.group(0).upper().replace("(T)", "")
+        number = match.group(0).upper().replace("(T)", "").removesuffix("T")
         if pending_range and numbers[-1].isdigit() and number.isdigit():
             first, last = int(numbers[-1]), int(number)
             if 0 < last - first <= _MAX_RANGE:

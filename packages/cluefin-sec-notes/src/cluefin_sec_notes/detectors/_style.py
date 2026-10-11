@@ -4,7 +4,8 @@ INDEPENDENCE")을 스타일로 알아본다. 앞 탐지기들이 못 찾은 Item
 - 앞 탐지기가 찾은 Item 헤딩 문단들의 스타일(굵기, 글자 크기) 최빈값을 이 문서의 Item 헤딩 스타일로 본다.
   참조할 헤딩이 없으면 아무것도 내지 않는다.
 - 못 찾은 Item마다 카탈로그상 바로 앞 Item과 바로 뒤 Item 위치 사이에서, 그 스타일의 한 줄짜리 문단 중 제목이
-  카탈로그 제목·별칭과 같은 첫 문단을 고른다. 앞 Item을 모르면 찾지 않는다(표지·목차의 제목 줄을 피한다).
+  카탈로그 제목·별칭과 같은 첫 문단을 고른다. 앞 Item이 없으면 그 Part 헤딩부터 찾고, 그것도 없으면 찾지 않는다
+  (표지·목차의 제목 줄을 피한다).
 - 제목 비교는 단어 끝 s를 떼고 한다(공시가 "Related Transaction"처럼 단수로 쓴 경우). 같은 제목이라도 스타일이
   다르면(본문 속 굵지 않은 소제목) 받지 않는다.
 - 신뢰도는 정규식(0.6)과 목차(0.95) 사이. 빈자리만 채우므로 다른 탐지기의 후보와 겨루지 않는다.
@@ -15,7 +16,7 @@ from __future__ import annotations
 from collections import Counter
 
 from cluefin_sec_notes._blocks import Paragraph
-from cluefin_sec_notes._labels import normalize_title, parse_item_label
+from cluefin_sec_notes._labels import normalize_title, parse_item_label, parse_part
 from cluefin_sec_notes._model import Candidate, ItemKey
 from cluefin_sec_notes.detectors._base import Detection, DetectionContext
 
@@ -40,6 +41,8 @@ class HeadingStyleDetector:
             if key in known or key in context.absent or not spec.applies_to(context.document.period_end):
                 continue
             lower, upper = _neighbours(context, known, position)
+            if lower is None:
+                lower = _part_heading_before(context, spec.part, len(blocks) if upper is None else upper)
             if lower is None:
                 continue
             titles = {_fold(title) for title in spec.titles}
@@ -79,6 +82,17 @@ def _neighbours(context: DetectionContext, known: dict[ItemKey, int], position: 
         if index is not None:
             (before if index < position else after).append((index, block))
     return (max(before)[1] if before else None, min(after)[1] if after else None)
+
+
+def _part_heading_before(context: DetectionContext, part: str | None, before: int) -> int | None:
+    """카탈로그상 앞 Item이 없을 때(Part I 첫 Item) 그 Part 헤딩("PART I. FINANCIAL INFORMATION")을 하한으로 쓴다."""
+    if part is None:
+        return None
+    for index in range(before - 1, -1, -1):
+        block = context.document.blocks[index]
+        if isinstance(block, Paragraph) and not context.is_excluded(index) and parse_part(block.text) == part:
+            return index
+    return None
 
 
 def _is_title_line(block, style: tuple[bool, float | None], titles: set[str]) -> bool:
