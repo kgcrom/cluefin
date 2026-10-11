@@ -52,12 +52,31 @@ def test_items_follow_page_references_into_the_same_document():
     assert not statements.incorporated_by_reference  # 본문이 이 문서에 있다
 
     assert len(result.item("9A").ranges) == 1  # 쪽 하나는 곁가지 참조
-    assert len(result.item("15").ranges) == 1  # 문서 목록 Item
+    # 문서 목록 Item: 쪽 참조를 따르지 않고, 뒤에 붙은 MD&A 쪽(Item 7이 가져감)도 빼다
+    assert (
+        result.item("15").text
+        == "Item 15. Exhibits and Financial Statement Schedules\n\nFinancial statements: pages F-1 through F-2."
+    )
     market = result.item("7A")
     assert len(market.ranges) == 1 and market.incorporated_by_reference  # 다른 문서의 쪽
 
     unresolved = [finding for finding in result.findings if finding.code == PAGE_REFERENCE_UNRESOLVED]
     assert [finding.key.number for finding in unresolved] == ["1A"]
+
+
+def test_exhibit_index_after_the_f_pages_stays_in_the_exhibits_item():
+    pages = [
+        *PAGES[:6],
+        page("F-1", "Balance sheet."),
+        page("F-2", "Notes to the statements."),
+        "<div>EXHIBIT INDEX</div>",
+    ]
+    pages.append(page("7", "SIGNATURES", "Signed."))
+    result = extract_items(parse_filing(filing(*pages)))
+    assert result.item("8").text.endswith("Balance sheet.\n\nNotes to the statements.")
+    exhibits = result.item("15")
+    assert len(exhibits.ranges) == 2
+    assert exhibits.text.endswith("Financial statements: pages F-1 through F-2.\n\nEXHIBIT INDEX")
 
 
 def test_statements_item_takes_f_pages_without_page_numbers():
