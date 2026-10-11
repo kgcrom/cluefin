@@ -19,8 +19,8 @@ _ITEM = re.compile(
 _ITEM_NUMBER = re.compile(_NUMBER, re.IGNORECASE)
 _RANGE = re.compile(r"(\d{1,2})\s*(?:through|to)\s*(\d{1,2})$", re.IGNORECASE)
 _MAX_RANGE = 10
-# 목차 행에서 제목 뒤에 오는 페이지 표기("5", "II-253", "Pages 10 to 12"), 정규화 후 모양.
-_PAGE_REFERENCE = re.compile(r"(?:pages? )?(?:[ivx]+ )?\d+(?: (?:and|to|through) (?:[ivx]+ )?\d+)?")
+# 목차 행에서 제목 뒤에 오는 칸의 토큰(정규화 후). Part·Item 번호·페이지("I 1 5", "1A 13", "ii 253", "pages 10 to 12").
+_TOC_TAIL_TOKEN = re.compile(r"[ivx]+|\d+[a-d]?|pages?|part|item|and|to|through")
 _NON_WORD = re.compile(r"[^a-z0-9]+")
 
 
@@ -90,8 +90,10 @@ def match_title(catalog: FormCatalog, text: str, part: str | None = None) -> Ite
 
 
 def _is_title_with_page(normalized: str, title: str) -> bool:
-    """제목과 같거나, 제목 뒤에 페이지 표기만 붙었다. "Business Overview"는 "Business"가 아니다."""
+    """제목과 같거나, 제목 뒤에 Part·Item 번호·페이지 칸만 붙었다. "Business Overview"는 "Business"가 아니다."""
     if not normalized.startswith(title):
         return False
     rest = normalized[len(title) :]
-    return not rest or (rest.startswith(" ") and _PAGE_REFERENCE.fullmatch(rest.strip()) is not None)
+    if rest and not rest.startswith(" "):
+        return False
+    return all(_TOC_TAIL_TOKEN.fullmatch(token) for token in rest.split())

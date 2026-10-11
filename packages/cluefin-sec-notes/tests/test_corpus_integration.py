@@ -4,7 +4,8 @@ from collections import Counter
 
 import pytest
 
-from cluefin_sec_notes import load_filing
+from cluefin_sec_notes import extract_items, load_filing
+from cluefin_sec_notes._expectations import FAILED, FIXED, check_expectations
 
 pytestmark = pytest.mark.integration
 
@@ -20,3 +21,16 @@ def test_every_filing_parses_with_its_form_and_known_markup(corpus_filings):
         assert not unknown, (filing.id, unknown)
         fixes.update({fix.kind: fix.count for fix in document.report.fixes})
     print("\n", len(corpus_filings), dict(fixes))
+
+
+def test_golden_expectations_hold(corpus_filings):
+    """기대값이 틀리면 회귀(failed), known_bad가 맞으면 개선(fixed) — 둘 다 manifest를 보고 판단하라는 신호다."""
+    problems = []
+    for filing in corpus_filings:
+        if not filing.entry.get("items") and not filing.entry.get("present") and not filing.entry.get("known_bad"):
+            continue
+        extraction = extract_items(load_filing(filing.path, form=filing.entry["form"]))
+        for check in check_expectations(extraction, filing.entry):
+            if check.status in (FAILED, FIXED):
+                problems.append(f"{filing.id} {check.key} {check.status}: {check.detail}")
+    assert not problems, "\n".join(problems)

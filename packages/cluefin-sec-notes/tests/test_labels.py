@@ -49,4 +49,8 @@ def test_match_title_prefers_longest_title():
     )
     assert match_title(FORM_10K, "Submission of Matters to a Vote of Security Holders").number == "4"
     assert match_title(FORM_10K, "Business Overview") is None
+    assert match_title(FORM_10K, "Business Segments 5") is None
+    assert match_title(FORM_10K, "Risk Factors 1A 13").number == "1A"  # 제목 | Item | 페이지 칸
+    assert match_title(FORM_10K, "Business I 1 5").number == "1"  # 제목 | Part | Item | 페이지 칸
+    assert match_title(FORM_10K, "Properties II-25").number == "2"
     assert match_title(FORM_10K, "Business").number == "1"

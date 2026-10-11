@@ -101,7 +101,12 @@ FORM_10K = FormCatalog(
         ),
         _item("II", "6", "Reserved", "Selected Financial Data", "Selected Consolidated Financial Data"),
         _item("II", "7", "Management's Discussion and Analysis of Financial Condition and Results of Operations"),
-        _item("II", "7A", "Quantitative and Qualitative Disclosures About Market Risk"),
+        _item(
+            "II",
+            "7A",
+            "Quantitative and Qualitative Disclosures About Market Risk",
+            "Quantitative and Qualitative Disclosures About Risk",
+        ),
         _item("II", "8", "Financial Statements and Supplementary Data"),
         _item("II", "9", "Changes in and Disagreements With Accountants on Accounting and Financial Disclosure"),
         _item("II", "9A", "Controls and Procedures", since=date(2003, 8, 14)),
