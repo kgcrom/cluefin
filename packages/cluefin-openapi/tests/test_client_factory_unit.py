@@ -21,6 +21,7 @@ def test_config_from_env(monkeypatch):
     monkeypatch.setenv("KIWOOM_SECRET_KEY", "kiwoom-secret")
     monkeypatch.setenv("KIWOOM_ENV", "dev")
     monkeypatch.setenv("DART_AUTH_KEY", "dart-key")
+    monkeypatch.setenv("SEC_USER_AGENT", "Jane Doe jane@example.com")
     monkeypatch.setenv("CLUEFIN_OPENAPI_CACHE_DIR", "/tmp/cluefin-cache")
     monkeypatch.setenv("CLUEFIN_OPENAPI_DEBUG", "true")
 
@@ -33,6 +34,7 @@ def test_config_from_env(monkeypatch):
     assert config.kiwoom_secret_key == "kiwoom-secret"
     assert config.kiwoom_env == "dev"
     assert config.dart_auth_key == "dart-key"
+    assert config.sec_user_agent == "Jane Doe jane@example.com"
     assert config.cache_dir == "/tmp/cluefin-cache"
     assert config.debug is True
 
@@ -188,6 +190,29 @@ def test_factory_creates_dart_client_without_cache(monkeypatch):
     assert client is not None
 
 
+def test_factory_creates_sec_client_with_user_agent(monkeypatch):
+    captured = {}
+
+    class FakeSecClient:
+        def __init__(self, user_agent):
+            captured["sec_client"] = {"user_agent": user_agent}
+
+    monkeypatch.setattr("cluefin_openapi.client_factory.SecClient", FakeSecClient)
+
+    factory = BrokerClientFactory(BrokerClientConfig(sec_user_agent="Jane Doe jane@example.com"))
+    client = factory.create_sec()
+
+    assert captured["sec_client"]["user_agent"] == "Jane Doe jane@example.com"
+    assert client is not None
+
+
+def test_factory_create_sec_requires_user_agent():
+    factory = BrokerClientFactory(BrokerClientConfig())
+
+    with pytest.raises(ValueError, match="SEC_USER_AGENT"):
+        factory.create_sec()
+
+
 def test_factory_creates_nhplug_client_with_cache_dir(monkeypatch):
     captured = {}
 
@@ -241,12 +266,14 @@ def test_create_dispatches_to_the_matching_create_method(monkeypatch):
     monkeypatch.setattr(factory, "create_kiwoom", lambda: calls.append("kiwoom") or "kiwoom-client")
     monkeypatch.setattr(factory, "create_dart", lambda: calls.append("dart") or "dart-client")
     monkeypatch.setattr(factory, "create_nhplug", lambda: calls.append("nhplug") or "nhplug-client")
+    monkeypatch.setattr(factory, "create_sec", lambda: calls.append("sec") or "sec-client")
 
     assert factory.create("kis") == "kis-client"
     assert factory.create("kiwoom") == "kiwoom-client"
     assert factory.create("dart") == "dart-client"
     assert factory.create("nhplug") == "nhplug-client"
-    assert calls == ["kis", "kiwoom", "dart", "nhplug"]
+    assert factory.create("sec") == "sec-client"
+    assert calls == ["kis", "kiwoom", "dart", "nhplug", "sec"]
 
 
 def test_create_raises_value_error_for_unknown_broker():

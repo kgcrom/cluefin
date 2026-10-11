@@ -74,6 +74,8 @@ class TaxonomyInfo(BaseModel):
 
     labels: dict[str, ConceptLabel] = {}
     presentation_trees: dict[str, list[PresentationNode]] = {}
+    # linkrole URI → role definition. SEC filings use "{sort code} - {Statement|Disclosure|...} - {title}".
+    role_definitions: dict[str, str] = {}
 
 
 class StatementType(str, Enum):

@@ -102,6 +102,24 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   Asset-class specs are also public at `https://www.nhplug.com/openapi-docs/<slug>/openapi.json`
   (the declared source of truth; slugs: common·krstock·gbstock·krfuture·gbfuture·krbond·krgold).
 
+## SEC EDGAR (sec)
+
+- No API key: SEC identifies callers by the User-Agent ("Name email"): `SEC_USER_AGENT` in `.env` at runtime
+  (`BrokerClientFactory`), in `.env.test` for tests (`tests/sec/_env.py`, like every other integration suite).
+  An undeclared agent gets **403** from both www.sec.gov and data.sec.gov (measured 2026-10-11 with
+  `python-requests/…`; a browser-like agent still got 403 from www.sec.gov). The 403 page is titled "Request Rate
+  Threshold Exceeded" even when the rate is fine — check the agent first. Per SEC's policy a client over 10 req/s
+  also gets 403 (not 429) for about 10 minutes (not measured). Hence 403 is never retried and the default is 8 req/s.
+- `Client._request` only accepts `https://www.sec.gov` and `https://data.sec.gov` URLs, and every value that goes
+  into a URL path passes `_ids.py` (CIK, accession number, single path segment). Keep it that way when adding
+  endpoints — EFTS full-text search (`efts.sec.gov`) would need the allow-list widened on purpose.
+- `submissions.filings.recent` is column arrays (one list per field), at least 1,000 filings or one year;
+  the rest is in `filings.files` pages. `FilingEntry` declares every live column — the integration test fails
+  when SEC adds one, so declare it rather than relaxing the test.
+- companyfacts/companyconcept repeat the same period's value once per filing that reported it (original,
+  next year's comparative, amendments). `fy`/`fp` describe the **filing**, not the value's period; only one row
+  per period carries `frame`. Pick rows by `start`/`end`/`accn`, not by `fy`.
+
 ## Kiwoom scope
 
 - Kiwoom US-stock (overseas) support is **Python-only**; the sibling `cluefin-openapi-ts`
