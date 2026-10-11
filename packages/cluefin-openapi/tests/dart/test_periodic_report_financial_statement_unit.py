@@ -364,6 +364,76 @@ def test_download_financial_statement_xbrl_overwrites_with_flag(tmp_path: Path, 
     assert existing_file.read_bytes() == new_content
 
 
+def _zip_payload(entries: tuple[tuple[str, bytes], ...]) -> bytes:
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        for name, content in entries:
+            archive.writestr(name, content)
+    return buffer.getvalue()
+
+
+def _download_zip(client: Client, payload: bytes, destination: Path, *, overwrite: bool = False) -> Path:
+    service = PeriodicReportFinancialStatement(client)
+    with requests_mock.Mocker() as mock_requests:
+        mock_requests.get(f"{BASE_URL}/api/fnlttXbrl.xml", content=payload, status_code=200)
+        return service.download_financial_statement_xbrl(
+            rcept_no=DOWNLOAD_RECEPT_NO,
+            reprt_code=DOWNLOAD_REPRT_CODE,
+            destination=destination,
+            overwrite=overwrite,
+        )
+
+
+def test_download_financial_statement_xbrl_extracts_backslash_names_into_folders(
+    tmp_path: Path, client: Client
+) -> None:
+    """FY2022 이전 DART ZIP의 `\\` 구분자 이름은 하위 폴더로 풀어야 함"""
+    payload = _zip_payload(
+        (
+            ("entity_2011.xbrl", b"<xbrl/>"),
+            ("ifrs_for_entity\\dimensions\\pre_entity.xml", b"<pre/>"),
+            ("labels\\lab_entity-ko.xml", b"<lab/>"),
+        )
+    )
+    destination = tmp_path / "xbrl_output"
+
+    _download_zip(client, payload, destination)
+
+    assert (destination / "ifrs_for_entity" / "dimensions" / "pre_entity.xml").read_bytes() == b"<pre/>"
+    assert (destination / "labels" / "lab_entity-ko.xml").read_bytes() == b"<lab/>"
+    assert not [path for path in destination.rglob("*") if "\\" in path.name]
+
+
+@pytest.mark.parametrize("name", ["..\\..\\evil.txt", "../evil.txt", "\\evil.txt"])
+def test_download_financial_statement_xbrl_rejects_entries_outside_destination(
+    tmp_path: Path, client: Client, name: str
+) -> None:
+    """대상 폴더 밖을 가리키는 항목이 있으면 아무 파일도 쓰지 않고 거부해야 함"""
+    payload = _zip_payload((("entity_2024.xbrl", b"<xbrl/>"), (name, b"evil")))
+    destination = tmp_path / "a" / "xbrl_output"
+
+    with pytest.raises(DartAPIError, match="대상 폴더 밖"):
+        _download_zip(client, payload, destination)
+
+    assert [path for path in tmp_path.rglob("*") if path.is_file()] == []
+
+
+def test_download_financial_statement_xbrl_rejects_existing_file_under_backslash_name(
+    tmp_path: Path, client: Client
+) -> None:
+    """덮어쓰기 검사는 `\\`를 폴더로 바꾼 경로로 해야 함"""
+    destination = tmp_path / "xbrl_output"
+    existing_file = destination / "labels" / "lab-ko.xml"
+    existing_file.parent.mkdir(parents=True)
+    existing_file.write_text("existing content")
+    payload = _zip_payload((("labels\\lab-ko.xml", b"<lab/>"),))
+
+    with pytest.raises(FileExistsError, match="lab-ko.xml"):
+        _download_zip(client, payload, destination)
+
+    assert existing_file.read_text() == "existing content"
+
+
 @pytest.mark.parametrize(
     "item_type,fields",
     [
