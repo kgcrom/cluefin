@@ -90,6 +90,13 @@ class Table:
         """한 행의 비지 않은 칸을 공백으로 이은 것. 표로 짠 헤딩("Item 1." | "Business")을 읽는 데 쓴다."""
         return " ".join(cell.text for cell in self.rows[index] if cell.text)
 
+    def grid(self) -> tuple[tuple[str, ...], ...]:
+        """열을 맞춘 문자열 행렬. 병합 칸을 펴고, `$`·`)`·`%` 칸을 옆 값에 붙이고, 빈 행·열을 지운다
+        (`_grid.table_grid`). 금액은 `parse_amount`로 숫자로 바꾼다."""
+        from cluefin_sec_notes._grid import table_grid
+
+        return table_grid(self)
+
 
 @dataclass(frozen=True, slots=True)
 class PageBreak:
