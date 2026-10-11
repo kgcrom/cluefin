@@ -98,6 +98,19 @@ class TestBuildPresentationNodeDepthAndOrder:
         assert grandchild.depth == 2
         assert grandchild.order == 1.0
 
+    def test_preferred_label_comes_from_the_arc(self, fixtures_dir):
+        doc = parse_xbrl_file(fixtures_dir / "pres_tree" / "pres_tree.xbrl", include_taxonomy=True)
+
+        root = doc.taxonomy.presentation_trees["http://example.com/role/PresTreeRole"][0]
+
+        labels = {child.concept_local_name: child.preferred_label for child in root.children}
+        assert labels == {
+            "ChildA": None,
+            "ChildB": None,
+            "ChildC": "http://www.xbrl.org/2003/role/periodEndLabel",
+        }
+        assert root.preferred_label is None
+
 
 class _QName:
     def __init__(self, local_name):
@@ -114,7 +127,10 @@ class TestDanglingRelationships:
         root = SimpleNamespace(qname=_QName("Root"))
         child = SimpleNamespace(qname=_QName("Child"))
         rels_by_concept = {
-            "Root": [SimpleNamespace(order=2.0, toModelObject=child), SimpleNamespace(order=1.0, toModelObject=None)],
+            "Root": [
+                SimpleNamespace(order=2.0, toModelObject=child, preferredLabel=None),
+                SimpleNamespace(order=1.0, toModelObject=None, preferredLabel=None),
+            ],
             "Child": [],
         }
         rel_set = SimpleNamespace(fromModelObject=lambda concept: rels_by_concept[concept.qname.localName])

@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import re
+from datetime import date, timedelta
+from itertools import groupby
 
 from cluefin_xbrl._types import (
     FinancialStatement,
     ParsedFinancialStatements,
+    PeriodType,
     PresentationNode,
     StatementLineItem,
     StatementType,
@@ -173,6 +176,7 @@ def extract_financial_statements(doc: XbrlDocument) -> ParsedFinancialStatements
         line_items = _flatten_presentation_tree(
             roots, facts_by_concept, doc.taxonomy.labels, is_consolidated, intrinsic_axes
         )
+        line_items = _split_period_balances(line_items)
 
         periods: list[XbrlPeriod] = []
         seen_periods: set[str] = set()
@@ -346,6 +350,7 @@ def _collect_line_items(
                     order=node.order,
                     is_abstract=False,
                     dimensions=dims,
+                    preferred_label=node.preferred_label,
                 )
             )
     else:
@@ -358,11 +363,80 @@ def _collect_line_items(
                 depth=node.depth,
                 order=node.order,
                 is_abstract=True,
+                preferred_label=node.preferred_label,
             )
         )
 
     for child in node.children:
         _collect_line_items(child, facts_by_concept, labels, is_consolidated, intrinsic_axes, items)
+
+
+def _split_period_balances(items: list[StatementLineItem]) -> list[StatementLineItem]:
+    """Keep only the matching instants on a balance drawn as both a beginning and an ending row.
+
+    SEC statements show one concept twice (equity in the statement of changes in equity, cash in the cash flow
+    statement) and tell the rows apart only by the arc's ``periodStartLabel`` / ``periodEndLabel``. Every instant
+    of the concept matches both rows, so the beginning row keeps the day before a duration's start date (instants
+    are stored inclusive, see ``_exclusive_to_date``) and the ending row keeps a duration's end date. A row left
+    with no fact stays as an abstract row so the tree keeps its shape.
+
+    Only such pairs are split. DART draws a single ``periodEndLabel`` row whose instants include an opening
+    balance found on no other row (FY2010 opening equity in FY2011 filings), and tags its separate
+    beginning-of-period concepts at the column's end date.
+    """
+    kinds: dict[str, set[str]] = {}
+    for item in items:
+        kind = _period_label_kind(item.preferred_label)
+        if kind:
+            kinds.setdefault(item.concept_local_name, set()).add(kind)
+    paired = {concept for concept, found in kinds.items() if len(found) == 2}
+    if not paired:
+        return items
+
+    opening, closing = _period_boundaries(items)
+    split: list[StatementLineItem] = []
+    for _, run in groupby(items, key=_row_key):
+        rows = list(run)
+        first = rows[0]
+        kind = _period_label_kind(first.preferred_label)
+        if kind is None or first.concept_local_name not in paired:
+            split.extend(rows)
+            continue
+        allowed = opening if kind == "start" else closing
+        kept = [row for row in rows if row.period is not None and row.period.instant in allowed]
+        split.extend(kept or [_abstract_row(first)])
+    return split
+
+
+def _period_boundaries(items: list[StatementLineItem]) -> tuple[frozenset[date], frozenset[date]]:
+    """Instants that open (the day before the start date) and close (the end date) the statement's durations."""
+    durations = [
+        (item.period.start_date, item.period.end_date)
+        for item in items
+        if item.period is not None and item.period.period_type == PeriodType.DURATION
+    ]
+    opening = frozenset(start - timedelta(days=1) for start, _ in durations if start)
+    closing = frozenset(end for _, end in durations if end)
+    return opening, closing
+
+
+def _period_label_kind(role: str | None) -> str | None:
+    """Map a period start/end label role (negated variants included) to "start" / "end"; None otherwise."""
+    name = (role or "").rsplit("/", 1)[-1].lower()
+    if name.endswith("periodstartlabel"):
+        return "start"
+    if name.endswith("periodendlabel"):
+        return "end"
+    return None
+
+
+def _row_key(item: StatementLineItem) -> tuple:
+    """Items from one presentation node are contiguous and share these fields."""
+    return (item.concept_local_name, item.preferred_label, item.depth, item.order)
+
+
+def _abstract_row(item: StatementLineItem) -> StatementLineItem:
+    return item.model_copy(update={"value": None, "unit": None, "period": None, "is_abstract": True, "dimensions": {}})
 
 
 def statement_to_dicts(statement: FinancialStatement) -> list[dict]:
@@ -387,6 +461,7 @@ def statement_to_dicts(statement: FinancialStatement) -> list[dict]:
             "order": item.order,
             "is_abstract": item.is_abstract,
             "dimensions": dict(item.dimensions),
+            "preferred_label": item.preferred_label,
         }
         if item.period is not None:
             row["period_type"] = item.period.period_type.value

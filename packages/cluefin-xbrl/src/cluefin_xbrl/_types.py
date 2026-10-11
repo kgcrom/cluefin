@@ -66,6 +66,8 @@ class PresentationNode(BaseModel):
     concept_qname: str
     order: float = 0.0
     depth: int = 0
+    # Role URI of the arc's preferredLabel (e.g. http://www.xbrl.org/2003/role/periodStartLabel); None when the arc has none.
+    preferred_label: Optional[str] = None
     children: list[PresentationNode] = []
 
 
@@ -94,6 +96,9 @@ class StatementLineItem(BaseModel):
     ``dimensions`` holds the statement-intrinsic dimensional context (e.g. the
     equity component axis on a statement of changes in equity). The
     consolidated/separate axis is resolved at extraction time and not repeated here.
+
+    ``preferred_label`` is the presentation arc's preferredLabel role. It tells apart the rows of a concept
+    shown twice, such as the beginning (``periodStartLabel``) and ending (``periodEndLabel``) equity balance.
     """
 
     concept_local_name: str
@@ -107,6 +112,7 @@ class StatementLineItem(BaseModel):
     order: float = 0.0
     is_abstract: bool = False
     dimensions: dict[str, str] = {}
+    preferred_label: Optional[str] = None
 
 
 class FinancialStatement(BaseModel):

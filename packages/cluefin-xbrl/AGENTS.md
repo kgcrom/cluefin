@@ -69,10 +69,17 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   test asserts exactly one row per value so this cannot regress silently.
 - Newer filings embed the linkbases in the company schema: Microsoft FY2026's folder has only
   `msft-20260630.xsd` and `msft-20260630_htm.xml`. Never require separate `_pre/_cal/_lab.xml` files.
-- `extract_notes` is DART-only (it keys on `D8xxxxx` role codes). Labels are the concept's standard label;
-  SEC presentation `preferredLabel`s ("Total net sales") are not read yet. One visible consequence: a concept
-  shown twice as beginning and ending balance (`StockholdersEquity` in SCE, period-end cash in CF) gets every
-  instant on both rows, because only the `periodStartLabel`/`periodEndLabel` tells them apart.
+- `extract_notes` is DART-only (it keys on `D8xxxxx` role codes). Labels are the concept's standard label; the
+  preferredLabel's *text* ("Total net sales") is not read, only its role (`preferred_label` on nodes and line items).
+- A balance drawn twice in one statement — beginning and ending row, told apart only by `periodStartLabel` /
+  `periodEndLabel` (SEC: equity in SCE, cash in CF) — is split by `_split_period_balances`: the beginning row keeps
+  the day before a duration's start date, the ending row the end date. Measured 2026-10-11 on 8 SEC filings
+  (10-K and 10-Q): 18 such pairs, every one of their 254 instants landed on one row or both, none on neither.
+- Only pairs are split. DART never drew one (29 filings, three companies, FY2011–2024): its SCE has a single
+  `periodEndLabel` equity row, and FY2011 filings put the FY2010 opening equity on that row and nowhere else, so
+  filtering it would drop the value. DART's own beginning-of-period concepts (`...AtBeginningOfPeriodCf`,
+  `EquityAtBeginningOfPeriod`) are tagged at the **column's end date** and need no split.
+- Fact order inside one row changes between runs of the same file (Arelle); compare statements as row sets.
 
 ## Testing gotchas
 

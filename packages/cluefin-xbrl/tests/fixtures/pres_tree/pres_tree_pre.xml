@@ -29,7 +29,8 @@
         <link:presentationArc xlink:type="arc"
                               xlink:arcrole="http://www.xbrl.org/2003/arcrole/parent-child"
                               xlink:from="loc_Root" xlink:to="loc_ChildC"
-                              order="3.0"/>
+                              order="3.0"
+                              preferredLabel="http://www.xbrl.org/2003/role/periodEndLabel"/>
 
         <!-- Grandchild under ChildB, to exercise depth >= 2. -->
         <link:presentationArc xlink:type="arc"

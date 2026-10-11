@@ -412,9 +412,20 @@ def _sec_doc(trees: dict, definitions: dict, facts: list[XbrlFact] | None = None
     return XbrlDocument(source_file="aapl-20230930_htm.xml", facts=facts or [], taxonomy=taxonomy)
 
 
-def _node(name: str, children: list[PresentationNode] | None = None, depth: int = 0) -> PresentationNode:
+def _node(
+    name: str,
+    children: list[PresentationNode] | None = None,
+    depth: int = 0,
+    preferred_label: str | None = None,
+    order: float = 0.0,
+) -> PresentationNode:
     return PresentationNode(
-        concept_local_name=name, concept_qname=f"us-gaap:{name}", depth=depth, children=children or []
+        concept_local_name=name,
+        concept_qname=f"us-gaap:{name}",
+        depth=depth,
+        order=order,
+        preferred_label=preferred_label,
+        children=children or [],
     )
 
 
@@ -558,3 +569,146 @@ class TestDuplicateFacts:
         a = _usd_fact("NetIncomeLoss", "18.00").model_copy(update={"context_id": "c-1"})
         b = _usd_fact("NetIncomeLoss", "18").model_copy(update={"context_id": "c-1"})
         assert self._income([a, b]) == [Decimal("18.00")]
+
+
+PERIOD_START = "http://www.xbrl.org/2003/role/periodStartLabel"
+PERIOD_END = "http://www.xbrl.org/2003/role/periodEndLabel"
+# Apple FY2021-FY2023: the instants are stored inclusive, so a year opens on the day before its start date.
+APPLE_YEARS = [
+    (date(2020, 9, 27), date(2021, 9, 25)),
+    (date(2021, 9, 26), date(2022, 9, 24)),
+    (date(2022, 9, 25), date(2023, 9, 30)),
+]
+APPLE_EQUITY = {
+    date(2020, 9, 26): "65339000000",
+    date(2021, 9, 25): "63090000000",
+    date(2022, 9, 24): "50672000000",
+    date(2023, 9, 30): "62146000000",
+}
+
+
+def _instant_fact(name: str, instant: date, value: str, dimensions: dict[str, str] | None = None) -> XbrlFact:
+    return XbrlFact(
+        concept_local_name=name,
+        concept_qname=f"us-gaap:{name}",
+        namespace="http://fasb.org/us-gaap/2023",
+        value=value,
+        numeric_value=Decimal(value),
+        unit="iso4217:USD",
+        context_id=f"c-{instant}-{sorted((dimensions or {}).items())}",
+        period=XbrlPeriod(period_type=PeriodType.INSTANT, instant=instant),
+        dimensions=dimensions or {},
+    )
+
+
+def _year_fact(name: str, start: date, end: date, value: str) -> XbrlFact:
+    return XbrlFact(
+        concept_local_name=name,
+        concept_qname=f"us-gaap:{name}",
+        namespace="http://fasb.org/us-gaap/2023",
+        value=value,
+        numeric_value=Decimal(value),
+        unit="iso4217:USD",
+        context_id=f"c-{start}-{end}",
+        period=XbrlPeriod(period_type=PeriodType.DURATION, start_date=start, end_date=end),
+    )
+
+
+class TestPeriodBalances:
+    """A balance drawn as both beginning and ending row keeps only its own instants on each row."""
+
+    ROLE = "http://x/role/CONSOLIDATEDSTATEMENTSOFSHAREHOLDERSEQUITY"
+    DEFINITION = "0000006 - Statement - CONSOLIDATED STATEMENTS OF SHAREHOLDERS' EQUITY"
+
+    def _equity_statement(self, start_label=PERIOD_START, end_label=PERIOD_END, extra_facts=()):
+        tree = [
+            _node("StatementEquityComponentsAxis", [_node("RetainedEarningsMember", depth=1)]),
+            _node(
+                "StatementLineItems",
+                [
+                    _node("StockholdersEquity", depth=1, order=1.0, preferred_label=start_label),
+                    _node("NetIncomeLoss", depth=1, order=2.0),
+                    _node("StockholdersEquity", depth=1, order=3.0, preferred_label=end_label),
+                ],
+                order=1.0,
+            ),
+        ]
+        facts = [_instant_fact("StockholdersEquity", day, value) for day, value in APPLE_EQUITY.items()]
+        facts += [_year_fact("NetIncomeLoss", start, end, "1") for start, end in APPLE_YEARS]
+        doc = _sec_doc({self.ROLE: tree}, {self.ROLE: self.DEFINITION}, facts + list(extra_facts))
+        return extract_financial_statements(doc).statements["SCE"]
+
+    @staticmethod
+    def _rows(statement, label):
+        return sorted(
+            (item.period.instant, item.value, tuple(item.dimensions.items()))
+            for item in statement.line_items
+            if item.concept_local_name == "StockholdersEquity" and item.preferred_label == label
+        )
+
+    def test_beginning_row_keeps_the_day_before_each_start(self):
+        assert self._rows(self._equity_statement(), PERIOD_START) == [
+            (date(2020, 9, 26), Decimal("65339000000"), ()),
+            (date(2021, 9, 25), Decimal("63090000000"), ()),
+            (date(2022, 9, 24), Decimal("50672000000"), ()),
+        ]
+
+    def test_ending_row_keeps_each_end_date(self):
+        assert self._rows(self._equity_statement(), PERIOD_END) == [
+            (date(2021, 9, 25), Decimal("63090000000"), ()),
+            (date(2022, 9, 24), Decimal("50672000000"), ()),
+            (date(2023, 9, 30), Decimal("62146000000"), ()),
+        ]
+
+    def test_component_axis_rows_are_split_the_same_way(self):
+        axis = {"us-gaap:StatementEquityComponentsAxis": "us-gaap:RetainedEarningsMember"}
+        component = [_instant_fact("StockholdersEquity", day, "7", axis) for day in APPLE_EQUITY]
+        statement = self._equity_statement(extra_facts=component)
+
+        opening = [day for day, _, dims in self._rows(statement, PERIOD_START) if dims]
+        closing = [day for day, _, dims in self._rows(statement, PERIOD_END) if dims]
+        assert opening == [date(2020, 9, 26), date(2021, 9, 25), date(2022, 9, 24)]
+        assert closing == [date(2021, 9, 25), date(2022, 9, 24), date(2023, 9, 30)]
+
+    def test_negated_period_labels_count_as_a_pair(self):
+        statement = self._equity_statement(
+            "http://www.xbrl.org/2009/role/negatedPeriodStartLabel",
+            "http://www.xbrl.org/2009/role/negatedPeriodEndLabel",
+        )
+        rows = [item for item in statement.line_items if item.concept_local_name == "StockholdersEquity"]
+        assert len(rows) == 6
+
+    def test_a_single_period_end_row_keeps_every_instant(self):
+        """DART draws equity once with periodEndLabel; its opening balance is on no other row."""
+        statement = self._equity_statement(start_label=None)
+
+        assert [day for day, _, _ in self._rows(statement, PERIOD_END)] == sorted(APPLE_EQUITY)
+        assert [day for day, _, _ in self._rows(statement, None)] == sorted(APPLE_EQUITY)
+
+    def test_a_row_left_without_facts_stays_as_an_abstract_row(self):
+        tree = [
+            _node(
+                "StatementLineItems",
+                [
+                    _node("StockholdersEquity", depth=1, order=1.0, preferred_label=PERIOD_START),
+                    _node("NetIncomeLoss", depth=1, order=2.0),
+                    _node("StockholdersEquity", depth=1, order=3.0, preferred_label=PERIOD_END),
+                ],
+            )
+        ]
+        facts = [_instant_fact("StockholdersEquity", date(2023, 9, 30), "62146000000")]
+        facts.append(_year_fact("NetIncomeLoss", *APPLE_YEARS[-1], "1"))
+        doc = _sec_doc({self.ROLE: tree}, {self.ROLE: self.DEFINITION}, facts)
+
+        items = extract_financial_statements(doc).statements["SCE"].line_items
+        equity = [
+            (i.preferred_label, i.is_abstract, i.value) for i in items if i.concept_local_name == "StockholdersEquity"
+        ]
+        assert equity == [(PERIOD_START, True, None), (PERIOD_END, False, Decimal("62146000000"))]
+
+    def test_preferred_label_reaches_the_dicts(self):
+        rows = statement_to_dicts(self._equity_statement())
+        assert {row["preferred_label"] for row in rows if row["concept"] == "StockholdersEquity"} == {
+            PERIOD_START,
+            PERIOD_END,
+        }
