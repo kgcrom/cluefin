@@ -57,6 +57,10 @@ Client(user_agent=user_agent).archives.download_xbrl_files(320193, "0000320193-2
 # 필수다 — 없거나 이메일이 빠지면 캐시가 차 있어도 ValueError
 doc = parse_xbrl_directory("aapl-fy2023", include_taxonomy=True, http_user_agent=user_agent)
 parsed = extract_financial_statements(doc)  # statements: BS, IS, CIS, CF, SCE (미국 공시는 연결만)
+
+# 자본변동표의 자본, 현금흐름표의 현금은 기초·기말 두 행으로 나온다. 행마다 preferred_label 로 구분하고,
+# 기초 행(…/periodStartLabel)에는 기간 시작 전날, 기말 행(…/periodEndLabel)에는 기간 종료일 시점 값만 있다
+equity = [i for i in parsed.statements["SCE"].line_items if i.concept_local_name == "StockholdersEquity"]
 ```
 
 ## 예제 노트북
