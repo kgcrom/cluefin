@@ -46,6 +46,12 @@ Each rule below replaced an approach that broke real filings. Don't go back to t
   10-Q I:4 > 30,000 (max 7,104 / 275,902; one smoke 43,935 that really ate the statements), 10-K 7 < 3,000
   (non-incorporated golden min > 9,475 / 1,214). Synthetic fixtures carry long `MDNA`/`STATEMENTS` bodies so
   these rules stay quiet in unit tests.
+- **`item()` raises only for `UNCERTAIN_CODES`, and only `item()` raises.** `extract_items()` and iteration never
+  raise, so results, candidates and findings stay inspectable. `toc_target_missing` (8 golden `ok` Items found by
+  heading after a dead TOC link) and `non_sequential_layout` (1) sit on correct Items, so they're left out.
+  `MissingItemError` keys off the `missing_item` finding, not `missing`, so amendments (no missing warnings) and
+  omitted Items still return None. Corpus tooling (`_expectations.item_by_key`, scripts) calls `strict=False`.
+  Adding a new boundary warning means deciding whether it joins `UNCERTAIN_CODES` (measure golden `ok` first).
 - **Page references follow only the first closed range in a near-empty body.** Following every reference in a
   short body broke golden 9A ("report on page F-2"), 7A ("see … on page 75"), Item 2 (a trailing "refer to pages
   51–54") and Item 7 (second sentence "read in conjunction with … pages 165–314"). Current rule: non-statement
