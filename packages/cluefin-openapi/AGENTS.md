@@ -41,6 +41,10 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - WebSocket auth differs per broker: KIS needs a separate `approval_key` from
   `Auth.approve()`, while Kiwoom reuses the plain access token. Don't assume symmetry.
 - Kiwoom's mock (`dev`) domestic WebSocket supports KRX only.
+- DART XBRL ZIPs (`fnlttXbrl.xml`) for FY2022 and earlier name their six linkbases with Windows `\`
+  separators (`ifrs_for_…\dimensions_…\pre_….xml`); FY2023+ are flat (measured 2026-10-11, three companies,
+  FY2011–2024). `extractall` keeps `\` in the file name on macOS/Linux, and Arelle then silently drops the
+  company's labels and presentation — so `download_financial_statement_xbrl` extracts entry by entry.
 - Mixed dev/prod tokens are rejected server-side (Kiwoom `8031`, KIS `EGW00123`) — this
   is why token caches are scoped by env/app_key.
 - Kiwoom occasionally removes TRs from its official docs while the API keeps working
