@@ -58,6 +58,10 @@ Each rule below replaced an approach that broke real filings. Don't go back to t
   Items with a body ≤ 1,000 chars follow the first in-document closed range; single pages are ignored; bodies
   naming another document (proxy, Exhibit 13, annual report to shareholders) are skipped entirely. Open references,
   "page F-1" and page-less F-pages are for the financial-statements Item only. Item 15 (`lists_documents`) never follows.
+- **Item 15 loses the blocks other Items took by reference; it is not cut short.** Annual-report-style 10-Ks put
+  the whole annual report after Item 15, so Item 15 ran to the signatures (1,002,763 chars) while Items 7/8 had
+  already taken those pages. Truncating at the first taken block lost an exhibit index that follows the F-pages,
+  so the taken ranges are subtracted and empty leftovers (page breaks) dropped. 6 of 624 exhibit Items changed.
 - **Cross-reference index Items are page-granular**: the first page may start with the previous section's tail.
   Their ranges don't cut other Items and don't take part in order checks.
 - **10-Q Part tracking**: headings are "Item 1." without a Part; the Part comes from the last Part heading

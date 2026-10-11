@@ -113,6 +113,7 @@ def extract_items(
     items = tuple(_mark_incorporated(item) for item in _build_items(document, catalog, accepted))
     ranged = {key for key, candidate in accepted.items() if candidate.ranges}
     items, reference_findings = resolve_page_references(document, catalog, items, skip=ranged)
+    items = tuple(_without_taken_pages(catalog, item, items) for item in items)
     findings.extend(reference_findings)
     findings.extend(_empty_items(document, catalog, items))
     findings.extend(_short_statements(catalog, items, findings))
@@ -302,6 +303,32 @@ def _signatures(document: SecDocument, after: int) -> int:
         if isinstance(block, Paragraph) and normalize_title(block.text) in _SIGNATURES:
             return index
     return len(document.blocks)
+
+
+def _without_taken_pages(catalog: FormCatalog, item: Item, items: tuple[Item, ...]) -> Item:
+    """문서 목록 Item(10-K 15)에서 다른 Item이 쪽 참조로 가져간 구간을 뺀다. 연차보고서형 10-K는 Item 15 뒤에 연차보고서
+    본문(MD&A·재무제표)이 붙어 Item 15가 문서 끝까지 가는데, 그 쪽은 Item 7·8이 이미 본문으로 가져갔다. 끝을 자르지 않고
+    겹친 구간만 빼는 것은 F-쪽 뒤에 전시물 목록이 오는 공시가 있어서다."""
+    spec = catalog.spec(item.key.part, item.key.number)
+    if spec is None or not spec.lists_documents or len(item.ranges) > 1:
+        return item
+    taken = sorted(
+        (start, end)
+        for other in items
+        if other.key != item.key
+        for start, end in other.ranges
+        if item.start < start < item.end
+    )
+    if not taken:
+        return item
+    pieces, position = [], item.start
+    for start, end in [*taken, (item.end, item.end)]:
+        if start > position:
+            pieces.append((position, start))
+        position = max(position, end)
+    # 첫 조각(헤딩)은 남기고, 가져간 구간 사이에 쪽 나눔만 남은 조각은 버린다.
+    kept = pieces[:1] + [piece for piece in pieces[1:] if item.document.text(*piece)]
+    return replace(item, end=kept[0][1], ranges=tuple(kept))
 
 
 def _empty_items(document: SecDocument, catalog: FormCatalog, items: tuple[Item, ...]) -> list[Finding]:
