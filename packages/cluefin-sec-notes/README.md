@@ -1,7 +1,9 @@
 # cluefin-sec-notes
 
-SEC EDGAR 공시 주 문서(10-K·10-Q·8-K HTML)에서 Item 단위 본문을 뽑는 패키지입니다. 네트워크를 쓰지 않고
-로컬 파일만 읽습니다. 원문은 `cluefin-openapi`의 `sec` 모듈로 받습니다. 의존성은 없습니다(stdlib `html.parser`).
+SEC EDGAR 공시 주 문서(10-K·10-Q·8-K HTML)에서 Item 단위 본문을 뽑는 패키지입니다. 내부자 소유 신고
+(Form 3·4·5 XML)를 읽는 하위 패키지 `cluefin_sec_notes.ownership`도 있습니다([아래](#내부자-소유-신고-form-345)).
+네트워크를 쓰지 않고 로컬 파일만 읽습니다. 원문은 `cluefin-openapi`의 `sec` 모듈로 받습니다. HTML은 stdlib
+`html.parser`로, XML은 `defusedxml`로 읽습니다.
 
 경계를 확신하지 못하면 조용히 틀리지 않고 `findings`로 알리는 것이 목표입니다. Item마다 어떤 방식으로
 찾았는지(`method`)와 신뢰도(`confidence`)가 붙습니다.
@@ -127,3 +129,34 @@ parse_amount("$(1,234)")  # Decimal('-1234'). 쉼표·통화 기호·퍼센트·
 다음 쪽 머리말이 구간 끝에 남은 Item 목록("Item 9, 9A")은 경고 없이 잘라 냅니다.
 
 읽으며 고친 HTML 결함(닫히지 않은 태그, 숨긴 내용, 머리말 제거 등)은 `document.report`에 위치와 함께 남습니다.
+
+## 내부자 소유 신고 (Form 3·4·5)
+
+임원·이사·10% 주주가 회사 주식을 사고팔거나(Form 4, 2영업일 안), 처음 보유를 신고하거나(Form 3), 연간 신고(Form 5)할 때
+내는 XML(`ownershipDocument`)입니다. 정정(`/A`)도 같은 형식입니다.
+
+```python
+from cluefin_openapi.sec import Client
+from cluefin_sec_notes.ownership import load_ownership
+
+client = Client("Your Name your@email.com")
+filing = client.submissions.filings(cik, forms=["4"])[0]
+# 주 문서명은 SEC가 XSL로 렌더링한 경로(xslF345X05/form4.xml)다. 파일명만 떼면 원본 XML이다
+name = filing.primary_document.rsplit("/", 1)[-1]
+path = client.archives.download_filing_document(cik, filing.accession_number, name, destination="ownership")
+
+doc = load_ownership(path)
+doc.issuer.trading_symbol, [owner.officer_title for owner in doc.reporting_owners]
+for t in doc.non_derivative_transactions:
+    print(t.date, t.code, t.shares, t.price, t.acquired_disposed, t.shares_owned_after)
+    for field, ids in t.footnote_ids.items():  # 예: {"price": ("F2",)} — "가중평균, 범위 $262.00–$262.67"
+        print(" ", field, [doc.footnotes[i] for i in ids])
+```
+
+- 표는 넷입니다: `non_derivative_transactions`·`non_derivative_holdings`(주식), `derivative_transactions`·
+  `derivative_holdings`(옵션·RSU 등, 행사가·만기·기초자산 칸이 더 있음). `doc.transactions`·`doc.holdings`는 둘을 이어 줍니다.
+- `code`는 SEC 거래 코드입니다. P 장내 매수, S 장내 매도, A 보상 지급, M 옵션 행사, F 세금 원천징수분, G 증여 등.
+  매수 신호로 쓸 만한 P는 드뭅니다(표본 거래 1,035건 중 32건).
+- 값이 없으면 None입니다. 옵션 행사(M) 가격처럼 값 대신 각주만 있는 칸이 흔해서, 각주는 필드별 `footnote_ids`로 남깁니다.
+- `aff10b5_one`(사전 매매 계획 10b5-1에 따른 거래인지)은 2023년부터 있는 칸이라 그전 공시는 None입니다.
+- 예상 밖의 불리언·숫자·날짜, 3·4·5가 아닌 서식은 `ValueError`입니다.

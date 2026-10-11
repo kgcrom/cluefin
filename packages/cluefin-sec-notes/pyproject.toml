@@ -1,14 +1,16 @@
 [project]
 name = "cluefin-sec-notes"
 version = "0.1.0"
-description = "SEC EDGAR filing document (10-K/10-Q/8-K HTML) parser for Item sections"
+description = "SEC EDGAR filing parsers: 10-K/10-Q/8-K Item sections (HTML) and Form 3/4/5 insider ownership (XML)"
 readme = "README.md"
 license = "MIT"
 authors = [
     { name = "Hangoo Kang", email = "kgcrom@hotmail.com" }
 ]
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "defusedxml>=0.7.1",
+]
 
 [build-system]
 requires = ["hatchling"]
