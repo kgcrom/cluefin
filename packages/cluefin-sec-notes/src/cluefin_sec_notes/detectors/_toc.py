@@ -107,7 +107,7 @@ def _keys(context: DetectionContext, text: str, part: str | None) -> tuple[ItemK
         label_part = label.part or part
         keys = []
         for number in label.numbers:
-            spec = catalog.spec(label_part, number)
+            spec = catalog.resolve(label_part, number)
             if spec is not None:
                 keys.append(ItemKey(spec.part, spec.number))
         return tuple(keys)
@@ -128,14 +128,14 @@ def _heading_near(context: DetectionContext, block: int, key: ItemKey) -> tuple[
     # 빈 칸만 있는 표(Workiva 쪽 머리 자리)는 건너뛰고 확인한다.
     while first + 1 < len(document.blocks) and not block_text(document.blocks[first]).strip():
         first += 1
-    if first < len(document.blocks) and _is_heading_of(context, document.blocks[first], key):
+    if first < len(document.blocks) and _is_heading_of(context, first, key):
         return block, True
     for index in range(first, min(first + _MAX_REFINE, len(document.blocks))):
         for text, _ in _rows(document.blocks[index]):
             label = parse_item_label(text)
             if label is None:
                 continue
-            if key.number in label.numbers:
+            if _labels_key(context, label, index, key):
                 return index, True
             later = [catalog.index(label.part or key.part, number) for number in label.numbers]
             if position is not None and any(other is not None and other > position for other in later):
@@ -143,13 +143,21 @@ def _heading_near(context: DetectionContext, block: int, key: ItemKey) -> tuple[
     return block, False
 
 
-def _is_heading_of(context: DetectionContext, block, key: ItemKey) -> bool:
+def _labels_key(context: DetectionContext, label, index: int, key: ItemKey) -> bool:
+    """Item 표기가 이 Item이다. Part마다 번호가 다시 시작하는 서식은 Part도 맞아야 한다(Part I Item 4 링크가
+    Part II "Item 4." 헤딩을 가리키는 작성 오류)."""
+    if key.number not in label.numbers:
+        return False
+    return not context.catalog.part_scoped or (label.part or context.part_at(index)) == key.part
+
+
+def _is_heading_of(context: DetectionContext, index: int, key: ItemKey) -> bool:
     """블록이 이 Item 표기나 이 Item 제목으로 시작한다("RISK FACTORS. The following …"처럼 본문이 붙어도)."""
     spec = context.catalog.spec(key.part, key.number)
     titles = [normalize_title(title) for title in spec.titles] if spec else []
-    for text, _ in _rows(block):
+    for text, _ in _rows(context.document.blocks[index]):
         label = parse_item_label(text)
-        if label is not None and key.number in label.numbers:
+        if label is not None and _labels_key(context, label, index, key):
             return True
         normalized = normalize_title(text)
         if any(normalized == title or normalized.startswith(title + " ") for title in titles):

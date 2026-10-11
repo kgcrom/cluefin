@@ -55,3 +55,10 @@ def test_match_title_prefers_longest_title():
     assert match_title(FORM_10K, "Business I 1 5").number == "1"  # 제목 | Part | Item | 페이지 칸
     assert match_title(FORM_10K, "Properties II-25").number == "2"
     assert match_title(FORM_10K, "Business").number == "1"
+
+
+def test_title_glued_to_the_number_and_item_4t():
+    assert parse_item_label("Item 7.01Regulation FD Disclosure.").numbers == ("7.01",)
+    assert parse_item_label("Item 7.01Regulation FD Disclosure.").rest == "Regulation FD Disclosure."
+    assert parse_item_label("ITEM 4T. CONTROLS AND PROCEDURES").numbers == ("4",)
+    assert parse_item_label("Item 10K") is None

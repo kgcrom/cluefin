@@ -59,6 +59,7 @@ _MAX_TITLE_LINE = 150
 _STATED_OMISSION = re.compile(
     r"incorporated\s+(?:\w+\s+){0,3}?by\s+reference|omitted|general\s+instruction", re.IGNORECASE
 )
+_PART_PREFIX = re.compile(r"^part [ivx]+ ?")
 # 헤딩을 담은 표로 볼 최대 행 수(글자 있는 행). "Item 1." | "Business"처럼 표로 짠 헤딩.
 _MAX_HEADING_ROWS = 3
 # Item 표기 행이 이만큼 있는 표는 목차다.
@@ -326,7 +327,7 @@ def _omitted(context: DetectionContext, missing: tuple[ItemKey, ...]) -> tuple[I
         if _may_hold_heading(block)
         for line in block_text(block).split("\n")
         if len(line) <= _MAX_TITLE_LINE
-    }
+    } - _part_names(document)
     omitted = []
     for key in missing:
         spec = catalog.spec(key.part, key.number)
@@ -336,6 +337,25 @@ def _omitted(context: DetectionContext, missing: tuple[ItemKey, ...]) -> tuple[I
         if not mentioned and not (titles & lines):
             omitted.append(key)
     return tuple(sorted({*stated, *omitted}, key=lambda key: _catalog_index(catalog, key)))
+
+
+def _part_names(document: SecDocument) -> set[str]:
+    """Part 헤딩의 이름("PART II — OTHER INFORMATION", 줄이나 블록이 나뉜 "PART II" + "OTHER INFORMATION"). 10-Q Part II
+    이름은 Part II Item 5 제목과 같아서, 이것을 제목 줄로 보면 생략한 Item 5가 "표기는 있다"로 잡힌다."""
+    names = set()
+    blocks = document.blocks
+    for index, block in enumerate(blocks):
+        if not isinstance(block, Paragraph) or len(block.text) > _PART_HEADING_MAX or parse_part(block.text) is None:
+            continue
+        lines = [line for line in block.text.split("\n") if line.strip()]
+        rest = _PART_PREFIX.sub("", normalize_title(lines[0]))
+        if not rest and len(lines) > 1:
+            rest = normalize_title(lines[1])
+        if not rest and index + 1 < len(blocks):
+            rest = normalize_title(block_text(blocks[index + 1]).split("\n")[0])
+        if rest:
+            names.add(rest)
+    return names
 
 
 def _mentioned(key: ItemKey, texts: list[str]) -> bool:

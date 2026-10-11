@@ -10,18 +10,18 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
-from cluefin_sec_notes._blocks import Paragraph, Table
 from cluefin_sec_notes._labels import normalize_title, parse_item_label, parse_part
 from cluefin_sec_notes._model import UNKNOWN_ITEM, Candidate, Finding, ItemKey
-from cluefin_sec_notes.detectors._base import Detection, DetectionContext
+from cluefin_sec_notes.detectors._base import Detection, DetectionContext, leading_lines
 
 # 헤딩으로 볼 첫 줄 최대 길이. 이보다 길면 Item 표기 뒤가 카탈로그 제목으로 시작할 때만 헤딩이다
 # ("Item 1A. Risk Factors. The following …"처럼 제목과 본문이 한 문단에 붙은 공시).
 _MAX_HEADING = 200
-# 헤딩을 담은 표로 볼 최대 행 수(글자 있는 행).
-_MAX_HEADING_TABLE_ROWS = 3
+# Item 표기 바로 뒤의 하위 항목 표시("(e)", "(a)(1)")는 다른 서식 Item을 가리키는 참조다.
+_SUBSECTION = re.compile(r"\([a-z0-9]{1,3}\)", re.IGNORECASE)
 # 링크 없는 글자 목차: Item 표기 블록이 이만큼 연달아(사이 블록 없이) 이어지면 목차다.
 _MIN_TEXT_TOC_RUN = 4
 
@@ -60,10 +60,12 @@ class PatternDetector:
         candidates: list[Candidate] = []
         unknown: list[_Heading] = []
         for heading in headings:
-            specs = [catalog.spec(heading.part, number) for number in heading.numbers]
+            specs = [catalog.resolve(heading.part, number) for number in heading.numbers]
             if not any(specs):
                 unknown.append(heading)
                 continue
+            # 카탈로그에 있지만 이 공시 시점에는 없는 번호(2026년 8-K 5.07 본문의 "Item 2." 안건 = 2004년 전 8-K Item 2)
+            specs = [spec for spec in specs if spec is not None and spec.applies_to(context.document.period_end)]
             for spec in specs:
                 if spec is not None:
                     key = ItemKey(spec.part, spec.number)
@@ -72,56 +74,42 @@ class PatternDetector:
 
 
 def _headings(context: DetectionContext) -> list[_Heading]:
-    """Item 표기로 시작하는 블록. 표기에 Part가 없으면("Item 1.") 앞에 나온 Part 헤딩("PART II — OTHER
-    INFORMATION")의 Part를 쓴다. 10-Q처럼 Part마다 번호가 다시 시작하는 서식은 이게 없으면 Part II Item 1이
-    Part I Item 1로 잡힌다. 목차 구간의 Part 행은 따라가지 않는다."""
+    """Item 표기로 시작하는 블록. 표기에 Part가 없으면("Item 1.") 앞에 나온 Part 헤딩의 Part(`part_at`)를 쓴다.
+    10-Q처럼 Part마다 번호가 다시 시작하는 서식은 이게 없으면 Part II Item 1이 Part I Item 1로 잡힌다.
+    표기 뒤가 소문자나 하위 항목 표시로 이어지면("Item 7A of the registrant's Annual Report", "Item 5.02(e)") 문장 속
+    참조다. "Item 4. (Removed and Reserved)."는 헤딩이다."""
     catalog = context.catalog
     headings = []
-    current_part: str | None = None
     for index, block in enumerate(context.document.blocks):
-        lines, bold = _leading_lines(block)
+        lines, bold = leading_lines(block)
         if not lines:
             continue
-        part = parse_part(lines[0])
-        if part is not None and not context.is_excluded(index):
-            current_part = part
-        label = parse_item_label(lines[0])
-        line = lines[0]
-        if label is None and part is not None and len(lines) > 1:
+        label, line = parse_item_label(lines[0]), lines[0]
+        if label is None and parse_part(lines[0]) is not None and len(lines) > 1:
             # "PART I. FINANCIAL INFORMATION⏎ITEM 1. FINANCIAL STATEMENTS"처럼 Part와 Item이 한 블록에 줄로 나뉜 헤딩
             label, line = parse_item_label(lines[1]), lines[1]
-        if label is None:
+        if label is None or _is_reference(label.rest):
             continue
-        label_part = label.part or current_part
-        if len(line) > _MAX_HEADING and not _starts_with_title(catalog, label.rest, label.numbers, label_part):
+        part = label.part or context.part_at(index)
+        if len(line) > _MAX_HEADING and not _starts_with_title(catalog, label.rest, label.numbers, part):
             continue
-        headings.append(_Heading(index, label_part, label.numbers, line, bold))
+        headings.append(_Heading(index, part, label.numbers, line, bold))
     return headings
 
 
-def _leading_lines(block) -> tuple[list[str], bool]:
-    """블록 앞 두 줄(표는 글자 있는 앞 두 행)과 굵기."""
-    if isinstance(block, Paragraph):
-        return block.text.split("\n")[:2], block.bold
-    if isinstance(block, Table):
-        row = _first_filled_row(block)
-        if row is None:
-            return [], False
-        rows = [block.row_text(index) for index in range(row, len(block.rows)) if block.row_text(index)]
-        return rows[:2], all(cell.bold for cell in block.rows[row] if cell.text)
-    return [], False
-
-
-def _first_filled_row(table: Table) -> int | None:
-    """표로 짠 헤딩("Item 1." | "Business")의 글자 있는 첫 행. 행이 많은 데이터 표는 헤딩이 아니다."""
-    filled = [index for index, row in enumerate(table.rows) if any(cell.text for cell in row)]
-    return filled[0] if filled and len(filled) <= _MAX_HEADING_TABLE_ROWS else None
+def _is_reference(rest: str) -> bool:
+    """ "of the registrant's …", "(e)"처럼 Item 표기 뒤가 문장이나 하위 항목뿐이다. "(d). Exhibits"는 헤딩이다."""
+    subsection = _SUBSECTION.match(rest)
+    if subsection is not None:
+        rest = rest[subsection.end() :].lstrip(" .:;—–-")
+        return not rest or rest[0].islower()
+    return bool(rest) and rest[0].islower()
 
 
 def _starts_with_title(catalog, rest: str, numbers: tuple[str, ...], part: str | None) -> bool:
     normalized = normalize_title(rest)
     for number in numbers:
-        spec = catalog.spec(part, number)
+        spec = catalog.resolve(part, number)
         if spec and any(normalized.startswith(normalize_title(title)) for title in spec.titles):
             return True
     return False

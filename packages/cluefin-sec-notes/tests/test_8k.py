@@ -63,3 +63,32 @@ def test_old_and_new_numbering_apply_by_date():
     legacy, current = FORM_8K.spec(None, "5"), FORM_8K.spec(None, "5.02")
     assert legacy.applies_to(date(2004, 8, 22)) and not legacy.applies_to(date(2004, 8, 23))
     assert current.applies_to(date(2004, 8, 23)) and not current.applies_to(date(2004, 8, 22))
+
+
+def test_subsection_heading_and_vote_proposals_numbered_like_old_items():
+    result = extract_items(
+        parse_filing(
+            filing(
+                "June 3, 2026",
+                ("Item 5.07 Submission of Matters to a Vote of Security Holders.", "The proposals were approved."),
+                ("Item 2. Ratification of the Appointment of Auditors", "Votes for: 100."),
+                ("ITEM 9.01(d). Exhibits", "104 Cover Page Interactive Data File."),
+            )
+        )
+    )
+    assert [item.key.number for item in result] == ["5.07", "9.01"]
+    assert UNKNOWN_ITEM not in {finding.code for finding in result.findings}
+
+
+def test_item_heading_in_the_first_row_of_an_exhibit_table():
+    exhibits = (
+        "<table><tr><td>Item 9.01 Financial Statements and Exhibits</td></tr><tr><td>(d) Exhibits</td></tr>"
+        "<tr><td>Exhibit No.</td><td>Description</td></tr><tr><td>99.1</td><td>Press release</td></tr></table>"
+    )
+    html = EARNINGS.replace(
+        '<table><tr><td style="font-weight:700">Item 9.01 Financial Statements and Exhibits.</td></tr></table>'
+        "<div>(d) Exhibits. 99.1 Press release.</div>",
+        exhibits,
+    )
+    assert html != EARNINGS
+    assert [item.key.number for item in extract_items(parse_filing(html))] == ["2.02", "9.01"]

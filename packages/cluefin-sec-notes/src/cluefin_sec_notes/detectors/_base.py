@@ -5,9 +5,14 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Protocol
 
+from cluefin_sec_notes._blocks import Paragraph, Table
 from cluefin_sec_notes._catalog import FormCatalog
 from cluefin_sec_notes._document import SecDocument
+from cluefin_sec_notes._labels import parse_item_label, parse_part
 from cluefin_sec_notes._model import Candidate, Finding, ItemKey
+
+# 헤딩을 담은 표로 볼 최대 행 수(글자 있는 행). "Item 1." | "Business"처럼 표로 짠 헤딩.
+MAX_HEADING_TABLE_ROWS = 3
 
 
 @dataclass
@@ -27,9 +32,45 @@ class DetectionContext:
     excluded: list[tuple[int, int]] = field(default_factory=list)
     previous: list[Candidate] = field(default_factory=list)
     absent: dict[ItemKey, str] = field(default_factory=dict)
+    _parts: tuple[int, list[str | None]] | None = field(default=None, repr=False)
 
     def is_excluded(self, block: int) -> bool:
         return any(start <= block < end for start, end in self.excluded)
+
+    def part_at(self, block: int) -> str | None:
+        """그 블록에 적용되는 Part: 앞에 나온(그 블록 포함) 마지막 Part 헤딩. 목차 구간의 Part 행은 보지 않는다.
+        10-Q처럼 "Item 1."에 Part가 없는 서식에서 Item 키를 정한다."""
+        if self._parts is None or self._parts[0] != len(self.excluded):
+            current: str | None = None
+            parts: list[str | None] = []
+            for index, each in enumerate(self.document.blocks):
+                lines = leading_lines(each)[0]
+                part = parse_part(lines[0]) if lines else None
+                if part is not None and not self.is_excluded(index):
+                    current = part
+                parts.append(current)
+            self._parts = (len(self.excluded), parts)
+        parts = self._parts[1]
+        return parts[min(block, len(parts) - 1)] if parts else None
+
+
+def leading_lines(block) -> tuple[list[str], bool]:
+    """헤딩을 읽을 블록 앞 두 줄(표는 글자 있는 앞 두 행)과 굵기. 행이 많은 표는 첫 행만 Item 표기일 때만 그 행을
+    준다(8-K "Item 9.01 Financial Statements and Exhibits" 행 아래 전시물 목록이 붙은 표). 다른 행에도 Item 표기가
+    있으면 목차라 빈 목록이다."""
+    if isinstance(block, Paragraph):
+        return block.text.split("\n")[:2], block.bold
+    if isinstance(block, Table):
+        filled = [index for index, row in enumerate(block.rows) if any(cell.text for cell in row)]
+        if not filled:
+            return [], False
+        rows = [block.row_text(index) for index in filled]
+        bold = all(cell.bold for cell in block.rows[filled[0]] if cell.text)
+        if len(filled) <= MAX_HEADING_TABLE_ROWS:
+            return rows[:2], bold
+        if parse_item_label(rows[0]) is not None and not any(parse_item_label(row) for row in rows[1:]):
+            return rows[:1], bold
+    return [], False
 
 
 @dataclass(frozen=True)

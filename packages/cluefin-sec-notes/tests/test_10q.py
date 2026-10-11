@@ -94,3 +94,22 @@ def test_omitted_part_two_items_are_not_confused_with_part_one_numbers():
     result = extract_items(parse_filing(filing(toc(present), body(present, after_part_two=note))))
     assert {ItemKey("II", "3"), ItemKey("II", "4")} <= set(result.omitted)
     assert MISSING_ITEM not in {finding.code for finding in result.warnings}
+
+
+def test_toc_link_to_the_other_parts_heading_is_not_trusted():
+    """Part I Item 4 링크가 Part II "Item 4." 앵커를 가리키는 작성 오류."""
+    wrong = toc().replace(f'href="#{anchor("I", "4")}"', f'href="#{anchor("II", "4")}"')
+    result = extract_items(parse_filing(filing(wrong, body())))
+    assert result.item("4", "I").text == "Item 4. Controls and Procedures\n\nBody of I 4."
+    assert result.item("4", "II").heading == "Item 4. Mine Safety Disclosures"
+
+
+def test_item_4t_is_item_4_and_part_two_only_numbers_survive_a_missing_part_heading():
+    content = (
+        body(anchored=False)
+        .replace("Item 4. Controls and Procedures", "Item 4T. Controls and Procedures")
+        .replace('<div style="font-weight:700">PART II — OTHER INFORMATION</div>', "")
+    )
+    result = extract_items(parse_filing(filing("", content)))
+    assert result.item("4", "I").heading == "Item 4T. Controls and Procedures"
+    assert result.item("5", "II") is not None and result.item("6", "II") is not None  # Part II에만 있는 번호

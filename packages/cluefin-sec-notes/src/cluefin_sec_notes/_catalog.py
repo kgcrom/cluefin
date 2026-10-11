@@ -76,6 +76,15 @@ class FormCatalog:
         index = self.index(part, number)
         return None if index is None else self.items[index]
 
+    def resolve(self, part: str | None, number: str) -> ItemSpec | None:
+        """`spec`과 같되, Part마다 번호가 다시 시작하는 서식에서 그 Part에 없는 번호가 다른 Part 하나에만 있으면 그
+        Item(10-Q의 5·6·1A는 Part II에만 있다). Part 헤딩을 놓쳐 현재 Part가 틀려도 이런 번호는 바로 읽힌다."""
+        spec = self.spec(part, number)
+        if spec is not None or not self.part_scoped:
+            return spec
+        matches = [spec for spec in self.items if spec.number == number]
+        return matches[0] if len(matches) == 1 else None
+
 
 def _item(part: str | None, number: str, title: str, *aliases: str, **options) -> ItemSpec:
     return ItemSpec(part=part, number=number, title=title, aliases=aliases, **options)
@@ -164,8 +173,7 @@ FORM_10K = FormCatalog(
     ),
 )
 
-# 10-Q는 Part마다 Item 번호가 다시 시작한다(Part I Item 1 재무제표, Part II Item 1 소송). 4T는 2007-12-15부터 2010년까지
-# 소규모 보고회사가 쓰던 Controls and Procedures.
+# 10-Q는 Part마다 Item 번호가 다시 시작한다(Part I Item 1 재무제표, Part II Item 1 소송).
 FORM_10Q = FormCatalog(
     name="10-Q",
     forms=("10-Q", "10-QT", "10-QSB"),
@@ -189,8 +197,7 @@ FORM_10Q = FormCatalog(
             "Quantitative and Qualitative Disclosures About Market Risk",
             "Quantitative and Qualitative Disclosure About Market Risk",
         ),
-        _item("I", "4", "Controls and Procedures"),
-        _item("I", "4T", "Controls and Procedures", optional=True),
+        _item("I", "4", "Controls and Procedures"),  # "Item 4T"도 이 Item이다(`parse_item_label`)
         _item("II", "1", "Legal Proceedings"),
         _item("II", "1A", "Risk Factors", since=date(2005, 12, 1)),
         _item(
