@@ -113,6 +113,15 @@ shapes are in `src/dart/client.ts` and `src/dart/xml.ts`.
   vulnerable to entity-expansion and large-token DoS; `defusedxml` forbids entity declarations outright.
   Its stable release is still 0.7.1 (0.8.0 stuck at rc since 2023-09) but it works on 3.10–3.14.
 
+### Python: nested quantifiers in a regex are a critical finding
+
+- "Detected usage of re.compile with an inefficient regular expression" (critical) fires on a
+  quantified group inside another quantified group. The case was a combined-label pattern for
+  "Items 10, 11 and 12": `{N}(?:\.?(?:\s*(?:,|and|&))+\s*{N})*`.
+- After: keep each regex flat (one number, one separator) and loop in code with
+  `pattern.match(text, pos)` (`_read_numbers` in `cluefin_sec_notes/_labels.py`). Same results, linear time.
+- A mutable default argument (`def f(items=SOME_LIST)`) is a high finding, tests included. Use a tuple.
+
 ## Environment gotchas
 
 - macOS system deps: `brew install lightgbm ta-lib`. `lightgbm` is a runtime dep of
