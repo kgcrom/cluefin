@@ -58,3 +58,11 @@ def test_download_pre_inline_xbrl_files(client: Client, tmp_path: Path):
     names = {p.name for p in paths}
     assert "aapl-20180929.xml" in names
     assert "aapl-20180929.xsd" in names
+
+
+def test_download_13f_files(client: Client, tmp_path: Path):
+    """Berkshire's 13F-HR for 2022Q4: the information table is a numbered file, not infotable.xml."""
+    files = client.archives.download_13f_files(1067983, "0000950123-23-002585", destination=tmp_path)
+    assert files.cover.name == "primary_doc.xml"
+    assert files.information_table is not None
+    assert b"informationTable" in files.information_table.read_bytes()[:1000]

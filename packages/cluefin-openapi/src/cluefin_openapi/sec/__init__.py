@@ -5,7 +5,7 @@ SEC has no API key: every request declares its caller in the User-Agent header
 """
 
 from cluefin_openapi.sec._archives import Archives
-from cluefin_openapi.sec._archives_types import FilingIndex, FilingIndexItem
+from cluefin_openapi.sec._archives_types import FilingIndex, FilingIndexItem, Form13FFiles
 from cluefin_openapi.sec._client import Client
 from cluefin_openapi.sec._exceptions import (
     SecAPIError,
@@ -45,6 +45,7 @@ __all__ = [
     "FilingEntry",
     "FilingIndex",
     "FilingIndexItem",
+    "Form13FFiles",
     "FormerName",
     "Frame",
     "FrameValue",

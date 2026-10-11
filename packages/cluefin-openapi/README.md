@@ -460,6 +460,11 @@ known = values_as_of(concept.units["USD"], date(2024, 1, 2))  # 기간(start, en
 # 공시 원문과 XBRL 파일 (cluefin-xbrl 의 parse_xbrl_directory 로 파싱)
 client.archives.download_filing_document(cik, latest.accession_number, latest.primary_document, destination="aapl")
 client.archives.download_xbrl_files(cik, latest.accession_number, destination="aapl-xbrl")
+
+# 13F 기관 보유 보고: 표지와 정보표 (cluefin-sec-notes 의 load_13f 로 파싱)
+thirteen_f = client.submissions.filings(1067983, forms=["13F-HR"])[0]
+files = client.archives.download_13f_files(1067983, thirteen_f.accession_number, destination="brk-13f")
+files.cover, files.information_table  # 통지(13F-NT)는 information_table 이 None
 ```
 
 `BrokerClientFactory().create("sec")` 도 `.env` 의 `SEC_USER_AGENT` 로 같은 클라이언트를 만듭니다.

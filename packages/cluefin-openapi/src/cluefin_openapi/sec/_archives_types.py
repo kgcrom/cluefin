@@ -1,5 +1,6 @@
 from datetime import datetime
-from typing import Any, List, Optional
+from pathlib import Path
+from typing import Any, List, NamedTuple, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -29,3 +30,12 @@ class FilingIndex(BaseModel):
     name: str = Field(description="폴더 경로 (/Archives/edgar/data/320193/000032019323000106)")
     parent_dir: Optional[str] = Field(default=None, alias="parent-dir", description="상위 폴더 경로")
     items: List[FilingIndexItem] = Field(default_factory=list, alias="item", description="파일 목록")
+
+
+class Form13FFiles(NamedTuple):
+    """13F 공시에서 받은 파일. `cluefin_sec_notes.ownership.load_13f`가 그대로 읽는다."""
+
+    cover: Path
+    """표지 `primary_doc.xml`"""
+    information_table: Optional[Path]
+    """보유 목록 XML. 통지(13F-NT)는 None"""

@@ -137,6 +137,10 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   sampled) were Eastern shifted twice, 4–5 h late — AAPL 0000320193-23-000106: header 2023-11-02 18:08:27 ET,
   JSON `2023-11-03T02:08:27Z` (measured 2026-10-11). Nothing in the JSON tells them apart, so `values_as_of` uses
   `filed` only. `filed` is the header's `FILED AS OF DATE`: acceptance after 17:30 ET counts as the next business day.
+- 13F folders hold the cover `primary_doc.xml` and **one** other XML, the information table, whose name is
+  arbitrary and may end in upper-case `.XML` (2 of 518 measured 2026-10-12); 13F-NT has the cover only.
+  `download_13f_files` picks by elimination and raises if two candidates appear. The submissions'
+  `primaryDocument` is the XSL path `xslForm13F_X0n/primary_doc.xml`, not the raw file.
 
 ## Kiwoom scope
 
