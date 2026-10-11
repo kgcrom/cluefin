@@ -1,4 +1,4 @@
-"""쪽 머리말·꼬리말("Apple Inc. | 2025 Form 10-K | 4", "Table of Contents", "II-252")을 본문에서 뺀다.
+"""쪽 머리말·꼬리말("Example Corp. | 2025 Form 10-K | 4", "Table of Contents", "II-252")을 본문에서 뺀다.
 
 Item 본문 중간과 끝에 끼어드는 것을 막는다. 판단 근거는 두 가지다.
 

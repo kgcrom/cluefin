@@ -4,7 +4,7 @@
 기대값(`items`·`present`)을 쓴다. 이미 있는 `known_bad`는 건드리지 않는다.
 
     uv run python packages/cluefin-sec-notes/scripts/draft_expectations.py docs/plans/sec-notes-corpus/golden.json \
-        --corpus ~/.cache/cluefin-sec-notes-corpus --only 0000320193-25-000079
+        --corpus ~/.cache/cluefin-sec-notes-corpus --only <접수번호>
 """
 
 from __future__ import annotations
