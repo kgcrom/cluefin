@@ -125,9 +125,9 @@ class Item:
 
     @property
     def heading(self) -> str:
+        """구간에서 글자가 있는 첫 줄(빈 칸만 있는 표는 건너뛴다)."""
         from cluefin_sec_notes._document import block_text
 
-        """구간에서 글자가 있는 첫 줄(빈 칸만 있는 표는 건너뛴다)."""
         for block in self.document.blocks[self.start : self.end]:
             line = next((line.strip() for line in block_text(block).split("\n") if line.strip()), "")
             if line:
