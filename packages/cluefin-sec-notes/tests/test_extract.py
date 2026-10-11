@@ -310,3 +310,33 @@ def test_part_three_omitted_by_general_instruction_sentence(synthetic):
     assert len(result.missing) == 5
     assert result.omitted == result.missing
     assert result.warnings == ()
+
+
+def test_detector_ranges_span_several_places_without_cutting_other_items(synthetic):
+    """구간을 정한 후보(교차참조 색인처럼)는 그 구간들을 잇고, 다른 Item의 끝을 자르지 않으며, 순서 경고도 없다."""
+    from cluefin_sec_notes import Candidate
+    from cluefin_sec_notes.detectors import DEFAULT_DETECTORS, Detection
+
+    document = parse_filing(synthetic.filing())
+    plain = extract_items(document)
+    business, legal = plain.item("1"), plain.item("3")
+    # 첫 구간이 Item 3 본문 중간에서 시작해도 Item 3을 자르지 않는다.
+    ranges = ((legal.start + 1, legal.end), (business.start, business.end))
+
+    class FixedRanges:
+        name = "fixed"
+        confidence = 0.99
+
+        def detect(self, context):
+            return Detection(candidates=(Candidate(ItemKey("I", "1A"), ranges[0][0], self.name, 0.99, ranges=ranges),))
+
+    result = extract_items(document, detectors=(*DEFAULT_DETECTORS, FixedRanges()))
+    risk = result.item("1A")
+    assert risk.ranges == ranges
+    assert (risk.start, risk.end) == ranges[0]
+    assert risk.text == "Body of item 3.\n\n" + business.text
+    assert len(risk.blocks) == len(legal.blocks) - 1 + len(business.blocks)
+    assert result.item("3").text == legal.text
+    assert result.item("1B").text == plain.item("1B").text  # 1A 구간 위치로 다른 Item 후보를 버리지 않는다
+    assert not any(finding.code == NON_SEQUENTIAL_LAYOUT for finding in result.findings)
+    assert plain.item("2").ranges == ((plain.item("2").start, plain.item("2").end),)

@@ -152,9 +152,10 @@ def _resolve(candidates: list[Candidate], catalog: FormCatalog) -> tuple[dict[It
 
 
 def _order_conflict(candidate: Candidate, accepted: dict[ItemKey, Candidate], catalog: FormCatalog) -> Candidate | None:
-    """신뢰도가 더 높은 채택 Item 중 카탈로그상 바로 앞·뒤 Item과 위치가 어긋나면 그 Item."""
+    """신뢰도가 더 높은 채택 Item 중 카탈로그상 바로 앞·뒤 Item과 위치가 어긋나면 그 Item. 구간을 탐지기가 정한
+    Item(교차참조 색인)은 문서 순서와 무관하게 놓이므로 기준으로 삼지 않는다."""
     position = _catalog_index(catalog, candidate.key)
-    stronger = [other for other in accepted.values() if other.confidence > candidate.confidence]
+    stronger = [other for other in accepted.values() if other.confidence > candidate.confidence and not other.ranges]
     before = [other for other in stronger if _catalog_index(catalog, other.key) < position]
     after = [other for other in stronger if _catalog_index(catalog, other.key) > position]
     previous = max(before, key=lambda other: _catalog_index(catalog, other.key), default=None)
@@ -167,9 +168,11 @@ def _order_conflict(candidate: Candidate, accepted: dict[ItemKey, Candidate], ca
 
 
 def _non_sequential(accepted: dict[ItemKey, Candidate], catalog: FormCatalog) -> list[Finding]:
-    # 결합 헤딩("Items 1 and 2")의 뒤쪽 Item은 앞쪽 Item 자리에 있는 것이 정상이라 빼고 본다.
+    # 결합 헤딩("Items 1 and 2")의 뒤쪽 Item은 앞쪽 Item 자리에 있는 것이 정상이라 빼고 본다. 구간을 탐지기가 정한
+    # 후보(교차참조 색인)는 순서와 무관하게 구간이 맞으므로 빼고 본다.
     first_at_block: dict[int, Candidate] = {}
-    for candidate in sorted(accepted.values(), key=lambda candidate: _catalog_index(catalog, candidate.key)):
+    headed = [candidate for candidate in accepted.values() if not candidate.ranges]
+    for candidate in sorted(headed, key=lambda candidate: _catalog_index(catalog, candidate.key)):
         first_at_block.setdefault(candidate.block, candidate)
     ordered = sorted(first_at_block.values(), key=lambda candidate: _catalog_index(catalog, candidate.key))
     for previous, current in zip(ordered, ordered[1:], strict=False):
@@ -193,13 +196,17 @@ def _catalog_index(catalog: FormCatalog, key: ItemKey) -> int:
 
 def _build_items(document: SecDocument, catalog: FormCatalog, accepted: dict[ItemKey, Candidate]) -> tuple[Item, ...]:
     ordered = sorted(accepted.values(), key=lambda candidate: (candidate.block, _catalog_index(catalog, candidate.key)))
-    starts = sorted({candidate.block for candidate in ordered})
+    # 구간이 정해진 후보는 다른 Item의 끝을 자르지 않는다.
+    starts = sorted({candidate.block for candidate in ordered if not candidate.ranges})
     last_start = starts[-1] if starts else 0
     end_of_items = _signatures(document, last_start)
     items = []
     for candidate in ordered:
-        later = [start for start in starts if start > candidate.block]
-        end = _trim_part_heading(document, candidate.block, later[0] if later else end_of_items)
+        if candidate.ranges:
+            end = candidate.ranges[0][1]
+        else:
+            later = [start for start in starts if start > candidate.block]
+            end = _trim_part_heading(document, candidate.block, later[0] if later else end_of_items)
         spec = catalog.spec(candidate.key.part, candidate.key.number)
         shared = tuple(other.key for other in ordered if other.block == candidate.block and other.key != candidate.key)
         items.append(
@@ -213,6 +220,7 @@ def _build_items(document: SecDocument, catalog: FormCatalog, accepted: dict[Ite
                 document=document,
                 evidence=candidate.evidence,
                 shared_with=shared,
+                ranges=candidate.ranges,
             )
         )
     return tuple(items)
