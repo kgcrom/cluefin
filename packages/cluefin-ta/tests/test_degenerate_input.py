@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 
 from cluefin_ta import AD, ADX, KAMA, MFI, OBV
-from cluefin_ta._core import dx_loop, kama_loop, mfi_loop, rolling_std, true_range_loop
+from cluefin_ta._core import adx_loop, kama_loop, mfi_loop, rolling_std, true_range_loop
 
 N = 40
 FLAT = np.full(N, 100.0)
@@ -42,8 +42,8 @@ class TestFlatBars:
     def test_kama_holds_price_when_volatility_is_zero(self):
         result = KAMA(FLAT, timeperiod=10)
 
-        assert np.isnan(result[:9]).all()
-        np.testing.assert_array_equal(result[9:], np.full(N - 9, 100.0))
+        assert np.isnan(result[:10]).all()
+        np.testing.assert_array_equal(result[10:], np.full(N - 10, 100.0))
 
     def test_adx_is_zero_when_true_range_is_zero(self):
         timeperiod = 14
@@ -53,16 +53,6 @@ class TestFlatBars:
         warmup = 2 * timeperiod - 1
         assert np.isnan(result[:warmup]).all()
         np.testing.assert_array_equal(result[warmup:], np.zeros(N - warmup))
-
-    def test_dx_loop_directional_indicators_are_zero(self):
-        timeperiod = 14
-        prev_close = np.concatenate([[np.nan], FLAT[:-1]])
-
-        plus_di, minus_di, dx = dx_loop(FLAT, FLAT, prev_close, timeperiod)
-
-        for values in (plus_di, minus_di, dx):
-            assert np.isnan(values[:timeperiod]).all()
-            np.testing.assert_array_equal(values[timeperiod:], np.zeros(N - timeperiod))
 
 
 def test_mfi_is_100_when_there_is_no_negative_money_flow():
@@ -83,7 +73,7 @@ def test_mfi_is_100_when_there_is_no_negative_money_flow():
         pytest.param(lambda x: kama_loop(x, 5, 2 / 3, 2 / 31), id="kama_loop"),
         pytest.param(lambda x: mfi_loop(x, np.ones_like(x), 5), id="mfi_loop"),
         pytest.param(lambda x: true_range_loop(x, x, x), id="true_range_loop"),
-        pytest.param(lambda x: dx_loop(x, x, x, 5)[2], id="dx_loop"),
+        pytest.param(lambda x: adx_loop(x, x, x, 5), id="adx_loop"),
     ],
 )
 def test_core_loop_shorter_than_window_is_all_nan(call):

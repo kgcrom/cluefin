@@ -16,8 +16,8 @@ Functions:
 
 import numpy as np
 
-from cluefin_ta._core import dx_loop, mfi_loop, rolling_minmax, wilder_smooth
-from cluefin_ta.overlap import EMA, SMA, _require_sma
+from cluefin_ta._core import adx_loop, mfi_loop, rolling_minmax, wilder_smooth
+from cluefin_ta.overlap import SMA, _ema_from, _require_sma
 
 
 def _fast_k(high: np.ndarray, low: np.ndarray, close: np.ndarray, period: int) -> np.ndarray:
@@ -106,30 +106,23 @@ def MACD(
     close = np.asarray(close, dtype=np.float64)
     n = len(close)
 
-    macd = np.full(n, np.nan)
+    # ta-lib swaps the periods rather than producing a negated MACD
+    if slowperiod < fastperiod:
+        fastperiod, slowperiod = slowperiod, fastperiod
+
+    # Both EMAs start at the slow EMA's first bar (ta-lib seeds the fast one there too,
+    # from the fastperiod bars ending at that index), and all three outputs start once
+    # the signal EMA has its first value.
+    start = slowperiod - 1
+    first = start + signalperiod - 1
+    if n <= first:
+        nan_arr = np.full(n, np.nan)
+        return nan_arr, nan_arr.copy(), nan_arr.copy()
+
+    macd = _ema_from(close, fastperiod, start) - _ema_from(close, slowperiod, start)
     signal = np.full(n, np.nan)
-    hist = np.full(n, np.nan)
-
-    if n < slowperiod:
-        return macd, signal, hist
-
-    # Calculate fast and slow EMAs
-    fast_ema = EMA(close, fastperiod)
-    slow_ema = EMA(close, slowperiod)
-
-    # MACD line = Fast EMA - Slow EMA
-    macd = fast_ema - slow_ema
-
-    # Calculate signal line (EMA of MACD)
-    # Need to handle NaN values in MACD for signal calculation
-    valid_start = slowperiod - 1
-    if n >= valid_start + signalperiod:
-        # Calculate EMA of valid MACD values
-        macd_valid = macd[valid_start:]
-        signal_ema = EMA(macd_valid, signalperiod)
-        signal[valid_start:] = signal_ema
-
-    # Histogram = MACD - Signal
+    signal[start:] = _ema_from(macd[start:], signalperiod, signalperiod - 1)
+    macd[:first] = np.nan
     hist = macd - signal
 
     return macd, signal, hist
@@ -447,37 +440,8 @@ def ADX(
     high = np.asarray(high, dtype=np.float64)
     low = np.asarray(low, dtype=np.float64)
     close = np.asarray(close, dtype=np.float64)
-    n = len(close)
 
-    result = np.full(n, np.nan)
-
-    if n < timeperiod * 2:
-        return result
-
-    # Create prev_close array (close shifted by 1)
-    prev_close = np.empty(n, dtype=np.float64)
-    prev_close[0] = np.nan
-    prev_close[1:] = close[:-1]
-
-    # Get +DI, -DI, DX
-    plus_di, minus_di, dx = dx_loop(high, low, prev_close, timeperiod)
-
-    # ADX = Wilder smoothed average of DX
-    # First ADX is the average of first 'period' DX values
-    first_adx_idx = timeperiod * 2 - 1
-    if first_adx_idx < n:
-        # Average of DX values from index 'period' to '2*period-1'
-        dx_values = dx[timeperiod : first_adx_idx + 1]
-        valid_dx = dx_values[~np.isnan(dx_values)]
-        if len(valid_dx) > 0:
-            result[first_adx_idx] = np.mean(valid_dx)
-
-            # Wilder smoothing for subsequent ADX values
-            for i in range(first_adx_idx + 1, n):
-                if not np.isnan(dx[i]):
-                    result[i] = (result[i - 1] * (timeperiod - 1) + dx[i]) / timeperiod
-
-    return result
+    return adx_loop(high, low, close, timeperiod)
 
 
 __all__ = ["RSI", "MACD", "STOCH", "STOCHF", "WILLR", "MOM", "ROC", "CCI", "MFI", "ADX"]

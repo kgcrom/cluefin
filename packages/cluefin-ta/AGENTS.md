@@ -8,10 +8,12 @@ AGENTS.md for repo-wide rules.
 - The C-backed `ta-lib` package (dev dependency only) is the test oracle. New indicators
   must match it at `rtol=1e-10` **including the NaN warm-up prefix length** (ta-lib's
   lookback convention), not just post-warm-up values.
-- The few looser tolerances (MACD, ADX, KAMA) are deliberate — ta-lib's internal
-  "unstable period" handling diverges there. Don't loosen a tolerance to make a new
-  implementation pass; reproduce ta-lib's algorithm quirks instead (see the comments in
-  `overlap.py` DEMA, `momentum.py` STOCH, `volume.py` ADOSC for the pattern).
+- There are no looser tolerances: MACD, ADX and KAMA used to differ (MACD by up to 35%)
+  and were blamed on ta-lib's "unstable period", but the real causes were algorithm
+  details — MACD seeds the fast EMA at the slow EMA's first bar, ADX starts its Wilder
+  sums from `period - 1` bars and skips near-zero (`TA_IS_ZERO`, 1e-8) DX, KAMA's first
+  value is at index `period`. When a new indicator won't match, read the ta-lib C source
+  and reproduce it; don't loosen the tolerance (see `_core.py` and DEMA, STOCH, ADOSC).
 
 ## Regime functions never look ahead
 

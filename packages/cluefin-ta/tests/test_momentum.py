@@ -3,6 +3,7 @@ Tests for momentum indicators (RSI, MACD, STOCH, STOCHF, WILLR, MOM, ROC, CCI, M
 """
 
 import numpy as np
+import pytest
 import talib
 
 from cluefin_ta import ADX, CCI, MACD, MFI, MOM, ROC, RSI, STOCH, STOCHF, WILLR
@@ -61,28 +62,29 @@ class TestRSI:
 class TestMACD:
     """Tests for Moving Average Convergence/Divergence."""
 
-    def test_macd_matches_talib(self, sample_close):
-        """Verify MACD matches ta-lib output within acceptable tolerance.
+    @pytest.mark.parametrize(
+        ("fast", "slow", "signal"),
+        [(12, 26, 9), (5, 35, 5), (3, 10, 16), (26, 12, 9)],
+        ids=["default", "wide", "long-signal", "swapped"],
+    )
+    def test_macd_matches_talib(self, sample_close, fast, slow, signal):
+        """Values and NaN prefix match ta-lib, which seeds the fast EMA at the slow EMA's first bar."""
+        expected = talib.MACD(sample_close, fastperiod=fast, slowperiod=slow, signalperiod=signal)
+        actual = MACD(sample_close, fastperiod=fast, slowperiod=slow, signalperiod=signal)
 
-        Note: ta-lib uses internal "unstable period" handling which causes slight
-        differences in early EMA values. The tolerance allows for ~2% relative difference
-        which is acceptable for practical trading applications.
-        """
-        expected_macd, expected_signal, expected_hist = talib.MACD(sample_close)
-        actual_macd, actual_signal, actual_hist = MACD(sample_close)
+        for name, ours, theirs in zip(("macd", "signal", "hist"), actual, expected, strict=True):
+            np.testing.assert_array_equal(np.isnan(ours), np.isnan(theirs), err_msg=name)
+            mask = ~np.isnan(theirs)
+            np.testing.assert_allclose(ours[mask], theirs[mask], rtol=1e-10, err_msg=name)
 
-        # Compare non-NaN values for MACD line
-        # Use more relaxed tolerance due to EMA initialization differences
-        mask = ~np.isnan(expected_macd) & ~np.isnan(actual_macd)
-        np.testing.assert_allclose(actual_macd[mask], expected_macd[mask], rtol=0.05)
+    def test_macd_at_exact_lookback_length(self, sample_close):
+        """One bar more than the lookback gives exactly one value; one less gives none."""
+        for n in (33, 34):
+            expected = talib.MACD(sample_close[:n])
+            actual = MACD(sample_close[:n])
 
-        # Compare signal line (signal is EMA of MACD, so differences compound)
-        signal_mask = ~np.isnan(expected_signal) & ~np.isnan(actual_signal)
-        np.testing.assert_allclose(actual_signal[signal_mask], expected_signal[signal_mask], rtol=0.05)
-
-        # Compare histogram using absolute tolerance (small values have high relative error)
-        hist_mask = ~np.isnan(expected_hist) & ~np.isnan(actual_hist)
-        np.testing.assert_allclose(actual_hist[hist_mask], expected_hist[hist_mask], atol=0.2)
+            for ours, theirs in zip(actual, expected, strict=True):
+                np.testing.assert_array_equal(np.isnan(ours), np.isnan(theirs))
 
     def test_macd_histogram_calculation(self, sample_close):
         """Verify histogram = MACD - Signal."""
@@ -295,10 +297,24 @@ class TestADX:
         expected = talib.ADX(high, low, close, timeperiod=14)
         actual = ADX(high, low, close, timeperiod=14)
 
-        mask = ~np.isnan(expected) & ~np.isnan(actual)
-        # ADX uses multiple smoothing operations, allow some tolerance
-        # Early values may differ slightly due to initialization differences
-        np.testing.assert_allclose(actual[mask], expected[mask], rtol=0.06)
+        np.testing.assert_array_equal(np.isnan(actual), np.isnan(expected))
+        mask = ~np.isnan(expected)
+        np.testing.assert_allclose(actual[mask], expected[mask], rtol=1e-10)
+
+    @pytest.mark.parametrize("timeperiod", [5, 14, 30])
+    def test_adx_matches_talib_on_tick_rounded_prices(self, timeperiod):
+        """KRX-like prices on a 50-won grid produce equal highs/lows (zero DM) often."""
+        rng = np.random.default_rng(timeperiod)
+        close = np.round(50000 * np.exp(np.cumsum(rng.normal(0, 0.02, 600))) / 50) * 50
+        high = close + np.round(np.abs(rng.normal(0, 300, 600)) / 50) * 50
+        low = close - np.round(np.abs(rng.normal(0, 300, 600)) / 50) * 50
+
+        expected = talib.ADX(high, low, close, timeperiod=timeperiod)
+        actual = ADX(high, low, close, timeperiod=timeperiod)
+
+        np.testing.assert_array_equal(np.isnan(actual), np.isnan(expected))
+        mask = ~np.isnan(expected)
+        np.testing.assert_allclose(actual[mask], expected[mask], rtol=1e-10)
 
     def test_adx_range(self, sample_ohlcv):
         """Verify ADX values are in range [0, 100]."""

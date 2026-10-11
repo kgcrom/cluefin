@@ -5,25 +5,23 @@ Low-level NumPy loops and rolling-window helpers shared by the indicator modules
 import numpy as np
 
 
-def ema_loop(close: np.ndarray, period: int, alpha: float, initial_sma: float) -> np.ndarray:
+def ema_loop(values: np.ndarray, start: int, alpha: float, seed: float) -> np.ndarray:
     """
-    EMA calculation loop.
+    EMA from ``seed`` at index ``start`` on, NaN before.
 
-    Args:
-        close: Array of closing prices
-        period: EMA period
-        alpha: Smoothing factor (2 / (period + 1))
-        initial_sma: Initial SMA value for first EMA
-
-    Returns:
-        Array of EMA values with NaN for initial periods
+    Uses ta-lib's update ``prev + (x - prev) * alpha`` rather than
+    ``alpha * x + (1 - alpha) * prev``; the two round differently.
     """
-    n = len(close)
+    n = len(values)
     result = np.full(n, np.nan)
-    result[period - 1] = initial_sma
+    if start >= n:
+        return result
 
-    for i in range(period, n):
-        result[i] = alpha * close[i] + (1 - alpha) * result[i - 1]
+    prev = seed
+    result[start] = prev
+    for i in range(start + 1, n):
+        prev = (values[i] - prev) * alpha + prev
+        result[i] = prev
 
     return result
 
@@ -210,7 +208,11 @@ def kama_loop(
     slow_sc: float,
 ) -> np.ndarray:
     """
-    Kaufman Adaptive Moving Average calculation loop.
+    Kaufman Adaptive Moving Average, following ta-lib's TA_KAMA.
+
+    The first value is at index ``period`` (seeded from ``close[period - 1]``). The
+    volatility sum is a running total like ta-lib's, and an efficiency ratio whose
+    volatility is (near) zero counts as 1, also like ta-lib.
 
     Args:
         close: Array of closing prices
@@ -219,122 +221,122 @@ def kama_loop(
         slow_sc: Slow smoothing constant (2 / (slow + 1))
 
     Returns:
-        Array of KAMA values with NaN for initial periods
+        Array of KAMA values with NaN for the first ``period`` bars
     """
     n = len(close)
     result = np.full(n, np.nan)
 
-    if n < period:
+    if n <= period:
         return result
 
-    # First KAMA value is the first close price after enough data
-    result[period - 1] = close[period - 1]
+    prices = close.tolist()
+    abs_diff = [abs(prices[j + 1] - prices[j]) for j in range(n - 1)]
+    sc_range = fast_sc - slow_sc
 
+    volatility = 0.0
+    for j in range(period):
+        volatility += abs_diff[j]
+
+    kama = prices[period - 1]
     for i in range(period, n):
-        # Change = |close - close[period ago]|
-        change = abs(close[i] - close[i - period])
-
-        # Volatility = sum of |close - prev_close| over period
-        volatility = 0.0
-        for j in range(i - period + 1, i + 1):
-            volatility += abs(close[j] - close[j - 1])
-
-        # Efficiency Ratio
-        if volatility != 0:
-            er = change / volatility
-        else:
-            er = 0.0
-
-        # Smoothing Constant: SC = (ER * (fast_sc - slow_sc) + slow_sc)^2
-        sc = (er * (fast_sc - slow_sc) + slow_sc) ** 2
-
-        # KAMA = prev_KAMA + SC * (close - prev_KAMA)
-        result[i] = result[i - 1] + sc * (close[i] - result[i - 1])
+        if i > period:
+            volatility -= abs_diff[i - period - 1]
+            volatility += abs_diff[i - 1]
+        change = prices[i] - prices[i - period]
+        efficiency = 1.0 if volatility <= change or _is_zero(volatility) else abs(change / volatility)
+        sc = efficiency * sc_range + slow_sc
+        sc *= sc
+        kama = (prices[i] - kama) * sc + kama
+        result[i] = kama
 
     return result
 
 
-def dx_loop(
-    high: np.ndarray,
-    low: np.ndarray,
-    prev_close: np.ndarray,
-    period: int,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """
-    Directional Index calculation loop for ADX.
+def _is_zero(value: float) -> bool:
+    """ta-lib's TA_IS_ZERO: within 1e-8 of zero."""
+    return -1e-8 < value < 1e-8
 
-    Calculates +DI, -DI, and DX using Wilder's smoothing.
+
+def adx_loop(high: np.ndarray, low: np.ndarray, close: np.ndarray, period: int) -> np.ndarray:
+    """
+    Average Directional Index, following ta-lib's TA_ADX.
+
+    The Wilder sums of +DM, -DM and TR start from ``period - 1`` bars and are smoothed
+    from bar ``period`` on; the first ADX (index ``2 * period - 1``) averages the DX of
+    bars ``period .. 2 * period - 1``. A bar whose TR or DI sum is (near) zero adds no DX
+    and leaves the ADX unchanged, as in ta-lib.
 
     Args:
         high: Array of high prices
         low: Array of low prices
-        prev_close: Array of previous close prices (close shifted by 1)
+        close: Array of closing prices
         period: Smoothing period
 
     Returns:
-        Tuple of (+DI, -DI, DX) arrays
+        Array of ADX values with NaN for the first ``2 * period - 1`` bars
     """
-    n = len(high)
-    plus_di = np.full(n, np.nan)
-    minus_di = np.full(n, np.nan)
-    dx = np.full(n, np.nan)
+    n = len(close)
+    result = np.full(n, np.nan)
+    first = 2 * period - 1
 
-    if n < period + 1:
-        return plus_di, minus_di, dx
+    if n <= first:
+        return result
 
-    # Calculate +DM, -DM, and TR
-    plus_dm = np.zeros(n)
-    minus_dm = np.zeros(n)
-    tr = np.zeros(n)
+    highs, lows, closes = high.tolist(), low.tolist(), close.tolist()
+    plus_dm = minus_dm = tr = 0.0
 
-    for i in range(1, n):
-        up_move = high[i] - high[i - 1]
-        down_move = low[i - 1] - low[i]
+    def directional_move(t: int) -> tuple[float, float]:
+        up = highs[t] - highs[t - 1]
+        down = lows[t - 1] - lows[t]
+        if down > 0 and up < down:
+            return 0.0, down
+        if up > 0 and up > down:
+            return up, 0.0
+        return 0.0, 0.0
 
-        if up_move > down_move and up_move > 0:
-            plus_dm[i] = up_move
-        if down_move > up_move and down_move > 0:
-            minus_dm[i] = down_move
+    def true_range(t: int) -> float:
+        return max(highs[t] - lows[t], abs(highs[t] - closes[t - 1]), abs(lows[t] - closes[t - 1]))
 
-        # True Range
-        hl = high[i] - low[i]
-        hc = abs(high[i] - prev_close[i])
-        lc = abs(low[i] - prev_close[i])
-        tr[i] = max(hl, hc, lc)
+    def smooth(t: int) -> None:
+        nonlocal plus_dm, minus_dm, tr
+        up, down = directional_move(t)
+        minus_dm = minus_dm - minus_dm / period + down
+        plus_dm = plus_dm - plus_dm / period + up
+        tr = tr - tr / period + true_range(t)
 
-    # Wilder smoothing for +DM, -DM, TR
-    smooth_plus_dm = np.full(n, np.nan)
-    smooth_minus_dm = np.full(n, np.nan)
-    smooth_tr = np.full(n, np.nan)
+    def directional_index() -> float | None:
+        if _is_zero(tr):
+            return None
+        minus_di = 100.0 * (minus_dm / tr)
+        plus_di = 100.0 * (plus_dm / tr)
+        di_sum = minus_di + plus_di
+        if _is_zero(di_sum):
+            return None
+        return 100.0 * (abs(minus_di - plus_di) / di_sum)
 
-    # Initialize with sum of first 'period' values
-    smooth_plus_dm[period] = np.sum(plus_dm[1 : period + 1])
-    smooth_minus_dm[period] = np.sum(minus_dm[1 : period + 1])
-    smooth_tr[period] = np.sum(tr[1 : period + 1])
+    for t in range(1, period):
+        up, down = directional_move(t)
+        plus_dm += up
+        minus_dm += down
+        tr += true_range(t)
 
-    # Wilder smoothing
-    for i in range(period + 1, n):
-        smooth_plus_dm[i] = smooth_plus_dm[i - 1] - (smooth_plus_dm[i - 1] / period) + plus_dm[i]
-        smooth_minus_dm[i] = smooth_minus_dm[i - 1] - (smooth_minus_dm[i - 1] / period) + minus_dm[i]
-        smooth_tr[i] = smooth_tr[i - 1] - (smooth_tr[i - 1] / period) + tr[i]
+    dx_sum = 0.0
+    for t in range(period, first + 1):
+        smooth(t)
+        dx = directional_index()
+        if dx is not None:
+            dx_sum += dx
 
-    # Calculate +DI, -DI
-    for i in range(period, n):
-        if smooth_tr[i] != 0:
-            plus_di[i] = 100.0 * smooth_plus_dm[i] / smooth_tr[i]
-            minus_di[i] = 100.0 * smooth_minus_dm[i] / smooth_tr[i]
-        else:
-            plus_di[i] = 0.0
-            minus_di[i] = 0.0
+    adx = dx_sum / period
+    result[first] = adx
+    for t in range(first + 1, n):
+        smooth(t)
+        dx = directional_index()
+        if dx is not None:
+            adx = (adx * (period - 1) + dx) / period
+        result[t] = adx
 
-        # Calculate DX
-        di_sum = plus_di[i] + minus_di[i]
-        if di_sum != 0:
-            dx[i] = 100.0 * abs(plus_di[i] - minus_di[i]) / di_sum
-        else:
-            dx[i] = 0.0
-
-    return plus_di, minus_di, dx
+    return result
 
 
 def mfi_loop(
@@ -390,6 +392,6 @@ __all__ = [
     "obv_loop",
     "ad_loop",
     "kama_loop",
-    "dx_loop",
+    "adx_loop",
     "mfi_loop",
 ]

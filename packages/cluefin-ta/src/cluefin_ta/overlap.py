@@ -16,6 +16,12 @@ import numpy as np
 from cluefin_ta._core import ema_loop, kama_loop, rolling_std
 
 
+def _ema_from(values: np.ndarray, period: int, start: int) -> np.ndarray:
+    """ta-lib's EMA whose first value is at ``start``: the SMA of the ``period`` values ending there."""
+    seed = np.mean(values[start - period + 1 : start + 1])
+    return ema_loop(values, start, 2.0 / (period + 1), seed)
+
+
 def _require_sma(name: str, matype: int) -> None:
     """Reject ta-lib MA types other than SMA (0) instead of silently computing an SMA."""
     if matype != 0:
@@ -64,13 +70,7 @@ def EMA(close: np.ndarray, timeperiod: int = 30) -> np.ndarray:
     if n < timeperiod:
         return np.full(n, np.nan)
 
-    # Calculate multiplier (smoothing factor)
-    alpha = 2.0 / (timeperiod + 1)
-
-    # Initialize with SMA for the first EMA value
-    initial_sma = np.mean(close[:timeperiod])
-
-    return ema_loop(close, timeperiod, alpha, initial_sma)
+    return _ema_from(close, timeperiod, timeperiod - 1)
 
 
 def WMA(close: np.ndarray, timeperiod: int = 30) -> np.ndarray:
