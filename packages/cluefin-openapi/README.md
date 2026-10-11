@@ -729,7 +729,7 @@ packages/cluefin-openapi/
 │   ├── dart/                      # Dart API 테스트
 │   │   ├── test_*_unit.py        # 단위 테스트
 │   │   └── test_*_integration.py # 통합 테스트
-│   └── sec/                       # SEC EDGAR 테스트 (통합 테스트는 SEC_USER_AGENT 필요)
+│   └── sec/                       # SEC EDGAR 테스트 (통합 테스트는 .env.test 의 SEC_USER_AGENT 사용)
 ├── pyproject.toml               # 패키지 의존성 및 설정
 └── README.md                    # 이 문서
 ```

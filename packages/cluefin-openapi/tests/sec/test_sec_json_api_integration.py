@@ -1,5 +1,6 @@
 """Live checks against www.sec.gov / data.sec.gov (read-only, no account involved)."""
 
+import re
 from datetime import date
 from decimal import Decimal
 
@@ -50,7 +51,8 @@ def test_submissions_rows_match_the_live_columns(client: Client):
     company = client.submissions.submissions(APPLE_CIK)
     assert company.name == "Apple Inc."
     assert company.tickers[0] == "AAPL"
-    assert company.fiscal_year_end == "0927" or company.fiscal_year_end == "0928"
+    # 52/53-week year ending the last Saturday of September: the MMDD moves every year (0926 in 2026-10).
+    assert re.fullmatch(r"09\d{2}", company.fiscal_year_end or "")
     assert len(company.filings) == len(raw["filings"]["recent"]["accessionNumber"])
     assert company.filing_files, "Apple has more history than fits in `recent`"
 

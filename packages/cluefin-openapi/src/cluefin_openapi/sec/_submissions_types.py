@@ -24,6 +24,11 @@ class FilingEntry(BaseModel):
     size: Optional[int] = Field(default=None, description="제출물 전체 크기(바이트)")
     is_xbrl: bool = Field(default=False, alias="isXBRL", description="XBRL 포함 여부")
     is_inline_xbrl: bool = Field(default=False, alias="isInlineXBRL", description="인라인 XBRL 여부")
+    is_xbrl_numeric: Optional[bool] = Field(
+        default=None,
+        alias="isXBRLNumeric",
+        description="SEC 문서에 없는 열. 최근 제출분에만 0/1이 있고 이전 제출분은 null (2026-10 실측). 이름상 숫자 XBRL 값 포함 여부",
+    )
     primary_document: Optional[str] = Field(default=None, alias="primaryDocument", description="주 문서 파일명")
     primary_doc_description: Optional[str] = Field(
         default=None, alias="primaryDocDescription", description="주 문서 설명"

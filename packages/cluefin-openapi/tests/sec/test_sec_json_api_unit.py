@@ -45,6 +45,7 @@ TENK_ROW = {
     "size": 9472616,
     "isXBRL": 1,
     "isInlineXBRL": 1,
+    "isXBRLNumeric": None,
     "primaryDocument": "aapl-20230930.htm",
     "primaryDocDescription": "10-K",
 }
@@ -61,6 +62,7 @@ FORM4_ROW = {
     "size": 4800,
     "isXBRL": 0,
     "isInlineXBRL": 0,
+    "isXBRLNumeric": 0,
     "primaryDocument": "xslF345X05/wk-form4_1700519405.xml",
     "primaryDocDescription": "FORM 4",
 }
@@ -171,12 +173,14 @@ class TestSubmissions:
         assert tenk.report_date == date(2023, 9, 30)
         assert tenk.acceptance_date_time == datetime(2023, 11, 2, 18, 8, 27, tzinfo=timezone.utc)
         assert tenk.is_xbrl is True and tenk.is_inline_xbrl is True
+        assert tenk.is_xbrl_numeric is None  # null on all but the most recent filings
         assert tenk.items is None  # "" becomes None
         assert tenk.primary_document == "aapl-20230930.htm"
 
         form4 = company.filings[1]
         assert form4.act is None and form4.file_number is None
         assert form4.is_xbrl is False
+        assert form4.is_xbrl_numeric is False
 
     def test_mismatched_column_lengths_fail_loudly(self, client: Client):
         broken = {**SUBMISSIONS_PAYLOAD, "filings": {"recent": {"form": ["10-K", "4"], "accessionNumber": ["x"]}}}

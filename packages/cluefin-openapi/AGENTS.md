@@ -104,14 +104,15 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 
 ## SEC EDGAR (sec)
 
-- No API key: SEC identifies callers by the User-Agent ("Name email"), from `SEC_USER_AGENT` in `.env`.
-  Per SEC's access policy, an undeclared agent **and** a client over 10 req/s both get **403**, not 429, and the
-  over-rate block lasts about 10 minutes. That is why 403 is never retried and the default is 8 req/s.
+- No API key: SEC identifies callers by the User-Agent ("Name email"): `SEC_USER_AGENT` in `.env` at runtime
+  (`BrokerClientFactory`), in `.env.test` for tests (`tests/sec/_env.py`, like every other integration suite).
+  An undeclared agent gets **403** from both www.sec.gov and data.sec.gov (measured 2026-10-11 with
+  `python-requests/…`; a browser-like agent still got 403 from www.sec.gov). The 403 page is titled "Request Rate
+  Threshold Exceeded" even when the rate is fine — check the agent first. Per SEC's policy a client over 10 req/s
+  also gets 403 (not 429) for about 10 minutes (not measured). Hence 403 is never retried and the default is 8 req/s.
 - `Client._request` only accepts `https://www.sec.gov` and `https://data.sec.gov` URLs, and every value that goes
   into a URL path passes `_ids.py` (CIK, accession number, single path segment). Keep it that way when adding
   endpoints — EFTS full-text search (`efts.sec.gov`) would need the allow-list widened on purpose.
-- SEC integration tests read `SEC_USER_AGENT` with `dotenv_values` (`tests/sec/_env.py`), never `load_dotenv`:
-  `.env` is the broker **prod** pair, and loading it would leak `KIS_ENV=prod` etc. into every later test.
 - `submissions.filings.recent` is column arrays (one list per field), at least 1,000 filings or one year;
   the rest is in `filings.files` pages. `FilingEntry` declares every live column — the integration test fails
   when SEC adds one, so declare it rather than relaxing the test.
