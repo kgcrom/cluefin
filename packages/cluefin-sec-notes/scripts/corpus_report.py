@@ -1,5 +1,6 @@
 """코퍼스 전체의 추출 결과 요약: 공시별 기대값 검사, Finding 코드별·층화 칸별 집계.
 
+known_bad는 경고가 붙었는지도 센다. 경고 없는 known_bad는 사용자가 틀린 줄 모르고 쓰는 Item이라 따로 보여 준다.
 기대값이 없는 공시(스모크)는 자동 불변식 위반을 보여 주고, `--write-baseline`이면 지금 위반 목록을 manifest의
 `baseline`에 적는다(통합 테스트가 새 위반을 회귀로 잡는다).
 
@@ -34,6 +35,7 @@ def main() -> None:
     bad_by_stratum: dict[str, list[bool]] = defaultdict(list)
     bad_filings = 0
     total = 0
+    known_bad = silent_known_bad = 0
     for manifest in args.manifests:
         entries = read_manifest(manifest)
         for entry in entries:
@@ -62,11 +64,17 @@ def main() -> None:
             for check in checks:
                 if check.status in (FAILED, FIXED):
                     print(f"       {check.status} {check.key}: {check.detail}")
+                elif check.status == KNOWN_BAD:
+                    known_bad += 1
+                    silent_known_bad += not check.warned
+                    if not check.warned:
+                        print(f"       {check.status}(경고 없음) {check.key}: {check.detail}")
             if not checks and violations:
                 print(f"       위반: {', '.join(violations)}")
         if args.write_baseline:
             write_manifest(manifest, entries)
     print(f"\nknown-bad 포함 불량 공시: {bad_filings}/{total}")
+    print(f"경고 없는 known_bad: {silent_known_bad}/{known_bad}")
     print("Finding 코드:", dict(codes.most_common()))
     print("불변식 위반:", dict(violations_total.most_common()))
     print("층화 칸별 불량:")
