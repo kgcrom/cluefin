@@ -414,6 +414,31 @@ class TestSubscribe:
         assert server.writer.frames == []
         assert client.subscriptions == {}
 
+    @pytest.mark.asyncio
+    async def test_close_forgets_subscriptions_so_reconnect_can_resubscribe(self, client, server):
+        await client.subscribe("mc", "005930")
+        await client.close()
+        assert client.subscriptions == {}
+
+        await client.connect()
+        await client.subscribe("mc", "005930")
+
+        ((_, payload),) = server.writer.decoded_frames()
+        assert json.loads(payload)["body"] == {"tr_cd": "mc", "tr_key": "005930"}
+
+    @pytest.mark.asyncio
+    async def test_reconnect_after_server_drop_resubscribes(self, client, server):
+        await client.subscribe("mc", "005930")
+        server.reader.feed_eof()
+        await _settle()
+        assert client.connected is False
+
+        await client.connect()
+        await client.subscribe("mc", "005930")
+
+        ((_, payload),) = server.writer.decoded_frames()
+        assert json.loads(payload)["body"] == {"tr_cd": "mc", "tr_key": "005930"}
+
 
 class TestClose:
     @pytest.mark.asyncio

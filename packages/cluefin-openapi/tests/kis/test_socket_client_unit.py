@@ -533,6 +533,39 @@ class TestSocketSubscriptions:
 
         socket_client._send_frame.assert_not_awaited()
 
+    @pytest.mark.asyncio
+    async def test_close_forgets_subscriptions(self, socket_client):
+        socket_client._connected = True
+        socket_client._subscriptions["H0STASP0:005930"] = "005930"
+
+        await socket_client.close()
+
+        assert socket_client.subscriptions == {}
+
+    @pytest.mark.asyncio
+    async def test_reconnect_after_server_drop_resubscribes(self, socket_client, monkeypatch):
+        """서버가 끊은 뒤 남은 구독 키 때문에 재연결 후 같은 구독이 전송되지 않던 문제."""
+        socket_client._subscriptions["H0STASP0:005930"] = "005930"  # left over from the dropped session
+
+        async def fake_open_connection(host, port, ssl=None):
+            return FakeReader(handshake_response=_handshake_response()), FakeWriter()
+
+        async def idle_receive_loop():
+            await asyncio.Event().wait()
+
+        monkeypatch.setattr(asyncio, "open_connection", fake_open_connection)
+        monkeypatch.setattr("os.urandom", Mock(return_value=b"0" * 16))
+        socket_client._receive_loop = idle_receive_loop
+
+        await socket_client.connect()
+        socket_client._send_frame = AsyncMock()
+        await socket_client.subscribe("H0STASP0", "005930")
+
+        socket_client._send_frame.assert_awaited_once()
+        assert socket_client.subscriptions == {"H0STASP0:005930": "005930"}
+
+        await socket_client.close()
+
 
 class TestSocketConnectionLifecycle:
     @pytest.mark.asyncio
