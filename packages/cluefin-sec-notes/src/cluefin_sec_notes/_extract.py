@@ -57,9 +57,12 @@ _NEGATION_WINDOW = 40
 _MAX_TITLE_LINE = 150
 # 생략·참조 편입을 말하는 문장. 이 문장에만 나오는 Item은 공시가 생략한 것이다.
 _STATED_OMISSION = re.compile(
-    r"incorporated\s+(?:\w+\s+){0,3}?by\s+reference|omitted|general\s+instruction", re.IGNORECASE
+    r"incorporated\s+(?:\w+\s+){0,3}?by\s+reference|omitted|general\s+instruction|not\s+applicable", re.IGNORECASE
 )
 _PART_PREFIX = re.compile(r"^part [ivx]+ ?")
+# "Part I, Item 4"처럼 Item 언급 바로 앞에 밝힌 Part.
+_NAMED_PART = re.compile(r"\bpart\s+(IV|V?I{1,3}|V)\b[\s,.\-—–]*$", re.IGNORECASE)
+_NAMED_PART_WINDOW = 15
 # 헤딩을 담은 표로 볼 최대 행 수(글자 있는 행). "Item 1." | "Business"처럼 표로 짠 헤딩.
 _MAX_HEADING_ROWS = 3
 # Item 표기 행이 이만큼 있는 표는 목차다.
@@ -306,7 +309,7 @@ def _missing(document: SecDocument, catalog: FormCatalog, accepted: dict[ItemKey
 
 def _omitted(context: DetectionContext, missing: tuple[ItemKey, ...]) -> tuple[ItemKey, ...]:
     """공시가 본문이 없다고 밝힌 Item(`context.absent`)과, 목차 밖 어디에도 "Item N" 표기나 그 Item 제목만 있는 줄이
-    없는 Item. 목차에만 있으면 본문에서 뺀 것이다.
+    없는 Item. 목차에만 있으면 본문에서 뺀 것이다. 생략할 수 없는 Item(`ItemSpec.mandatory`)은 빼지 않는다.
     본문 문장에 나오더라도 그 문장이 생략·참조 편입을 말하면("Items 10 through 14 … are incorporated by reference
     pursuant to General Instruction G") 생략이다."""
     if not missing:
@@ -314,11 +317,12 @@ def _omitted(context: DetectionContext, missing: tuple[ItemKey, ...]) -> tuple[I
     document, catalog = context.document, context.catalog
     stated = [key for key in missing if key in context.absent]
     missing = tuple(key for key in missing if key not in context.absent)
-    kept = [
-        block
+    kept_indexes = [
+        index
         for index, block in enumerate(document.blocks)
         if not context.is_excluded(index) and not _is_toc_table(block)
     ]
+    kept = [document.blocks[index] for index in kept_indexes]
     texts = [block_text(block) for block in kept]
     # 제목 줄은 문단과 헤딩을 담은 작은 표에서만 모은다. 데이터 표 칸의 "Other Information" 행은 헤딩이 아니다.
     lines = {
@@ -331,10 +335,17 @@ def _omitted(context: DetectionContext, missing: tuple[ItemKey, ...]) -> tuple[I
     omitted = []
     for key in missing:
         spec = catalog.spec(key.part, key.number)
+        if spec is not None and spec.mandatory:
+            continue
         titles = {normalize_title(title) for title in spec.titles} if spec else set()
-        # Part마다 번호가 다시 시작하는 서식(10-Q)은 "Item 3" 언급이 어느 Part의 것인지 모르므로 제목 줄만 본다.
-        mentioned = not catalog.part_scoped and _mentioned(key, texts)
-        if not mentioned and not (titles & lines):
+        # Part마다 번호가 다시 시작하는 서식(10-Q)은 그 Part 구간의 "Item N" 언급만 센다(Part I "Item 3."이 생략한
+        # Part II Item 3의 언급이 되지 않게).
+        scoped = (
+            [text for index, text in zip(kept_indexes, texts, strict=True) if context.part_at(index) == key.part]
+            if catalog.part_scoped
+            else texts
+        )
+        if not _mentioned(key, scoped, part_scoped=catalog.part_scoped) and not (titles & lines):
             omitted.append(key)
     return tuple(sorted({*stated, *omitted}, key=lambda key: _catalog_index(catalog, key)))
 
@@ -358,9 +369,18 @@ def _part_names(document: SecDocument) -> set[str]:
     return names
 
 
-def _mentioned(key: ItemKey, texts: list[str]) -> bool:
+def _mentioned(key: ItemKey, texts: list[str], *, part_scoped: bool = False) -> bool:
+    """ "Item N" 언급이 있다(생략을 밝히는 문장 속 언급은 빼고). Part마다 번호가 다시 시작하는 서식은 다른 Part를
+    밝힌 언급("Part I, Item 4 \"Controls and Procedures\"")도 뺀다."""
     mention = re.compile(rf"\bitems?\s*{re.escape(key.number)}(?![\dA-Za-z])", re.IGNORECASE)
-    return any(mention.search(text) and not _STATED_OMISSION.search(text) for text in texts)
+    for text in texts:
+        if _STATED_OMISSION.search(text):
+            continue
+        for match in mention.finditer(text):
+            named = _NAMED_PART.search(text[max(0, match.start() - _NAMED_PART_WINDOW) : match.start()])
+            if not (part_scoped and named and named.group(1).upper() != key.part):
+                return True
+    return False
 
 
 def _may_hold_heading(block) -> bool:

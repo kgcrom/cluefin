@@ -26,6 +26,8 @@ class ItemSpec:
         may_be_incorporated: 위임장(DEF 14A) 등에서 참조로 편입해 본문이 한 줄뿐인 것이 정상인 Item(Part III).
         lists_documents: 본문이 다른 Item에 실린 문서의 목록이다(10-K Item 15). 쪽 참조("pages F-1 through F-30")를
             이 Item의 본문 위치로 보지 않는다.
+        mandatory: 모든 제출자가 써야 해서 생략할 수 없는 Item(10-Q Part I Item 1·2·4). 못 찾으면 문서에 표기가 없어도
+            생략(`omitted`)이 아니라 `missing_item`이다. 표기가 목차에만 있고 본문은 헤딩 없이 시작하는 공시가 있어서다.
         financial_statements: 재무제표 Item(10-K Item 8). 본문이 참조 몇 줄뿐이고 문서에 F-쪽이 따로 있으면, 쪽 번호를
             적지 않았어도("appears following Item 15") F-쪽을 본문으로 본다.
     """
@@ -40,6 +42,7 @@ class ItemSpec:
     may_be_incorporated: bool = False
     lists_documents: bool = False
     financial_statements: bool = False
+    mandatory: bool = False
 
     @property
     def titles(self) -> tuple[str, ...]:
@@ -189,15 +192,21 @@ FORM_10Q = FormCatalog(
             "Condensed Consolidated Financial Statements (Unaudited)",
             "Financial Statements (Unaudited)",
             financial_statements=True,
+            mandatory=True,
         ),
-        _item("I", "2", "Management's Discussion and Analysis of Financial Condition and Results of Operations"),
+        _item(
+            "I",
+            "2",
+            "Management's Discussion and Analysis of Financial Condition and Results of Operations",
+            mandatory=True,
+        ),
         _item(
             "I",
             "3",
             "Quantitative and Qualitative Disclosures About Market Risk",
             "Quantitative and Qualitative Disclosure About Market Risk",
         ),
-        _item("I", "4", "Controls and Procedures"),  # "Item 4T"도 이 Item이다(`parse_item_label`)
+        _item("I", "4", "Controls and Procedures", mandatory=True),  # "Item 4T"도 이 Item이다(`parse_item_label`)
         _item("II", "1", "Legal Proceedings"),
         _item("II", "1A", "Risk Factors", since=date(2005, 12, 1)),
         _item(

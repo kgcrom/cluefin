@@ -128,3 +128,37 @@ def test_part_headings_of_a_text_toc_do_not_label_body_items():
     content = body(anchored=False).replace('<div style="font-weight:700">PART I — FINANCIAL INFORMATION</div>', "", 1)
     result = extract_items(parse_filing(filing(text_toc, content)))
     assert keys(result) == [f"{part}:{number}" for part, number, _ in ITEMS]
+
+
+def test_statement_index_table_heads_part_one_item_one():
+    """재무제표 앞 색인 쪽이 Part·Item 1 헤딩을 겸하는 표."""
+    index = (
+        "<table><tr><td></td><td>Page</td></tr><tr><td>PART I — FINANCIAL INFORMATION</td><td></td></tr>"
+        "<tr><td>Item 1. Financial Statements (unaudited)</td><td></td></tr>"
+        "<tr><td>Consolidated Balance Sheets</td><td>3</td></tr><tr><td>Consolidated Statements of Income</td><td>4</td></tr>"
+        "<tr><td>Notes to Consolidated Financial Statements</td><td>5</td></tr></table>"
+    )
+    content = body(anchored=False).replace(
+        '<div style="font-weight:700">PART I — FINANCIAL INFORMATION</div><div style="font-weight:700">Item 1. Financial Statements</div>',
+        index,
+    )
+    result = extract_items(parse_filing(filing("", content)))
+    statements = result.item("1", "I")
+    assert statements is not None and statements.text.endswith("Body of I 1.")
+    assert statements.method == "pattern"
+    assert keys(result) == [f"{part}:{number}" for part, number, _ in ITEMS]
+
+
+def test_statements_without_heading_right_after_the_toc():
+    """목차 다음 쪽에 "Item 1." 헤딩 없이 재무상태표부터 싣는 10-Q."""
+    statements = "<table><tr><td>Balance Sheet</td><td>2026</td></tr><tr><td>Cash</td><td>$1</td></tr></table>"
+    content = body(anchored=False).replace(
+        '<div style="font-weight:700">PART I — FINANCIAL INFORMATION</div><div style="font-weight:700">Item 1. Financial Statements</div><div>Body of I 1.</div>',
+        statements,
+    )
+    text_toc = "<table>" + "".join(f"<tr><td>Item {n}.</td><td>{t}</td></tr>" for _, n, t in ITEMS) + "</table>"
+    result = extract_items(parse_filing(filing(text_toc, content)))
+    statements_item = result.item("1", "I")
+    assert statements_item.method == "statements_after_toc"
+    assert statements_item.text.startswith("Balance Sheet\t2026")
+    assert result.item("2", "I").heading.startswith("Item 2.")
