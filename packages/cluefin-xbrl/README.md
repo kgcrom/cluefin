@@ -53,7 +53,8 @@ from cluefin_xbrl import extract_financial_statements, parse_xbrl_directory
 user_agent = os.environ["SEC_USER_AGENT"]  # "이름 이메일"
 Client(user_agent=user_agent).archives.download_xbrl_files(320193, "0000320193-23-000106", destination="aapl-fy2023")
 
-# Arelle 이 US-GAAP·DEI 택소노미를 처음 한 번 웹에서 받아 캐시한다. http_user_agent 로 SEC 정책대로 신원을 밝힌다
+# Arelle 이 US-GAAP·DEI 택소노미를 처음 한 번 웹에서 받아 캐시한다. SEC 공시는 http_user_agent("이름 이메일")가
+# 필수다 — 없거나 이메일이 빠지면 캐시가 차 있어도 ValueError
 doc = parse_xbrl_directory("aapl-fy2023", include_taxonomy=True, http_user_agent=user_agent)
 parsed = extract_financial_statements(doc)  # statements: BS, IS, CIS, CF, SCE (미국 공시는 연결만)
 ```
@@ -71,7 +72,7 @@ uv run --with jupyter jupyter lab packages/cluefin-xbrl/examples/xbrl_analysis.i
 
 | 함수 | 설명 |
 |------|------|
-| `parse_xbrl_file(path, *, include_taxonomy=False, http_user_agent=None)` | 단일 XBRL 파일을 파싱해 `XbrlDocument` 반환 |
+| `parse_xbrl_file(path, *, include_taxonomy=False, http_user_agent=None)` | 단일 XBRL 파일을 파싱해 `XbrlDocument` 반환. SEC 인스턴스는 `http_user_agent`("이름 이메일") 필수, 없으면 `ValueError` |
 | `parse_xbrl_directory(directory, *, include_taxonomy=False, http_user_agent=None)` | 디렉터리 내 XBRL 인스턴스(DART `.xbrl`, SEC `*_htm.xml` 등)를 찾아 파싱 |
 | `extract_financial_statements(doc)` | `XbrlDocument`에서 재무제표를 구조화해 `ParsedFinancialStatements` 반환 |
 | `statement_to_dicts(statement)` | `FinancialStatement`을 `list[dict]`로 변환 |

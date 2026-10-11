@@ -110,6 +110,8 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   `python-requests/…`; a browser-like agent still got 403 from www.sec.gov). The 403 page is titled "Request Rate
   Threshold Exceeded" even when the rate is fine — check the agent first. Per SEC's policy a client over 10 req/s
   also gets 403 (not 429) for about 10 minutes (not measured). Hence 403 is never retried and the default is 8 req/s.
+- The agent check (`_validate_user_agent`: "@" after stripping) is duplicated in cluefin-xbrl's parser, which
+  requires the same value before Arelle fetches SEC taxonomies (xbrl doesn't depend on openapi). Change both together.
 - `Client._request` only accepts `https://www.sec.gov` and `https://data.sec.gov` URLs, and every value that goes
   into a URL path passes `_ids.py` (CIK, accession number, single path segment). Keep it that way when adding
   endpoints — EFTS full-text search (`efts.sec.gov`) would need the allow-list widened on purpose.

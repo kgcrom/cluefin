@@ -8,9 +8,18 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   path lives in cluefin-openapi (`dart` ZIP fetch, `sec.archives.download_xbrl_files`). A missing
   download function here is intentional, not a gap.
 - Arelle itself does go online: it fetches the taxonomies an instance imports (US-GAAP from
-  xbrl.fasb.org, DEI/SRT from xbrl.sec.gov) on first use and caches them. Unlike www/data.sec.gov,
-  xbrl.sec.gov answered 200 to Arelle's default agent (2026-10-11). `http_user_agent` is there to declare
-  the caller per SEC policy, not because parsing fails without it.
+  xbrl.fasb.org, DEI/SRT from xbrl.sec.gov, DART's from dart.fss.or.kr) on first use and caches them
+  (`~/Library/Caches/Arelle`). This is the only SEC request in the repo that bypasses `sec.Client`:
+  no rate limit, and it only happens on a cold cache.
+- **SEC instances need `http_user_agent` with an email; `parse_xbrl_file` raises `ValueError` before Arelle
+  runs.** xbrl.sec.gov still answered Arelle's default agent on 2026-10-11, but www/data.sec.gov already
+  return 403 for it, and a failed taxonomy download is not an error in Arelle: it logs `IOerror` /
+  `xbrl:schemaImportMissing` and returns the instance with most facts gone (Apple FY2023: 78 of 1,164).
+  The check applies even on a warm cache, so a parse doesn't depend on the machine. The rule ("@" after
+  stripping) mirrors `sec.Client`'s `_validate_user_agent`; change both together. DART needs no agent.
+- An SEC instance is recognized by `xbrl.sec.gov/dei` in its first 8KB (the root element's namespace
+  declarations; within 2KB in every filing checked, 2011–2025, extracted, pre-2019 and inline `.htm`).
+  DART instances never declare it. The CIK context scheme can sit at the end of the file, so it's not used.
 
 ## DART/Arelle quirks baked into the code
 
