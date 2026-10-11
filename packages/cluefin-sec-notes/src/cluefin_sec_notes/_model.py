@@ -112,6 +112,13 @@ class Item:
         return tuple(block for start, end in self.ranges for block in self.document.blocks[start:end])
 
     @property
+    def tables(self):
+        """구간 안의 표(문서 순서). 열 맞춘 행렬은 `table.grid()`, 금액은 `parse_amount`."""
+        from cluefin_sec_notes._blocks import Table
+
+        return tuple(block for block in self.blocks if isinstance(block, Table))
+
+    @property
     def text(self) -> str:
         """제목 블록을 포함한 구간 텍스트(제목과 본문이 한 문단에 붙은 공시가 있어 제목을 따로 떼지 않는다)."""
         return "\n\n".join(text for start, end in self.ranges if (text := self.document.text(start, end)))

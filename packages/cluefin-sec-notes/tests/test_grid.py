@@ -138,3 +138,15 @@ def test_footnote_mark_cells_join_the_value_on_their_left():
 def test_small_negative_in_parentheses_is_a_value_not_a_footnote():
     grid = table(["", ("2025", 2), ("2024", 2)], ["Derivatives CVA", "$", "(36)", "$", "29"]).grid()
     assert grid == (("", "2025", "2024"), ("Derivatives CVA", "$(36)", "$29"))
+
+
+def test_item_tables_and_public_parse_amount(synthetic):
+    from cluefin_sec_notes import extract_items, parse_amount, parse_filing
+
+    table_html = (
+        "<table><tr><td>Revenue</td><td>$</td><td>1,234</td></tr><tr><td>Costs</td><td></td><td>56</td></tr></table>"
+    )
+    content = synthetic.body().replace("<div>Body of item 8.</div>", "<div>Body of item 8.</div>" + table_html)
+    statements = extract_items(parse_filing(synthetic.filing(content=content))).item("8")
+    assert len(statements.tables) == 1
+    assert [parse_amount(row[1]) for row in statements.tables[0].grid()] == [Decimal("1234"), Decimal("56")]
