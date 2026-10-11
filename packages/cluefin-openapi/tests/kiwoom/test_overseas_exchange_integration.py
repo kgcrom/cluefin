@@ -36,6 +36,7 @@ def test_get_exchange_rate(client: Client):
 
 
 @pytest.mark.integration
+@pytest.mark.mutation
 @real_account_only("ust31302 환전신청", "rc=7, '1999:...실패사유=모의투자에서는 해당업무가 제공되지 않습니다.'")
 def test_request_exchange(client: Client):
     # NOTE: ust31302 actually executes a currency exchange, so this test uses a

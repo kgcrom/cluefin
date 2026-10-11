@@ -51,6 +51,7 @@ def pending_buy_order_no(client: Client) -> str:
 
 
 @pytest.mark.integration
+@pytest.mark.mutation
 def test_request_buy_order(client: Client):
     try:
         response = client.overseas_order.request_buy_order(
@@ -64,6 +65,7 @@ def test_request_buy_order(client: Client):
 
 
 @pytest.mark.integration
+@pytest.mark.mutation
 def test_request_sell_order(client: Client):
     try:
         response = client.overseas_order.request_sell_order(
@@ -77,6 +79,7 @@ def test_request_sell_order(client: Client):
 
 
 @pytest.mark.integration
+@pytest.mark.mutation
 def test_request_modify_order(client: Client, pending_buy_order_no: str):
     response = client.overseas_order.request_modify_order(
         orig_ord_no=pending_buy_order_no,
@@ -90,6 +93,7 @@ def test_request_modify_order(client: Client, pending_buy_order_no: str):
 
 
 @pytest.mark.integration
+@pytest.mark.mutation
 def test_request_cancel_order(client: Client, pending_buy_order_no: str):
     response = client.overseas_order.request_cancel_order(
         orig_ord_no=pending_buy_order_no, stex_tp=TEST_STEX_TP, stk_cd=TEST_STK_CD

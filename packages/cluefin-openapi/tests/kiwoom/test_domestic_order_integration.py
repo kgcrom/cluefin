@@ -49,6 +49,7 @@ def pending_buy_order_no(client: Client) -> str:
 
 
 @pytest.mark.integration
+@pytest.mark.mutation
 def test_request_buy_order(client: Client):
     try:
         response = client.order.request_buy_order(
@@ -63,6 +64,7 @@ def test_request_buy_order(client: Client):
 
 
 @pytest.mark.integration
+@pytest.mark.mutation
 def test_request_sell_order(client: Client):
     try:
         response = client.order.request_sell_order(
@@ -76,6 +78,7 @@ def test_request_sell_order(client: Client):
 
 
 @pytest.mark.integration
+@pytest.mark.mutation
 def test_request_modify_order(client: Client, pending_buy_order_no: str):
     response = client.order.request_modify_order(
         dmst_stex_tp="KRX",
@@ -91,6 +94,7 @@ def test_request_modify_order(client: Client, pending_buy_order_no: str):
 
 
 @pytest.mark.integration
+@pytest.mark.mutation
 def test_request_cancel_order(client: Client, pending_buy_order_no: str):
     response = client.order.request_cancel_order(
         dmst_stex_tp="KRX", orig_ord_no=pending_buy_order_no, stk_cd=TEST_STK_CD, cncl_qty="1"

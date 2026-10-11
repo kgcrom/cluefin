@@ -7,7 +7,7 @@ import pytest
 
 from cluefin_openapi.kiwoom._exceptions import KiwoomAPIError
 
-from ._integration_helpers import skip_if_env_blocked
+from ._integration_helpers import LIVE_MUTATION_FLAG, mutation_skip_reason, skip_if_env_blocked
 
 
 def _error(return_msg: str) -> KiwoomAPIError:
@@ -60,3 +60,39 @@ def test_falls_back_to_message_when_response_data_missing():
 
     with pytest.raises(pytest.skip.Exception):
         skip_if_env_blocked(error)
+
+
+# --- mutation_skip_reason: 주문·환전 테스트가 명시 없이 도는 일이 없어야 한다 ---
+
+
+@pytest.mark.parametrize("markexpr", ["", "integration", "integration and realtime", "mutations", "not_mutation"])
+@pytest.mark.parametrize("env", ["dev", "prod"])
+def test_mutation_blocked_unless_markexpr_names_it(monkeypatch, markexpr: str, env: str):
+    monkeypatch.setenv(LIVE_MUTATION_FLAG, "1")  # 플래그가 있어도 -m 명시가 먼저다
+
+    assert mutation_skip_reason(markexpr, env) is not None
+
+
+def test_mutation_runs_on_dev_when_markexpr_names_it(monkeypatch):
+    monkeypatch.delenv(LIVE_MUTATION_FLAG, raising=False)
+
+    assert mutation_skip_reason("integration and mutation", "dev") is None
+
+
+@pytest.mark.parametrize("flag", [None, "", "0", "true", "yes"])
+def test_mutation_on_prod_needs_flag_exactly_one(monkeypatch, flag):
+    if flag is None:
+        monkeypatch.delenv(LIVE_MUTATION_FLAG, raising=False)
+    else:
+        monkeypatch.setenv(LIVE_MUTATION_FLAG, flag)
+
+    reason = mutation_skip_reason("integration and mutation", "prod")
+
+    assert reason is not None
+    assert LIVE_MUTATION_FLAG in reason
+
+
+def test_mutation_runs_on_prod_with_flag(monkeypatch):
+    monkeypatch.setenv(LIVE_MUTATION_FLAG, "1")
+
+    assert mutation_skip_reason("integration and mutation", "prod") is None
