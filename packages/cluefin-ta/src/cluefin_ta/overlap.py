@@ -12,6 +12,7 @@ Functions:
 """
 
 import numpy as np
+from numpy.lib.stride_tricks import sliding_window_view
 
 from cluefin_ta._core import ema_loop, kama_loop, rolling_std
 
@@ -95,10 +96,7 @@ def WMA(close: np.ndarray, timeperiod: int = 30) -> np.ndarray:
     weights = np.arange(1, timeperiod + 1, dtype=np.float64)
     weight_sum = weights.sum()
 
-    # Calculate WMA for each position
-    for i in range(timeperiod - 1, n):
-        window = close[i - timeperiod + 1 : i + 1]
-        result[i] = np.sum(window * weights) / weight_sum
+    result[timeperiod - 1 :] = sliding_window_view(close, timeperiod) @ weights / weight_sum
 
     return result
 

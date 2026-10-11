@@ -118,6 +118,8 @@ class TestSTOCH:
         k_mask = ~np.isnan(expected_k)
         d_mask = ~np.isnan(expected_d)
 
+        np.testing.assert_array_equal(np.isnan(actual_k), np.isnan(expected_k))
+        np.testing.assert_array_equal(np.isnan(actual_d), np.isnan(expected_d))
         np.testing.assert_allclose(actual_k[k_mask], expected_k[k_mask], rtol=1e-10)
         np.testing.assert_allclose(actual_d[d_mask], expected_d[d_mask], rtol=1e-10)
 
@@ -180,6 +182,8 @@ class TestSTOCHF:
         k_mask = ~np.isnan(expected_k)
         d_mask = ~np.isnan(expected_d)
 
+        np.testing.assert_array_equal(np.isnan(actual_k), np.isnan(expected_k))
+        np.testing.assert_array_equal(np.isnan(actual_d), np.isnan(expected_d))
         np.testing.assert_allclose(actual_k[k_mask], expected_k[k_mask], rtol=1e-10)
         np.testing.assert_allclose(actual_d[d_mask], expected_d[d_mask], rtol=1e-10)
 

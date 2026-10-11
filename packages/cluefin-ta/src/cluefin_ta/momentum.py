@@ -15,9 +15,17 @@ Functions:
 """
 
 import numpy as np
+from numpy.lib.stride_tricks import sliding_window_view
 
 from cluefin_ta._core import adx_loop, mfi_loop, rolling_minmax, wilder_smooth
 from cluefin_ta.overlap import SMA, _ema_from, _require_sma
+
+
+def _window_mean(values: np.ndarray, period: int) -> np.ndarray:
+    """Mean of every full ``period`` window (empty if there is none)."""
+    if len(values) < period:
+        return np.empty(0)
+    return sliding_window_view(values, period).mean(axis=1)
 
 
 def _fast_k(high: np.ndarray, low: np.ndarray, close: np.ndarray, period: int) -> np.ndarray:
@@ -59,28 +67,14 @@ def RSI(close: np.ndarray, timeperiod: int = 14) -> np.ndarray:
     avg_gain = np.mean(gains[:timeperiod])
     avg_loss = np.mean(losses[:timeperiod])
 
-    # Calculate first RSI value (ta-lib returns 0 when there is no movement at all)
-    if avg_gain == 0 and avg_loss == 0:
-        result[timeperiod] = 0.0
-    elif avg_loss == 0:
-        result[timeperiod] = 100.0
-    else:
-        rs = avg_gain / avg_loss
-        result[timeperiod] = 100.0 - (100.0 / (1.0 + rs))
+    # Wilder's smoothing; deltas[i - 1] is the change into bar i, so bar i reads index i - 1
+    gain = wilder_smooth(gains, timeperiod, avg_gain, timeperiod - 1)[timeperiod - 1 : n - 1]
+    loss = wilder_smooth(losses, timeperiod, avg_loss, timeperiod - 1)[timeperiod - 1 : n - 1]
 
-    # Use Wilder's smoothing for gains and losses
-    smoothed_gains = wilder_smooth(gains, timeperiod, avg_gain, timeperiod - 1)
-    smoothed_losses = wilder_smooth(losses, timeperiod, avg_loss, timeperiod - 1)
-
-    # Calculate RSI from smoothed values (starting from timeperiod+1)
-    for i in range(timeperiod + 1, n):
-        if smoothed_gains[i - 1] == 0 and smoothed_losses[i - 1] == 0:
-            result[i] = 0.0
-        elif smoothed_losses[i - 1] == 0:
-            result[i] = 100.0
-        else:
-            rs = smoothed_gains[i - 1] / smoothed_losses[i - 1]
-            result[i] = 100.0 - (100.0 / (1.0 + rs))
+    with np.errstate(divide="ignore", invalid="ignore"):
+        rsi = 100.0 - (100.0 / (1.0 + gain / loss))
+    # ta-lib returns 0 when there is no movement at all, 100 when there are no losses
+    result[timeperiod:] = np.where((gain == 0) & (loss == 0), 0.0, np.where(loss == 0, 100.0, rsi))
 
     return result
 
@@ -172,17 +166,14 @@ def STOCH(
 
     fastk = _fast_k(high, low, close, fastk_period)
 
-    # Calculate Slow %K (SMA of Fast %K) - ta-lib starts from first valid fastk
+    # Slow %K = SMA of Fast %K, Slow %D = SMA of Slow %K, each from the first valid input
     valid_start = fastk_period - 1
-    for i in range(valid_start + slowk_period - 1, n):
-        window = fastk[i - slowk_period + 1 : i + 1]
-        slowk[i] = np.mean(window)
-
-    # Calculate Slow %D (SMA of Slow %K)
     slowk_start = valid_start + slowk_period - 1
-    for i in range(slowk_start + slowd_period - 1, n):
-        window = slowk[i - slowd_period + 1 : i + 1]
-        slowd[i] = np.mean(window)
+    slowk[slowk_start:] = _window_mean(fastk[valid_start:], slowk_period)
+    first = slowk_start + slowd_period - 1
+    slowd[first:] = _window_mean(slowk[slowk_start:], slowd_period)
+    # ta-lib emits both lines from the first Slow %D bar
+    slowk[:first] = np.nan
 
     return slowk, slowd
 
@@ -264,11 +255,12 @@ def STOCHF(
 
     fastk = _fast_k(high, low, close, fastk_period)
 
-    # Calculate Fast %D (SMA of Fast %K)
+    # Fast %D = SMA of Fast %K from its first valid value
     valid_start = fastk_period - 1
-    for i in range(valid_start + fastd_period - 1, n):
-        window = fastk[i - fastd_period + 1 : i + 1]
-        fastd[i] = np.mean(window)
+    first = valid_start + fastd_period - 1
+    fastd[first:] = _window_mean(fastk[valid_start:], fastd_period)
+    # ta-lib emits both lines from the first Fast %D bar
+    fastk[:first] = np.nan
 
     return fastk, fastd
 
@@ -366,16 +358,13 @@ def CCI(
     # SMA of Typical Price
     tp_sma = SMA(tp, timeperiod)
 
-    # Mean Deviation (average of |TP - SMA(TP)|)
-    for i in range(timeperiod - 1, n):
-        window = tp[i - timeperiod + 1 : i + 1]
-        mean_tp = tp_sma[i]
-        mean_dev = np.mean(np.abs(window - mean_tp))
+    # Mean Deviation (average of |TP - SMA(TP)|) over each window
+    mean_tp = tp_sma[timeperiod - 1 :]
+    mean_dev = np.abs(sliding_window_view(tp, timeperiod) - mean_tp[:, None]).mean(axis=1)
 
-        if mean_dev != 0:
-            result[i] = (tp[i] - mean_tp) / (0.015 * mean_dev)
-        else:
-            result[i] = 0.0
+    with np.errstate(divide="ignore", invalid="ignore"):
+        cci = (tp[timeperiod - 1 :] - mean_tp) / (0.015 * mean_dev)
+    result[timeperiod - 1 :] = np.where(mean_dev != 0, cci, 0.0)
 
     return result
 

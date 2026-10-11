@@ -3,6 +3,7 @@ Low-level NumPy loops and rolling-window helpers shared by the indicator modules
 """
 
 import numpy as np
+from numpy.lib.stride_tricks import sliding_window_view
 
 
 def ema_loop(values: np.ndarray, start: int, alpha: float, seed: float) -> np.ndarray:
@@ -17,11 +18,12 @@ def ema_loop(values: np.ndarray, start: int, alpha: float, seed: float) -> np.nd
     if start >= n:
         return result
 
-    prev = seed
-    result[start] = prev
-    for i in range(start + 1, n):
-        prev = (values[i] - prev) * alpha + prev
-        result[i] = prev
+    prev = float(seed)
+    smoothed = [prev]
+    for value in values[start + 1 :].tolist():
+        prev = (value - prev) * alpha + prev
+        smoothed.append(prev)
+    result[start:] = smoothed
 
     return result
 
@@ -75,12 +77,14 @@ def wilder_smooth(values: np.ndarray, period: int, initial_value: float, start_i
     Returns:
         Array of smoothed values with NaN for initial periods
     """
-    n = len(values)
-    result = np.full(n, np.nan)
-    result[start_idx] = initial_value
+    result = np.full(len(values), np.nan)
 
-    for i in range(start_idx + 1, n):
-        result[i] = (result[i - 1] * (period - 1) + values[i]) / period
+    prev = float(initial_value)
+    smoothed = [prev]
+    for value in values[start_idx + 1 :].tolist():
+        prev = (prev * (period - 1) + value) / period
+        smoothed.append(prev)
+    result[start_idx:] = smoothed
 
     return result
 
@@ -101,9 +105,9 @@ def rolling_minmax(high: np.ndarray, low: np.ndarray, period: int) -> tuple[np.n
     highest = np.full(n, np.nan)
     lowest = np.full(n, np.nan)
 
-    for i in range(period - 1, n):
-        highest[i] = np.max(high[i - period + 1 : i + 1])
-        lowest[i] = np.min(low[i - period + 1 : i + 1])
+    if n >= period:
+        highest[period - 1 :] = sliding_window_view(high, period).max(axis=1)
+        lowest[period - 1 :] = sliding_window_view(low, period).min(axis=1)
 
     return highest, lowest
 
@@ -152,19 +156,11 @@ def obv_loop(close: np.ndarray, volume: np.ndarray) -> np.ndarray:
     Returns:
         Array of OBV values
     """
-    n = len(close)
-    result = np.zeros(n, dtype=np.float64)
-    result[0] = volume[0]
-
-    for i in range(1, n):
-        if close[i] > close[i - 1]:
-            result[i] = result[i - 1] + volume[i]
-        elif close[i] < close[i - 1]:
-            result[i] = result[i - 1] - volume[i]
-        else:
-            result[i] = result[i - 1]
-
-    return result
+    # Sequential cumsum adds in the same order as a running loop
+    # Equal (or NaN) closes carry the previous value, as ta-lib's comparisons do
+    change = np.where(close[1:] > close[:-1], 1.0, np.where(close[1:] < close[:-1], -1.0, 0.0))
+    signed_volume = np.concatenate([volume[:1], change * volume[1:]])
+    return np.cumsum(signed_volume)
 
 
 def ad_loop(high: np.ndarray, low: np.ndarray, close: np.ndarray, volume: np.ndarray) -> np.ndarray:
@@ -180,25 +176,10 @@ def ad_loop(high: np.ndarray, low: np.ndarray, close: np.ndarray, volume: np.nda
     Returns:
         Array of A/D values
     """
-    n = len(close)
-    result = np.zeros(n, dtype=np.float64)
-
-    for i in range(n):
-        hl_range = high[i] - low[i]
-
-        if hl_range != 0:
-            mfm = ((close[i] - low[i]) - (high[i] - close[i])) / hl_range
-        else:
-            mfm = 0.0
-
-        mfv = mfm * volume[i]
-
-        if i == 0:
-            result[i] = mfv
-        else:
-            result[i] = result[i - 1] + mfv
-
-    return result
+    hl_range = high - low
+    with np.errstate(divide="ignore", invalid="ignore"):
+        multiplier = np.where(hl_range != 0, ((close - low) - (high - close)) / hl_range, 0.0)
+    return np.cumsum(multiplier * volume)
 
 
 def kama_loop(
@@ -361,24 +342,16 @@ def mfi_loop(
     if n < period + 1:
         return result
 
-    # Raw money flow
-    raw_mf = typical_price * volume
+    raw_mf = (typical_price * volume)[1:]
+    rising = typical_price[1:] > typical_price[:-1]
+    falling = typical_price[1:] < typical_price[:-1]
+    pos_mf = sliding_window_view(np.where(rising, raw_mf, 0.0), period).sum(axis=1)
+    neg_mf = sliding_window_view(np.where(falling, raw_mf, 0.0), period).sum(axis=1)
 
-    for i in range(period, n):
-        pos_mf = 0.0
-        neg_mf = 0.0
-
-        for j in range(i - period + 1, i + 1):
-            if typical_price[j] > typical_price[j - 1]:
-                pos_mf += raw_mf[j]
-            elif typical_price[j] < typical_price[j - 1]:
-                neg_mf += raw_mf[j]
-
-        if neg_mf != 0:
-            mf_ratio = pos_mf / neg_mf
-            result[i] = 100.0 - (100.0 / (1.0 + mf_ratio))
-        else:
-            result[i] = 100.0
+    # ta-lib's TA_MFI: 0 when the total flow is below 1 (e.g. no change at all)
+    total = pos_mf + neg_mf
+    with np.errstate(divide="ignore", invalid="ignore"):
+        result[period:] = np.where(total < 1.0, 0.0, 100.0 * (pos_mf / total))
 
     return result
 
