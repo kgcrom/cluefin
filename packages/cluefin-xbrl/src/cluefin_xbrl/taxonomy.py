@@ -114,6 +114,7 @@ def _build_presentation_node(
     concept: ModelConcept,
     depth: int,
     order: float = 0.0,
+    preferred_label: str | None = None,
 ) -> PresentationNode:
     """Recursively build a presentation tree node."""
     child_rels: list[ModelRelationship] = rel_set.fromModelObject(concept)
@@ -123,7 +124,9 @@ def _build_presentation_node(
         child_concept = rel.toModelObject
         if child_concept is None:
             continue
-        child_node = _build_presentation_node(rel_set, child_concept, depth=depth + 1, order=rel.order)
+        child_node = _build_presentation_node(
+            rel_set, child_concept, depth=depth + 1, order=rel.order, preferred_label=rel.preferredLabel
+        )
         children.append(child_node)
 
     return PresentationNode(
@@ -131,5 +134,6 @@ def _build_presentation_node(
         concept_qname=str(concept.qname),
         order=order,
         depth=depth,
+        preferred_label=preferred_label,
         children=children,
     )

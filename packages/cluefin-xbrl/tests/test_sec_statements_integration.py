@@ -104,6 +104,37 @@ def test_equity_statement_keeps_component_axis(statements):
     assert "us-gaap:StatementEquityComponentsAxis" in axes
 
 
+def _balances(statement, concept):
+    """(preferredLabel role name, instant) → value for a balance's undimensioned rows."""
+    return {
+        (item.preferred_label.rsplit("/", 1)[-1], item.period.instant): item.value
+        for item in statement.line_items
+        if item.concept_local_name == concept and not item.is_abstract and not item.dimensions
+    }
+
+
+def test_equity_beginning_and_ending_rows_hold_their_own_balances(statements):
+    """Equity is drawn twice (periodStartLabel / periodEndLabel); each row gets only its own instants."""
+    _, result = statements
+    assert _balances(result.statements["SCE"], "StockholdersEquity") == {
+        ("periodStartLabel", date(2020, 9, 26)): Decimal("65339000000"),
+        ("periodStartLabel", date(2021, 9, 25)): Decimal("63090000000"),
+        ("periodStartLabel", date(2022, 9, 24)): Decimal("50672000000"),
+        ("periodEndLabel", date(2021, 9, 25)): Decimal("63090000000"),
+        ("periodEndLabel", date(2022, 9, 24)): Decimal("50672000000"),
+        ("periodEndLabel", date(2023, 9, 30)): Decimal("62146000000"),
+    }
+
+
+def test_cash_beginning_and_ending_rows_hold_their_own_balances(statements):
+    _, result = statements
+    cash = _balances(result.statements["CF"], "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents")
+    assert cash[("periodStartLabel", date(2022, 9, 24))] == Decimal("24977000000")
+    assert cash[("periodEndLabel", date(2023, 9, 30))] == Decimal("30737000000")
+    assert ("periodStartLabel", date(2023, 9, 30)) not in cash
+    assert ("periodEndLabel", date(2020, 9, 26)) not in cash
+
+
 MICROSOFT_CIK = 789019
 MICROSOFT_FY2026_10K = "0001193125-26-323660"
 MSFT_FY2026 = (date(2025, 7, 1), date(2026, 6, 30))
