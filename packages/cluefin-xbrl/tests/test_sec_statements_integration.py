@@ -2,7 +2,7 @@
 
 Downloads the filing with cluefin-openapi, then parses it here. Arelle fetches the US-GAAP/DEI taxonomies
 on first run (cached afterwards), so this needs network and SEC_USER_AGENT ("Name email") in the
-environment or the repo-root .env:
+repo-root .env.test:
     uv run pytest packages/cluefin-xbrl/tests/test_sec_statements_integration.py -m integration
 """
 
@@ -16,13 +16,12 @@ import pytest
 
 from cluefin_xbrl import extract_financial_statements, parse_xbrl_directory
 
-_REPO_ROOT = Path(__file__).resolve().parents[3]
-# dotenv_values, not load_dotenv: .env also holds broker prod settings that must not leak into os.environ.
-_USER_AGENT = os.environ.get("SEC_USER_AGENT") or dotenv.dotenv_values(_REPO_ROOT / ".env").get("SEC_USER_AGENT")
+dotenv.load_dotenv(dotenv_path=Path(__file__).resolve().parents[3] / ".env.test")
+_USER_AGENT = os.getenv("SEC_USER_AGENT")
 
 pytestmark = [
     pytest.mark.integration,
-    pytest.mark.skipif(not _USER_AGENT, reason="SEC_USER_AGENT 미설정 (.env)"),
+    pytest.mark.skipif(not _USER_AGENT, reason="SEC_USER_AGENT 미설정 (.env.test)"),
 ]
 
 APPLE_CIK = 320193
@@ -54,7 +53,8 @@ def _value(statement, concept, *, period=None, instant=None, dimensions=None):
         and (period is None or (item.period.start_date, item.period.end_date) == period)
         and (instant is None or item.period.instant == instant)
     ]
-    assert len(set(matches)) == 1, f"{concept}: {matches}"
+    # Exactly one row: inline XBRL repeats facts, and the extractor must collapse the copies.
+    assert len(matches) == 1, f"{concept}: {matches}"
     return matches[0]
 
 
