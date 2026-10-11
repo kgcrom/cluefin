@@ -3,6 +3,7 @@ name = "cluefin-dart-notes"
 version = "0.1.0"
 description = "DART disclosure document (dart4 XML) parser for sections, tables and notes"
 readme = "README.md"
+license = "MIT"
 authors = [
     { name = "Hangoo Kang", email = "kgcrom@hotmail.com" }
 ]

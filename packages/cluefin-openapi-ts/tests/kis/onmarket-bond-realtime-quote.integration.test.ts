@@ -3,9 +3,11 @@ import type { WebSocketEvent } from '../../src/core/websocket';
 import { KisAuth } from '../../src/kis/auth';
 import { OnmarketBondRealtimeQuote } from '../../src/kis/onmarket-bond-realtime-quote';
 import { KisSocketClient } from '../../src/kis/socket-client';
+import { isKrxMarketHours } from '../_helpers/market-hours';
 
 const runIntegration = process.env.CLUEFIN_OPENAPI_TS_RUN_INTEGRATION === '1';
-const integrationTest = runIntegration ? test : test.skip;
+// 장외에는 시세가 오지 않아 수신 대기에서 실패한다 — Python 실시간 통합 테스트와 같은 시간 가드.
+const integrationTest = runIntegration && isKrxMarketHours() ? test : test.skip;
 
 const getEnvOrThrow = (key: string): string => {
   const value = process.env[key];

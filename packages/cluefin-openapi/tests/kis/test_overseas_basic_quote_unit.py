@@ -2,7 +2,12 @@ import pytest
 
 from cluefin_openapi.kis import _overseas_basic_quote as overseas_basic_quote_module
 from cluefin_openapi.kis._overseas_basic_quote import BasicQuote
-from cluefin_openapi.kis._overseas_basic_quote_types import StockCurrentPriceDetail, StockCurrentPriceDetailItem
+from cluefin_openapi.kis._overseas_basic_quote_types import (
+    ConclusionTrend,
+    ConclusionTrendMeta,
+    StockCurrentPriceDetail,
+    StockCurrentPriceDetailItem,
+)
 
 from ._case_runner import CASE_FIELDS, load_cases, run_case
 
@@ -55,3 +60,27 @@ def test_stock_current_price_detail_parses_real_response_model() -> None:
     assert body.output.rsym == "DNASAAPL"
     assert body.output.last == "150.00"
     assert body.output.curr == "USD"
+
+
+def test_conclusion_trend_empty_list_output1_becomes_none() -> None:
+    """서버가 output1 을 객체 대신 빈 리스트로 보내는 경우가 있다."""
+    payload = {"rt_cd": "0", "msg_cd": "MCA00000", "msg1": "정상처리 되었습니다.", "output1": [], "output2": []}
+
+    body = ConclusionTrend.model_validate(payload)
+
+    assert body.output1 is None
+    assert body.output2 == []
+
+
+def test_conclusion_trend_object_output1_is_parsed() -> None:
+    payload = {
+        "rt_cd": "0",
+        "msg_cd": "MCA00000",
+        "msg1": "정상처리 되었습니다.",
+        "output1": {"rsym": "DNASTSLA", "zdiv": "4", "nrec": "0"},
+        "output2": [],
+    }
+
+    body = ConclusionTrend.model_validate(payload)
+
+    assert body.output1 == ConclusionTrendMeta(rsym="DNASTSLA", zdiv="4", nrec="0")

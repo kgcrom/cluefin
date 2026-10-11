@@ -73,6 +73,10 @@ export class BaseWebSocketClient extends EventEmitter {
   }
 
   public connect(): void {
+    // A new session has nothing subscribed server-side; stale keys from a dropped connection
+    // would make subscribe() treat a re-subscription as a duplicate. Not cleared in the 'close'
+    // handler: an old socket's late 'close' would wipe the new session's subscriptions.
+    this._subscriptions.clear();
     this.ws = new WebSocket(this.url);
 
     this.ws.on('open', () => {
@@ -97,6 +101,7 @@ export class BaseWebSocketClient extends EventEmitter {
 
   public close(): void {
     this._connected = false;
+    this._subscriptions.clear();
     if (this.ws) {
       this.ws.close();
       this.ws = null;

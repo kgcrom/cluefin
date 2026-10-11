@@ -1,6 +1,15 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { BaseWebSocketClient, type SubscriptionType, type WebSocketEvent } from '../../src/core/websocket';
+
+// connect() must never open a real socket in unit tests.
+vi.mock('ws', () => ({
+  default: class {
+    on(): void {}
+    send(): void {}
+    close(): void {}
+  },
+}));
 
 class TestWebSocketClient extends BaseWebSocketClient {
   public constructor() {
@@ -102,5 +111,29 @@ describe('BaseWebSocketClient', () => {
 
     expect(client.connected).toBe(false);
     expect(socket.sent).toEqual(['closed']);
+  });
+
+  it('forgets subscriptions on close so a reconnect can resubscribe', async () => {
+    const client = new TestWebSocketClient();
+    attachSocket(client);
+    await client.subscribe('TR', 'KEY');
+
+    client.close();
+    expect(client.subscriptions.size).toBe(0);
+
+    const socket = attachSocket(client);
+    await client.subscribe('TR', 'KEY');
+    expect(socket.sent).toEqual([JSON.stringify({ trId: 'TR', trKey: 'KEY', trType: '1' })]);
+  });
+
+  it('starts each connect with no subscriptions left over from a dropped session', async () => {
+    const client = new TestWebSocketClient();
+    attachSocket(client);
+    await client.subscribe('TR', 'KEY');
+
+    // The server dropped the session: no close() call, then the caller connects again.
+    client.connect();
+    expect(client.subscriptions.size).toBe(0);
+    client.close();
   });
 });

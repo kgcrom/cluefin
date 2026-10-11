@@ -173,6 +173,9 @@ class SocketClient:
         Raises:
             KISNetworkError: If connection fails
         """
+        # A new session has nothing subscribed server-side; stale keys from a dropped
+        # connection would make subscribe() treat a re-subscription as a duplicate.
+        self._subscriptions.clear()
         try:
             # Parse WebSocket URL
             url = self._ws_url
@@ -583,6 +586,7 @@ class SocketClient:
     async def close(self) -> None:
         """Close WebSocket connection."""
         self._connected = False
+        self._subscriptions.clear()
 
         if self._receive_task:
             self._receive_task.cancel()

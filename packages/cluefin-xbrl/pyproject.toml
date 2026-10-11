@@ -3,6 +3,7 @@ name = "cluefin-xbrl"
 version = "0.1.0"
 description = "XBRL parser for Korean financial statements (DART)"
 readme = "README.md"
+license = "MIT"
 authors = [
     { name = "Hangoo Kang", email = "kgcrom@hotmail.com" }
 ]

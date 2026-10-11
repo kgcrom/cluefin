@@ -61,7 +61,7 @@ def CAGR(returns: np.ndarray, periods_per_year: int = 252) -> float:
     """
     returns = np.asarray(returns, dtype=np.float64)
 
-    if len(returns) == 0:
+    if len(returns) == 0 or periods_per_year <= 0:
         return 0.0
 
     # Calculate total return
@@ -70,9 +70,6 @@ def CAGR(returns: np.ndarray, periods_per_year: int = 252) -> float:
     # Calculate number of years
     n_periods = len(returns)
     n_years = n_periods / periods_per_year
-
-    if n_years <= 0:
-        return 0.0
 
     # CAGR = (1 + total_return)^(1/n_years) - 1
     if total_return <= -1:

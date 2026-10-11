@@ -1,5 +1,8 @@
 """Tests for regime detection functions."""
 
+import sys
+from unittest.mock import patch
+
 import numpy as np
 import pytest
 
@@ -541,29 +544,11 @@ class TestREGIME_HMM:
 
     def test_hmm_missing_library(self):
         """Test graceful failure when hmmlearn not installed."""
-        # Mock the import to always fail
-        import sys
+        # A None entry in sys.modules makes `from hmmlearn import hmm` raise ImportError
+        with patch.dict(sys.modules, {"hmmlearn": None}):
+            with pytest.raises(ImportError, match="hmmlearn is required"):
+                REGIME_HMM(np.zeros(20), n_states=3)
 
-        original_modules = sys.modules.copy()
-
-        try:
-            # Remove hmmlearn from sys.modules if it exists
-            if "hmmlearn" in sys.modules:
-                del sys.modules["hmmlearn"]
-            if "hmmlearn.hmm" in sys.modules:
-                del sys.modules["hmmlearn.hmm"]
-
-            # We can't actually test this easily without mocking
-            # Just verify function exists
-            assert callable(REGIME_HMM)
-
-        finally:
-            # Restore sys.modules
-            sys.modules.update(original_modules)
-
-    @pytest.mark.skipif(
-        pytest.importorskip("hmmlearn", reason="hmmlearn not installed") is None, reason="hmmlearn required"
-    )
     def test_hmm_basic_three_states(self):
         """Test basic 3-state HMM detection."""
         pytest.importorskip("hmmlearn")
@@ -595,9 +580,6 @@ class TestREGIME_HMM:
         valid_states = states[~np.isnan(states)]
         assert np.all((valid_states >= 0) & (valid_states <= 2))
 
-    @pytest.mark.skipif(
-        pytest.importorskip("hmmlearn", reason="hmmlearn not installed") is None, reason="hmmlearn required"
-    )
     def test_hmm_transition_matrix_valid(self):
         """Test that transition matrix rows sum to 1."""
         pytest.importorskip("hmmlearn")
@@ -612,9 +594,6 @@ class TestREGIME_HMM:
             row_sums = np.sum(trans_probs, axis=1)
             np.testing.assert_array_almost_equal(row_sums, np.ones(3), decimal=5)
 
-    @pytest.mark.skipif(
-        pytest.importorskip("hmmlearn", reason="hmmlearn not installed") is None, reason="hmmlearn required"
-    )
     def test_hmm_insufficient_data(self):
         """Test HMM with insufficient data."""
         pytest.importorskip("hmmlearn")
@@ -629,9 +608,6 @@ class TestREGIME_HMM:
         assert np.all(np.isnan(trans_probs))
         assert np.all(np.isnan(means))
 
-    @pytest.mark.skipif(
-        pytest.importorskip("hmmlearn", reason="hmmlearn not installed") is None, reason="hmmlearn required"
-    )
     def test_hmm_with_nan_values(self):
         """Test HMM with NaN values in returns."""
         pytest.importorskip("hmmlearn")
@@ -647,9 +623,6 @@ class TestREGIME_HMM:
         # NaN positions should remain NaN
         assert np.all(np.isnan(states[10:15]))
 
-    @pytest.mark.skipif(
-        pytest.importorskip("hmmlearn", reason="hmmlearn not installed") is None, reason="hmmlearn required"
-    )
     def test_hmm_reproducibility(self):
         """Test that HMM is reproducible with same random_state."""
         pytest.importorskip("hmmlearn")
@@ -666,9 +639,6 @@ class TestREGIME_HMM:
         np.testing.assert_array_almost_equal(trans1, trans2, decimal=10)
         np.testing.assert_array_almost_equal(means1, means2, decimal=10)
 
-    @pytest.mark.skipif(
-        pytest.importorskip("hmmlearn", reason="hmmlearn not installed") is None, reason="hmmlearn required"
-    )
     def test_hmm_two_states(self):
         """Test HMM with 2 states (Bull/Bear only)."""
         pytest.importorskip("hmmlearn")
@@ -687,9 +657,6 @@ class TestREGIME_HMM:
 class TestREGIME_HMM_Integration:
     """Integration tests for HMM functions."""
 
-    @pytest.mark.skipif(
-        pytest.importorskip("hmmlearn", reason="hmmlearn not installed") is None, reason="hmmlearn required"
-    )
     def test_hmm_returns_to_hmm_pipeline(self):
         """Test using REGIME_HMM_RETURNS -> REGIME_HMM pipeline."""
         pytest.importorskip("hmmlearn")
