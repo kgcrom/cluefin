@@ -450,6 +450,13 @@ revenue = facts.concept("us-gaap", "RevenueFromContractWithCustomerExcludingAsse
 concept = client.xbrl.company_concept(cik, "us-gaap", "NetIncomeLoss")
 frame = client.xbrl.frames("us-gaap", "Assets", "USD", "CY2023Q4I")
 
+# 시점 기준 값: 같은 기간 값이 원공시·비교 표시·정정마다 한 행씩 있고 재작성으로 바뀌기도 한다.
+# as_of 전날까지 제출된(filed < as_of) 행 중 기간마다 가장 늦은 행을 고른다. frame 으로 고르면 미래 값이 섞인다
+from datetime import date
+from cluefin_openapi.sec import values_as_of
+
+known = values_as_of(concept.units["USD"], date(2024, 1, 2))  # 기간(start, end)마다 FactValue 하나
+
 # 공시 원문과 XBRL 파일 (cluefin-xbrl 의 parse_xbrl_directory 로 파싱)
 client.archives.download_filing_document(cik, latest.accession_number, latest.primary_document, destination="aapl")
 client.archives.download_xbrl_files(cik, latest.accession_number, destination="aapl-xbrl")

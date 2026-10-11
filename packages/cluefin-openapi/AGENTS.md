@@ -125,6 +125,13 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - companyfacts/companyconcept repeat the same period's value once per filing that reported it (original,
   next year's comparative, amendments). `fy`/`fp` describe the **filing**, not the value's period; only one row
   per period carries `frame`. Pick rows by `start`/`end`/`accn`, not by `fy`.
+- `values_as_of(rows, as_of)` picks, per period, the latest row with `filed < as_of`. Measured 2026-10-11 on ten
+  companies' full companyfacts: `frame` sat on the latest-filed row in 54,336 of 54,337 multi-row periods, and its
+  value differed from the original filing's in thousands (AAPL 333, GE 3,191), so choosing by `frame` leaks later
+  restatements (KHC 2019, SMCI 2019, CELH 2023) and 8-K recasts (GE) into the past. `filed == as_of` is excluded
+  because 16:00–17:30 ET acceptances keep that day's date (13 of 29 sampled). Same-day ties go to the higher
+  accession sequence of the same filer prefix (SEC's `frame` agreed in 21/21 ties with different values); ties
+  across prefixes were never seen and raise `ValueError`, as does one accession with two values for a period.
 - `FilingEntry.acceptance_date_time` (`acceptanceDateTime`) ends in `Z` but is not always UTC. Against the filing
   header's `ACCEPTANCE-DATETIME` (Eastern), 20 of 29 10-K/10-Q were real UTC and 9 (every AAPL, KHC and SMCI one
   sampled) were Eastern shifted twice, 4–5 h late — AAPL 0000320193-23-000106: header 2023-11-02 18:08:27 ET,
