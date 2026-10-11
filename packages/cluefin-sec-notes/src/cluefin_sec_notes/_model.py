@@ -30,6 +30,9 @@ PAGE_REFERENCE_UNRESOLVED = "page_reference_unresolved"
 번호가 여러 쪽에 찍혔다). Item에는 참조 문장만 남는다."""
 EMPTY_ITEM = "empty_item"
 """Item 제목 뒤에 본문이 없다. 참조 편입이 정상인 Item(Part III)은 제외."""
+STATEMENTS_NOT_FOUND = "statements_not_found"
+"""재무제표 Item(10-K 8, 10-Q Part I 1)의 본문이 재무제표라기엔 짧다. 재무제표가 다른 곳(Item 15, F-쪽)에 있다는 참조를
+따라가지 못한 것이다. 참조 편입과 `page_reference_unresolved`가 이미 난 Item은 제외."""
 
 WARNING = "warning"
 INFO = "info"

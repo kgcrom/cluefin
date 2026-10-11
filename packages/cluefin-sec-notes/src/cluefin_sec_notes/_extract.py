@@ -29,6 +29,8 @@ from cluefin_sec_notes._model import (
     NON_SEQUENTIAL_LAYOUT,
     OMITTED_ITEM,
     OUT_OF_ORDER,
+    STATEMENTS_NOT_FOUND,
+    WARNING,
     Candidate,
     Finding,
     Item,
@@ -71,6 +73,9 @@ _TOC_TABLE_ROWS = 3
 _PART_HEADING_MAX = 80
 # 제목 자리에 이것만 있으면 빈 Item이 아니라 "해당 없음"을 적은 것이다(Item 6 "[Reserved]" 등).
 _PLACEHOLDERS = frozenset({"reserved", "removed and reserved", "none", "not applicable"})
+# 재무제표 Item 본문이 이보다 짧으면 재무제표가 아니라 다른 곳을 가리키는 참조다. 코퍼스(2026-10)에서 골든 `ok`의 최소는
+# 13,097자(작은 10-Q), 참조뿐인 10-K Item 8은 112–3,321자, 실제로 작은 재무제표(신탁 10-Q)가 6,797자였다.
+_MIN_STATEMENTS_CHARS = 5_000
 
 
 def extract_items(
@@ -109,6 +114,7 @@ def extract_items(
     items, reference_findings = resolve_page_references(document, catalog, items, skip=ranged)
     findings.extend(reference_findings)
     findings.extend(_empty_items(document, catalog, items))
+    findings.extend(_short_statements(catalog, items, findings))
     missing = _missing(document, catalog, accepted)
     omitted = _omitted(context, missing)
     if not _is_amendment(document):
@@ -305,6 +311,22 @@ def _empty_items(document: SecDocument, catalog: FormCatalog, items: tuple[Item,
         if (not rest or rest in titles) and rest not in _PLACEHOLDERS:
             findings.append(Finding(EMPTY_ITEM, f"{item.key} 본문이 없다", key=item.key, block=item.start))
     return findings
+
+
+def _short_statements(catalog: FormCatalog, items: tuple[Item, ...], findings: list[Finding]) -> list[Finding]:
+    """재무제표 Item인데 본문이 재무제표라기엔 짧다. 이미 경고가 난 Item(쪽 참조 실패, 빈 Item)에는 겹쳐 내지 않는다."""
+    warned = {finding.key for finding in findings if finding.severity == WARNING}
+    short = []
+    for item in items:
+        spec = catalog.spec(item.key.part, item.key.number)
+        if spec is None or not spec.financial_statements or item.incorporated_by_reference or item.key in warned:
+            continue
+        if len(item.ranges) == 1 and len(item.text) < _MIN_STATEMENTS_CHARS:
+            message = (
+                f"{item.key} 본문이 {len(item.text):,}자뿐이다(재무제표가 다른 곳에 있다는 참조를 따라가지 못했다)"
+            )
+            short.append(Finding(STATEMENTS_NOT_FOUND, message, key=item.key, block=item.start))
+    return short
 
 
 def _missing(document: SecDocument, catalog: FormCatalog, accepted: dict[ItemKey, Candidate]) -> tuple[ItemKey, ...]:

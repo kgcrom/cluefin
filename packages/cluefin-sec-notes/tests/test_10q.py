@@ -9,6 +9,14 @@ COVER = (
     "</ix:hidden></ix:header></div><div>FORM 10-Q</div>"
 )
 BREAK = '<hr style="page-break-after:always"/>'
+# Part I Item 1 본문이 짧으면 `statements_not_found`가 나므로, 경고 없는 결과를 보는 테스트는 재무제표만큼 긴 표를 붙인다.
+STATEMENTS = (
+    "<table>"
+    + "".join(
+        f"<tr><td>Condensed balance sheet line {row}</td><td>$</td><td>1,{row:03}</td></tr>" for row in range(200)
+    )
+    + "</table>"
+)
 PARTS = {"I": "FINANCIAL INFORMATION", "II": "OTHER INFORMATION"}
 ITEMS = (
     ("I", "1", "Financial Statements"),
@@ -67,11 +75,12 @@ def keys(result) -> list[str]:
 
 
 def test_toc_anchors_keep_part_one_and_part_two_items_apart():
-    result = extract_items(parse_filing(filing(toc(), body())))
+    content = body().replace("<div>Body of I 1.</div>", "<div>Body of I 1.</div>" + STATEMENTS)
+    result = extract_items(parse_filing(filing(toc(), content)))
     assert result.catalog == "10-Q"
     assert keys(result) == [f"{part}:{number}" for part, number, _ in ITEMS]
     assert result.item("1", "II").text == "Item 1. Legal Proceedings\n\nBody of II 1."
-    assert result.item("1", "I").text == "Item 1. Financial Statements\n\nBody of I 1."
+    assert result.item("1", "I").text.startswith("Item 1. Financial Statements\n\nBody of I 1.\n\nCondensed balance")
     assert result.warnings == ()
 
 

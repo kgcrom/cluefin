@@ -33,6 +33,11 @@ Each rule below replaced an approach that broke real filings. Don't go back to t
   "Item 5." headings. At the end it's safe: the next Item's real heading is that Item's start block. Only labels
   without a title that don't name the Item itself are trimmed (a continued page's own "Item 7" stays). In the
   corpus all 18 such labels were the last block; 16 sat in golden `ok` Items within the length tolerance.
+- **`statements_not_found` looks at length, not tables or titles.** "No table" missed a reference-only Item 8 that
+  kept two quarterly tables (the statements sat inside Item 15). Balance-sheet wording flagged two golden `ok` Items
+  (48k/72k chars). The 5,000-char cut sits in a gap: reference-only Items 112–3,321 chars, the smallest real
+  statements 6,797 (a trust 10-Q), golden `ok` minimum 13,097. Not raised when `page_reference_unresolved` or
+  `empty_item` already covers the Item. It replaces the corpus invariants `no_table:8`/`no_table:I:1`.
 - **Page references follow only the first closed range in a near-empty body.** Following every reference in a
   short body broke golden 9A ("report on page F-2"), 7A ("see … on page 75"), Item 2 (a trailing "refer to pages
   51–54") and Item 7 (second sentence "read in conjunction with … pages 165–314"). Current rule: non-statement

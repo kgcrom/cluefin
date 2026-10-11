@@ -159,8 +159,7 @@ def invariant_violations(extraction: ItemExtraction, *, sec_items: Sequence[str]
     """기대값 없이 볼 수 있는 이상. 서식마다 다르다.
 
     - 공통: 필수 Item 누락(`missing:…`), `missing_item` 외 경고 코드(`warning:…`).
-    - 10-K: 너무 짧은 1A(`short:1A`), 표 없는 Item 8(`no_table:8`).
-    - 10-Q: 표 없는 Part I Item 1(`no_table:I:1`).
+    - 10-K: 너무 짧은 1A(`short:1A`). 짧은 재무제표 Item은 `statements_not_found` 경고(`warning:…`)로 잡힌다.
     - 8-K: 제출 이력의 Item 목록(`sec_items`)과 비교해 문서에서 못 찾은 것(`missing:2.02`), 목록에 없는데 찾은 것
       (`extra:7.01`). 8-K 카탈로그는 전부 optional이라 공통 누락 검사는 아무것도 내지 않는다.
     """
@@ -174,8 +173,6 @@ def invariant_violations(extraction: ItemExtraction, *, sec_items: Sequence[str]
             violations.add(f"warning:{finding.code}")
     if extraction.catalog == _10K:
         violations.update(_annual_report_violations(extraction))
-    elif part_scoped and _has_no_table(extraction.item("1", "I")):
-        violations.add("no_table:I:1")
     elif extraction.catalog == _8K and sec_items is not None:
         violations.update(sec_item_violations([item.key.number for item in extraction], sec_items))
     return sorted(violations)
@@ -200,14 +197,4 @@ def _annual_report_violations(extraction: ItemExtraction) -> list[str]:
         and not any(phrase in risk.text.lower() for phrase in _SMALLER_REPORTING)
     ):
         violations.append("short:1A")
-    if _has_no_table(extraction.item("8")):
-        violations.append("no_table:8")
     return violations
-
-
-def _has_no_table(statements: Item | None) -> bool:
-    return (
-        statements is not None
-        and not statements.incorporated_by_reference
-        and not any(isinstance(block, Table) for block in statements.blocks)
-    )

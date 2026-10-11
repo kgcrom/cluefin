@@ -77,8 +77,8 @@ def test_expectation_key_and_ten_k_invariants(synthetic):
     risk = extraction.item("1A")
     assert expectation_key(risk, part_scoped=False) == "1A"
     assert expectation_key(risk, part_scoped=True) == "I:1A"
-    # 합성 공시의 1A는 짧고 Item 8에 표가 없다. sec_items는 8-K에서만 본다.
-    assert invariant_violations(extraction, sec_items=["1.01"]) == ["no_table:8", "short:1A"]
+    # 합성 공시의 1A는 짧다. sec_items는 8-K에서만 본다.
+    assert invariant_violations(extraction, sec_items=["1.01"]) == ["short:1A"]
 
 
 def test_table_row_expectation(synthetic):

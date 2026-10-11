@@ -5,6 +5,7 @@ from cluefin_sec_notes import (
     MISSING_ITEM,
     NON_SEQUENTIAL_LAYOUT,
     OMITTED_ITEM,
+    STATEMENTS_NOT_FOUND,
     TOC_NOT_FOUND,
     TOC_TARGET_MISSING,
     UNKNOWN_ITEM,
@@ -260,16 +261,31 @@ def test_next_page_item_list_left_at_the_end_is_trimmed(synthetic):
     content = (
         synthetic.body()
         .replace("<div>Body of item 7.</div>", f"<div>Body of item 7.</div>{page_break}<div>Item 7</div>")
-        .replace("<div>Body of item 8.</div>", f"<div>Body of item 8.</div>{page_break}<div>Item 9, 9A</div>")
+        .replace(synthetic.STATEMENTS, f"{synthetic.STATEMENTS}{page_break}<div>Item 9, 9A</div>")
         .replace(
             "<div>Body of item 9A.</div>",
             f"<div>Body of item 9A.</div>{page_break}<div>Part II, III</div><div>Item 9B, 10, 11</div>",
         )
     )
     result = extract(synthetic.filing(content=content))
-    assert result.item("8").text == "Item 8. Financial Statements and Supplementary Data\n\nBody of item 8."
+    assert result.item("8").text.endswith("Consolidated balance sheet line 199\t$\t1,199")
     assert result.item("9A").text == "Item 9A. Controls and Procedures\n\nBody of item 9A."
     assert result.item("7").text.endswith("Body of item 7.\n\nItem 7")
+
+
+def test_statements_item_holding_only_a_reference_is_warned(synthetic):
+    reference = "<div>The financial statements and schedules are listed in Part IV, Item 15 of this Form 10-K.</div>"
+    content = synthetic.body().replace(f"<div>Body of item 8.</div>{synthetic.STATEMENTS}", reference)
+    result = extract(synthetic.filing(content=content))
+    warned = [(finding.code, finding.key) for finding in result.warnings]
+    assert warned == [(STATEMENTS_NOT_FOUND, ItemKey("II", "8"))]
+
+    incorporated = synthetic.body().replace(
+        f"<div>Body of item 8.</div>{synthetic.STATEMENTS}",
+        "<div>The financial statements are included in the Annual Report to Shareholders and incorporated herein by "
+        "reference.</div>",
+    )
+    assert extract(synthetic.filing(content=incorporated)).warnings == ()
 
 
 def test_incorporated_by_reference_items(synthetic):
