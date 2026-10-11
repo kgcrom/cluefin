@@ -40,6 +40,10 @@ jobs:
         with:
           enable-cache: true
 
+      # 배포본이 CI 에서 테스트한 의존성 버전 그대로 빌드되도록, bump 전에 lock 이 최신인지 확인한다.
+      - name: Check lockfile
+        run: uv lock --check
+
       - name: Bump version
         id: bump
         run: |
@@ -59,8 +63,11 @@ jobs:
           echo "new_version=$new_version" >> "$GITHUB_OUTPUT"
           echo "Bumped version: $current -> $new_version"
 
+      # bump 로 바뀐 워크스페이스 버전만 lock 에 반영하고(다른 의존성은 lock 값 유지), 그 lock 으로 설치한다.
       - name: Install dependencies
-        run: uv sync --all-packages
+        run: |
+          uv lock
+          uv sync --all-packages --locked
 
       - name: Run tests
         run: uv run pytest ${{ env.PACKAGE_DIR }}/tests -m "not integration and not slow"
