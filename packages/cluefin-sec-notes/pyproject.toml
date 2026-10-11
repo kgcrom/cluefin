@@ -1,0 +1,19 @@
+[project]
+name = "cluefin-sec-notes"
+version = "0.1.0"
+description = "SEC EDGAR filing document (10-K/10-Q/8-K HTML) parser for Item sections"
+readme = "README.md"
+license = "MIT"
+authors = [
+    { name = "Hangoo Kang", email = "kgcrom@hotmail.com" }
+]
+requires-python = ">=3.10"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+extend = "../../pyproject.toml"
+include = ["src/**", "tests/**", "scripts/**"]

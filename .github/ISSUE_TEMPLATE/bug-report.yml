@@ -34,6 +34,7 @@ body:
         - cluefin-desk
         - cluefin-xbrl
         - cluefin-dart-notes
+        - cluefin-sec-notes
     validations:
       required: true
 
