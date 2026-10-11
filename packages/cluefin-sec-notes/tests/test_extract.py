@@ -2,13 +2,17 @@ import pytest
 
 from cluefin_sec_notes import (
     EMPTY_ITEM,
+    IMPLAUSIBLE_LENGTH,
     MISSING_ITEM,
     NON_SEQUENTIAL_LAYOUT,
     OMITTED_ITEM,
+    STATEMENTS_NOT_FOUND,
     TOC_NOT_FOUND,
     TOC_TARGET_MISSING,
     UNKNOWN_ITEM,
     ItemKey,
+    MissingItemError,
+    UncertainItemError,
     extract_items,
     parse_filing,
 )
@@ -91,10 +95,7 @@ def test_missing_target_is_reported_and_heading_fills_the_gap(synthetic):
     market_risk = result.item("7A")
     assert market_risk.method == "pattern"
     assert market_risk.text == "Item 7A. Quantitative and Qualitative Disclosures About Market Risk\n\nBody of item 7A."
-    assert (
-        result.item("7").text
-        == "Item 7. Management’s Discussion and Analysis of Financial Condition and Results of Operations\n\nBody of item 7."
-    )
+    assert result.item("7").text.endswith("Results of operations paragraph 59: revenue grew in the period.")
     assert {finding.code for finding in result.warnings} == {TOC_TARGET_MISSING}
 
 
@@ -107,7 +108,10 @@ def test_without_any_heading_the_item_is_missing_not_guessed(synthetic):
         )
     )
     result = extract(synthetic.filing(content=content))
-    assert result.item("7A") is None
+    with pytest.raises(MissingItemError) as raised:
+        result.item("7A")
+    assert raised.value.key == ItemKey("II", "7A")
+    assert result.item("7A", strict=False) is None
     assert ItemKey("II", "7A") in result.missing
     assert {finding.code for finding in result.warnings} == {TOC_TARGET_MISSING, MISSING_ITEM}
     assert result.item("7").text.endswith("Body of item 7A.")
@@ -255,6 +259,54 @@ def test_unknown_item_is_reported(synthetic):
     assert result.item("1").text == "Item 1. Business\n\na\n\nItem 1D. Artificial Intelligence\n\nb"
 
 
+def test_next_page_item_list_left_at_the_end_is_trimmed(synthetic):
+    page_break = '<hr style="page-break-after:always"/>'
+    content = (
+        synthetic.body()
+        .replace(synthetic.MDNA, f"{synthetic.MDNA}{page_break}<div>Item 7</div>")
+        .replace(synthetic.STATEMENTS, f"{synthetic.STATEMENTS}{page_break}<div>Item 9, 9A</div>")
+        .replace(
+            "<div>Body of item 9A.</div>",
+            f"<div>Body of item 9A.</div>{page_break}<div>Part II, III</div><div>Item 9B, 10, 11</div>",
+        )
+    )
+    result = extract(synthetic.filing(content=content))
+    assert result.item("8").text.endswith("Consolidated balance sheet line 199\t$\t1,199")
+    assert result.item("9A").text == "Item 9A. Controls and Procedures\n\nBody of item 9A."
+    assert result.item("7").text.endswith("revenue grew in the period.\n\nItem 7")
+
+
+def test_statements_item_holding_only_a_reference_is_warned(synthetic):
+    reference = "<div>The financial statements and schedules are listed in Part IV, Item 15 of this Form 10-K.</div>"
+    content = synthetic.body().replace(f"<div>Body of item 8.</div>{synthetic.STATEMENTS}", reference)
+    result = extract(synthetic.filing(content=content))
+    warned = [(finding.code, finding.key) for finding in result.warnings]
+    assert warned == [(STATEMENTS_NOT_FOUND, ItemKey("II", "8"))]
+    with pytest.raises(UncertainItemError) as raised:
+        result.item("8")
+    statements = result.item("8", strict=False)
+    assert raised.value.item is statements
+    assert [finding.code for finding in raised.value.findings] == [STATEMENTS_NOT_FOUND]
+    assert statements.warnings == raised.value.findings
+    # 순회는 예외를 내지 않고, 경고는 Item마다 붙어 있다.
+    assert {item.key.number for item in result if item.warnings} == {"8"}
+
+    incorporated = synthetic.body().replace(
+        f"<div>Body of item 8.</div>{synthetic.STATEMENTS}",
+        "<div>The financial statements are included in the Annual Report to Shareholders and incorporated herein by "
+        "reference.</div>",
+    )
+    assert extract(synthetic.filing(content=incorporated)).warnings == ()
+
+
+def test_mdna_body_after_the_market_risk_heading_is_warned(synthetic):
+    """복수 등록인 통합형: Item 7 헤딩 바로 뒤에 7A 헤딩이 오고 MD&A 본문은 그 뒤에 있다."""
+    content = synthetic.body().replace(f"<div>Body of item 7.</div>{synthetic.MDNA}", "")
+    content = content.replace("<div>Body of item 7A.</div>", "<div>Body of item 7A.</div>" + synthetic.MDNA)
+    result = extract(synthetic.filing(content=content))
+    assert [(finding.code, finding.key) for finding in result.warnings] == [(IMPLAUSIBLE_LENGTH, ItemKey("II", "7"))]
+
+
 def test_incorporated_by_reference_items(synthetic):
     content = (
         "<p>Item 9B. Other Information</p><p>None.</p><p>PART III</p>"
@@ -309,6 +361,8 @@ def test_item_never_mentioned_is_omitted_not_missing(synthetic):
     assert result.omitted == result.missing
     assert result.warnings == ()
     assert OMITTED_ITEM in {finding.code for finding in result.findings}
+    assert result.item("7A") is None  # 생략은 예외가 아니다
+    assert result.item("99") is None  # 카탈로그에 없는 번호도
 
 
 def test_toc_link_to_another_items_heading_loses_to_the_real_heading(synthetic):

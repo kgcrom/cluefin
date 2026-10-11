@@ -17,7 +17,7 @@ DEFAULT_MANIFEST_DIR = REPO_ROOT / "docs" / "plans" / "sec-notes-corpus"
 
 def sec_client():
     import dotenv
-    from cluefin_openapi.sec._client import Client
+    from cluefin_openapi.sec import Client
 
     dotenv.load_dotenv(REPO_ROOT / ".env.test")
     user_agent = os.getenv("SEC_USER_AGENT")

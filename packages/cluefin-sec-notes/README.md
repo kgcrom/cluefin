@@ -29,13 +29,31 @@ result = extract_items(document)  # 서식을 알면 load_filing(path, form="10-
 for item in result:  # 문서 순서
     print(item.key, item.method, item.confidence, len(item.text))
 
-risk = result.item("1A")
+risk = result.item("1A")  # 구간을 믿을 수 없으면 예외(아래)
 print(risk.heading)  # "Item 1A. Risk Factors"
 print(risk.text[:500])
 
 for finding in result.warnings:  # 결과를 의심해야 할 때만 warning
     print(finding.code, finding.message)
 ```
+
+`item()`은 조용히 틀린 구간을 내주지 않습니다.
+
+```python
+from cluefin_sec_notes import MissingItemError, UncertainItemError
+
+try:
+    statements = result.item("8")
+except UncertainItemError as error:  # 찾았지만 경계가 의심스럽다(아래 표의 "예외" 열)
+    print([finding.code for finding in error.findings])  # ['statements_not_found']
+    statements = error.item  # 그래도 쓰려면. result.item("8", strict=False)와 같다
+except MissingItemError as error:  # 문서에 표기는 있는데 구간을 못 찾았다
+    print(error.key, error)
+```
+
+- 문서가 생략한 Item(`omitted`)과 카탈로그에 없는 번호는 예외 없이 None입니다.
+- `for item in result` 순회는 예외를 내지 않습니다. Item마다 `item.warnings`(그 Item의 warning Finding)를 보세요.
+- `strict=False`면 경고와 무관하게 찾은 것을 그대로(없으면 None) 돌려줍니다.
 
 - `Item.text`는 헤딩을 포함한 구간 텍스트입니다. 표는 행마다 칸을 탭으로 잇습니다.
 - `Item.ranges`는 블록 구간 `[start, end)`들입니다. 본문이 같은 문서의 다른 쪽에 있는 Item은 구간이 여럿입니다
@@ -92,15 +110,20 @@ parse_amount("$(1,234)")  # Decimal('-1234'). 쉼표·통화 기호·퍼센트·
 
 ## Finding 코드
 
-| 코드 | 뜻 |
-| --- | --- |
-| `missing_item` | 있어야 할 Item을 못 찾았는데 문서에 그 표기나 제목이 있다(탐지 실패 의심) |
-| `omitted_item` (info) | 문서에 표기가 없거나 공시가 생략을 밝혔다 |
-| `unknown_item` | 카탈로그에 없는 Item 번호의 헤딩 |
-| `empty_item` | 헤딩 뒤에 본문이 없다 |
-| `non_sequential_layout` | Item이 카탈로그 순서대로 놓이지 않았다(구간 끝을 의심) |
-| `page_reference_unresolved` | 같은 문서의 쪽을 참조하는데 그 쪽 번호를 찾지 못했다 |
-| `toc_target_missing` | 목차 링크가 가리키는 앵커가 없다 |
-| `toc_not_found`, `out_of_order`, `conflicting_candidate` (info) | 탐지 과정의 정보 |
+| 코드 | 뜻 | `item()` 예외 |
+| --- | --- | --- |
+| `missing_item` | 있어야 할 Item을 못 찾았는데 문서에 그 표기나 제목이 있다(탐지 실패 의심) | `MissingItemError` |
+| `empty_item` | 헤딩 뒤에 본문이 없다 | `UncertainItemError` |
+| `page_reference_unresolved` | 같은 문서의 쪽을 참조하는데 그 쪽 번호를 찾지 못했다 | `UncertainItemError` |
+| `statements_not_found` | 재무제표 Item(10-K 8, 10-Q I:1)이 재무제표라기엔 짧다(다른 곳을 가리키는 참조만 남음) | `UncertainItemError` |
+| `implausible_length` | Item 길이가 그 Item에 그럴듯한 범위를 벗어났다(10-K 7·7A, 10-Q I:3·I:4. 앞뒤 경계가 틀림) | `UncertainItemError` |
+| `non_sequential_layout` | Item이 카탈로그 순서대로 놓이지 않았다(구간 끝을 의심) | 없음(`item.warnings`에만) |
+| `toc_target_missing` | 목차 링크가 가리키는 앵커가 없다(Item은 헤딩으로 찾았을 수 있다) | 없음(`item.warnings`에만) |
+| `unknown_item` | 카탈로그에 없는 Item 번호의 헤딩 | 없음(공시 단위) |
+| `omitted_item` (info) | 문서에 표기가 없거나 공시가 생략을 밝혔다 | 없음(None) |
+| `toc_not_found`, `out_of_order`, `conflicting_candidate` (info) | 탐지 과정의 정보 | 없음 |
+
+예외를 내는 코드는 `UNCERTAIN_CODES`입니다. 목차·배치 경고는 맞게 찾은 Item에도 붙어서 예외에서 뺐습니다.
+다음 쪽 머리말이 구간 끝에 남은 Item 목록("Item 9, 9A")은 경고 없이 잘라 냅니다.
 
 읽으며 고친 HTML 결함(닫히지 않은 태그, 숨긴 내용, 머리말 제거 등)은 `document.report`에 위치와 함께 남습니다.

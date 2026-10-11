@@ -1,4 +1,6 @@
-from cluefin_sec_notes import PAGE_REFERENCE_UNRESOLVED, extract_items, parse_filing
+import pytest
+
+from cluefin_sec_notes import PAGE_REFERENCE_UNRESOLVED, UncertainItemError, extract_items, parse_filing
 
 BREAK = '<hr style="page-break-after:always"/>'
 
@@ -82,7 +84,9 @@ def test_f_pages_starting_with_another_items_heading_skip_that_heading():
 def test_without_page_numbers_nothing_is_added():
     html = filing(*PAGES).replace("<div>F-1</div>", "").replace("<div>F-2</div>", "")
     result = extract_items(parse_filing(html))
-    assert len(result.item("8").ranges) == 1
+    with pytest.raises(UncertainItemError):
+        result.item("8")
+    assert len(result.item("8", strict=False).ranges) == 1
     assert {finding.key.number for finding in result.findings if finding.code == PAGE_REFERENCE_UNRESOLVED} == {
         "1A",
         "8",

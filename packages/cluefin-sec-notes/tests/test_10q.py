@@ -1,6 +1,6 @@
 """10-Q: Part마다 Item 번호가 다시 시작한다. 합성 공시는 관찰한 레이아웃만 흉내 낸다."""
 
-from cluefin_sec_notes import MISSING_ITEM, ItemKey, extract_items, parse_filing
+from cluefin_sec_notes import IMPLAUSIBLE_LENGTH, MISSING_ITEM, ItemKey, extract_items, parse_filing
 
 COVER = (
     '<div style="display:none"><ix:header><ix:hidden>'
@@ -9,6 +9,14 @@ COVER = (
     "</ix:hidden></ix:header></div><div>FORM 10-Q</div>"
 )
 BREAK = '<hr style="page-break-after:always"/>'
+# Part I Item 1 본문이 짧으면 `statements_not_found`가 나므로, 경고 없는 결과를 보는 테스트는 재무제표만큼 긴 표를 붙인다.
+STATEMENTS = (
+    "<table>"
+    + "".join(
+        f"<tr><td>Condensed balance sheet line {row}</td><td>$</td><td>1,{row:03}</td></tr>" for row in range(200)
+    )
+    + "</table>"
+)
 PARTS = {"I": "FINANCIAL INFORMATION", "II": "OTHER INFORMATION"}
 ITEMS = (
     ("I", "1", "Financial Statements"),
@@ -67,11 +75,12 @@ def keys(result) -> list[str]:
 
 
 def test_toc_anchors_keep_part_one_and_part_two_items_apart():
-    result = extract_items(parse_filing(filing(toc(), body())))
+    content = body().replace("<div>Body of I 1.</div>", "<div>Body of I 1.</div>" + STATEMENTS)
+    result = extract_items(parse_filing(filing(toc(), content)))
     assert result.catalog == "10-Q"
     assert keys(result) == [f"{part}:{number}" for part, number, _ in ITEMS]
     assert result.item("1", "II").text == "Item 1. Legal Proceedings\n\nBody of II 1."
-    assert result.item("1", "I").text == "Item 1. Financial Statements\n\nBody of I 1."
+    assert result.item("1", "I").text.startswith("Item 1. Financial Statements\n\nBody of I 1.\n\nCondensed balance")
     assert result.warnings == ()
 
 
@@ -143,7 +152,7 @@ def test_statement_index_table_heads_part_one_item_one():
         index,
     )
     result = extract_items(parse_filing(filing("", content)))
-    statements = result.item("1", "I")
+    statements = result.item("1", "I", strict=False)  # 합성 본문이 짧아 statements_not_found가 난다
     assert statements is not None and statements.text.endswith("Body of I 1.")
     assert statements.method == "pattern"
     assert keys(result) == [f"{part}:{number}" for part, number, _ in ITEMS]
@@ -158,7 +167,15 @@ def test_statements_without_heading_right_after_the_toc():
     )
     text_toc = "<table>" + "".join(f"<tr><td>Item {n}.</td><td>{t}</td></tr>" for _, n, t in ITEMS) + "</table>"
     result = extract_items(parse_filing(filing(text_toc, content)))
-    statements_item = result.item("1", "I")
+    statements_item = result.item("1", "I", strict=False)  # 합성 표가 짧아 statements_not_found가 난다
     assert statements_item.method == "statements_after_toc"
     assert statements_item.text.startswith("Balance Sheet\t2026")
     assert result.item("2", "I").heading.startswith("Item 2.")
+
+
+def test_controls_item_swallowing_the_statements_is_warned():
+    """Part I Item 1 헤딩을 못 찾으면 뒤쪽 재무제표가 Item 4에 들어온다. Item 4는 원래 짧다."""
+    content = body().replace("<div>Body of I 4.</div>", "<div>Body of I 4.</div>" + STATEMENTS * 5)
+    result = extract_items(parse_filing(filing(toc(), content)))
+    warned = {finding.key for finding in result.warnings if finding.code == IMPLAUSIBLE_LENGTH}
+    assert warned == {ItemKey("I", "4")}

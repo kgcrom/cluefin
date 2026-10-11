@@ -148,5 +148,5 @@ def test_item_tables_and_public_parse_amount(synthetic):
     )
     content = synthetic.body().replace("<div>Body of item 8.</div>", "<div>Body of item 8.</div>" + table_html)
     statements = extract_items(parse_filing(synthetic.filing(content=content))).item("8")
-    assert len(statements.tables) == 1
+    assert len(statements.tables) == 2  # 붙인 표와 합성 공시의 재무제표 표
     assert [parse_amount(row[1]) for row in statements.tables[0].grid()] == [Decimal("1234"), Decimal("56")]

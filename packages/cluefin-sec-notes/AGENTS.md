@@ -28,8 +28,30 @@ Each rule below replaced an approach that broke real filings. Don't go back to t
 - **Page furniture compares Item/Part labels literally.** Stripping digits for the repeat check (needed for page
   numbers) also erased real "Item 9." headings on filings that start a new Item on every page. Sentences ending
   in "." ("None.") are excluded from repeat detection.
-- **Leftover page headers listing that page's Items ("Item 9, 9A")** are known-bad, not fixed: treating a bare
-  item label after a Part header as furniture would also delete real "PART II" + "Item 5." headings.
+- **Page headers listing that page's Items ("Item 9, 9A", "Part II, III") are trimmed only at a range's end.**
+  Treating a bare item label after a Part header as furniture anywhere would also delete real "PART II" +
+  "Item 5." headings. At the end it's safe: the next Item's real heading is that Item's start block. Only labels
+  without a title that don't name the Item itself are trimmed (a continued page's own "Item 7" stays). In the
+  corpus all 18 such labels were the last block; 16 sat in golden `ok` Items within the length tolerance.
+- **`statements_not_found` looks at length, not tables or titles.** "No table" missed a reference-only Item 8 that
+  kept two quarterly tables (the statements sat inside Item 15). Balance-sheet wording flagged two golden `ok` Items
+  (48k/72k chars). The 5,000-char cut sits in a gap: reference-only Items 112–3,321 chars, the smallest real
+  statements 6,797 (a trust 10-Q), golden `ok` minimum 13,097. Not raised when `page_reference_unresolved` or
+  `empty_item` already covers the Item. It replaces the corpus invariants `no_table:8`/`no_table:I:1`.
+- **Boundary spills are caught by per-Item length ranges (`ItemSpec.min_chars`/`max_chars`), nothing else.**
+  A first line that is neither the Item label nor its title flagged 24 golden `ok` Items (cross-reference indexes,
+  statements right after the TOC, Items opening with "Part III"). "The previous Item is short" misfires on pairs
+  that are short-then-long by nature (6→7, II:1→II:1A, 7A→8). Ranges are set only where the corpus splits cleanly:
+  10-K 7A > 150,000 (golden max 104,249, a bank; known-bad 272,767), 10-Q I:3 > 50,000 (max 6,705 / 103,900),
+  10-Q I:4 > 30,000 (max 7,104 / 275,902; one smoke 43,935 that really ate the statements), 10-K 7 < 3,000
+  (non-incorporated golden min > 9,475 / 1,214). Synthetic fixtures carry long `MDNA`/`STATEMENTS` bodies so
+  these rules stay quiet in unit tests.
+- **`item()` raises only for `UNCERTAIN_CODES`, and only `item()` raises.** `extract_items()` and iteration never
+  raise, so results, candidates and findings stay inspectable. `toc_target_missing` (8 golden `ok` Items found by
+  heading after a dead TOC link) and `non_sequential_layout` (1) sit on correct Items, so they're left out.
+  `MissingItemError` keys off the `missing_item` finding, not `missing`, so amendments (no missing warnings) and
+  omitted Items still return None. Corpus tooling (`_expectations.item_by_key`, scripts) calls `strict=False`.
+  Adding a new boundary warning means deciding whether it joins `UNCERTAIN_CODES` (measure golden `ok` first).
 - **Page references follow only the first closed range in a near-empty body.** Following every reference in a
   short body broke golden 9A ("report on page F-2"), 7A ("see … on page 75"), Item 2 (a trailing "refer to pages
   51–54") and Item 7 (second sentence "read in conjunction with … pages 165–314"). Current rule: non-statement

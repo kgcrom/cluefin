@@ -17,18 +17,21 @@ import re
 from collections.abc import Sequence
 from dataclasses import replace
 
-from cluefin_sec_notes._blocks import Paragraph, Table
+from cluefin_sec_notes._blocks import PageBreak, Paragraph, Table
 from cluefin_sec_notes._catalog import FormCatalog, catalog_for
 from cluefin_sec_notes._document import SecDocument, block_text
 from cluefin_sec_notes._labels import normalize_title, parse_item_label, parse_part
 from cluefin_sec_notes._model import (
     CONFLICTING_CANDIDATE,
     EMPTY_ITEM,
+    IMPLAUSIBLE_LENGTH,
     INFO,
     MISSING_ITEM,
     NON_SEQUENTIAL_LAYOUT,
     OMITTED_ITEM,
     OUT_OF_ORDER,
+    STATEMENTS_NOT_FOUND,
+    WARNING,
     Candidate,
     Finding,
     Item,
@@ -71,6 +74,9 @@ _TOC_TABLE_ROWS = 3
 _PART_HEADING_MAX = 80
 # 제목 자리에 이것만 있으면 빈 Item이 아니라 "해당 없음"을 적은 것이다(Item 6 "[Reserved]" 등).
 _PLACEHOLDERS = frozenset({"reserved", "removed and reserved", "none", "not applicable"})
+# 재무제표 Item 본문이 이보다 짧으면 재무제표가 아니라 다른 곳을 가리키는 참조다. 코퍼스(2026-10)에서 골든 `ok`의 최소는
+# 13,097자(작은 10-Q), 참조뿐인 10-K Item 8은 112–3,321자, 실제로 작은 재무제표(신탁 10-Q)가 6,797자였다.
+_MIN_STATEMENTS_CHARS = 5_000
 
 
 def extract_items(
@@ -109,6 +115,8 @@ def extract_items(
     items, reference_findings = resolve_page_references(document, catalog, items, skip=ranged)
     findings.extend(reference_findings)
     findings.extend(_empty_items(document, catalog, items))
+    findings.extend(_short_statements(catalog, items, findings))
+    findings.extend(_implausible_lengths(catalog, items, findings, skip=ranged))
     missing = _missing(document, catalog, accepted)
     omitted = _omitted(context, missing)
     if not _is_amendment(document):
@@ -121,6 +129,7 @@ def extract_items(
                 findings.append(Finding(OMITTED_ITEM, f"{key} 표기가 문서에 없다", severity=INFO, key=key))
             else:
                 findings.append(Finding(MISSING_ITEM, f"{key}을 찾지 못했다(문서에 표기는 있다)", key=key))
+    items = tuple(_with_warnings(item, findings) for item in items)
     return ItemExtraction(
         document=document,
         catalog=catalog.name,
@@ -130,6 +139,11 @@ def extract_items(
         candidates=tuple(candidates),
         omitted=omitted,
     )
+
+
+def _with_warnings(item: Item, findings: list[Finding]) -> Item:
+    warnings = tuple(finding for finding in findings if finding.severity == WARNING and finding.key == item.key)
+    return replace(item, warnings=warnings) if warnings else item
 
 
 def _resolve(candidates: list[Candidate], catalog: FormCatalog) -> tuple[dict[ItemKey, Candidate], list[Finding]]:
@@ -219,13 +233,14 @@ def _build_items(document: SecDocument, catalog: FormCatalog, accepted: dict[Ite
     end_of_items = _signatures(document, last_start)
     items = []
     for candidate in ordered:
+        shared = tuple(other.key for other in ordered if other.block == candidate.block and other.key != candidate.key)
         if candidate.ranges:
             end = candidate.ranges[0][1]
         else:
             later = [start for start in starts if start > candidate.block]
-            end = _trim_part_heading(document, candidate.block, later[0] if later else end_of_items)
+            own = {key.number for key in (candidate.key, *shared)}
+            end = _trim_page_header(document, candidate.block, later[0] if later else end_of_items, own)
         spec = catalog.spec(candidate.key.part, candidate.key.number)
-        shared = tuple(other.key for other in ordered if other.block == candidate.block and other.key != candidate.key)
         items.append(
             Item(
                 key=candidate.key,
@@ -243,15 +258,24 @@ def _build_items(document: SecDocument, catalog: FormCatalog, accepted: dict[Ite
     return tuple(items)
 
 
-def _trim_part_heading(document: SecDocument, start: int, end: int) -> int:
-    """구간 끝의 Part 헤딩은 다음 Part의 것이다."""
-    while end - 1 > start:
-        block = document.blocks[end - 1]
-        if not (isinstance(block, Paragraph) and len(block.text) <= _PART_HEADING_MAX and parse_part(block.text)):
+def _trim_page_header(document: SecDocument, start: int, end: int, own: set[str]) -> int:
+    """구간 끝의 Part 헤딩은 다음 Part의 것이다. 제목 없이 다른 Item 번호만 있는 줄("Item 9, 9A", "Part II, III")은
+    다음 쪽 머리말이다(그 쪽에 실린 Item 목록). 구간 끝만 보므로 실제 헤딩(다음 Item의 시작 블록)은 건드리지 않는다.
+    끝의 쪽 나눔은 건너뛰고 보되, 잘라 낼 줄이 없으면 남긴다."""
+    position = end
+    while position - 1 > start:
+        block = document.blocks[position - 1]
+        position -= 1
+        if isinstance(block, PageBreak):
+            continue
+        if not (isinstance(block, Paragraph) and len(block.text) <= _PART_HEADING_MAX):
             break
-        if parse_item_label(block.text) is not None:
+        label = parse_item_label(block.text)
+        if label is None and parse_part(block.text) is None:
             break
-        end -= 1
+        if label is not None and (label.rest or own.intersection(label.numbers)):
+            break
+        end = position
     return end
 
 
@@ -295,6 +319,44 @@ def _empty_items(document: SecDocument, catalog: FormCatalog, items: tuple[Item,
         if (not rest or rest in titles) and rest not in _PLACEHOLDERS:
             findings.append(Finding(EMPTY_ITEM, f"{item.key} 본문이 없다", key=item.key, block=item.start))
     return findings
+
+
+def _short_statements(catalog: FormCatalog, items: tuple[Item, ...], findings: list[Finding]) -> list[Finding]:
+    """재무제표 Item인데 본문이 재무제표라기엔 짧다. 이미 경고가 난 Item(쪽 참조 실패, 빈 Item)에는 겹쳐 내지 않는다."""
+    warned = {finding.key for finding in findings if finding.severity == WARNING}
+    short = []
+    for item in items:
+        spec = catalog.spec(item.key.part, item.key.number)
+        if spec is None or not spec.financial_statements or item.incorporated_by_reference or item.key in warned:
+            continue
+        if len(item.ranges) == 1 and len(item.text) < _MIN_STATEMENTS_CHARS:
+            message = (
+                f"{item.key} 본문이 {len(item.text):,}자뿐이다(재무제표가 다른 곳에 있다는 참조를 따라가지 못했다)"
+            )
+            short.append(Finding(STATEMENTS_NOT_FOUND, message, key=item.key, block=item.start))
+    return short
+
+
+def _implausible_lengths(
+    catalog: FormCatalog, items: tuple[Item, ...], findings: list[Finding], *, skip: set[ItemKey]
+) -> list[Finding]:
+    """본문 길이가 카탈로그 범위를 벗어난 Item. 참조 편입, 쪽을 덧붙인 Item, 탐지기가 구간을 정한 Item(교차참조 색인),
+    이미 경고가 난 Item은 뺀다."""
+    warned = {finding.key for finding in findings if finding.severity == WARNING}
+    unusual = []
+    for item in items:
+        spec = catalog.spec(item.key.part, item.key.number)
+        if spec is None or item.incorporated_by_reference or len(item.ranges) > 1 or item.key in skip | warned:
+            continue
+        length = len(item.text)
+        if spec.max_chars is not None and length > spec.max_chars:
+            message = f"{item.key} 본문이 {length:,}자로 너무 길다(앞뒤 Item을 못 찾아 그 본문까지 들어왔을 수 있다)"
+        elif spec.min_chars is not None and length < spec.min_chars:
+            message = f"{item.key} 본문이 {length:,}자로 너무 짧다(본문이 다음 Item 헤딩 뒤에 있을 수 있다)"
+        else:
+            continue
+        unusual.append(Finding(IMPLAUSIBLE_LENGTH, message, key=item.key, block=item.start))
+    return unusual
 
 
 def _missing(document: SecDocument, catalog: FormCatalog, accepted: dict[ItemKey, Candidate]) -> tuple[ItemKey, ...]:

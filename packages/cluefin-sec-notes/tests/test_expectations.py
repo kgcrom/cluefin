@@ -28,6 +28,20 @@ def test_statuses(synthetic):
     assert statuses == {"1A": OK, "7": FAILED, "8": KNOWN_BAD, "2": OK, "99": FAILED, "3": FIXED}
 
 
+def test_known_bad_records_whether_the_item_is_warned(synthetic):
+    content = (
+        synthetic.body()
+        .replace(f'<div id="{synthetic.anchor_id("7A")}"></div>', "")
+        .replace(
+            '<div style="font-weight:700">Item 7A. Quantitative and Qualitative Disclosures About Market Risk</div>', ""
+        )
+    )
+    extraction = extract_items(parse_filing(synthetic.filing(content=content)))
+    entry = {"items": {"8": {"min_chars": 10_000}}, "known_bad": {"7A": "missing", "8": "too short"}}
+    warned = {check.key: check.warned for check in check_expectations(extraction, entry)}
+    assert warned == {"7A": True, "8": False}
+
+
 def test_char_tolerance(synthetic):
     extraction = extract_items(parse_filing(synthetic.filing()))
     length = len(extraction.item("1A").text)
@@ -63,8 +77,8 @@ def test_expectation_key_and_ten_k_invariants(synthetic):
     risk = extraction.item("1A")
     assert expectation_key(risk, part_scoped=False) == "1A"
     assert expectation_key(risk, part_scoped=True) == "I:1A"
-    # 합성 공시의 1A는 짧고 Item 8에 표가 없다. sec_items는 8-K에서만 본다.
-    assert invariant_violations(extraction, sec_items=["1.01"]) == ["no_table:8", "short:1A"]
+    # 합성 공시의 1A는 짧다. sec_items는 8-K에서만 본다.
+    assert invariant_violations(extraction, sec_items=["1.01"]) == ["short:1A"]
 
 
 def test_table_row_expectation(synthetic):

@@ -117,6 +117,19 @@ def workiva_toc(items=TOC_ITEMS) -> str:
     return '<div id="toc"></div><table>' + "".join(rows) + "</table>"
 
 
+# 재무제표 Item 본문 뒤에 붙이는 표. 본문이 짧으면 `statements_not_found`가 나므로 실제 재무제표만큼 길게 만든다.
+STATEMENTS = (
+    "<table>"
+    + "".join(
+        f"<tr><td>Consolidated balance sheet line {row}</td><td>$</td><td>1,{row:03}</td></tr>" for row in range(200)
+    )
+    + "</table>"
+)
+
+# Item 7 본문 뒤에 붙이는 MD&A. 본문이 짧으면 `implausible_length`가 나므로 실제 MD&A만큼 길게 만든다.
+MDNA = "".join(f"<div>Results of operations paragraph {row}: revenue grew in the period.</div>" for row in range(60))
+
+
 def body(items=TOC_ITEMS, *, anchored=True, page_header=False) -> str:
     parts = []
     for _part, number, title in items:
@@ -128,6 +141,7 @@ def body(items=TOC_ITEMS, *, anchored=True, page_header=False) -> str:
             + anchor
             + f'<div style="font-weight:700">Item {number}. {title}</div>'
             + f"<div>Body of item {number}.</div>"
+            + {"7": MDNA, "8": STATEMENTS}.get(number, "")
         )
     return "".join(parts) + '<hr style="page-break-after:always"/><div>SIGNATURES</div><div>signed</div>'
 
@@ -144,4 +158,12 @@ def filing(toc: str | None = None, content: str | None = None) -> str:
 
 @pytest.fixture
 def synthetic() -> SimpleNamespace:
-    return SimpleNamespace(TOC_ITEMS=TOC_ITEMS, anchor_id=anchor_id, workiva_toc=workiva_toc, body=body, filing=filing)
+    return SimpleNamespace(
+        TOC_ITEMS=TOC_ITEMS,
+        STATEMENTS=STATEMENTS,
+        MDNA=MDNA,
+        anchor_id=anchor_id,
+        workiva_toc=workiva_toc,
+        body=body,
+        filing=filing,
+    )

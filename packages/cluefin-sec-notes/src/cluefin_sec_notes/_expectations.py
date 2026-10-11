@@ -10,7 +10,8 @@ manifest 항목의 기대값 필드:
 - `present`: `["1B", "2", …]` — 있기만 하면 되는 Item.
 - `known_bad`: `{"7": "이유"}` — 지금은 틀리는 것으로 알려진 Item. 틀리면 통과, **맞으면** `fixed`로 실패시킨다
   (개선을 manifest에 반영하라는 신호. `scripts/draft_expectations.py --accept`로 반영한다). 반대로 기대값이 틀리면
-  `failed`(회귀).
+  `failed`(회귀). known_bad 검사의 `warned`는 그 Item 키에 warning Finding이 붙었는지다. 경고 없는 known_bad는
+  라이브러리 사용자가 틀린 줄 모르고 쓰는 Item이다(판정에는 쓰지 않는다).
 
 - `tables`: `[{"item": "8", "row": ["Products", "$307,003", "$294,866"]}]` — 그 Item의 표 중 하나의 그리드(`Table.grid()`)에
   이 행이 그대로 있어야 한다(열 맞춤 검사). 검사 키는 `table:<Item>`.
@@ -51,11 +52,22 @@ class ItemCheck:
     key: str
     status: str
     detail: str = ""
+    warned: bool = False
 
 
 def item_by_key(extraction: ItemExtraction, key: str) -> Item | None:
     part, _, number = key.rpartition(":")
-    return extraction.item(number, part or None)
+    return extraction.item(number, part or None, strict=False)
+
+
+def has_warning(extraction: ItemExtraction, key: str) -> bool:
+    """manifest 키(`"8"`, `"I:3"`)의 Item에 warning Finding이 붙었는지."""
+    part, _, number = key.rpartition(":")
+    number = number.upper()
+    return any(
+        finding.key is not None and finding.key.number == number and (not part or finding.key.part == part)
+        for finding in extraction.warnings
+    )
 
 
 def check_expectations(extraction: ItemExtraction, entry: dict) -> list[ItemCheck]:
@@ -70,7 +82,8 @@ def check_expectations(extraction: ItemExtraction, entry: dict) -> list[ItemChec
         problem = _problem(item_by_key(extraction, key), expectation)
         if key in known_bad:
             status = KNOWN_BAD if problem else FIXED
-            checks.append(ItemCheck(key, status, problem or f"known_bad가 고쳐졌다: {known_bad[key]}"))
+            detail = problem or f"known_bad가 고쳐졌다: {known_bad[key]}"
+            checks.append(ItemCheck(key, status, detail, warned=has_warning(extraction, key)))
         else:
             checks.append(ItemCheck(key, FAILED if problem else OK, problem))
     for expectation in entry.get("tables", ()):
@@ -146,8 +159,7 @@ def invariant_violations(extraction: ItemExtraction, *, sec_items: Sequence[str]
     """기대값 없이 볼 수 있는 이상. 서식마다 다르다.
 
     - 공통: 필수 Item 누락(`missing:…`), `missing_item` 외 경고 코드(`warning:…`).
-    - 10-K: 너무 짧은 1A(`short:1A`), 표 없는 Item 8(`no_table:8`).
-    - 10-Q: 표 없는 Part I Item 1(`no_table:I:1`).
+    - 10-K: 너무 짧은 1A(`short:1A`). 짧은 재무제표 Item은 `statements_not_found` 경고(`warning:…`)로 잡힌다.
     - 8-K: 제출 이력의 Item 목록(`sec_items`)과 비교해 문서에서 못 찾은 것(`missing:2.02`), 목록에 없는데 찾은 것
       (`extra:7.01`). 8-K 카탈로그는 전부 optional이라 공통 누락 검사는 아무것도 내지 않는다.
     """
@@ -161,8 +173,6 @@ def invariant_violations(extraction: ItemExtraction, *, sec_items: Sequence[str]
             violations.add(f"warning:{finding.code}")
     if extraction.catalog == _10K:
         violations.update(_annual_report_violations(extraction))
-    elif part_scoped and _has_no_table(extraction.item("1", "I")):
-        violations.add("no_table:I:1")
     elif extraction.catalog == _8K and sec_items is not None:
         violations.update(sec_item_violations([item.key.number for item in extraction], sec_items))
     return sorted(violations)
@@ -179,7 +189,7 @@ def sec_item_violations(found: Sequence[str], sec_items: Sequence[str]) -> list[
 
 def _annual_report_violations(extraction: ItemExtraction) -> list[str]:
     violations = []
-    risk = extraction.item("1A")
+    risk = extraction.item("1A", strict=False)
     if (
         risk is not None
         and not risk.incorporated_by_reference
@@ -187,14 +197,4 @@ def _annual_report_violations(extraction: ItemExtraction) -> list[str]:
         and not any(phrase in risk.text.lower() for phrase in _SMALLER_REPORTING)
     ):
         violations.append("short:1A")
-    if _has_no_table(extraction.item("8")):
-        violations.append("no_table:8")
     return violations
-
-
-def _has_no_table(statements: Item | None) -> bool:
-    return (
-        statements is not None
-        and not statements.incorporated_by_reference
-        and not any(isinstance(block, Table) for block in statements.blocks)
-    )
