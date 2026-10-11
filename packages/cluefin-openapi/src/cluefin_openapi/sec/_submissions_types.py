@@ -13,7 +13,13 @@ class FilingEntry(BaseModel):
     filing_date: date = Field(alias="filingDate", description="제출일")
     report_date: Optional[date] = Field(default=None, alias="reportDate", description="보고 기준일. 없으면 None")
     acceptance_date_time: Optional[datetime] = Field(
-        default=None, alias="acceptanceDateTime", description="EDGAR 접수 시각 (UTC)"
+        default=None,
+        alias="acceptanceDateTime",
+        description=(
+            "EDGAR 접수 시각. SEC가 `Z`(UTC)를 붙여 주지만 UTC가 아닌 공시가 있다: 헤더와 대조한 10-K/10-Q 29건 중 9건은"
+            " 동부시각을 두 번 바꾼 값(실제 UTC보다 4–5시간 늦음, 2026-10 실측). 값만으로는 가릴 수 없다."
+            " 정확한 시각은 공시 헤더의 ACCEPTANCE-DATETIME(동부시각)"
+        ),
     )
     act: Optional[str] = Field(default=None, description="근거 법령 (33, 34 등)")
     form: str = Field(description="서식 (10-K, 10-Q, 8-K, 4 ...)")

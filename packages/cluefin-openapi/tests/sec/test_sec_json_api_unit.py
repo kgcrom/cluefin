@@ -35,7 +35,7 @@ TENK_ROW = {
     "accessionNumber": "0000320193-23-000106",
     "filingDate": "2023-11-03",
     "reportDate": "2023-09-30",
-    "acceptanceDateTime": "2023-11-02T18:08:27.000Z",
+    "acceptanceDateTime": "2023-11-03T02:08:27.000Z",
     "act": "34",
     "form": "10-K",
     "fileNumber": "001-36743",
@@ -171,7 +171,8 @@ class TestSubmissions:
         tenk = company.filings[2]
         assert tenk.accession_number == "0000320193-23-000106"
         assert tenk.report_date == date(2023, 9, 30)
-        assert tenk.acceptance_date_time == datetime(2023, 11, 2, 18, 8, 27, tzinfo=timezone.utc)
+        # Parsed as given. The filing header says 2023-11-02 18:08:27 ET, so this "Z" value is not real UTC.
+        assert tenk.acceptance_date_time == datetime(2023, 11, 3, 2, 8, 27, tzinfo=timezone.utc)
         assert tenk.is_xbrl is True and tenk.is_inline_xbrl is True
         assert tenk.is_xbrl_numeric is None  # null on all but the most recent filings
         assert tenk.items is None  # "" becomes None

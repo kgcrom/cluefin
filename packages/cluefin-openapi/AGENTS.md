@@ -125,6 +125,11 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - companyfacts/companyconcept repeat the same period's value once per filing that reported it (original,
   next year's comparative, amendments). `fy`/`fp` describe the **filing**, not the value's period; only one row
   per period carries `frame`. Pick rows by `start`/`end`/`accn`, not by `fy`.
+- `FilingEntry.acceptance_date_time` (`acceptanceDateTime`) ends in `Z` but is not always UTC. Against the filing
+  header's `ACCEPTANCE-DATETIME` (Eastern), 20 of 29 10-K/10-Q were real UTC and 9 (every AAPL, KHC and SMCI one
+  sampled) were Eastern shifted twice, 4–5 h late — AAPL 0000320193-23-000106: header 2023-11-02 18:08:27 ET,
+  JSON `2023-11-03T02:08:27Z` (measured 2026-10-11). Nothing in the JSON tells them apart, so `values_as_of` uses
+  `filed` only. `filed` is the header's `FILED AS OF DATE`: acceptance after 17:30 ET counts as the next business day.
 
 ## Kiwoom scope
 
