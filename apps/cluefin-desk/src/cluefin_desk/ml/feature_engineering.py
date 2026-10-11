@@ -174,34 +174,30 @@ class FeatureEngineer:
                 returns = talib.REGIME_HMM_RETURNS(close)
                 hmm_states, transition_probs, state_means = talib.REGIME_HMM(returns, n_states=3, random_state=42)
 
-                df["regime_hmm_state"] = hmm_states
+                # Every bar's state, matrix and means come from a model fitted on earlier bars only
+                rows = np.flatnonzero(~np.isnan(hmm_states))
+                if len(rows) == 0:
+                    # An all-NaN column would make dropna() discard every training row
+                    logger.warning("Too few bars for an HMM fit. Skipping HMM regime features.")
+                else:
+                    current = hmm_states[rows].astype(int)
+                    df["regime_hmm_state"] = hmm_states
 
-                # Add transition probabilities as features
-                # These represent probability of transitioning TO each state from current state
-                for i in range(3):
-                    trans_prob_col = np.full(len(df), np.nan)
-                    for state in range(3):
-                        mask = df["regime_hmm_state"] == state
-                        if np.any(mask):
-                            # Probability of transitioning from current state to state i
-                            trans_prob_col[mask] = transition_probs[state, i]
-                    df[f"regime_hmm_trans_to_{i}"] = trans_prob_col
+                    # Probability of transitioning from the current state to state i
+                    for i in range(3):
+                        trans_prob_col = np.full(len(df), np.nan)
+                        trans_prob_col[rows] = transition_probs[rows, current, i]
+                        df[f"regime_hmm_trans_to_{i}"] = trans_prob_col
 
-                # Add expected return for current regime state
-                # This is the learned mean return for each HMM state
-                state_mean_col = np.full(len(df), np.nan)
-                for state in range(3):
-                    mask = df["regime_hmm_state"] == state
-                    if np.any(mask):
-                        state_mean_col[mask] = state_means[state]
-                df["regime_hmm_expected_return"] = state_mean_col
+                    # Learned mean return of the current state
+                    state_mean_col = np.full(len(df), np.nan)
+                    state_mean_col[rows] = state_means[rows, current]
+                    df["regime_hmm_expected_return"] = state_mean_col
 
-                logger.info("Successfully created HMM regime features")
+                    logger.info("Successfully created HMM regime features")
 
             except ImportError:
-                logger.warning(
-                    "hmmlearn not available. Skipping HMM regime features. Install with: uv add --optional hmm hmmlearn"
-                )
+                logger.warning("hmmlearn not available. Skipping HMM regime features.")
             except Exception as e:
                 logger.warning(f"Error creating HMM features: {e}. Skipping HMM regime features.")
 

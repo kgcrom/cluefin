@@ -88,8 +88,13 @@ trend, vol, combined = REGIME_COMBINED(high, low, close)
 # HMM 기반 레짐 감지 (선택적 의존성 필요)
 returns = REGIME_HMM_RETURNS(close)
 states, trans_probs, means = REGIME_HMM(returns, n_states=3)
-# states: 0=약세, 1=중립, 2=강세
+# states: 0=약세, 1=중립, 2=강세 (봉마다 하나)
+# trans_probs: (n, 3, 3), means: (n, 3) — 봉마다 그 시점의 모델 값
 ```
+
+레짐 함수는 모든 봉을 **그 봉까지의 데이터만으로** 판정합니다. 변동성 기준선은 그 시점까지의
+NATR 퍼센타일이고, HMM은 그 시점까지의 수익률로 학습(`refit_every`마다 재학습)한 모델의
+필터링 확률을 씁니다. 그래서 ML 피처나 백테스트에 그대로 넣어도 미래 정보가 섞이지 않습니다.
 
 ## 예제 노트북
 
@@ -179,10 +184,10 @@ uv run --with jupyter jupyter lab packages/cluefin-ta/examples/ta_quickstart.ipy
 |------|------|
 | `REGIME_MA(close, fast_period=20, slow_period=50, sideways_threshold=0.02)` | 이동평균 기반 레짐 감지 (0=하락, 1=횡보, 2=상승) |
 | `REGIME_MA_DURATION(regime_states)` | 현재 레짐 지속 기간 계산 |
-| `REGIME_VOLATILITY(high, low, close, atr_period=14, threshold_percentile=66)` | 변동성 기반 레짐 감지 (0=저변동성, 1=고변동성) |
+| `REGIME_VOLATILITY(high, low, close, atr_period=14, threshold_percentile=66, min_periods=1)` | 변동성 기반 레짐 감지 (0=저변동성, 1=고변동성, 기준선은 그 시점까지의 퍼센타일) |
 | `REGIME_COMBINED(high, low, close, ...)` | 추세+변동성 결합 레짐 (0-5: 6가지 시장 상태) |
 | `REGIME_HMM_RETURNS(close)` | HMM 레짐 감지용 수익률 계산 |
-| `REGIME_HMM(returns, n_states=3, ...)` | 은닉 마르코프 모델 기반 레짐 감지 |
+| `REGIME_HMM(returns, n_states=3, ..., min_periods=60, refit_every=20)` | 은닉 마르코프 모델 기반 레짐 감지 (확장 창 재학습 + 필터링) |
 
 ## 요구사항
 
