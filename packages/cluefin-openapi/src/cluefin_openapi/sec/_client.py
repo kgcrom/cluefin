@@ -63,6 +63,24 @@ class Client(BaseHttpClient):
         )
         self._rate_limiter = TokenBucket(capacity=rate_limit_burst, refill_rate=rate_limit_requests_per_second)
 
+    @property
+    def reference(self):
+        from ._reference import Reference
+
+        return Reference(self)
+
+    @property
+    def submissions(self):
+        from ._submissions import Submissions
+
+        return Submissions(self)
+
+    @property
+    def xbrl(self):
+        from ._xbrl_api import XbrlApi
+
+        return XbrlApi(self)
+
     def _get_json(self, url: str):
         """GET a sec.gov URL and return the decoded JSON body."""
         return self._request(url).json()
