@@ -57,7 +57,7 @@ def corpus_filings() -> list[CorpusFiling]:
 # 실제 공시가 아니며, 관찰한 레이아웃 유형만 흉내 낸다. 테스트는 `synthetic` fixture로 쓴다(importlib 모드라
 # 테스트 폴더의 도움 모듈을 import할 수 없다).
 
-TOC_ITEMS = [
+TOC_ITEMS = (
     ("I", "1", "Business"),
     ("I", "1A", "Risk Factors"),
     ("I", "1B", "Unresolved Staff Comments"),
@@ -85,7 +85,7 @@ TOC_ITEMS = [
     ("III", "14", "Principal Accountant Fees and Services"),
     ("IV", "15", "Exhibits and Financial Statement Schedules"),
     ("IV", "16", "Form 10-K Summary"),
-]
+)
 COVER = (
     '<div style="display:none"><ix:header><ix:hidden>'
     '<ix:nonNumeric name="dei:DocumentType">10-K</ix:nonNumeric>'
