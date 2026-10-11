@@ -1,0 +1,96 @@
+"""10-Q: Part마다 Item 번호가 다시 시작한다. 합성 공시는 관찰한 레이아웃만 흉내 낸다."""
+
+from cluefin_sec_notes import MISSING_ITEM, ItemKey, extract_items, parse_filing
+
+COVER = (
+    '<div style="display:none"><ix:header><ix:hidden>'
+    '<ix:nonNumeric name="dei:DocumentType">10-Q</ix:nonNumeric>'
+    '<ix:nonNumeric name="dei:DocumentPeriodEndDate">2025-09-30</ix:nonNumeric>'
+    "</ix:hidden></ix:header></div><div>FORM 10-Q</div>"
+)
+BREAK = '<hr style="page-break-after:always"/>'
+PARTS = {"I": "FINANCIAL INFORMATION", "II": "OTHER INFORMATION"}
+ITEMS = (
+    ("I", "1", "Financial Statements"),
+    ("I", "2", "Management’s Discussion and Analysis of Financial Condition and Results of Operations"),
+    ("I", "3", "Quantitative and Qualitative Disclosures About Market Risk"),
+    ("I", "4", "Controls and Procedures"),
+    ("II", "1", "Legal Proceedings"),
+    ("II", "1A", "Risk Factors"),
+    ("II", "2", "Unregistered Sales of Equity Securities and Use of Proceeds"),
+    ("II", "3", "Defaults Upon Senior Securities"),
+    ("II", "4", "Mine Safety Disclosures"),
+    ("II", "5", "Other Information"),
+    ("II", "6", "Exhibits"),
+)
+
+
+def anchor(part: str, number: str) -> str:
+    return f"p{part.lower()}i{number.lower()}"
+
+
+def toc(items=ITEMS) -> str:
+    rows, part = [], None
+    for item_part, number, title in items:
+        if item_part != part:
+            part = item_part
+            rows.append(f"<tr><td>PART {part}</td><td>{PARTS[part]}</td><td></td></tr>")
+        href = f"#{anchor(item_part, number)}"
+        rows.append(f'<tr><td><a href="{href}">Item {number}.</a></td><td>{title}</td><td>{len(rows)}</td></tr>')
+    return "<table>" + "".join(rows) + "</table>"
+
+
+def body(items=ITEMS, *, anchored=True, combined_heading=False, after_part_two="") -> str:
+    parts, part = [], None
+    for item_part, number, title in items:
+        heading = f"Item {number}. {title}"
+        if item_part != part:
+            part = item_part
+            part_heading = f"PART {part} — {PARTS[part]}"
+            if combined_heading:
+                heading = f"{part_heading}<br/>{heading}"
+            else:
+                parts.append(BREAK + f'<div style="font-weight:700">{part_heading}</div>')
+                if part == "II":
+                    parts.append(after_part_two)
+        tag = f'<div id="{anchor(item_part, number)}"></div>' if anchored else ""
+        parts.append(f'{tag}<div style="font-weight:700">{heading}</div><div>Body of {item_part} {number}.</div>')
+    return "".join(parts) + BREAK + "<div>SIGNATURES</div><div>signed</div>"
+
+
+def filing(table_of_contents: str, content: str) -> str:
+    return "<html><body>" + COVER + table_of_contents + content + "</body></html>"
+
+
+def keys(result) -> list[str]:
+    return [f"{item.key.part}:{item.key.number}" for item in result]
+
+
+def test_toc_anchors_keep_part_one_and_part_two_items_apart():
+    result = extract_items(parse_filing(filing(toc(), body())))
+    assert result.catalog == "10-Q"
+    assert keys(result) == [f"{part}:{number}" for part, number, _ in ITEMS]
+    assert result.item("1", "II").text == "Item 1. Legal Proceedings\n\nBody of II 1."
+    assert result.item("1", "I").text == "Item 1. Financial Statements\n\nBody of I 1."
+    assert result.warnings == ()
+
+
+def test_headings_without_part_take_the_part_heading_above_them():
+    result = extract_items(parse_filing(filing("", body(anchored=False))))
+    assert keys(result) == [f"{part}:{number}" for part, number, _ in ITEMS]
+    assert result.item("1", "II").heading == "Item 1. Legal Proceedings"
+    assert result.item("4", "I").text == "Item 4. Controls and Procedures\n\nBody of I 4."  # 뒤 Part 헤딩은 잘라 낸다
+
+
+def test_part_and_item_in_one_heading_block():
+    result = extract_items(parse_filing(filing("", body(anchored=False, combined_heading=True))))
+    assert keys(result) == [f"{part}:{number}" for part, number, _ in ITEMS]
+    assert result.item("1", "II").heading == "PART II — OTHER INFORMATION"
+
+
+def test_omitted_part_two_items_are_not_confused_with_part_one_numbers():
+    present = [item for item in ITEMS if item[:2] not in {("II", "3"), ("II", "4")}]
+    note = "<div>Items 3 and 4 of Part II are not applicable and have been omitted.</div>"
+    result = extract_items(parse_filing(filing(toc(present), body(present, after_part_two=note))))
+    assert {ItemKey("II", "3"), ItemKey("II", "4")} <= set(result.omitted)
+    assert MISSING_ITEM not in {finding.code for finding in result.warnings}

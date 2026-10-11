@@ -3,7 +3,7 @@
 __version__ = "0.1.0"
 
 from cluefin_sec_notes._blocks import Block, Cell, Link, PageBreak, Paragraph, Table
-from cluefin_sec_notes._catalog import CATALOGS, FORM_10K, FormCatalog, ItemSpec, catalog_for
+from cluefin_sec_notes._catalog import CATALOGS, FORM_10K, FORM_10Q, FormCatalog, ItemSpec, catalog_for
 from cluefin_sec_notes._document import SecDocument, block_text, load_filing, parse_date, parse_filing
 from cluefin_sec_notes._extract import extract_items
 from cluefin_sec_notes._furniture import Page
@@ -47,6 +47,7 @@ __all__ = [
     "Candidate",
     "EMPTY_ITEM",
     "FORM_10K",
+    "FORM_10Q",
     "Finding",
     "FormCatalog",
     "Item",

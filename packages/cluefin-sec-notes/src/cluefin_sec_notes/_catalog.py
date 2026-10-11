@@ -160,7 +160,56 @@ FORM_10K = FormCatalog(
     ),
 )
 
-CATALOGS: tuple[FormCatalog, ...] = (FORM_10K,)
+# 10-Q는 Part마다 Item 번호가 다시 시작한다(Part I Item 1 재무제표, Part II Item 1 소송). 4T는 2007-12-15부터 2010년까지
+# 소규모 보고회사가 쓰던 Controls and Procedures.
+FORM_10Q = FormCatalog(
+    name="10-Q",
+    forms=("10-Q", "10-QT", "10-QSB"),
+    part_scoped=True,
+    items=(
+        _item(
+            "I",
+            "1",
+            "Financial Statements",
+            "Condensed Consolidated Financial Statements",
+            "Consolidated Financial Statements",
+            "Unaudited Condensed Consolidated Financial Statements",
+            "Condensed Consolidated Financial Statements (Unaudited)",
+            "Financial Statements (Unaudited)",
+            financial_statements=True,
+        ),
+        _item("I", "2", "Management's Discussion and Analysis of Financial Condition and Results of Operations"),
+        _item(
+            "I",
+            "3",
+            "Quantitative and Qualitative Disclosures About Market Risk",
+            "Quantitative and Qualitative Disclosure About Market Risk",
+        ),
+        _item("I", "4", "Controls and Procedures"),
+        _item("I", "4T", "Controls and Procedures", optional=True),
+        _item("II", "1", "Legal Proceedings"),
+        _item("II", "1A", "Risk Factors", since=date(2005, 12, 1)),
+        _item(
+            "II",
+            "2",
+            "Unregistered Sales of Equity Securities and Use of Proceeds",
+            "Changes in Securities and Use of Proceeds",
+            "Changes in Securities",
+        ),
+        _item("II", "3", "Defaults Upon Senior Securities"),
+        _item(
+            "II",
+            "4",
+            "Mine Safety Disclosures",
+            "Submission of Matters to a Vote of Security Holders",
+            "Removed and Reserved",
+        ),
+        _item("II", "5", "Other Information"),
+        _item("II", "6", "Exhibits", "Exhibits and Reports on Form 8-K", lists_documents=True),
+    ),
+)
+
+CATALOGS: tuple[FormCatalog, ...] = (FORM_10K, FORM_10Q)
 
 
 def catalog_for(form: str | None) -> FormCatalog | None:

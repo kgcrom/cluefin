@@ -13,7 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from cluefin_sec_notes._blocks import Paragraph, Table
-from cluefin_sec_notes._labels import normalize_title, parse_item_label
+from cluefin_sec_notes._labels import normalize_title, parse_item_label, parse_part
 from cluefin_sec_notes._model import UNKNOWN_ITEM, Candidate, Finding, ItemKey
 from cluefin_sec_notes.detectors._base import Detection, DetectionContext
 
@@ -72,25 +72,44 @@ class PatternDetector:
 
 
 def _headings(context: DetectionContext) -> list[_Heading]:
+    """Item 표기로 시작하는 블록. 표기에 Part가 없으면("Item 1.") 앞에 나온 Part 헤딩("PART II — OTHER
+    INFORMATION")의 Part를 쓴다. 10-Q처럼 Part마다 번호가 다시 시작하는 서식은 이게 없으면 Part II Item 1이
+    Part I Item 1로 잡힌다. 목차 구간의 Part 행은 따라가지 않는다."""
     catalog = context.catalog
     headings = []
+    current_part: str | None = None
     for index, block in enumerate(context.document.blocks):
-        if isinstance(block, Paragraph):
-            line, bold = block.text.split("\n")[0], block.bold
-        elif isinstance(block, Table):
-            row = _first_filled_row(block)
-            if row is None:
-                continue
-            line, bold = block.row_text(row), all(cell.bold for cell in block.rows[row] if cell.text)
-        else:
+        lines, bold = _leading_lines(block)
+        if not lines:
             continue
-        label = parse_item_label(line)
+        part = parse_part(lines[0])
+        if part is not None and not context.is_excluded(index):
+            current_part = part
+        label = parse_item_label(lines[0])
+        line = lines[0]
+        if label is None and part is not None and len(lines) > 1:
+            # "PART I. FINANCIAL INFORMATION⏎ITEM 1. FINANCIAL STATEMENTS"처럼 Part와 Item이 한 블록에 줄로 나뉜 헤딩
+            label, line = parse_item_label(lines[1]), lines[1]
         if label is None:
             continue
-        if len(line) > _MAX_HEADING and not _starts_with_title(catalog, label.rest, label.numbers):
+        label_part = label.part or current_part
+        if len(line) > _MAX_HEADING and not _starts_with_title(catalog, label.rest, label.numbers, label_part):
             continue
-        headings.append(_Heading(index, label.part, label.numbers, line, bold))
+        headings.append(_Heading(index, label_part, label.numbers, line, bold))
     return headings
+
+
+def _leading_lines(block) -> tuple[list[str], bool]:
+    """블록 앞 두 줄(표는 글자 있는 앞 두 행)과 굵기."""
+    if isinstance(block, Paragraph):
+        return block.text.split("\n")[:2], block.bold
+    if isinstance(block, Table):
+        row = _first_filled_row(block)
+        if row is None:
+            return [], False
+        rows = [block.row_text(index) for index in range(row, len(block.rows)) if block.row_text(index)]
+        return rows[:2], all(cell.bold for cell in block.rows[row] if cell.text)
+    return [], False
 
 
 def _first_filled_row(table: Table) -> int | None:
@@ -99,10 +118,10 @@ def _first_filled_row(table: Table) -> int | None:
     return filled[0] if filled and len(filled) <= _MAX_HEADING_TABLE_ROWS else None
 
 
-def _starts_with_title(catalog, rest: str, numbers: tuple[str, ...]) -> bool:
+def _starts_with_title(catalog, rest: str, numbers: tuple[str, ...], part: str | None) -> bool:
     normalized = normalize_title(rest)
     for number in numbers:
-        spec = catalog.spec(None, number)
+        spec = catalog.spec(part, number)
         if spec and any(normalized.startswith(normalize_title(title)) for title in spec.titles):
             return True
     return False

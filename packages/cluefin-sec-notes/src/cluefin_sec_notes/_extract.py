@@ -317,13 +317,18 @@ def _omitted(context: DetectionContext, missing: tuple[ItemKey, ...]) -> tuple[I
     }
     omitted = []
     for key in missing:
-        mention = re.compile(rf"\bitems?\s*{re.escape(key.number)}(?![\dA-Za-z])", re.IGNORECASE)
         spec = catalog.spec(key.part, key.number)
         titles = {normalize_title(title) for title in spec.titles} if spec else set()
-        mentioned = any(mention.search(text) and not _STATED_OMISSION.search(text) for text in texts)
+        # Part마다 번호가 다시 시작하는 서식(10-Q)은 "Item 3" 언급이 어느 Part의 것인지 모르므로 제목 줄만 본다.
+        mentioned = not catalog.part_scoped and _mentioned(key, texts)
         if not mentioned and not (titles & lines):
             omitted.append(key)
     return tuple(sorted({*stated, *omitted}, key=lambda key: _catalog_index(catalog, key)))
+
+
+def _mentioned(key: ItemKey, texts: list[str]) -> bool:
+    mention = re.compile(rf"\bitems?\s*{re.escape(key.number)}(?![\dA-Za-z])", re.IGNORECASE)
+    return any(mention.search(text) and not _STATED_OMISSION.search(text) for text in texts)
 
 
 def _may_hold_heading(block) -> bool:
