@@ -82,6 +82,12 @@ class Client(BaseHttpClient):
         return Archives(self)
 
     @property
+    def fails_to_deliver(self):
+        from ._fails_to_deliver import FailsToDeliver
+
+        return FailsToDeliver(self)
+
+    @property
     def xbrl(self):
         from ._xbrl_api import XbrlApi
 

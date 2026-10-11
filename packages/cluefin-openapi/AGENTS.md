@@ -141,6 +141,12 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   arbitrary and may end in upper-case `.XML` (2 of 518 measured 2026-10-12); 13F-NT has the cover only.
   `download_13f_files` picks by elimination and raises if two candidates appear. The submissions'
   `primaryDocument` is the XSL path `xslForm13F_X0n/primary_doc.xml`, not the raw file.
+- Fails-to-Deliver is the SEC-side CUSIP → ticker source (13F tables carry no ticker; the 13(f) securities list
+  has none either). Zip paths are **not** derivable: four folders by era (`fails-deliver-data`, `other/…`,
+  `frequently-requested-foia-document-…`, `node/add/data_distribution`) and `_0` suffixes, so `files()` reads the
+  list page's links (413, 2009-07a–2026-09a, no gaps or duplicates, measured 2026-10-12). The zip member sometimes
+  lacks `.txt`. Format unchanged since 2009: `|`-separated, `.` for a missing price, two `Trailer …` lines whose
+  record count is checked against the rows read (16 files across 2009–2026 matched).
 
 ## Kiwoom scope
 
