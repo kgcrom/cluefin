@@ -22,6 +22,12 @@ _SEC_NON_INSTANCE = re.compile(r"(_(cal|def|lab|pre|ref)\.xml|^FilingSummary\.xm
 # Root element of an XBRL instance, with or without a namespace prefix (<xbrli:xbrl ...>, <xbrl ...>).
 _INSTANCE_ROOT = re.compile(rb"<(?:[A-Za-z_][\w.-]*:)?xbrl[\s>]")
 _DEI_NAMESPACE_PREFIX = "http://xbrl.sec.gov/dei/"
+# How much of a file to read when sniffing its kind without parsing it (instances run to tens of MB).
+_HEAD_BYTES = 8192
+# SEC instances (extracted, pre-2019 and inline .htm) declare the DEI namespace on the root element, within the
+# first 2KB in every filing checked (2011-2025). DART instances never use it. The CIK context scheme can't be
+# used instead: some filings put their contexts at the end of the file.
+_SEC_MARKER = b"xbrl.sec.gov/dei"
 
 
 class XbrlParseError(Exception):
@@ -40,20 +46,23 @@ def parse_xbrl_file(
         path: Path to the XBRL instance file (.xbrl, or an SEC instance such as ``aapl-20230930_htm.xml``).
         include_taxonomy: If True, also extract taxonomy labels and presentation trees.
         http_user_agent: User-Agent Arelle sends when it downloads referenced taxonomies (SEC filings import
-            DEI/SRT schemas from xbrl.sec.gov). SEC asks automated clients to declare "Name email"; Arelle's
-            default agent still worked on 2026-10-11. Downloads are cached by Arelle, so this only matters on
-            the first parse of a taxonomy version.
+            DEI/SRT schemas from xbrl.sec.gov). Required for SEC instances: SEC asks automated clients to declare
+            "Name email" (e.g. ``"Jane Doe jane@example.com"``). Required even when the taxonomies are already
+            cached, so a parse doesn't depend on the machine's cache. Not needed for DART instances.
 
     Returns:
         XbrlDocument with all extracted facts.
 
     Raises:
         FileNotFoundError: If the file does not exist.
+        ValueError: If the file is an SEC instance and ``http_user_agent`` has no email.
         XbrlParseError: If parsing fails.
     """
     file_path = Path(path).resolve()
     if not file_path.exists():
         raise FileNotFoundError(f"XBRL 파일을 찾을 수 없습니다: {file_path}")
+    if _is_sec_instance(file_path):
+        http_user_agent = _require_sec_user_agent(http_user_agent, file_path)
 
     model_xbrl = _parse_with_session(file_path, http_user_agent=http_user_agent)
 
@@ -99,6 +108,7 @@ def parse_xbrl_directory(
 
     Raises:
         FileNotFoundError: If the directory does not exist.
+        ValueError: If the instance is an SEC instance and ``http_user_agent`` has no email.
         XbrlParseError: If no .xbrl files are found.
     """
     dir_path = Path(directory).resolve()
@@ -121,10 +131,33 @@ def _find_sec_instance(dir_path: Path) -> Path | None:
 
 
 def _looks_like_instance(path: Path) -> bool:
-    """Check the root element name without parsing the document (instances run to tens of MB)."""
+    """Check the root element name without parsing the document."""
+    return _INSTANCE_ROOT.search(_read_head(path)) is not None
+
+
+def _is_sec_instance(path: Path) -> bool:
+    return _SEC_MARKER in _read_head(path)
+
+
+def _read_head(path: Path) -> bytes:
     with path.open("rb") as handle:
-        head = handle.read(8192)
-    return _INSTANCE_ROOT.search(head) is not None
+        return handle.read(_HEAD_BYTES)
+
+
+def _require_sec_user_agent(user_agent: str | None, path: Path) -> str:
+    """Same rule as cluefin-openapi's ``sec.Client``: a non-empty value with an email. Keep the two in step.
+
+    Without it Arelle downloads the taxonomies with its default agent. That worked on 2026-10-11 but
+    www/data.sec.gov already reject such agents, and when the download fails Arelle only logs it and
+    returns an instance with most facts missing (Apple FY2023: 78 of 1,164).
+    """
+    value = (user_agent or "").strip()
+    if "@" not in value:
+        raise ValueError(
+            'SEC 공시는 http_user_agent에 "이름 이메일"을 넣어야 합니다 (예: "Jane Doe jane@example.com"). '
+            f"Arelle이 xbrl.sec.gov에서 택소노미를 받을 때 이 값을 보냅니다: {path}"
+        )
+    return value
 
 
 def _reporting_period_end(facts: list[XbrlFact]) -> date | None:
