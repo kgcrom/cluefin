@@ -1,7 +1,14 @@
 import pytest
 
 from cluefin_sec_notes._furniture import Page
-from cluefin_sec_notes._pages import PageIndex, PageList, normalize_label, parse_page_list, read_spans
+from cluefin_sec_notes._pages import (
+    PageIndex,
+    PageList,
+    find_page_references,
+    normalize_label,
+    parse_page_list,
+    read_spans,
+)
 
 
 @pytest.mark.parametrize(
@@ -70,3 +77,23 @@ def test_lettered_section_runs_from_f1_to_the_last_f_page():
 def test_lettered_section_without_f1_starts_at_the_first_f_page():
     index = PageIndex(_pages("10", "F-2", "F-3"))
     assert index.lettered_section("f") == (3, 8)
+
+
+def test_find_page_references():
+    references = find_page_references(
+        "Statements begin on page F-1. See pages 46–160 of this report and pages 5 to 7 of the Proxy Statement. "
+        "Index on page F-1, et seq. Also page 30."
+    )
+    assert [(ref.spans, ref.open_ended, ref.external) for ref in references] == [
+        ((("F-1", "F-1"),), True, False),
+        ((("46", "160"),), False, False),
+        ((("5", "7"),), False, True),
+        ((("F-1", "F-1"),), True, False),
+        ((("30", "30"),), False, False),
+    ]
+
+
+def test_lettered_section_from_a_given_page():
+    index = PageIndex(_pages("II-1", "II-2", "II-3", "III-1"))
+    assert index.lettered_section("II", "II-2") == (3, 8)
+    assert index.lettered_section("II", "II-9") is None

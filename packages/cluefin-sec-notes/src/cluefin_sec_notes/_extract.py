@@ -35,12 +35,13 @@ from cluefin_sec_notes._model import (
     ItemExtraction,
     ItemKey,
 )
+from cluefin_sec_notes._references import REFERENCE_BODY_MAX_CHARS, item_body, resolve_page_references
 from cluefin_sec_notes.detectors import DEFAULT_DETECTORS, DetectionContext, Detector
 
 _SIGNATURES = "signatures"
-# 참조 편입 문구. 본문이 이 길이 이하이고 문구가 있으면 Item 내용이 다른 문서(위임장, Exhibit 13 연차보고서,
-# 같은 문서의 F-페이지 등)에 있다는 뜻이다.
-_INCORPORATION_MAX_CHARS = 2500
+# 참조 편입 문구. 본문이 `REFERENCE_BODY_MAX_CHARS` 이하이고 문구가 있으면 Item 내용이 다른 문서(위임장,
+# Exhibit 13 연차보고서 등)에 있다는 뜻이다. 같은 문서의 쪽을 가리키면 `resolve_page_references`가 그 쪽을 붙이고
+# 참조 편입 표시를 거둔다.
 _INCORPORATION = re.compile(
     r"incorporated\s+(?:\w+\s+){0,3}?by\s+reference"
     r"|will\s+be\s+(?:included|set\s+forth|contained|presented)\s+in\s+.{0,120}?proxy\s+statement"
@@ -95,6 +96,8 @@ def extract_items(
     findings.extend(resolve_findings)
     findings.extend(_non_sequential(accepted, catalog))
     items = tuple(_mark_incorporated(item) for item in _build_items(document, catalog, accepted))
+    items, reference_findings = resolve_page_references(document, catalog, items)
+    findings.extend(reference_findings)
     findings.extend(_empty_items(document, catalog, items))
     missing = _missing(document, catalog, accepted)
     omitted = _omitted(context, missing)
@@ -239,9 +242,8 @@ def _trim_part_heading(document: SecDocument, start: int, end: int) -> int:
 
 
 def _mark_incorporated(item: Item) -> Item:
-    heading = item.heading
-    body = item.text[len(heading) :] if item.text.startswith(heading) else item.text
-    if len(body) <= _INCORPORATION_MAX_CHARS and _INCORPORATION.search(body):
+    body = item_body(item)
+    if len(body) <= REFERENCE_BODY_MAX_CHARS and _INCORPORATION.search(body):
         return replace(item, incorporated_by_reference=True)
     return item
 

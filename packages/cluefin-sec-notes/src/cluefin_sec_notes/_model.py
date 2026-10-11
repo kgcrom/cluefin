@@ -25,6 +25,9 @@ TOC_TARGET_MISSING = "toc_target_missing"
 """목차 링크가 가리키는 앵커가 문서에 없다."""
 TOC_NOT_FOUND = "toc_not_found"
 """Item 링크가 모인 목차를 찾지 못했다(목차 앵커 방식을 쓰지 못함)."""
+PAGE_REFERENCE_UNRESOLVED = "page_reference_unresolved"
+"""본문이 같은 문서의 쪽("pages F-1 through F-30")에 있다는데 그 쪽 번호를 머리말·꼬리말에서 찾지 못했다(또는 같은
+번호가 여러 쪽에 찍혔다). Item에는 참조 문장만 남는다."""
 EMPTY_ITEM = "empty_item"
 """Item 제목 뒤에 본문이 없다. 참조 편입이 정상인 Item(Part III)은 제외."""
 
