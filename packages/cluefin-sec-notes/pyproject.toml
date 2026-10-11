@@ -1,7 +1,7 @@
 [project]
 name = "cluefin-sec-notes"
 version = "0.1.0"
-description = "SEC EDGAR filing parsers: 10-K/10-Q/8-K Item sections (HTML) and Form 3/4/5 insider ownership (XML)"
+description = "SEC EDGAR filing parsers: 10-K/10-Q/8-K Item sections (HTML), Form 3/4/5 insider ownership and 13F institutional holdings (XML)"
 readme = "README.md"
 license = "MIT"
 authors = [
