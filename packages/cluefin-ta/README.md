@@ -8,16 +8,17 @@ TA-Lib 호환 API를 제공하는 순수 Python 기술적 분석 라이브러리
 
 ## 특징
 
-- **간편한 설치**: `pip install`만으로 설치 가능 (brew/apt 시스템 의존성 불필요)
+- **간편한 설치**: NumPy만 의존 (C TA-Lib 같은 brew/apt 시스템 의존성 불필요)
 - **TA-Lib 호환 API**: 기존 TA-Lib 코드를 최소한의 변경으로 마이그레이션
 - **포트폴리오 메트릭**: TA-Lib에 없는 MDD, Sharpe, Sortino 등 추가 제공
 - **시장 레짐 감지**: 이동평균, 변동성, HMM 기반 시장 상태 분류
 
 ## 설치
 
+PyPI에 배포하지 않는 uv 워크스페이스 멤버로, 저장소 루트에서 설치합니다.
+
 ```bash
-# 기본 설치 (NumPy만 의존)
-pip install cluefin-ta
+uv sync --all-packages
 ```
 
 ## 사용법
@@ -186,4 +187,4 @@ uv run --with jupyter jupyter lab packages/cluefin-ta/examples/ta_quickstart.ipy
 ## 요구사항
 
 - **필수**: `numpy>=1.20.0`
-- **선택**: `hmmlearn` (HMM 레짐 감지용, `uv add --optional hmm hmmlearn`)
+- **선택**: `hmmlearn` (HMM 레짐 감지용, `hmm` extra. 워크스페이스에서는 dev 그룹으로 함께 설치됨)
