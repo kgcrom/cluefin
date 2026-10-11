@@ -4,10 +4,16 @@
 """
 
 import asyncio
+import base64
+import contextlib
+import hashlib
 import json
+import ssl
 import struct
+from unittest.mock import Mock
 
 import pytest
+from loguru import logger
 
 from cluefin_openapi.kiwoom._exceptions import KiwoomAPIError, KiwoomNetworkError
 from cluefin_openapi.kiwoom._socket_client import KiwoomWebSocketClient, KiwoomWebSocketMessage
@@ -263,3 +269,300 @@ class TestConnect:
 
 async def _noop_handshake(*args, **kwargs):
     return None
+
+
+def _websocket_accept(ws_key_bytes: bytes) -> str:
+    ws_key = base64.b64encode(ws_key_bytes).decode()
+    return base64.b64encode(
+        hashlib.sha1(
+            (ws_key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode(),
+            usedforsecurity=False,
+        ).digest()
+    ).decode()
+
+
+def _handshake_response(status: bytes = b"101 Switching Protocols") -> bytes:
+    return b"HTTP/1.1 " + status + b"\r\nSec-WebSocket-Accept: " + _websocket_accept(b"0" * 16).encode() + b"\r\n\r\n"
+
+
+def _client_opcode(frame: bytes) -> int:
+    return frame[0] & 0x0F
+
+
+@pytest.fixture
+def debug_client():
+    client = KiwoomWebSocketClient(token="test-token", env="dev", market="domestic", debug=True)
+    yield client
+    logger.disable("cluefin_openapi.kiwoom")
+
+
+class TestConnectEndToEnd:
+    @pytest.mark.parametrize(
+        ("env", "market", "host", "path"),
+        [
+            ("dev", "domestic", "mockapi.kiwoom.com", "/api/dostk/websocket"),
+            ("prod", "overseas", "api.kiwoom.com", "/api/us/websocket"),
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_connect_handshakes_logs_in_and_queues_frames(self, monkeypatch, env, market, host, path):
+        client = KiwoomWebSocketClient(token="test-token", env=env, market=market)
+        writer = FakeWriter()
+        reader = FakeReader(
+            _json_frame({"trnm": "LOGIN", "return_code": "0"}) + _json_frame({"trnm": "REAL", "data": []}),
+            handshake_response=_handshake_response(),
+        )
+        opened = []
+
+        async def fake_open_connection(open_host, open_port, ssl=None):
+            opened.append((open_host, open_port, ssl))
+            return reader, writer
+
+        monkeypatch.setattr(asyncio, "open_connection", fake_open_connection)
+        # deterministic handshake key (16 bytes) and frame masks (4 bytes)
+        monkeypatch.setattr("os.urandom", lambda size: b"0" * size)
+
+        async with client:
+            assert client.connected is True
+            message = await asyncio.wait_for(client.recv(), timeout=1)
+
+        [(open_host, open_port, ssl_context)] = opened
+        assert (open_host, open_port) == (host, 10000)
+        assert isinstance(ssl_context, ssl.SSLContext)
+        assert writer.writes[0].decode().startswith(f"GET {path} HTTP/1.1\r\nHost: {host}:10000\r\n")
+        assert _decode_client_frame(writer.writes[1]) == {"trnm": "LOGIN", "token": "test-token"}
+        assert message.trnm == "REAL"
+        # __aexit__ closed the socket with a close frame
+        assert _client_opcode(writer.writes[-1]) == 0x8
+        assert writer.closed is True
+        assert client.connected is False
+
+    @pytest.mark.parametrize("error", [ConnectionRefusedError("refused"), asyncio.IncompleteReadError(b"", 2)])
+    @pytest.mark.asyncio
+    async def test_connect_wraps_transport_errors(self, client, monkeypatch, error):
+        async def fail(host, port, ssl=None):
+            raise error
+
+        monkeypatch.setattr(asyncio, "open_connection", fail)
+
+        with pytest.raises(KiwoomNetworkError, match="Failed to connect to WebSocket") as exc_info:
+            await client.connect()
+
+        assert exc_info.value.__cause__ is error
+        assert client.connected is False
+        assert client._receive_task is None
+
+    @pytest.mark.asyncio
+    async def test_connect_login_rejection_leaves_client_disconnected(self, client, monkeypatch):
+        reader = FakeReader(_json_frame({"trnm": "LOGIN", "return_code": 8005, "return_msg": "토큰 만료"}))
+
+        async def fake_open_connection(host, port, ssl=None):
+            return reader, FakeWriter()
+
+        monkeypatch.setattr(asyncio, "open_connection", fake_open_connection)
+        monkeypatch.setattr(client, "_websocket_handshake", _noop_handshake)
+
+        with pytest.raises(KiwoomAPIError, match="토큰 만료") as exc_info:
+            await client.connect()
+
+        assert exc_info.value.response_data["return_code"] == 8005
+        assert client.connected is False
+        assert client._receive_task is None
+
+
+class TestHandshake:
+    @pytest.mark.asyncio
+    async def test_handshake_accepts_valid_response(self, client, monkeypatch):
+        client._writer = FakeWriter()
+        client._reader = FakeReader(handshake_response=_handshake_response())
+        monkeypatch.setattr("os.urandom", Mock(return_value=b"0" * 16))
+
+        await client._websocket_handshake("api.kiwoom.com", 10000, "/api/us/websocket")
+
+        request = client._writer.writes[0].decode()
+        assert f"Sec-WebSocket-Key: {base64.b64encode(b'0' * 16).decode()}\r\n" in request
+        assert "Sec-WebSocket-Version: 13\r\n" in request
+
+    @pytest.mark.asyncio
+    async def test_handshake_rejects_non_101_status(self, client):
+        client._writer = FakeWriter()
+        client._reader = FakeReader(handshake_response=b"HTTP/1.1 401 Unauthorized\r\n\r\n")
+
+        with pytest.raises(KiwoomNetworkError, match="handshake failed: HTTP/1.1 401 Unauthorized"):
+            await client._websocket_handshake("api.kiwoom.com", 10000, "/")
+
+    @pytest.mark.asyncio
+    async def test_handshake_rejects_wrong_accept(self, client, monkeypatch):
+        client._writer = FakeWriter()
+        client._reader = FakeReader(handshake_response=_handshake_response())
+        monkeypatch.setattr("os.urandom", Mock(return_value=b"1" * 16))  # key no longer matches the accept
+
+        with pytest.raises(KiwoomNetworkError, match="invalid Sec-WebSocket-Accept"):
+            await client._websocket_handshake("api.kiwoom.com", 10000, "/")
+
+    @pytest.mark.asyncio
+    async def test_handshake_requires_connection(self, client):
+        with pytest.raises(KiwoomNetworkError, match="connection not initialized"):
+            await client._websocket_handshake("api.kiwoom.com", 10000, "/")
+
+
+class TestFramingEdgeCases:
+    @pytest.mark.asyncio
+    async def test_receive_frame_requires_reader(self, client):
+        with pytest.raises(KiwoomNetworkError, match="connection not initialized"):
+            await client._receive_frame()
+
+    @pytest.mark.asyncio
+    async def test_receive_frame_unmasks_masked_payload(self, client):
+        mask_key = b"\x01\x02\x03\x04"
+        payload = b"masked"
+        masked = bytes(byte ^ mask_key[index % 4] for index, byte in enumerate(payload))
+        client._reader = FakeReader(bytes([0x81, 0x80 | len(payload)]) + mask_key + masked)
+
+        assert await client._receive_frame() == (0x1, payload)
+
+    @pytest.mark.asyncio
+    async def test_recv_json_skips_pong_and_reads_binary_frame(self, client):
+        client._reader = FakeReader(
+            _server_frame(b"", opcode=0xA) + _server_frame(json.dumps({"trnm": "CNSRLST"}).encode(), opcode=0x2)
+        )
+
+        message = await client._recv_json()
+
+        assert message.trnm == "CNSRLST"
+
+    @pytest.mark.asyncio
+    async def test_recv_json_non_object_body_becomes_empty(self, client):
+        client._reader = FakeReader(_server_frame(b"[1, 2]"))
+
+        message = await client._recv_json()
+
+        assert (message.trnm, message.body, message.raw) == ("", {}, "[1, 2]")
+
+
+class TestLoginEdgeCases:
+    @pytest.mark.asyncio
+    async def test_login_ignores_unexpected_frames_before_login(self, debug_client):
+        debug_client._writer = FakeWriter()
+        debug_client._reader = FakeReader(
+            _json_frame({"trnm": "REAL", "data": []}) + _json_frame({"trnm": "LOGIN", "return_code": 0})
+        )
+
+        await debug_client._login()
+
+        # only the LOGIN request was sent; the stray REAL frame got no reply
+        assert len(debug_client._writer.writes) == 1
+
+    @pytest.mark.asyncio
+    async def test_login_failure_without_message_reports_unknown(self, client):
+        client._writer = FakeWriter()
+        client._reader = FakeReader(_json_frame({"trnm": "LOGIN", "return_code": 1}))
+
+        with pytest.raises(KiwoomAPIError, match="WebSocket LOGIN failed: unknown error"):
+            await client._login()
+
+
+class TestSendEdgeCases:
+    @pytest.mark.asyncio
+    async def test_send_raises_when_rate_limited_and_sends_nothing(self, client):
+        client._writer = FakeWriter()
+        client._rate_limiter.wait_for_tokens = Mock(return_value=False)
+
+        with pytest.raises(KiwoomAPIError, match="rate limit exceeded"):
+            await client.send({"trnm": "REG"})
+
+        assert client._writer.writes == []
+
+    @pytest.mark.asyncio
+    async def test_send_dict_in_debug_mode(self, debug_client):
+        debug_client._writer = FakeWriter()
+
+        await debug_client.send({"trnm": "REMOVE", "grp_no": "1"})
+
+        assert _decode_client_frame(debug_client._writer.writes[0]) == {"trnm": "REMOVE", "grp_no": "1"}
+
+
+class TestLifecycleEdgeCases:
+    @pytest.mark.asyncio
+    async def test_close_releases_writer_even_if_close_frame_and_wait_closed_fail(self, debug_client):
+        class BrokenWriter(FakeWriter):
+            async def drain(self):
+                raise ConnectionResetError("peer gone")
+
+            async def wait_closed(self):
+                raise ConnectionResetError("peer gone")
+
+        writer = BrokenWriter()
+        debug_client._writer = writer
+        debug_client._reader = FakeReader()
+        debug_client._connected = True
+
+        await debug_client.close()
+
+        assert writer.closed is True
+        assert debug_client._writer is None
+        assert debug_client._reader is None
+        assert debug_client.connected is False
+
+    @pytest.mark.asyncio
+    async def test_receive_loop_exits_quietly_when_cancelled(self, client):
+        client._connected = True
+        reading = asyncio.Event()
+
+        async def recv_json():
+            reading.set()
+            await asyncio.Event().wait()
+
+        client._recv_json = recv_json
+        task = asyncio.create_task(client._receive_loop())
+        await asyncio.wait_for(reading.wait(), timeout=1)
+
+        task.cancel()
+        await task
+
+        assert task.done() and not task.cancelled()
+        assert client.connected is True  # cancellation is close()'s job, not a receive error
+
+    @pytest.mark.asyncio
+    async def test_receive_loop_marks_disconnected_on_server_close(self, client):
+        client._connected = True
+        client._reader = FakeReader(_json_frame({"trnm": "REAL"}) + _server_frame(b"", opcode=0x8))
+
+        # The loop currently lets KiwoomNetworkError escape on a server close frame; only the
+        # state change and the already-queued frame are pinned here.
+        with contextlib.suppress(KiwoomNetworkError):
+            await client._receive_loop()
+
+        assert client.connected is False
+        assert (await client.recv()).trnm == "REAL"
+
+    @pytest.mark.asyncio
+    async def test_events_keeps_waiting_through_timeouts_while_connected(self, client, monkeypatch):
+        client._connected = True
+        calls = []
+
+        async def fake_wait_for(awaitable, timeout):
+            calls.append(timeout)
+            awaitable.close()
+            if len(calls) == 2:
+                client._connected = False
+            raise asyncio.TimeoutError
+
+        monkeypatch.setattr(asyncio, "wait_for", fake_wait_for)
+
+        received = [message async for message in client.events()]
+
+        assert received == []
+        assert calls == [1.0, 1.0]
+
+    @pytest.mark.asyncio
+    async def test_emit_drops_message_when_queue_drains_concurrently(self, client):
+        queue = Mock()
+        queue.put_nowait.side_effect = asyncio.QueueFull
+        queue.get_nowait.side_effect = asyncio.QueueEmpty
+        client._event_queue = queue
+
+        await client._emit(KiwoomWebSocketMessage(trnm="REAL"))
+
+        queue.put_nowait.assert_called_once()
+        queue.get_nowait.assert_called_once_with()

@@ -8,6 +8,7 @@ import struct
 from unittest.mock import AsyncMock, Mock
 
 import pytest
+from loguru import logger
 from pydantic import SecretStr
 
 from cluefin_openapi.kis._exceptions import KISAPIError, KISNetworkError
@@ -565,3 +566,281 @@ class TestSocketConnectionLifecycle:
 
         with pytest.raises(KISNetworkError, match="Failed to connect"):
             await socket_client.connect()
+
+
+def _decode_client_frame(frame: bytes) -> tuple[int, bytes]:
+    """Unmask a client→server frame and return (opcode, payload)."""
+    assert frame[1] & 0x80, "client frames must be masked"
+    length = frame[1] & 0x7F
+    offset = 2
+    if length == 126:
+        length = struct.unpack(">H", frame[2:4])[0]
+        offset = 4
+    elif length == 127:
+        length = struct.unpack(">Q", frame[2:10])[0]
+        offset = 10
+    mask_key = frame[offset : offset + 4]
+    payload = frame[offset + 4 : offset + 4 + length]
+    assert len(payload) == length
+    return frame[0] & 0x0F, bytes(byte ^ mask_key[index % 4] for index, byte in enumerate(payload))
+
+
+def _handshake_response(status: bytes = b"101 Switching Protocols", ws_key_bytes: bytes = b"0" * 16) -> bytes:
+    accept = _websocket_accept(base64.b64encode(ws_key_bytes).decode())
+    return b"HTTP/1.1 " + status + b"\r\nSec-WebSocket-Accept: " + accept.encode() + b"\r\n\r\n"
+
+
+class TestSendFrameEncoding:
+    @pytest.mark.parametrize("payload", [b"abc", b"x" * 126, b"x" * 66000])
+    @pytest.mark.parametrize("opcode", [0x1, 0x8, 0xA])
+    @pytest.mark.asyncio
+    async def test_send_frame_round_trips_opcode_and_payload(self, socket_client, payload, opcode):
+        socket_client._writer = FakeWriter()
+
+        await socket_client._send_frame(payload, opcode=opcode)
+
+        assert _decode_client_frame(socket_client._writer.writes[0]) == (opcode, payload)
+
+
+class TestSocketConnect:
+    @pytest.mark.parametrize(
+        ("url", "host", "port", "use_ssl"),
+        [
+            ("ws://ops.koreainvestment.com:31000", "ops.koreainvestment.com", 31000, False),
+            ("ws://example.test:9000/tryitout", "example.test", 9000, False),
+            ("ws://example.test/tryitout", "example.test", 80, False),
+            ("wss://example.test/tryitout", "example.test", 443, True),
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_connect_opens_connection_handshakes_and_starts_receive_loop(
+        self, socket_client, monkeypatch, url, host, port, use_ssl
+    ):
+        socket_client._ws_url = url
+        opened = []
+        reader = FakeReader(handshake_response=_handshake_response())
+        writer = FakeWriter()
+
+        async def fake_open_connection(open_host, open_port, ssl=None):
+            opened.append((open_host, open_port, ssl))
+            return reader, writer
+
+        loop_started = asyncio.Event()
+
+        async def fake_receive_loop():
+            loop_started.set()
+            await asyncio.Event().wait()
+
+        monkeypatch.setattr(asyncio, "open_connection", fake_open_connection)
+        monkeypatch.setattr("os.urandom", Mock(return_value=b"0" * 16))
+        socket_client._receive_loop = fake_receive_loop
+
+        await socket_client.connect()
+        await asyncio.wait_for(loop_started.wait(), timeout=1)
+
+        [(open_host, open_port, ssl_context)] = opened
+        assert (open_host, open_port) == (host, port)
+        assert (ssl_context is not None) is use_ssl
+        assert writer.writes[0].decode().startswith(f"GET /tryitout HTTP/1.1\r\nHost: {host}:{port}\r\n")
+        assert socket_client.connected is True
+        assert socket_client._event_queue.get_nowait().event_type == "connected"
+
+        await socket_client.close()
+
+        assert socket_client._receive_task is None
+        assert writer.closed is True
+        # close() sends a masked close frame after the handshake bytes
+        assert _decode_client_frame(writer.writes[-1]) == (0x8, b"")
+
+    @pytest.mark.asyncio
+    async def test_connect_wraps_rejected_handshake_and_stays_disconnected(self, socket_client, monkeypatch):
+        reader = FakeReader(handshake_response=b"HTTP/1.1 403 Forbidden\r\n\r\n")
+
+        async def fake_open_connection(host, port, ssl=None):
+            return reader, FakeWriter()
+
+        monkeypatch.setattr(asyncio, "open_connection", fake_open_connection)
+
+        with pytest.raises(KISNetworkError, match="Failed to connect to WebSocket: WebSocket handshake failed"):
+            await socket_client.connect()
+
+        assert socket_client.connected is False
+        assert socket_client._receive_task is None
+        assert socket_client._event_queue.empty()
+
+    @pytest.mark.asyncio
+    async def test_connect_wraps_connection_refused(self, socket_client, monkeypatch):
+        async def refuse(host, port, ssl=None):
+            raise ConnectionRefusedError("refused")
+
+        monkeypatch.setattr(asyncio, "open_connection", refuse)
+
+        with pytest.raises(KISNetworkError, match="refused") as exc_info:
+            await socket_client.connect()
+
+        assert isinstance(exc_info.value.__cause__, ConnectionRefusedError)
+        assert socket_client.connected is False
+
+    @pytest.mark.asyncio
+    async def test_websocket_handshake_rejects_non_101_status(self, socket_client):
+        socket_client._reader = FakeReader(handshake_response=b"HTTP/1.1 400 Bad Request\r\n\r\n")
+        socket_client._writer = FakeWriter()
+
+        with pytest.raises(KISNetworkError, match="handshake failed: HTTP/1.1 400 Bad Request"):
+            await socket_client._websocket_handshake("example.test", 80)
+
+    @pytest.mark.asyncio
+    async def test_async_context_manager_connects_then_closes(self, socket_client):
+        socket_client.connect = AsyncMock()
+        socket_client.close = AsyncMock()
+
+        async with socket_client as entered:
+            assert entered is socket_client
+            socket_client.connect.assert_awaited_once_with()
+            socket_client.close.assert_not_awaited()
+
+        socket_client.close.assert_awaited_once_with()
+
+
+class TestSocketCloseAndEventsEdgeCases:
+    @pytest.mark.asyncio
+    async def test_close_still_releases_writer_when_close_frame_and_wait_closed_fail(self):
+        client = SocketClient("approval", "app", "secret", debug=True)
+
+        class BrokenWriter(FakeWriter):
+            async def drain(self):
+                raise ConnectionResetError("peer gone")
+
+            async def wait_closed(self):
+                raise ConnectionResetError("peer gone")
+
+        writer = BrokenWriter()
+        client._writer = writer
+        client._reader = FakeReader()
+
+        try:
+            await client.close()
+        finally:
+            logger.disable("cluefin_openapi.kis")
+
+        assert writer.closed is True
+        assert client._writer is None
+        assert client._reader is None
+
+    @pytest.mark.asyncio
+    async def test_events_keeps_waiting_through_timeouts_while_connected(self, socket_client, monkeypatch):
+        socket_client._connected = True
+        calls = []
+
+        async def fake_wait_for(awaitable, timeout):
+            calls.append(timeout)
+            awaitable.close()
+            if len(calls) == 2:
+                socket_client._connected = False
+            raise asyncio.TimeoutError
+
+        monkeypatch.setattr(asyncio, "wait_for", fake_wait_for)
+
+        events = [event async for event in socket_client.events()]
+
+        assert events == []
+        assert calls == [1.0, 1.0]
+
+    @pytest.mark.asyncio
+    async def test_emit_event_drops_event_when_queue_drains_concurrently(self, socket_client):
+        queue = Mock()
+        queue.put_nowait.side_effect = asyncio.QueueFull
+        queue.get_nowait.side_effect = asyncio.QueueEmpty
+        socket_client._event_queue = queue
+
+        await socket_client._emit_event(WebSocketEvent(event_type="connected"))
+
+        queue.put_nowait.assert_called_once()
+        queue.get_nowait.assert_called_once_with()
+
+    @pytest.mark.asyncio
+    async def test_receive_loop_error_after_close_is_not_reported(self, socket_client):
+        socket_client._connected = True
+
+        async def receive_frame():
+            socket_client._connected = False  # close() raced the read
+            raise ConnectionResetError("closed")
+
+        socket_client._receive_frame = receive_frame
+
+        await socket_client._receive_loop()
+
+        assert socket_client._event_queue.empty()
+
+    @pytest.mark.asyncio
+    async def test_receive_loop_exits_quietly_when_cancelled(self, socket_client):
+        socket_client._connected = True
+        reading = asyncio.Event()
+
+        async def receive_frame():
+            reading.set()
+            await asyncio.Event().wait()
+
+        socket_client._receive_frame = receive_frame
+        task = asyncio.create_task(socket_client._receive_loop())
+        await asyncio.wait_for(reading.wait(), timeout=1)
+
+        task.cancel()
+        await task  # CancelledError is swallowed by the loop
+
+        assert task.done() and not task.cancelled()
+        assert socket_client._event_queue.empty()
+
+
+class TestSocketDebugMode:
+    """debug=True only adds logging; the wire behavior must be identical."""
+
+    @pytest.fixture
+    def debug_client(self):
+        client = SocketClient("approval", "app", "secret", env="dev", debug=True)
+        yield client
+        logger.disable("cluefin_openapi.kis")
+
+    @pytest.mark.asyncio
+    async def test_subscription_flow_in_debug_mode(self, debug_client):
+        debug_client._connected = True
+        debug_client._writer = FakeWriter()
+
+        await debug_client.subscribe("H0STCNI0", "HTSID")
+        await debug_client.subscribe("H0STCNI0", "HTSID")  # duplicate: no second frame
+        await debug_client.unsubscribe("H0STCNI0", "HTSID")
+        await debug_client.unsubscribe("H0STCNI0", "HTSID")  # already gone: no frame
+
+        sent = [json.loads(_decode_client_frame(frame)[1]) for frame in debug_client._writer.writes]
+        assert [message["header"]["tr_type"] for message in sent] == ["1", "2"]
+        assert all(message["header"]["approval_key"] == "approval" for message in sent)
+        assert all(message["body"]["input"] == {"tr_id": "H0STCNI0", "tr_key": "HTSID"} for message in sent)
+        assert [debug_client._event_queue.get_nowait().event_type for _ in range(2)] == ["subscribed", "unsubscribed"]
+
+    @pytest.mark.asyncio
+    async def test_receive_loop_in_debug_mode(self, debug_client):
+        debug_client._connected = True
+        debug_client._writer = FakeWriter()
+        frames = [(0x1, b"PINGPONG"), (0x9, b"hb"), (0xA, b""), (0x8, b"")]
+
+        async def receive_frame():
+            return frames.pop(0)
+
+        debug_client._receive_frame = receive_frame
+
+        await debug_client._receive_loop()
+
+        replies = [_decode_client_frame(frame) for frame in debug_client._writer.writes]
+        assert replies == [(0x1, b"PINGPONG"), (0xA, b"hb")]
+        assert debug_client._event_queue.get_nowait().event_type == "disconnected"
+        assert debug_client.connected is False
+
+    @pytest.mark.asyncio
+    async def test_handshake_in_debug_mode(self, debug_client, monkeypatch):
+        debug_client._reader = FakeReader(handshake_response=_handshake_response())
+        debug_client._writer = FakeWriter()
+        monkeypatch.setattr("os.urandom", Mock(return_value=b"0" * 16))
+
+        await debug_client._websocket_handshake("example.test", 80)
+
+        assert debug_client._writer.writes[0].startswith(b"GET /tryitout HTTP/1.1\r\n")
