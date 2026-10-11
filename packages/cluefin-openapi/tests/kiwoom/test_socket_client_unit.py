@@ -5,7 +5,6 @@
 
 import asyncio
 import base64
-import contextlib
 import hashlib
 import json
 import ssl
@@ -528,13 +527,22 @@ class TestLifecycleEdgeCases:
         client._connected = True
         client._reader = FakeReader(_json_frame({"trnm": "REAL"}) + _server_frame(b"", opcode=0x8))
 
-        # The loop currently lets KiwoomNetworkError escape on a server close frame; only the
-        # state change and the already-queued frame are pinned here.
-        with contextlib.suppress(KiwoomNetworkError):
-            await client._receive_loop()
+        await client._receive_loop()
 
         assert client.connected is False
         assert (await client.recv()).trnm == "REAL"
+
+    @pytest.mark.asyncio
+    async def test_close_after_server_close_does_not_raise(self, client):
+        """서버가 먼저 닫은 뒤의 close()·async with 종료가 예외를 다시 던지지 않는다."""
+        client._connected = True
+        client._reader = FakeReader(_server_frame(b"", opcode=0x8))
+        client._receive_task = asyncio.create_task(client._receive_loop())
+        await asyncio.sleep(0)
+
+        await client.close()
+
+        assert client.connected is False
 
     @pytest.mark.asyncio
     async def test_events_keeps_waiting_through_timeouts_while_connected(self, client, monkeypatch):
