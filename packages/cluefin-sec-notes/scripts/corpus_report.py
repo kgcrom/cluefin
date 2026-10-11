@@ -44,7 +44,7 @@ def main() -> None:
             elapsed = time.perf_counter() - started
             checks = check_expectations(extraction, entry)
             statuses = Counter(check.status for check in checks)
-            violations = invariant_violations(extraction)
+            violations = invariant_violations(extraction, sec_items=entry.get("sec_items"))
             violations_total.update(violations)
             if args.write_baseline and not checks:
                 entry["baseline"] = violations

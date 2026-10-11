@@ -1,5 +1,15 @@
 from cluefin_sec_notes import extract_items, parse_filing
-from cluefin_sec_notes._expectations import FAILED, FIXED, KNOWN_BAD, OK, accept_items, check_expectations
+from cluefin_sec_notes._expectations import (
+    FAILED,
+    FIXED,
+    KNOWN_BAD,
+    OK,
+    accept_items,
+    check_expectations,
+    expectation_key,
+    invariant_violations,
+    sec_item_violations,
+)
 
 
 def test_statuses(synthetic):
@@ -41,3 +51,17 @@ def test_accept_items_turns_fixed_known_bad_into_expectations(synthetic):
     assert entry["present"] == ["3"]
     assert "known_bad" not in entry
     assert {check.status for check in check_expectations(extraction, entry)} == {OK}
+
+
+def test_sec_item_violations_compare_with_the_filing_index():
+    assert sec_item_violations(["2.02", "9.01"], ["2.02", "9.01"]) == []
+    assert sec_item_violations(["2.02", "7.01"], ["2.02", " 9.01"]) == ["extra:7.01", "missing:9.01"]
+
+
+def test_expectation_key_and_ten_k_invariants(synthetic):
+    extraction = extract_items(parse_filing(synthetic.filing()))
+    risk = extraction.item("1A")
+    assert expectation_key(risk, part_scoped=False) == "1A"
+    assert expectation_key(risk, part_scoped=True) == "I:1A"
+    # 합성 공시의 1A는 짧고 Item 8에 표가 없다. sec_items는 8-K에서만 본다.
+    assert invariant_violations(extraction, sec_items=["1.01"]) == ["no_table:8", "short:1A"]

@@ -18,11 +18,14 @@ from pathlib import Path
 
 from _corpus import filing_path, read_manifest, write_manifest
 
-from cluefin_sec_notes import block_text, extract_items, load_filing
-from cluefin_sec_notes._expectations import accept_items
+from cluefin_sec_notes import block_text, catalog_for, extract_items, load_filing
+from cluefin_sec_notes._expectations import accept_items, expectation_key
 
-# 사람이 경계를 확인해 시작 문장·길이를 적는 Item. 나머지는 있는지만 본다.
-CORE_ITEMS = ("1", "1A", "1C", "7", "7A", "8", "9A")
+# 사람이 경계를 확인해 시작 문장·길이를 적는 Item(기대값 키). 나머지는 있는지만 본다. 없는 서식은 전부 핵심이다(8-K).
+CORE_ITEMS = {
+    "10-K": ("1", "1A", "1C", "7", "7A", "8", "9A"),
+    "10-Q": ("I:1", "I:2", "I:3", "I:4", "II:1A"),
+}
 _CONTEXT = 160
 
 
@@ -51,20 +54,25 @@ def main() -> None:
         for finding in extraction.findings:
             print(f"  [{finding.severity}] {finding.code}: {finding.message}")
         items, present = {}, []
+        catalog = catalog_for(extraction.catalog)
+        part_scoped = bool(catalog and catalog.part_scoped)
+        core = CORE_ITEMS.get(extraction.catalog)
         for item in extraction:
+            key = expectation_key(item, part_scoped=part_scoped)
+            is_core = core is None or key in core
             before_end = document.text(max(item.start, item.end - 2), item.end)
             after_end = block_text(document.blocks[item.end]) if item.end < len(document.blocks) else "<문서 끝>"
-            if args.core and item.key.number not in CORE_ITEMS:
-                present.append(item.key.number)
+            if args.core and not is_core:
+                present.append(key)
                 continue
             print(f"\n  --- {item.key} [{item.method}] 블록 {item.start}–{item.end} 길이 {len(item.text)}")
             print(f"  시작: {item.text[:_CONTEXT]!r}")
             print(f"  끝  : …{before_end[-_CONTEXT:]!r}")
             print(f"  다음: {after_end[:80]!r}")
-            if item.key.number in CORE_ITEMS:
-                items[item.key.number] = {"starts_with": item.heading[:60], "chars": len(item.text)}
+            if is_core:
+                items[key] = {"starts_with": item.heading[:60], "chars": len(item.text)}
             else:
-                present.append(item.key.number)
+                present.append(key)
         if args.write:
             entry["items"], entry["present"] = items, present
     if args.write:
