@@ -142,8 +142,9 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - 엉뚱한 `rcept_no` 는 오류 없이 **다른 회사의 유효한 ZIP** 을 돌려주고, `reprt_code` 는 서버가
   무시한다. 그래서 `corp_code` 가 필수이고 파싱된 `entity_id` 와 다르면 exit 4 다.
 - Arelle 은 콜드 캐시(`~/Library/Caches/Arelle`)에서 택소노미를 네트워크로 받아 첫 파싱이 최대 ~76초
-  걸린다. 오프라인+콜드면 예외 없이 `facts == []` 문서가 오므로 핸들러가 facts 0·기간 없음을 exit 4 로
-  올린다. 단위 테스트는 파서를 monkeypatch 해 네트워크를 타지 않는다.
+  걸린다. 오프라인+콜드면 택소노미를 못 읽어 cluefin-xbrl 이 `XbrlParseError` 를 내고 exit 4 가 된다
+  (예전엔 예외 없이 facts 가 빈 문서가 왔다 — facts 0·기간 없음 검사는 안전망으로 남겨 둠). 단위 테스트는
+  파서를 monkeypatch 해 네트워크를 타지 않는다.
 - Arelle 은 `[info] loaded …` 를 **stdout** 에 찍는다. 파싱 호출을 `redirect_stdout(sys.stderr)` 로 감싸지 않으면
   JSON 출력이 깨진다 — 파서를 monkeypatch 하는 단위 테스트·핸들러를 직접 부르는 통합 테스트로는 안 보인다.
 - 회사에 따라 IS 키가 없고 손익이 CIS 에만 있다(노드메이슨), 연결재무제표가 없는 회사도 있다(티씨머티리얼즈).

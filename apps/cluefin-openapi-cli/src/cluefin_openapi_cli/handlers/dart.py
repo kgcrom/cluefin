@@ -418,7 +418,7 @@ _AS_FILED_STATEMENTS_PATTERN = "^(BS|IS|CIS|CF|SCE)(,(BS|IS|CIS|CF|SCE))*$"
 _AS_FILED_BASES = (("CFS", "consolidated"), ("OFS", "separate"))
 _AS_FILED_COLD_CACHE_HINT = (
     "Arelle downloads base taxonomies on a cold cache (~/Library/Caches/Arelle); offline with a cold "
-    "cache it silently yields an empty document. Check network access and retry."
+    "cache the parse fails or yields an empty document. Check network access and retry."
 )
 
 
