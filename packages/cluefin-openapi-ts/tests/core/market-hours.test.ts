@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { isKrxMarketHours, isUsMarketHours } from '../_helpers/market-hours';
+import { isKrxContinuousHours, isKrxMarketHours, isUsMarketHours } from '../_helpers/market-hours';
 
 describe('isKrxMarketHours', () => {
   test.each([
@@ -11,6 +11,18 @@ describe('isKrxMarketHours', () => {
     ['2026-10-10T10:00:00+09:00', false], // 토
   ])('%s → %s', (iso, expected) => {
     expect(isKrxMarketHours(new Date(iso))).toBe(expected);
+  });
+});
+
+describe('isKrxContinuousHours', () => {
+  test.each([
+    ['2026-10-12T09:00:00+09:00', true],
+    ['2026-10-12T15:20:00+09:00', true], // 연속매매 마지막 분
+    ['2026-10-12T15:21:00+09:00', false], // 종가 단일가
+    ['2026-10-12T08:59:00+09:00', false],
+    ['2026-10-11T10:00:00+09:00', false], // 일
+  ])('%s → %s', (iso, expected) => {
+    expect(isKrxContinuousHours(new Date(iso))).toBe(expected);
   });
 });
 

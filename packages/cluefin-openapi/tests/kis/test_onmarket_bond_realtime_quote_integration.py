@@ -3,17 +3,14 @@
 These tests require actual API credentials and network access.
 They connect to the KIS WebSocket server (prod only) and receive real-time bond market data.
 
-WARNING: These tests should only be run during market hours (9:00-15:30 KST)
-for reliable real-time data. Outside market hours, data may not be available.
+Runs only during KST market hours (Mon-Fri 09:00-15:30). A single bond trades rarely, so data
+reception tests skip on timeout instead of failing.
 
-Test bond code: KR103502GA34 (국고채권03500-5306)
-Test bond index code: 0001
+Test bond code: KR103502GA34 (국고01500-5003(20-2), checked with inquire-price 2026-10-11)
+Test bond index code: KBPR01 (the H0BICNT0 request example in the KIS portal)
 """
 
 import asyncio
-import re
-from datetime import datetime, time
-from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -25,33 +22,22 @@ from cluefin_openapi.kis._onmarket_bond_realtime_quote_types import (
 )
 from cluefin_openapi.kis._socket_client import SocketClient
 
+from ._realtime import is_kst_market_hours, require_integration_and_realtime
+
 pytestmark = [pytest.mark.integration, pytest.mark.realtime]
 
 BOND_CODE = "KR103502GA34"
-BOND_INDEX_CODE = "0001"
-
-
-def _markexpr_includes(markexpr: str, name: str) -> bool:
-    return re.search(rf"(?<![A-Za-z0-9_]){re.escape(name)}(?![A-Za-z0-9_])", markexpr) is not None
-
-
-def _is_kst_market_hours() -> bool:
-    now = datetime.now(ZoneInfo("Asia/Seoul"))
-    if now.weekday() >= 5:
-        return False
-    return time(9, 0) <= now.time() <= time(15, 30)
+BOND_INDEX_CODE = "KBPR01"
 
 
 @pytest.fixture(autouse=True, scope="module")
 def _require_integration_and_realtime(request):
-    markexpr = request.config.option.markexpr or ""
-    if not (_markexpr_includes(markexpr, "integration") and _markexpr_includes(markexpr, "realtime")):
-        pytest.skip('Requires -m "integration and realtime"')
+    require_integration_and_realtime(request)
 
 
 @pytest.fixture(autouse=True, scope="module")
 def _require_kst_market_hours():
-    if not _is_kst_market_hours():
+    if not is_kst_market_hours():
         pytest.skip("Requires KST market hours (Mon-Fri 09:00-15:30)")
 
 

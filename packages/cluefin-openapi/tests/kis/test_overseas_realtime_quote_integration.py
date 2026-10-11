@@ -3,16 +3,14 @@
 These tests require actual API credentials and network access.
 They connect to the KIS WebSocket server (prod only) and receive real-time overseas stock data.
 
-WARNING: Runs only during US regular hours (Mon-Fri 09:30-16:00 America/New_York) —
-off-hours runs fail. Data reception tests also use timeout+skip.
+Runs only during US regular hours (Mon-Fri 09:30-16:00 America/New_York; 22:30-05:00 KST in
+summer time). AAPL trades continuously then, so a data timeout is a failure; the HK delayed
+orderbook (HK is closed during US hours) still skips on timeout.
 
 Test symbols: AAPL (NAS), MSFT (NAS)
 """
 
 import asyncio
-import re
-from datetime import datetime, time
-from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -24,30 +22,19 @@ from cluefin_openapi.kis._overseas_realtime_quote_types import (
 )
 from cluefin_openapi.kis._socket_client import SocketClient
 
+from ._realtime import is_us_market_hours, require_integration_and_realtime
+
 pytestmark = [pytest.mark.integration, pytest.mark.realtime]
-
-
-def _markexpr_includes(markexpr: str, name: str) -> bool:
-    return re.search(rf"(?<![A-Za-z0-9_]){re.escape(name)}(?![A-Za-z0-9_])", markexpr) is not None
 
 
 @pytest.fixture(autouse=True, scope="module")
 def _require_integration_and_realtime(request):
-    markexpr = request.config.option.markexpr or ""
-    if not (_markexpr_includes(markexpr, "integration") and _markexpr_includes(markexpr, "realtime")):
-        pytest.skip('Requires -m "integration and realtime"')
-
-
-def _is_us_market_hours() -> bool:
-    now = datetime.now(ZoneInfo("America/New_York"))
-    if now.weekday() >= 5:
-        return False
-    return time(9, 30) <= now.time() <= time(16, 0)
+    require_integration_and_realtime(request)
 
 
 @pytest.fixture(autouse=True, scope="module")
 def _require_us_market_hours():
-    if not _is_us_market_hours():
+    if not is_us_market_hours():
         pytest.skip("Requires US market hours (Mon-Fri 09:30-16:00 America/New_York)")
 
 
@@ -116,10 +103,7 @@ async def test_unsubscribe_orderbook(socket_client_params):
 
 @pytest.mark.asyncio
 async def test_receive_orderbook_data(socket_client_params):
-    """Test receiving real-time overseas orderbook data.
-
-    Note: This test may timeout outside US market hours.
-    """
+    """Test receiving real-time overseas orderbook data."""
     async with SocketClient(**socket_client_params) as client:
         realtime = OverseasRealtimeQuote(client)
 
@@ -149,7 +133,7 @@ async def test_receive_orderbook_data(socket_client_params):
         try:
             await asyncio.wait_for(receive_data(), timeout=timeout)
         except asyncio.TimeoutError:
-            pytest.skip(f"No orderbook data received within {timeout}s. This may be expected outside market hours.")
+            pytest.fail(f"No orderbook data for AAPL within {timeout}s during US regular hours.")
 
         assert data_received is True
 
@@ -228,10 +212,7 @@ async def test_unsubscribe_execution(socket_client_params):
 
 @pytest.mark.asyncio
 async def test_receive_execution_data(socket_client_params):
-    """Test receiving real-time delayed execution data.
-
-    Note: This test may timeout outside US market hours.
-    """
+    """Test receiving real-time delayed execution data."""
     async with SocketClient(**socket_client_params) as client:
         realtime = OverseasRealtimeQuote(client)
 
@@ -261,7 +242,7 @@ async def test_receive_execution_data(socket_client_params):
         try:
             await asyncio.wait_for(receive_data(), timeout=timeout)
         except asyncio.TimeoutError:
-            pytest.skip(f"No execution data received within {timeout}s. This may be expected outside market hours.")
+            pytest.fail(f"No execution data for AAPL within {timeout}s during US regular hours.")
 
         assert data_received is True
 
@@ -324,7 +305,7 @@ async def test_unsubscribe_delayed_orderbook(socket_client_params):
 async def test_receive_delayed_orderbook_data(socket_client_params):
     """Test receiving delayed orderbook data (Asia).
 
-    Note: This test may timeout outside HK market hours.
+    Note: HK is closed during US regular hours, so this usually skips on timeout.
     """
     async with SocketClient(**socket_client_params) as client:
         realtime = OverseasRealtimeQuote(client)
@@ -433,7 +414,7 @@ async def test_combined_orderbook_and_execution(socket_client_params):
         try:
             await asyncio.wait_for(receive_data(), timeout=timeout)
         except asyncio.TimeoutError:
-            pytest.skip(f"No data received within {timeout}s. This may be expected outside market hours.")
+            pytest.fail(f"No orderbook or execution data for AAPL within {timeout}s during US regular hours.")
 
         assert data_received["orderbook"] or data_received["execution"]
 
