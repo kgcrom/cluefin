@@ -8,8 +8,9 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   path lives in cluefin-openapi (`dart` ZIP fetch, `sec.archives.download_xbrl_files`). A missing
   download function here is intentional, not a gap.
 - Arelle itself does go online: it fetches the taxonomies an instance imports (US-GAAP from
-  xbrl.fasb.org, DEI/SRT from xbrl.sec.gov) on first use and caches them. xbrl.sec.gov refuses an
-  undeclared User-Agent, hence `http_user_agent` on the parse functions.
+  xbrl.fasb.org, DEI/SRT from xbrl.sec.gov) on first use and caches them. Unlike www/data.sec.gov,
+  xbrl.sec.gov answered 200 to Arelle's default agent (2026-10-11). `http_user_agent` is there to declare
+  the caller per SEC policy, not because parsing fails without it.
 
 ## DART/Arelle quirks baked into the code
 
@@ -39,8 +40,13 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   `_INTRINSIC_AXES_BY_TYPE` table — the tree rule was not checked against DART filings.
 - `reporting_period_end` comes from `dei:DocumentPeriodEndDate` when present. The latest instant is wrong for
   SEC: cover-page shares outstanding are dated weeks after the period end.
+- Inline XBRL tags a number everywhere it appears, and the SEC-extracted instance keeps every copy (Apple
+  FY2023: revenue 3×, net income 4×). `_collect_line_items` collapses facts with the same context, unit and
+  value; the integration test asserts exactly one row per value so this cannot regress silently.
 - `extract_notes` is DART-only (it keys on `D8xxxxx` role codes). Labels are the concept's standard label;
-  SEC presentation `preferredLabel`s ("Total net sales") are not read yet.
+  SEC presentation `preferredLabel`s ("Total net sales") are not read yet. One visible consequence: a concept
+  shown twice as beginning and ending balance (`StockholdersEquity` in SCE, period-end cash in CF) gets every
+  instant on both rows, because only the `periodStartLabel`/`periodEndLabel` tells them apart.
 
 ## Testing gotchas
 

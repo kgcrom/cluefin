@@ -318,9 +318,15 @@ def _collect_line_items(
     label_en = label.label_en if label is not None and hasattr(label, "label_en") else None
 
     matched: list[tuple[XbrlFact, dict[str, str]]] = []
+    seen: set[tuple] = set()
     for fact in facts_by_concept.get(node.concept_local_name, []):
         dims = _match_statement_fact(fact, is_consolidated, intrinsic_axes)
-        if dims is not None:
+        # Inline XBRL tags the same number wherever it appears (statement, notes, MD&A), and the SEC-extracted
+        # instance keeps every copy: Apple's FY2023 net income is in it four times. Same context, unit and value
+        # is one fact (XBRL "consistent duplicates"); a different value in the same context is kept.
+        key = (fact.context_id, fact.unit, fact.value)
+        if dims is not None and key not in seen:
+            seen.add(key)
             matched.append((fact, dims))
 
     if matched:

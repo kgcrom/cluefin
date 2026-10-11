@@ -53,7 +53,7 @@ from cluefin_xbrl import extract_financial_statements, parse_xbrl_directory
 user_agent = os.environ["SEC_USER_AGENT"]  # "이름 이메일"
 Client(user_agent=user_agent).archives.download_xbrl_files(320193, "0000320193-23-000106", destination="aapl-fy2023")
 
-# Arelle 이 US-GAAP·DEI 택소노미를 처음 한 번 웹에서 받아 캐시한다. xbrl.sec.gov 는 User-Agent 를 요구한다
+# Arelle 이 US-GAAP·DEI 택소노미를 처음 한 번 웹에서 받아 캐시한다. http_user_agent 로 SEC 정책대로 신원을 밝힌다
 doc = parse_xbrl_directory("aapl-fy2023", include_taxonomy=True, http_user_agent=user_agent)
 parsed = extract_financial_statements(doc)  # statements: BS, IS, CIS, CF, SCE (미국 공시는 연결만)
 ```

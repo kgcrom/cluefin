@@ -39,9 +39,10 @@ def parse_xbrl_file(
     Args:
         path: Path to the XBRL instance file (.xbrl, or an SEC instance such as ``aapl-20230930_htm.xml``).
         include_taxonomy: If True, also extract taxonomy labels and presentation trees.
-        http_user_agent: User-Agent Arelle sends when it downloads referenced taxonomies. SEC filings import
-            DEI/SRT schemas from xbrl.sec.gov, which refuses requests without a declared "Name email" agent.
-            Downloads are cached by Arelle, so this only matters on the first parse of a taxonomy version.
+        http_user_agent: User-Agent Arelle sends when it downloads referenced taxonomies (SEC filings import
+            DEI/SRT schemas from xbrl.sec.gov). SEC asks automated clients to declare "Name email"; Arelle's
+            default agent still worked on 2026-10-11. Downloads are cached by Arelle, so this only matters on
+            the first parse of a taxonomy version.
 
     Returns:
         XbrlDocument with all extracted facts.

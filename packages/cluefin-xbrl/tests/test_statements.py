@@ -529,3 +529,27 @@ class TestSecStatements:
         )
 
         assert extract_financial_statements(doc).statements["BS"].linkrole == role_a
+
+
+class TestDuplicateFacts:
+    ROLE = "http://x/role/CONSOLIDATEDSTATEMENTSOFOPERATIONS"
+    DEFINITION = "0000002 - Statement - CONSOLIDATED STATEMENTS OF OPERATIONS"
+
+    def _income(self, facts):
+        doc = _sec_doc({self.ROLE: [_node("NetIncomeLoss")]}, {self.ROLE: self.DEFINITION}, facts)
+        return [i.value for i in extract_financial_statements(doc).statements["IS"].line_items]
+
+    def test_consistent_duplicates_collapse_to_one_row(self):
+        """The same number tagged in the statement and in a note is one fact."""
+        copies = [_usd_fact("NetIncomeLoss", "96995000000").model_copy(update={"context_id": "c-1"}) for _ in range(4)]
+        assert self._income(copies) == [Decimal("96995000000")]
+
+    def test_different_values_in_the_same_context_are_kept(self):
+        a = _usd_fact("NetIncomeLoss", "96995000000").model_copy(update={"context_id": "c-1"})
+        b = _usd_fact("NetIncomeLoss", "97000000000").model_copy(update={"context_id": "c-1"})
+        assert self._income([a, b]) == [Decimal("96995000000"), Decimal("97000000000")]
+
+    def test_same_value_in_different_contexts_is_kept(self):
+        a = _usd_fact("NetIncomeLoss", "1").model_copy(update={"context_id": "c-2023"})
+        b = _usd_fact("NetIncomeLoss", "1").model_copy(update={"context_id": "c-2022"})
+        assert self._income([a, b]) == [Decimal("1"), Decimal("1")]
