@@ -28,7 +28,7 @@ uv 워크스페이스 모노레포:
 |--------|------|
 | [cluefin-openapi](packages/cluefin-openapi/) | KIS/키움/NH PLUG/DART Python API 클라이언트 (Pydantic, 속도 제한, 인증, 웹소켓) |
 | [cluefin-openapi-ts](packages/cluefin-openapi-ts/) | KIS/키움/NH PLUG TypeScript API 클라이언트 (Node 20+, Zod, ESM/CJS) |
-| [cluefin-ta](packages/cluefin-ta/) | 순수 Python 기술적 분석 (TA-Lib 호환, 45개 지표) |
+| [cluefin-ta](packages/cluefin-ta/) | 순수 Python 기술적 분석 (TA-Lib 호환, 38개 함수) |
 | [cluefin-xbrl](packages/cluefin-xbrl/) | DART XBRL 재무제표 파서 |
 | [cluefin-dart-notes](packages/cluefin-dart-notes/) | DART 공시 원문(dart4 XML) 파서 — 섹션·표·주석 노트 (XBRL에 없는 서술형 내용) |
 | [cluefin-sec-notes](packages/cluefin-sec-notes/) | SEC EDGAR 공시 원문(10-K/10-Q/8-K HTML) 파서 — Item 단위 본문 |

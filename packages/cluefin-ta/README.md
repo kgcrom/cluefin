@@ -107,7 +107,7 @@ uv run --with jupyter jupyter lab packages/cluefin-ta/examples/ta_quickstart.ipy
 
 ## 지원 함수
 
-총 **45개** 기술 분석 함수 지원
+총 **38개** 기술 분석 함수 지원
 
 ### Overlap Studies (이동평균) - 7개
 
@@ -152,20 +152,15 @@ uv run --with jupyter jupyter lab packages/cluefin-ta/examples/ta_quickstart.ipy
 | `AD(high, low, close, volume)` | 축적/분산 |
 | `ADOSC(high, low, close, volume, fastperiod=3, slowperiod=10)` | A/D 오실레이터 |
 
-### Candlestick Patterns (캔들패턴) - 10개
+### Candlestick Patterns (캔들패턴) - 3개
+
+TA-Lib C 소스와 같은 알고리즘(직전 봉들의 평균 몸통·고저폭 기준)이라 결과가 정확히 같습니다.
 
 | 함수 | 설명 | 신호 |
 |------|------|--------|
 | `CDLDOJI` | 도지 | +100 |
 | `CDLHAMMER` | 해머 | +100 |
-| `CDLENGULFING` | 장악형 | +100/-100 |
-| `CDLSHOOTINGSTAR` | 유성형 | -100 |
-| `CDLHANGINGMAN` | 교수형 | -100 |
-| `CDLHARAMI` | 하라미 | +100/-100 |
-| `CDLPIERCING` | 관통형 | +100 |
-| `CDLMORNINGSTAR` | 샛별 (3봉) | +100 |
-| `CDLEVENINGSTAR` | 저녁별 (3봉) | -100 |
-| `CDLDARKCLOUDCOVER` | 먹구름 | -100 |
+| `CDLENGULFING` | 장악형 | ±100 (한쪽 끝이 겹치면 ±80) |
 
 ### Portfolio Metrics (포트폴리오) - 6개
 

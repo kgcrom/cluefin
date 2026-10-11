@@ -21,6 +21,14 @@ AGENTS.md for repo-wide rules.
   with forward filtering, never `predict()`/Viterbi over the whole series. Each function
   has a "prefix result == truncated full result" test; keep one for any new function.
 
+## Candlestick patterns are under the same contract
+
+- `pattern.py` reproduces ta-lib's C functions, compared with **exact** equality. The
+  thresholds are ta-lib "candle settings" (average of a range over the previous N bars),
+  and the average's sum must be a running total (add new, drop trailing) like ta-lib's:
+  a fresh `sum()` rounds differently and flips ties, which tick-rounded KRX prices hit
+  often. A new pattern needs the tick-rounded parity cases in `test_pattern.py` too.
+
 ## Testing gotchas
 
 - Parity test modules `import talib` at module level on purpose: the `ta-lib>=0.6`
