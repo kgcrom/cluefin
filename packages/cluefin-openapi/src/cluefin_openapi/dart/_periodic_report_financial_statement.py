@@ -1,4 +1,5 @@
 import io
+import shutil
 import zipfile
 from pathlib import Path
 from typing import Literal, Mapping
@@ -22,6 +23,31 @@ from cluefin_openapi.dart._periodic_report_financial_statement_types import (
     XbrlTaxonomy,
     XbrlTaxonomyItem,
 )
+
+
+def _extract_zip(archive: zipfile.ZipFile, destination: Path, *, overwrite: bool) -> None:
+    """Extract `archive` into `destination`, treating `\\` in entry names as a directory separator.
+
+    `ZipFile.extractall` keeps `\\` as part of the file name on macOS/Linux, which is why it is not used.
+    Every entry is checked before anything is written, so a rejected archive leaves no files behind.
+    """
+    root = destination.resolve()
+    targets: list[tuple[zipfile.ZipInfo, Path]] = []
+    for info in archive.infolist():
+        name = info.filename.replace("\\", "/")
+        if name.endswith("/"):
+            continue
+        target = (root / name).resolve()
+        if not target.is_relative_to(root):
+            raise DartAPIError(f"ZIP 항목 경로가 대상 폴더 밖을 가리킵니다: {info.filename}")
+        if not overwrite and target.exists():
+            raise FileExistsError(f"이미 존재하는 파일을 덮어쓸 수 없습니다: {target}")
+        targets.append((info, target))
+
+    for info, target in targets:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with archive.open(info) as source, target.open("wb") as sink:
+            shutil.copyfileobj(source, sink)
 
 
 class PeriodicReportFinancialStatement:
@@ -280,6 +306,9 @@ class PeriodicReportFinancialStatement:
         - _lab-ko.xml: Korean label linkbase
         - _lab-en.xml: English label linkbase
 
+        FY2022 이전 사업보고서 ZIP은 항목 이름에 Windows 구분자 `\\`를 쓴다(`labels\\lab_…-ko_….xml`).
+        이를 하위 폴더로 풀어야 Arelle이 진입점이 가리키는 링크베이스를 찾는다.
+
         Args:
             rcept_no (str): 접수번호 (14자리)
             reprt_code (Literal): 보고서코드 (11011: 사업보고서, 11012: 반기보고서, 11013: 1분기보고서, 11014: 3분기보고서)
@@ -318,12 +347,7 @@ class PeriodicReportFinancialStatement:
             buffer.seek(0)
             try:
                 with zipfile.ZipFile(buffer) as archive:
-                    if not overwrite:
-                        for name in archive.namelist():
-                            file_path = destination_path / name
-                            if file_path.exists():
-                                raise FileExistsError(f"이미 존재하는 파일을 덮어쓸 수 없습니다: {file_path}")
-                    archive.extractall(destination_path)
+                    _extract_zip(archive, destination_path, overwrite=overwrite)
             except zipfile.BadZipFile as exc:  # pragma: no cover - defensive guard
                 raise DartAPIError("ZIP 파일이 손상되었습니다.") from exc
         else:
