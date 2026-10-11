@@ -96,6 +96,7 @@ def parse_xbrl_directory(directory: str | Path, *, include_taxonomy: bool = Fals
 def _parse_with_session(path: Path) -> ModelXbrl:
     """Load an XBRL file using Arelle Session with thread safety."""
     from arelle.api.Session import Session
+    from arelle.ModelDocument import Type
     from arelle.RuntimeOptions import RuntimeOptions
 
     with _arelle_lock:
@@ -108,7 +109,16 @@ def _parse_with_session(path: Path) -> ModelXbrl:
             models = session.get_models()
             if not models:
                 raise XbrlParseError(f"XBRL 모델을 로드할 수 없습니다: {path}")
-            return models[0]
+            model_xbrl = models[0]
+            # Arelle reports unreadable files through the model's error log rather than raising,
+            # so without these checks a broken file parses as a document with zero facts.
+            document = model_xbrl.modelDocument
+            if document is None:
+                errors = ", ".join(str(error) for error in model_xbrl.errors)
+                raise XbrlParseError(f"XBRL 문서를 읽을 수 없습니다: {path} ({errors})")
+            if document.type not in (Type.INSTANCE, Type.INLINEXBRL):
+                raise XbrlParseError(f"XBRL 인스턴스 문서가 아닙니다: {path}")
+            return model_xbrl
 
 
 def _extract_facts(model_xbrl: ModelXbrl) -> list[XbrlFact]:
