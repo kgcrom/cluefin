@@ -40,6 +40,11 @@ def test_non_numeric_pagination_string_is_rejected():
         _result(page_no="abc")
 
 
+def test_fractional_pagination_number_is_rejected_not_truncated():
+    with pytest.raises(ValidationError, match="Cannot convert '4.5' to int"):
+        _result(page_no=4.5)
+
+
 def test_parse_reads_result_key():
     payload = {"result": {"status": "000", "message": "정상", "total_count": "1", "list": [{"name": "a"}]}}
 
