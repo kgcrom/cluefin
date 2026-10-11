@@ -339,6 +339,12 @@ requires-dist = [
 name = "cluefin-sec-notes"
 version = "0.1.0"
 source = { editable = "packages/cluefin-sec-notes" }
+dependencies = [
+    { name = "defusedxml" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "defusedxml", specifier = ">=0.7.1" }]
 
 [[package]]
 name = "cluefin-ta"
