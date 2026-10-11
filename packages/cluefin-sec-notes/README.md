@@ -1,7 +1,8 @@
 # cluefin-sec-notes
 
 SEC EDGAR 공시 주 문서(10-K·10-Q·8-K HTML)에서 Item 단위 본문을 뽑는 패키지입니다. 내부자 소유 신고
-(Form 3·4·5 XML)를 읽는 하위 패키지 `cluefin_sec_notes.ownership`도 있습니다([아래](#내부자-소유-신고-form-345)).
+(Form 3·4·5 XML)와 13F 기관 보유 보고를 읽는 하위 패키지 `cluefin_sec_notes.ownership`도 있습니다
+([Form 3·4·5](#내부자-소유-신고-form-345), [13F](#기관-보유-보고-13f)).
 네트워크를 쓰지 않고 로컬 파일만 읽습니다. 원문은 `cluefin-openapi`의 `sec` 모듈로 받습니다. HTML은 stdlib
 `html.parser`로, XML은 `defusedxml`로 읽습니다.
 
@@ -160,3 +161,40 @@ for t in doc.non_derivative_transactions:
 - 값이 없으면 None입니다. 옵션 행사(M) 가격처럼 값 대신 각주만 있는 칸이 흔해서, 각주는 필드별 `footnote_ids`로 남깁니다.
 - `aff10b5_one`(사전 매매 계획 10b5-1에 따른 거래인지)은 2023년부터 있는 칸이라 그전 공시는 None입니다.
 - 예상 밖의 불리언·숫자·날짜, 3·4·5가 아닌 서식은 `ValueError`입니다.
+
+## 기관 보유 보고 (13F)
+
+운용자산 1억 달러 이상 운용사가 분기 말 보유 미국 상장 증권을 45일 안에 내는 보고입니다. 공시 폴더에 XML이 둘 있습니다:
+표지 `primary_doc.xml`과 보유 목록인 정보표(파일명은 공시마다 다름). 13F-NT(통지)는 다른 운용사가 대신 보고한다는 표지뿐입니다.
+2013년 상반기 이전 공시는 XML이 아닌 텍스트라 읽지 않습니다.
+
+```python
+from cluefin_openapi.sec import Client
+from cluefin_sec_notes.ownership import load_13f
+
+client = Client("Your Name your@email.com")
+filing = client.submissions.filings(cik, forms=["13F-HR"])[0]
+names = [item.name for item in client.archives.filing_index(cik, filing.accession_number).items]
+# 정보표 파일명은 공시마다 다르고 확장자가 대문자(.XML)인 것도 있다
+(table,) = [n for n in names if n.lower().endswith(".xml") and n != "primary_doc.xml"]
+cover_path, table_path = (
+    client.archives.download_filing_document(cik, filing.accession_number, n, destination="13f")
+    for n in ("primary_doc.xml", table)
+)
+
+doc = load_13f(cover_path, table_path, filed=filing.filing_date)
+doc.cover.period_of_report, doc.cover.report_type, doc.table.value_unit_suspect
+for row in doc.holdings:
+    print(row.cusip, row.name_of_issuer, row.value, row.shares, row.shares_type, row.put_call, row.other_managers)
+```
+
+- **`value`는 달러로 맞춰 줍니다.** 2023-01-03 이후 제출분은 달러, 그전은 천 달러로 적혀 있어 제출일(`filed`)이
+  필요합니다. 보고 기준일이 아니라 제출일 기준입니다(2023년에 낸 2020년 기간 정정분도 달러). 규칙과 다른 단위로 낸
+  공시가 있어(표본 약 5%) 주당 금액 중앙값이 1–5,000달러 밖이면 `table.value_unit_suspect`가 True입니다. 값은 고치지 않습니다.
+- 정보표에는 티커가 없습니다. CUSIP(대문자로만 맞춤)과 발행사명, 일부 공시의 FIGI뿐입니다.
+- 한 종목이 여러 행일 수 있습니다: 투자 재량(`investment_discretion`)·함께 보고하는 운용사(`other_managers`, 표지
+  `included_managers`의 순번)·풋/콜마다 행이 나뉩니다.
+- 정정(`/A`)의 `amendment_type`은 RESTATEMENT(전체 재작성)·NEW HOLDINGS(보유 추가)입니다. 원본과 합치지 않습니다.
+- 표지의 합계(`table_entry_total`·`table_value_total`)는 적힌 그대로입니다. 실제 행·금액과 다른 공시가 있습니다.
+- 정보표는 `iterparse`로 읽어 5만 행(23MB)도 1초 안팎, 파싱 메모리 수 MB입니다.
+- 예상 밖의 숫자·날짜·불리언, 13F가 아닌 서식, 정보표 없는 보유 보고는 `ValueError`입니다.

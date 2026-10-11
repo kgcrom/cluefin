@@ -11,7 +11,8 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules (Codacy
 - Item extraction is out of scope for pre-2001 `.txt` filings, 20-F and other forms, and exhibits (8-K EX-99.1 is a
   separate file).
 - Form 3/4/5 live in the `ownership` subpackage (decided 2026-10-12 instead of a separate package: no shared code,
-  but a new package would only add setup). Keep the two apart; 13F is planned to join `ownership`.
+  but a new package would only add setup). Keep the two apart; 13F joined `ownership` (no shared code with
+  Form 3/4/5 beyond the `_xml.Element` Protocol).
 
 ## Ownership (Form 3/4/5)
 
@@ -32,6 +33,29 @@ Measured 2026-10-12 on 477 filings (eight issuers, Forms 3/4/5 and amendments, 2
 - The issuer is not always the company whose submissions you listed: 4 of 477 were that company reporting its
   stake in another issuer. Amendments may carry no rows (5 of 34 4/A fixed only signature or remarks); the parser
   does not merge an amendment with its original.
+
+## Ownership (13F)
+
+Measured 2026-10-12 on 635 filings: random picks from EDGAR `full-index/<year>/QTR<n>/form.idx` for every quarter
+2013Q3–2026Q3 (13F-HR, HR/A, NT, NT/A) plus five large managers (up to 50,651 rows / 23 MB). 0 errors; every one
+of the 516 information tables gave as many rows as it has `infoTable` elements.
+
+- A folder holds `primary_doc.xml` (cover) and **exactly one** other XML, the information table; NT has the cover
+  only. The table's name is arbitrary and its extension may be upper case (`inftable.XML`, 2 of 518).
+  `primaryDocument` is the XSL path `xslForm13F_X0n/primary_doc.xml`. Pre-mid-2013 filings are `.txt` (out of scope).
+- Both XMLs are namespaced (Form 3/4/5 are not); paths go through `_qualified`.
+- **`value` unit is decided by the filing date, not the period**: dollars from 2023-01-03 filings, thousands
+  before (2019/2020/2022-period amendments filed in 2023 were dollars). The parser needs `filed` and normalises to
+  dollars. Filers get it wrong both ways: 24 of 516 tables (4.7%) have a median price per share outside $1–5,000
+  after normalising (thousands after the boundary → $0.01–0.58; dollars before → $24k–110k), flagged as
+  `value_unit_suspect`, values untouched. Normal tables sat at $5–300. The cover's `tableValueTotal` and
+  `tableEntryTotal` are kept as written; they disagreed with the table in a few filings.
+- `otherManager` is free text: `1,2`, `1 2`, `1, 2`, blank, `None`/`NONE`/`N/A`/`-`/`_`, a manager's name. Numbers
+  are parsed only when every token is a digit run, and the raw text is kept. Don't make it raise.
+- Shapes handled: whole numbers written `12300.00`; unpadded dates `2-8-2018`; lower-case and 7/8-char CUSIPs
+  (upper-cased, not padded); padded enum cells (`SH `, ` SOLE `). Enums are closed (`SH`/`PRN`, `Put`/`Call`,
+  `SOLE`/`DFND`/`OTR`) and anything else raises.
+- `iterparse` + `clear()` on each `infoTable`: same time as `fromstring` (0.7 s for 23 MB) at 4 MB instead of 135 MB.
 
 ## Detection: rules that look arbitrary but aren't
 
