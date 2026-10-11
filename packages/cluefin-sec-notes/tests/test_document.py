@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from cluefin_sec_notes import Paragraph, load_filing, parse_filing
+from cluefin_sec_notes import IMPLICIT_CLOSE, Paragraph, load_filing, parse_filing
 
 
 def test_form_from_argument_wins():
@@ -40,3 +40,10 @@ def test_edgar_sgml_wrapper_gives_form_and_is_not_text():
     assert document.form == "10-K405"
     assert [block.text for block in document.blocks] == ["Item 1. Business"]
     assert document.report.fixes == ()
+
+
+def test_unclosed_head_does_not_swallow_the_body():
+    html = "<HTML><HEAD><TITLE>Report</TITLE><BODY><P>FORM 8-K</P><P>Item 8.01 Other Events.</P></BODY></HTML>"
+    document = parse_filing(html)
+    assert [block.text for block in document.blocks] == ["FORM 8-K", "Item 8.01 Other Events."]
+    assert IMPLICIT_CLOSE in {fix.kind for fix in document.report.fixes}

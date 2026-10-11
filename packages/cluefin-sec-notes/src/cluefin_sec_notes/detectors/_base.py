@@ -13,6 +13,9 @@ from cluefin_sec_notes._model import Candidate, Finding, ItemKey
 
 # 헤딩을 담은 표로 볼 최대 행 수(글자 있는 행). "Item 1." | "Business"처럼 표로 짠 헤딩.
 MAX_HEADING_TABLE_ROWS = 3
+# Item 표기 행이 이만큼 있는 표는 목차다. Part 헤딩 뒤 이만큼의 블록 안에서 찾는다.
+_TOC_TABLE_ROWS = 3
+_TOC_LOOKAHEAD = 3
 
 
 @dataclass
@@ -43,15 +46,29 @@ class DetectionContext:
         if self._parts is None or self._parts[0] != len(self.excluded):
             current: str | None = None
             parts: list[str | None] = []
-            for index, each in enumerate(self.document.blocks):
+            blocks = self.document.blocks
+            for index, each in enumerate(blocks):
                 lines = leading_lines(each)[0]
                 part = parse_part(lines[0]) if lines else None
-                if part is not None and not self.is_excluded(index):
+                if part is not None and not self.is_excluded(index) and not _heads_toc_table(blocks, index):
                     current = part
                 parts.append(current)
             self._parts = (len(self.excluded), parts)
         parts = self._parts[1]
         return parts[min(block, len(parts) - 1)] if parts else None
+
+
+def _heads_toc_table(blocks, index: int) -> bool:
+    """Part 헤딩 바로 뒤가 Item 표기 행이 여럿인 표(링크 없는 목차)다. 목차의 "PART II"가 본문 Part I Item들에
+    붙지 않게 한다(본문에 Part I 헤딩 없이 "ITEM 1."부터 시작하는 2008년 10-Q)."""
+    for following in range(index + 1, min(index + 1 + _TOC_LOOKAHEAD, len(blocks))):
+        block = blocks[following]
+        if isinstance(block, Table):
+            labelled = sum(1 for row in range(len(block.rows)) if parse_item_label(block.row_text(row)) is not None)
+            return labelled >= _TOC_TABLE_ROWS
+        if isinstance(block, Paragraph) and block.text.strip():
+            return False
+    return False
 
 
 def leading_lines(block) -> tuple[list[str], bool]:

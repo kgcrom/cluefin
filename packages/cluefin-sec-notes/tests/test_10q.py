@@ -113,3 +113,18 @@ def test_item_4t_is_item_4_and_part_two_only_numbers_survive_a_missing_part_head
     result = extract_items(parse_filing(filing("", content)))
     assert result.item("4", "I").heading == "Item 4T. Controls and Procedures"
     assert result.item("5", "II") is not None and result.item("6", "II") is not None  # Part II에만 있는 번호
+
+
+def test_part_headings_of_a_text_toc_do_not_label_body_items():
+    """링크 없는 목차에 "PART I"·"PART II" 헤딩과 Item 표가 있고, 본문은 Part I 헤딩 없이 "Item 1."부터 시작한다."""
+    rows = "".join(f"<tr><td>Item {number}.</td><td>{title}</td></tr>" for part, number, title in ITEMS if part == "I")
+    rows_two = "".join(
+        f"<tr><td>Item {number}.</td><td>{title}</td></tr>" for part, number, title in ITEMS if part == "II"
+    )
+    text_toc = (
+        f"<div>PART I — FINANCIAL INFORMATION</div><table>{rows}</table>"
+        f"<div>PART II — OTHER INFORMATION</div><table>{rows_two}</table>"
+    )
+    content = body(anchored=False).replace('<div style="font-weight:700">PART I — FINANCIAL INFORMATION</div>', "", 1)
+    result = extract_items(parse_filing(filing(text_toc, content)))
+    assert keys(result) == [f"{part}:{number}" for part, number, _ in ITEMS]
