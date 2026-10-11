@@ -6,9 +6,9 @@
 
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
 from dataclasses import dataclass
-from datetime import date
 from decimal import Decimal
 
 DOCUMENT_TYPES = frozenset({"3", "3/A", "4", "4/A", "5", "5/A"})
@@ -49,8 +49,8 @@ class Transaction:
 
     derivative: bool
     security_title: str | None
-    date: date | None
-    deemed_execution_date: date | None
+    date: datetime.date | None
+    deemed_execution_date: datetime.date | None
     form_type: str | None
     code: str | None
     equity_swap: bool | None
@@ -64,8 +64,8 @@ class Transaction:
     direct_indirect: str | None
     nature_of_ownership: str | None
     exercise_price: Decimal | None
-    exercise_date: date | None
-    expiration_date: date | None
+    exercise_date: datetime.date | None
+    expiration_date: datetime.date | None
     underlying_title: str | None
     underlying_shares: Decimal | None
     underlying_value: Decimal | None
@@ -83,8 +83,8 @@ class Holding:
     direct_indirect: str | None
     nature_of_ownership: str | None
     exercise_price: Decimal | None
-    exercise_date: date | None
-    expiration_date: date | None
+    exercise_date: datetime.date | None
+    expiration_date: datetime.date | None
     underlying_title: str | None
     underlying_shares: Decimal | None
     underlying_value: Decimal | None
@@ -94,7 +94,7 @@ class Holding:
 @dataclass(frozen=True)
 class Signature:
     name: str | None
-    date: date | None
+    date: datetime.date | None
 
 
 @dataclass(frozen=True)
@@ -107,8 +107,8 @@ class OwnershipDocument:
 
     schema_version: str | None
     document_type: str
-    period_of_report: date | None
-    date_of_original_submission: date | None
+    period_of_report: datetime.date | None
+    date_of_original_submission: datetime.date | None
     issuer: Issuer
     reporting_owners: tuple[ReportingOwner, ...]
     non_derivative_transactions: tuple[Transaction, ...]
