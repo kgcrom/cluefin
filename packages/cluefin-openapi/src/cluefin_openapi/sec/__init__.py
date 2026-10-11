@@ -4,6 +4,8 @@ SEC has no API key: every request declares its caller in the User-Agent header
 ("Name email@example.com"). See https://www.sec.gov/os/accessing-edgar-data
 """
 
+from cluefin_openapi.sec._archives import Archives
+from cluefin_openapi.sec._archives_types import FilingIndex, FilingIndexItem
 from cluefin_openapi.sec._client import Client
 from cluefin_openapi.sec._exceptions import (
     SecAPIError,
@@ -30,6 +32,7 @@ from cluefin_openapi.sec._xbrl_api_types import (
 )
 
 __all__ = [
+    "Archives",
     "Client",
     "CompanyConcept",
     "CompanyFacts",
@@ -39,6 +42,8 @@ __all__ = [
     "ConceptFacts",
     "FactValue",
     "FilingEntry",
+    "FilingIndex",
+    "FilingIndexItem",
     "FormerName",
     "Frame",
     "FrameValue",

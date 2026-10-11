@@ -76,6 +76,12 @@ class Client(BaseHttpClient):
         return Submissions(self)
 
     @property
+    def archives(self):
+        from ._archives import Archives
+
+        return Archives(self)
+
+    @property
     def xbrl(self):
         from ._xbrl_api import XbrlApi
 
