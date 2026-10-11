@@ -17,3 +17,6 @@ build-backend = "hatchling.build"
 [tool.ruff]
 extend = "../../pyproject.toml"
 include = ["src/**", "tests/**", "scripts/**"]
+
+[tool.ruff.lint.extend-per-file-ignores]
+"scripts/**" = ["T201"]

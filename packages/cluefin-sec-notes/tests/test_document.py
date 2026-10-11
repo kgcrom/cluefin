@@ -29,3 +29,14 @@ def test_load_filing_keeps_source(tmp_path: Path):
     document = load_filing(path, form="10-K")
     assert document.source == path
     assert isinstance(document.blocks[0], Paragraph)
+
+
+def test_edgar_sgml_wrapper_gives_form_and_is_not_text():
+    html = (
+        "<DOCUMENT>\n<TYPE>10-K405\n<SEQUENCE>1\n<FILENAME>d10k.htm\n<DESCRIPTION>FORM 10-K\n<TEXT>\n"
+        "<HTML><BODY><P>Item 1. Business</P></BODY></HTML>\n</TEXT>\n</DOCUMENT>"
+    )
+    document = parse_filing(html)
+    assert document.form == "10-K405"
+    assert [block.text for block in document.blocks] == ["Item 1. Business"]
+    assert document.report.fixes == ()

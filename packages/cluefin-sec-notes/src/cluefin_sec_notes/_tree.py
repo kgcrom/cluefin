@@ -43,6 +43,10 @@ IX_TAGS = frozenset(
     }
 )  # fmt: skip
 _KNOWN_PREFIXES = ("xbrli:", "xbrldi:", "link:")
+# EDGAR가 2000년대 공시 문서를 감싼 SGML(`<DOCUMENT><TYPE>10-K<SEQUENCE>1<FILENAME>…<TEXT><HTML>…`).
+# 머리 태그는 닫히지 않으므로 다음 태그가 나오면 닫는다(그러지 않으면 문서 전체가 TYPE 안에 들어간다).
+EDGAR_HEADER_TAGS = frozenset({"type", "sequence", "filename", "description"})
+EDGAR_TAGS = EDGAR_HEADER_TAGS | frozenset({"document", "text"})
 _STRUCTURAL_TAGS = frozenset({"html", "head", "body"})
 
 # 브라우저의 "scope": 닫는 태그가 이 경계를 넘어 바깥 태그를 찾지 않는다. 표 칸 안의 짝 없는 `</div>`가
@@ -142,6 +146,8 @@ class _TreeBuilder(HTMLParser):
     # 내부 ------------------------------------------------------------------------------------------------------
 
     def _open(self, tag: str, attrs: list[tuple[str, str | None]], *, self_closing: bool) -> None:
+        if self.stack[-1].tag in EDGAR_HEADER_TAGS:
+            self.stack.pop()
         if self._is_unknown(tag):
             self.collector.unknown_tags[tag] += 1
             self._record(UNKNOWN_TAG, self.get_starttag_text() or tag)
@@ -158,7 +164,7 @@ class _TreeBuilder(HTMLParser):
             self.stack.append(node)
 
     def _is_unknown(self, tag: str) -> bool:
-        if tag in HTML_TAGS or tag in IX_TAGS or tag.startswith(_KNOWN_PREFIXES):
+        if tag in HTML_TAGS or tag in IX_TAGS or tag in EDGAR_TAGS or tag.startswith(_KNOWN_PREFIXES):
             return False
         # `ix:header` 안의 typed dimension은 회사가 정한 요소 이름(`us-gaap:…Axis.domain`)을 쓴다.
         return not (":" in tag and any(node.tag == "ix:header" for node in self.stack))

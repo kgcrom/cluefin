@@ -23,8 +23,8 @@ class SecDocument:
     Attributes:
         blocks: 문서 순서의 문단·표·페이지 경계.
         anchors: 문서 안 링크가 가리키는 앵커 → 그 앵커가 시작하는 블록 위치. 뒤에 블록이 없으면 `len(blocks)`.
-        form: 서식(`10-K`, `10-Q`, `8-K`, 정정은 `/A`). 호출자가 준 값, 인라인 XBRL `dei:DocumentType`, 표지 순으로
-            정한다. 못 정하면 None.
+        form: 서식(`10-K`, `10-Q`, `8-K`, 정정은 `/A`). 호출자가 준 값, 인라인 XBRL `dei:DocumentType`,
+            2000년대 공시를 감싼 EDGAR SGML의 `<TYPE>`, 표지 순으로 정한다. 못 정하면 None.
         dei: 인라인 XBRL의 `dei:` 사실(`DocumentType`, `EntityRegistrantName`, `DocumentPeriodEndDate` …).
             2019년 이전 공시는 비어 있다.
         report: 읽으며 고친 것.
@@ -70,7 +70,10 @@ def parse_filing(data: bytes | str, *, form: str | None = None, source: Path | N
     return SecDocument(
         blocks=blocks,
         anchors=linearized.anchors,
-        form=_normalize_form(form) or _normalize_form(linearized.dei.get("DocumentType")) or _cover_form(blocks),
+        form=_normalize_form(form)
+        or _normalize_form(linearized.dei.get("DocumentType"))
+        or _normalize_form(linearized.edgar_header.get("type"))
+        or _cover_form(blocks),
         dei=linearized.dei,
         report=collector.build(encoding, declared),
         source=source,

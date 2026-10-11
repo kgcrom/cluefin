@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from typing import Union
 
 from cluefin_sec_notes._report import HIDDEN_CONTENT, LAYOUT_TABLE, ReportCollector
-from cluefin_sec_notes._tree import Node
+from cluefin_sec_notes._tree import EDGAR_HEADER_TAGS, Node
 
 _BLOCK_TAGS = frozenset(
     {
@@ -132,6 +132,7 @@ class LinearizedDocument:
     blocks: list[Block]
     anchors: dict[str, int]
     dei: dict[str, str]
+    edgar_header: dict[str, str]
 
 
 class _Linearizer:
@@ -146,6 +147,7 @@ class _Linearizer:
         self.pending_anchors: list[str] = []
         self.paragraph = _ParagraphBuilder()
         self.position = (0, 0)  # 마지막으로 들어간 요소의 원문 위치. 문단 위치로 쓴다.
+        self.edgar_header: dict[str, str] = {}
 
     def run(self, root: Node, style: _Style) -> list[Block]:
         # (노드, 스타일) 또는 (노드, None) = 그 노드를 나가는 표시
@@ -167,6 +169,9 @@ class _Linearizer:
     def _enter(self, node: Node, parent_style: _Style, stack: list) -> None:
         tag = node.tag
         if tag in _SKIPPED_TAGS:
+            return
+        if tag in EDGAR_HEADER_TAGS:
+            self.edgar_header.setdefault(tag, _normalize(node.text()))
             return
         declarations = _style_declarations(node)
         if tag == "ix:header" or declarations.get("display") == "none":
@@ -337,7 +342,7 @@ def linearize(root: Node, collector: ReportCollector) -> LinearizedDocument:
             anchors.setdefault(name, index)
     for name in linearizer.pending_anchors:  # 문서 끝, 뒤에 블록이 없는 앵커
         anchors.setdefault(name, len(blocks))
-    return LinearizedDocument(blocks=blocks, anchors=anchors, dei=dei)
+    return LinearizedDocument(blocks=blocks, anchors=anchors, dei=dei, edgar_header=linearizer.edgar_header)
 
 
 # 도움 함수 -------------------------------------------------------------------------------------------------------
