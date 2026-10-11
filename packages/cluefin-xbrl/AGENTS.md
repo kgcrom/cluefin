@@ -14,12 +14,26 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - **SEC instances need `http_user_agent` with an email; `parse_xbrl_file` raises `ValueError` before Arelle
   runs.** xbrl.sec.gov still answered Arelle's default agent on 2026-10-11, but www/data.sec.gov already
   return 403 for it, and a failed taxonomy download is not an error in Arelle: it logs `IOerror` /
-  `xbrl:schemaImportMissing` and returns the instance with most facts gone (Apple FY2023: 78 of 1,164).
-  The check applies even on a warm cache, so a parse doesn't depend on the machine. The rule ("@" after
+  `xbrl:schemaImportMissing` and returns the instance with most facts gone (Apple FY2023: 78 of 1,164;
+  the parser now raises on those codes, see below). The check applies even on a warm cache, so a parse doesn't depend on the machine. The rule ("@" after
   stripping) mirrors `sec.Client`'s `_validate_user_agent`; change both together. DART needs no agent.
 - An SEC instance is recognized by `xbrl.sec.gov/dei` in its first 8KB (the root element's namespace
   declarations; within 2KB in every filing checked, 2011–2025, extracted, pre-2019 and inline `.htm`).
   DART instances never declare it. The CIK context scheme can sit at the end of the file, so it's not used.
+
+## Arelle load errors that raise
+
+- Arelle never raises when a referenced file (linkbase, company schema, taxonomy) can't be read; it logs and
+  returns a model missing whatever that file defined. `_raise_on_unreadable_files` raises `XbrlParseError` on
+  `IOerror` or `xbrl:schemaImportMissing`, naming files from `model_xbrl.urlUnloadableDocs`. Measured
+  2026-10-11: neither code in 35 complete filings (SEC AAPL/MSFT/JPM 2011–2025, DART three companies
+  FY2011–2024); `IOerror` in every broken case (DART ZIP extracted flat, offline with an empty cache).
+- Left out on purpose: `xmlSchema:valueError` (8 in one complete DART FY2024 filing — a malformed value, not a
+  missing file) and `xmlSchema:elementUnexpected` (only ever a side effect of a missing taxonomy). Add a code
+  only after checking it never appears in complete filings.
+- DART ZIPs for FY2022 and earlier keep their linkbases in `\`-named subfolders. Extracted flat (plain
+  `extractall` on macOS/Linux) they now raise here; cluefin-openapi's `download_financial_statement_xbrl`
+  extracts them correctly.
 
 ## DART/Arelle quirks baked into the code
 

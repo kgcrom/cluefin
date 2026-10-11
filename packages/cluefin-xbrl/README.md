@@ -72,7 +72,7 @@ uv run --with jupyter jupyter lab packages/cluefin-xbrl/examples/xbrl_analysis.i
 
 | 함수 | 설명 |
 |------|------|
-| `parse_xbrl_file(path, *, include_taxonomy=False, http_user_agent=None)` | 단일 XBRL 파일을 파싱해 `XbrlDocument` 반환. SEC 인스턴스는 `http_user_agent`("이름 이메일") 필수, 없으면 `ValueError` |
+| `parse_xbrl_file(path, *, include_taxonomy=False, http_user_agent=None)` | 단일 XBRL 파일을 파싱해 `XbrlDocument` 반환. SEC 인스턴스는 `http_user_agent`("이름 이메일") 필수, 없으면 `ValueError`. 인스턴스가 참조하는 링크베이스·스키마·택소노미를 하나라도 못 읽으면(하위 폴더 없이 푼 DART ZIP, 오프라인+빈 캐시) `XbrlParseError` |
 | `parse_xbrl_directory(directory, *, include_taxonomy=False, http_user_agent=None)` | 디렉터리 내 XBRL 인스턴스(DART `.xbrl`, SEC `*_htm.xml` 등)를 찾아 파싱 |
 | `extract_financial_statements(doc)` | `XbrlDocument`에서 재무제표를 구조화해 `ParsedFinancialStatements` 반환 |
 | `statement_to_dicts(statement)` | `FinancialStatement`을 `list[dict]`로 변환 |
