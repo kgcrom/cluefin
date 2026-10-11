@@ -3,9 +3,11 @@ import type { WebSocketEvent } from '../../src/core/websocket';
 import { KisAuth } from '../../src/kis/auth';
 import { OverseasRealtimeQuote } from '../../src/kis/overseas-realtime-quote';
 import { KisSocketClient } from '../../src/kis/socket-client';
+import { isUsMarketHours } from '../_helpers/market-hours';
 
 const runIntegration = process.env.CLUEFIN_OPENAPI_TS_RUN_INTEGRATION === '1';
-const integrationTest = runIntegration ? test : test.skip;
+// 장외에는 시세가 오지 않아 수신 대기에서 실패한다 — 미국 정규장 시간에만 돈다.
+const integrationTest = runIntegration && isUsMarketHours() ? test : test.skip;
 
 const getEnvOrThrow = (key: string): string => {
   const value = process.env[key];
