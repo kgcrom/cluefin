@@ -553,3 +553,8 @@ class TestDuplicateFacts:
         a = _usd_fact("NetIncomeLoss", "1").model_copy(update={"context_id": "c-2023"})
         b = _usd_fact("NetIncomeLoss", "1").model_copy(update={"context_id": "c-2022"})
         assert self._income([a, b]) == [Decimal("1"), Decimal("1")]
+
+    def test_same_number_written_with_different_precision_is_one_fact(self):
+        a = _usd_fact("NetIncomeLoss", "18.00").model_copy(update={"context_id": "c-1"})
+        b = _usd_fact("NetIncomeLoss", "18").model_copy(update={"context_id": "c-1"})
+        assert self._income([a, b]) == [Decimal("18.00")]

@@ -42,7 +42,10 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   SEC: cover-page shares outstanding are dated weeks after the period end.
 - Inline XBRL tags a number everywhere it appears, and the SEC-extracted instance keeps every copy (Apple
   FY2023: revenue 3×, net income 4×). `_collect_line_items` collapses facts with the same context, unit and
-  value; the integration test asserts exactly one row per value so this cannot regress silently.
+  value, comparing numbers as numbers — Microsoft FY2026 tags the same EPS as "18.00" and "18". The integration
+  test asserts exactly one row per value so this cannot regress silently.
+- Newer filings embed the linkbases in the company schema: Microsoft FY2026's folder has only
+  `msft-20260630.xsd` and `msft-20260630_htm.xml`. Never require separate `_pre/_cal/_lab.xml` files.
 - `extract_notes` is DART-only (it keys on `D8xxxxx` role codes). Labels are the concept's standard label;
   SEC presentation `preferredLabel`s ("Total net sales") are not read yet. One visible consequence: a concept
   shown twice as beginning and ending balance (`StockholdersEquity` in SCE, period-end cash in CF) gets every

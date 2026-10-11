@@ -323,8 +323,10 @@ def _collect_line_items(
         dims = _match_statement_fact(fact, is_consolidated, intrinsic_axes)
         # Inline XBRL tags the same number wherever it appears (statement, notes, MD&A), and the SEC-extracted
         # instance keeps every copy: Apple's FY2023 net income is in it four times. Same context, unit and value
-        # is one fact (XBRL "consistent duplicates"); a different value in the same context is kept.
-        key = (fact.context_id, fact.unit, fact.value)
+        # is one fact (XBRL "consistent duplicates"); a different value in the same context is kept. Numbers are
+        # compared as numbers: the same EPS is tagged "18.00" in the statement and "18" elsewhere (Microsoft FY2026).
+        value = fact.numeric_value if fact.numeric_value is not None else fact.value
+        key = (fact.context_id, fact.unit, value)
         if dims is not None and key not in seen:
             seen.add(key)
             matched.append((fact, dims))
