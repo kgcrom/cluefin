@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import threading
 from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
@@ -16,17 +17,32 @@ if TYPE_CHECKING:
 
 _arelle_lock = threading.Lock()
 
+# SEC filing folders hold the instance next to the linkbases, all as .xml. These are not instances.
+_SEC_NON_INSTANCE = re.compile(r"(_(cal|def|lab|pre|ref)\.xml|^FilingSummary\.xml|^R\d+\.xml)$", re.IGNORECASE)
+# Root element of an XBRL instance, with or without a namespace prefix (<xbrli:xbrl ...>, <xbrl ...>).
+_INSTANCE_ROOT = re.compile(rb"<(?:[A-Za-z_][\w.-]*:)?xbrl[\s>]")
+_DEI_NAMESPACE_PREFIX = "http://xbrl.sec.gov/dei/"
+
 
 class XbrlParseError(Exception):
     """Raised when XBRL parsing fails."""
 
 
-def parse_xbrl_file(path: str | Path, *, include_taxonomy: bool = False) -> XbrlDocument:
+def parse_xbrl_file(
+    path: str | Path,
+    *,
+    include_taxonomy: bool = False,
+    http_user_agent: str | None = None,
+) -> XbrlDocument:
     """Parse a single XBRL instance file and extract all facts.
 
     Args:
-        path: Path to the XBRL instance file (.xbrl).
+        path: Path to the XBRL instance file (.xbrl, or an SEC instance such as ``aapl-20230930_htm.xml``).
         include_taxonomy: If True, also extract taxonomy labels and presentation trees.
+        http_user_agent: User-Agent Arelle sends when it downloads referenced taxonomies (SEC filings import
+            DEI/SRT schemas from xbrl.sec.gov). SEC asks automated clients to declare "Name email"; Arelle's
+            default agent still worked on 2026-10-11. Downloads are cached by Arelle, so this only matters on
+            the first parse of a taxonomy version.
 
     Returns:
         XbrlDocument with all extracted facts.
@@ -39,17 +55,12 @@ def parse_xbrl_file(path: str | Path, *, include_taxonomy: bool = False) -> Xbrl
     if not file_path.exists():
         raise FileNotFoundError(f"XBRL 파일을 찾을 수 없습니다: {file_path}")
 
-    model_xbrl = _parse_with_session(file_path)
+    model_xbrl = _parse_with_session(file_path, http_user_agent=http_user_agent)
 
     facts = _extract_facts(model_xbrl)
 
-    entity_id = None
-    reporting_end = None
-    if facts:
-        entity_id = facts[0].entity_id
-        instant_dates = [f.period.instant for f in facts if f.period and f.period.instant]
-        if instant_dates:
-            reporting_end = max(instant_dates)
+    entity_id = facts[0].entity_id if facts else None
+    reporting_end = _reporting_period_end(facts)
 
     doc = XbrlDocument(
         source_file=str(file_path),
@@ -66,14 +77,22 @@ def parse_xbrl_file(path: str | Path, *, include_taxonomy: bool = False) -> Xbrl
     return doc
 
 
-def parse_xbrl_directory(directory: str | Path, *, include_taxonomy: bool = False) -> XbrlDocument:
+def parse_xbrl_directory(
+    directory: str | Path,
+    *,
+    include_taxonomy: bool = False,
+    http_user_agent: str | None = None,
+) -> XbrlDocument:
     """Find and parse the XBRL instance file in a directory.
 
-    Searches for .xbrl files in the directory and parses the first one found.
+    Parses the first .xbrl file by name (DART). Without one, looks for an SEC instance: the extracted
+    inline-XBRL instance ``*_htm.xml`` first, then any other .xml whose root element is ``xbrl``
+    (pre-2019 filings such as ``aapl-20180929.xml``). Linkbases and SEC rendering files are skipped.
 
     Args:
         directory: Path to directory containing XBRL files.
         include_taxonomy: If True, also extract taxonomy labels and presentation trees.
+        http_user_agent: See :func:`parse_xbrl_file`.
 
     Returns:
         XbrlDocument with all extracted facts.
@@ -86,24 +105,58 @@ def parse_xbrl_directory(directory: str | Path, *, include_taxonomy: bool = Fals
     if not dir_path.exists():
         raise FileNotFoundError(f"디렉토리를 찾을 수 없습니다: {dir_path}")
 
-    xbrl_files = sorted(dir_path.glob("*.xbrl"))
-    if not xbrl_files:
+    instance = next(iter(sorted(dir_path.glob("*.xbrl"))), None) or _find_sec_instance(dir_path)
+    if instance is None:
         raise XbrlParseError(f"디렉토리에 XBRL 파일이 없습니다: {dir_path}")
 
-    return parse_xbrl_file(xbrl_files[0], include_taxonomy=include_taxonomy)
+    return parse_xbrl_file(instance, include_taxonomy=include_taxonomy, http_user_agent=http_user_agent)
 
 
-def _parse_with_session(path: Path) -> ModelXbrl:
+def _find_sec_instance(dir_path: Path) -> Path | None:
+    """Pick the instance document out of an SEC filing folder's .xml files."""
+    candidates = [p for p in sorted(dir_path.glob("*.xml")) if not _SEC_NON_INSTANCE.search(p.name)]
+    # The SEC-extracted inline instance first; its name is the only reliable signal in a mixed folder.
+    candidates.sort(key=lambda p: not p.name.lower().endswith("_htm.xml"))
+    return next((p for p in candidates if _looks_like_instance(p)), None)
+
+
+def _looks_like_instance(path: Path) -> bool:
+    """Check the root element name without parsing the document (instances run to tens of MB)."""
+    with path.open("rb") as handle:
+        head = handle.read(8192)
+    return _INSTANCE_ROOT.search(head) is not None
+
+
+def _reporting_period_end(facts: list[XbrlFact]) -> date | None:
+    """The reporting date of the document.
+
+    SEC instances state it as ``dei:DocumentPeriodEndDate``. The latest instant would be wrong there: the
+    cover page reports shares outstanding as of a date weeks after the period end. Other instances (DART)
+    fall back to the latest instant date.
+    """
+    for fact in facts:
+        if fact.concept_local_name == "DocumentPeriodEndDate" and fact.namespace.startswith(_DEI_NAMESPACE_PREFIX):
+            try:
+                return date.fromisoformat((fact.value or "").strip())
+            except ValueError:
+                break
+    instant_dates = [f.period.instant for f in facts if f.period and f.period.instant]
+    return max(instant_dates) if instant_dates else None
+
+
+def _parse_with_session(path: Path, *, http_user_agent: str | None = None) -> ModelXbrl:
     """Load an XBRL file using Arelle Session with thread safety."""
     from arelle.api.Session import Session
     from arelle.ModelDocument import Type
     from arelle.RuntimeOptions import RuntimeOptions
 
+    extra_options = {"httpUserAgent": http_user_agent} if http_user_agent else {}
     with _arelle_lock:
         with Session() as session:
             options = RuntimeOptions(
                 entrypointFile=str(path),
                 keepOpen=True,
+                **extra_options,
             )
             session.run(options)
             models = session.get_models()

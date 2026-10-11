@@ -3,10 +3,12 @@
 import shutil
 from datetime import date, datetime
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
 
-from cluefin_xbrl._types import PeriodType
+import cluefin_xbrl.parser as parser_module
+from cluefin_xbrl._types import PeriodType, XbrlFact, XbrlPeriod
 from cluefin_xbrl.parser import (
     XbrlParseError,
     _exclusive_to_date,
@@ -236,3 +238,147 @@ class TestTryParseDecimal:
 
     def test_empty_string(self):
         assert _try_parse_decimal("") is None
+
+
+_SEC_INSTANCE_HEAD = (
+    b'<?xml version="1.0" encoding="utf-8"?>\n'
+    b"<!--XBRL document created with Workiva-->\n"
+    b'<xbrli:xbrl xmlns:xbrli="http://www.xbrl.org/2003/instance" xml:lang="en-US">\n</xbrli:xbrl>\n'
+)
+_LINKBASE_HEAD = b'<?xml version="1.0"?>\n<link:linkbase xmlns:link="http://www.xbrl.org/2003/linkbase"/>\n'
+
+
+def _write_sec_folder(folder, instance_name):
+    for name in ("aapl-20230930_cal.xml", "aapl-20230930_def.xml", "aapl-20230930_lab.xml", "aapl-20230930_pre.xml"):
+        (folder / name).write_bytes(_LINKBASE_HEAD)
+    (folder / "aapl-20230930.xsd").write_bytes(b"<xs:schema/>")
+    (folder / "FilingSummary.xml").write_bytes(b"<FilingSummary/>")
+    (folder / "R1.xml").write_bytes(b"<InstanceReport/>")
+    (folder / instance_name).write_bytes(_SEC_INSTANCE_HEAD)
+
+
+class TestParseSecDirectory:
+    @pytest.fixture
+    def captured(self, monkeypatch):
+        calls = {}
+
+        def fake_parse(path, *, include_taxonomy=False, http_user_agent=None):
+            calls.update(path=Path(path), include_taxonomy=include_taxonomy, http_user_agent=http_user_agent)
+            return "parsed"
+
+        monkeypatch.setattr(parser_module, "parse_xbrl_file", fake_parse)
+        return calls
+
+    def test_picks_inline_extracted_instance(self, tmp_path, captured):
+        _write_sec_folder(tmp_path, "aapl-20230930_htm.xml")
+
+        result = parse_xbrl_directory(tmp_path, include_taxonomy=True, http_user_agent="Jane jane@example.com")
+
+        assert result == "parsed"
+        assert captured == {
+            "path": tmp_path / "aapl-20230930_htm.xml",
+            "include_taxonomy": True,
+            "http_user_agent": "Jane jane@example.com",
+        }
+
+    def test_picks_pre_inline_instance_by_root_element(self, tmp_path, captured):
+        _write_sec_folder(tmp_path, "aapl-20180929.xml")
+
+        parse_xbrl_directory(tmp_path)
+
+        assert captured["path"] == tmp_path / "aapl-20180929.xml"
+
+    def test_unprefixed_root_is_an_instance(self, tmp_path, captured):
+        (tmp_path / "abc-20101231.xml").write_bytes(
+            b'<?xml version="1.0"?>\n<xbrl xmlns="http://www.xbrl.org/2003/instance">'
+        )
+
+        parse_xbrl_directory(tmp_path)
+
+        assert captured["path"] == tmp_path / "abc-20101231.xml"
+
+    def test_dart_xbrl_file_wins(self, tmp_path, captured):
+        _write_sec_folder(tmp_path, "aapl-20230930_htm.xml")
+        (tmp_path / "entity.xbrl").write_bytes(_SEC_INSTANCE_HEAD)
+
+        parse_xbrl_directory(tmp_path)
+
+        assert captured["path"] == tmp_path / "entity.xbrl"
+
+    def test_folder_with_only_linkbases_has_no_instance(self, tmp_path):
+        _write_sec_folder(tmp_path, "aapl-20230930_htm.xml")
+        (tmp_path / "aapl-20230930_htm.xml").unlink()
+
+        with pytest.raises(XbrlParseError, match="XBRL 파일이 없습니다"):
+            parse_xbrl_directory(tmp_path)
+
+
+def _fact(local_name, value, namespace, period=None):
+    return XbrlFact(
+        concept_local_name=local_name,
+        concept_qname=f"x:{local_name}",
+        namespace=namespace,
+        value=value,
+        period=period,
+    )
+
+
+class TestReportingPeriodEnd:
+    DEI = "http://xbrl.sec.gov/dei/2023"
+
+    def test_sec_document_period_end_date_wins_over_later_instants(self):
+        facts = [
+            _fact("DocumentPeriodEndDate", "2023-09-30", self.DEI),
+            # Shares outstanding on the cover page are measured weeks after the period end.
+            _fact(
+                "EntityCommonStockSharesOutstanding",
+                "15550061000",
+                self.DEI,
+                XbrlPeriod(period_type=PeriodType.INSTANT, instant=date(2023, 10, 20)),
+            ),
+        ]
+        assert parser_module._reporting_period_end(facts) == date(2023, 9, 30)
+
+    def test_falls_back_to_latest_instant(self):
+        facts = [
+            _fact("Assets", "1", "ifrs", XbrlPeriod(period_type=PeriodType.INSTANT, instant=date(2023, 12, 31))),
+            _fact("Assets", "1", "ifrs", XbrlPeriod(period_type=PeriodType.INSTANT, instant=date(2022, 12, 31))),
+        ]
+        assert parser_module._reporting_period_end(facts) == date(2023, 12, 31)
+
+    def test_non_dei_document_period_end_date_is_ignored(self):
+        instant = XbrlPeriod(period_type=PeriodType.INSTANT, instant=date(2024, 6, 30))
+        facts = [
+            _fact("DocumentPeriodEndDate", "2023-09-30", "http://example.com/other"),
+            _fact("A", "1", "x", instant),
+        ]
+        assert parser_module._reporting_period_end(facts) == date(2024, 6, 30)
+
+    def test_unparseable_value_falls_back(self):
+        instant = XbrlPeriod(period_type=PeriodType.INSTANT, instant=date(2024, 6, 30))
+        facts = [_fact("DocumentPeriodEndDate", "--09-30", self.DEI), _fact("A", "1", "x", instant)]
+        assert parser_module._reporting_period_end(facts) == date(2024, 6, 30)
+
+    def test_no_facts(self):
+        assert parser_module._reporting_period_end([]) is None
+
+
+class TestHttpUserAgentOption:
+    def test_user_agent_reaches_arelle_runtime_options(self, monkeypatch, sample_xbrl_path):
+        import arelle.api.Session as session_module
+
+        seen = []
+        real_session = session_module.Session
+
+        class SpySession(real_session):
+            def run(self, options, *args, **kwargs):
+                seen.append(options.httpUserAgent)
+                return super().run(options, *args, **kwargs)
+
+        monkeypatch.setattr(session_module, "Session", SpySession)
+
+        parse_xbrl_file(sample_xbrl_path, http_user_agent="Jane jane@example.com")
+        parse_xbrl_file(sample_xbrl_path)
+
+        assert seen[0] == "Jane jane@example.com"
+        assert seen[1] != "Jane jane@example.com"

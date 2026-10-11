@@ -137,3 +137,12 @@ class TestDanglingRelationships:
 
         assert labels["Assets"].label_ko == "자산"
         assert labels["Assets"].label_en is None
+
+
+class TestRoleDefinitions:
+    def test_role_definition_is_extracted(self, sample_xbrl_path):
+        doc = parse_xbrl_file(sample_xbrl_path, include_taxonomy=True)
+
+        definitions = doc.taxonomy.role_definitions
+        role = next(uri for uri in definitions if uri.endswith("StatementOfFinancialPosition"))
+        assert definitions[role] == "Statement of Financial Position"

@@ -23,7 +23,21 @@ def extract_taxonomy(model_xbrl: ModelXbrl) -> TaxonomyInfo:
     """
     labels = _extract_labels(model_xbrl)
     presentation_trees = _extract_presentation_trees(model_xbrl)
-    return TaxonomyInfo(labels=labels, presentation_trees=presentation_trees)
+    return TaxonomyInfo(
+        labels=labels,
+        presentation_trees=presentation_trees,
+        role_definitions=_extract_role_definitions(model_xbrl),
+    )
+
+
+def _extract_role_definitions(model_xbrl: ModelXbrl) -> dict[str, str]:
+    """Map each linkrole URI to its declared definition (the human-readable role title)."""
+    definitions: dict[str, str] = {}
+    for role_uri, role_types in model_xbrl.roleTypes.items():
+        definition = next((rt.definition for rt in role_types if rt.definition), None)
+        if definition:
+            definitions[role_uri] = definition.strip()
+    return definitions
 
 
 def _extract_labels(model_xbrl: ModelXbrl) -> dict[str, ConceptLabel]:

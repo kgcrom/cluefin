@@ -1,4 +1,4 @@
-"""Live check of `dart financial-as-filed` against DART (real .env key, two downloads).
+"""Live check of `dart financial-as-filed` against DART (DART_AUTH_KEY from .env.test, two downloads).
 
 Nodemason (01328170) FY2024: the original filing and its amendment report opposite-sign
 consolidated operating income. The first run on a cold Arelle cache can take about a minute.
@@ -30,10 +30,12 @@ class _Session:
 
 @pytest.fixture(scope="module")
 def session() -> _Session:
-    dotenv.load_dotenv()
-    if not os.getenv("DART_AUTH_KEY"):
+    dotenv.load_dotenv(dotenv_path=".env.test")
+    auth_key = os.getenv("DART_AUTH_KEY")
+    if not auth_key:
         pytest.skip("DART_AUTH_KEY is not configured")
-    return _Session(BrokerClientFactory(BrokerClientConfig.from_env()).create("dart"))
+    # Not BrokerClientConfig.from_env(): it merges the cwd's .env (production) into the config.
+    return _Session(BrokerClientFactory(BrokerClientConfig(dart_auth_key=auth_key)).create("dart"))
 
 
 def _operating_income(session: _Session, rcept_no: str) -> str:

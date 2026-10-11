@@ -16,8 +16,9 @@ from cluefin_openapi.kiwoom._auth import Auth as KiwoomAuth
 from cluefin_openapi.kiwoom._client import Client as KiwoomClient
 from cluefin_openapi.nhplug._auth import Auth as NHPlugAuth
 from cluefin_openapi.nhplug._http_client import HttpClient as NHPlugHttpClient
+from cluefin_openapi.sec._client import Client as SecClient
 
-BrokerName = Literal["kis", "kiwoom", "dart", "nhplug"]
+BrokerName = Literal["kis", "kiwoom", "dart", "nhplug", "sec"]
 BrokerEnv = Literal["dev", "prod"]
 
 __all__ = ["BrokerClientConfig", "BrokerClientFactory", "create_broker_client"]
@@ -37,6 +38,7 @@ class BrokerClientConfig:
     nhplug_app_key: Optional[str] = None
     nhplug_secret_key: Optional[str] = None
     nhplug_env: BrokerEnv = "dev"
+    sec_user_agent: Optional[str] = None
     cache_dir: Optional[str] = None
     debug: bool = False
 
@@ -54,6 +56,7 @@ class BrokerClientConfig:
             nhplug_app_key=env.get("NHPLUG_APP_KEY"),
             nhplug_secret_key=env.get("NHPLUG_SECRET_KEY"),
             nhplug_env=env.get("NHPLUG_ENV", "dev").lower(),
+            sec_user_agent=env.get("SEC_USER_AGENT"),
             cache_dir=env.get("CLUEFIN_OPENAPI_CACHE_DIR"),
             debug=env.get("CLUEFIN_OPENAPI_DEBUG", "0").lower() in {"1", "true", "yes", "on"},
         )
@@ -111,6 +114,8 @@ class BrokerClientFactory:
             return self.create_dart()
         if broker == "nhplug":
             return self.create_nhplug()
+        if broker == "sec":
+            return self.create_sec()
         raise ValueError(f"Unknown broker: {broker}")
 
     def create_kis(self) -> KisHttpClient:
@@ -170,6 +175,13 @@ class BrokerClientFactory:
         if not self.config.dart_auth_key:
             raise ValueError("DART credentials not configured (dart_auth_key)")
         return DartClient(auth_key=self.config.dart_auth_key)
+
+    def create_sec(self) -> SecClient:
+        if not self.config.sec_user_agent:
+            raise ValueError(
+                'SEC User-Agent not configured (sec_user_agent, e.g. SEC_USER_AGENT="Name email@example.com")'
+            )
+        return SecClient(user_agent=self.config.sec_user_agent)
 
 
 def create_broker_client(broker: BrokerName, config: BrokerClientConfig | None = None):

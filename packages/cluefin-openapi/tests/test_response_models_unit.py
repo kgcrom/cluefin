@@ -17,7 +17,7 @@ from cluefin_openapi.kis._domestic_basic_quote_types import DomesticStockCurrent
 from cluefin_openapi.kiwoom._domestic_theme_types import DomesticThemeGroup
 
 SRC = Path(__file__).resolve().parents[1] / "src" / "cluefin_openapi"
-BROKERS = ("kiwoom", "kis", "dart")
+BROKERS = ("kiwoom", "kis", "dart", "sec")
 
 # Field(..., max_length=N) 만 잡는다. json_schema_extra={"max_length": N} 은 스키마 메타데이터라
 # 검증에 관여하지 않으므로 허용한다.

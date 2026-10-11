@@ -1,5 +1,6 @@
 """Tests for financial statement extraction."""
 
+from datetime import date
 from decimal import Decimal
 
 import pytest
@@ -363,3 +364,197 @@ class TestSeparateStatements:
         doc = parse_xbrl_file(sample_xbrl_path, include_taxonomy=True)
         result = extract_financial_statements(doc)
         assert result.separate_statements == {}
+
+
+_SEC_STATEMENT_TITLE_CASES = [
+    pytest.param("CONSOLIDATED BALANCE SHEETS", StatementType.BS, id="balance_sheets"),
+    pytest.param("Consolidated Statements of Financial Condition", StatementType.BS, id="financial_condition"),
+    pytest.param("CONSOLIDATED STATEMENTS OF OPERATIONS", StatementType.IS, id="operations"),
+    pytest.param("CONSOLIDATED INCOME STATEMENTS", StatementType.IS, id="income_statements"),
+    pytest.param("Consolidated Statements of Earnings", StatementType.IS, id="earnings"),
+    pytest.param("CONSOLIDATED STATEMENTS OF COMPREHENSIVE INCOME", StatementType.CIS, id="comprehensive_income"),
+    pytest.param("Consolidated Statements of Comprehensive Income (Loss)", StatementType.CIS, id="comprehensive_loss"),
+    pytest.param(
+        "CONSOLIDATED STATEMENTS OF OPERATIONS AND COMPREHENSIVE INCOME", StatementType.IS, id="combined_operations"
+    ),
+    pytest.param("Consolidated Statements of Income and Comprehensive Income", StatementType.IS, id="combined_income"),
+    pytest.param("CONSOLIDATED STATEMENTS OF CASH FLOWS", StatementType.CF, id="cash_flows"),
+    pytest.param("CONSOLIDATED STATEMENTS OF SHAREHOLDERS' EQUITY", StatementType.SCE, id="shareholders_equity"),
+    pytest.param("Consolidated Statements of Stockholders' Deficit", StatementType.SCE, id="stockholders_deficit"),
+    pytest.param("Consolidated Statements of Changes in Equity", StatementType.SCE, id="changes_in_equity"),
+    pytest.param("CONSOLIDATED BALANCE SHEETS (Parenthetical)", None, id="parenthetical"),
+    pytest.param("Cover", None, id="unknown_title"),
+]
+
+
+class TestIdentifySecStatementType:
+    SEC_ROLE = "http://www.apple.com/role/SomeFilerChosenUri"
+
+    @pytest.mark.parametrize("title, expected", _SEC_STATEMENT_TITLE_CASES)
+    def test_statement_titles(self, title, expected):
+        definition = f"0000002 - Statement - {title}"
+        assert _identify_statement_type(self.SEC_ROLE, definition) == expected
+
+    @pytest.mark.parametrize("kind", ["Disclosure", "Document", "Schedule"])
+    def test_non_statement_roles_are_skipped_even_if_uri_matches(self, kind):
+        """Disclosure roles often carry statement words in the URI (BalanceSheetComponentsDetails)."""
+        role = "http://www.apple.com/role/BalanceSheetComponentsDetails"
+        assert _identify_statement_type(role, f"9952160 - {kind} - Balance Sheet Components (Details)") is None
+
+    def test_non_sec_definition_falls_back_to_uri(self):
+        role = "http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D210000"
+        definition = "[D210000] Statement of financial position, current/non-current - Consolidated"
+        assert _identify_statement_type(role, definition) == StatementType.BS
+
+
+def _sec_doc(trees: dict, definitions: dict, facts: list[XbrlFact] | None = None) -> XbrlDocument:
+    taxonomy = TaxonomyInfo(presentation_trees=trees, role_definitions=definitions)
+    return XbrlDocument(source_file="aapl-20230930_htm.xml", facts=facts or [], taxonomy=taxonomy)
+
+
+def _node(name: str, children: list[PresentationNode] | None = None, depth: int = 0) -> PresentationNode:
+    return PresentationNode(
+        concept_local_name=name, concept_qname=f"us-gaap:{name}", depth=depth, children=children or []
+    )
+
+
+def _usd_fact(name: str, value: str, dimensions: dict[str, str] | None = None) -> XbrlFact:
+    return XbrlFact(
+        concept_local_name=name,
+        concept_qname=f"us-gaap:{name}",
+        namespace="http://fasb.org/us-gaap/2023",
+        value=value,
+        numeric_value=Decimal(value),
+        unit="iso4217:USD",
+        period=XbrlPeriod(period_type=PeriodType.DURATION, start_date=date(2022, 9, 25), end_date=date(2023, 9, 30)),
+        dimensions=dimensions or {},
+    )
+
+
+class TestSecStatements:
+    def test_roles_follow_sort_code_not_loader_order(self):
+        """Arelle's role order is not the filing order; the sort code is."""
+        later = "http://x/role/BalanceSheetAlternative"
+        face = "http://x/role/CONSOLIDATEDBALANCESHEETS"
+        doc = _sec_doc(
+            trees={later: [_node("Liabilities")], face: [_node("Assets")]},
+            definitions={
+                later: "0000099 - Statement - Alternative Balance Sheets",
+                face: "0000004 - Statement - CONSOLIDATED BALANCE SHEETS",
+            },
+        )
+
+        bs = extract_financial_statements(doc).statements["BS"]
+
+        assert bs.linkrole == face
+        assert bs.is_consolidated is True
+
+    def test_all_five_statements_and_no_separate(self):
+        roles = {
+            "http://x/role/CONSOLIDATEDSTATEMENTSOFOPERATIONS": "0000002 - Statement - CONSOLIDATED STATEMENTS OF OPERATIONS",
+            "http://x/role/CONSOLIDATEDSTATEMENTSOFCOMPREHENSIVEINCOME": "0000003 - Statement - CONSOLIDATED STATEMENTS OF COMPREHENSIVE INCOME",
+            "http://x/role/CONSOLIDATEDBALANCESHEETS": "0000004 - Statement - CONSOLIDATED BALANCE SHEETS",
+            "http://x/role/CONSOLIDATEDBALANCESHEETSParenthetical": "0000005 - Statement - CONSOLIDATED BALANCE SHEETS (Parenthetical)",
+            "http://x/role/CONSOLIDATEDSTATEMENTSOFSHAREHOLDERSEQUITY": "0000006 - Statement - CONSOLIDATED STATEMENTS OF SHAREHOLDERS' EQUITY",
+            "http://x/role/CONSOLIDATEDSTATEMENTSOFCASHFLOWS": "0000007 - Statement - CONSOLIDATED STATEMENTS OF CASH FLOWS",
+            "http://x/role/Revenue": "0000020 - Disclosure - Revenue",
+        }
+        doc = _sec_doc(trees={role: [_node("Assets")] for role in roles}, definitions=roles)
+
+        result = extract_financial_statements(doc)
+
+        assert set(result.statements) == {"IS", "CIS", "BS", "SCE", "CF"}
+        assert result.statements["BS"].linkrole.endswith("CONSOLIDATEDBALANCESHEETS")
+        assert result.separate_statements == {}
+
+    def test_axes_drawn_in_the_statement_keep_their_facts(self):
+        """Apple's income statement splits net sales by Product and Service [Axis] on the face."""
+        role = "http://x/role/CONSOLIDATEDSTATEMENTSOFOPERATIONS"
+        tree = [
+            _node(
+                "IncomeStatementAbstract",
+                [
+                    _node(
+                        "StatementTable",
+                        [
+                            _node("ProductOrServiceAxis", [_node("ProductMember", depth=3)], depth=2),
+                            _node(
+                                "StatementLineItems",
+                                [_node("RevenueFromContractWithCustomerExcludingAssessedTax", depth=3)],
+                                depth=2,
+                            ),
+                        ],
+                        depth=1,
+                    )
+                ],
+            )
+        ]
+        facts = [
+            _usd_fact("RevenueFromContractWithCustomerExcludingAssessedTax", "383285000000"),
+            _usd_fact(
+                "RevenueFromContractWithCustomerExcludingAssessedTax",
+                "298085000000",
+                {"srt:ProductOrServiceAxis": "us-gaap:ProductMember"},
+            ),
+            # A segment breakdown is note detail, not part of this statement.
+            _usd_fact(
+                "RevenueFromContractWithCustomerExcludingAssessedTax",
+                "162560000000",
+                {"us-gaap:StatementBusinessSegmentsAxis": "aapl:AmericasSegmentMember"},
+            ),
+        ]
+        doc = _sec_doc({role: tree}, {role: "0000002 - Statement - CONSOLIDATED STATEMENTS OF OPERATIONS"}, facts)
+
+        income = extract_financial_statements(doc).statements["IS"]
+        revenue = [
+            (item.value, item.dimensions)
+            for item in income.line_items
+            if item.concept_local_name == "RevenueFromContractWithCustomerExcludingAssessedTax"
+        ]
+        assert revenue == [
+            (Decimal("383285000000"), {}),
+            (Decimal("298085000000"), {"srt:ProductOrServiceAxis": "us-gaap:ProductMember"}),
+        ]
+
+    def test_dart_documents_keep_loader_order(self):
+        """No SEC definitions → the existing DART behaviour (first role in loader order wins) is unchanged."""
+        role_a = "http://dart.fss.or.kr/role/ifrs/dart_role-D210000"
+        role_b = "http://example.com/role/StatementOfFinancialPosition"
+        doc = _sec_doc(
+            trees={role_a: [_node("Assets")], role_b: [_node("Equity")]},
+            definitions={
+                role_a: "[D210000] Statement of financial position",
+                role_b: "Statement of Financial Position",
+            },
+        )
+
+        assert extract_financial_statements(doc).statements["BS"].linkrole == role_a
+
+
+class TestDuplicateFacts:
+    ROLE = "http://x/role/CONSOLIDATEDSTATEMENTSOFOPERATIONS"
+    DEFINITION = "0000002 - Statement - CONSOLIDATED STATEMENTS OF OPERATIONS"
+
+    def _income(self, facts):
+        doc = _sec_doc({self.ROLE: [_node("NetIncomeLoss")]}, {self.ROLE: self.DEFINITION}, facts)
+        return [i.value for i in extract_financial_statements(doc).statements["IS"].line_items]
+
+    def test_consistent_duplicates_collapse_to_one_row(self):
+        """The same number tagged in the statement and in a note is one fact."""
+        copies = [_usd_fact("NetIncomeLoss", "96995000000").model_copy(update={"context_id": "c-1"}) for _ in range(4)]
+        assert self._income(copies) == [Decimal("96995000000")]
+
+    def test_different_values_in_the_same_context_are_kept(self):
+        a = _usd_fact("NetIncomeLoss", "96995000000").model_copy(update={"context_id": "c-1"})
+        b = _usd_fact("NetIncomeLoss", "97000000000").model_copy(update={"context_id": "c-1"})
+        assert self._income([a, b]) == [Decimal("96995000000"), Decimal("97000000000")]
+
+    def test_same_value_in_different_contexts_is_kept(self):
+        a = _usd_fact("NetIncomeLoss", "1").model_copy(update={"context_id": "c-2023"})
+        b = _usd_fact("NetIncomeLoss", "1").model_copy(update={"context_id": "c-2022"})
+        assert self._income([a, b]) == [Decimal("1"), Decimal("1")]
+
+    def test_same_number_written_with_different_precision_is_one_fact(self):
+        a = _usd_fact("NetIncomeLoss", "18.00").model_copy(update={"context_id": "c-1"})
+        b = _usd_fact("NetIncomeLoss", "18").model_copy(update={"context_id": "c-1"})
+        assert self._income([a, b]) == [Decimal("18.00")]
