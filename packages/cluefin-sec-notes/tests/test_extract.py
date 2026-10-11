@@ -213,6 +213,10 @@ def test_incorporated_by_reference_items(synthetic):
         "<p>Item 11. Executive Compensation</p><p>Refer to pages 12 through 21 of the Proxy Statement, which are "
         "incorporated herein by reference.</p>"
         "<p>Item 12. Security Ownership</p><p>" + "A long table of owners. " * 200 + "incorporated by reference.</p>"
+        "<p>Item 13. Certain Relationships</p><p>Information in response to this Item 13 will be in the 2026 Proxy "
+        "Statement and is incorporated into this item by reference.</p>"
+        "<p>Item 14. Principal Accountant Fees</p><p>Information in response to this Item 14 can be found in the 2025 "
+        "Annual Report to Shareholders under “Audit Fees.”</p>"
     )
     result = extract(synthetic.filing(toc="", content=content))
     assert [(item.key.number, item.incorporated_by_reference) for item in result] == [
@@ -220,6 +224,8 @@ def test_incorporated_by_reference_items(synthetic):
         ("10", True),
         ("11", True),
         ("12", False),
+        ("13", True),
+        ("14", True),
     ]
     # 다음 Part 헤딩은 앞 Item 끝에서 잘라 낸다.
     assert result.item("9B").text == "Item 9B. Other Information\n\nNone."
@@ -280,4 +286,27 @@ def test_unverified_toc_link_far_from_any_heading_is_replaced_by_pattern(synthet
     assert result.item("12").method == "pattern"
     assert result.item("12").heading.startswith("Item 12.")
     assert "note text" in result.item("8").text
+    assert result.warnings == ()
+
+
+def test_combined_heading_of_non_adjacent_items_is_not_non_sequential(synthetic):
+    content = (
+        "<p>Items 1 and 2. Business and Properties</p><p>a</p><p>Item 1A. Risk Factors</p><p>b</p>"
+        "<p>Item 3. Legal Proceedings</p><p>c</p>"
+    )
+    result = extract(synthetic.filing(toc="", content=content))
+    assert [item.key.number for item in result] == ["1", "2", "1A", "3"]
+    assert NON_SEQUENTIAL_LAYOUT not in {finding.code for finding in result.findings}
+
+
+def test_part_three_omitted_by_general_instruction_sentence(synthetic):
+    items = [item for item in synthetic.TOC_ITEMS if item[0] != "III"]
+    content = synthetic.body(items).replace(
+        "<div>Body of item 9C.</div>",
+        "<div>Body of item 9C.</div><p>Pursuant to General Instruction G(3), the information required by Items 10 "
+        "through 14 is incorporated herein by reference from our proxy statement.</p>",
+    )
+    result = extract(synthetic.filing(toc=synthetic.workiva_toc(items), content=content))
+    assert len(result.missing) == 5
+    assert result.omitted == result.missing
     assert result.warnings == ()

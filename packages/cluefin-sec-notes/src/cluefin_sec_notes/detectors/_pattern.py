@@ -169,22 +169,28 @@ def _neighbours(context: DetectionContext, known: dict[ItemKey, int], position: 
 
 
 def _longest_chain(context: DetectionContext, candidates: list[Candidate]) -> list[Candidate]:
-    """문서 순서와 카탈로그 순서가 함께 (같은 블록이면 같거나) 증가하는 가장 긴 사슬. 같은 길이면 앞쪽 것."""
-    ordered = sorted(candidates, key=lambda candidate: (candidate.block, _position(context, candidate.key)))
-    best: list[int] = [1] * len(ordered)
-    previous: list[int] = [-1] * len(ordered)
-    for current, candidate in enumerate(ordered):
+    """문서 순서와 카탈로그 순서가 함께 증가하는 가장 긴 헤딩 사슬. 같은 길이면 앞쪽 것.
+
+    한 블록의 후보(결합 헤딩 "Items 1 and 2")는 한 마디로 묶고 그중 가장 앞 Item의 카탈로그 위치로 순서를 본다.
+    그래야 "Items 1 and 2" 다음의 "Item 1A"가 사슬에 들어간다.
+    """
+    nodes: dict[int, list[Candidate]] = {}
+    for candidate in candidates:
+        nodes.setdefault(candidate.block, []).append(candidate)
+    blocks = sorted(nodes)
+    positions = [min(_position(context, candidate.key) for candidate in nodes[block]) for block in blocks]
+    best = [1] * len(blocks)
+    previous = [-1] * len(blocks)
+    for current in range(len(blocks)):
         for earlier in range(current):
-            other = ordered[earlier]
-            later_in_catalog = _position(context, other.key) < _position(context, candidate.key)
-            if later_in_catalog and best[earlier] + 1 > best[current]:
+            if positions[earlier] < positions[current] and best[earlier] + 1 > best[current]:
                 best[current] = best[earlier] + 1
                 previous[current] = earlier
-    if not ordered:
+    if not blocks:
         return []
-    end = max(range(len(ordered)), key=lambda index: (best[index], -index))
-    chain = []
+    end = max(range(len(blocks)), key=lambda index: (best[index], -index))
+    chain: list[Candidate] = []
     while end != -1:
-        chain.append(ordered[end])
+        chain = nodes[blocks[end]] + chain
         end = previous[end]
-    return list(reversed(chain))
+    return chain

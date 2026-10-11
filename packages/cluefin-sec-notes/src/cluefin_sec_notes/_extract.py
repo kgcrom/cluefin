@@ -42,14 +42,19 @@ _SIGNATURES = "signatures"
 # 같은 문서의 F-페이지 등)에 있다는 뜻이다.
 _INCORPORATION_MAX_CHARS = 2500
 _INCORPORATION = re.compile(
-    r"incorporated\s+(?:herein\s+|in\s+this\s+\w+\s+)?by\s+reference"
+    r"incorporated\s+(?:\w+\s+){0,3}?by\s+reference"
     r"|will\s+be\s+(?:included|set\s+forth|contained|presented)\s+in\s+.{0,120}?proxy\s+statement"
     r"|(?:is|are)\s+(?:included|set\s+forth|contained)\s+(?:in|under)\s+.{0,160}?"
-    r"(?:proxy\s+statement|annual\s+report\s+to\s+(?:share|stock)holders)",
+    r"(?:proxy\s+statement|annual\s+report\s+to\s+(?:share|stock)holders)"
+    r"|can\s+be\s+found\s+(?:in|under)\s+.{0,160}?(?:proxy\s+statement|annual\s+report\s+to\s+(?:share|stock)holders)",
     re.IGNORECASE | re.DOTALL,
 )
 # 제목만 있는 줄로 볼 최대 길이(생략 판단에서 "Risk Factors" 같은 헤딩을 찾을 때).
 _MAX_TITLE_LINE = 150
+# 생략·참조 편입을 말하는 문장. 이 문장에만 나오는 Item은 공시가 생략한 것이다.
+_STATED_OMISSION = re.compile(
+    r"incorporated\s+(?:\w+\s+){0,3}?by\s+reference|omitted|general\s+instruction", re.IGNORECASE
+)
 # Item 표기 행이 이만큼 있는 표는 목차다.
 _TOC_TABLE_ROWS = 3
 # Part 헤딩("PART II", "PART II — OTHER INFORMATION")으로 볼 최대 길이. Item 끝에 붙으면 잘라 낸다.
@@ -162,7 +167,11 @@ def _order_conflict(candidate: Candidate, accepted: dict[ItemKey, Candidate], ca
 
 
 def _non_sequential(accepted: dict[ItemKey, Candidate], catalog: FormCatalog) -> list[Finding]:
-    ordered = sorted(accepted.values(), key=lambda candidate: _catalog_index(catalog, candidate.key))
+    # 결합 헤딩("Items 1 and 2")의 뒤쪽 Item은 앞쪽 Item 자리에 있는 것이 정상이라 빼고 본다.
+    first_at_block: dict[int, Candidate] = {}
+    for candidate in sorted(accepted.values(), key=lambda candidate: _catalog_index(catalog, candidate.key)):
+        first_at_block.setdefault(candidate.block, candidate)
+    ordered = sorted(first_at_block.values(), key=lambda candidate: _catalog_index(catalog, candidate.key))
     for previous, current in zip(ordered, ordered[1:], strict=False):
         if current.block < previous.block:
             return [
@@ -266,7 +275,9 @@ def _missing(document: SecDocument, catalog: FormCatalog, accepted: dict[ItemKey
 
 
 def _omitted(context: DetectionContext, missing: tuple[ItemKey, ...]) -> tuple[ItemKey, ...]:
-    """목차 밖 어디에도 "Item N" 표기나 그 Item 제목만 있는 줄이 없는 Item. 목차에만 있으면 본문에서 뺀 것이다."""
+    """목차 밖 어디에도 "Item N" 표기나 그 Item 제목만 있는 줄이 없는 Item. 목차에만 있으면 본문에서 뺀 것이다.
+    본문 문장에 나오더라도 그 문장이 생략·참조 편입을 말하면("Items 10 through 14 … are incorporated by reference
+    pursuant to General Instruction G") 생략이다."""
     if not missing:
         return ()
     document, catalog = context.document, context.catalog
@@ -275,14 +286,14 @@ def _omitted(context: DetectionContext, missing: tuple[ItemKey, ...]) -> tuple[I
         for index, block in enumerate(document.blocks)
         if not context.is_excluded(index) and not _is_toc_table(block)
     ]
-    joined = "\n".join(texts)
     lines = {normalize_title(line) for text in texts for line in text.split("\n") if len(line) <= _MAX_TITLE_LINE}
     omitted = []
     for key in missing:
         mention = re.compile(rf"\bitems?\s*{re.escape(key.number)}(?![\dA-Za-z])", re.IGNORECASE)
         spec = catalog.spec(key.part, key.number)
         titles = {normalize_title(title) for title in spec.titles} if spec else set()
-        if not mention.search(joined) and not (titles & lines):
+        mentioned = any(mention.search(text) and not _STATED_OMISSION.search(text) for text in texts)
+        if not mentioned and not (titles & lines):
             omitted.append(key)
     return tuple(omitted)
 

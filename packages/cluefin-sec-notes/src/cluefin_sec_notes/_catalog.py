@@ -108,6 +108,8 @@ FORM_10K = FormCatalog(
             "Quantitative and Qualitative Disclosures About Risk",
         ),
         _item("II", "8", "Financial Statements and Supplementary Data"),
+        # SEC 서식에는 없고 일부 회사가 붙이는 Item(스모크 코퍼스에서 unknown_item으로 발견, 2개 연도에 반복).
+        _item("II", "8A", "Unaudited Supplemental Presentation of Statements of Financial Condition", optional=True),
         _item("II", "9", "Changes in and Disagreements With Accountants on Accounting and Financial Disclosure"),
         _item("II", "9A", "Controls and Procedures", since=date(2003, 8, 14)),
         _item("II", "9B", "Other Information", since=date(2004, 8, 23)),

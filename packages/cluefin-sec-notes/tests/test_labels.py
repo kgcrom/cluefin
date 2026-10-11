@@ -12,6 +12,7 @@ from cluefin_sec_notes._labels import parse_part
         ("Item 1.Business", ItemLabel(None, ("1",), "Business")),
         ("item 1a — risk", ItemLabel(None, ("1A",), "risk")),
         ("Items 1 and 2. Business and Properties", ItemLabel(None, ("1", "2"), "Business and Properties")),
+        ("ITEMS 1. AND 2.\tBUSINESS AND PROPERTIES", ItemLabel(None, ("1", "2"), "BUSINESS AND PROPERTIES")),
         ("Items 10, 11, 12, and 13 for each", ItemLabel(None, ("10", "11", "12", "13"), "for each")),
         ("Items 10 through 14.", ItemLabel(None, ("10", "11", "12", "13", "14"), "")),
         ("Item 9A(T). Controls", ItemLabel(None, ("9A",), "Controls")),

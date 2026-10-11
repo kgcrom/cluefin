@@ -10,10 +10,10 @@ from cluefin_sec_notes._catalog import FormCatalog, ItemSpec
 _ROMAN = r"(?:IV|V?I{1,3}|V)"
 # 줄 맨 앞의 "Part II", "PART II." 등. Item 표기 앞에 붙어 오기도 한다("Part II, Item 7").
 _PART = re.compile(rf"^\s*part\s+({_ROMAN})\b[\s.,:;—–-]*", re.IGNORECASE)
-# "Item 1A.", "ITEM 7A:", "Items 1 and 2.", "Items 10, 11, 12, 13 and 14", "Item 2.02", "Item 9A(T)"
+# "Item 1A.", "ITEM 7A:", "Items 1 and 2.", "ITEMS 1. AND 2.", "Items 10, 11, 12, 13 and 14", "Item 2.02", "Item 9A(T)"
 _NUMBER = r"\d{1,2}[A-D]?(?:\.\d{2})?(?:\(T\))?"
 _ITEM = re.compile(
-    rf"^\s*items?\s*({_NUMBER}(?:(?:\s*(?:,|and|&|through|to))+\s*(?:items?\s*)?{_NUMBER})*)(?![\w])[\s.,:;—–-]*",
+    rf"^\s*items?\s*({_NUMBER}(?:\.?(?:\s*(?:,|and|&|through|to))+\s*(?:items?\s*)?{_NUMBER})*)(?![\w])[\s.,:;—–-]*",
     re.IGNORECASE,
 )
 _ITEM_NUMBER = re.compile(_NUMBER, re.IGNORECASE)

@@ -5,7 +5,8 @@ manifest 항목의 기대값 필드:
 - `items`: `{"1A": {"starts_with": "Item 1A. Risk Factors", "chars": 73082}}` — 사람이 경계를 확인한 핵심 Item.
   추출한 Item 텍스트가 `starts_with`로 시작하고 길이가 `chars`의 ±`CHAR_TOLERANCE` 안이어야 한다.
   정확한 길이를 아직 모르면(교차참조형처럼 지금 틀리는 Item) `min_chars`·`max_chars`로 범위만 적는다.
-  `incorporated`: 참조 편입(`Item.incorporated_by_reference`) 여부.
+  `incorporated`: 참조 편입(`Item.incorporated_by_reference`) 여부. `excludes`: 들어 있으면 안 되는 문자열
+  (다음 Item 헤딩이 섞이지 않았는지).
 - `present`: `["1B", "2", …]` — 있기만 하면 되는 Item.
 - `known_bad`: `{"7": "이유"}` — 지금은 틀리는 것으로 알려진 Item. 틀리면 통과, **맞으면** `fixed`로 실패시킨다
   (개선을 manifest에 반영하라는 신호). 반대로 기대값이 틀리면 `failed`(회귀).
@@ -78,6 +79,9 @@ def _problem(item: Item | None, expectation: dict) -> str:
         return f"길이 {len(text)} (최소 {expectation['min_chars']})"
     if "max_chars" in expectation and len(text) > expectation["max_chars"]:
         return f"길이 {len(text)} (최대 {expectation['max_chars']})"
+    excluded = expectation.get("excludes")
+    if excluded and excluded in text:
+        return f"들어 있으면 안 되는 {excluded!r}가 있다"
     incorporated = expectation.get("incorporated")
     if incorporated is not None and item.incorporated_by_reference != incorporated:
         return f"참조 편입 {item.incorporated_by_reference} (기대 {incorporated})"
