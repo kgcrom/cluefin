@@ -87,3 +87,38 @@ def test_without_page_numbers_nothing_is_added():
         "1A",
         "8",
     }
+
+
+def _index_table(*rows: tuple[str, ...]) -> str:
+    return (
+        "<table>" + "".join("<tr>" + "".join(f"<td>{cell}</td>" for cell in row) + "</tr>" for row in rows) + "</table>"
+    )
+
+
+def test_cross_reference_index_sets_item_ranges_from_page_numbers():
+    index = _index_table(
+        ("Item Number", "", "Page"),
+        ("Part I", "", ""),
+        ("1.", "Business", "2, 4"),
+        ("1A.", "Risk Factors", "3"),
+        ("1B.", "Unresolved Staff Comments", "Not Applicable"),
+        ("Part III", "", ""),
+        ("11.", "Executive Compensation", "**"),
+        ("15.", "Exhibits and Financial Statement Schedules", "99"),
+    )
+    html = filing(
+        f"<div>FORM 10-K CROSS-REFERENCE INDEX</div>{index}<div>1</div>{BREAK}",
+        page("2", "OVERVIEW", "We make things."),
+        page("3", "RISK FACTORS", "Things may go wrong."),
+        page("4", "MORE ABOUT THE BUSINESS", "We sell things."),
+    )
+    result = extract_items(parse_filing(html))
+
+    business = result.item("1")
+    assert business.method == "cross_reference"
+    assert business.text == "OVERVIEW\n\nWe make things.\n\nMORE ABOUT THE BUSINESS\n\nWe sell things."
+    assert result.item("1A").text == "RISK FACTORS\n\nThings may go wrong."
+    assert {key.number for key in result.omitted} >= {"1B", "11"}  # 공시가 이 문서에 없다고 밝혔다
+    assert not {finding.key.number for finding in result.warnings if finding.key} & {"1B", "11"}
+    unresolved = [finding for finding in result.findings if finding.code == PAGE_REFERENCE_UNRESOLVED]
+    assert [finding.key.number for finding in unresolved] == ["15"]

@@ -96,14 +96,19 @@ def extract_items(
     findings.extend(resolve_findings)
     findings.extend(_non_sequential(accepted, catalog))
     items = tuple(_mark_incorporated(item) for item in _build_items(document, catalog, accepted))
-    items, reference_findings = resolve_page_references(document, catalog, items)
+    ranged = {key for key, candidate in accepted.items() if candidate.ranges}
+    items, reference_findings = resolve_page_references(document, catalog, items, skip=ranged)
     findings.extend(reference_findings)
     findings.extend(_empty_items(document, catalog, items))
     missing = _missing(document, catalog, accepted)
     omitted = _omitted(context, missing)
     if not _is_amendment(document):
         for key in missing:
-            if key in omitted:
+            if key in context.absent:
+                findings.append(
+                    Finding(OMITTED_ITEM, f"{key} 본문이 이 문서에 없다({context.absent[key]})", severity=INFO, key=key)
+                )
+            elif key in omitted:
                 findings.append(Finding(OMITTED_ITEM, f"{key} 표기가 문서에 없다", severity=INFO, key=key))
             else:
                 findings.append(Finding(MISSING_ITEM, f"{key}을 찾지 못했다(문서에 표기는 있다)", key=key))
@@ -285,12 +290,15 @@ def _missing(document: SecDocument, catalog: FormCatalog, accepted: dict[ItemKey
 
 
 def _omitted(context: DetectionContext, missing: tuple[ItemKey, ...]) -> tuple[ItemKey, ...]:
-    """목차 밖 어디에도 "Item N" 표기나 그 Item 제목만 있는 줄이 없는 Item. 목차에만 있으면 본문에서 뺀 것이다.
+    """공시가 본문이 없다고 밝힌 Item(`context.absent`)과, 목차 밖 어디에도 "Item N" 표기나 그 Item 제목만 있는 줄이
+    없는 Item. 목차에만 있으면 본문에서 뺀 것이다.
     본문 문장에 나오더라도 그 문장이 생략·참조 편입을 말하면("Items 10 through 14 … are incorporated by reference
     pursuant to General Instruction G") 생략이다."""
     if not missing:
         return ()
     document, catalog = context.document, context.catalog
+    stated = [key for key in missing if key in context.absent]
+    missing = tuple(key for key in missing if key not in context.absent)
     texts = [
         block_text(block)
         for index, block in enumerate(document.blocks)
@@ -305,7 +313,7 @@ def _omitted(context: DetectionContext, missing: tuple[ItemKey, ...]) -> tuple[I
         mentioned = any(mention.search(text) and not _STATED_OMISSION.search(text) for text in texts)
         if not mentioned and not (titles & lines):
             omitted.append(key)
-    return tuple(omitted)
+    return tuple(sorted({*stated, *omitted}, key=lambda key: _catalog_index(catalog, key)))
 
 
 def _is_toc_table(block) -> bool:

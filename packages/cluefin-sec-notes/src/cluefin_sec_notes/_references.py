@@ -22,12 +22,12 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from dataclasses import replace
 
 from cluefin_sec_notes._catalog import FormCatalog, ItemSpec
 from cluefin_sec_notes._document import SecDocument
-from cluefin_sec_notes._model import PAGE_REFERENCE_UNRESOLVED, Finding, Item
+from cluefin_sec_notes._model import PAGE_REFERENCE_UNRESOLVED, Finding, Item, ItemKey
 from cluefin_sec_notes._pages import (
     EXTERNAL_DOCUMENT,
     PageIndex,
@@ -50,8 +50,9 @@ def item_body(item: Item) -> str:
 
 
 def resolve_page_references(
-    document: SecDocument, catalog: FormCatalog, items: Sequence[Item]
+    document: SecDocument, catalog: FormCatalog, items: Sequence[Item], *, skip: Collection[ItemKey] = ()
 ) -> tuple[tuple[Item, ...], list[Finding]]:
+    """`skip`: 탐지기가 구간을 정한 Item(교차참조 색인). 그 구간 텍스트 속 쪽 번호는 따라가지 않는다."""
     if not document.pages:
         return tuple(items), []
     index = PageIndex(document.pages)
@@ -61,7 +62,7 @@ def resolve_page_references(
     for item in items:
         spec = catalog.spec(item.key.part, item.key.number)
         body = item_body(item)
-        if spec is None or not _may_refer(spec, item, body):
+        if spec is None or item.key in skip or not _may_refer(spec, item, body):
             resolved.append(item)
             continue
         references = [reference for reference in find_page_references(body) if not reference.external][:1]
