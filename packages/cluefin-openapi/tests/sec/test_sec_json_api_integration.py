@@ -6,7 +6,7 @@ from decimal import Decimal
 
 import pytest
 
-from cluefin_openapi.sec import Client, FilingEntry, SecNotFoundError
+from cluefin_openapi.sec import Client, FactValue, FilingEntry, SecNotFoundError, values_as_of
 
 from ._env import SEC_USER_AGENT, requires_user_agent
 
@@ -16,6 +16,8 @@ APPLE_CIK = 320193
 # Apple FY2023 10-K (period 2022-09-25 ~ 2023-09-30): net sales $383,285M.
 APPLE_FY2023_10K = "0000320193-23-000106"
 APPLE_FY2023_REVENUE = Decimal("383285000000")
+# Celsius restated its 2021-12-31 payables in the FY2022 10-K filed 2023-03-01 (91,478,612 -> 72,442,000).
+CELSIUS_CIK = 1341766
 
 
 @pytest.fixture(scope="module")
@@ -85,6 +87,22 @@ def test_company_concept_revenue(client: Client):
     concept = client.xbrl.company_concept(APPLE_CIK, "us-gaap", "RevenueFromContractWithCustomerExcludingAssessedTax")
     values = {(v.accn, v.start, v.end): v.val for v in concept.units["USD"]}
     assert values[(APPLE_FY2023_10K, date(2022, 9, 25), date(2023, 9, 30))] == APPLE_FY2023_REVENUE
+
+
+def test_values_as_of_follows_a_restatement(client: Client):
+    concept = client.xbrl.company_concept(CELSIUS_CIK, "us-gaap", "AccountsPayableAndAccruedLiabilitiesCurrent")
+
+    def year_end_2021(as_of: date) -> FactValue:
+        rows = values_as_of(concept.units["USD"], as_of)
+        return next(row for row in rows if row.start is None and row.end == date(2021, 12, 31))
+
+    original = year_end_2021(date(2022, 4, 1))
+    assert (original.accn, original.form, original.val) == ("0000950170-22-003965", "10-K", Decimal("91478612"))
+    # The restating 10-K was filed on 2023-03-01, so that day still sees the last 10-Q's comparative.
+    before = year_end_2021(date(2023, 3, 1))
+    assert (before.accn, before.val) == ("0000950170-22-023818", Decimal("91479000"))
+    restated = year_end_2021(date(2023, 3, 2))
+    assert (restated.accn, restated.form, restated.val) == ("0000950170-23-005612", "10-K", Decimal("72442000"))
 
 
 def test_company_concept_unknown_tag_is_not_found(client: Client):

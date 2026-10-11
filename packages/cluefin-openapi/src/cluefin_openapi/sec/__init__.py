@@ -17,6 +17,7 @@ from cluefin_openapi.sec._exceptions import (
     SecServerError,
     SecTimeoutError,
 )
+from cluefin_openapi.sec._point_in_time import values_as_of
 from cluefin_openapi.sec._reference import Reference
 from cluefin_openapi.sec._reference_types import CompanyTicker, CompanyTickerExchange
 from cluefin_openapi.sec._submissions import Submissions
@@ -51,6 +52,7 @@ __all__ = [
     "Submissions",
     "SubmissionsFile",
     "XbrlApi",
+    "values_as_of",
     "SecAPIError",
     "SecAuthorizationError",
     "SecClientError",
