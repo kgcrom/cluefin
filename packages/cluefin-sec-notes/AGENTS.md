@@ -5,10 +5,33 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules (Codacy
 ## Scope
 
 - **Pure local-file parser** — downloading lives in cluefin-openapi (`sec.archives.download_filing_document`).
-- No dependencies. stdlib `html.parser` builds the tree; lxml was rejected because libxml2 silently drops
-  content deeper than 256 levels without `huge_tree`, and `recover=True` doesn't say what it dropped. Tree code
-  never recurses (Python's recursion limit is hit by real filings).
-- Out of scope by decision: pre-2001 `.txt` filings, 20-F and other forms, exhibits (8-K EX-99.1 is a separate file).
+- HTML: stdlib `html.parser` builds the tree; lxml was rejected because libxml2 silently drops content deeper than
+  256 levels without `huge_tree`, and `recover=True` doesn't say what it dropped. Tree code never recurses
+  (Python's recursion limit is hit by real filings). The only dependency, `defusedxml`, is for the ownership XML.
+- Item extraction is out of scope for pre-2001 `.txt` filings, 20-F and other forms, and exhibits (8-K EX-99.1 is a
+  separate file).
+- Form 3/4/5 live in the `ownership` subpackage (decided 2026-10-12 instead of a separate package: no shared code,
+  but a new package would only add setup). Keep the two apart; 13F is planned to join `ownership`.
+
+## Ownership (Form 3/4/5)
+
+Measured 2026-10-12 on 477 filings (eight issuers, Forms 3/4/5 and amendments, 2004–2026, schema X0201–X0609).
+
+- `primaryDocument` is always the XSL rendering path (`xslF345X0n/<name>.xml`); the raw XML is `<name>.xml` at
+  the folder root, which `download_filing_document` accepts as is. Accessions with a filing agent's prefix are
+  reachable under the issuer's CIK too.
+- Parse with `defusedxml` only; element types come from the local `_xml.Element` Protocol because even a
+  type-only import from stdlib `xml` is a Codacy critical (root AGENTS.md).
+- Rows are filled from field tables (`_parse._Field`: name, path, converter). The transaction code's footnotes sit
+  on `transactionCoding`, not on the code element, hence `notes_path` (412 such references). Every `footnoteId` in
+  the 477 filings landed in some row's `footnote_ids`; keep it that way when adding fields.
+- Shapes seen and handled: booleans `1`/`0`/`true`/`false` (nothing else, so anything else raises); decimals without
+  a leading zero (`.20`); empty cells; price given only as a footnote (M/C/A rows); derivative amounts as
+  `transactionTotalValue` instead of shares; `valueOwnedFollowingTransaction`; omitted relationship flags (= False);
+  an empty `transactionCoding` on Form 5 holdings (ignored).
+- The issuer is not always the company whose submissions you listed: 4 of 477 were that company reporting its
+  stake in another issuer. Amendments may carry no rows (5 of 34 4/A fixed only signature or remarks); the parser
+  does not merge an amendment with its original.
 
 ## Detection: rules that look arbitrary but aren't
 

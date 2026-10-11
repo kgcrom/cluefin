@@ -31,7 +31,7 @@ uv 워크스페이스 모노레포:
 | [cluefin-ta](packages/cluefin-ta/) | 순수 Python 기술적 분석 (TA-Lib 호환, 45개 지표) |
 | [cluefin-xbrl](packages/cluefin-xbrl/) | DART XBRL 재무제표 파서 |
 | [cluefin-dart-notes](packages/cluefin-dart-notes/) | DART 공시 원문(dart4 XML) 파서 — 섹션·표·주석 노트 (XBRL에 없는 서술형 내용) |
-| [cluefin-sec-notes](packages/cluefin-sec-notes/) | SEC EDGAR 공시 원문(10-K/10-Q/8-K HTML) 파서 — Item 단위 본문 |
+| [cluefin-sec-notes](packages/cluefin-sec-notes/) | SEC EDGAR 공시 원문 파서 — 10-K/10-Q/8-K HTML의 Item 단위 본문, Form 3·4·5 내부자 소유 신고(XML) |
 | [cluefin-openapi-cli](apps/cluefin-openapi-cli/) | Agent-friendly broker CLI (`list`, `describe`, broker-first command path) |
 | [cluefin-desk](apps/cluefin-desk/) | TUI 대시보드 (기술적 분석, KIS·DART·XBRL 재무, LightGBM + SHAP 예측) |
 
