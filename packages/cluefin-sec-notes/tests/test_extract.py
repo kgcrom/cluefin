@@ -2,6 +2,7 @@ import pytest
 
 from cluefin_sec_notes import (
     EMPTY_ITEM,
+    IMPLAUSIBLE_LENGTH,
     MISSING_ITEM,
     NON_SEQUENTIAL_LAYOUT,
     OMITTED_ITEM,
@@ -92,10 +93,7 @@ def test_missing_target_is_reported_and_heading_fills_the_gap(synthetic):
     market_risk = result.item("7A")
     assert market_risk.method == "pattern"
     assert market_risk.text == "Item 7A. Quantitative and Qualitative Disclosures About Market Risk\n\nBody of item 7A."
-    assert (
-        result.item("7").text
-        == "Item 7. Management’s Discussion and Analysis of Financial Condition and Results of Operations\n\nBody of item 7."
-    )
+    assert result.item("7").text.endswith("Results of operations paragraph 59: revenue grew in the period.")
     assert {finding.code for finding in result.warnings} == {TOC_TARGET_MISSING}
 
 
@@ -260,7 +258,7 @@ def test_next_page_item_list_left_at_the_end_is_trimmed(synthetic):
     page_break = '<hr style="page-break-after:always"/>'
     content = (
         synthetic.body()
-        .replace("<div>Body of item 7.</div>", f"<div>Body of item 7.</div>{page_break}<div>Item 7</div>")
+        .replace(synthetic.MDNA, f"{synthetic.MDNA}{page_break}<div>Item 7</div>")
         .replace(synthetic.STATEMENTS, f"{synthetic.STATEMENTS}{page_break}<div>Item 9, 9A</div>")
         .replace(
             "<div>Body of item 9A.</div>",
@@ -270,7 +268,7 @@ def test_next_page_item_list_left_at_the_end_is_trimmed(synthetic):
     result = extract(synthetic.filing(content=content))
     assert result.item("8").text.endswith("Consolidated balance sheet line 199\t$\t1,199")
     assert result.item("9A").text == "Item 9A. Controls and Procedures\n\nBody of item 9A."
-    assert result.item("7").text.endswith("Body of item 7.\n\nItem 7")
+    assert result.item("7").text.endswith("revenue grew in the period.\n\nItem 7")
 
 
 def test_statements_item_holding_only_a_reference_is_warned(synthetic):
@@ -286,6 +284,14 @@ def test_statements_item_holding_only_a_reference_is_warned(synthetic):
         "reference.</div>",
     )
     assert extract(synthetic.filing(content=incorporated)).warnings == ()
+
+
+def test_mdna_body_after_the_market_risk_heading_is_warned(synthetic):
+    """복수 등록인 통합형: Item 7 헤딩 바로 뒤에 7A 헤딩이 오고 MD&A 본문은 그 뒤에 있다."""
+    content = synthetic.body().replace(f"<div>Body of item 7.</div>{synthetic.MDNA}", "")
+    content = content.replace("<div>Body of item 7A.</div>", "<div>Body of item 7A.</div>" + synthetic.MDNA)
+    result = extract(synthetic.filing(content=content))
+    assert [(finding.code, finding.key) for finding in result.warnings] == [(IMPLAUSIBLE_LENGTH, ItemKey("II", "7"))]
 
 
 def test_incorporated_by_reference_items(synthetic):

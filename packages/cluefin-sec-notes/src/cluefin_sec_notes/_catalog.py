@@ -30,6 +30,8 @@ class ItemSpec:
             생략(`omitted`)이 아니라 `missing_item`이다. 표기가 목차에만 있고 본문은 헤딩 없이 시작하는 공시가 있어서다.
         financial_statements: 재무제표 Item(10-K Item 8). 본문이 참조 몇 줄뿐이고 문서에 F-쪽이 따로 있으면, 쪽 번호를
             적지 않았어도("appears following Item 15") F-쪽을 본문으로 본다.
+        min_chars, max_chars: 본문 길이(`Item.text`)의 그럴듯한 범위. 벗어나면 이웃 Item과의 경계가 틀린 것이다
+            (`implausible_length`). 코퍼스 분포가 확실히 갈리는 Item에만 둔다(값의 근거는 패키지 AGENTS.md).
     """
 
     part: str | None
@@ -43,6 +45,8 @@ class ItemSpec:
     lists_documents: bool = False
     financial_statements: bool = False
     mandatory: bool = False
+    min_chars: int | None = None
+    max_chars: int | None = None
 
     @property
     def titles(self) -> tuple[str, ...]:
@@ -122,12 +126,18 @@ FORM_10K = FormCatalog(
             "Market for the Registrant's Common Equity and Related Stockholder Matters",
         ),
         _item("II", "6", "Reserved", "Selected Financial Data", "Selected Consolidated Financial Data"),
-        _item("II", "7", "Management's Discussion and Analysis of Financial Condition and Results of Operations"),
+        _item(
+            "II",
+            "7",
+            "Management's Discussion and Analysis of Financial Condition and Results of Operations",
+            min_chars=3_000,
+        ),
         _item(
             "II",
             "7A",
             "Quantitative and Qualitative Disclosures About Market Risk",
             "Quantitative and Qualitative Disclosures About Risk",
+            max_chars=150_000,
         ),
         _item("II", "8", "Financial Statements and Supplementary Data", financial_statements=True),
         # SEC 서식에는 없고 일부 회사가 붙이는 Item(스모크 코퍼스에서 unknown_item으로 발견, 2개 연도에 반복).
@@ -205,8 +215,11 @@ FORM_10Q = FormCatalog(
             "3",
             "Quantitative and Qualitative Disclosures About Market Risk",
             "Quantitative and Qualitative Disclosure About Market Risk",
+            max_chars=50_000,
         ),
-        _item("I", "4", "Controls and Procedures", mandatory=True),  # "Item 4T"도 이 Item이다(`parse_item_label`)
+        _item(
+            "I", "4", "Controls and Procedures", mandatory=True, max_chars=30_000
+        ),  # "Item 4T"도 이 Item이다(`parse_item_label`)
         _item("II", "1", "Legal Proceedings"),
         _item("II", "1A", "Risk Factors", since=date(2005, 12, 1)),
         _item(

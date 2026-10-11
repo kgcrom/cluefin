@@ -1,6 +1,6 @@
 """10-Q: Part마다 Item 번호가 다시 시작한다. 합성 공시는 관찰한 레이아웃만 흉내 낸다."""
 
-from cluefin_sec_notes import MISSING_ITEM, ItemKey, extract_items, parse_filing
+from cluefin_sec_notes import IMPLAUSIBLE_LENGTH, MISSING_ITEM, ItemKey, extract_items, parse_filing
 
 COVER = (
     '<div style="display:none"><ix:header><ix:hidden>'
@@ -171,3 +171,11 @@ def test_statements_without_heading_right_after_the_toc():
     assert statements_item.method == "statements_after_toc"
     assert statements_item.text.startswith("Balance Sheet\t2026")
     assert result.item("2", "I").heading.startswith("Item 2.")
+
+
+def test_controls_item_swallowing_the_statements_is_warned():
+    """Part I Item 1 헤딩을 못 찾으면 뒤쪽 재무제표가 Item 4에 들어온다. Item 4는 원래 짧다."""
+    content = body().replace("<div>Body of I 4.</div>", "<div>Body of I 4.</div>" + STATEMENTS * 5)
+    result = extract_items(parse_filing(filing(toc(), content)))
+    warned = {finding.key for finding in result.warnings if finding.code == IMPLAUSIBLE_LENGTH}
+    assert warned == {ItemKey("I", "4")}

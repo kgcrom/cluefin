@@ -24,6 +24,7 @@ from cluefin_sec_notes._labels import normalize_title, parse_item_label, parse_p
 from cluefin_sec_notes._model import (
     CONFLICTING_CANDIDATE,
     EMPTY_ITEM,
+    IMPLAUSIBLE_LENGTH,
     INFO,
     MISSING_ITEM,
     NON_SEQUENTIAL_LAYOUT,
@@ -115,6 +116,7 @@ def extract_items(
     findings.extend(reference_findings)
     findings.extend(_empty_items(document, catalog, items))
     findings.extend(_short_statements(catalog, items, findings))
+    findings.extend(_implausible_lengths(catalog, items, findings, skip=ranged))
     missing = _missing(document, catalog, accepted)
     omitted = _omitted(context, missing)
     if not _is_amendment(document):
@@ -327,6 +329,28 @@ def _short_statements(catalog: FormCatalog, items: tuple[Item, ...], findings: l
             )
             short.append(Finding(STATEMENTS_NOT_FOUND, message, key=item.key, block=item.start))
     return short
+
+
+def _implausible_lengths(
+    catalog: FormCatalog, items: tuple[Item, ...], findings: list[Finding], *, skip: set[ItemKey]
+) -> list[Finding]:
+    """본문 길이가 카탈로그 범위를 벗어난 Item. 참조 편입, 쪽을 덧붙인 Item, 탐지기가 구간을 정한 Item(교차참조 색인),
+    이미 경고가 난 Item은 뺀다."""
+    warned = {finding.key for finding in findings if finding.severity == WARNING}
+    unusual = []
+    for item in items:
+        spec = catalog.spec(item.key.part, item.key.number)
+        if spec is None or item.incorporated_by_reference or len(item.ranges) > 1 or item.key in skip | warned:
+            continue
+        length = len(item.text)
+        if spec.max_chars is not None and length > spec.max_chars:
+            message = f"{item.key} 본문이 {length:,}자로 너무 길다(앞뒤 Item을 못 찾아 그 본문까지 들어왔을 수 있다)"
+        elif spec.min_chars is not None and length < spec.min_chars:
+            message = f"{item.key} 본문이 {length:,}자로 너무 짧다(본문이 다음 Item 헤딩 뒤에 있을 수 있다)"
+        else:
+            continue
+        unusual.append(Finding(IMPLAUSIBLE_LENGTH, message, key=item.key, block=item.start))
+    return unusual
 
 
 def _missing(document: SecDocument, catalog: FormCatalog, accepted: dict[ItemKey, Candidate]) -> tuple[ItemKey, ...]:

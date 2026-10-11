@@ -12,6 +12,7 @@ from cluefin_sec_notes._labels import ItemLabel, match_title, normalize_title, p
 from cluefin_sec_notes._model import (
     CONFLICTING_CANDIDATE,
     EMPTY_ITEM,
+    IMPLAUSIBLE_LENGTH,
     MISSING_ITEM,
     NON_SEQUENTIAL_LAYOUT,
     OMITTED_ITEM,
@@ -53,6 +54,7 @@ __all__ = [
     "FORM_10Q",
     "Finding",
     "FormCatalog",
+    "IMPLAUSIBLE_LENGTH",
     "Item",
     "ItemExtraction",
     "ItemKey",
