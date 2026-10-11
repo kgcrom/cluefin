@@ -99,12 +99,63 @@ def test_missing_target_is_reported_and_heading_fills_the_gap(synthetic):
 
 
 def test_without_any_heading_the_item_is_missing_not_guessed(synthetic):
-    content = synthetic.body().replace(f'<div id="{synthetic.anchor_id("7A")}"></div>', "").replace("Item 7A. ", "")
+    content = (
+        synthetic.body()
+        .replace(f'<div id="{synthetic.anchor_id("7A")}"></div>', "")
+        .replace(
+            '<div style="font-weight:700">Item 7A. Quantitative and Qualitative Disclosures About Market Risk</div>', ""
+        )
+    )
     result = extract(synthetic.filing(content=content))
     assert result.item("7A") is None
     assert ItemKey("II", "7A") in result.missing
     assert {finding.code for finding in result.warnings} == {TOC_TARGET_MISSING, MISSING_ITEM}
     assert result.item("7").text.endswith("Body of item 7A.")
+
+
+def test_title_only_heading_in_the_item_heading_style_fills_the_gap(synthetic):
+    """ "Item 13." 표기 없이 제목만 있는 헤딩. 같은 제목의 굵지 않은 소제목(앞 Item 본문 속)은 헤딩이 아니고,
+    단수·복수 차이("Transaction")는 같은 제목으로 본다."""
+    heading = '<div style="font-weight:700">Item 13. Certain Relationships and Related Transactions, and Director Independence</div>'
+    content = (
+        synthetic.body(anchored=False)
+        .replace(
+            "<div>Body of item 12.</div>",
+            "<div>Body of item 12.</div><div>Certain Relationships and Related Transactions</div><div>None.</div>",
+        )
+        .replace(
+            heading,
+            '<div style="font-weight:700">CERTAIN RELATIONSHIPS AND RELATED TRANSACTION, AND DIRECTOR INDEPENDENCE</div>',
+        )
+    )
+    result = extract(synthetic.filing(toc="", content=content))
+    item = result.item("13")
+    assert item.method == "heading_style"
+    assert item.text == "CERTAIN RELATIONSHIPS AND RELATED TRANSACTION, AND DIRECTOR INDEPENDENCE\n\nBody of item 13."
+    assert result.item("12").text.endswith("Certain Relationships and Related Transactions\n\nNone.")
+    assert result.missing == ()
+
+
+def test_title_line_in_a_data_table_is_not_a_mention(synthetic):
+    """데이터 표 칸의 "Other Information" 행만 있으면 9B는 표기가 없는 것(생략)이다."""
+    table = (
+        "<table>"
+        + "".join(
+            f"<tr><td>{label}</td><td>{value}</td></tr>"
+            for label, value in [("Lease cost", "$1"), ("Other Information", ""), ("Term", "2 years"), ("Rate", "5%")]
+        )
+        + "</table>"
+    )
+    content = (
+        synthetic.body()
+        .replace(f'<div id="{synthetic.anchor_id("9B")}"></div>', "")
+        .replace('<div style="font-weight:700">Item 9B. Other Information</div><div>Body of item 9B.</div>', "")
+        .replace("<div>Body of item 8.</div>", "<div>Body of item 8.</div>" + table)
+    )
+    toc = synthetic.workiva_toc([item for item in synthetic.TOC_ITEMS if item[1] != "9B"])
+    result = extract(synthetic.filing(toc=toc, content=content))
+    assert ItemKey("II", "9B") in result.omitted
+    assert MISSING_ITEM not in {finding.code for finding in result.warnings}
 
 
 def test_items_before_their_since_date_are_not_missing(synthetic):

@@ -2,10 +2,16 @@
 
 from cluefin_sec_notes.detectors._base import Detection, DetectionContext, Detector
 from cluefin_sec_notes.detectors._pattern import PatternDetector
+from cluefin_sec_notes.detectors._style import HeadingStyleDetector
 from cluefin_sec_notes.detectors._toc import TocAnchorDetector
 from cluefin_sec_notes.detectors._xref import CrossReferenceDetector
 
-DEFAULT_DETECTORS: tuple[Detector, ...] = (TocAnchorDetector(), CrossReferenceDetector(), PatternDetector())
+DEFAULT_DETECTORS: tuple[Detector, ...] = (
+    TocAnchorDetector(),
+    CrossReferenceDetector(),
+    PatternDetector(),
+    HeadingStyleDetector(),
+)
 
 __all__ = [
     "DEFAULT_DETECTORS",
@@ -13,6 +19,7 @@ __all__ = [
     "Detection",
     "DetectionContext",
     "Detector",
+    "HeadingStyleDetector",
     "PatternDetector",
     "TocAnchorDetector",
 ]

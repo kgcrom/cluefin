@@ -56,6 +56,8 @@ _MAX_TITLE_LINE = 150
 _STATED_OMISSION = re.compile(
     r"incorporated\s+(?:\w+\s+){0,3}?by\s+reference|omitted|general\s+instruction", re.IGNORECASE
 )
+# 헤딩을 담은 표로 볼 최대 행 수(글자 있는 행). "Item 1." | "Business"처럼 표로 짠 헤딩.
+_MAX_HEADING_ROWS = 3
 # Item 표기 행이 이만큼 있는 표는 목차다.
 _TOC_TABLE_ROWS = 3
 # Part 헤딩("PART II", "PART II — OTHER INFORMATION")으로 볼 최대 길이. Item 끝에 붙으면 잘라 낸다.
@@ -299,12 +301,20 @@ def _omitted(context: DetectionContext, missing: tuple[ItemKey, ...]) -> tuple[I
     document, catalog = context.document, context.catalog
     stated = [key for key in missing if key in context.absent]
     missing = tuple(key for key in missing if key not in context.absent)
-    texts = [
-        block_text(block)
+    kept = [
+        block
         for index, block in enumerate(document.blocks)
         if not context.is_excluded(index) and not _is_toc_table(block)
     ]
-    lines = {normalize_title(line) for text in texts for line in text.split("\n") if len(line) <= _MAX_TITLE_LINE}
+    texts = [block_text(block) for block in kept]
+    # 제목 줄은 문단과 헤딩을 담은 작은 표에서만 모은다. 데이터 표 칸의 "Other Information" 행은 헤딩이 아니다.
+    lines = {
+        normalize_title(line)
+        for block in kept
+        if _may_hold_heading(block)
+        for line in block_text(block).split("\n")
+        if len(line) <= _MAX_TITLE_LINE
+    }
     omitted = []
     for key in missing:
         mention = re.compile(rf"\bitems?\s*{re.escape(key.number)}(?![\dA-Za-z])", re.IGNORECASE)
@@ -314,6 +324,14 @@ def _omitted(context: DetectionContext, missing: tuple[ItemKey, ...]) -> tuple[I
         if not mentioned and not (titles & lines):
             omitted.append(key)
     return tuple(sorted({*stated, *omitted}, key=lambda key: _catalog_index(catalog, key)))
+
+
+def _may_hold_heading(block) -> bool:
+    if isinstance(block, Paragraph):
+        return True
+    return (
+        isinstance(block, Table) and sum(1 for row in block.rows if any(cell.text for cell in row)) <= _MAX_HEADING_ROWS
+    )
 
 
 def _is_toc_table(block) -> bool:
