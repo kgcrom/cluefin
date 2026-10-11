@@ -255,6 +255,23 @@ def test_unknown_item_is_reported(synthetic):
     assert result.item("1").text == "Item 1. Business\n\na\n\nItem 1D. Artificial Intelligence\n\nb"
 
 
+def test_next_page_item_list_left_at_the_end_is_trimmed(synthetic):
+    page_break = '<hr style="page-break-after:always"/>'
+    content = (
+        synthetic.body()
+        .replace("<div>Body of item 7.</div>", f"<div>Body of item 7.</div>{page_break}<div>Item 7</div>")
+        .replace("<div>Body of item 8.</div>", f"<div>Body of item 8.</div>{page_break}<div>Item 9, 9A</div>")
+        .replace(
+            "<div>Body of item 9A.</div>",
+            f"<div>Body of item 9A.</div>{page_break}<div>Part II, III</div><div>Item 9B, 10, 11</div>",
+        )
+    )
+    result = extract(synthetic.filing(content=content))
+    assert result.item("8").text == "Item 8. Financial Statements and Supplementary Data\n\nBody of item 8."
+    assert result.item("9A").text == "Item 9A. Controls and Procedures\n\nBody of item 9A."
+    assert result.item("7").text.endswith("Body of item 7.\n\nItem 7")
+
+
 def test_incorporated_by_reference_items(synthetic):
     content = (
         "<p>Item 9B. Other Information</p><p>None.</p><p>PART III</p>"

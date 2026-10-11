@@ -28,8 +28,11 @@ Each rule below replaced an approach that broke real filings. Don't go back to t
 - **Page furniture compares Item/Part labels literally.** Stripping digits for the repeat check (needed for page
   numbers) also erased real "Item 9." headings on filings that start a new Item on every page. Sentences ending
   in "." ("None.") are excluded from repeat detection.
-- **Leftover page headers listing that page's Items ("Item 9, 9A")** are known-bad, not fixed: treating a bare
-  item label after a Part header as furniture would also delete real "PART II" + "Item 5." headings.
+- **Page headers listing that page's Items ("Item 9, 9A", "Part II, III") are trimmed only at a range's end.**
+  Treating a bare item label after a Part header as furniture anywhere would also delete real "PART II" +
+  "Item 5." headings. At the end it's safe: the next Item's real heading is that Item's start block. Only labels
+  without a title that don't name the Item itself are trimmed (a continued page's own "Item 7" stays). In the
+  corpus all 18 such labels were the last block; 16 sat in golden `ok` Items within the length tolerance.
 - **Page references follow only the first closed range in a near-empty body.** Following every reference in a
   short body broke golden 9A ("report on page F-2"), 7A ("see … on page 75"), Item 2 (a trailing "refer to pages
   51–54") and Item 7 (second sentence "read in conjunction with … pages 165–314"). Current rule: non-statement

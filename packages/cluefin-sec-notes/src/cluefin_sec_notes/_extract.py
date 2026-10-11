@@ -17,7 +17,7 @@ import re
 from collections.abc import Sequence
 from dataclasses import replace
 
-from cluefin_sec_notes._blocks import Paragraph, Table
+from cluefin_sec_notes._blocks import PageBreak, Paragraph, Table
 from cluefin_sec_notes._catalog import FormCatalog, catalog_for
 from cluefin_sec_notes._document import SecDocument, block_text
 from cluefin_sec_notes._labels import normalize_title, parse_item_label, parse_part
@@ -219,13 +219,14 @@ def _build_items(document: SecDocument, catalog: FormCatalog, accepted: dict[Ite
     end_of_items = _signatures(document, last_start)
     items = []
     for candidate in ordered:
+        shared = tuple(other.key for other in ordered if other.block == candidate.block and other.key != candidate.key)
         if candidate.ranges:
             end = candidate.ranges[0][1]
         else:
             later = [start for start in starts if start > candidate.block]
-            end = _trim_part_heading(document, candidate.block, later[0] if later else end_of_items)
+            own = {key.number for key in (candidate.key, *shared)}
+            end = _trim_page_header(document, candidate.block, later[0] if later else end_of_items, own)
         spec = catalog.spec(candidate.key.part, candidate.key.number)
-        shared = tuple(other.key for other in ordered if other.block == candidate.block and other.key != candidate.key)
         items.append(
             Item(
                 key=candidate.key,
@@ -243,15 +244,24 @@ def _build_items(document: SecDocument, catalog: FormCatalog, accepted: dict[Ite
     return tuple(items)
 
 
-def _trim_part_heading(document: SecDocument, start: int, end: int) -> int:
-    """구간 끝의 Part 헤딩은 다음 Part의 것이다."""
-    while end - 1 > start:
-        block = document.blocks[end - 1]
-        if not (isinstance(block, Paragraph) and len(block.text) <= _PART_HEADING_MAX and parse_part(block.text)):
+def _trim_page_header(document: SecDocument, start: int, end: int, own: set[str]) -> int:
+    """구간 끝의 Part 헤딩은 다음 Part의 것이다. 제목 없이 다른 Item 번호만 있는 줄("Item 9, 9A", "Part II, III")은
+    다음 쪽 머리말이다(그 쪽에 실린 Item 목록). 구간 끝만 보므로 실제 헤딩(다음 Item의 시작 블록)은 건드리지 않는다.
+    끝의 쪽 나눔은 건너뛰고 보되, 잘라 낼 줄이 없으면 남긴다."""
+    position = end
+    while position - 1 > start:
+        block = document.blocks[position - 1]
+        position -= 1
+        if isinstance(block, PageBreak):
+            continue
+        if not (isinstance(block, Paragraph) and len(block.text) <= _PART_HEADING_MAX):
             break
-        if parse_item_label(block.text) is not None:
+        label = parse_item_label(block.text)
+        if label is None and parse_part(block.text) is None:
             break
-        end -= 1
+        if label is not None and (label.rest or own.intersection(label.numbers)):
+            break
+        end = position
     return end
 
 
