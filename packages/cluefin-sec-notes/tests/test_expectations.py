@@ -1,5 +1,5 @@
 from cluefin_sec_notes import extract_items, parse_filing
-from cluefin_sec_notes._expectations import FAILED, FIXED, KNOWN_BAD, OK, check_expectations
+from cluefin_sec_notes._expectations import FAILED, FIXED, KNOWN_BAD, OK, accept_items, check_expectations
 
 
 def test_statuses(synthetic):
@@ -25,3 +25,19 @@ def test_char_tolerance(synthetic):
     far = {"items": {"1A": {"chars": length * 2}}}
     assert check_expectations(extraction, near)[0].status == OK
     assert check_expectations(extraction, far)[0].detail == f"길이 {length} (기대 {length * 2})"
+
+
+def test_accept_items_turns_fixed_known_bad_into_expectations(synthetic):
+    extraction = extract_items(parse_filing(synthetic.filing()))
+    entry = {
+        "items": {"1A": {"min_chars": 10_000, "excludes": "Item 2."}},
+        "present": ["2", "3"],
+        "known_bad": {"1A": "was too short", "2": "was missing"},
+    }
+    assert accept_items(extraction, entry, ["1A", "2", "99"]) == ["99"]
+    risk = extraction.item("1A")
+    assert entry["items"]["1A"] == {"starts_with": risk.heading[:60], "chars": len(risk.text), "excludes": "Item 2."}
+    assert entry["items"]["2"]["chars"] == len(extraction.item("2").text)
+    assert entry["present"] == ["3"]
+    assert "known_bad" not in entry
+    assert {check.status for check in check_expectations(extraction, entry)} == {OK}
