@@ -2,8 +2,8 @@
 
 `asyncio.open_connection` is replaced by a fake that hands the client a real
 `asyncio.StreamReader` (server → client bytes) and a writer that records every frame
-(client → server). The fake answers the handshake with the correct
-`Sec-WebSocket-Accept` computed from the key the client actually sent, so connect(),
+(client → server). The handshake key is pinned to the RFC 6455 sample nonce and the
+fake answers with the spec's `Sec-WebSocket-Accept` for it, so connect(),
 the receive loop, subscribe/unsubscribe and close() run unmodified with no network.
 
 NH PLUG has no heartbeat or auto-reconnect (see the module docstring); what is covered
@@ -12,8 +12,8 @@ here is ping → pong, close/EOF handling and the frame codec.
 
 import asyncio
 import base64
-import hashlib
 import json
+import os
 import re
 import struct
 
@@ -23,12 +23,13 @@ import pytest_asyncio
 from cluefin_openapi.nhplug._exceptions import NHPlugAPIError, NHPlugNetworkError
 from cluefin_openapi.nhplug._socket_client import SocketClient, WebSocketEvent
 
-_WS_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 _KEY_PATTERN = re.compile(rb"Sec-WebSocket-Key: (?P<key>[A-Za-z0-9+/=]+)\r\n")
 
-
-def _websocket_accept(ws_key: str) -> str:
-    return base64.b64encode(hashlib.sha1((ws_key + _WS_GUID).encode(), usedforsecurity=False).digest()).decode()
+# RFC 6455 section 1.3 sample handshake: a client that sends this 16-byte nonce as its key
+# must get back this Sec-WebSocket-Accept. Using the spec's pair checks the client against
+# an outside answer instead of re-deriving SHA1 here.
+_RFC6455_NONCE = b"the sample nonce"
+_RFC6455_ACCEPT = "s3pPLMBiTxaQ9kYGzzhZRbK+xOo="
 
 
 def _server_frame(payload: bytes, opcode: int = 0x1, mask_key: bytes | None = None) -> bytes:
@@ -92,11 +93,12 @@ class FakeServerWriter:
     def _handshake_response(self, request: bytes) -> bytes:
         match = _KEY_PATTERN.search(request)
         assert match is not None
-        accept = _websocket_accept(match.group("key").decode())
+        assert match.group("key") == base64.b64encode(_RFC6455_NONCE)
+        accept = _RFC6455_ACCEPT
         if self.handshake == "rejected":
             return b"HTTP/1.1 403 Forbidden\r\n\r\n"
         if self.handshake == "bad_accept":
-            accept = _websocket_accept("some-other-key")
+            accept = "not-the-expected-accept"
         return f"HTTP/1.1 101 Switching Protocols\r\nSec-WebSocket-Accept: {accept}\r\n\r\n".encode()
 
     async def drain(self) -> None:
@@ -136,6 +138,9 @@ class FakeServer:
 @pytest.fixture
 def server(monkeypatch) -> FakeServer:
     fake = FakeServer()
+    # pin only the 16-byte handshake key to the RFC nonce; frame masks stay random
+    real_urandom = os.urandom
+    monkeypatch.setattr(os, "urandom", lambda size: _RFC6455_NONCE if size == 16 else real_urandom(size))
     monkeypatch.setattr(asyncio, "open_connection", fake.open_connection)
     return fake
 

@@ -5,7 +5,6 @@
 
 import asyncio
 import base64
-import hashlib
 import json
 import ssl
 import struct
@@ -270,18 +269,15 @@ async def _noop_handshake(*args, **kwargs):
     return None
 
 
-def _websocket_accept(ws_key_bytes: bytes) -> str:
-    ws_key = base64.b64encode(ws_key_bytes).decode()
-    return base64.b64encode(
-        hashlib.sha1(
-            (ws_key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode(),
-            usedforsecurity=False,
-        ).digest()
-    ).decode()
+# RFC 6455 section 1.3 sample handshake: a client that sends this 16-byte nonce as its key
+# must get back this Sec-WebSocket-Accept. Using the spec's pair checks the client against
+# an outside answer instead of re-deriving SHA1 here.
+_RFC6455_NONCE = b"the sample nonce"
+_RFC6455_ACCEPT = "s3pPLMBiTxaQ9kYGzzhZRbK+xOo="
 
 
 def _handshake_response(status: bytes = b"101 Switching Protocols") -> bytes:
-    return b"HTTP/1.1 " + status + b"\r\nSec-WebSocket-Accept: " + _websocket_accept(b"0" * 16).encode() + b"\r\n\r\n"
+    return b"HTTP/1.1 " + status + b"\r\nSec-WebSocket-Accept: " + _RFC6455_ACCEPT.encode() + b"\r\n\r\n"
 
 
 def _client_opcode(frame: bytes) -> int:
@@ -319,7 +315,7 @@ class TestConnectEndToEnd:
 
         monkeypatch.setattr(asyncio, "open_connection", fake_open_connection)
         # deterministic handshake key (16 bytes) and frame masks (4 bytes)
-        monkeypatch.setattr("os.urandom", lambda size: b"0" * size)
+        monkeypatch.setattr("os.urandom", lambda size: _RFC6455_NONCE[:size])
 
         async with client:
             assert client.connected is True
@@ -374,12 +370,12 @@ class TestHandshake:
     async def test_handshake_accepts_valid_response(self, client, monkeypatch):
         client._writer = FakeWriter()
         client._reader = FakeReader(handshake_response=_handshake_response())
-        monkeypatch.setattr("os.urandom", Mock(return_value=b"0" * 16))
+        monkeypatch.setattr("os.urandom", Mock(return_value=_RFC6455_NONCE))
 
         await client._websocket_handshake("api.kiwoom.com", 10000, "/api/us/websocket")
 
         request = client._writer.writes[0].decode()
-        assert f"Sec-WebSocket-Key: {base64.b64encode(b'0' * 16).decode()}\r\n" in request
+        assert f"Sec-WebSocket-Key: {base64.b64encode(_RFC6455_NONCE).decode()}\r\n" in request
         assert "Sec-WebSocket-Version: 13\r\n" in request
 
     @pytest.mark.asyncio

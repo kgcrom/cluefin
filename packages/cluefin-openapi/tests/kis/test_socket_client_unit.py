@@ -2,7 +2,6 @@
 
 import asyncio
 import base64
-import hashlib
 import json
 import struct
 from unittest.mock import AsyncMock, Mock
@@ -55,13 +54,11 @@ class FakeReader:
         return chunk
 
 
-def _websocket_accept(ws_key: str) -> str:
-    return base64.b64encode(
-        hashlib.sha1(
-            (ws_key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode(),
-            usedforsecurity=False,
-        ).digest()
-    ).decode()
+# RFC 6455 section 1.3 sample handshake: a client that sends this 16-byte nonce as its key
+# must get back this Sec-WebSocket-Accept. Using the spec's pair checks the client against
+# an outside answer instead of re-deriving SHA1 here.
+_RFC6455_NONCE = b"the sample nonce"
+_RFC6455_ACCEPT = "s3pPLMBiTxaQ9kYGzzhZRbK+xOo="
 
 
 def _server_frame(payload: bytes, opcode: int = 0x1, mask_key: bytes | None = None) -> bytes:
@@ -307,13 +304,14 @@ class TestWebSocketMessage:
 class TestWebSocketHandshakeAndFrames:
     @pytest.mark.asyncio
     async def test_websocket_handshake_success(self, socket_client, monkeypatch):
-        ws_key = base64.b64encode(b"0" * 16).decode()
-        accept = _websocket_accept(ws_key)
+        ws_key = base64.b64encode(_RFC6455_NONCE).decode()
         socket_client._reader = FakeReader(
-            handshake_response=(f"HTTP/1.1 101 Switching Protocols\r\nSec-WebSocket-Accept: {accept}\r\n\r\n").encode()
+            handshake_response=(
+                f"HTTP/1.1 101 Switching Protocols\r\nSec-WebSocket-Accept: {_RFC6455_ACCEPT}\r\n\r\n"
+            ).encode()
         )
         socket_client._writer = FakeWriter()
-        monkeypatch.setattr("os.urandom", Mock(return_value=b"0" * 16))
+        monkeypatch.setattr("os.urandom", Mock(return_value=_RFC6455_NONCE))
 
         await socket_client._websocket_handshake("example.test", 80)
 
@@ -327,7 +325,7 @@ class TestWebSocketHandshakeAndFrames:
             handshake_response=b"HTTP/1.1 101 Switching Protocols\r\nSec-WebSocket-Accept: wrong\r\n\r\n"
         )
         socket_client._writer = FakeWriter()
-        monkeypatch.setattr("os.urandom", Mock(return_value=b"0" * 16))
+        monkeypatch.setattr("os.urandom", Mock(return_value=_RFC6455_NONCE))
 
         with pytest.raises(KISNetworkError, match="invalid Sec-WebSocket-Accept"):
             await socket_client._websocket_handshake("example.test", 80)
@@ -554,7 +552,7 @@ class TestSocketSubscriptions:
             await asyncio.Event().wait()
 
         monkeypatch.setattr(asyncio, "open_connection", fake_open_connection)
-        monkeypatch.setattr("os.urandom", Mock(return_value=b"0" * 16))
+        monkeypatch.setattr("os.urandom", Mock(return_value=_RFC6455_NONCE))
         socket_client._receive_loop = idle_receive_loop
 
         await socket_client.connect()
@@ -618,9 +616,8 @@ def _decode_client_frame(frame: bytes) -> tuple[int, bytes]:
     return frame[0] & 0x0F, bytes(byte ^ mask_key[index % 4] for index, byte in enumerate(payload))
 
 
-def _handshake_response(status: bytes = b"101 Switching Protocols", ws_key_bytes: bytes = b"0" * 16) -> bytes:
-    accept = _websocket_accept(base64.b64encode(ws_key_bytes).decode())
-    return b"HTTP/1.1 " + status + b"\r\nSec-WebSocket-Accept: " + accept.encode() + b"\r\n\r\n"
+def _handshake_response(status: bytes = b"101 Switching Protocols") -> bytes:
+    return b"HTTP/1.1 " + status + b"\r\nSec-WebSocket-Accept: " + _RFC6455_ACCEPT.encode() + b"\r\n\r\n"
 
 
 class TestSendFrameEncoding:
@@ -665,7 +662,7 @@ class TestSocketConnect:
             await asyncio.Event().wait()
 
         monkeypatch.setattr(asyncio, "open_connection", fake_open_connection)
-        monkeypatch.setattr("os.urandom", Mock(return_value=b"0" * 16))
+        monkeypatch.setattr("os.urandom", Mock(return_value=_RFC6455_NONCE))
         socket_client._receive_loop = fake_receive_loop
 
         await socket_client.connect()
@@ -872,7 +869,7 @@ class TestSocketDebugMode:
     async def test_handshake_in_debug_mode(self, debug_client, monkeypatch):
         debug_client._reader = FakeReader(handshake_response=_handshake_response())
         debug_client._writer = FakeWriter()
-        monkeypatch.setattr("os.urandom", Mock(return_value=b"0" * 16))
+        monkeypatch.setattr("os.urandom", Mock(return_value=_RFC6455_NONCE))
 
         await debug_client._websocket_handshake("example.test", 80)
 
