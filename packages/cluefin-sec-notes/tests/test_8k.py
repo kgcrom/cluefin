@@ -92,3 +92,8 @@ def test_item_heading_in_the_first_row_of_an_exhibit_table():
     )
     assert html != EARNINGS
     assert [item.key.number for item in extract_items(parse_filing(html))] == ["2.02", "9.01"]
+
+
+def test_last_item_ends_at_a_singular_signature_heading():
+    result = extract_items(parse_filing(EARNINGS.replace("<div>SIGNATURES</div>", "<div>SIGNATURE</div>")))
+    assert result.item("9.01").text.endswith("(d) Exhibits. 99.1 Press release.")

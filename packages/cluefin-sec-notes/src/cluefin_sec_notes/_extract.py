@@ -38,7 +38,7 @@ from cluefin_sec_notes._model import (
 from cluefin_sec_notes._references import REFERENCE_BODY_MAX_CHARS, item_body, resolve_page_references
 from cluefin_sec_notes.detectors import DEFAULT_DETECTORS, DetectionContext, Detector
 
-_SIGNATURES = "signatures"
+_SIGNATURES = frozenset({"signatures", "signature"})  # 8-K는 단수가 흔하다
 # 참조 편입 문구. 본문이 `REFERENCE_BODY_MAX_CHARS` 이하이고 문구가 있으면 Item 내용이 다른 문서(위임장,
 # Exhibit 13 연차보고서 등)에 있다는 뜻이다. 같은 문서의 쪽을 가리키면 `resolve_page_references`가 그 쪽을 붙이고
 # 참조 편입 표시를 거둔다.
@@ -275,7 +275,7 @@ def _signatures(document: SecDocument, after: int) -> int:
     """마지막 Item 뒤의 서명란 헤딩 위치. 없으면 문서 끝."""
     for index in range(after + 1, len(document.blocks)):
         block = document.blocks[index]
-        if isinstance(block, Paragraph) and normalize_title(block.text) == _SIGNATURES:
+        if isinstance(block, Paragraph) and normalize_title(block.text) in _SIGNATURES:
             return index
     return len(document.blocks)
 
