@@ -102,6 +102,23 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   Asset-class specs are also public at `https://www.nhplug.com/openapi-docs/<slug>/openapi.json`
   (the declared source of truth; slugs: common·krstock·gbstock·krfuture·gbfuture·krbond·krgold).
 
+## SEC EDGAR (sec)
+
+- No API key: SEC identifies callers by the User-Agent ("Name email"), from `SEC_USER_AGENT` in `.env`.
+  Per SEC's access policy, an undeclared agent **and** a client over 10 req/s both get **403**, not 429, and the
+  over-rate block lasts about 10 minutes. That is why 403 is never retried and the default is 8 req/s.
+- `Client._request` only accepts `https://www.sec.gov` and `https://data.sec.gov` URLs, and every value that goes
+  into a URL path passes `_ids.py` (CIK, accession number, single path segment). Keep it that way when adding
+  endpoints — EFTS full-text search (`efts.sec.gov`) would need the allow-list widened on purpose.
+- SEC integration tests read `SEC_USER_AGENT` with `dotenv_values` (`tests/sec/_env.py`), never `load_dotenv`:
+  `.env` is the broker **prod** pair, and loading it would leak `KIS_ENV=prod` etc. into every later test.
+- `submissions.filings.recent` is column arrays (one list per field), at least 1,000 filings or one year;
+  the rest is in `filings.files` pages. `FilingEntry` declares every live column — the integration test fails
+  when SEC adds one, so declare it rather than relaxing the test.
+- companyfacts/companyconcept repeat the same period's value once per filing that reported it (original,
+  next year's comparative, amendments). `fy`/`fp` describe the **filing**, not the value's period; only one row
+  per period carries `frame`. Pick rows by `start`/`end`/`accn`, not by `fy`.
+
 ## Kiwoom scope
 
 - Kiwoom US-stock (overseas) support is **Python-only**; the sibling `cluefin-openapi-ts`

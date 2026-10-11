@@ -26,6 +26,7 @@
 - **ETF, 섹터, 테마**: ETF 정보, 업종별 정보, 테마별 종목 분류
 - **시장 상황 모니터링**: 시장 지수, 거래량, 시장 동향
 - **기업 공시 분석 (DART)**: 공시 원문, 재무제표, 대량보유상황 등 공시 데이터
+- **미국 공시 (SEC EDGAR)**: 티커→CIK, 제출 이력, XBRL 값(companyfacts·companyconcept·frames), 공시 원문·XBRL 파일 다운로드
 
 ## ⚡ 빠른 시작
 
@@ -110,6 +111,9 @@ NHPLUG_ENV=dev # options: prod | dev(default)
 
 # 금융감독원 DART API 키 설정
 DART_AUTH_KEY=your_dart_auth_key_here
+
+# SEC EDGAR — API 키 대신 User-Agent에 "이름 이메일"을 밝혀야 합니다 (없으면 SEC가 403)
+SEC_USER_AGENT="Your Name your.email@example.com"
 ```
 
 ### 기본 사용법
@@ -421,6 +425,38 @@ asyncio.run(main())
 
 세션이 남아 끊기지 않을 때는 `nhplug_client.common.close_websocket_session()`으로 정리합니다.
 
+## 🇺🇸 SEC EDGAR 사용 예제
+
+SEC는 API 키가 없고, 모든 요청의 User-Agent에 이름과 이메일을 요구합니다. 클라이언트는 초당 8회(SEC 한도 10회)로
+요청을 제한하고, 429·5xx는 재시도합니다. 403은 User-Agent가 없거나 한도를 넘겨 차단된 것이라 재시도하지 않습니다.
+
+```python
+import os
+
+from cluefin_openapi.sec import Client
+
+client = Client(user_agent=os.environ["SEC_USER_AGENT"])
+
+# 티커 → CIK
+cik = client.reference.ticker_to_cik("AAPL")  # 320193
+
+# 제출 이력 (최신순). include_older=True 면 오래된 페이지까지 받는다
+tenks = client.submissions.filings(cik, forms=["10-K"])
+latest = tenks[0]  # accession_number, filing_date, report_date, primary_document, is_inline_xbrl ...
+
+# XBRL 값: 회사 전체 / 개념 하나 / 기간 하나의 모든 회사
+facts = client.xbrl.company_facts(cik)
+revenue = facts.concept("us-gaap", "RevenueFromContractWithCustomerExcludingAssessedTax")
+concept = client.xbrl.company_concept(cik, "us-gaap", "NetIncomeLoss")
+frame = client.xbrl.frames("us-gaap", "Assets", "USD", "CY2023Q4I")
+
+# 공시 원문과 XBRL 파일 (cluefin-xbrl 의 parse_xbrl_directory 로 파싱)
+client.archives.download_filing_document(cik, latest.accession_number, latest.primary_document, destination="aapl")
+client.archives.download_xbrl_files(cik, latest.accession_number, destination="aapl-xbrl")
+```
+
+`BrokerClientFactory().create("sec")` 도 `.env` 의 `SEC_USER_AGENT` 로 같은 클라이언트를 만듭니다.
+
 ## 🔌 키움 웹소켓 사용 예제 (조건검색·실시간 시세)
 
 키움 웹소켓 기능은 HTTP `Client`와 별개로 비동기(`asyncio`)로 동작합니다.
@@ -678,6 +714,7 @@ packages/cluefin-openapi/
 │   ├── nhplug/                    # NH투자증권 PLUG API 클라이언트
 │   │   ├── _krstock_*.py         # 국내주식 주문/조회/시세
 │   │   └── _overseas_stock_*.py  # 해외주식 주문/조회/시세
+│   ├── sec/                       # SEC EDGAR 클라이언트 (미국 공시)
 │   └── __init__.py
 ├── tests/                        # 테스트 스위트
 │   ├── kiwoom/                   # 키움증권 API 테스트
@@ -689,9 +726,10 @@ packages/cluefin-openapi/
 │   ├── nhplug/                    # NH투자증권 PLUG API 테스트
 │   │   ├── test_*_unit.py        # 단위 테스트 (requests_mock 사용)
 │   │   └── test_*_integration.py # 통합 테스트 (@pytest.mark.integration)
-│   └── dart/                      # Dart API 테스트
-│       ├── test_*_unit.py        # 단위 테스트
-│       └── test_*_integration.py # 통합 테스트
+│   ├── dart/                      # Dart API 테스트
+│   │   ├── test_*_unit.py        # 단위 테스트
+│   │   └── test_*_integration.py # 통합 테스트
+│   └── sec/                       # SEC EDGAR 테스트 (통합 테스트는 SEC_USER_AGENT 필요)
 ├── pyproject.toml               # 패키지 의존성 및 설정
 └── README.md                    # 이 문서
 ```
@@ -748,6 +786,7 @@ uv run ruff check packages/cluefin-openapi/
 - [한국투자증권 OpenAPI 포털](https://apiportal.koreainvestment.com/)
 - [NH투자증권 PLUG 포털](https://www.nhplug.com/) ([N2 PLUG](https://www.n2plug.com/))
 - [금융감독원 OpenAPI 포털](https://opendart.fss.or.kr/)
+- [SEC EDGAR API](https://www.sec.gov/search-filings/edgar-application-programming-interfaces) · [접근 정책(User-Agent·요청 한도)](https://www.sec.gov/os/accessing-edgar-data)
 
 ---
 
