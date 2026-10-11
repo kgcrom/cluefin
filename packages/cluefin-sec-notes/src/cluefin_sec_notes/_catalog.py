@@ -21,6 +21,7 @@ class ItemSpec:
         title: 현행 표준 제목.
         aliases: 예전 제목이나 흔한 다른 표기. 제목만으로 Item을 알아볼 때(번호 없는 목차 행) 쓴다.
         since: 이 Item이 생긴 기준일(보고 기간 말 기준). 그 전 공시에는 없어도 누락이 아니다.
+        until: 이 Item이 없어진 기준일(그날부터 적용 안 함). 2004-08-23 전 8-K 번호 체계 등.
         optional: 있어도 되고 없어도 되는 Item(예: 10-K Item 16 Form 10-K Summary).
         may_be_incorporated: 위임장(DEF 14A) 등에서 참조로 편입해 본문이 한 줄뿐인 것이 정상인 Item(Part III).
         lists_documents: 본문이 다른 Item에 실린 문서의 목록이다(10-K Item 15). 쪽 참조("pages F-1 through F-30")를
@@ -34,6 +35,7 @@ class ItemSpec:
     title: str
     aliases: tuple[str, ...] = ()
     since: date | None = None
+    until: date | None = None
     optional: bool = False
     may_be_incorporated: bool = False
     lists_documents: bool = False
@@ -44,8 +46,10 @@ class ItemSpec:
         return (self.title, *self.aliases)
 
     def applies_to(self, period_end: date | None) -> bool:
-        """보고 기간 말이 `since` 이후인지. 기간을 모르면 적용한다고 본다."""
-        return self.since is None or period_end is None or period_end >= self.since
+        """보고 기간 말이 `[since, until)` 안인지. 기간을 모르면 적용한다고 본다."""
+        if period_end is None:
+            return True
+        return (self.since is None or period_end >= self.since) and (self.until is None or period_end < self.until)
 
 
 @dataclass(frozen=True)
@@ -209,7 +213,105 @@ FORM_10Q = FormCatalog(
     ),
 )
 
-CATALOGS: tuple[FormCatalog, ...] = (FORM_10K, FORM_10Q)
+# 8-K는 공시마다 사건에 해당하는 Item만 있다. 전부 optional이고, 어떤 Item이 있어야 하는지는 제출 이력의 Item 목록이
+# 정답이다. 2004-08-23 시행 개정 전에는 번호 체계가 달랐다(Item 1–12). 번호가 겹치지 않아("5" ↔ "5.02") 한 카탈로그에 둔다.
+_8K_SINCE = date(2004, 8, 23)
+
+
+def _event(number: str, title: str, *aliases: str, since: date = _8K_SINCE, **options) -> ItemSpec:
+    return _item(None, number, title, *aliases, since=since, optional=True, **options)
+
+
+def _legacy_event(number: str, title: str, *aliases: str) -> ItemSpec:
+    return _item(None, number, title, *aliases, until=_8K_SINCE, optional=True)
+
+
+FORM_8K = FormCatalog(
+    name="8-K",
+    forms=("8-K", "8-K12B", "8-K12G3", "8-K15D5"),
+    items=(
+        _event("1.01", "Entry into a Material Definitive Agreement"),
+        _event("1.02", "Termination of a Material Definitive Agreement"),
+        _event("1.03", "Bankruptcy or Receivership"),
+        _event("1.04", "Mine Safety - Reporting of Shutdowns and Patterns of Violations", since=date(2010, 8, 27)),
+        _event("1.05", "Material Cybersecurity Incidents", since=date(2023, 12, 18)),
+        _event("2.01", "Completion of Acquisition or Disposition of Assets"),
+        _event("2.02", "Results of Operations and Financial Condition"),
+        _event(
+            "2.03",
+            "Creation of a Direct Financial Obligation or an Obligation under an Off-Balance Sheet Arrangement of a "
+            "Registrant",
+        ),
+        _event(
+            "2.04",
+            "Triggering Events That Accelerate or Increase a Direct Financial Obligation or an Obligation under an "
+            "Off-Balance Sheet Arrangement",
+        ),
+        _event("2.05", "Costs Associated with Exit or Disposal Activities"),
+        _event("2.06", "Material Impairments"),
+        _event(
+            "3.01",
+            "Notice of Delisting or Failure to Satisfy a Continued Listing Rule or Standard; Transfer of Listing",
+        ),
+        _event("3.02", "Unregistered Sales of Equity Securities"),
+        _event("3.03", "Material Modification to Rights of Security Holders"),
+        _event("4.01", "Changes in Registrant's Certifying Accountant"),
+        _event(
+            "4.02",
+            "Non-Reliance on Previously Issued Financial Statements or a Related Audit Report or Completed Interim "
+            "Review",
+        ),
+        _event("5.01", "Changes in Control of Registrant"),
+        _event(
+            "5.02",
+            "Departure of Directors or Certain Officers; Election of Directors; Appointment of Certain Officers; "
+            "Compensatory Arrangements of Certain Officers",
+            "Departure of Directors or Principal Officers; Election of Directors; Appointment of Principal Officers",
+        ),
+        _event("5.03", "Amendments to Articles of Incorporation or Bylaws; Change in Fiscal Year"),
+        _event("5.04", "Temporary Suspension of Trading Under Registrant's Employee Benefit Plans"),
+        _event(
+            "5.05",
+            "Amendment to Registrant's Code of Ethics, or Waiver of a Provision of the Code of Ethics",
+            "Amendments to the Registrant's Code of Ethics, or Waiver of a Provision of the Code of Ethics",
+        ),
+        _event("5.06", "Change in Shell Company Status"),
+        _event("5.07", "Submission of Matters to a Vote of Security Holders", since=date(2010, 2, 28)),
+        _event("5.08", "Shareholder Director Nominations", since=date(2011, 9, 14)),
+        _event("6.01", "ABS Informational and Computational Material"),
+        _event("6.02", "Change of Servicer or Trustee"),
+        _event("6.03", "Change in Credit Enhancement or Other External Support"),
+        _event("6.04", "Failure to Make a Required Distribution"),
+        _event("6.05", "Securities Act Updating Disclosure"),
+        _event("6.06", "Static Pool", since=date(2016, 11, 23)),
+        _event("6.10", "Alternative Filings of Asset-Backed Issuers", since=date(2016, 11, 23)),
+        _event("7.01", "Regulation FD Disclosure"),
+        _event("8.01", "Other Events"),
+        _event("9.01", "Financial Statements and Exhibits", lists_documents=True),
+        _legacy_event("1", "Changes in Control of Registrant"),
+        _legacy_event("2", "Acquisition or Disposition of Assets"),
+        _legacy_event("3", "Bankruptcy or Receivership"),
+        _legacy_event("4", "Changes in Registrant's Certifying Accountant"),
+        _legacy_event(
+            "5", "Other Events", "Other Events and Regulation FD Disclosure", "Other Events and Required FD Disclosure"
+        ),
+        _legacy_event("6", "Resignations of Registrant's Directors"),
+        _legacy_event(
+            "7",
+            "Financial Statements and Exhibits",
+            "Financial Statements, Pro Forma Financial Information and Exhibits",
+        ),
+        _legacy_event("8", "Change in Fiscal Year"),
+        _legacy_event("9", "Regulation FD Disclosure"),
+        _legacy_event(
+            "10", "Amendments to the Registrant's Code of Ethics, or Waiver of a Provision of the Code of Ethics"
+        ),
+        _legacy_event("11", "Temporary Suspension of Trading Under Registrant's Employee Benefit Plans"),
+        _legacy_event("12", "Results of Operations and Financial Condition"),
+    ),
+)
+
+CATALOGS: tuple[FormCatalog, ...] = (FORM_10K, FORM_10Q, FORM_8K)
 
 
 def catalog_for(form: str | None) -> FormCatalog | None:

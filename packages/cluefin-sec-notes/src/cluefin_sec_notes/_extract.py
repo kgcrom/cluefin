@@ -50,6 +50,9 @@ _INCORPORATION = re.compile(
     r"|can\s+be\s+found\s+(?:in|under)\s+.{0,160}?(?:proxy\s+statement|annual\s+report\s+to\s+(?:share|stock)holders)",
     re.IGNORECASE | re.DOTALL,
 )
+# 참조 편입 문구 바로 앞(글자 수)에 이 부정어가 있으면 편입이 아니다.
+_NEGATION = re.compile(r"\bnot\b|\bnor\b", re.IGNORECASE)
+_NEGATION_WINDOW = 40
 # 제목만 있는 줄로 볼 최대 길이(생략 판단에서 "Risk Factors" 같은 헤딩을 찾을 때).
 _MAX_TITLE_LINE = 150
 # 생략·참조 편입을 말하는 문장. 이 문장에만 나오는 Item은 공시가 생략한 것이다.
@@ -250,9 +253,18 @@ def _trim_part_heading(document: SecDocument, start: int, end: int) -> int:
 
 def _mark_incorporated(item: Item) -> Item:
     body = item_body(item)
-    if len(body) <= REFERENCE_BODY_MAX_CHARS and _INCORPORATION.search(body):
+    if len(body) <= REFERENCE_BODY_MAX_CHARS and _incorporates(body):
         return replace(item, incorporated_by_reference=True)
     return item
+
+
+def _incorporates(body: str) -> bool:
+    """참조 편입 문구가 있다. "shall not be deemed incorporated by reference"(8-K 2.02·7.01, 10-K 성과 그래프)처럼
+    바로 앞에 부정어가 있으면 편입이 아니라 편입하지 말라는 말이다."""
+    return any(
+        not _NEGATION.search(body, max(0, match.start() - _NEGATION_WINDOW), match.start())
+        for match in _INCORPORATION.finditer(body)
+    )
 
 
 def _signatures(document: SecDocument, after: int) -> int:
