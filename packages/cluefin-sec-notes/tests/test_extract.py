@@ -4,6 +4,7 @@ from cluefin_sec_notes import (
     EMPTY_ITEM,
     MISSING_ITEM,
     NON_SEQUENTIAL_LAYOUT,
+    OMITTED_ITEM,
     TOC_NOT_FOUND,
     TOC_TARGET_MISSING,
     UNKNOWN_ITEM,
@@ -222,3 +223,61 @@ def test_incorporated_by_reference_items(synthetic):
     ]
     # 다음 Part 헤딩은 앞 Item 끝에서 잘라 낸다.
     assert result.item("9B").text == "Item 9B. Other Information\n\nNone."
+
+
+def test_heading_in_table_with_empty_spacer_row(synthetic):
+    content = (
+        "<table><tr><td></td><td></td></tr><tr><td>Item 1.</td><td>Business</td></tr></table><p>a</p>"
+        "<table><tr><td></td><td></td></tr><tr><td>Item 2.</td><td>Properties</td></tr></table><p>b</p>"
+    )
+    result = extract(synthetic.filing(toc="", content=content))
+    assert [(item.key.number, item.heading) for item in result] == [
+        ("1", "Item 1.\tBusiness"),
+        ("2", "Item 2.\tProperties"),
+    ]
+
+
+def test_empty_href_in_heading_is_not_a_toc_link(synthetic):
+    content = synthetic.body().replace(f'<div id="{synthetic.anchor_id("1")}"></div>', "")
+    content = content.replace("Item 1. Business", '<a href="#"></a>Item 1. Business', 1)
+    result = extract(synthetic.filing(content=content))
+    assert result.item("1").method == "pattern"
+    assert result.item("1").text == "Item 1. Business\n\nBody of item 1."
+
+
+def test_item_never_mentioned_is_omitted_not_missing(synthetic):
+    items = [item for item in synthetic.TOC_ITEMS if item[1] not in ("6", "7A")]
+    result = extract(synthetic.filing(toc=synthetic.workiva_toc(items), content=synthetic.body(items)))
+    assert set(result.missing) == {ItemKey("II", "6"), ItemKey("II", "7A")}
+    assert result.omitted == result.missing
+    assert result.warnings == ()
+    assert OMITTED_ITEM in {finding.code for finding in result.findings}
+
+
+def test_toc_link_to_another_items_heading_loses_to_the_real_heading(synthetic):
+    # 목차의 Item 11 링크가 7A 헤딩을 가리킨다(작성 오류). 본문의 진짜 Item 11 헤딩이 이긴다.
+    toc = synthetic.workiva_toc().replace(
+        f'href="#{synthetic.anchor_id("11")}"', f'href="#{synthetic.anchor_id("7A")}"'
+    )
+    result = extract(synthetic.filing(toc=toc))
+    assert result.item("11").text == "Item 11. Executive Compensation\n\nBody of item 11."
+    assert result.item("7A").text.endswith("Body of item 7A.")
+    assert result.warnings == ()
+
+
+def test_anchor_names_match_case_insensitively(synthetic):
+    content = synthetic.body().replace(f'<div id="{synthetic.anchor_id("1A")}"></div>', '<a name="I1A"></a>')
+    result = extract(synthetic.filing(content=content))
+    assert result.item("1A").method == "toc_anchor"
+
+
+def test_unverified_toc_link_far_from_any_heading_is_replaced_by_pattern(synthetic):
+    # 링크가 Item 8 본문 중간(주석)을 가리키고, 그 뒤 40블록 안에 Item 12 헤딩이 없다.
+    note = '<div id="note13"></div><p>Note 13 - Stock-Based Compensation</p>' + "<p>note text</p>" * 45
+    content = synthetic.body().replace("<div>Body of item 8.</div>", "<div>Body of item 8.</div>" + note)
+    toc = synthetic.workiva_toc().replace(f'href="#{synthetic.anchor_id("12")}"', 'href="#note13"')
+    result = extract(synthetic.filing(toc=toc, content=content))
+    assert result.item("12").method == "pattern"
+    assert result.item("12").heading.startswith("Item 12.")
+    assert "note text" in result.item("8").text
+    assert result.warnings == ()

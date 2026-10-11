@@ -17,9 +17,9 @@ import re
 from collections.abc import Sequence
 from dataclasses import replace
 
-from cluefin_sec_notes._blocks import Paragraph
+from cluefin_sec_notes._blocks import Paragraph, Table
 from cluefin_sec_notes._catalog import FormCatalog, catalog_for
-from cluefin_sec_notes._document import SecDocument
+from cluefin_sec_notes._document import SecDocument, block_text
 from cluefin_sec_notes._labels import normalize_title, parse_item_label, parse_part
 from cluefin_sec_notes._model import (
     CONFLICTING_CANDIDATE,
@@ -27,6 +27,7 @@ from cluefin_sec_notes._model import (
     INFO,
     MISSING_ITEM,
     NON_SEQUENTIAL_LAYOUT,
+    OMITTED_ITEM,
     OUT_OF_ORDER,
     Candidate,
     Finding,
@@ -47,6 +48,10 @@ _INCORPORATION = re.compile(
     r"(?:proxy\s+statement|annual\s+report\s+to\s+(?:share|stock)holders)",
     re.IGNORECASE | re.DOTALL,
 )
+# 제목만 있는 줄로 볼 최대 길이(생략 판단에서 "Risk Factors" 같은 헤딩을 찾을 때).
+_MAX_TITLE_LINE = 150
+# Item 표기 행이 이만큼 있는 표는 목차다.
+_TOC_TABLE_ROWS = 3
 # Part 헤딩("PART II", "PART II — OTHER INFORMATION")으로 볼 최대 길이. Item 끝에 붙으면 잘라 낸다.
 _PART_HEADING_MAX = 80
 # 제목 자리에 이것만 있으면 빈 Item이 아니라 "해당 없음"을 적은 것이다(Item 6 "[Reserved]" 등).
@@ -87,9 +92,13 @@ def extract_items(
     items = tuple(_mark_incorporated(item) for item in _build_items(document, catalog, accepted))
     findings.extend(_empty_items(document, catalog, items))
     missing = _missing(document, catalog, accepted)
-    findings.extend(
-        Finding(MISSING_ITEM, f"{key}을 찾지 못했다", key=key) for key in missing if not _is_amendment(document)
-    )
+    omitted = _omitted(context, missing)
+    if not _is_amendment(document):
+        for key in missing:
+            if key in omitted:
+                findings.append(Finding(OMITTED_ITEM, f"{key} 표기가 문서에 없다", severity=INFO, key=key))
+            else:
+                findings.append(Finding(MISSING_ITEM, f"{key}을 찾지 못했다(문서에 표기는 있다)", key=key))
     return ItemExtraction(
         document=document,
         catalog=catalog.name,
@@ -97,6 +106,7 @@ def extract_items(
         missing=missing,
         findings=tuple(findings),
         candidates=tuple(candidates),
+        omitted=omitted,
     )
 
 
@@ -125,6 +135,7 @@ def _resolve(candidates: list[Candidate], catalog: FormCatalog) -> tuple[dict[It
                 Finding(
                     OUT_OF_ORDER,
                     f"{candidate.key}(블록 {candidate.block})가 {conflict.key}(블록 {conflict.block})와 순서가 어긋난다",
+                    severity=INFO,
                     key=candidate.key,
                     block=candidate.block,
                     method=candidate.method,
@@ -232,7 +243,7 @@ def _empty_items(document: SecDocument, catalog: FormCatalog, items: tuple[Item,
     findings = []
     for item in items:
         spec = catalog.spec(item.key.part, item.key.number)
-        if item.end - item.start > 1 or item.shared_with or spec is None or spec.may_be_incorporated:
+        if item.end - item.start > 1 or item.shared_with or spec is None or spec.may_be_incorporated or spec.optional:
             continue
         if item.incorporated_by_reference:
             continue
@@ -252,6 +263,36 @@ def _missing(document: SecDocument, catalog: FormCatalog, accepted: dict[ItemKey
         and spec.applies_to(document.period_end)
         and ItemKey(spec.part, spec.number) not in accepted
     )
+
+
+def _omitted(context: DetectionContext, missing: tuple[ItemKey, ...]) -> tuple[ItemKey, ...]:
+    """목차 밖 어디에도 "Item N" 표기나 그 Item 제목만 있는 줄이 없는 Item. 목차에만 있으면 본문에서 뺀 것이다."""
+    if not missing:
+        return ()
+    document, catalog = context.document, context.catalog
+    texts = [
+        block_text(block)
+        for index, block in enumerate(document.blocks)
+        if not context.is_excluded(index) and not _is_toc_table(block)
+    ]
+    joined = "\n".join(texts)
+    lines = {normalize_title(line) for text in texts for line in text.split("\n") if len(line) <= _MAX_TITLE_LINE}
+    omitted = []
+    for key in missing:
+        mention = re.compile(rf"\bitems?\s*{re.escape(key.number)}(?![\dA-Za-z])", re.IGNORECASE)
+        spec = catalog.spec(key.part, key.number)
+        titles = {normalize_title(title) for title in spec.titles} if spec else set()
+        if not mention.search(joined) and not (titles & lines):
+            omitted.append(key)
+    return tuple(omitted)
+
+
+def _is_toc_table(block) -> bool:
+    """Item 표기 행이 여럿인 표(링크 없는 목차)."""
+    if not isinstance(block, Table):
+        return False
+    labelled = sum(1 for index in range(len(block.rows)) if parse_item_label(block.row_text(index)) is not None)
+    return labelled >= _TOC_TABLE_ROWS
 
 
 def _is_amendment(document: SecDocument) -> bool:

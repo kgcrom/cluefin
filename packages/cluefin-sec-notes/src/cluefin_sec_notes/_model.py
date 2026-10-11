@@ -10,11 +10,13 @@ if TYPE_CHECKING:
 
 # Finding 코드. 코퍼스 리포트가 이 코드로 실패 양상을 묶는다. 새 양상을 감지하게 되면 코드를 더하고 설명을 단다.
 MISSING_ITEM = "missing_item"
-"""카탈로그상 이 공시에 있어야 할 Item을 어느 탐지기도 찾지 못했다."""
+"""카탈로그상 이 공시에 있어야 할 Item을 못 찾았는데, 문서에는 그 Item 표기나 제목이 있다(탐지 실패 의심)."""
+OMITTED_ITEM = "omitted_item"
+"""카탈로그상 있어야 할 Item이 문서 어디에도 표기되지 않았다(공시가 생략함. 소규모 보고회사의 6·7A 등)."""
 UNKNOWN_ITEM = "unknown_item"
 """Item 표기는 있는데 카탈로그에 없는 번호다. 새 Item이면 카탈로그에 더한다."""
 OUT_OF_ORDER = "out_of_order"
-"""후보 위치가 이미 정한 Item들과 카탈로그 순서가 어긋나 버렸다."""
+"""후보 위치가 이미 정한 Item들과 카탈로그 순서가 어긋나 버렸다(정보). 그 Item을 끝내 못 찾으면 missing_item이 따로 난다."""
 CONFLICTING_CANDIDATE = "conflicting_candidate"
 """이미 정한 Item에 신뢰도가 낮은 탐지기가 다른 위치를 냈다(버렸다)."""
 NON_SEQUENTIAL_LAYOUT = "non_sequential_layout"
@@ -120,6 +122,7 @@ class ItemExtraction:
     Attributes:
         items: 문서 순서.
         missing: 카탈로그상 있어야 하는데 못 찾은 Item.
+        omitted: `missing` 중 문서에 표기조차 없는 Item(공시가 생략한 것).
         findings: 문제와 사실. `warnings`는 그중 `warning`만.
         candidates: 탐지기들이 낸 후보 전부(채택 여부와 무관). 경계가 이상할 때 원인을 보는 용도.
     """
@@ -130,6 +133,7 @@ class ItemExtraction:
     missing: tuple[ItemKey, ...]
     findings: tuple[Finding, ...]
     candidates: tuple[Candidate, ...]
+    omitted: tuple[ItemKey, ...] = ()
 
     @property
     def warnings(self) -> tuple[Finding, ...]:

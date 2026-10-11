@@ -11,15 +11,22 @@ manifest 항목의 기대값 필드:
   (개선을 manifest에 반영하라는 신호). 반대로 기대값이 틀리면 `failed`(회귀).
 
 Item 키는 10-K는 번호(`"1A"`), Part마다 번호가 다시 시작하는 서식은 `"II:1A"`.
+
+스모크 코퍼스는 사람이 본 기대값 대신 자동 불변식(`invariant_violations`)만 본다. manifest의 `baseline`에
+지금 위반 목록을 적어 두고, 새 위반이 생기면 회귀, 사라지면 개선으로 알린다.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-from cluefin_sec_notes._model import Item, ItemExtraction
+from cluefin_sec_notes._blocks import Table
+from cluefin_sec_notes._model import MISSING_ITEM, Item, ItemExtraction
 
 CHAR_TOLERANCE = 0.10
+# 스모크 불변식: Item 1A가 이보다 짧으면(참조 편입이 아니면) 경계를 의심한다. 소규모 보고회사는 "해당 없음" 한 줄이라 뺀다.
+MIN_RISK_FACTORS_CHARS = 1000
+_SMALLER_REPORTING = ("smaller reporting compan", "not required", "not applicable")
 
 OK = "ok"
 FAILED = "failed"
@@ -75,3 +82,30 @@ def _problem(item: Item | None, expectation: dict) -> str:
     if incorporated is not None and item.incorporated_by_reference != incorporated:
         return f"참조 편입 {item.incorporated_by_reference} (기대 {incorporated})"
     return ""
+
+
+def invariant_violations(extraction: ItemExtraction, *, part_scoped: bool = False) -> list[str]:
+    """기대값 없이 볼 수 있는 이상: 필수 Item 누락, 경고 코드, 너무 짧은 1A, 표 없는 Item 8."""
+    violations = set()
+    for key in extraction.missing:
+        if key not in extraction.omitted:
+            violations.add(f"missing:{key.part}:{key.number}" if part_scoped else f"missing:{key.number}")
+    for finding in extraction.warnings:
+        if finding.code != MISSING_ITEM:
+            violations.add(f"warning:{finding.code}")
+    risk = extraction.item("1A")
+    if (
+        risk is not None
+        and not risk.incorporated_by_reference
+        and len(risk.text) < MIN_RISK_FACTORS_CHARS
+        and not any(phrase in risk.text.lower() for phrase in _SMALLER_REPORTING)
+    ):
+        violations.add("short:1A")
+    statements = extraction.item("8")
+    if (
+        statements is not None
+        and not statements.incorporated_by_reference
+        and not any(isinstance(block, Table) for block in statements.blocks)
+    ):
+        violations.add("no_table:8")
+    return sorted(violations)

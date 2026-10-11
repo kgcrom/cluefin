@@ -5,7 +5,7 @@ from collections import Counter
 import pytest
 
 from cluefin_sec_notes import extract_items, load_filing
-from cluefin_sec_notes._expectations import FAILED, FIXED, check_expectations
+from cluefin_sec_notes._expectations import FAILED, FIXED, check_expectations, invariant_violations
 
 pytestmark = pytest.mark.integration
 
@@ -33,4 +33,17 @@ def test_golden_expectations_hold(corpus_filings):
         for check in check_expectations(extraction, filing.entry):
             if check.status in (FAILED, FIXED):
                 problems.append(f"{filing.id} {check.key} {check.status}: {check.detail}")
+    assert not problems, "\n".join(problems)
+
+
+def test_smoke_baseline_holds(corpus_filings):
+    """스모크 공시는 자동 불변식 위반이 baseline과 같아야 한다. 새 위반은 회귀, 사라진 위반은 개선(baseline 갱신)."""
+    problems = []
+    for filing in corpus_filings:
+        if "baseline" not in filing.entry:
+            continue
+        extraction = extract_items(load_filing(filing.path, form=filing.entry["form"]))
+        now, before = set(invariant_violations(extraction)), set(filing.entry["baseline"])
+        if now != before:
+            problems.append(f"{filing.id} 새 위반 {sorted(now - before)} 사라진 위반 {sorted(before - now)}")
     assert not problems, "\n".join(problems)

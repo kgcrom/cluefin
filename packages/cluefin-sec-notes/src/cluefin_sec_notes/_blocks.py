@@ -140,6 +140,7 @@ class _Linearizer:
 
     def __init__(self, targets: frozenset[str], collector: ReportCollector, dei: dict[str, str], *, in_cell: bool):
         self.targets = targets
+        self.folded_targets = {target.lower(): target for target in targets}
         self.collector = collector
         self.dei = dei
         self.in_cell = in_cell
@@ -196,7 +197,7 @@ class _Linearizer:
             if _breaks_page(declarations, "page-break-after", "break-after"):
                 self._page_break(node)
             return
-        if tag == "a" and node.attrs.get("href", "").startswith("#"):
+        if tag == "a" and node.attrs.get("href", "").startswith("#") and len(node.attrs["href"]) > 1:
             self.paragraph.links.append(Link(target=node.attrs["href"][1:], text=_normalize(node.text())))
         if block and style.align is not None and not self.paragraph.has_text:
             self.paragraph.align = style.align
@@ -231,8 +232,10 @@ class _Linearizer:
     def _anchor(self, node: Node) -> None:
         self.position = (node.line, node.column)
         for name in (node.attrs.get("id"), node.attrs.get("name") if node.tag == "a" else None):
-            if name and name in self.targets and name not in self.pending_anchors:
-                self.pending_anchors.append(name)
+            # 오래된 공시는 `href="#item1"`과 `<a name="Item1">`처럼 대소문자가 다르다(브라우저 쿼크 모드에서는 이동한다).
+            target = name if name in self.targets else self.folded_targets.get(name.lower()) if name else None
+            if target and target not in self.pending_anchors:
+                self.pending_anchors.append(target)
 
     def _flush(self) -> None:
         builder = self.paragraph

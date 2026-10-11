@@ -20,6 +20,8 @@ from cluefin_sec_notes.detectors._base import Detection, DetectionContext
 # 헤딩으로 볼 첫 줄 최대 길이. 이보다 길면 Item 표기 뒤가 카탈로그 제목으로 시작할 때만 헤딩이다
 # ("Item 1A. Risk Factors. The following …"처럼 제목과 본문이 한 문단에 붙은 공시).
 _MAX_HEADING = 200
+# 헤딩을 담은 표로 볼 최대 행 수(글자 있는 행).
+_MAX_HEADING_TABLE_ROWS = 3
 # 링크 없는 글자 목차: Item 표기 블록이 이만큼 연달아(사이 블록 없이) 이어지면 목차다.
 _MIN_TEXT_TOC_RUN = 4
 
@@ -45,7 +47,7 @@ class PatternDetector:
             Finding(UNKNOWN_ITEM, f"카탈로그에 없는 Item: {heading.text[:80]!r}", block=heading.block, method=self.name)
             for heading in unknown
         )
-        if context.previous:
+        if any(candidate.confidence > self.confidence for candidate in context.previous):
             chosen = _fill_gaps(context, candidates)
         else:
             chosen = _longest_chain(context, candidates)
@@ -75,8 +77,11 @@ def _headings(context: DetectionContext) -> list[_Heading]:
     for index, block in enumerate(context.document.blocks):
         if isinstance(block, Paragraph):
             line, bold = block.text.split("\n")[0], block.bold
-        elif isinstance(block, Table) and block.rows:
-            line, bold = block.row_text(0), all(cell.bold for cell in block.rows[0] if cell.text)
+        elif isinstance(block, Table):
+            row = _first_filled_row(block)
+            if row is None:
+                continue
+            line, bold = block.row_text(row), all(cell.bold for cell in block.rows[row] if cell.text)
         else:
             continue
         label = parse_item_label(line)
@@ -86,6 +91,12 @@ def _headings(context: DetectionContext) -> list[_Heading]:
             continue
         headings.append(_Heading(index, label.part, label.numbers, line, bold))
     return headings
+
+
+def _first_filled_row(table: Table) -> int | None:
+    """표로 짠 헤딩("Item 1." | "Business")의 글자 있는 첫 행. 행이 많은 데이터 표는 헤딩이 아니다."""
+    filled = [index for index, row in enumerate(table.rows) if any(cell.text for cell in row)]
+    return filled[0] if filled and len(filled) <= _MAX_HEADING_TABLE_ROWS else None
 
 
 def _starts_with_title(catalog, rest: str, numbers: tuple[str, ...]) -> bool:
@@ -127,6 +138,8 @@ def _fill_gaps(context: DetectionContext, candidates: list[Candidate]) -> list[C
     """앞 탐지기가 못 찾은 Item마다, 카탈로그상 바로 앞·뒤 Item의 위치 사이에 있는 첫 후보."""
     known: dict[ItemKey, int] = {}
     for candidate in context.previous:
+        if candidate.confidence <= PatternDetector.confidence:  # 검증 안 된 목차 링크 등은 빈자리로 본다
+            continue
         known[candidate.key] = min(candidate.block, known.get(candidate.key, candidate.block))
     chosen = []
     for key in dict.fromkeys(candidate.key for candidate in candidates):
