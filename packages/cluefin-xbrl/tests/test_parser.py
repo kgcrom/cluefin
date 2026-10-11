@@ -382,3 +382,57 @@ class TestHttpUserAgentOption:
 
         assert seen[0] == "Jane jane@example.com"
         assert seen[1] != "Jane jane@example.com"
+
+
+# The root element of an SEC instance as filed: it declares the DEI namespace.
+_SEC_DEI_INSTANCE = (
+    b'<?xml version="1.0" encoding="utf-8"?>\n'
+    b'<xbrli:xbrl xmlns:xbrli="http://www.xbrl.org/2003/instance" xmlns:dei="http://xbrl.sec.gov/dei/2023">\n'
+    b"</xbrli:xbrl>\n"
+)
+
+
+class _ReachedArelle(Exception):
+    pass
+
+
+class TestSecInstanceRequiresUserAgent:
+    @pytest.fixture
+    def arelle_calls(self, monkeypatch):
+        calls = []
+
+        def fake_session(path, *, http_user_agent=None):
+            calls.append(http_user_agent)
+            raise _ReachedArelle
+
+        monkeypatch.setattr(parser_module, "_parse_with_session", fake_session)
+        return calls
+
+    @pytest.fixture
+    def sec_instance(self, tmp_path):
+        path = tmp_path / "aapl-20230930_htm.xml"
+        path.write_bytes(_SEC_DEI_INSTANCE)
+        return path
+
+    @pytest.mark.parametrize("user_agent", [None, "", "   ", "Jane Doe"])
+    def test_without_email_is_rejected_before_arelle(self, sec_instance, arelle_calls, user_agent):
+        with pytest.raises(ValueError, match="http_user_agent"):
+            parse_xbrl_file(sec_instance, http_user_agent=user_agent)
+        assert arelle_calls == []
+
+    def test_user_agent_with_email_is_passed_stripped(self, sec_instance, arelle_calls):
+        with pytest.raises(_ReachedArelle):
+            parse_xbrl_file(sec_instance, http_user_agent="  Jane Doe jane@example.com ")
+        assert arelle_calls == ["Jane Doe jane@example.com"]
+
+    def test_directory_route_is_checked_too(self, tmp_path, arelle_calls):
+        _write_sec_folder(tmp_path, "aapl-20230930_htm.xml")
+        (tmp_path / "aapl-20230930_htm.xml").write_bytes(_SEC_DEI_INSTANCE)
+        with pytest.raises(ValueError, match="http_user_agent"):
+            parse_xbrl_directory(tmp_path)
+        assert arelle_calls == []
+
+    def test_dart_instance_needs_no_user_agent(self, sample_xbrl_path, arelle_calls):
+        with pytest.raises(_ReachedArelle):
+            parse_xbrl_file(sample_xbrl_path)
+        assert arelle_calls == [None]
