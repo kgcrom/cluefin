@@ -12,6 +12,9 @@ manifest 항목의 기대값 필드:
   (개선을 manifest에 반영하라는 신호. `scripts/draft_expectations.py --accept`로 반영한다). 반대로 기대값이 틀리면
   `failed`(회귀).
 
+- `tables`: `[{"item": "8", "row": ["Products", "$307,003", "$294,866"]}]` — 그 Item의 표 중 하나의 그리드(`Table.grid()`)에
+  이 행이 그대로 있어야 한다(열 맞춤 검사). 검사 키는 `table:<Item>`.
+
 Item 키는 10-K는 번호(`"1A"`), Part마다 번호가 다시 시작하는 서식은 `"II:1A"`.
 
 스모크 코퍼스는 사람이 본 기대값 대신 자동 불변식(`invariant_violations`)만 본다. manifest의 `baseline`에
@@ -70,7 +73,21 @@ def check_expectations(extraction: ItemExtraction, entry: dict) -> list[ItemChec
             checks.append(ItemCheck(key, status, problem or f"known_bad가 고쳐졌다: {known_bad[key]}"))
         else:
             checks.append(ItemCheck(key, FAILED if problem else OK, problem))
+    for expectation in entry.get("tables", ()):
+        problem = _table_problem(item_by_key(extraction, expectation["item"]), expectation["row"])
+        checks.append(ItemCheck(f"table:{expectation['item']}", FAILED if problem else OK, problem))
     return checks
+
+
+def _table_problem(item: Item | None, row: list[str]) -> str:
+    if item is None:
+        return "Item 없음"
+    wanted = tuple(row)
+    grids = [block.grid() for block in item.blocks if isinstance(block, Table)]
+    if any(wanted in grid for grid in grids):
+        return ""
+    near = next((line for grid in grids for line in grid if line and line[0] == wanted[0]), None)
+    return f"행이 없다: {wanted!r}" + (f" (같은 라벨 행: {near!r})" if near else "")
 
 
 def accept_items(extraction: ItemExtraction, entry: dict, keys: list[str]) -> list[str]:

@@ -7,6 +7,7 @@ from cluefin_sec_notes._catalog import CATALOGS, FORM_8K, FORM_10K, FORM_10Q, Fo
 from cluefin_sec_notes._document import SecDocument, block_text, load_filing, parse_date, parse_filing
 from cluefin_sec_notes._extract import extract_items
 from cluefin_sec_notes._furniture import Page
+from cluefin_sec_notes._grid import parse_amount
 from cluefin_sec_notes._labels import ItemLabel, match_title, normalize_title, parse_item_label
 from cluefin_sec_notes._model import (
     CONFLICTING_CANDIDATE,
@@ -68,6 +69,7 @@ __all__ = [
     "extract_items",
     "match_title",
     "normalize_title",
+    "parse_amount",
     "parse_date",
     "parse_item_label",
     "Block",

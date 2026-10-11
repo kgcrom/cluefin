@@ -65,3 +65,19 @@ def test_expectation_key_and_ten_k_invariants(synthetic):
     assert expectation_key(risk, part_scoped=True) == "I:1A"
     # 합성 공시의 1A는 짧고 Item 8에 표가 없다. sec_items는 8-K에서만 본다.
     assert invariant_violations(extraction, sec_items=["1.01"]) == ["no_table:8", "short:1A"]
+
+
+def test_table_row_expectation(synthetic):
+    table = (
+        "<table><tr><td></td><td colspan='2'>2025</td></tr>"
+        "<tr><td>Revenue</td><td>$</td><td>1,234</td></tr><tr><td>Costs</td><td></td><td>(56</td><td>)</td></tr></table>"
+    )
+    content = synthetic.body().replace("<div>Body of item 8.</div>", "<div>Body of item 8.</div>" + table)
+    extraction = extract_items(parse_filing(synthetic.filing(content=content)))
+    good = {"tables": [{"item": "8", "row": ["Revenue", "$1,234"]}]}
+    bad = {"tables": [{"item": "8", "row": ["Revenue", "$9"]}]}
+    assert [check.status for check in check_expectations(extraction, good)] == [OK]
+    assert (
+        check_expectations(extraction, bad)[0].detail
+        == "행이 없다: ('Revenue', '$9') (같은 라벨 행: ('Revenue', '$1,234'))"
+    )
