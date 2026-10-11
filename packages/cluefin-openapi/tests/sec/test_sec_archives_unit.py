@@ -161,3 +161,57 @@ def test_download_xbrl_files_checks_every_target_before_downloading(client: Clie
             client.archives.download_xbrl_files(320193, "0000320193-23-000106", destination=tmp_path)
         assert m.call_count == 1
     assert sorted(p.name for p in tmp_path.iterdir()) == ["aapl-20230930_pre.xml"]
+
+
+FORM13F_FOLDER = "https://www.sec.gov/Archives/edgar/data/1067983/000095012323002585"
+
+
+def _form13f_index(*names: str) -> dict:
+    headers = ["0000950123-23-002585-index-headers.html", "0000950123-23-002585-index.html", "0000950123-23-002585.txt"]
+    return {"directory": {"item": [_item(name) for name in (*headers, *names)], "name": "x"}}
+
+
+@pytest.mark.parametrize("table", ["infotable.xml", "20651.xml", "inftable.XML"])
+def test_download_13f_files_picks_the_only_other_xml(client: Client, tmp_path: Path, table: str):
+    with requests_mock.Mocker() as m:
+        m.get(f"{FORM13F_FOLDER}/index.json", json=_form13f_index("primary_doc.xml", table))
+        m.get(f"{FORM13F_FOLDER}/primary_doc.xml", content=b"cover")
+        m.get(f"{FORM13F_FOLDER}/{table}", content=b"table")
+        files = client.archives.download_13f_files(1067983, "0000950123-23-002585", destination=tmp_path)
+
+    assert files.cover == tmp_path / "primary_doc.xml"
+    assert files.information_table == tmp_path / table
+    assert (files.cover.read_bytes(), files.information_table.read_bytes()) == (b"cover", b"table")
+
+
+def test_download_13f_files_notice_has_no_table(client: Client, tmp_path: Path):
+    with requests_mock.Mocker() as m:
+        m.get(f"{FORM13F_FOLDER}/index.json", json=_form13f_index("primary_doc.xml"))
+        m.get(f"{FORM13F_FOLDER}/primary_doc.xml", content=b"cover")
+        files = client.archives.download_13f_files(1067983, "0000950123-23-002585", destination=tmp_path)
+
+    assert (files.cover.name, files.information_table) == ("primary_doc.xml", None)
+
+
+@pytest.mark.parametrize(
+    ("names", "message"),
+    [
+        (("infotable.xml",), "표지"),
+        (("primary_doc.xml", "a.xml", "b.xml"), "여럿"),
+    ],
+)
+def test_download_13f_files_rejects_unexpected_folders(client: Client, tmp_path: Path, names, message):
+    with requests_mock.Mocker() as m:
+        m.get(f"{FORM13F_FOLDER}/index.json", json=_form13f_index(*names))
+        with pytest.raises(SecAPIError, match=message):
+            client.archives.download_13f_files(1067983, "0000950123-23-002585", destination=tmp_path)
+        assert m.call_count == 1
+
+
+def test_download_13f_files_checks_every_target_before_downloading(client: Client, tmp_path: Path):
+    (tmp_path / "infotable.xml").write_bytes(b"old")
+    with requests_mock.Mocker() as m:
+        m.get(f"{FORM13F_FOLDER}/index.json", json=_form13f_index("primary_doc.xml", "infotable.xml"))
+        with pytest.raises(FileExistsError, match="infotable.xml"):
+            client.archives.download_13f_files(1067983, "0000950123-23-002585", destination=tmp_path)
+        assert m.call_count == 1

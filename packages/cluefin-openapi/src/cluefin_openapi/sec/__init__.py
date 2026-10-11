@@ -5,7 +5,7 @@ SEC has no API key: every request declares its caller in the User-Agent header
 """
 
 from cluefin_openapi.sec._archives import Archives
-from cluefin_openapi.sec._archives_types import FilingIndex, FilingIndexItem
+from cluefin_openapi.sec._archives_types import FilingIndex, FilingIndexItem, Form13FFiles
 from cluefin_openapi.sec._client import Client
 from cluefin_openapi.sec._exceptions import (
     SecAPIError,
@@ -17,6 +17,8 @@ from cluefin_openapi.sec._exceptions import (
     SecServerError,
     SecTimeoutError,
 )
+from cluefin_openapi.sec._fails_to_deliver import FailsToDeliver, cusip_symbols
+from cluefin_openapi.sec._fails_to_deliver_types import FailsToDeliverFile, FailToDeliver
 from cluefin_openapi.sec._point_in_time import values_as_of
 from cluefin_openapi.sec._reference import Reference
 from cluefin_openapi.sec._reference_types import CompanyTicker, CompanyTickerExchange
@@ -42,9 +44,13 @@ __all__ = [
     "CompanyTickerExchange",
     "ConceptFacts",
     "FactValue",
+    "FailToDeliver",
+    "FailsToDeliver",
+    "FailsToDeliverFile",
     "FilingEntry",
     "FilingIndex",
     "FilingIndexItem",
+    "Form13FFiles",
     "FormerName",
     "Frame",
     "FrameValue",
@@ -52,6 +58,7 @@ __all__ = [
     "Submissions",
     "SubmissionsFile",
     "XbrlApi",
+    "cusip_symbols",
     "values_as_of",
     "SecAPIError",
     "SecAuthorizationError",

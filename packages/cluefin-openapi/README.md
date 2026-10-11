@@ -26,7 +26,7 @@
 - **ETF, 섹터, 테마**: ETF 정보, 업종별 정보, 테마별 종목 분류
 - **시장 상황 모니터링**: 시장 지수, 거래량, 시장 동향
 - **기업 공시 분석 (DART)**: 공시 원문, 재무제표, 대량보유상황 등 공시 데이터
-- **미국 공시 (SEC EDGAR)**: 티커→CIK, 제출 이력, XBRL 값(companyfacts·companyconcept·frames), 공시 원문·XBRL 파일 다운로드
+- **미국 공시 (SEC EDGAR)**: 티커→CIK, 제출 이력, XBRL 값(companyfacts·companyconcept·frames), 공시 원문·XBRL·13F 파일 다운로드, CUSIP→티커(Fails-to-Deliver)
 
 ## ⚡ 빠른 시작
 
@@ -460,7 +460,22 @@ known = values_as_of(concept.units["USD"], date(2024, 1, 2))  # 기간(start, en
 # 공시 원문과 XBRL 파일 (cluefin-xbrl 의 parse_xbrl_directory 로 파싱)
 client.archives.download_filing_document(cik, latest.accession_number, latest.primary_document, destination="aapl")
 client.archives.download_xbrl_files(cik, latest.accession_number, destination="aapl-xbrl")
+
+# 13F 기관 보유 보고: 표지와 정보표 (cluefin-sec-notes 의 load_13f 로 파싱)
+thirteen_f = client.submissions.filings(1067983, forms=["13F-HR"])[0]
+files = client.archives.download_13f_files(1067983, thirteen_f.accession_number, destination="brk-13f")
+files.cover, files.information_table  # 통지(13F-NT)는 information_table 이 None
+
+# CUSIP → 티커: 13F 정보표엔 티커가 없다. Fails-to-Deliver(반월마다, 2009-07~)에 CUSIP·티커가 함께 있다
+from cluefin_openapi.sec import cusip_symbols
+
+recent = client.fails_to_deliver.files()[:12]  # 최신순. 6개월치
+symbols = cusip_symbols(r for f in recent for r in client.fails_to_deliver.records(f))
+symbols.get("037833100")  # "AAPL". 티커가 바뀐 CUSIP은 결제일이 가장 늦은 티커
 ```
+
+Fails-to-Deliver에는 결제 불이행이 한 번이라도 있었던 종목만 실립니다. 6개월치로 2026년 13F 12건의 금액
+99.7–99.9%가 매핑됐고(행 기준 93–99%), 과거 보고를 매핑할 때는 그 시기 파일을 쓰는 편이 맞습니다(티커는 바뀝니다).
 
 `BrokerClientFactory().create("sec")` 도 `.env` 의 `SEC_USER_AGENT` 로 같은 클라이언트를 만듭니다.
 

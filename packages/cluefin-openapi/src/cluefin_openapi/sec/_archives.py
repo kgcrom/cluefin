@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 from typing import List
 
-from ._archives_types import FilingIndex
+from ._archives_types import FilingIndex, Form13FFiles
 from ._client import WWW_BASE_URL, Client
 from ._exceptions import SecAPIError
 from ._ids import accession_plain, cik_digits, path_segment
@@ -15,6 +15,9 @@ from ._ids import accession_plain, cik_digits, path_segment
 # 인라인 XBRL 공시(2019년~)는 SEC가 본문 .htm에서 뽑은 인스턴스를 `<이름>_htm.xml`로 함께 둔다.
 # 폴더의 .xml 중 XBRL 입력이 아닌 것은 SEC 렌더링 결과(2009~2012년의 R1.xml)와 요약 파일뿐이다.
 _NOT_XBRL_INPUT = re.compile(r"^(R\d+|FilingSummary)\.xml$", re.IGNORECASE)
+
+# 13F 표지. 제출 이력의 주 문서명은 XSL 렌더링 경로(`xslForm13F_X02/primary_doc.xml`)지만 원본은 폴더 바로 아래다.
+_13F_COVER = "primary_doc.xml"
 
 
 class Archives:
@@ -106,6 +109,52 @@ class Archives:
             self.download_filing_document(cik, accession_number, name, destination=folder, overwrite=True)
             for name in names
         ]
+
+    def download_13f_files(
+        self,
+        cik: int | str,
+        accession_number: str,
+        *,
+        destination: Path | str,
+        overwrite: bool = False,
+    ) -> Form13FFiles:
+        """13F 표지와 정보표(보유 목록) XML을 한 폴더에 저장한다.
+
+        정보표 파일명은 공시마다 다르고(`infotable.xml`, `form13fInfoTable.xml`, 숫자 이름 …) 확장자가 대문자인
+        것도 있다. 폴더에서 표지가 아닌 유일한 XML을 정보표로 고른다(실공시 635건 모두 0개 또는 1개, 2026-10 실측).
+
+        Args:
+            cik (int | str): 제출 운용사의 CIK
+            accession_number (str): 접수번호
+            destination (Path | str): 저장할 폴더
+            overwrite (bool): 이미 있는 파일을 덮어쓸지. 기본값 False. 하나라도 있으면 아무것도 받지 않는다.
+
+        Returns:
+            Form13FFiles: 표지와 정보표 경로. 통지(13F-NT)는 정보표가 None.
+
+        Raises:
+            SecAPIError: 폴더에 표지가 없거나, 표지가 아닌 XML이 둘 이상일 때
+        """
+        names = [item.name for item in self.filing_index(cik, accession_number).items]
+        if _13F_COVER not in names:
+            raise SecAPIError(f"13F 표지({_13F_COVER})가 없는 공시입니다: {accession_number}")
+        tables = [name for name in names if name.lower().endswith(".xml") and name != _13F_COVER]
+        if len(tables) > 1:
+            raise SecAPIError(f"정보표 후보가 여럿입니다: {accession_number} {sorted(tables)}")
+
+        # Validate every name before the first download so a bad one cannot leave a half-written folder.
+        targets = [path_segment(name, what="파일명") for name in (_13F_COVER, *tables)]
+        folder = Path(destination).expanduser()
+        if not overwrite:
+            existing = next((folder / name for name in targets if (folder / name).exists()), None)
+            if existing is not None:
+                raise FileExistsError(f"이미 존재하는 파일을 덮어쓸 수 없습니다: {existing}")
+
+        cover, *table = (
+            self.download_filing_document(cik, accession_number, name, destination=folder, overwrite=True)
+            for name in targets
+        )
+        return Form13FFiles(cover=cover, information_table=table[0] if table else None)
 
 
 def _folder_url(cik: int | str, accession_number: str) -> str:
