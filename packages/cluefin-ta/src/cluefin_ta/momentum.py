@@ -17,7 +17,7 @@ Functions:
 import numpy as np
 
 from cluefin_ta._core import dx_loop, mfi_loop, rolling_minmax, wilder_smooth
-from cluefin_ta.overlap import EMA
+from cluefin_ta.overlap import EMA, _require_sma
 
 
 def RSI(close: np.ndarray, timeperiod: int = 14) -> np.ndarray:
@@ -144,13 +144,18 @@ def STOCH(
         close: Array of closing prices
         fastk_period: Fast %K period (default: 5)
         slowk_period: Slow %K smoothing period (default: 3)
-        slowk_matype: Slow %K MA type (0=SMA) - only SMA supported
+        slowk_matype: Slow %K MA type - only 0 (SMA) is supported
         slowd_period: Slow %D period (default: 3)
-        slowd_matype: Slow %D MA type (0=SMA) - only SMA supported
+        slowd_matype: Slow %D MA type - only 0 (SMA) is supported
 
     Returns:
         Tuple of (slowk, slowd)
+
+    Raises:
+        ValueError: If slowk_matype or slowd_matype is not 0
     """
+    _require_sma("slowk_matype", slowk_matype)
+    _require_sma("slowd_matype", slowd_matype)
     high = np.asarray(high, dtype=np.float64)
     low = np.asarray(low, dtype=np.float64)
     close = np.asarray(close, dtype=np.float64)
@@ -251,11 +256,15 @@ def STOCHF(
         close: Array of closing prices
         fastk_period: Fast %K period (default: 5)
         fastd_period: Fast %D period (default: 3)
-        fastd_matype: Fast %D MA type (0=SMA) - only SMA supported
+        fastd_matype: Fast %D MA type - only 0 (SMA) is supported
 
     Returns:
         Tuple of (fastk, fastd)
+
+    Raises:
+        ValueError: If fastd_matype is not 0
     """
+    _require_sma("fastd_matype", fastd_matype)
     high = np.asarray(high, dtype=np.float64)
     low = np.asarray(low, dtype=np.float64)
     close = np.asarray(close, dtype=np.float64)

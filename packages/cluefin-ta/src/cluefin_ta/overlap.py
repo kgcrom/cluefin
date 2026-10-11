@@ -16,6 +16,12 @@ import numpy as np
 from cluefin_ta._core import ema_loop, kama_loop, rolling_std
 
 
+def _require_sma(name: str, matype: int) -> None:
+    """Reject ta-lib MA types other than SMA (0) instead of silently computing an SMA."""
+    if matype != 0:
+        raise ValueError(f"{name}={matype} is not supported; only 0 (SMA) is implemented")
+
+
 def SMA(close: np.ndarray, timeperiod: int = 30) -> np.ndarray:
     """
     Simple Moving Average.
@@ -222,11 +228,15 @@ def BBANDS(
         timeperiod: Number of periods for the moving average (default: 5)
         nbdevup: Number of standard deviations for upper band (default: 2.0)
         nbdevdn: Number of standard deviations for lower band (default: 2.0)
-        matype: Moving average type (0=SMA, 1=EMA) - currently only SMA supported
+        matype: Moving average type - only 0 (SMA) is supported
 
     Returns:
         Tuple of (upper_band, middle_band, lower_band)
+
+    Raises:
+        ValueError: If matype is not 0
     """
+    _require_sma("matype", matype)
     close = np.asarray(close, dtype=np.float64)
     n = len(close)
 
