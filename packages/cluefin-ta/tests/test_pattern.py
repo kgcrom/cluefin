@@ -2,7 +2,10 @@
 Tests for candlestick pattern recognition.
 """
 
+import warnings
+
 import numpy as np
+import pytest
 
 from cluefin_ta import (
     CDLDARKCLOUDCOVER,
@@ -529,3 +532,111 @@ class TestCDLDARKCLOUDCOVER:
 
         result = CDLDARKCLOUDCOVER(open_arr, high, low, close)
         assert result[0] == 0
+
+
+SINGLE_BAR_PATTERNS = [CDLDOJI, CDLHAMMER, CDLSHOOTINGSTAR, CDLHANGINGMAN]
+MULTI_BAR_PATTERNS = [
+    (CDLENGULFING, 2),
+    (CDLHARAMI, 2),
+    (CDLPIERCING, 2),
+    (CDLDARKCLOUDCOVER, 2),
+    (CDLMORNINGSTAR, 3),
+    (CDLEVENINGSTAR, 3),
+]
+
+
+class TestPatternGuards:
+    """Edge inputs real market data produces: flat bars (거래정지·상하한가 시가=종가), zero bodies, short series."""
+
+    @pytest.mark.parametrize("pattern", SINGLE_BAR_PATTERNS, ids=lambda f: f.__name__)
+    def test_flat_bar_is_no_pattern_without_division_warning(self, pattern):
+        """A bar with high == low has zero range; it must be skipped, not divided by."""
+        flat = np.array([100.0, 100.0])
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            result = pattern(flat, flat, flat, flat)
+
+        assert result.tolist() == [0, 0]
+
+    @pytest.mark.parametrize(
+        ("pattern", "expected"),
+        [(CDLHAMMER, 100), (CDLHANGINGMAN, -100)],
+        ids=lambda v: getattr(v, "__name__", str(v)),
+    )
+    def test_dragonfly_doji_counts_as_long_lower_shadow(self, pattern, expected):
+        """open == close == high with a long lower shadow: zero body must not hide the shadow ratio."""
+        price = np.array([100.0])
+        low = np.array([95.0])
+
+        result = pattern(price, price, low, price)
+
+        assert result.tolist() == [expected]
+
+    def test_gravestone_doji_is_shooting_star(self):
+        """open == close == low with a long upper shadow: zero body must not hide the shadow ratio."""
+        price = np.array([100.0])
+        high = np.array([105.0])
+
+        result = CDLSHOOTINGSTAR(price, high, price, price)
+
+        assert result.tolist() == [-100]
+
+    @pytest.mark.parametrize(
+        ("pattern", "bars_needed"), MULTI_BAR_PATTERNS, ids=lambda v: getattr(v, "__name__", str(v))
+    )
+    def test_series_shorter_than_pattern_returns_zeros(self, pattern, bars_needed):
+        """Fewer bars than the pattern spans: same-length all-zero output, including an empty series."""
+        for n in range(bars_needed):
+            prices = np.full(n, 100.0)
+
+            result = pattern(prices, prices + 1, prices - 1, prices)
+
+            assert result.tolist() == [0] * n
+
+    @pytest.mark.parametrize("pattern", [CDLMORNINGSTAR, CDLEVENINGSTAR], ids=lambda f: f.__name__)
+    def test_star_with_flat_first_bar_is_skipped_without_division_warning(self, pattern):
+        """Day 1 with zero range cannot be the large candle; it must be skipped, not divided by."""
+        open_arr = np.array([100.0, 98.0, 99.0])
+        high = np.array([100.0, 99.0, 108.0])
+        low = np.array([100.0, 97.0, 98.0])
+        close = np.array([100.0, 98.5, 107.0])
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            result = pattern(open_arr, high, low, close)
+
+        assert result.tolist() == [0, 0, 0]
+
+    def test_morningstar_rejects_small_third_body(self):
+        """Day 3 closes above the day 1 midpoint (105) but its body (2) is under half of day 1's (10)."""
+        open_arr = np.array([110.0, 98.0, 105.0])
+        high = np.array([111.0, 99.0, 108.0])
+        low = np.array([99.0, 97.0, 104.0])
+        close = np.array([100.0, 98.5, 107.0])
+
+        result = CDLMORNINGSTAR(open_arr, high, low, close)
+
+        assert result[2] == 0
+
+    def test_eveningstar_rejects_close_above_midpoint(self):
+        """Day 3 is bearish with a full body but closes at 106, above the day 1 midpoint (105)."""
+        open_arr = np.array([100.0, 112.0, 111.0])
+        high = np.array([111.0, 113.0, 112.0])
+        low = np.array([99.0, 111.0, 105.0])
+        close = np.array([110.0, 112.5, 106.0])
+
+        result = CDLEVENINGSTAR(open_arr, high, low, close)
+
+        assert result[2] == 0
+
+    def test_eveningstar_rejects_small_third_body(self):
+        """Day 3 closes below the day 1 midpoint (105) but its body (4) is under half of day 1's (10)."""
+        open_arr = np.array([100.0, 112.0, 108.0])
+        high = np.array([111.0, 113.0, 109.0])
+        low = np.array([99.0, 111.0, 103.0])
+        close = np.array([110.0, 112.5, 104.0])
+
+        result = CDLEVENINGSTAR(open_arr, high, low, close)
+
+        assert result[2] == 0
