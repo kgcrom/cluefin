@@ -276,6 +276,13 @@ class TestPortfolioIntegration:
 class TestPortfolioGuards:
     """Edge inputs: wipe-outs (상장폐지), series too short for a standard deviation."""
 
+    @pytest.mark.parametrize("periods_per_year", [0, -252])
+    def test_cagr_non_positive_periods_per_year_is_zero(self, periods_per_year):
+        """No year length to annualise over; 0 used to raise ZeroDivisionError."""
+        returns = np.array([0.01, 0.02])
+
+        assert CAGR(returns, periods_per_year=periods_per_year) == 0.0
+
     def test_cagr_total_loss_is_minus_one(self):
         """A position that goes to zero has CAGR -100%, however long the series."""
         returns = np.array([0.05, 0.02, -1.0])
