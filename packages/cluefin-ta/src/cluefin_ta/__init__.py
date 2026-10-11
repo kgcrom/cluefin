@@ -19,18 +19,7 @@ from cluefin_ta.momentum import ADX, CCI, MACD, MFI, MOM, ROC, RSI, STOCH, STOCH
 from cluefin_ta.overlap import BBANDS, DEMA, EMA, KAMA, SMA, TEMA, WMA
 
 # Pattern Recognition (Candlestick)
-from cluefin_ta.pattern import (
-    CDLDARKCLOUDCOVER,
-    CDLDOJI,
-    CDLENGULFING,
-    CDLEVENINGSTAR,
-    CDLHAMMER,
-    CDLHANGINGMAN,
-    CDLHARAMI,
-    CDLMORNINGSTAR,
-    CDLPIERCING,
-    CDLSHOOTINGSTAR,
-)
+from cluefin_ta.pattern import CDLDOJI, CDLENGULFING, CDLHAMMER
 
 # Portfolio Metrics
 from cluefin_ta.portfolio import CAGR, CALMAR, MDD, SHARPE, SORTINO, VOLATILITY
@@ -86,13 +75,6 @@ __all__ = [
     "CDLDOJI",
     "CDLHAMMER",
     "CDLENGULFING",
-    "CDLSHOOTINGSTAR",
-    "CDLHANGINGMAN",
-    "CDLHARAMI",
-    "CDLPIERCING",
-    "CDLMORNINGSTAR",
-    "CDLEVENINGSTAR",
-    "CDLDARKCLOUDCOVER",
     # Portfolio
     "MDD",
     "CAGR",

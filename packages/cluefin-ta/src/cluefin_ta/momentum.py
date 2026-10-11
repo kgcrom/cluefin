@@ -15,9 +15,27 @@ Functions:
 """
 
 import numpy as np
+from numpy.lib.stride_tricks import sliding_window_view
 
-from cluefin_ta._core import dx_loop, mfi_loop, rolling_minmax, wilder_smooth
-from cluefin_ta.overlap import EMA
+from cluefin_ta._core import adx_loop, mfi_loop, rolling_minmax, wilder_smooth
+from cluefin_ta.overlap import SMA, _ema_from, _require_sma
+
+
+def _window_mean(values: np.ndarray, period: int) -> np.ndarray:
+    """Mean of every full ``period`` window (empty if there is none)."""
+    if len(values) < period:
+        return np.empty(0)
+    return sliding_window_view(values, period).mean(axis=1)
+
+
+def _fast_k(high: np.ndarray, low: np.ndarray, close: np.ndarray, period: int) -> np.ndarray:
+    """Stochastic Fast %K, shared by STOCH and STOCHF. 50 (neutral) when the window has no range."""
+    highest_high, lowest_low = rolling_minmax(high, low, period)
+    span = highest_high - lowest_low
+    with np.errstate(divide="ignore", invalid="ignore"):
+        fastk = np.where(span != 0, 100.0 * (close - lowest_low) / span, 50.0)
+    fastk[: period - 1] = np.nan
+    return fastk
 
 
 def RSI(close: np.ndarray, timeperiod: int = 14) -> np.ndarray:
@@ -49,28 +67,14 @@ def RSI(close: np.ndarray, timeperiod: int = 14) -> np.ndarray:
     avg_gain = np.mean(gains[:timeperiod])
     avg_loss = np.mean(losses[:timeperiod])
 
-    # Calculate first RSI value (ta-lib returns 0 when there is no movement at all)
-    if avg_gain == 0 and avg_loss == 0:
-        result[timeperiod] = 0.0
-    elif avg_loss == 0:
-        result[timeperiod] = 100.0
-    else:
-        rs = avg_gain / avg_loss
-        result[timeperiod] = 100.0 - (100.0 / (1.0 + rs))
+    # Wilder's smoothing; deltas[i - 1] is the change into bar i, so bar i reads index i - 1
+    gain = wilder_smooth(gains, timeperiod, avg_gain, timeperiod - 1)[timeperiod - 1 : n - 1]
+    loss = wilder_smooth(losses, timeperiod, avg_loss, timeperiod - 1)[timeperiod - 1 : n - 1]
 
-    # Use Wilder's smoothing for gains and losses
-    smoothed_gains = wilder_smooth(gains, timeperiod, avg_gain, timeperiod - 1)
-    smoothed_losses = wilder_smooth(losses, timeperiod, avg_loss, timeperiod - 1)
-
-    # Calculate RSI from smoothed values (starting from timeperiod+1)
-    for i in range(timeperiod + 1, n):
-        if smoothed_gains[i - 1] == 0 and smoothed_losses[i - 1] == 0:
-            result[i] = 0.0
-        elif smoothed_losses[i - 1] == 0:
-            result[i] = 100.0
-        else:
-            rs = smoothed_gains[i - 1] / smoothed_losses[i - 1]
-            result[i] = 100.0 - (100.0 / (1.0 + rs))
+    with np.errstate(divide="ignore", invalid="ignore"):
+        rsi = 100.0 - (100.0 / (1.0 + gain / loss))
+    # ta-lib returns 0 when there is no movement at all, 100 when there are no losses
+    result[timeperiod:] = np.where((gain == 0) & (loss == 0), 0.0, np.where(loss == 0, 100.0, rsi))
 
     return result
 
@@ -96,30 +100,23 @@ def MACD(
     close = np.asarray(close, dtype=np.float64)
     n = len(close)
 
-    macd = np.full(n, np.nan)
+    # ta-lib swaps the periods rather than producing a negated MACD
+    if slowperiod < fastperiod:
+        fastperiod, slowperiod = slowperiod, fastperiod
+
+    # Both EMAs start at the slow EMA's first bar (ta-lib seeds the fast one there too,
+    # from the fastperiod bars ending at that index), and all three outputs start once
+    # the signal EMA has its first value.
+    start = slowperiod - 1
+    first = start + signalperiod - 1
+    if n <= first:
+        nan_arr = np.full(n, np.nan)
+        return nan_arr, nan_arr.copy(), nan_arr.copy()
+
+    macd = _ema_from(close, fastperiod, start) - _ema_from(close, slowperiod, start)
     signal = np.full(n, np.nan)
-    hist = np.full(n, np.nan)
-
-    if n < slowperiod:
-        return macd, signal, hist
-
-    # Calculate fast and slow EMAs
-    fast_ema = EMA(close, fastperiod)
-    slow_ema = EMA(close, slowperiod)
-
-    # MACD line = Fast EMA - Slow EMA
-    macd = fast_ema - slow_ema
-
-    # Calculate signal line (EMA of MACD)
-    # Need to handle NaN values in MACD for signal calculation
-    valid_start = slowperiod - 1
-    if n >= valid_start + signalperiod:
-        # Calculate EMA of valid MACD values
-        macd_valid = macd[valid_start:]
-        signal_ema = EMA(macd_valid, signalperiod)
-        signal[valid_start:] = signal_ema
-
-    # Histogram = MACD - Signal
+    signal[start:] = _ema_from(macd[start:], signalperiod, signalperiod - 1)
+    macd[:first] = np.nan
     hist = macd - signal
 
     return macd, signal, hist
@@ -144,13 +141,18 @@ def STOCH(
         close: Array of closing prices
         fastk_period: Fast %K period (default: 5)
         slowk_period: Slow %K smoothing period (default: 3)
-        slowk_matype: Slow %K MA type (0=SMA) - only SMA supported
+        slowk_matype: Slow %K MA type - only 0 (SMA) is supported
         slowd_period: Slow %D period (default: 3)
-        slowd_matype: Slow %D MA type (0=SMA) - only SMA supported
+        slowd_matype: Slow %D MA type - only 0 (SMA) is supported
 
     Returns:
         Tuple of (slowk, slowd)
+
+    Raises:
+        ValueError: If slowk_matype or slowd_matype is not 0
     """
+    _require_sma("slowk_matype", slowk_matype)
+    _require_sma("slowd_matype", slowd_matype)
     high = np.asarray(high, dtype=np.float64)
     low = np.asarray(low, dtype=np.float64)
     close = np.asarray(close, dtype=np.float64)
@@ -162,31 +164,16 @@ def STOCH(
     if n < fastk_period:
         return slowk, slowd
 
-    # Get rolling min/max
-    highest_high, lowest_low = rolling_minmax(high, low, fastk_period)
+    fastk = _fast_k(high, low, close, fastk_period)
 
-    # Calculate Fast %K
-    fastk = np.full(n, np.nan)
-    for i in range(fastk_period - 1, n):
-        hh = highest_high[i]
-        ll = lowest_low[i]
-
-        if hh != ll:
-            fastk[i] = 100.0 * (close[i] - ll) / (hh - ll)
-        else:
-            fastk[i] = 50.0  # Neutral when no range
-
-    # Calculate Slow %K (SMA of Fast %K) - ta-lib starts from first valid fastk
+    # Slow %K = SMA of Fast %K, Slow %D = SMA of Slow %K, each from the first valid input
     valid_start = fastk_period - 1
-    for i in range(valid_start + slowk_period - 1, n):
-        window = fastk[i - slowk_period + 1 : i + 1]
-        slowk[i] = np.mean(window)
-
-    # Calculate Slow %D (SMA of Slow %K)
     slowk_start = valid_start + slowk_period - 1
-    for i in range(slowk_start + slowd_period - 1, n):
-        window = slowk[i - slowd_period + 1 : i + 1]
-        slowd[i] = np.mean(window)
+    slowk[slowk_start:] = _window_mean(fastk[valid_start:], slowk_period)
+    first = slowk_start + slowd_period - 1
+    slowd[first:] = _window_mean(slowk[slowk_start:], slowd_period)
+    # ta-lib emits both lines from the first Slow %D bar
+    slowk[:first] = np.nan
 
     return slowk, slowd
 
@@ -219,17 +206,12 @@ def WILLR(
     if n < timeperiod:
         return result
 
-    # Get rolling min/max
     highest_high, lowest_low = rolling_minmax(high, low, timeperiod)
-
-    for i in range(timeperiod - 1, n):
-        hh = highest_high[i]
-        ll = lowest_low[i]
-
-        if hh != ll:
-            result[i] = -100.0 * (hh - close[i]) / (hh - ll)
-        else:
-            result[i] = -50.0  # Neutral when no range
+    span = highest_high - lowest_low
+    with np.errstate(divide="ignore", invalid="ignore"):
+        # -50 (neutral) when the window has no range
+        result = np.where(span != 0, -100.0 * (highest_high - close) / span, -50.0)
+    result[: timeperiod - 1] = np.nan
 
     return result
 
@@ -251,11 +233,15 @@ def STOCHF(
         close: Array of closing prices
         fastk_period: Fast %K period (default: 5)
         fastd_period: Fast %D period (default: 3)
-        fastd_matype: Fast %D MA type (0=SMA) - only SMA supported
+        fastd_matype: Fast %D MA type - only 0 (SMA) is supported
 
     Returns:
         Tuple of (fastk, fastd)
+
+    Raises:
+        ValueError: If fastd_matype is not 0
     """
+    _require_sma("fastd_matype", fastd_matype)
     high = np.asarray(high, dtype=np.float64)
     low = np.asarray(low, dtype=np.float64)
     close = np.asarray(close, dtype=np.float64)
@@ -267,24 +253,14 @@ def STOCHF(
     if n < fastk_period:
         return fastk, fastd
 
-    # Get rolling min/max
-    highest_high, lowest_low = rolling_minmax(high, low, fastk_period)
+    fastk = _fast_k(high, low, close, fastk_period)
 
-    # Calculate Fast %K
-    for i in range(fastk_period - 1, n):
-        hh = highest_high[i]
-        ll = lowest_low[i]
-
-        if hh != ll:
-            fastk[i] = 100.0 * (close[i] - ll) / (hh - ll)
-        else:
-            fastk[i] = 50.0  # Neutral when no range
-
-    # Calculate Fast %D (SMA of Fast %K)
+    # Fast %D = SMA of Fast %K from its first valid value
     valid_start = fastk_period - 1
-    for i in range(valid_start + fastd_period - 1, n):
-        window = fastk[i - fastd_period + 1 : i + 1]
-        fastd[i] = np.mean(window)
+    first = valid_start + fastd_period - 1
+    fastd[first:] = _window_mean(fastk[valid_start:], fastd_period)
+    # ta-lib emits both lines from the first Fast %D bar
+    fastk[:first] = np.nan
 
     return fastk, fastd
 
@@ -380,20 +356,15 @@ def CCI(
     tp = (high + low + close) / 3.0
 
     # SMA of Typical Price
-    from cluefin_ta.overlap import SMA
-
     tp_sma = SMA(tp, timeperiod)
 
-    # Mean Deviation (average of |TP - SMA(TP)|)
-    for i in range(timeperiod - 1, n):
-        window = tp[i - timeperiod + 1 : i + 1]
-        mean_tp = tp_sma[i]
-        mean_dev = np.mean(np.abs(window - mean_tp))
+    # Mean Deviation (average of |TP - SMA(TP)|) over each window
+    mean_tp = tp_sma[timeperiod - 1 :]
+    mean_dev = np.abs(sliding_window_view(tp, timeperiod) - mean_tp[:, None]).mean(axis=1)
 
-        if mean_dev != 0:
-            result[i] = (tp[i] - mean_tp) / (0.015 * mean_dev)
-        else:
-            result[i] = 0.0
+    with np.errstate(divide="ignore", invalid="ignore"):
+        cci = (tp[timeperiod - 1 :] - mean_tp) / (0.015 * mean_dev)
+    result[timeperiod - 1 :] = np.where(mean_dev != 0, cci, 0.0)
 
     return result
 
@@ -458,37 +429,8 @@ def ADX(
     high = np.asarray(high, dtype=np.float64)
     low = np.asarray(low, dtype=np.float64)
     close = np.asarray(close, dtype=np.float64)
-    n = len(close)
 
-    result = np.full(n, np.nan)
-
-    if n < timeperiod * 2:
-        return result
-
-    # Create prev_close array (close shifted by 1)
-    prev_close = np.empty(n, dtype=np.float64)
-    prev_close[0] = np.nan
-    prev_close[1:] = close[:-1]
-
-    # Get +DI, -DI, DX
-    plus_di, minus_di, dx = dx_loop(high, low, prev_close, timeperiod)
-
-    # ADX = Wilder smoothed average of DX
-    # First ADX is the average of first 'period' DX values
-    first_adx_idx = timeperiod * 2 - 1
-    if first_adx_idx < n:
-        # Average of DX values from index 'period' to '2*period-1'
-        dx_values = dx[timeperiod : first_adx_idx + 1]
-        valid_dx = dx_values[~np.isnan(dx_values)]
-        if len(valid_dx) > 0:
-            result[first_adx_idx] = np.mean(valid_dx)
-
-            # Wilder smoothing for subsequent ADX values
-            for i in range(first_adx_idx + 1, n):
-                if not np.isnan(dx[i]):
-                    result[i] = (result[i - 1] * (timeperiod - 1) + dx[i]) / timeperiod
-
-    return result
+    return adx_loop(high, low, close, timeperiod)
 
 
 __all__ = ["RSI", "MACD", "STOCH", "STOCHF", "WILLR", "MOM", "ROC", "CCI", "MFI", "ADX"]

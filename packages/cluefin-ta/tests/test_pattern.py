@@ -1,642 +1,103 @@
 """
-Tests for candlestick pattern recognition.
+Tests for candlestick pattern recognition (CDLDOJI, CDLHAMMER, CDLENGULFING).
+
+Patterns are integer outputs decided by threshold comparisons, so parity with ta-lib is
+exact equality, not a tolerance. Tick-rounded prices are included because KRX prices sit
+on a tick grid, which makes ta-lib's ties (<= vs <, the 80 "partial" engulfing) common.
 """
 
 import warnings
 
 import numpy as np
 import pytest
+import talib
 
-from cluefin_ta import (
-    CDLDARKCLOUDCOVER,
-    CDLDOJI,
-    CDLENGULFING,
-    CDLEVENINGSTAR,
-    CDLHAMMER,
-    CDLHANGINGMAN,
-    CDLHARAMI,
-    CDLMORNINGSTAR,
-    CDLPIERCING,
-    CDLSHOOTINGSTAR,
-)
+from cluefin_ta import CDLDOJI, CDLENGULFING, CDLHAMMER
 
+PATTERNS = [CDLDOJI, CDLHAMMER, CDLENGULFING]
 
-class TestCDLDOJI:
-    """Tests for Doji pattern."""
 
-    def test_cdldoji_output_values(self, sample_ohlcv):
-        """Verify CDLDOJI returns valid values (-100, 0, or 100)."""
-        result = CDLDOJI(
-            sample_ohlcv["open"],
-            sample_ohlcv["high"],
-            sample_ohlcv["low"],
-            sample_ohlcv["close"],
-        )
+def _bars(seed: int, n: int, tick: float | None) -> tuple[np.ndarray, ...]:
+    rng = np.random.default_rng(seed)
+    close = 50000 * np.exp(np.cumsum(rng.normal(0, 0.02, n)))
+    open_arr = close * (1 + rng.normal(0, 0.01, n))
+    high = np.maximum(open_arr, close) * (1 + np.abs(rng.normal(0, 0.006, n)))
+    low = np.minimum(open_arr, close) * (1 - np.abs(rng.normal(0, 0.006, n)))
+    if tick is None:
+        return open_arr, high, low, close
+    return tuple(np.round(a / tick) * tick for a in (open_arr, high, low, close))
 
-        unique_values = np.unique(result)
-        valid_values = {-100, 0, 100}
-        assert set(unique_values).issubset(valid_values)
 
-    def test_cdldoji_perfect_doji(self):
-        """Test detection of perfect doji (open == close)."""
-        # Create a perfect doji: open equals close
-        open_arr = np.array([100.0])
-        high = np.array([105.0])
-        low = np.array([95.0])
-        close = np.array([100.0])  # Same as open
+def _talib(pattern):
+    return getattr(talib, pattern.__name__)
 
-        result = CDLDOJI(open_arr, high, low, close)
 
-        # Should detect doji
-        assert result[0] == 100
+@pytest.mark.parametrize("pattern", PATTERNS, ids=lambda f: f.__name__)
+class TestTalibParity:
+    def test_matches_talib(self, pattern, sample_ohlcv):
+        ohlc = (sample_ohlcv["open"], sample_ohlcv["high"], sample_ohlcv["low"], sample_ohlcv["close"])
 
-    def test_cdldoji_no_doji(self):
-        """Test non-doji candle."""
-        # Create a candle with significant body
-        open_arr = np.array([100.0])
-        high = np.array([105.0])
-        low = np.array([95.0])
-        close = np.array([104.0])  # Big body
+        np.testing.assert_array_equal(pattern(*ohlc), _talib(pattern)(*ohlc))
 
-        result = CDLDOJI(open_arr, high, low, close)
+    @pytest.mark.parametrize("tick", [None, 50.0, 500.0])
+    @pytest.mark.parametrize("seed", range(5))
+    def test_matches_talib_on_long_series(self, pattern, seed, tick):
+        ohlc = _bars(seed, 1500, tick)
 
-        # Should not detect doji
-        assert result[0] == 0
+        np.testing.assert_array_equal(pattern(*ohlc), _talib(pattern)(*ohlc))
 
+    def test_matches_talib_inside_and_around_lookback(self, pattern):
+        """Lengths 0..13 cover every pattern's lookback (2, 10, 11) and the first bar after it."""
+        ohlc = _bars(1, 13, 50.0)
+        for n in range(len(ohlc[0]) + 1):
+            prefix = tuple(a[:n] for a in ohlc)
 
-class TestCDLHAMMER:
-    """Tests for Hammer pattern."""
+            np.testing.assert_array_equal(pattern(*prefix), _talib(pattern)(*prefix), err_msg=f"n={n}")
 
-    def test_cdlhammer_output_values(self, sample_ohlcv):
-        """Verify CDLHAMMER returns valid values (0 or 100)."""
-        result = CDLHAMMER(
-            sample_ohlcv["open"],
-            sample_ohlcv["high"],
-            sample_ohlcv["low"],
-            sample_ohlcv["close"],
-        )
-
-        unique_values = np.unique(result)
-        # Hammer is bullish pattern, should return 0 or 100
-        valid_values = {0, 100}
-        assert set(unique_values).issubset(valid_values)
-
-    def test_cdlhammer_perfect_hammer(self):
-        """Test detection of perfect hammer pattern."""
-        # Hammer: small body at top, long lower shadow, no upper shadow
-        open_arr = np.array([100.0])
-        high = np.array([101.0])  # Small upper shadow
-        low = np.array([90.0])  # Long lower shadow
-        close = np.array([100.5])  # Small body
-
-        result = CDLHAMMER(open_arr, high, low, close)
-
-        # Should detect hammer
-        assert result[0] == 100
-
-    def test_cdlhammer_no_hammer(self):
-        """Test non-hammer candle."""
-        # Regular candle with balanced shadows
-        open_arr = np.array([100.0])
-        high = np.array([105.0])
-        low = np.array([95.0])
-        close = np.array([103.0])
-
-        result = CDLHAMMER(open_arr, high, low, close)
-
-        # Should not detect hammer
-        assert result[0] == 0
-
-
-class TestCDLENGULFING:
-    """Tests for Engulfing pattern."""
-
-    def test_cdlengulfing_output_values(self, sample_ohlcv):
-        """Verify CDLENGULFING returns valid values (-100, 0, or 100)."""
-        result = CDLENGULFING(
-            sample_ohlcv["open"],
-            sample_ohlcv["high"],
-            sample_ohlcv["low"],
-            sample_ohlcv["close"],
-        )
-
-        unique_values = np.unique(result)
-        valid_values = {-100, 0, 100}
-        assert set(unique_values).issubset(valid_values)
-
-    def test_cdlengulfing_bullish(self):
-        """Test detection of bullish engulfing pattern."""
-        # Day 1: Bearish candle, Day 2: Bullish candle that engulfs
-        open_arr = np.array([102.0, 98.0])
-        high = np.array([103.0, 104.0])
-        low = np.array([99.0, 97.0])
-        close = np.array([100.0, 103.0])  # Day 1: bearish, Day 2: bullish engulfing
-
-        result = CDLENGULFING(open_arr, high, low, close)
-
-        # Should detect bullish engulfing on day 2
-        assert result[0] == 0  # No pattern on first day
-        assert result[1] == 100  # Bullish engulfing
-
-    def test_cdlengulfing_bearish(self):
-        """Test detection of bearish engulfing pattern."""
-        # Day 1: Bullish candle, Day 2: Bearish candle that engulfs
-        open_arr = np.array([98.0, 104.0])
-        high = np.array([103.0, 105.0])
-        low = np.array([97.0, 96.0])
-        close = np.array([102.0, 97.0])  # Day 1: bullish, Day 2: bearish engulfing
-
-        result = CDLENGULFING(open_arr, high, low, close)
-
-        # Should detect bearish engulfing on day 2
-        assert result[0] == 0  # No pattern on first day
-        assert result[1] == -100  # Bearish engulfing
-
-    def test_cdlengulfing_no_engulf(self):
-        """Test non-engulfing pattern."""
-        # Two bullish candles, second doesn't engulf
-        open_arr = np.array([100.0, 102.0])
-        high = np.array([103.0, 104.0])
-        low = np.array([99.0, 101.0])
-        close = np.array([102.0, 103.0])
-
-        result = CDLENGULFING(open_arr, high, low, close)
-
-        # No engulfing pattern
-        assert result[0] == 0
-        assert result[1] == 0
-
-    def test_cdlengulfing_first_value(self, sample_ohlcv):
-        """Verify first value is always 0 (needs previous candle)."""
-        result = CDLENGULFING(
-            sample_ohlcv["open"],
-            sample_ohlcv["high"],
-            sample_ohlcv["low"],
-            sample_ohlcv["close"],
-        )
-
-        assert result[0] == 0
-
-
-class TestCDLSHOOTINGSTAR:
-    """Tests for Shooting Star pattern."""
-
-    def test_cdlshootingstar_output_values(self, sample_ohlcv):
-        """Verify CDLSHOOTINGSTAR returns valid values."""
-        result = CDLSHOOTINGSTAR(
-            sample_ohlcv["open"],
-            sample_ohlcv["high"],
-            sample_ohlcv["low"],
-            sample_ohlcv["close"],
-        )
-
-        unique_values = np.unique(result)
-        valid_values = {-100, 0}
-        assert set(unique_values).issubset(valid_values)
-
-    def test_cdlshootingstar_perfect(self):
-        """Test detection of perfect shooting star pattern."""
-        # Shooting star: small body at bottom, long upper shadow, no lower shadow
-        open_arr = np.array([100.0])
-        high = np.array([110.0])  # Long upper shadow
-        low = np.array([99.5])  # Small lower shadow
-        close = np.array([100.5])  # Small body
-
-        result = CDLSHOOTINGSTAR(open_arr, high, low, close)
-
-        # Should detect shooting star
-        assert result[0] == -100
-
-    def test_cdlshootingstar_no_pattern(self):
-        """Test non-shooting-star candle."""
-        # Regular bullish candle
-        open_arr = np.array([100.0])
-        high = np.array([105.0])
-        low = np.array([95.0])
-        close = np.array([104.0])
-
-        result = CDLSHOOTINGSTAR(open_arr, high, low, close)
-
-        assert result[0] == 0
-
-
-class TestCDLHANGINGMAN:
-    """Tests for Hanging Man pattern."""
-
-    def test_cdlhangingman_output_values(self, sample_ohlcv):
-        """Verify CDLHANGINGMAN returns valid values."""
-        result = CDLHANGINGMAN(
-            sample_ohlcv["open"],
-            sample_ohlcv["high"],
-            sample_ohlcv["low"],
-            sample_ohlcv["close"],
-        )
-
-        unique_values = np.unique(result)
-        valid_values = {-100, 0}
-        assert set(unique_values).issubset(valid_values)
-
-    def test_cdlhangingman_perfect(self):
-        """Test detection of hanging man pattern (same shape as hammer)."""
-        # Hanging man: small body at top, long lower shadow, no upper shadow
-        open_arr = np.array([100.0])
-        high = np.array([101.0])  # Small upper shadow
-        low = np.array([90.0])  # Long lower shadow
-        close = np.array([100.5])  # Small body
-
-        result = CDLHANGINGMAN(open_arr, high, low, close)
-
-        # Should detect hanging man (bearish signal)
-        assert result[0] == -100
-
-
-class TestCDLHARAMI:
-    """Tests for Harami pattern."""
-
-    def test_cdlharami_output_values(self, sample_ohlcv):
-        """Verify CDLHARAMI returns valid values."""
-        result = CDLHARAMI(
-            sample_ohlcv["open"],
-            sample_ohlcv["high"],
-            sample_ohlcv["low"],
-            sample_ohlcv["close"],
-        )
-
-        unique_values = np.unique(result)
-        valid_values = {-100, 0, 100}
-        assert set(unique_values).issubset(valid_values)
-
-    def test_cdlharami_bullish(self):
-        """Test detection of bullish harami pattern."""
-        # Day 1: Large bearish candle, Day 2: Small bullish candle inside
-        open_arr = np.array([105.0, 101.0])
-        high = np.array([106.0, 102.0])
-        low = np.array([99.0, 100.0])
-        close = np.array([100.0, 101.5])  # Day 1: bearish, Day 2: bullish inside
-
-        result = CDLHARAMI(open_arr, high, low, close)
-
-        assert result[0] == 0  # No pattern on first day
-        assert result[1] == 100  # Bullish harami
-
-    def test_cdlharami_bearish(self):
-        """Test detection of bearish harami pattern."""
-        # Day 1: Large bullish candle, Day 2: Small bearish candle inside
-        open_arr = np.array([100.0, 104.0])
-        high = np.array([106.0, 104.5])
-        low = np.array([99.0, 101.0])
-        close = np.array([105.0, 101.5])  # Day 1: bullish, Day 2: bearish inside
-
-        result = CDLHARAMI(open_arr, high, low, close)
-
-        assert result[0] == 0
-        assert result[1] == -100  # Bearish harami
-
-    def test_cdlharami_first_value(self):
-        """Verify first value is always 0."""
-        open_arr = np.array([100.0, 101.0])
-        high = np.array([102.0, 103.0])
-        low = np.array([99.0, 100.0])
-        close = np.array([101.0, 100.5])
-
-        result = CDLHARAMI(open_arr, high, low, close)
-        assert result[0] == 0
-
-
-class TestCDLPIERCING:
-    """Tests for Piercing Line pattern."""
-
-    def test_cdlpiercing_output_values(self, sample_ohlcv):
-        """Verify CDLPIERCING returns valid values."""
-        result = CDLPIERCING(
-            sample_ohlcv["open"],
-            sample_ohlcv["high"],
-            sample_ohlcv["low"],
-            sample_ohlcv["close"],
-        )
-
-        unique_values = np.unique(result)
-        valid_values = {0, 100}
-        assert set(unique_values).issubset(valid_values)
-
-    def test_cdlpiercing_perfect(self):
-        """Test detection of piercing line pattern."""
-        # Day 1: Bearish candle, Day 2: Opens below day 1 low, closes above midpoint
-        open_arr = np.array([105.0, 98.0])  # Day 2 opens below day 1's low (99)
-        high = np.array([106.0, 104.0])
-        low = np.array([99.0, 97.0])
-        close = np.array([100.0, 103.5])  # Day 1: bearish (105->100), Day 2: bullish, closes above 102.5 midpoint
-
-        result = CDLPIERCING(open_arr, high, low, close)
-
-        assert result[0] == 0  # No pattern on first day
-        assert result[1] == 100  # Piercing line
-
-    def test_cdlpiercing_first_value(self):
-        """Verify first value is always 0."""
-        open_arr = np.array([100.0, 95.0])
-        high = np.array([102.0, 105.0])
-        low = np.array([99.0, 94.0])
-        close = np.array([99.5, 104.0])
-
-        result = CDLPIERCING(open_arr, high, low, close)
-        assert result[0] == 0
-
-
-class TestCDLMORNINGSTAR:
-    """Tests for Morning Star pattern (3-bar bullish reversal)."""
-
-    def test_cdlmorningstar_output_values(self, sample_ohlcv):
-        """Verify CDLMORNINGSTAR returns valid values."""
-        result = CDLMORNINGSTAR(
-            sample_ohlcv["open"],
-            sample_ohlcv["high"],
-            sample_ohlcv["low"],
-            sample_ohlcv["close"],
-        )
-
-        unique_values = np.unique(result)
-        valid_values = {0, 100}
-        assert set(unique_values).issubset(valid_values)
-
-    def test_cdlmorningstar_perfect(self):
-        """Test detection of perfect morning star pattern."""
-        # Day 1: Large bearish candle
-        # Day 2: Small body (star) that gaps down
-        # Day 3: Large bullish candle that closes above day 1 midpoint
-        open_arr = np.array([110.0, 98.0, 99.0])
-        high = np.array([111.0, 99.0, 108.0])
-        low = np.array([99.0, 97.0, 98.0])
-        close = np.array([100.0, 98.5, 107.0])
-
-        result = CDLMORNINGSTAR(open_arr, high, low, close)
-
-        assert result[0] == 0  # No pattern on first day
-        assert result[1] == 0  # No pattern on second day
-        assert result[2] == 100  # Morning star detected on third day
-
-    def test_cdlmorningstar_no_gap(self):
-        """Test that pattern requires gap down for star."""
-        # Day 2 doesn't gap down from day 1
-        open_arr = np.array([110.0, 102.0, 99.0])  # Day 2 open too high
-        high = np.array([111.0, 103.0, 108.0])
-        low = np.array([99.0, 101.0, 98.0])
-        close = np.array([100.0, 102.5, 107.0])
-
-        result = CDLMORNINGSTAR(open_arr, high, low, close)
-
-        assert result[2] == 0  # No pattern - star didn't gap down
-
-    def test_cdlmorningstar_first_two_values(self):
-        """Verify first two values are always 0 (needs 3 candles)."""
-        open_arr = np.array([110.0, 98.0, 99.0])
-        high = np.array([111.0, 99.0, 108.0])
-        low = np.array([99.0, 97.0, 98.0])
-        close = np.array([100.0, 98.5, 107.0])
-
-        result = CDLMORNINGSTAR(open_arr, high, low, close)
-
-        assert result[0] == 0
-        assert result[1] == 0
-
-    def test_cdlmorningstar_short_array(self):
-        """Test with array shorter than 3 elements."""
-        open_arr = np.array([100.0, 95.0])
-        high = np.array([102.0, 96.0])
-        low = np.array([99.0, 94.0])
-        close = np.array([99.5, 95.5])
-
-        result = CDLMORNINGSTAR(open_arr, high, low, close)
-
-        assert len(result) == 2
-        assert np.all(result == 0)
-
-
-class TestCDLEVENINGSTAR:
-    """Tests for Evening Star pattern (3-bar bearish reversal)."""
-
-    def test_cdleveningstar_output_values(self, sample_ohlcv):
-        """Verify CDLEVENINGSTAR returns valid values."""
-        result = CDLEVENINGSTAR(
-            sample_ohlcv["open"],
-            sample_ohlcv["high"],
-            sample_ohlcv["low"],
-            sample_ohlcv["close"],
-        )
-
-        unique_values = np.unique(result)
-        valid_values = {-100, 0}
-        assert set(unique_values).issubset(valid_values)
-
-    def test_cdleveningstar_perfect(self):
-        """Test detection of perfect evening star pattern."""
-        # Day 1: Large bullish candle
-        # Day 2: Small body (star) that gaps up
-        # Day 3: Large bearish candle that closes below day 1 midpoint
-        open_arr = np.array([100.0, 112.0, 111.0])
-        high = np.array([111.0, 113.0, 112.0])
-        low = np.array([99.0, 111.0, 102.0])
-        close = np.array([110.0, 112.5, 103.0])
-
-        result = CDLEVENINGSTAR(open_arr, high, low, close)
-
-        assert result[0] == 0  # No pattern on first day
-        assert result[1] == 0  # No pattern on second day
-        assert result[2] == -100  # Evening star detected on third day
-
-    def test_cdleveningstar_no_gap(self):
-        """Test that pattern requires gap up for star."""
-        # Day 2 doesn't gap up from day 1
-        open_arr = np.array([100.0, 108.0, 109.0])  # Day 2 open not above day 1 close
-        high = np.array([111.0, 109.0, 110.0])
-        low = np.array([99.0, 107.0, 102.0])
-        close = np.array([110.0, 108.5, 103.0])
-
-        result = CDLEVENINGSTAR(open_arr, high, low, close)
-
-        assert result[2] == 0  # No pattern - star didn't gap up
-
-    def test_cdleveningstar_first_two_values(self):
-        """Verify first two values are always 0 (needs 3 candles)."""
-        open_arr = np.array([100.0, 112.0, 111.0])
-        high = np.array([111.0, 113.0, 112.0])
-        low = np.array([99.0, 111.0, 102.0])
-        close = np.array([110.0, 112.5, 103.0])
-
-        result = CDLEVENINGSTAR(open_arr, high, low, close)
-
-        assert result[0] == 0
-        assert result[1] == 0
-
-
-class TestCDLDARKCLOUDCOVER:
-    """Tests for Dark Cloud Cover pattern (2-bar bearish reversal)."""
-
-    def test_cdldarkcloudcover_output_values(self, sample_ohlcv):
-        """Verify CDLDARKCLOUDCOVER returns valid values."""
-        result = CDLDARKCLOUDCOVER(
-            sample_ohlcv["open"],
-            sample_ohlcv["high"],
-            sample_ohlcv["low"],
-            sample_ohlcv["close"],
-        )
-
-        unique_values = np.unique(result)
-        valid_values = {-100, 0}
-        assert set(unique_values).issubset(valid_values)
-
-    def test_cdldarkcloudcover_perfect(self):
-        """Test detection of perfect dark cloud cover pattern."""
-        # Day 1: Large bullish candle
-        # Day 2: Opens above day 1 high (gap up), closes below day 1 midpoint
-        open_arr = np.array([100.0, 112.0])  # Day 2 opens above day 1 high (111)
-        high = np.array([111.0, 113.0])
-        low = np.array([99.0, 103.0])
-        close = np.array([110.0, 104.0])  # Day 2 closes below midpoint (105) but above open (100)
-
-        result = CDLDARKCLOUDCOVER(open_arr, high, low, close)
-
-        assert result[0] == 0  # No pattern on first day
-        assert result[1] == -100  # Dark cloud cover detected
-
-    def test_cdldarkcloudcover_no_gap(self):
-        """Test that pattern requires gap up opening."""
-        # Day 2 doesn't open above day 1 high
-        open_arr = np.array([100.0, 109.0])  # Day 2 opens below day 1 high (111)
-        high = np.array([111.0, 110.0])
-        low = np.array([99.0, 103.0])
-        close = np.array([110.0, 104.0])
-
-        result = CDLDARKCLOUDCOVER(open_arr, high, low, close)
-
-        assert result[1] == 0  # No pattern - no gap up
-
-    def test_cdldarkcloudcover_close_above_midpoint(self):
-        """Test that pattern requires close below midpoint."""
-        # Day 2 closes above day 1 midpoint
-        open_arr = np.array([100.0, 112.0])
-        high = np.array([111.0, 113.0])
-        low = np.array([99.0, 106.0])
-        close = np.array([110.0, 107.0])  # Closes above midpoint (105)
-
-        result = CDLDARKCLOUDCOVER(open_arr, high, low, close)
-
-        assert result[1] == 0  # No pattern - close too high
-
-    def test_cdldarkcloudcover_first_value(self):
-        """Verify first value is always 0."""
-        open_arr = np.array([100.0, 112.0])
-        high = np.array([111.0, 113.0])
-        low = np.array([99.0, 103.0])
-        close = np.array([110.0, 104.0])
-
-        result = CDLDARKCLOUDCOVER(open_arr, high, low, close)
-        assert result[0] == 0
-
-
-SINGLE_BAR_PATTERNS = [CDLDOJI, CDLHAMMER, CDLSHOOTINGSTAR, CDLHANGINGMAN]
-MULTI_BAR_PATTERNS = [
-    (CDLENGULFING, 2),
-    (CDLHARAMI, 2),
-    (CDLPIERCING, 2),
-    (CDLDARKCLOUDCOVER, 2),
-    (CDLMORNINGSTAR, 3),
-    (CDLEVENINGSTAR, 3),
-]
-
-
-class TestPatternGuards:
-    """Edge inputs real market data produces: flat bars (거래정지·상하한가 시가=종가), zero bodies, short series."""
-
-    @pytest.mark.parametrize("pattern", SINGLE_BAR_PATTERNS, ids=lambda f: f.__name__)
-    def test_flat_bar_is_no_pattern_without_division_warning(self, pattern):
-        """A bar with high == low has zero range; it must be skipped, not divided by."""
-        flat = np.array([100.0, 100.0])
+    def test_flat_bars_are_no_pattern_without_division_warning(self, pattern):
+        """거래정지: high == low == open == close for every bar."""
+        flat = np.full(30, 100.0)
 
         with warnings.catch_warnings():
             warnings.simplefilter("error")
             result = pattern(flat, flat, flat, flat)
 
-        assert result.tolist() == [0, 0]
+        np.testing.assert_array_equal(result, _talib(pattern)(flat, flat, flat, flat))
 
+
+class TestCDLDOJI:
+    def test_doji_is_relative_to_previous_ranges(self):
+        """Body 0.5 is a doji after ten bars of range 10 (threshold 0.1 * 10 = 1)."""
+        open_arr = np.full(11, 100.0)
+        close = np.append(np.full(10, 104.0), 100.5)
+        high = np.full(11, 105.0)
+        low = np.full(11, 95.0)
+
+        result = CDLDOJI(open_arr, high, low, close)
+
+        assert result[:10].tolist() == [0] * 10
+        assert result[10] == 100
+
+
+class TestCDLENGULFING:
+    # Bar 0 only fills ta-lib's 2-bar lookback
     @pytest.mark.parametrize(
-        ("pattern", "expected"),
-        [(CDLHAMMER, 100), (CDLHANGINGMAN, -100)],
-        ids=lambda v: getattr(v, "__name__", str(v)),
+        ("open_arr", "close", "expected"),
+        [
+            ([100, 105, 99], [101, 100, 106], 100),  # white body covers the black one
+            ([100, 105, 100], [101, 100, 106], 80),  # open equals the previous close
+            ([100, 100, 106], [101, 105, 99], -100),  # black body covers the white one
+            ([100, 100, 105], [101, 105, 99], -80),  # open equals the previous close
+            ([100, 105, 101], [101, 100, 104], 0),  # inside the previous body
+        ],
     )
-    def test_dragonfly_doji_counts_as_long_lower_shadow(self, pattern, expected):
-        """open == close == high with a long lower shadow: zero body must not hide the shadow ratio."""
-        price = np.array([100.0])
-        low = np.array([95.0])
+    def test_engulfing_scores(self, open_arr, close, expected):
+        open_arr = np.array(open_arr, dtype=np.float64)
+        close = np.array(close, dtype=np.float64)
+        high = np.maximum(open_arr, close) + 1
+        low = np.minimum(open_arr, close) - 1
 
-        result = pattern(price, price, low, price)
+        result = CDLENGULFING(open_arr, high, low, close)
 
-        assert result.tolist() == [expected]
-
-    def test_gravestone_doji_is_shooting_star(self):
-        """open == close == low with a long upper shadow: zero body must not hide the shadow ratio."""
-        price = np.array([100.0])
-        high = np.array([105.0])
-
-        result = CDLSHOOTINGSTAR(price, high, price, price)
-
-        assert result.tolist() == [-100]
-
-    @pytest.mark.parametrize(
-        ("pattern", "bars_needed"), MULTI_BAR_PATTERNS, ids=lambda v: getattr(v, "__name__", str(v))
-    )
-    def test_series_shorter_than_pattern_returns_zeros(self, pattern, bars_needed):
-        """Fewer bars than the pattern spans: same-length all-zero output, including an empty series."""
-        for n in range(bars_needed):
-            prices = np.full(n, 100.0)
-
-            result = pattern(prices, prices + 1, prices - 1, prices)
-
-            assert result.tolist() == [0] * n
-
-    @pytest.mark.parametrize("pattern", [CDLMORNINGSTAR, CDLEVENINGSTAR], ids=lambda f: f.__name__)
-    def test_star_with_flat_first_bar_is_skipped_without_division_warning(self, pattern):
-        """Day 1 with zero range cannot be the large candle; it must be skipped, not divided by."""
-        open_arr = np.array([100.0, 98.0, 99.0])
-        high = np.array([100.0, 99.0, 108.0])
-        low = np.array([100.0, 97.0, 98.0])
-        close = np.array([100.0, 98.5, 107.0])
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            result = pattern(open_arr, high, low, close)
-
-        assert result.tolist() == [0, 0, 0]
-
-    def test_morningstar_rejects_small_third_body(self):
-        """Day 3 closes above the day 1 midpoint (105) but its body (2) is under half of day 1's (10)."""
-        open_arr = np.array([110.0, 98.0, 105.0])
-        high = np.array([111.0, 99.0, 108.0])
-        low = np.array([99.0, 97.0, 104.0])
-        close = np.array([100.0, 98.5, 107.0])
-
-        result = CDLMORNINGSTAR(open_arr, high, low, close)
-
-        assert result[2] == 0
-
-    def test_eveningstar_rejects_close_above_midpoint(self):
-        """Day 3 is bearish with a full body but closes at 106, above the day 1 midpoint (105)."""
-        open_arr = np.array([100.0, 112.0, 111.0])
-        high = np.array([111.0, 113.0, 112.0])
-        low = np.array([99.0, 111.0, 105.0])
-        close = np.array([110.0, 112.5, 106.0])
-
-        result = CDLEVENINGSTAR(open_arr, high, low, close)
-
-        assert result[2] == 0
-
-    def test_eveningstar_rejects_small_third_body(self):
-        """Day 3 closes below the day 1 midpoint (105) but its body (4) is under half of day 1's (10)."""
-        open_arr = np.array([100.0, 112.0, 108.0])
-        high = np.array([111.0, 113.0, 109.0])
-        low = np.array([99.0, 111.0, 103.0])
-        close = np.array([110.0, 112.5, 104.0])
-
-        result = CDLEVENINGSTAR(open_arr, high, low, close)
-
-        assert result[2] == 0
+        assert result.tolist() == [0, 0, expected]
+        assert result.tolist() == talib.CDLENGULFING(open_arr, high, low, close).tolist()

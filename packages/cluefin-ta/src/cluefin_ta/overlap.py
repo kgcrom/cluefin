@@ -12,8 +12,21 @@ Functions:
 """
 
 import numpy as np
+from numpy.lib.stride_tricks import sliding_window_view
 
 from cluefin_ta._core import ema_loop, kama_loop, rolling_std
+
+
+def _ema_from(values: np.ndarray, period: int, start: int) -> np.ndarray:
+    """ta-lib's EMA whose first value is at ``start``: the SMA of the ``period`` values ending there."""
+    seed = np.mean(values[start - period + 1 : start + 1])
+    return ema_loop(values, start, 2.0 / (period + 1), seed)
+
+
+def _require_sma(name: str, matype: int) -> None:
+    """Reject ta-lib MA types other than SMA (0) instead of silently computing an SMA."""
+    if matype != 0:
+        raise ValueError(f"{name}={matype} is not supported; only 0 (SMA) is implemented")
 
 
 def SMA(close: np.ndarray, timeperiod: int = 30) -> np.ndarray:
@@ -58,13 +71,7 @@ def EMA(close: np.ndarray, timeperiod: int = 30) -> np.ndarray:
     if n < timeperiod:
         return np.full(n, np.nan)
 
-    # Calculate multiplier (smoothing factor)
-    alpha = 2.0 / (timeperiod + 1)
-
-    # Initialize with SMA for the first EMA value
-    initial_sma = np.mean(close[:timeperiod])
-
-    return ema_loop(close, timeperiod, alpha, initial_sma)
+    return _ema_from(close, timeperiod, timeperiod - 1)
 
 
 def WMA(close: np.ndarray, timeperiod: int = 30) -> np.ndarray:
@@ -89,10 +96,7 @@ def WMA(close: np.ndarray, timeperiod: int = 30) -> np.ndarray:
     weights = np.arange(1, timeperiod + 1, dtype=np.float64)
     weight_sum = weights.sum()
 
-    # Calculate WMA for each position
-    for i in range(timeperiod - 1, n):
-        window = close[i - timeperiod + 1 : i + 1]
-        result[i] = np.sum(window * weights) / weight_sum
+    result[timeperiod - 1 :] = sliding_window_view(close, timeperiod) @ weights / weight_sum
 
     return result
 
@@ -222,11 +226,15 @@ def BBANDS(
         timeperiod: Number of periods for the moving average (default: 5)
         nbdevup: Number of standard deviations for upper band (default: 2.0)
         nbdevdn: Number of standard deviations for lower band (default: 2.0)
-        matype: Moving average type (0=SMA, 1=EMA) - currently only SMA supported
+        matype: Moving average type - only 0 (SMA) is supported
 
     Returns:
         Tuple of (upper_band, middle_band, lower_band)
+
+    Raises:
+        ValueError: If matype is not 0
     """
+    _require_sma("matype", matype)
     close = np.asarray(close, dtype=np.float64)
     n = len(close)
 

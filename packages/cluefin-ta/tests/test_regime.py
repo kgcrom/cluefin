@@ -14,6 +14,7 @@ from cluefin_ta import (
     REGIME_MA_DURATION,
     REGIME_VOLATILITY,
 )
+from cluefin_ta.volatility import NATR
 
 
 class TestREGIME_MA:
@@ -343,6 +344,47 @@ class TestREGIME_VOLATILITY:
         # Should handle NaN gracefully
         assert len(result) == n
 
+    def test_volatility_uses_no_future_data(self):
+        """A bar's regime must not change when later bars are appended."""
+        np.random.seed(7)
+        n = 300
+        close = 100 + np.cumsum(np.random.uniform(-1, 1, n))
+        high = close + np.random.uniform(0, 3, n)
+        low = close - np.random.uniform(0, 3, n)
+
+        full = REGIME_VOLATILITY(high, low, close)
+        prefix = REGIME_VOLATILITY(high[:150], low[:150], close[:150])
+
+        np.testing.assert_array_equal(full[:150], prefix)
+
+    def test_volatility_threshold_is_expanding_percentile(self):
+        """Each bar is compared to the percentile of NATR up to and including that bar."""
+        np.random.seed(3)
+        n = 120
+        close = 100 + np.cumsum(np.random.uniform(-1, 1, n))
+        high = close + np.random.uniform(0, 3, n)
+        low = close - np.random.uniform(0, 3, n)
+
+        result = REGIME_VOLATILITY(high, low, close, atr_period=14, threshold_percentile=66)
+        natr = NATR(high, low, close, timeperiod=14)
+
+        for i in range(14, n):
+            threshold = np.percentile(natr[14 : i + 1], 66)
+            assert result[i] == float(natr[i] > threshold), f"bar {i}"
+
+    def test_volatility_min_periods(self):
+        """No classification before min_periods valid NATR values."""
+        np.random.seed(5)
+        n = 80
+        close = 100 + np.cumsum(np.random.uniform(-1, 1, n))
+        high = close + 1.0
+        low = close - 1.0
+
+        result = REGIME_VOLATILITY(high, low, close, atr_period=14, min_periods=20)
+
+        assert np.all(np.isnan(result[: 14 + 19]))
+        assert not np.any(np.isnan(result[14 + 19 :]))
+
 
 class TestREGIME_COMBINED:
     """Tests for combined regime detection."""
@@ -568,13 +610,13 @@ class TestREGIME_HMM:
         # Detect regimes
         states, trans_probs, means = REGIME_HMM(returns, n_states=3, random_state=42)
 
-        # Check output shapes
+        # One entry per bar
         assert len(states) == len(returns)
-        assert trans_probs.shape == (3, 3)
-        assert len(means) == 3
+        assert trans_probs.shape == (len(returns), 3, 3)
+        assert means.shape == (len(returns), 3)
 
         # Check that states are sorted by mean (Bear < Neutral < Bull)
-        assert means[0] < means[1] < means[2]
+        assert means[-1, 0] < means[-1, 1] < means[-1, 2]
 
         # Valid states should be in range [0, 2]
         valid_states = states[~np.isnan(states)]
@@ -589,10 +631,11 @@ class TestREGIME_HMM:
 
         states, trans_probs, means = REGIME_HMM(returns, n_states=3)
 
-        if not np.all(np.isnan(trans_probs)):
-            # Each row should sum to 1 (probability distribution)
-            row_sums = np.sum(trans_probs, axis=1)
-            np.testing.assert_array_almost_equal(row_sums, np.ones(3), decimal=5)
+        fitted = ~np.isnan(states)
+        assert np.any(fitted)
+        # Each row of every bar's matrix is a probability distribution
+        row_sums = np.sum(trans_probs[fitted], axis=2)
+        np.testing.assert_array_almost_equal(row_sums, np.ones((int(fitted.sum()), 3)), decimal=5)
 
     def test_hmm_insufficient_data(self):
         """Test HMM with insufficient data."""
@@ -648,8 +691,8 @@ class TestREGIME_HMM:
 
         states, trans_probs, means = REGIME_HMM(returns, n_states=2)
 
-        assert trans_probs.shape == (2, 2)
-        assert len(means) == 2
+        assert trans_probs.shape == (100, 2, 2)
+        assert means.shape == (100, 2)
         valid_states = states[~np.isnan(states)]
         assert np.all((valid_states >= 0) & (valid_states <= 1))
 
@@ -675,3 +718,31 @@ class TestREGIME_HMM_Integration:
         # Should work end-to-end
         assert len(states) == len(prices)
         assert not np.all(np.isnan(states))  # Should have some valid states
+
+    def test_hmm_uses_no_future_data(self):
+        """A bar's state, matrix and means must not change when later bars are appended."""
+        pytest.importorskip("hmmlearn")
+
+        np.random.seed(11)
+        returns = np.concatenate([np.random.normal(-0.01, 0.02, 80), np.random.normal(0.015, 0.01, 80)])
+
+        full = REGIME_HMM(returns, n_states=3, min_periods=40, refit_every=15)
+        prefix = REGIME_HMM(returns[:100], n_states=3, min_periods=40, refit_every=15)
+
+        for full_part, prefix_part in zip(full, prefix, strict=True):
+            np.testing.assert_array_equal(full_part[:100], prefix_part)
+
+    def test_hmm_nan_before_first_fit(self):
+        """Bars before min_periods valid returns have no state."""
+        pytest.importorskip("hmmlearn")
+
+        np.random.seed(13)
+        returns = np.random.normal(0, 0.02, 100)
+
+        states, trans_probs, means = REGIME_HMM(returns, n_states=2, min_periods=50)
+
+        # The first fit uses returns[:50], so bar 49 is the first one with a state
+        assert np.all(np.isnan(states[:49]))
+        assert np.all(np.isnan(trans_probs[:49]))
+        assert np.all(np.isnan(means[:49]))
+        assert not np.any(np.isnan(states[49:]))

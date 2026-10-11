@@ -114,24 +114,24 @@ def ADOSC(
     # It starts EMA from index 0 (no warmup period for A/D values)
     result = np.full(n, np.nan)
 
-    # Fast EMA
-    fast_alpha = 2.0 / (fastperiod + 1)
-    fast_ema = np.full(n, np.nan)
-    fast_ema[0] = ad[0]
-    for i in range(1, n):
-        fast_ema[i] = fast_alpha * ad[i] + (1 - fast_alpha) * fast_ema[i - 1]
-
-    # Slow EMA
-    slow_alpha = 2.0 / (slowperiod + 1)
-    slow_ema = np.full(n, np.nan)
-    slow_ema[0] = ad[0]
-    for i in range(1, n):
-        slow_ema[i] = slow_alpha * ad[i] + (1 - slow_alpha) * slow_ema[i - 1]
+    fast_ema = _ema_from_first(ad, fastperiod)
+    slow_ema = _ema_from_first(ad, slowperiod)
 
     # ADOSC = Fast EMA - Slow EMA (starting from slowperiod - 1)
     result[slowperiod - 1 :] = fast_ema[slowperiod - 1 :] - slow_ema[slowperiod - 1 :]
 
     return result
+
+
+def _ema_from_first(values: np.ndarray, period: int) -> np.ndarray:
+    """EMA seeded with the first value, in ADOSC's ``k * x + (1 - k) * prev`` form."""
+    alpha = 2.0 / (period + 1)
+    prev = float(values[0])
+    smoothed = [prev]
+    for value in values[1:].tolist():
+        prev = alpha * value + (1 - alpha) * prev
+        smoothed.append(prev)
+    return np.array(smoothed)
 
 
 __all__ = ["OBV", "AD", "ADOSC"]

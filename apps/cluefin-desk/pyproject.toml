@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "cluefin-openapi",
-    "cluefin-ta",
+    "cluefin-ta[hmm]",
     "cluefin-xbrl",
     "textual>=1.0.0",
     "pandas>=2.0.0",

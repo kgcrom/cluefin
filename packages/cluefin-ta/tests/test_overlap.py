@@ -14,7 +14,6 @@ NAN_PREFIX_CASES = [
     ("SMA", SMA, 20),
     ("EMA", EMA, 12),
     ("WMA", WMA, 20),
-    ("KAMA", KAMA, 30),
 ]
 
 # (name, our func, timeperiod) for single-output overlap indicators, used to
@@ -164,14 +163,21 @@ class TestTEMA:
 class TestKAMA:
     """Tests for Kaufman Adaptive Moving Average."""
 
-    def test_kama_matches_talib(self, sample_close):
-        """Verify KAMA matches ta-lib output."""
-        timeperiod = 30
+    @pytest.mark.parametrize("timeperiod", [10, 30])
+    def test_kama_matches_talib(self, sample_close, timeperiod):
+        """Values and NaN prefix (timeperiod bars, one more than the other MAs) match ta-lib."""
         expected = talib.KAMA(sample_close, timeperiod=timeperiod)
         actual = KAMA(sample_close, timeperiod=timeperiod)
 
+        np.testing.assert_array_equal(np.isnan(actual), np.isnan(expected))
         mask = ~np.isnan(expected)
-        np.testing.assert_allclose(actual[mask], expected[mask], rtol=1e-6)
+        np.testing.assert_allclose(actual[mask], expected[mask], rtol=1e-10)
+
+    def test_kama_flat_window_matches_talib(self):
+        """A flat window after a move: ta-lib treats zero volatility as efficiency 1."""
+        close = np.concatenate([np.linspace(100.0, 120.0, 20), np.full(20, 120.0)])
+
+        np.testing.assert_allclose(KAMA(close, timeperiod=10), talib.KAMA(close, timeperiod=10), rtol=1e-10)
 
 
 @pytest.mark.parametrize("name,func,timeperiod", NAN_PREFIX_CASES, ids=[c[0] for c in NAN_PREFIX_CASES])

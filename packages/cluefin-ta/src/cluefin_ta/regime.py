@@ -13,6 +13,8 @@ Regime States:
     2: Bull Market (Fast MA > Slow MA and diverging)
 """
 
+import bisect
+
 import numpy as np
 
 from cluefin_ta.overlap import SMA
@@ -170,13 +172,18 @@ def REGIME_VOLATILITY(
     close: np.ndarray,
     atr_period: int = 14,
     threshold_percentile: int = 66,
+    min_periods: int = 1,
 ) -> np.ndarray:
     """
     Volatility-based Market Regime Detection.
 
     Classifies market into low/high volatility regimes based on NATR:
-    - 0 (Low Volatility): NATR below threshold percentile
-    - 1 (High Volatility): NATR above threshold percentile
+    - 0 (Low Volatility): NATR at or below the threshold percentile
+    - 1 (High Volatility): NATR above the threshold percentile
+
+    The threshold at bar ``t`` is the percentile of the NATR values up to and including
+    ``t`` (an expanding window), so no bar is classified with data from its future. The
+    last bar's threshold is the percentile of the whole series.
 
     Uses Normalized ATR (NATR) to measure volatility as a percentage of price,
     making it comparable across different price levels.
@@ -188,6 +195,7 @@ def REGIME_VOLATILITY(
         atr_period: ATR calculation period (default: 14)
         threshold_percentile: Percentile for high/low volatility split (default: 66)
                             66 means top 34% is high volatility
+        min_periods: Valid NATR values needed before the first classification (default: 1)
 
     Returns:
         Array of volatility regime (0/1) with NaN for initial periods
@@ -205,35 +213,49 @@ def REGIME_VOLATILITY(
         >>> # Returns 0 or 1 for low/high volatility
 
     Notes:
-        - First valid value appears at index (atr_period)
+        - First valid value appears at index (atr_period + min_periods - 1)
+        - Early classifications rest on little history and are noisier
         - Higher threshold_percentile means more restrictive high volatility classification
         - NATR is used instead of ATR to normalize across different price levels
     """
     high = np.asarray(high, dtype=np.float64)
     low = np.asarray(low, dtype=np.float64)
     close = np.asarray(close, dtype=np.float64)
-    n = len(close)
 
     # Calculate NATR (Normalized ATR as percentage)
     natr = NATR(high, low, close, timeperiod=atr_period)
 
-    # Get valid NATR values (non-NaN)
-    valid_natr = natr[~np.isnan(natr)]
+    threshold = _expanding_percentile(natr, threshold_percentile, min_periods)
 
-    if len(valid_natr) == 0:
-        # No valid data, return all NaN
-        return np.full(n, np.nan)
-
-    # Calculate threshold based on percentile
-    threshold = np.percentile(valid_natr, threshold_percentile)
-
-    # Classify regime: High volatility (1) if above threshold, Low volatility (0) otherwise
-    regime = np.where(natr > threshold, 1, 0)
-
-    # Preserve NaN values from NATR calculation
-    regime = np.where(np.isnan(natr), np.nan, regime)
-
+    # High volatility (1) if above threshold, low volatility (0) otherwise
+    regime = np.where(natr > threshold, 1.0, 0.0)
+    regime[np.isnan(threshold)] = np.nan
     return regime
+
+
+def _expanding_percentile(values: np.ndarray, q: float, min_periods: int) -> np.ndarray:
+    """Percentile of the non-NaN values up to each index (np.percentile's linear method).
+
+    NaN where the value itself is NaN or fewer than ``min_periods`` values have been seen.
+    """
+    result = np.full(len(values), np.nan)
+    seen: list[float] = []
+    for i, value in enumerate(values):
+        if np.isnan(value):
+            continue
+        bisect.insort(seen, float(value))
+        if len(seen) >= min_periods:
+            result[i] = _sorted_percentile(seen, q)
+    return result
+
+
+def _sorted_percentile(sorted_values: list[float], q: float) -> float:
+    position = q / 100.0 * (len(sorted_values) - 1)
+    lower = int(position)
+    fraction = position - lower
+    if fraction == 0:
+        return sorted_values[lower]
+    return sorted_values[lower] + (sorted_values[lower + 1] - sorted_values[lower]) * fraction
 
 
 def REGIME_COMBINED(
@@ -364,13 +386,16 @@ def REGIME_HMM(
     covariance_type: str = "full",
     n_iter: int = 100,
     random_state: int = 42,
+    min_periods: int = 60,
+    refit_every: int = 20,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
-    Hidden Markov Model-based Regime Detection.
+    Hidden Markov Model-based Regime Detection, using only past data at every bar.
 
-    Uses Gaussian HMM to identify hidden market regimes from returns data.
-    The model automatically learns regime characteristics (means, variances, transitions)
-    from historical data without manual threshold setting.
+    A Gaussian HMM is fitted on the returns seen so far (an expanding window) and refitted
+    every ``refit_every`` valid returns. Each bar's state is the most likely one given the
+    returns up to and including that bar (forward filtering), not the whole series, so the
+    output can be used as a feature or in a backtest without leaking the future.
 
     Args:
         returns: Array of price returns (use REGIME_HMM_RETURNS to prepare)
@@ -380,122 +405,113 @@ def REGIME_HMM(
                         Options: "full", "diag", "spherical", "tied"
         n_iter: Maximum HMM training iterations (default: 100)
         random_state: Random seed for reproducibility (default: 42)
+        min_periods: Valid returns needed before the first fit (default: 60,
+                     never fewer than 2 * n_states)
+        refit_every: Valid returns between refits (default: 20)
 
     Returns:
-        Tuple of (regime_states, transition_probs, state_means)
+        Tuple of (regime_states, transition_probs, state_means), one entry per bar, all
+        from the model that was current at that bar. NaN before the first fit and where
+        the return is NaN.
 
-        regime_states: Array of regime states (0 to n_states-1)
+        regime_states: Array (n,) of regime states (0 to n_states-1)
                       Sorted by mean return: 0=Bear (lowest), 1=Neutral, 2=Bull (highest)
-        transition_probs: State transition probability matrix (n_states x n_states)
-                         Element [i,j] = P(state j at t+1 | state i at t)
-        state_means: Mean return for each state, sorted ascending
-                    Useful for interpreting what each state represents
+        transition_probs: Array (n, n_states, n_states)
+                         Element [t, i, j] = P(state j at t+1 | state i at t)
+        state_means: Array (n, n_states) of each state's mean return, ascending
 
     Examples:
         >>> import numpy as np
         >>> from cluefin_ta import REGIME_HMM, REGIME_HMM_RETURNS
         >>>
-        >>> # Create price data with regime changes
-        >>> prices = np.concatenate(
-        ...     [
-        ...         100 + np.cumsum(np.random.normal(-0.01, 0.02, 50)),  # Bear
-        ...         100 + np.cumsum(np.random.normal(0.02, 0.02, 50)),  # Bull
-        ...     ]
-        ... )
-        >>>
-        >>> # Prepare returns
+        >>> prices = 100 + np.cumsum(np.random.normal(0.0, 1.0, 300))
         >>> returns = REGIME_HMM_RETURNS(prices)
-        >>>
-        >>> # Detect regimes
         >>> states, trans_probs, means = REGIME_HMM(returns, n_states=3)
         >>>
-        >>> print(f"State means: {means}")  # Shows avg return for each regime
-        >>> print(f"Current regime: {states[-1]}")  # Last detected regime
-        >>> print(f"Transition probs shape: {trans_probs.shape}")  # (3, 3)
+        >>> print(f"Current regime: {states[-1]}")
+        >>> print(f"Its mean return: {means[-1, int(states[-1])]}")
+        >>> print(f"Transition probs shape: {trans_probs.shape}")  # (300, 3, 3)
 
     Raises:
         ImportError: If hmmlearn is not installed
 
     Notes:
-        - Requires hmmlearn library: `uv add --optional hmm hmmlearn`
-        - Minimum data requirement: 2 * n_states samples
-        - States are automatically sorted by mean return for interpretability
-        - NaN values in returns are handled by fitting on valid data only
-        - Returns NaN arrays if insufficient valid data
-        - Transition probabilities can be used to predict regime persistence
+        - Requires hmmlearn: the `hmm` extra (installed by the workspace dev group)
+        - States are sorted by mean return within each fit, so labels stay comparable
+          across refits
+        - A failed refit keeps the previous model for its bars (NaN if there is none yet)
+        - Cost grows with the number of refits; raise ``refit_every`` for long series
     """
-    # Check if hmmlearn is available
     try:
         from hmmlearn import hmm
     except ImportError as e:
         raise ImportError(
             "hmmlearn is required for HMM regime detection. "
-            "Install with: uv add --optional hmm hmmlearn\n"
-            "Or for development: uv sync --group dev"
+            "Install the `hmm` extra (cluefin-ta[hmm]); the workspace dev group already includes it."
         ) from e
 
     returns = np.asarray(returns, dtype=np.float64)
     n = len(returns)
+    states = np.full(n, np.nan)
+    transition_probs = np.full((n, n_states, n_states), np.nan)
+    state_means = np.full((n, n_states), np.nan)
 
-    # Handle insufficient data
-    if n < 2 * n_states:
-        # Not enough data for reliable HMM
-        return (np.full(n, np.nan), np.full((n_states, n_states), np.nan), np.full(n_states, np.nan))
+    valid_idx = np.flatnonzero(~np.isnan(returns))
+    observed = returns[valid_idx]
+    first_fit = max(min_periods, 2 * n_states)
 
-    # Remove NaN values for HMM fitting
-    valid_mask = ~np.isnan(returns)
-    valid_returns = returns[valid_mask]
-
-    if len(valid_returns) < 2 * n_states:
-        # Not enough valid data
-        return (np.full(n, np.nan), np.full((n_states, n_states), np.nan), np.full(n_states, np.nan))
-
-    # Reshape for hmmlearn (expects 2D array: [n_samples, n_features])
-    valid_returns_2d = valid_returns.reshape(-1, 1)
-
-    # Fit Gaussian HMM
-    try:
-        model = hmm.GaussianHMM(
+    model = None
+    failed_fits = 0
+    for fit_end in range(first_fit, len(observed) + 1, refit_every):
+        candidate = hmm.GaussianHMM(
             n_components=n_states,
             covariance_type=covariance_type,
             n_iter=n_iter,
             random_state=random_state,
         )
+        try:
+            candidate.fit(observed[:fit_end].reshape(-1, 1))
+            model = candidate
+        except (ValueError, np.linalg.LinAlgError):
+            # Keep the previous model: it was fitted on even older data, so still causal
+            failed_fits += 1
+        if model is None:
+            continue
 
-        model.fit(valid_returns_2d)
+        # Bars from the last training return until the next refit use this model
+        segment = np.arange(fit_end - 1, min(fit_end - 1 + refit_every, len(observed)))
+        order = np.argsort(model.means_[:, 0])
+        filtered = _forward_filter(model, observed[: segment[-1] + 1])[segment][:, order]
 
-        # Predict hidden states
-        hidden_states = model.predict(valid_returns_2d)
+        rows = valid_idx[segment]
+        states[rows] = np.argmax(filtered, axis=1)
+        transition_probs[rows] = model.transmat_[order][:, order]
+        state_means[rows] = model.means_[order, 0]
 
-    except Exception as e:
-        # HMM fitting failed (convergence issues, etc.)
+    if failed_fits:
         import warnings
 
-        warnings.warn(f"HMM fitting failed: {e}. Returning NaN.", UserWarning, stacklevel=2)
-        return (np.full(n, np.nan), np.full((n_states, n_states), np.nan), np.full(n_states, np.nan))
+        warnings.warn(
+            f"HMM fitting failed {failed_fits} time(s); those bars use the previous fit (NaN if none).",
+            UserWarning,
+            stacklevel=2,
+        )
+    return states, transition_probs, state_means
 
-    # Map hidden states back to original array (with NaN preserved)
-    regime_states = np.full(n, np.nan)
-    regime_states[valid_mask] = hidden_states
 
-    # Extract transition probabilities and state means
-    transition_probs = model.transmat_
-    state_means = model.means_.flatten()
+def _forward_filter(model, observed: np.ndarray) -> np.ndarray:
+    """P(state at t | returns up to t) for every t, from a fitted 1-feature GaussianHMM."""
+    variances = model.covars_[:, 0, 0]
+    means = model.means_[:, 0]
+    log_likelihood = -0.5 * (np.log(2.0 * np.pi * variances) + (observed[:, None] - means) ** 2 / variances)
+    # Per-row rescaling keeps exp() in range; the normalisation below cancels it
+    likelihood = np.exp(log_likelihood - log_likelihood.max(axis=1, keepdims=True))
 
-    # Sort states by mean return (Bear=0, Neutral=1, Bull=2)
-    # This makes interpretation easier and consistent
-    sorted_indices = np.argsort(state_means)
-
-    # Create mapping from old states to new sorted states
-    state_mapping = np.empty(n_states, dtype=int)
-    state_mapping[sorted_indices] = np.arange(n_states)
-
-    # Remap regime states to sorted order
-    regime_states_valid = regime_states[valid_mask]
-    regime_states[valid_mask] = state_mapping[regime_states_valid.astype(int)]
-
-    # Rearrange transition matrix and means to match sorted states
-    transition_probs = transition_probs[sorted_indices][:, sorted_indices]
-    state_means = state_means[sorted_indices]
-
-    return regime_states, transition_probs, state_means
+    filtered = np.empty_like(likelihood)
+    belief = model.startprob_
+    for t, row in enumerate(likelihood):
+        belief = row * (belief if t == 0 else belief @ model.transmat_)
+        total = belief.sum()
+        belief = belief / total if total > 0 else np.full(len(row), 1.0 / len(row))
+        filtered[t] = belief
+    return filtered
