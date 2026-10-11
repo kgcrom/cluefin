@@ -57,7 +57,7 @@ class ItemCheck:
 
 def item_by_key(extraction: ItemExtraction, key: str) -> Item | None:
     part, _, number = key.rpartition(":")
-    return extraction.item(number, part or None)
+    return extraction.item(number, part or None, strict=False)
 
 
 def has_warning(extraction: ItemExtraction, key: str) -> bool:
@@ -189,7 +189,7 @@ def sec_item_violations(found: Sequence[str], sec_items: Sequence[str]) -> list[
 
 def _annual_report_violations(extraction: ItemExtraction) -> list[str]:
     violations = []
-    risk = extraction.item("1A")
+    risk = extraction.item("1A", strict=False)
     if (
         risk is not None
         and not risk.incorporated_by_reference

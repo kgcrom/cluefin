@@ -37,6 +37,11 @@ STATEMENTS_NOT_FOUND = "statements_not_found"
 """재무제표 Item(10-K 8, 10-Q Part I 1)의 본문이 재무제표라기엔 짧다. 재무제표가 다른 곳(Item 15, F-쪽)에 있다는 참조를
 따라가지 못한 것이다. 참조 편입과 `page_reference_unresolved`가 이미 난 Item은 제외."""
 
+# 구간 자체를 의심하라는 코드. `ItemExtraction.item()`은 이 코드의 경고가 붙은 Item을 내주지 않고 `UncertainItemError`를
+# 낸다. 목차·배치를 말하는 경고(`toc_target_missing`·`non_sequential_layout`)는 코퍼스에서 맞게 찾은 Item에도 붙어서
+# (골든 9건) `Item.warnings`에만 싣는다.
+UNCERTAIN_CODES = frozenset({EMPTY_ITEM, PAGE_REFERENCE_UNRESOLVED, STATEMENTS_NOT_FOUND, IMPLAUSIBLE_LENGTH})
+
 WARNING = "warning"
 INFO = "info"
 
@@ -95,6 +100,7 @@ class Item:
         incorporated_by_reference: 본문이 다른 문서(위임장 등)를 참조로 편입한다는 문장뿐이다.
         ranges: 본문 블록 구간 `[start, end)`들. 첫 구간은 `(start, end)`이고, 본문이 같은 문서의 다른 쪽에 있으면
             ("See pages F-1 through F-30") 그 구간이 뒤에 붙는다. `blocks`·`text`는 모든 구간을 잇는다.
+        warnings: 이 Item 키의 warning Finding. `UNCERTAIN_CODES`가 있으면 구간을 믿지 말라는 뜻이다.
     """
 
     key: ItemKey
@@ -108,6 +114,7 @@ class Item:
     shared_with: tuple[ItemKey, ...] = ()
     incorporated_by_reference: bool = False
     ranges: tuple[tuple[int, int], ...] = ()
+    warnings: tuple[Finding, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.ranges:
@@ -165,17 +172,61 @@ class ItemExtraction:
     def warnings(self) -> tuple[Finding, ...]:
         return tuple(finding for finding in self.findings if finding.severity == WARNING)
 
-    def item(self, number: str, part: str | None = None) -> Item | None:
-        """번호로 찾는다. 10-Q처럼 Part마다 번호가 다시 시작하는 서식은 `part`를 준다."""
+    def item(self, number: str, part: str | None = None, *, strict: bool = True) -> Item | None:
+        """번호로 찾는다. 10-Q처럼 Part마다 번호가 다시 시작하는 서식은 `part`를 준다.
+
+        Args:
+            strict: 기본값. 구간을 믿을 수 없으면 예외를 낸다. False면 경고와 무관하게 찾은 것을 그대로 돌려준다.
+
+        Returns:
+            찾은 Item. 문서가 생략한 Item(`omitted`)과 카탈로그·문서에 없는 번호는 None.
+
+        Raises:
+            UncertainItemError: 그 Item에 `UNCERTAIN_CODES` 경고가 있다(strict일 때).
+            MissingItemError: 문서에 표기는 있는데 찾지 못했다(`missing_item`, strict일 때).
+        """
         number = number.upper()
         part = part.upper() if part else None
-        return next(
-            (item for item in self.items if item.key.number == number and (part is None or item.key.part == part)),
-            None,
-        )
+
+        def matches(key: ItemKey) -> bool:
+            return key.number == number and (part is None or key.part == part)
+
+        found = next((item for item in self.items if matches(item.key)), None)
+        if not strict:
+            return found
+        if found is None:
+            missing = [finding for finding in self.warnings if finding.code == MISSING_ITEM and matches(finding.key)]
+            if missing:
+                raise MissingItemError(missing[0].key, tuple(missing))
+            return None
+        uncertain = tuple(finding for finding in found.warnings if finding.code in UNCERTAIN_CODES)
+        if uncertain:
+            raise UncertainItemError(found, uncertain)
+        return found
 
     def __iter__(self):
         return iter(self.items)
 
     def __len__(self) -> int:
         return len(self.items)
+
+
+class ItemError(Exception):
+    """`ItemExtraction.item()`이 Item을 내주지 못한 이유. `findings`에 근거가 있다."""
+
+    def __init__(self, key: ItemKey, findings: tuple[Finding, ...]) -> None:
+        super().__init__("; ".join(finding.message for finding in findings))
+        self.key = key
+        self.findings = findings
+
+
+class UncertainItemError(ItemError):
+    """찾았지만 구간을 믿을 수 없다. 그래도 쓰려면 `item` 또는 `item(…, strict=False)`."""
+
+    def __init__(self, item: Item, findings: tuple[Finding, ...]) -> None:
+        super().__init__(item.key, findings)
+        self.item = item
+
+
+class MissingItemError(ItemError):
+    """문서에 그 Item 표기는 있는데 구간을 찾지 못했다."""

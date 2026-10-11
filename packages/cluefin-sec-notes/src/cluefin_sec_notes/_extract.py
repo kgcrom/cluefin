@@ -129,6 +129,7 @@ def extract_items(
                 findings.append(Finding(OMITTED_ITEM, f"{key} 표기가 문서에 없다", severity=INFO, key=key))
             else:
                 findings.append(Finding(MISSING_ITEM, f"{key}을 찾지 못했다(문서에 표기는 있다)", key=key))
+    items = tuple(_with_warnings(item, findings) for item in items)
     return ItemExtraction(
         document=document,
         catalog=catalog.name,
@@ -138,6 +139,11 @@ def extract_items(
         candidates=tuple(candidates),
         omitted=omitted,
     )
+
+
+def _with_warnings(item: Item, findings: list[Finding]) -> Item:
+    warnings = tuple(finding for finding in findings if finding.severity == WARNING and finding.key == item.key)
+    return replace(item, warnings=warnings) if warnings else item
 
 
 def _resolve(candidates: list[Candidate], catalog: FormCatalog) -> tuple[dict[ItemKey, Candidate], list[Finding]]:

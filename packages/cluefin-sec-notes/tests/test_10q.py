@@ -152,7 +152,7 @@ def test_statement_index_table_heads_part_one_item_one():
         index,
     )
     result = extract_items(parse_filing(filing("", content)))
-    statements = result.item("1", "I")
+    statements = result.item("1", "I", strict=False)  # 합성 본문이 짧아 statements_not_found가 난다
     assert statements is not None and statements.text.endswith("Body of I 1.")
     assert statements.method == "pattern"
     assert keys(result) == [f"{part}:{number}" for part, number, _ in ITEMS]
@@ -167,7 +167,7 @@ def test_statements_without_heading_right_after_the_toc():
     )
     text_toc = "<table>" + "".join(f"<tr><td>Item {n}.</td><td>{t}</td></tr>" for _, n, t in ITEMS) + "</table>"
     result = extract_items(parse_filing(filing(text_toc, content)))
-    statements_item = result.item("1", "I")
+    statements_item = result.item("1", "I", strict=False)  # 합성 표가 짧아 statements_not_found가 난다
     assert statements_item.method == "statements_after_toc"
     assert statements_item.text.startswith("Balance Sheet\t2026")
     assert result.item("2", "I").heading.startswith("Item 2.")
