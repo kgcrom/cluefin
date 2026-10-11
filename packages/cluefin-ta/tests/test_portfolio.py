@@ -2,6 +2,8 @@
 Tests for portfolio metrics (MDD, CAGR, SHARPE, SORTINO, CALMAR, VOLATILITY).
 """
 
+import warnings
+
 import numpy as np
 import pytest
 
@@ -269,3 +271,42 @@ class TestPortfolioIntegration:
         assert mdd > 0  # Should have drawdown
         assert cagr < 0  # Negative return
         assert sharpe < 0  # Negative Sharpe
+
+
+class TestPortfolioGuards:
+    """Edge inputs: wipe-outs (상장폐지), series too short for a standard deviation."""
+
+    @pytest.mark.parametrize("periods_per_year", [0, -252])
+    def test_cagr_non_positive_periods_per_year_is_zero(self, periods_per_year):
+        """No year length to annualise over; 0 used to raise ZeroDivisionError."""
+        returns = np.array([0.01, 0.02])
+
+        assert CAGR(returns, periods_per_year=periods_per_year) == 0.0
+
+    def test_cagr_total_loss_is_minus_one(self):
+        """A position that goes to zero has CAGR -100%, however long the series."""
+        returns = np.array([0.05, 0.02, -1.0])
+
+        assert CAGR(returns, periods_per_year=252) == -1.0
+
+    def test_cagr_loss_beyond_total_is_capped_at_minus_one(self):
+        """A leveraged loss over 100% must not be raised to a power (sign flips for even exponents)."""
+        returns = np.array([-1.5])
+
+        # Uncapped: (1 - 1.5) ** (1 / 0.5) - 1 = -0.75
+        assert CAGR(returns, periods_per_year=2) == -1.0
+
+    @pytest.mark.parametrize("ratio", [SHARPE, SORTINO], ids=lambda f: f.__name__)
+    def test_ratio_of_single_return_is_zero(self, ratio):
+        """One return has no dispersion to divide by."""
+        assert ratio(np.array([0.01])) == 0.0
+
+    def test_sortino_zero_downside_deviation_is_zero(self):
+        """Negative returns so small their squares underflow give a zero downside deviation."""
+        returns = np.array([0.01, -1e-200])
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            sortino = SORTINO(returns)
+
+        assert sortino == 0.0

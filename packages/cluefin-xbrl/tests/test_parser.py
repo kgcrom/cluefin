@@ -114,6 +114,70 @@ class TestParseXbrlFile:
         with pytest.raises(FileNotFoundError):
             parse_xbrl_file(tmp_path / "nonexistent.xbrl")
 
+    def test_no_model_loaded_raises(self, sample_xbrl_path, monkeypatch):
+        """Arelle 이 모델을 하나도 돌려주지 않으면 XbrlParseError 로 알린다."""
+
+        class _EmptySession:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+            def run(self, options):
+                pass
+
+            def get_models(self):
+                return []
+
+        monkeypatch.setattr("arelle.api.Session.Session", _EmptySession)
+
+        with pytest.raises(XbrlParseError, match="XBRL 모델을 로드할 수 없습니다"):
+            parse_xbrl_file(sample_xbrl_path)
+
+    @pytest.mark.parametrize("content", ["not xml at all", ""], ids=["not_xml", "empty"])
+    def test_unreadable_file_raises(self, tmp_path, content):
+        """XML 로 읽히지 않는 파일은 fact 0건 문서가 아니라 XbrlParseError 다."""
+        path = tmp_path / "broken.xbrl"
+        path.write_text(content)
+
+        with pytest.raises(XbrlParseError, match="XBRL 문서를 읽을 수 없습니다"):
+            parse_xbrl_file(path)
+
+    def test_non_instance_xml_raises(self, tmp_path):
+        """XML 이지만 XBRL 인스턴스가 아닌 파일도 XbrlParseError 다."""
+        path = tmp_path / "other.xbrl"
+        path.write_text('<?xml version="1.0"?><root><a>1</a></root>')
+
+        with pytest.raises(XbrlParseError, match="XBRL 인스턴스 문서가 아닙니다"):
+            parse_xbrl_file(path)
+
+    def test_forever_period_extraction(self, fixtures_dir, tmp_path):
+        for name in ("sample.xsd", "sample_lab-ko.xml", "sample_lab-en.xml", "sample_pre.xml"):
+            shutil.copy(fixtures_dir / name, tmp_path / name)
+        forever_context = """
+    <xbrli:context id="ctx_forever">
+        <xbrli:entity>
+            <xbrli:identifier scheme="http://www.dart.fss.or.kr">00126380</xbrli:identifier>
+        </xbrli:entity>
+        <xbrli:period>
+            <xbrli:forever/>
+        </xbrli:period>
+    </xbrli:context>
+    <sample:AuditorName contextRef="ctx_forever">forever-auditor</sample:AuditorName>
+</xbrli:xbrl>"""
+        instance = (fixtures_dir / "sample.xbrl").read_text(encoding="utf-8")
+        (tmp_path / "sample.xbrl").write_text(instance.replace("</xbrli:xbrl>", forever_context), encoding="utf-8")
+
+        doc = parse_xbrl_file(tmp_path / "sample.xbrl")
+
+        fact = next(f for f in doc.facts if f.value == "forever-auditor")
+        assert fact.period is not None
+        assert fact.period.period_type == PeriodType.FOREVER
+        assert fact.period.instant is None
+        assert fact.period.start_date is None
+        assert fact.period.end_date is None
+
 
 class TestParseXbrlDirectory:
     def test_finds_xbrl(self, sample_xbrl_dir):

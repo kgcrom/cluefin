@@ -3,14 +3,16 @@
 These tests require actual API credentials and network access.
 They connect to the KIS WebSocket server (prod only) and receive real-time overseas stock data.
 
-WARNING: Market hours vary by exchange. Data reception tests use timeout+skip
-for graceful handling outside market hours.
+WARNING: Runs only during US regular hours (Mon-Fri 09:30-16:00 America/New_York) —
+off-hours runs fail. Data reception tests also use timeout+skip.
 
 Test symbols: AAPL (NAS), MSFT (NAS)
 """
 
 import asyncio
 import re
+from datetime import datetime, time
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -34,6 +36,19 @@ def _require_integration_and_realtime(request):
     markexpr = request.config.option.markexpr or ""
     if not (_markexpr_includes(markexpr, "integration") and _markexpr_includes(markexpr, "realtime")):
         pytest.skip('Requires -m "integration and realtime"')
+
+
+def _is_us_market_hours() -> bool:
+    now = datetime.now(ZoneInfo("America/New_York"))
+    if now.weekday() >= 5:
+        return False
+    return time(9, 30) <= now.time() <= time(16, 0)
+
+
+@pytest.fixture(autouse=True, scope="module")
+def _require_us_market_hours():
+    if not _is_us_market_hours():
+        pytest.skip("Requires US market hours (Mon-Fri 09:30-16:00 America/New_York)")
 
 
 @pytest.fixture(autouse=True, scope="module")

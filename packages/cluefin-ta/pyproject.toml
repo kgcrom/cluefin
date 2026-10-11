@@ -3,6 +3,7 @@ name = "cluefin-ta"
 version = "0.1.0"
 description = "Pure Python technical analysis library with ta-lib compatible API"
 readme = "README.md"
+license = "MIT"
 authors = [
     { name = "Hangoo Kang", email = "kgcrom@hotmail.com" }
 ]

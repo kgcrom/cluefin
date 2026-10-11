@@ -54,7 +54,7 @@ ignore = ["E501"]
 [tool.pytest.ini_options]
 markers = [
     "integration: integration tests",
-    "realtime: real-time data tests (requires market hours 9:00-15:30 KST)",
+    "realtime: real-time data tests (requires market hours: KRX 09:00-15:30 KST, US 09:30-16:00 ET)",
 ]
 addopts = "-ra --import-mode=importlib"
 testpaths = [

@@ -174,15 +174,40 @@ jobs:
         path: |
           pip-audit-report.json
 
+  openapi-ts:
+    name: cluefin-openapi-ts (build, lint, typecheck, unit test)
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: packages/cluefin-openapi-ts
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v7
+      with:
+        node-version: 20
+        cache: npm
+        cache-dependency-path: packages/cluefin-openapi-ts/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    # npm publish 직전에 도는 것과 같은 게이트: build → biome check → typecheck → unit test
+    - name: Run publish check
+      run: npm run publish:check
+
   notify:
     name: Notify Status
     runs-on: ubuntu-24.04
-    needs: [lint, test, security]
+    needs: [lint, test, security, openapi-ts]
     if: always()
     
     steps:
     - name: Notify success
-      if: needs.lint.result == 'success' && needs.test.result == 'success' && needs.security.result == 'success'
+      if: needs.lint.result == 'success' && needs.test.result == 'success' && needs.security.result == 'success' && needs.openapi-ts.result == 'success'
       env:
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
         DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
@@ -193,7 +218,7 @@ jobs:
         fi
         
     - name: Notify failure
-      if: needs.lint.result == 'failure' || needs.test.result == 'failure' || needs.security.result == 'failure'
+      if: needs.lint.result == 'failure' || needs.test.result == 'failure' || needs.security.result == 'failure' || needs.openapi-ts.result == 'failure'
       env:
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
         DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}

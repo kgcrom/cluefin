@@ -271,7 +271,9 @@ class KiwoomWebSocketClient:
                 await self._emit(message)
         except asyncio.CancelledError:
             pass
-        except (asyncio.IncompleteReadError, ConnectionError, OSError) as e:
+        # KiwoomNetworkError is the server's close frame (_recv_json). Letting it escape would kill
+        # the task with that exception, which close() then re-raises while awaiting the task.
+        except (asyncio.IncompleteReadError, ConnectionError, OSError, KiwoomNetworkError) as e:
             if self._connected:
                 logger.error("Kiwoom WebSocket receive error: {}", e)
                 self._connected = False

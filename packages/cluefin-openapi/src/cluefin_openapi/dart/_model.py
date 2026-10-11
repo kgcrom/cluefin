@@ -89,8 +89,11 @@ class DartResult(BaseModel, Generic[T_DartListItem]):
                 return None
             try:
                 return int(stripped, 10)
-            except ValueError as exc:  # pragma: no cover - defensive guard
+            except ValueError as exc:
                 raise ValueError(f"Cannot convert '{value}' to int") from exc
+        # int() would silently truncate 4.5 to 4; a page count with a fraction is a bad response.
+        if isinstance(value, float) and not value.is_integer():
+            raise ValueError(f"Cannot convert '{value}' to int")
         return int(value)
 
 
