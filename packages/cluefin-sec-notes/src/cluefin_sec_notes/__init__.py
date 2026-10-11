@@ -6,6 +6,7 @@ from cluefin_sec_notes._blocks import Block, Cell, Link, PageBreak, Paragraph, T
 from cluefin_sec_notes._catalog import CATALOGS, FORM_10K, FormCatalog, ItemSpec, catalog_for
 from cluefin_sec_notes._document import SecDocument, block_text, load_filing, parse_date, parse_filing
 from cluefin_sec_notes._extract import extract_items
+from cluefin_sec_notes._furniture import Page
 from cluefin_sec_notes._labels import ItemLabel, match_title, normalize_title, parse_item_label
 from cluefin_sec_notes._model import (
     CONFLICTING_CANDIDATE,
@@ -29,6 +30,7 @@ from cluefin_sec_notes._report import (
     IMPLICIT_CLOSE,
     LAYOUT_TABLE,
     MISNESTED_END,
+    PAGE_FURNITURE,
     STRAY_END_TAG,
     UNCLOSED_AT_EOF,
     UNKNOWN_TAG,
@@ -71,6 +73,8 @@ __all__ = [
     "LAYOUT_TABLE",
     "Link",
     "MISNESTED_END",
+    "PAGE_FURNITURE",
+    "Page",
     "PageBreak",
     "Paragraph",
     "ParseFix",

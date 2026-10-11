@@ -28,6 +28,8 @@ HIDDEN_CONTENT = "hidden_content"
 """`display:none` 요소와 `ix:header`. 본문에서 뺐다(인라인 XBRL 메타라 화면에 안 보인다)."""
 LAYOUT_TABLE = "layout_table"
 """배치용 표(칸 하나, 또는 칸 안에 표). 표로 만들지 않고 안의 내용을 본문 흐름으로 읽었다."""
+PAGE_FURNITURE = "page_furniture"
+"""쪽 머리말·꼬리말(반복되는 짧은 줄, 쪽 번호). 본문에서 뺐다."""
 ENCODING_FALLBACK = "encoding_fallback"
 """선언한 인코딩으로 읽히지 않아 다른 인코딩으로 읽었다."""
 
@@ -39,6 +41,7 @@ FIX_KINDS = (
     UNKNOWN_TAG,
     HIDDEN_CONTENT,
     LAYOUT_TABLE,
+    PAGE_FURNITURE,
     ENCODING_FALLBACK,
 )
 

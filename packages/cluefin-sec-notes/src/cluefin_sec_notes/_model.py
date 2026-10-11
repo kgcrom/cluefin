@@ -105,10 +105,12 @@ class Item:
     def heading(self) -> str:
         from cluefin_sec_notes._document import block_text
 
-        if self.start >= self.end:
-            return ""
-        lines = (line.strip() for line in block_text(self.document.blocks[self.start]).split("\n"))
-        return next((line for line in lines if line), "")
+        """구간에서 글자가 있는 첫 줄(빈 칸만 있는 표는 건너뛴다)."""
+        for block in self.document.blocks[self.start : self.end]:
+            line = next((line.strip() for line in block_text(block).split("\n") if line.strip()), "")
+            if line:
+                return line
+        return ""
 
 
 @dataclass(frozen=True, eq=False)

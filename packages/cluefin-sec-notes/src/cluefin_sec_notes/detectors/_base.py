@@ -17,11 +17,13 @@ class DetectionContext:
     Attributes:
         excluded: Item 본문 탐색에서 뺄 블록 구간 `[start, end)`. 목차 탐지기가 목차 구간을 넣는다
             (목차 안의 "Item 1A. Risk Factors"를 본문 헤딩으로 잡지 않게).
+        previous: 앞 탐지기들이 낸 후보. 신뢰도 낮은 탐지기는 이걸 보고 빈자리만 채운다.
     """
 
     document: SecDocument
     catalog: FormCatalog
     excluded: list[tuple[int, int]] = field(default_factory=list)
+    previous: list[Candidate] = field(default_factory=list)
 
     def is_excluded(self, block: int) -> bool:
         return any(start <= block < end for start, end in self.excluded)

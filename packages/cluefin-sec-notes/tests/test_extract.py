@@ -6,6 +6,7 @@ from cluefin_sec_notes import (
     NON_SEQUENTIAL_LAYOUT,
     TOC_NOT_FOUND,
     TOC_TARGET_MISSING,
+    UNKNOWN_ITEM,
     ItemKey,
     extract_items,
     parse_filing,
@@ -83,14 +84,25 @@ def test_link_to_page_top_moves_down_to_the_heading(synthetic):
     assert "앵커 블록" in result.item("9A").evidence
 
 
-def test_missing_target_is_reported_not_guessed(synthetic):
+def test_missing_target_is_reported_and_heading_fills_the_gap(synthetic):
     content = synthetic.body().replace(f'<div id="{synthetic.anchor_id("7A")}"></div>', "")
+    result = extract(synthetic.filing(content=content))
+    market_risk = result.item("7A")
+    assert market_risk.method == "pattern"
+    assert market_risk.text == "Item 7A. Quantitative and Qualitative Disclosures About Market Risk\n\nBody of item 7A."
+    assert (
+        result.item("7").text
+        == "Item 7. Management’s Discussion and Analysis of Financial Condition and Results of Operations\n\nBody of item 7."
+    )
+    assert {finding.code for finding in result.warnings} == {TOC_TARGET_MISSING}
+
+
+def test_without_any_heading_the_item_is_missing_not_guessed(synthetic):
+    content = synthetic.body().replace(f'<div id="{synthetic.anchor_id("7A")}"></div>', "").replace("Item 7A. ", "")
     result = extract(synthetic.filing(content=content))
     assert result.item("7A") is None
     assert ItemKey("II", "7A") in result.missing
-    codes = {finding.code for finding in result.warnings}
-    assert codes == {TOC_TARGET_MISSING, MISSING_ITEM}
-    # 7A가 빠졌으니 Item 7 구간이 7A 본문까지 덮는다(그래서 경고를 남긴다).
+    assert {finding.code for finding in result.warnings} == {TOC_TARGET_MISSING, MISSING_ITEM}
     assert result.item("7").text.endswith("Body of item 7A.")
 
 
@@ -111,10 +123,12 @@ def test_amendment_missing_items_are_not_warned(synthetic):
     assert result.warnings == ()
 
 
-def test_no_toc_is_reported(synthetic):
+def test_without_toc_headings_are_found_by_pattern(synthetic):
     result = extract(synthetic.filing(toc="", content=synthetic.body(anchored=False)))
-    assert len(result) == 0
     assert TOC_NOT_FOUND in {finding.code for finding in result.findings}
+    assert len(result) == len(synthetic.TOC_ITEMS)
+    assert {item.method for item in result} == {"pattern"}
+    assert result.warnings == ()
 
 
 def test_non_sequential_layout_is_accepted_and_warned(synthetic):
@@ -141,3 +155,70 @@ def test_heading_only_item_is_empty_but_reserved_is_not(synthetic):
 def test_unsupported_form_raises(synthetic):
     with pytest.raises(ValueError, match="20-F"):
         extract("<p>x</p>", form="20-F")
+
+
+def test_pattern_chain_skips_cross_reference_paragraphs(synthetic):
+    content = (
+        "<p>Item 1. Business</p><p>We make things.</p>"
+        "<p>Item 7 of this report discusses results in detail and should be read with the risk factors.</p>"
+        "<p>Item 1A. Risk Factors</p><p>Risks.</p>"
+        "<p>Item 7. Management’s Discussion and Analysis</p><p>Results.</p>"
+        "<p>Item 8. Financial Statements and Supplementary Data</p><p>Numbers.</p>"
+    )
+    result = extract(synthetic.filing(toc="", content=content))
+    assert [(item.key.number, item.heading) for item in result] == [
+        ("1", "Item 1. Business"),
+        ("1A", "Item 1A. Risk Factors"),
+        ("7", "Item 7. Management’s Discussion and Analysis"),
+        ("8", "Item 8. Financial Statements and Supplementary Data"),
+    ]
+    assert result.item("1").text == (
+        "Item 1. Business\n\nWe make things.\n\n"
+        "Item 7 of this report discusses results in detail and should be read with the risk factors."
+    )
+
+
+def test_text_toc_without_links_is_not_taken_for_headings(synthetic):
+    toc = "<p>Item 1. Business 3</p><p>Item 1A. Risk Factors 9</p><p>Item 2. Properties 20</p><p>Item 3. Legal 21</p>"
+    content = "<p>Item 1. Business</p><p>a</p><p>Item 1A. Risk Factors</p><p>b</p><p>Item 2. Properties</p><p>c</p><p>Item 3. Legal Proceedings</p><p>d</p>"
+    result = extract(synthetic.filing(toc=toc, content=content))
+    assert result.item("1").text == "Item 1. Business\n\na"
+    assert result.item("3").text == "Item 3. Legal Proceedings\n\nd"
+
+
+def test_long_paragraph_counts_as_heading_only_when_title_follows(synthetic):
+    risk = "Item 1A. Risk Factors. " + "Our business faces risks. " * 20
+    cross = "Item 7 describes " + "results of operations in more detail. " * 20
+    content = f"<p>Item 1. Business</p><p>a</p><p>{risk}</p><p>{cross}</p><p>Item 2. Properties</p><p>c</p>"
+    result = extract(synthetic.filing(toc="", content=content))
+    assert [item.key.number for item in result] == ["1", "1A", "2"]
+    assert result.item("1A").text.startswith("Item 1A. Risk Factors. Our business")
+
+
+def test_unknown_item_is_reported(synthetic):
+    content = "<p>Item 1. Business</p><p>a</p><p>Item 1D. Artificial Intelligence</p><p>b</p><p>Item 2. Properties</p><p>c</p>"
+    result = extract(synthetic.filing(toc="", content=content))
+    unknown = [finding for finding in result.warnings if finding.code == UNKNOWN_ITEM]
+    assert [finding.message for finding in unknown] == ["카탈로그에 없는 Item: 'Item 1D. Artificial Intelligence'"]
+    assert result.item("1").text == "Item 1. Business\n\na\n\nItem 1D. Artificial Intelligence\n\nb"
+
+
+def test_incorporated_by_reference_items(synthetic):
+    content = (
+        "<p>Item 9B. Other Information</p><p>None.</p><p>PART III</p>"
+        "<p>Item 10. Directors, Executive Officers and Corporate Governance</p>"
+        "<p>The information required by this item will be included in our Proxy Statement for the 2026 annual "
+        "meeting and is incorporated herein by reference.</p>"
+        "<p>Item 11. Executive Compensation</p><p>Refer to pages 12 through 21 of the Proxy Statement, which are "
+        "incorporated herein by reference.</p>"
+        "<p>Item 12. Security Ownership</p><p>" + "A long table of owners. " * 200 + "incorporated by reference.</p>"
+    )
+    result = extract(synthetic.filing(toc="", content=content))
+    assert [(item.key.number, item.incorporated_by_reference) for item in result] == [
+        ("9B", False),
+        ("10", True),
+        ("11", True),
+        ("12", False),
+    ]
+    # 다음 Part 헤딩은 앞 Item 끝에서 잘라 낸다.
+    assert result.item("9B").text == "Item 9B. Other Information\n\nNone."

@@ -13,12 +13,14 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Sequence
+from dataclasses import replace
 
 from cluefin_sec_notes._blocks import Paragraph
 from cluefin_sec_notes._catalog import FormCatalog, catalog_for
 from cluefin_sec_notes._document import SecDocument
-from cluefin_sec_notes._labels import normalize_title, parse_item_label
+from cluefin_sec_notes._labels import normalize_title, parse_item_label, parse_part
 from cluefin_sec_notes._model import (
     CONFLICTING_CANDIDATE,
     EMPTY_ITEM,
@@ -35,6 +37,18 @@ from cluefin_sec_notes._model import (
 from cluefin_sec_notes.detectors import DEFAULT_DETECTORS, DetectionContext, Detector
 
 _SIGNATURES = "signatures"
+# 참조 편입 문구. 본문이 이 길이 이하이고 문구가 있으면 Item 내용이 다른 문서(위임장, Exhibit 13 연차보고서,
+# 같은 문서의 F-페이지 등)에 있다는 뜻이다.
+_INCORPORATION_MAX_CHARS = 2500
+_INCORPORATION = re.compile(
+    r"incorporated\s+(?:herein\s+|in\s+this\s+\w+\s+)?by\s+reference"
+    r"|will\s+be\s+(?:included|set\s+forth|contained|presented)\s+in\s+.{0,120}?proxy\s+statement"
+    r"|(?:is|are)\s+(?:included|set\s+forth|contained)\s+(?:in|under)\s+.{0,160}?"
+    r"(?:proxy\s+statement|annual\s+report\s+to\s+(?:share|stock)holders)",
+    re.IGNORECASE | re.DOTALL,
+)
+# Part 헤딩("PART II", "PART II — OTHER INFORMATION")으로 볼 최대 길이. Item 끝에 붙으면 잘라 낸다.
+_PART_HEADING_MAX = 80
 # 제목 자리에 이것만 있으면 빈 Item이 아니라 "해당 없음"을 적은 것이다(Item 6 "[Reserved]" 등).
 _PLACEHOLDERS = frozenset({"reserved", "removed and reserved", "none", "not applicable"})
 
@@ -65,11 +79,12 @@ def extract_items(
         detection = detector.detect(context)
         candidates.extend(detection.candidates)
         findings.extend(detection.findings)
+        context.previous.extend(detection.candidates)
 
     accepted, resolve_findings = _resolve(candidates, catalog)
     findings.extend(resolve_findings)
     findings.extend(_non_sequential(accepted, catalog))
-    items = _build_items(document, catalog, accepted)
+    items = tuple(_mark_incorporated(item) for item in _build_items(document, catalog, accepted))
     findings.extend(_empty_items(document, catalog, items))
     missing = _missing(document, catalog, accepted)
     findings.extend(
@@ -164,7 +179,7 @@ def _build_items(document: SecDocument, catalog: FormCatalog, accepted: dict[Ite
     items = []
     for candidate in ordered:
         later = [start for start in starts if start > candidate.block]
-        end = later[0] if later else end_of_items
+        end = _trim_part_heading(document, candidate.block, later[0] if later else end_of_items)
         spec = catalog.spec(candidate.key.part, candidate.key.number)
         shared = tuple(other.key for other in ordered if other.block == candidate.block and other.key != candidate.key)
         items.append(
@@ -183,6 +198,26 @@ def _build_items(document: SecDocument, catalog: FormCatalog, accepted: dict[Ite
     return tuple(items)
 
 
+def _trim_part_heading(document: SecDocument, start: int, end: int) -> int:
+    """구간 끝의 Part 헤딩은 다음 Part의 것이다."""
+    while end - 1 > start:
+        block = document.blocks[end - 1]
+        if not (isinstance(block, Paragraph) and len(block.text) <= _PART_HEADING_MAX and parse_part(block.text)):
+            break
+        if parse_item_label(block.text) is not None:
+            break
+        end -= 1
+    return end
+
+
+def _mark_incorporated(item: Item) -> Item:
+    heading = item.heading
+    body = item.text[len(heading) :] if item.text.startswith(heading) else item.text
+    if len(body) <= _INCORPORATION_MAX_CHARS and _INCORPORATION.search(body):
+        return replace(item, incorporated_by_reference=True)
+    return item
+
+
 def _signatures(document: SecDocument, after: int) -> int:
     """마지막 Item 뒤의 서명란 헤딩 위치. 없으면 문서 끝."""
     for index in range(after + 1, len(document.blocks)):
@@ -198,6 +233,8 @@ def _empty_items(document: SecDocument, catalog: FormCatalog, items: tuple[Item,
     for item in items:
         spec = catalog.spec(item.key.part, item.key.number)
         if item.end - item.start > 1 or item.shared_with or spec is None or spec.may_be_incorporated:
+            continue
+        if item.incorporated_by_reference:
             continue
         label = parse_item_label(item.heading)
         rest = normalize_title(label.rest if label else item.heading)

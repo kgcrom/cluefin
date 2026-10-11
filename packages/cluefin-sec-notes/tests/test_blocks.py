@@ -132,8 +132,8 @@ def test_anchor_inside_table_goes_to_table_and_empty_table_passes_it_on():
 
 def test_page_breaks_from_style_and_hr_collapse():
     result = blocks(
-        '<p>page 1</p><div style="page-break-after:always"></div><hr/>'
-        '<p style="page-break-before: always">page 2</p><hr><p>page 3</p>'
+        '<p>first</p><div style="page-break-after:always"></div><hr/>'
+        '<p style="page-break-before: always">second</p><hr><p>third</p>'
     )
     assert [type(block).__name__ for block in result] == [
         "Paragraph",

@@ -9,6 +9,7 @@ from pathlib import Path
 
 from cluefin_sec_notes._blocks import Block, Paragraph, Table, linearize
 from cluefin_sec_notes._decode import decode_html
+from cluefin_sec_notes._furniture import Page, remove_page_furniture
 from cluefin_sec_notes._report import ENCODING_FALLBACK, ParseReport, ReportCollector
 from cluefin_sec_notes._tree import build_tree
 
@@ -35,6 +36,7 @@ class SecDocument:
             2000년대 공시를 감싼 EDGAR SGML의 `<TYPE>`, 표지 순으로 정한다. 못 정하면 None.
         dei: 인라인 XBRL의 `dei:` 사실(`DocumentType`, `EntityRegistrantName`, `DocumentPeriodEndDate` …).
             2019년 이전 공시는 비어 있다.
+        pages: 쪽 구간과 머리말·꼬리말의 쪽 번호. 쪽 경계가 없는 공시는 비어 있다.
         period_end: 보고 기간 말(`dei:DocumentPeriodEndDate`, 없으면 표지의 "fiscal year ended …").
             카탈로그의 Item 적용 시점(1C 등)을 판단하는 데 쓴다. 못 찾으면 None.
         report: 읽으며 고친 것.
@@ -48,6 +50,7 @@ class SecDocument:
     report: ParseReport
     source: Path | None = None
     period_end: date | None = None
+    pages: tuple[Page, ...] = ()
 
     def text(self, start: int = 0, end: int | None = None) -> str:
         """블록 구간의 텍스트. 문단은 그대로, 표는 행마다 칸을 탭으로 잇는다. 블록 사이는 빈 줄."""
@@ -77,10 +80,15 @@ def parse_filing(data: bytes | str, *, form: str | None = None, source: Path | N
     else:
         html, encoding, declared = data, "str", None
     linearized = linearize(build_tree(html, collector), collector)
-    blocks = tuple(linearized.blocks)
+    kept, mapping, pages = remove_page_furniture(linearized.blocks, collector)
+    blocks = tuple(kept)
+    anchors = {
+        name: mapping[index] if index < len(mapping) else len(blocks) for name, index in linearized.anchors.items()
+    }
     return SecDocument(
         blocks=blocks,
-        anchors=linearized.anchors,
+        anchors=anchors,
+        pages=tuple(pages),
         form=_normalize_form(form)
         or _normalize_form(linearized.dei.get("DocumentType"))
         or _normalize_form(linearized.edgar_header.get("type"))
