@@ -7,7 +7,12 @@ import pytest
 
 from cluefin_openapi.kiwoom._exceptions import KiwoomAPIError
 
-from ._integration_helpers import LIVE_MUTATION_FLAG, mutation_skip_reason, skip_if_env_blocked
+from ._integration_helpers import (
+    LIVE_MUTATION_FLAG,
+    cancel_leftover_orders,
+    mutation_skip_reason,
+    skip_if_env_blocked,
+)
 
 
 def _error(return_msg: str) -> KiwoomAPIError:
@@ -96,3 +101,34 @@ def test_mutation_runs_on_prod_with_flag(monkeypatch):
     monkeypatch.setenv(LIVE_MUTATION_FLAG, "1")
 
     assert mutation_skip_reason("integration and mutation", "prod") is None
+
+
+# --- cancel_leftover_orders: 주문 테스트가 남긴 미체결 주문 정리 ---
+
+
+def test_cancel_leftover_orders_cancels_every_order():
+    cancelled = []
+
+    cancel_leftover_orders(["0000101", "0000102"], cancelled.append)
+
+    assert cancelled == ["0000101", "0000102"]
+
+
+def test_cancel_leftover_orders_tries_all_then_fails_with_the_ones_left():
+    cancelled = []
+
+    def cancel(ord_no: str) -> None:
+        if ord_no == "0000101":
+            raise _error("[2000](RC4032:모의투자 원주문번호가 존재하지 않습니다.)")
+        cancelled.append(ord_no)
+
+    with pytest.raises(pytest.fail.Exception) as excinfo:
+        cancel_leftover_orders(["0000101", "0000102"], cancel)
+
+    assert cancelled == ["0000102"]  # 앞의 실패로 멈추지 않는다
+    assert "0000101" in str(excinfo.value)
+    assert "0000102" not in str(excinfo.value)
+
+
+def test_cancel_leftover_orders_does_nothing_when_empty():
+    cancel_leftover_orders([], lambda ord_no: pytest.fail("호출되면 안 된다"))

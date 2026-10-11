@@ -10,7 +10,7 @@
 
 import os
 import re
-from typing import NoReturn, Optional
+from typing import Callable, List, NoReturn, Optional
 
 import dotenv
 import pytest
@@ -82,3 +82,19 @@ def mutation_skip_reason(markexpr: str, env: str) -> Optional[str]:
     if env == "prod" and os.getenv(LIVE_MUTATION_FLAG) != "1":
         return f"KIWOOM_ENV=prod 는 실계좌다 — {LIVE_MUTATION_FLAG}=1 을 직접 줘야 돈다"
     return None
+
+
+def cancel_leftover_orders(ord_nos: List[str], cancel: Callable[[str], object]) -> None:
+    """테스트가 접수하고 남긴 미체결 주문을 취소한다 (주문 테스트 픽스처의 teardown 용).
+
+    하나라도 취소하지 못하면 주문번호를 담아 실패시킨다 — 조용히 넘어가면 계좌에 주문이 남은 걸
+    아무도 모른다. 이미 취소·정정된 주문은 호출부가 목록에서 빼 두어야 한다.
+    """
+    failed = []
+    for ord_no in ord_nos:
+        try:
+            cancel(ord_no)
+        except KiwoomAPIError as e:
+            failed.append(f"{ord_no} ({e.message})")
+    if failed:
+        pytest.fail("미체결 주문을 취소하지 못했다 — 직접 취소해야 한다: " + ", ".join(failed))
