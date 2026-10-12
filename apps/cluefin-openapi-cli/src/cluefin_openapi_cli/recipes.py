@@ -238,6 +238,52 @@ _RECIPES: tuple[WorkflowRecipe, ...] = (
         "Table amounts are strings as filed and the table's `unit` is not applied.",
     ),
     WorkflowRecipe(
+        name="us-peer-filings",
+        title="Read a US Customer's or Competitor's Filings",
+        description="Read the SEC filings of a US company that bears on a Korean stock: risk factors and MD&A "
+        "(demand, capex, inventory guidance) from the 10-K/10-Q, and the latest quarter from the 8-K earnings release.",
+        domains=("statements",),
+        tags=("us-filing", "risk-factors", "earnings-release"),
+        steps=(
+            RecipeStep(
+                title="Resolve the ticker",
+                command=("sec", "company-lookup"),
+                purpose="Get the company's CIK from its US ticker.",
+                agent_notes="Pass --ticker (BRK.B and BRK-B both work). Korean companies' own filings are in dart.",
+            ),
+            RecipeStep(
+                title="List recent filings",
+                command=("sec", "filings"),
+                purpose="Pick the newest 10-K or 10-Q, or the newest 8-K with item 2.02 (results).",
+                agent_notes="Use --forms 10-K or --forms 10-Q, or --forms 8-K --items 2.02. If the hint lists only "
+                "20-F/6-K, the company is a foreign private issuer and sec filing-items cannot read it.",
+            ),
+            RecipeStep(
+                title="Outline the report",
+                command=("sec", "filing-items"),
+                purpose="See which Items the filing has, their sizes and whether any boundary is uncertain.",
+                agent_notes="Call without --items first. Distrust an Item with `uncertain: true` or warnings; "
+                "an `incorporated_by_reference` Item holds only a pointer to another document.",
+            ),
+            RecipeStep(
+                title="Read the Items",
+                command=("sec", "filing-items"),
+                purpose="Read 1A (risk factors) and 7 (MD&A) of a 10-K, or II:1A and I:2 of a 10-Q.",
+                agent_notes="Pass --items 1A,7. Text is cut at --max-chars (default 40000); continue one Item at a "
+                "time with --items <key> --offset-chars <next_offset>.",
+            ),
+            RecipeStep(
+                title="Read the earnings release",
+                command=("sec", "filing-exhibit"),
+                purpose="Read the 8-K's EX-99.1 press release: revenue, margins and next-quarter guidance tables.",
+                agent_notes="Use the accession_number of the 8-K with item 2.02; the 8-K body itself only points "
+                "to the exhibit. --include-tables true adds column-aligned grids.",
+            ),
+        ),
+        agent_notes="Each command downloads the filing again; keep the cik and accession_number from the first "
+        "steps. Amounts are strings as filed and table units are not applied.",
+    ),
+    WorkflowRecipe(
         name="disclosure-monitoring",
         title="Disclosure Monitoring",
         description="Monitor market announcements and DART disclosures.",

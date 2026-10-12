@@ -255,6 +255,14 @@ _DOMAIN_TAXONOMY: dict[str, TaxonomyMetadata] = {
 }
 
 _TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {
+    "risk-factors": TaxonomyMetadata(
+        name="risk-factors",
+        description="A US filing's narrative Items: 10-K 1A risk factors, 7 MD&A, 1 business; 10-Q II:1A and I:2.",
+        when_to_use="Use for demand, capex and inventory commentary or supply-chain risks a US customer or "
+        "competitor discloses. Read the table of contents (no --items) first.",
+        related_domains=("statements",),
+        related_tags=("us-filing", "filing-text"),
+    ),
     "screening": TaxonomyMetadata(
         name="screening",
         description="Commands that return a filtered or ranked slice of the market rather than one known stock.",
@@ -409,6 +417,16 @@ _TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {
         description="Cash dividend or stock dividend schedule and decision data.",
         when_to_use="Use for income, payout, corporate-action, and event monitoring tasks.",
         related_domains=("corporate-actions",),
+    ),
+    "earnings-release": TaxonomyMetadata(
+        name="earnings-release",
+        description="A US company's quarterly results press release (8-K exhibit EX-99.1): revenue, margins, "
+        "guidance tables as filed.",
+        when_to_use="Use for a US customer or competitor's latest reported quarter and outlook; find the 8-K with "
+        "sec filings --forms 8-K --items 2.02.",
+        avoid_when="Use dart financial commands for Korean companies' results.",
+        related_domains=("statements", "news"),
+        related_tags=("us-filing",),
     ),
     "filing-text": TaxonomyMetadata(
         name="filing-text",
@@ -818,8 +836,8 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
     "dart.share-count": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
     "sec.company-lookup": CommandTaxonomy(("reference",), ("us-filing", "reference-list")),
     "sec.filings": CommandTaxonomy(("news", "statements"), ("us-filing", "disclosure")),
-    "sec.filing-items": CommandTaxonomy(("statements",), ("us-filing", "filing-text")),
-    "sec.filing-exhibit": CommandTaxonomy(("statements", "news"), ("us-filing", "filing-text")),
+    "sec.filing-items": CommandTaxonomy(("statements",), ("us-filing", "filing-text", "risk-factors")),
+    "sec.filing-exhibit": CommandTaxonomy(("statements", "news"), ("us-filing", "filing-text", "earnings-release")),
 }
 
 
@@ -1017,6 +1035,15 @@ QUERY_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("수주", ("orders", "segment", "section")),
     ("원재료", ("raw", "materials", "segment", "section")),
     ("주요 제품", ("main", "products", "segment", "section")),
+    # 미국 공시(sec *). 한국 기업 자신의 공시는 dart 몫이라 "공시"만으로는 sec 로 보내지 않는다.
+    ("미국 공시", ("sec", "us", "filing")),
+    ("미국", ("us", "sec")),
+    ("티커", ("ticker", "cik")),
+    ("위험요인", ("risk", "factors", "items")),
+    ("리스크 팩터", ("risk", "factors", "items")),
+    ("경영진 분석", ("md", "items")),
+    ("실적 발표", ("earnings", "release", "exhibit")),
+    ("보도자료", ("press", "release", "exhibit")),
     ("공매도", ("short", "selling")),
     ("신용", ("credit", "margin", "loan")),
     ("대출", ("loan", "loanable")),
