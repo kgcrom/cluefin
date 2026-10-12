@@ -61,6 +61,13 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   resolves body codes before HTTP status. Never assume 200 == success.
 - WebSocket auth differs per broker: KIS needs a separate `approval_key` from
   `Auth.approve()`, while Kiwoom reuses the plain access token. Don't assume symmetry.
+- A KIS app key allows **one WebSocket session at a time**, and each `Auth.approve()` call voids the keys
+  issued before it. The server answers a subscribe with `OPSP8996 ALREADY IN USE appkey` while another
+  session is open, or `OPSP0011 invalid approval` once a newer key exists, then drops the connection
+  (2026-10-12). One key reused across sequential sessions is fine. So KIS realtime tests fail when
+  anything else uses the same app key at the same time: another pytest or TS run, desk, a script.
+  `SocketClient` reports these replies as `error` events and names them in the next "not connected"
+  error.
 - Kiwoom's mock (`dev`) domestic WebSocket supports KRX only.
 - Mixed dev/prod tokens are rejected server-side (Kiwoom `8031`, KIS `EGW00123`) — this
   is why token caches are scoped by env/app_key.
