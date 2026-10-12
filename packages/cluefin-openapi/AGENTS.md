@@ -170,6 +170,13 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   arbitrary and may end in upper-case `.XML` (2 of 518 measured 2026-10-12); 13F-NT has the cover only.
   `download_13f_files` picks by elimination and raises if two candidates appear. The submissions'
   `primaryDocument` is the XSL path `xslForm13F_X0n/primary_doc.xml`, not the raw file.
+- **An Archives folder opens under any CIK**: another company's CIK with a valid accession number still returns
+  200 (measured 2026-10-12), so the CIK in the path proves nothing. `filing_detail()` reads the filing's detail page
+  (`<accession>-index.html`), whose `parties` are the real filer/issuer/reporting owner — check `ciks` there.
+  It is also the only place with document types (EX-99.1 …; `index.json` has names only, and names are arbitrary).
+  `-index-headers.html` (SGML header) would be easier to parse but is **404 before 2015** even though `index.json`
+  lists it (AAPL filings, one per year, 2004–2014 404, 2015–2026 200); the detail page has the same layout back to
+  2001. Inline XBRL rows link through the viewer (`/ix?doc=…`) and Form 4 lists the XSL rendering path too.
 - Fails-to-Deliver is the SEC-side CUSIP → ticker source (13F tables carry no ticker; the 13(f) securities list
   has none either). Zip paths are **not** derivable: four folders by era (`fails-deliver-data`, `other/…`,
   `frequently-requested-foia-document-…`, `node/add/data_distribution`) and `_0` suffixes, so `files()` reads the

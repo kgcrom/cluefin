@@ -461,6 +461,11 @@ known = values_as_of(concept.units["USD"], date(2024, 1, 2))  # 기간(start, en
 client.archives.download_filing_document(cik, latest.accession_number, latest.primary_document, destination="aapl")
 client.archives.download_xbrl_files(cik, latest.accession_number, destination="aapl-xbrl")
 
+# 공시 상세: 문서마다 종류(EX-99.1 등)와 제출 당사자 CIK. 폴더는 다른 회사 CIK 경로로도 열리니 ciks로 확인한다
+detail = client.archives.filing_detail(cik, latest.accession_number)
+press = next(d for d in detail.documents if d.type == "EX-99.1")  # 8-K 실적 보도자료 (파일명은 공시마다 다름)
+assert cik in detail.ciks
+
 # 13F 기관 보유 보고: 표지와 정보표 (cluefin-sec-notes 의 load_13f 로 파싱)
 thirteen_f = client.submissions.filings(1067983, forms=["13F-HR"])[0]
 files = client.archives.download_13f_files(1067983, thirteen_f.accession_number, destination="brk-13f")
