@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { KisSocketClient } from '../../src/kis/socket-client';
+import { KisApiError } from '../../src/core/errors';
+import type { WebSocketEvent } from '../../src/core/websocket';
+import { KisSocketClient, parseKisRejection } from '../../src/kis/socket-client';
 
 describe('KisSocketClient', () => {
   const defaultOptions = {
@@ -56,6 +58,70 @@ describe('KisSocketClient', () => {
       expect(parsed.header.tr_type).toBe('2');
       expect(parsed.body.input.tr_id).toBe('H0STASP0');
       expect(parsed.body.input.tr_key).toBe('005930');
+    });
+  });
+
+  describe('server rejection', () => {
+    const deliver = (client: KisSocketClient, raw: string): void => {
+      (client as unknown as { handleMessage: (raw: string) => void }).handleMessage(raw);
+    };
+    const invalidApproval = JSON.stringify({
+      header: { tr_id: 'H0BJCNT0', tr_key: 'KR103502GA34', encrypt: 'N' },
+      body: { rt_cd: '1', msg_cd: 'OPSP0011', msg1: `invalid approval : ${defaultOptions.approvalKey}` },
+    });
+
+    it('emits an error event with the approval key masked', () => {
+      const client = new KisSocketClient(defaultOptions);
+      const events: WebSocketEvent[] = [];
+      client.on('error', (event: WebSocketEvent) => events.push(event));
+
+      deliver(client, invalidApproval);
+
+      expect(events).toHaveLength(1);
+      const event = events.at(0);
+      expect(event?.trId).toBe('H0BJCNT0');
+      expect(event?.error).toBeInstanceOf(KisApiError);
+      expect(event?.error?.message).toContain('[OPSP0011] invalid approval : ***');
+      expect(JSON.stringify(event?.error)).not.toContain(defaultOptions.approvalKey);
+      expect(event?.error?.message).not.toContain(defaultOptions.approvalKey);
+    });
+
+    it('reports a rejection without tr_id', () => {
+      const parsed = parseKisRejection(
+        '{"header":{"tr_id":"(null)","tr_key":"","encrypt":"N"},"body":{"rt_cd":"9","msg_cd":"OPSP8996","msg1":"ALREADY IN USE appkey"}}',
+        defaultOptions.approvalKey,
+      );
+
+      expect(parsed?.error.message).toContain('[OPSP8996] ALREADY IN USE appkey');
+      expect(parsed?.error.errorCode).toBe('OPSP8996');
+    });
+
+    it.each([
+      '{"header":{"tr_id":"H0BJCNT0"},"body":{"rt_cd":"0","msg_cd":"OPSP0000","msg1":"SUBSCRIBE SUCCESS"}}',
+      '{"header":{"tr_id":"PINGPONG","datetime":"20261012094000"}}',
+      '[1, 2]',
+      'some unknown message format',
+    ])('ignores a non-rejection message: %s', (raw) => {
+      expect(parseKisRejection(raw, defaultOptions.approvalKey)).toBeUndefined();
+    });
+
+    it('does not throw when nobody listens for errors', () => {
+      const client = new KisSocketClient(defaultOptions);
+
+      expect(() => deliver(client, invalidApproval)).not.toThrow();
+    });
+
+    it('names the rejection in the next not-connected error', async () => {
+      const client = new KisSocketClient(defaultOptions);
+      deliver(client, invalidApproval);
+
+      await expect(client.subscribe('H0BJASP0', 'KR103502GA34')).rejects.toThrow(/not connected .*OPSP0011/);
+    });
+
+    it('keeps the plain not-connected error without a rejection', async () => {
+      const client = new KisSocketClient(defaultOptions);
+
+      await expect(client.subscribe('H0BJASP0', 'KR103502GA34')).rejects.toThrow(/^WebSocket not connected$/);
     });
   });
 });

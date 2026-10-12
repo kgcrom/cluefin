@@ -1,169 +1,67 @@
 import { describe, expect, test } from 'vitest';
-import type { WebSocketEvent } from '../../src/core/websocket';
-import { KisAuth } from '../../src/kis/auth';
 import { OnmarketBondRealtimeQuote } from '../../src/kis/onmarket-bond-realtime-quote';
-import { KisSocketClient } from '../../src/kis/socket-client';
+import { receiveFirstKisData } from '../_helpers/kis-realtime';
 import { isKrxMarketHours } from '../_helpers/market-hours';
 
 const runIntegration = process.env.CLUEFIN_OPENAPI_TS_RUN_INTEGRATION === '1';
-// 장외에는 시세가 오지 않아 수신 대기에서 실패한다 — Python 실시간 통합 테스트와 같은 시간 가드.
+// 장외에는 시세가 오지 않는다 — Python 실시간 통합 테스트와 같은 시간 가드. 채권 한 종목은 장중에도 체결이
+// 드물어서, 시간 안에 데이터가 안 오면 실패가 아니라 skip 한다(Python 과 같다).
 const integrationTest = runIntegration && isKrxMarketHours() ? test : test.skip;
 
-const getEnvOrThrow = (key: string): string => {
-  const value = process.env[key];
-  if (!value) {
-    throw new Error(`${key} is required for integration tests`);
-  }
-  return value;
-};
+// 국고01500-5003(20-2). inquire-price 로 실재하는 종목임을 확인(2026-10-11). 예전 값 KR1035010001 은 없는 종목이었다.
+const BOND_CODE = 'KR103502GA34';
+// H0BICNT0 요청 예시값(KIS 포털). 예전 값 BOND001 은 근거가 없었다.
+const BOND_INDEX_CODE = 'KBPR01';
+const RECEIVE_TIMEOUT_MS = 30_000;
 
 describe('OnmarketBondRealtimeQuote integration', () => {
-  integrationTest('should connect, subscribe bond execution, receive data, and disconnect', async () => {
-    const appKey = getEnvOrThrow('KIS_APP_KEY');
-    const secretKey = getEnvOrThrow('KIS_SECRET_KEY');
-    const env = 'prod' as const;
-
-    const auth = new KisAuth({ appKey, secretKey, env });
-    const { approvalKey } = await auth.approve();
-
-    const client = new KisSocketClient({
-      approvalKey,
-      appKey,
-      secretKey,
-      env,
+  integrationTest('should receive and parse bond execution data', async (ctx) => {
+    const event = await receiveFirstKisData({
+      env: 'prod',
+      trId: OnmarketBondRealtimeQuote.TR_ID_BOND_EXECUTION,
+      timeoutMs: RECEIVE_TIMEOUT_MS,
+      subscribe: (client) => new OnmarketBondRealtimeQuote(client).subscribeBondExecution(BOND_CODE),
     });
+    if (!event) {
+      ctx.skip(`no bond execution for ${BOND_CODE} within ${RECEIVE_TIMEOUT_MS}ms (thinly traded)`);
+      return;
+    }
 
-    const receivedEvents: WebSocketEvent[] = [];
-
-    const result = await new Promise<{ connected: boolean; dataReceived: boolean }>((resolve) => {
-      const timeout = setTimeout(() => {
-        client.close();
-        resolve({ connected: true, dataReceived: receivedEvents.length > 0 });
-      }, 10_000);
-
-      client.on('connected', async () => {
-        const quote = new OnmarketBondRealtimeQuote(client);
-        await quote.subscribeBondExecution('KR1035010001');
-      });
-
-      client.on('data', (event: WebSocketEvent) => {
-        receivedEvents.push(event);
-        if (event.trId === OnmarketBondRealtimeQuote.TR_ID_BOND_EXECUTION && event.data) {
-          const items = OnmarketBondRealtimeQuote.parseBondExecutionData(event.data.values);
-          expect(items.length).toBeGreaterThan(0);
-          expect(items[0]?.stndIscd).toBe('KR1035010001');
-          clearTimeout(timeout);
-          client.close();
-          resolve({ connected: true, dataReceived: true });
-        }
-      });
-
-      client.on('error', (event: WebSocketEvent) => {
-        clearTimeout(timeout);
-        client.close();
-        throw event.error ?? new Error('WebSocket error');
-      });
-
-      client.connect();
-    });
-
-    expect(result.connected).toBe(true);
+    const items = OnmarketBondRealtimeQuote.parseBondExecutionData(event.data?.values ?? []);
+    expect(items.length).toBeGreaterThan(0);
+    expect(items[0]?.stndIscd).toBe(BOND_CODE);
   });
 
-  integrationTest('should connect, subscribe bond orderbook, receive data, and disconnect', async () => {
-    const appKey = getEnvOrThrow('KIS_APP_KEY');
-    const secretKey = getEnvOrThrow('KIS_SECRET_KEY');
-    const env = 'prod' as const;
-
-    const auth = new KisAuth({ appKey, secretKey, env });
-    const { approvalKey } = await auth.approve();
-
-    const client = new KisSocketClient({
-      approvalKey,
-      appKey,
-      secretKey,
-      env,
+  integrationTest('should receive and parse bond orderbook data', async (ctx) => {
+    const event = await receiveFirstKisData({
+      env: 'prod',
+      trId: OnmarketBondRealtimeQuote.TR_ID_BOND_ORDERBOOK,
+      timeoutMs: RECEIVE_TIMEOUT_MS,
+      subscribe: (client) => new OnmarketBondRealtimeQuote(client).subscribeBondOrderbook(BOND_CODE),
     });
+    if (!event) {
+      ctx.skip(`no bond orderbook for ${BOND_CODE} within ${RECEIVE_TIMEOUT_MS}ms (thinly traded)`);
+      return;
+    }
 
-    const result = await new Promise<{ connected: boolean; dataReceived: boolean }>((resolve) => {
-      const timeout = setTimeout(() => {
-        client.close();
-        resolve({ connected: true, dataReceived: false });
-      }, 10_000);
-
-      client.on('connected', async () => {
-        const quote = new OnmarketBondRealtimeQuote(client);
-        await quote.subscribeBondOrderbook('KR1035010001');
-      });
-
-      client.on('data', (event: WebSocketEvent) => {
-        if (event.trId === OnmarketBondRealtimeQuote.TR_ID_BOND_ORDERBOOK && event.data) {
-          const items = OnmarketBondRealtimeQuote.parseBondOrderbookData(event.data.values);
-          expect(items.length).toBeGreaterThan(0);
-          expect(items[0]?.stndIscd).toBe('KR1035010001');
-          clearTimeout(timeout);
-          client.close();
-          resolve({ connected: true, dataReceived: true });
-        }
-      });
-
-      client.on('error', (event: WebSocketEvent) => {
-        clearTimeout(timeout);
-        client.close();
-        throw event.error ?? new Error('WebSocket error');
-      });
-
-      client.connect();
-    });
-
-    expect(result.connected).toBe(true);
+    const items = OnmarketBondRealtimeQuote.parseBondOrderbookData(event.data?.values ?? []);
+    expect(items.length).toBeGreaterThan(0);
+    expect(items[0]?.stndIscd).toBe(BOND_CODE);
   });
 
-  integrationTest('should connect, subscribe bond index execution, receive data, and disconnect', async () => {
-    const appKey = getEnvOrThrow('KIS_APP_KEY');
-    const secretKey = getEnvOrThrow('KIS_SECRET_KEY');
-    const env = 'prod' as const;
-
-    const auth = new KisAuth({ appKey, secretKey, env });
-    const { approvalKey } = await auth.approve();
-
-    const client = new KisSocketClient({
-      approvalKey,
-      appKey,
-      secretKey,
-      env,
+  integrationTest('should receive and parse bond index execution data', async (ctx) => {
+    const event = await receiveFirstKisData({
+      env: 'prod',
+      trId: OnmarketBondRealtimeQuote.TR_ID_BOND_INDEX_EXECUTION,
+      timeoutMs: RECEIVE_TIMEOUT_MS,
+      subscribe: (client) => new OnmarketBondRealtimeQuote(client).subscribeBondIndexExecution(BOND_INDEX_CODE),
     });
+    if (!event) {
+      ctx.skip(`no bond index data for ${BOND_INDEX_CODE} within ${RECEIVE_TIMEOUT_MS}ms`);
+      return;
+    }
 
-    const result = await new Promise<{ connected: boolean; dataReceived: boolean }>((resolve) => {
-      const timeout = setTimeout(() => {
-        client.close();
-        resolve({ connected: true, dataReceived: false });
-      }, 10_000);
-
-      client.on('connected', async () => {
-        const quote = new OnmarketBondRealtimeQuote(client);
-        await quote.subscribeBondIndexExecution('BOND001');
-      });
-
-      client.on('data', (event: WebSocketEvent) => {
-        if (event.trId === OnmarketBondRealtimeQuote.TR_ID_BOND_INDEX_EXECUTION && event.data) {
-          const items = OnmarketBondRealtimeQuote.parseBondIndexExecutionData(event.data.values);
-          expect(items.length).toBeGreaterThan(0);
-          clearTimeout(timeout);
-          client.close();
-          resolve({ connected: true, dataReceived: true });
-        }
-      });
-
-      client.on('error', (event: WebSocketEvent) => {
-        clearTimeout(timeout);
-        client.close();
-        throw event.error ?? new Error('WebSocket error');
-      });
-
-      client.connect();
-    });
-
-    expect(result.connected).toBe(true);
+    const items = OnmarketBondRealtimeQuote.parseBondIndexExecutionData(event.data?.values ?? []);
+    expect(items.length).toBeGreaterThan(0);
   });
 });

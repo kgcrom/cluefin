@@ -1,121 +1,40 @@
 import { describe, expect, test } from 'vitest';
-import type { WebSocketEvent } from '../../src/core/websocket';
-import { KisAuth } from '../../src/kis/auth';
 import { OverseasRealtimeQuote } from '../../src/kis/overseas-realtime-quote';
-import { KisSocketClient } from '../../src/kis/socket-client';
+import { receiveFirstKisData } from '../_helpers/kis-realtime';
 import { isUsMarketHours } from '../_helpers/market-hours';
 
 const runIntegration = process.env.CLUEFIN_OPENAPI_TS_RUN_INTEGRATION === '1';
-// 장외에는 시세가 오지 않아 수신 대기에서 실패한다 — 미국 정규장 시간에만 돈다.
+// 미국 정규장에만 돈다. 그 시간에 AAPL 은 계속 체결되므로 데이터가 안 오면 실패다.
 const integrationTest = runIntegration && isUsMarketHours() ? test : test.skip;
 
-const getEnvOrThrow = (key: string): string => {
-  const value = process.env[key];
-  if (!value) {
-    throw new Error(`${key} is required for integration tests`);
-  }
-  return value;
-};
+const RECEIVE_TIMEOUT_MS = 30_000;
 
 describe('OverseasRealtimeQuote integration', () => {
-  integrationTest('should connect, subscribe execution, receive data, and disconnect', async () => {
-    const appKey = getEnvOrThrow('KIS_APP_KEY');
-    const secretKey = getEnvOrThrow('KIS_SECRET_KEY');
-    const env = 'prod' as const;
-
-    const auth = new KisAuth({ appKey, secretKey, env });
-    const { approvalKey } = await auth.approve();
-
-    const client = new KisSocketClient({
-      approvalKey,
-      appKey,
-      secretKey,
-      env,
+  integrationTest('should receive and parse execution data', async () => {
+    const event = await receiveFirstKisData({
+      env: 'prod',
+      trId: OverseasRealtimeQuote.TR_ID_EXECUTION,
+      timeoutMs: RECEIVE_TIMEOUT_MS,
+      subscribe: (client) => new OverseasRealtimeQuote(client).subscribeExecution('DNASAAPL'),
     });
 
-    const receivedEvents: WebSocketEvent[] = [];
-
-    const result = await new Promise<{ connected: boolean; dataReceived: boolean }>((resolve) => {
-      const timeout = setTimeout(() => {
-        client.close();
-        resolve({ connected: true, dataReceived: receivedEvents.length > 0 });
-      }, 15_000);
-
-      client.on('connected', async () => {
-        const quote = new OverseasRealtimeQuote(client);
-        await quote.subscribeExecution('DNASAAPL');
-      });
-
-      client.on('data', (event: WebSocketEvent) => {
-        receivedEvents.push(event);
-        if (event.trId === OverseasRealtimeQuote.TR_ID_EXECUTION && event.data) {
-          const items = OverseasRealtimeQuote.parseExecutionData(event.data.values);
-          expect(items.length).toBeGreaterThan(0);
-          expect(items[0]?.symb).toBe('AAPL');
-          clearTimeout(timeout);
-          client.close();
-          resolve({ connected: true, dataReceived: true });
-        }
-      });
-
-      client.on('error', (event: WebSocketEvent) => {
-        clearTimeout(timeout);
-        client.close();
-        throw event.error ?? new Error('WebSocket error');
-      });
-
-      client.connect();
-    });
-
-    expect(result.connected).toBe(true);
+    expect(event, `no execution data for AAPL within ${RECEIVE_TIMEOUT_MS}ms`).toBeDefined();
+    const items = OverseasRealtimeQuote.parseExecutionData(event?.data?.values ?? []);
+    expect(items.length).toBeGreaterThan(0);
+    expect(items[0]?.symb).toBe('AAPL');
   });
 
-  integrationTest('should connect, subscribe orderbook, receive data, and disconnect', async () => {
-    const appKey = getEnvOrThrow('KIS_APP_KEY');
-    const secretKey = getEnvOrThrow('KIS_SECRET_KEY');
-    const env = 'prod' as const;
-
-    const auth = new KisAuth({ appKey, secretKey, env });
-    const { approvalKey } = await auth.approve();
-
-    const client = new KisSocketClient({
-      approvalKey,
-      appKey,
-      secretKey,
-      env,
+  integrationTest('should receive and parse orderbook data', async () => {
+    const event = await receiveFirstKisData({
+      env: 'prod',
+      trId: OverseasRealtimeQuote.TR_ID_ORDERBOOK,
+      timeoutMs: RECEIVE_TIMEOUT_MS,
+      subscribe: (client) => new OverseasRealtimeQuote(client).subscribeOrderbook('AAPL', 'NAS'),
     });
 
-    const result = await new Promise<{ connected: boolean; dataReceived: boolean }>((resolve) => {
-      const timeout = setTimeout(() => {
-        client.close();
-        resolve({ connected: true, dataReceived: false });
-      }, 15_000);
-
-      client.on('connected', async () => {
-        const quote = new OverseasRealtimeQuote(client);
-        await quote.subscribeOrderbook('AAPL', 'NAS');
-      });
-
-      client.on('data', (event: WebSocketEvent) => {
-        if (event.trId === OverseasRealtimeQuote.TR_ID_ORDERBOOK && event.data) {
-          const items = OverseasRealtimeQuote.parseOrderbookData(event.data.values);
-          expect(items.length).toBeGreaterThan(0);
-          expect(items[0]?.symb).toBe('AAPL');
-          clearTimeout(timeout);
-          client.close();
-          resolve({ connected: true, dataReceived: true });
-        }
-      });
-
-      client.on('error', (event: WebSocketEvent) => {
-        clearTimeout(timeout);
-        client.close();
-        throw event.error ?? new Error('WebSocket error');
-      });
-
-      client.connect();
-    });
-
-    expect(result.connected).toBe(true);
+    expect(event, `no orderbook data for AAPL within ${RECEIVE_TIMEOUT_MS}ms`).toBeDefined();
+    const items = OverseasRealtimeQuote.parseOrderbookData(event?.data?.values ?? []);
+    expect(items.length).toBeGreaterThan(0);
+    expect(items[0]?.symb).toBe('AAPL');
   });
 });

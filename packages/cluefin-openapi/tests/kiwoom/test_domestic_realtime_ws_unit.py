@@ -79,7 +79,7 @@ class TestParse:
                 ],
             },
         )
-        parsed = DomesticRealtime.parse(message)
+        (parsed,) = DomesticRealtime.parse(message)
         assert isinstance(parsed, DomesticRealtimeStockExecution)
         values = parsed.data[0].values
         assert values.execution_time == "165208"
@@ -95,7 +95,7 @@ class TestParse:
                 "data": [{"type": "00", "item": "005930", "values": {"9001": "005930", "913": "체결"}}],
             },
         )
-        parsed = DomesticRealtime.parse(message)
+        (parsed,) = DomesticRealtime.parse(message)
         assert isinstance(parsed, DomesticRealtimeOrderExecution)
         assert parsed.data[0].values.stock_code == "005930"
         assert parsed.data[0].values.order_status == "체결"
@@ -109,7 +109,7 @@ class TestParse:
                 "data": [{"type": "0G", "item": "069500", "values": {"36": "+7488.27", "39": "0.02", "265": "-0.01"}}],
             },
         )
-        parsed = DomesticRealtime.parse(message)
+        (parsed,) = DomesticRealtime.parse(message)
         assert isinstance(parsed, DomesticRealtimeEtfNav)
         assert parsed.data[0].values.nav == "+7488.27"
         assert parsed.data[0].values.tracking_error_rate == "0.02"
@@ -120,7 +120,7 @@ class TestParse:
             trnm="REAL",
             body={"trnm": "REAL", "data": [{"type": "0U", "item": "001", "values": {"252": "46", "254": "3"}}]},
         )
-        parsed = DomesticRealtime.parse(message)
+        (parsed,) = DomesticRealtime.parse(message)
         assert isinstance(parsed, DomesticRealtimeIndustryFluctuation)
         assert parsed.data[0].values.advancing_count == "46"
         assert parsed.data[0].values.lower_limit_count == "3"
@@ -130,7 +130,7 @@ class TestParse:
             trnm="REAL",
             body={"trnm": "REAL", "data": [{"type": "0D", "item": "005930", "values": {"41": "20800", "61": "1000"}}]},
         )
-        parsed = DomesticRealtime.parse(message)
+        (parsed,) = DomesticRealtime.parse(message)
         assert isinstance(parsed, DomesticRealtimeStockQuoteRemaining)
         assert parsed.data[0].values.ask_price_1 == "20800"
         assert parsed.data[0].values.ask_volume_1 == "1000"
@@ -143,15 +143,38 @@ class TestParse:
                 "data": [{"type": "1h", "item": "005930", "values": {"9001": "005930", "1221": "21000"}}],
             },
         )
-        parsed = DomesticRealtime.parse(message)
+        (parsed,) = DomesticRealtime.parse(message)
         assert isinstance(parsed, DomesticRealtimeViActivation)
         assert parsed.data[0].values.vi_activation_price == "21000"
 
-    def test_parse_returns_none_for_ack_frame(self):
-        """등록/해지 ACK 프레임(빈 data)은 대상 TR이 아니므로 None."""
-        message = KiwoomWebSocketMessage(trnm="REG", body={"trnm": "REG", "return_code": 0, "data": []})
-        assert DomesticRealtime.parse(message) is None
+    def test_parse_splits_mixed_type_frame(self):
+        """실서버는 0B·0D 를 한 프레임에 섞어 보낸다 — data[0] 의 type 하나로 전체를 검증하면 0D 값이 빈 값이 된다."""
+        message = KiwoomWebSocketMessage(
+            trnm="REAL",
+            body={
+                "trnm": "REAL",
+                "data": [
+                    {"type": "0B", "item": "005930", "values": {"10": "-20800"}},
+                    {"type": "0D", "item": "000660", "values": {"41": "180000"}},
+                    {"type": "0D", "item": "005930", "values": {"41": "20850"}},
+                    {"type": "0B", "item": "000660", "values": {"10": "+179500"}},
+                ],
+            },
+        )
+        execution, quote = DomesticRealtime.parse(message)
+        assert isinstance(execution, DomesticRealtimeStockExecution)
+        assert [(d.item, d.values.current_price) for d in execution.data] == [
+            ("005930", "-20800"),
+            ("000660", "+179500"),
+        ]
+        assert isinstance(quote, DomesticRealtimeStockQuoteRemaining)
+        assert [(d.item, d.values.ask_price_1) for d in quote.data] == [("000660", "180000"), ("005930", "20850")]
 
-    def test_parse_returns_none_for_unknown_type(self):
+    def test_parse_returns_empty_for_ack_frame(self):
+        """등록/해지 ACK 프레임(빈 data)은 대상 TR이 아니므로 빈 리스트."""
+        message = KiwoomWebSocketMessage(trnm="REG", body={"trnm": "REG", "return_code": 0, "data": []})
+        assert DomesticRealtime.parse(message) == []
+
+    def test_parse_returns_empty_for_unknown_type(self):
         message = KiwoomWebSocketMessage(trnm="REAL", body={"trnm": "REAL", "data": [{"type": "ZZ"}]})
-        assert DomesticRealtime.parse(message) is None
+        assert DomesticRealtime.parse(message) == []

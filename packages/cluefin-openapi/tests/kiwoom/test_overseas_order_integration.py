@@ -1,11 +1,12 @@
 import math
+from typing import Iterator, List
 
 import pytest
 
 from cluefin_openapi.kiwoom._client import Client
 from cluefin_openapi.kiwoom._exceptions import KiwoomAPIError
 
-from ._integration_helpers import real_account_only, skip_if_env_blocked
+from ._integration_helpers import cancel_leftover_orders, real_account_only, skip_if_env_blocked
 from ._spec_conformance import assert_spec_conformance
 
 TEST_STEX_TP = "ND"  # NASDAQ
@@ -28,7 +29,23 @@ def _unfillable_buy_price(client: Client) -> str:
 
 
 @pytest.fixture
-def pending_buy_order_no(client: Client) -> str:
+def pending_orders(client: Client) -> Iterator[List[str]]:
+    """테스트가 접수한 주문번호를 모아 두었다가, 테스트가 실패해도 끝나면 취소한다.
+
+    취소·정정으로 원주문이 사라졌으면 테스트가 목록을 고쳐 둔다 (취소는 빼고, 정정은 새 번호로 바꾼다).
+    """
+    ord_nos: List[str] = []
+    yield ord_nos
+    cancel_leftover_orders(
+        ord_nos,
+        lambda ord_no: client.overseas_order.request_cancel_order(
+            orig_ord_no=ord_no, stex_tp=TEST_STEX_TP, stk_cd=TEST_STK_CD
+        ),
+    )
+
+
+@pytest.fixture
+def pending_buy_order_no(client: Client, pending_orders: List[str]) -> str:
     """정정/취소 대상이 될 미체결 매수주문을 실제로 접수하고 그 주문번호를 반환한다.
 
     주문번호를 하드코딩하면 "RC4061:모의투자 주문번호를 확인하세요"로 항상 실패한다.
@@ -47,11 +64,14 @@ def pending_buy_order_no(client: Client) -> str:
 
     ord_no = response.body.ord_no
     assert ord_no, "매수주문 응답에 주문번호가 없다"
+    pending_orders.append(ord_no)
     return ord_no
 
 
 @pytest.mark.integration
-def test_request_buy_order(client: Client):
+@pytest.mark.mutation
+def test_request_buy_order(client: Client, pending_orders: List[str]):
+    # $1.00 지정가라 체결되지 않는다 — 미체결로 남은 주문은 teardown 에서 취소한다.
     try:
         response = client.overseas_order.request_buy_order(
             stex_tp=TEST_STEX_TP, stk_cd=TEST_STK_CD, ord_qty="1", trde_tp="00", ord_uv="1.00"
@@ -61,10 +81,14 @@ def test_request_buy_order(client: Client):
 
     assert response is not None
     assert response.body is not None
+    assert response.body.ord_no
+    pending_orders.append(response.body.ord_no)
 
 
 @pytest.mark.integration
-def test_request_sell_order(client: Client):
+@pytest.mark.mutation
+def test_request_sell_order(client: Client, pending_orders: List[str]):
+    # $100,000 지정가라 체결되지 않는다 — 미체결로 남은 주문은 teardown 에서 취소한다.
     try:
         response = client.overseas_order.request_sell_order(
             stk_cd=TEST_STK_CD, stex_tp=TEST_STEX_TP, ord_qty="1", trde_tp="00", ord_uv="100000.00"
@@ -74,26 +98,34 @@ def test_request_sell_order(client: Client):
 
     assert response is not None
     assert response.body is not None
+    assert response.body.ord_no
+    pending_orders.append(response.body.ord_no)
 
 
 @pytest.mark.integration
-def test_request_modify_order(client: Client, pending_buy_order_no: str):
+@pytest.mark.mutation
+def test_request_modify_order(client: Client, pending_buy_order_no: str, pending_orders: List[str]):
     response = client.overseas_order.request_modify_order(
         orig_ord_no=pending_buy_order_no,
         stex_tp=TEST_STEX_TP,
         stk_cd=TEST_STK_CD,
         mdfy_uv=_unfillable_buy_price(client),
     )
+    # 정정이 받아들여지면 원주문은 사라지고 새 주문번호로 남는다 — teardown 이 새 번호를 취소하게 바꾼다.
+    if response.body.ord_no:
+        pending_orders[pending_orders.index(pending_buy_order_no)] = response.body.ord_no
     assert_spec_conformance(client, response)
     assert response is not None
     assert response.body is not None
 
 
 @pytest.mark.integration
-def test_request_cancel_order(client: Client, pending_buy_order_no: str):
+@pytest.mark.mutation
+def test_request_cancel_order(client: Client, pending_buy_order_no: str, pending_orders: List[str]):
     response = client.overseas_order.request_cancel_order(
         orig_ord_no=pending_buy_order_no, stex_tp=TEST_STEX_TP, stk_cd=TEST_STK_CD
     )
+    pending_orders.remove(pending_buy_order_no)  # 취소됐으니 teardown 이 다시 취소하지 않게
     assert_spec_conformance(client, response)
     assert response is not None
     assert response.body is not None

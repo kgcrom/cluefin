@@ -57,6 +57,7 @@ ignore = ["E501"]
 markers = [
     "integration: integration tests",
     "realtime: real-time data tests (requires market hours: KRX 09:00-15:30 KST, US 09:30-16:00 ET)",
+    "mutation: places orders or exchanges currency on the broker account (runs only when -m names it; prod also needs CLUEFIN_TEST_LIVE_MUTATION=1)",
 ]
 addopts = "-ra --import-mode=importlib"
 testpaths = [

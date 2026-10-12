@@ -151,6 +151,7 @@ class SocketClient:
         self._writer: Optional[asyncio.StreamWriter] = None
         self._connected = False
         self._receive_task: Optional[asyncio.Task] = None
+        self._last_rejection: Optional[KISAPIError] = None
         self._rate_limiter = TokenBucket(capacity=rate_limit_burst, refill_rate=rate_limit_requests_per_second)
 
         if debug:
@@ -209,6 +210,7 @@ class SocketClient:
             await self._websocket_handshake(host, port)
 
             self._connected = True
+            self._last_rejection = None
 
             # Start receive task
             self._receive_task = asyncio.create_task(self._receive_loop())
@@ -417,6 +419,57 @@ class SocketClient:
                     raw=raw,
                 )
             )
+            return
+
+        if message.message_type == MessageType.SYSTEM:
+            rejection = self._parse_rejection(raw)
+            if rejection is not None:
+                self._last_rejection = rejection
+                await self._emit_event(
+                    WebSocketEvent(
+                        event_type="error",
+                        tr_id=(rejection.response_data or {}).get("tr_id"),
+                        error=rejection,
+                    )
+                )
+
+    def _parse_rejection(self, raw: str) -> Optional[KISAPIError]:
+        """Turn a JSON system reply with rt_cd != "0" into an error.
+
+        KIS rejects at the session level and then drops the connection, e.g.
+        OPSP8996 "ALREADY IN USE appkey" (another session uses the app key) and
+        OPSP0011 "invalid approval" (a newer Auth.approve() replaced the key).
+        msg1 echoes the approval key, so it is masked.
+
+        Args:
+            raw: Raw message string
+
+        Returns:
+            KISAPIError for a rejection, None otherwise
+        """
+        try:
+            payload = json.loads(raw)
+        except ValueError:
+            return None
+        if not isinstance(payload, dict):
+            return None
+
+        header = payload.get("header")
+        body = payload.get("body")
+        if not isinstance(body, dict) or body.get("rt_cd") in (None, "0"):
+            return None
+
+        tr_id = header.get("tr_id") if isinstance(header, dict) else None
+        msg_cd = str(body.get("msg_cd", ""))
+        msg1 = str(body.get("msg1", ""))
+        if self.approval_key:
+            msg1 = msg1.replace(self.approval_key, "***")
+        msg1 = msg1.strip()
+
+        return KISAPIError(
+            f"KIS WebSocket rejected {tr_id}: [{msg_cd}] {msg1}",
+            response_data={"tr_id": tr_id, "rt_cd": body.get("rt_cd"), "msg_cd": msg_cd, "msg1": msg1},
+        )
 
     def _parse_message(self, raw: str) -> WebSocketMessage:
         """Parse raw WebSocket message.
@@ -488,7 +541,7 @@ class SocketClient:
             KISAPIError: If subscription fails
         """
         if not self._connected:
-            raise KISAPIError("WebSocket not connected")
+            raise self._not_connected_error()
 
         # Rate limiting
         if not self._rate_limiter.wait_for_tokens(timeout=5.0):
@@ -518,7 +571,7 @@ class SocketClient:
             tr_key: Transaction key
         """
         if not self._connected:
-            raise KISAPIError("WebSocket not connected")
+            raise self._not_connected_error()
 
         subscription_key = f"{tr_id}:{tr_key}"
         if subscription_key not in self._subscriptions:
@@ -535,6 +588,15 @@ class SocketClient:
         del self._subscriptions[subscription_key]
 
         await self._emit_event(WebSocketEvent(event_type="unsubscribed", tr_id=tr_id, tr_key=tr_key))
+
+    def _not_connected_error(self) -> KISAPIError:
+        """Error for a call on a closed socket, naming the server rejection that closed it if any."""
+        if self._last_rejection is not None:
+            return KISAPIError(
+                f"WebSocket not connected (server closed it after: {self._last_rejection})",
+                response_data=self._last_rejection.response_data,
+            )
+        return KISAPIError("WebSocket not connected")
 
     def _build_subscription_message(self, tr_id: str, tr_key: str, tr_type: SubscriptionType) -> str:
         """Build subscription/unsubscription message.

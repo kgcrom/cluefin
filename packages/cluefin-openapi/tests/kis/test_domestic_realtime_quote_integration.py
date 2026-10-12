@@ -3,14 +3,12 @@
 These tests require actual API credentials and network access.
 They connect to the KIS WebSocket server and receive real-time market data.
 
-WARNING: These tests should only be run during market hours (9:00-15:30 KST)
-for reliable real-time data. Outside market hours, data may not be available.
+Runs only during KRX continuous trading (Mon-Fri 09:00-15:20 KST) and on prod: the execution TR
+H0UNCNT0 (통합) is not offered on the mock server. Samsung Electronics trades every few seconds then,
+so a data timeout is a failure, not a skip.
 """
 
 import asyncio
-import re
-from datetime import datetime, time
-from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -21,31 +19,19 @@ from cluefin_openapi.kis._domestic_realtime_quote_types import (
 )
 from cluefin_openapi.kis._socket_client import SocketClient
 
-pytestmark = [pytest.mark.integration, pytest.mark.realtime]
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.realtime,
+    # 시간대 gate 가 먼저 — 장외에는 auth_dev 를 쓰는 _require_prod_env 까지 가지 않는다.
+    pytest.mark.usefixtures("krx_continuous_hours", "_require_prod_env"),
+]
 
 
-def _markexpr_includes(markexpr: str, name: str) -> bool:
-    return re.search(rf"(?<![A-Za-z0-9_]){re.escape(name)}(?![A-Za-z0-9_])", markexpr) is not None
-
-
-def _is_kst_market_hours() -> bool:
-    now = datetime.now(ZoneInfo("Asia/Seoul"))
-    if now.weekday() >= 5:
-        return False
-    return time(9, 0) <= now.time() <= time(15, 30)
-
-
-@pytest.fixture(autouse=True, scope="module")
-def _require_integration_and_realtime(request):
-    markexpr = request.config.option.markexpr or ""
-    if not (_markexpr_includes(markexpr, "integration") and _markexpr_includes(markexpr, "realtime")):
-        pytest.skip('Requires -m "integration and realtime"')
-
-
-@pytest.fixture(autouse=True, scope="module")
-def _require_kst_market_hours():
-    if not _is_kst_market_hours():
-        pytest.skip("Requires KST market hours (Mon-Fri 09:00-15:30)")
+@pytest.fixture(scope="module")
+def _require_prod_env(auth_dev):
+    # H0UNCNT0 (실시간 체결가 통합) 은 모의투자 미지원 — 포털 명세의 virtualTrId 가 "모의투자 미지원" 이다.
+    if auth_dev.env != "prod":
+        pytest.skip("DomesticRealtimeQuote execution (H0UNCNT0) requires prod environment (KIS_ENV=prod)")
 
 
 @pytest.fixture(scope="module")
@@ -62,7 +48,7 @@ def socket_client_params(auth_dev, approval_key):
         "approval_key": approval_key,
         "app_key": auth_dev.app_key,
         "secret_key": auth_dev.secret_key,
-        "env": "dev",
+        "env": auth_dev.env,
         "debug": True,
     }
 
@@ -107,10 +93,7 @@ async def test_unsubscribe_execution(socket_client_params):
 
 @pytest.mark.asyncio
 async def test_receive_execution_data(socket_client_params):
-    """Test receiving real-time execution data.
-
-    Note: This test may timeout outside market hours when no data is being sent.
-    """
+    """Test receiving real-time execution data."""
     async with SocketClient(**socket_client_params) as client:
         realtime = DomesticRealtimeQuote(client)
 
@@ -124,6 +107,8 @@ async def test_receive_execution_data(socket_client_params):
         async def receive_data():
             nonlocal data_received
             async for event in client.events():
+                if event.event_type == "error":
+                    pytest.fail(f"KIS WebSocket error: {event.error}")
                 if event.event_type == "data" and event.tr_id == DomesticRealtimeQuote.TR_ID_EXECUTION:
                     # Parse the data (returns list of items)
                     executions = realtime.parse_execution_data(event.data["values"])
@@ -147,11 +132,7 @@ async def test_receive_execution_data(socket_client_params):
         try:
             await asyncio.wait_for(receive_data(), timeout=timeout)
         except asyncio.TimeoutError:
-            # Outside market hours, no data may be available
-            pytest.skip(
-                f"No execution data received within {timeout}s. "
-                "This may be expected outside market hours (9:00-15:30 KST)."
-            )
+            pytest.fail(f"No execution data for 005930 within {timeout}s during continuous trading hours.")
 
         assert data_received is True
 
@@ -196,6 +177,8 @@ async def test_subscription_events(socket_client_params):
         async def check_events():
             nonlocal subscribed_event_found
             async for event in client.events():
+                if event.event_type == "error":
+                    pytest.fail(f"KIS WebSocket error: {event.error}")
                 if event.event_type == "subscribed":
                     assert event.tr_id == "H0UNCNT0"
                     assert event.tr_key == "005930"
@@ -243,11 +226,7 @@ async def test_unsubscribe_orderbook(socket_client_params):
 
 @pytest.mark.asyncio
 async def test_receive_orderbook_data(socket_client_params):
-    """Test receiving real-time orderbook data.
-
-    Note: This test may timeout outside market hours when no data is being sent.
-    Orderbook data updates more frequently than execution data.
-    """
+    """Test receiving real-time orderbook data."""
     async with SocketClient(**socket_client_params) as client:
         realtime = DomesticRealtimeQuote(client)
 
@@ -261,6 +240,8 @@ async def test_receive_orderbook_data(socket_client_params):
         async def receive_data():
             nonlocal data_received
             async for event in client.events():
+                if event.event_type == "error":
+                    pytest.fail(f"KIS WebSocket error: {event.error}")
                 if event.event_type == "data" and event.tr_id == DomesticRealtimeQuote.TR_ID_ORDERBOOK:
                     # Parse the data (returns list of items)
                     orderbooks = realtime.parse_orderbook_data(event.data["values"])
@@ -284,11 +265,7 @@ async def test_receive_orderbook_data(socket_client_params):
         try:
             await asyncio.wait_for(receive_data(), timeout=timeout)
         except asyncio.TimeoutError:
-            # Outside market hours, no data may be available
-            pytest.skip(
-                f"No orderbook data received within {timeout}s. "
-                "This may be expected outside market hours (9:00-15:30 KST)."
-            )
+            pytest.fail(f"No orderbook data for 005930 within {timeout}s during continuous trading hours.")
 
         assert data_received is True
 
@@ -333,6 +310,8 @@ async def test_orderbook_subscription_events(socket_client_params):
         async def check_events():
             nonlocal subscribed_event_found
             async for event in client.events():
+                if event.event_type == "error":
+                    pytest.fail(f"KIS WebSocket error: {event.error}")
                 if event.event_type == "subscribed":
                     assert event.tr_id == "H0STASP0"
                     assert event.tr_key == "005930"
@@ -368,6 +347,8 @@ async def test_combined_execution_and_orderbook(socket_client_params):
 
         async def receive_data():
             async for event in client.events():
+                if event.event_type == "error":
+                    pytest.fail(f"KIS WebSocket error: {event.error}")
                 if event.event_type == "data":
                     if event.tr_id == DomesticRealtimeQuote.TR_ID_EXECUTION:
                         executions = realtime.parse_execution_data(event.data["values"])
@@ -389,9 +370,7 @@ async def test_combined_execution_and_orderbook(socket_client_params):
         try:
             await asyncio.wait_for(receive_data(), timeout=timeout)
         except asyncio.TimeoutError:
-            pytest.skip(
-                f"No data received within {timeout}s. This may be expected outside market hours (9:00-15:30 KST)."
-            )
+            pytest.fail(f"No execution or orderbook data for 005930 within {timeout}s during continuous trading hours.")
 
         # At least one type should be received
         assert data_received["execution"] or data_received["orderbook"]

@@ -2,6 +2,7 @@
 
 import os
 import time
+from pathlib import Path
 
 import pytest
 from pydantic import SecretStr
@@ -11,8 +12,22 @@ from cluefin_openapi.kiwoom._client import Client
 
 # `.env.test` 로딩은 여기 임포트만으로 끝난다 — 모듈 레벨 skipif가 KIWOOM_ENV를 보려면
 # 픽스처 실행이 아니라 수집 시점에 로드돼 있어야 한다.
-from ._integration_helpers import kiwoom_env
+from ._integration_helpers import kiwoom_env, mutation_skip_reason
 from ._spec_conformance import record_exchanges
+
+
+def pytest_collection_modifyitems(config, items):
+    """`mutation` 테스트(주문·환전 접수)는 명시적으로 골랐을 때만 돌린다.
+
+    픽스처가 아니라 수집 단계에서 skip 을 붙인다 — 그래야 미체결 주문을 접수하는 픽스처도 돌지 않는다.
+    """
+    reason = mutation_skip_reason(config.option.markexpr or "", kiwoom_env())
+    if reason is None:
+        return
+    here = Path(__file__).parent
+    for item in items:
+        if item.get_closest_marker("mutation") and here in item.path.parents:
+            item.add_marker(pytest.mark.skip(reason=reason))
 
 
 @pytest.fixture(scope="module")

@@ -26,7 +26,7 @@ import os
 import ssl
 import struct
 from dataclasses import dataclass, field
-from typing import Any, Dict, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Mapping, Optional, Type, TypeVar, Union
 from urllib.parse import urlparse
 
 from loguru import logger
@@ -44,6 +44,24 @@ class KiwoomWebSocketMessage:
     trnm: str
     body: Dict[str, Any] = field(default_factory=dict)
     raw: str = ""
+
+
+ModelT = TypeVar("ModelT", bound=BaseModel)
+
+
+def split_real_frame(message: KiwoomWebSocketMessage, models: Mapping[str, Type[ModelT]]) -> List[ModelT]:
+    """REAL 프레임을 TR type별 응답 모델로 나눈다.
+
+    서버는 한 프레임의 ``data`` 에 여러 TR type 항목을 섞어 보낸다(0B·0D 를 함께 등록하면
+    ``0B/0D/0D/0B`` 처럼 온다, 2026-10-12 실측). 한 모델로 프레임 전체를 검증하면 다른 type 항목은
+    오류 없이 빈 값으로 남으므로, type 마다 그 항목만 담은 모델을 처음 나온 순서로 하나씩 만든다.
+    ``models`` 에 없는 type 은 버린다.
+    """
+    groups: Dict[str, List[Dict[str, Any]]] = {}
+    for item in message.body.get("data") or []:
+        if isinstance(item, dict) and item.get("type") in models:
+            groups.setdefault(item["type"], []).append(item)
+    return [models[tr_type].model_validate({**message.body, "data": items}) for tr_type, items in groups.items()]
 
 
 class KiwoomWebSocketClient:

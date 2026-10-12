@@ -30,7 +30,7 @@ TR (type):
 - 1h VI발동/해제     → DomesticRealtimeViActivation
 """
 
-from typing import Iterable, Optional
+from typing import Iterable, List
 
 from pydantic import BaseModel
 
@@ -57,7 +57,7 @@ from ._domestic_realtime_types import (
     DomesticRealtimeStockQuoteRemaining,
     DomesticRealtimeViActivation,
 )
-from ._socket_client import KiwoomWebSocketClient, KiwoomWebSocketMessage
+from ._socket_client import KiwoomWebSocketClient, KiwoomWebSocketMessage, split_real_frame
 
 # 수신한 REAL 프레임의 ``data[].type`` → 응답 모델 매핑
 _FRAME_MODELS = {
@@ -92,8 +92,7 @@ class DomesticRealtime:
             realtime = DomesticRealtime(ws)
             await realtime.register(["0B", "0D"], ["005930", "000660"])
             async for message in ws.events():
-                parsed = realtime.parse(message)
-                if parsed is not None:
+                for parsed in realtime.parse(message):
                     print(parsed)
         ```
     """
@@ -152,21 +151,16 @@ class DomesticRealtime:
         await self.socket_client.send(request)
 
     @staticmethod
-    def parse(message: KiwoomWebSocketMessage) -> Optional[BaseModel]:
-        """수신 프레임을 TR type에 맞는 응답 모델로 파싱한다.
+    def parse(message: KiwoomWebSocketMessage) -> List[BaseModel]:
+        """수신 프레임을 TR type별 응답 모델로 파싱한다.
 
-        ``data[].type``으로 TR을 판별하며, 실시간 대상이 아닌 프레임(빈 data, LOGIN/PING
-        등)은 ``None``을 반환한다.
+        한 REAL 프레임에 여러 type 이 섞여 오므로 type 마다 그 항목만 담은 모델 하나씩을 돌려준다
+        (``split_real_frame``). 실시간 대상이 아닌 프레임(빈 data, REG/REMOVE 응답 등)은 빈 리스트다.
 
         Args:
             message: 수신한 WebSocket 메시지.
 
         Returns:
-            파싱된 응답 모델. 대상 TR이 아니면 None.
+            파싱된 응답 모델 리스트. 프레임에 나온 type 순서.
         """
-        data = message.body.get("data") or []
-        tr_type = data[0].get("type") if data and isinstance(data[0], dict) else None
-        model = _FRAME_MODELS.get(tr_type)
-        if model is None:
-            return None
-        return model.model_validate(message.body)
+        return split_real_frame(message, _FRAME_MODELS)

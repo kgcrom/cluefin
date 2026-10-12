@@ -29,6 +29,10 @@ const isWeekdayBetween = (now: Date, timeZone: string, open: number, close: numb
   return open <= minutes && minutes <= close;
 };
 
+/** 국내 주식 정규장 연속매매: 평일 09:00–15:20 KST. 15:20 이후는 종가 단일가라 체결이 오지 않는다. */
+export const isKrxContinuousHours = (now: Date = new Date()): boolean =>
+  isWeekdayBetween(now, 'Asia/Seoul', 9 * 60, 15 * 60 + 20);
+
 /** 국내 정규장: 평일 09:00–15:30 KST. 공휴일은 따지지 않는다. */
 export const isKrxMarketHours = (now: Date = new Date()): boolean =>
   isWeekdayBetween(now, 'Asia/Seoul', 9 * 60, 15 * 60 + 30);

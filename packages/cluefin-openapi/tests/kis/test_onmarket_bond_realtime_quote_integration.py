@@ -3,17 +3,14 @@
 These tests require actual API credentials and network access.
 They connect to the KIS WebSocket server (prod only) and receive real-time bond market data.
 
-WARNING: These tests should only be run during market hours (9:00-15:30 KST)
-for reliable real-time data. Outside market hours, data may not be available.
+Runs only during KST market hours (Mon-Fri 09:00-15:30). A single bond trades rarely, so data
+reception tests skip on timeout instead of failing.
 
-Test bond code: KR103502GA34 (국고채권03500-5306)
-Test bond index code: 0001
+Test bond code: KR103502GA34 (국고01500-5003(20-2), checked with inquire-price 2026-10-11)
+Test bond index code: KBPR01 (the H0BICNT0 request example in the KIS portal)
 """
 
 import asyncio
-import re
-from datetime import datetime, time
-from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -25,37 +22,18 @@ from cluefin_openapi.kis._onmarket_bond_realtime_quote_types import (
 )
 from cluefin_openapi.kis._socket_client import SocketClient
 
-pytestmark = [pytest.mark.integration, pytest.mark.realtime]
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.realtime,
+    # 시간대 gate 가 먼저 — 장외에는 auth_dev 를 쓰는 _require_prod_env 까지 가지 않는다.
+    pytest.mark.usefixtures("kst_market_hours", "_require_prod_env"),
+]
 
 BOND_CODE = "KR103502GA34"
-BOND_INDEX_CODE = "0001"
+BOND_INDEX_CODE = "KBPR01"
 
 
-def _markexpr_includes(markexpr: str, name: str) -> bool:
-    return re.search(rf"(?<![A-Za-z0-9_]){re.escape(name)}(?![A-Za-z0-9_])", markexpr) is not None
-
-
-def _is_kst_market_hours() -> bool:
-    now = datetime.now(ZoneInfo("Asia/Seoul"))
-    if now.weekday() >= 5:
-        return False
-    return time(9, 0) <= now.time() <= time(15, 30)
-
-
-@pytest.fixture(autouse=True, scope="module")
-def _require_integration_and_realtime(request):
-    markexpr = request.config.option.markexpr or ""
-    if not (_markexpr_includes(markexpr, "integration") and _markexpr_includes(markexpr, "realtime")):
-        pytest.skip('Requires -m "integration and realtime"')
-
-
-@pytest.fixture(autouse=True, scope="module")
-def _require_kst_market_hours():
-    if not _is_kst_market_hours():
-        pytest.skip("Requires KST market hours (Mon-Fri 09:00-15:30)")
-
-
-@pytest.fixture(autouse=True, scope="module")
+@pytest.fixture(scope="module")
 def _require_prod_env(auth_dev):
     if auth_dev.env != "prod":
         pytest.skip("OnmarketBondRealtimeQuote requires prod environment (KIS_ENV=prod)")
@@ -133,6 +111,8 @@ async def test_receive_execution_data(socket_client_params):
         async def receive_data():
             nonlocal data_received
             async for event in client.events():
+                if event.event_type == "error":
+                    pytest.fail(f"KIS WebSocket error: {event.error}")
                 if event.event_type == "data" and event.tr_id == OnmarketBondRealtimeQuote.TR_ID_EXECUTION:
                     executions = realtime.parse_execution_data(event.data["values"])
 
@@ -172,6 +152,8 @@ async def test_subscription_events(socket_client_params):
         async def check_events():
             nonlocal subscribed_event_found
             async for event in client.events():
+                if event.event_type == "error":
+                    pytest.fail(f"KIS WebSocket error: {event.error}")
                 if event.event_type == "subscribed":
                     assert event.tr_id == "H0BJCNT0"
                     assert event.tr_key == BOND_CODE
@@ -230,6 +212,8 @@ async def test_receive_orderbook_data(socket_client_params):
         async def receive_data():
             nonlocal data_received
             async for event in client.events():
+                if event.event_type == "error":
+                    pytest.fail(f"KIS WebSocket error: {event.error}")
                 if event.event_type == "data" and event.tr_id == OnmarketBondRealtimeQuote.TR_ID_ORDERBOOK:
                     orderbooks = realtime.parse_orderbook_data(event.data["values"])
 
@@ -269,6 +253,8 @@ async def test_orderbook_subscription_events(socket_client_params):
         async def check_events():
             nonlocal subscribed_event_found
             async for event in client.events():
+                if event.event_type == "error":
+                    pytest.fail(f"KIS WebSocket error: {event.error}")
                 if event.event_type == "subscribed":
                     assert event.tr_id == "H0BJASP0"
                     assert event.tr_key == BOND_CODE
@@ -327,6 +313,8 @@ async def test_receive_index_execution_data(socket_client_params):
         async def receive_data():
             nonlocal data_received
             async for event in client.events():
+                if event.event_type == "error":
+                    pytest.fail(f"KIS WebSocket error: {event.error}")
                 if event.event_type == "data" and event.tr_id == OnmarketBondRealtimeQuote.TR_ID_INDEX_EXECUTION:
                     index_data = realtime.parse_index_execution_data(event.data["values"])
 
@@ -373,6 +361,8 @@ async def test_combined_execution_and_orderbook(socket_client_params):
 
         async def receive_data():
             async for event in client.events():
+                if event.event_type == "error":
+                    pytest.fail(f"KIS WebSocket error: {event.error}")
                 if event.event_type == "data":
                     if event.tr_id == OnmarketBondRealtimeQuote.TR_ID_EXECUTION:
                         executions = realtime.parse_execution_data(event.data["values"])

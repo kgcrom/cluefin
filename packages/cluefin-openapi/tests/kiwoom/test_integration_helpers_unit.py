@@ -7,7 +7,12 @@ import pytest
 
 from cluefin_openapi.kiwoom._exceptions import KiwoomAPIError
 
-from ._integration_helpers import skip_if_env_blocked
+from ._integration_helpers import (
+    LIVE_MUTATION_FLAG,
+    cancel_leftover_orders,
+    mutation_skip_reason,
+    skip_if_env_blocked,
+)
 
 
 def _error(return_msg: str) -> KiwoomAPIError:
@@ -60,3 +65,70 @@ def test_falls_back_to_message_when_response_data_missing():
 
     with pytest.raises(pytest.skip.Exception):
         skip_if_env_blocked(error)
+
+
+# --- mutation_skip_reason: 주문·환전 테스트가 명시 없이 도는 일이 없어야 한다 ---
+
+
+@pytest.mark.parametrize("markexpr", ["", "integration", "integration and realtime", "mutations", "not_mutation"])
+@pytest.mark.parametrize("env", ["dev", "prod"])
+def test_mutation_blocked_unless_markexpr_names_it(monkeypatch, markexpr: str, env: str):
+    monkeypatch.setenv(LIVE_MUTATION_FLAG, "1")  # 플래그가 있어도 -m 명시가 먼저다
+
+    assert mutation_skip_reason(markexpr, env) is not None
+
+
+def test_mutation_runs_on_dev_when_markexpr_names_it(monkeypatch):
+    monkeypatch.delenv(LIVE_MUTATION_FLAG, raising=False)
+
+    assert mutation_skip_reason("integration and mutation", "dev") is None
+
+
+@pytest.mark.parametrize("flag", [None, "", "0", "true", "yes"])
+def test_mutation_on_prod_needs_flag_exactly_one(monkeypatch, flag):
+    if flag is None:
+        monkeypatch.delenv(LIVE_MUTATION_FLAG, raising=False)
+    else:
+        monkeypatch.setenv(LIVE_MUTATION_FLAG, flag)
+
+    reason = mutation_skip_reason("integration and mutation", "prod")
+
+    assert reason is not None
+    assert LIVE_MUTATION_FLAG in reason
+
+
+def test_mutation_runs_on_prod_with_flag(monkeypatch):
+    monkeypatch.setenv(LIVE_MUTATION_FLAG, "1")
+
+    assert mutation_skip_reason("integration and mutation", "prod") is None
+
+
+# --- cancel_leftover_orders: 주문 테스트가 남긴 미체결 주문 정리 ---
+
+
+def test_cancel_leftover_orders_cancels_every_order():
+    cancelled = []
+
+    cancel_leftover_orders(["0000101", "0000102"], cancelled.append)
+
+    assert cancelled == ["0000101", "0000102"]
+
+
+def test_cancel_leftover_orders_tries_all_then_fails_with_the_ones_left():
+    cancelled = []
+
+    def cancel(ord_no: str) -> None:
+        if ord_no == "0000101":
+            raise _error("[2000](RC4032:모의투자 원주문번호가 존재하지 않습니다.)")
+        cancelled.append(ord_no)
+
+    with pytest.raises(pytest.fail.Exception) as excinfo:
+        cancel_leftover_orders(["0000101", "0000102"], cancel)
+
+    assert cancelled == ["0000102"]  # 앞의 실패로 멈추지 않는다
+    assert "0000101" in str(excinfo.value)
+    assert "0000102" not in str(excinfo.value)
+
+
+def test_cancel_leftover_orders_does_nothing_when_empty():
+    cancel_leftover_orders([], lambda ord_no: pytest.fail("호출되면 안 된다"))
