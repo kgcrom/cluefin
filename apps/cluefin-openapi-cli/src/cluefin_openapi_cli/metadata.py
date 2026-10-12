@@ -396,6 +396,16 @@ _TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {
         when_to_use="Use for income, payout, corporate-action, and event monitoring tasks.",
         related_domains=("corporate-actions",),
     ),
+    "filing-text": TaxonomyMetadata(
+        name="filing-text",
+        description="Text and tables parsed from a DART filing's original document: business description, "
+        "financial statement notes, audit reports.",
+        when_to_use="Use for what numbers alone do not say: segment revenue mix, products, orders, raw materials, "
+        "borrowings maturity, related parties, contingencies and lawsuits. Start with dart document-outline.",
+        avoid_when="Use financial-statement commands for statement line items; they are structured and smaller.",
+        related_domains=("statements",),
+        related_tags=("disclosure", "financial-statement"),
+    ),
     "financial-ratio": TaxonomyMetadata(
         name="financial-ratio",
         description="Profitability, stability, growth, valuation, and other financial ratios.",
@@ -772,6 +782,7 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
     "dart.disclosure-search": CommandTaxonomy(("news", "statements"), ("disclosure",)),
     "dart.executive-ownership-report": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
     "dart.financial-full-statements": CommandTaxonomy(("statements",), ("financial-statement", "disclosure")),
+    "dart.document-outline": CommandTaxonomy(("statements",), ("filing-text", "disclosure")),
     "dart.financial-as-filed": CommandTaxonomy(("statements",), ("financial-statement", "disclosure")),
     "dart.financial-major-accounts": CommandTaxonomy(("statements",), ("financial-statement", "disclosure")),
     "dart.financial-major-indicators": CommandTaxonomy(("statements",), ("financial-ratio", "disclosure")),

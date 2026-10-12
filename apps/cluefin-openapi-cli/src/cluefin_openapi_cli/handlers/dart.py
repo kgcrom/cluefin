@@ -8,8 +8,16 @@ import sys
 import tempfile
 from datetime import date
 from decimal import Decimal
+from pathlib import Path
+from typing import Any
 
-from cluefin_openapi_cli.errors import DART_REQUEST_LIMIT_STATUS, EXIT_BROKER, CliError, DartQuotaExceededAPIError
+from cluefin_openapi_cli.errors import (
+    DART_REQUEST_LIMIT_STATUS,
+    EXIT_BROKER,
+    EXIT_USAGE,
+    CliError,
+    DartQuotaExceededAPIError,
+)
 from cluefin_openapi_cli.handlers._base import DispatcherProtocol, dump_model, rpc_method
 
 
@@ -660,6 +668,192 @@ def handle_share_count(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Filing text (cluefin-dart-notes): download the original XML, parse, return blocks
+# ---------------------------------------------------------------------------
+
+# cluefin-dart-notes supports periodic and audit reports filed 2017 or later; older filings use
+# another document layout. The year is the first four digits of the receipt number.
+_DOCUMENT_MIN_YEAR = 2017
+
+_DOCUMENT_PARAMS = {
+    "rcept_no": {
+        "type": "string",
+        "pattern": r"^\d{14}$",
+        "description": "Receipt number (14 digits, from dart disclosure-search) of a periodic report "
+        "(사업·반기·분기보고서) or an audit report (감사보고서) filed 2017 or later",
+    },
+    "corp_code": {
+        "type": "string",
+        "pattern": r"^\d{8}$",
+        "description": "Corporate unique code (8 digits). Required safety check: DART returns another "
+        "company's file for a wrong rcept_no, so every parsed document must belong to this company.",
+    },
+}
+
+
+def _check_document_year(rcept_no: str) -> None:
+    if int(rcept_no[:4]) < _DOCUMENT_MIN_YEAR:
+        raise CliError(
+            f"Filings before {_DOCUMENT_MIN_YEAR} are not supported",
+            exit_code=EXIT_USAGE,
+            error_type="ValidationError",
+            data={"rcept_no": rcept_no, "min_year": _DOCUMENT_MIN_YEAR},
+            hint=f"Filings before {_DOCUMENT_MIN_YEAR} use an older document layout that the parser does not "
+            "read. Pick a later rcept_no from dart disclosure-search.",
+        )
+
+
+def _load_filing(session, rcept_no: str, corp_code: str) -> list[tuple[str, Any]]:
+    """Download every XML of one filing into a temp directory and parse it: ``[(file name, DartDocument)]``.
+
+    The main document comes first, attached audit reports follow by name. A ZIP can hold only an
+    audit report. Parsing reads each file into memory, so the documents (and their lazily
+    computed blocks) outlive the temp directory. The directory is listed rather than trusting the
+    client's return value.
+    """
+    # Imported here so other commands do not pay for the parser at startup.
+    from cluefin_dart_notes import DartXmlRepairError, load_document
+
+    dart = session.get_dart()
+    with tempfile.TemporaryDirectory(prefix="cluefin-dart-document-") as tmp:
+        dart.public_disclosure.disclosure_document_files(rcept_no, destination=tmp)
+        main_name = f"{rcept_no}.xml"
+        paths = sorted(Path(tmp).glob("*.xml"), key=lambda p: (p.name != main_name, p.name))
+        if not paths:
+            raise CliError(
+                "DART returned no XML document for this rcept_no",
+                exit_code=EXIT_BROKER,
+                error_type="ResponseParseError",
+                data={"rcept_no": rcept_no},
+            )
+        try:
+            documents = [(path.name, load_document(path)) for path in paths]
+        except DartXmlRepairError as exc:
+            raise CliError(
+                f"Failed to parse the filing XML: {exc}",
+                exit_code=EXIT_BROKER,
+                error_type="ResponseParseError",
+                data={"rcept_no": rcept_no, "exception": type(exc).__name__},
+            ) from exc
+
+    actual = sorted({document.corp_code or "" for _, document in documents})
+    if actual != [corp_code]:
+        raise CliError(
+            "The filing belongs to a different company than corp_code (wrong rcept_no?)",
+            exit_code=EXIT_BROKER,
+            error_type="ResponseParseError",
+            data={"rcept_no": rcept_no, "expected": corp_code, "actual": actual},
+        )
+    return documents
+
+
+def _block_chars(block) -> int:
+    """Text size of one block; a table counts every grid cell (merged cells repeat)."""
+    from cluefin_dart_notes import Table
+
+    if isinstance(block, Table):
+        return sum(len(text) for row in block.to_rows() for text in row)
+    return len(block.text)
+
+
+def _section_size(section, cache: dict) -> tuple[int, int]:
+    """(chars, tables) of a section with its subsections, counting subsection titles as text.
+
+    This is what ``document-section`` returns with ``include_children`` (the default), so the
+    outline tells the caller how large a request will be before making it.
+    """
+    from cluefin_dart_notes import Table
+
+    key = id(section)
+    if key not in cache:
+        chars = sum(_block_chars(block) for block in section.blocks)
+        tables = sum(1 for block in section.blocks if isinstance(block, Table))
+        for child in section.children:
+            child_chars, child_tables = _section_size(child, cache)
+            chars += len(child.title) + child_chars
+            tables += child_tables
+        cache[key] = (chars, tables)
+    return cache[key]
+
+
+def _repair_summary(document) -> dict:
+    repair = document.repair
+    if repair is None:
+        return {"used_fallback": False, "rules": {}, "warnings": []}
+    return {
+        "used_fallback": repair.used_fallback,
+        "rules": {report.rule: report.count for report in repair.reports},
+        "warnings": list(repair.warnings),
+    }
+
+
+def _document_header(file: str, document) -> dict:
+    return {
+        "file": file,
+        "document_name": document.document_name,
+        "document_code": document.document_code,
+        "company_name": document.company_name,
+        "is_periodic_report": document.is_periodic_report,
+        "is_audit_report": document.is_audit_report,
+    }
+
+
+@rpc_method(
+    name="dart.document_outline",
+    description=(
+        "List the sections of one filing's original document (공시 원문): the periodic report body and its "
+        "attached audit reports (a ZIP can also hold only an audit report). Use it before dart document-section "
+        "or dart financial-notes to see what the filing contains and how large each part is. Sections are "
+        "numbered by `index` across the whole filing in document order (main document first). `chars` and "
+        "`tables` include subsections. `assoc_code` meanings differ by document kind: in a periodic report "
+        "D-0-2-0-0 is II. 사업의 내용, in an audit report it is 외부감사 실시내용. Supported: periodic and audit "
+        "reports filed 2017 or later. Nothing is written to disk."
+    ),
+    parameters={
+        "type": "object",
+        "properties": dict(_DOCUMENT_PARAMS),
+        "required": ["rcept_no", "corp_code"],
+    },
+    returns={"type": "object"},
+    category="dart",
+    broker="dart",
+)
+def handle_document_outline(params: dict, session) -> dict:
+    rcept_no = params["rcept_no"]
+    corp_code = params["corp_code"]
+    _check_document_year(rcept_no)
+    documents = _load_filing(session, rcept_no, corp_code)
+
+    index = itertools.count()
+    payload = []
+    for file, document in documents:
+        cache: dict = {}
+        sections = []
+        for section in document.iter_sections():
+            chars, tables = _section_size(section, cache)
+            sections.append(
+                {
+                    "index": next(index),
+                    "level": section.level,
+                    "title": section.title,
+                    "assoc_code": section.assoc_code,
+                    "is_correction": section.is_correction,
+                    "chars": chars,
+                    "tables": tables,
+                }
+            )
+        payload.append(
+            {
+                **_document_header(file, document),
+                "summary": dict(document.summary),
+                "sections": sections,
+                "repair": _repair_summary(document),
+            }
+        )
+    return {"rcept_no": rcept_no, "corp_code": corp_code, "documents": payload}
+
+
+# ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
 
@@ -675,6 +869,7 @@ _ALL_HANDLERS = [
     handle_financial_full_statements,
     handle_financial_major_indicators,
     handle_financial_as_filed,
+    handle_document_outline,
 ]
 
 
