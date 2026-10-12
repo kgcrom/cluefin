@@ -412,10 +412,11 @@ _TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {
     ),
     "filing-text": TaxonomyMetadata(
         name="filing-text",
-        description="Text and tables parsed from a DART filing's original document: business description, "
-        "financial statement notes, audit reports.",
+        description="Text and tables parsed from a filing's original document: DART business description, "
+        "financial statement notes and audit reports; SEC 10-K/10-Q/8-K Items and exhibits.",
         when_to_use="Use for what numbers alone do not say: segment revenue mix, products, orders, raw materials, "
-        "borrowings maturity, related parties, contingencies and lawsuits. Start with dart document-outline.",
+        "borrowings maturity, related parties, contingencies and lawsuits (dart document-outline first); a US "
+        "company's risk factors, MD&A and earnings release (sec filing-items first).",
         avoid_when="Use financial-statement commands for statement line items; they are structured and smaller.",
         related_domains=("statements",),
         related_tags=("disclosure", "financial-statement"),
@@ -817,6 +818,7 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
     "dart.share-count": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
     "sec.company-lookup": CommandTaxonomy(("reference",), ("us-filing", "reference-list")),
     "sec.filings": CommandTaxonomy(("news", "statements"), ("us-filing", "disclosure")),
+    "sec.filing-items": CommandTaxonomy(("statements",), ("us-filing", "filing-text")),
 }
 
 

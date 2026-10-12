@@ -323,6 +323,7 @@ source = { editable = "apps/cluefin-openapi-cli" }
 dependencies = [
     { name = "cluefin-dart-notes" },
     { name = "cluefin-openapi" },
+    { name = "cluefin-sec-notes" },
     { name = "cluefin-ta" },
     { name = "cluefin-xbrl" },
     { name = "pydantic" },
@@ -332,6 +333,7 @@ dependencies = [
 requires-dist = [
     { name = "cluefin-dart-notes", editable = "packages/cluefin-dart-notes" },
     { name = "cluefin-openapi", editable = "packages/cluefin-openapi" },
+    { name = "cluefin-sec-notes", editable = "packages/cluefin-sec-notes" },
     { name = "cluefin-ta", editable = "packages/cluefin-ta" },
     { name = "cluefin-xbrl", editable = "packages/cluefin-xbrl" },
     { name = "pydantic", specifier = ">=2.12.0,<3.0.0" },
