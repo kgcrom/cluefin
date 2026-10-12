@@ -36,6 +36,7 @@ def test_kis_is_primary_and_kiwoom_is_auxiliary() -> None:
     assert BROKER_ROLES["kis"].role == "primary"
     assert BROKER_ROLES["kiwoom"].role == "auxiliary"
     assert BROKER_ROLES["dart"].role == "reference"
+    assert BROKER_ROLES["sec"].role == "reference"
 
 
 @pytest.mark.parametrize(("source", "targets"), sorted(KIWOOM_KIS_ALTERNATIVES.items()))
@@ -102,7 +103,8 @@ def test_list_is_brief_by_default_and_kis_first() -> None:
     assert set(first) >= {"qualified_name", "broker_role", "required", "kis_alternatives"}
     brokers = [row["broker"] for row in payload["commands"]]
     assert brokers.index("kiwoom") > brokers.index("kis")
-    assert brokers[-1] == "dart"
+    assert brokers.index("sec") > brokers.index("dart")
+    assert brokers[-1] == "sec"
 
 
 def test_list_full_includes_parameters_and_query_filters() -> None:
@@ -119,7 +121,7 @@ def test_list_rejects_unknown_broker() -> None:
     code, payload = _json(["list", "--broker", "nhplug", "--json"])
 
     assert code == EXIT_USAGE
-    assert payload["error"]["data"]["allowed"] == ["kis", "kiwoom", "dart"]
+    assert payload["error"]["data"]["allowed"] == ["kis", "kiwoom", "dart", "sec"]
 
 
 def test_schema_exposes_json_schema_options_and_invocations() -> None:

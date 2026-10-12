@@ -13,6 +13,7 @@ from typing import Any
 from cluefin_openapi_cli.metadata import (
     BROKER_ORDER,
     BROKER_ROLES,
+    FLAT_BROKERS,
     broker_rank,
     build_taxonomy_entry,
     category_info,
@@ -170,6 +171,7 @@ def _credentials_status(broker: str) -> dict[str, Any]:
         "kis": (config.kis_app_key, config.kis_secret_key),
         "kiwoom": (config.kiwoom_app_key, config.kiwoom_secret_key),
         "dart": (config.dart_auth_key,),
+        "sec": (config.sec_user_agent,),
     }.get(broker, ())
     envs = {"kis": config.kis_env, "kiwoom": config.kiwoom_env}
     return {
@@ -396,7 +398,7 @@ def _help_command_row(command: CommandSpec) -> dict[str, Any]:
 
 def _render_broker_help(broker: str, positional: list[str], *, force_json: bool) -> bool:
     registry = get_registry()
-    if broker == "dart":
+    if broker in FLAT_BROKERS:
         if positional:
             return False
         commands = registry.list_commands(broker=broker)

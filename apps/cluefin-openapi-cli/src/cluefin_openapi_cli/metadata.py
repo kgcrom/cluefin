@@ -47,6 +47,7 @@ _BROKER_CREDENTIALS: dict[str, tuple[str, ...]] = {
     "dart": ("DART_AUTH_KEY",),
     "kis": ("KIS_APP_KEY", "KIS_SECRET_KEY"),
     "kiwoom": ("KIWOOM_APP_KEY", "KIWOOM_SECRET_KEY"),
+    "sec": ("SEC_USER_AGENT",),
 }
 
 BROKER_ROLES: dict[str, BrokerRole] = {
@@ -81,7 +82,20 @@ BROKER_ROLES: dict[str, BrokerRole] = {
         when_to_use="Use for disclosure text, filing search, and issuer registry data that no broker provides.",
         credentials=_BROKER_CREDENTIALS["dart"],
     ),
+    "sec": BrokerRole(
+        name="sec",
+        role="reference",
+        rank=3,
+        description="SEC EDGAR (US filings). 10-K/10-Q/8-K text by Item and 8-K exhibits such as the earnings "
+        "press release, for US-listed customers, suppliers and competitors. Korean companies' own filings are in dart.",
+        when_to_use="Use when a Korean stock's thesis depends on a US company's risk factors, MD&A guidance or "
+        "results. Not for 20-F/6-K filers (most Korean ADRs).",
+        credentials=_BROKER_CREDENTIALS["sec"],
+    ),
 }
+
+# Brokers whose CLI path has no category segment: `dart <name>`, `sec <name>`.
+FLAT_BROKERS: frozenset[str] = frozenset({"dart", "sec"})
 
 BROKER_ORDER: tuple[str, ...] = tuple(sorted(BROKER_ROLES, key=lambda name: BROKER_ROLES[name].rank))
 
@@ -537,6 +551,16 @@ _TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {
         when_to_use="Use for high-frequency or execution-level chart analysis.",
         related_domains=("chart",),
     ),
+    "us-filing": TaxonomyMetadata(
+        name="us-filing",
+        description="US SEC EDGAR filings of US-listed companies: 10-K, 10-Q, 8-K and their exhibits.",
+        when_to_use="Use when a US customer, supplier or competitor's risk factors, MD&A or earnings release bears "
+        "on a Korean stock. Start with sec company-lookup, then sec filings.",
+        avoid_when="Use disclosure (dart) for Korean companies' own filings. 20-F/6-K filers (most Korean ADRs) "
+        "are not read by sec filing-items.",
+        related_domains=("statements", "news"),
+        related_tags=("disclosure", "filing-text"),
+    ),
     "volume-rank": TaxonomyMetadata(
         name="volume-rank",
         description="Trading volume ranking or volume renewal data.",
@@ -791,6 +815,8 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
     "dart.large-holding-report": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
     "dart.major-shareholder": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
     "dart.share-count": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
+    "sec.company-lookup": CommandTaxonomy(("reference",), ("us-filing", "reference-list")),
+    "sec.filings": CommandTaxonomy(("news", "statements"), ("us-filing", "disclosure")),
 }
 
 
@@ -798,6 +824,7 @@ _CATEGORY_DEFAULTS: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
     "analysis": (("trading-flow", "market"), ("foreign", "institution")),
     "chart": (("chart",), ("ohlcv",)),
     "dart": (("news", "statements"), ("disclosure",)),
+    "sec": (("statements",), ("us-filing",)),
     "etf": (("etf", "market"), ("current-price",)),
     "financial": (("statements",), ("financial-statement", "financial-ratio")),
     "market": (("market",), ("market-calendar",)),
@@ -847,6 +874,13 @@ CATEGORY_INFO: dict[str, CategoryInfo] = {
         when_to_use="Use for the filed source document or to resolve a corp_code; not a price source.",
         domains=_CATEGORY_DEFAULTS["dart"][0],
         tags=_CATEGORY_DEFAULTS["dart"][1],
+    ),
+    "sec": CategoryInfo(
+        name="sec",
+        description="US SEC EDGAR filings: company lookup, filing lists, 10-K/10-Q/8-K Items and exhibits.",
+        when_to_use="Use for a US company's filed text (risk factors, MD&A, earnings releases); not a price source.",
+        domains=_CATEGORY_DEFAULTS["sec"][0],
+        tags=_CATEGORY_DEFAULTS["sec"][1],
     ),
     "etf": CategoryInfo(
         name="etf",
@@ -1103,6 +1137,9 @@ _NAME_SAMPLES: tuple[tuple[tuple[str, ...], tuple[str, ...], str], ...] = (
     (("date",), ("_dt", "ymd"), "20250101"),
     (("corp_code",), (), "00126380"),
     (("rcept_no",), (), "20250318001317"),
+    # SEC: Apple, the same example cluefin-openapi's README uses.
+    (("cik",), (), "320193"),
+    (("accession_number",), (), "0000320193-23-000106"),
     (("stock_code", "code", "iscd"), (), "005930"),
     (("market",), (), "J"),
 )

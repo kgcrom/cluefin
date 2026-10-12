@@ -21,6 +21,7 @@ from cluefin_openapi_cli.errors import (
 )
 from cluefin_openapi_cli.metadata import (
     BROKER_ROLES,
+    FLAT_BROKERS,
 )
 from cluefin_openapi_cli.output import (
     attach_truncation,
@@ -95,7 +96,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
             f"{APP_NAME} list [--domain DOMAIN] [--tag TAG] [--query TEXT] [--full] [--json]",
         ],
         "options": [
-            {"flag": "--broker B", "meaning": "Restrict to one broker (kis, kiwoom, dart)."},
+            {"flag": "--broker B", "meaning": "Restrict to one broker (kis, kiwoom, dart, sec)."},
             {"flag": "--category C", "meaning": "Restrict to one provider SDK category."},
             {"flag": "--domain D", "meaning": "Restrict to one agent-intent domain; see `domains`."},
             {"flag": "--tag T", "meaning": "Restrict to one capability tag; see `tags`."},
@@ -112,7 +113,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
         "description": "Discovery-oriented detail for one command: metadata, use cases, and examples.",
         "usage": [
             f"{APP_NAME} describe <broker> <category> <name> [--json]",
-            f"{APP_NAME} describe dart <name> [--json]",
+            f"{APP_NAME} describe dart|sec <name> [--json]",
         ],
         "options": [],
         "examples": [f"uv run {APP_NAME} describe kis stock current-price --json"],
@@ -122,7 +123,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
         "description": "Execution contract for one command: JSON Schema, per-parameter flags, and runnable invoke strings.",
         "usage": [
             f"{APP_NAME} schema <broker> <category> <name> [--json]",
-            f"{APP_NAME} schema dart <name> [--json]",
+            f"{APP_NAME} schema dart|sec <name> [--json]",
         ],
         "options": [],
         "examples": [f"uv run {APP_NAME} schema kis stock current-price --json"],
@@ -162,7 +163,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
 _DYNAMIC_USAGE = (
     f"{APP_NAME} <broker> <category> <name> [--params-json JSON] [schema options] "
     "[--dry-run] [--fields a,b] [--compact] [--json]",
-    f"{APP_NAME} dart <name> [--params-json JSON] [schema options] [--dry-run] [--fields a,b] [--compact] [--json]",
+    f"{APP_NAME} dart|sec <name> [--params-json JSON] [schema options] [--dry-run] [--fields a,b] [--compact] [--json]",
 )
 
 
@@ -367,13 +368,13 @@ def _run_recipe(argv: list[str]) -> None:
 
 
 def _resolve_positional_path(verb: str, positional: list[str]) -> tuple[str, ...]:
-    usage = f"Usage: {verb} <broker> <category> <name> (or `{verb} dart <name>`)."
+    usage = f"Usage: {verb} <broker> <category> <name> (or `{verb} dart|sec <name>`)."
     if not positional:
         raise CliError(usage, exit_code=EXIT_USAGE)
 
     broker = positional[0]
     path_parts = positional[1:]
-    if broker == "dart" and len(path_parts) == 1:
+    if broker in FLAT_BROKERS and len(path_parts) == 1:
         return (broker, path_parts[0])
     if len(path_parts) == 2:
         return (broker, path_parts[0], path_parts[1])
@@ -438,9 +439,9 @@ def _run_dynamic(argv: list[str]) -> None:
     if help_requested and _render_broker_help(broker, positional, force_json=force_json_flag):
         return
 
-    if broker == "dart":
+    if broker in FLAT_BROKERS:
         if len(positional) < 1:
-            raise CliError(f"Usage: {APP_NAME} dart <name> [options]", exit_code=EXIT_USAGE)
+            raise CliError(f"Usage: {APP_NAME} {broker} <name> [options]", exit_code=EXIT_USAGE)
         path: tuple[str, ...] = (broker, positional[0])
     else:
         if len(positional) < 2:

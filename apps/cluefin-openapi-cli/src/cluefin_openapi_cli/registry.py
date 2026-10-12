@@ -8,7 +8,9 @@ from cluefin_openapi import BrokerClientFactory
 from cluefin_openapi_cli.handlers.dart import _ALL_HANDLERS as DART_HANDLERS
 from cluefin_openapi_cli.handlers.kis import get_kis_handlers
 from cluefin_openapi_cli.handlers.kiwoom import get_kiwoom_handlers
+from cluefin_openapi_cli.handlers.sec import _ALL_HANDLERS as SEC_HANDLERS
 from cluefin_openapi_cli.metadata import (
+    FLAT_BROKERS,
     broker_rank,
     broker_role_name,
     build_agent_notes,
@@ -125,6 +127,11 @@ class _BrokerSession:
             raise RuntimeError("DART client requested from non-DART session.")
         return self._get_client()
 
+    def get_sec(self):
+        if self._broker != "sec":
+            raise RuntimeError("SEC client requested from non-SEC session.")
+        return self._get_client()
+
 
 def _kebab_case(value: str) -> str:
     return value.replace("_", "-").replace(".", "-")
@@ -134,6 +141,7 @@ def _iter_broker_handlers() -> Iterable[Callable[..., Any]]:
     yield from get_kis_handlers()
     yield from get_kiwoom_handlers()
     yield from DART_HANDLERS
+    yield from SEC_HANDLERS
 
 
 def build_cli_registry() -> dict[tuple[str, ...], CommandSpec]:
@@ -143,10 +151,10 @@ def build_cli_registry() -> dict[tuple[str, ...], CommandSpec]:
         schema = handler._rpc_schema
         method_name = schema.name
 
-        if schema.broker == "dart":
+        if schema.broker in FLAT_BROKERS:
             _, leaf_name = method_name.split(".", 1)
-            category = "dart"
-            path_segments = ("dart", _kebab_case(leaf_name))
+            category = schema.broker
+            path_segments = (schema.broker, _kebab_case(leaf_name))
             command_name = _kebab_case(leaf_name)
         else:
             category, leaf_name = method_name.split(".", 1)

@@ -72,6 +72,14 @@ class DartQuotaExceededAPIError(Exception):
         self.response_data = {"status": DART_REQUEST_LIMIT_STATUS, "message": message}
 
 
+# SEC answers 403 both for a missing/undeclared User-Agent and for going over 10 requests per second, after
+# which it keeps refusing for about 10 minutes. Neither is fixed by retrying right away.
+_SEC_FORBIDDEN_HINT = (
+    'SEC refused the request (403). Check SEC_USER_AGENT in .env ("Name email@example.com"). If it is set, the '
+    "client went over SEC's rate limit and is blocked for about 10 minutes; do not retry in a loop."
+)
+
+
 def _class_names(exc: BaseException) -> list[str]:
     return [klass.__name__ for klass in type(exc).__mro__]
 
@@ -133,10 +141,13 @@ def classify_exception(exc: BaseException, *, command: str, broker: str) -> CliE
             exit_code=EXIT_CREDENTIALS,
             data=data,
             error_type="AuthenticationError",
-            hint="Token was rejected. Check the *_APP_KEY / *_SECRET_KEY pair and *_ENV (dev vs prod) for this broker.",
+            hint=_SEC_FORBIDDEN_HINT
+            if broker == "sec"
+            else "Token was rejected. Check the *_APP_KEY / *_SECRET_KEY pair and *_ENV (dev vs prod) for this broker.",
         )
 
-    if isinstance(exc, ValueError) and "credentials not configured" in message:
+    # "SEC User-Agent not configured" (factory) and an agent without an e-mail (client) are credential problems too.
+    if isinstance(exc, ValueError) and ("not configured" in message or "SEC_USER_AGENT" in message):
         return CliError(
             message,
             exit_code=EXIT_CREDENTIALS,
@@ -176,6 +187,16 @@ def classify_exception(exc: BaseException, *, command: str, broker: str) -> CliE
             hint="The broker returned a sparse or empty body. Check that the code exists (e.g. `kis stock "
             "basic-info`) and that the market is open for this data; if the code is valid, the response "
             "model in cluefin-openapi may need updating.",
+        )
+
+    if any(name.endswith("NotFoundError") for name in names):
+        return CliError(
+            message,
+            exit_code=EXIT_BROKER,
+            data=data,
+            error_type="NotFound",
+            hint="The broker has no such resource. Check the identifiers; for sec, take cik from sec company-lookup "
+            "and accession_number from sec filings.",
         )
 
     if any(name.endswith("ValidationError") for name in names):

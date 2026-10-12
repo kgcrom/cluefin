@@ -17,6 +17,7 @@ import pytest
 from cluefin_openapi.dart._client import Client as DartClient
 from cluefin_openapi.kis._http_client import HttpClient as KisClient
 from cluefin_openapi.kiwoom._client import Client as KiwoomClient
+from cluefin_openapi.sec._client import Client as SecClient
 
 from cluefin_openapi_cli.errors import CliError
 from cluefin_openapi_cli.metadata import _sample_value
@@ -29,6 +30,7 @@ def _real_clients() -> dict:
         "kis": KisClient(token="token", app_key="key", secret_key="secret", env="dev"),
         "kiwoom": KiwoomClient(token="token", env="dev"),
         "dart": DartClient(auth_key="key"),
+        "sec": SecClient(user_agent="Contract Test test@example.com"),
     }
 
 
@@ -74,35 +76,43 @@ class _FakeResponse:
 
 
 class _ContractMethod:
-    def __init__(self, real_method, calls: list) -> None:
+    def __init__(self, real_method, calls: list, *, bare: bool = False) -> None:
         self._real_method = real_method
         self._calls = calls
+        self._bare = bare
 
     def __call__(self, *args, **kwargs):
         inspect.signature(self._real_method).bind(*args, **kwargs)
         probe = _BodyProbe()
         self._calls.append((self._real_method, probe))
-        return _FakeResponse(probe)
+        if not self._bare:
+            return _FakeResponse(probe)
+        # SEC methods return the model itself (or a list of models), and its handlers read fields
+        # directly, so the probe is the response and every field read is checked against the model.
+        ret = typing.get_type_hints(self._real_method).get("return")
+        return [] if typing.get_origin(ret) is list else probe
 
 
 class _ContractSubClient:
-    def __init__(self, real_sub, calls: list) -> None:
+    def __init__(self, real_sub, calls: list, *, bare: bool = False) -> None:
         self._real_sub = real_sub
         self._calls = calls
+        self._bare = bare
 
     def __getattr__(self, method_name: str) -> _ContractMethod:
         real_method = getattr(self._real_sub, method_name)  # 존재하지 않으면 AttributeError
-        return _ContractMethod(real_method, self._calls)
+        return _ContractMethod(real_method, self._calls, bare=self._bare)
 
 
 class _ContractClient:
-    def __init__(self, real_client, calls: list) -> None:
+    def __init__(self, real_client, calls: list, *, bare: bool = False) -> None:
         self._real_client = real_client
         self._calls = calls
+        self._bare = bare
 
     def __getattr__(self, sub_name: str) -> _ContractSubClient:
         real_sub = getattr(self._real_client, sub_name)  # 존재하지 않으면 AttributeError
-        return _ContractSubClient(real_sub, self._calls)
+        return _ContractSubClient(real_sub, self._calls, bare=self._bare)
 
 
 class _ContractSession:
@@ -117,6 +127,9 @@ class _ContractSession:
 
     def get_dart(self) -> _ContractClient:
         return _ContractClient(_real_clients()["dart"], self.calls)
+
+    def get_sec(self) -> _ContractClient:
+        return _ContractClient(_real_clients()["sec"], self.calls, bare=True)
 
 
 # Commands whose selectors are mutually exclusive reject a full sample set before calling the
