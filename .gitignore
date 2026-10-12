@@ -82,3 +82,7 @@ CLAUDE.local.md
 .uv-cache/
 data/
 
+
+# sec-notes corpus manifests name real filings (cluefin-sec-notes AGENTS.md). docs/plans itself stays
+# un-ignored so plan docs can be @-mentioned in Claude Code; they are kept out of commits by hand.
+docs/plans/sec-notes-corpus/
