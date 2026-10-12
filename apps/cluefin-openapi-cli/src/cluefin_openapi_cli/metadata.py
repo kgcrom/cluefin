@@ -819,6 +819,7 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
     "sec.company-lookup": CommandTaxonomy(("reference",), ("us-filing", "reference-list")),
     "sec.filings": CommandTaxonomy(("news", "statements"), ("us-filing", "disclosure")),
     "sec.filing-items": CommandTaxonomy(("statements",), ("us-filing", "filing-text")),
+    "sec.filing-exhibit": CommandTaxonomy(("statements", "news"), ("us-filing", "filing-text")),
 }
 
 

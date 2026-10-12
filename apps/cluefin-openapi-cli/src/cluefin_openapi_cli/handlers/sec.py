@@ -508,6 +508,86 @@ def handle_filing_items(params: dict, session) -> dict:
     return payload
 
 
+_DEFAULT_EXHIBIT = "EX-99.1"
+
+
+def _document_row(document) -> dict:
+    return {
+        "sequence": document.sequence,
+        "type": document.type,
+        "name": document.name,
+        "description": document.description,
+        "size": document.size,
+    }
+
+
+@rpc_method(
+    name="sec.filing_exhibit",
+    description=(
+        "Read one exhibit of a filing as text, by exhibit type (default EX-99.1). An 8-K's results live there, not "
+        "in the 8-K body: EX-99.1 is usually the earnings press release (revenue, margins, guidance tables), EX-99.2 "
+        "often the slides or CFO commentary. Also lists the filing's HTML documents (type, name, description, "
+        "size) so other exhibits can be picked. The exhibit is returned as plain text (tables one row per line, "
+        "tab-separated), cut at max_chars (default 40000) with chars_total / truncated / next_offset; "
+        "include_tables adds column-aligned grids. Amounts stay strings as filed; units are not applied. "
+        "Press releases measured 2-30k characters. Nothing is written to disk."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "cik": _CIK_PARAM,
+            "accession_number": _ACCESSION_PARAM,
+            "exhibit": {
+                "type": "string",
+                "default": _DEFAULT_EXHIBIT,
+                "pattern": r"^[A-Za-z0-9.-]+$",
+                "description": "Exhibit type as listed by SEC, e.g. EX-99.1, EX-99.2, EX-10.1. Default EX-99.1.",
+            },
+            "max_chars": _MAX_CHARS_PARAM,
+            "offset_chars": _OFFSET_CHARS_PARAM,
+            "include_tables": _INCLUDE_TABLES_PARAM,
+        },
+        "required": ["cik", "accession_number"],
+    },
+    returns={"type": "object"},
+    category="sec",
+    broker="sec",
+)
+def handle_filing_exhibit(params: dict, session) -> dict:
+    cik, accession_number = params["cik"], params["accession_number"]
+    exhibit = (params.get("exhibit") or _DEFAULT_EXHIBIT).strip().upper()
+    sec = session.get_sec()
+    detail = _checked_detail(sec, cik, accession_number)
+    # Images, XBRL and the full submission text are not readable exhibits; old .txt documents are out of scope.
+    documents = [
+        document
+        for document in detail.documents
+        if document.type and not document.data_file and document.name.lower().endswith(_HTML_SUFFIXES)
+    ]
+    payload = {
+        **_filing_header(detail, cik),
+        "exhibit": exhibit,
+        "documents": [_document_row(document) for document in documents],
+    }
+    document = next((document for document in documents if document.type.upper() == exhibit), None)
+    if document is None:
+        listed = sorted({document.type for document in documents})
+        return {
+            **payload,
+            "document": None,
+            "text": None,
+            "hint": f"This filing has no {exhibit}. Its documents are: {', '.join(listed) or 'none'}. "
+            "Pass one of them as --exhibit.",
+        }
+
+    parsed = _load_document(sec, cik, accession_number, document, form=exhibit)
+    payload["document"] = _document_row(document)
+    payload.update(_text_page(parsed.text(), parsed.blocks, params))
+    if payload["truncated"]:
+        payload["hint"] = "Text was cut at max_chars. Continue with --offset-chars <next_offset>, or raise --max-chars."
+    return payload
+
+
 # ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
@@ -516,6 +596,7 @@ _ALL_HANDLERS = [
     handle_company_lookup,
     handle_filings,
     handle_filing_items,
+    handle_filing_exhibit,
 ]
 
 

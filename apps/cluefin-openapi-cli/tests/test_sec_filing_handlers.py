@@ -229,3 +229,57 @@ def test_item_keys_carry_the_part_only_where_numbers_restart() -> None:
 )
 def test_window_prefers_paragraph_then_line_boundaries(text: str, max_chars: int, expected: tuple[int, int]) -> None:
     assert handlers._window(text, 0, max_chars) == expected
+
+
+# --- filing-exhibit ----------------------------------------------------------------------------------------------
+
+PRESS_RELEASE = (
+    "<html><body><div>Exhibit 99.1</div><div>ALPHA MEMORY REPORTS RECORD QUARTER</div>"
+    + "".join(f"<div>Highlight {row}: revenue up {row} percent.</div>" for row in range(30))
+    + '<table><tr><td>(in millions)</td><td colspan="2">Q4</td><td colspan="2">Q3</td></tr>'
+    "<tr><td>Revenue</td><td>$</td><td>54,229</td><td>$</td><td>41,456</td></tr></table>"
+    "</body></html>"
+)
+
+
+def _exhibit(params: dict, detail: FilingDetail | None = None) -> tuple[dict, _Session]:
+    session = _Session(detail or _detail(form="8-K", main="alpha-8k.htm"), {"ex991.htm": PRESS_RELEASE})
+    result = handlers.handle_filing_exhibit({"cik": CIK, "accession_number": ACCESSION, **params}, session)
+    return result, session
+
+
+def test_exhibit_defaults_to_the_earnings_release_and_lists_html_documents() -> None:
+    result, session = _exhibit({"include_tables": True})
+
+    assert session.downloads == ["ex991.htm"]
+    assert result["exhibit"] == "EX-99.1"
+    assert result["document"]["name"] == "ex991.htm"
+    # The schema and the full submission text are not readable exhibits.
+    assert [row["type"] for row in result["documents"]] == ["8-K", "EX-99.1"]
+    assert result["text"].startswith("Exhibit 99.1\n\nALPHA MEMORY REPORTS RECORD QUARTER")
+    assert result["truncated"] is False
+    assert result["tables"][-1][-1] == ["Revenue", "$54,229", "$41,456"]
+
+
+def test_exhibit_pages_like_filing_items() -> None:
+    first, _ = _exhibit({"max_chars": 200})
+    assert first["truncated"] is True
+    assert "offset-chars" in first["hint"]
+
+    second, _ = _exhibit({"max_chars": 200, "offset_chars": first["next_offset"]})
+    assert second["offset_chars"] == first["next_offset"]
+    assert second["text"].startswith("Highlight")
+
+
+def test_missing_exhibit_lists_what_the_filing_has_without_downloading() -> None:
+    result, session = _exhibit({"exhibit": "ex-99.2"})
+
+    assert session.downloads == []
+    assert (result["exhibit"], result["document"], result["text"]) == ("EX-99.2", None, None)
+    assert "8-K, EX-99.1" in result["hint"]
+
+
+def test_exhibit_refuses_another_companys_filing() -> None:
+    with pytest.raises(CliError) as error:
+        _exhibit({}, detail=_detail(form="8-K", cik=2002))
+    assert error.value.exit_code == EXIT_BROKER
