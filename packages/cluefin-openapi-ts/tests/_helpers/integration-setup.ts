@@ -221,16 +221,16 @@ export const NHPLUG_US_NATION_CD = '200'; // 미국
 const NHPLUG_ENV_BLOCKED_CODES: readonly string[] = [...NOT_BUSINESS_DAY_RSP_CODES, ...NO_DATA_RSP_CODES];
 
 /**
- * NH PLUG 클라이언트 (프로세스당 1개, 토큰은 파일 캐시 재사용).
+ * NH PLUG access token (프로세스당 1회, 파일 캐시 재사용). REST 클라이언트와 실시간 소켓이 함께 쓴다.
  *
  * 토큰 발급은 서버에서 초당 1회로 제한되고 불필요한 재발급마다 계좌 보안 알림이
  * 뜬다. 파이썬 `TokenManager` 와 같은 캐시 파일(tmpdir/cluefin-openapi/
  * `.nhplug_token_cache_<app_key 해시>.json`)을 공유해 실제 발급은 만료 전까지 1회다.
  * 캐시는 env 가 아니라 app_key 로만 구분한다 — 토큰 하나가 운영·모의투자 모두에 쓰인다.
  */
-export function getNhplugClient(): Promise<NhplugClient> {
-  if (!g.__nhplugClientPromise) {
-    g.__nhplugClientPromise = (async () => {
+export function getNhplugToken(): Promise<string> {
+  if (!g.__nhplugTokenPromise) {
+    g.__nhplugTokenPromise = (async () => {
       const appKey = process.env.NHPLUG_APP_KEY;
       const secretKey = process.env.NHPLUG_SECRET_KEY;
       if (!appKey || !secretKey) {
@@ -239,10 +239,24 @@ export function getNhplugClient(): Promise<NhplugClient> {
       const cacheDir = process.env.NHPLUG_TOKEN_CACHE_DIR ?? path.join(os.tmpdir(), 'cluefin-openapi');
       mkdirSync(cacheDir, { recursive: true });
       const tokenCacheStore = new NhplugFileTokenCacheStore(path.join(cacheDir, nhplugTokenCacheFileName(appKey)));
-      const auth = new NhplugAuth({ appKey, secretKey, tokenCacheStore });
-      const tokenResponse = await auth.generate();
+      const tokenResponse = await new NhplugAuth({ appKey, secretKey, tokenCacheStore }).generate();
+      return tokenResponse.accessToken;
+    })();
+  }
+  return g.__nhplugTokenPromise as Promise<string>;
+}
+
+/** NH PLUG 클라이언트 (프로세스당 1개, 토큰은 `getNhplugToken`). */
+export function getNhplugClient(): Promise<NhplugClient> {
+  if (!g.__nhplugClientPromise) {
+    g.__nhplugClientPromise = (async () => {
+      const appKey = process.env.NHPLUG_APP_KEY;
+      const secretKey = process.env.NHPLUG_SECRET_KEY;
+      if (!appKey || !secretKey) {
+        throw new Error('NHPLUG_APP_KEY and NHPLUG_SECRET_KEY are required');
+      }
       return new NhplugClient({
-        token: tokenResponse.accessToken,
+        token: await getNhplugToken(),
         appKey,
         secretKey,
         env: NHPLUG_ENV,
