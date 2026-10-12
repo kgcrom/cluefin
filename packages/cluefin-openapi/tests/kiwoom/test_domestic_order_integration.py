@@ -17,13 +17,14 @@ def _base_price(client: Client) -> int:
     return abs(int(client.market_conditions.get_stock_price(stk_cd=TEST_STK_CD).body.close_pric))
 
 
-def _unfillable_buy_price(client: Client) -> str:
+def _unfillable_buy_price(client: Client, steps_below: int = 0) -> str:
     """체결되지 않을 만큼 낮으면서 가격제한폭(±30%) 안에 드는 매수 지정가를 계산한다.
 
     1,000원 배수로 내림하면 어느 가격대의 호가단위(1/5/10/50/100/500/1000원)에도 맞는다.
+    `steps_below` 만큼 1,000원씩 더 낮춘다 — 정정은 원주문과 같은 가격이면 거부된다(RC4041).
     """
     base = _base_price(client)
-    price = (int(base * 0.8) // 1000) * 1000
+    price = (int(base * 0.8) // 1000 - steps_below) * 1000
     if price <= 0:
         pytest.skip(f"기준가가 너무 낮아 미체결 지정가를 만들 수 없다: {base}")
     return str(price)
@@ -135,7 +136,7 @@ def test_request_modify_order(client: Client, pending_buy_order_no: str, pending
         orig_ord_no=pending_buy_order_no,
         stk_cd=TEST_STK_CD,
         mdfy_qty="1",
-        mdfy_uv=_unfillable_buy_price(client),
+        mdfy_uv=_unfillable_buy_price(client, steps_below=1),
         mdfy_cond_uv="",
     )
     # 정정이 받아들여지면 원주문은 사라지고 새 주문번호로 남는다 — teardown 이 새 번호를 취소하게 바꾼다.
