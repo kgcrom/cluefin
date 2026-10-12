@@ -5,6 +5,7 @@ description = "Agent-friendly CLI surface for cluefin-openapi broker metadata"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "cluefin-dart-notes",
     "cluefin-openapi",
     "cluefin-ta",
     "cluefin-xbrl",

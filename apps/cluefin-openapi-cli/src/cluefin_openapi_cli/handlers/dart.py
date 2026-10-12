@@ -8,8 +8,16 @@ import sys
 import tempfile
 from datetime import date
 from decimal import Decimal
+from pathlib import Path
+from typing import Any
 
-from cluefin_openapi_cli.errors import DART_REQUEST_LIMIT_STATUS, EXIT_BROKER, CliError, DartQuotaExceededAPIError
+from cluefin_openapi_cli.errors import (
+    DART_REQUEST_LIMIT_STATUS,
+    EXIT_BROKER,
+    EXIT_USAGE,
+    CliError,
+    DartQuotaExceededAPIError,
+)
 from cluefin_openapi_cli.handlers._base import DispatcherProtocol, dump_model, rpc_method
 
 
@@ -660,6 +668,557 @@ def handle_share_count(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Filing text (cluefin-dart-notes): download the original XML, parse, return blocks
+# ---------------------------------------------------------------------------
+
+# cluefin-dart-notes supports periodic and audit reports filed 2017 or later; older filings use
+# another document layout. The year is the first four digits of the receipt number.
+_DOCUMENT_MIN_YEAR = 2017
+
+_DOCUMENT_PARAMS = {
+    "rcept_no": {
+        "type": "string",
+        "pattern": r"^\d{14}$",
+        "description": "Receipt number (14 digits, from dart disclosure-search) of a periodic report "
+        "(사업·반기·분기보고서) or an audit report (감사보고서) filed 2017 or later",
+    },
+    "corp_code": {
+        "type": "string",
+        "pattern": r"^\d{8}$",
+        "description": "Corporate unique code (8 digits). Required safety check: DART returns another "
+        "company's file for a wrong rcept_no, so every parsed document must belong to this company.",
+    },
+}
+
+
+def _check_document_year(rcept_no: str) -> None:
+    if int(rcept_no[:4]) < _DOCUMENT_MIN_YEAR:
+        raise CliError(
+            f"Filings before {_DOCUMENT_MIN_YEAR} are not supported",
+            exit_code=EXIT_USAGE,
+            error_type="ValidationError",
+            data={"rcept_no": rcept_no, "min_year": _DOCUMENT_MIN_YEAR},
+            hint=f"Filings before {_DOCUMENT_MIN_YEAR} use an older document layout that the parser does not "
+            "read. Pick a later rcept_no from dart disclosure-search.",
+        )
+
+
+def _load_filing(session, rcept_no: str, corp_code: str) -> list[tuple[str, Any]]:
+    """Download every XML of one filing into a temp directory and parse it: ``[(file name, DartDocument)]``.
+
+    The main document comes first, attached audit reports follow by name. A ZIP can hold only an
+    audit report. Parsing reads each file into memory, so the documents (and their lazily
+    computed blocks) outlive the temp directory. The directory is listed rather than trusting the
+    client's return value.
+    """
+    # Imported here so other commands do not pay for the parser at startup.
+    from cluefin_dart_notes import DartXmlRepairError, load_document
+
+    dart = session.get_dart()
+    with tempfile.TemporaryDirectory(prefix="cluefin-dart-document-") as tmp:
+        dart.public_disclosure.disclosure_document_files(rcept_no, destination=tmp)
+        main_name = f"{rcept_no}.xml"
+        paths = sorted(Path(tmp).glob("*.xml"), key=lambda p: (p.name != main_name, p.name))
+        if not paths:
+            raise CliError(
+                "DART returned no XML document for this rcept_no",
+                exit_code=EXIT_BROKER,
+                error_type="ResponseParseError",
+                data={"rcept_no": rcept_no},
+            )
+        try:
+            documents = [(path.name, load_document(path)) for path in paths]
+        except DartXmlRepairError as exc:
+            raise CliError(
+                f"Failed to parse the filing XML: {exc}",
+                exit_code=EXIT_BROKER,
+                error_type="ResponseParseError",
+                data={"rcept_no": rcept_no, "exception": type(exc).__name__},
+            ) from exc
+
+    actual = sorted({document.corp_code or "" for _, document in documents})
+    if actual != [corp_code]:
+        raise CliError(
+            "The filing belongs to a different company than corp_code (wrong rcept_no?)",
+            exit_code=EXIT_BROKER,
+            error_type="ResponseParseError",
+            data={"rcept_no": rcept_no, "expected": corp_code, "actual": actual},
+        )
+    return documents
+
+
+def _block_chars(block) -> int:
+    """Text size of one block; a table counts every grid cell (merged cells repeat)."""
+    from cluefin_dart_notes import Table
+
+    if isinstance(block, Table):
+        return sum(len(text) for row in block.to_rows() for text in row)
+    return len(block.text)
+
+
+def _section_size(section, cache: dict) -> tuple[int, int]:
+    """(chars, tables) of a section with its subsections, counting subsection titles as text.
+
+    This is what ``document-section`` returns with ``include_children`` (the default), so the
+    outline tells the caller how large a request will be before making it.
+    """
+    from cluefin_dart_notes import Table
+
+    key = id(section)
+    if key not in cache:
+        chars = sum(_block_chars(block) for block in section.blocks)
+        tables = sum(1 for block in section.blocks if isinstance(block, Table))
+        for child in section.children:
+            child_chars, child_tables = _section_size(child, cache)
+            chars += len(child.title) + child_chars
+            tables += child_tables
+        cache[key] = (chars, tables)
+    return cache[key]
+
+
+def _repair_summary(document) -> dict:
+    repair = document.repair
+    if repair is None:
+        return {"used_fallback": False, "rules": {}, "warnings": []}
+    return {
+        "used_fallback": repair.used_fallback,
+        "rules": {report.rule: report.count for report in repair.reports},
+        "warnings": list(repair.warnings),
+    }
+
+
+def _section_indexes(documents: list[tuple[str, Any]]) -> dict[int, int]:
+    """``id(section)`` → number across the whole filing, in document order (main document first).
+
+    ``document-outline`` shows these numbers and ``document-section --index`` takes them back.
+    """
+    sections = (section for _, document in documents for section in document.iter_sections())
+    return {id(section): number for number, section in enumerate(sections)}
+
+
+def _document_header(file: str, document) -> dict:
+    return {
+        "file": file,
+        "document_name": document.document_name,
+        "document_code": document.document_code,
+        "company_name": document.company_name,
+        "is_periodic_report": document.is_periodic_report,
+        "is_audit_report": document.is_audit_report,
+    }
+
+
+@rpc_method(
+    name="dart.document_outline",
+    description=(
+        "List the sections of one filing's original document (공시 원문): the periodic report body and its "
+        "attached audit reports (a ZIP can also hold only an audit report). Use it before dart document-section "
+        "or dart financial-notes to see what the filing contains and how large each part is. Sections are "
+        "numbered by `index` across the whole filing in document order (main document first). `chars` and "
+        "`tables` include subsections. `assoc_code` meanings differ by document kind: in a periodic report "
+        "D-0-2-0-0 is II. 사업의 내용, in an audit report it is 외부감사 실시내용. Supported: periodic and audit "
+        "reports filed 2017 or later. Nothing is written to disk."
+    ),
+    parameters={
+        "type": "object",
+        "properties": dict(_DOCUMENT_PARAMS),
+        "required": ["rcept_no", "corp_code"],
+    },
+    returns={"type": "object"},
+    category="dart",
+    broker="dart",
+)
+def handle_document_outline(params: dict, session) -> dict:
+    rcept_no = params["rcept_no"]
+    corp_code = params["corp_code"]
+    _check_document_year(rcept_no)
+    documents = _load_filing(session, rcept_no, corp_code)
+
+    indexes = _section_indexes(documents)
+    payload = []
+    for file, document in documents:
+        cache: dict = {}
+        sections = []
+        for section in document.iter_sections():
+            chars, tables = _section_size(section, cache)
+            sections.append(
+                {
+                    "index": indexes[id(section)],
+                    "level": section.level,
+                    "title": section.title,
+                    "assoc_code": section.assoc_code,
+                    "is_correction": section.is_correction,
+                    "chars": chars,
+                    "tables": tables,
+                }
+            )
+        payload.append(
+            {
+                **_document_header(file, document),
+                "summary": dict(document.summary),
+                "sections": sections,
+                "repair": _repair_summary(document),
+            }
+        )
+    return {"rcept_no": rcept_no, "corp_code": corp_code, "documents": payload}
+
+
+_DEFAULT_MAX_CHARS = 20000
+_SECTION_SELECTORS = ("section", "assoc_code", "title", "index")
+
+
+def _max_chars(params: dict) -> int:
+    """Text cap from params; 0 means no cap. The schema already rejected negatives."""
+    return int(params.get("max_chars", _DEFAULT_MAX_CHARS))
+
+
+def _block_payload(block) -> dict:
+    """One block as JSON. Amounts stay strings as filed; `unit` is reported, never applied."""
+    from cluefin_dart_notes import Heading, Table
+
+    if isinstance(block, Table):
+        return {"type": "table", "caption": block.caption, "unit": block.unit, "rows": block.to_rows()}
+    kind = "heading" if isinstance(block, Heading) else "paragraph"
+    return {"type": kind, "text": block.text}
+
+
+def _section_blocks(section, *, include_children: bool) -> list[tuple[int, dict]]:
+    """``(chars, block)`` of a section in document order.
+
+    ``Section.blocks`` leaves subsections out, so with ``include_children`` each subsection is
+    announced by a ``section`` marker (its title counts as text, as in the outline) and followed
+    by its own blocks.
+    """
+    blocks = [(_block_chars(block), _block_payload(block)) for block in section.blocks]
+    if include_children:
+        for child in section.children:
+            marker = {"type": "section", "level": child.level, "title": child.title, "assoc_code": child.assoc_code}
+            blocks.append((len(child.title), marker))
+            blocks.extend(_section_blocks(child, include_children=True))
+    return blocks
+
+
+class _CharBudget:
+    """Cuts a response at block boundaries once ``max_chars`` would be exceeded (0 = no cap).
+
+    The first block is always kept, even when it alone is over the cap, so a section that opens
+    with a large table never comes back empty. After the first cut every later block is dropped,
+    so what is returned is a prefix of the selection.
+    """
+
+    def __init__(self, max_chars: int) -> None:
+        self.max_chars = max_chars
+        self.total = 0
+        self.returned = 0
+        self.cut = False
+
+    def take(self, sized_blocks: list[tuple[int, dict]]) -> list[dict]:
+        kept = []
+        for chars, block in sized_blocks:
+            self.total += chars
+            over = self.max_chars and self.returned + chars > self.max_chars and self.returned > 0
+            if self.cut or over:
+                self.cut = True
+                continue
+            self.returned += chars
+            kept.append(block)
+        return kept
+
+    def summary(self) -> dict:
+        return {"total_chars": self.total, "returned_chars": self.returned, "truncated": self.cut}
+
+
+def _selector(params: dict) -> tuple[str, Any]:
+    given = [name for name in _SECTION_SELECTORS if name in params]
+    if len(given) != 1:
+        raise CliError(
+            "Give exactly one section selector",
+            exit_code=EXIT_USAGE,
+            error_type="ValidationError",
+            data={"selectors": list(_SECTION_SELECTORS), "given": given},
+            hint="Pass one of --section, --assoc-code, --title or --index. Run dart document-outline first to "
+            "see the titles, codes and indexes of this filing.",
+        )
+    return given[0], params[given[0]]
+
+
+def _named_sections(documents: list[tuple[str, Any]], name: str) -> list:
+    from cluefin_dart_notes import business_description, business_overviews, company_overview
+
+    periodic = [document for _, document in documents if document.is_periodic_report]
+    if not periodic:
+        raise CliError(
+            f"--section {name} needs a periodic report, and this filing holds only audit reports",
+            exit_code=EXIT_USAGE,
+            error_type="ValidationError",
+            data={"section": name, "documents": [document.document_code for _, document in documents]},
+            hint="An audit report has no business description or company overview. Use dart financial-notes "
+            "for its notes, or --assoc-code/--title/--index from dart document-outline.",
+        )
+    if name == "business-overview":
+        return [section for document in periodic for section in business_overviews(document)]
+    find = business_description if name == "business" else company_overview
+    return [section for section in map(find, periodic) if section is not None]
+
+
+def _matching_sections(documents: list[tuple[str, Any]], kind: str, value, indexes: dict[int, int]) -> list:
+    from cluefin_dart_notes import find_sections
+
+    if kind == "section":
+        return _named_sections(documents, value)
+    if kind == "index":
+        return [s for _, document in documents for s in document.iter_sections() if indexes[id(s)] == value]
+    return [section for _, document in documents for section in find_sections(document, **{kind: value})]
+
+
+def _outermost(sections: list) -> list:
+    """Drop sections nested in another selected one; their content already comes with the parent."""
+    nested = {id(child) for section in sections for child in itertools.islice(section.iter(), 1, None)}
+    return [section for section in sections if id(section) not in nested]
+
+
+@rpc_method(
+    name="dart.document_section",
+    description=(
+        "Read sections of one filing's original document (공시 원문) as blocks, e.g. the business description "
+        "with segment revenue mix, main products, orders and raw materials: paragraph, heading, table "
+        "(caption, unit, rows of cell strings) and, with include_children, a `section` marker before each "
+        "subsection. Choose exactly one selector: `section` (business = II. 사업의 내용, business-overview = "
+        "사업의 개요 for every industry template, company-overview = I. 회사의 개요; periodic reports only), "
+        "`assoc_code` (`*` wildcard allowed, e.g. L-0-2-*), `title` (leading number and spaces ignored) or "
+        "`index` (from dart document-outline). Every matching section is returned with its file and index. "
+        "Output stops at a block boundary after max_chars characters of text (default 20000, 0 = no cap; the "
+        "first block is always returned) and reports total_chars / returned_chars / truncated. Amounts are "
+        "returned as filed (strings, unit not applied). Run dart document-outline first: a large-cap "
+        "business section is ~40k characters, a single subsection usually fits. Nothing is written to disk."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            **_DOCUMENT_PARAMS,
+            "section": {
+                "type": "string",
+                "enum": ["business", "business-overview", "company-overview"],
+                "description": "Named section of a periodic report (II. 사업의 내용, 사업의 개요, I. 회사의 개요)",
+            },
+            "assoc_code": {
+                "type": "string",
+                "description": "Section code (AASSOCNOTE) from the outline, `*` wildcard allowed (`?` is not). "
+                "Codes differ by document kind: D-0-2-0-0 is II. 사업의 내용 in a periodic report and "
+                "외부감사 실시내용 in an audit report.",
+            },
+            "title": {
+                "type": "string",
+                "description": "Section title; the leading number and all spaces are ignored "
+                "(`연결재무제표 주석` matches `3. 연결재무제표 주석`)",
+            },
+            "index": {"type": "integer", "minimum": 0, "description": "Section index from dart document-outline"},
+            "include_children": {
+                "type": "boolean",
+                "default": True,
+                "description": "Include subsections (default true). False returns the section's own text only.",
+            },
+            "max_chars": {
+                "type": "integer",
+                "minimum": 0,
+                "default": _DEFAULT_MAX_CHARS,
+                "description": "Max characters of text returned, cut at a block boundary. Default 20000, "
+                "0 = no cap. Named max_chars because --limit is a global CLI option and never reaches handlers.",
+            },
+        },
+        "required": ["rcept_no", "corp_code"],
+    },
+    returns={"type": "object"},
+    category="dart",
+    broker="dart",
+)
+def handle_document_section(params: dict, session) -> dict:
+    rcept_no = params["rcept_no"]
+    corp_code = params["corp_code"]
+    kind, value = _selector(params)
+    _check_document_year(rcept_no)
+    documents = _load_filing(session, rcept_no, corp_code)
+
+    indexes = _section_indexes(documents)
+    files = {id(section): file for file, document in documents for section in document.iter_sections()}
+    include_children = params.get("include_children", True)
+    matched = _matching_sections(documents, kind, value, indexes)
+    selected = _outermost(matched) if include_children else matched
+    budget = _CharBudget(_max_chars(params))
+    sections = [
+        {
+            "file": files[id(section)],
+            "index": indexes[id(section)],
+            "level": section.level,
+            "title": section.title,
+            "assoc_code": section.assoc_code,
+            "blocks": budget.take(_section_blocks(section, include_children=include_children)),
+        }
+        for section in selected
+    ]
+    result = {
+        "rcept_no": rcept_no,
+        "corp_code": corp_code,
+        "selector": {kind: value},
+        "sections": sections,
+        **budget.summary(),
+    }
+    if not sections:
+        result["hint"] = "No section matched. Run dart document-outline to see this filing's titles, codes and indexes."
+    elif budget.cut:
+        result["hint"] = (
+            "Output was cut at max_chars. Raise --max-chars (0 = no cap) or select a subsection by --index "
+            "or --assoc-code from dart document-outline."
+        )
+    return result
+
+
+_NOTE_BASES = ("consolidated", "separate")
+_NOTE_NUMBERS_PATTERN = r"^[0-9][0-9A-Za-z&-]*(,[0-9][0-9A-Za-z&-]*)*$"
+
+
+def _notes_sources(documents: list[tuple[str, Any]]) -> list[tuple[str, Any]]:
+    """Documents whose notes are read: the periodic report, else the audit reports.
+
+    A periodic report ZIP also carries the audit reports, whose notes repeat the report's own
+    (sometimes without per-note titles), so they are used only for an audit-report-only filing.
+    """
+    periodic = [(file, document) for file, document in documents if document.is_periodic_report]
+    return periodic or [(file, document) for file, document in documents if document.is_audit_report]
+
+
+def _note_filter(params: dict):
+    """Predicate for the requested notes, or None for table-of-contents mode. Numbers OR title terms."""
+    numbers = {part.strip() for part in params["notes"].split(",")} if "notes" in params else set()
+    terms = [_squash(part) for part in params.get("title_contains", "").split(",") if part.strip()]
+    if not numbers and not terms:
+        return None
+    return lambda note: note.number in numbers or any(term in _squash(note.title) for term in terms)
+
+
+def _squash(text: str) -> str:
+    return "".join(text.split())
+
+
+def _note_size(note) -> tuple[int, int]:
+    from cluefin_dart_notes import Table
+
+    return sum(_block_chars(block) for block in note.blocks), sum(isinstance(block, Table) for block in note.blocks)
+
+
+@rpc_method(
+    name="dart.financial_notes",
+    description=(
+        "Read the financial statement notes (재무제표 주석) of one filing, split into numbered notes: borrowings, "
+        "related parties, contingent liabilities and lawsuits, property plant and equipment and so on. Without "
+        "`notes` or `title_contains` it returns the table of contents only: per basis, each note's number, "
+        "title, chars and tables. With them it returns the matching notes as blocks (paragraph, heading, table "
+        "with caption, unit and rows of cell strings); a note matches if its number is listed or its title "
+        "contains any term (spaces ignored), e.g. title_contains=차입금,특수관계자,우발. Notes come from the "
+        "periodic report; for an audit-report-only filing, from the audit report (00760 separate, 00761 "
+        "consolidated). `warnings` from the note splitter (a skipped number, or a note that may have been "
+        "missed) are always returned; read them before trusting the list. Output stops at a block boundary after "
+        "max_chars characters (default 20000, 0 = no cap). Amounts are returned as filed (strings, unit not "
+        "applied). Supported: periodic and audit reports filed 2017 or later. Nothing is written to disk."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            **_DOCUMENT_PARAMS,
+            "basis": {
+                "type": "string",
+                "enum": ["consolidated", "separate", "both"],
+                "default": "both",
+                "description": "Notes of the consolidated (연결) or separate (별도) statements, or both. Default both.",
+            },
+            "notes": {
+                "type": "string",
+                "pattern": _NOTE_NUMBERS_PATTERN,
+                "description": "Comma-separated note numbers exactly as in the table of contents, e.g. 7,9-1,6-A",
+            },
+            "title_contains": {
+                "type": "string",
+                "description": "Comma-separated title terms; a note matches if its title contains any of them "
+                "(spaces ignored), e.g. 차입금,특수관계자,우발",
+            },
+            "max_chars": {
+                "type": "integer",
+                "minimum": 0,
+                "default": _DEFAULT_MAX_CHARS,
+                "description": "Max characters of note text returned, cut at a block boundary. Default 20000, "
+                "0 = no cap. Named max_chars because --limit is a global CLI option and never reaches handlers.",
+            },
+        },
+        "required": ["rcept_no", "corp_code"],
+    },
+    returns={"type": "object"},
+    category="dart",
+    broker="dart",
+)
+def handle_financial_notes(params: dict, session) -> dict:
+    from cluefin_dart_notes import notes_sections, split_notes
+
+    rcept_no = params["rcept_no"]
+    corp_code = params["corp_code"]
+    basis_param = params.get("basis", "both")
+    bases = _NOTE_BASES if basis_param == "both" else (basis_param,)
+    wanted = _note_filter(params)
+    _check_document_year(rcept_no)
+    documents = _load_filing(session, rcept_no, corp_code)
+
+    budget = _CharBudget(_max_chars(params))
+    sources = []
+    for file, document in _notes_sources(documents):
+        for section, basis in notes_sections(document):
+            if basis not in bases:
+                continue
+            split = split_notes(section, basis)
+            notes = []
+            for note in split.notes:
+                if wanted is not None and not wanted(note):
+                    continue
+                chars, tables = _note_size(note)
+                entry = {"number": note.number, "title": note.title, "chars": chars, "tables": tables}
+                if wanted is not None:
+                    sized = [(_block_chars(block), _block_payload(block)) for block in note.blocks]
+                    entry = {**entry, "heading": note.heading, "blocks": budget.take(sized)}
+                notes.append(entry)
+            sources.append(
+                {
+                    "file": file,
+                    "document_code": document.document_code,
+                    "basis": basis,
+                    "section_title": section.title,
+                    "split_method": split.method,
+                    "warnings": list(split.warnings),
+                    "preamble_chars": sum(_block_chars(block) for block in split.preamble),
+                    "notes": notes,
+                }
+            )
+
+    result = {
+        "rcept_no": rcept_no,
+        "corp_code": corp_code,
+        "mode": "toc" if wanted is None else "notes",
+        "sources": sources,
+    }
+    if wanted is not None:
+        result.update(budget.summary())
+    if not sources:
+        result["hint"] = (
+            "No notes section of the requested basis was found. Run dart document-outline; a company without "
+            "consolidated statements has separate notes only."
+        )
+    elif any(not source["notes"] for source in sources) and wanted is None:
+        result["hint"] = (
+            "A notes section could not be split into numbered notes. Read it whole with dart document-section "
+            "--index (see dart document-outline)."
+        )
+    elif wanted is not None and budget.cut:
+        result["hint"] = "Output was cut at max_chars. Raise --max-chars (0 = no cap) or request fewer notes."
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
 
@@ -675,6 +1234,9 @@ _ALL_HANDLERS = [
     handle_financial_full_statements,
     handle_financial_major_indicators,
     handle_financial_as_filed,
+    handle_document_outline,
+    handle_document_section,
+    handle_financial_notes,
 ]
 
 

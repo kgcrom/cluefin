@@ -284,7 +284,8 @@ def test_unfiltered_list_full_is_truncated_but_reports_the_real_total() -> None:
     code, payload = _json(["list", "--full", "--json"])
 
     assert code == 0
-    assert payload["count"] == 188
+    # The total itself is pinned once, in test_rpc_registry.py.
+    assert payload["count"] == len(build_cli_registry())
     assert payload["returned"] == 25
     assert payload["truncated"] is True
     assert "--limit 0" in payload["hint"]
@@ -293,7 +294,7 @@ def test_unfiltered_list_full_is_truncated_but_reports_the_real_total() -> None:
 def test_explicit_limit_zero_restores_every_row() -> None:
     _, payload = _json(["list", "--full", "--limit", "0", "--json"])
 
-    assert payload["returned"] == 188
+    assert payload["returned"] == len(build_cli_registry())
     assert "truncated" not in payload
 
 
