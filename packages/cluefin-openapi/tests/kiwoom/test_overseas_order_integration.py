@@ -13,16 +13,17 @@ TEST_STEX_TP = "ND"  # NASDAQ
 TEST_STK_CD = "AAPL"
 
 
-def _unfillable_buy_price(client: Client) -> str:
+def _unfillable_buy_price(client: Client, steps_below: int = 0) -> str:
     """체결되지 않을 만큼 낮은 매수 지정가를 계산한다.
 
     usa20100의 `cur_prc`는 등락 부호가 붙어 나오므로(예: "-213.4500") 절댓값을 취하고,
     미국장 시간 밖이라 현재가가 0이면 전일종가로 대체한다. 소수점 둘째 자리로 내림하면
     $1 이상 종목의 호가단위($0.01)에 맞는다.
+    `steps_below` 만큼 $0.01씩 더 낮춘다 — 국내는 원주문과 같은 가격의 정정이 거부됐다(RC4041).
     """
     body = client.overseas_market_condition.get_current_price_stock_info(stex_tp=TEST_STEX_TP, stk_cd=TEST_STK_CD).body
     base = abs(float(body.cur_prc or 0)) or abs(float(body.base_close_pric or 0))
-    price = math.floor(base * 0.8 * 100) / 100
+    price = (math.floor(base * 0.8 * 100) - steps_below) / 100
     if price <= 0:
         pytest.skip(f"기준가를 구할 수 없어 미체결 지정가를 만들 수 없다: cur_prc={body.cur_prc!r}")
     return f"{price:.2f}"
@@ -109,7 +110,7 @@ def test_request_modify_order(client: Client, pending_buy_order_no: str, pending
         orig_ord_no=pending_buy_order_no,
         stex_tp=TEST_STEX_TP,
         stk_cd=TEST_STK_CD,
-        mdfy_uv=_unfillable_buy_price(client),
+        mdfy_uv=_unfillable_buy_price(client, steps_below=1),
     )
     # 정정이 받아들여지면 원주문은 사라지고 새 주문번호로 남는다 — teardown 이 새 번호를 취소하게 바꾼다.
     if response.body.ord_no:
