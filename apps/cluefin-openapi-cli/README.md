@@ -13,6 +13,7 @@
 | `kis` | **primary** | 기본 소스. 시세·차트·순위·재무·업종·ETF·일정·휴장일. 모든 작업은 여기서 시작한다. |
 | `kiwoom` | **auxiliary** | KIS가 못 보는 빈칸만 채운다. 테마, 업종 구성종목, 틱 차트, 프로그램매매 상세, 거래원(회원사) 수급. |
 | `dart` | reference | 공시 원문·기업 고유번호·최대주주·발행주식수·정기보고서 재무제표(반기·분기 포함, `financial-as-filed` 는 접수 당시 값)·원문 서술(사업의 내용 `document-outline`/`document-section`, 재무제표 주석 `financial-notes`). 시세 소스가 아니다. |
+| `sec` | reference | 미국 SEC EDGAR. 미국 상장 고객사·경쟁사의 10-K/10-Q/8-K Item 본문(`filing-items`)과 8-K 실적 보도자료 EX-99.1(`filing-exhibit`). 20-F/6-K(한국 ADR 대부분)는 읽지 않는다. 한국 기업 공시는 `dart`. |
 
 Kiwoom command에는 `kis_alternatives` 필드가 있습니다. 비어 있지 않으면 같은 질문을 KIS로 먼저 풀어야 하고, 비어 있으면 그것이 Kiwoom을 쓰는 이유입니다. `brokers --json`의 `kiwoom_only_commands`가 그 목록입니다.
 
@@ -33,6 +34,7 @@ KIS_SECRET_KEY=...
 KIWOOM_APP_KEY=...
 KIWOOM_SECRET_KEY=...
 DART_AUTH_KEY=...
+SEC_USER_AGENT="Your Name your.email@example.com"   # SEC는 키 대신 User-Agent에 이름·이메일을 요구한다
 ```
 
 어느 broker가 설정돼 있는지는 값을 노출하지 않고 `brokers --json`의 `credentials.configured`로 확인합니다.
@@ -71,7 +73,7 @@ uv run cluefin-openapi-cli kis chart --help --json
 
 `list --query`는 `qualified_name`·`description`에 대한 **리터럴 부분 문자열 필터**입니다. 자연어·한국어 질의에는 `search`를, 정확한 문자열 필터링에는 `list --query`를 씁니다.
 
-`list`는 기본이 **brief**입니다. 한 row에 `qualified_name`, `broker_role`, `description`, `domains`, `tags`, `required`(필수 parameter 이름), `kis_alternatives`만 담아 command 목록 전체가 100KB 이하로 떨어집니다. parameter 전체가 필요하면 `--full`을 주거나, 특정 command만 `schema`로 봅니다. 정렬은 항상 kis → kiwoom → dart 입니다.
+`list`는 기본이 **brief**입니다. 한 row에 `qualified_name`, `broker_role`, `description`, `domains`, `tags`, `required`(필수 parameter 이름), `kis_alternatives`만 담아 command 목록 전체가 100KB 이하로 떨어집니다. parameter 전체가 필요하면 `--full`을 주거나, 특정 command만 `schema`로 봅니다. 정렬은 항상 kis → kiwoom → dart → sec 입니다.
 
 `--full`을 필터 없이 부르면 상위 25개만 반환하고 `count`(전체)·`returned`·`truncated: true`·`hint`를 함께 냅니다. 전체가 필요하면 `--limit 0`을 명시합니다.
 
@@ -131,19 +133,21 @@ uv run cluefin-openapi-cli recipe technical-analysis --json
 uv run cluefin-openapi-cli recipe market-scan --json
 uv run cluefin-openapi-cli recipe corporate-actions --json
 uv run cluefin-openapi-cli recipe disclosure-monitoring --json
+uv run cluefin-openapi-cli recipe us-peer-filings --json
 ```
 
 ### 4. Command Path
 
 - `kis <category> <name>`
 - `kiwoom <category> <name>`
-- `dart <name>`
+- `dart <name>`, `sec <name>` (category 단계 없음)
 - `search`, `brokers`, `list`, `describe`, `schema`, `domains`, `tags`, `recipes`, `recipe`는 meta command
 
 ```bash
 uv run cluefin-openapi-cli kis stock current-price --stock-code 005930 --json
 uv run cluefin-openapi-cli kiwoom chart tick --stock-code KRX:005930 --tic-scope 1 --json
 uv run cluefin-openapi-cli dart company-overview --corp-code 00126380 --json
+uv run cluefin-openapi-cli sec filing-items --cik 320193 --accession-number 0000320193-23-000106 --items 1A --json
 ```
 
 ## 입력 방식
@@ -211,11 +215,11 @@ uv run cluefin-openapi-cli kiwoom theme group --query-type 0 --date-type 10 --th
 | 0 | 성공 | |
 | 1 | CLI/client 내부의 예상치 못한 실패 | 그대로 재시도하지 말 것 |
 | 2 | usage·검증 오류 | 인자를 고친다. `schema`를 다시 본다 |
-| 3 | 자격증명 누락·거부 | `.env`/환경변수 확인. 재시도 무의미 |
+| 3 | 자격증명 누락·거부 (SEC는 `SEC_USER_AGENT` 누락·403) | `.env`/환경변수 확인. 재시도 무의미. SEC 403은 과속 차단(약 10분)일 수도 있다 |
 | 4 | broker API·네트워크·타임아웃·응답 파싱 실패 | `retryable`이 true일 때만 한 번 재시도 |
 | 5 | broker rate limit | `data.retry_after`초(없으면 1초 이상) 대기 후 재시도. 단 DART `data.status == "020"` 은 일일 한도라 반복 재시도 금지 |
 
-`error.type` 예: `ValidationError`, `CredentialsMissing`, `AuthenticationError`, `RateLimitError`, `BrokerUnavailable`, `BrokerApiError`, `BrokerRejectedRequest`, `ResponseParseError`(존재하지 않는 종목코드처럼 broker가 빈 응답을 준 경우), `ExecutionError`.
+`error.type` 예: `ValidationError`, `CredentialsMissing`, `AuthenticationError`, `RateLimitError`, `BrokerUnavailable`, `BrokerApiError`, `BrokerRejectedRequest`, `ResponseParseError`(존재하지 않는 종목코드처럼 broker가 빈 응답을 준 경우, 다른 회사의 공시), `NotFound`(SEC 404: CIK·접수번호 확인), `ExecutionError`.
 
 ## 뼈대: 모듈과 요청 흐름
 
@@ -233,7 +237,8 @@ src/cluefin_openapi_cli/
     ├── _base.py    @rpc_method 데코레이터, KIS/Kiwoom 응답 추출 헬퍼
     ├── kis/        category별 handler 모듈 (stock, chart, ranking, financial, …)
     ├── kiwoom/     category별 handler 모듈 (theme, sector, etf, program, …)
-    └── dart.py
+    ├── dart.py
+    └── sec.py
 ```
 
 한 번의 broker command 실행은 다음 순서로 흐릅니다.
@@ -262,7 +267,7 @@ command 하나는 handler 함수에 붙은 `@rpc_method(name="stock.current_pric
 
 - CLI 내부 registry가 command metadata와 executor set을 직접 관리
 - 실제 broker client 생성은 `cluefin_openapi.client_factory`를 사용
-- KIS, Kiwoom은 토큰 캐시를 사용하고, DART는 stateless client로 동작
+- KIS, Kiwoom은 토큰 캐시를 사용하고, DART·SEC는 stateless client로 동작
 - 모든 command는 `side_effect: "read"`. 주문·계좌 변경 command는 없다
 - Agent integration은 이 CLI의 JSON discovery를 직접 사용합니다. agent용 사용 규칙은 `SKILL.md`에 있습니다
 

@@ -47,6 +47,7 @@ _BROKER_CREDENTIALS: dict[str, tuple[str, ...]] = {
     "dart": ("DART_AUTH_KEY",),
     "kis": ("KIS_APP_KEY", "KIS_SECRET_KEY"),
     "kiwoom": ("KIWOOM_APP_KEY", "KIWOOM_SECRET_KEY"),
+    "sec": ("SEC_USER_AGENT",),
 }
 
 BROKER_ROLES: dict[str, BrokerRole] = {
@@ -81,7 +82,20 @@ BROKER_ROLES: dict[str, BrokerRole] = {
         when_to_use="Use for disclosure text, filing search, and issuer registry data that no broker provides.",
         credentials=_BROKER_CREDENTIALS["dart"],
     ),
+    "sec": BrokerRole(
+        name="sec",
+        role="reference",
+        rank=3,
+        description="SEC EDGAR (US filings). 10-K/10-Q/8-K text by Item and 8-K exhibits such as the earnings "
+        "press release, for US-listed customers, suppliers and competitors. Korean companies' own filings are in dart.",
+        when_to_use="Use when a Korean stock's thesis depends on a US company's risk factors, MD&A guidance or "
+        "results. Not for 20-F/6-K filers (most Korean ADRs).",
+        credentials=_BROKER_CREDENTIALS["sec"],
+    ),
 }
+
+# Brokers whose CLI path has no category segment: `dart <name>`, `sec <name>`.
+FLAT_BROKERS: frozenset[str] = frozenset({"dart", "sec"})
 
 BROKER_ORDER: tuple[str, ...] = tuple(sorted(BROKER_ROLES, key=lambda name: BROKER_ROLES[name].rank))
 
@@ -241,6 +255,14 @@ _DOMAIN_TAXONOMY: dict[str, TaxonomyMetadata] = {
 }
 
 _TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {
+    "risk-factors": TaxonomyMetadata(
+        name="risk-factors",
+        description="A US filing's narrative Items: 10-K 1A risk factors, 7 MD&A, 1 business; 10-Q II:1A and I:2.",
+        when_to_use="Use for demand, capex and inventory commentary or supply-chain risks a US customer or "
+        "competitor discloses. Read the table of contents (no --items) first.",
+        related_domains=("statements",),
+        related_tags=("us-filing", "filing-text"),
+    ),
     "screening": TaxonomyMetadata(
         name="screening",
         description="Commands that return a filtered or ranked slice of the market rather than one known stock.",
@@ -396,12 +418,23 @@ _TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {
         when_to_use="Use for income, payout, corporate-action, and event monitoring tasks.",
         related_domains=("corporate-actions",),
     ),
+    "earnings-release": TaxonomyMetadata(
+        name="earnings-release",
+        description="A US company's quarterly results press release (8-K exhibit EX-99.1): revenue, margins, "
+        "guidance tables as filed.",
+        when_to_use="Use for a US customer or competitor's latest reported quarter and outlook; find the 8-K with "
+        "sec filings --forms 8-K --items 2.02.",
+        avoid_when="Use dart financial commands for Korean companies' results.",
+        related_domains=("statements", "news"),
+        related_tags=("us-filing",),
+    ),
     "filing-text": TaxonomyMetadata(
         name="filing-text",
-        description="Text and tables parsed from a DART filing's original document: business description, "
-        "financial statement notes, audit reports.",
+        description="Text and tables parsed from a filing's original document: DART business description, "
+        "financial statement notes and audit reports; SEC 10-K/10-Q/8-K Items and exhibits.",
         when_to_use="Use for what numbers alone do not say: segment revenue mix, products, orders, raw materials, "
-        "borrowings maturity, related parties, contingencies and lawsuits. Start with dart document-outline.",
+        "borrowings maturity, related parties, contingencies and lawsuits (dart document-outline first); a US "
+        "company's risk factors, MD&A and earnings release (sec filing-items first).",
         avoid_when="Use financial-statement commands for statement line items; they are structured and smaller.",
         related_domains=("statements",),
         related_tags=("disclosure", "financial-statement"),
@@ -536,6 +569,16 @@ _TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {
         description="Tick interval price or index data.",
         when_to_use="Use for high-frequency or execution-level chart analysis.",
         related_domains=("chart",),
+    ),
+    "us-filing": TaxonomyMetadata(
+        name="us-filing",
+        description="US SEC EDGAR filings of US-listed companies: 10-K, 10-Q, 8-K and their exhibits.",
+        when_to_use="Use when a US customer, supplier or competitor's risk factors, MD&A or earnings release bears "
+        "on a Korean stock. Start with sec company-lookup, then sec filings.",
+        avoid_when="Use disclosure (dart) for Korean companies' own filings. 20-F/6-K filers (most Korean ADRs) "
+        "are not read by sec filing-items.",
+        related_domains=("statements", "news"),
+        related_tags=("disclosure", "filing-text"),
     ),
     "volume-rank": TaxonomyMetadata(
         name="volume-rank",
@@ -791,6 +834,10 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
     "dart.large-holding-report": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
     "dart.major-shareholder": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
     "dart.share-count": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
+    "sec.company-lookup": CommandTaxonomy(("reference",), ("us-filing", "reference-list")),
+    "sec.filings": CommandTaxonomy(("news", "statements"), ("us-filing", "disclosure")),
+    "sec.filing-items": CommandTaxonomy(("statements",), ("us-filing", "filing-text", "risk-factors")),
+    "sec.filing-exhibit": CommandTaxonomy(("statements", "news"), ("us-filing", "filing-text", "earnings-release")),
 }
 
 
@@ -798,6 +845,7 @@ _CATEGORY_DEFAULTS: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
     "analysis": (("trading-flow", "market"), ("foreign", "institution")),
     "chart": (("chart",), ("ohlcv",)),
     "dart": (("news", "statements"), ("disclosure",)),
+    "sec": (("statements",), ("us-filing",)),
     "etf": (("etf", "market"), ("current-price",)),
     "financial": (("statements",), ("financial-statement", "financial-ratio")),
     "market": (("market",), ("market-calendar",)),
@@ -847,6 +895,13 @@ CATEGORY_INFO: dict[str, CategoryInfo] = {
         when_to_use="Use for the filed source document or to resolve a corp_code; not a price source.",
         domains=_CATEGORY_DEFAULTS["dart"][0],
         tags=_CATEGORY_DEFAULTS["dart"][1],
+    ),
+    "sec": CategoryInfo(
+        name="sec",
+        description="US SEC EDGAR filings: company lookup, filing lists, 10-K/10-Q/8-K Items and exhibits.",
+        when_to_use="Use for a US company's filed text (risk factors, MD&A, earnings releases); not a price source.",
+        domains=_CATEGORY_DEFAULTS["sec"][0],
+        tags=_CATEGORY_DEFAULTS["sec"][1],
     ),
     "etf": CategoryInfo(
         name="etf",
@@ -980,6 +1035,15 @@ QUERY_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("수주", ("orders", "segment", "section")),
     ("원재료", ("raw", "materials", "segment", "section")),
     ("주요 제품", ("main", "products", "segment", "section")),
+    # 미국 공시(sec *). 한국 기업 자신의 공시는 dart 몫이라 "공시"만으로는 sec 로 보내지 않는다.
+    ("미국 공시", ("sec", "us", "filing")),
+    ("미국", ("us", "sec")),
+    ("티커", ("ticker", "cik")),
+    ("위험요인", ("risk", "factors", "items")),
+    ("리스크 팩터", ("risk", "factors", "items")),
+    ("경영진 분석", ("md", "items")),
+    ("실적 발표", ("earnings", "release", "exhibit")),
+    ("보도자료", ("press", "release", "exhibit")),
     ("공매도", ("short", "selling")),
     ("신용", ("credit", "margin", "loan")),
     ("대출", ("loan", "loanable")),
@@ -1103,6 +1167,9 @@ _NAME_SAMPLES: tuple[tuple[tuple[str, ...], tuple[str, ...], str], ...] = (
     (("date",), ("_dt", "ymd"), "20250101"),
     (("corp_code",), (), "00126380"),
     (("rcept_no",), (), "20250318001317"),
+    # SEC: Apple, the same example cluefin-openapi's README uses.
+    (("cik",), (), "320193"),
+    (("accession_number",), (), "0000320193-23-000106"),
     (("stock_code", "code", "iscd"), (), "005930"),
     (("market",), (), "J"),
 )

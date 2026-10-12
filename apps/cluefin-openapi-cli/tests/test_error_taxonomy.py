@@ -115,3 +115,45 @@ def test_status_020_on_non_api_error_class_is_not_rate_limited() -> None:
         response_data = {"status": "020"}
 
     assert classify_exception(_Odd("x"), command="c", broker="dart").exit_code == EXIT_UNEXPECTED
+
+
+# --- SEC ----------------------------------------------------------------------
+
+
+def _sec_errors():
+    from cluefin_openapi.sec import SecAuthorizationError, SecNotFoundError, SecRateLimitError
+
+    return SecAuthorizationError, SecNotFoundError, SecRateLimitError
+
+
+def test_classify_sec_403_points_at_the_user_agent_and_rate_block() -> None:
+    forbidden, _, _ = _sec_errors()
+    error = classify_exception(forbidden("refused", status_code=403), command="sec.filings", broker="sec")
+
+    assert error.exit_code == EXIT_CREDENTIALS
+    assert "SEC_USER_AGENT" in (error.hint or "")
+    assert "10 minutes" in (error.hint or "")
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        'SEC User-Agent not configured (sec_user_agent, e.g. SEC_USER_AGENT="Name email@example.com")',
+        'SEC 요청에는 "이름 이메일" 형식의 User-Agent가 필요합니다. .env의 SEC_USER_AGENT를 확인하세요.',
+    ],
+)
+def test_classify_missing_or_malformed_sec_user_agent_as_credentials(message: str) -> None:
+    error = classify_exception(ValueError(message), command="sec.filings", broker="sec")
+
+    assert error.exit_code == EXIT_CREDENTIALS
+    assert error.error_type == "CredentialsMissing"
+
+
+def test_classify_sec_not_found_and_rate_limit() -> None:
+    _, not_found, rate_limited = _sec_errors()
+    missing = classify_exception(not_found("Not found: …", status_code=404), command="sec.filing-items", broker="sec")
+    assert (missing.exit_code, missing.error_type, missing.retryable) == (EXIT_BROKER, "NotFound", False)
+    assert "sec filings" in (missing.hint or "")
+
+    limited = classify_exception(rate_limited("429", retry_after=3), command="sec.filings", broker="sec")
+    assert (limited.exit_code, limited.data["retry_after"]) == (EXIT_RATE_LIMIT, 3)

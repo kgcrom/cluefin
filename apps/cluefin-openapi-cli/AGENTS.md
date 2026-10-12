@@ -17,7 +17,7 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 
 ## Broker roles are data, not code paths
 
-- KIS = primary, Kiwoom = auxiliary, DART = reference — defined once in
+- KIS = primary, Kiwoom = auxiliary, DART and SEC = reference — defined once in
   `metadata.BROKER_ROLES`. Ordering everywhere (`list`, `brokers`, `iter_brokers`) comes
   from `broker_rank`, not from alphabetical sorting.
 - `metadata.COMMAND_TAXONOMY` is the authoritative domain/tag source, keyed by qualified
@@ -60,19 +60,21 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 
 - Nothing introspects `cluefin-openapi`. A new client method needs: an `@rpc_method`
   handler, an entry in that module's `_ALL_HANDLERS`, and wiring in the broker
-  aggregator (`get_kis_handlers()` / `get_kiwoom_handlers()` / `DART_HANDLERS`).
+  aggregator (`get_kis_handlers()` / `get_kiwoom_handlers()` / `DART_HANDLERS` / `SEC_HANDLERS`).
 - The `name=` passed to `@rpc_method` controls the CLI path via dot-splitting
-  (`category.leaf` for kis/kiwoom; dart has no category segment) — wrong dot placement
-  lands the command in the wrong path.
+  (`category.leaf` for kis/kiwoom; brokers in `metadata.FLAT_BROKERS` — dart, sec — have no
+  category segment) — wrong dot placement lands the command in the wrong path.
 - A `category` missing from `_CATEGORY_DEFAULTS` in `metadata.py` silently falls back to
   domain `market` / tag `ranking` instead of erroring — add an entry for new categories.
 
-## `kis chart technical`, `dart financial-as-filed` and the dart filing-text commands compute; every other command passes through
+## `kis chart technical`, `dart financial-as-filed` and the dart/sec filing-text commands compute; every other command passes through
 
 - `dart financial-as-filed` is the second non-pass-through command: it parses a downloaded XBRL
   (see the `dart financial-*` section) and is excluded from the generic client-call tests the same way.
 - `dart document-outline` / `document-section` / `financial-notes` parse the downloaded original XML with
   cluefin-dart-notes (see the `dart document-*` section) and are excluded from those tests too.
+- `sec filing-items` / `filing-exhibit` parse a downloaded document with cluefin-sec-notes (see the `sec *`
+  section); `test_sec_filing_handlers.py` covers them with synthetic HTML.
 - `kis chart technical` is the **only** command that computes from a paged series. It pages
   `chart.period` itself (`ohlcv.fetch_kis_daily_series`), computes via `indicators.py`, and
   returns readings only — the candle series never reaches the caller, which is the whole
@@ -176,6 +178,32 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - 분할 경고(`warnings`)는 모든 모드에서 출처별로 그대로 내보낸다. 구형 공시에서 흔하다(2019 대형주 별도
   주석: 4·18번 없음). 노트를 하나도 못 나누면 본문이 전부 preamble 이라 이 명령으로는 못 읽는다 —
   hint 가 `document-section --index` 로 보낸다.
+
+## `sec *` 는 SEC EDGAR 를 읽는다 (미국 고객사·경쟁사 공시)
+
+- `SEC_USER_AGENT`("이름 이메일")는 루트 `.env` 에 있어야 한다 — `.env.test` 에만 있으면 CLI 는 못 쓴다. 없거나 `@` 가
+  없으면 exit 3 `CredentialsMissing`(클라이언트의 ValueError 문구로 분류). SEC 403 은 User-Agent 문제와 과속 차단
+  (약 10분)을 구별할 수 없어 exit 3 + 그 둘을 말하는 hint, `*NotFoundError`(404)는 exit 4 `NotFound`.
+- **SEC 폴더는 다른 회사 CIK 경로로도 200 을 준다**(2026-10-12 실측). 그래서 `filing-items`·`filing-exhibit` 은
+  `archives.filing_detail()`(공시 상세 `-index.html`)의 `parties` 에 `cik` 가 없으면 다운로드 전에 exit 4. 주 문서는
+  상세 페이지의 순번 1 문서라 `primary_document` 파라미터가 없고, exhibit 은 문서 종류(EX-99.1)로 고른다(파일명은
+  공시마다 제각각). `-index-headers.html`(SGML)은 2015년 이전 공시에서 404 라 쓰지 않는다.
+- 20-F·40-F·6-K 등 sec-notes 카탈로그에 없는 서식과 `.txt` 주 문서(2001년 이전)는 다운로드 전에 exit 2.
+- 경고는 버리지 않는다. `extract_items` 결과를 그대로 싣고, `UNCERTAIN_CODES` 경고가 있으면 `uncertain: true`.
+  `item()`(예외를 냄)은 쓰지 않는다 — 생략·누락·없는 Item 은 `status`(`omitted`/`missing`/`not_in_filing`/
+  `not_in_catalog`)와 `text: null` 로 돌려준다.
+- `max_chars` 기본 40000: 영문은 글자당 토큰이 적어 DART 20000 과 비슷한 토큰량이다. 2026-10-12 실측(대형 반도체·장비·
+  은행 10-K, 10-Q, 8-K): 10-K 1A 68–118k자, 7 18–40k자(은행 393k), 1 16–62k자, 8 62–535k자, 10-Q I:2 34–38k자,
+  II:1A 64–109k자, EX-99.1 2–30k자. 다운로드+파싱 0.3–1초(은행 10-K 13MB 2.7초). 자르는 곳은 빈 줄, 없으면 줄 끝
+  (표는 한 행이 한 줄). `next_offset` 은 구분 줄바꿈을 건너뛴 위치. `offset_chars` 는 Item 하나일 때만.
+- `include_tables` 는 반환 구간 안에서 **시작하는** 표만 `grid()` 로 준다. 오프셋은 `SecDocument.text` 처럼 빈 블록을
+  빼고 빈 줄로 이은 위치로 센다(`_table_grids`) — sec-notes 의 텍스트 조립을 바꾸면 같이 바꿀 것.
+- `company-lookup` 은 매번 전체 목록(~1만 행)을 받아 거른다. `filings` 는 SEC 의 recent 목록(1년 이상 또는 1,000건)만 본다.
+- 테스트 픽스처는 합성 회사·CIK·접수번호만 쓴다(cluefin-sec-notes AGENTS.md). 스키마 예시의 `cik`/`accession_number`
+  샘플은 cluefin-openapi README 와 같은 AAPL 값이다.
+- 클라이언트 계약 테스트는 SEC 메서드가 모델을 그대로 돌려주므로 프로브 자체를 응답으로 준다(`bare=True`, 리스트를
+  돌려주는 메서드는 `[]`). 핸들러는 모델 **필드**만 읽어야 한다 — `FilingDetail.ciks` 같은 property 를 읽으면 그 테스트가
+  실패하므로 `parties` 를 읽는다.
 
 ## Tests that break on unrelated-looking changes
 

@@ -27,6 +27,23 @@ def test_filing_index_lists_primary_document(client: Client):
     assert "aapl-20230930_htm.xml" in names
 
 
+def test_filing_detail_lists_document_types_and_filer(client: Client):
+    detail = client.archives.filing_detail(APPLE_CIK, APPLE_FY2023_10K)
+    assert detail.form == "10-K"
+    assert detail.filing_date == date(2023, 11, 3)
+    assert APPLE_CIK in detail.ciks
+    main = detail.documents[0]
+    assert (main.sequence, main.type, main.name) == (1, "10-K", "aapl-20230930.htm")
+    assert any(document.type == "EX-21.1" for document in detail.documents)
+
+
+def test_filing_detail_reads_pre_2015_pages(client: Client):
+    """Apple's January 2004 8-K: `-index-headers.html` is listed but 404 before 2015, the detail page is not."""
+    detail = client.archives.filing_detail(APPLE_CIK, "0001104659-04-000896")
+    assert detail.form == "8-K"
+    assert [document.type for document in detail.documents if document.type] == ["8-K", "EX-99.1", "EX-99.2"]
+
+
 def test_download_primary_document(client: Client, tmp_path: Path):
     path = client.archives.download_filing_document(
         APPLE_CIK, APPLE_FY2023_10K, "aapl-20230930.htm", destination=tmp_path

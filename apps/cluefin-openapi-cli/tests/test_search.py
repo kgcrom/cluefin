@@ -43,6 +43,14 @@ RECALL_CASES = [
     ("사업의 내용", "dart.document-section"),
     ("수주 원재료", "dart.document-section"),
     ("감사보고서 목차", "dart.document-outline"),
+    ("미국 공시", "sec.filings"),
+    ("티커 cik", "sec.company-lookup"),
+    ("위험요인", "sec.filing-items"),
+    ("risk factors", "sec.filing-items"),
+    ("경영진 분석", "sec.filing-items"),
+    ("10-K", "sec.filing-items"),
+    ("실적 발표 보도자료", "sec.filing-exhibit"),
+    ("earnings release", "sec.filing-exhibit"),
 ]
 
 

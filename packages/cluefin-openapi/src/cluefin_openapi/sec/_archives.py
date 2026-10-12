@@ -6,10 +6,11 @@ import re
 from pathlib import Path
 from typing import List
 
-from ._archives_types import FilingIndex, Form13FFiles
+from ._archives_types import FilingDetail, FilingIndex, Form13FFiles
 from ._client import WWW_BASE_URL, Client
 from ._exceptions import SecAPIError
-from ._ids import accession_plain, cik_digits, path_segment
+from ._filing_detail import parse_filing_detail
+from ._ids import accession_dashed, accession_plain, cik_digits, path_segment
 
 # XBRL 제출물에서 파서가 쓰는 파일은 인스턴스, 회사 스키마(.xsd), 링크베이스(_cal/_def/_lab/_pre.xml)다.
 # 인라인 XBRL 공시(2019년~)는 SEC가 본문 .htm에서 뽑은 인스턴스를 `<이름>_htm.xml`로 함께 둔다.
@@ -37,6 +38,20 @@ class Archives:
         if not isinstance(payload, dict) or not isinstance(payload.get("directory"), dict):
             raise SecAPIError(f"공시 폴더 목록 응답에 directory가 없습니다: {accession_number}")
         return FilingIndex.model_validate(payload["directory"])
+
+    def filing_detail(self, cik: int | str, accession_number: str) -> FilingDetail:
+        """공시 상세 페이지: 서식, 문서별 종류(EX-99.1 등), 제출 당사자 CIK.
+
+        폴더는 다른 회사의 CIK 경로로도 열리므로, 공시가 그 회사 것인지는 `FilingDetail.ciks`로 확인한다.
+
+        Args:
+            cik (int | str): 제출 회사의 CIK
+            accession_number (str): 접수번호 (대시는 있어도 없어도 된다)
+        """
+        page = self.client._get_bytes(
+            f"{_folder_url(cik, accession_number)}/{accession_dashed(accession_number)}-index.html"
+        )
+        return parse_filing_detail(page.decode("utf-8", "replace"), accession_number)
 
     def download_filing_document(
         self,
