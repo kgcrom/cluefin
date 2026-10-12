@@ -4,9 +4,30 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 
 ## Dangerous integration tests
 
-- Running the full `integration` suite with `KIWOOM_ENV=prod` **submits live market
-  orders** (the domestic order tests use market-order type `trde_tp="3"`) and `ust31302`
-  executes a **real currency exchange**. Run only read-only tests against prod.
+- Tests that place orders or exchange currency (Kiwoom domestic/US orders, `ust31302`) are marked
+  `mutation` and run **only when `-m` names `mutation`**; with `KIWOOM_ENV=prod` they also need
+  `CLUEFIN_TEST_LIVE_MUTATION=1` in the shell (the gate is `pytest_collection_modifyitems` in
+  `tests/kiwoom/conftest.py`, so even the order-placing fixture is skipped). Keep that flag out of
+  `pyproject.toml` and `.env*` — a saved flag would let the next run trade unnoticed. Orders are
+  unfillable limit orders that teardown cancels; a teardown failure is an ERROR that lists the order
+  numbers left behind — cancel those by hand. `ust31302` executes a **real currency exchange** on prod.
+- NH PLUG has no order integration tests (order modules are unit-tested only).
+- `realtime` tests run only with `-m "integration and realtime"` and inside market hours: KRX stocks
+  09:00–15:20 KST (after 15:20 is the closing auction, no trades), KIS bonds 09:00–15:30 KST, US
+  09:30–16:00 New York. The gates are fixtures in `tests/conftest.py` (`krx_continuous_hours`,
+  `kst_market_hours`, `us_market_hours`) applied with `pytest.mark.usefixtures`, listed **before** any
+  fixture that authenticates — autouse fixtures run before `usefixtures`, so an autouse auth check
+  would hit the network off-hours. During those hours a liquid stock that sends nothing within 30s is a
+  failure, not a skip; thinly traded bonds skip.
+- **No broker's WebSocket rejects a bad subscription**, so a subscribe/ack check proves nothing —
+  assert on received data. KIS answers `SUBSCRIBE SUCCESS` to unknown codes and to TRs the mock does
+  not offer; Kiwoom answers REG with `return_code: 0` for `999999`; NH PLUG live answers `rsp_cd 00000`
+  for `999999` (2026-10-11/12). The KIS Python client also emits `subscribed` right after sending, not
+  on the server reply. NH PLUG's mock socket (:17070) is the exception that does refuse — quote
+  channels get `WSS10006`, so NH realtime tests are live-only.
+- Kiwoom packs several realtime types into one REAL frame (`0B/0D/0D/0B` when both are registered), so
+  `DomesticRealtime.parse`/`OverseasRealtime.parse` return a list with one model per type. Don't go
+  back to picking the model from `data[0]` — the other type's values silently become empty strings.
 - KIS debug artifacts (`/tmp/cluefin-kis-debug/*.json`) are written with unredacted raw
   response bodies on every integration response — `KIS_DEBUG_ON_FAILURE` only gates
   *printing*, not the file write.
@@ -81,8 +102,9 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - All 시세 APIs (`/krstock/quote/*`, `/gbstock/quote/*`) are **live-domain only**. moapi rejects
   them with `IGW40023`, or for gbstock `IGW40019 "종목코드(iem_cd)를 확인해주세요"` — a misleading
   message that means "not provided on mock", not a bad code. Their integration tests only run
-  with `NHPLUG_ENV=prod`; run **only the quote files** that way — the order tests would place
-  real orders.
+  with `NHPLUG_ENV=prod`. WebSocket quote channels are live-only too (see "Dangerous integration
+  tests"); US quotes there are the free delayed `rc`/`rh` — real-time `RC`/`RH` need a paid quote
+  agreement.
 - A failing body `rsp_cd` goes through one function, `_exceptions.raise_for_rsp_cd`: known codes
   map to `NHPlugNoDataError` (empty result — **not** a request error), `NHPlugMockUnsupportedError`
   and `NHPlugNotBusinessDayError`, all subclasses of `NHPlugAPIError`. Add a newly observed code to

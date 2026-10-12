@@ -163,6 +163,12 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - They run serialized (separate vitest config, one worker, 180s timeout) to respect
   live rate limits; don't fold them into the parallel unit config.
 - KIS account tests need `KIS_CANO`; without it they skip silently rather than fail.
+- Realtime tests must assert on **received data**, never on the subscribe reply: KIS answers
+  `SUBSCRIBE SUCCESS` to unknown codes and to TRs its mock doesn't offer, and NH PLUG live answers
+  `rsp_cd 00000` to unknown codes (that reply also arrives as a `data` event with no `trKey`). That
+  is why `tests/_helpers/kis-realtime.ts` and `nhplug-realtime.ts` exist. They run only in market
+  hours (`tests/_helpers/market-hours.ts`: KRX 09:00–15:20, bonds 09:00–15:30, US regular session),
+  and there a liquid stock that sends nothing within 30s is a failure.
 - KIS tests use `assertKisResponseShapeDeep` (`tests/_helpers/kis-response-shape.ts`), not
   `assertResponseShape`: the older helper only checks top-level keys plus the one block a call
   passes in, so item fields could drift unseen. nhplug tests use `assertNhplugMatchesSpec`
