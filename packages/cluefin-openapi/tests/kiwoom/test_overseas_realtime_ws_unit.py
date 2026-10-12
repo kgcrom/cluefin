@@ -75,7 +75,7 @@ class TestParse:
                 "data": [{"type": "F5", "item": "AAPL", "values": {"9001": "AAPL", "910": "190.00"}}],
             },
         )
-        parsed = OverseasRealtime.parse(message)
+        (parsed,) = OverseasRealtime.parse(message)
         assert isinstance(parsed, OverseasRealtimeExecution)
         assert parsed.data[0].values.stock_code == "AAPL"
         assert parsed.data[0].values.execution_price == "190.00"
@@ -85,25 +85,42 @@ class TestParse:
             trnm="REAL",
             body={"trnm": "REAL", "data": [{"type": "F4", "item": "NVDA", "values": {"9001": "NVDA"}}]},
         )
-        assert isinstance(OverseasRealtime.parse(message), OverseasRealtimeOrderConfirmation)
+        assert [type(p) for p in OverseasRealtime.parse(message)] == [OverseasRealtimeOrderConfirmation]
 
     def test_parse_dispatches_execution_price_frame(self):
         message = KiwoomWebSocketMessage(
             trnm="REAL", body={"trnm": "REAL", "data": [{"type": "FE", "item": "TSLA", "values": {"10": "250.00"}}]}
         )
-        assert isinstance(OverseasRealtime.parse(message), OverseasRealtimeExecutionPrice)
+        assert [type(p) for p in OverseasRealtime.parse(message)] == [OverseasRealtimeExecutionPrice]
 
     def test_parse_dispatches_ten_quotes_frame(self):
         message = KiwoomWebSocketMessage(
             trnm="REAL", body={"trnm": "REAL", "data": [{"type": "FT", "item": "NVDA", "values": {"41": "500.10"}}]}
         )
-        assert isinstance(OverseasRealtime.parse(message), OverseasRealtimeTenQuotes)
+        assert [type(p) for p in OverseasRealtime.parse(message)] == [OverseasRealtimeTenQuotes]
 
-    def test_parse_returns_none_for_ack_frame(self):
-        """등록/해지 ACK 프레임(빈 data)은 대상 TR이 아니므로 None."""
+    def test_parse_splits_mixed_type_frame(self):
+        """국내와 같이 한 프레임에 여러 type 이 섞여 오면 type 별 모델로 나뉜다."""
+        message = KiwoomWebSocketMessage(
+            trnm="REAL",
+            body={
+                "trnm": "REAL",
+                "data": [
+                    {"type": "FT", "item": "NVDA", "values": {"41": "500.10"}},
+                    {"type": "FE", "item": "NVDA", "values": {"10": "500.05"}},
+                ],
+            },
+        )
+        quotes, price = OverseasRealtime.parse(message)
+        assert isinstance(quotes, OverseasRealtimeTenQuotes)
+        assert isinstance(price, OverseasRealtimeExecutionPrice)
+        assert [d.item for d in price.data] == ["NVDA"]
+
+    def test_parse_returns_empty_for_ack_frame(self):
+        """등록/해지 ACK 프레임(빈 data)은 대상 TR이 아니므로 빈 리스트."""
         message = KiwoomWebSocketMessage(trnm="REG", body={"trnm": "REG", "return_code": 0, "data": []})
-        assert OverseasRealtime.parse(message) is None
+        assert OverseasRealtime.parse(message) == []
 
-    def test_parse_returns_none_for_unknown_type(self):
+    def test_parse_returns_empty_for_unknown_type(self):
         message = KiwoomWebSocketMessage(trnm="REAL", body={"trnm": "REAL", "data": [{"type": "0A"}]})
-        assert OverseasRealtime.parse(message) is None
+        assert OverseasRealtime.parse(message) == []
