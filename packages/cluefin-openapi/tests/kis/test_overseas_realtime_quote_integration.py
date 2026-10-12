@@ -22,23 +22,15 @@ from cluefin_openapi.kis._overseas_realtime_quote_types import (
 )
 from cluefin_openapi.kis._socket_client import SocketClient
 
-from ._realtime import is_us_market_hours, require_integration_and_realtime
-
-pytestmark = [pytest.mark.integration, pytest.mark.realtime]
-
-
-@pytest.fixture(autouse=True, scope="module")
-def _require_integration_and_realtime(request):
-    require_integration_and_realtime(request)
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.realtime,
+    # 시간대 gate 가 먼저 — 장외에는 auth_dev 를 쓰는 _require_prod_env 까지 가지 않는다.
+    pytest.mark.usefixtures("us_market_hours", "_require_prod_env"),
+]
 
 
-@pytest.fixture(autouse=True, scope="module")
-def _require_us_market_hours():
-    if not is_us_market_hours():
-        pytest.skip("Requires US market hours (Mon-Fri 09:30-16:00 America/New_York)")
-
-
-@pytest.fixture(autouse=True, scope="module")
+@pytest.fixture(scope="module")
 def _require_prod_env(auth_dev):
     if auth_dev.env != "prod":
         pytest.skip("OverseasRealtimeQuote requires prod environment (KIS_ENV=prod)")

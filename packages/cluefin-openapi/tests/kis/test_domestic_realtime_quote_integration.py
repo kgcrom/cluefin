@@ -19,23 +19,15 @@ from cluefin_openapi.kis._domestic_realtime_quote_types import (
 )
 from cluefin_openapi.kis._socket_client import SocketClient
 
-from ._realtime import is_krx_continuous_hours, require_integration_and_realtime
-
-pytestmark = [pytest.mark.integration, pytest.mark.realtime]
-
-
-@pytest.fixture(autouse=True, scope="module")
-def _require_integration_and_realtime(request):
-    require_integration_and_realtime(request)
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.realtime,
+    # 시간대 gate 가 먼저 — 장외에는 auth_dev 를 쓰는 _require_prod_env 까지 가지 않는다.
+    pytest.mark.usefixtures("krx_continuous_hours", "_require_prod_env"),
+]
 
 
-@pytest.fixture(autouse=True, scope="module")
-def _require_krx_continuous_hours():
-    if not is_krx_continuous_hours():
-        pytest.skip("Requires KRX continuous trading hours (Mon-Fri 09:00-15:20 KST)")
-
-
-@pytest.fixture(autouse=True, scope="module")
+@pytest.fixture(scope="module")
 def _require_prod_env(auth_dev):
     # H0UNCNT0 (실시간 체결가 통합) 은 모의투자 미지원 — 포털 명세의 virtualTrId 가 "모의투자 미지원" 이다.
     if auth_dev.env != "prod":

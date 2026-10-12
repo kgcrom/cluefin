@@ -22,26 +22,18 @@ from cluefin_openapi.kis._onmarket_bond_realtime_quote_types import (
 )
 from cluefin_openapi.kis._socket_client import SocketClient
 
-from ._realtime import is_kst_market_hours, require_integration_and_realtime
-
-pytestmark = [pytest.mark.integration, pytest.mark.realtime]
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.realtime,
+    # 시간대 gate 가 먼저 — 장외에는 auth_dev 를 쓰는 _require_prod_env 까지 가지 않는다.
+    pytest.mark.usefixtures("kst_market_hours", "_require_prod_env"),
+]
 
 BOND_CODE = "KR103502GA34"
 BOND_INDEX_CODE = "KBPR01"
 
 
-@pytest.fixture(autouse=True, scope="module")
-def _require_integration_and_realtime(request):
-    require_integration_and_realtime(request)
-
-
-@pytest.fixture(autouse=True, scope="module")
-def _require_kst_market_hours():
-    if not is_kst_market_hours():
-        pytest.skip("Requires KST market hours (Mon-Fri 09:00-15:30)")
-
-
-@pytest.fixture(autouse=True, scope="module")
+@pytest.fixture(scope="module")
 def _require_prod_env(auth_dev):
     if auth_dev.env != "prod":
         pytest.skip("OnmarketBondRealtimeQuote requires prod environment (KIS_ENV=prod)")
