@@ -783,6 +783,7 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
     "dart.executive-ownership-report": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
     "dart.financial-full-statements": CommandTaxonomy(("statements",), ("financial-statement", "disclosure")),
     "dart.document-outline": CommandTaxonomy(("statements",), ("filing-text", "disclosure")),
+    "dart.document-section": CommandTaxonomy(("statements",), ("filing-text", "disclosure")),
     "dart.financial-as-filed": CommandTaxonomy(("statements",), ("financial-statement", "disclosure")),
     "dart.financial-major-accounts": CommandTaxonomy(("statements",), ("financial-statement", "disclosure")),
     "dart.financial-major-indicators": CommandTaxonomy(("statements",), ("financial-ratio", "disclosure")),

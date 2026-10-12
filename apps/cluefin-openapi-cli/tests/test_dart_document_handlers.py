@@ -13,8 +13,11 @@ import cluefin_dart_notes
 import pytest
 from cluefin_openapi.dart._exceptions import DartAPIError
 
+from cluefin_openapi_cli import registry as registry_module
 from cluefin_openapi_cli.errors import CliError, classify_exception
 from cluefin_openapi_cli.handlers import dart as handlers
+from cluefin_openapi_cli.main import run_cli
+from cluefin_openapi_cli.registry import EmptyRegistry, RpcRegistry, set_registry_provider
 
 CORP = "00000001"
 OTHER_CORP = "00000002"
@@ -226,3 +229,156 @@ def test_outline_reports_header_summary_and_repair() -> None:
     assert main["repair"]["used_fallback"] is False
     assert main["repair"]["rules"]["bare-ampersand"] == 1
     assert main["sections"][0]["is_correction"] is False
+
+
+# --- document-section ------------------------------------------------------
+
+
+def _section(params: dict, session: _Session | None = None) -> dict:
+    return handlers.handle_document_section({"rcept_no": RCEPT, "corp_code": CORP, **params}, session or _Session())
+
+
+@pytest.mark.parametrize("selectors", [{}, {"section": "business", "index": 2}, {"title": "주석", "assoc_code": "D-*"}])
+def test_section_needs_exactly_one_selector_before_any_client(selectors) -> None:
+    session = _Session()
+    with pytest.raises(CliError) as excinfo:
+        _section(selectors, session)
+    assert excinfo.value.exit_code == 2 and set(excinfo.value.data["given"]) == set(selectors)
+    assert session.get_dart_calls == 0
+
+
+def test_business_section_includes_subsections_with_markers_and_tables() -> None:
+    result = _section({"section": "business"})
+    (business,) = result["sections"]
+    assert (business["file"], business["index"], business["assoc_code"]) == (f"{RCEPT}.xml", 2, "D-0-2-0-0")
+    assert business["blocks"] == [
+        {"type": "section", "level": 2, "title": "1. 사업의 개요", "assoc_code": "L-0-2-1-L1"},
+        {"type": "paragraph", "text": "R&D 중심의 부품 사업"},
+        {"type": "section", "level": 2, "title": "2. 주요 제품 및 서비스", "assoc_code": "L-0-2-2-L1"},
+        {"type": "paragraph", "text": "(단위 : 백만원)"},
+        {"type": "table", "caption": None, "unit": "백만원", "rows": [["제품", "매출액"], ["부품", "1,234"]]},
+    ]
+    assert result["selector"] == {"section": "business"} and result["truncated"] is False
+    assert result["total_chars"] == result["returned_chars"]
+    json.dumps(result)
+
+
+def test_section_sizes_match_the_outline() -> None:
+    outline = {s["index"]: s["chars"] for d in _outline()["documents"] for s in d["sections"]}
+    for index in outline:
+        assert _section({"index": index})["total_chars"] == outline[index]
+
+
+def test_named_sections() -> None:
+    (overview,) = _section({"section": "business-overview"})["sections"]
+    assert overview["assoc_code"] == "L-0-2-1-L1"
+    (company,) = _section({"section": "company-overview"})["sections"]
+    assert company["title"] == "I. 회사의 개요"
+
+
+@pytest.mark.parametrize("name", ["business", "business-overview", "company-overview"])
+def test_named_section_on_an_audit_report_only_filing_is_exit_2(name) -> None:
+    with pytest.raises(CliError) as excinfo:
+        _section({"section": name}, _Session({f"{RCEPT}_00760.xml": audit_report()}))
+    assert excinfo.value.exit_code == 2 and "audit report" in excinfo.value.hint
+
+
+def test_assoc_code_glob_title_and_index_selectors() -> None:
+    subsections = _section({"assoc_code": "L-0-2-*"})["sections"]
+    assert [s["assoc_code"] for s in subsections] == ["L-0-2-1-L1", "L-0-2-2-L1"]
+
+    # Same code, other meaning: only the audit report has D-0-1-0-0 (주석).
+    (notes,) = _section({"assoc_code": "D-0-1-0-0"})["sections"]
+    assert notes["file"] == f"{RCEPT}_00760.xml" and notes["index"] == 8
+
+    (titled,) = _section({"title": "연결재무제표 주석"})["sections"]
+    assert titled["title"] == "3. 연결재무제표 주석"
+
+    (indexed,) = _section({"index": 4})["sections"]
+    assert indexed["title"] == "2. 주요 제품 및 서비스"
+
+
+def test_nested_matches_are_returned_once_with_their_parent() -> None:
+    # "*0-2-*" matches II. 사업의 내용, both of its subsections and the audit report's D-0-2-0-0.
+    with_children = _section({"assoc_code": "*0-2-*"})["sections"]
+    assert [s["index"] for s in with_children] == [2, 9]
+    own_only = _section({"assoc_code": "*0-2-*", "include_children": False})["sections"]
+    assert [s["index"] for s in own_only] == [2, 3, 4, 9]
+    assert own_only[0]["blocks"] == []
+
+
+def test_no_match_is_an_empty_result_with_a_hint() -> None:
+    result = _section({"title": "없는 제목"})
+    assert result["sections"] == [] and result["total_chars"] == 0
+    assert "document-outline" in result["hint"]
+
+
+def test_max_chars_cuts_at_a_block_boundary() -> None:
+    full = _section({"section": "business", "max_chars": 0})
+    cut = _section({"section": "business", "max_chars": 30})
+    assert cut["total_chars"] == full["total_chars"] == full["returned_chars"]
+    assert cut["truncated"] is True and "max-chars" in cut["hint"]
+    # 9 (marker) + 13 (paragraph) fit in 30; the next marker (14) does not, and nothing after it is kept.
+    assert cut["returned_chars"] == len("1. 사업의 개요") + len("R&D 중심의 부품 사업")
+    assert [b["type"] for b in cut["sections"][0]["blocks"]] == ["section", "paragraph"]
+
+
+def test_first_block_is_kept_even_over_the_cap() -> None:
+    result = _section({"index": 4, "max_chars": 1})
+    assert [b["type"] for b in result["sections"][0]["blocks"]] == ["paragraph"]
+    assert result["truncated"] is True
+
+
+def test_cap_spans_all_selected_sections() -> None:
+    result = _section({"assoc_code": "L-0-2-*", "max_chars": 20})
+    first, second = result["sections"]
+    assert len(first["blocks"]) == 1 and second["blocks"] == []
+    assert result["truncated"] is True
+
+
+# --- through the CLI ---------------------------------------------------------
+
+
+class _FakeFactory:
+    def __init__(self, files: dict[str, bytes]) -> None:
+        self.files = files
+
+    def create(self, broker: str):
+        assert broker == "dart"
+        return _FakeDart(self.files)
+
+
+@pytest.fixture
+def cli(monkeypatch):
+    def install(files: dict[str, bytes] | None = None):
+        factory = _FakeFactory(periodic_filing() if files is None else files)
+        monkeypatch.setattr(registry_module, "BrokerClientFactory", lambda: factory)
+        set_registry_provider(lambda: RpcRegistry(client_factory=factory))
+
+    yield install
+    set_registry_provider(EmptyRegistry)
+
+
+def test_cli_section_flags_and_json(cli) -> None:
+    cli()
+    result = run_cli(
+        ["dart", "document-section", "--rcept-no", RCEPT, "--corp-code", CORP, "--section", "business", "--json"]
+    )
+    assert result.exit_code == 0, result.stdout
+    payload = json.loads(result.stdout)
+    assert payload["sections"][0]["assoc_code"] == "D-0-2-0-0"
+
+
+@pytest.mark.parametrize("bad", [{"index": -1}, {"max_chars": -1}, {"section": "notes"}, {"rcept_no": "123"}])
+def test_cli_rejects_bad_section_params_with_exit_2(cli, bad) -> None:
+    cli()
+    body = {"rcept_no": RCEPT, "corp_code": CORP, "section": "business", **bad}
+    result = run_cli(["dart", "document-section", "--params-json", json.dumps(body), "--json"])
+    assert result.exit_code == 2, result.stdout
+
+
+def test_cli_outline_runs(cli) -> None:
+    cli()
+    result = run_cli(["dart", "document-outline", "--rcept-no", RCEPT, "--corp-code", CORP, "--json"])
+    assert result.exit_code == 0, result.stdout
+    assert len(json.loads(result.stdout)["documents"]) == 2

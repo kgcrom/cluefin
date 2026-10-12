@@ -119,9 +119,17 @@ class _ContractSession:
         return _ContractClient(_real_clients()["dart"], self.calls)
 
 
-def _build_params(parameters: dict) -> dict:
+# Commands whose selectors are mutually exclusive reject a full sample set before calling the
+# client (exit 2). Keep only the first selector so the probe reaches the client call.
+_EXCLUSIVE_SELECTORS = {"dart.document-section": ("section", "assoc_code", "title", "index")}
+
+
+def _build_params(parameters: dict, qualified_name: str = "") -> dict:
     properties = parameters.get("properties", {})
-    return {field: _sample_value(field, schema) for field, schema in properties.items()}
+    params = {field: _sample_value(field, schema) for field, schema in properties.items()}
+    for extra in _EXCLUSIVE_SELECTORS.get(qualified_name, ())[1:]:
+        params.pop(extra, None)
+    return params
 
 
 _ALL_COMMANDS = sorted(build_cli_registry().values(), key=lambda spec: spec.qualified_name)
@@ -130,7 +138,7 @@ _ALL_COMMANDS = sorted(build_cli_registry().values(), key=lambda spec: spec.qual
 @pytest.mark.parametrize("spec", _ALL_COMMANDS, ids=lambda spec: spec.qualified_name)
 def test_handler_matches_real_client_contract(spec):
     session = _ContractSession()
-    params = _build_params(spec.parameters)
+    params = _build_params(spec.parameters, spec.qualified_name)
 
     try:
         spec.executor(params, session)
