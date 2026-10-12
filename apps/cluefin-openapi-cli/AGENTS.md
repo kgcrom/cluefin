@@ -67,10 +67,12 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - A `category` missing from `_CATEGORY_DEFAULTS` in `metadata.py` silently falls back to
   domain `market` / tag `ranking` instead of erroring — add an entry for new categories.
 
-## `kis chart technical` and `dart financial-as-filed` compute; every other command passes through
+## `kis chart technical`, `dart financial-as-filed` and the dart filing-text commands compute; every other command passes through
 
 - `dart financial-as-filed` is the second non-pass-through command: it parses a downloaded XBRL
   (see the `dart financial-*` section) and is excluded from the generic client-call tests the same way.
+- `dart document-outline` / `document-section` / `financial-notes` parse the downloaded original XML with
+  cluefin-dart-notes (see the `dart document-*` section) and are excluded from those tests too.
 - `kis chart technical` is the **only** command that computes from a paged series. It pages
   `chart.period` itself (`ohlcv.fetch_kis_daily_series`), computes via `indicators.py`, and
   returns readings only — the candle series never reaches the caller, which is the whole
@@ -150,10 +152,35 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - 회사에 따라 IS 키가 없고 손익이 CIS 에만 있다(노드메이슨), 연결재무제표가 없는 회사도 있다(티씨머티리얼즈).
   IS 를 CIS 로 합성하지 않고, 요청했지만 없는 것은 응답 `missing`(`"IS/consolidated"` 형식)에 적는다.
 
+## `dart document-*` · `dart financial-notes` 는 공시 원문을 받아 파싱한다
+
+- `disclosure_document_files` 로 임시 디렉터리에 받고 cluefin-dart-notes 로 파싱한다(디스크에 남기지 않음).
+  세 명령이 같은 `rcept_no` 를 각자 다시 받는다 — 캐시는 없다. 2026-10-12 실측: 대형주 반기보고서 6.8MB,
+  다운로드+파싱 ~1초.
+- `corp_code` 는 필수이고 **첨부 감사보고서까지 모든 파일**의 `AREGCIK` 가 같아야 한다(다르면 exit 4).
+  2019·2025·2026 정기보고서와 감사보고서 단독 공시 모두 본문·감사보고서에 8자리 고유번호가 있었다.
+- 2017년 이전 접수번호(앞 4자리)는 클라이언트를 만들기 전에 exit 2. 파서 지원 범위 밖이다.
+- 핸들러는 `disclosure_document_files` 의 반환값이 아니라 **임시 디렉터리를 다시 훑는다**.
+  `test_handler_client_contract.py` 의 프로브가 경로 목록을 주지 않기 때문이고, XML 0개는 exit 4 다.
+- `index` 는 파일 경계를 넘어 매긴다(본문 먼저, 나머지 파일 이름순 — `_xml_entries` 와 같은 순서).
+  outline 의 `chars` 는 하위 섹션과 그 제목을 포함하고, `document-section --index` 의 `total_chars` 와 같다.
+- `document-section` 의 선택자(`section`·`assoc_code`·`title`·`index`)는 정확히 하나여야 한다. 계약 테스트는
+  모든 파라미터에 샘플을 채우므로 `_EXCLUSIVE_SELECTORS` 로 선택자 하나만 남긴다 — 선택자가 있는 명령을
+  추가하면 거기에도 넣을 것. `assoc_code` glob 은 `*` 만 된다(`?` 는 문자열 검증이 막는다).
+- `max_chars`(기본 20000)는 블록 경계에서 자르고 첫 블록은 넘어도 돌려준다. 실측 크기: 대형주 "II. 사업의
+  내용" 36–61k자, 하위 섹션 ≤18k자, 주석 섹션 75–130k자, 가장 큰 노트 43k자, 노트 중앙값 ~1k자.
+  JSON 은 글자 수의 ~1.5배.
+- `financial-notes` 는 정기보고서가 있으면 그 주석만 읽는다. 정기보고서 ZIP 의 첨부 감사보고서 주석은 같은
+  내용을 반복하고(2019 실측: 별도 주석의 글자 수가 같았다) 노트 제목 없이 연번 분할로만 나뉜다.
+  감사보고서만 든 공시일 때만 감사보고서 주석(00760 별도, 00761 연결)을 쓴다.
+- 분할 경고(`warnings`)는 모든 모드에서 출처별로 그대로 내보낸다. 구형 공시에서 흔하다(2019 대형주 별도
+  주석: 4·18번 없음). 노트를 하나도 못 나누면 본문이 전부 preamble 이라 이 명령으로는 못 읽는다 —
+  hint 가 `document-section --index` 로 보낸다.
+
 ## Tests that break on unrelated-looking changes
 
 - `test_rpc_registry.py` hardcodes the total command count — bump it when adding or
-  removing any handler.
+  removing any handler. It is the only place; `test_agent_surface.py` reads the registry length.
 - A domain/tag used in `COMMAND_TAXONOMY` must also exist in `_DOMAIN_TAXONOMY`/
   `_TAG_TAXONOMY` or the taxonomy-coverage test fails.
 - `test_taxonomy_filters_are_selective` puts a floor under filter precision (≥110 distinct

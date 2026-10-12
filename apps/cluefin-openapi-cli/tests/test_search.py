@@ -37,6 +37,12 @@ RECALL_CASES = [
     ("반기 실적", "dart.financial-major-accounts"),
     ("매출액 영업이익", "dart.financial-major-accounts"),
     ("분기 순이익", "dart.financial-major-accounts"),
+    ("공시 원문 주석", "dart.financial-notes"),
+    ("특수관계자 거래", "dart.financial-notes"),
+    ("차입금 만기", "dart.financial-notes"),
+    ("사업의 내용", "dart.document-section"),
+    ("수주 원재료", "dart.document-section"),
+    ("감사보고서 목차", "dart.document-outline"),
 ]
 
 

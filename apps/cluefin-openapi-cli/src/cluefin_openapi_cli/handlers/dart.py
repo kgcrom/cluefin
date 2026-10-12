@@ -979,7 +979,8 @@ def _outermost(sections: list) -> list:
 @rpc_method(
     name="dart.document_section",
     description=(
-        "Read sections of one filing's original document (공시 원문) as blocks: paragraph, heading, table "
+        "Read sections of one filing's original document (공시 원문) as blocks, e.g. the business description "
+        "with segment revenue mix, main products, orders and raw materials: paragraph, heading, table "
         "(caption, unit, rows of cell strings) and, with include_children, a `section` marker before each "
         "subsection. Choose exactly one selector: `section` (business = II. 사업의 내용, business-overview = "
         "사업의 개요 for every industry template, company-overview = I. 회사의 개요; periodic reports only), "
@@ -1107,7 +1108,8 @@ def _note_size(note) -> tuple[int, int]:
 @rpc_method(
     name="dart.financial_notes",
     description=(
-        "Read the financial statement notes (재무제표 주석) of one filing, split into numbered notes. Without "
+        "Read the financial statement notes (재무제표 주석) of one filing, split into numbered notes: borrowings, "
+        "related parties, contingent liabilities and lawsuits, property plant and equipment and so on. Without "
         "`notes` or `title_contains` it returns the table of contents only: per basis, each note's number, "
         "title, chars and tables. With them it returns the matching notes as blocks (paragraph, heading, table "
         "with caption, unit and rows of cell strings); a note matches if its number is listed or its title "

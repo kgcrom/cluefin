@@ -198,6 +198,46 @@ _RECIPES: tuple[WorkflowRecipe, ...] = (
         "KIS returns annual rows for many small caps and lags the filing.",
     ),
     WorkflowRecipe(
+        name="filing-text",
+        title="Read a Periodic Report's Text",
+        description="Read what the numbers do not say from the filing itself: business description (segments, "
+        "products, orders, raw materials) and financial statement notes (borrowings, related parties, contingencies).",
+        domains=("statements",),
+        tags=("filing-text", "disclosure"),
+        steps=(
+            RecipeStep(
+                title="Find the periodic report",
+                command=("dart", "disclosure-search"),
+                purpose="Get the rcept_no of the newest 사업·반기·분기보고서.",
+                agent_notes="Use --corp-code with --pblntf-ty A and a recent --bgn-de. Filings before 2017 are not "
+                "supported by the text commands.",
+            ),
+            RecipeStep(
+                title="Outline the filing",
+                command=("dart", "document-outline"),
+                purpose="See every section of the report and its attached audit reports, with sizes.",
+                agent_notes="Pass the same --corp-code: a wrong rcept_no returns another company's filing, which the "
+                "command rejects with exit 4. `chars` tells you whether a section fits in one call.",
+            ),
+            RecipeStep(
+                title="Read the business description",
+                command=("dart", "document-section"),
+                purpose="Read II. 사업의 내용 or one of its subsections as paragraphs and tables.",
+                agent_notes="Start with --section business-overview; the whole business section of a large cap is "
+                "~40k characters, so pick subsections by --index from the outline instead of raising --max-chars.",
+            ),
+            RecipeStep(
+                title="Read financial statement notes",
+                command=("dart", "financial-notes"),
+                purpose="List the notes, then read only the ones you need.",
+                agent_notes="Call once without filters for the table of contents and its warnings, then pass "
+                "--title-contains 차입금,특수관계자,우발 or --notes with numbers from that list.",
+            ),
+        ),
+        agent_notes="Every step downloads the filing again; keep the rcept_no and corp_code from the first steps. "
+        "Table amounts are strings as filed and the table's `unit` is not applied.",
+    ),
+    WorkflowRecipe(
         name="disclosure-monitoring",
         title="Disclosure Monitoring",
         description="Monitor market announcements and DART disclosures.",
