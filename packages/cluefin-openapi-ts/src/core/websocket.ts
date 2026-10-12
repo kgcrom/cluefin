@@ -110,7 +110,7 @@ export class BaseWebSocketClient extends EventEmitter {
 
   public async subscribe(trId: string, trKey: string): Promise<void> {
     if (!this._connected || !this.ws) {
-      throw new Error('WebSocket not connected');
+      throw this.notConnectedError();
     }
 
     const ok = await this.rateLimiter.waitForToken(5000);
@@ -131,7 +131,7 @@ export class BaseWebSocketClient extends EventEmitter {
 
   public async unsubscribe(trId: string, trKey: string): Promise<void> {
     if (!this._connected || !this.ws) {
-      throw new Error('WebSocket not connected');
+      throw this.notConnectedError();
     }
 
     const subscriptionKey = `${trId}:${trKey}`;
@@ -143,6 +143,11 @@ export class BaseWebSocketClient extends EventEmitter {
     this.ws.send(message);
     this._subscriptions.delete(subscriptionKey);
     this.emitEvent({ eventType: 'unsubscribed', trId, trKey });
+  }
+
+  /** subscribe/unsubscribe 가 닫힌 소켓에서 불렸을 때의 오류. 벤더가 끊은 이유를 덧붙일 수 있게 열어 둔다. */
+  protected notConnectedError(): Error {
+    return new Error('WebSocket not connected');
   }
 
   protected buildSubscriptionMessage(_trId: string, _trKey: string, _trType: SubscriptionType): string {
