@@ -15,6 +15,7 @@ _PARSING_HANDLERS = {
     handlers.handle_financial_as_filed,
     handlers.handle_document_outline,
     handlers.handle_document_section,
+    handlers.handle_financial_notes,
 }
 _PASS_THROUGH_HANDLERS = [h for h in handlers._ALL_HANDLERS if h not in _PARSING_HANDLERS]
 

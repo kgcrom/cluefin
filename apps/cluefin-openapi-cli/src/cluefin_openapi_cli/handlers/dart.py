@@ -1071,6 +1071,151 @@ def handle_document_section(params: dict, session) -> dict:
     return result
 
 
+_NOTE_BASES = ("consolidated", "separate")
+_NOTE_NUMBERS_PATTERN = r"^[0-9][0-9A-Za-z&-]*(,[0-9][0-9A-Za-z&-]*)*$"
+
+
+def _notes_sources(documents: list[tuple[str, Any]]) -> list[tuple[str, Any]]:
+    """Documents whose notes are read: the periodic report, else the audit reports.
+
+    A periodic report ZIP also carries the audit reports, whose notes repeat the report's own
+    (sometimes without per-note titles), so they are used only for an audit-report-only filing.
+    """
+    periodic = [(file, document) for file, document in documents if document.is_periodic_report]
+    return periodic or [(file, document) for file, document in documents if document.is_audit_report]
+
+
+def _note_filter(params: dict):
+    """Predicate for the requested notes, or None for table-of-contents mode. Numbers OR title terms."""
+    numbers = {part.strip() for part in params["notes"].split(",")} if "notes" in params else set()
+    terms = [_squash(part) for part in params.get("title_contains", "").split(",") if part.strip()]
+    if not numbers and not terms:
+        return None
+    return lambda note: note.number in numbers or any(term in _squash(note.title) for term in terms)
+
+
+def _squash(text: str) -> str:
+    return "".join(text.split())
+
+
+def _note_size(note) -> tuple[int, int]:
+    from cluefin_dart_notes import Table
+
+    return sum(_block_chars(block) for block in note.blocks), sum(isinstance(block, Table) for block in note.blocks)
+
+
+@rpc_method(
+    name="dart.financial_notes",
+    description=(
+        "Read the financial statement notes (재무제표 주석) of one filing, split into numbered notes. Without "
+        "`notes` or `title_contains` it returns the table of contents only: per basis, each note's number, "
+        "title, chars and tables. With them it returns the matching notes as blocks (paragraph, heading, table "
+        "with caption, unit and rows of cell strings); a note matches if its number is listed or its title "
+        "contains any term (spaces ignored), e.g. title_contains=차입금,특수관계자,우발. Notes come from the "
+        "periodic report; for an audit-report-only filing, from the audit report (00760 separate, 00761 "
+        "consolidated). `warnings` from the note splitter (a skipped number, or a note that may have been "
+        "missed) are always returned; read them before trusting the list. Output stops at a block boundary after "
+        "max_chars characters (default 20000, 0 = no cap). Amounts are returned as filed (strings, unit not "
+        "applied). Supported: periodic and audit reports filed 2017 or later. Nothing is written to disk."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            **_DOCUMENT_PARAMS,
+            "basis": {
+                "type": "string",
+                "enum": ["consolidated", "separate", "both"],
+                "default": "both",
+                "description": "Notes of the consolidated (연결) or separate (별도) statements, or both. Default both.",
+            },
+            "notes": {
+                "type": "string",
+                "pattern": _NOTE_NUMBERS_PATTERN,
+                "description": "Comma-separated note numbers exactly as in the table of contents, e.g. 7,9-1,6-A",
+            },
+            "title_contains": {
+                "type": "string",
+                "description": "Comma-separated title terms; a note matches if its title contains any of them "
+                "(spaces ignored), e.g. 차입금,특수관계자,우발",
+            },
+            "max_chars": {
+                "type": "integer",
+                "minimum": 0,
+                "default": _DEFAULT_MAX_CHARS,
+                "description": "Max characters of note text returned, cut at a block boundary. Default 20000, "
+                "0 = no cap. Named max_chars because --limit is a global CLI option and never reaches handlers.",
+            },
+        },
+        "required": ["rcept_no", "corp_code"],
+    },
+    returns={"type": "object"},
+    category="dart",
+    broker="dart",
+)
+def handle_financial_notes(params: dict, session) -> dict:
+    from cluefin_dart_notes import notes_sections, split_notes
+
+    rcept_no = params["rcept_no"]
+    corp_code = params["corp_code"]
+    basis_param = params.get("basis", "both")
+    bases = _NOTE_BASES if basis_param == "both" else (basis_param,)
+    wanted = _note_filter(params)
+    _check_document_year(rcept_no)
+    documents = _load_filing(session, rcept_no, corp_code)
+
+    budget = _CharBudget(_max_chars(params))
+    sources = []
+    for file, document in _notes_sources(documents):
+        for section, basis in notes_sections(document):
+            if basis not in bases:
+                continue
+            split = split_notes(section, basis)
+            notes = []
+            for note in split.notes:
+                if wanted is not None and not wanted(note):
+                    continue
+                chars, tables = _note_size(note)
+                entry = {"number": note.number, "title": note.title, "chars": chars, "tables": tables}
+                if wanted is not None:
+                    sized = [(_block_chars(block), _block_payload(block)) for block in note.blocks]
+                    entry = {**entry, "heading": note.heading, "blocks": budget.take(sized)}
+                notes.append(entry)
+            sources.append(
+                {
+                    "file": file,
+                    "document_code": document.document_code,
+                    "basis": basis,
+                    "section_title": section.title,
+                    "split_method": split.method,
+                    "warnings": list(split.warnings),
+                    "preamble_chars": sum(_block_chars(block) for block in split.preamble),
+                    "notes": notes,
+                }
+            )
+
+    result = {
+        "rcept_no": rcept_no,
+        "corp_code": corp_code,
+        "mode": "toc" if wanted is None else "notes",
+        "sources": sources,
+    }
+    if wanted is not None:
+        result.update(budget.summary())
+    if not sources:
+        result["hint"] = (
+            "No notes section of the requested basis was found. Run dart document-outline; a company without "
+            "consolidated statements has separate notes only."
+        )
+    elif any(not source["notes"] for source in sources) and wanted is None:
+        result["hint"] = (
+            "A notes section could not be split into numbered notes. Read it whole with dart document-section "
+            "--index (see dart document-outline)."
+        )
+    elif wanted is not None and budget.cut:
+        result["hint"] = "Output was cut at max_chars. Raise --max-chars (0 = no cap) or request fewer notes."
+    return result
+
+
 # ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
@@ -1089,6 +1234,7 @@ _ALL_HANDLERS = [
     handle_financial_as_filed,
     handle_document_outline,
     handle_document_section,
+    handle_financial_notes,
 ]
 
 

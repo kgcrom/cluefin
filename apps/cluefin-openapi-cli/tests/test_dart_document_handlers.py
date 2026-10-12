@@ -382,3 +382,165 @@ def test_cli_outline_runs(cli) -> None:
     result = run_cli(["dart", "document-outline", "--rcept-no", RCEPT, "--corp-code", CORP, "--json"])
     assert result.exit_code == 0, result.stdout
     assert len(json.loads(result.stdout)["documents"]) == 2
+
+
+# --- financial-notes ---------------------------------------------------------
+
+
+def notes_report(*, consolidated: str | None = None) -> bytes:
+    """An annual report whose consolidated notes need sequence splitting and separate notes have headings.
+
+    Consolidated: 3 is absent (a skip warning) and "8." inside the last note looks like a missed note.
+    """
+    consolidated = (
+        consolidated
+        or """
+<P>1. 일반사항</P><P>회사는 부품을 만든다.</P>
+<P>2. 차입금</P><P>(단위 : 백만원)</P>
+<TABLE BORDER="1"><TBODY><TR><TH>차입처</TH><TH>금액</TH></TR><TR><TD>은행</TD><TD>(500)</TD></TR></TBODY></TABLE>
+<P>4. 특수관계자 거래</P><P>특수관계자 본문</P>
+<P>8. 기타 사항은 다음과 같다.</P>"""
+    )
+    return f"""<?xml version="1.0" encoding="utf-8"?>
+<DOCUMENT>
+<DOCUMENT-NAME ACODE="11011">사업보고서</DOCUMENT-NAME>
+<FORMULA-VERSION ADATE="20260101">6.7</FORMULA-VERSION>
+<COMPANY-NAME AREGCIK="{CORP}">가나다 주식회사</COMPANY-NAME>
+<BODY>
+<SECTION-1><TITLE ATOC="Y" AASSOCNOTE="D-0-3-0-0">III. 재무에 관한 사항</TITLE>
+<LIBRARY>
+<SECTION-2><TITLE ATOC="Y" AASSOCNOTE="D-0-3-3-0">3. 연결재무제표 주석</TITLE>{consolidated}
+</SECTION-2>
+<SECTION-2><TITLE ATOC="Y" AASSOCNOTE="D-0-3-5-0">5. 재무제표 주석</TITLE>
+<P>별도 주석 머리말</P>
+<TABLE-GROUP><TITLE ATOC="N">1. 일반사항 (별도)</TITLE><P>별도 일반사항</P></TABLE-GROUP>
+<TABLE-GROUP><TITLE ATOC="N">9-1. 차입금</TITLE><P>별도 차입금 본문</P></TABLE-GROUP>
+<TABLE-GROUP><TITLE ATOC="N">10. 우발부채와 약정사항</TITLE><P>소송 본문</P></TABLE-GROUP>
+</SECTION-2>
+</LIBRARY>
+</SECTION-1>
+</BODY>
+</DOCUMENT>
+""".encode()
+
+
+def notes_filing(**kwargs) -> dict[str, bytes]:
+    return {f"{RCEPT}.xml": notes_report(**kwargs), f"{RCEPT}_00760.xml": audit_report()}
+
+
+def _notes(params: dict | None = None, files: dict[str, bytes] | None = None) -> dict:
+    return handlers.handle_financial_notes(
+        {"rcept_no": RCEPT, "corp_code": CORP, **(params or {})}, _Session(notes_filing() if files is None else files)
+    )
+
+
+def test_notes_toc_reads_the_periodic_report_not_its_attached_audit_report() -> None:
+    result = _notes()
+    assert result["mode"] == "toc" and "total_chars" not in result
+    consolidated, separate = result["sources"]
+    assert {consolidated["file"], separate["file"]} == {f"{RCEPT}.xml"}
+    assert (consolidated["basis"], consolidated["split_method"]) == ("consolidated", "sequence")
+    assert [(n["number"], n["title"]) for n in consolidated["notes"]] == [
+        ("1", "일반사항"),
+        ("2", "차입금"),
+        ("4", "특수관계자 거래"),
+    ]
+    assert consolidated["notes"][1]["tables"] == 1 and "blocks" not in consolidated["notes"][1]
+    assert (separate["basis"], separate["split_method"]) == ("separate", "heading")
+    assert [(n["number"], n["title"]) for n in separate["notes"]] == [
+        ("1", "일반사항"),
+        ("9-1", "차입금"),
+        ("10", "우발부채와 약정사항"),
+    ]
+    assert separate["preamble_chars"] == len("별도 주석 머리말")
+    json.dumps(result)
+
+
+def test_splitter_warnings_are_never_dropped() -> None:
+    (consolidated,) = _notes({"basis": "consolidated"})["sources"]
+    warnings = " ".join(consolidated["warnings"])
+    assert "3번 노트가 없습니다" in warnings
+    assert "놓쳤을 수 있습니다" in warnings
+    # Also in notes mode, and for a source where nothing matched.
+    (consolidated,) = _notes({"basis": "consolidated", "notes": "99"})["sources"]
+    assert consolidated["notes"] == [] and len(consolidated["warnings"]) == 2
+
+
+def test_basis_filter() -> None:
+    assert [s["basis"] for s in _notes({"basis": "separate"})["sources"]] == ["separate"]
+
+
+def test_notes_by_number_return_blocks() -> None:
+    result = _notes({"notes": "9-1,2"})
+    assert result["mode"] == "notes" and result["truncated"] is False
+    consolidated, separate = result["sources"]
+    (borrowings,) = consolidated["notes"]
+    assert borrowings["heading"] == "2. 차입금"
+    assert borrowings["blocks"] == [
+        {"type": "paragraph", "text": "(단위 : 백만원)"},
+        {"type": "table", "caption": None, "unit": "백만원", "rows": [["차입처", "금액"], ["은행", "(500)"]]},
+    ]
+    assert [n["number"] for n in separate["notes"]] == ["9-1"]
+    assert result["total_chars"] == result["returned_chars"] == borrowings["chars"] + separate["notes"][0]["chars"]
+
+
+def test_notes_by_title_terms_are_or_and_ignore_spaces() -> None:
+    result = _notes({"title_contains": "특수 관계자, 우발"})
+    consolidated, separate = result["sources"]
+    assert [n["number"] for n in consolidated["notes"]] == ["4"]
+    assert [n["number"] for n in separate["notes"]] == ["10"]
+
+
+def test_numbers_and_title_terms_combine_as_a_union() -> None:
+    (separate,) = _notes({"basis": "separate", "notes": "1", "title_contains": "우발"})["sources"]
+    assert [n["number"] for n in separate["notes"]] == ["1", "10"]
+
+
+@pytest.mark.parametrize(("code", "basis"), [("00760", "separate"), ("00761", "consolidated")])
+def test_audit_report_only_filing_uses_its_notes(code, basis) -> None:
+    files = {f"{RCEPT}_{code}.xml": audit_report(code=code)}
+    (source,) = _notes(files=files)["sources"]
+    assert (source["file"], source["document_code"], source["basis"]) == (f"{RCEPT}_{code}.xml", code, basis)
+    assert [n["title"] for n in source["notes"]] == ["일반사항"]
+
+
+def test_notes_max_chars_cut() -> None:
+    result = _notes({"title_contains": "차입금", "max_chars": 15})
+    assert result["truncated"] is True and "max-chars" in result["hint"]
+    consolidated, separate = result["sources"]
+    assert len(consolidated["notes"][0]["blocks"]) == 1 and separate["notes"][0]["blocks"] == []
+    # The note itself is still listed with its full size.
+    assert separate["notes"][0]["chars"] == len("별도 차입금 본문")
+
+
+def test_missing_basis_is_empty_with_a_hint() -> None:
+    result = handlers.handle_financial_notes(
+        {"rcept_no": RCEPT, "corp_code": CORP, "basis": "separate"}, _Session(periodic_filing())
+    )
+    assert result["sources"] == [] and "document-outline" in result["hint"]
+
+
+def test_unsplittable_notes_point_to_document_section() -> None:
+    files = notes_filing(consolidated="<P>번호 없는 주석 본문</P>")
+    result = _notes({"basis": "consolidated"}, files)
+    (source,) = result["sources"]
+    assert source["notes"] == [] and source["warnings"] == ["노트를 하나도 찾지 못했습니다."]
+    assert source["preamble_chars"] == len("번호 없는 주석 본문")
+    assert "document-section" in result["hint"]
+
+
+@pytest.mark.parametrize("bad", [{"notes": "7,"}, {"notes": "a"}, {"basis": "all"}, {"max_chars": -5}])
+def test_cli_rejects_bad_notes_params_with_exit_2(cli, bad) -> None:
+    cli(notes_filing())
+    body = {"rcept_no": RCEPT, "corp_code": CORP, **bad}
+    result = run_cli(["dart", "financial-notes", "--params-json", json.dumps(body), "--json"])
+    assert result.exit_code == 2, result.stdout
+
+
+def test_cli_notes_runs(cli) -> None:
+    cli(notes_filing())
+    result = run_cli(
+        ["dart", "financial-notes", "--rcept-no", RCEPT, "--corp-code", CORP, "--title-contains", "차입금", "--json"]
+    )
+    assert result.exit_code == 0, result.stdout
+    assert json.loads(result.stdout)["mode"] == "notes"
