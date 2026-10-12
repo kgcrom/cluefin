@@ -396,6 +396,50 @@ class TestSocketMessageHandling:
         assert event.data == {"values": ["123", "456"], "encrypted": False}
 
     @pytest.mark.asyncio
+    async def test_handle_rejection_emits_error_with_masked_approval_key(self, socket_client):
+        raw = json.dumps(
+            {
+                "header": {"tr_id": "H0BJCNT0", "tr_key": "KR103502GA34", "encrypt": "N"},
+                "body": {"rt_cd": "1", "msg_cd": "OPSP0011", "msg1": "invalid approval : test_approval_key"},
+            }
+        )
+
+        await socket_client._handle_message(raw)
+
+        event = socket_client._event_queue.get_nowait()
+        assert event.event_type == "error"
+        assert event.tr_id == "H0BJCNT0"
+        assert isinstance(event.error, KISAPIError)
+        assert "[OPSP0011] invalid approval : ***" in str(event.error)
+        assert "test_approval_key" not in str(event.error)
+        assert "test_approval_key" not in json.dumps(event.error.response_data)
+
+    @pytest.mark.asyncio
+    async def test_handle_rejection_without_tr_id(self, socket_client):
+        raw = '{"header":{"tr_id":"(null)","tr_key":"","encrypt":"N"},"body":{"rt_cd":"9","msg_cd":"OPSP8996","msg1":"ALREADY IN USE appkey"}}'
+
+        await socket_client._handle_message(raw)
+
+        event = socket_client._event_queue.get_nowait()
+        assert event.event_type == "error"
+        assert "[OPSP8996] ALREADY IN USE appkey" in str(event.error)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "raw",
+        [
+            '{"header":{"tr_id":"H0BJCNT0"},"body":{"rt_cd":"0","msg_cd":"OPSP0000","msg1":"SUBSCRIBE SUCCESS"}}',
+            '{"header":{"tr_id":"PINGPONG","datetime":"20261012094000"}}',
+            "[1, 2]",
+            "some unknown message format",
+        ],
+    )
+    async def test_handle_non_rejection_system_message_emits_nothing(self, socket_client, raw):
+        await socket_client._handle_message(raw)
+
+        assert socket_client._event_queue.empty()
+
+    @pytest.mark.asyncio
     async def test_emit_event_drops_oldest_when_queue_is_full(self):
         client = SocketClient("approval", "app", "secret", queue_maxsize=1)
         await client._emit_event(WebSocketEvent(event_type="connected"))
@@ -475,6 +519,16 @@ class TestSocketSubscriptions:
     async def test_subscribe_requires_connection(self, socket_client):
         with pytest.raises(KISAPIError, match="not connected"):
             await socket_client.subscribe("H0STASP0", "005930")
+
+    @pytest.mark.asyncio
+    async def test_subscribe_after_rejection_names_the_rejection(self, socket_client):
+        await socket_client._handle_message(
+            '{"header":{"tr_id":"H0BJCNT0"},"body":{"rt_cd":"1","msg_cd":"OPSP0011","msg1":"invalid approval : x"}}'
+        )
+
+        with pytest.raises(KISAPIError, match=r"not connected .*OPSP0011") as exc_info:
+            await socket_client.subscribe("H0BJASP0", "KR103502GA34")
+        assert exc_info.value.response_data["msg_cd"] == "OPSP0011"
 
     @pytest.mark.asyncio
     async def test_subscribe_sends_message_and_emits_event(self, socket_client):

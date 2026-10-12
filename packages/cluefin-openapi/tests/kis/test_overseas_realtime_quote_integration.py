@@ -107,6 +107,8 @@ async def test_receive_orderbook_data(socket_client_params):
         async def receive_data():
             nonlocal data_received
             async for event in client.events():
+                if event.event_type == "error":
+                    pytest.fail(f"KIS WebSocket error: {event.error}")
                 if event.event_type == "data" and event.tr_id == OverseasRealtimeQuote.TR_ID:
                     orderbooks = realtime.parse_data(event.data["values"])
 
@@ -143,6 +145,8 @@ async def test_orderbook_subscription_events(socket_client_params):
         async def check_events():
             nonlocal subscribed_event_found
             async for event in client.events():
+                if event.event_type == "error":
+                    pytest.fail(f"KIS WebSocket error: {event.error}")
                 if event.event_type == "subscribed":
                     assert event.tr_id == "HDFSASP0"
                     assert event.tr_key == "RNASAAPL"
@@ -216,6 +220,8 @@ async def test_receive_execution_data(socket_client_params):
         async def receive_data():
             nonlocal data_received
             async for event in client.events():
+                if event.event_type == "error":
+                    pytest.fail(f"KIS WebSocket error: {event.error}")
                 if event.event_type == "data" and event.tr_id == OverseasRealtimeQuote.TR_ID_EXECUTION:
                     executions = realtime.parse_execution_data(event.data["values"])
 
@@ -252,6 +258,8 @@ async def test_execution_subscription_events(socket_client_params):
         async def check_events():
             nonlocal subscribed_event_found
             async for event in client.events():
+                if event.event_type == "error":
+                    pytest.fail(f"KIS WebSocket error: {event.error}")
                 if event.event_type == "subscribed":
                     assert event.tr_id == "HDFSCNT0"
                     assert event.tr_key == "DNASAAPL"
@@ -310,6 +318,8 @@ async def test_receive_delayed_orderbook_data(socket_client_params):
         async def receive_data():
             nonlocal data_received
             async for event in client.events():
+                if event.event_type == "error":
+                    pytest.fail(f"KIS WebSocket error: {event.error}")
                 if event.event_type == "data" and event.tr_id == OverseasRealtimeQuote.TR_ID_DELAYED_ORDERBOOK:
                     orderbooks = realtime.parse_delayed_orderbook_data(event.data["values"])
 
@@ -386,6 +396,8 @@ async def test_combined_orderbook_and_execution(socket_client_params):
 
         async def receive_data():
             async for event in client.events():
+                if event.event_type == "error":
+                    pytest.fail(f"KIS WebSocket error: {event.error}")
                 if event.event_type == "data":
                     if event.tr_id == OverseasRealtimeQuote.TR_ID:
                         orderbooks = realtime.parse_data(event.data["values"])
