@@ -86,6 +86,53 @@ class TestHasHts:
         assert fetcher.has_hts is False
 
 
+class TestWatchlistCalls:
+    def _fetcher(self, monkeypatch):
+        fetcher = _make_fetcher(
+            monkeypatch, kis_app_key="kis-key", kis_secret_key="kis-secret", kis_hts_user_id="hts-id"
+        )
+        fetcher._kis_client = MagicMock()
+        return fetcher, fetcher._kis_client.domestic_market_analysis
+
+    def test_groups_and_stocks_pass_hts_id(self, monkeypatch):
+        fetcher, analysis = self._fetcher(monkeypatch)
+        analysis.get_watchlist_groups.return_value.body.output2 = ["g"]
+        analysis.get_watchlist_stocks_by_group.return_value.body.output2 = ["s"]
+
+        assert fetcher.get_watchlist_groups() == ["g"]
+        assert fetcher.get_watchlist_stocks("002") == ["s"]
+        analysis.get_watchlist_groups.assert_called_once_with("1", "00", "hts-id")
+        analysis.get_watchlist_stocks_by_group.assert_called_once_with("1", "hts-id", "", "002", "", "", "", "4")
+
+    def test_error_message_masks_hts_id(self, monkeypatch):
+        fetcher, analysis = self._fetcher(monkeypatch)
+        analysis.get_watchlist_groups.side_effect = ConnectionError(
+            "Max retries exceeded with url: /uapi/x?TYPE=1&USER_ID=hts-id"
+        )
+        with pytest.raises(RuntimeError) as excinfo:
+            fetcher.get_watchlist_groups()
+        assert "hts-id" not in str(excinfo.value)
+        assert "USER_ID=<HTS_ID>" in str(excinfo.value)
+        assert excinfo.value.__cause__ is None and excinfo.value.__suppress_context__
+
+    def test_quotes_are_chunked_by_thirty_in_order(self, monkeypatch):
+        fetcher, analysis = self._fetcher(monkeypatch)
+        analysis.get_watchlist_multi_quote.side_effect = lambda **kw: SimpleNamespace(
+            body=SimpleNamespace(output=[v for k, v in kw.items() if k.startswith("fid_input_iscd_")])
+        )
+        pairs = [("J", f"{i:06d}") for i in range(31)]
+
+        assert fetcher.get_watchlist_quotes(pairs) == [code for _, code in pairs]
+        first, second = analysis.get_watchlist_multi_quote.call_args_list
+        assert len(first.kwargs) == 60 and first.kwargs["fid_input_iscd_30"] == "000029"
+        assert second.kwargs == {"fid_cond_mrkt_div_code_1": "J", "fid_input_iscd_1": "000030"}
+
+    def test_no_quotes_call_for_empty_list(self, monkeypatch):
+        fetcher, analysis = self._fetcher(monkeypatch)
+        assert fetcher.get_watchlist_quotes([]) == []
+        analysis.get_watchlist_multi_quote.assert_not_called()
+
+
 class TestSplitAnnualAndYtd:
     split = staticmethod(DomesticDataFetcher._split_annual_and_ytd)
 

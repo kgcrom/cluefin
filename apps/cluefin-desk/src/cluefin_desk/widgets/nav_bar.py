@@ -65,6 +65,7 @@ class NavBar(Widget):
         ("THEME", "3"),
         ("ETF", "4"),
         ("INV", "5"),
+        ("WATCH", "6"),
     ]
 
     def __init__(self, **kwargs):

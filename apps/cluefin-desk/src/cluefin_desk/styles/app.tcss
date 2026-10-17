@@ -335,3 +335,31 @@ StockSearchScreen {
     height: 1;
     color: $text-muted;
 }
+
+/* Watchlist Screen */
+#watchlist-content {
+    layout: horizontal;
+    height: 1fr;
+}
+
+#watchlist-groups {
+    width: 28;
+    height: 1fr;
+    border: solid $primary;
+}
+
+#watchlist-main {
+    width: 1fr;
+    height: 1fr;
+}
+
+#watchlist-stocks {
+    height: 1fr;
+    border: solid $secondary;
+}
+
+#watchlist-status {
+    height: auto;
+    padding: 0 1;
+    color: $text-muted;
+}

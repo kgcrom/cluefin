@@ -960,3 +960,47 @@ class DomesticDataFetcher:
             cycle_tp="0",
             stex_tp="1",
         )
+
+    # ──────────────────────────────────────
+    # KIS HTS watchlist (requires has_hts)
+    # ──────────────────────────────────────
+
+    WATCHLIST_QUOTE_LIMIT = 30  # get_watchlist_multi_quote slots per call
+
+    def _hts_call(self, fn, *args):
+        """Run a watchlist call; failures are re-raised with the HTS ID masked.
+
+        The ID is a request param, and a network error's message can carry the full
+        request URL with its query string — screens show and log `str(e)`.
+        """
+        try:
+            return fn(*args)
+        except Exception as e:
+            message = str(e)
+            if settings.kis_hts_user_id:
+                message = message.replace(settings.kis_hts_user_id, "<HTS_ID>")
+            raise RuntimeError(message) from None
+
+    def get_watchlist_groups(self) -> list:
+        analysis = self.kis_client.domestic_market_analysis
+        response = self._hts_call(analysis.get_watchlist_groups, "1", "00", settings.kis_hts_user_id)
+        return list(response.body.output2)
+
+    def get_watchlist_stocks(self, group_code: str) -> list:
+        analysis = self.kis_client.domestic_market_analysis
+        response = self._hts_call(
+            analysis.get_watchlist_stocks_by_group, "1", settings.kis_hts_user_id, "", group_code, "", "", "", "4"
+        )
+        return list(response.body.output2)
+
+    def get_watchlist_quotes(self, stocks: List[tuple]) -> list:
+        """Multi-quote for `(market_code, stock_code)` pairs, 30 per call, in input order."""
+        analysis = self.kis_client.domestic_market_analysis
+        quotes = []
+        for start in range(0, len(stocks), self.WATCHLIST_QUOTE_LIMIT):
+            kwargs = {}
+            for slot, (market, code) in enumerate(stocks[start : start + self.WATCHLIST_QUOTE_LIMIT], start=1):
+                kwargs[f"fid_cond_mrkt_div_code_{slot}"] = market
+                kwargs[f"fid_input_iscd_{slot}"] = code
+            quotes.extend(analysis.get_watchlist_multi_quote(**kwargs).body.output)
+        return quotes

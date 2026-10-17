@@ -26,6 +26,7 @@ class CluefinDeskApp(App):
         Binding("3", "switch_screen('3')", "THEME", show=True),
         Binding("4", "switch_screen('4')", "ETF", show=True),
         Binding("5", "switch_screen('5')", "INV", show=True),
+        Binding("6", "switch_screen('6')", "WATCH", show=True),
         Binding("slash", "search_stock", "Search", show=True),
     ]
 
@@ -63,6 +64,7 @@ class CluefinDeskApp(App):
         from cluefin_desk.screens.market_overview import MarketOverviewScreen
         from cluefin_desk.screens.screening import ScreeningScreen
         from cluefin_desk.screens.theme_sector import ThemeSectorScreen
+        from cluefin_desk.screens.watchlist import WatchlistScreen
 
         screen_map = {
             "1": MarketOverviewScreen,
@@ -70,6 +72,7 @@ class CluefinDeskApp(App):
             "3": ThemeSectorScreen,
             "4": EtfAnalysisScreen,
             "5": InvestorFlowScreen,
+            "6": WatchlistScreen,
         }
         cls = screen_map.get(key)
         return cls() if cls else None
