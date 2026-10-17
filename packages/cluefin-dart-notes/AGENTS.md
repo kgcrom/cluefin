@@ -106,10 +106,11 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - Unit tests use **synthetic fragments only**. Don't commit real filings or name the companies used for
   review; integration tests read `CLUEFIN_DART_NOTES_TEST_DIR` (any directory of `*.xml`, searched
   recursively) and skip when it is unset.
-- The review corpus is **not kept on disk** — only its list is, in the git-ignored
-  `.claude/plans/dart-notes-corpus-manifest.json` (`[{group, rcept_no, files}, …]`, top KOSPI/KOSDAQ and
-  unlisted filings). Rebuild it (~30 s, needs `DART_AUTH_KEY` in `.env.test`) before running the
-  integration tests, and delete it again afterwards:
+- The review corpus is **not kept in the repo** — only its list is, in the git-ignored
+  `docs/plans/dart-notes-corpus/manifest.json` (`[{group, rcept_no, files, sizes}, …]`, top KOSPI/KOSDAQ and
+  unlisted filings). The filings themselves go to `~/.cache/cluefin-dart-notes-corpus`, outside the repo
+  (27 filings, 43 XML, ~130 MB, ~20 s to download, needs `DART_AUTH_KEY` in `.env.test`; 2026-10-17).
+  Download it when the cache is missing:
 
   ```bash
   uv run python - <<'EOF'
@@ -121,12 +122,12 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 
   dotenv.load_dotenv(".env.test")
   dart = PublicDisclosure(Client(auth_key=os.environ["DART_AUTH_KEY"]))
-  root = Path(".claude/plans/dart-notes-corpus")
-  for item in json.loads(Path(".claude/plans/dart-notes-corpus-manifest.json").read_text()):
+  root = Path.home() / ".cache/cluefin-dart-notes-corpus"
+  for item in json.loads(Path("docs/plans/dart-notes-corpus/manifest.json").read_text()):
       time.sleep(0.5)  # DART rate limit
       dart.disclosure_document_files(item["rcept_no"], destination=root / item["group"] / item["rcept_no"], overwrite=True)
   EOF
-  CLUEFIN_DART_NOTES_TEST_DIR=.claude/plans/dart-notes-corpus uv run pytest packages/cluefin-dart-notes -m integration -q
+  CLUEFIN_DART_NOTES_TEST_DIR=~/.cache/cluefin-dart-notes-corpus uv run pytest packages/cluefin-dart-notes -m integration -q
   ```
 
   Without the manifest, any directory of downloaded filings works; mix generations (2017–2021,
