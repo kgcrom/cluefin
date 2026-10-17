@@ -376,3 +376,20 @@ def test_get_dividend_information_excludes_none_parameters(client: Client) -> No
         assert last_request.qs["crtfc_key"] == [AUTH_KEY]
         assert last_request.qs["corp_code"] == [BASE_PARAMS["corp_code"]]
         assert last_request.qs["bsns_year"] == [BASE_PARAMS["bsns_year"]]
+
+
+def test_auditor_opinion_accepts_rows_without_optional_opinion_keys(client: Client) -> None:
+    """2026-10-17 실측(9개사 54행): 값이 없는 행은 adt_opinion·emphs_matter·core_adt_matter 키를 뺀다.
+    항상 온 것은 adt_reprt_spcmnt_matter 뿐이었다."""
+    service = PeriodicReportKeyInformation(client)
+    payload = build_payload(AuditorNameAndOpinionItem)
+    for key in ("adt_opinion", "emphs_matter", "core_adt_matter"):
+        del payload["list"][0][key]
+
+    with requests_mock.Mocker() as mock_requests:
+        mock_requests.get("https://opendart.fss.or.kr/api/accnutAdtorNmNdAdtOpinion.json", json=payload)
+        result = service.get_auditor_name_and_opinion("00126380", "2025", "11011")
+
+    item = result.result.list[0]
+    assert (item.adt_opinion, item.emphs_matter, item.core_adt_matter) == (None, None, None)
+    assert item.adt_reprt_spcmnt_matter == payload["list"][0]["adt_reprt_spcmnt_matter"]

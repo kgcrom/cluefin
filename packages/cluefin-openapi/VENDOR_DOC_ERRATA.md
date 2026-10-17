@@ -247,3 +247,14 @@ ka10023 `stk_cnd`(1, `11`~`20`), ka10030 `mang_stk_incls`·`trde_qty_tp`·`trde_
 
 부호 필드는 길이 1 인 `*sign*` 전부를 `known_exceed` 에 올렸다 — 지금 빈 값인 필드도 같은 표기로 올 수 있어서다.
 `"1E"` 의 의미는 문서에 없다 (평일 장중 재확인 필요).
+
+## DART
+
+문서 출처: `opendart.fss.or.kr` 개발가이드의 응답 결과 표. 표에는 타입 열이 없고 설명에 "(원)", "(주)" 같은 단위만 있다.
+
+### 응답 필드
+
+| API | 문서 | 실서버 | 실측 | 코드 |
+|---|---|---|---|---|
+| 주요사항보고서 8종 — 유상증자 `piicDecsn`·무상증자 `fricDecsn`·유무상증자 `pifricDecsn`·감자 `crDecsn`·부도발생 `dfOcr`·영업정지 `bsnSp`·해산사유 `dsRsOcr`·자산양수도(기타)/풋백옵션 `astInhtrfEtcPtbkOpt` | 금액·주식수·참석 인원 (단위만 표기) | **콤마 문자열**(`"12,345,678,900"`), 값이 없으면 `"-"`, 비율은 `"0.5"` | 2026-10-17, 종류당 최근 공시 2~6건 | 59개 필드를 `int`/`float` → `str` (다른 28종처럼 패스스루). 예전엔 실데이터마다 `int_parsing` 으로 응답 전체가 거부됐다 |
+| 회계감사인 명칭·감사의견 `accnutAdtorNmNdAdtOpinion` | `adt_opinion`·`emphs_matter`·`core_adt_matter` 항상 있음 | 값이 없는 행은 키를 뺀다. 항상 온 것은 `adt_reprt_spcmnt_matter` 뿐 | 2026-10-17, 9개사 54행 (2025 사업보고서) | 세 필드 선택(`None`) |
