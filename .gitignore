@@ -81,6 +81,8 @@ CLAUDE.local.md
 .ruff_cache/
 .uv-cache/
 data/
+# desk 소스 패키지 이름이 data 다 — 무시하면 새 모듈이 git·ruff 에서 조용히 빠진다
+!apps/cluefin-desk/src/cluefin_desk/data/
 
 
 # sec-notes corpus manifests name real filings (cluefin-sec-notes AGENTS.md). docs/plans itself stays
