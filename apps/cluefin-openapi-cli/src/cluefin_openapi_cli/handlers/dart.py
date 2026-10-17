@@ -6,10 +6,11 @@ import contextlib
 import itertools
 import sys
 import tempfile
-from datetime import date
+from dataclasses import dataclass
+from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from cluefin_openapi_cli.errors import (
     DART_REQUEST_LIMIT_STATUS,
@@ -668,6 +669,205 @@ def handle_share_count(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Major-event reports (주요사항보고서) and periodic-report items: one command each, one table row per
+# endpoint. The library's method names often do not match their endpoints (`real_estate_development`
+# calls dfOcr, 부도발생), so the endpoint and its meaning live here and the lambdas name the method once.
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class _Endpoint:
+    endpoint: str  # DART API name, echoed in the output
+    label: str  # Korean report name
+    call: Callable[[Any, dict], Any]
+
+
+def _event(endpoint: str, label: str, method: Callable[[Any], Callable[..., Any]]) -> _Endpoint:
+    def call(dart, params):
+        return method(dart.major_shareholder_disclosure)(
+            corp_code=params["corp_code"], bgn_de=params["bgn_de"], end_de=params["end_de"]
+        )
+
+    return _Endpoint(endpoint, label, call)
+
+
+# The client class is named MajorShareholderDisclosure but serves DART DS005, 주요사항보고서.
+_MAJOR_EVENTS: dict[str, _Endpoint] = {
+    "convertible-bond": _event("cvbdIsDecsn", "전환사채권 발행결정", lambda c: c.convertible_bond_issuance_decision),
+    "bond-with-warrant": _event(
+        "bdwtIsDecsn", "신주인수권부사채권 발행결정", lambda c: c.new_stock_warrant_bond_issuance_decision
+    ),
+    "exchangeable-bond": _event("exbdIsDecsn", "교환사채권 발행결정", lambda c: c.corporate_bond_issuance_decision),
+    "contingent-capital-writedown": _event(
+        "wdCocobdIsDecsn", "상각형 조건부자본증권 발행결정", lambda c: c.reorganization_plan_approved_ruling
+    ),
+    "rights-offering": _event("piicDecsn", "유상증자 결정", lambda c: c.securities_granted_decision),
+    "bonus-issue": _event("fricDecsn", "무상증자 결정", lambda c: c.free_securities_decision),
+    "rights-and-bonus-issue": _event("pifricDecsn", "유무상증자 결정", lambda c: c.paid_in_capital_reduction_decision),
+    "capital-reduction": _event("crDecsn", "감자 결정", lambda c: c.capital_reduction_decision),
+    "treasury-stock-acquisition": _event(
+        "tsstkAqDecsn", "자기주식 취득 결정", lambda c: c.treasury_stock_acquisition_decision
+    ),
+    "treasury-stock-disposal": _event(
+        "tsstkDpDecsn", "자기주식 처분 결정", lambda c: c.treasury_stock_disposal_decision
+    ),
+    "treasury-trust-contract": _event(
+        "tsstkAqTrctrCnsDecsn", "자기주식취득 신탁계약 체결 결정", lambda c: c.treasury_stock_trust_contract_decision
+    ),
+    "treasury-trust-termination": _event(
+        "tsstkAqTrctrCcDecsn",
+        "자기주식취득 신탁계약 해지 결정",
+        lambda c: c.treasury_stock_trust_contract_termination_decision,
+    ),
+    "merger": _event("cmpMgDecsn", "회사합병 결정", lambda c: c.corporate_law_decision),
+    "split": _event("cmpDvDecsn", "회사분할 결정", lambda c: c.corporate_division_decision),
+    "split-merger": _event("cmpDvmgDecsn", "회사분할합병 결정", lambda c: c.corporate_law_method_decision),
+    "share-exchange": _event("stkExtrDecsn", "주식교환·이전 결정", lambda c: c.stock_trading_other_decision),
+    "default": _event("dfOcr", "부도발생", lambda c: c.real_estate_development),
+    "business-suspension": _event("bsnSp", "영업정지", lambda c: c.business_letter),
+    "rehabilitation-filing": _event(
+        "ctrcvsBgrq", "회생절차 개시신청", lambda c: c.corporate_rehabilitation_proceedings
+    ),
+    "dissolution": _event("dsRsOcr", "해산사유 발생", lambda c: c.dissolution_occurrence),
+    "creditor-management-start": _event(
+        "bnkMngtPcbg", "채권은행 등의 관리절차 개시", lambda c: c.government_bond_manager_replacement
+    ),
+    "creditor-management-end": _event(
+        "bnkMngtPcsp", "채권은행 등의 관리절차 중단", lambda c: c.government_bond_manager_transfer_termination
+    ),
+    "lawsuit": _event("lwstLg", "소송 등의 제기", lambda c: c.profit_revocation),
+    "business-acquisition": _event("bsnInhDecsn", "영업양수 결정", lambda c: c.business_plan_decision),
+    "business-transfer": _event("bsnTrfDecsn", "영업양도 결정", lambda c: c.business_transfer_decision),
+    "tangible-asset-acquisition": _event(
+        "tgastInhDecsn", "유형자산 양수 결정", lambda c: c.tangible_asset_plan_decision
+    ),
+    "tangible-asset-transfer": _event(
+        "tgastTrfDecsn", "유형자산 양도 결정", lambda c: c.tangible_asset_transfer_decision
+    ),
+    "equity-stake-acquisition": _event(
+        "otcprStkInvscrInhDecsn",
+        "타법인 주식 및 출자증권 양수결정",
+        lambda c: c.retirement_stock_investment_plan_decision,
+    ),
+    "equity-stake-transfer": _event(
+        "otcprStkInvscrTrfDecsn",
+        "타법인 주식 및 출자증권 양도결정",
+        lambda c: c.retirement_stock_investment_transfer_decision,
+    ),
+    "equity-linked-bond-acquisition": _event(
+        "stkrtbdInhDecsn", "주권 관련 사채권 양수 결정", lambda c: c.stock_related_bond_plan_decision
+    ),
+    "equity-linked-bond-transfer": _event(
+        "stkrtbdTrfDecsn", "주권 관련 사채권 양도 결정", lambda c: c.stock_related_bond_transfer_decision
+    ),
+    "asset-transfer-putback": _event(
+        "astInhtrfEtcPtbkOpt", "자산양수도(기타), 풋백옵션", lambda c: c.treasury_stock_acquisition_disposal_plan
+    ),
+    "overseas-listing-decision": _event(
+        "ovLstDecsn", "해외 증권시장 주권등 상장 결정", lambda c: c.overseas_securities_trading_resolution
+    ),
+    "overseas-delisting-decision": _event(
+        "ovDlstDecsn",
+        "해외 증권시장 주권등 상장폐지 결정",
+        lambda c: c.overseas_securities_trading_delisting_resolution,
+    ),
+    "overseas-listing": _event("ovLst", "해외 증권시장 주권등 상장", lambda c: c.overseas_securities_trading_status),
+    "overseas-delisting": _event(
+        "ovDlst", "해외 증권시장 주권등 상장폐지", lambda c: c.overseas_securities_trading_status_delisting
+    ),
+}
+
+# DART serves 주요사항보고서 data from 2015 on.
+_MAJOR_EVENT_MIN_DATE = "20150101"
+
+
+def _choices(table: dict[str, _Endpoint]) -> str:
+    return "; ".join(f"{slug} ({spec.label})" for slug, spec in table.items())
+
+
+def _parse_day(value: str, field: str) -> datetime:
+    try:
+        return datetime.strptime(value, "%Y%m%d")
+    except ValueError:
+        raise CliError(
+            f"{field} is not a calendar date: {value}",
+            exit_code=EXIT_USAGE,
+            error_type="ValidationError",
+            data={field: value},
+        ) from None
+
+
+def _check_event_range(params: dict) -> None:
+    begin = _parse_day(params["bgn_de"], "bgn_de")
+    end = _parse_day(params["end_de"], "end_de")
+    if begin > end:
+        raise CliError(
+            "bgn_de is after end_de",
+            exit_code=EXIT_USAGE,
+            error_type="ValidationError",
+            data={"bgn_de": params["bgn_de"], "end_de": params["end_de"]},
+        )
+    if params["bgn_de"] < _MAJOR_EVENT_MIN_DATE:
+        raise CliError(
+            f"DART has no major-event report data before {_MAJOR_EVENT_MIN_DATE}",
+            exit_code=EXIT_USAGE,
+            error_type="ValidationError",
+            data={"bgn_de": params["bgn_de"], "min_date": _MAJOR_EVENT_MIN_DATE},
+            hint="Start the range at 20150101 or later.",
+        )
+
+
+@rpc_method(
+    name="dart.major_event",
+    description=(
+        "Get one company's major-event reports (주요사항보고서) filed in a date range, one event type per call: "
+        "convertible bond (CB), bond with warrant (BW) and exchangeable bond (EB) issuance, rights offering, "
+        "bonus issue, capital reduction, treasury stock acquisition and disposal, merger, split, share exchange, "
+        "default, rehabilitation, lawsuit, asset and business transfers, overseas listing — the dilution and "
+        "shareholder-return record of a company. Rows carry the "
+        "decision's structured fields as filed — amount, conversion or exercise price, issue size, counterparty, "
+        'purpose of funds, board date. Numbers arrive as comma strings and missing values as "-". '
+        "status 013 means no such report in the range, not an error. Data from 2015. For the schedule of "
+        "upcoming corporate actions use kis schedule commands; to find which events a company filed, use "
+        "dart disclosure-search --pblntf-ty B."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "corp_code": {
+                "type": "string",
+                "description": "Corporate unique code (8 digits, from dart corp-code-lookup)",
+            },
+            "event": {
+                "type": "string",
+                "enum": list(_MAJOR_EVENTS),
+                "description": "Event type (DART endpoint): " + _choices(_MAJOR_EVENTS),
+            },
+            "bgn_de": {
+                "type": "string",
+                "pattern": r"^\d{8}$",
+                "description": "Start of the receipt-date range (YYYYMMDD, 20150101 or later)",
+            },
+            "end_de": {
+                "type": "string",
+                "pattern": r"^\d{8}$",
+                "description": "End of the receipt-date range (YYYYMMDD)",
+            },
+        },
+        "required": ["corp_code", "event", "bgn_de", "end_de"],
+    },
+    returns={"type": "object"},
+    category="dart",
+    broker="dart",
+)
+def handle_major_event(params: dict, session) -> dict:
+    _check_event_range(params)
+    spec = _MAJOR_EVENTS[params["event"]]
+    result = spec.call(session.get_dart(), params)
+    return {"event": params["event"], "endpoint": spec.endpoint, **dump_model(_checked(result))}
+
+
+# ---------------------------------------------------------------------------
 # Filing text (cluefin-dart-notes): download the original XML, parse, return blocks
 # ---------------------------------------------------------------------------
 
@@ -1230,6 +1430,7 @@ _ALL_HANDLERS = [
     handle_executive_ownership_report,
     handle_major_shareholder,
     handle_share_count,
+    handle_major_event,
     handle_financial_major_accounts,
     handle_financial_full_statements,
     handle_financial_major_indicators,

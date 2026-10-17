@@ -406,6 +406,14 @@ _TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {
         when_to_use="Use for day-level chart, sector, ETF, and trading-flow analysis.",
         related_domains=("chart", "sector", "etf"),
     ),
+    "dilution": TaxonomyMetadata(
+        name="dilution",
+        description="Decisions that change the share count or add claims on it: CB/BW/EB issuance, rights offering, "
+        "bonus issue, capital reduction, treasury stock.",
+        when_to_use="Use for dilution and shareholder-return checks on one company (dart major-event).",
+        related_domains=("corporate-actions",),
+        related_tags=("major-event", "capital-increase"),
+    ),
     "disclosure": TaxonomyMetadata(
         name="disclosure",
         description="Formal DART disclosure or disclosure-linked company data.",
@@ -474,6 +482,16 @@ _TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {
         description="Holiday, business day, and date-based market schedule data.",
         when_to_use="Use to validate tradable dates or discover market calendar events.",
         related_domains=("market-calendar", "market"),
+    ),
+    "major-event": TaxonomyMetadata(
+        name="major-event",
+        description="DART major-event reports (주요사항보고서): the structured body of a decision filing — amounts, "
+        "prices, counterparties, purposes.",
+        when_to_use="Use after dart disclosure-search --pblntf-ty B finds the filing, or to scan one company's "
+        "decisions of one type over a date range.",
+        avoid_when="Use kis schedule commands for upcoming event calendars across the market.",
+        related_domains=("corporate-actions", "news"),
+        related_tags=("disclosure", "dilution", "merger-split"),
     ),
     "market-cap": TaxonomyMetadata(
         name="market-cap",
@@ -832,6 +850,9 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
     "dart.financial-major-accounts": CommandTaxonomy(("statements",), ("financial-statement", "disclosure")),
     "dart.financial-major-indicators": CommandTaxonomy(("statements",), ("financial-ratio", "disclosure")),
     "dart.large-holding-report": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
+    "dart.major-event": CommandTaxonomy(
+        ("corporate-actions", "news"), ("disclosure", "major-event", "dilution", "capital-increase", "merger-split")
+    ),
     "dart.major-shareholder": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
     "dart.share-count": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
     "sec.company-lookup": CommandTaxonomy(("reference",), ("us-filing", "reference-list")),
@@ -1029,7 +1050,7 @@ QUERY_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("감사보고서", ("audit", "report", "notes")),
     ("특수관계자", ("related", "parties", "notes")),
     ("우발부채", ("contingent", "liabilities", "notes")),
-    ("소송", ("lawsuits", "contingent", "notes")),
+    ("소송", ("lawsuits", "lawsuit", "contingent", "notes")),
     ("차입금", ("borrowings", "notes")),
     ("유형자산", ("property", "plant", "equipment", "notes")),
     ("수주", ("orders", "segment", "section")),
@@ -1048,15 +1069,29 @@ QUERY_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("신용", ("credit", "margin", "loan")),
     ("대출", ("loan", "loanable")),
     ("시가총액", ("market", "cap", "value")),
+    ("유상증자", ("offering", "capital", "increase")),
+    ("무상증자", ("bonus", "issue")),
     ("증자", ("capital", "increase")),
     ("감자", ("capital", "reduction")),
     ("합병", ("merger", "split")),
+    ("분할", ("split",)),
+    ("주식교환", ("share", "exchange")),
+    ("전환사채", ("convertible", "bond")),
+    ("신주인수권부사채", ("bond", "warrant")),
+    ("교환사채", ("exchangeable", "bond")),
+    ("주요사항보고서", ("major", "event")),
+    ("주요사항", ("major", "event")),
+    ("희석", ("dilution", "convertible", "rights")),
+    ("부도", ("default",)),
+    ("회생", ("rehabilitation",)),
     ("상장", ("listing", "ipo", "subscription")),
     ("주주총회", ("shareholder", "meeting")),
     ("최대주주", ("major", "shareholder")),
     ("발행주식수", ("share", "count", "issued", "outstanding", "treasury")),
     ("주식총수", ("share", "count", "issued", "outstanding", "treasury")),
     ("유통주식", ("share", "count", "outstanding", "issued")),
+    ("자사주 매입", ("treasury", "stock", "acquisition")),
+    ("자사주 처분", ("treasury", "stock", "disposal")),
     ("자사주", ("treasury", "share", "count")),
     ("자기주식", ("treasury", "share", "count")),
     ("휴장일", ("holiday", "calendar", "business", "day")),
@@ -1166,6 +1201,8 @@ _TYPE_SAMPLES: dict[str, Any] = {"integer": 1, "number": 1.0, "boolean": False}
 _NAME_SAMPLES: tuple[tuple[tuple[str, ...], tuple[str, ...], str], ...] = (
     (("date",), ("_dt", "ymd"), "20250101"),
     (("corp_code",), (), "00126380"),
+    # DART receipt-date range (bgn_de/end_de); one day is a valid range.
+    ((), ("_de",), "20250101"),
     (("rcept_no",), (), "20250318001317"),
     # SEC: Apple, the same example cluefin-openapi's README uses.
     (("cik",), (), "320193"),
