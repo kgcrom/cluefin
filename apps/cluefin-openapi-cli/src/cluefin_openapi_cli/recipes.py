@@ -159,6 +159,14 @@ _RECIPES: tuple[WorkflowRecipe, ...] = (
                 agent_notes="Use DART disclosures for original filings when material.",
             ),
             RecipeStep(
+                title="Decision filing body",
+                command=("dart", "major-event"),
+                purpose="Read the structured body of one company's decision filings: amount, conversion or issue "
+                "price, counterparty, purpose of funds.",
+                agent_notes="One event type per call (convertible-bond, rights-offering, merger ...). Schedules above "
+                "list events market-wide; this reads one issuer's filing as filed.",
+            ),
+            RecipeStep(
                 title="Shareholder meeting",
                 command=("kis", "schedule", "shareholder-meeting"),
                 purpose="Find shareholder meeting schedules.",
@@ -301,6 +309,13 @@ _RECIPES: tuple[WorkflowRecipe, ...] = (
                 command=("dart", "disclosure-search"),
                 purpose="Search formal DART disclosures.",
                 agent_notes="Use corp_code and date filters when monitoring a specific issuer.",
+            ),
+            RecipeStep(
+                title="Major-event report body",
+                command=("dart", "major-event"),
+                purpose="Read a major-event report (pblntf_ty B) found by the search as structured fields.",
+                agent_notes="Map report_nm to an event type (전환사채권발행결정 → convertible-bond) and pass the "
+                "rcept_dt as both bgn_de and end_de.",
             ),
             RecipeStep(
                 title="DART company overview",
