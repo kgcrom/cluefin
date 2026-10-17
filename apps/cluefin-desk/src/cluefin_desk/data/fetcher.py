@@ -76,6 +76,11 @@ class DomesticDataFetcher:
         """True when KIS credentials are configured (client may not be built yet)."""
         return bool(settings.kis_app_key and settings.kis_secret_key)
 
+    @property
+    def has_hts(self) -> bool:
+        """True when KIS keys and the HTS user ID (needed by watchlist APIs) are configured."""
+        return self.has_kis and bool(settings.kis_hts_user_id)
+
     # ──────────────────────────────────────
     # Basic stock data
     # ──────────────────────────────────────

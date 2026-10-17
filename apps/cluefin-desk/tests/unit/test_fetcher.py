@@ -72,6 +72,20 @@ def _ratio_row(stac_yymm, **overrides):
     return SimpleNamespace(stac_yymm=stac_yymm, **defaults)
 
 
+class TestHasHts:
+    def test_needs_kis_keys_and_hts_id(self, monkeypatch):
+        fetcher = _make_fetcher(monkeypatch, kis_app_key="kis-key", kis_secret_key="kis-secret", kis_hts_user_id="hts")
+        assert fetcher.has_hts is True
+
+    def test_false_without_hts_id(self, monkeypatch):
+        fetcher = _make_fetcher(monkeypatch, kis_app_key="kis-key", kis_secret_key="kis-secret", kis_hts_user_id=None)
+        assert fetcher.has_hts is False
+
+    def test_false_without_kis_keys(self, monkeypatch):
+        fetcher = _make_fetcher(monkeypatch, kis_app_key=None, kis_secret_key=None, kis_hts_user_id="hts")
+        assert fetcher.has_hts is False
+
+
 class TestSplitAnnualAndYtd:
     split = staticmethod(DomesticDataFetcher._split_annual_and_ytd)
 
