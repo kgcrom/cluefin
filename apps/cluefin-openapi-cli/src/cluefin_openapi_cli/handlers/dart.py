@@ -867,6 +867,137 @@ def handle_major_event(params: dict, session) -> dict:
     return {"event": params["event"], "endpoint": spec.endpoint, **dump_model(_checked(result))}
 
 
+def _item(endpoint: str, label: str, method: Callable[[Any], Callable[..., Any]]) -> _Endpoint:
+    def call(dart, params):
+        return method(dart.periodic_report_key_information)(
+            corp_code=params["corp_code"], bsns_year=params["bsns_year"], reprt_code=params["reprt_code"]
+        )
+
+    return _Endpoint(endpoint, label, call)
+
+
+# 최대주주 현황(hyslrSttus)과 주식의 총수(stockTotqySttus)는 dart major-shareholder / share-count 가 이미 연다.
+_REPORT_ITEMS: dict[str, _Endpoint] = {
+    "dividend": _item("alotMatter", "배당에 관한 사항", lambda c: c.get_dividend_information),
+    "treasury-stock": _item(
+        "tesstkAcqsDspsSttus", "자기주식 취득 및 처분 현황", lambda c: c.get_treasury_stock_activity
+    ),
+    "capital-change": _item("irdsSttus", "증자(감자) 현황", lambda c: c.get_capital_change_status),
+    "major-shareholder-changes": _item("hyslrChgSttus", "최대주주 변동현황", lambda c: c.get_major_shareholder_changes),
+    "minority-shareholders": _item("mrhlSttus", "소액주주 현황", lambda c: c.get_minority_shareholder_status),
+    "executives": _item("exctvSttus", "임원 현황", lambda c: c.get_executive_status),
+    "employees": _item("empSttus", "직원 현황", lambda c: c.get_employee_status),
+    "outside-directors": _item(
+        "outcmpnyDrctrNdChangeSttus", "사외이사 및 그 변동현황", lambda c: c.get_outside_director_status
+    ),
+    "director-pay-individual": _item(
+        "hmvAuditIndvdlBySttus",
+        "이사·감사 개별 보수현황(5억 이상)",
+        lambda c: c.get_board_and_audit_compensation_above_500m,
+    ),
+    "director-pay-total": _item(
+        "hmvAuditAllSttus", "이사·감사 전체 보수지급금액", lambda c: c.get_board_and_audit_total_compensation
+    ),
+    "top-five-pay": _item(
+        "indvdlByPay", "개인별 보수지급 금액(5억 이상 상위 5인)", lambda c: c.get_top_five_individual_compensation
+    ),
+    "unregistered-executive-pay": _item(
+        "unrstExctvMendngSttus", "미등기임원 보수현황", lambda c: c.get_unregistered_executive_compensation
+    ),
+    "director-pay-approved": _item(
+        "drctrAdtAllMendngSttusGmtsckConfmAmount",
+        "이사·감사 전체 보수현황(주주총회 승인금액)",
+        lambda c: c.get_board_and_audit_compensation_shareholder_approved,
+    ),
+    "director-pay-by-type": _item(
+        "drctrAdtAllMendngSttusMendngPymntamtTyCl",
+        "이사·감사 전체 보수현황(보수지급금액 유형별)",
+        lambda c: c.get_board_and_audit_compensation_by_type,
+    ),
+    "other-corp-investments": _item(
+        "otrCprInvstmntSttus", "타법인 출자현황", lambda c: c.get_other_corporation_investments
+    ),
+    "debt-securities-issued": _item(
+        "detScritsIsuAcmslt", "채무증권 발행실적", lambda c: c.get_debt_securities_issuance_performance
+    ),
+    "commercial-paper-outstanding": _item(
+        "entrprsBilScritsNrdmpBlce", "기업어음증권 미상환 잔액", lambda c: c.get_outstanding_commercial_paper_balance
+    ),
+    "short-term-bonds-outstanding": _item(
+        "srtpdPsndbtNrdmpBlce", "단기사채 미상환 잔액", lambda c: c.get_outstanding_short_term_bonds
+    ),
+    "corporate-bonds-outstanding": _item(
+        "cprndNrdmpBlce", "회사채 미상환 잔액", lambda c: c.get_outstanding_corporate_bonds
+    ),
+    "hybrid-capital-outstanding": _item(
+        "newCaplScritsNrdmpBlce", "신종자본증권 미상환 잔액", lambda c: c.get_outstanding_hybrid_capital_securities
+    ),
+    "contingent-capital-outstanding": _item(
+        "cndlCaplScritsNrdmpBlce",
+        "조건부 자본증권 미상환 잔액",
+        lambda c: c.get_outstanding_contingent_capital_securities,
+    ),
+    "auditor-opinion": _item(
+        "accnutAdtorNmNdAdtOpinion", "회계감사인의 명칭 및 감사의견", lambda c: c.get_auditor_name_and_opinion
+    ),
+    "audit-contracts": _item("adtServcCnclsSttus", "감사용역 체결현황", lambda c: c.get_audit_service_contracts),
+    "non-audit-contracts": _item(
+        "accnutAdtorNonAdtServcCnclsSttus",
+        "회계감사인과의 비감사용역 계약체결 현황",
+        lambda c: c.get_non_audit_service_contracts,
+    ),
+    "public-offering-fund-usage": _item(
+        "pssrpCptalUseDtls", "공모자금의 사용내역", lambda c: c.get_public_offering_fund_usage
+    ),
+    "private-placement-fund-usage": _item(
+        "prvsrpCptalUseDtls", "사모자금의 사용내역", lambda c: c.get_private_placement_fund_usage
+    ),
+}
+
+
+@rpc_method(
+    name="dart.report_item",
+    description=(
+        "Get one section of a company's periodic report (정기보고서 주요정보), one item per call: dividend "
+        "(DPS, payout ratio, dividend yield), treasury stock activity, capital changes, major shareholder changes, "
+        "minority shareholders, executives, employees, outside directors, director and executive pay (compensation), other "
+        "corporation investments, debt securities issued and bonds, commercial paper and hybrid capital "
+        "outstanding, auditor name and audit opinion, audit and non-audit contracts, public offering and private "
+        'placement fund usage. Rows are as DART sends them: comma strings, "-" for missing. status 013 means '
+        "the report has no such section. Data from bsns_year 2015. Major shareholder status and total share count "
+        "have their own commands: dart major-shareholder and dart share-count."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "corp_code": {
+                "type": "string",
+                "description": "Corporate unique code (8 digits, from dart corp-code-lookup)",
+            },
+            "item": {
+                "type": "string",
+                "enum": list(_REPORT_ITEMS),
+                "description": "Report section (DART endpoint): " + _choices(_REPORT_ITEMS),
+            },
+            "bsns_year": {"type": "string", "description": "Business year (4 digits, e.g. 2025)"},
+            "reprt_code": {
+                "type": "string",
+                "enum": ["11013", "11012", "11014", "11011"],
+                "description": "Report code (11013:Q1, 11012:H1, 11014:Q3, 11011:Annual)",
+            },
+        },
+        "required": ["corp_code", "item", "bsns_year", "reprt_code"],
+    },
+    returns={"type": "object"},
+    category="dart",
+    broker="dart",
+)
+def handle_report_item(params: dict, session) -> dict:
+    spec = _REPORT_ITEMS[params["item"]]
+    result = spec.call(session.get_dart(), params)
+    return {"item": params["item"], "endpoint": spec.endpoint, **dump_model(_checked(result))}
+
+
 # ---------------------------------------------------------------------------
 # Filing text (cluefin-dart-notes): download the original XML, parse, return blocks
 # ---------------------------------------------------------------------------
@@ -1431,6 +1562,7 @@ _ALL_HANDLERS = [
     handle_major_shareholder,
     handle_share_count,
     handle_major_event,
+    handle_report_item,
     handle_financial_major_accounts,
     handle_financial_full_statements,
     handle_financial_major_indicators,

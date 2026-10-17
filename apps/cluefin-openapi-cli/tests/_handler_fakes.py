@@ -34,6 +34,7 @@ _SAMPLE_VALUES = {
     "reprt_code": "11011",
     "corp_code": "00126380",
     "event": "convertible-bond",
+    "item": "dividend",
     "bgn_de": "20240101",
     "end_de": "20240131",
     "idx_cl_code": "M210000",

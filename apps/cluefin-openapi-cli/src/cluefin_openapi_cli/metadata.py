@@ -530,6 +530,16 @@ _TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {
         when_to_use="Use when the task specifically involves off-regular-session prices or execution.",
         related_domains=("quote",),
     ),
+    "periodic-report-item": TaxonomyMetadata(
+        name="periodic-report-item",
+        description="Sections of a DART periodic report as structured rows: dividends, treasury stock, executives, "
+        "employees, pay, bonds outstanding, auditor opinion, fund usage.",
+        when_to_use="Use for one company's governance, payout and funding facts as reported in its annual or "
+        "quarterly report (dart report-item).",
+        avoid_when="Use financial-statement commands for statement line items.",
+        related_domains=("statements", "corporate-actions"),
+        related_tags=("disclosure", "dividend", "shareholder"),
+    ),
     "program-trading": TaxonomyMetadata(
         name="program-trading",
         description="Program trading summary, cumulative, arbitrage, or by-stock flow data.",
@@ -854,6 +864,9 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
         ("corporate-actions", "news"), ("disclosure", "major-event", "dilution", "capital-increase", "merger-split")
     ),
     "dart.major-shareholder": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
+    "dart.report-item": CommandTaxonomy(
+        ("statements", "corporate-actions"), ("disclosure", "periodic-report-item", "dividend")
+    ),
     "dart.share-count": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
     "sec.company-lookup": CommandTaxonomy(("reference",), ("us-filing", "reference-list")),
     "sec.filings": CommandTaxonomy(("news", "statements"), ("us-filing", "disclosure")),
@@ -1020,7 +1033,7 @@ QUERY_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("재무지표", ("financial", "indicators", "ratio")),
     ("연결재무제표", ("consolidated", "financial", "statements")),
     ("대차대조표", ("balance", "sheet")),
-    ("배당", ("dividend", "yield")),
+    ("배당", ("dividend", "yield", "payout")),
     ("차트", ("chart", "ohlcv", "price", "history")),
     ("분봉", ("minute", "chart")),
     ("일봉", ("daily", "chart")),
@@ -1048,6 +1061,22 @@ QUERY_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("사업내용", ("business", "description", "segment", "section")),
     ("사업의 개요", ("business", "overview", "section")),
     ("감사보고서", ("audit", "report", "notes")),
+    ("감사의견", ("auditor", "audit", "opinion")),
+    ("감사인", ("auditor", "opinion")),
+    ("비감사용역", ("non", "audit", "contracts")),
+    ("임원", ("executives",)),
+    ("직원", ("employees",)),
+    ("사외이사", ("outside", "directors")),
+    ("소액주주", ("minority", "shareholders")),
+    ("보수", ("pay", "compensation")),
+    ("연봉", ("pay", "compensation")),
+    ("타법인출자", ("other", "corporation", "investments")),
+    ("타법인 출자", ("other", "corporation", "investments")),
+    ("사채 잔액", ("bonds", "outstanding")),
+    ("회사채", ("corporate", "bonds", "outstanding")),
+    ("기업어음", ("commercial", "paper")),
+    ("공모자금", ("public", "offering", "fund", "usage")),
+    ("사모자금", ("private", "placement", "fund", "usage")),
     ("특수관계자", ("related", "parties", "notes")),
     ("우발부채", ("contingent", "liabilities", "notes")),
     ("소송", ("lawsuits", "lawsuit", "contingent", "notes")),

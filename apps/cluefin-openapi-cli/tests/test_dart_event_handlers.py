@@ -1,4 +1,4 @@
-"""dart major-event — 람다 표가 실제 라이브러리 메서드를 부르고, 그 메서드가 표에 적힌 엔드포인트로 가는지.
+"""dart major-event·report-item — 람다 표가 실제 라이브러리 메서드를 부르고, 그 메서드가 표에 적힌 엔드포인트로 가는지.
 
 라이브러리 메서드 이름은 엔드포인트와 자주 다르다(`real_estate_development` → dfOcr, 부도발생). 표의 `endpoint`
 가 진실의 원천이므로, 실제 DART client 의 `_get` 만 가로채 36종 전부를 대조한다. 계약 테스트
@@ -35,6 +35,10 @@ class _RecordingDart:
     @property
     def major_shareholder_disclosure(self):
         return self.client.major_shareholder_disclosure
+
+    @property
+    def periodic_report_key_information(self):
+        return self.client.periodic_report_key_information
 
 
 class _Session:
@@ -133,3 +137,44 @@ def test_rows_pass_through_unchanged() -> None:
         "endpoint": spec.endpoint,
         "result": {"status": "000", "list": [row]},
     }
+
+
+# --- dart report-item -------------------------------------------------------------------------
+
+_ITEM_PARAMS = {"corp_code": "00126380", "item": "dividend", "bsns_year": "2025", "reprt_code": "11011"}
+
+
+@pytest.mark.parametrize("item", list(handlers._REPORT_ITEMS))
+def test_every_item_calls_the_endpoint_in_the_table(item: str) -> None:
+    dart = _RecordingDart()
+    spec = handlers._REPORT_ITEMS[item]
+
+    result = handlers.handle_report_item({**_ITEM_PARAMS, "item": item}, _Session(dart))
+
+    assert dart.paths == [
+        (f"/api/{spec.endpoint}.json", {"corp_code": "00126380", "bsns_year": "2025", "reprt_code": "11011"})
+    ]
+    assert (result["item"], result["endpoint"]) == (item, spec.endpoint)
+    assert result["result"]["status"] == "013"
+
+
+def test_item_table_has_26_endpoints_and_leaves_existing_commands_alone() -> None:
+    endpoints = [spec.endpoint for spec in handlers._REPORT_ITEMS.values()]
+    assert len(endpoints) == len(set(endpoints)) == 26
+    # dart major-shareholder / share-count already serve these two
+    assert not {"hyslrSttus", "stockTotqySttus"} & set(endpoints)
+
+
+def test_item_schema() -> None:
+    schema = handlers.handle_report_item._rpc_schema.parameters
+    assert schema["properties"]["item"]["enum"] == list(handlers._REPORT_ITEMS)
+    assert validate_params(_ITEM_PARAMS, schema).ok
+    assert not validate_params({**_ITEM_PARAMS, "reprt_code": "99999"}, schema).ok
+    assert not validate_params({**_ITEM_PARAMS, "item": "share-count"}, schema).ok
+
+
+def test_item_status_020_is_classified_as_rate_limit() -> None:
+    with pytest.raises(Exception) as exc_info:
+        handlers.handle_report_item(_ITEM_PARAMS, _Session(_RecordingDart(status="020")))
+    error = classify_exception(exc_info.value, command="dart.report-item", broker="dart")
+    assert error.exit_code == EXIT_RATE_LIMIT
