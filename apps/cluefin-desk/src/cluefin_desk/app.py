@@ -1,10 +1,13 @@
+import threading
 from pathlib import Path
+from typing import Optional
 
 from textual.app import App
 from textual.binding import Binding
 
 from cluefin_desk.config.settings import settings
 from cluefin_desk.data.fetcher import DomesticDataFetcher
+from cluefin_desk.data.listing import StockListing, load_listing
 from cluefin_desk.data.screener import StockScreener
 
 CSS_PATH = Path(__file__).parent / "styles" / "app.tcss"
@@ -23,6 +26,7 @@ class CluefinDeskApp(App):
         Binding("3", "switch_screen('3')", "THEME", show=True),
         Binding("4", "switch_screen('4')", "ETF", show=True),
         Binding("5", "switch_screen('5')", "INV", show=True),
+        Binding("slash", "search_stock", "Search", show=True),
     ]
 
     def __init__(self):
@@ -30,6 +34,8 @@ class CluefinDeskApp(App):
         self.fetcher = DomesticDataFetcher()
         self.screener = StockScreener(self.fetcher)
         self._current_screen_key = "1"
+        self._listing: Optional[StockListing] = None
+        self._listing_lock = threading.Lock()
 
     def on_mount(self) -> None:
         from cluefin_desk.screens.market_overview import MarketOverviewScreen
@@ -67,6 +73,28 @@ class CluefinDeskApp(App):
         }
         cls = screen_map.get(key)
         return cls() if cls else None
+
+    def get_listing(self) -> StockListing:
+        """Stock search index, fetched once per app run. Called from worker threads."""
+        with self._listing_lock:
+            if self._listing is None:
+                self._listing = load_listing(self.fetcher.kiwoom_client)
+            return self._listing
+
+    def action_search_stock(self) -> None:
+        from cluefin_desk.screens.stock_search import StockSearchScreen
+
+        if isinstance(self.screen, StockSearchScreen):
+            return
+        self.push_screen(StockSearchScreen(self.get_listing), self.open_stock_detail)
+
+    def open_stock_detail(self, stock_code: Optional[str]) -> None:
+        """Open the detail screen on top of the current one (escape returns)."""
+        if not stock_code:
+            return
+        from cluefin_desk.screens.stock_detail import StockDetailScreen
+
+        self.push_screen(StockDetailScreen(stock_code=stock_code))
 
     @property
     def dart_client(self):

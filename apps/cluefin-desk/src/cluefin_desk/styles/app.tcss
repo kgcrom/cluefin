@@ -308,3 +308,30 @@ Screen {
     padding: 0 1;
     color: $text-muted;
 }
+
+/* Stock Search Modal */
+StockSearchScreen {
+    align: center middle;
+}
+
+#search-dialog {
+    width: 76;
+    height: 24;
+    border: round $primary;
+    background: $surface;
+    padding: 0 1;
+}
+
+#search-title {
+    height: 1;
+    color: $text-muted;
+}
+
+#search-results {
+    height: 1fr;
+}
+
+#search-status {
+    height: 1;
+    color: $text-muted;
+}
