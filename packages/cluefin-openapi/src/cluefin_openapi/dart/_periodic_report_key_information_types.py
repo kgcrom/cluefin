@@ -448,10 +448,11 @@ class AuditorNameAndOpinionItem(BaseModel):
     corp_name: str = Field(description="공시대상회사명")
     bsns_year: str = Field(description="사업연도")
     adtor: str = Field(description="감사인")
-    adt_opinion: str = Field(description="감사의견")
+    # 실서버는 값이 없는 행에서 감사의견·강조사항·핵심감사사항 키를 빼고 보낸다 (VENDOR_DOC_ERRATA.md)
+    adt_opinion: Optional[str] = Field(default=None, description="감사의견")
     adt_reprt_spcmnt_matter: str = Field(description="감사보고서 특기사항")
-    emphs_matter: str = Field(description="강조사항 등")
-    core_adt_matter: Optional[str] = Field(description="핵심감사사항")
+    emphs_matter: Optional[str] = Field(default=None, description="강조사항 등")
+    core_adt_matter: Optional[str] = Field(default=None, description="핵심감사사항")
     stlm_dt: str = Field(description="결산기준일")
 
 

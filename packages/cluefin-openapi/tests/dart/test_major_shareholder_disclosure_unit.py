@@ -310,3 +310,63 @@ def test_corporate_law_decision_accepts_response_without_external_evaluation_opi
 
     assert result.result.list is not None
     assert result.result.list[0].exevl_op is None
+
+
+# 2026-10-17 실측: 실서버는 금액·주식수를 콤마 문자열로, 값이 없으면 "-" 로 보낸다. 이 필드들을 int/float 로
+# 선언했던 8종은 실데이터마다 int_parsing 으로 응답 전체가 거부됐다 (VENDOR_DOC_ERRATA.md).
+LIVE_SHAPED_VALUES = [
+    (
+        "securities_granted_decision",
+        "/api/piicDecsn.json",
+        types.SecuritiesGrantedDecisionItem,
+        {"fdpp_op": "12,345,678,900", "bfic_tisstk_estk": "-", "nstk_ostk_cnt": "1,234,567", "fv_ps": "500"},
+    ),
+    (
+        "free_securities_decision",
+        "/api/fricDecsn.json",
+        types.FreeSecuritiesDecisionItem,
+        {"nstk_ascnt_ps_ostk": "0.5", "nstk_ascnt_ps_estk": "-", "bfic_tisstk_ostk": "9,876,543"},
+    ),
+    (
+        "paid_in_capital_reduction_decision",
+        "/api/pifricDecsn.json",
+        types.PaidInCapitalReductionDecisionItem,
+        {"piic_fdpp_op": "1,000,000,000", "fric_nstk_estk_cnt": "-", "fric_od_a_at_t": "3"},
+    ),
+    (
+        "capital_reduction_decision",
+        "/api/crDecsn.json",
+        types.CapitalReductionDecisionItem,
+        {"bfcr_cpt": "123,456,789,000", "atcr_tisstk_estk": "-", "fv_ps": "5,000"},
+    ),
+    ("real_estate_development", "/api/dfOcr.json", types.RealEstateDevelopmentItem, {"df_amt": "1,234,567,890"}),
+    (
+        "business_letter",
+        "/api/bsnSp.json",
+        types.BusinessLetterItem,
+        {"bsnsp_amt": "1,234,567,890,000", "rsl": "98,765,432,100", "od_a_at_b": "-"},
+    ),
+    ("dissolution_occurrence", "/api/dsRsOcr.json", types.DissolutionOccurrenceItem, {"od_a_at_t": "-"}),
+    (
+        "treasury_stock_acquisition_disposal_plan",
+        "/api/astInhtrfEtcPtbkOpt.json",
+        types.TreasuryStockAcquisitionDisposalPlanItem,
+        {"ast_inhtrf_prc": "-"},
+    ),
+]
+
+
+@pytest.mark.parametrize("method_name, endpoint, item_type, values", LIVE_SHAPED_VALUES)
+def test_major_event_amounts_pass_through_as_live_strings(
+    client: Client, method_name: str, endpoint: str, item_type, values: dict
+) -> None:
+    service = MajorShareholderDisclosure(client)
+    payload = build_payload(item_type, overrides=values)
+
+    with requests_mock.Mocker() as mock_requests:
+        mock_requests.get(f"{BASE_URL}{endpoint}", json=payload, status_code=200)
+        result = getattr(service, method_name)("00126380", "20240101", "20240131")
+
+    item = result.result.list[0]
+    for field_name, value in values.items():
+        assert getattr(item, field_name) == value
