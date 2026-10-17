@@ -4,8 +4,8 @@ Interactive TUI dashboard for Korean stock market analysis, built with [Textual]
 
 ## Screens
 
-Top-level screens switch with keys `1`–`5`; `stock detail` and `financial analysis` are
-pushed from a row selection (`escape` goes back).
+Top-level screens switch with keys `1`–`6`; `stock detail` and `financial analysis` are
+pushed from a row selection or from `/` stock search (`escape` goes back).
 
 | Key | Screen | Content |
 |-----|--------|---------|
@@ -14,6 +14,8 @@ pushed from a row selection (`escape` goes back).
 | `3` | Theme / sector | Theme groups and sector constituents (Kiwoom) |
 | `4` | ETF analysis | ETF ranking and composition |
 | `5` | Investor flow | Institution/foreign net-buy trends |
+| `6` | Watchlist | KIS HTS watchlist groups (also those made in the 한국투자 mobile app) and their quotes |
+| `/` | Stock search | Code (6 characters, letters included) or name → stock detail, from any screen |
 | — | Stock detail | Price chart, RSI/MACD/Bollinger, investor·broker·supply, opinions, news, ML prediction (LightGBM + SHAP) |
 | — | Financial analysis | KIS financials, XBRL statements, DART disclosures, dividends, major shareholders, share changes |
 
@@ -33,6 +35,7 @@ root uses the production `.env`.
 
 - Kiwoom API keys (`KIWOOM_APP_KEY`, `KIWOOM_SECRET_KEY`) — required; authentication runs at startup
 - KIS API keys (`KIS_APP_KEY`, `KIS_SECRET_KEY`) — optional; KIS-backed panels are skipped without them
+- KIS HTS login ID (`KIS_HTS_USER_ID`) — optional; the watchlist screen needs it (with the KIS keys)
 - DART API key (`DART_AUTH_KEY`) — optional; disclosure/financial tabs need it
 
 The app is read-only — it contains no order or account-mutation code.

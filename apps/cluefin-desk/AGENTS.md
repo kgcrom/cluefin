@@ -24,6 +24,14 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   Check call sites before extending those.
 - KIS 랭킹 조회의 `fid_cond_scr_div_code` 등 화면코드는 KIS 포털이 요구하는 고정 키다
   (`data/fetcher.py`). 통합테스트 값과 다르게 바꾸면 오류 없이 빈 응답이 온다.
+- `KIS_HTS_USER_ID`(관심종목 화면)는 KIS 관심종목 API 의 요청 파라미터다. 값을 화면·로그·테스트 픽스처에
+  남기지 않는다 — 네트워크 오류 메시지에는 쿼리 문자열이 붙은 URL 이 실릴 수 있어서 fetcher 의 `_hts_call` 이
+  가린 뒤 다시 던진다. 관심종목 호출을 추가하면 이 래퍼를 거친다.
+- KIS 조건검색(`psearch-*`)은 HTS [0110] 에서 서버저장한 조건식만 읽는다. 저장된 조건식이 없으면 HTTP 200 +
+  `rt_cd=1` `MCA05762` "조회가 계속 됩니다" 가 온다(2026-10-17 실측). MTS 만 쓰는 계정은 조건식을 만들 수 없어
+  화면을 두지 않았다. 관심 그룹은 MTS 에서 만든 것도 바로 보인다.
+- 종목코드는 숫자만이 아니다 — 신규 상장·우선주 일부가 `0001A0`·`00088K` 꼴이다(키움 ka10099 기준 86개).
+  코드 형식을 `isdigit()`·`[0-9]{6}` 로 거르지 않는다(`data/listing.is_stock_code`).
 - KIS 재무 시계열은 문서와 달리 진행연도 누적 행이 맨 앞에 온다(실측).
   `_split_annual_and_ytd` 를 우회해 첫 행을 연간으로 쓰면 ROE·성장률이 부풀려진다.
 
@@ -64,12 +72,15 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 
 ## Testing
 
-- TUI 하네스가 7화면 전부에 있다: `tests/unit/test_<screen>.py` (market_overview ·
-  screening · theme_sector · etf_analysis · investor_flow · stock_detail ·
-  financial_analysis_screen). 화면을 띄우는 테스트는 `CluefinDeskApp` 대신
+- TUI 하네스가 화면마다 있다: `tests/unit/test_<screen>.py` (market_overview ·
+  screening · theme_sector · etf_analysis · investor_flow · watchlist · stock_detail ·
+  financial_analysis_screen · stock_search). 화면을 띄우는 테스트는 `CluefinDeskApp` 대신
   그 파일들의 `HarnessApp`(App 서브클래스 + fake fetcher/screener/dart client)을 쓴다 —
   `CluefinDeskApp.__init__` 은 생성만으로 실계좌 인증을 때린다. 같은 이유로 테스트에서
   실제 `DomesticDataFetcher` 를 만들면 cwd 의 `.env` 로 라이브 인증이 나간다.
+- 앱 수준 바인딩·액션을 테스트할 때는 `test_stock_search.py` 처럼 `CluefinDeskApp` 을 상속하고
+  `App.__init__` 만 부른다. `on_mount` 를 덮어쓸 때는 `event.prevent_default()` 를 불러야 한다 — Textual 은
+  부모 클래스의 `on_mount` 도 부르므로 막지 않으면 실제 시장 개요 화면이 떠 라이브 조회를 한다.
 - 패널 텍스트는 `str(widget.content)` 로 읽는다 (textual 8 의 Static 에는
   `renderable` 이 없다). 워커를 기다릴 때는 `await pilot.pause()` →
   `await app.workers.wait_for_complete()` → `await pilot.pause()`.
