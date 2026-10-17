@@ -188,9 +188,10 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   `MajorShareholderDisclosure` 도 실제로는 주요사항보고서(DS005)다. `handlers/dart.py` 의 `_MAJOR_EVENTS`·`_REPORT_ITEMS`
   (slug → 엔드포인트·한국어 이름·람다)가 진실의 원천이다. `getattr(client, 이름)` 으로 바꾸지 않는다 — 이름이 오해를
   부르고 Codacy 가 동적 호출로 잡는다. `test_dart_event_handlers.py` 가 62종 전부 실제 client 의 `_get` 경로를 표와 대조한다.
-- 실데이터 검증(2026-10-17, 종류당 최근 12개월 공시 표본 2건): 주요사항 31종은 행으로 확인. `split-merger`·
-  `business-acquisition`·`business-transfer` 는 표본 공시가 있었지만 013(자회사 공시 등으로 보임), `overseas-delisting-decision`·
-  `overseas-delisting` 은 표본이 없어 **미검증**. report-item 26종은 대형주·소형주 각 1곳의 2025 사업보고서로 확인.
+- 실데이터 검증(2026-10-17, 최근 12개월 주요사항보고 공시에서 종류별 표본, CLI 경유): 주요사항 33종은 행으로 확인.
+  `split-merger` 는 표본 4건이 모두 013(자회사 공시로 보임), `overseas-delisting-decision`·`overseas-delisting` 은 표본이 없어
+  **미검증**. 표본은 `[기재정정]` 을 빼고 고른다 — 정정 공시의 접수일로 조회하면 013 이 온다. report-item 26종은 대형주·소형주
+  각 1곳의 2025 사업보고서로 확인. 10년 범위(2016–2026) 조회도 된다.
   이 과정에서 라이브러리 모델 8종(유상·무상·유무상증자·감자·부도·영업정지·해산·자산양수도)의 숫자 필드와 감사의견 3필드를
   실서버에 맞춰 고쳤다(`packages/cluefin-openapi/VENDOR_DOC_ERRATA.md` DART 절).
 - `major-event` 의 `bgn_de`·`end_de` 는 필수다. 기본값이 있으면 "없음(013)" 과 "기간이 틀림" 을 구분할 수 없다. 달력 날짜·
