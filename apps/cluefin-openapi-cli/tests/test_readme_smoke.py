@@ -7,7 +7,7 @@ from cluefin_openapi_cli.main import run_cli
 from cluefin_openapi_cli.registry import RpcRegistry, set_registry_provider
 
 README = Path("apps/cluefin-openapi-cli/README.md")
-SKILL = Path("apps/cluefin-openapi-cli/SKILL.md")
+AGENTS = Path("apps/cluefin-openapi-cli/AGENTS.md")
 
 
 def test_readme_mentions_agent_discovery_commands() -> None:
@@ -84,11 +84,11 @@ def test_readme_taxonomy_examples_match_json_shape() -> None:
     assert f'"command_count": {chart["command_count"]}' in readme
 
 
-def test_readme_and_skill_document_roles_dry_run_and_exit_codes() -> None:
+def test_readme_and_agents_document_roles_dry_run_and_exit_codes() -> None:
     readme = README.read_text(encoding="utf-8")
-    skill = SKILL.read_text(encoding="utf-8")
+    agents = AGENTS.read_text(encoding="utf-8")
 
-    for text in (readme, skill):
+    for text in (readme, agents):
         assert "primary" in text and "auxiliary" in text
         assert "kis_alternatives" in text
         assert "--dry-run" in text
@@ -97,5 +97,4 @@ def test_readme_and_skill_document_roles_dry_run_and_exit_codes() -> None:
         assert "schema kis stock current-price --json" in text
         assert "retryable" in text
     assert "| 5 |" in readme  # exit-code table
-    assert skill.startswith("---\nname: cluefin-openapi-cli\n")
-    assert "cluefin-cli" not in skill
+    assert "SKILL.md" not in agents and "SKILL.md" not in readme

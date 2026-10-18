@@ -74,8 +74,9 @@ poetry.lock
 # Token cache files
 *_token_cache.json
 
-# Claude Code AI assistant configuration and memory
-.claude/
+# Claude Code AI assistant configuration and memory (agents are shared, the rest is local)
+.claude/*
+!.claude/agents/
 CLAUDE.local.md
 
 .ruff_cache/

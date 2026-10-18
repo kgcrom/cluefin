@@ -1,6 +1,48 @@
 # AGENTS.md — cluefin-openapi-cli
 
-Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
+Non-obvious constraints only; see the root AGENTS.md for repo-wide rules. 첫 절은 이 CLI 로
+데이터를 조회하는 에이전트용이고, 그 아래는 CLI 를 고치는 사람용이다.
+
+## 에이전트가 데이터를 조회할 때
+
+모든 명령은 저장소 루트에서 `uv run cluefin-openapi-cli …` 로 부르고 출력은 JSON 이다. 조회 전용이지만
+루트 `.env` 의 **실계좌** 자격증명으로 토큰이 발급된다. 자격증명 값은 어디에도 찍지 않는다 —
+확인은 `brokers --json` 의 `credentials.configured` 로 끝낸다.
+
+흐름은 `search` → `schema` → `--dry-run` → 실행이다. 명령·파라미터·코드값은 추측하지 말고 CLI 가 말해 주는
+것을 쓴다(`search` 는 빈 결과 대신 `fallback` 을 주고, `schema` 는 바로 실행 가능한 `invoke.*` 를 준다).
+여러 단계가 필요한 일은 `recipes --json` → `recipe <name> --json` 에 순서와 `agent_notes` 가 있다.
+
+```bash
+uv run cluefin-openapi-cli search 외국인 순매수 상위 --json
+uv run cluefin-openapi-cli schema kis stock current-price --json
+uv run cluefin-openapi-cli kis stock current-price --stock-code 005930 --dry-run --json
+uv run cluefin-openapi-cli kis stock current-price --stock-code 005930 --fields current_price,per,pbr --compact
+uv run cluefin-openapi-cli kis chart technical --stock-code 005930 --count 250 --json
+uv run cluefin-openapi-cli recipe stock-research --json
+```
+
+CLI 가 말해 주지 않는 것만 적는다.
+
+- **출처 역할.** KIS 가 1순위(primary), 키움은 보조(auxiliary) — `kis_alternatives` 가 `[]` 인 명령이나
+  KIS 가 빈 데이터를 줬을 때만, DART·SEC 는 참고(reference) 다.
+- **최신 실적은 DART, 과거 연간·주당지표는 KIS.** `kis financial *` 은 소형주에서 연간 행만 오고 최신 공시보다
+  한 해 늦을 수 있다. 반기·분기는 `dart financial-major-accounts`(`recipe latest-earnings`), 비율·성장률은
+  `dart financial-major-indicators`, EPS·BPS 만 KIS 다. 분기 보고서의 `thstrm_amount` 는 해당 분기 단독,
+  `thstrm_add_amount` 는 연초 누적이다. 정정 전 원본 값은 `dart financial-as-filed` 뿐이다.
+- **숫자가 말해 주지 않는 것은 원문에 있다.** 부문별 매출·수주·차입금 만기·우발부채는 `recipe filing-text`
+  (정기보고서·감사보고서만 읽힌다), 주요사항보고서의 금액·상대방은 `dart major-event`, 배당·자사주·임원 등
+  정기보고서 항목은 `dart report-item`. 미국 고객사·경쟁사 공시는 `recipe us-peer-filings`(20-F/6-K 제출사는
+  못 읽는다).
+- **환율 명령은 없다.** 금리는 `kis market interest-rate`. 매크로를 웹 검색으로 대신하지 않는다 — 기준일이 섞인다.
+- **기술적 지표는 `kis chart technical`.** 캔들을 받아 직접 계산하지 않는다. `signal.trend` 와
+  `signal.mean_reversion` 은 별개 계열이라 하나의 점수로 합치지 않는다. 값은 `cluefin-desk` 화면과 다르다(EMA
+  워밍업 차이) — 이 CLI 가 기준이다.
+- **응답은 작게.** `--fields`·`--limit`·`--compact`. 잘리면 `_truncated` 에 실제 `total` 이 온다. `list --json`
+  을 필터 없이 부르지 않는다(61KB).
+- **exit code 로 분기한다.** 0 정상 · 1 내부 오류 · 2 인자 오류(`error.data.issues[]` 읽고 고친 뒤 재시도) ·
+  3 자격증명(중단하고 보고) · 4 브로커/네트워크(`error.retryable` 이 true 일 때만 1회 재시도) ·
+  5 레이트리밋(`data.retry_after` 만큼 대기, DART `status` 020 은 일일 한도라 재시도 금지). KIS 는 동시 2개까지.
 
 ## Env & safety
 
@@ -37,7 +79,7 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 ## Exit codes and error envelope
 
 - Exit codes are a contract with agents (`errors.EXIT_CODES`; mirrored in README and
-  SKILL.md): 2 usage/validation, 3 credentials/auth, 4 broker/network/response-parse,
+  the agent section above): 2 usage/validation, 3 credentials/auth, 4 broker/network/response-parse,
   5 rate limit, 1 everything else. Do not raise `CliError` with a bare exit 1 for a
   classifiable failure — route it through `classify_exception`.
 - Broker exceptions are classified by **class-name suffix** (`*RateLimitError`,
@@ -238,12 +280,14 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - Recipe → command references are validated only by a test, not at runtime; renaming a
   command path silently breaks recipes until tests run.
 - `test_readme_smoke.py` does literal substring assertions against `README.md` and
-  `SKILL.md` — keep the example/taxonomy strings in sync with `metadata.py` text.
+  this file's agent section — keep the example/taxonomy strings in sync with `metadata.py` text.
+  `test_cli_contract.py` also runs every `uv run cluefin-openapi-cli` line inside a code block of
+  both files (offline, or `--dry-run`), so an example here must be a valid command.
 - `list` is **brief** by default (`_command_brief`); `--full` restores the old
   per-command `parameters`. Tests and agents that need parameters must use `--full` or
   `schema`. An **unfiltered** `list --full` is capped at 25 rows (`_UNFILTERED_FULL_LIMIT`)
   and reports `count`/`returned`/`truncated`; `--limit 0` restores every row. It truncates
-  rather than refuses because README/SKILL assertions require it to exit 0.
+  rather than refuses because README/AGENTS assertions require it to exit 0.
 - `test_readme_smoke.py` also pins the `command_count` printed in the README's taxonomy
   example against the live `domains --json`, so retagging commands can fail it.
 
