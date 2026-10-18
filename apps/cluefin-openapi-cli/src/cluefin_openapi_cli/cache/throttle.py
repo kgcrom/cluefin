@@ -17,8 +17,9 @@ __all__ = ["RATE_LIMIT_CODE", "is_rate_limited", "kis_call", "kis_error_code"]
 
 RATE_LIMIT_CODE = "EGW00201"
 # Other transient KIS failures seen during a bulk load (2026-10-18): a gateway routing error
-# (HTTP 500) and "SESSION FULL" (HTTP 200, rt_cd 9). They clear within a second or two.
-_TRANSIENT_CODES = frozenset({"EGW00300", "OPSQ1002"})
+# (HTTP 500), "please query again" (HTTP 500) and "SESSION FULL" (HTTP 200, rt_cd 9). They clear
+# within a second or two.
+_TRANSIENT_CODES = frozenset({"EGW00300", "EGW00316", "OPSQ1002"})
 _PAUSE_SECONDS = 0.1
 _TRANSIENT_PAUSE_SECONDS = 1.0
 _MAX_ATTEMPTS = 30
