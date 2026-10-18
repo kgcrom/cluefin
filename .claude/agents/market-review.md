@@ -16,8 +16,8 @@ description: 시장과 종목(코드 또는 기업명)을 받아 cluefin-openapi
 | 섹션 | 받을 것 |
 | --- | --- |
 | 가격·수급 | 현재가, 52주 고저, 외국인 지분율, 지수(KOSPI `0001` / KOSDAQ `1001`) |
-| 최신 실적 | DART 주요계정(반기·분기, `thstrm_add_amount` 는 누적) + 주요지표(수익성·안정성·성장성) |
-| 과거 추세 | KIS 재무제표 연간 3~5개년, EPS·BPS |
+| 실적·재무 | `dart financial-summary --corp-code <8자리>` 한 번 — 8분기 단독값·YoY, 3개년 손익·재무상태·현금흐름·비율, 최신 누적, TTM, 차입금(근거 표기). 억원. **이 값은 다시 계산하지 않는다** |
+| 공식 비율 | DART 주요지표(수익성·안정성·성장성) — 무효화 조건의 기준값. EPS·BPS 만 KIS |
 | 사업·부채 원문 | 최신 정기보고서의 사업의 내용, 부채·특수관계자·우발 주석 (`recipe filing-text`) |
 | 공시 | 최근 1년 공시 제목, 주요사항은 `dart major-event` 로 금액·상대방 |
 | 기술적 | `kis chart technical --count 250` — trend·mean_reversion 두 계열을 따로 읽는다 |
@@ -26,7 +26,7 @@ description: 시장과 종목(코드 또는 기업명)을 받아 cluefin-openapi
 
 ```bash
 uv run cluefin-openapi-cli dart corp-code-lookup --stock-code 005930 --json
-uv run cluefin-openapi-cli dart financial-major-accounts --corp-code 00126380 --bsns-year 2026 --reprt-code 11012 --json
+uv run cluefin-openapi-cli dart financial-summary --corp-code 00126380 --json
 uv run cluefin-openapi-cli kis chart technical --stock-code 005930 --count 250 --json
 uv run cluefin-openapi-cli kis market announcement --stock-code 005930 --limit 40 --json
 ```

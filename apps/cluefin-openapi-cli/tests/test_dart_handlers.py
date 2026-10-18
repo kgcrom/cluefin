@@ -10,9 +10,11 @@ from cluefin_openapi_cli.validation import validate_params
 
 # These parse what the client downloaded instead of returning the response, so the generic fake
 # (which writes no file) cannot satisfy them. test_dart_as_filed_handler.py and
-# test_dart_document_handlers.py cover them.
+# test_dart_document_handlers.py cover them. financial-summary calls the client several times
+# and computes; test_dart_financial_summary.py covers it.
 _PARSING_HANDLERS = {
     handlers.handle_financial_as_filed,
+    handlers.handle_financial_summary,
     handlers.handle_document_outline,
     handlers.handle_document_section,
     handlers.handle_financial_notes,

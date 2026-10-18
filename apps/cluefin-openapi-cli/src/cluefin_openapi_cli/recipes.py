@@ -201,6 +201,14 @@ _RECIPES: tuple[WorkflowRecipe, ...] = (
                 agent_notes="In quarterly reports thstrm_amount is the single quarter and thstrm_add_amount the year-to-date "
                 "sum; compare year-to-date against frmtrm_add_amount, never against the annual row.",
             ),
+            RecipeStep(
+                title="Summarize quarters, years and ratios",
+                command=("dart", "financial-summary"),
+                purpose="Get the last 8 single quarters with YoY, three fiscal years with ratios, the latest "
+                "year-to-date period and TTM sums computed from the full statements, in 억원.",
+                agent_notes="One call replaces reading several reports and deriving quarters by hand; do not recompute "
+                "its figures. It costs 8 DART calls, so call it once per company and reuse the output.",
+            ),
         ),
         agent_notes="Prefer this over kis financial commands whenever the question is about the most recent period; "
         "KIS returns annual rows for many small caps and lags the filing.",

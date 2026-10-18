@@ -857,6 +857,7 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
     "dart.document-section": CommandTaxonomy(("statements",), ("filing-text", "disclosure")),
     "dart.financial-notes": CommandTaxonomy(("statements",), ("filing-text", "financial-statement")),
     "dart.financial-as-filed": CommandTaxonomy(("statements",), ("financial-statement", "disclosure")),
+    "dart.financial-summary": CommandTaxonomy(("statements",), ("financial-statement", "financial-ratio")),
     "dart.financial-major-accounts": CommandTaxonomy(("statements",), ("financial-statement", "disclosure")),
     "dart.financial-major-indicators": CommandTaxonomy(("statements",), ("financial-ratio", "disclosure")),
     "dart.large-holding-report": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
@@ -1229,6 +1230,8 @@ _TYPE_SAMPLES: dict[str, Any] = {"integer": 1, "number": 1.0, "boolean": False}
 # has to come before the generic `code` rule.
 _NAME_SAMPLES: tuple[tuple[tuple[str, ...], tuple[str, ...], str], ...] = (
     (("date",), ("_dt", "ymd"), "20250101"),
+    # financial-summary's point-in-time cutoff (YYYYMMDD).
+    (("as_of",), (), "20250101"),
     (("corp_code",), (), "00126380"),
     # DART receipt-date range (bgn_de/end_de); one day is a valid range.
     ((), ("_de",), "20250101"),
