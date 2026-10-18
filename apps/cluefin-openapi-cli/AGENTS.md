@@ -36,6 +36,10 @@ CLI 가 말해 주지 않는 것만 적는다.
   (정기보고서·감사보고서만 읽힌다), 주요사항보고서의 금액·상대방은 `dart major-event`, 배당·자사주·임원 등
   정기보고서 항목은 `dart report-item`. 미국 고객사·경쟁사 공시는 `recipe us-peer-filings`(20-F/6-K 제출사는
   못 읽는다).
+- **증권사 의견과 밸류에이션도 계산 명령이 있다.** 여러 증권사의 최근 목표가·의견은 `kis stock opinion-summary
+  --stock-code`(기본 90일, 평균·중앙값·최고·최저), 시총·TTM PER·PBR·추정 연도별 PER 은
+  `kis stock valuation --stock-code --corp-code`(KIS 종가 + DART 주식수 + DART 재무, 약 11회). `kis stock
+  estimated-earnings` 는 한국투자증권 한 곳의 추정이라 컨센서스라 부르지 않는다(`table` 로 라벨됨).
 - **환율 명령은 없다.** 금리는 `kis market interest-rate`. 매크로를 웹 검색으로 대신하지 않는다 — 기준일이 섞인다.
 - **기술적 지표는 `kis chart technical`.** 캔들을 받아 직접 계산하지 않는다. `signal.trend` 와
   `signal.mean_reversion` 은 별개 계열이라 하나의 점수로 합치지 않는다. 값은 `cluefin-desk` 화면과 다르다(EMA
@@ -111,10 +115,20 @@ CLI 가 말해 주지 않는 것만 적는다.
 - A `category` missing from `_CATEGORY_DEFAULTS` in `metadata.py` silently falls back to
   domain `market` / tag `ranking` instead of erroring — add an entry for new categories.
 
-## `kis chart technical`, `dart financial-as-filed`, `dart financial-summary` and the dart/sec filing-text commands compute; every other command passes through
+## `kis chart technical`, `kis stock opinion-summary`/`valuation`, `dart financial-as-filed`/`financial-summary` and the dart/sec filing-text commands compute; every other command passes through
 
 - `dart financial-as-filed` is the second non-pass-through command: it parses a downloaded XBRL
   (see the `dart financial-*` section) and is excluded from the generic client-call tests the same way.
+- `kis stock valuation` is the only **cross-broker** command: KIS close (`ohlcv.fetch_kis_daily_series`,
+  unadjusted) × DART common share count (`dart share-count` of the latest periodic report) over
+  `dart_handlers.collect_reports` statements, plus the KIS estimate EPS. `_BrokerSession` therefore creates
+  clients per broker on demand (it used to refuse another broker's client); each broker still runs its own
+  credentials check, so a missing DART key fails with exit 3 only when the command reaches DART.
+  `test_kis_stock_info_handlers.py` excludes it from the calls-once check; `test_kis_opinion_valuation.py`
+  covers it with one fake session answering both brokers. Market cap uses **issued** common shares (KRX
+  convention, treasury included), preferred shares are ignored — stated in the response `notes`.
+- `kis stock opinion-summary` is one `investment-opinion` call plus `opinions.summarize` (factory
+  `opinions()`): each broker's latest row in the window, positive targets only.
 - `dart financial-summary` calls `financial-full-statements` 8 times (two years × four report codes on one
   basis) and returns derived figures from `statements.py` (ported from cluefin-factory `statements.mjs`,
   archived 2026-10-18). Rules live in that module, not in docs: Q2–Q4 are year-to-date differences, a year's

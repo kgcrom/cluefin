@@ -102,35 +102,34 @@ class EmptyRegistry:
 
 
 class _BrokerSession:
+    """Lazily creates one client per broker for the duration of a command.
+
+    `broker` is the command's own broker and is created first; a command may still ask for
+    another broker's client (`kis stock valuation` reads KIS prices and DART statements), and
+    that client is created — with its own credentials check — only when asked for.
+    """
+
     def __init__(self, broker: str, client_factory: BrokerClientFactory | None = None) -> None:
         self._broker = broker
         self._client_factory = client_factory or BrokerClientFactory()
-        self._client = None
+        self._clients: dict[str, Any] = {}
 
-    def _get_client(self):
-        if self._client is None:
-            self._client = self._client_factory.create(self._broker)
-        return self._client
+    def _get_client(self, broker: str):
+        if broker not in self._clients:
+            self._clients[broker] = self._client_factory.create(broker)
+        return self._clients[broker]
 
     def get_kis(self):
-        if self._broker != "kis":
-            raise RuntimeError("KIS client requested from non-KIS session.")
-        return self._get_client()
+        return self._get_client("kis")
 
     def get_kiwoom(self):
-        if self._broker != "kiwoom":
-            raise RuntimeError("Kiwoom client requested from non-Kiwoom session.")
-        return self._get_client()
+        return self._get_client("kiwoom")
 
     def get_dart(self):
-        if self._broker != "dart":
-            raise RuntimeError("DART client requested from non-DART session.")
-        return self._get_client()
+        return self._get_client("dart")
 
     def get_sec(self):
-        if self._broker != "sec":
-            raise RuntimeError("SEC client requested from non-SEC session.")
-        return self._get_client()
+        return self._get_client("sec")
 
 
 def _kebab_case(value: str) -> str:

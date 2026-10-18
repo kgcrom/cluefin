@@ -1,6 +1,13 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+
+from cluefin_openapi_cli import opinions, statements
+from cluefin_openapi_cli.errors import EXIT_BROKER, CliError
+from cluefin_openapi_cli.handlers import dart as dart_handlers
 from cluefin_openapi_cli.handlers._base import DispatcherProtocol, extract_output, rpc_method
+from cluefin_openapi_cli.ohlcv import fetch_kis_daily_series
 
 # Appended to every financial command's div_cls_code description.
 _QUARTERLY_COVERAGE_NOTE = (
@@ -1233,6 +1240,207 @@ def handle_kis_investment_opinion_by_brokerage(params: dict, session) -> dict:
 # Registration
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# kis.stock_info.opinion_summary — computes from investment_opinion rows
+# ---------------------------------------------------------------------------
+
+_OPINION_DEFAULT_DAYS = 90
+_KST = ZoneInfo("Asia/Seoul")
+
+
+def _kst_today() -> str:
+    return datetime.now(_KST).strftime("%Y%m%d")
+
+
+def _days_before(day: str, days: int) -> str:
+    return (datetime.strptime(day, "%Y%m%d") - timedelta(days=days)).strftime("%Y%m%d")
+
+
+@rpc_method(
+    name="stock.opinion_summary",
+    description=(
+        "Summarize broker opinions for a stock over a window (default 90 days): each brokerage's latest "
+        "rating, previous rating and target price, plus mean/median/max/min target and a rating count. "
+        "Computed from kis stock investment-opinion in one call. This is the cross-broker view; "
+        "kis stock estimated-earnings is a single brokerage's estimate."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "stock_code": {"type": "string", "pattern": "^[0-9]{6}$", "description": "6-digit stock code"},
+            "as_of": {
+                "type": "string",
+                "pattern": "^[0-9]{8}$",
+                "description": "End of the window (YYYYMMDD). Default today (KST).",
+            },
+            "days": {
+                "type": "integer",
+                "minimum": 7,
+                "maximum": 365,
+                "default": _OPINION_DEFAULT_DAYS,
+                "description": f"Window length in calendar days ending at as_of. Default {_OPINION_DEFAULT_DAYS}.",
+            },
+        },
+        "required": ["stock_code"],
+    },
+    returns={"type": "object"},
+    category="stock",
+    broker="kis",
+)
+def handle_kis_opinion_summary(params: dict, session) -> dict:
+    kis = session.get_kis()
+    as_of = params.get("as_of") or _kst_today()
+    since = _days_before(as_of, int(params.get("days", _OPINION_DEFAULT_DAYS)))
+    response = kis.domestic_stock_info.get_investment_opinion(
+        "J", "16633", params["stock_code"], f"00{since}", f"00{as_of}"
+    )
+    rows = extract_output(response, "output")
+    summary = opinions.summarize(rows if isinstance(rows, list) else [], since)
+    return {"stock_code": params["stock_code"], "as_of": as_of, **summary}
+
+
+# ---------------------------------------------------------------------------
+# kis.stock_info.valuation — KIS close × DART share count over DART statements
+# ---------------------------------------------------------------------------
+
+_VALUATION_NOTES = (
+    "시가총액 = 기준 종가(수정 전 원주가) × 보통주 발행주식총수(DART 주식의 총수, 최신 정기보고서). 우선주는 빼고 센다.",
+    "per_ttm 은 시가총액 ÷ 최근 4개 분기 지배주주순이익 합, pbr 은 시가총액 ÷ 최신 보고 기간 지배주주지분. 분모가 0 이하면 null.",
+    "per_by_year 의 EPS 는 한국투자증권 리서치 추정(kis stock estimated-earnings)이지 컨센서스가 아니다. 실적 연도 PER 도 기준 종가로 다시 계산한 값이다.",
+    "재무 수치는 dart financial-summary 와 같은 규칙(최신 정정본, 연결 우선)이다.",
+)
+
+
+def _ratio_if_positive(numerator: float | None, denominator: float | None) -> float | None:
+    if numerator is None or denominator is None or denominator <= 0:
+        return None
+    return numerator / denominator
+
+
+def _common_shares(rows: list[dict]) -> dict | None:
+    common = next((row for row in rows if str(row.get("se") or "").strip() == "보통주"), None)
+    if common is None:
+        return None
+    return {
+        "issued": statements.won(common.get("istc_totqy")),
+        "treasury": statements.won(common.get("tesstk_co")),
+        "outstanding": statements.won(common.get("distb_stock_co")),
+    }
+
+
+@rpc_method(
+    name="stock.valuation",
+    description=(
+        "Value a stock at a reference close: market cap, TTM PER, PBR, and PER on each year of the KIS "
+        "research estimate (periods ending in E are estimates). Combines the KIS close (unadjusted, as of a "
+        "date), the DART common share count of the latest periodic report, and dart financial-summary's "
+        "quarters. Needs corp_code as well as stock_code. About 11 calls (1 KIS price, 8+1 DART, 1 KIS "
+        "estimate); call once per stock and reuse."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "stock_code": {"type": "string", "pattern": "^[0-9]{6}$", "description": "6-digit stock code"},
+            "corp_code": {
+                "type": "string",
+                "pattern": "^[0-9]{8}$",
+                "description": "DART corporate unique code (8 digits, from dart corp-code-lookup)",
+            },
+            "as_of": {
+                "type": "string",
+                "pattern": "^[0-9]{8}$",
+                "description": "Reference date (YYYYMMDD): last close on or before it, reports received by it. Default today (KST).",
+            },
+        },
+        "required": ["stock_code", "corp_code"],
+    },
+    returns={"type": "object"},
+    category="stock",
+    broker="kis",
+)
+def handle_kis_stock_valuation(params: dict, session) -> dict:
+    """Return multiples at a reference close, not the inputs. Arithmetic lives here; statement rules in `statements`."""
+    stock_code = params["stock_code"]
+    corp_code = params["corp_code"]
+    as_of = params.get("as_of") or _kst_today()
+    kis = session.get_kis()
+
+    series = fetch_kis_daily_series(kis, stock_code, count=1, end_date=as_of, adjusted=False)
+    if not series.candles:
+        raise CliError(
+            f"No daily close for {stock_code} on or before {as_of}",
+            exit_code=EXIT_BROKER,
+            error_type="NotFound",
+            data={"stock_code": stock_code, "as_of": as_of},
+            hint="Check the code with kis stock basic-info; a newly listed or delisted code has no close in the window.",
+        )
+    last = series.candles[-1]
+    close = last.close
+
+    dart = session.get_dart()
+    basis, reports, dart_calls = dart_handlers.collect_reports(dart, corp_code, int(as_of[:4]), as_of, ("CFS", "OFS"))
+    if not reports:
+        raise CliError(
+            f"No periodic report of {corp_code} received by {as_of}",
+            exit_code=EXIT_BROKER,
+            error_type="NotFound",
+            data={"corp_code": corp_code, "as_of": as_of, "calls": 1 + dart_calls},
+            hint="Check the corp_code with dart company-overview; it must belong to the same company as stock_code.",
+        )
+    latest_report = max(reports, key=lambda r: r.order)
+    share_rows = dart_handlers.dart_rows(
+        dart.periodic_report_key_information.get_total_number_of_shares(
+            corp_code=corp_code, bsns_year=str(latest_report.year), reprt_code=latest_report.reprt_code
+        )
+    )
+    shares = _common_shares(share_rows)
+    issued = shares["issued"] if shares else None
+
+    quarter_list = statements.quarters(reports)
+    ttm_net_income = statements.trailing(quarter_list, "net_income_owners")
+    equity_owners = statements.latest(latest_report)["equity_owners"]
+    market_cap = None if issued is None else close * issued
+
+    estimate = kis.domestic_stock_info.get_estimated_earnings(stock_code)
+    periods = [row.get("dt") for row in _estimate_rows(extract_output(estimate, "output4"))]
+    eps_row = next(
+        (
+            row
+            for row in _estimate_table(extract_output(estimate, "output3"), _ESTIMATE_DETAIL_ROWS, periods)
+            if row["metric"] == "eps"
+        ),
+        None,
+    )
+    per_by_year = [
+        {
+            "period": period,
+            "estimate": str(period).endswith("E"),
+            "eps": eps,
+            "per": _ratio_if_positive(close, eps),
+        }
+        for period, eps in (eps_row["values"].items() if eps_row else ())
+    ]
+
+    eok = statements.EOK
+    return {
+        "stock_code": stock_code,
+        "corp_code": corp_code,
+        "as_of": as_of,
+        "price": {"close": close, "date": last.timestamp[:8], "adjusted": False},
+        "shares": {**shares, "report": f"{latest_report.year}-{latest_report.reprt_code}"} if shares else None,
+        "statement_basis": basis,
+        "unit": "억원",
+        "market_cap": None if market_cap is None else market_cap / eok,
+        "ttm_net_income_owners": None if ttm_net_income is None else ttm_net_income / eok,
+        "equity_owners": None if equity_owners is None else equity_owners / eok,
+        "per_ttm": _ratio_if_positive(market_cap, ttm_net_income),
+        "pbr": _ratio_if_positive(market_cap, equity_owners),
+        "per_by_year": per_by_year,
+        "calls": 1 + dart_calls + 1 + 1,
+        "notes": list(_VALUATION_NOTES),
+    }
+
+
 _ALL_HANDLERS = [
     handle_kis_product_basic_info,
     handle_kis_stock_basic_info,
@@ -1257,6 +1465,8 @@ _ALL_HANDLERS = [
     handle_kis_ksd_stock_dividend_schedule,
     handle_kis_ksd_shareholder_meeting_schedule,
     handle_kis_estimated_earnings,
+    handle_kis_opinion_summary,
+    handle_kis_stock_valuation,
     handle_kis_stock_loanable_list,
     handle_kis_investment_opinion,
     handle_kis_investment_opinion_by_brokerage,
