@@ -149,18 +149,16 @@ def open_store(path: Path | str | None = None, *, read_only: bool = False) -> du
 
 # Columns added after a table first shipped; CREATE TABLE IF NOT EXISTS leaves old files without them.
 _ADDED_COLUMNS = (
-    ("ohlcv", "lock_code", "TEXT"),
-    ("ohlcv", "prtt_rate", "DOUBLE"),
-    ("ohlcv", "reval_code", "TEXT"),
-    ("probe_log", "scty_grp_id_cd", "TEXT"),
+    "ALTER TABLE ohlcv ADD COLUMN IF NOT EXISTS lock_code TEXT",
+    "ALTER TABLE ohlcv ADD COLUMN IF NOT EXISTS prtt_rate DOUBLE",
+    "ALTER TABLE ohlcv ADD COLUMN IF NOT EXISTS reval_code TEXT",
+    "ALTER TABLE probe_log ADD COLUMN IF NOT EXISTS scty_grp_id_cd TEXT",
 )
 
 
 def _apply_schema(conn: duckdb.DuckDBPyConnection) -> None:
-    for statement in SCHEMA:
+    for statement in (*SCHEMA, *_ADDED_COLUMNS):
         conn.execute(statement)
-    for table, column, kind in _ADDED_COLUMNS:
-        conn.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {column} {kind}")
 
 
 def _scalar_row(conn: duckdb.DuckDBPyConnection, sql: str) -> tuple[Any, ...]:

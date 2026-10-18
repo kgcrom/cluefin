@@ -135,12 +135,27 @@ def _load(conn, kiwoom, kis, dart, today=TODAY):
     return load_company(conn, kiwoom=kiwoom, kis=kis, dart=dart, today=today, since=SINCE, sleep=lambda _s: None)
 
 
+_ROW_KEYS = (
+    "code",
+    "name",
+    "market",
+    "kind",
+    "corp_code",
+    "settle_month",
+    "listed_on",
+    "delisted_on",
+    "is_admin",
+    "is_halted",
+    "seen_on",
+)
+
+
 def _rows(conn):
-    cols = "code, name, market, kind, corp_code, settle_month, listed_on, delisted_on, is_admin, is_halted, seen_on"
-    return {
-        row[0]: dict(zip(cols.split(", "), row, strict=False))
-        for row in conn.execute(f"SELECT {cols} FROM company ORDER BY code").fetchall()
-    }
+    rows = conn.execute(
+        "SELECT code, name, market, kind, corp_code, settle_month, listed_on, delisted_on, is_admin, is_halted, seen_on "
+        "FROM company ORDER BY code"
+    ).fetchall()
+    return {row[0]: dict(zip(_ROW_KEYS, row, strict=True)) for row in rows}
 
 
 def test_first_load_keeps_stocks_and_backfills_delisted() -> None:

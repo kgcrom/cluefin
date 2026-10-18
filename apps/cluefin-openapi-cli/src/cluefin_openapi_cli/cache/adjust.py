@@ -27,7 +27,11 @@ __all__ = ["AdjustStats", "load_adjustments"]
 
 _PROBE_DAYS = 100  # ~70 trading days: always a single call under the 100-row cap
 _ROUNDING = 0.5
-_UPDATE_CHUNK = 500
+_UPDATE_SQL = (
+    "UPDATE ohlcv SET adj_factor = f.factor "
+    "FROM (SELECT unnest(?::DATE[]) AS day, unnest(?::DOUBLE[]) AS factor) AS f "
+    "WHERE ohlcv.code = ? AND ohlcv.date = f.day"
+)
 
 
 @dataclass(slots=True)
@@ -67,15 +71,8 @@ def _factors(stored: list[tuple[date, float | None]], adjusted: dict[date, float
 
 
 def _write(conn: duckdb.DuckDBPyConnection, code: str, factors: list[tuple[date, float]]) -> None:
-    for offset in range(0, len(factors), _UPDATE_CHUNK):
-        chunk = factors[offset : offset + _UPDATE_CHUNK]
-        values = ", ".join(["(?, ?)"] * len(chunk))
-        params: list[Any] = [value for pair in chunk for value in pair]
-        conn.execute(
-            f"UPDATE ohlcv SET adj_factor = f.factor FROM (VALUES {values}) AS f(day, factor) "
-            "WHERE ohlcv.code = ? AND ohlcv.date = f.day",
-            [*params, code],
-        )
+    if factors:
+        conn.execute(_UPDATE_SQL, [[day for day, _ in factors], [factor for _, factor in factors], code])
 
 
 def _stored(conn: duckdb.DuckDBPyConnection, code: str, since: date | None = None) -> list[tuple[Any, ...]]:

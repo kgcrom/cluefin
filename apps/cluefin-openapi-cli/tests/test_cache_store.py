@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import json
-import subprocess
-import sys
 from datetime import date, datetime
 
+import duckdb
 import pytest
 
 from cluefin_openapi_cli.cache import store
@@ -49,25 +48,16 @@ def test_reader_without_file_is_cache_missing(cache_dir) -> None:
     assert excinfo.value.exit_code == 2
 
 
-def test_reader_while_another_process_writes_is_cache_locked(cache_dir) -> None:
+def test_reader_while_another_process_writes_is_cache_locked(cache_dir, monkeypatch) -> None:
     store.open_store().close()
-    holder = subprocess.Popen(
-        [
-            sys.executable,
-            "-c",
-            "import duckdb, sys, time; c = duckdb.connect(sys.argv[1]); print('ready', flush=True); time.sleep(30)",
-            str(store.cache_path()),
-        ],
-        stdout=subprocess.PIPE,
-        text=True,
-    )
-    try:
-        assert holder.stdout is not None and holder.stdout.readline().strip() == "ready"
-        with pytest.raises(CliError) as excinfo:
-            store.open_store(read_only=True)
-    finally:
-        holder.kill()
-        holder.wait()
+
+    def locked(*_args, **_kwargs):
+        # The message DuckDB gives a second process while a writer holds the file.
+        raise duckdb.IOException('IO Error: Could not set lock on file "market.duckdb": Conflicting lock is held')
+
+    monkeypatch.setattr(store.duckdb, "connect", locked)
+    with pytest.raises(CliError) as excinfo:
+        store.open_store(read_only=True)
 
     assert excinfo.value.error_type == "CacheLocked"
     assert excinfo.value.retryable is True

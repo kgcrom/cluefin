@@ -32,24 +32,15 @@ __all__ = ["INDICES", "Bar", "BarLoadStats", "fetch_index_bars", "fetch_stock_ba
 RECHECK_ROWS = 60
 # Bars loaded before bar_log existed: a first bar within a week of the start counts as complete.
 _INFERRED_START_SLACK = timedelta(days=7)
-_INSERT_CHUNK = 500
 # Cache code -> KIS sector code (FID_INPUT_ISCD with market U).
 INDICES: tuple[tuple[str, str], ...] = (("U0001", "0001"), ("U1001", "1001"), ("U2001", "2001"))
 
-_COLUMNS = (
-    "code",
-    "date",
-    "open",
-    "high",
-    "low",
-    "close",
-    "volume",
-    "value",
-    "lock_code",
-    "prtt_rate",
-    "reval_code",
-    "loaded_at",
-)
+# One static statement per code: each column travels as a list parameter and unnest zips them.
+_INSERT_SQL = """
+INSERT INTO ohlcv (code, date, open, high, low, close, volume, value, lock_code, prtt_rate, reval_code, loaded_at)
+SELECT ?, unnest(?::DATE[]), unnest(?::DOUBLE[]), unnest(?::DOUBLE[]), unnest(?::DOUBLE[]), unnest(?::DOUBLE[]),
+       unnest(?::DOUBLE[]), unnest(?::DOUBLE[]), unnest(?::TEXT[]), unnest(?::DOUBLE[]), unnest(?::TEXT[]), ?
+"""
 
 
 @dataclass(frozen=True, slots=True)
@@ -206,31 +197,13 @@ def fetch_index_bars(
 
 
 def _insert(conn: duckdb.DuckDBPyConnection, code: str, bars: list[Bar], loaded_at: datetime) -> None:
-    placeholders = "(" + ", ".join("?" * len(_COLUMNS)) + ")"
-    for offset in range(0, len(bars), _INSERT_CHUNK):
-        chunk = bars[offset : offset + _INSERT_CHUNK]
-        values: list[Any] = []
-        for bar in chunk:
-            values.extend(
-                (
-                    code,
-                    bar.date,
-                    bar.open,
-                    bar.high,
-                    bar.low,
-                    bar.close,
-                    bar.volume,
-                    bar.value,
-                    bar.lock_code,
-                    bar.prtt_rate,
-                    bar.reval_code,
-                    loaded_at,
-                )
-            )
-        conn.execute(
-            f"INSERT INTO ohlcv ({', '.join(_COLUMNS)}) VALUES " + ", ".join([placeholders] * len(chunk)),
-            values,
-        )
+    if not bars:
+        return
+    columns = [
+        [getattr(bar, name) for bar in bars]
+        for name in ("date", "open", "high", "low", "close", "volume", "value", "lock_code", "prtt_rate", "reval_code")
+    ]
+    conn.execute(_INSERT_SQL, [code, *columns, loaded_at])
 
 
 @dataclass(frozen=True, slots=True)

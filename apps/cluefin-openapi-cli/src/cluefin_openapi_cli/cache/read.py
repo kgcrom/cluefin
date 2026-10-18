@@ -71,6 +71,18 @@ _COMPANY_COLUMNS = (
 )
 
 
+_COMPANY_SQL = """
+SELECT code, name, market, kind, sector, industry, corp_code, settle_month, listed_on, delisted_on, list_count,
+       is_admin, is_halted, seen_on
+FROM company
+WHERE (?::TEXT IS NULL OR code = ?)
+  AND (?::TEXT IS NULL OR market = ?)
+  AND (?::DATE IS NULL OR ((listed_on IS NULL OR listed_on <= ?) AND (delisted_on IS NULL OR delisted_on > ?)))
+  AND (? OR delisted_on IS NULL)
+ORDER BY code
+"""
+
+
 def read_company(
     conn: duckdb.DuckDBPyConnection,
     *,
@@ -81,23 +93,9 @@ def read_company(
 ) -> dict[str, Any]:
     """Company rows. ``as_of`` gives the universe listed on that day (point in time)."""
 
-    where: list[str] = []
-    params: list[Any] = []
-    if code is not None:
-        where.append("code = ?")
-        params.append(code)
-    if market is not None:
-        where.append("market = ?")
-        params.append(market)
-    if as_of is not None:
-        where.append("(listed_on IS NULL OR listed_on <= ?) AND (delisted_on IS NULL OR delisted_on > ?)")
-        params.extend([as_of, as_of])
-    elif not include_delisted and code is None:
-        where.append("delisted_on IS NULL")
-    sql = f"SELECT {', '.join(_COMPANY_COLUMNS)} FROM company"
-    if where:
-        sql += " WHERE " + " AND ".join(where)
-    rows = conn.execute(sql + " ORDER BY code", params).fetchall()
+    # A code lookup or an as-of universe includes delisted rows on its own terms.
+    keep_delisted = include_delisted or code is not None or as_of is not None
+    rows = conn.execute(_COMPANY_SQL, [code, code, market, market, as_of, as_of, as_of, keep_delisted]).fetchall()
     companies = [{name: _iso(value) for name, value in zip(_COMPANY_COLUMNS, row, strict=False)} for row in rows]
     payload: dict[str, Any] = {"count": len(companies), "companies": companies}
     if as_of is not None:
