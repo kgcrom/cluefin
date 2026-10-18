@@ -73,6 +73,7 @@ SCHEMA = (
     CREATE TABLE IF NOT EXISTS probe_log (
       code TEXT PRIMARY KEY,
       mket_id_cd TEXT,
+      scty_grp_id_cd TEXT,
       delisted_on DATE,
       checked_at TIMESTAMP
     )

@@ -160,12 +160,20 @@ _META_HELP: dict[str, dict[str, Any]] = {
     },
     "cache": {
         "description": "Local daily-bar and company cache (DuckDB). Reads a file, not a broker.",
-        "usage": [f"{APP_NAME} cache status [--json]"],
-        "options": [],
+        "usage": [
+            f"{APP_NAME} cache status [--json]",
+            f"{APP_NAME} cache load [--only company|all] [--since YYYYMMDD] [--json]",
+        ],
+        "options": [
+            {"flag": "--only P", "meaning": "Parts to load, comma-separated (default all)."},
+            {"flag": "--since YYYYMMDD", "meaning": "First day kept for delisted stocks and bars (default 20160101)."},
+        ],
         "examples": [f"uv run {APP_NAME} cache status --json"],
         "notes": [
             "The file is $CLUEFIN_CACHE_DIR/market.duckdb (default ~/.cache/cluefin/).",
             "Exit 2 CacheMissing before the first load; exit 1 CacheLocked while a load is writing.",
+            "`cache load` is the only command that calls brokers (KIS, Kiwoom, DART), one call at a time; "
+            "progress goes to stderr.",
         ],
     },
 }
