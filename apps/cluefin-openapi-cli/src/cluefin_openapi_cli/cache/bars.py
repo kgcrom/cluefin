@@ -6,9 +6,12 @@ correction), replaces that stock's whole history. The bar's own corporate-action
 (`flng_cls_code`, `prtt_rate`, `revl_issu_reas`) are stored as sent: they are what was known
 on that day.
 
-KIS `chart.period` has no cursor: at most 100 rows per call inside a date window (indices: 50),
-newest first. Windows walk backwards from the end, never stopping on an empty window — a
-long trading halt is an empty window in the middle of a history, not its start.
+KIS `chart.period` has no cursor: a call returns the newest 100 rows of its date range (indices:
+50), even for a ten-year range (measured 2026-10-18). So each call asks for the whole remaining
+range and the next one ends the day before the oldest row returned; an empty answer means nothing
+is left. Halts and the years before a listing cost nothing, and `listed_on` is not needed — KIS
+keeps a moved stock's history under its code while basic-info shows only the new market's date
+(035720: KOSPI 2017-07-10, KOSDAQ bars from 1999 still served).
 """
 
 from __future__ import annotations
@@ -26,8 +29,6 @@ from cluefin_openapi_cli.ohlcv import adj_price_flag
 
 __all__ = ["INDICES", "Bar", "BarLoadStats", "fetch_index_bars", "fetch_stock_bars", "load_bars"]
 
-_STOCK_WINDOW_DAYS = 140  # ~95 trading days, under the 100-row cap
-_INDEX_WINDOW_DAYS = 70  # ~48 trading days, under the 50-row cap
 RECHECK_ROWS = 60
 # Bars loaded before bar_log existed: a first bar within a week of the start counts as complete.
 _INFERRED_START_SLACK = timedelta(days=7)
@@ -148,18 +149,16 @@ def _index_bar(item: Any) -> Bar | None:
     )
 
 
-def _walk(fetch_page: Callable[[date, date], list[Bar]], start: date, end: date, window_days: int) -> list[Bar]:
+def _walk(fetch_page: Callable[[date, date], list[Bar]], start: date, end: date) -> list[Bar]:
     by_date: dict[date, Bar] = {}
-    window_end = end
-    while window_end >= start:
-        window_start = max(start, window_end - timedelta(days=window_days))
-        page = fetch_page(window_start, window_end)
+    range_end = end
+    while range_end >= start:
+        page = [bar for bar in fetch_page(start, range_end) if start <= bar.date <= range_end]
+        if not page:
+            break
         for bar in page:
-            if start <= bar.date <= end:
-                by_date[bar.date] = bar
-        oldest = min((bar.date for bar in page), default=None)
-        # A page at the row cap ends inside the window: continue from the day before its oldest row.
-        window_end = (oldest if oldest is not None and oldest > window_start else window_start) - timedelta(days=1)
+            by_date[bar.date] = bar
+        range_end = min(bar.date for bar in page) - timedelta(days=1)
     return [by_date[day] for day in sorted(by_date)]
 
 
@@ -183,7 +182,7 @@ def fetch_stock_bars(
         )
         return [bar for bar in map(_stock_bar, getattr(response.body, "output2", None) or []) if bar]
 
-    return _walk(page, start, end, _STOCK_WINDOW_DAYS)
+    return _walk(page, start, end)
 
 
 def fetch_index_bars(
@@ -203,7 +202,7 @@ def fetch_index_bars(
         )
         return [bar for bar in map(_index_bar, getattr(response.body, "output2", None) or []) if bar]
 
-    return _walk(page, start, end, _INDEX_WINDOW_DAYS)
+    return _walk(page, start, end)
 
 
 def _insert(conn: duckdb.DuckDBPyConnection, code: str, bars: list[Bar], loaded_at: datetime) -> None:
@@ -243,12 +242,11 @@ class _Target:
 
 
 def _targets(conn: duckdb.DuckDBPyConnection, *, since: date, last_day: date) -> list[_Target]:
-    rows = conn.execute("SELECT code, listed_on, delisted_on FROM company ORDER BY code").fetchall()
+    rows = conn.execute("SELECT code, delisted_on FROM company ORDER BY code").fetchall()
     targets = []
-    for code, listed_on, delisted_on in rows:
-        start = max(since, listed_on) if listed_on else since
+    for code, delisted_on in rows:
         end = min(last_day, delisted_on) if delisted_on else last_day
-        targets.append(_Target(code, start, end, delisted_on))
+        targets.append(_Target(code, since, end, delisted_on))
     return targets
 
 

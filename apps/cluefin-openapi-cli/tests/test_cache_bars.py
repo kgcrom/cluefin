@@ -128,7 +128,7 @@ def test_initial_load_walks_whole_history_through_a_halt(market) -> None:
     for cache_code, _ in INDICES:
         assert len(_closes(conn, cache_code)) == len(expected)
     calls_005930 = sum(1 for call in kis.stock_calls if call[0] == "005930")
-    assert calls_005930 <= len(expected) // 95 + 3
+    assert calls_005930 == -(-len(expected) // 100)  # one call per 100 rows; the last page reaches `since`
 
 
 def test_daily_run_appends_with_one_call_per_code(market) -> None:
@@ -199,13 +199,13 @@ def test_one_failing_code_does_not_stop_the_load(market) -> None:
     assert _closes(conn, "005930") and not _closes(conn, "000660")
 
 
-def test_new_listing_starts_at_listing_date(market) -> None:
+def test_listing_date_does_not_bound_history(market) -> None:
     last, series = market
-    conn = _store_with([("005930", date(2026, 9, 1), None)])
+    conn = _store_with([("005930", date(2026, 9, 1), None)])  # basic-info date after a market move
 
     _load(conn, FakeKis(series), last)
 
-    assert min(_closes(conn, "005930")) == date(2026, 9, 1)
+    assert min(_closes(conn, "005930")) == date(2016, 1, 1)
 
 
 @pytest.mark.parametrize(
@@ -216,17 +216,16 @@ def test_last_closed_day_waits_for_the_session_to_end(now, expected) -> None:
     assert _last_closed_day(now) == expected
 
 
-def test_earlier_start_backfills_the_head_once(market) -> None:
+def test_bars_fetched_from_a_later_start_are_backfilled_once(market) -> None:
     last, series = market
-    conn = _store_with([("005930", date(2026, 9, 1), None)])
+    conn = _store_with([("005930", None, None)])
     kis = FakeKis(series)
-    _load(conn, kis, last)
+    load_bars(conn, kis=kis, since=date(2026, 9, 1), last_day=last, sleep=lambda _s: None)
     conn.execute("INSERT INTO adj_log VALUES ('005930', ?, ?)", [last, datetime(2026, 10, 16)])
-    conn.execute("UPDATE company SET listed_on = DATE '2025-01-02'")
 
     _load(conn, kis, last)
 
-    assert min(_closes(conn, "005930")) == date(2025, 1, 2)
+    assert min(_closes(conn, "005930")) == SINCE
     assert conn.execute("SELECT count(*) FROM adj_log").fetchone()[0] == 0  # head bars need factors
     kis.stock_calls.clear()
     _load(conn, kis, last)
