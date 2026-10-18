@@ -17,12 +17,13 @@ from pathlib import Path
 import pytest
 
 from cluefin_openapi_cli import registry as registry_module
+from cluefin_openapi_cli.cache.cli import SUBCOMMANDS as CACHE_SUBCOMMANDS
 from cluefin_openapi_cli.main import run_cli
 from cluefin_openapi_cli.registry import EmptyRegistry, RpcRegistry, build_cli_registry, set_registry_provider
 
 README = Path("apps/cluefin-openapi-cli/README.md")
 AGENTS = Path("apps/cluefin-openapi-cli/AGENTS.md")
-META = {"search", "brokers", "list", "describe", "schema", "domains", "tags", "recipes", "recipe"}
+META = {"search", "brokers", "list", "describe", "schema", "domains", "tags", "recipes", "recipe", "cache"}
 
 
 class _ExplodingFactory:
@@ -116,6 +117,11 @@ def test_documented_offline_commands_execute(doc: Path) -> None:
     assert offline, doc
 
     for argv in offline:
+        if argv[0] == "cache":
+            # `cache load` calls brokers and the read subcommands depend on a local file, so a
+            # documented cache line is checked for a real subcommand, not executed.
+            assert len(argv) > 1 and argv[1] in CACHE_SUBCOMMANDS, argv
+            continue
         result = run_cli(argv)
         assert result.exit_code == 0, (argv, result.stdout)
         assert result.stdout.lstrip().startswith("{"), argv

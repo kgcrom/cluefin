@@ -152,6 +152,28 @@ uv run cluefin-openapi-cli dart report-item --corp-code 00126380 --item dividend
 uv run cluefin-openapi-cli sec filing-items --cik 320193 --accession-number 0000320193-23-000106 --items 1A --json
 ```
 
+### 5. 로컬 일봉 캐시 (`cache`)
+
+전종목 횡단면 질의·백테스트용으로 상장 주식 전종목(2016년 이후 폐지 종목 포함)과 KOSPI·KOSDAQ·KOSPI200 일봉을
+DuckDB 파일 하나(`~/.cache/cluefin/market.duckdb`, `CLUEFIN_CACHE_DIR` 로 변경)에 쌓습니다. `cache load` 만 broker 를
+부르고(KIS·키움·DART, 한 번에 하나씩), 나머지는 파일만 읽습니다.
+
+```bash
+uv run cluefin-openapi-cli cache load --json                     # 장 마감 후. 첫 실행 ~2시간 20분, 이후 ~7분
+uv run cluefin-openapi-cli cache status --json
+uv run cluefin-openapi-cli cache ohlcv --code 005930 --since 20260901 --adjusted true --json
+uv run cluefin-openapi-cli cache company --as-of 20180102 --limit 5 --json
+```
+
+| 테이블 | 내용 |
+|---|---|
+| `company` | 종목 하나에 한 행: 이름·시장·업종·표준산업분류·DART 고유번호·결산월·상장일·폐지일·관리/정지 |
+| `ohlcv` | 종목·지수(`U0001`·`U1001`·`U2001`) 일봉. 원주가 + `adj_factor`(수정주가 = 가격 × 계수), 락구분·분할비율·재평가사유 |
+| `load_log`·`adj_log`·`bar_log`·`probe_log` | 적재 기록, 수정계수 확인 시점, 일봉 시작일, 폐지 후보 확인 기록 |
+
+DuckDB 는 쓰는 동안 다른 프로세스가 파일을 열 수 없습니다. `cache load` 중의 읽기는 exit 1 `CacheLocked`, 첫 적재 전은
+exit 2 `CacheMissing` 입니다.
+
 ## 입력 방식
 
 scalar 필드는 `--flag value` 또는 `--flag=value`로 줍니다. 배열·객체는 `--params-json`에 전체 객체를 넣거나, 해당 flag에 JSON 문자열을 넣습니다.
@@ -235,6 +257,7 @@ src/cluefin_openapi_cli/
 ├── output.py       JSON 직렬화, --compact, --fields 마스킹
 ├── search.py       자연어 query → BM25F 순위 command 후보. 한국어 alias 확장·fallback
 ├── recipes.py      여러 command를 엮는 workflow guide
+├── cache/          로컬 DuckDB 캐시: store(스키마·잠금) · company · bars · adjust · read · cli(`cache <sub>`)
 └── handlers/
     ├── _base.py    @rpc_method 데코레이터, KIS/Kiwoom 응답 추출 헬퍼
     ├── kis/        category별 handler 모듈 (stock, chart, ranking, financial, …)

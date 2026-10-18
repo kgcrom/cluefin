@@ -6,6 +6,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass
 from typing import Any
 
+from cluefin_openapi_cli.cache.cli import run_cache
 from cluefin_openapi_cli.cliargs import (
     _merge_params,
     _parse_fields,
@@ -51,7 +52,7 @@ from cluefin_openapi_cli.registry import CommandSpec, get_registry
 
 __all__ = ["CLIResult", "CliError", "dispatch", "main", "run_cli"]
 
-META_COMMANDS = ("search", "brokers", "list", "describe", "schema", "domains", "tags", "recipes", "recipe")
+META_COMMANDS = ("search", "brokers", "list", "describe", "schema", "domains", "tags", "recipes", "recipe", "cache")
 
 # Per-meta-command help. `usage` is the single source of truth for the root `--help`
 # listing too (`_run_root`), so the two can never drift apart.
@@ -156,6 +157,38 @@ _META_HELP: dict[str, dict[str, Any]] = {
         "options": [],
         "examples": [f"uv run {APP_NAME} recipe stock-research --json"],
         "notes": [],
+    },
+    "cache": {
+        "description": "Local daily-bar and company cache (DuckDB). Reads a file, not a broker.",
+        "usage": [
+            f"{APP_NAME} cache status [--json]",
+            f"{APP_NAME} cache load [--only company,ohlcv,adj|all] [--since YYYYMMDD] [--json]",
+            f"{APP_NAME} cache ohlcv --code <code> [--since YYYYMMDD] [--until YYYYMMDD] [--adjusted true] [--json]",
+            f"{APP_NAME} cache company [--code <code>] [--as-of YYYYMMDD] [--include-delisted true] "
+            "[--market KOSPI|KOSDAQ] [--json]",
+        ],
+        "options": [
+            {"flag": "--only P", "meaning": "Parts to load, comma-separated (default all)."},
+            {
+                "flag": "--since YYYYMMDD",
+                "meaning": "load: first day kept (default 20160101); ohlcv: first bar (default a year back).",
+            },
+            {"flag": "--adjusted true", "meaning": "ohlcv: prices × adj_factor, volume ÷ adj_factor (KIS 수정주가)."},
+            {"flag": "--as-of YYYYMMDD", "meaning": "company: stocks listed on that day, delisted ones included."},
+        ],
+        "examples": [
+            f"uv run {APP_NAME} cache status --json",
+            f"uv run {APP_NAME} cache ohlcv --code 005930 --since 20260901 --adjusted true --json",
+            f"uv run {APP_NAME} cache company --as-of 20180102 --limit 5 --json",
+        ],
+        "notes": [
+            "The file is $CLUEFIN_CACHE_DIR/market.duckdb (default ~/.cache/cluefin/).",
+            "Exit 2 CacheMissing before the first load; exit 1 CacheLocked while a load is writing.",
+            "`cache load` is the only command that calls brokers (KIS, Kiwoom, DART), one call at a time; "
+            "progress goes to stderr.",
+            "Bars are unadjusted; trade at those prices in a backtest and use --adjusted only for signals.",
+            "Index bars use codes U0001 (KOSPI), U1001 (KOSDAQ), U2001 (KOSPI200).",
+        ],
     },
 }
 
@@ -517,6 +550,7 @@ def dispatch(argv: list[str] | None = None) -> None:
         "tags": _run_tags,
         "recipes": _run_recipes,
         "recipe": _run_recipe,
+        "cache": run_cache,
     }
     runner = runners.get(args[0])
     if runner is not None:
