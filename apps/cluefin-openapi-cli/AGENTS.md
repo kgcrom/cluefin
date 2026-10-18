@@ -26,8 +26,10 @@ CLI 가 말해 주지 않는 것만 적는다.
 
 - **출처 역할.** KIS 가 1순위(primary), 키움은 보조(auxiliary) — `kis_alternatives` 가 `[]` 인 명령이나
   KIS 가 빈 데이터를 줬을 때만, DART·SEC 는 참고(reference) 다.
-- **최신 실적은 DART, 과거 연간·주당지표는 KIS.** `kis financial *` 은 소형주에서 연간 행만 오고 최신 공시보다
-  한 해 늦을 수 있다. 반기·분기는 `dart financial-major-accounts`(`recipe latest-earnings`), 비율·성장률은
+- **최신 실적은 DART, 주당지표만 KIS.** `kis financial *` 은 소형주에서 연간 행만 오고 최신 공시보다 한 해 늦을
+  수 있다. 리포트용 숫자(최근 8분기 단독값·YoY, 3개년 손익·재무상태·현금흐름·비율, 최신 누적, TTM, 차입금)는
+  **`dart financial-summary --corp-code <8자리>` 한 번**으로 받고 다시 계산하지 않는다(DART 8회, 억원). 한 보고서만
+  볼 때는 `dart financial-major-accounts`(`recipe latest-earnings`), 비율·성장률의 공식 값은
   `dart financial-major-indicators`, EPS·BPS 만 KIS 다. 분기 보고서의 `thstrm_amount` 는 해당 분기 단독,
   `thstrm_add_amount` 는 연초 누적이다. 정정 전 원본 값은 `dart financial-as-filed` 뿐이다.
 - **숫자가 말해 주지 않는 것은 원문에 있다.** 부문별 매출·수주·차입금 만기·우발부채는 `recipe filing-text`
@@ -109,10 +111,17 @@ CLI 가 말해 주지 않는 것만 적는다.
 - A `category` missing from `_CATEGORY_DEFAULTS` in `metadata.py` silently falls back to
   domain `market` / tag `ranking` instead of erroring — add an entry for new categories.
 
-## `kis chart technical`, `dart financial-as-filed` and the dart/sec filing-text commands compute; every other command passes through
+## `kis chart technical`, `dart financial-as-filed`, `dart financial-summary` and the dart/sec filing-text commands compute; every other command passes through
 
 - `dart financial-as-filed` is the second non-pass-through command: it parses a downloaded XBRL
   (see the `dart financial-*` section) and is excluded from the generic client-call tests the same way.
+- `dart financial-summary` calls `financial-full-statements` 8 times (two years × four report codes on one
+  basis) and returns derived figures from `statements.py` (ported from cluefin-factory `statements.mjs`,
+  archived 2026-10-18). Rules live in that module, not in docs: Q2–Q4 are year-to-date differences, a year's
+  own report beats the next year's comparative column, borrowings are summed by label with a
+  financial-liabilities fallback (`borrowings_basis` says which), ROE/ROA use average equity/assets.
+  `test_dart_handlers.py` lists it with the parsing handlers; `test_dart_financial_summary.py` covers it
+  with a fake keyed by (year, reprt_code, fs_div).
 - `dart document-outline` / `document-section` / `financial-notes` parse the downloaded original XML with
   cluefin-dart-notes (see the `dart document-*` section) and are excluded from those tests too.
 - `sec filing-items` / `filing-exhibit` parse a downloaded document with cluefin-sec-notes (see the `sec *`
@@ -175,6 +184,9 @@ CLI 가 말해 주지 않는 것만 적는다.
   쓰면 성장률이 절반 가까이 틀어진다. `frmtrm_add_amount` 가 전년 동기 누적이다.
 - 주요계정 응답에는 `fs_div` 파라미터가 없고 회사가 제출한 기준(연결·개별)이 그대로
   온다. 연결재무제표가 없는 회사는 OFS 행만 온다. 전체 재무제표만 `fs_div` 를 받는다.
+- `financial-summary` 의 `as_of` 는 **접수일**(`rcept_no` 앞 8자리)로만 거른다. JSON API 가 최신 정정본 값만 주므로
+  시점 필터를 통과한 보고서의 숫자도 정정 후 값일 수 있다 — 응답 `notes` 에 적혀 있고, 접수 당시 값은 `financial-as-filed`.
+  연초(사업보고서 제출 전)에는 두 해 창에 사업보고서가 없어 전전년 사업보고서를 한 번 더 부른다(`calls` 9).
 - `dart share-count` 의 수치는 `"5,969,782,550"` 같은 콤마 문자열이고 결측은 `"-"` 로 온다. 패스스루라
   변환하지 않는다. 각 행의 `rcept_no` 는 원본이 아닌 최신 정정 보고서다 (2026-09-30 실측:
   노드메이슨 2024 사업보고서 4행 모두 정정 `20250828000839`). 원본 시점 주식수는 이 API로 얻을 수 없다.

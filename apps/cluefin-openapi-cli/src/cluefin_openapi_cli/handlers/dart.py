@@ -11,7 +11,9 @@ from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Callable
+from zoneinfo import ZoneInfo
 
+from cluefin_openapi_cli import statements
 from cluefin_openapi_cli.errors import (
     DART_REQUEST_LIMIT_STATUS,
     EXIT_BROKER,
@@ -607,6 +609,177 @@ def handle_financial_as_filed(params: dict, session) -> dict:
         "reporting_period_end": reporting_period_end,
         "statements": statements,
         "missing": missing,
+    }
+
+
+# ---------------------------------------------------------------------------
+# dart.financial_summary — computes from several full-statement reports
+# ---------------------------------------------------------------------------
+
+_SUMMARY_DEFAULT_QUARTERS = 8
+_SUMMARY_MAX_QUARTERS = 12
+_SUMMARY_BASES = {"auto": ("CFS", "OFS"), "CFS": ("CFS",), "OFS": ("OFS",)}
+_SUMMARY_NOTES = (
+    "금액 단위는 억원. 분기 Q2~Q4는 누적에서 뺀 값(4Q = 연간 − 9개월 누적)이다.",
+    "gpm·opm·debt_ratio·net_debt_ratio·interest_coverage·roe·roa·free_cash_flow(영업CF − 유형자산 취득)·ttm 은 계산값이다.",
+    "interest_coverage 의 이자비용은 현금흐름표 조정 항목의 이자비용이다.",
+    "DART JSON API 는 기간마다 최신 정정본 값만 준다. as_of 는 접수일로만 거르므로 정정 전 값은 financial-as-filed 로 읽는다.",
+    "분·반기 보고서의 현금흐름표 순이익 행이 누적 대신 3개월 값으로 올 때가 있다(dartrail 2026 실측). 여기 현금흐름은 그대로 옮긴 값이다.",
+)
+
+
+def _kst_today() -> str:
+    return datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y%m%d")
+
+
+def _statement_rows(result) -> list[dict]:
+    rows = getattr(getattr(_checked(result), "result", None), "list", None) or []
+    return [dump_model(row) for row in rows]
+
+
+def _fetch_reports(
+    dart, corp_code: str, keys: list[tuple[int, str]], as_of: str, basis: str
+) -> list[statements.Report]:
+    """The periodic reports named by (year, reprt_code) on one statement basis, received by `as_of`."""
+    reports = []
+    for year, reprt_code in keys:
+        result = dart.periodic_report_financial_statement.get_single_company_full_statements(
+            corp_code=corp_code,
+            bsns_year=str(year),
+            reprt_code=reprt_code,
+            fs_div=basis,
+        )
+        rows = _statement_rows(result)
+        if not rows:
+            continue
+        rcept_no = str(rows[0].get("rcept_no") or "")
+        if rcept_no[:8] > as_of:
+            continue
+        reports.append(statements.Report(year=year, reprt_code=reprt_code, rcept_no=rcept_no, rows=rows))
+    return reports
+
+
+def _collect_reports(
+    dart, corp_code: str, year: int, as_of: str, bases: tuple[str, ...]
+) -> tuple[str | None, list, int]:
+    """(basis, reports, calls) for the first basis that has any report of `year - 1`/`year`.
+
+    Until the annual report of `year - 1` is filed (March), the window holds no annual report
+    at all, and the three-year table needs one: the previous annual report is fetched on its
+    own then (one more call) rather than re-fetching a whole year.
+    """
+    window = [(y, code) for y in (year - 1, year) for code in statements.QUARTER_OF]
+    calls = 0
+    for basis in bases:
+        reports = _fetch_reports(dart, corp_code, window, as_of, basis)
+        calls += len(window)
+        if not reports:
+            continue
+        if not any(r.reprt_code == "11011" for r in reports):
+            reports += _fetch_reports(dart, corp_code, [(year - 2, "11011")], as_of, basis)
+            calls += 1
+        return basis, reports, calls
+    return None, [], calls
+
+
+@rpc_method(
+    name="dart.financial_summary",
+    description=(
+        "Compute a company's financial summary from its DART periodic reports (단일회사 전체 재무제표 "
+        "several reports at once): the last N single quarters with YoY (Q2–Q4 derived from year-to-date "
+        "differences, 4Q = annual − 9 months), three fiscal years from the latest annual report with ratios "
+        "(GPM, OPM, debt ratio, net debt, interest coverage, ROE/ROA on average equity/assets, FCF), the "
+        "latest filed period year-to-date, TTM sums, and borrowings summed by account label (basis stated). "
+        "Consolidated statements first, separate when the filer has none; the two are never mixed. "
+        "Money in 억원. Costs 8 DART calls (16 when only separate statements exist, one more before the "
+        "latest annual report is filed); DART's daily quota applies. Values are the latest amended ones — use "
+        "financial-as-filed for what a filing said at the time."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "corp_code": {
+                "type": "string",
+                "pattern": r"^\d{8}$",
+                "description": "Corporate unique code (8 digits, from dart corp-code-lookup)",
+            },
+            "as_of": {
+                "type": "string",
+                "pattern": r"^\d{8}$",
+                "description": "Only reports received on or before this date (YYYYMMDD) are used. Default today (KST).",
+            },
+            "fs_div": {
+                "type": "string",
+                "enum": ["auto", "CFS", "OFS"],
+                "default": "auto",
+                "description": "Statement basis: auto tries consolidated (CFS) then separate (OFS). Default auto.",
+            },
+            "quarters": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": _SUMMARY_MAX_QUARTERS,
+                "default": _SUMMARY_DEFAULT_QUARTERS,
+                "description": f"Single quarters to return, newest last. Default {_SUMMARY_DEFAULT_QUARTERS}.",
+            },
+        },
+        "required": ["corp_code"],
+    },
+    returns={"type": "object"},
+    category="dart",
+    broker="dart",
+)
+def handle_financial_summary(params: dict, session) -> dict:
+    """Fetch two years of full statements and return derived figures, not the rows.
+
+    The agent used to fetch these report by report and back-derive the quarters by hand,
+    which took most of a run and drifted between runs; the same input now gives the same
+    numbers. Everything beyond the fetch lives in `statements`.
+    """
+    corp_code = params["corp_code"]
+    as_of = params.get("as_of") or _kst_today()
+    bases = _SUMMARY_BASES[params.get("fs_div", "auto")]
+    shown = int(params.get("quarters", _SUMMARY_DEFAULT_QUARTERS))
+
+    dart = session.get_dart()
+    basis, reports, calls = _collect_reports(dart, corp_code, int(as_of[:4]), as_of, bases)
+    if not reports:
+        raise CliError(
+            f"No periodic report of {corp_code} received by {as_of} on basis {'/'.join(bases)}",
+            exit_code=EXIT_BROKER,
+            error_type="NotFound",
+            data={"corp_code": corp_code, "as_of": as_of, "fs_div": params.get("fs_div", "auto"), "calls": calls},
+            hint=(
+                "Check the corp_code with dart company-overview and the filings with dart disclosure-search "
+                "--pblntf-ty A. A company with separate statements only needs --fs-div OFS or auto."
+            ),
+        )
+
+    latest_report = max(reports, key=lambda r: r.order)
+    annual_reports = [r for r in reports if r.reprt_code == "11011"]
+    annual_report = max(annual_reports, key=lambda r: r.year) if annual_reports else None
+    quarter_list = statements.quarters(reports)[-shown:]
+
+    return {
+        "corp_code": corp_code,
+        "as_of": as_of,
+        "statement_basis": basis,
+        "unit": "억원",
+        "reports": [
+            {"year": r.year, "reprt_code": r.reprt_code, "rcept_no": r.rcept_no, "received_on": r.rcept_no[:8]}
+            for r in sorted(reports, key=lambda r: r.order)
+        ],
+        "quarters": [statements.to_eok(q) for q in quarter_list],
+        "annual": [statements.to_eok(y) for y in statements.annual(annual_report)] if annual_report else [],
+        "latest": statements.to_eok(statements.latest(latest_report)),
+        "ttm": {
+            key: None if value is None else value / statements.EOK
+            for key, value in (
+                (key, statements.trailing(quarter_list, key))
+                for key in ("revenue", "operating_income", "net_income_owners")
+            )
+        },
+        "calls": calls,
+        "notes": list(_SUMMARY_NOTES),
     }
 
 
@@ -1567,6 +1740,7 @@ _ALL_HANDLERS = [
     handle_financial_full_statements,
     handle_financial_major_indicators,
     handle_financial_as_filed,
+    handle_financial_summary,
     handle_document_outline,
     handle_document_section,
     handle_financial_notes,
