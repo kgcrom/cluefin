@@ -71,6 +71,13 @@ SCHEMA = (
       seconds DOUBLE
     )
     """,
+    # The earliest day each code's bars were fetched from, so a start moved earlier is backfilled.
+    """
+    CREATE TABLE IF NOT EXISTS bar_log (
+      code TEXT PRIMARY KEY,
+      fetched_from DATE
+    )
+    """,
     # How far each stock's adj_factor is known to be current (cache/adjust.py).
     """
     CREATE TABLE IF NOT EXISTS adj_log (

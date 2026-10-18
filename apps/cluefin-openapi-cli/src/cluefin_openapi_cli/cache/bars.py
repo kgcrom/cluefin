@@ -29,6 +29,8 @@ __all__ = ["INDICES", "Bar", "BarLoadStats", "fetch_index_bars", "fetch_stock_ba
 _STOCK_WINDOW_DAYS = 140  # ~95 trading days, under the 100-row cap
 _INDEX_WINDOW_DAYS = 70  # ~48 trading days, under the 50-row cap
 RECHECK_ROWS = 60
+# Bars loaded before bar_log existed: a first bar within a week of the start counts as complete.
+_INFERRED_START_SLACK = timedelta(days=7)
 _INSERT_CHUNK = 500
 # Cache code -> KIS sector code (FID_INPUT_ISCD with market U).
 INDICES: tuple[tuple[str, str], ...] = (("U0001", "0001"), ("U1001", "1001"), ("U2001", "2001"))
@@ -259,11 +261,16 @@ def _sync(
     stats: BarLoadStats,
     now: datetime,
 ) -> None:
-    """Append new bars; replace the code's history when a re-fetched recent close differs."""
+    """Append new bars; replace the code's history when a re-fetched recent close differs.
+
+    Also backfills the head when ``start`` is earlier than where this code was fetched from
+    (a corrected listing date or an earlier ``--since``).
+    """
 
     recent = conn.execute(
         "SELECT date, close FROM ohlcv WHERE code = ? ORDER BY date DESC LIMIT ?", [code, RECHECK_ROWS]
     ).fetchall()
+    head: list[Bar] = []
     if not recent:
         bars = fetch(start, end)
         replace = False
@@ -277,20 +284,37 @@ def _sync(
         else:
             last = recent[0][0]
             bars = [bar for bar in fresh if bar.date > last]
+            fetched_from = _fetched_from(conn, code, start)
+            if start < fetched_from:
+                head = fetch(start, fetched_from - timedelta(days=1))
     conn.begin()
     try:
         if replace:
             conn.execute("DELETE FROM ohlcv WHERE code = ?", [code])
-            # The re-inserted bars carry the default factor; make the next adj run start over.
-            conn.execute("DELETE FROM adj_log WHERE code = ?", [code])
             stats.replaced += 1
-        _insert(conn, code, bars, now)
+        if replace or head:
+            # Re-inserted or older bars carry the default factor; make the next adj run start over.
+            conn.execute("DELETE FROM adj_log WHERE code = ?", [code])
+        _insert(conn, code, head + bars, now)
+        conn.execute(
+            "INSERT INTO bar_log VALUES (?, ?) ON CONFLICT (code) DO UPDATE SET "
+            "fetched_from = least(bar_log.fetched_from, excluded.fetched_from)",
+            [code, start],
+        )
         conn.commit()
     except Exception:
         conn.rollback()
         raise
-    stats.rows += len(bars)
+    stats.rows += len(head) + len(bars)
     stats.loaded += 1
+
+
+def _fetched_from(conn: duckdb.DuckDBPyConnection, code: str, start: date) -> date:
+    row = conn.execute("SELECT fetched_from FROM bar_log WHERE code = ?", [code]).fetchone()
+    if row and row[0] is not None:
+        return row[0]
+    first = conn.execute("SELECT min(date) FROM ohlcv WHERE code = ?", [code]).fetchone()[0]
+    return start if first is None or first - start <= _INFERRED_START_SLACK else first
 
 
 def _complete_delisted(conn: duckdb.DuckDBPyConnection, target: _Target) -> bool:

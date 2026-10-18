@@ -157,12 +157,10 @@ def fetch_basic_info(kis: Any, code: str, *, sleep: Callable[[float], None] | No
     kwargs = {"sleep": sleep} if sleep is not None else {}
     output = kis_call(kis.domestic_stock_info.get_stock_basic_info, "300", code, **kwargs).body.output
     mket_id_cd = _text(output.mket_id_cd)
-    if mket_id_cd == "STK":
-        listed_on = _yyyymmdd(output.scts_mket_lstg_dt)
-    elif mket_id_cd == "KSQ":
-        listed_on = _yyyymmdd(output.kosdaq_mket_lstg_dt)
-    else:
-        listed_on = None
+    # A KOSDAQ -> KOSPI move keeps the code and its history but gets a new KOSPI listing date
+    # (035720: KOSPI 2017-07-10), so the earlier of the two dates is when trading began.
+    dates = [d for d in (_yyyymmdd(output.scts_mket_lstg_dt), _yyyymmdd(output.kosdaq_mket_lstg_dt)) if d]
+    listed_on = min(dates) if dates and mket_id_cd in _KIS_MARKETS else None
     return BasicInfo(
         code=code,
         name=_text(output.prdt_abrv_name) or _text(output.prdt_name),

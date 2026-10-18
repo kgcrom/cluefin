@@ -110,7 +110,7 @@ def _sources():
             "005930": _basic("STK", scts="19750611", setl="12", name="삼성전자"),
             "005935": _basic("STK", scts="19890825", setl="", name="삼성전자우"),
             "088260": _basic("STK", scts="20160101", abol="20200101", group="RT"),
-            "035720": _basic("KSQ", kosdaq="20171110", setl="1231", name="카카오"),
+            "035720": _basic("STK", scts="20170710", kosdaq="19991117", setl="1231", name="카카오"),
             "117930": _basic("STK", scts="20091210", abol="20170307", name="한진해운", industry="해상 운송업"),
             "266170": _basic("KNX", kosdaq="20170609", setl="1231"),
             "037830": _basic("KSQ", kosdaq="20020205", abol="20100209"),
@@ -154,6 +154,7 @@ def test_first_load_keeps_stocks_and_backfills_delisted() -> None:
     assert rows["005930"]["settle_month"] == 12 and rows["005930"]["listed_on"] == date(1975, 6, 11)
     assert rows["005930"]["corp_code"] == "00126380" and rows["005930"]["delisted_on"] is None
     assert rows["035720"]["settle_month"] == 12  # '1231' normalised
+    assert rows["035720"]["listed_on"] == date(1999, 11, 17)  # moved KOSDAQ -> KOSPI: the earlier date
     assert rows["005935"]["corp_code"] == "00126380"  # preferred share -> its common's DART id
     assert rows["005935"]["settle_month"] == 12 and dart.overview_calls == ["00126380"]  # blank in KIS, DART fills
     assert rows["035720"]["is_admin"] is True and rows["035720"]["is_halted"] is True

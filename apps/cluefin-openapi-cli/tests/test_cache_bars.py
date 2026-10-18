@@ -214,3 +214,33 @@ def test_new_listing_starts_at_listing_date(market) -> None:
 )
 def test_last_closed_day_waits_for_the_session_to_end(now, expected) -> None:
     assert _last_closed_day(now) == expected
+
+
+def test_earlier_start_backfills_the_head_once(market) -> None:
+    last, series = market
+    conn = _store_with([("005930", date(2026, 9, 1), None)])
+    kis = FakeKis(series)
+    _load(conn, kis, last)
+    conn.execute("INSERT INTO adj_log VALUES ('005930', ?, ?)", [last, datetime(2026, 10, 16)])
+    conn.execute("UPDATE company SET listed_on = DATE '2025-01-02'")
+
+    _load(conn, kis, last)
+
+    assert min(_closes(conn, "005930")) == date(2025, 1, 2)
+    assert conn.execute("SELECT count(*) FROM adj_log").fetchone()[0] == 0  # head bars need factors
+    kis.stock_calls.clear()
+    _load(conn, kis, last)
+    assert [call[0] for call in kis.stock_calls] == ["005930"]
+
+
+def test_bars_loaded_before_bar_log_are_not_refetched(market) -> None:
+    last, series = market
+    conn = _store_with([("005930", date(1975, 6, 11), None)])
+    kis = FakeKis(series)
+    _load(conn, kis, last)
+    conn.execute("DELETE FROM bar_log")
+    kis.stock_calls.clear()
+
+    _load(conn, kis, last)
+
+    assert [call[0] for call in kis.stock_calls] == ["005930"]
