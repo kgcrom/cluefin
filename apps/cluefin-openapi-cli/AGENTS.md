@@ -182,6 +182,10 @@ CLI 가 말해 주지 않는 것만 적는다.
   `total`/`returned`/`truncated` 는 `list --full` 의 절단 규약과 같은 모양이다.
 - `stock_code` 는 비상장사에서 공백 문자열로 채워져 오므로 비교 전에 `_clean()` 으로
   strip 한다. `listed_only` 도 "값이 있다"가 아니라 "strip 후 비어 있지 않다"로 판정한다.
+- **`listed_only` 는 "현재 상장" 필터가 아니다.** DART 는 폐지 회사의 `stock_code` 를 지우지 않는다(2026-10-18 실측: 한진해운
+  117930, 2017-03 폐지, `corp_cls` 만 null). 전종목 유니버스는 키움 ka10099 로 만든다(`docs/plans/ohlcv-cache-plan.md`).
+  폐지 여부는 KIS `basic-info` 의 `scts_mket_lstg_abol_dt`/`kosdaq_mket_lstg_abol_dt`; `kis stock current-price` 는
+  폐지 종목에서 필드가 빠진 몸체를 받으면 `basic-info` 를 한 번 더 불러 exit 4 `Delisted` 로 바꾼다.
 - 불리언 파라미터는 값을 받아야 한다 — `--listed-only true`. 플래그처럼 값 없이 주면
   exit 2 (`Option --listed-only requires a value.`).
 

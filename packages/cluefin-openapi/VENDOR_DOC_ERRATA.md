@@ -21,6 +21,7 @@
 | 시간외호가 `inquire-overtime-asking-price` (FHPST02300400) | 표: 블록 `output1`, 증감 `ovtm_untp_askp/bidp_icdc1~10` / 예시: 블록 `output`, 증감 1~3 | 블록 `output`, 증감 **1~3 만** | 2026-09-27 | 모델은 `output`, 4~10 은 테스트 `ignore` |
 | 국내주식기간별시세 `inquire-daily-itemchartprice` (FHKST03010100) | `itewhol_loan_rmnd_ratem` | 키가 **`itewhol_loan_rmnd_ratem name`** (공백 포함) | 2026-08 | 두 키 모두 수용 |
 | 국내주식기간별시세 `inquire-daily-itemchartprice` (FHKST03010100), 상장폐지 종목 | output1 에 `prdy_vrss_sign`·`hts_kor_isnm`·`stck_shrn_iscd` 포함 | 폐지 종목은 output1 을 0 으로 채우고 이 세 키는 **보내지 않는다**. output2 캔들은 정상으로 온다 (rt_cd=0) | 2026-09-30, 117930(한진해운) 일봉 2016-08 (22봉) | 세 필드만 `Optional`(기본 None), 나머지는 엄격 유지. 통합테스트 `ignore` |
+| 주식현재가 시세 `inquire-price` (FHKST01010100), 상장폐지 종목 | 표: 전 필드 | `rt_cd=0` 인데 `prdy_vrss_sign`·`stck_prpr` 등 8개 필드가 **빠진** 몸체가 와 모델 검증 실패(`KISValidationError`). `iscd_stat_cls_code=00`, `bstp_kor_isnm=' '`. `basic-info` 는 같은 코드에 `scts_mket_lstg_abol_dt=20170307` 을 준다 | 2026-10-18, 117930(한진해운) | 모델은 그대로. CLI `kis stock current-price` 가 검증 실패 시 `basic-info` 폐지일을 확인해 exit 4 `Delisted` 로 안내 |
 | 주식현재가 회원사 `inquire-member` (FHKST01010600) | 표: output 에 `acml_vol` 없음 | 보냄 | 2026-09-27 | 모델에 있음 |
 | 예상체결가 `exp-closing-price` (FHKST117300C0) | 표: 블록 `output1` / 예시: `output` | `output` | 2026-09-27 | 모델은 `output` |
 | 주식현재가 시간대별체결 `inquire-time-itemconclusion` (FHPST01060000) | 표: output2 가 object, `stck_pbpr` / 예시: array | array, `stck_prpr` | 2026-09-27 | 모델은 array, `stck_prpr` |
