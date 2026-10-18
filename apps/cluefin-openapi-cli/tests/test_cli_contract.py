@@ -22,7 +22,7 @@ from cluefin_openapi_cli.registry import EmptyRegistry, RpcRegistry, build_cli_r
 
 README = Path("apps/cluefin-openapi-cli/README.md")
 AGENTS = Path("apps/cluefin-openapi-cli/AGENTS.md")
-META = {"search", "brokers", "list", "describe", "schema", "domains", "tags", "recipes", "recipe"}
+META = {"search", "brokers", "list", "describe", "schema", "domains", "tags", "recipes", "recipe", "cache"}
 
 
 class _ExplodingFactory:

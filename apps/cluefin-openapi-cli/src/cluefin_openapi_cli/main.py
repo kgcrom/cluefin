@@ -6,6 +6,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass
 from typing import Any
 
+from cluefin_openapi_cli.cache.cli import run_cache
 from cluefin_openapi_cli.cliargs import (
     _merge_params,
     _parse_fields,
@@ -51,7 +52,7 @@ from cluefin_openapi_cli.registry import CommandSpec, get_registry
 
 __all__ = ["CLIResult", "CliError", "dispatch", "main", "run_cli"]
 
-META_COMMANDS = ("search", "brokers", "list", "describe", "schema", "domains", "tags", "recipes", "recipe")
+META_COMMANDS = ("search", "brokers", "list", "describe", "schema", "domains", "tags", "recipes", "recipe", "cache")
 
 # Per-meta-command help. `usage` is the single source of truth for the root `--help`
 # listing too (`_run_root`), so the two can never drift apart.
@@ -156,6 +157,16 @@ _META_HELP: dict[str, dict[str, Any]] = {
         "options": [],
         "examples": [f"uv run {APP_NAME} recipe stock-research --json"],
         "notes": [],
+    },
+    "cache": {
+        "description": "Local daily-bar and company cache (DuckDB). Reads a file, not a broker.",
+        "usage": [f"{APP_NAME} cache status [--json]"],
+        "options": [],
+        "examples": [f"uv run {APP_NAME} cache status --json"],
+        "notes": [
+            "The file is $CLUEFIN_CACHE_DIR/market.duckdb (default ~/.cache/cluefin/).",
+            "Exit 2 CacheMissing before the first load; exit 1 CacheLocked while a load is writing.",
+        ],
     },
 }
 
@@ -517,6 +528,7 @@ def dispatch(argv: list[str] | None = None) -> None:
         "tags": _run_tags,
         "recipes": _run_recipes,
         "recipe": _run_recipe,
+        "cache": run_cache,
     }
     runner = runners.get(args[0])
     if runner is not None:
