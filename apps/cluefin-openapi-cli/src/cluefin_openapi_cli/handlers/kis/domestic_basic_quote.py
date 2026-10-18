@@ -12,6 +12,32 @@ from cluefin_openapi_cli.ohlcv import fetch_kis_daily_series
 # ---------------------------------------------------------------------------
 
 
+def _delisted_on(kis, stock_code: str) -> str | None:
+    """The delisting date from `basic-info` (KOSPI or KOSDAQ column), or None while listed."""
+    info = kis.domestic_stock_info.get_stock_basic_info("300", stock_code)
+    item = getattr(info.body, "output", None)
+    for field in ("scts_mket_lstg_abol_dt", "kosdaq_mket_lstg_abol_dt"):
+        value = str(getattr(item, field, "") or "").strip()
+        if value and value != "00000000":
+            return value
+    return None
+
+
+def _raise_if_delisted(kis, stock_code: str, cause: Exception) -> None:
+    """A sparse current-price body is what KIS sends for a delisted code (117930, 2026-10-18). Say so."""
+    delisted_on = _delisted_on(kis, stock_code)
+    if delisted_on is None:
+        return
+    raise CliError(
+        f"{stock_code} was delisted on {delisted_on}; it has no current price.",
+        exit_code=EXIT_BROKER,
+        error_type="Delisted",
+        data={"stock_code": stock_code, "delisted_on": delisted_on},
+        hint="Price history up to the delisting is still available from kis chart period; "
+        "listing dates are in kis stock basic-info.",
+    ) from cause
+
+
 @rpc_method(
     name="stock.current_price",
     description="Get current stock price from KIS. Returns price, volume, market cap, PER, PBR.",
@@ -34,7 +60,12 @@ from cluefin_openapi_cli.ohlcv import fetch_kis_daily_series
 def handle_kis_stock_current_price(params: dict, session) -> dict:
     kis = session.get_kis()
     market = params.get("market", "J")
-    response = kis.domestic_basic_quote.get_stock_current_price(market, params["stock_code"])
+    try:
+        response = kis.domestic_basic_quote.get_stock_current_price(market, params["stock_code"])
+    except Exception as exc:  # noqa: BLE001 - only a response-model failure is inspected; anything else re-raises
+        if type(exc).__name__.endswith("ValidationError"):
+            _raise_if_delisted(kis, params["stock_code"], exc)
+        raise
     item = response.body.output
     if item is None:
         return {"stock_code": params["stock_code"], "error": "No data returned"}

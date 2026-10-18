@@ -172,7 +172,12 @@ def _paged_response(matched: list, params: dict) -> dict:
             "corp_code": {"type": "string", "description": "Exact corporate unique code (8 digits)"},
             "stock_code": {"type": "string", "description": "Exact listed stock code (6 digits), e.g. 020000"},
             "corp_name": {"type": "string", "description": "Company name, case-insensitive substring match"},
-            "listed_only": {"type": "boolean", "description": "Keep only companies with a stock code. Default false."},
+            "listed_only": {
+                "type": "boolean",
+                "description": "Keep only companies with a stock code. Default false. DART keeps the stock code of "
+                "a delisted company (117930 한진해운, delisted 2017, still carries it), so this is not a "
+                "'currently listed' filter; check kis stock basic-info *_lstg_abol_dt when that matters.",
+            },
             "max_rows": {
                 "type": "integer",
                 "description": "Max rows returned. Default 100, 0 = no cap. "
