@@ -316,12 +316,18 @@ def _fetched_from(conn: duckdb.DuckDBPyConnection, code: str, start: date) -> da
 
 
 def _complete_delisted(conn: duckdb.DuckDBPyConnection, target: _Target) -> bool:
-    """A delisted code whose bars were loaded after its delisting needs nothing more."""
+    """A delisted code loaded after its delisting, from the current start, needs nothing more."""
 
     if target.delisted_on is None:
         return False
-    row = conn.execute("SELECT max(loaded_at) FROM ohlcv WHERE code = ?", [target.code]).fetchone()
-    return bool(row and row[0] is not None and row[0].date() > target.delisted_on)
+    row = conn.execute(
+        "SELECT max(o.loaded_at), any_value(b.fetched_from) FROM ohlcv o LEFT JOIN bar_log b ON b.code = o.code "
+        "WHERE o.code = ?",
+        [target.code],
+    ).fetchone()
+    if not row or row[0] is None or row[1] is None:
+        return False
+    return row[0].date() > target.delisted_on and row[1] <= target.start
 
 
 def load_bars(

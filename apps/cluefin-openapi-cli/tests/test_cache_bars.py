@@ -243,3 +243,18 @@ def test_bars_loaded_before_bar_log_are_not_refetched(market) -> None:
     _load(conn, kis, last)
 
     assert [call[0] for call in kis.stock_calls] == ["005930"]
+
+
+def test_delisted_code_without_bar_log_is_checked_once(market) -> None:
+    last, series = market
+    conn = _store_with([("117930", None, date(2017, 3, 7))])
+    kis = FakeKis(series)
+    _load(conn, kis, last)
+    conn.execute("DELETE FROM bar_log")
+    kis.stock_calls.clear()
+
+    _load(conn, kis, last)
+    first_rerun = len(kis.stock_calls)
+    _load(conn, kis, last)
+
+    assert first_rerun == 1 and len(kis.stock_calls) == 1
