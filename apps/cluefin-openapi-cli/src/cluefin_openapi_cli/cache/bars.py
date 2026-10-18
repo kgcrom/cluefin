@@ -281,6 +281,8 @@ def _sync(
     try:
         if replace:
             conn.execute("DELETE FROM ohlcv WHERE code = ?", [code])
+            # The re-inserted bars carry the default factor; make the next adj run start over.
+            conn.execute("DELETE FROM adj_log WHERE code = ?", [code])
             stats.replaced += 1
         _insert(conn, code, bars, now)
         conn.commit()

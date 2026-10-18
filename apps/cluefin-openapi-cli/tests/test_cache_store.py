@@ -37,7 +37,7 @@ def test_writer_creates_file_and_schema(cache_dir) -> None:
     tables = {row[0] for row in conn.execute("SELECT table_name FROM information_schema.tables").fetchall()}
     conn.close()
 
-    assert tables == {"company", "ohlcv", "load_log", "probe_log"}
+    assert tables == {"company", "ohlcv", "load_log", "probe_log", "adj_log"}
     assert store.cache_path().exists()
 
 

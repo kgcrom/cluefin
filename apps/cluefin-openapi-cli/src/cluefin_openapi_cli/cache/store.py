@@ -71,6 +71,14 @@ SCHEMA = (
       seconds DOUBLE
     )
     """,
+    # How far each stock's adj_factor is known to be current (cache/adjust.py).
+    """
+    CREATE TABLE IF NOT EXISTS adj_log (
+      code TEXT PRIMARY KEY,
+      checked_through DATE,
+      computed_at TIMESTAMP
+    )
+    """,
     # Codes already checked as delisting candidates, so basic-info is not asked twice.
     """
     CREATE TABLE IF NOT EXISTS probe_log (
