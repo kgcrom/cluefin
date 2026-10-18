@@ -978,9 +978,64 @@ def handle_kis_ksd_shareholder_meeting_schedule(params: dict, session) -> dict:
 # ---------------------------------------------------------------------------
 
 
+# KIS labels output2/output3 rows only as DATA1..5. Row order and scale were identified against
+# DART actuals (005930 FY2023, 192820) — see cluefin-openapi VENDOR_DOC_ERRATA.md "국내주식 종목추정실적".
+# Money rows arrive in 억원; growth, per-share, multiples and ratios arrive ×10.
+_ESTIMATE_ROWS = (
+    ("revenue", "억원", 1),
+    ("revenue_growth_yoy", "%", 10),
+    ("operating_income", "억원", 1),
+    ("operating_income_growth_yoy", "%", 10),
+    ("net_income_owners", "억원", 1),
+    ("net_income_owners_growth_yoy", "%", 10),
+)
+_ESTIMATE_DETAIL_ROWS = (
+    ("ebitda", "억원", 1),
+    ("eps", "원", 10),
+    ("eps_growth_yoy", "%", 10),
+    ("per", "배", 10),
+    ("ev_ebitda", "배", 10),
+    ("roe", "%", 10),
+    ("debt_ratio", "%", 10),
+    ("interest_coverage", "배", 10),
+)
+_ESTIMATE_NOTE = (
+    "Estimates of one brokerage (Korea Investment & Securities research; summary.name1 is the analyst), "
+    "not a consensus. Broker-by-broker ratings and target prices come from kis stock investment-opinion."
+)
+
+
+def _estimate_number(value, scale: int) -> float | None:
+    try:
+        return float(str(value).replace(",", "")) / scale
+    except (TypeError, ValueError):
+        return None
+
+
+def _estimate_rows(block) -> list[dict]:
+    """The dict rows of an output block; anything else (missing block, odd shape) counts as no rows."""
+    return [row for row in block if isinstance(row, dict)] if isinstance(block, list) else []
+
+
+def _estimate_table(rows, layout, periods: list[str]) -> list[dict]:
+    """Label the unlabelled DATA1..5 rows by position; a layout row without a response row is skipped."""
+    table = []
+    for (metric, unit, scale), row in zip(layout, _estimate_rows(rows), strict=False):
+        values = {period: _estimate_number(row.get(f"data{i + 1}"), scale) for i, period in enumerate(periods)}
+        table.append({"metric": metric, "unit": unit, "values": values})
+    return table
+
+
 @rpc_method(
     name="stock.estimated_earnings",
-    description="Get estimated earnings for a stock.",
+    description=(
+        "Get one brokerage's earnings estimates for a stock (국내주식 종목추정실적): three reported fiscal "
+        "years and two estimate years (periods ending in E) of revenue, operating income, net income, "
+        "EBITDA, EPS, PER, EV/EBITDA, ROE, debt ratio and interest coverage. These are Korea Investment & "
+        "Securities research estimates (summary.name1 is the analyst), not a consensus; for ratings and "
+        "target prices across brokers use kis stock investment-opinion. `data`/`data_detail` are the raw "
+        "DATA1..5 rows (money in 억원, everything else ×10); `table` labels them with unit and scale applied."
+    ),
     parameters={
         "type": "object",
         "properties": {
@@ -998,11 +1053,17 @@ def handle_kis_ksd_shareholder_meeting_schedule(params: dict, session) -> dict:
 def handle_kis_estimated_earnings(params: dict, session) -> dict:
     kis = session.get_kis()
     response = kis.domestic_stock_info.get_estimated_earnings(params["stock_code"])
+    data = extract_output(response, "output2")
+    detail = extract_output(response, "output3")
+    periods = [row.get("dt") for row in _estimate_rows(extract_output(response, "output4"))]
     return {
         "summary": extract_output(response, "output1"),
-        "data": extract_output(response, "output2"),
-        "data_detail": extract_output(response, "output3"),
+        "data": data,
+        "data_detail": detail,
         "periods": extract_output(response, "output4"),
+        "table": _estimate_table(data, _ESTIMATE_ROWS, periods)
+        + _estimate_table(detail, _ESTIMATE_DETAIL_ROWS, periods),
+        "note": _ESTIMATE_NOTE,
     }
 
 

@@ -489,14 +489,16 @@ class KsdShareholderMeetingSchedule(BaseModel, KisHttpBody):
 
 
 class EstimatedEarningsItem1(BaseModel):
-    sht_cd: str = Field(title="ELW단축종목코드")
+    # KIS 문서(와 공식 샘플의 COLUMN_MAPPING)는 이 블록에 ELW 화면 필드명을 잘못 붙여 뒀다.
+    # 아래 title 은 실측(VENDOR_DOC_ERRATA.md "국내주식 종목추정실적")을 따른다.
+    sht_cd: str = Field(title="종목코드", description="A + 6자리 (ex: A005930)")
     item_kor_nm: str = Field(title="HTS한글종목명")
-    name1: str = Field(title="ELW현재가")
-    name2: str = Field(title="전일대비")
-    estdate: str = Field(title="전일대비부호")
-    rcmd_name: str = Field(title="전일대비율")
-    capital: str = Field(title="누적거래량")
-    forn_item_lmtrt: str = Field(title="행사가")
+    name1: str = Field(title="담당 애널리스트", description="한국투자증권 리서치 담당자 이름 — 한 증권사의 추정치다")
+    name2: str = Field(title="담당 애널리스트2", description="실측에서 빈 문자열")
+    estdate: str = Field(title="추정일", description="YYYYMMDD")
+    rcmd_name: str = Field(title="투자의견", description="ex: 매수")
+    capital: str = Field(title="자본금", description="억원 (ex: 005930 → 8975.0)")
+    forn_item_lmtrt: str = Field(title="외국인한도율", description="실측에서 0.00 — 의미 미확인")
 
 
 class EstimatedEarningsItem2(BaseModel):
