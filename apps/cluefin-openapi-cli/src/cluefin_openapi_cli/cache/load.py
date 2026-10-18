@@ -9,11 +9,12 @@ from typing import Any, Callable
 
 import duckdb
 
+from cluefin_openapi_cli.cache.bars import load_bars
 from cluefin_openapi_cli.cache.company import load_company
 
 __all__ = ["PARTS", "Sources", "run_load"]
 
-PARTS = ("company",)
+PARTS = ("company", "ohlcv")
 
 
 @dataclass(slots=True)
@@ -54,6 +55,7 @@ def run_load(
     parts: tuple[str, ...],
     since: date,
     today: date,
+    last_day: date,
     progress: Callable[[str], None],
     sleep: Callable[[float], None] | None = None,
 ) -> dict[str, Any]:
@@ -74,6 +76,10 @@ def run_load(
             )
             summary = stats.as_dict()
             codes, rows, replaced, errors = stats.listed + stats.delisted_found, 0, 0, len(stats.errors)
+        elif part == "ohlcv":
+            bar_stats = load_bars(conn, kis=sources.kis, since=since, last_day=last_day, progress=progress, sleep=sleep)
+            summary = {**bar_stats.as_dict(), "last_day": last_day.isoformat()}
+            codes, rows, replaced, errors = bar_stats.loaded, bar_stats.rows, bar_stats.replaced, len(bar_stats.errors)
         else:  # pragma: no cover - PARTS is validated by the caller
             raise ValueError(part)
         seconds = round(time.perf_counter() - started, 1)

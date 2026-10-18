@@ -162,7 +162,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
         "description": "Local daily-bar and company cache (DuckDB). Reads a file, not a broker.",
         "usage": [
             f"{APP_NAME} cache status [--json]",
-            f"{APP_NAME} cache load [--only company|all] [--since YYYYMMDD] [--json]",
+            f"{APP_NAME} cache load [--only company,ohlcv|all] [--since YYYYMMDD] [--json]",
         ],
         "options": [
             {"flag": "--only P", "meaning": "Parts to load, comma-separated (default all)."},

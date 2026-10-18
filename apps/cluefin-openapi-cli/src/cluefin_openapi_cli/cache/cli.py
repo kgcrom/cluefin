@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import sys
-from datetime import date, datetime
+from datetime import date, datetime, time, timedelta
 from typing import Any, Callable
+from zoneinfo import ZoneInfo
 
 from cluefin_openapi_cli.cache import store
 from cluefin_openapi_cli.cache.load import PARTS, Sources, run_load
@@ -29,6 +30,12 @@ def _run_status(argv: list[str]) -> None:
 
 
 _DEFAULT_SINCE = "20160101"
+# KRX closes at 15:30 (closing auction until then); a bar fetched earlier would be a partial day.
+_SESSION_FINAL = time(16, 0)
+
+
+def _last_closed_day(now: datetime) -> date:
+    return now.date() if now.time() >= _SESSION_FINAL else now.date() - timedelta(days=1)
 
 
 def _client_factory() -> Any:
@@ -70,6 +77,7 @@ def _run_load(argv: list[str]) -> None:
         raise CliError("`cache load` does not accept positional arguments.", exit_code=EXIT_USAGE)
     parts = _parse_parts(_str_option(options, "only"))
     since = _parse_day(_str_option(options, "since") or _DEFAULT_SINCE, "since")
+    now = datetime.now(ZoneInfo("Asia/Seoul")).replace(tzinfo=None)
     path = store.cache_path()
     conn = store.open_store(path)
     try:
@@ -78,7 +86,8 @@ def _run_load(argv: list[str]) -> None:
             Sources(factory=_client_factory()),
             parts=parts,
             since=since,
-            today=date.today(),
+            today=now.date(),
+            last_day=_last_closed_day(now),
             progress=_progress,
         )
     except CliError:
