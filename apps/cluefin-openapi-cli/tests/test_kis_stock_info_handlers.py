@@ -10,8 +10,11 @@ from _handler_fakes import (
 
 from cluefin_openapi_cli.handlers.kis import domestic_stock_info as handlers
 
+# valuation calls KIS and DART several times and computes; test_kis_opinion_valuation.py covers it.
+_PASS_THROUGH_HANDLERS = [h for h in handlers._ALL_HANDLERS if h is not handlers.handle_kis_stock_valuation]
 
-@pytest.mark.parametrize("handler", handlers._ALL_HANDLERS, ids=lambda h: h._rpc_schema.name)
+
+@pytest.mark.parametrize("handler", _PASS_THROUGH_HANDLERS, ids=lambda h: h._rpc_schema.name)
 def test_handler_calls_underlying_client(handler) -> None:
     assert_calls_client_once(handler)
 

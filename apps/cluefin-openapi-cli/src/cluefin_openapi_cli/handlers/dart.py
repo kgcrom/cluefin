@@ -632,14 +632,12 @@ def _kst_today() -> str:
     return datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y%m%d")
 
 
-def _statement_rows(result) -> list[dict]:
+def dart_rows(result) -> list[dict]:
     rows = getattr(getattr(_checked(result), "result", None), "list", None) or []
     return [dump_model(row) for row in rows]
 
 
-def _fetch_reports(
-    dart, corp_code: str, keys: list[tuple[int, str]], as_of: str, basis: str
-) -> list[statements.Report]:
+def fetch_reports(dart, corp_code: str, keys: list[tuple[int, str]], as_of: str, basis: str) -> list[statements.Report]:
     """The periodic reports named by (year, reprt_code) on one statement basis, received by `as_of`."""
     reports = []
     for year, reprt_code in keys:
@@ -649,7 +647,7 @@ def _fetch_reports(
             reprt_code=reprt_code,
             fs_div=basis,
         )
-        rows = _statement_rows(result)
+        rows = dart_rows(result)
         if not rows:
             continue
         rcept_no = str(rows[0].get("rcept_no") or "")
@@ -659,7 +657,7 @@ def _fetch_reports(
     return reports
 
 
-def _collect_reports(
+def collect_reports(
     dart, corp_code: str, year: int, as_of: str, bases: tuple[str, ...]
 ) -> tuple[str | None, list, int]:
     """(basis, reports, calls) for the first basis that has any report of `year - 1`/`year`.
@@ -671,12 +669,12 @@ def _collect_reports(
     window = [(y, code) for y in (year - 1, year) for code in statements.QUARTER_OF]
     calls = 0
     for basis in bases:
-        reports = _fetch_reports(dart, corp_code, window, as_of, basis)
+        reports = fetch_reports(dart, corp_code, window, as_of, basis)
         calls += len(window)
         if not reports:
             continue
         if not any(r.reprt_code == "11011" for r in reports):
-            reports += _fetch_reports(dart, corp_code, [(year - 2, "11011")], as_of, basis)
+            reports += fetch_reports(dart, corp_code, [(year - 2, "11011")], as_of, basis)
             calls += 1
         return basis, reports, calls
     return None, [], calls
@@ -741,7 +739,7 @@ def handle_financial_summary(params: dict, session) -> dict:
     shown = int(params.get("quarters", _SUMMARY_DEFAULT_QUARTERS))
 
     dart = session.get_dart()
-    basis, reports, calls = _collect_reports(dart, corp_code, int(as_of[:4]), as_of, bases)
+    basis, reports, calls = collect_reports(dart, corp_code, int(as_of[:4]), as_of, bases)
     if not reports:
         raise CliError(
             f"No periodic report of {corp_code} received by {as_of} on basis {'/'.join(bases)}",

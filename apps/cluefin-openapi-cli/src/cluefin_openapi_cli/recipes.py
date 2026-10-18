@@ -64,6 +64,21 @@ _RECIPES: tuple[WorkflowRecipe, ...] = (
                 purpose="Add foreign and institutional trading-flow context.",
                 agent_notes="Check date fields before comparing with price movement.",
             ),
+            RecipeStep(
+                title="Summarize broker targets",
+                command=("kis", "stock", "opinion-summary"),
+                purpose="Each broker's latest rating and target price in the window, with mean/median/max/min.",
+                agent_notes="Default window is 90 days. This is the cross-broker view; kis stock estimated-earnings is one "
+                "brokerage's estimate, not a consensus.",
+            ),
+            RecipeStep(
+                title="Value at the current price",
+                command=("kis", "stock", "valuation"),
+                purpose="Market cap, TTM PER, PBR and PER on the KIS estimate years from the close, DART share count "
+                "and DART statements.",
+                agent_notes="Needs corp_code as well as stock_code (resolve with dart corp-code-lookup once). Costs ~11 "
+                "calls; call once and reuse. Do not recompute its multiples from other sources.",
+            ),
         ),
         agent_notes="Use this recipe as a broad first pass, then narrow by domain/tag for detailed follow-up.",
     ),

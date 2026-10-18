@@ -745,6 +745,8 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
     "kis.stock.current-price-extended": CommandTaxonomy(("quote",), ("current-price", "volatility", "credit")),
     "kis.stock.estimated-earnings": CommandTaxonomy(("statements",), ("earnings-estimate",)),
     "kis.stock.investment-opinion": CommandTaxonomy(("statements",), ("analyst-opinion",)),
+    "kis.stock.opinion-summary": CommandTaxonomy(("statements",), ("analyst-opinion",)),
+    "kis.stock.valuation": CommandTaxonomy(("statements",), ("valuation", "financial-ratio")),
     "kis.stock.investment-opinion-by-brokerage": CommandTaxonomy(("statements",), ("analyst-opinion", "broker-flow")),
     "kis.stock.loanable": CommandTaxonomy(("reference", "trading-flow"), ("reference-list", "short-selling")),
     "kis.stock.margin-tradable": CommandTaxonomy(("reference", "trading-flow"), ("reference-list", "credit")),
