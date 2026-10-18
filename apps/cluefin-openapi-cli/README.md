@@ -174,6 +174,18 @@ uv run cluefin-openapi-cli cache company --as-of 20180102 --limit 5 --json
 DuckDB 는 쓰는 동안 다른 프로세스가 파일을 열 수 없습니다. `cache load` 중의 읽기는 exit 1 `CacheLocked`, 첫 적재 전은
 exit 2 `CacheMissing` 입니다.
 
+DuckDB CLI(`brew install duckdb`, 캐시와 같은 1.5 계열)로 직접 SQL 을 쓸 수 있습니다. 켜 둔 동안은 `cache load` 가 못 쓰니
+적재 전에 닫습니다.
+
+```bash
+duckdb -readonly ~/.cache/cluefin/market.duckdb          # SQL 셸, .quit 로 종료
+# 브라우저 UI(http://localhost:4213): 메모리 DB 로 띄우고 캐시만 읽기 전용으로 붙인다
+duckdb -cmd "ATTACH '$HOME/.cache/cluefin/market.duckdb' AS market (READ_ONLY); USE market; CALL start_ui();"
+```
+
+`duckdb -readonly -ui <파일>` 은 UI 가 자기 상태 카탈로그(`_duckdb_ui`)를 만들지 못해 `Catalog "_duckdb_ui" does not exist`
+로 실패합니다. 수정주가는 `close * adj_factor` 입니다.
+
 ## 입력 방식
 
 scalar 필드는 `--flag value` 또는 `--flag=value`로 줍니다. 배열·객체는 `--params-json`에 전체 객체를 넣거나, 해당 flag에 JSON 문자열을 넣습니다.
