@@ -44,6 +44,9 @@ CLI 가 말해 주지 않는 것만 적는다.
 - **기술적 지표는 `kis chart technical`.** 캔들을 받아 직접 계산하지 않는다. `signal.trend` 와
   `signal.mean_reversion` 은 별개 계열이라 하나의 점수로 합치지 않는다. 값은 `cluefin-desk` 화면과 다르다(EMA
   워밍업 차이) — 이 CLI 가 기준이다.
+- **전종목·과거 일봉은 로컬 캐시.** 여러 종목의 일봉, 특정 날짜의 상장 종목(폐지 포함)은 `cache ohlcv`·`cache company --as-of`
+  로 읽는다(네트워크 없음). 캐시는 원주가다 — 신호는 `--adjusted true`, 백테스트 체결가는 원주가. 파일이 없으면 exit 2
+  `CacheMissing`; `cache load`(첫 실행 ~2시간 20분, 이후 하루 ~7분)는 사용자가 요청할 때만 돌린다.
 - **응답은 작게.** `--fields`·`--limit`·`--compact`. 잘리면 `_truncated` 에 실제 `total` 이 온다. `list --json`
   을 필터 없이 부르지 않는다(61KB).
 - **exit code 로 분기한다.** 0 정상 · 1 내부 오류 · 2 인자 오류(`error.data.issues[]` 읽고 고친 뒤 재시도) ·
@@ -170,6 +173,36 @@ CLI 가 말해 주지 않는 것만 적는다.
 - Numbers will **not** match `cluefin-desk`: desk's pandas `ewm(span=N)` has no warm-up
   gap, while `cluefin-ta` follows ta-lib's SMA-seeded EMA with `N-1` leading NaNs.
   `cluefin-ta` is the reference here.
+
+## `cache *` 는 로컬 DuckDB 파일이다 (`cache/`)
+
+- 메타 명령이다(`main.META_COMMANDS`, registry 밖). `cache load` 만 broker 를 부르고 나머지는 파일만 읽는다.
+  `test_cli_contract.py` 는 문서의 `cache` 줄을 실행하지 않고 하위 명령 이름만 확인한다 — `load` 는 실호출이고 읽기는
+  로컬 파일에 따라 결과가 달라서다. `--dry-run` 은 없다.
+- **쓰는 프로세스는 하나, 쓰는 동안 읽기도 막힌다**(DuckDB). 읽기는 `read_only=True` 로 열고 잠금은 `CacheLocked`.
+  `cache load` 는 병렬 호출을 하지 않는다 — 사용자 결정(2026-10-18), KIS 는 동시 2개 제한도 있다.
+- **KIS 초당 한도는 HTTP 500 `EGW00201`** 이고 클라이언트 기본 20 req/s 에서도 ~10% 가 걸린다. 클라이언트 재시도(1초부터)로는
+  실효 ~5 req/s 라 `Sources` 가 KIS 클라이언트를 `max_retries=0` 으로 바꾸고 `throttle.kis_call` 이 0.1초 쉬고 다시 부른다
+  (실효 ~15 req/s). 같은 곳에서 `EGW00300`(게이트웨이)·`EGW00316`(재조회 요청)·`OPSQ1002`(SESSION FULL, HTTP 200
+  rt_cd 9)는 1초씩 5회 — 7만 회 적재에서 각각 몇 건씩 나왔다.
+- **유니버스는 키움 ka10099 의 `거래소`·`코스닥` 종류만**(ETF·ETN·리츠 제외). 목록에서 사라진 코드는 지우지 않고 basic-info
+  `lstg_abol_dt` 로 `delisted_on` 을 채운다. 2016년 이후 폐지 주식은 DART `stock_code` 차집합에서 보충하되 basic-info 의
+  `mket_id_cd`(STK/KSQ)·`scty_grp_id_cd`(ST/FS/DR)로 거른다 — 차집합에는 코넥스(상장일이 **코스닥** 필드에 있다)·리츠·선박투자가
+  섞인다. 확인한 코드는 `probe_log` 에 남겨 다시 부르지 않는다. 우선주는 DART 에 없어 끝자리를 0 으로 바꾼 보통주의
+  `corp_code`, KIS `setl_mmdd` 는 `'12'`·`'1231'` 두 형식이고 빈 종목은 DART 기업개황 `acc_mt`.
+- **`listed_on` 으로 일봉 시작을 자르지 않는다.** 코스닥→코스피 이전 종목은 basic-info 에 코스피 상장일만 남는다(035720:
+  2017-07-10) 그런데 KIS 일봉은 그 코드로 이전 시절까지 준다. 일봉은 항상 `--since` 부터다.
+- **일봉은 원주가**(`chart.period` 의 `"1"`). 과거가 안 바뀌므로 덧붙이기만 하고, 매 실행 최근 60일 종가가 다르면 그 종목만
+  전 구간 교체(`adj_log` 도 지워 수정계수를 다시 계산). KIS 는 10년 구간을 줘도 **최근 100행**(지수 50행)을 주므로 매번 남은
+  구간 전체를 요청하고 가장 오래된 행 전날로 줄여 가다 빈 응답에서 멈춘다 — 거래정지 공백·상장 전 기간에 호출을 쓰지 않는다.
+  `bar_log.fetched_from` 이 종목별 시작이고, `--since` 가 앞당겨지면 앞부분만 받아 채운다. 거래정지일은 시가=종가=전일 종가·
+  거래량 0 으로 온다. 0 가격은 NULL. 16시(KST) 전에는 전 거래일까지만 받는다.
+- **`adj_factor` = KIS 수정종가 ÷ 원주가 종가(날짜별)**. 분할일의 `prtt_rate` 는 0 으로 와서(2018-05 삼성전자) 기업행위를
+  원주가 응답만으로는 알 수 없다. 첫 구간 수정주가가 원주가와 모두 같으면 계수 1(호출 1회), 다르면 전 구간. 증분은 최근 60일을
+  받아 `close × adj_factor` 와 0.5원 넘게 다르면 새 기업행위로 보고 전 구간 재계산. 2016~ 3,187종목 중 1,662종목이 기업행위
+  있음(배당락일 변화도 있다 — KIS 수정주가 정의 그대로). KIS 가 수정주가를 원 단위로 반올림해 저가주의 계수는 날마다 조금씩
+  흔들린다 — 그래야 KIS 값과 정확히 같다(2026-10-18 표본 20종목 원주가·수정주가 전 날짜 일치).
+- PIT 한계: `company` 의 이름·업종·상장주식수는 현재 값이다. DART 등록 전에 폐지된 종목은 빠질 수 있다.
 
 ## `dart corp-code-lookup` 은 전체 색인을 받아 클라이언트에서 거른다
 
