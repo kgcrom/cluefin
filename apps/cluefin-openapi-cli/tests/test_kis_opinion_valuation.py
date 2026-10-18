@@ -187,10 +187,10 @@ def _statements() -> dict:
     }
 
 
-SHARES = [
+SHARES = (
     {"se": "보통주", "istc_totqy": "1,000,000", "tesstk_co": "100,000", "distb_stock_co": "900,000"},
     {"se": "우선주", "istc_totqy": "50,000", "tesstk_co": "-", "distb_stock_co": "50,000"},
-]
+)
 
 ESTIMATE = {
     "output4": [{"dt": "2025.12"}, {"dt": "2026.12E"}],
@@ -199,8 +199,11 @@ ESTIMATE = {
 }
 
 
-def _session(candles=None, shares=SHARES, estimate=ESTIMATE) -> _Session:
+def _session(candles=None, shares=None, estimate=None) -> _Session:
+    """None means the standard fixture; pass [] to simulate an empty broker answer."""
     candles = [_candle("20261016", "40000"), _candle("20261017", "40000")] if candles is None else candles
+    shares = list(SHARES) if shares is None else shares
+    estimate = dict(ESTIMATE) if estimate is None else estimate
     return _Session(_Kis(candles, estimate, []), _Dart(_statements(), shares))
 
 
