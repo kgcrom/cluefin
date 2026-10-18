@@ -9,9 +9,10 @@ from zoneinfo import ZoneInfo
 
 from cluefin_openapi_cli.cache import store
 from cluefin_openapi_cli.cache.load import PARTS, Sources, run_load
-from cluefin_openapi_cli.cliargs import _parse_named_options, _str_option
+from cluefin_openapi_cli.cache.read import read_company, read_ohlcv
+from cluefin_openapi_cli.cliargs import _parse_fields, _parse_limit, _parse_named_options, _str_option
 from cluefin_openapi_cli.errors import EXIT_USAGE, CliError, classify_exception
-from cluefin_openapi_cli.output import render_output
+from cluefin_openapi_cli.output import attach_truncation, limit_rows, render_output, select_fields
 
 __all__ = ["SUBCOMMANDS", "run_cache"]
 
@@ -103,9 +104,94 @@ def _run_load(argv: list[str]) -> None:
     )
 
 
+_DEFAULT_OHLCV_DAYS = 365
+_DEFAULT_COMPANY_LIMIT = 100
+
+
+def _parse_bool(options: dict[str, str | bool], key: str) -> bool:
+    raw = _str_option(options, key)
+    if raw is None:
+        return False
+    if raw.lower() in {"true", "1", "yes"}:
+        return True
+    if raw.lower() in {"false", "0", "no"}:
+        return False
+    raise CliError(f"`--{key.replace('_', '-')}` takes true or false, got `{raw}`.", exit_code=EXIT_USAGE)
+
+
+def _render_read(payload: dict[str, Any], options: dict[str, str | bool], *, default_limit: int | None) -> None:
+    fields = _parse_fields(options.get("fields"))
+    limit = _parse_limit(options.get("limit"))
+    if limit is None:
+        limit = default_limit
+    data: Any = payload
+    if fields:
+        data = select_fields(data, fields)
+    if limit is not None:
+        data, notes = limit_rows(data, limit)
+        data = attach_truncation(data, limit, notes)
+    render_output(data, force_json=bool(options.get("json", False)), compact=bool(options.get("compact", False)))
+
+
+def _read_conn():
+    return store.open_store(store.cache_path(), read_only=True)
+
+
+def _run_ohlcv(argv: list[str]) -> None:
+    positional, options = _parse_named_options(argv)
+    code = _str_option(options, "code")
+    if positional or not code:
+        raise CliError(
+            "Usage: cache ohlcv --code <code> [--since YYYYMMDD] [--until YYYYMMDD] [--adjusted true].",
+            exit_code=EXIT_USAGE,
+        )
+    until_raw = _str_option(options, "until")
+    until = _parse_day(until_raw, "until") if until_raw else date.today()
+    since_raw = _str_option(options, "since")
+    since = _parse_day(since_raw, "since") if since_raw else until - timedelta(days=_DEFAULT_OHLCV_DAYS)
+    if since > until:
+        raise CliError("`--since` is after `--until`.", exit_code=EXIT_USAGE)
+    adjusted = _parse_bool(options, "adjusted")
+    conn = _read_conn()
+    try:
+        payload = read_ohlcv(conn, code.strip().upper(), since=since, until=until, adjusted=adjusted)
+    finally:
+        conn.close()
+    if not payload["bars"]:
+        payload["hint"] = (
+            "No bars in range. Check the code with `cache company --code` and the span with `cache status`."
+        )
+    _render_read(payload, options, default_limit=None)
+
+
+def _run_company(argv: list[str]) -> None:
+    positional, options = _parse_named_options(argv)
+    if positional:
+        raise CliError("`cache company` does not accept positional arguments.", exit_code=EXIT_USAGE)
+    code = _str_option(options, "code")
+    market = _str_option(options, "market")
+    if market is not None and market.upper() not in {"KOSPI", "KOSDAQ"}:
+        raise CliError("`--market` takes KOSPI or KOSDAQ.", exit_code=EXIT_USAGE)
+    as_of_raw = _str_option(options, "as_of")
+    conn = _read_conn()
+    try:
+        payload = read_company(
+            conn,
+            code=code.strip().upper() if code else None,
+            as_of=_parse_day(as_of_raw, "as-of") if as_of_raw else None,
+            include_delisted=_parse_bool(options, "include_delisted"),
+            market=market.upper() if market else None,
+        )
+    finally:
+        conn.close()
+    _render_read(payload, options, default_limit=None if code else _DEFAULT_COMPANY_LIMIT)
+
+
 SUBCOMMANDS: dict[str, Callable[[list[str]], None]] = {
     "status": _run_status,
     "load": _run_load,
+    "ohlcv": _run_ohlcv,
+    "company": _run_company,
 }
 
 
