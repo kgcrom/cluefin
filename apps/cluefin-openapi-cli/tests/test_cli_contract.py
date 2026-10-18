@@ -21,7 +21,7 @@ from cluefin_openapi_cli.main import run_cli
 from cluefin_openapi_cli.registry import EmptyRegistry, RpcRegistry, build_cli_registry, set_registry_provider
 
 README = Path("apps/cluefin-openapi-cli/README.md")
-SKILL = Path("apps/cluefin-openapi-cli/SKILL.md")
+AGENTS = Path("apps/cluefin-openapi-cli/AGENTS.md")
 META = {"search", "brokers", "list", "describe", "schema", "domains", "tags", "recipes", "recipe"}
 
 
@@ -108,7 +108,7 @@ def _needs_network(argv: list[str]) -> bool:
     return "--dry-run" not in argv
 
 
-@pytest.mark.parametrize("doc", [README, SKILL], ids=["README", "SKILL"])
+@pytest.mark.parametrize("doc", [README, AGENTS], ids=["README", "AGENTS"])
 def test_documented_offline_commands_execute(doc: Path) -> None:
     commands = _doc_commands(doc.read_text(encoding="utf-8"))
     offline = [argv for argv in commands if not _needs_network(argv)]

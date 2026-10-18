@@ -1,7 +1,7 @@
 """Structured error taxonomy for agent consumers.
 
 Exit codes are the contract an agent branches on; the JSON envelope carries the
-detail. Keep the table below in sync with README.md and SKILL.md.
+detail. Keep the table below in sync with README.md and AGENTS.md.
 """
 
 from __future__ import annotations

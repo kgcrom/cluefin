@@ -271,7 +271,7 @@ command 하나는 handler 함수에 붙은 `@rpc_method(name="stock.current_pric
 - 실제 broker client 생성은 `cluefin_openapi.client_factory`를 사용
 - KIS, Kiwoom은 토큰 캐시를 사용하고, DART·SEC는 stateless client로 동작
 - 모든 command는 `side_effect: "read"`. 주문·계좌 변경 command는 없다
-- Agent integration은 이 CLI의 JSON discovery를 직접 사용합니다. agent용 사용 규칙은 `SKILL.md`에 있습니다
+- Agent integration은 이 CLI의 JSON discovery를 직접 사용합니다. agent용 사용 규칙은 `AGENTS.md` 첫 절에 있습니다
 
 ## 주의사항
 
