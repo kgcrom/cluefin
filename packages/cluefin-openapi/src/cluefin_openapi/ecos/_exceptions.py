@@ -4,7 +4,7 @@ ECOS는 오류도 HTTP 200으로 돌려주고 본문 `{"RESULT": {"CODE": "ERROR
 `code` 에 그 결과 코드가 실린다. HTTP 단계 오류(404·5xx·타임아웃·연결)는 `code` 가 None.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 
 class EcosAPIError(Exception):
@@ -17,6 +17,7 @@ class EcosAPIError(Exception):
         status_code: Optional[int] = None,
         response_data: Optional[Dict[str, Any]] = None,
         request_context: Optional[Dict[str, Any]] = None,
+        hint: Optional[str] = None,
     ):
         super().__init__(message)
         self.message = message
@@ -24,10 +25,13 @@ class EcosAPIError(Exception):
         self.status_code = status_code
         self.response_data = response_data
         self.request_context = request_context or {}
+        # 결과 코드별로 무엇을 고치면 되는지. 서버 메시지는 명세 문구 그대로라 조치까지는 알려 주지 않는다.
+        self.hint = hint
 
     def __str__(self) -> str:
         if self.code:
-            return f"ECOS API Error [{self.code}]: {self.message}"
+            tail = f" (조치: {self.hint})" if self.hint else ""
+            return f"ECOS API Error [{self.code}]: {self.message}{tail}"
         if self.status_code:
             return f"ECOS API Error [{self.status_code}]: {self.message}"
         return f"ECOS API Error: {self.message}"
@@ -50,6 +54,10 @@ class EcosSampleLimitError(EcosRequestError):
 
 class EcosServerError(EcosAPIError):
     """서버 쪽 오류 (ERROR-400 60초 타임아웃, 500, 600 DB 연결, 601 SQL, HTTP 5xx)."""
+
+
+class EcosQueryTimeoutError(EcosServerError):
+    """ERROR-400: 검색 범위가 커서 서버가 60초 만에 끊었다. 다시 보내도 같으니 기간·항목을 좁혀야 한다."""
 
 
 class EcosRateLimitError(EcosAPIError):
@@ -81,25 +89,40 @@ def raise_for_result(
     """
     common = {"code": code, "response_data": response_data, "request_context": request_context}
     if code == SAMPLE_LIMIT_CODE and SAMPLE_LIMIT_HINT in message:
-        raise EcosSampleLimitError(message, **common)
-    error_cls = _RESULT_CODE_ERRORS.get(code, EcosAPIError)
-    raise error_cls(message or "ECOS 오류", **common)
+        raise EcosSampleLimitError(message, hint=_SAMPLE_LIMIT_ACTION, **common)
+    error_cls, hint = _RESULT_CODE_ERRORS.get(code, (EcosAPIError, None))
+    raise error_cls(message or "ECOS 오류", hint=hint, **common)
 
 
-# 새로 본 코드는 여기에 한 줄 더한다. 표에 없는 코드는 EcosAPIError.
-_RESULT_CODE_ERRORS: Dict[str, type] = {
-    "INFO-100": EcosAuthenticationError,
-    "ERROR-100": EcosRequestError,
-    "ERROR-101": EcosRequestError,
-    "ERROR-200": EcosRequestError,
-    "ERROR-300": EcosRequestError,
-    "ERROR-301": EcosRequestError,
-    "ERROR-400": EcosServerError,
-    "ERROR-500": EcosServerError,
-    "ERROR-600": EcosServerError,
-    "ERROR-601": EcosServerError,
-    "ERROR-602": EcosRateLimitError,
+_ROW_RANGE_ACTION = "start_row·end_row 는 1 이상 정수이고 start_row ≤ end_row 여야 합니다"
+_SAMPLE_LIMIT_ACTION = "sample 키는 한 번에 10행까지입니다. 범위를 10행 이하로 주거나 생략해 쪽 넘김에 맡기세요"
+
+# 새로 본 코드는 여기에 한 줄 더한다. 표에 없는 코드는 EcosAPIError. 문구는 명세의 "OpenAPI 메세지" 표를 따른다.
+_RESULT_CODE_ERRORS: Dict[str, Tuple[type, str]] = {
+    "INFO-100": (
+        EcosAuthenticationError,
+        "ECOS_AUTH_KEY 를 확인하세요. 키가 없으면 ECOS 에서 신청하거나 키 없이 sample(10행)로 쓰세요",
+    ),
+    "ERROR-100": (EcosRequestError, "통계표코드·주기·검색 시작/종료일자 같은 필수 값이 비었는지 확인하세요"),
+    "ERROR-101": (
+        EcosRequestError,
+        "날짜는 주기 형식을 따릅니다. A=2024, S=2024S1, Q=2024Q1, M=202401, SM=202401S1, D=20240101",
+    ),
+    "ERROR-200": (EcosRequestError, "요청 유형(json)이 경로에 없거나 잘못됐습니다. 클라이언트 경로 조립을 확인하세요"),
+    "ERROR-300": (EcosRequestError, _ROW_RANGE_ACTION),
+    "ERROR-301": (EcosRequestError, _ROW_RANGE_ACTION),
+    "ERROR-400": (EcosQueryTimeoutError, "기간을 나눠 여러 번 받거나 항목코드를 지정해 범위를 좁히세요"),
+    "ERROR-500": (EcosServerError, "서비스명을 확인하고, 맞다면 잠시 후 다시 시도하세요"),
+    "ERROR-600": (EcosServerError, "ECOS 서버 DB 접속 오류입니다. 재시도 후에도 같으면 잠시 뒤 다시 시도하세요"),
+    "ERROR-601": (EcosServerError, "서버 SQL 오류입니다. 통계표·항목코드 조합을 확인하거나 잠시 뒤 다시 시도하세요"),
+    "ERROR-602": (
+        EcosRateLimitError,
+        "호출이 너무 많아 제한됐습니다. rate_limit_requests_per_second 를 낮추거나 잠시 뒤 다시 시도하세요",
+    ),
 }
+
+# 일시적이라 같은 요청을 다시 보내 볼 만한 코드. ERROR-400(범위 과다)·601(SQL)은 다시 보내도 같다.
+RETRYABLE_RESULT_CODES = frozenset({"ERROR-600", "ERROR-602"})
 
 # ERROR-301 은 건수 타입 오류·시작>끝·sample 10건 초과가 같은 코드라 메시지 꼬리로만 가른다.
 # 문구가 바뀌면 일반 EcosRequestError 로 떨어질 뿐이라(상위 클래스) 잡는 쪽이 깨지지 않는다.

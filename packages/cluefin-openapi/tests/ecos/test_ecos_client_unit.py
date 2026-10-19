@@ -13,6 +13,7 @@ from cluefin_openapi.ecos import (
     EcosAuthenticationError,
     EcosNetworkError,
     EcosNotFoundError,
+    EcosQueryTimeoutError,
     EcosRateLimitError,
     EcosRequestError,
     EcosSampleLimitError,
@@ -50,6 +51,9 @@ class TestInit:
     @pytest.mark.parametrize("key", [None, ""])
     def test_empty_key_falls_back_to_sample(self, key):
         assert Client(auth_key=key).is_sample
+
+    def test_default_timeout_outlasts_server_60s_cutoff(self, sample: Client):
+        assert sample.timeout > 60
 
     def test_real_key_uses_1000_row_pages(self, real: Client):
         assert not real.is_sample
@@ -147,7 +151,7 @@ class TestBodyResult:
             ("ERROR-300", "조회건수 값이 누락되어 있습니다.", EcosRequestError),
             ("ERROR-301", "조회건수 값의 타입이 유효하지 않습니다.\n 요청시작건수가 더 큽니다.", EcosRequestError),
             ("ERROR-301", SAMPLE_LIMIT_MESSAGE, EcosSampleLimitError),
-            ("ERROR-400", "60초 TIMEOUT이 발생하였습니다.", EcosServerError),
+            ("ERROR-400", "60초 TIMEOUT이 발생하였습니다.", EcosQueryTimeoutError),
             ("ERROR-500", "서버 오류입니다.", EcosServerError),
             ("ERROR-600", "DB Connection 오류입니다.", EcosServerError),
             ("ERROR-601", "SQL 오류입니다.", EcosServerError),
@@ -163,6 +167,62 @@ class TestBodyResult:
         assert type(info.value) is expected
         assert info.value.code == code
         assert info.value.status_code is None or info.value.status_code == 200
+
+    def test_query_timeout_is_a_server_error(self, real: Client):
+        with requests_mock.Mocker() as m:
+            m.get(ANY_ECOS, json=result("ERROR-400", "60초 TIMEOUT"))
+            with pytest.raises(EcosServerError):
+                real.statistic_catalog.key_statistic_list()
+
+    @pytest.mark.parametrize(
+        ("code", "message", "needle"),
+        [
+            ("ERROR-101", "주기와 다른 형식의 날짜 형식입니다.", "D=20240101"),
+            ("ERROR-301", SAMPLE_LIMIT_MESSAGE, "10행"),
+            ("ERROR-400", "60초 TIMEOUT", "기간을 나눠"),
+        ],
+    )
+    def test_error_carries_action_hint(self, real: Client, code, message, needle):
+        with requests_mock.Mocker() as m:
+            m.get(ANY_ECOS, json=result(code, message))
+            with pytest.raises(EcosAPIError) as info:
+                real.statistic_catalog.key_statistic_list()
+        assert needle in info.value.hint
+        assert f"(조치: {info.value.hint})" in str(info.value)
+
+    def test_unknown_code_has_no_hint(self, real: Client):
+        with requests_mock.Mocker() as m:
+            m.get(ANY_ECOS, json=result("ERROR-999", "처음 보는 코드"))
+            with pytest.raises(EcosAPIError) as info:
+                real.statistic_catalog.key_statistic_list()
+        assert info.value.hint is None
+        assert str(info.value) == "ECOS API Error [ERROR-999]: 처음 보는 코드"
+
+    @pytest.mark.parametrize("code", ["ERROR-600", "ERROR-602"])
+    def test_transient_body_error_is_retried(self, code):
+        client = Client(auth_key=REAL_KEY, max_retries=2)
+        with requests_mock.Mocker() as m, patch("time.sleep") as sleep:
+            m.get(ANY_ECOS, [{"json": result(code, "일시 오류")}, {"json": load("key_statistic_list.json")}])
+            page = client.statistic_catalog.key_statistic_list(start_row=1, end_row=10)
+        assert page.rows
+        assert m.call_count == 2
+        sleep.assert_called_once_with(1)
+
+    def test_transient_body_error_gives_up_after_retries(self):
+        client = Client(auth_key=REAL_KEY, max_retries=2)
+        with requests_mock.Mocker() as m, patch("time.sleep"):
+            m.get(ANY_ECOS, json=result("ERROR-602", "과도한 OpenAPI호출로 이용이 제한되었습니다."))
+            with pytest.raises(EcosRateLimitError):
+                client.statistic_catalog.key_statistic_list()
+        assert m.call_count == 3
+
+    def test_query_timeout_is_not_retried(self):
+        client = Client(auth_key=REAL_KEY, max_retries=2)
+        with requests_mock.Mocker() as m, patch("time.sleep"):
+            m.get(ANY_ECOS, json=result("ERROR-400", "60초 TIMEOUT"))
+            with pytest.raises(EcosQueryTimeoutError):
+                client.statistic_catalog.key_statistic_list()
+        assert m.call_count == 1
 
     def test_plain_request_error_is_not_a_sample_limit(self, real: Client):
         with requests_mock.Mocker() as m:

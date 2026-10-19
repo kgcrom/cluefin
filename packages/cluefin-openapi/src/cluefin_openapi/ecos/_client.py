@@ -1,12 +1,15 @@
+import time
 from typing import Any, Dict, List, Literal, Optional, Tuple
 from urllib.parse import quote
 
 import requests
+from loguru import logger
 
 from cluefin_openapi._http_base import BaseHttpClient
 from cluefin_openapi._rate_limiter import TokenBucket
 
 from ._exceptions import (
+    RETRYABLE_RESULT_CODES,
     EcosAPIError,
     EcosNetworkError,
     EcosNotFoundError,
@@ -26,6 +29,9 @@ PAGE_SIZE = 1000
 
 NO_DATA_CODE = "INFO-200"
 
+# 서버는 60초를 넘는 조회를 ERROR-400 으로 끊는다. 클라이언트가 먼저 끊으면 그 답을 못 보고 같은 요청을 재시도한다.
+DEFAULT_TIMEOUT = 75
+
 Lang = Literal["kr", "en"]
 
 
@@ -38,7 +44,7 @@ class Client(BaseHttpClient):
     def __init__(
         self,
         auth_key: Optional[str] = None,
-        timeout: int = 30,
+        timeout: int = DEFAULT_TIMEOUT,
         max_retries: int = 3,
         rate_limit_requests_per_second: float = 5.0,
         rate_limit_burst: int = 5,
@@ -87,17 +93,9 @@ class Client(BaseHttpClient):
         url = f"{BASE_URL}/{service}/{quote(self.auth_key, safe='')}/json/{tail}"
         request_context = {"method": "GET", "service": service, "path": f"/{service}/***/json/{tail}"}
 
-        response = self._request(url, request_context)
-        body = self._safe_json(response)
-        if not isinstance(body, dict):
-            raise EcosAPIError("ECOS 응답이 JSON 객체가 아닙니다", status_code=200, request_context=request_context)
-
-        result = body.get("RESULT")
-        if isinstance(result, dict):
-            code = str(result.get("CODE") or "")
-            if code == NO_DATA_CODE:
-                return {"list_total_count": 0, "row": []}
-            raise_for_result(code, str(result.get("MESSAGE") or ""), body, request_context)
+        body = self._get_body(url, request_context)
+        if body is None:
+            return {"list_total_count": 0, "row": []}
 
         page = body.get(service)
         if not isinstance(page, dict):
@@ -105,6 +103,26 @@ class Client(BaseHttpClient):
                 f"ECOS 응답에 '{service}' 블록이 없습니다", response_data=body, request_context=request_context
             )
         return page
+
+    def _get_body(self, url: str, request_context: dict) -> Optional[Dict]:
+        """본문을 받아 `RESULT` 를 푼다. 데이터 없음이면 None, 일시 오류(600·602)는 HTTP 5xx·429 처럼 재시도한다."""
+        for attempt in range(self.max_retries + 1):
+            body = self._safe_json(self._request(url, request_context))
+            if not isinstance(body, dict):
+                raise EcosAPIError("ECOS 응답이 JSON 객체가 아닙니다", status_code=200, request_context=request_context)
+            result = body.get("RESULT")
+            if not isinstance(result, dict):
+                return body
+            code = str(result.get("CODE") or "")
+            if code == NO_DATA_CODE:
+                return None
+            if code in RETRYABLE_RESULT_CODES and attempt < self.max_retries:
+                wait_time = 2**attempt
+                logger.warning(f"ECOS {code}, retrying in {wait_time}s ({attempt + 1}/{self.max_retries})")
+                time.sleep(wait_time)
+                continue
+            raise_for_result(code, str(result.get("MESSAGE") or ""), body, request_context)
+        raise EcosAPIError("ECOS 재시도 횟수를 넘겼습니다", request_context=request_context)
 
     def _get_rows(
         self,

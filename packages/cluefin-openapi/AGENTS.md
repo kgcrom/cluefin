@@ -190,6 +190,10 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   2026-10-19: INFO-100/200, ERROR-100/101/200/301). Only an unknown service name gets HTTP 404 (an HTML page titled
   "503"). `INFO-200` (no data, also for an unknown stat code) becomes an empty page, not an exception; every other code
   goes through `_exceptions.raise_for_result` — add a newly seen code to `_RESULT_CODE_ERRORS`.
+- The server cuts a query at 60 s with `ERROR-400`, so the default client timeout is 75 s. Below 60 s the client times
+  out first and resends the same oversized query `max_retries` times instead of surfacing `EcosQueryTimeoutError`.
+  Only `ERROR-600`/`602` are retried (`RETRYABLE_RESULT_CODES`); they come in a 200 body, so the HTTP 429/5xx retry
+  never sees them. 400 and 601 fail the same way again.
 - **ERROR-301 means three things**: a non-integer row count, start > end, and the `sample` key asking for more than 10
   rows. Only the message tail tells them apart, so `EcosSampleLimitError` is chosen by "sample" in the message and is a
   subclass of `EcosRequestError` (a reworded message just falls back to the parent).

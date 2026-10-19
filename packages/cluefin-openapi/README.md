@@ -520,7 +520,8 @@ client.statistic_glossary.meta("경제심리지수")
 - 상수: 국고채 1·3·5·10·20·30년, 통안증권·CD 91일, 회사채 3년 AA-·BBB-(`MARKET_RATES`), 원/달러 매매기준율 `USD_KRW`,
   소비자물가 총지수 `CPI_TOTAL`. 값은 원문 그대로(연 % 등) 두고 비율 변환은 쓰는 쪽에서 합니다.
 - 오류도 HTTP 200 본문 `RESULT.CODE`로 옵니다. 데이터 없음(`INFO-200`)은 빈 `rows`, 나머지는
-  `EcosAuthenticationError`·`EcosRequestError`(`EcosSampleLimitError`)·`EcosServerError`·`EcosRateLimitError`입니다.
+  `EcosAuthenticationError`·`EcosRequestError`(`EcosSampleLimitError`)·`EcosServerError`(`EcosQueryTimeoutError`)·
+  `EcosRateLimitError`입니다. 예외의 `hint` 에 코드별 조치가 실리고, 일시 오류(`ERROR-600`·`602`)는 자동 재시도합니다.
 - `BrokerClientFactory().create("ecos")` 는 `.env` 의 `ECOS_AUTH_KEY`(없으면 sample)로 같은 클라이언트를 만듭니다.
 
 ## 🔌 키움 웹소켓 사용 예제 (조건검색·실시간 시세)
