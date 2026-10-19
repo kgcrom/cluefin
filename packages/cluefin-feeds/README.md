@@ -7,6 +7,7 @@
 |---|---|---|
 | `cluefin_feeds.treasury` | 미 재무부 금리 XML 피드 | 명목 국채 수익률 곡선(1개월~30년, 일별) |
 | `cluefin_feeds.bls` | 미 노동통계국 Public Data API | 시계열 ID로 CPI·고용 등 (월별·연평균) |
+| `cluefin_feeds.damodaran` | Damodaran Online (NYU, 공개 파일) | 국가 위험 프리미엄·ERP, 지역별 업종 β, 종목 → 업종 분류 |
 
 ## 미 재무부 수익률 곡선
 
@@ -37,6 +38,25 @@ annual_2015 = next(r for r in cpi.data if r.year == 2015 and r.period == "M13").
   서버는 넘치는 연도를 **앞쪽 10년만** 남기므로 직접 부를 때도 나눠야 최근 값이 빠지지 않습니다.
 - 결측은 `raw_value == "-"`, `value is None`(예: 2025-10 셧다운, 각주 코드 X). 없는 시리즈도 성공으로 오고
   `messages`에 "Invalid Series for Series …"가 실립니다.
+
+## Damodaran
+
+```python
+from cluefin_feeds.damodaran import Client
+
+client = Client()
+korea = client.country_risk_premiums().get("Korea")  # HTML, 의존성 없음
+print(korea.equity_risk_premium, korea.country_risk_premium)  # 4.87 0.64 (% 단위 Decimal)
+
+# 아래 둘은 xls — pip install 'cluefin-feeds[damodaran]'
+betas = client.industry_betas("emerging")  # 한국은 Emerging Markets
+companies = client.companies("South Korea")  # indname.xls 약 22MB
+samsung = next(c for c in companies if c.krx_code == "005930")
+beta_u = betas.get(samsung.industry_group).unlevered_beta_corrected_for_cash  # 영업자산 β
+```
+
+- 표는 1년에 한두 번 바뀝니다(업종 β 1월, ERP 1월·7월). 매번 받지 말고 저장해 쓰세요.
+- 다시 레버할 때는 β = β_U × (1 + (1 − t) × D/E), t 는 한계세율(`corporate_tax_rate` 또는 표의 `marginal_tax_rate`).
 
 ## 오류
 

@@ -14,6 +14,12 @@ dependencies = [
     "requests>=2.32.4",
 ]
 
+[project.optional-dependencies]
+# Damodaran 업종 β·종목 업종 표는 구형 .xls 로만 공개된다.
+damodaran = [
+    "xlrd>=2.0.1",
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
