@@ -16,7 +16,7 @@ from cluefin_feeds.treasury import Client
 
 rows = Client().par_yield_curve("202610")  # 한 달(YYYYMM) 또는 한 해(YYYY)
 latest = rows[-1]
-print(latest.date, latest.year_10)  # 2026-10-16 4.05 (연 %, Decimal)
+print(latest.date, latest.year_10)  # 2026-10-16 5.09 (연 %, Decimal)
 ```
 
 - 자료가 아직 없는 달(달 초)은 빈 목록입니다. 최근 값이 필요하면 지난달을 다시 묻습니다.
