@@ -184,6 +184,28 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   lacks `.txt`. Format unchanged since 2009: `|`-separated, `.` for a missing price, two `Trailer …` lines whose
   record count is checked against the rows read (16 files across 2009–2026 matched).
 
+## 한국은행 ECOS (ecos)
+
+- **Errors come as HTTP 200 with `{"RESULT": {"CODE", "MESSAGE"}}`** for the sample key *and* a real key (measured
+  2026-10-19: INFO-100/200, ERROR-100/101/200/301). Only an unknown service name gets HTTP 404 (an HTML page titled
+  "503"). `INFO-200` (no data, also for an unknown stat code) becomes an empty page, not an exception; every other code
+  goes through `_exceptions.raise_for_result` — add a newly seen code to `_RESULT_CODE_ERRORS`.
+- **ERROR-301 means three things**: a non-integer row count, start > end, and the `sample` key asking for more than 10
+  rows. Only the message tail tells them apart, so `EcosSampleLimitError` is chosen by "sample" in the message and is a
+  subclass of `EcosRequestError` (a reworded message just falls back to the parent).
+- **The key is a URL path segment.** `request_context["path"]` shows it as `***`, and network/timeout errors are re-raised
+  with the key replaced and the cause chain cut (`requests` puts the full URL in its message). Never log the URL.
+- Page size is 10 for `sample` (`1/10`, `11/20`, … paging works) and 1000 for a real key. The real key actually has no row
+  cap (`1/100000` returned all 5,184 rows) — 1000 follows the docs. `max_pages` stops a runaway loop with an error rather
+  than returning a truncated list.
+- The portal's spec page is a JS SPA whose data comes from `POST /api/serviceEndpoint/httpService/request.json`
+  (`trxCd` `OSUOA03R01` services, `OSUOA04R01` fields with `srchCndYn` Y/N, `OSUOA05R01` messages) and matches the
+  downloadable `.xls` specs. The xls `StatisticSearch` example (`200Y001/A/2015/2021`) returns INFO-200; use the web one
+  (`200Y101/A/2020/2023/10101`).
+- Field types are mixed: `list_total_count`/`DATA_CNT`/`row_count` are numbers, `DATA_VALUE`/`TIME`/`LVL` strings, and
+  `WGT` came as `"1000"` — row models use `coerce_numbers_to_str`. `KeyStatisticList` adds an undocumented `row_count`
+  and its row order is not stable between calls.
+
 ## Kiwoom scope
 
 - Kiwoom US-stock (overseas) support is **Python-only**; the sibling `cluefin-openapi-ts`

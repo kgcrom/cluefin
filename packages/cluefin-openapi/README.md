@@ -114,6 +114,9 @@ DART_AUTH_KEY=your_dart_auth_key_here
 
 # SEC EDGAR — API 키 대신 User-Agent에 "이름 이메일"을 밝혀야 합니다 (없으면 SEC가 403)
 SEC_USER_AGENT="Your Name your.email@example.com"
+
+# 한국은행 ECOS — 비우면 공개 시험 키 sample (한 번에 10행, 쪽 넘김으로 이어 받음)
+ECOS_AUTH_KEY=your_ecos_auth_key_here
 ```
 
 ### 기본 사용법
@@ -484,6 +487,42 @@ Fails-to-Deliver에는 결제 불이행이 한 번이라도 있었던 종목만 
 
 `BrokerClientFactory().create("sec")` 도 `.env` 의 `SEC_USER_AGENT` 로 같은 클라이언트를 만듭니다.
 
+## 🏦 한국은행 ECOS 사용 예제
+
+ECOS(경제통계시스템) Open API 6개 서비스를 지원합니다. 키가 없으면 공개 시험 키 `sample`로 동작하고(한 번에 10행,
+클라이언트가 쪽 넘김으로 이어 받음), [ECOS](https://ecos.bok.or.kr/api/)에서 받은 키를 주면 1000행씩 받습니다.
+
+```python
+import os
+
+from cluefin_openapi.ecos import CORP_BOND_3Y_AA_MINUS, CPI_TOTAL, KTB_10Y, USD_KRW, Client
+
+client = Client(auth_key=os.getenv("ECOS_AUTH_KEY"))  # None 이면 sample
+
+# 통계 조회: 통계표·주기·기간·항목코드. 휴일은 행이 없으니 "최근 값"은 2주쯤 받아 마지막 행을 쓴다
+page = client.statistic_search.search_series(KTB_10Y, "20261005", "20261017")
+latest = page.rows[-1]
+print(latest.time, latest.data_value, latest.unit_name)  # 20261016 4.182 연%  (원문 문자열, latest.value 는 Decimal)
+
+# 항목코드 없이 통계표 전체 (시장금리 817Y002 는 27개 항목)
+rates = client.statistic_search.search("817Y002", "D", "20261005", "20261017")
+
+# 항목코드 찾기
+tables = client.statistic_catalog.table_list()              # 통계표 목록 (분류 행 포함)
+items = client.statistic_catalog.item_list("817Y002")       # 통계표의 항목
+key100 = client.statistic_catalog.key_statistic_list()      # 100대 통계지표 최근 값
+
+# 용어사전·메타
+client.statistic_glossary.word("소비자동향지수")
+client.statistic_glossary.meta("경제심리지수")
+```
+
+- 상수: 국고채 1·3·5·10·20·30년, 통안증권·CD 91일, 회사채 3년 AA-·BBB-(`MARKET_RATES`), 원/달러 매매기준율 `USD_KRW`,
+  소비자물가 총지수 `CPI_TOTAL`. 값은 원문 그대로(연 % 등) 두고 비율 변환은 쓰는 쪽에서 합니다.
+- 오류도 HTTP 200 본문 `RESULT.CODE`로 옵니다. 데이터 없음(`INFO-200`)은 빈 `rows`, 나머지는
+  `EcosAuthenticationError`·`EcosRequestError`(`EcosSampleLimitError`)·`EcosServerError`·`EcosRateLimitError`입니다.
+- `BrokerClientFactory().create("ecos")` 는 `.env` 의 `ECOS_AUTH_KEY`(없으면 sample)로 같은 클라이언트를 만듭니다.
+
 ## 🔌 키움 웹소켓 사용 예제 (조건검색·실시간 시세)
 
 키움 웹소켓 기능은 HTTP `Client`와 별개로 비동기(`asyncio`)로 동작합니다.
@@ -736,6 +775,7 @@ KIS_DEBUG_ON_FAILURE=1 uv run pytest packages/cluefin-openapi/tests/kis/test_dom
 packages/cluefin-openapi/
 ├── src/cluefin_openapi/
 │   ├── dart/                      # 금융감독원 DART 공시 클라이언트
+│   ├── ecos/                      # 한국은행 ECOS 경제통계 클라이언트
 │   ├── kiwoom/                    # 키움증권 API 클라이언트
 │   ├── kis/                       # 한국투자증권 API 클라이언트
 │   ├── nhplug/                    # NH투자증권 PLUG API 클라이언트
@@ -756,6 +796,7 @@ packages/cluefin-openapi/
 │   ├── dart/                      # Dart API 테스트
 │   │   ├── test_*_unit.py        # 단위 테스트
 │   │   └── test_*_integration.py # 통합 테스트
+│   ├── ecos/                      # ECOS 테스트 (통합 테스트는 sample 키로 늘, 실키는 .env.test 의 ECOS_AUTH_KEY 가 있을 때)
 │   └── sec/                       # SEC EDGAR 테스트 (통합 테스트는 .env.test 의 SEC_USER_AGENT 사용)
 ├── pyproject.toml               # 패키지 의존성 및 설정
 └── README.md                    # 이 문서
@@ -813,6 +854,7 @@ uv run ruff check packages/cluefin-openapi/
 - [한국투자증권 OpenAPI 포털](https://apiportal.koreainvestment.com/)
 - [NH투자증권 PLUG 포털](https://www.nhplug.com/) ([N2 PLUG](https://www.n2plug.com/))
 - [금융감독원 OpenAPI 포털](https://opendart.fss.or.kr/)
+- [한국은행 ECOS Open API](https://ecos.bok.or.kr/api/) · [개발 명세서](https://ecos.bok.or.kr/api/#/DevGuide/DevSpeciflcation)
 - [SEC EDGAR API](https://www.sec.gov/search-filings/edgar-application-programming-interfaces) · [접근 정책(User-Agent·요청 한도)](https://www.sec.gov/os/accessing-edgar-data)
 
 ---

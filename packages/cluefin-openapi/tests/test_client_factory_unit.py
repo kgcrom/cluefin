@@ -22,6 +22,7 @@ def test_config_from_env(monkeypatch):
     monkeypatch.setenv("KIWOOM_ENV", "dev")
     monkeypatch.setenv("DART_AUTH_KEY", "dart-key")
     monkeypatch.setenv("SEC_USER_AGENT", "Jane Doe jane@example.com")
+    monkeypatch.setenv("ECOS_AUTH_KEY", "ecos-key")
     monkeypatch.setenv("CLUEFIN_OPENAPI_CACHE_DIR", "/tmp/cluefin-cache")
     monkeypatch.setenv("CLUEFIN_OPENAPI_DEBUG", "true")
 
@@ -35,6 +36,7 @@ def test_config_from_env(monkeypatch):
     assert config.kiwoom_env == "dev"
     assert config.dart_auth_key == "dart-key"
     assert config.sec_user_agent == "Jane Doe jane@example.com"
+    assert config.ecos_auth_key == "ecos-key"
     assert config.cache_dir == "/tmp/cluefin-cache"
     assert config.debug is True
 
@@ -211,6 +213,17 @@ def test_factory_create_sec_requires_user_agent():
 
     with pytest.raises(ValueError, match="SEC_USER_AGENT"):
         factory.create_sec()
+
+
+def test_factory_creates_ecos_client_with_key():
+    client = BrokerClientFactory(BrokerClientConfig(ecos_auth_key="ecos-key")).create("ecos")
+
+    assert client.auth_key == "ecos-key"
+    assert not client.is_sample
+
+
+def test_factory_creates_ecos_sample_client_without_key():
+    assert BrokerClientFactory(BrokerClientConfig()).create_ecos().is_sample
 
 
 def test_factory_creates_nhplug_client_with_cache_dir(monkeypatch):
