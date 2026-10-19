@@ -21,6 +21,7 @@ members = [
     "cluefin",
     "cluefin-dart-notes",
     "cluefin-desk",
+    "cluefin-feeds",
     "cluefin-openapi",
     "cluefin-openapi-cli",
     "cluefin-sec-notes",
@@ -295,6 +296,23 @@ requires-dist = [
     { name = "scikit-learn", specifier = ">=1.3.0,<2.0.0" },
     { name = "shap", specifier = ">=0.47.2,<1.0.0" },
     { name = "textual", specifier = ">=1.0.0" },
+]
+
+[[package]]
+name = "cluefin-feeds"
+version = "0.1.0"
+source = { editable = "packages/cluefin-feeds" }
+dependencies = [
+    { name = "defusedxml" },
+    { name = "pydantic" },
+    { name = "requests" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "defusedxml", specifier = ">=0.7.1" },
+    { name = "pydantic", specifier = ">=2.12.0,<3.0.0" },
+    { name = "requests", specifier = ">=2.32.4" },
 ]
 
 [[package]]
