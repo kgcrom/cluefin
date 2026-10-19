@@ -1,0 +1,122 @@
+{
+"status": "REQUEST_SUCCEEDED",
+"responseTime": 76,
+"message": [],
+"Results": {
+"series": [
+{
+"seriesID": "CUUR0000SA0",
+"data": [
+{
+"year": "2015",
+"period": "M12",
+"periodName": "December",
+"value": "236.525",
+"footnotes": [
+{}
+]
+},
+{
+"year": "2015",
+"period": "M11",
+"periodName": "November",
+"value": "237.336",
+"footnotes": [
+{}
+]
+},
+{
+"year": "2015",
+"period": "M10",
+"periodName": "October",
+"value": "237.838",
+"footnotes": [
+{}
+]
+},
+{
+"year": "2015",
+"period": "M09",
+"periodName": "September",
+"value": "237.945",
+"footnotes": [
+{}
+]
+},
+{
+"year": "2015",
+"period": "M08",
+"periodName": "August",
+"value": "238.316",
+"footnotes": [
+{}
+]
+},
+{
+"year": "2015",
+"period": "M07",
+"periodName": "July",
+"value": "238.654",
+"footnotes": [
+{}
+]
+},
+{
+"year": "2015",
+"period": "M06",
+"periodName": "June",
+"value": "238.638",
+"footnotes": [
+{}
+]
+},
+{
+"year": "2015",
+"period": "M05",
+"periodName": "May",
+"value": "237.805",
+"footnotes": [
+{}
+]
+},
+{
+"year": "2015",
+"period": "M04",
+"periodName": "April",
+"value": "236.599",
+"footnotes": [
+{}
+]
+},
+{
+"year": "2015",
+"period": "M03",
+"periodName": "March",
+"value": "236.119",
+"footnotes": [
+{}
+]
+},
+{
+"year": "2015",
+"period": "M02",
+"periodName": "February",
+"value": "234.722",
+"footnotes": [
+{}
+]
+},
+{
+"year": "2015",
+"period": "M01",
+"periodName": "January",
+"value": "233.707",
+"footnotes": [
+{}
+]
+}
+]
+}
+]
+}
+}
