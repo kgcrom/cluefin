@@ -60,7 +60,7 @@ sma = talib.SMA(close, timeperiod=20)
 ### 포트폴리오 메트릭
 
 ```python
-from cluefin_ta import MDD, CAGR, SHARPE, SORTINO, CALMAR, VOLATILITY
+from cluefin_ta import MDD, CAGR, SHARPE, SORTINO, CALMAR, VOLATILITY, BETA, ALPHA
 
 returns = np.array([...])  # 일별 수익률
 
@@ -70,6 +70,8 @@ sharpe = SHARPE(returns, risk_free=0)       # 샤프비율
 sortino = SORTINO(returns, risk_free=0)     # 소르티노비율
 calmar = CALMAR(returns)                    # 칼마비율
 vol = VOLATILITY(returns)                   # 연환산변동성
+beta = BETA(returns, kospi_returns)         # 베타 (같은 날짜로 정렬한 벤치마크 수익률)
+alpha = ALPHA(returns, kospi_returns)       # 젠센 알파 (연율)
 ```
 
 ### 시장 레짐 감지
@@ -107,7 +109,7 @@ uv run --with jupyter jupyter lab packages/cluefin-ta/examples/ta_quickstart.ipy
 
 ## 지원 함수
 
-총 **38개** 기술 분석 함수 지원
+총 **40개** 기술 분석 함수 지원
 
 ### Overlap Studies (이동평균) - 7개
 
@@ -162,7 +164,7 @@ TA-Lib C 소스와 같은 알고리즘(직전 봉들의 평균 몸통·고저폭
 | `CDLHAMMER` | 해머 | +100 |
 | `CDLENGULFING` | 장악형 | ±100 (한쪽 끝이 겹치면 ±80) |
 
-### Portfolio Metrics (포트폴리오) - 6개
+### Portfolio Metrics (포트폴리오) - 8개
 
 | 함수 | 설명 |
 |------|------|
@@ -172,6 +174,8 @@ TA-Lib C 소스와 같은 알고리즘(직전 봉들의 평균 몸통·고저폭
 | `SORTINO(returns, risk_free=0, periods_per_year=252)` | 소르티노비율 |
 | `CALMAR(returns, periods_per_year=252)` | 칼마비율 |
 | `VOLATILITY(returns, periods_per_year=252)` | 연환산변동성 |
+| `BETA(returns, benchmark_returns)` | 베타 (공분산/분산, 날짜 정렬된 같은 길이 배열) |
+| `ALPHA(returns, benchmark_returns, risk_free=0, periods_per_year=252)` | 젠센 알파 (연율) |
 
 ### Regime Detection (시장 레짐 감지) - 6개
 

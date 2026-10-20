@@ -8,6 +8,8 @@ Functions:
     SORTINO: Sortino Ratio
     CALMAR: Calmar Ratio
     VOLATILITY: Annualized Volatility
+    BETA: Beta against a benchmark
+    ALPHA: Jensen's Alpha against a benchmark
 
 These functions are not part of ta-lib but are commonly used
 for portfolio performance analysis.
@@ -218,6 +220,82 @@ def CALMAR(returns: np.ndarray, periods_per_year: int = 252) -> float:
     return float(cagr / mdd)
 
 
+def _paired(returns: np.ndarray, benchmark_returns: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    returns = np.asarray(returns, dtype=np.float64)
+    benchmark_returns = np.asarray(benchmark_returns, dtype=np.float64)
+    if returns.shape != benchmark_returns.shape:
+        raise ValueError(
+            f"returns and benchmark_returns must be date-aligned arrays of the same length; "
+            f"got {returns.shape} and {benchmark_returns.shape}"
+        )
+    return returns, benchmark_returns
+
+
+def _beta(returns: np.ndarray, benchmark_returns: np.ndarray) -> float:
+    if len(returns) < 2:
+        return float("nan")
+    benchmark_var = np.var(benchmark_returns, ddof=1)
+    if np.isclose(benchmark_var, 0, atol=1e-30):
+        return float("nan")
+    return float(np.cov(returns, benchmark_returns, ddof=1)[0, 1] / benchmark_var)
+
+
+def BETA(returns: np.ndarray, benchmark_returns: np.ndarray) -> float:
+    """
+    Beta against a benchmark.
+
+    Cov(returns, benchmark) / Var(benchmark), both with ``ddof=1``.
+
+    Args:
+        returns: Array of periodic returns (e.g., daily returns as decimals)
+        benchmark_returns: Benchmark returns for the same periods, aligned by date
+            with ``returns`` (same length, same order). Align before calling — e.g.
+            a stock's suspended days must be dropped from both or filled in both.
+
+    Returns:
+        Beta, or NaN when there are fewer than 2 periods or the benchmark has no variance
+
+    Raises:
+        ValueError: If the two arrays differ in length
+    """
+    returns, benchmark_returns = _paired(returns, benchmark_returns)
+    return _beta(returns, benchmark_returns)
+
+
+def ALPHA(
+    returns: np.ndarray,
+    benchmark_returns: np.ndarray,
+    risk_free: float | np.ndarray = 0.0,
+    periods_per_year: int = 252,
+) -> float:
+    """
+    Jensen's Alpha against a benchmark (annualized).
+
+    ``(mean(r - rf) - beta * mean(b - rf)) * periods_per_year``, where beta is taken
+    over the excess returns ``r - rf`` and ``b - rf``.
+
+    Args:
+        returns: Array of periodic returns (e.g., daily returns as decimals)
+        benchmark_returns: Benchmark returns for the same periods, aligned by date
+        risk_free: Risk-free rate **per period** — a scalar, or an array the same
+            length as ``returns`` (default: 0)
+        periods_per_year: Number of periods in a year (default: 252 for trading days)
+
+    Returns:
+        Annualized alpha as a decimal (e.g., 0.03 for 3% a year), or NaN when beta is
+        undefined (fewer than 2 periods, or a benchmark with no variance)
+
+    Raises:
+        ValueError: If the arrays differ in length
+    """
+    returns, benchmark_returns = _paired(returns, benchmark_returns)
+    excess, benchmark_excess = returns - risk_free, benchmark_returns - risk_free
+    beta = _beta(excess, benchmark_excess)
+    if np.isnan(beta):
+        return float("nan")
+    return float((np.mean(excess) - beta * np.mean(benchmark_excess)) * periods_per_year)
+
+
 __all__ = [
     "MDD",
     "CAGR",
@@ -225,4 +303,6 @@ __all__ = [
     "SHARPE",
     "SORTINO",
     "CALMAR",
+    "BETA",
+    "ALPHA",
 ]

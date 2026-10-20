@@ -1,5 +1,5 @@
 """
-Tests for portfolio metrics (MDD, CAGR, SHARPE, SORTINO, CALMAR, VOLATILITY).
+Tests for portfolio metrics (MDD, CAGR, SHARPE, SORTINO, CALMAR, VOLATILITY, BETA, ALPHA).
 """
 
 import warnings
@@ -7,7 +7,7 @@ import warnings
 import numpy as np
 import pytest
 
-from cluefin_ta import CAGR, CALMAR, MDD, SHARPE, SORTINO, VOLATILITY
+from cluefin_ta import ALPHA, BETA, CAGR, CALMAR, MDD, SHARPE, SORTINO, VOLATILITY
 
 
 class TestMDD:
@@ -223,6 +223,90 @@ class TestCALMAR:
         returns = np.array([])
         calmar = CALMAR(returns)
         assert calmar == 0.0
+
+
+def _benchmark(n: int = 252, seed: int = 7) -> np.ndarray:
+    return np.random.default_rng(seed).normal(0.0004, 0.01, n)
+
+
+class TestBETA:
+    """Tests for Beta. No ta-lib counterpart, so the oracle is the formula itself."""
+
+    def test_beta_hand_computed(self):
+        """Cov/Var by hand: b = [1, 2, 3]%, r = [2, 1, 6]% → cov 2e-4, var 1e-4."""
+        benchmark = np.array([0.01, 0.02, 0.03])
+        returns = np.array([0.02, 0.01, 0.06])
+
+        assert BETA(returns, benchmark) == pytest.approx(2.0, rel=1e-12)
+
+    def test_beta_of_linear_combination(self):
+        """r = c + k·b gives beta k exactly, whatever the intercept."""
+        benchmark = _benchmark()
+
+        assert BETA(0.0003 + 1.5 * benchmark, benchmark) == pytest.approx(1.5, rel=1e-12)
+        assert BETA(-0.5 * benchmark, benchmark) == pytest.approx(-0.5, rel=1e-12)
+
+    def test_beta_matches_ols_slope(self):
+        """Beta is the OLS slope of returns on the benchmark."""
+        benchmark = _benchmark()
+        returns = 1.2 * benchmark + np.random.default_rng(1).normal(0, 0.005, benchmark.size)
+
+        slope = np.polyfit(benchmark, returns, 1)[0]
+        assert BETA(returns, benchmark) == pytest.approx(slope, rel=1e-10)
+
+    def test_beta_of_benchmark_is_one(self):
+        benchmark = _benchmark()
+
+        assert BETA(benchmark, benchmark) == pytest.approx(1.0, rel=1e-12)
+
+    def test_beta_length_mismatch_raises(self):
+        """Arrays that are not date-aligned must not be silently truncated."""
+        with pytest.raises(ValueError, match="same length"):
+            BETA(np.zeros(5), np.zeros(4))
+
+    @pytest.mark.parametrize(
+        "returns, benchmark",
+        [
+            (np.array([0.01]), np.array([0.02])),
+            (np.array([0.01, 0.02, -0.01]), np.full(3, 0.01)),
+        ],
+        ids=["single-period", "flat-benchmark"],
+    )
+    def test_beta_undefined_is_nan(self, returns, benchmark):
+        assert np.isnan(BETA(returns, benchmark))
+
+
+class TestALPHA:
+    """Tests for Jensen's Alpha (annualized, arithmetic)."""
+
+    def test_alpha_of_constructed_series(self):
+        """r - rf = a + β(b - rf) exactly → alpha = a × periods_per_year."""
+        benchmark = _benchmark()
+        a, beta, rf = 0.0002, 1.3, 0.0001
+        returns = rf + a + beta * (benchmark - rf)
+
+        assert ALPHA(returns, benchmark, risk_free=rf) == pytest.approx(a * 252, rel=1e-10)
+
+    def test_alpha_with_risk_free_array(self):
+        """A per-period risk-free series (e.g. daily from treasury yields) is subtracted bar by bar."""
+        benchmark = _benchmark()
+        rf = np.linspace(0.00008, 0.00014, benchmark.size)
+        a, beta = -0.0001, 0.8
+        returns = rf + a + beta * (benchmark - rf)
+
+        assert ALPHA(returns, benchmark, risk_free=rf, periods_per_year=250) == pytest.approx(a * 250, rel=1e-10)
+
+    def test_alpha_of_benchmark_is_zero(self):
+        benchmark = _benchmark()
+
+        assert ALPHA(benchmark, benchmark, risk_free=0.0001) == pytest.approx(0.0, abs=1e-15)
+
+    def test_alpha_length_mismatch_raises(self):
+        with pytest.raises(ValueError, match="same length"):
+            ALPHA(np.zeros(3), np.zeros(4))
+
+    def test_alpha_flat_benchmark_is_nan(self):
+        assert np.isnan(ALPHA(np.array([0.01, 0.02, -0.01]), np.full(3, 0.01)))
 
 
 class TestPortfolioIntegration:
