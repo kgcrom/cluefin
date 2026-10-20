@@ -210,6 +210,25 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   `WGT` came as `"1000"` — row models use `coerce_numbers_to_str`. `KeyStatisticList` adds an undocumented `row_count`
   and its row order is not stable between calls.
 
+### Finding a series (what the catalog won't tell you up front)
+
+- Start from the table, not a keyword: `table_list()` is 844 rows, 617 of them queryable (`SRCH_YN=Y`), and names
+  repeat across tables (e.g. M2 is split by 평잔/말잔 × 원계열/계절조정 into separate tables). For markets, most
+  questions land on a handful of tables: `817Y002` (all daily market rates: KTB curve, CD/CP, KOFR, corp bonds),
+  `722Y001` (base rate), `121Y006`/`121Y015` (bank lending rates, new vs. outstanding), `802Y001` (daily KOSPI/KOSDAQ,
+  foreign net buying, market cap), `901Y014` (monthly PER/dividend yield), `901Y054`–`901Y056` (delinquency, investor
+  flows, deposits/margin loans). README has the item codes, measured 2026-10-20.
+- `item_list()` returns **one row per item × cycle** (`722Y001`'s base rate appears four times, D/M/Q/A). The cycle you
+  pass must be one the item has, or you get INFO-200 (empty), not an error.
+- Some tables have **two item groups** (`901Y054`: loan type × bank group, `901Y055`: investor × volume/value). Pass the
+  codes in group order; omitting the second returns every group-2 item (`["MO3AB"]` alone gave 3 bank groups per month). The group-2 item carries the unit (`VA` = 백만원),
+  the group-1 item shows `unit_name=None`.
+- Spreads (term spread, credit spread) are **not** series — fetch both legs and subtract on matched dates.
+- Units differ per table and are only in `unit_name` (원, 억원, 십억원, 백만원; 연% vs %). Never assume.
+- Monthly/quarterly series lag by 1–3 months (on 2026-10-20: lending rates/M2 ended 2026-08, delinquency 2026-07,
+  household credit 2026Q2). A "latest value" query with a tight window returns INFO-200 → empty, which looks like a bug
+  but isn't; widen the window.
+
 ## Kiwoom scope
 
 - Kiwoom US-stock (overseas) support is **Python-only**; the sibling `cluefin-openapi-ts`
