@@ -80,6 +80,7 @@ jobs:
         cp packages/cluefin-openapi/.env.sample packages/cluefin-openapi/.env
         
     - name: Run unit tests
+      if: matrix.python-version != env.PYTHON_VERSION
       env:
         # Environment variables
         TEST_ENVIRONMENT: ${{ vars.TEST_ENVIRONMENT || 'development' }}
@@ -87,7 +88,25 @@ jobs:
         ENABLE_INTEGRATION_TESTS: ${{ vars.ENABLE_INTEGRATION_TESTS || 'false' }}
       run: |
         uv run pytest -m "not integration and not slow"
-        
+
+    # 커버리지는 PYTHON_VERSION 칸에서 같은 단위 테스트를 coverage 로 돌려 얻는다.
+    # 따로 잡을 두면 같은 테스트를 새 러너에서 설치부터 한 번 더 돌게 된다.
+    - name: Run unit tests with coverage
+      if: matrix.python-version == env.PYTHON_VERSION
+      run: |
+        uv run coverage run -m pytest -m "not integration and not slow"
+        uv run coverage xml
+
+    - name: Upload coverage to Codacy
+      if: matrix.python-version == env.PYTHON_VERSION
+      env:
+        CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+        CODACY_ORGANIZATION_PROVIDER: gh
+        CODACY_USERNAME: kgcrom
+        CODACY_PROJECT_NAME: cluefin
+      run: |
+        bash <(curl -Ls https://coverage.codacy.com/get.sh) report -l Python -r coverage.xml
+
     - name: Run integration tests
       if: vars.ENABLE_INTEGRATION_TESTS == 'true'
       env:
@@ -98,45 +117,6 @@ jobs:
         LOG_LEVEL: ${{ vars.LOG_LEVEL || 'DEBUG' }}
       run: |
         uv run pytest -m "integration" -v --tb=short
-
-  coverage:
-    name: Codacy Coverage Report
-    runs-on: ubuntu-24.04
-    environment: development
-    needs: test
-    if: needs.test.result == 'success'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-      
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v7
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v10.2.0
-        with:
-          enable-cache: true
-          cache-suffix: coverage
-
-      - name: Install dependencies
-        run: |
-          uv sync --all-packages --all-extras --locked
-
-      - name: Generate coverage report
-        run: |
-          uv run coverage run -m pytest -m "not integration and not slow"
-          uv run coverage xml
-      
-      - name: Upload coverage to Codecov
-        env:
-          CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
-          CODACY_ORGANIZATION_PROVIDER: gh
-          CODACY_USERNAME: kgcrom
-          CODACY_PROJECT_NAME: cluefin
-        run: |
-          bash <(curl -Ls https://coverage.codacy.com/get.sh) report -l Python -r coverage.xml
 
   security:
     name: Security Scan
