@@ -1,0 +1,41 @@
+name: CI cluefin-openapi-ts
+
+"on":
+  push:
+    branches: [ main ]
+    # TS 패키지는 자기 폴더 밖 파일을 빌드·단위 테스트에 쓰지 않는다
+    paths:
+      - 'packages/cluefin-openapi-ts/**'
+      - '.github/workflows/ci-openapi-ts.yml'
+  workflow_dispatch:
+
+# 연달아 머지되면 앞 커밋의 실행은 취소하고 마지막 커밋만 끝까지 돌린다
+concurrency:
+  group: ci-openapi-ts-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  openapi-ts:
+    name: cluefin-openapi-ts (build, lint, typecheck, unit test)
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: packages/cluefin-openapi-ts
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v7
+      with:
+        node-version: 24
+        cache: npm
+        cache-dependency-path: packages/cluefin-openapi-ts/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    # npm publish 직전에 도는 것과 같은 게이트: build → biome check → typecheck → unit test
+    - name: Run publish check
+      run: npm run publish:check
