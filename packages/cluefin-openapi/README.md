@@ -114,6 +114,9 @@ DART_AUTH_KEY=your_dart_auth_key_here
 
 # SEC EDGAR — API 키 대신 User-Agent에 "이름 이메일"을 밝혀야 합니다 (없으면 SEC가 403)
 SEC_USER_AGENT="Your Name your.email@example.com"
+
+# 한국은행 ECOS — 비우면 공개 시험 키 sample (한 번에 10행, 쪽 넘김으로 이어 받음)
+ECOS_AUTH_KEY=your_ecos_auth_key_here
 ```
 
 ### 기본 사용법
@@ -484,6 +487,83 @@ Fails-to-Deliver에는 결제 불이행이 한 번이라도 있었던 종목만 
 
 `BrokerClientFactory().create("sec")` 도 `.env` 의 `SEC_USER_AGENT` 로 같은 클라이언트를 만듭니다.
 
+## 🏦 한국은행 ECOS 사용 예제
+
+ECOS(경제통계시스템) Open API 6개 서비스를 지원합니다. 키가 없으면 공개 시험 키 `sample`로 동작하고(한 번에 10행,
+클라이언트가 쪽 넘김으로 이어 받음), [ECOS](https://ecos.bok.or.kr/api/)에서 받은 키를 주면 1000행씩 받습니다.
+
+```python
+import os
+
+from cluefin_openapi.ecos import CORP_BOND_3Y_AA_MINUS, CPI_TOTAL, KTB_10Y, USD_KRW, Client
+
+client = Client(auth_key=os.getenv("ECOS_AUTH_KEY"))  # None 이면 sample
+
+# 통계 조회: 통계표·주기·기간·항목코드. 휴일은 행이 없으니 "최근 값"은 2주쯤 받아 마지막 행을 쓴다
+page = client.statistic_search.search_series(KTB_10Y, "20261005", "20261017")
+latest = page.rows[-1]
+print(latest.time, latest.data_value, latest.unit_name)  # 20261016 4.182 연%  (원문 문자열, latest.value 는 Decimal)
+
+# 항목코드 없이 통계표 전체 (시장금리 817Y002 는 27개 항목)
+rates = client.statistic_search.search("817Y002", "D", "20261005", "20261017")
+
+# 항목코드 찾기
+tables = client.statistic_catalog.table_list()              # 통계표 목록 (분류 행 포함)
+items = client.statistic_catalog.item_list("817Y002")       # 통계표의 항목
+key100 = client.statistic_catalog.key_statistic_list()      # 100대 통계지표 최근 값
+
+# 용어사전·메타
+client.statistic_glossary.word("소비자동향지수")
+client.statistic_glossary.meta("경제심리지수")
+```
+
+- 상수: 국고채 1·3·5·10·20·30년, 통안증권·CD 91일, 회사채 3년 AA-·BBB-(`MARKET_RATES`), 원/달러 매매기준율 `USD_KRW`,
+  소비자물가 총지수 `CPI_TOTAL`. 값은 원문 그대로(연 % 등) 두고 비율 변환은 쓰는 쪽에서 합니다.
+- 오류도 HTTP 200 본문 `RESULT.CODE`로 옵니다. 데이터 없음(`INFO-200`)은 빈 `rows`, 나머지는
+  `EcosAuthenticationError`·`EcosRequestError`(`EcosSampleLimitError`)·`EcosServerError`(`EcosQueryTimeoutError`)·
+  `EcosRateLimitError`입니다. 예외의 `hint` 에 코드별 조치가 실리고, 일시 오류(`ERROR-600`·`602`)는 자동 재시도합니다.
+- `BrokerClientFactory().create("ecos")` 는 `.env` 의 `ECOS_AUTH_KEY`(없으면 sample)로 같은 클라이언트를 만듭니다.
+
+### 조회할 수 있는 데이터 — 금리·신용·증시
+
+ECOS에서 조회할 수 있는 표는 617개(통화/금융·국민계정·환율·물가·기업경영분석·심리지수·지급결제·산업·해외 9개 분류)입니다.
+그중 시장을 볼 때 자주 쓰는 금리·신용·증시 계열을 정리했습니다. 2026-10-20 실조회 기준이고, 호출은 모두
+`client.statistic_search.search(통계표, 주기, 시작, 끝, [항목코드…])` 형식입니다.
+
+| 보고 싶은 것 | 통계표 | 주기 | 항목코드 | 단위 |
+|---|---|---|---|---|
+| 한국은행 기준금리 | `722Y001` | D·M·Q·A | `0101000` | 연% |
+| CD 91일 · CP 91일 · KOFR(무위험 익일물) | `817Y002` | D | `010502000` · `010503000` · `010901000` | 연% |
+| 국고채 1·3·5·10·20·30년 | `817Y002` | D | 상수 `KTB_1Y`~`KTB_30Y` (2·50년도 같은 표) | 연% |
+| 회사채 3년 AA- · BBB- | `817Y002` | D | `010300000` · `010320000` | 연% |
+| 예금은행 대출금리(신규취급액): 평균 · 주택담보 · 기업 | `121Y006` | M | `BECBLA01` · `BECBLA0302` · `BECBLA02` | 연% |
+| M2(평잔, 원계열) | `161Y006` | M | `BBHA00` | 십억원 |
+| 가계신용 | `151Y001` | Q | `1000000` | 십억원 |
+| 예금은행 가계대출 | `151Y002` | M | `1111000` | 십억원 |
+| 은행 연체율(1일 이상): 가계 · 기업 | `901Y054` | M | `["MO3AB", "AB"]` · `["MO3AA", "AB"]` | % |
+| 대출태도지수(국내은행 종합) | `514Y001` | Q | `AA` | 지수 |
+| KOSPI · KOSDAQ 지수 | `802Y001` | D | `0001000` · `0089000` | 지수 |
+| 유가증권시장 외국인 순매수 · 시가총액 | `802Y001` | D | `0030000` · `0183000` | 억원 |
+| KOSPI PER · 배당수익률 | `901Y014` | M | `1110000` · `1100000` | 배 · % |
+| 투자자 예탁금 · 신용융자 잔고 | `901Y056` | M | `S23A` · `S23E` | 원 |
+| 투자자별 순매수 대금: 외국인 · 개인 | `901Y055` | M | `["S22CC", "VA"]` · `["S22CB", "VA"]` | 백만원 |
+
+```python
+# 기준금리 월말 값
+client.statistic_search.search("722Y001", "M", "201601", "202609", ["0101000"])
+
+# 가계대출 연체율 — 항목 그룹이 둘인 표는 그룹 순서대로 두 코드를 넣는다
+client.statistic_search.search("901Y054", "M", "201601", "202609", ["MO3AB", "AB"])
+```
+
+- **장단기 금리차·신용 스프레드는 따로 있는 계열이 아닙니다.** 국고채 10년−3년, 회사채 AA−−국고채 3년처럼 두 계열을 받아 날짜를 맞춰 뺍니다.
+- **단위가 표마다 다릅니다**(원·억원·십억원·백만원, 연%·%). 행의 `unit_name`을 보고 환산하세요.
+- **월·분기 통계는 늦게 나옵니다.** 2026-10-20 기준 대출금리·M2는 2026-08, 연체율은 2026-07, 가계신용은
+  2026Q2가 마지막이었습니다. "최근 값"을 받을 때는 기간을 넉넉히 잡고 마지막 행을 씁니다.
+- 주식 계열은 한국거래소 자료를 ECOS가 다시 싣는 것입니다. 종목 시세는 증권사 API가 낫고, ECOS는 금리·환율과
+  같은 날짜 축으로 맞춰 볼 때 씁니다.
+- 위 표에 없는 계열은 `statistic_catalog.table_list()`에서 표를 찾고 `item_list(통계표)`로 항목코드·주기·수록 기간을 확인합니다.
+
 ## 🔌 키움 웹소켓 사용 예제 (조건검색·실시간 시세)
 
 키움 웹소켓 기능은 HTTP `Client`와 별개로 비동기(`asyncio`)로 동작합니다.
@@ -736,6 +816,7 @@ KIS_DEBUG_ON_FAILURE=1 uv run pytest packages/cluefin-openapi/tests/kis/test_dom
 packages/cluefin-openapi/
 ├── src/cluefin_openapi/
 │   ├── dart/                      # 금융감독원 DART 공시 클라이언트
+│   ├── ecos/                      # 한국은행 ECOS 경제통계 클라이언트
 │   ├── kiwoom/                    # 키움증권 API 클라이언트
 │   ├── kis/                       # 한국투자증권 API 클라이언트
 │   ├── nhplug/                    # NH투자증권 PLUG API 클라이언트
@@ -756,6 +837,7 @@ packages/cluefin-openapi/
 │   ├── dart/                      # Dart API 테스트
 │   │   ├── test_*_unit.py        # 단위 테스트
 │   │   └── test_*_integration.py # 통합 테스트
+│   ├── ecos/                      # ECOS 테스트 (통합 테스트는 sample 키로 늘, 실키는 .env.test 의 ECOS_AUTH_KEY 가 있을 때)
 │   └── sec/                       # SEC EDGAR 테스트 (통합 테스트는 .env.test 의 SEC_USER_AGENT 사용)
 ├── pyproject.toml               # 패키지 의존성 및 설정
 └── README.md                    # 이 문서
@@ -813,6 +895,7 @@ uv run ruff check packages/cluefin-openapi/
 - [한국투자증권 OpenAPI 포털](https://apiportal.koreainvestment.com/)
 - [NH투자증권 PLUG 포털](https://www.nhplug.com/) ([N2 PLUG](https://www.n2plug.com/))
 - [금융감독원 OpenAPI 포털](https://opendart.fss.or.kr/)
+- [한국은행 ECOS Open API](https://ecos.bok.or.kr/api/) · [개발 명세서](https://ecos.bok.or.kr/api/#/DevGuide/DevSpeciflcation)
 - [SEC EDGAR API](https://www.sec.gov/search-filings/edgar-application-programming-interfaces) · [접근 정책(User-Agent·요청 한도)](https://www.sec.gov/os/accessing-edgar-data)
 
 ---

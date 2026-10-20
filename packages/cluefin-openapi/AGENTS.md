@@ -184,6 +184,51 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   lacks `.txt`. Format unchanged since 2009: `|`-separated, `.` for a missing price, two `Trailer …` lines whose
   record count is checked against the rows read (16 files across 2009–2026 matched).
 
+## 한국은행 ECOS (ecos)
+
+- **Errors come as HTTP 200 with `{"RESULT": {"CODE", "MESSAGE"}}`** for the sample key *and* a real key (measured
+  2026-10-19: INFO-100/200, ERROR-100/101/200/301). Only an unknown service name gets HTTP 404 (an HTML page titled
+  "503"). `INFO-200` (no data, also for an unknown stat code) becomes an empty page, not an exception; every other code
+  goes through `_exceptions.raise_for_result` — add a newly seen code to `_RESULT_CODE_ERRORS`.
+- The server cuts a query at 60 s with `ERROR-400`, so the default client timeout is 75 s. Below 60 s the client times
+  out first and resends the same oversized query `max_retries` times instead of surfacing `EcosQueryTimeoutError`.
+  Only `ERROR-600`/`602` are retried (`RETRYABLE_RESULT_CODES`); they come in a 200 body, so the HTTP 429/5xx retry
+  never sees them. 400 and 601 fail the same way again.
+- **ERROR-301 means three things**: a non-integer row count, start > end, and the `sample` key asking for more than 10
+  rows. Only the message tail tells them apart, so `EcosSampleLimitError` is chosen by "sample" in the message and is a
+  subclass of `EcosRequestError` (a reworded message just falls back to the parent).
+- **The key is a URL path segment.** `request_context["path"]` shows it as `***`, and network/timeout errors are re-raised
+  with the key replaced and the cause chain cut (`requests` puts the full URL in its message). Never log the URL.
+- Page size is 10 for `sample` (`1/10`, `11/20`, … paging works) and 1000 for a real key. The real key actually has no row
+  cap (`1/100000` returned all 5,184 rows) — 1000 follows the docs. `max_pages` stops a runaway loop with an error rather
+  than returning a truncated list.
+- The portal's spec page is a JS SPA whose data comes from `POST /api/serviceEndpoint/httpService/request.json`
+  (`trxCd` `OSUOA03R01` services, `OSUOA04R01` fields with `srchCndYn` Y/N, `OSUOA05R01` messages) and matches the
+  downloadable `.xls` specs. The xls `StatisticSearch` example (`200Y001/A/2015/2021`) returns INFO-200; use the web one
+  (`200Y101/A/2020/2023/10101`).
+- Field types are mixed: `list_total_count`/`DATA_CNT`/`row_count` are numbers, `DATA_VALUE`/`TIME`/`LVL` strings, and
+  `WGT` came as `"1000"` — row models use `coerce_numbers_to_str`. `KeyStatisticList` adds an undocumented `row_count`
+  and its row order is not stable between calls.
+
+### Finding a series (what the catalog won't tell you up front)
+
+- Start from the table, not a keyword: `table_list()` is 844 rows, 617 of them queryable (`SRCH_YN=Y`), and names
+  repeat across tables (e.g. M2 is split by 평잔/말잔 × 원계열/계절조정 into separate tables). For markets, most
+  questions land on a handful of tables: `817Y002` (all daily market rates: KTB curve, CD/CP, KOFR, corp bonds),
+  `722Y001` (base rate), `121Y006`/`121Y015` (bank lending rates, new vs. outstanding), `802Y001` (daily KOSPI/KOSDAQ,
+  foreign net buying, market cap), `901Y014` (monthly PER/dividend yield), `901Y054`–`901Y056` (delinquency, investor
+  flows, deposits/margin loans). README has the item codes, measured 2026-10-20.
+- `item_list()` returns **one row per item × cycle** (`722Y001`'s base rate appears four times, D/M/Q/A). The cycle you
+  pass must be one the item has, or you get INFO-200 (empty), not an error.
+- Some tables have **two item groups** (`901Y054`: loan type × bank group, `901Y055`: investor × volume/value). Pass the
+  codes in group order; omitting the second returns every group-2 item (`["MO3AB"]` alone gave 3 bank groups per month). The group-2 item carries the unit (`VA` = 백만원),
+  the group-1 item shows `unit_name=None`.
+- Spreads (term spread, credit spread) are **not** series — fetch both legs and subtract on matched dates.
+- Units differ per table and are only in `unit_name` (원, 억원, 십억원, 백만원; 연% vs %). Never assume.
+- Monthly/quarterly series lag by 1–3 months (on 2026-10-20: lending rates/M2 ended 2026-08, delinquency 2026-07,
+  household credit 2026Q2). A "latest value" query with a tight window returns INFO-200 → empty, which looks like a bug
+  but isn't; widen the window.
+
 ## Kiwoom scope
 
 - Kiwoom US-stock (overseas) support is **Python-only**; the sibling `cluefin-openapi-ts`

@@ -10,6 +10,7 @@ from typing import Literal, Mapping, Optional
 from pydantic import SecretStr
 
 from cluefin_openapi.dart._client import Client as DartClient
+from cluefin_openapi.ecos._client import Client as EcosClient
 from cluefin_openapi.kis._auth import Auth as KisAuth
 from cluefin_openapi.kis._http_client import HttpClient as KisHttpClient
 from cluefin_openapi.kiwoom._auth import Auth as KiwoomAuth
@@ -18,7 +19,7 @@ from cluefin_openapi.nhplug._auth import Auth as NHPlugAuth
 from cluefin_openapi.nhplug._http_client import HttpClient as NHPlugHttpClient
 from cluefin_openapi.sec._client import Client as SecClient
 
-BrokerName = Literal["kis", "kiwoom", "dart", "nhplug", "sec"]
+BrokerName = Literal["kis", "kiwoom", "dart", "nhplug", "sec", "ecos"]
 BrokerEnv = Literal["dev", "prod"]
 
 __all__ = ["BrokerClientConfig", "BrokerClientFactory", "create_broker_client"]
@@ -39,6 +40,7 @@ class BrokerClientConfig:
     nhplug_secret_key: Optional[str] = None
     nhplug_env: BrokerEnv = "dev"
     sec_user_agent: Optional[str] = None
+    ecos_auth_key: Optional[str] = None
     cache_dir: Optional[str] = None
     debug: bool = False
 
@@ -57,6 +59,7 @@ class BrokerClientConfig:
             nhplug_secret_key=env.get("NHPLUG_SECRET_KEY"),
             nhplug_env=env.get("NHPLUG_ENV", "dev").lower(),
             sec_user_agent=env.get("SEC_USER_AGENT"),
+            ecos_auth_key=env.get("ECOS_AUTH_KEY"),
             cache_dir=env.get("CLUEFIN_OPENAPI_CACHE_DIR"),
             debug=env.get("CLUEFIN_OPENAPI_DEBUG", "0").lower() in {"1", "true", "yes", "on"},
         )
@@ -116,6 +119,8 @@ class BrokerClientFactory:
             return self.create_nhplug()
         if broker == "sec":
             return self.create_sec()
+        if broker == "ecos":
+            return self.create_ecos()
         raise ValueError(f"Unknown broker: {broker}")
 
     def create_kis(self) -> KisHttpClient:
@@ -182,6 +187,10 @@ class BrokerClientFactory:
                 'SEC User-Agent not configured (sec_user_agent, e.g. SEC_USER_AGENT="Name email@example.com")'
             )
         return SecClient(user_agent=self.config.sec_user_agent)
+
+    def create_ecos(self) -> EcosClient:
+        # 키가 없으면 공개 시험 키 sample 로 만든다 (한 번에 10행, 쪽 넘김).
+        return EcosClient(auth_key=self.config.ecos_auth_key)
 
 
 def create_broker_client(broker: BrokerName, config: BrokerClientConfig | None = None):

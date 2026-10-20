@@ -1,0 +1,87 @@
+{
+"StatisticSearch": {
+"list_total_count": 5,
+"row": [
+{
+"STAT_CODE": "731Y001",
+"STAT_NAME": "3.1.1.1. 주요국 통화의 대원화환율",
+"ITEM_CODE1": "0000001",
+"ITEM_NAME1": "원/미국달러(매매기준율)",
+"ITEM_CODE2": null,
+"ITEM_NAME2": null,
+"ITEM_CODE3": null,
+"ITEM_NAME3": null,
+"ITEM_CODE4": null,
+"ITEM_NAME4": null,
+"UNIT_NAME": "원",
+"WGT": null,
+"TIME": "20261012",
+"DATA_VALUE": "1338"
+},
+{
+"STAT_CODE": "731Y001",
+"STAT_NAME": "3.1.1.1. 주요국 통화의 대원화환율",
+"ITEM_CODE1": "0000001",
+"ITEM_NAME1": "원/미국달러(매매기준율)",
+"ITEM_CODE2": null,
+"ITEM_NAME2": null,
+"ITEM_CODE3": null,
+"ITEM_NAME3": null,
+"ITEM_CODE4": null,
+"ITEM_NAME4": null,
+"UNIT_NAME": "원",
+"WGT": null,
+"TIME": "20261013",
+"DATA_VALUE": "1335.8"
+},
+{
+"STAT_CODE": "731Y001",
+"STAT_NAME": "3.1.1.1. 주요국 통화의 대원화환율",
+"ITEM_CODE1": "0000001",
+"ITEM_NAME1": "원/미국달러(매매기준율)",
+"ITEM_CODE2": null,
+"ITEM_NAME2": null,
+"ITEM_CODE3": null,
+"ITEM_NAME3": null,
+"ITEM_CODE4": null,
+"ITEM_NAME4": null,
+"UNIT_NAME": "원",
+"WGT": null,
+"TIME": "20261014",
+"DATA_VALUE": "1340.5"
+},
+{
+"STAT_CODE": "731Y001",
+"STAT_NAME": "3.1.1.1. 주요국 통화의 대원화환율",
+"ITEM_CODE1": "0000001",
+"ITEM_NAME1": "원/미국달러(매매기준율)",
+"ITEM_CODE2": null,
+"ITEM_NAME2": null,
+"ITEM_CODE3": null,
+"ITEM_NAME3": null,
+"ITEM_CODE4": null,
+"ITEM_NAME4": null,
+"UNIT_NAME": "원",
+"WGT": null,
+"TIME": "20261015",
+"DATA_VALUE": "1338.6"
+},
+{
+"STAT_CODE": "731Y001",
+"STAT_NAME": "3.1.1.1. 주요국 통화의 대원화환율",
+"ITEM_CODE1": "0000001",
+"ITEM_NAME1": "원/미국달러(매매기준율)",
+"ITEM_CODE2": null,
+"ITEM_NAME2": null,
+"ITEM_CODE3": null,
+"ITEM_NAME3": null,
+"ITEM_CODE4": null,
+"ITEM_NAME4": null,
+"UNIT_NAME": "원",
+"WGT": null,
+"TIME": "20261016",
+"DATA_VALUE": "1348.5"
+}
+]
+}
+}
