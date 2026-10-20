@@ -131,39 +131,3 @@ jobs:
         LOG_LEVEL: ${{ vars.LOG_LEVEL || 'DEBUG' }}
       run: |
         uv run pytest -m "integration" -v --tb=short
-
-  security:
-    name: Security Scan
-    runs-on: ubuntu-24.04
-    environment: development
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v7
-      
-    - name: Set up Python
-      uses: actions/setup-python@v7
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        
-    - name: Install uv
-      uses: astral-sh/setup-uv@v10.2.0
-      with:
-        enable-cache: true
-        cache-suffix: security
-        
-    - name: Install dependencies
-      run: |
-        uv sync --all-packages --locked
-        
-    - name: Run pip-audit vulnerability scan
-      run: |
-        uv tool install pip-audit
-        uv run pip-audit --desc --format json --output pip-audit-report.json || true
-
-    - name: Upload security reports
-      uses: actions/upload-artifact@v7
-      with:
-        name: security-reports
-        path: |
-          pip-audit-report.json

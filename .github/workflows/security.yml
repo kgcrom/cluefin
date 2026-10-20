@@ -1,0 +1,31 @@
+name: Security Scan
+
+"on":
+  push:
+    branches: [ main ]
+    paths:
+      - 'uv.lock'
+      - '.github/workflows/security.yml'
+  # 의존성이 그대로여도 새 취약점은 공개되므로 주 1회 다시 본다 (월요일 09:00 KST)
+  schedule:
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+
+jobs:
+  pip-audit:
+    name: pip-audit (uv.lock)
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v10.2.0
+
+    # 설치된 환경이 아니라 lock 에 고정된 버전 전부(모든 패키지·extra·dev)를 본다.
+    # 취약점이 있으면 실패한다.
+    - name: Run pip-audit
+      run: |
+        uv export --all-packages --all-extras --locked --no-emit-workspace --format requirements-txt -o requirements.txt
+        uvx pip-audit -r requirements.txt --require-hashes --disable-pip --desc
