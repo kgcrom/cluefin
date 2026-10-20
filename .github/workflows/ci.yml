@@ -3,6 +3,15 @@ name: CI Pipeline
 "on":
   push:
     branches: [ main ]
+    # 문서만 바뀐 커밋과 TS 패키지(ci-openapi-ts.yml 이 따로 돈다)는 건너뛴다.
+    # CLI 테스트가 읽는 README·AGENTS 는 다시 넣는다(뒤 패턴이 앞 패턴을 덮는다).
+    paths:
+      - '**'
+      - '!**/*.md'
+      - '!docs/**'
+      - '!packages/cluefin-openapi-ts/**'
+      - 'apps/cluefin-openapi-cli/README.md'
+      - 'apps/cluefin-openapi-cli/AGENTS.md'
   workflow_dispatch:
     inputs:
       debug_enabled:
@@ -154,40 +163,15 @@ jobs:
         path: |
           pip-audit-report.json
 
-  openapi-ts:
-    name: cluefin-openapi-ts (build, lint, typecheck, unit test)
-    runs-on: ubuntu-24.04
-    defaults:
-      run:
-        working-directory: packages/cluefin-openapi-ts
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v7
-
-    - name: Set up Node.js
-      uses: actions/setup-node@v7
-      with:
-        node-version: 24
-        cache: npm
-        cache-dependency-path: packages/cluefin-openapi-ts/package-lock.json
-
-    - name: Install dependencies
-      run: npm ci
-
-    # npm publish 직전에 도는 것과 같은 게이트: build → biome check → typecheck → unit test
-    - name: Run publish check
-      run: npm run publish:check
-
   notify:
     name: Notify Status
     runs-on: ubuntu-24.04
-    needs: [lint, test, security, openapi-ts]
+    needs: [lint, test, security]
     if: always()
     
     steps:
     - name: Notify success
-      if: needs.lint.result == 'success' && needs.test.result == 'success' && needs.security.result == 'success' && needs.openapi-ts.result == 'success'
+      if: needs.lint.result == 'success' && needs.test.result == 'success' && needs.security.result == 'success'
       env:
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
         DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
@@ -198,7 +182,7 @@ jobs:
         fi
         
     - name: Notify failure
-      if: needs.lint.result == 'failure' || needs.test.result == 'failure' || needs.security.result == 'failure' || needs.openapi-ts.result == 'failure'
+      if: needs.lint.result == 'failure' || needs.test.result == 'failure' || needs.security.result == 'failure'
       env:
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
         DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
