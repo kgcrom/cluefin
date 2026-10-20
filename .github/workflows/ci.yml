@@ -99,7 +99,6 @@ jobs:
         # Environment variables
         TEST_ENVIRONMENT: ${{ vars.TEST_ENVIRONMENT || 'development' }}
         LOG_LEVEL: ${{ vars.LOG_LEVEL || 'INFO' }}
-        ENABLE_INTEGRATION_TESTS: ${{ vars.ENABLE_INTEGRATION_TESTS || 'false' }}
       run: |
         uv run pytest -m "not integration and not slow"
 
@@ -120,14 +119,3 @@ jobs:
         CODACY_PROJECT_NAME: cluefin
       run: |
         bash <(curl -Ls https://coverage.codacy.com/get.sh) report -l Python -r coverage.xml
-
-    - name: Run integration tests
-      if: vars.ENABLE_INTEGRATION_TESTS == 'true'
-      env:
-        KIWOOM_API_KEY: ${{ secrets.KIWOOM_API_KEY }}
-        KIWOOM_SECRET_KEY: ${{ secrets.KIWOOM_SECRET_KEY }}
-        KRX_API_KEY: ${{ secrets.KRX_API_KEY }}
-        TEST_ENVIRONMENT: ${{ vars.TEST_ENVIRONMENT || 'development' }}
-        LOG_LEVEL: ${{ vars.LOG_LEVEL || 'DEBUG' }}
-      run: |
-        uv run pytest -m "integration" -v --tb=short
