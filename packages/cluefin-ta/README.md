@@ -60,7 +60,7 @@ sma = talib.SMA(close, timeperiod=20)
 ### 포트폴리오 메트릭
 
 ```python
-from cluefin_ta import MDD, CAGR, SHARPE, SORTINO, CALMAR, VOLATILITY, BETA, ALPHA, PERIODIC_RATE
+from cluefin_ta import MDD, CAGR, SHARPE, SORTINO, CALMAR, VOLATILITY, BETA, ALPHA, PERIODIC_RATE, PERFORMANCE
 
 returns = np.array([...])  # 일별 수익률
 
@@ -72,6 +72,9 @@ calmar = CALMAR(returns)                    # 칼마비율
 vol = VOLATILITY(returns)                   # 연환산변동성
 beta = BETA(returns, kospi_returns)         # 베타 (같은 날짜로 정렬한 벤치마크 수익률)
 alpha = ALPHA(returns, kospi_returns)       # 젠센 알파 (연율)
+
+# 백테스트 자산곡선과 같은 날짜의 KOSPI(U0001) 종가로 한 번에
+stats = PERFORMANCE(equity, benchmark=kospi_close, years=calendar_days / 365.25)
 ```
 
 ### 시장 레짐 감지
@@ -109,7 +112,7 @@ uv run --with jupyter jupyter lab packages/cluefin-ta/examples/ta_quickstart.ipy
 
 ## 지원 함수
 
-총 **41개** 기술 분석 함수 지원
+총 **42개** 기술 분석 함수 지원
 
 ### Overlap Studies (이동평균) - 7개
 
@@ -164,7 +167,7 @@ TA-Lib C 소스와 같은 알고리즘(직전 봉들의 평균 몸통·고저폭
 | `CDLHAMMER` | 해머 | +100 |
 | `CDLENGULFING` | 장악형 | ±100 (한쪽 끝이 겹치면 ±80) |
 
-### Portfolio Metrics (포트폴리오) - 9개
+### Portfolio Metrics (포트폴리오) - 10개
 
 | 함수 | 설명 |
 |------|------|
@@ -177,6 +180,7 @@ TA-Lib C 소스와 같은 알고리즘(직전 봉들의 평균 몸통·고저폭
 | `BETA(returns, benchmark_returns)` | 베타 (공분산/분산, 날짜 정렬된 같은 길이 배열) |
 | `ALPHA(returns, benchmark_returns, risk_free=0, periods_per_year=252)` | 젠센 알파 (연율) |
 | `PERIODIC_RATE(annual_rate, periods_per_year=252)` | 연율 → 기간당 수익률 (`risk_free` 용) |
+| `PERFORMANCE(equity, benchmark=None, risk_free=0, periods_per_year=252, years=None)` | 자산곡선 → 위 지표 dict (벤치마크 가격을 주면 `beta`·`alpha`, `years` 를 주면 달력 기준 CAGR) |
 
 `risk_free` 는 **기간당** 값이다(스칼라 또는 `returns` 와 같은 길이의 배열). 연 3.5% 국고채를 그대로 넣으면 매일 3.5% 를 빼는 셈이니
 `PERIODIC_RATE(0.035)` 로 바꿔 넣는다. ECOS 일별 금리 계열은 퍼센트라 100 으로 나눠 `PERIODIC_RATE` 에 배열째 넣고, 수익률과 같은 날짜로 맞춘다.

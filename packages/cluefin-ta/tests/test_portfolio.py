@@ -7,7 +7,7 @@ import warnings
 import numpy as np
 import pytest
 
-from cluefin_ta import ALPHA, BETA, CAGR, CALMAR, MDD, PERIODIC_RATE, SHARPE, SORTINO, VOLATILITY
+from cluefin_ta import ALPHA, BETA, CAGR, CALMAR, MDD, PERFORMANCE, PERIODIC_RATE, SHARPE, SORTINO, VOLATILITY
 
 
 class TestMDD:
@@ -339,6 +339,70 @@ class TestALPHA:
 
     def test_alpha_flat_benchmark_is_nan(self):
         assert np.isnan(ALPHA(np.array([0.01, 0.02, -0.01]), np.full(3, 0.01)))
+
+
+def _curve(returns: np.ndarray, start: float = 100.0) -> np.ndarray:
+    return start * np.concatenate([[1.0], np.cumprod(1 + returns)])
+
+
+class TestPERFORMANCE:
+    """Equity-curve summary: the individual metrics over the curve's returns."""
+
+    def test_matches_individual_metrics(self):
+        returns = _benchmark(seed=3) + 0.0005
+        rf = PERIODIC_RATE(0.035)
+
+        stats = PERFORMANCE(_curve(returns), risk_free=rf)
+
+        assert stats == pytest.approx(
+            {
+                "cagr": CAGR(returns),
+                "mdd": MDD(returns),
+                "volatility": VOLATILITY(returns),
+                "sharpe": SHARPE(returns, risk_free=rf),
+                "sortino": SORTINO(returns, risk_free=rf),
+                "calmar": CALMAR(returns),
+            },
+            rel=1e-12,
+        )
+
+    def test_years_annualizes_over_the_calendar(self):
+        """100 → 121 over two calendar years is 10% a year, however many bars it took."""
+        equity = np.array([100.0, 95.0, 110.0, 121.0])
+
+        stats = PERFORMANCE(equity, years=2.0)
+
+        assert stats["cagr"] == pytest.approx(0.10, rel=1e-12)
+        assert stats["calmar"] == pytest.approx(0.10 / 0.05, rel=1e-12)
+
+    def test_mdd_is_peak_to_trough_of_the_curve(self):
+        equity = np.array([100.0, 120.0, 90.0, 130.0, 104.0])
+
+        assert PERFORMANCE(equity)["mdd"] == pytest.approx(0.25, rel=1e-12)
+
+    def test_wiped_out_curve_with_years_is_minus_one(self):
+        assert PERFORMANCE(np.array([100.0, 50.0, 0.0]), years=1.0)["cagr"] == -1.0
+
+    def test_benchmark_adds_beta_and_alpha(self):
+        benchmark = _curve(_benchmark())
+        returns = 0.0002 + 1.3 * _benchmark()
+
+        stats = PERFORMANCE(_curve(returns), benchmark=benchmark)
+
+        assert stats["beta"] == pytest.approx(1.3, rel=1e-10)
+        assert stats["alpha"] == pytest.approx(0.0002 * 252, rel=1e-8)
+
+    def test_no_benchmark_has_no_beta(self):
+        assert "beta" not in PERFORMANCE(np.array([100.0, 101.0, 102.0]))
+
+    @pytest.mark.parametrize(
+        "equity, benchmark",
+        [(np.array([100.0]), None), (np.arange(1.0, 6.0), np.arange(1.0, 5.0))],
+        ids=["single-value", "benchmark-length"],
+    )
+    def test_bad_curves_raise(self, equity, benchmark):
+        with pytest.raises(ValueError):
+            PERFORMANCE(equity, benchmark=benchmark)
 
 
 class TestPortfolioIntegration:

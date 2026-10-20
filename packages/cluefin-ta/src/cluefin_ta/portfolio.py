@@ -11,6 +11,7 @@ Functions:
     BETA: Beta against a benchmark
     ALPHA: Jensen's Alpha against a benchmark
     PERIODIC_RATE: Annual rate to per-period rate (for risk_free)
+    PERFORMANCE: All of the above from an equity curve (and a benchmark price series)
 
 These functions are not part of ta-lib but are commonly used
 for portfolio performance analysis.
@@ -239,12 +240,12 @@ def CALMAR(returns: np.ndarray, periods_per_year: int = 252) -> float:
     if len(returns) == 0:
         return 0.0
 
-    cagr = CAGR(returns, periods_per_year)
-    mdd = MDD(returns)
+    return _calmar(CAGR(returns, periods_per_year), MDD(returns))
 
+
+def _calmar(cagr: float, mdd: float) -> float:
     if mdd == 0:
         return float("inf") if cagr > 0 else 0.0
-
     return float(cagr / mdd)
 
 
@@ -324,6 +325,70 @@ def ALPHA(
     return float((np.mean(excess) - beta * np.mean(benchmark_excess)) * periods_per_year)
 
 
+def _curve_returns(curve: np.ndarray, name: str) -> np.ndarray:
+    curve = np.asarray(curve, dtype=np.float64)
+    if curve.ndim != 1 or len(curve) < 2:
+        raise ValueError(f"{name} must be a 1-D series of at least 2 values; got shape {curve.shape}")
+    return curve[1:] / curve[:-1] - 1
+
+
+def PERFORMANCE(
+    equity: np.ndarray,
+    benchmark: np.ndarray | None = None,
+    risk_free: float | np.ndarray = 0.0,
+    periods_per_year: int = 252,
+    years: float | None = None,
+) -> dict[str, float]:
+    """
+    Performance summary of an equity curve, optionally against a benchmark.
+
+    Turns the curve into periodic returns and applies ``CAGR``, ``MDD``,
+    ``VOLATILITY``, ``SHARPE``, ``SORTINO``, ``CALMAR`` (and ``BETA``, ``ALPHA`` with
+    a benchmark), so a backtest reports every metric under one definition.
+
+    Args:
+        equity: Portfolio value per period, oldest first (positive values)
+        benchmark: Benchmark prices for the same dates as ``equity`` (e.g. KOSPI
+            ``U0001`` or KOSDAQ ``U1001`` closes from the ``cluefin-openapi-cli``
+            cache), same length. Align before calling.
+        risk_free: Risk-free rate **per period**, a scalar or an array with one value
+            per return (``len(equity) - 1``). See ``PERIODIC_RATE``.
+        periods_per_year: Number of periods in a year (default: 252 for trading days)
+        years: Length of the curve in years for CAGR, e.g. calendar days / 365.25.
+            By default it is ``(len(equity) - 1) / periods_per_year``, which drifts
+            from the calendar when the market has fewer than ``periods_per_year``
+            trading days (KRX has ~245).
+
+    Returns:
+        Dict with ``cagr``, ``mdd``, ``volatility``, ``sharpe``, ``sortino``,
+        ``calmar``, plus ``beta`` and ``alpha`` when a benchmark is given — decimals,
+        with the same NaN/inf conventions as the individual functions
+
+    Raises:
+        ValueError: If a curve has fewer than 2 values, or the arrays differ in length
+    """
+    returns = _curve_returns(equity, "equity")
+    if years is None:
+        cagr = CAGR(returns, periods_per_year)
+    else:
+        total = float(np.prod(1 + returns))
+        cagr = -1.0 if total <= 0 else total ** (1 / years) - 1
+    mdd = MDD(returns)
+    stats = {
+        "cagr": cagr,
+        "mdd": mdd,
+        "volatility": VOLATILITY(returns, periods_per_year),
+        "sharpe": SHARPE(returns, risk_free, periods_per_year),
+        "sortino": SORTINO(returns, risk_free, periods_per_year),
+        "calmar": _calmar(cagr, mdd),
+    }
+    if benchmark is not None:
+        benchmark_returns = _curve_returns(benchmark, "benchmark")
+        stats["beta"] = BETA(returns, benchmark_returns)
+        stats["alpha"] = ALPHA(returns, benchmark_returns, risk_free, periods_per_year)
+    return stats
+
+
 __all__ = [
     "MDD",
     "CAGR",
@@ -334,4 +399,5 @@ __all__ = [
     "BETA",
     "ALPHA",
     "PERIODIC_RATE",
+    "PERFORMANCE",
 ]
