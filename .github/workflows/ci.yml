@@ -167,32 +167,3 @@ jobs:
         name: security-reports
         path: |
           pip-audit-report.json
-
-  notify:
-    name: Notify Status
-    runs-on: ubuntu-24.04
-    needs: [lint, test, security]
-    if: always()
-    
-    steps:
-    - name: Notify success
-      if: needs.lint.result == 'success' && needs.test.result == 'success' && needs.security.result == 'success'
-      env:
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-      run: |
-        echo "All checks passed successfully!"
-        if [ -n "$SLACK_WEBHOOK" ]; then
-          echo "Would notify Slack (webhook configured)"
-        fi
-        
-    - name: Notify failure
-      if: needs.lint.result == 'failure' || needs.test.result == 'failure' || needs.security.result == 'failure'
-      env:
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-      run: |
-        echo "Some checks failed!"
-        if [ -n "$SLACK_WEBHOOK" ]; then
-          echo "Would notify Slack about failure (webhook configured)"
-        fi
