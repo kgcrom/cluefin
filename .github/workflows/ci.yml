@@ -23,6 +23,11 @@ name: CI Pipeline
 env:
   PYTHON_VERSION: "3.10"
 
+# 연달아 머지되면 앞 커밋의 실행은 취소하고 마지막 커밋만 끝까지 돌린다
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     name: Lint Code

@@ -9,6 +9,11 @@ name: CI cluefin-openapi-ts
       - '.github/workflows/ci-openapi-ts.yml'
   workflow_dispatch:
 
+# 연달아 머지되면 앞 커밋의 실행은 취소하고 마지막 커밋만 끝까지 돌린다
+concurrency:
+  group: ci-openapi-ts-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   openapi-ts:
     name: cluefin-openapi-ts (build, lint, typecheck, unit test)
