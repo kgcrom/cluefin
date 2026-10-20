@@ -89,16 +89,8 @@ jobs:
       run: |
         uv sync --all-packages --all-extras --locked
 
-    - name: Create test environment file
-      run: |
-        cp packages/cluefin-openapi/.env.sample packages/cluefin-openapi/.env
-        
     - name: Run unit tests
       if: matrix.python-version != env.PYTHON_VERSION
-      env:
-        # Environment variables
-        TEST_ENVIRONMENT: ${{ vars.TEST_ENVIRONMENT || 'development' }}
-        LOG_LEVEL: ${{ vars.LOG_LEVEL || 'INFO' }}
       run: |
         uv run pytest -m "not integration and not slow"
 
