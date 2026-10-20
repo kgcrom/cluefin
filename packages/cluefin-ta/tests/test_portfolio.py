@@ -7,7 +7,7 @@ import warnings
 import numpy as np
 import pytest
 
-from cluefin_ta import ALPHA, BETA, CAGR, CALMAR, MDD, SHARPE, SORTINO, VOLATILITY
+from cluefin_ta import ALPHA, BETA, CAGR, CALMAR, MDD, PERIODIC_RATE, SHARPE, SORTINO, VOLATILITY
 
 
 class TestMDD:
@@ -139,11 +139,25 @@ class TestSHARPE:
         expected = (np.mean(excess) / np.std(excess, ddof=1)) * np.sqrt(252)
         assert sharpe == pytest.approx(expected, rel=1e-5)
 
-    def test_sharpe_zero_vol(self):
-        """Test Sharpe ratio with zero volatility."""
+    def test_sharpe_zero_vol_is_nan(self):
+        """No volatility leaves the ratio undefined; 0.0 would read as "no excess return"."""
         returns = np.full(10, 0.01)
-        sharpe = SHARPE(returns)
-        assert sharpe == 0.0
+
+        assert np.isnan(SHARPE(returns))
+
+    def test_sharpe_with_risk_free_array(self):
+        """A per-period risk-free series is subtracted bar by bar."""
+        returns = np.array([0.01, 0.02, 0.015, 0.012, 0.018])
+        risk_free = np.array([0.0001, 0.0002, 0.0001, 0.0003, 0.0002])
+
+        excess = returns - risk_free
+        expected = (np.mean(excess) / np.std(excess, ddof=1)) * np.sqrt(252)
+        assert SHARPE(returns, risk_free=risk_free) == pytest.approx(expected, rel=1e-12)
+
+    @pytest.mark.parametrize("ratio", [SHARPE, SORTINO], ids=lambda f: f.__name__)
+    def test_risk_free_length_mismatch_raises(self, ratio):
+        with pytest.raises(ValueError, match="aligned with returns"):
+            ratio(np.zeros(5), risk_free=np.zeros(4))
 
 
 class TestSORTINO:
@@ -165,16 +179,34 @@ class TestSORTINO:
         assert sortino == float("inf")
 
     def test_sortino_vs_sharpe(self):
-        """Test that Sortino >= Sharpe for same returns."""
+        """With a positive mean, Sortino >= Sharpe: the downside deviation over all N is below the std."""
         np.random.seed(42)
-        returns = np.random.normal(0.001, 0.02, 100)
-        sharpe = SHARPE(returns, periods_per_year=252)
-        sortino = SORTINO(returns, periods_per_year=252)
+        returns = np.random.normal(0.004, 0.02, 100)
+        assert np.mean(returns) > 0
 
-        # Sortino should be >= Sharpe when there are negative returns
-        # because downside std <= total std
-        if np.any(returns < 0):
-            assert sortino >= sharpe
+        assert SORTINO(returns) >= SHARPE(returns)
+
+    def test_sortino_downside_averages_over_all_periods(self):
+        """Hand-computed: r = [2%, -1%, 3%, -2%] → DD = sqrt((1e-4 + 4e-4) / 4), not / 2."""
+        returns = np.array([0.02, -0.01, 0.03, -0.02])
+
+        downside = np.sqrt((0.01**2 + 0.02**2) / 4)
+        expected = (0.005 / downside) * np.sqrt(252)
+        assert SORTINO(returns) == pytest.approx(expected, rel=1e-12)
+
+    def test_sortino_target_is_risk_free(self):
+        """Returns above zero but below the risk-free rate count as downside."""
+        returns = np.array([0.001, 0.003, 0.0005, 0.004])
+        risk_free = 0.002
+
+        excess = returns - risk_free
+        downside = np.sqrt(np.mean(np.minimum(excess, 0) ** 2))
+        expected = (np.mean(excess) / downside) * np.sqrt(252)
+        assert SORTINO(returns, risk_free=risk_free) == pytest.approx(expected, rel=1e-12)
+
+    def test_sortino_flat_series_is_nan(self):
+        """No downside and no excess return: undefined, neither 0 nor inf."""
+        assert np.isnan(SORTINO(np.zeros(10)))
 
     def test_sortino_all_negative_below_risk_free(self):
         """Test Sortino when every return is negative and below the risk-free rate."""
@@ -381,16 +413,42 @@ class TestPortfolioGuards:
         assert CAGR(returns, periods_per_year=2) == -1.0
 
     @pytest.mark.parametrize("ratio", [SHARPE, SORTINO], ids=lambda f: f.__name__)
-    def test_ratio_of_single_return_is_zero(self, ratio):
+    def test_ratio_of_single_return_is_nan(self, ratio):
         """One return has no dispersion to divide by."""
-        assert ratio(np.array([0.01])) == 0.0
+        assert np.isnan(ratio(np.array([0.01])))
 
-    def test_sortino_zero_downside_deviation_is_zero(self):
-        """Negative returns so small their squares underflow give a zero downside deviation."""
+    def test_sortino_underflowing_downside_is_treated_as_none(self):
+        """Negative returns so small their squares underflow count as no downside."""
         returns = np.array([0.01, -1e-200])
 
         with warnings.catch_warnings():
             warnings.simplefilter("error")
             sortino = SORTINO(returns)
 
-        assert sortino == 0.0
+        assert sortino == float("inf")
+
+
+class TestPERIODIC_RATE:
+    """Annual → per-period rate for risk_free."""
+
+    def test_compounds_back_to_annual(self):
+        daily = PERIODIC_RATE(0.035, periods_per_year=252)
+
+        assert isinstance(daily, float)
+        assert (1 + daily) ** 252 - 1 == pytest.approx(0.035, rel=1e-12)
+
+    def test_array_keeps_shape(self):
+        """A daily treasury series (ECOS gives percent: divide by 100 first) converts element-wise."""
+        annual = np.array([3.5, 3.4, 3.6]) / 100
+
+        daily = PERIODIC_RATE(annual)
+
+        assert daily.shape == (3,)
+        np.testing.assert_allclose((1 + daily) ** 252 - 1, annual, rtol=1e-12)
+
+    def test_annual_rate_passed_raw_is_far_off(self):
+        """Why the helper exists: a raw annual 3.5% as risk_free flips a strong Sharpe negative."""
+        returns = np.tile([0.012, -0.008], 126)  # mean 0.2% a day, std 1%
+
+        assert SHARPE(returns, risk_free=PERIODIC_RATE(0.035)) > 0
+        assert SHARPE(returns, risk_free=0.035) < 0

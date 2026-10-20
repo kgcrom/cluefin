@@ -141,6 +141,13 @@ def test_flat_series_has_no_drawdown() -> None:
     assert indicators.values["mdd"] == 0.0
 
 
+def test_flat_series_has_no_sharpe() -> None:
+    """No volatility leaves Sharpe undefined (a suspended stock), so it is None rather than 0.0."""
+    indicators = compute_indicators(_series(_flat()))
+
+    assert indicators.values["sharpe"] is None
+
+
 def test_downtrend_produces_a_drawdown() -> None:
     indicators = compute_indicators(_series(_downtrend()))
 

@@ -10,6 +10,7 @@ Functions:
     VOLATILITY: Annualized Volatility
     BETA: Beta against a benchmark
     ALPHA: Jensen's Alpha against a benchmark
+    PERIODIC_RATE: Annual rate to per-period rate (for risk_free)
 
 These functions are not part of ta-lib but are commonly used
 for portfolio performance analysis.
@@ -104,92 +105,119 @@ def VOLATILITY(returns: np.ndarray, periods_per_year: int = 252) -> float:
     return float(np.std(returns, ddof=1) * np.sqrt(periods_per_year))
 
 
+def PERIODIC_RATE(annual_rate: float | np.ndarray, periods_per_year: int = 252) -> float | np.ndarray:
+    """
+    Convert an annual rate to a per-period rate, compounding: ``(1 + r) ** (1 / n) - 1``.
+
+    ``SHARPE``/``SORTINO``/``ALPHA`` take ``risk_free`` per period. Passing an annual
+    yield straight in (``0.035`` for a 3.5% treasury) subtracts 3.5% from every *daily*
+    return and swamps the ratio; convert it with this first.
+
+    Args:
+        annual_rate: Annual rate as a decimal (``0.035`` for 3.5% — ECOS and KIS quote
+            yields in percent, so divide by 100). A scalar, or an array such as a daily
+            series of treasury yields aligned with the returns.
+        periods_per_year: Number of periods in a year (default: 252 for trading days)
+
+    Returns:
+        Per-period rate, a float for a scalar input or an array of the same shape
+    """
+    rate = (1 + np.asarray(annual_rate, dtype=np.float64)) ** (1 / periods_per_year) - 1
+    return float(rate) if rate.ndim == 0 else rate
+
+
+def _excess(returns: np.ndarray, risk_free: float | np.ndarray) -> np.ndarray:
+    risk_free = np.asarray(risk_free, dtype=np.float64)
+    if risk_free.ndim != 0 and risk_free.shape != returns.shape:
+        raise ValueError(
+            f"risk_free must be a scalar or an array aligned with returns; got {risk_free.shape} for {returns.shape}"
+        )
+    return returns - risk_free
+
+
 def SHARPE(
     returns: np.ndarray,
-    risk_free: float = 0.0,
+    risk_free: float | np.ndarray = 0.0,
     periods_per_year: int = 252,
 ) -> float:
     """
     Sharpe Ratio.
 
-    Calculates the risk-adjusted return using total volatility.
+    Calculates the risk-adjusted return using total volatility:
+    ``mean(r - rf) / std(r - rf, ddof=1) * sqrt(periods_per_year)``.
 
     Args:
         returns: Array of periodic returns (e.g., daily returns as decimals)
-        risk_free: Risk-free rate per period (default: 0)
+        risk_free: Risk-free rate **per period**, not annual — a scalar, or an array
+            the same length as ``returns`` (e.g. daily treasury yields). Convert an
+            annual rate with ``PERIODIC_RATE`` (default: 0)
         periods_per_year: Number of periods in a year (default: 252 for trading days)
 
     Returns:
-        Sharpe ratio (annualized)
+        Sharpe ratio (annualized), or NaN when there are fewer than 2 periods or the
+        excess returns have no volatility (the ratio is undefined, not zero)
+
+    Raises:
+        ValueError: If ``risk_free`` is an array of a different length
     """
     returns = np.asarray(returns, dtype=np.float64)
+    excess_returns = _excess(returns, risk_free)
 
     if len(returns) < 2:
-        return 0.0
+        return float("nan")
 
-    # Calculate excess returns
-    excess_returns = returns - risk_free
-
-    # Calculate mean and std of excess returns
     mean_excess = np.mean(excess_returns)
     std_excess = np.std(excess_returns, ddof=1)
 
-    if std_excess == 0 or np.isclose(std_excess, 0, atol=1e-15):
-        return 0.0
+    if np.isclose(std_excess, 0, atol=1e-15):
+        return float("nan")
 
-    # Annualize the Sharpe ratio
-    sharpe = (mean_excess / std_excess) * np.sqrt(periods_per_year)
-
-    return float(sharpe)
+    return float((mean_excess / std_excess) * np.sqrt(periods_per_year))
 
 
 def SORTINO(
     returns: np.ndarray,
-    risk_free: float = 0.0,
+    risk_free: float | np.ndarray = 0.0,
     periods_per_year: int = 252,
 ) -> float:
     """
     Sortino Ratio.
 
-    Calculates the risk-adjusted return using downside volatility only.
-    Unlike Sharpe ratio, it only penalizes downside volatility.
+    Calculates the risk-adjusted return using downside volatility only, with the
+    risk-free rate as the target: ``mean(r - rf) / DD * sqrt(periods_per_year)``.
+    The downside deviation ``DD = sqrt(mean(min(r - rf, 0) ** 2))`` averages over
+    **all** periods (periods above the target count as zero), not over the losing
+    periods only — dividing by the loss count inflates DD and understates the ratio.
 
     Args:
         returns: Array of periodic returns (e.g., daily returns as decimals)
-        risk_free: Risk-free rate per period (default: 0)
+        risk_free: Risk-free rate **per period**, not annual — a scalar, or an array
+            the same length as ``returns``. Convert an annual rate with
+            ``PERIODIC_RATE`` (default: 0)
         periods_per_year: Number of periods in a year (default: 252 for trading days)
 
     Returns:
-        Sortino ratio (annualized)
+        Sortino ratio (annualized). ``inf`` when nothing falls below the target and the
+        mean excess return is positive; NaN when there are fewer than 2 periods, or no
+        downside with a non-positive mean
+
+    Raises:
+        ValueError: If ``risk_free`` is an array of a different length
     """
     returns = np.asarray(returns, dtype=np.float64)
+    excess_returns = _excess(returns, risk_free)
 
     if len(returns) < 2:
-        return 0.0
+        return float("nan")
 
-    # Calculate excess returns
-    excess_returns = returns - risk_free
-
-    # Calculate mean excess return
     mean_excess = np.mean(excess_returns)
+    downside_std = np.sqrt(np.mean(np.minimum(excess_returns, 0.0) ** 2))
 
-    # Calculate downside deviation (only negative returns)
-    negative_returns = excess_returns[excess_returns < 0]
-
-    if len(negative_returns) == 0:
-        # No negative returns, return infinity or large number
-        return float("inf") if mean_excess > 0 else 0.0
-
-    # Downside deviation (semi-standard deviation)
-    downside_std = np.sqrt(np.mean(negative_returns**2))
-
+    # No downside (or one so small its squares underflow)
     if downside_std == 0:
-        return 0.0
+        return float("inf") if mean_excess > 0 else float("nan")
 
-    # Annualize the Sortino ratio
-    sortino = (mean_excess / downside_std) * np.sqrt(periods_per_year)
-
-    return float(sortino)
+    return float((mean_excess / downside_std) * np.sqrt(periods_per_year))
 
 
 def CALMAR(returns: np.ndarray, periods_per_year: int = 252) -> float:
@@ -278,7 +306,7 @@ def ALPHA(
         returns: Array of periodic returns (e.g., daily returns as decimals)
         benchmark_returns: Benchmark returns for the same periods, aligned by date
         risk_free: Risk-free rate **per period** — a scalar, or an array the same
-            length as ``returns`` (default: 0)
+            length as ``returns``. Convert an annual rate with ``PERIODIC_RATE`` (default: 0)
         periods_per_year: Number of periods in a year (default: 252 for trading days)
 
     Returns:
@@ -289,7 +317,7 @@ def ALPHA(
         ValueError: If the arrays differ in length
     """
     returns, benchmark_returns = _paired(returns, benchmark_returns)
-    excess, benchmark_excess = returns - risk_free, benchmark_returns - risk_free
+    excess, benchmark_excess = _excess(returns, risk_free), _excess(benchmark_returns, risk_free)
     beta = _beta(excess, benchmark_excess)
     if np.isnan(beta):
         return float("nan")
@@ -305,4 +333,5 @@ __all__ = [
     "CALMAR",
     "BETA",
     "ALPHA",
+    "PERIODIC_RATE",
 ]
