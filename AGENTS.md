@@ -18,6 +18,9 @@ its non-obvious constraints.
 - Real API keys are used **only** by tests marked `integration`; everything else is mocked
   and hits no network.
 - `realtime`-marked tests require market hours (09:00–15:30 KST).
+- Test files are `test_<target>_unit.py` or `test_<target>_integration.py`, flat under each package's
+  `tests/` (subfolders only per broker/feed). Shared helpers are `_`-prefixed modules imported
+  relatively (`from ._helpers import …`), never via `sys.path` edits.
 
 ## Codacy (PR check)
 

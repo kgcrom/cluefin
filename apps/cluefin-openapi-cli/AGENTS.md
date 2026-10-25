@@ -83,7 +83,7 @@ CLI 가 말해 주지 않는 것만 적는다.
 - `metadata.KIWOOM_KIS_ALTERNATIVES` is a hand-maintained map; a Kiwoom command missing
   from it is *declared* Kiwoom-only and shows up in `brokers --json` →
   `kiwoom_only_commands`. When adding a Kiwoom handler that overlaps KIS, add the entry
-  or agents will treat it as the intended Kiwoom use. `test_agent_surface.py` fails if
+  or agents will treat it as the intended Kiwoom use. `test_agent_surface_unit.py` fails if
   any key or target is not a real command path.
 
 ## Exit codes and error envelope
@@ -128,7 +128,7 @@ CLI 가 말해 주지 않는 것만 적는다.
   `dart_handlers.collect_reports` statements, plus the KIS estimate EPS. `_BrokerSession` therefore creates
   clients per broker on demand (it used to refuse another broker's client); each broker still runs its own
   credentials check, so a missing DART key fails with exit 3 only when the command reaches DART.
-  `test_kis_stock_info_handlers.py` excludes it from the calls-once check; `test_kis_opinion_valuation.py`
+  `test_kis_stock_info_handlers_unit.py` excludes it from the calls-once check; `test_kis_opinion_valuation_unit.py`
   covers it with one fake session answering both brokers. Market cap uses **issued** common shares (KRX
   convention, treasury included), preferred shares are ignored — stated in the response `notes`.
 - `kis stock opinion-summary` is one `investment-opinion` call plus `opinions.summarize` (factory
@@ -138,18 +138,18 @@ CLI 가 말해 주지 않는 것만 적는다.
   archived 2026-10-18). Rules live in that module, not in docs: Q2–Q4 are year-to-date differences, a year's
   own report beats the next year's comparative column, borrowings are summed by label with a
   financial-liabilities fallback (`borrowings_basis` says which), ROE/ROA use average equity/assets.
-  `test_dart_handlers.py` lists it with the parsing handlers; `test_dart_financial_summary.py` covers it
+  `test_dart_handlers_unit.py` lists it with the parsing handlers; `test_dart_financial_summary_unit.py` covers it
   with a fake keyed by (year, reprt_code, fs_div).
 - `dart document-outline` / `document-section` / `financial-notes` parse the downloaded original XML with
   cluefin-dart-notes (see the `dart document-*` section) and are excluded from those tests too.
 - `sec filing-items` / `filing-exhibit` parse a downloaded document with cluefin-sec-notes (see the `sec *`
-  section); `test_sec_filing_handlers.py` covers them with synthetic HTML.
+  section); `test_sec_filing_handlers_unit.py` covers them with synthetic HTML.
 - `kis chart technical` is the **only** command that computes from a paged series. It pages
   `chart.period` itself (`ohlcv.fetch_kis_daily_series`), computes via `indicators.py`, and
   returns readings only — the candle series never reaches the caller, which is the whole
   reason it exists. `_handler_fakes.assert_calls_client_once` therefore does not describe
-  it: `test_kis_basic_quote_handlers.py` excludes it and `test_kis_technical_handler.py`
-  covers it instead. `test_handler_client_contract.py` swallows `CliError` for the same
+  it: `test_kis_basic_quote_handlers_unit.py` excludes it and `test_kis_technical_handler_unit.py`
+  covers it instead. `test_handler_client_contract_unit.py` swallows `CliError` for the same
   reason — its probe returns `None` for every output field, which this handler correctly
   treats as an empty response.
 - **`adj_price` polarity is inverted between the two KIS chart endpoints** —
@@ -178,7 +178,7 @@ CLI 가 말해 주지 않는 것만 적는다.
 ## `cache *` 는 로컬 DuckDB 파일이다 (`cache/`)
 
 - 메타 명령이다(`main.META_COMMANDS`, registry 밖). `cache load` 만 broker 를 부르고 나머지는 파일만 읽는다.
-  `test_cli_contract.py` 는 문서의 `cache` 줄을 실행하지 않고 하위 명령 이름만 확인한다 — `load` 는 실호출이고 읽기는
+  `test_cli_contract_unit.py` 는 문서의 `cache` 줄을 실행하지 않고 하위 명령 이름만 확인한다 — `load` 는 실호출이고 읽기는
   로컬 파일에 따라 결과가 달라서다. `--dry-run` 은 없다.
 - **쓰는 프로세스는 하나, 쓰는 동안 읽기도 막힌다**(DuckDB). 읽기는 `read_only=True` 로 열고 잠금은 `CacheLocked`.
   `cache load` 는 병렬 호출을 하지 않는다 — 사용자 결정(2026-10-18), KIS 는 동시 2개 제한도 있다.
@@ -276,7 +276,7 @@ CLI 가 말해 주지 않는 것만 적는다.
   2019·2025·2026 정기보고서와 감사보고서 단독 공시 모두 본문·감사보고서에 8자리 고유번호가 있었다.
 - 2017년 이전 접수번호(앞 4자리)는 클라이언트를 만들기 전에 exit 2. 파서 지원 범위 밖이다.
 - 핸들러는 `disclosure_document_files` 의 반환값이 아니라 **임시 디렉터리를 다시 훑는다**.
-  `test_handler_client_contract.py` 의 프로브가 경로 목록을 주지 않기 때문이고, XML 0개는 exit 4 다.
+  `test_handler_client_contract_unit.py` 의 프로브가 경로 목록을 주지 않기 때문이고, XML 0개는 exit 4 다.
 - `index` 는 파일 경계를 넘어 매긴다(본문 먼저, 나머지 파일 이름순 — `_xml_entries` 와 같은 순서).
   outline 의 `chars` 는 하위 섹션과 그 제목을 포함하고, `document-section --index` 의 `total_chars` 와 같다.
 - `document-section` 의 선택자(`section`·`assoc_code`·`title`·`index`)는 정확히 하나여야 한다. 계약 테스트는
@@ -300,7 +300,7 @@ CLI 가 말해 주지 않는 것만 적는다.
   `business_letter` 는 bsnSp(영업정지), `corporate_bond_issuance_decision` 은 exbdIsDecsn(교환사채). 클래스 이름
   `MajorShareholderDisclosure` 도 실제로는 주요사항보고서(DS005)다. `handlers/dart.py` 의 `_MAJOR_EVENTS`·`_REPORT_ITEMS`
   (slug → 엔드포인트·한국어 이름·람다)가 진실의 원천이다. `getattr(client, 이름)` 으로 바꾸지 않는다 — 이름이 오해를
-  부르고 Codacy 가 동적 호출로 잡는다. `test_dart_event_handlers.py` 가 62종 전부 실제 client 의 `_get` 경로를 표와 대조한다.
+  부르고 Codacy 가 동적 호출로 잡는다. `test_dart_event_handlers_unit.py` 가 62종 전부 실제 client 의 `_get` 경로를 표와 대조한다.
 - 실데이터 검증(2026-10-17, 최근 12개월 주요사항보고 공시에서 종류별 표본, CLI 경유): 주요사항 33종은 행으로 확인.
   `split-merger` 는 표본 4건이 모두 013(자회사 공시로 보임), `overseas-delisting-decision`·`overseas-delisting` 은 표본이 없어
   **미검증**. 표본은 `[기재정정]` 을 빼고 고른다 — 정정 공시의 접수일로 조회하면 013 이 온다. report-item 26종은 대형주·소형주
@@ -341,8 +341,8 @@ CLI 가 말해 주지 않는 것만 적는다.
 
 ## Tests that break on unrelated-looking changes
 
-- `test_rpc_registry.py` hardcodes the total command count — bump it when adding or
-  removing any handler. It is the only place; `test_agent_surface.py` reads the registry length.
+- `test_rpc_registry_unit.py` hardcodes the total command count — bump it when adding or
+  removing any handler. It is the only place; `test_agent_surface_unit.py` reads the registry length.
 - A domain/tag used in `COMMAND_TAXONOMY` must also exist in `_DOMAIN_TAXONOMY`/
   `_TAG_TAXONOMY` or the taxonomy-coverage test fails.
 - `test_taxonomy_filters_are_selective` puts a floor under filter precision (≥110 distinct
@@ -350,30 +350,30 @@ CLI 가 말해 주지 않는 것만 적는다.
   commands back into one bucket fails it.
 - Recipe → command references are validated only by a test, not at runtime; renaming a
   command path silently breaks recipes until tests run.
-- `test_readme_smoke.py` does literal substring assertions against `README.md` and
+- `test_readme_smoke_unit.py` does literal substring assertions against `README.md` and
   this file's agent section — keep the example/taxonomy strings in sync with `metadata.py` text.
-  `test_cli_contract.py` also runs every `uv run cluefin-openapi-cli` line inside a code block of
+  `test_cli_contract_unit.py` also runs every `uv run cluefin-openapi-cli` line inside a code block of
   both files (offline, or `--dry-run`), so an example here must be a valid command.
 - `list` is **brief** by default (`_command_brief`); `--full` restores the old
   per-command `parameters`. Tests and agents that need parameters must use `--full` or
   `schema`. An **unfiltered** `list --full` is capped at 25 rows (`_UNFILTERED_FULL_LIMIT`)
   and reports `count`/`returned`/`truncated`; `--limit 0` restores every row. It truncates
   rather than refuses because README/AGENTS assertions require it to exit 0.
-- `test_readme_smoke.py` also pins the `command_count` printed in the README's taxonomy
+- `test_readme_smoke_unit.py` also pins the `command_count` printed in the README's taxonomy
   example against the live `domains --json`, so retagging commands can fail it.
 
 ## search is a ranker, `list --query` is a filter
 
-- These are deliberately separate primitives. `test_agent_surface.py` asserts that
+- These are deliberately separate primitives. `test_agent_surface_unit.py` asserts that
   `list --full --query "theme group"` returns **only** matching names — redirecting
   `--query` into the scorer breaks that by construction.
 - The corpus is 100% English, so Hangul never enters the index. Korean reaches it only
   through `metadata.QUERY_ALIASES` expansion, and alias values are run through the same
   `tokenize()` as documents — a raw plural like `securities` would otherwise never match
-  the indexed stem `securitie`. `test_search.py` fails on any alias expansion that
+  the indexed stem `securitie`. `test_search_unit.py` fails on any alias expansion that
   reaches nothing.
 - The BM25F index is cached on the **registry object identity**; `set_registry_provider`
   swaps registries between tests and an unkeyed cache would serve a stale index.
-- `tests/test_cli_contract.py` has a `META` set — a new meta command must be added there
+- `tests/test_cli_contract_unit.py` has a `META` set — a new meta command must be added there
   or its documented examples get re-run as network commands and silently stop being
   verified offline.

@@ -112,7 +112,7 @@ def broker_role_name(broker: str) -> str:
 
 # Kiwoom command → KIS commands that cover the same question. An auxiliary command with
 # an empty tuple here is Kiwoom-only and is the intended reason to call Kiwoom at all.
-# Validated against the live registry by tests/test_agent_surface.py.
+# Validated against the live registry by tests/test_agent_surface_unit.py.
 KIWOOM_KIS_ALTERNATIVES: dict[str, tuple[str, ...]] = {
     "kiwoom.analysis.daily-institutional": ("kis.analysis.investor-by-market-daily",),
     "kiwoom.analysis.foreign-institution": ("kis.analysis.institutional-foreign",),

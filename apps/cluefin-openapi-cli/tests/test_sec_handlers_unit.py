@@ -5,11 +5,12 @@ from datetime import date
 from types import SimpleNamespace
 
 import pytest
-from _handler_fakes import assert_registers_all
 from cluefin_openapi.sec import CompanySubmissions, CompanyTickerExchange, FilingEntry
 
 from cluefin_openapi_cli.handlers import sec as handlers
 from cluefin_openapi_cli.main import run_cli
+
+from ._handler_fakes import assert_registers_all
 
 # Synthetic companies only: no real company, CIK or accession number (cluefin-sec-notes AGENTS.md).
 _TICKERS = [

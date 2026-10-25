@@ -286,7 +286,7 @@ def test_unfiltered_list_full_is_truncated_but_reports_the_real_total() -> None:
     code, payload = _json(["list", "--full", "--json"])
 
     assert code == 0
-    # The total itself is pinned once, in test_rpc_registry.py.
+    # The total itself is pinned once, in test_rpc_registry_unit.py.
     assert payload["count"] == len(build_cli_registry())
     assert payload["returned"] == 25
     assert payload["truncated"] is True
