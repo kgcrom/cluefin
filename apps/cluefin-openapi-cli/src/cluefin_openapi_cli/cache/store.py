@@ -81,6 +81,34 @@ SCHEMA = (
       PRIMARY KEY (series, date)
     )
     """,
+    # 키움 테마 스냅샷: Kiwoom answers with today's values only, so each day is kept under its own as_of.
+    """
+    CREATE TABLE IF NOT EXISTS theme (
+      as_of DATE,
+      theme_code TEXT,
+      name TEXT,
+      stock_count INTEGER,
+      change_pct DOUBLE,
+      period_return_pct DOUBLE,
+      period_days INTEGER,
+      rising INTEGER,
+      falling INTEGER,
+      main_stocks TEXT,
+      loaded_at TIMESTAMP,
+      PRIMARY KEY (as_of, theme_code)
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS theme_member (
+      as_of DATE,
+      theme_code TEXT,
+      code TEXT,
+      name TEXT,
+      change_pct DOUBLE,
+      period_return_pct DOUBLE,
+      PRIMARY KEY (as_of, theme_code, code)
+    )
+    """,
     # The earliest day each code's bars were fetched from, so a start moved earlier is backfilled.
     """
     CREATE TABLE IF NOT EXISTS bar_log (
@@ -194,6 +222,9 @@ def status(conn: duckdb.DuckDBPyConnection) -> dict[str, Any]:
     rates = conn.execute(
         "SELECT series, count(*), min(date), max(date) FROM rates GROUP BY series ORDER BY series"
     ).fetchall()
+    snapshots, theme_first, theme_last = _scalar_row(
+        conn, "SELECT count(DISTINCT as_of), min(as_of), max(as_of) FROM theme"
+    )
     loads = conn.execute(
         "SELECT kind, max(run_at) FROM load_log GROUP BY kind ORDER BY kind",
     ).fetchall()
@@ -204,5 +235,6 @@ def status(conn: duckdb.DuckDBPyConnection) -> dict[str, Any]:
             series: {"rows": rows, "first_date": _iso(first), "last_date": _iso(last)}
             for series, rows, first, last in rates
         },
+        "theme": {"snapshots": snapshots, "first_date": _iso(theme_first), "last_date": _iso(theme_last)},
         "last_load": {kind: _iso(run_at) for kind, run_at in loads},
     }
