@@ -14,6 +14,12 @@ from cluefin_dart_notes._find import find_section
 logger = logging.getLogger(__name__)
 
 Basis = Literal["consolidated", "separate"]
+
+# 정기보고서의 주석 섹션: (AASSOCNOTE 코드, 제목, 기준), 연결·별도 순서.
+_PERIODIC_NOTES_SECTIONS: tuple[tuple[str, str, Basis], ...] = (
+    ("D-0-3-3-0", "연결재무제표 주석", "consolidated"),
+    ("D-0-3-5-0", "재무제표 주석", "separate"),
+)
 SplitMethod = Literal["heading", "sequence"]
 
 # 노트 소제목의 번호: "7", "9-1", "6-A", "9&10", "15 & 16".
@@ -82,10 +88,7 @@ def notes_sections(document: DartDocument) -> list[tuple[Section, Basis]]:
         basis: Basis = "consolidated" if document.document_code == "00761" else "separate"
         return [(section, basis)] if section is not None else []
     found: list[tuple[Section, Basis]] = []
-    for code, title, basis in (
-        ("D-0-3-3-0", "연결재무제표 주석", "consolidated"),
-        ("D-0-3-5-0", "재무제표 주석", "separate"),
-    ):
+    for code, title, basis in _PERIODIC_NOTES_SECTIONS:
         section = find_section(document, assoc_code=code) or find_section(document, title=title)
         if section is not None:
             found.append((section, basis))
@@ -117,8 +120,7 @@ def split_notes(section: Section, basis: Basis) -> NoteSplit:
 def _split_by_headings(section: Section, basis: Basis, blocks: tuple[Block, ...]) -> NoteSplit:
     builder = _NoteBuilder(basis)
     for block in blocks:
-        match = _HEADING_NUMBER.fullmatch(block.text) if isinstance(block, Heading) else None
-        if match:
+        if isinstance(block, Heading) and (match := _HEADING_NUMBER.fullmatch(block.text)):
             builder.start(_compact_number(match.group(1)), match.group(2), block.text)
         else:
             builder.add(block)
@@ -287,7 +289,7 @@ def _cut_long_title(text: str, end: int, start: int) -> int:
 
 class _NoteBuilder:
     def __init__(self, basis: Basis) -> None:
-        self.basis = basis
+        self.basis: Basis = basis
         self.collected: list[Note] = []
         self._preamble: list[Block] = []
         self._current: tuple[str, str, str] | None = None

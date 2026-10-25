@@ -76,7 +76,7 @@ def ATR(
     tr = TRANGE(high, low, close)
 
     # First ATR value is SMA of True Range
-    initial_atr = np.mean(tr[1 : timeperiod + 1])
+    initial_atr = float(np.mean(tr[1 : timeperiod + 1]))
 
     # Apply Wilder's smoothing
     return wilder_smooth(tr, timeperiod, initial_atr, timeperiod)

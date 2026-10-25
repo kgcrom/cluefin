@@ -64,8 +64,8 @@ def RSI(close: np.ndarray, timeperiod: int = 14) -> np.ndarray:
     losses = np.where(deltas < 0, -deltas, 0.0)
 
     # Calculate initial average gain and loss using SMA
-    avg_gain = np.mean(gains[:timeperiod])
-    avg_loss = np.mean(losses[:timeperiod])
+    avg_gain = float(np.mean(gains[:timeperiod]))
+    avg_loss = float(np.mean(losses[:timeperiod]))
 
     # Wilder's smoothing; deltas[i - 1] is the change into bar i, so bar i reads index i - 1
     gain = wilder_smooth(gains, timeperiod, avg_gain, timeperiod - 1)[timeperiod - 1 : n - 1]

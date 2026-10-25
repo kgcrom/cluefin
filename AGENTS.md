@@ -136,6 +136,10 @@ shapes are in `src/dart/client.ts` and `src/dart/xml.ts`.
   the lock (3.11–3.14, macOS/Linux/Windows). It is only `cluefin-ta`'s dev-group test
   oracle; no app imports `talib`.
 - Git hooks run via **lefthook** (`uv run lefthook install`) — not the `pre-commit` framework.
+- Type checking is `uv run pyright` (basic mode) over the `[tool.pyright] include` list in the root
+  `pyproject.toml`; CI's `typecheck` job fails on any error there. Packages are added one at a time once their
+  errors are 0 — packages not in the list are unchecked, not clean. pydantic models with `populate_by_name` still
+  type-check against the alias only, so construct them by alias.
 
 ## Conventions
 

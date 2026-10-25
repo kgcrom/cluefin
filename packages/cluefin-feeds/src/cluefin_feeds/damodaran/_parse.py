@@ -117,7 +117,7 @@ _BETA_COLUMNS = (
     ("std_equity", "standard deviation of equity"),
     ("std_operating_income", "standard deviation in operating income"),
 )
-_OPTIONAL_BETA_COLUMNS = {"hilo_risk", "std_equity", "std_operating_income"}
+_OPTIONAL_BETA_COLUMNS = frozenset({"hilo_risk", "std_equity", "std_operating_income"})
 
 _COMPANY_COLUMNS = (
     ("company_name", "company name"),
