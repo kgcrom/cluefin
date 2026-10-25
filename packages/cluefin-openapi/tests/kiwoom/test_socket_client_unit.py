@@ -551,7 +551,7 @@ class TestLifecycleEdgeCases:
             awaitable.close()
             if len(calls) == 2:
                 client._connected = False
-            raise asyncio.TimeoutError
+            raise TimeoutError
 
         monkeypatch.setattr(asyncio, "wait_for", fake_wait_for)
 

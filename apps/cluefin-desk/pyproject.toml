@@ -3,7 +3,7 @@ name = "cluefin-desk"
 version = "0.1.0"
 description = "Interactive TUI dashboard for Korean stock market analysis"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "cluefin-openapi",
     "cluefin-ta[hmm]",

@@ -7,7 +7,7 @@ license = "MIT"
 authors = [
     { name = "Hangoo Kang", email = "kgcrom@hotmail.com" }
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "numpy>=1.20.0",
 ]

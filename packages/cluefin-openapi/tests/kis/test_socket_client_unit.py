@@ -821,7 +821,7 @@ class TestSocketCloseAndEventsEdgeCases:
             awaitable.close()
             if len(calls) == 2:
                 socket_client._connected = False
-            raise asyncio.TimeoutError
+            raise TimeoutError
 
         monkeypatch.setattr(asyncio, "wait_for", fake_wait_for)
 

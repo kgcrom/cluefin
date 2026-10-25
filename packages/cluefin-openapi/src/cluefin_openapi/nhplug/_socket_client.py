@@ -521,7 +521,7 @@ class SocketClient:
             try:
                 event = await asyncio.wait_for(self._event_queue.get(), timeout=1.0)
                 yield event
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue
 
     async def close(self) -> None:

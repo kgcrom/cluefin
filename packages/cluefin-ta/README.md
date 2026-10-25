@@ -2,7 +2,7 @@
 
 TA-Lib 호환 API를 제공하는 순수 Python 기술적 분석 라이브러리입니다.
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-green)
+![Python](https://img.shields.io/badge/Python-3.11%2B-green)
 ![NumPy](https://img.shields.io/badge/NumPy-Pure%20Python-blue)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 

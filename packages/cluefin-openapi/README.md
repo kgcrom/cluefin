@@ -9,7 +9,7 @@
 
 > **cluefin-openapi**: 주식 투자 OpenAPI를 위한 Python 클라이언트
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-green)
+![Python](https://img.shields.io/badge/Python-3.11%2B-green)
 ![Pydantic](https://img.shields.io/badge/Pydantic-Type%20Safe-blue)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
@@ -36,7 +36,7 @@
 # 워크스페이스 설치 (권장)
 git clone https://github.com/kgcrom/cluefin
 cd cluefin
-uv venv --python 3.10
+uv venv --python 3.11
 uv sync --all-packages
 
 # 패키지만 단독 설치

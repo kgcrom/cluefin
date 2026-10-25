@@ -53,7 +53,7 @@ async def _receive_first(ws: KiwoomWebSocketClient, model: type[BaseModel]) -> B
 
     try:
         received = await asyncio.wait_for(wait(), timeout=TIMEOUT_SECONDS)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         pytest.fail(f"No {model.__name__} for {STOCK[0]} within {TIMEOUT_SECONDS}s during US market hours.")
     assert received is not None, "WebSocket closed before any data arrived"
     return received

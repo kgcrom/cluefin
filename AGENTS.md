@@ -129,7 +129,7 @@ shapes are in `src/dart/client.ts` and `src/dart/xml.ts`.
 
 - macOS system dep: `brew install lightgbm` (a runtime dep of `cluefin-desk`). The C
   TA-Lib needs no install: `ta-lib>=0.6` wheels bundle `libta-lib` for every platform in
-  the lock (3.10–3.14, macOS/Linux/Windows). It is only `cluefin-ta`'s dev-group test
+  the lock (3.11–3.14, macOS/Linux/Windows). It is only `cluefin-ta`'s dev-group test
   oracle; no app imports `talib`.
 - Git hooks run via **lefthook** (`uv run lefthook install`) — not the `pre-commit` framework.
 
