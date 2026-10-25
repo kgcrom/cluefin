@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pytest
-from cluefin_openapi.dart._client import Client as DartClient
+from cluefin_openapi.dart import Client as DartClient
 
 from cluefin_openapi_cli.errors import EXIT_RATE_LIMIT, EXIT_USAGE, CliError, classify_exception
 from cluefin_openapi_cli.handlers import dart as handlers

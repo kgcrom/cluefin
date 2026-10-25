@@ -1,5 +1,6 @@
 """Korea Investment & Securities (KIS) API Client"""
 
+from cluefin_openapi.kis._auth import Auth
 from cluefin_openapi.kis._domestic_realtime_quote import DomesticRealtimeQuote
 from cluefin_openapi.kis._domestic_realtime_quote_types import (
     EXECUTION_FIELD_NAMES,
@@ -42,6 +43,7 @@ from cluefin_openapi.kis._socket_client import SocketClient, SubscriptionType, W
 from cluefin_openapi.kis._token_manager import TokenManager
 
 __all__ = [
+    "Auth",
     "BOND_EXECUTION_FIELD_NAMES",
     "BOND_INDEX_EXECUTION_FIELD_NAMES",
     "BOND_ORDERBOOK_FIELD_NAMES",

@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
-from cluefin_openapi.kis._exceptions import KISAPIError
+from cluefin_openapi.kis import KISAPIError
 
 from cluefin_desk.data.fetcher import DomesticDataFetcher
 

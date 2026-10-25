@@ -252,9 +252,7 @@ class FinancialAnalysisScreen(Screen):
 
     def _load_dart_statements(self, dart_client, corp_code: str) -> None:
         """주요 재무계정·재무지표 (DART 정기보고서)."""
-        from cluefin_openapi.dart._periodic_report_financial_statement import (
-            PeriodicReportFinancialStatement,
-        )
+        from cluefin_openapi.dart import PeriodicReportFinancialStatement
 
         statement_api = PeriodicReportFinancialStatement(dart_client)
 

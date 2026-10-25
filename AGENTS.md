@@ -137,6 +137,9 @@ shapes are in `src/dart/client.ts` and `src/dart/xml.ts`.
 
 - Conventional Commits with **Korean** messages: `type(scope): 설명`.
 - When discovering broker commands, prefer `cluefin-openapi-cli`'s `--json` output.
+- Apps import clients, auth, services and exceptions from the broker package (`from cluefin_openapi.kis import
+  Auth`), not its `_`-modules. Response models are the exception: only kis realtime and ecos re-export them, so
+  `cluefin_openapi.<broker>._*_types` is the path. Patch targets in tests follow the import path the app uses.
 - `packages/*/examples/*.ipynb` 노트북은 커밋 전에 output·execution_count 를 지운다
   (출력에 계좌번호가 섞일 수 있다):
   `uv run --with jupyter jupyter nbconvert --clear-output --inplace <노트북>.ipynb`

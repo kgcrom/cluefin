@@ -182,7 +182,7 @@ class HarnessApp(App):
 @pytest.fixture(autouse=True)
 def _patch_external(monkeypatch):
     monkeypatch.setattr(
-        "cluefin_openapi.dart._periodic_report_financial_statement.PeriodicReportFinancialStatement",
+        "cluefin_openapi.dart.PeriodicReportFinancialStatement",
         FakeStatementApi,
     )
     monkeypatch.setattr("cluefin_desk.data.xbrl.XbrlStatementFetcher", FakeXbrlFetcher)

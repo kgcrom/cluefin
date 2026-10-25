@@ -102,7 +102,7 @@ class CluefinDeskApp(App):
     def dart_client(self):
         """Lazy-init DART client (requires dart_auth_key)."""
         if not hasattr(self, "_dart_client"):
-            from cluefin_openapi.dart._client import Client as DartClient
+            from cluefin_openapi.dart import Client as DartClient
 
             if settings.dart_auth_key:
                 self._dart_client = DartClient(auth_key=settings.dart_auth_key)

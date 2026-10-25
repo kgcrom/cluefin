@@ -11,7 +11,7 @@ from pathlib import Path
 
 import cluefin_dart_notes
 import pytest
-from cluefin_openapi.dart._exceptions import DartAPIError
+from cluefin_openapi.dart import DartAPIError
 
 from cluefin_openapi_cli import registry as registry_module
 from cluefin_openapi_cli.errors import CliError, classify_exception

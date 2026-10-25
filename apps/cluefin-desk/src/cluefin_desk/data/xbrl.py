@@ -11,9 +11,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from cluefin_openapi.dart._client import Client as DartClient
-from cluefin_openapi.dart._periodic_report_financial_statement import PeriodicReportFinancialStatement
-from cluefin_openapi.dart._public_disclosure import PublicDisclosure
+from cluefin_openapi.dart import Client as DartClient
+from cluefin_openapi.dart import PeriodicReportFinancialStatement, PublicDisclosure
 from cluefin_xbrl import (
     ParsedFinancialStatements,
     ParsedNotes,
