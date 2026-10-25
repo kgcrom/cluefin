@@ -180,3 +180,14 @@ def test_history_matches_the_kis_command_definition(cache) -> None:
 
     assert payload["rows"][0]["history"] == expected
     assert "history" not in plain["rows"][0]
+
+
+def test_fresh_g3_filter_keeps_group_3_of_two_or_three_days(cache, monkeypatch) -> None:
+    # History is replayed only for group-3 rows, in universe order: 000010, 000040, 000090.
+    days = iter([2, 12, 3])
+    monkeypatch.setattr(trend_setup, "history", lambda prices, index: {"state": "g3", "status_days": next(days)})
+
+    _, payload = _scan("--history-filter", "fresh_g3")
+
+    assert {row["code"] for row in payload["rows"]} == {"000010", "000090"}
+    assert run_cli(["cache", "trend-setup", "--history-filter", "g1_recent", "--json"]).exit_code == 2

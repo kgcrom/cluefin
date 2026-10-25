@@ -156,7 +156,7 @@ def _wanted(row: dict[str, Any], statuses: list[str] | None, include_excluded: b
     return include_excluded or row["action"] != "exclude"
 
 
-# README "trend-setup 규칙과 근거" (theme): a theme is hot when its median 20-session adjusted return ranks in the top
+# README "trend-setup 규칙과 근거" §8: a theme is hot when its median 20-session adjusted return ranks in the top
 # 20% of themes with at least 5 stocks; a stock leads its theme when it is among the theme's top 3 by
 # 20-day traded value or one of Kiwoom's main stocks, and its rel is at least the theme's median rel.
 _THEME_MIN_STOCKS = 5
@@ -271,6 +271,7 @@ def scan(
     include_excluded: bool = False,
     theme_filter: bool = False,
     with_history: bool = False,
+    fresh_g3: bool = False,
 ) -> dict[str, Any]:
     """Judge every stock listed on ``as_of``; rows for the wanted market/codes/statuses, counts for those.
 
@@ -326,11 +327,16 @@ def scan(
         row["theme"] = themes.get(company["code"], _NO_THEME) if themes is not None else None
         counts[f"{row['action']}/{row['status']}"] += 1
         counts["theme_pass"] += bool(row["theme"] and row["theme"]["pass"])
-        if _wanted(row, statuses, include_excluded) and (not theme_filter or (row["theme"] or {}).get("pass")):
-            if with_history and entry.prices is not None:
-                # Only for shown rows: ~80 judgements a stock, too slow for the whole market.
-                row["history"] = trend_setup.history(entry.prices, indices[_INDEX_FOR[company["market"]]])
-            rows.append(row)
+        if not _wanted(row, statuses, include_excluded) or (theme_filter and not (row["theme"] or {}).get("pass")):
+            continue
+        if fresh_g3 and row["groups"]["g3"] is False:
+            continue  # cannot be fresh g3; skip the history replay
+        if (with_history or fresh_g3) and entry.prices is not None:
+            # Only for shown rows: ~80 judgements a stock, too slow for the whole market.
+            row["history"] = trend_setup.history(entry.prices, indices[_INDEX_FOR[company["market"]]])
+        if fresh_g3 and not trend_setup.is_fresh_g3(row["history"]):
+            continue
+        rows.append(row)
     rows.sort(key=_sort_key)
     summary: dict[str, Any] = {key: counts[key] for key in _STATUS_ORDER if counts[key]}
     if themes is not None:

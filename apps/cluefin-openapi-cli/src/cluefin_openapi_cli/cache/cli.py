@@ -272,6 +272,19 @@ def _trend_as_of(conn, raw: str | None) -> date:
     return as_of
 
 
+def _history_filter(options: dict[str, str | bool]) -> bool:
+    raw = _str_option(options, "history_filter")
+    if raw is None:
+        return False
+    if raw != "fresh_g3":
+        raise CliError(
+            f"`--history-filter` takes fresh_g3, got `{raw}`.",
+            exit_code=EXIT_USAGE,
+            hint="Only filters that passed the out-of-sample test exist (README trend-setup §9).",
+        )
+    return True
+
+
 def _run_trend_setup(argv: list[str]) -> None:
     positional, options = _parse_named_options(argv)
     if positional:
@@ -293,6 +306,7 @@ def _run_trend_setup(argv: list[str]) -> None:
             include_excluded=include_excluded,
             theme_filter=_parse_bool(options, "theme_filter"),
             with_history=_parse_bool(options, "history"),
+            fresh_g3=_history_filter(options),
         )
     finally:
         conn.close()

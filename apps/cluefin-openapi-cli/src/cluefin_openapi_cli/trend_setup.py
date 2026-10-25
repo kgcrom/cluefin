@@ -50,6 +50,7 @@ __all__ = [
     "floor_to_tick",
     "g2_score",
     "history",
+    "is_fresh_g3",
     "levels",
     "fractal_highs",
     "price_features",
@@ -411,7 +412,7 @@ def strength(prices: PriceArrays, index: IndexCloses) -> Strength | None:
 
 @dataclass(frozen=True, slots=True)
 class Rules:
-    """Every number here was set by the backtest; § is the section of the README's trend-setup rules.
+    """Every number here was set by the backtest; § is the section of the README's "trend-setup 규칙과 근거".
 
     The numbers live only here — the README explains them and does not keep a second copy.
     """
@@ -705,7 +706,7 @@ def analyze(prices: PriceArrays, index: IndexCloses) -> dict[str, Any]:
         ),
         "setup": _clean({key: setup[key] for key in ("groups", "action", "status", "reason", "checks", "g2_score")}),
         "levels": setup["levels"],
-        "rules": {"version": RULES_VERSION, "source": "apps/cluefin-openapi-cli/README.md#trend-setup"},
+        "rules": {"version": RULES_VERSION, "source": "apps/cluefin-openapi-cli/README.md#trend-setup-규칙과-근거"},
         "caveats": list(CAVEATS),
     }
 
@@ -832,3 +833,12 @@ def history(
         "last_g1_date": last_g1,
         "exit": exit_kind,
     }
+
+
+def is_fresh_g3(history_block: dict[str, Any]) -> bool:
+    """Group 3 for 2–3 sessions — the one history filter that passed the out-of-sample test (README §9).
+
+    2017-01~2021-10, factory group-3 trades: 2–3 days +0.26R (659) vs 11+ days −0.10R (128).
+    """
+
+    return history_block["state"] == "g3" and 2 <= history_block["status_days"] <= 3
