@@ -78,30 +78,28 @@ class TestLongValuesAreAccepted:
         assert item.se == long_se
 
 
-def _model_classes():
-    import importlib
+def _tuple_wrapped_fields(path: Path) -> list[str]:
+    import ast
 
-    from pydantic import BaseModel
+    found = []
+    for node in ast.walk(ast.parse(path.read_text())):
+        if not isinstance(node, ast.ClassDef):
+            continue
+        for stmt in node.body:
+            if (
+                isinstance(stmt, ast.AnnAssign)
+                and isinstance(stmt.value, ast.Tuple)
+                and any(isinstance(item, ast.Call) and ast.unparse(item.func) == "Field" for item in stmt.value.elts)
+            ):
+                found.append(f"{path.name}:{stmt.lineno} {node.name}.{ast.unparse(stmt.target)}")
+    return found
 
-    for path in _response_model_files():
-        module = importlib.import_module(f"cluefin_openapi.{path.parent.name}.{path.stem}")
-        for value in vars(module).values():
-            if isinstance(value, type) and issubclass(value, BaseModel) and value.__module__ == module.__name__:
-                yield value
 
-
-def test_no_field_default_is_a_tuple_wrapping_field():
+@pytest.mark.parametrize("path", _response_model_files(), ids=lambda p: f"{p.parent.name}/{p.name}")
+def test_no_field_default_is_a_tuple_wrapping_field(path: Path):
     """`x: list[...] = (Field(...),)` 처럼 끝 쉼표가 붙으면 기본값이 FieldInfo 를 담은 튜플이 된다.
 
     응답에 그 필드가 없을 때 빈 리스트 대신 그 튜플이 들어간다. 2026-10-26 pyright 로 키움 ka10074(일자별실현손익)
     `dt_rlzt_pl` 에서 찾았다.
     """
-    from pydantic.fields import FieldInfo
-
-    offenders = [
-        f"{cls.__module__}.{cls.__name__}.{name}"
-        for cls in _model_classes()
-        for name, field in cls.model_fields.items()
-        if isinstance(field.default, tuple) and any(isinstance(item, FieldInfo) for item in field.default)
-    ]
-    assert offenders == []
+    assert _tuple_wrapped_fields(path) == []
