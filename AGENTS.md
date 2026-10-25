@@ -59,7 +59,7 @@ the summary; the check run's annotations have every finding as `file:line`:
 
 ```bash
 sha=$(gh pr view <N> --json headRefOid -q .headRefOid)
-id=$(gh api repos/kgcrom/cluefin/commits/$sha/check-runs -q '.check_runs[]|select(.name|test("Codacy"))|.id')
+id=$(gh api repos/kgcrom/cluefin/commits/$sha/check-runs -q '.check_runs[]|select(.name=="Codacy Static Code Analysis")|.id')
 gh api "repos/kgcrom/cluefin/check-runs/$id/annotations?per_page=100" \
   -q '.[]|"\(.annotation_level) \(.path):\(.start_line) \(.message)"'
 # critical only: add  select(.annotation_level=="failure")|  before the string
@@ -73,6 +73,11 @@ gh api "repos/kgcrom/cluefin/check-runs/$id/annotations?per_page=100" \
 - Right after a push the check run for the new head has `conclusion: null` (and `gh pr checks`
   may say "no checks reported"). That is "still analysing", not a pass — poll until the
   conclusion is set before reading annotations.
+- Select the check by its exact name, `Codacy Static Code Analysis`. Since #186 a PR also gets `Codacy Diff Coverage`
+  and `Codacy Coverage Variation`; matching `test("Codacy")` can pick a coverage check and read its success as the
+  analysis result.
+- The CI workflow (`ci.yml`: lint, typecheck, tests) runs on pushes to main, not on PRs. To see it before merging, run
+  it on the branch: `gh workflow run ci.yml --ref <branch>`.
 
 ### Recurring TypeScript findings and what actually fixes them
 
