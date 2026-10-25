@@ -146,8 +146,7 @@ shapes are in `src/dart/client.ts` and `src/dart/xml.ts`.
 - Internal results and value objects are `@dataclass(frozen=True, slots=True)`; build changed copies with
   `dataclasses.replace`. pydantic is only for external API (wire) models. Any other option set carries a one-line
   `#` reason above the decorator (mutable accumulators/builders, `eq=False` for identity, bases a `BaseModel` also
-  inherits, and `Generic` classes built as `X[T](...)`, whose `__orig_class__` assignment is a `TypeError` under
-  frozen+slots on 3.10).
+  inherits).
 - Logging is stdlib: `logger = logging.getLogger(__name__)` at module level; f-string messages (loguru's `{}` args
   don't format in stdlib, and `%s` args trip Codacy when the text says token/key — see Codacy above).
   Packages never add handlers or set levels; only app entry points do (`cluefin_openapi_cli.main._configure_logging`,

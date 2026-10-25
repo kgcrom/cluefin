@@ -53,8 +53,7 @@ def validate_kis_response(model_cls: type[T], data: Any) -> T:
         raise KISValidationError(message=msg, response_data=data) from e
 
 
-# slots 없음: `Resp[T](...)` 로 만들면 typing 이 __orig_class__ 를 대입하는데, 3.10 의 frozen+slots 는 이때 TypeError.
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class KisHttpResponse(Generic[T_KisHttpBody]):
     header: KisHttpHeader
     body: T_KisHttpBody
