@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 class BaseHttpClient:
     """Mixin holding request helpers shared by all broker HTTP clients."""
 
+    max_retries: int  # set by the mixing-in client
+
     def _safe_json(self, response: requests.Response) -> dict | None:
         """Safely parse a JSON response, returning None if parsing fails."""
         try:

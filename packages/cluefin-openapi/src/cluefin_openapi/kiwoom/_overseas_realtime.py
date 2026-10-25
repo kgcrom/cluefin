@@ -14,6 +14,7 @@ TR:
 """
 
 from collections.abc import Iterable
+from typing import Literal
 
 from ._overseas_realtime_types import (
     OverseasRealtimeExecution,
@@ -63,7 +64,7 @@ class OverseasRealtime:
         types: Iterable[str],
         items: Iterable[OverseasRealtimeRegisterItem | tuple[str, str]],
         grp_no: str = "1",
-        refresh: str = "1",
+        refresh: Literal["0", "1"] = "1",
     ) -> None:
         """실시간 시세를 등록(REG)한다.
 
@@ -94,11 +95,11 @@ class OverseasRealtime:
 
     async def _send(
         self,
-        trnm: str,
+        trnm: Literal["REG", "REMOVE"],
         types: Iterable[str],
         items: Iterable[OverseasRealtimeRegisterItem | tuple[str, str]],
         grp_no: str,
-        refresh: str,
+        refresh: Literal["0", "1"],
     ) -> None:
         register_items = [
             item

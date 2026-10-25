@@ -81,7 +81,7 @@ class TokenManager:
         Returns:
             TokenResponse: Valid access token
         """
-        if self._is_token_valid():
+        if self._token_cache is not None and self._is_token_valid():
             logger.debug("Using cached NH PLUG token")
             return self._token_cache
 

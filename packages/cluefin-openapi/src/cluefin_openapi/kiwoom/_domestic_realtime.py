@@ -31,6 +31,7 @@ TR (type):
 """
 
 from collections.abc import Iterable
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -105,7 +106,7 @@ class DomesticRealtime:
         types: Iterable[str],
         items: Iterable[str],
         grp_no: str = "1",
-        refresh: str = "1",
+        refresh: Literal["0", "1"] = "1",
     ) -> None:
         """실시간 시세를 등록(REG)한다.
 
@@ -136,11 +137,11 @@ class DomesticRealtime:
 
     async def _send(
         self,
-        trnm: str,
+        trnm: Literal["REG", "REMOVE"],
         types: Iterable[str],
         items: Iterable[str],
         grp_no: str,
-        refresh: str,
+        refresh: Literal["0", "1"],
     ) -> None:
         request = DomesticRealtimeRequest(
             trnm=trnm,

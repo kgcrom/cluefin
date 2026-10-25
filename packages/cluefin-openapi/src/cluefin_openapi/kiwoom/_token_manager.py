@@ -68,7 +68,7 @@ class TokenManager:
         self._load_from_disk()
 
     def get_or_generate(self, generate_func) -> TokenResponse:
-        if self._is_token_valid():
+        if self._token_cache is not None and self._is_token_valid():
             logger.debug(f"Using cached Kiwoom token (expires at {self._token_cache.expires_dt})")
             return self._token_cache
 
