@@ -29,7 +29,7 @@ _MAX_GAP = 6
 _NUMBER_CELL = re.compile(r"^(\d{1,2}[A-D]?)\.?$", re.IGNORECASE)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class _Row:
     key: ItemKey
     pages: PageList

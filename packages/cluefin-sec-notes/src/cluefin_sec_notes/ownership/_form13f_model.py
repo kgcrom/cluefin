@@ -19,7 +19,7 @@ DOLLAR_VALUES_FROM = datetime.date(2023, 1, 3)
 """
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Form13FManager:
     """표지에 적힌 다른 운용사.
 
@@ -34,7 +34,7 @@ class Form13FManager:
     sec_file_number: str | None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Form13FCover:
     """13F 표지(정정·통지 포함).
 
@@ -74,7 +74,7 @@ class Form13FCover:
         return self.submission_type.startswith("13F-NT")
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Form13FHolding:
     """정보표 한 행.
 
@@ -100,7 +100,7 @@ class Form13FHolding:
     voting_none: int | None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Form13FTable:
     """정보표.
 
@@ -115,7 +115,7 @@ class Form13FTable:
     value_unit_suspect: bool
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Form13F:
     """13F 한 건: 표지와 정보표. 통지(13F-NT)는 `table`이 None이다."""
 

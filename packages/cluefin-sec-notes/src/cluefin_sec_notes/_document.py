@@ -25,7 +25,8 @@ _COVER_PERIOD = re.compile(
 _DATE_FORMATS = ("%Y-%m-%d", "%B %d %Y", "%b %d %Y", "%m/%d/%Y")
 
 
-@dataclass(frozen=True, eq=False)
+# eq=False: 원문 트리·문서 전체를 담는 결과라 값 비교가 무의미하다. identity 로 비교·해시한다.
+@dataclass(frozen=True, slots=True, eq=False)
 class SecDocument:
     """공시 주 문서.
 

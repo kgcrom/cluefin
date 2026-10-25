@@ -37,7 +37,7 @@ _TRAILING_PAGE = re.compile(r"(?:^|[\s|])\(?((?:[A-Z]{1,3}\s?[-–]\s?)?\d{1,4})
 _LEADING_PAGE = re.compile(r"^\(?((?:[A-Z]{1,3}\s?[-–]\s?)?\d{1,4})\)?(?:\s|$)")
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Page:
     """쪽 하나. `start`·`end`는 `SecDocument.blocks` 구간 `[start, end)`(쪽 끝 PageBreak 제외).
 

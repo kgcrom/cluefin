@@ -46,7 +46,7 @@ FIX_KINDS = (
 )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SourceSample:
     """원문 위치 하나. `line`·`column`은 1부터 센다(원문 디코딩 후 문자 기준)."""
 
@@ -55,7 +55,7 @@ class SourceSample:
     context: str
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ParseFix:
     """한 종류의 고쳐 읽기. `samples`는 앞쪽 몇 개만 남긴다."""
 
@@ -64,7 +64,7 @@ class ParseFix:
     samples: tuple[SourceSample, ...] = ()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ParseReport:
     """문서 하나를 읽으며 고쳐 읽은 것 전부.
 

@@ -34,6 +34,7 @@ def element_text(element: Element) -> str:
     return normalize_text("".join(element.itertext()))
 
 
+# slots 없음: `blocks` 가 cached_property 라 __dict__ 가 필요하다. eq=False 는 원문 트리를 담아서.
 @dataclass(frozen=True, eq=False)
 class Section:
     """`SECTION-1/2/3` 하나(또는 정정신고 블록). 직속 `TITLE`에서 제목과 코드를 읽는다.
@@ -71,7 +72,8 @@ class Section:
             yield from child.iter()
 
 
-@dataclass(frozen=True, eq=False)
+# eq=False: 원문 트리·문서 전체를 담는 결과라 값 비교가 무의미하다. identity 로 비교·해시한다.
+@dataclass(frozen=True, slots=True, eq=False)
 class DartDocument:
     """원문 XML 하나(본문 또는 첨부 감사보고서).
 

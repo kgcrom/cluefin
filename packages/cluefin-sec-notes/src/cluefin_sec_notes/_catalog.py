@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from datetime import date
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ItemSpec:
     """Item 하나.
 
@@ -59,7 +59,7 @@ class ItemSpec:
         return (self.since is None or period_end >= self.since) and (self.until is None or period_end < self.until)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class FormCatalog:
     """서식 하나의 Item 목록(문서에 나오는 순서).
 

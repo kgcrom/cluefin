@@ -26,7 +26,7 @@ BALANCE = frozenset({"BS"})
 CASH = frozenset({"CF"})
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Item:
     """One statement line: XBRL ids first, then Korean labels for filers off the taxonomy."""
 

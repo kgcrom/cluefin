@@ -28,7 +28,7 @@ _BOLD_START = "\ue000"
 _BOLD_END = "\ue001"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Paragraph:
     """문단. `text`의 줄바꿈은 원문의 `&cr;`·`BR`에서 온 것만 남는다.
 
@@ -41,7 +41,7 @@ class Paragraph:
     bold_spans: tuple[tuple[int, int], ...] = ()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Heading:
     """섹션이 아닌 `TITLE`. 2024년 이후 상장사 주석에서는 노트마다 `TABLE-GROUP > TITLE`이 붙는다."""
 
@@ -50,7 +50,7 @@ class Heading:
     toc_id: str | None = None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Cell:
     """표 셀. 병합 셀은 격자에서 차지하는 칸마다 같은 객체가 들어간다(`row`·`col`은 왼쪽 위 칸).
 
@@ -75,7 +75,8 @@ class Cell:
         return self.tag in _HEADER_CELL_TAGS
 
 
-@dataclass(frozen=True, eq=False)
+# eq=False: 원문 트리·문서 전체를 담는 결과라 값 비교가 무의미하다. identity 로 비교·해시한다.
+@dataclass(frozen=True, slots=True, eq=False)
 class Table:
     """표. `grid`는 COLSPAN·ROWSPAN을 펼친 직사각형 격자이고, 비는 칸은 None이다.
 
@@ -220,7 +221,7 @@ def _add_span(spans: list[tuple[int, int]], start: int, end: int) -> None:
 # --- 표 -------------------------------------------------------------------
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class _Caption:
     text: str
     unit: str | None

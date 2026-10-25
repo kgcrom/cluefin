@@ -15,7 +15,7 @@ DOCUMENT_TYPES = frozenset({"3", "3/A", "4", "4/A", "5", "5/A"})
 """읽는 서식. 셋 다 같은 `ownershipDocument` 스키마다."""
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Issuer:
     """주식을 발행한 회사."""
 
@@ -24,7 +24,7 @@ class Issuer:
     trading_symbol: str | None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ReportingOwner:
     """신고자. 펀드 공동 신고면 한 문서에 여럿이다."""
 
@@ -38,7 +38,7 @@ class ReportingOwner:
     other_text: str | None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Transaction:
     """거래 한 줄 (비파생 표 I, 파생 표 II).
 
@@ -72,7 +72,7 @@ class Transaction:
     footnote_ids: Mapping[str, tuple[str, ...]]
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Holding:
     """거래 없이 보유만 적은 줄 (Form 3의 보유, Form 4·5의 다른 보유 형태)."""
 
@@ -91,13 +91,13 @@ class Holding:
     footnote_ids: Mapping[str, tuple[str, ...]]
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Signature:
     name: str | None
     date: datetime.date | None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class OwnershipDocument:
     """Form 3·4·5(정정 포함) 한 건.
 

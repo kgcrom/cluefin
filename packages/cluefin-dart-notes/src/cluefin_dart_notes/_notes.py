@@ -36,7 +36,8 @@ _BODY_START = re.compile(
 _LOOKAHEAD_NUMBERS = 4
 
 
-@dataclass(frozen=True, eq=False)
+# eq=False: 원문 트리·문서 전체를 담는 결과라 값 비교가 무의미하다. identity 로 비교·해시한다.
+@dataclass(frozen=True, slots=True, eq=False)
 class Note:
     """주석 노트 하나.
 
@@ -55,7 +56,8 @@ class Note:
     blocks: tuple[Block, ...] = field(repr=False)
 
 
-@dataclass(frozen=True, eq=False)
+# eq=False: 원문 트리·문서 전체를 담는 결과라 값 비교가 무의미하다. identity 로 비교·해시한다.
+@dataclass(frozen=True, slots=True, eq=False)
 class NoteSplit:
     """주석 섹션 하나를 나눈 결과와 진단.
 
@@ -126,7 +128,7 @@ def _split_by_headings(section: Section, basis: Basis, blocks: tuple[Block, ...]
 # --- 순번 유도 탐색 -----------------------------------------------------------
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class _Hit:
     number: int
     start: int  # 제목 줄이 시작하는 위치("N.")

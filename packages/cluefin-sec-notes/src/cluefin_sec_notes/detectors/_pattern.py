@@ -26,7 +26,7 @@ _SUBSECTION = re.compile(r"\([a-z0-9]{1,3}\)", re.IGNORECASE)
 _MIN_TEXT_TOC_RUN = 4
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class _Heading:
     block: int
     part: str | None

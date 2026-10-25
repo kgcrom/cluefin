@@ -97,7 +97,7 @@ def leading_lines(block) -> tuple[list[str], bool]:
     return rows[start : position + 1], all(cell.bold for cell in block.rows[filled[position]] if cell.text)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Detection:
     candidates: tuple[Candidate, ...] = ()
     findings: tuple[Finding, ...] = ()

@@ -47,7 +47,7 @@ KNOWN_BAD = "known_bad"
 FIXED = "fixed"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ItemCheck:
     key: str
     status: str
