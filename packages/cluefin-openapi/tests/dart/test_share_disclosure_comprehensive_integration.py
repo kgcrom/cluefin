@@ -1,5 +1,6 @@
 import os
 import time
+from pathlib import Path
 
 import dotenv
 import pytest
@@ -18,7 +19,7 @@ from cluefin_openapi.dart._share_disclosure_comprehensive_types import (
 @pytest.fixture
 def client() -> Client:
     time.sleep(1)
-    dotenv.load_dotenv(dotenv_path=".env.test")
+    dotenv.load_dotenv(dotenv_path=Path(__file__).resolve().parents[4] / ".env.test")
     return Client(auth_key=os.getenv("DART_AUTH_KEY", ""))
 
 

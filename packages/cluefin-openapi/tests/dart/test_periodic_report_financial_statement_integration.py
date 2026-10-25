@@ -3,6 +3,7 @@ import logging
 import os
 import time
 import zipfile
+from pathlib import Path
 
 import dotenv
 import pytest
@@ -77,7 +78,7 @@ ENDPOINTS = [
 @pytest.fixture
 def client() -> Client:
     time.sleep(REQUEST_DELAY_SECONDS)
-    dotenv.load_dotenv(dotenv_path=".env.test")
+    dotenv.load_dotenv(dotenv_path=Path(__file__).resolve().parents[4] / ".env.test")
     return Client(auth_key=os.getenv("DART_AUTH_KEY", ""))
 
 

@@ -30,7 +30,7 @@ class _Session:
 
 @pytest.fixture(scope="module")
 def session() -> _Session:
-    dotenv.load_dotenv(dotenv_path=".env.test")
+    dotenv.load_dotenv(dotenv_path=Path(__file__).resolve().parents[3] / ".env.test")
     auth_key = os.getenv("DART_AUTH_KEY")
     if not auth_key:
         pytest.skip("DART_AUTH_KEY is not configured")

@@ -6,6 +6,7 @@ This allows you to run integration tests without hitting the 1-minute rate limit
 
 import os
 import sys
+from pathlib import Path
 
 import dotenv
 from loguru import logger
@@ -17,7 +18,7 @@ from cluefin_openapi.kis._auth import Auth
 def main():
     """Generate and cache a KIS API token."""
     # Load environment variables
-    dotenv.load_dotenv(dotenv_path=".env.test")
+    dotenv.load_dotenv(dotenv_path=Path(__file__).resolve().parents[4] / ".env.test")
 
     app_key = os.getenv("KIS_APP_KEY")
     secret_key = os.getenv("KIS_SECRET_KEY")
