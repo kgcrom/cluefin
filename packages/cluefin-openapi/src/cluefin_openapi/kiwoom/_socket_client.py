@@ -22,6 +22,7 @@ import asyncio
 import base64
 import hashlib
 import json
+import logging
 import os
 import ssl
 import struct
@@ -30,12 +31,13 @@ from dataclasses import dataclass, field
 from typing import Any, Literal, TypeVar
 from urllib.parse import urlparse
 
-from loguru import logger
 from pydantic import BaseModel
 
 from cluefin_openapi._rate_limiter import TokenBucket
 
 from ._exceptions import KiwoomAPIError, KiwoomNetworkError
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True, slots=True)
@@ -127,9 +129,6 @@ class KiwoomWebSocketClient:
         self._receive_task: asyncio.Task | None = None
         self._rate_limiter = TokenBucket(capacity=rate_limit_burst, refill_rate=rate_limit_requests_per_second)
 
-        if debug:
-            logger.enable("cluefin_openapi.kiwoom")
-
     async def __aenter__(self) -> "KiwoomWebSocketClient":
         await self.connect()
         return self
@@ -172,7 +171,7 @@ class KiwoomWebSocketClient:
         self._receive_task = asyncio.create_task(self._receive_loop())
 
         if self.debug:
-            logger.debug("Kiwoom WebSocket connected: {}", self._ws_url)
+            logger.debug(f"Kiwoom WebSocket connected: {self._ws_url}")
 
     async def close(self) -> None:
         """WebSocket 연결을 종료한다."""
@@ -191,13 +190,13 @@ class KiwoomWebSocketClient:
                 await self._send_frame(b"", opcode=0x8)  # Close frame
             except Exception as exc:
                 if self.debug:
-                    logger.debug("Failed to send close frame: {}", exc)
+                    logger.debug(f"Failed to send close frame: {exc}")
             self._writer.close()
             try:
                 await self._writer.wait_closed()
             except Exception as exc:
                 if self.debug:
-                    logger.debug("Failed to close writer: {}", exc)
+                    logger.debug(f"Failed to close writer: {exc}")
             self._writer = None
             self._reader = None
 
@@ -226,7 +225,7 @@ class KiwoomWebSocketClient:
                 return
             # LOGIN 이전의 예상치 못한 프레임은 무시한다.
             if self.debug:
-                logger.debug("Ignoring pre-LOGIN frame: {}", message.trnm)
+                logger.debug(f"Ignoring pre-LOGIN frame: {message.trnm}")
 
     # ------------------------------------------------------------------
     # 송신 / 수신 (도메인 클래스에서 사용하는 공개 API)
@@ -251,7 +250,7 @@ class KiwoomWebSocketClient:
             raise KiwoomAPIError("WebSocket send rate limit exceeded")
 
         if self.debug:
-            logger.debug("WS send: {}", payload)
+            logger.debug(f"WS send: {payload}")
 
         await self._send_frame(json.dumps(payload).encode("utf-8"))
 
@@ -294,7 +293,7 @@ class KiwoomWebSocketClient:
         # the task with that exception, which close() then re-raises while awaiting the task.
         except (asyncio.IncompleteReadError, ConnectionError, OSError, KiwoomNetworkError) as e:
             if self._connected:
-                logger.error("Kiwoom WebSocket receive error: {}", e)
+                logger.error(f"Kiwoom WebSocket receive error: {e}")
                 self._connected = False
 
     async def _emit(self, message: KiwoomWebSocketMessage) -> None:

@@ -7,17 +7,19 @@ all components (feature engineering, model training, prediction, and SHAP analys
 work correctly together.
 """
 
+import logging
 import sys
 import warnings
 from datetime import datetime
 
 import numpy as np
 import pandas as pd
-from loguru import logger
 from rich.console import Console
 from rich.panel import Panel
 
 from cluefin_desk.ml import StockMLPredictor
+
+logger = logging.getLogger(__name__)
 
 # Suppress warnings for cleaner output
 warnings.filterwarnings("ignore")
@@ -253,13 +255,7 @@ def test_ml_pipeline():
 
 def main():
     """Main entry point."""
-    # Configure logger for test
-    logger.remove()
-    logger.add(
-        sys.stderr,
-        level="INFO",
-        format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <level>{message}</level>",
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)-8s | %(message)s")
 
     console.print(Panel.fit("ML Pipeline Test Script", style="bold blue"))
     console.print("[dim]Testing ML pipeline components with sample Korean stock data[/dim]")

@@ -1,7 +1,7 @@
+import logging
 from typing import Literal
 
 import requests
-from loguru import logger
 from pydantic import SecretStr
 
 from cluefin_openapi.kis._auth_types import (
@@ -9,6 +9,8 @@ from cluefin_openapi.kis._auth_types import (
     TokenResponse,
 )
 from cluefin_openapi.kis._token_manager import TokenManager
+
+logger = logging.getLogger(__name__)
 
 
 class Auth:

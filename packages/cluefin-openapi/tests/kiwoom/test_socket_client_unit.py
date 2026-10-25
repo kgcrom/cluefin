@@ -11,7 +11,6 @@ import struct
 from unittest.mock import Mock
 
 import pytest
-from loguru import logger
 
 from cluefin_openapi.kiwoom._exceptions import KiwoomAPIError, KiwoomNetworkError
 from cluefin_openapi.kiwoom._socket_client import KiwoomWebSocketClient, KiwoomWebSocketMessage
@@ -287,8 +286,7 @@ def _client_opcode(frame: bytes) -> int:
 @pytest.fixture
 def debug_client():
     client = KiwoomWebSocketClient(token="test-token", env="dev", market="domestic", debug=True)
-    yield client
-    logger.disable("cluefin_openapi.kiwoom")
+    return client
 
 
 class TestConnectEndToEnd:

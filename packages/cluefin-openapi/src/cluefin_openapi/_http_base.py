@@ -1,11 +1,13 @@
 """Shared HTTP-client infrastructure for kis, dart, and kiwoom clients."""
 
 import json
+import logging
 import time
 from collections.abc import Callable
 
 import requests
-from loguru import logger
+
+logger = logging.getLogger(__name__)
 
 
 class BaseHttpClient:

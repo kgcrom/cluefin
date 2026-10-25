@@ -1,5 +1,7 @@
 """Tests for Kiwoom API 서버 오류코드 registry and client return_code handling."""
 
+import logging
+
 import pytest
 import requests_mock
 
@@ -122,21 +124,15 @@ def test_post_succeeds_when_return_code_is_zero(client):
     assert response.status_code == 200
 
 
-def test_error_return_code_is_logged(client):
-    records = []
-    from loguru import logger
+def test_error_return_code_is_logged(client, caplog):
+    caplog.set_level(logging.ERROR, logger="cluefin_openapi")
+    with requests_mock.Mocker() as m:
+        m.post(
+            "https://mockapi.kiwoom.com/api/dostk/stkinfo",
+            json={"return_code": 1700, "return_msg": "허용된 API 요청 개수를 초과하였습니다"},
+            status_code=200,
+        )
+        with pytest.raises(KiwoomRateLimitError):
+            client._post("/api/dostk/stkinfo", {"api-id": "ka10001"}, {"stk_cd": "005930"})
 
-    sink_id = logger.add(lambda message: records.append(message), level="ERROR")
-    try:
-        with requests_mock.Mocker() as m:
-            m.post(
-                "https://mockapi.kiwoom.com/api/dostk/stkinfo",
-                json={"return_code": 1700, "return_msg": "허용된 API 요청 개수를 초과하였습니다"},
-                status_code=200,
-            )
-            with pytest.raises(KiwoomRateLimitError):
-                client._post("/api/dostk/stkinfo", {"api-id": "ka10001"}, {"stk_cd": "005930"})
-    finally:
-        logger.remove(sink_id)
-
-    assert any("return_code=1700" in str(record) for record in records)
+    assert any("return_code=1700" in record.getMessage() for record in caplog.records)

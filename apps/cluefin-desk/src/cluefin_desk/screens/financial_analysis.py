@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable, Iterable, Sequence
 from typing import Any
 
@@ -15,6 +16,8 @@ from cluefin_desk.clock import now_kst
 from cluefin_desk.formatting import pad
 from cluefin_desk.screens._guard import guarded, screen_gone, set_text
 from cluefin_desk.widgets.nav_footer import NavFooter
+
+logger = logging.getLogger(__name__)
 
 
 class FinancialAnalysisScreen(Screen):
@@ -107,7 +110,6 @@ class FinancialAnalysisScreen(Screen):
         except Exception as e:
             if screen_gone(self, e):
                 return
-            from loguru import logger
 
             logger.error(f"Failed to resolve corp_code for {self.stock_code}: {e}")
             self._show_dart_unavailable(f"DART corp_code 조회 실패: {e}")

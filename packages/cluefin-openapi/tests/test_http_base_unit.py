@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 import requests
 import requests_mock as rm_mod
@@ -109,31 +111,25 @@ def test_5xx_retries_then_dispatches(monkeypatch):
     assert calls["n"] == 3  # initial + 2 retries
 
 
-def test_5xx_retry_emits_warning_log(monkeypatch, rl):
+def test_5xx_retry_emits_warning_log(monkeypatch, rl, caplog):
     import time as _time_mod
 
-    from loguru import logger as _logger
-
     monkeypatch.setattr(_time_mod, "sleep", lambda s: None)
-    records = []
-    sink_id = _logger.add(lambda msg: records.append(str(msg)), level="WARNING")
-    try:
-        with rm_mod.Mocker() as m:
-            m.get(
-                "https://x.test/p",
-                [{"status_code": 500, "text": "boom"}, {"status_code": 200, "text": "ok"}],
-            )
-            _Dummy()._execute_with_retry(
-                lambda: requests.get("https://x.test/p"),
-                rate_limiter=rl,
-                timeout=5,
-                max_retries=2,
-                request_context={"path": "/p"},
-                **_retry_kwargs(),
-            )
-    finally:
-        _logger.remove(sink_id)
-    assert any("Server error 500, retrying" in r for r in records)
+    caplog.set_level(logging.WARNING, logger="cluefin_openapi")
+    with rm_mod.Mocker() as m:
+        m.get(
+            "https://x.test/p",
+            [{"status_code": 500, "text": "boom"}, {"status_code": 200, "text": "ok"}],
+        )
+        _Dummy()._execute_with_retry(
+            lambda: requests.get("https://x.test/p"),
+            rate_limiter=rl,
+            timeout=5,
+            max_retries=2,
+            request_context={"path": "/p"},
+            **_retry_kwargs(),
+        )
+    assert any("Server error 500, retrying" in r.getMessage() for r in caplog.records)
 
 
 def test_terminal_5xx_with_none_dispatch_returns_response(monkeypatch, rl):

@@ -4,15 +4,17 @@ Run this script once to generate a token that will be cached for ~6 hours.
 This allows you to run integration tests without hitting the 1-minute rate limit.
 """
 
+import logging
 import os
 import sys
 from pathlib import Path
 
 import dotenv
-from loguru import logger
 from pydantic import SecretStr
 
 from cluefin_openapi.kis._auth import Auth
+
+logger = logging.getLogger(__name__)
 
 
 def main():
@@ -34,7 +36,7 @@ def main():
     auth = Auth(app_key=app_key, secret_key=SecretStr(secret_key), env=env)
     token = auth.generate()
 
-    logger.success("Token generated successfully!")
+    logger.info("Token generated successfully!")
     logger.info(f"Access token: {token.access_token[:20]}...")
     logger.info(f"Expires at: {token.access_token_token_expired}")
     logger.info(f"Token type: {token.token_type}")
@@ -43,4 +45,5 @@ def main():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     main()

@@ -64,8 +64,9 @@ CLI 가 말해 주지 않는 것만 적는다.
   auth token, though. `--dry-run` is the only execution path that never touches auth.
 - `brokers --json` and `--dry-run` report `credentials.configured` as a boolean derived
   from `BrokerClientConfig.from_env()`; never add the values themselves to any payload.
-- Client `loguru` output is cut to WARNING in `main()` so agents get clean stderr. Set
-  `CLUEFIN_OPENAPI_DEBUG=1` to see client DEBUG/INFO again.
+- `main()` sets stdlib logging to WARNING on stderr (`_configure_logging`) so agents get clean stderr. Set
+  `CLUEFIN_OPENAPI_DEBUG=1` to lower the `cluefin_openapi` logger to DEBUG; the per-call DEBUG lines also need
+  the client's own `debug=True`.
 
 ## Broker roles are data, not code paths
 

@@ -6,15 +6,17 @@ using client credentials authentication flow.
 
 from __future__ import annotations
 
+import logging
 from typing import Literal
 
 import requests
-from loguru import logger
 from pydantic import SecretStr
 
 from ._auth_types import TokenResponse
 from ._error_codes import KIWOOM_ERROR_CODES, parse_return_code
 from ._token_manager import TokenManager
+
+logger = logging.getLogger(__name__)
 
 
 def _log_error_body(response: requests.Response, endpoint: str) -> None:
@@ -29,14 +31,10 @@ def _log_error_body(response: requests.Response, endpoint: str) -> None:
         return_code = parse_return_code(data.get("return_code"))
         message = data.get("return_msg") or (KIWOOM_ERROR_CODES.get(return_code) if return_code else None)
         logger.error(
-            "Kiwoom auth request failed ({}): status={}, return_code={}, message={}",
-            endpoint,
-            response.status_code,
-            return_code,
-            message,
+            f"Kiwoom auth request failed ({endpoint}): status={response.status_code}, return_code={return_code}, message={message}"
         )
     else:
-        logger.error("Kiwoom auth request failed ({}): status={}", endpoint, response.status_code)
+        logger.error(f"Kiwoom auth request failed ({endpoint}): status={response.status_code}")
 
 
 class Auth:

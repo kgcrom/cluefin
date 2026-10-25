@@ -5,11 +5,14 @@ This module handles the conversion of stock data and technical indicators
 into ML-ready features, including TA-Lib indicators and target variable creation.
 """
 
+import logging
+
 import cluefin_ta as talib
 import numpy as np
 import pandas as pd
-from loguru import logger
 from sklearn.preprocessing import StandardScaler
+
+logger = logging.getLogger(__name__)
 
 try:
     from imblearn.over_sampling import SMOTE

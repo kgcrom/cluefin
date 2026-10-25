@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from rich.markup import escape
 from textual import work
@@ -14,6 +15,8 @@ from cluefin_desk.widgets.company_info import CompanyInfoWidget
 from cluefin_desk.widgets.indicator_panel import IndicatorPanel
 from cluefin_desk.widgets.nav_footer import NavFooter
 from cluefin_desk.widgets.price_chart import PriceChartWidget
+
+logger = logging.getLogger(__name__)
 
 # KIS 뉴스 제공업체 코드 중 공시 채널 — F 장내공시, G 코스닥공시, H 프리보드공시, I 기타공시, N 코넥스공시.
 # 뉴스와 공시가 한 피드로 오므로 이 코드로만 둘을 구분할 수 있다.
@@ -439,7 +442,6 @@ class StockDetailScreen(Screen):
         except Exception as e:
             if screen_gone(self, e):
                 return
-            from loguru import logger
 
             logger.error(f"ML prediction failed: {e}")
             err_msg = str(e)

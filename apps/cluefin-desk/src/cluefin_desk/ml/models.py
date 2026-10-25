@@ -5,15 +5,17 @@ This module contains ML model implementations using LightGBM and scikit-learn
 for stock price prediction and classification.
 """
 
+import logging
 from typing import Any
 
 import joblib
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
-from loguru import logger
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
 from sklearn.model_selection import TimeSeriesSplit, cross_val_score
+
+logger = logging.getLogger(__name__)
 
 
 class StockPredictor:

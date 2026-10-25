@@ -14,6 +14,7 @@ WebSocket URLs (정본은 각 자산군 openapi.json 의 `x-environments`):
 
 import asyncio
 import json
+import logging
 import ssl
 import struct
 from asyncio import Queue
@@ -21,11 +22,11 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Literal
 
-from loguru import logger
-
 from cluefin_openapi._rate_limiter import TokenBucket
 
 from ._exceptions import NHPlugAPIError, NHPlugNetworkError
+
+logger = logging.getLogger(__name__)
 
 
 class SubscriptionType(str, Enum):
@@ -130,11 +131,6 @@ class SocketClient:
         self._connected = False
         self._receive_task: asyncio.Task | None = None
         self._rate_limiter = TokenBucket(capacity=rate_limit_burst, refill_rate=rate_limit_requests_per_second)
-
-        if debug:
-            logger.enable("cluefin_openapi.nhplug")
-        else:
-            logger.disable("cluefin_openapi.nhplug")
 
     async def __aenter__(self) -> "SocketClient":
         """Async context manager entry."""
@@ -542,13 +538,13 @@ class SocketClient:
                 await self._send_frame(b"", opcode=0x8)
             except Exception as exc:
                 if self.debug:
-                    logger.debug("Failed to send close frame: {}", exc)
+                    logger.debug(f"Failed to send close frame: {exc}")
             self._writer.close()
             try:
                 await self._writer.wait_closed()
             except Exception as exc:
                 if self.debug:
-                    logger.debug("Failed to close writer: {}", exc)
+                    logger.debug(f"Failed to close writer: {exc}")
             self._writer = None
             self._reader = None
 

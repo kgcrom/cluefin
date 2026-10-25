@@ -1,11 +1,13 @@
+import logging
 from typing import Literal
 
 import requests
-from loguru import logger
 from pydantic import SecretStr
 
 from cluefin_openapi.nhplug._auth_types import TokenResponse, TokenRevokeResponse
 from cluefin_openapi.nhplug._token_manager import TokenManager
+
+logger = logging.getLogger(__name__)
 
 # 접근토큰 발급/폐기는 운영 도메인 전용(모의투자 미제공). 발급받은 토큰은
 # 운영·모의투자 호출 모두에 사용하므로 Auth 는 env 를 받지 않는다.

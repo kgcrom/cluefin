@@ -5,15 +5,17 @@ ML 모델 진단 및 데이터 품질 분석 모듈.
 도구들을 제공합니다.
 """
 
+import logging
 import warnings
 from typing import Any
 
 import numpy as np
 import pandas as pd
-from loguru import logger
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+
+logger = logging.getLogger(__name__)
 
 warnings.filterwarnings("ignore")
 

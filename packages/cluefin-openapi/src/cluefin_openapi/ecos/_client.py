@@ -1,9 +1,9 @@
+import logging
 import time
 from typing import Any, Literal
 from urllib.parse import quote
 
 import requests
-from loguru import logger
 
 from cluefin_openapi._http_base import BaseHttpClient
 from cluefin_openapi._rate_limiter import TokenBucket
@@ -18,6 +18,8 @@ from ._exceptions import (
     EcosTimeoutError,
     raise_for_result,
 )
+
+logger = logging.getLogger(__name__)
 
 BASE_URL = "https://ecos.bok.or.kr/api"
 

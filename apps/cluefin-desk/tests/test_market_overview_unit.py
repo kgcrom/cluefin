@@ -4,12 +4,12 @@
 "안 보이는" 상태였고, 투자자 순매수는 KIS 가 오름차순으로 줘 한 달 전 5일이 보였다.
 """
 
+import logging
 import threading
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from loguru import logger
 from rich.cells import cell_len
 from rich.text import Text
 from textual.app import App
@@ -193,24 +193,21 @@ class SwitchingHarnessApp(HarnessApp):
 
 
 @pytest.mark.asyncio
-async def test_switching_screen_mid_load_is_not_logged_as_failure():
+async def test_switching_screen_mid_load_is_not_logged_as_failure(caplog):
     """2026-09-02 실측: KIS 패널 로딩 중 화면을 바꾸면 내려간 화면의 워커가 self.app 을
     만지며 NoActiveAppError(메시지 없음)를 내고, 이것이 "Failed to load KIS 투자자별
     순매수: " 라는 원인 없는 ERROR 로 찍혔다. 취소는 조용히 끝나야 한다."""
-    errors = []
-    sink = logger.add(lambda m: errors.append(m.record["message"]), level="ERROR")
+    caplog.set_level(logging.ERROR, logger="cluefin_desk")
     fetcher = SlowKisFetcher()
     app = SwitchingHarnessApp(fetcher, AnyTabScreener())
-    try:
-        async with app.run_test() as pilot:
-            await pilot.pause()
-            await pilot.pause(0.2)
-            app.switch_away()
-            await pilot.pause(0.2)
-            fetcher.release.set()
-            await pilot.pause(0.5)
-            await app.workers.wait_for_complete()
-            await pilot.pause(0.2)
-    finally:
-        logger.remove(sink)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        await pilot.pause(0.2)
+        app.switch_away()
+        await pilot.pause(0.2)
+        fetcher.release.set()
+        await pilot.pause(0.5)
+        await app.workers.wait_for_complete()
+        await pilot.pause(0.2)
+    errors = [r.getMessage() for r in caplog.records if r.name.startswith("cluefin_desk")]
     assert errors == [], errors

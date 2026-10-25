@@ -1,8 +1,8 @@
+import logging
 import time
 from typing import Any, Literal
 
 import requests
-from loguru import logger
 from pydantic import SecretStr
 
 from cluefin_openapi._http_base import BaseHttpClient
@@ -18,6 +18,8 @@ from ._exceptions import (
     NHPlugTimeoutError,
     NHPlugValidationError,
 )
+
+logger = logging.getLogger(__name__)
 
 _ERROR_TYPES = {
     "validation": NHPlugValidationError,
@@ -76,11 +78,6 @@ class HttpClient(BaseHttpClient):
         )
 
         self._rate_limiter = TokenBucket(capacity=rate_limit_burst, refill_rate=rate_limit_requests_per_second)
-
-        if self.debug:
-            logger.enable("cluefin_openapi.nhplug")
-        else:
-            logger.disable("cluefin_openapi.nhplug")
 
     @property
     def common(self):

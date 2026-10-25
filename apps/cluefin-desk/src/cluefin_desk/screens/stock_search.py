@@ -5,6 +5,7 @@
 아직 없거나 받지 못했어도 그대로 연다.
 """
 
+import logging
 from collections.abc import Callable
 
 from rich.markup import escape
@@ -19,6 +20,8 @@ from textual.widgets.option_list import Option
 from cluefin_desk.data.listing import ListedStock, StockListing, is_stock_code
 from cluefin_desk.formatting import pad
 from cluefin_desk.screens._guard import screen_gone, set_text
+
+logger = logging.getLogger(__name__)
 
 LOADING = "종목 목록 불러오는 중…"
 
@@ -55,7 +58,6 @@ class StockSearchScreen(ModalScreen[str | None]):
         except Exception as e:
             if screen_gone(self, e):
                 return
-            from loguru import logger
 
             logger.error(f"Failed to load stock listing: {e}")
             set_text(self, "#search-status", f"종목 목록 로딩 실패: {escape(str(e))} — 6자리 코드는 그대로 열 수 있다")

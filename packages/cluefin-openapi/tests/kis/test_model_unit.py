@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 from pydantic import BaseModel
 
@@ -27,17 +29,11 @@ def test_validate_kis_response_wraps_validation_error_with_raw_response() -> Non
     assert isinstance(err.__cause__, Exception)
 
 
-def test_validate_kis_response_does_not_log_the_raw_response() -> None:
+def test_validate_kis_response_does_not_log_the_raw_response(caplog) -> None:
     """원문은 예외로만 전달한다. 로그로도 남기면 잡아서 처리하는 호출부에서도 계좌 응답 원문이 찍힌다."""
-    from loguru import logger
-
     raw = {"rt_cd": "0", "output": {"acnt_no": "secret-account"}}
-    captured: list[str] = []
-    sink_id = logger.add(captured.append, level="DEBUG")
-    try:
-        with pytest.raises(KISValidationError):
-            validate_kis_response(_Body, raw)
-    finally:
-        logger.remove(sink_id)
+    caplog.set_level(logging.DEBUG, logger="cluefin_openapi")
+    with pytest.raises(KISValidationError):
+        validate_kis_response(_Body, raw)
 
-    assert captured == []
+    assert caplog.records == []

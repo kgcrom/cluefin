@@ -6,10 +6,10 @@ feature engineering, model training, and SHAP explanation into a
 unified pipeline for stock prediction.
 """
 
+import logging
 from typing import Any
 
 import pandas as pd
-from loguru import logger
 from rich.console import Console
 from rich.panel import Panel
 
@@ -17,6 +17,8 @@ from .diagnostics import MLDiagnostics
 from .explainer import SHAPExplainer
 from .feature_engineering import FeatureEngineer
 from .models import StockPredictor
+
+logger = logging.getLogger(__name__)
 
 
 class StockMLPredictor:

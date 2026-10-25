@@ -1,3 +1,5 @@
+import logging
+
 from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -10,6 +12,8 @@ from cluefin_desk.widgets.market_overview import MarketOverviewBar
 from cluefin_desk.widgets.nav_bar import NavBar
 from cluefin_desk.widgets.nav_footer import NavFooter
 from cluefin_desk.widgets.stock_table import StockScreeningTable
+
+logger = logging.getLogger(__name__)
 
 TAB_CONFIG = [
     ("상승률", "tab-gainers", "table-gainers"),
@@ -106,7 +110,6 @@ class ScreeningScreen(Screen):
             except Exception as e:
                 if screen_gone(self, e):
                     return
-                from loguru import logger
 
                 logger.error(f"Failed to load {table_id}: {e}")
                 set_text(self, f"#status-{table_id}", f"로딩 실패: {e}")
