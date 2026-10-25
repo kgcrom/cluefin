@@ -7,6 +7,7 @@ for Kiwoom only — its KIS side is still `KIS_ENV=prod` (see repo AGENTS.md).
 import os
 import sys
 import time
+from pathlib import Path
 from typing import Literal, cast
 
 import dotenv
@@ -28,7 +29,7 @@ def pytest_runtest_makereport(item, call):
 @pytest.fixture(scope="module")
 def auth_dev():
     """Fixture to create Auth instance for dev environment."""
-    dotenv.load_dotenv(dotenv_path=".env.test")
+    dotenv.load_dotenv(dotenv_path=Path(__file__).resolve().parents[4] / ".env.test")
     app_key = os.getenv("KIS_APP_KEY")
     secret_key = os.getenv("KIS_SECRET_KEY")
     env = cast(Literal["dev", "prod"], os.getenv("KIS_ENV", "dev"))

@@ -11,6 +11,7 @@
 import os
 import re
 from collections.abc import Callable
+from pathlib import Path
 from typing import NoReturn
 
 import dotenv
@@ -20,7 +21,7 @@ from cluefin_openapi.kiwoom._exceptions import KiwoomAPIError
 
 # 모듈 임포트(= 테스트 수집) 시점에 로드해야 모듈 레벨 skipif가 KIWOOM_ENV를 볼 수 있다.
 # 픽스처 안에서만 로드하면 skipif는 셸 env(보통 미설정)만 읽고 기본값 "dev"로 떨어진다.
-dotenv.load_dotenv(dotenv_path=".env.test")
+dotenv.load_dotenv(dotenv_path=Path(__file__).resolve().parents[4] / ".env.test")
 
 
 def kiwoom_env() -> str:

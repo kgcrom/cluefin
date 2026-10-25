@@ -8,6 +8,7 @@ of its 8-Ks with item 2.02 and an EX-99.1 earnings release; the test is skipped 
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import dotenv
 import pytest
@@ -31,7 +32,7 @@ def filer() -> tuple[_Session, dict]:
     values = {name: os.getenv(name) for name in names}
     if not all(values.values()):
         pytest.skip(f"{' / '.join(names)} are not set")
-    dotenv.load_dotenv(dotenv_path=".env.test")
+    dotenv.load_dotenv(dotenv_path=Path(__file__).resolve().parents[3] / ".env.test")
     agent = os.getenv("SEC_USER_AGENT")
     if not agent:
         pytest.skip("SEC_USER_AGENT is not configured")

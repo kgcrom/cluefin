@@ -2,6 +2,7 @@
 
 import os
 import time
+from pathlib import Path
 from typing import Literal, cast
 
 import dotenv
@@ -19,7 +20,7 @@ def auth():
     토큰 발급은 운영 도메인 전용이므로 env 구분이 없다. generate() 는 파일 캐시를
     우선 사용하므로, 테스트를 반복 실행해도 실제 발급은 토큰 만료 전까지 1회다.
     """
-    dotenv.load_dotenv(dotenv_path=".env.test")
+    dotenv.load_dotenv(dotenv_path=Path(__file__).resolve().parents[4] / ".env.test")
     app_key = os.getenv("NHPLUG_APP_KEY")
     secret_key = os.getenv("NHPLUG_SECRET_KEY")
 

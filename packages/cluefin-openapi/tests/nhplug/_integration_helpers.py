@@ -8,6 +8,7 @@ kiwoom 의 `tests/kiwoom/_integration_helpers.py` 와 같은 철학이다. 두 �
 """
 
 import os
+from pathlib import Path
 from typing import NoReturn
 
 import dotenv
@@ -16,7 +17,7 @@ import pytest
 from cluefin_openapi.nhplug._exceptions import NO_DATA_RSP_CODES, NOT_BUSINESS_DAY_RSP_CODES, NHPlugAPIError
 
 # 모듈 임포트(= 테스트 수집) 시점에 로드해야 모듈 레벨 skipif 가 NHPLUG_ENV 를 볼 수 있다.
-dotenv.load_dotenv(dotenv_path=".env.test")
+dotenv.load_dotenv(dotenv_path=Path(__file__).resolve().parents[4] / ".env.test")
 
 
 def nhplug_env() -> str:

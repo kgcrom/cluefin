@@ -8,6 +8,7 @@ CLUEFIN_DART_DOCUMENT_CORP_CODE to its company; the test is skipped otherwise. T
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import dotenv
 import pytest
@@ -30,7 +31,7 @@ def filing() -> tuple[_Session, dict]:
     corp_code = os.getenv("CLUEFIN_DART_DOCUMENT_CORP_CODE")
     if not rcept_no or not corp_code:
         pytest.skip("CLUEFIN_DART_DOCUMENT_RCEPT_NO / CLUEFIN_DART_DOCUMENT_CORP_CODE are not set")
-    dotenv.load_dotenv(dotenv_path=".env.test")
+    dotenv.load_dotenv(dotenv_path=Path(__file__).resolve().parents[3] / ".env.test")
     auth_key = os.getenv("DART_AUTH_KEY")
     if not auth_key:
         pytest.skip("DART_AUTH_KEY is not configured")
