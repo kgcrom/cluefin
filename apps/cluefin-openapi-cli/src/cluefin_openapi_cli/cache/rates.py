@@ -6,9 +6,10 @@ Holidays have no row. A daily run re-reads the last week so a late or revised va
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
-from typing import Any, Callable
+from typing import Any
 
 import duckdb
 from cluefin_openapi.ecos import CD_91D, KTB_1Y, KTB_3Y, KTB_10Y
