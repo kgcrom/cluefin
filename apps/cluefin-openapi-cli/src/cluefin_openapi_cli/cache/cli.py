@@ -291,6 +291,7 @@ def _run_trend_setup(argv: list[str]) -> None:
             codes=[code.upper() for code in codes] if codes else None,
             statuses=_list_option(options, "status"),
             include_excluded=include_excluded,
+            theme_filter=_parse_bool(options, "theme_filter"),
         )
     finally:
         conn.close()

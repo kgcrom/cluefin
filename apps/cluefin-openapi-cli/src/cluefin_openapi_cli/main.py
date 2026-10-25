@@ -169,7 +169,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
             f"{APP_NAME} cache perf --code <code> [--bench U0001] [--since YYYYMMDD] [--until YYYYMMDD] "
             "[--risk-free 0.035|ktb3y] [--json]",
             f"{APP_NAME} cache trend-setup [--as-of YYYYMMDD] [--market KOSPI|KOSDAQ] [--status alert,watch/g2] "
-            "[--code <c1,c2>] [--include-excluded true] [--json]",
+            "[--code <c1,c2>] [--include-excluded true] [--theme-filter true] [--json]",
         ],
         "options": [
             {"flag": "--only P", "meaning": "Parts to load, comma-separated (default all)."},
@@ -183,6 +183,11 @@ _META_HELP: dict[str, dict[str, Any]] = {
             {
                 "flag": "--status S",
                 "meaning": "trend-setup: action or action/status list (alert, watch/g2, …); default every non-exclude.",
+            },
+            {
+                "flag": "--theme-filter true",
+                "meaning": "trend-setup: only stocks leading a hot Kiwoom theme (needs a `cache load --only theme` "
+                "snapshot for --as-of).",
             },
             {
                 "flag": "--risk-free R",
