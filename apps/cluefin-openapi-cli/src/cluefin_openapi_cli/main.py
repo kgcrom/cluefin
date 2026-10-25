@@ -166,6 +166,8 @@ _META_HELP: dict[str, dict[str, Any]] = {
             f"{APP_NAME} cache ohlcv --code <code> [--since YYYYMMDD] [--until YYYYMMDD] [--adjusted true] [--json]",
             f"{APP_NAME} cache company [--code <code>] [--as-of YYYYMMDD] [--include-delisted true] "
             "[--market KOSPI|KOSDAQ] [--json]",
+            f"{APP_NAME} cache perf --code <code> [--bench U0001] [--since YYYYMMDD] [--until YYYYMMDD] "
+            "[--risk-free 0.035] [--json]",
         ],
         "options": [
             {"flag": "--only P", "meaning": "Parts to load, comma-separated (default all)."},
@@ -175,11 +177,17 @@ _META_HELP: dict[str, dict[str, Any]] = {
             },
             {"flag": "--adjusted true", "meaning": "ohlcv: prices × adj_factor, volume ÷ adj_factor (KIS 수정주가)."},
             {"flag": "--as-of YYYYMMDD", "meaning": "company: stocks listed on that day, delisted ones included."},
+            {"flag": "--bench CODE", "meaning": "perf: benchmark code (default U0001 KOSPI)."},
+            {
+                "flag": "--risk-free R",
+                "meaning": "perf: annual risk-free rate as a decimal (0.035 for 3.5%, default 0).",
+            },
         ],
         "examples": [
             f"uv run {APP_NAME} cache status --json",
             f"uv run {APP_NAME} cache ohlcv --code 005930 --since 20260901 --adjusted true --json",
             f"uv run {APP_NAME} cache company --as-of 20180102 --limit 5 --json",
+            f"uv run {APP_NAME} cache perf --code 005930 --bench U0001 --since 20210101 --risk-free 0.03 --json",
         ],
         "notes": [
             "The file is $CLUEFIN_CACHE_DIR/market.duckdb (default ~/.cache/cluefin/).",
@@ -188,6 +196,8 @@ _META_HELP: dict[str, dict[str, Any]] = {
             "progress goes to stderr.",
             "Bars are unadjusted; trade at those prices in a backtest and use --adjusted only for signals.",
             "Index bars use codes U0001 (KOSPI), U1001 (KOSDAQ), U2001 (KOSPI200).",
+            "perf: buy-and-hold on adjusted closes, dates shared with the benchmark only; CAGR over calendar "
+            "years. Returns the stock's metrics with beta/alpha and the benchmark's own metrics.",
         ],
     },
 }

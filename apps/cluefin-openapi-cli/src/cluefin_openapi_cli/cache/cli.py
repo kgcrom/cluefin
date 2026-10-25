@@ -9,6 +9,7 @@ from zoneinfo import ZoneInfo
 
 from cluefin_openapi_cli.cache import store
 from cluefin_openapi_cli.cache.load import PARTS, Sources, run_load
+from cluefin_openapi_cli.cache.perf import read_perf
 from cluefin_openapi_cli.cache.read import read_company, read_ohlcv
 from cluefin_openapi_cli.cliargs import _parse_fields, _parse_limit, _parse_named_options, _str_option
 from cluefin_openapi_cli.errors import EXIT_USAGE, CliError, classify_exception
@@ -187,11 +188,60 @@ def _run_company(argv: list[str]) -> None:
     _render_read(payload, options, default_limit=None if code else _DEFAULT_COMPANY_LIMIT)
 
 
+_DEFAULT_BENCHMARK = "U0001"
+
+
+def _parse_rate(raw: str | None) -> float:
+    if raw is None:
+        return 0.0
+    try:
+        rate = float(raw)
+    except ValueError:
+        raise CliError(f"`--risk-free` must be a number, got `{raw}`.", exit_code=EXIT_USAGE) from None
+    # 3.5 for 3.5% would subtract 350% a year; ECOS and KIS quote rates in percent.
+    if not 0 <= rate < 1:
+        raise CliError(f"`--risk-free` is an annual decimal (0.035 for 3.5%), got `{raw}`.", exit_code=EXIT_USAGE)
+    return rate
+
+
+def _run_perf(argv: list[str]) -> None:
+    positional, options = _parse_named_options(argv)
+    code = _str_option(options, "code")
+    if positional or not code:
+        raise CliError(
+            "Usage: cache perf --code <code> [--bench U0001] [--since YYYYMMDD] [--until YYYYMMDD] "
+            "[--risk-free 0.035].",
+            exit_code=EXIT_USAGE,
+        )
+    until_raw = _str_option(options, "until")
+    until = _parse_day(until_raw, "until") if until_raw else date.today()
+    since_raw = _str_option(options, "since")
+    since = _parse_day(since_raw, "since") if since_raw else until - timedelta(days=_DEFAULT_OHLCV_DAYS)
+    if since > until:
+        raise CliError("`--since` is after `--until`.", exit_code=EXIT_USAGE)
+    benchmark = (_str_option(options, "bench") or _DEFAULT_BENCHMARK).strip().upper()
+    risk_free = _parse_rate(_str_option(options, "risk_free"))
+    conn = _read_conn()
+    try:
+        payload = read_perf(
+            conn, code.strip().upper(), benchmark=benchmark, since=since, until=until, risk_free=risk_free
+        )
+    finally:
+        conn.close()
+    if payload["performance"] is None:
+        payload["hint"] = (
+            "Fewer than 2 days with bars for both codes. Check them with `cache ohlcv --code` "
+            "and the span with `cache status`."
+        )
+    _render_read(payload, options, default_limit=None)
+
+
 SUBCOMMANDS: dict[str, Callable[[list[str]], None]] = {
     "status": _run_status,
     "load": _run_load,
     "ohlcv": _run_ohlcv,
     "company": _run_company,
+    "perf": _run_perf,
 }
 
 
