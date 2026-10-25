@@ -53,7 +53,7 @@ def test_undecodable_bytes_raise():
 
 
 def test_empty_candidates_are_rejected():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"인코딩 후보가 비어 있습니다\."):
         Decoder(candidates=())
 
 

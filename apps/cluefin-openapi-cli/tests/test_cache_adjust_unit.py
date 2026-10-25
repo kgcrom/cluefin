@@ -99,7 +99,8 @@ def test_flat_stock_costs_one_probe_and_split_stock_is_recomputed() -> None:
 
     assert [c for c, adj in kis.calls if c == "FLAT00"] == ["FLAT00"]
     assert all(adj == "0" for _, adj in kis.calls)  # chart.period "0" = adjusted
-    assert stats.probed_flat == 1 and stats.recomputed == 1
+    assert stats.probed_flat == 1
+    assert stats.recomputed == 1
     assert _factor(conn, "SPLIT0", SPLIT - timedelta(days=1)) == 1 / 50
     assert _factor(conn, "SPLIT0", SPLIT) == 1.0
     assert _adjusted_matches(conn, kis, "SPLIT0")
@@ -120,7 +121,8 @@ def test_daily_run_extends_with_one_call_and_skips_up_to_date_codes() -> None:
     stats = load_adjustments(conn, kis=kis, sleep=lambda _s: None)
 
     assert sorted(c for c, _ in kis.calls) == ["FLAT00", "SPLIT0"]
-    assert stats.extended == 2 and stats.recomputed == 0
+    assert stats.extended == 2
+    assert stats.recomputed == 0
     assert _factor(conn, "SPLIT0", new_days[-1]) == 1.0
 
 
@@ -154,7 +156,8 @@ def test_rounded_adjusted_prices_do_not_trigger_recompute() -> None:
 
     stats = load_adjustments(conn, kis=kis, sleep=lambda _s: None)
 
-    assert stats.recomputed == 0 and stats.extended == 2
+    assert stats.recomputed == 0
+    assert stats.extended == 2
     assert _adjusted_matches(conn, kis, "SPLIT0")
 
 
@@ -167,4 +170,5 @@ def test_bar_replace_resets_adjustment_state() -> None:
 
     assert conn.execute("SELECT count(*) FROM adj_log WHERE code = 'SPLIT0'").fetchone()[0] == 0
     stats = load_adjustments(conn, kis=kis, sleep=lambda _s: None)
-    assert stats.recomputed == 1 and _adjusted_matches(conn, kis, "SPLIT0")
+    assert stats.recomputed == 1
+    assert _adjusted_matches(conn, kis, "SPLIT0")

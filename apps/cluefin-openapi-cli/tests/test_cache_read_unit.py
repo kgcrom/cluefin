@@ -53,7 +53,8 @@ def test_ohlcv_adjusted_scales_prices_and_volume(cache) -> None:
     )
 
     first = payload["bars"][0]
-    assert first["close"] == pytest.approx(53000.0) and first["volume"] == pytest.approx(500.0)
+    assert first["close"] == pytest.approx(53000.0)
+    assert first["volume"] == pytest.approx(500.0)
 
 
 def test_ohlcv_default_window_is_a_year_back_from_until(cache) -> None:
@@ -66,7 +67,8 @@ def test_ohlcv_default_window_is_a_year_back_from_until(cache) -> None:
 def test_ohlcv_empty_range_hints(cache) -> None:
     _, payload = _json(["cache", "ohlcv", "--code", "000000", "--since", "20180101", "--until", "20181231"])
 
-    assert payload["count"] == 0 and "hint" in payload
+    assert payload["count"] == 0
+    assert "hint" in payload
 
 
 def test_ohlcv_requires_code_and_valid_bool(cache) -> None:

@@ -34,7 +34,7 @@ class TestDomesticConditionSearchList:
         assert request.model_dump(by_alias=True) == {"trnm": "CNSRLST"}
 
     def test_invalid_trnm_raises(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"1 validation error for 국내주식 조건검색 목록조회 요청"):
             DomesticConditionSearchListRequest(trnm="INVALID")
 
     def test_response_validates_and_maps_fields(self):
@@ -91,11 +91,11 @@ class TestDomesticConditionSearchRequest:
 
     def test_invalid_search_type_raises(self):
         """ka10172는 search_type이 반드시 '0' (일반조회)."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"1 validation error for 국내주식 조건검색 요청 일반"):
             DomesticConditionSearchRequest(trnm="CNSRREQ", seq="0", search_type="1")
 
     def test_invalid_stex_tp_raises(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"1 validation error for 국내주식 조건검색 요청 일반"):
             DomesticConditionSearchRequest(trnm="CNSRREQ", seq="0", search_type="0", stex_tp="Z")
 
     def test_response_maps_fid_keys_by_alias(self):
@@ -179,7 +179,7 @@ class TestDomesticConditionSearchRealtimeRequest:
 
     def test_invalid_search_type_raises(self):
         """ka10173은 search_type이 반드시 '1' (조건검색+실시간조건검색)."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"1 validation error for 국내주식 조건검색 요청 실시간"):
             DomesticConditionSearchRealtimeRequest(trnm="CNSRREQ", seq="0", search_type="0")
 
     def test_response_maps_fields(self):
@@ -241,12 +241,12 @@ class TestDomesticConditionSearchRealtimePush:
         assert item.values.exchange == "1"
 
     def test_invalid_trnm_raises(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"1 validation error for 국내주식 조건검색 실시간 푸시"):
             DomesticConditionSearchRealtimePush.model_validate({"trnm": "CNSRREQ", "data": []})
 
     def test_data_required(self):
         """스펙상 data/trnm 모두 Required=Y - data 누락시 검증 실패."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"1 validation error for 국내주식 조건검색 실시간 푸시"):
             DomesticConditionSearchRealtimePush.model_validate({"trnm": "REAL"})
 
 
@@ -261,7 +261,7 @@ class TestDomesticConditionSearchRealtimeCancel:
         assert request.model_dump(by_alias=True) == {"trnm": "CNSRCLR", "seq": "0"}
 
     def test_invalid_trnm_raises(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"1 validation error for 국내주식 조건검색 실시간 해제 요청"):
             DomesticConditionSearchRealtimeCancelRequest(trnm="INVALID", seq="0")
 
     def test_response_requires_all_fields(self):
@@ -273,7 +273,7 @@ class TestDomesticConditionSearchRealtimeCancel:
         assert response.trnm == "CNSRCLR"
         assert response.seq == "0"
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"1 validation error for 국내주식 조건검색 실시간 해제 응답"):
             DomesticConditionSearchRealtimeCancelResponse.model_validate(
                 {"return_code": 0, "return_msg": "", "trnm": "CNSRCLR"}
             )

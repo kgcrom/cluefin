@@ -39,7 +39,7 @@ def test_find_with_both_conditions(recent):
 
 
 def test_find_requires_a_condition(recent):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"assoc_code 와 title 중 하나는 있어야 합니다\."):
         find_sections(recent)
 
 

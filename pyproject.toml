@@ -47,7 +47,7 @@ extend-exclude = ["*.json", "*.ipynb", "docs/plans"]
 [tool.ruff.format]
 docstring-code-format = true
 [tool.ruff.lint]
-select = ["E", "F", "W", "B", "Q", "I", "ASYNC", "T20", "UP", "TID251", "DTZ"]
+select = ["E", "F", "W", "B", "Q", "I", "ASYNC", "T20", "UP", "TID251", "DTZ", "PT"]
 # DTZ007: strptime parses date-only (YYYYMMDD) or KST wall-clock strings from broker APIs; 3.10 has no date.strptime.
 ignore = ["E501", "DTZ007"]
 

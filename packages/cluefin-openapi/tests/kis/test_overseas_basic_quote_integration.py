@@ -8,6 +8,7 @@ These tests require valid API credentials in environment variables:
 Run with: uv run pytest packages/cluefin-openapi/tests/kis/test_overseas_basic_quote_integration.py -v -m integration
 """
 
+import contextlib
 from datetime import datetime, timedelta
 
 import pytest
@@ -238,7 +239,7 @@ def test_get_settlement_date(client: HttpClient):
 
 @pytest.mark.integration
 @pytest.mark.parametrize(
-    "exchange,symbol",
+    ("exchange", "symbol"),
     [
         ("NYS", "IBM"),  # New York Stock Exchange
         ("NAS", "TSLA"),  # NASDAQ
@@ -260,32 +261,26 @@ def test_current_price_multiple_exchanges(client: HttpClient, exchange, symbol):
 @pytest.mark.integration
 def test_invalid_stock_symbol(client: HttpClient):
     """Test handling of invalid stock symbol."""
-    try:
+    with contextlib.suppress(Exception):  # either a raise or a response is accepted
         response = client.overseas_basic_quote.get_stock_current_price_detail(
             auth="", excd="NAS", symb="INVALIDCODE123456"
         )
         # If no exception, check for error in response
         assert response is not None
-    except Exception as e:
-        # Expected to fail with invalid symbol
-        assert e is not None
 
 
 @pytest.mark.integration
 def test_invalid_exchange_code(client: HttpClient):
     """Test handling of invalid exchange code."""
-    try:
+    with contextlib.suppress(Exception):  # either a raise or a response is accepted
         response = client.overseas_basic_quote.get_stock_current_price_detail(auth="", excd="INVALID", symb="AAPL")
         assert response is not None
-    except Exception as e:
-        # Expected to fail with invalid exchange
-        assert e is not None
 
 
 @pytest.mark.integration
 def test_invalid_date_format(client: HttpClient):
     """Test handling of invalid date format."""
-    try:
+    with contextlib.suppress(Exception):  # either a raise or a response is accepted
         response = client.overseas_basic_quote.get_item_index_exchange_period_price(
             fid_cond_mrkt_div_code="N",
             fid_input_iscd="SPX",
@@ -294,6 +289,3 @@ def test_invalid_date_format(client: HttpClient):
             fid_period_div_code="D",
         )
         assert response is not None
-    except Exception as e:
-        # Expected to fail with invalid date
-        assert e is not None

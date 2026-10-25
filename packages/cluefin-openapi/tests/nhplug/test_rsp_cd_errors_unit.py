@@ -27,7 +27,7 @@ def test_missing_rsp_cd_does_not_raise():
 
 
 @pytest.mark.parametrize(
-    "rsp_cd, rsp_msg, error_type",
+    ("rsp_cd", "rsp_msg", "error_type"),
     [
         ("13578", "조회할 내역이 없습니다.", NHPlugNoDataError),
         ("11512", "데이터가 존재하지 않습니다.", NHPlugNoDataError),

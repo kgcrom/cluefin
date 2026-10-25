@@ -95,7 +95,7 @@ class TestRevoke:
         assert "token_type_hint=access_token" in revoke_request.text
 
     def test_revoke_without_token_raises(self, auth):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"No token to revoke: pass `token` explicitly or call"):
             auth.revoke()
 
     def test_revoke_explicit_token_keeps_unrelated_cache(self, auth):

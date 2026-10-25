@@ -101,8 +101,10 @@ class TestTables:
         assert (table.n_rows, table.n_cols) == (3, 3)
         assert table_to_rows(table) == [["구분", "당기", "당기"], ["구분", "1분기", "2분기"], ["매출", "1,000", "(20)"]]
         assert table.grid[0][1] is table.grid[0][2]
-        assert table.grid[0][0].row_span == 2 and table.grid[0][0].is_header
-        assert table.grid[2][1].acode == "ifrs_Revenue" and not table.grid[2][1].is_header
+        assert table.grid[0][0].row_span == 2
+        assert table.grid[0][0].is_header
+        assert table.grid[2][1].acode == "ifrs_Revenue"
+        assert not table.grid[2][1].is_header
 
     def test_invalid_span_values_count_as_one(self):
         (table,) = blocks_of('<TABLE BORDER="1"><TR><TD COLSPAN="x">a</TD><TD ROWSPAN="0">b</TD></TR></TABLE>')
@@ -155,7 +157,8 @@ class TestTables:
         )
 
         first, data = blocks
-        assert not first.bordered and first.unit is None
+        assert not first.bordered
+        assert first.unit is None
         assert data.unit == "주"
 
     def test_long_borderless_table_with_unit_is_not_a_caption(self):

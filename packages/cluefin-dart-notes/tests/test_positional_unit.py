@@ -40,7 +40,9 @@ def test_fixes_repeat_until_document_parses():
 
     text, result = body_text(raw, fallback_only())
 
-    assert "R&D" in text and "S&P" in text and "<시장 동향>" in text
+    assert "R&D" in text
+    assert "S&P" in text
+    assert "<시장 동향>" in text
     report = result.reports[-1]
     assert report.count == 3
     assert [sample.line for sample in report.samples] == [2, 3, 4]

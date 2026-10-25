@@ -119,7 +119,8 @@ def test_assert_fails_without_leaking_values(monkeypatch):
     message = str(exc.value)
     assert "extra: acnt_no" in message
     assert "length: response cur_prc is 10 chars" in message
-    assert "1234567890" not in message and "8888888888" not in message
+    assert "1234567890" not in message
+    assert "8888888888" not in message
 
 
 def test_ignore_lists_are_separate(monkeypatch):

@@ -37,7 +37,8 @@ def test_event_items_and_furnished_information_is_not_incorporated():
     assert [item.key.number for item in result] == ["2.02", "9.01"]
     assert result.item("2.02").title == "Results of Operations and Financial Condition"
     assert not result.item("2.02").incorporated_by_reference  # "shall not be incorporated by reference"
-    assert result.missing == () and result.warnings == ()
+    assert result.missing == ()
+    assert result.warnings == ()
     assert invariant_violations(result, sec_items=["2.02", "9.01"]) == []
     assert invariant_violations(result, sec_items=["2.02", "7.01"]) == ["extra:9.01", "missing:7.01"]
 
@@ -61,8 +62,10 @@ def test_items_before_2004_use_the_old_numbering():
 
 def test_old_and_new_numbering_apply_by_date():
     legacy, current = FORM_8K.spec(None, "5"), FORM_8K.spec(None, "5.02")
-    assert legacy.applies_to(date(2004, 8, 22)) and not legacy.applies_to(date(2004, 8, 23))
-    assert current.applies_to(date(2004, 8, 23)) and not current.applies_to(date(2004, 8, 22))
+    assert legacy.applies_to(date(2004, 8, 22))
+    assert not legacy.applies_to(date(2004, 8, 23))
+    assert current.applies_to(date(2004, 8, 23))
+    assert not current.applies_to(date(2004, 8, 22))
 
 
 def test_subsection_heading_and_vote_proposals_numbered_like_old_items():

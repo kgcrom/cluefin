@@ -8,6 +8,7 @@ These tests require valid API credentials in environment variables:
 Run with: uv run pytest packages/cluefin-openapi/tests/kis/test_overseas_market_analysis_integration.py -v -m integration
 """
 
+import contextlib
 import time
 from datetime import datetime, timedelta
 
@@ -596,7 +597,7 @@ def test_get_stock_collateral_loan_eligible_china(client: HttpClient):
 
 @pytest.mark.integration
 @pytest.mark.parametrize(
-    "exchange_code,exchange_name",
+    ("exchange_code", "exchange_name"),
     [
         ("NYS", "NYSE"),
         ("NAS", "NASDAQ"),
@@ -621,7 +622,7 @@ def test_market_cap_rank_multiple_exchanges(client: HttpClient, exchange_code, e
 @pytest.mark.integration
 def test_invalid_exchange_code(client: HttpClient):
     """Test handling of invalid exchange code."""
-    try:
+    with contextlib.suppress(Exception):  # either a raise or a response is accepted
         response = client.overseas_market_analysis.get_stock_price_fluctuation(
             excd="INVALID",  # Invalid exchange code
             gubn="1",
@@ -630,15 +631,12 @@ def test_invalid_exchange_code(client: HttpClient):
         )
         # If no exception, check for error in response
         assert response is not None
-    except Exception as e:
-        # Expected to fail with invalid exchange code
-        assert e is not None
 
 
 @pytest.mark.integration
 def test_invalid_date_range_rights(client: HttpClient):
     """Test handling of invalid date range for rights inquiry."""
-    try:
+    with contextlib.suppress(Exception):  # either a raise or a response is accepted
         response = client.overseas_market_analysis.get_stock_period_rights_inquiry(
             rght_type_cd="%%",
             inqr_dvsn_cd="02",
@@ -650,9 +648,6 @@ def test_invalid_date_range_rights(client: HttpClient):
             ctx_area_fk50="",
         )
         assert response is not None
-    except Exception as e:
-        # Expected to fail with invalid date range
-        assert e is not None
 
 
 @pytest.mark.integration
@@ -661,7 +656,7 @@ def test_invalid_stock_symbol_rights(client: HttpClient):
     start_dt = (datetime.now() - timedelta(days=90)).strftime("%Y%m%d")
     end_dt = (datetime.now() + timedelta(days=90)).strftime("%Y%m%d")
 
-    try:
+    with contextlib.suppress(Exception):  # either a raise or a response is accepted
         response = client.overseas_market_analysis.get_stock_rights_aggregate(
             ncod="US",
             symb="INVALID999",  # Invalid symbol
@@ -670,6 +665,3 @@ def test_invalid_stock_symbol_rights(client: HttpClient):
         )
         # If no exception, check for error in response
         assert response is not None
-    except Exception as e:
-        # Expected to fail or return empty results
-        assert e is not None

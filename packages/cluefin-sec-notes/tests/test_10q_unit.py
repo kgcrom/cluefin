@@ -121,7 +121,8 @@ def test_item_4t_is_item_4_and_part_two_only_numbers_survive_a_missing_part_head
     )
     result = extract_items(parse_filing(filing("", content)))
     assert result.item("4", "I").heading == "Item 4T. Controls and Procedures"
-    assert result.item("5", "II") is not None and result.item("6", "II") is not None  # Part II에만 있는 번호
+    assert result.item("5", "II") is not None
+    assert result.item("6", "II") is not None
 
 
 def test_part_headings_of_a_text_toc_do_not_label_body_items():
@@ -153,7 +154,8 @@ def test_statement_index_table_heads_part_one_item_one():
     )
     result = extract_items(parse_filing(filing("", content)))
     statements = result.item("1", "I", strict=False)  # 합성 본문이 짧아 statements_not_found가 난다
-    assert statements is not None and statements.text.endswith("Body of I 1.")
+    assert statements is not None
+    assert statements.text.endswith("Body of I 1.")
     assert statements.method == "pattern"
     assert keys(result) == [f"{part}:{number}" for part, number, _ in ITEMS]
 

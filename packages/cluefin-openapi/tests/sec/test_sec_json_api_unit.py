@@ -126,7 +126,7 @@ class TestReference:
         ]
 
     @pytest.mark.parametrize(
-        "ticker, expected", [("aapl", 320193), ("BRK.B", 1067983), ("brk-b", 1067983), ("ZZZZ", None)]
+        ("ticker", "expected"), [("aapl", 320193), ("BRK.B", 1067983), ("brk-b", 1067983), ("ZZZZ", None)]
     )
     def test_ticker_to_cik(self, client: Client, ticker, expected):
         payload = {
@@ -173,13 +173,15 @@ class TestSubmissions:
         assert tenk.report_date == date(2023, 9, 30)
         # Parsed as given. The filing header says 2023-11-02 18:08:27 ET, so this "Z" value is not real UTC.
         assert tenk.acceptance_date_time == datetime(2023, 11, 3, 2, 8, 27, tzinfo=timezone.utc)
-        assert tenk.is_xbrl is True and tenk.is_inline_xbrl is True
+        assert tenk.is_xbrl is True
+        assert tenk.is_inline_xbrl is True
         assert tenk.is_xbrl_numeric is None  # null on all but the most recent filings
         assert tenk.items is None  # "" becomes None
         assert tenk.primary_document == "aapl-20230930.htm"
 
         form4 = company.filings[1]
-        assert form4.act is None and form4.file_number is None
+        assert form4.act is None
+        assert form4.file_number is None
         assert form4.is_xbrl is False
         assert form4.is_xbrl_numeric is False
 
@@ -211,7 +213,8 @@ class TestSubmissions:
         with requests_mock.Mocker() as m:
             m.get("https://data.sec.gov/submissions/CIK0000320193-submissions-001.json", json=OLD_PAGE_PAYLOAD)
             rows = client.submissions.submissions_page("CIK0000320193-submissions-001.json")
-        assert len(rows) == 1 and isinstance(rows[0], FilingEntry)
+        assert len(rows) == 1
+        assert isinstance(rows[0], FilingEntry)
 
     @pytest.mark.parametrize(
         "name", ["../submissions/CIK0000320193.json", "CIK0000320193.json", "x-submissions-001.json"]
@@ -292,8 +295,10 @@ class TestXbrlApi:
         assert revenues is not None
         first, restated = revenues.units["USD"]
         assert first.val == Decimal("383285000000")
-        assert first.start == date(2022, 9, 25) and first.end == date(2023, 9, 30)
-        assert first.frame == "CY2023" and restated.frame is None
+        assert first.start == date(2022, 9, 25)
+        assert first.end == date(2023, 9, 30)
+        assert first.frame == "CY2023"
+        assert restated.frame is None
         assert facts.concept("us-gaap", "EarningsPerShareDiluted").units["USD/shares"][0].val == Decimal("6.13")
         shares = facts.concept("dei", "EntityCommonStockSharesOutstanding").units["shares"][0]
         assert shares.start is None
@@ -369,6 +374,8 @@ class TestXbrlApi:
 
     def test_bad_tag_never_reaches_the_network(self, client: Client):
         with requests_mock.Mocker() as m:
-            with pytest.raises(ValueError):
+            with pytest.raises(
+                ValueError, match=r"개념 이름에 쓸 수 없는 값입니다: '\.\./\.\./submissions/CIK0000320193'"
+            ):
                 client.xbrl.company_concept(320193, "us-gaap", "../../submissions/CIK0000320193")
             assert m.call_count == 0

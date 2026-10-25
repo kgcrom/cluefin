@@ -145,7 +145,8 @@ def test_items_return_text_with_truncation_fields() -> None:
     risk, mdna = result["items"]
     assert (risk["key"], risk["status"]) == ("1A", "found")
     assert risk["text"].startswith("Item 1A. Risk Factors")
-    assert risk["chars_returned"] <= 500 and risk["truncated"] is True
+    assert risk["chars_returned"] <= 500
+    assert risk["truncated"] is True
     # Cut at a block boundary: the next window starts on the following paragraph.
     assert risk["next_offset"] == risk["chars_returned"] + 2
     assert mdna["key"] == "7"
@@ -154,7 +155,8 @@ def test_items_return_text_with_truncation_fields() -> None:
 
 def test_offset_continues_where_the_previous_page_stopped() -> None:
     whole = _items({"items": "1A", "max_chars": 0})["items"][0]
-    assert whole["truncated"] is False and whole["next_offset"] is None
+    assert whole["truncated"] is False
+    assert whole["next_offset"] is None
 
     pages, offset = [], 0
     while offset is not None:
@@ -214,7 +216,8 @@ def test_item_keys_carry_the_part_only_where_numbers_restart() -> None:
     assert handlers._item_key(key, ten_q) == "II:1A"
     assert handlers._item_key(key, ten_k) == "1A"
     assert handlers._requested_keys({"items": "ii:1a, 2.02,7"}) == [("II", "1A"), (None, "2.02"), (None, "7")]
-    assert handlers._key_matches(key, None, "1A") and not handlers._key_matches(key, "I", "1A")
+    assert handlers._key_matches(key, None, "1A")
+    assert not handlers._key_matches(key, "I", "1A")
 
 
 @pytest.mark.parametrize(

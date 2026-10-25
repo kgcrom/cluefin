@@ -652,7 +652,7 @@ FAILING_RSP_CD_CASES = [
 ]
 
 
-@pytest.mark.parametrize("endpoint, call", FAILING_RSP_CD_CASES)
+@pytest.mark.parametrize(("endpoint", "call"), FAILING_RSP_CD_CASES)
 def test_raises_on_failing_rsp_cd(client, endpoint, call):
     with requests_mock.Mocker() as m:
         m.post(endpoint, json={"rsp_cd": "IGW40018", "rsp_msg": "종목코드가 존재하지 않습니다."})
@@ -661,7 +661,7 @@ def test_raises_on_failing_rsp_cd(client, endpoint, call):
 
 
 @pytest.mark.parametrize(
-    "api, call",
+    ("api", "call"),
     [
         pytest.param("currentExecution", lambda c, **kw: c.krstock_quote.current_execution("KRX", "005930", **kw)),
         pytest.param("currentDaily", lambda c, **kw: c.krstock_quote.current_daily("KRX", "005930", **kw)),

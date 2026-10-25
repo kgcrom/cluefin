@@ -38,7 +38,8 @@ class TestCountryRiskPremiums:
     def test_na_becomes_none(self):
         table = parse_country_risk_premiums((FIXTURES / "ctryprem.html").read_text(encoding="latin-1"))
         north = table.get("Korea, D.P.R.")
-        assert north.sovereign_cds is None and north.cds_equity_risk_premium is None
+        assert north.sovereign_cds is None
+        assert north.cds_equity_risk_premium is None
         assert north.equity_risk_premium == Decimal("19.77")
 
     def test_columns_are_found_by_name_not_position(self):

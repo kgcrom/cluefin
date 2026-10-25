@@ -19,7 +19,8 @@ def test_par_yield_curve_recent_month():
     assert rows
     latest = rows[-1]
     assert (today - latest.date).days < 45
-    assert latest.year_10 is not None and 0 < latest.year_10 < 20
+    assert latest.year_10 is not None
+    assert 0 < latest.year_10 < 20
     # 피드에 새 만기가 생기면 모델에 선언해야 한다.
     assert not latest.model_extra, f"선언 안 된 필드: {latest.model_extra}"
 

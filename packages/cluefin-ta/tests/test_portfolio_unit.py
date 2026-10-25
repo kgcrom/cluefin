@@ -297,7 +297,7 @@ class TestBETA:
             BETA(np.zeros(5), np.zeros(4))
 
     @pytest.mark.parametrize(
-        "returns, benchmark",
+        ("returns", "benchmark"),
         [
             (np.array([0.01]), np.array([0.02])),
             (np.array([0.01, 0.02, -0.01]), np.full(3, 0.01)),
@@ -396,12 +396,15 @@ class TestPERFORMANCE:
         assert "beta" not in PERFORMANCE(np.array([100.0, 101.0, 102.0]))
 
     @pytest.mark.parametrize(
-        "equity, benchmark",
-        [(np.array([100.0]), None), (np.arange(1.0, 6.0), np.arange(1.0, 5.0))],
+        ("equity", "benchmark", "message"),
+        [
+            (np.array([100.0]), None, "equity must be a 1-D series"),
+            (np.arange(1.0, 6.0), np.arange(1.0, 5.0), "must be date-aligned arrays of the same length"),
+        ],
         ids=["single-value", "benchmark-length"],
     )
-    def test_bad_curves_raise(self, equity, benchmark):
-        with pytest.raises(ValueError):
+    def test_bad_curves_raise(self, equity, benchmark, message):
+        with pytest.raises(ValueError, match=message):
             PERFORMANCE(equity, benchmark=benchmark)
 
 

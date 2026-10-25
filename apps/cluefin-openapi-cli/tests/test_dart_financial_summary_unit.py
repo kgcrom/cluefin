@@ -220,7 +220,8 @@ def test_summary_uses_consolidated_statements_in_eight_calls() -> None:
     result = handlers.handle_financial_summary({"corp_code": "00000001", "as_of": "20261018"}, session)
 
     assert result["statement_basis"] == "CFS"
-    assert result["calls"] == 8 and len(session.statements.calls) == 8
+    assert result["calls"] == 8
+    assert len(session.statements.calls) == 8
     assert {c[3] for c in session.statements.calls} == {"CFS"}
     assert [q["period"] for q in result["quarters"]] == [
         "2024Q3",
@@ -233,7 +234,8 @@ def test_summary_uses_consolidated_statements_in_eight_calls() -> None:
         "2026Q2",
     ]
     assert result["quarters"][-1]["revenue"] == pytest.approx(170 / 1e8)
-    assert result["latest"]["period"] == "2026H1" and result["latest"]["revenue"] == pytest.approx(320 / 1e8)
+    assert result["latest"]["period"] == "2026H1"
+    assert result["latest"]["revenue"] == pytest.approx(320 / 1e8)
     assert result["reports"][-1] == {
         "year": 2026,
         "reprt_code": "11012",
@@ -241,7 +243,8 @@ def test_summary_uses_consolidated_statements_in_eight_calls() -> None:
         "received_on": "20260814",
     }
     assert result["ttm"]["revenue"] == pytest.approx((110 + 130 + 150 + 170) / 1e8)
-    assert result["annual"][-1]["year"] == 2025 and result["unit"] == "억원"
+    assert result["annual"][-1]["year"] == 2025
+    assert result["unit"] == "억원"
 
 
 def test_summary_falls_back_to_separate_statements_when_there_is_no_consolidated() -> None:

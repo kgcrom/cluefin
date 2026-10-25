@@ -16,7 +16,8 @@ def test_country_risk_premiums(client: Client):
     table = client.country_risk_premiums()
     assert len(table.rows) > 150
     korea = table.get("Korea")
-    assert korea is not None and korea.equity_risk_premium is not None
+    assert korea is not None
+    assert korea.equity_risk_premium is not None
     assert 3 < korea.equity_risk_premium < 10
     assert table.updated is not None
 

@@ -56,7 +56,8 @@ def test_sample_ktb_10y(sample: Client):
     assert page.rows, "최근 2주 국고채 10년 값이 없다"
     row = page.rows[-1]
     assert (row.item_code1, row.unit_name) == ("010210000", "연%")
-    assert row.value is not None and 0 < row.value < 20
+    assert row.value is not None
+    assert 0 < row.value < 20
     assert not row.model_extra, f"선언 안 된 필드: {row.model_extra}"
 
 
@@ -112,6 +113,7 @@ def test_real_catalog(real: Client):
 @requires_key
 def test_real_glossary(real: Client):
     words = real.statistic_glossary.word("소비자동향지수")
-    assert words.rows and words.rows[0].word == "소비자동향지수"
+    assert words.rows
+    assert words.rows[0].word == "소비자동향지수"
     meta = real.statistic_glossary.meta("경제심리지수")
     assert any(row.name == "통계명" for row in meta.rows)

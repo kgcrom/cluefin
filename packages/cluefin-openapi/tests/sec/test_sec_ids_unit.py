@@ -4,7 +4,7 @@ from cluefin_openapi.sec._ids import accession_dashed, accession_plain, cik10, c
 
 
 @pytest.mark.parametrize(
-    "value, expected",
+    ("value", "expected"),
     [
         (320193, "0000320193"),
         ("320193", "0000320193"),
@@ -45,5 +45,5 @@ def test_path_segment_accepts_plain_names(value):
 
 @pytest.mark.parametrize("value", ["", "..", "a/b", "../etc", ".hidden", "a..b", "a b", "a?b=1", "a#b"])
 def test_path_segment_rejects_traversal_and_url_syntax(value):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"x에 쓸 수 없는 값입니다: '"):
         path_segment(value, what="x")

@@ -8,6 +8,7 @@ These tests require valid API credentials in environment variables:
 Run with: uv run pytest packages/cluefin-openapi/tests/kis/test_domestic_stock_info_integration.py -v -m integration
 """
 
+import contextlib
 from datetime import datetime, timedelta
 
 import pytest
@@ -406,22 +407,19 @@ def test_get_investment_opinion_by_brokerage(client: HttpClient, investment_date
 def test_invalid_stock_code(client: HttpClient):
     """Test handling of invalid stock code."""
     # This should either raise an exception or return an error response
-    try:
+    with contextlib.suppress(Exception):  # either a raise or a response is accepted
         response = client.domestic_stock_info.get_product_basic_info(
             pdno="999999",  # Invalid code
             prdt_type_cd="300",
         )
         # If no exception, check for error in response
         assert response is not None
-    except Exception as e:
-        # Expected to fail with invalid code
-        assert e is not None
 
 
 @pytest.mark.integration
 def test_invalid_date_range(client: HttpClient):
     """Test handling of invalid date range."""
-    try:
+    with contextlib.suppress(Exception):  # either a raise or a response is accepted
         response = client.domestic_stock_info.get_ksd_dividend_decision(
             cts="",
             gb1="0",
@@ -431,6 +429,3 @@ def test_invalid_date_range(client: HttpClient):
             high_gb="",
         )
         assert response is not None
-    except Exception as e:
-        # Expected to fail with invalid date range
-        assert e is not None

@@ -171,7 +171,8 @@ def test_open_market_sale_with_weighted_average_price(form4):
     assert sale.date == date(2025, 4, 1)
     assert sale.footnote_ids == {"code": ("F1",), "price": ("F2",)}
     assert form4.footnotes["F2"].startswith("Weighted average price")
-    assert sale.exercise_price is None and sale.underlying_title is None
+    assert sale.exercise_price is None
+    assert sale.underlying_title is None
 
 
 def test_price_given_only_as_a_footnote(form4):
@@ -317,5 +318,5 @@ def test_unexpected_number_names_the_cell():
 
 def test_entity_declarations_are_refused():
     source = '<?xml version="1.0"?><!DOCTYPE d [<!ENTITY e "x">]><ownershipDocument>&e;</ownershipDocument>'
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"EntitiesForbidden\(name='e', system_id=None, public_id=None\)"):
         parse_ownership(source)

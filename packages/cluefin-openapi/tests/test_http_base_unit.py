@@ -336,7 +336,7 @@ def _dispatch_client():
 
 
 @pytest.mark.parametrize(
-    "status,expected_cls",
+    ("status", "expected_cls"),
     [
         (400, _ValidationErr),
         (401, _AuthErr),

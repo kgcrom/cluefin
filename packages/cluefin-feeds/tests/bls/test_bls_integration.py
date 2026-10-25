@@ -36,4 +36,5 @@ def test_recent_cpi(client: Client):
     result = client.timeseries([CPI_U_ALL_ITEMS], year - 1, year)
     assert result.messages == [] or all("No Data" in m for m in result.messages)
     latest = result.get(CPI_U_ALL_ITEMS).data[-1]
-    assert latest.year >= year - 1 and latest.value is not None
+    assert latest.year >= year - 1
+    assert latest.value is not None

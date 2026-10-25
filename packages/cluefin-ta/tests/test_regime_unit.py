@@ -422,7 +422,8 @@ class TestREGIME_COMBINED:
         # Check valid values
         valid_combined = combined[~np.isnan(combined)]
         if len(valid_combined) > 0:
-            assert np.all(valid_combined >= 0) and np.all(valid_combined <= 5), "Combined regime must be in range 0-5"
+            assert np.all(valid_combined >= 0), "Combined regime must be in range 0-5"
+            assert np.all(valid_combined <= 5), "Combined regime must be in range 0-5"
 
     def test_combined_consistency(self):
         """Test consistency between trend, vol, and combined."""

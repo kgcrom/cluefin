@@ -134,8 +134,10 @@ class TestSTOCH:
         valid_k = slowk[~np.isnan(slowk)]
         valid_d = slowd[~np.isnan(slowd)]
 
-        assert np.all(valid_k >= 0) and np.all(valid_k <= 100)
-        assert np.all(valid_d >= 0) and np.all(valid_d <= 100)
+        assert np.all(valid_k >= 0)
+        assert np.all(valid_k <= 100)
+        assert np.all(valid_d >= 0)
+        assert np.all(valid_d <= 100)
 
 
 class TestWILLR:
@@ -198,8 +200,10 @@ class TestSTOCHF:
         valid_k = fastk[~np.isnan(fastk)]
         valid_d = fastd[~np.isnan(fastd)]
 
-        assert np.all(valid_k >= 0) and np.all(valid_k <= 100)
-        assert np.all(valid_d >= 0) and np.all(valid_d <= 100)
+        assert np.all(valid_k >= 0)
+        assert np.all(valid_k <= 100)
+        assert np.all(valid_d >= 0)
+        assert np.all(valid_d <= 100)
 
 
 class TestMOM:

@@ -113,7 +113,8 @@ class TestScreeningScreen:
         async with app.run_test() as pilot:
             screen = await _loaded(app, pilot)
             status = _status(screen, "table-volume")
-            assert "로딩 실패" in status and "get_top_volume 조회 실패" in status
+            assert "로딩 실패" in status
+            assert "get_top_volume 조회 실패" in status
             # 같은 워커(키움 그룹)의 뒤 탭들도 채워진다
             assert _rows(screen, "table-value") == 1
             assert _rows(screen, "table-margin") == 1

@@ -40,11 +40,11 @@ class TestDomesticRealtimeRequest:
         }
 
     def test_invalid_trnm_raises(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"1 validation error for 국내주식 실시간 시세 등록/해지 요청"):
             DomesticRealtimeRequest(trnm="INVALID", grp_no="1", refresh="1")
 
     def test_invalid_refresh_raises(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"1 validation error for 국내주식 실시간 시세 등록/해지 요청"):
             DomesticRealtimeRequest(trnm="REG", grp_no="1", refresh="2")
 
 

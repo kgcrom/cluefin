@@ -45,7 +45,8 @@ def test_outline_section_and_notes_agree_on_one_filing(filing) -> None:
 
     outline = handle_document_outline(base, session)
     main = outline["documents"][0]
-    assert main["is_periodic_report"] and main["file"] == f"{base['rcept_no']}.xml"
+    assert main["is_periodic_report"]
+    assert main["file"] == f"{base['rcept_no']}.xml"
     # The repair rules cover every defect seen so far; the positional fallback means a new one.
     assert not any(document["repair"]["used_fallback"] for document in outline["documents"])
     business = next(s for s in main["sections"] if s["assoc_code"] == "D-0-2-0-0")
@@ -54,9 +55,11 @@ def test_outline_section_and_notes_agree_on_one_filing(filing) -> None:
     assert section["total_chars"] == section["returned_chars"] == business["chars"] > 0
 
     toc = handle_financial_notes(base, session)
-    assert toc["sources"] and all(source["file"] == main["file"] for source in toc["sources"])
+    assert toc["sources"]
+    assert all(source["file"] == main["file"] for source in toc["sources"])
     first = next(source for source in toc["sources"] if source["notes"])
     number = first["notes"][0]["number"]
     notes = handle_financial_notes({**base, "basis": first["basis"], "notes": number, "max_chars": 0}, session)
     (read,) = notes["sources"][0]["notes"]
-    assert read["number"] == number and read["blocks"]
+    assert read["number"] == number
+    assert read["blocks"]

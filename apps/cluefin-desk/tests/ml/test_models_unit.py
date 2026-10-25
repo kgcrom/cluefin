@@ -109,7 +109,8 @@ def test_save_model_writes_file(tmp_path) -> None:
     predictor.train(X, y)
     path = tmp_path / "model.txt"
     predictor.save_model(str(path))
-    assert path.exists() and path.stat().st_size > 0
+    assert path.exists()
+    assert path.stat().st_size > 0
 
 
 def test_save_and_load_round_trip_preserves_predictions(tmp_path) -> None:

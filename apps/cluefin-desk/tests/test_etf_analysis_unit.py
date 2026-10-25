@@ -27,7 +27,9 @@ def _etf(code="069500", name="KODEX 200", pre_rt="1.25", nav="40,123.45", trace=
 class TestFormatEtfRow:
     def test_full_row(self):
         row = EtfAnalysisScreen._format_etf_row(1, _etf())
-        assert row[0] == "1" and row[1] == "069500" and row[2] == "KODEX 200"
+        assert row[0] == "1"
+        assert row[1] == "069500"
+        assert row[2] == "KODEX 200"
         assert "+1.25%" in row[4]
         assert row[5] == "40,123.45"
         assert row[6] == "0.12%"
@@ -37,7 +39,9 @@ class TestFormatEtfRow:
         """키움은 없는 값을 "" 또는 "-" 로 준다."""
         row = EtfAnalysisScreen._format_etf_row(2, _etf(pre_rt="-", nav="", trace="", qty=""))
         assert row[4] == "0.00%"
-        assert row[5] == "-" and row[6] == "-" and row[7] == "-"
+        assert row[5] == "-"
+        assert row[6] == "-"
+        assert row[7] == "-"
 
     def test_negative_rate_is_blue(self):
         row = EtfAnalysisScreen._format_etf_row(1, _etf(pre_rt="-0.8"))
@@ -56,8 +60,11 @@ class TestFormatNavLines:
     def test_both_sections(self):
         text = "\n".join(EtfAnalysisScreen._format_nav_lines("069500", [_nav_row()], [_component()]))
         assert "069500 — NAV 괴리 추이" in text
-        assert "20260901" in text and "0.12%" in text
-        assert "구성종목 상위" in text and "삼성전자" in text and "비중 31.2%" in text
+        assert "20260901" in text
+        assert "0.12%" in text
+        assert "구성종목 상위" in text
+        assert "삼성전자" in text
+        assert "비중 31.2%" in text
 
     def test_bracketed_component_name_survives_markup(self):
         comp = _component()
@@ -150,7 +157,8 @@ class TestEtfScreen:
         async with app.run_test() as pilot:
             screen = await _loaded(app, pilot)
             status = _text(screen, "#etf-status")
-            assert "ETF 시세 로딩 실패" in status and "ka40004" in status
+            assert "ETF 시세 로딩 실패" in status
+            assert "ka40004" in status
 
     async def test_nav_key_fills_panel(self):
         app = HarnessApp(FakeFetcher())
@@ -158,7 +166,8 @@ class TestEtfScreen:
             screen = await _loaded(app, pilot)
             await _press_nav(app, pilot, screen)
             panel = _text(screen, "#etf-kis-panel")
-            assert "069500 — NAV 괴리 추이" in panel and "삼성전자" in panel
+            assert "069500 — NAV 괴리 추이" in panel
+            assert "삼성전자" in panel
 
     async def test_nav_key_without_kis_explains(self):
         app = HarnessApp(FakeFetcher(has_kis=False))
@@ -173,4 +182,5 @@ class TestEtfScreen:
             screen = await _loaded(app, pilot)
             await _press_nav(app, pilot, screen)
             panel = _text(screen, "#etf-kis-panel")
-            assert "NAV 상세 로딩 실패" in panel and "NAV 조회 실패" in panel
+            assert "NAV 상세 로딩 실패" in panel
+            assert "NAV 조회 실패" in panel
