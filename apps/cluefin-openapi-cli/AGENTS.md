@@ -44,10 +44,14 @@ CLI 가 말해 주지 않는 것만 적는다.
 - **기술적 지표는 `kis chart technical`.** 캔들을 받아 직접 계산하지 않는다. `signal.trend` 와
   `signal.mean_reversion` 은 별개 계열이라 하나의 점수로 합치지 않는다. 값은 `cluefin-desk` 화면과 다르다(EMA
   워밍업 차이) — 이 CLI 가 기준이다.
+- **"이 종목이 돌파 대기냐"는 `kis chart trend-setup`.** 트렌드 템플릿·52주 고점갭·프랙탈 피봇과 수축·지수 대비 강도로 관심종목
+  1·2·3그룹과 `alert`/`watch`/`exclude`, 피봇 기준 알림·손절가를 준다(약 12회 호출). 백테스트 정의라 `atr14_pct` 는 단순 평균이고
+  technical 의 ATR(Wilder)과 다르다 — 두 값을 섞지 않는다. `action` 은 매수 추천이 아니다(`caveats`). 장 마감(15:40) 전에는 어제 기준이다.
 - **전종목·과거 일봉은 로컬 캐시.** 여러 종목의 일봉, 특정 날짜의 상장 종목(폐지 포함)은 `cache ohlcv`·`cache company --as-of`
   로 읽는다(네트워크 없음). 캐시는 원주가다 — 신호는 `--adjusted true`, 백테스트 체결가는 원주가. 파일이 없으면 exit 2
   `CacheMissing`; `cache load`(첫 실행 ~2시간 20분, 이후 하루 ~7분)는 사용자가 요청할 때만 돌린다.
   지수 대비 성과(CAGR·MDD·샤프·베타·알파)는 `cache perf --code --bench U0001` — 일봉을 받아 직접 계산하지 않는다.
+  그날 1·2·3그룹 종목 찾기는 `cache trend-setup`(전 종목 약 1초), 한 종목의 오늘 값은 `kis chart trend-setup`.
 - **응답은 작게.** `--fields`·`--limit`·`--compact`. 잘리면 `_truncated` 에 실제 `total` 이 온다. `list --json`
   을 필터 없이 부르지 않는다(61KB).
 - **exit code 로 분기한다.** 0 정상 · 1 내부 오류 · 2 인자 오류(`error.data.issues[]` 읽고 고친 뒤 재시도) ·
@@ -120,7 +124,7 @@ CLI 가 말해 주지 않는 것만 적는다.
 - A `category` missing from `_CATEGORY_DEFAULTS` in `metadata.py` silently falls back to
   domain `market` / tag `ranking` instead of erroring — add an entry for new categories.
 
-## `kis chart technical`, `kis stock opinion-summary`/`valuation`, `dart financial-as-filed`/`financial-summary` and the dart/sec filing-text commands compute; every other command passes through
+## `kis chart technical`/`trend-setup`, `kis stock opinion-summary`/`valuation`, `dart financial-as-filed`/`financial-summary` and the dart/sec filing-text commands compute; every other command passes through
 
 - `dart financial-as-filed` is the second non-pass-through command: it parses a downloaded XBRL
   (see the `dart financial-*` section) and is excluded from the generic client-call tests the same way.
@@ -145,7 +149,10 @@ CLI 가 말해 주지 않는 것만 적는다.
   cluefin-dart-notes (see the `dart document-*` section) and are excluded from those tests too.
 - `sec filing-items` / `filing-exhibit` parse a downloaded document with cluefin-sec-notes (see the `sec *`
   section); `test_sec_filing_handlers_unit.py` covers them with synthetic HTML.
-- `kis chart technical` is the **only** command that computes from a paged series. It pages
+- `kis chart trend-setup` also computes from paged series (stock via `ohlcv.fetch_kis_daily_series`, index via
+  `cache.bars.fetch_index_bars` — 50 rows a call) plus `basic-info` for the benchmark; the rules live in `trend_setup.py`
+  (see its section below). Excluded from the calls-once check like technical; `test_kis_trend_setup_handler_unit.py` covers it.
+- `kis chart technical` computes from a paged series the same way. It pages
   `chart.period` itself (`ohlcv.fetch_kis_daily_series`), computes via `indicators.py`, and
   returns readings only — the candle series never reaches the caller, which is the whole
   reason it exists. `_handler_fakes.assert_calls_client_once` therefore does not describe
@@ -175,6 +182,22 @@ CLI 가 말해 주지 않는 것만 적는다.
 - Numbers will **not** match `cluefin-desk`: desk's pandas `ewm(span=N)` has no warm-up
   gap, while `cluefin-ta` follows ta-lib's SMA-seeded EMA with `N-1` leading NaNs.
   `cluefin-ta` is the reference here.
+
+## `trend-setup` 은 백테스트 정의를 옮긴 것이다 (`trend_setup.py`)
+
+- 규칙과 근거는 README "trend-setup 규칙과 근거". 공식은 cluefin-factory(아카이브) `scripts/watchlist/*.mjs` `a5cfbcf` 의 이식이고
+  임계값은 그 공식에만 의미가 있다 — ta-lib 정의(Wilder ATR, SMA 시드)로 "고치면" 근거가 사라진다. 그래서 이 모듈은 cluefin-ta 를
+  import 하지 않는다. 골든 픽스처(`tests/fixtures/trend_setup/stock-*.json`)의 `expected` 는 백테스트 파이썬 산출값이다 — 테스트가
+  깨지면 코드를 고치지 기대값을 고치지 않는다. 파일 이름은 종목코드 대신 중립 이름이다.
+- 판정은 마지막 **260봉**으로 한다(두 명령 같음). 프랙탈 피봇은 창 안에서만 찾으므로 봉 수를 바꾸면 드물게 피봇이 달라진다.
+  이력(`history`)은 그 전 60봉을 더 쓴다(kis 는 320봉, 지수 500일).
+- 장중 캔들: `end_date` 없이 15:40(KST) 전에 부르면 오늘 캔들을 버리고 `dropped_intraday_candle` 에 적는다. `include_today` 로 유지하면
+  caveat. 시각은 `handlers/kis/domestic_basic_quote._now()` 로 주입한다(테스트).
+- 지수는 코스피 `0001`·코스닥 `1001`(KOSPI200 아님). `benchmark=auto` 는 basic-info `mket_id_cd`(STK/KSQ), 그 밖은 exit 2.
+  지수에 종목 마지막 날짜가 없으면 가까운 날로 메우지 않고 exit 4 `IndexDateMismatch`.
+- 판정은 상태를 저장하지 않는다. 이전 상태는 `history` 가 지난 봉으로 다시 계산한 값이다(`_judge` 를 날마다 다시 부름).
+  성과와 엮는 필터·문구는 표본 외 검증을 통과한 것만 낸다(README §9) — 2026-10 검증에서 `fresh_g3`(3그룹 2~3일)만 통과,
+  1그룹 이력은 실패라 필터가 없다. 새 이력 필터를 더하려면 `docs/plans/watchlist-rules-backtest/validate_history.py` 로 먼저 검증한다.
 
 ## `cache *` 는 로컬 DuckDB 파일이다 (`cache/`)
 
@@ -211,6 +234,15 @@ CLI 가 말해 주지 않는 것만 적는다.
   -98% 손실로 보인다. 벤치마크와 날짜를 inner join 하므로 한쪽에 없는 날은 빠진다. 지표 정의는 `cluefin-ta` 가 갖고 여기서
   다시 계산하지 않는다 — NaN(변동 없음 등)은 `null`. `--risk-free <계열>` 은 `rates` 를 ASOF join 해 기간 첫날 이전의 마지막 발표값을
   쓰고, 10일 넘게 묵은 값(적재가 멈춘 캐시)은 exit 2 `RatesMissing` 이다.
+- **`cache trend-setup` 에 규칙을 두지 않는다.** 종목마다 `trend_setup.analyze` 를 부르고(`kis chart trend-setup` 과 같은 함수),
+  `test_cache_trend.py` 가 두 결과가 같은지 본다. 유니버스는 백테스트와 같다: 그날 상장(`read_company(as_of)`), 끝자리 0, 이름에
+  "스팩" 없음, 0 가격 봉 제외. 2026-10-16 전 종목 2,487개가 research `scan.py` 와 action·status·피봇·rel 모두 같았다.
+  `--market`·`--code` 로 행을 좁혀도 전 종목을 판정한다(테마 주도주 순위가 전 종목 기준이라서). `--history true` 는 보이는 행만.
+- **`theme` 은 키움 테마 스냅샷**이다. 키움은 현재 값만 주고 KIS 에는 국내 테마 API 가 없어 날마다 쌓는다. 평일 16시 전은 장중이라
+  건너뛰고, 이름 붙일 날짜는 KIS 지수 일봉의 마지막 거래일이다(휴장일 이름으로 쌓지 않게). 2026-10-25 실측 142테마·897구성종목,
+  ka90002 연속조회(`cond-yn` 헤더)가 필요한 테마는 없었다. **키움 기간수익률(`dt_prft_rt`)은 원주가 기준이고 테마 값은 구성종목
+  단순 평균**이라 감자 종목 하나(+905%)가 테마를 1위로 만든다 — 관심 테마는 캐시 수정주가 중앙값으로 계산한다. `main_stk` 는 종목명
+  쉼표 목록이라 같은 테마 구성종목 이름과 맞춘다.
 - PIT 한계: `company` 의 이름·업종·상장주식수는 현재 값이다. DART 등록 전에 폐지된 종목은 빠질 수 있다.
 
 ## `dart corp-code-lookup` 은 전체 색인을 받아 클라이언트에서 거른다
