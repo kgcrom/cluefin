@@ -167,7 +167,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
             f"{APP_NAME} cache company [--code <code>] [--as-of YYYYMMDD] [--include-delisted true] "
             "[--market KOSPI|KOSDAQ] [--json]",
             f"{APP_NAME} cache perf --code <code> [--bench U0001] [--since YYYYMMDD] [--until YYYYMMDD] "
-            "[--risk-free 0.035] [--json]",
+            "[--risk-free 0.035|ktb3y] [--json]",
         ],
         "options": [
             {"flag": "--only P", "meaning": "Parts to load, comma-separated (default all)."},
@@ -180,14 +180,15 @@ _META_HELP: dict[str, dict[str, Any]] = {
             {"flag": "--bench CODE", "meaning": "perf: benchmark code (default U0001 KOSPI)."},
             {
                 "flag": "--risk-free R",
-                "meaning": "perf: annual risk-free rate as a decimal (0.035 for 3.5%, default 0).",
+                "meaning": "perf: annual decimal (0.035 for 3.5%, default 0) or a cached daily series: "
+                "ktb1y, ktb3y, ktb10y, cd91d.",
             },
         ],
         "examples": [
             f"uv run {APP_NAME} cache status --json",
             f"uv run {APP_NAME} cache ohlcv --code 005930 --since 20260901 --adjusted true --json",
             f"uv run {APP_NAME} cache company --as-of 20180102 --limit 5 --json",
-            f"uv run {APP_NAME} cache perf --code 005930 --bench U0001 --since 20210101 --risk-free 0.03 --json",
+            f"uv run {APP_NAME} cache perf --code 005930 --bench U0001 --since 20210101 --risk-free ktb3y --json",
         ],
         "notes": [
             "The file is $CLUEFIN_CACHE_DIR/market.duckdb (default ~/.cache/cluefin/).",

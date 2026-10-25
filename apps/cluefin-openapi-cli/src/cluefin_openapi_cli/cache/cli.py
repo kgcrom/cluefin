@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 from cluefin_openapi_cli.cache import store
 from cluefin_openapi_cli.cache.load import PARTS, Sources, run_load
 from cluefin_openapi_cli.cache.perf import read_perf
+from cluefin_openapi_cli.cache.rates import RATE_SERIES
 from cluefin_openapi_cli.cache.read import read_company, read_ohlcv
 from cluefin_openapi_cli.cliargs import _parse_fields, _parse_limit, _parse_named_options, _str_option
 from cluefin_openapi_cli.errors import EXIT_USAGE, CliError, classify_exception
@@ -191,13 +192,18 @@ def _run_company(argv: list[str]) -> None:
 _DEFAULT_BENCHMARK = "U0001"
 
 
-def _parse_rate(raw: str | None) -> float:
+def _parse_rate(raw: str | None) -> float | str:
     if raw is None:
         return 0.0
+    if raw.lower() in RATE_SERIES:
+        return raw.lower()
     try:
         rate = float(raw)
     except ValueError:
-        raise CliError(f"`--risk-free` must be a number, got `{raw}`.", exit_code=EXIT_USAGE) from None
+        raise CliError(
+            f"`--risk-free` takes an annual decimal or one of {', '.join(RATE_SERIES)}, got `{raw}`.",
+            exit_code=EXIT_USAGE,
+        ) from None
     # 3.5 for 3.5% would subtract 350% a year; ECOS and KIS quote rates in percent.
     if not 0 <= rate < 1:
         raise CliError(f"`--risk-free` is an annual decimal (0.035 for 3.5%), got `{raw}`.", exit_code=EXIT_USAGE)
@@ -210,7 +216,7 @@ def _run_perf(argv: list[str]) -> None:
     if positional or not code:
         raise CliError(
             "Usage: cache perf --code <code> [--bench U0001] [--since YYYYMMDD] [--until YYYYMMDD] "
-            "[--risk-free 0.035].",
+            "[--risk-free 0.035|ktb3y].",
             exit_code=EXIT_USAGE,
         )
     until_raw = _str_option(options, "until")

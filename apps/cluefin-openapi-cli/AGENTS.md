@@ -208,7 +208,8 @@ CLI 가 말해 주지 않는 것만 적는다.
   건너뛴다. ECOS 는 하루 늦게 올라온다(2026-10-25 적재 시 마지막 10-23).
 - `cache perf` 의 수익률은 **수정종가**다(`read_ohlcv(adjusted=True)` 와 같은 계수, 0·NULL 계수는 1). 원주가로는 분할일이
   -98% 손실로 보인다. 벤치마크와 날짜를 inner join 하므로 한쪽에 없는 날은 빠진다. 지표 정의는 `cluefin-ta` 가 갖고 여기서
-  다시 계산하지 않는다 — NaN(변동 없음 등)은 `null`.
+  다시 계산하지 않는다 — NaN(변동 없음 등)은 `null`. `--risk-free <계열>` 은 `rates` 를 ASOF join 해 기간 첫날 이전의 마지막 발표값을
+  쓰고, 10일 넘게 묵은 값(적재가 멈춘 캐시)은 exit 2 `RatesMissing` 이다.
 - PIT 한계: `company` 의 이름·업종·상장주식수는 현재 값이다. DART 등록 전에 폐지된 종목은 빠질 수 있다.
 
 ## `dart corp-code-lookup` 은 전체 색인을 받아 클라이언트에서 거른다

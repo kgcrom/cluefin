@@ -163,12 +163,13 @@ uv run cluefin-openapi-cli cache load --json                     # 장 마감 �
 uv run cluefin-openapi-cli cache status --json
 uv run cluefin-openapi-cli cache ohlcv --code 005930 --since 20260901 --adjusted true --json
 uv run cluefin-openapi-cli cache company --as-of 20180102 --limit 5 --json
-uv run cluefin-openapi-cli cache perf --code 005930 --bench U0001 --since 20210101 --risk-free 0.03 --json
+uv run cluefin-openapi-cli cache perf --code 005930 --bench U0001 --since 20210101 --risk-free ktb3y --json
 ```
 
 `cache perf` 는 종목을 수정주가로 사서 들고 있었을 때의 성과(`cluefin-ta` `PERFORMANCE`: CAGR·MDD·변동성·샤프·소르티노·칼마·
 베타·알파)와 같은 기간 벤치마크(기본 `U0001`) 자체의 성과를 함께 줍니다. 두 코드 모두 일봉이 있는 날만 쓰고, CAGR 은 달력 연수로
-셉니다. `--risk-free` 는 연율 소수(3.5% 는 `0.035`)입니다.
+셉니다. `--risk-free` 는 연율 소수(3.5% 는 `0.035`)나 `rates` 계열 이름(`ktb3y` 등)입니다. 계열이면 각 기간 첫날의 금리(그날 발표가
+없으면 직전 발표값)를 쓰고, 캐시에 없으면 exit 2 `RatesMissing` 입니다.
 
 | 테이블 | 내용 |
 |---|---|

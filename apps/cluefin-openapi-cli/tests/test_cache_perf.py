@@ -81,3 +81,34 @@ def test_perf_rejects_percent_risk_free_and_missing_code(cache) -> None:
     assert _perf("--risk-free", "3.5")[0] == 2
     assert _perf("--risk-free", "abc")[0] == 2
     assert run_cli(["cache", "perf", "--json"]).exit_code == 2
+
+
+def _add_rates(cache, rows) -> None:
+    conn = store.open_store()
+    conn.executemany("INSERT INTO rates VALUES ('ktb3y', ?, ?, NULL)", rows)
+    conn.close()
+
+
+def test_perf_with_a_rate_series_uses_the_rate_on_each_period_start(cache) -> None:
+    # Published 05-02 and 05-08 only: 05-03/05-04 carry 05-02's rate forward.
+    _add_rates(cache, [(date(2018, 5, 2), 2.0), (date(2018, 5, 8), 3.0)])
+
+    code, payload = _perf("--risk-free", "KTB3Y")
+
+    annual = np.array([0.02, 0.02, 0.02, 0.03])
+    stock = np.array([close * factor for close, factor in _STOCK])
+    years = (_DAYS[-1] - _DAYS[0]).days / 365.25
+    expected = PERFORMANCE(stock, benchmark=np.array(_KOSPI), risk_free=PERIODIC_RATE(annual), years=years)
+    assert code == 0
+    assert payload["risk_free"] == "ktb3y" and payload["risk_free_mean"] == pytest.approx(0.0225)
+    assert payload["performance"]["sharpe"] == pytest.approx(expected["sharpe"], abs=1e-4)
+    assert payload["performance"]["alpha"] == pytest.approx(expected["alpha"], abs=1e-4)
+
+
+def test_perf_rate_series_missing_from_cache_is_exit_2(cache) -> None:
+    _add_rates(cache, [(date(2018, 5, 3), 2.0)])  # nothing on or before 05-02
+
+    code, payload = _perf("--risk-free", "ktb3y")
+
+    assert code == 2 and payload["error"]["type"] == "RatesMissing"
+    assert payload["error"]["data"]["first_gap"] == "2018-05-02"
