@@ -1,5 +1,7 @@
 """Tests for financial statement extraction."""
 
+import copy
+from dataclasses import replace
 from datetime import date
 from decimal import Decimal
 
@@ -242,8 +244,8 @@ def _make_doc_with_dimensional_facts(
     node = PresentationNode(concept_local_name="Assets", concept_qname="ifrs-full:Assets")
     taxonomy = TaxonomyInfo(
         presentation_trees={
-            dart_role_bs_consolidated: [node.model_copy(deep=True)],
-            dart_role_bs_separate: [node.model_copy(deep=True)],
+            dart_role_bs_consolidated: [copy.deepcopy(node)],
+            dart_role_bs_separate: [copy.deepcopy(node)],
         },
     )
     return XbrlDocument(source_file="x.xbrl", facts=facts, entity_id="00000000", taxonomy=taxonomy)
@@ -552,22 +554,22 @@ class TestDuplicateFacts:
 
     def test_consistent_duplicates_collapse_to_one_row(self):
         """The same number tagged in the statement and in a note is one fact."""
-        copies = [_usd_fact("NetIncomeLoss", "96995000000").model_copy(update={"context_id": "c-1"}) for _ in range(4)]
+        copies = [replace(_usd_fact("NetIncomeLoss", "96995000000"), context_id="c-1") for _ in range(4)]
         assert self._income(copies) == [Decimal("96995000000")]
 
     def test_different_values_in_the_same_context_are_kept(self):
-        a = _usd_fact("NetIncomeLoss", "96995000000").model_copy(update={"context_id": "c-1"})
-        b = _usd_fact("NetIncomeLoss", "97000000000").model_copy(update={"context_id": "c-1"})
+        a = replace(_usd_fact("NetIncomeLoss", "96995000000"), context_id="c-1")
+        b = replace(_usd_fact("NetIncomeLoss", "97000000000"), context_id="c-1")
         assert self._income([a, b]) == [Decimal("96995000000"), Decimal("97000000000")]
 
     def test_same_value_in_different_contexts_is_kept(self):
-        a = _usd_fact("NetIncomeLoss", "1").model_copy(update={"context_id": "c-2023"})
-        b = _usd_fact("NetIncomeLoss", "1").model_copy(update={"context_id": "c-2022"})
+        a = replace(_usd_fact("NetIncomeLoss", "1"), context_id="c-2023")
+        b = replace(_usd_fact("NetIncomeLoss", "1"), context_id="c-2022")
         assert self._income([a, b]) == [Decimal("1"), Decimal("1")]
 
     def test_same_number_written_with_different_precision_is_one_fact(self):
-        a = _usd_fact("NetIncomeLoss", "18.00").model_copy(update={"context_id": "c-1"})
-        b = _usd_fact("NetIncomeLoss", "18").model_copy(update={"context_id": "c-1"})
+        a = replace(_usd_fact("NetIncomeLoss", "18.00"), context_id="c-1")
+        b = replace(_usd_fact("NetIncomeLoss", "18"), context_id="c-1")
         assert self._income([a, b]) == [Decimal("18.00")]
 
 
