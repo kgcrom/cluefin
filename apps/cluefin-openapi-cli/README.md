@@ -154,21 +154,28 @@ uv run cluefin-openapi-cli sec filing-items --cik 320193 --accession-number 0000
 
 ### 5. 로컬 일봉 캐시 (`cache`)
 
-전종목 횡단면 질의·백테스트용으로 상장 주식 전종목(2016년 이후 폐지 종목 포함)과 KOSPI·KOSDAQ·KOSPI200 일봉을
-DuckDB 파일 하나(`~/.cache/cluefin/market.duckdb`, `CLUEFIN_CACHE_DIR` 로 변경)에 쌓습니다. `cache load` 만 broker 를
-부르고(KIS·키움·DART, 한 번에 하나씩), 나머지는 파일만 읽습니다.
+전종목 횡단면 질의·백테스트용으로 상장 주식 전종목(2016년 이후 폐지 종목 포함)과 KOSPI·KOSDAQ·KOSPI200 일봉, 국고채·CD
+일별 금리를 DuckDB 파일 하나(`~/.cache/cluefin/market.duckdb`, `CLUEFIN_CACHE_DIR` 로 변경)에 쌓습니다. `cache load` 만 broker 를
+부르고(KIS·키움·DART·ECOS, 한 번에 하나씩), 나머지는 파일만 읽습니다. 금리(`rates`)는 `.env` 의 `ECOS_AUTH_KEY` 가 있어야 받습니다.
 
 ```bash
 uv run cluefin-openapi-cli cache load --json                     # 장 마감 후. 첫 실행 ~2시간 20분, 이후 ~7분
 uv run cluefin-openapi-cli cache status --json
 uv run cluefin-openapi-cli cache ohlcv --code 005930 --since 20260901 --adjusted true --json
 uv run cluefin-openapi-cli cache company --as-of 20180102 --limit 5 --json
+uv run cluefin-openapi-cli cache perf --code 005930 --bench U0001 --since 20210101 --risk-free ktb3y --json
 ```
+
+`cache perf` 는 종목을 수정주가로 사서 들고 있었을 때의 성과(`cluefin-ta` `PERFORMANCE`: CAGR·MDD·변동성·샤프·소르티노·칼마·
+베타·알파)와 같은 기간 벤치마크(기본 `U0001`) 자체의 성과를 함께 줍니다. 두 코드 모두 일봉이 있는 날만 쓰고, CAGR 은 달력 연수로
+셉니다. `--risk-free` 는 연율 소수(3.5% 는 `0.035`)나 `rates` 계열 이름(`ktb3y` 등)입니다. 계열이면 각 기간 첫날의 금리(그날 발표가
+없으면 직전 발표값)를 쓰고, 캐시에 없으면 exit 2 `RatesMissing` 입니다.
 
 | 테이블 | 내용 |
 |---|---|
 | `company` | 종목 하나에 한 행: 이름·시장·업종·표준산업분류·DART 고유번호·결산월·상장일·폐지일·관리/정지 |
 | `ohlcv` | 종목·지수(`U0001`·`U1001`·`U2001`) 일봉. 원주가 + `adj_factor`(수정주가 = 가격 × 계수), 락구분·분할비율·재평가사유 |
+| `rates` | ECOS 일별 시장금리 `ktb1y`·`ktb3y`·`ktb10y`·`cd91d`. 값은 발표 원문 그대로 연 %(3.5 = 3.5%) |
 | `load_log`·`adj_log`·`bar_log`·`probe_log` | 적재 기록, 수정계수 확인 시점, 일봉 시작일, 폐지 후보 확인 기록 |
 
 DuckDB 는 쓰는 동안 다른 프로세스가 파일을 열 수 없습니다. `cache load` 중의 읽기는 exit 1 `CacheLocked`, 첫 적재 전은
@@ -269,7 +276,7 @@ src/cluefin_openapi_cli/
 ├── output.py       JSON 직렬화, --compact, --fields 마스킹
 ├── search.py       자연어 query → BM25F 순위 command 후보. 한국어 alias 확장·fallback
 ├── recipes.py      여러 command를 엮는 workflow guide
-├── cache/          로컬 DuckDB 캐시: store(스키마·잠금) · company · bars · adjust · read · cli(`cache <sub>`)
+├── cache/          로컬 DuckDB 캐시: store(스키마·잠금) · company · bars · adjust · read · perf · cli(`cache <sub>`)
 └── handlers/
     ├── _base.py    @rpc_method 데코레이터, KIS/Kiwoom 응답 추출 헬퍼
     ├── kis/        category별 handler 모듈 (stock, chart, ranking, financial, …)
