@@ -61,6 +61,35 @@ jobs:
       run: |
         uv run ruff format --check .
 
+  # 대상 패키지는 루트 pyproject.toml 의 [tool.pyright] include. import 를 따라가야 하므로 전체를 설치한다.
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-24.04
+    environment: development
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+
+    - name: Set up Python
+      uses: actions/setup-python@v7
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v10.2.0
+      with:
+        enable-cache: true
+        cache-suffix: typecheck
+
+    - name: Install dependencies
+      run: |
+        uv sync --all-packages --all-extras --locked
+
+    - name: Run pyright
+      run: |
+        uv run pyright
+
   test:
     name: Run Tests
     runs-on: ubuntu-24.04

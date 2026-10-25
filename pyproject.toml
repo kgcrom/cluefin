@@ -21,6 +21,7 @@ members = [
 dev = [
     "coverage>=7.15.4",
     "lefthook>=2.1.11",
+    "pyright[nodejs]>=1.1.414",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "python-dotenv>=1.2.3",
@@ -37,6 +38,18 @@ cluefin-sec-notes = { workspace = true }
 cluefin-feeds = { workspace = true }
 cluefin-openapi-cli = { workspace = true }
 cluefin-desk = { workspace = true }
+
+# 타입 검사는 패키지 하나씩 켠다. include 에 넣은 곳은 오류 0 을 유지한다(CI typecheck 잡).
+[tool.pyright]
+typeCheckingMode = "basic"
+pythonVersion = "3.11"
+venvPath = "."
+venv = ".venv"
+include = [
+    "packages/cluefin-feeds/src",
+    "packages/cluefin-ta/src",
+    "packages/cluefin-dart-notes/src",
+]
 
 [tool.ruff]
 line-length = 120
