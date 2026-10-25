@@ -4,10 +4,15 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 
 ## Real-account behavior
 
-- `Settings` loads `.env` **cwd-relative**, so launching from the repo root uses the
+- `Settings.from_env()` reads `.env` **cwd-relative** through cluefin-openapi's `load_env`/`BrokerClientConfig`
+  (same parser and precedence as cluefin-openapi-cli), so launching from the repo root uses the
   production Kiwoom credentials, and `DomesticDataFetcher.__init__` authenticates
   (real network call) at app startup before any screen renders. The app is read-only —
   no order/account-mutation code exists — so exposure is auth/API usage, not trades.
+- Clients come from `BrokerClientFactory`, so `CLUEFIN_OPENAPI_CACHE_DIR` (token cache location) and
+  `CLUEFIN_OPENAPI_DEBUG` apply to desk too. Only `KIS_HTS_USER_ID` is desk's own setting.
+  Tests pass `Settings(brokers=BrokerClientConfig(...))` to `DomesticDataFetcher` and patch auth in
+  `cluefin_openapi.client_factory`.
 
 ## Conventions for new screens
 

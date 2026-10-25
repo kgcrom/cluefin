@@ -3,15 +3,13 @@ from datetime import timedelta
 from typing import Any
 
 import pandas as pd
-from cluefin_openapi.kis import Auth as KisAuth
+from cluefin_openapi import BrokerClientFactory
 from cluefin_openapi.kis import HttpClient as KisClient
 from cluefin_openapi.kis import KISAPIError
-from cluefin_openapi.kiwoom import Auth as KiwoomAuth
-from cluefin_openapi.kiwoom import Client as KiwoomClient
-from pydantic import SecretStr, ValidationError
+from pydantic import ValidationError
 
 from cluefin_desk.clock import now_kst
-from cluefin_desk.config.settings import settings
+from cluefin_desk.config.settings import Settings, settings
 
 logger = logging.getLogger(__name__)
 
@@ -33,56 +31,38 @@ class DomesticDataFetcher:
         except (ValueError, TypeError):
             return 0.0
 
-    def __init__(self):
-        if not settings.kiwoom_app_key:
+    def __init__(self, config: Settings | None = None):
+        self._settings = config or settings
+        brokers = self._settings.brokers
+        if not brokers.kiwoom_app_key:
             raise ValueError("KIWOOM_APP_KEY environment variable is required")
-        if not settings.kiwoom_secret_key:
+        if not brokers.kiwoom_secret_key:
             raise ValueError("KIWOOM_SECRET_KEY environment variable is required")
 
-        auth = KiwoomAuth(
-            app_key=settings.kiwoom_app_key,
-            secret_key=SecretStr(settings.kiwoom_secret_key),
-            env=settings.kiwoom_env,
-        )
-        token = auth.generate_token()
-        self.kiwoom_client = KiwoomClient(
-            token=token.get_token(),
-            env=settings.kiwoom_env,
-        )
+        self._factory = BrokerClientFactory(brokers)
+        self.kiwoom_client = self._factory.create_kiwoom()
         self._kis_client: KisClient | None = None
 
     @property
     def kis_client(self) -> KisClient:
         """Build (once) the KIS client, generating a token on first use."""
         if self._kis_client is None:
-            if not settings.kis_app_key:
+            if not self._settings.brokers.kis_app_key:
                 raise ValueError("KIS_APP_KEY environment variable is required")
-            if not settings.kis_secret_key:
+            if not self._settings.brokers.kis_secret_key:
                 raise ValueError("KIS_SECRET_KEY environment variable is required")
-
-            auth = KisAuth(
-                app_key=settings.kis_app_key,
-                secret_key=SecretStr(settings.kis_secret_key),
-                env=settings.kis_env,
-            )
-            token = auth.generate()
-            self._kis_client = KisClient(
-                token=token.get_token(),
-                app_key=settings.kis_app_key,
-                secret_key=SecretStr(settings.kis_secret_key),
-                env=settings.kis_env,
-            )
+            self._kis_client = self._factory.create_kis()
         return self._kis_client
 
     @property
     def has_kis(self) -> bool:
         """True when KIS credentials are configured (client may not be built yet)."""
-        return bool(settings.kis_app_key and settings.kis_secret_key)
+        return bool(self._settings.brokers.kis_app_key and self._settings.brokers.kis_secret_key)
 
     @property
     def has_hts(self) -> bool:
         """True when KIS keys and the HTS user ID (needed by watchlist APIs) are configured."""
-        return self.has_kis and bool(settings.kis_hts_user_id)
+        return self.has_kis and bool(self._settings.kis_hts_user_id)
 
     # ──────────────────────────────────────
     # Basic stock data
@@ -980,19 +960,19 @@ class DomesticDataFetcher:
             return fn(*args)
         except Exception as e:
             message = str(e)
-            if settings.kis_hts_user_id:
-                message = message.replace(settings.kis_hts_user_id, "<HTS_ID>")
+            if self._settings.kis_hts_user_id:
+                message = message.replace(self._settings.kis_hts_user_id, "<HTS_ID>")
             raise RuntimeError(message) from None
 
     def get_watchlist_groups(self) -> list:
         analysis = self.kis_client.domestic_market_analysis
-        response = self._hts_call(analysis.get_watchlist_groups, "1", "00", settings.kis_hts_user_id)
+        response = self._hts_call(analysis.get_watchlist_groups, "1", "00", self._settings.kis_hts_user_id)
         return list(response.body.output2)
 
     def get_watchlist_stocks(self, group_code: str) -> list:
         analysis = self.kis_client.domestic_market_analysis
         response = self._hts_call(
-            analysis.get_watchlist_stocks_by_group, "1", settings.kis_hts_user_id, "", group_code, "", "", "", "4"
+            analysis.get_watchlist_stocks_by_group, "1", self._settings.kis_hts_user_id, "", group_code, "", "", "", "4"
         )
         return list(response.body.output2)
 

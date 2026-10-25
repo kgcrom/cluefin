@@ -4,26 +4,22 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
+from cluefin_openapi import BrokerClientConfig
 from cluefin_openapi.kis import KISAPIError
 
+from cluefin_desk.config.settings import Settings
 from cluefin_desk.data.fetcher import DomesticDataFetcher
 
 
-def _make_fetcher(monkeypatch, **settings_overrides):
-    """Build a fetcher with Kiwoom auth mocked out (no network)."""
-    from cluefin_desk.config.settings import settings
-
-    monkeypatch.setattr(settings, "kiwoom_app_key", "kiwoom-key")
-    monkeypatch.setattr(settings, "kiwoom_secret_key", "kiwoom-secret")
-    for name, value in settings_overrides.items():
-        monkeypatch.setattr(settings, name, value)
-
+def _make_fetcher(monkeypatch, kis_hts_user_id=None, **broker_overrides):
+    """Build a fetcher with Kiwoom auth mocked out (no network). Overrides are `BrokerClientConfig` fields."""
+    brokers = BrokerClientConfig(kiwoom_app_key="kiwoom-key", kiwoom_secret_key="kiwoom-secret", **broker_overrides)
     with (
-        patch("cluefin_desk.data.fetcher.KiwoomAuth") as kiwoom_auth,
-        patch("cluefin_desk.data.fetcher.KiwoomClient"),
+        patch("cluefin_openapi.client_factory.KiwoomAuth") as kiwoom_auth,
+        patch("cluefin_openapi.client_factory.KiwoomClient"),
     ):
         kiwoom_auth.return_value.generate_token.return_value.get_token.return_value = "kiwoom-token"
-        return DomesticDataFetcher()
+        return DomesticDataFetcher(Settings(brokers=brokers, kis_hts_user_id=kis_hts_user_id))
 
 
 class TestKisClientLazy:
@@ -40,7 +36,7 @@ class TestKisClientLazy:
             _ = fetcher.kis_client
 
     def test_no_kis_auth_at_construction(self, monkeypatch):
-        with patch("cluefin_desk.data.fetcher.KisAuth") as kis_auth:
+        with patch("cluefin_openapi.client_factory.KisAuth") as kis_auth:
             _make_fetcher(monkeypatch, kis_app_key="kis-key", kis_secret_key="kis-secret")
             kis_auth.assert_not_called()
 
@@ -49,8 +45,8 @@ class TestKisClientLazy:
         assert fetcher.has_kis is True
 
         with (
-            patch("cluefin_desk.data.fetcher.KisAuth") as kis_auth,
-            patch("cluefin_desk.data.fetcher.KisClient") as kis_client_cls,
+            patch("cluefin_openapi.client_factory.KisAuth") as kis_auth,
+            patch("cluefin_openapi.client_factory.KisHttpClient") as kis_client_cls,
         ):
             kis_auth.return_value.generate.return_value.get_token.return_value = "kis-token"
             kis_client_cls.return_value = MagicMock()
