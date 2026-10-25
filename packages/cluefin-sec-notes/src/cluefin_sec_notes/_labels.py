@@ -25,7 +25,7 @@ _TOC_TAIL_TOKEN = re.compile(r"[ivx]+|\d+[a-d]?|pages?|part|item|and|to|through"
 _NON_WORD = re.compile(r"[^a-z0-9]+")
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ItemLabel:
     """Item 표기 하나를 읽은 결과.
 

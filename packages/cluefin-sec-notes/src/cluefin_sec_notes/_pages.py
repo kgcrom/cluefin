@@ -26,7 +26,7 @@ _NOT_APPLICABLE = re.compile(r"^\s*(?:not\s+applicable|none|n/?a|—|–|-)\s*\.
 _DASHES = re.compile(r"[–—]")
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class PageList:
     """쪽 목록 표기 하나를 읽은 결과.
 
@@ -85,7 +85,7 @@ def parse_page_list(text: str) -> PageList | None:
     return PageList(spans=spans, footnote=footnote)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class PageReference:
     """문장 속 쪽 참조 하나("appear on pages 162–314", "beginning on page F-1").
 

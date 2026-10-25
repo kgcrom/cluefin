@@ -70,7 +70,7 @@ class SearchResult:
     per_term: dict[str, Any] = field(default_factory=dict)
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class _Index:
     docs: dict[str, dict[str, list[str]]]
     commands: dict[str, CommandSpec]

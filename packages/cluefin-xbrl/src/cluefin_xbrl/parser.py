@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import threading
+from dataclasses import replace
 from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -89,7 +90,7 @@ def parse_xbrl_file(
     if include_taxonomy:
         from cluefin_xbrl.taxonomy import extract_taxonomy
 
-        doc.taxonomy = extract_taxonomy(model_xbrl)
+        doc = replace(doc, taxonomy=extract_taxonomy(model_xbrl))
 
     return doc
 

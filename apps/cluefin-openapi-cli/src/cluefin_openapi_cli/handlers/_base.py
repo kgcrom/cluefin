@@ -30,7 +30,7 @@ def dump_model(obj) -> dict:
     return obj.model_dump() if hasattr(obj, "model_dump") else {}
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class MethodSchema:
     name: str
     description: str

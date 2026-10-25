@@ -21,7 +21,7 @@ UNVERIFIED_CONFIDENCE = 0.5
 _MAX_REFINE = 40
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class _Entry:
     """목차 행 하나: 어떤 Item(들)이 어느 앵커를 가리키는지."""
 

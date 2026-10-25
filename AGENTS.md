@@ -139,6 +139,11 @@ shapes are in `src/dart/client.ts` and `src/dart/xml.ts`.
 - When discovering broker commands, prefer `cluefin-openapi-cli`'s `--json` output.
 - "Today"/"now" is KST, not the machine's zone (ruff `DTZ`): apps use `clock.today_kst()`/`now_kst()`
   (`cluefin_openapi_cli.clock`, `cluefin_desk.clock`). Token caches stay naive local time — the TS package shares them.
+- Internal results and value objects are `@dataclass(frozen=True, slots=True)`; build changed copies with
+  `dataclasses.replace`. pydantic is only for external API (wire) models. Any other option set carries a one-line
+  `#` reason above the decorator (mutable accumulators/builders, `eq=False` for identity, bases a `BaseModel` also
+  inherits, and `Generic` classes built as `X[T](...)`, whose `__orig_class__` assignment is a `TypeError` under
+  frozen+slots on 3.10).
 - Apps import clients, auth, services and exceptions from the broker package (`from cluefin_openapi.kis import
   Auth`), not its `_`-modules. Response models are the exception: only kis realtime and ecos re-export them, so
   `cluefin_openapi.<broker>._*_types` is the path. Patch targets in tests follow the import path the app uses.

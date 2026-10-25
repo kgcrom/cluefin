@@ -1,12 +1,11 @@
-"""Pydantic models for XBRL parsed data."""
+"""Data models for XBRL parsed data."""
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
 from enum import Enum
-
-from pydantic import BaseModel, ConfigDict
 
 
 class PeriodType(str, Enum):
@@ -17,10 +16,9 @@ class PeriodType(str, Enum):
     FOREVER = "forever"
 
 
-class XbrlPeriod(BaseModel):
+@dataclass(frozen=True, slots=True)
+class XbrlPeriod:
     """Represents an XBRL context period."""
-
-    model_config = ConfigDict(frozen=True)
 
     period_type: PeriodType
     instant: date | None = None
@@ -28,10 +26,9 @@ class XbrlPeriod(BaseModel):
     end_date: date | None = None
 
 
-class XbrlFact(BaseModel):
+@dataclass(frozen=True, slots=True)
+class XbrlFact:
     """A single XBRL fact extracted from an instance document."""
-
-    model_config = ConfigDict(frozen=True)
 
     concept_local_name: str
     concept_qname: str
@@ -44,13 +41,12 @@ class XbrlFact(BaseModel):
     period: XbrlPeriod | None = None
     entity_id: str | None = None
     is_nil: bool = False
-    dimensions: dict[str, str] = {}
+    dimensions: dict[str, str] = field(default_factory=dict)
 
 
-class ConceptLabel(BaseModel):
+@dataclass(frozen=True, slots=True)
+class ConceptLabel:
     """Label information for a concept."""
-
-    model_config = ConfigDict(frozen=True)
 
     concept_local_name: str
     concept_qname: str
@@ -58,7 +54,8 @@ class ConceptLabel(BaseModel):
     label_en: str | None = None
 
 
-class PresentationNode(BaseModel):
+@dataclass(frozen=True, slots=True)
+class PresentationNode:
     """A node in the presentation tree hierarchy."""
 
     concept_local_name: str
@@ -67,16 +64,17 @@ class PresentationNode(BaseModel):
     depth: int = 0
     # Role URI of the arc's preferredLabel (e.g. http://www.xbrl.org/2003/role/periodStartLabel); None when the arc has none.
     preferred_label: str | None = None
-    children: list[PresentationNode] = []
+    children: list[PresentationNode] = field(default_factory=list)
 
 
-class TaxonomyInfo(BaseModel):
+@dataclass(frozen=True, slots=True)
+class TaxonomyInfo:
     """Taxonomy label and presentation information."""
 
-    labels: dict[str, ConceptLabel] = {}
-    presentation_trees: dict[str, list[PresentationNode]] = {}
+    labels: dict[str, ConceptLabel] = field(default_factory=dict)
+    presentation_trees: dict[str, list[PresentationNode]] = field(default_factory=dict)
     # linkrole URI → role definition. SEC filings use "{sort code} - {Statement|Disclosure|...} - {title}".
-    role_definitions: dict[str, str] = {}
+    role_definitions: dict[str, str] = field(default_factory=dict)
 
 
 class StatementType(str, Enum):
@@ -89,7 +87,8 @@ class StatementType(str, Enum):
     SCE = "SCE"
 
 
-class StatementLineItem(BaseModel):
+@dataclass(frozen=True, slots=True)
+class StatementLineItem:
     """A single line item in a financial statement.
 
     ``dimensions`` holds the statement-intrinsic dimensional context (e.g. the
@@ -110,21 +109,23 @@ class StatementLineItem(BaseModel):
     depth: int = 0
     order: float = 0.0
     is_abstract: bool = False
-    dimensions: dict[str, str] = {}
+    dimensions: dict[str, str] = field(default_factory=dict)
     preferred_label: str | None = None
 
 
-class FinancialStatement(BaseModel):
+@dataclass(frozen=True, slots=True)
+class FinancialStatement:
     """A structured financial statement."""
 
     statement_type: StatementType
     linkrole: str
-    line_items: list[StatementLineItem] = []
-    periods: list[XbrlPeriod] = []
+    line_items: list[StatementLineItem] = field(default_factory=list)
+    periods: list[XbrlPeriod] = field(default_factory=list)
     is_consolidated: bool = True
 
 
-class ParsedFinancialStatements(BaseModel):
+@dataclass(frozen=True, slots=True)
+class ParsedFinancialStatements:
     """Collection of parsed financial statements.
 
     ``statements`` holds consolidated (연결) statements keyed by type code (BS/IS/CIS/CF/SCE);
@@ -133,11 +134,12 @@ class ParsedFinancialStatements(BaseModel):
 
     source_file: str
     entity_id: str | None = None
-    statements: dict[str, FinancialStatement] = {}
-    separate_statements: dict[str, FinancialStatement] = {}
+    statements: dict[str, FinancialStatement] = field(default_factory=dict)
+    separate_statements: dict[str, FinancialStatement] = field(default_factory=dict)
 
 
-class XbrlDocument(BaseModel):
+@dataclass(frozen=True, slots=True)
+class XbrlDocument:
     """Parsed XBRL instance document."""
 
     source_file: str
@@ -147,7 +149,8 @@ class XbrlDocument(BaseModel):
     taxonomy: TaxonomyInfo | None = None
 
 
-class NoteLineItem(BaseModel):
+@dataclass(frozen=True, slots=True)
+class NoteLineItem:
     """A single line item in a financial statement note, with dimensional context.
 
     ``value`` holds numeric facts; ``text_value`` holds non-numeric facts
@@ -165,23 +168,25 @@ class NoteLineItem(BaseModel):
     depth: int = 0
     order: float = 0.0
     is_abstract: bool = False
-    dimensions: dict[str, str] = {}
+    dimensions: dict[str, str] = field(default_factory=dict)
 
 
-class NoteSection(BaseModel):
+@dataclass(frozen=True, slots=True)
+class NoteSection:
     """A structured financial statement note (disclosure)."""
 
     role_code: str
     role_uri: str
     title: str | None = None
     is_consolidated: bool = True
-    line_items: list[NoteLineItem] = []
-    periods: list[XbrlPeriod] = []
+    line_items: list[NoteLineItem] = field(default_factory=list)
+    periods: list[XbrlPeriod] = field(default_factory=list)
 
 
-class ParsedNotes(BaseModel):
+@dataclass(frozen=True, slots=True)
+class ParsedNotes:
     """Collection of parsed financial statement notes."""
 
     source_file: str
     entity_id: str | None = None
-    notes: dict[str, NoteSection] = {}
+    notes: dict[str, NoteSection] = field(default_factory=dict)

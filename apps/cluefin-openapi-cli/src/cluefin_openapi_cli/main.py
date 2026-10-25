@@ -211,7 +211,7 @@ _DYNAMIC_USAGE = (
 )
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class CLIResult:
     exit_code: int
     stdout: str

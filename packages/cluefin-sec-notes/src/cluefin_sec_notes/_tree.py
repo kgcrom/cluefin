@@ -82,6 +82,7 @@ _HEAD_CLOSER = (frozenset({"head"}), frozenset({"html"}))
 _OPTIONAL_END_TAGS = frozenset({"p", "li", "dt", "dd", "tr", "td", "th", "thead", "tbody", "tfoot", "option"})
 
 
+# frozen 아님: 파싱 중에 children 에 붙여 가며 트리를 만든다. eq=False 는 하위 트리 전체를 재귀 비교하지 않게.
 @dataclass(eq=False, slots=True)
 class Node:
     """요소 하나. `children`은 문서 순서의 `Node`와 텍스트(`str`). `line`·`column`은 여는 태그 위치(1부터)."""

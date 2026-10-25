@@ -23,6 +23,7 @@ RATE_SERIES = {"ktb1y": KTB_1Y, "ktb3y": KTB_3Y, "ktb10y": KTB_10Y, "cd91d": CD_
 _REREAD_DAYS = 7
 
 
+# frozen 아님: 적재하면서 건수를 더해 가는 누적기.
 @dataclass(slots=True)
 class RateLoadStats:
     series: int = 0

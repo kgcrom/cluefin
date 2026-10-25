@@ -24,6 +24,7 @@ class KisHttpHeader(BaseModel):
     )
 
 
+# frozen·slots 없음: pydantic 응답 모델이 BaseModel 과 함께 상속하는 기반이라 둘 다 붙일 수 없다.
 @dataclass
 class KisHttpBody:
     rt_cd: Literal["2", "1", "0", ""] = Field(
@@ -52,7 +53,8 @@ def validate_kis_response(model_cls: type[T], data: Any) -> T:
         raise KISValidationError(message=msg, response_data=data) from e
 
 
-@dataclass
+# slots 없음: `Resp[T](...)` 로 만들면 typing 이 __orig_class__ 를 대입하는데, 3.10 의 frozen+slots 는 이때 TypeError.
+@dataclass(frozen=True)
 class KisHttpResponse(Generic[T_KisHttpBody]):
     header: KisHttpHeader
     body: T_KisHttpBody

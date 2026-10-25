@@ -16,13 +16,15 @@ class KiwoomHttpHeader(BaseModel):
     api_id: str = Field(alias="api-id")
 
 
+# frozen·slots 없음: pydantic 응답 모델이 BaseModel 과 함께 상속하는 기반이라 둘 다 붙일 수 없다.
 @dataclass
 class KiwoomHttpBody:  # This can remain a base class or be used directly if no further specialization is needed often
     return_code: int
     return_msg: str | None = None
 
 
-@dataclass
+# slots 없음: `Resp[T](...)` 로 만들면 typing 이 __orig_class__ 를 대입하는데, 3.10 의 frozen+slots 는 이때 TypeError.
+@dataclass(frozen=True)
 class KiwoomHttpResponse(Generic[T_KiwoomHttpBody]):
     headers: KiwoomHttpHeader
     body: T_KiwoomHttpBody

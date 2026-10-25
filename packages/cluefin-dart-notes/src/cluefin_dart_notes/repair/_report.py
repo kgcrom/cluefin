@@ -8,7 +8,7 @@ MAX_SAMPLES = 5
 _CONTEXT_RADIUS = 30
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class RepairSample:
     """고친 자리 하나. `line`·`column`은 1부터 센다. 정리 규칙은 줄 수를 바꾸지 않으므로 줄 번호는 원문과 같다."""
 
@@ -17,7 +17,7 @@ class RepairSample:
     context: str
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class RuleOutcome:
     """규칙 하나를 적용한 결과."""
 
@@ -27,7 +27,7 @@ class RuleOutcome:
     warnings: tuple[str, ...] = ()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class RepairReport:
     """규칙 하나가 문서에서 고친 것."""
 
@@ -37,7 +37,7 @@ class RepairReport:
     warnings: tuple[str, ...] = ()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class RepairResult:
     """정리된 XML과 단계별 기록. `reports`에는 실제로 무언가를 고친 단계만 들어 있다."""
 
@@ -72,7 +72,8 @@ class DartXmlRepairError(Exception):
         self.context = context
 
 
-@dataclass
+# frozen 아님: 고친 횟수를 세어 가는 누적기.
+@dataclass(slots=True)
 class SampleCollector:
     """규칙 구현용: 고친 위치를 세고 앞쪽 몇 개만 견본으로 남긴다."""
 

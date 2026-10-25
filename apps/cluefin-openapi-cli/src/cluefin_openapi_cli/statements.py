@@ -26,7 +26,7 @@ BALANCE = frozenset({"BS"})
 CASH = frozenset({"CF"})
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Item:
     """One statement line: XBRL ids first, then Korean labels for filers off the taxonomy."""
 
@@ -94,7 +94,7 @@ MONEY_FIELDS = frozenset(
 EOK = 1e8
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class Report:
     """One periodic report's rows as `dart financial-full-statements` returns them."""
 

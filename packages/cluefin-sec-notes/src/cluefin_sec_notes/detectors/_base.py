@@ -18,7 +18,8 @@ _TOC_TABLE_ROWS = 3
 _TOC_LOOKAHEAD = 3
 
 
-@dataclass
+# frozen 아님: 탐지기가 돌면서 excluded·previous 를 채우고 _parts 를 처음 쓸 때 계산해 둔다.
+@dataclass(slots=True)
 class DetectionContext:
     """탐지기들이 공유하는 상태. 앞 탐지기가 알아낸 것을 뒤 탐지기가 쓴다.
 
@@ -97,7 +98,7 @@ def leading_lines(block) -> tuple[list[str], bool]:
     return rows[start : position + 1], all(cell.bold for cell in block.rows[filled[position]] if cell.text)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Detection:
     candidates: tuple[Candidate, ...] = ()
     findings: tuple[Finding, ...] = ()

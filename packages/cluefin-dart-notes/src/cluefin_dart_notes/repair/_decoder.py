@@ -11,7 +11,7 @@ from cluefin_dart_notes.repair._report import DartXmlRepairError, RepairReport, 
 _DECLARED_ENCODING = re.compile(r"""(<\?xml[^>]*?encoding\s*=\s*)(["'])([^"']*)\2""")
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class DecodeResult:
     text: str
     encoding: str

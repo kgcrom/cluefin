@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from dataclasses import replace
 from datetime import date, timedelta
 from itertools import groupby
 
@@ -436,7 +437,7 @@ def _row_key(item: StatementLineItem) -> tuple:
 
 
 def _abstract_row(item: StatementLineItem) -> StatementLineItem:
-    return item.model_copy(update={"value": None, "unit": None, "period": None, "is_abstract": True, "dimensions": {}})
+    return replace(item, value=None, unit=None, period=None, is_abstract=True, dimensions={})
 
 
 def statement_to_dicts(statement: FinancialStatement) -> list[dict]:

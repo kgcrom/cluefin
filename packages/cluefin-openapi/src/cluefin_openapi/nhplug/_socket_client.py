@@ -35,7 +35,7 @@ class SubscriptionType(str, Enum):
     UNSUBSCRIBE = "2"
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class WebSocketMessage:
     """Parsed WebSocket message from NH PLUG API.
 
@@ -48,7 +48,7 @@ class WebSocketMessage:
     raw: str = ""
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class WebSocketEvent:
     """Event emitted from WebSocket for queue-based processing."""
 

@@ -116,14 +116,15 @@ class _Style:
     pre: bool = False
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class _Run:
     text: str
     bold: bool
     size: float | None
 
 
-@dataclass
+# frozen 아님: 런을 붙여 가며 문단 하나를 만드는 빌더.
+@dataclass(slots=True)
 class _ParagraphBuilder:
     runs: list[_Run] = field(default_factory=list)
     links: list[Link] = field(default_factory=list)
@@ -133,7 +134,7 @@ class _ParagraphBuilder:
     has_text: bool = False
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class LinearizedDocument:
     blocks: list[Block]
     anchors: dict[str, int]

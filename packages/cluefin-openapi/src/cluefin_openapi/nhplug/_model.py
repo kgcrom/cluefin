@@ -74,7 +74,8 @@ class NHPlugHttpHeader(BaseModel):
     cts_flag: Literal["Y", "N"] | None = Field(default=None, description="연속거래 여부 (Y: 연속거래 있음)")
 
 
-@dataclass
+# slots 없음: `Resp[T](...)` 로 만들면 typing 이 __orig_class__ 를 대입하는데, 3.10 의 frozen+slots 는 이때 TypeError.
+@dataclass(frozen=True)
 class NHPlugHttpResponse(Generic[T_NHPlugHttpBody]):
     header: NHPlugHttpHeader
     body: T_NHPlugHttpBody

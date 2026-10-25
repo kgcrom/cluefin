@@ -63,6 +63,7 @@ class BasicInfo:
     delisted_on: date | None
 
 
+# frozen 아님: 적재하면서 건수를 더해 가는 누적기.
 @dataclass(slots=True)
 class CompanyLoadStats:
     listed: int = 0

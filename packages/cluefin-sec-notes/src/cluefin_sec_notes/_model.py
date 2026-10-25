@@ -46,7 +46,7 @@ WARNING = "warning"
 INFO = "info"
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True, slots=True)
 class ItemKey:
     """Item 식별자. 10-K처럼 번호만으로 유일한 서식도 Part를 채워 둔다(카탈로그 값)."""
 
@@ -57,7 +57,7 @@ class ItemKey:
         return f"Part {self.part} Item {self.number}" if self.part else f"Item {self.number}"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Candidate:
     """탐지기가 낸 Item 시작 위치 후보.
 
@@ -78,7 +78,7 @@ class Candidate:
     ranges: tuple[tuple[int, int], ...] = ()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Finding:
     """추출 중 알게 된 문제나 사실. `severity`는 `warning`(결과를 의심하라) 또는 `info`."""
 
@@ -90,7 +90,8 @@ class Finding:
     method: str | None = None
 
 
-@dataclass(frozen=True, eq=False)
+# eq=False: 원문 트리·문서 전체를 담는 결과라 값 비교가 무의미하다. identity 로 비교·해시한다.
+@dataclass(frozen=True, slots=True, eq=False)
 class Item:
     """Item 하나의 구간. `start`(제목 블록)부터 `end` 직전 블록까지.
 
@@ -148,7 +149,8 @@ class Item:
         return ""
 
 
-@dataclass(frozen=True, eq=False)
+# eq=False: 원문 트리·문서 전체를 담는 결과라 값 비교가 무의미하다. identity 로 비교·해시한다.
+@dataclass(frozen=True, slots=True, eq=False)
 class ItemExtraction:
     """공시 하나의 Item 추출 결과.
 
