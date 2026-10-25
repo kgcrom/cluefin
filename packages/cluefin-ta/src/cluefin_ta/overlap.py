@@ -19,7 +19,7 @@ from cluefin_ta._core import ema_loop, kama_loop, rolling_std
 
 def _ema_from(values: np.ndarray, period: int, start: int) -> np.ndarray:
     """ta-lib's EMA whose first value is at ``start``: the SMA of the ``period`` values ending there."""
-    seed = np.mean(values[start - period + 1 : start + 1])
+    seed = float(np.mean(values[start - period + 1 : start + 1]))
     return ema_loop(values, start, 2.0 / (period + 1), seed)
 
 

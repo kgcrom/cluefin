@@ -115,7 +115,7 @@ def table_to_rows(table: Table) -> list[list[str]]:
 
 def extract_blocks(element: Element) -> list[Block]:
     """요소 안의 블록을 문서 순서로. 직속 `TITLE`(섹션 제목)과 하위 섹션은 건너뛴다."""
-    blocks: list[Block] = []
+    blocks: list[Block | _Caption] = []
     for child in element:
         if child.tag == "TITLE":
             continue

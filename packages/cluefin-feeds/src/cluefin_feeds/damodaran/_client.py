@@ -73,7 +73,7 @@ def _open_workbook(content: bytes, url: str) -> Any:
         ) from exc
     try:
         return xlrd.open_workbook(file_contents=content)
-    except xlrd.XLRDError as exc:
+    except xlrd.biffh.XLRDError as exc:
         raise FeedParseError(f"xls 를 열지 못했습니다: {exc}", url=url) from exc
 
 
@@ -83,7 +83,7 @@ def _sheet(book: Any, name: str, url: str) -> Any:
     return book.sheet_by_name(name)
 
 
-def _excel_date(serial: float, datemode: int) -> dt.date:
+def _excel_date(serial: float, datemode: Literal[0, 1]) -> dt.date:
     import xlrd
 
     return xlrd.xldate_as_datetime(serial, datemode).date()

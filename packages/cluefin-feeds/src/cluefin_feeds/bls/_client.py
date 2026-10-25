@@ -84,7 +84,7 @@ class Client:
                     merged.setdefault(series.series_id, []).extend(series.data)
 
         return BlsResponse(
-            series=[BlsSeries(series_id=sid, data=_sorted_unique(rows)) for sid, rows in merged.items()],
+            series=[BlsSeries(seriesID=sid, data=_sorted_unique(rows)) for sid, rows in merged.items()],
             messages=messages,
         )
 
