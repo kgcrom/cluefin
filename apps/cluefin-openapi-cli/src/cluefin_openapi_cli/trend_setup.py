@@ -32,6 +32,7 @@ from cluefin_openapi_cli.ohlcv import CandleSeries
 
 __all__ = [
     "BASE_WINDOW",
+    "RULES",
     "FRACTAL_N",
     "MIN_CANDLES",
     "IndexCloses",
@@ -39,12 +40,18 @@ __all__ = [
     "Pivot",
     "PriceArrays",
     "PriceFeatures",
+    "Rules",
     "Strength",
+    "classify",
     "find_pivot",
+    "floor_to_tick",
+    "g2_score",
+    "levels",
     "fractal_highs",
     "price_features",
     "return_pct",
     "strength",
+    "tick_size",
     "true_range",
     "weighted_return",
 ]
@@ -371,3 +378,199 @@ def strength(prices: PriceArrays, index: IndexCloses) -> Strength | None:
         return_21d_pct=stock_21,
         index_return_21d_pct=index_21,
     )
+
+
+# ---------------------------------------------------------------------------
+# Groups, action and price levels (factory `classify.mjs`)
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class Rules:
+    """Every number here was set by the backtest; § is the section of the README's trend-setup rules.
+
+    The numbers live only here — the README explains them and does not keep a second copy.
+    """
+
+    # §2 공통: 20일 평균 거래대금(억원) 하한. 이보다 얇으면 체결·손절이 백테스트대로 안 된다.
+    min_traded_value: float = 10
+    # §4 지수 대비 강도: 지수보다 강해야 한다(원고의 "종목 RS > 지수 RS").
+    rel_floor: float = 1.0
+    # §4 백분위 RS 90 의 기간 중앙값. 넘으면 과열(1그룹) 쪽이다.
+    rel_ceiling: float = 1.32
+    # §2 1그룹: 52주 고점 대비 하한(%), 이만큼 출렁이거나(10일 고저폭 %) 50일선에서 떨어져 있으면(%) 과열.
+    g1_max_gap: float = -20
+    g1_range10: float = 15
+    g1_dist_sma50: float = 25
+    # §2 2그룹: 52주 저점 대비 상승률(%) 구간 — Stage 2 초입.
+    g2_from_low_min: float = 30
+    g2_from_low_max: float = 150
+    # §3 3그룹(수축 완료).
+    g3_min_contractions: int = 3
+    g3_max_last_contraction: float = 10
+    g3_max_range10: float = 12
+    g3_max_gap: float = -20
+    # §3 백테스트 셋업은 종가가 피봇 아래 8% 안일 때만 잡았다.
+    g3_max_below_pivot: float = -8
+    # §6 주문.
+    alert_below_pivot: float = 0.03
+    chase_limit: float = 0.05
+    stop_loss: float = 0.08
+    take_profit: float = 0.24
+    # §5 2그룹 점수가 이 이상이면 3그룹 후보.
+    g2_candidate_score: int = 6
+
+
+RULES = Rules()
+
+# KRX tick size, one table for KOSPI and KOSDAQ since 2023-01-25: (upper bound, tick).
+_TICKS = ((2000, 1), (5000, 5), (20000, 10), (50000, 50), (200000, 100), (500000, 500))
+
+
+def tick_size(price: float) -> int:
+    return next((tick for bound, tick in _TICKS if price < bound), 1000)
+
+
+def floor_to_tick(price: float) -> float:
+    """Round down to a valid quote."""
+
+    tick = tick_size(price)
+    return float(math.floor(price / tick) * tick)
+
+
+def levels(pivot_price: float) -> dict[str, float]:
+    """§6: alert, buy stop, chase limit, stop loss and the 3R target, on valid ticks.
+
+    The buy stop is the pivot itself, not floored — the pivot is a traded high, already a valid quote.
+    """
+
+    return {
+        "alert": floor_to_tick(pivot_price * (1 - RULES.alert_below_pivot)),
+        "buy_stop": pivot_price,
+        "chase_limit": floor_to_tick(pivot_price * (1 + RULES.chase_limit)),
+        "stop_loss": floor_to_tick(pivot_price * (1 - RULES.stop_loss)),
+        "take_profit": floor_to_tick(pivot_price * (1 + RULES.take_profit)),
+    }
+
+
+def _check(check_id: str, rule: str, value: Any, passed: Any) -> dict[str, Any]:
+    """``id`` is for agents to branch on; ``rule`` is the Korean line a person reads."""
+
+    return {"id": check_id, "rule": rule, "value": value, "pass": bool(passed)}
+
+
+def _all_pass(checks: list[dict[str, Any]]) -> bool:
+    return all(check["pass"] for check in checks)
+
+
+def g2_score(f: PriceFeatures, s: Strength) -> dict[str, Any]:
+    """§5: seven conditions that made a group-2 stock more likely to become a group-3 breakout."""
+
+    items = [
+        _check("score.range10", "10일 고저폭 ≤ 12%", f.range_10d_pct, f.range_10d_pct <= 12),
+        _check("score.atr14", "ATR14 ≤ 4.5%", f.atr14_pct, f.atr14_pct <= 4.5),
+        _check("score.depth60", "60일 깊이 ≤ 30%", f.depth_60d_pct, f.depth_60d_pct <= 30),
+        _check("score.dist_sma50", "50일선 이격 ≤ 10%", f.dist_sma50_pct, f.dist_sma50_pct <= 10),
+        _check("score.excess_21d", "지수 대비 21일 초과수익 ≤ 5.5%p", s.excess_21d_pp, s.excess_21d_pp <= 5.5),
+        _check("score.from_low", "52주 저점 대비 ≤ 100%", f.from_low_pct, f.from_low_pct <= 100),
+        _check("score.gap", "52주 고점 −15% 이내", f.gap_to_high_pct, f.gap_to_high_pct >= -15),
+    ]
+    score = sum(1 for item in items if item["pass"])
+    return {"score": score, "of": len(items), "candidate": score >= RULES.g2_candidate_score, "items": items}
+
+
+def _group_checks(f: PriceFeatures, pv: Pivot | None, s: Strength) -> dict[str, Any]:
+    r = RULES
+    liquid = _check(
+        "liquid",
+        f"거래대금 ≥ {r.min_traded_value:g}억",
+        f.traded_value_20d_eok,
+        f.traded_value_20d_eok >= r.min_traded_value,
+    )
+    g1 = [
+        _check("g1.rel_ceiling", f"지수 대비 ≥ {r.rel_ceiling:g}", s.rel, s.rel >= r.rel_ceiling),
+        _check("g1.gap", f"52주 고점 {r.g1_max_gap:g}% 이내", f.gap_to_high_pct, f.gap_to_high_pct >= r.g1_max_gap),
+        _check(
+            "g1.overheat",
+            f"10일 고저폭 > {r.g1_range10:g}% 또는 50일선 이격 > {r.g1_dist_sma50:g}%",
+            {"range_10d_pct": f.range_10d_pct, "dist_sma50_pct": f.dist_sma50_pct},
+            f.range_10d_pct > r.g1_range10 or f.dist_sma50_pct > r.g1_dist_sma50,
+        ),
+    ]
+    lo, hi = r.g2_from_low_min, r.g2_from_low_max
+    g2 = [
+        _check("g2.template", "정배열(트렌드 템플릿)", f.template, f.template),
+        _check("g2.from_low", f"52주 저점 대비 {lo:g}~{hi:g}%", f.from_low_pct, lo <= f.from_low_pct <= hi),
+        _check("g2.rel_floor", f"지수 대비 > {r.rel_floor:g}", s.rel, s.rel > r.rel_floor),
+    ]
+    contractions = pv.contractions if pv else 0
+    g3 = [
+        {**liquid, "id": "g3.liquid"},
+        _check(
+            "g3.contractions", f"수축 ≥ {r.g3_min_contractions}회", contractions, contractions >= r.g3_min_contractions
+        ),
+        _check(
+            "g3.last_contraction",
+            f"마지막 수축 ≤ {r.g3_max_last_contraction:g}%",
+            pv.last_contraction_pct if pv else None,
+            pv is not None and pv.last_contraction_pct <= r.g3_max_last_contraction,
+        ),
+        _check(
+            "g3.range10", f"10일 고저폭 ≤ {r.g3_max_range10:g}%", f.range_10d_pct, f.range_10d_pct <= r.g3_max_range10
+        ),
+        _check("g3.gap", f"52주 고점 {r.g3_max_gap:g}% 이내", f.gap_to_high_pct, f.gap_to_high_pct >= r.g3_max_gap),
+        _check(
+            "g3.rel_band",
+            f"지수 대비 {r.rel_floor:g} 초과 {r.rel_ceiling:g} 미만",
+            s.rel,
+            r.rel_floor < s.rel < r.rel_ceiling,
+        ),
+    ]
+    return {"liquid": liquid, "g1": g1, "g2": g2, "g3": g3}
+
+
+def _decide(groups: dict[str, bool], liquid: bool, to_pivot: float | None, candidate: bool) -> tuple[str, str, str]:
+    """``(action, status, reason)``, decided once in the original order."""
+
+    if not liquid:
+        return "exclude", "illiquid", "거래대금이 얇아 백테스트 대상 밖"
+    if groups["g1"]:
+        return "exclude", "overheated", "1그룹(과열) — 이 자리 돌파는 우위가 없었다"
+    if groups["g3"] and to_pivot is not None:
+        if to_pivot >= RULES.chase_limit * 100:
+            return "watch", "extended", "피봇 +5% 초과 — 추격 금지"
+        # A close exactly on the pivot has not broken out; the buy stop is still the next step.
+        if to_pivot > 0:
+            return "watch", "breaking_out", "이미 피봇 위(추격 한도 안) — 백테스트는 피봇 아래에서 셋업을 잡았다"
+        if to_pivot < RULES.g3_max_below_pivot:
+            return "watch", "far_below_pivot", "피봇에서 8% 넘게 아래"
+        return "alert", "setup", "3그룹 — 피봇 아래 알림, 피봇에서 매수 스톱"
+    if groups["g2"]:
+        if candidate:
+            return "watch", "g3_candidate", "2그룹 — 점수가 높아 3그룹 후보"
+        return "watch", "g2", "2그룹 — 수축을 기다린다"
+    return "exclude", "no_group", "어느 그룹 조건도 채우지 못함"
+
+
+def classify(f: PriceFeatures, pv: Pivot | None, s: Strength) -> dict[str, Any]:
+    """Groups (they can overlap), the per-rule checks behind them, and one action.
+
+    The action is decided once: illiquid → exclude, group 1 → exclude, group 3 → alert/watch
+    by distance to the pivot, group 2 → watch, nothing → exclude.
+    """
+
+    checks = _group_checks(f, pv, s)
+    groups = {name: _all_pass(checks[name]) for name in ("g1", "g2", "g3")}
+    score = g2_score(f, s)
+    to_pivot = (f.close / pv.price - 1) * 100 if pv else None
+    action, status, reason = _decide(groups, checks["liquid"]["pass"], to_pivot, score["candidate"])
+    return {
+        "groups": groups,
+        "action": action,
+        "status": status,
+        "reason": reason,
+        "checks": checks,
+        "g2_score": score,
+        "to_pivot_pct": to_pivot,
+        "levels": levels(pv.price) if pv else None,
+    }
