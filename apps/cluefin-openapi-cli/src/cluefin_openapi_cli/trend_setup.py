@@ -164,6 +164,12 @@ def _min(values: np.ndarray) -> float:
     return float(finite.min()) if finite.size else math.inf
 
 
+def _ratio(numerator: float, denominator: float) -> float:
+    """NaN for a zero denominator (50 halted sessions have no volume) instead of a numpy warning."""
+
+    return float(numerator / denominator) if denominator else math.nan
+
+
 def _sma(values: np.ndarray, t: int, n: int) -> float:
     return float(values[t - n + 1 : t + 1].mean())
 
@@ -283,7 +289,7 @@ def price_features(prices: PriceArrays) -> PriceFeatures | None:
         weighted_return=float(weighted_return(close) or math.nan),
         range_10d_pct=(high_10 - _min(low[t - 9 :])) / high_10 * 100,
         atr14_pct=atr14 / c * 100,
-        volume_20_50=float(prices.volume[t - 19 :].mean() / prices.volume[t - 49 :].mean()),
+        volume_20_50=_ratio(prices.volume[t - 19 :].mean(), prices.volume[t - 49 :].mean()),
         traded_value_20d_eok=float(prices.value[t - 19 :].mean() / 1e8),
         dist_sma50_pct=(c / sma_50 - 1) * 100,
         depth_60d_pct=(1 - _min(low[t - 59 :]) / high_60) * 100,
