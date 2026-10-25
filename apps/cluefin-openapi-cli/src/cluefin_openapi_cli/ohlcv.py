@@ -23,9 +23,10 @@ fails silently if you skip it:
 from __future__ import annotations
 
 import math
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
-from typing import Any, Iterable, Literal, Sequence
+from typing import Any, Literal
 
 import numpy as np
 

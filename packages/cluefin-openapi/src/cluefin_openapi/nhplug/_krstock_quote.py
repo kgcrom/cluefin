@@ -1,4 +1,4 @@
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 from cluefin_openapi.nhplug._exceptions import raise_for_rsp_cd
 from cluefin_openapi.nhplug._http_client import HttpClient
@@ -29,7 +29,7 @@ class KrStockQuote:
         self.client = client
 
     @staticmethod
-    def _drop_none(body: Dict[str, Any]) -> Dict[str, Any]:
+    def _drop_none(body: dict[str, Any]) -> dict[str, Any]:
         """선택 파라미터는 값이 있을 때만 전송한다."""
         return {k: v for k, v in body.items() if v is not None}
 
@@ -64,8 +64,8 @@ class KrStockQuote:
         self,
         market_cd: Literal["KRX", "NXT", "UNT"],
         iem_cd: str,
-        array_cnt: Optional[str] = None,
-        view_main_yn: Optional[Literal["Y", "N"]] = None,
+        array_cnt: str | None = None,
+        view_main_yn: Literal["Y", "N"] | None = None,
     ) -> NHPlugHttpResponse[KrStockQuoteCurrentExecution]:
         """주식현재가 체결 (`POST /krstock/quote/v1/currentExecution`).
 
@@ -100,8 +100,8 @@ class KrStockQuote:
         self,
         market_cd: Literal["KRX", "NXT", "UNT"],
         iem_cd: str,
-        array_cnt: Optional[str] = None,
-        view_main_yn: Optional[Literal["Y", "N"]] = None,
+        array_cnt: str | None = None,
+        view_main_yn: Literal["Y", "N"] | None = None,
     ) -> NHPlugHttpResponse[KrStockQuoteCurrentDaily]:
         """주식현재가 일자별 (`POST /krstock/quote/v1/currentDaily`).
 
@@ -168,20 +168,20 @@ class KrStockQuote:
         self,
         market_cd: Literal["KRX", "NXT", "UNT"],
         iem_cd: str,
-        mrkt_div_cls_code: Optional[Literal["1", "4", "A", "E", "T"]] = None,
-        edate: Optional[str] = None,
-        array_cnt: Optional[str] = None,
-        maxavg: Optional[str] = None,
-        gubun: Optional[Literal["1", "2", "3", "4", "5", "6", "7"]] = None,
-        xtick: Optional[str] = None,
-        today_cls_code: Optional[Literal["0", "1"]] = None,
-        fake_tick: Optional[Literal["0", "1"]] = None,
-        sur_flag: Optional[Literal["0", "1"]] = None,
-        sur_gb_day_cnt: Optional[str] = None,
-        sur_bf_end_time: Optional[str] = None,
-        out1_scale_change: Optional[Literal["0", "1", "2"]] = None,
-        out2_scale_change: Optional[Literal["0", "1", "2"]] = None,
-        view_main_yn: Optional[Literal["Y", "N"]] = None,
+        mrkt_div_cls_code: Literal["1", "4", "A", "E", "T"] | None = None,
+        edate: str | None = None,
+        array_cnt: str | None = None,
+        maxavg: str | None = None,
+        gubun: Literal["1", "2", "3", "4", "5", "6", "7"] | None = None,
+        xtick: str | None = None,
+        today_cls_code: Literal["0", "1"] | None = None,
+        fake_tick: Literal["0", "1"] | None = None,
+        sur_flag: Literal["0", "1"] | None = None,
+        sur_gb_day_cnt: str | None = None,
+        sur_bf_end_time: str | None = None,
+        out1_scale_change: Literal["0", "1", "2"] | None = None,
+        out2_scale_change: Literal["0", "1", "2"] | None = None,
+        view_main_yn: Literal["Y", "N"] | None = None,
     ) -> NHPlugHttpResponse[KrStockQuotePeriod]:
         """국내주식기간별시세(일/주/월/년) (`POST /krstock/quote/v1/period`).
 

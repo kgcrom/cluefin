@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from typing import List, Optional, Sequence
+from collections.abc import Sequence
 
 from ._client import DATA_BASE_URL, Client
 from ._ids import cik10
@@ -30,7 +30,7 @@ class Submissions:
         payload = self.client._get_json(f"{DATA_BASE_URL}/submissions/CIK{cik10(cik)}.json")
         return CompanySubmissions.model_validate(payload)
 
-    def submissions_page(self, name: str) -> List[FilingEntry]:
+    def submissions_page(self, name: str) -> list[FilingEntry]:
         """오래된 제출 이력 한 페이지.
 
         Args:
@@ -48,10 +48,10 @@ class Submissions:
         self,
         cik: int | str,
         *,
-        forms: Optional[Sequence[str]] = None,
+        forms: Sequence[str] | None = None,
         include_amendments: bool = True,
         include_older: bool = False,
-    ) -> List[FilingEntry]:
+    ) -> list[FilingEntry]:
         """제출 이력을 서식으로 걸러 돌려준다 (최신순).
 
         Args:

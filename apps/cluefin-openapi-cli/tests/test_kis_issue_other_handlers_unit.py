@@ -3,9 +3,10 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pytest
-from _handler_fakes import assert_calls_client_once, assert_registers_all
 
 from cluefin_openapi_cli.handlers.kis import domestic_issue_other as handlers
+
+from ._handler_fakes import assert_calls_client_once, assert_registers_all
 
 
 @pytest.mark.parametrize("handler", handlers._ALL_HANDLERS, ids=lambda h: h._rpc_schema.name)

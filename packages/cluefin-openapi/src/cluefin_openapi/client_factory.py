@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal, Mapping, Optional
+from typing import Literal
 
 from pydantic import SecretStr
 
@@ -29,23 +30,23 @@ __all__ = ["BrokerClientConfig", "BrokerClientFactory", "create_broker_client"]
 class BrokerClientConfig:
     """Configuration for broker client creation."""
 
-    kis_app_key: Optional[str] = None
-    kis_secret_key: Optional[str] = None
+    kis_app_key: str | None = None
+    kis_secret_key: str | None = None
     kis_env: BrokerEnv = "dev"
-    kiwoom_app_key: Optional[str] = None
-    kiwoom_secret_key: Optional[str] = None
+    kiwoom_app_key: str | None = None
+    kiwoom_secret_key: str | None = None
     kiwoom_env: BrokerEnv = "dev"
-    dart_auth_key: Optional[str] = None
-    nhplug_app_key: Optional[str] = None
-    nhplug_secret_key: Optional[str] = None
+    dart_auth_key: str | None = None
+    nhplug_app_key: str | None = None
+    nhplug_secret_key: str | None = None
     nhplug_env: BrokerEnv = "dev"
-    sec_user_agent: Optional[str] = None
-    ecos_auth_key: Optional[str] = None
-    cache_dir: Optional[str] = None
+    sec_user_agent: str | None = None
+    ecos_auth_key: str | None = None
+    cache_dir: str | None = None
     debug: bool = False
 
     @classmethod
-    def from_env(cls, environ: Mapping[str, str] | None = None) -> "BrokerClientConfig":
+    def from_env(cls, environ: Mapping[str, str] | None = None) -> BrokerClientConfig:
         env = _merge_env_with_dotenv(environ or os.environ)
         return cls(
             kis_app_key=env.get("KIS_APP_KEY"),
@@ -64,7 +65,7 @@ class BrokerClientConfig:
             debug=env.get("CLUEFIN_OPENAPI_DEBUG", "0").lower() in {"1", "true", "yes", "on"},
         )
 
-    def resolved_cache_dir(self) -> Optional[str]:
+    def resolved_cache_dir(self) -> str | None:
         if self.cache_dir:
             return str(Path(self.cache_dir).expanduser())
         return None

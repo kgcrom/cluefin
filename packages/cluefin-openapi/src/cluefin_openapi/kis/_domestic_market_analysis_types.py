@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 from pydantic import BaseModel, Field
 
@@ -120,7 +120,7 @@ class WatchlistStocksByGroupItem2(BaseModel):
     exch_code: str = Field(title="거래소코드")
     jong_code: str = Field(title="종목코드")
     color_code: str = Field(title="생상 코드")
-    memo: Optional[str] = Field(title="메모")
+    memo: str | None = Field(title="메모")
     hts_kor_isnm: str = Field(title="HTS 한글 종목명")
     fxdt_ntby_qty: str = Field(title="기준일 순매수 수량")
     cntg_unpr: str = Field(title="체결단가")

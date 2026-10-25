@@ -14,10 +14,10 @@ import typing
 from functools import lru_cache
 
 import pytest
-from cluefin_openapi.dart._client import Client as DartClient
-from cluefin_openapi.kis._http_client import HttpClient as KisClient
-from cluefin_openapi.kiwoom._client import Client as KiwoomClient
-from cluefin_openapi.sec._client import Client as SecClient
+from cluefin_openapi.dart import Client as DartClient
+from cluefin_openapi.kis import HttpClient as KisClient
+from cluefin_openapi.kiwoom import Client as KiwoomClient
+from cluefin_openapi.sec import Client as SecClient
 
 from cluefin_openapi_cli.errors import CliError
 from cluefin_openapi_cli.metadata import _sample_value

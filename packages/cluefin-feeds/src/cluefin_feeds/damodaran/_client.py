@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import datetime as dt
-from typing import Any, List, Literal, Optional
+from typing import Any, Literal
 
 from .._exceptions import FeedParseError
 from .._http import HttpClient
@@ -34,7 +34,7 @@ class Client:
     표는 1년에 한두 번(1월, ERP 는 7월에도) 바뀐다. 매일 받지 말고 쓰는 쪽에서 저장해 둔다.
     """
 
-    def __init__(self, http: Optional[HttpClient] = None):
+    def __init__(self, http: HttpClient | None = None):
         self.http = http or HttpClient(timeout=120)
 
     def country_risk_premiums(self) -> CountryRiskPremiumTable:
@@ -53,7 +53,7 @@ class Client:
         rows = [sheet.row_values(r) for r in range(sheet.nrows)]
         return parse_industry_betas(rows, lambda serial: _excel_date(serial, book.datemode))
 
-    def companies(self, country: Optional[str] = "South Korea") -> List[CompanyIndustry]:
+    def companies(self, country: str | None = "South Korea") -> list[CompanyIndustry]:
         """종목 → 업종 분류 (indname.xls, 약 22MB·4만 8천 종목). country=None 이면 전체.
 
         한국은 "South Korea" (2026-01 기준 2,660종목·88업종). `krx_code` 로 6자리 코드를 얻는다.

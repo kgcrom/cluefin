@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Union
 
 from cluefin_sec_notes._report import HIDDEN_CONTENT, LAYOUT_TABLE, ReportCollector
 from cluefin_sec_notes._tree import EDGAR_HEADER_TAGS, Node
@@ -106,7 +105,7 @@ class PageBreak:
     column: int
 
 
-Block = Union[Paragraph, Table, PageBreak]
+Block = Paragraph | Table | PageBreak
 
 
 @dataclass(frozen=True, slots=True)

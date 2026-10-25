@@ -10,7 +10,6 @@ work correctly together.
 import sys
 import warnings
 from datetime import datetime
-from typing import Dict
 
 import numpy as np
 import pandas as pd
@@ -102,7 +101,7 @@ def create_sample_stock_data(days: int = 300) -> pd.DataFrame:
     return df
 
 
-def create_sample_indicators(stock_data: pd.DataFrame) -> Dict:
+def create_sample_indicators(stock_data: pd.DataFrame) -> dict:
     """
     Create basic technical indicators for testing.
     This simulates what would normally come from TechnicalAnalyzer.

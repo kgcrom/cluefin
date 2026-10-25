@@ -7,7 +7,8 @@ couple of runnable recipes — so every search ends with a next step.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Iterable, Sequence
+from collections.abc import Iterable, Sequence
+from typing import TYPE_CHECKING, Any
 
 from cluefin_openapi_cli.metadata import build_taxonomy_entry
 from cluefin_openapi_cli.query_terms import ALIAS_TABLE, HANGUL_RUN
@@ -48,7 +49,7 @@ def _did_you_mean(index: _Index, unknown: Sequence[str], extra: Iterable[str]) -
 
 
 def _taxonomy_scores(
-    index: "_Index", scored: Sequence[tuple[float, str, list[str], dict[str, float]]], kind: str
+    index: _Index, scored: Sequence[tuple[float, str, list[str], dict[str, float]]], kind: str
 ) -> dict[str, float]:
     """Sum the top hits' scores per domain (or tag).
 
@@ -66,7 +67,7 @@ def _taxonomy_scores(
     return scores
 
 
-def _taxonomy_rows(index: "_Index", kind: str, scores: dict[str, float]) -> list[dict[str, Any]]:
+def _taxonomy_rows(index: _Index, kind: str, scores: dict[str, float]) -> list[dict[str, Any]]:
     rows = []
     for name, _ in sorted(scores.items(), key=lambda pair: (-pair[1], pair[0]))[:3]:
         count = sum(1 for command in index.commands.values() if name in getattr(command, kind))

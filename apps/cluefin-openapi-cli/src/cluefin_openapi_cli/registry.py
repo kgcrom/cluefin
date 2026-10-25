@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Iterable, Protocol
+from typing import Any, Protocol
 
 from cluefin_openapi import BrokerClientFactory
 

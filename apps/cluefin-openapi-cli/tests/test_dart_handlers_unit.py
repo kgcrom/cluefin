@@ -3,15 +3,16 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pytest
-from _handler_fakes import FakeSession, assert_calls_client_once, assert_registers_all
 
 from cluefin_openapi_cli.handlers import dart as handlers
 from cluefin_openapi_cli.validation import validate_params
 
+from ._handler_fakes import FakeSession, assert_calls_client_once, assert_registers_all
+
 # These parse what the client downloaded instead of returning the response, so the generic fake
-# (which writes no file) cannot satisfy them. test_dart_as_filed_handler.py and
-# test_dart_document_handlers.py cover them. financial-summary calls the client several times
-# and computes; test_dart_financial_summary.py covers it.
+# (which writes no file) cannot satisfy them. test_dart_as_filed_handler_unit.py and
+# test_dart_document_handlers_unit.py cover them. financial-summary calls the client several times
+# and computes; test_dart_financial_summary_unit.py covers it.
 _PARSING_HANDLERS = {
     handlers.handle_financial_as_filed,
     handlers.handle_financial_summary,

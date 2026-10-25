@@ -9,7 +9,7 @@
 """
 
 import asyncio
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 
@@ -35,10 +35,10 @@ def access_token(auth) -> str:
     return auth.generate().access_token
 
 
-async def _first_data(ws: SocketClient, tr_cd: str, tr_key: str) -> Dict[str, Any]:
+async def _first_data(ws: SocketClient, tr_cd: str, tr_key: str) -> dict[str, Any]:
     """`tr_cd` 채널에서 `tr_key` 종목의 첫 시세 body. 장중 timeout 이면 실패한다."""
 
-    async def wait() -> Dict[str, Any]:
+    async def wait() -> dict[str, Any]:
         async for event in ws.events():
             if event.event_type == "data" and event.tr_cd == tr_cd and event.tr_key and tr_key in event.tr_key:
                 return event.data or {}

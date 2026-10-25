@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel, Field
 
 from cluefin_openapi.kis._model import KisHttpBody
@@ -47,7 +45,7 @@ class OnmarketBondAskingPriceItem(BaseModel):
 class OnmarketBondAskingPrice(BaseModel, KisHttpBody):
     """장내채권현재가(호가)"""
 
-    output: Optional[OnmarketBondAskingPriceItem] = Field(default=None, title="응답상세")
+    output: OnmarketBondAskingPriceItem | None = Field(default=None, title="응답상세")
 
 
 class OnmarketBondPriceItem(BaseModel):
@@ -75,7 +73,7 @@ class OnmarketBondPriceItem(BaseModel):
 class OnmarketBondPrice(BaseModel, KisHttpBody):
     """장내채권현재가(시세)"""
 
-    output: Optional[OnmarketBondPriceItem] = Field(default=None, title="응답상세")
+    output: OnmarketBondPriceItem | None = Field(default=None, title="응답상세")
 
 
 class OnmarketBondExecutionItem(BaseModel):
@@ -301,7 +299,7 @@ class OnmarketBondIssueInfoOutput(BaseModel):
 class OnmarketBondIssueInfo(BaseModel, KisHttpBody):
     """장내채권 발행정보"""
 
-    output: Optional[OnmarketBondIssueInfoOutput] = Field(default=None, title="응답상세")
+    output: OnmarketBondIssueInfoOutput | None = Field(default=None, title="응답상세")
 
 
 class OnmarketBondInfoItem(BaseModel):
@@ -393,4 +391,4 @@ class OnmarketBondInfoItem(BaseModel):
 class OnmarketBondInfo(BaseModel, KisHttpBody):
     """장내채권 기본조회"""
 
-    output: Optional[OnmarketBondInfoItem] = Field(default=None, title="응답상세")
+    output: OnmarketBondInfoItem | None = Field(default=None, title="응답상세")

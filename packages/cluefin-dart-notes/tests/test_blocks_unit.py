@@ -209,6 +209,6 @@ class TestTables:
 
 
 def test_extract_blocks_accepts_any_element():
-    element = fromstring("<TD><P>a</P></TD>".encode())
+    element = fromstring(b"<TD><P>a</P></TD>")
 
     assert extract_blocks(element) == [Paragraph("a")]

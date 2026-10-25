@@ -58,8 +58,8 @@ def _make_xbrl_fact(
 ) -> XbrlFact:
     """Build a minimal numeric XbrlFact for statement/note extraction tests.
 
-    Covers the boilerplate shared by ``_make_assets_fact`` (test_statements.py) and
-    ``_make_obligation_fact`` (test_notes.py): a numeric fact with an instant period,
+    Covers the boilerplate shared by ``_make_assets_fact`` (test_statements_unit.py) and
+    ``_make_obligation_fact`` (test_notes_unit.py): a numeric fact with an instant period,
     on the standard IFRS namespace, that callers can override via ``**overrides``.
     """
     if "numeric_value" not in overrides:

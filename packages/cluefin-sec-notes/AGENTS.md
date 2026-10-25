@@ -142,7 +142,7 @@ Each rule below replaced an approach that broke real filings. Don't go back to t
   `scripts/corpus_report.py <manifest> --corpus … --write-baseline`. Smoke baselines only see invariant violations,
   so a new detector that fills Items wrongly is invisible there — list what it adopted across the corpus and read it.
 - Unit tests use the synthetic HTML in `tests/conftest.py` (`synthetic` fixture; importlib mode can't import test
-  helper modules) and per-form helpers in `tests/test_10q.py`/`test_8k.py`.
+  helper modules) and per-form helpers in `tests/test_10q_unit.py`/`test_8k_unit.py`.
 
 ## Gotchas
 

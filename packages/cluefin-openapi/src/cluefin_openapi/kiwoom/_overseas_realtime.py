@@ -13,7 +13,7 @@ TR:
 - FT 미국주식10호가         → OverseasRealtimeTenQuotes
 """
 
-from typing import Iterable, List, Union
+from collections.abc import Iterable
 
 from ._overseas_realtime_types import (
     OverseasRealtimeExecution,
@@ -61,7 +61,7 @@ class OverseasRealtime:
     async def register(
         self,
         types: Iterable[str],
-        items: Iterable[Union[OverseasRealtimeRegisterItem, tuple[str, str]]],
+        items: Iterable[OverseasRealtimeRegisterItem | tuple[str, str]],
         grp_no: str = "1",
         refresh: str = "1",
     ) -> None:
@@ -79,7 +79,7 @@ class OverseasRealtime:
     async def remove(
         self,
         types: Iterable[str],
-        items: Iterable[Union[OverseasRealtimeRegisterItem, tuple[str, str]]],
+        items: Iterable[OverseasRealtimeRegisterItem | tuple[str, str]],
         grp_no: str = "1",
     ) -> None:
         """실시간 시세를 해지(REMOVE)한다.
@@ -96,7 +96,7 @@ class OverseasRealtime:
         self,
         trnm: str,
         types: Iterable[str],
-        items: Iterable[Union[OverseasRealtimeRegisterItem, tuple[str, str]]],
+        items: Iterable[OverseasRealtimeRegisterItem | tuple[str, str]],
         grp_no: str,
         refresh: str,
     ) -> None:
@@ -117,13 +117,11 @@ class OverseasRealtime:
     @staticmethod
     def parse(
         message: KiwoomWebSocketMessage,
-    ) -> List[
-        Union[
-            OverseasRealtimeOrderConfirmation,
-            OverseasRealtimeExecution,
-            OverseasRealtimeExecutionPrice,
-            OverseasRealtimeTenQuotes,
-        ]
+    ) -> list[
+        OverseasRealtimeOrderConfirmation
+        | OverseasRealtimeExecution
+        | OverseasRealtimeExecutionPrice
+        | OverseasRealtimeTenQuotes
     ]:
         """수신 프레임을 TR type별 응답 모델로 파싱한다.
 

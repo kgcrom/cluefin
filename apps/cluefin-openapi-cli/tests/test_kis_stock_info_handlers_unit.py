@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 import pytest
-from _handler_fakes import (
+
+from cluefin_openapi_cli.handlers.kis import domestic_stock_info as handlers
+
+from ._handler_fakes import (
     FakeSession,
     assert_calls_client_once,
     assert_registers_all,
     sample_params,
 )
 
-from cluefin_openapi_cli.handlers.kis import domestic_stock_info as handlers
-
-# valuation calls KIS and DART several times and computes; test_kis_opinion_valuation.py covers it.
+# valuation calls KIS and DART several times and computes; test_kis_opinion_valuation_unit.py covers it.
 _PASS_THROUGH_HANDLERS = [h for h in handlers._ALL_HANDLERS if h is not handlers.handle_kis_stock_valuation]
 
 

@@ -6,11 +6,12 @@ import contextlib
 import itertools
 import sys
 import tempfile
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 from zoneinfo import ZoneInfo
 
 from cluefin_openapi_cli import statements

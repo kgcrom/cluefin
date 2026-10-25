@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Type
 
 import pytest
 import requests_mock
@@ -82,7 +81,7 @@ class MethodCase:
     method_name: str
     endpoint: str
     response_type: type
-    item_type: Type[BaseModel]
+    item_type: type[BaseModel]
     error_message: str
     overrides: dict[str, object] | None = None
 
@@ -297,7 +296,7 @@ _COMMON_ITEM_VALUES = {
 }
 
 
-def build_payload(item_type: Type[BaseModel], overrides: dict[str, object] | None = None) -> dict[str, object]:
+def build_payload(item_type: type[BaseModel], overrides: dict[str, object] | None = None) -> dict[str, object]:
     return _build_payload(item_type, overrides=overrides, common_values=_COMMON_ITEM_VALUES)
 
 

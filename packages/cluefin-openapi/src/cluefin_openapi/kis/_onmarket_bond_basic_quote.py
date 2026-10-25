@@ -1,6 +1,6 @@
 """장내채권 기본 시세"""
 
-from typing_extensions import Literal
+from typing import Literal
 
 from cluefin_openapi.kis._http_client import HttpClient
 from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse

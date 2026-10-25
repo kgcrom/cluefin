@@ -5,7 +5,7 @@ This module contains ML model implementations using LightGBM and scikit-learn
 for stock price prediction and classification.
 """
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 import joblib
 import lightgbm as lgb
@@ -24,7 +24,7 @@ class StockPredictor:
     price movement prediction using LightGBM classifier.
     """
 
-    def __init__(self, model_params: Optional[Dict] = None):
+    def __init__(self, model_params: dict | None = None):
         """
         Initialize StockPredictor with model parameters.
 
@@ -32,11 +32,11 @@ class StockPredictor:
             model_params: Optional dictionary of LightGBM parameters
         """
         self.model_params = model_params or self._get_default_params()
-        self.model: Optional[lgb.LGBMClassifier] = None
-        self.feature_importance: Optional[pd.Series] = None
+        self.model: lgb.LGBMClassifier | None = None
+        self.feature_importance: pd.Series | None = None
         self.is_trained = False
 
-    def _get_default_params(self) -> Dict[str, Any]:
+    def _get_default_params(self) -> dict[str, Any]:
         """
         Get default LightGBM parameters optimized for stock prediction.
 
@@ -58,7 +58,7 @@ class StockPredictor:
             "class_weight": None,  # Will be set dynamically if needed
         }
 
-    def train(self, X: pd.DataFrame, y: pd.Series, validation_split: float = 0.2) -> Dict[str, float]:
+    def train(self, X: pd.DataFrame, y: pd.Series, validation_split: float = 0.2) -> dict[str, float]:
         """
         Train the LightGBM model with time series split.
 
@@ -171,7 +171,7 @@ class StockPredictor:
             logger.error(f"   Traceback: {traceback.format_exc()}")
             raise
 
-    def predict(self, X: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
+    def predict(self, X: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
         """
         Make predictions using the trained model.
 
@@ -194,7 +194,7 @@ class StockPredictor:
             logger.error(f"Error making predictions: {e}")
             raise
 
-    def cross_validate(self, X: pd.DataFrame, y: pd.Series, cv_folds: int = 5) -> Dict[str, float]:
+    def cross_validate(self, X: pd.DataFrame, y: pd.Series, cv_folds: int = 5) -> dict[str, float]:
         """
         Perform time series cross-validation.
 
@@ -255,7 +255,7 @@ class StockPredictor:
 
         return self.feature_importance.head(top_n)
 
-    def evaluate_model(self, X_test: pd.DataFrame, y_test: pd.Series) -> Dict[str, float]:
+    def evaluate_model(self, X_test: pd.DataFrame, y_test: pd.Series) -> dict[str, float]:
         """
         Evaluate model performance on test data.
 

@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 import requests
 from loguru import logger
@@ -17,14 +17,14 @@ class Auth:
         app_key: str,
         secret_key: SecretStr,
         env: Literal["dev", "prod"] = "dev",
-        cache_dir: Optional[str] = None,
-        token_manager: Optional[TokenManager] = None,
+        cache_dir: str | None = None,
+        token_manager: TokenManager | None = None,
     ) -> None:
         self.app_key = app_key
         self.secret_key = secret_key
         self.env = env
         self.token_manager = token_manager or TokenManager(cache_dir=cache_dir, env=env, app_key=app_key)
-        self._token_data: Optional[TokenResponse] = None
+        self._token_data: TokenResponse | None = None
 
         if env == "prod":
             self.url = "https://openapi.koreainvestment.com:9443"

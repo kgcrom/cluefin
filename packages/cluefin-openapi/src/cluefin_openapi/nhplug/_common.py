@@ -1,5 +1,3 @@
-from typing import Optional
-
 from cluefin_openapi.nhplug._common_types import AccountList, WebsocketCloseResponse
 from cluefin_openapi.nhplug._exceptions import raise_for_rsp_cd
 from cluefin_openapi.nhplug._http_client import HttpClient
@@ -15,7 +13,7 @@ class Common:
     def __init__(self, client: HttpClient):
         self.client = client
 
-    def get_account_list(self, cts: Optional[str] = None) -> NHPlugHttpResponse[AccountList]:
+    def get_account_list(self, cts: str | None = None) -> NHPlugHttpResponse[AccountList]:
         """계좌 목록 조회 (`POST /n2/acctinfo`).
 
         모든 자산군 조회·주문 API 는 계좌번호(`act_no`)를 입력으로 요구하므로

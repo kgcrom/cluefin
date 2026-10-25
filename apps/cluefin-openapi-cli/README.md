@@ -301,11 +301,11 @@ command 하나는 handler 함수에 붙은 `@rpc_method(name="stock.current_pric
 
 검증 테스트(`tests/`):
 
-- `test_agent_surface.py`: role·alternatives·schema·dry-run·검증·field mask·exit code 분류
-- `test_cli_contract.py`: 모든 command가 `schema`가 유효하고 `invoke.dry_run` 예시가 실제로 exit 0으로 통과하는지, README 코드 블록의 명령이 실행되는지
-- `test_handler_client_contract.py`: handler가 호출하는 client 메서드·응답 필드가 실제 `cluefin-openapi`에 존재하는지
-- `test_rpc_registry.py`: command 수·metadata 완결성·taxonomy 커버리지·`COMMAND_TAXONOMY` 전수 대응·필터 선택도
-- `test_search.py`: 한국어/영어 질의 recall, 순위, fallback, alias 동기화, 인덱스 캐싱
+- `test_agent_surface_unit.py`: role·alternatives·schema·dry-run·검증·field mask·exit code 분류
+- `test_cli_contract_unit.py`: 모든 command가 `schema`가 유효하고 `invoke.dry_run` 예시가 실제로 exit 0으로 통과하는지, README 코드 블록의 명령이 실행되는지
+- `test_handler_client_contract_unit.py`: handler가 호출하는 client 메서드·응답 필드가 실제 `cluefin-openapi`에 존재하는지
+- `test_rpc_registry_unit.py`: command 수·metadata 완결성·taxonomy 커버리지·`COMMAND_TAXONOMY` 전수 대응·필터 선택도
+- `test_search_unit.py`: 한국어/영어 질의 recall, 순위, fallback, alias 동기화, 인덱스 캐싱
 
 ## 동작 원칙
 

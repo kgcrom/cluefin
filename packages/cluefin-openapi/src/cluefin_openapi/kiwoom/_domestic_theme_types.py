@@ -1,5 +1,3 @@
-from typing import List
-
 from pydantic import BaseModel, Field
 from pydantic.config import ConfigDict
 
@@ -28,7 +26,7 @@ class DomesticThemeGroupItem(BaseModel):
 class DomesticThemeGroup(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="테마그룹별요청 응답")
 
-    thema_grp: List[DomesticThemeGroupItem] = Field(default_factory=list, description="테마그룹별")
+    thema_grp: list[DomesticThemeGroupItem] = Field(default_factory=list, description="테마그룹별")
 
 
 class DomesticThemeGroupStocksItem(BaseModel):
@@ -51,4 +49,4 @@ class DomesticThemeGroupStocks(BaseModel, KiwoomHttpBody):
 
     flu_rt: str = Field(default="", description="등락률")
     dt_prft_rt: str = Field(default="", description="기간수익률")
-    thema_comp_stk: List[DomesticThemeGroupStocksItem] = Field(default_factory=list, description="테마구성종목")
+    thema_comp_stk: list[DomesticThemeGroupStocksItem] = Field(default_factory=list, description="테마구성종목")

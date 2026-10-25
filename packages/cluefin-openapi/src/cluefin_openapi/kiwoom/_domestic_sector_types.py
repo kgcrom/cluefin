@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel, Field
 from pydantic.config import ConfigDict
 
@@ -46,10 +44,10 @@ class DomesticSectorIndustryInvestorNetBuyItem(BaseModel):
     etc_corp_netprps: str = Field(default="", description="기타법인순매수")
     ind_netprps: str = Field(default="", description="개인순매수")
     frgnr_netprps: str = Field(default="", description="외국인순매수")
-    native_trmt_frgnr_netprps: Optional[str] = Field(default=None, description="내국인대우외국인순매수")
-    natn_netprps: Optional[str] = Field(default=None, description="국가순매수")
-    samo_fund_netprps: Optional[str] = Field(default=None, description="사모펀드순매수")
-    orgn_netprps: Optional[str] = Field(default=None, description="기관계순매수")
+    native_trmt_frgnr_netprps: str | None = Field(default=None, description="내국인대우외국인순매수")
+    natn_netprps: str | None = Field(default=None, description="국가순매수")
+    samo_fund_netprps: str | None = Field(default=None, description="사모펀드순매수")
+    orgn_netprps: str | None = Field(default=None, description="기관계순매수")
 
 
 class DomesticSectorIndustryInvestorNetBuy(BaseModel, KiwoomHttpBody):

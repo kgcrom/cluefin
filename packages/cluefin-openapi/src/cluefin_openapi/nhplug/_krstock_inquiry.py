@@ -1,4 +1,4 @@
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 from cluefin_openapi.nhplug._exceptions import raise_for_rsp_cd
 from cluefin_openapi.nhplug._http_client import HttpClient
@@ -57,7 +57,7 @@ class KrStockInquiry:
         self.client = client
 
     @staticmethod
-    def _drop_none(body: Dict[str, Any]) -> Dict[str, Any]:
+    def _drop_none(body: dict[str, Any]) -> dict[str, Any]:
         """선택 파라미터는 값이 있을 때만 전송한다."""
         return {k: v for k, v in body.items() if v is not None}
 
@@ -68,8 +68,8 @@ class KrStockInquiry:
         ltg_aot_dit_cd: Literal["1", "9"],
         aet_bse: Literal["1", "2"],
         qut_dit_cd: Literal["UNT", "KRX", "NXT"],
-        aly_qut_cd: Optional[Literal["1", "2"]] = None,
-        cts: Optional[str] = None,
+        aly_qut_cd: Literal["1", "2"] | None = None,
+        cts: str | None = None,
     ) -> NHPlugHttpResponse[KrStockInquiryBalance]:
         """주식잔고조회 (`POST /krstock/inquiry/v1/balance`).
 
@@ -110,9 +110,9 @@ class KrStockInquiry:
         act_no: str,
         orr_dt: str,
         ost_cns_dit: Literal["0", "1", "2"],
-        itg_orr_no: Optional[int] = None,
-        orr_mkt_cd: Optional[Literal["00", "01", "02", "03", "06"]] = None,
-        cts: Optional[str] = None,
+        itg_orr_no: int | None = None,
+        orr_mkt_cd: Literal["00", "01", "02", "03", "06"] | None = None,
+        cts: str | None = None,
     ) -> NHPlugHttpResponse[KrStockInquiryDailyOrderExecution]:
         """주식일별주문체결조회 (`POST /krstock/inquiry/v1/dailyOrderExecution`).
 
@@ -149,10 +149,10 @@ class KrStockInquiry:
         iem_cd: str,
         ost_dit_cd: Literal["1", "2", "3"],
         nmn_pr_tp_cd: QuoteTypeCode,
-        orr_pr: Optional[int] = None,
-        cfd_lon_cd: Optional[CreditLoanCode] = None,
-        lon_dt: Optional[str] = None,
-        cts: Optional[str] = None,
+        orr_pr: int | None = None,
+        cfd_lon_cd: CreditLoanCode | None = None,
+        lon_dt: str | None = None,
+        cts: str | None = None,
     ) -> NHPlugHttpResponse[KrStockInquiryBuyableQuantity]:
         """매수가능수량조회 (`POST /krstock/inquiry/v1/buyableQuantity`).
 
@@ -194,8 +194,8 @@ class KrStockInquiry:
         act_no: str,
         iem_cd: str,
         cfd_lon_cd: SellableCreditLoanCode,
-        lon_dt: Optional[str] = None,
-        cts: Optional[str] = None,
+        lon_dt: str | None = None,
+        cts: str | None = None,
     ) -> NHPlugHttpResponse[KrStockInquirySellableQuantity]:
         """매도가능수량조회 (`POST /krstock/inquiry/v1/sellableQuantity`).
 
@@ -230,11 +230,11 @@ class KrStockInquiry:
         act_no: str,
         sby_dit_cd: ReservedInquiryTradeTypeCode,
         bkg_orr_tp_cd: ReservedInquiryOrderTypeCode,
-        bkg_orr_rtn_dt: Optional[str] = None,
-        iem_cd: Optional[str] = None,
-        cfd_lon_cd: Optional[ReservedCreditLoanCode] = None,
-        bkg_orr_can_dit_cd: Optional[Literal["0", "1", "2"]] = None,
-        cts: Optional[str] = None,
+        bkg_orr_rtn_dt: str | None = None,
+        iem_cd: str | None = None,
+        cfd_lon_cd: ReservedCreditLoanCode | None = None,
+        bkg_orr_can_dit_cd: Literal["0", "1", "2"] | None = None,
+        cts: str | None = None,
     ) -> NHPlugHttpResponse[KrStockInquiryReservedInquiry]:
         """주식예약주문조회 (`POST /krstock/inquiry/v1/reservedInquiry`).
 
@@ -282,8 +282,8 @@ class KrStockInquiry:
         iqr_dit_cd1: Literal["0", "1", "2"],
         fee_dit_cd: Literal["1", "2"],
         qut_dit_cd: Literal["UNT", "KRX", "NXT"],
-        aly_qut_cd: Optional[Literal["1", "2"]] = None,
-        cts: Optional[str] = None,
+        aly_qut_cd: Literal["1", "2"] | None = None,
+        cts: str | None = None,
     ) -> NHPlugHttpResponse[KrStockInquiryRealizedPnl]:
         """주식잔고조회_실현손익 (`POST /krstock/inquiry/v1/realizedPnl`).
 
@@ -323,8 +323,8 @@ class KrStockInquiry:
         eal_aly_cd: Literal["1", "2"],
         aet_bse: Literal["1", "2"],
         qut_dit_cd: Literal["UNT", "KRX", "NXT"],
-        aly_qut_cd: Optional[Literal["1", "2"]] = None,
-        cts: Optional[str] = None,
+        aly_qut_cd: Literal["1", "2"] | None = None,
+        cts: str | None = None,
     ) -> NHPlugHttpResponse[KrStockInquiryAssetStatus]:
         """투자계좌자산현황조회 (`POST /krstock/inquiry/v1/assetStatus`).
 
@@ -363,8 +363,8 @@ class KrStockInquiry:
         act_no: str,
         iqr_sta_dt: str,
         iqr_end_dt: str,
-        iem_cd: Optional[str] = None,
-        cts: Optional[str] = None,
+        iem_cd: str | None = None,
+        cts: str | None = None,
     ) -> NHPlugHttpResponse[KrStockInquiryDailyPnl]:
         """실현손익일별합산조회 (`POST /krstock/inquiry/v1/dailyPnl`).
 
@@ -398,7 +398,7 @@ class KrStockInquiry:
         act_no: str,
         iqr_sta_dt: str,
         iqr_end_dt: str,
-        cts: Optional[str] = None,
+        cts: str | None = None,
     ) -> NHPlugHttpResponse[KrStockInquiryTradingPnl]:
         """종목별실현손익현황조회 (`POST /krstock/inquiry/v1/tradingPnl`).
 
@@ -429,7 +429,7 @@ class KrStockInquiry:
     def integrated_margin(
         self,
         act_no: str,
-        cts: Optional[str] = None,
+        cts: str | None = None,
     ) -> NHPlugHttpResponse[KrStockInquiryIntegratedMargin]:
         """주식통합증거금 현황 (`POST /krstock/inquiry/v1/integratedMargin`).
 
@@ -452,9 +452,9 @@ class KrStockInquiry:
     def rights_held(
         self,
         act_no: str,
-        sta_dt: Optional[str] = None,
-        rit_tp_cd: Optional[str] = None,
-        cts: Optional[str] = None,
+        sta_dt: str | None = None,
+        rit_tp_cd: str | None = None,
+        cts: str | None = None,
     ) -> NHPlugHttpResponse[KrStockInquiryRightsHeld]:
         """기간별계좌권리현황조회보유 (`POST /krstock/inquiry/v1/rightsHeld`).
 
@@ -486,7 +486,7 @@ class KrStockInquiry:
     def rights_scheduled(
         self,
         act_no: str,
-        cts: Optional[str] = None,
+        cts: str | None = None,
     ) -> NHPlugHttpResponse[KrStockInquiryRightsScheduled]:
         """기간별계좌권리현황조회예정 (`POST /krstock/inquiry/v1/rightsScheduled`).
 

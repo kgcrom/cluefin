@@ -6,7 +6,6 @@ AAPL 은 정규장에 몇 초마다 체결되므로 수신 timeout 은 실패다
 """
 
 import asyncio
-from typing import Optional, Type
 
 import pytest
 from pydantic import BaseModel
@@ -42,10 +41,10 @@ def access_token(auth) -> str:
     return auth.generate_token().get_token()
 
 
-async def _receive_first(ws: KiwoomWebSocketClient, model: Type[BaseModel]) -> BaseModel:
+async def _receive_first(ws: KiwoomWebSocketClient, model: type[BaseModel]) -> BaseModel:
     """`model` 로 파싱되는 첫 항목 묶음. 정규장 timeout 이면 실패한다."""
 
-    async def wait() -> Optional[BaseModel]:
+    async def wait() -> BaseModel | None:
         async for message in ws.events():
             for parsed in OverseasRealtime.parse(message):
                 if isinstance(parsed, model):

@@ -5,7 +5,6 @@ Rows are shaped after real ones measured 2026-10-11 (CELH restatement, SMCI same
 
 from datetime import date
 from decimal import Decimal
-from typing import Optional
 
 import pytest
 
@@ -18,9 +17,9 @@ def _row(
     val: int,
     *,
     end: date = date(2021, 12, 31),
-    start: Optional[date] = None,
+    start: date | None = None,
     form: str = "10-K",
-    frame: Optional[str] = None,
+    frame: str | None = None,
 ) -> FactValue:
     return FactValue(start=start, end=end, val=Decimal(val), accn=accn, form=form, filed=filed, frame=frame)
 

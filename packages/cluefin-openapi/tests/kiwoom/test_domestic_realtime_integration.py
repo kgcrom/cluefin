@@ -9,7 +9,6 @@ skip 이 아니라 실패다.
 """
 
 import asyncio
-from typing import Dict, Type
 
 import pytest
 from pydantic import BaseModel
@@ -39,9 +38,9 @@ def access_token(auth) -> str:
     return auth.generate_token().get_token()
 
 
-async def _receive_each(ws: KiwoomWebSocketClient, *models: Type[BaseModel]) -> Dict[type, BaseModel]:
+async def _receive_each(ws: KiwoomWebSocketClient, *models: type[BaseModel]) -> dict[type, BaseModel]:
     """`models` 가 하나씩 파싱될 때까지 받는다. 장중 timeout 이면 실패한다."""
-    received: Dict[type, BaseModel] = {}
+    received: dict[type, BaseModel] = {}
 
     async def wait() -> None:
         async for message in ws.events():

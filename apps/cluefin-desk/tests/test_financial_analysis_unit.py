@@ -1,6 +1,6 @@
 """재무분석 화면의 순수 로직 — 사업연도 후퇴, 연결/개별 선택, 패널 포매팅.
 
-화면 조립·워커 흐름은 test_financial_analysis_screen.py (Pilot 하네스) 가 본다.
+화면 조립·워커 흐름은 test_financial_analysis_screen_unit.py (Pilot 하네스) 가 본다.
 """
 
 from datetime import datetime

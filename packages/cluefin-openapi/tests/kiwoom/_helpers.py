@@ -1,10 +1,10 @@
 import inspect
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import Mock
 
-DEFAULT_BASE_HEADERS: Dict[str, str] = {
+DEFAULT_BASE_HEADERS: dict[str, str] = {
     "Content-Type": "application/json",
     "Accept": "application/json",
 }
@@ -33,15 +33,15 @@ class EndpointCase:
     method_name: str
     response_model_attr: str
     api_id: str
-    call_kwargs: Dict[str, Any]
-    expected_body: Dict[str, Any]
-    response_payload: Dict[str, Any] = field(default_factory=lambda: {"return_code": 0, "return_msg": "OK"})
+    call_kwargs: dict[str, Any]
+    expected_body: dict[str, Any]
+    response_payload: dict[str, Any] = field(default_factory=lambda: {"return_code": 0, "return_msg": "OK"})
     cont_flag_key: str | None = "cont-yn"
     cont_flag_value: str = "N"
     next_key: str | None = ""
 
 
-def build_mock_response(payload: Dict[str, Any], api_id: str, cont_yn: str, next_key: str) -> Mock:
+def build_mock_response(payload: dict[str, Any], api_id: str, cont_yn: str, next_key: str) -> Mock:
     response = Mock()
     response.status_code = 200
     response.json.return_value = payload
@@ -57,7 +57,7 @@ def make_dummy_model(captured_instances: list[Any]):
             captured_instances.append(self)
 
         @classmethod
-        def model_validate(cls, data: Dict[str, Any]):
+        def model_validate(cls, data: dict[str, Any]):
             return cls(**data)
 
     return DummyResponseModel
@@ -68,7 +68,7 @@ def run_post_case(
     module,
     api_cls,
     case: EndpointCase,
-    base_headers: Dict[str, str] | None = None,
+    base_headers: dict[str, str] | None = None,
 ):
     if base_headers is None:
         base_headers = DEFAULT_BASE_HEADERS

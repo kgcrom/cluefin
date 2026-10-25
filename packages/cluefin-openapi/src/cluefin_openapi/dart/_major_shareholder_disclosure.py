@@ -1,4 +1,4 @@
-from typing import Mapping
+from collections.abc import Mapping
 
 from ._client import Client
 from ._major_shareholder_disclosure_types import (

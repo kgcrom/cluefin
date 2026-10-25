@@ -1,8 +1,9 @@
 import io
 import zipfile
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal, Mapping, Type
+from typing import Any, Literal
 
 import pytest
 import requests_mock
@@ -52,8 +53,8 @@ DOWNLOAD_QUERY_PARAMS = {
     "rcept_no": DOWNLOAD_RECEPT_NO,
     "reprt_code": DOWNLOAD_REPRT_CODE,
 }
-SUCCESS_XML = "<result><status>000</status><message>정상적으로 처리되었습니다</message></result>".encode("utf-8")
-ERROR_XML = "<result><status>012</status><message>에러</message></result>".encode("utf-8")
+SUCCESS_XML = "<result><status>000</status><message>정상적으로 처리되었습니다</message></result>".encode()
+ERROR_XML = "<result><status>012</status><message>에러</message></result>".encode()
 
 
 @dataclass(frozen=True)
@@ -61,7 +62,7 @@ class MethodCase:
     method_name: str
     endpoint: str
     response_type: type[Any]
-    item_type: Type[BaseModel]
+    item_type: type[BaseModel]
     params: dict[str, str]
     error_message: str
     overrides: dict[str, Any] | None = None
@@ -119,7 +120,7 @@ METHOD_CASES = [
 ]
 
 
-def build_payload(item_type: Type[BaseModel], overrides: dict[str, Any] | None = None) -> dict[str, Any]:
+def build_payload(item_type: type[BaseModel], overrides: dict[str, Any] | None = None) -> dict[str, Any]:
     return _build_payload(item_type, overrides=overrides)
 
 
@@ -442,7 +443,7 @@ def test_download_financial_statement_xbrl_rejects_existing_file_under_backslash
         (SingleCompanyFullStatementItem, ["bfefrmtrm_nm", "bfefrmtrm_amount"]),
     ],
 )
-def test_bfefrmtrm_fields_are_optional(item_type: Type[BaseModel], fields: list[str]) -> None:
+def test_bfefrmtrm_fields_are_optional(item_type: type[BaseModel], fields: list[str]) -> None:
     """분기/반기 보고서에서 bfefrmtrm_* 필드가 없어도 파싱되어야 함"""
     payload = build_payload(item_type)
     # bfefrmtrm_* 필드 제거

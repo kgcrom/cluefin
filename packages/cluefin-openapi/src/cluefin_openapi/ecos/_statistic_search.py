@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Literal, Optional, Sequence, cast
+from collections.abc import Sequence
+from typing import Literal, cast
 
 from ._client import Client, Lang
 from ._constants import EcosSeries
@@ -29,8 +30,8 @@ class StatisticSearch:
         item_codes: Sequence[str] = (),
         *,
         lang: Lang = "kr",
-        start_row: Optional[int] = None,
-        end_row: Optional[int] = None,
+        start_row: int | None = None,
+        end_row: int | None = None,
     ) -> EcosPage[StatisticObservation]:
         """통계표의 시계열 값을 받는다.
 

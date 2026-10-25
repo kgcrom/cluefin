@@ -1,6 +1,6 @@
 """DART API Exception classes."""
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class DartAPIError(Exception):
@@ -9,9 +9,9 @@ class DartAPIError(Exception):
     def __init__(
         self,
         message: str,
-        status_code: Optional[int] = None,
-        response_data: Optional[Dict[str, Any]] = None,
-        request_context: Optional[Dict[str, Any]] = None,
+        status_code: int | None = None,
+        response_data: dict[str, Any] | None = None,
+        request_context: dict[str, Any] | None = None,
     ):
         super().__init__(message)
         self.message = message
@@ -32,8 +32,8 @@ class DartAuthenticationError(DartAPIError):
         self,
         message: str = "Authentication failed - invalid or expired token",
         status_code: int = 401,
-        response_data: Optional[Dict[str, Any]] = None,
-        request_context: Optional[Dict[str, Any]] = None,
+        response_data: dict[str, Any] | None = None,
+        request_context: dict[str, Any] | None = None,
     ):
         super().__init__(message, status_code, response_data, request_context)
 
@@ -45,8 +45,8 @@ class DartAuthorizationError(DartAPIError):
         self,
         message: str = "Access forbidden - insufficient permissions",
         status_code: int = 403,
-        response_data: Optional[Dict[str, Any]] = None,
-        request_context: Optional[Dict[str, Any]] = None,
+        response_data: dict[str, Any] | None = None,
+        request_context: dict[str, Any] | None = None,
     ):
         super().__init__(message, status_code, response_data, request_context)
 
@@ -58,8 +58,8 @@ class DartClientError(DartAPIError):
         self,
         message: str,
         status_code: int,
-        response_data: Optional[Dict[str, Any]] = None,
-        request_context: Optional[Dict[str, Any]] = None,
+        response_data: dict[str, Any] | None = None,
+        request_context: dict[str, Any] | None = None,
     ):
         super().__init__(message, status_code, response_data, request_context)
 
@@ -71,8 +71,8 @@ class DartServerError(DartAPIError):
         self,
         message: str,
         status_code: int,
-        response_data: Optional[Dict[str, Any]] = None,
-        request_context: Optional[Dict[str, Any]] = None,
+        response_data: dict[str, Any] | None = None,
+        request_context: dict[str, Any] | None = None,
     ):
         super().__init__(message, status_code, response_data, request_context)
 
@@ -83,10 +83,10 @@ class DartRateLimitError(DartAPIError):
     def __init__(
         self,
         message: str,
-        status_code: Optional[int] = 429,
-        response_data: Optional[Dict[str, Any]] = None,
-        request_context: Optional[Dict[str, Any]] = None,
-        retry_after: Optional[int] = None,
+        status_code: int | None = 429,
+        response_data: dict[str, Any] | None = None,
+        request_context: dict[str, Any] | None = None,
+        retry_after: int | None = None,
     ):
         super().__init__(message, status_code, response_data, request_context)
         self.retry_after = retry_after
@@ -98,9 +98,9 @@ class DartTimeoutError(DartAPIError):
     def __init__(
         self,
         message: str = "Request timeout",
-        status_code: Optional[int] = None,
-        response_data: Optional[Dict[str, Any]] = None,
-        request_context: Optional[Dict[str, Any]] = None,
+        status_code: int | None = None,
+        response_data: dict[str, Any] | None = None,
+        request_context: dict[str, Any] | None = None,
     ):
         super().__init__(message, status_code, response_data, request_context)
 
@@ -111,8 +111,8 @@ class DartNetworkError(DartAPIError):
     def __init__(
         self,
         message: str = "Network connection failed",
-        status_code: Optional[int] = None,
-        response_data: Optional[Dict[str, Any]] = None,
-        request_context: Optional[Dict[str, Any]] = None,
+        status_code: int | None = None,
+        response_data: dict[str, Any] | None = None,
+        request_context: dict[str, Any] | None = None,
     ):
         super().__init__(message, status_code, response_data, request_context)

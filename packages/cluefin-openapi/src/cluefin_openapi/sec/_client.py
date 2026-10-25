@@ -1,4 +1,3 @@
-from typing import Optional
 from urllib.parse import urlsplit
 
 import requests
@@ -101,7 +100,7 @@ class Client(BaseHttpClient):
         """GET a sec.gov URL and return the raw body."""
         return self._request(url).content
 
-    def _dispatch_sec(self, response: requests.Response, request_context: dict) -> Optional[Exception]:
+    def _dispatch_sec(self, response: requests.Response, request_context: dict) -> Exception | None:
         """Map a non-200 HTTP response to the appropriate SEC exception."""
         common = {
             "status_code": response.status_code,

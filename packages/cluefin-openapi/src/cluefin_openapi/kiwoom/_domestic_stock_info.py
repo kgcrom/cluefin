@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 from cluefin_openapi.kiwoom._domestic_stock_info_types import (
     DomesticStockInfoBasic,
@@ -993,7 +993,7 @@ class DomesticStockInfo:
         stk_cd: str,
         tdy_pred: Literal["1", "2"],
         tic_min: str = "0",
-        tm: Optional[str] = None,
+        tm: str | None = None,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticStockInfoDailyPreviousDayConclusion]:

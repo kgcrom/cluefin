@@ -1,6 +1,6 @@
 """Custom exceptions for Kiwoom API client."""
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class KiwoomAPIError(Exception):
@@ -8,14 +8,14 @@ class KiwoomAPIError(Exception):
 
     # Kiwoom server error code (body return_code), set when the error originates
     # from a documented API 서버 오류코드 (see _error_codes.py).
-    return_code: Optional[int] = None
+    return_code: int | None = None
 
     def __init__(
         self,
         message: str,
-        status_code: Optional[int] = None,
-        response_data: Optional[Dict[str, Any]] = None,
-        request_context: Optional[Dict[str, Any]] = None,
+        status_code: int | None = None,
+        response_data: dict[str, Any] | None = None,
+        request_context: dict[str, Any] | None = None,
     ):
         super().__init__(message)
         self.message = message
@@ -48,10 +48,10 @@ class KiwoomRateLimitError(KiwoomAPIError):
     def __init__(
         self,
         message: str,
-        status_code: Optional[int] = None,
-        response_data: Optional[Dict[str, Any]] = None,
-        request_context: Optional[Dict[str, Any]] = None,
-        retry_after: Optional[int] = None,
+        status_code: int | None = None,
+        response_data: dict[str, Any] | None = None,
+        request_context: dict[str, Any] | None = None,
+        retry_after: int | None = None,
     ):
         super().__init__(message, status_code, response_data, request_context)
         self.retry_after = retry_after

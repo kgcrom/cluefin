@@ -19,8 +19,9 @@ emitting `N-1` leading NaNs. `cluefin-ta`'s definition is the reference here.
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 from cluefin_ta import ADX, ATR, BBANDS, MACD, MDD, OBV, RSI, SHARPE, SMA, STOCH

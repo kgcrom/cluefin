@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 from cluefin_openapi.kis._domestic_account_types import (
     BuyTradableInquiry,
@@ -72,8 +72,8 @@ class DomesticAccount:
         ord_qty: int,
         ord_unpr: int,
         sll_type: Literal["01", "02", "05"] = "01",
-        cndt_pric: Optional[int] = None,
-        excg_id_dvsn_cd: Optional[Literal["KRX", "NXT", "SOR"]] = None,
+        cndt_pric: int | None = None,
+        excg_id_dvsn_cd: Literal["KRX", "NXT", "SOR"] | None = None,
     ) -> KisHttpResponse[StockQuoteCurrent]:
         """
         주식주문(현금)
@@ -145,20 +145,20 @@ class DomesticAccount:
         ],
         ord_qty: str,
         ord_unpr: str,
-        rsvn_ord_yn: Optional[Literal["Y", "N"]] = None,
-        emgc_ord_yn: Optional[Literal["Y", "N"]] = None,
-        pgtr_dvsn: Optional[str] = None,
-        lqty_tr_ngtn_dtl_no: Optional[str] = None,
-        lqty_tr_agmt_no: Optional[str] = None,
-        lqty_tr_ngtn_id: Optional[str] = None,
-        lp_ord_yn: Optional[Literal["Y", "N"]] = None,
-        mdia_odno: Optional[str] = None,
-        ord_svr_dvsn_cd: Optional[str] = None,
-        pgm_nmpr_stmt_dvsn_cd: Optional[str] = None,
-        cvrg_slct_rson_cd: Optional[str] = None,
-        cvrg_seq: Optional[str] = None,
-        excg_id_dvsn_cd: Optional[Literal["KRX", "NXT", "SOR"]] = None,
-        cndt_pric: Optional[str] = None,
+        rsvn_ord_yn: Literal["Y", "N"] | None = None,
+        emgc_ord_yn: Literal["Y", "N"] | None = None,
+        pgtr_dvsn: str | None = None,
+        lqty_tr_ngtn_dtl_no: str | None = None,
+        lqty_tr_agmt_no: str | None = None,
+        lqty_tr_ngtn_id: str | None = None,
+        lp_ord_yn: Literal["Y", "N"] | None = None,
+        mdia_odno: str | None = None,
+        ord_svr_dvsn_cd: str | None = None,
+        pgm_nmpr_stmt_dvsn_cd: str | None = None,
+        cvrg_slct_rson_cd: str | None = None,
+        cvrg_seq: str | None = None,
+        excg_id_dvsn_cd: Literal["KRX", "NXT", "SOR"] | None = None,
+        cndt_pric: str | None = None,
     ) -> KisHttpResponse[StockQuoteCredit]:
         """
         주식주문(신용)
@@ -255,7 +255,7 @@ class DomesticAccount:
         ord_qty: str,
         ord_unpr: str,
         qty_all_ord_yn: Literal["Y", "N"],
-        excg_id_dvsn_cd: Optional[Literal["KRX", "NXT", "SOR"]] = None,
+        excg_id_dvsn_cd: Literal["KRX", "NXT", "SOR"] | None = None,
     ) -> KisHttpResponse[StockQuoteCorrection]:
         """
         주식주문(정정취소)
@@ -365,8 +365,8 @@ class DomesticAccount:
         ctx_area_fk100: str,
         ctx_area_nk100: str,
         ord_gno_brno: str = "",
-        pdno: Optional[str] = None,
-        odno: Optional[str] = None,
+        pdno: str | None = None,
+        odno: str | None = None,
     ) -> KisHttpResponse[StockDailySeparateConclusion]:
         """
         주식일별주문체결조회
@@ -628,9 +628,9 @@ class DomesticAccount:
         sll_buy_dvsn_cd: Literal["01", "02"],
         ord_dvsn_cd: Literal["00", "01", "02", "05"],
         ord_objt_cblc_dvsn_cd: Literal["10", "12", "14", "21", "22", "23", "24", "25", "26", "27", "28"],
-        loan_dt: Optional[str] = None,
-        rsvn_ord_end_dt: Optional[str] = None,
-        ldng_dt: Optional[str] = None,
+        loan_dt: str | None = None,
+        rsvn_ord_end_dt: str | None = None,
+        ldng_dt: str | None = None,
     ) -> KisHttpResponse[StockReserveQuote]:
         """
         주식예약주문
@@ -687,10 +687,10 @@ class DomesticAccount:
         ord_dvsn_cd: Literal["00", "01", "02", "05"],
         ord_objt_cblc_dvsn_cd: Literal["10", "12", "14", "21", "22", "23", "24", "25", "26", "27", "28"],
         ctal_tlno: str,
-        loan_dt: Optional[str] = None,
-        rsvn_ord_end_dt: Optional[str] = None,
-        rsvn_ord_orgno: Optional[str] = None,
-        rsvn_ord_ord_dt: Optional[str] = None,
+        loan_dt: str | None = None,
+        rsvn_ord_end_dt: str | None = None,
+        rsvn_ord_orgno: str | None = None,
+        rsvn_ord_ord_dt: str | None = None,
     ) -> KisHttpResponse[StockReserveQuoteCorrection]:
         """
         주식예약주문정정취소

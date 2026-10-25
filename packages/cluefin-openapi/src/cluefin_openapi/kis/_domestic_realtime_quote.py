@@ -7,7 +7,6 @@ References:
 """
 
 from functools import wraps
-from typing import List
 
 from ._domestic_realtime_quote_types import (
     EXECUTION_FIELD_NAMES,
@@ -101,7 +100,7 @@ class DomesticRealtimeQuote:
         await self.socket_client.unsubscribe(self.TR_ID_EXECUTION, stock_code)
 
     @staticmethod
-    def parse_execution_data(data: List[str]) -> List[DomesticRealtimeExecutionItem]:
+    def parse_execution_data(data: list[str]) -> list[DomesticRealtimeExecutionItem]:
         """Parse WebSocket data into list of DomesticRealtimeExecutionItem.
 
         WebSocket data is received as a list of string values separated by "^" delimiter.
@@ -183,7 +182,7 @@ class DomesticRealtimeQuote:
         await self.socket_client.unsubscribe(self.TR_ID_ORDERBOOK, stock_code)
 
     @staticmethod
-    def parse_orderbook_data(data: List[str]) -> List[DomesticRealtimeOrderbookItem]:
+    def parse_orderbook_data(data: list[str]) -> list[DomesticRealtimeOrderbookItem]:
         """Parse WebSocket data into list of DomesticRealtimeOrderbookItem.
 
         WebSocket data is received as a list of string values separated by "^" delimiter.
@@ -275,7 +274,7 @@ class DomesticRealtimeQuote:
         await self.socket_client.unsubscribe(self.TR_ID_EXECUTION_NOTIFICATION, hts_id)
 
     @staticmethod
-    def parse_execution_notification_data(data: List[str]) -> List[DomesticRealtimeExecutionNotificationItem]:
+    def parse_execution_notification_data(data: list[str]) -> list[DomesticRealtimeExecutionNotificationItem]:
         """Parse WebSocket data into list of DomesticRealtimeExecutionNotificationItem.
 
         WebSocket data is received as a list of string values separated by "^" delimiter.

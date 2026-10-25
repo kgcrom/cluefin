@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel, ConfigDict, Field
 
 from cluefin_openapi.dart._model import DartHttpBody
@@ -22,18 +20,18 @@ class SingleCompanyMajorAccountItem(BaseModel):
     thstrm_nm: str = Field(description="당기명 (ex: 제 13 기 3분기말)")
     thstrm_dt: str = Field(description="당기일자 (ex: 2018.09.30 현재)")
     thstrm_amount: str = Field(description="당기금액 (ex: 9,999,999,999)")
-    thstrm_add_amount: Optional[str] = Field(description="당기누적금액 (ex: 9,999,999,999)", default=None)
+    thstrm_add_amount: str | None = Field(description="당기누적금액 (ex: 9,999,999,999)", default=None)
     frmtrm_nm: str = Field(description="전기명 (ex: 제 12 기말)")
     frmtrm_dt: str = Field(description="전기일자 (ex: 2017.01.01 ~ 2017.12.31)")
     frmtrm_amount: str = Field(description="전기금액 (ex: 9,999,999,999)")
-    frmtrm_add_amount: Optional[str] = Field(description="전기누적금액 (ex: 9,999,999,999)", default=None)
-    bfefrmtrm_nm: Optional[str] = Field(
+    frmtrm_add_amount: str | None = Field(description="전기누적금액 (ex: 9,999,999,999)", default=None)
+    bfefrmtrm_nm: str | None = Field(
         default=None, description="전전기명 (ex: 제 11 기말(※ 사업보고서의 경우에만 출력))"
     )
-    bfefrmtrm_dt: Optional[str] = Field(
+    bfefrmtrm_dt: str | None = Field(
         default=None, description="전전기일자 (ex: 2016.12.31 현재(※ 사업보고서의 경우에만 출력))"
     )
-    bfefrmtrm_amount: Optional[str] = Field(
+    bfefrmtrm_amount: str | None = Field(
         default=None, description="전전기금액 (ex: 9,999,999,999(※ 사업보고서의 경우에만 출력))"
     )
     ord: int = Field(description="계정과목 정렬순서")
@@ -50,7 +48,7 @@ class MultiCompanyMajorAccountItem(BaseModel):
     rcept_no: str = Field(description="접수번호(14자리)")
     bsns_year: str = Field(description="사업 연도 (YYYY)")
     stock_code: str = Field(description="종목 코드 (상장회사의 종목코드 6자리)")
-    corp_name: Optional[str] = Field(description="회사명", default=None)
+    corp_name: str | None = Field(description="회사명", default=None)
     corp_code: str = Field(description="공시대상회사 고유번호 (8자리)")
     reprt_code: str = Field(
         description="보고서 코드 (1분기보고서:11013, 반기보고서:11012, 3분기보고서:11014, 사업보고서:11011)"
@@ -63,18 +61,18 @@ class MultiCompanyMajorAccountItem(BaseModel):
     thstrm_nm: str = Field(description="당기명 (ex: 제 13 기 3분기말)")
     thstrm_dt: str = Field(description="당기일자 (ex: 2018.09.30 현재)")
     thstrm_amount: str = Field(description="당기금액 (ex: 9,999,999,999)")
-    thstrm_add_amount: Optional[str] = Field(description="당기누적금액 (ex: 9,999,999,999)", default=None)
+    thstrm_add_amount: str | None = Field(description="당기누적금액 (ex: 9,999,999,999)", default=None)
     frmtrm_nm: str = Field(description="전기명 (ex: 제 12 기말)")
     frmtrm_dt: str = Field(description="전기일자 (ex: 2017.01.01 ~ 2017.12.31)")
     frmtrm_amount: str = Field(description="전기금액 (ex: 9,999,999,999)")
-    frmtrm_add_amount: Optional[str] = Field(description="전기누적금액 (ex: 9,999,999,999)", default=None)
-    bfefrmtrm_nm: Optional[str] = Field(
+    frmtrm_add_amount: str | None = Field(description="전기누적금액 (ex: 9,999,999,999)", default=None)
+    bfefrmtrm_nm: str | None = Field(
         default=None, description="전전기명 (ex: 제 11 기말(※ 사업보고서의 경우에만 출력))"
     )
-    bfefrmtrm_dt: Optional[str] = Field(
+    bfefrmtrm_dt: str | None = Field(
         default=None, description="전전기일자 (ex: 2016.12.31 현재(※ 사업보고서의 경우에만 출력))"
     )
-    bfefrmtrm_amount: Optional[str] = Field(
+    bfefrmtrm_amount: str | None = Field(
         default=None, description="전전기금액 (ex: 9,999,999,999(※ 사업보고서의 경우에만 출력))"
     )
     ord: str = Field(description="계정과목 정렬순서")
@@ -105,19 +103,19 @@ class SingleCompanyFullStatementItem(BaseModel):
     thstrm_amount: str = Field(
         description="당기금액 (9,999,999,999 ※ 분/반기 보고서이면서 (포괄)손익계산서 일 경우 [3개월] 금액)"
     )
-    thstrm_add_amount: Optional[str] = Field(description="당기누적금액 (9,999,999,999)", default=None)
-    frmtrm_nm: Optional[str] = Field(default=None, description="전기명 (ex: 제 12 기말)")
-    frmtrm_amount: Optional[str] = Field(default=None, description="전기금액 (9,999,999,999)")
-    frmtrm_q_nm: Optional[str] = Field(description="전기명(분/반기) (ex: 제 18 기 반기)", default=None)
-    frmtrm_q_amount: Optional[str] = Field(
+    thstrm_add_amount: str | None = Field(description="당기누적금액 (9,999,999,999)", default=None)
+    frmtrm_nm: str | None = Field(default=None, description="전기명 (ex: 제 12 기말)")
+    frmtrm_amount: str | None = Field(default=None, description="전기금액 (9,999,999,999)")
+    frmtrm_q_nm: str | None = Field(description="전기명(분/반기) (ex: 제 18 기 반기)", default=None)
+    frmtrm_q_amount: str | None = Field(
         description="전기금액(분/반기) (9,999,999,999 ※ 분/반기 보고서이면서 (포괄)손익계산서 일 경우 [3개월] 금액)",
         default=None,
     )
-    frmtrm_add_amount: Optional[str] = Field(description="전기누적금액 (9,999,999,999)", default=None)
-    bfefrmtrm_nm: Optional[str] = Field(
+    frmtrm_add_amount: str | None = Field(description="전기누적금액 (9,999,999,999)", default=None)
+    bfefrmtrm_nm: str | None = Field(
         default=None, description="전전기명 (ex: 제 11 기말(※ 사업보고서의 경우에만 출력))"
     )
-    bfefrmtrm_amount: Optional[str] = Field(
+    bfefrmtrm_amount: str | None = Field(
         default=None, description="전전기금액 (9,999,999,999(※ 사업보고서의 경우에만 출력))"
     )
     ord: str = Field(description="계정과목 정렬순서 (계정과목 정렬순서)")
@@ -144,7 +142,7 @@ class SingleCompanyMajorIndicatorItem(BaseModel):
     idx_cl_nm: str = Field(description="지표분류명 (수익성지표,안정성지표,성장성지표,활동성지표)")
     idx_code: str = Field(description="지표코드 (ex) M211000")
     idx_nm: str = Field(description="지표명 (ex) 영업이익률")
-    idx_val: Optional[str] = Field(description="지표값 (ex) 0.256 — 일부 항목은 값이 제공되지 않습니다.", default=None)
+    idx_val: str | None = Field(description="지표값 (ex) 0.256 — 일부 항목은 값이 제공되지 않습니다.", default=None)
 
 
 class SingleCompanyMajorIndicator(BaseModel, DartHttpBody[SingleCompanyMajorIndicatorItem]):
@@ -167,7 +165,7 @@ class MultiCompanyMajorIndicatorItem(BaseModel):
     idx_cl_nm: str = Field(description="지표분류명 (수익성지표,안정성지표,성장성지표,활동성지표)")
     idx_code: str = Field(description="지표코드 (ex) M211000")
     idx_nm: str = Field(description="지표명 (ex) 영업이익률")
-    idx_val: Optional[str] = Field(description="지표값 (ex) 0.256 — 일부 항목은 값이 제공되지 않습니다.", default=None)
+    idx_val: str | None = Field(description="지표값 (ex) 0.256 — 일부 항목은 값이 제공되지 않습니다.", default=None)
 
 
 class MultiCompanyMajorIndicator(BaseModel, DartHttpBody[MultiCompanyMajorIndicatorItem]):
@@ -185,7 +183,7 @@ class XbrlTaxonomyItem(BaseModel):
     bsns_de: str = Field(description="기준일 (ex: 20221231)")
     label_kor: str = Field(description="한글 출력명 (ex: 자본총계)")
     label_eng: str = Field(description="영문 출력명 (ex: Total Equity)")
-    data_tp: Optional[str] = Field(
+    data_tp: str | None = Field(
         default=None,
         description="데이터 유형 (※ 데이타 유형설명 - text block : 제목 - Text : Text - yyyy-mm-dd : Date - X : Monetary Value - (X): Monetary Value(Negative) - X.XX : Decimalized Value - Shares : Number of shares (주식 수) - For each : 공시된 항목이 전후로 반복적으로 공시될 경우 사용 - 공란 : 입력 필요 없음)",
     )

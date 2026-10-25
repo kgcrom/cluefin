@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import List
 
 from loguru import logger
 
@@ -22,7 +21,7 @@ class StockScreener:
     def __init__(self, fetcher: DomesticDataFetcher):
         self.fetcher = fetcher
 
-    def get_top_gainers(self) -> List[ScreeningItem]:
+    def get_top_gainers(self) -> list[ScreeningItem]:
         try:
             response = self.fetcher.get_top_percentage_change(sort_tp="1")
             items = response.body.pred_pre_flu_rt_upper
@@ -42,7 +41,7 @@ class StockScreener:
             logger.error(f"Failed to fetch top gainers: {e}")
             return []
 
-    def get_top_losers(self) -> List[ScreeningItem]:
+    def get_top_losers(self) -> list[ScreeningItem]:
         try:
             response = self.fetcher.get_top_percentage_change(sort_tp="2")
             items = response.body.pred_pre_flu_rt_upper
@@ -62,7 +61,7 @@ class StockScreener:
             logger.error(f"Failed to fetch top losers: {e}")
             return []
 
-    def get_top_volume(self) -> List[ScreeningItem]:
+    def get_top_volume(self) -> list[ScreeningItem]:
         try:
             response = self.fetcher.get_top_trading_volume()
             items = response.body.tdy_trde_qty_upper
@@ -82,7 +81,7 @@ class StockScreener:
             logger.error(f"Failed to fetch top volume: {e}")
             return []
 
-    def get_top_value(self) -> List[ScreeningItem]:
+    def get_top_value(self) -> list[ScreeningItem]:
         try:
             response = self.fetcher.get_top_transaction_value()
             items = response.body.trde_prica_upper
@@ -102,7 +101,7 @@ class StockScreener:
             logger.error(f"Failed to fetch top value: {e}")
             return []
 
-    def get_top_foreigner_net_buy(self) -> List[ScreeningItem]:
+    def get_top_foreigner_net_buy(self) -> list[ScreeningItem]:
         try:
             response = self.fetcher.get_top_foreigner_period_trading(trde_tp="1")
             items = response.body.for_dt_trde_upper
@@ -122,7 +121,7 @@ class StockScreener:
             logger.error(f"Failed to fetch foreigner net buy: {e}")
             return []
 
-    def get_new_high_price(self) -> List[ScreeningItem]:
+    def get_new_high_price(self) -> list[ScreeningItem]:
         try:
             response = self.fetcher.get_new_high_low_price(ntl_tp="1")
             items = response.body.ntl_pric
@@ -142,7 +141,7 @@ class StockScreener:
             logger.error(f"Failed to fetch new high price: {e}")
             return []
 
-    def get_price_volatility(self) -> List[ScreeningItem]:
+    def get_price_volatility(self) -> list[ScreeningItem]:
         try:
             response = self.fetcher.get_price_volatility(flu_tp="1")
             items = response.body.pric_jmpflu
@@ -163,7 +162,7 @@ class StockScreener:
             logger.error(f"Failed to fetch price volatility: {e}")
             return []
 
-    def get_top_margin_ratio(self) -> List[ScreeningItem]:
+    def get_top_margin_ratio(self) -> list[ScreeningItem]:
         try:
             response = self.fetcher.get_top_margin_ratio()
             items = response.body.crd_rt_upper
@@ -188,7 +187,7 @@ class StockScreener:
     # KIS-backed rankings (empty without KIS keys)
     # ──────────────────────────────────────
 
-    def get_dividend_yield_top(self) -> List[ScreeningItem]:
+    def get_dividend_yield_top(self) -> list[ScreeningItem]:
         """배당수익률 상위 (KIS). 시세 없이 배당 정보만 내려오는 랭킹이라
         current_price/volume 은 비운다. extra = 배당수익률(%)."""
         if not self.fetcher.has_kis:
@@ -210,7 +209,7 @@ class StockScreener:
             logger.error(f"Failed to fetch dividend yield top: {e}")
             return []
 
-    def get_short_selling_top(self) -> List[ScreeningItem]:
+    def get_short_selling_top(self) -> list[ScreeningItem]:
         """공매도 상위 (KIS, 당일). extra = 공매도 거래량 비중(%)."""
         if not self.fetcher.has_kis:
             return []
@@ -231,7 +230,7 @@ class StockScreener:
             logger.error(f"Failed to fetch short selling top: {e}")
             return []
 
-    def get_credit_balance_top(self) -> List[ScreeningItem]:
+    def get_credit_balance_top(self) -> list[ScreeningItem]:
         """신용잔고 상위 (KIS, 잔고비율순). extra = 융자잔고비율(%)."""
         if not self.fetcher.has_kis:
             return []
@@ -252,7 +251,7 @@ class StockScreener:
             logger.error(f"Failed to fetch credit balance top: {e}")
             return []
 
-    def get_disparity_index_top(self) -> List[ScreeningItem]:
+    def get_disparity_index_top(self) -> list[ScreeningItem]:
         """이격도(20일) 상위 (KIS). extra = 20일 이격도."""
         if not self.fetcher.has_kis:
             return []

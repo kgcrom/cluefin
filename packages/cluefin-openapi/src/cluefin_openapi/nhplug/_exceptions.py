@@ -1,6 +1,6 @@
 """Custom exceptions for NH PLUG API client."""
 
-from typing import Any, Dict, Optional, Type
+from typing import Any
 
 from cluefin_openapi.nhplug._model import SUCCESS_RSP_CODES
 
@@ -11,9 +11,9 @@ class NHPlugAPIError(Exception):
     def __init__(
         self,
         message: str,
-        status_code: Optional[int] = None,
-        response_data: Optional[Dict[str, Any]] = None,
-        request_context: Optional[Dict[str, Any]] = None,
+        status_code: int | None = None,
+        response_data: dict[str, Any] | None = None,
+        request_context: dict[str, Any] | None = None,
     ):
         super().__init__(message)
         self.message = message
@@ -22,7 +22,7 @@ class NHPlugAPIError(Exception):
         self.request_context = request_context or {}
 
     @property
-    def rsp_cd(self) -> Optional[str]:
+    def rsp_cd(self) -> str | None:
         """응답 body 의 `rsp_cd` — HTTP 200 실패와 HTTP 400 입력 오류(IGW…) 모두 담긴다."""
         data = self.response_data
         return data.get("rsp_cd") if isinstance(data, dict) else None
@@ -56,10 +56,10 @@ class NHPlugRateLimitError(NHPlugAPIError):
     def __init__(
         self,
         message: str,
-        status_code: Optional[int] = None,
-        response_data: Optional[Dict[str, Any]] = None,
-        request_context: Optional[Dict[str, Any]] = None,
-        retry_after: Optional[int] = None,
+        status_code: int | None = None,
+        response_data: dict[str, Any] | None = None,
+        request_context: dict[str, Any] | None = None,
+        retry_after: int | None = None,
     ):
         super().__init__(message, status_code, response_data, request_context)
         self.retry_after = retry_after
@@ -126,14 +126,14 @@ NOT_BUSINESS_DAY_RSP_CODES: tuple[str, ...] = (
     "14100",  # 모의투자 영업일이 아닙니다 (2026-08-22 토요일 모의)
 )
 
-_RSP_CD_ERROR_TYPES: Dict[str, Type[NHPlugAPIError]] = {
+_RSP_CD_ERROR_TYPES: dict[str, type[NHPlugAPIError]] = {
     **dict.fromkeys(NO_DATA_RSP_CODES, NHPlugNoDataError),
     **dict.fromkeys(MOCK_UNSUPPORTED_RSP_CODES, NHPlugMockUnsupportedError),
     **dict.fromkeys(NOT_BUSINESS_DAY_RSP_CODES, NHPlugNotBusinessDayError),
 }
 
 
-def raise_for_rsp_cd(response_data: Dict[str, Any]) -> None:
+def raise_for_rsp_cd(response_data: dict[str, Any]) -> None:
     """HTTP 200 이어도 body `rsp_cd` 가 실패일 수 있으므로 확인한다.
 
     뜻이 확인된 코드는 전용 예외(모두 NHPlugAPIError 하위)로, 나머지는 NHPlugAPIError 로 올린다.

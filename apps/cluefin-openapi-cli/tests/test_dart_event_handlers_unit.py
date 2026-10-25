@@ -2,7 +2,7 @@
 
 라이브러리 메서드 이름은 엔드포인트와 자주 다르다(`real_estate_development` → dfOcr, 부도발생). 표의 `endpoint`
 가 진실의 원천이므로, 실제 DART client 의 `_get` 만 가로채 36종 전부를 대조한다. 계약 테스트
-(`test_handler_client_contract.py`)는 enum 첫 값 하나만 돌기 때문에 이 테스트가 필요하다.
+(`test_handler_client_contract_unit.py`)는 enum 첫 값 하나만 돌기 때문에 이 테스트가 필요하다.
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pytest
-from cluefin_openapi.dart._client import Client as DartClient
+from cluefin_openapi.dart import Client as DartClient
 
 from cluefin_openapi_cli.errors import EXIT_RATE_LIMIT, EXIT_USAGE, CliError, classify_exception
 from cluefin_openapi_cli.handlers import dart as handlers

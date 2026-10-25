@@ -18,6 +18,9 @@ its non-obvious constraints.
 - Real API keys are used **only** by tests marked `integration`; everything else is mocked
   and hits no network.
 - `realtime`-marked tests require market hours (09:00–15:30 KST).
+- Test files are `test_<target>_unit.py` or `test_<target>_integration.py`, flat under each package's
+  `tests/` (subfolders only per broker/feed). Shared helpers are `_`-prefixed modules imported
+  relatively (`from ._helpers import …`), never via `sys.path` edits.
 
 ## Codacy (PR check)
 
@@ -134,6 +137,9 @@ shapes are in `src/dart/client.ts` and `src/dart/xml.ts`.
 
 - Conventional Commits with **Korean** messages: `type(scope): 설명`.
 - When discovering broker commands, prefer `cluefin-openapi-cli`'s `--json` output.
+- Apps import clients, auth, services and exceptions from the broker package (`from cluefin_openapi.kis import
+  Auth`), not its `_`-modules. Response models are the exception: only kis realtime and ecos re-export them, so
+  `cluefin_openapi.<broker>._*_types` is the path. Patch targets in tests follow the import path the app uses.
 - `packages/*/examples/*.ipynb` 노트북은 커밋 전에 output·execution_count 를 지운다
   (출력에 계좌번호가 섞일 수 있다):
   `uv run --with jupyter jupyter nbconvert --clear-output --inplace <노트북>.ipynb`

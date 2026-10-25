@@ -3,7 +3,7 @@
 import json
 import re
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import requests_mock
 
@@ -18,15 +18,15 @@ SAMPLE_LIMIT_MESSAGE = (
 _PATH = re.compile(r"^/api/(?P<service>\w+)/(?P<key>[^/]+)/json/(?P<lang>\w+)/(?P<start>\d+)/(?P<end>\d+)")
 
 
-def load(name: str) -> Dict[str, Any]:
+def load(name: str) -> dict[str, Any]:
     return json.loads((FIXTURES / name).read_text(encoding="utf-8"))
 
 
-def result(code: str, message: str = "") -> Dict[str, Any]:
+def result(code: str, message: str = "") -> dict[str, Any]:
     return {"RESULT": {"CODE": code, "MESSAGE": message}}
 
 
-def serve_rows(mocker: requests_mock.Mocker, service: str, rows: List[Dict[str, Any]], sample_limit: int = 10):
+def serve_rows(mocker: requests_mock.Mocker, service: str, rows: list[dict[str, Any]], sample_limit: int = 10):
     """URL 의 행 범위대로 잘라 주는 가짜 ECOS. sample 키로 sample_limit 를 넘기면 ERROR-301."""
 
     def respond(request, context):

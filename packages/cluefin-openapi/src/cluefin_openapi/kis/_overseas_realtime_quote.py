@@ -7,7 +7,6 @@ References:
 """
 
 from functools import wraps
-from typing import List
 
 from ._overseas_realtime_quote_types import (
     OVERSEAS_DELAYED_ORDERBOOK_FIELD_NAMES,
@@ -103,7 +102,7 @@ class OverseasRealtimeQuote:
         await self.socket_client.unsubscribe(self.TR_ID, tr_key)
 
     @staticmethod
-    def parse_data(data: List[str]) -> List[OverseasRealtimeOrderbookItem]:
+    def parse_data(data: list[str]) -> list[OverseasRealtimeOrderbookItem]:
         """Parse WebSocket data into list of OverseasRealtimeOrderbookItem.
 
         Args:
@@ -157,7 +156,7 @@ class OverseasRealtimeQuote:
         await self.socket_client.unsubscribe(self.TR_ID_EXECUTION, tr_key)
 
     @staticmethod
-    def parse_execution_data(data: List[str]) -> List[OverseasRealtimeExecutionItem]:
+    def parse_execution_data(data: list[str]) -> list[OverseasRealtimeExecutionItem]:
         """Parse WebSocket data into list of OverseasRealtimeExecutionItem.
 
         WebSocket data is received as a list of string values separated by "^" delimiter.
@@ -224,7 +223,7 @@ class OverseasRealtimeQuote:
         await self.socket_client.unsubscribe(self.TR_ID_DELAYED_ORDERBOOK, tr_key)
 
     @staticmethod
-    def parse_delayed_orderbook_data(data: List[str]) -> List[OverseasRealtimeDelayedOrderbookItem]:
+    def parse_delayed_orderbook_data(data: list[str]) -> list[OverseasRealtimeDelayedOrderbookItem]:
         """Parse WebSocket data into list of OverseasRealtimeDelayedOrderbookItem.
 
         WebSocket data is received as a list of string values separated by "^" delimiter.
@@ -291,8 +290,8 @@ class OverseasRealtimeQuote:
 
     @staticmethod
     def parse_execution_notification_data(
-        data: List[str],
-    ) -> List[OverseasRealtimeExecutionNotificationItem]:
+        data: list[str],
+    ) -> list[OverseasRealtimeExecutionNotificationItem]:
         """Parse WebSocket data into list of OverseasRealtimeExecutionNotificationItem.
 
         WebSocket data is received as a list of string values separated by "^" delimiter.

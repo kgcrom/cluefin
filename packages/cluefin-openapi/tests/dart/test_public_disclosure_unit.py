@@ -274,7 +274,7 @@ def test_disclosure_document_file_raises_on_dart_error(
         "  <status>013</status>\n"
         "  <message>유효하지 않은 접수번호입니다.</message>\n"
         "</result>\n"
-    ).encode("utf-8")
+    ).encode()
 
     destination = tmp_path / "error.xml"
     service = PublicDisclosure(client)

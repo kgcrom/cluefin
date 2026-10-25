@@ -7,7 +7,6 @@ References:
 """
 
 from functools import wraps
-from typing import List
 
 from ._onmarket_bond_realtime_quote_types import (
     BOND_EXECUTION_FIELD_NAMES,
@@ -118,7 +117,7 @@ class OnmarketBondRealtimeQuote:
         await self.socket_client.unsubscribe(self.TR_ID_EXECUTION, bond_code)
 
     @staticmethod
-    def parse_execution_data(data: List[str]) -> List[OnmarketBondRealtimeExecutionItem]:
+    def parse_execution_data(data: list[str]) -> list[OnmarketBondRealtimeExecutionItem]:
         """Parse WebSocket data into list of OnmarketBondRealtimeExecutionItem.
 
         WebSocket data is received as a list of string values separated by "^" delimiter.
@@ -200,7 +199,7 @@ class OnmarketBondRealtimeQuote:
         await self.socket_client.unsubscribe(self.TR_ID_ORDERBOOK, bond_code)
 
     @staticmethod
-    def parse_orderbook_data(data: List[str]) -> List[OnmarketBondRealtimeOrderbookItem]:
+    def parse_orderbook_data(data: list[str]) -> list[OnmarketBondRealtimeOrderbookItem]:
         """Parse WebSocket data into list of OnmarketBondRealtimeOrderbookItem.
 
         WebSocket data is received as a list of string values separated by "^" delimiter.
@@ -282,7 +281,7 @@ class OnmarketBondRealtimeQuote:
         await self.socket_client.unsubscribe(self.TR_ID_INDEX_EXECUTION, bond_code)
 
     @staticmethod
-    def parse_index_execution_data(data: List[str]) -> List[OnmarketBondIndexRealtimeExecutionItem]:
+    def parse_index_execution_data(data: list[str]) -> list[OnmarketBondIndexRealtimeExecutionItem]:
         """Parse WebSocket data into list of OnmarketBondIndexRealtimeExecutionItem.
 
         WebSocket data is received as a list of string values separated by "^" delimiter.

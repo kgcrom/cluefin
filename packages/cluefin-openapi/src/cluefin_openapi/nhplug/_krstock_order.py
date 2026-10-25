@@ -1,4 +1,4 @@
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 from cluefin_openapi.nhplug._exceptions import raise_for_rsp_cd
 from cluefin_openapi.nhplug._http_client import HttpClient
@@ -75,7 +75,7 @@ class KrStockOrder:
         self.client = client
 
     @staticmethod
-    def _drop_none(body: Dict[str, Any]) -> Dict[str, Any]:
+    def _drop_none(body: dict[str, Any]) -> dict[str, Any]:
         """선택 파라미터는 값이 있을 때만 전송한다."""
         return {k: v for k, v in body.items() if v is not None}
 
@@ -89,9 +89,9 @@ class KrStockOrder:
         sor_mkt_sli_yn: Literal["Y", "N"],
         orr_cnd_dit_cd: Literal["00", "01", "02", "05"] = "00",
         ssl_nmn_pr_dit_cd: Literal["00", "01", "02", "99"] = "00",
-        orr_pr: Optional[float] = None,
-        orr_amt: Optional[int] = None,
-        sop_cnd_pr: Optional[float] = None,
+        orr_pr: float | None = None,
+        orr_amt: int | None = None,
+        sop_cnd_pr: float | None = None,
     ) -> NHPlugHttpResponse[KrStockOrderCashBuy]:
         """주식주문(현금) 매수 (`POST /krstock/order/v1/cashBuy`).
 
@@ -140,9 +140,9 @@ class KrStockOrder:
         sor_mkt_sli_yn: Literal["Y", "N"],
         orr_cnd_dit_cd: Literal["00", "01", "02", "05"] = "00",
         ssl_nmn_pr_dit_cd: Literal["00", "01", "02", "99"] = "00",
-        orr_pr: Optional[float] = None,
-        orr_amt: Optional[int] = None,
-        sop_cnd_pr: Optional[float] = None,
+        orr_pr: float | None = None,
+        orr_amt: int | None = None,
+        sop_cnd_pr: float | None = None,
     ) -> NHPlugHttpResponse[KrStockOrderCashSell]:
         """주식주문(현금) 매도 (`POST /krstock/order/v1/cashSell`).
 
@@ -191,10 +191,10 @@ class KrStockOrder:
         rmt_mkt_cd: Literal["SOR", "KRX", "NXT"],
         sor_mkt_sli_yn: Literal["Y", "N"],
         orr_cnd_dit_cd: Literal["00", "01", "02", "05"] = "00",
-        orr_pr: Optional[float] = None,
-        orr_amt: Optional[int] = None,
-        lon_dt: Optional[str] = None,
-        sop_cnd_pr: Optional[float] = None,
+        orr_pr: float | None = None,
+        orr_amt: int | None = None,
+        lon_dt: str | None = None,
+        sop_cnd_pr: float | None = None,
     ) -> NHPlugHttpResponse[KrStockOrderCreditBuy]:
         """주식주문(신용) 매수 (`POST /krstock/order/v1/creditBuy`).
 
@@ -245,10 +245,10 @@ class KrStockOrder:
         rmt_mkt_cd: Literal["SOR", "KRX", "NXT"],
         sor_mkt_sli_yn: Literal["Y", "N"],
         orr_cnd_dit_cd: Literal["00", "01", "02", "05"] = "00",
-        orr_pr: Optional[float] = None,
-        orr_amt: Optional[int] = None,
-        lon_dt: Optional[str] = None,
-        sop_cnd_pr: Optional[float] = None,
+        orr_pr: float | None = None,
+        orr_amt: int | None = None,
+        lon_dt: str | None = None,
+        sop_cnd_pr: float | None = None,
     ) -> NHPlugHttpResponse[KrStockOrderCreditSell]:
         """주식주문(신용) 매도 (`POST /krstock/order/v1/creditSell`).
 
@@ -347,7 +347,7 @@ class KrStockOrder:
         org_mkt_orr_no: int,
         all_pat_dit_cd: Literal["1", "2"],
         iem_cd: str,
-        cor_qty: Optional[int] = None,
+        cor_qty: int | None = None,
     ) -> NHPlugHttpResponse[KrStockOrderCancel]:
         """주식주문(정정취소) 취소 (`POST /krstock/order/v1/cancel`).
 
@@ -389,16 +389,16 @@ class KrStockOrder:
         nmn_pr_tp_cd: ReservedQuoteTypeCode,
         cfd_lon_cd: ReservedCreditLoanCode,
         orr_qty: int,
-        orr_uit_pr: Optional[int],
+        orr_uit_pr: int | None,
         bkg_orr_tp_cd: Literal["1", "2", "3"],
         bkg_orr_enf_tp_cd: Literal["1", "2"],
         rmt_mkt_cd: Literal["KRX", "NXT"],
-        lon_dt: Optional[str] = None,
-        bkg_orr_sta_dt: Optional[str] = None,
-        bkg_orr_end_dt: Optional[str] = None,
-        end_pr_cmp_ftw_amt: Optional[int] = None,
-        orr_pr_rge_hlm_pr: Optional[int] = None,
-        orr_pr_rge_llm_pr: Optional[int] = None,
+        lon_dt: str | None = None,
+        bkg_orr_sta_dt: str | None = None,
+        bkg_orr_end_dt: str | None = None,
+        end_pr_cmp_ftw_amt: int | None = None,
+        orr_pr_rge_hlm_pr: int | None = None,
+        orr_pr_rge_llm_pr: int | None = None,
     ) -> NHPlugHttpResponse[KrStockOrderReservedOrder]:
         """주식예약주문 (`POST /krstock/order/v1/reservedOrder`).
 
@@ -465,7 +465,7 @@ class KrStockOrder:
         bkg_orr_no: int,
         bkg_orr_tp_cd: Literal["1", "2", "3"],
         rmt_mkt_cd: Literal["KRX", "NXT"],
-        bkg_rtn_dt: Optional[str] = None,
+        bkg_rtn_dt: str | None = None,
     ) -> NHPlugHttpResponse[KrStockOrderReservedCancel]:
         """주식예약주문취소 (`POST /krstock/order/v1/reservedCancel`).
 

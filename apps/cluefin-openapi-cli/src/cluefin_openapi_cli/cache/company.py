@@ -9,9 +9,10 @@ DART's corp-code index, which keeps `stock_code` after delisting, filtered throu
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
-from typing import Any, Callable
+from typing import Any
 
 import duckdb
 

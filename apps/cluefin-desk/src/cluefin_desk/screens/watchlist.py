@@ -4,8 +4,6 @@
 HTS ID(`KIS_HTS_USER_ID`)가 있어야 한다. ID 값은 화면·로그에 찍지 않는다.
 """
 
-from typing import Optional
-
 from rich.markup import escape
 from textual import work
 from textual.app import ComposeResult
@@ -46,7 +44,7 @@ class WatchlistScreen(Screen):
     def __init__(self):
         super().__init__()
         self._group_names: dict[str, str] = {}
-        self._current_group: Optional[str] = None
+        self._current_group: str | None = None
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -159,7 +157,7 @@ class WatchlistScreen(Screen):
         return rows
 
     @staticmethod
-    def _to_float(value: str) -> Optional[float]:
+    def _to_float(value: str) -> float | None:
         try:
             return float(value)
         except (TypeError, ValueError):

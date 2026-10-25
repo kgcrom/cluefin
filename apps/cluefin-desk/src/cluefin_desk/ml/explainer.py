@@ -5,7 +5,7 @@ This module provides model interpretability using SHAP (SHapley Additive exPlana
 for understanding feature importance and individual prediction explanations.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -35,10 +35,10 @@ class SHAPExplainer:
         """
         self.model = model
         self.model_type = model_type
-        self.explainer: Optional[shap.Explainer] = None
-        self.shap_values: Optional[np.ndarray] = None
-        self.base_values: Optional[np.ndarray] = None
-        self.feature_names: List[str] = []
+        self.explainer: shap.Explainer | None = None
+        self.shap_values: np.ndarray | None = None
+        self.base_values: np.ndarray | None = None
+        self.feature_names: list[str] = []
         self.console = Console()
 
     def initialize_explainer(self, X_background: pd.DataFrame) -> None:
@@ -154,7 +154,7 @@ class SHAPExplainer:
             logger.error(f"Error calculating feature importance: {e}")
             raise
 
-    def explain_prediction(self, X_sample: pd.DataFrame, sample_idx: int = 0) -> Dict[str, Any]:
+    def explain_prediction(self, X_sample: pd.DataFrame, sample_idx: int = 0) -> dict[str, Any]:
         """
         Explain individual prediction using SHAP values.
 
@@ -321,7 +321,7 @@ Final Prediction: {prediction_text}
             logger.error(f"Error displaying prediction explanation: {e}")
             raise
 
-    def get_summary_statistics(self, X: pd.DataFrame) -> Dict[str, Any]:
+    def get_summary_statistics(self, X: pd.DataFrame) -> dict[str, Any]:
         """
         Get summary statistics about SHAP values.
 

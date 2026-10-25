@@ -1,6 +1,6 @@
 """SEC EDGAR API Exception classes."""
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class SecAPIError(Exception):
@@ -9,9 +9,9 @@ class SecAPIError(Exception):
     def __init__(
         self,
         message: str,
-        status_code: Optional[int] = None,
-        response_data: Optional[Dict[str, Any]] = None,
-        request_context: Optional[Dict[str, Any]] = None,
+        status_code: int | None = None,
+        response_data: dict[str, Any] | None = None,
+        request_context: dict[str, Any] | None = None,
     ):
         super().__init__(message)
         self.message = message
@@ -36,8 +36,8 @@ class SecAuthorizationError(SecAPIError):
         self,
         message: str = "Access forbidden",
         status_code: int = 403,
-        response_data: Optional[Dict[str, Any]] = None,
-        request_context: Optional[Dict[str, Any]] = None,
+        response_data: dict[str, Any] | None = None,
+        request_context: dict[str, Any] | None = None,
     ):
         super().__init__(message, status_code, response_data, request_context)
 
@@ -49,8 +49,8 @@ class SecNotFoundError(SecAPIError):
         self,
         message: str = "Not found",
         status_code: int = 404,
-        response_data: Optional[Dict[str, Any]] = None,
-        request_context: Optional[Dict[str, Any]] = None,
+        response_data: dict[str, Any] | None = None,
+        request_context: dict[str, Any] | None = None,
     ):
         super().__init__(message, status_code, response_data, request_context)
 
@@ -62,8 +62,8 @@ class SecClientError(SecAPIError):
         self,
         message: str,
         status_code: int,
-        response_data: Optional[Dict[str, Any]] = None,
-        request_context: Optional[Dict[str, Any]] = None,
+        response_data: dict[str, Any] | None = None,
+        request_context: dict[str, Any] | None = None,
     ):
         super().__init__(message, status_code, response_data, request_context)
 
@@ -75,8 +75,8 @@ class SecServerError(SecAPIError):
         self,
         message: str,
         status_code: int,
-        response_data: Optional[Dict[str, Any]] = None,
-        request_context: Optional[Dict[str, Any]] = None,
+        response_data: dict[str, Any] | None = None,
+        request_context: dict[str, Any] | None = None,
     ):
         super().__init__(message, status_code, response_data, request_context)
 
@@ -87,10 +87,10 @@ class SecRateLimitError(SecAPIError):
     def __init__(
         self,
         message: str,
-        status_code: Optional[int] = 429,
-        response_data: Optional[Dict[str, Any]] = None,
-        request_context: Optional[Dict[str, Any]] = None,
-        retry_after: Optional[int] = None,
+        status_code: int | None = 429,
+        response_data: dict[str, Any] | None = None,
+        request_context: dict[str, Any] | None = None,
+        retry_after: int | None = None,
     ):
         super().__init__(message, status_code, response_data, request_context)
         self.retry_after = retry_after
@@ -102,9 +102,9 @@ class SecTimeoutError(SecAPIError):
     def __init__(
         self,
         message: str = "Request timeout",
-        status_code: Optional[int] = None,
-        response_data: Optional[Dict[str, Any]] = None,
-        request_context: Optional[Dict[str, Any]] = None,
+        status_code: int | None = None,
+        response_data: dict[str, Any] | None = None,
+        request_context: dict[str, Any] | None = None,
     ):
         super().__init__(message, status_code, response_data, request_context)
 
@@ -115,8 +115,8 @@ class SecNetworkError(SecAPIError):
     def __init__(
         self,
         message: str = "Network connection failed",
-        status_code: Optional[int] = None,
-        response_data: Optional[Dict[str, Any]] = None,
-        request_context: Optional[Dict[str, Any]] = None,
+        status_code: int | None = None,
+        response_data: dict[str, Any] | None = None,
+        request_context: dict[str, Any] | None = None,
     ):
         super().__init__(message, status_code, response_data, request_context)

@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 from cluefin_openapi.kiwoom._client import Client
 from cluefin_openapi.kiwoom._domestic_chart_types import (
@@ -168,7 +168,7 @@ class DomesticChart:
         stk_cd: str,
         tic_scope: str,
         upd_stkpc_tp: str = "0",
-        base_dt: Optional[str] = None,
+        base_dt: str | None = None,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticChartStockMinute]:
@@ -410,7 +410,7 @@ class DomesticChart:
         self,
         inds_cd: str,
         tic_scope: str,
-        base_dt: Optional[str] = None,
+        base_dt: str | None = None,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticChartIndustryMinute]:

@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel, ConfigDict, Field
 
 from cluefin_openapi.dart._model import DartHttpBody
@@ -115,15 +113,15 @@ class SecuritiesGrantedDecisionItem(BaseModel):
     bfic_tisstk_ostk: str = Field(description="증자전 발행주식총수 (주)(보통주식 (주))")
     bfic_tisstk_estk: str = Field(description="증자전 발행주식총수 (주)(기타주식 (주))")
     fdpp_fclt: str = Field(description="자금조달의 목적(시설자금 (원))")
-    fdpp_bsninh: Optional[str] = Field(description="자금조달의 목적(영업양수자금 (원)) ① 2019년 12월 9일부터 추가됨")
+    fdpp_bsninh: str | None = Field(description="자금조달의 목적(영업양수자금 (원)) ① 2019년 12월 9일부터 추가됨")
     fdpp_op: str = Field(description="자금조달의 목적(운영자금 (원))")
-    fdpp_dtrp: Optional[str] = Field(description="자금조달의 목적(채무상환자금 (원)) ① 2019년 12월 9일부터 추가됨")
+    fdpp_dtrp: str | None = Field(description="자금조달의 목적(채무상환자금 (원)) ① 2019년 12월 9일부터 추가됨")
     fdpp_ocsa: str = Field(description="자금조달의 목적(타법인 증권 취득자금 (원))")
     fdpp_etc: str = Field(description="자금조달의 목적(기타자금 (원))")
     ic_mthn: str = Field(description="증자방식")
     ssl_at: str = Field(description="공매도 해당여부")
-    ssl_bgd: Optional[str] = Field(description="공매도 시작일")
-    ssl_edd: Optional[str] = Field(description="공매도 종료일")
+    ssl_bgd: str | None = Field(description="공매도 시작일")
+    ssl_edd: str | None = Field(description="공매도 종료일")
 
 
 class SecuritiesGrantedDecision(BaseModel, DartHttpBody[SecuritiesGrantedDecisionItem]):
@@ -171,11 +169,11 @@ class PaidInCapitalReductionDecisionItem(BaseModel):
     piic_bfic_tisstk_ostk: str = Field(description="유상증자(증자전 발행주식총수 (주)(보통주식 (주)))")
     piic_bfic_tisstk_estk: str = Field(description="유상증자(증자전 발행주식총수 (주)(기타주식 (주)))")
     piic_fdpp_fclt: str = Field(description="유상증자(자금조달의 목적(시설자금 (원)))")
-    piic_fdpp_bsninh: Optional[str] = Field(
+    piic_fdpp_bsninh: str | None = Field(
         description="유상증자(자금조달의 목적(영업양수자금 (원))) ① 2019년 12월 9일부터 추가됨"
     )
     piic_fdpp_op: str = Field(description="유상증자(자금조달의 목적(운영자금 (원)))")
-    piic_fdpp_dtrp: Optional[str] = Field(
+    piic_fdpp_dtrp: str | None = Field(
         description="유상증자(자금조달의 목적(채무상환자금 (원))) ① 2019년 12월 9일부터 추가됨"
     )
     piic_fdpp_ocsa: str = Field(description="유상증자(자금조달의 목적(타법인 증권 취득자금 (원)))")
@@ -197,8 +195,8 @@ class PaidInCapitalReductionDecisionItem(BaseModel):
     fric_od_a_at_b: str = Field(description="무상증자(사외이사 참석여부(불참(명)))")
     fric_adt_a_atn: str = Field(description="무상증자(감사(감사위원)참석 여부)")
     ssl_at: str = Field(description="공매도 해당여부")
-    ssl_bgd: Optional[str] = Field(description="공매도 시작일")
-    ssl_edd: Optional[str] = Field(description="공매도 종료일")
+    ssl_bgd: str | None = Field(description="공매도 시작일")
+    ssl_edd: str | None = Field(description="공매도 종료일")
 
 
 class PaidInCapitalReductionDecision(BaseModel, DartHttpBody[PaidInCapitalReductionDecisionItem]):
@@ -230,12 +228,12 @@ class CapitalReductionDecisionItem(BaseModel):
     crsc_trnmsppd: str = Field(description="감자일정(명의개서정지기간)")
     crsc_osprpd: str = Field(description="감자일정(구주권 제출기간) ① 2019년 12월 8일까지 사용됨")
     crsc_trspprpd: str = Field(description="감자일정(매매거래 정지예정기간) ① 2019년 12월 8일까지 사용됨")
-    crsc_osprpd_bgd: Optional[str] = Field(description="감자일정(구주권 제출기간(시작일)) ② 2019년 12월 9일부터 추가됨")
-    crsc_osprpd_edd: Optional[str] = Field(description="감자일정(구주권 제출기간(종료일)) ② 2019년 12월 9일부터 추가됨")
-    crsc_trspprpd_bgd: Optional[str] = Field(
+    crsc_osprpd_bgd: str | None = Field(description="감자일정(구주권 제출기간(시작일)) ② 2019년 12월 9일부터 추가됨")
+    crsc_osprpd_edd: str | None = Field(description="감자일정(구주권 제출기간(종료일)) ② 2019년 12월 9일부터 추가됨")
+    crsc_trspprpd_bgd: str | None = Field(
         description="감자일정(매매거래 정지예정기간(시작일)) ② 2019년 12월 9일부터 추가됨"
     )
-    crsc_trspprpd_edd: Optional[str] = Field(
+    crsc_trspprpd_edd: str | None = Field(
         description="감자일정(매매거래 정지예정기간(종료일)) ② 2019년 12월 9일부터 추가됨"
     )
     crsc_nstkdlprd: str = Field(description="감자일정(신주권교부예정일)")
@@ -1190,7 +1188,7 @@ class CorporateLawDecisionItem(BaseModel):
     exevl_bs_rs: str = Field(description="외부평가에 관한 사항(근거 및 사유)")
     exevl_intn: str = Field(description="외부평가에 관한 사항(외부평가기관의 명칭)")
     exevl_pd: str = Field(description="외부평가에 관한 사항(외부평가 기간)")
-    exevl_op: Optional[str] = Field(description="외부평가에 관한 사항(외부평가 의견)", default=None)
+    exevl_op: str | None = Field(description="외부평가에 관한 사항(외부평가 의견)", default=None)
     mgnstk_ostk_cnt: str = Field(description="합병신주의 종류와 수(주)(보통주식)")
     mgnstk_cstk_cnt: str = Field(description="합병신주의 종류와 수(주)(종류주식)")
     mgptncmp_cmpnm: str = Field(description="합병상대회사(회사명)")

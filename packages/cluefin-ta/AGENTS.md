@@ -29,7 +29,7 @@ AGENTS.md for repo-wide rules.
   thresholds are ta-lib "candle settings" (average of a range over the previous N bars),
   and the average's sum must be a running total (add new, drop trailing) like ta-lib's:
   a fresh `sum()` rounds differently and flips ties, which tick-rounded KRX prices hit
-  often. A new pattern needs the tick-rounded parity cases in `test_pattern.py` too.
+  often. A new pattern needs the tick-rounded parity cases in `test_pattern_unit.py` too.
 
 ## Testing gotchas
 

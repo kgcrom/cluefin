@@ -64,7 +64,7 @@ RESPONSE_MODELS = {
 def load_test_cases():
     """Load test cases from JSON file."""
     test_file = Path(__file__).parent / "domestic_ranking_analysis_cases.json"
-    with open(test_file, "r", encoding="utf-8") as f:
+    with open(test_file, encoding="utf-8") as f:
         return json.load(f)
 
 

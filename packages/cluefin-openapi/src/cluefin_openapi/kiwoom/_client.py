@@ -1,5 +1,5 @@
 import json
-from typing import Dict, List, Literal, Optional, Tuple
+from typing import Literal
 
 import requests
 from loguru import logger
@@ -24,7 +24,7 @@ from ._exceptions import (
 class MockResponse:
     """Mock response object for caching."""
 
-    def __init__(self, status_code: int, headers: dict, content: bytes, json_data: Optional[dict] = None):
+    def __init__(self, status_code: int, headers: dict, content: bytes, json_data: dict | None = None):
         self.status_code = status_code
         self.headers = headers
         self.content = content
@@ -218,7 +218,7 @@ class Client(BaseHttpClient):
         "api": KiwoomAPIError,
     }
 
-    def _error_from_return_code(self, response, request_context: dict) -> Optional[KiwoomAPIError]:
+    def _error_from_return_code(self, response, request_context: dict) -> KiwoomAPIError | None:
         """Map a non-zero body return_code (API 서버 오류코드) to a typed exception.
 
         Returns None when the body has no return_code or reports success (0).
@@ -247,14 +247,14 @@ class Client(BaseHttpClient):
         )
         return exc
 
-    def _dispatch_kiwoom(self, response, request_context: dict) -> Optional[Exception]:
+    def _dispatch_kiwoom(self, response, request_context: dict) -> Exception | None:
         """Prefer body return_code resolution, then fall back to HTTP status dispatch."""
         exc = self._error_from_return_code(response, request_context)
         if exc is not None:
             return exc
         return self._dispatch_by_status(response, request_context, self._ERROR_TYPES)
 
-    def _post(self, path: str, headers: Dict[str, str], body: Dict[str, str], use_cache: bool = True):
+    def _post(self, path: str, headers: dict[str, str], body: dict[str, str], use_cache: bool = True):
         """Make a POST request with improved error handling and logging."""
         # Check cache first if enabled — short-circuit BEFORE rate-limiting/HTTP
         cache_key = None
@@ -332,7 +332,7 @@ class Client(BaseHttpClient):
         if hasattr(self, "_session"):
             self._session.close()
 
-    def batch_post(self, requests_data: List[Tuple[str, Dict[str, str], Dict[str, str]]]) -> List[requests.Response]:
+    def batch_post(self, requests_data: list[tuple[str, dict[str, str], dict[str, str]]]) -> list[requests.Response]:
         """
         Execute multiple POST requests with rate limiting.
 
@@ -365,7 +365,7 @@ class Client(BaseHttpClient):
             if self.debug:
                 logger.debug("Cache cleared")
 
-    def cache_info(self) -> Optional[Dict]:
+    def cache_info(self) -> dict | None:
         """Get cache statistics if caching is enabled."""
         if self._cache:
             return self._cache.cache_info()

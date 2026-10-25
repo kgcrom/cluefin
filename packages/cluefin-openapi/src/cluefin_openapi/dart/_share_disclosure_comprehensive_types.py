@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel, ConfigDict, Field
 
 from cluefin_openapi.dart._model import DartHttpBody
@@ -43,7 +41,7 @@ class ExecutiveMajorShareholderOwnershipReportItem(BaseModel):
     isu_exctv_ofcps: str = Field(
         description="발행 회사 관계 임원 직위(대표이사, 이사, 전무 등)",
     )
-    isu_main_shrhldr: Optional[str] = Field(description="발행 회사 관계 주요 주주(10%이상주주 등)", default=None)
+    isu_main_shrhldr: str | None = Field(description="발행 회사 관계 주요 주주(10%이상주주 등)", default=None)
     sp_stock_lmp_cnt: str = Field(description="특정 증권 등 소유 수")
     sp_stock_lmp_irds_cnt: str = Field(description="특정 증권 등 소유 증감 수")
     sp_stock_lmp_rate: str = Field(

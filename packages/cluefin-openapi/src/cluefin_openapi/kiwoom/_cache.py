@@ -2,7 +2,7 @@
 
 import hashlib
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class SimpleCache:
@@ -16,9 +16,9 @@ class SimpleCache:
             default_ttl: Default time-to-live in seconds (default: 5 minutes)
         """
         self.default_ttl = default_ttl
-        self._cache: Dict[str, Dict[str, Any]] = {}
+        self._cache: dict[str, dict[str, Any]] = {}
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """
         Get value from cache.
 
@@ -37,7 +37,7 @@ class SimpleCache:
                 del self._cache[key]
         return None
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> None:
         """
         Set value in cache.
 
@@ -89,7 +89,7 @@ class SimpleCache:
 
         return len(expired_keys)
 
-    def cache_info(self) -> Dict[str, Any]:
+    def cache_info(self) -> dict[str, Any]:
         """Get cache statistics."""
         current_time = time.time()
         valid_entries = sum(1 for entry in self._cache.values() if current_time < entry["expires_at"])
@@ -101,7 +101,7 @@ class SimpleCache:
         }
 
 
-def create_cache_key(url: str, headers: Dict[str, str], body: Dict[str, Any]) -> str:
+def create_cache_key(url: str, headers: dict[str, str], body: dict[str, Any]) -> str:
     """
     Create a cache key from request parameters.
 
