@@ -23,8 +23,7 @@ class KiwoomHttpBody:  # This can remain a base class or be used directly if no 
     return_msg: str | None = None
 
 
-# slots 없음: `Resp[T](...)` 로 만들면 typing 이 __orig_class__ 를 대입하는데, 3.10 의 frozen+slots 는 이때 TypeError.
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class KiwoomHttpResponse(Generic[T_KiwoomHttpBody]):
     headers: KiwoomHttpHeader
     body: T_KiwoomHttpBody
