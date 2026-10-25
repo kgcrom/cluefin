@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
 
 from cluefin_openapi_cli import opinions, statements
+from cluefin_openapi_cli.clock import KST
 from cluefin_openapi_cli.errors import EXIT_BROKER, CliError
 from cluefin_openapi_cli.handlers import dart as dart_handlers
 from cluefin_openapi_cli.handlers._base import DispatcherProtocol, extract_output, rpc_method
@@ -1245,11 +1245,10 @@ def handle_kis_investment_opinion_by_brokerage(params: dict, session) -> dict:
 # ---------------------------------------------------------------------------
 
 _OPINION_DEFAULT_DAYS = 90
-_KST = ZoneInfo("Asia/Seoul")
 
 
 def _kst_today() -> str:
-    return datetime.now(_KST).strftime("%Y%m%d")
+    return datetime.now(KST).strftime("%Y%m%d")
 
 
 def _days_before(day: str, days: int) -> str:

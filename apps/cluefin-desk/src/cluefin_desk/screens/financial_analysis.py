@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Sequence
-from datetime import datetime
 from typing import Any
 
 from rich.markup import escape
@@ -12,6 +11,7 @@ from textual.containers import VerticalScroll
 from textual.screen import Screen
 from textual.widgets import DataTable, Header, Static, TabbedContent, TabPane
 
+from cluefin_desk.clock import now_kst
 from cluefin_desk.formatting import pad
 from cluefin_desk.screens._guard import guarded, screen_gone, set_text
 from cluefin_desk.widgets.nav_footer import NavFooter
@@ -149,7 +149,7 @@ class FinancialAnalysisScreen(Screen):
     @classmethod
     def _dart_years(cls) -> list[str]:
         """조회 대상 사업연도, 최신 우선 — 직전 사업연도부터 뒤로."""
-        this_year = datetime.now().year
+        this_year = now_kst().year
         return [str(this_year - offset) for offset in range(1, cls.DART_YEAR_LOOKBACK + 1)]
 
     @classmethod

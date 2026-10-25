@@ -30,6 +30,8 @@ from typing import Any, Literal
 
 import numpy as np
 
+from cluefin_openapi_cli.clock import today_kst
+
 __all__ = [
     "Candle",
     "CandleSeries",
@@ -327,7 +329,7 @@ def fetch_kis_daily_series(
     if count <= 0:
         raise ValueError("count must be positive")
 
-    window_end = _parse_yyyymmdd(end_date) if end_date else date.today()
+    window_end = _parse_yyyymmdd(end_date) if end_date else today_kst()
     adj = adj_price_flag("chart.period", adjusted=adjusted)
     collected: list[Candle] = []
     seen: set[str] = set()

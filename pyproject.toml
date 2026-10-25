@@ -47,15 +47,18 @@ extend-exclude = ["*.json", "*.ipynb", "docs/plans"]
 [tool.ruff.format]
 docstring-code-format = true
 [tool.ruff.lint]
-select = ["E", "F", "W", "B", "Q", "I", "ASYNC", "T20", "UP", "TID251"]
-ignore = ["E501"]
+select = ["E", "F", "W", "B", "Q", "I", "ASYNC", "T20", "UP", "TID251", "DTZ"]
+# DTZ007: strptime parses date-only (YYYYMMDD) or KST wall-clock strings from broker APIs; 3.10 has no date.strptime.
+ignore = ["E501", "DTZ007"]
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 # Codacy flags any stdlib xml import as XXE (critical), even type-only ones.
 "xml".msg = "Parse with defusedxml; for element types declare a Protocol (see cluefin_dart_notes/_xml.py)"
 
 [tool.ruff.lint.per-file-ignores]
-"**/tests/**" = ["T201"]
+"**/tests/**" = ["T201", "DTZ"]
+# Token caches store naive local time; the TS package reads the same files (token-file.ts).
+"**/_token_manager.py" = ["DTZ005"]
 # __init__.py re-exports modules without using them in-file; that is intentional, not dead code.
 "**/__init__.py" = ["F401"]
 

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Any
 
 import pandas as pd
@@ -10,6 +10,7 @@ from cluefin_openapi.kiwoom import Client as KiwoomClient
 from loguru import logger
 from pydantic import SecretStr, ValidationError
 
+from cluefin_desk.clock import now_kst
 from cluefin_desk.config.settings import settings
 
 
@@ -325,7 +326,7 @@ class DomesticDataFetcher:
         KIS caps this response at the 100 most recent bars regardless of the
         requested range.
         """
-        end_date = datetime.now()
+        end_date = now_kst()
         start_date = end_date - timedelta(days=days)
 
         try:
@@ -376,7 +377,7 @@ class DomesticDataFetcher:
         Returns a DataFrame indexed by date, one column per investor type;
         empty when KIS has no rows (or the lookup degrades).
         """
-        base_date = datetime.now().strftime("%Y%m%d")
+        base_date = now_kst().strftime("%Y%m%d")
 
         try:
             items = self.kis_client.domestic_market_analysis.get_investor_trading_trend_by_stock_daily(
@@ -411,7 +412,7 @@ class DomesticDataFetcher:
         Items carry 의견(invt_opnn)·이전의견·증권사명(mbcr_name)·목표가(hts_goal_prc)·
         괴리율(dprt). Degrades to [] when the name has no coverage.
         """
-        end = datetime.now()
+        end = now_kst()
         start = end - timedelta(days=months * 30)
         try:
             return (
@@ -462,7 +463,7 @@ class DomesticDataFetcher:
     def get_short_selling_trend(self, stock_code: str, days: int = 30) -> list:
         """공매도 일별 추이 (KIS). Items: stck_bsop_date, ssts_cntg_qty(공매도량),
         ssts_vol_rlim(비중), acml_ssts_cntg_qty(누적)."""
-        end = datetime.now()
+        end = now_kst()
         start = end - timedelta(days=days)
         try:
             return (
@@ -487,7 +488,7 @@ class DomesticDataFetcher:
                     fid_cond_mrkt_div_code="J",
                     fid_cond_scr_div_code="20476",
                     fid_input_iscd=stock_code,
-                    fid_input_date_1=datetime.now().strftime("%Y%m%d"),
+                    fid_input_date_1=now_kst().strftime("%Y%m%d"),
                 ).body.output
                 or []
             )
@@ -518,7 +519,7 @@ class DomesticDataFetcher:
     def get_market_investor_trend_daily(self, market: str = "KSP", days: int = 30) -> list:
         """시장 전체 투자자별 일별 순매수 (KIS). market: KSP(코스피)/KSQ(코스닥).
         Items: stck_bsop_date, bstp_nmix_prpr(지수), prsn/frgn/orgn_ntby_qty."""
-        end = datetime.now()
+        end = now_kst()
         start = end - timedelta(days=days)
         sector_code = "0001" if market == "KSP" else "1001"
         try:
@@ -542,7 +543,7 @@ class DomesticDataFetcher:
         try:
             return (
                 self.kis_client.domestic_market_analysis.get_market_fund_summary(
-                    fid_input_date_1=datetime.now().strftime("%Y%m%d"),
+                    fid_input_date_1=now_kst().strftime("%Y%m%d"),
                 ).body.output
                 or []
             )
@@ -557,7 +558,7 @@ class DomesticDataFetcher:
     def get_dividend_yield_top(self, market: str = "1") -> list:
         """배당수익률 상위 (KIS). market: 0 전체, 1 코스피, 2 코스피200, 3 코스닥.
         기준일은 최근 1년 결산·현금배당."""
-        end = datetime.now()
+        end = now_kst()
         start = end - timedelta(days=365)
         try:
             return (
@@ -646,7 +647,7 @@ class DomesticDataFetcher:
     def get_etf_nav_daily_trend(self, stk_cd: str, days: int = 30) -> list:
         """ETF NAV 대비 일별 추이 (KIS). Items: stck_bsop_date, stck_clpr, nav,
         dprt(괴리율)."""
-        end = datetime.now()
+        end = now_kst()
         start = end - timedelta(days=days)
         try:
             return (
@@ -676,7 +677,7 @@ class DomesticDataFetcher:
             return []
 
     async def get_stock_data(self, stock_code: str) -> pd.DataFrame:
-        parsed_date = datetime.now().strftime("%Y%m%d")
+        parsed_date = now_kst().strftime("%Y%m%d")
         max_pages = 3
         cont_yn = "N"
         next_key = ""
@@ -842,7 +843,7 @@ class DomesticDataFetcher:
         return self.kiwoom_client.sector.get_industry_investor_net_buy(
             mrkt_tp=mrkt_tp,
             amt_qty_tp=amt_qty_tp,
-            base_dt=datetime.now().strftime("%Y%m%d"),
+            base_dt=now_kst().strftime("%Y%m%d"),
             stex_tp="1",
         )
 
@@ -913,7 +914,7 @@ class DomesticDataFetcher:
 
     def get_program_trading_status_by_stock(self):
         return self.kiwoom_client.stock_info.get_program_trading_status_by_stock(
-            dt=datetime.now().strftime("%Y%m%d"),
+            dt=now_kst().strftime("%Y%m%d"),
             mrkt_tp="000",
             stex_tp="1",
         )
@@ -924,7 +925,7 @@ class DomesticDataFetcher:
 
     def get_institutional_investor_by_stock(self, stk_cd: str, amt_qty_tp: str = "1"):
         return self.kiwoom_client.stock_info.get_institutional_investor_by_stock(
-            dt=datetime.now().strftime("%Y%m%d"),
+            dt=now_kst().strftime("%Y%m%d"),
             stk_cd=stk_cd,
             amt_qty_tp=amt_qty_tp,
             trde_tp="0",
@@ -935,8 +936,8 @@ class DomesticDataFetcher:
         return self.kiwoom_client.stock_info.get_stock_trading_member(stk_cd=stk_cd)
 
     def get_stock_specific_securities_firm_ranking(self, stk_cd: str):
-        today = datetime.now().strftime("%Y%m%d")
-        start = (datetime.now() - timedelta(days=30)).strftime("%Y%m%d")
+        today = now_kst().strftime("%Y%m%d")
+        start = (now_kst() - timedelta(days=30)).strftime("%Y%m%d")
         return self.kiwoom_client.rank_info.get_stock_specific_securities_firm_ranking(
             stk_cd=stk_cd,
             strt_dt=start,
@@ -947,7 +948,7 @@ class DomesticDataFetcher:
     def get_margin_trading_trend(self, stk_cd: str):
         return self.kiwoom_client.stock_info.get_margin_trading_trend(
             stk_cd=stk_cd,
-            dt=datetime.now().strftime("%Y%m%d"),
+            dt=now_kst().strftime("%Y%m%d"),
             qry_tp="0",
         )
 

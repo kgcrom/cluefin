@@ -17,12 +17,13 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from typing import Any
 
 import duckdb
 
 from cluefin_openapi_cli.cache.bars import RECHECK_ROWS, BarLoadStats, fetch_stock_bars
+from cluefin_openapi_cli.clock import now_kst
 
 __all__ = ["AdjustStats", "load_adjustments"]
 
@@ -166,7 +167,7 @@ def load_adjustments(
             conn.execute(
                 "INSERT INTO adj_log VALUES (?, ?, ?) ON CONFLICT (code) DO UPDATE SET "
                 "checked_through = excluded.checked_through, computed_at = excluded.computed_at",
-                [code, last, datetime.now()],
+                [code, last, now_kst()],
             )
         except Exception as exc:  # noqa: BLE001 - one bad code must not stop a bulk load
             stats.errors.append({"code": code, "error": f"{type(exc).__name__}: {str(exc)[:200]}"})
