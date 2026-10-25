@@ -292,6 +292,7 @@ def _run_trend_setup(argv: list[str]) -> None:
             statuses=_list_option(options, "status"),
             include_excluded=include_excluded,
             theme_filter=_parse_bool(options, "theme_filter"),
+            with_history=_parse_bool(options, "history"),
         )
     finally:
         conn.close()

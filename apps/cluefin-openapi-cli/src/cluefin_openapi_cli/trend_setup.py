@@ -49,6 +49,7 @@ __all__ = [
     "find_pivot",
     "floor_to_tick",
     "g2_score",
+    "history",
     "levels",
     "fractal_highs",
     "price_features",
@@ -706,4 +707,128 @@ def analyze(prices: PriceArrays, index: IndexCloses) -> dict[str, Any]:
         "levels": setup["levels"],
         "rules": {"version": RULES_VERSION, "source": "apps/cluefin-openapi-cli/README.md#trend-setup"},
         "caveats": list(CAVEATS),
+    }
+
+
+# ---------------------------------------------------------------------------
+# State history: the judgement keeps no state, so the past is recomputed from the bars
+# ---------------------------------------------------------------------------
+
+# Bars per judgement, as `kis chart trend-setup` fetches; history needs this many before each past day.
+WINDOW = 260
+HISTORY_DAYS = 20
+G1_LOOKBACK = 60
+# A state that lasted this many days or fewer is a flicker, skipped when looking for the previous one.
+_FLICKER_DAYS = 2
+
+
+def _state(setup: dict[str, Any]) -> str:
+    """One state per day in the backtest's priority: illiquid → g1 → g3 → g2 → none."""
+
+    if not setup["checks"]["liquid"]["pass"]:
+        return "illiquid"
+    groups = setup["groups"]
+    return next((name for name in ("g1", "g3", "g2") if groups[name]), "none")
+
+
+def _judge(prices: PriceArrays, index: IndexCloses, end: int) -> tuple[str, Pivot | None] | None:
+    """State and pivot on bar ``end - 1`` from the ``WINDOW`` bars up to it; None when not computable."""
+
+    window = prices.window(start=max(0, end - WINDOW), stop=end)
+    f = price_features(window)
+    if f is None:
+        return None
+    try:
+        s = strength(window, index)
+    except IndexDateMismatch:
+        return None
+    if s is None:
+        return None
+    pv = find_pivot(window)
+    return _state(classify(f, pv, s)), pv
+
+
+def _was_g1(prices: PriceArrays, index: IndexCloses, end: int) -> bool:
+    """State g1 on bar ``end - 1`` — features and strength only, no pivot (g1 does not use it)."""
+
+    window = prices.window(start=max(0, end - WINDOW), stop=end)
+    f = price_features(window)
+    if f is None:
+        return False
+    try:
+        s = strength(window, index)
+    except IndexDateMismatch:
+        return False
+    if s is None:
+        return False
+    r = RULES
+    return bool(
+        f.traded_value_20d_eok >= r.min_traded_value
+        and s.rel >= r.rel_ceiling
+        and f.gap_to_high_pct >= r.g1_max_gap
+        and (f.range_10d_pct > r.g1_range10 or f.dist_sma50_pct > r.g1_dist_sma50)
+    )
+
+
+def _runs(states: list[str | None]) -> list[tuple[str | None, int, int]]:
+    """``(state, first index, length)`` runs, oldest first."""
+
+    runs: list[tuple[str | None, int, int]] = []
+    for i, state in enumerate(states):
+        if runs and runs[-1][0] == state:
+            first = runs[-1][1]
+            runs[-1] = (state, first, i - first + 1)
+        else:
+            runs.append((state, i, 1))
+    return runs
+
+
+def history(
+    prices: PriceArrays, index: IndexCloses, *, days: int = HISTORY_DAYS, g1_lookback: int = G1_LOOKBACK
+) -> dict[str, Any]:
+    """Recent state history of the last bar (plan 4-9). Facts only; nothing here feeds the judgement.
+
+    - ``status_days``: sessions the current state has lasted (today included), capped at ``days``.
+    - ``prev_status``/``prev_status_date``: the state before it and its last day, skipping flickers
+      (≤ 2 days) and runs of the current state; None when it lies beyond ``days``.
+    - ``g1_within_60d``/``last_g1_date``: g1 in the ``g1_lookback`` sessions before today.
+    - ``exit``: when yesterday was g3 and today is not — ``breakout`` (close ≥ yesterday's pivot),
+      ``breakdown`` (close below the stop-loss line) or ``faded``.
+    """
+
+    n = len(prices)
+    judged = [_judge(prices, index, end) for end in range(max(1, n - days + 1), n + 1)]
+    dates = prices.dates[n - len(judged) :]
+    states = [item[0] if item else None for item in judged]
+    runs = _runs(states)
+    current, first, length = runs[-1]
+    prev_status = prev_date = None
+    for state, start, run_length in reversed(runs[:-1]):
+        if state is None or start == 0 and run_length <= _FLICKER_DAYS:
+            break  # unknown, or a short run cut by the window: cannot tell a flicker from a state
+        if state != current and run_length > _FLICKER_DAYS:
+            prev_status, prev_date = state, dates[start + run_length - 1]
+            break
+    exit_kind = None
+    if len(judged) >= 2 and judged[-2] and judged[-2][0] == "g3" and current != "g3" and judged[-2][1]:
+        pivot_price, close = judged[-2][1].price, float(prices.close[-1])
+        if close >= pivot_price:
+            exit_kind = "breakout"
+        elif close < pivot_price * (1 - RULES.stop_loss):
+            exit_kind = "breakdown"
+        else:
+            exit_kind = "faded"
+    last_g1 = next(
+        (prices.dates[end - 1] for end in range(n - 1, max(0, n - 1 - g1_lookback), -1) if _was_g1(prices, index, end)),
+        None,
+    )
+    return {
+        "state": current,
+        "status_days": length,
+        "status_days_capped": first == 0 and length == days,
+        "prev_status": prev_status,
+        "prev_status_date": prev_date,
+        "g1_within_60d": last_g1 is not None,
+        "last_g1_date": last_g1,
+        "exit": exit_kind,
     }

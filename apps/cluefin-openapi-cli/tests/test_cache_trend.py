@@ -169,3 +169,14 @@ def test_default_as_of_is_the_last_index_day(cache) -> None:
 def test_market_and_code_filters(cache) -> None:
     assert set(_rows("--market", "kosdaq")) == {"000020"}
     assert set(_rows("--code", "000010,000030")) == {"000010", "000030"}
+
+
+def test_history_matches_the_kis_command_definition(cache) -> None:
+    prices = prices_of("stock-e")
+    expected = trend_setup.history(prices, index_of("KOSPI"))
+
+    _, payload = _scan("--code", "000010", "--history", "true")
+    _, plain = _scan("--code", "000010")
+
+    assert payload["rows"][0]["history"] == expected
+    assert "history" not in plain["rows"][0]

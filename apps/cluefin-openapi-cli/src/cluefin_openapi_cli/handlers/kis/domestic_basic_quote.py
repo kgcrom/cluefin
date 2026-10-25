@@ -791,10 +791,11 @@ def handle_kis_chart_technical(params: dict, session) -> dict:
 # Trend setup
 # ---------------------------------------------------------------------------
 
-# 260 bars leave room above trend_setup.MIN_CANDLES (251); one more covers a dropped intraday bar.
-_TREND_CANDLES = 260
-# Calendar days of index history to cover 251 index closes (~245 sessions a year).
-_INDEX_LOOKBACK_DAYS = 420
+# The judgement reads trend_setup.WINDOW (260) bars; its history replays the 60 sessions before
+# today, so 320 are fetched — one more covers a dropped intraday bar.
+_TREND_CANDLES = trend_setup.WINDOW + trend_setup.G1_LOOKBACK
+# Calendar days of index history to cover 251 index closes 60 sessions back (~245 sessions a year).
+_INDEX_LOOKBACK_DAYS = 500
 # KRX closes at 15:30; before 15:40 today's bar is still moving.
 _SESSION_FINAL = time(15, 40)
 _KST = ZoneInfo("Asia/Seoul")
@@ -892,11 +893,12 @@ def _insufficient(stock_code: str, exc: trend_setup.InsufficientHistory) -> CliE
     broker="kis",
 )
 def handle_kis_chart_trend_setup(params: dict, session) -> dict:
-    """Fetch ~260 adjusted bars and the index, return the setup reading rather than the candles.
+    """Fetch ~320 adjusted bars and the index, return the setup reading rather than the candles.
 
     The rules are the backtest's (`trend_setup.py`); this handler only does I/O, the
-    intraday-bar decision and error mapping. About 10 calls: basic-info (auto benchmark),
-    ~3 stock windows and ~6 index windows (50 rows each).
+    intraday-bar decision and error mapping. About 12 calls: basic-info (auto benchmark),
+    ~4 stock windows and ~7 index windows (50 rows each). The judgement uses the last 260
+    bars; the 60 before them replay the state history.
     """
 
     kis = session.get_kis()
@@ -923,7 +925,8 @@ def handle_kis_chart_trend_setup(params: dict, session) -> dict:
     elif intraday:
         dropped = prices.dates[-1]
         prices = prices.window(stop=-1)
-    prices = prices.window(start=-_TREND_CANDLES)
+    full = prices.window(start=-_TREND_CANDLES)
+    prices = full.window(start=-trend_setup.WINDOW)
     if len(prices) < trend_setup.MIN_CANDLES:
         raise _insufficient(stock_code, trend_setup.InsufficientHistory("stock", len(prices)))
 
@@ -950,6 +953,7 @@ def handle_kis_chart_trend_setup(params: dict, session) -> dict:
         "dropped_intraday_candle": dropped,
         "adjusted": True,
         **reading,
+        "history": trend_setup.history(full, index),
         "caveats": [*reading["caveats"], *caveats],
     }
 

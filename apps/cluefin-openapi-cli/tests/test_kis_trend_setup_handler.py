@@ -106,6 +106,13 @@ def test_golden_values_survive_the_handler() -> None:
     assert got["levels"]["buy_stop"] == expected["pivot"]
 
 
+def test_history_is_always_included() -> None:
+    got = _run(FakeKis())
+
+    assert got["history"]["state"] == "g3"
+    assert got["candle_count"] == 260
+
+
 def test_returns_readings_not_candles_and_stays_small() -> None:
     got = _run(FakeKis())
 

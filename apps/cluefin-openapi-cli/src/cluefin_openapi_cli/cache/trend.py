@@ -20,9 +20,9 @@ from cluefin_openapi_cli.cache.read import read_company
 
 __all__ = ["latest_index_date", "scan"]
 
-# Matches `kis chart trend-setup` (260 bars); ~380 calendar days, read with slack.
-_BARS = 260
-_LOOKBACK_DAYS = 500
+# Matches `kis chart trend-setup`: 260 bars judged plus 60 for the history (~470 calendar days, with slack).
+_BARS = trend_setup.WINDOW + trend_setup.G1_LOOKBACK
+_LOOKBACK_DAYS = 560
 _INDEX_FOR = {"KOSPI": "U0001", "KOSDAQ": "U1001"}
 
 # Adjusted like `read_ohlcv(adjusted=True)`; NULL prices (KIS 0) drop the bar, as in the backtest.
@@ -171,6 +171,7 @@ class _Judged:
     company: dict[str, Any]
     reading: dict[str, Any]
     return_20d_pct: float | None
+    prices: trend_setup.PriceArrays | None = None
 
 
 def _theme_snapshot(conn: duckdb.DuckDBPyConnection, as_of: date) -> tuple[list[tuple], list[tuple]] | None:
@@ -269,6 +270,7 @@ def scan(
     statuses: list[str] | None = None,
     include_excluded: bool = False,
     theme_filter: bool = False,
+    with_history: bool = False,
 ) -> dict[str, Any]:
     """Judge every stock listed on ``as_of``; rows for the wanted market/codes/statuses, counts for those.
 
@@ -296,11 +298,13 @@ def scan(
             skipped["no_bar"] += counted
             continue
         try:
-            reading = trend_setup.analyze(prices, indices[_INDEX_FOR[company["market"]]])
+            reading = trend_setup.analyze(
+                prices.window(start=-trend_setup.WINDOW), indices[_INDEX_FOR[company["market"]]]
+            )
         except trend_setup.InsufficientHistory:
             skipped["insufficient_history"] += counted
             continue
-        judged[company["code"]] = _Judged(company, reading, _return_20d(prices))
+        judged[company["code"]] = _Judged(company, reading, _return_20d(prices), prices)
 
     snapshot = _theme_snapshot(conn, as_of)
     themes = _theme_tags(*snapshot, judged) if snapshot else None
@@ -323,6 +327,9 @@ def scan(
         counts[f"{row['action']}/{row['status']}"] += 1
         counts["theme_pass"] += bool(row["theme"] and row["theme"]["pass"])
         if _wanted(row, statuses, include_excluded) and (not theme_filter or (row["theme"] or {}).get("pass")):
+            if with_history and entry.prices is not None:
+                # Only for shown rows: ~80 judgements a stock, too slow for the whole market.
+                row["history"] = trend_setup.history(entry.prices, indices[_INDEX_FOR[company["market"]]])
             rows.append(row)
     rows.sort(key=_sort_key)
     summary: dict[str, Any] = {key: counts[key] for key in _STATUS_ORDER if counts[key]}
