@@ -8,7 +8,6 @@ These tests require valid API credentials in environment variables:
 Run with: uv run pytest packages/cluefin-openapi/tests/kis/test_overseas_market_analysis_integration.py -v -m integration
 """
 
-import contextlib
 import time
 from datetime import datetime, timedelta
 
@@ -621,23 +620,16 @@ def test_market_cap_rank_multiple_exchanges(client: HttpClient, exchange_code, e
 
 @pytest.mark.integration
 def test_invalid_exchange_code(client: HttpClient):
-    """Test handling of invalid exchange code."""
-    with contextlib.suppress(Exception):  # either a raise or a response is accepted
-        response = client.overseas_market_analysis.get_stock_price_fluctuation(
-            excd="INVALID",  # Invalid exchange code
-            gubn="1",
-            minx="3",
-            vol_rang="0",
-        )
-        # If no exception, check for error in response
-        assert response is not None
+    """길이가 넘는 거래소 코드는 rt_cd=2 `OPSQ2001` 로 거절된다(2026-10-25 실측)."""
+    with pytest.raises(ValueError, match=r"\[OPSQ2001\]: ERROR WRONG VALUE SIZE \[EXCD\]"):
+        client.overseas_market_analysis.get_stock_price_fluctuation(excd="INVALID", gubn="1", minx="3", vol_rang="0")
 
 
 @pytest.mark.integration
 def test_invalid_date_range_rights(client: HttpClient):
-    """Test handling of invalid date range for rights inquiry."""
-    with contextlib.suppress(Exception):  # either a raise or a response is accepted
-        response = client.overseas_market_analysis.get_stock_period_rights_inquiry(
+    """시작일이 종료일보다 늦으면 rt_cd=7 `APSB0045` 로 거절된다(2026-10-25 실측)."""
+    with pytest.raises(ValueError, match=r"\[APSB0045\]: 종료일자가 시작일자보다 작습니다"):
+        client.overseas_market_analysis.get_stock_period_rights_inquiry(
             rght_type_cd="%%",
             inqr_dvsn_cd="02",
             inqr_strt_dt="20990101",  # Future date
@@ -647,21 +639,20 @@ def test_invalid_date_range_rights(client: HttpClient):
             ctx_area_nk50="",
             ctx_area_fk50="",
         )
-        assert response is not None
 
 
 @pytest.mark.integration
 def test_invalid_stock_symbol_rights(client: HttpClient):
-    """Test handling of invalid stock symbol in rights aggregate."""
+    """없는 심볼은 오류 없이 빈 목록이 온다(2026-10-25 실측)."""
     start_dt = (datetime.now() - timedelta(days=90)).strftime("%Y%m%d")
     end_dt = (datetime.now() + timedelta(days=90)).strftime("%Y%m%d")
 
-    with contextlib.suppress(Exception):  # either a raise or a response is accepted
-        response = client.overseas_market_analysis.get_stock_rights_aggregate(
-            ncod="US",
-            symb="INVALID999",  # Invalid symbol
-            st_ymd=start_dt,
-            ed_ymd=end_dt,
-        )
-        # If no exception, check for error in response
-        assert response is not None
+    response = client.overseas_market_analysis.get_stock_rights_aggregate(
+        ncod="US",
+        symb="INVALID999",  # Invalid symbol
+        st_ymd=start_dt,
+        ed_ymd=end_dt,
+    )
+
+    assert response.body.rt_cd == "0"
+    assert response.body.output1 == []

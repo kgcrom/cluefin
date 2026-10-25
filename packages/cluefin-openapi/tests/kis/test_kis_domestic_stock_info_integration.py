@@ -8,7 +8,6 @@ These tests require valid API credentials in environment variables:
 Run with: uv run pytest packages/cluefin-openapi/tests/kis/test_domestic_stock_info_integration.py -v -m integration
 """
 
-import contextlib
 from datetime import datetime, timedelta
 
 import pytest
@@ -405,27 +404,23 @@ def test_get_investment_opinion_by_brokerage(client: HttpClient, investment_date
 
 @pytest.mark.integration
 def test_invalid_stock_code(client: HttpClient):
-    """Test handling of invalid stock code."""
-    # This should either raise an exception or return an error response
-    with contextlib.suppress(Exception):  # either a raise or a response is accepted
-        response = client.domestic_stock_info.get_product_basic_info(
-            pdno="999999",  # Invalid code
-            prdt_type_cd="300",
-        )
-        # If no exception, check for error in response
-        assert response is not None
+    """`999999` 는 오류가 아니라 정상 응답이다 — 상품기본정보가 채워져 온다(2026-10-25 실측)."""
+    response = client.domestic_stock_info.get_product_basic_info(pdno="999999", prdt_type_cd="300")
+
+    assert response.body.rt_cd == "0"
 
 
 @pytest.mark.integration
 def test_invalid_date_range(client: HttpClient):
-    """Test handling of invalid date range."""
-    with contextlib.suppress(Exception):  # either a raise or a response is accepted
-        response = client.domestic_stock_info.get_ksd_dividend_decision(
-            cts="",
-            gb1="0",
-            f_dt="20990101",  # Future date
-            t_dt="20000101",  # Past date (reversed range)
-            sht_cd="",
-            high_gb="",
-        )
-        assert response is not None
+    """시작일이 종료일보다 늦어도 오류 없이 빈 목록이 온다(2026-10-25 실측)."""
+    response = client.domestic_stock_info.get_ksd_dividend_decision(
+        cts="",
+        gb1="0",
+        f_dt="20990101",  # Future date
+        t_dt="20000101",  # Past date (reversed range)
+        sht_cd="",
+        high_gb="",
+    )
+
+    assert response.body.rt_cd == "0"
+    assert response.body.output1 == []
