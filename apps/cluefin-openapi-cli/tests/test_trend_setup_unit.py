@@ -140,9 +140,12 @@ def test_pivot_matches_backtest(name: str) -> None:
 def test_pivot_reference_values() -> None:
     a, b, c = (find_pivot(prices_of(name)) for name in ("stock-a", "stock-b", "stock-c"))
 
-    assert a is not None and a.price == 179700
-    assert b is not None and f"{b.last_contraction_pct:.1f}" == "9.9"
-    assert c is not None and c.price == 6040
+    assert a is not None
+    assert a.price == 179700
+    assert b is not None
+    assert f"{b.last_contraction_pct:.1f}" == "9.9"
+    assert c is not None
+    assert c.price == 6040
 
 
 def test_fractal_high_needs_three_lower_bars_on_each_side() -> None:
@@ -169,7 +172,9 @@ def test_contraction_legs_from_the_base_high_excluding_the_pivot_bar_low() -> No
     got = find_pivot(_from_highs(highs))
 
     assert got is not None
-    assert got.price == 90 and got.contractions == 3 and got.age == 5
+    assert got.price == 90
+    assert got.contractions == 3
+    assert got.age == 5
     assert got.legs[0] == pytest.approx(40)
     assert got.legs[1] == pytest.approx((1 - 70 / 95) * 100)
     assert got.last_contraction_pct == pytest.approx((1 - 74 / 90) * 100)
@@ -194,8 +199,10 @@ def test_strength_reference_values() -> None:
     weak = strength(prices_of("stock-a"), index_of("KOSPI"))
     strong = strength(prices_of("stock-d"), index_of("KOSDAQ"))
 
-    assert weak is not None and f"{weak.rel:.2f}" == "0.81"
-    assert strong is not None and f"{strong.rel:.2f}" == "2.95"
+    assert weak is not None
+    assert f"{weak.rel:.2f}" == "0.81"
+    assert strong is not None
+    assert f"{strong.rel:.2f}" == "2.95"
 
 
 def test_strength_reads_the_index_on_the_stock_date_and_ignores_later_days() -> None:

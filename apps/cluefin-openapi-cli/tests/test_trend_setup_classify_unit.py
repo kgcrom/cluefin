@@ -5,7 +5,6 @@ from __future__ import annotations
 from dataclasses import replace
 
 import pytest
-from test_trend_setup import index_of, load, prices_of
 
 from cluefin_openapi_cli.trend_setup import (
     Pivot,
@@ -21,11 +20,14 @@ from cluefin_openapi_cli.trend_setup import (
     tick_size,
 )
 
+from .test_trend_setup_unit import index_of, load, prices_of
+
 
 def classify_fixture(name: str) -> dict:
     prices = prices_of(name)
     f, s = price_features(prices), strength(prices, index_of(load(name)["market"]))
-    assert f is not None and s is not None
+    assert f is not None
+    assert s is not None
     return classify(f, find_pivot(prices), s)
 
 
@@ -173,7 +175,8 @@ def test_illiquid_comes_before_everything() -> None:
 def test_group_1_excludes_even_when_group_2_also_holds() -> None:
     got = run(s={"rel": 1.5}, f={"dist_sma50_pct": 30})
 
-    assert got["groups"]["g1"] is True and got["groups"]["g2"] is True
+    assert got["groups"]["g1"] is True
+    assert got["groups"]["g2"] is True
     assert (got["action"], got["status"]) == ("exclude", "overheated")
 
 
@@ -181,7 +184,8 @@ def test_no_pivot_means_no_group_3_and_no_levels() -> None:
     got = run(no_pivot=True)
 
     assert got["groups"]["g3"] is False
-    assert got["to_pivot_pct"] is None and got["levels"] is None
+    assert got["to_pivot_pct"] is None
+    assert got["levels"] is None
     assert got["status"] == "g3_candidate"
 
 

@@ -11,13 +11,15 @@ and a theme's return is the plain mean of its stocks', so they are stored for re
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
-from typing import Any, Callable
+from datetime import date, timedelta
+from typing import Any
 
 import duckdb
 
 from cluefin_openapi_cli.cache.bars import fetch_index_bars
+from cluefin_openapi_cli.clock import now_kst
 
 __all__ = ["ThemeLoadStats", "load_theme"]
 
@@ -102,7 +104,7 @@ def load_theme(
         return stats
     stats.as_of = as_of
     groups = _groups(kiwoom, stats)
-    now = datetime.now()
+    now = now_kst()
     themes, members = [], []
     for index, group in enumerate(groups, 1):
         code = str(group.thema_grp_cd).strip()

@@ -7,11 +7,12 @@ from datetime import datetime
 from types import SimpleNamespace
 
 import pytest
-from test_trend_setup import load
 
 from cluefin_openapi_cli.errors import EXIT_BROKER, EXIT_USAGE, CliError
 from cluefin_openapi_cli.handlers.kis import domestic_basic_quote
 from cluefin_openapi_cli.handlers.kis.domestic_basic_quote import handle_kis_chart_trend_setup
+
+from .test_trend_setup_unit import load
 
 
 def _response(rows: list) -> SimpleNamespace:
@@ -125,7 +126,8 @@ def test_auto_benchmark_follows_basic_info() -> None:
 
     got = _run(kis)
 
-    assert set(kis.sectors) == {"1001"} and got["market"] == "KOSDAQ"
+    assert set(kis.sectors) == {"1001"}
+    assert got["market"] == "KOSDAQ"
 
 
 def test_explicit_benchmark_skips_basic_info() -> None:
@@ -148,7 +150,8 @@ def test_intraday_bar_is_dropped_before_the_close(monkeypatch) -> None:
 
     got = _run(FakeKis())
 
-    assert got["dropped_intraday_candle"] == "20261006" and got["as_of"] == "20261002"
+    assert got["dropped_intraday_candle"] == "20261006"
+    assert got["as_of"] == "20261002"
 
 
 def test_include_today_keeps_the_intraday_bar_with_a_caveat(monkeypatch) -> None:
@@ -156,7 +159,8 @@ def test_include_today_keeps_the_intraday_bar_with_a_caveat(monkeypatch) -> None
 
     got = _run(FakeKis(), include_today=True)
 
-    assert got["dropped_intraday_candle"] is None and got["as_of"] == "20261006"
+    assert got["dropped_intraday_candle"] is None
+    assert got["as_of"] == "20261006"
     assert any("장중" in caveat for caveat in got["caveats"])
 
 

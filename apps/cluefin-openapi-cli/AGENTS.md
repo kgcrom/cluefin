@@ -235,7 +235,7 @@ CLI 가 말해 주지 않는 것만 적는다.
   다시 계산하지 않는다 — NaN(변동 없음 등)은 `null`. `--risk-free <계열>` 은 `rates` 를 ASOF join 해 기간 첫날 이전의 마지막 발표값을
   쓰고, 10일 넘게 묵은 값(적재가 멈춘 캐시)은 exit 2 `RatesMissing` 이다.
 - **`cache trend-setup` 에 규칙을 두지 않는다.** 종목마다 `trend_setup.analyze` 를 부르고(`kis chart trend-setup` 과 같은 함수),
-  `test_cache_trend.py` 가 두 결과가 같은지 본다. 유니버스는 백테스트와 같다: 그날 상장(`read_company(as_of)`), 끝자리 0, 이름에
+  `test_cache_trend_unit.py` 가 두 결과가 같은지 본다. 유니버스는 백테스트와 같다: 그날 상장(`read_company(as_of)`), 끝자리 0, 이름에
   "스팩" 없음, 0 가격 봉 제외. 2026-10-16 전 종목 2,487개가 research `scan.py` 와 action·status·피봇·rel 모두 같았다.
   `--market`·`--code` 로 행을 좁혀도 전 종목을 판정한다(테마 주도주 순위가 전 종목 기준이라서). `--history true` 는 보이는 행만.
 - **`theme` 은 키움 테마 스냅샷**이다. 키움은 현재 값만 주고 KIS 에는 국내 테마 API 가 없어 날마다 쌓는다. 평일 16시 전은 장중이라

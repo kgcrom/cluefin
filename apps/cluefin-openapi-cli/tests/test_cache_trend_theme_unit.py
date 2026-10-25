@@ -5,11 +5,11 @@ from __future__ import annotations
 import json
 from datetime import date
 
-from test_cache_trend import _AS_OF, cache, cache_dir  # noqa: F401 - pytest fixtures
-
 from cluefin_openapi_cli.cache import store
 from cluefin_openapi_cli.cache.trend import _Judged, _theme_tags
 from cluefin_openapi_cli.main import run_cli
+
+from .test_cache_trend_unit import _AS_OF, cache, cache_dir  # noqa: F401 - pytest fixtures
 
 
 def _judged(code: str, *, ret: float, rel: float, value: float) -> _Judged:
@@ -59,7 +59,8 @@ def test_leader_is_top_traded_value_or_main_stock_and_at_least_median_rel() -> N
     def t1(code: str) -> dict:
         return blocks[code]["themes"][0]
 
-    assert t1("100000")["leader_by"] == ["traded_value_top3"] and t1("100000")["leader"] is False
+    assert t1("100000")["leader_by"] == ["traded_value_top3"]
+    assert t1("100000")["leader"] is False
     assert t1("100002")["leader"] is True  # top 3 by value, rel = median
     assert (t1("100004")["leader_by"], t1("100004")["leader"]) == (["main_stock"], True)
     assert blocks["100002"]["pass"] is True

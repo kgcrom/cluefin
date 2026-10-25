@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-from test_trend_setup import index_of, load, prices_of
 
 from cluefin_openapi_cli import trend_setup
 from cluefin_openapi_cli.trend_setup import IndexCloses, Pivot, PriceArrays, history
+
+from .test_trend_setup_unit import index_of, load, prices_of
 
 _PIVOT = Pivot(price=100.0, date="20260101", age=5, last_contraction_pct=5, legs=(10, 8, 5))
 

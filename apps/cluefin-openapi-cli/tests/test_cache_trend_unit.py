@@ -6,11 +6,12 @@ import json
 from datetime import date, datetime
 
 import pytest
-from test_trend_setup import index_of, load, prices_of
 
 from cluefin_openapi_cli import trend_setup
 from cluefin_openapi_cli.cache import store
 from cluefin_openapi_cli.main import run_cli
+
+from .test_trend_setup_unit import index_of, load, prices_of
 
 _AS_OF = "20261006"
 

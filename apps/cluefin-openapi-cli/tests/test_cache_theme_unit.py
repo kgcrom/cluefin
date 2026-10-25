@@ -98,7 +98,8 @@ def test_one_failing_theme_does_not_stop_the_snapshot() -> None:
 
     stats = _load(conn, FakeKiwoom(fail="102"))
 
-    assert stats.themes == 2 and stats.errors[0]["code"] == "102"
+    assert stats.themes == 2
+    assert stats.errors[0]["code"] == "102"
 
 
 def test_rerun_on_the_same_day_replaces_the_snapshot() -> None:
@@ -118,7 +119,8 @@ def test_weekday_before_the_close_is_skipped() -> None:
 
     stats = _load(conn, kiwoom, today=date(2026, 10, 26), last_day=_SATURDAY)
 
-    assert stats.skipped == "intraday" and kiwoom.keys == []
+    assert stats.skipped == "intraday"
+    assert kiwoom.keys == []
 
 
 def test_status_reports_snapshot_dates() -> None:

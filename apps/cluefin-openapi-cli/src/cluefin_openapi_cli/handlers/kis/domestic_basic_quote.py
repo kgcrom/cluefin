@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from datetime import datetime, time, timedelta
-from zoneinfo import ZoneInfo
 
 from cluefin_openapi_cli import trend_setup
 from cluefin_openapi_cli.cache.bars import fetch_index_bars
+from cluefin_openapi_cli.clock import now_kst
 from cluefin_openapi_cli.errors import EXIT_BROKER, EXIT_USAGE, CliError
 from cluefin_openapi_cli.handlers._base import DispatcherProtocol, extract_output, rpc_method
 from cluefin_openapi_cli.indicators import MIN_CANDLES, analyze
@@ -798,7 +798,6 @@ _TREND_CANDLES = trend_setup.WINDOW + trend_setup.G1_LOOKBACK
 _INDEX_LOOKBACK_DAYS = 500
 # KRX closes at 15:30; before 15:40 today's bar is still moving.
 _SESSION_FINAL = time(15, 40)
-_KST = ZoneInfo("Asia/Seoul")
 _BENCHMARKS = {"STK": ("0001", "KOSPI"), "KSQ": ("1001", "KOSDAQ")}
 _BENCHMARK_MARKETS = {code: market for code, market in _BENCHMARKS.values()}
 
@@ -806,7 +805,7 @@ _BENCHMARK_MARKETS = {code: market for code, market in _BENCHMARKS.values()}
 def _now() -> datetime:
     """KST wall clock; tests replace this function."""
 
-    return datetime.now(_KST).replace(tzinfo=None)
+    return now_kst()
 
 
 def _resolve_benchmark(kis, stock_code: str, caveats: list[str]) -> str:

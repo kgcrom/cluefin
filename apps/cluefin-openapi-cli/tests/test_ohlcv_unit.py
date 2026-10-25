@@ -364,5 +364,6 @@ def test_missing_traded_value_is_nan_and_bar_stays_complete() -> None:
         stock_code="005930",
     ).candles[0]
 
-    assert math.isnan(candle.value) and candle.complete
+    assert math.isnan(candle.value)
+    assert candle.complete
     assert math.isnan(minute.value)
