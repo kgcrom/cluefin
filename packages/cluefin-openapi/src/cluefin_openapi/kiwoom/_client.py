@@ -236,11 +236,7 @@ class Client(BaseHttpClient):
             request_context=request_context,
         )
         logger.error(
-            "Kiwoom API error (return_code=%s, api-id=%s, path=%s): %s",
-            return_code,
-            request_context.get("tr_id"),
-            request_context.get("path"),
-            data.get("return_msg") or exc.message,
+            f"Kiwoom API error (return_code={return_code}, api-id={request_context.get('tr_id')}, path={request_context.get('path')}): {data.get('return_msg') or exc.message}"
         )
         return exc
 

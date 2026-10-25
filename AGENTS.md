@@ -124,6 +124,10 @@ shapes are in `src/dart/client.ts` and `src/dart/xml.ts`.
 - After: keep each regex flat (one number, one separator) and loop in code with
   `pattern.match(text, pos)` (`_read_numbers` in `cluefin_sec_notes/_labels.py`). Same results, linear time.
 - A mutable default argument (`def f(items=SOME_LIST)`) is a high finding, tests included. Use a tuple.
+- A stdlib logger call whose message mentions a token/secret/key **and** passes `%s` arguments is a high
+  "potential hardcoded secret being logged" finding, even when the argument is a timestamp or path (6 in the
+  Kiwoom token manager, #181; loguru calls were never matched). Put the values in an f-string, like the KIS/NH
+  token managers, and never log the token itself.
 
 ## Environment gotchas
 
@@ -144,7 +148,8 @@ shapes are in `src/dart/client.ts` and `src/dart/xml.ts`.
   `#` reason above the decorator (mutable accumulators/builders, `eq=False` for identity, bases a `BaseModel` also
   inherits, and `Generic` classes built as `X[T](...)`, whose `__orig_class__` assignment is a `TypeError` under
   frozen+slots on 3.10).
-- Logging is stdlib: `logger = logging.getLogger(__name__)` at module level, `%s` arguments (not loguru's `{}`).
+- Logging is stdlib: `logger = logging.getLogger(__name__)` at module level; f-string messages (loguru's `{}` args
+  don't format in stdlib, and `%s` args trip Codacy when the text says token/key — see Codacy above).
   Packages never add handlers or set levels; only app entry points do (`cluefin_openapi_cli.main._configure_logging`,
   `cluefin_desk.app._configure_logging`). Tests read logs with `caplog`.
 - Apps import clients, auth, services and exceptions from the broker package (`from cluefin_openapi.kis import

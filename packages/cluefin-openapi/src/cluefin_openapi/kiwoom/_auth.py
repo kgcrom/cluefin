@@ -31,14 +31,10 @@ def _log_error_body(response: requests.Response, endpoint: str) -> None:
         return_code = parse_return_code(data.get("return_code"))
         message = data.get("return_msg") or (KIWOOM_ERROR_CODES.get(return_code) if return_code else None)
         logger.error(
-            "Kiwoom auth request failed (%s): status=%s, return_code=%s, message=%s",
-            endpoint,
-            response.status_code,
-            return_code,
-            message,
+            f"Kiwoom auth request failed ({endpoint}): status={response.status_code}, return_code={return_code}, message={message}"
         )
     else:
-        logger.error("Kiwoom auth request failed (%s): status=%s", endpoint, response.status_code)
+        logger.error(f"Kiwoom auth request failed ({endpoint}): status={response.status_code}")
 
 
 class Auth:

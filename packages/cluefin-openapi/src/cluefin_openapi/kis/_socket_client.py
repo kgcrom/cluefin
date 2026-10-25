@@ -661,13 +661,13 @@ class SocketClient:
                 await self._send_frame(b"", opcode=0x8)
             except Exception as exc:
                 if self.debug:
-                    logger.debug("Failed to send close frame: %s", exc)
+                    logger.debug(f"Failed to send close frame: {exc}")
             self._writer.close()
             try:
                 await self._writer.wait_closed()
             except Exception as exc:
                 if self.debug:
-                    logger.debug("Failed to close writer: %s", exc)
+                    logger.debug(f"Failed to close writer: {exc}")
             self._writer = None
             self._reader = None
 

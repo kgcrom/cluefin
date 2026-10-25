@@ -69,7 +69,7 @@ class TokenManager:
 
     def get_or_generate(self, generate_func) -> TokenResponse:
         if self._is_token_valid():
-            logger.debug("Using cached Kiwoom token (expires at %s)", self._token_cache.expires_dt)
+            logger.debug(f"Using cached Kiwoom token (expires at {self._token_cache.expires_dt})")
             return self._token_cache
 
         logger.info("Generating new Kiwoom token (cached token unavailable or expiring)")
@@ -84,7 +84,7 @@ class TokenManager:
         if self._last_refresh is not None:
             age = datetime.now() - self._last_refresh
             if age > self.MAX_CACHE_AGE:
-                logger.debug("Kiwoom token cache expired (age: %s, max: %s)", age, self.MAX_CACHE_AGE)
+                logger.debug(f"Kiwoom token cache expired (age: {age}, max: {self.MAX_CACHE_AGE})")
                 return False
 
         expiry = getattr(self._token_cache, "expires_dt", None)
@@ -95,9 +95,7 @@ class TokenManager:
         expiry_threshold = expiry - self.EXPIRY_BUFFER
         is_valid = datetime.now() < expiry_threshold
         if not is_valid:
-            logger.debug(
-                "Kiwoom token expiring soon (expires at %s, refresh threshold at %s)", expiry, expiry_threshold
-            )
+            logger.debug(f"Kiwoom token expiring soon (expires at {expiry}, refresh threshold at {expiry_threshold})")
         return is_valid
 
     def _save_token(self, token: TokenResponse) -> None:
@@ -112,9 +110,9 @@ class TokenManager:
             }
             self.cache_dir.mkdir(parents=True, exist_ok=True)
             write_json_atomic(self.cache_file, cache_data)
-            logger.debug("Kiwoom token cached at %s", self.cache_file)
+            logger.debug(f"Kiwoom token cached at {self.cache_file}")
         except Exception as exc:
-            logger.error("Failed to save Kiwoom token cache: %s", exc)
+            logger.error(f"Failed to save Kiwoom token cache: {exc}")
 
     def _load_from_disk(self) -> None:
         if not self.cache_file.exists():
@@ -128,11 +126,11 @@ class TokenManager:
                 cached_at = cache_data.get("cached_at")
                 if cached_at:
                     self._last_refresh = datetime.fromisoformat(cached_at)
-                logger.debug("Loaded Kiwoom token from disk (cached at %s)", cached_at)
+                logger.debug(f"Loaded Kiwoom token from disk (cached at {cached_at})")
             else:
                 logger.warning("Kiwoom token cache file is empty or malformed")
         except (FileNotFoundError, ValueError) as exc:
-            logger.warning("Failed to load Kiwoom token cache: %s", exc)
+            logger.warning(f"Failed to load Kiwoom token cache: {exc}")
 
     def clear_cache(self) -> None:
         self._token_cache = None
