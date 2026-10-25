@@ -18,7 +18,7 @@ uv sync --all-packages
 cp packages/cluefin-openapi/.env.sample .env  # API 키 설정
 ```
 
-**사전 요구사항**: [uv](https://github.com/astral-sh/uv), Python 3.10+
+**사전 요구사항**: [uv](https://github.com/astral-sh/uv), Python 3.11+
 
 ## 프로젝트 구조
 

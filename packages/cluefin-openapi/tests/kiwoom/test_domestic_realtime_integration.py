@@ -51,7 +51,7 @@ async def _receive_each(ws: KiwoomWebSocketClient, *models: type[BaseModel]) -> 
 
     try:
         await asyncio.wait_for(wait(), timeout=TIMEOUT_SECONDS)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         missing = [model.__name__ for model in models if model not in received]
         pytest.fail(f"No {missing} for {STK_CD} within {TIMEOUT_SECONDS}s during continuous trading hours.")
     assert all(model in received for model in models), "WebSocket closed before the data arrived"

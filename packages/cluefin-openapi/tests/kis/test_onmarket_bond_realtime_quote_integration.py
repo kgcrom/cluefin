@@ -130,7 +130,7 @@ async def test_receive_execution_data(socket_client_params):
 
         try:
             await asyncio.wait_for(receive_data(), timeout=timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pytest.skip(
                 f"No bond execution data received within {timeout}s. "
                 "This may be expected outside market hours (9:00-15:30 KST)."
@@ -162,7 +162,7 @@ async def test_subscription_events(socket_client_params):
 
         try:
             await asyncio.wait_for(check_events(), timeout=5)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pass
 
         assert subscribed_event_found is True
@@ -231,7 +231,7 @@ async def test_receive_orderbook_data(socket_client_params):
 
         try:
             await asyncio.wait_for(receive_data(), timeout=timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pytest.skip(
                 f"No bond orderbook data received within {timeout}s. "
                 "This may be expected outside market hours (9:00-15:30 KST)."
@@ -263,7 +263,7 @@ async def test_orderbook_subscription_events(socket_client_params):
 
         try:
             await asyncio.wait_for(check_events(), timeout=5)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pass
 
         assert subscribed_event_found is True
@@ -331,7 +331,7 @@ async def test_receive_index_execution_data(socket_client_params):
 
         try:
             await asyncio.wait_for(receive_data(), timeout=timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pytest.skip(
                 f"No bond index execution data received within {timeout}s. "
                 "This may be expected outside market hours (9:00-15:30 KST)."
@@ -382,7 +382,7 @@ async def test_combined_execution_and_orderbook(socket_client_params):
 
         try:
             await asyncio.wait_for(receive_data(), timeout=timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pytest.skip(
                 f"No data received within {timeout}s. This may be expected outside market hours (9:00-15:30 KST)."
             )

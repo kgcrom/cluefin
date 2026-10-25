@@ -21,7 +21,7 @@ name: CI Pipeline
         type: boolean
 
 env:
-  PYTHON_VERSION: "3.10"
+  PYTHON_VERSION: "3.11"
 
 # 연달아 머지되면 앞 커밋의 실행은 취소하고 마지막 커밋만 끝까지 돌린다
 concurrency:
@@ -67,7 +67,7 @@ jobs:
     environment: development
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.11", "3.12"]
         
     steps:
     - name: Checkout code

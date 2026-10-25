@@ -46,7 +46,7 @@ async def _first_data(ws: SocketClient, tr_cd: str, tr_key: str) -> dict[str, An
 
     try:
         body = await asyncio.wait_for(wait(), timeout=TIMEOUT_SECONDS)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         pytest.fail(f"No {tr_cd} data for {tr_key} within {TIMEOUT_SECONDS}s during market hours.")
     assert body, "WebSocket closed before any data arrived"
     return body

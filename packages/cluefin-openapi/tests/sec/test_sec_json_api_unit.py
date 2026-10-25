@@ -3,7 +3,7 @@
 Payloads are trimmed copies of real responses (same keys and value types).
 """
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 import pytest
@@ -172,7 +172,7 @@ class TestSubmissions:
         assert tenk.accession_number == "0000320193-23-000106"
         assert tenk.report_date == date(2023, 9, 30)
         # Parsed as given. The filing header says 2023-11-02 18:08:27 ET, so this "Z" value is not real UTC.
-        assert tenk.acceptance_date_time == datetime(2023, 11, 3, 2, 8, 27, tzinfo=timezone.utc)
+        assert tenk.acceptance_date_time == datetime(2023, 11, 3, 2, 8, 27, tzinfo=UTC)
         assert tenk.is_xbrl is True
         assert tenk.is_inline_xbrl is True
         assert tenk.is_xbrl_numeric is None  # null on all but the most recent filings

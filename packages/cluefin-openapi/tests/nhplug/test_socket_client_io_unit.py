@@ -528,7 +528,7 @@ class TestEventsGenerator:
                 # Server pushes something during the idle period, then the session ends.
                 socket_client._event_queue.put_nowait(late_event)
                 socket_client._connected = False
-                raise asyncio.TimeoutError
+                raise TimeoutError
             return await real_wait_for(awaitable, timeout)
 
         monkeypatch.setattr(asyncio, "wait_for", wait_for_with_one_idle_timeout)

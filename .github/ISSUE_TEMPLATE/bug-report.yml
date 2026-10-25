@@ -81,7 +81,7 @@ body:
       description: OS, Python, uv 버전 등 환경 정보를 입력해주세요.
       placeholder: |
         - OS: macOS 15.x / Ubuntu 24.04
-        - Python: 3.10.x
+        - Python: 3.11.x
         - uv: 0.x.x
     validations:
       required: false

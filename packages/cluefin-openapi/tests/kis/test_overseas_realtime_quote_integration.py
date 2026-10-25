@@ -126,7 +126,7 @@ async def test_receive_orderbook_data(socket_client_params):
 
         try:
             await asyncio.wait_for(receive_data(), timeout=timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pytest.fail(f"No orderbook data for AAPL within {timeout}s during US regular hours.")
 
         assert data_received is True
@@ -155,7 +155,7 @@ async def test_orderbook_subscription_events(socket_client_params):
 
         try:
             await asyncio.wait_for(check_events(), timeout=5)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pass
 
         assert subscribed_event_found is True
@@ -239,7 +239,7 @@ async def test_receive_execution_data(socket_client_params):
 
         try:
             await asyncio.wait_for(receive_data(), timeout=timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pytest.fail(f"No execution data for AAPL within {timeout}s during US regular hours.")
 
         assert data_received is True
@@ -268,7 +268,7 @@ async def test_execution_subscription_events(socket_client_params):
 
         try:
             await asyncio.wait_for(check_events(), timeout=5)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pass
 
         assert subscribed_event_found is True
@@ -337,7 +337,7 @@ async def test_receive_delayed_orderbook_data(socket_client_params):
 
         try:
             await asyncio.wait_for(receive_data(), timeout=timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pytest.skip(
                 f"No delayed orderbook data received within {timeout}s. This may be expected outside market hours."
             )
@@ -417,7 +417,7 @@ async def test_combined_orderbook_and_execution(socket_client_params):
 
         try:
             await asyncio.wait_for(receive_data(), timeout=timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pytest.fail(f"No orderbook or execution data for AAPL within {timeout}s during US regular hours.")
 
         assert data_received["orderbook"] or data_received["execution"]

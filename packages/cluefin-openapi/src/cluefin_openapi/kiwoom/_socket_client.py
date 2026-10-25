@@ -272,7 +272,7 @@ class KiwoomWebSocketClient:
             try:
                 message = await asyncio.wait_for(self._event_queue.get(), timeout=1.0)
                 yield message
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue
 
     # ------------------------------------------------------------------

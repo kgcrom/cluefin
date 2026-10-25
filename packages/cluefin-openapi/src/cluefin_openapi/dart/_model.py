@@ -4,10 +4,9 @@ import builtins
 from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import Enum
-from typing import Generic, TypeVar
+from typing import Generic, Self, TypeVar
 
 from pydantic import BaseModel, Field, field_validator
-from typing_extensions import Self
 
 
 class DartStatusCode(str, Enum):
