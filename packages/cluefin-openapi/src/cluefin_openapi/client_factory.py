@@ -23,7 +23,7 @@ from cluefin_openapi.sec._client import Client as SecClient
 BrokerName = Literal["kis", "kiwoom", "dart", "nhplug", "sec", "ecos"]
 BrokerEnv = Literal["dev", "prod"]
 
-__all__ = ["BrokerClientConfig", "BrokerClientFactory", "create_broker_client"]
+__all__ = ["BrokerClientConfig", "BrokerClientFactory", "create_broker_client", "load_env"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,7 +47,7 @@ class BrokerClientConfig:
 
     @classmethod
     def from_env(cls, environ: Mapping[str, str] | None = None) -> BrokerClientConfig:
-        env = _merge_env_with_dotenv(environ or os.environ)
+        env = load_env(environ)
         return cls(
             kis_app_key=env.get("KIS_APP_KEY"),
             kis_secret_key=env.get("KIS_SECRET_KEY"),
@@ -71,10 +71,13 @@ class BrokerClientConfig:
         return None
 
 
-def _merge_env_with_dotenv(environ: Mapping[str, str]) -> dict[str, str]:
-    """Load `.env` from the current working directory, keeping real env precedence."""
+def load_env(environ: Mapping[str, str] | None = None) -> dict[str, str]:
+    """`.env` in the current working directory overlaid by the real environment (``environ``, default ``os.environ``).
+
+    Apps that need settings beyond the broker keys read them from here, so one `.env` parser serves them all.
+    """
     merged = dict(_load_dotenv_file(Path.cwd() / ".env"))
-    merged.update(dict(environ))
+    merged.update(dict(os.environ if environ is None else environ))
     return merged
 
 
