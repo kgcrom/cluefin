@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from cluefin_openapi_cli.errors import EXIT_BROKER, CliError
+from datetime import datetime, time, timedelta
+
+from cluefin_openapi_cli import trend_setup
+from cluefin_openapi_cli.cache.bars import fetch_index_bars
+from cluefin_openapi_cli.clock import now_kst
+from cluefin_openapi_cli.errors import EXIT_BROKER, EXIT_USAGE, CliError
 from cluefin_openapi_cli.handlers._base import DispatcherProtocol, extract_output, rpc_method
 from cluefin_openapi_cli.indicators import MIN_CANDLES, analyze
 from cluefin_openapi_cli.ohlcv import fetch_kis_daily_series
@@ -783,6 +788,176 @@ def handle_kis_chart_technical(params: dict, session) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Trend setup
+# ---------------------------------------------------------------------------
+
+# The judgement reads trend_setup.WINDOW (260) bars; its history replays the 60 sessions before
+# today, so 320 are fetched — one more covers a dropped intraday bar.
+_TREND_CANDLES = trend_setup.WINDOW + trend_setup.G1_LOOKBACK
+# Calendar days of index history to cover 251 index closes 60 sessions back (~245 sessions a year).
+_INDEX_LOOKBACK_DAYS = 500
+# KRX closes at 15:30; before 15:40 today's bar is still moving.
+_SESSION_FINAL = time(15, 40)
+_BENCHMARKS = {"STK": ("0001", "KOSPI"), "KSQ": ("1001", "KOSDAQ")}
+_BENCHMARK_MARKETS = {code: market for code, market in _BENCHMARKS.values()}
+
+
+def _now() -> datetime:
+    """KST wall clock; tests replace this function."""
+
+    return now_kst()
+
+
+def _resolve_benchmark(kis, stock_code: str, caveats: list[str]) -> str:
+    """0001 for a KOSPI stock, 1001 for KOSDAQ, from `basic-info` (one call)."""
+
+    output = getattr(kis.domestic_stock_info.get_stock_basic_info("300", stock_code).body, "output", None)
+    if output is None:
+        raise CliError(
+            f"basic-info returned no body for {stock_code}.",
+            exit_code=EXIT_BROKER,
+            error_type="ResponseParseError",
+            hint="Check the stock code with `kis stock basic-info`.",
+        )
+    market = str(getattr(output, "mket_id_cd", "") or "").strip()
+    if market not in _BENCHMARKS:
+        raise CliError(
+            f"{stock_code} trades on `{market or 'unknown'}`, not KOSPI (STK) or KOSDAQ (KSQ).",
+            exit_code=EXIT_USAGE,
+            error_type="ValidationError",
+            data={"stock_code": stock_code, "mket_id_cd": market},
+            hint="Pass --benchmark 0001 (KOSPI) or 1001 (KOSDAQ).",
+        )
+    group = str(getattr(output, "scty_grp_id_cd", "") or "").strip()
+    if group != "ST":
+        caveats.append(f"보통주가 아니다(scty_grp_id_cd={group}) — 백테스트 유니버스는 보통주만이었다.")
+    return _BENCHMARKS[market][0]
+
+
+def _insufficient(stock_code: str, exc: trend_setup.InsufficientHistory) -> CliError:
+    return CliError(
+        f"Only {exc.count} daily bars for the {exc.which} of {stock_code}; trend-setup needs {trend_setup.MIN_CANDLES}.",
+        exit_code=EXIT_BROKER,
+        error_type="InsufficientHistory",
+        data={"stock_code": stock_code, "series": exc.which, "candles": exc.count, "required": trend_setup.MIN_CANDLES},
+        hint=(
+            "A listing younger than ~260 sessions is outside the backtest. Check `kis stock basic-info`, "
+            "or the code may be suspended or wrong."
+        ),
+    )
+
+
+@rpc_method(
+    name="chart.trend_setup",
+    description=(
+        "Trend-following breakout setup for one stock from about 260 adjusted daily bars and its market index: "
+        "Minervini trend template with moving average stack, 52-week high gap, fractal pivot and base "
+        "contraction (VCP), relative strength vs. KOSPI/KOSDAQ, watchlist setup group 1/2/3, and pivot "
+        "alert/stop levels. Returns the readings and one alert/watch/exclude action, not the candles."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "stock_code": {"type": "string", "description": "6-digit stock code", "pattern": "^[0-9]{6}$"},
+            "market": {
+                "type": "string",
+                "enum": ["J", "NX", "UN"],
+                "description": "Market code (J:KRX, NX:NXT, UN:Combined). Default J.",
+            },
+            "benchmark": {
+                "type": "string",
+                "enum": ["auto", "0001", "1001"],
+                "description": (
+                    "Index for relative strength: 0001 KOSPI, 1001 KOSDAQ (not KOSPI200). "
+                    "Default auto: from basic-info (one more call)."
+                ),
+            },
+            "end_date": {
+                "type": "string",
+                "description": "Judge as of this date (YYYYMMDD), to replay a past day. Default today.",
+                "pattern": "^[0-9]{8}$",
+            },
+            "include_today": {
+                "type": "boolean",
+                "description": (
+                    "Keep today's unfinished bar before 15:40 KST (default false: judge on the last closed day, "
+                    "as the backtest did)."
+                ),
+            },
+        },
+        "required": ["stock_code"],
+    },
+    returns={"type": "object"},
+    category="chart",
+    broker="kis",
+)
+def handle_kis_chart_trend_setup(params: dict, session) -> dict:
+    """Fetch ~320 adjusted bars and the index, return the setup reading rather than the candles.
+
+    The rules are the backtest's (`trend_setup.py`); this handler only does I/O, the
+    intraday-bar decision and error mapping. About 12 calls: basic-info (auto benchmark),
+    ~4 stock windows and ~7 index windows (50 rows each). The judgement uses the last 260
+    bars; the 60 before them replay the state history.
+    """
+
+    kis = session.get_kis()
+    stock_code = params["stock_code"]
+    caveats: list[str] = []
+    if not stock_code.endswith("0"):
+        caveats.append("우선주로 보인다(코드 끝자리 0 아님) — 백테스트 유니버스는 보통주만이었다.")
+    benchmark = params.get("benchmark", "auto")
+    if benchmark == "auto":
+        benchmark = _resolve_benchmark(kis, stock_code, caveats)
+
+    end_date = params.get("end_date")
+    series = fetch_kis_daily_series(
+        kis, stock_code, count=_TREND_CANDLES + 1, market=params.get("market", "J"), end_date=end_date, adjusted=True
+    )
+    prices = trend_setup.PriceArrays.from_series(series)
+    dropped = None
+    now = _now()
+    intraday = (
+        not end_date and len(prices) > 0 and prices.dates[-1] == now.strftime("%Y%m%d") and now.time() < _SESSION_FINAL
+    )
+    if intraday and params.get("include_today", False):
+        caveats.append("장중 미완성 캔들 포함 — 백테스트 조건(마지막 완료 거래일)과 다르다.")
+    elif intraday:
+        dropped = prices.dates[-1]
+        prices = prices.window(stop=-1)
+    full = prices.window(start=-_TREND_CANDLES)
+    prices = full.window(start=-trend_setup.WINDOW)
+    if len(prices) < trend_setup.MIN_CANDLES:
+        raise _insufficient(stock_code, trend_setup.InsufficientHistory("stock", len(prices)))
+
+    as_of = datetime.strptime(prices.dates[-1], "%Y%m%d").date()
+    bars = fetch_index_bars(kis, benchmark, as_of - timedelta(days=_INDEX_LOOKBACK_DAYS), as_of)
+    index = trend_setup.IndexCloses.from_pairs((bar.date, bar.close) for bar in bars)
+    try:
+        reading = trend_setup.analyze(prices, index)
+    except trend_setup.InsufficientHistory as exc:
+        raise _insufficient(stock_code, exc) from exc
+    except trend_setup.IndexDateMismatch as exc:
+        raise CliError(
+            f"Index {benchmark} has no close on {exc.as_of}, the stock's last bar.",
+            exit_code=EXIT_BROKER,
+            error_type="IndexDateMismatch",
+            data={"stock_code": stock_code, "benchmark": benchmark, "as_of": exc.as_of},
+            hint="Pass an earlier --end-date, or leave include_today false during the session.",
+        ) from exc
+    return {
+        "stock_code": stock_code,
+        "benchmark": benchmark,
+        "market": _BENCHMARK_MARKETS[benchmark],
+        "as_of": reading.pop("as_of"),
+        "dropped_intraday_candle": dropped,
+        "adjusted": True,
+        **reading,
+        "history": trend_setup.history(full, index),
+        "caveats": [*reading["caveats"], *caveats],
+    }
+
+
+# ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
 
@@ -805,6 +980,7 @@ _ALL_HANDLERS = [
     handle_kis_etf_nav_comparison_trend,
     handle_kis_etf_nav_comparison_daily,
     handle_kis_chart_technical,
+    handle_kis_chart_trend_setup,
 ]
 
 

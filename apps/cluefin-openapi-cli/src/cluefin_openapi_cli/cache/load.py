@@ -14,11 +14,12 @@ from cluefin_openapi_cli.cache.adjust import load_adjustments
 from cluefin_openapi_cli.cache.bars import load_bars
 from cluefin_openapi_cli.cache.company import load_company
 from cluefin_openapi_cli.cache.rates import load_rates
+from cluefin_openapi_cli.cache.theme import load_theme
 from cluefin_openapi_cli.clock import now_kst
 
 __all__ = ["PARTS", "Sources", "run_load"]
 
-PARTS = ("company", "ohlcv", "adj", "rates")
+PARTS = ("company", "ohlcv", "adj", "rates", "theme")
 
 
 # frozen 아님: 브로커 클라이언트를 처음 쓸 때 만들어 _clients 에 담는다.
@@ -97,6 +98,12 @@ def run_load(
             rate_stats = load_rates(conn, ecos=sources.ecos, since=since, last_day=last_day, progress=progress)
             summary = rate_stats.as_dict()
             codes, rows, replaced, errors = rate_stats.series, rate_stats.rows, 0, len(rate_stats.errors)
+        elif part == "theme":
+            theme_stats = load_theme(
+                conn, kiwoom=sources.kiwoom, kis=sources.kis, today=today, last_day=last_day, progress=progress
+            )
+            summary = theme_stats.as_dict()
+            codes, rows, replaced, errors = theme_stats.themes, theme_stats.members, 0, len(theme_stats.errors)
         else:  # pragma: no cover - PARTS is validated by the caller
             raise ValueError(part)
         seconds = round(time.perf_counter() - started, 1)

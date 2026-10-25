@@ -162,12 +162,15 @@ _META_HELP: dict[str, dict[str, Any]] = {
         "description": "Local daily-bar and company cache (DuckDB). Reads a file, not a broker.",
         "usage": [
             f"{APP_NAME} cache status [--json]",
-            f"{APP_NAME} cache load [--only company,ohlcv,adj,rates|all] [--since YYYYMMDD] [--json]",
+            f"{APP_NAME} cache load [--only company,ohlcv,adj,rates,theme|all] [--since YYYYMMDD] [--json]",
             f"{APP_NAME} cache ohlcv --code <code> [--since YYYYMMDD] [--until YYYYMMDD] [--adjusted true] [--json]",
             f"{APP_NAME} cache company [--code <code>] [--as-of YYYYMMDD] [--include-delisted true] "
             "[--market KOSPI|KOSDAQ] [--json]",
             f"{APP_NAME} cache perf --code <code> [--bench U0001] [--since YYYYMMDD] [--until YYYYMMDD] "
             "[--risk-free 0.035|ktb3y] [--json]",
+            f"{APP_NAME} cache trend-setup [--as-of YYYYMMDD] [--market KOSPI|KOSDAQ] [--status alert,watch/g2] "
+            "[--code <c1,c2>] [--include-excluded true] [--theme-filter true] [--history true] "
+            "[--history-filter fresh_g3] [--json]",
         ],
         "options": [
             {"flag": "--only P", "meaning": "Parts to load, comma-separated (default all)."},
@@ -179,6 +182,25 @@ _META_HELP: dict[str, dict[str, Any]] = {
             {"flag": "--as-of YYYYMMDD", "meaning": "company: stocks listed on that day, delisted ones included."},
             {"flag": "--bench CODE", "meaning": "perf: benchmark code (default U0001 KOSPI)."},
             {
+                "flag": "--status S",
+                "meaning": "trend-setup: action or action/status list (alert, watch/g2, …); default every non-exclude.",
+            },
+            {
+                "flag": "--theme-filter true",
+                "meaning": "trend-setup: only stocks leading a hot Kiwoom theme (needs a `cache load --only theme` "
+                "snapshot for --as-of).",
+            },
+            {
+                "flag": "--history true",
+                "meaning": "trend-setup: add each shown row's state history (previous state, days in state, "
+                "recent group 1, group-3 exit); slower.",
+            },
+            {
+                "flag": "--history-filter fresh_g3",
+                "meaning": "trend-setup: only group 3 for 2–3 sessions (out-of-sample 2017–2021: +0.26R vs −0.10R "
+                "for 11+ days).",
+            },
+            {
                 "flag": "--risk-free R",
                 "meaning": "perf: annual decimal (0.035 for 3.5%, default 0) or a cached daily series: "
                 "ktb1y, ktb3y, ktb10y, cd91d.",
@@ -189,6 +211,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
             f"uv run {APP_NAME} cache ohlcv --code 005930 --since 20260901 --adjusted true --json",
             f"uv run {APP_NAME} cache company --as-of 20180102 --limit 5 --json",
             f"uv run {APP_NAME} cache perf --code 005930 --bench U0001 --since 20210101 --risk-free ktb3y --json",
+            f"uv run {APP_NAME} cache trend-setup --status alert,watch --json",
         ],
         "notes": [
             "The file is $CLUEFIN_CACHE_DIR/market.duckdb (default ~/.cache/cluefin/).",
@@ -197,6 +220,8 @@ _META_HELP: dict[str, dict[str, Any]] = {
             "progress goes to stderr.",
             "Bars are unadjusted; trade at those prices in a backtest and use --adjusted only for signals.",
             "Index bars use codes U0001 (KOSPI), U1001 (KOSDAQ), U2001 (KOSPI200).",
+            "trend-setup: the same judgement as `kis chart trend-setup` for every common stock listed on --as-of "
+            "(default the last cached trading day); rows carry `failed` check ids, full checks are on the kis command.",
             "perf: buy-and-hold on adjusted closes, dates shared with the benchmark only; CAGR over calendar "
             "years. Returns the stock's metrics with beta/alpha and the benchmark's own metrics.",
         ],

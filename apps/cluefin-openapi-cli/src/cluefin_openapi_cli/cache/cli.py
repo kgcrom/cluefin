@@ -12,6 +12,7 @@ from cluefin_openapi_cli.cache.load import PARTS, Sources, run_load
 from cluefin_openapi_cli.cache.perf import read_perf
 from cluefin_openapi_cli.cache.rates import RATE_SERIES
 from cluefin_openapi_cli.cache.read import read_company, read_ohlcv
+from cluefin_openapi_cli.cache.trend import latest_index_date, scan
 from cluefin_openapi_cli.cliargs import _parse_fields, _parse_limit, _parse_named_options, _str_option
 from cluefin_openapi_cli.clock import now_kst, today_kst
 from cluefin_openapi_cli.errors import EXIT_USAGE, CliError, classify_exception
@@ -243,12 +244,82 @@ def _run_perf(argv: list[str]) -> None:
     _render_read(payload, options, default_limit=None)
 
 
+def _list_option(options: dict[str, str | bool], key: str) -> list[str] | None:
+    raw = _str_option(options, key)
+    items = [item.strip() for item in raw.split(",") if item.strip()] if raw else []
+    return items or None
+
+
+def _trend_as_of(conn, raw: str | None) -> date:
+    """`--as-of`, defaulting to the last KOSPI bar; a day without an index bar is a usage error."""
+
+    latest = latest_index_date(conn)
+    if latest is None:
+        raise CliError("The cache has no index bars.", exit_code=EXIT_USAGE, hint="Run `cache load` first.")
+    if raw is None:
+        return latest
+    as_of = _parse_day(raw, "as-of")
+    row = conn.execute("SELECT max(date) FROM ohlcv WHERE code = 'U0001' AND date <= ?", [as_of]).fetchone()
+    previous = row[0] if row else None
+    if previous != as_of:
+        hint = f"The previous trading day in the cache is {previous:%Y%m%d}." if previous else "Pick a later day."
+        raise CliError(
+            f"No KOSPI bar on {as_of:%Y%m%d} in the cache (holiday, or not loaded yet).",
+            exit_code=EXIT_USAGE,
+            hint=hint,
+            data={"as_of": as_of.isoformat(), "latest": latest.isoformat()},
+        )
+    return as_of
+
+
+def _history_filter(options: dict[str, str | bool]) -> bool:
+    raw = _str_option(options, "history_filter")
+    if raw is None:
+        return False
+    if raw != "fresh_g3":
+        raise CliError(
+            f"`--history-filter` takes fresh_g3, got `{raw}`.",
+            exit_code=EXIT_USAGE,
+            hint="Only filters that passed the out-of-sample test exist (README trend-setup §9).",
+        )
+    return True
+
+
+def _run_trend_setup(argv: list[str]) -> None:
+    positional, options = _parse_named_options(argv)
+    if positional:
+        raise CliError("`cache trend-setup` does not accept positional arguments.", exit_code=EXIT_USAGE)
+    market = _str_option(options, "market")
+    if market is not None and market.upper() not in {"KOSPI", "KOSDAQ"}:
+        raise CliError("`--market` takes KOSPI or KOSDAQ.", exit_code=EXIT_USAGE)
+    codes = _list_option(options, "code")
+    include_excluded = _parse_bool(options, "include_excluded")
+    conn = _read_conn()
+    try:
+        as_of = _trend_as_of(conn, _str_option(options, "as_of"))
+        payload = scan(
+            conn,
+            as_of,
+            market=market.upper() if market else None,
+            codes=[code.upper() for code in codes] if codes else None,
+            statuses=_list_option(options, "status"),
+            include_excluded=include_excluded,
+            theme_filter=_parse_bool(options, "theme_filter"),
+            with_history=_parse_bool(options, "history"),
+            fresh_g3=_history_filter(options),
+        )
+    finally:
+        conn.close()
+    _render_read(payload, options, default_limit=_DEFAULT_COMPANY_LIMIT if include_excluded else None)
+
+
 SUBCOMMANDS: dict[str, Callable[[list[str]], None]] = {
     "status": _run_status,
     "load": _run_load,
     "ohlcv": _run_ohlcv,
     "company": _run_company,
     "perf": _run_perf,
+    "trend-setup": _run_trend_setup,
 }
 
 

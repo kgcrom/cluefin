@@ -87,7 +87,7 @@ _RECIPES: tuple[WorkflowRecipe, ...] = (
         title="Technical Analysis",
         description="Read technical indicator signals for one stock, or collect the raw chart data behind them.",
         domains=("chart",),
-        tags=("technical-indicator", "ohlcv", "daily", "minute"),
+        tags=("technical-indicator", "trend-template", "ohlcv", "daily", "minute"),
         steps=(
             RecipeStep(
                 title="Read the indicators",
@@ -97,6 +97,16 @@ _RECIPES: tuple[WorkflowRecipe, ...] = (
                     "Start here. The CLI fetches the candles and computes in-process, so the reply is a few dozen "
                     "numbers rather than a few hundred rows. Only fall through to the chart commands below when the "
                     "rows themselves are the deliverable."
+                ),
+            ),
+            RecipeStep(
+                title="Judge the breakout setup",
+                command=("kis", "chart", "trend-setup"),
+                purpose="Trend template, 52-week range, fractal pivot, strength vs. index and watchlist group 1/2/3.",
+                agent_notes=(
+                    "Use for 'is this stock waiting at a breakout' questions. The rules are a backtest's, not "
+                    "ta-lib's: its atr14_pct is a plain mean and differs from `technical`'s Wilder ATR. For every "
+                    "stock on a day, `cache trend-setup` reads the local cache instead of calling KIS."
                 ),
             ),
             RecipeStep(

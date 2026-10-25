@@ -23,6 +23,7 @@ description: 시장과 종목(코드 또는 기업명)을 받아 cluefin-openapi
 | 사업·부채 원문 | 최신 정기보고서의 사업의 내용, 부채·특수관계자·우발 주석 (`recipe filing-text`) |
 | 공시 | 최근 1년 공시 제목, 주요사항은 `dart major-event` 로 금액·상대방 |
 | 기술적 | `kis chart technical --count 250` — trend·mean_reversion 두 계열을 따로 읽는다 |
+| 추세 셋업 | `kis chart trend-setup` — 관심종목 1·2·3그룹과 피봇 기준 알림·손절가. `action` 은 매수 추천이 아니다(백테스트 근거·한계는 `caveats`) |
 | 뉴스·금리 | `kis market announcement`, `kis market interest-rate`. 환율은 "데이터 없음" |
 | 미국 비교 기업 | 사업 내용·뉴스에 미국 상장 고객사·경쟁사가 보이면 최대 2개사 (`recipe us-peer-filings`) |
 
@@ -32,6 +33,7 @@ uv run cluefin-openapi-cli dart financial-summary --corp-code 00126380 --json
 uv run cluefin-openapi-cli kis stock valuation --stock-code 005930 --corp-code 00126380 --json
 uv run cluefin-openapi-cli kis stock opinion-summary --stock-code 005930 --json
 uv run cluefin-openapi-cli kis chart technical --stock-code 005930 --count 250 --json
+uv run cluefin-openapi-cli kis chart trend-setup --stock-code 005930 --json
 uv run cluefin-openapi-cli kis market announcement --stock-code 005930 --limit 40 --json
 ```
 

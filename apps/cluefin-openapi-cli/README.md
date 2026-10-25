@@ -10,7 +10,7 @@
 
 | broker | role | 용도 |
 |---|---|---|
-| `kis` | **primary** | 기본 소스. 시세·차트·순위·재무·업종·ETF·일정·휴장일. 모든 작업은 여기서 시작한다. 계산 명령: `chart technical`(지표·신호), `stock opinion-summary`(증권사별 목표가 집계), `stock valuation`(종가 × DART 주식수 × DART 재무로 시총·TTM PER·PBR). |
+| `kis` | **primary** | 기본 소스. 시세·차트·순위·재무·업종·ETF·일정·휴장일. 모든 작업은 여기서 시작한다. 계산 명령: `chart technical`(지표·신호), `chart trend-setup`(추세 셋업 1·2·3그룹 판정), `stock opinion-summary`(증권사별 목표가 집계), `stock valuation`(종가 × DART 주식수 × DART 재무로 시총·TTM PER·PBR). |
 | `kiwoom` | **auxiliary** | KIS가 못 보는 빈칸만 채운다. 테마, 업종 구성종목, 틱 차트, 프로그램매매 상세, 거래원(회원사) 수급. |
 | `dart` | reference | 공시 원문·기업 고유번호·최대주주·발행주식수·정기보고서 재무제표(반기·분기 포함, `financial-as-filed` 는 접수 당시 값, `financial-summary` 는 분기 역산·3개년·비율·TTM 계산)·원문 서술(사업의 내용 `document-outline`/`document-section`, 재무제표 주석 `financial-notes`)·주요사항보고서 본문(`major-event`: CB·BW·EB·유무상증자·감자·자사주·합병·분할 등 36종)·정기보고서 주요정보(`report-item`: 배당·자기주식·임원·보수·사채 잔액·감사의견 등 26종). 시세 소스가 아니다. |
 | `sec` | reference | 미국 SEC EDGAR. 미국 상장 고객사·경쟁사의 10-K/10-Q/8-K Item 본문(`filing-items`)과 8-K 실적 보도자료 EX-99.1(`filing-exhibit`). 20-F/6-K(한국 ADR 대부분)는 읽지 않는다. 한국 기업 공시는 `dart`. |
@@ -101,7 +101,7 @@ Agent용 분류 기준:
   "avoid_when": "Skip when the question is what the indicators say rather than what the prices were — `kis chart technical` computes them and returns readings instead of rows.",
   "related_tags": ["ohlcv", "daily", "minute", "tick"],
   "example_filter": "uv run cluefin-openapi-cli list --domain chart --json",
-  "command_count": 16
+  "command_count": 17
 }
 ```
 
@@ -150,6 +150,7 @@ uv run cluefin-openapi-cli dart company-overview --corp-code 00126380 --json
 uv run cluefin-openapi-cli dart major-event --corp-code 00126380 --event convertible-bond --bgn-de 20230101 --end-de 20261016 --json
 uv run cluefin-openapi-cli dart report-item --corp-code 00126380 --item dividend --bsns-year 2025 --reprt-code 11011 --json
 uv run cluefin-openapi-cli sec filing-items --cik 320193 --accession-number 0000320193-23-000106 --items 1A --json
+uv run cluefin-openapi-cli kis chart trend-setup --stock-code 005930 --json
 ```
 
 ### 5. 로컬 일봉 캐시 (`cache`)
@@ -164,7 +165,15 @@ uv run cluefin-openapi-cli cache status --json
 uv run cluefin-openapi-cli cache ohlcv --code 005930 --since 20260901 --adjusted true --json
 uv run cluefin-openapi-cli cache company --as-of 20180102 --limit 5 --json
 uv run cluefin-openapi-cli cache perf --code 005930 --bench U0001 --since 20210101 --risk-free ktb3y --json
+uv run cluefin-openapi-cli cache trend-setup --status alert,watch --json            # 마지막 거래일 전 종목 1·2·3그룹
+uv run cluefin-openapi-cli cache trend-setup --as-of 20261016 --theme-filter true --history true --json
 ```
+
+`cache trend-setup` 은 `kis chart trend-setup` 과 같은 판정을 그날 상장한 보통주 전부(우선주·스팩 제외, 나중에 폐지된 종목 포함)에
+돌립니다(약 1초). 기본은 alert·watch 행만 내고 전체는 `summary` 건수로 셉니다. 행의 `failed` 는 2·3그룹에서 통과 못 한 check id 라
+"왜 3그룹이 아닌가"를 행만 보고 알 수 있고, 규칙별 값 전체는 `kis chart trend-setup --end-date` 로 봅니다. 테마(`theme`)는
+`cache load --only theme` 스냅샷이 있는 날만 붙고, `--history true` 는 보이는 행마다 상태 이력을 계산합니다(행이 많으면 느립니다).
+`--history-filter fresh_g3` 은 3그룹이 된 지 2~3일인 종목만 남깁니다(표본 외 검증을 통과한 유일한 이력 필터, 아래 §9).
 
 `cache perf` 는 종목을 수정주가로 사서 들고 있었을 때의 성과(`cluefin-ta` `PERFORMANCE`: CAGR·MDD·변동성·샤프·소르티노·칼마·
 베타·알파)와 같은 기간 벤치마크(기본 `U0001`) 자체의 성과를 함께 줍니다. 두 코드 모두 일봉이 있는 날만 쓰고, CAGR 은 달력 연수로
@@ -175,6 +184,7 @@ uv run cluefin-openapi-cli cache perf --code 005930 --bench U0001 --since 202101
 |---|---|
 | `company` | 종목 하나에 한 행: 이름·시장·업종·표준산업분류·DART 고유번호·결산월·상장일·폐지일·관리/정지 |
 | `ohlcv` | 종목·지수(`U0001`·`U1001`·`U2001`) 일봉. 원주가 + `adj_factor`(수정주가 = 가격 × 계수), 락구분·분할비율·재평가사유 |
+| `theme`·`theme_member` | 키움 테마 스냅샷(날마다, `as_of` 별): 테마 이름·구성종목 수·주요종목, 구성종목. 키움 기간수익률은 원주가라 참고로만 |
 | `rates` | ECOS 일별 시장금리 `ktb1y`·`ktb3y`·`ktb10y`·`cd91d`. 값은 발표 원문 그대로 연 %(3.5 = 3.5%) |
 | `load_log`·`adj_log`·`bar_log`·`probe_log` | 적재 기록, 수정계수 확인 시점, 일봉 시작일, 폐지 후보 확인 기록 |
 
@@ -192,6 +202,104 @@ duckdb -cmd "ATTACH '$HOME/.cache/cluefin/market.duckdb' AS market (READ_ONLY); 
 
 `duckdb -readonly -ui <파일>` 은 UI 가 자기 상태 카탈로그(`_duckdb_ui`)를 만들지 못해 `Catalog "_duckdb_ui" does not exist`
 로 실패합니다. 수정주가는 `close * adj_factor` 입니다.
+
+## trend-setup 규칙과 근거
+
+`kis chart trend-setup`(종목 하나, KIS 실시간)과 `cache trend-setup`(전 종목, 로컬 캐시)이 쓰는 관심종목 1·2·3그룹 규칙의 출처다.
+채택한 값은 `trend_setup.py` 의 `RULES` 에만 있고, 여기는 그 값이 어디서 왔는지를 적는다. 정의는 cluefin-factory(아카이브)
+`scripts/watchlist/*.mjs` 를 그대로 옮긴 것이고, 골든 테스트가 백테스트 값과 소수 6자리까지 같은지 확인한다. **공식을 바꾸면 근거가
+사라진다** — 값을 바꾸려면 백테스트부터 다시 돌린다.
+
+**`kis chart technical` 과 숫자가 다르다.** 이 명령의 `atr14_pct` 는 14일 true range 의 **단순 평균**이고 technical 의 ATR14 는
+ta-lib(Wilder) 평활이다. 52주 고가·저가는 당일을 빼고 직전 250거래일의 장중 고가·저가다. 지수는 코스피 종목 `0001`, 코스닥 종목
+`1001` 이다(KOSPI200 이 아니다).
+
+### §1 데이터와 방법
+
+- 원 백테스트(factory): 코스피·코스닥 보통주 2,487개, KIS 수정주가 2024-01~2026-10, 피봇 돌파 2025-02~2026-10 약 1.2만 건.
+  t일 종가까지의 정보로 셋업을 정하고(피봇은 t−3일까지 확정된 프랙탈 고점), t+1일 고가가 피봇 이상이면 max(시가, 피봇)에 산다.
+  시가가 피봇 +5% 를 넘으면 사지 않는다. 손절 −8%, 익절 +24%(3R), 왕복 비용 0.3%. 결과는 평균 R(손절폭 대비 손익)로 본다.
+- 기준선(20일 평균 거래대금 ≥ 10억인 모든 피봇 돌파): 7,860건, 승률 30.6%, +0.14R — 기간이 강세장이라 기준선도 플러스다.
+- 5년 재검증(2026-10, 2021-10~2026-10, **상장폐지 포함**, 같은 시뮬레이터): 3그룹 1,512건 평균 +0.13R, 4슬롯·25% 포트폴리오
+  CAGR +7.5%·MDD 34%. 1·2그룹 매수는 모든 규칙에서 마이너스였다.
+
+### §2 그룹
+
+그룹은 겹칠 수 있고, action 은 한 번만 정한다: 비유동 → 제외, 1그룹 → 제외, 3그룹 → 피봇 거리로 알림/관찰, 2그룹 → 관찰, 나머지 → 제외.
+
+| 그룹 | 그 자리 돌파의 성과(원 백테스트) |
+|---|---|
+| 1 강세선두(과열) | 1,269건, 승률 28.1%, +0.06R — 우위 없음, 사지 않는다 |
+| 2 추세시작 | 1,243건, 승률 30.5%, +0.14R — 기준선과 같음 |
+| 3 돌파대기 | 143건, 승률 49.7%, +0.79R(§3) |
+
+- 공통: 20일 평균 거래대금 10억 미만은 대상 밖(손절이 계획대로 체결되지 않는다).
+- 1그룹: 지수 대비 강도 상위(백분위 RS ≥ 90 ≈ 지수 대비 ≥ 1.32)이면서 52주 고점 −20% 이내, 10일 고저폭이나 50일선 이격으로 과열.
+- 2그룹: 트렌드 템플릿(현재가 > 50일 > 150일 > 200일선, 200일선 상승, 52주 저점 +25% 이상, 고점 −25% 이내) + 52주 저점 대비
+  +30~150%(Stage 2 초입) + 지수보다 강함.
+
+### §3 3그룹(돌파대기)
+
+수축 3회 이상, 마지막 수축 10% 이하, 10일 고저폭 12% 이하, 52주 고점 −20% 이내, 지수 대비 1 초과 1.32 미만, 거래대금 10억 이상.
+알림은 종가가 피봇 아래 8% 안일 때만이다(백테스트 셋업 조건). 임계값을 바꿔도 결과가 평평했다(마지막 수축 8~15%·수축 2~4회
+조합 +0.29~+0.70R, 10일 고저폭 8%~제한 없음 +0.53~+0.62R). 피봇은 좌우 3봉보다 높은(왼쪽은 엄격히, 오른쪽은 같아도 됨) 고가 중
+가장 최근 것이고, 마지막 수축은 피봇 **다음 봉부터** 최저가까지의 하락률이다.
+
+### §4 지수 대비 강도(RS 대신)
+
+전 종목 백분위 대신 **종목 가중수익률 ÷ 자기 시장 지수 가중수익률**(가중수익률 = 2×63일 + 126일 + 189일 + 250일 수익 배수)을 쓴다.
+백분위는 이 값의 순위일 뿐이라 `> 1` 은 "종목 RS > 지수 RS" 와 같은 비교다. 같은 3그룹 조건에서 백분위 RS 60~90 은 +0.60R,
+지수 대비 1~1.32 는 +0.79R 이었다. 상한 1.32 는 백분위 RS 90 에 해당하는 지수 대비 값의 기간 중앙값이고, 백분위 RS ≥ 90 은 모든
+조합에서 성과가 무너졌다. 지수가 강한 시기에는 통과 종목이 급감해 장세 필터처럼 작동한다. 지수 대비 21일 초과수익 ≤ 5.5%p 는
+백분위 RS(1M) ≤ 80 과 91% 일치한다(§5).
+
+### §5 2그룹 점수 — 3그룹 후보
+
+2그룹 종목을 20거래일마다 관측해 90일 안에 3그룹 돌파를 수익으로 끝냈는지 봤다(평균 5.9%). 7개 조건(10일 고저폭 ≤ 12%,
+ATR14 ≤ 4.5%, 60일 깊이 ≤ 30%, 50일선 이격 ≤ 10%, 지수 대비 21일 초과수익 ≤ 5.5%p, 52주 저점 대비 ≤ 100%, 52주 고점 −15% 이내)의
+충족 개수별 성공률은 0점 0% → 6점 16.6% → 7점 20.1% 로 두 해 모두 단조였다. 6점 이상을 3그룹 후보(`g3_candidate`)로 낸다.
+최근 한 달 덜 오른 2그룹이 더 잘 됐다.
+
+### §6 주문 가격(`levels`)
+
+알림 = 피봇 −3%(**매수가가 아니다** — 피봇 −3% 선매수의 27% 는 피봇에 닿지 못하고 −1R 로 끝났다), 매수 스톱 = 피봇, 추격 한도 =
+피봇 +5%, 손절 = 피봇 −8%, 익절 = 피봇 +24%(3R). 모두 한국거래소 호가 단위로 내림하되 매수 스톱(체결된 고가)은 그대로다. 수량·금액
+(포지션 사이징)은 내지 않는다. 매수 당일 확인할 것 — 같은 업종 +3% 이상 종목 비율, 돌파일 거래량 50일 평균의 1.5배 — 은 장중에만
+알 수 있어 판정에 없다.
+
+### §7 하지 않는 것과 한계
+
+- 장세 필터(지수 60일선 등)는 3그룹 성과를 개선하지 못했다. 하락 방어는 −8% 손절이 맡는다.
+- 원 규칙은 2025-02~2026-10 강세장 위주이고, 2026Q3 폭락기에는 3그룹도 전패했다. 5년 재검증의 +0.13R 이 더 보수적인 기대치다.
+- **폭락 뒤 V자 반등장의 짧은 베이스 돌파는 3그룹으로 잡지 않는다** — 10일 고저폭 ≤ 12% 를 못 채우고 대부분 1그룹(과열)이 된다.
+- 시가총액은 쓰지 않는다. 캐시의 `company.market` 은 현재 값이라 시장을 옮긴 종목은 과거 날짜에서 비교 지수가 틀릴 수 있다.
+
+### §8 테마(`cache trend-setup` 의 `theme`)
+
+키움 테마 스냅샷으로 관심 테마와 그 테마의 주도주를 **표시만** 한다(action 은 바꾸지 않는다 — 백테스트가 없다). 관심 테마는
+구성종목 5개 이상 테마 중 캐시 수정주가 20일 수익률 **중앙값** 상위 20%, 주도주는 그 테마에서 20일 거래대금 상위 3 또는 키움
+주요종목이면서 지수 대비 강도가 테마 중앙값 이상인 종목(크기만 크고 약한 종목은 뺀다). 키움 기간수익률은 원주가 기준이라
+감자·병합 종목이 +905% 로 잡혀(2026-10 실측) 테마 평균을 망치므로 쓰지 않는다. `--theme-filter true` 는 관심 테마의 주도주만 남긴다.
+
+### §9 상태 이력(`history`)
+
+판정은 날마다 새로 매겨 상태를 저장하지 않는다. `history` 는 지난 봉으로 다시 계산한 사실이다: 현재 상태(`illiquid`·`g1`·`g3`·
+`g2`·`none`, 이 우선순위)의 지속 일수(최대 20), 2일 이하 깜빡임을 건너뛴 이전 상태, 직전 60거래일 안의 1그룹 여부, 3그룹을 벗어난
+날의 종류(전날 피봇 이상 `breakout`, 손절선 아래 `breakdown`, 그 사이 `faded`). 성과와의 관계는 아래 표본 외 검증 결과만 말한다.
+
+**표본 외 검증(2026-10, 2017-01~2021-10, 상장폐지 포함, §1 과 같은 시뮬레이터, 3그룹 2,185건).** 가설·지표·문턱은 결과를 보기
+전에 정했다(구간 탐색 2021-10~2026-10 에서 본 것을 처음 보는 구간에서 확인). 통과 = 방향 같음, 종목 단위 부트스트랩 95% 구간이 0 초과,
+연도 과반 방향 같음, 두 칸 각 100건 이상, 포트폴리오(4슬롯·25%)에서 CAGR 이 낮아지지 않거나 MDD 가 5%p 이상 줄어든다.
+
+| 가설 | 결과 | 숫자 |
+|---|---|---|
+| 3그룹 연속 2~3일 > 11일 이상 | **통과** | +0.26R(659건) vs −0.10R(128건), 95% 구간 [+0.01, +0.68], 5년 중 5년, MDD 45→31%(CAGR 5.2→2.4%) |
+| 직전 60거래일 안에 1그룹 이력 있음 > 없음 | 실패 | +0.21R(647) vs +0.13R(1,538), 구간 [−0.09, +0.25], 5년 중 2년 |
+| `exit` 라벨 점검: breakout 뒤 20일 > breakdown 뒤 | 통과 | 중앙값 −0.79% vs −1.10% |
+
+통과한 것만 필터로 낸다: `cache trend-setup --history-filter fresh_g3` 는 3그룹이 된 지 2~3일인 종목만 남긴다. 거래 기회가 줄어
+포트폴리오 CAGR 은 낮아졌으니 손실 폭을 줄이는 쪽의 필터다. 1그룹 이력(`g1_within_60d`)은 사실로만 표시하고 성과와 엮지 않는다.
+판정(`action`)은 어느 경우에도 바꾸지 않았다.
 
 ## 입력 방식
 
@@ -276,7 +384,9 @@ src/cluefin_openapi_cli/
 ├── output.py       JSON 직렬화, --compact, --fields 마스킹
 ├── search.py       자연어 query → BM25F 순위 command 후보. 한국어 alias 확장·fallback
 ├── recipes.py      여러 command를 엮는 workflow guide
-├── cache/          로컬 DuckDB 캐시: store(스키마·잠금) · company · bars · adjust · read · perf · cli(`cache <sub>`)
+├── indicators.py   `kis chart technical` 의 지표·신호 조립(cluefin-ta)
+├── trend_setup.py  `trend-setup` 두 명령의 판정(백테스트 정의 이식, cluefin-ta 를 쓰지 않음)
+├── cache/          로컬 DuckDB 캐시: store(스키마·잠금) · company · bars · adjust · rates · theme · read · perf · trend · cli(`cache <sub>`)
 └── handlers/
     ├── _base.py    @rpc_method 데코레이터, KIS/Kiwoom 응답 추출 헬퍼
     ├── kis/        category별 handler 모듈 (stock, chart, ranking, financial, …)
