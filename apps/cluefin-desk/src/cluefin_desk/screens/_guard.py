@@ -1,8 +1,12 @@
 """워커 스레드에서 UI 를 만지는 공통 도우미 — 실패는 화면에 남기고, 화면 전환은 취소로 본다."""
 
+import logging
+
 from rich.markup import escape
 from textual.message_pump import NoActiveAppError
 from textual.widgets import Static
+
+logger = logging.getLogger(__name__)
 
 
 def _closed(screen) -> bool:
@@ -51,7 +55,6 @@ def guarded(screen, selector: str | None, label: str, fn, *args) -> None:
     except Exception as e:
         if screen_gone(screen, e):
             return
-        from loguru import logger
 
         logger.error(f"Failed to load {label}: {e}")
         if selector is not None:

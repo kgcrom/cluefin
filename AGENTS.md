@@ -144,6 +144,9 @@ shapes are in `src/dart/client.ts` and `src/dart/xml.ts`.
   `#` reason above the decorator (mutable accumulators/builders, `eq=False` for identity, bases a `BaseModel` also
   inherits, and `Generic` classes built as `X[T](...)`, whose `__orig_class__` assignment is a `TypeError` under
   frozen+slots on 3.10).
+- Logging is stdlib: `logger = logging.getLogger(__name__)` at module level, `%s` arguments (not loguru's `{}`).
+  Packages never add handlers or set levels; only app entry points do (`cluefin_openapi_cli.main._configure_logging`,
+  `cluefin_desk.app._configure_logging`). Tests read logs with `caplog`.
 - Apps import clients, auth, services and exceptions from the broker package (`from cluefin_openapi.kis import
   Auth`), not its `_`-modules. Response models are the exception: only kis realtime and ecos re-export them, so
   `cluefin_openapi.<broker>._*_types` is the path. Patch targets in tests follow the import path the app uses.

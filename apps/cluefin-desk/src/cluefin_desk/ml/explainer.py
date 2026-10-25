@@ -5,16 +5,18 @@ This module provides model interpretability using SHAP (SHapley Additive exPlana
 for understanding feature importance and individual prediction explanations.
 """
 
+import logging
 from typing import Any
 
 import numpy as np
 import pandas as pd
 import shap
-from loguru import logger
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from scipy.special import expit as sigmoid
+
+logger = logging.getLogger(__name__)
 
 
 class SHAPExplainer:

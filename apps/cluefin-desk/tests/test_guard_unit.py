@@ -1,9 +1,9 @@
 """screens/_guard.py — 실패 문구가 Rich 마크업으로 깨지지 않는지."""
 
+import logging
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
-from loguru import logger
 from rich.text import Text
 from textual.css.query import NoMatches
 from textual.message_pump import NoActiveAppError
@@ -65,16 +65,12 @@ class TestSetText:
         screen = SimpleNamespace(is_attached=True, is_running=False, app=FakeApp(), query_one=query_one)
         _guard.set_text(screen, "#panel", "hello")  # 예외 없이 버린다
 
-    def test_guarded_on_removed_screen_logs_nothing(self, monkeypatch):
-        errors = []
-        sink = logger.add(lambda m: errors.append(m.record["message"]), level="ERROR")
+    def test_guarded_on_removed_screen_logs_nothing(self, monkeypatch, caplog):
+        caplog.set_level(logging.ERROR, logger="cluefin_desk")
         screen = SimpleNamespace(is_attached=True, is_running=False)
 
         def boom():
             raise NoMatches("No nodes match '#panel'")
 
-        try:
-            _guard.guarded(screen, "#panel", "급등", boom)
-        finally:
-            logger.remove(sink)
-        assert errors == []
+        _guard.guarded(screen, "#panel", "급등", boom)
+        assert caplog.records == []

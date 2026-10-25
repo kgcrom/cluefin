@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 from typing import Any
 
@@ -7,11 +8,12 @@ from cluefin_openapi.kis import HttpClient as KisClient
 from cluefin_openapi.kis import KISAPIError
 from cluefin_openapi.kiwoom import Auth as KiwoomAuth
 from cluefin_openapi.kiwoom import Client as KiwoomClient
-from loguru import logger
 from pydantic import SecretStr, ValidationError
 
 from cluefin_desk.clock import now_kst
 from cluefin_desk.config.settings import settings
+
+logger = logging.getLogger(__name__)
 
 
 class DomesticDataFetcher:

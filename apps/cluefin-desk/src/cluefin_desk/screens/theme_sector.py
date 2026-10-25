@@ -1,3 +1,5 @@
+import logging
+
 from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -9,6 +11,8 @@ from cluefin_desk.screens._guard import guarded, screen_gone, set_text
 from cluefin_desk.widgets.market_overview import MarketOverviewBar
 from cluefin_desk.widgets.nav_bar import NavBar
 from cluefin_desk.widgets.nav_footer import NavFooter
+
+logger = logging.getLogger(__name__)
 
 
 class ThemeSectorScreen(Screen):
@@ -182,7 +186,6 @@ class ThemeSectorScreen(Screen):
         except Exception as e:
             if screen_gone(self, e):
                 return
-            from loguru import logger
 
             logger.error(f"Failed to load theme stocks: {e}")
             set_text(self, "#theme-status", f"테마 구성종목 로딩 실패: {e}")
@@ -214,7 +217,6 @@ class ThemeSectorScreen(Screen):
         except Exception as e:
             if screen_gone(self, e):
                 return
-            from loguru import logger
 
             logger.error(f"Failed to load sector detail: {e}")
             set_text(self, "#sector-chart-panel", f"업종 상세 로딩 실패: {e}")

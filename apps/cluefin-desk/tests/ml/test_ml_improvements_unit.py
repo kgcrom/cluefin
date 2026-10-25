@@ -9,13 +9,16 @@ This script tests the Phase 1 improvements to the ML prediction system:
 - Improved logging and error handling
 """
 
+import logging
+
 import numpy as np
 import pandas as pd
-from loguru import logger
 
 from cluefin_desk.ml.diagnostics import MLDiagnostics
 from cluefin_desk.ml.feature_engineering import FeatureEngineer
 from cluefin_desk.ml.predictor import StockMLPredictor
+
+logger = logging.getLogger(__name__)
 
 
 def create_test_data():

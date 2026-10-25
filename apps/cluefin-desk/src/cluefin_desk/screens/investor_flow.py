@@ -1,4 +1,5 @@
-from loguru import logger
+import logging
+
 from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -11,6 +12,8 @@ from cluefin_desk.screens._guard import screen_gone, set_text
 from cluefin_desk.widgets.market_overview import MarketOverviewBar
 from cluefin_desk.widgets.nav_bar import NavBar
 from cluefin_desk.widgets.nav_footer import NavFooter
+
+logger = logging.getLogger(__name__)
 
 # ka10051/ka20002 의 시장구분 — 한 자리 코드. "0001" 을 주면 서버가 코스닥으로 해석한다.
 SECTOR_MARKETS = [("KOSPI", "0"), ("KOSDAQ", "1")]

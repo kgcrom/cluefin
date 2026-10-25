@@ -1,3 +1,4 @@
+import logging
 import threading
 from pathlib import Path
 
@@ -111,6 +112,20 @@ class CluefinDeskApp(App):
         return self._dart_client
 
 
+def _configure_logging() -> None:
+    """앱 전체의 로그 출력을 여기 한 곳에서 정한다.
+
+    TUI 가 화면을 쓰는 동안 stderr 로 찍으면 화면이 깨지므로 TextualHandler 로 devtools 콘솔
+    (`textual console`)에 보낸다. 앱이 뜨기 전(시작 시 인증 등)에는 stderr 로 나간다."""
+    from textual.logging import TextualHandler
+
+    logging.basicConfig(
+        level=logging.WARNING, handlers=[TextualHandler()], format="%(levelname)s %(name)s: %(message)s"
+    )
+    logging.getLogger("cluefin_desk").setLevel(logging.INFO)
+
+
 def main():
+    _configure_logging()
     app = CluefinDeskApp()
     app.run()

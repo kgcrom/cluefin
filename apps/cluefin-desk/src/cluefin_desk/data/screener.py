@@ -1,8 +1,9 @@
+import logging
 from dataclasses import dataclass
 
-from loguru import logger
-
 from cluefin_desk.data.fetcher import DomesticDataFetcher
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True, slots=True)

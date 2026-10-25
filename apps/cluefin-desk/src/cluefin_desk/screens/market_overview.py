@@ -1,3 +1,5 @@
+import logging
+
 from rich.markup import escape
 from textual import work
 from textual.app import ComposeResult
@@ -11,6 +13,8 @@ from cluefin_desk.screens._guard import screen_gone, set_text
 from cluefin_desk.widgets.market_overview import MarketOverviewBar
 from cluefin_desk.widgets.nav_bar import NavBar
 from cluefin_desk.widgets.nav_footer import NavFooter
+
+logger = logging.getLogger(__name__)
 
 INDUSTRY_CODES = [("KOSPI", "001"), ("KOSDAQ", "101")]
 
@@ -117,7 +121,6 @@ class MarketOverviewScreen(Screen):
         except Exception as e:
             if screen_gone(self, e):
                 return
-            from loguru import logger
 
             logger.error(f"Failed to load sector data: {e}")
 
@@ -165,7 +168,6 @@ class MarketOverviewScreen(Screen):
         except Exception as e:
             if screen_gone(self, e):
                 return
-            from loguru import logger
 
             logger.error(f"Failed to load top movers: {e}")
             err_msg = escape(str(e))
@@ -250,7 +252,6 @@ class MarketOverviewScreen(Screen):
             except Exception as e:
                 if screen_gone(self, e):
                     return
-                from loguru import logger
 
                 logger.error(f"Failed to load KIS {label}: {e}")
                 set_text(self, selector, f"[bold]{label} (KIS)[/bold]\n  로드 실패: {escape(str(e))}")
