@@ -124,6 +124,9 @@ shapes are in `src/dart/client.ts` and `src/dart/xml.ts`.
 - After: keep each regex flat (one number, one separator) and loop in code with
   `pattern.match(text, pos)` (`_read_numbers` in `cluefin_sec_notes/_labels.py`). Same results, linear time.
 - A mutable default argument (`def f(items=SOME_LIST)`) is a high finding, tests included. Use a tuple.
+- `importlib.import_module(<non-literal>)` is a critical "untrusted input loads arbitrary code" finding, tests
+  included (#186: a test importing every `*_types.py` by path). Scan the source with `ast` instead of importing,
+  as `tests/test_response_models_unit.py` does.
 - A stdlib logger call whose message mentions a token/secret/key **and** passes `%s` arguments is a high
   "potential hardcoded secret being logged" finding, even when the argument is a timestamp or path (6 in the
   Kiwoom token manager, #181; loguru calls were never matched). Put the values in an f-string, like the KIS/NH

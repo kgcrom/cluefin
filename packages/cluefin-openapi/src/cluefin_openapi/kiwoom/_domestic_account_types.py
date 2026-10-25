@@ -73,11 +73,9 @@ class DomesticAccountDailyRealizedProfitLoss(BaseModel, KiwoomHttpBody):
     rlzt_pl: str = Field(default="", description="실현손익")
     trde_cmsn: str = Field(default="", description="매매수수료")
     trde_tax: str = Field(default="", description="매매세금")
-    dt_rlzt_pl: list[DomesticAccountDailyRealizedProfitLossItem] = (
-        Field(
-            default_factory=list,
-            description="일자별실현손익",
-        ),
+    dt_rlzt_pl: list[DomesticAccountDailyRealizedProfitLossItem] = Field(
+        default_factory=list,
+        description="일자별실현손익",
     )
 
 

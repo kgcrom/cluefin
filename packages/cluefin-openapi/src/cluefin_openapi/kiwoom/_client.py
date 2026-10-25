@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Literal
+from typing import Any, Literal
 
 import requests
 
@@ -247,7 +247,7 @@ class Client(BaseHttpClient):
             return exc
         return self._dispatch_by_status(response, request_context, self._ERROR_TYPES)
 
-    def _post(self, path: str, headers: dict[str, str], body: dict[str, str], use_cache: bool = True):
+    def _post(self, path: str, headers: dict[str, str], body: dict[str, Any], use_cache: bool = True):
         """Make a POST request with improved error handling and logging."""
         # Check cache first if enabled — short-circuit BEFORE rate-limiting/HTTP
         cache_key = None

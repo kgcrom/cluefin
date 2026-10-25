@@ -49,6 +49,7 @@ include = [
     "packages/cluefin-feeds/src",
     "packages/cluefin-ta/src",
     "packages/cluefin-dart-notes/src",
+    "packages/cluefin-openapi/src",
 ]
 
 [tool.ruff]

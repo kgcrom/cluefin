@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field, ValidationError
 
 from cluefin_openapi.kis._exceptions import KISValidationError
 
-T = TypeVar("T")
+T = TypeVar("T", bound=BaseModel)
 T_KisHttpBody = TypeVar("T_KisHttpBody", bound="KisHttpBody")
 
 

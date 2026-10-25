@@ -6,7 +6,7 @@ import os
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
+from typing import Literal, cast
 
 from pydantic import SecretStr
 
@@ -51,14 +51,15 @@ class BrokerClientConfig:
         return cls(
             kis_app_key=env.get("KIS_APP_KEY"),
             kis_secret_key=env.get("KIS_SECRET_KEY"),
-            kis_env=env.get("KIS_ENV", "dev").lower(),
+            # dev/prod 검사는 각 Auth 가 한다(Kiwoom 은 ValueError, KIS·NH 는 prod 가 아니면 dev).
+            kis_env=cast(BrokerEnv, env.get("KIS_ENV", "dev").lower()),
             kiwoom_app_key=env.get("KIWOOM_APP_KEY"),
             kiwoom_secret_key=env.get("KIWOOM_SECRET_KEY"),
-            kiwoom_env=env.get("KIWOOM_ENV", "dev").lower(),
+            kiwoom_env=cast(BrokerEnv, env.get("KIWOOM_ENV", "dev").lower()),
             dart_auth_key=env.get("DART_AUTH_KEY"),
             nhplug_app_key=env.get("NHPLUG_APP_KEY"),
             nhplug_secret_key=env.get("NHPLUG_SECRET_KEY"),
-            nhplug_env=env.get("NHPLUG_ENV", "dev").lower(),
+            nhplug_env=cast(BrokerEnv, env.get("NHPLUG_ENV", "dev").lower()),
             sec_user_agent=env.get("SEC_USER_AGENT"),
             ecos_auth_key=env.get("ECOS_AUTH_KEY"),
             cache_dir=env.get("CLUEFIN_OPENAPI_CACHE_DIR"),

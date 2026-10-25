@@ -86,7 +86,7 @@ class TokenManager:
             TokenResponse: Valid access token
         """
         # Check if cached token is still valid
-        if self._is_token_valid():
+        if self._token_cache is not None and self._is_token_valid():
             logger.debug(f"Using cached token (expires at {self._token_cache.access_token_token_expired})")
             return self._token_cache
 
