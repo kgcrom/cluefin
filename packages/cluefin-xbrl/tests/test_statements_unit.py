@@ -33,7 +33,7 @@ _LOCAL_NAME_CASES = [
 
 
 class TestLocalName:
-    @pytest.mark.parametrize("qname, expected", _LOCAL_NAME_CASES)
+    @pytest.mark.parametrize(("qname", "expected"), _LOCAL_NAME_CASES)
     def test_local_name(self, qname, expected):
         assert _local_name(qname) == expected
 
@@ -87,7 +87,7 @@ _IDENTIFY_STATEMENT_TYPE_CASES = [
 
 
 class TestIdentifyStatementType:
-    @pytest.mark.parametrize("linkrole, expected", _IDENTIFY_STATEMENT_TYPE_CASES)
+    @pytest.mark.parametrize(("linkrole", "expected"), _IDENTIFY_STATEMENT_TYPE_CASES)
     def test_identify_statement_type(self, linkrole, expected):
         assert _identify_statement_type(linkrole) == expected
 
@@ -390,7 +390,7 @@ _SEC_STATEMENT_TITLE_CASES = [
 class TestIdentifySecStatementType:
     SEC_ROLE = "http://www.apple.com/role/SomeFilerChosenUri"
 
-    @pytest.mark.parametrize("title, expected", _SEC_STATEMENT_TITLE_CASES)
+    @pytest.mark.parametrize(("title", "expected"), _SEC_STATEMENT_TITLE_CASES)
     def test_statement_titles(self, title, expected):
         definition = f"0000002 - Statement - {title}"
         assert _identify_statement_type(self.SEC_ROLE, definition) == expected

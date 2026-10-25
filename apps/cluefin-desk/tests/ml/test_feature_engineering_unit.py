@@ -205,13 +205,16 @@ class TestRegimeFeatureIntegration:
 
         predictor = StockMLPredictor()
 
+        error: Exception | None = None
         try:
             # Try to prepare data with regime features
-            prepared_df, feature_names = predictor.prepare_data(stock_data, indicators)
+            _, feature_names = predictor.prepare_data(stock_data, indicators)
+        except Exception as e:
+            error = e
 
+        if error is None:
             # Should succeed without errors
             assert "regime_trend" in feature_names or len(feature_names) > 0
-
-        except Exception as e:
+        else:
             # If it fails, it should be due to insufficient data, not regime features
-            assert "regime" not in str(e).lower(), f"Should not fail due to regime features: {e}"
+            assert "regime" not in str(error).lower(), f"Should not fail due to regime features: {error}"

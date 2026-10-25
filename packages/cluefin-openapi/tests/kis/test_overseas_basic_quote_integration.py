@@ -238,7 +238,7 @@ def test_get_settlement_date(client: HttpClient):
 
 @pytest.mark.integration
 @pytest.mark.parametrize(
-    "exchange,symbol",
+    ("exchange", "symbol"),
     [
         ("NYS", "IBM"),  # New York Stock Exchange
         ("NAS", "TSLA"),  # NASDAQ
@@ -259,41 +259,26 @@ def test_current_price_multiple_exchanges(client: HttpClient, exchange, symbol):
 
 @pytest.mark.integration
 def test_invalid_stock_symbol(client: HttpClient):
-    """Test handling of invalid stock symbol."""
-    try:
-        response = client.overseas_basic_quote.get_stock_current_price_detail(
-            auth="", excd="NAS", symb="INVALIDCODE123456"
-        )
-        # If no exception, check for error in response
-        assert response is not None
-    except Exception as e:
-        # Expected to fail with invalid symbol
-        assert e is not None
+    """길이가 넘는 심볼은 rt_cd=2 `OPSQ2001` 로 거절된다(2026-10-25 실측)."""
+    with pytest.raises(ValueError, match=r"\[OPSQ2001\]: ERROR WRONG VALUE SIZE \[SYMB\]"):
+        client.overseas_basic_quote.get_stock_current_price_detail(auth="", excd="NAS", symb="INVALIDCODE123456")
 
 
 @pytest.mark.integration
 def test_invalid_exchange_code(client: HttpClient):
-    """Test handling of invalid exchange code."""
-    try:
-        response = client.overseas_basic_quote.get_stock_current_price_detail(auth="", excd="INVALID", symb="AAPL")
-        assert response is not None
-    except Exception as e:
-        # Expected to fail with invalid exchange
-        assert e is not None
+    """길이가 넘는 거래소 코드는 rt_cd=2 `OPSQ2001` 로 거절된다(2026-10-25 실측)."""
+    with pytest.raises(ValueError, match=r"\[OPSQ2001\]: ERROR WRONG VALUE SIZE \[EXCD\]"):
+        client.overseas_basic_quote.get_stock_current_price_detail(auth="", excd="INVALID", symb="AAPL")
 
 
 @pytest.mark.integration
 def test_invalid_date_format(client: HttpClient):
-    """Test handling of invalid date format."""
-    try:
-        response = client.overseas_basic_quote.get_item_index_exchange_period_price(
+    """YYYYMMDD 가 아닌 날짜는 rt_cd=2 `OPSQ2002` 로 거절된다(2026-10-25 실측)."""
+    with pytest.raises(ValueError, match=r"\[OPSQ2002\]: ERROR INVALID INPUT_FILED_SIZE \[FID_INPUT_DATE_1\]"):
+        client.overseas_basic_quote.get_item_index_exchange_period_price(
             fid_cond_mrkt_div_code="N",
             fid_input_iscd="SPX",
             fid_input_date_1="invalid_date",
             fid_input_date_2="20250101",
             fid_period_div_code="D",
         )
-        assert response is not None
-    except Exception as e:
-        # Expected to fail with invalid date
-        assert e is not None

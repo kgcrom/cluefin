@@ -1,6 +1,6 @@
 import io
 import zipfile
-from datetime import date
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -88,10 +88,10 @@ def test_public_disclosure_search_defaults_to_dart_safe_date_range(
     client: Client,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    class FixedDate(date):
+    class FixedDatetime(datetime):
         @classmethod
-        def today(cls) -> date:
-            return cls(2026, 5, 23)
+        def now(cls, tz=None) -> datetime:
+            return cls(2026, 5, 23, 12, 0, tzinfo=tz)
 
     expected_payload = {
         "status": "000",
@@ -103,7 +103,7 @@ def test_public_disclosure_search_defaults_to_dart_safe_date_range(
         "list": [],
     }
 
-    monkeypatch.setattr(public_disclosure_module, "date", FixedDate)
+    monkeypatch.setattr(public_disclosure_module, "datetime", FixedDatetime)
     service = PublicDisclosure(client)
 
     with requests_mock.Mocker() as mock_requests:

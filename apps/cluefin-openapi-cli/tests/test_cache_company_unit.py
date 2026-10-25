@@ -166,18 +166,25 @@ def test_first_load_keeps_stocks_and_backfills_delisted() -> None:
     rows = _rows(conn)
 
     assert set(rows) == {"005930", "005935", "035720", "117930"}  # ETF, KONEX, REIT, pre-2016 left out
-    assert rows["005930"]["settle_month"] == 12 and rows["005930"]["listed_on"] == date(1975, 6, 11)
-    assert rows["005930"]["corp_code"] == "00126380" and rows["005930"]["delisted_on"] is None
+    assert rows["005930"]["settle_month"] == 12
+    assert rows["005930"]["listed_on"] == date(1975, 6, 11)
+    assert rows["005930"]["corp_code"] == "00126380"
+    assert rows["005930"]["delisted_on"] is None
     assert rows["035720"]["settle_month"] == 12  # '1231' normalised
     assert rows["035720"]["listed_on"] == date(1999, 11, 17)  # moved KOSDAQ -> KOSPI: the earlier date
     assert rows["005935"]["corp_code"] == "00126380"  # preferred share -> its common's DART id
-    assert rows["005935"]["settle_month"] == 12 and dart.overview_calls == ["00126380"]  # blank in KIS, DART fills
-    assert rows["035720"]["is_admin"] is True and rows["035720"]["is_halted"] is True
-    assert rows["117930"]["delisted_on"] == date(2017, 3, 7) and rows["117930"]["seen_on"] is None
-    assert rows["117930"]["market"] == "KOSPI" and rows["117930"]["corp_code"] == "00111111"
+    assert rows["005935"]["settle_month"] == 12
+    assert dart.overview_calls == ["00126380"]
+    assert rows["035720"]["is_admin"] is True
+    assert rows["035720"]["is_halted"] is True
+    assert rows["117930"]["delisted_on"] == date(2017, 3, 7)
+    assert rows["117930"]["seen_on"] is None
+    assert rows["117930"]["market"] == "KOSPI"
+    assert rows["117930"]["corp_code"] == "00111111"
     probed = {row[0]: row[1] for row in conn.execute("SELECT code, mket_id_cd FROM probe_log").fetchall()}
     assert probed == {"117930": "STK", "266170": "KNX", "037830": "KSQ", "088260": "STK"}
-    assert stats.as_dict()["errors"] == 0 and stats.delisted_found == 1
+    assert stats.as_dict()["errors"] == 0
+    assert stats.delisted_found == 1
 
 
 def test_second_load_marks_vanished_code_and_skips_fresh_details() -> None:
@@ -238,7 +245,7 @@ def test_kis_call_retries_only_rate_limit() -> None:
     pauses.clear()
     assert kis_call(busy, sleep=pauses.append) == "ok"
     assert pauses == [1.0]
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="boom"):
         kis_call(lambda: (_ for _ in ()).throw(ValueError("boom")), sleep=pauses.append)
 
 

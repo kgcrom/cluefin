@@ -180,7 +180,7 @@ class TestKAMA:
         np.testing.assert_allclose(KAMA(close, timeperiod=10), talib.KAMA(close, timeperiod=10), rtol=1e-10)
 
 
-@pytest.mark.parametrize("name,func,timeperiod", NAN_PREFIX_CASES, ids=[c[0] for c in NAN_PREFIX_CASES])
+@pytest.mark.parametrize(("name", "func", "timeperiod"), NAN_PREFIX_CASES, ids=[c[0] for c in NAN_PREFIX_CASES])
 def test_nan_prefix(name, func, timeperiod, sample_close):
     """Verify each indicator's NaN warm-up prefix is exactly (timeperiod - 1) values."""
     result = func(sample_close, timeperiod=timeperiod)
@@ -189,7 +189,7 @@ def test_nan_prefix(name, func, timeperiod, sample_close):
     assert not np.isnan(result[timeperiod - 1])
 
 
-@pytest.mark.parametrize("name,func,timeperiod", SHORT_ARRAY_CASES, ids=[c[0] for c in SHORT_ARRAY_CASES])
+@pytest.mark.parametrize(("name", "func", "timeperiod"), SHORT_ARRAY_CASES, ids=[c[0] for c in SHORT_ARRAY_CASES])
 def test_short_array(name, func, timeperiod, short_data):
     """Test each indicator returns all-NaN when input is shorter than timeperiod."""
     result = func(short_data, timeperiod=timeperiod)

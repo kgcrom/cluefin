@@ -33,7 +33,7 @@ class TestOverseasConditionSearchList:
         assert request.model_dump(by_alias=True) == {"trnm": "GCNSRLST"}
 
     def test_invalid_trnm_raises(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"1 validation error for 미국주식 조건검색 목록조회 요청"):
             OverseasConditionSearchListRequest(trnm="INVALID")
 
     def test_response_validates_and_maps_fields(self):
@@ -87,7 +87,7 @@ class TestOverseasConditionSearchRequest:
 
     def test_invalid_search_type_raises(self):
         """usa20281은 search_type이 반드시 '0' (일반조회)."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"1 validation error for 미국주식 조건검색 요청 일반"):
             OverseasConditionSearchRequest(trnm="GCNSRREQ", seq="0", search_type="1")
 
     def test_response_maps_fid_keys_by_alias(self):
@@ -174,7 +174,7 @@ class TestOverseasConditionSearchRealtimeRequest:
 
     def test_invalid_search_type_raises(self):
         """usa20290은 search_type이 반드시 '1' (조건검색+실시간조건검색)."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"1 validation error for 미국주식 조건검색 요청 실시간"):
             OverseasConditionSearchRealtimeRequest(trnm="GCNSRREQ", seq="0", search_type="0")
 
     def test_response_maps_stex_tp_alias(self):
@@ -219,7 +219,7 @@ class TestOverseasConditionSearchRealtimeCancel:
         assert request.model_dump(by_alias=True) == {"trnm": "GCNSRCLR", "seq": "0"}
 
     def test_invalid_trnm_raises(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"1 validation error for 미국주식 조건검색 실시간 해제 요청"):
             OverseasConditionSearchRealtimeCancelRequest(trnm="INVALID", seq="0")
 
     def test_response_requires_all_fields(self):
@@ -231,7 +231,7 @@ class TestOverseasConditionSearchRealtimeCancel:
         assert response.trnm == "GCNSRCLR"
         assert response.seq == "0"
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"1 validation error for 미국주식 조건검색 실시간 해제 응답"):
             OverseasConditionSearchRealtimeCancelResponse.model_validate(
                 {"return_code": 0, "return_msg": "", "trnm": "GCNSRCLR"}
             )

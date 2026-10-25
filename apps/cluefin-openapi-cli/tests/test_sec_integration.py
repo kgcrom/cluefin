@@ -62,7 +62,8 @@ def test_eight_k_earnings_release_and_cik_check(filer) -> None:
 
     release = handle_filing_exhibit(base, session)
     assert release["document"]["type"] == "EX-99.1"
-    assert release["chars_total"] > 0 and release["text"]
+    assert release["chars_total"] > 0
+    assert release["text"]
 
     # A folder opens under any CIK; the detail page's parties are what refuses it.
     with pytest.raises(CliError) as error:

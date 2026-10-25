@@ -6,7 +6,6 @@ import sys
 from collections.abc import Callable
 from datetime import date, datetime, time, timedelta
 from typing import Any
-from zoneinfo import ZoneInfo
 
 from cluefin_openapi_cli.cache import store
 from cluefin_openapi_cli.cache.load import PARTS, Sources, run_load
@@ -14,6 +13,7 @@ from cluefin_openapi_cli.cache.perf import read_perf
 from cluefin_openapi_cli.cache.rates import RATE_SERIES
 from cluefin_openapi_cli.cache.read import read_company, read_ohlcv
 from cluefin_openapi_cli.cliargs import _parse_fields, _parse_limit, _parse_named_options, _str_option
+from cluefin_openapi_cli.clock import now_kst, today_kst
 from cluefin_openapi_cli.errors import EXIT_USAGE, CliError, classify_exception
 from cluefin_openapi_cli.output import attach_truncation, limit_rows, render_output, select_fields
 
@@ -71,7 +71,7 @@ def _parse_parts(raw: str | None) -> tuple[str, ...]:
 
 
 def _progress(message: str) -> None:
-    sys.stderr.write(f"[cache load] {datetime.now():%H:%M:%S} {message}\n")
+    sys.stderr.write(f"[cache load] {now_kst():%H:%M:%S} {message}\n")
     sys.stderr.flush()
 
 
@@ -81,7 +81,7 @@ def _run_load(argv: list[str]) -> None:
         raise CliError("`cache load` does not accept positional arguments.", exit_code=EXIT_USAGE)
     parts = _parse_parts(_str_option(options, "only"))
     since = _parse_day(_str_option(options, "since") or _DEFAULT_SINCE, "since")
-    now = datetime.now(ZoneInfo("Asia/Seoul")).replace(tzinfo=None)
+    now = now_kst()
     path = store.cache_path()
     conn = store.open_store(path)
     try:
@@ -149,7 +149,7 @@ def _run_ohlcv(argv: list[str]) -> None:
             exit_code=EXIT_USAGE,
         )
     until_raw = _str_option(options, "until")
-    until = _parse_day(until_raw, "until") if until_raw else date.today()
+    until = _parse_day(until_raw, "until") if until_raw else today_kst()
     since_raw = _str_option(options, "since")
     since = _parse_day(since_raw, "since") if since_raw else until - timedelta(days=_DEFAULT_OHLCV_DAYS)
     if since > until:
@@ -221,7 +221,7 @@ def _run_perf(argv: list[str]) -> None:
             exit_code=EXIT_USAGE,
         )
     until_raw = _str_option(options, "until")
-    until = _parse_day(until_raw, "until") if until_raw else date.today()
+    until = _parse_day(until_raw, "until") if until_raw else today_kst()
     since_raw = _str_option(options, "since")
     since = _parse_day(since_raw, "since") if since_raw else until - timedelta(days=_DEFAULT_OHLCV_DAYS)
     if since > until:

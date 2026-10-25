@@ -26,6 +26,7 @@ from typing import Any
 import duckdb
 
 from cluefin_openapi_cli.cache.throttle import kis_call
+from cluefin_openapi_cli.clock import now_kst
 from cluefin_openapi_cli.ohlcv import adj_price_flag
 
 __all__ = ["INDICES", "Bar", "BarLoadStats", "fetch_index_bars", "fetch_stock_bars", "load_bars"]
@@ -325,7 +326,7 @@ def load_bars(
             stats.skipped += 1
             continue
         try:
-            now = datetime.now()
+            now = now_kst()
             _sync(
                 conn,
                 target.code,
@@ -359,7 +360,7 @@ def load_bars(
                 last_day,
                 lambda s, e, sector=sector_code: fetch_index_bars(kis, sector, s, e, stats=stats, **call),
                 stats,
-                datetime.now(),
+                now_kst(),
             )
         except Exception as exc:  # noqa: BLE001
             stats.errors.append({"code": cache_code, "error": f"{type(exc).__name__}: {str(exc)[:200]}"})

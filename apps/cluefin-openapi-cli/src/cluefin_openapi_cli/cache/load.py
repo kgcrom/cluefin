@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date
 from typing import Any
 
 import duckdb
@@ -14,6 +14,7 @@ from cluefin_openapi_cli.cache.adjust import load_adjustments
 from cluefin_openapi_cli.cache.bars import load_bars
 from cluefin_openapi_cli.cache.company import load_company
 from cluefin_openapi_cli.cache.rates import load_rates
+from cluefin_openapi_cli.clock import now_kst
 
 __all__ = ["PARTS", "Sources", "run_load"]
 
@@ -69,7 +70,7 @@ def run_load(
     result: dict[str, Any] = {}
     for part in parts:
         started = time.perf_counter()
-        run_at = datetime.now()
+        run_at = now_kst()
         if part == "company":
             stats = load_company(
                 conn,

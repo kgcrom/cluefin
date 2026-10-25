@@ -45,7 +45,7 @@ def test_parse_return_code():
 
 
 @pytest.mark.parametrize(
-    "code,expected_cls",
+    ("code", "expected_cls"),
     [
         (1501, KiwoomValidationError),
         (1517, KiwoomValidationError),

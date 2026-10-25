@@ -53,7 +53,7 @@ def client() -> Client:
     return Client(token="test_token", env="dev")
 
 
-@pytest.mark.parametrize("property_name,expected_cls", PROPERTY_CASES, ids=[c[0] for c in PROPERTY_CASES])
+@pytest.mark.parametrize(("property_name", "expected_cls"), PROPERTY_CASES, ids=[c[0] for c in PROPERTY_CASES])
 def test_property_returns_expected_domain_class(client, property_name, expected_cls):
     instance = getattr(client, property_name)
     assert isinstance(instance, expected_cls)

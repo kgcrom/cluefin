@@ -93,7 +93,8 @@ class TestFormatStatementLines:
             )
         )
         assert "2025 사업보고서 · 연결" in text
-        assert "매출액" in text and "1,000" in text
+        assert "매출액" in text
+        assert "1,000" in text
         assert "[수익성] 영업이익률: 0.12" in text
 
     def test_separate_basis_label(self):
@@ -142,7 +143,8 @@ class TestFormatShareholderLines:
             nm="[x]펀드", relate="[/특별관계자]", trmend_posesn_stock_co="1", trmend_posesn_stock_qota_rt="1"
         )
         text = Text.from_markup("\n".join(FinancialAnalysisScreen._format_shareholder_lines([item], "2025"))).plain
-        assert "[x]펀드" in text and "[/특별관계자]" in text
+        assert "[x]펀드" in text
+        assert "[/특별관계자]" in text
 
     def test_missing_relation_renders_as_dash(self):
         item = SimpleNamespace(nm="홍길동", relate=None, trmend_posesn_stock_co=None, trmend_posesn_stock_qota_rt=None)

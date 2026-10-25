@@ -109,7 +109,10 @@ class TestSubscribeBondExecution:
         """Test that subscribe_execution raises ValueError in dev environment."""
         realtime_quote = OnmarketBondRealtimeQuote(mock_socket_client_dev)
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(
+            ValueError,
+            match=r"장내채권 실시간 체결가는 운영 서버\(prod\)에서만 사용 가능합니다\. 현재 환경: dev",
+        ) as exc_info:
             await realtime_quote.subscribe_execution("KR103502GA34")
 
         assert "운영 서버(prod)에서만 사용 가능" in str(exc_info.value)
@@ -131,7 +134,10 @@ class TestUnsubscribeBondExecution:
         """Test that unsubscribe_execution raises ValueError in dev environment."""
         realtime_quote = OnmarketBondRealtimeQuote(mock_socket_client_dev)
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(
+            ValueError,
+            match=r"장내채권 실시간 체결가는 운영 서버\(prod\)에서만 사용 가능합니다\. 현재 환경: dev",
+        ) as exc_info:
             await realtime_quote.unsubscribe_execution("KR103502GA34")
 
         assert "운영 서버(prod)에서만 사용 가능" in str(exc_info.value)
@@ -176,14 +182,14 @@ class TestParseBondExecutionData:
         """Test that insufficient fields raises ValueError."""
         short_data = ["KR103502GA34", "국고채권", "093000"]  # Only 3 fields
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match=r"Expected at least 19 fields, got 3\. First field") as exc_info:
             OnmarketBondRealtimeQuote.parse_execution_data(short_data)
 
         assert "Expected at least 19 fields, got 3" in str(exc_info.value)
 
     def test_parse_execution_data_empty_list_raises_error(self):
         """Test that empty list raises ValueError."""
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match=r"Expected at least 19 fields, got 0\. First field: empty") as exc_info:
             OnmarketBondRealtimeQuote.parse_execution_data([])
 
         assert "Expected at least 19 fields, got 0" in str(exc_info.value)
@@ -341,7 +347,10 @@ class TestSubscribeBondOrderbook:
         """Test that subscribe_orderbook raises ValueError in dev environment."""
         realtime_quote = OnmarketBondRealtimeQuote(mock_socket_client_dev)
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(
+            ValueError,
+            match=r"장내채권 실시간 체결가는 운영 서버\(prod\)에서만 사용 가능합니다\. 현재 환경: dev",
+        ) as exc_info:
             await realtime_quote.subscribe_orderbook("KR103502GA34")
 
         assert "운영 서버(prod)에서만 사용 가능" in str(exc_info.value)
@@ -363,7 +372,10 @@ class TestUnsubscribeBondOrderbook:
         """Test that unsubscribe_orderbook raises ValueError in dev environment."""
         realtime_quote = OnmarketBondRealtimeQuote(mock_socket_client_dev)
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(
+            ValueError,
+            match=r"장내채권 실시간 체결가는 운영 서버\(prod\)에서만 사용 가능합니다\. 현재 환경: dev",
+        ) as exc_info:
             await realtime_quote.unsubscribe_orderbook("KR103502GA34")
 
         assert "운영 서버(prod)에서만 사용 가능" in str(exc_info.value)
@@ -403,14 +415,14 @@ class TestParseBondOrderbookData:
         """Test that insufficient fields raises ValueError."""
         short_data = ["KR103502GA34", "093000", "3.500"]  # Only 3 fields
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match=r"Expected at least 34 fields, got 3\. First field") as exc_info:
             OnmarketBondRealtimeQuote.parse_orderbook_data(short_data)
 
         assert "Expected at least 34 fields, got 3" in str(exc_info.value)
 
     def test_parse_orderbook_data_empty_list_raises_error(self):
         """Test that empty list raises ValueError."""
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match=r"Expected at least 34 fields, got 0\. First field: empty") as exc_info:
             OnmarketBondRealtimeQuote.parse_orderbook_data([])
 
         assert "Expected at least 34 fields, got 0" in str(exc_info.value)
@@ -533,7 +545,10 @@ class TestSubscribeBondIndexExecution:
         """Test that subscribe_index_execution raises ValueError in dev environment."""
         realtime_quote = OnmarketBondRealtimeQuote(mock_socket_client_dev)
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(
+            ValueError,
+            match=r"장내채권 실시간 체결가는 운영 서버\(prod\)에서만 사용 가능합니다\. 현재 환경: dev",
+        ) as exc_info:
             await realtime_quote.subscribe_index_execution("BOND_IDX_001")
 
         assert "운영 서버(prod)에서만 사용 가능" in str(exc_info.value)
@@ -555,7 +570,10 @@ class TestUnsubscribeBondIndexExecution:
         """Test that unsubscribe_index_execution raises ValueError in dev environment."""
         realtime_quote = OnmarketBondRealtimeQuote(mock_socket_client_dev)
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(
+            ValueError,
+            match=r"장내채권 실시간 체결가는 운영 서버\(prod\)에서만 사용 가능합니다\. 현재 환경: dev",
+        ) as exc_info:
             await realtime_quote.unsubscribe_index_execution("BOND_IDX_001")
 
         assert "운영 서버(prod)에서만 사용 가능" in str(exc_info.value)
@@ -601,14 +619,14 @@ class TestParseBondIndexExecutionData:
         """Test that insufficient fields raises ValueError."""
         short_data = ["BOND_IDX_001", "20240101", "093000"]  # Only 3 fields
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match=r"Expected at least 20 fields, got 3\. First field") as exc_info:
             OnmarketBondRealtimeQuote.parse_index_execution_data(short_data)
 
         assert "Expected at least 20 fields, got 3" in str(exc_info.value)
 
     def test_parse_index_execution_data_empty_list_raises_error(self):
         """Test that empty list raises ValueError."""
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match=r"Expected at least 20 fields, got 0\. First field: empty") as exc_info:
             OnmarketBondRealtimeQuote.parse_index_execution_data([])
 
         assert "Expected at least 20 fields, got 0" in str(exc_info.value)

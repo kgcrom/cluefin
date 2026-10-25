@@ -120,7 +120,8 @@ def test_documented_offline_commands_execute(doc: Path) -> None:
         if argv[0] == "cache":
             # `cache load` calls brokers and the read subcommands depend on a local file, so a
             # documented cache line is checked for a real subcommand, not executed.
-            assert len(argv) > 1 and argv[1] in CACHE_SUBCOMMANDS, argv
+            assert len(argv) > 1, argv
+            assert argv[1] in CACHE_SUBCOMMANDS, argv
             continue
         result = run_cli(argv)
         assert result.exit_code == 0, (argv, result.stdout)

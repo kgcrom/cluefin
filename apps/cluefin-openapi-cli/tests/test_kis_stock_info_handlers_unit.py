@@ -64,12 +64,16 @@ def test_estimated_earnings_table_labels_rows_and_applies_scale() -> None:
 
     table = handlers._estimate_table(data, handlers._ESTIMATE_ROWS, periods)
     assert [row["metric"] for row in table] == ["revenue", "revenue_growth_yoy"]
-    assert table[0]["unit"] == "억원" and table[0]["values"]["2023.12"] == 2589355.0
-    assert table[1]["unit"] == "%" and table[1]["values"]["2023.12"] == pytest.approx(-14.3)
+    assert table[0]["unit"] == "억원"
+    assert table[0]["values"]["2023.12"] == 2589355.0
+    assert table[1]["unit"] == "%"
+    assert table[1]["values"]["2023.12"] == pytest.approx(-14.3)
 
     detail_table = handlers._estimate_table(detail, handlers._ESTIMATE_DETAIL_ROWS, periods)
-    assert detail_table[0]["metric"] == "ebitda" and detail_table[0]["values"]["2024.12"] is None
-    assert detail_table[1]["metric"] == "eps" and detail_table[1]["values"]["2023.12"] == 2131.0
+    assert detail_table[0]["metric"] == "ebitda"
+    assert detail_table[0]["values"]["2024.12"] is None
+    assert detail_table[1]["metric"] == "eps"
+    assert detail_table[1]["values"]["2023.12"] == 2131.0
     # Fewer response rows than the layout: only the rows that exist are labelled.
     assert len(detail_table) == 2
 

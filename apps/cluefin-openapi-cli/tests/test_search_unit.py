@@ -153,7 +153,8 @@ def test_expansion_prefers_the_longer_alias() -> None:
     terms, unmatched = expand_query("순매수")
     weights = dict(terms)
 
-    assert "buy" in weights and "net" in weights
+    assert "buy" in weights
+    assert "net" in weights
     assert not unmatched
 
 

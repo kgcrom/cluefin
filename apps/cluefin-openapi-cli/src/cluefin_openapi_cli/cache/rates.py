@@ -14,6 +14,8 @@ from typing import Any
 import duckdb
 from cluefin_openapi.ecos import CD_91D, KTB_1Y, KTB_3Y, KTB_10Y
 
+from cluefin_openapi_cli.clock import now_kst
+
 __all__ = ["RATE_SERIES", "RateLoadStats", "load_rates"]
 
 # Slug used by `cache perf --risk-free` → ECOS series.
@@ -68,7 +70,7 @@ def load_rates(
             stats.calls += 1
             page = ecos.statistic_search.search_series(series, f"{start:%Y%m%d}", f"{last_day:%Y%m%d}")
             observations = _observations(page)
-            now = datetime.now()
+            now = now_kst()
             conn.executemany(
                 "INSERT OR REPLACE INTO rates VALUES (?, ?, ?, ?)",
                 [(slug, day, value, now) for day, value in observations],

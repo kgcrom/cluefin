@@ -72,13 +72,18 @@ def test_close_websocket_session(client):
 
     NO_SESSION_CODES = ("IGW50025", "10000")
 
+    error: NHPlugAPIError | None = None
     try:
         response = client.common.close_websocket_session()
+    except NHPlugAPIError as e:
+        error = e
+
+    if error is None:
         assert response.body.rsp_cd is not None
         assert response.body.rsp_msg is not None
-    except NHPlugAPIError as e:
-        assert e.response_data is not None
-        assert e.response_data.get("rsp_cd") in NO_SESSION_CODES
+    else:
+        assert error.response_data is not None
+        assert error.response_data.get("rsp_cd") in NO_SESSION_CODES
 
 
 @pytest.mark.integration

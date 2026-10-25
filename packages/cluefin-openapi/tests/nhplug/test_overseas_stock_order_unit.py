@@ -423,7 +423,7 @@ FAILING_RSP_CD_CASES = [
 ]
 
 
-@pytest.mark.parametrize("endpoint, call", FAILING_RSP_CD_CASES)
+@pytest.mark.parametrize(("endpoint", "call"), FAILING_RSP_CD_CASES)
 def test_raises_on_failing_rsp_cd(client, endpoint, call):
     with requests_mock.Mocker() as m:
         m.post(endpoint, json={"rsp_cd": "40310", "rsp_msg": "권한이 없습니다."})

@@ -26,7 +26,7 @@ _IDENTIFY_NOTE_ROLE_CASES = [
 
 
 class TestIdentifyNoteRole:
-    @pytest.mark.parametrize("linkrole, expected", _IDENTIFY_NOTE_ROLE_CASES)
+    @pytest.mark.parametrize(("linkrole", "expected"), _IDENTIFY_NOTE_ROLE_CASES)
     def test_identify_note_role(self, linkrole, expected):
         assert _identify_note_role(linkrole) == expected
 
@@ -108,7 +108,9 @@ def _make_obligation_fact(period: XbrlPeriod, make_xbrl_fact) -> XbrlFact:
 class TestExtractNotes:
     def test_requires_taxonomy(self):
         doc = XbrlDocument(source_file="x.xbrl", facts=[])
-        with pytest.raises(ValueError):
+        with pytest.raises(
+            ValueError, match=r"Taxonomy 정보가 필요합니다\. parse_xbrl_file\(include_taxonomy=True\)로"
+        ):
             extract_notes(doc)
 
     def test_extracts_only_note_roles(self, dart_role_bs_consolidated):

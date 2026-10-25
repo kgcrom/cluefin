@@ -190,7 +190,8 @@ class TestSequenceMethod:
         )
 
         assert [note.number for note in result.notes] == ["1"]
-        assert len(result.warnings) == 1 and "놓쳤을 수" in result.warnings[0]
+        assert len(result.warnings) == 1
+        assert "놓쳤을 수" in result.warnings[0]
 
     def test_no_notes(self, caplog):
         document = parse_document(periodic("<P>본문만 있습니다.</P>"))

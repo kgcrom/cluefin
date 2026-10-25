@@ -436,7 +436,7 @@ def test_download_financial_statement_xbrl_rejects_existing_file_under_backslash
 
 
 @pytest.mark.parametrize(
-    "item_type,fields",
+    ("item_type", "fields"),
     [
         (SingleCompanyMajorAccountItem, ["bfefrmtrm_nm", "bfefrmtrm_dt", "bfefrmtrm_amount"]),
         (MultiCompanyMajorAccountItem, ["bfefrmtrm_nm", "bfefrmtrm_dt", "bfefrmtrm_amount"]),

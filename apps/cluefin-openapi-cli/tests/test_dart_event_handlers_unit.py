@@ -12,7 +12,13 @@ from types import SimpleNamespace
 import pytest
 from cluefin_openapi.dart import Client as DartClient
 
-from cluefin_openapi_cli.errors import EXIT_RATE_LIMIT, EXIT_USAGE, CliError, classify_exception
+from cluefin_openapi_cli.errors import (
+    EXIT_RATE_LIMIT,
+    EXIT_USAGE,
+    CliError,
+    DartQuotaExceededAPIError,
+    classify_exception,
+)
 from cluefin_openapi_cli.handlers import dart as handlers
 from cluefin_openapi_cli.validation import validate_params
 
@@ -92,7 +98,7 @@ def test_schema_rejects_bad_shapes(changes: dict) -> None:
 
 
 @pytest.mark.parametrize(
-    "changes, message",
+    ("changes", "message"),
     [
         ({"bgn_de": "20250101", "end_de": "20241231"}, "after"),
         ({"bgn_de": "20141231"}, "before 20150101"),
@@ -116,7 +122,7 @@ def test_single_day_range_is_allowed() -> None:
 
 
 def test_status_020_is_classified_as_rate_limit() -> None:
-    with pytest.raises(Exception) as exc_info:
+    with pytest.raises(DartQuotaExceededAPIError, match=r"조회된 데이타가 없습니다\.") as exc_info:
         handlers.handle_major_event(_PARAMS, _Session(_RecordingDart(status="020")))
     error = classify_exception(exc_info.value, command="dart.major-event", broker="dart")
     assert error.exit_code == EXIT_RATE_LIMIT
@@ -174,7 +180,7 @@ def test_item_schema() -> None:
 
 
 def test_item_status_020_is_classified_as_rate_limit() -> None:
-    with pytest.raises(Exception) as exc_info:
+    with pytest.raises(DartQuotaExceededAPIError, match=r"조회된 데이타가 없습니다\.") as exc_info:
         handlers.handle_report_item(_ITEM_PARAMS, _Session(_RecordingDart(status="020")))
     error = classify_exception(exc_info.value, command="dart.report-item", broker="dart")
     assert error.exit_code == EXIT_RATE_LIMIT

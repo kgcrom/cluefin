@@ -48,7 +48,8 @@ def test_summarize_keeps_each_brokers_latest_target_and_computes_statistics() ->
         "previous_rating": "중립",
         "target": 120000,
     }
-    assert out["mean"] == 100000 and out["median"] == 100000
+    assert out["mean"] == 100000
+    assert out["median"] == 100000
     assert out["max"] == {"target": 120000, "broker": "A증권", "date": "20260915"}
     assert out["min"]["broker"] == "B증권"
     assert out["ratings"] == {"매수": 1, "중립": 1}
@@ -56,7 +57,9 @@ def test_summarize_keeps_each_brokers_latest_target_and_computes_statistics() ->
 
 def test_summarize_with_nothing_in_the_window_is_empty_not_an_error() -> None:
     out = opinions.summarize([_opinion("20250101", "A증권", "100")], since="20260101")
-    assert out["count"] == 0 and out["mean"] is None and out["brokers"] == []
+    assert out["count"] == 0
+    assert out["mean"] is None
+    assert out["brokers"] == []
     assert opinions.summarize([{"value": "1"}], since="20260101")["count"] == 0
 
 
@@ -233,7 +236,10 @@ def test_valuation_without_a_common_share_row_leaves_market_cap_null() -> None:
     out = handlers.handle_kis_stock_valuation(
         {"stock_code": "000001", "corp_code": "00000001", "as_of": "20261018"}, _session(shares=[])
     )
-    assert out["shares"] is None and out["market_cap"] is None and out["per_ttm"] is None and out["pbr"] is None
+    assert out["shares"] is None
+    assert out["market_cap"] is None
+    assert out["per_ttm"] is None
+    assert out["pbr"] is None
     assert out["per_by_year"][0]["per"] == pytest.approx(1.0)  # EPS-based PER needs no share count
 
 
@@ -254,5 +260,7 @@ def test_opinion_summary_passes_the_window_with_the_kis_00_prefix() -> None:
     out = handlers.handle_kis_opinion_summary({"stock_code": "000001", "as_of": "20261018", "days": 30}, session)
 
     assert session.kis.calls == [("opinion", "0020260918", "0020261018")]
-    assert out["since"] == "20260918" and out["as_of"] == "20261018"
-    assert out["count"] == 1 and out["brokers"][0]["target"] == 50000
+    assert out["since"] == "20260918"
+    assert out["as_of"] == "20261018"
+    assert out["count"] == 1
+    assert out["brokers"][0]["target"] == 50000

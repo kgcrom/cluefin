@@ -129,14 +129,16 @@ def test_main_document_comes_first_whatever_order_the_zip_had() -> None:
     result = _outline()
     assert [d["file"] for d in result["documents"]] == [f"{RCEPT}.xml", f"{RCEPT}_00760.xml"]
     assert [d["document_code"] for d in result["documents"]] == ["11012", "00760"]
-    assert result["rcept_no"] == RCEPT and result["corp_code"] == CORP
+    assert result["rcept_no"] == RCEPT
+    assert result["corp_code"] == CORP
     json.dumps(result)
 
 
 def test_audit_report_only_filing() -> None:
     result = _outline(session=_Session({f"{RCEPT}_00760.xml": audit_report()}))
     (document,) = result["documents"]
-    assert document["is_audit_report"] and not document["is_periodic_report"]
+    assert document["is_audit_report"]
+    assert not document["is_periodic_report"]
     assert document["summary"] == {"AUDIT_CIK": "00000009"}
 
 
@@ -145,22 +147,26 @@ def test_another_company_in_any_file_is_exit_4(files) -> None:
     with pytest.raises(CliError) as excinfo:
         _outline(session=_Session(files))
     err = excinfo.value
-    assert err.exit_code == 4 and err.error_type == "ResponseParseError"
-    assert err.data["expected"] == CORP and OTHER_CORP in err.data["actual"]
+    assert err.exit_code == 4
+    assert err.error_type == "ResponseParseError"
+    assert err.data["expected"] == CORP
+    assert OTHER_CORP in err.data["actual"]
 
 
 def test_filing_before_2017_is_exit_2_without_touching_the_client() -> None:
     session = _Session()
     with pytest.raises(CliError) as excinfo:
         _outline({"rcept_no": "20160330000001"}, session)
-    assert excinfo.value.exit_code == 2 and "2017" in (excinfo.value.hint or "")
+    assert excinfo.value.exit_code == 2
+    assert "2017" in (excinfo.value.hint or "")
     assert session.get_dart_calls == 0
 
 
 def test_no_xml_in_the_download_is_exit_4() -> None:
     with pytest.raises(CliError) as excinfo:
         _outline(session=_Session({}))
-    assert excinfo.value.exit_code == 4 and excinfo.value.error_type == "ResponseParseError"
+    assert excinfo.value.exit_code == 4
+    assert excinfo.value.error_type == "ResponseParseError"
 
 
 def test_unparseable_document_is_exit_4(monkeypatch) -> None:
@@ -170,7 +176,8 @@ def test_unparseable_document_is_exit_4(monkeypatch) -> None:
     monkeypatch.setattr(cluefin_dart_notes, "load_document", broken)
     with pytest.raises(CliError) as excinfo:
         _outline()
-    assert excinfo.value.exit_code == 4 and excinfo.value.data["exception"] == "DartXmlRepairError"
+    assert excinfo.value.exit_code == 4
+    assert excinfo.value.data["exception"] == "DartXmlRepairError"
 
 
 def test_dart_quota_status_propagates_and_classifies_as_exit_5() -> None:
@@ -223,8 +230,10 @@ def test_outline_sizes_include_subsections_and_their_titles() -> None:
 
 def test_outline_reports_header_summary_and_repair() -> None:
     main = _outline()["documents"][0]
-    assert main["document_name"] == "반기보고서" and main["company_name"] == "가나다 주식회사"
-    assert main["is_periodic_report"] and not main["is_audit_report"]
+    assert main["document_name"] == "반기보고서"
+    assert main["company_name"] == "가나다 주식회사"
+    assert main["is_periodic_report"]
+    assert not main["is_audit_report"]
     assert main["summary"] == {"IFRS_YN": "Y"}
     assert main["repair"]["used_fallback"] is False
     assert main["repair"]["rules"]["bare-ampersand"] == 1
@@ -243,7 +252,8 @@ def test_section_needs_exactly_one_selector_before_any_client(selectors) -> None
     session = _Session()
     with pytest.raises(CliError) as excinfo:
         _section(selectors, session)
-    assert excinfo.value.exit_code == 2 and set(excinfo.value.data["given"]) == set(selectors)
+    assert excinfo.value.exit_code == 2
+    assert set(excinfo.value.data["given"]) == set(selectors)
     assert session.get_dart_calls == 0
 
 
@@ -258,7 +268,8 @@ def test_business_section_includes_subsections_with_markers_and_tables() -> None
         {"type": "paragraph", "text": "(단위 : 백만원)"},
         {"type": "table", "caption": None, "unit": "백만원", "rows": [["제품", "매출액"], ["부품", "1,234"]]},
     ]
-    assert result["selector"] == {"section": "business"} and result["truncated"] is False
+    assert result["selector"] == {"section": "business"}
+    assert result["truncated"] is False
     assert result["total_chars"] == result["returned_chars"]
     json.dumps(result)
 
@@ -280,7 +291,8 @@ def test_named_sections() -> None:
 def test_named_section_on_an_audit_report_only_filing_is_exit_2(name) -> None:
     with pytest.raises(CliError) as excinfo:
         _section({"section": name}, _Session({f"{RCEPT}_00760.xml": audit_report()}))
-    assert excinfo.value.exit_code == 2 and "audit report" in excinfo.value.hint
+    assert excinfo.value.exit_code == 2
+    assert "audit report" in excinfo.value.hint
 
 
 def test_assoc_code_glob_title_and_index_selectors() -> None:
@@ -289,7 +301,8 @@ def test_assoc_code_glob_title_and_index_selectors() -> None:
 
     # Same code, other meaning: only the audit report has D-0-1-0-0 (주석).
     (notes,) = _section({"assoc_code": "D-0-1-0-0"})["sections"]
-    assert notes["file"] == f"{RCEPT}_00760.xml" and notes["index"] == 8
+    assert notes["file"] == f"{RCEPT}_00760.xml"
+    assert notes["index"] == 8
 
     (titled,) = _section({"title": "연결재무제표 주석"})["sections"]
     assert titled["title"] == "3. 연결재무제표 주석"
@@ -309,7 +322,8 @@ def test_nested_matches_are_returned_once_with_their_parent() -> None:
 
 def test_no_match_is_an_empty_result_with_a_hint() -> None:
     result = _section({"title": "없는 제목"})
-    assert result["sections"] == [] and result["total_chars"] == 0
+    assert result["sections"] == []
+    assert result["total_chars"] == 0
     assert "document-outline" in result["hint"]
 
 
@@ -317,7 +331,8 @@ def test_max_chars_cuts_at_a_block_boundary() -> None:
     full = _section({"section": "business", "max_chars": 0})
     cut = _section({"section": "business", "max_chars": 30})
     assert cut["total_chars"] == full["total_chars"] == full["returned_chars"]
-    assert cut["truncated"] is True and "max-chars" in cut["hint"]
+    assert cut["truncated"] is True
+    assert "max-chars" in cut["hint"]
     # 9 (marker) + 13 (paragraph) fit in 30; the next marker (14) does not, and nothing after it is kept.
     assert cut["returned_chars"] == len("1. 사업의 개요") + len("R&D 중심의 부품 사업")
     assert [b["type"] for b in cut["sections"][0]["blocks"]] == ["section", "paragraph"]
@@ -332,7 +347,8 @@ def test_first_block_is_kept_even_over_the_cap() -> None:
 def test_cap_spans_all_selected_sections() -> None:
     result = _section({"assoc_code": "L-0-2-*", "max_chars": 20})
     first, second = result["sections"]
-    assert len(first["blocks"]) == 1 and second["blocks"] == []
+    assert len(first["blocks"]) == 1
+    assert second["blocks"] == []
     assert result["truncated"] is True
 
 
@@ -436,7 +452,8 @@ def _notes(params: dict | None = None, files: dict[str, bytes] | None = None) ->
 
 def test_notes_toc_reads_the_periodic_report_not_its_attached_audit_report() -> None:
     result = _notes()
-    assert result["mode"] == "toc" and "total_chars" not in result
+    assert result["mode"] == "toc"
+    assert "total_chars" not in result
     consolidated, separate = result["sources"]
     assert {consolidated["file"], separate["file"]} == {f"{RCEPT}.xml"}
     assert (consolidated["basis"], consolidated["split_method"]) == ("consolidated", "sequence")
@@ -445,7 +462,8 @@ def test_notes_toc_reads_the_periodic_report_not_its_attached_audit_report() -> 
         ("2", "차입금"),
         ("4", "특수관계자 거래"),
     ]
-    assert consolidated["notes"][1]["tables"] == 1 and "blocks" not in consolidated["notes"][1]
+    assert consolidated["notes"][1]["tables"] == 1
+    assert "blocks" not in consolidated["notes"][1]
     assert (separate["basis"], separate["split_method"]) == ("separate", "heading")
     assert [(n["number"], n["title"]) for n in separate["notes"]] == [
         ("1", "일반사항"),
@@ -463,7 +481,8 @@ def test_splitter_warnings_are_never_dropped() -> None:
     assert "놓쳤을 수 있습니다" in warnings
     # Also in notes mode, and for a source where nothing matched.
     (consolidated,) = _notes({"basis": "consolidated", "notes": "99"})["sources"]
-    assert consolidated["notes"] == [] and len(consolidated["warnings"]) == 2
+    assert consolidated["notes"] == []
+    assert len(consolidated["warnings"]) == 2
 
 
 def test_basis_filter() -> None:
@@ -472,7 +491,8 @@ def test_basis_filter() -> None:
 
 def test_notes_by_number_return_blocks() -> None:
     result = _notes({"notes": "9-1,2"})
-    assert result["mode"] == "notes" and result["truncated"] is False
+    assert result["mode"] == "notes"
+    assert result["truncated"] is False
     consolidated, separate = result["sources"]
     (borrowings,) = consolidated["notes"]
     assert borrowings["heading"] == "2. 차입금"
@@ -506,9 +526,11 @@ def test_audit_report_only_filing_uses_its_notes(code, basis) -> None:
 
 def test_notes_max_chars_cut() -> None:
     result = _notes({"title_contains": "차입금", "max_chars": 15})
-    assert result["truncated"] is True and "max-chars" in result["hint"]
+    assert result["truncated"] is True
+    assert "max-chars" in result["hint"]
     consolidated, separate = result["sources"]
-    assert len(consolidated["notes"][0]["blocks"]) == 1 and separate["notes"][0]["blocks"] == []
+    assert len(consolidated["notes"][0]["blocks"]) == 1
+    assert separate["notes"][0]["blocks"] == []
     # The note itself is still listed with its full size.
     assert separate["notes"][0]["chars"] == len("별도 차입금 본문")
 
@@ -517,14 +539,16 @@ def test_missing_basis_is_empty_with_a_hint() -> None:
     result = handlers.handle_financial_notes(
         {"rcept_no": RCEPT, "corp_code": CORP, "basis": "separate"}, _Session(periodic_filing())
     )
-    assert result["sources"] == [] and "document-outline" in result["hint"]
+    assert result["sources"] == []
+    assert "document-outline" in result["hint"]
 
 
 def test_unsplittable_notes_point_to_document_section() -> None:
     files = notes_filing(consolidated="<P>번호 없는 주석 본문</P>")
     result = _notes({"basis": "consolidated"}, files)
     (source,) = result["sources"]
-    assert source["notes"] == [] and source["warnings"] == ["노트를 하나도 찾지 못했습니다."]
+    assert source["notes"] == []
+    assert source["warnings"] == ["노트를 하나도 찾지 못했습니다."]
     assert source["preamble_chars"] == len("번호 없는 주석 본문")
     assert "document-section" in result["hint"]
 

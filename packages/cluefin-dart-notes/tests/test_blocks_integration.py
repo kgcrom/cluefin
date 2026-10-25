@@ -35,5 +35,6 @@ def test_text_has_no_markers(corpus_documents):
         for section in document.iter_sections():
             for block in section.blocks:
                 if isinstance(block, Paragraph):
-                    assert " " not in block.text and "" not in block.text, document.rcept_no
+                    assert " " not in block.text, document.rcept_no
+                    assert "" not in block.text, document.rcept_no
                     assert block.text == block.text.strip(), document.rcept_no

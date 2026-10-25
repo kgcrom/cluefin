@@ -872,7 +872,8 @@ class TestSocketCloseAndEventsEdgeCases:
         task.cancel()
         await task  # CancelledError is swallowed by the loop
 
-        assert task.done() and not task.cancelled()
+        assert task.done()
+        assert not task.cancelled()
         assert socket_client._event_queue.empty()
 
 

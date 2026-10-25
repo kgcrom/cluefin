@@ -113,7 +113,8 @@ class TestWatchlistCalls:
             fetcher.get_watchlist_groups()
         assert "hts-id" not in str(excinfo.value)
         assert "USER_ID=<HTS_ID>" in str(excinfo.value)
-        assert excinfo.value.__cause__ is None and excinfo.value.__suppress_context__
+        assert excinfo.value.__cause__ is None
+        assert excinfo.value.__suppress_context__
 
     def test_quotes_are_chunked_by_thirty_in_order(self, monkeypatch):
         fetcher, analysis = self._fetcher(monkeypatch)
@@ -124,7 +125,8 @@ class TestWatchlistCalls:
 
         assert fetcher.get_watchlist_quotes(pairs) == [code for _, code in pairs]
         first, second = analysis.get_watchlist_multi_quote.call_args_list
-        assert len(first.kwargs) == 60 and first.kwargs["fid_input_iscd_30"] == "000029"
+        assert len(first.kwargs) == 60
+        assert first.kwargs["fid_input_iscd_30"] == "000029"
         assert second.kwargs == {"fid_cond_mrkt_div_code_1": "J", "fid_input_iscd_1": "000030"}
 
     def test_no_quotes_call_for_empty_list(self, monkeypatch):

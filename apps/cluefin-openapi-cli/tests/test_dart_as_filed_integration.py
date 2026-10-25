@@ -43,7 +43,8 @@ def _operating_income(session: _Session, rcept_no: str) -> str:
         {"rcept_no": rcept_no, "reprt_code": "11011", "corp_code": CORP, "statements": "CIS", "fs_div": "CFS"},
         session,
     )
-    assert result["entity_id"] == CORP and result["reporting_period_end"] == "2024-12-31"
+    assert result["entity_id"] == CORP
+    assert result["reporting_period_end"] == "2024-12-31"
     rows = [r for r in result["statements"]["CIS"]["consolidated"] if r["concept_qname"] == "dart:OperatingIncomeLoss"]
     # Current period sorts first.
     assert rows[0]["end_date"] == "2024-12-31"

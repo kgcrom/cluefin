@@ -68,7 +68,8 @@ class TestKisLines:
     def test_fund_lines(self):
         lines = MarketOverviewScreen._format_kis_fund_lines([_fund("20260901", "981691", "334302", "2576303")])
         assert "억원" in lines[0]
-        assert "981,691" in lines[2] and "2,576,303" in lines[2]
+        assert "981,691" in lines[2]
+        assert "2,576,303" in lines[2]
 
     def test_empty(self):
         assert "데이터 없음" in MarketOverviewScreen._format_kis_fund_lines([])[1]
@@ -141,7 +142,8 @@ class TestMarketOverviewScreen:
             assert "981,691" in _text(screen, "#kis-fund-panel")
             assert "21,879" in _text(screen, "#kis-investor-panel")
             fund = screen.query_one("#kis-fund-panel", Static)
-            assert fund.region.width > 0 and fund.region.height > 0
+            assert fund.region.width > 0
+            assert fund.region.height > 0
             assert "+3.50%" in _text(screen, "#top-gainers-panel")
 
     async def test_without_kis_keys_panels_say_so(self):

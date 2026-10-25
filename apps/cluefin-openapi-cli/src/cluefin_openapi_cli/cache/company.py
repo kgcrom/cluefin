@@ -17,6 +17,7 @@ from typing import Any
 import duckdb
 
 from cluefin_openapi_cli.cache.throttle import kis_call
+from cluefin_openapi_cli.clock import now_kst
 
 __all__ = [
     "BasicInfo",
@@ -204,7 +205,7 @@ def load_company(
     """Refresh `company` from the three sources, one call at a time."""
 
     stats = CompanyLoadStats()
-    now = datetime.now()
+    now = now_kst()
 
     listing = fetch_listing(kiwoom)
     stats.listed = len(listing)

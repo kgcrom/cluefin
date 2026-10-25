@@ -153,7 +153,7 @@ DOMAIN_CASES: list[tuple[str, type, str, str, dict[str, Any]]] = [
 
 
 @pytest.mark.parametrize(
-    "domain_name,api_cls,path,method_name,call_kwargs", DOMAIN_CASES, ids=[c[0] for c in DOMAIN_CASES]
+    ("domain_name", "api_cls", "path", "method_name", "call_kwargs"), DOMAIN_CASES, ids=[c[0] for c in DOMAIN_CASES]
 )
 def test_domain_method_raises_on_failing_return_code_with_http_200(
     domain_name, api_cls, path, method_name, call_kwargs

@@ -515,7 +515,8 @@ class TestLifecycleEdgeCases:
         task.cancel()
         await task
 
-        assert task.done() and not task.cancelled()
+        assert task.done()
+        assert not task.cancelled()
         assert client.connected is True  # cancellation is close()'s job, not a receive error
 
     @pytest.mark.asyncio

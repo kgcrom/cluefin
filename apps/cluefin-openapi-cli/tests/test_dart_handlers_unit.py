@@ -56,10 +56,13 @@ def test_corp_code_lookup_handles_empty_list() -> None:
 def test_corp_code_lookup_limit_caps_rows_and_flags_truncation() -> None:
     session = FakeSession()
     capped = handlers.handle_corp_code_lookup({"max_rows": 1}, session)
-    assert capped["total"] == 2 and capped["returned"] == 1 and capped["truncated"] is True
+    assert capped["total"] == 2
+    assert capped["returned"] == 1
+    assert capped["truncated"] is True
 
     uncapped = handlers.handle_corp_code_lookup({"max_rows": 0}, session)
-    assert uncapped["returned"] == 2 and uncapped["truncated"] is False
+    assert uncapped["returned"] == 2
+    assert uncapped["truncated"] is False
 
 
 # DART's corp-code XML pads unlisted stock codes with spaces; the rows below mirror that.
@@ -157,7 +160,9 @@ def test_share_disclosure_handles_empty_list() -> None:
 def test_share_disclosure_max_rows_caps_rows_and_flags_truncation() -> None:
     session = FakeSession()
     capped = handlers.handle_large_holding_report({"corp_code": "x", "max_rows": 1}, session)
-    assert capped["total"] == 2 and capped["returned"] == 1 and capped["truncated"] is True
+    assert capped["total"] == 2
+    assert capped["returned"] == 1
+    assert capped["truncated"] is True
 
 
 def test_financial_statement_handlers_forward_the_report_key() -> None:
@@ -200,9 +205,9 @@ _MAJOR_ACCOUNTS_PARAMS = {"corp_code": "00126380", "bsns_year": "2025", "reprt_c
 
 
 def test_json_path_status_020_is_classified_as_rate_limit() -> None:
-    from cluefin_openapi_cli.errors import EXIT_RATE_LIMIT, classify_exception
+    from cluefin_openapi_cli.errors import EXIT_RATE_LIMIT, DartQuotaExceededAPIError, classify_exception
 
-    with pytest.raises(Exception) as exc_info:
+    with pytest.raises(DartQuotaExceededAPIError) as exc_info:
         handlers.handle_financial_major_accounts(_MAJOR_ACCOUNTS_PARAMS, _major_accounts_session("020"))
 
     error = classify_exception(exc_info.value, command="dart.financial-major-accounts", broker="dart")

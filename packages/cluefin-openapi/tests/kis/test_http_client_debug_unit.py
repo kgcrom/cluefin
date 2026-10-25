@@ -163,11 +163,17 @@ def test_raises_typed_errors(client: HttpClient, requests_mock, method, status_c
         json={"rt_cd": "1", "msg_cd": "ERR", "msg1": "error"},
     )
 
+    if method == "GET":
+
+        def call():
+            return client._get("/uapi/error", headers={"tr_id": "TR"}, params={"p": "v"})
+    else:
+
+        def call():
+            return client._post("/uapi/error", headers={"tr_id": "TR"}, body={"p": "v"})
+
     with pytest.raises(exception_type) as exc_info:
-        if method == "GET":
-            client._get("/uapi/error", headers={"tr_id": "TR"}, params={"p": "v"})
-        else:
-            client._post("/uapi/error", headers={"tr_id": "TR"}, body={"p": "v"})
+        call()
 
     assert exc_info.value.request_context["method"] == method
     assert "headers" not in exc_info.value.request_context  # no credentials on exceptions
@@ -212,11 +218,17 @@ def test_get_translates_request_exceptions(client: HttpClient, side_effect, exce
 def test_requests_raise_when_rate_limiter_times_out(client: HttpClient, method_name):
     client._rate_limiter.wait_for_tokens = Mock(return_value=False)
 
+    if method_name == "_get":
+
+        def call():
+            return client._get("/uapi/rate", headers={}, params={})
+    else:
+
+        def call():
+            return client._post("/uapi/rate", headers={}, body={})
+
     with pytest.raises(KISRateLimitError):
-        if method_name == "_get":
-            client._get("/uapi/rate", headers={}, params={})
-        else:
-            client._post("/uapi/rate", headers={}, body={})
+        call()
 
 
 def test_post_success_records_debug(client: HttpClient, requests_mock):

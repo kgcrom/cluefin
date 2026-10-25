@@ -161,7 +161,9 @@ class TestSubscribe:
         """Test that subscribe raises ValueError in dev environment."""
         quote = OverseasRealtimeQuote(mock_socket_client_dev)
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(
+            ValueError, match=r"해외주식 실시간시세는 운영 서버\(prod\)에서만 사용 가능합니다\. 현재 환경: dev"
+        ) as exc_info:
             await quote.subscribe("AAPL", "NAS")
 
         assert "운영 서버(prod)에서만 사용 가능" in str(exc_info.value)
@@ -187,7 +189,9 @@ class TestUnsubscribe:
         """Test that unsubscribe raises ValueError in dev environment."""
         quote = OverseasRealtimeQuote(mock_socket_client_dev)
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(
+            ValueError, match=r"해외주식 실시간시세는 운영 서버\(prod\)에서만 사용 가능합니다\. 현재 환경: dev"
+        ) as exc_info:
             await quote.unsubscribe("AAPL", "NAS")
 
         assert "운영 서버(prod)에서만 사용 가능" in str(exc_info.value)
@@ -215,7 +219,7 @@ class TestParseData:
         """Test that insufficient fields raises ValueError."""
         short_data = ["val"] * 70
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match=r"Expected at least 71 fields, got 70\. First field: val") as exc_info:
             OverseasRealtimeQuote.parse_data(short_data)
 
         assert "Expected at least 71 fields, got 70" in str(exc_info.value)
@@ -265,7 +269,9 @@ class TestSubscribeExecution:
         """Test that subscribe_execution raises ValueError in dev environment."""
         realtime_quote = OverseasRealtimeQuote(mock_socket_client_dev)
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(
+            ValueError, match=r"해외주식 실시간시세는 운영 서버\(prod\)에서만 사용 가능합니다\. 현재 환경: dev"
+        ) as exc_info:
             await realtime_quote.subscribe_execution("DNASAAPL")
 
         assert "운영 서버(prod)에서만 사용 가능" in str(exc_info.value)
@@ -287,7 +293,9 @@ class TestUnsubscribeExecution:
         """Test that unsubscribe_execution raises ValueError in dev environment."""
         realtime_quote = OverseasRealtimeQuote(mock_socket_client_dev)
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(
+            ValueError, match=r"해외주식 실시간시세는 운영 서버\(prod\)에서만 사용 가능합니다\. 현재 환경: dev"
+        ) as exc_info:
             await realtime_quote.unsubscribe_execution("DNASAAPL")
 
         assert "운영 서버(prod)에서만 사용 가능" in str(exc_info.value)
@@ -339,14 +347,14 @@ class TestParseExecutionData:
         """Test that insufficient fields raises ValueError."""
         short_data = ["DNASAAPL", "AAPL", "4"]
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match=r"Expected at least 26 fields, got 3\. First field: DNASAAPL") as exc_info:
             OverseasRealtimeQuote.parse_execution_data(short_data)
 
         assert "Expected at least 26 fields, got 3" in str(exc_info.value)
 
     def test_parse_execution_data_empty_list_raises_error(self):
         """Test that empty list raises ValueError."""
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match=r"Expected at least 26 fields, got 0\. First field: empty") as exc_info:
             OverseasRealtimeQuote.parse_execution_data([])
 
         assert "Expected at least 26 fields, got 0" in str(exc_info.value)
@@ -444,7 +452,9 @@ class TestSubscribeDelayedOrderbook:
         """Test that subscribe_delayed_orderbook raises ValueError in dev environment."""
         realtime_quote = OverseasRealtimeQuote(mock_socket_client_dev)
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(
+            ValueError, match=r"해외주식 실시간시세는 운영 서버\(prod\)에서만 사용 가능합니다\. 현재 환경: dev"
+        ) as exc_info:
             await realtime_quote.subscribe_delayed_orderbook("DHKS00003")
 
         assert "운영 서버(prod)에서만 사용 가능" in str(exc_info.value)
@@ -466,7 +476,9 @@ class TestUnsubscribeDelayedOrderbook:
         """Test that unsubscribe_delayed_orderbook raises ValueError in dev environment."""
         realtime_quote = OverseasRealtimeQuote(mock_socket_client_dev)
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(
+            ValueError, match=r"해외주식 실시간시세는 운영 서버\(prod\)에서만 사용 가능합니다\. 현재 환경: dev"
+        ) as exc_info:
             await realtime_quote.unsubscribe_delayed_orderbook("DHKS00003")
 
         assert "운영 서버(prod)에서만 사용 가능" in str(exc_info.value)
@@ -509,14 +521,16 @@ class TestParseDelayedOrderbookData:
         """Test that insufficient fields raises ValueError."""
         short_data = ["DHKS00003", "00003", "2"]
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(
+            ValueError, match=r"Expected at least 17 fields, got 3\. First field: DHKS00003"
+        ) as exc_info:
             OverseasRealtimeQuote.parse_delayed_orderbook_data(short_data)
 
         assert "Expected at least 17 fields, got 3" in str(exc_info.value)
 
     def test_parse_empty_list_raises_error(self):
         """Test that empty list raises ValueError."""
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match=r"Expected at least 17 fields, got 0\. First field: empty") as exc_info:
             OverseasRealtimeQuote.parse_delayed_orderbook_data([])
 
         assert "Expected at least 17 fields, got 0" in str(exc_info.value)
@@ -653,7 +667,9 @@ class TestSubscribeExecutionNotification:
         """Test that subscribe_execution_notification raises ValueError in dev environment."""
         realtime_quote = OverseasRealtimeQuote(mock_socket_client_dev)
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(
+            ValueError, match=r"해외주식 실시간시세는 운영 서버\(prod\)에서만 사용 가능합니다\. 현재 환경: dev"
+        ) as exc_info:
             await realtime_quote.subscribe_execution_notification("user01")
 
         assert "운영 서버(prod)에서만 사용 가능" in str(exc_info.value)
@@ -675,7 +691,9 @@ class TestUnsubscribeExecutionNotification:
         """Test that unsubscribe_execution_notification raises ValueError in dev environment."""
         realtime_quote = OverseasRealtimeQuote(mock_socket_client_dev)
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(
+            ValueError, match=r"해외주식 실시간시세는 운영 서버\(prod\)에서만 사용 가능합니다\. 현재 환경: dev"
+        ) as exc_info:
             await realtime_quote.unsubscribe_execution_notification("user01")
 
         assert "운영 서버(prod)에서만 사용 가능" in str(exc_info.value)
@@ -742,14 +760,14 @@ class TestParseExecutionNotificationData:
         """Test that insufficient fields raises ValueError."""
         short_data = ["user01", "50012345-01", "0000012345"]
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match=r"Expected at least 25 fields, got 3\. First field: user01") as exc_info:
             OverseasRealtimeQuote.parse_execution_notification_data(short_data)
 
         assert "Expected at least 25 fields, got 3" in str(exc_info.value)
 
     def test_parse_empty_list_raises_error(self):
         """Test that empty list raises ValueError."""
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match=r"Expected at least 25 fields, got 0\. First field: empty") as exc_info:
             OverseasRealtimeQuote.parse_execution_notification_data([])
 
         assert "Expected at least 25 fields, got 0" in str(exc_info.value)

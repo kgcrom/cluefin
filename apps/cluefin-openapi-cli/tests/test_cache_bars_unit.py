@@ -121,10 +121,12 @@ def test_initial_load_walks_whole_history_through_a_halt(market) -> None:
     assert list(_closes(conn, "005930")) == expected
     halted_2020 = [d for d in _closes(conn, "000660") if d.year == 2020]
     assert min(_closes(conn, "000660")) == date(2016, 1, 1)  # a Friday in this synthetic calendar
-    assert halted_2020[0] < date(2020, 3, 1) and halted_2020[-1] > date(2020, 9, 30)
+    assert halted_2020[0] < date(2020, 3, 1)
+    assert halted_2020[-1] > date(2020, 9, 30)
     assert list(_closes(conn, "117930"))[-1] == date(2017, 3, 6)
     assert all(adj == "1" for *_, adj in kis.stock_calls)  # chart.period "1" = unadjusted
-    assert stats.errors == [] and stats.replaced == 0
+    assert stats.errors == []
+    assert stats.replaced == 0
     for cache_code, _ in INDICES:
         assert len(_closes(conn, cache_code)) == len(expected)
     calls_005930 = sum(1 for call in kis.stock_calls if call[0] == "005930")
@@ -171,7 +173,8 @@ def test_delisted_code_is_skipped_once_complete(market) -> None:
 
     stats = _load(conn, kis, last)
 
-    assert kis.stock_calls == [] and stats.skipped == 1
+    assert kis.stock_calls == []
+    assert stats.skipped == 1
 
 
 def test_zero_price_is_null_and_markers_are_kept(market) -> None:
@@ -196,7 +199,8 @@ def test_one_failing_code_does_not_stop_the_load(market) -> None:
     stats = _load(conn, FakeKis(series, fail=frozenset({"000660"})), last)
 
     assert [error["code"] for error in stats.errors] == ["000660"]
-    assert _closes(conn, "005930") and not _closes(conn, "000660")
+    assert _closes(conn, "005930")
+    assert not _closes(conn, "000660")
 
 
 def test_listing_date_does_not_bound_history(market) -> None:
@@ -257,4 +261,5 @@ def test_delisted_code_without_bar_log_is_checked_once(market) -> None:
     first_rerun = len(kis.stock_calls)
     _load(conn, kis, last)
 
-    assert first_rerun == 1 and len(kis.stock_calls) == 1
+    assert first_rerun == 1
+    assert len(kis.stock_calls) == 1

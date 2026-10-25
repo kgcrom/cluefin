@@ -5,9 +5,10 @@ from __future__ import annotations
 import io
 import zipfile
 from collections.abc import Mapping
-from datetime import date, timedelta
+from datetime import datetime, timedelta
 from pathlib import Path, PurePosixPath
 from typing import Literal, Protocol
+from zoneinfo import ZoneInfo
 
 from defusedxml.ElementTree import ParseError, fromstring
 
@@ -21,6 +22,8 @@ from ._public_disclosure_types import (
     UniqueNumber,
     UniqueNumberItem,
 )
+
+_KST = ZoneInfo("Asia/Seoul")
 
 
 class _XmlNode(Protocol):
@@ -79,7 +82,7 @@ class PublicDisclosure:
             # DART defaults to an empty result when no date range is provided.
             # Without corp_code, DART rejects search periods longer than 3 months;
             # use an inclusive range safely under that limit.
-            today = date.today()
+            today = datetime.now(_KST).date()
             bgn_de = (today - timedelta(days=89)).strftime("%Y%m%d")
             end_de = today.strftime("%Y%m%d")
 

@@ -56,7 +56,8 @@ def test_perf_matches_performance_on_adjusted_closes(cache) -> None:
     years = (_DAYS[-1] - _DAYS[0]).days / 365.25
     expected = PERFORMANCE(stock, benchmark=kospi, risk_free=PERIODIC_RATE(0.03), years=years)
     assert code == 0
-    assert payload["benchmark"] == "U0001" and payload["count"] == 5
+    assert payload["benchmark"] == "U0001"
+    assert payload["count"] == 5
     assert (payload["first"], payload["last"]) == ("2018-05-02", "2018-05-09")
     assert payload["performance"].keys() == expected.keys()
     for name, value in expected.items():
@@ -68,13 +69,16 @@ def test_perf_matches_performance_on_adjusted_closes(cache) -> None:
 def test_perf_keeps_only_dates_both_codes_have(cache) -> None:
     _, payload = _perf("--bench", "u1001")
 
-    assert payload["benchmark"] == "U1001" and payload["count"] == 4
+    assert payload["benchmark"] == "U1001"
+    assert payload["count"] == 4
 
 
 def test_perf_without_shared_bars_hints(cache) -> None:
     _, payload = _perf("--bench", "U2001")
 
-    assert payload["count"] == 0 and payload["performance"] is None and "hint" in payload
+    assert payload["count"] == 0
+    assert payload["performance"] is None
+    assert "hint" in payload
 
 
 def test_perf_rejects_percent_risk_free_and_missing_code(cache) -> None:
@@ -100,7 +104,8 @@ def test_perf_with_a_rate_series_uses_the_rate_on_each_period_start(cache) -> No
     years = (_DAYS[-1] - _DAYS[0]).days / 365.25
     expected = PERFORMANCE(stock, benchmark=np.array(_KOSPI), risk_free=PERIODIC_RATE(annual), years=years)
     assert code == 0
-    assert payload["risk_free"] == "ktb3y" and payload["risk_free_mean"] == pytest.approx(0.0225)
+    assert payload["risk_free"] == "ktb3y"
+    assert payload["risk_free_mean"] == pytest.approx(0.0225)
     assert payload["performance"]["sharpe"] == pytest.approx(expected["sharpe"], abs=1e-4)
     assert payload["performance"]["alpha"] == pytest.approx(expected["alpha"], abs=1e-4)
 
@@ -110,5 +115,6 @@ def test_perf_rate_series_missing_from_cache_is_exit_2(cache) -> None:
 
     code, payload = _perf("--risk-free", "ktb3y")
 
-    assert code == 2 and payload["error"]["type"] == "RatesMissing"
+    assert code == 2
+    assert payload["error"]["type"] == "RatesMissing"
     assert payload["error"]["data"]["first_gap"] == "2018-05-02"

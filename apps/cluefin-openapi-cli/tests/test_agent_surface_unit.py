@@ -84,7 +84,8 @@ def test_root_payload_lists_roles_workflow_and_exit_codes() -> None:
 
     assert code == 0
     assert payload["brokers"][0] == {"name": "kis", "role": "primary"}
-    assert "brokers" in payload["commands"] and "schema" in payload["commands"]
+    assert "brokers" in payload["commands"]
+    assert "schema" in payload["commands"]
     assert payload["workflow"][0].endswith("brokers --json")
     assert set(payload["exit_codes"]) == {"0", "1", "2", "3", "4", "5"}
 

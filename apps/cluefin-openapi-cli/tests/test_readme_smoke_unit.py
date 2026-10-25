@@ -89,7 +89,8 @@ def test_readme_and_agents_document_roles_dry_run_and_exit_codes() -> None:
     agents = AGENTS.read_text(encoding="utf-8")
 
     for text in (readme, agents):
-        assert "primary" in text and "auxiliary" in text
+        assert "primary" in text
+        assert "auxiliary" in text
         assert "kis_alternatives" in text
         assert "--dry-run" in text
         assert "--fields" in text
@@ -97,4 +98,5 @@ def test_readme_and_agents_document_roles_dry_run_and_exit_codes() -> None:
         assert "schema kis stock current-price --json" in text
         assert "retryable" in text
     assert "| 5 |" in readme  # exit-code table
-    assert "SKILL.md" not in agents and "SKILL.md" not in readme
+    assert "SKILL.md" not in agents
+    assert "SKILL.md" not in readme

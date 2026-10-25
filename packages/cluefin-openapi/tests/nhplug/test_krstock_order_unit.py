@@ -598,7 +598,7 @@ FAILING_RSP_CD_CASES = [
 ]
 
 
-@pytest.mark.parametrize("endpoint, call, rsp_cd, rsp_msg", FAILING_RSP_CD_CASES)
+@pytest.mark.parametrize(("endpoint", "call", "rsp_cd", "rsp_msg"), FAILING_RSP_CD_CASES)
 def test_raises_on_failing_rsp_cd(client, endpoint, call, rsp_cd, rsp_msg):
     with requests_mock.Mocker() as m:
         m.post(endpoint, json={"rsp_cd": rsp_cd, "rsp_msg": rsp_msg})

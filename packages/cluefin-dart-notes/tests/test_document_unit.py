@@ -15,7 +15,8 @@ def test_recent_periodic_metadata(periodic_recent_bytes):
     assert document.formula_version == "6.7"
     assert document.encoding == "utf-8"
     assert dict(document.summary) == {"IFRS_YN": "Y"}
-    assert document.is_periodic_report and not document.is_audit_report
+    assert document.is_periodic_report
+    assert not document.is_audit_report
     assert document.rcept_no is None
 
 
@@ -28,13 +29,15 @@ def test_legacy_metadata_lives_in_document_header(periodic_legacy_bytes):
     assert document.formula_version == "3.2"
     assert document.encoding == "cp949"
     assert dict(document.summary) == {}
-    assert document.repair is not None and document.repair.reports
+    assert document.repair is not None
+    assert document.repair.reports
 
 
 def test_audit_report_summary(audit_report_bytes):
     document = parse_document(audit_report_bytes)
 
-    assert document.is_audit_report and not document.is_periodic_report
+    assert document.is_audit_report
+    assert not document.is_periodic_report
     assert dict(document.summary) == {"AUDIT_CIK": "00000009", "TOT_ASSETS": "1,234"}
 
 
@@ -69,7 +72,8 @@ def test_section_attributes(periodic_recent_bytes):
     assert overview.toc_id == "3"
     assert overview.title_en == "I. Overview"
     assert overview.children[1].title == "2. 회사의 연혁"
-    assert overview.element is not None and overview.element.tag == "SECTION-1"
+    assert overview.element is not None
+    assert overview.element.tag == "SECTION-1"
 
 
 def test_legacy_sections_have_no_english_title_or_toc_id(periodic_legacy_bytes):

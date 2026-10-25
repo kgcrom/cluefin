@@ -217,11 +217,13 @@ class TestAllTabsPopulated:
             assert "재무비율 (KIS)" in _panel_text(screen, "#kis-financial-content")
             # 연결(CFS) 우선 — 개별 값 1,000 이 아니라 3,000 이 보여야 한다
             statements = _panel_text(screen, "#financial-statement-content")
-            assert "3,000" in statements and "1,000" not in statements
+            assert "3,000" in statements
+            assert "1,000" not in statements
             assert "주당 현금배당금(원) (보통주)" in _panel_text(screen, "#dividend-content")
             assert "이재용" in _panel_text(screen, "#major-shareholder-content")
             share_change = _panel_text(screen, "#share-change-content")
-            assert "주식의 총수 현황" in share_change and "유상증자(주주배정)" in share_change
+            assert "주식의 총수 현황" in share_change
+            assert "유상증자(주주배정)" in share_change
             assert "주석 목차" in _panel_text(screen, "#xbrl-content")
 
     async def test_disclosure_table_and_title(self):

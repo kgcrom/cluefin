@@ -37,7 +37,9 @@ def test_loads_every_series_and_skips_empty_values() -> None:
 
     stats = _load(conn, ecos)
 
-    assert stats.calls == len(RATE_SERIES) and stats.rows == 2 * len(RATE_SERIES) and not stats.errors
+    assert stats.calls == len(RATE_SERIES)
+    assert stats.rows == 2 * len(RATE_SERIES)
+    assert not stats.errors
     assert (KTB_3Y.item_code, "20160101", "20260107") in ecos.calls
     rows = conn.execute("SELECT date, value FROM rates WHERE series = 'ktb3y' ORDER BY date").fetchall()
     assert rows == [(date(2026, 1, 5), 3.10), (date(2026, 1, 7), 3.15)]
@@ -60,7 +62,8 @@ def test_sample_key_skips_with_an_error() -> None:
 
     stats = _load(conn, ecos)
 
-    assert ecos.calls == [] and stats.errors[0]["code"] == "ecos"
+    assert ecos.calls == []
+    assert stats.errors[0]["code"] == "ecos"
 
 
 def test_status_reports_rates_per_series() -> None:

@@ -173,14 +173,18 @@ def test_original_and_amended_operating_income_differ_as_decimal_strings(install
 
     orig_rows = _operating_income(original)
     amend_rows = _operating_income(amended)
-    assert orig_rows[0]["value"] == "28915427" and isinstance(orig_rows[0]["value"], str)
+    assert orig_rows[0]["value"] == "28915427"
+    assert isinstance(orig_rows[0]["value"], str)
     assert amend_rows[0]["value"] == "-190143795"
     assert orig_rows[0]["label_ko"] == "영업이익(손실)"
-    assert orig_rows[0]["end_date"] == "2024-12-31" and orig_rows[0]["start_date"] == "2024-01-01"
+    assert orig_rows[0]["end_date"] == "2024-12-31"
+    assert orig_rows[0]["start_date"] == "2024-01-01"
     # Prior-period comparative columns are kept and identical between the two filings.
     assert [r["value"] for r in orig_rows[1:]] == [r["value"] for r in amend_rows[1:]] == ["-3588338302", "-3299506436"]
-    assert original["entity_id"] == CORP and original["reporting_period_end"] == "2024-12-31"
-    assert original["rcept_no"] == ORIGINAL and amended["rcept_no"] == AMENDED
+    assert original["entity_id"] == CORP
+    assert original["reporting_period_end"] == "2024-12-31"
+    assert original["rcept_no"] == ORIGINAL
+    assert amended["rcept_no"] == AMENDED
     json.dumps(original)  # JSON-serializable: no Decimal/date leaks
 
 
@@ -191,7 +195,8 @@ def test_download_and_parse_happen_in_the_same_temp_directory(install) -> None:
 
     assert dart.periodic_report_financial_statement.calls == [(ORIGINAL, "11011")]
     assert seen["directory"] == dart.periodic_report_financial_statement.destinations[0]
-    assert seen["include_taxonomy"] is True and seen["files"] == ["dummy.xbrl"]
+    assert seen["include_taxonomy"] is True
+    assert seen["files"] == ["dummy.xbrl"]
 
 
 def test_temp_directory_is_removed_on_success(install) -> None:
@@ -232,15 +237,18 @@ def test_entity_mismatch_is_exit_4_with_expected_and_actual(install) -> None:
     with pytest.raises(CliError) as excinfo:
         _run()
     err = excinfo.value
-    assert err.exit_code == 4 and err.error_type == "ResponseParseError"
-    assert err.data["expected"] == CORP and err.data["actual"] == "00163114"
+    assert err.exit_code == 4
+    assert err.error_type == "ResponseParseError"
+    assert err.data["expected"] == CORP
+    assert err.data["actual"] == "00163114"
 
 
 def test_zero_facts_is_exit_4(install) -> None:
     install(_doc(facts=0), _parsed("1"))
     with pytest.raises(CliError) as excinfo:
         _run()
-    assert excinfo.value.exit_code == 4 and excinfo.value.error_type == "ResponseParseError"
+    assert excinfo.value.exit_code == 4
+    assert excinfo.value.error_type == "ResponseParseError"
     assert "Arelle" in (excinfo.value.hint or "")
 
 
@@ -248,7 +256,8 @@ def test_missing_reporting_period_end_is_exit_4(install) -> None:
     install(_doc(period_end=None), _parsed("1"))
     with pytest.raises(CliError) as excinfo:
         _run()
-    assert excinfo.value.exit_code == 4 and excinfo.value.error_type == "ResponseParseError"
+    assert excinfo.value.exit_code == 4
+    assert excinfo.value.error_type == "ResponseParseError"
 
 
 def test_parser_errors_map_to_exit_4(monkeypatch) -> None:
@@ -258,7 +267,8 @@ def test_parser_errors_map_to_exit_4(monkeypatch) -> None:
     monkeypatch.setattr(cluefin_xbrl, "parse_xbrl_directory", parse_error)
     with pytest.raises(CliError) as excinfo:
         _run()
-    assert excinfo.value.exit_code == 4 and excinfo.value.error_type == "ResponseParseError"
+    assert excinfo.value.exit_code == 4
+    assert excinfo.value.error_type == "ResponseParseError"
 
     monkeypatch.setattr(cluefin_xbrl, "parse_xbrl_directory", lambda d, *, include_taxonomy=False: _doc())
 
@@ -380,7 +390,8 @@ def test_abstract_rows_are_skipped_and_none_value_stays_none(install) -> None:
     rows = _run({"statements": "CIS", "fs_div": "CFS"})["statements"]["CIS"]["consolidated"]
     assert all(not r["concept"].endswith("Abstract") for r in rows)
     note = next(r for r in rows if r["concept"] == "Note")
-    assert note["value"] is None and note["unit"] is None
+    assert note["value"] is None
+    assert note["unit"] is None
     row = rows[0]
     assert set(row) == {
         "concept_qname",
@@ -397,14 +408,17 @@ def test_abstract_rows_are_skipped_and_none_value_stays_none(install) -> None:
         "depth",
         "order",
     }
-    assert row["period_type"] == "duration" and row["unit"] == "iso4217:KRW"
+    assert row["period_type"] == "duration"
+    assert row["unit"] == "iso4217:KRW"
 
 
 def test_instant_rows_carry_instant_only(install) -> None:
     install(_doc(), _parsed("1"))
     row = _run({"statements": "BS", "fs_div": "CFS"})["statements"]["BS"]["consolidated"][0]
-    assert row["period_type"] == "instant" and row["instant"] == "2024-12-31"
-    assert row["start_date"] is None and row["end_date"] is None
+    assert row["period_type"] == "instant"
+    assert row["instant"] == "2024-12-31"
+    assert row["start_date"] is None
+    assert row["end_date"] is None
 
 
 # --- through the CLI ---------------------------------------------------------

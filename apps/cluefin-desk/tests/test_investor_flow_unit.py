@@ -28,7 +28,8 @@ class TestSectorRow:
         assert name == "제조"
         assert index == "2,704.06"
         assert rate == "[blue]-2.10%[/blue]"
-        assert frgn == "-2,668" and ind == "+3,698"
+        assert frgn == "-2,668"
+        assert ind == "+3,698"
 
     def test_positive_rate_is_red_with_plus(self):
         _, _, rate, _, _ = InvestorFlowScreen._format_sector_row(_sector(cur_prc="+49457", flu_rt="+48"))
@@ -36,7 +37,8 @@ class TestSectorRow:
 
     def test_blank_values(self):
         _, index, rate, _, _ = InvestorFlowScreen._format_sector_row(_sector(cur_prc="", flu_rt="-"))
-        assert index == "-" and rate == "-"
+        assert index == "-"
+        assert rate == "-"
 
 
 class FakeFetcher:

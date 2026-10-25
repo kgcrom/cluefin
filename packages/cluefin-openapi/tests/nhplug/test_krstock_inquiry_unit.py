@@ -163,7 +163,7 @@ class TestDailyOrderExecution:
         assert response.body.rsp_cd == "XA102"
 
     @pytest.mark.parametrize(
-        "rsp_cd, rsp_msg",
+        ("rsp_cd", "rsp_msg"),
         [
             ("00166", "조회가 완료되었습니다."),
             ("00221", "계좌/종목별 주문가능수량/금액 조회가 완료되었습니다."),
@@ -875,7 +875,7 @@ FAILING_RSP_CD_CASES = [
 ]
 
 
-@pytest.mark.parametrize("endpoint, call", FAILING_RSP_CD_CASES)
+@pytest.mark.parametrize(("endpoint", "call"), FAILING_RSP_CD_CASES)
 def test_raises_on_failing_rsp_cd(client, endpoint, call):
     with requests_mock.Mocker() as m:
         m.post(endpoint, json={"rsp_cd": "IGW40018", "rsp_msg": "계좌정보가 존재하지 않습니다."})
@@ -908,7 +908,7 @@ ALY_QUT_CD_CASES = [
 ]
 
 
-@pytest.mark.parametrize("api, call", ALY_QUT_CD_CASES)
+@pytest.mark.parametrize(("api", "call"), ALY_QUT_CD_CASES)
 def test_aly_qut_cd_is_sent_only_when_given(client, api, call):
     """스펙(260911)은 aly_qut_cd 를 필수로 추가했지만 서버는 생략도 받는다 — 선택 인자, 값이 있을 때만 전송."""
     with requests_mock.Mocker() as m:

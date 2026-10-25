@@ -169,14 +169,14 @@ class TestParseExecutionData:
         """Test that insufficient fields raises ValueError."""
         short_data = ["005930", "093000", "70000"]  # Only 3 fields
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match=r"Expected at least 46 fields, got 3\. First field: 005930") as exc_info:
             DomesticRealtimeQuote.parse_execution_data(short_data)
 
         assert "Expected at least 46 fields, got 3" in str(exc_info.value)
 
     def test_parse_execution_data_empty_list_raises_error(self):
         """Test that empty list raises ValueError."""
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match=r"Expected at least 46 fields, got 0\. First field: empty") as exc_info:
             DomesticRealtimeQuote.parse_execution_data([])
 
         assert "Expected at least 46 fields, got 0" in str(exc_info.value)
@@ -392,14 +392,14 @@ class TestParseOrderbookData:
         """Test that wrong field count raises ValueError."""
         short_data = ["005930", "093000", "0"]  # Only 3 fields
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match=r"Expected at least 62 fields, got 3\. First field: 005930") as exc_info:
             DomesticRealtimeQuote.parse_orderbook_data(short_data)
 
         assert "Expected at least 62 fields, got 3" in str(exc_info.value)
 
     def test_parse_orderbook_data_empty_list_raises_error(self):
         """Test that empty list raises ValueError."""
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match=r"Expected at least 62 fields, got 0\. First field: empty") as exc_info:
             DomesticRealtimeQuote.parse_orderbook_data([])
 
         assert "Expected at least 62 fields, got 0" in str(exc_info.value)
@@ -552,7 +552,9 @@ class TestSubscribeExecutionNotification:
         """Test that subscribe_execution_notification raises ValueError in dev environment."""
         realtime_quote = DomesticRealtimeQuote(mock_socket_client_dev)
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(
+            ValueError, match=r"실시간 체결통보는 운영 서버\(prod\)에서만 사용 가능합니다\. 현재 환경: dev"
+        ) as exc_info:
             await realtime_quote.subscribe_execution_notification("HTSID0000001")
 
         assert "운영 서버(prod)에서만 사용 가능" in str(exc_info.value)
@@ -574,7 +576,9 @@ class TestUnsubscribeExecutionNotification:
         """Test that unsubscribe_execution_notification raises ValueError in dev environment."""
         realtime_quote = DomesticRealtimeQuote(mock_socket_client_dev)
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(
+            ValueError, match=r"실시간 체결통보는 운영 서버\(prod\)에서만 사용 가능합니다\. 현재 환경: dev"
+        ) as exc_info:
             await realtime_quote.unsubscribe_execution_notification("HTSID0000001")
 
         assert "운영 서버(prod)에서만 사용 가능" in str(exc_info.value)
@@ -624,14 +628,14 @@ class TestParseExecutionNotificationData:
         """Test that insufficient fields raises ValueError."""
         short_data = ["CUST0001", "1234567890", "0000000001"]  # Only 3 fields
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match=r"Expected at least 26 fields, got 3\. First field: CUST0001") as exc_info:
             DomesticRealtimeQuote.parse_execution_notification_data(short_data)
 
         assert "Expected at least 26 fields, got 3" in str(exc_info.value)
 
     def test_parse_execution_notification_data_empty_list_raises_error(self):
         """Test that empty list raises ValueError."""
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match=r"Expected at least 26 fields, got 0\. First field: empty") as exc_info:
             DomesticRealtimeQuote.parse_execution_notification_data([])
 
         assert "Expected at least 26 fields, got 0" in str(exc_info.value)

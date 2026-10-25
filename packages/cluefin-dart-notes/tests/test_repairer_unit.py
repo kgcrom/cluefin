@@ -129,7 +129,7 @@ def test_without_rule():
     repairer = DartXmlRepairer().without_rule("attributes")
 
     assert [rule.name for rule in repairer.rules] == ["dart-entities", "bare-ampersand", "unknown-tags"]
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"규칙 attributes이\(가\) 없습니다\."):
         repairer.without_rule("attributes")
 
 

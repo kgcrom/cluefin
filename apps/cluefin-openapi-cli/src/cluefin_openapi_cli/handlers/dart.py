@@ -12,9 +12,9 @@ from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
-from zoneinfo import ZoneInfo
 
 from cluefin_openapi_cli import statements
+from cluefin_openapi_cli.clock import KST
 from cluefin_openapi_cli.errors import (
     DART_REQUEST_LIMIT_STATUS,
     EXIT_BROKER,
@@ -635,7 +635,7 @@ _SUMMARY_NOTES = (
 
 
 def _kst_today() -> str:
-    return datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y%m%d")
+    return datetime.now(KST).strftime("%Y%m%d")
 
 
 def dart_rows(result) -> list[dict]:

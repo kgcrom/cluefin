@@ -236,7 +236,7 @@ def client() -> Client:
 
 
 @pytest.mark.parametrize(
-    "method_name, endpoint, response_model, list_model",
+    ("method_name", "endpoint", "response_model", "list_model"),
     METHOD_SPECS,
 )
 def test_major_shareholder_disclosure_calls_expected_endpoint(
@@ -356,7 +356,7 @@ LIVE_SHAPED_VALUES = [
 ]
 
 
-@pytest.mark.parametrize("method_name, endpoint, item_type, values", LIVE_SHAPED_VALUES)
+@pytest.mark.parametrize(("method_name", "endpoint", "item_type", "values"), LIVE_SHAPED_VALUES)
 def test_major_event_amounts_pass_through_as_live_strings(
     client: Client, method_name: str, endpoint: str, item_type, values: dict
 ) -> None:

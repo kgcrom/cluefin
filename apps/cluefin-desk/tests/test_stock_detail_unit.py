@@ -36,8 +36,10 @@ class TestFormatBrokerLines:
     def test_lists_both_sides(self):
         text = "\n".join(StockDetailScreen._format_broker_lines(_broker_body()))
         assert "매매원 현황 — 삼성전자" in text
-        assert "매수 상위" in text and "매도 상위" in text
-        assert "매수사1" in text and "매도사5" in text
+        assert "매수 상위" in text
+        assert "매도 상위" in text
+        assert "매수사1" in text
+        assert "매도사5" in text
 
 
 class TestFormatBrokerMarkup:
@@ -46,7 +48,8 @@ class TestFormatBrokerMarkup:
         body.stk_nm = "[kr]테스트"
         body.buy_trde_ori_nm_1 = "[jp]모간"
         rendered = Text.from_markup("\n".join(StockDetailScreen._format_broker_lines(body))).plain
-        assert "[kr]테스트" in rendered and "[jp]모간" in rendered
+        assert "[kr]테스트" in rendered
+        assert "[jp]모간" in rendered
 
 
 class TestFormatMarginLines:
@@ -100,7 +103,8 @@ class TestFormatOpinionLines:
             dprt=None,
         )
         rendered = Text.from_markup("\n".join(StockDetailScreen._format_opinion_lines([item]))).plain
-        assert "[nh]투자증권" in rendered and "[/매수]" in rendered
+        assert "[nh]투자증권" in rendered
+        assert "[/매수]" in rendered
 
 
 def _news_item(title="TCL, 삼성전자 제소", provider="9", dorg="뉴스핌", dt="20260902", tm="212221"):
@@ -125,7 +129,8 @@ class TestFormatNewsLines:
                 _news_item(provider="2", dorg="한국경제신문"),
             ]
         )
-        assert "[공시]" in lines[4] and "주요사항보고서" in lines[4]
+        assert "[공시]" in lines[4]
+        assert "주요사항보고서" in lines[4]
         assert "[공시]" not in lines[5]
 
     def test_bracketed_title_is_not_eaten_as_markup(self):
@@ -317,14 +322,16 @@ class TestStockDetailScreen:
             assert "투자자별 일별 순매수" in _panel_text(screen, "#kis-supply-content")
             assert "미래에셋증권" in _panel_text(screen, "#opinion-detail-content")
             news = _panel_text(screen, "#news-detail-content")
-            assert "TCL, 삼성전자 제소" in news and "[공시]" in news
+            assert "TCL, 삼성전자 제소" in news
+            assert "[공시]" in news
 
     async def test_one_failing_tab_does_not_block_the_others(self):
         app = HarnessApp(FakeFetcher(broker_error=True))
         async with app.run_test() as pilot:
             screen = await _loaded(app, pilot)
             broker = _panel_text(screen, "#broker-detail-content")
-            assert "매매원 로딩 실패" in broker and "TR 폐지" in broker
+            assert "매매원 로딩 실패" in broker
+            assert "TR 폐지" in broker
             assert "신용거래 추이" in _panel_text(screen, "#supply-detail-content")
             assert "미래에셋증권" in _panel_text(screen, "#opinion-detail-content")
 

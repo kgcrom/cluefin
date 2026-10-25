@@ -58,7 +58,8 @@ def test_items_follow_page_references_into_the_same_document():
         == "Item 15. Exhibits and Financial Statement Schedules\n\nFinancial statements: pages F-1 through F-2."
     )
     market = result.item("7A")
-    assert len(market.ranges) == 1 and market.incorporated_by_reference  # 다른 문서의 쪽
+    assert len(market.ranges) == 1
+    assert market.incorporated_by_reference
 
     unresolved = [finding for finding in result.findings if finding.code == PAGE_REFERENCE_UNRESOLVED]
     assert [finding.key.number for finding in unresolved] == ["1A"]
