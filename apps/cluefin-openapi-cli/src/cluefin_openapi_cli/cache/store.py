@@ -71,6 +71,16 @@ SCHEMA = (
       seconds DOUBLE
     )
     """,
+    # 시장금리: ECOS daily rates by `rates.RATE_SERIES` slug, annual percent as published (3.5 = 3.5%).
+    """
+    CREATE TABLE IF NOT EXISTS rates (
+      series TEXT,
+      date DATE,
+      value DOUBLE,
+      loaded_at TIMESTAMP,
+      PRIMARY KEY (series, date)
+    )
+    """,
     # The earliest day each code's bars were fetched from, so a start moved earlier is backfilled.
     """
     CREATE TABLE IF NOT EXISTS bar_log (
@@ -181,11 +191,18 @@ def status(conn: duckdb.DuckDBPyConnection) -> dict[str, Any]:
     rows, codes, first, last = _scalar_row(
         conn, "SELECT count(*), count(DISTINCT code), min(date), max(date) FROM ohlcv"
     )
+    rates = conn.execute(
+        "SELECT series, count(*), min(date), max(date) FROM rates GROUP BY series ORDER BY series"
+    ).fetchall()
     loads = conn.execute(
         "SELECT kind, max(run_at) FROM load_log GROUP BY kind ORDER BY kind",
     ).fetchall()
     return {
         "company": {"listed": listed, "delisted": delisted},
         "ohlcv": {"rows": rows, "codes": codes, "first_date": _iso(first), "last_date": _iso(last)},
+        "rates": {
+            series: {"rows": rows, "first_date": _iso(first), "last_date": _iso(last)}
+            for series, rows, first, last in rates
+        },
         "last_load": {kind: _iso(run_at) for kind, run_at in loads},
     }

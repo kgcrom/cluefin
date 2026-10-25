@@ -12,10 +12,11 @@ import duckdb
 from cluefin_openapi_cli.cache.adjust import load_adjustments
 from cluefin_openapi_cli.cache.bars import load_bars
 from cluefin_openapi_cli.cache.company import load_company
+from cluefin_openapi_cli.cache.rates import load_rates
 
 __all__ = ["PARTS", "Sources", "run_load"]
 
-PARTS = ("company", "ohlcv", "adj")
+PARTS = ("company", "ohlcv", "adj", "rates")
 
 
 @dataclass(slots=True)
@@ -47,6 +48,10 @@ class Sources:
     @property
     def dart(self) -> Any:
         return self._get("dart")
+
+    @property
+    def ecos(self) -> Any:
+        return self._get("ecos")
 
 
 def run_load(
@@ -85,6 +90,10 @@ def run_load(
             adj_stats = load_adjustments(conn, kis=sources.kis, progress=progress, sleep=sleep)
             summary = adj_stats.as_dict()
             codes, rows, replaced, errors = adj_stats.codes, 0, adj_stats.recomputed, len(adj_stats.errors)
+        elif part == "rates":
+            rate_stats = load_rates(conn, ecos=sources.ecos, since=since, last_day=last_day, progress=progress)
+            summary = rate_stats.as_dict()
+            codes, rows, replaced, errors = rate_stats.series, rate_stats.rows, 0, len(rate_stats.errors)
         else:  # pragma: no cover - PARTS is validated by the caller
             raise ValueError(part)
         seconds = round(time.perf_counter() - started, 1)
