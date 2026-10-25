@@ -22,7 +22,18 @@ from cluefin_ta.overlap import BBANDS, DEMA, EMA, KAMA, SMA, TEMA, WMA
 from cluefin_ta.pattern import CDLDOJI, CDLENGULFING, CDLHAMMER
 
 # Portfolio Metrics
-from cluefin_ta.portfolio import CAGR, CALMAR, MDD, SHARPE, SORTINO, VOLATILITY
+from cluefin_ta.portfolio import (
+    ALPHA,
+    BETA,
+    CAGR,
+    CALMAR,
+    MDD,
+    PERFORMANCE,
+    PERIODIC_RATE,
+    SHARPE,
+    SORTINO,
+    VOLATILITY,
+)
 from cluefin_ta.regime import (
     REGIME_COMBINED,
     REGIME_HMM,
@@ -82,6 +93,10 @@ __all__ = [
     "SHARPE",
     "SORTINO",
     "CALMAR",
+    "BETA",
+    "ALPHA",
+    "PERIODIC_RATE",
+    "PERFORMANCE",
     # Regime Detection
     "REGIME_MA",
     "REGIME_MA_DURATION",

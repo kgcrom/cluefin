@@ -8,6 +8,10 @@ Functions:
     SORTINO: Sortino Ratio
     CALMAR: Calmar Ratio
     VOLATILITY: Annualized Volatility
+    BETA: Beta against a benchmark
+    ALPHA: Jensen's Alpha against a benchmark
+    PERIODIC_RATE: Annual rate to per-period rate (for risk_free)
+    PERFORMANCE: All of the above from an equity curve (and a benchmark price series)
 
 These functions are not part of ta-lib but are commonly used
 for portfolio performance analysis.
@@ -102,92 +106,119 @@ def VOLATILITY(returns: np.ndarray, periods_per_year: int = 252) -> float:
     return float(np.std(returns, ddof=1) * np.sqrt(periods_per_year))
 
 
+def PERIODIC_RATE(annual_rate: float | np.ndarray, periods_per_year: int = 252) -> float | np.ndarray:
+    """
+    Convert an annual rate to a per-period rate, compounding: ``(1 + r) ** (1 / n) - 1``.
+
+    ``SHARPE``/``SORTINO``/``ALPHA`` take ``risk_free`` per period. Passing an annual
+    yield straight in (``0.035`` for a 3.5% treasury) subtracts 3.5% from every *daily*
+    return and swamps the ratio; convert it with this first.
+
+    Args:
+        annual_rate: Annual rate as a decimal (``0.035`` for 3.5% — ECOS and KIS quote
+            yields in percent, so divide by 100). A scalar, or an array such as a daily
+            series of treasury yields aligned with the returns.
+        periods_per_year: Number of periods in a year (default: 252 for trading days)
+
+    Returns:
+        Per-period rate, a float for a scalar input or an array of the same shape
+    """
+    rate = (1 + np.asarray(annual_rate, dtype=np.float64)) ** (1 / periods_per_year) - 1
+    return float(rate) if rate.ndim == 0 else rate
+
+
+def _excess(returns: np.ndarray, risk_free: float | np.ndarray) -> np.ndarray:
+    risk_free = np.asarray(risk_free, dtype=np.float64)
+    if risk_free.ndim != 0 and risk_free.shape != returns.shape:
+        raise ValueError(
+            f"risk_free must be a scalar or an array aligned with returns; got {risk_free.shape} for {returns.shape}"
+        )
+    return returns - risk_free
+
+
 def SHARPE(
     returns: np.ndarray,
-    risk_free: float = 0.0,
+    risk_free: float | np.ndarray = 0.0,
     periods_per_year: int = 252,
 ) -> float:
     """
     Sharpe Ratio.
 
-    Calculates the risk-adjusted return using total volatility.
+    Calculates the risk-adjusted return using total volatility:
+    ``mean(r - rf) / std(r - rf, ddof=1) * sqrt(periods_per_year)``.
 
     Args:
         returns: Array of periodic returns (e.g., daily returns as decimals)
-        risk_free: Risk-free rate per period (default: 0)
+        risk_free: Risk-free rate **per period**, not annual — a scalar, or an array
+            the same length as ``returns`` (e.g. daily treasury yields). Convert an
+            annual rate with ``PERIODIC_RATE`` (default: 0)
         periods_per_year: Number of periods in a year (default: 252 for trading days)
 
     Returns:
-        Sharpe ratio (annualized)
+        Sharpe ratio (annualized), or NaN when there are fewer than 2 periods or the
+        excess returns have no volatility (the ratio is undefined, not zero)
+
+    Raises:
+        ValueError: If ``risk_free`` is an array of a different length
     """
     returns = np.asarray(returns, dtype=np.float64)
+    excess_returns = _excess(returns, risk_free)
 
     if len(returns) < 2:
-        return 0.0
+        return float("nan")
 
-    # Calculate excess returns
-    excess_returns = returns - risk_free
-
-    # Calculate mean and std of excess returns
     mean_excess = np.mean(excess_returns)
     std_excess = np.std(excess_returns, ddof=1)
 
-    if std_excess == 0 or np.isclose(std_excess, 0, atol=1e-15):
-        return 0.0
+    if np.isclose(std_excess, 0, atol=1e-15):
+        return float("nan")
 
-    # Annualize the Sharpe ratio
-    sharpe = (mean_excess / std_excess) * np.sqrt(periods_per_year)
-
-    return float(sharpe)
+    return float((mean_excess / std_excess) * np.sqrt(periods_per_year))
 
 
 def SORTINO(
     returns: np.ndarray,
-    risk_free: float = 0.0,
+    risk_free: float | np.ndarray = 0.0,
     periods_per_year: int = 252,
 ) -> float:
     """
     Sortino Ratio.
 
-    Calculates the risk-adjusted return using downside volatility only.
-    Unlike Sharpe ratio, it only penalizes downside volatility.
+    Calculates the risk-adjusted return using downside volatility only, with the
+    risk-free rate as the target: ``mean(r - rf) / DD * sqrt(periods_per_year)``.
+    The downside deviation ``DD = sqrt(mean(min(r - rf, 0) ** 2))`` averages over
+    **all** periods (periods above the target count as zero), not over the losing
+    periods only — dividing by the loss count inflates DD and understates the ratio.
 
     Args:
         returns: Array of periodic returns (e.g., daily returns as decimals)
-        risk_free: Risk-free rate per period (default: 0)
+        risk_free: Risk-free rate **per period**, not annual — a scalar, or an array
+            the same length as ``returns``. Convert an annual rate with
+            ``PERIODIC_RATE`` (default: 0)
         periods_per_year: Number of periods in a year (default: 252 for trading days)
 
     Returns:
-        Sortino ratio (annualized)
+        Sortino ratio (annualized). ``inf`` when nothing falls below the target and the
+        mean excess return is positive; NaN when there are fewer than 2 periods, or no
+        downside with a non-positive mean
+
+    Raises:
+        ValueError: If ``risk_free`` is an array of a different length
     """
     returns = np.asarray(returns, dtype=np.float64)
+    excess_returns = _excess(returns, risk_free)
 
     if len(returns) < 2:
-        return 0.0
+        return float("nan")
 
-    # Calculate excess returns
-    excess_returns = returns - risk_free
-
-    # Calculate mean excess return
     mean_excess = np.mean(excess_returns)
+    downside_std = np.sqrt(np.mean(np.minimum(excess_returns, 0.0) ** 2))
 
-    # Calculate downside deviation (only negative returns)
-    negative_returns = excess_returns[excess_returns < 0]
-
-    if len(negative_returns) == 0:
-        # No negative returns, return infinity or large number
-        return float("inf") if mean_excess > 0 else 0.0
-
-    # Downside deviation (semi-standard deviation)
-    downside_std = np.sqrt(np.mean(negative_returns**2))
-
+    # No downside (or one so small its squares underflow)
     if downside_std == 0:
-        return 0.0
+        return float("inf") if mean_excess > 0 else float("nan")
 
-    # Annualize the Sortino ratio
-    sortino = (mean_excess / downside_std) * np.sqrt(periods_per_year)
-
-    return float(sortino)
+    return float((mean_excess / downside_std) * np.sqrt(periods_per_year))
 
 
 def CALMAR(returns: np.ndarray, periods_per_year: int = 252) -> float:
@@ -209,13 +240,153 @@ def CALMAR(returns: np.ndarray, periods_per_year: int = 252) -> float:
     if len(returns) == 0:
         return 0.0
 
-    cagr = CAGR(returns, periods_per_year)
-    mdd = MDD(returns)
+    return _calmar(CAGR(returns, periods_per_year), MDD(returns))
 
+
+def _calmar(cagr: float, mdd: float) -> float:
     if mdd == 0:
         return float("inf") if cagr > 0 else 0.0
-
     return float(cagr / mdd)
+
+
+def _paired(returns: np.ndarray, benchmark_returns: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    returns = np.asarray(returns, dtype=np.float64)
+    benchmark_returns = np.asarray(benchmark_returns, dtype=np.float64)
+    if returns.shape != benchmark_returns.shape:
+        raise ValueError(
+            f"returns and benchmark_returns must be date-aligned arrays of the same length; "
+            f"got {returns.shape} and {benchmark_returns.shape}"
+        )
+    return returns, benchmark_returns
+
+
+def _beta(returns: np.ndarray, benchmark_returns: np.ndarray) -> float:
+    if len(returns) < 2:
+        return float("nan")
+    benchmark_var = np.var(benchmark_returns, ddof=1)
+    if np.isclose(benchmark_var, 0, atol=1e-30):
+        return float("nan")
+    return float(np.cov(returns, benchmark_returns, ddof=1)[0, 1] / benchmark_var)
+
+
+def BETA(returns: np.ndarray, benchmark_returns: np.ndarray) -> float:
+    """
+    Beta against a benchmark.
+
+    Cov(returns, benchmark) / Var(benchmark), both with ``ddof=1``.
+
+    Args:
+        returns: Array of periodic returns (e.g., daily returns as decimals)
+        benchmark_returns: Benchmark returns for the same periods, aligned by date
+            with ``returns`` (same length, same order). Align before calling — e.g.
+            a stock's suspended days must be dropped from both or filled in both.
+
+    Returns:
+        Beta, or NaN when there are fewer than 2 periods or the benchmark has no variance
+
+    Raises:
+        ValueError: If the two arrays differ in length
+    """
+    returns, benchmark_returns = _paired(returns, benchmark_returns)
+    return _beta(returns, benchmark_returns)
+
+
+def ALPHA(
+    returns: np.ndarray,
+    benchmark_returns: np.ndarray,
+    risk_free: float | np.ndarray = 0.0,
+    periods_per_year: int = 252,
+) -> float:
+    """
+    Jensen's Alpha against a benchmark (annualized).
+
+    ``(mean(r - rf) - beta * mean(b - rf)) * periods_per_year``, where beta is taken
+    over the excess returns ``r - rf`` and ``b - rf``.
+
+    Args:
+        returns: Array of periodic returns (e.g., daily returns as decimals)
+        benchmark_returns: Benchmark returns for the same periods, aligned by date
+        risk_free: Risk-free rate **per period** — a scalar, or an array the same
+            length as ``returns``. Convert an annual rate with ``PERIODIC_RATE`` (default: 0)
+        periods_per_year: Number of periods in a year (default: 252 for trading days)
+
+    Returns:
+        Annualized alpha as a decimal (e.g., 0.03 for 3% a year), or NaN when beta is
+        undefined (fewer than 2 periods, or a benchmark with no variance)
+
+    Raises:
+        ValueError: If the arrays differ in length
+    """
+    returns, benchmark_returns = _paired(returns, benchmark_returns)
+    excess, benchmark_excess = _excess(returns, risk_free), _excess(benchmark_returns, risk_free)
+    beta = _beta(excess, benchmark_excess)
+    if np.isnan(beta):
+        return float("nan")
+    return float((np.mean(excess) - beta * np.mean(benchmark_excess)) * periods_per_year)
+
+
+def _curve_returns(curve: np.ndarray, name: str) -> np.ndarray:
+    curve = np.asarray(curve, dtype=np.float64)
+    if curve.ndim != 1 or len(curve) < 2:
+        raise ValueError(f"{name} must be a 1-D series of at least 2 values; got shape {curve.shape}")
+    return curve[1:] / curve[:-1] - 1
+
+
+def PERFORMANCE(
+    equity: np.ndarray,
+    benchmark: np.ndarray | None = None,
+    risk_free: float | np.ndarray = 0.0,
+    periods_per_year: int = 252,
+    years: float | None = None,
+) -> dict[str, float]:
+    """
+    Performance summary of an equity curve, optionally against a benchmark.
+
+    Turns the curve into periodic returns and applies ``CAGR``, ``MDD``,
+    ``VOLATILITY``, ``SHARPE``, ``SORTINO``, ``CALMAR`` (and ``BETA``, ``ALPHA`` with
+    a benchmark), so a backtest reports every metric under one definition.
+
+    Args:
+        equity: Portfolio value per period, oldest first (positive values)
+        benchmark: Benchmark prices for the same dates as ``equity`` (e.g. KOSPI
+            ``U0001`` or KOSDAQ ``U1001`` closes from the ``cluefin-openapi-cli``
+            cache), same length. Align before calling.
+        risk_free: Risk-free rate **per period**, a scalar or an array with one value
+            per return (``len(equity) - 1``). See ``PERIODIC_RATE``.
+        periods_per_year: Number of periods in a year (default: 252 for trading days)
+        years: Length of the curve in years for CAGR, e.g. calendar days / 365.25.
+            By default it is ``(len(equity) - 1) / periods_per_year``, which drifts
+            from the calendar when the market has fewer than ``periods_per_year``
+            trading days (KRX has ~245).
+
+    Returns:
+        Dict with ``cagr``, ``mdd``, ``volatility``, ``sharpe``, ``sortino``,
+        ``calmar``, plus ``beta`` and ``alpha`` when a benchmark is given — decimals,
+        with the same NaN/inf conventions as the individual functions
+
+    Raises:
+        ValueError: If a curve has fewer than 2 values, or the arrays differ in length
+    """
+    returns = _curve_returns(equity, "equity")
+    if years is None:
+        cagr = CAGR(returns, periods_per_year)
+    else:
+        total = float(np.prod(1 + returns))
+        cagr = -1.0 if total <= 0 else total ** (1 / years) - 1
+    mdd = MDD(returns)
+    stats = {
+        "cagr": cagr,
+        "mdd": mdd,
+        "volatility": VOLATILITY(returns, periods_per_year),
+        "sharpe": SHARPE(returns, risk_free, periods_per_year),
+        "sortino": SORTINO(returns, risk_free, periods_per_year),
+        "calmar": _calmar(cagr, mdd),
+    }
+    if benchmark is not None:
+        benchmark_returns = _curve_returns(benchmark, "benchmark")
+        stats["beta"] = BETA(returns, benchmark_returns)
+        stats["alpha"] = ALPHA(returns, benchmark_returns, risk_free, periods_per_year)
+    return stats
 
 
 __all__ = [
@@ -225,4 +396,8 @@ __all__ = [
     "SHARPE",
     "SORTINO",
     "CALMAR",
+    "BETA",
+    "ALPHA",
+    "PERIODIC_RATE",
+    "PERFORMANCE",
 ]
