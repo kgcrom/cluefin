@@ -10,6 +10,7 @@ from cluefin_openapi.client_factory import (
     BrokerClientConfig,
     BrokerClientFactory,
     _load_dotenv_file,
+    load_env,
 )
 
 
@@ -360,3 +361,14 @@ def test_load_dotenv_file_blank_key_is_skipped(tmp_path):
     path.write_text("=value-with-no-key\nREAL_KEY=real_value\n", encoding="utf-8")
 
     assert _load_dotenv_file(path) == {"REAL_KEY": "real_value"}
+
+
+def test_load_env_overlays_real_environment_on_dotenv(tmp_path, monkeypatch):
+    """앱이 브로커 키 밖의 설정(desk 의 KIS_HTS_USER_ID 등)을 같은 규칙으로 읽는다: .env 위에 실제 환경변수."""
+    (tmp_path / ".env").write_text("ONLY_IN_FILE=file\nIN_BOTH=file\n")
+    monkeypatch.chdir(tmp_path)
+
+    env = load_env({"IN_BOTH": "real"})
+
+    assert env["ONLY_IN_FILE"] == "file"
+    assert env["IN_BOTH"] == "real"
