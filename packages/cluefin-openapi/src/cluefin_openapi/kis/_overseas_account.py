@@ -1,5 +1,6 @@
 from typing import Literal
 
+from cluefin_openapi.kis._exceptions import raise_for_rt_cd
 from cluefin_openapi.kis._http_client import HttpClient
 from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 from cluefin_openapi.kis._overseas_account_types import (
@@ -29,14 +30,6 @@ class OverseasAccount:
 
     def __init__(self, client: HttpClient):
         self.client = client
-
-    def _check_response_error(self, response_data: dict) -> None:
-        """Check if API response contains an error and raise if so."""
-        rt_cd = response_data.get("rt_cd")
-        if rt_cd != "0":
-            msg_cd = response_data.get("msg_cd", "")
-            msg1 = response_data.get("msg1", "Unknown error")
-            raise ValueError(f"KIS API Error [{msg_cd}]: {msg1} (rt_cd={rt_cd})")
 
     def request_stock_order(
         self,
@@ -118,7 +111,7 @@ class OverseasAccount:
         }
         response = self.client._post("/uapi/overseas-stock/v1/trading/order", headers=headers, body=body)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockQuoteCurrent.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -176,7 +169,7 @@ class OverseasAccount:
             body=body,
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockQuoteCorrection.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -243,7 +236,7 @@ class OverseasAccount:
         }
         response = self.client._post("/uapi/overseas-stock/v1/trading/order-resv", headers=headers, body=body)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockReserveQuote.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -283,7 +276,7 @@ class OverseasAccount:
             body=body,
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockReserveQuoteCorrection.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -326,7 +319,7 @@ class OverseasAccount:
             params=params,
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = BuyTradableAmount.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -370,7 +363,7 @@ class OverseasAccount:
             params=params,
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockNotConclusion.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -416,7 +409,7 @@ class OverseasAccount:
             params=params,
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockBalance.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -486,7 +479,7 @@ class OverseasAccount:
             params=params,
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockConclusionHistory.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -532,7 +525,7 @@ class OverseasAccount:
             params=params,
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = CurrentBalanceByConclusion.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -587,7 +580,7 @@ class OverseasAccount:
             params=params,
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = ReserveOrders.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -628,7 +621,7 @@ class OverseasAccount:
             params=params,
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = BalanceBySettlement.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -684,7 +677,7 @@ class OverseasAccount:
             params=params,
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = DailyTransactionHistory.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -743,7 +736,7 @@ class OverseasAccount:
             params=params,
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = PeriodProfitLoss.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -775,7 +768,7 @@ class OverseasAccount:
             params=params,
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = MarginAggregate.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -833,7 +826,7 @@ class OverseasAccount:
             body=body,
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = OrderAfterDayTime.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -892,7 +885,7 @@ class OverseasAccount:
             body=body,
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = CorrectAfterDayTime.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -929,7 +922,7 @@ class OverseasAccount:
         }
         response = self.client._get("/uapi/overseas-stock/v1/trading/algo-ordno", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = LimitOrderNumber.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -979,7 +972,7 @@ class OverseasAccount:
             params=params,
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = LimitOrderExecutionHistory.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)

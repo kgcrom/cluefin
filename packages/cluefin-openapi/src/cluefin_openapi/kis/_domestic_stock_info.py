@@ -26,6 +26,7 @@ from cluefin_openapi.kis._domestic_stock_info_types import (
     StockBasicInfo,
     StockLoanableList,
 )
+from cluefin_openapi.kis._exceptions import raise_for_rt_cd
 from cluefin_openapi.kis._http_client import HttpClient
 from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 
@@ -35,14 +36,6 @@ class DomesticStockInfo:
 
     def __init__(self, client: HttpClient):
         self.client = client
-
-    def _check_response_error(self, response_data: dict) -> None:
-        """Check if API response contains an error and raise if so."""
-        rt_cd = response_data.get("rt_cd")
-        if rt_cd != "0":
-            msg_cd = response_data.get("msg_cd", "")
-            msg1 = response_data.get("msg1", "Unknown error")
-            raise ValueError(f"KIS API Error [{msg_cd}]: {msg1} (rt_cd={rt_cd})")
 
     def get_product_basic_info(
         self,
@@ -68,7 +61,7 @@ class DomesticStockInfo:
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/search-info", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = ProductBasicInfo.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -99,7 +92,7 @@ class DomesticStockInfo:
             "/uapi/domestic-stock/v1/quotations/search-stock-info", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockBasicInfo.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -131,7 +124,7 @@ class DomesticStockInfo:
         }
         response = self.client._get("/uapi/domestic-stock/v1/finance/balance-sheet", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = BalanceSheet.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -163,7 +156,7 @@ class DomesticStockInfo:
         }
         response = self.client._get("/uapi/domestic-stock/v1/finance/income-statement", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = IncomeStatement.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -195,7 +188,7 @@ class DomesticStockInfo:
         }
         response = self.client._get("/uapi/domestic-stock/v1/finance/financial-ratio", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = FinancialRatio.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -227,7 +220,7 @@ class DomesticStockInfo:
         }
         response = self.client._get("/uapi/domestic-stock/v1/finance/profit-ratio", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = ProfitabilityRatio.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -261,7 +254,7 @@ class DomesticStockInfo:
             "/uapi/domestic-stock/v1/finance/other-major-ratios", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = OtherKeyRatio.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -293,7 +286,7 @@ class DomesticStockInfo:
         }
         response = self.client._get("/uapi/domestic-stock/v1/finance/stability-ratio", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StabilityRatio.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -325,7 +318,7 @@ class DomesticStockInfo:
         }
         response = self.client._get("/uapi/domestic-stock/v1/finance/growth-ratio", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = GrowthRatio.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -365,7 +358,7 @@ class DomesticStockInfo:
             "/uapi/domestic-stock/v1/quotations/credit-by-company", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = MarginTradableStocks.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -406,7 +399,7 @@ class DomesticStockInfo:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ksdinfo/dividend", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = KsdDividendDecision.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -441,7 +434,7 @@ class DomesticStockInfo:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ksdinfo/purreq", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = KsdStockDividendDecision.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -476,7 +469,7 @@ class DomesticStockInfo:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ksdinfo/merger-split", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = KsdMergerSplitDecision.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -514,7 +507,7 @@ class DomesticStockInfo:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ksdinfo/rev-split", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = KsdParValueChangeDecision.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -549,7 +542,7 @@ class DomesticStockInfo:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ksdinfo/cap-dcrs", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = KsdCapitalReductionSchedule.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -584,7 +577,7 @@ class DomesticStockInfo:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ksdinfo/list-info", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = KsdListingInfoSchedule.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -619,7 +612,7 @@ class DomesticStockInfo:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ksdinfo/pub-offer", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = KsdIpoSubscriptionSchedule.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -654,7 +647,7 @@ class DomesticStockInfo:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ksdinfo/forfeit", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = KsdForfeitedShareSchedule.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -689,7 +682,7 @@ class DomesticStockInfo:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ksdinfo/mand-deposit", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = KsdDepositSchedule.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -727,7 +720,7 @@ class DomesticStockInfo:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ksdinfo/paidin-capin", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = KsdPaidInCapitalIncreaseSchedule.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -762,7 +755,7 @@ class DomesticStockInfo:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ksdinfo/bonus-issue", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = KsdStockDividendSchedule.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -797,7 +790,7 @@ class DomesticStockInfo:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ksdinfo/sharehld-meet", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = KsdShareholderMeetingSchedule.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -825,7 +818,7 @@ class DomesticStockInfo:
             "/uapi/domestic-stock/v1/quotations/estimate-perform", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = EstimatedEarnings.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -868,7 +861,7 @@ class DomesticStockInfo:
             "/uapi/domestic-stock/v1/quotations/lendable-by-company", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockLoanableList.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -906,7 +899,7 @@ class DomesticStockInfo:
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/invest-opinion", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = InvestmentOpinion.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -947,7 +940,7 @@ class DomesticStockInfo:
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/invest-opbysec", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = InvestmentOpinionByBrokerage.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)

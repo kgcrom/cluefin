@@ -25,6 +25,7 @@ from cluefin_openapi.kis._domestic_account_types import (
     StockReserveQuoteCorrection,
     StockReserveQuoteInquiry,
 )
+from cluefin_openapi.kis._exceptions import raise_for_rt_cd
 from cluefin_openapi.kis._http_client import HttpClient
 from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 
@@ -34,14 +35,6 @@ class DomesticAccount:
 
     def __init__(self, client: HttpClient):
         self.client = client
-
-    def _check_response_error(self, response_data: dict) -> None:
-        """Check if API response contains an error and raise if so."""
-        rt_cd = response_data.get("rt_cd")
-        if rt_cd != "0":
-            msg_cd = response_data.get("msg_cd", "")
-            msg1 = response_data.get("msg1", "Unknown error")
-            raise ValueError(f"KIS API Error [{msg_cd}]: {msg1} (rt_cd={rt_cd})")
 
     def request_stock_quote_current(
         self,
@@ -110,7 +103,7 @@ class DomesticAccount:
 
         response = self.client._post("/uapi/domestic-stock/v1/trading/order-cash", headers=headers, body=body)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockQuoteCurrent.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -221,7 +214,7 @@ class DomesticAccount:
         }
         response = self.client._post("/uapi/domestic-stock/v1/trading/order-credit", headers=headers, body=body)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockQuoteCredit.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -293,7 +286,7 @@ class DomesticAccount:
         }
         response = self.client._post("/uapi/domestic-stock/v1/trading/order-rvsecncl", headers=headers, body=body)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockQuoteCorrection.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -343,7 +336,7 @@ class DomesticAccount:
             "/uapi/domestic-stock/v1/trading/inquire-psbl-rvsecncl", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockQuoteCorrectionCancellableQty.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -418,7 +411,7 @@ class DomesticAccount:
             "/uapi/domestic-stock/v1/trading/inquire-daily-ccld", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockDailySeparateConclusion.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -474,7 +467,7 @@ class DomesticAccount:
 
         response = self.client._get("/uapi/domestic-stock/v1/trading/inquire-balance", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockBalance.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -523,7 +516,7 @@ class DomesticAccount:
             "/uapi/domestic-stock/v1/trading/inquire-psbl-order", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = BuyTradableInquiry.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -555,7 +548,7 @@ class DomesticAccount:
         }
         response = self.client._get("/uapi/domestic-stock/v1/trading/inquire-psbl-sell", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = SellTradableInquiry.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -613,7 +606,7 @@ class DomesticAccount:
             "/uapi/domestic-stock/v1/trading/inquire-credit-psamount", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = CreditTradableInquiry.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -669,7 +662,7 @@ class DomesticAccount:
         }
         response = self.client._post("/uapi/domestic-stock/v1/trading/order-resv", headers=headers, body=body)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockReserveQuote.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -736,7 +729,7 @@ class DomesticAccount:
         }
         response = self.client._post("/uapi/domestic-stock/v1/trading/order-resv-rvsecncl", headers=headers, body=body)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockReserveQuoteCorrection.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -798,7 +791,7 @@ class DomesticAccount:
         }
         response = self.client._get("/uapi/domestic-stock/v1/trading/order-resv-ccnl", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockReserveQuoteInquiry.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -838,7 +831,7 @@ class DomesticAccount:
             "/uapi/domestic-stock/v1/trading/pension/inquire-present-balance", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = PensionConclusionBalance.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -887,7 +880,7 @@ class DomesticAccount:
             "/uapi/domestic-stock/v1/trading/pension/inquire-daily-ccld", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = PensionNotConclusionHistory.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -933,7 +926,7 @@ class DomesticAccount:
             "/uapi/domestic-stock/v1/trading/pension/inquire-psbl-order", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = PensionBuyTradableInquiry.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -967,7 +960,7 @@ class DomesticAccount:
             "/uapi/domestic-stock/v1/trading/pension/inquire-deposit", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = PensionReserveDepositInquiry.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -1010,7 +1003,7 @@ class DomesticAccount:
             "/uapi/domestic-stock/v1/trading/pension/inquire-balance", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = PensionBalanceInquiry.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -1074,7 +1067,7 @@ class DomesticAccount:
             "/uapi/domestic-stock/v1/trading/inquire-balance-rlz-pl", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockBalanceLossProfit.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -1114,7 +1107,7 @@ class DomesticAccount:
             "/uapi/domestic-stock/v1/trading/inquire-account-balance", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = InvestmentAccountCurrentStatus.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -1170,7 +1163,7 @@ class DomesticAccount:
             "/uapi/domestic-stock/v1/trading/inquire-period-profit", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = PeriodProfitSummary.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -1225,7 +1218,7 @@ class DomesticAccount:
             "/uapi/domestic-stock/v1/trading/inquire-period-trade-profit", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = PeriodTradingProfitStatus.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -1262,7 +1255,7 @@ class DomesticAccount:
         }
         response = self.client._get("/uapi/domestic-stock/v1/trading/intgr-margin", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockIntegratedDepositBalance.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -1324,7 +1317,7 @@ class DomesticAccount:
         }
         response = self.client._get("/uapi/domestic-stock/v1/trading/period-rights", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = PeriodAccountingCurrentStatus.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)

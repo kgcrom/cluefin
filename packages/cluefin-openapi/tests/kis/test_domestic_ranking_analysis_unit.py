@@ -124,14 +124,6 @@ def test_all_domestic_ranking_analysis_wrappers_call_client(monkeypatch, method_
     assert result.body.payload == mock_response.json.return_value
 
 
-def test_domestic_ranking_analysis_raises_on_api_error():
-    client = Mock()
-    analysis = DomesticRankingAnalysis(client)
-
-    with pytest.raises(ValueError, match=r"KIS API Error \[EGW001\]"):
-        analysis._check_response_error({"rt_cd": "1", "msg_cd": "EGW001", "msg1": "Bad request"})
-
-
 @pytest.mark.parametrize("test_case", TEST_CASES, ids=[case["method_name"] for case in TEST_CASES])
 def test_domestic_ranking_analysis_methods(test_case):
     """Test all domestic ranking analysis methods with parameterized test cases."""

@@ -2,6 +2,7 @@
 
 from typing import Literal
 
+from cluefin_openapi.kis._exceptions import raise_for_rt_cd
 from cluefin_openapi.kis._http_client import HttpClient
 from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 from cluefin_openapi.kis._onmarket_bond_basic_quote_types import (
@@ -21,14 +22,6 @@ class OnmarketBondBasicQuote:
 
     def __init__(self, client: HttpClient):
         self.client = client
-
-    def _check_response_error(self, response_data: dict) -> None:
-        """Check if API response contains an error and raise if so."""
-        rt_cd = response_data.get("rt_cd")
-        if rt_cd != "0":
-            msg_cd = response_data.get("msg_cd", "")
-            msg1 = response_data.get("msg1", "Unknown error")
-            raise ValueError(f"KIS API Error [{msg_cd}]: {msg1} (rt_cd={rt_cd})")
 
     def get_bond_asking_price(
         self, fid_input_iscd: str, fid_cond_mrkt_div_code: Literal["B"] = "B"
@@ -54,7 +47,7 @@ class OnmarketBondBasicQuote:
             "/uapi/domestic-bond/v1/quotations/inquire-asking-price", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = OnmarketBondAskingPrice.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -79,7 +72,7 @@ class OnmarketBondBasicQuote:
         }
         response = self.client._get("/uapi/domestic-bond/v1/quotations/inquire-price", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = OnmarketBondPrice.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -104,7 +97,7 @@ class OnmarketBondBasicQuote:
         }
         response = self.client._get("/uapi/domestic-bond/v1/quotations/inquire-ccnl", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = OnmarketBondExecution.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -131,7 +124,7 @@ class OnmarketBondBasicQuote:
             "/uapi/domestic-bond/v1/quotations/inquire-daily-price", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = OnmarketBondDailyPrice.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -160,7 +153,7 @@ class OnmarketBondBasicQuote:
             params=params,
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = OnmarketBondDailyChartPrice.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -204,7 +197,7 @@ class OnmarketBondBasicQuote:
             params=params,
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = OnmarketBondAvgUnitPrice.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -231,7 +224,7 @@ class OnmarketBondBasicQuote:
             params=params,
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = OnmarketBondInfo.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -251,7 +244,7 @@ class OnmarketBondBasicQuote:
         params = {"PDNO": pdno, "PRDT_TYPE_CD": prdt_type_cd}
         response = self.client._get("/uapi/domestic-bond/v1/quotations/issue-info", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = OnmarketBondIssueInfo.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)

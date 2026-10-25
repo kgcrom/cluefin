@@ -14,6 +14,7 @@ from cluefin_openapi.kis._domestic_issue_other_types import (
     SectorTimeIndexSecond,
     VolatilityInterruptionStatus,
 )
+from cluefin_openapi.kis._exceptions import raise_for_rt_cd
 from cluefin_openapi.kis._http_client import HttpClient
 from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 
@@ -23,14 +24,6 @@ class DomesticIssueOther:
 
     def __init__(self, client: HttpClient):
         self.client = client
-
-    def _check_response_error(self, response_data: dict) -> None:
-        """Check if API response contains an error and raise if so."""
-        rt_cd = response_data.get("rt_cd")
-        if rt_cd != "0":
-            msg_cd = response_data.get("msg_cd", "")
-            msg1 = response_data.get("msg1", "Unknown error")
-            raise ValueError(f"KIS API Error [{msg_cd}]: {msg1} (rt_cd={rt_cd})")
 
     def get_sector_current_index(
         self,
@@ -58,7 +51,7 @@ class DomesticIssueOther:
             "/uapi/domestic-stock/v1/quotations/inquire-index-price", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = SectorCurrentIndex.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -95,7 +88,7 @@ class DomesticIssueOther:
             "/uapi/domestic-stock/v1/quotations/inquire-index-daily-price", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = SectorDailyIndex.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -126,7 +119,7 @@ class DomesticIssueOther:
             "/uapi/domestic-stock/v1/quotations/inquire-index-tickprice", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = SectorTimeIndexSecond.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -160,7 +153,7 @@ class DomesticIssueOther:
             "/uapi/domestic-stock/v1/quotations/inquire-index-timeprice", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = SectorTimeIndexMinute.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -200,7 +193,7 @@ class DomesticIssueOther:
             "/uapi/domestic-stock/v1/quotations/inquire-time-indexchartprice", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = SectorMinuteInquiry.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -240,7 +233,7 @@ class DomesticIssueOther:
             "/uapi/domestic-stock/v1/quotations/inquire-daily-indexchartprice", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = SectorPeriodQuote.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -280,7 +273,7 @@ class DomesticIssueOther:
             "/uapi/domestic-stock/v1/quotations/inquire-index-category-price", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = SectorAllQuoteByCategory.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -317,7 +310,7 @@ class DomesticIssueOther:
             "/uapi/domestic-stock/v1/quotations/exp-index-trend", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = ExpectedIndexTrend.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -357,7 +350,7 @@ class DomesticIssueOther:
             "/uapi/domestic-stock/v1/quotations/exp-total-index", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = ExpectedIndexAll.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -406,7 +399,7 @@ class DomesticIssueOther:
             "/uapi/domestic-stock/v1/quotations/inquire-vi-status", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = VolatilityInterruptionStatus.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -441,7 +434,7 @@ class DomesticIssueOther:
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/comp-interest", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = InterestRateSummary.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -488,7 +481,7 @@ class DomesticIssueOther:
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/news-title", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = MarketAnnouncementSchedule.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -520,7 +513,7 @@ class DomesticIssueOther:
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/chk-holiday", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = HolidayInquiry.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -538,7 +531,7 @@ class DomesticIssueOther:
         params = {}
         response = self.client._get("/uapi/domestic-stock/v1/quotations/market-time", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = FuturesBusinessDayInquiry.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)

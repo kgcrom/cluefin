@@ -62,6 +62,28 @@ class KISValidationError(KISAPIError):
     pass
 
 
+class KISResponseError(KISAPIError, ValueError):
+    """Raised when the HTTP call succeeds but the body says it failed (`rt_cd != "0"`).
+
+    Also a ``ValueError`` because these errors were plain ``ValueError`` before; callers that catch
+    ``ValueError`` keep working. ``response_data`` holds only ``rt_cd``/``msg_cd``/``msg1``.
+    """
+
+    pass
+
+
+def raise_for_rt_cd(response_data: dict[str, Any]) -> None:
+    """Raise ``KISResponseError`` when a KIS body reports failure (`rt_cd` other than ``"0"``)."""
+    rt_cd = response_data.get("rt_cd")
+    if rt_cd != "0":
+        msg_cd = response_data.get("msg_cd", "")
+        msg1 = response_data.get("msg1", "Unknown error")
+        raise KISResponseError(
+            f"KIS API Error [{msg_cd}]: {msg1} (rt_cd={rt_cd})",
+            response_data={"rt_cd": rt_cd, "msg_cd": msg_cd, "msg1": msg1},
+        )
+
+
 class KISServerError(KISAPIError):
     """Raised when server error occurs (5xx status codes)."""
 

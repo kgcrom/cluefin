@@ -22,6 +22,7 @@ from cluefin_openapi.kis._domestic_ranking_analysis_types import (
     StockWatchlistRegistrationTop,
     TradingVolumeRank,
 )
+from cluefin_openapi.kis._exceptions import raise_for_rt_cd
 from cluefin_openapi.kis._http_client import HttpClient
 from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 
@@ -31,14 +32,6 @@ class DomesticRankingAnalysis:
 
     def __init__(self, client: HttpClient):
         self.client = client
-
-    def _check_response_error(self, response_data: dict) -> None:
-        """Check if API response contains an error and raise if so."""
-        rt_cd = response_data.get("rt_cd")
-        if rt_cd != "0":
-            msg_cd = response_data.get("msg_cd", "")
-            msg1 = response_data.get("msg1", "Unknown error")
-            raise ValueError(f"KIS API Error [{msg_cd}]: {msg1} (rt_cd={rt_cd})")
 
     def get_trading_volume_rank(
         self,
@@ -88,7 +81,7 @@ class DomesticRankingAnalysis:
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/volume-rank", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = TradingVolumeRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -153,7 +146,7 @@ class DomesticRankingAnalysis:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/fluctuation", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockFluctuationRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -206,7 +199,7 @@ class DomesticRankingAnalysis:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/quote-balance", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockHogaQuantityRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -270,7 +263,7 @@ class DomesticRankingAnalysis:
             "/uapi/domestic-stock/v1/ranking/profit-asset-index", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockProfitabilityIndicatorRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -320,7 +313,7 @@ class DomesticRankingAnalysis:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/market-cap", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockMarketCapTop.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -382,7 +375,7 @@ class DomesticRankingAnalysis:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/finance-ratio", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockFinanceRatioRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -437,7 +430,7 @@ class DomesticRankingAnalysis:
             "/uapi/domestic-stock/v1/ranking/after-hour-balance", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockTimeHogaRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -489,7 +482,7 @@ class DomesticRankingAnalysis:
             "/uapi/domestic-stock/v1/ranking/prefer-disparate-ratio", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockPreferredStockRatioTop.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -545,7 +538,7 @@ class DomesticRankingAnalysis:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/disparity", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockDisparityIndexRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -607,7 +600,7 @@ class DomesticRankingAnalysis:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/market-value", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockMarketPriceRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -657,7 +650,7 @@ class DomesticRankingAnalysis:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/volume-power", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockExecutionStrengthTop.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -715,7 +708,7 @@ class DomesticRankingAnalysis:
             "/uapi/domestic-stock/v1/ranking/top-interest-stock", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockWatchlistRegistrationTop.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -768,7 +761,7 @@ class DomesticRankingAnalysis:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/exp-trans-updown", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockExpectedExecutionRiseDeclineTop.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -827,7 +820,7 @@ class DomesticRankingAnalysis:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/traded-by-company", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockProprietaryTradingTop.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -886,7 +879,7 @@ class DomesticRankingAnalysis:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/near-new-highlow", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockNewHighLowApproachingTop.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -933,7 +926,7 @@ class DomesticRankingAnalysis:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/dividend-rate", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockDividendYieldTop.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -992,7 +985,7 @@ class DomesticRankingAnalysis:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/bulk-trans-num", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockLargeExecutionCountTop.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -1030,7 +1023,7 @@ class DomesticRankingAnalysis:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/credit-balance", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockCreditBalanceTop.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -1083,7 +1076,7 @@ class DomesticRankingAnalysis:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/short-sale", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockShortSellingTop.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -1138,7 +1131,7 @@ class DomesticRankingAnalysis:
             "/uapi/domestic-stock/v1/ranking/overtime-fluctuation", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockAfterHoursFluctuationRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -1188,7 +1181,7 @@ class DomesticRankingAnalysis:
         }
         response = self.client._get("/uapi/domestic-stock/v1/ranking/overtime-volume", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockAfterHoursVolumeRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -1206,7 +1199,7 @@ class DomesticRankingAnalysis:
         params = {}
         response = self.client._get("/uapi/domestic-stock/v1/ranking/hts-top-view", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = HtsInquiryTop20.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
