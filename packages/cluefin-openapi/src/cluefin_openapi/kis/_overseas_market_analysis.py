@@ -1,3 +1,4 @@
+from cluefin_openapi.kis._exceptions import raise_for_rt_cd
 from cluefin_openapi.kis._http_client import HttpClient
 from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 from cluefin_openapi.kis._overseas_market_analysis_types import (
@@ -24,14 +25,6 @@ class OverseasMarketAnalysis:
 
     def __init__(self, client: HttpClient):
         self.client = client
-
-    def _check_response_error(self, response_data: dict) -> None:
-        """Check if API response contains an error and raise if so."""
-        rt_cd = response_data.get("rt_cd")
-        if rt_cd != "0":
-            msg_cd = response_data.get("msg_cd", "")
-            msg1 = response_data.get("msg1", "Unknown error")
-            raise ValueError(f"KIS API Error [{msg_cd}]: {msg1} (rt_cd={rt_cd})")
 
     def get_stock_price_fluctuation(
         self,
@@ -65,7 +58,7 @@ class OverseasMarketAnalysis:
         }
         response = self.client._get("/uapi/overseas-stock/v1/ranking/price-fluct", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockPriceFluctuation.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -103,7 +96,7 @@ class OverseasMarketAnalysis:
         }
         response = self.client._get("/uapi/overseas-stock/v1/ranking/volume-surge", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockVolumeSurge.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -141,7 +134,7 @@ class OverseasMarketAnalysis:
         }
         response = self.client._get("/uapi/overseas-stock/v1/ranking/volume-power", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockBuyExecutionStrengthTop.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -182,7 +175,7 @@ class OverseasMarketAnalysis:
         }
         response = self.client._get("/uapi/overseas-stock/v1/ranking/updown-rate", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockRiseDeclineRate.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -226,7 +219,7 @@ class OverseasMarketAnalysis:
         }
         response = self.client._get("/uapi/overseas-stock/v1/ranking/new-highlow", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockNewHighLowPrice.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -270,7 +263,7 @@ class OverseasMarketAnalysis:
         }
         response = self.client._get("/uapi/overseas-stock/v1/ranking/trade-vol", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockTradingVolumeRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -314,7 +307,7 @@ class OverseasMarketAnalysis:
         }
         response = self.client._get("/uapi/overseas-stock/v1/ranking/trade-pbmn", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockTradingAmountRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -352,7 +345,7 @@ class OverseasMarketAnalysis:
         }
         response = self.client._get("/uapi/overseas-stock/v1/ranking/trade-growth", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockTradingIncreaseRateRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -390,7 +383,7 @@ class OverseasMarketAnalysis:
         }
         response = self.client._get("/uapi/overseas-stock/v1/ranking/trade-turnover", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockTradingTurnoverRateRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -428,7 +421,7 @@ class OverseasMarketAnalysis:
         }
         response = self.client._get("/uapi/overseas-stock/v1/ranking/market-cap", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockMarketCapRank.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -475,7 +468,7 @@ class OverseasMarketAnalysis:
         }
         response = self.client._get("/uapi/overseas-price/v1/quotations/period-rights", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockPeriodRightsInquiry.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -522,7 +515,7 @@ class OverseasMarketAnalysis:
         }
         response = self.client._get("/uapi/overseas-price/v1/quotations/news-title", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = NewsAggregateTitle.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -557,7 +550,7 @@ class OverseasMarketAnalysis:
         }
         response = self.client._get("/uapi/overseas-price/v1/quotations/rights-by-ice", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockRightsAggregate.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -618,7 +611,7 @@ class OverseasMarketAnalysis:
             "/uapi/overseas-price/v1/quotations/colable-by-company", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockCollateralLoanEligible.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -668,7 +661,7 @@ class OverseasMarketAnalysis:
         }
         response = self.client._get("/uapi/overseas-price/v1/quotations/brknews-title", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = BreakingNewsTitle.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)

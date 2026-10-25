@@ -29,6 +29,7 @@ from cluefin_openapi.kis._domestic_market_analysis_types import (
     WatchlistMultiQuote,
     WatchlistStocksByGroup,
 )
+from cluefin_openapi.kis._exceptions import raise_for_rt_cd
 from cluefin_openapi.kis._http_client import HttpClient
 from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 
@@ -38,14 +39,6 @@ class DomesticMarketAnalysis:
 
     def __init__(self, client: HttpClient):
         self.client = client
-
-    def _check_response_error(self, response_data: dict) -> None:
-        """Check if API response contains an error and raise if so."""
-        rt_cd = response_data.get("rt_cd")
-        if rt_cd != "0":
-            msg_cd = response_data.get("msg_cd", "")
-            msg1 = response_data.get("msg1", "Unknown error")
-            raise ValueError(f"KIS API Error [{msg_cd}]: {msg1} (rt_cd={rt_cd})")
 
     def get_condition_search_list(self, user_id: str) -> KisHttpResponse[ConditionSearchList]:
         """
@@ -65,7 +58,7 @@ class DomesticMarketAnalysis:
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/psearch-title", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = ConditionSearchList.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -90,7 +83,7 @@ class DomesticMarketAnalysis:
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/psearch-result", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = ConditionSearchResult.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -121,7 +114,7 @@ class DomesticMarketAnalysis:
             "/uapi/domestic-stock/v1/quotations/intstock-grouplist", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = WatchlistGroups.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -383,7 +376,7 @@ class DomesticMarketAnalysis:
             "/uapi/domestic-stock/v1/quotations/intstock-multprice", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = WatchlistMultiQuote.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -432,7 +425,7 @@ class DomesticMarketAnalysis:
             "/uapi/domestic-stock/v1/quotations/intstock-stocklist-by-group", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = WatchlistStocksByGroup.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -475,7 +468,7 @@ class DomesticMarketAnalysis:
             "/uapi/domestic-stock/v1/quotations/foreign-institution-total", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = InstitutionalForeignTradingAggregate.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -511,7 +504,7 @@ class DomesticMarketAnalysis:
             "/uapi/domestic-stock/v1/quotations/frgnmem-trade-estimate", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = ForeignBrokerageTradingAggregate.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -553,7 +546,7 @@ class DomesticMarketAnalysis:
             "/uapi/domestic-stock/v1/quotations/investor-trade-by-stock-daily", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = InvestorTradingTrendByStockDaily.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -582,7 +575,7 @@ class DomesticMarketAnalysis:
             "/uapi/domestic-stock/v1/quotations/inquire-investor-time-by-market", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = InvestorTradingTrendByMarketIntraday.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -625,7 +618,7 @@ class DomesticMarketAnalysis:
             "/uapi/domestic-stock/v1/quotations/inquire-investor-daily-by-market", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = InvestorTradingTrendByMarketDaily.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -656,7 +649,7 @@ class DomesticMarketAnalysis:
             "/uapi/domestic-stock/v1/quotations/frgnmem-pchs-trend", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = ForeignNetBuyTrendByStock.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -699,7 +692,7 @@ class DomesticMarketAnalysis:
             "/uapi/domestic-stock/v1/quotations/frgnmem-trade-trend", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = MemberTradingTrendTick.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -742,7 +735,7 @@ class DomesticMarketAnalysis:
             "/uapi/domestic-stock/v1/quotations/inquire-member-daily", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = MemberTradingTrendByStock.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -771,7 +764,7 @@ class DomesticMarketAnalysis:
             "/uapi/domestic-stock/v1/quotations/program-trade-by-stock", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = ProgramTradingTrendByStockIntraday.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -802,7 +795,7 @@ class DomesticMarketAnalysis:
             "/uapi/domestic-stock/v1/quotations/program-trade-by-stock-daily", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = ProgramTradingTrendByStockDaily.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -829,7 +822,7 @@ class DomesticMarketAnalysis:
             "/uapi/domestic-stock/v1/quotations/investor-trend-estimate", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = ForeignInstitutionalEstimateByStock.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -878,7 +871,7 @@ class DomesticMarketAnalysis:
             "/uapi/domestic-stock/v1/quotations/inquire-daily-trade-volume", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = BuySellVolumeByStockDaily.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -921,7 +914,7 @@ class DomesticMarketAnalysis:
             "/uapi/domestic-stock/v1/quotations/comp-program-trade-today", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = ProgramTradingSummaryIntraday.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -958,7 +951,7 @@ class DomesticMarketAnalysis:
             "/uapi/domestic-stock/v1/quotations/comp-program-trade-daily", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = ProgramTradingSummaryDaily.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -987,7 +980,7 @@ class DomesticMarketAnalysis:
             "/uapi/domestic-stock/v1/quotations/investor-program-trade-today", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = ProgramTradingInvestorTrendToday.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -1024,7 +1017,7 @@ class DomesticMarketAnalysis:
             "/uapi/domestic-stock/v1/quotations/daily-credit-balance", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = CreditBalanceTrendDaily.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -1055,7 +1048,7 @@ class DomesticMarketAnalysis:
             "/uapi/domestic-stock/v1/quotations/exp-price-trend", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = ExpectedPriceTrend.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -1092,7 +1085,7 @@ class DomesticMarketAnalysis:
             "/uapi/domestic-stock/v1/quotations/daily-short-sale", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = ShortSellingTrendDaily.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -1141,7 +1134,7 @@ class DomesticMarketAnalysis:
             "/uapi/domestic-stock/v1/ranking/overtime-exp-trans-fluct", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = AfterHoursExpectedFluctuation.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -1170,7 +1163,7 @@ class DomesticMarketAnalysis:
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/tradprt-byamt", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = TradingWeightByAmount.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -1193,7 +1186,7 @@ class DomesticMarketAnalysis:
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/mktfunds", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = MarketFundSummary.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -1228,7 +1221,7 @@ class DomesticMarketAnalysis:
             "/uapi/domestic-stock/v1/quotations/daily-loan-trans", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockLoanTrendDaily.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -1283,7 +1276,7 @@ class DomesticMarketAnalysis:
             "/uapi/domestic-stock/v1/quotations/capture-uplowprice", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = LimitPriceStocks.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -1318,7 +1311,7 @@ class DomesticMarketAnalysis:
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/pbar-tratio", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = ResistanceLevelTradingWeight.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)

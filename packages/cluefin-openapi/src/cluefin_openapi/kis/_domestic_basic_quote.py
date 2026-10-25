@@ -23,6 +23,7 @@ from cluefin_openapi.kis._domestic_basic_quote_types import (
     DomesticStockPeriodQuote,
     DomesticStockTodayMinuteChart,
 )
+from cluefin_openapi.kis._exceptions import raise_for_rt_cd
 from cluefin_openapi.kis._http_client import HttpClient
 from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse, validate_kis_response
 
@@ -32,14 +33,6 @@ class DomesticBasicQuote:
 
     def __init__(self, client: HttpClient):
         self.client = client
-
-    def _check_response_error(self, response_data: dict) -> None:
-        """Check if API response contains an error and raise if so."""
-        rt_cd = response_data.get("rt_cd")
-        if rt_cd != "0":
-            msg_cd = response_data.get("msg_cd", "")
-            msg1 = response_data.get("msg1", "Unknown error")
-            raise ValueError(f"KIS API Error [{msg_cd}]: {msg1} (rt_cd={rt_cd})")
 
     def get_stock_current_price(
         self,
@@ -65,7 +58,7 @@ class DomesticBasicQuote:
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/inquire-price", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = validate_kis_response(KisHttpHeader, response.headers)
         body = validate_kis_response(DomesticStockCurrentPrice, response_data)
         return KisHttpResponse(header=header, body=body)
@@ -94,7 +87,7 @@ class DomesticBasicQuote:
             "/uapi/domestic-stock/v1/quotations/inquire-price-2", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = validate_kis_response(KisHttpHeader, response.headers)
         body = validate_kis_response(DomesticStockCurrentPrice2, response_data)
         return KisHttpResponse(header=header, body=body)
@@ -121,7 +114,7 @@ class DomesticBasicQuote:
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/inquire-ccnl", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = validate_kis_response(KisHttpHeader, response.headers)
         body = validate_kis_response(DomesticStockCurrentPriceConclusion, response_data)
         return KisHttpResponse(header=header, body=body)
@@ -158,7 +151,7 @@ class DomesticBasicQuote:
             "/uapi/domestic-stock/v1/quotations/inquire-daily-price", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = validate_kis_response(KisHttpHeader, response.headers)
         body = validate_kis_response(DomesticStockCurrentPriceDaily, response_data)
         return KisHttpResponse(header=header, body=body)
@@ -187,7 +180,7 @@ class DomesticBasicQuote:
             "/uapi/domestic-stock/v1/quotations/inquire-asking-price-exp-ccn", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = validate_kis_response(KisHttpHeader, response.headers)
         body = validate_kis_response(DomesticStockCurrentPriceAskingExpectedConclusion, response_data)
         return KisHttpResponse(header=header, body=body)
@@ -216,7 +209,7 @@ class DomesticBasicQuote:
             "/uapi/domestic-stock/v1/quotations/inquire-investor", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = validate_kis_response(KisHttpHeader, response.headers)
         body = validate_kis_response(DomesticStockCurrentPriceInvestor, response_data)
         return KisHttpResponse(header=header, body=body)
@@ -234,7 +227,7 @@ class DomesticBasicQuote:
         }
         response = self.client._get("/uapi/domestic-stock/v1/quotations/inquire-member", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = validate_kis_response(KisHttpHeader, response.headers)
         body = validate_kis_response(DomesticStockCurrentPriceMember, response_data)
         return KisHttpResponse(header=header, body=body)
@@ -277,7 +270,7 @@ class DomesticBasicQuote:
             "/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = validate_kis_response(KisHttpHeader, response.headers)
         body = validate_kis_response(DomesticStockPeriodQuote, response_data)
         return KisHttpResponse(header=header, body=body)
@@ -317,7 +310,7 @@ class DomesticBasicQuote:
             "/uapi/domestic-stock/v1/quotations/inquire-time-itemchartprice", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = validate_kis_response(KisHttpHeader, response.headers)
         body = validate_kis_response(DomesticStockTodayMinuteChart, response_data)
         return KisHttpResponse(header=header, body=body)
@@ -360,7 +353,7 @@ class DomesticBasicQuote:
             "/uapi/domestic-stock/v1/quotations/inquire-time-dailychartprice", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = validate_kis_response(KisHttpHeader, response.headers)
         body = validate_kis_response(DomesticStockDailyMinuteChart, response_data)
         return KisHttpResponse(header=header, body=body)
@@ -394,7 +387,7 @@ class DomesticBasicQuote:
             "/uapi/domestic-stock/v1/quotations/inquire-time-itemconclusion", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = validate_kis_response(KisHttpHeader, response.headers)
         body = validate_kis_response(DomesticStockCurrentPriceTimeItemConclusion, response_data)
         return KisHttpResponse(header=header, body=body)
@@ -425,7 +418,7 @@ class DomesticBasicQuote:
             "/uapi/domestic-stock/v1/quotations/inquire-daily-overtimeprice", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = validate_kis_response(KisHttpHeader, response.headers)
         body = validate_kis_response(DomesticStockCurrentPriceDailyOvertimePrice, response_data)
         return KisHttpResponse(header=header, body=body)
@@ -455,7 +448,7 @@ class DomesticBasicQuote:
             "/uapi/domestic-stock/v1/quotations/inquire-time-overtimeconclusion", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = validate_kis_response(KisHttpHeader, response.headers)
         body = validate_kis_response(DomesticStockCurrentPriceOvertimeConclusion, response_data)
         return KisHttpResponse(header=header, body=body)
@@ -483,7 +476,7 @@ class DomesticBasicQuote:
             "/uapi/domestic-stock/v1/quotations/inquire-overtime-price", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = validate_kis_response(KisHttpHeader, response.headers)
         body = validate_kis_response(DomesticStockOvertimeCurrentPrice, response_data)
         return KisHttpResponse(header=header, body=body)
@@ -512,7 +505,7 @@ class DomesticBasicQuote:
             "/uapi/domestic-stock/v1/quotations/inquire-overtime-asking-price", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = validate_kis_response(KisHttpHeader, response.headers)
         body = validate_kis_response(DomesticStockOvertimeAskingPrice, response_data)
         return KisHttpResponse(header=header, body=body)
@@ -552,7 +545,7 @@ class DomesticBasicQuote:
             "/uapi/domestic-stock/v1/quotations/exp-closing-price", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = validate_kis_response(KisHttpHeader, response.headers)
         body = validate_kis_response(DomesticStockClosingExpectedPrice, response_data)
         return KisHttpResponse(header=header, body=body)
@@ -579,7 +572,7 @@ class DomesticBasicQuote:
         }
         response = self.client._get("/uapi/etfetn/v1/quotations/inquire-price", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = validate_kis_response(KisHttpHeader, response.headers)
         body = validate_kis_response(DomesticEtfEtnCurrentPrice, response_data)
         return KisHttpResponse(header=header, body=body)
@@ -615,7 +608,7 @@ class DomesticBasicQuote:
             "/uapi/etfetn/v1/quotations/inquire-component-stock-price", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = validate_kis_response(KisHttpHeader, response.headers)
         body = validate_kis_response(DomesticEtfComponentStockPrice, response_data)
         return KisHttpResponse(header=header, body=body)
@@ -642,7 +635,7 @@ class DomesticBasicQuote:
         }
         response = self.client._get("/uapi/etfetn/v1/quotations/nav-comparison-trend", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = validate_kis_response(KisHttpHeader, response.headers)
         body = validate_kis_response(DomesticEtfNavComparisonTrend, response_data)
         return KisHttpResponse(header=header, body=body)
@@ -679,7 +672,7 @@ class DomesticBasicQuote:
             "/uapi/etfetn/v1/quotations/nav-comparison-daily-trend", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = validate_kis_response(KisHttpHeader, response.headers)
         body = validate_kis_response(DomesticEtfNavComparisonDailyTrend, response_data)
         return KisHttpResponse(header=header, body=body)
@@ -713,7 +706,7 @@ class DomesticBasicQuote:
             "/uapi/etfetn/v1/quotations/nav-comparison-time-trend", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = validate_kis_response(KisHttpHeader, response.headers)
         body = validate_kis_response(DomesticEtfNavComparisonTimeTrend, response_data)
         return KisHttpResponse(header=header, body=body)

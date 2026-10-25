@@ -7,6 +7,7 @@ from datetime import date
 from types import SimpleNamespace
 
 import pytest
+from cluefin_openapi.kis._exceptions import KISResponseError, raise_for_rt_cd
 
 from cluefin_openapi_cli.cache import cli as cache_cli
 from cluefin_openapi_cli.cache import store
@@ -16,6 +17,14 @@ from cluefin_openapi_cli.main import run_cli
 
 TODAY = date(2026, 10, 19)
 SINCE = date(2016, 1, 1)
+
+
+def _body_error(rt_cd: str, msg_cd: str, msg1: str) -> KISResponseError:
+    """What a KIS service method raises for a 200 whose body has a failing `rt_cd`."""
+    return KISResponseError(
+        f"KIS API Error [{msg_cd}]: {msg1} (rt_cd={rt_cd})",
+        response_data={"rt_cd": rt_cd, "msg_cd": msg_cd, "msg1": msg1},
+    )
 
 
 def _listing_item(code, name, kind, state="증거금40%|담보대출|신용가능", up_name="전기전자"):
@@ -74,7 +83,7 @@ class FakeKis:
             self.throttle_once.discard(pdno)
             raise RateLimited()
         if pdno not in self.infos:
-            raise ValueError(f"KIS API Error [OPSQ0002]: no such code {pdno}")
+            raise_for_rt_cd({"rt_cd": "1", "msg_cd": "OPSQ0002", "msg1": f"no such code {pdno}"})
         return SimpleNamespace(body=SimpleNamespace(output=self.infos[pdno]))
 
 
@@ -234,7 +243,7 @@ def test_kis_call_retries_only_rate_limit() -> None:
 
     assert kis_call(flaky, sleep=pauses.append) == "ok"
     assert pauses == [0.1, 0.1]
-    session_full = iter([ValueError("KIS API Error [OPSQ1002]: SESSION FULL (rt_cd=9)"), "ok"])
+    session_full = iter([_body_error("9", "OPSQ1002", "SESSION FULL"), "ok"])
 
     def busy():
         value = next(session_full)

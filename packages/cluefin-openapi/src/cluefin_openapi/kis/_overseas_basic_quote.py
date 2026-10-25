@@ -1,3 +1,4 @@
+from cluefin_openapi.kis._exceptions import raise_for_rt_cd
 from cluefin_openapi.kis._http_client import HttpClient
 from cluefin_openapi.kis._model import KisHttpHeader, KisHttpResponse
 from cluefin_openapi.kis._overseas_basic_quote_types import (
@@ -22,14 +23,6 @@ class BasicQuote:
 
     def __init__(self, client: HttpClient):
         self.client = client
-
-    def _check_response_error(self, response_data: dict) -> None:
-        """Check if API response contains an error and raise if so."""
-        rt_cd = response_data.get("rt_cd")
-        if rt_cd != "0":
-            msg_cd = response_data.get("msg_cd", "")
-            msg1 = response_data.get("msg1", "Unknown error")
-            raise ValueError(f"KIS API Error [{msg_cd}]: {msg1} (rt_cd={rt_cd})")
 
     def get_stock_current_price_detail(
         self,
@@ -58,7 +51,7 @@ class BasicQuote:
         }
         response = self.client._get("/uapi/overseas-price/v1/quotations/price-detail", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockCurrentPriceDetail.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -92,7 +85,7 @@ class BasicQuote:
             "/uapi/overseas-price/v1/quotations/inquire-asking-price", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = CurrentPriceFirstQuote.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -124,7 +117,7 @@ class BasicQuote:
         }
         response = self.client._get("/uapi/overseas-price/v1/quotations/price", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockCurrentPriceConclusion.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -162,7 +155,7 @@ class BasicQuote:
         }
         response = self.client._get("/uapi/overseas-price/v1/quotations/inquire-ccnl", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = ConclusionTrend.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -214,7 +207,7 @@ class BasicQuote:
             "/uapi/overseas-price/v1/quotations/inquire-time-itemchartprice", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockMinuteChart.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -251,7 +244,7 @@ class BasicQuote:
             "/uapi/overseas-price/v1/quotations/inquire-time-indexchartprice", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = IndexMinuteChart.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -295,7 +288,7 @@ class BasicQuote:
         }
         response = self.client._get("/uapi/overseas-price/v1/quotations/dailyprice", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = StockPeriodQuote.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -335,7 +328,7 @@ class BasicQuote:
             "/uapi/overseas-price/v1/quotations/inquire-daily-chartprice", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = ItemIndexExchangePeriodPrice.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -439,7 +432,7 @@ class BasicQuote:
         }
         response = self.client._get("/uapi/overseas-price/v1/quotations/inquire-search", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = SearchByCondition.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -473,7 +466,7 @@ class BasicQuote:
             "/uapi/overseas-stock/v1/quotations/countries-holiday", headers=headers, params=params
         )
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = SettlementDate.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -502,7 +495,7 @@ class BasicQuote:
         }
         response = self.client._get("/uapi/overseas-price/v1/quotations/search-info", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = ProductBaseInfo.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -540,7 +533,7 @@ class BasicQuote:
         }
         response = self.client._get("/uapi/overseas-price/v1/quotations/industry-theme", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = SectorPrice.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)
@@ -569,7 +562,7 @@ class BasicQuote:
         }
         response = self.client._get("/uapi/overseas-price/v1/quotations/industry-price", headers=headers, params=params)
         response_data = response.json()
-        self._check_response_error(response_data)
+        raise_for_rt_cd(response_data)
         header = KisHttpHeader.model_validate(response.headers)
         body = SectorCodes.model_validate(response_data)
         return KisHttpResponse(header=header, body=body)

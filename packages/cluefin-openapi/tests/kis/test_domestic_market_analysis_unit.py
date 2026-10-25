@@ -10,6 +10,7 @@ from cluefin_openapi.kis._domestic_market_analysis_types import (
     MemberTradingTrendTick,
     ProgramTradingSummaryIntraday,
 )
+from cluefin_openapi.kis._exceptions import KISResponseError
 
 from ._case_runner import CASE_FIELDS, load_cases, run_case
 
@@ -66,11 +67,18 @@ def test_all_domestic_market_analysis_wrappers_call_client(monkeypatch, method_n
 
 
 def test_domestic_market_analysis_raises_on_api_error():
+    """A 200 with a failing `rt_cd` comes out of the wrapper as KISResponseError."""
+    method_name = _all_market_analysis_methods()[0]
+    mock_response = Mock()
+    mock_response.json.return_value = {"rt_cd": "1", "msg_cd": "EGW001", "msg1": "Bad request"}
     client = Mock()
-    analysis = DomesticMarketAnalysis(client)
+    client._get.return_value = mock_response
+    client._post.return_value = mock_response
 
-    with pytest.raises(ValueError, match=r"KIS API Error \[EGW001\]"):
-        analysis._check_response_error({"rt_cd": "1", "msg_cd": "EGW001", "msg1": "Bad request"})
+    with pytest.raises(KISResponseError, match=r"KIS API Error \[EGW001\]") as exc_info:
+        getattr(DomesticMarketAnalysis(client), method_name)(**_all_kwargs_for(method_name))
+
+    assert exc_info.value.response_data == {"rt_cd": "1", "msg_cd": "EGW001", "msg1": "Bad request"}
 
 
 @pytest.mark.parametrize(CASE_FIELDS, DOMESTIC_MARKET_ANALYSIS_CASES)

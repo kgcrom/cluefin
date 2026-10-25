@@ -6,6 +6,7 @@ from datetime import date, datetime, timedelta
 from types import SimpleNamespace
 
 import pytest
+from cluefin_openapi.kis._exceptions import raise_for_rt_cd
 
 from cluefin_openapi_cli.cache import store
 from cluefin_openapi_cli.cache.bars import INDICES, load_bars
@@ -42,7 +43,7 @@ class FakeKis:
     def _stock(self, market, code, d1, d2, period, adj):
         self.stock_calls.append((code, d1, d2, adj))
         if code in self.fail:
-            raise ValueError("KIS API Error [OPSQ0001]: broken")
+            raise_for_rt_cd({"rt_cd": "1", "msg_cd": "OPSQ0001", "msg1": "broken"})
         rows = []
         for day in self._rows(code, d1, d2, 100):
             close = self.series[code][day]
