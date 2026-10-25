@@ -97,6 +97,9 @@ class Candle:
     low: float
     close: float
     volume: float
+    # Traded value in won. Only KIS daily/period rows carry it; a missing value does not
+    # make the bar unusable for indicators, so ``complete`` ignores it.
+    value: float = math.nan
 
     @property
     def complete(self) -> bool:
@@ -123,7 +126,7 @@ class CandleSeries:
         return sum(1 for candle in self.candles if not candle.complete)
 
     def arrays(self) -> dict[str, np.ndarray]:
-        """Return float64 arrays keyed ``open``/``high``/``low``/``close``/``volume``.
+        """Return float64 arrays keyed ``open``/``high``/``low``/``close``/``volume``/``value``.
 
         `cluefin-ta` takes `np.ndarray` directly, so this is the handoff point; nothing
         downstream needs pandas.
@@ -131,7 +134,7 @@ class CandleSeries:
 
         return {
             name: np.array([getattr(candle, name) for candle in self.candles], dtype=np.float64)
-            for name in ("open", "high", "low", "close", "volume")
+            for name in ("open", "high", "low", "close", "volume", "value")
         }
 
     def tail(self, count: int) -> CandleSeries:
@@ -190,7 +193,9 @@ def adj_price_flag(endpoint: str, *, adjusted: bool = True) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _kis_candle(item: Any, *, close_field: str, volume_field: str, timestamp: str) -> Candle:
+def _kis_candle(
+    item: Any, *, close_field: str, volume_field: str, timestamp: str, value_field: str | None = None
+) -> Candle:
     return Candle(
         timestamp=timestamp,
         open=_to_float(_field(item, "stck_oprc"), magnitude=True),
@@ -198,6 +203,7 @@ def _kis_candle(item: Any, *, close_field: str, volume_field: str, timestamp: st
         low=_to_float(_field(item, "stck_lwpr"), magnitude=True),
         close=_to_float(_field(item, close_field), magnitude=True),
         volume=_to_float(_field(item, volume_field), magnitude=True),
+        value=_to_float(_field(item, value_field), magnitude=True) if value_field else math.nan,
     )
 
 
@@ -212,6 +218,7 @@ def from_kis_daily(items: Sequence[Any], *, stock_code: str) -> CandleSeries:
                 item,
                 close_field="stck_clpr",
                 volume_field="acml_vol",
+                value_field="acml_tr_pbmn",
                 timestamp=str(_field(item, "stck_bsop_date") or "").strip(),
             )
             for item in items
@@ -230,6 +237,7 @@ def from_kis_period(items: Sequence[Any], *, stock_code: str) -> CandleSeries:
                 item,
                 close_field="stck_clpr",
                 volume_field="acml_vol",
+                value_field="acml_tr_pbmn",
                 timestamp=str(_field(item, "stck_bsop_date") or "").strip(),
             )
             for item in items

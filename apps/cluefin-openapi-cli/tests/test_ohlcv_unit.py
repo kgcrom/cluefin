@@ -232,7 +232,7 @@ def test_arrays_are_float64_and_aligned_with_candle_order() -> None:
     )
 
     arrays = series.arrays()
-    assert set(arrays) == {"open", "high", "low", "close", "volume"}
+    assert set(arrays) == {"open", "high", "low", "close", "volume", "value"}
     assert arrays["close"].dtype.name == "float64"
     assert list(arrays["close"]) == [100.0, 200.0]
     assert list(arrays["volume"]) == [10.0, 20.0]
@@ -348,3 +348,21 @@ def test_empty_series_survives_arrays_and_tail() -> None:
 def test_candle_complete_flag() -> None:
     assert Candle("20260101", 1.0, 2.0, 0.5, 1.5, 10.0).complete is True
     assert Candle("20260101", 1.0, 2.0, 0.5, math.nan, 10.0).complete is False
+
+
+def test_kis_daily_and_period_read_traded_value() -> None:
+    row = {**_kis_daily_row("20260101", "100"), "acml_tr_pbmn": "1,234,500"}
+
+    for normalize in (from_kis_daily, from_kis_period):
+        assert normalize([row], stock_code="005930").candles[0].value == 1234500.0
+
+
+def test_missing_traded_value_is_nan_and_bar_stays_complete() -> None:
+    candle = from_kis_period([_kis_daily_row("20260101", "100")], stock_code="005930").candles[0]
+    minute = from_kis_minute(
+        [{**_kis_daily_row("20260101", "100"), "stck_cntg_hour": "090100", "stck_prpr": "100", "cntg_vol": "5"}],
+        stock_code="005930",
+    ).candles[0]
+
+    assert math.isnan(candle.value) and candle.complete
+    assert math.isnan(minute.value)
