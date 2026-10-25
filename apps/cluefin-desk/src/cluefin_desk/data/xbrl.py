@@ -23,7 +23,7 @@ from cluefin_xbrl import (
 )
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class XbrlBundle:
     """All data parseable from a single XBRL filing."""
 

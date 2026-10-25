@@ -72,7 +72,8 @@ class DartXmlRepairError(Exception):
         self.context = context
 
 
-@dataclass
+# frozen 아님: 고친 횟수를 세어 가는 누적기.
+@dataclass(slots=True)
 class SampleCollector:
     """규칙 구현용: 고친 위치를 세고 앞쪽 몇 개만 견본으로 남긴다."""
 

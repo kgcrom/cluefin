@@ -100,6 +100,7 @@ class DartResult(BaseModel, Generic[T_DartListItem]):
         return int(value)
 
 
+# frozen·slots 없음: pydantic 응답 모델이 BaseModel 과 함께 상속하는 기반이라 둘 다 붙일 수 없다.
 @dataclass
 class DartHttpBody(Generic[T_DartListItem]):
     """Typed representation of a DART response payload."""

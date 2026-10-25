@@ -38,7 +38,7 @@ from cluefin_openapi._rate_limiter import TokenBucket
 from ._exceptions import KiwoomAPIError, KiwoomNetworkError
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class KiwoomWebSocketMessage:
     """수신한 WebSocket 프레임 (파싱된 JSON)."""
 

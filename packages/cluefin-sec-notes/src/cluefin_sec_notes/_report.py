@@ -87,7 +87,7 @@ class ParseReport:
         return next((fix for fix in self.fixes if fix.kind == kind), None)
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class ReportCollector:
     """파서 구현용: 종류별로 세고 앞쪽 몇 개만 견본으로 남긴다."""
 

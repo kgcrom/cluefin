@@ -26,7 +26,7 @@ BrokerEnv = Literal["dev", "prod"]
 __all__ = ["BrokerClientConfig", "BrokerClientFactory", "create_broker_client"]
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class BrokerClientConfig:
     """Configuration for broker client creation."""
 

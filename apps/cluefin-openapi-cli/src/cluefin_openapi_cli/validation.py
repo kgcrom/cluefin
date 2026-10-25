@@ -27,7 +27,7 @@ _TYPE_RULES: dict[str, tuple[tuple[type, ...], tuple[type, ...], str | None]] = 
 }
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class ValidationIssue:
     field: str
     problem: str
@@ -46,7 +46,7 @@ class ValidationIssue:
         return payload
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class ValidationReport:
     issues: list[ValidationIssue] = field(default_factory=list)
 

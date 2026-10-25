@@ -94,7 +94,7 @@ MONEY_FIELDS = frozenset(
 EOK = 1e8
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class Report:
     """One periodic report's rows as `dart financial-full-statements` returns them."""
 

@@ -5,7 +5,7 @@ from loguru import logger
 from cluefin_desk.data.fetcher import DomesticDataFetcher
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class ScreeningItem:
     rank: int
     stock_code: str

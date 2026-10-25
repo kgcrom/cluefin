@@ -59,6 +59,7 @@ class Bar:
     reval_code: str | None = None
 
 
+# frozen 아님: 적재하면서 건수를 더해 가는 누적기.
 @dataclass(slots=True)
 class BarLoadStats:
     codes: int = 0

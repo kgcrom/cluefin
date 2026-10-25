@@ -21,6 +21,7 @@ __all__ = ["PARTS", "Sources", "run_load"]
 PARTS = ("company", "ohlcv", "adj", "rates")
 
 
+# frozen 아님: 브로커 클라이언트를 처음 쓸 때 만들어 _clients 에 담는다.
 @dataclass(slots=True)
 class Sources:
     """Broker clients, created lazily so `--only` touches only the brokers it needs."""

@@ -44,7 +44,7 @@ class MessageType(str, Enum):
     SYSTEM = "SYSTEM"
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class WebSocketMessage:
     """Parsed WebSocket message from KIS API."""
 
@@ -55,7 +55,7 @@ class WebSocketMessage:
     encrypted: bool = False
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class SubscriptionRequest:
     """WebSocket subscription request."""
 
@@ -64,7 +64,7 @@ class SubscriptionRequest:
     tr_type: SubscriptionType = SubscriptionType.SUBSCRIBE
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class WebSocketEvent:
     """Event emitted from WebSocket for queue-based processing."""
 
