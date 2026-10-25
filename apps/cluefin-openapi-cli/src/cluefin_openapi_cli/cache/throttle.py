@@ -9,7 +9,6 @@ which measured ~15 successful calls/s. One call at a time, never in parallel.
 
 from __future__ import annotations
 
-import re
 import time
 from collections.abc import Callable
 from typing import Any, TypeVar
@@ -25,18 +24,16 @@ _PAUSE_SECONDS = 0.1
 _TRANSIENT_PAUSE_SECONDS = 1.0
 _MAX_ATTEMPTS = 30
 _MAX_TRANSIENT_ATTEMPTS = 5
-# Body errors (rt_cd != 0 in a 200) are raised as ValueError("KIS API Error [CODE]: ...").
-_BODY_CODE = re.compile(r"KIS API Error \[(?P<code>[A-Z0-9]+)\]")
 
 T = TypeVar("T")
 
 
 def kis_error_code(exc: BaseException) -> str | None:
+    """`msg_cd` of a KIS error: HTTP errors (KISServerError …) and body errors (KISResponseError) both carry it."""
     data = getattr(exc, "response_data", None)
     if isinstance(data, dict) and data.get("msg_cd"):
         return str(data["msg_cd"])
-    match = _BODY_CODE.search(str(exc))
-    return match.group("code") if match else None
+    return None
 
 
 def is_rate_limited(exc: BaseException) -> bool:

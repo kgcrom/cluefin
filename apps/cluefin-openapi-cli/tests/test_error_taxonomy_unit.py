@@ -7,6 +7,7 @@ parallel copies, so the stubs below only need the right name and payload attribu
 from __future__ import annotations
 
 import pytest
+from cluefin_openapi.kis import KISResponseError
 
 from cluefin_openapi_cli.errors import (
     EXIT_BROKER,
@@ -46,7 +47,15 @@ class _KISAPIError(Exception):
         ),
         (_KiwoomNetworkError("boom"), EXIT_BROKER, "BrokerUnavailable", True),
         (_KISAPIError("bad"), EXIT_BROKER, "BrokerApiError", False),
-        (ValueError("KIS API Error [OPSQ0001]: no data (rt_cd=1)"), EXIT_BROKER, "BrokerApiError", False),
+        (
+            KISResponseError(
+                "KIS API Error [OPSQ0001]: no data (rt_cd=1)",
+                response_data={"rt_cd": "1", "msg_cd": "OPSQ0001", "msg1": "no data"},
+            ),
+            EXIT_BROKER,
+            "BrokerApiError",
+            False,
+        ),
         (RuntimeError("weird"), EXIT_UNEXPECTED, "ExecutionError", False),
     ],
 )

@@ -208,7 +208,7 @@ def classify_exception(exc: BaseException, *, command: str, broker: str) -> CliE
             hint="The broker rejected the parameters. Re-read `schema <command>` and check enum/code values.",
         )
 
-    if any(name.endswith("APIError") for name in names) or (isinstance(exc, ValueError) and "API Error" in message):
+    if any(name.endswith("APIError") for name in names):
         return CliError(
             message,
             exit_code=EXIT_BROKER,
