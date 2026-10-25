@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 from cluefin_openapi.kiwoom._client import Client
 from cluefin_openapi.kiwoom._domestic_account_types import (
@@ -170,7 +170,7 @@ class DomesticAccount:
         all_stk_tp: str,
         trde_tp: str,
         stex_tp: str,
-        stk_cd: Optional[str] = None,
+        stk_cd: str | None = None,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticAccountUnexecuted]:
@@ -220,8 +220,8 @@ class DomesticAccount:
         qry_tp: str,
         sell_tp: str,
         stex_tp: str,
-        stk_cd: Optional[str] = None,
-        ord_no: Optional[str] = None,
+        stk_cd: str | None = None,
+        ord_no: str | None = None,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticAccountExecuted]:
@@ -387,7 +387,7 @@ class DomesticAccount:
         self,
         ottks_tp: str,
         ch_crd_tp: str,
-        base_dt: Optional[str] = None,
+        base_dt: str | None = None,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticAccountCurrentDayTradingJournal]:
@@ -725,9 +725,9 @@ class DomesticAccount:
         sell_tp: str,
         qry_tp: str,
         dmst_stex_tp: str,
-        ord_dt: Optional[str] = None,
-        stk_cd: Optional[str] = None,
-        fr_ord_no: Optional[str] = None,
+        ord_dt: str | None = None,
+        stk_cd: str | None = None,
+        fr_ord_no: str | None = None,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticAccountOrderExecutionStatus]:
@@ -786,9 +786,9 @@ class DomesticAccount:
         stk_cd: str,
         trde_tp: str,
         uv: str,
-        io_amt: Optional[str] = None,
-        trde_qty: Optional[str] = None,
-        exp_buy_unp: Optional[str] = None,
+        io_amt: str | None = None,
+        trde_qty: str | None = None,
+        exp_buy_unp: str | None = None,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticAccountAvailableWithdrawalAmount]:
@@ -842,7 +842,7 @@ class DomesticAccount:
     def get_available_order_quantity_by_margin_rate(
         self,
         stk_cd: str,
-        uv: Optional[str] = None,
+        uv: str | None = None,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticAccountAvailableOrderQuantityByMarginRate]:
@@ -884,7 +884,7 @@ class DomesticAccount:
     def get_available_order_quantity_by_margin_loan_stock(
         self,
         stk_cd: str,
-        uv: Optional[str] = None,
+        uv: str | None = None,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticAccountAvailableOrderQuantityByMarginLoanStock]:
@@ -960,10 +960,10 @@ class DomesticAccount:
         tp: str,
         gds_tp: str,
         dmst_stex_tp: str,
-        stk_cd: Optional[str] = None,
-        crnc_cd: Optional[str] = None,
-        frgn_stex_code: Optional[str] = None,
-        qry_sort_tp: Optional[str] = None,
+        stk_cd: str | None = None,
+        crnc_cd: str | None = None,
+        frgn_stex_code: str | None = None,
+        qry_sort_tp: str | None = None,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticAccountConsignmentComprehensiveTransactionHistory]:

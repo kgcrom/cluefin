@@ -19,7 +19,7 @@ import struct
 from asyncio import Queue
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 from loguru import logger
 
@@ -42,9 +42,9 @@ class WebSocketMessage:
     서버 푸시 구조: {"header": {"tr_cd", "tr_key"}, "body": {…응답필드…}}
     """
 
-    tr_cd: Optional[str] = None
-    tr_key: Optional[str] = None
-    body: Optional[Dict[str, Any]] = None
+    tr_cd: str | None = None
+    tr_key: str | None = None
+    body: dict[str, Any] | None = None
     raw: str = ""
 
 
@@ -53,11 +53,11 @@ class WebSocketEvent:
     """Event emitted from WebSocket for queue-based processing."""
 
     event_type: Literal["data", "connected", "disconnected", "error", "subscribed", "unsubscribed", "system"]
-    tr_cd: Optional[str] = None
-    tr_key: Optional[str] = None
-    data: Optional[Dict[str, Any]] = None
-    error: Optional[Exception] = None
-    raw: Optional[str] = None
+    tr_cd: str | None = None
+    tr_key: str | None = None
+    data: dict[str, Any] | None = None
+    error: Exception | None = None
+    raw: str | None = None
 
 
 class SocketClient:
@@ -124,11 +124,11 @@ class SocketClient:
         else:
             self._ws_url = self.WS_URL_DEV
         self._event_queue: Queue[WebSocketEvent] = Queue(maxsize=queue_maxsize)
-        self._subscriptions: Dict[str, str] = {}  # tr_cd:tr_key -> tr_key
-        self._reader: Optional[asyncio.StreamReader] = None
-        self._writer: Optional[asyncio.StreamWriter] = None
+        self._subscriptions: dict[str, str] = {}  # tr_cd:tr_key -> tr_key
+        self._reader: asyncio.StreamReader | None = None
+        self._writer: asyncio.StreamWriter | None = None
         self._connected = False
-        self._receive_task: Optional[asyncio.Task] = None
+        self._receive_task: asyncio.Task | None = None
         self._rate_limiter = TokenBucket(capacity=rate_limit_burst, refill_rate=rate_limit_requests_per_second)
 
         if debug:
@@ -561,6 +561,6 @@ class SocketClient:
         return self._connected
 
     @property
-    def subscriptions(self) -> Dict[str, str]:
+    def subscriptions(self) -> dict[str, str]:
         """Get current subscriptions."""
         return dict(self._subscriptions)

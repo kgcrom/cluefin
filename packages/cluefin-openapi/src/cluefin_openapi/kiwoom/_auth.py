@@ -6,7 +6,7 @@ using client credentials authentication flow.
 
 from __future__ import annotations
 
-from typing import Literal, Optional
+from typing import Literal
 
 import requests
 from loguru import logger
@@ -57,8 +57,8 @@ class Auth:
         app_key: str,
         secret_key: SecretStr,
         env: Literal["dev", "prod"] = "dev",
-        cache_dir: Optional[str] = None,
-        token_manager: Optional[TokenManager] = None,
+        cache_dir: str | None = None,
+        token_manager: TokenManager | None = None,
     ) -> None:
         self.app_key = app_key
         self.secret_key = secret_key

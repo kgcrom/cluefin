@@ -1,8 +1,10 @@
 """DART OpenAPI response models."""
 
+import builtins
+from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import Enum
-from typing import Generic, List, Mapping, Optional, Type, TypeVar
+from typing import Generic, TypeVar
 
 from pydantic import BaseModel, Field, field_validator
 from typing_extensions import Self
@@ -66,11 +68,12 @@ class DartResult(BaseModel, Generic[T_DartListItem]):
 
     status: DartStatusCode = Field(description="에러 및 정보 코드")
     message: str = Field(description="에러 및 정보 메시지")
-    page_no: Optional[int] = Field(default=None, description="페이지 번호")
-    page_count: Optional[int] = Field(default=None, description="페이지 별 건수")
-    total_count: Optional[int] = Field(default=None, description="총 건수")
-    total_page: Optional[int] = Field(default=None, description="총 페이지 수")
-    list: Optional[List[T_DartListItem]] = Field(
+    page_no: int | None = Field(default=None, description="페이지 번호")
+    page_count: int | None = Field(default=None, description="페이지 별 건수")
+    total_count: int | None = Field(default=None, description="총 건수")
+    total_page: int | None = Field(default=None, description="총 페이지 수")
+    # 필드 이름 `list` 가 클래스 본문에서 builtin 을 가리므로 builtins.list 로 쓴다.
+    list: builtins.list[T_DartListItem] | None = Field(
         default=None,
         description="요청 결과 목록 (엔드포인트에 따라 미제공)",
     )
@@ -108,7 +111,7 @@ class DartHttpBody(Generic[T_DartListItem]):
         cls,
         payload: Mapping[str, object],
         *,
-        list_model: Type[T_DartListItem],
+        list_model: type[T_DartListItem],
         result_key: str = "result",
     ) -> Self:
         """Parse raw payload into a structured response.

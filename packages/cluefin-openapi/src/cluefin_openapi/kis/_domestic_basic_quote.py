@@ -1,4 +1,4 @@
-from typing_extensions import Literal
+from typing import Literal
 
 from cluefin_openapi.kis._domestic_basic_quote_types import (
     DomesticEtfComponentStockPrice,

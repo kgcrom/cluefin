@@ -10,7 +10,8 @@
 
 import os
 import re
-from typing import Callable, List, NoReturn, Optional
+from collections.abc import Callable
+from typing import NoReturn
 
 import dotenv
 import pytest
@@ -72,7 +73,7 @@ def _markexpr_names(markexpr: str, name: str) -> bool:
     return re.search(rf"(?<![A-Za-z0-9_]){re.escape(name)}(?![A-Za-z0-9_])", markexpr) is not None
 
 
-def mutation_skip_reason(markexpr: str, env: str) -> Optional[str]:
+def mutation_skip_reason(markexpr: str, env: str) -> str | None:
     """`mutation` 테스트(주문·환전 접수)를 지금 돌리면 안 되는 이유. 돌려도 되면 None.
 
     - `-m` 에 `mutation` 이 없으면 막는다: `-m integration` 만으로는 주문이 나가지 않게.
@@ -85,7 +86,7 @@ def mutation_skip_reason(markexpr: str, env: str) -> Optional[str]:
     return None
 
 
-def cancel_leftover_orders(ord_nos: List[str], cancel: Callable[[str], object]) -> None:
+def cancel_leftover_orders(ord_nos: list[str], cancel: Callable[[str], object]) -> None:
     """테스트가 접수하고 남긴 미체결 주문을 취소한다 (주문 테스트 픽스처의 teardown 용).
 
     하나라도 취소하지 못하면 주문번호를 담아 실패시킨다 — 조용히 넘어가면 계좌에 주문이 남은 걸

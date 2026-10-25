@@ -1,6 +1,6 @@
 """Custom exceptions for KIS API client."""
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class KISAPIError(Exception):
@@ -9,9 +9,9 @@ class KISAPIError(Exception):
     def __init__(
         self,
         message: str,
-        status_code: Optional[int] = None,
-        response_data: Optional[Dict[str, Any]] = None,
-        request_context: Optional[Dict[str, Any]] = None,
+        status_code: int | None = None,
+        response_data: dict[str, Any] | None = None,
+        request_context: dict[str, Any] | None = None,
     ):
         super().__init__(message)
         self.message = message
@@ -44,10 +44,10 @@ class KISRateLimitError(KISAPIError):
     def __init__(
         self,
         message: str,
-        status_code: Optional[int] = None,
-        response_data: Optional[Dict[str, Any]] = None,
-        request_context: Optional[Dict[str, Any]] = None,
-        retry_after: Optional[int] = None,
+        status_code: int | None = None,
+        response_data: dict[str, Any] | None = None,
+        request_context: dict[str, Any] | None = None,
+        retry_after: int | None = None,
     ):
         super().__init__(message, status_code, response_data, request_context)
         self.retry_after = retry_after

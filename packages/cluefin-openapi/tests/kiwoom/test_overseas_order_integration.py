@@ -1,5 +1,5 @@
 import math
-from typing import Iterator, List
+from collections.abc import Iterator
 
 import pytest
 
@@ -30,12 +30,12 @@ def _unfillable_buy_price(client: Client, steps_below: int = 0) -> str:
 
 
 @pytest.fixture
-def pending_orders(client: Client) -> Iterator[List[str]]:
+def pending_orders(client: Client) -> Iterator[list[str]]:
     """테스트가 접수한 주문번호를 모아 두었다가, 테스트가 실패해도 끝나면 취소한다.
 
     취소·정정으로 원주문이 사라졌으면 테스트가 목록을 고쳐 둔다 (취소는 빼고, 정정은 새 번호로 바꾼다).
     """
-    ord_nos: List[str] = []
+    ord_nos: list[str] = []
     yield ord_nos
     cancel_leftover_orders(
         ord_nos,
@@ -46,7 +46,7 @@ def pending_orders(client: Client) -> Iterator[List[str]]:
 
 
 @pytest.fixture
-def pending_buy_order_no(client: Client, pending_orders: List[str]) -> str:
+def pending_buy_order_no(client: Client, pending_orders: list[str]) -> str:
     """정정/취소 대상이 될 미체결 매수주문을 실제로 접수하고 그 주문번호를 반환한다.
 
     주문번호를 하드코딩하면 "RC4061:모의투자 주문번호를 확인하세요"로 항상 실패한다.
@@ -71,7 +71,7 @@ def pending_buy_order_no(client: Client, pending_orders: List[str]) -> str:
 
 @pytest.mark.integration
 @pytest.mark.mutation
-def test_request_buy_order(client: Client, pending_orders: List[str]):
+def test_request_buy_order(client: Client, pending_orders: list[str]):
     # $1.00 지정가라 체결되지 않는다 — 미체결로 남은 주문은 teardown 에서 취소한다.
     try:
         response = client.overseas_order.request_buy_order(
@@ -88,7 +88,7 @@ def test_request_buy_order(client: Client, pending_orders: List[str]):
 
 @pytest.mark.integration
 @pytest.mark.mutation
-def test_request_sell_order(client: Client, pending_orders: List[str]):
+def test_request_sell_order(client: Client, pending_orders: list[str]):
     # $100,000 지정가라 체결되지 않는다 — 미체결로 남은 주문은 teardown 에서 취소한다.
     try:
         response = client.overseas_order.request_sell_order(
@@ -105,7 +105,7 @@ def test_request_sell_order(client: Client, pending_orders: List[str]):
 
 @pytest.mark.integration
 @pytest.mark.mutation
-def test_request_modify_order(client: Client, pending_buy_order_no: str, pending_orders: List[str]):
+def test_request_modify_order(client: Client, pending_buy_order_no: str, pending_orders: list[str]):
     response = client.overseas_order.request_modify_order(
         orig_ord_no=pending_buy_order_no,
         stex_tp=TEST_STEX_TP,
@@ -122,7 +122,7 @@ def test_request_modify_order(client: Client, pending_buy_order_no: str, pending
 
 @pytest.mark.integration
 @pytest.mark.mutation
-def test_request_cancel_order(client: Client, pending_buy_order_no: str, pending_orders: List[str]):
+def test_request_cancel_order(client: Client, pending_buy_order_no: str, pending_orders: list[str]):
     response = client.overseas_order.request_cancel_order(
         orig_ord_no=pending_buy_order_no, stex_tp=TEST_STEX_TP, stk_cd=TEST_STK_CD
     )

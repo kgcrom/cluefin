@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 from ._client import Client, Lang
 from ._model import EcosPage
 from ._statistic_catalog_types import KeyStatistic, StatisticItem, StatisticTable
@@ -17,11 +15,11 @@ class StatisticCatalog:
 
     def table_list(
         self,
-        stat_code: Optional[str] = None,
+        stat_code: str | None = None,
         *,
         lang: Lang = "kr",
-        start_row: Optional[int] = None,
-        end_row: Optional[int] = None,
+        start_row: int | None = None,
+        end_row: int | None = None,
     ) -> EcosPage[StatisticTable]:
         """서비스 통계 목록 (OA-1020).
 
@@ -37,8 +35,8 @@ class StatisticCatalog:
         stat_code: str,
         *,
         lang: Lang = "kr",
-        start_row: Optional[int] = None,
-        end_row: Optional[int] = None,
+        start_row: int | None = None,
+        end_row: int | None = None,
     ) -> EcosPage[StatisticItem]:
         """통계 세부항목 목록 (OA-1030). StatisticSearch 에 넣을 항목코드를 찾는 데 쓴다."""
         total, rows, row_count = self.client._get_rows("StatisticItemList", (stat_code,), lang, start_row, end_row)
@@ -48,8 +46,8 @@ class StatisticCatalog:
         self,
         *,
         lang: Lang = "kr",
-        start_row: Optional[int] = None,
-        end_row: Optional[int] = None,
+        start_row: int | None = None,
+        end_row: int | None = None,
     ) -> EcosPage[KeyStatistic]:
         """100대 통계지표 (OA-1010) — 지표마다 최근 값 하나. 행 순서는 호출마다 같다는 보장이 없다."""
         total, rows, row_count = self.client._get_rows("KeyStatisticList", (), lang, start_row, end_row)

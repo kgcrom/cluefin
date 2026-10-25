@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel, ConfigDict, Field
 
 from cluefin_openapi.dart._model import DartHttpBody, DartStatusCode
@@ -103,17 +101,17 @@ class UniqueNumberItem(BaseModel):
         alias="corp_name",
         description="공시대상회사 정식명칭",
     )
-    corp_eng_name: Optional[str] = Field(
+    corp_eng_name: str | None = Field(
         default=None,
         alias="corp_eng_name",
         description="공시대상회사 영문 정식명칭",
     )
-    corp_cls: Optional[str] = Field(
+    corp_cls: str | None = Field(
         default=None,
         alias="corp_cls",
         description="법인구분: Y(유가), K(코스닥), N(코넥스), E(기타)",
     )
-    stock_code: Optional[str] = Field(
+    stock_code: str | None = Field(
         default=None,
         alias="stock_code",
         description="상장회사의 경우 주식 종목코드(6자리)",

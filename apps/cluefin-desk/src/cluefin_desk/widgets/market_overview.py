@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any
 
 from textual.app import ComposeResult
 from textual.widgets import Static
@@ -16,7 +16,7 @@ class MarketOverviewBar(Static):
     }
     """
 
-    def update_indices(self, kospi: List[Dict[str, Any]], kosdaq: List[Dict[str, Any]]) -> None:
+    def update_indices(self, kospi: list[dict[str, Any]], kosdaq: list[dict[str, Any]]) -> None:
         parts = []
         for item in kospi:
             rate = item.get("fluctuation_rate", 0.0)

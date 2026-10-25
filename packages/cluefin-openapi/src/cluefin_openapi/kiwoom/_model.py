@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Generic, Optional, TypeVar
+from typing import Generic, TypeVar
 
 from pydantic import BaseModel, Field
 
@@ -19,7 +19,7 @@ class KiwoomHttpHeader(BaseModel):
 @dataclass
 class KiwoomHttpBody:  # This can remain a base class or be used directly if no further specialization is needed often
     return_code: int
-    return_msg: Optional[str] = None
+    return_msg: str | None = None
 
 
 @dataclass

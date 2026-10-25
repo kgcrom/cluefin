@@ -2,7 +2,7 @@ import json
 import tempfile
 import time
 from pathlib import Path
-from typing import Any, Dict, Literal, Optional, Union
+from typing import Any, Literal
 from uuid import uuid4
 
 import requests
@@ -29,7 +29,7 @@ class HttpClient(BaseHttpClient):
         self,
         token: str,
         app_key: str,
-        secret_key: Union[str, SecretStr],
+        secret_key: str | SecretStr,
         env: Literal["prod", "dev"] = "prod",
         debug: bool = False,
         timeout: int = 30,
@@ -44,7 +44,7 @@ class HttpClient(BaseHttpClient):
         self.debug = debug
         self.timeout = timeout
         self.max_retries = max_retries
-        self._last_response_debug: Optional[Dict[str, Any]] = None
+        self._last_response_debug: dict[str, Any] | None = None
 
         if self.env == "prod":
             self.base_url = "https://openapi.koreainvestment.com:9443"
@@ -161,7 +161,7 @@ class HttpClient(BaseHttpClient):
         request_context: dict,
         response: requests.Response,
         response_payload: Any,
-    ) -> Optional[str]:
+    ) -> str | None:
         """Persist the last response payload to a temp file for quick inspection."""
         try:
             debug_dir = Path(tempfile.gettempdir()) / "cluefin-kis-debug"
@@ -208,7 +208,7 @@ class HttpClient(BaseHttpClient):
         }
 
     @property
-    def last_response_debug(self) -> Optional[Dict[str, Any]]:
+    def last_response_debug(self) -> dict[str, Any] | None:
         """Return the last recorded response snapshot."""
         return self._last_response_debug
 
@@ -250,8 +250,8 @@ class HttpClient(BaseHttpClient):
         path: str,
         headers: dict,
         *,
-        params: Optional[dict] = None,
-        body: Optional[dict] = None,
+        params: dict | None = None,
+        body: dict | None = None,
     ) -> requests.Response:
         """Shared GET/POST implementation with rate limiting, retry, and error handling."""
         url = self.base_url + path

@@ -1,5 +1,5 @@
 import time
-from typing import Any, Dict, List, Literal, Optional, Tuple
+from typing import Any, Literal
 from urllib.parse import quote
 
 import requests
@@ -43,7 +43,7 @@ class Client(BaseHttpClient):
 
     def __init__(
         self,
-        auth_key: Optional[str] = None,
+        auth_key: str | None = None,
         timeout: int = DEFAULT_TIMEOUT,
         max_retries: int = 3,
         rate_limit_requests_per_second: float = 5.0,
@@ -84,7 +84,7 @@ class Client(BaseHttpClient):
 
         return StatisticGlossary(self)
 
-    def _get_page(self, service: str, start_row: int, end_row: int, segments: Tuple[str, ...], lang: Lang) -> Dict:
+    def _get_page(self, service: str, start_row: int, end_row: int, segments: tuple[str, ...], lang: Lang) -> dict:
         """한 쪽을 받아 `{"list_total_count", "row", …}` 를 돌려준다. 데이터 없음(INFO-200)은 빈 쪽."""
         if start_row < 1 or end_row < start_row:
             raise ValueError(f"행 범위는 1 ≤ start_row ≤ end_row 여야 합니다. 받은 값: {start_row}/{end_row}")
@@ -104,7 +104,7 @@ class Client(BaseHttpClient):
             )
         return page
 
-    def _get_body(self, url: str, request_context: dict) -> Optional[Dict]:
+    def _get_body(self, url: str, request_context: dict) -> dict | None:
         """본문을 받아 `RESULT` 를 푼다. 데이터 없음이면 None, 일시 오류(600·602)는 HTTP 5xx·429 처럼 재시도한다."""
         for attempt in range(self.max_retries + 1):
             body = self._safe_json(self._request(url, request_context))
@@ -127,11 +127,11 @@ class Client(BaseHttpClient):
     def _get_rows(
         self,
         service: str,
-        segments: Tuple[str, ...],
+        segments: tuple[str, ...],
         lang: Lang,
-        start_row: Optional[int] = None,
-        end_row: Optional[int] = None,
-    ) -> Tuple[int, List[Dict[str, Any]], Optional[int]]:
+        start_row: int | None = None,
+        end_row: int | None = None,
+    ) -> tuple[int, list[dict[str, Any]], int | None]:
         """(list_total_count, 행 목록, row_count)를 돌려준다.
 
         행 범위를 주면 그 쪽만, 안 주면 `list_total_count` 를 다 채울 때까지 쪽 넘김한다.
@@ -141,7 +141,7 @@ class Client(BaseHttpClient):
             page = self._get_page(service, first, end_row or first + self.page_size - 1, segments, lang)
             return int(page.get("list_total_count") or 0), list(page.get("row") or []), page.get("row_count")
 
-        rows: List[Dict[str, Any]] = []
+        rows: list[dict[str, Any]] = []
         total = 0
         for index in range(self.max_pages):
             first = index * self.page_size + 1
@@ -156,7 +156,7 @@ class Client(BaseHttpClient):
             "기간·항목을 좁히거나 실키(ECOS_AUTH_KEY)를 쓰세요."
         )
 
-    def _dispatch_ecos(self, response: requests.Response, request_context: dict) -> Optional[Exception]:
+    def _dispatch_ecos(self, response: requests.Response, request_context: dict) -> Exception | None:
         """Map a non-200 HTTP response to the appropriate ECOS exception."""
         common = {"status_code": response.status_code, "response_data": None, "request_context": request_context}
         if response.status_code == 404:

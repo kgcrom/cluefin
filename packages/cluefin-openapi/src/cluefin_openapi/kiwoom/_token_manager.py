@@ -6,7 +6,6 @@ import hashlib
 from datetime import datetime, timedelta
 from pathlib import Path
 from tempfile import gettempdir
-from typing import Optional
 
 from loguru import logger
 
@@ -26,7 +25,7 @@ class TokenManager:
         return Path(gettempdir()) / "cluefin-openapi"
 
     @staticmethod
-    def _cache_file_name(env: Optional[str], app_key: Optional[str]) -> str:
+    def _cache_file_name(env: str | None, app_key: str | None) -> str:
         """Build an environment- and credential-scoped cache file name.
 
         Tokens are not interchangeable between the real (prod) and mock (dev)
@@ -45,9 +44,9 @@ class TokenManager:
 
     def __init__(
         self,
-        cache_dir: Optional[str] = None,
-        env: Optional[str] = None,
-        app_key: Optional[str] = None,
+        cache_dir: str | None = None,
+        env: str | None = None,
+        app_key: str | None = None,
     ) -> None:
         """Initialize token manager.
 
@@ -63,8 +62,8 @@ class TokenManager:
 
         self.cache_dir = Path(cache_dir)
         self.cache_file = self.cache_dir / self._cache_file_name(env, app_key)
-        self._token_cache: Optional[TokenResponse] = None
-        self._last_refresh: Optional[datetime] = None
+        self._token_cache: TokenResponse | None = None
+        self._last_refresh: datetime | None = None
         self._load_from_disk()
 
     def get_or_generate(self, generate_func) -> TokenResponse:

@@ -1,4 +1,4 @@
-from typing import Mapping
+from collections.abc import Mapping
 
 from cluefin_openapi.dart._client import Client
 from cluefin_openapi.dart._periodic_report_key_information_types import (

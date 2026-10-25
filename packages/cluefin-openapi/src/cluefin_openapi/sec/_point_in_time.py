@@ -5,14 +5,14 @@ companyfacts/companyconcept는 같은 기간 값을 그 값을 실은 공시마�
 `frame`이 붙은 행(SEC 대표값)은 대개 가장 늦은 공시의 행이라 과거 시점의 값으로 쓰면 미래 정보가 섞인다.
 """
 
+from collections.abc import Iterable
 from datetime import date
 from itertools import groupby
-from typing import Iterable, List, Tuple
 
 from cluefin_openapi.sec._xbrl_api_types import FactValue
 
 
-def values_as_of(values: Iterable[FactValue], as_of: date) -> List[FactValue]:
+def values_as_of(values: Iterable[FactValue], as_of: date) -> list[FactValue]:
     """`as_of` 날이 시작될 때 이미 공개돼 있던 값을 기간마다 하나씩 고른다.
 
     - 공개 시점은 `filed`(EDGAR 제출일)다. `filed < as_of`인 행만 본다. EDGAR는 17:30 ET 뒤 접수를 다음 영업일
@@ -36,12 +36,12 @@ def values_as_of(values: Iterable[FactValue], as_of: date) -> List[FactValue]:
     return [_latest(list(rows)) for _, rows in groupby(known, key=_period_key)]
 
 
-def _period_key(value: FactValue) -> Tuple[date, bool, date]:
+def _period_key(value: FactValue) -> tuple[date, bool, date]:
     """기간 정렬 키. 시점 값(`start` 없음)과 같은 `end`의 기간 값을 가른다."""
     return (value.end, value.start is not None, value.start or date.min)
 
 
-def _latest(rows: List[FactValue]) -> FactValue:
+def _latest(rows: list[FactValue]) -> FactValue:
     """한 기간의 행들 중 가장 늦게 공개된 행."""
     last_filed = max(row.filed for row in rows)
     same_day = [row for row in rows if row.filed == last_filed]
@@ -61,7 +61,7 @@ def _filer(accn: str) -> str:
     return accn.split("-", 1)[0]
 
 
-def _describe(rows: List[FactValue]) -> str:
+def _describe(rows: list[FactValue]) -> str:
     """오류 메시지용: 기간과 행마다 접수번호·서식·제출일·값."""
     listed = ", ".join(f"{row.accn}({row.form}, {row.filed}, {row.val})" for row in rows)
     return f"기간 {rows[0].start}~{rows[0].end}: {listed}"

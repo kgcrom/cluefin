@@ -8,8 +8,9 @@ always digits: newer listings and preferred shares use letters (``0001A0``, ``00
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import Any
 
 # (Kiwoom mrkt_tp, market label)
 MARKETS: tuple[tuple[str, str], ...] = (("0", "KOSPI"), ("10", "KOSDAQ"))

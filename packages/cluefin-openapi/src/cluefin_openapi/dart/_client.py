@@ -1,5 +1,3 @@
-from typing import Dict, Optional
-
 import requests
 
 from cluefin_openapi._http_base import BaseHttpClient
@@ -72,15 +70,15 @@ class Client(BaseHttpClient):
 
         return PeriodicReportFinancialStatement(self)
 
-    def _get_bytes(self, path: str, *, params: Optional[Dict] = None):
+    def _get_bytes(self, path: str, *, params: dict | None = None):
         """Make a GET request and return raw bytes with rate limiting and retry."""
         return self._request(path, params=params, return_json=False)
 
-    def _get(self, path: str, *, params: Optional[Dict] = None):
+    def _get(self, path: str, *, params: dict | None = None):
         """Make a GET request and return JSON with rate limiting and retry."""
         return self._request(path, params=params, return_json=True)
 
-    def _dispatch_dart(self, response: requests.Response, request_context: dict) -> Optional[Exception]:
+    def _dispatch_dart(self, response: requests.Response, request_context: dict) -> Exception | None:
         """Map a non-200 HTTP response to the appropriate DART exception.
 
         Returns an Exception to raise, or None to accept the response (200 path
@@ -134,7 +132,7 @@ class Client(BaseHttpClient):
                 request_context=request_context,
             )
 
-    def _request(self, path: str, *, params: Optional[Dict] = None, return_json: bool = True):
+    def _request(self, path: str, *, params: dict | None = None, return_json: bool = True):
         """Internal request method with rate limiting and retry logic."""
         url = self.base_url + path
         # Copy so the auth secret is never written back into the caller's dict

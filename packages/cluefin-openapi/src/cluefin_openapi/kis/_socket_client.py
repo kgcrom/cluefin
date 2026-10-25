@@ -19,7 +19,7 @@ import struct
 from asyncio import Queue
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Literal
 
 from loguru import logger
 from pydantic import SecretStr
@@ -49,8 +49,8 @@ class WebSocketMessage:
     """Parsed WebSocket message from KIS API."""
 
     message_type: MessageType
-    tr_id: Optional[str] = None
-    data: Optional[List[str]] = None
+    tr_id: str | None = None
+    data: list[str] | None = None
     raw: str = ""
     encrypted: bool = False
 
@@ -69,11 +69,11 @@ class WebSocketEvent:
     """Event emitted from WebSocket for queue-based processing."""
 
     event_type: Literal["data", "connected", "disconnected", "error", "subscribed", "unsubscribed"]
-    tr_id: Optional[str] = None
-    tr_key: Optional[str] = None
-    data: Optional[Dict[str, Any]] = None
-    error: Optional[Exception] = None
-    raw: Optional[str] = None
+    tr_id: str | None = None
+    tr_key: str | None = None
+    data: dict[str, Any] | None = None
+    error: Exception | None = None
+    raw: str | None = None
 
 
 class SocketClient:
@@ -119,7 +119,7 @@ class SocketClient:
         self,
         approval_key: str,
         app_key: str,
-        secret_key: Union[str, SecretStr],
+        secret_key: str | SecretStr,
         env: Literal["prod", "dev"] = "prod",
         debug: bool = False,
         queue_maxsize: int = 1000,
@@ -146,12 +146,12 @@ class SocketClient:
 
         self._ws_url = self.WS_URL_PROD if env == "prod" else self.WS_URL_DEV
         self._event_queue: Queue[WebSocketEvent] = Queue(maxsize=queue_maxsize)
-        self._subscriptions: Dict[str, str] = {}  # tr_id:tr_key -> subscription key
-        self._reader: Optional[asyncio.StreamReader] = None
-        self._writer: Optional[asyncio.StreamWriter] = None
+        self._subscriptions: dict[str, str] = {}  # tr_id:tr_key -> subscription key
+        self._reader: asyncio.StreamReader | None = None
+        self._writer: asyncio.StreamWriter | None = None
         self._connected = False
-        self._receive_task: Optional[asyncio.Task] = None
-        self._last_rejection: Optional[KISAPIError] = None
+        self._receive_task: asyncio.Task | None = None
+        self._last_rejection: KISAPIError | None = None
         self._rate_limiter = TokenBucket(capacity=rate_limit_burst, refill_rate=rate_limit_requests_per_second)
 
         if debug:
@@ -433,7 +433,7 @@ class SocketClient:
                     )
                 )
 
-    def _parse_rejection(self, raw: str) -> Optional[KISAPIError]:
+    def _parse_rejection(self, raw: str) -> KISAPIError | None:
         """Turn a JSON system reply with rt_cd != "0" into an error.
 
         KIS rejects at the session level and then drops the connection, e.g.
@@ -683,6 +683,6 @@ class SocketClient:
         return self._connected
 
     @property
-    def subscriptions(self) -> Dict[str, str]:
+    def subscriptions(self) -> dict[str, str]:
         """Get current subscriptions."""
         return dict(self._subscriptions)

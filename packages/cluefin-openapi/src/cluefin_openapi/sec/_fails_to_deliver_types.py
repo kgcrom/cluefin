@@ -1,6 +1,5 @@
 from datetime import date
 from decimal import Decimal
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -24,7 +23,7 @@ class FailToDeliver(BaseModel):
 
     settlement_date: date = Field(description="결제일")
     cusip: str = Field(description="CUSIP (9자리)")
-    symbol: Optional[str] = Field(default=None, description="티커. 없으면 None")
+    symbol: str | None = Field(default=None, description="티커. 없으면 None")
     quantity: int = Field(description="결제 불이행 수량 (주)")
-    description: Optional[str] = Field(default=None, description="종목 설명")
-    price: Optional[Decimal] = Field(default=None, description="전일 종가. 없으면(원문 '.') None")
+    description: str | None = Field(default=None, description="종목 설명")
+    price: Decimal | None = Field(default=None, description="전일 종가. 없으면(원문 '.') None")

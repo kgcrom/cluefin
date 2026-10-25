@@ -1,7 +1,6 @@
 import json
 from collections.abc import Sequence
 from types import SimpleNamespace
-from typing import Optional
 
 import pytest
 from pydantic import AliasChoices, BaseModel, Field
@@ -22,7 +21,7 @@ class Summary(BaseModel):
 
 class Body(BaseModel, KisHttpBody):
     output1: Sequence[Row] = Field(default_factory=list)
-    output2: Optional[Summary] = None
+    output2: Summary | None = None
 
 
 def _raw(**overrides):

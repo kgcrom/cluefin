@@ -5,7 +5,7 @@ messages and typed exceptions. Kiwoom reports these codes in the response body
 (``return_code`` / ``return_msg``) for both token endpoints and TR endpoints.
 """
 
-from typing import Any, Dict, Optional, Type
+from typing import Any
 
 from ._exceptions import (
     KiwoomAPIError,
@@ -18,7 +18,7 @@ from ._exceptions import (
 
 # return_code -> documented message (placeholders {?} are filled by the server
 # in return_msg; these serve as fallbacks when return_msg is absent).
-KIWOOM_ERROR_CODES: Dict[int, str] = {
+KIWOOM_ERROR_CODES: dict[int, str] = {
     1501: "API ID가 Null이거나 값이 없습니다",
     1504: "해당 URI에서는 지원하는 API ID가 아닙니다. API ID={?}, URI={?}",
     1505: "해당 API ID는 존재하지 않습니다. API ID={?}",
@@ -89,7 +89,7 @@ _RATE_LIMIT_CODES = frozenset({1687, 1700, 1701, 1702})
 _SERVER_CODES = frozenset({1999})
 
 
-def parse_return_code(value: Any) -> Optional[int]:
+def parse_return_code(value: Any) -> int | None:
     """Coerce a body return_code (int or numeric string) to int, else None."""
     if isinstance(value, bool):
         return None
@@ -103,7 +103,7 @@ def parse_return_code(value: Any) -> Optional[int]:
     return None
 
 
-def error_type_for_code(return_code: int) -> Type[KiwoomAPIError]:
+def error_type_for_code(return_code: int) -> type[KiwoomAPIError]:
     """Return the exception class for a Kiwoom server error code."""
     if return_code in _VALIDATION_CODES:
         return KiwoomValidationError
@@ -120,10 +120,10 @@ def error_type_for_code(return_code: int) -> Type[KiwoomAPIError]:
 
 def resolve_kiwoom_error(
     return_code: int,
-    return_msg: Optional[str] = None,
-    status_code: Optional[int] = None,
-    response_data: Optional[Dict[str, Any]] = None,
-    request_context: Optional[Dict[str, Any]] = None,
+    return_msg: str | None = None,
+    status_code: int | None = None,
+    response_data: dict[str, Any] | None = None,
+    request_context: dict[str, Any] | None = None,
 ) -> KiwoomAPIError:
     """Build a typed exception for a non-zero Kiwoom ``return_code``.
 

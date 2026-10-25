@@ -1,5 +1,3 @@
-from typing import Dict
-
 import pytest
 
 from cluefin_openapi.kiwoom import _domestic_rank_info as rank_info_module
@@ -8,11 +6,11 @@ from cluefin_openapi.kiwoom._domestic_rank_info import DomesticRankInfo
 from ._helpers import EndpointCase, method_metadata, run_post_case
 
 
-def payload(name: str) -> Dict[str, str]:
+def payload(name: str) -> dict[str, str]:
     return {"return_code": 0, "return_msg": "OK", "endpoint": name}
 
 
-CALL_KWARGS: Dict[str, Dict[str, str]] = {
+CALL_KWARGS: dict[str, dict[str, str]] = {
     "get_top_remaining_order_quantity": {
         "mrkt_tp": "001",
         "sort_tp": "1",

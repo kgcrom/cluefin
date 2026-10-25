@@ -5,7 +5,7 @@
 
 import threading
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 import requests
 
@@ -28,7 +28,7 @@ class HttpClient:
         timeout: float = 30,
         max_retries: int = 3,
         min_interval: float = 0.5,
-        headers: Optional[Dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
     ):
         self.timeout = timeout
         self.max_retries = max_retries
@@ -38,10 +38,10 @@ class HttpClient:
         self._lock = threading.Lock()
         self._last_sent = 0.0
 
-    def get(self, url: str, params: Optional[Dict[str, str]] = None) -> requests.Response:
+    def get(self, url: str, params: dict[str, str] | None = None) -> requests.Response:
         return self._send("GET", url, params=params)
 
-    def post_json(self, url: str, body: Dict[str, Any]) -> requests.Response:
+    def post_json(self, url: str, body: dict[str, Any]) -> requests.Response:
         return self._send("POST", url, json=body)
 
     def close(self) -> None:
@@ -84,7 +84,7 @@ class HttpClient:
             self._last_sent = time.monotonic()
 
 
-def _retry_after(response: requests.Response) -> Optional[int]:
+def _retry_after(response: requests.Response) -> int | None:
     value = response.headers.get("Retry-After", "")
     return int(value) if value.isdigit() else None
 

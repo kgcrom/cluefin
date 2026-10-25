@@ -25,8 +25,9 @@ import json
 import os
 import ssl
 import struct
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Literal, Mapping, Optional, Type, TypeVar, Union
+from typing import Any, Literal, TypeVar
 from urllib.parse import urlparse
 
 from loguru import logger
@@ -42,14 +43,14 @@ class KiwoomWebSocketMessage:
     """수신한 WebSocket 프레임 (파싱된 JSON)."""
 
     trnm: str
-    body: Dict[str, Any] = field(default_factory=dict)
+    body: dict[str, Any] = field(default_factory=dict)
     raw: str = ""
 
 
 ModelT = TypeVar("ModelT", bound=BaseModel)
 
 
-def split_real_frame(message: KiwoomWebSocketMessage, models: Mapping[str, Type[ModelT]]) -> List[ModelT]:
+def split_real_frame(message: KiwoomWebSocketMessage, models: Mapping[str, type[ModelT]]) -> list[ModelT]:
     """REAL 프레임을 TR type별 응답 모델로 나눈다.
 
     서버는 한 프레임의 ``data`` 에 여러 TR type 항목을 섞어 보낸다(0B·0D 를 함께 등록하면
@@ -57,7 +58,7 @@ def split_real_frame(message: KiwoomWebSocketMessage, models: Mapping[str, Type[
     오류 없이 빈 값으로 남으므로, type 마다 그 항목만 담은 모델을 처음 나온 순서로 하나씩 만든다.
     ``models`` 에 없는 type 은 버린다.
     """
-    groups: Dict[str, List[Dict[str, Any]]] = {}
+    groups: dict[str, list[dict[str, Any]]] = {}
     for item in message.body.get("data") or []:
         if isinstance(item, dict) and item.get("type") in models:
             groups.setdefault(item["type"], []).append(item)
@@ -119,11 +120,11 @@ class KiwoomWebSocketClient:
 
         host = self.WS_HOST_PROD if env == "prod" else self.WS_HOST_DEV
         self._ws_url = f"{host}{self.WS_PATH[market]}"
-        self._event_queue: "asyncio.Queue[KiwoomWebSocketMessage]" = asyncio.Queue(maxsize=queue_maxsize)
-        self._reader: Optional[asyncio.StreamReader] = None
-        self._writer: Optional[asyncio.StreamWriter] = None
+        self._event_queue: asyncio.Queue[KiwoomWebSocketMessage] = asyncio.Queue(maxsize=queue_maxsize)
+        self._reader: asyncio.StreamReader | None = None
+        self._writer: asyncio.StreamWriter | None = None
         self._connected = False
-        self._receive_task: Optional[asyncio.Task] = None
+        self._receive_task: asyncio.Task | None = None
         self._rate_limiter = TokenBucket(capacity=rate_limit_burst, refill_rate=rate_limit_requests_per_second)
 
         if debug:
@@ -231,7 +232,7 @@ class KiwoomWebSocketClient:
     # 송신 / 수신 (도메인 클래스에서 사용하는 공개 API)
     # ------------------------------------------------------------------
 
-    async def send(self, message: Union[Dict[str, Any], BaseModel]) -> None:
+    async def send(self, message: dict[str, Any] | BaseModel) -> None:
         """JSON 프레임을 송신한다.
 
         Args:

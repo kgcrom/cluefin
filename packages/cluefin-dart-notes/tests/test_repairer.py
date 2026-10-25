@@ -84,7 +84,7 @@ def test_suspected_real_tag_is_warned_and_logged(caplog):
 
 def test_fallback_use_is_logged(caplog):
     with caplog.at_level(logging.WARNING):
-        _, result = DartXmlRepairer(rules=()).parse("<DOCUMENT><P>R&D</P></DOCUMENT>".encode())
+        _, result = DartXmlRepairer(rules=()).parse(b"<DOCUMENT><P>R&D</P></DOCUMENT>")
 
     assert result.used_fallback
     assert "위치 기반" in caplog.text

@@ -6,7 +6,6 @@ by kis, krx, dart, and kiwoom clients to control API request rates.
 
 import threading
 import time
-from typing import Optional
 
 
 class TokenBucket:
@@ -60,7 +59,7 @@ class TokenBucket:
                 return True
             return False
 
-    def wait_for_tokens(self, tokens: int = 1, timeout: Optional[float] = None) -> bool:
+    def wait_for_tokens(self, tokens: int = 1, timeout: float | None = None) -> bool:
         """Wait until enough tokens are available.
 
         Args:

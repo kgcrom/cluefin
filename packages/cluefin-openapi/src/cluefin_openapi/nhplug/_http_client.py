@@ -1,5 +1,5 @@
 import time
-from typing import Any, Dict, Literal, Optional, Union
+from typing import Any, Literal
 
 import requests
 from loguru import logger
@@ -41,7 +41,7 @@ class HttpClient(BaseHttpClient):
         self,
         token: str,
         app_key: str,
-        secret_key: Union[str, SecretStr],
+        secret_key: str | SecretStr,
         env: Literal["prod", "dev"] = "prod",
         debug: bool = False,
         timeout: int = 30,
@@ -134,8 +134,8 @@ class HttpClient(BaseHttpClient):
     def post(
         self,
         path: str,
-        body: Optional[Dict[str, Any]] = None,
-        cts: Optional[str] = None,
+        body: dict[str, Any] | None = None,
+        cts: str | None = None,
     ) -> requests.Response:
         """Send an envelope-wrapped POST request.
 
@@ -148,7 +148,7 @@ class HttpClient(BaseHttpClient):
             requests.Response: raw response (envelope parsing is done by category modules)
         """
         url = f"{self.base_url}{path}"
-        headers: Dict[str, str] = {}
+        headers: dict[str, str] = {}
         if cts is not None:
             headers["cts"] = cts
             headers["cts_flag"] = "Y"
@@ -156,7 +156,7 @@ class HttpClient(BaseHttpClient):
         payload = {"Input_0": body or {}}
         request_context = {"method": "POST", "path": path, "url": url, "body": payload}
 
-        last_exception: Optional[Exception] = None
+        last_exception: Exception | None = None
         for attempt in range(self.max_retries + 1):
             if not self._rate_limiter.wait_for_tokens(timeout=self.timeout):
                 raise NHPlugRateLimitError(

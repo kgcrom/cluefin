@@ -5,8 +5,6 @@ This module handles the conversion of stock data and technical indicators
 into ML-ready features, including TA-Lib indicators and target variable creation.
 """
 
-from typing import Dict, List, Tuple
-
 import cluefin_ta as talib
 import numpy as np
 import pandas as pd
@@ -32,7 +30,7 @@ class FeatureEngineer:
 
     def __init__(self):
         self.scaler = StandardScaler()
-        self.feature_names: List[str] = []
+        self.feature_names: list[str] = []
 
     def create_talib_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -274,7 +272,7 @@ class FeatureEngineer:
             logger.error(f"Error creating target variable: {e}")
             return df
 
-    def prepare_features(self, stock_data: pd.DataFrame, indicators: Dict) -> Tuple[pd.DataFrame, List[str]]:
+    def prepare_features(self, stock_data: pd.DataFrame, indicators: dict) -> tuple[pd.DataFrame, list[str]]:
         """
         Prepare all features for ML training.
 
@@ -333,7 +331,7 @@ class FeatureEngineer:
             logger.error(f"Error preparing features: {e}")
             raise
 
-    def _handle_missing_values(self, df: pd.DataFrame, feature_cols: List[str]) -> pd.DataFrame:
+    def _handle_missing_values(self, df: pd.DataFrame, feature_cols: list[str]) -> pd.DataFrame:
         """
         Handle missing values in feature columns.
 
@@ -360,7 +358,7 @@ class FeatureEngineer:
 
     def normalize_features(
         self, train_features: pd.DataFrame, test_features: pd.DataFrame = None
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
         """
         Normalize features using StandardScaler.
 
@@ -386,7 +384,7 @@ class FeatureEngineer:
 
     def apply_smote_oversampling(
         self, X: pd.DataFrame, y: pd.Series, sampling_strategy: str = "auto", random_state: int = 42
-    ) -> Tuple[pd.DataFrame, pd.Series]:
+    ) -> tuple[pd.DataFrame, pd.Series]:
         """
         Apply SMOTE oversampling to handle class imbalance.
 
@@ -429,7 +427,7 @@ class FeatureEngineer:
             logger.error(f"Error applying SMOTE: {e}")
             return X, y
 
-    def calculate_class_weights(self, y: pd.Series) -> Dict[int, float]:
+    def calculate_class_weights(self, y: pd.Series) -> dict[int, float]:
         """
         Calculate class weights for handling imbalanced data.
 

@@ -1,5 +1,4 @@
 from types import SimpleNamespace
-from typing import List, Optional, Union
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
@@ -14,22 +13,22 @@ class Row(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     iem_cd: str
-    iem_nm: Optional[str] = None
+    iem_nm: str | None = None
 
 
 class Summary(BaseModel):
     model_config = ConfigDict(extra="allow")
 
-    total: Optional[int] = None
+    total: int | None = None
 
 
 class Body(NHPlugAssetHttpBody):
-    output_0: Optional[Summary] = Field(default=None, alias="Output_0")
-    output_1: Optional[List[Row]] = Field(default=None, alias="Output_1")
+    output_0: Summary | None = Field(default=None, alias="Output_0")
+    output_1: list[Row] | None = Field(default=None, alias="Output_1")
 
 
 class EitherBody(NHPlugAssetHttpBody):
-    output_0: Optional[Union[Summary, List[Summary]]] = Field(default=None, alias="Output_0")
+    output_0: Summary | list[Summary] | None = Field(default=None, alias="Output_0")
 
 
 def _raw(**overrides):

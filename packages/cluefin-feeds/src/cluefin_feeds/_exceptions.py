@@ -1,12 +1,10 @@
 """cluefin-feeds 공통 예외. 공급처별 예외(예: BLS 본문 status 실패)는 FeedError 를 상속한다."""
 
-from typing import Optional
-
 
 class FeedError(Exception):
     """Base exception for every feed."""
 
-    def __init__(self, message: str, status_code: Optional[int] = None, url: Optional[str] = None):
+    def __init__(self, message: str, status_code: int | None = None, url: str | None = None):
         super().__init__(message)
         self.message = message
         self.status_code = status_code

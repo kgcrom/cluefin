@@ -1,5 +1,3 @@
-from typing import List
-
 from textual.widgets import DataTable
 
 from cluefin_desk.data.screener import ScreeningItem
@@ -29,7 +27,7 @@ class StockScreeningTable(DataTable):
         for label, width in COLUMNS:
             self.add_column(label, key=label, width=width)
 
-    def load_data(self, items: List[ScreeningItem]) -> None:
+    def load_data(self, items: list[ScreeningItem]) -> None:
         self.clear()
         for item in items:
             rate = float(item.change_rate) if item.change_rate else 0.0

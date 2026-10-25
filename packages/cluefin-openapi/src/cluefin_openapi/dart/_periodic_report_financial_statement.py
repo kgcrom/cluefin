@@ -1,8 +1,9 @@
 import io
 import shutil
 import zipfile
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Literal, Mapping
+from typing import Literal
 
 from defusedxml import ElementTree
 

@@ -47,8 +47,12 @@ extend-exclude = ["*.json", "*.ipynb", "docs/plans"]
 [tool.ruff.format]
 docstring-code-format = true
 [tool.ruff.lint]
-select = ["E", "F", "W", "B", "Q", "I", "ASYNC", "T20"]
+select = ["E", "F", "W", "B", "Q", "I", "ASYNC", "T20", "UP", "TID251"]
 ignore = ["E501"]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+# Codacy flags any stdlib xml import as XXE (critical), even type-only ones.
+"xml".msg = "Parse with defusedxml; for element types declare a Protocol (see cluefin_dart_notes/_xml.py)"
 
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**" = ["T201"]

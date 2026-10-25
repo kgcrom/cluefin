@@ -30,7 +30,7 @@ TR (type):
 - 1h VI발동/해제     → DomesticRealtimeViActivation
 """
 
-from typing import Iterable, List
+from collections.abc import Iterable
 
 from pydantic import BaseModel
 
@@ -151,7 +151,7 @@ class DomesticRealtime:
         await self.socket_client.send(request)
 
     @staticmethod
-    def parse(message: KiwoomWebSocketMessage) -> List[BaseModel]:
+    def parse(message: KiwoomWebSocketMessage) -> list[BaseModel]:
         """수신 프레임을 TR type별 응답 모델로 파싱한다.
 
         한 REAL 프레임에 여러 type 이 섞여 오므로 type 마다 그 항목만 담은 모델 하나씩을 돌려준다

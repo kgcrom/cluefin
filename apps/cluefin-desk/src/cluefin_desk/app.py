@@ -1,6 +1,5 @@
 import threading
 from pathlib import Path
-from typing import Optional
 
 from textual.app import App
 from textual.binding import Binding
@@ -35,7 +34,7 @@ class CluefinDeskApp(App):
         self.fetcher = DomesticDataFetcher()
         self.screener = StockScreener(self.fetcher)
         self._current_screen_key = "1"
-        self._listing: Optional[StockListing] = None
+        self._listing: StockListing | None = None
         self._listing_lock = threading.Lock()
 
     def on_mount(self) -> None:
@@ -91,7 +90,7 @@ class CluefinDeskApp(App):
             return
         self.push_screen(StockSearchScreen(self.get_listing), self.open_stock_detail)
 
-    def open_stock_detail(self, stock_code: Optional[str]) -> None:
+    def open_stock_detail(self, stock_code: str | None) -> None:
         """Open the detail screen on top of the current one (escape returns)."""
         if not stock_code:
             return

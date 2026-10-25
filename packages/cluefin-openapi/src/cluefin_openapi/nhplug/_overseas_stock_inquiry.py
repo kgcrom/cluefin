@@ -1,4 +1,4 @@
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 from cluefin_openapi.nhplug._exceptions import raise_for_rsp_cd
 from cluefin_openapi.nhplug._http_client import HttpClient
@@ -65,7 +65,7 @@ class OverseasStockInquiry:
         self.client = client
 
     @staticmethod
-    def _drop_none(body: Dict[str, Any]) -> Dict[str, Any]:
+    def _drop_none(body: dict[str, Any]) -> dict[str, Any]:
         """선택 파라미터는 값이 있을 때만 전송한다."""
         return {k: v for k, v in body.items() if v is not None}
 
@@ -78,10 +78,10 @@ class OverseasStockInquiry:
         wtm_cur_knd_cd: Literal["1", "2", "3", "4"],
         oss_orr_knd_cd: Literal["1", "2", "3"],
         ahi_nmn_pr_tp_cd: SpotQuoteTypeCode,
-        fc_orr_uit_pr: Optional[float] = None,
-        cfd_lon_cd: Optional[CreditLoanCode] = None,
-        lon_dt: Optional[str] = None,
-        cts: Optional[str] = None,
+        fc_orr_uit_pr: float | None = None,
+        cfd_lon_cd: CreditLoanCode | None = None,
+        lon_dt: str | None = None,
+        cts: str | None = None,
     ) -> NHPlugHttpResponse[OverseasStockInquiryBuyableAmount]:
         """해외주식 매수가능금액·수량 조회 (`POST /gbstock/inquiry/v1/buyableAmount`).
 
@@ -140,10 +140,10 @@ class OverseasStockInquiry:
         oss_sby_dit_cd: Literal["0", "1", "2"],
         sot_dit: Literal["0", "1"],
         ost_cns_dit: Literal["0", "1", "2"],
-        iem_cd: Optional[str] = None,
-        orr_no: Optional[int] = None,
-        ove_qty_dit_cd: Optional[str] = None,
-        cts: Optional[str] = None,
+        iem_cd: str | None = None,
+        orr_no: int | None = None,
+        ove_qty_dit_cd: str | None = None,
+        cts: str | None = None,
     ) -> NHPlugHttpResponse[OverseasStockInquiryUnexecuted]:
         """해외주식 주문체결내역 (`POST /gbstock/inquiry/v1/unexecuted`).
 
@@ -191,8 +191,8 @@ class OverseasStockInquiry:
         qut_iqr_dit_cd: Literal["1", "9"],
         fc_sec_trd_nat_cd: ForeignTradeNationCode,
         cur_cd: TradeCurrencyCode,
-        xns_dit_cd: Optional[Literal["0", "1"]] = None,
-        cts: Optional[str] = None,
+        xns_dit_cd: Literal["0", "1"] | None = None,
+        cts: str | None = None,
     ) -> NHPlugHttpResponse[OverseasStockInquiryBalance]:
         """해외주식 잔고 (`POST /gbstock/inquiry/v1/balance`).
 
@@ -239,8 +239,8 @@ class OverseasStockInquiry:
         oss_orr_knd_cd: Literal["0", "1", "2", "3"],
         bkg_orr_tp_cd: Literal["0", "1", "2", "3", "4"],
         wtm_cur_knd_cd: Literal["0", "1", "2"],
-        iem_cd: Optional[str] = None,
-        cts: Optional[str] = None,
+        iem_cd: str | None = None,
+        cts: str | None = None,
     ) -> NHPlugHttpResponse[OverseasStockInquiryReservedInquiry]:
         """해외주식 예약주문조회 (`POST /gbstock/inquiry/v1/reservedInquiry`).
 
@@ -295,8 +295,8 @@ class OverseasStockInquiry:
         iqr_end_dt: str,
         act_trd_cfc_cd: Literal["00", "01", "02", "03", "04", "05", "06"],
         iem_mlf_cd: Literal["00001", "00002", "00003", "00004", "00005"],
-        iem_cd: Optional[str] = None,
-        cts: Optional[str] = None,
+        iem_cd: str | None = None,
+        cts: str | None = None,
     ) -> NHPlugHttpResponse[OverseasStockInquiryDailyTransaction]:
         """해외주식 일별거래내역 (`POST /gbstock/inquiry/v1/dailyTransaction`).
 
@@ -343,10 +343,10 @@ class OverseasStockInquiry:
         iqr_dit: Literal["1", "2"],
         sta_orr_dt: str,
         end_orr_dt: str,
-        iem_cd: Optional[str] = None,
-        trd_cur_cd: Optional[TradeCurrencyCode] = None,
-        fc_sec_trd_nat_cd: Optional[ForeignTradeNationCodeWithAll] = None,
-        cts: Optional[str] = None,
+        iem_cd: str | None = None,
+        trd_cur_cd: TradeCurrencyCode | None = None,
+        fc_sec_trd_nat_cd: ForeignTradeNationCodeWithAll | None = None,
+        cts: str | None = None,
     ) -> NHPlugHttpResponse[OverseasStockInquiryPeriodPnl]:
         """해외주식 기간손익 (`POST /gbstock/inquiry/v1/periodPnl`).
 
@@ -395,8 +395,8 @@ class OverseasStockInquiry:
         orr_dt: str,
         fc_sec_trd_nat_cd: ForeignTradeNationCode,
         trd_cur_cd: TradeCurrencyCode,
-        iem_cd: Optional[str] = None,
-        cts: Optional[str] = None,
+        iem_cd: str | None = None,
+        cts: str | None = None,
     ) -> NHPlugHttpResponse[OverseasStockInquiryPeriodPnlDetail]:
         """해외주식 기간손익 상세 (`POST /gbstock/inquiry/v1/periodPnlDetail`).
 
@@ -438,7 +438,7 @@ class OverseasStockInquiry:
     def margin(
         self,
         act_no: str,
-        cts: Optional[str] = None,
+        cts: str | None = None,
     ) -> NHPlugHttpResponse[OverseasStockInquiryMargin]:
         """해외증거금 통화별조회 (`POST /gbstock/inquiry/v1/margin`).
 

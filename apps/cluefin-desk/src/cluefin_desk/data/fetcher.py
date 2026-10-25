@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pandas as pd
 from cluefin_openapi.kis._auth import Auth as KisAuth
@@ -46,7 +46,7 @@ class DomesticDataFetcher:
             token=token.get_token(),
             env=settings.kiwoom_env,
         )
-        self._kis_client: Optional[KisClient] = None
+        self._kis_client: KisClient | None = None
 
     @property
     def kis_client(self) -> KisClient:
@@ -130,7 +130,7 @@ class DomesticDataFetcher:
             pdno=stock_code,
         ).body.output
 
-        merged_data: Dict[str, Any] = {"stock_code": stock_code}
+        merged_data: dict[str, Any] = {"stock_code": stock_code}
 
         if price is not None:
             merged_data.update(
@@ -174,7 +174,7 @@ class DomesticDataFetcher:
 
         return pd.DataFrame([merged_data])
 
-    def _fetch_financial_metrics(self, stock_code: str, settlement_month: Optional[str] = None) -> Dict[str, Any]:
+    def _fetch_financial_metrics(self, stock_code: str, settlement_month: str | None = None) -> dict[str, Any]:
         """Fill in the profitability/scale figures the quote response omits.
 
         KIS 재무비율 (FHKST66430300) and 손익계산서 (FHKST66430200) cover ROE, 매출액,
@@ -186,7 +186,7 @@ class DomesticDataFetcher:
         inflates ROE and every growth rate, so the completed year is used for the
         headline numbers and the cumulative row is surfaced separately as YTD.
         """
-        metrics: Dict[str, Any] = {}
+        metrics: dict[str, Any] = {}
 
         annual_ratio, ytd_ratio = self._split_annual_and_ytd(
             self.get_financial_ratio_series(stock_code), settlement_month
@@ -275,7 +275,7 @@ class DomesticDataFetcher:
             return []
 
     @staticmethod
-    def _split_annual_and_ytd(items, settlement_month: Optional[str]):
+    def _split_annual_and_ytd(items, settlement_month: str | None):
         """Split the KIS "년" series into (completed fiscal year, in-progress cumulative).
 
         A row belongs to a completed year when its 결산 년월 ends on the company's
@@ -680,7 +680,7 @@ class DomesticDataFetcher:
         max_pages = 3
         cont_yn = "N"
         next_key = ""
-        rows: List[Dict[str, Any]] = []
+        rows: list[dict[str, Any]] = []
 
         for _ in range(max_pages):
             response = self.kiwoom_client.chart.get_stock_daily(
@@ -993,7 +993,7 @@ class DomesticDataFetcher:
         )
         return list(response.body.output2)
 
-    def get_watchlist_quotes(self, stocks: List[tuple]) -> list:
+    def get_watchlist_quotes(self, stocks: list[tuple]) -> list:
         """Multi-quote for `(market_code, stock_code)` pairs, 30 per call, in input order."""
         analysis = self.kis_client.domestic_market_analysis
         quotes = []

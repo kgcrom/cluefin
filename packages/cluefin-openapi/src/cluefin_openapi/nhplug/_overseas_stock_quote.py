@@ -1,4 +1,4 @@
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 from cluefin_openapi.nhplug._exceptions import raise_for_rsp_cd
 from cluefin_openapi.nhplug._http_client import HttpClient
@@ -29,7 +29,7 @@ class OverseasStockQuote:
         self.client = client
 
     @staticmethod
-    def _drop_none(body: Dict[str, Any]) -> Dict[str, Any]:
+    def _drop_none(body: dict[str, Any]) -> dict[str, Any]:
         """선택 파라미터는 값이 있을 때만 전송한다."""
         return {k: v for k, v in body.items() if v is not None}
 
@@ -154,8 +154,8 @@ class OverseasStockQuote:
         maxavg: str,
         gubun: Literal["1", "2", "3"],
         today_cls: Literal["0", "1"],
-        xtick: Optional[str] = None,
-        scale_change: Optional[str] = None,
+        xtick: str | None = None,
+        scale_change: str | None = None,
     ) -> NHPlugHttpResponse[OverseasStockQuoteSymbolIndexFxPeriod]:
         """해외주식 기간별시세(지수·환율) (`POST /gbstock/quote/v1/symbolIndexFxPeriod`).
 

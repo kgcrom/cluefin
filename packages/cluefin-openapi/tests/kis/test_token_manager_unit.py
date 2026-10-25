@@ -150,7 +150,7 @@ def test_token_persistence_to_disk(temp_cache_dir, valid_token):
     assert manager.cache_file.exists()
 
     # Verify cache file content
-    with open(manager.cache_file, "r") as f:
+    with open(manager.cache_file) as f:
         cache_data = json.load(f)
 
     assert cache_data["token"]["access_token"] == valid_token.access_token

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import List
 
 from ._archives_types import FilingDetail, FilingIndex, Form13FFiles
 from ._client import WWW_BASE_URL, Client
@@ -91,7 +90,7 @@ class Archives:
         *,
         destination: Path | str,
         overwrite: bool = False,
-    ) -> List[Path]:
+    ) -> list[Path]:
         """XBRL 인스턴스·스키마·링크베이스를 한 폴더에 저장한다. `cluefin-xbrl`이 그 폴더를 파싱한다.
 
         인라인 XBRL 공시(2019년~)는 SEC가 뽑아 둔 인스턴스(`*_htm.xml`)를 받는다. 본문 .htm은 받지 않는다.

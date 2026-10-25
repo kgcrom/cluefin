@@ -7,7 +7,7 @@ any field not explicitly overridden with a type-appropriate placeholder value.
 """
 
 import types
-from typing import Any, Literal, Type, Union, get_args, get_origin
+from typing import Any, Literal, Union, get_args, get_origin
 
 from pydantic import BaseModel
 
@@ -32,7 +32,7 @@ def default_value(annotation: Any, field_name: str) -> Any:
 
 
 def build_payload(
-    item_type: Type[BaseModel],
+    item_type: type[BaseModel],
     overrides: dict[str, Any] | None = None,
     common_values: dict[str, Any] | None = None,
 ) -> dict[str, Any]:

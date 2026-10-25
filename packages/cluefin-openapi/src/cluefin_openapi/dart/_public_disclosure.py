@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import io
 import zipfile
+from collections.abc import Mapping
 from datetime import date, timedelta
 from pathlib import Path, PurePosixPath
-from typing import List, Literal, Mapping, Optional
-from xml.etree.ElementTree import Element
+from typing import Literal, Protocol
 
 from defusedxml.ElementTree import ParseError, fromstring
 
@@ -23,6 +23,12 @@ from ._public_disclosure_types import (
 )
 
 
+class _XmlNode(Protocol):
+    """`defusedxml` 이 돌려주는 요소 중 여기서 쓰는 부분. 표준 `xml` import 는 보안 분석이 XXE 로 지적한다."""
+
+    def findtext(self, path: str) -> str | None: ...
+
+
 class PublicDisclosure:
     """DART 공시정보 API"""
 
@@ -32,17 +38,17 @@ class PublicDisclosure:
     def public_disclosure_search(
         self,
         *,
-        corp_code: Optional[str] = None,
-        bgn_de: Optional[str] = None,
-        end_de: Optional[str] = None,
+        corp_code: str | None = None,
+        bgn_de: str | None = None,
+        end_de: str | None = None,
         last_reprt_at: Literal["Y", "N"] = "N",
-        pblntf_ty: Optional[Literal["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]] = None,
-        pblntf_detail_ty: Optional[str] = None,
-        corp_cls: Optional[Literal["Y", "K", "N", "E"]] = None,
-        sort: Optional[Literal["date", "crp", "rpt"]] = None,
-        sort_mth: Optional[Literal["asc", "desc"]] = None,
-        page_no: Optional[int] = None,
-        page_count: Optional[int] = None,
+        pblntf_ty: Literal["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"] | None = None,
+        pblntf_detail_ty: str | None = None,
+        corp_cls: Literal["Y", "K", "N", "E"] | None = None,
+        sort: Literal["date", "crp", "rpt"] | None = None,
+        sort_mth: Literal["asc", "desc"] | None = None,
+        page_no: int | None = None,
+        page_count: int | None = None,
     ) -> PublicDisclosureSearch:
         """공시검색
 
@@ -170,7 +176,7 @@ class PublicDisclosure:
         *,
         destination: Path | str = Path("."),
         overwrite: bool = False,
-    ) -> List[Path]:
+    ) -> list[Path]:
         """
         공시서류원본파일 - 원본 ZIP에 든 XML을 모두 저장합니다.
 
@@ -244,7 +250,7 @@ class PublicDisclosure:
         status = DartStatusCode.SUCCESS
         message = "정상"
 
-        items: List[UniqueNumberItem] = []
+        items: list[UniqueNumberItem] = []
         for element in root.findall("list"):
             corp_code = self._xml_text(element, "corp_code")
             corp_name = self._xml_text(element, "corp_name")
@@ -276,16 +282,16 @@ class PublicDisclosure:
         return UniqueNumber.parse(payload, list_model=UniqueNumberItem)
 
     @staticmethod
-    def _xml_text(node: Element, tag: str) -> str:
+    def _xml_text(node: _XmlNode, tag: str) -> str:
         value = node.findtext(tag)
         return value.strip() if value else ""
 
-    def _optional_xml_text(self, node: Element, tag: str) -> Optional[str]:
+    def _optional_xml_text(self, node: _XmlNode, tag: str) -> str | None:
         value = self._xml_text(node, tag)
         return value or None
 
 
-def _xml_entries(payload: bytes, rcept_no: str) -> List[tuple[str, bytes]]:
+def _xml_entries(payload: bytes, rcept_no: str) -> list[tuple[str, bytes]]:
     """원본 ZIP의 XML 항목을 (파일 이름, 바이트)로 돌려준다. 본문을 첫 번째로 두고 나머지는 이름순이다.
 
     항목 이름은 `/`로 시작하기도 해서(2016년 공시) 디렉터리 부분을 버리고 파일 이름만 쓴다.

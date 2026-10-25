@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -142,13 +142,13 @@ class CurrentPriceFirstQuoteItem2(BaseModel):
 
 
 class CurrentPriceFirstQuoteItem3(BaseModel):
-    vstm: Optional[str] = Field(title="VCMStart시간", description="데이터 없음")
-    vetm: Optional[str] = Field(title="VCMEnd시간", description="데이터 없음")
-    csbp: Optional[str] = Field(title="CAS/VCM기준가", description="데이터 없음")
-    cshi: Optional[str] = Field(title="CAS/VCMHighprice", description="데이터 없음")
-    cslo: Optional[str] = Field(title="CAS/VCMLowprice", description="데이터 없음")
-    iep: Optional[str] = Field(title="IEP", description="데이터 없음")
-    iev: Optional[str] = Field(title="IEV", description="데이터 없음")
+    vstm: str | None = Field(title="VCMStart시간", description="데이터 없음")
+    vetm: str | None = Field(title="VCMEnd시간", description="데이터 없음")
+    csbp: str | None = Field(title="CAS/VCM기준가", description="데이터 없음")
+    cshi: str | None = Field(title="CAS/VCMHighprice", description="데이터 없음")
+    cslo: str | None = Field(title="CAS/VCMLowprice", description="데이터 없음")
+    iep: str | None = Field(title="IEP", description="데이터 없음")
+    iev: str | None = Field(title="IEV", description="데이터 없음")
 
 
 class CurrentPriceFirstQuote(BaseModel, KisHttpBody):
@@ -203,7 +203,7 @@ class ConclusionTrendMeta(BaseModel):
 class ConclusionTrend(BaseModel, KisHttpBody):
     """해외주식 체결추이"""
 
-    output1: Optional[ConclusionTrendMeta] = Field(default=None, title="응답상세1")
+    output1: ConclusionTrendMeta | None = Field(default=None, title="응답상세1")
     output2: Sequence[ConclusionTrendItem] = Field(default_factory=list, title="응답상세2")
 
     @field_validator("output1", mode="before")
@@ -298,16 +298,16 @@ class StockPeriodQuoteItem2(BaseModel):
     low: str = Field(title="저가", description="해당일 가장 낮은 거래가격")
     tvol: str = Field(title="거래량", description="해당일 거래량")
     tamt: str = Field(title="거래대금", description="해당일 거래대금")
-    pbid: Optional[str] = Field(
+    pbid: str | None = Field(
         title="매수호가",
         description="마지막 체결이 발생한 시점의 매수호가. * 해당 일자 거래량 0인 경우 값이 수신되지 않음",
     )
-    vbid: Optional[str] = Field(title="매수호가잔량", description="* 해당 일자 거래량 0인 경우 값이 수신되지 않음")
-    pask: Optional[str] = Field(
+    vbid: str | None = Field(title="매수호가잔량", description="* 해당 일자 거래량 0인 경우 값이 수신되지 않음")
+    pask: str | None = Field(
         title="매도호가",
         description="마지막 체결이 발생한 시점의 매도호가. * 해당 일자 거래량 0인 경우 값이 수신되지 않음",
     )
-    vask: Optional[str] = Field(title="매도호가잔량", description="* 해당 일자 거래량 0인 경우 값이 수신되지 않음")
+    vask: str | None = Field(title="매도호가잔량", description="* 해당 일자 거래량 0인 경우 값이 수신되지 않음")
 
 
 class StockPeriodQuote(BaseModel, KisHttpBody):
@@ -318,28 +318,28 @@ class StockPeriodQuote(BaseModel, KisHttpBody):
 
 
 class ItemIndexExchangePeriodPriceItem1(BaseModel):
-    ovrs_nmix_prdy_vrss: Optional[str] = Field(title="전일 대비", default=None)
-    prdy_vrss_sign: Optional[str] = Field(title="전일 대비 부호", default=None)
-    prdy_ctrt: Optional[str] = Field(title="전일 대비율", default=None)
-    ovrs_nmix_prdy_clpr: Optional[str] = Field(title="전일 종가", default=None)
-    acml_vol: Optional[str] = Field(title="누적 거래량", default=None)
-    hts_kor_isnm: Optional[str] = Field(title="HTS 한글 종목명", default=None)
-    ovrs_nmix_prpr: Optional[str] = Field(title="현재가", default=None)
-    stck_shrn_iscd: Optional[str] = Field(title="단축 종목코드", default=None)
-    prdy_vol: Optional[str] = Field(title="전일 거래량", default=None)
-    ovrs_prod_oprc: Optional[str] = Field(title="시가", default=None)
-    ovrs_prod_hgpr: Optional[str] = Field(title="최고가", default=None)
-    ovrs_prod_lwpr: Optional[str] = Field(title="최저가", default=None)
+    ovrs_nmix_prdy_vrss: str | None = Field(title="전일 대비", default=None)
+    prdy_vrss_sign: str | None = Field(title="전일 대비 부호", default=None)
+    prdy_ctrt: str | None = Field(title="전일 대비율", default=None)
+    ovrs_nmix_prdy_clpr: str | None = Field(title="전일 종가", default=None)
+    acml_vol: str | None = Field(title="누적 거래량", default=None)
+    hts_kor_isnm: str | None = Field(title="HTS 한글 종목명", default=None)
+    ovrs_nmix_prpr: str | None = Field(title="현재가", default=None)
+    stck_shrn_iscd: str | None = Field(title="단축 종목코드", default=None)
+    prdy_vol: str | None = Field(title="전일 거래량", default=None)
+    ovrs_prod_oprc: str | None = Field(title="시가", default=None)
+    ovrs_prod_hgpr: str | None = Field(title="최고가", default=None)
+    ovrs_prod_lwpr: str | None = Field(title="최저가", default=None)
 
 
 class ItemIndexExchangePeriodPriceItem2(BaseModel):
-    stck_bsop_date: Optional[str] = Field(title="영업 일자", default=None)
-    ovrs_nmix_prpr: Optional[str] = Field(title="현재가", default=None)
-    ovrs_nmix_oprc: Optional[str] = Field(title="시가", default=None)
-    ovrs_nmix_hgpr: Optional[str] = Field(title="최고가", default=None)
-    ovrs_nmix_lwpr: Optional[str] = Field(title="최저가", default=None)
-    acml_vol: Optional[str] = Field(title="누적 거래량", default=None)
-    mod_yn: Optional[str] = Field(title="변경 여부", default=None)
+    stck_bsop_date: str | None = Field(title="영업 일자", default=None)
+    ovrs_nmix_prpr: str | None = Field(title="현재가", default=None)
+    ovrs_nmix_oprc: str | None = Field(title="시가", default=None)
+    ovrs_nmix_hgpr: str | None = Field(title="최고가", default=None)
+    ovrs_nmix_lwpr: str | None = Field(title="최저가", default=None)
+    acml_vol: str | None = Field(title="누적 거래량", default=None)
+    mod_yn: str | None = Field(title="변경 여부", default=None)
 
 
 class ItemIndexExchangePeriodPrice(BaseModel, KisHttpBody):
@@ -350,37 +350,37 @@ class ItemIndexExchangePeriodPrice(BaseModel, KisHttpBody):
 
 
 class SearchByConditionItem1(BaseModel):
-    zdiv: Optional[str] = Field(title="소수점자리수")
-    stat: Optional[str] = Field(title="거래상태정보")
-    crec: Optional[str] = Field(title="현재조회종목수")
-    trec: Optional[str] = Field(title="전체조회종목수")
-    nrec: Optional[str] = Field(title="Record Count")
+    zdiv: str | None = Field(title="소수점자리수")
+    stat: str | None = Field(title="거래상태정보")
+    crec: str | None = Field(title="현재조회종목수")
+    trec: str | None = Field(title="전체조회종목수")
+    nrec: str | None = Field(title="Record Count")
 
 
 class SearchByConditionItem2(BaseModel):
-    rsym: Optional[str] = Field(
+    rsym: str | None = Field(
         title="실시간조회심볼",
         description="실시간조회심볼\n\nD+시장구분(3자리)+종목코드\n예) DNASAAPL : D+NAS(나스닥)+AAPL(애플)\n[시장구분]\nNYS : 뉴욕, NAS : 나스닥, AMS : 아멕스 ,\nTSE : 도쿄, HKS : 홍콩,\nSHS : 상해, SZS : 심천\nHSX : 호치민, HNX : 하노이",
     )
-    excd: Optional[str] = Field(title="거래소코드")
-    name: Optional[str] = Field(title="종목명")
-    symb: Optional[str] = Field(title="종목코드")
-    last: Optional[str] = Field(title="현재가")
-    shar: Optional[str] = Field(title="발행주식", description="발행주식수(단위: 천)")
-    valx: Optional[str] = Field(title="시가총액", description="시가총액(단위: 천)")
-    plow: Optional[str] = Field(title="저가")
-    phigh: Optional[str] = Field(title="고가")
-    popen: Optional[str] = Field(title="시가")
-    tvol: Optional[str] = Field(title="거래량", description="거래량(단위: 주)")
-    rate: Optional[str] = Field(title="등락율", description="등락율(%)")
-    diff: Optional[str] = Field(title="대비")
-    sign: Optional[str] = Field(title="기호")
-    avol: Optional[str] = Field(title="거래대금", description="거래대금(단위: 천)")
-    eps: Optional[str] = Field(title="EPS")
-    per: Optional[str] = Field(title="PER")
-    rank: Optional[str] = Field(title="순위")
-    ename: Optional[str] = Field(title="영문종목명")
-    e_ordyn: Optional[str] = Field(title="매매가능", description="가능 : O")
+    excd: str | None = Field(title="거래소코드")
+    name: str | None = Field(title="종목명")
+    symb: str | None = Field(title="종목코드")
+    last: str | None = Field(title="현재가")
+    shar: str | None = Field(title="발행주식", description="발행주식수(단위: 천)")
+    valx: str | None = Field(title="시가총액", description="시가총액(단위: 천)")
+    plow: str | None = Field(title="저가")
+    phigh: str | None = Field(title="고가")
+    popen: str | None = Field(title="시가")
+    tvol: str | None = Field(title="거래량", description="거래량(단위: 주)")
+    rate: str | None = Field(title="등락율", description="등락율(%)")
+    diff: str | None = Field(title="대비")
+    sign: str | None = Field(title="기호")
+    avol: str | None = Field(title="거래대금", description="거래대금(단위: 천)")
+    eps: str | None = Field(title="EPS")
+    per: str | None = Field(title="PER")
+    rank: str | None = Field(title="순위")
+    ename: str | None = Field(title="영문종목명")
+    e_ordyn: str | None = Field(title="매매가능", description="가능 : O")
 
 
 class SearchByCondition(BaseModel, KisHttpBody):

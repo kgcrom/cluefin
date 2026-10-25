@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import datetime as dt
 import re
+from collections.abc import Callable, Sequence
 from decimal import Decimal, InvalidOperation
 from html.parser import HTMLParser
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any
 
 from .._exceptions import FeedParseError
 from ._types import (
@@ -38,9 +39,9 @@ class _TableCollector(HTMLParser):
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
-        self.tables: List[List[List[str]]] = []
-        self._row: Optional[List[str]] = None
-        self._cell: Optional[List[str]] = None
+        self.tables: list[list[list[str]]] = []
+        self._row: list[str] | None = None
+        self._cell: list[str] | None = None
 
     def handle_starttag(self, tag: str, attrs) -> None:
         if tag == "table":
@@ -86,15 +87,15 @@ def _is_crp_header(cells: Sequence[str]) -> bool:
     return bool(lowered) and lowered[0] == "country" and "equity risk premium" in lowered
 
 
-def _crp_values(cells: Sequence[str], positions: Dict[str, int]) -> Dict[str, Any]:
-    values: Dict[str, Any] = {name: cells[index] for name, index in positions.items()}
+def _crp_values(cells: Sequence[str], positions: dict[str, int]) -> dict[str, Any]:
+    values: dict[str, Any] = {name: cells[index] for name, index in positions.items()}
     for name in positions:
         if name not in ("country", "moodys_rating"):
             values[name] = _percent(values[name])
     return values
 
 
-def _percent(text: str) -> Optional[Decimal]:
+def _percent(text: str) -> Decimal | None:
     try:
         return Decimal(text.strip().rstrip("%").replace(",", ""))
     except InvalidOperation:
@@ -150,7 +151,7 @@ def parse_industry_betas(rows: Sequence[Sequence[Any]], to_date: Callable[[float
         name = _text(row[0]) if row else ""
         if not name:
             break
-        values: Dict[str, Any] = {field: _number(row[i]) for field, i in positions.items()}
+        values: dict[str, Any] = {field: _number(row[i]) for field, i in positions.items()}
         values["industry_name"] = name
         values["number_of_firms"] = int(values["number_of_firms"] or 0)
         values["unlevered_beta_by_year"] = {
@@ -167,7 +168,7 @@ def parse_industry_betas(rows: Sequence[Sequence[Any]], to_date: Callable[[float
     )
 
 
-def parse_companies(rows: Sequence[Sequence[Any]], country: Optional[str]) -> List[CompanyIndustry]:
+def parse_companies(rows: Sequence[Sequence[Any]], country: str | None) -> list[CompanyIndustry]:
     """indname.xls "By industry" 시트의 행들. country 를 주면 그 나라만."""
     if not rows:
         raise FeedParseError("indname.xls 시트가 비었습니다")
@@ -187,10 +188,10 @@ def parse_companies(rows: Sequence[Sequence[Any]], country: Optional[str]) -> Li
 # ── 공통 ───────────────────────────────────────────────────────
 
 
-def _column_positions(header: Sequence[str], columns, source: str, optional=frozenset()) -> Dict[str, int]:
+def _column_positions(header: Sequence[str], columns, source: str, optional=frozenset()) -> dict[str, int]:
     """(필드, 머리 앞부분) 표를 머리 행의 위치로. 여러 열이 같은 앞부분이면 가장 길게 맞는 열을 쓴다."""
     lowered = [h.strip().lower() for h in header]
-    positions: Dict[str, int] = {}
+    positions: dict[str, int] = {}
     for field, prefix in columns:
         candidates = [i for i, h in enumerate(lowered) if h == prefix] or [
             i for i, h in enumerate(lowered) if h.startswith(prefix) and not _claimed_by_longer(h, prefix, columns)
@@ -226,7 +227,7 @@ def _text(cell: Any) -> str:
     return str(cell).strip() if cell is not None else ""
 
 
-def _number(cell: Any) -> Optional[float]:
+def _number(cell: Any) -> float | None:
     if isinstance(cell, (int, float)) and not isinstance(cell, bool):
         return float(cell)
     try:

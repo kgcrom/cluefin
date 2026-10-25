@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 from pydantic import BaseModel, Field
 
@@ -38,19 +38,19 @@ class StockQuoteCorrection(BaseModel, KisHttpBody):
 
 
 class StockReserveQuoteItem(BaseModel):
-    odno: Optional[str] = Field(
+    odno: str | None = Field(
         default=None,
         title="한국거래소전송주문조직번호",
         alias="ODNO",
         description="tr_id가 TTTT3016U(미국 예약 매도 주문) / TTTT3014U(미국 예약 매수 주문)인 경우만 출력",
     )
-    rsvn_ord_rcit_dt: Optional[str] = Field(
+    rsvn_ord_rcit_dt: str | None = Field(
         default=None,
         title="예약주문접수일자",
         alias="RSVN_ORD_RCIT_DT",
         description="tr_id가 TTTS3013U(중국/홍콩/일본/베트남 예약 주문)인 경우만 출력",
     )
-    ovrs_rsvn_odno: Optional[str] = Field(
+    ovrs_rsvn_odno: str | None = Field(
         default=None,
         title="해외예약주문번호",
         alias="OVRS_RSVN_ODNO",
@@ -75,30 +75,26 @@ class StockReserveQuoteCorrection(BaseModel, KisHttpBody):
 
 
 class BuyTradableAmountItem(BaseModel):
-    tr_crcy_cd: Optional[str] = Field(title="거래통화코드")
-    ord_psbl_frcr_amt: Optional[str] = Field(title="주문가능외화금액", description="18.2")
-    sll_ruse_psbl_amt: Optional[str] = Field(title="매도재사용가능금액", description="가능금액 산정 시 사용")
-    ovrs_ord_psbl_amt: Optional[str] = Field(
+    tr_crcy_cd: str | None = Field(title="거래통화코드")
+    ord_psbl_frcr_amt: str | None = Field(title="주문가능외화금액", description="18.2")
+    sll_ruse_psbl_amt: str | None = Field(title="매도재사용가능금액", description="가능금액 산정 시 사용")
+    ovrs_ord_psbl_amt: str | None = Field(
         title="해외주문가능금액",
         description='- 한국투자 앱 해외주식 주문화면내 "외화" 인경우 주문가능금액',
     )
-    max_ord_psbl_qty: Optional[str] = Field(
+    max_ord_psbl_qty: str | None = Field(
         title="최대주문가능수량",
         description='- 한국투자 앱 해외주식 주문화면내 "외화" 인경우 주문가능수량\n- 매수 시 수량단위 절사해서 사용 \n   예 : (100주단위) 545 주 -> 500 주 / (10주단위) 545 주 -> 540 주',
     )
-    echm_af_ord_psbl_amt: Optional[str] = Field(
-        title="환전이후주문가능금액", description="사용되지 않는 사항(0으로 출력)"
-    )
-    echm_af_ord_psbl_qty: Optional[str] = Field(
-        title="환전이후주문가능수량", description="사용되지 않는 사항(0으로 출력)"
-    )
-    ord_psbl_qty: Optional[str] = Field(title="주문가능수량", description="22(20.1)")
-    exrt: Optional[str] = Field(title="환율", description="25(18.6)")
-    frcr_ord_psbl_amt1: Optional[str] = Field(
+    echm_af_ord_psbl_amt: str | None = Field(title="환전이후주문가능금액", description="사용되지 않는 사항(0으로 출력)")
+    echm_af_ord_psbl_qty: str | None = Field(title="환전이후주문가능수량", description="사용되지 않는 사항(0으로 출력)")
+    ord_psbl_qty: str | None = Field(title="주문가능수량", description="22(20.1)")
+    exrt: str | None = Field(title="환율", description="25(18.6)")
+    frcr_ord_psbl_amt1: str | None = Field(
         title="외화주문가능금액1",
         description='- 한국투자 앱 해외주식 주문화면내 "통합" 인경우 주문가능금액',
     )
-    ovrs_max_ord_psbl_qty: Optional[str] = Field(
+    ovrs_max_ord_psbl_qty: str | None = Field(
         title="해외최대주문가능수량",
         description='- 한국투자 앱 해외주식 주문화면내 "통합" 인경우 주문가능수량\n- 매수 시 수량단위 절사해서 사용 \n   예 : (100주단위) 545 주 -> 500 주 / (10주단위) 545 주 -> 540 주',
     )
@@ -360,30 +356,30 @@ class CurrentBalanceByConclusion(BaseModel, KisHttpBody):
 
 
 class ReserveOrdersItem(BaseModel):
-    cncl_yn: Optional[str] = Field(title="취소여부")
-    rsvn_ord_rcit_dt: Optional[str] = Field(title="예약주문접수일자")
-    ovrs_rsvn_odno: Optional[str] = Field(title="해외예약주문번호")
-    ord_dt: Optional[str] = Field(title="주문일자")
-    ord_gno_brno: Optional[str] = Field(title="주문채번지점번호")
-    odno: Optional[str] = Field(title="주문번호")
-    sll_buy_dvsn_cd: Optional[str] = Field(title="매도매수구분코드")
-    sll_buy_dvsn_cd_name: Optional[str] = Field(title="매도매수구분명")
-    ovrs_rsvn_ord_stat_cd: Optional[str] = Field(title="해외예약주문상태코드")
-    ovrs_rsvn_ord_stat_cd_name: Optional[str] = Field(title="해외예약주문상태코드명")
-    pdno: Optional[str] = Field(title="상품번호")
-    prdt_type_cd: Optional[str] = Field(title="상품유형코드")
-    prdt_name: Optional[str] = Field(title="상품명")
-    ord_rcit_tmd: Optional[str] = Field(title="주문접수시각")
-    ord_fwdg_tmd: Optional[str] = Field(title="주문전송시각")
-    tr_dvsn_name: Optional[str] = Field(title="거래구분명")
-    ovrs_excg_cd: Optional[str] = Field(title="해외거래소코드")
-    tr_mket_name: Optional[str] = Field(title="거래시장명")
-    ord_stfno: Optional[str] = Field(title="주문직원번호")
-    ft_ord_qty: Optional[str] = Field(title="FT주문수량")
-    ft_ord_unpr3: Optional[str] = Field(title="FT주문단가3")
-    ft_ccld_qty: Optional[str] = Field(title="FT체결수량")
-    nprc_rson_text: Optional[str] = Field(title="미처리사유내용")
-    splt_buy_attr_name: Optional[str] = Field(
+    cncl_yn: str | None = Field(title="취소여부")
+    rsvn_ord_rcit_dt: str | None = Field(title="예약주문접수일자")
+    ovrs_rsvn_odno: str | None = Field(title="해외예약주문번호")
+    ord_dt: str | None = Field(title="주문일자")
+    ord_gno_brno: str | None = Field(title="주문채번지점번호")
+    odno: str | None = Field(title="주문번호")
+    sll_buy_dvsn_cd: str | None = Field(title="매도매수구분코드")
+    sll_buy_dvsn_cd_name: str | None = Field(title="매도매수구분명")
+    ovrs_rsvn_ord_stat_cd: str | None = Field(title="해외예약주문상태코드")
+    ovrs_rsvn_ord_stat_cd_name: str | None = Field(title="해외예약주문상태코드명")
+    pdno: str | None = Field(title="상품번호")
+    prdt_type_cd: str | None = Field(title="상품유형코드")
+    prdt_name: str | None = Field(title="상품명")
+    ord_rcit_tmd: str | None = Field(title="주문접수시각")
+    ord_fwdg_tmd: str | None = Field(title="주문전송시각")
+    tr_dvsn_name: str | None = Field(title="거래구분명")
+    ovrs_excg_cd: str | None = Field(title="해외거래소코드")
+    tr_mket_name: str | None = Field(title="거래시장명")
+    ord_stfno: str | None = Field(title="주문직원번호")
+    ft_ord_qty: str | None = Field(title="FT주문수량")
+    ft_ord_unpr3: str | None = Field(title="FT주문단가3")
+    ft_ccld_qty: str | None = Field(title="FT체결수량")
+    nprc_rson_text: str | None = Field(title="미처리사유내용")
+    splt_buy_attr_name: str | None = Field(
         title="분할매수속성명",
         description="정규장 종료 주문 시에는 '정규장 종료', 시간 입력 시에는 from ~ to 시간 표시",
     )
@@ -605,7 +601,7 @@ class LimitOrderNumberItem(BaseModel):
     ft_ord_unpr3: str = Field(title="FT주문단가")
     splt_buy_attr_name: str = Field(title="분할매수속성명")
     ft_ccld_qty: str = Field(title="FT체결수량")
-    ord_gno_brno: Optional[str] = Field(title="주문채번지점번호")
+    ord_gno_brno: str | None = Field(title="주문채번지점번호")
 
 
 class LimitOrderNumber(BaseModel, KisHttpBody):
@@ -621,9 +617,9 @@ class LimitOrderConclusionHistoryItem1(BaseModel):
     ccld_btwn: str = Field(title="체결시간", description="HHMMSS")
     pdno: str = Field(title="상품번호")
     item_name: str = Field(title="종목명")
-    ft_ccld_qty: Optional[str] = Field(title="FT체결수량")
+    ft_ccld_qty: str | None = Field(title="FT체결수량")
     ft_ccld_unpr3: str = Field(title="FT체결단가")
-    ft_ccld_amt3: Optional[str] = Field(title="FT체결금액")
+    ft_ccld_amt3: str | None = Field(title="FT체결금액")
 
 
 class LimitOrderConclusionHistoryItem2(BaseModel):

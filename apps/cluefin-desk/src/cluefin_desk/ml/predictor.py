@@ -6,7 +6,7 @@ feature engineering, model training, and SHAP explanation into a
 unified pipeline for stock prediction.
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import pandas as pd
 from loguru import logger
@@ -27,7 +27,7 @@ class StockMLPredictor:
     into a unified pipeline for stock price movement prediction.
     """
 
-    def __init__(self, model_params: Optional[Dict] = None, enable_diagnostics: bool = True):
+    def __init__(self, model_params: dict | None = None, enable_diagnostics: bool = True):
         """
         Initialize the ML prediction pipeline.
 
@@ -37,19 +37,19 @@ class StockMLPredictor:
         """
         self.feature_engineer = FeatureEngineer()
         self.model = StockPredictor(model_params)
-        self.explainer: Optional[SHAPExplainer] = None
+        self.explainer: SHAPExplainer | None = None
         self.diagnostics = MLDiagnostics() if enable_diagnostics else None
         self.console = Console()
 
         # Pipeline state
         self.is_fitted = False
-        self.feature_names: List[str] = []
-        self.training_metrics: Dict[str, float] = {}
+        self.feature_names: list[str] = []
+        self.training_metrics: dict[str, float] = {}
 
         # Configuration
         self.enable_diagnostics = enable_diagnostics
 
-    def prepare_data(self, stock_data: pd.DataFrame, indicators: Dict) -> Tuple[pd.DataFrame, List[str]]:
+    def prepare_data(self, stock_data: pd.DataFrame, indicators: dict) -> tuple[pd.DataFrame, list[str]]:
         """
         Prepare data for ML training using feature engineering.
 
@@ -81,7 +81,7 @@ class StockMLPredictor:
         validation_split: float = 0.2,
         use_smote: bool = True,
         use_class_weights: bool = True,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Train the ML model on prepared data with improved handling for class imbalance.
 
@@ -153,7 +153,7 @@ class StockMLPredictor:
             logger.error(f"❌ Error training model: {e}")
             raise
 
-    def predict(self, stock_data: pd.DataFrame, indicators: Dict) -> Dict[str, Any]:
+    def predict(self, stock_data: pd.DataFrame, indicators: dict) -> dict[str, Any]:
         """
         Make predictions on new stock data.
 
@@ -223,7 +223,7 @@ class StockMLPredictor:
             logger.error(f"Error making predictions: {e}")
             raise
 
-    def display_prediction_results(self, prediction_result: Dict[str, Any]) -> None:
+    def display_prediction_results(self, prediction_result: dict[str, Any]) -> None:
         """
         Display prediction results in a rich format.
 
@@ -269,7 +269,7 @@ Validation AUC: {self.training_metrics.get("val_auc", 0):.3f}
         except Exception as e:
             logger.error(f"Error displaying prediction results: {e}")
 
-    def display_feature_importance(self, prediction_result: Dict[str, Any], top_n: int = 10) -> None:
+    def display_feature_importance(self, prediction_result: dict[str, Any], top_n: int = 10) -> None:
         """
         Display feature importance using SHAP values.
 
@@ -293,7 +293,7 @@ Validation AUC: {self.training_metrics.get("val_auc", 0):.3f}
         except Exception as e:
             logger.error(f"Error displaying feature importance: {e}")
 
-    def get_model_summary(self) -> Dict[str, Any]:
+    def get_model_summary(self) -> dict[str, Any]:
         """
         Get summary information about the trained model.
 
@@ -322,7 +322,7 @@ Validation AUC: {self.training_metrics.get("val_auc", 0):.3f}
             logger.error(f"Error getting model summary: {e}")
             return {"status": "error", "error": str(e)}
 
-    def cross_validate_model(self, prepared_df: pd.DataFrame, cv_folds: int = 5) -> Dict[str, float]:
+    def cross_validate_model(self, prepared_df: pd.DataFrame, cv_folds: int = 5) -> dict[str, float]:
         """
         Perform cross-validation on the prepared data.
 

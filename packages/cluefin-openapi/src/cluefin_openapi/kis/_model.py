@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Generic, Literal, Type, TypeVar
+from typing import Any, Generic, Literal, TypeVar
 
 from pydantic import BaseModel, Field, ValidationError
 
@@ -33,7 +33,7 @@ class KisHttpBody:
     msg1: str = Field(description="응답메세지")
 
 
-def validate_kis_response(model_cls: Type[T], data: Any) -> T:
+def validate_kis_response(model_cls: type[T], data: Any) -> T:
     """model_validate() 호출 시 ValidationError를 KISValidationError로 변환하여 상세 에러 정보를 제공한다.
 
     로그는 남기지 않는다. 원문은 예외의 ``response_data`` 로 전달되며, 잡아서 처리하는 호출부까지

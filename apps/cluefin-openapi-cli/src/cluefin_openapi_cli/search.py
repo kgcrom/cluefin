@@ -11,8 +11,9 @@ queries reach the corpus through `metadata.QUERY_ALIASES` expansion instead.
 from __future__ import annotations
 
 import math
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Iterable, Sequence
+from typing import Any
 
 from cluefin_openapi_cli.metadata import broker_rank
 from cluefin_openapi_cli.query_terms import expand_query, tokenize

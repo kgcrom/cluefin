@@ -11,7 +11,8 @@ from __future__ import annotations
 
 import re
 import time
-from typing import Any, Callable, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 __all__ = ["RATE_LIMIT_CODE", "is_rate_limited", "kis_call", "kis_error_code"]
 

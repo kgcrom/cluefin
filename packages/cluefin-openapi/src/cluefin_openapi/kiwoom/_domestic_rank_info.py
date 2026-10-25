@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 from cluefin_openapi.kiwoom._client import Client
 from cluefin_openapi.kiwoom._domestic_rank_info_types import (
@@ -1373,7 +1373,7 @@ class DomesticRankInfo:
         trde_tp: Literal["1", "2"],
         mrkt_tp: Literal["000", "001", "101"],
         orgn_tp: Literal["9000", "9100", "1000", "3000", "5000", "4000", "2000", "6000", "7000", "7100", "9999"],
-        amt_qty_tp: Optional[Literal["1", "2"]] = None,
+        amt_qty_tp: Literal["1", "2"] | None = None,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticRankInfoTopIntradayTradingByInvestor]:

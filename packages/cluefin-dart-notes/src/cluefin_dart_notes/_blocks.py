@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from collections.abc import Iterator
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 from cluefin_dart_notes.repair._rules import LINE_BREAK
 
@@ -104,7 +104,7 @@ class Table:
         return [[cell.text if cell else "" for cell in row] for row in self.grid]
 
 
-Block = Union[Paragraph, Heading, Table]
+Block = Paragraph | Heading | Table
 
 
 def table_to_rows(table: Table) -> list[list[str]]:

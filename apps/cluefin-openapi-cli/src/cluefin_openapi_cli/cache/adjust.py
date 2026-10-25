@@ -15,9 +15,10 @@ difference above half a won means a new event and the stock is recomputed.
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
-from typing import Any, Callable
+from typing import Any
 
 import duckdb
 

@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
+from collections.abc import Iterator, Sequence
+from typing import Any
 
 from .._exceptions import FeedError, FeedParseError, FeedRateLimitError
 from .._http import HttpClient
@@ -23,7 +24,7 @@ NOT_PROCESSED = "REQUEST_NOT_PROCESSED"
 class BlsAPIError(FeedError):
     """본문 status 가 REQUEST_SUCCEEDED 가 아닐 때 (HTTP 는 200). `status`·`messages` 에 서버 응답."""
 
-    def __init__(self, message: str, status: str, messages: List[str], url: Optional[str] = None):
+    def __init__(self, message: str, status: str, messages: list[str], url: str | None = None):
         super().__init__(message, url=url)
         self.status = status
         self.messages = messages
@@ -36,20 +37,20 @@ class BlsDailyLimitError(FeedRateLimitError):
 class Client:
     """미 노동통계국(BLS) 시계열. 키 없이 v1, 등록 키가 있으면 v2 로 보낸다."""
 
-    def __init__(self, registration_key: Optional[str] = None, http: Optional[HttpClient] = None):
+    def __init__(self, registration_key: str | None = None, http: HttpClient | None = None):
         self.registration_key = registration_key or None
         self.http = http or HttpClient()
 
     @property
-    def limits(self) -> Tuple[int, int]:
+    def limits(self) -> tuple[int, int]:
         """(한 번에 시리즈 수, 한 번에 연도 수)"""
         return V2_LIMITS if self.registration_key else V1_LIMITS
 
     def timeseries(
         self,
         series_ids: Sequence[str],
-        start_year: Optional[int] = None,
-        end_year: Optional[int] = None,
+        start_year: int | None = None,
+        end_year: int | None = None,
         *,
         annual_average: bool = False,
     ) -> BlsResponse:
@@ -73,8 +74,8 @@ class Client:
             raise ValueError(f"start_year({start_year}) 가 end_year({end_year}) 보다 큽니다")
 
         max_series, max_years = self.limits
-        merged: Dict[str, List[BlsObservation]] = {series_id: [] for series_id in ids}
-        messages: List[str] = []
+        merged: dict[str, list[BlsObservation]] = {series_id: [] for series_id in ids}
+        messages: list[str] = []
         for batch in _chunks(ids, max_series):
             for years in _year_windows(start_year, end_year, max_years):
                 payload = self._post(batch, years, annual_average)
@@ -87,8 +88,8 @@ class Client:
             messages=messages,
         )
 
-    def _post(self, series_ids: List[str], years: Optional[Tuple[int, int]], annual_average: bool) -> Dict[str, Any]:
-        body: Dict[str, Any] = {"seriesid": series_ids}
+    def _post(self, series_ids: list[str], years: tuple[int, int] | None, annual_average: bool) -> dict[str, Any]:
+        body: dict[str, Any] = {"seriesid": series_ids}
         if years:
             body["startyear"], body["endyear"] = str(years[0]), str(years[1])
         if annual_average:
@@ -115,12 +116,12 @@ class Client:
         raise BlsAPIError(f"BLS 요청 실패 ({status}): {text}", status=status, messages=messages, url=url)
 
 
-def _chunks(items: List[str], size: int) -> Iterator[List[str]]:
+def _chunks(items: list[str], size: int) -> Iterator[list[str]]:
     for start in range(0, len(items), size):
         yield items[start : start + size]
 
 
-def _year_windows(start: Optional[int], end: Optional[int], size: int) -> Iterator[Optional[Tuple[int, int]]]:
+def _year_windows(start: int | None, end: int | None, size: int) -> Iterator[tuple[int, int] | None]:
     if start is None or end is None:
         yield None
         return
@@ -128,11 +129,11 @@ def _year_windows(start: Optional[int], end: Optional[int], size: int) -> Iterat
         yield first, min(first + size - 1, end)
 
 
-def _series_of(payload: Dict[str, Any]) -> List[BlsSeries]:
+def _series_of(payload: dict[str, Any]) -> list[BlsSeries]:
     results = payload.get("Results") or {}
     return [BlsSeries.model_validate(raw) for raw in results.get("series") or []]
 
 
-def _sorted_unique(rows: List[BlsObservation]) -> List[BlsObservation]:
+def _sorted_unique(rows: list[BlsObservation]) -> list[BlsObservation]:
     by_key = {(row.year, row.period): row for row in rows}
     return [by_key[key] for key in sorted(by_key)]

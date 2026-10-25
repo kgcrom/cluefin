@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 import requests
 from loguru import logger
@@ -17,13 +17,13 @@ class Auth:
         self,
         app_key: str,
         secret_key: SecretStr,
-        cache_dir: Optional[str] = None,
-        token_manager: Optional[TokenManager] = None,
+        cache_dir: str | None = None,
+        token_manager: TokenManager | None = None,
     ) -> None:
         self.app_key = app_key
         self.secret_key = secret_key
         self.token_manager = token_manager or TokenManager(cache_dir=cache_dir, app_key=app_key)
-        self._token_data: Optional[TokenResponse] = None
+        self._token_data: TokenResponse | None = None
 
     def generate(self) -> TokenResponse:
         """Get cached token or generate a new one if expired.
@@ -68,7 +68,7 @@ class Auth:
 
     def revoke(
         self,
-        token: Optional[str] = None,
+        token: str | None = None,
         token_type_hint: Literal["access_token", "refresh_token"] = "access_token",
     ) -> TokenRevokeResponse:
         """Revoke an access token (`POST /oauth2/revoke`).

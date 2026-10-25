@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -21,4 +19,4 @@ class CompanyTickerExchange(BaseModel):
     cik: int = Field(description="CIK (앞자리 0 없는 정수)")
     name: str = Field(description="회사명")
     ticker: str = Field(description="티커")
-    exchange: Optional[str] = Field(default=None, description="거래소 (Nasdaq, NYSE, OTC, CBOE 등). 없으면 None")
+    exchange: str | None = Field(default=None, description="거래소 (Nasdaq, NYSE, OTC, CBOE 등). 없으면 None")

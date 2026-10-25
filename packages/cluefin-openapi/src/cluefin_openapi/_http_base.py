@@ -2,7 +2,7 @@
 
 import json
 import time
-from typing import Callable, Dict, Optional
+from collections.abc import Callable
 
 import requests
 from loguru import logger
@@ -11,14 +11,14 @@ from loguru import logger
 class BaseHttpClient:
     """Mixin holding request helpers shared by all broker HTTP clients."""
 
-    def _safe_json(self, response: requests.Response) -> Optional[Dict]:
+    def _safe_json(self, response: requests.Response) -> dict | None:
         """Safely parse a JSON response, returning None if parsing fails."""
         try:
             return response.json()
         except (ValueError, json.JSONDecodeError):
             return None
 
-    def _get_retry_after(self, response: requests.Response) -> Optional[int]:
+    def _get_retry_after(self, response: requests.Response) -> int | None:
         """Extract the Retry-After header as an int, or None."""
         retry_after = response.headers.get("Retry-After")
         if retry_after:
@@ -53,8 +53,8 @@ class BaseHttpClient:
         self,
         response: requests.Response,
         request_context: dict,
-        error_types: Dict[str, type],
-    ) -> Optional[Exception]:
+        error_types: dict[str, type],
+    ) -> Exception | None:
         """Map a non-200 response to a typed exception via a per-client class table.
 
         error_types keys: "validation" (400), "auth" (401), "authz" (403),
@@ -94,11 +94,11 @@ class BaseHttpClient:
         timeout: int,
         max_retries: int,
         request_context: dict,
-        dispatch: Callable[[requests.Response], Optional[Exception]],
+        dispatch: Callable[[requests.Response], Exception | None],
         rate_limit_error: Callable[[], Exception],
         timeout_error_cls: type,
         network_error_cls: type,
-        on_response: Optional[Callable[[requests.Response, dict], None]] = None,
+        on_response: Callable[[requests.Response, dict], None] | None = None,
         debug: bool = False,
     ) -> requests.Response:
         """Shared rate-limit pre-flight, attempt loop, status dispatch, and backoff.

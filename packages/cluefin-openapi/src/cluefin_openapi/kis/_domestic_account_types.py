@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 from pydantic import BaseModel, Field
 
@@ -271,7 +271,7 @@ class CreditTradableInquiry(BaseModel, KisHttpBody):
 
 
 class StockReserveQuoteItem(BaseModel):
-    rsvn_ord_seq: Optional[str] = Field(title="예약주문순번")
+    rsvn_ord_seq: str | None = Field(title="예약주문순번")
 
 
 class StockReserveQuote(BaseModel, KisHttpBody):

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable, Sequence
 from datetime import datetime
-from typing import Any, Callable, Iterable, Sequence
+from typing import Any
 
 from rich.markup import escape
 from textual import work

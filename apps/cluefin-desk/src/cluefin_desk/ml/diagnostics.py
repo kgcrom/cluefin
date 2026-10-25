@@ -6,7 +6,7 @@ ML 모델 진단 및 데이터 품질 분석 모듈.
 """
 
 import warnings
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -29,7 +29,7 @@ class MLDiagnostics:
     def __init__(self):
         self.console = Console()
 
-    def analyze_target_distribution(self, y: pd.Series, target_name: str = "target") -> Dict[str, Any]:
+    def analyze_target_distribution(self, y: pd.Series, target_name: str = "target") -> dict[str, Any]:
         """
         타겟 변수 분포를 분석하고 클래스 불균형을 확인합니다.
 
@@ -86,7 +86,7 @@ class MLDiagnostics:
             logger.error(f"타겟 변수 분석 오류: {e}")
             raise
 
-    def analyze_feature_quality(self, X: pd.DataFrame, feature_names: List[str] = None) -> Dict[str, Any]:
+    def analyze_feature_quality(self, X: pd.DataFrame, feature_names: list[str] = None) -> dict[str, Any]:
         """
         특성 데이터 품질을 분석합니다.
 
@@ -170,7 +170,7 @@ class MLDiagnostics:
             logger.error(f"특성 품질 분석 오류: {e}")
             raise
 
-    def diagnose_training_data(self, X: pd.DataFrame, y: pd.Series, feature_names: List[str] = None) -> Dict[str, Any]:
+    def diagnose_training_data(self, X: pd.DataFrame, y: pd.Series, feature_names: list[str] = None) -> dict[str, Any]:
         """
         전체 학습 데이터를 진단합니다.
 
@@ -219,7 +219,7 @@ class MLDiagnostics:
             logger.error(f"학습 데이터 진단 오류: {e}")
             raise
 
-    def _display_target_analysis(self, analysis: Dict, target_name: str) -> None:
+    def _display_target_analysis(self, analysis: dict, target_name: str) -> None:
         """타겟 변수 분석 결과를 표시합니다."""
 
         table = Table(title=f"🎯 타겟 변수 '{target_name}' 분석 결과")
@@ -281,7 +281,7 @@ class MLDiagnostics:
                 )
             )
 
-    def _display_feature_quality_analysis(self, analysis: Dict) -> None:
+    def _display_feature_quality_analysis(self, analysis: dict) -> None:
         """특성 품질 분석 결과를 표시합니다."""
 
         table = Table(title="🔍 특성 데이터 품질 분석")
@@ -335,7 +335,7 @@ class MLDiagnostics:
 
             self.console.print(Panel(problem_text.strip(), title="⚠️ 문제 특성 상세", border_style="red"))
 
-    def _display_comprehensive_diagnosis(self, diagnosis: Dict) -> None:
+    def _display_comprehensive_diagnosis(self, diagnosis: dict) -> None:
         """종합 진단 결과를 표시합니다."""
 
         size_analysis = diagnosis["size_analysis"]
@@ -373,8 +373,8 @@ class MLDiagnostics:
             self.console.print(Panel(rec_text, title="💡 개선 권장사항", border_style="blue"))
 
     def _generate_recommendations(
-        self, target_analysis: Dict, feature_analysis: Dict, size_analysis: Dict
-    ) -> List[str]:
+        self, target_analysis: dict, feature_analysis: dict, size_analysis: dict
+    ) -> list[str]:
         """분석 결과를 바탕으로 개선 권장사항을 생성합니다."""
 
         recommendations = []

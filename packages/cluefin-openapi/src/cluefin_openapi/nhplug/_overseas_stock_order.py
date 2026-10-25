@@ -1,4 +1,4 @@
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 from cluefin_openapi.nhplug._exceptions import raise_for_rsp_cd
 from cluefin_openapi.nhplug._http_client import HttpClient
@@ -102,7 +102,7 @@ class OverseasStockOrder:
         self.client = client
 
     @staticmethod
-    def _drop_none(body: Dict[str, Any]) -> Dict[str, Any]:
+    def _drop_none(body: dict[str, Any]) -> dict[str, Any]:
         """선택 파라미터는 값이 있을 때만 전송한다."""
         return {k: v for k, v in body.items() if v is not None}
 
@@ -114,7 +114,7 @@ class OverseasStockOrder:
         orr_qty: int,
         ahi_nmn_pr_tp_cd: SpotBuyQuoteTypeCode,
         wtm_cur_knd_cd: Literal["1", "2"],
-        fc_orr_uit_pr: Optional[float] = None,
+        fc_orr_uit_pr: float | None = None,
     ) -> NHPlugHttpResponse[OverseasStockOrderBuy]:
         """해외주식 주문매수 (`POST /gbstock/order/v1/buy`).
 
@@ -156,7 +156,7 @@ class OverseasStockOrder:
         iem_cd: str,
         orr_qty: int,
         ahi_nmn_pr_tp_cd: SpotQuoteTypeCode,
-        fc_orr_uit_pr: Optional[float] = None,
+        fc_orr_uit_pr: float | None = None,
     ) -> NHPlugHttpResponse[OverseasStockOrderSell]:
         """해외주식 주문매도 (`POST /gbstock/order/v1/sell`).
 
@@ -196,7 +196,7 @@ class OverseasStockOrder:
         iem_cd: str,
         org_orr_no: int,
         fc_orr_uit_pr: float,
-        fc_stop_orr_bse_pr: Optional[float] = None,
+        fc_stop_orr_bse_pr: float | None = None,
     ) -> NHPlugHttpResponse[OverseasStockOrderModify]:
         """해외주식 정정취소주문정정 (`POST /gbstock/order/v1/modify`).
 
@@ -235,7 +235,7 @@ class OverseasStockOrder:
         fc_sec_trd_nat_cd: ForeignTradeNationCode,
         iem_cd: str,
         all_pat_dit_cd: Literal["1", "2"],
-        can_qty: Optional[int] = None,
+        can_qty: int | None = None,
     ) -> NHPlugHttpResponse[OverseasStockOrderCancel]:
         """해외주식 정정취소주문취소 (`POST /gbstock/order/v1/cancel`).
 
@@ -275,17 +275,17 @@ class OverseasStockOrder:
         oss_sby_dit_cd: Literal["1", "2"],
         orr_qty: int,
         nmn_pr_tp_cd: ReservedQuoteTypeCode,
-        fc_orr_uit_pr: Optional[float] = None,
-        oss_orr_knd_cd: Optional[Literal["1", "2"]] = None,
-        ose_ivs_sgy_cd: Optional[Literal["0", "1", "2"]] = None,
-        bkg_orr_tp_cd: Optional[Literal["1", "2", "3"]] = None,
-        bkg_orr_sta_dt: Optional[str] = None,
-        bkg_orr_end_dt: Optional[str] = None,
-        wtm_cur_knd_cd: Optional[Literal["1", "2"]] = None,
-        fc_stop_orr_bse_pr: Optional[float] = None,
-        orr_pdt_dit_cd: Optional[OrderProductCode] = None,
-        lon_dt: Optional[str] = None,
-        cfd_lon_cd: Optional[CreditLoanCode] = None,
+        fc_orr_uit_pr: float | None = None,
+        oss_orr_knd_cd: Literal["1", "2"] | None = None,
+        ose_ivs_sgy_cd: Literal["0", "1", "2"] | None = None,
+        bkg_orr_tp_cd: Literal["1", "2", "3"] | None = None,
+        bkg_orr_sta_dt: str | None = None,
+        bkg_orr_end_dt: str | None = None,
+        wtm_cur_knd_cd: Literal["1", "2"] | None = None,
+        fc_stop_orr_bse_pr: float | None = None,
+        orr_pdt_dit_cd: OrderProductCode | None = None,
+        lon_dt: str | None = None,
+        cfd_lon_cd: CreditLoanCode | None = None,
     ) -> NHPlugHttpResponse[OverseasStockOrderReservedSubmit]:
         """해외주식 예약주문접수 (`POST /gbstock/order/v1/reservedSubmit`).
 
@@ -346,8 +346,8 @@ class OverseasStockOrder:
         fc_mkt_dit_cd: ForeignTradeNationCode,
         bkg_orr_dt: str,
         bkg_rtn_orr_no: int,
-        iem_cd: Optional[str] = None,
-        orr_pdt_dit_cd: Optional[OrderProductCode] = None,
+        iem_cd: str | None = None,
+        orr_pdt_dit_cd: OrderProductCode | None = None,
     ) -> NHPlugHttpResponse[OverseasStockOrderReservedCancel]:
         """해외주식 예약주문접수취소 (`POST /gbstock/order/v1/reservedCancel`).
 

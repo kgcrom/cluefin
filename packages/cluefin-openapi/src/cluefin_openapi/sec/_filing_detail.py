@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from datetime import date
 from html.parser import HTMLParser
-from typing import Dict, List, Optional, Tuple
 from urllib.parse import parse_qs, urlsplit
 
 from ._archives_types import FilingDetail, FilingDocument, FilingParty
@@ -25,15 +24,15 @@ class _DetailPage(HTMLParser):
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self.form = ""
-        self.info: Dict[str, str] = {}
-        self.rows: List[Tuple[bool, List[str], str]] = []
-        self.parties: List[Tuple[str, str]] = []
-        self._capture: Optional[str] = None
-        self._buffer: List[str] = []
+        self.info: dict[str, str] = {}
+        self.rows: list[tuple[bool, list[str], str]] = []
+        self.parties: list[tuple[str, str]] = []
+        self._capture: str | None = None
+        self._buffer: list[str] = []
         self._label = ""
         self._in_form_name = False
-        self._data_files: Optional[bool] = None
-        self._cells: Optional[List[str]] = None
+        self._data_files: bool | None = None
+        self._cells: list[str] | None = None
         self._href = ""
         self._cik = ""
 
@@ -117,7 +116,7 @@ def parse_filing_detail(html: str, accession_number: str) -> FilingDetail:
     )
 
 
-def _document(data_file: bool, cells: List[str], href: str, folder: str) -> FilingDocument:
+def _document(data_file: bool, cells: list[str], href: str, folder: str) -> FilingDocument:
     sequence, description, shown, kind, size = cells
     # 인라인 XBRL 문서는 뷰어 링크(`/ix?doc=/Archives/...`)다. 폴더 뒤 경로가 파일명(Form 4 렌더링은 하위 폴더 포함).
     path = href.partition("doc=")[2] or href
@@ -132,7 +131,7 @@ def _document(data_file: bool, cells: List[str], href: str, folder: str) -> Fili
     )
 
 
-def _party(text: str, cik: str) -> Optional[FilingParty]:
+def _party(text: str, cik: str) -> FilingParty | None:
     """`MICRON TECHNOLOGY INC (Issuer) CIK: 0000723125 (see all company filings)` → 이름·역할·CIK."""
     number = _int(cik)
     if number is None:
@@ -148,16 +147,16 @@ def _squash(text: str) -> str:
     return " ".join(text.split())
 
 
-def _lines(text: Optional[str]) -> List[str]:
+def _lines(text: str | None) -> list[str]:
     return [line for line in map(_squash, (text or "").split("\n")) if line]
 
 
-def _int(text: str) -> Optional[int]:
+def _int(text: str) -> int | None:
     text = text.strip()
     return int(text) if text.isdigit() else None
 
 
-def _date(text: Optional[str]) -> Optional[date]:
+def _date(text: str | None) -> date | None:
     try:
         return date.fromisoformat(_squash(text or ""))
     except ValueError:

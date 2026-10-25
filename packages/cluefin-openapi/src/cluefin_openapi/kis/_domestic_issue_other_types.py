@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 from pydantic import BaseModel, Field
 
@@ -268,14 +268,14 @@ class ExpectedIndexAllItem1(BaseModel):
     bstp_nmix_prpr: str = Field(title="업종 지수 현재가")
     bstp_nmix_prdy_vrss: str = Field(title="업종 지수 전일 대비")
     # 문서는 필수로 적지만 2026-09-27(휴장일) 응답엔 없었다 — 평일 재확인 대기
-    prdy_vrss_sign: Optional[str] = Field(default=None, title="전일 대비 부호")
+    prdy_vrss_sign: str | None = Field(default=None, title="전일 대비 부호")
     prdy_ctrt: str = Field(title="전일 대비율")
     acml_vol: str = Field(title="누적 거래량")
     ascn_issu_cnt: str = Field(title="상승 종목 수")
     down_issu_cnt: str = Field(title="하락 종목 수")
     stnr_issu_cnt: str = Field(title="보합 종목 수")
     # 문서는 필수로 적지만 2026-09-27(휴장일) 응답엔 없었다 — 평일 재확인 대기
-    bstp_cls_code: Optional[str] = Field(default=None, title="업종 구분 코드")
+    bstp_cls_code: str | None = Field(default=None, title="업종 구분 코드")
 
 
 class ExpectedIndexAllItem2(BaseModel):
@@ -339,7 +339,7 @@ class InterestRateSummaryItem2(BaseModel):
     prdy_vrss_sign: str = Field(title="전일대비부호")
     bond_mnrt_prdy_vrss: str = Field(title="채권금리전일대비")
     bstp_nmix_prdy_ctrt: str = Field(title="업종지수전일대비율")
-    stck_bsop_date: Optional[str] = Field(default="", title="주식영업일자")
+    stck_bsop_date: str | None = Field(default="", title="주식영업일자")
 
 
 class InterestRateSummary(BaseModel, KisHttpBody):

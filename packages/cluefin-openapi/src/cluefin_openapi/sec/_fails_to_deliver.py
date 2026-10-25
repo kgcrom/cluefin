@@ -9,9 +9,9 @@ from __future__ import annotations
 import io
 import re
 import zipfile
+from collections.abc import Iterable
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
-from typing import Dict, Iterable, List, Optional
 
 from ._client import WWW_BASE_URL, Client
 from ._exceptions import SecAPIError
@@ -35,7 +35,7 @@ class FailsToDeliver:
     def __init__(self, client: Client):
         self.client = client
 
-    def files(self) -> List[FailsToDeliverFile]:
+    def files(self) -> list[FailsToDeliverFile]:
         """받을 수 있는 파일 목록 (최신순)."""
         html = self.client._get_bytes(LIST_URL).decode("utf-8", "replace")
         found = {}
@@ -52,7 +52,7 @@ class FailsToDeliver:
             raise SecAPIError(f"Fails-to-Deliver 목록에 파일 링크가 없습니다: {LIST_URL}")
         return sorted(found.values(), key=lambda file: file.name, reverse=True)
 
-    def records(self, file: FailsToDeliverFile) -> List[FailToDeliver]:
+    def records(self, file: FailsToDeliverFile) -> list[FailToDeliver]:
         """파일 하나의 행 (약 5–7만 행, zip 1–2MB).
 
         Raises:
@@ -67,12 +67,12 @@ class FailsToDeliver:
         return _parse(text, file.name)
 
 
-def cusip_symbols(records: Iterable[FailToDeliver]) -> Dict[str, str]:
+def cusip_symbols(records: Iterable[FailToDeliver]) -> dict[str, str]:
     """CUSIP → 티커. 한 CUSIP에 티커가 여럿이면(티커 변경) 결제일이 가장 늦은 것을 쓴다.
 
     결제일이 같으면 나중에 나온 행이 이긴다. 티커가 없는 행은 건너뛴다.
     """
-    latest: Dict[str, FailToDeliver] = {}
+    latest: dict[str, FailToDeliver] = {}
     for record in records:
         if not record.symbol:
             continue
@@ -82,12 +82,12 @@ def cusip_symbols(records: Iterable[FailToDeliver]) -> Dict[str, str]:
     return {cusip: record.symbol or "" for cusip, record in latest.items()}
 
 
-def _parse(text: str, name: str) -> List[FailToDeliver]:
+def _parse(text: str, name: str) -> list[FailToDeliver]:
     lines = text.splitlines()
     if not lines or lines[0].strip() != _HEADER:
         raise SecAPIError(f"Fails-to-Deliver 머리글이 다릅니다: {name} {lines[:1]!r}")
-    rows: List[FailToDeliver] = []
-    expected: Optional[int] = None
+    rows: list[FailToDeliver] = []
+    expected: int | None = None
     for number, line in enumerate(lines[1:], start=2):
         if line.startswith(_TRAILER):
             count = _TRAILER_COUNT.fullmatch(line.strip())
@@ -118,7 +118,7 @@ def _row(line: str, where: str) -> FailToDeliver:
         raise SecAPIError(f"Fails-to-Deliver 행을 읽을 수 없습니다: {where} {line!r} ({error})") from None
 
 
-def _price(raw: str) -> Optional[Decimal]:
+def _price(raw: str) -> Decimal | None:
     if raw in ("", "."):
         return None
     try:

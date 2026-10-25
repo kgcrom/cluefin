@@ -1,6 +1,5 @@
 from datetime import date
 from decimal import Decimal
-from typing import Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -14,15 +13,15 @@ class FactValue(BaseModel):
 
     model_config = ConfigDict(title="SEC XBRL 값", extra="allow")
 
-    start: Optional[date] = Field(default=None, description="기간 시작일. 시점 값(재무상태표 등)은 None")
+    start: date | None = Field(default=None, description="기간 시작일. 시점 값(재무상태표 등)은 None")
     end: date = Field(description="기간 종료일 또는 시점")
     val: Decimal = Field(description="값")
     accn: str = Field(description="이 값을 실은 공시의 접수번호")
-    fy: Optional[int] = Field(default=None, description="공시의 회계연도 (값의 기간이 아니라 공시 기준)")
-    fp: Optional[str] = Field(default=None, description="공시의 회계기간 (FY, Q1, Q2, Q3)")
+    fy: int | None = Field(default=None, description="공시의 회계연도 (값의 기간이 아니라 공시 기준)")
+    fp: str | None = Field(default=None, description="공시의 회계기간 (FY, Q1, Q2, Q3)")
     form: str = Field(description="공시 서식 (10-K, 10-Q ...)")
     filed: date = Field(description="공시 제출일")
-    frame: Optional[str] = Field(default=None, description="SEC 대표 기간 (CY2023, CY2023Q4I ...)")
+    frame: str | None = Field(default=None, description="SEC 대표 기간 (CY2023, CY2023Q4I ...)")
 
 
 class ConceptFacts(BaseModel):
@@ -30,9 +29,9 @@ class ConceptFacts(BaseModel):
 
     model_config = ConfigDict(title="SEC XBRL 개념", extra="allow")
 
-    label: Optional[str] = Field(default=None, description="개념 이름")
-    description: Optional[str] = Field(default=None, description="개념 설명")
-    units: Dict[str, List[FactValue]] = Field(
+    label: str | None = Field(default=None, description="개념 이름")
+    description: str | None = Field(default=None, description="개념 설명")
+    units: dict[str, list[FactValue]] = Field(
         default_factory=dict, description="단위(USD, shares, USD/shares ...) → 값"
     )
 
@@ -47,9 +46,9 @@ class CompanyFacts(BaseModel):
 
     cik: int = Field(description="CIK")
     entity_name: str = Field(alias="entityName", description="회사명")
-    facts: Dict[str, Dict[str, ConceptFacts]] = Field(default_factory=dict, description="택소노미 → 개념 → 값")
+    facts: dict[str, dict[str, ConceptFacts]] = Field(default_factory=dict, description="택소노미 → 개념 → 값")
 
-    def concept(self, taxonomy: str, tag: str) -> Optional[ConceptFacts]:
+    def concept(self, taxonomy: str, tag: str) -> ConceptFacts | None:
         """택소노미와 개념 이름으로 값을 찾는다. 없으면 None."""
         return self.facts.get(taxonomy, {}).get(tag)
 
@@ -62,10 +61,10 @@ class CompanyConcept(BaseModel):
     cik: int = Field(description="CIK")
     taxonomy: str = Field(description="택소노미 (us-gaap, dei ...)")
     tag: str = Field(description="개념 이름")
-    label: Optional[str] = Field(default=None, description="개념 이름")
-    description: Optional[str] = Field(default=None, description="개념 설명")
+    label: str | None = Field(default=None, description="개념 이름")
+    description: str | None = Field(default=None, description="개념 설명")
     entity_name: str = Field(alias="entityName", description="회사명")
-    units: Dict[str, List[FactValue]] = Field(default_factory=dict, description="단위 → 값")
+    units: dict[str, list[FactValue]] = Field(default_factory=dict, description="단위 → 값")
 
 
 class FrameValue(BaseModel):
@@ -76,8 +75,8 @@ class FrameValue(BaseModel):
     accn: str = Field(description="값을 실은 공시의 접수번호")
     cik: int = Field(description="CIK")
     entity_name: str = Field(alias="entityName", description="회사명")
-    loc: Optional[str] = Field(default=None, description="소재지 (US-CA 등)")
-    start: Optional[date] = Field(default=None, description="기간 시작일. 시점 frame이면 None")
+    loc: str | None = Field(default=None, description="소재지 (US-CA 등)")
+    start: date | None = Field(default=None, description="기간 시작일. 시점 frame이면 None")
     end: date = Field(description="기간 종료일 또는 시점")
     val: Decimal = Field(description="값")
 
@@ -91,7 +90,7 @@ class Frame(BaseModel):
     tag: str = Field(description="개념 이름")
     ccp: str = Field(description="달력 기간 (CY2023, CY2023Q4I ...)")
     uom: str = Field(description="단위")
-    label: Optional[str] = Field(default=None, description="개념 이름")
-    description: Optional[str] = Field(default=None, description="개념 설명")
+    label: str | None = Field(default=None, description="개념 이름")
+    description: str | None = Field(default=None, description="개념 설명")
     pts: int = Field(description="회사 수")
-    data: List[FrameValue] = Field(default_factory=list, description="회사별 값")
+    data: list[FrameValue] = Field(default_factory=list, description="회사별 값")

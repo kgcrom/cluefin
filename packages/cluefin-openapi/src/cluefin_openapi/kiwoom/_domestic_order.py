@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 from cluefin_openapi.kiwoom._client import Client
 from cluefin_openapi.kiwoom._domestic_order_types import (
@@ -24,8 +24,8 @@ class DomesticOrder:
         stk_cd: str,
         ord_qty: str,
         trde_tp: str,
-        ord_uv: Optional[str] = None,
-        cond_uv: Optional[str] = None,
+        ord_uv: str | None = None,
+        cond_uv: str | None = None,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticOrderBuy]:
@@ -99,8 +99,8 @@ class DomesticOrder:
             "46",
             "47",
         ],
-        ord_uv: Optional[str] = None,
-        cond_uv: Optional[str] = None,
+        ord_uv: str | None = None,
+        cond_uv: str | None = None,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticOrderSell]:
@@ -174,7 +174,7 @@ class DomesticOrder:
         stk_cd: str,
         mdfy_qty: str,
         mdfy_uv: str,
-        mdfy_cond_uv: Optional[str] = None,
+        mdfy_cond_uv: str | None = None,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[DomesticOrderModify]:

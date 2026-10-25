@@ -5,7 +5,7 @@
 아직 없거나 받지 못했어도 그대로 연다.
 """
 
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from rich.markup import escape
 from textual import work
@@ -23,7 +23,7 @@ from cluefin_desk.screens._guard import screen_gone, set_text
 LOADING = "종목 목록 불러오는 중…"
 
 
-class StockSearchScreen(ModalScreen[Optional[str]]):
+class StockSearchScreen(ModalScreen[str | None]):
     """Dismisses with the chosen stock code, or None on escape."""
 
     BINDINGS = [
@@ -34,7 +34,7 @@ class StockSearchScreen(ModalScreen[Optional[str]]):
     def __init__(self, load_listing: Callable[[], StockListing]):
         super().__init__()
         self._load_listing = load_listing
-        self._listing: Optional[StockListing] = None
+        self._listing: StockListing | None = None
 
     def compose(self) -> ComposeResult:
         with Vertical(id="search-dialog"):

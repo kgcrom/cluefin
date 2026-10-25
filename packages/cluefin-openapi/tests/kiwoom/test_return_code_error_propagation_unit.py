@@ -8,7 +8,7 @@ Kiwoom은 HTTP 200으로 응답하면서 본문 return_code 로 실패를 알린
 확인한다.
 """
 
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 import requests_mock
@@ -42,7 +42,7 @@ FAILING_RETURN_CODE = 1902
 FAILING_RESPONSE = {"return_code": FAILING_RETURN_CODE, "return_msg": "종목 정보가 없습니다."}
 
 # (도메인 이름, API 클래스, 경로, 대표 메서드, 호출 kwargs)
-DOMAIN_CASES: list[tuple[str, type, str, str, Dict[str, Any]]] = [
+DOMAIN_CASES: list[tuple[str, type, str, str, dict[str, Any]]] = [
     ("account", DomesticAccount, "/api/dostk/acnt", "get_deposit_balance_details", {"qry_tp": "3"}),
     (
         "chart",

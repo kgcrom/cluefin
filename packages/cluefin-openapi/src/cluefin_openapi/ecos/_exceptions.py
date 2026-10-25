@@ -4,7 +4,7 @@ ECOS는 오류도 HTTP 200으로 돌려주고 본문 `{"RESULT": {"CODE": "ERROR
 `code` 에 그 결과 코드가 실린다. HTTP 단계 오류(404·5xx·타임아웃·연결)는 `code` 가 None.
 """
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 
 class EcosAPIError(Exception):
@@ -13,11 +13,11 @@ class EcosAPIError(Exception):
     def __init__(
         self,
         message: str,
-        code: Optional[str] = None,
-        status_code: Optional[int] = None,
-        response_data: Optional[Dict[str, Any]] = None,
-        request_context: Optional[Dict[str, Any]] = None,
-        hint: Optional[str] = None,
+        code: str | None = None,
+        status_code: int | None = None,
+        response_data: dict[str, Any] | None = None,
+        request_context: dict[str, Any] | None = None,
+        hint: str | None = None,
     ):
         super().__init__(message)
         self.message = message
@@ -79,8 +79,8 @@ class EcosNetworkError(EcosAPIError):
 def raise_for_result(
     code: str,
     message: str,
-    response_data: Optional[Dict[str, Any]] = None,
-    request_context: Optional[Dict[str, Any]] = None,
+    response_data: dict[str, Any] | None = None,
+    request_context: dict[str, Any] | None = None,
 ) -> None:
     """본문 `RESULT.CODE` 를 예외로 바꿔 던진다. 데이터 없음(INFO-200)은 호출 전에 걸러진다.
 
@@ -98,7 +98,7 @@ _ROW_RANGE_ACTION = "start_row·end_row 는 1 이상 정수이고 start_row ≤ 
 _SAMPLE_LIMIT_ACTION = "sample 키는 한 번에 10행까지입니다. 범위를 10행 이하로 주거나 생략해 쪽 넘김에 맡기세요"
 
 # 새로 본 코드는 여기에 한 줄 더한다. 표에 없는 코드는 EcosAPIError. 문구는 명세의 "OpenAPI 메세지" 표를 따른다.
-_RESULT_CODE_ERRORS: Dict[str, Tuple[type, str]] = {
+_RESULT_CODE_ERRORS: dict[str, tuple[type, str]] = {
     "INFO-100": (
         EcosAuthenticationError,
         "ECOS_AUTH_KEY 를 확인하세요. 키가 없으면 ECOS 에서 신청하거나 키 없이 sample(10행)로 쓰세요",

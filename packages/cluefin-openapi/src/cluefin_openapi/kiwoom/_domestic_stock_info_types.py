@@ -1,4 +1,4 @@
-from typing import List
+import builtins
 
 from pydantic import BaseModel, Field
 from pydantic.config import ConfigDict
@@ -120,7 +120,7 @@ class DomesticStockInfoExecution(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(
         title="주식체결정보요청 응답",
     )
-    cntr_infr: List[DomesticStockInfoExecutionItem] = Field(default_factory=list, description="체결정보")
+    cntr_infr: list[DomesticStockInfoExecutionItem] = Field(default_factory=list, description="체결정보")
 
 
 class DomesticStockInfoMarginTradingTrendItem(BaseModel):
@@ -142,7 +142,7 @@ class DomesticStockInfoMarginTradingTrend(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(
         title="주식신용거래추세요청 응답",
     )
-    crd_trde_trend: List[DomesticStockInfoMarginTradingTrendItem] = Field(
+    crd_trde_trend: list[DomesticStockInfoMarginTradingTrendItem] = Field(
         default_factory=list, description="신용매매동향"
     )
 
@@ -182,7 +182,7 @@ class DomesticStockInfoDailyTradingDetailsItem(BaseModel):
 
 class DomesticStockInfoDailyTradingDetails(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="주식일별거래상세요청 응답")
-    daly_trde_dtl: List[DomesticStockInfoDailyTradingDetailsItem] = Field(
+    daly_trde_dtl: list[DomesticStockInfoDailyTradingDetailsItem] = Field(
         default_factory=list, description="일별거래상세"
     )
 
@@ -204,7 +204,7 @@ class DomesticStockInfoNewHighLowPriceItem(BaseModel):
 
 class DomesticStockInfoNewHighLowPrice(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="주식신고저가요청 응답")
-    ntl_pric: List[DomesticStockInfoNewHighLowPriceItem] = Field(default_factory=list, description="신고저가")
+    ntl_pric: list[DomesticStockInfoNewHighLowPriceItem] = Field(default_factory=list, description="신고저가")
 
 
 class DomesticStockInfoUpperLowerLimitPriceItem(BaseModel):
@@ -226,7 +226,7 @@ class DomesticStockInfoUpperLowerLimitPriceItem(BaseModel):
 
 class DomesticStockInfoUpperLowerLimitPrice(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="주식상하한가요청 응답")
-    updown_pric: List[DomesticStockInfoUpperLowerLimitPriceItem] = Field(default_factory=list, description="상하한가")
+    updown_pric: list[DomesticStockInfoUpperLowerLimitPriceItem] = Field(default_factory=list, description="상하한가")
 
 
 class DomesticStockInfoHighLowPriceApproachItem(BaseModel):
@@ -246,7 +246,7 @@ class DomesticStockInfoHighLowPriceApproachItem(BaseModel):
 class DomesticStockInfoHighLowPriceApproach(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="고저가 근접요청 응답")
 
-    high_low_pric_alacc: List[DomesticStockInfoHighLowPriceApproachItem] = Field(
+    high_low_pric_alacc: list[DomesticStockInfoHighLowPriceApproachItem] = Field(
         default_factory=list, description="고저가근접"
     )
 
@@ -267,7 +267,7 @@ class DomesticStockInfoPriceVolatilityItem(BaseModel):
 
 class DomesticStockInfoPriceVolatility(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="가격급등락요청 응답")
-    pric_jmpflu: List[DomesticStockInfoPriceVolatilityItem] = Field(default_factory=list, description="가격 급등락")
+    pric_jmpflu: list[DomesticStockInfoPriceVolatilityItem] = Field(default_factory=list, description="가격 급등락")
 
 
 class DomesticStockInfoTradingVolumeRenewalItem(BaseModel):
@@ -286,7 +286,7 @@ class DomesticStockInfoTradingVolumeRenewalItem(BaseModel):
 class DomesticStockInfoTradingVolumeRenewal(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="거래량갱신요청 응답")
 
-    trde_qty_updt: List[DomesticStockInfoTradingVolumeRenewalItem] = Field(
+    trde_qty_updt: list[DomesticStockInfoTradingVolumeRenewalItem] = Field(
         default_factory=list, description="거래량 갱신"
     )
 
@@ -308,7 +308,7 @@ class DomesticStockInfoSupplyDemandConcentrationItem(BaseModel):
 class DomesticStockInfoSupplyDemandConcentration(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="매물대집중요청 응답")
 
-    prps_cnctr: List[DomesticStockInfoSupplyDemandConcentrationItem] = Field(
+    prps_cnctr: list[DomesticStockInfoSupplyDemandConcentrationItem] = Field(
         default_factory=list, description="매물대 집중"
     )
 
@@ -328,7 +328,7 @@ class DomesticStockInfoHighPerItem(BaseModel):
 class DomesticStockInfoHighPer(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="고저PER요청 응답")
 
-    high_low_per: List[DomesticStockInfoHighPerItem] = Field(default_factory=list, description="고저 PER")
+    high_low_per: list[DomesticStockInfoHighPerItem] = Field(default_factory=list, description="고저 PER")
 
 
 class DomesticStockInfoChangeRateFromOpenItem(BaseModel):
@@ -349,7 +349,7 @@ class DomesticStockInfoChangeRateFromOpenItem(BaseModel):
 class DomesticStockInfoChangeRateFromOpen(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="시가대비등락률요청 응답")
 
-    open_pric_pre_flu_rt: List[DomesticStockInfoChangeRateFromOpenItem] = Field(
+    open_pric_pre_flu_rt: list[DomesticStockInfoChangeRateFromOpenItem] = Field(
         default_factory=list, description="시가대비등락률"
     )
 
@@ -369,7 +369,7 @@ class DomesticStockInfoTradingMemberSupplyDemandAnalysisItem(BaseModel):
 class DomesticStockInfoTradingMemberSupplyDemandAnalysis(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="거래원매물대분석요청 응답")
 
-    trde_ori_prps_anly: List[DomesticStockInfoTradingMemberSupplyDemandAnalysisItem] = Field(
+    trde_ori_prps_anly: list[DomesticStockInfoTradingMemberSupplyDemandAnalysisItem] = Field(
         default_factory=list, description="거래원 매물대 분석"
     )
 
@@ -391,7 +391,7 @@ class DomesticStockInfoTradingMemberInstantVolumeItem(BaseModel):
 class DomesticStockInfoTradingMemberInstantVolume(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="거래원순간거래량요청 응답")
 
-    trde_ori_mont_trde_qty: List[DomesticStockInfoTradingMemberInstantVolumeItem] = Field(
+    trde_ori_mont_trde_qty: list[DomesticStockInfoTradingMemberInstantVolumeItem] = Field(
         default_factory=list, description="거래원 순간 거래량"
     )
 
@@ -416,7 +416,7 @@ class DomesticStockInfoVolatilityControlEventItem(BaseModel):
 class DomesticStockInfoVolatilityControlEvent(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="변동성완화장치발동요청 응답")
 
-    motn_stk: List[DomesticStockInfoVolatilityControlEventItem] = Field(
+    motn_stk: list[DomesticStockInfoVolatilityControlEventItem] = Field(
         default_factory=list, description="변동성완화장치 발동 목록"
     )
 
@@ -435,7 +435,7 @@ class DomesticStockInfoDailyPreviousDayExecutionVolumeItem(BaseModel):
 class DomesticStockInfoDailyPreviousDayExecutionVolume(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="당일전일체결량요청 응답")
 
-    tdy_pred_cntr_qty: List[DomesticStockInfoDailyPreviousDayExecutionVolumeItem] = Field(
+    tdy_pred_cntr_qty: list[DomesticStockInfoDailyPreviousDayExecutionVolumeItem] = Field(
         default_factory=list, description="당일 전일 체결량"
     )
 
@@ -456,7 +456,7 @@ class DomesticStockInfoDailyTradingItemsByInvestorItem(BaseModel):
 
 class DomesticStockInfoDailyTradingItemsByInvestor(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="투자자별일별매매종목요청 응답")
-    invsr_daly_trde_stk: List[DomesticStockInfoDailyTradingItemsByInvestorItem] = Field(
+    invsr_daly_trde_stk: list[DomesticStockInfoDailyTradingItemsByInvestorItem] = Field(
         default_factory=list, description="투자자별 일별 매매 종목"
     )
 
@@ -487,7 +487,7 @@ class DomesticStockInfoInstitutionalInvestorByStockItem(BaseModel):
 class DomesticStockInfoInstitutionalInvestorByStock(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="종목별투자자기관별요청 응답")
 
-    stk_invsr_orgn: List[DomesticStockInfoInstitutionalInvestorByStockItem] = Field(
+    stk_invsr_orgn: list[DomesticStockInfoInstitutionalInvestorByStockItem] = Field(
         default_factory=list, description="종목별 투자자 기관"
     )
 
@@ -511,7 +511,7 @@ class DomesticStockInfoTotalInstitutionalInvestorByStockItem(BaseModel):
 class DomesticStockInfoTotalInstitutionalInvestorByStock(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="종목별투자자기관별합계요청 응답")
 
-    stk_invsr_orgn_tot: List[DomesticStockInfoTotalInstitutionalInvestorByStockItem] = Field(
+    stk_invsr_orgn_tot: list[DomesticStockInfoTotalInstitutionalInvestorByStockItem] = Field(
         default_factory=list, description="종목별 투자자 기관 합계"
     )
 
@@ -534,7 +534,7 @@ class DomesticStockInfoDailyPreviousDayConclusionItem(BaseModel):
 class DomesticStockInfoDailyPreviousDayConclusion(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="당일전일체결요청 응답")
 
-    tdy_pred_cntr: List[DomesticStockInfoDailyPreviousDayConclusionItem] = Field(
+    tdy_pred_cntr: list[DomesticStockInfoDailyPreviousDayConclusionItem] = Field(
         default_factory=list, description="당일 전일 체결"
     )
 
@@ -608,7 +608,7 @@ class DomesticStockInfoInterestStockInfoItem(BaseModel):
 class DomesticStockInfoInterestStockInfo(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="관심종목정보요청 응답")
 
-    atn_stk_infr: List[DomesticStockInfoInterestStockInfoItem] = Field(
+    atn_stk_infr: list[DomesticStockInfoInterestStockInfoItem] = Field(
         default_factory=list, description="관심 종목 정보"
     )
 
@@ -637,7 +637,8 @@ class DomesticStockInfoSummaryItem(BaseModel):
 class DomesticStockInfoSummary(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="종목정보리스트 응답")
 
-    list: List[DomesticStockInfoSummaryItem] = Field(default_factory=list, description="종목 리스트")
+    # 필드 이름 `list` 가 클래스 본문에서 builtin 을 가리므로 builtins.list 로 쓴다.
+    list: builtins.list[DomesticStockInfoSummaryItem] = Field(default_factory=list, description="종목 리스트")
 
 
 class DomesticStockInfoBasicV1(BaseModel, KiwoomHttpBody):
@@ -673,7 +674,7 @@ class DomesticStockInfoIndustryCodeItem(BaseModel):
 class DomesticStockInfoIndustryCode(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="업종코드리스트 요청 응답")
 
-    list: List[DomesticStockInfoIndustryCodeItem] = Field(default_factory=list, description="업종코드 리스트")
+    list: builtins.list[DomesticStockInfoIndustryCodeItem] = Field(default_factory=list, description="업종코드 리스트")
 
 
 class DomesticStockInfoMemberCompanyItem(BaseModel):
@@ -685,7 +686,9 @@ class DomesticStockInfoMemberCompanyItem(BaseModel):
 class DomesticStockInfoMemberCompany(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="회원사코드리스트 요청 응답")
 
-    list: List[DomesticStockInfoMemberCompanyItem] = Field(default_factory=list, description="회원사 코드 리스트")
+    list: builtins.list[DomesticStockInfoMemberCompanyItem] = Field(
+        default_factory=list, description="회원사 코드 리스트"
+    )
 
 
 class DomesticStockInfoTop50ProgramNetBuyItem(BaseModel):
@@ -705,7 +708,7 @@ class DomesticStockInfoTop50ProgramNetBuyItem(BaseModel):
 class DomesticStockInfoTop50ProgramNetBuy(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="프로그램순매수상위50요청 응답")
 
-    prm_netprps_upper_50: List[DomesticStockInfoTop50ProgramNetBuyItem] = Field(
+    prm_netprps_upper_50: list[DomesticStockInfoTop50ProgramNetBuyItem] = Field(
         default_factory=list, description="프로그램 순매수 상위 50"
     )
 
@@ -727,7 +730,7 @@ class DomesticStockInfoProgramTradingStatusByStockItem(BaseModel):
 class DomesticStockInfoProgramTradingStatusByStock(BaseModel, KiwoomHttpBody):
     model_config = ConfigDict(title="종목별프로그램매매현황요청 응답")
 
-    stk_prm_trde_prst: List[DomesticStockInfoProgramTradingStatusByStockItem] = Field(
+    stk_prm_trde_prst: list[DomesticStockInfoProgramTradingStatusByStockItem] = Field(
         default_factory=list, description="종목별 프로그램 매매 현황"
     )
     tot_1: str = Field(default="", description="매수체결수량합계")

@@ -5,7 +5,6 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -24,9 +23,9 @@ class XbrlPeriod(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     period_type: PeriodType
-    instant: Optional[date] = None
-    start_date: Optional[date] = None
-    end_date: Optional[date] = None
+    instant: date | None = None
+    start_date: date | None = None
+    end_date: date | None = None
 
 
 class XbrlFact(BaseModel):
@@ -37,13 +36,13 @@ class XbrlFact(BaseModel):
     concept_local_name: str
     concept_qname: str
     namespace: str
-    value: Optional[str] = None
-    numeric_value: Optional[Decimal] = None
-    decimals: Optional[str] = None
-    unit: Optional[str] = None
-    context_id: Optional[str] = None
-    period: Optional[XbrlPeriod] = None
-    entity_id: Optional[str] = None
+    value: str | None = None
+    numeric_value: Decimal | None = None
+    decimals: str | None = None
+    unit: str | None = None
+    context_id: str | None = None
+    period: XbrlPeriod | None = None
+    entity_id: str | None = None
     is_nil: bool = False
     dimensions: dict[str, str] = {}
 
@@ -55,8 +54,8 @@ class ConceptLabel(BaseModel):
 
     concept_local_name: str
     concept_qname: str
-    label_ko: Optional[str] = None
-    label_en: Optional[str] = None
+    label_ko: str | None = None
+    label_en: str | None = None
 
 
 class PresentationNode(BaseModel):
@@ -67,7 +66,7 @@ class PresentationNode(BaseModel):
     order: float = 0.0
     depth: int = 0
     # Role URI of the arc's preferredLabel (e.g. http://www.xbrl.org/2003/role/periodStartLabel); None when the arc has none.
-    preferred_label: Optional[str] = None
+    preferred_label: str | None = None
     children: list[PresentationNode] = []
 
 
@@ -103,16 +102,16 @@ class StatementLineItem(BaseModel):
 
     concept_local_name: str
     concept_qname: str
-    label_ko: Optional[str] = None
-    label_en: Optional[str] = None
-    value: Optional[Decimal] = None
-    unit: Optional[str] = None
-    period: Optional[XbrlPeriod] = None
+    label_ko: str | None = None
+    label_en: str | None = None
+    value: Decimal | None = None
+    unit: str | None = None
+    period: XbrlPeriod | None = None
     depth: int = 0
     order: float = 0.0
     is_abstract: bool = False
     dimensions: dict[str, str] = {}
-    preferred_label: Optional[str] = None
+    preferred_label: str | None = None
 
 
 class FinancialStatement(BaseModel):
@@ -133,7 +132,7 @@ class ParsedFinancialStatements(BaseModel):
     """
 
     source_file: str
-    entity_id: Optional[str] = None
+    entity_id: str | None = None
     statements: dict[str, FinancialStatement] = {}
     separate_statements: dict[str, FinancialStatement] = {}
 
@@ -143,9 +142,9 @@ class XbrlDocument(BaseModel):
 
     source_file: str
     facts: list[XbrlFact]
-    entity_id: Optional[str] = None
-    reporting_period_end: Optional[date] = None
-    taxonomy: Optional[TaxonomyInfo] = None
+    entity_id: str | None = None
+    reporting_period_end: date | None = None
+    taxonomy: TaxonomyInfo | None = None
 
 
 class NoteLineItem(BaseModel):
@@ -157,12 +156,12 @@ class NoteLineItem(BaseModel):
 
     concept_local_name: str
     concept_qname: str
-    label_ko: Optional[str] = None
-    label_en: Optional[str] = None
-    value: Optional[Decimal] = None
-    text_value: Optional[str] = None
-    unit: Optional[str] = None
-    period: Optional[XbrlPeriod] = None
+    label_ko: str | None = None
+    label_en: str | None = None
+    value: Decimal | None = None
+    text_value: str | None = None
+    unit: str | None = None
+    period: XbrlPeriod | None = None
     depth: int = 0
     order: float = 0.0
     is_abstract: bool = False
@@ -174,7 +173,7 @@ class NoteSection(BaseModel):
 
     role_code: str
     role_uri: str
-    title: Optional[str] = None
+    title: str | None = None
     is_consolidated: bool = True
     line_items: list[NoteLineItem] = []
     periods: list[XbrlPeriod] = []
@@ -184,5 +183,5 @@ class ParsedNotes(BaseModel):
     """Collection of parsed financial statement notes."""
 
     source_file: str
-    entity_id: Optional[str] = None
+    entity_id: str | None = None
     notes: dict[str, NoteSection] = {}

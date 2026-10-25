@@ -63,7 +63,7 @@ class _Record:
     def __iter__(self):
         return iter([_Record(), _Record()])
 
-    def __getitem__(self, index) -> "_Record":
+    def __getitem__(self, index) -> _Record:
         return _Record()
 
     def __len__(self) -> int:
