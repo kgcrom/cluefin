@@ -122,7 +122,6 @@ ECOS_AUTH_KEY=your_ecos_auth_key_here
 ### 기본 사용법
 
 ```python
-from loguru import logger
 from pydantic import SecretStr
 import os
 from cluefin_openapi.kiwoom._auth import Auth
@@ -143,8 +142,8 @@ client = Client(token=token.get_token(), env="dev")
 
 # 삼성전자(005930) 일별 실현손익 조회
 response = client.account.get_daily_stock_realized_profit_loss_by_date("005930", "20250630")
-logger.info(f"응답 헤더: ${response.headers}")
-logger.info(f"응답 데이터: ${response.body}")
+print(f"응답 헤더: ${response.headers}")
+print(f"응답 데이터: ${response.body}")
 ```
 
 ## 📚 API 문서
@@ -153,7 +152,6 @@ logger.info(f"응답 데이터: ${response.body}")
 
 ```python
 # 키움증권
-from loguru import logger
 import os
 from pydantic import SecretStr
 import dotenv
@@ -170,7 +168,7 @@ auth = Auth(
 
 # 토큰 생성
 token = auth.generate_token()
-logger.info(f"token => ${token}")
+print(f"token => ${token}")
 ```
 
 ### 클라이언트 초기화
@@ -187,7 +185,6 @@ client = Client(
 
 ```python
 # 한국투자증권
-from loguru import logger
 import os
 from pydantic import SecretStr
 import dotenv
@@ -212,12 +209,11 @@ kis_client = KISClient(
     token=token,
     env="dev",
 )
-logger.info(f"kis_client => ${kis_client}")
+print(f"kis_client => ${kis_client}")
 ```
 
 ```python
 # NH투자증권 PLUG
-from loguru import logger
 import os
 from pydantic import SecretStr
 import dotenv
@@ -240,7 +236,7 @@ nhplug_client = NHPlugClient(
     secret_key=SecretStr(os.getenv("NHPLUG_SECRET_KEY")),
     env="dev",  # 모의투자: "dev", 운영: "prod"
 )
-logger.info(f"nhplug_client => ${nhplug_client}")
+print(f"nhplug_client => ${nhplug_client}")
 ```
 
 ## 📊 KIS API 사용 예제
@@ -248,7 +244,6 @@ logger.info(f"nhplug_client => ${nhplug_client}")
 ### 국내 주식 시세 조회
 
 ```python
-from loguru import logger
 from cluefin_openapi.kis._client import Client as KISClient
 
 # 주식 현재가 시세 조회
@@ -256,7 +251,7 @@ current_price = kis_client.domestic_basic_quote.get_inquire_price(
     fid_cond_mrkt_div_code="J",  # 시장 분류 코드 (J: 주식)
     fid_input_iscd="005930"      # 종목 코드 (삼성전자)
 )
-logger.info(f"현재가: {current_price}")
+print(f"현재가: {current_price}")
 
 # 주식 일별 시세 조회
 daily_price = kis_client.domestic_basic_quote.get_inquire_daily_itemchartprice(
@@ -266,7 +261,7 @@ daily_price = kis_client.domestic_basic_quote.get_inquire_daily_itemchartprice(
     fid_input_date_2="20250131",  # 조회 종료일
     fid_period_div_code="D"        # 기간 분류 코드 (D: 일)
 )
-logger.info(f"일별 시세: {daily_price}")
+print(f"일별 시세: {daily_price}")
 ```
 
 ### 국내 계좌 조회
@@ -286,7 +281,7 @@ balance = kis_client.domestic_account.get_inquire_balance(
     ctx_area_fk100="",    # 연속조회검색조건100
     ctx_area_nk100=""     # 연속조회키100
 )
-logger.info(f"잔고: {balance}")
+print(f"잔고: {balance}")
 ```
 
 ### 해외 주식 시세 조회
@@ -297,7 +292,7 @@ overseas_price = kis_client.overseas_basic_quote.get_inquire_price(
     exch="NAS",           # 거래소 코드 (NAS: 나스닥)
     symb="AAPL"           # 종목 코드 (애플)
 )
-logger.info(f"해외 주식 현재가: {overseas_price}")
+print(f"해외 주식 현재가: {overseas_price}")
 ```
 
 ## 🏦 NH PLUG API 사용 예제
@@ -311,13 +306,12 @@ logger.info(f"해외 주식 현재가: {overseas_price}")
 ### 계좌 목록 조회
 
 ```python
-from loguru import logger
 
 # 계좌번호는 모든 조회·주문 API의 act_no 로 사용합니다.
 # 운영은 acct_type=01·02, 모의투자는 03 계좌만 유효합니다.
 accounts = nhplug_client.common.get_account_list()
 for account in accounts.body.output_0 or []:
-    logger.info(f"{account.acct_no} (acct_type={account.acct_type})")
+    print(f"{account.acct_no} (acct_type={account.acct_type})")
 ```
 
 ### 국내주식 시세·잔고 조회
@@ -325,7 +319,7 @@ for account in accounts.body.output_0 or []:
 ```python
 # 주식현재가 시세 — 시세 API는 계좌번호가 필요 없습니다.
 current = nhplug_client.krstock_quote.current_price(market_cd="KRX", iem_cd="005930")
-logger.info(f"현재가: {current.body.output_0.stck_prpr}")
+print(f"현재가: {current.body.output_0.stck_prpr}")
 
 # 주식 잔고 조회
 balance = nhplug_client.krstock_inquiry.balance(
@@ -335,7 +329,7 @@ balance = nhplug_client.krstock_inquiry.balance(
     aet_bse="1",         # 자산기준: 순자산
     qut_dit_cd="UNT",    # 시세구분코드: 통합시세
 )
-logger.info(f"잔고: {balance.body}")
+print(f"잔고: {balance.body}")
 ```
 
 ### 해외주식 조회·시세
@@ -348,7 +342,7 @@ balance = nhplug_client.overseas_stock_inquiry.balance(
     fc_sec_trd_nat_cd="200",  # 미국
     cur_cd="KRW",             # 전체
 )
-logger.info(f"평가금액합계: {balance.body.output_0.eal_amt_sum}")
+print(f"평가금액합계: {balance.body.output_0.eal_amt_sum}")
 
 # 해외주식 매수가능금액 조회
 buyable = nhplug_client.overseas_stock_inquiry.buyable_amount(
@@ -360,11 +354,11 @@ buyable = nhplug_client.overseas_stock_inquiry.buyable_amount(
     oss_orr_knd_cd="1",       # GTS(미국시장주문)
     ahi_nmn_pr_tp_cd="03",    # 시장가
 )
-logger.info(f"매수가능: {buyable.body.output_0}")
+print(f"매수가능: {buyable.body.output_0}")
 
 # 해외주식 현재가상세 — 종목명은 iem_nm 을 읽습니다(스펙의 kor_name 은 실서버 미사용)
 price = nhplug_client.overseas_stock_quote.current(iem_cd="AAPL")
-logger.info(f"{price.body.output_0.iem_nm}: {price.body.output_0.trdprc}")
+print(f"{price.body.output_0.iem_nm}: {price.body.output_0.trdprc}")
 ```
 
 > ⚠️ 해외주식 시세 4종(`/gbstock/quote/v1/*`)은 **모의투자에서 제공되지 않습니다**.
@@ -384,7 +378,7 @@ order = nhplug_client.overseas_stock_order.buy(
     wtm_cur_knd_cd="2",       # 원화
     fc_orr_uit_pr=300.00,     # 지정가 유형이면 필수
 )
-logger.info(f"주문번호: {order.body.output_0.orr_no}")
+print(f"주문번호: {order.body.output_0.orr_no}")
 ```
 
 ### NH PLUG 실시간 시세 (웹소켓)
@@ -596,12 +590,15 @@ asyncio.run(main())
 
 ### 로깅 설정
 
+라이브러리는 stdlib `logging` 으로 `cluefin_openapi.<브로커>.<모듈>` 이름의 로거에 남기고 핸들러는 붙이지 않습니다.
+출력 위치·레벨은 쓰는 쪽에서 정합니다. 요청·응답 단위의 DEBUG 로그는 클라이언트를 `debug=True` 로 만들어야 나옵니다.
+
 ```python
 import logging
-from loguru import logger
 
-# 로그 레벨 설정
-logger.add("kiwoom_api.log", level="INFO", rotation="10 MB")
+logging.basicConfig(level=logging.WARNING)
+logging.getLogger("cluefin_openapi").setLevel(logging.INFO)  # 토큰 발급 등 INFO 까지
+logging.getLogger("cluefin_openapi").addHandler(logging.FileHandler("cluefin_openapi.log"))
 ```
 
 ### 요청 제한 관리
@@ -617,19 +614,18 @@ logger.add("kiwoom_api.log", level="INFO", rotation="10 MB")
 ### 키움증권 API 에러 처리
 
 ```python
-from loguru import logger
 from cluefin_openapi.kiwoom._exceptions import KiwoomAPIError, KiwoomRateLimitError
 
 try:
     response = client.account.get_daily_stock_realized_profit_loss_by_date("005930", "20250630")
 except KiwoomRateLimitError as e:
-    logger.info(f"요청 제한 초과, 재시도 대기: {e.retry_after}")
+    print(f"요청 제한 초과, 재시도 대기: {e.retry_after}")
 except KiwoomAPIError as e:
-    logger.info(f"API 에러: {e.message}")
-    logger.info(f"HTTP 상태 코드: {e.status_code}")
-    logger.info(f"응답 데이터: {e.response_data}")
+    print(f"API 에러: {e.message}")
+    print(f"HTTP 상태 코드: {e.status_code}")
+    print(f"응답 데이터: {e.response_data}")
 except Exception as e:
-    logger.info(f"일반 에러: {str(e)}")
+    print(f"일반 에러: {str(e)}")
 ```
 
 키움 API 서버가 응답 본문에 `return_code`를 내려주면, 라이브러리가 `_error_codes.py`의
@@ -640,7 +636,6 @@ except Exception as e:
 ### 한국투자증권 API 에러 처리
 
 ```python
-from loguru import logger
 from cluefin_openapi.kis._exceptions import KISAPIError
 
 try:
@@ -649,10 +644,10 @@ try:
         fid_input_iscd="005930"
     )
 except KISAPIError as e:
-    logger.error(f"KIS API 에러: {e.message}")
-    logger.error(f"HTTP 상태 코드: {e.status_code}")
+    print(f"KIS API 에러: {e.message}")
+    print(f"HTTP 상태 코드: {e.status_code}")
 except Exception as e:
-    logger.error(f"일반 에러: {str(e)}")
+    print(f"일반 에러: {str(e)}")
 ```
 
 ### NH투자증권 PLUG API 에러 처리
@@ -671,7 +666,6 @@ NH PLUG는 **HTTP 200이어도 응답 본문 `rsp_cd`가 실패**일 수 있습�
 | `NHPlugAPIError` | 그 외 | 분류되지 않은 실패 |
 
 ```python
-from loguru import logger
 from cluefin_openapi.nhplug import (
     NHPlugAPIError,
     NHPlugNoDataError,
@@ -682,14 +676,14 @@ from cluefin_openapi.nhplug import (
 try:
     response = nhplug_client.krstock_inquiry.sellable_quantity(act_no="12345678901", iem_cd="005930", cfd_lon_cd="00")
 except NHPlugNoDataError:
-    logger.info("매도 가능한 잔고 없음")
+    print("매도 가능한 잔고 없음")
 except NHPlugValidationError as e:
     # 입력 오류는 HTTP 400 + rsp_cd(IGW…) 형태로 옵니다
-    logger.error(f"입력 오류 [{e.rsp_cd}]: {e.message}")
+    print(f"입력 오류 [{e.rsp_cd}]: {e.message}")
 except NHPlugRateLimitError as e:
-    logger.error(f"요청 제한 초과: {e.message}")
+    print(f"요청 제한 초과: {e.message}")
 except NHPlugAPIError as e:
-    logger.error(f"API 에러 [{e.rsp_cd}]: {e.message}")
+    print(f"API 에러 [{e.rsp_cd}]: {e.message}")
 ```
 
 성공으로 취급하는 본문 코드는 `nhplug._model.SUCCESS_RSP_CODES`로 관리합니다.
@@ -867,7 +861,6 @@ class KiwoomHttpResponse(Generic[T]):
 - **pytest**: 테스트 프레임워크
 - **Pydantic**: 데이터 검증 및 타입 안전성
 - **requests**: HTTP 클라이언트
-- **loguru**: 구조화된 로깅
 
 ```bash
 # 워크스페이스 루트에서 실행

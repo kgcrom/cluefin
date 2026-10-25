@@ -1,8 +1,8 @@
 import json
+import logging
 from typing import Literal
 
 import requests
-from loguru import logger
 
 from cluefin_openapi._http_base import BaseHttpClient
 from cluefin_openapi._rate_limiter import TokenBucket
@@ -19,6 +19,8 @@ from ._exceptions import (
     KiwoomTimeoutError,
     KiwoomValidationError,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class MockResponse:
@@ -83,11 +85,6 @@ class Client(BaseHttpClient):
 
         # Initialize cache if enabled
         self._cache = SimpleCache(default_ttl=cache_ttl) if enable_caching else None
-
-        # Configure logging. Debug chatter is already gated behind `if self.debug`,
-        # so the namespace stays enabled to keep API error/warning logs visible.
-        if self.debug:
-            logger.enable("cluefin_openapi.kiwoom")
 
     @property
     def account(self):
@@ -239,7 +236,7 @@ class Client(BaseHttpClient):
             request_context=request_context,
         )
         logger.error(
-            "Kiwoom API error (return_code={}, api-id={}, path={}): {}",
+            "Kiwoom API error (return_code=%s, api-id=%s, path=%s): %s",
             return_code,
             request_context.get("tr_id"),
             request_context.get("path"),

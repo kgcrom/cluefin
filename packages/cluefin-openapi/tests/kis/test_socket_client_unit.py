@@ -7,7 +7,6 @@ import struct
 from unittest.mock import AsyncMock, Mock
 
 import pytest
-from loguru import logger
 from pydantic import SecretStr
 
 from cluefin_openapi.kis._exceptions import KISAPIError, KISNetworkError
@@ -802,10 +801,7 @@ class TestSocketCloseAndEventsEdgeCases:
         client._writer = writer
         client._reader = FakeReader()
 
-        try:
-            await client.close()
-        finally:
-            logger.disable("cluefin_openapi.kis")
+        await client.close()
 
         assert writer.closed is True
         assert client._writer is None
@@ -883,8 +879,7 @@ class TestSocketDebugMode:
     @pytest.fixture
     def debug_client(self):
         client = SocketClient("approval", "app", "secret", env="dev", debug=True)
-        yield client
-        logger.disable("cluefin_openapi.kis")
+        return client
 
     @pytest.mark.asyncio
     async def test_subscription_flow_in_debug_mode(self, debug_client):

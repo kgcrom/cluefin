@@ -7,14 +7,15 @@ also rate-limited server-side (1 request per second).
 """
 
 import hashlib
+import logging
 from datetime import datetime, timedelta
 from pathlib import Path
 from tempfile import gettempdir
 
-from loguru import logger
-
 from cluefin_openapi._atomic_file import read_json_locked, write_json_atomic
 from cluefin_openapi.nhplug._auth_types import TokenResponse
+
+logger = logging.getLogger(__name__)
 
 
 class TokenManager:

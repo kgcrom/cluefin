@@ -575,25 +575,20 @@ def dispatch(argv: list[str] | None = None) -> None:
     _run_dynamic(args)
 
 
-def _quiet_client_logging() -> None:
-    """Keep stderr clean for agents: client DEBUG/INFO chatter only with CLUEFIN_OPENAPI_DEBUG."""
+def _configure_logging() -> None:
+    """Keep stderr clean for agents: WARNING and up only, client DEBUG/INFO with CLUEFIN_OPENAPI_DEBUG."""
 
+    import logging
     import os
 
+    logging.basicConfig(level=logging.WARNING, stream=sys.stderr, format="%(levelname)s %(name)s: %(message)s")
     if os.environ.get("CLUEFIN_OPENAPI_DEBUG", "0").lower() in {"1", "true", "yes", "on"}:
-        return
-    try:
-        from loguru import logger
-
-        logger.remove()
-        logger.add(sys.stderr, level="WARNING")
-    except Exception:  # pragma: no cover - loguru is a transitive dependency; never fail on it
-        return
+        logging.getLogger("cluefin_openapi").setLevel(logging.DEBUG)
 
 
 def main(argv: list[str] | None = None) -> None:
     args = list(sys.argv[1:] if argv is None else argv)
-    _quiet_client_logging()
+    _configure_logging()
     try:
         dispatch(args)
     except CliError as exc:

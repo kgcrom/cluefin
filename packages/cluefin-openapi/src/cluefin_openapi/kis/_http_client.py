@@ -1,4 +1,5 @@
 import json
+import logging
 import tempfile
 import time
 from pathlib import Path
@@ -6,7 +7,6 @@ from typing import Any, Literal
 from uuid import uuid4
 
 import requests
-from loguru import logger
 from pydantic import SecretStr
 
 from cluefin_openapi._http_base import BaseHttpClient
@@ -22,6 +22,8 @@ from ._exceptions import (
     KISTimeoutError,
     KISValidationError,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class HttpClient(BaseHttpClient):
@@ -62,11 +64,6 @@ class HttpClient(BaseHttpClient):
 
         # Initialize rate limiter
         self._rate_limiter = TokenBucket(capacity=rate_limit_burst, refill_rate=rate_limit_requests_per_second)
-
-        if self.debug:
-            logger.enable("cluefin_openapi.kis")
-        else:
-            logger.disable("cluefin_openapi.kis")
 
     @property
     def domestic_account(self):

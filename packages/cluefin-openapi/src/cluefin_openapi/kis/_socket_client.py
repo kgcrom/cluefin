@@ -14,6 +14,7 @@ References:
 
 import asyncio
 import json
+import logging
 import ssl
 import struct
 from asyncio import Queue
@@ -21,12 +22,13 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Literal
 
-from loguru import logger
 from pydantic import SecretStr
 
 from cluefin_openapi._rate_limiter import TokenBucket
 
 from ._exceptions import KISAPIError, KISNetworkError
+
+logger = logging.getLogger(__name__)
 
 
 class SubscriptionType(str, Enum):
@@ -153,11 +155,6 @@ class SocketClient:
         self._receive_task: asyncio.Task | None = None
         self._last_rejection: KISAPIError | None = None
         self._rate_limiter = TokenBucket(capacity=rate_limit_burst, refill_rate=rate_limit_requests_per_second)
-
-        if debug:
-            logger.enable("cluefin_openapi.kis")
-        else:
-            logger.disable("cluefin_openapi.kis")
 
     async def __aenter__(self) -> "SocketClient":
         """Async context manager entry."""
@@ -664,13 +661,13 @@ class SocketClient:
                 await self._send_frame(b"", opcode=0x8)
             except Exception as exc:
                 if self.debug:
-                    logger.debug("Failed to send close frame: {}", exc)
+                    logger.debug("Failed to send close frame: %s", exc)
             self._writer.close()
             try:
                 await self._writer.wait_closed()
             except Exception as exc:
                 if self.debug:
-                    logger.debug("Failed to close writer: {}", exc)
+                    logger.debug("Failed to close writer: %s", exc)
             self._writer = None
             self._reader = None
 
