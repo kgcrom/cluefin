@@ -216,17 +216,5 @@ def test_strength_is_none_when_either_side_is_short() -> None:
     prices, index = prices_of("stock-a"), index_of("KOSPI")
     short_index = IndexCloses(dates=index.dates[-250:], closes=index.closes[-250:])
 
-    assert strength(_last(prices, 250), index) is None
+    assert strength(prices.window(start=-250), index) is None
     assert strength(prices, short_index) is None
-
-
-def _last(prices: PriceArrays, n: int) -> PriceArrays:
-    return PriceArrays(
-        dates=prices.dates[-n:],
-        open=prices.open[-n:],
-        high=prices.high[-n:],
-        low=prices.low[-n:],
-        close=prices.close[-n:],
-        volume=prices.volume[-n:],
-        value=prices.value[-n:],
-    )

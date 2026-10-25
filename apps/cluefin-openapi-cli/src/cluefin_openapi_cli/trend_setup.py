@@ -32,16 +32,19 @@ from cluefin_openapi_cli.ohlcv import CandleSeries
 
 __all__ = [
     "BASE_WINDOW",
+    "CAVEATS",
     "RULES",
     "FRACTAL_N",
     "MIN_CANDLES",
     "IndexCloses",
     "IndexDateMismatch",
+    "InsufficientHistory",
     "Pivot",
     "PriceArrays",
     "PriceFeatures",
     "Rules",
     "Strength",
+    "analyze",
     "classify",
     "find_pivot",
     "floor_to_tick",
@@ -112,6 +115,20 @@ class PriceArrays:
             close=_array(columns[4]),
             volume=_array(columns[5]),
             value=_array(columns[6]),
+        )
+
+    def window(self, start: int | None = None, stop: int | None = None) -> PriceArrays:
+        """Bars ``[start:stop]``, Python slice rules."""
+
+        cut = slice(start, stop)
+        return PriceArrays(
+            dates=self.dates[cut],
+            open=self.open[cut],
+            high=self.high[cut],
+            low=self.low[cut],
+            close=self.close[cut],
+            volume=self.volume[cut],
+            value=self.value[cut],
         )
 
 
@@ -573,4 +590,114 @@ def classify(f: PriceFeatures, pv: Pivot | None, s: Strength) -> dict[str, Any]:
         "g2_score": score,
         "to_pivot_pct": to_pivot,
         "levels": levels(pv.price) if pv else None,
+    }
+
+
+# ---------------------------------------------------------------------------
+# One stock's full reading (shared by `kis chart trend-setup` and `cache trend-setup`)
+# ---------------------------------------------------------------------------
+
+RULES_VERSION = "2026-10"
+CAVEATS = (
+    "규칙은 2021-10~2026-10 5년 백테스트(폐지 포함)에서 나왔다 — 3그룹 다음 날 피봇 돌파 1,512건 평균 +0.13R, "
+    "1·2그룹 매수는 모든 규칙에서 마이너스였다.",
+    "장중 트리거(돌파일 거래량, 업종 동반 상승)는 판정에 없다 — 매수 당일 직접 확인.",
+    "폭락 뒤 V자 반등장의 짧은 베이스 돌파는 3그룹으로 잡지 않는다(10일 고저폭 ≤ 12%, 대부분 1그룹 과열).",
+    "action 은 매수 추천이 아니다 — alert 는 피봇 아래 알림을 걸 자리라는 뜻이다.",
+)
+
+
+class InsufficientHistory(ValueError):
+    """Fewer than ``MIN_CANDLES`` bars for the stock (``which="stock"``) or its index (``"index"``)."""
+
+    def __init__(self, which: str, count: int) -> None:
+        super().__init__(f"{which} has {count} bars; trend-setup needs {MIN_CANDLES}.")
+        self.which = which
+        self.count = count
+
+
+def _clean(value: Any, digits: int = 4) -> Any:
+    """Round floats for output; NaN/inf become None so JSON stays valid. Recurses into dicts/lists."""
+
+    if isinstance(value, bool) or value is None:
+        return value
+    if isinstance(value, float | np.floating):
+        return None if math.isnan(value) or math.isinf(value) else round(float(value), digits)
+    if isinstance(value, dict):
+        return {key: _clean(item, digits) for key, item in value.items()}
+    if isinstance(value, list | tuple):
+        return [_clean(item, digits) for item in value]
+    return value
+
+
+def analyze(prices: PriceArrays, index: IndexCloses) -> dict[str, Any]:
+    """Every reading of the last bar plus the setup, as output-ready (rounded) values.
+
+    Raises ``InsufficientHistory`` and ``IndexDateMismatch``; callers turn them into exit codes.
+    """
+
+    f = price_features(prices)
+    if f is None:
+        raise InsufficientHistory("stock", len(prices))
+    s = strength(prices, index)
+    if s is None:
+        raise InsufficientHistory("index", index.dates.index(prices.dates[-1]) + 1)
+    pv = find_pivot(prices)
+    setup = classify(f, pv, s)
+    return {
+        "as_of": f.date,
+        "candle_count": len(prices),
+        "close": f.close,
+        "trend": {
+            "sma_50": _clean(f.sma_50, 2),
+            "sma_150": _clean(f.sma_150, 2),
+            "sma_200": _clean(f.sma_200, 2),
+            "sma_200_rising": f.sma_200_rising,
+            "template": f.template,
+            "template_checks": [{"rule": rule, "pass": bool(passed)} for rule, passed in f.template_checks()],
+        },
+        "range_52w": _clean(
+            {
+                "high": f.high_52w,
+                "low": f.low_52w,
+                "gap_to_high_pct": f.gap_to_high_pct,
+                "from_low_pct": f.from_low_pct,
+            }
+        ),
+        "volatility": _clean(
+            {
+                "atr14_pct": f.atr14_pct,
+                "range_10d_pct": f.range_10d_pct,
+                "depth_60d_pct": f.depth_60d_pct,
+                "dist_sma50_pct": f.dist_sma50_pct,
+            }
+        ),
+        "volume": _clean({"volume_20_50": f.volume_20_50, "traded_value_20d_eok": f.traded_value_20d_eok}),
+        "pivot": _clean(
+            {
+                "price": pv.price,
+                "date": pv.date,
+                "age": pv.age,
+                "last_contraction_pct": pv.last_contraction_pct,
+                "contractions": pv.contractions,
+                "legs": list(pv.legs),
+                "to_pivot_pct": setup["to_pivot_pct"],
+            }
+        )
+        if pv
+        else None,
+        "strength": _clean(
+            {
+                "rel": s.rel,
+                "excess_21d_pp": s.excess_21d_pp,
+                "weighted_return": s.weighted_return,
+                "index_weighted_return": s.index_weighted_return,
+                "return_21d_pct": s.return_21d_pct,
+                "index_return_21d_pct": s.index_return_21d_pct,
+            }
+        ),
+        "setup": _clean({key: setup[key] for key in ("groups", "action", "status", "reason", "checks", "g2_score")}),
+        "levels": setup["levels"],
+        "rules": {"version": RULES_VERSION, "source": "apps/cluefin-openapi-cli/README.md#trend-setup"},
+        "caveats": list(CAVEATS),
     }

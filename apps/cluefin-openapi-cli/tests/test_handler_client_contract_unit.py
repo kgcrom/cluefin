@@ -157,7 +157,7 @@ def test_handler_matches_real_client_contract(spec):
         spec.executor(params, session)
     except CliError:
         # 프로브는 모든 output 필드를 None으로 돌려주므로 빈 응답과 구분되지 않는다.
-        # 응답을 계산에 쓰는 핸들러(`kis.chart.technical`)는 여기서 정당하게 실패한다 —
+        # 응답을 계산에 쓰는 핸들러(`kis.chart.technical`·`trend-setup`)는 여기서 정당하게 실패한다 —
         # 이 테스트가 검증하는 것(메서드 시그니처·필드 접근)은 그 전에 이미 일어났다.
         pass
 
