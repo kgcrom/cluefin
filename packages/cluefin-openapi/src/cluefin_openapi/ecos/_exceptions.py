@@ -85,7 +85,7 @@ def raise_for_result(
     """본문 `RESULT.CODE` 를 예외로 바꿔 던진다. 데이터 없음(INFO-200)은 호출 전에 걸러진다.
 
     코드는 `INFO-100`·`ERROR-101` 꼴이고, 같은 ERROR-301 이 건수 타입 오류·시작>끝·sample 10건 초과를 함께 뜻한다
-    (메시지 꼬리만 다르다). 명세의 코드 목록은 `docs/ecos_spec/*.xls` 의 "OpenAPI 메세지" 표.
+    (메시지 꼬리만 다르다). 명세의 코드 목록은 ECOS 개발 명세서(https://ecos.bok.or.kr/api/)의 "OpenAPI 메세지" 표.
     """
     common = {"code": code, "response_data": response_data, "request_context": request_context}
     if code == SAMPLE_LIMIT_CODE and SAMPLE_LIMIT_HINT in message:
