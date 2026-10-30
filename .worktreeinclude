@@ -1,0 +1,12 @@
+# 새 worktree 에 복사할 gitignore 파일 목록. 문법은 .gitignore 와 같다.
+# 패턴에 맞으면서 gitignore 된 파일만 복사하므로 추적 파일은 중복되지 않는다.
+#
+# 이 저장소는 WorktreeCreate hook(.claude/hooks/worktree-create.sh)이 worktree 를 만든다.
+# hook 이 있으면 Claude Code 는 이 파일을 직접 읽지 않고, hook 이 읽어서 복사한 뒤 uv sync --all-packages 를 돌린다.
+# Bash 로 직접 `git worktree add` 하면 hook 이 돌지 않으니 복사와 uv sync 도 직접 한다.
+#
+# .venv 는 넣지 않는다. 크고, 인터프리터 심볼릭 링크가 원래 체크아웃을 가리킨다. uv sync 가 새로 만든다.
+
+# 실계좌(prod) 키와 키움 모의 키. 값은 절대 출력하지 않는다(루트 AGENTS.md).
+.env
+.env.test
