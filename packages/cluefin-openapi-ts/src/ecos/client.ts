@@ -23,6 +23,7 @@ import {
 import { BaseHttpClient } from '../core/http.js';
 import { consoleLogger, type Logger } from '../core/logger.js';
 import { withRetry } from '../core/retry.js';
+import { StatisticCatalog } from './statistic-catalog.js';
 import { StatisticSearch } from './statistic-search.js';
 import type { EcosLang, EcosPage, EcosPageOptions } from './types.js';
 
@@ -189,6 +190,7 @@ export class EcosClient {
   private readonly logger: Logger;
 
   private statisticSearchInstance?: StatisticSearch;
+  private statisticCatalogInstance?: StatisticCatalog;
 
   public constructor(options: EcosClientOptions = {}) {
     this.authKey = options.authKey || ECOS_SAMPLE_AUTH_KEY;
@@ -224,6 +226,14 @@ export class EcosClient {
       this.statisticSearchInstance = new StatisticSearch(this);
     }
     return this.statisticSearchInstance;
+  }
+
+  /** 통계 목록 (StatisticTableList · StatisticItemList · KeyStatisticList) */
+  public get statisticCatalog(): StatisticCatalog {
+    if (!this.statisticCatalogInstance) {
+      this.statisticCatalogInstance = new StatisticCatalog(this);
+    }
+    return this.statisticCatalogInstance;
   }
 
   /**
