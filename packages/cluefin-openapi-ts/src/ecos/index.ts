@@ -1,5 +1,5 @@
 export type { EcosClientOptions } from './client.js';
-export { camelizeEcosKeys, ECOS_BASE_URL, ECOS_SAMPLE_AUTH_KEY, EcosClient } from './client.js';
+export { camelizeEcosKeys, ECOS_BASE_URL, EcosClient } from './client.js';
 export type { EcosSeries } from './constants.js';
 export {
   CD_91D,

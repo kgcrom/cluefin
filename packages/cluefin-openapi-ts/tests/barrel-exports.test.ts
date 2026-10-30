@@ -33,7 +33,7 @@ test('root barrel exposes runtime exports from core, KIS, Kiwoom, and NH PLUG mo
   expect(Root.EcosClient).toBe(Ecos.EcosClient);
   expect(Root.StatisticSearch).toBe(Ecos.StatisticSearch);
   expect(Root.KTB_10Y.itemCode).toBe('010210000');
-  expect(Root.ECOS_SAMPLE_AUTH_KEY).toBe('sample');
+  expect(new Root.EcosClient().isSample).toBe(true);
   expect(new Root.EcosSampleLimitError('x')).toBeInstanceOf(Root.EcosValidationError);
   expect(new Root.EcosNotFoundError('x')).toBeInstanceOf(Root.EcosApiError);
 
