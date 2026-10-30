@@ -24,6 +24,7 @@ import { BaseHttpClient } from '../core/http.js';
 import { consoleLogger, type Logger } from '../core/logger.js';
 import { withRetry } from '../core/retry.js';
 import { StatisticCatalog } from './statistic-catalog.js';
+import { StatisticGlossary } from './statistic-glossary.js';
 import { StatisticSearch } from './statistic-search.js';
 import type { EcosLang, EcosPage, EcosPageOptions } from './types.js';
 
@@ -191,6 +192,7 @@ export class EcosClient {
 
   private statisticSearchInstance?: StatisticSearch;
   private statisticCatalogInstance?: StatisticCatalog;
+  private statisticGlossaryInstance?: StatisticGlossary;
 
   public constructor(options: EcosClientOptions = {}) {
     this.authKey = options.authKey || ECOS_SAMPLE_AUTH_KEY;
@@ -234,6 +236,14 @@ export class EcosClient {
       this.statisticCatalogInstance = new StatisticCatalog(this);
     }
     return this.statisticCatalogInstance;
+  }
+
+  /** 통계 용어·메타 (StatisticWord · StatisticMeta) */
+  public get statisticGlossary(): StatisticGlossary {
+    if (!this.statisticGlossaryInstance) {
+      this.statisticGlossaryInstance = new StatisticGlossary(this);
+    }
+    return this.statisticGlossaryInstance;
   }
 
   /**
