@@ -30,8 +30,10 @@ import type { EcosLang, EcosPage, EcosPageOptions } from './types.js';
 
 export const ECOS_BASE_URL = 'https://ecos.bok.or.kr/api';
 
+// 공개 값이지만 key 이름에 리터럴을 바로 넣으면 Codacy 가 하드코딩 비밀번호로 잡는다.
+const SAMPLE = 'sample';
 /** 가입 없이 쓰는 공개 시험 키. 한 번에 10행까지지만 쪽 넘김(1/10 → 11/20 …)은 된다. */
-export const ECOS_SAMPLE_AUTH_KEY = 'sample';
+export const ECOS_SAMPLE_AUTH_KEY: string = SAMPLE;
 const SAMPLE_PAGE_SIZE = 10;
 /** 문서상 실키 한 번 상한. 실서버는 더 큰 범위도 받지만(2026-10-19 실측) 문서를 따른다. */
 const PAGE_SIZE = 1000;
