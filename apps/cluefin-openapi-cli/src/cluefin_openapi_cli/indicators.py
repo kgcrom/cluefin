@@ -27,14 +27,18 @@ import numpy as np
 from cluefin_ta import ADX, ATR, BBANDS, MACD, MDD, OBV, RSI, SHARPE, SMA, STOCH
 
 from cluefin_openapi_cli.ohlcv import CandleSeries
+from cluefin_openapi_cli.trend_setup import ceil_to_tick, floor_to_tick
 
 __all__ = [
+    "DEFAULT_HORIZONS",
     "IndicatorSet",
     "MIN_CANDLES",
     "SignalRule",
+    "StopSizing",
     "analyze",
     "compute_indicators",
     "score_signals",
+    "stop_sizing",
 ]
 
 # The longest warm-up any configured indicator needs is SMA(60); below that the slow MA
@@ -49,6 +53,14 @@ MIN_CANDLES = 60
 _STRONG = 0.4
 
 _TRADING_DAYS_PER_YEAR = 252
+
+# Stop-width floor from the market-review agent: 1.5 × ATR14 × √(horizon / 30). A stop closer than
+# this is inside normal noise for the horizon; one wider than 20% of the price means no position
+# (watch), not a wider stop.
+_STOP_ATR_MULTIPLE = 1.5
+_STOP_BASE_DAYS = 30
+_STOP_MAX_PCT = 20.0
+DEFAULT_HORIZONS = (20, 40, 60)
 
 
 def _last(values: np.ndarray) -> float:
@@ -90,6 +102,48 @@ class IndicatorSet:
     missing_count: int
     close: float
     values: dict[str, Any]
+
+
+@dataclass(frozen=True, slots=True)
+class StopSizing:
+    """The narrowest stop a ``horizon_days`` view can use, on both sides of the reference price.
+
+    ``buy_stop`` is floored and ``sell_stop`` ceiled to a valid tick, so each is at least
+    ``width`` away. ``verdict_cap`` is ``"watch"`` when the width exceeds 20% of the price.
+    """
+
+    horizon_days: int
+    width: float
+    width_pct: float
+    buy_stop: float
+    sell_stop: float
+    too_wide: bool
+    verdict_cap: str | None
+
+
+def stop_sizing(
+    close: float, atr_14: float | None, horizons: tuple[int, ...] = DEFAULT_HORIZONS
+) -> tuple[StopSizing, ...] | None:
+    """Stop-width floor per horizon; ``None`` while ATR is still in its warm-up."""
+
+    if atr_14 is None or not math.isfinite(atr_14) or close <= 0:
+        return None
+    return tuple(_stop_for(close, atr_14, horizon) for horizon in horizons)
+
+
+def _stop_for(close: float, atr_14: float, horizon: int) -> StopSizing:
+    width = _STOP_ATR_MULTIPLE * atr_14 * math.sqrt(horizon / _STOP_BASE_DAYS)
+    width_pct = width / close * 100
+    too_wide = width_pct > _STOP_MAX_PCT
+    return StopSizing(
+        horizon_days=horizon,
+        width=round(width, 2),
+        width_pct=round(width_pct, 2),
+        buy_stop=floor_to_tick(max(close - width, 0.0)),
+        sell_stop=ceil_to_tick(close + width),
+        too_wide=too_wide,
+        verdict_cap="watch" if too_wide else None,
+    )
 
 
 def compute_indicators(series: CandleSeries) -> IndicatorSet:
