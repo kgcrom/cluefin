@@ -1,0 +1,78 @@
+{
+  "KeyStatisticList": {
+    "list_total_count": 101,
+    "row_count": 10,
+    "row": [
+      {
+        "CLASS_NAME": "통화량",
+        "KEYSTAT_NAME": "M1(협의통화, 평잔)",
+        "DATA_VALUE": "1351852.9",
+        "CYCLE": "202608",
+        "UNIT_NAME": "십억원"
+      },
+      {
+        "CLASS_NAME": "통화량",
+        "KEYSTAT_NAME": "M2(광의통화, 평잔)",
+        "DATA_VALUE": "4257820.8",
+        "CYCLE": "202608",
+        "UNIT_NAME": "십억원"
+      },
+      {
+        "CLASS_NAME": "환율",
+        "KEYSTAT_NAME": "원/달러 환율(종가)",
+        "DATA_VALUE": "1330.3",
+        "CYCLE": "20261019",
+        "UNIT_NAME": "원"
+      },
+      {
+        "CLASS_NAME": "환율",
+        "KEYSTAT_NAME": "원/엔(100엔) 환율(매매기준율)",
+        "DATA_VALUE": "850.24",
+        "CYCLE": "20261019",
+        "UNIT_NAME": "원"
+      },
+      {
+        "CLASS_NAME": "환율",
+        "KEYSTAT_NAME": "원/유로 환율(매매기준율)",
+        "DATA_VALUE": "1505.17",
+        "CYCLE": "20261019",
+        "UNIT_NAME": "원"
+      },
+      {
+        "CLASS_NAME": "환율",
+        "KEYSTAT_NAME": "원/위안 환율(종가)",
+        "DATA_VALUE": "199.01",
+        "CYCLE": "20261019",
+        "UNIT_NAME": "원"
+      },
+      {
+        "CLASS_NAME": "채권",
+        "KEYSTAT_NAME": "국고채발행액",
+        "DATA_VALUE": "21228",
+        "CYCLE": "202608",
+        "UNIT_NAME": "십억원"
+      },
+      {
+        "CLASS_NAME": "소득",
+        "KEYSTAT_NAME": "GDP(명목, 계절조정)",
+        "DATA_VALUE": "834925.1",
+        "CYCLE": "2026Q2",
+        "UNIT_NAME": "십억원"
+      },
+      {
+        "CLASS_NAME": "소비",
+        "KEYSTAT_NAME": "개인신용카드사용액",
+        "DATA_VALUE": "80429718",
+        "CYCLE": "202607",
+        "UNIT_NAME": "백만원"
+      },
+      {
+        "CLASS_NAME": "가계",
+        "KEYSTAT_NAME": "가구당월평균소득",
+        "DATA_VALUE": "6969.4",
+        "CYCLE": "2024Q4",
+        "UNIT_NAME": "천원"
+      }
+    ]
+  }
+}
