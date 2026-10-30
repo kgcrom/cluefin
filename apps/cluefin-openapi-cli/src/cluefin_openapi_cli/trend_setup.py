@@ -463,6 +463,13 @@ def floor_to_tick(price: float) -> float:
     return float(math.floor(price / tick) * tick)
 
 
+def ceil_to_tick(price: float) -> float:
+    """Round up to a valid quote."""
+
+    tick = tick_size(price)
+    return float(math.ceil(price / tick) * tick)
+
+
 def levels(pivot_price: float) -> dict[str, float]:
     """§6: alert, buy stop, chase limit, stop loss and the 3R target, on valid ticks.
 

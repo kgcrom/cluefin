@@ -43,7 +43,8 @@ CLI 가 말해 주지 않는 것만 적는다.
 - **환율 명령은 없다.** 금리는 `kis market interest-rate`. 매크로를 웹 검색으로 대신하지 않는다 — 기준일이 섞인다.
 - **기술적 지표는 `kis chart technical`.** 캔들을 받아 직접 계산하지 않는다. `signal.trend` 와
   `signal.mean_reversion` 은 별개 계열이라 하나의 점수로 합치지 않는다. 값은 `cluefin-desk` 화면과 다르다(EMA
-  워밍업 차이) — 이 CLI 가 기준이다.
+  워밍업 차이) — 이 CLI 가 기준이다. `stop_sizing` 은 horizon(`--horizon-days 20,40,60`)별 손절폭 하한
+  `1.5 × ATR14 × √(h/30)` 과 buy/sell 손절가(틱 맞춤), 20% 초과 시 `verdict_cap: watch` 다 — 손절폭을 직접 계산하지 않는다.
 - **"이 종목이 돌파 대기냐"는 `kis chart trend-setup`.** 트렌드 템플릿·52주 고점갭·프랙탈 피봇과 수축·지수 대비 강도로 관심종목
   1·2·3그룹과 `alert`/`watch`/`exclude`, 피봇 기준 알림·손절가를 준다(약 12회 호출). 백테스트 정의라 `atr14_pct` 는 단순 평균이고
   technical 의 ATR(Wilder)과 다르다 — 두 값을 섞지 않는다. `action` 은 매수 추천이 아니다(`caveats`). 장 마감(15:40) 전에는 어제 기준이다.

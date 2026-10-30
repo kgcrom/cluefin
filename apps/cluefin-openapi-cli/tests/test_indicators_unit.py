@@ -5,11 +5,13 @@ import math
 import pytest
 
 from cluefin_openapi_cli.indicators import (
+    DEFAULT_HORIZONS,
     MIN_CANDLES,
     IndicatorSet,
     analyze,
     compute_indicators,
     score_signals,
+    stop_sizing,
 )
 from cluefin_openapi_cli.ohlcv import Candle, CandleSeries
 
@@ -339,6 +341,7 @@ def test_analyze_payload_is_json_safe_and_small() -> None:
         "close",
         "indicators",
         "signal",
+        "stop_sizing",
     }
 
 
@@ -347,3 +350,52 @@ def test_analyze_carries_the_series_provenance() -> None:
 
     assert payload["stock_code"] == "005930"
     assert payload["source"] == "test"
+
+
+def test_stop_sizing_scales_with_the_square_root_of_the_horizon() -> None:
+    sizes = stop_sizing(10_000, 300, (20, 30))
+    assert sizes is not None
+    short, base = sizes
+    # 1.5 × 300 × √(20/30) = 367.42: the buy stop floors and the sell stop ceils to the 10-won tick.
+    assert (short.width, short.width_pct, short.buy_stop, short.sell_stop) == (367.42, 3.67, 9630, 10370)
+    assert (base.width, base.width_pct, base.buy_stop, base.sell_stop) == (450, 4.5, 9550, 10450)
+    assert not short.too_wide
+    assert short.verdict_cap is None
+
+
+def test_stop_sizing_defaults_to_the_agent_horizons() -> None:
+    sizes = stop_sizing(10_000, 300)
+    assert sizes is not None
+    assert tuple(size.horizon_days for size in sizes) == DEFAULT_HORIZONS
+
+
+def test_stop_wider_than_twenty_percent_caps_the_verdict_at_watch() -> None:
+    sizes = stop_sizing(3_000, 400, (30,))
+    assert sizes is not None
+    # Exactly 20% is still allowed; the cap is for wider than 20%.
+    assert (sizes[0].width_pct, sizes[0].too_wide, sizes[0].verdict_cap) == (20.0, False, None)
+
+    wider = stop_sizing(3_000, 401, (30,))
+    assert wider is not None
+    assert (wider[0].too_wide, wider[0].verdict_cap) == (True, "watch")
+
+
+@pytest.mark.parametrize("atr", [None, math.nan])
+def test_stop_sizing_is_none_without_atr(atr: float | None) -> None:
+    assert stop_sizing(10_000, atr) is None
+
+
+def test_buy_stop_never_goes_below_zero() -> None:
+    sizes = stop_sizing(1_000, 2_000, (30,))
+    assert sizes is not None
+    assert sizes[0].buy_stop == 0
+    assert sizes[0].too_wide
+
+
+def test_analyze_sizes_stops_from_its_own_close_and_atr() -> None:
+    payload = analyze(_series(_uptrend()), (30,))
+
+    (level,) = payload["stop_sizing"]["levels"]
+    width = 1.5 * payload["indicators"]["atr_14"]
+    assert level["width"] == pytest.approx(width, abs=0.01)
+    assert level["width_pct"] == pytest.approx(width / payload["close"] * 100, abs=0.01)

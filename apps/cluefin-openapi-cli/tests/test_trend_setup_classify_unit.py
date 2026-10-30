@@ -10,6 +10,7 @@ from cluefin_openapi_cli.trend_setup import (
     Pivot,
     PriceFeatures,
     Strength,
+    ceil_to_tick,
     classify,
     find_pivot,
     floor_to_tick,
@@ -227,6 +228,13 @@ def test_g2_score_counts_passed_items() -> None:
 )
 def test_tick_size_bounds(price: float, tick: int) -> None:
     assert tick_size(price) == tick
+
+
+def test_ceil_to_tick_rounds_up_and_keeps_valid_quotes() -> None:
+    assert ceil_to_tick(174301) == 174400
+    assert ceil_to_tick(174300) == 174300
+    # Crossing a band edge lands on the edge, which is a valid quote in the next band.
+    assert ceil_to_tick(49_990.5) == 50_000
 
 
 def test_levels_on_valid_ticks() -> None:

@@ -9,7 +9,7 @@ from cluefin_openapi_cli.cache.bars import fetch_index_bars
 from cluefin_openapi_cli.clock import now_kst
 from cluefin_openapi_cli.errors import EXIT_BROKER, EXIT_USAGE, CliError
 from cluefin_openapi_cli.handlers._base import DispatcherProtocol, extract_output, rpc_method
-from cluefin_openapi_cli.indicators import MIN_CANDLES, analyze
+from cluefin_openapi_cli.indicators import DEFAULT_HORIZONS, MIN_CANDLES, analyze
 from cluefin_openapi_cli.ohlcv import fetch_kis_daily_series
 
 # ---------------------------------------------------------------------------
@@ -709,13 +709,16 @@ def handle_kis_etf_nav_comparison_daily(params: dict, session) -> dict:
 
 _TECHNICAL_DEFAULT_COUNT = 120
 _TECHNICAL_MAX_COUNT = 600
+# A horizon past a year of sessions is no longer a stop for one position.
+_HORIZON_MAX_DAYS = 250
 
 
 @rpc_method(
     name="chart.technical",
     description=(
         "Compute technical indicators and signal readings for a stock from daily OHLCV. "
-        "Returns final indicator values and rule votes only, not the candle series."
+        "Returns final indicator values and rule votes only, not the candle series, plus the "
+        "per-horizon stop-width floor (stop_sizing)."
     ),
     parameters={
         "type": "object",
@@ -744,6 +747,15 @@ _TECHNICAL_MAX_COUNT = 600
                 "type": "boolean",
                 "description": "Use adjusted prices (default true). False returns original prices.",
             },
+            "horizon_days": {
+                "type": "string",
+                "description": (
+                    "Comma-separated trading-day horizons for stop_sizing, e.g. 20,40,60 (the default). "
+                    f"Each 1-{_HORIZON_MAX_DAYS}."
+                ),
+                "pattern": "^[0-9]{1,3}(,[0-9]{1,3})*$",
+                "default": ",".join(map(str, DEFAULT_HORIZONS)),
+            },
         },
         "required": ["stock_code"],
     },
@@ -760,6 +772,7 @@ def handle_kis_chart_technical(params: dict, session) -> dict:
     out. Everything here beyond the fetch lives in `ohlcv` and `indicators`.
     """
 
+    horizons = _parse_horizons(params.get("horizon_days"))
     kis = session.get_kis()
     count = int(params.get("count", _TECHNICAL_DEFAULT_COUNT))
     series = fetch_kis_daily_series(
@@ -784,7 +797,26 @@ def handle_kis_chart_technical(params: dict, session) -> dict:
             ),
         )
 
-    return analyze(series)
+    return analyze(series, horizons)
+
+
+def _parse_horizons(raw: str | None) -> tuple[int, ...]:
+    """``"20,40,60"`` → ``(20, 40, 60)``, deduplicated in order; absent means the agent defaults."""
+
+    if not raw:
+        return DEFAULT_HORIZONS
+    parts = raw.split(",")
+    # RPC callers skip the schema pattern, so a non-number still has to fail as usage.
+    horizons = tuple(dict.fromkeys(int(part) for part in parts if part.isdigit()))
+    if len(parts) != sum(part.isdigit() for part in parts) or not all(1 <= h <= _HORIZON_MAX_DAYS for h in horizons):
+        raise CliError(
+            f"horizon_days must be comma-separated integers, each 1-{_HORIZON_MAX_DAYS}; got `{raw}`.",
+            exit_code=EXIT_USAGE,
+            error_type="ValidationError",
+            data={"horizon_days": raw},
+            hint="Pass trading-day horizons such as --horizon-days 20,40,60.",
+        )
+    return horizons
 
 
 # ---------------------------------------------------------------------------
