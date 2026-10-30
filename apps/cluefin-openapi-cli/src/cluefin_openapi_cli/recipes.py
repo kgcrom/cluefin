@@ -96,7 +96,9 @@ _RECIPES: tuple[WorkflowRecipe, ...] = (
                 agent_notes=(
                     "Start here. The CLI fetches the candles and computes in-process, so the reply is a few dozen "
                     "numbers rather than a few hundred rows. Only fall through to the chart commands below when the "
-                    "rows themselves are the deliverable."
+                    "rows themselves are the deliverable. `stop_sizing` gives the per-horizon stop-width floor "
+                    "(1.5 × ATR14 × √(h/30)) with buy/sell stop prices and `verdict_cap: watch` past 20% — use "
+                    "it instead of computing the stop; pass `--horizon-days 20,40,60` to choose horizons."
                 ),
             ),
             RecipeStep(

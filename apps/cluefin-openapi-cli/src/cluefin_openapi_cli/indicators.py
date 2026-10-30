@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Any
 
 import numpy as np
@@ -325,10 +325,11 @@ def score_signals(indicators: IndicatorSet) -> dict[str, Any]:
     }
 
 
-def analyze(series: CandleSeries) -> dict[str, Any]:
+def analyze(series: CandleSeries, horizons: tuple[int, ...] = DEFAULT_HORIZONS) -> dict[str, Any]:
     """Run the whole layer and return the JSON-safe payload the command emits."""
 
     indicators = compute_indicators(series)
+    sizes = stop_sizing(indicators.close, indicators.values["atr_14"], horizons)
     return {
         "stock_code": series.stock_code,
         "source": series.source,
@@ -338,4 +339,10 @@ def analyze(series: CandleSeries) -> dict[str, Any]:
         "close": _clean(indicators.close, 2),
         "indicators": indicators.values,
         "signal": score_signals(indicators),
+        "stop_sizing": None
+        if sizes is None
+        else {
+            "rule": "width = 1.5 × atr_14 × √(horizon_days / 30) from close; watch when width_pct > 20",
+            "levels": [asdict(size) for size in sizes],
+        },
     }

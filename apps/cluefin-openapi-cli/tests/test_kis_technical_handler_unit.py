@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from cluefin_openapi_cli.errors import EXIT_BROKER, CliError
+from cluefin_openapi_cli.errors import EXIT_BROKER, EXIT_USAGE, CliError
 from cluefin_openapi_cli.handlers.kis.domestic_basic_quote import handle_kis_chart_technical
 from cluefin_openapi_cli.indicators import MIN_CANDLES
 
@@ -69,6 +69,7 @@ def test_returns_indicator_readings_not_the_candle_series() -> None:
         "close",
         "indicators",
         "signal",
+        "stop_sizing",
     }
     assert result["stock_code"] == "005930"
     assert result["signal"]["trend"]["label"] == "BULLISH"
@@ -148,3 +149,33 @@ def test_pages_until_the_requested_count_is_reached() -> None:
 
     assert len(session.quote.calls) == 2
     assert result["candle_count"] == 120
+
+
+def test_stop_sizing_defaults_to_the_agent_horizons() -> None:
+    session = _FakeSession([_rows(120)])
+
+    result = handle_kis_chart_technical({"stock_code": "005930"}, session)
+
+    levels = result["stop_sizing"]["levels"]
+    assert [level["horizon_days"] for level in levels] == [20, 40, 60]
+    for level in levels:
+        assert level["buy_stop"] < result["close"] < level["sell_stop"]
+
+
+def test_horizon_days_is_a_comma_list_deduplicated_in_order() -> None:
+    session = _FakeSession([_rows(120)])
+
+    result = handle_kis_chart_technical({"stock_code": "005930", "horizon_days": "60,20,60"}, session)
+
+    assert [level["horizon_days"] for level in result["stop_sizing"]["levels"]] == [60, 20]
+
+
+@pytest.mark.parametrize("raw", ["0", "20,251", "20,x", "20,"])
+def test_out_of_range_horizon_is_a_usage_error_before_any_broker_call(raw: str) -> None:
+    session = _FakeSession([_rows(120)])
+
+    with pytest.raises(CliError) as caught:
+        handle_kis_chart_technical({"stock_code": "005930", "horizon_days": raw}, session)
+
+    assert caught.value.exit_code == EXIT_USAGE
+    assert session.quote.calls == []

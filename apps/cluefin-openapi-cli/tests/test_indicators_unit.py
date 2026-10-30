@@ -341,6 +341,7 @@ def test_analyze_payload_is_json_safe_and_small() -> None:
         "close",
         "indicators",
         "signal",
+        "stop_sizing",
     }
 
 
@@ -389,3 +390,12 @@ def test_buy_stop_never_goes_below_zero() -> None:
     assert sizes is not None
     assert sizes[0].buy_stop == 0
     assert sizes[0].too_wide
+
+
+def test_analyze_sizes_stops_from_its_own_close_and_atr() -> None:
+    payload = analyze(_series(_uptrend()), (30,))
+
+    (level,) = payload["stop_sizing"]["levels"]
+    width = 1.5 * payload["indicators"]["atr_14"]
+    assert level["width"] == pytest.approx(width, abs=0.01)
+    assert level["width_pct"] == pytest.approx(width / payload["close"] * 100, abs=0.01)
