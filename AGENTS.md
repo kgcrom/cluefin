@@ -153,6 +153,8 @@ shapes are in `src/dart/client.ts` and `src/dart/xml.ts`.
 
 - Conventional Commits with **Korean** messages: `type(scope): 설명`.
 - When discovering broker commands, prefer `cluefin-openapi-cli`'s `--json` output.
+- 사용자와 대화하며 하는 기업 분석과 HTML 리포트("리포트 생성")는 메인 대화가 맡는다. 판단 기준은
+  `.claude/agents/market-review.md` 의 데이터·분석·판단 절, HTML 은 생성 요청 시에만 `docs/agents/market-review-report-design.md`.
 - "Today"/"now" is KST, not the machine's zone (ruff `DTZ`): apps use `clock.today_kst()`/`now_kst()`
   (`cluefin_openapi_cli.clock`, `cluefin_desk.clock`). Token caches stay naive local time — the TS package shares them.
 - Internal results and value objects are `@dataclass(frozen=True, slots=True)`; build changed copies with
