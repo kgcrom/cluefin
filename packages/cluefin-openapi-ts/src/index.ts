@@ -15,6 +15,16 @@ export {
   DartServerError,
   DartTimeoutError,
   DartValidationError,
+  EcosApiError,
+  EcosAuthenticationError,
+  EcosNetworkError,
+  EcosNotFoundError,
+  EcosQueryTimeoutError,
+  EcosRateLimitError,
+  EcosSampleLimitError,
+  EcosServerError,
+  EcosTimeoutError,
+  EcosValidationError,
   KisApiError,
   KisAuthenticationError,
   KisAuthorizationError,
@@ -67,6 +77,7 @@ export type {
 export { BaseWebSocketClient } from './core/websocket.js';
 
 export * from './dart/index.js';
+export * from './ecos/index.js';
 export * from './kis/index.js';
 export * from './kiwoom/index.js';
 export * from './nhplug/index.js';

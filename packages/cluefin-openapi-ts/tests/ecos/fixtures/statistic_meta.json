@@ -1,0 +1,77 @@
+{
+  "StatisticMeta": {
+    "list_total_count": 53,
+    "row": [
+      {
+        "LVL": "2",
+        "P_CONT_CODE": "0000000108",
+        "CONT_CODE": "N13",
+        "CONT_NAME": "참고 자료",
+        "META_DATA": null
+      },
+      {
+        "LVL": "3",
+        "P_CONT_CODE": "N13",
+        "CONT_CODE": "0000000107",
+        "CONT_NAME": "기타 참고 자료",
+        "META_DATA": null
+      },
+      {
+        "LVL": "1",
+        "P_CONT_CODE": null,
+        "CONT_CODE": "0000000108",
+        "CONT_NAME": "기타",
+        "META_DATA": null
+      },
+      {
+        "LVL": "1",
+        "P_CONT_CODE": null,
+        "CONT_CODE": "0000000001",
+        "CONT_NAME": "기본정보",
+        "META_DATA": null
+      },
+      {
+        "LVL": "4",
+        "P_CONT_CODE": "N031",
+        "CONT_CODE": "0000000002",
+        "CONT_NAME": "통계명",
+        "META_DATA": "경제심리지수"
+      },
+      {
+        "LVL": "4",
+        "P_CONT_CODE": "N031",
+        "CONT_CODE": "0000000006",
+        "CONT_NAME": "조사(작성)목적 ",
+        "META_DATA": "기업과 소비자 모두를 포함한 민간의 경제상황에 대한 심리를 종합적으로 파악하기 위하여 BSI 및 CSI 지수를 합성하여 경제심리지수(ESI : Economic Sentiment Index)를 작성"
+      },
+      {
+        "LVL": "4",
+        "P_CONT_CODE": "N123",
+        "CONT_CODE": "0000000017",
+        "CONT_NAME": "조사(작성)대상기간/시점 ",
+        "META_DATA": "매월"
+      },
+      {
+        "LVL": "4",
+        "P_CONT_CODE": "N031",
+        "CONT_CODE": "0000000025",
+        "CONT_NAME": "계속여부",
+        "META_DATA": "Y"
+      },
+      {
+        "LVL": "3",
+        "P_CONT_CODE": "N01",
+        "CONT_CODE": "N011",
+        "CONT_NAME": "담당기관",
+        "META_DATA": "한국은행"
+      },
+      {
+        "LVL": "3",
+        "P_CONT_CODE": "N01",
+        "CONT_CODE": "N012",
+        "CONT_NAME": "담당부서",
+        "META_DATA": "경제통계1국 경제심리조사팀"
+      }
+    ]
+  }
+}

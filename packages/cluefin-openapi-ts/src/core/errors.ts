@@ -80,3 +80,22 @@ export class DartServerError extends ApiServerError {}
 export class DartNetworkError extends ApiNetworkError {}
 export class DartTimeoutError extends ApiTimeoutError {}
 export class DartRateLimitError extends ApiRateLimitError {}
+
+/** ECOS 는 오류도 HTTP 200 + 본문 `RESULT.CODE` 로 준다. 그 코드(`ERROR-101` 등)가 `errorCode` 에 실린다. */
+export class EcosApiError extends ApiError {}
+/** INFO-100: 인증키가 유효하지 않다. */
+export class EcosAuthenticationError extends ApiAuthenticationError {}
+/** 요청 값 오류 (ERROR-100 필수값 누락, 101 날짜 형식, 200 요청유형, 300·301 조회건수). */
+export class EcosValidationError extends ApiValidationError {}
+/** ERROR-301 중 `sample` 키로 10건을 넘겨 요청한 경우 — 메시지 꼬리로만 구분된다. */
+export class EcosSampleLimitError extends EcosValidationError {}
+/** 서버 쪽 오류 (ERROR-400·500·600·601, HTTP 5xx). */
+export class EcosServerError extends ApiServerError {}
+/** ERROR-400: 검색 범위가 커서 서버가 60초 만에 끊었다. 다시 보내도 같으니 기간·항목을 좁혀야 한다. */
+export class EcosQueryTimeoutError extends EcosServerError {}
+/** HTTP 404 (없는 서비스명). 없는 통계표·데이터는 404가 아니라 빈 결과(INFO-200)다. */
+export class EcosNotFoundError extends EcosApiError {}
+export class EcosNetworkError extends ApiNetworkError {}
+export class EcosTimeoutError extends ApiTimeoutError {}
+/** ERROR-602 과도한 호출로 이용 제한, HTTP 429, 또는 레이트 리밋 대기 시간 초과. */
+export class EcosRateLimitError extends ApiRateLimitError {}

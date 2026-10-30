@@ -1,0 +1,31 @@
+{
+  "StatisticTableList": {
+    "list_total_count": 844,
+    "row": [
+      {
+        "P_STAT_CODE": "*",
+        "STAT_CODE": "0000000001",
+        "STAT_NAME": "1. 통화/금융",
+        "CYCLE": null,
+        "SRCH_YN": "N",
+        "ORG_NAME": null
+      },
+      {
+        "P_STAT_CODE": "0000000001",
+        "STAT_CODE": "0000000620",
+        "STAT_NAME": "1.1. 통화/유동성(신지표)",
+        "CYCLE": null,
+        "SRCH_YN": "N",
+        "ORG_NAME": null
+      },
+      {
+        "P_STAT_CODE": "0000000620",
+        "STAT_CODE": "0000000621",
+        "STAT_NAME": "1.1.1. 본원통화",
+        "CYCLE": null,
+        "SRCH_YN": "N",
+        "ORG_NAME": null
+      }
+    ]
+  }
+}
