@@ -1,6 +1,6 @@
 {
   "name": "cluefin-openapi",
-  "version": "0.7.1",
+  "version": "1.0.0",
   "description": "TypeScript OpenAPI client for KIS, Kiwoom, NH PLUG, OpenDART and Bank of Korea ECOS",
   "license": "MIT",
   "author": "kgcrom",
