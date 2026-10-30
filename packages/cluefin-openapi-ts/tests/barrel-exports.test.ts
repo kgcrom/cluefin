@@ -4,6 +4,8 @@ import * as Root from '../src';
 import { BaseWebSocketClient } from '../src/core/websocket';
 import * as Dart from '../src/dart';
 import { DartClient } from '../src/dart/client';
+import * as Ecos from '../src/ecos';
+import { EcosClient } from '../src/ecos/client';
 import * as Kis from '../src/kis';
 import { KisAuth } from '../src/kis/auth';
 import { KisHttpClient } from '../src/kis/http-client';
@@ -26,6 +28,14 @@ test('root barrel exposes runtime exports from core, KIS, Kiwoom, and NH PLUG mo
   expect(Root.DART_SUCCESS_STATUS).toBe('000');
   expect(new Root.DartRateLimitError('x')).toBeInstanceOf(Root.ApiRateLimitError);
   expect(new Root.DartApiError('x')).toBeInstanceOf(Root.ApiError);
+
+  expect(Root.EcosClient).toBe(EcosClient);
+  expect(Root.EcosClient).toBe(Ecos.EcosClient);
+  expect(Root.StatisticSearch).toBe(Ecos.StatisticSearch);
+  expect(Root.KTB_10Y.itemCode).toBe('010210000');
+  expect(Root.ECOS_SAMPLE_AUTH_KEY).toBe('sample');
+  expect(new Root.EcosSampleLimitError('x')).toBeInstanceOf(Root.EcosValidationError);
+  expect(new Root.EcosNotFoundError('x')).toBeInstanceOf(Root.EcosApiError);
 
   expect(Root.KisAuth).toBe(KisAuth);
   expect(Root.KisAuth).toBe(Kis.KisAuth);

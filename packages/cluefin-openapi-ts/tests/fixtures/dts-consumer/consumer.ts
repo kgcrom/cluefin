@@ -11,19 +11,25 @@ import type {
   CorpCodeResponse,
   DartXbrlFiles,
   DomesticAccountResponseMap,
+  EcosPage,
+  KeyStatistic,
   KrStockQuoteCurrentPriceResponse,
   NhplugTokenCacheEntry,
   PublicDisclosureSearchResponse,
+  StatisticObservation,
   StockInfoResponse,
 } from 'cluefin-openapi';
 import {
   DartApiError,
   DartClient,
+  type EcosClient,
+  EcosSampleLimitError,
   KisAuth,
   KisHttpClient,
   KisSocketClient,
   KiwoomAuth,
   KiwoomClient,
+  KTB_10Y,
   NHPLUG_SUCCESS_RSP_CODES,
   NhplugAuth,
   NhplugClient,
@@ -67,6 +73,18 @@ export const firstStockCode: string | undefined = corpCodes.list[0]?.stockCode;
 declare const xbrl: DartXbrlFiles;
 export const xbrlFileNames: string[] = [...xbrl.keys()];
 export const dartErrorIsApiError: boolean = new DartApiError('x') instanceof Error;
+
+// ECOS: 도메인 getter·행 타입·상수가 소비자에게 보이는지.
+declare const ecos: EcosClient;
+export const ecosSearch: Promise<EcosPage<StatisticObservation>> = ecos.statisticSearch.searchSeries(
+  KTB_10Y,
+  '20261001',
+  '20261017',
+);
+export const ecosKeyStats = ecos.statisticCatalog.keyStatisticList;
+declare const keyStat: KeyStatistic;
+export const keyStatName: string = keyStat.keystatName;
+export const ecosErrorIsApiError: boolean = new EcosSampleLimitError('x') instanceof Error;
 
 export const successCodes: readonly string[] = NHPLUG_SUCCESS_RSP_CODES;
 export const successCodeCount: number = NHPLUG_SUCCESS_RSP_CODES.length;

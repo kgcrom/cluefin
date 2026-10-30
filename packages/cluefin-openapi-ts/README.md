@@ -7,12 +7,13 @@
 > 지연되거나 충분히 이루어지지 않았을 수 있습니다. 웹소켓 기능을 사용하거나 수정할 때는
 > 이 점을 감안하고, 가능하면 장중에 직접 동작을 확인해 주세요.
 
-한국투자증권(KIS)·키움증권·NH투자증권(PLUG) 주문·시세 API와 금융감독원 OpenDART(공시·재무제표)를 한 패키지로.
+한국투자증권(KIS)·키움증권·NH투자증권(PLUG) 주문·시세 API와 금융감독원 OpenDART(공시·재무제표), 한국은행 ECOS(경제통계)를 한 패키지로.
 
 - **KIS**: 국내/해외주식·장내채권 REST API + 실시간 WebSocket 시세, 토큰 파일 캐시
 - **키움**: 국내주식 REST API (해외주식·WebSocket은 파이썬 패키지 `cluefin-openapi` 전용)
 - **NH PLUG**: 공통 2 + 국내주식 31 + 해외주식 18 = REST 51개 엔드포인트 + 실시간 WebSocket 시세
 - **OpenDART**: 공시검색·기업개황·재무제표·주요사항보고서 등 REST 77개 — 토큰 없이 키 하나로 상장사 전체 공시 조회
+- **ECOS**: 한국은행 경제통계 6개 서비스(통계 조회·목록·100대 지표·용어·메타) — 키 없이 공개 시험 키 `sample`로 바로
 - 요청/응답 Zod 검증, 응답 키 자동 camelCase 변환, 재시도·rate limit 내장
 
 ## 설치
@@ -38,10 +39,11 @@ NHPLUG_SECRET_KEY=your_secret_key
 NHPLUG_ENV=dev                 # dev(모의투자, moapi) | prod(운영, 실주문)
 
 DART_AUTH_KEY=your_auth_key    # OpenDART — 계좌 없이 발급, 주문 기능 없음(조회 전용)
+ECOS_AUTH_KEY=your_auth_key    # 한국은행 ECOS — 비우면 공개 시험 키 sample(한 번에 10행)
 ```
 
 API 키 발급: [KIS](https://apiportal.koreainvestment.com/) / [키움](https://apiportal.kiwoom.com/) /
-[NH PLUG](https://www.nhplug.com/) / [OpenDART](https://opendart.fss.or.kr/)
+[NH PLUG](https://www.nhplug.com/) / [OpenDART](https://opendart.fss.or.kr/) / [ECOS](https://ecos.bok.or.kr/api/)
 
 ## 빠른 시작
 
@@ -284,6 +286,44 @@ console.log([...files.body.keys()]); // ['20260310002820.xml', '20260310002820_0
   `rateLimitRequestsPerSecond`로 바꿉니다.
 - 인증키는 에러 메시지와 로그에서 `***`로 가려집니다.
 
+### 한국은행 ECOS (경제통계)
+
+가입 없이 공개 시험 키 `sample`로 바로 씁니다. 금리·환율·물가처럼 DART 재무제표와 짝지어 쓰는 거시 값의 데이터원입니다.
+
+```ts
+import { EcosClient, KTB_10Y, parseEcosValue } from 'cluefin-openapi';
+
+const ecos = new EcosClient({ authKey: process.env.ECOS_AUTH_KEY }); // 비우면 sample
+
+// 통계표·주기·기간·항목코드로 조회 — 날짜 형식은 주기를 따른다(A 2024 · Q 2024Q1 · M 202401 · D 20240101)
+const { rows } = await ecos.statisticSearch.search({
+  statCode: '200Y101',
+  cycle: 'A',
+  start: '2020',
+  end: '2023',
+  itemCodes: ['10101'],
+});
+
+// 자주 쓰는 계열은 상수로 — 국고채 10년 최근 2주(휴일엔 행이 없다)
+const ktb = await ecos.statisticSearch.searchSeries(KTB_10Y, '20261001', '20261017');
+const last = ktb.rows.at(-1);
+console.log(last?.time, parseEcosValue(last?.dataValue)); // '20261016' 4.182 (연 %)
+
+// 어떤 통계표·항목이 있는지
+const items = await ecos.statisticCatalog.itemList({ statCode: '817Y002' });
+const keyStats = await ecos.statisticCatalog.keyStatisticList(); // 100대 통계지표 최근 값
+```
+
+#### 꼭 알아둘 것
+
+- `sample` 키는 **한 번에 10행**입니다. 행 범위(`startRow`·`endRow`)를 생략하면 클라이언트가 10행씩(실키는 1000행씩) 끝까지 이어 받습니다.
+  범위를 직접 주면 그 쪽만 받고, sample 로 10행을 넘기면 `EcosSampleLimitError`입니다.
+- **오류도 HTTP 200**으로 옵니다. 클라이언트가 본문 `RESULT.CODE`를 보고 예외로 바꿉니다(`INFO-100` 인증, `ERROR-101` 날짜 형식 …).
+  데이터 없음(`INFO-200`)과 없는 통계표는 예외가 아니라 빈 `rows`입니다.
+- 응답 키는 와이어 이름의 camelCase(`STAT_CODE` → `statCode`, `P_STAT_CODE` → `pStatCode`)이고 값은 원문 문자열입니다.
+  숫자 변환은 `parseEcosValue`, 비율 변환은 쓰는 쪽에서 하세요.
+- 인증키는 URL 경로에 들어가므로 에러 메시지·로그에는 키를 가린 경로(`/StatisticSearch/***/json/…`)만 남습니다.
+
 ## API 모듈
 
 ### KIS REST (`KisHttpClient`의 getter)
@@ -346,9 +386,17 @@ console.log([...files.body.keys()]); // ['20260310002820.xml', '20260310002820_0
 | `periodicReportKeyInformation` | 배당·주주·임원·보수·감사 등 정기보고서 주요정보 | 28 |
 | `majorShareholderDisclosure` | 증자·자기주식·합병/분할 등 주요사항보고서 | 36 |
 
+### ECOS REST (`EcosClient`의 getter)
+
+| 모듈 | 설명 | 서비스 |
+|------|------|------|
+| `statisticSearch` | 통계 조회 (`search`·`searchSeries`) | 1 |
+| `statisticCatalog` | 통계표 목록·세부항목·100대 통계지표 | 3 |
+| `statisticGlossary` | 통계용어사전·통계메타DB | 2 |
+
 ## 에러 처리
 
-KIS/키움/NH PLUG/DART 각각 전용 에러 클래스 제공 (`ApiError` 상속, 예: `DartRateLimitError`):
+KIS/키움/NH PLUG/DART/ECOS 각각 전용 에러 클래스 제공 (`ApiError` 상속, 예: `DartRateLimitError`):
 
 `Authentication` · `Authorization` · `Validation` · `Server` · `Network` · `Timeout` · `RateLimit`
 

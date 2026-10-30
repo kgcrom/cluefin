@@ -72,6 +72,23 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - `PublicDisclosure` and `PeriodicReportFinancialStatement` are class + interface merges (custom
   methods plus generated ones) — Biome's `noUnsafeDeclarationMerging` is off for this.
 
+## Bank of Korea ECOS (`src/ecos`)
+
+- **Hand-written, outside `generate:metadata`.** Python `ecos/` builds URL *path segments* through
+  `client._get_rows(...)`, not path + query metadata, so the generator can't see it. When the Python
+  `ecos/_*.py` or `_*_types.py` change, update `src/ecos/*` by hand (schemas, result-code table, constants).
+- Wire keys are UPPER_SNAKE (`STAT_CODE`). The shared `toCamelCase` turns them into `sTATCode`, so rows go
+  through `camelizeEcosKeys` (lowercase first). Field names follow the wire (`pStatCode`, `srchYn`, `wgt`),
+  not Python's renamed fields (`parent_stat_code`, `searchable`, `weight`).
+- Errors arrive as HTTP 200 + `RESULT.CODE`; `INFO-200` is an empty page, not an error. The code → class
+  table and the retryable set (600·602) mirror Python `_exceptions.py`. ERROR-301 is split into
+  `EcosSampleLimitError` only by the message containing "sample".
+- The auth key sits in the URL path: `requestContext.path` is masked (`/***/`) and messages are redacted.
+  `sample` is not redacted — it is public and the server's own messages contain the word.
+- Row schemas are `z.looseObject` (unknown fields pass), so the integration test checks row keys against
+  each schema's shape to catch spec drift. It runs on `sample` without any key; `ECOS_AUTH_KEY` adds one
+  real-key paging test.
+
 ## Declaration output (`dist/types`)
 
 - `build:types` is `tsc -p tsconfig.build.json` — a real `--emitDeclarationOnly` pass over
