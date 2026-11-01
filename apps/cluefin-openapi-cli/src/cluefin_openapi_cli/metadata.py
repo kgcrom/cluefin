@@ -48,6 +48,8 @@ _BROKER_CREDENTIALS: dict[str, tuple[str, ...]] = {
     "kis": ("KIS_APP_KEY", "KIS_SECRET_KEY"),
     "kiwoom": ("KIWOOM_APP_KEY", "KIWOOM_SECRET_KEY"),
     "sec": ("SEC_USER_AGENT",),
+    # Optional: without it the public `sample` key answers 10 rows a call (see BrokerRole below).
+    "ecos": ("ECOS_AUTH_KEY",),
 }
 
 BROKER_ROLES: dict[str, BrokerRole] = {
@@ -92,10 +94,22 @@ BROKER_ROLES: dict[str, BrokerRole] = {
         "results. Not for 20-F/6-K filers (most Korean ADRs).",
         credentials=_BROKER_CREDENTIALS["sec"],
     ),
+    "ecos": BrokerRole(
+        name="ecos",
+        role="reference",
+        rank=4,
+        description="Bank of Korea ECOS (economic statistics). Macro series: base rate, market rates and credit "
+        "spreads, KRW exchange rates, CPI, GDP, the composite leading index, business and consumer sentiment, "
+        "exports. Not a stock source.",
+        when_to_use="Use for the macro backdrop of a stock or market call. Start with ecos macro-snapshot; find "
+        "any other series with ecos table-search → ecos items → ecos series. ECOS_AUTH_KEY is optional: without "
+        "it the public sample key pages 10 rows a call, and macro-snapshot refuses to run.",
+        credentials=_BROKER_CREDENTIALS["ecos"],
+    ),
 }
 
-# Brokers whose CLI path has no category segment: `dart <name>`, `sec <name>`.
-FLAT_BROKERS: frozenset[str] = frozenset({"dart", "sec"})
+# Brokers whose CLI path has no category segment: `dart <name>`, `sec <name>`, `ecos <name>`.
+FLAT_BROKERS: frozenset[str] = frozenset({"dart", "sec", "ecos"})
 
 BROKER_ORDER: tuple[str, ...] = tuple(sorted(BROKER_ROLES, key=lambda name: BROKER_ROLES[name].rank))
 
@@ -244,6 +258,14 @@ _DOMAIN_TAXONOMY: dict[str, TaxonomyMetadata] = {
         when_to_use="Use for thematic market scans and group membership discovery.",
         avoid_when="Use sector for exchange sector or industry index analysis.",
         related_tags=("theme-group",),
+    ),
+    "macro": TaxonomyMetadata(
+        name="macro",
+        description="Economy-wide statistics from the Bank of Korea (ECOS): rates, exchange rates, prices, growth, "
+        "business cycle and sentiment indices, trade.",
+        when_to_use="Use for the macro backdrop of an investment call — rate and credit regime, KRW, cycle direction.",
+        avoid_when="Use market for exchange-traded market scans and quote for a stock's own price.",
+        related_tags=("macro-indicator", "economic-series", "statistic-catalog"),
     ),
     "trading-flow": TaxonomyMetadata(
         name="trading-flow",
@@ -632,6 +654,29 @@ _TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {
         related_domains=("statements", "news"),
         related_tags=("disclosure", "filing-text"),
     ),
+    "macro-indicator": TaxonomyMetadata(
+        name="macro-indicator",
+        description="Latest readings of headline economic indicators with their change and long-run percentile.",
+        when_to_use="Use for 'what is the macro backdrop now' in one call (ecos macro-snapshot).",
+        avoid_when="Use economic-series when one indicator's full history is needed.",
+        related_domains=("macro", "market"),
+        related_tags=("economic-series", "market-breadth"),
+    ),
+    "economic-series": TaxonomyMetadata(
+        name="economic-series",
+        description="A Bank of Korea statistic's time series by table code, cycle, period and item codes.",
+        when_to_use="Use when the indicator is known (table and item codes from ecos items) and its history matters.",
+        avoid_when="Use macro-indicator for the latest values of the headline set.",
+        related_domains=("macro",),
+        related_tags=("statistic-catalog",),
+    ),
+    "statistic-catalog": TaxonomyMetadata(
+        name="statistic-catalog",
+        description="The ECOS table list, a table's item codes, and the statistics glossary.",
+        when_to_use="Use to find which table and item codes hold an indicator before calling ecos series.",
+        related_domains=("macro", "reference"),
+        related_tags=("economic-series", "reference-list"),
+    ),
     "volume-rank": TaxonomyMetadata(
         name="volume-rank",
         description="Trading volume ranking or volume renewal data.",
@@ -902,6 +947,11 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
     "sec.filings": CommandTaxonomy(("news", "statements"), ("us-filing", "disclosure")),
     "sec.filing-items": CommandTaxonomy(("statements",), ("us-filing", "filing-text", "risk-factors")),
     "sec.filing-exhibit": CommandTaxonomy(("statements", "news"), ("us-filing", "filing-text", "earnings-release")),
+    "ecos.table-search": CommandTaxonomy(("macro", "reference"), ("statistic-catalog", "reference-list")),
+    "ecos.items": CommandTaxonomy(("macro", "reference"), ("statistic-catalog",)),
+    "ecos.word": CommandTaxonomy(("macro",), ("statistic-catalog",)),
+    "ecos.series": CommandTaxonomy(("macro",), ("economic-series",)),
+    "ecos.key-stats": CommandTaxonomy(("macro", "market"), ("macro-indicator",)),
 }
 
 
@@ -910,6 +960,7 @@ _CATEGORY_DEFAULTS: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
     "chart": (("chart",), ("ohlcv",)),
     "dart": (("news", "statements"), ("disclosure",)),
     "sec": (("statements",), ("us-filing",)),
+    "ecos": (("macro",), ("economic-series",)),
     "etf": (("etf", "market"), ("current-price",)),
     "financial": (("statements",), ("financial-statement", "financial-ratio")),
     "market": (("market",), ("market-calendar",)),
@@ -966,6 +1017,13 @@ CATEGORY_INFO: dict[str, CategoryInfo] = {
         when_to_use="Use for a US company's filed text (risk factors, MD&A, earnings releases); not a price source.",
         domains=_CATEGORY_DEFAULTS["sec"][0],
         tags=_CATEGORY_DEFAULTS["sec"][1],
+    ),
+    "ecos": CategoryInfo(
+        name="ecos",
+        description="Bank of Korea economic statistics: table and item lookup, time series, headline indicators.",
+        when_to_use="Use for the macro backdrop (rates, KRW, prices, cycle, sentiment, exports); not a price source.",
+        domains=_CATEGORY_DEFAULTS["ecos"][0],
+        tags=_CATEGORY_DEFAULTS["ecos"][1],
     ),
     "etf": CategoryInfo(
         name="etf",
@@ -1124,6 +1182,31 @@ QUERY_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("경영진 분석", ("md", "items")),
     ("실적 발표", ("earnings", "release", "exhibit")),
     ("보도자료", ("press", "release", "exhibit")),
+    # 매크로(ecos *). 통계표·항목코드는 ecos table-search → items 로 찾는다.
+    ("한국은행", ("bank", "korea", "ecos")),
+    ("경제통계", ("economic", "statistics", "ecos")),
+    ("경제지표", ("economic", "indicators", "macro")),
+    ("거시경제", ("macro", "economic")),
+    ("매크로", ("macro",)),
+    ("기준금리", ("base", "rate", "macro")),
+    ("시장금리", ("market", "rates", "macro")),
+    ("금리", ("rate", "interest", "macro")),
+    ("환율", ("exchange", "rate", "krw", "macro")),
+    ("원달러", ("exchange", "rate", "krw")),
+    ("물가", ("cpi", "prices")),
+    ("소비자물가", ("cpi", "consumer", "prices")),
+    ("경기", ("cycle", "leading", "index", "macro")),
+    ("선행지수", ("leading", "index", "cycle")),
+    ("경기선행지수", ("leading", "index", "cycle")),
+    ("경제심리", ("sentiment", "economic")),
+    ("기업경기", ("business", "sentiment", "bsi")),
+    ("소비자심리", ("consumer", "sentiment")),
+    ("심리지수", ("sentiment", "index")),
+    ("수출", ("exports", "trade")),
+    ("성장률", ("gdp", "growth")),
+    ("국내총생산", ("gdp", "growth")),
+    ("통계표", ("table", "statistics", "ecos")),
+    ("통계용어", ("glossary", "statistics", "term")),
     ("공매도", ("short", "selling")),
     ("신용", ("credit", "margin", "loan")),
     ("대출", ("loan", "loanable")),
@@ -1277,6 +1360,8 @@ _NAME_SAMPLES: tuple[tuple[tuple[str, ...], tuple[str, ...], str], ...] = (
     (("rcept_no",), (), "20250318001317"),
     # SEC: Apple, the same example cluefin-openapi's README uses.
     (("cik",), (), "320193"),
+    # ECOS: 시장금리(일별). Must precede the generic `code` rule.
+    (("stat_code",), (), "817Y002"),
     (("accession_number",), (), "0000320193-23-000106"),
     (("stock_code", "code", "iscd"), (), "005930"),
     (("market",), (), "J"),

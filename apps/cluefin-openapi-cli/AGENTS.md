@@ -40,7 +40,10 @@ CLI 가 말해 주지 않는 것만 적는다.
   --stock-code`(기본 90일, 평균·중앙값·최고·최저), 시총·TTM PER·PBR·추정 연도별 PER 은
   `kis stock valuation --stock-code --corp-code`(KIS 종가 + DART 주식수 + DART 재무, 약 11회). `kis stock
   estimated-earnings` 는 한국투자증권 한 곳의 추정이라 컨센서스라 부르지 않는다(`table` 로 라벨됨).
-- **환율 명령은 없다.** 금리는 `kis market interest-rate`. 매크로를 웹 검색으로 대신하지 않는다 — 기준일이 섞인다.
+- **매크로는 `ecos`(한국은행).** 기준금리·국고채·회사채·원/달러·CPI·GDP·선행지수·BSI·ESI·수출은 `ecos table-search` →
+  `ecos items` → `ecos series` 로 찾아 받는다(통계표·항목코드를 추측하지 않는다). 지표마다 최근값 하나면 `ecos key-stats`.
+  월·분기 통계는 기간이 끝나고 몇 주 뒤 올라온다 — 값마다 `time` 이 기준일이다. 장중 금리 요약은 `kis market interest-rate`.
+  매크로를 웹 검색으로 대신하지 않는다 — 기준일이 섞인다.
 - **기술적 지표는 `kis chart technical`.** 캔들을 받아 직접 계산하지 않는다. `signal.trend` 와
   `signal.mean_reversion` 은 별개 계열이라 하나의 점수로 합치지 않는다. 값은 `cluefin-desk` 화면과 다르다(EMA
   워밍업 차이) — 이 CLI 가 기준이다. `stop_sizing` 은 horizon(`--horizon-days 20,40,60`)별 손절폭 하한
@@ -75,7 +78,7 @@ CLI 가 말해 주지 않는 것만 적는다.
 
 ## Broker roles are data, not code paths
 
-- KIS = primary, Kiwoom = auxiliary, DART and SEC = reference — defined once in
+- KIS = primary, Kiwoom = auxiliary, DART, SEC and ECOS = reference — defined once in
   `metadata.BROKER_ROLES`. Ordering everywhere (`list`, `brokers`, `iter_brokers`) comes
   from `broker_rank`, not from alphabetical sorting.
 - `metadata.COMMAND_TAXONOMY` is the authoritative domain/tag source, keyed by qualified
@@ -118,9 +121,9 @@ CLI 가 말해 주지 않는 것만 적는다.
 
 - Nothing introspects `cluefin-openapi`. A new client method needs: an `@rpc_method`
   handler, an entry in that module's `_ALL_HANDLERS`, and wiring in the broker
-  aggregator (`get_kis_handlers()` / `get_kiwoom_handlers()` / `DART_HANDLERS` / `SEC_HANDLERS`).
+  aggregator (`get_kis_handlers()` / `get_kiwoom_handlers()` / `DART_HANDLERS` / `SEC_HANDLERS` / `ECOS_HANDLERS`).
 - The `name=` passed to `@rpc_method` controls the CLI path via dot-splitting
-  (`category.leaf` for kis/kiwoom; brokers in `metadata.FLAT_BROKERS` — dart, sec — have no
+  (`category.leaf` for kis/kiwoom; brokers in `metadata.FLAT_BROKERS` — dart, sec, ecos — have no
   category segment) — wrong dot placement lands the command in the wrong path.
 - A `category` missing from `_CATEGORY_DEFAULTS` in `metadata.py` silently falls back to
   domain `market` / tag `ranking` instead of erroring — add an entry for new categories.
@@ -372,6 +375,19 @@ CLI 가 말해 주지 않는 것만 적는다.
 - 클라이언트 계약 테스트는 SEC 메서드가 모델을 그대로 돌려주므로 프로브 자체를 응답으로 준다(`bare=True`, 리스트를
   돌려주는 메서드는 `[]`). 핸들러는 모델 **필드**만 읽어야 한다 — `FilingDetail.ciks` 같은 property 를 읽으면 그 테스트가
   실패하므로 `parties` 를 읽는다.
+
+## `ecos *` 는 한국은행 경제통계다
+
+- `ECOS_AUTH_KEY` 는 선택이다. 없으면 클라이언트가 공개 `sample` 키로 쪽당 10행씩 받는다(`table-search` 는 전체 목록 ~840행이라
+  ~85회). 키 오류(INFO-100)는 exit 3, 그 밖의 결과 코드는 클라이언트의 `hint` 를 그대로 싣는다(`errors._classify_ecos`).
+  ERROR-400(60초 초과)은 이름이 `*TimeoutError` 지만 같은 범위를 다시 보내도 같으니 `QueryTooLarge`, retryable false.
+- `series` 의 기간 형식은 주기를 따른다(`handlers/ecos.py` `_PERIOD_PATTERNS`). 클라이언트를 만들기 전에 exit 2 로 걸러 ERROR-101
+  왕복을 줄인다. 파라미터가 `start_date`/`end_date` 인 것은 계약 테스트 샘플(`date` → `20250101`)이 주기 D 에 맞아서다 — 주기
+  enum 의 첫 값도 그래서 `D` 다. `stat_code` 샘플은 `metadata._NAME_SAMPLES` 의 `817Y002`.
+- ECOS 서비스는 `EcosPage` 를 바로 돌려준다 — 계약 테스트는 SEC 처럼 `bare=True` 프로브를 쓰고, 핸들러는 `page.rows or []` 로
+  읽는다(프로브의 필드는 None). 행의 `value` property 는 프로브가 모델 필드가 아니라고 막으므로 `to_number(row.data_value)` 를 쓴다.
+- `DATA_VALUE` 는 문자열이고 빈 값(휴일·미집계)이 있다. 숫자로 바꾸되 빈 값은 `null`, 0 으로 채우지 않는다.
+- `key-stats` 는 서버 행 순서가 호출마다 달라 `(class_name, name)` 으로 정렬해 낸다.
 
 ## Tests that break on unrelated-looking changes
 

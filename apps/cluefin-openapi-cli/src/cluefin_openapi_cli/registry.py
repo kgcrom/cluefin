@@ -7,6 +7,7 @@ from typing import Any, Protocol
 from cluefin_openapi import BrokerClientFactory
 
 from cluefin_openapi_cli.handlers.dart import _ALL_HANDLERS as DART_HANDLERS
+from cluefin_openapi_cli.handlers.ecos import _ALL_HANDLERS as ECOS_HANDLERS
 from cluefin_openapi_cli.handlers.kis import get_kis_handlers
 from cluefin_openapi_cli.handlers.kiwoom import get_kiwoom_handlers
 from cluefin_openapi_cli.handlers.sec import _ALL_HANDLERS as SEC_HANDLERS
@@ -132,6 +133,9 @@ class _BrokerSession:
     def get_sec(self):
         return self._get_client("sec")
 
+    def get_ecos(self):
+        return self._get_client("ecos")
+
 
 def _kebab_case(value: str) -> str:
     return value.replace("_", "-").replace(".", "-")
@@ -142,6 +146,7 @@ def _iter_broker_handlers() -> Iterable[Callable[..., Any]]:
     yield from get_kiwoom_handlers()
     yield from DART_HANDLERS
     yield from SEC_HANDLERS
+    yield from ECOS_HANDLERS
 
 
 def build_cli_registry() -> dict[tuple[str, ...], CommandSpec]:

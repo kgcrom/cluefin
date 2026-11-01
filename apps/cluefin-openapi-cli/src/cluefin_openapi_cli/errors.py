@@ -84,6 +84,32 @@ def _class_names(exc: BaseException) -> list[str]:
     return [klass.__name__ for klass in type(exc).__mro__]
 
 
+_ECOS_KEY_HINT = (
+    "ECOS rejected the key (INFO-100). Check ECOS_AUTH_KEY in .env, or remove it to fall back to the public sample "
+    "key (10 rows a call)."
+)
+
+
+def _classify_ecos(names: list[str], message: str, data: dict[str, Any], hint: str | None) -> CliError | None:
+    """ECOS errors that the suffix rules below would misfile.
+
+    `EcosQueryTimeoutError` (ERROR-400: the server gave up after 60 s) ends in ``TimeoutError`` but resending the same
+    range fails the same way, and an ECOS key error must not point at *_APP_KEY. The client's per-code ``hint`` says
+    what to change, so it replaces the generic one.
+    """
+    if "EcosQueryTimeoutError" in names:
+        return CliError(
+            message, exit_code=EXIT_BROKER, data=data, error_type="QueryTooLarge", retryable=False, hint=hint
+        )
+    if "EcosAuthenticationError" in names:
+        return CliError(
+            message, exit_code=EXIT_CREDENTIALS, data=data, error_type="AuthenticationError", hint=_ECOS_KEY_HINT
+        )
+    if "EcosRequestError" in names:
+        return CliError(message, exit_code=EXIT_BROKER, data=data, error_type="BrokerRejectedRequest", hint=hint)
+    return None
+
+
 def classify_exception(exc: BaseException, *, command: str, broker: str) -> CliError:
     """Map a broker-client exception onto the CLI exit-code taxonomy.
 
@@ -121,6 +147,11 @@ def classify_exception(exc: BaseException, *, command: str, broker: str) -> CliE
             hint="DART daily request quota is exhausted (status 020). It resets daily; do not retry in a "
             "loop. Wait until the quota resets or use a different DART key.",
         )
+
+    if broker == "ecos":
+        ecos_error = _classify_ecos(names, message, data, getattr(exc, "hint", None))
+        if ecos_error is not None:
+            return ecos_error
 
     if any(name.endswith("RateLimitError") for name in names):
         retry_after = getattr(exc, "retry_after", None)

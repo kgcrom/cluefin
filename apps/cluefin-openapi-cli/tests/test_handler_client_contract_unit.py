@@ -15,6 +15,7 @@ from functools import lru_cache
 
 import pytest
 from cluefin_openapi.dart import Client as DartClient
+from cluefin_openapi.ecos import Client as EcosClient
 from cluefin_openapi.kis import HttpClient as KisClient
 from cluefin_openapi.kiwoom import Client as KiwoomClient
 from cluefin_openapi.sec import Client as SecClient
@@ -31,6 +32,7 @@ def _real_clients() -> dict:
         "kiwoom": KiwoomClient(token="token", env="dev"),
         "dart": DartClient(auth_key="key"),
         "sec": SecClient(user_agent="Contract Test test@example.com"),
+        "ecos": EcosClient(auth_key="key"),
     }
 
 
@@ -130,6 +132,10 @@ class _ContractSession:
 
     def get_sec(self) -> _ContractClient:
         return _ContractClient(_real_clients()["sec"], self.calls, bare=True)
+
+    def get_ecos(self) -> _ContractClient:
+        # ECOS services return EcosPage directly, like SEC.
+        return _ContractClient(_real_clients()["ecos"], self.calls, bare=True)
 
 
 # Commands whose selectors are mutually exclusive reject a full sample set before calling the
