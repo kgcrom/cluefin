@@ -40,7 +40,9 @@ CLI 가 말해 주지 않는 것만 적는다.
   --stock-code`(기본 90일, 평균·중앙값·최고·최저), 시총·TTM PER·PBR·추정 연도별 PER 은
   `kis stock valuation --stock-code --corp-code`(KIS 종가 + DART 주식수 + DART 재무, 약 11회). `kis stock
   estimated-earnings` 는 한국투자증권 한 곳의 추정이라 컨센서스라 부르지 않는다(`table` 로 라벨됨).
-- **매크로는 `ecos`(한국은행).** 기준금리·국고채·회사채·원/달러·CPI·GDP·선행지수·BSI·ESI·수출은 `ecos table-search` →
+- **매크로는 `ecos`(한국은행).** 국면을 볼 때는 **`ecos macro-snapshot` 한 번** — 기준금리·국고채 3/10년·회사채 AA-/BBB-·원/달러·
+  CPI·선행/동행지수 순환변동치·ESI·BSI·CCSI·뉴스심리·GDP·수출 15계열과 장단기 금리차·신용스프레드마다 최근값·1m/3m/1y 변화·10년
+  백분위(약 15회, 실키 필요). 국면 라벨은 주지 않는다 — 어느 수치에 판단을 기대는지 직접 적는다. 그 밖의 계열은 `ecos table-search` →
   `ecos items` → `ecos series` 로 찾아 받는다(통계표·항목코드를 추측하지 않는다). 지표마다 최근값 하나면 `ecos key-stats`.
   월·분기 통계는 기간이 끝나고 몇 주 뒤 올라온다 — 값마다 `time` 이 기준일이다. 장중 금리 요약은 `kis market interest-rate`.
   매크로를 웹 검색으로 대신하지 않는다 — 기준일이 섞인다.
@@ -128,7 +130,7 @@ CLI 가 말해 주지 않는 것만 적는다.
 - A `category` missing from `_CATEGORY_DEFAULTS` in `metadata.py` silently falls back to
   domain `market` / tag `ranking` instead of erroring — add an entry for new categories.
 
-## `kis chart technical`/`trend-setup`, `kis stock opinion-summary`/`valuation`, `dart financial-as-filed`/`financial-summary` and the dart/sec filing-text commands compute; every other command passes through
+## `kis chart technical`/`trend-setup`, `kis stock opinion-summary`/`valuation`, `dart financial-as-filed`/`financial-summary`, `ecos macro-snapshot` and the dart/sec filing-text commands compute; every other command passes through
 
 - `dart financial-as-filed` is the second non-pass-through command: it parses a downloaded XBRL
   (see the `dart financial-*` section) and is excluded from the generic client-call tests the same way.
@@ -388,6 +390,14 @@ CLI 가 말해 주지 않는 것만 적는다.
   읽는다(프로브의 필드는 None). 행의 `value` property 는 프로브가 모델 필드가 아니라고 막으므로 `to_number(row.data_value)` 를 쓴다.
 - `DATA_VALUE` 는 문자열이고 빈 값(휴일·미집계)이 있다. 숫자로 바꾸되 빈 값은 `null`, 0 으로 채우지 않는다.
 - `key-stats` 는 서버 행 순서가 호출마다 달라 `(class_name, name)` 으로 정렬해 낸다.
+- `macro-snapshot` 은 계산 명령이다(`macro.py`). 계열 표 `SERIES` 의 코드는 2026-11-01 실서버로 확인했고, 통합 테스트
+  (`test_ecos_integration.py`)가 계열마다 값이 오는지 본다. 항목 그룹이 둘인 표(BSI 512Y014, CCSI 511Y002)는 두 코드를 다 준다 —
+  하나만 주면 성별·연령별 행이 같은 시점에 섞여 온다. 한 시점에 행이 둘 이상이면 평균내지 않고 `missing` 에 적는다.
+  - 국면 라벨을 넣지 않는 것은 사용자 결정(2026-11-01)이다. trend-setup 처럼 표본 외 검증을 통과한 규칙만 낸다.
+  - 기준일을 맞추지 않는다. 계열마다 `as_of` 가 다르고(월·분기 발표 지연), 파생 스프레드는 두 계열에 모두 있는 날만 뺀다.
+  - 백분위는 창 안 관측치 중 최근값 이하의 비율이다. 값은 오늘 받은 개정 후 값이라 과거 시점 재현(eval)에는 그대로 못 쓴다.
+  - sample 키면 클라이언트를 부르기 전에 exit 3. 계열 하나의 실패(`EcosAPIError`)는 `missing` 에 적고 계속하지만, 키 오류와 레이트
+    리밋은 그대로 올린다(exit 3·5). 계약 테스트의 프록시는 `is_sample` 이 bool 이 아니어서 `is True` 로 비교한다.
 
 ## Tests that break on unrelated-looking changes
 

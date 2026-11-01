@@ -952,6 +952,7 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
     "ecos.word": CommandTaxonomy(("macro",), ("statistic-catalog",)),
     "ecos.series": CommandTaxonomy(("macro",), ("economic-series",)),
     "ecos.key-stats": CommandTaxonomy(("macro", "market"), ("macro-indicator",)),
+    "ecos.macro-snapshot": CommandTaxonomy(("macro", "market"), ("macro-indicator", "market-breadth")),
 }
 
 
@@ -1192,8 +1193,8 @@ QUERY_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("시장금리", ("market", "rates", "macro")),
     ("금리", ("rate", "interest", "macro")),
     ("환율", ("exchange", "rate", "krw", "macro")),
-    ("원달러", ("exchange", "rate", "krw")),
-    ("물가", ("cpi", "prices")),
+    ("원달러", ("exchange", "rate", "krw", "usd")),
+    ("물가", ("cpi", "prices", "inflation")),
     ("소비자물가", ("cpi", "consumer", "prices")),
     ("경기", ("cycle", "leading", "index", "macro")),
     ("선행지수", ("leading", "index", "cycle")),
@@ -1205,6 +1206,10 @@ QUERY_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("수출", ("exports", "trade")),
     ("성장률", ("gdp", "growth")),
     ("국내총생산", ("gdp", "growth")),
+    ("신용스프레드", ("credit", "spread")),
+    ("장단기 금리차", ("term", "spread")),
+    ("금리차", ("spread", "term")),
+    ("경기 국면", ("macro", "snapshot", "cycle")),
     ("통계표", ("table", "statistics", "ecos")),
     ("통계용어", ("glossary", "statistics", "term")),
     ("공매도", ("short", "selling")),

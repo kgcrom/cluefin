@@ -7,7 +7,9 @@ from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
-from cluefin_openapi_cli.errors import EXIT_USAGE, CliError
+from cluefin_openapi_cli import macro
+from cluefin_openapi_cli.clock import today_kst
+from cluefin_openapi_cli.errors import EXIT_BROKER, EXIT_CREDENTIALS, EXIT_USAGE, CliError
 from cluefin_openapi_cli.handlers._base import DispatcherProtocol, rpc_method
 
 CYCLES = ("D", "M", "Q", "A", "S", "SM")
@@ -330,6 +332,85 @@ def handle_word(params: dict, session) -> dict:
     return {"term": params["term"], "total": len(rows), "data": rows}
 
 
+def _today():
+    """Injection point for tests."""
+    return today_kst()
+
+
+_MACRO_NOTES = [
+    "Each indicator has its own as_of: monthly and quarterly statistics are published weeks after the period, so "
+    "they are not aligned to one date. ECOS posts daily rates one business day late.",
+    "change.1m/3m/1y (1q/1y for quarterly) is the latest value minus the last value on or before that many months "
+    "earlier, in the indicator's unit (%p for rates, spreads and the yoy rows; points for indices).",
+    "percentile is the share of the window's observations at or below the latest value (0-100); min/max are over "
+    "the same window. Daily series have ~250 observations a year, monthly 12.",
+    "Values are as published today. GDP and some indices are revised later, so a past percentile computed from "
+    "this data is not what was known at the time.",
+    "No regime label is given on purpose: read levels, direction and percentiles yourself and say which ones a "
+    "call depends on.",
+]
+
+
+@rpc_method(
+    name="ecos.macro_snapshot",
+    description=(
+        "Macro backdrop in one call: base rate, treasury 3y/10y, corporate bond AA-/BBB- yields, USD/KRW, CPI "
+        "inflation (yoy), composite leading and coincident index cycles, economic sentiment (ESI), business "
+        "outlook (BSI), consumer sentiment (CCSI), news sentiment, real GDP growth (qoq) and exports growth (yoy), "
+        "plus term spread (10y-3y) and credit spreads (AA- minus treasury, BBB- minus AA-). Each row: value, "
+        "as_of, change over 1m/3m/1y, percentile and min/max within the last window_years, source table and "
+        "items. Numbers only, no regime label. About 15 ECOS series calls; needs ECOS_AUTH_KEY (the sample key "
+        "would take hundreds of calls)."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "window_years": {
+                "type": "integer",
+                "minimum": 3,
+                "maximum": 20,
+                "default": 10,
+                "description": "Years of history behind percentile/min/max. Default 10.",
+            },
+        },
+    },
+    returns={"type": "object"},
+    category="ecos",
+    broker="ecos",
+)
+def handle_macro_snapshot(params: dict, session) -> dict:
+    window_years = int(params.get("window_years", 10))
+    ecos = session.get_ecos()
+    # `is True`: the client contract test hands in a proxy object, which must not read as the sample key.
+    if ecos.is_sample is True:
+        raise CliError(
+            "ecos macro-snapshot needs ECOS_AUTH_KEY.",
+            exit_code=EXIT_CREDENTIALS,
+            error_type="CredentialsMissing",
+            hint="Set ECOS_AUTH_KEY in .env. The public sample key pages 10 rows a call, so ten years of daily "
+            "rates would take hundreds of calls. ecos series still works without a key for short ranges.",
+        )
+    today = _today()
+
+    def fetch(series: macro.MacroSeries) -> list[macro.Point]:
+        start, end = macro.fetch_window(series, today, window_years)
+        page = ecos.statistic_search.search(series.stat_code, series.cycle, start, end, series.item_codes)
+        points = [(row.time, to_number(row.data_value)) for row in page.rows or []]
+        return sorted((time, value) for time, value in points if value is not None)
+
+    result = macro.snapshot(fetch, window_years=window_years)
+    if not result["indicators"]:
+        raise CliError(
+            "ECOS returned no data for any macro series.",
+            exit_code=EXIT_BROKER,
+            data={"missing": result["missing"]},
+            error_type="BrokerApiError",
+            retryable=True,
+            hint="Retry once; if it persists, check one series with ecos series.",
+        )
+    return {"run_date": f"{today:%Y-%m-%d}", "window_years": window_years, **result, "notes": _MACRO_NOTES}
+
+
 # ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
@@ -340,6 +421,7 @@ _ALL_HANDLERS = [
     handle_series,
     handle_key_stats,
     handle_word,
+    handle_macro_snapshot,
 ]
 
 
