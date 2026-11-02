@@ -137,7 +137,7 @@ CLI 가 말해 주지 않는 것만 적는다.
 - A `category` missing from `_CATEGORY_DEFAULTS` in `metadata.py` silently falls back to
   domain `market` / tag `ranking` instead of erroring — add an entry for new categories.
 
-## `kis chart technical`/`trend-setup`, `kis stock opinion-summary`/`valuation`, `dart financial-as-filed`/`financial-summary`, `ecos macro-snapshot` and the dart/sec filing-text commands compute; every other command passes through
+## `kis chart technical`/`trend-setup`, `kis stock opinion-summary`/`valuation`/`implied-expectations`, `dart financial-as-filed`/`financial-summary`, `ecos macro-snapshot` and the dart/sec filing-text commands compute; every other command passes through
 
 - `dart financial-as-filed` is the second non-pass-through command: it parses a downloaded XBRL
   (see the `dart financial-*` section) and is excluded from the generic client-call tests the same way.
@@ -149,6 +149,19 @@ CLI 가 말해 주지 않는 것만 적는다.
   `test_kis_stock_info_handlers_unit.py` excludes it from the calls-once check; `test_kis_opinion_valuation_unit.py`
   covers it with one fake session answering both brokers. Market cap uses **issued** common shares (KRX
   convention, treasury included), preferred shares are ignored — stated in the response `notes`.
+- `kis stock implied-expectations` reverse-engineers what today's price assumes: the steady ROE that makes
+  RIM(잔여이익모델) match today's market cap, and the explicit-horizon revenue growth that makes a reverse DCF
+  match today's EV — numbers and stated assumptions only, no label. It is **three-broker** (KIS price/estimate,
+  DART statements/shares, ECOS 국고채 10년·회사채 AA- 3년) plus an optional Damodaran Korea ERP/tax-rate fetch
+  (`cluefin_feeds.damodaran`, only when `--erp`/`--tax-rate` are not both given). The math (bisection, RIM,
+  reverse DCF) is a pure module, `implied.py` — no I/O, hand-checkable against closed-form cases for small
+  horizons. `_fetch_damodaran_korea` is its own function so unit tests can monkeypatch it and never touch the
+  network; if it is not given `--erp` and that fetch fails, the command exits 3 with a hint to pass `--erp`
+  (a missing/failing Damodaran fetch for `--tax-rate` alone instead falls back to a stated default rate — not a
+  hard failure, since the plan only requires the ERP path to error). `test_kis_stock_info_handlers_unit.py`
+  excludes it from the calls-once check like valuation; `test_kis_implied_expectations_unit.py` covers it with
+  one fake session answering all three brokers. Depends on `cluefin-feeds` (workspace dependency, not a broker
+  client — there is no `session.get_damodaran()`).
 - `kis stock opinion-summary` is one `investment-opinion` call plus `opinions.summarize` (factory
   `opinions()`): each broker's latest row in the window, positive targets only.
 - `dart financial-summary` calls `financial-full-statements` 8 times (two years × four report codes on one
