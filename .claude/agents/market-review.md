@@ -44,6 +44,9 @@ uv run cluefin-openapi-cli kis market announcement --stock-code 005930 --limit 4
 uv run cluefin-openapi-cli ecos macro-snapshot --json
 ```
 
+위 명령은 한 줄씩 별도 Bash 호출로 부르고, 독립인 것은 같은 턴에 병렬로 보낸다. `for` 루프·`$(...)`·`bash -c` 로
+묶으면 worktree 에서 실행이 거부된다.
+
 규칙은 셋이다. **없는 데이터는 없다고 쓴다**(추정해서 채우지 않는다). **출처와 기준일을 수치 옆에 적는다**
 — 재무는 `dart-<보고서코드>` 또는 `kis-annual`, 연결·별도를 한 표에 섞지 않는다. **계산값은 계산값이라고
 표시한다**(분기 역산, TTM, FCF). 기준일이 어긋나거나 핵심 수치가 비어 판단할 수 없으면 리포트 첫머리에
