@@ -411,7 +411,13 @@ CLI 가 말해 주지 않는 것만 적는다.
   순서를 가정하지 않고 이름으로 맞췄다. 품목코드(수출물가 402Y014·생산자물가 404Y014·수출금액지수 403Y001)가 없는 업종(인쇄 18,
   조선 등 기타운송장비 31 의 수출 쪽)은 비슷한 품목으로 대신 채우지 않고 `missing` 에 적는다. 재고순환은 부호(`shipments_up`/
   `inventory_up`)와 차이값만 내고 국면 이름(회복/확장/하강/수축)은 주지 않는다(macro-snapshot 과 같은 결정). `induty_code` 는
-  DART 기업개황 값 그대로 받고 앞 두 자리만 쓴다 — 제조업이 아니면(10~33 밖) exit 2.
+  DART 기업개황 값 그대로 받고 앞 두 자리만 쓴다 — 제조업이 아니면(10~33 밖) exit 2. 담배(12)·기타 제품(33)은 BSI 업종코드
+  `C3300`("기타제품, 담배")를 공유한다 — 두 업종 모두 `industry.bsi_shared_with` 에 서로를 적어 이 BSI 가 담배만의 값이
+  아님을 agent 가 바로 안다.
+- **ECOS 레이트리밋은 3분 300회**(`ERROR-602`, 2026-11-03 실측: 24개 업종 전수 조회 중 ~190여 회 만에 걸림)고 30분 뒤 풀린다
+  (실측). `macro-snapshot`(~15회) 하나, `industry-outlook`(~8회) 하나는 문제없지만, 여러 업종·여러 종목에 `industry-outlook`
+  을 반복 호출하거나(`test_ecos_integration.py` 의 `slow` 전수 테스트가 그 경우) 다른 ECOS 호출과 짧은 시간에 합쳐지면
+  걸릴 수 있다. 걸리면 `EcosRateLimitError`(exit 5, retryable) 로 그대로 올라오고 — 재시도 전 30분을 기다린다.
 
 ## Tests that break on unrelated-looking changes
 

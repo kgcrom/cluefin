@@ -47,6 +47,20 @@ def test_resolve_division_uses_the_first_two_digits() -> None:
     assert industry.resolve_division("5") is None  # too short to resolve
 
 
+def test_bsi_shared_with_flags_the_tobacco_and_other_products_overlap() -> None:
+    tobacco = next(d for d in industry.DIVISIONS if d.ksic == "12")
+    other_products = next(d for d in industry.DIVISIONS if d.ksic == "33")
+    assert tobacco.bsi_item == other_products.bsi_item == "C3300"
+
+    assert [d.ksic for d in industry.bsi_shared_with(tobacco)] == ["33"]
+    assert [d.ksic for d in industry.bsi_shared_with(other_products)] == ["12"]
+
+    # Every other division's BSI code is its own.
+    for division in industry.DIVISIONS:
+        if division.ksic not in ("12", "33"):
+            assert industry.bsi_shared_with(division) == ()
+
+
 def test_series_specs_mark_divisions_with_no_mapped_product_as_none() -> None:
     printing = next(d for d in industry.DIVISIONS if d.ksic == "18")
     specs = dict((key, series) for key, _, _, series in industry.series_specs(printing))
@@ -168,10 +182,18 @@ def test_handler_calls_every_mapped_series_once(monkeypatch: pytest.MonkeyPatch)
             "ppi": "30911AA",
             "export_value": "30911AA",
         },
+        "bsi_shared_with": [],
     }
     assert result["missing"] == []
     assert result["window_years"] == 10
     assert any("no phase" in note or "phase" in note for note in result["notes"])
+    assert any("bsi_shared_with" in note for note in result["notes"])
+
+
+def test_handler_flags_the_shared_bsi_code_for_tobacco(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(handlers, "_today", lambda: date(2026, 11, 1))
+    result = handlers.handle_industry_outlook({"induty_code": "12000"}, _Session())
+    assert result["industry"]["bsi_shared_with"] == [{"ksic": "33", "name": "기타 제품 제조업"}]
 
 
 def test_handler_refuses_the_sample_key() -> None:

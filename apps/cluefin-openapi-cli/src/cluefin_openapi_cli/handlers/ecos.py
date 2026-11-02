@@ -437,6 +437,9 @@ _INDUSTRY_NOTES = [
     "missing lists the indicators this division has no mapped code for (e.g. no standalone commodity price for "
     "printing or for shipbuilding/기타운송장비 in these ECOS tables) rather than substituting a loosely related "
     "product. See industry.py for which division has which code and how it was checked.",
+    "If industry.bsi_shared_with is non-empty, this division's bsi_outlook/bsi_actual come from a BSI survey "
+    "industry code shared with another division (e.g. 12 담배 and 33 기타 제품 both read C3300) — the BSI value "
+    "is not specific to this division alone.",
 ]
 
 
@@ -521,6 +524,9 @@ def handle_industry_outlook(params: dict, session) -> dict:
                 "ppi": division.ppi_item,
                 "export_value": division.export_value_item,
             },
+            "bsi_shared_with": [
+                {"ksic": shared.ksic, "name": shared.name} for shared in industry.bsi_shared_with(division)
+            ],
         },
         **result,
         "notes": _INDUSTRY_NOTES,

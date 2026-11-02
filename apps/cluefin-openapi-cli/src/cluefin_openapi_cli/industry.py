@@ -36,7 +36,7 @@ from cluefin_openapi.ecos import EcosAPIError, EcosAuthenticationError, EcosRate
 
 from cluefin_openapi_cli import macro
 
-__all__ = ["Division", "DIVISIONS", "resolve_division", "series_specs", "industry_outlook"]
+__all__ = ["Division", "DIVISIONS", "resolve_division", "bsi_shared_with", "series_specs", "industry_outlook"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -110,6 +110,13 @@ _BY_KSIC: dict[str, Division] = {division.ksic: division for division in DIVISIO
 def resolve_division(induty_code: str) -> Division | None:
     """DART `induty_code` (2-5 digits) -> its manufacturing division, or None (non-manufacturing/unknown)."""
     return _BY_KSIC.get(induty_code[:2])
+
+
+def bsi_shared_with(division: Division) -> tuple[Division, ...]:
+    """Other divisions whose BSI survey industry code is the same one (e.g. 12/33 both C3300). Empty if unique."""
+    if division.bsi_item is None:
+        return ()
+    return tuple(d for d in DIVISIONS if d.ksic != division.ksic and d.bsi_item == division.bsi_item)
 
 
 def _series(key: str, name: str, group: str, stat_code: str, item_codes: tuple[str, ...]) -> macro.MacroSeries:
