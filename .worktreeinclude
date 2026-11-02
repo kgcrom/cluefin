@@ -10,3 +10,6 @@
 # 실계좌(prod) 키와 키움 모의 키. 값은 절대 출력하지 않는다(루트 AGENTS.md).
 .env
 .env.test
+
+# 개인 권한·hook 설정. 없으면 worktree 세션에서 원래 체크아웃의 파일을 고칠 수 없다.
+.claude/settings.local.json
