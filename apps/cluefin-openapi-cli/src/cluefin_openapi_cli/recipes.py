@@ -361,6 +361,48 @@ _RECIPES: tuple[WorkflowRecipe, ...] = (
         ),
         agent_notes="Use KIS for title-level discovery and DART for formal disclosure records.",
     ),
+    WorkflowRecipe(
+        name="macro-context",
+        title="Macro Context",
+        description="Read the Korean macro backdrop (rates, credit, KRW, prices, cycle, sentiment, growth, exports) "
+        "and dig into any indicator a call depends on.",
+        domains=("macro", "market"),
+        tags=("macro-indicator", "economic-series", "statistic-catalog"),
+        steps=(
+            RecipeStep(
+                title="Macro snapshot",
+                command=("ecos", "macro-snapshot"),
+                purpose="Every headline indicator and spread with its latest value, 1m/3m/1y change and 10-year "
+                "percentile, in one call.",
+                agent_notes="Needs ECOS_AUTH_KEY. Read each row's as_of: monthly data lags weeks. There is no regime "
+                "label on purpose — name the readings your call rests on (e.g. leading_cycle falling for 3 months, "
+                "credit_spread_aa at a high percentile) instead of a one-word regime.",
+            ),
+            RecipeStep(
+                title="Find a table",
+                command=("ecos", "table-search"),
+                purpose="Locate the ECOS table for an indicator the snapshot does not carry (e.g. 업종별 BSI, "
+                "생산자물가, 주택가격).",
+                agent_notes="Every query term must match the table name. The list is downloaded on every call.",
+            ),
+            RecipeStep(
+                title="Pick item codes",
+                command=("ecos", "items"),
+                purpose="Get the item codes and the latest period on file (end_time) for that table.",
+                agent_notes="A table with a Group2 needs a code from each group, in group order; otherwise rows for "
+                "every sub-item come back mixed.",
+            ),
+            RecipeStep(
+                title="Read the series",
+                command=("ecos", "series"),
+                purpose="The indicator's history in the cycle's period format.",
+                agent_notes="Periods: D 20240101, M 202401, Q 2024Q1, A 2024. max_rows keeps the most recent rows.",
+            ),
+        ),
+        agent_notes="Macro explains the backdrop, not a single stock: say which reading matters for this company and "
+        "through which channel (KRW for exporters, rates for lenders and growth multiples, credit spreads for leveraged "
+        "issuers). Do not substitute web search for these numbers.",
+    ),
 )
 
 

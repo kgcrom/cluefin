@@ -97,7 +97,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
             f"{APP_NAME} list [--domain DOMAIN] [--tag TAG] [--query TEXT] [--full] [--json]",
         ],
         "options": [
-            {"flag": "--broker B", "meaning": "Restrict to one broker (kis, kiwoom, dart, sec)."},
+            {"flag": "--broker B", "meaning": "Restrict to one broker (kis, kiwoom, dart, sec, ecos)."},
             {"flag": "--category C", "meaning": "Restrict to one provider SDK category."},
             {"flag": "--domain D", "meaning": "Restrict to one agent-intent domain; see `domains`."},
             {"flag": "--tag T", "meaning": "Restrict to one capability tag; see `tags`."},
@@ -114,7 +114,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
         "description": "Discovery-oriented detail for one command: metadata, use cases, and examples.",
         "usage": [
             f"{APP_NAME} describe <broker> <category> <name> [--json]",
-            f"{APP_NAME} describe dart|sec <name> [--json]",
+            f"{APP_NAME} describe dart|sec|ecos <name> [--json]",
         ],
         "options": [],
         "examples": [f"uv run {APP_NAME} describe kis stock current-price --json"],
@@ -124,7 +124,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
         "description": "Execution contract for one command: JSON Schema, per-parameter flags, and runnable invoke strings.",
         "usage": [
             f"{APP_NAME} schema <broker> <category> <name> [--json]",
-            f"{APP_NAME} schema dart|sec <name> [--json]",
+            f"{APP_NAME} schema dart|sec|ecos <name> [--json]",
         ],
         "options": [],
         "examples": [f"uv run {APP_NAME} schema kis stock current-price --json"],
@@ -232,7 +232,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
 _DYNAMIC_USAGE = (
     f"{APP_NAME} <broker> <category> <name> [--params-json JSON] [schema options] "
     "[--dry-run] [--fields a,b] [--compact] [--json]",
-    f"{APP_NAME} dart|sec <name> [--params-json JSON] [schema options] [--dry-run] [--fields a,b] [--compact] [--json]",
+    f"{APP_NAME} dart|sec|ecos <name> [--params-json JSON] [schema options] [--dry-run] [--fields a,b] [--compact] [--json]",
 )
 
 
@@ -437,7 +437,7 @@ def _run_recipe(argv: list[str]) -> None:
 
 
 def _resolve_positional_path(verb: str, positional: list[str]) -> tuple[str, ...]:
-    usage = f"Usage: {verb} <broker> <category> <name> (or `{verb} dart|sec <name>`)."
+    usage = f"Usage: {verb} <broker> <category> <name> (or `{verb} dart|sec|ecos <name>`)."
     if not positional:
         raise CliError(usage, exit_code=EXIT_USAGE)
 

@@ -172,6 +172,7 @@ def _credentials_status(broker: str) -> dict[str, Any]:
         "kiwoom": (config.kiwoom_app_key, config.kiwoom_secret_key),
         "dart": (config.dart_auth_key,),
         "sec": (config.sec_user_agent,),
+        "ecos": (config.ecos_auth_key,),
     }.get(broker, ())
     envs = {"kis": config.kis_env, "kiwoom": config.kiwoom_env}
     return {

@@ -28,7 +28,8 @@ description: 시장과 종목(코드 또는 기업명)을 받아 cluefin-openapi
 | 공시 | 최근 1년 공시 제목, 주요사항은 `dart major-event` 로 금액·상대방 |
 | 기술적 | `kis chart technical --count 250` — trend·mean_reversion 두 계열을 따로 읽는다 |
 | 추세 셋업 | `kis chart trend-setup` — 관심종목 1·2·3그룹과 피봇 기준 알림·손절가. `action` 은 매수 추천이 아니다(백테스트 근거·한계는 `caveats`) |
-| 뉴스·금리 | `kis market announcement`, `kis market interest-rate`. 환율은 "데이터 없음" |
+| 뉴스 | `kis market announcement` |
+| 매크로 | `ecos macro-snapshot` 한 번 — 기준금리·국고채·회사채·원/달러·CPI·선행/동행지수·ESI·BSI·CCSI·뉴스심리·GDP·수출과 금리차·신용스프레드의 최근값·변화·10년 백분위. 다른 계열은 `recipe macro-context` |
 | 국내 비교 기업 | 지시에 있거나 사업보고서 경쟁 현황에 나오는 국내 상장사 최대 3개사. 본 종목과 같은 명령(`financial-summary` · `valuation` · `current-price` · `technical` · `trend-setup`, CB·BW 는 `major-event`)을 같은 가격 기준일로 |
 | 미국 비교 기업 | 사업 내용·뉴스에 미국 상장 고객사·경쟁사가 보이면 최대 2개사 (`recipe us-peer-filings`) |
 
@@ -40,6 +41,7 @@ uv run cluefin-openapi-cli kis stock opinion-summary --stock-code 005930 --json
 uv run cluefin-openapi-cli kis chart technical --stock-code 005930 --count 250 --json
 uv run cluefin-openapi-cli kis chart trend-setup --stock-code 005930 --json
 uv run cluefin-openapi-cli kis market announcement --stock-code 005930 --limit 40 --json
+uv run cluefin-openapi-cli ecos macro-snapshot --json
 ```
 
 규칙은 셋이다. **없는 데이터는 없다고 쓴다**(추정해서 채우지 않는다). **출처와 기준일을 수치 옆에 적는다**
@@ -57,7 +59,9 @@ uv run cluefin-openapi-cli kis market announcement --stock-code 005930 --limit 4
    의견·목표가는 `kis stock investment-opinion` 에서 증권사별로 오므로 평균·중앙값은 거기서 센다.
 2. **사업 현황** — 주가를 움직일 사업 이슈(수주·증설·신제품·지배구조)를 원문·공시·뉴스 근거와 함께.
 3. **기술적** — 추세, 이동평균 배열, 지지·저항, 무효화 가격. 두 신호 계열이 충돌하면 충돌 자체를 적는다.
-4. **뉴스·공시·매크로** — 호재/악재/중립과 영향 기간. 금리는 이 종목에 미치는 영향만.
+4. **뉴스·공시·매크로** — 호재/악재/중립과 영향 기간. 매크로는 이 종목에 닿는 경로의 수치만 고른다(수출주는 원/달러·수출,
+   차입이 많으면 신용스프레드, 성장주 멀티플은 국고 10년, 내수는 CCSI). 수치마다 `as_of`·변화·백분위를 함께 적고, 국면을
+   한 단어로 정하지 않는다 — snapshot 은 라벨을 주지 않는다.
 5. **경쟁사 대비** (비교 기업이 있을 때) — 종목을 열로 둔 한 표에 같은 항목을 채운다: 시총, TTM PER·PBR,
    현금 제외 PER*(순현금일 때) 또는 EV/EBIT*(순차입일 때), PSR*, 최근 누적 매출 YoY, TTM 영업이익률, 차입금·
    부채비율, 순현금*, 희석 요인(CB·BW·스톡옵션), trend 신호·셋업 그룹, 50일선 이격, 52주 고점 대비.
@@ -79,7 +83,7 @@ uv run cluefin-openapi-cli kis market announcement --stock-code 005930 --limit 4
   필요한 건 더 넓은 손절이 아니라 포지션을 잡지 않는 것이다.
 - 무효화 조건 최소 2개, 그중 하나는 horizon 에 맞는 것(분기 실적, 주간 추세). 일봉 조건 하나로 끝내면
   60일 판단이 사흘 만에 끝난다. 재무 조건의 값은 DART 주요지표 기준(% 단위).
-- `data_as_of` — 가격·재무(회계기준일과 공시일 구분)·뉴스·금리 기준일.
+- `data_as_of` — 가격·재무(회계기준일과 공시일 구분)·뉴스·매크로(인용한 계열별 `as_of`) 기준일.
 - `peer_rank` — 비교 기업이 있으면 본 종목을 포함한 순서. 회사마다 판단과 한 줄 이유를 붙인다.
 
 ## 리포트
