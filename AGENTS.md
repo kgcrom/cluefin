@@ -65,6 +65,9 @@ gh api "repos/kgcrom/cluefin/check-runs/$id/annotations?per_page=100" \
 # critical only: add  select(.annotation_level=="failure")|  before the string
 ```
 
+In a worktree session the `$(...)` lines are refused; run each step separately with the literal sha and id (see
+"Shell commands in a worktree session").
+
 - Codacy's own API also answers with the same token:
   `GET https://app.codacy.com/api/v3/analysis/organizations/gh/kgcrom/repositories/cluefin/pull-requests/<N>/issues?status=new`
   with header `api-token: $CODACY_API_TOKEN` (returns `{analyzed, data, pagination}`). `.../commits/<sha>/issues`
@@ -151,14 +154,19 @@ shapes are in `src/dart/client.ts` and `src/dart/xml.ts`.
 
 ## Shell commands in a worktree session
 
-A worktree-isolated session (`EnterWorktree`, subagent `isolation: worktree`) checks before running that every
-git command stays inside the worktree, and refuses what it can't verify ("names git in a form too complex to
-verify"). Measured 2026-11-03:
+A worktree-isolated session (`EnterWorktree`, subagent `isolation: worktree`) checks before running that no
+command runs git outside the worktree, and refuses what it can't verify ("too complex to verify", "a value computed
+at runtime … cannot be shown not to be git"). Measured 2026-11-03:
 
-- Refused: git in the same command as `$?`, `$(...)`, a `for` loop, or `git -C <another dir>` — e.g.
+- Refused, **any command**: passing it a value from `$(...)` — `sha=$(gh pr view …); gh api …/$sha/…` and
+  `x=$(…); uv run cluefin-openapi-cli $x` were both refused, not only git.
+- Refused, git only: git in the same command as `$?`, a `for` loop, or `git -C <another dir>` — e.g.
   `git check-ignore -v docs/x.html; echo rc=$?`, `for f in a b; do git log -1 -- "$f"; done`.
-- Runs: plain git joined by `|`, `;`, `&&` (`git ls-files docs | grep report`), and a plain variable
-  (`f=AGENTS.md; git log -1 -- "$f"`). The Bash tool already reports the exit code, so `echo $?` is never needed.
+- Runs: plain commands joined by `|`, `;`, `&&` (`git ls-files docs | grep report`), a plain variable
+  (`f=AGENTS.md; git log -1 -- "$f"`), a non-git loop (`for c in …; do uv run cluefin-openapi-cli "$c"; done`) and
+  `bash -c '<literal command>'`. The Bash tool already reports the exit code, so `echo $?` is never needed.
+- To use one command's output in the next (a sha, a check-run id), run the first on its own and paste the literal
+  value into the second — the Codacy snippet above has to be run that way in a worktree.
 - Paths are relative to the worktree. The main checkout's absolute path is outside the repository for git
   (`fatal: … is outside repository`), and its untracked files (e.g. `docs/*-report-*.html`) aren't in the worktree;
   work on those from the main checkout.
@@ -166,7 +174,7 @@ verify"). Measured 2026-11-03:
 So: **one command per Bash call**, independent calls sent in parallel in the same turn. Keep the same habit for
 `cluefin-openapi-cli` (`.claude/agents/market-review.md`, `apps/cluefin-openapi-cli/AGENTS.md`): don't bundle calls
 with `for`·`while`·`$(...)`·`eval`·`bash -c`; parallel calls are as fast and each result and exit code stays
-separate (KIS allows 2 concurrent). Non-git loops weren't refused in the measurement above, but don't rely on it.
+separate (KIS allows 2 concurrent).
 
 ## Conventions
 
