@@ -1,3 +1,5 @@
+import re
+
 import requests
 
 from cluefin_openapi._http_base import BaseHttpClient
@@ -13,6 +15,29 @@ from ._exceptions import (
     DartServerError,
     DartTimeoutError,
 )
+from ._model import DartStatusCode
+
+# 키가 틀리면 DART 는 HTTP 200 본문의 status 로 알린다(JSON 이든 ZIP 자리의 XML 이든). 2026-11-02 실측.
+KEY_ERROR_STATUSES = frozenset(
+    {
+        DartStatusCode.UNREGISTERED_KEY.value,
+        DartStatusCode.DISABLED_KEY.value,
+        DartStatusCode.INACCESSIBLE_IP.value,
+        DartStatusCode.EXPIRED_ACCOUNT.value,
+    }
+)
+_XML_STATUS = re.compile(rb"<status>\s*(\d{3})\s*</status>")
+_XML_MESSAGE = re.compile(rb"<message>(.*?)</message>", re.S)
+
+
+def _raise_for_key_status(status: object, message: object, request_context: dict) -> None:
+    if status in KEY_ERROR_STATUSES:
+        raise DartAuthenticationError(
+            f"{status} {message or 'DART rejected the key'}",
+            status_code=None,
+            response_data={"status": status, "message": message},
+            request_context=request_context,
+        )
 
 
 class Client(BaseHttpClient):
@@ -163,7 +188,22 @@ class Client(BaseHttpClient):
             timeout_error_cls=DartTimeoutError,
             network_error_cls=DartNetworkError,
         )
-        return response.json() if return_json else response.content
+        if return_json:
+            payload = response.json()
+            if isinstance(payload, dict):
+                _raise_for_key_status(payload.get("status"), payload.get("message"), request_context)
+            return payload
+        content = response.content
+        if not content.startswith(b"PK"):  # ZIP 이 아니면 오류 XML 일 수 있다
+            match = _XML_STATUS.search(content[:512])
+            if match:
+                message = _XML_MESSAGE.search(content[:512])
+                _raise_for_key_status(
+                    match.group(1).decode(),
+                    message.group(1).decode("utf-8", "replace") if message else None,
+                    request_context,
+                )
+        return content
 
     def close(self):
         """Close the HTTP session."""

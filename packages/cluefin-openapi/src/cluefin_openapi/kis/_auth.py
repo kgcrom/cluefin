@@ -8,9 +8,31 @@ from cluefin_openapi.kis._auth_types import (
     ApprovalResponse,
     TokenResponse,
 )
+from cluefin_openapi.kis._exceptions import KISAPIError, KISAuthenticationError, KISRateLimitError
 from cluefin_openapi.kis._token_manager import TokenManager
 
 logger = logging.getLogger(__name__)
+
+# 토큰 발급은 서버가 1분에 1회로 막는다. 같은 403 이지만 키 문제가 아니다.
+_TOKEN_RATE_LIMIT_CODE = "EGW00133"
+
+
+def _token_error(response: requests.Response) -> KISAPIError | None:
+    """토큰 발급 401·403 을 키 오류(EGW00103 AppKey, EGW00105 AppSecret 등)나 발급 제한으로 바꾼다. 그 밖은 None."""
+    if response.status_code not in (401, 403):
+        return None
+    try:
+        body = response.json()
+    except ValueError:
+        body = None
+    body = body if isinstance(body, dict) else {}
+    code = body.get("error_code")
+    description = body.get("error_description") or response.reason
+    response_data = {key: body[key] for key in ("error_code", "error_description") if key in body}
+    message = f"Token generation failed: {code} {description}" if code else f"Token generation failed: {description}"
+    if code == _TOKEN_RATE_LIMIT_CODE:
+        return KISRateLimitError(message, response.status_code, response_data, retry_after=60)
+    return KISAuthenticationError(message, response.status_code, response_data)
 
 
 class Auth:
@@ -63,7 +85,10 @@ class Auth:
             response.raise_for_status()
         except requests.HTTPError as e:
             logger.error(f"Failed to generate token: {e}, Response: {response.text}")
-            raise
+            token_error = _token_error(response)
+            if token_error is None:
+                raise
+            raise token_error from e
 
         token_data = TokenResponse(**response.json())
         self._token_data = token_data

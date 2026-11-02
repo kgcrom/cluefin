@@ -6,6 +6,7 @@ from pydantic import SecretStr, ValidationError
 
 from cluefin_openapi.kis._auth import Auth
 from cluefin_openapi.kis._auth_types import ApprovalResponse, TokenResponse
+from cluefin_openapi.kis._exceptions import KISAuthenticationError, KISRateLimitError
 from cluefin_openapi.kis._token_manager import TokenManager
 
 
@@ -59,6 +60,45 @@ def test_generate_http_error(dev_auth, requests_mock):
     requests_mock.post(
         "https://openapivts.koreainvestment.com:29443/oauth2/tokenP", status_code=401, json={"error": "Unauthorized"}
     )
+
+    with pytest.raises(KISAuthenticationError):
+        dev_auth.generate()
+
+
+@pytest.mark.parametrize(
+    ("code", "description"),
+    [("EGW00103", "유효하지 않은 AppKey입니다."), ("EGW00105", "유효하지 않은 AppSecret입니다.")],
+)
+def test_generate_invalid_key_raises_authentication_error(dev_auth, requests_mock, code, description):
+    requests_mock.post(
+        "https://openapivts.koreainvestment.com:29443/oauth2/tokenP",
+        status_code=403,
+        json={"error_code": code, "error_description": description},
+    )
+
+    with pytest.raises(KISAuthenticationError) as exc_info:
+        dev_auth.generate()
+
+    assert exc_info.value.status_code == 403
+    assert exc_info.value.response_data == {"error_code": code, "error_description": description}
+    assert isinstance(exc_info.value.__cause__, requests.HTTPError)
+
+
+def test_generate_token_rate_limit_is_not_a_key_error(dev_auth, requests_mock):
+    requests_mock.post(
+        "https://openapivts.koreainvestment.com:29443/oauth2/tokenP",
+        status_code=403,
+        json={"error_code": "EGW00133", "error_description": "접근토큰 발급 잠시 후 다시 시도하세요(1분당 1회)"},
+    )
+
+    with pytest.raises(KISRateLimitError) as exc_info:
+        dev_auth.generate()
+
+    assert exc_info.value.retry_after == 60
+
+
+def test_generate_server_error_stays_http_error(dev_auth, requests_mock):
+    requests_mock.post("https://openapivts.koreainvestment.com:29443/oauth2/tokenP", status_code=500, text="oops")
 
     with pytest.raises(requests.HTTPError):
         dev_auth.generate()
