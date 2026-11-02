@@ -330,6 +330,16 @@ _TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {
         when_to_use="Use to rank or screen by valuation multiples.",
         related_domains=("market", "statements"),
     ),
+    "implied-expectations": TaxonomyMetadata(
+        name="implied-expectations",
+        description="What today's market price assumes: RIM implied steady ROE, reverse-DCF implied revenue "
+        "growth, numbers and stated assumptions only.",
+        when_to_use="Use to compare what a stock actually did (DART ROE, revenue CAGR) against what its "
+        "current price requires.",
+        avoid_when="Use valuation for PER/PBR multiples rather than a reverse-engineered growth/ROE path.",
+        related_domains=("statements",),
+        related_tags=("valuation", "earnings-estimate"),
+    ),
     "nav": TaxonomyMetadata(
         name="nav",
         description="ETF/ETN net asset value and NAV-vs-price tracking.",
@@ -816,6 +826,7 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
     "kis.stock.current-price": CommandTaxonomy(("quote",), ("current-price",)),
     "kis.stock.current-price-extended": CommandTaxonomy(("quote",), ("current-price", "volatility", "credit")),
     "kis.stock.estimated-earnings": CommandTaxonomy(("statements",), ("earnings-estimate",)),
+    "kis.stock.implied-expectations": CommandTaxonomy(("statements",), ("valuation", "implied-expectations")),
     "kis.stock.investment-opinion": CommandTaxonomy(("statements",), ("analyst-opinion",)),
     "kis.stock.opinion-summary": CommandTaxonomy(("statements",), ("analyst-opinion",)),
     "kis.stock.valuation": CommandTaxonomy(("statements",), ("valuation", "financial-ratio")),
@@ -1223,6 +1234,11 @@ QUERY_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("신용", ("credit", "margin", "loan")),
     ("대출", ("loan", "loanable")),
     ("시가총액", ("market", "cap", "value")),
+    ("역dcf", ("reverse", "dcf", "implied", "growth", "expectations")),
+    ("역디씨에프", ("reverse", "dcf", "implied", "growth", "expectations")),
+    ("내재 기대", ("implied", "expectations", "reverse", "dcf", "roe")),
+    ("내재가치", ("implied", "expectations", "rim", "reverse", "dcf")),
+    ("잔여이익모델", ("rim", "implied", "roe", "expectations")),
     ("유상증자", ("offering", "capital", "increase")),
     ("무상증자", ("bonus", "issue")),
     ("증자", ("capital", "increase")),

@@ -11,8 +11,10 @@ from ._handler_fakes import (
     sample_params,
 )
 
-# valuation calls KIS and DART several times and computes; test_kis_opinion_valuation_unit.py covers it.
-_PASS_THROUGH_HANDLERS = [h for h in handlers._ALL_HANDLERS if h is not handlers.handle_kis_stock_valuation]
+# valuation and implied-expectations call KIS/DART/ECOS several times and compute;
+# test_kis_opinion_valuation_unit.py and test_kis_implied_expectations_unit.py cover them.
+_COMPUTED_HANDLERS = {handlers.handle_kis_stock_valuation, handlers.handle_kis_implied_expectations}
+_PASS_THROUGH_HANDLERS = [h for h in handlers._ALL_HANDLERS if h not in _COMPUTED_HANDLERS]
 
 
 @pytest.mark.parametrize("handler", _PASS_THROUGH_HANDLERS, ids=lambda h: h._rpc_schema.name)
