@@ -149,6 +149,32 @@ def test_series_with_mixed_units_labels_each_row() -> None:
     assert [row["unit_name"] for row in result["data"]] == ["2020=100", "연%"]
 
 
+def test_series_max_rows_keeps_latest_periods_across_items() -> None:
+    # ECOS returns several items item by item; the cap must not drop the first item entirely.
+    observations = [
+        _obs("20261029", "3.0"),
+        _obs("20261030", "3.1"),
+        _obs("20261029", "4.0", "010210000", "국고채(10년)"),
+        _obs("20261030", "4.1", "010210000", "국고채(10년)"),
+    ]
+    result = handlers.handle_series(
+        {"stat_code": "817Y002", "cycle": "D", "start_date": "20261029", "end_date": "20261030", "max_rows": 2},
+        _Session(observations=observations),
+    )
+    assert [(row["time"], row["item_code1"]) for row in result["data"]] == [
+        ("20261030", "010200000"),
+        ("20261030", "010210000"),
+    ]
+
+
+def test_ecos_agent_notes_say_the_key_is_optional() -> None:
+    from cluefin_openapi_cli.registry import build_cli_registry
+
+    notes = build_cli_registry()[("ecos", "series")].agent_notes
+    assert "optional" in notes
+    assert "Requires ECOS_AUTH_KEY" not in notes
+
+
 def test_series_without_rows_explains_publication_lag() -> None:
     result = handlers.handle_series(
         {"stat_code": "901Y067", "cycle": "M", "start_date": "202612", "end_date": "202612"}, _Session()

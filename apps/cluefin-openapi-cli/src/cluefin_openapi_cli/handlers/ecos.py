@@ -257,6 +257,8 @@ def handle_series(params: dict, session) -> dict:
     if len(units) > 1:
         for out, row in zip(rows, observations, strict=False):
             out["unit_name"] = row.unit_name
+    # ECOS orders several items item by item; sort by period (stable) so max_rows keeps the latest periods of all.
+    rows.sort(key=lambda out: out["time"])
 
     payload: dict[str, Any] = {
         "stat_code": params["stat_code"],

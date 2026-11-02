@@ -1427,6 +1427,11 @@ def build_agent_notes(
 
     credential_note = ", ".join(required_credentials) if required_credentials else "configured broker credentials"
     base = f"Read-only {broker.upper()} command. Use --json for machine-readable output. Requires {credential_note}."
+    if broker == "ecos":
+        base = (
+            "Read-only ECOS command. Use --json for machine-readable output. ECOS_AUTH_KEY is optional: without it "
+            "the public sample key returns 10 rows a call (macro-snapshot refuses to run)."
+        )
     if broker_role_name(broker) == "auxiliary":
         if kis_alternatives:
             preferred = ", ".join(kis_alternatives)
