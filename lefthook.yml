@@ -15,6 +15,10 @@ pre-push:
     python-test:
       glob: "*.py"
       run: uv run pytest -m "not integration and not slow" --tb=short -q
+    # 바뀐 파일만 보면 손대지 않은 호출부 오류를 놓친다(#196). 그래서 include 전체를 본다.
+    python-typecheck:
+      glob: ["*.py", "pyproject.toml"]
+      run: uv run pyright
     node-test:
       glob: "*.{ts,tsx,js}"
       root: "packages/cluefin-openapi-ts/"

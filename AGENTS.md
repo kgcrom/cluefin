@@ -151,6 +151,12 @@ shapes are in `src/dart/client.ts` and `src/dart/xml.ts`.
   `pyproject.toml`; CI's `typecheck` job fails on any error there. Packages are added one at a time once their
   errors are 0 — packages not in the list are unchecked, not clean. pydantic models with `populate_by_name` still
   type-check against the alias only, so construct them by alias.
+- **Run pyright over the whole include list before a PR, not on the changed files.** CI runs it only after merge
+  (see the Codacy section); the lefthook pre-push runs it when `*.py`/`pyproject.toml` change. A changed
+  function whose return type is inferred breaks callers you didn't touch: #196 changed `dart/_client.py`'s
+  `_request` so its inferred type became `dict | Any | bytes`, pyright on that one file was clean, and main
+  failed in two unchanged DART modules (2026-11-02). Annotate return types of shared helpers so the change
+  shows up where it's made.
 
 ## Shell commands in a worktree session
 
