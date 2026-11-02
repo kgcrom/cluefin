@@ -84,6 +84,13 @@ def _class_names(exc: BaseException) -> list[str]:
     return [klass.__name__ for klass in type(exc).__mro__]
 
 
+# A bad DART key arrives as body status 010/011/012/901 (client raises DartAuthenticationError). Matched by the
+# exception class, not ``broker``: `kis stock valuation` reaches DART under broker "kis".
+_DART_KEY_HINT = (
+    "DART rejected the key (status 010 unregistered, 011 disabled, 012 IP not allowed, 901 expired account). "
+    "Check DART_AUTH_KEY in .env; do not retry."
+)
+
 _ECOS_KEY_HINT = (
     "ECOS rejected the key (INFO-100). Check ECOS_AUTH_KEY in .env, or remove it to fall back to the public sample "
     "key (10 rows a call)."
@@ -174,6 +181,8 @@ def classify_exception(exc: BaseException, *, command: str, broker: str) -> CliE
             error_type="AuthenticationError",
             hint=_SEC_FORBIDDEN_HINT
             if broker == "sec"
+            else _DART_KEY_HINT
+            if any(name.startswith("Dart") for name in names)
             else "Token was rejected. Check the *_APP_KEY / *_SECRET_KEY pair and *_ENV (dev vs prod) for this broker.",
         )
 

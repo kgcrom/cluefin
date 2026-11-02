@@ -61,7 +61,7 @@ CLI 가 말해 주지 않는 것만 적는다.
 - **응답은 작게.** `--fields`·`--limit`·`--compact`. 잘리면 `_truncated` 에 실제 `total` 이 온다. `list --json`
   을 필터 없이 부르지 않는다(61KB).
 - **exit code 로 분기한다.** 0 정상 · 1 내부 오류 · 2 인자 오류(`error.data.issues[]` 읽고 고친 뒤 재시도) ·
-  3 자격증명(중단하고 보고) · 4 브로커/네트워크(`error.retryable` 이 true 일 때만 1회 재시도) ·
+  3 자격증명 — 키 누락·무효 모두(중단하고 보고) · 4 브로커/네트워크(`error.retryable` 이 true 일 때만 1회 재시도) ·
   5 레이트리밋(`data.retry_after` 만큼 대기, DART `status` 020 은 일일 한도라 재시도 금지). KIS 는 동시 2개까지.
 
 ## Env & safety
@@ -103,6 +103,9 @@ CLI 가 말해 주지 않는 것만 적는다.
   the agent section above): 2 usage/validation, 3 credentials/auth, 4 broker/network/response-parse,
   5 rate limit, 1 everything else. Do not raise `CliError` with a bare exit 1 for a
   classifiable failure — route it through `classify_exception`.
+- A bad key is exit 3 too, not only a missing one: KIS token issuance 403 and DART body status 010/011/012/901 are
+  raised by the client as `*AuthenticationError` (cluefin-openapi AGENTS). The DART hint names `DART_AUTH_KEY` by
+  exception class, not `broker`, because `kis stock valuation` reaches DART under broker `kis`.
 - Broker exceptions are classified by **class-name suffix** (`*RateLimitError`,
   `*AuthenticationError`, …) because kis/kiwoom/dart exception hierarchies are parallel
   copies. A pydantic `ValidationError` from response parsing is deliberately separated

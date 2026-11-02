@@ -119,6 +119,30 @@ def test_dart_other_status_keeps_generic_api_error_bucket() -> None:
     assert error.error_type == "BrokerApiError"
 
 
+@pytest.mark.parametrize("broker", ["dart", "kis"])  # kis: `kis stock valuation` reaches DART under broker "kis"
+def test_dart_invalid_key_is_exit_3_pointing_at_dart_auth_key(broker: str) -> None:
+    from cluefin_openapi.dart._exceptions import DartAuthenticationError
+
+    exc = DartAuthenticationError("010 등록되지 않은 인증키입니다.", status_code=None, response_data={"status": "010"})
+    error = classify_exception(exc, command="dart.x", broker=broker)
+
+    assert error.exit_code == EXIT_CREDENTIALS
+    assert error.error_type == "AuthenticationError"
+    assert error.data["status"] == "010"
+    assert "DART_AUTH_KEY" in (error.hint or "")
+    assert "_APP_KEY" not in (error.hint or "")
+
+
+def test_kis_invalid_app_key_is_exit_3() -> None:
+    from cluefin_openapi.kis._exceptions import KISAuthenticationError
+
+    exc = KISAuthenticationError("Token generation failed: EGW00103 유효하지 않은 AppKey입니다.", 403)
+    error = classify_exception(exc, command="kis.stock.current-price", broker="kis")
+
+    assert error.exit_code == EXIT_CREDENTIALS
+    assert "*_APP_KEY" in (error.hint or "")
+
+
 def test_status_020_on_non_api_error_class_is_not_rate_limited() -> None:
     class _Odd(Exception):
         response_data = {"status": "020"}
