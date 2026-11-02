@@ -11,5 +11,6 @@
 .env
 .env.test
 
-# 개인 권한·hook 설정. 없으면 worktree 세션에서 원래 체크아웃의 파일을 고칠 수 없다.
+# 개인 권한·hook 설정과 로컬 작업 흐름. worktree 안에서도 같은 내용을 보고 고칠 수 있게 복사한다.
 .claude/settings.local.json
+CLAUDE.local.md
