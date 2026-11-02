@@ -158,8 +158,8 @@ A worktree-isolated session (`EnterWorktree`, subagent `isolation: worktree`) ch
 command runs git outside the worktree, and refuses what it can't verify ("too complex to verify", "a value computed
 at runtime … cannot be shown not to be git"). Measured 2026-11-03:
 
-- Refused, **any command**: passing it a value from `$(...)` — `sha=$(gh pr view …); gh api …/$sha/…` and
-  `x=$(…); uv run cluefin-openapi-cli $x` were both refused, not only git.
+- Refused, **not only git**: passing a value from `$(...)` to a command that could run git — `sha=$(gh pr view …);
+  gh api …/$sha/…` and `x=$(…); uv run cluefin-openapi-cli $x` were both refused (`c=$(gh …); echo "$c"` ran).
 - Refused, git only: git in the same command as `$?`, a `for` loop, or `git -C <another dir>` — e.g.
   `git check-ignore -v docs/x.html; echo rc=$?`, `for f in a b; do git log -1 -- "$f"; done`.
 - Runs: plain commands joined by `|`, `;`, `&&` (`git ls-files docs | grep report`), a plain variable
