@@ -149,6 +149,25 @@ shapes are in `src/dart/client.ts` and `src/dart/xml.ts`.
   errors are 0 — packages not in the list are unchecked, not clean. pydantic models with `populate_by_name` still
   type-check against the alias only, so construct them by alias.
 
+## Shell commands in a worktree session
+
+A worktree-isolated session (`EnterWorktree`, subagent `isolation: worktree`) checks before running that every
+git command stays inside the worktree, and refuses what it can't verify ("names git in a form too complex to
+verify"). Measured 2026-11-03:
+
+- Refused: git in the same command as `$?`/`$VAR`, `$(...)`, `for`/`while`, or `git -C <another dir>` — e.g.
+  `git check-ignore -v docs/x.html; echo rc=$?`, `for f in a b; do git log -1 -- "$f"; done`.
+- Runs: plain git joined by `|`, `;`, `&&` (`git ls-files docs | grep report`). The Bash tool already reports the
+  exit code, so `echo $?` is never needed.
+- Paths are relative to the worktree. The main checkout's absolute path is outside the repository for git
+  (`fatal: … is outside repository`), and its untracked files (e.g. `docs/*-report-*.html`) aren't in the worktree;
+  work on those from the main checkout.
+
+So: **one command per Bash call**, independent calls sent in parallel in the same turn. Keep the same habit for
+`cluefin-openapi-cli` (`.claude/agents/market-review.md`, `apps/cluefin-openapi-cli/AGENTS.md`): don't bundle calls
+with `for`·`while`·`$(...)`·`eval`·`bash -c`; parallel calls are as fast and each result and exit code stays
+separate (KIS allows 2 concurrent). Non-git loops weren't refused in the measurement above, but don't rely on it.
+
 ## Conventions
 
 - Conventional Commits with **Korean** messages: `type(scope): 설명`.
