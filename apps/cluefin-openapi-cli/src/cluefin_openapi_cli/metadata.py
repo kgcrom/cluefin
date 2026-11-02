@@ -953,6 +953,7 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
     "ecos.series": CommandTaxonomy(("macro",), ("economic-series",)),
     "ecos.key-stats": CommandTaxonomy(("macro", "market"), ("macro-indicator",)),
     "ecos.macro-snapshot": CommandTaxonomy(("macro", "market"), ("macro-indicator", "market-breadth")),
+    "ecos.industry-outlook": CommandTaxonomy(("macro", "market"), ("macro-indicator", "economic-series")),
 }
 
 
@@ -1210,6 +1211,12 @@ QUERY_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("장단기 금리차", ("term", "spread")),
     ("금리차", ("spread", "term")),
     ("경기 국면", ("macro", "snapshot", "cycle")),
+    ("업황", ("business", "sentiment", "bsi")),
+    ("업종 BSI", ("industry", "bsi")),
+    ("재고순환", ("inventory", "cycle")),
+    ("수출물가", ("export", "price", "index")),
+    ("생산자물가", ("producer", "price", "index")),
+    ("업종 전망", ("industry", "outlook")),
     ("통계표", ("table", "statistics", "ecos")),
     ("통계용어", ("glossary", "statistics", "term")),
     ("공매도", ("short", "selling")),
@@ -1367,6 +1374,9 @@ _NAME_SAMPLES: tuple[tuple[tuple[str, ...], tuple[str, ...], str], ...] = (
     (("cik",), (), "320193"),
     # ECOS: 시장금리(일별). Must precede the generic `code` rule.
     (("stat_code",), (), "817Y002"),
+    # ECOS industry-outlook: a manufacturing KSIC division (26 = 전자부품,컴퓨터,영상음향및통신장비).
+    # Must precede the generic `code` rule below, which would otherwise match "induty_code" on substring "code".
+    (("induty_code",), (), "26410"),
     (("accession_number",), (), "0000320193-23-000106"),
     (("stock_code", "code", "iscd"), (), "005930"),
     (("market",), (), "J"),

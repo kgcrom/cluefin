@@ -14,7 +14,7 @@
 | `kiwoom` | **auxiliary** | KIS가 못 보는 빈칸만 채운다. 테마, 업종 구성종목, 틱 차트, 프로그램매매 상세, 거래원(회원사) 수급. |
 | `dart` | reference | 공시 원문·기업 고유번호·최대주주·발행주식수·정기보고서 재무제표(반기·분기 포함, `financial-as-filed` 는 접수 당시 값, `financial-summary` 는 분기 역산·3개년·비율·TTM 계산)·원문 서술(사업의 내용 `document-outline`/`document-section`, 재무제표 주석 `financial-notes`)·주요사항보고서 본문(`major-event`: CB·BW·EB·유무상증자·감자·자사주·합병·분할 등 36종)·정기보고서 주요정보(`report-item`: 배당·자기주식·임원·보수·사채 잔액·감사의견 등 26종). 시세 소스가 아니다. |
 | `sec` | reference | 미국 SEC EDGAR. 미국 상장 고객사·경쟁사의 10-K/10-Q/8-K Item 본문(`filing-items`)과 8-K 실적 보도자료 EX-99.1(`filing-exhibit`). 20-F/6-K(한국 ADR 대부분)는 읽지 않는다. 한국 기업 공시는 `dart`. |
-| `ecos` | reference | 한국은행 ECOS 경제통계. 기준금리·시장금리·환율·물가·GDP·경기종합지수·기업/소비자 심리·수출. 통계표 찾기(`table-search`) → 항목코드(`items`) → 시계열(`series`), 100대 지표 최근값(`key-stats`), 용어(`word`). 계산 명령: `macro-snapshot`(기준금리·국고채·회사채·원/달러·물가·선행/동행지수·심리·GDP·수출 15계열과 금리차·신용스프레드의 최근값·1m/3m/1y 변화·10년 백분위, 국면 라벨 없음, 실키 필요). `ECOS_AUTH_KEY` 가 없으면 공개 `sample` 키(한 번에 10행)로 돈다. 종목 소스가 아니다. |
+| `ecos` | reference | 한국은행 ECOS 경제통계. 기준금리·시장금리·환율·물가·GDP·경기종합지수·기업/소비자 심리·수출. 통계표 찾기(`table-search`) → 항목코드(`items`) → 시계열(`series`), 100대 지표 최근값(`key-stats`), 용어(`word`). 계산 명령: `macro-snapshot`(기준금리·국고채·회사채·원/달러·물가·선행/동행지수·심리·GDP·수출 15계열과 금리차·신용스프레드의 최근값·1m/3m/1y 변화·10년 백분위, 국면 라벨 없음, 실키 필요), `industry-outlook --induty-code`(KSIC 제조업 중분류 C10~C33 하나의 업종 BSI 전망·실적, 생산·출하·재고(원지수) 전년비, 재고순환(부호만), 대표 품목 수출물가·생산자물가·수출금액지수 전년비, 실키 필요). `ECOS_AUTH_KEY` 가 없으면 공개 `sample` 키(한 번에 10행)로 돈다. 종목 소스가 아니다. |
 
 Kiwoom command에는 `kis_alternatives` 필드가 있습니다. 비어 있지 않으면 같은 질문을 KIS로 먼저 풀어야 하고, 비어 있으면 그것이 Kiwoom을 쓰는 이유입니다. `brokers --json`의 `kiwoom_only_commands`가 그 목록입니다.
 
