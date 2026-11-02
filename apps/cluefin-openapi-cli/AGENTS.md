@@ -257,6 +257,16 @@ CLI 가 말해 주지 않는 것만 적는다.
   단순 평균**이라 감자 종목 하나(+905%)가 테마를 1위로 만든다 — 관심 테마는 캐시 수정주가 중앙값으로 계산한다. `main_stk` 는 종목명
   쉼표 목록이라 같은 테마 구성종목 이름과 맞춘다.
 - PIT 한계: `company` 의 이름·업종·상장주식수는 현재 값이다. DART 등록 전에 폐지된 종목은 빠질 수 있다.
+- **`cache base-rate`/`base-rate-build` 는 기저율(outside view)이다**(`cache/baserate.py`). 칸은 trend-setup 그룹(g1/g2/g3/none,
+  `trend_setup.analyze`의 action/status 를 `_STATUS_TO_STATE` 로 되짚은 것 — 규칙을 다시 derive 하지 않는다. illiquid 는 버린다)
+  × 그날 횡단면 시총 3분위다. PBR 축은 B-1b(과거 재무) 전까지 없다. 시총은 그날 원주가 × **현재** `company.list_count` 근사다(캐시에
+  과거 상장주식수가 없다). `base-rate-build` 만 쓰고(거래일 5일 간격 표본, `setup_state`), 증분(표의 현재 max `sample_date` 이후만
+  계산)·멱등(`ON CONFLICT DO NOTHING`)이다 — 전 종목 하루치 판정이 `cache trend-setup` 과 같은 비용(~0.5~1초)이라 매번 전부 다시
+  돌리지 않는다. `base-rate` 쿼리는 그 표만 읽는다: 대상 종목 하나의 오늘 판정(`analyze` 1회)과 오늘 유니버스의 시총 3분위(유동성
+  필터 전, 과거 칸보다 약간 넓은 모집단 — 속도 때문에 의도적인 근사, `notes` 에 적는다)만 새로 계산한다. 칸 표본이 30개 미만이면
+  그룹×시총 → 그룹 → 전체로 올려 합치고(`_resolve_cell`), horizon 별 초과수익(수정종가, `cache perf` 와 같은 관례)은 forward
+  거래일 매핑 후 계산하므로 칸 표본 수와 horizon 별 n 이 다를 수 있다(최근 표본은 긴 horizon 의 미래 데이터가 아직 없다).
+  `--target-pct`/`--stop-pct` 선도달률의 동일 날 양쪽 도달은 손절로 센다.
 
 ## `dart corp-code-lookup` 은 전체 색인을 받아 클라이언트에서 거른다
 

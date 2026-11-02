@@ -42,6 +42,7 @@ def test_writer_creates_file_and_schema(cache_dir) -> None:
         "rates",
         "theme",
         "theme_member",
+        "setup_state",
         "load_log",
         "probe_log",
         "adj_log",

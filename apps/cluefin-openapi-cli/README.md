@@ -170,6 +170,8 @@ uv run cluefin-openapi-cli cache company --as-of 20180102 --limit 5 --json
 uv run cluefin-openapi-cli cache perf --code 005930 --bench U0001 --since 20210101 --risk-free ktb3y --json
 uv run cluefin-openapi-cli cache trend-setup --status alert,watch --json            # 마지막 거래일 전 종목 1·2·3그룹
 uv run cluefin-openapi-cli cache trend-setup --as-of 20261016 --theme-filter true --history true --json
+uv run cluefin-openapi-cli cache base-rate-build --json                            # 한 번만: 거래일 5일 간격 표본 적재(분 단위)
+uv run cluefin-openapi-cli cache base-rate --code 005930 --horizons 20,40,60 --json
 ```
 
 `cache trend-setup` 은 `kis chart trend-setup` 과 같은 판정을 그날 상장한 보통주 전부(우선주·스팩 제외, 나중에 폐지된 종목 포함)에
@@ -177,6 +179,14 @@ uv run cluefin-openapi-cli cache trend-setup --as-of 20261016 --theme-filter tru
 "왜 3그룹이 아닌가"를 행만 보고 알 수 있고, 규칙별 값 전체는 `kis chart trend-setup --end-date` 로 봅니다. 테마(`theme`)는
 `cache load --only theme` 스냅샷이 있는 날만 붙고, `--history true` 는 보이는 행마다 상태 이력을 계산합니다(행이 많으면 느립니다).
 `--history-filter fresh_g3` 은 3그룹이 된 지 2~3일인 종목만 남깁니다(표본 외 검증을 통과한 유일한 이력 필터, 아래 §9).
+
+`cache base-rate` 는 한 종목의 기저율(outside view, Mauboussin *The Base Rate Book*): "지금과 같은 상태(trend-setup 그룹 ×
+시총 3분위)의 종목들이 과거에 다음 20·40·60거래일 동안 지수 대비 얼마나 벌었나"를 분위수(p10~p90)·평균·플러스 비율로 줍니다.
+`--target-pct`/`--stop-pct` 를 같이 주면 그 horizon 안에서 고가가 +목표를 저가가 −손절보다 먼저 건드린 비율(같은 날 둘 다면 손절로
+침)도 냅니다. 라벨·추천이 아니라 과거 분포이고, 칸의 표본이 30개 미만이면 그룹×시총 → 그룹 → 전체 순으로 합치고 어느 수준을
+썼는지를 `cell.level` 에 적습니다. 먼저 `cache base-rate-build` 로 표본(`setup_state`, 거래일 5일 간격)을 쌓아야 하고(증분·
+재실행해도 안전), 이건 이 하위명령만의 쓰기입니다. 시총은 캐시에 과거 상장주식수가 없어 그날 종가 × **현재** 상장주식수 근사이고,
+PBR(밸류에이션) 축은 캐시에 과거 재무가 들어오기 전까지는 없습니다 — `notes` 에 둘 다 적혀 있습니다.
 
 `cache perf` 는 종목을 수정주가로 사서 들고 있었을 때의 성과(`cluefin-ta` `PERFORMANCE`: CAGR·MDD·변동성·샤프·소르티노·칼마·
 베타·알파)와 같은 기간 벤치마크(기본 `U0001`) 자체의 성과를 함께 줍니다. 두 코드 모두 일봉이 있는 날만 쓰고, CAGR 은 달력 연수로
@@ -190,6 +200,7 @@ uv run cluefin-openapi-cli cache trend-setup --as-of 20261016 --theme-filter tru
 | `theme`·`theme_member` | 키움 테마 스냅샷(날마다, `as_of` 별): 테마 이름·구성종목 수·주요종목, 구성종목. 키움 기간수익률은 원주가라 참고로만 |
 | `rates` | ECOS 일별 시장금리 `ktb1y`·`ktb3y`·`ktb10y`·`cd91d`. 값은 발표 원문 그대로 연 %(3.5 = 3.5%) |
 | `load_log`·`adj_log`·`bar_log`·`probe_log` | 적재 기록, 수정계수 확인 시점, 일봉 시작일, 폐지 후보 확인 기록 |
+| `setup_state` | `cache base-rate-build` 가 쓰는 기저율 표본: 거래일 5일 간격 (sample_date, code) 당 trend-setup 그룹·시총 3분위·시총·수정종가·지수코드·지수종가 |
 
 DuckDB 는 쓰는 동안 다른 프로세스가 파일을 열 수 없습니다. `cache load` 중의 읽기는 exit 1 `CacheLocked`, 첫 적재 전은
 exit 2 `CacheMissing` 입니다.

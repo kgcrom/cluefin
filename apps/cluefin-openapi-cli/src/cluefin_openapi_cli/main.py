@@ -171,6 +171,9 @@ _META_HELP: dict[str, dict[str, Any]] = {
             f"{APP_NAME} cache trend-setup [--as-of YYYYMMDD] [--market KOSPI|KOSDAQ] [--status alert,watch/g2] "
             "[--code <c1,c2>] [--include-excluded true] [--theme-filter true] [--history true] "
             "[--history-filter fresh_g3] [--json]",
+            f"{APP_NAME} cache base-rate-build [--until YYYYMMDD] [--stride 5] [--json]",
+            f"{APP_NAME} cache base-rate --code <code> [--as-of YYYYMMDD] [--horizons 20,40,60] "
+            "[--target-pct P --stop-pct P] [--json]",
         ],
         "options": [
             {"flag": "--only P", "meaning": "Parts to load, comma-separated (default all)."},
@@ -205,6 +208,20 @@ _META_HELP: dict[str, dict[str, Any]] = {
                 "meaning": "perf: annual decimal (0.035 for 3.5%, default 0) or a cached daily series: "
                 "ktb1y, ktb3y, ktb10y, cd91d.",
             },
+            {
+                "flag": "--stride N",
+                "meaning": "base-rate-build: trading-day sampling interval (default 5). Incremental: only new "
+                "sample dates after the table's current max are computed.",
+            },
+            {
+                "flag": "--horizons H",
+                "meaning": "base-rate: trading-day horizons, comma-separated (default 20,40,60).",
+            },
+            {
+                "flag": "--target-pct P --stop-pct P",
+                "meaning": "base-rate: adds a touch-rate — share of samples whose adjusted high reached +P before "
+                "the low reached −P within the horizon (both required together; same-day both counts as stop).",
+            },
         ],
         "examples": [
             f"uv run {APP_NAME} cache status --json",
@@ -212,6 +229,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
             f"uv run {APP_NAME} cache company --as-of 20180102 --limit 5 --json",
             f"uv run {APP_NAME} cache perf --code 005930 --bench U0001 --since 20210101 --risk-free ktb3y --json",
             f"uv run {APP_NAME} cache trend-setup --status alert,watch --json",
+            f"uv run {APP_NAME} cache base-rate --code 005930 --horizons 20,40,60 --json",
         ],
         "notes": [
             "The file is $CLUEFIN_CACHE_DIR/market.duckdb (default ~/.cache/cluefin/).",
@@ -224,6 +242,9 @@ _META_HELP: dict[str, dict[str, Any]] = {
             "(default the last cached trading day); rows carry `failed` check ids, full checks are on the kis command.",
             "perf: buy-and-hold on adjusted closes, dates shared with the benchmark only; CAGR over calendar "
             "years. Returns the stock's metrics with beta/alpha and the benchmark's own metrics.",
+            "base-rate: the outside view — stocks in the same trend-setup group × market-cap tercile, "
+            "historically, and their horizon excess return vs. the stock's own index. Descriptive only, no "
+            "rule or recommendation; run `base-rate-build` first (writer, minutes) so `base-rate` only reads.",
         ],
     },
 }
