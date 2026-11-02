@@ -155,10 +155,10 @@ A worktree-isolated session (`EnterWorktree`, subagent `isolation: worktree`) ch
 git command stays inside the worktree, and refuses what it can't verify ("names git in a form too complex to
 verify"). Measured 2026-11-03:
 
-- Refused: git in the same command as `$?`/`$VAR`, `$(...)`, `for`/`while`, or `git -C <another dir>` — e.g.
+- Refused: git in the same command as `$?`, `$(...)`, a `for` loop, or `git -C <another dir>` — e.g.
   `git check-ignore -v docs/x.html; echo rc=$?`, `for f in a b; do git log -1 -- "$f"; done`.
-- Runs: plain git joined by `|`, `;`, `&&` (`git ls-files docs | grep report`). The Bash tool already reports the
-  exit code, so `echo $?` is never needed.
+- Runs: plain git joined by `|`, `;`, `&&` (`git ls-files docs | grep report`), and a plain variable
+  (`f=AGENTS.md; git log -1 -- "$f"`). The Bash tool already reports the exit code, so `echo $?` is never needed.
 - Paths are relative to the worktree. The main checkout's absolute path is outside the repository for git
   (`fatal: … is outside repository`), and its untracked files (e.g. `docs/*-report-*.html`) aren't in the worktree;
   work on those from the main checkout.
