@@ -5,7 +5,7 @@ from statistics import mean
 
 from cluefin_openapi_cli import implied, opinions, statements
 from cluefin_openapi_cli.clock import KST
-from cluefin_openapi_cli.errors import EXIT_BROKER, EXIT_CREDENTIALS, CliError
+from cluefin_openapi_cli.errors import EXIT_BROKER, CliError
 from cluefin_openapi_cli.handlers import dart as dart_handlers
 from cluefin_openapi_cli.handlers._base import DispatcherProtocol, extract_output, rpc_method
 from cluefin_openapi_cli.handlers.ecos import to_number
@@ -1464,11 +1464,18 @@ _IMPLIED_EXPECTATIONS_NOTES = (
     "시가총액 = kis stock valuation 과 같은 식(기준 종가 × DART 보통주 발행주식총수, 우선주 제외).",
     "RIM: B0 은 DART 최신 지배기업지분(연결 우선). 1년차 ROE 가 fade_years 년에 걸쳐 자기자본비용으로 선형 수렴하고, "
     "그 뒤는 초과 ROE 가 정확히 0 이라고 가정한다(별도 터미널 값 없음). 장부가는 배당성향만큼만 유보해 성장한다.",
-    "역DCF: EV = 시가총액 + DART 차입금(최신 보고 기준, 계정 합산 기준은 borrowings_basis) − 현금. 매출은 TTM, "
-    "영업이익률도 TTM. 재투자 = 매출증분 ÷ sales_to_capital(Damodaran 관행), horizon_years 년 뒤는 terminal_growth 로 "
-    "영구성장한다고 가정한다.",
+    "역DCF: EV = 시가총액 + DART 차입금(최신 보고 기준, 계정 합산 기준은 borrowings_basis) − 현금. 매출은 TTM. "
+    "재투자 = 매출증분 ÷ sales_to_capital(Damodaran 관행), horizon_years 년 뒤는 terminal_growth 로 영구성장한다고 "
+    "가정한다.",
+    "reverse_dcf.implied_revenue_growth 는 TTM 영업이익률을 그대로 horizon_years 동안 유지한다고 가정한 값이다 — "
+    "업황 정점(또는 저점)의 TTM 마진이면 내재 성장률이 과장되게 낮아(또는 높아) 보일 수 있다. "
+    "alternative_dart_3y_avg_margin 에 DART 3개년 평균 영업이익률로 다시 푼 값을 같이 낸다; 둘 다 '정답'이 아니라 "
+    "마진 가정에 결과가 조건부라는 뜻이다.",
     "WACC 는 시가총액·차입금의 시장가치 가중. 세후 타인자본비용의 세율·ERP 는 둘 다 주어지지 않으면 Damodaran 한국 "
     "표(cluefin-feeds)에서 한 번 받는다 — erp 와 tax_rate 를 모두 주면 호출하지 않는다.",
+    "ECOS 국고채(10년)·회사채(3년, AA-) 중 하나라도 최근 값이 없으면 자기자본비용·WACC 를 0% 로 채우지 않고 "
+    "exit 4 로 멈춘다(BrokerUnavailable, retryable). --erp 없이 Damodaran 한국 ERP 조회가 실패해도 같은 exit 4 — "
+    "둘 다 자격증명이 아니라 데이터 출처 문제라서다.",
     "no_solution(reason 있음)은 주어진 탐색 구간(ROE -50%~150%, 성장률 -50%~200%) 안에 해가 없다는 뜻이지 "
     "'불가능'이 아니다 — 가정을 좁히면 해가 생길 수 있다.",
 )
@@ -1523,6 +1530,16 @@ def _revenue_cagr(annual_years: list[dict]) -> float | None:
         return None
     periods = len(annual_years) - 1
     return ((revenue_last / revenue_first) ** (1 / periods) - 1) * 100
+
+
+def _avg_operating_margin(annual_years: list[dict]) -> float | None:
+    """Simple mean of 영업이익 ÷ 매출 over the DART 3 FY rows (not TTM) — a less cyclical margin level."""
+    margins = [
+        year["operating_income"] / year["revenue"]
+        for year in annual_years
+        if year.get("operating_income") is not None and year.get("revenue")
+    ]
+    return mean(margins) if margins else None
 
 
 def _kis_estimate_roe(kis, stock_code: str) -> list[dict]:
@@ -1699,7 +1716,25 @@ def handle_kis_implied_expectations(params: dict, session) -> dict:  # noqa: PLR
 
     ecos = session.get_ecos()
     risk_free_pct, risk_free_as_of = _fetch_latest_rate(ecos, _KTB_10Y_ITEM, as_of)
+    if risk_free_pct is None:
+        raise CliError(
+            f"ECOS returned no 국고채(10년) rate (817Y002/010210000) on or before {as_of}.",
+            exit_code=EXIT_BROKER,
+            error_type="BrokerUnavailable",
+            retryable=True,
+            data={"stat_code": _RATE_STAT_CODE, "item_code": _KTB_10Y_ITEM, "as_of": as_of},
+            hint="Retry once; check with ecos series --stat-code 817Y002 --cycle D --item-codes 010210000.",
+        )
     cost_of_debt_pct, cost_of_debt_as_of = _fetch_latest_rate(ecos, _CORP_AA_3Y_ITEM, as_of)
+    if cost_of_debt_pct is None:
+        raise CliError(
+            f"ECOS returned no 회사채(3년, AA-) rate (817Y002/010300000) on or before {as_of}.",
+            exit_code=EXIT_BROKER,
+            error_type="BrokerUnavailable",
+            retryable=True,
+            data={"stat_code": _RATE_STAT_CODE, "item_code": _CORP_AA_3Y_ITEM, "as_of": as_of},
+            hint="Retry once; check with ecos series --stat-code 817Y002 --cycle D --item-codes 010300000.",
+        )
 
     erp_given = "erp" in params
     tax_given = "tax_rate" in params
@@ -1719,8 +1754,9 @@ def handle_kis_implied_expectations(params: dict, session) -> dict:  # noqa: PLR
     else:
         raise CliError(
             "Damodaran Korea ERP could not be fetched and --erp was not given.",
-            exit_code=EXIT_CREDENTIALS,
-            error_type="CredentialsMissing",
+            exit_code=EXIT_BROKER,
+            error_type="BrokerUnavailable",
+            retryable=True,
             data={"reason": damodaran_error},
             hint="Pass --erp <percent> to override, or retry once network to pages.stern.nyu.edu is available.",
         )
@@ -1732,8 +1768,8 @@ def handle_kis_implied_expectations(params: dict, session) -> dict:  # noqa: PLR
     else:
         tax_rate_pct, tax_source = _DEFAULT_TAX_RATE, f"기본값 {_DEFAULT_TAX_RATE}% (Damodaran 을 못 받음)"
 
-    risk_free = (risk_free_pct or 0.0) / 100
-    cost_of_debt = (cost_of_debt_pct or 0.0) / 100
+    risk_free = risk_free_pct / 100
+    cost_of_debt = cost_of_debt_pct / 100
     tax_rate = tax_rate_pct / 100
     erp = erp_pct / 100
     terminal_growth = terminal_growth_pct / 100
@@ -1753,20 +1789,17 @@ def handle_kis_implied_expectations(params: dict, session) -> dict:  # noqa: PLR
         if b0 is None or b0 <= 0 or market_cap_eok is None
         else implied.implied_roe(market_cap_eok, b0 / eok, cost_of_equity, fade_years, payout_ratio_pct / 100)
     )
-    dcf_result = (
-        implied.BisectionResult(None, "missing_revenue_margin_ev_or_wacc")
-        if not ttm_revenue or operating_margin is None or ev_target is None or wacc is None
-        else implied.implied_growth(
-            ev_target / eok,
-            ttm_revenue / eok,
-            operating_margin,
-            tax_rate,
-            sales_to_capital,
-            wacc,
-            horizon_years,
-            terminal_growth,
+    avg_operating_margin = _avg_operating_margin(annual_years)
+
+    def _dcf_result(margin: float | None) -> implied.BisectionResult:
+        if not ttm_revenue or margin is None or ev_target is None or wacc is None:
+            return implied.BisectionResult(None, "missing_revenue_margin_ev_or_wacc")
+        return implied.implied_growth(
+            ev_target / eok, ttm_revenue / eok, margin, tax_rate, sales_to_capital, wacc, horizon_years, terminal_growth
         )
-    )
+
+    dcf_result = _dcf_result(operating_margin)
+    dcf_result_avg_margin = _dcf_result(avg_operating_margin)
 
     def rim_sensitivity_row(coe: float, years_delta: int) -> dict:
         years = max(1, fade_years + years_delta)
@@ -1823,17 +1856,27 @@ def handle_kis_implied_expectations(params: dict, session) -> dict:  # noqa: PLR
         "reverse_dcf": {
             "implied_revenue_growth": None if dcf_result.value is None else dcf_result.value * 100,
             "reason": dcf_result.reason,
+            "margin_assumption": "ttm_operating_margin",
+            "alternative_dart_3y_avg_margin": {
+                "margin_assumption": "dart_3y_avg_operating_margin",
+                "operating_margin": None if avg_operating_margin is None else avg_operating_margin * 100,
+                "implied_revenue_growth": None
+                if dcf_result_avg_margin.value is None
+                else dcf_result_avg_margin.value * 100,
+                "reason": dcf_result_avg_margin.reason,
+            },
         },
         "comparison": {
             "dart_roe_latest_fy": annual_years[-1]["roe"] if annual_years else None,
             "dart_roe_3y_avg": mean(roes) if roes else None,
             "dart_revenue_cagr_3y": _revenue_cagr(annual_years),
             "ttm_operating_margin": None if operating_margin is None else operating_margin * 100,
+            "dart_operating_margin_3y_avg": None if avg_operating_margin is None else avg_operating_margin * 100,
             "kis_estimate_roe": _kis_estimate_roe(kis, stock_code),
         },
         "sensitivity": {
-            "rim_implied_roe": _sensitivity_table(erp_pct, risk_free_pct or 0.0, beta, rim_sensitivity_row),
-            "reverse_dcf_implied_growth": _sensitivity_table(erp_pct, risk_free_pct or 0.0, beta, dcf_sensitivity_row),
+            "rim_implied_roe": _sensitivity_table(erp_pct, risk_free_pct, beta, rim_sensitivity_row),
+            "reverse_dcf_implied_growth": _sensitivity_table(erp_pct, risk_free_pct, beta, dcf_sensitivity_row),
         },
         "assumptions": {
             "beta": beta,

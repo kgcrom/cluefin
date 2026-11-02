@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from cluefin_openapi_cli.errors import EXIT_BROKER, EXIT_CREDENTIALS, CliError
+from cluefin_openapi_cli.errors import EXIT_BROKER, CliError
 from cluefin_openapi_cli.handlers.kis import domestic_stock_info as handlers
 
 
@@ -163,7 +163,9 @@ def _statements() -> dict:
     annual_rows = [
         _income(thstrm_amount=str(400 * EOK), frmtrm_amount=str(360 * EOK), bfefrmtrm_amount=str(320 * EOK)),
         _revenue(thstrm_amount=str(2000 * EOK), frmtrm_amount=str(1800 * EOK), bfefrmtrm_amount=str(1600 * EOK)),
-        _operating_income(thstrm_amount=str(400 * EOK), frmtrm_amount=str(360 * EOK), bfefrmtrm_amount=str(320 * EOK)),
+        # Deliberately not 20% of revenue in every year (400/2000=20%, 270/1800=15%, 224/1600=14%) so the
+        # DART 3y average operating margin (~16.3%) differs from the TTM margin (20%) used elsewhere.
+        _operating_income(thstrm_amount=str(400 * EOK), frmtrm_amount=str(270 * EOK), bfefrmtrm_amount=str(224 * EOK)),
         _equity(thstrm_amount=str(2000 * EOK), frmtrm_amount=str(1900 * EOK), bfefrmtrm_amount=str(1800 * EOK)),
         _borrowings(str(500 * EOK)),
         _cash(str(100 * EOK)),
@@ -196,7 +198,14 @@ ESTIMATE = {
 }
 
 
-def _session(*, ktb_10y="3.0", corp_aa_3y="4.0", candles=None, estimate=None, shares=None) -> _Session:
+def _session(
+    *,
+    ktb_10y: str | None = "3.0",
+    corp_aa_3y: str | None = "4.0",
+    candles=None,
+    estimate=None,
+    shares=None,
+) -> _Session:
     candles = [_candle("20261017", "120000")] if candles is None else candles
     estimate = dict(ESTIMATE) if estimate is None else estimate
     shares = list(SHARES) if shares is None else shares
@@ -232,6 +241,15 @@ def test_implied_expectations_computes_rim_and_reverse_dcf_without_damodaran() -
     assert out["rim"]["implied_roe"] is not None
     assert out["reverse_dcf"]["reason"] is None
     assert out["reverse_dcf"]["implied_revenue_growth"] is not None
+    assert out["reverse_dcf"]["margin_assumption"] == "ttm_operating_margin"
+
+    alternative = out["reverse_dcf"]["alternative_dart_3y_avg_margin"]
+    assert alternative["margin_assumption"] == "dart_3y_avg_operating_margin"
+    assert alternative["operating_margin"] == pytest.approx((20.0 + 15.0 + 14.0) / 3)
+    assert alternative["reason"] is None
+    assert alternative["implied_revenue_growth"] is not None
+    # A lower average margin than the TTM one implies a higher revenue growth is needed to hit the same EV.
+    assert alternative["implied_revenue_growth"] > out["reverse_dcf"]["implied_revenue_growth"]
 
     assert out["assumptions"]["erp"] == {"value": 6.0, "source": "param", "updated": None}
     assert out["assumptions"]["tax_rate"] == {"value": 22.0, "source": "param"}
@@ -240,6 +258,7 @@ def test_implied_expectations_computes_rim_and_reverse_dcf_without_damodaran() -
 
     assert out["comparison"]["dart_roe_latest_fy"] is not None
     assert out["comparison"]["dart_revenue_cagr_3y"] is not None
+    assert out["comparison"]["dart_operating_margin_3y_avg"] == pytest.approx((20.0 + 15.0 + 14.0) / 3)
     assert out["comparison"]["kis_estimate_roe"] == [
         {"period": "2025.12", "estimate": False, "roe": 15.0},
         {"period": "2026.12E", "estimate": True, "roe": 16.0},
@@ -290,7 +309,7 @@ def test_implied_expectations_uses_damodaran_only_when_erp_or_tax_rate_is_missin
     }
 
 
-def test_implied_expectations_without_erp_and_failing_damodaran_is_exit_3(monkeypatch) -> None:
+def test_implied_expectations_without_erp_and_failing_damodaran_is_exit_4(monkeypatch) -> None:
     def failing_damodaran():
         raise RuntimeError("network down")
 
@@ -300,8 +319,32 @@ def test_implied_expectations_without_erp_and_failing_damodaran_is_exit_3(monkey
     with pytest.raises(CliError) as info:
         handlers.handle_kis_implied_expectations(params, _session())
 
-    assert info.value.exit_code == EXIT_CREDENTIALS
+    # A fetch failure is a broker/network problem, not a credentials problem.
+    assert info.value.exit_code == EXIT_BROKER
+    assert info.value.error_type == "BrokerUnavailable"
+    assert info.value.retryable is True
     assert "erp" in (info.value.hint or "")
+
+
+def test_implied_expectations_missing_risk_free_rate_is_exit_4() -> None:
+    session = _session(ktb_10y=None)
+    with pytest.raises(CliError) as info:
+        handlers.handle_kis_implied_expectations(_base_params(), session)
+
+    assert info.value.exit_code == EXIT_BROKER
+    assert info.value.error_type == "BrokerUnavailable"
+    assert info.value.retryable is True
+    # ECOS was tried before falling over to Damodaran/the rest of the computation.
+    assert ("817Y002", "D", "20261004", "20261018", ("010210000",)) in session.ecos.calls
+
+
+def test_implied_expectations_missing_cost_of_debt_rate_is_exit_4() -> None:
+    session = _session(corp_aa_3y=None)
+    with pytest.raises(CliError) as info:
+        handlers.handle_kis_implied_expectations(_base_params(), session)
+
+    assert info.value.exit_code == EXIT_BROKER
+    assert info.value.error_type == "BrokerUnavailable"
 
 
 def test_implied_expectations_without_a_close_is_exit_4_before_any_dart_call() -> None:
