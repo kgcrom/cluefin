@@ -132,15 +132,19 @@ def test_horizon_stats_computes_excess_return_against_the_index(cache) -> None:
     conn.executemany(
         "INSERT INTO ohlcv (code, date, close, high, low, adj_factor) VALUES (?, ?, ?, ?, ?, 1.0)",
         [
+            ("A1", base_a, 100.0, 100.0, 100.0),
             ("A1", fwd_a, 110.0, 110.0, 110.0),
+            ("A2", base_b, 200.0, 200.0, 200.0),
             ("A2", fwd_b, 180.0, 180.0, 180.0),
+            ("U0001", base_a, 1000.0, 1000.0, 1000.0),
             ("U0001", fwd_a, 1050.0, 1050.0, 1050.0),
+            ("U0001", base_b, 2000.0, 2000.0, 2000.0),
             ("U0001", fwd_b, 1900.0, 1900.0, 1900.0),
         ],
     )
     rows = [
-        (base_a, "A1", "KOSPI", "U0001", 100.0, 1000.0),
-        (base_b, "A2", "KOSPI", "U0001", 200.0, 2000.0),
+        (base_a, "A1", "KOSPI", "U0001"),
+        (base_b, "A2", "KOSPI", "U0001"),
     ]
 
     stats = baserate._horizon_stats(conn, rows, calendar, 20, target_pct=None, stop_pct=None)
@@ -159,7 +163,7 @@ def test_horizon_stats_computes_excess_return_against_the_index(cache) -> None:
 def test_horizon_stats_drops_samples_without_a_forward_date(cache) -> None:
     calendar = _calendar(5)
     conn = store.open_store()
-    rows = [(calendar[4], "A1", "KOSPI", "U0001", 100.0, 1000.0)]  # no day 20 sessions ahead
+    rows = [(calendar[4], "A1", "KOSPI", "U0001")]  # no day 20 sessions ahead
 
     stats = baserate._horizon_stats(conn, rows, calendar, 20, target_pct=None, stop_pct=None)
 
@@ -177,6 +181,48 @@ def test_horizon_stats_drops_samples_without_a_forward_date(cache) -> None:
     }
 
 
+def test_horizon_stats_rereads_the_base_price_so_a_later_adj_factor_rewrite_cannot_go_stale(cache) -> None:
+    """Regression: `setup_state` used to freeze the base adjusted close at build time.
+
+    `cache load` can rewrite a stock's *whole* `adj_factor` history once it detects a new
+    corporate action (AGENTS.md "0.5원 넘게 다르면 … 전 구간 재계산"). A cell built before that
+    rewrite must not keep comparing an old-factor base price against a current-factor forward
+    price — both have to come from the same (the current) factor, or the excess return jumps
+    by the correction ratio for no economic reason.
+    """
+
+    calendar = _calendar(40)
+    base_day, fwd_day = calendar[10], calendar[30]
+    conn = store.open_store()
+    conn.executemany(
+        "INSERT INTO ohlcv (code, date, close, adj_factor) VALUES (?, ?, ?, 1.0)",
+        [
+            ("P1", base_day, 100.0),
+            ("P1", fwd_day, 120.0),
+            ("U0001", base_day, 1000.0),
+            ("U0001", fwd_day, 1000.0),  # flat index: excess == the stock's own return
+        ],
+    )
+    # `rows` is exactly the shape `_resolve_cell` returns now: no stored adj_close, so the
+    # base price can only come from a fresh read of `ohlcv`.
+    rows = [(base_day, "P1", "KOSPI", "U0001")]
+
+    before = baserate._horizon_stats(conn, rows, calendar, 20, target_pct=None, stop_pct=None)
+    assert before["mean"] == pytest.approx(120 / 100 - 1, abs=1e-9)
+
+    # Simulate a later `cache load` that discovers a new corporate action and recomputes P1's
+    # whole adj_factor history, changing the factor on `base_day` only (the split's effective
+    # date falls between base_day and fwd_day, so the two days now carry different factors).
+    conn.execute("UPDATE ohlcv SET adj_factor = 2.0 WHERE code = 'P1' AND date = ?", [base_day])
+
+    after = baserate._horizon_stats(conn, rows, calendar, 20, target_pct=None, stop_pct=None)
+
+    # The same `rows` (same setup_state cell) must now reflect the corrected factor, not a
+    # value frozen at build time.
+    assert after["mean"] == pytest.approx(120 / (100 * 2.0) - 1, abs=1e-9)
+    assert after["mean"] != before["mean"]
+
+
 # ---------------------------------------------------------------------------
 # touch rate (target/stop), including the same-day-both-hit tie
 # ---------------------------------------------------------------------------
@@ -187,15 +233,19 @@ def test_touch_rate_same_day_both_hit_counts_as_stop(cache) -> None:
     base_day, next_day = calendar[0], calendar[1]
     conn = store.open_store()
     conn.executemany(
-        "INSERT INTO ohlcv (code, date, high, low, adj_factor) VALUES (?, ?, ?, ?, 1.0)",
+        "INSERT INTO ohlcv (code, date, close, high, low, adj_factor) VALUES (?, ?, 100.0, ?, ?, 1.0)",
         [
+            ("T1", base_day, None, None),
+            ("T2", base_day, None, None),
+            ("T3", base_day, None, None),
+            ("T4", base_day, None, None),
             ("T1", next_day, 112.0, 95.0),  # target only (+10% = 110 reached, -10% = 90 not)
             ("T2", next_day, 112.0, 85.0),  # both reached same day -> counts as stop
             ("T3", next_day, 105.0, 85.0),  # stop only
             ("T4", next_day, 101.0, 99.0),  # neither
         ],
     )
-    rows = [(base_day, code, "KOSPI", "U0001", 100.0, 1000.0) for code in ("T1", "T2", "T3", "T4")]
+    rows = [(base_day, code, "KOSPI", "U0001") for code in ("T1", "T2", "T3", "T4")]
 
     stats = baserate._horizon_stats(conn, rows, calendar, 1, target_pct=10.0, stop_pct=10.0)
 

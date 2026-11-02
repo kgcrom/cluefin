@@ -213,13 +213,16 @@ def build(conn: duckdb.DuckDBPyConnection, *, stride: int = SAMPLE_STRIDE, until
 # query: current cell, merge-up, forward excess return and touch rate
 # ---------------------------------------------------------------------------
 
+# `adj_close`/`index_close` stay in `setup_state` (written by `build()`, see the schema
+# comment) but are not selected here: `cache load` can rewrite a code's *entire* adj_factor
+# history once it detects a new corporate action (AGENTS.md "0.5원 넘게 다르면 … 전 구간
+# 재계산"), which would silently leave a build-time snapshot on the wrong factor relative to
+# a freshly computed forward price. Both ends of every return are re-read from `ohlcv` at
+# query time instead (`_adjusted_prices`), so they always share one `cache load` run's factors.
 _CELL_SQL = {
-    "group_mcap": (
-        "SELECT sample_date, code, market, index_code, adj_close, index_close FROM setup_state "
-        "WHERE state = ? AND mcap_bucket = ?"
-    ),
-    "group": "SELECT sample_date, code, market, index_code, adj_close, index_close FROM setup_state WHERE state = ?",
-    "all": "SELECT sample_date, code, market, index_code, adj_close, index_close FROM setup_state",
+    "group_mcap": "SELECT sample_date, code, market, index_code FROM setup_state WHERE state = ? AND mcap_bucket = ?",
+    "group": "SELECT sample_date, code, market, index_code FROM setup_state WHERE state = ?",
+    "all": "SELECT sample_date, code, market, index_code FROM setup_state",
 }
 
 
@@ -289,6 +292,24 @@ def _round(value: float | None, digits: int = 4) -> float | None:
     return None if value is None or not np.isfinite(value) else round(float(value), digits)
 
 
+def _adjusted_prices(conn: duckdb.DuckDBPyConnection, codes: list[str], days: list[date]) -> dict[int, float]:
+    """``close * adj_factor`` for each ``(codes[i], days[i])``, read fresh from ``ohlcv``.
+
+    Always current: a stock's whole `adj_factor` history can be rewritten by a later
+    `cache load` run (AGENTS.md "전 구간 재계산"), so nothing here is cached across calls —
+    every price this module compares, base or forward, goes through this one function.
+    """
+
+    idx = list(range(len(codes)))
+    rows = conn.execute(
+        "SELECT u.i, o.close * COALESCE(NULLIF(o.adj_factor, 0), 1) FROM "
+        "(SELECT unnest(?::INT[]) AS i, unnest(?::TEXT[]) AS code, unnest(?::DATE[]) AS d) u "
+        "JOIN ohlcv o ON o.code = u.code AND o.date = u.d",
+        [idx, codes, days],
+    ).fetchall()
+    return dict(rows)
+
+
 def _horizon_stats(
     conn: duckdb.DuckDBPyConnection,
     rows: list[tuple[Any, ...]],
@@ -314,43 +335,39 @@ def _horizon_stats(
     }
     if not usable:
         return empty
-    # The touch rate only needs the high/low path, not the forward close — compute it even
-    # when no sample has both a forward stock and index close (e.g. a thin index history).
+
+    n = len(usable)
+    codes = [row[1] for row in usable]
+    index_codes = [row[3] for row in usable]
+    base_dates = [row[0] for row in usable]
+    fwd_dates = [forward[row[0]] for row in usable]
+    # One query per entity for both ends of the window, so a base price is exactly as fresh
+    # as its forward price — see `_adjusted_prices` and the `_CELL_SQL` comment above.
+    stock_prices = _adjusted_prices(conn, codes * 2, base_dates + fwd_dates)
+    index_prices = _adjusted_prices(conn, index_codes * 2, base_dates + fwd_dates)
+    base_stock = {i: stock_prices.get(i) for i in range(n)}
+    fwd_stock = {i: stock_prices.get(n + i) for i in range(n)}
+    base_index = {i: index_prices.get(i) for i in range(n)}
+    fwd_index = {i: index_prices.get(n + i) for i in range(n)}
+
+    # The touch rate only needs the high/low path and the base close, not the forward close —
+    # compute it even when no sample has both a forward stock and index close.
     touch = (
-        _touch_rates(conn, usable, forward, target_pct, stop_pct)
+        _touch_rates(conn, usable, forward, base_stock, target_pct, stop_pct)
         if target_pct is not None and stop_pct is not None
         else None
     )
-    codes = [row[1] for row in usable]
-    fwd_dates = [forward[row[0]] for row in usable]
-    idx = list(range(len(usable)))
-    stock_fwd = dict(
-        conn.execute(
-            "SELECT u.i, o.close * COALESCE(NULLIF(o.adj_factor, 0), 1) FROM "
-            "(SELECT unnest(?::INT[]) AS i, unnest(?::TEXT[]) AS code, unnest(?::DATE[]) AS d) u "
-            "JOIN ohlcv o ON o.code = u.code AND o.date = u.d",
-            [idx, codes, fwd_dates],
-        ).fetchall()
-    )
-    index_codes = [row[3] for row in usable]
-    index_fwd = dict(
-        conn.execute(
-            "SELECT u.i, o.close * COALESCE(NULLIF(o.adj_factor, 0), 1) FROM "
-            "(SELECT unnest(?::INT[]) AS i, unnest(?::TEXT[]) AS code, unnest(?::DATE[]) AS d) u "
-            "JOIN ohlcv o ON o.code = u.code AND o.date = u.d",
-            [idx, index_codes, fwd_dates],
-        ).fetchall()
-    )
+
     excess: list[float] = []
     dates_seen: set[date] = set()
     for i, row in enumerate(usable):
-        sample_date, _code, _market, _index_code, base_close, base_index = row
-        fwd_close = stock_fwd.get(i)
-        fwd_index = index_fwd.get(i)
-        if fwd_close is None or fwd_index is None or not base_close or not base_index:
+        sample_date = row[0]
+        b_close, f_close = base_stock.get(i), fwd_stock.get(i)
+        b_index, f_index = base_index.get(i), fwd_index.get(i)
+        if not b_close or f_close is None or not b_index or f_index is None:
             continue
-        stock_ret = fwd_close / base_close - 1
-        index_ret = fwd_index / base_index - 1
+        stock_ret = f_close / b_close - 1
+        index_ret = f_index / b_index - 1
         excess.append(stock_ret - index_ret)
         dates_seen.add(sample_date)
     if not excess:
@@ -375,6 +392,7 @@ def _touch_rates(
     conn: duckdb.DuckDBPyConnection,
     usable: list[tuple[Any, ...]],
     forward: dict[date, date],
+    base_stock: dict[int, float | None],
     target_pct: float,
     stop_pct: float,
 ) -> dict[str, Any]:
@@ -402,8 +420,8 @@ def _touch_rates(
 
     target_hits = stop_hits = neither = 0
     n = 0
-    for i, row in enumerate(usable):
-        base_close = row[4]
+    for i, _row in enumerate(usable):
+        base_close = base_stock.get(i)
         if not base_close:
             continue
         path = by_sample.get(i)
