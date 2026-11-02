@@ -58,9 +58,10 @@ CLI 가 말해 주지 않는 것만 적는다.
   `CacheMissing`; `cache load`(첫 실행 ~2시간 20분, 이후 하루 ~7분)는 사용자가 요청할 때만 돌린다.
   지수 대비 성과(CAGR·MDD·샤프·베타·알파)는 `cache perf --code --bench U0001` — 일봉을 받아 직접 계산하지 않는다.
   그날 1·2·3그룹 종목 찾기는 `cache trend-setup`(전 종목 약 1초), 한 종목의 오늘 값은 `kis chart trend-setup`.
-- **명령 하나에 Bash 호출 하나.** `for`·`while`·`$(...)`·`eval`·`bash -c` 로 여러 명령을 묶지 않는다. worktree 세션에서는
-  Claude Code 가 명령이 worktree 밖을 건드리지 않는지 실행 전에 확인하는데, 변수로 조립한 명령은 확인할 수 없어 거부한다.
-  서로 독립인 호출은 같은 턴에 병렬로 보낸다(KIS 는 동시 2개까지).
+- **명령 하나에 Bash 호출 하나.** `for`·`while`·`$(...)`·`eval`·`bash -c` 로 여러 명령을 묶지 않는다. 호출마다 결과와
+  exit code 가 따로 남아야 아래 exit code 분기를 할 수 있다. 서로 독립인 호출은 같은 턴에 병렬로 보낸다(KIS 는 동시 2개까지).
+  worktree 세션에서 실행 전에 거부되는 것은 git 이 섞인 명령이다(2026-11-03 실측, git 없는 루프는 통과) — 루트
+  `AGENTS.md` 의 worktree 절.
 - **응답은 작게.** `--fields`·`--limit`·`--compact`. 잘리면 `_truncated` 에 실제 `total` 이 온다. `list --json`
   을 필터 없이 부르지 않는다(61KB).
 - **exit code 로 분기한다.** 0 정상 · 1 내부 오류 · 2 인자 오류(`error.data.issues[]` 읽고 고친 뒤 재시도) ·
