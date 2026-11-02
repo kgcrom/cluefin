@@ -7,7 +7,7 @@ from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
-from cluefin_openapi_cli import macro
+from cluefin_openapi_cli import industry, macro
 from cluefin_openapi_cli.clock import today_kst
 from cluefin_openapi_cli.errors import EXIT_BROKER, EXIT_CREDENTIALS, EXIT_USAGE, CliError
 from cluefin_openapi_cli.handlers._base import DispatcherProtocol, rpc_method
@@ -413,6 +413,126 @@ def handle_macro_snapshot(params: dict, session) -> dict:
     return {"run_date": f"{today:%Y-%m-%d}", "window_years": window_years, **result, "notes": _MACRO_NOTES}
 
 
+_INDUTY_CODE_PARAM = {
+    "type": "string",
+    "pattern": r"^[0-9]{2,5}$",
+    "description": "Industry code as DART company-overview's induty_code (KSIC), 2-5 digits. Only the first two "
+    "digits (the KSIC manufacturing division) are used, e.g. 26410 -> division 26.",
+}
+
+_INDUSTRY_NOTES = [
+    "Industry-level: these are division averages, not one company. A diversified company (holding company, "
+    "several business segments) should also check which product its own segments actually sell (recipe "
+    "filing-text) rather than read the division number as that company's number.",
+    "Each indicator has its own as_of (BSI, production/shipment/inventory and product prices are monthly but "
+    "not published the same week). change.1m/3m/1y is the latest value minus the last value on or before that "
+    "many months earlier. percentile is the share of the window's observations at or below the latest value.",
+    "production/shipment/inventory and the inventory cycle use the raw (원지수) index, not seasonally adjusted, "
+    "so the same basis underlies both the YoY rows and the inventory-cycle subtraction.",
+    "inventory_cycle gives shipments_up/inventory_up (sign of each YoY) and their difference only — no phase "
+    "name (회복/확장/하강/수축): that is a forecast rule and this repo only ships rules that passed an "
+    "out-of-sample check (README §9).",
+    "export_price_yoy is 원화기준 (KRW basis, 402Y014 item 'W'), matching the KRW basis of ppi_yoy and the "
+    "production/shipment/inventory legs, not the dollar-basis alternative ECOS also publishes.",
+    "missing lists the indicators this division has no mapped code for (e.g. no standalone commodity price for "
+    "printing or for shipbuilding/기타운송장비 in these ECOS tables) rather than substituting a loosely related "
+    "product. See industry.py for which division has which code and how it was checked.",
+    "If industry.bsi_shared_with is non-empty, this division's bsi_outlook/bsi_actual come from a BSI survey "
+    "industry code shared with another division (e.g. 12 담배 and 33 기타 제품 both read C3300) — the BSI value "
+    "is not specific to this division alone.",
+]
+
+
+@rpc_method(
+    name="ecos.industry_outlook",
+    description=(
+        "One KSIC manufacturing division's (C10-C33) leading indicators in one call: business survey index (BSI) "
+        "outlook and actual, production/shipment/inventory indices (yoy, raw index), the inventory cycle "
+        "(shipment yoy minus inventory yoy, signs only), and a representative product's export price, producer "
+        "price (PPI) and export value index (yoy). Each row: value, as_of, change over 1m/3m/1y, percentile and "
+        "min/max within the last window_years, source table and items. Numbers only, no phase/regime label. "
+        "induty_code is the KSIC code as DART company-overview returns it (first two digits select the division); "
+        "non-manufacturing or unknown divisions are exit 2. About 8-11 ECOS series calls; needs ECOS_AUTH_KEY."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "induty_code": _INDUTY_CODE_PARAM,
+            "window_years": {
+                "type": "integer",
+                "minimum": 3,
+                "maximum": 20,
+                "default": 10,
+                "description": "Years of history behind percentile/min/max. Default 10.",
+            },
+        },
+        "required": ["induty_code"],
+    },
+    returns={"type": "object"},
+    category="ecos",
+    broker="ecos",
+)
+def handle_industry_outlook(params: dict, session) -> dict:
+    division = industry.resolve_division(params["induty_code"])
+    if division is None:
+        raise CliError(
+            f"induty_code {params['induty_code']!r} is not a KSIC manufacturing division (10-33).",
+            exit_code=EXIT_USAGE,
+            error_type="UnsupportedIndustry",
+            hint="This command covers manufacturing divisions only (KSIC C10-C33, from DART company-overview "
+            "induty_code). Non-manufacturing industries are out of scope.",
+        )
+    window_years = int(params.get("window_years", 10))
+    ecos = session.get_ecos()
+    if ecos.is_sample is True:
+        raise CliError(
+            "ecos industry-outlook needs ECOS_AUTH_KEY.",
+            exit_code=EXIT_CREDENTIALS,
+            error_type="CredentialsMissing",
+            hint="Set ECOS_AUTH_KEY in .env. The public sample key pages 10 rows a call, so ten years of monthly "
+            "series would take many calls. ecos series still works without a key for short ranges.",
+        )
+    today = _today()
+
+    def fetch(series: macro.MacroSeries) -> list[macro.Point]:
+        start, end = macro.fetch_window(series, today, window_years)
+        page = ecos.statistic_search.search(series.stat_code, series.cycle, start, end, series.item_codes)
+        points = [(row.time, to_number(row.data_value)) for row in page.rows or []]
+        return sorted((time, value) for time, value in points if value is not None)
+
+    result = industry.industry_outlook(division, fetch, window_years=window_years)
+    if not result["indicators"]:
+        raise CliError(
+            "ECOS returned no data for any indicator of this division.",
+            exit_code=EXIT_BROKER,
+            data={"missing": result["missing"]},
+            error_type="BrokerApiError",
+            retryable=True,
+            hint="Retry once; if it persists, check one series with ecos series.",
+        )
+    return {
+        "run_date": f"{today:%Y-%m-%d}",
+        "window_years": window_years,
+        "industry": {
+            "ksic": division.ksic,
+            "name": division.name,
+            "product": division.product_name,
+            "codes": {
+                "bsi": division.bsi_item,
+                "production_shipment_inventory": division.production_item,
+                "export_price": division.export_price_item,
+                "ppi": division.ppi_item,
+                "export_value": division.export_value_item,
+            },
+            "bsi_shared_with": [
+                {"ksic": shared.ksic, "name": shared.name} for shared in industry.bsi_shared_with(division)
+            ],
+        },
+        **result,
+        "notes": _INDUSTRY_NOTES,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
@@ -424,6 +544,7 @@ _ALL_HANDLERS = [
     handle_key_stats,
     handle_word,
     handle_macro_snapshot,
+    handle_industry_outlook,
 ]
 
 
