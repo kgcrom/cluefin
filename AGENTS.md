@@ -167,6 +167,9 @@ at runtime … cannot be shown not to be git"). Measured 2026-11-03:
   `bash -c '<literal command>'`. The Bash tool already reports the exit code, so `echo $?` is never needed.
 - To use one command's output in the next (a sha, a check-run id), run the first on its own and paste the literal
   value into the second — the Codacy snippet above has to be run that way in a worktree.
+- Polling: a loop with `gh` inside `$(...)` is refused even with literal arguments; a pipe works —
+  `until gh pr checks <N> | grep -E 'Codacy Static Code Analysis[[:space:]]+(pass|fail)'; do sleep 20; done` in a
+  background Bash call.
 - Paths are relative to the worktree. The main checkout's absolute path is outside the repository for git
   (`fatal: … is outside repository`), and its untracked files (e.g. `docs/*-report-*.html`) aren't in the worktree;
   work on those from the main checkout.
