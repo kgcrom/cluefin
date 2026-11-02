@@ -11,6 +11,24 @@ description: 시장과 종목(코드 또는 기업명)을 받아 cluefin-openapi
 사용자와 대화하며 정보를 모으고 HTML 리포트를 만드는 일은 메인 대화가 맡는다 — 서브에이전트는 메인 대화를
 볼 수 없어 대화에서 모은 정보를 빠짐없이 담을 수 없다. 메인 대화도 아래 데이터·분석·판단 절을 같은 기준으로 쓴다.
 
+## 키 확인
+
+데이터를 모으기 전에 아래 세 명령부터 부른다. 어차피 쓸 호출이라 따로 드는 비용은 없다. exit 3 은 키가 없거나
+무효라는 뜻이고, 어느 키인지는 `error.hint` 가 말한다.
+
+```bash
+uv run cluefin-openapi-cli kis stock current-price --stock-code 005930 --json
+uv run cluefin-openapi-cli dart corp-code-lookup --stock-code 005930 --json
+uv run cluefin-openapi-cli ecos macro-snapshot --json
+```
+
+- **KIS·DART 가 exit 3 이면 멈춘다.** 리포트를 쓰지 않는다. 어느 키(`KIS_APP_KEY`·`KIS_SECRET_KEY`, `DART_AUTH_KEY`)가
+  없거나 무효인지 `error.message` 와 함께 알리고 `.env` 를 고치라고 한다. 다른 출처로 채워 판단을 내지 않는다.
+- **ECOS 가 exit 3 이면 매크로만 빼고 계속한다.** 매크로 행과 4단계 매크로는 "데이터 없음: ECOS 키 누락·무효"로 두고,
+  시나리오에 매크로 전제를 넣지 않는다. 요약 맨 앞과 "데이터 출처와 한계" 에 ECOS 키가 유효하지 않아 매크로를
+  뺐다고 적는다. 메인 대화라면 첫 답에서 사용자에게 바로 알린다.
+- exit 4·5 는 키 문제가 아니다 — exit code 규칙(`apps/cluefin-openapi-cli/AGENTS.md`)대로 재시도하거나 데이터 없음으로 적는다.
+
 ## 데이터
 
 전부 `uv run cluefin-openapi-cli` 로 받는다. 사용법은 `apps/cluefin-openapi-cli/AGENTS.md` 첫 절이고,
@@ -61,7 +79,7 @@ uv run cluefin-openapi-cli ecos macro-snapshot --json
 3. **기술적** — 추세, 이동평균 배열, 지지·저항, 무효화 가격. 두 신호 계열이 충돌하면 충돌 자체를 적는다.
 4. **뉴스·공시·매크로** — 호재/악재/중립과 영향 기간. 매크로는 이 종목에 닿는 경로의 수치만 고른다(수출주는 원/달러·수출,
    차입이 많으면 신용스프레드, 성장주 멀티플은 국고 10년, 내수는 CCSI). 수치마다 `as_of`·변화·백분위를 함께 적고, 국면을
-   한 단어로 정하지 않는다 — snapshot 은 라벨을 주지 않는다.
+   한 단어로 정하지 않는다 — snapshot 은 라벨을 주지 않는다. ECOS 를 못 받았으면 매크로는 쓰지 않고 그 사실만 적는다.
 5. **경쟁사 대비** (비교 기업이 있을 때) — 종목을 열로 둔 한 표에 같은 항목을 채운다: 시총, TTM PER·PBR,
    현금 제외 PER*(순현금일 때) 또는 EV/EBIT*(순차입일 때), PSR*, 최근 누적 매출 YoY, TTM 영업이익률, 차입금·
    부채비율, 순현금*, 희석 요인(CB·BW·스톡옵션), trend 신호·셋업 그룹, 50일선 이격, 52주 고점 대비.
