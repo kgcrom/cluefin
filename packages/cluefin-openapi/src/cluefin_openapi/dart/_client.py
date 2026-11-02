@@ -1,4 +1,5 @@
 import re
+from typing import Any, Literal, overload
 
 import requests
 
@@ -95,11 +96,11 @@ class Client(BaseHttpClient):
 
         return PeriodicReportFinancialStatement(self)
 
-    def _get_bytes(self, path: str, *, params: dict | None = None):
+    def _get_bytes(self, path: str, *, params: dict | None = None) -> bytes:
         """Make a GET request and return raw bytes with rate limiting and retry."""
         return self._request(path, params=params, return_json=False)
 
-    def _get(self, path: str, *, params: dict | None = None):
+    def _get(self, path: str, *, params: dict | None = None) -> Any:
         """Make a GET request and return JSON with rate limiting and retry."""
         return self._request(path, params=params, return_json=True)
 
@@ -157,7 +158,11 @@ class Client(BaseHttpClient):
                 request_context=request_context,
             )
 
-    def _request(self, path: str, *, params: dict | None = None, return_json: bool = True):
+    @overload
+    def _request(self, path: str, *, params: dict | None = ..., return_json: Literal[False]) -> bytes: ...
+    @overload
+    def _request(self, path: str, *, params: dict | None = ..., return_json: Literal[True] = ...) -> Any: ...
+    def _request(self, path: str, *, params: dict | None = None, return_json: bool = True) -> Any:
         """Internal request method with rate limiting and retry logic."""
         url = self.base_url + path
         # Copy so the auth secret is never written back into the caller's dict
