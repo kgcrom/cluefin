@@ -31,7 +31,7 @@ class DartAuthenticationError(DartAPIError):
     def __init__(
         self,
         message: str = "Authentication failed - invalid or expired token",
-        status_code: int = 401,
+        status_code: int | None = 401,
         response_data: dict[str, Any] | None = None,
         request_context: dict[str, Any] | None = None,
     ):

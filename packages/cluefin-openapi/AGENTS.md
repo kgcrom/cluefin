@@ -57,6 +57,11 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 
 - KIS may invalidate tokens before their stated 24h expiry — `MAX_CACHE_AGE=6h` in the
   token manager is deliberate. KIS also rate-limits token generation to 1/min server-side.
+- A bad KIS key fails at token issuance with HTTP 403 `EGW00103` (AppKey) — `Auth` raises `KISAuthenticationError`.
+  `EGW00133` (the 1/min issuance limit) is the same 403 but becomes `KISRateLimitError`, not a key error.
+- A bad DART key comes as HTTP 200 with body `status` 010/011/012/901 — JSON, or an error XML where a ZIP was
+  expected (`corpCode.xml`, `document.xml`, `fnlttXbrl.xml`; measured 2026-11-02). `Client._request` raises
+  `DartAuthenticationError` for these so callers don't read it as "no data" or a corrupt ZIP.
 - KIS can return HTTP 200 with a failing body `rt_cd`; every service module checks it with
   `_exceptions.raise_for_rt_cd`, which raises `KISResponseError` (a `KISAPIError` **and** a `ValueError` —
   these were plain `ValueError` before, keep the base for callers) carrying only `rt_cd`/`msg_cd`/`msg1`.

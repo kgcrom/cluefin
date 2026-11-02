@@ -123,6 +123,39 @@ class TestAuthenticationErrors:
             assert exc_info.value.status_code == 403
             assert "Access forbidden" in str(exc_info.value)
 
+    @pytest.mark.parametrize("status", ["010", "011", "012", "901"])
+    def test_key_status_in_json_body_raises_authentication_error(self, client: Client, status: str):
+        with requests_mock.Mocker() as m:
+            m.get("https://opendart.fss.or.kr/api/list.json", json={"status": status, "message": "키 오류"})
+
+            with pytest.raises(DartAuthenticationError) as exc_info:
+                client._get("/api/list.json")
+
+        assert exc_info.value.response_data == {"status": status, "message": "키 오류"}
+        assert exc_info.value.request_context["params"]["crtfc_key"] == "***"
+
+    def test_key_status_in_xml_body_raises_authentication_error(self, client: Client):
+        body = (
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            "<result><status>010</status><message>등록되지 않은 인증키입니다.</message></result>"
+        ).encode()
+        with requests_mock.Mocker() as m:
+            m.get("https://opendart.fss.or.kr/api/corpCode.xml", content=body)
+
+            with pytest.raises(DartAuthenticationError) as exc_info:
+                client._get_bytes("/api/corpCode.xml")
+
+        assert "010 등록되지 않은 인증키입니다." in str(exc_info.value)
+
+    def test_other_status_passes_through(self, client: Client):
+        xml = b"<result><status>013</status><message>no data</message></result>"
+        with requests_mock.Mocker() as m:
+            m.get("https://opendart.fss.or.kr/api/list.json", json={"status": "013", "message": "no data"})
+            m.get("https://opendart.fss.or.kr/api/document.xml", content=xml)
+
+            assert client._get("/api/list.json")["status"] == "013"
+            assert client._get_bytes("/api/document.xml") == xml
+
     def test_client_error_400(self, client: Client):
         with requests_mock.Mocker() as m:
             m.get(
