@@ -7,7 +7,7 @@ from collections.abc import Callable
 from datetime import date, datetime, time, timedelta
 from typing import Any
 
-from cluefin_openapi_cli.cache import store
+from cluefin_openapi_cli.cache import baserate, store
 from cluefin_openapi_cli.cache.load import PARTS, Sources, run_load
 from cluefin_openapi_cli.cache.perf import read_perf
 from cluefin_openapi_cli.cache.rates import RATE_SERIES
@@ -313,6 +313,84 @@ def _run_trend_setup(argv: list[str]) -> None:
     _render_read(payload, options, default_limit=_DEFAULT_COMPANY_LIMIT if include_excluded else None)
 
 
+def _parse_int_list(raw: str | None, *, option: str) -> list[int] | None:
+    if raw is None:
+        return None
+    items = [item.strip() for item in raw.split(",") if item.strip()]
+    try:
+        values = [int(item) for item in items]
+    except ValueError:
+        raise CliError(f"`--{option}` takes comma-separated integers, got `{raw}`.", exit_code=EXIT_USAGE) from None
+    if not values or any(value <= 0 for value in values):
+        raise CliError(f"`--{option}` takes positive integers, got `{raw}`.", exit_code=EXIT_USAGE)
+    return values
+
+
+def _parse_float(raw: str | None, *, option: str) -> float | None:
+    if raw is None:
+        return None
+    try:
+        value = float(raw)
+    except ValueError:
+        raise CliError(f"`--{option}` takes a number, got `{raw}`.", exit_code=EXIT_USAGE) from None
+    if value <= 0:
+        raise CliError(f"`--{option}` must be positive, got `{raw}`.", exit_code=EXIT_USAGE)
+    return value
+
+
+def _run_base_rate_build(argv: list[str]) -> None:
+    positional, options = _parse_named_options(argv)
+    if positional:
+        raise CliError("`cache base-rate-build` does not accept positional arguments.", exit_code=EXIT_USAGE)
+    until_raw = _str_option(options, "until")
+    until = _parse_day(until_raw, "until") if until_raw else None
+    stride_raw = _str_option(options, "stride")
+    stride = int(stride_raw) if stride_raw else baserate.SAMPLE_STRIDE
+    if stride <= 0:
+        raise CliError(f"`--stride` must be positive, got `{stride_raw}`.", exit_code=EXIT_USAGE)
+    path = store.cache_path()
+    conn = store.open_store(path)
+    try:
+        result = baserate.build(conn, stride=stride, until=until)
+    finally:
+        conn.close()
+    render_output(
+        {"path": str(path), **result},
+        force_json=bool(options.get("json", False)),
+        compact=bool(options.get("compact", False)),
+    )
+
+
+def _run_base_rate(argv: list[str]) -> None:
+    positional, options = _parse_named_options(argv)
+    code = _str_option(options, "code")
+    if positional or not code:
+        raise CliError(
+            "Usage: cache base-rate --code <code> [--as-of YYYYMMDD] [--horizons 20,40,60] "
+            "[--target-pct P --stop-pct P].",
+            exit_code=EXIT_USAGE,
+        )
+    as_of_raw = _str_option(options, "as_of")
+    horizons = _parse_int_list(_str_option(options, "horizons"), option="horizons") or list(baserate.DEFAULT_HORIZONS)
+    target_pct = _parse_float(_str_option(options, "target_pct"), option="target-pct")
+    stop_pct = _parse_float(_str_option(options, "stop_pct"), option="stop-pct")
+    if (target_pct is None) != (stop_pct is None):
+        raise CliError("`--target-pct` and `--stop-pct` must be given together.", exit_code=EXIT_USAGE)
+    conn = _read_conn()
+    try:
+        payload = baserate.query(
+            conn,
+            code.strip().upper(),
+            as_of=_parse_day(as_of_raw, "as-of") if as_of_raw else None,
+            horizons=tuple(horizons),
+            target_pct=target_pct,
+            stop_pct=stop_pct,
+        )
+    finally:
+        conn.close()
+    _render_read(payload, options, default_limit=None)
+
+
 SUBCOMMANDS: dict[str, Callable[[list[str]], None]] = {
     "status": _run_status,
     "load": _run_load,
@@ -320,6 +398,8 @@ SUBCOMMANDS: dict[str, Callable[[list[str]], None]] = {
     "company": _run_company,
     "perf": _run_perf,
     "trend-setup": _run_trend_setup,
+    "base-rate-build": _run_base_rate_build,
+    "base-rate": _run_base_rate,
 }
 
 

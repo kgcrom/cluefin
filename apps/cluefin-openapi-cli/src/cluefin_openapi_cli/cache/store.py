@@ -134,6 +134,23 @@ SCHEMA = (
       checked_at TIMESTAMP
     )
     """,
+    # 기저율(cache base-rate) 표본: sampled trading days' trend-setup state × market-cap tercile,
+    # built by `cache base-rate build` (cache/baserate.py). `state` is one of g1/g2/g3/none —
+    # illiquid stocks are dropped (same as the backtest universe, `trend_setup`'s "거래대금" gate).
+    """
+    CREATE TABLE IF NOT EXISTS setup_state (
+      sample_date DATE,
+      code TEXT,
+      market TEXT,
+      state TEXT,
+      mcap_bucket SMALLINT,
+      mcap DOUBLE,
+      adj_close DOUBLE,
+      index_code TEXT,
+      index_close DOUBLE,
+      PRIMARY KEY (sample_date, code)
+    )
+    """,
 )
 
 
