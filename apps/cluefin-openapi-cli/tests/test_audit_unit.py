@@ -155,3 +155,44 @@ def test_projects_dirs_matches_repo_and_worktree_slugs(tmp_path: Path) -> None:
     (base / f"{slug}--claude-worktrees-a").mkdir()
     (base / "other").mkdir()
     assert [p.name for p in projects_dirs(repo, base)] == [slug, f"{slug}--claude-worktrees-a"]
+
+
+def test_to_file_off_cli_and_report_contract(tmp_path: Path) -> None:
+    spec = parse_spec(
+        "company-review",
+        "```audit\nreport-has: data_as_of\nreport-has: 무효화\nreport-lacks: 목표가|확신도\n```",
+    )
+    rows = [
+        {"type": "user", "timestamp": "t0", "message": {"content": "005930"}},
+        _bash("1", f"{APP} dart financial-major-indicators --corp-code 00126380 --json > /tmp/a.json", "t1"),
+        _result("1", ""),
+        _bash("2", "cat .env | grep KIS", "t2"),
+        _result("2", "x"),
+        _bash("3", "python3 -c 'from cluefin_openapi.kis import x; x.place_order()'", "t3"),
+        _result("3", "x"),
+        {
+            "type": "assistant",
+            "timestamp": "t4",
+            "message": {"content": [{"type": "text", "text": "무효화 2개, 목표가 1"}]},
+        },
+    ]
+    run = load_run(_write_run(tmp_path, rows))
+    assert run.calls[0].to_file
+    found = {f["type"] for f in check_run(spec, run)["findings"]}
+    assert {"output_to_file", "off_cli_secret", "off_cli_direct_api", "off_cli_order"} <= found
+    assert "report_lacks_required" in found
+    assert "report_has_forbidden" in found
+
+
+def test_duplicate_marks_different_outputs(tmp_path: Path) -> None:
+    rows = [
+        {"type": "user", "timestamp": "t0", "message": {"content": "005930"}},
+        _bash("1", f"{APP} dart financial-notes --corp-code 1 --json", "t1"),
+        _result("1", '{"a": 1}'),
+        _bash("2", f"{APP} dart financial-notes --corp-code 1 --json", "t2"),
+        _result("2", '{"a": 2}'),
+    ]
+    result = check_run(parse_spec("x", "```audit\nsubjects: prompt\n```"), load_run(_write_run(tmp_path, rows)))
+    dup = next(f for f in result["findings"] if f["type"] == "duplicate")
+    assert dup["calls"] == [0, 1]
+    assert dup["same_output"] is False

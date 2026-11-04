@@ -36,7 +36,7 @@ uv run cluefin-openapi-cli dart dilution-watch --corp-code 01009789 --bgn-de 202
 uv run cluefin-openapi-cli kis market announcement --stock-code 192820 --json
 ```
 
-한 줄씩 별도 Bash 호출, 독립인 것은 같은 턴에 병렬. 같은 명령을 같은 인자로 다시 부르지 않는다.
+한 줄씩 별도 Bash 호출, 독립인 것은 같은 턴에 병렬. 같은 명령을 같은 인자로 다시 부르지 않는다. 출력을 파일로 보내지 않는다(`>`).
 `dilution-watch` 는 기간 안 새 이벤트를 보되, 살아 있는 CB·BW 의 리픽싱 최저가는 기간 밖 발행분도 본다(기본 3년).
 
 ## 분류
@@ -67,4 +67,6 @@ each: dart disclosure-search
 each: dart dilution-watch
 each: kis market announcement
 stop-on-exit3: dart
+report-has: 다시 볼 것
+report-has: 투자 조언이 아닌 의사결정 보조 리포트
 ```

@@ -420,13 +420,17 @@ CLI 가 말해 주지 않는 것만 적는다.
 - broker 도 캐시 쓰기도 없다. 판단 적중(수익률)은 보지 않는다 — 수집 누락·중복·실패 처리만 결정적으로 본다(결정 2026-11-05).
   받은 데이터를 리포트가 놓쳤는지는 `.claude/agents/agent-audit.md` 가 `audit trace` 를 읽고 판단한다.
 - 규칙의 출처는 각 `.claude/agents/<name>.md` 끝의 ```` ```audit ```` 블록 하나다(`subjects`·`required`·`main`·`each`·
-  `stop-on-exit3`). 코드에 명령 목록을 두지 않는다 — agent 데이터 절을 고치면 그 블록만 같이 고친다.
+  `stop-on-exit3`·`report-has`(리포트에 있어야 할 문자열)·`report-lacks`(있으면 안 되는 정규식)). 코드에 명령 목록을 두지 않는다 — agent 데이터 절을 고치면 그 블록만 같이 고친다.
 - 트랜스크립트 자리: `$CLAUDE_CONFIG_DIR/projects`(기본 `~/.claude/projects`)에서 저장소 경로의 slug(영숫자 외 `-`)로
   시작하는 폴더 전부(worktree 포함). 서브에이전트는 `<session>/subagents/agent-<id>.jsonl` + `.meta.json`(`agentType`).
   스트리밍 턴은 같은 `tool_use` 를 여러 행에 반복하므로 id 로 한 번만 센다. exit code 는 `tool_result.is_error` 와
   `Exit code N` 첫 줄에서 읽는다(성공은 0, 권한 거부 등은 null).
 - 셸 파싱: `2>&1`·`> file` 은 토큰화 전에 지운다(안 지우면 `--json 2` 로 읽힌다). 인자에 `$` 가 있으면 루프·`$(...)` 로 보고
   중복 대신 `shell_expansion` 으로 센다. 탐색 명령(`search`·`schema`·`recipe` 등)은 중복으로 세지 않는다.
+- 블록과 무관하게 늘 보는 것: 출력을 파일로 보낸 호출(`output_to_file` — 응답에 데이터가 없어 근거를 대조할 수 없다,
+  `2>&1`·`>/dev/null` 은 제외), CLI 밖 경로(`off_cli_secret`: `.env` 읽기·키 변수, `off_cli_direct_api`: curl·
+  `cluefin_openapi` 직접 import, `off_cli_order`: 그 안의 주문 흔적). CLI 명령은 전부 `side_effect: read` 라 주문·키 노출은
+  CLI 밖에서만 생긴다. `duplicate` 의 `same_output: false` 는 같은 인자에 다른 응답(페이지·불안정)이다.
 - 대상 종목: `subjects: prompt`/`report` 는 그 텍스트의 6자리 숫자 중 캐시 `company` 에 있는 코드만(캐시가 없으면 전부).
   `--session --code` 는 대화에 다른 작업이 섞여 있어 텍스트를 쓰지 않고 `each` 명령에 넘긴 코드만 본다. corp-code 로 부른
   명령은 출력 어디든 `stock_code`·`corp_code` 가 함께 있는 객체로 매핑한다.

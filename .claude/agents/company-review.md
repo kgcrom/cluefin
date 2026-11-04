@@ -72,7 +72,8 @@ uv run cluefin-openapi-cli kis market announcement --stock-code 005930 --limit 4
 uv run cluefin-openapi-cli ecos macro-snapshot --json
 ```
 
-같은 명령을 같은 인자로 두 번 부르지 않는다 — 앞 결과를 다시 읽는다. 위 명령은 한 줄씩 별도 Bash 호출로 부르고, 독립인 것은 같은 턴에 병렬로 보낸다. `for` 루프·`$(...)`·`bash -c` 로
+같은 명령을 같은 인자로 두 번 부르지 않는다 — 앞 결과를 다시 읽는다. 출력을 파일로 보내지 않는다(`>`) — 리포트 수치는
+대화에 찍힌 CLI 응답에서만 가져와야 나중에 근거를 대조할 수 있다. 위 명령은 한 줄씩 별도 Bash 호출로 부르고, 독립인 것은 같은 턴에 병렬로 보낸다. `for` 루프·`$(...)`·`bash -c` 로
 묶지 않는다 — 명령마다 결과와 exit code 가 따로 남아야 키 오류(exit 3)에서 멈출 수 있다. worktree 에서는 `$(...)` 로
 만든 값을 넘기면 CLI 도 거부되고, git 은 `$?`·루프와 섞어도 거부된다(루트 `AGENTS.md` 의 worktree 절). 앞 명령의 결과
 (corp-code 등)는 따로 받아 다음 명령에 값을 그대로 적는다.
@@ -225,4 +226,9 @@ each: kis chart trend-setup
 each: cache rs
 each: dart dilution-watch
 stop-on-exit3: kis dart
+report-has: horizon_days
+report-has: data_as_of
+report-has: 무효화
+report-has: 데이터 출처
+report-has: 투자 조언이 아닌 의사결정 보조 리포트
 ```

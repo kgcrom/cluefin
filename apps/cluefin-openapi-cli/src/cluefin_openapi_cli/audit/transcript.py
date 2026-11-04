@@ -12,7 +12,7 @@ import json
 import os
 import re
 import shlex
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
@@ -35,6 +35,10 @@ _CONTROL = frozenset({"&&", "||", ";", "|", "&", "(", ")"})
 _EXIT_RE = re.compile(r"^(?:Error: )?Exit code (\d+)")
 # `2>&1`, `> out.json`, `>> log`, `< in` — dropped before tokenising so `2` is not read as a flag value.
 _REDIRECT_RE = re.compile(r"\s\d*(?:>>?|<)(?:&\d+|\s*[^\s|;&]+)")
+# stdout sent to a file: the data never reaches the transcript, so the report's numbers cannot be traced.
+_TO_FILE_RE = re.compile(r"(?:^|\s)1?>>?\s*(?!&)(?!/dev/null)[^\s|;&]+")
+# Commands that only reshape or move around a CLI call; any other segment makes the Bash call "mixed".
+_PLUMBING = frozenset({"cd", "head", "tail", "jq", "python", "python3", "grep", "sed", "cat", "echo", "wc", "sort"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,6 +49,9 @@ class CliCall:
     exit_code: int | None  # None: the Bash call never ran (denied) or held several CLI calls
     output: str
     timestamp: str
+    shell: str = ""  # the whole Bash command this call came from
+    to_file: bool = False  # stdout redirected to a file
+    mixed: bool = False  # the Bash command also ran non-CLI work, so output/exit code may not be this call's
 
     @property
     def command(self) -> str:
@@ -76,6 +83,8 @@ class AgentRun:
     started: str
     ended: str
     calls: tuple[CliCall, ...] = field(default=())
+    shell: tuple[str, ...] = field(default=())  # every Bash command, CLI or not
+    reads: tuple[str, ...] = field(default=())  # file paths opened with the Read tool
 
 
 def projects_dirs(root: Path, base: Path | None = None) -> list[Path]:
@@ -90,9 +99,12 @@ def projects_dirs(root: Path, base: Path | None = None) -> list[Path]:
     return sorted(p for p in base.iterdir() if p.is_dir() and p.name.startswith(slug))
 
 
-def _segments(command: str) -> list[list[str]]:
-    segments: list[list[str]] = []
+def _segments(command: str) -> list[tuple[list[str], bool]]:
+    """Command segments split on shell control operators, each with whether its line sends stdout to a file."""
+
+    segments: list[tuple[list[str], bool]] = []
     for raw in command.splitlines():
+        to_file = bool(_TO_FILE_RE.search(raw))
         line = _REDIRECT_RE.sub(" ", raw)
         try:
             lexer = shlex.shlex(line, posix=True, punctuation_chars=True)
@@ -104,12 +116,12 @@ def _segments(command: str) -> list[list[str]]:
         for token in tokens:
             if token in _CONTROL:
                 if current:
-                    segments.append(current)
+                    segments.append((current, to_file))
                 current = []
             else:
                 current.append(token)
         if current:
-            segments.append(current)
+            segments.append((current, to_file))
     return segments
 
 
@@ -143,12 +155,21 @@ def _parse_invocation(tokens: list[str]) -> tuple[tuple[str, ...], dict[str, str
 
 
 def parse_cli_calls(command: str) -> list[tuple[tuple[str, ...], dict[str, str]]]:
+    return [(path, args) for path, args, _ in _parse_with_flags(command)[0]]
+
+
+def _parse_with_flags(command: str) -> tuple[list[tuple[tuple[str, ...], dict[str, str], bool]], bool]:
+    """CLI invocations with their to-file flag, and whether the command did other (non-plumbing) work."""
+
     calls = []
-    for segment in _segments(command):
-        parsed = _parse_invocation(segment)
+    mixed = False
+    for tokens, to_file in _segments(command):
+        parsed = _parse_invocation(tokens)
         if parsed is not None:
-            calls.append(parsed)
-    return calls
+            calls.append((*parsed, to_file))
+        elif tokens and tokens[0] not in _PLUMBING and tokens[0] not in {"uv", "do", "done", "for"}:
+            mixed = True
+    return calls, mixed
 
 
 def _text(content: Any) -> str:
@@ -181,10 +202,20 @@ def _read_rows(path: Path) -> list[dict[str, Any]]:
     return rows
 
 
-def _extract(rows: list[dict[str, Any]]) -> tuple[list[CliCall], list[tuple[str, str]]]:
-    """CLI calls in order, and every assistant text block as (timestamp, text)."""
+@dataclass(frozen=True, slots=True)
+class _Extracted:
+    calls: list[CliCall]
+    texts: list[tuple[str, str]]  # (timestamp, assistant text)
+    shell: list[tuple[str, str]]  # (timestamp, Bash command)
+    reads: list[tuple[str, str]]  # (timestamp, Read file path)
+
+
+def _extract(rows: list[dict[str, Any]]) -> _Extracted:
+    """CLI calls in order, every assistant text block, every Bash command and every Read path."""
 
     pending: dict[str, tuple[str, str]] = {}
+    shell: dict[str, tuple[str, str]] = {}
+    reads: dict[str, tuple[str, str]] = {}
     results: dict[str, dict[str, Any]] = {}
     texts: list[tuple[str, str]] = []
     order: list[str] = []
@@ -197,8 +228,11 @@ def _extract(rows: list[dict[str, Any]]) -> tuple[list[CliCall], list[tuple[str,
             if not isinstance(block, dict):
                 continue
             kind = block.get("type")
+            if kind == "tool_use" and block.get("name") == "Read":
+                reads.setdefault(str(block.get("id")), (stamp, str(block.get("input", {}).get("file_path", ""))))
             if kind == "tool_use" and block.get("name") == "Bash":
                 command = str(block.get("input", {}).get("command", ""))
+                shell.setdefault(str(block.get("id")), (stamp, command))
                 # A streamed assistant turn can repeat the same tool_use block in several rows.
                 if APP_TOKEN in command and block["id"] not in pending:
                     pending[block["id"]] = (command, stamp)
@@ -211,10 +245,10 @@ def _extract(rows: list[dict[str, Any]]) -> tuple[list[CliCall], list[tuple[str,
     for tool_id in order:
         command, stamp = pending[tool_id]
         result = results.get(tool_id)
-        parsed = parse_cli_calls(command)
+        parsed, mixed = _parse_with_flags(command)
         exit_code = _exit_code(result) if result is not None else None
         output = _text(result.get("content")) if result is not None else ""
-        for path, args in parsed:
+        for path, args, to_file in parsed:
             calls.append(
                 CliCall(
                     index=len(calls),
@@ -223,9 +257,12 @@ def _extract(rows: list[dict[str, Any]]) -> tuple[list[CliCall], list[tuple[str,
                     exit_code=exit_code if len(parsed) == 1 else None,
                     output=output if len(parsed) == 1 else "",
                     timestamp=stamp,
+                    shell=command,
+                    to_file=to_file,
+                    mixed=mixed,
                 )
             )
-    return calls, texts
+    return _Extracted(calls, texts, list(shell.values()), list(reads.values()))
 
 
 def _first_prompt(rows: list[dict[str, Any]]) -> str:
@@ -241,7 +278,8 @@ def load_run(jsonl: Path) -> AgentRun:
     meta_path = jsonl.with_suffix(".meta.json")
     meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else {}
     rows = _read_rows(jsonl)
-    calls, texts = _extract(rows)
+    found = _extract(rows)
+    texts = found.texts
     stamps = [str(r["timestamp"]) for r in rows if r.get("timestamp")]
     return AgentRun(
         run_id=jsonl.stem.removeprefix("agent-"),
@@ -253,7 +291,9 @@ def load_run(jsonl: Path) -> AgentRun:
         report=texts[-1][1] if texts else "",
         started=stamps[0] if stamps else "",
         ended=stamps[-1] if stamps else "",
-        calls=tuple(calls),
+        calls=tuple(found.calls),
+        shell=tuple(command for _, command in found.shell),
+        reads=tuple(path for _, path in found.reads),
     )
 
 
@@ -261,7 +301,8 @@ def load_session(jsonl: Path, code: str) -> AgentRun:
     """A main-conversation analysis of one stock: calls and assistant text from the first call naming `code` on."""
 
     rows = _read_rows(jsonl)
-    calls, texts = _extract(rows)
+    found = _extract(rows)
+    calls, texts = found.calls, found.texts
     first = next((c for c in calls if code in c.codes()), None)
     if first is None:
         kept: list[CliCall] = []
@@ -282,7 +323,9 @@ def load_session(jsonl: Path, code: str) -> AgentRun:
         report=report,
         started=started,
         ended=stamps[-1] if stamps else "",
-        calls=tuple(CliCall(i, c.path, c.args, c.exit_code, c.output, c.timestamp) for i, c in enumerate(kept)),
+        calls=tuple(replace(c, index=i) for i, c in enumerate(kept)),
+        shell=tuple(cmd for stamp, cmd in found.shell if started and stamp >= started),
+        reads=tuple(path for stamp, path in found.reads if started and stamp >= started),
     )
 
 
