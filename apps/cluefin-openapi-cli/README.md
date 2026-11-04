@@ -10,7 +10,7 @@
 
 | broker | role | 용도 |
 |---|---|---|
-| `kis` | **primary** | 기본 소스. 시세·차트·순위·재무·업종·ETF·일정·휴장일. 모든 작업은 여기서 시작한다. 계산 명령: `chart technical`(지표·신호), `chart trend-setup`(추세 셋업 1·2·3그룹 판정), `stock opinion-summary`(증권사별 목표가 집계), `stock valuation`(종가 × DART 주식수 × DART 재무로 시총·TTM PER·PBR), `stock valuation-band`(로컬 캐시 5년 일봉 × 연도별 DART EPS·BPS로 PER·PBR 분위와 현재 분위), `stock implied-expectations`(RIM 내재 ROE·역DCF 내재 매출성장률, 라벨 없음). |
+| `kis` | **primary** | 기본 소스. 시세·차트·순위·재무·업종·ETF·일정·휴장일. 모든 작업은 여기서 시작한다. 계산 명령: `chart technical`(지표·신호), `chart trend-setup`(추세 셋업 1·2·3그룹 판정), `stock opinion-summary`(증권사별 목표가 집계), `stock valuation`(종가 × DART 주식수 × DART 재무로 시총·TTM PER·PBR), `stock valuation-band`(로컬 캐시 5년 일봉 × 연도별 DART EPS·BPS로 PER·PBR 분위와 현재 분위), `stock implied-expectations`(RIM 내재 ROE·역DCF 내재 매출성장률, 라벨 없음), `stock investor-metrics`(FCF 수익률·오너 어닝스·EV/EBIT·이익수익률·PEG·주주수익률·Altman Z 시총 원형, 라벨 없음). |
 | `kiwoom` | **auxiliary** | KIS가 못 보는 빈칸만 채운다. 테마, 업종 구성종목, 틱 차트, 프로그램매매 상세, 거래원(회원사) 수급. |
 | `dart` | reference | 공시 원문·기업 고유번호·최대주주·발행주식수·정기보고서 재무제표(반기·분기 포함, `financial-as-filed` 는 접수 당시 값, `financial-summary` 는 분기 역산·3개년·비율·TTM 계산)·원문 서술(사업의 내용 `document-outline`/`document-section`, 재무제표 주석 `financial-notes`)·주요사항보고서 본문(`major-event`: CB·BW·EB·유무상증자·감자·자사주·합병·분할 등 36종)·정기보고서 주요정보(`report-item`: 배당·자기주식·임원·보수·사채 잔액·감사의견 등 26종). 계산 명령: `dilution-watch`(CB·BW·EB·유상증자·무상증자·유무상증자·감자·자기주식 취득/처분(신탁 포함) 11종의 `major-event` 호출을 한 번에 모아 금액·전환가·리픽싱 최저가·신주수·발행주식 대비 비율로 맞춘다. 자사주 소각은 `report-item treasury-stock` 몫이라 `not_covered` 로 표시한다). 시세 소스가 아니다. |
 | `sec` | reference | 미국 SEC EDGAR. 미국 상장 고객사·경쟁사의 10-K/10-Q/8-K Item 본문(`filing-items`)과 8-K 실적 보도자료 EX-99.1(`filing-exhibit`). 20-F/6-K(한국 ADR 대부분)는 읽지 않는다. 한국 기업 공시는 `dart`. |
@@ -289,6 +289,36 @@ duckdb -cmd "ATTACH '$HOME/.cache/cluefin/market.duckdb' AS market (READ_ONLY); 
 않으므로 `current_assets`/`current_liabilities`(그리고 흔히 `revenue`)가 애초에 `statements.py` 단계에서 `None`이다. 그래서
 Altman X1, F-Score 의 유동비율·매출총이익률·자산회전율 항목이 `null`이고, `altman_z_double_prime.missing`에 이유가 적힌다 —
 0 으로 메워 지표를 왜곡하지 않는다.
+
+## 가치투자자형 지표 (`kis stock investor-metrics`)
+
+`kis stock valuation`과 같은 시가총액(기준 종가 × DART 보통주 발행주식총수)을 들고 와 FCF 수익률·오너 어닝스·EV/EBIT·
+이익수익률·PEG·주주수익률·Altman Z(시총 원형)를 한 번에 낸다. 라벨·추천은 없다. 계산은 `investor_metrics.py`(순수 함수,
+DART/KIS 호출 없음)에 있고, ROIC·Altman Z''(장부가)는 다시 짜지 않고 `quality.py`를 재사용한다 — `altman_z`만 `quality.py`에
+새로 추가해 Z''의 x1~x3(운전자본·이익잉여금·EBIT 비율)을 그대로 쓴다.
+
+- **FCF 수익률** = 잉여현금흐름(영업활동현금흐름 − 유형자산의취득) ÷ 시가총액.
+- **오너 어닝스** = 지배주주순이익 + 감가상각비 + 무형자산상각비 − 유형자산 취득 전액 − 운전자본(유동자산−유동부채) 증가.
+  유지 capex 를 따로 추정하지 않는 보수적인 정의다. (Warren Buffett, Berkshire Hathaway 1986 주주서한.) 감가상각비·
+  무형자산상각비 중 하나라도 없으면(대형 공시자는 현금흐름표 "조정" 한 줄에 묶어 낸다) 0 으로 메우지 않고 `null` + 이유를
+  낸다.
+- **EV/EBIT·이익수익률(EBIT/EV)** — EBIT 는 영업이익(TTM) 대용. (Joel Greenblatt, *The Little Book That Still Beats the
+  Market*, 2005 — 마법공식의 이익수익률과 같은 정의.)
+- **PEG** = PER(TTM) ÷ EPS 성장률(%). 성장률을 두 출처로 나란히 낸다: `dart_3y_eps_cagr`(최신 사업보고서 당기·전전기
+  지배주주순이익 ÷ 그 사업연도 말 보통주 발행주식수로 구한 EPS 의 CAGR, 오래된 연도 주식수 조회에 DART 호출 1회 추가)와
+  `kis_estimated_eps_growth`(KIS 종목추정실적 `eps_growth_yoy`, 가장 가까운 추정연도, 한국투자증권 한 곳의 추정). 어느
+  쪽도 다른 쪽을 대신하지 않는다. (Peter Lynch, *One Up on Wall Street*, 1989.)
+- **주주수익률** = (배당금의 지급 + 자기주식의 취득 − 자기주식의 처분 − 주식의 발행) ÷ 시가총액.
+  `proceeds_from_share_issuance`(`statements.py`)는 실물로 확인됐다(2026-11-04, 대규모 유상증자가 있었던 종목 실호출).
+  `treasury_shares_disposed`는 아직 실물로 확인되지 않았다 — 네 현금흐름표 항목이 모두 있어야 계산한다(`null` 이 "활동
+  없음"인지 "항목을 못 찾음"인지 구분할 수 없어서다).
+- **Altman Z(시총 원형)** = 1.2·X1 + 1.4·X2 + 3.3·X3 + 0.6·X4 + 1.0·X5, X4=시가총액/부채, X5=매출/자산(X1~X3 은 Z''와
+  같다). (Edward Altman, "Financial Ratios, Discriminant Analysis and the Prediction of Corporate Bankruptcy", *The
+  Journal of Finance*, 1968.)
+
+`fcf_yield`/`owner_earnings`/`shareholder_yield`는 최신 사업보고서의 1개년(annual 의 마지막 해) 현금흐름표 기준이다 —
+`statements.py`는 분기 현금흐름을 연환산하지 않는다(YTD 뿐). `ev_ebit`/`earnings_yield`/PEG 의 PER 은 TTM(직전 4개 분기
+합산) 지배주주순이익·영업이익을 쓴다 — `valuation`/`implied-expectations`와 같은 관례.
 
 ## trend-setup 규칙과 근거
 

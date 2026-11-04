@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from statistics import mean
 
 from cluefin_openapi_cli import band as valuation_band
-from cluefin_openapi_cli import implied, opinions, statements
+from cluefin_openapi_cli import implied, investor_metrics, opinions, quality, statements
 from cluefin_openapi_cli.cache import store as cache_store
 from cluefin_openapi_cli.cache.read import read_ohlcv
 from cluefin_openapi_cli.clock import KST
@@ -2075,6 +2075,236 @@ def handle_kis_stock_valuation_band(params: dict, session) -> dict:
     }
 
 
+# ---------------------------------------------------------------------------
+# kis.stock_info.investor_metrics — FCF·오너 어닝스·EV/EBIT·PEG·주주수익률·Altman Z
+# ---------------------------------------------------------------------------
+
+_INVESTOR_METRICS_NOTES = (
+    "계산값이다 — 추천·라벨(싸다/비싸다)을 내지 않는다. 시가총액 = kis stock valuation 과 같은 식(기준 "
+    "종가 × DART 보통주 발행주식총수, 우선주 제외).",
+    "fcf_yield·owner_earnings·shareholder_yield 는 최신 사업보고서(annual report)의 1개년(annual 의 "
+    "마지막 해) 현금흐름표 기준이다 — 최신 분기가 그 이후면 그만큼 뒤처진다. statements.py 는 분기 "
+    "현금흐름을 연환산하지 않는다(YTD 뿐). ev_ebit·earnings_yield·PEG 의 PER 은 직전 4개 분기 합산(TTM) "
+    "지배주주순이익·영업이익을 쓴다 — kis stock valuation/implied-expectations 와 같은 관례.",
+    "오너 어닝스 = 지배주주순이익 + 감가상각비 + 무형자산상각비 − 유형자산 취득 전액 − 운전자본 증가. "
+    "감가상각비·무형자산상각비 중 하나라도 없으면 0 으로 메우지 않고 null + 이유를 낸다(investor_metrics.py).",
+    "주주수익률 = (배당금 지급 + 자기주식 취득 − 자기주식 처분 − 주식 발행) ÷ 시가총액. proceeds_from_share_"
+    "issuance(statements.py)는 실물로 확인됐다(2026-11-04, 대규모 유상증자가 있었던 종목 실호출). "
+    "treasury_shares_disposed 는 아직 실물로 확인되지 않았다 — None 이 '활동 없음'인지 '항목을 못 찾음'인지 "
+    "구분할 수 없어 네 항목이 모두 있어야 계산한다.",
+    "PEG 의 성장률은 두 출처를 나란히 낸다: dart_eps_growth(최신 사업보고서 당기·전전기 지배주주순이익 ÷ "
+    "그 사업연도 말 보통주 발행주식수로 구한 EPS 의 CAGR, DART share-count 호출 1회 추가)와 "
+    "kis_eps_growth(KIS 종목추정실적 eps_growth_yoy, 가장 가까운 추정연도, 한국투자증권 한 곳의 추정). "
+    "어느 쪽도 다른 쪽을 대신하지 않는다.",
+    "Altman Z(시총 원형)는 quality.altman_z — quality.py 의 Z''(장부가) 계산 요소(x1~x3)를 재사용하고 "
+    "x4(시가총액/부채)·x5(매출/자산)만 새로 낸다. 결측 성분은 missing 에 이유가 있다.",
+)
+
+
+@rpc_method(
+    name="stock.investor_metrics",
+    description=(
+        "Value-investor quality/value metrics at a reference close: FCF yield, owner earnings (and its "
+        "yield), EV/EBIT and earnings yield (Greenblatt magic-formula style), PEG from both a DART 3-year "
+        "EPS CAGR and the KIS research estimate's EPS growth, shareholder yield (dividends + buybacks − "
+        "disposals − issuance, cash-flow statement), and Altman Z (market-cap original, reusing dart "
+        "financial-summary's quality.py for its components). Numbers and components only, no buy/sell "
+        "label. Needs corp_code as well as stock_code. About 12 calls (1 KIS price, 8+2 DART, 1 KIS "
+        "estimate); call once per stock and reuse."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "stock_code": {"type": "string", "pattern": "^[0-9]{6}$", "description": "6-digit stock code"},
+            "corp_code": {
+                "type": "string",
+                "pattern": "^[0-9]{8}$",
+                "description": "DART corporate unique code (8 digits, from dart corp-code-lookup)",
+            },
+            "as_of": {
+                "type": "string",
+                "pattern": "^[0-9]{8}$",
+                "description": "Reference date (YYYYMMDD): last close on or before it, reports received by it. Default today (KST).",
+            },
+        },
+        "required": ["stock_code", "corp_code"],
+    },
+    returns={"type": "object"},
+    category="stock",
+    broker="kis",
+)
+def handle_kis_investor_metrics(params: dict, session) -> dict:  # noqa: PLR0914
+    stock_code = params["stock_code"]
+    corp_code = params["corp_code"]
+    as_of = params.get("as_of") or _kst_today()
+    kis = session.get_kis()
+
+    series = fetch_kis_daily_series(kis, stock_code, count=1, end_date=as_of, adjusted=False)
+    if not series.candles:
+        raise CliError(
+            f"No daily close for {stock_code} on or before {as_of}",
+            exit_code=EXIT_BROKER,
+            error_type="NotFound",
+            data={"stock_code": stock_code, "as_of": as_of},
+            hint="Check the code with kis stock basic-info; a newly listed or delisted code has no close in the window.",
+        )
+    last = series.candles[-1]
+    close = last.close
+
+    dart = session.get_dart()
+    basis, reports, dart_calls = dart_handlers.collect_reports(dart, corp_code, int(as_of[:4]), as_of, ("CFS", "OFS"))
+    if not reports:
+        raise CliError(
+            f"No periodic report of {corp_code} received by {as_of}",
+            exit_code=EXIT_BROKER,
+            error_type="NotFound",
+            data={"corp_code": corp_code, "as_of": as_of, "calls": 1 + dart_calls},
+            hint="Check the corp_code with dart company-overview; it must belong to the same company as stock_code.",
+        )
+    latest_report = max(reports, key=lambda r: r.order)
+    annual_reports = [r for r in reports if r.reprt_code == "11011"]
+    annual_report = max(annual_reports, key=lambda r: r.year) if annual_reports else None
+    annual_years = statements.annual(annual_report) if annual_report else []
+
+    share_rows = dart_handlers.dart_rows(
+        dart.periodic_report_key_information.get_total_number_of_shares(
+            corp_code=corp_code, bsns_year=str(latest_report.year), reprt_code=latest_report.reprt_code
+        )
+    )
+    dart_calls += 1
+    shares = _common_shares(share_rows)
+    issued = shares["issued"] if shares else None
+
+    quarter_list = statements.quarters(reports)
+    latest_figures = statements.latest(latest_report)
+    eok = statements.EOK
+
+    market_cap = None if issued is None else close * issued
+    borrowings = latest_figures["borrowings"]
+    cash = latest_figures["cash"]
+    ev = None if market_cap is None else market_cap + (borrowings or 0.0) - (cash or 0.0)
+
+    ttm_net_income_owners = statements.trailing(quarter_list, "net_income_owners")
+    ttm_operating_income = statements.trailing(quarter_list, "operating_income")
+    per_ttm = _ratio_if_positive(market_cap, ttm_net_income_owners)
+
+    latest_fy = annual_years[-1] if annual_years else None
+    oldest_fy = annual_years[0] if annual_years else None
+    previous_fy = annual_years[-2] if len(annual_years) >= 2 else None
+
+    def _working_capital(year: dict | None) -> float | None:
+        if year is None:
+            return None
+        ca, cl = year.get("current_assets"), year.get("current_liabilities")
+        return None if ca is None or cl is None else ca - cl
+
+    wc_now, wc_prev = _working_capital(latest_fy), _working_capital(previous_fy)
+    working_capital_increase = None if wc_now is None or wc_prev is None else wc_now - wc_prev
+
+    # Everything from here on is reported in 억원 (like market_cap/ev above) except EPS, which stays in 원
+    # per share — `_to_eok` only touches the money-valued inputs the next few metrics take.
+    def _to_eok(value: float | None) -> float | None:
+        return None if value is None else value / eok
+
+    free_cash_flow_eok = _to_eok(latest_fy.get("free_cash_flow")) if latest_fy else None
+    market_cap_eok = _to_eok(market_cap)
+    fcf_yield_result = investor_metrics.fcf_yield(free_cash_flow_eok, market_cap_eok)
+
+    owner_earnings_result = investor_metrics.owner_earnings(
+        _to_eok(latest_fy.get("net_income_owners")) if latest_fy else None,
+        _to_eok(latest_fy.get("depreciation")) if latest_fy else None,
+        _to_eok(latest_fy.get("amortization")) if latest_fy else None,
+        _to_eok(latest_fy.get("capex")) if latest_fy else None,
+        _to_eok(working_capital_increase),
+    )
+    owner_earnings_yield_result = investor_metrics.owner_earnings_yield(owner_earnings_result["value"], market_cap_eok)
+
+    ev_ebit_result = investor_metrics.ev_ebit(_to_eok(ev), _to_eok(ttm_operating_income))
+    earnings_yield_result = investor_metrics.earnings_yield(_to_eok(ttm_operating_income), _to_eok(ev))
+
+    shareholder_yield_result = investor_metrics.shareholder_yield(
+        _to_eok(latest_fy.get("dividends_paid")) if latest_fy else None,
+        _to_eok(latest_fy.get("treasury_shares_acquired")) if latest_fy else None,
+        _to_eok(latest_fy.get("treasury_shares_disposed")) if latest_fy else None,
+        _to_eok(latest_fy.get("proceeds_from_share_issuance")) if latest_fy else None,
+        market_cap_eok,
+    )
+
+    # Altman Z's x1-x5 are all ratios (dimensionless), so market_cap and the year's raw 원 figures only
+    # need to share one scale, not specifically 억원 — raw 원 (statements.annual()'s native unit) is fine.
+    altman_z_result = quality.altman_z(latest_fy, market_cap) if latest_fy else quality.altman_z({}, market_cap)
+
+    # DART 3년 EPS CAGR: 최신 사업보고서의 당기(latest_fy)·전전기(oldest_fy) 지배주주순이익을 그 사업연도
+    # 말 보통주 발행주식수로 나눈다. 최신 연도는 위에서 받은 issued 를 그대로 쓰고, 2개년 전은 그 해의
+    # 사업보고서(reprt_code 11011)를 따로 한 번 더 부른다.
+    dart_eps_cagr_result: dict
+    if oldest_fy is None or latest_fy is None or issued is None:
+        dart_eps_cagr_result = investor_metrics.eps_cagr(None, None, None)
+    else:
+        try:
+            oldest_share_rows = dart_handlers.dart_rows(
+                dart.periodic_report_key_information.get_total_number_of_shares(
+                    corp_code=corp_code, bsns_year=str(oldest_fy["year"]), reprt_code="11011"
+                )
+            )
+        except Exception as exc:  # noqa: BLE001 - turned into a null + reason, not a hard failure
+            oldest_share_rows = []
+            oldest_shares_error = f"{type(exc).__name__}: {str(exc)[:200]}"
+        else:
+            oldest_shares_error = None
+        dart_calls += 1
+        oldest_shares = _common_shares(oldest_share_rows)
+        oldest_issued = oldest_shares["issued"] if oldest_shares else None
+        eps_oldest = (
+            None
+            if oldest_issued is None or oldest_fy.get("net_income_owners") is None
+            else oldest_fy["net_income_owners"] / oldest_issued
+        )
+        eps_latest = None if latest_fy.get("net_income_owners") is None else latest_fy["net_income_owners"] / issued
+        years = latest_fy["year"] - oldest_fy["year"]
+        dart_eps_cagr_result = investor_metrics.eps_cagr(eps_oldest, eps_latest, years)
+        if dart_eps_cagr_result["value"] is None and oldest_issued is None:
+            reason = oldest_shares_error or "DART 보통주 발행주식수를 그 사업연도(bsns_year) 사업보고서에서 찾지 못함"
+            dart_eps_cagr_result = {**dart_eps_cagr_result, "reason": reason}
+
+    estimate = kis.domestic_stock_info.get_estimated_earnings(stock_code)
+    periods = [row.get("dt") for row in _estimate_rows(extract_output(estimate, "output4"))]
+    estimate_table = _estimate_table(extract_output(estimate, "output3"), _ESTIMATE_DETAIL_ROWS, periods)
+    growth_row = next((row for row in estimate_table if row["metric"] == "eps_growth_yoy"), None)
+    kis_estimate_period = next((period for period in periods if str(period).endswith("E")), None)
+    kis_eps_growth_pct = (
+        growth_row["values"].get(kis_estimate_period)
+        if growth_row is not None and kis_estimate_period is not None
+        else None
+    )
+
+    peg_dart = investor_metrics.peg(per_ttm, dart_eps_cagr_result["value"], "dart_3y_eps_cagr")
+    peg_kis = investor_metrics.peg(per_ttm, kis_eps_growth_pct, f"kis_estimated_eps_growth_yoy({kis_estimate_period})")
+
+    return {
+        "stock_code": stock_code,
+        "corp_code": corp_code,
+        "as_of": as_of,
+        "price": {"close": close, "date": last.timestamp[:8], "adjusted": False},
+        "shares": {**shares, "report": f"{latest_report.year}-{latest_report.reprt_code}"} if shares else None,
+        "statement_basis": basis,
+        "unit": "억원",
+        "market_cap": None if market_cap is None else market_cap / eok,
+        "ev": None if ev is None else ev / eok,
+        "per_ttm": per_ttm,
+        "fcf_yield": fcf_yield_result,
+        "owner_earnings": owner_earnings_result,
+        "owner_earnings_yield": owner_earnings_yield_result,
+        "ev_ebit": ev_ebit_result,
+        "earnings_yield": earnings_yield_result,
+        "peg": {"dart_3y_eps_cagr": peg_dart, "kis_estimated_eps_growth": peg_kis},
+        "shareholder_yield": shareholder_yield_result,
+        "altman_z": altman_z_result,
+        "calls": 1 + dart_calls + 1,
+        "notes": list(_INVESTOR_METRICS_NOTES),
+    }
+
+
 _ALL_HANDLERS = [
     handle_kis_product_basic_info,
     handle_kis_stock_basic_info,
@@ -2103,6 +2333,7 @@ _ALL_HANDLERS = [
     handle_kis_stock_valuation,
     handle_kis_implied_expectations,
     handle_kis_stock_valuation_band,
+    handle_kis_investor_metrics,
     handle_kis_stock_loanable_list,
     handle_kis_investment_opinion,
     handle_kis_investment_opinion_by_brokerage,
