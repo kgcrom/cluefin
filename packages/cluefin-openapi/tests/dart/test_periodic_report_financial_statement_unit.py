@@ -453,3 +453,20 @@ def test_bfefrmtrm_fields_are_optional(item_type: type[BaseModel], fields: list[
     item = item_type(**payload["list"][0])
     for field in fields:
         assert getattr(item, field) is None
+
+
+def test_frmtrm_fields_are_optional_for_multi_company_major_accounts() -> None:
+    """전기 비교값 자체가 없는 회사(신규 상장 등)는 frmtrm_* 세 필드를 통째로 비워 보낸다
+
+    (2026-11-04 다중회사 주요계정 전종목 적재 실측). bfefrmtrm_* 와 달리 "사업보고서에만" 식의
+    문서 안내가 없는데도 실제로는 없는 경우가 있어, 그 셋도 Optional 이어야 한다.
+    """
+    fields = ["frmtrm_nm", "frmtrm_dt", "frmtrm_amount"]
+    payload = build_payload(MultiCompanyMajorAccountItem)
+    for field in fields:
+        del payload["list"][0][field]
+
+    item = MultiCompanyMajorAccountItem(**payload["list"][0])
+
+    for field in fields:
+        assert getattr(item, field) is None

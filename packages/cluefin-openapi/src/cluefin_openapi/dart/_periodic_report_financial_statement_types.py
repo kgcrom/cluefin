@@ -62,9 +62,12 @@ class MultiCompanyMajorAccountItem(BaseModel):
     thstrm_dt: str = Field(description="당기일자 (ex: 2018.09.30 현재)")
     thstrm_amount: str = Field(description="당기금액 (ex: 9,999,999,999)")
     thstrm_add_amount: str | None = Field(description="당기누적금액 (ex: 9,999,999,999)", default=None)
-    frmtrm_nm: str = Field(description="전기명 (ex: 제 12 기말)")
-    frmtrm_dt: str = Field(description="전기일자 (ex: 2017.01.01 ~ 2017.12.31)")
-    frmtrm_amount: str = Field(description="전기금액 (ex: 9,999,999,999)")
+    # 신규 상장·분할 등으로 전기 비교값 자체가 없는 회사는 frmtrm_* 세 필드를 통째로 비워 보낸다
+    # (2026-11-04 다중회사 주요계정 전종목 적재 실측 — bfefrmtrm_* 처럼 "사업보고서에만" 식의 안내가
+    # 없는데도 없는 경우가 있다). bfefrmtrm_* 와 같은 이유로 Optional.
+    frmtrm_nm: str | None = Field(default=None, description="전기명 (ex: 제 12 기말)")
+    frmtrm_dt: str | None = Field(default=None, description="전기일자 (ex: 2017.01.01 ~ 2017.12.31)")
+    frmtrm_amount: str | None = Field(default=None, description="전기금액 (ex: 9,999,999,999)")
     frmtrm_add_amount: str | None = Field(description="전기누적금액 (ex: 9,999,999,999)", default=None)
     bfefrmtrm_nm: str | None = Field(
         default=None, description="전전기명 (ex: 제 11 기말(※ 사업보고서의 경우에만 출력))"

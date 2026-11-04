@@ -151,6 +151,33 @@ SCHEMA = (
       PRIMARY KEY (sample_date, code)
     )
     """,
+    # DART fnlttMultiAcnt(다중회사 주요계정) 연간(reprt_code 11011) 주요계정: one row per
+    # (code, year, account_nm). `basis` is CFS (연결) when the company files one, else OFS
+    # (별도) — there is no 지배/비지배 split and no cash-flow line (cache/financials.py).
+    """
+    CREATE TABLE IF NOT EXISTS financials (
+      code TEXT,
+      year TEXT,
+      reprt_code TEXT,
+      basis TEXT,
+      account_nm TEXT,
+      amount DOUBLE,
+      currency TEXT,
+      loaded_at TIMESTAMP,
+      PRIMARY KEY (code, year, account_nm)
+    )
+    """,
+    # (code, year) pairs already asked of DART, success or not — so a company with no filing
+    # for a year (013) is not re-queried on every `cache load` (cache/financials.py).
+    """
+    CREATE TABLE IF NOT EXISTS financials_fetch_log (
+      code TEXT,
+      year TEXT,
+      status TEXT,
+      fetched_at TIMESTAMP,
+      PRIMARY KEY (code, year)
+    )
+    """,
 )
 
 
@@ -242,6 +269,9 @@ def status(conn: duckdb.DuckDBPyConnection) -> dict[str, Any]:
     snapshots, theme_first, theme_last = _scalar_row(
         conn, "SELECT count(DISTINCT as_of), min(as_of), max(as_of) FROM theme"
     )
+    fin_codes, fin_years_first, fin_years_last = _scalar_row(
+        conn, "SELECT count(DISTINCT code), min(year), max(year) FROM financials"
+    )
     loads = conn.execute(
         "SELECT kind, max(run_at) FROM load_log GROUP BY kind ORDER BY kind",
     ).fetchall()
@@ -253,5 +283,6 @@ def status(conn: duckdb.DuckDBPyConnection) -> dict[str, Any]:
             for series, rows, first, last in rates
         },
         "theme": {"snapshots": snapshots, "first_date": _iso(theme_first), "last_date": _iso(theme_last)},
+        "financials": {"codes": fin_codes, "first_year": fin_years_first, "last_year": fin_years_last},
         "last_load": {kind: _iso(run_at) for kind, run_at in loads},
     }

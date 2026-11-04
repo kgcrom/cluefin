@@ -11,7 +11,7 @@ from cluefin_openapi_cli.cache import baserate, breadth, store
 from cluefin_openapi_cli.cache.load import PARTS, Sources, run_load
 from cluefin_openapi_cli.cache.perf import read_perf
 from cluefin_openapi_cli.cache.rates import RATE_SERIES
-from cluefin_openapi_cli.cache.read import read_company, read_ohlcv
+from cluefin_openapi_cli.cache.read import read_company, read_financials, read_ohlcv
 from cluefin_openapi_cli.cache.trend import latest_index_date, scan
 from cluefin_openapi_cli.cliargs import _parse_fields, _parse_limit, _parse_named_options, _str_option
 from cluefin_openapi_cli.clock import now_kst, today_kst
@@ -210,6 +210,31 @@ def _parse_rate(raw: str | None) -> float | str:
     if not 0 <= rate < 1:
         raise CliError(f"`--risk-free` is an annual decimal (0.035 for 3.5%), got `{raw}`.", exit_code=EXIT_USAGE)
     return rate
+
+
+def _run_financials(argv: list[str]) -> None:
+    positional, options = _parse_named_options(argv)
+    code = _str_option(options, "code")
+    if positional or not code:
+        raise CliError(
+            "Usage: cache financials --code <code> [--since-year YYYY] [--until-year YYYY].", exit_code=EXIT_USAGE
+        )
+    conn = _read_conn()
+    try:
+        payload = read_financials(
+            conn,
+            code.strip().upper(),
+            since_year=_str_option(options, "since_year"),
+            until_year=_str_option(options, "until_year"),
+        )
+    finally:
+        conn.close()
+    if not payload["years"]:
+        payload["hint"] = (
+            "No cached financials. Check the code with `cache company --code` and run `cache load --only "
+            "financials` if the cache predates it."
+        )
+    _render_read(payload, options, default_limit=None)
 
 
 def _run_perf(argv: list[str]) -> None:
@@ -438,6 +463,7 @@ SUBCOMMANDS: dict[str, Callable[[list[str]], None]] = {
     "load": _run_load,
     "ohlcv": _run_ohlcv,
     "company": _run_company,
+    "financials": _run_financials,
     "perf": _run_perf,
     "trend-setup": _run_trend_setup,
     "base-rate-build": _run_base_rate_build,
