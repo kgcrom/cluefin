@@ -113,14 +113,22 @@ def _annual_row(sj_div, account_id, values) -> dict:
 ANNUAL_ROWS = [
     _annual_row("CIS", "ifrs-full_Revenue", ["1000", "1000", "1000"]),
     _annual_row("CIS", "dart_OperatingIncomeLoss", ["100", "100", "100"]),
+    _annual_row("CIS", "ifrs-full_ProfitLossBeforeTax", ["70", "70", "80"]),
+    _annual_row("CIS", "ifrs-full_IncomeTaxExpenseContinuingOperations", ["20", "20", "20"]),
     _annual_row("CIS", "ifrs-full_ProfitLossAttributableToOwnersOfParent", ["50", "50", "60"]),
     _annual_row("BS", "ifrs-full_Liabilities", ["300", "300", "300"]),
     _annual_row("BS", "ifrs-full_Equity", ["100", "100", "150"]),
     _annual_row("BS", "ifrs-full_EquityAttributableToOwnersOfParent", ["100", "100", "140"]),
+    _annual_row("BS", "ifrs-full_RetainedEarnings", ["40", "40", "90"]),
     _annual_row("CF", "ifrs-full_CashFlowsFromUsedInOperatingActivities", ["80", "80", "80"]),
     _annual_row(
         "CF", "ifrs-full_PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities", ["30", "30", "120"]
     ),
+    _annual_row("CF", "ifrs-full_DepreciationExpense", ["15", "15", "15"]),
+    _annual_row("CF", "ifrs-full_AmortisationExpense", ["5", "5", "5"]),
+    _annual_row("CF", "ifrs-full_PaymentsToAcquireOrRedeemEntitysShares", ["0", "0", "10"]),
+    _annual_row("CF", "ifrs-full_ProceedsFromSaleOrDisposalOfEntitysSharesHeld", ["0", "0", "0"]),
+    _annual_row("CF", "ifrs-full_ProceedsFromIssuingShares", ["0", "0", "0"]),
 ]
 
 
@@ -132,6 +140,20 @@ def test_annual_gives_three_years_oldest_first_with_roe_on_average_equity() -> N
     assert y3["debt_ratio"] == pytest.approx(200)
     assert y3["free_cash_flow"] == -40
     assert y3["opm"] == pytest.approx(10)
+
+
+def test_annual_picks_up_the_quality_items() -> None:
+    y1, _, y3 = s.annual(_report(2025, "11011", ANNUAL_ROWS))
+    assert y1["retained_earnings"] == 40
+    assert y3["retained_earnings"] == 90
+    assert y1["income_tax_expense"] == 20
+    assert y1["pretax_income"] == 70
+    assert y3["pretax_income"] == 80
+    assert y1["depreciation"] == 15
+    assert y1["amortization"] == 5
+    assert y1["treasury_shares_acquired"] == 0
+    assert y3["treasury_shares_acquired"] == 10
+    assert y3["proceeds_from_share_issuance"] == 0
 
 
 def test_latest_reads_income_year_to_date_and_cash_flow_as_is() -> None:
