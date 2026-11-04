@@ -83,7 +83,7 @@ class TestRegimeCell:
         closes = [100.0] * 59 + [103.2]
         cell = MarketOverviewBar.format_regime_cell(closes)
         assert "KOSPI200 103 ·" in cell
-        assert "+3.2% 위" in cell
+        assert "+3.1% 위" in cell  # 평균에 마지막 종가도 들어간다: (59×100+103.2)/60
 
     def test_below_moving_average_shows_minus_and_아래(self):
         closes = [100.0] * 59 + [97.0]
@@ -104,6 +104,12 @@ class TestRegimeCell:
 
 
 class TestMarketOverviewBarRegime:
+    def test_does_not_override_textual_render(self):
+        """Widget._render 은 Textual 이 화면을 그릴 때 Visual 을 받는 훅이다 — 덮으면 바가 그려지지 않는다."""
+        from textual.widgets import Static
+
+        assert MarketOverviewBar._render is Static._render
+
     def test_update_regime_keeps_index_parts(self):
         bar = MarketOverviewBar()
         bar.update_indices([{"name": "KOSPI", "close_price": 2500.0, "fluctuation_rate": 1.0}], [])

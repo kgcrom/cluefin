@@ -8,7 +8,7 @@ class MarketOverviewBar(Static):
     """KOSPI/KOSDAQ index summary bar.
 
     장세(KOSPI200 60일선 대비) 칸은 지수 칸과 별도 워커에서 비동기로 채워지므로,
-    각자 상태를 들고 있다가 `_render` 에서 합친다 — 먼저 끝난 쪽이 나중 쪽을 지우지 않는다.
+    각자 상태를 들고 있다가 `_refresh_text` 에서 합친다 — 먼저 끝난 쪽이 나중 쪽을 지우지 않는다.
     """
 
     DEFAULT_CSS = """
@@ -40,14 +40,14 @@ class MarketOverviewBar(Static):
             parts.append(f"[bold]{item['name']}[/bold] {item['close_price']:,.2f} [{color}]{sign}{rate:.2f}%[/{color}]")
 
         self._index_parts = parts
-        self._render()
+        self._refresh_text()
 
     def update_regime(self, text: str) -> None:
         """장세 칸 하나만 갱신한다 (KIS 호출이 지수 칸과 별도로 끝난다)."""
         self._regime_text = text
-        self._render()
+        self._refresh_text()
 
-    def _render(self) -> None:
+    def _refresh_text(self) -> None:
         parts = list(self._index_parts)
         if self._regime_text:
             parts.append(self._regime_text)
