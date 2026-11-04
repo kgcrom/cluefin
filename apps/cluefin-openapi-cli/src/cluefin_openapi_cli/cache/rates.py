@@ -1,7 +1,10 @@
-"""`rates` table: ECOS daily market rates (annual %, as published), the risk-free side of `cache perf`.
+"""`rates` table: ECOS daily market series, the risk-free side of `cache perf` and `cache macro-beta`'s inputs.
 
 One `StatisticSearch` per series covers any span with a real key (no row cap; paged by 1000 anyway).
 Holidays have no row. A daily run re-reads the last week so a late or revised value replaces the old one.
+
+``usdkrw`` (731Y001, 원/달러 매매기준율) is a level, not an annual percent like the others — `cache macro-beta`
+turns it into a week-over-week percent change, the same table shape just a different unit per slug.
 """
 
 from __future__ import annotations
@@ -12,14 +15,14 @@ from datetime import date, datetime, timedelta
 from typing import Any
 
 import duckdb
-from cluefin_openapi.ecos import CD_91D, KTB_1Y, KTB_3Y, KTB_10Y
+from cluefin_openapi.ecos import CD_91D, KTB_1Y, KTB_3Y, KTB_10Y, USD_KRW
 
 from cluefin_openapi_cli.clock import now_kst
 
 __all__ = ["RATE_SERIES", "RateLoadStats", "load_rates"]
 
 # Slug used by `cache perf --risk-free` → ECOS series.
-RATE_SERIES = {"ktb1y": KTB_1Y, "ktb3y": KTB_3Y, "ktb10y": KTB_10Y, "cd91d": CD_91D}
+RATE_SERIES = {"ktb1y": KTB_1Y, "ktb3y": KTB_3Y, "ktb10y": KTB_10Y, "cd91d": CD_91D, "usdkrw": USD_KRW}
 _REREAD_DAYS = 7
 
 

@@ -178,6 +178,7 @@ uv run cluefin-openapi-cli cache rs --market KOSDAQ --by industry --limit 20 --j
 uv run cluefin-openapi-cli cache breadth --json                                    # 전 종목 신고가·신저가·FTD
 uv run cluefin-openapi-cli cache load --only financials --json                     # DART, 전 종목 최근 5개년, 연 약 26회
 uv run cluefin-openapi-cli cache financials --code 005930 --json
+uv run cluefin-openapi-cli cache macro-beta --code 005930 --json                   # 주간 수익률을 KOSPI·환율·금리에 회귀
 ```
 
 `cache load --only financials` 는 DART `fnlttMultiAcnt`(다중회사 주요계정)로 전 종목(캐시 `company` 의 `corp_code` 가 있는
@@ -222,12 +223,17 @@ IBD(윌리엄 오닐) 방법론의 근사로 냅니다 — 공식이 비공개�
 셉니다. `--risk-free` 는 연율 소수(3.5% 는 `0.035`)나 `rates` 계열 이름(`ktb3y` 등)입니다. 계열이면 각 기간 첫날의 금리(그날 발표가
 없으면 직전 발표값)를 쓰고, 캐시에 없으면 exit 2 `RatesMissing` 입니다.
 
+`cache macro-beta` 는 종목 주간 수익률(ISO 주 단위 마지막 수정종가의 전주 대비 변화율)을 KOSPI 주간 수익률·원/달러
+(`usdkrw`, 731Y001) 주간 변화율·국고채 3년·10년(`ktb3y`·`ktb10y`) 주간 변화(bp)에 절편 포함 OLS 로 회귀해 계수(β)·t값·
+전체 R²·표본 주 수를 냅니다. 다섯 계열 모두 값이 있는 주만 쓰고(`weeks`), 30주 미만이면 `regression` 이 `null`이며
+`hint` 가 원인(캐시 부족 또는 `cache load --only rates` 필요)을 적습니다. 예측이 아니라 그 구간의 민감도 진단입니다.
+
 | 테이블 | 내용 |
 |---|---|
 | `company` | 종목 하나에 한 행: 이름·시장·업종·표준산업분류·DART 고유번호·결산월·상장일·폐지일·관리/정지 |
 | `ohlcv` | 종목·지수(`U0001`·`U1001`·`U2001`) 일봉. 원주가 + `adj_factor`(수정주가 = 가격 × 계수), 락구분·분할비율·재평가사유 |
 | `theme`·`theme_member` | 키움 테마 스냅샷(날마다, `as_of` 별): 테마 이름·구성종목 수·주요종목, 구성종목. 키움 기간수익률은 원주가라 참고로만 |
-| `rates` | ECOS 일별 시장금리 `ktb1y`·`ktb3y`·`ktb10y`·`cd91d`. 값은 발표 원문 그대로 연 %(3.5 = 3.5%) |
+| `rates` | ECOS 일별 시장금리 `ktb1y`·`ktb3y`·`ktb10y`·`cd91d` + 원/달러 `usdkrw`. 금리는 발표 원문 그대로 연 %(3.5 = 3.5%), `usdkrw` 는 환율 수준값 |
 | `load_log`·`adj_log`·`bar_log`·`probe_log` | 적재 기록, 수정계수 확인 시점, 일봉 시작일, 폐지 후보 확인 기록 |
 | `setup_state` | `cache base-rate-build` 가 쓰는 기저율 표본: 거래일 5일 간격 (sample_date, code) 당 trend-setup 그룹·시총 3분위·시총·수정종가·지수코드·지수종가 |
 | `financials`·`financials_fetch_log` | DART 다중회사 주요계정 5개년(종목·연도·계정당 한 행, `basis` CFS/OFS) · 물어본 (종목, 연도) 기록(증분용) |

@@ -71,7 +71,8 @@ SCHEMA = (
       seconds DOUBLE
     )
     """,
-    # 시장금리: ECOS daily rates by `rates.RATE_SERIES` slug, annual percent as published (3.5 = 3.5%).
+    # 시장금리·환율: ECOS daily series by `rates.RATE_SERIES` slug. Rate slugs are annual percent as
+    # published (3.5 = 3.5%); `usdkrw` is a level (원/달러 매매기준율), not a percent.
     """
     CREATE TABLE IF NOT EXISTS rates (
       series TEXT,
