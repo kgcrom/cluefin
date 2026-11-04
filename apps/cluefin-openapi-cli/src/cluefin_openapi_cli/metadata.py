@@ -935,6 +935,9 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
     "kiwoom.theme.group-stocks": CommandTaxonomy(("theme", "market"), ("theme-group", "screening")),
     "dart.company-overview": CommandTaxonomy(("statements", "reference"), ("disclosure", "shareholder")),
     "dart.corp-code-lookup": CommandTaxonomy(("reference",), ("reference-list", "disclosure")),
+    "dart.dilution-watch": CommandTaxonomy(
+        ("corporate-actions",), ("disclosure", "dilution", "capital-increase", "shareholder")
+    ),
     "dart.disclosure-search": CommandTaxonomy(("news", "statements"), ("disclosure",)),
     "dart.executive-ownership-report": CommandTaxonomy(("statements",), ("shareholder", "disclosure")),
     "dart.financial-full-statements": CommandTaxonomy(("statements",), ("financial-statement", "disclosure")),

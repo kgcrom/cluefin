@@ -12,7 +12,7 @@
 |---|---|---|
 | `kis` | **primary** | 기본 소스. 시세·차트·순위·재무·업종·ETF·일정·휴장일. 모든 작업은 여기서 시작한다. 계산 명령: `chart technical`(지표·신호), `chart trend-setup`(추세 셋업 1·2·3그룹 판정), `stock opinion-summary`(증권사별 목표가 집계), `stock valuation`(종가 × DART 주식수 × DART 재무로 시총·TTM PER·PBR), `stock implied-expectations`(RIM 내재 ROE·역DCF 내재 매출성장률, 라벨 없음). |
 | `kiwoom` | **auxiliary** | KIS가 못 보는 빈칸만 채운다. 테마, 업종 구성종목, 틱 차트, 프로그램매매 상세, 거래원(회원사) 수급. |
-| `dart` | reference | 공시 원문·기업 고유번호·최대주주·발행주식수·정기보고서 재무제표(반기·분기 포함, `financial-as-filed` 는 접수 당시 값, `financial-summary` 는 분기 역산·3개년·비율·TTM 계산)·원문 서술(사업의 내용 `document-outline`/`document-section`, 재무제표 주석 `financial-notes`)·주요사항보고서 본문(`major-event`: CB·BW·EB·유무상증자·감자·자사주·합병·분할 등 36종)·정기보고서 주요정보(`report-item`: 배당·자기주식·임원·보수·사채 잔액·감사의견 등 26종). 시세 소스가 아니다. |
+| `dart` | reference | 공시 원문·기업 고유번호·최대주주·발행주식수·정기보고서 재무제표(반기·분기 포함, `financial-as-filed` 는 접수 당시 값, `financial-summary` 는 분기 역산·3개년·비율·TTM 계산)·원문 서술(사업의 내용 `document-outline`/`document-section`, 재무제표 주석 `financial-notes`)·주요사항보고서 본문(`major-event`: CB·BW·EB·유무상증자·감자·자사주·합병·분할 등 36종)·정기보고서 주요정보(`report-item`: 배당·자기주식·임원·보수·사채 잔액·감사의견 등 26종). 계산 명령: `dilution-watch`(CB·BW·EB·유상증자·무상증자·유무상증자·감자·자기주식 취득/처분(신탁 포함) 11종의 `major-event` 호출을 한 번에 모아 금액·전환가·리픽싱 최저가·신주수·발행주식 대비 비율로 맞춘다. 자사주 소각은 `report-item treasury-stock` 몫이라 `not_covered` 로 표시한다). 시세 소스가 아니다. |
 | `sec` | reference | 미국 SEC EDGAR. 미국 상장 고객사·경쟁사의 10-K/10-Q/8-K Item 본문(`filing-items`)과 8-K 실적 보도자료 EX-99.1(`filing-exhibit`). 20-F/6-K(한국 ADR 대부분)는 읽지 않는다. 한국 기업 공시는 `dart`. |
 | `ecos` | reference | 한국은행 ECOS 경제통계. 기준금리·시장금리·환율·물가·GDP·경기종합지수·기업/소비자 심리·수출. 통계표 찾기(`table-search`) → 항목코드(`items`) → 시계열(`series`), 100대 지표 최근값(`key-stats`), 용어(`word`). 계산 명령: `macro-snapshot`(기준금리·국고채·회사채·원/달러·물가·선행/동행지수·심리·GDP·수출 15계열과 금리차·신용스프레드의 최근값·1m/3m/1y 변화·10년 백분위, 국면 라벨 없음, 실키 필요), `industry-outlook --induty-code`(KSIC 제조업 중분류 C10~C33 하나의 업종 BSI 전망·실적, 생산·출하·재고(원지수) 전년비, 재고순환(부호만), 대표 품목 수출물가·생산자물가·수출금액지수 전년비, 실키 필요). `ECOS_AUTH_KEY` 가 없으면 공개 `sample` 키(한 번에 10행)로 돈다. 종목 소스가 아니다. |
 
@@ -150,6 +150,7 @@ uv run cluefin-openapi-cli kis stock current-price --stock-code 005930 --json
 uv run cluefin-openapi-cli kiwoom chart tick --stock-code KRX:005930 --tic-scope 1 --json
 uv run cluefin-openapi-cli dart company-overview --corp-code 00126380 --json
 uv run cluefin-openapi-cli dart major-event --corp-code 00126380 --event convertible-bond --bgn-de 20230101 --end-de 20261016 --json
+uv run cluefin-openapi-cli dart dilution-watch --corp-code 00126380 --bgn-de 20230101 --end-de 20261016 --json
 uv run cluefin-openapi-cli dart report-item --corp-code 00126380 --item dividend --bsns-year 2025 --reprt-code 11011 --json
 uv run cluefin-openapi-cli sec filing-items --cik 320193 --accession-number 0000320193-23-000106 --items 1A --json
 uv run cluefin-openapi-cli ecos series --stat-code 817Y002 --cycle D --start-date 20261001 --end-date 20261030 --item-codes 010200000 --dry-run --json
