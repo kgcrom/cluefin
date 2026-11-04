@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import functools
 import subprocess
 from collections import Counter, defaultdict
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -38,21 +40,50 @@ def _repo_root() -> Path:
     )
 
 
+@functools.cache
+def _agents_history(root: Path) -> tuple[tuple[str, datetime, frozenset[str]], ...]:
+    """Commits touching `.claude/agents`, newest first: (short sha, commit time, file names).
+
+    One fixed git command, filtered here — the argv never carries run data.
+    """
+
+    try:
+        out = subprocess.run(
+            ["git", "log", "--format=@%h %cI", "--name-only", "--", ".claude/agents"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=10,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return ()
+    commits: list[tuple[str, datetime, frozenset[str]]] = []
+    sha, when, files = "", None, set()
+    for line in [*out.stdout.splitlines(), "@"]:
+        if line.startswith("@"):
+            if sha and when is not None:
+                commits.append((sha, when, frozenset(files)))
+            parts = line[1:].split()
+            sha, when, files = (
+                (parts[0], datetime.fromisoformat(parts[1]), set()) if len(parts) == 2 else ("", None, set())
+            )
+        elif line.strip():
+            files.add(Path(line.strip()).name)
+    return tuple(commits)
+
+
 def _agent_commit(root: Path, agent: str, started: str) -> str | None:
     """The last commit of the agent file at the run's start — the prompt version the run used."""
 
     name = ALIASES.get(agent, agent)
-    # Old names are listed as paths instead of `--follow`, which finds nothing when combined with `--before`.
-    names = [name, *(old for old, new in ALIASES.items() if new == name)]
-    command = ["git", "log", "-1", "--format=%h"]
-    if started:
-        command.append(f"--before={started}")
-    command += ["--", *(str(_AGENTS_DIR / f"{n}.md") for n in names)]
-    try:
-        out = subprocess.run(command, cwd=root, capture_output=True, text=True, check=False, timeout=10)
-    except (OSError, subprocess.TimeoutExpired):
-        return None
-    return out.stdout.strip() or None
+    # Old names count too: a run under `market-review` used the file now called `company-review`.
+    names = {f"{n}.md" for n in (name, *(old for old, new in ALIASES.items() if new == name))}
+    cutoff = datetime.fromisoformat(started.replace("Z", "+00:00")) if started else None
+    for sha, when, files in _agents_history(root):
+        if files & names and (cutoff is None or when <= cutoff):
+            return sha
+    return None
 
 
 def _valid_codes() -> frozenset[str] | None:
