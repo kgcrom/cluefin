@@ -13,7 +13,8 @@ description: 한국 상장 종목 하나(코드 또는 기업명)를 받아 clue
 
 ## 키 확인
 
-데이터를 모으기 전에 아래 세 명령부터 부른다. 어차피 쓸 호출이라 따로 드는 비용은 없다. exit 3 은 키가 없거나
+데이터를 모으기 전에 아래 세 명령부터 부른다. 어차피 쓸 호출이라 따로 드는 비용은 없다. 예시의 005930 대신
+대상 종목 코드로 부른다 — 다른 코드로 부르면 감사에서 검토 대상 종목으로 잡힌다. exit 3 은 키가 없거나
 무효라는 뜻이고, 어느 키인지는 `error.hint` 가 말한다.
 
 ```bash
@@ -71,7 +72,7 @@ uv run cluefin-openapi-cli kis market announcement --stock-code 005930 --limit 4
 uv run cluefin-openapi-cli ecos macro-snapshot --json
 ```
 
-위 명령은 한 줄씩 별도 Bash 호출로 부르고, 독립인 것은 같은 턴에 병렬로 보낸다. `for` 루프·`$(...)`·`bash -c` 로
+같은 명령을 같은 인자로 두 번 부르지 않는다 — 앞 결과를 다시 읽는다. 위 명령은 한 줄씩 별도 Bash 호출로 부르고, 독립인 것은 같은 턴에 병렬로 보낸다. `for` 루프·`$(...)`·`bash -c` 로
 묶지 않는다 — 명령마다 결과와 exit code 가 따로 남아야 키 오류(exit 3)에서 멈출 수 있다. worktree 에서는 `$(...)` 로
 만든 값을 넘기면 CLI 도 거부되고, git 은 `$?`·루프와 섞어도 거부된다(루트 `AGENTS.md` 의 worktree 절). 앞 명령의 결과
 (corp-code 등)는 따로 받아 다음 명령에 값을 그대로 적는다.
@@ -198,3 +199,30 @@ HTML 리포트는 이 에이전트가 만들지 않는다. 메인 대화가 만�
   꼭 파일이 필요하면 세션 임시 폴더(scratchpad)에 두고 `docs/` 에는 남기지 않는다.
 - 생성 요청을 받으면 그때 `docs/agents/company-review-report-design.md` 를 읽고 그에 따라 만든다. 그 밖의
   경우에는 읽지 않는다.
+
+## 감사 기준
+
+`cluefin-openapi-cli audit check` 가 읽는 블록이다. 데이터·전망 절을 바꾸면 같이 고친다. `main` 은 대상 종목,
+`each` 는 대상과 비교 기업 모두에 부를 명령이다. `ecos industry-outlook`·`cache base-rate` 는 전망 절 몫이다.
+
+```audit
+subjects: prompt, report
+required: ecos macro-snapshot
+required: ecos industry-outlook
+main: kis stock opinion-summary
+main: kis market announcement
+main: cache macro-beta
+main: cache base-rate
+main: kis stock implied-expectations
+each: dart corp-code-lookup
+each: kis stock current-price
+each: dart financial-summary
+each: kis stock valuation
+each: kis stock valuation-band
+each: kis stock investor-metrics
+each: kis chart technical
+each: kis chart trend-setup
+each: cache rs
+each: dart dilution-watch
+stop-on-exit3: kis dart
+```
