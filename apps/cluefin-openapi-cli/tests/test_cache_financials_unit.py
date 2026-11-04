@@ -10,7 +10,7 @@ from cluefin_openapi_cli.cache import store
 from cluefin_openapi_cli.cache.financials import (
     ANNUAL_REPORT_CODE,
     BATCH_SIZE,
-    _call,
+    _fetch,
     default_years,
     load_financials,
 )
@@ -174,11 +174,105 @@ def test_company_limit_exceeded_splits_the_batch_in_half() -> None:
             return _result("000", [_item(codes[0], "자본총계", f"{int(codes[0]) * 10}")])
 
     dart = SplittingDart()
-    result = _call(dart, ["1", "2", "3", "4"], "2025")
+    outcome = _fetch(dart, ["1", "2", "3", "4"], "2025")
 
-    assert result.result.status == "000"
-    assert {item.stock_code for item in result.result.list} == {"1", "2", "3", "4"}
-    assert len(dart.calls) == 7  # 1 (4-way) + 2 (2-way) + 4 (singles)
+    assert {item.stock_code for item in outcome.items} == {"1", "2", "3", "4"}
+    assert not outcome.failed_corp_codes
+    assert outcome.calls == len(dart.calls) == 7  # 1 (4-way) + 2 (2-way) + 4 (singles)
+
+
+def test_fetch_deduplicates_corp_codes_before_calling() -> None:
+    """A preferred share remaps to its common share's corp_code — the batch must not repeat it."""
+
+    class RecordingDart:
+        def __init__(self) -> None:
+            self.calls: list[tuple[str, ...]] = []
+            self.periodic_report_financial_statement = self
+
+        def get_multi_company_major_accounts(self, *, corp_code: str, bsns_year: str, reprt_code: str):
+            codes = tuple(corp_code.split(","))
+            self.calls.append(codes)
+            return _result("000", [_item(codes[0], "자본총계", "1")])
+
+    dart = RecordingDart()
+    outcome = _fetch(dart, ["A", "B", "A"], "2025")
+
+    assert dart.calls == [("A", "B")]
+    assert outcome.calls == 1
+
+
+def test_one_bad_corp_code_is_isolated_and_the_rest_still_succeed() -> None:
+    """A record that always fails validation must not sink the other 99 in its batch."""
+
+    class FlakyDart:
+        def __init__(self) -> None:
+            self.calls: list[tuple[str, ...]] = []
+            self.periodic_report_financial_statement = self
+
+        def get_multi_company_major_accounts(self, *, corp_code: str, bsns_year: str, reprt_code: str):
+            codes = tuple(corp_code.split(","))
+            self.calls.append(codes)
+            if "BAD0000" in codes:
+                raise ValueError("boom: this corp_code always fails")
+            return _result("000", [_item(c, "자본총계", "1") for c in codes])
+
+    dart = FlakyDart()
+    good_codes = [f"G{i:06d}" for i in range(7)]
+    all_codes = [*good_codes[:3], "BAD0000", *good_codes[3:]]
+
+    outcome = _fetch(dart, all_codes, "2025")
+
+    assert outcome.failed_corp_codes == ("BAD0000",)
+    assert "boom" in outcome.error_samples[0]
+    assert {item.stock_code for item in outcome.items} == set(good_codes)
+
+
+def test_quota_hit_while_narrowing_stops_without_finishing_the_batch() -> None:
+    class QuotaMidwayDart:
+        def __init__(self) -> None:
+            self.periodic_report_financial_statement = self
+
+        def get_multi_company_major_accounts(self, *, corp_code: str, bsns_year: str, reprt_code: str):
+            codes = tuple(corp_code.split(","))
+            if len(codes) > 1:
+                return _result("021", None)
+            if codes[0] == "1":
+                from cluefin_openapi_cli.errors import DartQuotaExceededAPIError
+
+                raise DartQuotaExceededAPIError("한도 초과")
+            return _result("000", [_item(codes[0], "자본총계", "1")])
+
+    dart = QuotaMidwayDart()
+    outcome = _fetch(dart, ["1", "2", "3", "4"], "2025")
+
+    assert outcome.quota_exhausted is True
+
+
+def test_load_financials_marks_the_isolated_bad_code_as_error_and_keeps_the_rest() -> None:
+    conn = _conn_with_companies([("005930", "00126380"), ("000660", "00164779"), ("005380", "00164742")])
+    stock_code_of = {"00126380": "005930", "00164779": "000660", "00164742": "005380"}
+
+    class FlakyDart:
+        def __init__(self) -> None:
+            self.periodic_report_financial_statement = self
+
+        def get_multi_company_major_accounts(self, *, corp_code: str, bsns_year: str, reprt_code: str):
+            codes = tuple(corp_code.split(","))
+            if "00164742" in codes:
+                raise ValueError("boom")
+            return _result("000", [_item(stock_code_of[c], "자본총계", "1") for c in codes])
+
+    stats = load_financials(conn, dart=FlakyDart(), years=("2025",))
+
+    assert stats.failed_codes == 1
+    log = dict(conn.execute("SELECT code, status FROM financials_fetch_log").fetchall())
+    assert log == {"005930": "ok", "000660": "ok", "005380": "error"}
+    assert conn.execute("SELECT count(*) FROM financials WHERE code = '005380'").fetchone()[0] == 0
+
+    # The `error` pair is retried on the next run; `ok` pairs are not.
+    stats2 = load_financials(conn, dart=FlakyDart(), years=("2025",))
+    assert stats2.codes_skipped == 2
+    assert stats2.failed_codes == 1
 
 
 def test_loaded_at_is_recorded() -> None:

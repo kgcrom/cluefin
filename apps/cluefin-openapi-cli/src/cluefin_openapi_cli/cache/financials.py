@@ -21,14 +21,29 @@ This table is a cheap cross-sectional screen (`cache magic-formula`, `cache base
 axis). A single ticker that needs exact, restated-aware numbers still goes through `dart
 financial-summary`/`financial-full-statements` directly.
 
-Incremental via `financials_fetch_log`: a (code, year) pair already asked of DART — whether
-it came back with rows or came back empty (not in that batch's response, meaning no filing
-that year) — is not re-asked. Only a batch-level error (network, rate limit) leaves a pair
-unlogged so it is retried on the next `cache load`.
+Incremental via `financials_fetch_log`: a (code, year) pair logged ``ok``/``empty`` is not
+re-asked. A pair logged ``error`` (see "one bad corp_code" below) is retried on every run,
+same as an unlogged pair.
+
+One bad corp_code must not drop 99 good ones (2026-11-04 full-universe load: 31/192 batches of
+100 failed outright). Two real causes, both now handled:
+
+- **A batch with a duplicate corp_code 302-redirects to an HTML error page instead of JSON**
+  (`JSONDecodeError`). A duplicate happens when a preferred share and its common share both
+  land in the same 100-code batch — DART only knows the common share's `corp_code`
+  (`company.corp_code_for`), so both resolve to the same id. Fixed by de-duplicating the
+  `corp_code` list before every call (`_fetch`).
+- A single company's filing can still fail pydantic validation (e.g. a field the model
+  declared required turns out missing for that filer) or the call can fail outright
+  (network). `_fetch` narrows a failing batch by bisection until the one corp_code (or the
+  rare case where none remain) is isolated; a single corp_code that still fails is recorded
+  as `error` in `financials_fetch_log` and counted in `failed_codes`/`errors`, and every
+  other corp_code in the original batch is still written normally.
 """
 
 from __future__ import annotations
 
+import dataclasses
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date
@@ -56,7 +71,6 @@ DEFAULT_YEAR_COUNT = 5
 _COMPANY_LIMIT_EXCEEDED = "021"
 _REQUEST_LIMIT_EXCEEDED = "020"
 _NO_DATA = "013"
-_SUCCESS = "000"
 
 
 def default_years(today: date, *, count: int = DEFAULT_YEAR_COUNT) -> tuple[str, ...]:
@@ -78,6 +92,7 @@ class FinancialLoadStats:
     codes_ok: int = 0
     codes_empty: int = 0
     codes_skipped: int = 0
+    failed_codes: int = 0
     rows: int = 0
     errors: list[dict[str, str]] = field(default_factory=list)
 
@@ -88,6 +103,7 @@ class FinancialLoadStats:
             "codes_fetched": self.codes_ok,
             "codes_empty": self.codes_empty,
             "codes_already_cached": self.codes_skipped,
+            "failed_codes": self.failed_codes,
             "rows": self.rows,
             "errors": len(self.errors),
             "error_samples": self.errors[:10],
@@ -100,30 +116,73 @@ def _status_of(result: Any) -> str | None:
     return str(getattr(status, "value", status)) if status is not None else None
 
 
-def _call(dart: Any, corp_codes: list[str], year: str) -> Any:
-    """One `fnlttMultiAcnt` call, halving the batch and retrying if DART answers 021.
+def _is_quota_exception(exc: BaseException) -> bool:
+    data = getattr(exc, "response_data", None)
+    return isinstance(data, dict) and data.get("status") == _REQUEST_LIMIT_EXCEEDED
 
-    Defensive only: callers already batch at `BATCH_SIZE` (100), which DART accepts.
+
+@dataclass(frozen=True, slots=True)
+class _FetchOutcome:
+    items: list[Any]
+    quota_exhausted: bool = False
+    failed_corp_codes: tuple[str, ...] = ()
+    error_samples: tuple[str, ...] = ()
+    calls: int = 0
+
+
+def _fetch(dart: Any, corp_codes: list[str], year: str) -> _FetchOutcome:
+    """One or more `fnlttMultiAcnt` calls for ``corp_codes``, narrowing on failure.
+
+    De-duplicates first (see module docstring). A daily-quota hit (020) stops immediately —
+    bisecting into it would only spend more of the same exhausted quota. Anything else that
+    fails (021 "too many companies", an exception) is narrowed by bisection until either it
+    succeeds on a smaller slice or a single corp_code is isolated as unrecoverable.
     """
 
-    result = dart.periodic_report_financial_statement.get_multi_company_major_accounts(
-        corp_code=",".join(corp_codes),
-        bsns_year=year,
-        reprt_code=ANNUAL_REPORT_CODE,
+    codes = list(dict.fromkeys(corp_codes))
+    if not codes:
+        return _FetchOutcome(items=[])
+    try:
+        result = dart.periodic_report_financial_statement.get_multi_company_major_accounts(
+            corp_code=",".join(codes),
+            bsns_year=year,
+            reprt_code=ANNUAL_REPORT_CODE,
+        )
+    except Exception as exc:  # noqa: BLE001 - narrowed below, not swallowed
+        if _is_quota_exception(exc):
+            return _FetchOutcome(items=[], quota_exhausted=True, calls=1)
+        return _narrow(dart, codes, year, calls_so_far=1, error=exc)
+
+    status = _status_of(result)
+    if status == _REQUEST_LIMIT_EXCEEDED:
+        return _FetchOutcome(items=[], quota_exhausted=True, calls=1)
+    if status == _COMPANY_LIMIT_EXCEEDED:
+        return _narrow(dart, codes, year, calls_so_far=1, error=None)
+    if status == _NO_DATA:
+        return _FetchOutcome(items=[], calls=1)
+    return _FetchOutcome(items=list(result.result.list or []), calls=1)
+
+
+def _narrow(dart: Any, codes: list[str], year: str, *, calls_so_far: int, error: BaseException | None) -> _FetchOutcome:
+    if len(codes) == 1:
+        message = (
+            f"{type(error).__name__}: {str(error)[:200]}"
+            if error is not None
+            else "DART status 021 (021 for a single corp_code)"
+        )
+        return _FetchOutcome(items=[], failed_corp_codes=(codes[0],), error_samples=(message,), calls=calls_so_far)
+    mid = len(codes) // 2
+    first = _fetch(dart, codes[:mid], year)
+    if first.quota_exhausted:
+        return dataclasses.replace(first, calls=calls_so_far + first.calls)
+    second = _fetch(dart, codes[mid:], year)
+    return _FetchOutcome(
+        items=[*first.items, *second.items],
+        quota_exhausted=second.quota_exhausted,
+        failed_corp_codes=(*first.failed_corp_codes, *second.failed_corp_codes),
+        error_samples=(*first.error_samples, *second.error_samples),
+        calls=calls_so_far + first.calls + second.calls,
     )
-    if _status_of(result) != _COMPANY_LIMIT_EXCEEDED or len(corp_codes) <= 1:
-        return result
-    mid = len(corp_codes) // 2
-    first = _call(dart, corp_codes[:mid], year)
-    second = _call(dart, corp_codes[mid:], year)
-    first_status, second_status = _status_of(first), _status_of(second)
-    merged_list = [*(first.result.list or []), *(second.result.list or [])]
-    first.result.list = merged_list
-    if _REQUEST_LIMIT_EXCEEDED in (first_status, second_status):
-        first.result.status = _REQUEST_LIMIT_EXCEEDED
-    elif merged_list:
-        first.result.status = _SUCCESS
-    return first
 
 
 def _batches(items: list[str], size: int) -> list[list[str]]:
@@ -183,9 +242,16 @@ def _universe(conn: duckdb.DuckDBPyConnection) -> list[str]:
 
 
 def _candidates(conn: duckdb.DuckDBPyConnection, year: str) -> list[str]:
+    """Codes still worth asking for ``year``: never asked, or asked and left `error`.
+
+    `ok`/`empty` are a settled answer and are not re-asked; `error` is not (see module
+    docstring) so a `cache load` keeps retrying only the handful DART keeps rejecting.
+    """
+
     rows = conn.execute(
         "SELECT c.code FROM company c WHERE c.corp_code IS NOT NULL "
-        "AND NOT EXISTS (SELECT 1 FROM financials_fetch_log f WHERE f.code = c.code AND f.year = ?) "
+        "AND NOT EXISTS (SELECT 1 FROM financials_fetch_log f WHERE f.code = c.code AND f.year = ? "
+        "AND f.status != 'error') "
         "ORDER BY c.code",
         [year],
     ).fetchall()
@@ -197,6 +263,65 @@ def _corp_code_of(conn: duckdb.DuckDBPyConnection, codes: list[str]) -> dict[str
         "SELECT code, corp_code FROM company WHERE code IN (SELECT unnest(?::TEXT[]))", [codes]
     ).fetchall()
     return dict(rows)
+
+
+def _process_batch(
+    conn: duckdb.DuckDBPyConnection,
+    *,
+    dart: Any,
+    batch: list[str],
+    corp_code_by_code: dict[str, str],
+    year: str,
+    now: Any,
+    stats: FinancialLoadStats,
+) -> bool:
+    """One batch. Returns ``True`` if the daily quota is exhausted (caller should stop)."""
+
+    codes_by_corp: dict[str, list[str]] = {}
+    for code in batch:
+        corp_code = corp_code_by_code.get(code)
+        if corp_code:
+            codes_by_corp.setdefault(corp_code, []).append(code)
+    if not codes_by_corp:
+        return False
+
+    outcome = _fetch(dart, list(codes_by_corp), year)
+    stats.calls += outcome.calls
+
+    by_code = _best_rows(outcome.items)
+    fetched = set(by_code)
+    rows: list[tuple[Any, ...]] = []
+    for code, accounts in by_code.items():
+        for account_nm, (basis, amount, currency) in accounts.items():
+            rows.append((code, year, ANNUAL_REPORT_CODE, basis or None, account_nm, amount, currency, now))
+    if rows:
+        conn.executemany(_UPSERT_SQL, rows)
+        stats.rows += len(rows)
+
+    error_codes: set[str] = set()
+    for corp_code in outcome.failed_corp_codes:
+        error_codes.update(codes_by_corp.get(corp_code, []))
+    if error_codes:
+        conn.executemany(_FETCH_LOG_SQL, [(code, year, "error", now) for code in error_codes])
+        stats.failed_codes += len(error_codes)
+        stats.errors.extend(
+            {"year": year, "code": code, "error": message}
+            for code, message in zip(sorted(error_codes), outcome.error_samples, strict=False)
+        )
+
+    if outcome.quota_exhausted:
+        # Codes neither fetched nor confirmed failed are of unknown status (quota hit before
+        # they were asked) — leave them unlogged so a later run (quota resets daily) retries.
+        stats.errors.append({"year": year, "error": "DART daily quota exhausted (status 020)"})
+        return True
+
+    empty_codes = set(batch) - fetched - error_codes
+    settled = [(code, year, "ok", now) for code in fetched] + [(code, year, "empty", now) for code in empty_codes]
+    if settled:
+        conn.executemany(_FETCH_LOG_SQL, settled)
+    stats.codes_ok += len(fetched)
+    stats.codes_empty += len(empty_codes)
+    return False
 
 
 def load_financials(
@@ -222,43 +347,11 @@ def load_financials(
         corp_code_by_code = _corp_code_of(conn, candidates)
         batches = _batches(candidates, BATCH_SIZE)
         for index, batch in enumerate(batches, 1):
+            quota_exhausted = _process_batch(
+                conn, dart=dart, batch=batch, corp_code_by_code=corp_code_by_code, year=year, now=now, stats=stats
+            )
             if quota_exhausted:
                 break
-            corp_codes = [corp_code_by_code[code] for code in batch if code in corp_code_by_code]
-            if not corp_codes:
-                continue
-            stats.calls += 1
-            try:
-                result = _call(dart, corp_codes, year)
-            except Exception as exc:  # noqa: BLE001 - one bad batch must not stop the rest
-                status = getattr(exc, "response_data", None)
-                if isinstance(status, dict) and status.get("status") == _REQUEST_LIMIT_EXCEEDED:
-                    quota_exhausted = True
-                    stats.errors.append({"year": year, "error": "DART daily quota exhausted mid-load"})
-                    break
-                stats.errors.append({"year": year, "error": f"{type(exc).__name__}: {str(exc)[:200]}"})
-                continue
-            status = _status_of(result)
-            if status == _REQUEST_LIMIT_EXCEEDED:
-                quota_exhausted = True
-                stats.errors.append({"year": year, "error": "DART daily quota exhausted (status 020)"})
-                break
-            items = (result.result.list or []) if status != _NO_DATA else []
-            by_code = _best_rows(items)
-            fetched = set(by_code)
-            rows: list[tuple[Any, ...]] = []
-            for code, accounts in by_code.items():
-                for account_nm, (basis, amount, currency) in accounts.items():
-                    rows.append((code, year, ANNUAL_REPORT_CODE, basis or None, account_nm, amount, currency, now))
-            if rows:
-                conn.executemany(_UPSERT_SQL, rows)
-                stats.rows += len(rows)
-            conn.executemany(
-                _FETCH_LOG_SQL,
-                [(code, year, "ok" if code in fetched else "empty", now) for code in batch],
-            )
-            stats.codes_ok += len(fetched)
-            stats.codes_empty += len(batch) - len(fetched)
             if index % 5 == 0 or index == len(batches):
                 progress(f"financials: {year} batch {index}/{len(batches)}")
 

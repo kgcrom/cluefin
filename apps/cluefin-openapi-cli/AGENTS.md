@@ -325,19 +325,28 @@ CLI 가 말해 주지 않는 것만 적는다.
     찾는다 — 매수·매도 신호가 아니라 날짜·등락률·거래량 비교 사실만 낸다.
 - **`cache load --only financials`/`cache financials` 는 DART `fnlttMultiAcnt`(다중회사 주요계정)다**(`cache/financials.py`,
   결정 2026-11-04 `docs/plans/today-bundles-plan.md` B-1b). 한 번에 최대 100개 `corp_code`(콤마로 묶어 한 파라미터), 101개면
-  상태 021(`COMPANY_LIMIT_EXCEEDED`) — JSON 경로라 예외 없이 빈 `list` 로 온다(020 처리와 같은 모양, `_call` 이 이 상태만
-  보면 배치를 반으로 쪼개 재시도한다. `BATCH_SIZE=100` 이 이미 한도 안이라 방어적 코드고, 정상 경로에서는 거의 안 탄다).
-  연간(`reprt_code` 11011)만 쓰고, 사업연도는 `default_years`(오늘 기준 최근 5개, 당해 연도는 아직 사업보고서가 안 나왔을
-  수 있어 제외)다. 이 엔드포인트가 주는 계정은 고정된 표준 12개뿐이다 — 유동자산·비유동자산·자산총계·유동부채·비유동부채·
-  부채총계·자본금·이익잉여금(결손금)·자본총계·매출액·영업이익·당기순이익(`ACCOUNT_NAMES`). **지배/비지배 구분이 없고
-  현금흐름표 항목도 없다** — 둘 다 필요하면 종목별 `financial-full-statements`(`kis stock valuation-band` 가 하는 방식)를
-  직접 부른다. 연결(CFS)이 있으면 그걸, 없으면 별도(OFS)만 쓴다(`_best_rows`, 한 회사가 둘 다 내면 CFS 우선) — 행의 `basis`
-  에 어느 쪽인지 남는다. 금액은 DART 가 주는 그대로 **원**이다(`statements.won` 재사용) — `financial-summary` 의 억원과
-  다르다. `financials_fetch_log`(code, year)가 이미 물어본 쌍을 기억해 재실행은 새 종목(`company.corp_code IS NOT NULL`)·
-  새 연도만 부른다. 그 배치 응답에 없던 회사는 "그 해 공시 없음"으로 보고 `status='empty'` 로 남겨 매번 다시 묻지 않는다 —
-  배치 호출 자체가 실패(네트워크 등)했을 때만 그 배치의 코드들을 기록하지 않아 다음 `cache load` 가 다시 묻는다. 일일
-  한도(상태 020)에 걸리면 즉시 멈추고(`quota_exhausted`) 남은 연도·배치를 건너뛴다 — 계속 불러 봐야 전부 같은 이유로
-  실패한다.
+  상태 021(`COMPANY_LIMIT_EXCEEDED`) — JSON 경로라 예외 없이 빈 `list` 로 온다(020 처리와 같은 모양). `BATCH_SIZE=100` 이
+  이미 한도 안이라 021 은 정상 경로에서 거의 안 뜬다. 연간(`reprt_code` 11011)만 쓰고, 사업연도는 `default_years`(오늘
+  기준 최근 5개, 당해 연도는 아직 사업보고서가 안 나왔을 수 있어 제외)다. 이 엔드포인트가 주는 계정은 고정된 표준
+  12개뿐이다 — 유동자산·비유동자산·자산총계·유동부채·비유동부채·부채총계·자본금·이익잉여금(결손금)·자본총계·매출액·
+  영업이익·당기순이익(`ACCOUNT_NAMES`). **지배/비지배 구분이 없고 현금흐름표 항목도 없다** — 둘 다 필요하면 종목별
+  `financial-full-statements`(`kis stock valuation-band` 가 하는 방식)를 직접 부른다. 연결(CFS)이 있으면 그걸, 없으면
+  별도(OFS)만 쓴다(`_best_rows`, 한 회사가 둘 다 내면 CFS 우선) — 행의 `basis` 에 어느 쪽인지 남는다. 금액은 DART 가
+  주는 그대로 **원**이다(`statements.won` 재사용) — `financial-summary` 의 억원과 다르다. `financials_fetch_log`(code,
+  year)가 이미 물어본 쌍을 기억해 재실행은 새 종목(`company.corp_code IS NOT NULL`)·새 연도·그리고 `error` 로 남은 쌍만
+  부른다(`ok`/`empty` 는 다시 안 묻는다). 그 배치 응답에 없던 회사는 "그 해 공시 없음"으로 보고 `status='empty'` 로 남긴다.
+  일일 한도(상태 020)에 걸리면 즉시 멈추고(`quota_exhausted`) 남은 연도·배치를 건너뛴다 — 계속 불러 봐야 전부 같은
+  이유로 실패한다.
+- **한 종목 오류로 배치 100개를 통째로 버리지 않는다**(`_fetch`/`_narrow`, 2026-11-04 전종목 적재 실측: 192배치 중 31개가
+  통째로 실패). 두 원인이 있었다: ① **중복 `corp_code` 가 섞인 배치는 JSON 대신 HTML 에러 페이지로 302 리다이렉트된다**
+  (`JSONDecodeError`) — 우선주와 보통주가 같은 100개 배치에 들어가면 `company.corp_code_for` 가 둘 다 보통주의
+  `corp_code` 로 돌려줘 중복이 생긴다. `_fetch` 가 호출 직전 `corp_code` 리스트를 중복 제거해서 막는다(배치 자체도
+  `_process_batch` 에서 `codes_by_corp` 딕셔너리 키로 모아 호출하므로 이중으로 막힘). ② 그래도 한 회사의 응답이 pydantic
+  검증을 못 넘기거나(모델이 필수로 선언한 필드가 그 회사만 빠짐) 호출 자체가 실패하면, `_narrow` 가 배치를 반으로 계속
+  쪼개 문제의 `corp_code` 하나(또는 드물게 그 이하)까지 좁힌다 — 020(일일 한도)만은 쪼개지 않고 바로 멈춘다(어차피 전부
+  같은 이유로 실패해 호출만 낭비). 끝까지 좁혀도 실패하는 (code, year) 는 `financials_fetch_log` 에 `status='error'` 로
+  남고(다음 실행에 재시도 대상, `ok`/`empty` 와 달리 스킵 안 함) `cache load` 결과의 `failed_codes`/`errors` 에 찍힌다 —
+  그 회사만 빠지고 같은 배치의 나머지는 정상 적재된다.
 
 ## `dart corp-code-lookup` 은 전체 색인을 받아 클라이언트에서 거른다
 

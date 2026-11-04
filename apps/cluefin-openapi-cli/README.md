@@ -187,7 +187,9 @@ uv run cluefin-openapi-cli cache financials --code 005930 --json
 한 번에 최대 100개 회사만 되고(101개면 DART 021 오류), 연결(CFS)을 올려 받은 회사가 있으면 그걸 쓰고 없으면 별도(OFS)이며
 행의 `basis` 에 어느 쪽인지 남습니다. `financials_fetch_log` 로 (종목, 연도) 쌍을 기억해 재실행 시 새 종목·새 연도만
 부릅니다(013 로 데이터가 없던 쌍도 "확인함"으로 남아 매번 다시 묻지 않습니다). 금액 단위는 **원**입니다(`dart
-financial-summary` 는 억원).
+financial-summary` 는 억원). 한 회사의 응답만 이상해도(검증 실패·호출 실패) 배치를 반으로 좁혀 그 회사만
+`financials_fetch_log` 에 `error` 로 남기고(다음 실행에 재시도) 같은 배치의 나머지 99개는 정상 적재합니다 — 결과의
+`failed_codes` 가 그 수입니다.
 
 `cache trend-setup` 은 `kis chart trend-setup` 과 같은 판정을 그날 상장한 보통주 전부(우선주·스팩 제외, 나중에 폐지된 종목 포함)에
 돌립니다(약 1초). 기본은 alert·watch 행만 내고 전체는 `summary` 건수로 셉니다. 행의 `failed` 는 2·3그룹에서 통과 못 한 check id 라
