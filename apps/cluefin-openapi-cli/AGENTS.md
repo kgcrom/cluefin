@@ -157,7 +157,10 @@ CLI 가 말해 주지 않는 것만 적는다.
   convention, treasury included), preferred shares are ignored — stated in the response `notes`.
 - `kis stock valuation-band` is a 5-year PER/PBR band: each cached daily close (local `cache`
   DuckDB, `cache.read.read_ohlcv`, unadjusted — **no live KIS call**, so `cache load` must already
-  have run) over each fiscal year's EPS/BPS. EPS/BPS come from DART's per-stock full statements
+  have run) over the EPS/BPS of the latest fiscal year already due on that day
+  (`band.trailing_fiscal_year`: prior year from April 1, two back before it) — the same trailing basis
+  as `current`, so the percentile compares like with like and the history never uses a report that was
+  not public yet. `--years` is the price window back from `as_of`. EPS/BPS come from DART's per-stock full statements
   (`get_single_company_full_statements`, 11011 only) and common share count, fetched one fiscal
   year at a time — deliberately **not** `cache financials`/`fnlttMultiAcnt`, which has no
   지배/비지배 split (decision 2026-11-04, `docs/plans/today-bundles-plan.md` B-7, same reasoning as

@@ -51,18 +51,18 @@ SHARES = (
 
 
 def _statements() -> dict:
-    """2024: 지배주주순이익 100억, 지배지분 1,000억 → EPS 10,000/BPS 100,000 (shares 1,000,000).
+    """FY2023: 지배주주순이익 100억, 지배지분 1,000억 → EPS 10,000/BPS 100,000 (shares 1,000,000).
 
-    2025: 200억/1,500억 → EPS 20,000/BPS 150,000.
+    FY2024: 200억/1,500억 → EPS 20,000/BPS 150,000. Bars from 2024-04-01 use FY2023, from 2025-04-01 FY2024.
     """
     return {
-        (2024, "11011", "CFS"): [
-            _income(100 * EOK, "20250315000001"),
-            _equity(1000 * EOK, "20250315000001"),
+        (2023, "11011", "CFS"): [
+            _income(100 * EOK, "20240315000001"),
+            _equity(1000 * EOK, "20240315000001"),
         ],
-        (2025, "11011", "CFS"): [
-            _income(200 * EOK, "20260315000001"),
-            _equity(1500 * EOK, "20260315000001"),
+        (2024, "11011", "CFS"): [
+            _income(200 * EOK, "20250315000001"),
+            _equity(1500 * EOK, "20250315000001"),
         ],
     }
 
@@ -129,12 +129,13 @@ def test_valuation_band_computes_quantiles_and_current_percentile(cache_conn) ->
     session = _session()
 
     out = handlers.handle_kis_stock_valuation_band(
-        {"stock_code": "000001", "corp_code": "00000001", "as_of": "20261104", "years": 2}, session
+        {"stock_code": "000001", "corp_code": "00000001", "as_of": "20260331", "years": 2}, session
     )
 
-    assert out["years"] == [2024, 2025]
+    # window 2024-03-31..2026-03-31 → trailing fiscal years 2022..2024 (FY2022 has no report here)
+    assert out["years"] == [2022, 2023, 2024]
     assert out["statement_basis"] == "CFS"
-    assert out["current"] == {"close": 22000.0, "date": "2025-10-01", "eps_bps_year": 2025}
+    assert out["current"] == {"close": 22000.0, "date": "2025-10-01", "eps_bps_year": 2024}
 
     per = out["per"]
     assert per["n"] == 4
@@ -148,12 +149,13 @@ def test_valuation_band_computes_quantiles_and_current_percentile(cache_conn) ->
     assert pbr["current"] == pytest.approx(0.1467, rel=1e-3)
     assert pbr["current_percentile"] == pytest.approx(50.0)
 
-    assert out["calls"] == 4  # 2 statements (both CFS) + 2 share-count
+    assert out["calls"] == 5  # 3 statements (CFS) + 2 share-count (only years with a report)
     assert session.dart.calls == [
+        ("statements", "2022", "11011", "CFS"),
+        ("statements", "2023", "11011", "CFS"),
         ("statements", "2024", "11011", "CFS"),
-        ("statements", "2025", "11011", "CFS"),
+        ("shares", "2023", "11011"),
         ("shares", "2024", "11011"),
-        ("shares", "2025", "11011"),
     ]
 
 
@@ -162,11 +164,11 @@ def test_valuation_band_falls_back_to_ofs_when_cfs_is_empty(cache_conn) -> None:
     session = _session(statements=ofs_statements)
 
     out = handlers.handle_kis_stock_valuation_band(
-        {"stock_code": "000001", "corp_code": "00000001", "as_of": "20261104", "years": 2}, session
+        {"stock_code": "000001", "corp_code": "00000001", "as_of": "20260331", "years": 2}, session
     )
 
     assert out["statement_basis"] == "OFS"
-    assert out["calls"] == 2 + 2 + 2  # CFS attempt (2, empty) + OFS attempt (2) + share-count (2)
+    assert out["calls"] == 3 + 3 + 2  # CFS attempt (3, empty) + OFS attempt (3) + share-count (2)
 
 
 def test_valuation_band_without_any_annual_report_is_exit_4(cache_conn) -> None:
@@ -174,7 +176,7 @@ def test_valuation_band_without_any_annual_report_is_exit_4(cache_conn) -> None:
 
     with pytest.raises(CliError) as info:
         handlers.handle_kis_stock_valuation_band(
-            {"stock_code": "000001", "corp_code": "00000001", "as_of": "20261104", "years": 2}, session
+            {"stock_code": "000001", "corp_code": "00000001", "as_of": "20260331", "years": 2}, session
         )
 
     assert info.value.exit_code == EXIT_BROKER
@@ -188,7 +190,7 @@ def test_valuation_band_without_cached_bars_is_exit_4(monkeypatch) -> None:
 
     with pytest.raises(CliError) as info:
         handlers.handle_kis_stock_valuation_band(
-            {"stock_code": "000001", "corp_code": "00000001", "as_of": "20261104", "years": 2}, session
+            {"stock_code": "000001", "corp_code": "00000001", "as_of": "20260331", "years": 2}, session
         )
 
     assert info.value.exit_code == EXIT_BROKER
@@ -198,12 +200,12 @@ def test_valuation_band_drops_a_year_whose_shares_are_missing(cache_conn) -> Non
     session = _session(shares=[])
 
     out = handlers.handle_kis_stock_valuation_band(
-        {"stock_code": "000001", "corp_code": "00000001", "as_of": "20261104", "years": 2}, session
+        {"stock_code": "000001", "corp_code": "00000001", "as_of": "20260331", "years": 2}, session
     )
 
     assert out["years_detail"] == [
         {
-            "year": 2024,
+            "year": 2023,
             "net_income_owners": pytest.approx(100 * EOK),
             "equity_owners": pytest.approx(1000 * EOK),
             "shares": None,
@@ -211,7 +213,7 @@ def test_valuation_band_drops_a_year_whose_shares_are_missing(cache_conn) -> Non
             "bps": None,
         },
         {
-            "year": 2025,
+            "year": 2024,
             "net_income_owners": pytest.approx(200 * EOK),
             "equity_owners": pytest.approx(1500 * EOK),
             "shares": None,
@@ -222,3 +224,16 @@ def test_valuation_band_drops_a_year_whose_shares_are_missing(cache_conn) -> Non
     assert out["current"]["eps_bps_year"] is None
     assert out["per"]["n"] == 0
     assert out["per"]["current"] is None
+
+
+def test_valuation_band_never_pairs_a_bar_with_a_report_not_yet_due(cache_conn) -> None:
+    """A 2025-03 bar must use FY2023, not FY2024 (whose report is due 2025-03-31)."""
+    cache_conn.execute("INSERT INTO ohlcv (code, date, close) VALUES ('000001', '2025-03-01', 30000.0)")
+    session = _session()
+
+    out = handlers.handle_kis_stock_valuation_band(
+        {"stock_code": "000001", "corp_code": "00000001", "as_of": "20260331", "years": 2}, session
+    )
+
+    assert out["per"]["n"] == 5
+    assert out["per"]["quantiles"]["max"] == pytest.approx(3.0)  # 30,000 / FY2023 EPS 10,000

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from statistics import mean
 
 from cluefin_openapi_cli import band as valuation_band
@@ -1913,13 +1913,14 @@ _BAND_MIN_YEARS = 2
 _BAND_MAX_YEARS = 10
 
 _VALUATION_BAND_NOTES = (
-    "PER·PBR 시계열 = 그날 종가(원주가, 조정 전, 로컬 `cache ohlcv`) ÷ 그 회계연도 EPS·BPS. 회계연도는 "
-    "역년(12월 결산)으로 가정한다 — 결산월이 다른 종목은 기간이 어긋날 수 있다.",
+    "PER·PBR 시계열 = 그날 종가(원주가, 조정 전, 로컬 `cache ohlcv`) ÷ 그날 이미 공시됐어야 하는 최신 사업연도 "
+    "EPS·BPS(4월 1일부터 전년도, 그 전에는 전전년도 — 12월 결산 가정). current 와 같은 기준이라 현재 분위가 "
+    "같은 잣대의 비교다. 결산월이 다른 종목은 기간이 어긋날 수 있다.",
     "EPS·BPS 는 cache financials(fnlttMultiAcnt, 지배/비지배 구분 없음) 대신 종목별 전체 재무제표를 "
     "연도마다 직접 불러 계산한다(지배주주순이익 ÷ 그 해 정기보고서의 보통주 발행주식총수, 지배기업지분 ÷ "
     "같은 주식수 — kis stock valuation 과 같은 관례, 우선주 제외). 결정 2026-11-04, "
     "docs/plans/today-bundles-plan.md B-7.",
-    "최신 연도는 사업보고서가 아직 없으면(다음 해 3월 전) 빠진다 — 분기 실적을 연 환산하지 않는다.",
+    "사업보고서가 늦어 아직 없는 연도는 빠진다 — 분기 실적을 연 환산하지 않는다.",
     "current 는 캐시의 가장 최근 종가 ÷ 계산 가능한 가장 최근 회계연도 EPS·BPS다 — kis stock valuation 의 "
     "TTM·최신 분기 분모와 다르다(연간 vs TTM). current_percentile 은 과거 분포 안에서 현재 값 이하인 표본의 "
     "비율(0~100)이다.",
@@ -1975,7 +1976,7 @@ def _fetch_band_annual_reports(dart, corp_code: str, years: list[int], as_of: st
                 "minimum": _BAND_MIN_YEARS,
                 "maximum": _BAND_MAX_YEARS,
                 "default": _BAND_DEFAULT_YEARS,
-                "description": f"Number of completed fiscal years in the band. Default {_BAND_DEFAULT_YEARS}.",
+                "description": f"Band length in years of daily closes back from as_of. Default {_BAND_DEFAULT_YEARS}.",
             },
         },
         "required": ["stock_code", "corp_code"],
@@ -1990,8 +1991,14 @@ def handle_kis_stock_valuation_band(params: dict, session) -> dict:
     corp_code = params["corp_code"]
     as_of = params.get("as_of") or _kst_today()
     years_n = int(params.get("years", _BAND_DEFAULT_YEARS))
-    current_year = int(as_of[:4])
-    fiscal_years = list(range(current_year - years_n, current_year))
+    window_end = datetime.strptime(as_of, "%Y%m%d").date()
+    try:
+        window_start = window_end.replace(year=window_end.year - years_n)
+    except ValueError:  # Feb 29
+        window_start = window_end.replace(year=window_end.year - years_n, day=28)
+    fiscal_years = list(
+        range(valuation_band.trailing_fiscal_year(window_start), valuation_band.trailing_fiscal_year(window_end) + 1)
+    )
 
     dart = session.get_dart()
     basis, reports, dart_calls = _fetch_band_annual_reports(dart, corp_code, fiscal_years, as_of)
@@ -2036,8 +2043,6 @@ def handle_kis_stock_valuation_band(params: dict, session) -> dict:
 
     cache_conn = cache_store.open_store(read_only=True)
     try:
-        window_start = date(fiscal_years[0], 1, 1)
-        window_end = datetime.strptime(as_of, "%Y%m%d").date()
         bars_payload = read_ohlcv(cache_conn, stock_code, since=window_start, until=window_end, adjusted=False)
     finally:
         cache_conn.close()

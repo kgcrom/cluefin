@@ -8,22 +8,38 @@ come from DART's per-stock full statements and share count, fetched one fiscal y
 not `cache financials` (`fnlttMultiAcnt`), which has no 지배/비지배 split (decision 2026-11-04,
 docs/plans/today-bundles-plan.md B-7).
 
-A day's multiple is that day's close divided by the EPS/BPS of the calendar year it falls in
-(결산월 12월 가정 — a different fiscal year end would shift this). A year with no computable
-EPS/BPS (not yet filed, or a missing share count) contributes no rows for that year — never
+A day's multiple is that day's close divided by the EPS/BPS of the latest fiscal year whose
+사업보고서 was due by that day (`trailing_fiscal_year`: the prior year from April 1, two years back
+before it — 결산월 12월 가정). That is what an investor could see on the day, and the same basis
+the `current` multiple uses, so the current percentile compares like with like. A fiscal year
+with no computable EPS/BPS (missing statements or share count) contributes no rows — never
 zero-filled.
 """
 
 from __future__ import annotations
 
+from datetime import date, datetime
 from typing import Any
 
 import numpy as np
 
-__all__ = ["band", "eps_bps", "multiple_series", "quantiles"]
+__all__ = ["band", "eps_bps", "multiple_series", "quantiles", "trailing_fiscal_year"]
 
 _QUANTILE_LEVELS = (0.0, 0.25, 0.50, 0.75, 1.00)
 _QUANTILE_LABELS = ("min", "p25", "median", "p75", "max")
+
+
+def _as_date(day: str | date) -> date:
+    if isinstance(day, date):
+        return day
+    text = str(day).replace("-", "")
+    return datetime.strptime(text[:8], "%Y%m%d").date()
+
+
+def trailing_fiscal_year(day: str | date) -> int:
+    """Latest fiscal year whose annual report was due by ``day`` (filed within 90 days: by March 31)."""
+    d = _as_date(day)
+    return d.year - 1 if (d.month, d.day) >= (4, 1) else d.year - 2
 
 
 def eps_bps(
@@ -56,16 +72,16 @@ def _percentile_of(value: float, values: list[float]) -> float:
 
 
 def multiple_series(bars: list[tuple[str, float]], per_share_by_year: dict[int, float | None]) -> list[dict[str, Any]]:
-    """`(date "YYYY-MM-DD"/"YYYYMMDD", close)` bars → one row per bar whose year has a per-share value.
+    """`(date "YYYY-MM-DD"/"YYYYMMDD", close)` bars → one row per bar whose trailing fiscal year has a value.
 
-    Rows whose calendar year is missing from `per_share_by_year`, or whose per-share value or
-    close is None/non-positive, are dropped.
+    Each bar is paired with `trailing_fiscal_year(date)`. Rows whose fiscal year is missing from
+    `per_share_by_year`, or whose per-share value or close is None/non-positive, are dropped.
     """
     out = []
     for day, close in bars:
         if close is None or close <= 0:
             continue
-        year = int(str(day)[:4])
+        year = trailing_fiscal_year(day)
         value = per_share_by_year.get(year)
         if value is None or value <= 0:
             continue
