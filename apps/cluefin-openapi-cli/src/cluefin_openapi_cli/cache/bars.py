@@ -1,10 +1,11 @@
 """`ohlcv` table: unadjusted KIS daily bars for every `company` row plus three indices.
 
 Unadjusted prices never change after the fact, so a daily run only appends — except that
-each run re-fetches a stock's last 60 stored days and, if any close differs (a vendor
-correction), replaces that stock's whole history. The bar's own corporate-action markers
-(`flng_cls_code`, `prtt_rate`, `revl_issu_reas`) are stored as sent: they are what was known
-on that day.
+each run re-fetches a stock's last 60 stored days. If only the last stored day's close differs
+(that bar was stored before KIS finalised it; 2026-11-04 most stocks' 10-23 close), that one row
+is overwritten; if an earlier close differs (a vendor correction), the stock's whole history is
+replaced. The bar's own corporate-action markers (`flng_cls_code`, `prtt_rate`, `revl_issu_reas`)
+are stored as sent: they are what was known on that day.
 
 KIS `chart.period` has no cursor: a call returns the newest 100 rows of its date range (indices:
 50), even for a ten-year range (measured 2026-10-18). So each call asks for the whole remaining
@@ -67,6 +68,7 @@ class BarLoadStats:
     skipped: int = 0
     rows: int = 0
     replaced: int = 0
+    patched: int = 0
     calls: int = 0
     errors: list[dict[str, str]] = field(default_factory=list)
 
@@ -77,6 +79,7 @@ class BarLoadStats:
             "skipped": self.skipped,
             "rows": self.rows,
             "replaced": self.replaced,
+            "patched": self.patched,
             "calls": self.calls,
             "errors": len(self.errors),
             "error_samples": self.errors[:10],
@@ -235,29 +238,31 @@ def _sync(
     stats: BarLoadStats,
     now: datetime,
 ) -> None:
-    """Append new bars; replace the code's history when a re-fetched recent close differs.
+    """Append new bars; patch or replace stored bars when a re-fetched recent close differs.
 
-    Also backfills the head when ``start`` is earlier than where this code was fetched from
-    (a corrected listing date or an earlier ``--since``).
+    A difference on the last stored day alone overwrites that row; any earlier difference, or a last
+    day KIS no longer returns, replaces the code's history. Also backfills the head when ``start`` is
+    earlier than where this code was fetched from (a corrected listing date or an earlier ``--since``).
     """
 
     recent = conn.execute(
         "SELECT date, close FROM ohlcv WHERE code = ? ORDER BY date DESC LIMIT ?", [code, RECHECK_ROWS]
     ).fetchall()
     head: list[Bar] = []
+    patch: Bar | None = None
     if not recent:
         bars = fetch(start, end)
         replace = False
     else:
-        recheck_from = recent[-1][0]
-        fresh = fetch(recheck_from, end)
-        by_date = {bar.date: bar.close for bar in fresh}
-        replace = any(by_date.get(day, float("nan")) != close for day, close in recent if close is not None)
+        last = recent[0][0]
+        fresh = {bar.date: bar for bar in fetch(recent[-1][0], end)}
+        changed = [day for day, close in recent if close is not None and _close_on(fresh, day) != close]
+        replace = any(day != last or day not in fresh for day in changed)
         if replace:
             bars = fetch(start, end)
         else:
-            last = recent[0][0]
-            bars = [bar for bar in fresh if bar.date > last]
+            patch = fresh[last] if changed else None
+            bars = [bar for day, bar in sorted(fresh.items()) if day > last]
             fetched_from = _fetched_from(conn, code, start)
             if start < fetched_from:
                 head = fetch(start, fetched_from - timedelta(days=1))
@@ -269,6 +274,15 @@ def _sync(
         if replace or head:
             # Re-inserted or older bars carry the default factor; make the next adj run start over.
             conn.execute("DELETE FROM adj_log WHERE code = ?", [code])
+        if patch is not None:
+            conn.execute("DELETE FROM ohlcv WHERE code = ? AND date = ?", [code, patch.date])
+            # The re-inserted row has the default factor; the next adj run extends from the day before.
+            conn.execute(
+                "UPDATE adj_log SET checked_through = ? WHERE code = ? AND checked_through >= ?",
+                [patch.date - timedelta(days=1), code, patch.date],
+            )
+            bars = [patch, *bars]
+            stats.patched += 1
         _insert(conn, code, head + bars, now)
         conn.execute(
             "INSERT INTO bar_log VALUES (?, ?) ON CONFLICT (code) DO UPDATE SET "
@@ -281,6 +295,11 @@ def _sync(
         raise
     stats.rows += len(head) + len(bars)
     stats.loaded += 1
+
+
+def _close_on(fresh: dict[date, Bar], day: date) -> float | None:
+    bar = fresh.get(day)
+    return float("nan") if bar is None else bar.close
 
 
 def _fetched_from(conn: duckdb.DuckDBPyConnection, code: str, start: date) -> date:

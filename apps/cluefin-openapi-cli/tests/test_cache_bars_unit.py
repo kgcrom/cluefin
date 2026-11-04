@@ -165,6 +165,45 @@ def test_corrected_recent_close_replaces_whole_history(market) -> None:
     assert _closes(conn, "005930")[date(2016, 1, 4)] == 2.0
 
 
+def test_changed_last_stored_close_patches_only_that_day(market) -> None:
+    last, series = market
+    conn = _store_with([("005930", date(1975, 6, 11), None)])
+    kis = FakeKis(series)
+    _load(conn, kis, last)
+    conn.execute("UPDATE ohlcv SET adj_factor = 0.5 WHERE code = '005930'")
+    conn.execute("INSERT INTO adj_log VALUES ('005930', ?, ?)", [last, datetime(2026, 10, 16)])
+    rows_before = len(_closes(conn, "005930"))
+    series["005930"][last] = 7777.0  # the stored last bar was not final yet
+    new_day = last + timedelta(days=3)
+    series["005930"][new_day] = 8888.0
+    kis.stock_calls.clear()
+
+    stats = _load(conn, kis, new_day)
+
+    assert (stats.replaced, stats.patched) == (0, 1)
+    assert [call[0] for call in kis.stock_calls] == ["005930"]  # no refetch of the history
+    closes = _closes(conn, "005930")
+    assert (closes[last], closes[new_day]) == (7777.0, 8888.0)
+    assert len(closes) == rows_before + 1
+    factors = dict(conn.execute("SELECT date, adj_factor FROM ohlcv WHERE code = '005930'").fetchall())
+    assert factors[last - timedelta(days=1)] == 0.5  # older factors stay
+    assert factors[last] == 1.0
+    assert conn.execute("SELECT checked_through FROM adj_log").fetchone()[0] == last - timedelta(days=1)
+
+
+def test_last_stored_day_missing_from_kis_replaces_whole_history(market) -> None:
+    last, series = market
+    conn = _store_with([("005930", date(1975, 6, 11), None)])
+    kis = FakeKis(series)
+    _load(conn, kis, last)
+    del series["005930"][last]
+
+    stats = _load(conn, kis, last)
+
+    assert (stats.replaced, stats.patched) == (1, 0)
+    assert last not in _closes(conn, "005930")
+
+
 def test_delisted_code_is_skipped_once_complete(market) -> None:
     last, series = market
     conn = _store_with([("117930", None, date(2017, 3, 7))])
