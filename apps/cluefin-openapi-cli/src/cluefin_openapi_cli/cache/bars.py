@@ -2,10 +2,10 @@
 
 Unadjusted prices never change after the fact, so a daily run only appends — except that
 each run re-fetches a stock's last 60 stored days. If only the last stored day's close differs
-(that bar was stored before KIS finalised it; 2026-11-04 most stocks' 10-23 close), that one row is
-overwritten; if an earlier close differs (a vendor correction), the stock's whole history is replaced. The bar's own corporate-action markers
-(`flng_cls_code`, `prtt_rate`, `revl_issu_reas`) are stored as sent: they are what was known
-on that day.
+(that bar was stored before KIS finalised it; 2026-11-04 most stocks' 10-23 close), that one row
+is overwritten; if an earlier close differs (a vendor correction), the stock's whole history is
+replaced. The bar's own corporate-action markers (`flng_cls_code`, `prtt_rate`, `revl_issu_reas`)
+are stored as sent: they are what was known on that day.
 
 KIS `chart.period` has no cursor: a call returns the newest 100 rows of its date range (indices:
 50), even for a ten-year range (measured 2026-10-18). So each call asks for the whole remaining
