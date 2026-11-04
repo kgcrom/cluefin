@@ -1,10 +1,11 @@
 """Collect one company's recent major-event disclosures (주요사항보고서) for the
 financial-analysis screen's "주요사항" tab.
 
-Desk does not depend on cluefin-openapi-cli (2026-11-04 decision), so this calls
-`cluefin_openapi.dart`'s `MajorShareholderDisclosure` client directly instead of
-reusing that CLI's `dart.dilution_watch`/`dart.major_event` handlers. The slug ->
-client-method mapping below mirrors
+This calls `cluefin_openapi.dart`'s `MajorShareholderDisclosure` client directly
+instead of reusing cluefin-openapi-cli's `dart.dilution_watch`/`dart.major_event`
+handlers (2026-11-04 decision) — desk's dependency on that CLI (added for the
+watchlist's trend-setup group column, see `data/trend_groups.py`) is for its cache
+module only, not its DART handlers. The slug -> client-method mapping below mirrors
 `apps/cluefin-openapi-cli/src/cluefin_openapi_cli/handlers/dart.py`'s `_MAJOR_EVENTS`
 table, the source of truth for which library method actually serves which DART
 endpoint — several of `cluefin-openapi`'s method names do not match their endpoint

@@ -14,7 +14,7 @@ pushed from a row selection or from `/` stock search (`escape` goes back).
 | `3` | Theme / sector | Theme groups and sector constituents (Kiwoom) |
 | `4` | ETF analysis | ETF ranking and composition |
 | `5` | Investor flow | Institution/foreign net-buy trends |
-| `6` | Watchlist | KIS HTS watchlist groups (also those made in the 한국투자 mobile app) and their quotes |
+| `6` | Watchlist | KIS HTS watchlist groups (also those made in the 한국투자 mobile app) and their quotes, plus each stock's trend-setup group (1/2/3, from the local `cache load`/`cache trend-setup` cache; "-" if the cache is missing) |
 | `/` | Stock search | Code (6 characters, letters included) or name → stock detail, from any screen |
 | — | Stock detail | Price chart, RSI/MACD/Bollinger, investor·broker·supply, opinions, news, ML prediction (LightGBM + SHAP) |
 | — | Financial analysis | KIS financials, XBRL statements, DART disclosures, dividends, major shareholders, share changes |

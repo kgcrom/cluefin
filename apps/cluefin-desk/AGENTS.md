@@ -14,6 +14,13 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   Tests pass `Settings(brokers=BrokerClientConfig(...))` to `DomesticDataFetcher` and patch auth in
   `cluefin_openapi.client_factory`.
 
+## Dependencies
+
+- `cluefin-openapi-cli` is a workspace dependency (2026-11-04, B-12) only for the watchlist's
+  trend-setup group column (`data/trend_groups.py` reads `cache/trend.py`'s local DuckDB cache and
+  reuses `trend_setup`'s group rules) — not for its CLI handlers; `data/major_events.py` still calls
+  `cluefin-openapi`'s DART client directly for the reason in its docstring.
+
 ## Conventions for new screens
 
 - The fetcher and screener are app-lifetime singletons: use `self.app.fetcher` /
