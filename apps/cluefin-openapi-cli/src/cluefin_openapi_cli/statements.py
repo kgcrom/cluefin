@@ -79,11 +79,13 @@ CASH_ITEMS: dict[str, Item] = {
     ),
     "dividends_paid": Item(("ifrs-full_DividendsPaidClassifiedAsFinancingActivities",), ("배당금의지급", "배당금지급")),
     "interest_expense": Item(("dart_AdjustmentsForInterestExpenses",), ("이자비용",)),
-    # D&A is split across two cash-flow adjustment lines in most filings (유형자산/무형자산); quality.py sums them.
+    # D&A: only filers that itemize the cash-flow adjustments carry these lines. Many large filers lump them into
+    # one "조정" line (D&A then lives in the notes), so None here is "not itemized", not zero. Nothing sums them yet.
     "depreciation": Item(("ifrs-full_DepreciationExpense",), ("감가상각비", "유형자산감가상각비")),
     "amortization": Item(("ifrs-full_AmortisationExpense",), ("무형자산상각비", "무형자산감가상각비")),
     "treasury_shares_acquired": Item(
-        ("ifrs-full_PaymentsToAcquireOrRedeemEntitysShares",), ("자기주식의취득", "자기주식취득")
+        ("dart_AcquisitionOfTreasuryShares", "ifrs-full_PaymentsToAcquireOrRedeemEntitysShares"),
+        ("자기주식의취득", "자기주식취득"),
     ),
     "treasury_shares_disposed": Item(
         ("ifrs-full_ProceedsFromSaleOrDisposalOfEntitysSharesHeld",), ("자기주식의처분", "자기주식처분")
