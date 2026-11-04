@@ -182,6 +182,17 @@ uv run cluefin-openapi-cli cache macro-beta --code 005930 --json                
 uv run cluefin-openapi-cli cache magic-formula --top 30 --json                     # 이익수익률+ROIC 순위 합 상위 30
 ```
 
+`audit` 은 `.claude/agents/*.md` 로 돈 agent 실행을 Claude Code 트랜스크립트에서 읽어, 그 agent 파일의 감사 기준과
+대조합니다(빠진 명령·같은 인자 반복·exit 3 뒤 계속·재시도 없는 실패). 저장소 루트에서 실행합니다.
+
+```bash
+uv run cluefin-openapi-cli audit runs --json                                       # 서브에이전트 실행 목록
+uv run cluefin-openapi-cli audit check --run <agent id> --json                     # 한 실행의 결정적 검사
+uv run cluefin-openapi-cli audit check --session <session id> --code 005930 --json # 메인 대화의 기업 분석
+uv run cluefin-openapi-cli audit trace --run <agent id> --json                     # 호출·응답·리포트 (agent-audit 입력)
+uv run cluefin-openapi-cli audit report --json                                     # agent·프롬프트 버전별 누적
+```
+
 `cache load --only financials` 는 DART `fnlttMultiAcnt`(다중회사 주요계정)로 전 종목(캐시 `company` 의 `corp_code` 가 있는
 종목) 최근 5개 사업연도의 연간(reprt_code 11011) 표준 12개 계정만 쌓습니다 — 유동자산·비유동자산·자산총계·유동부채·
 비유동부채·부채총계·자본금·이익잉여금(결손금)·자본총계·매출액·영업이익·당기순이익. **지배/비지배 구분이 없고 현금흐름표

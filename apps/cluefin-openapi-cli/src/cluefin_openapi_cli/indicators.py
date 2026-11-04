@@ -54,7 +54,7 @@ _STRONG = 0.4
 
 _TRADING_DAYS_PER_YEAR = 252
 
-# Stop-width floor from the market-review agent: 1.5 × ATR14 × √(horizon / 30). A stop closer than
+# Stop-width floor from the company-review agent: 1.5 × ATR14 × √(horizon / 30). A stop closer than
 # this is inside normal noise for the horizon; one wider than 20% of the price means no position
 # (watch), not a wider stop.
 _STOP_ATR_MULTIPLE = 1.5

@@ -6,6 +6,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass
 from typing import Any
 
+from cluefin_openapi_cli.audit.cli import run_audit
 from cluefin_openapi_cli.cache.cli import run_cache
 from cluefin_openapi_cli.cliargs import (
     _merge_params,
@@ -52,7 +53,19 @@ from cluefin_openapi_cli.registry import CommandSpec, get_registry
 
 __all__ = ["CLIResult", "CliError", "dispatch", "main", "run_cli"]
 
-META_COMMANDS = ("search", "brokers", "list", "describe", "schema", "domains", "tags", "recipes", "recipe", "cache")
+META_COMMANDS = (
+    "search",
+    "brokers",
+    "list",
+    "describe",
+    "schema",
+    "domains",
+    "tags",
+    "recipes",
+    "recipe",
+    "cache",
+    "audit",
+)
 
 # Per-meta-command help. `usage` is the single source of truth for the root `--help`
 # listing too (`_run_root`), so the two can never drift apart.
@@ -279,6 +292,39 @@ _META_HELP: dict[str, dict[str, Any]] = {
             "utilities, 관리종목/거래정지, and the bottom 20% by market cap. `cache financials` has no cash or "
             "debt breakout, so EV and invested capital are approximations — see cache/magic.py docstring and "
             "every payload's `notes` before reading these as the textbook ratio.",
+        ],
+    },
+    "audit": {
+        "description": "Check agent runs from Claude Code transcripts: missing, repeated and failed CLI calls. "
+        "Reads files, not a broker.",
+        "usage": [
+            f"{APP_NAME} audit runs [--agent NAME] [--limit 20] [--json]",
+            f"{APP_NAME} audit check (--run <agent id> | --session <id> --code <code>) [--agent NAME] [--json]",
+            f"{APP_NAME} audit trace (--run <agent id> | --session <id> --code <code>) [--max-chars 4000] [--json]",
+            f"{APP_NAME} audit report [--agent NAME] [--json]",
+        ],
+        "options": [
+            {"flag": "--run ID", "meaning": "A subagent run id from `audit runs`."},
+            {
+                "flag": "--session ID --code CODE",
+                "meaning": "A main-conversation analysis: the session id and the stock it analysed. Only calls "
+                "and text from the first call naming that stock on are read.",
+            },
+            {"flag": "--agent NAME", "meaning": "Agent file to check against (default: the run's own agent)."},
+            {"flag": "--max-chars N", "meaning": "trace: cut each call output at N characters (default 4000)."},
+        ],
+        "examples": [
+            f"uv run {APP_NAME} audit runs --json",
+            f"uv run {APP_NAME} audit check --run a8414b43310852719 --json",
+            f"uv run {APP_NAME} audit trace --run a8414b43310852719 --json",
+            f"uv run {APP_NAME} audit report --json",
+        ],
+        "notes": [
+            "Rules come from the ```audit block at the end of each `.claude/agents/<name>.md`.",
+            "`agent_commit` is the agent file's last commit before the run started, so findings group by prompt "
+            "version.",
+            "Run from the repository root; transcripts are read from $CLAUDE_CONFIG_DIR/projects (default "
+            "~/.claude/projects).",
         ],
     },
 }
@@ -642,6 +688,7 @@ def dispatch(argv: list[str] | None = None) -> None:
         "recipes": _run_recipes,
         "recipe": _run_recipe,
         "cache": run_cache,
+        "audit": run_audit,
     }
     runner = runners.get(args[0])
     if runner is not None:
