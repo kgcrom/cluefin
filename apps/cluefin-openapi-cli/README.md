@@ -179,6 +179,7 @@ uv run cluefin-openapi-cli cache breadth --json                                 
 uv run cluefin-openapi-cli cache load --only financials --json                     # DART, 전 종목 최근 5개년, 연 약 26회
 uv run cluefin-openapi-cli cache financials --code 005930 --json
 uv run cluefin-openapi-cli cache macro-beta --code 005930 --json                   # 주간 수익률을 KOSPI·환율·금리에 회귀
+uv run cluefin-openapi-cli cache magic-formula --top 30 --json                     # 이익수익률+ROIC 순위 합 상위 30
 ```
 
 `cache load --only financials` 는 DART `fnlttMultiAcnt`(다중회사 주요계정)로 전 종목(캐시 `company` 의 `corp_code` 가 있는
@@ -217,6 +218,14 @@ PBR(밸류에이션) 축은 캐시에 과거 재무가 들어오기 전까지는
 증가, 최근 25거래일)와 **follow-through day**(최근 스윙 저점 다음 상승일을 1일차로, 4~10일차에 1.25% 이상 상승 + 거래량 증가)를
 IBD(윌리엄 오닐) 방법론의 근사로 냅니다 — 공식이 비공개라 임계값·창 크기의 근거는 `cache/breadth.py` 모듈 docstring 에 적혀
 있고, 매수·매도 신호가 아니라 날짜·수치 사실만 줍니다.
+
+`cache magic-formula` 는 Greenblatt 마법공식(이익수익률 EBIT/EV + ROIC) 횡단면 스크린입니다. 유니버스는 `cache rs`/
+`cache breadth` 와 같은 `cache.trend._universe` 에서 금융·증권·보험·전기/가스 업종(`company.sector`)·관리종목·거래정지를
+빼고, 남은 종목의 시총 하위 20% 를 더 뺍니다. 재무는 `cache financials` 의 종목별 최신 사업연도 1개년이고 EBIT 는 영업이익으로
+대신합니다. **`financials` 에 현금·이자부채 구분이 없어** EV(= 시총 + 부채총계)와 투하자본(= 자산총계 − 유동부채)은 둘 다
+근사이고 — Greenblatt 의 정확한 정의가 아닙니다. 두 지표의 순위는 `cache rs`/`cache breadth` 가 쓰는
+`_percentile_rank`(0~99, 평균순위 동점 처리)의 합이고(높을수록 좋음), `--top`(기본 30)개까지 보여 줍니다. 한계는
+`cache/magic.py` 모듈 docstring 과 매 응답의 `notes` 에 있습니다.
 
 `cache perf` 는 종목을 수정주가로 사서 들고 있었을 때의 성과(`cluefin-ta` `PERFORMANCE`: CAGR·MDD·변동성·샤프·소르티노·칼마·
 베타·알파)와 같은 기간 벤치마크(기본 `U0001`) 자체의 성과를 함께 줍니다. 두 코드 모두 일봉이 있는 날만 쓰고, CAGR 은 달력 연수로

@@ -7,7 +7,7 @@ from collections.abc import Callable
 from datetime import date, datetime, time, timedelta
 from typing import Any
 
-from cluefin_openapi_cli.cache import baserate, breadth, store
+from cluefin_openapi_cli.cache import baserate, breadth, magic, store
 from cluefin_openapi_cli.cache.load import PARTS, Sources, run_load
 from cluefin_openapi_cli.cache.macro_beta import DEFAULT_SINCE_DAYS, read_macro_beta
 from cluefin_openapi_cli.cache.perf import read_perf
@@ -479,6 +479,32 @@ def _run_breadth(argv: list[str]) -> None:
     _render_read(payload, options, default_limit=None)
 
 
+def _parse_top(raw: str | None) -> int:
+    if raw is None:
+        return magic.DEFAULT_TOP
+    try:
+        value = int(raw)
+    except ValueError:
+        raise CliError(f"`--top` takes a positive integer, got `{raw}`.", exit_code=EXIT_USAGE) from None
+    if value <= 0:
+        raise CliError(f"`--top` must be positive, got `{raw}`.", exit_code=EXIT_USAGE)
+    return value
+
+
+def _run_magic_formula(argv: list[str]) -> None:
+    positional, options = _parse_named_options(argv)
+    if positional:
+        raise CliError("`cache magic-formula` does not accept positional arguments.", exit_code=EXIT_USAGE)
+    top = _parse_top(_str_option(options, "top"))
+    conn = _read_conn()
+    try:
+        as_of = _trend_as_of(conn, _str_option(options, "as_of"))
+        payload = magic.screen(conn, as_of, top=top)
+    finally:
+        conn.close()
+    _render_read(payload, options, default_limit=None)
+
+
 SUBCOMMANDS: dict[str, Callable[[list[str]], None]] = {
     "status": _run_status,
     "load": _run_load,
@@ -492,6 +518,7 @@ SUBCOMMANDS: dict[str, Callable[[list[str]], None]] = {
     "rs": _run_rs,
     "breadth": _run_breadth,
     "macro-beta": _run_macro_beta,
+    "magic-formula": _run_magic_formula,
 }
 
 

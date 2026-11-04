@@ -178,6 +178,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
             "[--by sector|industry] [--json]",
             f"{APP_NAME} cache breadth [--as-of YYYYMMDD] [--market KOSPI|KOSDAQ] [--json]",
             f"{APP_NAME} cache macro-beta --code <code> [--since YYYYMMDD] [--until YYYYMMDD] [--json]",
+            f"{APP_NAME} cache magic-formula [--as-of YYYYMMDD] [--top 30] [--json]",
         ],
         "options": [
             {"flag": "--only P", "meaning": "Parts to load, comma-separated (default all)."},
@@ -234,6 +235,10 @@ _META_HELP: dict[str, dict[str, Any]] = {
                 "flag": "--since/--until YYYYMMDD",
                 "meaning": "macro-beta: regression window (default 3 years back from today).",
             },
+            {
+                "flag": "--top N",
+                "meaning": "magic-formula: rows to return, best combined rank first (default 30).",
+            },
         ],
         "examples": [
             f"uv run {APP_NAME} cache status --json",
@@ -245,6 +250,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
             f"uv run {APP_NAME} cache rs --code 005930,000660 --json",
             f"uv run {APP_NAME} cache breadth --json",
             f"uv run {APP_NAME} cache macro-beta --code 005930 --json",
+            f"uv run {APP_NAME} cache magic-formula --top 30 --json",
         ],
         "notes": [
             "The file is $CLUEFIN_CACHE_DIR/market.duckdb (default ~/.cache/cluefin/).",
@@ -269,6 +275,10 @@ _META_HELP: dict[str, dict[str, Any]] = {
             "macro-beta: weekly OLS of the stock's return on KOSPI return, USD/KRW change and KTB 3Y/10Y yield "
             "change (bp); needs `cache load --only rates` (ECOS_AUTH_KEY) for the FX/rate series. Diagnostic "
             "only — coefficients/t-values/R² over the window, not a forecast.",
+            "magic-formula: Greenblatt earnings-yield(EBIT/EV)+ROIC screen, universe minus financials/insurance/"
+            "utilities, 관리종목/거래정지, and the bottom 20% by market cap. `cache financials` has no cash or "
+            "debt breakout, so EV and invested capital are approximations — see cache/magic.py docstring and "
+            "every payload's `notes` before reading these as the textbook ratio.",
         ],
     },
 }
