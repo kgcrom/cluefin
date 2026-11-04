@@ -56,7 +56,7 @@ const binaryEndpoint: DartEndpointDefinition = {
   params: [],
 };
 
-const createClient = (fetchMock: typeof fetch, options: { maxRetries?: number } = {}): DartClient =>
+const createClient = (fetchMock: typeof fetch, options: { maxRetries?: number; rawKeys?: boolean } = {}): DartClient =>
   new DartClient({ authKey: AUTH_KEY, fetchImpl: fetchMock, logger: silentLogger, maxRetries: 0, ...options });
 
 describe('DartClient.invokeEndpoint', () => {
@@ -77,6 +77,18 @@ describe('DartClient.invokeEndpoint', () => {
       crtfc_key: AUTH_KEY,
     });
     expect(response.body).toEqual({ status: '000', message: '정상', corpName: '삼성전자', totalCount: 1 });
+  });
+
+  it('rawKeys: true 면 응답 키를 camelCase 로 바꾸지 않고 원문 그대로 돌려준다', async () => {
+    const { fetchMock } = createFetchMock(() =>
+      jsonResponse({ status: '000', message: '정상', corp_name: '삼성전자', total_count: 1 }),
+    );
+
+    const response = await createClient(fetchMock, { rawKeys: true }).invokeEndpoint(jsonEndpoint, {
+      corpCode: '00126380',
+    });
+
+    expect(response.body).toEqual({ status: '000', message: '정상', corp_name: '삼성전자', total_count: 1 });
   });
 
   it('선택 파라미터를 생략하면 쿼리에서 빠진다', async () => {
