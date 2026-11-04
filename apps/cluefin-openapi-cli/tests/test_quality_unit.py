@@ -116,6 +116,41 @@ def test_altman_z_is_null_with_a_reason_when_there_is_no_classified_balance_shee
     assert result["x2"] is not None  # retained_earnings/assets still computable
 
 
+def test_altman_z_market_cap_version_reuses_x1_x2_x3_and_adds_x4_x5() -> None:
+    result = q.altman_z(_year(), market_cap=900.0)
+
+    x1 = (400.0 - 200.0) / 800.0
+    x2 = 200.0 / 800.0
+    x3 = 100.0 / 800.0
+    x4 = 900.0 / 350.0  # market_cap / liabilities, not book equity
+    x5 = 1000.0 / 800.0  # revenue / assets
+    expected = 1.2 * x1 + 1.4 * x2 + 3.3 * x3 + 0.6 * x4 + 1.0 * x5
+    assert result["value"] == pytest.approx(expected)
+    assert result["x4"] == pytest.approx(x4)
+    assert result["x5"] == pytest.approx(x5)
+    assert result["missing"] == []
+
+
+def test_altman_z_is_null_with_a_reason_when_market_cap_is_missing() -> None:
+    result = q.altman_z(_year(), market_cap=None)
+
+    assert result["value"] is None
+    assert result["x4"] is None
+    assert result["x1"] is not None  # x1-x3 still computable without market_cap
+    assert any("x4" in reason for reason in result["missing"])
+    # The Z'' x4 (book equity/liabilities) reason must not leak into this Z (market-cap) result.
+    assert not any("자본/부채" in reason for reason in result["missing"])
+
+
+def test_altman_z_names_missing_revenue_for_financial_filers() -> None:
+    result = q.altman_z(_year(revenue=None, current_assets=None, current_liabilities=None), market_cap=900.0)
+
+    assert result["value"] is None
+    assert result["x5"] is None
+    assert any("x5" in reason for reason in result["missing"])
+    assert any("x1" in reason for reason in result["missing"])
+
+
 def test_piotroski_f_score_scores_nine_items_and_sums_them() -> None:
     previous = _year(
         revenue=900.0,

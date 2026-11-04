@@ -29,6 +29,11 @@ Formulas and sources (also in README/AGENTS):
   Separate Winners from Losers", Journal of Accounting Research, 2000.)
 - Altman Z''(장부가, 비제조업·이머징마켓 변형) = 6.56·X1 + 3.26·X2 + 6.72·X3 + 1.05·X4.
   (Edward Altman, Hartzell & Peck, "Emerging Markets Corporate Bonds: A Scoring System", 1995.)
+- Altman Z(원형, 시가총액 버전) = 1.2·X1 + 1.4·X2 + 3.3·X3 + 0.6·X4 + 1.0·X5. X1~X3 은 Z''와 같고,
+  X4 는 장부가 자기자본 대신 시가총액 ÷ 부채총계, X5 는 매출액 ÷ 자산총계다. `kis stock investor-metrics`
+  가 시가총액을 들고 와 `altman_z`를 호출한다 — 이 모듈은 Z''의 x1~x3 계산을 재사용만 한다.
+  (Edward Altman, "Financial Ratios, Discriminant Analysis and the Prediction of Corporate
+  Bankruptcy", The Journal of Finance, 1968.)
 """
 
 from __future__ import annotations
@@ -185,6 +190,41 @@ def altman_z_double_prime(year: dict[str, Any]) -> dict[str, Any]:
         value = 6.56 * x1 + 3.26 * x2 + 6.72 * x3 + 1.05 * x4
 
     return {"value": value, "x1": x1, "x2": x2, "x3": x3, "x4": x4, "missing": missing}
+
+
+def altman_z(year: dict[str, Any], market_cap: float | None) -> dict[str, Any]:
+    """Z(원형, 시가총액 버전) = 1.2·X1 + 1.4·X2 + 3.3·X3 + 0.6·X4 + 1.0·X5.
+
+    X1~X3 은 `altman_z_double_prime`과 같은 운전자본·이익잉여금·EBIT 비율이다 — 다시 계산하지 않고
+    그 결과를 재사용한다. X4(시가총액 ÷ 부채총계)·X5(매출액 ÷ 자산총계)만 이 함수가 새로 낸다.
+    `market_cap`은 호출부가 같은 단위(원 또는 억원)로 `year`의 금액과 맞춰 넘겨야 한다.
+    """
+    prime = altman_z_double_prime(year)
+    x1, x2, x3 = prime["x1"], prime["x2"], prime["x3"]
+    # x4 메시지만 뺀다 — Z''의 x4(자기자본/부채, 장부가)는 이 Z(시가총액 버전)의 x4와 다른 성분이다.
+    missing = [item for item in prime["missing"] if not item.startswith("x4")]
+
+    assets = year.get("assets")
+    liabilities = year.get("liabilities")
+    revenue = year.get("revenue")
+
+    x4 = None
+    if market_cap is None or liabilities is None or liabilities == 0:
+        missing.append("x4(시가총액/부채): market_cap 또는 liabilities 없음")
+    else:
+        x4 = market_cap / liabilities
+
+    x5 = None
+    if assets is None or assets == 0 or revenue is None:
+        missing.append("x5(매출/자산): revenue 없음 — 금융업(은행·보험·증권)은 매출 항목이 없다")
+    else:
+        x5 = revenue / assets
+
+    value = None
+    if None not in (x1, x2, x3, x4, x5):
+        value = 1.2 * x1 + 1.4 * x2 + 3.3 * x3 + 0.6 * x4 + 1.0 * x5
+
+    return {"value": value, "x1": x1, "x2": x2, "x3": x3, "x4": x4, "x5": x5, "missing": missing}
 
 
 def _flag(condition: bool | None) -> int | None:

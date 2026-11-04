@@ -340,6 +340,17 @@ _TAG_TAXONOMY: dict[str, TaxonomyMetadata] = {
         related_domains=("statements",),
         related_tags=("valuation", "earnings-estimate"),
     ),
+    "investor-quality": TaxonomyMetadata(
+        name="investor-quality",
+        description="Value-investor quality/value metrics: FCF yield, owner earnings, EV/EBIT and earnings "
+        "yield, PEG, shareholder yield, Altman Z — numbers and formula components, no buy/sell label.",
+        when_to_use="Use to screen or discuss a stock with the metrics well-known value investors use "
+        "(Buffett owner earnings, Greenblatt magic formula, Lynch PEG, shareholder yield).",
+        avoid_when="Use valuation for plain PER/PBR, or financial-ratio for dart financial-summary's ROIC/"
+        "DuPont/F-Score quality block.",
+        related_domains=("statements",),
+        related_tags=("valuation", "financial-ratio"),
+    ),
     "nav": TaxonomyMetadata(
         name="nav",
         description="ETF/ETN net asset value and NAV-vs-price tracking.",
@@ -827,6 +838,7 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
     "kis.stock.current-price-extended": CommandTaxonomy(("quote",), ("current-price", "volatility", "credit")),
     "kis.stock.estimated-earnings": CommandTaxonomy(("statements",), ("earnings-estimate",)),
     "kis.stock.implied-expectations": CommandTaxonomy(("statements",), ("valuation", "implied-expectations")),
+    "kis.stock.investor-metrics": CommandTaxonomy(("statements",), ("investor-quality", "valuation")),
     "kis.stock.investment-opinion": CommandTaxonomy(("statements",), ("analyst-opinion",)),
     "kis.stock.opinion-summary": CommandTaxonomy(("statements",), ("analyst-opinion",)),
     "kis.stock.valuation": CommandTaxonomy(("statements",), ("valuation", "financial-ratio")),

@@ -45,7 +45,10 @@ CLI 가 말해 주지 않는 것만 적는다.
   `kis stock valuation --stock-code --corp-code`(KIS 종가 + DART 주식수 + DART 재무, 약 11회). 5년 PER·PBR 밴드와
   현재 분위는 `kis stock valuation-band --stock-code --corp-code`(로컬 `cache` 일봉 × 연도별 DART 전체
   재무제표·주식수, 실시간 KIS 호출 없음 — `cache load` 가 먼저 돌아 있어야 한다). `kis stock
-  estimated-earnings` 는 한국투자증권 한 곳의 추정이라 컨센서스라 부르지 않는다(`table` 로 라벨됨).
+  estimated-earnings` 는 한국투자증권 한 곳의 추정이라 컨센서스라 부르지 않는다(`table` 로 라벨됨). 가치투자자형
+  지표(FCF 수익률, 오너 어닝스, EV/EBIT·이익수익률, PEG, 주주수익률, Altman Z 시총 원형)는 `kis stock
+  investor-metrics --stock-code --corp-code`(약 12회) — ROIC·DuPont·F-Score·Z''(장부가)는 `dart
+  financial-summary` 의 `quality` 블록이다.
 - **매크로는 `ecos`(한국은행).** 국면을 볼 때는 **`ecos macro-snapshot` 한 번** — 기준금리·국고채 3/10년·회사채 AA-/BBB-·원/달러·
   CPI·선행/동행지수 순환변동치·ESI·BSI·CCSI·뉴스심리·GDP·수출 15계열과 장단기 금리차·신용스프레드마다 최근값·1m/3m/1y 변화·10년
   백분위(약 15회, 실키 필요). 국면 라벨은 주지 않는다 — 어느 수치에 판단을 기대는지 직접 적는다. 그 밖의 계열은 `ecos table-search` →
@@ -143,7 +146,7 @@ CLI 가 말해 주지 않는 것만 적는다.
 - A `category` missing from `_CATEGORY_DEFAULTS` in `metadata.py` silently falls back to
   domain `market` / tag `ranking` instead of erroring — add an entry for new categories.
 
-## `kis chart technical`/`trend-setup`, `kis stock opinion-summary`/`valuation`/`valuation-band`/`implied-expectations`, `dart financial-as-filed`/`financial-summary`, `ecos macro-snapshot` and the dart/sec filing-text commands compute; every other command passes through
+## `kis chart technical`/`trend-setup`, `kis stock opinion-summary`/`valuation`/`valuation-band`/`implied-expectations`/`investor-metrics`, `dart financial-as-filed`/`financial-summary`, `ecos macro-snapshot` and the dart/sec filing-text commands compute; every other command passes through
 
 - `dart financial-as-filed` is the second non-pass-through command: it parses a downloaded XBRL
   (see the `dart financial-*` section) and is excluded from the generic client-call tests the same way.
@@ -188,6 +191,30 @@ CLI 가 말해 주지 않는 것만 적는다.
   excludes it from the calls-once check like valuation; `test_kis_implied_expectations_unit.py` covers it with
   one fake session answering all three brokers. Depends on `cluefin-feeds` (workspace dependency, not a broker
   client — there is no `session.get_damodaran()`).
+- `kis stock investor-metrics` gives value-investor metrics at a reference close: FCF yield, owner earnings (and
+  its yield), EV/EBIT and earnings yield (Greenblatt magic-formula style, EBIT = 영업이익), PEG from two growth
+  sources side by side, shareholder yield, and Altman Z (market-cap original). The math is a pure module,
+  `investor_metrics.py` — no I/O, every metric returns `null` + `reason` instead of substituting 0 for a missing
+  input (same discipline as `quality.py`). It does not recompute ROIC or Altman Z'' — those stay in `quality.py`
+  (`dart financial-summary`'s `quality` block); this command only adds `quality.altman_z`, the market-cap variant
+  that reuses Z'''s x1-x3 (운전자본·이익잉여금·EBIT 비율) and adds x4(시가총액/부채)·x5(매출/자산).
+  `fcf_yield`/`owner_earnings`/`shareholder_yield` read the **latest annual report's own fiscal year**
+  (`statements.annual()`'s last entry) because `statements.py` never builds a TTM cash-flow figure (quarterly
+  cash-flow rows are year-to-date only, see the `statements.py` section) — `ev_ebit`/`earnings_yield`/`per_ttm`
+  instead use TTM operating income/net income (`statements.trailing`), the same convention as `valuation`/
+  `implied-expectations`. The DART EPS CAGR divides the latest and oldest of the 3 DART fiscal years' 지배주주
+  순이익 by **that fiscal year's own** common-share count — the oldest year needs one extra DART
+  `periodic_report_key_information.get_total_number_of_shares` call (`bsns_year` = that year, `reprt_code`
+  `11011`) beyond the one `valuation`/`implied-expectations` already make for the latest year. The KIS-sourced
+  growth instead reads `eps_growth_yoy` straight off `stock estimated-earnings`' table (nearest `E` period) — the
+  two PEG growth sources are never averaged or made to agree. Of the two unverified `statements.py` XBRL ids,
+  `proceeds_from_share_issuance` was confirmed against a real filing (2026-11-04, a stock with a large rights
+  offering); `treasury_shares_disposed` is still unverified. When the cash-flow statement was read
+  (`operating_cash_flow` present), `shareholder_yield` treats a missing item as no activity (0) and lists it in
+  `assumed_zero` — companies don't file lines for things they didn't do; without a cash-flow statement it is null.
+  `test_investor_metrics_unit.py` covers the pure functions, `test_quality_unit.py` covers `altman_z`,
+  `test_kis_investor_metrics_unit.py` covers the handler with one fake session answering KIS and DART (excluded
+  from the calls-once check like valuation/implied-expectations).
 - `kis stock opinion-summary` is one `investment-opinion` call plus `opinions.summarize` (factory
   `opinions()`): each broker's latest row in the window, positive targets only.
 - `dart financial-summary` calls `financial-full-statements` 8 times (two years × four report codes on one
