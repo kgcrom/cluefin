@@ -11,9 +11,14 @@ from ._handler_fakes import (
     sample_params,
 )
 
-# valuation and implied-expectations call KIS/DART/ECOS several times and compute;
-# test_kis_opinion_valuation_unit.py and test_kis_implied_expectations_unit.py cover them.
-_COMPUTED_HANDLERS = {handlers.handle_kis_stock_valuation, handlers.handle_kis_implied_expectations}
+# valuation, implied-expectations and valuation-band call KIS/DART/ECOS/the local cache several
+# times and compute; test_kis_opinion_valuation_unit.py, test_kis_implied_expectations_unit.py and
+# test_kis_valuation_band_unit.py cover them.
+_COMPUTED_HANDLERS = {
+    handlers.handle_kis_stock_valuation,
+    handlers.handle_kis_implied_expectations,
+    handlers.handle_kis_stock_valuation_band,
+}
 _PASS_THROUGH_HANDLERS = [h for h in handlers._ALL_HANDLERS if h not in _COMPUTED_HANDLERS]
 
 
