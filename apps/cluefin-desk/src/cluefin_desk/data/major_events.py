@@ -1,19 +1,17 @@
 """Collect one company's recent major-event disclosures (주요사항보고서) for the
 financial-analysis screen's "주요사항" tab.
 
-This calls `cluefin_openapi.dart`'s `MajorShareholderDisclosure` client directly
+This calls `cluefin_openapi.dart`'s `MajorMattersReport` client directly
 instead of reusing cluefin-openapi-cli's `dart.dilution_watch`/`dart.major_event`
 handlers (2026-11-04 decision) — desk's dependency on that CLI (added for the
 watchlist's trend-setup group column, see `data/trend_groups.py`) is for its cache
 module only, not its DART handlers. The slug -> client-method mapping below mirrors
 `apps/cluefin-openapi-cli/src/cluefin_openapi_cli/handlers/dart.py`'s `_MAJOR_EVENTS`
 table, the source of truth for which library method actually serves which DART
-endpoint — several of `cluefin-openapi`'s method names do not match their endpoint
-(e.g. `real_estate_development` serves `dfOcr`, 부도발생). Only the event kinds the
-B-14 plan decided on are covered here: CB/BW/EB issuance, rights offering, bonus
-issue, rights-and-bonus issue, capital reduction, treasury stock acquisition/
-disposal (trust included), plus default/business-suspension/rehabilitation-filing/
-dissolution.
+endpoint. Only the event kinds the B-14 plan decided on are covered here: CB/BW/EB
+issuance, rights offering, bonus issue, rights-and-bonus issue, capital reduction,
+treasury stock acquisition/disposal (trust included), plus
+default/business-suspension/rehabilitation-filing/dissolution.
 """
 
 from __future__ import annotations
@@ -119,7 +117,7 @@ class _EventType:
 
 def _event(label: str, method: Callable[[Any], Callable[..., Any]], summarize: Callable[[Any], str]) -> _EventType:
     def call(dart_client: Any, corp_code: str, bgn_de: str, end_de: str) -> Any:
-        return method(dart_client.major_shareholder_disclosure)(corp_code=corp_code, bgn_de=bgn_de, end_de=end_de)
+        return method(dart_client.major_matters_report)(corp_code=corp_code, bgn_de=bgn_de, end_de=end_de)
 
     return _EventType(label, call, summarize)
 
@@ -132,11 +130,11 @@ MAJOR_EVENT_TYPES: dict[str, _EventType] = {
     "bond-with-warrant": _event(
         "신주인수권부사채권 발행결정", lambda c: c.new_stock_warrant_bond_issuance_decision, _summary_bond
     ),
-    "exchangeable-bond": _event("교환사채권 발행결정", lambda c: c.corporate_bond_issuance_decision, _summary_bond),
-    "rights-offering": _event("유상증자 결정", lambda c: c.securities_granted_decision, _summary_rights_offering),
-    "bonus-issue": _event("무상증자 결정", lambda c: c.free_securities_decision, _summary_bonus_issue),
+    "exchangeable-bond": _event("교환사채권 발행결정", lambda c: c.exchangeable_bond_issuance_decision, _summary_bond),
+    "rights-offering": _event("유상증자 결정", lambda c: c.paid_in_capital_increase_decision, _summary_rights_offering),
+    "bonus-issue": _event("무상증자 결정", lambda c: c.free_capital_increase_decision, _summary_bonus_issue),
     "rights-and-bonus-issue": _event(
-        "유무상증자 결정", lambda c: c.paid_in_capital_reduction_decision, _summary_rights_and_bonus
+        "유무상증자 결정", lambda c: c.paid_in_and_free_capital_increase_decision, _summary_rights_and_bonus
     ),
     "capital-reduction": _event("감자 결정", lambda c: c.capital_reduction_decision, _summary_capital_reduction),
     "treasury-stock-acquisition": _event(
@@ -155,8 +153,8 @@ MAJOR_EVENT_TYPES: dict[str, _EventType] = {
         lambda c: c.treasury_stock_trust_contract_termination_decision,
         _summary_treasury_trust_termination,
     ),
-    "default": _event("부도발생", lambda c: c.real_estate_development, _summary_default),
-    "business-suspension": _event("영업정지", lambda c: c.business_letter, _summary_business_suspension),
+    "default": _event("부도발생", lambda c: c.default_occurrence, _summary_default),
+    "business-suspension": _event("영업정지", lambda c: c.business_suspension, _summary_business_suspension),
     "rehabilitation-filing": _event(
         "회생절차 개시신청", lambda c: c.corporate_rehabilitation_proceedings, _summary_rehabilitation
     ),

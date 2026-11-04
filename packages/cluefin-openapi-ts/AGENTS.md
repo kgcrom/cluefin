@@ -55,8 +55,10 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   unseen (2026-10: wrong model for trust-contract, duplicated path for tangible-asset transfer, a
   `recpt_no` typo, a required field the server never sends). Our integration tests attach
   `responseSchema` to the call so a mismatch with live data throws — a failure there usually means
-  a Python bug. Python method names are misleading (`profit_revocation` = 소송등의제기); trust the
-  live check, not the name.
+  a Python bug. Python method names were renamed to match their endpoints in 2026-11-04 (B-13;
+  `profit_revocation` → `lawsuit_filing` for 소송등의제기, among 23 others) — the old names survive
+  only as deprecated aliases, so don't reintroduce them in new TS code. Still trust the live check
+  over any name when the two disagree.
 - Auth is the `crtfc_key` query param (no token, no cache). The key is masked in errors/logs —
   keep it out of `requestContext`.
 - A non-`000` body `status` is **returned, not thrown** (matches Python). Only binary endpoints

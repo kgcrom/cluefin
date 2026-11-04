@@ -1,6 +1,6 @@
 """dart major-event·report-item — 람다 표가 실제 라이브러리 메서드를 부르고, 그 메서드가 표에 적힌 엔드포인트로 가는지.
 
-라이브러리 메서드 이름은 엔드포인트와 자주 다르다(`real_estate_development` → dfOcr, 부도발생). 표의 `endpoint`
+라이브러리 메서드 이름은 2026-11-04(B-13)부터 엔드포인트와 일치한다. 그래도 표의 `endpoint`
 가 진실의 원천이므로, 실제 DART client 의 `_get` 만 가로채 36종 전부를 대조한다. 계약 테스트
 (`test_handler_client_contract_unit.py`)는 enum 첫 값 하나만 돌기 때문에 이 테스트가 필요하다.
 """
@@ -39,8 +39,8 @@ class _RecordingDart:
         self.client._get = fake_get
 
     @property
-    def major_shareholder_disclosure(self):
-        return self.client.major_shareholder_disclosure
+    def major_matters_report(self):
+        return self.client.major_matters_report
 
     @property
     def periodic_report_key_information(self):
@@ -133,9 +133,7 @@ def test_rows_pass_through_unchanged() -> None:
     model = SimpleNamespace(model_dump=lambda **_: {"result": {"status": "000", "list": [row]}})
     spec = handlers._MAJOR_EVENTS["convertible-bond"]
     session = _Session(
-        SimpleNamespace(
-            major_shareholder_disclosure=SimpleNamespace(convertible_bond_issuance_decision=lambda **_: model)
-        )
+        SimpleNamespace(major_matters_report=SimpleNamespace(convertible_bond_issuance_decision=lambda **_: model))
     )
     result = handlers.handle_major_event(_PARAMS, session)
     assert result == {
@@ -192,10 +190,10 @@ _DILUTION_PARAMS = {"corp_code": "00126380", "bgn_de": "20220101", "end_de": "20
 _DILUTION_EVENT_METHODS = {
     "convertible-bond": "convertible_bond_issuance_decision",
     "bond-with-warrant": "new_stock_warrant_bond_issuance_decision",
-    "exchangeable-bond": "corporate_bond_issuance_decision",
-    "rights-offering": "securities_granted_decision",
-    "bonus-issue": "free_securities_decision",
-    "rights-and-bonus-issue": "paid_in_capital_reduction_decision",
+    "exchangeable-bond": "exchangeable_bond_issuance_decision",
+    "rights-offering": "paid_in_capital_increase_decision",
+    "bonus-issue": "free_capital_increase_decision",
+    "rights-and-bonus-issue": "paid_in_and_free_capital_increase_decision",
     "capital-reduction": "capital_reduction_decision",
     "treasury-stock-acquisition": "treasury_stock_acquisition_decision",
     "treasury-stock-disposal": "treasury_stock_disposal_decision",
@@ -254,7 +252,7 @@ def test_dilution_watch_normalizes_rows_and_computes_pct_of_shares() -> None:
         for slug, method in _DILUTION_EVENT_METHODS.items()
     }
     dart = SimpleNamespace(
-        major_shareholder_disclosure=SimpleNamespace(**event_methods),
+        major_matters_report=SimpleNamespace(**event_methods),
         periodic_report_key_information=SimpleNamespace(get_total_number_of_shares=share_count),
     )
 

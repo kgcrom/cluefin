@@ -113,8 +113,8 @@ class FakePublicDisclosure:
         )
 
 
-class FakeMajorShareholderDisclosure:
-    """`major_shareholder_disclosure` 자리에 끼워 넣는다 — 지정하지 않은 종류는 013(없음)."""
+class FakeMajorMattersReport:
+    """`major_matters_report` 자리에 끼워 넣는다 — 지정하지 않은 종류는 013(없음)."""
 
     def __init__(self, responses=None, raising=None):
         self._responses = responses or {}
@@ -141,7 +141,7 @@ class FakeDartClient:
     ):
         self.public_disclosure = FakePublicDisclosure(corp_code, corp_code_raises)
         self.periodic_report_key_information = FakeKeyInformation()
-        self.major_shareholder_disclosure = FakeMajorShareholderDisclosure(major_events, major_events_raising)
+        self.major_matters_report = FakeMajorMattersReport(major_events, major_events_raising)
 
 
 class FakeStatementApi:
@@ -271,7 +271,7 @@ class TestAllTabsPopulated:
                     "convertible_bond_issuance_decision": [
                         SimpleNamespace(rcept_no="20260101000111", bd_fta="10,000,000,000")
                     ],
-                    "real_estate_development": [
+                    "default_occurrence": [
                         SimpleNamespace(rcept_no="20260615000222", df_amt="5,000,000,000", df_bnk="국민은행")
                     ],
                 }
@@ -364,11 +364,11 @@ class TestDegradedPaths:
         app = HarnessApp(
             dart_client=FakeDartClient(
                 major_events={
-                    "real_estate_development": [
+                    "default_occurrence": [
                         SimpleNamespace(rcept_no="20260615000222", df_amt="1", df_bnk="-"),
                     ]
                 },
-                major_events_raising={"business_letter": RuntimeError("요청 제한을 초과하였습니다")},
+                major_events_raising={"business_suspension": RuntimeError("요청 제한을 초과하였습니다")},
             )
         )
         async with app.run_test() as pilot:
