@@ -59,4 +59,4 @@ A worktree-isolated session refuses commands it can't prove don't run git outsid
 - Logging is stdlib `logging.getLogger(__name__)` with f-string messages (loguru `{}` args don't format; `%s` args
   trip Codacy when the text mentions token/key). Only app entry points add handlers or set levels; tests use `caplog`.
 - 사용자와 대화하며 하는 기업 분석과 HTML 리포트("리포트 생성")는 메인 대화가 맡는다. 판단 기준은
-  `.claude/agents/market-review.md` 의 데이터·분석·판단 절, HTML 은 생성 요청 시에만 `docs/agents/market-review-report-design.md`.
+  `.claude/agents/company-review.md` 의 데이터·분석·판단 절, HTML 은 생성 요청 시에만 `docs/agents/company-review-report-design.md`.
