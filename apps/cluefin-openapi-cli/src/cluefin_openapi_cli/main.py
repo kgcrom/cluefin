@@ -174,6 +174,9 @@ _META_HELP: dict[str, dict[str, Any]] = {
             f"{APP_NAME} cache base-rate-build [--until YYYYMMDD] [--stride 5] [--json]",
             f"{APP_NAME} cache base-rate --code <code> [--as-of YYYYMMDD] [--horizons 20,40,60] "
             "[--target-pct P --stop-pct P] [--json]",
+            f"{APP_NAME} cache rs [--as-of YYYYMMDD] [--market KOSPI|KOSDAQ] [--code <c1,c2>] "
+            "[--by sector|industry] [--json]",
+            f"{APP_NAME} cache breadth [--as-of YYYYMMDD] [--market KOSPI|KOSDAQ] [--json]",
         ],
         "options": [
             {"flag": "--only P", "meaning": "Parts to load, comma-separated (default all)."},
@@ -222,6 +225,10 @@ _META_HELP: dict[str, dict[str, Any]] = {
                 "meaning": "base-rate: adds a touch-rate — share of samples whose adjusted high reached +P before "
                 "the low reached −P within the horizon (both required together; same-day both counts as stop).",
             },
+            {
+                "flag": "--by sector|industry",
+                "meaning": "rs: cross-section grouping for the sector/industry percentile (default sector).",
+            },
         ],
         "examples": [
             f"uv run {APP_NAME} cache status --json",
@@ -230,6 +237,8 @@ _META_HELP: dict[str, dict[str, Any]] = {
             f"uv run {APP_NAME} cache perf --code 005930 --bench U0001 --since 20210101 --risk-free ktb3y --json",
             f"uv run {APP_NAME} cache trend-setup --status alert,watch --json",
             f"uv run {APP_NAME} cache base-rate --code 005930 --horizons 20,40,60 --json",
+            f"uv run {APP_NAME} cache rs --code 005930,000660 --json",
+            f"uv run {APP_NAME} cache breadth --json",
         ],
         "notes": [
             "The file is $CLUEFIN_CACHE_DIR/market.duckdb (default ~/.cache/cluefin/).",
@@ -245,6 +254,12 @@ _META_HELP: dict[str, dict[str, Any]] = {
             "base-rate: the outside view — stocks in the same trend-setup group × market-cap tercile, "
             "historically, and their horizon excess return vs. the stock's own index. Descriptive only, no "
             "rule or recommendation; run `base-rate-build` first (writer, minutes) so `base-rate` only reads.",
+            "rs: RS(1M) is the cross-sectional percentile (0-99) of 21-trading-day adjusted returns "
+            "(stockeasy-metric-definitions memory); sector/industry RS is the same percentile over group median "
+            "returns. No long-horizon IBD-weighted RS (formula unconfirmed).",
+            "breadth: new 52-week highs/lows, %>50dma, advance/decline, and per-index distribution-day/"
+            "follow-through-day counts (IBD methodology approximation, thresholds in cache/breadth.py docstring). "
+            "Descriptive only, not a buy/sell signal.",
         ],
     },
 }
