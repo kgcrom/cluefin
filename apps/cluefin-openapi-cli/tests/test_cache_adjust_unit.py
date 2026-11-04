@@ -164,11 +164,24 @@ def test_rounded_adjusted_prices_do_not_trigger_recompute() -> None:
 def test_bar_replace_resets_adjustment_state() -> None:
     conn, kis = _setup({"SPLIT0": [(SPLIT, 1 / 50)]})
     load_adjustments(conn, kis=kis, sleep=lambda _s: None)
-    kis.raw["SPLIT0"][LAST] = 999.0  # vendor correction inside the recheck window
+    kis.raw["SPLIT0"][DAYS[-2]] = 999.0  # vendor correction inside the recheck window, before the last day
 
     load_bars(conn, kis=kis, since=SINCE, last_day=LAST, sleep=lambda _s: None)
 
     assert conn.execute("SELECT count(*) FROM adj_log WHERE code = 'SPLIT0'").fetchone()[0] == 0
     stats = load_adjustments(conn, kis=kis, sleep=lambda _s: None)
     assert stats.recomputed == 1
+    assert _adjusted_matches(conn, kis, "SPLIT0")
+
+
+def test_patched_last_bar_extends_adjustment_from_the_day_before() -> None:
+    conn, kis = _setup({"SPLIT0": [(SPLIT, 1 / 50)]})
+    load_adjustments(conn, kis=kis, sleep=lambda _s: None)
+    kis.raw["SPLIT0"][LAST] = 999.0  # the stored last bar was not final yet
+
+    bar_stats = load_bars(conn, kis=kis, since=SINCE, last_day=LAST, sleep=lambda _s: None)
+    stats = load_adjustments(conn, kis=kis, sleep=lambda _s: None)
+
+    assert (bar_stats.replaced, bar_stats.patched) == (0, 1)
+    assert (stats.recomputed, stats.extended) == (0, 1)
     assert _adjusted_matches(conn, kis, "SPLIT0")
