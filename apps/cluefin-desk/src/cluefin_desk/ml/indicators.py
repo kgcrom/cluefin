@@ -20,39 +20,51 @@ class TechnicalAnalyzer:
 
         result = data.copy()
 
-        # Moving Averages
-        result["sma_5"] = self._sma(data["close"], 5)
-        result["sma_20"] = self._sma(data["close"], 20)
-        result["sma_50"] = self._sma(data["close"], 50)
-        result["sma_120"] = self._sma(data["close"], 120)
-        result["sma_240"] = self._sma(data["close"], 240)
+        # Moving Averages: cluefin_ta.SMA matches a plain rolling mean (desk previously
+        # hand-rolled this), so it's a drop-in swap. EMA stays hand-rolled (see below).
+        result["sma_5"] = talib.SMA(data["close"].values, timeperiod=5)
+        result["sma_20"] = talib.SMA(data["close"].values, timeperiod=20)
+        result["sma_50"] = talib.SMA(data["close"].values, timeperiod=50)
+        result["sma_120"] = talib.SMA(data["close"].values, timeperiod=120)
+        result["sma_240"] = talib.SMA(data["close"].values, timeperiod=240)
         result["ema_12"] = self._ema(data["close"], 12)
         result["ema_26"] = self._ema(data["close"], 26)
 
-        # RSI
+        # RSI: cluefin_ta.RSI uses Wilder smoothing (ta-lib's definition); this desk RSI
+        # uses a plain rolling mean of gains/losses and is a survivor ML feature
+        # (desk AGENTS.md), so it is kept as-is rather than switched to a different
+        # indicator definition. See refactor report for the measured difference.
         result["rsi"] = self._rsi(data["close"], 14)
 
-        # MACD
+        # MACD: derived from the hand-rolled ema_12/26 above, so macd_histogram (a
+        # survivor ML feature) keeps its current values instead of adopting
+        # cluefin_ta.MACD's ta-lib-style EMA warm-up (seeded by an SMA, which differs
+        # noticeably from the ewm() EMA for roughly the first 2x the slow period).
         macd_line = result["ema_12"] - result["ema_26"]
         macd_signal = self._ema(macd_line, 9)
         result["macd"] = macd_line
         result["macd_signal"] = macd_signal
         result["macd_histogram"] = macd_line - macd_signal
 
-        # Bollinger Bands
+        # Bollinger Bands: not a survivor feature (create_talib_features overwrites
+        # bb_upper/middle/lower). Kept hand-rolled because cluefin_ta.BBANDS uses a
+        # population stddev (ta-lib convention) vs this rolling().std() sample stddev —
+        # a real definition difference, not just floating-point noise.
         bb_middle = result["sma_20"]
         bb_std = data["close"].rolling(window=20).std()
         result["bb_middle"] = bb_middle
         result["bb_upper"] = bb_middle + (bb_std * 2)
         result["bb_lower"] = bb_middle - (bb_std * 2)
 
-        # Stochastic Oscillator
+        # Stochastic Oscillator: not a survivor feature either. cluefin_ta has no plain
+        # unsmoothed-%K variant with this desk's (period=14, no slow-%K smoothing)
+        # shape without changing the NaN warm-up window, so kept hand-rolled.
         stoch_k, stoch_d = self._stochastic(data["high"], data["low"], data["close"])
         result["stoch_k"] = stoch_k
         result["stoch_d"] = stoch_d
 
         # Volume indicators
-        result["volume_sma"] = self._sma(data["volume"], 20)
+        result["volume_sma"] = talib.SMA(data["volume"].values.astype(float), timeperiod=20)
         result["obv"] = talib.OBV(data["close"].values, data["volume"].values)
 
         # Trend strength and volatility
@@ -63,10 +75,6 @@ class TechnicalAnalyzer:
         result = self._calculate_support_resistance(result)
 
         return result
-
-    def _sma(self, series: pd.Series, period: int) -> pd.Series:
-        """Calculate Simple Moving Average."""
-        return series.rolling(window=period).mean()
 
     def _ema(self, series: pd.Series, period: int) -> pd.Series:
         """Calculate Exponential Moving Average."""
