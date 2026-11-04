@@ -403,6 +403,64 @@ _RECIPES: tuple[WorkflowRecipe, ...] = (
         "through which channel (KRW for exporters, rates for lenders and growth multiples, credit spreads for leveraged "
         "issuers). Do not substitute web search for these numbers.",
     ),
+    WorkflowRecipe(
+        name="outlook",
+        title="Outlook Scenarios",
+        description="Build bear/base/bull probability-weighted price scenarios for one stock from the industry "
+        "backdrop, what the market price already implies, and value-investor quality metrics.",
+        domains=("statements", "macro"),
+        tags=("valuation", "implied-expectations", "macro-indicator", "investor-quality", "financial-ratio"),
+        steps=(
+            RecipeStep(
+                title="Read the industry outlook",
+                command=("ecos", "industry-outlook"),
+                purpose="BSI outlook/actual, production/shipment/inventory yoy and the inventory cycle, plus a "
+                "representative product's export and producer prices, for one manufacturing KSIC division.",
+                agent_notes="Needs --induty-code (a KSIC manufacturing division C10-C33, e.g. 26 for "
+                "전자부품,컴퓨터,영상음향및통신장비). Needs ECOS_AUTH_KEY; if it is invalid, skip this step and say "
+                "so instead of filling the industry reading from elsewhere.",
+            ),
+            RecipeStep(
+                title="Read market-implied expectations",
+                command=("kis", "stock", "implied-expectations"),
+                purpose="Reverse-engineer today's price into an implied permanent ROE (RIM) and an implied revenue "
+                "growth rate (reverse DCF), against DART's own 3-year ROE/growth and the KIS research estimate.",
+                agent_notes="Needs stock_code and corp_code; ~14 calls, call once and reuse. Numbers and "
+                "assumptions only — it gives no cheap/expensive label.",
+            ),
+            RecipeStep(
+                title="Read the valuation band",
+                command=("kis", "stock", "valuation-band"),
+                purpose="5-year PER/PBR percentile band (min/p25/median/p75/max) and the current multiple's "
+                "percentile in that band.",
+                agent_notes="Needs `cache load` to have filled the local price cache first. `current` divides by "
+                "the prior fiscal year's EPS/BPS, so it differs from `kis stock valuation`'s TTM PER/PBR — "
+                "never mix the two in one scenario note.",
+            ),
+            RecipeStep(
+                title="Read investor-quality metrics",
+                command=("kis", "stock", "investor-metrics"),
+                purpose="FCF yield, owner earnings, EV/EBIT and earnings yield, PEG (DART and KIS), shareholder "
+                "yield and Altman Z at the current close.",
+                agent_notes="Missing figures come back as `null` with a `reason`. Owner earnings is often null at "
+                "large filers that omit D&A. Shareholder yield treats a missing cash-flow line as zero and flags "
+                "it in `assumed_zero` instead of dropping it.",
+            ),
+            RecipeStep(
+                title="Read the quality block",
+                command=("dart", "financial-summary"),
+                purpose="ROIC, DuPont decomposition, accruals and F-Score/Altman Z'' from the same call's "
+                "`quality` block.",
+                agent_notes="Reuse the latest-earnings recipe's call instead of calling this again in the same "
+                "session — it costs 8 DART calls.",
+            ),
+        ),
+        agent_notes="This recipe covers the RPC-backed steps only. The historical base rate (`cache base-rate`, "
+        "percentile of similar past setups) and the macro-beta check (`cache macro-beta`, discard a factor when "
+        "its t-value is small) are local cache subcommands outside this registry — call them directly alongside "
+        "these steps, starting scenario probabilities from the base-rate percentiles and adjusting them by the "
+        "gap between the industry outlook/implied expectations and that base rate.",
+    ),
 )
 
 
