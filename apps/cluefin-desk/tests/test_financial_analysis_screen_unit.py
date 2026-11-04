@@ -113,10 +113,35 @@ class FakePublicDisclosure:
         )
 
 
+class FakeMajorShareholderDisclosure:
+    """`major_shareholder_disclosure` 자리에 끼워 넣는다 — 지정하지 않은 종류는 013(없음)."""
+
+    def __init__(self, responses=None, raising=None):
+        self._responses = responses or {}
+        self._raising = raising or {}
+
+    def __getattr__(self, name):
+        def _method(corp_code, bgn_de, end_de):
+            if name in self._raising:
+                raise self._raising[name]
+            if name in self._responses:
+                return _response(self._responses[name])
+            return SimpleNamespace(result=SimpleNamespace(status="013", list=None))
+
+        return _method
+
+
 class FakeDartClient:
-    def __init__(self, corp_code: str | None = CORP_CODE, corp_code_raises: bool = False):
+    def __init__(
+        self,
+        corp_code: str | None = CORP_CODE,
+        corp_code_raises: bool = False,
+        major_events: dict | None = None,
+        major_events_raising: dict | None = None,
+    ):
         self.public_disclosure = FakePublicDisclosure(corp_code, corp_code_raises)
         self.periodic_report_key_information = FakeKeyInformation()
+        self.major_shareholder_disclosure = FakeMajorShareholderDisclosure(major_events, major_events_raising)
 
 
 class FakeStatementApi:
@@ -239,6 +264,29 @@ class TestAllTabsPopulated:
             assert "삼성전자" in _panel_text(screen, "#financial-title-bar")
             assert _panel_text(screen, "#disclosure-status") == ""
 
+    async def test_major_events_table_is_populated(self):
+        app = HarnessApp(
+            dart_client=FakeDartClient(
+                major_events={
+                    "convertible_bond_issuance_decision": [
+                        SimpleNamespace(rcept_no="20260101000111", bd_fta="10,000,000,000")
+                    ],
+                    "real_estate_development": [
+                        SimpleNamespace(rcept_no="20260615000222", df_amt="5,000,000,000", df_bnk="국민은행")
+                    ],
+                }
+            )
+        )
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+
+            screen = app.screen
+            table = screen.query_one("#major-events-content", DataTable)
+            assert table.row_count == 2
+            assert _panel_text(screen, "#major-events-status") == ""
+
 
 @pytest.mark.asyncio
 class TestDegradedPaths:
@@ -252,6 +300,7 @@ class TestDegradedPaths:
             screen = app.screen
             for selector in PANEL_IDS[1:]:
                 assert "DART_AUTH_KEY" in _panel_text(screen, selector)
+            assert "DART_AUTH_KEY" in _panel_text(screen, "#major-events-status")
             # KIS 탭은 DART 와 무관하게 계속 채워진다
             assert "재무비율 (KIS)" in _panel_text(screen, "#kis-financial-content")
 
@@ -267,6 +316,7 @@ class TestDegradedPaths:
             for selector in PANEL_IDS[1:]:
                 text = _panel_text(screen, selector)
                 assert "DART 공시대상 법인이 아닙니다" in text
+            assert "DART 공시대상 법인이 아닙니다" in _panel_text(screen, "#major-events-status")
 
     async def test_corp_code_lookup_failure_is_distinguished_from_unlisted(self):
         app = HarnessApp(dart_client=FakeDartClient(corp_code_raises=True))
@@ -309,3 +359,28 @@ class TestDegradedPaths:
             assert "요청 제한" in dividend
             assert "이재용" in _panel_text(screen, "#major-shareholder-content")
             assert "주석 목차" in _panel_text(screen, "#xbrl-content")
+
+    async def test_one_failing_major_event_type_does_not_block_the_others(self):
+        app = HarnessApp(
+            dart_client=FakeDartClient(
+                major_events={
+                    "real_estate_development": [
+                        SimpleNamespace(rcept_no="20260615000222", df_amt="1", df_bnk="-"),
+                    ]
+                },
+                major_events_raising={"business_letter": RuntimeError("요청 제한을 초과하였습니다")},
+            )
+        )
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+
+            screen = app.screen
+            table = screen.query_one("#major-events-content", DataTable)
+            assert table.row_count == 1
+            status = _panel_text(screen, "#major-events-status")
+            assert "1개 종류 조회 실패" in status
+            assert "business-suspension" in status
+            # 재무제표 등 다른 탭은 그대로 채워진다
+            assert "이재용" in _panel_text(screen, "#major-shareholder-content")
