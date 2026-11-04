@@ -8,7 +8,7 @@ from types import SimpleNamespace
 from cluefin_openapi.ecos import KTB_3Y
 
 from cluefin_openapi_cli.cache import store
-from cluefin_openapi_cli.cache.rates import RATE_SERIES, load_rates
+from cluefin_openapi_cli.cache.rates import ECOS_SERIES, RATE_SERIES, load_rates
 
 
 class FakeEcos:
@@ -37,8 +37,8 @@ def test_loads_every_series_and_skips_empty_values() -> None:
 
     stats = _load(conn, ecos)
 
-    assert stats.calls == len(RATE_SERIES)
-    assert stats.rows == 2 * len(RATE_SERIES)
+    assert stats.calls == len(ECOS_SERIES)
+    assert stats.rows == 2 * len(ECOS_SERIES)
     assert not stats.errors
     assert (KTB_3Y.item_code, "20160101", "20260107") in ecos.calls
     rows = conn.execute("SELECT date, value FROM rates WHERE series = 'ktb3y' ORDER BY date").fetchall()
@@ -73,3 +73,8 @@ def test_status_reports_rates_per_series() -> None:
     rates = store.status(conn)["rates"]
 
     assert rates["ktb3y"] == {"rows": 2, "first_date": "2026-01-05", "last_date": "2026-01-07"}
+
+
+def test_usdkrw_is_loaded_but_not_a_risk_free_choice() -> None:
+    assert "usdkrw" in ECOS_SERIES
+    assert "usdkrw" not in RATE_SERIES

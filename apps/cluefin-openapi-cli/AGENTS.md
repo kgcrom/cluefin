@@ -276,8 +276,8 @@ CLI 가 말해 주지 않는 것만 적는다.
 - **`rates` 는 ECOS 시장금리(817Y002) 4계열 + 원/달러(731Y001) `usdkrw`**, 계열당 호출 1번(실키는 행 상한이 없다 —
   cluefin-openapi AGENTS). 매번 저장된 마지막 날 7일 전부터 다시 받아 덮어쓴다. `sample` 키(ECOS_AUTH_KEY 없음)는 쪽당 10행이라
   10년이면 계열당 ~250회 — 받지 않고 오류 한 줄로 건너뛴다. ECOS 는 하루 늦게 올라온다(2026-10-25 적재 시 마지막 10-23).
-  `usdkrw` 는 다른 네 계열과 달리 연 %가 아니라 환율 수준값이다 — 같은 표에 섞여 있어도 단위가 다르니 금리처럼 `--risk-free`
-  에 쓰지 않는다.
+  `usdkrw` 는 다른 네 계열과 달리 연 %가 아니라 환율 수준값이다 — 적재 목록은 `ECOS_SERIES`, `--risk-free` 가 받는
+  `RATE_SERIES` 에는 넣지 않는다.
 - **`cache macro-beta` 는 `cache/macro_beta.py`**, 쓰기 없음(`rates`·`ohlcv` 만 읽는다). 종목·KOSPI(`U0001`)·`usdkrw`·
   `ktb3y`·`ktb10y` 각각 ISO 주(월요일 기준 `date_trunc('week', ...)`) 마지막 관측치만 남기고, 종목·KOSPI 는 전주 대비 변화율,
   금리 둘은 %p 차이 × 100(bp)로 바꾼 뒤 다섯 계열 모두 값이 있는 주의 교집합에서만 절편 포함 OLS 한 번(`numpy.linalg.lstsq`,
