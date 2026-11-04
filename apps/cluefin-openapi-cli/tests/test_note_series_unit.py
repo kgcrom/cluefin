@@ -290,3 +290,57 @@ def test_dash_is_zero_and_blank_is_missing() -> None:
 
     assert (rows["Other"].current, rows["Other"].prior) == (Decimal(0), None)
     assert (rows["Fees"].current, rows["Fees"].prior) == (None, Decimal(3))
+
+
+# 5. 재작성 -------------------------------------------------------------------------------------------------------
+
+
+def _deferred(fy: int, current: str, prior: str, unit: str = "in millions") -> NoteInput:
+    table = _table(
+        (f"({unit})", f"December 31, {fy}", f"December 31, {fy - 1}"),
+        ("Accrued expenses", str(fy - 1900), str(fy - 1901)),  # 해마다 이어지는 값(재작성 없음)
+        ("Other", current, prior),
+        unit=unit,
+    )
+    return NoteInput(6, "Income Taxes", (table,))
+
+
+def test_next_years_comparative_that_differs_is_flagged_not_corrected() -> None:
+    filings = [_filing(2024, _deferred(2024, "48", "36")), _filing(2023, _deferred(2023, "49", "21"))]
+
+    rows = _rows(build_series(filings)[0])
+
+    assert rows["Other"]["values_by_fy"] == {"2024": 48, "2023": 49}
+    assert rows["Other"]["restated"] == [{"fy": 2023, "filed_value": 49, "later_value": 36}]
+    assert "restated" not in rows["Accrued expenses"]
+
+
+def test_rounding_from_thousands_to_millions_is_not_restated() -> None:
+    filings = [
+        _filing(2023, _deferred(2023, "57", "28")),
+        _filing(2022, _deferred(2022, "28,513", "40,000", unit="in thousands")),
+    ]
+
+    # 28.513 → 28: 반올림 방향이 달라도 한 단위 미만이면 재작성이 아니다.
+    assert "restated" not in _rows(build_series(filings)[0])["Other"]
+
+
+def test_difference_under_half_a_percent_is_rounding() -> None:
+    filings = [_filing(2024, _deferred(2024, "48", "1,004")), _filing(2023, _deferred(2023, "1,000", "21"))]
+
+    assert "restated" not in _rows(build_series(filings)[0])["Other"]
+
+
+def test_row_new_in_the_later_year_has_no_restatement() -> None:
+    newer = _table(("(in millions)", "2024", "2023"), ("Stock compensation", "22", "18"), ("Other", "48", "49"))
+    older = _table(("(in millions)", "2023", "2022"), ("Other", "49", "21"))
+    filings = [
+        _filing(2024, NoteInput(6, "Income Taxes", (newer,))),
+        _filing(2023, NoteInput(6, "Income Taxes", (older,))),
+    ]
+
+    rows = _rows(build_series(filings)[0])
+
+    assert rows["Stock compensation"]["values_by_fy"] == {"2024": 22}
+    assert "restated" not in rows["Stock compensation"]
+    assert "restated" not in rows["Other"]

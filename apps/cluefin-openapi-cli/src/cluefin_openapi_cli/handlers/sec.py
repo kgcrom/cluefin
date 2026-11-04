@@ -778,7 +778,9 @@ def _series_summary(note: dict) -> dict:
         "and each row becomes a series of the current-year column of each 10-K. Amounts are converted to USD "
         "millions (unit_filed keeps what each year stated, e.g. 'in thousands'); percentages and per-share values "
         "are left as filed. Rows whose label changed are not merged: the new row carries label_changed with the "
-        "old label(s) as candidates. Without `notes` it returns the list of note series (title, number per fiscal year, tables, "
+        "old label(s) as candidates. When the next 10-K's comparative column differs from what was filed "
+        "(beyond rounding), the row carries restated: [{fy, filed_value, later_value}]; values are never "
+        "corrected. Without `notes` it returns the list of note series (title, number per fiscal year, tables, "
         "rows); with `notes` (comma-separated latest note numbers or title words, e.g. income tax,lease) the full "
         "tables. Downloads one document per year (about 1 second each). Original 10-Ks only (10-K/A skipped)."
     ),

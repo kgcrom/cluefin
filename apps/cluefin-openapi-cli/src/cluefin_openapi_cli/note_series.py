@@ -543,6 +543,9 @@ def _rows_payload(rows: list[_RowSeries], fys: list[int]) -> list[dict]:
         units = {str(fy): row.unit_filed[fy] for fy in fys if row.unit_filed.get(fy)}
         if units:
             entry["unit_filed"] = units
+        restated = _restated(row)
+        if restated:
+            entry["restated"] = restated
         if id(row) in candidates:
             entry["label_changed"] = candidates[id(row)]
         payload.append(entry)
@@ -550,7 +553,10 @@ def _rows_payload(rows: list[_RowSeries], fys: list[int]) -> list[dict]:
 
 
 def _restated(row: _RowSeries) -> list[dict]:
-    """다음 해 비교 열이 그해 당해 값과 다른 해. 두 단위 중 거친 쪽의 반올림 폭 안이거나 0.5% 미만이면 같다고 본다."""
+    """다음 해 비교 열이 그해 당해 값과 다른 해. 차이가 두 단위 중 거친 쪽의 한 단위 미만이거나 0.5% 미만이면 같다고 본다.
+
+    반 단위가 아니라 한 단위인 것은 합계를 맞추려 반올림 방향을 바꾸는 공시가 있어서다(천 달러 28,513 → 백만 달러 28).
+    """
     flagged = []
     for fy, filed in sorted(row.values.items()):
         later = row.later.get(fy)
@@ -559,7 +565,7 @@ def _restated(row: _RowSeries) -> list[dict]:
         difference = abs(later - filed)
         resolution = max(_resolution(row.unit_filed.get(fy)), _resolution(row.later_unit.get(fy)))
         base = max(abs(filed), abs(later))
-        if difference <= resolution / 2 or base == 0 or difference / base < RESTATED_MIN:
+        if difference < resolution or base == 0 or difference / base < RESTATED_MIN:
             continue
         flagged.append({"fy": fy, "filed_value": _number(filed), "later_value": _number(later)})
     return flagged

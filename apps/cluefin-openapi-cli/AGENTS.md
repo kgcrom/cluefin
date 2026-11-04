@@ -577,6 +577,9 @@ CLI 가 말해 주지 않는 것만 적는다.
   - 구역 머리("Current taxes")가 같은 이름의 행을 가른다. 구역 머리가 새로 붙어도("Differences resulting from:")
     구역을 뺀 이름이 표 안에 하나뿐이면 잇는다.
   - 대시는 0, 빈 칸은 값 없음.
+  - `restated` 는 차이가 거친 단위의 한 단위 미만이면 달지 않는다. 반 단위로 두면 천 달러 → 백만 달러 반올림(28,513 →
+    28, 합계를 맞추려 내림)이 재작성으로 잡혀 5편에서 오탐 5건이 났다. 남은 4건은 세율 조정표 "Other"·"Other
+    nondeductible expense" 재분류였다. Net Revenues 구분은 재작성이 없었다(5,580 은 FY2024 당해 값, 2023 비교 열은 2,576 그대로).
 - `company-lookup` 은 매번 전체 목록(~1만 행)을 받아 거른다. `filings` 는 SEC 의 recent 목록(1년 이상 또는 1,000건)만 본다.
 - 테스트 픽스처는 합성 회사·CIK·접수번호만 쓴다(cluefin-sec-notes AGENTS.md). 스키마 예시의 `cik`/`accession_number`
   샘플은 cluefin-openapi README 와 같은 AAPL 값이다.
