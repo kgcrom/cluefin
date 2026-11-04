@@ -218,6 +218,34 @@ duckdb -cmd "ATTACH '$HOME/.cache/cluefin/market.duckdb' AS market (READ_ONLY); 
 `duckdb -readonly -ui <파일>` 은 UI 가 자기 상태 카탈로그(`_duckdb_ui`)를 만들지 못해 `Catalog "_duckdb_ui" does not exist`
 로 실패합니다. 수정주가는 `close * adj_factor` 입니다.
 
+## 재무 품질 지표 (`dart financial-summary` 의 `quality`)
+
+`dart financial-summary` 는 3개년 연간 수치(`annual`)마다 `quality` 블록을 같이 낸다. 라벨·판정은 없고 값과 구성요소·공식만이다.
+계산은 `quality.py`(순수 함수, DART 호출 없음)에 있고 입력은 `statements.py` 의 항목(이익잉여금·법인세비용·감가상각·자기주식·
+주식발행을 B-20 에서 추가)이다.
+
+- **ROIC** = 세후 영업이익 ÷ 투하자본. 세율은 실효세율(법인세비용 ÷ 세전이익)을 0~40%로 자르고, 투하자본 = 자기자본(지배지분)
+  + 차입금 − 현금이며 전기 값이 있으면 당기·전기 평균을 쓴다. (Bruce Greenwald, *Value Investing*; Joel Greenblatt 마법공식과
+  같은 세후 영업이익 정의.)
+- **DuPont 3단계 분해**: ROE = 순이익률(순이익/매출) × 총자산회전율(매출/평균자산) × 레버리지(평균자산/평균자기자본).
+  `roe_check` 가 세 항의 곱, `roe_reported` 가 `annual` 의 보고된 ROE다 — 평균자산·평균자기자본 반올림이나 지배·비지배 순이익
+  구분 차이로 둘이 조금 다를 수 있다. (Donaldson Brown, DuPont Corporation, 1910~20년대 3-factor 분해.)
+- **발생액 비율(accruals ratio)** = (순이익 − 영업현금흐름) ÷ 평균총자산. (Richard Sloan, "Do Stock Prices Fully Reflect
+  Information in Accruals and Cash Flows about Future Earnings?", *The Accounting Review*, 1996.)
+- **Piotroski F-Score**: 수익성(ROA>0·CFO>0·ΔROA>0·CFO>순이익) 4개, 재무구조(Δ장기부채비율<0·Δ유동비율>0·신주 발행 없음) 3개,
+  효율성(Δ매출총이익률>0·Δ자산회전율>0) 2개, 합 9개를 0/1로 매겨 합산한다. 가장 최근 두 해로만 계산하므로 `annual` 의 가장
+  오래된 해에는 전기가 없어 전 항목 `null`(`incomplete: true`)이다. 장기부채비율은 `noncurrent_liabilities/assets` 근사다 —
+  financial-summary 는 만기별 차입금을 나누지 않는다. (Joseph Piotroski, "Value Investing: The Use of Historical Financial
+  Statement Information to Separate Winners from Losers", *Journal of Accounting Research*, 2000.)
+- **Altman Z''(장부가, 비제조업·이머징마켓 변형)** = 6.56·X1 + 3.26·X2 + 6.72·X3 + 1.05·X4, X1=운전자본/자산,
+  X2=이익잉여금/자산, X3=영업이익(EBIT 대용)/자산, X4=자본/부채. (Edward Altman, Hartzell & Peck, "Emerging Markets Corporate
+  Bonds: A Scoring System", 1995.)
+
+**금융업(은행·보험·증권)은 일부 항목이 구조적으로 `null`이다.** K-IFRS 는 금융업에 유동/비유동 구분 재무상태표를 요구하지
+않으므로 `current_assets`/`current_liabilities`(그리고 흔히 `revenue`)가 애초에 `statements.py` 단계에서 `None`이다. 그래서
+Altman X1, F-Score 의 유동비율·매출총이익률·자산회전율 항목이 `null`이고, `altman_z_double_prime.missing`에 이유가 적힌다 —
+0 으로 메워 지표를 왜곡하지 않는다.
+
 ## trend-setup 규칙과 근거
 
 `kis chart trend-setup`(종목 하나, KIS 실시간)과 `cache trend-setup`(전 종목, 로컬 캐시)이 쓰는 관심종목 1·2·3그룹 규칙의 출처다.

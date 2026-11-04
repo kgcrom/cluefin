@@ -175,6 +175,15 @@ CLI 가 말해 주지 않는 것만 적는다.
   financial-liabilities fallback (`borrowings_basis` says which), ROE/ROA use average equity/assets.
   `test_dart_handlers_unit.py` lists it with the parsing handlers; `test_dart_financial_summary_unit.py` covers it
   with a fake keyed by (year, reprt_code, fs_div).
+- The `quality` block (ROIC, DuPont, accrual ratio, Piotroski F-Score, Altman Z'') is a separate pure module,
+  `quality.py` — no DART calls, takes the `annual` three-year list `statements.annual()` already returned (post
+  `to_eok`, since every quality ratio is scale-invariant). Formulas and sources are in the module docstring and
+  README "재무 품질 지표"; no labels or verdicts, values and formula components only (2026-11-04 decision).
+  F-Score needs two consecutive years, so the oldest of the three gets `incomplete: true`. A classified balance
+  sheet (유동/비유동) is not required for banks/insurers/securities firms under K-IFRS, so `current_assets`/
+  `current_liabilities`/`revenue` are already `None` from `statements.py` for them — `quality.py` never
+  substitutes 0, it returns `null` for the affected metric and names the missing field in
+  `altman_z_double_prime.missing`. `test_quality_unit.py` covers the pure functions with synthetic figures.
 - `dart document-outline` / `document-section` / `financial-notes` parse the downloaded original XML with
   cluefin-dart-notes (see the `dart document-*` section) and are excluded from those tests too.
 - `sec filing-items` / `filing-exhibit` parse a downloaded document with cluefin-sec-notes (see the `sec *`
