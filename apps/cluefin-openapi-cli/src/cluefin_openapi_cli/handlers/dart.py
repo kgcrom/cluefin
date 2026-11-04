@@ -14,7 +14,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-from cluefin_openapi_cli import dilution, statements
+from cluefin_openapi_cli import dilution, quality, statements
 from cluefin_openapi_cli.clock import KST
 from cluefin_openapi_cli.errors import (
     DART_REQUEST_LIMIT_STATUS,
@@ -694,7 +694,10 @@ def collect_reports(
         "several reports at once): the last N single quarters with YoY (Q2–Q4 derived from year-to-date "
         "differences, 4Q = annual − 9 months), three fiscal years from the latest annual report with ratios "
         "(GPM, OPM, debt ratio, net debt, interest coverage, ROE/ROA on average equity/assets, FCF), the "
-        "latest filed period year-to-date, TTM sums, and borrowings summed by account label (basis stated). "
+        "latest filed period year-to-date, TTM sums, borrowings summed by account label (basis stated), and a "
+        "`quality` block per fiscal year (ROIC, DuPont 3-way split, accrual ratio, Altman Z'' book-value "
+        "variant, plus one Piotroski F-Score from the latest two years) — values and formula components only, "
+        "no verdicts; see quality.py for sources. "
         "Consolidated statements first, separate when the filer has none; the two are never mixed. "
         "Money in 억원. Costs 8 DART calls (16 when only separate statements exist, one more before the "
         "latest annual report is filed); DART's daily quota applies. Values are the latest amended ones — use "
@@ -763,6 +766,7 @@ def handle_financial_summary(params: dict, session) -> dict:
     annual_reports = [r for r in reports if r.reprt_code == "11011"]
     annual_report = max(annual_reports, key=lambda r: r.year) if annual_reports else None
     quarter_list = statements.quarters(reports)[-shown:]
+    annual_eok = [statements.to_eok(y) for y in statements.annual(annual_report)] if annual_report else []
 
     return {
         "corp_code": corp_code,
@@ -774,7 +778,7 @@ def handle_financial_summary(params: dict, session) -> dict:
             for r in sorted(reports, key=lambda r: r.order)
         ],
         "quarters": [statements.to_eok(q) for q in quarter_list],
-        "annual": [statements.to_eok(y) for y in statements.annual(annual_report)] if annual_report else [],
+        "annual": annual_eok,
         "latest": statements.to_eok(statements.latest(latest_report)),
         "ttm": {
             key: None if value is None else value / statements.EOK
@@ -783,6 +787,7 @@ def handle_financial_summary(params: dict, session) -> dict:
                 for key in ("revenue", "operating_income", "net_income_owners")
             )
         },
+        "quality": quality.compute(annual_eok) if annual_eok else None,
         "calls": calls,
         "notes": list(_SUMMARY_NOTES),
     }

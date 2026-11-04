@@ -42,6 +42,7 @@ INCOME_ITEMS: dict[str, Item] = {
     "sga": Item(("dart_TotalSellingGeneralAdministrativeExpenses",), ("판매비와관리비",)),
     "operating_income": Item(("dart_OperatingIncomeLoss",), ("영업이익", "영업이익(손실)")),
     "pretax_income": Item(("ifrs-full_ProfitLossBeforeTax",), ("법인세비용차감전순이익",)),
+    "income_tax_expense": Item(("ifrs-full_IncomeTaxExpenseContinuingOperations",), ("법인세비용", "법인세비용(수익)")),
     "net_income": Item(("ifrs-full_ProfitLoss",), ("당기순이익", "당기순이익(손실)")),
     # Owners' share only by id: the same Korean label also names the comprehensive-income split.
     "net_income_owners": Item(("ifrs-full_ProfitLossAttributableToOwnersOfParent",)),
@@ -65,6 +66,7 @@ BALANCE_ITEMS: dict[str, Item] = {
         ("ifrs-full_EquityAttributableToOwnersOfParent",),
         ("지배기업의소유주에게귀속되는지분", "지배기업소유주지분"),
     ),
+    "retained_earnings": Item(("ifrs-full_RetainedEarnings",), ("이익잉여금", "이익잉여금(결손금)")),
 }
 
 CASH_ITEMS: dict[str, Item] = {
@@ -77,6 +79,20 @@ CASH_ITEMS: dict[str, Item] = {
     ),
     "dividends_paid": Item(("ifrs-full_DividendsPaidClassifiedAsFinancingActivities",), ("배당금의지급", "배당금지급")),
     "interest_expense": Item(("dart_AdjustmentsForInterestExpenses",), ("이자비용",)),
+    # D&A: only filers that itemize the cash-flow adjustments carry these lines. Many large filers lump them into
+    # one "조정" line (D&A then lives in the notes), so None here is "not itemized", not zero. Nothing sums them yet.
+    "depreciation": Item(("ifrs-full_DepreciationExpense",), ("감가상각비", "유형자산감가상각비")),
+    "amortization": Item(("ifrs-full_AmortisationExpense",), ("무형자산상각비", "무형자산감가상각비")),
+    "treasury_shares_acquired": Item(
+        ("dart_AcquisitionOfTreasuryShares", "ifrs-full_PaymentsToAcquireOrRedeemEntitysShares"),
+        ("자기주식의취득", "자기주식취득"),
+    ),
+    "treasury_shares_disposed": Item(
+        ("ifrs-full_ProceedsFromSaleOrDisposalOfEntitysSharesHeld",), ("자기주식의처분", "자기주식처분")
+    ),
+    "proceeds_from_share_issuance": Item(
+        ("ifrs-full_ProceedsFromIssuingShares",), ("주식의발행", "유상증자", "주식발행")
+    ),
 }
 
 # Fields in 원 that `to_eok` converts. Ratios and growth reuse item names, so this is explicit.
