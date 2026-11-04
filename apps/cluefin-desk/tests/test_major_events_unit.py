@@ -12,8 +12,8 @@ def _response(items, status="000"):
     return SimpleNamespace(result=SimpleNamespace(status=status, list=items))
 
 
-class FakeMajorShareholderDisclosure:
-    """`major_shareholder_disclosure` 자리에 끼워 넣는다 — 메서드마다 호출 기록·응답을 쥔다."""
+class FakeMajorMattersReport:
+    """`major_matters_report` 자리에 끼워 넣는다 — 메서드마다 호출 기록·응답을 쥔다."""
 
     def __init__(self, responses=None, raising=None):
         self._responses = responses or {}
@@ -32,7 +32,7 @@ class FakeMajorShareholderDisclosure:
 
 class FakeDartClient:
     def __init__(self, responses=None, raising=None):
-        self.major_shareholder_disclosure = FakeMajorShareholderDisclosure(responses, raising)
+        self.major_matters_report = FakeMajorMattersReport(responses, raising)
 
 
 def _item(**kwargs):
@@ -44,8 +44,8 @@ class TestCollectMajorEvents:
         client = FakeDartClient()
         collect_major_events(client, "00126380", end=date(2026, 11, 4))
 
-        assert len(client.major_shareholder_disclosure.calls) == len(MAJOR_EVENT_TYPES)
-        for _, kwargs in client.major_shareholder_disclosure.calls:
+        assert len(client.major_matters_report.calls) == len(MAJOR_EVENT_TYPES)
+        for _, kwargs in client.major_matters_report.calls:
             assert kwargs["corp_code"] == "00126380"
             assert kwargs["bgn_de"] == "20251104"
             assert kwargs["end_de"] == "20261104"
@@ -54,7 +54,7 @@ class TestCollectMajorEvents:
         client = FakeDartClient()
         collect_major_events(client, "00126380", end=date(2015, 3, 1))
 
-        _, kwargs = client.major_shareholder_disclosure.calls[0]
+        _, kwargs = client.major_matters_report.calls[0]
         assert kwargs["bgn_de"] == "20150101"
 
     def test_status_013_is_skipped_silently(self):
@@ -70,7 +70,7 @@ class TestCollectMajorEvents:
                 "convertible_bond_issuance_decision": _response(
                     [_item(rcept_no="20260101000111", bd_fta="10,000,000,000")]
                 ),
-                "real_estate_development": _response(
+                "default_occurrence": _response(
                     [_item(rcept_no="20260615000222", df_amt="5,000,000,000", df_bnk="국민은행")]
                 ),
             }
@@ -91,10 +91,8 @@ class TestCollectMajorEvents:
 
     def test_one_failing_event_type_does_not_block_the_others(self):
         client = FakeDartClient(
-            responses={
-                "real_estate_development": _response([_item(rcept_no="20260615000222", df_amt="1", df_bnk="-")])
-            },
-            raising={"business_letter": RuntimeError("요청 제한을 초과하였습니다")},
+            responses={"default_occurrence": _response([_item(rcept_no="20260615000222", df_amt="1", df_bnk="-")])},
+            raising={"business_suspension": RuntimeError("요청 제한을 초과하였습니다")},
         )
         rows, errors = collect_major_events(client, "00126380", end=date(2026, 11, 4))
 
@@ -108,5 +106,5 @@ class TestCollectMajorEvents:
         client = FakeDartClient()
         collect_major_events(client, "00126380", end=date(2026, 11, 4))
 
-        called_methods = [name for name, _ in client.major_shareholder_disclosure.calls]
+        called_methods = [name for name, _ in client.major_matters_report.calls]
         assert len(called_methods) == len(set(called_methods)) == len(MAJOR_EVENT_TYPES)

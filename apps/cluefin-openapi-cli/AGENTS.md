@@ -408,10 +408,12 @@ CLI 가 말해 주지 않는 것만 적는다.
 
 - 주요사항보고서 36종·정기보고서 주요정보 26종을 명령 둘로 연다. 엔드포인트마다 명령을 두면 `disclosure` 태그가
   50개 상한(`test_taxonomy_filters_are_selective`)을 넘고, 인자가 종류별로 완전히 같다.
-- **라이브러리 메서드 이름이 엔드포인트와 자주 다르다** — `real_estate_development` 는 dfOcr(부도발생),
-  `business_letter` 는 bsnSp(영업정지), `corporate_bond_issuance_decision` 은 exbdIsDecsn(교환사채). 클래스 이름
-  `MajorShareholderDisclosure` 도 실제로는 주요사항보고서(DS005)다. `handlers/dart.py` 의 `_MAJOR_EVENTS`·`_REPORT_ITEMS`
-  (slug → 엔드포인트·한국어 이름·람다)가 진실의 원천이다. `getattr(client, 이름)` 으로 바꾸지 않는다 — 이름이 오해를
+- **라이브러리 메서드·클래스 이름은 2026-11-04(B-13)부터 엔드포인트와 일치한다** — `default_occurrence` 는
+  dfOcr(부도발생), `business_suspension` 은 bsnSp(영업정지), `exchangeable_bond_issuance_decision` 은
+  exbdIsDecsn(교환사채). 클래스 이름도 `MajorMattersReport`(주요사항보고서, DS005)로 바뀌었다. 옛 이름(`real_estate_development`,
+  `business_letter`, `corporate_bond_issuance_decision`, `MajorShareholderDisclosure` 등)은 `DeprecationWarning`
+  을 내는 별칭으로만 남아 있으니 새로 쓰지 않는다. `handlers/dart.py` 의 `_MAJOR_EVENTS`·`_REPORT_ITEMS`
+  (slug → 엔드포인트·한국어 이름·람다)가 그래도 진실의 원천이다. `getattr(client, 이름)` 으로 바꾸지 않는다 — 이름이 오해를
   부르고 Codacy 가 동적 호출로 잡는다. `test_dart_event_handlers_unit.py` 가 62종 전부 실제 client 의 `_get` 경로를 표와 대조한다.
 - 실데이터 검증(2026-10-17, 최근 12개월 주요사항보고 공시에서 종류별 표본, CLI 경유): 주요사항 33종은 행으로 확인.
   `split-merger` 는 표본 4건이 모두 013(자회사 공시로 보임), `overseas-delisting-decision`·`overseas-delisting` 은 표본이 없어

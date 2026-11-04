@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import type { z } from 'zod';
 
-import { majorShareholderDisclosureEndpoints } from '../../src/dart/metadata/major-shareholder-disclosure';
+import { majorMattersReportEndpoints } from '../../src/dart/metadata/major-shareholder-disclosure';
 import * as schemas from '../../src/dart/schemas/major-shareholder-disclosure';
 import { getDartClient, runDartIntegration, setupDartRateLimit } from '../_helpers/integration-setup';
 import { majorShareholderSamples } from './fixtures/major-shareholder-samples';
@@ -16,10 +16,10 @@ const schemaFor = (methodName: string): z.ZodTypeAny => {
 };
 
 // 주요사항보고서는 사건성 공시라 해당 연도에 샘플이 없을 수 있다 — 실패가 아니라 skip 으로 남긴다.
-describe('Dart MajorShareholderDisclosure', () => {
+describe('Dart MajorMattersReport', () => {
   setupDartRateLimit();
 
-  for (const endpoint of majorShareholderDisclosureEndpoints) {
+  for (const endpoint of majorMattersReportEndpoints) {
     const sample = majorShareholderSamples[endpoint.methodName];
     const run = sample ? it : test.skip;
 

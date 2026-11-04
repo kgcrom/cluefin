@@ -22,7 +22,7 @@ import { consoleLogger, type Logger } from '../core/logger.js';
 import type { ApiResponse, DartEndpointDefinition } from '../core/types.js';
 import { createInputSchema } from '../core/validation.js';
 import { isZip } from '../core/zip.js';
-import { MajorShareholderDisclosure } from './major-shareholder-disclosure.js';
+import { MajorMattersReport, type MajorShareholderDisclosure } from './major-shareholder-disclosure.js';
 import { PeriodicReportFinancialStatement } from './periodic-report-financial-statement.js';
 import { PeriodicReportKeyInformation } from './periodic-report-key-information.js';
 import { PublicDisclosure } from './public-disclosure.js';
@@ -101,7 +101,7 @@ export class DartClient {
   private shareDisclosureComprehensiveInstance?: DartShareDisclosureComprehensive;
   private periodicReportFinancialStatementInstance?: PeriodicReportFinancialStatement;
   private periodicReportKeyInformationInstance?: PeriodicReportKeyInformation;
-  private majorShareholderDisclosureInstance?: MajorShareholderDisclosure;
+  private majorMattersReportInstance?: MajorMattersReport;
 
   public constructor(options: DartClientOptions) {
     this.authKey = options.authKey;
@@ -154,11 +154,20 @@ export class DartClient {
   }
 
   /** 주요사항보고서 주요정보 (자기주식·증자·감자·사채 발행·합병/분할·양수도 결정 등) */
-  public get majorShareholderDisclosure(): MajorShareholderDisclosure {
-    if (!this.majorShareholderDisclosureInstance) {
-      this.majorShareholderDisclosureInstance = new MajorShareholderDisclosure(this);
+  public get majorMattersReport(): MajorMattersReport {
+    if (!this.majorMattersReportInstance) {
+      this.majorMattersReportInstance = new MajorMattersReport(this);
     }
-    return this.majorShareholderDisclosureInstance;
+    return this.majorMattersReportInstance;
+  }
+
+  /**
+   * `majorMattersReport` 의 옛 이름이다 (주요사항보고서는 주요주주 공시가 아니다).
+   *
+   * @deprecated Use {@link DartClient.majorMattersReport} instead (2026-11-04, B-13).
+   */
+  public get majorShareholderDisclosure(): MajorShareholderDisclosure {
+    return this.majorMattersReport as MajorShareholderDisclosure;
   }
 
   /** JSON 엔드포인트 호출. 응답 키는 camelCase 로 바뀐다. */

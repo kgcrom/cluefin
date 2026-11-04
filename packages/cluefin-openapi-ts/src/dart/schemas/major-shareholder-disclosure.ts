@@ -4,7 +4,7 @@ import type { CamelizeKeys } from '../../core/types.js';
 import { dartEnvelope, dartNumeric } from './common.js';
 
 /** 자산양수도(기타), 풋백옵션 항목 */
-export const treasuryStockAcquisitionDisposalPlanItemSchema = z.object({
+export const assetTransferPutbackOptionItemSchema = z.object({
   /** 접수번호(14자리) */
   rcept_no: z.string(),
   /** 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타) */
@@ -20,7 +20,7 @@ export const treasuryStockAcquisitionDisposalPlanItemSchema = z.object({
 });
 
 /** 부도발생 항목 */
-export const realEstateDevelopmentItemSchema = z.object({
+export const defaultOccurrenceItemSchema = z.object({
   /** 접수번호(14자리) */
   rcept_no: z.string(),
   /** 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타) */
@@ -42,7 +42,7 @@ export const realEstateDevelopmentItemSchema = z.object({
 });
 
 /** 영업정지 항목 */
-export const businessLetterItemSchema = z.object({
+export const businessSuspensionItemSchema = z.object({
   /** 접수번호(14자리) */
   rcept_no: z.string(),
   /** 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타) */
@@ -128,7 +128,7 @@ export const dissolutionOccurrenceItemSchema = z.object({
 });
 
 /** 유상증자 결정 항목 */
-export const securitiesGrantedDecisionItemSchema = z.object({
+export const paidInCapitalIncreaseDecisionItemSchema = z.object({
   /** 접수번호(14자리) */
   rcept_no: z.string(),
   /** 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타) */
@@ -170,7 +170,7 @@ export const securitiesGrantedDecisionItemSchema = z.object({
 });
 
 /** 무상증자 결정 항목 */
-export const freeSecuritiesDecisionItemSchema = z.object({
+export const freeCapitalIncreaseDecisionItemSchema = z.object({
   /** 접수번호(14자리) */
   rcept_no: z.string(),
   /** 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타) */
@@ -212,7 +212,7 @@ export const freeSecuritiesDecisionItemSchema = z.object({
 });
 
 /** 유무상증자 결정 항목 */
-export const paidInCapitalReductionDecisionItemSchema = z.object({
+export const paidInAndFreeCapitalIncreaseDecisionItemSchema = z.object({
   /** 접수번호(14자리) */
   rcept_no: z.string(),
   /** 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타) */
@@ -360,7 +360,7 @@ export const capitalReductionDecisionItemSchema = z.object({
 });
 
 /** 재권은행 등의 관리절차 개시 항목 */
-export const governmentBondManagerReplacementItemSchema = z.object({
+export const creditorBankManagementProcedureCommencementItemSchema = z.object({
   /** 접수번호(14자리) */
   rcept_no: z.string(),
   /** 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타) */
@@ -382,7 +382,7 @@ export const governmentBondManagerReplacementItemSchema = z.object({
 });
 
 /** 소송 등의 제기 항목 */
-export const profitRevocationItemSchema = z.object({
+export const lawsuitFilingItemSchema = z.object({
   /** 접수번호(14자리) */
   rcept_no: z.string(),
   /** 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타) */
@@ -408,7 +408,7 @@ export const profitRevocationItemSchema = z.object({
 });
 
 /** 해외 증권시장 주권등 상장 결정 항목 */
-export const overseasSecuritiesTradingResolutionItemSchema = z.object({
+export const overseasSecuritiesMarketListingDecisionItemSchema = z.object({
   /** 접수번호(14자리) */
   rcept_no: z.string(),
   /** 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타) */
@@ -452,7 +452,7 @@ export const overseasSecuritiesTradingResolutionItemSchema = z.object({
 });
 
 /** 해외 증권시장 주권등 상장폐지 결정 항목 */
-export const overseasSecuritiesTradingDelistingResolutionItemSchema = z.object({
+export const overseasSecuritiesMarketDelistingDecisionItemSchema = z.object({
   /** 접수번호(14자리) */
   rcept_no: z.string(),
   /** 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타) */
@@ -484,7 +484,7 @@ export const overseasSecuritiesTradingDelistingResolutionItemSchema = z.object({
 });
 
 /** 해외 증권시장 주권등 상장 항목 */
-export const overseasSecuritiesTradingStatusItemSchema = z.object({
+export const overseasSecuritiesMarketListingStatusItemSchema = z.object({
   /** 접수번호(14자리) */
   rcept_no: z.string(),
   /** 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타) */
@@ -508,7 +508,7 @@ export const overseasSecuritiesTradingStatusItemSchema = z.object({
 });
 
 /** 해외 증권시장 주권등 상장폐지 항목 */
-export const overseasSecuritiesTradingStatusDelistingItemSchema = z.object({
+export const overseasSecuritiesMarketDelistingStatusItemSchema = z.object({
   /** 접수번호(14자리) */
   rcept_no: z.string(),
   /** 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타) */
@@ -730,7 +730,7 @@ export const newStockWarrantBondIssuanceDecisionItemSchema = z.object({
 });
 
 /** 교환사채권 발행결정 항목 */
-export const corporateBondIssuanceDecisionItemSchema = z.object({
+export const exchangeableBondIssuanceDecisionItemSchema = z.object({
   /** 접수번호(14자리) */
   rcept_no: z.string(),
   /** 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타) */
@@ -818,7 +818,7 @@ export const corporateBondIssuanceDecisionItemSchema = z.object({
 });
 
 /** 채권은행 등의 관리절차 종단 항목 */
-export const governmentBondManagerTransferTerminationItemSchema = z.object({
+export const creditorBankManagementProcedureTerminationItemSchema = z.object({
   /** 접수번호(14자리) */
   rcept_no: z.string(),
   /** 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타) */
@@ -840,7 +840,7 @@ export const governmentBondManagerTransferTerminationItemSchema = z.object({
 });
 
 /** 상각형 조건부자본증권 발행결정 항목 */
-export const reorganizationPlanApprovedRulingItemSchema = z.object({
+export const writeDownContingentCapitalSecuritiesIssuanceDecisionItemSchema = z.object({
   /** 접수번호(14자리) */
   rcept_no: z.string(),
   /** 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타) */
@@ -1144,7 +1144,7 @@ export const treasuryStockTrustContractTerminationDecisionItemSchema = z.object(
 });
 
 /** 영업양수 결정 항목 */
-export const businessPlanDecisionItemSchema = z.object({
+export const businessAcquisitionDecisionItemSchema = z.object({
   /** 접수번호(14자리) */
   rcept_no: z.string(),
   /** 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타) */
@@ -1330,7 +1330,7 @@ export const businessTransferDecisionItemSchema = z.object({
 });
 
 /** 유형자산 양수 결정 항목 */
-export const tangibleAssetPlanDecisionItemSchema = z.object({
+export const tangibleAssetAcquisitionDecisionItemSchema = z.object({
   /** 접수번호(14자리) */
   rcept_no: z.string(),
   /** 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타) */
@@ -1498,7 +1498,7 @@ export const tangibleAssetTransferDecisionItemSchema = z.object({
 });
 
 /** 타법인 주식 및 출자증권 양수결정 항목 */
-export const retirementStockInvestmentPlanDecisionItemSchema = z.object({
+export const otherCorporationSecuritiesAcquisitionDecisionItemSchema = z.object({
   /** 접수번호(14자리) */
   rcept_no: z.string(),
   /** 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타) */
@@ -1588,7 +1588,7 @@ export const retirementStockInvestmentPlanDecisionItemSchema = z.object({
 });
 
 /** 타법인 주식 및 출자증권 양도결정 항목 */
-export const retirementStockInvestmentTransferDecisionItemSchema = z.object({
+export const otherCorporationSecuritiesTransferDecisionItemSchema = z.object({
   /** 접수번호(14자리) */
   rcept_no: z.string(),
   /** 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타) */
@@ -1670,7 +1670,7 @@ export const retirementStockInvestmentTransferDecisionItemSchema = z.object({
 });
 
 /** 주권 관련 사채권 양수 결정 항목 */
-export const stockRelatedBondPlanDecisionItemSchema = z.object({
+export const stockRelatedBondAcquisitionDecisionItemSchema = z.object({
   /** 접수번호(14자리) */
   rcept_no: z.string(),
   /** 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타) */
@@ -1842,7 +1842,7 @@ export const stockRelatedBondTransferDecisionItemSchema = z.object({
 });
 
 /** 회사합병 결정 항목 */
-export const corporateLawDecisionItemSchema = z.object({
+export const companyMergerDecisionItemSchema = z.object({
   /** 접수번호(14자리) */
   rcept_no: z.string(),
   /** 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타) */
@@ -2086,7 +2086,7 @@ export const corporateDivisionDecisionItemSchema = z.object({
 });
 
 /** 회사분할합병 결정 항목 */
-export const corporateLawMethodDecisionItemSchema = z.object({
+export const companyDivisionMergerDecisionItemSchema = z.object({
   /** 접수번호(14자리) */
   rcept_no: z.string(),
   /** 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타) */
@@ -2270,7 +2270,7 @@ export const corporateLawMethodDecisionItemSchema = z.object({
 });
 
 /** 주식교환·이전 결정 항목 */
-export const stockTradingOtherDecisionItemSchema = z.object({
+export const stockExchangeTransferDecisionItemSchema = z.object({
   /** 접수번호(14자리) */
   rcept_no: z.string(),
   /** 법인구분 : Y(유가), K(코스닥), N(코넥스), E(기타) */
@@ -2384,21 +2384,21 @@ export const stockTradingOtherDecisionItemSchema = z.object({
 });
 
 /** 자산양수도(기타), 풋백옵션 응답 */
-export const treasuryStockAcquisitionDisposalPlanResponseSchema = z.object({
+export const assetTransferPutbackOptionResponseSchema = z.object({
   ...dartEnvelope,
-  list: z.array(treasuryStockAcquisitionDisposalPlanItemSchema).nullish(),
+  list: z.array(assetTransferPutbackOptionItemSchema).nullish(),
 });
 
 /** 부도발생 응답 */
-export const realEstateDevelopmentResponseSchema = z.object({
+export const defaultOccurrenceResponseSchema = z.object({
   ...dartEnvelope,
-  list: z.array(realEstateDevelopmentItemSchema).nullish(),
+  list: z.array(defaultOccurrenceItemSchema).nullish(),
 });
 
 /** 영업정지 응답 */
-export const businessLetterResponseSchema = z.object({
+export const businessSuspensionResponseSchema = z.object({
   ...dartEnvelope,
-  list: z.array(businessLetterItemSchema).nullish(),
+  list: z.array(businessSuspensionItemSchema).nullish(),
 });
 
 /** 회생절차 개시신청 응답 */
@@ -2414,21 +2414,21 @@ export const dissolutionOccurrenceResponseSchema = z.object({
 });
 
 /** 유상증자 결정 응답 */
-export const securitiesGrantedDecisionResponseSchema = z.object({
+export const paidInCapitalIncreaseDecisionResponseSchema = z.object({
   ...dartEnvelope,
-  list: z.array(securitiesGrantedDecisionItemSchema).nullish(),
+  list: z.array(paidInCapitalIncreaseDecisionItemSchema).nullish(),
 });
 
 /** 무상증자 결정 응답 */
-export const freeSecuritiesDecisionResponseSchema = z.object({
+export const freeCapitalIncreaseDecisionResponseSchema = z.object({
   ...dartEnvelope,
-  list: z.array(freeSecuritiesDecisionItemSchema).nullish(),
+  list: z.array(freeCapitalIncreaseDecisionItemSchema).nullish(),
 });
 
 /** 유무상증자 결정 응답 */
-export const paidInCapitalReductionDecisionResponseSchema = z.object({
+export const paidInAndFreeCapitalIncreaseDecisionResponseSchema = z.object({
   ...dartEnvelope,
-  list: z.array(paidInCapitalReductionDecisionItemSchema).nullish(),
+  list: z.array(paidInAndFreeCapitalIncreaseDecisionItemSchema).nullish(),
 });
 
 /** 감자 결정 응답 */
@@ -2438,39 +2438,39 @@ export const capitalReductionDecisionResponseSchema = z.object({
 });
 
 /** 재권은행 등의 관리절차 개시 응답 */
-export const governmentBondManagerReplacementResponseSchema = z.object({
+export const creditorBankManagementProcedureCommencementResponseSchema = z.object({
   ...dartEnvelope,
-  list: z.array(governmentBondManagerReplacementItemSchema).nullish(),
+  list: z.array(creditorBankManagementProcedureCommencementItemSchema).nullish(),
 });
 
 /** 소송 등의 제기 응답 */
-export const profitRevocationResponseSchema = z.object({
+export const lawsuitFilingResponseSchema = z.object({
   ...dartEnvelope,
-  list: z.array(profitRevocationItemSchema).nullish(),
+  list: z.array(lawsuitFilingItemSchema).nullish(),
 });
 
 /** 해외 증권시장 주권등 상장 결정 응답 */
-export const overseasSecuritiesTradingResolutionResponseSchema = z.object({
+export const overseasSecuritiesMarketListingDecisionResponseSchema = z.object({
   ...dartEnvelope,
-  list: z.array(overseasSecuritiesTradingResolutionItemSchema).nullish(),
+  list: z.array(overseasSecuritiesMarketListingDecisionItemSchema).nullish(),
 });
 
 /** 해외 증권시장 주권등 상장폐지 결정 응답 */
-export const overseasSecuritiesTradingDelistingResolutionResponseSchema = z.object({
+export const overseasSecuritiesMarketDelistingDecisionResponseSchema = z.object({
   ...dartEnvelope,
-  list: z.array(overseasSecuritiesTradingDelistingResolutionItemSchema).nullish(),
+  list: z.array(overseasSecuritiesMarketDelistingDecisionItemSchema).nullish(),
 });
 
 /** 해외 증권시장 주권등 상장 응답 */
-export const overseasSecuritiesTradingStatusResponseSchema = z.object({
+export const overseasSecuritiesMarketListingStatusResponseSchema = z.object({
   ...dartEnvelope,
-  list: z.array(overseasSecuritiesTradingStatusItemSchema).nullish(),
+  list: z.array(overseasSecuritiesMarketListingStatusItemSchema).nullish(),
 });
 
 /** 해외 증권시장 주권등 상장폐지 응답 */
-export const overseasSecuritiesTradingStatusDelistingResponseSchema = z.object({
+export const overseasSecuritiesMarketDelistingStatusResponseSchema = z.object({
   ...dartEnvelope,
-  list: z.array(overseasSecuritiesTradingStatusDelistingItemSchema).nullish(),
+  list: z.array(overseasSecuritiesMarketDelistingStatusItemSchema).nullish(),
 });
 
 /** 전환사채권 발행결정 응답 */
@@ -2486,21 +2486,21 @@ export const newStockWarrantBondIssuanceDecisionResponseSchema = z.object({
 });
 
 /** 교환사채권 발행결정 응답 */
-export const corporateBondIssuanceDecisionResponseSchema = z.object({
+export const exchangeableBondIssuanceDecisionResponseSchema = z.object({
   ...dartEnvelope,
-  list: z.array(corporateBondIssuanceDecisionItemSchema).nullish(),
+  list: z.array(exchangeableBondIssuanceDecisionItemSchema).nullish(),
 });
 
 /** 채권은행 등의 관리절차 종단 응답 */
-export const governmentBondManagerTransferTerminationResponseSchema = z.object({
+export const creditorBankManagementProcedureTerminationResponseSchema = z.object({
   ...dartEnvelope,
-  list: z.array(governmentBondManagerTransferTerminationItemSchema).nullish(),
+  list: z.array(creditorBankManagementProcedureTerminationItemSchema).nullish(),
 });
 
 /** 상각형 조건부자본증권 발행결정 응답 */
-export const reorganizationPlanApprovedRulingResponseSchema = z.object({
+export const writeDownContingentCapitalSecuritiesIssuanceDecisionResponseSchema = z.object({
   ...dartEnvelope,
-  list: z.array(reorganizationPlanApprovedRulingItemSchema).nullish(),
+  list: z.array(writeDownContingentCapitalSecuritiesIssuanceDecisionItemSchema).nullish(),
 });
 
 /** 자기주식 취득 결정 응답 */
@@ -2528,9 +2528,9 @@ export const treasuryStockTrustContractTerminationDecisionResponseSchema = z.obj
 });
 
 /** 영업양수 결정 응답 */
-export const businessPlanDecisionResponseSchema = z.object({
+export const businessAcquisitionDecisionResponseSchema = z.object({
   ...dartEnvelope,
-  list: z.array(businessPlanDecisionItemSchema).nullish(),
+  list: z.array(businessAcquisitionDecisionItemSchema).nullish(),
 });
 
 /** 영업양도 결정 응답 */
@@ -2540,9 +2540,9 @@ export const businessTransferDecisionResponseSchema = z.object({
 });
 
 /** 유형자산 양수 결정 응답 */
-export const tangibleAssetPlanDecisionResponseSchema = z.object({
+export const tangibleAssetAcquisitionDecisionResponseSchema = z.object({
   ...dartEnvelope,
-  list: z.array(tangibleAssetPlanDecisionItemSchema).nullish(),
+  list: z.array(tangibleAssetAcquisitionDecisionItemSchema).nullish(),
 });
 
 /** 유형자산 양도 결정 응답 */
@@ -2552,21 +2552,21 @@ export const tangibleAssetTransferDecisionResponseSchema = z.object({
 });
 
 /** 타법인 주식 및 출자증권 양수결정 응답 */
-export const retirementStockInvestmentPlanDecisionResponseSchema = z.object({
+export const otherCorporationSecuritiesAcquisitionDecisionResponseSchema = z.object({
   ...dartEnvelope,
-  list: z.array(retirementStockInvestmentPlanDecisionItemSchema).nullish(),
+  list: z.array(otherCorporationSecuritiesAcquisitionDecisionItemSchema).nullish(),
 });
 
 /** 타법인 주식 및 출자증권 양도결정 응답 */
-export const retirementStockInvestmentTransferDecisionResponseSchema = z.object({
+export const otherCorporationSecuritiesTransferDecisionResponseSchema = z.object({
   ...dartEnvelope,
-  list: z.array(retirementStockInvestmentTransferDecisionItemSchema).nullish(),
+  list: z.array(otherCorporationSecuritiesTransferDecisionItemSchema).nullish(),
 });
 
 /** 주권 관련 사채권 양수 결정 응답 */
-export const stockRelatedBondPlanDecisionResponseSchema = z.object({
+export const stockRelatedBondAcquisitionDecisionResponseSchema = z.object({
   ...dartEnvelope,
-  list: z.array(stockRelatedBondPlanDecisionItemSchema).nullish(),
+  list: z.array(stockRelatedBondAcquisitionDecisionItemSchema).nullish(),
 });
 
 /** 주권 관련 사채권 양도 결정 응답 */
@@ -2576,9 +2576,9 @@ export const stockRelatedBondTransferDecisionResponseSchema = z.object({
 });
 
 /** 회사합병 결정 응답 */
-export const corporateLawDecisionResponseSchema = z.object({
+export const companyMergerDecisionResponseSchema = z.object({
   ...dartEnvelope,
-  list: z.array(corporateLawDecisionItemSchema).nullish(),
+  list: z.array(companyMergerDecisionItemSchema).nullish(),
 });
 
 /** 회사분할 결정 응답 */
@@ -2588,49 +2588,51 @@ export const corporateDivisionDecisionResponseSchema = z.object({
 });
 
 /** 회사분할합병 결정 응답 */
-export const corporateLawMethodDecisionResponseSchema = z.object({
+export const companyDivisionMergerDecisionResponseSchema = z.object({
   ...dartEnvelope,
-  list: z.array(corporateLawMethodDecisionItemSchema).nullish(),
+  list: z.array(companyDivisionMergerDecisionItemSchema).nullish(),
 });
 
 /** 주식교환·이전 결정 응답 */
-export const stockTradingOtherDecisionResponseSchema = z.object({
+export const stockExchangeTransferDecisionResponseSchema = z.object({
   ...dartEnvelope,
-  list: z.array(stockTradingOtherDecisionItemSchema).nullish(),
+  list: z.array(stockExchangeTransferDecisionItemSchema).nullish(),
 });
 
 // ── Response Types ──
 
-export type TreasuryStockAcquisitionDisposalPlanResponse = CamelizeKeys<
-  z.infer<typeof treasuryStockAcquisitionDisposalPlanResponseSchema>
->;
-export type RealEstateDevelopmentResponse = CamelizeKeys<z.infer<typeof realEstateDevelopmentResponseSchema>>;
-export type BusinessLetterResponse = CamelizeKeys<z.infer<typeof businessLetterResponseSchema>>;
+export type AssetTransferPutbackOptionResponse = CamelizeKeys<z.infer<typeof assetTransferPutbackOptionResponseSchema>>;
+export type DefaultOccurrenceResponse = CamelizeKeys<z.infer<typeof defaultOccurrenceResponseSchema>>;
+export type BusinessSuspensionResponse = CamelizeKeys<z.infer<typeof businessSuspensionResponseSchema>>;
 export type CorporateRehabilitationProceedingsResponse = CamelizeKeys<
   z.infer<typeof corporateRehabilitationProceedingsResponseSchema>
 >;
 export type DissolutionOccurrenceResponse = CamelizeKeys<z.infer<typeof dissolutionOccurrenceResponseSchema>>;
-export type SecuritiesGrantedDecisionResponse = CamelizeKeys<z.infer<typeof securitiesGrantedDecisionResponseSchema>>;
-export type FreeSecuritiesDecisionResponse = CamelizeKeys<z.infer<typeof freeSecuritiesDecisionResponseSchema>>;
-export type PaidInCapitalReductionDecisionResponse = CamelizeKeys<
-  z.infer<typeof paidInCapitalReductionDecisionResponseSchema>
+export type PaidInCapitalIncreaseDecisionResponse = CamelizeKeys<
+  z.infer<typeof paidInCapitalIncreaseDecisionResponseSchema>
+>;
+export type FreeCapitalIncreaseDecisionResponse = CamelizeKeys<
+  z.infer<typeof freeCapitalIncreaseDecisionResponseSchema>
+>;
+export type PaidInAndFreeCapitalIncreaseDecisionResponse = CamelizeKeys<
+  z.infer<typeof paidInAndFreeCapitalIncreaseDecisionResponseSchema>
 >;
 export type CapitalReductionDecisionResponse = CamelizeKeys<z.infer<typeof capitalReductionDecisionResponseSchema>>;
-export type GovernmentBondManagerReplacementResponse = CamelizeKeys<
-  z.infer<typeof governmentBondManagerReplacementResponseSchema>
+export type CreditorBankManagementProcedureCommencementResponse = CamelizeKeys<
+  z.infer<typeof creditorBankManagementProcedureCommencementResponseSchema>
 >;
-export type ProfitRevocationResponse = CamelizeKeys<z.infer<typeof profitRevocationResponseSchema>>;
-export type OverseasSecuritiesTradingResolutionResponse = CamelizeKeys<
-  z.infer<typeof overseasSecuritiesTradingResolutionResponseSchema>
+export type LawsuitFilingResponse = CamelizeKeys<z.infer<typeof lawsuitFilingResponseSchema>>;
+export type OverseasSecuritiesMarketListingDecisionResponse = CamelizeKeys<
+  z.infer<typeof overseasSecuritiesMarketListingDecisionResponseSchema>
 >;
-export type OverseasSecuritiesTradingDelistingResolutionResponse = CamelizeKeys<
-  z.infer<typeof overseasSecuritiesTradingDelistingResolutionResponseSchema>
+export type OverseasSecuritiesMarketDelistingDecisionResponse = CamelizeKeys<
+  z.infer<typeof overseasSecuritiesMarketDelistingDecisionResponseSchema>
 >;
-export type OverseasSecuritiesTradingStatusResponse = CamelizeKeys<
-  z.infer<typeof overseasSecuritiesTradingStatusResponseSchema>
+export type OverseasSecuritiesMarketListingStatusResponse = CamelizeKeys<
+  z.infer<typeof overseasSecuritiesMarketListingStatusResponseSchema>
 >;
-export type OverseasSecuritiesTradingStatusDelistingResponse = CamelizeKeys<
-  z.infer<typeof overseasSecuritiesTradingStatusDelistingResponseSchema>
+export type OverseasSecuritiesMarketDelistingStatusResponse = CamelizeKeys<
+  z.infer<typeof overseasSecuritiesMarketDelistingStatusResponseSchema>
 >;
 export type ConvertibleBondIssuanceDecisionResponse = CamelizeKeys<
   z.infer<typeof convertibleBondIssuanceDecisionResponseSchema>
@@ -2638,14 +2640,14 @@ export type ConvertibleBondIssuanceDecisionResponse = CamelizeKeys<
 export type NewStockWarrantBondIssuanceDecisionResponse = CamelizeKeys<
   z.infer<typeof newStockWarrantBondIssuanceDecisionResponseSchema>
 >;
-export type CorporateBondIssuanceDecisionResponse = CamelizeKeys<
-  z.infer<typeof corporateBondIssuanceDecisionResponseSchema>
+export type ExchangeableBondIssuanceDecisionResponse = CamelizeKeys<
+  z.infer<typeof exchangeableBondIssuanceDecisionResponseSchema>
 >;
-export type GovernmentBondManagerTransferTerminationResponse = CamelizeKeys<
-  z.infer<typeof governmentBondManagerTransferTerminationResponseSchema>
+export type CreditorBankManagementProcedureTerminationResponse = CamelizeKeys<
+  z.infer<typeof creditorBankManagementProcedureTerminationResponseSchema>
 >;
-export type ReorganizationPlanApprovedRulingResponse = CamelizeKeys<
-  z.infer<typeof reorganizationPlanApprovedRulingResponseSchema>
+export type WriteDownContingentCapitalSecuritiesIssuanceDecisionResponse = CamelizeKeys<
+  z.infer<typeof writeDownContingentCapitalSecuritiesIssuanceDecisionResponseSchema>
 >;
 export type TreasuryStockAcquisitionDecisionResponse = CamelizeKeys<
   z.infer<typeof treasuryStockAcquisitionDecisionResponseSchema>
@@ -2659,66 +2661,148 @@ export type TreasuryStockTrustContractDecisionResponse = CamelizeKeys<
 export type TreasuryStockTrustContractTerminationDecisionResponse = CamelizeKeys<
   z.infer<typeof treasuryStockTrustContractTerminationDecisionResponseSchema>
 >;
-export type BusinessPlanDecisionResponse = CamelizeKeys<z.infer<typeof businessPlanDecisionResponseSchema>>;
+export type BusinessAcquisitionDecisionResponse = CamelizeKeys<
+  z.infer<typeof businessAcquisitionDecisionResponseSchema>
+>;
 export type BusinessTransferDecisionResponse = CamelizeKeys<z.infer<typeof businessTransferDecisionResponseSchema>>;
-export type TangibleAssetPlanDecisionResponse = CamelizeKeys<z.infer<typeof tangibleAssetPlanDecisionResponseSchema>>;
+export type TangibleAssetAcquisitionDecisionResponse = CamelizeKeys<
+  z.infer<typeof tangibleAssetAcquisitionDecisionResponseSchema>
+>;
 export type TangibleAssetTransferDecisionResponse = CamelizeKeys<
   z.infer<typeof tangibleAssetTransferDecisionResponseSchema>
 >;
-export type RetirementStockInvestmentPlanDecisionResponse = CamelizeKeys<
-  z.infer<typeof retirementStockInvestmentPlanDecisionResponseSchema>
+export type OtherCorporationSecuritiesAcquisitionDecisionResponse = CamelizeKeys<
+  z.infer<typeof otherCorporationSecuritiesAcquisitionDecisionResponseSchema>
 >;
-export type RetirementStockInvestmentTransferDecisionResponse = CamelizeKeys<
-  z.infer<typeof retirementStockInvestmentTransferDecisionResponseSchema>
+export type OtherCorporationSecuritiesTransferDecisionResponse = CamelizeKeys<
+  z.infer<typeof otherCorporationSecuritiesTransferDecisionResponseSchema>
 >;
-export type StockRelatedBondPlanDecisionResponse = CamelizeKeys<
-  z.infer<typeof stockRelatedBondPlanDecisionResponseSchema>
+export type StockRelatedBondAcquisitionDecisionResponse = CamelizeKeys<
+  z.infer<typeof stockRelatedBondAcquisitionDecisionResponseSchema>
 >;
 export type StockRelatedBondTransferDecisionResponse = CamelizeKeys<
   z.infer<typeof stockRelatedBondTransferDecisionResponseSchema>
 >;
-export type CorporateLawDecisionResponse = CamelizeKeys<z.infer<typeof corporateLawDecisionResponseSchema>>;
+export type CompanyMergerDecisionResponse = CamelizeKeys<z.infer<typeof companyMergerDecisionResponseSchema>>;
 export type CorporateDivisionDecisionResponse = CamelizeKeys<z.infer<typeof corporateDivisionDecisionResponseSchema>>;
-export type CorporateLawMethodDecisionResponse = CamelizeKeys<z.infer<typeof corporateLawMethodDecisionResponseSchema>>;
-export type StockTradingOtherDecisionResponse = CamelizeKeys<z.infer<typeof stockTradingOtherDecisionResponseSchema>>;
+export type CompanyDivisionMergerDecisionResponse = CamelizeKeys<
+  z.infer<typeof companyDivisionMergerDecisionResponseSchema>
+>;
+export type StockExchangeTransferDecisionResponse = CamelizeKeys<
+  z.infer<typeof stockExchangeTransferDecisionResponseSchema>
+>;
 
 // ── Response Map ──
 
-export interface MajorShareholderDisclosureResponseMap {
-  treasuryStockAcquisitionDisposalPlan: TreasuryStockAcquisitionDisposalPlanResponse;
-  realEstateDevelopment: RealEstateDevelopmentResponse;
-  businessLetter: BusinessLetterResponse;
+export interface MajorMattersReportResponseMap {
+  assetTransferPutbackOption: AssetTransferPutbackOptionResponse;
+  defaultOccurrence: DefaultOccurrenceResponse;
+  businessSuspension: BusinessSuspensionResponse;
   corporateRehabilitationProceedings: CorporateRehabilitationProceedingsResponse;
   dissolutionOccurrence: DissolutionOccurrenceResponse;
-  securitiesGrantedDecision: SecuritiesGrantedDecisionResponse;
-  freeSecuritiesDecision: FreeSecuritiesDecisionResponse;
-  paidInCapitalReductionDecision: PaidInCapitalReductionDecisionResponse;
+  paidInCapitalIncreaseDecision: PaidInCapitalIncreaseDecisionResponse;
+  freeCapitalIncreaseDecision: FreeCapitalIncreaseDecisionResponse;
+  paidInAndFreeCapitalIncreaseDecision: PaidInAndFreeCapitalIncreaseDecisionResponse;
   capitalReductionDecision: CapitalReductionDecisionResponse;
-  governmentBondManagerReplacement: GovernmentBondManagerReplacementResponse;
-  profitRevocation: ProfitRevocationResponse;
-  overseasSecuritiesTradingResolution: OverseasSecuritiesTradingResolutionResponse;
-  overseasSecuritiesTradingDelistingResolution: OverseasSecuritiesTradingDelistingResolutionResponse;
-  overseasSecuritiesTradingStatus: OverseasSecuritiesTradingStatusResponse;
-  overseasSecuritiesTradingStatusDelisting: OverseasSecuritiesTradingStatusDelistingResponse;
+  creditorBankManagementProcedureCommencement: CreditorBankManagementProcedureCommencementResponse;
+  lawsuitFiling: LawsuitFilingResponse;
+  overseasSecuritiesMarketListingDecision: OverseasSecuritiesMarketListingDecisionResponse;
+  overseasSecuritiesMarketDelistingDecision: OverseasSecuritiesMarketDelistingDecisionResponse;
+  overseasSecuritiesMarketListingStatus: OverseasSecuritiesMarketListingStatusResponse;
+  overseasSecuritiesMarketDelistingStatus: OverseasSecuritiesMarketDelistingStatusResponse;
   convertibleBondIssuanceDecision: ConvertibleBondIssuanceDecisionResponse;
   newStockWarrantBondIssuanceDecision: NewStockWarrantBondIssuanceDecisionResponse;
-  corporateBondIssuanceDecision: CorporateBondIssuanceDecisionResponse;
-  governmentBondManagerTransferTermination: GovernmentBondManagerTransferTerminationResponse;
-  reorganizationPlanApprovedRuling: ReorganizationPlanApprovedRulingResponse;
+  exchangeableBondIssuanceDecision: ExchangeableBondIssuanceDecisionResponse;
+  creditorBankManagementProcedureTermination: CreditorBankManagementProcedureTerminationResponse;
+  writeDownContingentCapitalSecuritiesIssuanceDecision: WriteDownContingentCapitalSecuritiesIssuanceDecisionResponse;
   treasuryStockAcquisitionDecision: TreasuryStockAcquisitionDecisionResponse;
   treasuryStockDisposalDecision: TreasuryStockDisposalDecisionResponse;
   treasuryStockTrustContractDecision: TreasuryStockTrustContractDecisionResponse;
   treasuryStockTrustContractTerminationDecision: TreasuryStockTrustContractTerminationDecisionResponse;
-  businessPlanDecision: BusinessPlanDecisionResponse;
+  businessAcquisitionDecision: BusinessAcquisitionDecisionResponse;
   businessTransferDecision: BusinessTransferDecisionResponse;
-  tangibleAssetPlanDecision: TangibleAssetPlanDecisionResponse;
+  tangibleAssetAcquisitionDecision: TangibleAssetAcquisitionDecisionResponse;
   tangibleAssetTransferDecision: TangibleAssetTransferDecisionResponse;
-  retirementStockInvestmentPlanDecision: RetirementStockInvestmentPlanDecisionResponse;
-  retirementStockInvestmentTransferDecision: RetirementStockInvestmentTransferDecisionResponse;
-  stockRelatedBondPlanDecision: StockRelatedBondPlanDecisionResponse;
+  otherCorporationSecuritiesAcquisitionDecision: OtherCorporationSecuritiesAcquisitionDecisionResponse;
+  otherCorporationSecuritiesTransferDecision: OtherCorporationSecuritiesTransferDecisionResponse;
+  stockRelatedBondAcquisitionDecision: StockRelatedBondAcquisitionDecisionResponse;
   stockRelatedBondTransferDecision: StockRelatedBondTransferDecisionResponse;
-  corporateLawDecision: CorporateLawDecisionResponse;
+  companyMergerDecision: CompanyMergerDecisionResponse;
   corporateDivisionDecision: CorporateDivisionDecisionResponse;
-  corporateLawMethodDecision: CorporateLawMethodDecisionResponse;
-  stockTradingOtherDecision: StockTradingOtherDecisionResponse;
+  companyDivisionMergerDecision: CompanyDivisionMergerDecisionResponse;
+  stockExchangeTransferDecision: StockExchangeTransferDecisionResponse;
 }
+
+// ---------------------------------------------------------------------------
+// 2026-11-04 (B-13): 아래는 엔드포인트와 맞지 않던 옛 타입 이름이다. 삭제하지 않고
+// @deprecated 별칭으로 남긴다 — 외부 사용자 호환.
+// ---------------------------------------------------------------------------
+
+/** @deprecated AssetTransferPutbackOptionResponse 의 옛 이름. Use AssetTransferPutbackOptionResponse instead (2026-11-04). */
+export type TreasuryStockAcquisitionDisposalPlanResponse = AssetTransferPutbackOptionResponse;
+
+/** @deprecated DefaultOccurrenceResponse 의 옛 이름. Use DefaultOccurrenceResponse instead (2026-11-04). */
+export type RealEstateDevelopmentResponse = DefaultOccurrenceResponse;
+
+/** @deprecated BusinessSuspensionResponse 의 옛 이름. Use BusinessSuspensionResponse instead (2026-11-04). */
+export type BusinessLetterResponse = BusinessSuspensionResponse;
+
+/** @deprecated PaidInCapitalIncreaseDecisionResponse 의 옛 이름. Use PaidInCapitalIncreaseDecisionResponse instead (2026-11-04). */
+export type SecuritiesGrantedDecisionResponse = PaidInCapitalIncreaseDecisionResponse;
+
+/** @deprecated FreeCapitalIncreaseDecisionResponse 의 옛 이름. Use FreeCapitalIncreaseDecisionResponse instead (2026-11-04). */
+export type FreeSecuritiesDecisionResponse = FreeCapitalIncreaseDecisionResponse;
+
+/** @deprecated PaidInAndFreeCapitalIncreaseDecisionResponse 의 옛 이름. Use PaidInAndFreeCapitalIncreaseDecisionResponse instead (2026-11-04). */
+export type PaidInCapitalReductionDecisionResponse = PaidInAndFreeCapitalIncreaseDecisionResponse;
+
+/** @deprecated CreditorBankManagementProcedureCommencementResponse 의 옛 이름. Use CreditorBankManagementProcedureCommencementResponse instead (2026-11-04). */
+export type GovernmentBondManagerReplacementResponse = CreditorBankManagementProcedureCommencementResponse;
+
+/** @deprecated LawsuitFilingResponse 의 옛 이름. Use LawsuitFilingResponse instead (2026-11-04). */
+export type ProfitRevocationResponse = LawsuitFilingResponse;
+
+/** @deprecated OverseasSecuritiesMarketListingDecisionResponse 의 옛 이름. Use OverseasSecuritiesMarketListingDecisionResponse instead (2026-11-04). */
+export type OverseasSecuritiesTradingResolutionResponse = OverseasSecuritiesMarketListingDecisionResponse;
+
+/** @deprecated OverseasSecuritiesMarketDelistingDecisionResponse 의 옛 이름. Use OverseasSecuritiesMarketDelistingDecisionResponse instead (2026-11-04). */
+export type OverseasSecuritiesTradingDelistingResolutionResponse = OverseasSecuritiesMarketDelistingDecisionResponse;
+
+/** @deprecated OverseasSecuritiesMarketDelistingStatusResponse 의 옛 이름. Use OverseasSecuritiesMarketDelistingStatusResponse instead (2026-11-04). */
+export type OverseasSecuritiesTradingStatusDelistingResponse = OverseasSecuritiesMarketDelistingStatusResponse;
+
+/** @deprecated OverseasSecuritiesMarketListingStatusResponse 의 옛 이름. Use OverseasSecuritiesMarketListingStatusResponse instead (2026-11-04). */
+export type OverseasSecuritiesTradingStatusResponse = OverseasSecuritiesMarketListingStatusResponse;
+
+/** @deprecated ExchangeableBondIssuanceDecisionResponse 의 옛 이름. Use ExchangeableBondIssuanceDecisionResponse instead (2026-11-04). */
+export type CorporateBondIssuanceDecisionResponse = ExchangeableBondIssuanceDecisionResponse;
+
+/** @deprecated CreditorBankManagementProcedureTerminationResponse 의 옛 이름. Use CreditorBankManagementProcedureTerminationResponse instead (2026-11-04). */
+export type GovernmentBondManagerTransferTerminationResponse = CreditorBankManagementProcedureTerminationResponse;
+
+/** @deprecated WriteDownContingentCapitalSecuritiesIssuanceDecisionResponse 의 옛 이름. Use WriteDownContingentCapitalSecuritiesIssuanceDecisionResponse instead (2026-11-04). */
+export type ReorganizationPlanApprovedRulingResponse = WriteDownContingentCapitalSecuritiesIssuanceDecisionResponse;
+
+/** @deprecated BusinessAcquisitionDecisionResponse 의 옛 이름. Use BusinessAcquisitionDecisionResponse instead (2026-11-04). */
+export type BusinessPlanDecisionResponse = BusinessAcquisitionDecisionResponse;
+
+/** @deprecated TangibleAssetAcquisitionDecisionResponse 의 옛 이름. Use TangibleAssetAcquisitionDecisionResponse instead (2026-11-04). */
+export type TangibleAssetPlanDecisionResponse = TangibleAssetAcquisitionDecisionResponse;
+
+/** @deprecated OtherCorporationSecuritiesAcquisitionDecisionResponse 의 옛 이름. Use OtherCorporationSecuritiesAcquisitionDecisionResponse instead (2026-11-04). */
+export type RetirementStockInvestmentPlanDecisionResponse = OtherCorporationSecuritiesAcquisitionDecisionResponse;
+
+/** @deprecated OtherCorporationSecuritiesTransferDecisionResponse 의 옛 이름. Use OtherCorporationSecuritiesTransferDecisionResponse instead (2026-11-04). */
+export type RetirementStockInvestmentTransferDecisionResponse = OtherCorporationSecuritiesTransferDecisionResponse;
+
+/** @deprecated StockRelatedBondAcquisitionDecisionResponse 의 옛 이름. Use StockRelatedBondAcquisitionDecisionResponse instead (2026-11-04). */
+export type StockRelatedBondPlanDecisionResponse = StockRelatedBondAcquisitionDecisionResponse;
+
+/** @deprecated CompanyMergerDecisionResponse 의 옛 이름. Use CompanyMergerDecisionResponse instead (2026-11-04). */
+export type CorporateLawDecisionResponse = CompanyMergerDecisionResponse;
+
+/** @deprecated CompanyDivisionMergerDecisionResponse 의 옛 이름. Use CompanyDivisionMergerDecisionResponse instead (2026-11-04). */
+export type CorporateLawMethodDecisionResponse = CompanyDivisionMergerDecisionResponse;
+
+/** @deprecated StockExchangeTransferDecisionResponse 의 옛 이름. Use StockExchangeTransferDecisionResponse instead (2026-11-04). */
+export type StockTradingOtherDecisionResponse = StockExchangeTransferDecisionResponse;

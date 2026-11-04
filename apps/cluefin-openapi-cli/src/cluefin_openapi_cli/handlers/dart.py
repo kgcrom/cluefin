@@ -853,8 +853,8 @@ def handle_share_count(params: dict, session) -> dict:
 
 # ---------------------------------------------------------------------------
 # Major-event reports (주요사항보고서) and periodic-report items: one command each, one table row per
-# endpoint. The library's method names often do not match their endpoints (`real_estate_development`
-# calls dfOcr, 부도발생), so the endpoint and its meaning live here and the lambdas name the method once.
+# endpoint. The library's method names were fixed to match their endpoints in 2026-11-04 (B-13); the
+# endpoint and its meaning still live here so the lambdas name the method once.
 # ---------------------------------------------------------------------------
 
 
@@ -867,26 +867,29 @@ class _Endpoint:
 
 def _event(endpoint: str, label: str, method: Callable[[Any], Callable[..., Any]]) -> _Endpoint:
     def call(dart, params):
-        return method(dart.major_shareholder_disclosure)(
+        return method(dart.major_matters_report)(
             corp_code=params["corp_code"], bgn_de=params["bgn_de"], end_de=params["end_de"]
         )
 
     return _Endpoint(endpoint, label, call)
 
 
-# The client class is named MajorShareholderDisclosure but serves DART DS005, 주요사항보고서.
 _MAJOR_EVENTS: dict[str, _Endpoint] = {
     "convertible-bond": _event("cvbdIsDecsn", "전환사채권 발행결정", lambda c: c.convertible_bond_issuance_decision),
     "bond-with-warrant": _event(
         "bdwtIsDecsn", "신주인수권부사채권 발행결정", lambda c: c.new_stock_warrant_bond_issuance_decision
     ),
-    "exchangeable-bond": _event("exbdIsDecsn", "교환사채권 발행결정", lambda c: c.corporate_bond_issuance_decision),
+    "exchangeable-bond": _event("exbdIsDecsn", "교환사채권 발행결정", lambda c: c.exchangeable_bond_issuance_decision),
     "contingent-capital-writedown": _event(
-        "wdCocobdIsDecsn", "상각형 조건부자본증권 발행결정", lambda c: c.reorganization_plan_approved_ruling
+        "wdCocobdIsDecsn",
+        "상각형 조건부자본증권 발행결정",
+        lambda c: c.write_down_contingent_capital_securities_issuance_decision,
     ),
-    "rights-offering": _event("piicDecsn", "유상증자 결정", lambda c: c.securities_granted_decision),
-    "bonus-issue": _event("fricDecsn", "무상증자 결정", lambda c: c.free_securities_decision),
-    "rights-and-bonus-issue": _event("pifricDecsn", "유무상증자 결정", lambda c: c.paid_in_capital_reduction_decision),
+    "rights-offering": _event("piicDecsn", "유상증자 결정", lambda c: c.paid_in_capital_increase_decision),
+    "bonus-issue": _event("fricDecsn", "무상증자 결정", lambda c: c.free_capital_increase_decision),
+    "rights-and-bonus-issue": _event(
+        "pifricDecsn", "유무상증자 결정", lambda c: c.paid_in_and_free_capital_increase_decision
+    ),
     "capital-reduction": _event("crDecsn", "감자 결정", lambda c: c.capital_reduction_decision),
     "treasury-stock-acquisition": _event(
         "tsstkAqDecsn", "자기주식 취득 결정", lambda c: c.treasury_stock_acquisition_decision
@@ -902,27 +905,27 @@ _MAJOR_EVENTS: dict[str, _Endpoint] = {
         "자기주식취득 신탁계약 해지 결정",
         lambda c: c.treasury_stock_trust_contract_termination_decision,
     ),
-    "merger": _event("cmpMgDecsn", "회사합병 결정", lambda c: c.corporate_law_decision),
+    "merger": _event("cmpMgDecsn", "회사합병 결정", lambda c: c.company_merger_decision),
     "split": _event("cmpDvDecsn", "회사분할 결정", lambda c: c.corporate_division_decision),
-    "split-merger": _event("cmpDvmgDecsn", "회사분할합병 결정", lambda c: c.corporate_law_method_decision),
-    "share-exchange": _event("stkExtrDecsn", "주식교환·이전 결정", lambda c: c.stock_trading_other_decision),
-    "default": _event("dfOcr", "부도발생", lambda c: c.real_estate_development),
-    "business-suspension": _event("bsnSp", "영업정지", lambda c: c.business_letter),
+    "split-merger": _event("cmpDvmgDecsn", "회사분할합병 결정", lambda c: c.company_division_merger_decision),
+    "share-exchange": _event("stkExtrDecsn", "주식교환·이전 결정", lambda c: c.stock_exchange_transfer_decision),
+    "default": _event("dfOcr", "부도발생", lambda c: c.default_occurrence),
+    "business-suspension": _event("bsnSp", "영업정지", lambda c: c.business_suspension),
     "rehabilitation-filing": _event(
         "ctrcvsBgrq", "회생절차 개시신청", lambda c: c.corporate_rehabilitation_proceedings
     ),
     "dissolution": _event("dsRsOcr", "해산사유 발생", lambda c: c.dissolution_occurrence),
     "creditor-management-start": _event(
-        "bnkMngtPcbg", "채권은행 등의 관리절차 개시", lambda c: c.government_bond_manager_replacement
+        "bnkMngtPcbg", "채권은행 등의 관리절차 개시", lambda c: c.creditor_bank_management_procedure_commencement
     ),
     "creditor-management-end": _event(
-        "bnkMngtPcsp", "채권은행 등의 관리절차 중단", lambda c: c.government_bond_manager_transfer_termination
+        "bnkMngtPcsp", "채권은행 등의 관리절차 중단", lambda c: c.creditor_bank_management_procedure_termination
     ),
-    "lawsuit": _event("lwstLg", "소송 등의 제기", lambda c: c.profit_revocation),
-    "business-acquisition": _event("bsnInhDecsn", "영업양수 결정", lambda c: c.business_plan_decision),
+    "lawsuit": _event("lwstLg", "소송 등의 제기", lambda c: c.lawsuit_filing),
+    "business-acquisition": _event("bsnInhDecsn", "영업양수 결정", lambda c: c.business_acquisition_decision),
     "business-transfer": _event("bsnTrfDecsn", "영업양도 결정", lambda c: c.business_transfer_decision),
     "tangible-asset-acquisition": _event(
-        "tgastInhDecsn", "유형자산 양수 결정", lambda c: c.tangible_asset_plan_decision
+        "tgastInhDecsn", "유형자산 양수 결정", lambda c: c.tangible_asset_acquisition_decision
     ),
     "tangible-asset-transfer": _event(
         "tgastTrfDecsn", "유형자산 양도 결정", lambda c: c.tangible_asset_transfer_decision
@@ -930,33 +933,35 @@ _MAJOR_EVENTS: dict[str, _Endpoint] = {
     "equity-stake-acquisition": _event(
         "otcprStkInvscrInhDecsn",
         "타법인 주식 및 출자증권 양수결정",
-        lambda c: c.retirement_stock_investment_plan_decision,
+        lambda c: c.other_corporation_securities_acquisition_decision,
     ),
     "equity-stake-transfer": _event(
         "otcprStkInvscrTrfDecsn",
         "타법인 주식 및 출자증권 양도결정",
-        lambda c: c.retirement_stock_investment_transfer_decision,
+        lambda c: c.other_corporation_securities_transfer_decision,
     ),
     "equity-linked-bond-acquisition": _event(
-        "stkrtbdInhDecsn", "주권 관련 사채권 양수 결정", lambda c: c.stock_related_bond_plan_decision
+        "stkrtbdInhDecsn", "주권 관련 사채권 양수 결정", lambda c: c.stock_related_bond_acquisition_decision
     ),
     "equity-linked-bond-transfer": _event(
         "stkrtbdTrfDecsn", "주권 관련 사채권 양도 결정", lambda c: c.stock_related_bond_transfer_decision
     ),
     "asset-transfer-putback": _event(
-        "astInhtrfEtcPtbkOpt", "자산양수도(기타), 풋백옵션", lambda c: c.treasury_stock_acquisition_disposal_plan
+        "astInhtrfEtcPtbkOpt", "자산양수도(기타), 풋백옵션", lambda c: c.asset_transfer_putback_option
     ),
     "overseas-listing-decision": _event(
-        "ovLstDecsn", "해외 증권시장 주권등 상장 결정", lambda c: c.overseas_securities_trading_resolution
+        "ovLstDecsn", "해외 증권시장 주권등 상장 결정", lambda c: c.overseas_securities_market_listing_decision
     ),
     "overseas-delisting-decision": _event(
         "ovDlstDecsn",
         "해외 증권시장 주권등 상장폐지 결정",
-        lambda c: c.overseas_securities_trading_delisting_resolution,
+        lambda c: c.overseas_securities_market_delisting_decision,
     ),
-    "overseas-listing": _event("ovLst", "해외 증권시장 주권등 상장", lambda c: c.overseas_securities_trading_status),
+    "overseas-listing": _event(
+        "ovLst", "해외 증권시장 주권등 상장", lambda c: c.overseas_securities_market_listing_status
+    ),
     "overseas-delisting": _event(
-        "ovDlst", "해외 증권시장 주권등 상장폐지", lambda c: c.overseas_securities_trading_status_delisting
+        "ovDlst", "해외 증권시장 주권등 상장폐지", lambda c: c.overseas_securities_market_delisting_status
     ),
 }
 

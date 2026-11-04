@@ -1,9 +1,11 @@
+import warnings
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from cluefin_openapi.dart._model import DartHttpBody
 
 
-class TreasuryStockAcquisitionDisposalPlanItem(BaseModel):
+class AssetTransferPutbackOptionItem(BaseModel):
     model_config = ConfigDict(title="자산양수도(기타), 풋백옵션 항목")
 
     rcept_no: str = Field(description="접수번호(14자리)")
@@ -14,11 +16,11 @@ class TreasuryStockAcquisitionDisposalPlanItem(BaseModel):
     ast_inhtrf_prc: str = Field(description="자산양수ㆍ도 가액")
 
 
-class TreasuryStockAcquisitionDisposalPlan(BaseModel, DartHttpBody[TreasuryStockAcquisitionDisposalPlanItem]):
+class AssetTransferPutbackOption(BaseModel, DartHttpBody[AssetTransferPutbackOptionItem]):
     model_config = ConfigDict(title="자산양수도(기타), 풋백옵션 응답")
 
 
-class RealEstateDevelopmentItem(BaseModel):
+class DefaultOccurrenceItem(BaseModel):
     model_config = ConfigDict(title="부도발생 항목")
 
     rcept_no: str = Field(description="접수번호(14자리)")
@@ -32,11 +34,11 @@ class RealEstateDevelopmentItem(BaseModel):
     df_rs: str = Field(description="부도사유 및 경위")
 
 
-class RealEstateDevelopment(BaseModel, DartHttpBody[RealEstateDevelopmentItem]):
+class DefaultOccurrence(BaseModel, DartHttpBody[DefaultOccurrenceItem]):
     model_config = ConfigDict(title="부도발생 응답")
 
 
-class BusinessLetterItem(BaseModel):
+class BusinessSuspensionItem(BaseModel):
     model_config = ConfigDict(title="영업정지 항목")
 
     rcept_no: str = Field(description="접수번호(14자리)")
@@ -60,7 +62,7 @@ class BusinessLetterItem(BaseModel):
     adt_a_atn: str = Field(description="감사(감사위원) 참석여부")
 
 
-class BusinessLetter(BaseModel, DartHttpBody[BusinessLetterItem]):
+class BusinessSuspension(BaseModel, DartHttpBody[BusinessSuspensionItem]):
     model_config = ConfigDict(title="영업정지 응답")
 
 
@@ -100,7 +102,7 @@ class DissolutionOccurrence(BaseModel, DartHttpBody[DissolutionOccurrenceItem]):
     model_config = ConfigDict(title="해산사유 발생 응답")
 
 
-class SecuritiesGrantedDecisionItem(BaseModel):
+class PaidInCapitalIncreaseDecisionItem(BaseModel):
     model_config = ConfigDict(title="유상증자 결정 항목")
 
     rcept_no: str = Field(description="접수번호(14자리)")
@@ -124,11 +126,11 @@ class SecuritiesGrantedDecisionItem(BaseModel):
     ssl_edd: str | None = Field(description="공매도 종료일")
 
 
-class SecuritiesGrantedDecision(BaseModel, DartHttpBody[SecuritiesGrantedDecisionItem]):
+class PaidInCapitalIncreaseDecision(BaseModel, DartHttpBody[PaidInCapitalIncreaseDecisionItem]):
     model_config = ConfigDict(title="유상증자 결정 응답")
 
 
-class FreeSecuritiesDecisionItem(BaseModel):
+class FreeCapitalIncreaseDecisionItem(BaseModel):
     model_config = ConfigDict(title="무상증자 결정 항목")
 
     rcept_no: str = Field(description="접수번호(14자리)")
@@ -152,11 +154,11 @@ class FreeSecuritiesDecisionItem(BaseModel):
     adt_a_atn: str = Field(description="감사(감사위원)참석 여부")
 
 
-class FreeSecuritiesDecision(BaseModel, DartHttpBody[FreeSecuritiesDecisionItem]):
+class FreeCapitalIncreaseDecision(BaseModel, DartHttpBody[FreeCapitalIncreaseDecisionItem]):
     model_config = ConfigDict(title="무상증자 결정 응답")
 
 
-class PaidInCapitalReductionDecisionItem(BaseModel):
+class PaidInAndFreeCapitalIncreaseDecisionItem(BaseModel):
     model_config = ConfigDict(title="유무상증자 결정 항목")
 
     rcept_no: str = Field(description="접수번호(14자리)")
@@ -199,7 +201,7 @@ class PaidInCapitalReductionDecisionItem(BaseModel):
     ssl_edd: str | None = Field(description="공매도 종료일")
 
 
-class PaidInCapitalReductionDecision(BaseModel, DartHttpBody[PaidInCapitalReductionDecisionItem]):
+class PaidInAndFreeCapitalIncreaseDecision(BaseModel, DartHttpBody[PaidInAndFreeCapitalIncreaseDecisionItem]):
     model_config = ConfigDict(title="유무상증자 결정 응답")
 
 
@@ -252,7 +254,7 @@ class CapitalReductionDecision(BaseModel, DartHttpBody[CapitalReductionDecisionI
     model_config = ConfigDict(title="감자 결정 응답")
 
 
-class GovernmentBondManagerReplacementItem(BaseModel):
+class CreditorBankManagementProcedureCommencementItem(BaseModel):
     model_config = ConfigDict(title="재권은행 등의 관리절차 개시 항목")
 
     rcept_no: str = Field(description="접수번호(14자리)")
@@ -266,11 +268,13 @@ class GovernmentBondManagerReplacementItem(BaseModel):
     cfd: str = Field(description="확인일자")
 
 
-class GovernmentBondManagerReplacement(BaseModel, DartHttpBody[GovernmentBondManagerReplacementItem]):
+class CreditorBankManagementProcedureCommencement(
+    BaseModel, DartHttpBody[CreditorBankManagementProcedureCommencementItem]
+):
     model_config = ConfigDict(title="재권은행 등의 관리절차 개시 응답")
 
 
-class ProfitRevocationItem(BaseModel):
+class LawsuitFilingItem(BaseModel):
     model_config = ConfigDict(title="소송 등의 제기 항목")
 
     rcept_no: str = Field(description="접수번호(14자리)")
@@ -286,11 +290,11 @@ class ProfitRevocationItem(BaseModel):
     cfd: str = Field(description="확인일자")
 
 
-class ProfitRevocation(BaseModel, DartHttpBody[ProfitRevocationItem]):
+class LawsuitFiling(BaseModel, DartHttpBody[LawsuitFilingItem]):
     model_config = ConfigDict(title="소송 등의 제기 응답")
 
 
-class OverseasSecuritiesTradingResolutionItem(BaseModel):
+class OverseasSecuritiesMarketListingDecisionItem(BaseModel):
     model_config = ConfigDict(title="해외 증권시장 주권등 상장 결정 항목")
 
     rcept_no: str = Field(description="접수번호(14자리)")
@@ -315,11 +319,11 @@ class OverseasSecuritiesTradingResolutionItem(BaseModel):
     adt_a_atn: str = Field(description="감사(감사위원)참석여부")
 
 
-class OverseasSecuritiesTradingResolution(BaseModel, DartHttpBody[OverseasSecuritiesTradingResolutionItem]):
+class OverseasSecuritiesMarketListingDecision(BaseModel, DartHttpBody[OverseasSecuritiesMarketListingDecisionItem]):
     model_config = ConfigDict(title="해외 증권시장 주권등 상장 결정 응답")
 
 
-class OverseasSecuritiesTradingDelistingResolutionItem(BaseModel):
+class OverseasSecuritiesMarketDelistingDecisionItem(BaseModel):
     model_config = ConfigDict(title="해외 증권시장 주권등 상장폐지 결정 항목")
 
     rcept_no: str = Field(description="접수번호(14자리)")
@@ -338,13 +342,11 @@ class OverseasSecuritiesTradingDelistingResolutionItem(BaseModel):
     adt_a_atn: str = Field(description="감사(감사위원)참석여부")
 
 
-class OverseasSecuritiesTradingDelistingResolution(
-    BaseModel, DartHttpBody[OverseasSecuritiesTradingDelistingResolutionItem]
-):
+class OverseasSecuritiesMarketDelistingDecision(BaseModel, DartHttpBody[OverseasSecuritiesMarketDelistingDecisionItem]):
     model_config = ConfigDict(title="해외 증권시장 주권등 상장폐지 결정 응답")
 
 
-class OverseasSecuritiesTradingStatusItem(BaseModel):
+class OverseasSecuritiesMarketListingStatusItem(BaseModel):
     model_config = ConfigDict(title="해외 증권시장 주권등 상장 항목")
 
     rcept_no: str = Field(description="접수번호(14자리)")
@@ -359,11 +361,11 @@ class OverseasSecuritiesTradingStatusItem(BaseModel):
     cfd: str = Field(description="확인일자")
 
 
-class OverseasSecuritiesTradingStatus(BaseModel, DartHttpBody[OverseasSecuritiesTradingStatusItem]):
+class OverseasSecuritiesMarketListingStatus(BaseModel, DartHttpBody[OverseasSecuritiesMarketListingStatusItem]):
     model_config = ConfigDict(title="해외 증권시장 주권등 상장 응답")
 
 
-class OverseasSecuritiesTradingStatusDelistingItem(BaseModel):
+class OverseasSecuritiesMarketDelistingStatusItem(BaseModel):
     model_config = ConfigDict(title="해외 증권시장 주권등 상장폐지 항목")
 
     rcept_no: str = Field(description="접수번호(14자리)")
@@ -378,7 +380,7 @@ class OverseasSecuritiesTradingStatusDelistingItem(BaseModel):
     cfd: str = Field(description="확인일자")
 
 
-class OverseasSecuritiesTradingStatusDelisting(BaseModel, DartHttpBody[OverseasSecuritiesTradingStatusDelistingItem]):
+class OverseasSecuritiesMarketDelistingStatus(BaseModel, DartHttpBody[OverseasSecuritiesMarketDelistingStatusItem]):
     model_config = ConfigDict(title="해외 증권시장 주권등 상장폐지 응답")
 
 
@@ -509,7 +511,7 @@ class NewStockWarrantBondIssuanceDecision(BaseModel, DartHttpBody[NewStockWarran
     model_config = ConfigDict(title="신주인수권부사채권 발행결정 응답")
 
 
-class CorporateBondIssuanceDecisionItem(BaseModel):
+class ExchangeableBondIssuanceDecisionItem(BaseModel):
     model_config = ConfigDict(title="교환사채권 발행결정 항목")
 
     rcept_no: str = Field(description="접수번호(14자리)")
@@ -556,11 +558,11 @@ class CorporateBondIssuanceDecisionItem(BaseModel):
     ftc_stt_atn: str = Field(description="공정거래위원회 신고대상 여부")
 
 
-class CorporateBondIssuanceDecision(BaseModel, DartHttpBody[CorporateBondIssuanceDecisionItem]):
+class ExchangeableBondIssuanceDecision(BaseModel, DartHttpBody[ExchangeableBondIssuanceDecisionItem]):
     model_config = ConfigDict(title="교환사채권 발행결정 응답")
 
 
-class GovernmentBondManagerTransferTerminationItem(BaseModel):
+class CreditorBankManagementProcedureTerminationItem(BaseModel):
     model_config = ConfigDict(title="채권은행 등의 관리절차 종단 항목")
 
     rcept_no: str = Field(description="접수번호(14자리)")
@@ -574,11 +576,13 @@ class GovernmentBondManagerTransferTerminationItem(BaseModel):
     cfd: str = Field(description="확인일자")
 
 
-class GovernmentBondManagerTransferTermination(BaseModel, DartHttpBody[GovernmentBondManagerTransferTerminationItem]):
+class CreditorBankManagementProcedureTermination(
+    BaseModel, DartHttpBody[CreditorBankManagementProcedureTerminationItem]
+):
     model_config = ConfigDict(title="채권은행 등의 관리절차 종단 응답")
 
 
-class ReorganizationPlanApprovedRulingItem(BaseModel):
+class WriteDownContingentCapitalSecuritiesIssuanceDecisionItem(BaseModel):
     model_config = ConfigDict(title="상각형 조건부자본증권 발행결정 항목")
 
     rcept_no: str = Field(description="접수번호(14자리)")
@@ -617,7 +621,9 @@ class ReorganizationPlanApprovedRulingItem(BaseModel):
     ftc_stt_atn: str = Field(description="공정거래위원회 신고대상 여부")
 
 
-class ReorganizationPlanApprovedRuling(BaseModel, DartHttpBody[ReorganizationPlanApprovedRulingItem]):
+class WriteDownContingentCapitalSecuritiesIssuanceDecision(
+    BaseModel, DartHttpBody[WriteDownContingentCapitalSecuritiesIssuanceDecisionItem]
+):
     model_config = ConfigDict(title="상각형 조건부자본증권 발행결정 응답")
 
 
@@ -767,7 +773,7 @@ class TreasuryStockTrustContractTerminationDecision(
     model_config = ConfigDict(title="자기주식취득 신탁계약 해지 결정 응답")
 
 
-class BusinessPlanDecisionItem(BaseModel):
+class BusinessAcquisitionDecisionItem(BaseModel):
     model_config = ConfigDict(title="영업양수 결정 항목")
 
     rcept_no: str = Field(description="접수번호(14자리)")
@@ -820,7 +826,7 @@ class BusinessPlanDecisionItem(BaseModel):
     popt_ctr_cn: str = Field(description="계약내용")
 
 
-class BusinessPlanDecision(BaseModel, DartHttpBody[BusinessPlanDecisionItem]):
+class BusinessAcquisitionDecision(BaseModel, DartHttpBody[BusinessAcquisitionDecisionItem]):
     model_config = ConfigDict(title="영업양수 결정 응답")
 
 
@@ -874,7 +880,7 @@ class BusinessTransferDecision(BaseModel, DartHttpBody[BusinessTransferDecisionI
     model_config = ConfigDict(title="영업양도 결정 응답")
 
 
-class TangibleAssetPlanDecisionItem(BaseModel):
+class TangibleAssetAcquisitionDecisionItem(BaseModel):
     model_config = ConfigDict(title="유형자산 양수 결정 항목")
 
     rcept_no: str = Field(description="접수번호(14자리)")
@@ -919,7 +925,7 @@ class TangibleAssetPlanDecisionItem(BaseModel):
     popt_ctr_cn: str = Field(description="계약내용")
 
 
-class TangibleAssetPlanDecision(BaseModel, DartHttpBody[TangibleAssetPlanDecisionItem]):
+class TangibleAssetAcquisitionDecision(BaseModel, DartHttpBody[TangibleAssetAcquisitionDecisionItem]):
     model_config = ConfigDict(title="유형자산 양수 결정 응답")
 
 
@@ -972,7 +978,7 @@ class TangibleAssetTransferDecision(BaseModel, DartHttpBody[TangibleAssetTransfe
     model_config = ConfigDict(title="유형자산 양도 결정 응답")
 
 
-class RetirementStockInvestmentPlanDecisionItem(BaseModel):
+class OtherCorporationSecuritiesAcquisitionDecisionItem(BaseModel):
     model_config = ConfigDict(title="타법인 주식 및 출자증권 양수결정 항목")
 
     rcept_no: str = Field(description="접수번호(14자리)")
@@ -1020,11 +1026,13 @@ class RetirementStockInvestmentPlanDecisionItem(BaseModel):
     popt_ctr_cn: str = Field(description="계약내용")
 
 
-class RetirementStockInvestmentPlanDecision(BaseModel, DartHttpBody[RetirementStockInvestmentPlanDecisionItem]):
+class OtherCorporationSecuritiesAcquisitionDecision(
+    BaseModel, DartHttpBody[OtherCorporationSecuritiesAcquisitionDecisionItem]
+):
     model_config = ConfigDict(title="타법인 주식 및 출자증권 양수결정 응답")
 
 
-class RetirementStockInvestmentTransferDecisionItem(BaseModel):
+class OtherCorporationSecuritiesTransferDecisionItem(BaseModel):
     model_config = ConfigDict(title="타법인 주식 및 출자증권 양도결정 항목")
 
     rcept_no: str = Field(description="접수번호(14자리)")
@@ -1068,11 +1076,13 @@ class RetirementStockInvestmentTransferDecisionItem(BaseModel):
     popt_ctr_cn: str = Field(description="계약내용")
 
 
-class RetirementStockInvestmentTransferDecision(BaseModel, DartHttpBody[RetirementStockInvestmentTransferDecisionItem]):
+class OtherCorporationSecuritiesTransferDecision(
+    BaseModel, DartHttpBody[OtherCorporationSecuritiesTransferDecisionItem]
+):
     model_config = ConfigDict(title="타법인 주식 및 출자증권 양도결정 응답")
 
 
-class StockRelatedBondPlanDecisionItem(BaseModel):
+class StockRelatedBondAcquisitionDecisionItem(BaseModel):
     model_config = ConfigDict(title="주권 관련 사채권 양수 결정 항목")
 
     rcept_no: str = Field(description="접수번호(14자리)")
@@ -1118,7 +1128,7 @@ class StockRelatedBondPlanDecisionItem(BaseModel):
     popt_ctr_cn: str = Field(description="계약내용")
 
 
-class StockRelatedBondPlanDecision(BaseModel, DartHttpBody[StockRelatedBondPlanDecisionItem]):
+class StockRelatedBondAcquisitionDecision(BaseModel, DartHttpBody[StockRelatedBondAcquisitionDecisionItem]):
     model_config = ConfigDict(title="주권 관련 사채권 양수 결정 응답")
 
 
@@ -1172,7 +1182,7 @@ class StockRelatedBondTransferDecision(BaseModel, DartHttpBody[StockRelatedBondT
     model_config = ConfigDict(title="주권 관련 사채권 양도 결정 응답")
 
 
-class CorporateLawDecisionItem(BaseModel):
+class CompanyMergerDecisionItem(BaseModel):
     model_config = ConfigDict(title="회사합병 결정 항목")
 
     rcept_no: str = Field(description="접수번호(14자리)")
@@ -1246,7 +1256,7 @@ class CorporateLawDecisionItem(BaseModel):
     ex_sm_r: str = Field(description="제출을 면제받은 경우 그 사유")
 
 
-class CorporateLawDecision(BaseModel, DartHttpBody[CorporateLawDecisionItem]):
+class CompanyMergerDecision(BaseModel, DartHttpBody[CompanyMergerDecisionItem]):
     model_config = ConfigDict(title="회사합병 결정 응답")
 
 
@@ -1308,7 +1318,7 @@ class CorporateDivisionDecision(BaseModel, DartHttpBody[CorporateDivisionDecisio
     model_config = ConfigDict(title="회사분할 결정 응답")
 
 
-class CorporateLawMethodDecisionItem(BaseModel):
+class CompanyDivisionMergerDecisionItem(BaseModel):
     model_config = ConfigDict(title="회사분할합병 결정 항목")
 
     rcept_no: str = Field(description="접수번호(14자리)")
@@ -1405,11 +1415,11 @@ class CorporateLawMethodDecisionItem(BaseModel):
     ex_sm_r: str = Field(description="제출을 면제받은 경우 그 사유")
 
 
-class CorporateLawMethodDecision(BaseModel, DartHttpBody[CorporateLawMethodDecisionItem]):
+class CompanyDivisionMergerDecision(BaseModel, DartHttpBody[CompanyDivisionMergerDecisionItem]):
     model_config = ConfigDict(title="회사분할합병 결정 응답")
 
 
-class StockTradingOtherDecisionItem(BaseModel):
+class StockExchangeTransferDecisionItem(BaseModel):
     model_config = ConfigDict(title="주식교환·이전 결정 항목")
 
     rcept_no: str = Field(description="접수번호(14자리)")
@@ -1469,5 +1479,565 @@ class StockTradingOtherDecisionItem(BaseModel):
     ex_sm_r: str = Field(description="제출을 면제받은 경우 그 사유")
 
 
-class StockTradingOtherDecision(BaseModel, DartHttpBody[StockTradingOtherDecisionItem]):
+class StockExchangeTransferDecision(BaseModel, DartHttpBody[StockExchangeTransferDecisionItem]):
     model_config = ConfigDict(title="주식교환·이전 결정 응답")
+
+
+# ---------------------------------------------------------------------------
+# 2026-11-04 (B-13): 아래는 엔드포인트와 맞지 않던 옛 클래스 이름이다. 삭제하지 않고
+# DeprecationWarning 별칭으로 남긴다 — 외부 사용자 호환.
+# ---------------------------------------------------------------------------
+
+
+class TreasuryStockAcquisitionDisposalPlanItem(AssetTransferPutbackOptionItem):
+    """``AssetTransferPutbackOptionItem`` 의 옛 이름. Deprecated, use ``AssetTransferPutbackOptionItem`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "TreasuryStockAcquisitionDisposalPlanItem is deprecated; use AssetTransferPutbackOptionItem instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class TreasuryStockAcquisitionDisposalPlan(BaseModel, DartHttpBody[TreasuryStockAcquisitionDisposalPlanItem]):
+    """``AssetTransferPutbackOption`` 의 옛 이름. Deprecated, use ``AssetTransferPutbackOption`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "TreasuryStockAcquisitionDisposalPlan is deprecated; use AssetTransferPutbackOption instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class RealEstateDevelopmentItem(DefaultOccurrenceItem):
+    """``DefaultOccurrenceItem`` 의 옛 이름. Deprecated, use ``DefaultOccurrenceItem`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "RealEstateDevelopmentItem is deprecated; use DefaultOccurrenceItem instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class RealEstateDevelopment(BaseModel, DartHttpBody[RealEstateDevelopmentItem]):
+    """``DefaultOccurrence`` 의 옛 이름. Deprecated, use ``DefaultOccurrence`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "RealEstateDevelopment is deprecated; use DefaultOccurrence instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class BusinessLetterItem(BusinessSuspensionItem):
+    """``BusinessSuspensionItem`` 의 옛 이름. Deprecated, use ``BusinessSuspensionItem`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "BusinessLetterItem is deprecated; use BusinessSuspensionItem instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class BusinessLetter(BaseModel, DartHttpBody[BusinessLetterItem]):
+    """``BusinessSuspension`` 의 옛 이름. Deprecated, use ``BusinessSuspension`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "BusinessLetter is deprecated; use BusinessSuspension instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class SecuritiesGrantedDecisionItem(PaidInCapitalIncreaseDecisionItem):
+    """``PaidInCapitalIncreaseDecisionItem`` 의 옛 이름. Deprecated, use ``PaidInCapitalIncreaseDecisionItem`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "SecuritiesGrantedDecisionItem is deprecated; use PaidInCapitalIncreaseDecisionItem instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class SecuritiesGrantedDecision(BaseModel, DartHttpBody[SecuritiesGrantedDecisionItem]):
+    """``PaidInCapitalIncreaseDecision`` 의 옛 이름. Deprecated, use ``PaidInCapitalIncreaseDecision`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "SecuritiesGrantedDecision is deprecated; use PaidInCapitalIncreaseDecision instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class FreeSecuritiesDecisionItem(FreeCapitalIncreaseDecisionItem):
+    """``FreeCapitalIncreaseDecisionItem`` 의 옛 이름. Deprecated, use ``FreeCapitalIncreaseDecisionItem`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "FreeSecuritiesDecisionItem is deprecated; use FreeCapitalIncreaseDecisionItem instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class FreeSecuritiesDecision(BaseModel, DartHttpBody[FreeSecuritiesDecisionItem]):
+    """``FreeCapitalIncreaseDecision`` 의 옛 이름. Deprecated, use ``FreeCapitalIncreaseDecision`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "FreeSecuritiesDecision is deprecated; use FreeCapitalIncreaseDecision instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class PaidInCapitalReductionDecisionItem(PaidInAndFreeCapitalIncreaseDecisionItem):
+    """``PaidInAndFreeCapitalIncreaseDecisionItem`` 의 옛 이름. Deprecated, use ``PaidInAndFreeCapitalIncreaseDecisionItem`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "PaidInCapitalReductionDecisionItem is deprecated; use PaidInAndFreeCapitalIncreaseDecisionItem instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class PaidInCapitalReductionDecision(BaseModel, DartHttpBody[PaidInCapitalReductionDecisionItem]):
+    """``PaidInAndFreeCapitalIncreaseDecision`` 의 옛 이름. Deprecated, use ``PaidInAndFreeCapitalIncreaseDecision`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "PaidInCapitalReductionDecision is deprecated; use PaidInAndFreeCapitalIncreaseDecision instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class GovernmentBondManagerReplacementItem(CreditorBankManagementProcedureCommencementItem):
+    """``CreditorBankManagementProcedureCommencementItem`` 의 옛 이름. Deprecated, use ``CreditorBankManagementProcedureCommencementItem`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "GovernmentBondManagerReplacementItem is deprecated; use CreditorBankManagementProcedureCommencementItem instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class GovernmentBondManagerReplacement(BaseModel, DartHttpBody[GovernmentBondManagerReplacementItem]):
+    """``CreditorBankManagementProcedureCommencement`` 의 옛 이름. Deprecated, use ``CreditorBankManagementProcedureCommencement`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "GovernmentBondManagerReplacement is deprecated; use CreditorBankManagementProcedureCommencement instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class ProfitRevocationItem(LawsuitFilingItem):
+    """``LawsuitFilingItem`` 의 옛 이름. Deprecated, use ``LawsuitFilingItem`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "ProfitRevocationItem is deprecated; use LawsuitFilingItem instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class ProfitRevocation(BaseModel, DartHttpBody[ProfitRevocationItem]):
+    """``LawsuitFiling`` 의 옛 이름. Deprecated, use ``LawsuitFiling`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "ProfitRevocation is deprecated; use LawsuitFiling instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class OverseasSecuritiesTradingResolutionItem(OverseasSecuritiesMarketListingDecisionItem):
+    """``OverseasSecuritiesMarketListingDecisionItem`` 의 옛 이름. Deprecated, use ``OverseasSecuritiesMarketListingDecisionItem`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "OverseasSecuritiesTradingResolutionItem is deprecated; use OverseasSecuritiesMarketListingDecisionItem instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class OverseasSecuritiesTradingResolution(BaseModel, DartHttpBody[OverseasSecuritiesTradingResolutionItem]):
+    """``OverseasSecuritiesMarketListingDecision`` 의 옛 이름. Deprecated, use ``OverseasSecuritiesMarketListingDecision`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "OverseasSecuritiesTradingResolution is deprecated; use OverseasSecuritiesMarketListingDecision instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class OverseasSecuritiesTradingDelistingResolutionItem(OverseasSecuritiesMarketDelistingDecisionItem):
+    """``OverseasSecuritiesMarketDelistingDecisionItem`` 의 옛 이름. Deprecated, use ``OverseasSecuritiesMarketDelistingDecisionItem`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "OverseasSecuritiesTradingDelistingResolutionItem is deprecated; use OverseasSecuritiesMarketDelistingDecisionItem instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class OverseasSecuritiesTradingDelistingResolution(
+    BaseModel, DartHttpBody[OverseasSecuritiesTradingDelistingResolutionItem]
+):
+    """``OverseasSecuritiesMarketDelistingDecision`` 의 옛 이름. Deprecated, use ``OverseasSecuritiesMarketDelistingDecision`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "OverseasSecuritiesTradingDelistingResolution is deprecated; use OverseasSecuritiesMarketDelistingDecision instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class OverseasSecuritiesTradingStatusDelistingItem(OverseasSecuritiesMarketDelistingStatusItem):
+    """``OverseasSecuritiesMarketDelistingStatusItem`` 의 옛 이름. Deprecated, use ``OverseasSecuritiesMarketDelistingStatusItem`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "OverseasSecuritiesTradingStatusDelistingItem is deprecated; use OverseasSecuritiesMarketDelistingStatusItem instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class OverseasSecuritiesTradingStatusDelisting(BaseModel, DartHttpBody[OverseasSecuritiesTradingStatusDelistingItem]):
+    """``OverseasSecuritiesMarketDelistingStatus`` 의 옛 이름. Deprecated, use ``OverseasSecuritiesMarketDelistingStatus`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "OverseasSecuritiesTradingStatusDelisting is deprecated; use OverseasSecuritiesMarketDelistingStatus instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class OverseasSecuritiesTradingStatusItem(OverseasSecuritiesMarketListingStatusItem):
+    """``OverseasSecuritiesMarketListingStatusItem`` 의 옛 이름. Deprecated, use ``OverseasSecuritiesMarketListingStatusItem`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "OverseasSecuritiesTradingStatusItem is deprecated; use OverseasSecuritiesMarketListingStatusItem instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class OverseasSecuritiesTradingStatus(BaseModel, DartHttpBody[OverseasSecuritiesTradingStatusItem]):
+    """``OverseasSecuritiesMarketListingStatus`` 의 옛 이름. Deprecated, use ``OverseasSecuritiesMarketListingStatus`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "OverseasSecuritiesTradingStatus is deprecated; use OverseasSecuritiesMarketListingStatus instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class CorporateBondIssuanceDecisionItem(ExchangeableBondIssuanceDecisionItem):
+    """``ExchangeableBondIssuanceDecisionItem`` 의 옛 이름. Deprecated, use ``ExchangeableBondIssuanceDecisionItem`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "CorporateBondIssuanceDecisionItem is deprecated; use ExchangeableBondIssuanceDecisionItem instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class CorporateBondIssuanceDecision(BaseModel, DartHttpBody[CorporateBondIssuanceDecisionItem]):
+    """``ExchangeableBondIssuanceDecision`` 의 옛 이름. Deprecated, use ``ExchangeableBondIssuanceDecision`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "CorporateBondIssuanceDecision is deprecated; use ExchangeableBondIssuanceDecision instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class GovernmentBondManagerTransferTerminationItem(CreditorBankManagementProcedureTerminationItem):
+    """``CreditorBankManagementProcedureTerminationItem`` 의 옛 이름. Deprecated, use ``CreditorBankManagementProcedureTerminationItem`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "GovernmentBondManagerTransferTerminationItem is deprecated; use CreditorBankManagementProcedureTerminationItem instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class GovernmentBondManagerTransferTermination(BaseModel, DartHttpBody[GovernmentBondManagerTransferTerminationItem]):
+    """``CreditorBankManagementProcedureTermination`` 의 옛 이름. Deprecated, use ``CreditorBankManagementProcedureTermination`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "GovernmentBondManagerTransferTermination is deprecated; use CreditorBankManagementProcedureTermination instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class ReorganizationPlanApprovedRulingItem(WriteDownContingentCapitalSecuritiesIssuanceDecisionItem):
+    """``WriteDownContingentCapitalSecuritiesIssuanceDecisionItem`` 의 옛 이름. Deprecated, use ``WriteDownContingentCapitalSecuritiesIssuanceDecisionItem`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "ReorganizationPlanApprovedRulingItem is deprecated; use WriteDownContingentCapitalSecuritiesIssuanceDecisionItem instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class ReorganizationPlanApprovedRuling(BaseModel, DartHttpBody[ReorganizationPlanApprovedRulingItem]):
+    """``WriteDownContingentCapitalSecuritiesIssuanceDecision`` 의 옛 이름. Deprecated, use ``WriteDownContingentCapitalSecuritiesIssuanceDecision`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "ReorganizationPlanApprovedRuling is deprecated; use WriteDownContingentCapitalSecuritiesIssuanceDecision instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class BusinessPlanDecisionItem(BusinessAcquisitionDecisionItem):
+    """``BusinessAcquisitionDecisionItem`` 의 옛 이름. Deprecated, use ``BusinessAcquisitionDecisionItem`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "BusinessPlanDecisionItem is deprecated; use BusinessAcquisitionDecisionItem instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class BusinessPlanDecision(BaseModel, DartHttpBody[BusinessPlanDecisionItem]):
+    """``BusinessAcquisitionDecision`` 의 옛 이름. Deprecated, use ``BusinessAcquisitionDecision`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "BusinessPlanDecision is deprecated; use BusinessAcquisitionDecision instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class TangibleAssetPlanDecisionItem(TangibleAssetAcquisitionDecisionItem):
+    """``TangibleAssetAcquisitionDecisionItem`` 의 옛 이름. Deprecated, use ``TangibleAssetAcquisitionDecisionItem`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "TangibleAssetPlanDecisionItem is deprecated; use TangibleAssetAcquisitionDecisionItem instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class TangibleAssetPlanDecision(BaseModel, DartHttpBody[TangibleAssetPlanDecisionItem]):
+    """``TangibleAssetAcquisitionDecision`` 의 옛 이름. Deprecated, use ``TangibleAssetAcquisitionDecision`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "TangibleAssetPlanDecision is deprecated; use TangibleAssetAcquisitionDecision instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class RetirementStockInvestmentPlanDecisionItem(OtherCorporationSecuritiesAcquisitionDecisionItem):
+    """``OtherCorporationSecuritiesAcquisitionDecisionItem`` 의 옛 이름. Deprecated, use ``OtherCorporationSecuritiesAcquisitionDecisionItem`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "RetirementStockInvestmentPlanDecisionItem is deprecated; use OtherCorporationSecuritiesAcquisitionDecisionItem instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class RetirementStockInvestmentPlanDecision(BaseModel, DartHttpBody[RetirementStockInvestmentPlanDecisionItem]):
+    """``OtherCorporationSecuritiesAcquisitionDecision`` 의 옛 이름. Deprecated, use ``OtherCorporationSecuritiesAcquisitionDecision`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "RetirementStockInvestmentPlanDecision is deprecated; use OtherCorporationSecuritiesAcquisitionDecision instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class RetirementStockInvestmentTransferDecisionItem(OtherCorporationSecuritiesTransferDecisionItem):
+    """``OtherCorporationSecuritiesTransferDecisionItem`` 의 옛 이름. Deprecated, use ``OtherCorporationSecuritiesTransferDecisionItem`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "RetirementStockInvestmentTransferDecisionItem is deprecated; use OtherCorporationSecuritiesTransferDecisionItem instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class RetirementStockInvestmentTransferDecision(BaseModel, DartHttpBody[RetirementStockInvestmentTransferDecisionItem]):
+    """``OtherCorporationSecuritiesTransferDecision`` 의 옛 이름. Deprecated, use ``OtherCorporationSecuritiesTransferDecision`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "RetirementStockInvestmentTransferDecision is deprecated; use OtherCorporationSecuritiesTransferDecision instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class StockRelatedBondPlanDecisionItem(StockRelatedBondAcquisitionDecisionItem):
+    """``StockRelatedBondAcquisitionDecisionItem`` 의 옛 이름. Deprecated, use ``StockRelatedBondAcquisitionDecisionItem`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "StockRelatedBondPlanDecisionItem is deprecated; use StockRelatedBondAcquisitionDecisionItem instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class StockRelatedBondPlanDecision(BaseModel, DartHttpBody[StockRelatedBondPlanDecisionItem]):
+    """``StockRelatedBondAcquisitionDecision`` 의 옛 이름. Deprecated, use ``StockRelatedBondAcquisitionDecision`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "StockRelatedBondPlanDecision is deprecated; use StockRelatedBondAcquisitionDecision instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class CorporateLawDecisionItem(CompanyMergerDecisionItem):
+    """``CompanyMergerDecisionItem`` 의 옛 이름. Deprecated, use ``CompanyMergerDecisionItem`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "CorporateLawDecisionItem is deprecated; use CompanyMergerDecisionItem instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class CorporateLawDecision(BaseModel, DartHttpBody[CorporateLawDecisionItem]):
+    """``CompanyMergerDecision`` 의 옛 이름. Deprecated, use ``CompanyMergerDecision`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "CorporateLawDecision is deprecated; use CompanyMergerDecision instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class CorporateLawMethodDecisionItem(CompanyDivisionMergerDecisionItem):
+    """``CompanyDivisionMergerDecisionItem`` 의 옛 이름. Deprecated, use ``CompanyDivisionMergerDecisionItem`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "CorporateLawMethodDecisionItem is deprecated; use CompanyDivisionMergerDecisionItem instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class CorporateLawMethodDecision(BaseModel, DartHttpBody[CorporateLawMethodDecisionItem]):
+    """``CompanyDivisionMergerDecision`` 의 옛 이름. Deprecated, use ``CompanyDivisionMergerDecision`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "CorporateLawMethodDecision is deprecated; use CompanyDivisionMergerDecision instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class StockTradingOtherDecisionItem(StockExchangeTransferDecisionItem):
+    """``StockExchangeTransferDecisionItem`` 의 옛 이름. Deprecated, use ``StockExchangeTransferDecisionItem`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "StockTradingOtherDecisionItem is deprecated; use StockExchangeTransferDecisionItem instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
+
+
+class StockTradingOtherDecision(BaseModel, DartHttpBody[StockTradingOtherDecisionItem]):
+    """``StockExchangeTransferDecision`` 의 옛 이름. Deprecated, use ``StockExchangeTransferDecision`` instead."""
+
+    def __init__(self, /, **data):
+        warnings.warn(
+            "StockTradingOtherDecision is deprecated; use StockExchangeTransferDecision instead (2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)

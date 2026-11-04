@@ -11,7 +11,7 @@ from cluefin_openapi.dart._exceptions import (
     DartServerError,
     DartTimeoutError,
 )
-from cluefin_openapi.dart._major_shareholder_disclosure import MajorShareholderDisclosure
+from cluefin_openapi.dart._major_shareholder_disclosure import MajorMattersReport, MajorShareholderDisclosure
 from cluefin_openapi.dart._periodic_report_financial_statement import PeriodicReportFinancialStatement
 from cluefin_openapi.dart._periodic_report_key_information import PeriodicReportKeyInformation
 from cluefin_openapi.dart._public_disclosure import PublicDisclosure
@@ -19,6 +19,7 @@ from cluefin_openapi.dart._share_disclosure_comprehensive import ShareDisclosure
 
 __all__ = [
     "Client",
+    "MajorMattersReport",
     "MajorShareholderDisclosure",
     "PeriodicReportFinancialStatement",
     "PeriodicReportKeyInformation",
