@@ -12,7 +12,8 @@ screen (*The Little Book That Beats the Market*). Universe and inputs decided 20
   `cache trend-setup`/`cache rs` (`cache.trend._universe`): common stock listed on the day, no
   SPACs, KOSPI/KOSDAQ only.
 - Financials come from `cache financials` (DART `fnlttMultiAcnt`, see `cache/financials.py`):
-  each stock's latest cached fiscal year, 영업이익(operating profit) standing in for EBIT — the
+  each stock's latest cached fiscal year whose 사업보고서 was due by ``as_of`` (March 31 of the next
+  year — a past ``--as-of`` must not see a later filing), 영업이익(operating profit) standing in for EBIT — the
   endpoint has no EBIT line, same substitution as `dart financial-summary`'s `quality` block.
   Market cap is that day's raw close (pre-adjustment) × current `company.list_count` (same
   approximation as `cache/baserate.py`; the cache has no historical share count).
@@ -60,7 +61,7 @@ WITH ranked AS (
   SELECT code, year, account_nm, amount,
          dense_rank() OVER (PARTITION BY code ORDER BY year DESC) AS yr_rank
   FROM financials
-  WHERE code IN (SELECT unnest(?::TEXT[])) AND account_nm IN (SELECT unnest(?::TEXT[]))
+  WHERE code IN (SELECT unnest(?::TEXT[])) AND account_nm IN (SELECT unnest(?::TEXT[])) AND year <= ?
 )
 SELECT code, year, account_nm, amount FROM ranked WHERE yr_rank = 1
 """
@@ -75,7 +76,7 @@ _NOTES = (
     "업종(company.sector), 관리종목(is_admin)·거래정지(is_halted)를 빼고, 남은 종목의 시총 하위 20% 를 더 뺀 "
     "것이다(Greenblatt 원칙, 결정 2026-11-04).",
     "재무는 `cache financials`(DART fnlttMultiAcnt)의 종목별 최신 사업연도 1개년이다 — EBIT 는 영업이익으로 "
-    "대신한다(영업외손익 구분이 없다).",
+    "대신한다(영업외손익 구분이 없다). 사업보고서 마감(3월 31일) 전의 as_of 에는 전전 사업연도까지만 쓴다(미래 정보 차단).",
     "시총 = 그날 원주가(수정 전) × 현재 company.list_count 근사다 — 캐시에 과거 상장주식수가 없다 "
     "(cache/baserate.py 와 같은 근사).",
     "EV = 시총 + 부채총계 — `financials` 에 현금·이자부채 구분이 없어 현금을 빼지 못한 근사다. 현금이 많은 "
@@ -95,10 +96,19 @@ def _mcap_by_code(conn: duckdb.DuckDBPyConnection, codes: list[str], as_of: date
     return {code: close * list_count for code, close, list_count in rows}
 
 
-def _financials_by_code(conn: duckdb.DuckDBPyConnection, codes: list[str]) -> dict[str, dict[str, Any]]:
+def _last_filed_year(as_of: date) -> int:
+    """The latest fiscal year whose 사업보고서 was due by ``as_of`` (filed within 90 days, i.e. by March 31).
+
+    Without this cap a past ``--as-of`` would rank on a year that was not public yet (look-ahead).
+    """
+
+    return as_of.year - 1 if as_of >= date(as_of.year, 4, 1) else as_of.year - 2
+
+
+def _financials_by_code(conn: duckdb.DuckDBPyConnection, codes: list[str], as_of: date) -> dict[str, dict[str, Any]]:
     if not codes:
         return {}
-    rows = conn.execute(_FINANCIALS_SQL, [codes, list(_ACCOUNTS)]).fetchall()
+    rows = conn.execute(_FINANCIALS_SQL, [codes, list(_ACCOUNTS), str(_last_filed_year(as_of))]).fetchall()
     by_code: dict[str, dict[str, Any]] = {}
     for code, year, account_nm, amount in rows:
         entry = by_code.setdefault(code, {"year": year, "accounts": {}})
@@ -129,7 +139,7 @@ def screen(conn: duckdb.DuckDBPyConnection, as_of: date, *, top: int = DEFAULT_T
         sized = list(priced)
     below_cutoff = len(priced) - len(sized)
 
-    financials = _financials_by_code(conn, [row["code"] for row in sized])
+    financials = _financials_by_code(conn, [row["code"] for row in sized], as_of)
 
     candidates: list[dict[str, Any]] = []
     metrics: list[tuple[float, float]] = []

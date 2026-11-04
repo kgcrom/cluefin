@@ -9,7 +9,7 @@ import pytest
 from cluefin_openapi_cli.cache import magic, store
 from cluefin_openapi_cli.main import run_cli
 
-_AS_OF = date(2026, 3, 2)
+_AS_OF = date(2026, 4, 1)
 
 
 @pytest.fixture
@@ -322,3 +322,20 @@ def test_cli_magic_formula_rejects_non_integer_top(cache) -> None:
     result = run_cli(["cache", "magic-formula", "--top", "abc", "--json"])
 
     assert result.exit_code == 2
+
+
+def test_screen_does_not_use_a_fiscal_year_filed_after_as_of(cache) -> None:
+    conn = store.open_store()
+    as_of = date(2026, 3, 2)
+    _insert_company(conn, "900010")
+    _insert_close(conn, "900010", 100.0, as_of=as_of)
+    _insert_index_bar(conn, as_of=as_of)
+    _insert_financials(conn, "900010", year="2024", ebit=1.0, assets=10.0, current_liab=1.0, total_liab=1.0)
+    _insert_financials(conn, "900010", year="2025", ebit=100.0, assets=1000.0, current_liab=200.0, total_liab=400.0)
+    conn.close()
+
+    conn = store.open_store(read_only=True)
+    payload = magic.screen(conn, as_of)
+    conn.close()
+
+    assert payload["rows"][0]["fiscal_year"] == "2024"
