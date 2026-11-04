@@ -974,6 +974,7 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
     "sec.filings": CommandTaxonomy(("news", "statements"), ("us-filing", "disclosure")),
     "sec.filing-items": CommandTaxonomy(("statements",), ("us-filing", "filing-text", "risk-factors")),
     "sec.filing-notes": CommandTaxonomy(("statements",), ("us-filing", "filing-text", "financial-statement")),
+    "sec.note-series": CommandTaxonomy(("statements",), ("us-filing", "financial-statement", "disclosure")),
     "sec.filing-exhibit": CommandTaxonomy(("statements", "news"), ("us-filing", "filing-text", "earnings-release")),
     "ecos.table-search": CommandTaxonomy(("macro", "reference"), ("statistic-catalog", "reference-list")),
     "ecos.items": CommandTaxonomy(("macro", "reference"), ("statistic-catalog",)),

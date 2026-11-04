@@ -371,3 +371,82 @@ def test_notes_refuse_an_8k() -> None:
     with pytest.raises(CliError) as error:
         _notes({}, detail=_detail(form="8-K"))
     assert error.value.exit_code == EXIT_USAGE
+
+
+# --- note-series -----------------------------------------------------------------------------------------------
+
+
+def _year_notes(fy: int, number: int, product: str, unit: str) -> str:
+    return (
+        "<div>NOTES TO CONSOLIDATED FINANCIAL STATEMENTS</div>"
+        "<div>1. Description of Business</div><div>Alpha Memory Corp designs memory chips.</div>"
+        f"<div>{number}. Net Revenues</div><div>Revenue by type was as follows:</div>"
+        f'<table><tr><td>({unit})</td><td colspan="2">{fy}</td><td colspan="2">{fy - 1}</td></tr>'
+        f"<tr><td>Product sales</td><td>$</td><td>{product}</td><td>$</td><td>1</td></tr></table>"
+    )
+
+
+class _SeriesSession:
+    """get_sec() → submissions listing two original 10-Ks, archives serving their HTML."""
+
+    def __init__(self) -> None:
+        self.filings_calls: list[dict] = []
+        documents = {
+            "alpha-2025.htm": _ten_k(bodies={**BODIES, "8": STATEMENTS + _year_notes(2025, 2, "1,200", "in millions")}),
+            "alpha-2024.htm": _ten_k(
+                bodies={**BODIES, "8": STATEMENTS + _year_notes(2024, 3, "1,000,500", "in thousands")}
+            ).replace("2025-12-31", "2024-12-31"),
+        }
+        entries = [
+            SimpleNamespace(
+                accession_number=f"0000001001-{fy % 100 + 1:02d}-000008",
+                form="10-K",
+                filing_date=date(fy + 1, 2, 20),
+                report_date=date(fy, 12, 31),
+                primary_document=f"alpha-{fy}.htm",
+            )
+            for fy in (2024, 2025)
+        ]
+
+        def filings(cik, *, forms, include_amendments, include_older=False):
+            self.filings_calls.append({"forms": forms, "include_amendments": include_amendments})
+            return entries
+
+        def download(cik, accession_number, name, *, destination):
+            path = Path(destination) / name
+            path.write_text(documents[name], encoding="utf-8")
+            return path
+
+        self._client = SimpleNamespace(
+            submissions=SimpleNamespace(filings=filings), archives=SimpleNamespace(download_filing_document=download)
+        )
+
+    def get_sec(self):
+        return self._client
+
+
+def test_note_series_lists_notes_matched_across_years() -> None:
+    session = _SeriesSession()
+    result = handlers.handle_note_series({"cik": CIK, "years": 2}, session)
+
+    assert [filing["fy"] for filing in result["filings"]] == [2025, 2024]
+    assert session.filings_calls[0] == {"forms": ["10-K"], "include_amendments": False}
+    revenue = next(note for note in result["notes"] if note["title"] == "Net Revenues")
+    assert revenue == {"title": "Net Revenues", "numbers_by_fy": {"2025": 2, "2024": 3}, "tables": 1, "rows": 1}
+
+
+def test_note_series_with_notes_returns_rows_in_millions() -> None:
+    result = handlers.handle_note_series({"cik": CIK, "years": 2, "notes": "revenue"}, _SeriesSession())
+
+    (note,) = result["notes"]
+    (row,) = note["tables"][0]["rows"]
+    assert row["values_by_fy"] == {"2025": 1200, "2024": 1000.5}
+    assert row["unit_filed"] == {"2025": "in millions", "2024": "in thousands"}
+
+
+def test_note_series_without_10k_is_a_usage_error() -> None:
+    session = _SeriesSession()
+    session._client.submissions.filings = lambda cik, **kwargs: []
+    with pytest.raises(CliError) as error:
+        handlers.handle_note_series({"cik": CIK}, session)
+    assert error.value.exit_code == EXIT_USAGE

@@ -235,7 +235,7 @@ CLI 가 말해 주지 않는 것만 적는다.
   `altman_z_double_prime.missing`. `test_quality_unit.py` covers the pure functions with synthetic figures.
 - `dart document-outline` / `document-section` / `financial-notes` parse the downloaded original XML with
   cluefin-dart-notes (see the `dart document-*` section) and are excluded from those tests too.
-- `sec filing-items` / `filing-notes` / `filing-exhibit` parse a downloaded document with cluefin-sec-notes (see the `sec *`
+- `sec filing-items` / `filing-notes` / `filing-exhibit` / `note-series` parse downloaded documents with cluefin-sec-notes (see the `sec *`
   section); `test_sec_filing_handlers_unit.py` covers them with synthetic HTML.
 - `kis chart trend-setup` also computes from paged series (stock via `ohlcv.fetch_kis_daily_series`, index via
   `cache.bars.fetch_index_bars` — 50 rows a call) plus `basic-info` for the benchmark; the rules live in `trend_setup.py`
@@ -566,6 +566,17 @@ CLI 가 말해 주지 않는 것만 적는다.
 - `filing-notes` 는 재무제표 Item(10-K 8, 10-Q I:1)을 `split_notes` 로 나눈다. 표는 `{unit, grid}` 로 주고 단위는
   곱하지 않는다(`dart financial-notes` 와 같은 계약). `notes` 의 숫자(또는 한 글자)는 주석 번호, 나머지는 제목 부분 일치다.
   주석 번호는 해마다 바뀐다(2026-11-04 실측: 같은 회사 Income Taxes 가 13번 → 7번 → 6번) — 여러 해는 `note-series`.
+- `note-series` 는 최근 10-K(정정 제외) N편을 받아 `note_series.py` 로 잇는다. 해 잇기 규칙은 모듈 docstring 에 있고,
+  여기는 고르게 된 이유만 적는다(2026-11-04 실측, 이커머스 1개사 10-K 5편):
+  - 회계연도는 `dei:DocumentFiscalYearFocus` → 문서 기간말 → `report_date` 순. 같은 해가 두 편이면 최근 것만 쓰고
+    `problems` 에 남긴다.
+  - 값은 당해 열만. 머리에 연도가 없는 표는 값 열 전부를 당해로 본다(만기표·가정표). 당해 열이 없는 표(옛 서식이
+    전년 값만 남은 경우)는 `skipped_tables`.
+  - 표 짝은 행 이름 Jaccard 0.5 로는 행이 갈라진 표("Foreign" ↔ "Foreign - Korea"/"Foreign - Other")를 못 잇는다. 그래서
+    표 전체 낱말 Jaccard 0.7 을 두 번째 기준으로 둔다. 한 표가 셋으로 갈라진 경우(세그먼트 표)는 하나만 이어진다.
+  - 구역 머리("Current taxes")가 같은 이름의 행을 가른다. 구역 머리가 새로 붙어도("Differences resulting from:")
+    구역을 뺀 이름이 표 안에 하나뿐이면 잇는다.
+  - 대시는 0, 빈 칸은 값 없음.
 - `company-lookup` 은 매번 전체 목록(~1만 행)을 받아 거른다. `filings` 는 SEC 의 recent 목록(1년 이상 또는 1,000건)만 본다.
 - 테스트 픽스처는 합성 회사·CIK·접수번호만 쓴다(cluefin-sec-notes AGENTS.md). 스키마 예시의 `cik`/`accession_number`
   샘플은 cluefin-openapi README 와 같은 AAPL 값이다.

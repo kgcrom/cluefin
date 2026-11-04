@@ -692,6 +692,167 @@ def handle_filing_notes(params: dict, session) -> dict:
     return payload
 
 
+# ---------------------------------------------------------------------------
+# Note series: one note's tables across several 10-Ks (note_series.py)
+# ---------------------------------------------------------------------------
+
+_DEFAULT_SERIES_YEARS = 5
+_MAX_SERIES_YEARS = 10
+
+
+def _annual_reports(sec, cik: str, years: int) -> list:
+    """The latest ``years`` original 10-Ks (amendments excluded), newest first. Older history pages only if needed."""
+    entries = sec.submissions.filings(cik, forms=["10-K"], include_amendments=False)
+    if len(entries) < years:
+        entries = sec.submissions.filings(cik, forms=["10-K"], include_amendments=False, include_older=True)
+    return sorted(entries, key=lambda entry: entry.filing_date, reverse=True)[:years]
+
+
+def _filing_notes(sec, cik: str, entry):
+    """Download one 10-K and split its Item 8 into notes: (FilingNotes or None, problem dict or None)."""
+    from types import SimpleNamespace
+
+    from cluefin_sec_notes import extract_items, split_notes
+
+    from cluefin_openapi_cli.note_series import FilingNotes, NoteInput, TableInput
+
+    document = SimpleNamespace(name=entry.primary_document or "", type="10-K")
+    parsed = _load_document(sec, cik, entry.accession_number, document, form="10-K")
+    item = extract_items(parsed).item("8", strict=False)
+    if item is None:
+        return None, {"accession_number": entry.accession_number, "problem": "Item 8 not found"}
+    split = split_notes(item)
+    fy = _fiscal_year(parsed, entry)
+    statement_units = [table.unit for table in split.notes[0].tables if table.unit]
+    filing = FilingNotes(
+        fy=fy,
+        period_end=parsed.period_end or entry.report_date,
+        accession_number=entry.accession_number,
+        notes=tuple(
+            NoteInput(note.number, note.title, tuple(TableInput(table.grid(), table.unit) for table in note.tables))
+            for note in split
+        ),
+        statements_unit=statement_units[0] if statement_units else None,
+    )
+    warnings = [finding.code for finding in (*item.warnings, *split.findings)]
+    problem = {"fy": fy, "accession_number": entry.accession_number, "warnings": warnings} if warnings else None
+    return filing, problem
+
+
+def _fiscal_year(parsed, entry) -> int:
+    """dei:DocumentFiscalYearFocus, else the period end's year (a January-March year end belongs to the year before)."""
+    focus = (parsed.dei.get("DocumentFiscalYearFocus") or "").strip()
+    if focus.isdigit():
+        return int(focus)
+    period = parsed.period_end or entry.report_date or entry.filing_date
+    return period.year - 1 if period.month <= 3 else period.year
+
+
+def _series_selector(value: str | None):
+    tokens = [token.strip() for token in (value or "").split(",") if token.strip()]
+    if not tokens:
+        return None
+    numbers = {int(token) for token in tokens if token.isdigit()}
+    words = [token.lower() for token in tokens if not token.isdigit()]
+
+    def selected(title: str, number: int | None) -> bool:
+        return (number is not None and number in numbers) or any(word in title.lower() for word in words)
+
+    return selected
+
+
+def _series_summary(note: dict) -> dict:
+    return {
+        "title": note["title"],
+        "numbers_by_fy": note["numbers_by_fy"],
+        "tables": len(note["tables"]),
+        "rows": sum(len(table["rows"]) for table in note["tables"]),
+    }
+
+
+@rpc_method(
+    name="sec.note_series",
+    description=(
+        "Join one company's 10-K notes across years (default the last 5 annual reports): the same note is matched "
+        "by title even when its number changes, each note table is matched to the newer year's by its row labels, "
+        "and each row becomes a series of the current-year column of each 10-K. Amounts are converted to USD "
+        "millions (unit_filed keeps what each year stated, e.g. 'in thousands'); percentages and per-share values "
+        "are left as filed. Rows whose label changed are not merged: the new row carries label_changed with the "
+        "old label(s) as candidates. Without `notes` it returns the list of note series (title, number per fiscal year, tables, "
+        "rows); with `notes` (comma-separated latest note numbers or title words, e.g. income tax,lease) the full "
+        "tables. Downloads one document per year (about 1 second each). Original 10-Ks only (10-K/A skipped)."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "cik": _CIK_PARAM,
+            "years": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": _MAX_SERIES_YEARS,
+                "default": _DEFAULT_SERIES_YEARS,
+                "description": "How many of the latest 10-Ks to join. Default 5, max 10.",
+            },
+            "notes": {
+                "type": "string",
+                "description": "Comma-separated note numbers (as numbered in the latest 10-K) and/or title words, "
+                "e.g. 6 or income tax,lease. Omit for the list of note series.",
+            },
+        },
+        "required": ["cik"],
+    },
+    returns={"type": "object"},
+    category="sec",
+    broker="sec",
+)
+def handle_note_series(params: dict, session) -> dict:
+    from cluefin_openapi_cli.note_series import build_series
+
+    cik = params["cik"]
+    years = int(params.get("years", _DEFAULT_SERIES_YEARS))
+    selector = _series_selector(params.get("notes"))
+    sec = session.get_sec()
+    entries = _annual_reports(sec, cik, years)
+    if not entries:
+        raise CliError(
+            "This company has no 10-K",
+            exit_code=EXIT_USAGE,
+            error_type="ValidationError",
+            data={"cik": int(cik)},
+            hint="Check the forms with sec filings --cik <cik> --forms 10-K. Foreign private issuers file 20-F.",
+        )
+    filings, problems = [], []
+    for entry in entries:
+        filing, problem = _filing_notes(sec, cik, entry)
+        if filing is not None and any(kept.fy == filing.fy for kept in filings):
+            # 회계연도를 바꾼 해 등. 같은 해 두 편을 섞지 않고 최근 공시만 쓴다.
+            problems.append(
+                {"accession_number": entry.accession_number, "problem": f"duplicate fiscal year {filing.fy}"}
+            )
+            continue
+        if filing is not None:
+            filings.append(filing)
+        if problem is not None:
+            problems.append(problem)
+    series = build_series(filings, selector)
+    payload = {
+        "cik": int(cik),
+        "unit": "USD millions (percent and per-share values as filed)",
+        "filings": [
+            {"fy": filing.fy, "accession_number": filing.accession_number, "period_end": str(filing.period_end)}
+            for filing in sorted(filings, key=lambda filing: filing.fy, reverse=True)
+        ],
+        "problems": problems,
+    }
+    if selector is None:
+        payload["notes"] = [_series_summary(note) for note in series]
+        return payload
+    payload["notes"] = series
+    if not series:
+        payload["hint"] = "No note matched. Run without --notes for the list of note titles."
+    return payload
+
+
 _DEFAULT_EXHIBIT = "EX-99.1"
 
 
@@ -781,6 +942,7 @@ _ALL_HANDLERS = [
     handle_filings,
     handle_filing_items,
     handle_filing_notes,
+    handle_note_series,
     handle_filing_exhibit,
 ]
 
