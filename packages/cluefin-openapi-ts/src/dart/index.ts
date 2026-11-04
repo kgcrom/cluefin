@@ -1,7 +1,7 @@
 export type { DartBinaryResponse, DartClientOptions } from './client.js';
 export { DART_BASE_URL, DART_SUCCESS_STATUS, DartClient } from './client.js';
 export { DartDomainBase } from './domain-base.js';
-export { MajorShareholderDisclosure } from './major-shareholder-disclosure.js';
+export { MajorMattersReport, MajorShareholderDisclosure } from './major-shareholder-disclosure.js';
 export type { DartXbrlFiles } from './periodic-report-financial-statement.js';
 export { PeriodicReportFinancialStatement } from './periodic-report-financial-statement.js';
 export { PeriodicReportKeyInformation } from './periodic-report-key-information.js';

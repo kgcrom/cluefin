@@ -12,34 +12,42 @@ export interface MajorShareholderSample {
 }
 
 export const majorShareholderSamples: Record<string, MajorShareholderSample> = {
-  treasuryStockAcquisitionDisposalPlan: {
+  assetTransferPutbackOption: {
     reportName: '주요사항보고서(중요한자산양수도결정(기타))',
     corpCode: '01409095',
     rceptDt: '20250324',
   },
-  realEstateDevelopment: { reportName: '주요사항보고서(부도발생)', corpCode: '00116268', rceptDt: '20250618' },
-  businessLetter: { reportName: '주요사항보고서(영업정지)', corpCode: '01035289', rceptDt: '20250318' },
+  defaultOccurrence: { reportName: '주요사항보고서(부도발생)', corpCode: '00116268', rceptDt: '20250618' },
+  businessSuspension: { reportName: '주요사항보고서(영업정지)', corpCode: '01035289', rceptDt: '20250318' },
   corporateRehabilitationProceedings: {
     reportName: '주요사항보고서(회생절차개시신청)',
     corpCode: '00408956',
     rceptDt: '20250326',
   },
   dissolutionOccurrence: { reportName: '주요사항보고서(해산사유발생)', corpCode: '01497771', rceptDt: '20250321' },
-  securitiesGrantedDecision: { reportName: '주요사항보고서(유상증자결정)', corpCode: '01575839', rceptDt: '20250331' },
-  freeSecuritiesDecision: { reportName: '주요사항보고서(무상증자결정)', corpCode: '00332927', rceptDt: '20250319' },
-  paidInCapitalReductionDecision: {
+  paidInCapitalIncreaseDecision: {
+    reportName: '주요사항보고서(유상증자결정)',
+    corpCode: '01575839',
+    rceptDt: '20250331',
+  },
+  freeCapitalIncreaseDecision: {
+    reportName: '주요사항보고서(무상증자결정)',
+    corpCode: '00332927',
+    rceptDt: '20250319',
+  },
+  paidInAndFreeCapitalIncreaseDecision: {
     reportName: '주요사항보고서(유무상증자결정)',
     corpCode: '01135084',
     rceptDt: '20250627',
   },
   capitalReductionDecision: { reportName: '주요사항보고서(감자결정)', corpCode: '00258102', rceptDt: '20250314' },
-  profitRevocation: { reportName: '주요사항보고서(소송등의제기)', corpCode: '00364254', rceptDt: '20250331' },
-  overseasSecuritiesTradingStatus: {
+  lawsuitFiling: { reportName: '주요사항보고서(소송등의제기)', corpCode: '00364254', rceptDt: '20250331' },
+  overseasSecuritiesMarketListingStatus: {
     reportName: '주요사항보고서(해외증권시장주권등상장)',
     corpCode: '00126380',
     rceptDt: '20250213',
   },
-  overseasSecuritiesTradingStatusDelisting: {
+  overseasSecuritiesMarketDelistingStatus: {
     reportName: '주요사항보고서(해외증권시장주권등상장폐지)',
     corpCode: '00126380',
     rceptDt: '20250213',
@@ -54,12 +62,12 @@ export const majorShareholderSamples: Record<string, MajorShareholderSample> = {
     corpCode: '00910840',
     rceptDt: '20250225',
   },
-  corporateBondIssuanceDecision: {
+  exchangeableBondIssuanceDecision: {
     reportName: '주요사항보고서(교환사채권발행결정)',
     corpCode: '00159795',
     rceptDt: '20250331',
   },
-  reorganizationPlanApprovedRuling: {
+  writeDownContingentCapitalSecuritiesIssuanceDecision: {
     reportName: '주요사항보고서(상각형조건부자본증권발행결정)',
     corpCode: '00149646',
     rceptDt: '20250227',
@@ -84,9 +92,13 @@ export const majorShareholderSamples: Record<string, MajorShareholderSample> = {
     corpCode: '00860332',
     rceptDt: '20250328',
   },
-  businessPlanDecision: { reportName: '주요사항보고서(영업양수결정)', corpCode: '00118965', rceptDt: '20250331' },
+  businessAcquisitionDecision: {
+    reportName: '주요사항보고서(영업양수결정)',
+    corpCode: '00118965',
+    rceptDt: '20250331',
+  },
   businessTransferDecision: { reportName: '주요사항보고서(영업양도결정)', corpCode: '00274933', rceptDt: '20250828' },
-  tangibleAssetPlanDecision: {
+  tangibleAssetAcquisitionDecision: {
     reportName: '주요사항보고서(유형자산양수결정)',
     corpCode: '00642541',
     rceptDt: '20250327',
@@ -96,17 +108,17 @@ export const majorShareholderSamples: Record<string, MajorShareholderSample> = {
     corpCode: '00132725',
     rceptDt: '20250325',
   },
-  retirementStockInvestmentPlanDecision: {
+  otherCorporationSecuritiesAcquisitionDecision: {
     reportName: '주요사항보고서(타법인주식및출자증권양수결정)',
     corpCode: '00347716',
     rceptDt: '20250331',
   },
-  retirementStockInvestmentTransferDecision: {
+  otherCorporationSecuritiesTransferDecision: {
     reportName: '주요사항보고서(타법인주식및출자증권양도결정)',
     corpCode: '00112004',
     rceptDt: '20250326',
   },
-  stockRelatedBondPlanDecision: {
+  stockRelatedBondAcquisitionDecision: {
     reportName: '주요사항보고서(주권관련사채권양수결정)',
     corpCode: '00407975',
     rceptDt: '20250604',
@@ -116,14 +128,14 @@ export const majorShareholderSamples: Record<string, MajorShareholderSample> = {
     corpCode: '00642541',
     rceptDt: '20250325',
   },
-  corporateLawDecision: { reportName: '주요사항보고서(회사합병결정)', corpCode: '01204056', rceptDt: '20250331' },
+  companyMergerDecision: { reportName: '주요사항보고서(회사합병결정)', corpCode: '01204056', rceptDt: '20250331' },
   corporateDivisionDecision: { reportName: '주요사항보고서(회사분할결정)', corpCode: '00106623', rceptDt: '20250318' },
-  corporateLawMethodDecision: {
+  companyDivisionMergerDecision: {
     reportName: '주요사항보고서(회사분할합병결정)',
     corpCode: '00138792',
     rceptDt: '20250116',
   },
-  stockTradingOtherDecision: {
+  stockExchangeTransferDecision: {
     reportName: '주요사항보고서(주식교환ㆍ이전결정)',
     corpCode: '00197476',
     rceptDt: '20250318',

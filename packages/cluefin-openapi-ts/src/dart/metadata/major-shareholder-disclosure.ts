@@ -1,8 +1,8 @@
 import type { DartEndpointDefinition } from '../../core/types.js';
 
-export const majorShareholderDisclosureEndpoints: DartEndpointDefinition[] = [
+export const majorMattersReportEndpoints: DartEndpointDefinition[] = [
   {
-    methodName: 'treasuryStockAcquisitionDisposalPlan',
+    methodName: 'assetTransferPutbackOption',
     path: '/api/astInhtrfEtcPtbkOpt.json',
     queryMap: {
       corp_code: 'corpCode',
@@ -26,7 +26,7 @@ export const majorShareholderDisclosureEndpoints: DartEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'realEstateDevelopment',
+    methodName: 'defaultOccurrence',
     path: '/api/dfOcr.json',
     queryMap: {
       corp_code: 'corpCode',
@@ -50,7 +50,7 @@ export const majorShareholderDisclosureEndpoints: DartEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'businessLetter',
+    methodName: 'businessSuspension',
     path: '/api/bsnSp.json',
     queryMap: {
       corp_code: 'corpCode',
@@ -122,7 +122,7 @@ export const majorShareholderDisclosureEndpoints: DartEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'securitiesGrantedDecision',
+    methodName: 'paidInCapitalIncreaseDecision',
     path: '/api/piicDecsn.json',
     queryMap: {
       corp_code: 'corpCode',
@@ -146,7 +146,7 @@ export const majorShareholderDisclosureEndpoints: DartEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'freeSecuritiesDecision',
+    methodName: 'freeCapitalIncreaseDecision',
     path: '/api/fricDecsn.json',
     queryMap: {
       corp_code: 'corpCode',
@@ -170,7 +170,7 @@ export const majorShareholderDisclosureEndpoints: DartEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'paidInCapitalReductionDecision',
+    methodName: 'paidInAndFreeCapitalIncreaseDecision',
     path: '/api/pifricDecsn.json',
     queryMap: {
       corp_code: 'corpCode',
@@ -218,7 +218,7 @@ export const majorShareholderDisclosureEndpoints: DartEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'governmentBondManagerReplacement',
+    methodName: 'creditorBankManagementProcedureCommencement',
     path: '/api/bnkMngtPcbg.json',
     queryMap: {
       corp_code: 'corpCode',
@@ -242,7 +242,7 @@ export const majorShareholderDisclosureEndpoints: DartEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'profitRevocation',
+    methodName: 'lawsuitFiling',
     path: '/api/lwstLg.json',
     queryMap: {
       corp_code: 'corpCode',
@@ -266,7 +266,7 @@ export const majorShareholderDisclosureEndpoints: DartEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'overseasSecuritiesTradingResolution',
+    methodName: 'overseasSecuritiesMarketListingDecision',
     path: '/api/ovLstDecsn.json',
     queryMap: {
       corp_code: 'corpCode',
@@ -290,7 +290,7 @@ export const majorShareholderDisclosureEndpoints: DartEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'overseasSecuritiesTradingDelistingResolution',
+    methodName: 'overseasSecuritiesMarketDelistingDecision',
     path: '/api/ovDlstDecsn.json',
     queryMap: {
       corp_code: 'corpCode',
@@ -314,7 +314,7 @@ export const majorShareholderDisclosureEndpoints: DartEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'overseasSecuritiesTradingStatus',
+    methodName: 'overseasSecuritiesMarketListingStatus',
     path: '/api/ovLst.json',
     queryMap: {
       corp_code: 'corpCode',
@@ -338,7 +338,7 @@ export const majorShareholderDisclosureEndpoints: DartEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'overseasSecuritiesTradingStatusDelisting',
+    methodName: 'overseasSecuritiesMarketDelistingStatus',
     path: '/api/ovDlst.json',
     queryMap: {
       corp_code: 'corpCode',
@@ -410,7 +410,7 @@ export const majorShareholderDisclosureEndpoints: DartEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'corporateBondIssuanceDecision',
+    methodName: 'exchangeableBondIssuanceDecision',
     path: '/api/exbdIsDecsn.json',
     queryMap: {
       corp_code: 'corpCode',
@@ -434,7 +434,7 @@ export const majorShareholderDisclosureEndpoints: DartEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'governmentBondManagerTransferTermination',
+    methodName: 'creditorBankManagementProcedureTermination',
     path: '/api/bnkMngtPcsp.json',
     queryMap: {
       corp_code: 'corpCode',
@@ -458,7 +458,7 @@ export const majorShareholderDisclosureEndpoints: DartEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'reorganizationPlanApprovedRuling',
+    methodName: 'writeDownContingentCapitalSecuritiesIssuanceDecision',
     path: '/api/wdCocobdIsDecsn.json',
     queryMap: {
       corp_code: 'corpCode',
@@ -578,7 +578,7 @@ export const majorShareholderDisclosureEndpoints: DartEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'businessPlanDecision',
+    methodName: 'businessAcquisitionDecision',
     path: '/api/bsnInhDecsn.json',
     queryMap: {
       corp_code: 'corpCode',
@@ -626,7 +626,7 @@ export const majorShareholderDisclosureEndpoints: DartEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'tangibleAssetPlanDecision',
+    methodName: 'tangibleAssetAcquisitionDecision',
     path: '/api/tgastInhDecsn.json',
     queryMap: {
       corp_code: 'corpCode',
@@ -674,7 +674,7 @@ export const majorShareholderDisclosureEndpoints: DartEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'retirementStockInvestmentPlanDecision',
+    methodName: 'otherCorporationSecuritiesAcquisitionDecision',
     path: '/api/otcprStkInvscrInhDecsn.json',
     queryMap: {
       corp_code: 'corpCode',
@@ -698,7 +698,7 @@ export const majorShareholderDisclosureEndpoints: DartEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'retirementStockInvestmentTransferDecision',
+    methodName: 'otherCorporationSecuritiesTransferDecision',
     path: '/api/otcprStkInvscrTrfDecsn.json',
     queryMap: {
       corp_code: 'corpCode',
@@ -722,7 +722,7 @@ export const majorShareholderDisclosureEndpoints: DartEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'stockRelatedBondPlanDecision',
+    methodName: 'stockRelatedBondAcquisitionDecision',
     path: '/api/stkrtbdInhDecsn.json',
     queryMap: {
       corp_code: 'corpCode',
@@ -770,7 +770,7 @@ export const majorShareholderDisclosureEndpoints: DartEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'corporateLawDecision',
+    methodName: 'companyMergerDecision',
     path: '/api/cmpMgDecsn.json',
     queryMap: {
       corp_code: 'corpCode',
@@ -818,7 +818,7 @@ export const majorShareholderDisclosureEndpoints: DartEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'corporateLawMethodDecision',
+    methodName: 'companyDivisionMergerDecision',
     path: '/api/cmpDvmgDecsn.json',
     queryMap: {
       corp_code: 'corpCode',
@@ -842,7 +842,7 @@ export const majorShareholderDisclosureEndpoints: DartEndpointDefinition[] = [
     ],
   },
   {
-    methodName: 'stockTradingOtherDecision',
+    methodName: 'stockExchangeTransferDecision',
     path: '/api/stkExtrDecsn.json',
     queryMap: {
       corp_code: 'corpCode',
@@ -867,40 +867,40 @@ export const majorShareholderDisclosureEndpoints: DartEndpointDefinition[] = [
   },
 ];
 
-export type MajorShareholderDisclosureMethodName =
-  | 'treasuryStockAcquisitionDisposalPlan'
-  | 'realEstateDevelopment'
-  | 'businessLetter'
+export type MajorMattersReportMethodName =
+  | 'assetTransferPutbackOption'
+  | 'defaultOccurrence'
+  | 'businessSuspension'
   | 'corporateRehabilitationProceedings'
   | 'dissolutionOccurrence'
-  | 'securitiesGrantedDecision'
-  | 'freeSecuritiesDecision'
-  | 'paidInCapitalReductionDecision'
+  | 'paidInCapitalIncreaseDecision'
+  | 'freeCapitalIncreaseDecision'
+  | 'paidInAndFreeCapitalIncreaseDecision'
   | 'capitalReductionDecision'
-  | 'governmentBondManagerReplacement'
-  | 'profitRevocation'
-  | 'overseasSecuritiesTradingResolution'
-  | 'overseasSecuritiesTradingDelistingResolution'
-  | 'overseasSecuritiesTradingStatus'
-  | 'overseasSecuritiesTradingStatusDelisting'
+  | 'creditorBankManagementProcedureCommencement'
+  | 'lawsuitFiling'
+  | 'overseasSecuritiesMarketListingDecision'
+  | 'overseasSecuritiesMarketDelistingDecision'
+  | 'overseasSecuritiesMarketListingStatus'
+  | 'overseasSecuritiesMarketDelistingStatus'
   | 'convertibleBondIssuanceDecision'
   | 'newStockWarrantBondIssuanceDecision'
-  | 'corporateBondIssuanceDecision'
-  | 'governmentBondManagerTransferTermination'
-  | 'reorganizationPlanApprovedRuling'
+  | 'exchangeableBondIssuanceDecision'
+  | 'creditorBankManagementProcedureTermination'
+  | 'writeDownContingentCapitalSecuritiesIssuanceDecision'
   | 'treasuryStockAcquisitionDecision'
   | 'treasuryStockDisposalDecision'
   | 'treasuryStockTrustContractDecision'
   | 'treasuryStockTrustContractTerminationDecision'
-  | 'businessPlanDecision'
+  | 'businessAcquisitionDecision'
   | 'businessTransferDecision'
-  | 'tangibleAssetPlanDecision'
+  | 'tangibleAssetAcquisitionDecision'
   | 'tangibleAssetTransferDecision'
-  | 'retirementStockInvestmentPlanDecision'
-  | 'retirementStockInvestmentTransferDecision'
-  | 'stockRelatedBondPlanDecision'
+  | 'otherCorporationSecuritiesAcquisitionDecision'
+  | 'otherCorporationSecuritiesTransferDecision'
+  | 'stockRelatedBondAcquisitionDecision'
   | 'stockRelatedBondTransferDecision'
-  | 'corporateLawDecision'
+  | 'companyMergerDecision'
   | 'corporateDivisionDecision'
-  | 'corporateLawMethodDecision'
-  | 'stockTradingOtherDecision';
+  | 'companyDivisionMergerDecision'
+  | 'stockExchangeTransferDecision';

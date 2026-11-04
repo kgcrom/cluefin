@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { silentLogger } from '../../src/core/logger';
 import type { DartEndpointDefinition } from '../../src/core/types';
 import { DartClient } from '../../src/dart/client';
-import { majorShareholderDisclosureEndpoints } from '../../src/dart/metadata/major-shareholder-disclosure';
+import { majorMattersReportEndpoints } from '../../src/dart/metadata/major-shareholder-disclosure';
 import { periodicReportFinancialStatementEndpoints } from '../../src/dart/metadata/periodic-report-financial-statement';
 import { periodicReportKeyInformationEndpoints } from '../../src/dart/metadata/periodic-report-key-information';
 import { publicDisclosureEndpoints } from '../../src/dart/metadata/public-disclosure';
@@ -15,7 +15,7 @@ const categories: Array<[string, readonly DartEndpointDefinition[], number]> = [
   ['shareDisclosureComprehensive', shareDisclosureComprehensiveEndpoints, 2],
   ['periodicReportFinancialStatement', periodicReportFinancialStatementEndpoints, 7],
   ['periodicReportKeyInformation', periodicReportKeyInformationEndpoints, 28],
-  ['majorShareholderDisclosure', majorShareholderDisclosureEndpoints, 36],
+  ['majorMattersReport', majorMattersReportEndpoints, 36],
 ];
 const allEndpoints = categories.flatMap(([, endpoints]) => endpoints);
 
