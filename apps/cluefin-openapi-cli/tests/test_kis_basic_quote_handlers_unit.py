@@ -4,7 +4,7 @@ import pytest
 
 from cluefin_openapi_cli.handlers.kis import domestic_basic_quote as handlers
 
-from ._handler_fakes import assert_calls_client_once, assert_registers_all
+from ._handler_fakes import FakeSession, assert_calls_client_once, assert_registers_all
 
 # `chart.technical` and `chart.trend_setup` are not 1:1 client passthroughs: they page
 # the date window until they have enough candles (trend-setup also reads basic-info and
@@ -73,3 +73,46 @@ def test_current_price_validation_failure_on_a_listed_code_re_raises_the_origina
         handlers.handle_kis_stock_current_price({"stock_code": "005930"}, session)
 
     assert session.calls == ["current-price", "basic-info"]
+
+
+# ---------------------------------------------------------------------------
+# chart.daily / chart.period: `adjusted` echoes the input polarity
+# ---------------------------------------------------------------------------
+
+
+def test_chart_daily_reports_adjusted_true_for_the_adjusted_literal() -> None:
+    result = handlers.handle_kis_stock_daily({"stock_code": "005930", "adj_price": "1"}, FakeSession())
+    assert result["adjusted"] is True
+
+
+def test_chart_daily_reports_adjusted_false_for_the_unadjusted_literal() -> None:
+    result = handlers.handle_kis_stock_daily({"stock_code": "005930", "adj_price": "0"}, FakeSession())
+    assert result["adjusted"] is False
+
+
+def test_chart_daily_defaults_to_adjusted_true() -> None:
+    result = handlers.handle_kis_stock_daily({"stock_code": "005930"}, FakeSession())
+    assert result["adjusted"] is True
+
+
+def test_chart_period_reports_adjusted_true_for_the_opposite_literal() -> None:
+    """chart.period's polarity is inverted from chart.daily: "0" means adjusted here."""
+
+    result = handlers.handle_kis_stock_period_quote(
+        {"stock_code": "005930", "start_date": "20240101", "end_date": "20240131", "adj_price": "0"}, FakeSession()
+    )
+    assert result["adjusted"] is True
+
+
+def test_chart_period_reports_adjusted_false_for_the_opposite_literal() -> None:
+    result = handlers.handle_kis_stock_period_quote(
+        {"stock_code": "005930", "start_date": "20240101", "end_date": "20240131", "adj_price": "1"}, FakeSession()
+    )
+    assert result["adjusted"] is False
+
+
+def test_chart_period_defaults_to_adjusted_true() -> None:
+    result = handlers.handle_kis_stock_period_quote(
+        {"stock_code": "005930", "start_date": "20240101", "end_date": "20240131"}, FakeSession()
+    )
+    assert result["adjusted"] is True

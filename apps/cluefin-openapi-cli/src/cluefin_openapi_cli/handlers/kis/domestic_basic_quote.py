@@ -10,7 +10,7 @@ from cluefin_openapi_cli.clock import now_kst
 from cluefin_openapi_cli.errors import EXIT_BROKER, EXIT_USAGE, CliError
 from cluefin_openapi_cli.handlers._base import DispatcherProtocol, extract_output, rpc_method
 from cluefin_openapi_cli.indicators import DEFAULT_HORIZONS, MIN_CANDLES, analyze
-from cluefin_openapi_cli.ohlcv import fetch_kis_daily_series
+from cluefin_openapi_cli.ohlcv import fetch_kis_daily_series, is_adjusted
 
 # ---------------------------------------------------------------------------
 # Stock Current Price
@@ -191,7 +191,7 @@ def handle_kis_stock_conclusion(params: dict, session) -> dict:
             "adj_price": {
                 "type": "string",
                 "enum": ["0", "1"],
-                "description": "Adjusted price (0:unadjusted, 1:adjusted). Default 1.",
+                "description": "Adjusted price (0:unadjusted, 1:adjusted). Default 1. See the response `adjusted` field.",
             },
         },
         "required": ["stock_code"],
@@ -209,6 +209,7 @@ def handle_kis_stock_daily(params: dict, session) -> dict:
     items = response.body.output or []
     return {
         "stock_code": params["stock_code"],
+        "adjusted": is_adjusted("chart.daily", adj),
         "data": [
             {
                 "date": item.stck_bsop_date,
@@ -287,7 +288,7 @@ def handle_kis_stock_asking_expected(params: dict, session) -> dict:
             "adj_price": {
                 "type": "string",
                 "enum": ["0", "1"],
-                "description": "Price adjustment (0:adjusted, 1:original). Default 0.",
+                "description": "Price adjustment (0:adjusted, 1:original). Default 0. See the response `adjusted` field.",
             },
         },
         "required": ["stock_code", "start_date", "end_date"],
@@ -306,6 +307,7 @@ def handle_kis_stock_period_quote(params: dict, session) -> dict:
     )
     return {
         "stock_code": params["stock_code"],
+        "adjusted": is_adjusted("chart.period", adj),
         "summary": extract_output(response, "output1"),
         "data": extract_output(response, "output2"),
     }
