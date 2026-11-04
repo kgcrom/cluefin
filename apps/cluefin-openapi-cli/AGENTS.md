@@ -235,7 +235,7 @@ CLI 가 말해 주지 않는 것만 적는다.
   `altman_z_double_prime.missing`. `test_quality_unit.py` covers the pure functions with synthetic figures.
 - `dart document-outline` / `document-section` / `financial-notes` parse the downloaded original XML with
   cluefin-dart-notes (see the `dart document-*` section) and are excluded from those tests too.
-- `sec filing-items` / `filing-exhibit` parse a downloaded document with cluefin-sec-notes (see the `sec *`
+- `sec filing-items` / `filing-notes` / `filing-exhibit` parse a downloaded document with cluefin-sec-notes (see the `sec *`
   section); `test_sec_filing_handlers_unit.py` covers them with synthetic HTML.
 - `kis chart trend-setup` also computes from paged series (stock via `ohlcv.fetch_kis_daily_series`, index via
   `cache.bars.fetch_index_bars` — 50 rows a call) plus `basic-info` for the benchmark; the rules live in `trend_setup.py`
@@ -549,7 +549,7 @@ CLI 가 말해 주지 않는 것만 적는다.
 - `SEC_USER_AGENT`("이름 이메일")는 루트 `.env` 에 있어야 한다 — `.env.test` 에만 있으면 CLI 는 못 쓴다. 없거나 `@` 가
   없으면 exit 3 `CredentialsMissing`(클라이언트의 ValueError 문구로 분류). SEC 403 은 User-Agent 문제와 과속 차단
   (약 10분)을 구별할 수 없어 exit 3 + 그 둘을 말하는 hint, `*NotFoundError`(404)는 exit 4 `NotFound`.
-- **SEC 폴더는 다른 회사 CIK 경로로도 200 을 준다**(2026-10-12 실측). 그래서 `filing-items`·`filing-exhibit` 은
+- **SEC 폴더는 다른 회사 CIK 경로로도 200 을 준다**(2026-10-12 실측). 그래서 `filing-items`·`filing-notes`·`filing-exhibit` 은
   `archives.filing_detail()`(공시 상세 `-index.html`)의 `parties` 에 `cik` 가 없으면 다운로드 전에 exit 4. 주 문서는
   상세 페이지의 순번 1 문서라 `primary_document` 파라미터가 없고, exhibit 은 문서 종류(EX-99.1)로 고른다(파일명은
   공시마다 제각각). `-index-headers.html`(SGML)은 2015년 이전 공시에서 404 라 쓰지 않는다.
@@ -563,6 +563,9 @@ CLI 가 말해 주지 않는 것만 적는다.
   (표는 한 행이 한 줄). `next_offset` 은 구분 줄바꿈을 건너뛴 위치. `offset_chars` 는 Item 하나일 때만.
 - `include_tables` 는 반환 구간 안에서 **시작하는** 표만 `grid()` 로 준다. 오프셋은 `SecDocument.text` 처럼 빈 블록을
   빼고 빈 줄로 이은 위치로 센다(`_table_grids`) — sec-notes 의 텍스트 조립을 바꾸면 같이 바꿀 것.
+- `filing-notes` 는 재무제표 Item(10-K 8, 10-Q I:1)을 `split_notes` 로 나눈다. 표는 `{unit, grid}` 로 주고 단위는
+  곱하지 않는다(`dart financial-notes` 와 같은 계약). `notes` 의 숫자(또는 한 글자)는 주석 번호, 나머지는 제목 부분 일치다.
+  주석 번호는 해마다 바뀐다(2026-11-04 실측: 같은 회사 Income Taxes 가 13번 → 7번 → 6번) — 여러 해는 `note-series`.
 - `company-lookup` 은 매번 전체 목록(~1만 행)을 받아 거른다. `filings` 는 SEC 의 recent 목록(1년 이상 또는 1,000건)만 본다.
 - 테스트 픽스처는 합성 회사·CIK·접수번호만 쓴다(cluefin-sec-notes AGENTS.md). 스키마 예시의 `cik`/`accession_number`
   샘플은 cluefin-openapi README 와 같은 AAPL 값이다.

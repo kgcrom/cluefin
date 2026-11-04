@@ -61,14 +61,15 @@ STATEMENTS = (
 BODIES = {"1A": RISKS, "7": MDNA, "8": STATEMENTS}
 
 
-def _ten_k(items=ITEMS) -> str:
+def _ten_k(items=ITEMS, bodies=None) -> str:
+    bodies = BODIES if bodies is None else bodies
     toc = "".join(
         f'<tr><td><a href="#i{n.lower()}">Item {n}.</a></td><td><a href="#i{n.lower()}">{t}</a></td></tr>'
         for _, n, t in items
     )
     body = "".join(
         f'<hr style="page-break-after:always"/><div id="i{n.lower()}"></div>'
-        f'<div style="font-weight:700">Item {n}. {t}</div><div>Body of item {n}.</div>' + BODIES.get(n, "")
+        f'<div style="font-weight:700">Item {n}. {t}</div><div>Body of item {n}.</div>' + bodies.get(n, "")
         for _, n, t in items
     )
     return f"<html><body>{COVER}<table>{toc}</table>{body}<div>SIGNATURES</div></body></html>"
@@ -286,3 +287,87 @@ def test_exhibit_refuses_another_companys_filing() -> None:
     with pytest.raises(CliError) as error:
         _exhibit({}, detail=_detail(form="8-K", cik=2002))
     assert error.value.exit_code == EXIT_BROKER
+
+
+# --- filing-notes ----------------------------------------------------------------------------------------------
+
+NOTES = (
+    "<div>NOTES TO CONSOLIDATED FINANCIAL STATEMENTS</div>"
+    "<div>1. Description of Business</div><div>Alpha Memory Corp designs memory chips.</div>"
+    "<div>2. Net Revenues</div><div>Revenue by type was as follows:</div>"
+    '<table><tr><td>(in millions)</td><td colspan="2">2025</td><td colspan="2">2024</td></tr>'
+    "<tr><td>Product sales</td><td>$</td><td>1,200</td><td>$</td><td>1,000</td></tr>"
+    "<tr><td>Services</td><td></td><td>300</td><td></td><td>250</td></tr></table>"
+    "<div>3. Leases</div><div>(in thousands)</div>"
+    "<table><tr><td>Operating lease cost</td><td>$</td><td>4,500</td></tr></table>"
+)
+
+
+def _notes(params: dict, notes: str = NOTES, detail: FilingDetail | None = None) -> dict:
+    html = _ten_k(bodies={**BODIES, "8": STATEMENTS + notes})
+    session = _Session(detail or _detail(), {"alpha-10k.htm": html})
+    return handlers.handle_filing_notes({"cik": CIK, "accession_number": ACCESSION, **params}, session)
+
+
+def test_notes_without_selector_list_numbers_titles_and_units() -> None:
+    result = _notes({})
+
+    assert result["form"] == "10-K"
+    assert (result["item"]["key"], result["item"]["uncertain"]) == ("8", False)
+    assert [(note["number"], note["title"], note["tables"], note["units"]) for note in result["notes"]] == [
+        (None, "statements", 1, []),
+        (1, "Description of Business", 0, []),
+        (2, "Net Revenues", 1, ["in millions"]),
+        (3, "Leases", 1, ["in thousands"]),
+    ]
+    assert result["findings"] == []
+    assert all("text" not in note for note in result["notes"])
+
+
+def test_notes_by_number_or_title_word_return_text_and_tables_with_unit() -> None:
+    result = _notes({"notes": "2,lease"})
+
+    revenue, leases = result["notes"]
+    assert revenue["title"] == "Net Revenues"
+    assert revenue["text"].startswith("2. Net Revenues")
+    assert revenue["tables"] == [
+        {
+            "unit": "in millions",
+            "grid": [
+                ["(in millions)", "2025", "2024"],
+                ["Product sales", "$1,200", "$1,000"],
+                ["Services", "300", "250"],
+            ],
+        }
+    ]
+    assert leases["tables"][0]["unit"] == "in thousands"
+    assert leases["truncated"] is False
+
+
+def test_notes_page_like_filing_items() -> None:
+    first = _notes({"notes": "1", "max_chars": 30})
+    rest = _notes({"notes": "1", "offset_chars": first["notes"][0]["next_offset"]})
+
+    assert first["notes"][0]["truncated"] is True
+    assert "hint" in first
+    assert first["notes"][0]["text"] + "\n\n" + rest["notes"][0]["text"] == _notes({"notes": "1"})["notes"][0]["text"]
+
+
+def test_notes_offset_needs_exactly_one_note() -> None:
+    with pytest.raises(CliError) as error:
+        _notes({"notes": "2,3", "offset_chars": 10})
+    assert error.value.exit_code == EXIT_USAGE
+
+
+def test_notes_report_a_skipped_number_and_unmatched_selector() -> None:
+    result = _notes({"notes": "income tax"}, notes=NOTES.replace("3. Leases", "4. Leases"))
+
+    assert result["notes"] == []
+    assert "No note matched" in result["hint"]
+    assert [finding["code"] for finding in result["findings"]] == ["note_sequence_gap"]
+
+
+def test_notes_refuse_an_8k() -> None:
+    with pytest.raises(CliError) as error:
+        _notes({}, detail=_detail(form="8-K"))
+    assert error.value.exit_code == EXIT_USAGE
