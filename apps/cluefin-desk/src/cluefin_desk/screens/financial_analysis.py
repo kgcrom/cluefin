@@ -13,6 +13,7 @@ from textual.screen import Screen
 from textual.widgets import DataTable, Header, Static, TabbedContent, TabPane
 
 from cluefin_desk.clock import now_kst
+from cluefin_desk.data.major_events import MajorEventRow, collect_major_events
 from cluefin_desk.formatting import pad
 from cluefin_desk.screens._guard import guarded, screen_gone, set_text
 from cluefin_desk.widgets.nav_footer import NavFooter
@@ -43,6 +44,7 @@ class FinancialAnalysisScreen(Screen):
         "#share-change-content",
         "#xbrl-content",
         "#disclosure-status",
+        "#major-events-status",
     )
 
     def __init__(self, stock_code: str):
@@ -63,6 +65,9 @@ class FinancialAnalysisScreen(Screen):
             with TabPane("공시목록", id="tab-disclosure"):
                 yield DataTable(id="disclosure-list-content")
                 yield Static("", id="disclosure-status")
+            with TabPane("주요사항", id="tab-major-events"):
+                yield DataTable(id="major-events-content")
+                yield Static("", id="major-events-status")
             with TabPane("배당", id="tab-dividend"):
                 with VerticalScroll():
                     yield Static("Loading dividend data...", id="dividend-content")
@@ -93,6 +98,17 @@ class FinancialAnalysisScreen(Screen):
         ]:
             tbl.add_column(label, key=label, width=width)
 
+        major_events_tbl = self.query_one("#major-events-content", DataTable)
+        major_events_tbl.cursor_type = "row"
+        major_events_tbl.zebra_stripes = True
+        for label, width in [
+            ("접수일", 12),
+            ("종류", 22),
+            ("요약", 36),
+            ("DART 원문", 40),
+        ]:
+            major_events_tbl.add_column(label, key=label, width=width)
+
     # `r` 연타로 워커가 겹치면 같은 패널에 두 응답이 번갈아 써진다 — 최신 것만 남긴다.
     @work(thread=True, exclusive=True, group="financial-load")
     def load_all_data(self) -> None:
@@ -122,6 +138,7 @@ class FinancialAnalysisScreen(Screen):
             return
 
         guarded(self, "#disclosure-status", "공시목록", self._load_disclosure_list, dart_client, corp_code)
+        guarded(self, "#major-events-status", "주요사항", self._load_major_events, dart_client, corp_code)
         guarded(self, "#financial-statement-content", "재무제표", self._load_dart_statements, dart_client, corp_code)
         guarded(self, "#dividend-content", "배당", self._load_dividend_info, dart_client, corp_code)
         guarded(self, "#major-shareholder-content", "주요주주", self._load_major_shareholders, dart_client, corp_code)
@@ -135,6 +152,7 @@ class FinancialAnalysisScreen(Screen):
     def _show_dart_unavailable(self, message: str) -> None:
         def _apply():
             self.query_one("#disclosure-list-content", DataTable).clear()
+            self.query_one("#major-events-content", DataTable).clear()
             for selector in self._DART_PANELS:
                 self.query_one(selector, Static).update(message)
 
@@ -244,6 +262,36 @@ class FinancialAnalysisScreen(Screen):
                 title.update(f"[bold]{escape(items[0].corp_name)}[/bold] ({self.stock_code}) — 재무 분석  [Esc·뒤로]")
 
         self.app.call_from_thread(_update_disclosure_table)
+
+    def _load_major_events(self, dart_client, corp_code: str) -> None:
+        """최근 1년 주요사항보고서 (CB·BW·EB·증자·감자·자기주식, 부도·영업정지·회생·해산).
+
+        종류별로 호출이 나뉘어 있어(`data/major_events.collect_major_events`) 일부가
+        실패해도 나머지 종류는 그대로 보여준다 — 실패한 종류는 상태 줄에 적는다.
+        """
+        rows, errors = collect_major_events(dart_client, corp_code)
+
+        def _update_major_events_table():
+            tbl = self.query_one("#major-events-content", DataTable)
+            tbl.clear()
+            for row in rows:
+                tbl.add_row(*self._format_major_event_row(row), key=row.rcept_no)
+
+            status = self.query_one("#major-events-status", Static)
+            status.update(self._format_major_events_status(rows, errors))
+
+        self.app.call_from_thread(_update_major_events_table)
+
+    @staticmethod
+    def _format_major_event_row(row: MajorEventRow) -> tuple[str, str, str, str]:
+        return (row.rcept_dt, row.kind, row.summary, row.link)
+
+    @staticmethod
+    def _format_major_events_status(rows: list[MajorEventRow], errors: dict[str, str]) -> str:
+        parts = [] if rows else ["최근 1년간 주요사항 공시가 없습니다."]
+        if errors:
+            parts.append(f"{len(errors)}개 종류 조회 실패: {', '.join(sorted(errors))}")
+        return " / ".join(parts)
 
     _INDICATOR_CATEGORIES = {
         "M210000": "수익성",
