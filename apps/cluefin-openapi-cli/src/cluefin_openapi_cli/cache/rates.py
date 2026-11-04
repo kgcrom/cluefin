@@ -1,7 +1,10 @@
-"""`rates` table: ECOS daily market rates (annual %, as published), the risk-free side of `cache perf`.
+"""`rates` table: ECOS daily market series, the risk-free side of `cache perf` and `cache macro-beta`'s inputs.
 
 One `StatisticSearch` per series covers any span with a real key (no row cap; paged by 1000 anyway).
 Holidays have no row. A daily run re-reads the last week so a late or revised value replaces the old one.
+
+``usdkrw`` (731Y001, 원/달러 매매기준율) is a level, not an annual percent like the others — `cache macro-beta`
+turns it into a week-over-week percent change, the same table shape just a different unit per slug.
 """
 
 from __future__ import annotations
@@ -12,14 +15,16 @@ from datetime import date, datetime, timedelta
 from typing import Any
 
 import duckdb
-from cluefin_openapi.ecos import CD_91D, KTB_1Y, KTB_3Y, KTB_10Y
+from cluefin_openapi.ecos import CD_91D, KTB_1Y, KTB_3Y, KTB_10Y, USD_KRW
 
 from cluefin_openapi_cli.clock import now_kst
 
-__all__ = ["RATE_SERIES", "RateLoadStats", "load_rates"]
+__all__ = ["ECOS_SERIES", "RATE_SERIES", "RateLoadStats", "load_rates"]
 
-# Slug used by `cache perf --risk-free` → ECOS series.
+# Slug used by `cache perf --risk-free` → ECOS series. Rates only: `usdkrw` is a level, not an annual percent.
 RATE_SERIES = {"ktb1y": KTB_1Y, "ktb3y": KTB_3Y, "ktb10y": KTB_10Y, "cd91d": CD_91D}
+# Everything `load_rates` stores in the `rates` table.
+ECOS_SERIES = {**RATE_SERIES, "usdkrw": USD_KRW}
 _REREAD_DAYS = 7
 
 
@@ -58,12 +63,12 @@ def load_rates(
     last_day: date,
     progress: Callable[[str], None] = lambda _message: None,
 ) -> RateLoadStats:
-    stats = RateLoadStats(series=len(RATE_SERIES))
+    stats = RateLoadStats(series=len(ECOS_SERIES))
     if ecos.is_sample:
         # The public `sample` key pages 10 rows a call: ~250 calls a series for ten years.
         stats.errors.append({"code": "ecos", "error": "ECOS_AUTH_KEY is not set in .env; rates skipped."})
         return stats
-    for slug, series in RATE_SERIES.items():
+    for slug, series in ECOS_SERIES.items():
         row = conn.execute("SELECT max(date) FROM rates WHERE series = ?", [slug]).fetchone()
         stored = row[0] if row else None
         start = max(since, stored - timedelta(days=_REREAD_DAYS)) if stored else since

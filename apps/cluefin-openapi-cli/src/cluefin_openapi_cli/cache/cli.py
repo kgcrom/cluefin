@@ -9,6 +9,7 @@ from typing import Any
 
 from cluefin_openapi_cli.cache import baserate, breadth, store
 from cluefin_openapi_cli.cache.load import PARTS, Sources, run_load
+from cluefin_openapi_cli.cache.macro_beta import DEFAULT_SINCE_DAYS, read_macro_beta
 from cluefin_openapi_cli.cache.perf import read_perf
 from cluefin_openapi_cli.cache.rates import RATE_SERIES
 from cluefin_openapi_cli.cache.read import read_company, read_financials, read_ohlcv
@@ -442,6 +443,26 @@ def _run_rs(argv: list[str]) -> None:
     _render_read(payload, options, default_limit=_DEFAULT_COMPANY_LIMIT)
 
 
+def _run_macro_beta(argv: list[str]) -> None:
+    positional, options = _parse_named_options(argv)
+    code = _str_option(options, "code")
+    if positional or not code:
+        raise CliError(
+            "Usage: cache macro-beta --code <code> [--since YYYYMMDD] [--until YYYYMMDD] [--json].",
+            exit_code=EXIT_USAGE,
+        )
+    until_raw = _str_option(options, "until")
+    until = _parse_day(until_raw, "until") if until_raw else today_kst()
+    since_raw = _str_option(options, "since")
+    since = _parse_day(since_raw, "since") if since_raw else until - timedelta(days=DEFAULT_SINCE_DAYS)
+    conn = _read_conn()
+    try:
+        payload = read_macro_beta(conn, code.strip().upper(), since=since, until=until)
+    finally:
+        conn.close()
+    _render_read(payload, options, default_limit=None)
+
+
 def _run_breadth(argv: list[str]) -> None:
     positional, options = _parse_named_options(argv)
     if positional:
@@ -470,6 +491,7 @@ SUBCOMMANDS: dict[str, Callable[[list[str]], None]] = {
     "base-rate": _run_base_rate,
     "rs": _run_rs,
     "breadth": _run_breadth,
+    "macro-beta": _run_macro_beta,
 }
 
 
