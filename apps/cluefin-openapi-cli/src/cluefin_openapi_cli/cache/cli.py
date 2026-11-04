@@ -7,7 +7,7 @@ from collections.abc import Callable
 from datetime import date, datetime, time, timedelta
 from typing import Any
 
-from cluefin_openapi_cli.cache import baserate, store
+from cluefin_openapi_cli.cache import baserate, breadth, store
 from cluefin_openapi_cli.cache.load import PARTS, Sources, run_load
 from cluefin_openapi_cli.cache.perf import read_perf
 from cluefin_openapi_cli.cache.rates import RATE_SERIES
@@ -391,6 +391,32 @@ def _run_base_rate(argv: list[str]) -> None:
     _render_read(payload, options, default_limit=None)
 
 
+def _run_rs(argv: list[str]) -> None:
+    positional, options = _parse_named_options(argv)
+    if positional:
+        raise CliError("`cache rs` does not accept positional arguments.", exit_code=EXIT_USAGE)
+    market = _str_option(options, "market")
+    if market is not None and market.upper() not in {"KOSPI", "KOSDAQ"}:
+        raise CliError("`--market` takes KOSPI or KOSDAQ.", exit_code=EXIT_USAGE)
+    codes = _list_option(options, "code")
+    group_by = _str_option(options, "by") or "sector"
+    if group_by not in {"sector", "industry"}:
+        raise CliError("`--by` takes sector or industry.", exit_code=EXIT_USAGE)
+    conn = _read_conn()
+    try:
+        as_of = _trend_as_of(conn, _str_option(options, "as_of"))
+        payload = breadth.rs(
+            conn,
+            as_of,
+            market=market.upper() if market else None,
+            codes=[code.upper() for code in codes] if codes else None,
+            group_by=group_by,
+        )
+    finally:
+        conn.close()
+    _render_read(payload, options, default_limit=_DEFAULT_COMPANY_LIMIT)
+
+
 SUBCOMMANDS: dict[str, Callable[[list[str]], None]] = {
     "status": _run_status,
     "load": _run_load,
@@ -400,6 +426,7 @@ SUBCOMMANDS: dict[str, Callable[[list[str]], None]] = {
     "trend-setup": _run_trend_setup,
     "base-rate-build": _run_base_rate_build,
     "base-rate": _run_base_rate,
+    "rs": _run_rs,
 }
 
 

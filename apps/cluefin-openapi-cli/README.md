@@ -173,6 +173,8 @@ uv run cluefin-openapi-cli cache trend-setup --status alert,watch --json        
 uv run cluefin-openapi-cli cache trend-setup --as-of 20261016 --theme-filter true --history true --json
 uv run cluefin-openapi-cli cache base-rate-build --json                            # 한 번만: 거래일 5일 간격 표본 적재(분 단위)
 uv run cluefin-openapi-cli cache base-rate --code 005930 --horizons 20,40,60 --json
+uv run cluefin-openapi-cli cache rs --code 005930,000660 --json                    # RS(1M) 백분위·업종 RS
+uv run cluefin-openapi-cli cache rs --market KOSDAQ --by industry --limit 20 --json
 ```
 
 `cache trend-setup` 은 `kis chart trend-setup` 과 같은 판정을 그날 상장한 보통주 전부(우선주·스팩 제외, 나중에 폐지된 종목 포함)에
@@ -188,6 +190,12 @@ uv run cluefin-openapi-cli cache base-rate --code 005930 --horizons 20,40,60 --j
 썼는지를 `cell.level` 에 적습니다. 먼저 `cache base-rate-build` 로 표본(`setup_state`, 거래일 5일 간격)을 쌓아야 하고(증분·
 재실행해도 안전), 이건 이 하위명령만의 쓰기입니다. 시총은 캐시에 과거 상장주식수가 없어 그날 종가 × **현재** 상장주식수 근사이고,
 PBR(밸류에이션) 축은 캐시에 과거 재무가 들어오기 전까지는 없습니다 — `notes` 에 둘 다 적혀 있습니다.
+
+`cache rs` 는 RS(1M): 스탁이지 화면을 역산한 정의(memory `stockeasy-metric-definitions`, 상관 0.998)대로 21거래일 수정주가
+수익률의 코스피+코스닥 보통주 횡단면 백분위(0~99, 평균순위 방식으로 동점 처리)를 전 종목에 매깁니다. `업종 RS`(기본
+`company.sector`, `--by industry` 로 `industry`)는 같은 백분위를 그룹 중앙값 수익률에 적용한 값으로, 표본 3종목 미만인 그룹은
+`null` 입니다. IBD식 분기 가중 장기 RS 는 정확한 공식이 미확인이라(위 memory) 내지 않습니다 — `cache trend-setup` 처럼 `--market`·
+`--code` 로 보이는 행만 줄여도 백분위는 항상 전 종목 기준입니다.
 
 `cache perf` 는 종목을 수정주가로 사서 들고 있었을 때의 성과(`cluefin-ta` `PERFORMANCE`: CAGR·MDD·변동성·샤프·소르티노·칼마·
 베타·알파)와 같은 기간 벤치마크(기본 `U0001`) 자체의 성과를 함께 줍니다. 두 코드 모두 일봉이 있는 날만 쓰고, CAGR 은 달력 연수로
@@ -401,7 +409,8 @@ src/cluefin_openapi_cli/
 ├── recipes.py      여러 command를 엮는 workflow guide
 ├── indicators.py   `kis chart technical` 의 지표·신호 조립(cluefin-ta)
 ├── trend_setup.py  `trend-setup` 두 명령의 판정(백테스트 정의 이식, cluefin-ta 를 쓰지 않음)
-├── cache/          로컬 DuckDB 캐시: store(스키마·잠금) · company · bars · adjust · rates · theme · read · perf · trend · cli(`cache <sub>`)
+├── cache/          로컬 DuckDB 캐시: store(스키마·잠금) · company · bars · adjust · rates · theme · read · perf · trend · baserate ·
+│                   breadth(RS) · cli(`cache <sub>`)
 └── handlers/
     ├── _base.py    @rpc_method 데코레이터, KIS/Kiwoom 응답 추출 헬퍼
     ├── kis/        category별 handler 모듈 (stock, chart, ranking, financial, …)

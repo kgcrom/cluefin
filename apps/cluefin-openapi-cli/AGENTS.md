@@ -291,6 +291,19 @@ CLI 가 말해 주지 않는 것만 적는다.
   그룹×시총 → 그룹 → 전체로 올려 합치고(`_resolve_cell`), horizon 별 초과수익(수정종가, `cache perf` 와 같은 관례)은 forward
   거래일 매핑 후 계산하므로 칸 표본 수와 horizon 별 n 이 다를 수 있다(최근 표본은 긴 horizon 의 미래 데이터가 아직 없다).
   `--target-pct`/`--stop-pct` 선도달률의 동일 날 양쪽 도달은 손절로 센다.
+- **`cache rs` 는 쓰기가 없다**(`cache/breadth.py`, 새 표 없음 — `ohlcv`/`company`만 읽는다). 유니버스는
+  `cache trend-setup`과 같은 `cache.trend._universe`(그날 상장 보통주, 스팩 제외, KOSPI/KOSDAQ). 가격은 trend.py 와 같이
+  **수정주가**(`close * adj_factor`)다 — `cache ohlcv` 기본값(원주가)과 다르다.
+  - **RS(1M)** = 21거래일 수정주가 수익률의 횡단면 백분위(0~99, 평균순위로 동점 처리) — memory
+    `stockeasy-metric-definitions`(2026-10-07, 46종목 역산, 상관 0.998) 그대로다. 같은 memory 가 적은 IBD식 분기 가중 장기
+    RS 는 "정확한 공식 미확인"이라 내지 않는다 — RS(1M) 하나뿐이다. SQL 한 번(`_RETURN_SQL`)으로 전 종목의 `rn=1`(당일)·
+    `rn=22`(21거래일 전) 종가만 뽑는다(duckdb `row_number` 창함수) — `cache trend-setup`처럼 종목마다 `analyze` 를 돌리지
+    않아 빠르다(전 종목 1초 미만).
+  - **업종 RS** = 그룹(기본 `company.sector`, 26개 — `--by industry` 로 `industry`, 155개) 중앙값 21거래일 수익률을 그룹
+    간에 같은 백분위 함수로 다시 매긴 값. 표본 3종목(`_MIN_SECTOR_STOCKS`) 미만 그룹은 통째로 드롭(`null`) — 그 종목
+    자신의 RS(1M)은 영향받지 않는다.
+  - `scipy.stats.rankdata`를 쓰지 않는다(이 패키지는 scipy 의존성이 없다) — `_percentile_rank` 가 평균순위 타이 처리를 numpy
+    `argsort`+누적합으로 직접 구현한다.
 
 ## `dart corp-code-lookup` 은 전체 색인을 받아 클라이언트에서 거른다
 
