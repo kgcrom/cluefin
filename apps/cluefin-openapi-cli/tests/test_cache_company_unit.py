@@ -297,7 +297,14 @@ def test_cache_load_rejects_unknown_part(cache_dir) -> None:
     result = run_cli(["cache", "load", "--only", "minutes", "--json"])
 
     assert result.exit_code == 2
-    assert json.loads(result.stdout)["error"]["data"]["parts"] == ["company", "ohlcv", "adj", "rates", "theme"]
+    assert json.loads(result.stdout)["error"]["data"]["parts"] == [
+        "company",
+        "ohlcv",
+        "adj",
+        "rates",
+        "theme",
+        "financials",
+    ]
 
 
 def test_cache_load_rejects_bad_since(cache_dir) -> None:

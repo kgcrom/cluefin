@@ -47,6 +47,8 @@ def test_writer_creates_file_and_schema(cache_dir) -> None:
         "probe_log",
         "adj_log",
         "bar_log",
+        "financials",
+        "financials_fetch_log",
     }
     assert store.cache_path().exists()
 
