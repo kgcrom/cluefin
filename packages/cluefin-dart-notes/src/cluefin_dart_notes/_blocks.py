@@ -23,6 +23,10 @@ _CAPTION_MAX_ROWS = 6
 _CAPTION_MAX_LENGTH = 200
 # 단위만 적힌 문단으로 볼 최대 길이. 긴 문단 안의 "단위:"는 표 단위가 아니다.
 _UNIT_PARAGRAPH_MAX_LENGTH = 40
+# 긴 설명 문장 끝에 "...다음과 같습니다(단위:백만원)." 처럼 단위가 바로 붙는 경우를 받아줄 여유(닫는 괄호·마침표).
+_UNIT_PARAGRAPH_TRAILING_SLACK = 2
+# 단위 뒤에 닫는 괄호가 없으면(문장 끝까지 삼켜버리면) 진짜 단위로 보지 않을 최대 길이.
+_UNIT_TEXT_MAX_LENGTH = 12
 # 굵은 런의 시작·끝 표식. 정규화가 끝나면 지우고 위치만 남긴다. 원문에는 쓰이지 않는다(사용자 영역 문자).
 _BOLD_START = "\ue000"
 _BOLD_END = "\ue001"
@@ -361,11 +365,21 @@ def _attach_captions(items: list[Block | _Caption]) -> list[Block]:
 
 
 def _unit_paragraph(paragraph: Paragraph) -> str | None:
-    """문단의 마지막 줄이 짧은 단위 줄이면 그 단위. 오래된 공시는 설명 문단 끝줄에 "(단위: 주)"를 붙인다."""
+    """문단의 마지막 줄이 짧은 단위 줄이면 그 단위. 오래된 공시는 설명 문단 끝줄에 "(단위: 주)"를 붙인다.
+
+    금융업 사업보고서의 "사업의 내용"(L-0-2-n-L2) 설명 문단은 "...다음과 같습니다(단위:백만원)."
+    처럼 긴 문장 끝에 단위를 바로 붙인다. 이때는 문단 길이와 무관하게, 단위 뒤에 닫는 괄호·마침표
+    정도만 남아 있으면 그 단위를 쓴다.
+    """
     last_line = paragraph.text.rsplit("\n", 1)[-1]
-    if len(last_line) > _UNIT_PARAGRAPH_MAX_LENGTH:
-        return None
-    return _find_unit(last_line)
+    if len(last_line) <= _UNIT_PARAGRAPH_MAX_LENGTH:
+        return _find_unit(last_line)
+    match = _UNIT.search(last_line)
+    if match is not None and len(last_line) - match.end() <= _UNIT_PARAGRAPH_TRAILING_SLACK:
+        unit = match.group(1).strip()
+        if unit and len(unit) <= _UNIT_TEXT_MAX_LENGTH:
+            return unit
+    return None
 
 
 def _first_row_unit(table: Table) -> str | None:

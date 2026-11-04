@@ -66,7 +66,10 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   | `D-0-0-0-0` / `D-0-0-1-0` | — | (첨부)재무제표 / 독립된 감사인의 감사보고서 |
 
   Chapters I, VI, VIII, 【전문가의 확인】 and the 상세표 children have no code.
-- 11014 (3분기) has not been seen yet; 11013 matched 11012 in structure.
+- 11014 확인됨 (2026-11): DART 실제 공시는 1분기·3분기 보고서 모두 `ACODE="11013"`을 쓴다. `11014`는
+  (reprt_code 같은) 다른 DART API의 분류일 뿐, 원문 문서의 `DOCUMENT-NAME ACODE`에는 등장하지 않는다
+  (2017·2019·2022·2024년 분기보고서로 확인). `PERIODIC_REPORT_CODES`에 `11014`를 그대로 남겨 두는 것은
+  무해한 방어 코드다. 구조는 일반 분기보고서(11012/11013)와 같다.
 
 ## Blocks: what the heuristics are based on
 
@@ -77,7 +80,11 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   `TABLE > (THEAD|TBODY) > TR` only; `iter("TR")` also returns rows of nested tables.
 - Unit lookup order: caption table right before (borderless, ≤6 rows, ≤200 chars, contains "단위:"; notes
   use 1–2 rows, statement title tables 3–5), else the last line of the previous paragraph if short (old
-  filings append "(단위: 주)" to an explanation paragraph), else the data table's own first row.
+  filings append "(단위: 주)" to an explanation paragraph), else the data table's own first row. The
+  financial-industry `L-0-2-n-L2` 사업의 내용 subsections glue the unit onto the end of a long descriptive
+  sentence instead ("...다음과 같습니다(단위:백만원)."); that case is accepted only when the unit sits
+  right before the paragraph's closing parenthesis/period and the captured text itself is short — otherwise
+  a genuine mid-sentence "단위" (e.g. "최소 단위 : 원 미만 절사") would get misread as a table unit.
   On the corpus this gives a unit to 79% of data tables and to 96% of numeric ones (7,233 of 7,506); the rest are
   text tables or genuinely unitless. A caption table that no data table follows stays a block.
 - `TU` cells carry `AUNIT`/`AUNITVALUE`; `TE` cells carry `ACODE` (an XBRL-like item code).
