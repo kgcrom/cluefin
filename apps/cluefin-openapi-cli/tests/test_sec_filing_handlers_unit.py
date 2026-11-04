@@ -11,7 +11,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from cluefin_openapi.sec import FilingDetail, FilingDocument, FilingParty
+from cluefin_openapi.sec import CompanyFacts, FilingDetail, FilingDocument, FilingParty, SecNotFoundError
 
 from cluefin_openapi_cli.errors import EXIT_BROKER, EXIT_USAGE, CliError
 from cluefin_openapi_cli.handlers import sec as handlers
@@ -417,8 +417,16 @@ class _SeriesSession:
             path.write_text(documents[name], encoding="utf-8")
             return path
 
+        def company_facts(cik):
+            if self.facts is None:
+                raise SecNotFoundError()
+            return self.facts
+
+        self.facts: CompanyFacts | None = None
         self._client = SimpleNamespace(
-            submissions=SimpleNamespace(filings=filings), archives=SimpleNamespace(download_filing_document=download)
+            submissions=SimpleNamespace(filings=filings),
+            archives=SimpleNamespace(download_filing_document=download),
+            xbrl=SimpleNamespace(company_facts=company_facts),
         )
 
     def get_sec(self):
@@ -442,6 +450,27 @@ def test_note_series_with_notes_returns_rows_in_millions() -> None:
     (row,) = note["tables"][0]["rows"]
     assert row["values_by_fy"] == {"2025": 1200, "2024": 1000.5}
     assert row["unit_filed"] == {"2025": "in millions", "2024": "in thousands"}
+    assert result["xbrl"]["error"].startswith("SEC has no XBRL")  # companyfacts 404 는 오류가 아니다
+    assert "xbrl" not in row
+
+
+def test_note_series_attaches_companyfacts_concepts() -> None:
+    session = _SeriesSession()
+    facts = [
+        {"start": f"{fy}-01-01", "end": f"{fy}-12-31", "val": val, "accn": ACCESSION, "fy": fy, "fp": "FY"}
+        | {"form": "10-K", "filed": f"{fy + 1}-02-20"}
+        for fy, val in ((2025, 1_200_000_000), (2024, 1_000_500_000))
+    ]
+    session.facts = CompanyFacts.model_validate(
+        {"cik": 1001, "entityName": "Alpha Memory Corp", "facts": {"us-gaap": {"Revenues": {"units": {"USD": facts}}}}}
+    )
+
+    result = handlers.handle_note_series({"cik": CIK, "years": 2, "notes": "revenue"}, session)
+
+    (row,) = result["notes"][0]["tables"][0]["rows"]
+    assert row["xbrl"]["concept"] == "us-gaap:Revenues"
+    assert row["xbrl"]["values_by_fy"] == {"2025": 1200, "2024": 1000.5}
+    assert (result["xbrl"]["rows"], result["xbrl"]["matched"]) == (1, 1)
 
 
 def test_note_series_without_10k_is_a_usage_error() -> None:

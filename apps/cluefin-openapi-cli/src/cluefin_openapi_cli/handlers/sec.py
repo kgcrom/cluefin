@@ -800,6 +800,14 @@ def _series_summary(note: dict) -> dict:
                 "description": "Comma-separated note numbers (as numbered in the latest 10-K) and/or title words, "
                 "e.g. 6 or income tax,lease. Omit for the list of note series.",
             },
+            "include_xbrl": {
+                "type": "boolean",
+                "default": True,
+                "description": "With `notes`: add to each amount row the us-gaap concept whose 10-K annual value "
+                "equals it (SEC companyfacts, one more request) and that concept's values per fiscal year, latest "
+                "filed (first_filed_by_fy where the first filing differed). Segment and geographic rows have no "
+                "concept there. Default true.",
+            },
         },
         "required": ["cik"],
     },
@@ -852,7 +860,24 @@ def handle_note_series(params: dict, session) -> dict:
     payload["notes"] = series
     if not series:
         payload["hint"] = "No note matched. Run without --notes for the list of note titles."
+    elif params.get("include_xbrl", True):
+        payload["xbrl"] = _attach_company_facts(sec, cik, series, filings)
     return payload
+
+
+def _attach_company_facts(sec, cik: str, series: list[dict], filings: list) -> dict:
+    """Add an ``xbrl`` block to each amount row that a us-gaap concept matches; a company without XBRL is not an error."""
+    from cluefin_openapi.sec import SecNotFoundError
+
+    from cluefin_openapi_cli.note_xbrl import attach_xbrl, fact_index
+
+    try:
+        facts = sec.xbrl.company_facts(cik)
+    except SecNotFoundError:
+        return {"source": "companyfacts", "error": "SEC has no XBRL company facts for this cik"}
+    period_ends = {filing.fy: filing.period_end for filing in filings if filing.period_end is not None}
+    matched, total = attach_xbrl(series, fact_index(facts), period_ends)
+    return {"source": "companyfacts", "taxonomy": "us-gaap", "unit": "USD millions", "rows": total, "matched": matched}
 
 
 _DEFAULT_EXHIBIT = "EX-99.1"
