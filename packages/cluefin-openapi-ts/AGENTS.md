@@ -155,6 +155,24 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   `NhplugClient.invokeEndpoint` after the HTTP layer, so HTTP-level retry/rate-limit logic
   never sees those errors.
 
+## Codacy findings in TypeScript
+
+These came from `src/dart` (19 findings, then 6, then 0); the fixed shapes are in `src/dart/client.ts` and
+`src/dart/xml.ts`.
+
+- **Dynamic-key object access** (`security/detect-object-injection`). An `eslint-disable` comment is **ignored**,
+  and reads *and* assignments are flagged, tests too. `query[wireKey] = String(parsed[inputKey])` became: invert
+  the map once (`new Map(inputKey → wireKey)`), walk `Object.entries(parsedInput)`, push `[wireKey, value]`, then
+  `Object.fromEntries`. Tests calling `service[methodName](input)` became
+  `new Map(Object.entries(service)).get(name)` or a table of lambdas (`(s) => s.getFoo(input)`).
+- **`new RegExp(variable)`** is critical. A per-tag ``new RegExp(`<${tag}>…</${tag}>`)`` became `indexOf` on the
+  opening and closing tag (`findElement`) plus one literal regex.
+- **"Unnecessary conditional"** on `match[1] ?? ''` or `x !== undefined`: Codacy analyses without
+  `noUncheckedIndexedAccess`, so `??` looks dead while this tsconfig requires it. Use named regex groups read by
+  truthiness (`groups.body || ''`), branching in a small helper.
+- **Hardcoded password** on a literal assigned to a name containing key/secret/password, tests included. Build the
+  dummy at runtime: `` `test-${randomUUID()}` ``.
+
 ## Releasing (npm)
 
 - **The version bump is its own commit on `main`, after the feature PR is merged** —
