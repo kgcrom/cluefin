@@ -44,6 +44,12 @@ export interface DartClientOptions {
   fetchImpl?: typeof fetch;
   /** Sink for API error logs. Defaults to the console; pass `silentLogger` to mute. */
   logger?: Logger;
+  /**
+   * `true` 면 JSON 응답 키를 camelCase 로 바꾸지 않고 OpenDART 원문(snake_case) 그대로 돌려준다.
+   * 기본값 `false`(camelCase 변환, 기존 동작 유지)다. 켜면 도메인 메서드의 응답 타입(camelCase 필드)과
+   * 실제 런타임 키가 어긋나므로, 원문 키로 직접 읽거나 다른 도구에 그대로 넘길 때만 쓴다.
+   */
+  rawKeys?: boolean;
 }
 
 export interface DartBinaryResponse {
@@ -96,6 +102,7 @@ export class DartClient {
   private readonly http: BaseHttpClient;
   private readonly authKey: string;
   private readonly logger: Logger;
+  private readonly rawKeys: boolean;
 
   private publicDisclosureInstance?: PublicDisclosure;
   private shareDisclosureComprehensiveInstance?: DartShareDisclosureComprehensive;
@@ -106,6 +113,7 @@ export class DartClient {
   public constructor(options: DartClientOptions) {
     this.authKey = options.authKey;
     this.logger = options.logger ?? consoleLogger;
+    this.rawKeys = options.rawKeys ?? false;
     this.http = new BaseHttpClient(
       {
         timeoutMs: options.timeoutMs ?? 30_000,
@@ -170,7 +178,7 @@ export class DartClient {
     return this.majorMattersReport as MajorShareholderDisclosure;
   }
 
-  /** JSON 엔드포인트 호출. 응답 키는 camelCase 로 바뀐다. */
+  /** JSON 엔드포인트 호출. 응답 키는 기본적으로 camelCase 로 바뀐다 — `rawKeys: true` 면 원문 그대로. */
   public async invokeEndpoint(
     definition: DartEndpointDefinition,
     input: Record<string, unknown>,
@@ -181,7 +189,10 @@ export class DartClient {
       if (definition.responseSchema) {
         definition.responseSchema.parse(rawJson);
       }
-      return { headers: normalizeHeaders(response.headers), body: camelizeKeys(rawJson) as Record<string, unknown> };
+      const body = this.rawKeys
+        ? (rawJson as Record<string, unknown>)
+        : (camelizeKeys(rawJson) as Record<string, unknown>);
+      return { headers: normalizeHeaders(response.headers), body };
     } catch (error) {
       return this.fail(definition, error);
     }

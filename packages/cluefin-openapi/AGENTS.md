@@ -62,6 +62,14 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - A bad DART key comes as HTTP 200 with body `status` 010/011/012/901 — JSON, or an error XML where a ZIP was
   expected (`corpCode.xml`, `document.xml`, `fnlttXbrl.xml`; measured 2026-11-02). `Client._request` raises
   `DartAuthenticationError` for these so callers don't read it as "no data" or a corrupt ZIP.
+- `get_multi_company_major_accounts` (`/api/fnlttMultiAcnt.json`, 다중회사 주요계정) takes up to **100 `corp_code`s
+  at once** — a 101st makes the whole call fail with `status` `021` (`DartStatusCode.COMPANY_LIMIT_EXCEEDED`), not a
+  partial result. Batch callers (e.g. a universe-wide cache load) must chunk corp codes into groups of 100.
+- `fnlttMultiAcnt`/`fnlttSinglAcnt` 주요계정·주요지표 응답에는 **지배/비지배 구분이 없다** — 연결재무제표(`fs_div`
+  없음, 전체 재무제표만 CFS/OFS 선택 가능)의 당기순이익·자본 합계가 지배주주 몫과 비지배주주 몫을 합친 값으로 온다.
+  지주회사처럼 비지배 지분이 큰 종목은 이 값으로 계산한 PBR·ROE 등이 증권사가 쓰는 지배주주 기준 지표보다 낮게(또는
+  다르게) 나온다. 지배주주 몫이 필요하면 전체 재무제표(`fnlttSinglAcntAll`)에서 "지배기업 소유주지분"/"비지배지분"
+  계정을 직접 찾아 분리해야 한다.
 - KIS can return HTTP 200 with a failing body `rt_cd`; every service module checks it with
   `_exceptions.raise_for_rt_cd`, which raises `KISResponseError` (a `KISAPIError` **and** a `ValueError` —
   these were plain `ValueError` before, keep the base for callers) carrying only `rt_cd`/`msg_cd`/`msg1`.
