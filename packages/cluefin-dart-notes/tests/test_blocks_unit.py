@@ -190,6 +190,22 @@ class TestTables:
         assert [b.unit for b in only(blocks, Table)] == ["백만원", "대", None]
         assert only(blocks, Paragraph)[0].text == "(단위 : 백만원)"
 
+    def test_unit_at_end_of_long_sentence(self):
+        """금융업 사업보고서의 '사업의 내용'(L-0-2-n-L2) 설명 문단은 긴 문장 끝에 단위를 바로 붙인다.
+
+        "...다음과 같습니다(단위:백만원)." 처럼 문단이 40자를 넘어도, 단위 뒤에 닫는 괄호·마침표만
+        남아 있으면 그 단위를 쓴다. 단, 닫는 괄호 없이 문장이 계속되면(진짜 단위가 아니라 "원"이라는
+        단어가 중간에 나온 것) 단위로 보지 않는다.
+        """
+        blocks = blocks_of(
+            "<P>당분기말 및 전기말 현재 매매목적 파생금융상품의 내역은 다음과 같습니다(단위:백만원).</P>"
+            '<TABLE BORDER="1"><TR><TD>a</TD><TD>1</TD></TR></TABLE>'
+            "<P>이 설명은 단위라는 말을 쓰지만 않고 끝나버린 아주 긴 문장이라 단위를 알 수 없습니다</P>"
+            '<TABLE BORDER="1"><TR><TD>b</TD><TD>2</TD></TR></TABLE>'
+        )
+
+        assert [b.unit for b in only(blocks, Table)] == ["백만원", None]
+
     def test_unit_from_first_row_of_data_table(self):
         (table,) = blocks_of(
             '<TABLE BORDER="1"><TR><TD COLSPAN="2">(단위: 천원)</TD></TR><TR><TD>a</TD><TD>1</TD></TR></TABLE>'
