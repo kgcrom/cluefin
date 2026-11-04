@@ -73,6 +73,7 @@ class MarketOverviewScreen(Screen):
         self._load_sector_data("001")
         self._load_top_movers()
         self._load_kis_market_data()
+        self._load_regime()
 
     @work(thread=True)
     def _reload_sector_data(self, inds_cd: str) -> None:
@@ -255,6 +256,32 @@ class MarketOverviewScreen(Screen):
 
                 logger.error(f"Failed to load KIS {label}: {e}")
                 set_text(self, selector, f"[bold]{label} (KIS)[/bold]\n  로드 실패: {escape(str(e))}")
+
+    def _load_regime(self) -> None:
+        """market-bar 의 KOSPI200 60일선 대비 칸. 정보 표시용(장세 필터는 아니다 — 메모리).
+        데이터가 60개 미만이거나 KIS 호출이 실패해도 이 칸만 "—" 로 — 다른 패널엔 영향 없다."""
+        try:
+            fetcher = self.app.fetcher
+            if fetcher.has_kis:
+                closes = fetcher.get_index_daily_closes()
+                cell = MarketOverviewBar.format_regime_cell(closes)
+            else:
+                cell = "KOSPI200 —"
+
+            def _update():
+                self.query_one("#market-bar", MarketOverviewBar).update_regime(cell)
+
+            self.app.call_from_thread(_update)
+        except Exception as e:
+            if screen_gone(self, e):
+                return
+
+            logger.error(f"Failed to load KOSPI200 regime: {e}")
+
+            def _update_error():
+                self.query_one("#market-bar", MarketOverviewBar).update_regime("KOSPI200 —")
+
+            self.app.call_from_thread(_update_error)
 
     def action_refresh(self) -> None:
         self.load_all_data()
