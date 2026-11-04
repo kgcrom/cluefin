@@ -21,8 +21,10 @@ Formulas and sources (also in README/AGENTS, 2026-11-04 결정):
   순이익 ÷ 그 사업연도 말 보통주 발행주식수로 구한 EPS 의 CAGR, 그리고 KIS 종목추정실적의
   `eps_growth_yoy`(한국투자증권 추정, 가장 가까운 추정연도) — 어느 쪽도 다른 쪽을 대신하지 않는다
   (Peter Lynch, "One Up on Wall Street", 1989).
-- 주주수익률 = (배당금의 지급 + 자기주식의 취득 − 자기주식의 처분 − 주식의 발행) ÷ 시가총액. 현금흐름표
-  항목 전부가 있어야 계산한다(윌리엄 프리스트/Epoch Investment Partners 의 shareholder yield 정의).
+- 주주수익률 = (배당금의 지급 + 자기주식의 취득 − 자기주식의 처분 − 주식의 발행) ÷ 시가총액(윌리엄
+  프리스트/Epoch Investment Partners 의 shareholder yield 정의). 현금흐름표가 읽혔으면(영업활동현금흐름이
+  있으면) 없는 항목은 그 활동이 없었던 것으로 보고 0 으로 두되 `assumed_zero` 에 이름을 남긴다 — 회사는
+  하지 않은 활동의 줄을 공시하지 않는다. 현금흐름표 자체가 없으면 null + 이유.
 - Altman Z(시총 원형)는 `quality.altman_z`(quality.py) — 이 모듈은 재사용만 하고 다시 짜지 않는다.
 """
 
@@ -174,27 +176,37 @@ def shareholder_yield(
     treasury_shares_disposed: float | None,
     proceeds_from_share_issuance: float | None,
     market_cap: float | None,
+    *,
+    cash_flow_statement_present: bool = False,
 ) -> dict[str, Any]:
     """주주수익률(%) = (배당금 지급 + 자기주식 취득 − 자기주식 처분 − 주식 발행) ÷ 시가총액.
 
-    네 현금흐름표 항목이 모두 있어야 계산한다 — 자기주식 처분·주식 발행 항목은 실물로 아직 검증되지
-    않은 XBRL id 라서, None 이 "활동 없음(0)"인지 "항목을 못 찾음"인지 구분할 수 없다.
+    ``cash_flow_statement_present`` (영업활동현금흐름이 읽혔다)면 없는 항목을 그 활동이 없었던 것으로 보고 0 으로
+    계산하고 `assumed_zero` 에 이름을 남긴다. 아니면 None 이 "활동 없음"인지 "표를 못 읽음"인지 알 수 없어
+    항목이 하나라도 없으면 null + 이유다.
     """
-    components = {
+    items = {
         "dividends_paid": dividends_paid,
         "treasury_shares_acquired": treasury_shares_acquired,
         "treasury_shares_disposed": treasury_shares_disposed,
         "proceeds_from_share_issuance": proceeds_from_share_issuance,
-        "market_cap": market_cap,
     }
-    if any(value is None for value in components.values()):
-        return {"value": None, "components": components, "reason": _missing(**components)}
+    components = {**items, "market_cap": market_cap}
+    missing_items = [name for name, value in items.items() if value is None]
+    if market_cap is None or (missing_items and not cash_flow_statement_present):
+        return {"value": None, "components": components, "assumed_zero": [], "reason": _missing(**components)}
     if market_cap <= 0:
-        return {"value": None, "components": components, "reason": "market_cap 0 이하"}
+        return {"value": None, "components": components, "assumed_zero": [], "reason": "market_cap 0 이하"}
+    amounts = {name: abs(value or 0.0) for name, value in items.items()}
     net_return = (
-        abs(dividends_paid)
-        + abs(treasury_shares_acquired)
-        - abs(treasury_shares_disposed)
-        - abs(proceeds_from_share_issuance)
+        amounts["dividends_paid"]
+        + amounts["treasury_shares_acquired"]
+        - amounts["treasury_shares_disposed"]
+        - amounts["proceeds_from_share_issuance"]
     )
-    return {"value": net_return / market_cap * 100, "components": components, "reason": None}
+    return {
+        "value": net_return / market_cap * 100,
+        "components": components,
+        "assumed_zero": missing_items,
+        "reason": None,
+    }

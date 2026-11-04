@@ -136,3 +136,21 @@ def test_shareholder_yield_is_null_when_any_cash_flow_item_is_missing() -> None:
     assert result["value"] is None
     assert "treasury_shares_disposed" in result["reason"]
     assert result["components"]["treasury_shares_disposed"] is None  # not defaulted to 0
+
+
+def test_shareholder_yield_treats_missing_rows_as_zero_when_cash_flow_statement_was_read() -> None:
+    result = im.shareholder_yield(
+        dividends_paid=-30.0,
+        treasury_shares_acquired=None,
+        treasury_shares_disposed=None,
+        proceeds_from_share_issuance=None,
+        market_cap=1000.0,
+        cash_flow_statement_present=True,
+    )
+    assert result["value"] == pytest.approx(3.0)
+    assert result["assumed_zero"] == [
+        "treasury_shares_acquired",
+        "treasury_shares_disposed",
+        "proceeds_from_share_issuance",
+    ]
+    assert result["components"]["treasury_shares_disposed"] is None

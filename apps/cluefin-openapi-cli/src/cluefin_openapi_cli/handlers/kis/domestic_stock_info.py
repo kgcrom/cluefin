@@ -1322,7 +1322,8 @@ def _ratio_if_positive(numerator: float | None, denominator: float | None) -> fl
 
 
 def _common_shares(rows: list[dict]) -> dict | None:
-    common = next((row for row in rows if str(row.get("se") or "").strip() == "보통주"), None)
+    # 공시마다 라벨이 다르다: "보통주", "보통주식\n(의결권 있는주식)" 등.
+    common = next((row for row in rows if str(row.get("se") or "").strip().startswith("보통주")), None)
     if common is None:
         return None
     return {
@@ -2090,8 +2091,8 @@ _INVESTOR_METRICS_NOTES = (
     "감가상각비·무형자산상각비 중 하나라도 없으면 0 으로 메우지 않고 null + 이유를 낸다(investor_metrics.py).",
     "주주수익률 = (배당금 지급 + 자기주식 취득 − 자기주식 처분 − 주식 발행) ÷ 시가총액. proceeds_from_share_"
     "issuance(statements.py)는 실물로 확인됐다(2026-11-04, 대규모 유상증자가 있었던 종목 실호출). "
-    "treasury_shares_disposed 는 아직 실물로 확인되지 않았다 — None 이 '활동 없음'인지 '항목을 못 찾음'인지 "
-    "구분할 수 없어 네 항목이 모두 있어야 계산한다.",
+    "treasury_shares_disposed 는 아직 실물로 확인되지 않았다. 현금흐름표가 읽혔으면 없는 항목은 그 활동이 "
+    "없었던 것으로 보고 0 으로 계산하며 assumed_zero 에 이름을 남긴다 — 값이 의심스러우면 assumed_zero 를 본다.",
     "PEG 의 성장률은 두 출처를 나란히 낸다: dart_eps_growth(최신 사업보고서 당기·전전기 지배주주순이익 ÷ "
     "그 사업연도 말 보통주 발행주식수로 구한 EPS 의 CAGR, DART share-count 호출 1회 추가)와 "
     "kis_eps_growth(KIS 종목추정실적 eps_growth_yoy, 가장 가까운 추정연도, 한국투자증권 한 곳의 추정). "
@@ -2228,6 +2229,7 @@ def handle_kis_investor_metrics(params: dict, session) -> dict:  # noqa: PLR0914
         _to_eok(latest_fy.get("treasury_shares_disposed")) if latest_fy else None,
         _to_eok(latest_fy.get("proceeds_from_share_issuance")) if latest_fy else None,
         market_cap_eok,
+        cash_flow_statement_present=bool(latest_fy) and latest_fy.get("operating_cash_flow") is not None,
     )
 
     # Altman Z's x1-x5 are all ratios (dimensionless), so market_cap and the year's raw 원 figures only

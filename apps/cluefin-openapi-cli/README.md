@@ -310,8 +310,8 @@ DART/KIS 호출 없음)에 있고, ROIC·Altman Z''(장부가)는 다시 짜지 
   쪽도 다른 쪽을 대신하지 않는다. (Peter Lynch, *One Up on Wall Street*, 1989.)
 - **주주수익률** = (배당금의 지급 + 자기주식의 취득 − 자기주식의 처분 − 주식의 발행) ÷ 시가총액.
   `proceeds_from_share_issuance`(`statements.py`)는 실물로 확인됐다(2026-11-04, 대규모 유상증자가 있었던 종목 실호출).
-  `treasury_shares_disposed`는 아직 실물로 확인되지 않았다 — 네 현금흐름표 항목이 모두 있어야 계산한다(`null` 이 "활동
-  없음"인지 "항목을 못 찾음"인지 구분할 수 없어서다).
+  `treasury_shares_disposed`는 아직 실물로 확인되지 않았다. 현금흐름표가 읽혔으면(영업활동현금흐름이 있으면) 없는 항목은
+  그 활동이 없었던 것으로 보고 0 으로 계산하고 `assumed_zero` 에 이름을 남긴다. 현금흐름표가 없으면 `null` + 이유.
 - **Altman Z(시총 원형)** = 1.2·X1 + 1.4·X2 + 3.3·X3 + 0.6·X4 + 1.0·X5, X4=시가총액/부채, X5=매출/자산(X1~X3 은 Z''와
   같다). (Edward Altman, "Financial Ratios, Discriminant Analysis and the Prediction of Corporate Bankruptcy", *The
   Journal of Finance*, 1968.)

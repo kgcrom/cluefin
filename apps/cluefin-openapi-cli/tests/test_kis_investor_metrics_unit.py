@@ -277,3 +277,13 @@ def test_investor_metrics_without_a_periodic_report_is_exit_4() -> None:
     with pytest.raises(CliError) as info:
         _call(session)
     assert info.value.exit_code == EXIT_BROKER
+
+
+def test_common_shares_accepts_the_long_common_stock_label() -> None:
+    from cluefin_openapi_cli.handlers.kis.domestic_stock_info import _common_shares
+
+    rows = [
+        {"se": "보통주식\n(의결권 있는주식)", "istc_totqy": "1,000", "tesstk_co": "0", "distb_stock_co": "1,000"},
+        {"se": "우선주식", "istc_totqy": "10", "tesstk_co": "0", "distb_stock_co": "10"},
+    ]
+    assert _common_shares(rows)["issued"] == 1000

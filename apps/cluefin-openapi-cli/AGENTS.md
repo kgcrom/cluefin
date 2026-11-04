@@ -209,8 +209,9 @@ CLI 가 말해 주지 않는 것만 적는다.
   growth instead reads `eps_growth_yoy` straight off `stock estimated-earnings`' table (nearest `E` period) — the
   two PEG growth sources are never averaged or made to agree. Of the two unverified `statements.py` XBRL ids,
   `proceeds_from_share_issuance` was confirmed against a real filing (2026-11-04, a stock with a large rights
-  offering); `treasury_shares_disposed` is still unverified. `shareholder_yield` only computes when all four
-  cash-flow items are present, so a `None` there cannot be told apart from "no activity" yet.
+  offering); `treasury_shares_disposed` is still unverified. When the cash-flow statement was read
+  (`operating_cash_flow` present), `shareholder_yield` treats a missing item as no activity (0) and lists it in
+  `assumed_zero` — companies don't file lines for things they didn't do; without a cash-flow statement it is null.
   `test_investor_metrics_unit.py` covers the pure functions, `test_quality_unit.py` covers `altman_z`,
   `test_kis_investor_metrics_unit.py` covers the handler with one fake session answering KIS and DART (excluded
   from the calls-once check like valuation/implied-expectations).
