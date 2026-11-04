@@ -176,7 +176,18 @@ uv run cluefin-openapi-cli cache base-rate --code 005930 --horizons 20,40,60 --j
 uv run cluefin-openapi-cli cache rs --code 005930,000660 --json                    # RS(1M) 백분위·업종 RS
 uv run cluefin-openapi-cli cache rs --market KOSDAQ --by industry --limit 20 --json
 uv run cluefin-openapi-cli cache breadth --json                                    # 전 종목 신고가·신저가·FTD
+uv run cluefin-openapi-cli cache load --only financials --json                     # DART, 전 종목 최근 5개년, 연 약 26회
+uv run cluefin-openapi-cli cache financials --code 005930 --json
 ```
+
+`cache load --only financials` 는 DART `fnlttMultiAcnt`(다중회사 주요계정)로 전 종목(캐시 `company` 의 `corp_code` 가 있는
+종목) 최근 5개 사업연도의 연간(reprt_code 11011) 표준 12개 계정만 쌓습니다 — 유동자산·비유동자산·자산총계·유동부채·
+비유동부채·부채총계·자본금·이익잉여금(결손금)·자본총계·매출액·영업이익·당기순이익. **지배/비지배 구분이 없고 현금흐름표
+항목이 없습니다**(그 구분·현금흐름이 필요하면 종목별 `dart financial-summary`/`financial-full-statements` 를 직접 부릅니다).
+한 번에 최대 100개 회사만 되고(101개면 DART 021 오류), 연결(CFS)을 올려 받은 회사가 있으면 그걸 쓰고 없으면 별도(OFS)이며
+행의 `basis` 에 어느 쪽인지 남습니다. `financials_fetch_log` 로 (종목, 연도) 쌍을 기억해 재실행 시 새 종목·새 연도만
+부릅니다(013 로 데이터가 없던 쌍도 "확인함"으로 남아 매번 다시 묻지 않습니다). 금액 단위는 **원**입니다(`dart
+financial-summary` 는 억원).
 
 `cache trend-setup` 은 `kis chart trend-setup` 과 같은 판정을 그날 상장한 보통주 전부(우선주·스팩 제외, 나중에 폐지된 종목 포함)에
 돌립니다(약 1초). 기본은 alert·watch 행만 내고 전체는 `summary` 건수로 셉니다. 행의 `failed` 는 2·3그룹에서 통과 못 한 check id 라
@@ -217,6 +228,7 @@ IBD(윌리엄 오닐) 방법론의 근사로 냅니다 — 공식이 비공개�
 | `rates` | ECOS 일별 시장금리 `ktb1y`·`ktb3y`·`ktb10y`·`cd91d`. 값은 발표 원문 그대로 연 %(3.5 = 3.5%) |
 | `load_log`·`adj_log`·`bar_log`·`probe_log` | 적재 기록, 수정계수 확인 시점, 일봉 시작일, 폐지 후보 확인 기록 |
 | `setup_state` | `cache base-rate-build` 가 쓰는 기저율 표본: 거래일 5일 간격 (sample_date, code) 당 trend-setup 그룹·시총 3분위·시총·수정종가·지수코드·지수종가 |
+| `financials`·`financials_fetch_log` | DART 다중회사 주요계정 5개년(종목·연도·계정당 한 행, `basis` CFS/OFS) · 물어본 (종목, 연도) 기록(증분용) |
 
 DuckDB 는 쓰는 동안 다른 프로세스가 파일을 열 수 없습니다. `cache load` 중의 읽기는 exit 1 `CacheLocked`, 첫 적재 전은
 exit 2 `CacheMissing` 입니다.
