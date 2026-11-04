@@ -417,6 +417,22 @@ def _run_rs(argv: list[str]) -> None:
     _render_read(payload, options, default_limit=_DEFAULT_COMPANY_LIMIT)
 
 
+def _run_breadth(argv: list[str]) -> None:
+    positional, options = _parse_named_options(argv)
+    if positional:
+        raise CliError("`cache breadth` does not accept positional arguments.", exit_code=EXIT_USAGE)
+    market = _str_option(options, "market")
+    if market is not None and market.upper() not in {"KOSPI", "KOSDAQ"}:
+        raise CliError("`--market` takes KOSPI or KOSDAQ.", exit_code=EXIT_USAGE)
+    conn = _read_conn()
+    try:
+        as_of = _trend_as_of(conn, _str_option(options, "as_of"))
+        payload = breadth.breadth(conn, as_of, market=market.upper() if market else None)
+    finally:
+        conn.close()
+    _render_read(payload, options, default_limit=None)
+
+
 SUBCOMMANDS: dict[str, Callable[[list[str]], None]] = {
     "status": _run_status,
     "load": _run_load,
@@ -427,6 +443,7 @@ SUBCOMMANDS: dict[str, Callable[[list[str]], None]] = {
     "base-rate-build": _run_base_rate_build,
     "base-rate": _run_base_rate,
     "rs": _run_rs,
+    "breadth": _run_breadth,
 }
 
 

@@ -175,6 +175,7 @@ uv run cluefin-openapi-cli cache base-rate-build --json                         
 uv run cluefin-openapi-cli cache base-rate --code 005930 --horizons 20,40,60 --json
 uv run cluefin-openapi-cli cache rs --code 005930,000660 --json                    # RS(1M) 백분위·업종 RS
 uv run cluefin-openapi-cli cache rs --market KOSDAQ --by industry --limit 20 --json
+uv run cluefin-openapi-cli cache breadth --json                                    # 전 종목 신고가·신저가·FTD
 ```
 
 `cache trend-setup` 은 `kis chart trend-setup` 과 같은 판정을 그날 상장한 보통주 전부(우선주·스팩 제외, 나중에 폐지된 종목 포함)에
@@ -196,6 +197,12 @@ PBR(밸류에이션) 축은 캐시에 과거 재무가 들어오기 전까지는
 `company.sector`, `--by industry` 로 `industry`)는 같은 백분위를 그룹 중앙값 수익률에 적용한 값으로, 표본 3종목 미만인 그룹은
 `null` 입니다. IBD식 분기 가중 장기 RS 는 정확한 공식이 미확인이라(위 memory) 내지 않습니다 — `cache trend-setup` 처럼 `--market`·
 `--code` 로 보이는 행만 줄여도 백분위는 항상 전 종목 기준입니다.
+
+`cache breadth` 는 시장 폭: 52주 신고가·신저가 수(당일 제외 직전 250거래일 범위 갱신, trend-setup 과 같은 창), 50일선 위 종목
+비율, 전일 대비 상승·하락·보합 수, 그리고 지수(U0001·U1001·U2001)별 **distribution day**(0.2% 이상 하락 + 전일 대비 거래량
+증가, 최근 25거래일)와 **follow-through day**(최근 스윙 저점 다음 상승일을 1일차로, 4~10일차에 1.25% 이상 상승 + 거래량 증가)를
+IBD(윌리엄 오닐) 방법론의 근사로 냅니다 — 공식이 비공개라 임계값·창 크기의 근거는 `cache/breadth.py` 모듈 docstring 에 적혀
+있고, 매수·매도 신호가 아니라 날짜·수치 사실만 줍니다.
 
 `cache perf` 는 종목을 수정주가로 사서 들고 있었을 때의 성과(`cluefin-ta` `PERFORMANCE`: CAGR·MDD·변동성·샤프·소르티노·칼마·
 베타·알파)와 같은 기간 벤치마크(기본 `U0001`) 자체의 성과를 함께 줍니다. 두 코드 모두 일봉이 있는 날만 쓰고, CAGR 은 달력 연수로
@@ -410,7 +417,7 @@ src/cluefin_openapi_cli/
 ├── indicators.py   `kis chart technical` 의 지표·신호 조립(cluefin-ta)
 ├── trend_setup.py  `trend-setup` 두 명령의 판정(백테스트 정의 이식, cluefin-ta 를 쓰지 않음)
 ├── cache/          로컬 DuckDB 캐시: store(스키마·잠금) · company · bars · adjust · rates · theme · read · perf · trend · baserate ·
-│                   breadth(RS) · cli(`cache <sub>`)
+│                   breadth(RS·시장 폭) · cli(`cache <sub>`)
 └── handlers/
     ├── _base.py    @rpc_method 데코레이터, KIS/Kiwoom 응답 추출 헬퍼
     ├── kis/        category별 handler 모듈 (stock, chart, ranking, financial, …)

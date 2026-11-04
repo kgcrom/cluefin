@@ -176,6 +176,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
             "[--target-pct P --stop-pct P] [--json]",
             f"{APP_NAME} cache rs [--as-of YYYYMMDD] [--market KOSPI|KOSDAQ] [--code <c1,c2>] "
             "[--by sector|industry] [--json]",
+            f"{APP_NAME} cache breadth [--as-of YYYYMMDD] [--market KOSPI|KOSDAQ] [--json]",
         ],
         "options": [
             {"flag": "--only P", "meaning": "Parts to load, comma-separated (default all)."},
@@ -237,6 +238,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
             f"uv run {APP_NAME} cache trend-setup --status alert,watch --json",
             f"uv run {APP_NAME} cache base-rate --code 005930 --horizons 20,40,60 --json",
             f"uv run {APP_NAME} cache rs --code 005930,000660 --json",
+            f"uv run {APP_NAME} cache breadth --json",
         ],
         "notes": [
             "The file is $CLUEFIN_CACHE_DIR/market.duckdb (default ~/.cache/cluefin/).",
@@ -255,6 +257,9 @@ _META_HELP: dict[str, dict[str, Any]] = {
             "rs: RS(1M) is the cross-sectional percentile (0-99) of 21-trading-day adjusted returns "
             "(stockeasy-metric-definitions memory); sector/industry RS is the same percentile over group median "
             "returns. No long-horizon IBD-weighted RS (formula unconfirmed).",
+            "breadth: new 52-week highs/lows, %>50dma, advance/decline, and per-index distribution-day/"
+            "follow-through-day counts (IBD methodology approximation, thresholds in cache/breadth.py docstring). "
+            "Descriptive only, not a buy/sell signal.",
         ],
     },
 }
