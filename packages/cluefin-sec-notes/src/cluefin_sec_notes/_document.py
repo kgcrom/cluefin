@@ -12,6 +12,7 @@ from cluefin_sec_notes._decode import decode_html
 from cluefin_sec_notes._furniture import Page, remove_page_furniture
 from cluefin_sec_notes._report import ENCODING_FALLBACK, ParseReport, ReportCollector
 from cluefin_sec_notes._tree import build_tree
+from cluefin_sec_notes._units import attach_units
 
 # 표지에서 서식을 찾는 범위(블록 수). 표지는 문서 맨 앞 한두 페이지다.
 _COVER_BLOCKS = 80
@@ -82,7 +83,7 @@ def parse_filing(data: bytes | str, *, form: str | None = None, source: Path | N
         html, encoding, declared = data, "str", None
     linearized = linearize(build_tree(html, collector), collector)
     kept, mapping, pages = remove_page_furniture(linearized.blocks, collector)
-    blocks = tuple(kept)
+    blocks = tuple(attach_units(kept))
     anchors = {
         name: mapping[index] if index < len(mapping) else len(blocks) for name, index in linearized.anchors.items()
     }

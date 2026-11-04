@@ -74,12 +74,18 @@ class Cell:
 
 @dataclass(frozen=True, slots=True)
 class Table:
-    """데이터 표. 배치용 표(칸 하나, 칸 안에 표)는 표가 아니라 그 안의 블록으로 펼쳐진다."""
+    """데이터 표. 배치용 표(칸 하나, 칸 안에 표)는 표가 아니라 그 안의 블록으로 펼쳐진다.
+
+    Attributes:
+        unit: 머리 행이나 바로 앞 짧은 문단의 단위 문구("in thousands, except per share amounts"). 값을 곱하지 않는다.
+            배수는 `unit_scale(table.unit)`.
+    """
 
     rows: tuple[tuple[Cell, ...], ...]
     line: int
     column: int
     anchors: tuple[str, ...] = ()
+    unit: str | None = None
 
     @property
     def links(self) -> tuple[Link, ...]:

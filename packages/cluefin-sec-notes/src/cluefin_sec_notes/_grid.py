@@ -43,7 +43,8 @@ def parse_amount(text: str) -> Decimal | None:
     value = " ".join(text.split())
     while True:
         stripped = _FOOTNOTE.sub("", value)
-        if stripped == value:
+        # "(35)"·"$(35)"는 각주가 아니라 음수다. 떼고 나서 숫자가 남지 않으면 떼지 않는다.
+        if stripped == value or not any(char.isdigit() for char in stripped):
             break
         value = stripped
     value = value.replace(" ", "")

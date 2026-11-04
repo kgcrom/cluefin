@@ -288,24 +288,33 @@ def _next_offset(text: str, end: int) -> int:
     return end
 
 
-def _table_grids(blocks, start: int, end: int) -> list[list[list[str]]]:
-    """Grids of the tables whose text starts in ``[start, end)`` of the blocks' joined text.
+def _blocks_in_window(blocks, start: int, end: int):
+    """Blocks whose text starts in ``[start, end)`` of the blocks' joined text.
 
     Offsets follow ``SecDocument.text``: non-empty block texts joined by a blank line.
     """
-    from cluefin_sec_notes import Table, block_text
+    from cluefin_sec_notes import block_text
 
-    grids = []
     position = None
     for block in blocks:
         text = block_text(block)
         if not text:
             continue
         position = 0 if position is None else position + 2
-        if isinstance(block, Table) and start <= position < end:
-            grids.append([list(row) for row in block.grid()])
+        if start <= position < end:
+            yield block
         position += len(text)
-    return grids
+
+
+def _table_grids(blocks, start: int, end: int) -> list[list[list[str]]]:
+    """Grids of the tables whose text starts in ``[start, end)`` of the blocks' joined text."""
+    from cluefin_sec_notes import Table
+
+    return [
+        [list(row) for row in block.grid()]
+        for block in _blocks_in_window(blocks, start, end)
+        if isinstance(block, Table)
+    ]
 
 
 def _text_page(text: str, blocks, params: dict) -> dict:
@@ -508,6 +517,372 @@ def handle_filing_items(params: dict, session) -> dict:
     return payload
 
 
+# ---------------------------------------------------------------------------
+# Notes to the financial statements (cluefin-sec-notes split_notes)
+# ---------------------------------------------------------------------------
+
+# The financial statements Item per form: 10-K Item 8, 10-Q Part I Item 1.
+_STATEMENT_ITEMS = {"10-K": (None, "8"), "10-Q": ("I", "1")}
+
+
+def _statement_item(result, catalog, accession_number: str):
+    """The financial statements Item, or a CliError saying why it cannot be split."""
+    part, number = _STATEMENT_ITEMS[catalog.name]
+    item = result.item(number, part, strict=False)
+    if item is None:
+        raise CliError(
+            f"The financial statements Item ({_item_label(part, number)}) was not found in this filing",
+            exit_code=EXIT_BROKER,
+            error_type="ResponseParseError",
+            data={"accession_number": accession_number, "warnings": _findings(result.warnings)},
+            hint="Run sec filing-items without --items to see what was found.",
+        )
+    return item
+
+
+def _item_label(part: str | None, number: str) -> str:
+    return f"Part {part} Item {number}" if part else f"Item {number}"
+
+
+def _statements_catalog(detail):
+    catalog = _extractable_form(detail)
+    if catalog.name not in _STATEMENT_ITEMS:
+        raise CliError(
+            f"Notes are read from 10-K and 10-Q only, not {detail.form}",
+            exit_code=EXIT_USAGE,
+            error_type="ValidationError",
+            data={"form": detail.form, "supported": sorted(_STATEMENT_ITEMS)},
+            hint="An 8-K has no notes; its earnings tables are in sec filing-exhibit.",
+        )
+    return catalog
+
+
+def _note_matcher(value: str | None):
+    """``"6,income tax,lease"`` → a predicate: a number (or letter) matches the note's label, a word its title."""
+    tokens = [token.strip() for token in (value or "").split(",") if token.strip()]
+    if not tokens:
+        return None
+    labels = {token.upper() for token in tokens if token.isdigit() or (len(token) == 1 and token.isalpha())}
+    words = [token.lower() for token in tokens if token.upper() not in labels]
+
+    def matches(note) -> bool:
+        if note.label is not None and note.label.upper() in labels:
+            return True
+        return any(word in note.title.lower() for word in words)
+
+    return matches
+
+
+def _note_summary(note) -> dict:
+    units = sorted({table.unit for table in note.tables if table.unit})
+    return {
+        "number": note.number,
+        "label": note.label,
+        "title": note.title,
+        "chars": len(note.text),
+        "tables": len(note.tables),
+        "units": units,
+    }
+
+
+def _note_tables(blocks, start: int, end: int) -> list[dict]:
+    """Tables whose text starts in ``[start, end)``: the filed unit and the column-aligned grid (unit not applied)."""
+    from cluefin_sec_notes import Table
+
+    return [
+        {"unit": block.unit, "grid": [list(row) for row in block.grid()]}
+        for block in _blocks_in_window(blocks, start, end)
+        if isinstance(block, Table)
+    ]
+
+
+@rpc_method(
+    name="sec.filing_notes",
+    description=(
+        "Read the notes to the financial statements of a 10-K (Item 8) or 10-Q (Part I Item 1), split into "
+        "numbered notes: revenue disaggregation, segments, income taxes, leases, debt, stock compensation, "
+        "commitments and contingencies and so on. Without `notes` it returns the list only: per note number, "
+        "label, title, chars, tables and the units their tables state (e.g. 'in millions'); the part before the "
+        "first note (auditor's report and the statements) is number null, title 'statements'. With `notes` "
+        "(comma-separated note numbers or title words, e.g. 6,lease) it returns each matching note's text, cut at "
+        "max_chars (default 40000) with next_offset to continue, and its tables as column-aligned grids of cell "
+        "strings with the unit as filed (amounts are not scaled). `findings` (a skipped note number, a heading "
+        "without body) and the Item's own warnings are always returned. Note numbers change from year to year; "
+        "for several years of one note use sec note-series. Nothing is written to disk."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "cik": _CIK_PARAM,
+            "accession_number": _ACCESSION_PARAM,
+            "notes": {
+                "type": "string",
+                "description": "Comma-separated note numbers (or letters) and/or title words, e.g. 6 or "
+                "income tax,lease. Omit for the list of notes.",
+            },
+            "max_chars": _MAX_CHARS_PARAM,
+            "offset_chars": {
+                **_OFFSET_CHARS_PARAM,
+                "description": _OFFSET_CHARS_PARAM["description"] + " Needs exactly one matching note.",
+            },
+            "include_tables": {
+                "type": "boolean",
+                "default": True,
+                "description": "Return each table starting inside the returned text as {unit, grid}. Default true.",
+            },
+        },
+        "required": ["cik", "accession_number"],
+    },
+    returns={"type": "object"},
+    category="sec",
+    broker="sec",
+)
+def handle_filing_notes(params: dict, session) -> dict:
+    from cluefin_sec_notes import extract_items, split_notes
+
+    cik, accession_number = params["cik"], params["accession_number"]
+    matches = _note_matcher(params.get("notes"))
+    sec = session.get_sec()
+    detail = _checked_detail(sec, cik, accession_number)
+    catalog = _statements_catalog(detail)
+    document = _main_document(detail)
+    parsed = _load_document(sec, cik, accession_number, document, form=detail.form)
+    item = _statement_item(extract_items(parsed), catalog, accession_number)
+    split = split_notes(item)
+
+    payload = {
+        **_filing_header(detail, cik),
+        "document": document.name,
+        "item": _item_summary(item, catalog),
+        "findings": _findings(split.findings),
+    }
+    if matches is None:
+        payload["notes"] = [_note_summary(note) for note in split]
+        if len(split) == 1:
+            payload["hint"] = (
+                "No numbered note heading was found; the whole Item is under 'statements'. Read it with sec "
+                "filing-items --items " + _item_key(item.key, catalog) + "."
+            )
+        return payload
+
+    selected = [note for note in split if matches(note)]
+    if int(params.get("offset_chars", 0)) and len(selected) != 1:
+        raise CliError(
+            "offset_chars needs exactly one matching note",
+            exit_code=EXIT_USAGE,
+            error_type="ValidationError",
+            data={"notes": params.get("notes"), "matched": [note.title for note in selected]},
+            hint="Continue one truncated note at a time: --notes <number> --offset-chars <next_offset>.",
+        )
+    notes = []
+    for note in selected:
+        page = _text_page(note.text, note.blocks, {**params, "include_tables": False})
+        if params.get("include_tables", True):
+            start = page["offset_chars"]
+            page["tables"] = _note_tables(note.blocks, start, start + page["chars_returned"])
+        notes.append({**_note_summary(note), **page})
+    payload["notes"] = notes
+    if not notes:
+        payload["hint"] = "No note matched. Run without --notes for the list of numbers and titles."
+    elif any(note["truncated"] for note in notes):
+        payload["hint"] = (
+            "Text was cut at max_chars. Continue with --notes <number> --offset-chars <next_offset>, or raise "
+            "--max-chars (0 = no cap)."
+        )
+    return payload
+
+
+# ---------------------------------------------------------------------------
+# Note series: one note's tables across several 10-Ks (note_series.py)
+# ---------------------------------------------------------------------------
+
+_DEFAULT_SERIES_YEARS = 5
+_MAX_SERIES_YEARS = 10
+
+
+def _annual_reports(sec, cik: str, years: int) -> list:
+    """The latest ``years`` original 10-Ks (amendments excluded), newest first. Older history pages only if needed."""
+    entries = sec.submissions.filings(cik, forms=["10-K"], include_amendments=False)
+    if len(entries) < years:
+        entries = sec.submissions.filings(cik, forms=["10-K"], include_amendments=False, include_older=True)
+    return sorted(entries, key=lambda entry: entry.filing_date, reverse=True)[:years]
+
+
+def _filing_notes(sec, cik: str, entry):
+    """Download one 10-K and split its Item 8 into notes: (FilingNotes or None, problem dict or None)."""
+    from types import SimpleNamespace
+
+    from cluefin_sec_notes import extract_items, split_notes
+
+    from cluefin_openapi_cli.note_series import FilingNotes, NoteInput, TableInput
+
+    document = SimpleNamespace(name=entry.primary_document or "", type="10-K")
+    parsed = _load_document(sec, cik, entry.accession_number, document, form="10-K")
+    try:
+        item = extract_items(parsed).item("8", strict=False)
+    except ValueError as exc:  # filing-items 와 같다: 한 편이 안 읽혀도 나머지 해는 낸다
+        return None, {"accession_number": entry.accession_number, "problem": f"Item extraction failed: {exc}"}
+    if item is None:
+        return None, {"accession_number": entry.accession_number, "problem": "Item 8 not found"}
+    split = split_notes(item)
+    fy = _fiscal_year(parsed, entry)
+    statement_units = [table.unit for table in split.notes[0].tables if table.unit]
+    filing = FilingNotes(
+        fy=fy,
+        period_end=parsed.period_end or entry.report_date,
+        accession_number=entry.accession_number,
+        notes=tuple(
+            NoteInput(note.number, note.title, tuple(TableInput(table.grid(), table.unit) for table in note.tables))
+            for note in split
+        ),
+        statements_unit=statement_units[0] if statement_units else None,
+    )
+    warnings = [finding.code for finding in (*item.warnings, *split.findings)]
+    problem = {"fy": fy, "accession_number": entry.accession_number, "warnings": warnings} if warnings else None
+    return filing, problem
+
+
+def _fiscal_year(parsed, entry) -> int:
+    """dei:DocumentFiscalYearFocus, else the period end's year (a January-March year end belongs to the year before)."""
+    focus = (parsed.dei.get("DocumentFiscalYearFocus") or "").strip()
+    if focus.isdigit():
+        return int(focus)
+    period = parsed.period_end or entry.report_date or entry.filing_date
+    return period.year - 1 if period.month <= 3 else period.year
+
+
+def _series_selector(value: str | None):
+    tokens = [token.strip() for token in (value or "").split(",") if token.strip()]
+    if not tokens:
+        return None
+    numbers = {int(token) for token in tokens if token.isdigit()}
+    words = [token.lower() for token in tokens if not token.isdigit()]
+
+    def selected(title: str, number: int | None) -> bool:
+        return (number is not None and number in numbers) or any(word in title.lower() for word in words)
+
+    return selected
+
+
+def _series_summary(note: dict) -> dict:
+    return {
+        "title": note["title"],
+        "numbers_by_fy": note["numbers_by_fy"],
+        "tables": len(note["tables"]),
+        "rows": sum(len(table["rows"]) for table in note["tables"]),
+    }
+
+
+@rpc_method(
+    name="sec.note_series",
+    description=(
+        "Join one company's 10-K notes across years (default the last 5 annual reports): the same note is matched "
+        "by title even when its number changes, each note table is matched to the newer year's by its row labels, "
+        "and each row becomes a series of the current-year column of each 10-K. Amounts are converted to USD "
+        "millions (unit_filed keeps what each year stated, e.g. 'in thousands'); percentages and per-share values "
+        "are left as filed. Rows whose label changed are not merged: the new row carries label_changed with the "
+        "old label(s) as candidates. When the next 10-K's comparative column differs from what was filed "
+        "(beyond rounding), the row carries restated: [{fy, filed_value, later_value}]; values are never "
+        "corrected. Without `notes` it returns the list of note series (title, number per fiscal year, tables, "
+        "rows); with `notes` (comma-separated latest note numbers or title words, e.g. income tax,lease) the full "
+        "tables. Downloads one document per year (about 1 second each). Original 10-Ks only (10-K/A skipped)."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "cik": _CIK_PARAM,
+            "years": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": _MAX_SERIES_YEARS,
+                "default": _DEFAULT_SERIES_YEARS,
+                "description": "How many of the latest 10-Ks to join. Default 5, max 10.",
+            },
+            "notes": {
+                "type": "string",
+                "description": "Comma-separated note numbers (as numbered in the latest 10-K) and/or title words, "
+                "e.g. 6 or income tax,lease. Omit for the list of note series.",
+            },
+            "include_xbrl": {
+                "type": "boolean",
+                "default": True,
+                "description": "With `notes`: add to each amount row the us-gaap concept whose 10-K annual value "
+                "equals it (SEC companyfacts, one more request) and that concept's values per fiscal year, latest "
+                "filed (first_filed_by_fy where the first filing differed). Segment and geographic rows have no "
+                "concept there. Default true.",
+            },
+        },
+        "required": ["cik"],
+    },
+    returns={"type": "object"},
+    category="sec",
+    broker="sec",
+)
+def handle_note_series(params: dict, session) -> dict:
+    from cluefin_openapi_cli.note_series import build_series
+
+    cik = params["cik"]
+    years = int(params.get("years", _DEFAULT_SERIES_YEARS))
+    selector = _series_selector(params.get("notes"))
+    sec = session.get_sec()
+    entries = _annual_reports(sec, cik, years)
+    if not entries:
+        raise CliError(
+            "This company has no 10-K",
+            exit_code=EXIT_USAGE,
+            error_type="ValidationError",
+            data={"cik": int(cik)},
+            hint="Check the forms with sec filings --cik <cik> --forms 10-K. Foreign private issuers file 20-F.",
+        )
+    filings, problems = [], []
+    for entry in entries:
+        filing, problem = _filing_notes(sec, cik, entry)
+        if filing is not None and any(kept.fy == filing.fy for kept in filings):
+            # 회계연도를 바꾼 해 등. 같은 해 두 편을 섞지 않고 최근 공시만 쓴다.
+            problems.append(
+                {"accession_number": entry.accession_number, "problem": f"duplicate fiscal year {filing.fy}"}
+            )
+            continue
+        if filing is not None:
+            filings.append(filing)
+        if problem is not None:
+            problems.append(problem)
+    series = build_series(filings, selector)
+    payload = {
+        "cik": int(cik),
+        "unit": "USD millions (percent and per-share values as filed)",
+        "filings": [
+            {"fy": filing.fy, "accession_number": filing.accession_number, "period_end": str(filing.period_end)}
+            for filing in sorted(filings, key=lambda filing: filing.fy, reverse=True)
+        ],
+        "problems": problems,
+    }
+    if selector is None:
+        payload["notes"] = [_series_summary(note) for note in series]
+        return payload
+    payload["notes"] = series
+    if not series:
+        payload["hint"] = "No note matched. Run without --notes for the list of note titles."
+    elif params.get("include_xbrl", True):
+        payload["xbrl"] = _attach_company_facts(sec, cik, series, filings)
+    return payload
+
+
+def _attach_company_facts(sec, cik: str, series: list[dict], filings: list) -> dict:
+    """Add an ``xbrl`` block to each amount row that a us-gaap concept matches; a company without XBRL is not an error."""
+    from cluefin_openapi.sec import SecNotFoundError
+
+    from cluefin_openapi_cli.note_xbrl import attach_xbrl, fact_index
+
+    try:
+        facts = sec.xbrl.company_facts(cik)
+    except SecNotFoundError:
+        return {"source": "companyfacts", "error": "SEC has no XBRL company facts for this cik"}
+    period_ends = {filing.fy: filing.period_end for filing in filings if filing.period_end is not None}
+    matched, total = attach_xbrl(series, fact_index(facts), period_ends)
+    return {"source": "companyfacts", "taxonomy": "us-gaap", "unit": "USD millions", "rows": total, "matched": matched}
+
+
 _DEFAULT_EXHIBIT = "EX-99.1"
 
 
@@ -596,6 +971,8 @@ _ALL_HANDLERS = [
     handle_company_lookup,
     handle_filings,
     handle_filing_items,
+    handle_filing_notes,
+    handle_note_series,
     handle_filing_exhibit,
 ]
 

@@ -235,7 +235,7 @@ CLI 가 말해 주지 않는 것만 적는다.
   `altman_z_double_prime.missing`. `test_quality_unit.py` covers the pure functions with synthetic figures.
 - `dart document-outline` / `document-section` / `financial-notes` parse the downloaded original XML with
   cluefin-dart-notes (see the `dart document-*` section) and are excluded from those tests too.
-- `sec filing-items` / `filing-exhibit` parse a downloaded document with cluefin-sec-notes (see the `sec *`
+- `sec filing-items` / `filing-notes` / `filing-exhibit` / `note-series` parse downloaded documents with cluefin-sec-notes (see the `sec *`
   section); `test_sec_filing_handlers_unit.py` covers them with synthetic HTML.
 - `kis chart trend-setup` also computes from paged series (stock via `ohlcv.fetch_kis_daily_series`, index via
   `cache.bars.fetch_index_bars` — 50 rows a call) plus `basic-info` for the benchmark; the rules live in `trend_setup.py`
@@ -549,7 +549,7 @@ CLI 가 말해 주지 않는 것만 적는다.
 - `SEC_USER_AGENT`("이름 이메일")는 루트 `.env` 에 있어야 한다 — `.env.test` 에만 있으면 CLI 는 못 쓴다. 없거나 `@` 가
   없으면 exit 3 `CredentialsMissing`(클라이언트의 ValueError 문구로 분류). SEC 403 은 User-Agent 문제와 과속 차단
   (약 10분)을 구별할 수 없어 exit 3 + 그 둘을 말하는 hint, `*NotFoundError`(404)는 exit 4 `NotFound`.
-- **SEC 폴더는 다른 회사 CIK 경로로도 200 을 준다**(2026-10-12 실측). 그래서 `filing-items`·`filing-exhibit` 은
+- **SEC 폴더는 다른 회사 CIK 경로로도 200 을 준다**(2026-10-12 실측). 그래서 `filing-items`·`filing-notes`·`filing-exhibit` 은
   `archives.filing_detail()`(공시 상세 `-index.html`)의 `parties` 에 `cik` 가 없으면 다운로드 전에 exit 4. 주 문서는
   상세 페이지의 순번 1 문서라 `primary_document` 파라미터가 없고, exhibit 은 문서 종류(EX-99.1)로 고른다(파일명은
   공시마다 제각각). `-index-headers.html`(SGML)은 2015년 이전 공시에서 404 라 쓰지 않는다.
@@ -563,6 +563,26 @@ CLI 가 말해 주지 않는 것만 적는다.
   (표는 한 행이 한 줄). `next_offset` 은 구분 줄바꿈을 건너뛴 위치. `offset_chars` 는 Item 하나일 때만.
 - `include_tables` 는 반환 구간 안에서 **시작하는** 표만 `grid()` 로 준다. 오프셋은 `SecDocument.text` 처럼 빈 블록을
   빼고 빈 줄로 이은 위치로 센다(`_table_grids`) — sec-notes 의 텍스트 조립을 바꾸면 같이 바꿀 것.
+- `filing-notes` 는 재무제표 Item(10-K 8, 10-Q I:1)을 `split_notes` 로 나눈다. 표는 `{unit, grid}` 로 주고 단위는
+  곱하지 않는다(`dart financial-notes` 와 같은 계약). `notes` 의 숫자(또는 한 글자)는 주석 번호, 나머지는 제목 부분 일치다.
+  주석 번호는 해마다 바뀐다(2026-11-04 실측: 같은 회사 Income Taxes 가 13번 → 7번 → 6번) — 여러 해는 `note-series`.
+- `note-series` 는 최근 10-K(정정 제외) N편을 받아 `note_series.py` 로 잇는다. 해 잇기 규칙은 모듈 docstring 에 있고,
+  여기는 고르게 된 이유만 적는다(2026-11-04 실측, 이커머스 1개사 10-K 5편):
+  - 회계연도는 `dei:DocumentFiscalYearFocus` → 문서 기간말 → `report_date` 순. 같은 해가 두 편이면 최근 것만 쓰고
+    `problems` 에 남긴다.
+  - 값은 당해 열만. 머리에 연도가 없는 표는 값 열 전부를 당해로 본다(만기표·가정표). 당해 열이 없는 표(옛 서식이
+    전년 값만 남은 경우)는 `skipped_tables`.
+  - 표 짝은 행 이름 Jaccard 0.5 로는 행이 갈라진 표("Foreign" ↔ "Foreign - Korea"/"Foreign - Other")를 못 잇는다. 그래서
+    표 전체 낱말 Jaccard 0.7 을 두 번째 기준으로 둔다. 한 표가 셋으로 갈라진 경우(세그먼트 표)는 하나만 이어진다.
+  - 구역 머리("Current taxes")가 같은 이름의 행을 가른다. 구역 머리가 새로 붙어도("Differences resulting from:")
+    구역을 뺀 이름이 표 안에 하나뿐이면 잇는다.
+  - 대시는 0, 빈 칸은 값 없음.
+  - `restated` 는 차이가 거친 단위의 한 단위 미만이면 달지 않는다. 반 단위로 두면 천 달러 → 백만 달러 반올림(28,513 →
+    28, 합계를 맞추려 내림)이 재작성으로 잡혀 5편에서 오탐 5건이 났다. 남은 4건은 세율 조정표 "Other"·"Other
+    nondeductible expense" 재분류였다. Net Revenues 구분은 재작성이 없었다(5,580 은 FY2024 당해 값, 2023 비교 열은 2,576 그대로).
+  - `xbrl` 은 `notes` 를 줬을 때만 companyfacts 를 한 번 더 받는다(목록 모드는 안 받는다). 같은 실측에서 Net Revenues·
+    Income Taxes·Leases 금액 행 97개 중 57개에 개념이 붙었다. 구분 행(Net retail sales 등)은 차원 값이라 companyfacts 에
+    없어 붙지 않는다 — 그건 정상이다. companyfacts 404 는 `xbrl.error` 로 두고 명령은 성공한다.
 - `company-lookup` 은 매번 전체 목록(~1만 행)을 받아 거른다. `filings` 는 SEC 의 recent 목록(1년 이상 또는 1,000건)만 본다.
 - 테스트 픽스처는 합성 회사·CIK·접수번호만 쓴다(cluefin-sec-notes AGENTS.md). 스키마 예시의 `cik`/`accession_number`
   샘플은 cluefin-openapi README 와 같은 AAPL 값이다.
