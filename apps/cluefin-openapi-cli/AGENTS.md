@@ -355,6 +355,17 @@ CLI 가 말해 주지 않는 것만 적는다.
   남고(다음 실행에 재시도 대상, `ok`/`empty` 와 달리 스킵 안 함) `cache load` 결과의 `failed_codes`/`errors` 에 찍힌다 —
   그 회사만 빠지고 같은 배치의 나머지는 정상 적재된다.
 
+- **`cache magic-formula` 는 Greenblatt 마법공식 횡단면 스크린이다**(`cache/magic.py`, 쓰기 없음, 결정 2026-11-04
+  B-22). 유니버스는 `cache.trend._universe` 에서 금융·증권·보험·전기/가스(`company.sector`, Kiwoom 26개 그룹 중 넷)·
+  관리종목(`is_admin`)·거래정지(`is_halted`)를 빼고, 남은 종목의 시총(그날 원주가 × 현재 `list_count`, `baserate.py`와
+  같은 근사) 하위 20% 를 더 뺀다. 재무는 `cache financials`(`fnlttMultiAcnt`)의 종목별 최신 사업연도 1개년뿐이라
+  **EV·투하자본이 둘 다 근사다** — 그 표에 현금·이자부채 구분이 없어 EV = 시총 + 부채총계(현금 미차감), 투하자본 =
+  자산총계 − 유동부채(유동자산+비유동자산=자산총계인 대수적 항등식, 순운전자본+순고정자산의 근사)로 뗀다. 두 지표의
+  순위는 `cache.breadth._percentile_rank` 를 그대로 불러 쓴 값(0~99, 평균순위 동점 처리)의 합이다 — Greenblatt 원래의
+  오름차순 서수 합이 아니라 내림차순 백분위 합(높을수록 좋음, 0~198)이라고 모듈 docstring과 응답 `notes`에 적는다.
+  EBIT(영업이익)·투하자본·EV 중 하나라도 0 이하면 정의가 안 돼 `excluded` 로 세고 뺀다. `--top`(기본 30)은 출력 행수만
+  자르고 순위 모집단은 그대로다.
+
 ## `dart corp-code-lookup` 은 전체 색인을 받아 클라이언트에서 거른다
 
 - DART 의 corpCode.xml 에는 검색 파라미터가 없다. 어떤 필터를 줘도 **매번 전체 색인
