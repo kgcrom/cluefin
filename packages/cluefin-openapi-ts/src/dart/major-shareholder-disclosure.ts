@@ -99,7 +99,8 @@ export const MajorMattersReport = class MajorMattersReport extends DartDomainBas
     const self = this as unknown as Record<string, (input: Record<string, unknown>) => Promise<ApiResponse>>;
     for (const [oldName, newName] of DEPRECATED_METHOD_ALIASES) {
       Object.defineProperty(this, oldName, {
-        value: (input: Record<string, unknown> = {}) => self[newName]?.(input),
+        // eslint-disable-next-line security/detect-object-injection -- newName comes from internal endpoint metadata.
+        value: (input: Record<string, unknown> = {}) => self[newName](input),
         enumerable: true,
       });
     }
