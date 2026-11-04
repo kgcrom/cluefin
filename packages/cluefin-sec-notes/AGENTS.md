@@ -128,6 +128,24 @@ Each rule below replaced an approach that broke real filings. Don't go back to t
   letter marks or multiple marks ("(2)(9)") are merged as footnotes. Bare years ("2025") don't join columns —
   a year header spanning several sub-columns (Loans | Derivatives) would merge them.
 
+## Notes (`split_notes`) and `Table.unit`
+
+Measured 2026-11-04 on the 225 corpus 10-Ks whose Item 8 is ≥ 20,000 chars: all 225 split into ≥ 3 notes, 5 with a skipped number
+(a heading in a shape the parser does not read, e.g. a number floated outside the title block).
+
+- **Bold is not a signal.** One issuer's note headings were bold one year and plain the next. Headings are told
+  from numbered lists and statement footnotes by numbering order only.
+- **The note chain is chosen, not the first "1".** Statement footnotes ("(1) Including amounts from a related
+  party …") and schedule-of-investments footnotes run 1, 2, 3 … before the notes, and a greedy splitter took them
+  and then skipped the real notes. Every "1" starts a chain; the chain with the most notes that have a body wins,
+  then fewer skipped numbers, then the most headings in one numbering style (a lone "(1)" footnote followed by
+  "NOTE 2 –" ties with the real "NOTE 1 –" chain otherwise).
+- **A trailing period means a sentence**, except after a "Note" prefix or in an all-caps title
+  ("NOTE 1 – BASIS OF PREPARATION."). Without that rule "2. The Company leases offices." became note 2.
+- `Table.unit` is filled after page furniture is removed, so a "(in thousands)" paragraph before a page break still
+  reaches its table. A long paragraph counts only when it *ends* with the unit ("… as follows (in millions).").
+  The unit text is kept as filed; nothing is scaled (`unit_scale` gives the factor).
+
 ## Corpus workflow
 
 - Real filings and manifests are **never committed** (company names, CIKs and accession numbers stay out of code,

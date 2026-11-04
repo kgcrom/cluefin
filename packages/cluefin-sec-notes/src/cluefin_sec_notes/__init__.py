@@ -32,6 +32,7 @@ from cluefin_sec_notes._model import (
     MissingItemError,
     UncertainItemError,
 )
+from cluefin_sec_notes._notes import EMPTY_NOTE, NOTE_SEQUENCE_GAP, STATEMENTS_TITLE, Note, NoteSplit, split_notes
 from cluefin_sec_notes._report import (
     ENCODING_FALLBACK,
     FIX_KINDS,
@@ -47,6 +48,7 @@ from cluefin_sec_notes._report import (
     ParseReport,
     SourceSample,
 )
+from cluefin_sec_notes._units import unit_scale
 
 __all__ = [
     "CATALOGS",
@@ -82,6 +84,13 @@ __all__ = [
     "match_title",
     "normalize_title",
     "parse_amount",
+    "EMPTY_NOTE",
+    "NOTE_SEQUENCE_GAP",
+    "Note",
+    "NoteSplit",
+    "STATEMENTS_TITLE",
+    "split_notes",
+    "unit_scale",
     "parse_date",
     "parse_item_label",
     "Block",

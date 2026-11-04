@@ -109,7 +109,27 @@ parse_amount("$(1,234)")  # Decimal('-1234'). 쉼표·통화 기호·퍼센트·
 
 `Table.grid()`는 열을 맞춘 문자열 행렬입니다. 병합 칸(`colspan`·`rowspan`)을 펴고, 옆 칸에 따로 있는 `$`·`)`·`%`와
 각주 표시를 값에 붙이고, 금액 칸이 덮는 열끼리 하나로 묶은 뒤 빈 행·열을 지웁니다. 원문 칸 그대로는
-`Table.rows`(`Cell.text`·`col_span`·`row_span`)입니다. 표 머리의 단위("in millions")는 곱하지 않습니다.
+`Table.rows`(`Cell.text`·`col_span`·`row_span`)입니다.
+
+`Table.unit`은 표 머리 행이나 바로 앞 짧은 문단의 단위 문구("in thousands, except per share amounts")입니다. 값을 곱하지
+않고 글자만 싣습니다. 배수는 `unit_scale(table.unit)`(1000·1000000·1000000000, 없으면 None)입니다.
+
+## 주석 나누기
+
+```python
+from cluefin_sec_notes import split_notes
+
+split = split_notes(result.item("8"))  # 10-Q는 result.item("1", part="I")
+for note in split:  # 첫 원소는 감사보고서·본표(number=None, title="statements")
+    print(note.number, note.title, len(note.text), [table.unit for table in note.tables])
+split.note(6)  # 번호로 찾기
+split.findings  # note_sequence_gap(번호 건너뜀), empty_note(헤딩 뒤 본문 없음)
+```
+
+헤딩은 "3. Title", "(3) Title", "3) Title", "Note 3 — Title", "Note C – Title"(문자 번호, `number`는 A=1부터 센 값,
+`label`이 "C"), 칸 둘짜리 표 행("3." | "Title"), 번호와 제목이 나뉜 두 문단입니다. 본문 속 번호 목록이나 본표 각주
+("(1) Including …")와는 번호 순서로 가릅니다. 1번 후보마다 다음 번호를 따라 사슬을 만들고 본문 있는 주석이 가장 많은
+사슬을 씁니다. 제목은 길이로 자르지 않습니다.
 
 ## Finding 코드
 
@@ -128,6 +148,8 @@ parse_amount("$(1,234)")  # Decimal('-1234'). 쉼표·통화 기호·퍼센트·
 
 예외를 내는 코드는 `UNCERTAIN_CODES`입니다. 목차·배치 경고는 맞게 찾은 Item에도 붙어서 예외에서 뺐습니다.
 다음 쪽 머리말이 구간 끝에 남은 Item 목록("Item 9, 9A")은 경고 없이 잘라 냅니다.
+
+주석 나누기의 Finding(`note_sequence_gap`, `empty_note`)은 `split_notes(...).findings`에 따로 있습니다.
 
 읽으며 고친 HTML 결함(닫히지 않은 태그, 숨긴 내용, 머리말 제거 등)은 `document.report`에 위치와 함께 남습니다.
 
