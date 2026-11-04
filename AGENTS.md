@@ -12,6 +12,9 @@ its non-obvious constraints.
 - `.env` is the **production** pair (real brokerage account). `.env.test` is mock/dev for
   Kiwoom only — its KIS side is still `KIS_ENV=prod`. Anything that loads `.env` —
   including local CLI runs — talks to a real account.
+- `cluefin-openapi-cli` reads only `<cwd>/.env`, so run it from the repo root. Run from `apps/cluefin-openapi-cli`
+  it finds no `.env` and fails with exit 3 `CredentialsMissing` (`cache load` stopped on Kiwoom, 2026-11-04);
+  `brokers --json` shows which keys the current directory sees.
 
 ## Testing policy
 
