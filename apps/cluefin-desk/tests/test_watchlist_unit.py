@@ -10,6 +10,7 @@ from textual.widgets import DataTable, Static
 
 import cluefin_desk
 import cluefin_desk.screens.stock_detail as stock_detail_module
+import cluefin_desk.screens.watchlist as watchlist_module
 from cluefin_desk.screens.watchlist import NO_GROUPS, NO_HTS, WatchlistScreen
 
 
@@ -63,6 +64,12 @@ class FakeFetcher:
     def get_watchlist_quotes(self, pairs):
         self.calls.append(("quotes", tuple(pairs)))
         return [_quote(code, f"{code}시세명") for _, code in pairs]
+
+
+@pytest.fixture(autouse=True)
+def _no_trend_cache(monkeypatch):
+    """관심종목 화면 테스트는 로컬 DuckDB 캐시를 건드리지 않는다 — 기본은 캐시 없음(그룹 열 "-")과 같다."""
+    monkeypatch.setattr(watchlist_module, "lookup_trend_groups", lambda codes: {})
 
 
 class HarnessApp(App):
@@ -125,6 +132,18 @@ class TestWatchlistScreen:
             assert _codes(screen) == ["100010", "0001A0"]
             assert "1그룹 — 2종목" in _status(screen)
             assert fetcher.calls == ["groups", ("stocks", "000"), ("quotes", (("J", "100010"), ("J", "0001A0")))]
+
+    async def test_trend_group_column_from_cache(self, monkeypatch):
+        monkeypatch.setattr(
+            watchlist_module, "lookup_trend_groups", lambda codes: {"100010": "3"} if "100010" in codes else {}
+        )
+        fetcher = FakeFetcher()
+        app = HarnessApp(fetcher)
+        async with app.run_test() as pilot:
+            screen = await _loaded(app, pilot)
+            table = _table(screen, "watchlist-stocks")
+            assert table.get_row_at(0)[-1] == "3"  # 캐시에 있는 종목
+            assert table.get_row_at(1)[-1] == "-"  # 캐시에 없는 종목
 
     async def test_no_groups(self):
         app = HarnessApp(FakeFetcher(groups=[]))
@@ -189,7 +208,7 @@ class TestFormatQuoteRows:
     def test_formats_numbers_rate_and_eok(self):
         rows = WatchlistScreen._format_quote_rows([_stock("100010", "가나전자")], [_quote("100010", "가나전자")])
         assert rows == [
-            ("100010", "가나전자", "14,530", "[red]+3.12%[/red]", "38,079", "5.5", "13,950", "14,660", "13,950")
+            ("100010", "가나전자", "14,530", "[red]+3.12%[/red]", "38,079", "5.5", "13,950", "14,660", "13,950", "-")
         ]
 
     def test_negative_and_flat_rates(self):
@@ -199,7 +218,7 @@ class TestFormatQuoteRows:
 
     def test_missing_quote_keeps_code_and_name(self):
         rows = WatchlistScreen._format_quote_rows([_stock("100010", "가나전자")], [])
-        assert rows == [("100010", "가나전자", "-", "-", "-", "-", "-", "-", "-")]
+        assert rows == [("100010", "가나전자", "-", "-", "-", "-", "-", "-", "-", "-")]
 
     def test_keeps_group_order_and_escapes_markup(self):
         stocks = [_stock("200020", "[bold]다라"), _stock("100010", "가나전자")]
@@ -207,3 +226,15 @@ class TestFormatQuoteRows:
         rows = WatchlistScreen._format_quote_rows(stocks, quotes)
         assert [row[0] for row in rows] == ["200020", "100010"]
         assert rows[0][1] == "\\[bold]다라"
+
+    def test_trend_group_fills_from_mapping_missing_codes_default_to_dash(self):
+        stocks = [_stock("100010", "가나전자"), _stock("200020", "다라바이오")]
+        rows = WatchlistScreen._format_quote_rows(stocks, [], {"100010": "2,3"})
+        assert rows[0][-1] == "2,3"
+        assert rows[1][-1] == "-"
+
+    def test_trend_group_applies_to_rows_with_a_quote_too(self):
+        rows = WatchlistScreen._format_quote_rows(
+            [_stock("100010", "가나전자")], [_quote("100010", "가나전자")], {"100010": "1"}
+        )
+        assert rows[0][-1] == "1"

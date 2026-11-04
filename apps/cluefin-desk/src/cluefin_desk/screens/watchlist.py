@@ -12,6 +12,7 @@ from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import DataTable, Header, Static
 
+from cluefin_desk.data.trend_groups import NO_GROUP, lookup_trend_groups
 from cluefin_desk.screens._guard import guarded, set_text
 from cluefin_desk.widgets.nav_bar import NavBar
 from cluefin_desk.widgets.nav_footer import NavFooter
@@ -29,6 +30,7 @@ STOCK_COLUMNS = [
     ("시가", 10),
     ("고가", 10),
     ("저가", 10),
+    ("그룹", 6),
 ]
 
 
@@ -117,7 +119,9 @@ class WatchlistScreen(Screen):
         quotes = (
             fetcher.get_watchlist_quotes([(s.fid_mrkt_cls_code or "J", s.jong_code) for s in stocks]) if stocks else []
         )
-        rows = self._format_quote_rows(stocks, quotes)
+        # 로컬 캐시만 읽는다 — KIS 호출은 늘지 않는다. 캐시가 없거나 실패하면 빈 dict, 그룹 열은 "-".
+        trend_groups = lookup_trend_groups([s.jong_code for s in stocks]) if stocks else {}
+        rows = self._format_quote_rows(stocks, quotes, trend_groups)
         self.app.call_from_thread(self._fill_stocks, rows)
         status = f"{name} — {len(rows)}종목 · Enter 상세 · r 새로고침" if rows else f"{name} — 종목 없음"
         set_text(self, "#watchlist-status", status)
@@ -131,15 +135,20 @@ class WatchlistScreen(Screen):
     # ── formatting (pure) ────────────────────
 
     @staticmethod
-    def _format_quote_rows(stocks: list, quotes: list) -> list[tuple]:
-        """그룹 순서대로 한 행씩. 시세가 빠진 종목도 코드·이름은 남긴다."""
+    def _format_quote_rows(stocks: list, quotes: list, trend_groups: dict[str, str] | None = None) -> list[tuple]:
+        """그룹 순서대로 한 행씩. 시세가 빠진 종목도 코드·이름은 남긴다.
+
+        ``trend_groups`` 는 추세 셋업 그룹(코드 -> "1"/"2,3"/...) — 캐시에 없는 종목은 "-"다.
+        """
+        trend_groups = trend_groups or {}
         by_code = {quote.inter_shrn_iscd: quote for quote in quotes}
         rows = []
         for stock in stocks:
             quote = by_code.get(stock.jong_code)
             name = escape((quote.inter_kor_isnm if quote else "") or stock.hts_kor_isnm)
+            group = trend_groups.get(stock.jong_code, NO_GROUP)
             if quote is None:
-                rows.append((stock.jong_code, name, *["-"] * (len(STOCK_COLUMNS) - 2)))
+                rows.append((stock.jong_code, name, *["-"] * (len(STOCK_COLUMNS) - 3), group))
                 continue
             rows.append(
                 (
@@ -152,6 +161,7 @@ class WatchlistScreen(Screen):
                     WatchlistScreen._number(quote.inter2_oprc),
                     WatchlistScreen._number(quote.inter2_hgpr),
                     WatchlistScreen._number(quote.inter2_lwpr),
+                    group,
                 )
             )
         return rows
