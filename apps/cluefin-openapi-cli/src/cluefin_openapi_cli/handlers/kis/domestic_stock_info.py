@@ -1,9 +1,12 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from statistics import mean
 
+from cluefin_openapi_cli import band as valuation_band
 from cluefin_openapi_cli import implied, opinions, statements
+from cluefin_openapi_cli.cache import store as cache_store
+from cluefin_openapi_cli.cache.read import read_ohlcv
 from cluefin_openapi_cli.clock import KST
 from cluefin_openapi_cli.errors import EXIT_BROKER, CliError
 from cluefin_openapi_cli.handlers import dart as dart_handlers
@@ -1901,6 +1904,172 @@ def handle_kis_implied_expectations(params: dict, session) -> dict:  # noqa: PLR
     }
 
 
+# ---------------------------------------------------------------------------
+# kis.stock_info.valuation_band — 5-year PER/PBR band from the local cache × per-year DART EPS/BPS
+# ---------------------------------------------------------------------------
+
+_BAND_DEFAULT_YEARS = 5
+_BAND_MIN_YEARS = 2
+_BAND_MAX_YEARS = 10
+
+_VALUATION_BAND_NOTES = (
+    "PER·PBR 시계열 = 그날 종가(원주가, 조정 전, 로컬 `cache ohlcv`) ÷ 그 회계연도 EPS·BPS. 회계연도는 "
+    "역년(12월 결산)으로 가정한다 — 결산월이 다른 종목은 기간이 어긋날 수 있다.",
+    "EPS·BPS 는 cache financials(fnlttMultiAcnt, 지배/비지배 구분 없음) 대신 종목별 전체 재무제표를 "
+    "연도마다 직접 불러 계산한다(지배주주순이익 ÷ 그 해 정기보고서의 보통주 발행주식총수, 지배기업지분 ÷ "
+    "같은 주식수 — kis stock valuation 과 같은 관례, 우선주 제외). 결정 2026-11-04, "
+    "docs/plans/today-bundles-plan.md B-7.",
+    "최신 연도는 사업보고서가 아직 없으면(다음 해 3월 전) 빠진다 — 분기 실적을 연 환산하지 않는다.",
+    "current 는 캐시의 가장 최근 종가 ÷ 계산 가능한 가장 최근 회계연도 EPS·BPS다 — kis stock valuation 의 "
+    "TTM·최신 분기 분모와 다르다(연간 vs TTM). current_percentile 은 과거 분포 안에서 현재 값 이하인 표본의 "
+    "비율(0~100)이다.",
+    "가격은 로컬 cache(`cache load`)에서 읽는다 — 실시간 KIS 호출이 아니다. 캐시가 오래됐으면 band·current "
+    "모두 그만큼 오래된 값이다.",
+)
+
+
+def _fetch_band_annual_reports(dart, corp_code: str, years: list[int], as_of: str) -> tuple[str | None, list, int]:
+    """(basis, reports, calls): CFS across every year if any exists, else OFS across every year.
+
+    Unlike `collect_reports` (which windows two years for the summary/valuation commands), this
+    asks every year in the band at once so the whole series shares one statement basis.
+    """
+    keys = [(year, "11011") for year in years]
+    calls = 0
+    for basis in ("CFS", "OFS"):
+        reports = dart_handlers.fetch_reports(dart, corp_code, keys, as_of, basis)
+        calls += len(keys)
+        if reports:
+            return basis, reports, calls
+    return None, [], calls
+
+
+@rpc_method(
+    name="stock.valuation_band",
+    description=(
+        "5-year PER/PBR band: each cached day's close (local `cache` DuckDB, unadjusted) over each fiscal "
+        "year's EPS/BPS (DART full statements + common share count, fetched per year rather than cache "
+        "financials, which has no 지배/비지배 split). Returns min/p25/median/p75/max of the daily multiple "
+        "over the window plus the current multiple (latest cached close over the latest computable fiscal "
+        "year's EPS/BPS) and its percentile within that history. Needs corp_code as well as stock_code, and a "
+        "`cache load` already run. About 2 DART calls per fiscal year (statements + share count), doubled if "
+        "only separate (OFS) statements exist; no live KIS call — prices come from the local cache."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "stock_code": {"type": "string", "pattern": "^[0-9]{6}$", "description": "6-digit stock code"},
+            "corp_code": {
+                "type": "string",
+                "pattern": "^[0-9]{8}$",
+                "description": "DART corporate unique code (8 digits, from dart corp-code-lookup)",
+            },
+            "as_of": {
+                "type": "string",
+                "pattern": "^[0-9]{8}$",
+                "description": "Reference date (YYYYMMDD): last cached close on or before it, reports received "
+                "by it. Default today (KST).",
+            },
+            "years": {
+                "type": "integer",
+                "minimum": _BAND_MIN_YEARS,
+                "maximum": _BAND_MAX_YEARS,
+                "default": _BAND_DEFAULT_YEARS,
+                "description": f"Number of completed fiscal years in the band. Default {_BAND_DEFAULT_YEARS}.",
+            },
+        },
+        "required": ["stock_code", "corp_code"],
+    },
+    returns={"type": "object"},
+    category="stock",
+    broker="kis",
+)
+def handle_kis_stock_valuation_band(params: dict, session) -> dict:
+    """Band from the local price cache, not a live KIS call; multiple math lives in `band.py`."""
+    stock_code = params["stock_code"]
+    corp_code = params["corp_code"]
+    as_of = params.get("as_of") or _kst_today()
+    years_n = int(params.get("years", _BAND_DEFAULT_YEARS))
+    current_year = int(as_of[:4])
+    fiscal_years = list(range(current_year - years_n, current_year))
+
+    dart = session.get_dart()
+    basis, reports, dart_calls = _fetch_band_annual_reports(dart, corp_code, fiscal_years, as_of)
+    if not reports:
+        raise CliError(
+            f"No annual report (11011) of {corp_code} received by {as_of} for {fiscal_years[0]}-{fiscal_years[-1]}.",
+            exit_code=EXIT_BROKER,
+            error_type="NotFound",
+            data={"corp_code": corp_code, "as_of": as_of, "calls": dart_calls},
+            hint="Check the corp_code with dart company-overview; it must belong to the same company as stock_code.",
+        )
+
+    eps_by_year: dict[int, float | None] = {}
+    bps_by_year: dict[int, float | None] = {}
+    years_detail = []
+    for report in sorted(reports, key=lambda r: r.year):
+        figures = statements.latest(report)
+        share_rows = dart_handlers.dart_rows(
+            dart.periodic_report_key_information.get_total_number_of_shares(
+                corp_code=corp_code, bsns_year=str(report.year), reprt_code=report.reprt_code
+            )
+        )
+        dart_calls += 1
+        shares = _common_shares(share_rows)
+        issued = shares["issued"] if shares else None
+        eps, bps = valuation_band.eps_bps(figures["net_income_owners"], figures["equity_owners"], issued)
+        eps_by_year[report.year] = eps
+        bps_by_year[report.year] = bps
+        years_detail.append(
+            {
+                "year": report.year,
+                "net_income_owners": figures["net_income_owners"],
+                "equity_owners": figures["equity_owners"],
+                "shares": issued,
+                "eps": eps,
+                "bps": bps,
+            }
+        )
+
+    computable_years = [year for year in eps_by_year if eps_by_year[year] is not None or bps_by_year[year] is not None]
+    latest_year = max(computable_years) if computable_years else None
+
+    cache_conn = cache_store.open_store(read_only=True)
+    try:
+        window_start = date(fiscal_years[0], 1, 1)
+        window_end = datetime.strptime(as_of, "%Y%m%d").date()
+        bars_payload = read_ohlcv(cache_conn, stock_code, since=window_start, until=window_end, adjusted=False)
+    finally:
+        cache_conn.close()
+
+    bars = [(bar["date"], bar["close"]) for bar in bars_payload["bars"] if bar["close"] is not None]
+    if not bars:
+        raise CliError(
+            f"No cached close for {stock_code} between {window_start:%Y%m%d} and {as_of}.",
+            exit_code=EXIT_BROKER,
+            error_type="NotFound",
+            data={"stock_code": stock_code, "as_of": as_of},
+            hint="Run `cache load` first, or check the code with `cache company --code`.",
+        )
+    current_date, current_close = bars[-1]
+    current_eps = eps_by_year.get(latest_year) if latest_year is not None else None
+    current_bps = bps_by_year.get(latest_year) if latest_year is not None else None
+
+    return {
+        "stock_code": stock_code,
+        "corp_code": corp_code,
+        "as_of": as_of,
+        "years": fiscal_years,
+        "statement_basis": basis,
+        "current": {"close": current_close, "date": current_date, "eps_bps_year": latest_year},
+        "per": valuation_band.band(bars, eps_by_year, current_close=current_close, current_per_share=current_eps),
+        "pbr": valuation_band.band(bars, bps_by_year, current_close=current_close, current_per_share=current_bps),
+        "years_detail": years_detail,
+        "calls": dart_calls,
+        "notes": list(_VALUATION_BAND_NOTES),
+    }
+
+
 _ALL_HANDLERS = [
     handle_kis_product_basic_info,
     handle_kis_stock_basic_info,
@@ -1928,6 +2097,7 @@ _ALL_HANDLERS = [
     handle_kis_opinion_summary,
     handle_kis_stock_valuation,
     handle_kis_implied_expectations,
+    handle_kis_stock_valuation_band,
     handle_kis_stock_loanable_list,
     handle_kis_investment_opinion,
     handle_kis_investment_opinion_by_brokerage,

@@ -42,7 +42,9 @@ CLI 가 말해 주지 않는 것만 적는다.
   밖이라 `not_covered` 에 적힌다 — `dart report-item treasury-stock` 으로 따로 본다.
 - **증권사 의견과 밸류에이션도 계산 명령이 있다.** 여러 증권사의 최근 목표가·의견은 `kis stock opinion-summary
   --stock-code`(기본 90일, 평균·중앙값·최고·최저), 시총·TTM PER·PBR·추정 연도별 PER 은
-  `kis stock valuation --stock-code --corp-code`(KIS 종가 + DART 주식수 + DART 재무, 약 11회). `kis stock
+  `kis stock valuation --stock-code --corp-code`(KIS 종가 + DART 주식수 + DART 재무, 약 11회). 5년 PER·PBR 밴드와
+  현재 분위는 `kis stock valuation-band --stock-code --corp-code`(로컬 `cache` 일봉 × 연도별 DART 전체
+  재무제표·주식수, 실시간 KIS 호출 없음 — `cache load` 가 먼저 돌아 있어야 한다). `kis stock
   estimated-earnings` 는 한국투자증권 한 곳의 추정이라 컨센서스라 부르지 않는다(`table` 로 라벨됨).
 - **매크로는 `ecos`(한국은행).** 국면을 볼 때는 **`ecos macro-snapshot` 한 번** — 기준금리·국고채 3/10년·회사채 AA-/BBB-·원/달러·
   CPI·선행/동행지수 순환변동치·ESI·BSI·CCSI·뉴스심리·GDP·수출 15계열과 장단기 금리차·신용스프레드마다 최근값·1m/3m/1y 변화·10년
@@ -141,7 +143,7 @@ CLI 가 말해 주지 않는 것만 적는다.
 - A `category` missing from `_CATEGORY_DEFAULTS` in `metadata.py` silently falls back to
   domain `market` / tag `ranking` instead of erroring — add an entry for new categories.
 
-## `kis chart technical`/`trend-setup`, `kis stock opinion-summary`/`valuation`/`implied-expectations`, `dart financial-as-filed`/`financial-summary`, `ecos macro-snapshot` and the dart/sec filing-text commands compute; every other command passes through
+## `kis chart technical`/`trend-setup`, `kis stock opinion-summary`/`valuation`/`valuation-band`/`implied-expectations`, `dart financial-as-filed`/`financial-summary`, `ecos macro-snapshot` and the dart/sec filing-text commands compute; every other command passes through
 
 - `dart financial-as-filed` is the second non-pass-through command: it parses a downloaded XBRL
   (see the `dart financial-*` section) and is excluded from the generic client-call tests the same way.
@@ -153,6 +155,23 @@ CLI 가 말해 주지 않는 것만 적는다.
   `test_kis_stock_info_handlers_unit.py` excludes it from the calls-once check; `test_kis_opinion_valuation_unit.py`
   covers it with one fake session answering both brokers. Market cap uses **issued** common shares (KRX
   convention, treasury included), preferred shares are ignored — stated in the response `notes`.
+- `kis stock valuation-band` is a 5-year PER/PBR band: each cached daily close (local `cache`
+  DuckDB, `cache.read.read_ohlcv`, unadjusted — **no live KIS call**, so `cache load` must already
+  have run) over each fiscal year's EPS/BPS. EPS/BPS come from DART's per-stock full statements
+  (`get_single_company_full_statements`, 11011 only) and common share count, fetched one fiscal
+  year at a time — deliberately **not** `cache financials`/`fnlttMultiAcnt`, which has no
+  지배/비지배 split (decision 2026-11-04, `docs/plans/today-bundles-plan.md` B-7, same reasoning as
+  the `cache financials` bullet below). `_fetch_band_annual_reports` tries CFS across every
+  requested year first and only falls back to OFS for the whole window if CFS is empty everywhere
+  — one basis for the whole band, never mixed. A year whose annual report is not yet filed by
+  `as_of`, or whose share count is missing, drops out of that year (never zero-filled); `current`
+  uses the *latest computable* fiscal year's EPS/BPS against the most recent cached close, which
+  need not be the same calendar year — stated in `current.eps_bps_year`. The multiple-series
+  arithmetic (quantiles, percentile-of-current) is a pure module, `band.py`, hand-checkable in
+  `test_band_unit.py`; `test_kis_stock_info_handlers_unit.py` excludes the handler from the
+  calls-once check like valuation and implied-expectations; `test_kis_valuation_band_unit.py`
+  covers it with a fake DART session and a real in-memory `cache` DuckDB
+  (`cache.store.open_store(":memory:")`, `cache_store.open_store` monkeypatched to return it).
 - `kis stock implied-expectations` reverse-engineers what today's price assumes: the steady ROE that makes
   RIM(잔여이익모델) match today's market cap, and the explicit-horizon revenue growth that makes a reverse DCF
   match today's EV — numbers and stated assumptions only, no label. It is **three-broker** (KIS price/estimate,
