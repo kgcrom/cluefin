@@ -1,94 +1,95 @@
+import warnings
 from collections.abc import Mapping
 
 from ._client import Client
 from ._major_shareholder_disclosure_types import (
-    BusinessLetter,
-    BusinessLetterItem,
-    BusinessPlanDecision,
-    BusinessPlanDecisionItem,
+    AssetTransferPutbackOption,
+    AssetTransferPutbackOptionItem,
+    BusinessAcquisitionDecision,
+    BusinessAcquisitionDecisionItem,
+    BusinessSuspension,
+    BusinessSuspensionItem,
     BusinessTransferDecision,
     BusinessTransferDecisionItem,
     CapitalReductionDecision,
     CapitalReductionDecisionItem,
+    CompanyDivisionMergerDecision,
+    CompanyDivisionMergerDecisionItem,
+    CompanyMergerDecision,
+    CompanyMergerDecisionItem,
     ConvertibleBondIssuanceDecision,
     ConvertibleBondIssuanceDecisionItem,
-    CorporateBondIssuanceDecision,
-    CorporateBondIssuanceDecisionItem,
     CorporateDivisionDecision,
     CorporateDivisionDecisionItem,
-    CorporateLawDecision,
-    CorporateLawDecisionItem,
-    CorporateLawMethodDecision,
-    CorporateLawMethodDecisionItem,
     CorporateRehabilitationProceedings,
     CorporateRehabilitationProceedingsItem,
+    CreditorBankManagementProcedureCommencement,
+    CreditorBankManagementProcedureCommencementItem,
+    CreditorBankManagementProcedureTermination,
+    CreditorBankManagementProcedureTerminationItem,
+    DefaultOccurrence,
+    DefaultOccurrenceItem,
     DissolutionOccurrence,
     DissolutionOccurrenceItem,
-    FreeSecuritiesDecision,
-    FreeSecuritiesDecisionItem,
-    GovernmentBondManagerReplacement,
-    GovernmentBondManagerReplacementItem,
-    GovernmentBondManagerTransferTermination,
-    GovernmentBondManagerTransferTerminationItem,
+    ExchangeableBondIssuanceDecision,
+    ExchangeableBondIssuanceDecisionItem,
+    FreeCapitalIncreaseDecision,
+    FreeCapitalIncreaseDecisionItem,
+    LawsuitFiling,
+    LawsuitFilingItem,
     NewStockWarrantBondIssuanceDecision,
     NewStockWarrantBondIssuanceDecisionItem,
-    OverseasSecuritiesTradingDelistingResolution,
-    OverseasSecuritiesTradingDelistingResolutionItem,
-    OverseasSecuritiesTradingResolution,
-    OverseasSecuritiesTradingResolutionItem,
-    OverseasSecuritiesTradingStatus,
-    OverseasSecuritiesTradingStatusDelisting,
-    OverseasSecuritiesTradingStatusDelistingItem,
-    OverseasSecuritiesTradingStatusItem,
-    PaidInCapitalReductionDecision,
-    PaidInCapitalReductionDecisionItem,
-    ProfitRevocation,
-    ProfitRevocationItem,
-    RealEstateDevelopment,
-    RealEstateDevelopmentItem,
-    ReorganizationPlanApprovedRuling,
-    ReorganizationPlanApprovedRulingItem,
-    RetirementStockInvestmentPlanDecision,
-    RetirementStockInvestmentPlanDecisionItem,
-    RetirementStockInvestmentTransferDecision,
-    RetirementStockInvestmentTransferDecisionItem,
-    SecuritiesGrantedDecision,
-    SecuritiesGrantedDecisionItem,
-    StockRelatedBondPlanDecision,
-    StockRelatedBondPlanDecisionItem,
+    OtherCorporationSecuritiesAcquisitionDecision,
+    OtherCorporationSecuritiesAcquisitionDecisionItem,
+    OtherCorporationSecuritiesTransferDecision,
+    OtherCorporationSecuritiesTransferDecisionItem,
+    OverseasSecuritiesMarketDelistingDecision,
+    OverseasSecuritiesMarketDelistingDecisionItem,
+    OverseasSecuritiesMarketDelistingStatus,
+    OverseasSecuritiesMarketDelistingStatusItem,
+    OverseasSecuritiesMarketListingDecision,
+    OverseasSecuritiesMarketListingDecisionItem,
+    OverseasSecuritiesMarketListingStatus,
+    OverseasSecuritiesMarketListingStatusItem,
+    PaidInAndFreeCapitalIncreaseDecision,
+    PaidInAndFreeCapitalIncreaseDecisionItem,
+    PaidInCapitalIncreaseDecision,
+    PaidInCapitalIncreaseDecisionItem,
+    StockExchangeTransferDecision,
+    StockExchangeTransferDecisionItem,
+    StockRelatedBondAcquisitionDecision,
+    StockRelatedBondAcquisitionDecisionItem,
     StockRelatedBondTransferDecision,
     StockRelatedBondTransferDecisionItem,
-    StockTradingOtherDecision,
-    StockTradingOtherDecisionItem,
-    TangibleAssetPlanDecision,
-    TangibleAssetPlanDecisionItem,
+    TangibleAssetAcquisitionDecision,
+    TangibleAssetAcquisitionDecisionItem,
     TangibleAssetTransferDecision,
     TangibleAssetTransferDecisionItem,
     TreasuryStockAcquisitionDecision,
     TreasuryStockAcquisitionDecisionItem,
-    TreasuryStockAcquisitionDisposalPlan,
-    TreasuryStockAcquisitionDisposalPlanItem,
     TreasuryStockDisposalDecision,
     TreasuryStockDisposalDecisionItem,
     TreasuryStockTrustContractDecision,
     TreasuryStockTrustContractDecisionItem,
     TreasuryStockTrustContractTerminationDecision,
     TreasuryStockTrustContractTerminationDecisionItem,
+    WriteDownContingentCapitalSecuritiesIssuanceDecision,
+    WriteDownContingentCapitalSecuritiesIssuanceDecisionItem,
 )
 
 
-class MajorShareholderDisclosure:
+class MajorMattersReport:
     """주요사항보고서 주요정보"""
 
     def __init__(self, client: Client):
         self.client = client
 
-    def treasury_stock_acquisition_disposal_plan(
+    def asset_transfer_putback_option(
         self,
         corp_code: str,
         bgn_de: str,
         end_de: str,
-    ) -> TreasuryStockAcquisitionDisposalPlan:
+    ) -> AssetTransferPutbackOption:
         """
         자산양수도(기타), 풋백옵션 정보를 조회합니다.
 
@@ -98,7 +99,7 @@ class MajorShareholderDisclosure:
             end_de (str): 검색종료 접수일자(YYYYMMDD) ※ 2015년 이후 부터 정보제
 
         Returns:
-            TreasuryStockAcquisitionDisposalPlan: 자산양수도(기타), 풋백옵션 응답
+            AssetTransferPutbackOption: 자산양수도(기타), 풋백옵션 응답
 
         """
         params = {
@@ -110,14 +111,14 @@ class MajorShareholderDisclosure:
         if not isinstance(payload, Mapping):
             raise TypeError(f"자산양수도(기타), 풋백옵션 응답이 올바르지 않습니다: {payload!r}")
 
-        return TreasuryStockAcquisitionDisposalPlan.parse(payload, list_model=TreasuryStockAcquisitionDisposalPlanItem)
+        return AssetTransferPutbackOption.parse(payload, list_model=AssetTransferPutbackOptionItem)
 
-    def real_estate_development(
+    def default_occurrence(
         self,
         corp_code: str,
         bgn_de: str,
         end_de: str,
-    ) -> RealEstateDevelopment:
+    ) -> DefaultOccurrence:
         """
         부도발생 정보를 조회합니다.
 
@@ -127,7 +128,7 @@ class MajorShareholderDisclosure:
             end_de (str): 검색종료 접수일자(YYYYMMDD) ※ 2015년 이후 부터 정보제공
 
         Returns:
-            RealEstateDevelopment: 부도발생 응답
+            DefaultOccurrence: 부도발생 응답
 
         """
         params = {
@@ -140,14 +141,14 @@ class MajorShareholderDisclosure:
         if not isinstance(payload, Mapping):
             raise TypeError(f"부도발생 응답이 올바르지 않습니다: {payload!r}")
 
-        return RealEstateDevelopment.parse(payload, list_model=RealEstateDevelopmentItem)
+        return DefaultOccurrence.parse(payload, list_model=DefaultOccurrenceItem)
 
-    def business_letter(
+    def business_suspension(
         self,
         corp_code: str,
         bgn_de: str,
         end_de: str,
-    ) -> BusinessLetter:
+    ) -> BusinessSuspension:
         """
         영업정지 정보를 조회합니다.
 
@@ -157,7 +158,7 @@ class MajorShareholderDisclosure:
             end_de (str): 검색종료 접수일자(YYYYMMDD) ※ 2015년 이후 부터 정보제공
 
         Returns:
-            BusinessLetter: 영업정지 응답
+            BusinessSuspension: 영업정지 응답
         """
         params = {
             "corp_code": corp_code,
@@ -167,7 +168,7 @@ class MajorShareholderDisclosure:
         payload = self.client._get("/api/bsnSp.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"영업정지 응답이 올바르지 않습니다: {payload!r}")
-        return BusinessLetter.parse(payload, list_model=BusinessLetterItem)
+        return BusinessSuspension.parse(payload, list_model=BusinessSuspensionItem)
 
     def corporate_rehabilitation_proceedings(
         self,
@@ -223,12 +224,12 @@ class MajorShareholderDisclosure:
             raise TypeError(f"해산사유 발생 응답이 올바르지 않습니다: {payload!r}")
         return DissolutionOccurrence.parse(payload, list_model=DissolutionOccurrenceItem)
 
-    def securities_granted_decision(
+    def paid_in_capital_increase_decision(
         self,
         corp_code: str,
         bgn_de: str,
         end_de: str,
-    ) -> SecuritiesGrantedDecision:
+    ) -> PaidInCapitalIncreaseDecision:
         """
         유상증자 결정 정보를 조회합니다.
 
@@ -238,7 +239,7 @@ class MajorShareholderDisclosure:
             end_de (str): 검색종료 접수일자(YYYYMMDD) ※ 2015년 이후 부터 정보제
 
         Returns:
-            SecuritiesGrantedDecision: 유상증자 결정 응답
+            PaidInCapitalIncreaseDecision: 유상증자 결정 응답
         """
         params = {
             "corp_code": corp_code,
@@ -248,14 +249,14 @@ class MajorShareholderDisclosure:
         payload = self.client._get("/api/piicDecsn.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"유상증자 결정 응답이 올바르지 않습니다: {payload!r}")
-        return SecuritiesGrantedDecision.parse(payload, list_model=SecuritiesGrantedDecisionItem)
+        return PaidInCapitalIncreaseDecision.parse(payload, list_model=PaidInCapitalIncreaseDecisionItem)
 
-    def free_securities_decision(
+    def free_capital_increase_decision(
         self,
         corp_code: str,
         bgn_de: str,
         end_de: str,
-    ) -> FreeSecuritiesDecision:
+    ) -> FreeCapitalIncreaseDecision:
         """
         무상증자 결정 정보를 조회합니다.
 
@@ -265,7 +266,7 @@ class MajorShareholderDisclosure:
             end_de (str): 검색종료 접수일자(YYYYMMDD) ※ 2015년 이후 부터 정보제
 
         Returns:
-            FreeSecuritiesDecision: 무상증자 결정 응답
+            FreeCapitalIncreaseDecision: 무상증자 결정 응답
         """
         params = {
             "corp_code": corp_code,
@@ -275,14 +276,14 @@ class MajorShareholderDisclosure:
         payload = self.client._get("/api/fricDecsn.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"무상증자 결정 응답이 올바르지 않습니다: {payload!r}")
-        return FreeSecuritiesDecision.parse(payload, list_model=FreeSecuritiesDecisionItem)
+        return FreeCapitalIncreaseDecision.parse(payload, list_model=FreeCapitalIncreaseDecisionItem)
 
-    def paid_in_capital_reduction_decision(
+    def paid_in_and_free_capital_increase_decision(
         self,
         corp_code: str,
         bgn_de: str,
         end_de: str,
-    ) -> PaidInCapitalReductionDecision:
+    ) -> PaidInAndFreeCapitalIncreaseDecision:
         """
         유무상증자 결정 정보를 조회합니다.
 
@@ -292,7 +293,7 @@ class MajorShareholderDisclosure:
             end_de (str): 검색종료 접수일자(YYYYMMDD) ※ 2015년 이후 부터 정보제
 
         Returns:
-            PaidInCapitalReductionDecision: 유무상증자 결정 응답
+            PaidInAndFreeCapitalIncreaseDecision: 유무상증자 결정 응답
         """
         params = {
             "corp_code": corp_code,
@@ -302,7 +303,7 @@ class MajorShareholderDisclosure:
         payload = self.client._get("/api/pifricDecsn.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"유무상증자 결정 응답이 올바르지 않습니다: {payload!r}")
-        return PaidInCapitalReductionDecision.parse(payload, list_model=PaidInCapitalReductionDecisionItem)
+        return PaidInAndFreeCapitalIncreaseDecision.parse(payload, list_model=PaidInAndFreeCapitalIncreaseDecisionItem)
 
     def capital_reduction_decision(
         self,
@@ -331,12 +332,12 @@ class MajorShareholderDisclosure:
             raise TypeError(f"감자 결정 응답이 올바르지 않습니다: {payload!r}")
         return CapitalReductionDecision.parse(payload, list_model=CapitalReductionDecisionItem)
 
-    def government_bond_manager_replacement(
+    def creditor_bank_management_procedure_commencement(
         self,
         corp_code: str,
         bgn_de: str,
         end_de: str,
-    ) -> GovernmentBondManagerReplacement:
+    ) -> CreditorBankManagementProcedureCommencement:
         """
         재권은행 등의 관리절차 개시 정보를 조회합니다.
 
@@ -346,7 +347,7 @@ class MajorShareholderDisclosure:
             end_de (str): 검색종료 접수일자(YYYYMMDD) ※ 2015년 이후 부터 정보제
 
         Returns:
-            GovernmentBondManagerReplacement: 재권은행 등의 관리절차 개시 응답
+            CreditorBankManagementProcedureCommencement: 재권은행 등의 관리절차 개시 응답
         """
         params = {
             "corp_code": corp_code,
@@ -356,14 +357,16 @@ class MajorShareholderDisclosure:
         payload = self.client._get("/api/bnkMngtPcbg.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"재권은행 등의 관리절차 개시 응답이 올바르지 않습니다: {payload!r}")
-        return GovernmentBondManagerReplacement.parse(payload, list_model=GovernmentBondManagerReplacementItem)
+        return CreditorBankManagementProcedureCommencement.parse(
+            payload, list_model=CreditorBankManagementProcedureCommencementItem
+        )
 
-    def profit_revocation(
+    def lawsuit_filing(
         self,
         corp_code: str,
         bgn_de: str,
         end_de: str,
-    ) -> ProfitRevocation:
+    ) -> LawsuitFiling:
         """
         소송 등의 제기 정보를 조회합니다.
 
@@ -373,7 +376,7 @@ class MajorShareholderDisclosure:
             end_de (str): 검색종료 접수일자(YYYYMMDD) ※ 2015년 이후 부터 정보제 제공
 
         Returns:
-            ProfitRevocation: 소송 등의 제기 응답
+            LawsuitFiling: 소송 등의 제기 응답
         """
         params = {
             "corp_code": corp_code,
@@ -383,14 +386,14 @@ class MajorShareholderDisclosure:
         payload = self.client._get("/api/lwstLg.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"소송 등의 제기 응답이 올바르지 않습니다: {payload!r}")
-        return ProfitRevocation.parse(payload, list_model=ProfitRevocationItem)
+        return LawsuitFiling.parse(payload, list_model=LawsuitFilingItem)
 
-    def overseas_securities_trading_resolution(
+    def overseas_securities_market_listing_decision(
         self,
         corp_code: str,
         bgn_de: str,
         end_de: str,
-    ) -> OverseasSecuritiesTradingResolution:
+    ) -> OverseasSecuritiesMarketListingDecision:
         """
         해외 증권시장 주권등 상장 결정 정보를 조회합니다.
 
@@ -400,7 +403,7 @@ class MajorShareholderDisclosure:
             end_de (str): 검색종료 접수일자(YYYYMMDD) ※ 2015년 이후 부터 정보제공
 
         Returns:
-            OverseasSecuritiesTradingResolution: 해외 증권시장 주권등 상장 결정 응답
+            OverseasSecuritiesMarketListingDecision: 해외 증권시장 주권등 상장 결정 응답
         """
         params = {
             "corp_code": corp_code,
@@ -410,14 +413,16 @@ class MajorShareholderDisclosure:
         payload = self.client._get("/api/ovLstDecsn.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"해외 증권시장 주권등 상장 결정 응답이 올바르지 않습니다: {payload!r}")
-        return OverseasSecuritiesTradingResolution.parse(payload, list_model=OverseasSecuritiesTradingResolutionItem)
+        return OverseasSecuritiesMarketListingDecision.parse(
+            payload, list_model=OverseasSecuritiesMarketListingDecisionItem
+        )
 
-    def overseas_securities_trading_delisting_resolution(
+    def overseas_securities_market_delisting_decision(
         self,
         corp_code: str,
         bgn_de: str,
         end_de: str,
-    ) -> OverseasSecuritiesTradingDelistingResolution:
+    ) -> OverseasSecuritiesMarketDelistingDecision:
         """
         해외 증권시장 주권등 상장폐지 결정 정보를 조회합니다.
 
@@ -427,7 +432,7 @@ class MajorShareholderDisclosure:
             end_de (str): 검색종료 접수일자(YYYYMMDD) ※ 2015년 이후 부터 정보제공
 
         Returns:
-            OverseasSecuritiesTradingDelistingResolution: 해외 증권시장 주권등 상장폐지 결정 응답
+            OverseasSecuritiesMarketDelistingDecision: 해외 증권시장 주권등 상장폐지 결정 응답
         """
         params = {
             "corp_code": corp_code,
@@ -437,16 +442,16 @@ class MajorShareholderDisclosure:
         payload = self.client._get("/api/ovDlstDecsn.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"해외 증권시장 주권등 상장폐지 결정 응답이 올바르지 않습니다: {payload!r}")
-        return OverseasSecuritiesTradingDelistingResolution.parse(
-            payload, list_model=OverseasSecuritiesTradingDelistingResolutionItem
+        return OverseasSecuritiesMarketDelistingDecision.parse(
+            payload, list_model=OverseasSecuritiesMarketDelistingDecisionItem
         )
 
-    def overseas_securities_trading_status(
+    def overseas_securities_market_listing_status(
         self,
         corp_code: str,
         bgn_de: str,
         end_de: str,
-    ) -> OverseasSecuritiesTradingStatus:
+    ) -> OverseasSecuritiesMarketListingStatus:
         """
         해외 증권시장 주권등 상장 정보를 조회합니다.
 
@@ -456,7 +461,7 @@ class MajorShareholderDisclosure:
             end_de (str): 검색종료 접수일자(YYYYMMDD) ※ 2015년 이후 부터 정보제공
 
         Returns:
-            OverseasSecuritiesTradingStatus: 해외 증권시장 주권등 상장 응답
+            OverseasSecuritiesMarketListingStatus: 해외 증권시장 주권등 상장 응답
         """
         params = {
             "corp_code": corp_code,
@@ -466,14 +471,16 @@ class MajorShareholderDisclosure:
         payload = self.client._get("/api/ovLst.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"해외 증권시장 주권등 상장 응답이 올바르지 않습니다: {payload!r}")
-        return OverseasSecuritiesTradingStatus.parse(payload, list_model=OverseasSecuritiesTradingStatusItem)
+        return OverseasSecuritiesMarketListingStatus.parse(
+            payload, list_model=OverseasSecuritiesMarketListingStatusItem
+        )
 
-    def overseas_securities_trading_status_delisting(
+    def overseas_securities_market_delisting_status(
         self,
         corp_code: str,
         bgn_de: str,
         end_de: str,
-    ) -> OverseasSecuritiesTradingStatusDelisting:
+    ) -> OverseasSecuritiesMarketDelistingStatus:
         """
         해외 증권시장 주권등 상장폐지 정보를 조회합니다.
 
@@ -483,7 +490,7 @@ class MajorShareholderDisclosure:
             end_de (str): 검색종료 접수일자(YYYYMMDD) ※ 2015년 이후 부터 정보제공
 
         Returns:
-            OverseasSecuritiesTradingStatusDelisting: 해외 증권시장 주권등 상장폐지 응답
+            OverseasSecuritiesMarketDelistingStatus: 해외 증권시장 주권등 상장폐지 응답
         """
         params = {
             "corp_code": corp_code,
@@ -493,8 +500,8 @@ class MajorShareholderDisclosure:
         payload = self.client._get("/api/ovDlst.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"해외 증권시장 주권등 상장폐지 응답이 올바르지 않습니다: {payload!r}")
-        return OverseasSecuritiesTradingStatusDelisting.parse(
-            payload, list_model=OverseasSecuritiesTradingStatusDelistingItem
+        return OverseasSecuritiesMarketDelistingStatus.parse(
+            payload, list_model=OverseasSecuritiesMarketDelistingStatusItem
         )
 
     def convertible_bond_issuance_decision(
@@ -551,12 +558,12 @@ class MajorShareholderDisclosure:
             raise TypeError(f"신주인수권부사채권 발행결정 응답이 올바르지 않습니다: {payload!r}")
         return NewStockWarrantBondIssuanceDecision.parse(payload, list_model=NewStockWarrantBondIssuanceDecisionItem)
 
-    def corporate_bond_issuance_decision(
+    def exchangeable_bond_issuance_decision(
         self,
         corp_code: str,
         bgn_de: str,
         end_de: str,
-    ) -> CorporateBondIssuanceDecision:
+    ) -> ExchangeableBondIssuanceDecision:
         """
         교환사채권 발행결정 정보를 조회합니다.
 
@@ -566,7 +573,7 @@ class MajorShareholderDisclosure:
             end_de (str): 검색종료 접수일자(YYYYMMDD) ※ 2015년 이후 부터 정보제공
 
         Returns:
-            CorporateBondIssuanceDecision: 교환사채권 발행결정 응답
+            ExchangeableBondIssuanceDecision: 교환사채권 발행결정 응답
         """
         params = {
             "corp_code": corp_code,
@@ -576,14 +583,14 @@ class MajorShareholderDisclosure:
         payload = self.client._get("/api/exbdIsDecsn.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"교환사채권 발행결정 응답이 올바르지 않습니다: {payload!r}")
-        return CorporateBondIssuanceDecision.parse(payload, list_model=CorporateBondIssuanceDecisionItem)
+        return ExchangeableBondIssuanceDecision.parse(payload, list_model=ExchangeableBondIssuanceDecisionItem)
 
-    def government_bond_manager_transfer_termination(
+    def creditor_bank_management_procedure_termination(
         self,
         corp_code: str,
         bgn_de: str,
         end_de: str,
-    ) -> GovernmentBondManagerTransferTermination:
+    ) -> CreditorBankManagementProcedureTermination:
         """
         채권은행 등의 관리절차 종단 정보를 조회합니다.
 
@@ -593,7 +600,7 @@ class MajorShareholderDisclosure:
             end_de (str): 검색종료 접수일자(YYYYMMDD) ※ 2015년 이후 부터 정보제공
 
         Returns:
-            GovernmentBondManagerTransferTermination: 채권은행 등의 관리절차 종단 응답
+            CreditorBankManagementProcedureTermination: 채권은행 등의 관리절차 종단 응답
         """
         params = {
             "corp_code": corp_code,
@@ -603,16 +610,16 @@ class MajorShareholderDisclosure:
         payload = self.client._get("/api/bnkMngtPcsp.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"채권은행 등의 관리절차 종단 응답이 올바르지 않습니다: {payload!r}")
-        return GovernmentBondManagerTransferTermination.parse(
-            payload, list_model=GovernmentBondManagerTransferTerminationItem
+        return CreditorBankManagementProcedureTermination.parse(
+            payload, list_model=CreditorBankManagementProcedureTerminationItem
         )
 
-    def reorganization_plan_approved_ruling(
+    def write_down_contingent_capital_securities_issuance_decision(
         self,
         corp_code: str,
         bgn_de: str,
         end_de: str,
-    ) -> ReorganizationPlanApprovedRuling:
+    ) -> WriteDownContingentCapitalSecuritiesIssuanceDecision:
         """
         상각형 조건부자본증권 발행결정 정보를 조회합니다.
 
@@ -622,7 +629,7 @@ class MajorShareholderDisclosure:
             end_de (str): 검색종료 접수일자(YYYYMMDD) ※ 2015년 이후 부터 정보제공
 
         Returns:
-            ReorganizationPlanApprovedRuling: 상각형 조건부자본증권 발행결정 응답
+            WriteDownContingentCapitalSecuritiesIssuanceDecision: 상각형 조건부자본증권 발행결정 응답
         """
         params = {
             "corp_code": corp_code,
@@ -632,7 +639,9 @@ class MajorShareholderDisclosure:
         payload = self.client._get("/api/wdCocobdIsDecsn.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"상각형 조건부자본증권 발행결정 응답이 올바르지 않습니다: {payload!r}")
-        return ReorganizationPlanApprovedRuling.parse(payload, list_model=ReorganizationPlanApprovedRulingItem)
+        return WriteDownContingentCapitalSecuritiesIssuanceDecision.parse(
+            payload, list_model=WriteDownContingentCapitalSecuritiesIssuanceDecisionItem
+        )
 
     def treasury_stock_acquisition_decision(
         self,
@@ -744,7 +753,7 @@ class MajorShareholderDisclosure:
             payload, list_model=TreasuryStockTrustContractTerminationDecisionItem
         )
 
-    def business_plan_decision(
+    def business_acquisition_decision(
         self,
         corp_code: str,
         bgn_de: str,
@@ -769,7 +778,7 @@ class MajorShareholderDisclosure:
         payload = self.client._get("/api/bsnInhDecsn.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"영업양수 결정 응답이 올바르지 않습니다: {payload!r}")
-        return BusinessPlanDecision.parse(payload, list_model=BusinessPlanDecisionItem)
+        return BusinessAcquisitionDecision.parse(payload, list_model=BusinessAcquisitionDecisionItem)
 
     def business_transfer_decision(
         self,
@@ -798,7 +807,7 @@ class MajorShareholderDisclosure:
             raise TypeError(f"영업양도 결정 응답이 올바르지 않습니다: {payload!r}")
         return BusinessTransferDecision.parse(payload, list_model=BusinessTransferDecisionItem)
 
-    def tangible_asset_plan_decision(
+    def tangible_asset_acquisition_decision(
         self,
         corp_code: str,
         bgn_de: str,
@@ -823,7 +832,7 @@ class MajorShareholderDisclosure:
         payload = self.client._get("/api/tgastInhDecsn.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"유형자산 양수 결정 응답이 올바르지 않습니다: {payload!r}")
-        return TangibleAssetPlanDecision.parse(payload, list_model=TangibleAssetPlanDecisionItem)
+        return TangibleAssetAcquisitionDecision.parse(payload, list_model=TangibleAssetAcquisitionDecisionItem)
 
     def tangible_asset_transfer_decision(
         self,
@@ -852,7 +861,7 @@ class MajorShareholderDisclosure:
             raise TypeError(f"유형자산 양도 결정 응답이 올바르지 않습니다: {payload!r}")
         return TangibleAssetTransferDecision.parse(payload, list_model=TangibleAssetTransferDecisionItem)
 
-    def retirement_stock_investment_plan_decision(
+    def other_corporation_securities_acquisition_decision(
         self,
         corp_code: str,
         bgn_de: str,
@@ -877,11 +886,11 @@ class MajorShareholderDisclosure:
         payload = self.client._get("/api/otcprStkInvscrInhDecsn.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"타법인 주식 및 출자증권 양수결정 응답이 올바르지 않습니다: {payload!r}")
-        return RetirementStockInvestmentPlanDecision.parse(
-            payload, list_model=RetirementStockInvestmentPlanDecisionItem
+        return OtherCorporationSecuritiesAcquisitionDecision.parse(
+            payload, list_model=OtherCorporationSecuritiesAcquisitionDecisionItem
         )
 
-    def retirement_stock_investment_transfer_decision(
+    def other_corporation_securities_transfer_decision(
         self,
         corp_code: str,
         bgn_de: str,
@@ -906,11 +915,11 @@ class MajorShareholderDisclosure:
         payload = self.client._get("/api/otcprStkInvscrTrfDecsn.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"타법인 주식 및 출자증권 양도결정 응답이 올바르지 않습니다: {payload!r}")
-        return RetirementStockInvestmentTransferDecision.parse(
-            payload, list_model=RetirementStockInvestmentTransferDecisionItem
+        return OtherCorporationSecuritiesTransferDecision.parse(
+            payload, list_model=OtherCorporationSecuritiesTransferDecisionItem
         )
 
-    def stock_related_bond_plan_decision(
+    def stock_related_bond_acquisition_decision(
         self,
         corp_code: str,
         bgn_de: str,
@@ -935,7 +944,7 @@ class MajorShareholderDisclosure:
         payload = self.client._get("/api/stkrtbdInhDecsn.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"주권 관련 사채권 양수 결정 응답이 올바르지 않습니다: {payload!r}")
-        return StockRelatedBondPlanDecision.parse(payload, list_model=StockRelatedBondPlanDecisionItem)
+        return StockRelatedBondAcquisitionDecision.parse(payload, list_model=StockRelatedBondAcquisitionDecisionItem)
 
     def stock_related_bond_transfer_decision(
         self,
@@ -964,7 +973,7 @@ class MajorShareholderDisclosure:
             raise TypeError(f"주권 관련 사채권 양도 결정 응답이 올바르지 않습니다: {payload!r}")
         return StockRelatedBondTransferDecision.parse(payload, list_model=StockRelatedBondTransferDecisionItem)
 
-    def corporate_law_decision(
+    def company_merger_decision(
         self,
         corp_code: str,
         bgn_de: str,
@@ -989,7 +998,7 @@ class MajorShareholderDisclosure:
         payload = self.client._get("/api/cmpMgDecsn.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"회사합병 결정 응답이 올바르지 않습니다: {payload!r}")
-        return CorporateLawDecision.parse(payload, list_model=CorporateLawDecisionItem)
+        return CompanyMergerDecision.parse(payload, list_model=CompanyMergerDecisionItem)
 
     def corporate_division_decision(
         self,
@@ -1018,7 +1027,7 @@ class MajorShareholderDisclosure:
             raise TypeError(f"회사분할 결정 응답이 올바르지 않습니다: {payload!r}")
         return CorporateDivisionDecision.parse(payload, list_model=CorporateDivisionDecisionItem)
 
-    def corporate_law_method_decision(
+    def company_division_merger_decision(
         self,
         corp_code: str,
         bgn_de: str,
@@ -1043,9 +1052,9 @@ class MajorShareholderDisclosure:
         payload = self.client._get("/api/cmpDvmgDecsn.json", params=params)
         if not isinstance(payload, Mapping):
             raise TypeError(f"회사분할합병 결정 응답이 올바르지 않습니다: {payload!r}")
-        return CorporateLawMethodDecision.parse(payload, list_model=CorporateLawMethodDecisionItem)
+        return CompanyDivisionMergerDecision.parse(payload, list_model=CompanyDivisionMergerDecisionItem)
 
-    def stock_trading_other_decision(
+    def stock_exchange_transfer_decision(
         self,
         corp_code: str,
         bgn_de: str,
@@ -1071,4 +1080,229 @@ class MajorShareholderDisclosure:
         if not isinstance(payload, Mapping):
             raise TypeError(f"주식교환·이전 결정 응답이 올바르지 않습니다: {payload!r}")
 
-        return StockTradingOtherDecision.parse(payload, list_model=StockTradingOtherDecisionItem)
+        return StockExchangeTransferDecision.parse(payload, list_model=StockExchangeTransferDecisionItem)
+
+    # ------------------------------------------------------------------
+    # 2026-11-04: 아래는 엔드포인트와 맞지 않던 옛 이름이다 (B-13). 삭제하지 않고
+    # DeprecationWarning 별칭으로 남긴다 — 외부 사용자 호환.
+    # ------------------------------------------------------------------
+
+    def treasury_stock_acquisition_disposal_plan(self, *args, **kwargs):
+        """``asset_transfer_putback_option`` 의 옛 이름 (엔드포인트와 맞지 않았다). Deprecated, use ``asset_transfer_putback_option`` instead."""
+        warnings.warn(
+            "treasury_stock_acquisition_disposal_plan() is deprecated; use asset_transfer_putback_option() instead (endpoint-accurate name, 2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.asset_transfer_putback_option(*args, **kwargs)
+
+    def real_estate_development(self, *args, **kwargs):
+        """``default_occurrence`` 의 옛 이름 (엔드포인트와 맞지 않았다). Deprecated, use ``default_occurrence`` instead."""
+        warnings.warn(
+            "real_estate_development() is deprecated; use default_occurrence() instead (endpoint-accurate name, 2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.default_occurrence(*args, **kwargs)
+
+    def business_letter(self, *args, **kwargs):
+        """``business_suspension`` 의 옛 이름 (엔드포인트와 맞지 않았다). Deprecated, use ``business_suspension`` instead."""
+        warnings.warn(
+            "business_letter() is deprecated; use business_suspension() instead (endpoint-accurate name, 2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.business_suspension(*args, **kwargs)
+
+    def securities_granted_decision(self, *args, **kwargs):
+        """``paid_in_capital_increase_decision`` 의 옛 이름 (엔드포인트와 맞지 않았다). Deprecated, use ``paid_in_capital_increase_decision`` instead."""
+        warnings.warn(
+            "securities_granted_decision() is deprecated; use paid_in_capital_increase_decision() instead (endpoint-accurate name, 2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.paid_in_capital_increase_decision(*args, **kwargs)
+
+    def free_securities_decision(self, *args, **kwargs):
+        """``free_capital_increase_decision`` 의 옛 이름 (엔드포인트와 맞지 않았다). Deprecated, use ``free_capital_increase_decision`` instead."""
+        warnings.warn(
+            "free_securities_decision() is deprecated; use free_capital_increase_decision() instead (endpoint-accurate name, 2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.free_capital_increase_decision(*args, **kwargs)
+
+    def paid_in_capital_reduction_decision(self, *args, **kwargs):
+        """``paid_in_and_free_capital_increase_decision`` 의 옛 이름 (엔드포인트와 맞지 않았다). Deprecated, use ``paid_in_and_free_capital_increase_decision`` instead."""
+        warnings.warn(
+            "paid_in_capital_reduction_decision() is deprecated; use paid_in_and_free_capital_increase_decision() instead (endpoint-accurate name, 2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.paid_in_and_free_capital_increase_decision(*args, **kwargs)
+
+    def government_bond_manager_replacement(self, *args, **kwargs):
+        """``creditor_bank_management_procedure_commencement`` 의 옛 이름 (엔드포인트와 맞지 않았다). Deprecated, use ``creditor_bank_management_procedure_commencement`` instead."""
+        warnings.warn(
+            "government_bond_manager_replacement() is deprecated; use creditor_bank_management_procedure_commencement() instead (endpoint-accurate name, 2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.creditor_bank_management_procedure_commencement(*args, **kwargs)
+
+    def profit_revocation(self, *args, **kwargs):
+        """``lawsuit_filing`` 의 옛 이름 (엔드포인트와 맞지 않았다). Deprecated, use ``lawsuit_filing`` instead."""
+        warnings.warn(
+            "profit_revocation() is deprecated; use lawsuit_filing() instead (endpoint-accurate name, 2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.lawsuit_filing(*args, **kwargs)
+
+    def overseas_securities_trading_resolution(self, *args, **kwargs):
+        """``overseas_securities_market_listing_decision`` 의 옛 이름 (엔드포인트와 맞지 않았다). Deprecated, use ``overseas_securities_market_listing_decision`` instead."""
+        warnings.warn(
+            "overseas_securities_trading_resolution() is deprecated; use overseas_securities_market_listing_decision() instead (endpoint-accurate name, 2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.overseas_securities_market_listing_decision(*args, **kwargs)
+
+    def overseas_securities_trading_delisting_resolution(self, *args, **kwargs):
+        """``overseas_securities_market_delisting_decision`` 의 옛 이름 (엔드포인트와 맞지 않았다). Deprecated, use ``overseas_securities_market_delisting_decision`` instead."""
+        warnings.warn(
+            "overseas_securities_trading_delisting_resolution() is deprecated; use overseas_securities_market_delisting_decision() instead (endpoint-accurate name, 2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.overseas_securities_market_delisting_decision(*args, **kwargs)
+
+    def overseas_securities_trading_status_delisting(self, *args, **kwargs):
+        """``overseas_securities_market_delisting_status`` 의 옛 이름 (엔드포인트와 맞지 않았다). Deprecated, use ``overseas_securities_market_delisting_status`` instead."""
+        warnings.warn(
+            "overseas_securities_trading_status_delisting() is deprecated; use overseas_securities_market_delisting_status() instead (endpoint-accurate name, 2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.overseas_securities_market_delisting_status(*args, **kwargs)
+
+    def overseas_securities_trading_status(self, *args, **kwargs):
+        """``overseas_securities_market_listing_status`` 의 옛 이름 (엔드포인트와 맞지 않았다). Deprecated, use ``overseas_securities_market_listing_status`` instead."""
+        warnings.warn(
+            "overseas_securities_trading_status() is deprecated; use overseas_securities_market_listing_status() instead (endpoint-accurate name, 2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.overseas_securities_market_listing_status(*args, **kwargs)
+
+    def corporate_bond_issuance_decision(self, *args, **kwargs):
+        """``exchangeable_bond_issuance_decision`` 의 옛 이름 (엔드포인트와 맞지 않았다). Deprecated, use ``exchangeable_bond_issuance_decision`` instead."""
+        warnings.warn(
+            "corporate_bond_issuance_decision() is deprecated; use exchangeable_bond_issuance_decision() instead (endpoint-accurate name, 2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.exchangeable_bond_issuance_decision(*args, **kwargs)
+
+    def government_bond_manager_transfer_termination(self, *args, **kwargs):
+        """``creditor_bank_management_procedure_termination`` 의 옛 이름 (엔드포인트와 맞지 않았다). Deprecated, use ``creditor_bank_management_procedure_termination`` instead."""
+        warnings.warn(
+            "government_bond_manager_transfer_termination() is deprecated; use creditor_bank_management_procedure_termination() instead (endpoint-accurate name, 2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.creditor_bank_management_procedure_termination(*args, **kwargs)
+
+    def reorganization_plan_approved_ruling(self, *args, **kwargs):
+        """``write_down_contingent_capital_securities_issuance_decision`` 의 옛 이름 (엔드포인트와 맞지 않았다). Deprecated, use ``write_down_contingent_capital_securities_issuance_decision`` instead."""
+        warnings.warn(
+            "reorganization_plan_approved_ruling() is deprecated; use write_down_contingent_capital_securities_issuance_decision() instead (endpoint-accurate name, 2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.write_down_contingent_capital_securities_issuance_decision(*args, **kwargs)
+
+    def business_plan_decision(self, *args, **kwargs):
+        """``business_acquisition_decision`` 의 옛 이름 (엔드포인트와 맞지 않았다). Deprecated, use ``business_acquisition_decision`` instead."""
+        warnings.warn(
+            "business_plan_decision() is deprecated; use business_acquisition_decision() instead (endpoint-accurate name, 2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.business_acquisition_decision(*args, **kwargs)
+
+    def tangible_asset_plan_decision(self, *args, **kwargs):
+        """``tangible_asset_acquisition_decision`` 의 옛 이름 (엔드포인트와 맞지 않았다). Deprecated, use ``tangible_asset_acquisition_decision`` instead."""
+        warnings.warn(
+            "tangible_asset_plan_decision() is deprecated; use tangible_asset_acquisition_decision() instead (endpoint-accurate name, 2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.tangible_asset_acquisition_decision(*args, **kwargs)
+
+    def retirement_stock_investment_plan_decision(self, *args, **kwargs):
+        """``other_corporation_securities_acquisition_decision`` 의 옛 이름 (엔드포인트와 맞지 않았다). Deprecated, use ``other_corporation_securities_acquisition_decision`` instead."""
+        warnings.warn(
+            "retirement_stock_investment_plan_decision() is deprecated; use other_corporation_securities_acquisition_decision() instead (endpoint-accurate name, 2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.other_corporation_securities_acquisition_decision(*args, **kwargs)
+
+    def retirement_stock_investment_transfer_decision(self, *args, **kwargs):
+        """``other_corporation_securities_transfer_decision`` 의 옛 이름 (엔드포인트와 맞지 않았다). Deprecated, use ``other_corporation_securities_transfer_decision`` instead."""
+        warnings.warn(
+            "retirement_stock_investment_transfer_decision() is deprecated; use other_corporation_securities_transfer_decision() instead (endpoint-accurate name, 2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.other_corporation_securities_transfer_decision(*args, **kwargs)
+
+    def stock_related_bond_plan_decision(self, *args, **kwargs):
+        """``stock_related_bond_acquisition_decision`` 의 옛 이름 (엔드포인트와 맞지 않았다). Deprecated, use ``stock_related_bond_acquisition_decision`` instead."""
+        warnings.warn(
+            "stock_related_bond_plan_decision() is deprecated; use stock_related_bond_acquisition_decision() instead (endpoint-accurate name, 2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.stock_related_bond_acquisition_decision(*args, **kwargs)
+
+    def corporate_law_decision(self, *args, **kwargs):
+        """``company_merger_decision`` 의 옛 이름 (엔드포인트와 맞지 않았다). Deprecated, use ``company_merger_decision`` instead."""
+        warnings.warn(
+            "corporate_law_decision() is deprecated; use company_merger_decision() instead (endpoint-accurate name, 2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.company_merger_decision(*args, **kwargs)
+
+    def corporate_law_method_decision(self, *args, **kwargs):
+        """``company_division_merger_decision`` 의 옛 이름 (엔드포인트와 맞지 않았다). Deprecated, use ``company_division_merger_decision`` instead."""
+        warnings.warn(
+            "corporate_law_method_decision() is deprecated; use company_division_merger_decision() instead (endpoint-accurate name, 2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.company_division_merger_decision(*args, **kwargs)
+
+    def stock_trading_other_decision(self, *args, **kwargs):
+        """``stock_exchange_transfer_decision`` 의 옛 이름 (엔드포인트와 맞지 않았다). Deprecated, use ``stock_exchange_transfer_decision`` instead."""
+        warnings.warn(
+            "stock_trading_other_decision() is deprecated; use stock_exchange_transfer_decision() instead (endpoint-accurate name, 2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.stock_exchange_transfer_decision(*args, **kwargs)
+
+
+class MajorShareholderDisclosure(MajorMattersReport):
+    """``MajorMattersReport`` 의 옛 이름 (주요사항보고서는 주요주주 공시가 아니다). Deprecated, use ``MajorMattersReport`` instead."""
+
+    def __init__(self, client: Client):
+        warnings.warn(
+            "MajorShareholderDisclosure is deprecated; use MajorMattersReport instead "
+            "(it covers 주요사항보고서, not major-shareholder disclosures, 2026-11-04).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(client)

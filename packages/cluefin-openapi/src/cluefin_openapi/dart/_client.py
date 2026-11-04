@@ -67,10 +67,24 @@ class Client(BaseHttpClient):
         self._rate_limiter = TokenBucket(capacity=rate_limit_burst, refill_rate=rate_limit_requests_per_second)
 
     @property
-    def major_shareholder_disclosure(self):
-        from ._major_shareholder_disclosure import MajorShareholderDisclosure
+    def major_matters_report(self):
+        """주요사항보고서 주요정보 (DS005). `major_shareholder_disclosure` was its old, mismatched name."""
+        from ._major_shareholder_disclosure import MajorMattersReport
 
-        return MajorShareholderDisclosure(self)
+        return MajorMattersReport(self)
+
+    @property
+    def major_shareholder_disclosure(self):
+        """Deprecated alias for :attr:`major_matters_report` (2026-11-04, B-13)."""
+        import warnings
+
+        warnings.warn(
+            "Client.major_shareholder_disclosure is deprecated; use Client.major_matters_report instead "
+            "(it serves 주요사항보고서, not major-shareholder disclosures).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.major_matters_report
 
     @property
     def public_disclosure(self):

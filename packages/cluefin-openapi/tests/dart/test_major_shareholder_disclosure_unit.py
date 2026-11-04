@@ -3,7 +3,7 @@ import requests_mock
 
 from cluefin_openapi.dart import _major_shareholder_disclosure_types as types
 from cluefin_openapi.dart._client import Client
-from cluefin_openapi.dart._major_shareholder_disclosure import MajorShareholderDisclosure
+from cluefin_openapi.dart._major_shareholder_disclosure import MajorMattersReport, MajorShareholderDisclosure
 
 from ._helpers import build_payload
 
@@ -12,22 +12,22 @@ AUTH_KEY = "test-auth-key"
 
 METHOD_SPECS = [
     (
-        "treasury_stock_acquisition_disposal_plan",
+        "asset_transfer_putback_option",
         "/api/astInhtrfEtcPtbkOpt.json",
-        types.TreasuryStockAcquisitionDisposalPlan,
-        types.TreasuryStockAcquisitionDisposalPlanItem,
+        types.AssetTransferPutbackOption,
+        types.AssetTransferPutbackOptionItem,
     ),
     (
-        "real_estate_development",
+        "default_occurrence",
         "/api/dfOcr.json",
-        types.RealEstateDevelopment,
-        types.RealEstateDevelopmentItem,
+        types.DefaultOccurrence,
+        types.DefaultOccurrenceItem,
     ),
     (
-        "business_letter",
+        "business_suspension",
         "/api/bsnSp.json",
-        types.BusinessLetter,
-        types.BusinessLetterItem,
+        types.BusinessSuspension,
+        types.BusinessSuspensionItem,
     ),
     (
         "corporate_rehabilitation_proceedings",
@@ -42,22 +42,22 @@ METHOD_SPECS = [
         types.DissolutionOccurrenceItem,
     ),
     (
-        "securities_granted_decision",
+        "paid_in_capital_increase_decision",
         "/api/piicDecsn.json",
-        types.SecuritiesGrantedDecision,
-        types.SecuritiesGrantedDecisionItem,
+        types.PaidInCapitalIncreaseDecision,
+        types.PaidInCapitalIncreaseDecisionItem,
     ),
     (
-        "free_securities_decision",
+        "free_capital_increase_decision",
         "/api/fricDecsn.json",
-        types.FreeSecuritiesDecision,
-        types.FreeSecuritiesDecisionItem,
+        types.FreeCapitalIncreaseDecision,
+        types.FreeCapitalIncreaseDecisionItem,
     ),
     (
-        "paid_in_capital_reduction_decision",
+        "paid_in_and_free_capital_increase_decision",
         "/api/pifricDecsn.json",
-        types.PaidInCapitalReductionDecision,
-        types.PaidInCapitalReductionDecisionItem,
+        types.PaidInAndFreeCapitalIncreaseDecision,
+        types.PaidInAndFreeCapitalIncreaseDecisionItem,
     ),
     (
         "capital_reduction_decision",
@@ -66,40 +66,40 @@ METHOD_SPECS = [
         types.CapitalReductionDecisionItem,
     ),
     (
-        "government_bond_manager_replacement",
+        "creditor_bank_management_procedure_commencement",
         "/api/bnkMngtPcbg.json",
-        types.GovernmentBondManagerReplacement,
-        types.GovernmentBondManagerReplacementItem,
+        types.CreditorBankManagementProcedureCommencement,
+        types.CreditorBankManagementProcedureCommencementItem,
     ),
     (
-        "profit_revocation",
+        "lawsuit_filing",
         "/api/lwstLg.json",
-        types.ProfitRevocation,
-        types.ProfitRevocationItem,
+        types.LawsuitFiling,
+        types.LawsuitFilingItem,
     ),
     (
-        "overseas_securities_trading_resolution",
+        "overseas_securities_market_listing_decision",
         "/api/ovLstDecsn.json",
-        types.OverseasSecuritiesTradingResolution,
-        types.OverseasSecuritiesTradingResolutionItem,
+        types.OverseasSecuritiesMarketListingDecision,
+        types.OverseasSecuritiesMarketListingDecisionItem,
     ),
     (
-        "overseas_securities_trading_delisting_resolution",
+        "overseas_securities_market_delisting_decision",
         "/api/ovDlstDecsn.json",
-        types.OverseasSecuritiesTradingDelistingResolution,
-        types.OverseasSecuritiesTradingDelistingResolutionItem,
+        types.OverseasSecuritiesMarketDelistingDecision,
+        types.OverseasSecuritiesMarketDelistingDecisionItem,
     ),
     (
-        "overseas_securities_trading_status",
+        "overseas_securities_market_listing_status",
         "/api/ovLst.json",
-        types.OverseasSecuritiesTradingStatus,
-        types.OverseasSecuritiesTradingStatusItem,
+        types.OverseasSecuritiesMarketListingStatus,
+        types.OverseasSecuritiesMarketListingStatusItem,
     ),
     (
-        "overseas_securities_trading_status_delisting",
+        "overseas_securities_market_delisting_status",
         "/api/ovDlst.json",
-        types.OverseasSecuritiesTradingStatusDelisting,
-        types.OverseasSecuritiesTradingStatusDelistingItem,
+        types.OverseasSecuritiesMarketDelistingStatus,
+        types.OverseasSecuritiesMarketDelistingStatusItem,
     ),
     (
         "convertible_bond_issuance_decision",
@@ -114,22 +114,22 @@ METHOD_SPECS = [
         types.NewStockWarrantBondIssuanceDecisionItem,
     ),
     (
-        "corporate_bond_issuance_decision",
+        "exchangeable_bond_issuance_decision",
         "/api/exbdIsDecsn.json",
-        types.CorporateBondIssuanceDecision,
-        types.CorporateBondIssuanceDecisionItem,
+        types.ExchangeableBondIssuanceDecision,
+        types.ExchangeableBondIssuanceDecisionItem,
     ),
     (
-        "government_bond_manager_transfer_termination",
+        "creditor_bank_management_procedure_termination",
         "/api/bnkMngtPcsp.json",
-        types.GovernmentBondManagerTransferTermination,
-        types.GovernmentBondManagerTransferTerminationItem,
+        types.CreditorBankManagementProcedureTermination,
+        types.CreditorBankManagementProcedureTerminationItem,
     ),
     (
-        "reorganization_plan_approved_ruling",
+        "write_down_contingent_capital_securities_issuance_decision",
         "/api/wdCocobdIsDecsn.json",
-        types.ReorganizationPlanApprovedRuling,
-        types.ReorganizationPlanApprovedRulingItem,
+        types.WriteDownContingentCapitalSecuritiesIssuanceDecision,
+        types.WriteDownContingentCapitalSecuritiesIssuanceDecisionItem,
     ),
     (
         "treasury_stock_acquisition_decision",
@@ -156,10 +156,10 @@ METHOD_SPECS = [
         types.TreasuryStockTrustContractTerminationDecisionItem,
     ),
     (
-        "business_plan_decision",
+        "business_acquisition_decision",
         "/api/bsnInhDecsn.json",
-        types.BusinessPlanDecision,
-        types.BusinessPlanDecisionItem,
+        types.BusinessAcquisitionDecision,
+        types.BusinessAcquisitionDecisionItem,
     ),
     (
         "business_transfer_decision",
@@ -168,10 +168,10 @@ METHOD_SPECS = [
         types.BusinessTransferDecisionItem,
     ),
     (
-        "tangible_asset_plan_decision",
+        "tangible_asset_acquisition_decision",
         "/api/tgastInhDecsn.json",
-        types.TangibleAssetPlanDecision,
-        types.TangibleAssetPlanDecisionItem,
+        types.TangibleAssetAcquisitionDecision,
+        types.TangibleAssetAcquisitionDecisionItem,
     ),
     (
         "tangible_asset_transfer_decision",
@@ -180,22 +180,22 @@ METHOD_SPECS = [
         types.TangibleAssetTransferDecisionItem,
     ),
     (
-        "retirement_stock_investment_plan_decision",
+        "other_corporation_securities_acquisition_decision",
         "/api/otcprStkInvscrInhDecsn.json",
-        types.RetirementStockInvestmentPlanDecision,
-        types.RetirementStockInvestmentPlanDecisionItem,
+        types.OtherCorporationSecuritiesAcquisitionDecision,
+        types.OtherCorporationSecuritiesAcquisitionDecisionItem,
     ),
     (
-        "retirement_stock_investment_transfer_decision",
+        "other_corporation_securities_transfer_decision",
         "/api/otcprStkInvscrTrfDecsn.json",
-        types.RetirementStockInvestmentTransferDecision,
-        types.RetirementStockInvestmentTransferDecisionItem,
+        types.OtherCorporationSecuritiesTransferDecision,
+        types.OtherCorporationSecuritiesTransferDecisionItem,
     ),
     (
-        "stock_related_bond_plan_decision",
+        "stock_related_bond_acquisition_decision",
         "/api/stkrtbdInhDecsn.json",
-        types.StockRelatedBondPlanDecision,
-        types.StockRelatedBondPlanDecisionItem,
+        types.StockRelatedBondAcquisitionDecision,
+        types.StockRelatedBondAcquisitionDecisionItem,
     ),
     (
         "stock_related_bond_transfer_decision",
@@ -204,10 +204,10 @@ METHOD_SPECS = [
         types.StockRelatedBondTransferDecisionItem,
     ),
     (
-        "corporate_law_decision",
+        "company_merger_decision",
         "/api/cmpMgDecsn.json",
-        types.CorporateLawDecision,
-        types.CorporateLawDecisionItem,
+        types.CompanyMergerDecision,
+        types.CompanyMergerDecisionItem,
     ),
     (
         "corporate_division_decision",
@@ -216,16 +216,16 @@ METHOD_SPECS = [
         types.CorporateDivisionDecisionItem,
     ),
     (
-        "corporate_law_method_decision",
+        "company_division_merger_decision",
         "/api/cmpDvmgDecsn.json",
-        types.CorporateLawMethodDecision,
-        types.CorporateLawMethodDecisionItem,
+        types.CompanyDivisionMergerDecision,
+        types.CompanyDivisionMergerDecisionItem,
     ),
     (
-        "stock_trading_other_decision",
+        "stock_exchange_transfer_decision",
         "/api/stkExtrDecsn.json",
-        types.StockTradingOtherDecision,
-        types.StockTradingOtherDecisionItem,
+        types.StockExchangeTransferDecision,
+        types.StockExchangeTransferDecisionItem,
     ),
 ]
 
@@ -246,7 +246,7 @@ def test_major_shareholder_disclosure_calls_expected_endpoint(
     response_model,
     list_model,
 ) -> None:
-    service = MajorShareholderDisclosure(client)
+    service = MajorMattersReport(client)
     payload = build_payload(list_model)
 
     with requests_mock.Mocker() as mock_requests:
@@ -280,7 +280,7 @@ def test_major_shareholder_disclosure_rejects_non_mapping(
     monkeypatch: pytest.MonkeyPatch,
     method_name: str,
 ) -> None:
-    service = MajorShareholderDisclosure(client)
+    service = MajorMattersReport(client)
 
     monkeypatch.setattr(client, "_get", lambda *_, **__: ["unexpected"])
 
@@ -299,14 +299,14 @@ def test_major_shareholder_disclosure_endpoint_paths_are_unique() -> None:
 
 def test_corporate_law_decision_accepts_response_without_external_evaluation_opinion(client: Client) -> None:
     """회사합병결정 실응답에는 exevl_op(외부평가 의견)가 없다 — 분할합병결정에만 있는 필드다."""
-    service = MajorShareholderDisclosure(client)
-    payload = build_payload(types.CorporateLawDecisionItem)
+    service = MajorMattersReport(client)
+    payload = build_payload(types.CompanyMergerDecisionItem)
     del payload["list"][0]["exevl_op"]
 
     with requests_mock.Mocker() as mock_requests:
         mock_requests.get(f"{BASE_URL}/api/cmpMgDecsn.json", json=payload, status_code=200)
 
-        result = service.corporate_law_decision("00126380", "20240101", "20240131")
+        result = service.company_merger_decision("00126380", "20240101", "20240131")
 
     assert result.result.list is not None
     assert result.result.list[0].exevl_op is None
@@ -316,21 +316,21 @@ def test_corporate_law_decision_accepts_response_without_external_evaluation_opi
 # 선언했던 8종은 실데이터마다 int_parsing 으로 응답 전체가 거부됐다 (VENDOR_DOC_ERRATA.md).
 LIVE_SHAPED_VALUES = [
     (
-        "securities_granted_decision",
+        "paid_in_capital_increase_decision",
         "/api/piicDecsn.json",
-        types.SecuritiesGrantedDecisionItem,
+        types.PaidInCapitalIncreaseDecisionItem,
         {"fdpp_op": "12,345,678,900", "bfic_tisstk_estk": "-", "nstk_ostk_cnt": "1,234,567", "fv_ps": "500"},
     ),
     (
-        "free_securities_decision",
+        "free_capital_increase_decision",
         "/api/fricDecsn.json",
-        types.FreeSecuritiesDecisionItem,
+        types.FreeCapitalIncreaseDecisionItem,
         {"nstk_ascnt_ps_ostk": "0.5", "nstk_ascnt_ps_estk": "-", "bfic_tisstk_ostk": "9,876,543"},
     ),
     (
-        "paid_in_capital_reduction_decision",
+        "paid_in_and_free_capital_increase_decision",
         "/api/pifricDecsn.json",
-        types.PaidInCapitalReductionDecisionItem,
+        types.PaidInAndFreeCapitalIncreaseDecisionItem,
         {"piic_fdpp_op": "1,000,000,000", "fric_nstk_estk_cnt": "-", "fric_od_a_at_t": "3"},
     ),
     (
@@ -339,18 +339,18 @@ LIVE_SHAPED_VALUES = [
         types.CapitalReductionDecisionItem,
         {"bfcr_cpt": "123,456,789,000", "atcr_tisstk_estk": "-", "fv_ps": "5,000"},
     ),
-    ("real_estate_development", "/api/dfOcr.json", types.RealEstateDevelopmentItem, {"df_amt": "1,234,567,890"}),
+    ("default_occurrence", "/api/dfOcr.json", types.DefaultOccurrenceItem, {"df_amt": "1,234,567,890"}),
     (
-        "business_letter",
+        "business_suspension",
         "/api/bsnSp.json",
-        types.BusinessLetterItem,
+        types.BusinessSuspensionItem,
         {"bsnsp_amt": "1,234,567,890,000", "rsl": "98,765,432,100", "od_a_at_b": "-"},
     ),
     ("dissolution_occurrence", "/api/dsRsOcr.json", types.DissolutionOccurrenceItem, {"od_a_at_t": "-"}),
     (
-        "treasury_stock_acquisition_disposal_plan",
+        "asset_transfer_putback_option",
         "/api/astInhtrfEtcPtbkOpt.json",
-        types.TreasuryStockAcquisitionDisposalPlanItem,
+        types.AssetTransferPutbackOptionItem,
         {"ast_inhtrf_prc": "-"},
     ),
 ]
@@ -360,7 +360,7 @@ LIVE_SHAPED_VALUES = [
 def test_major_event_amounts_pass_through_as_live_strings(
     client: Client, method_name: str, endpoint: str, item_type, values: dict
 ) -> None:
-    service = MajorShareholderDisclosure(client)
+    service = MajorMattersReport(client)
     payload = build_payload(item_type, overrides=values)
 
     with requests_mock.Mocker() as mock_requests:
@@ -370,3 +370,26 @@ def test_major_event_amounts_pass_through_as_live_strings(
     item = result.result.list[0]
     for field_name, value in values.items():
         assert getattr(item, field_name) == value
+
+
+def test_major_shareholder_disclosure_alias_warns_and_delegates(client: Client) -> None:
+    """옛 클래스 이름(MajorShareholderDisclosure)은 지워지지 않고 경고와 함께 새 이름으로 위임한다."""
+    with pytest.deprecated_call():
+        service = MajorShareholderDisclosure(client)
+
+    payload = build_payload(types.DefaultOccurrenceItem)
+    with requests_mock.Mocker() as mock_requests:
+        mock_requests.get(f"{BASE_URL}/api/dfOcr.json", json=payload, status_code=200)
+        with pytest.deprecated_call():
+            result = service.real_estate_development("00126380", "20240101", "20240131")
+
+    assert isinstance(result, types.DefaultOccurrence)
+
+
+def test_major_shareholder_disclosure_item_alias_warns(client: Client) -> None:
+    """옛 Item 클래스 이름도 경고와 함께 새 모델로 그대로 쓸 수 있다."""
+    payload = build_payload(types.DefaultOccurrenceItem)
+    with pytest.deprecated_call():
+        item = types.RealEstateDevelopmentItem(**payload["list"][0])
+
+    assert isinstance(item, types.DefaultOccurrenceItem)
