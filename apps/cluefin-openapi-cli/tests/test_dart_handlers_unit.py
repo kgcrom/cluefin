@@ -11,11 +11,13 @@ from ._handler_fakes import FakeSession, assert_calls_client_once, assert_regist
 
 # These parse what the client downloaded instead of returning the response, so the generic fake
 # (which writes no file) cannot satisfy them. test_dart_as_filed_handler_unit.py and
-# test_dart_document_handlers_unit.py cover them. financial-summary calls the client several times
-# and computes; test_dart_financial_summary_unit.py covers it.
+# test_dart_document_handlers_unit.py cover them. financial-summary and dilution-watch call the
+# client several times and compute; test_dart_financial_summary_unit.py and
+# test_dart_event_handlers_unit.py cover them.
 _PARSING_HANDLERS = {
     handlers.handle_financial_as_filed,
     handlers.handle_financial_summary,
+    handlers.handle_dilution_watch,
     handlers.handle_document_outline,
     handlers.handle_document_section,
     handlers.handle_financial_notes,

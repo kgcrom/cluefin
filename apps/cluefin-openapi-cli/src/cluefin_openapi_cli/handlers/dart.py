@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import dataclasses
 import itertools
 import sys
 import tempfile
@@ -13,7 +14,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-from cluefin_openapi_cli import statements
+from cluefin_openapi_cli import dilution, statements
 from cluefin_openapi_cli.clock import KST
 from cluefin_openapi_cli.errors import (
     DART_REQUEST_LIMIT_STATUS,
@@ -1044,6 +1045,136 @@ def handle_major_event(params: dict, session) -> dict:
     return {"event": params["event"], "endpoint": spec.endpoint, **dump_model(_checked(result))}
 
 
+# ---------------------------------------------------------------------------
+# dart.dilution_watch — one company's dilution/buyback record, normalized (see dilution.py).
+# ---------------------------------------------------------------------------
+
+_DILUTION_WINDOW_YEARS = 3
+
+
+def _default_bgn_de(end_de: str) -> str:
+    """`end_de` minus three years (2026-11-04 decision), floored at `_MAJOR_EVENT_MIN_DATE`."""
+    end = datetime.strptime(end_de, "%Y%m%d")
+    try:
+        start = end.replace(year=end.year - _DILUTION_WINDOW_YEARS)
+    except ValueError:
+        # end_de is a leap-day Feb 29; three years back has no such day.
+        start = end.replace(year=end.year - _DILUTION_WINDOW_YEARS, day=28)
+    return max(start.strftime("%Y%m%d"), _MAJOR_EVENT_MIN_DATE)
+
+
+# Candidates in descending filing-order so the first one filed on or before `end_de` is the
+# closest periodic report to it — mirrors `fetch_reports`'s windowing but for `share-count`,
+# which has no statement basis and returns one snapshot per (year, reprt_code), not a series.
+_SHARE_COUNT_REPRT_CODES = ("11011", "11014", "11012", "11013")
+
+
+def _latest_share_count(dart, corp_code: str, end_de: str) -> tuple[float | None, dict | None, int]:
+    """Outstanding common-share count (`istc_totqy`, se=보통주) nearest `end_de`, and call count.
+
+    Returns `(issued_common_shares, report, calls)`; `report` is `None` when no periodic report's
+    share-count was received by `end_de` (e.g. a company too newly listed for the window).
+    """
+    year = int(end_de[:4])
+    calls = 0
+    for y in (year, year - 1):
+        for reprt_code in _SHARE_COUNT_REPRT_CODES:
+            rows = dart_rows(
+                dart.periodic_report_key_information.get_total_number_of_shares(
+                    corp_code=corp_code, bsns_year=str(y), reprt_code=reprt_code
+                )
+            )
+            calls += 1
+            if not rows:
+                continue
+            rcept_no = str(rows[0].get("rcept_no") or "")
+            if not rcept_no or rcept_no[:8] > end_de:
+                continue
+            common = next((row for row in rows if str(row.get("se") or "").strip() == "보통주"), None)
+            issued = statements.won(common.get("istc_totqy")) if common else None
+            return issued, {"bsns_year": str(y), "reprt_code": reprt_code, "rcept_no": rcept_no}, calls
+    return None, None, calls
+
+
+@rpc_method(
+    name="dart.dilution_watch",
+    description=(
+        "One company's dilution and shareholder-return record over a date range, in one call: CB, BW, EB, "
+        "rights offering, bonus issue, rights-and-bonus issue, capital reduction, and treasury stock "
+        "acquisition/disposal (including trust contract/termination) — 11 dart major-event endpoints, "
+        "each row mapped to common fields (rcept_dt, kind, amount_won, conversion_price, refixing_floor "
+        "[the lowest adjusted conversion/exercise price a CB/BW can refix to], new_shares [signed: positive "
+        "adds to the float, negative removes from it], pct_of_shares). pct_of_shares divides new_shares by "
+        "the outstanding common-share count (dart share-count, se=보통주) of the periodic report closest to "
+        "end_de — see share_base. Treasury-stock *retirement* (소각) is a periodic-report item, not a "
+        "major-event report, so it is not covered here; see not_covered and use dart report-item "
+        "treasury-stock for it. status 013 (no report of that kind in range) is not an error — that kind "
+        "contributes no rows and is listed in empty_kinds. Default range is the last 3 years ending today "
+        "(KST), floored at 20150101."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "corp_code": {
+                "type": "string",
+                "pattern": r"^\d{8}$",
+                "description": "Corporate unique code (8 digits, from dart corp-code-lookup)",
+            },
+            "bgn_de": {
+                "type": "string",
+                "pattern": r"^\d{8}$",
+                "description": "Start of the receipt-date range (YYYYMMDD, 20150101 or later). "
+                "Default: end_de minus 3 years, floored at 20150101.",
+            },
+            "end_de": {
+                "type": "string",
+                "pattern": r"^\d{8}$",
+                "description": "End of the receipt-date range (YYYYMMDD). Default today (KST).",
+            },
+        },
+        "required": ["corp_code"],
+    },
+    returns={"type": "object"},
+    category="dart",
+    broker="dart",
+)
+def handle_dilution_watch(params: dict, session) -> dict:
+    dart = session.get_dart()
+    corp_code = params["corp_code"]
+    end_de = params.get("end_de") or _kst_today()
+    bgn_de = params.get("bgn_de") or _default_bgn_de(end_de)
+    _check_event_range({"bgn_de": bgn_de, "end_de": end_de})
+
+    rows: list[dilution.DilutionRow] = []
+    empty_kinds: list[str] = []
+    calls = 0
+    for kind in dilution.DILUTION_KINDS:
+        spec = _MAJOR_EVENTS[kind]
+        result = spec.call(dart, {"corp_code": corp_code, "bgn_de": bgn_de, "end_de": end_de})
+        calls += 1
+        items = dart_rows(result)
+        if not items:
+            empty_kinds.append(kind)
+            continue
+        rows.extend(dilution.normalize_row(kind, item) for item in items)
+
+    total_shares, share_report, share_calls = _latest_share_count(dart, corp_code, end_de)
+    calls += share_calls
+    rows = [dilution.with_pct_of_shares(row, total_shares) for row in rows]
+    rows.sort(key=lambda row: row.rcept_dt, reverse=True)
+
+    return {
+        "corp_code": corp_code,
+        "bgn_de": bgn_de,
+        "end_de": end_de,
+        "rows": [dataclasses.asdict(row) for row in rows],
+        "empty_kinds": empty_kinds,
+        "not_covered": [dict(entry) for entry in dilution.NOT_COVERED],
+        "share_base": {"total_common_shares": total_shares, "report": share_report},
+        "calls": calls,
+    }
+
+
 def _item(endpoint: str, label: str, method: Callable[[Any], Callable[..., Any]]) -> _Endpoint:
     def call(dart, params):
         return method(dart.periodic_report_key_information)(
@@ -1739,6 +1870,7 @@ _ALL_HANDLERS = [
     handle_major_shareholder,
     handle_share_count,
     handle_major_event,
+    handle_dilution_watch,
     handle_report_item,
     handle_financial_major_accounts,
     handle_financial_full_statements,

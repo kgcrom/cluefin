@@ -36,6 +36,10 @@ CLI 가 말해 주지 않는 것만 적는다.
   (정기보고서·감사보고서만 읽힌다), 주요사항보고서의 금액·상대방은 `dart major-event`, 배당·자사주·임원 등
   정기보고서 항목은 `dart report-item`. 미국 고객사·경쟁사 공시는 `recipe us-peer-filings`(20-F/6-K 제출사는
   못 읽는다).
+- **희석·환원 이력은 `dart dilution-watch` 한 번.** CB·BW·EB·유상증자·무상증자·유무상증자·감자·자기주식
+  취득/처분(신탁 포함)을 종류별로 `major-event` 를 11번 부르고 필드를 손으로 맞추는 대신, 금액·전환가·리픽싱
+  최저가·신주수(부호로 증감 표시)·발행주식 대비 비율로 한 번에 받는다(기본 범위 최근 3년). 자사주 소각은 범위
+  밖이라 `not_covered` 에 적힌다 — `dart report-item treasury-stock` 으로 따로 본다.
 - **증권사 의견과 밸류에이션도 계산 명령이 있다.** 여러 증권사의 최근 목표가·의견은 `kis stock opinion-summary
   --stock-code`(기본 90일, 평균·중앙값·최고·최저), 시총·TTM PER·PBR·추정 연도별 PER 은
   `kis stock valuation --stock-code --corp-code`(KIS 종가 + DART 주식수 + DART 재무, 약 11회). `kis stock
@@ -388,6 +392,32 @@ CLI 가 말해 주지 않는 것만 적는다.
   `metadata._NAME_SAMPLES` 에 `_de` 접미사 샘플(`20250101`)이 있다.
 - 출력은 다른 DART 명령처럼 패스스루에 `event`/`item`·`endpoint` 두 키만 얹는다. 013 은 오류가 아니고, 020 은 `_checked` 가 exit 5 로 바꾼다.
 - 최대주주 현황(hyslrSttus)·주식의 총수(stockTotqySttus)는 `report-item` 에 넣지 않았다 — `dart major-shareholder`·`share-count` 가 연다.
+
+## `dart dilution-watch` 는 `major-event` 11종을 한 번에 모아 정규화한다 (`dilution.py`)
+
+- 범위는 2026-11-04 결정(`docs/plans/bundle1-plan.md` B-11): CB·BW·EB·유상증자·무상증자·유무상증자·감자·자기주식
+  취득/처분(신탁 체결·해지 포함). **자사주 소각**은 주요사항보고서가 아니라 정기보고서 `report-item treasury-stock`
+  이라 범위 밖이고, 응답 `not_covered` 에 그 사실을 적는다 — 조용히 빠뜨리지 않는다.
+  `dilution.DILUTION_KINDS` 가 그 11종의 슬러그 목록이고 `_MAJOR_EVENTS` 와 이름을 공유한다.
+- 엔드포인트마다 필드 이름이 다른 것(위 절)을 `dilution.normalize_row(kind, row)` 가 공통 필드로 맞춘다:
+  `rcept_dt`·`kind`·`corp_name`·`amount_won`·`conversion_price`·`refixing_floor`(CB/BW 만 있다 — 교환사채 모델에는
+  리픽싱 필드 자체가 없다)·`new_shares`. `new_shares` 는 부호로 방향을 표현한다 — 유통주식이 느는 쪽(CB/BW/EB 전환,
+  유상·무상·유무상증자, 자사주 처분)은 양수, 주는 쪽(감자, 자사주 취득)은 음수다. `normalize_row` 는 순수 함수라
+  DART 호출이 없다 — 행은 호출부(`handle_dilution_watch`)가 넘긴다.
+- **`pct_of_shares` 분모는 기간 끝(`end_de`)에 가장 가까운 사업보고서의 발행주식총수**(`dart share-count` 의
+  `se=보통주` 행 `istc_totqy`, 기존 `_common_shares`·`kis stock valuation` 과 같은 관례 — 우선주 제외)다.
+  `_latest_share_count` 가 `(end_de 연도, 전년) × (11011·11014·11012·11013)` 순으로 조회해 `end_de` 이전에
+  접수된 첫 보고서에서 멈춘다 — `fetch_reports`(재무제표용)와 같은 창이지만 주식수는 보고서별 스냅샷이라 기준·연결
+  구분이 없다. 모든 reprt_code 가 013 이면(신규 상장 등) `total_common_shares`·`report` 모두 `null`, 그 행들의
+  `pct_of_shares` 도 `null` (`dilution.with_pct_of_shares` 는 분자·분모 중 하나라도 없으면 그대로 둔다).
+- **`bgn_de`·`end_de` 를 생략하면 최근 3년**(`_default_bgn_de`, `end_de` 기준 -3년, 하한 20150101)이다. `major-event`
+  자체는 그 둘이 필수지만(013 vs 기간 오류 구분), `dilution-watch` 는 한 번에 11번 부르는 명령이라 매번 날짜를
+  쓰게 하지 않는다 — 범위는 응답 `bgn_de`/`end_de` 에 그대로 찍힌다.
+- 호출 수(`calls`)는 11(종류별 1회씩) + share-count 시도 횟수(보통 1~2, 최악 8)다. 013 인 종류는 `rows` 에 보태지
+  않고 `empty_kinds` 에 슬러그만 남는다 — `major-event` 와 같은 "013 은 오류 아님" 원칙.
+- `handle_dilution_watch` 는 financial-summary 처럼 클라이언트를 여러 번 부르고 계산하므로
+  `test_dart_handlers_unit.py` 의 "handler 가 client 를 한 번만 부르는지" 공용 검사에서 뺐다(`_PARSING_HANDLERS`).
+  `test_dart_event_handlers_unit.py` 가 종류별 호출·정규화·pct 계산·기본 기간·013/020 처리를 덮는다.
 
 ## `sec *` 는 SEC EDGAR 를 읽는다 (미국 고객사·경쟁사 공시)
 
