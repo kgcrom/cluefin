@@ -1,6 +1,7 @@
 # AGENTS.md — cluefin-sec-notes
 
-Non-obvious constraints only; see the root AGENTS.md for repo-wide rules (Codacy patterns included).
+Non-obvious constraints only; see the root AGENTS.md for repo-wide rules and `packages/AGENTS.md` for
+Codacy patterns.
 
 ## Scope
 
@@ -22,7 +23,7 @@ Measured 2026-10-12 on 477 filings (eight issuers, Forms 3/4/5 and amendments, 2
   the folder root, which `download_filing_document` accepts as is. Accessions with a filing agent's prefix are
   reachable under the issuer's CIK too.
 - Parse with `defusedxml` only; element types come from the local `_xml.Element` Protocol because even a
-  type-only import from stdlib `xml` is a Codacy critical (root AGENTS.md).
+  type-only import from stdlib `xml` is a Codacy critical (`packages/AGENTS.md`).
 - Rows are filled from field tables (`_parse._Field`: name, path, converter). The transaction code's footnotes sit
   on `transactionCoding`, not on the code element, hence `notes_path` (412 such references). Every `footnoteId` in
   the 477 filings landed in some row's `footnote_ids`; keep it that way when adding fields.

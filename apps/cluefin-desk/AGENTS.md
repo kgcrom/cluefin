@@ -77,6 +77,7 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 
 ## Testing
 
+- macOS 에서는 `brew install lightgbm` 이 먼저 필요하다(런타임 의존성).
 - TUI 하네스가 화면마다 있다: `tests/test_<screen>_unit.py` (market_overview ·
   screening · theme_sector · etf_analysis · investor_flow · watchlist · stock_detail ·
   financial_analysis_screen · stock_search). 화면을 띄우는 테스트는 `CluefinDeskApp` 대신
