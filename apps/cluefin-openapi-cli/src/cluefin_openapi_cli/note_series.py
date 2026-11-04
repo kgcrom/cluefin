@@ -132,14 +132,20 @@ class ReadTable:
         return frozenset(word for row in self.rows for word in row.name.split())
 
 
-def read_table(table: TableInput, fy: int, fallback_unit: str | None = None) -> ReadTable:
-    """행렬에서 당해(`fy`) 열과 전년(`fy - 1`) 열 값을 읽는다.
+def read_table(
+    table: TableInput, fy: int, fallback_unit: str | None = None, period_year: int | None = None
+) -> ReadTable:
+    """행렬에서 당해 열과 전년 열 값을 읽는다.
+
+    당해 열은 머리 연도가 `period_year`(기간말의 연도)인 열, 없으면 `fy`인 열이다. 회계연도가 1월에 끝나는 회사는
+    머리가 "February 1, 2025"(기간말)이기도 하고 "Fiscal 2024"(회계연도)이기도 해서 둘 다 본다. 기간말 연도를 먼저 보는
+    것은 "February 1, 2025 | February 3, 2024" 표에서 `fy`(2024)가 전년 열에 맞기 때문이다.
 
     - 열의 연도는 첫 값 행 위 머리 행에서 찾는다. 연도 머리 한 열 오른쪽에 제 머리가 있는 열(하위 열)도 그 해로 본다.
     - 연도 머리가 없는 표(만기표·가정표)는 값 열 전부를 당해 값으로 보고, 값 열이 둘 이상이면 열 머리를 행 열쇠에 붙인다.
       연도가 구역 머리에 있으면("December 31, 2024") 당해·전년 구역으로 읽는다.
     - 값 없는 행은 구역 머리("Current taxes:")다. 다음 합계 행("Total …", 구역 이름과 같은 행)에서 구역이 닫힌다.
-    - 행 이름이 연도뿐이고 첫 해가 `fy + 1`이면 만기표로 보고 상대 연도("fy+1")로 바꾼다. 그 밖의 연도 행(이월결손금 만료
+    - 행 이름이 연도뿐이고 첫 해가 다음 회계연도면 만기표로 보고 상대 연도("fy+1")로 바꾼다. 그 밖의 연도 행(이월결손금 만료
       연도 등)은 그대로 둔다.
     """
     grid = [row for row in table.grid if any(cell.strip() for cell in row)]
@@ -157,9 +163,11 @@ def read_table(table: TableInput, fy: int, fallback_unit: str | None = None) -> 
     year_columns = {column: year for column in range(1, width) if (year := _last_year(headers[column])) is not None}
     unit = table.unit or _head_unit(headers) or fallback_unit
     scale = _scale(unit)
+    found = set(year_columns.values()) or {_last_year(row[0]) for row in body if not _is_value_row(row)}
+    year = period_year if period_year is not None and period_year in found else fy
     if year_columns:
-        current = _columns_for(year_columns, headers, body, fy)
-        prior = _columns_for(year_columns, headers, body, fy - 1)
+        current = _columns_for(year_columns, headers, body, year)
+        prior = _columns_for(year_columns, headers, body, year - 1)
     else:
         current = [column for column in range(1, width) if any(_is_number(row[column]) for row in body)]
         prior = []
@@ -172,7 +180,8 @@ def read_table(table: TableInput, fy: int, fallback_unit: str | None = None) -> 
         if column is not None
     }
     label_years = [int(row[0].strip()) for row in body if _BARE_YEAR.fullmatch(row[0].strip()) and _is_value_row(row)]
-    relative = bool(label_years) and min(label_years) == fy + 1
+    # 만기표의 첫 해는 다음 회계연도다. 1월 결산 회사는 그 해를 기간말 연도로 적기도 해서 둘 다 본다.
+    relative_to = min(label_years) - 1 if label_years and min(label_years) in (fy + 1, year + 1) else None
 
     rows: list[ReadRow] = []
     section, section_label, section_year = "", "", None
@@ -184,16 +193,16 @@ def read_table(table: TableInput, fy: int, fallback_unit: str | None = None) -> 
                 section_label = label
             continue
         stacked = not year_columns and section_year is not None
-        if stacked and section_year not in (fy, fy - 1):
+        if stacked and section_year not in (year, year - 1):
             continue
-        name = _row_name(label, fy if relative else None)
+        name = _row_name(label, relative_to)
         for column, prior_column in pairs:
             shown = column if column is not None else prior_column
             kind = _kind(label, row[shown], headers[shown])
             multiplier = scale if kind == "amount" else None
             value = _value(row[column], multiplier) if column is not None else None
             prior_value = _value(row[prior_column], multiplier) if prior_column is not None else None
-            if stacked and section_year == fy - 1:
+            if stacked and section_year == year - 1:
                 value, prior_value = None, value
             if value is None and prior_value is None:
                 continue
@@ -439,7 +448,8 @@ def _match_note(series: list[_NoteSeries], title: str, used: set[int], fy: int) 
 def _add_tables(note: _NoteSeries, source: NoteInput, filing: FilingNotes) -> None:
     read: list[tuple[int, ReadTable]] = []
     for index, table in enumerate(source.tables):
-        parsed = read_table(table, filing.fy, filing.statements_unit)
+        period_year = filing.period_end.year if filing.period_end else None
+        parsed = read_table(table, filing.fy, filing.statements_unit, period_year)
         if not parsed.rows:
             continue
         if not parsed.has_current:

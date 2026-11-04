@@ -718,7 +718,10 @@ def _filing_notes(sec, cik: str, entry):
 
     document = SimpleNamespace(name=entry.primary_document or "", type="10-K")
     parsed = _load_document(sec, cik, entry.accession_number, document, form="10-K")
-    item = extract_items(parsed).item("8", strict=False)
+    try:
+        item = extract_items(parsed).item("8", strict=False)
+    except ValueError as exc:  # filing-items 와 같다: 한 편이 안 읽혀도 나머지 해는 낸다
+        return None, {"accession_number": entry.accession_number, "problem": f"Item extraction failed: {exc}"}
     if item is None:
         return None, {"accession_number": entry.accession_number, "problem": "Item 8 not found"}
     split = split_notes(item)

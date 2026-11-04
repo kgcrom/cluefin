@@ -344,3 +344,34 @@ def test_row_new_in_the_later_year_has_no_restatement() -> None:
     assert rows["Stock compensation"]["values_by_fy"] == {"2024": 22}
     assert "restated" not in rows["Stock compensation"]
     assert "restated" not in rows["Other"]
+
+
+# 1월 결산(회계연도 2024 = 2025-02-01 끝) ------------------------------------------------------------------------
+
+
+def test_january_year_end_header_by_period_end_date() -> None:
+    table = _table(("(in millions)", "February 1, 2025", "February 3, 2024"), ("Net sales", "500", "450"))
+
+    (row,) = read_table(table, 2024, period_year=2025).rows
+
+    # fy(2024)는 전년 열 머리에도 맞는다. 기간말 연도(2025) 열이 당해다.
+    assert (row.current, row.prior) == (Decimal(500), Decimal(450))
+
+
+def test_january_year_end_header_by_fiscal_year() -> None:
+    table = _table(("(in millions)", "Fiscal 2024", "Fiscal 2023"), ("Net sales", "500", "450"))
+    maturity = _table(("(in millions)", "Operating leases"), ("2025", "71"), ("2026", "60"))
+
+    (row,) = read_table(table, 2024, period_year=2025).rows
+
+    assert (row.current, row.prior) == (Decimal(500), Decimal(450))
+    assert [row.name for row in read_table(maturity, 2024, period_year=2025).rows] == ["fy+1", "fy+2"]
+
+
+def test_build_series_passes_the_period_end_year() -> None:
+    table = _table(("(in millions)", "February 1, 2025", "February 3, 2024"), ("Net sales", "500", "450"))
+    filing = FilingNotes(2024, date(2025, 2, 1), "0000001001-25-000001", (NoteInput(2, "Revenue", (table,)),))
+
+    (note,) = build_series([filing])
+
+    assert note["tables"][0]["rows"][0]["values_by_fy"] == {"2024": 500}
