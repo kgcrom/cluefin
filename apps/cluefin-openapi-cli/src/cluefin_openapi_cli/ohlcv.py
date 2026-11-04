@@ -36,6 +36,7 @@ __all__ = [
     "Candle",
     "CandleSeries",
     "adj_price_flag",
+    "is_adjusted",
     "from_kis_daily",
     "from_kis_minute",
     "from_kis_period",
@@ -186,6 +187,29 @@ def adj_price_flag(endpoint: str, *, adjusted: bool = True) -> str:
     except KeyError:
         raise ValueError(f"Unknown chart endpoint `{endpoint}`; known: {sorted(_ADJ_POLARITY)}") from None
     return adjusted_flag if adjusted else original_flag
+
+
+def is_adjusted(endpoint: str, flag: str) -> bool:
+    """Inverse of `adj_price_flag`: turn the vendor literal back into a bool.
+
+    Callers that only forward whatever `adj_price` the agent passed in (instead of
+    building it from `adjusted=True/False`) still need to tell the agent which price
+    base the response is in. An unrecognized literal is a bug upstream — raising here
+    beats silently reporting the wrong polarity.
+    """
+
+    try:
+        adjusted_flag, original_flag = _ADJ_POLARITY[endpoint]
+    except KeyError:
+        raise ValueError(f"Unknown chart endpoint `{endpoint}`; known: {sorted(_ADJ_POLARITY)}") from None
+    flag = str(flag)
+    if flag == adjusted_flag:
+        return True
+    if flag == original_flag:
+        return False
+    raise ValueError(
+        f"Unknown adj_price literal `{flag}` for endpoint `{endpoint}`; expected one of {sorted({adjusted_flag, original_flag})}"
+    )
 
 
 # ---------------------------------------------------------------------------

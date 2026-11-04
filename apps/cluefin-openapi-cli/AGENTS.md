@@ -189,7 +189,11 @@ CLI 가 말해 주지 않는 것만 적는다.
 - **`adj_price` polarity is inverted between the two KIS chart endpoints** —
   `chart.daily` is `0:unadjusted, 1:adjusted`, `chart.period` is `0:adjusted, 1:original`.
   Always go through `ohlcv.adj_price_flag(endpoint, adjusted=...)`; a raw "0"/"1" silently
-  mixes price bases.
+  mixes price bases. Since 2026-11-04 both handlers also echo `adjusted: bool` at the top of
+  their response (via `ohlcv.is_adjusted(endpoint, flag)`, the inverse lookup) so the agent
+  doesn't have to remember the polarity; the input `adj_price` parameter is unchanged.
+  `is_adjusted` raises on a literal that isn't either polarity value for that endpoint — it
+  does not guess.
 - **`ohlcv` parses missing values to NaN, never 0.0** (unlike desk's `_safe_float`), and
   takes the magnitude of every Kiwoom price — Kiwoom signs some responses (`cur_prc` is
   `"-270406"` on down days) and prices cannot be negative, so this is correct either way

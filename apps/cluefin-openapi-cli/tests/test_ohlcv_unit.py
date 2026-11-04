@@ -14,6 +14,7 @@ from cluefin_openapi_cli.ohlcv import (
     from_kis_period,
     from_kiwoom_daily,
     from_kiwoom_minute,
+    is_adjusted,
 )
 
 
@@ -218,6 +219,25 @@ def test_adj_price_polarity_is_inverted_between_the_two_kis_endpoints() -> None:
 def test_unknown_endpoint_is_rejected_rather_than_guessed() -> None:
     with pytest.raises(ValueError, match="Unknown chart endpoint"):
         adj_price_flag("chart.nonexistent")
+
+
+def test_is_adjusted_is_the_inverse_of_adj_price_flag() -> None:
+    """Round-trips both ways for both endpoints, including the inverted polarity."""
+
+    assert is_adjusted("chart.daily", "1") is True
+    assert is_adjusted("chart.daily", "0") is False
+    assert is_adjusted("chart.period", "0") is True
+    assert is_adjusted("chart.period", "1") is False
+
+
+def test_is_adjusted_rejects_unknown_endpoint() -> None:
+    with pytest.raises(ValueError, match="Unknown chart endpoint"):
+        is_adjusted("chart.nonexistent", "0")
+
+
+def test_is_adjusted_rejects_unknown_literal_rather_than_guessing() -> None:
+    with pytest.raises(ValueError, match="Unknown adj_price literal"):
+        is_adjusted("chart.daily", "2")
 
 
 # ---------------------------------------------------------------------------
