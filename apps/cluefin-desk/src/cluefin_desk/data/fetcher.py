@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any
 
 import pandas as pd
@@ -532,6 +532,44 @@ class DomesticDataFetcher:
         except (KISAPIError, ValidationError) as exc:
             logger.warning(f"market fund summary unavailable: {exc}")
             return []
+
+    def get_index_daily_closes(self, sector_code: str = "2001", min_days: int = 60) -> list[float]:
+        """업종(지수) 일별 종가, 날짜 오름차순. KOSPI200 기본값 "2001"(U2001).
+
+        국내주식업종기간별시세는 호출 하나당 응답이 ~50행으로 제한된다(cache/bars.py 실측) —
+        `min_days` 를 못 채우면 가장 오래된 행 전날을 끝으로 다시 부른다. 실패·부족 시 빈 리스트를
+        주고, 호출부(`MarketOverviewBar.format_regime_cell`)가 그 경우 "—" 로 보인다.
+        """
+        window_end = now_kst()
+        rows: dict[str, float] = {}
+        for _ in range(4):
+            start = window_end - timedelta(days=120)
+            try:
+                items = (
+                    self.kis_client.domestic_issue_other.get_sector_period_quote(
+                        fid_cond_mrkt_div_code="U",
+                        fid_input_iscd=sector_code,
+                        fid_input_date_1=start.strftime("%Y%m%d"),
+                        fid_input_date_2=window_end.strftime("%Y%m%d"),
+                        fid_period_div_code="D",
+                    ).body.output2
+                    or []
+                )
+            except (KISAPIError, ValidationError) as exc:
+                logger.warning(f"index daily closes unavailable for {sector_code}: {exc}")
+                break
+            if not items:
+                break
+            oldest = min(item.stck_bsop_date for item in items)
+            for item in items:
+                rows[item.stck_bsop_date] = self._safe_float(item.bstp_nmix_prpr)
+            if len(rows) >= min_days:
+                break
+            try:
+                window_end = datetime.strptime(oldest, "%Y%m%d") - timedelta(days=1)
+            except ValueError:
+                break
+        return [rows[d] for d in sorted(rows)]
 
     # ──────────────────────────────────────
     # KIS: 랭킹 (screening)

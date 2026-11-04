@@ -17,6 +17,7 @@ from textual.widgets import Static
 
 import cluefin_desk
 from cluefin_desk.screens.market_overview import MarketOverviewScreen
+from cluefin_desk.widgets.market_overview import MarketOverviewBar
 
 
 def _mover(name, price, rate):
@@ -75,10 +76,56 @@ class TestKisLines:
         assert "데이터 없음" in MarketOverviewScreen._format_kis_fund_lines([])[1]
 
 
+class TestRegimeCell:
+    """KOSPI200 60일선 대비 — 정보 표시용 한 칸(장세 필터 아님, 메모리)."""
+
+    def test_above_moving_average_shows_plus_and_위(self):
+        closes = [100.0] * 59 + [103.2]
+        cell = MarketOverviewBar.format_regime_cell(closes)
+        assert "KOSPI200 103 ·" in cell
+        assert "+3.2% 위" in cell
+
+    def test_below_moving_average_shows_minus_and_아래(self):
+        closes = [100.0] * 59 + [97.0]
+        cell = MarketOverviewBar.format_regime_cell(closes)
+        assert "-3.0% 아래" in cell
+
+    def test_fewer_than_window_shows_dash(self):
+        cell = MarketOverviewBar.format_regime_cell([100.0] * 59)
+        assert cell == "KOSPI200 —"
+
+    def test_empty_shows_dash(self):
+        assert MarketOverviewBar.format_regime_cell([]) == "KOSPI200 —"
+
+    def test_exactly_window_is_enough(self):
+        closes = [100.0] * 59 + [101.0]
+        cell = MarketOverviewBar.format_regime_cell(closes)
+        assert cell != "KOSPI200 —"
+
+
+class TestMarketOverviewBarRegime:
+    def test_update_regime_keeps_index_parts(self):
+        bar = MarketOverviewBar()
+        bar.update_indices([{"name": "KOSPI", "close_price": 2500.0, "fluctuation_rate": 1.0}], [])
+        bar.update_regime("KOSPI200 103 · 60일선 +3.2% 위")
+        text = str(bar.content)
+        assert "KOSPI" in text
+        assert "KOSPI200 103" in text
+
+    def test_update_indices_after_regime_keeps_regime(self):
+        bar = MarketOverviewBar()
+        bar.update_regime("KOSPI200 —")
+        bar.update_indices([{"name": "KOSPI", "close_price": 2500.0, "fluctuation_rate": 1.0}], [])
+        text = str(bar.content)
+        assert "KOSPI200 —" in text
+        assert "KOSPI" in text
+
+
 class FakeFetcher:
-    def __init__(self, has_kis=True, fund_error=False):
+    def __init__(self, has_kis=True, fund_error=False, index_closes=None):
         self.has_kis = has_kis
         self._fund_error = fund_error
+        self._index_closes = index_closes if index_closes is not None else [100.0] * 60
 
     def get_all_industry_index(self, inds_cd="001"):
         item = SimpleNamespace(
@@ -99,6 +146,9 @@ class FakeFetcher:
         if self._fund_error:
             raise RuntimeError("KIS 500")
         return [_fund("20260901", "981691", "334302", "2576303")]
+
+    def get_index_daily_closes(self, sector_code="2001", min_days=60):
+        return self._index_closes
 
 
 class FakeScreener:
@@ -145,6 +195,13 @@ class TestMarketOverviewScreen:
             assert fund.region.width > 0
             assert fund.region.height > 0
             assert "+3.50%" in _text(screen, "#top-gainers-panel")
+            assert "KOSPI200" in _text(screen, "#market-bar")
+
+    async def test_without_kis_keys_regime_cell_says_so(self):
+        app = HarnessApp(FakeFetcher(has_kis=False), FakeScreener())
+        async with app.run_test(size=(140, 50)) as pilot:
+            screen = await _loaded(app, pilot)
+            assert "KOSPI200 —" in _text(screen, "#market-bar")
 
     async def test_without_kis_keys_panels_say_so(self):
         app = HarnessApp(FakeFetcher(has_kis=False), FakeScreener())
