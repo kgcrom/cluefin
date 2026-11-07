@@ -19,8 +19,9 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 
 - `generate:metadata` regex-parses `packages/cluefin-openapi`'s Python source to produce
   the TS metadata files. Nothing re-runs it automatically: when the Python package's
-  endpoints change, re-run it or the TS side silently goes stale. It writes unformatted
-  JSON — run `npm run format` right after, or every metadata file shows up in the diff.
+  endpoints change, re-run it or the TS side silently goes stale. The script's raw
+  `JSON.stringify` output doesn't match Biome's quoting/trailing commas, so `generate:metadata`
+  chains `npm run format` itself — don't drop that or every metadata file shows up in the diff.
   A Python param counts as required when it has no default, even if typed `Optional`.
 - All three brokers (KIS, Kiwoom, nhplug) share their token cache **files** with Python
   under the same `<tmpdir>/cluefin-openapi/` directory, each using Python's own naming
@@ -47,7 +48,7 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 ## OpenDART (`src/dart`)
 
 - **Metadata *and* Zod schemas are generated** from the Python `dart/_*.py` + `_*_types.py`
-  (`generate:metadata`, then `npm run format`). Never hand-edit `src/dart/metadata|schemas`.
+  (`generate:metadata`). Never hand-edit `src/dart/metadata|schemas`.
   A method's response model comes from its return annotation, else from `return X.parse(...)`
   (16 Python methods have no annotation).
 - **Fix Python, not the generator, when a response is wrong.** Python's own tests build fake

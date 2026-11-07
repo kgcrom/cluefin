@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import type { CamelizeKeys } from '../../core/types.js';
-import { dartEnvelope, dartNumeric } from './common.js';
+import { dartEnvelope } from './common.js';
 
 /** 자산양수도(기타), 풋백옵션 항목 */
 export const assetTransferPutbackOptionItemSchema = z.object({
@@ -16,7 +16,7 @@ export const assetTransferPutbackOptionItemSchema = z.object({
   /** 보고 사유 */
   rp_rsn: z.string(),
   /** 자산양수ㆍ도 가액 */
-  ast_inhtrf_prc: dartNumeric,
+  ast_inhtrf_prc: z.string(),
 });
 
 /** 부도발생 항목 */
@@ -32,7 +32,7 @@ export const defaultOccurrenceItemSchema = z.object({
   /** 부도내용 */
   df_cn: z.string(),
   /** 부도금액 */
-  df_amt: dartNumeric,
+  df_amt: z.string(),
   /** 부도발생은행 */
   df_bnk: z.string(),
   /** 최종부도(당좌거래정지)일자 */
@@ -54,9 +54,9 @@ export const businessSuspensionItemSchema = z.object({
   /** 영업정지 분야 */
   bsnsp_rm: z.string(),
   /** 영업정지 내역(영업정지금액) */
-  bsnsp_amt: dartNumeric,
+  bsnsp_amt: z.string(),
   /** 영업정지 내역(최근매출총액) */
-  rsl: dartNumeric,
+  rsl: z.string(),
   /** 영업정지 내역(매출액 대비) */
   sl_vs: z.string(),
   /** 영업정지 내역(대규모법인여부) */
@@ -76,9 +76,9 @@ export const businessSuspensionItemSchema = z.object({
   /** 이사회결의일(결정일) */
   bddd: z.string(),
   /** 사외이사 참석여부(참석(명)) */
-  od_a_at_t: dartNumeric,
+  od_a_at_t: z.string(),
   /** 사외이사 참석여부(불참(명)) */
-  od_a_at_b: dartNumeric,
+  od_a_at_b: z.string(),
   /** 감사(감사위원) 참석여부 */
   adt_a_atn: z.string(),
 });
@@ -120,9 +120,9 @@ export const dissolutionOccurrenceItemSchema = z.object({
   /** 해산사유발생일(결정일) */
   ds_rsd: z.string(),
   /** 사외이사 참석여부(참석(명)) */
-  od_a_at_t: dartNumeric,
+  od_a_at_t: z.string(),
   /** 사외이사 참석여부(불참(명)) */
-  od_a_at_b: dartNumeric,
+  od_a_at_b: z.string(),
   /** 감사(감사위원)참석 여부 */
   adt_a_atn: z.string(),
 });
@@ -138,27 +138,27 @@ export const paidInCapitalIncreaseDecisionItemSchema = z.object({
   /** 공시대상회사명 */
   corp_name: z.string(),
   /** 신주의 종류와 수(보통주식 (주)) */
-  nstk_ostk_cnt: dartNumeric,
+  nstk_ostk_cnt: z.string(),
   /** 신주의 종류와 수(기타주식 (주)) */
-  nstk_estk_cnt: dartNumeric,
+  nstk_estk_cnt: z.string(),
   /** 1주당 액면가액 (원) */
-  fv_ps: dartNumeric,
+  fv_ps: z.string(),
   /** 증자전 발행주식총수 (주)(보통주식 (주)) */
-  bfic_tisstk_ostk: dartNumeric,
+  bfic_tisstk_ostk: z.string(),
   /** 증자전 발행주식총수 (주)(기타주식 (주)) */
-  bfic_tisstk_estk: dartNumeric,
+  bfic_tisstk_estk: z.string(),
   /** 자금조달의 목적(시설자금 (원)) */
-  fdpp_fclt: dartNumeric,
+  fdpp_fclt: z.string(),
   /** 자금조달의 목적(영업양수자금 (원)) ① 2019년 12월 9일부터 추가됨 */
-  fdpp_bsninh: dartNumeric.nullish(),
+  fdpp_bsninh: z.string().nullish(),
   /** 자금조달의 목적(운영자금 (원)) */
-  fdpp_op: dartNumeric,
+  fdpp_op: z.string(),
   /** 자금조달의 목적(채무상환자금 (원)) ① 2019년 12월 9일부터 추가됨 */
-  fdpp_dtrp: dartNumeric.nullish(),
+  fdpp_dtrp: z.string().nullish(),
   /** 자금조달의 목적(타법인 증권 취득자금 (원)) */
-  fdpp_ocsa: dartNumeric,
+  fdpp_ocsa: z.string(),
   /** 자금조달의 목적(기타자금 (원)) */
-  fdpp_etc: dartNumeric,
+  fdpp_etc: z.string(),
   /** 증자방식 */
   ic_mthn: z.string(),
   /** 공매도 해당여부 */
@@ -180,21 +180,21 @@ export const freeCapitalIncreaseDecisionItemSchema = z.object({
   /** 공시대상회사명 */
   corp_name: z.string(),
   /** 신주의 종류와 수(보통주식 (주)) */
-  nstk_ostk_cnt: dartNumeric,
+  nstk_ostk_cnt: z.string(),
   /** 신주의 종류와 수(기타주식 (주)) */
-  nstk_estk_cnt: dartNumeric,
+  nstk_estk_cnt: z.string(),
   /** 1주당 액면가액 (원) */
-  fv_ps: dartNumeric,
+  fv_ps: z.string(),
   /** 증자전 발행주식총수 (주)(보통주식 (주)) */
-  bfic_tisstk_ostk: dartNumeric,
+  bfic_tisstk_ostk: z.string(),
   /** 증자전 발행주식총수 (주)(기타주식 (주)) */
-  bfic_tisstk_estk: dartNumeric,
+  bfic_tisstk_estk: z.string(),
   /** 신주배정기준일 */
   nstk_asstd: z.string(),
   /** 1주당 신주배정 주식수(보통주식 (주)) */
-  nstk_ascnt_ps_ostk: dartNumeric,
+  nstk_ascnt_ps_ostk: z.string(),
   /** 1주당 신주배정 주식수(기타주식 (주)) */
-  nstk_ascnt_ps_estk: dartNumeric,
+  nstk_ascnt_ps_estk: z.string(),
   /** 신주의 배당기산일 */
   nstk_dividrk: z.string(),
   /** 신주권교부예정일 */
@@ -204,9 +204,9 @@ export const freeCapitalIncreaseDecisionItemSchema = z.object({
   /** 이사회결의일(결정일) */
   bddd: z.string(),
   /** 사외이사 참석여부(참석(명)) */
-  od_a_at_t: dartNumeric,
+  od_a_at_t: z.string(),
   /** 사외이사 참석여부(불참(명)) */
-  od_a_at_b: dartNumeric,
+  od_a_at_b: z.string(),
   /** 감사(감사위원)참석 여부 */
   adt_a_atn: z.string(),
 });
@@ -222,45 +222,45 @@ export const paidInAndFreeCapitalIncreaseDecisionItemSchema = z.object({
   /** 공시대상회사명 */
   corp_name: z.string(),
   /** 유상증자(신주의 종류와 수(보통주식 (주))) */
-  piic_nstk_ostk_cnt: dartNumeric,
+  piic_nstk_ostk_cnt: z.string(),
   /** 유상증자(신주의 종류와 수(기타주식 (주))) */
-  piic_nstk_estk_cnt: dartNumeric,
+  piic_nstk_estk_cnt: z.string(),
   /** 유상증자(1주당 액면가액 (원)) */
-  piic_fv_ps: dartNumeric,
+  piic_fv_ps: z.string(),
   /** 유상증자(증자전 발행주식총수 (주)(보통주식 (주))) */
-  piic_bfic_tisstk_ostk: dartNumeric,
+  piic_bfic_tisstk_ostk: z.string(),
   /** 유상증자(증자전 발행주식총수 (주)(기타주식 (주))) */
-  piic_bfic_tisstk_estk: dartNumeric,
+  piic_bfic_tisstk_estk: z.string(),
   /** 유상증자(자금조달의 목적(시설자금 (원))) */
-  piic_fdpp_fclt: dartNumeric,
+  piic_fdpp_fclt: z.string(),
   /** 유상증자(자금조달의 목적(영업양수자금 (원))) ① 2019년 12월 9일부터 추가됨 */
-  piic_fdpp_bsninh: dartNumeric.nullish(),
+  piic_fdpp_bsninh: z.string().nullish(),
   /** 유상증자(자금조달의 목적(운영자금 (원))) */
-  piic_fdpp_op: dartNumeric,
+  piic_fdpp_op: z.string(),
   /** 유상증자(자금조달의 목적(채무상환자금 (원))) ① 2019년 12월 9일부터 추가됨 */
-  piic_fdpp_dtrp: dartNumeric.nullish(),
+  piic_fdpp_dtrp: z.string().nullish(),
   /** 유상증자(자금조달의 목적(타법인 증권 취득자금 (원))) */
-  piic_fdpp_ocsa: dartNumeric,
+  piic_fdpp_ocsa: z.string(),
   /** 유상증자(자금조달의 목적(기타자금 (원))) */
-  piic_fdpp_etc: dartNumeric,
+  piic_fdpp_etc: z.string(),
   /** 유상증자(증자방식) */
   piic_ic_mthn: z.string(),
   /** 무상증자(신주의 종류와 수(보통주식 (주))) */
-  fric_nstk_ostk_cnt: dartNumeric,
+  fric_nstk_ostk_cnt: z.string(),
   /** 무상증자(신주의 종류와 수(기타주식 (주))) */
-  fric_nstk_estk_cnt: dartNumeric,
+  fric_nstk_estk_cnt: z.string(),
   /** 무상증자(1주당 액면가액 (원)) */
-  fric_fv_ps: dartNumeric,
+  fric_fv_ps: z.string(),
   /** 무상증자(증자전 발행주식총수(보통주식 (주))) */
-  fric_bfic_tisstk_ostk: dartNumeric,
+  fric_bfic_tisstk_ostk: z.string(),
   /** 무상증자(증자전 발행주식총수(기타주식 (주))) */
-  fric_bfic_tisstk_estk: dartNumeric,
+  fric_bfic_tisstk_estk: z.string(),
   /** 무상증자(신주배정기준일) */
   fric_nstk_asstd: z.string(),
   /** 무상증자(1주당 신주배정 주식수(보통주식 (주))) */
-  fric_nstk_ascnt_ps_ostk: dartNumeric,
+  fric_nstk_ascnt_ps_ostk: z.string(),
   /** 무상증자(1주당 신주배정 주식수(기타주식 (주))) */
-  fric_nstk_ascnt_ps_estk: dartNumeric,
+  fric_nstk_ascnt_ps_estk: z.string(),
   /** 무상증자(신주의 배당기산일) */
   fric_nstk_dividrk: z.string(),
   /** 무상증자(신주권교부예정일) */
@@ -270,9 +270,9 @@ export const paidInAndFreeCapitalIncreaseDecisionItemSchema = z.object({
   /** 무상증자(이사회결의일(결정일)) */
   fric_bddd: z.string(),
   /** 무상증자(사외이사 참석여부(참석(명))) */
-  fric_od_a_at_t: dartNumeric,
+  fric_od_a_at_t: z.string(),
   /** 무상증자(사외이사 참석여부(불참(명))) */
-  fric_od_a_at_b: dartNumeric,
+  fric_od_a_at_b: z.string(),
   /** 무상증자(감사(감사위원)참석 여부) */
   fric_adt_a_atn: z.string(),
   /** 공매도 해당여부 */
@@ -294,23 +294,23 @@ export const capitalReductionDecisionItemSchema = z.object({
   /** 공시대상회사명 */
   corp_name: z.string(),
   /** 감자주식의 종류와 수(보통주식 (주)) */
-  crstk_ostk_cnt: dartNumeric,
+  crstk_ostk_cnt: z.string(),
   /** 감자주식의 종류와 수(기타주식 (주)) */
-  crstk_estk_cnt: dartNumeric,
+  crstk_estk_cnt: z.string(),
   /** 1주당 액면가액 (원) */
-  fv_ps: dartNumeric,
+  fv_ps: z.string(),
   /** 감자전후 자본금(감자전 (원)) */
-  bfcr_cpt: dartNumeric,
+  bfcr_cpt: z.string(),
   /** 감자전후 자본금(감자후 (원)) */
-  atcr_cpt: dartNumeric,
+  atcr_cpt: z.string(),
   /** 감자전후 발행주식수(보통주식 (주)(감자전 (원))) */
-  bfcr_tisstk_ostk: dartNumeric,
+  bfcr_tisstk_ostk: z.string(),
   /** 감자전후 발행주식수(보통주식 (주)(감자후 (원))) */
-  atcr_tisstk_ostk: dartNumeric,
+  atcr_tisstk_ostk: z.string(),
   /** 감자전후 발행주식수(기타주식 (주)(감자전 (원))) */
-  bfcr_tisstk_estk: dartNumeric,
+  bfcr_tisstk_estk: z.string(),
   /** 감자전후 발행주식수(기타주식 (주)(감자후 (원))) */
-  atcr_tisstk_estk: dartNumeric,
+  atcr_tisstk_estk: z.string(),
   /** 감자비율(보통주식 (%)) */
   cr_rt_ostk: z.string(),
   /** 감자비율(기타주식 (%)) */
@@ -350,9 +350,9 @@ export const capitalReductionDecisionItemSchema = z.object({
   /** 이사회결의일(결정일) */
   bddd: z.string(),
   /** 사외이사 참석여부(참석(명)) */
-  od_a_at_t: dartNumeric,
+  od_a_at_t: z.string(),
   /** 사외이사 참석여부(불참(명)) */
-  od_a_at_b: dartNumeric,
+  od_a_at_b: z.string(),
   /** 감사(감사위원) 참석여부 */
   adt_a_atn: z.string(),
   /** 공정거래위원회 신고대상 여부 */
@@ -2732,77 +2732,3 @@ export interface MajorMattersReportResponseMap {
   companyDivisionMergerDecision: CompanyDivisionMergerDecisionResponse;
   stockExchangeTransferDecision: StockExchangeTransferDecisionResponse;
 }
-
-// ---------------------------------------------------------------------------
-// 2026-11-04 (B-13): 아래는 엔드포인트와 맞지 않던 옛 타입 이름이다. 삭제하지 않고
-// @deprecated 별칭으로 남긴다 — 외부 사용자 호환.
-// ---------------------------------------------------------------------------
-
-/** @deprecated AssetTransferPutbackOptionResponse 의 옛 이름. Use AssetTransferPutbackOptionResponse instead (2026-11-04). */
-export type TreasuryStockAcquisitionDisposalPlanResponse = AssetTransferPutbackOptionResponse;
-
-/** @deprecated DefaultOccurrenceResponse 의 옛 이름. Use DefaultOccurrenceResponse instead (2026-11-04). */
-export type RealEstateDevelopmentResponse = DefaultOccurrenceResponse;
-
-/** @deprecated BusinessSuspensionResponse 의 옛 이름. Use BusinessSuspensionResponse instead (2026-11-04). */
-export type BusinessLetterResponse = BusinessSuspensionResponse;
-
-/** @deprecated PaidInCapitalIncreaseDecisionResponse 의 옛 이름. Use PaidInCapitalIncreaseDecisionResponse instead (2026-11-04). */
-export type SecuritiesGrantedDecisionResponse = PaidInCapitalIncreaseDecisionResponse;
-
-/** @deprecated FreeCapitalIncreaseDecisionResponse 의 옛 이름. Use FreeCapitalIncreaseDecisionResponse instead (2026-11-04). */
-export type FreeSecuritiesDecisionResponse = FreeCapitalIncreaseDecisionResponse;
-
-/** @deprecated PaidInAndFreeCapitalIncreaseDecisionResponse 의 옛 이름. Use PaidInAndFreeCapitalIncreaseDecisionResponse instead (2026-11-04). */
-export type PaidInCapitalReductionDecisionResponse = PaidInAndFreeCapitalIncreaseDecisionResponse;
-
-/** @deprecated CreditorBankManagementProcedureCommencementResponse 의 옛 이름. Use CreditorBankManagementProcedureCommencementResponse instead (2026-11-04). */
-export type GovernmentBondManagerReplacementResponse = CreditorBankManagementProcedureCommencementResponse;
-
-/** @deprecated LawsuitFilingResponse 의 옛 이름. Use LawsuitFilingResponse instead (2026-11-04). */
-export type ProfitRevocationResponse = LawsuitFilingResponse;
-
-/** @deprecated OverseasSecuritiesMarketListingDecisionResponse 의 옛 이름. Use OverseasSecuritiesMarketListingDecisionResponse instead (2026-11-04). */
-export type OverseasSecuritiesTradingResolutionResponse = OverseasSecuritiesMarketListingDecisionResponse;
-
-/** @deprecated OverseasSecuritiesMarketDelistingDecisionResponse 의 옛 이름. Use OverseasSecuritiesMarketDelistingDecisionResponse instead (2026-11-04). */
-export type OverseasSecuritiesTradingDelistingResolutionResponse = OverseasSecuritiesMarketDelistingDecisionResponse;
-
-/** @deprecated OverseasSecuritiesMarketDelistingStatusResponse 의 옛 이름. Use OverseasSecuritiesMarketDelistingStatusResponse instead (2026-11-04). */
-export type OverseasSecuritiesTradingStatusDelistingResponse = OverseasSecuritiesMarketDelistingStatusResponse;
-
-/** @deprecated OverseasSecuritiesMarketListingStatusResponse 의 옛 이름. Use OverseasSecuritiesMarketListingStatusResponse instead (2026-11-04). */
-export type OverseasSecuritiesTradingStatusResponse = OverseasSecuritiesMarketListingStatusResponse;
-
-/** @deprecated ExchangeableBondIssuanceDecisionResponse 의 옛 이름. Use ExchangeableBondIssuanceDecisionResponse instead (2026-11-04). */
-export type CorporateBondIssuanceDecisionResponse = ExchangeableBondIssuanceDecisionResponse;
-
-/** @deprecated CreditorBankManagementProcedureTerminationResponse 의 옛 이름. Use CreditorBankManagementProcedureTerminationResponse instead (2026-11-04). */
-export type GovernmentBondManagerTransferTerminationResponse = CreditorBankManagementProcedureTerminationResponse;
-
-/** @deprecated WriteDownContingentCapitalSecuritiesIssuanceDecisionResponse 의 옛 이름. Use WriteDownContingentCapitalSecuritiesIssuanceDecisionResponse instead (2026-11-04). */
-export type ReorganizationPlanApprovedRulingResponse = WriteDownContingentCapitalSecuritiesIssuanceDecisionResponse;
-
-/** @deprecated BusinessAcquisitionDecisionResponse 의 옛 이름. Use BusinessAcquisitionDecisionResponse instead (2026-11-04). */
-export type BusinessPlanDecisionResponse = BusinessAcquisitionDecisionResponse;
-
-/** @deprecated TangibleAssetAcquisitionDecisionResponse 의 옛 이름. Use TangibleAssetAcquisitionDecisionResponse instead (2026-11-04). */
-export type TangibleAssetPlanDecisionResponse = TangibleAssetAcquisitionDecisionResponse;
-
-/** @deprecated OtherCorporationSecuritiesAcquisitionDecisionResponse 의 옛 이름. Use OtherCorporationSecuritiesAcquisitionDecisionResponse instead (2026-11-04). */
-export type RetirementStockInvestmentPlanDecisionResponse = OtherCorporationSecuritiesAcquisitionDecisionResponse;
-
-/** @deprecated OtherCorporationSecuritiesTransferDecisionResponse 의 옛 이름. Use OtherCorporationSecuritiesTransferDecisionResponse instead (2026-11-04). */
-export type RetirementStockInvestmentTransferDecisionResponse = OtherCorporationSecuritiesTransferDecisionResponse;
-
-/** @deprecated StockRelatedBondAcquisitionDecisionResponse 의 옛 이름. Use StockRelatedBondAcquisitionDecisionResponse instead (2026-11-04). */
-export type StockRelatedBondPlanDecisionResponse = StockRelatedBondAcquisitionDecisionResponse;
-
-/** @deprecated CompanyMergerDecisionResponse 의 옛 이름. Use CompanyMergerDecisionResponse instead (2026-11-04). */
-export type CorporateLawDecisionResponse = CompanyMergerDecisionResponse;
-
-/** @deprecated CompanyDivisionMergerDecisionResponse 의 옛 이름. Use CompanyDivisionMergerDecisionResponse instead (2026-11-04). */
-export type CorporateLawMethodDecisionResponse = CompanyDivisionMergerDecisionResponse;
-
-/** @deprecated StockExchangeTransferDecisionResponse 의 옛 이름. Use StockExchangeTransferDecisionResponse instead (2026-11-04). */
-export type StockTradingOtherDecisionResponse = StockExchangeTransferDecisionResponse;
