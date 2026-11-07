@@ -380,24 +380,27 @@ class OverseasAccount:
 
     def get_transaction_history(
         self,
-        strt_dt: str = "",
-        end_dt: str = "",
-        tp: Literal["", "0", "1", "2", "3", "4", "5", "6", "7", "8", "F", "M", "G", "H", "I", "J", "K"] = "",
+        strt_dt: str,
+        end_dt: str,
+        tp: Literal["0", "1", "2", "3", "4", "5", "6", "7", "8", "F", "M", "G", "H", "I", "J", "K"],
+        krw_repl_skip_yn: Literal["Y", "N"],
         stex_tp: Literal["", "ND", "NY", "NA"] = "",
         stk_cd: str = "",
-        krw_repl_skip_yn: Literal["", "Y", "N"] = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountTransactionHistory]:
         """미국주식 거래내역 (ust21100)
 
+        문서는 strt_dt·end_dt·tp·krw_repl_skip_yn 을 선택으로 적지만, 빈 값을 보내면 서버가
+        1511(필수 입력 값에 값이 존재하지 않습니다) 로 거절한다 (2026-11-07 prod 실측) — 네 필드 모두 필수로 둔다.
+
         Args:
-            strt_dt (str, optional): 시작일자. YYYYMMDD. Defaults to "".
-            end_dt (str, optional): 종료일자. YYYYMMDD. Defaults to "".
-            tp (Literal, optional): 구분. 0:전체,1:입출금,2:입출고,3:매매,4:매수,5:매도,F:환전, M:입출금+환전(매체전용), G:환전매수, H:환전매도, I:환전정산입금, J:환전정산출금, 6:입금, 7:출금 8:배당금입금 K:환전+환전정산입출금. Defaults to "".
+            strt_dt (str): 시작일자. YYYYMMDD
+            end_dt (str): 종료일자. YYYYMMDD
+            tp (Literal): 구분. 0:전체,1:입출금,2:입출고,3:매매,4:매수,5:매도,F:환전, M:입출금+환전(매체전용), G:환전매수, H:환전매도, I:환전정산입금, J:환전정산출금, 6:입금, 7:출금 8:배당금입금 K:환전+환전정산입출금.
+            krw_repl_skip_yn (Literal["Y", "N"]): 원화대용입출금제외여부. Y:제외,N:비제외.
             stex_tp (Literal["", "ND", "NY", "NA"], optional): 거래소구분. ND:NASDAQ,NY:NYSE,NA:AMEX. Defaults to "".
             stk_cd (str, optional): 종목코드. Defaults to "".
-            krw_repl_skip_yn (Literal["", "Y", "N"], optional): 원화대용입출금제외여부. Y:제외,N:비제외. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
@@ -769,21 +772,24 @@ class OverseasAccount:
         self,
         strt_dt: str,
         end_dt: str,
+        stk_cd: str,
         slby_tp: Literal["", "0", "1", "2"] = "",
         stex_tp: Literal["", "ND", "NY", "NA"] = "",
-        stk_cd: str = "",
         oppo_trde_tp: Literal["", "%", "0", "1"] = "",
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountOrderHistoryByPeriod]:
         """미국주식 기간별 주문내역 (ust21180)
 
+        문서는 stk_cd 를 "미입력시 전체" 라고 적지만, 빈 값·생략 모두 서버가 1517(파라미터=stk_cd
+        종목코드값이 없습니다) 로 거절한다 (2026-11-07 prod 실측) — 필수로 둔다.
+
         Args:
             strt_dt (str): 시작주문일자. YYYYMMDD
             end_dt (str): 종료주문일자. YYYYMMDD
+            stk_cd (str): 종목코드
             slby_tp (Literal["", "0", "1", "2"], optional): 매도수구분. 0:전체(기본값),1:매도,2:매수. Defaults to "".
             stex_tp (Literal["", "ND", "NY", "NA"], optional): 거래소구분. ND:NASDAQ,NY:NYSE,NA:AMEX. Defaults to "".
-            stk_cd (str, optional): 종목코드. 미입력시 전체. Defaults to "".
             oppo_trde_tp (Literal["", "%", "0", "1"], optional): 반대매매구분. %:전체,0:일반,1:반대매매. Defaults to "".
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
@@ -1073,16 +1079,19 @@ class OverseasAccount:
 
     def get_profit_rate_by_period(
         self,
-        fr_dt: str = "",
-        to_dt: str = "",
+        fr_dt: str,
+        to_dt: str,
         cont_yn: Literal["Y", "N"] = "N",
         next_key: str = "",
     ) -> KiwoomHttpResponse[OverseasAccountProfitRateByPeriod]:
         """미국주식 기간별 수익률 현황 (ust21650)
 
+        문서는 fr_dt·to_dt 를 선택으로 적지만, 빈 값을 보내면 서버가 1511(필수 입력 값에 값이
+        존재하지 않습니다) 로 거절한다 (2026-11-07 prod 실측) — 둘 다 필수로 둔다.
+
         Args:
-            fr_dt (str, optional): 조회시작일자. YYYYMMDD. Defaults to "".
-            to_dt (str, optional): 조회종료일자. YYYYMMDD. Defaults to "".
+            fr_dt (str): 조회시작일자. YYYYMMDD
+            to_dt (str): 조회종료일자. YYYYMMDD
             cont_yn (Literal["Y", "N"], optional): 연속조회 여부. Defaults to "N".
             next_key (str, optional): 다음키. Defaults to "".
 
