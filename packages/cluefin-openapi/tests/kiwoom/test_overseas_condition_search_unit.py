@@ -14,6 +14,7 @@ from cluefin_openapi.kiwoom._overseas_condition_search_types import (
     OverseasConditionSearchListResponse,
     OverseasConditionSearchRealtimeCancelRequest,
     OverseasConditionSearchRealtimeCancelResponse,
+    OverseasConditionSearchRealtimePush,
     OverseasConditionSearchRealtimeRequest,
     OverseasConditionSearchRealtimeResponse,
     OverseasConditionSearchRealtimeResultItem,
@@ -206,6 +207,51 @@ class TestOverseasConditionSearchRealtimeRequest:
         response = OverseasConditionSearchRealtimeResponse.model_validate(payload)
         assert response.return_code is None
         assert response.data == []
+
+
+class TestOverseasConditionSearchRealtimePush:
+    """usa20290 실시간 편입/이탈 푸시 프레임 (trnm=REAL, values FID 매핑 — 국내 ka10173 과 동일 FID)."""
+
+    def test_push_frame_maps_values_fid_keys(self):
+        payload = {
+            "trnm": "REAL",
+            "data": [
+                {
+                    "type": "0A",
+                    "name": "AAPL",
+                    "values": {
+                        "841": "1",
+                        "9001": "AAPL",
+                        "843": "I",
+                        "20": "093000",
+                        "907": "2",
+                        "9081": "ND",
+                    },
+                }
+            ],
+        }
+
+        push = OverseasConditionSearchRealtimePush.model_validate(payload)
+
+        assert push.trnm == "REAL"
+        item = push.data[0]
+        assert item.type == "0A"
+        assert item.name == "AAPL"
+        assert item.values.seq_no == "1"
+        assert item.values.stock_code == "AAPL"
+        assert item.values.insert_delete == "I"
+        assert item.values.exec_time == "093000"
+        assert item.values.buy_sell == "2"
+        assert item.values.exchange == "ND"
+
+    def test_invalid_trnm_raises(self):
+        with pytest.raises(ValueError, match=r"1 validation error for 미국주식 조건검색 실시간 푸시"):
+            OverseasConditionSearchRealtimePush.model_validate({"trnm": "GCNSRREQ", "data": []})
+
+    def test_data_required(self):
+        """스펙상 data/trnm 모두 Required=Y - data 누락시 검증 실패."""
+        with pytest.raises(ValueError, match=r"1 validation error for 미국주식 조건검색 실시간 푸시"):
+            OverseasConditionSearchRealtimePush.model_validate({"trnm": "REAL"})
 
 
 # ---------------------------------------------------------------------------

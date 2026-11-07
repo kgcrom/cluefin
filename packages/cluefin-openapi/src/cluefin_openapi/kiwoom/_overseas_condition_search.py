@@ -5,7 +5,8 @@
 
 ``KiwoomWebSocketClient``(LOGIN/PING 처리)를 감싸 조건검색 요청 프레임을 송신하고 응답을
 파싱한다. 목록조회/요청 일반/해제는 요청-응답형이고, 요청 실시간(search_type=1)은 이후
-편입/이탈 이벤트가 실시간 푸시로 도착한다.
+편입/이탈 이벤트가 실시간 푸시(trnm=REAL, ``OverseasConditionSearchRealtimePush``)로
+도착한다. (국내 ``_domestic_condition_search`` 와 대칭.)
 
 TR:
 - usa20280 조건검색 목록조회   GCNSRLST → OverseasConditionSearchListResponse
@@ -87,7 +88,7 @@ class OverseasConditionSearch:
         """미국주식 조건검색 요청 실시간 (usa20290, GCNSRREQ search_type=1).
 
         요청 직후 현재 편입 종목이 응답으로 반환되며, 이후 편입/이탈 이벤트는 실시간 푸시로
-        도착한다 (``socket_client.events()``로 수신).
+        도착한다 (``socket_client.events()``로 수신, ``OverseasConditionSearchRealtimePush``).
 
         Args:
             seq: 조건검색식 일련번호.

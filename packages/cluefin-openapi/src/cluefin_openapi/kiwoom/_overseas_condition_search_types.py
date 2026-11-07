@@ -7,6 +7,12 @@
 
 usa20281(요청 일반)과 usa20290(요청 실시간)은 동일한 ``trnm``(GCNSRREQ) 값을 공유하며
 ``search_type`` 값(0 vs 1)으로 구분된다.
+
+usa20290(실시간)은 응답이 두 종류다: 최초 조회 응답(trnm GCNSRREQ, data=[{jmcode,stexTp}])과
+이후 실시간 편입/이탈 푸시(trnm REAL, data=[{type, name, values{...}}]). 각각
+``OverseasConditionSearchRealtimeResponse`` / ``OverseasConditionSearchRealtimePush`` (국내
+``_domestic_condition_search_types.DomesticConditionSearchRealtimePush`` 와 대칭 — 포털 스펙상
+values FID(``841``·``9001``·``843``·``20``·``907``·``9081``)가 국내와 동일).
 """
 
 from typing import Literal
@@ -133,6 +139,41 @@ class OverseasConditionSearchRealtimeResponse(BaseModel):
     trnm: str = Field(default="", description="서비스명. GCNSRREQ")
     seq: str = Field(default="", description="조건검색식 일련번호")
     data: list[OverseasConditionSearchRealtimeResultItem] = Field(default_factory=list, description="검색결과데이터")
+
+
+class OverseasConditionSearchRealtimeValues(BaseModel):
+    """usa20290 실시간 푸시 프레임의 values 오브젝트 (FID 매핑, 국내 ka10173 과 동일 FID)."""
+
+    model_config = ConfigDict(populate_by_name=True, title="조건검색 실시간 수신 값")
+
+    seq_no: str = Field(default="", alias="841", description="일련번호")
+    stock_code: str = Field(default="", alias="9001", description="종목코드")
+    insert_delete: str = Field(default="", alias="843", description="삽입삭제 구분. I:삽입, D:삭제")
+    exec_time: str = Field(default="", alias="20", description="체결시간")
+    buy_sell: str = Field(default="", alias="907", description="매도/수 구분")
+    exchange: str = Field(default="", alias="9081", description="거래소 구분")
+
+
+class OverseasConditionSearchRealtimeDataItem(BaseModel):
+    """usa20290 실시간 푸시 프레임의 data 항목."""
+
+    model_config = ConfigDict(title="조건검색 실시간 데이터 항목")
+
+    type: str = Field(description="실시간 항목. TR명(0A,0B...)")
+    name: str = Field(description="실시간 항목명. 종목코드")
+    values: OverseasConditionSearchRealtimeValues = Field(description="실시간 수신 값")
+
+
+class OverseasConditionSearchRealtimePush(BaseModel):
+    """usa20290 조건검색 실시간 편입/이탈 푸시 프레임 (trnm=REAL).
+
+    스펙상 data/trnm 모두 Required=Y 인 실시간 이벤트 프레임 (국내 ka10173 과 동일 형태).
+    """
+
+    model_config = ConfigDict(title="미국주식 조건검색 실시간 푸시")
+
+    trnm: Literal["REAL"] = Field(description="서비스명. REAL 고정값")
+    data: list[OverseasConditionSearchRealtimeDataItem] = Field(description="검색결과데이터")
 
 
 # ---------------------------------------------------------------------------
