@@ -33,7 +33,7 @@ const schemaGroups: Array<{ name: string; schemas: ParseableSchema[] }> = [
     name: 'domestic stock info',
     schemas: [
       domesticStockInfo.getProductBasicInfoResponseSchema,
-      domesticStockInfo.getBalanceSheetResponseSchema,
+      domesticStockInfo.getStockBasicInfoResponseSchema,
       domesticStockInfo.getKsdDividendDecisionResponseSchema,
       domesticStockInfo.getKsdPaidInCapitalIncreaseScheduleResponseSchema,
       domesticStockInfo.getInvestmentOpinionByBrokerageResponseSchema,

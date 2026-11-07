@@ -33,7 +33,7 @@ const hasZodDependency = async (): Promise<boolean> => {
 
 test('KIS metadata should expose expected endpoint count', () => {
   expect(domesticBasicQuoteEndpoints.length).toBe(21);
-  expect(domesticStockInfoEndpoints.length).toBe(26);
+  expect(domesticStockInfoEndpoints.length).toBe(19);
   expect(overseasAccountEndpoints.length).toBe(18);
   expect(overseasBasicQuoteEndpoints.length).toBe(13);
   expect(overseasMarketAnalysisEndpoints.length).toBe(15);
