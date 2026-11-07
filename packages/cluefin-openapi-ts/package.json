@@ -45,7 +45,7 @@
   ],
   "scripts": {
     "clean": "rm -rf dist",
-    "generate:metadata": "node ./scripts/generate-metadata.mjs",
+    "generate:metadata": "node ./scripts/generate-metadata.mjs && npm run format",
     "build:types": "tsc -p tsconfig.build.json",
     "build:js": "tsdown --config ./tsdown.config.ts",
     "build": "npm run clean && npm run build:types && npm run build:js",

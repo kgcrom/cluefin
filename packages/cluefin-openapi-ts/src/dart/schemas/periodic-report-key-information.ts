@@ -620,11 +620,11 @@ export const auditorNameAndOpinionItemSchema = z.object({
   /** 감사인 */
   adtor: z.string(),
   /** 감사의견 */
-  adt_opinion: z.string(),
+  adt_opinion: z.string().nullish(),
   /** 감사보고서 특기사항 */
   adt_reprt_spcmnt_matter: z.string(),
   /** 강조사항 등 */
-  emphs_matter: z.string(),
+  emphs_matter: z.string().nullish(),
   /** 핵심감사사항 */
   core_adt_matter: z.string().nullish(),
   /** 결산기준일 */

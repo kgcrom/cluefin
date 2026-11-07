@@ -84,11 +84,11 @@ export const multiCompanyMajorAccountItemSchema = z.object({
   /** 당기누적금액 (ex: 9,999,999,999) */
   thstrm_add_amount: z.string().nullish(),
   /** 전기명 (ex: 제 12 기말) */
-  frmtrm_nm: z.string(),
+  frmtrm_nm: z.string().nullish(),
   /** 전기일자 (ex: 2017.01.01 ~ 2017.12.31) */
-  frmtrm_dt: z.string(),
+  frmtrm_dt: z.string().nullish(),
   /** 전기금액 (ex: 9,999,999,999) */
-  frmtrm_amount: z.string(),
+  frmtrm_amount: z.string().nullish(),
   /** 전기누적금액 (ex: 9,999,999,999) */
   frmtrm_add_amount: z.string().nullish(),
   /** 전전기명 (ex: 제 11 기말(※ 사업보고서의 경우에만 출력)) */

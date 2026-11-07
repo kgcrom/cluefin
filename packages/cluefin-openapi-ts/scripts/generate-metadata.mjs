@@ -254,26 +254,50 @@ const resolveDictEntries = (entries, signatureParams, context) => {
   return { mappings, syntheticParams };
 };
 
+// 클라이언트 클래스가 아닌 `Protocol` 헬퍼(예: `class _XmlNode(Protocol): def findtext(...): ...`)는
+// 와이어 엔드포인트가 아니다. 메서드 정규식이 클래스 경계를 모르므로, 스캔 전에 그 본문을 통째로 잘라낸다.
+const stripProtocolClasses = (source) => {
+  const classHeaderRegex = /^class \w+\([^)]*\bProtocol\b[^)]*\):\n/m;
+  let result = source;
+  let header = classHeaderRegex.exec(result);
+  while (header) {
+    const bodyStart = header.index + header[0].length;
+    const relativeEnd = result.slice(bodyStart).search(/^class \w+/m);
+    const end = relativeEnd === -1 ? result.length : bodyStart + relativeEnd;
+    result = result.slice(0, header.index) + result.slice(end);
+    header = classHeaderRegex.exec(result);
+  }
+  return result;
+};
+
+// 엔드포인트 이름이 바뀌면 옛 이름은 `def old(self, *args, **kwargs): ... return self.new(*args, **kwargs)`
+// 형태의 deprecated 별칭으로 남는다 (AGENTS.md "Python method names were renamed … 2026-11-04"). 와이어 파라미터가
+// 없고 새 이름으로 이미 메타데이터가 나오므로, TS 에 다시 끌어오지 않는다.
+const isDeprecatedAliasSignature = (signature) =>
+  /^\*args,\s*\*\*kwargs$/.test(signature.replace(/^self,\s*/, '').trim());
+
 const extractMethods = (source) => {
+  const stripped = stripProtocolClasses(source);
   const methodRegex =
     /\n\s{4}def\s+([a-zA-Z0-9_]+)\s*\(([\s\S]*?)\)\s*(?:->\s*([^\n:]+))?:\n([\s\S]*?)(?=\n\s{4}def\s+|$)/g;
   const methods = [];
-  let match = methodRegex.exec(source);
+  let match = methodRegex.exec(stripped);
   while (match) {
     const snakeName = match[1];
-    if (snakeName === '__init__' || snakeName.startsWith('_')) {
-      match = methodRegex.exec(source);
+    const signature = match[2];
+    if (snakeName === '__init__' || snakeName.startsWith('_') || isDeprecatedAliasSignature(signature)) {
+      match = methodRegex.exec(stripped);
       continue;
     }
 
     methods.push({
       snakeName,
       methodName: toCamelCase(snakeName),
-      signature: match[2],
+      signature,
       returnType: match[3]?.trim(),
       block: match[4],
     });
-    match = methodRegex.exec(source);
+    match = methodRegex.exec(stripped);
   }
   return methods;
 };
@@ -406,9 +430,26 @@ const writeTs = (targetRelativePath, symbolName, importPath, data) => {
 // 파일로 저장하기 위한 파이썬 전용 kwarg — 와이어 파라미터가 아니다 (TS 는 바이트를 반환한다).
 const DART_LOCAL_ONLY_PARAMS = new Set(['destination', 'overwrite']);
 
+// 공개 메서드가 실제 호출을 비공개 헬퍼에 위임하는 경우(예: `disclosure_document_file`/`_files`
+// 가 공유 `_get_document_payload`를 통해 `_get_bytes`를 부른다) 메서드 본문에는 경로가 없다.
+// `self._helper(...)` 호출 하나를 한 단계만 따라가 그 헬퍼 본문에서 경로를 찾는다.
+const findHelperBody = (source, helperName) => {
+  const regex = new RegExp(
+    `\\n\\s{4}def\\s+${helperName}\\s*\\([\\s\\S]*?\\)\\s*(?:->\\s*[^\\n:]+)?:\\n([\\s\\S]*?)(?=\\n\\s{4}def\\s+|$)`,
+  );
+  return regex.exec(source)?.[1] ?? '';
+};
+
 const extractDartMethods = (source, symbolName) =>
   extractMethods(source).map((method) => {
-    const pathMatch = method.block.match(/_get(_bytes)?\(\s*["']([^"']+)["']/);
+    const pathPattern = /_get(_bytes)?\(\s*["']([^"']+)["']/;
+    let pathMatch = method.block.match(pathPattern);
+    if (!pathMatch) {
+      const helperCall = method.block.match(/self\.(_[a-zA-Z0-9_]+)\(/);
+      if (helperCall) {
+        pathMatch = findHelperBody(source, helperCall[1]).match(pathPattern);
+      }
+    }
     const signatureParams = parseSignatureParams(method.signature).filter(
       (param) => param.snakeName !== '*' && !DART_LOCAL_ONLY_PARAMS.has(param.snakeName),
     );
@@ -439,15 +480,18 @@ const extractDartMethods = (source, symbolName) =>
     };
   });
 
-const buildDartMetadata = (sourceRelativePath, symbolName) => {
+const buildDartMetadata = (sourceRelativePath, symbolName, excludeMethods = []) => {
   const source = fs.readFileSync(resolveWithinRoot(workspaceRoot, sourceRelativePath), 'utf8');
-  return extractDartMethods(source, symbolName).map((method) => ({
-    methodName: method.methodName,
-    path: method.path,
-    queryMap: Object.fromEntries(method.signatureParams.map((param) => [param.snakeName, param.name])),
-    responseKind: method.responseKind,
-    params: stripInternalFields(method.signatureParams),
-  }));
+  const excluded = new Set(excludeMethods);
+  return extractDartMethods(source, symbolName)
+    .filter((method) => !excluded.has(method.methodName))
+    .map((method) => ({
+      methodName: method.methodName,
+      path: method.path,
+      queryMap: Object.fromEntries(method.signatureParams.map((param) => [param.snakeName, param.name])),
+      responseKind: method.responseKind,
+      params: stripInternalFields(method.signatureParams),
+    }));
 };
 
 // 파이썬 문자열 리터럴(이어붙이기 포함) → 값. `description=("a" "b")` 형태를 지원한다.
@@ -492,7 +536,9 @@ const parseDartClasses = (source) => {
       fields.push({
         name: field[1],
         annotation,
-        nullable: /^Optional\[/.test(annotation) || /\bdefault\s*=\s*None\b/.test(args),
+        // `Optional[X]`(옛 방식)과 `X | None`(2026-10-25 통일, #175) 둘 다 nullable 신호다.
+        nullable:
+          /^Optional\[/.test(annotation) || /\|\s*None\s*$/.test(annotation) || /\bdefault\s*=\s*None\b/.test(args),
         // alias 는 한글 라벨일 뿐 와이어 키가 아니다 (필드명이 와이어 키). description 이 없으면 라벨을 주석으로 쓴다.
         comment: description ? pythonStrings(description[1]) : alias ? pythonStrings(alias) : '',
       });
@@ -502,7 +548,11 @@ const parseDartClasses = (source) => {
 };
 
 const zodForAnnotation = (annotation, context) => {
-  const inner = annotation.replace(/^Optional\[(.*)\]$/, '$1').trim();
+  // 파이썬 타입 표기는 `Optional[X]`(옛 방식)와 `X | None`(2026-10-25 통일, #175) 둘 다 쓰인다.
+  const inner = annotation
+    .replace(/^Optional\[(.*)\]$/, '$1')
+    .replace(/\s*\|\s*None\s*$/, '')
+    .trim();
   if (inner === 'str' || inner === 'DartStatusCode') return 'z.string()';
   // pydantic 은 숫자 문자열("1000")도 int/float 로 강제변환하므로 와이어 값이 문자열일 수 있다.
   if (inner === 'int' || inner === 'float') return 'dartNumeric';
@@ -769,6 +819,10 @@ const dartCategories = [
     mapName: 'PublicDisclosureResponseMap',
     // 공시검색·원문·고유번호 응답은 도메인 클래스가 직접 가공한다 (고유번호는 XML 이라 스키마 대상이 아니다).
     excludeMethods: ['corpCode'],
+    // `disclosure_document_files`는 `disclosure_document_file`과 같은 `/api/document.xml`을 호출하고
+    // ZIP 의 XML 을 전부 푸느냐만 다르다 (`public-disclosure.ts`가 같은 메타데이터 엔트리를 재사용).
+    // 별도 엔트리로 두면 경로가 겹쳐 `tests/dart/metadata.test.ts`의 경로 유일성 검사가 깨진다.
+    excludeFromMetadata: ['disclosureDocumentFiles'],
   },
   {
     file: 'share_disclosure_comprehensive',
@@ -792,8 +846,11 @@ const dartCategories = [
   {
     file: 'major_shareholder_disclosure',
     out: 'major-shareholder-disclosure',
-    symbolName: 'majorShareholderDisclosureEndpoints',
-    mapName: 'MajorShareholderDisclosureResponseMap',
+    // 파이썬·TS 클래스 모두 2026-11-04 (B-13) 에 `MajorMattersReport`로 개명됐다(주요사항보고서는
+    // 주요주주 공시가 아니라서) — `MajorShareholderDisclosure`는 하위호환용 별칭으로만 남는다.
+    // 심볼 이름은 파일 이름을 따르지 않는다.
+    symbolName: 'majorMattersReportEndpoints',
+    mapName: 'MajorMattersReportResponseMap',
   },
 ];
 
@@ -803,6 +860,7 @@ for (const category of dartCategories) {
     targetPath: `${dartOut}/metadata/${category.out}.ts`,
     symbolName: category.symbolName,
     kind: 'dart',
+    excludeFromMetadata: category.excludeFromMetadata ?? [],
   });
 }
 
@@ -821,7 +879,7 @@ const importTypes = {
 };
 
 for (const task of tasks) {
-  const data = builders[task.kind](task.sourcePath, task.symbolName);
+  const data = builders[task.kind](task.sourcePath, task.symbolName, task.excludeFromMetadata);
   const importType = importTypes[task.kind];
   writeTs(task.targetPath, task.symbolName, importType, data);
   console.log(`${task.symbolName}: ${data.length}`);
