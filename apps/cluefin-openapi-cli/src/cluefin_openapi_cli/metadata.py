@@ -765,13 +765,6 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
     "kis.etf.current-price": CommandTaxonomy(("etf", "quote"), ("current-price", "nav")),
     "kis.etf.daily": CommandTaxonomy(("etf", "chart"), ("nav", "daily")),
     "kis.etf.nav-trend": CommandTaxonomy(("etf",), ("nav",)),
-    "kis.financial.balance-sheet": CommandTaxonomy(("statements",), ("financial-statement",)),
-    "kis.financial.growth": CommandTaxonomy(("statements",), ("financial-ratio",)),
-    "kis.financial.income-statement": CommandTaxonomy(("statements",), ("financial-statement",)),
-    "kis.financial.other-key": CommandTaxonomy(("statements",), ("financial-ratio",)),
-    "kis.financial.profitability": CommandTaxonomy(("statements",), ("financial-ratio",)),
-    "kis.financial.ratio": CommandTaxonomy(("statements",), ("financial-ratio",)),
-    "kis.financial.stability": CommandTaxonomy(("statements",), ("financial-ratio",)),
     "kis.market.announcement": CommandTaxonomy(("news", "market"), ("announcement", "disclosure")),
     "kis.market.futures-business-day": CommandTaxonomy(("market-calendar", "market"), ("market-calendar",)),
     "kis.market.holiday": CommandTaxonomy(("market-calendar", "market"), ("market-calendar",)),
@@ -993,7 +986,6 @@ _CATEGORY_DEFAULTS: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
     "sec": (("statements",), ("us-filing",)),
     "ecos": (("macro",), ("economic-series",)),
     "etf": (("etf", "market"), ("current-price",)),
-    "financial": (("statements",), ("financial-statement", "financial-ratio")),
     "market": (("market",), ("market-calendar",)),
     "program": (("trading-flow", "market"), ("program-trading",)),
     "ranking": (("market",), ("ranking",)),
@@ -1062,13 +1054,6 @@ CATEGORY_INFO: dict[str, CategoryInfo] = {
         when_to_use="Use for ETF-specific state; a plain equity quote belongs in stock.",
         domains=_CATEGORY_DEFAULTS["etf"][0],
         tags=_CATEGORY_DEFAULTS["etf"][1],
-    ),
-    "financial": CategoryInfo(
-        name="financial",
-        description="Reported financial statements and derived ratios.",
-        when_to_use="Use for balance sheet, income statement, and profitability/stability/growth ratios.",
-        domains=_CATEGORY_DEFAULTS["financial"][0],
-        tags=_CATEGORY_DEFAULTS["financial"][1],
     ),
     "market": CategoryInfo(
         name="market",
@@ -1311,8 +1296,8 @@ QUERY_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("실적", ("earnings", "estimate", "income", "financial", "statement", "account")),
     ("매출액", ("revenue", "sale", "income", "statement", "account")),
     ("매출", ("revenue", "sale", "income", "statement", "account")),
-    ("영업이익", ("operating", "income", "profit", "statement", "account")),
-    ("순이익", ("net", "income", "profit", "statement", "account")),
+    ("영업이익", ("operating", "income", "statement", "account")),
+    ("순이익", ("net", "income", "statement", "account")),
     ("반기", ("half", "year", "periodic", "report", "statement")),
     ("분기", ("quarterly", "periodic", "report", "statement")),
     ("지지선", ("resistance", "level")),
@@ -1494,8 +1479,6 @@ def build_agent_notes(
         )
     if category == "chart":
         return f"{base} Use chart output as provider-normalized market data before calculating technical indicators."
-    if category == "financial":
-        return f"{base} Use for statements and financial ratios; confirm fiscal period fields in the response."
     if category == "schedule":
         return f"{base} Use for corporate-action and market-calendar event discovery."
     if category in {"analysis", "program"} or "investor" in name:

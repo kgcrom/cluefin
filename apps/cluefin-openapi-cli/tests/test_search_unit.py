@@ -21,7 +21,7 @@ def _json(argv: list[str]) -> tuple[int, dict]:
 # Every row here returned 0 results from `list --query` before `search` existed.
 RECALL_CASES = [
     ("외국인 순매수 상위 종목", "foreign"),
-    ("재무제표", "kis.financial.balance-sheet"),
+    ("재무제표", "dart.financial"),
     ("moving average", "chart"),
     ("rsi", "chart"),
     ("foreign net buying", "foreign"),
