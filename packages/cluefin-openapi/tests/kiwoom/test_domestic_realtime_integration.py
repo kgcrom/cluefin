@@ -16,11 +16,14 @@ from pydantic import BaseModel
 from cluefin_openapi.kiwoom._domestic_realtime import DomesticRealtime
 from cluefin_openapi.kiwoom._domestic_realtime_types import (
     DomesticRealtimeStockExecution,
+    DomesticRealtimeStockExecutionValues,
     DomesticRealtimeStockQuoteRemaining,
+    DomesticRealtimeStockQuoteRemainingValues,
 )
 from cluefin_openapi.kiwoom._socket_client import KiwoomWebSocketClient, KiwoomWebSocketMessage
 
 from ._integration_helpers import kiwoom_env
+from ._realtime_spec_conformance import assert_real_frame_key_conformance
 
 pytestmark = [
     pytest.mark.integration,
@@ -31,6 +34,12 @@ pytestmark = [
 
 STK_CD = "005930"
 TIMEOUT_SECONDS = 30
+
+# REAL 프레임 data[].values 키 대조용 — 등록한 type 만 다룬다 (나머지 type 은 skip).
+_VALUES_MODELS = {
+    "0B": DomesticRealtimeStockExecutionValues,
+    "0D": DomesticRealtimeStockQuoteRemainingValues,
+}
 
 
 @pytest.fixture(scope="module")
@@ -44,6 +53,7 @@ async def _receive_each(ws: KiwoomWebSocketClient, *models: type[BaseModel]) -> 
 
     async def wait() -> None:
         async for message in ws.events():
+            assert_real_frame_key_conformance(message, _VALUES_MODELS)
             for parsed in DomesticRealtime.parse(message):
                 received.setdefault(type(parsed), parsed)
             if all(model in received for model in models):

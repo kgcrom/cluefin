@@ -13,11 +13,14 @@ from pydantic import BaseModel
 from cluefin_openapi.kiwoom._overseas_realtime import OverseasRealtime
 from cluefin_openapi.kiwoom._overseas_realtime_types import (
     OverseasRealtimeExecutionPrice,
+    OverseasRealtimeExecutionPriceValues,
     OverseasRealtimeTenQuotes,
+    OverseasRealtimeTenQuotesValues,
 )
 from cluefin_openapi.kiwoom._socket_client import KiwoomWebSocketClient
 
 from ._integration_helpers import kiwoom_env
+from ._realtime_spec_conformance import assert_real_frame_key_conformance
 
 pytestmark = [
     pytest.mark.integration,
@@ -28,6 +31,12 @@ pytestmark = [
 
 STOCK = ("AAPL", "ND")
 TIMEOUT_SECONDS = 30
+
+# REAL 프레임 data[].values 키 대조용 — 등록한 TR 만 다룬다 (나머지 TR 은 skip).
+_VALUES_MODELS = {
+    OverseasRealtime.TR_EXECUTION_PRICE: OverseasRealtimeExecutionPriceValues,
+    OverseasRealtime.TR_TEN_QUOTES: OverseasRealtimeTenQuotesValues,
+}
 
 
 @pytest.fixture(scope="module")
@@ -46,6 +55,7 @@ async def _receive_first(ws: KiwoomWebSocketClient, model: type[BaseModel]) -> B
 
     async def wait() -> BaseModel | None:
         async for message in ws.events():
+            assert_real_frame_key_conformance(message, _VALUES_MODELS)
             for parsed in OverseasRealtime.parse(message):
                 if isinstance(parsed, model):
                     return parsed
