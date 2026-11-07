@@ -131,37 +131,6 @@ class TestWatchlistCalls:
         analysis.get_watchlist_multi_quote.assert_not_called()
 
 
-class TestSplitAnnualAndYtd:
-    split = staticmethod(DomesticDataFetcher._split_annual_and_ytd)
-
-    def test_empty(self):
-        assert self.split([], "12") == (None, None)
-
-    def test_no_settlement_month_returns_newest_as_annual(self):
-        rows = [_ratio_row("202512"), _ratio_row("202606")]
-        annual, ytd = self.split(rows, None)
-        assert annual.stac_yymm == "202606"
-        assert ytd is None
-
-    def test_in_progress_cumulative_row_becomes_ytd(self):
-        rows = [_ratio_row("202606"), _ratio_row("202512"), _ratio_row("202412")]
-        annual, ytd = self.split(rows, "12")
-        assert annual.stac_yymm == "202512"
-        assert ytd.stac_yymm == "202606"
-
-    def test_no_ytd_when_newest_is_the_completed_year(self):
-        rows = [_ratio_row("202512"), _ratio_row("202412")]
-        annual, ytd = self.split(rows, "12")
-        assert annual.stac_yymm == "202512"
-        assert ytd is None
-
-    def test_unmatched_settlement_month_falls_back_to_newest(self):
-        rows = [_ratio_row("202606"), _ratio_row("202603")]
-        annual, ytd = self.split(rows, "12")
-        assert annual.stac_yymm == "202606"
-        assert ytd is None
-
-
 class TestDescribeState:
     def test_normal(self):
         assert DomesticDataFetcher._describe_state("N", "N") == "정상"
@@ -214,13 +183,11 @@ def _kis_product_output(**overrides):
     return SimpleNamespace(**fields)
 
 
-def _install_kis_mock(fetcher, price=None, product=None, ratios=None, statements=None):
+def _install_kis_mock(fetcher, price=None, product=None):
     """Inject a fake KIS client so no property-triggered auth happens."""
     kis = MagicMock()
     kis.domestic_basic_quote.get_stock_current_price.return_value.body.output = price
     kis.domestic_stock_info.get_stock_basic_info.return_value.body.output = product
-    kis.domestic_stock_info.get_financial_ratio.return_value.body.output = ratios or []
-    kis.domestic_stock_info.get_income_statement.return_value.body.output = statements or []
     fetcher._kis_client = kis
     return kis
 
@@ -248,43 +215,20 @@ class TestBasicDataDispatch:
     def test_with_kis_uses_kis_and_keeps_widget_keys(self, monkeypatch):
         fetcher = _make_fetcher(monkeypatch, kis_app_key="k", kis_secret_key="s")
         fetcher.kiwoom_client = MagicMock()
-        statement = SimpleNamespace(
-            stac_yymm="202512", sale_account="3000000", sale_totl_prfi="", bsop_prti="350000", thtr_ntin="300000"
-        )
-        _install_kis_mock(
-            fetcher,
-            price=_kis_price_output(),
-            product=_kis_product_output(),
-            ratios=[_ratio_row("202512"), _ratio_row("202606", roe_val="4.0")],
-            statements=[statement],
-        )
+        _install_kis_mock(fetcher, price=_kis_price_output(), product=_kis_product_output())
 
         df = asyncio.run(fetcher.get_basic_data("005930"))
 
         row = df.iloc[0]
         # widget-facing keys shared with the Kiwoom shape
-        for key in ("stock_name", "market_name", "sector_name", "market_cap", "per", "pbr", "roe", "eps", "bps"):
+        for key in ("stock_name", "market_name", "sector_name", "market_cap", "per", "pbr", "eps", "bps"):
             assert key in df.columns, key
         assert row["stock_name"] == "삼성전자"
-        # annual (202512), not the in-progress cumulative row (202606)
-        assert row["roe"] == "10.0"
-        assert row["financial_period"] == "202512"
-        assert row["ytd_period"] == "202606"
-        assert row["revenue"] == "3000000"
-        assert row["state"] == "정상"
-        fetcher.kiwoom_client.stock_info.get_stock_info.assert_not_called()
-
-    def test_kis_financial_failure_degrades_to_no_financial_columns(self, monkeypatch):
-        fetcher = _make_fetcher(monkeypatch, kis_app_key="k", kis_secret_key="s")
-        kis = _install_kis_mock(fetcher, price=_kis_price_output(), product=_kis_product_output())
-        kis.domestic_stock_info.get_financial_ratio.side_effect = KISAPIError("no data")
-        kis.domestic_stock_info.get_income_statement.side_effect = KISAPIError("no data")
-
-        df = asyncio.run(fetcher.get_basic_data("069500"))
-
-        assert df.iloc[0]["stock_name"] == "삼성전자"
+        # KIS 재무비율·손익계산서는 2026-11-11 서비스 종료로 호출하지 않는다
         assert "roe" not in df.columns
         assert "revenue" not in df.columns
+        assert row["state"] == "정상"
+        fetcher.kiwoom_client.stock_info.get_stock_info.assert_not_called()
 
 
 class TestInvestorTrendDaily:

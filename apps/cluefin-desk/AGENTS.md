@@ -44,8 +44,6 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   화면을 두지 않았다. 관심 그룹은 MTS 에서 만든 것도 바로 보인다.
 - 종목코드는 숫자만이 아니다 — 신규 상장·우선주 일부가 `0001A0`·`00088K` 꼴이다(키움 ka10099 기준 86개).
   코드 형식을 `isdigit()`·`[0-9]{6}` 로 거르지 않는다(`data/listing.is_stock_code`).
-- KIS 재무 시계열은 문서와 달리 진행연도 누적 행이 맨 앞에 온다(실측).
-  `_split_annual_and_ytd` 를 우회해 첫 행을 연간으로 쓰면 ROE·성장률이 부풀려진다.
 
 ## 지표 → ML 피처 경로
 

@@ -73,7 +73,7 @@ class DomesticDataFetcher:
 
         Both paths return the same widget-facing keys (stock_name, market_cap,
         per/pbr/roe/eps/bps, sector_name, market_name); the KIS path adds price,
-        52-week, supply/demand and financial columns on top.
+        52-week and supply/demand columns on top.
         """
         if self.has_kis:
             return self._get_basic_data_kis(stock_code)
@@ -151,134 +151,7 @@ class DomesticDataFetcher:
                 }
             )
 
-        merged_data.update(
-            self._fetch_financial_metrics(stock_code, settlement_month=merged_data.get("settlement_month"))
-        )
-
         return pd.DataFrame([merged_data])
-
-    def _fetch_financial_metrics(self, stock_code: str, settlement_month: str | None = None) -> dict[str, Any]:
-        """Fill in the profitability/scale figures the quote response omits.
-
-        KIS 재무비율 (FHKST66430300) and 손익계산서 (FHKST66430200) cover ROE, 매출액,
-        영업이익 and 당기순이익. Neither exists for ETF/ETN, so a failure here degrades
-        to "no financial rows" rather than failing the whole lookup.
-
-        `fid_div_cls_code="0"` is documented as 년(annual) but the live series leads with
-        the *in-progress* fiscal year's cumulative figures. Reporting that row as annual
-        inflates ROE and every growth rate, so the completed year is used for the
-        headline numbers and the cumulative row is surfaced separately as YTD.
-        """
-        metrics: dict[str, Any] = {}
-
-        annual_ratio, ytd_ratio = self._split_annual_and_ytd(
-            self.get_financial_ratio_series(stock_code), settlement_month
-        )
-        if annual_ratio is not None:
-            metrics.update(
-                {
-                    "financial_period": annual_ratio.stac_yymm,
-                    "roe": annual_ratio.roe_val,
-                    "revenue_growth_rate": annual_ratio.grs,
-                    "operating_profit_growth_rate": annual_ratio.bsop_prfi_inrt,
-                    "net_profit_growth_rate": annual_ratio.ntin_inrt,
-                    "debt_ratio": annual_ratio.lblt_rate,
-                    "reserve_ratio": annual_ratio.rsrv_rate,
-                }
-            )
-        if ytd_ratio is not None:
-            metrics.update(
-                {
-                    "ytd_period": ytd_ratio.stac_yymm,
-                    "ytd_roe": ytd_ratio.roe_val,
-                    "ytd_debt_ratio": ytd_ratio.lblt_rate,
-                }
-            )
-
-        annual_statement, ytd_statement = self._split_annual_and_ytd(
-            self.get_income_statement_series(stock_code), settlement_month
-        )
-        if annual_statement is not None:
-            metrics.update(
-                {
-                    "financial_period": annual_statement.stac_yymm,
-                    "revenue": annual_statement.sale_account,
-                    "operating_profit": annual_statement.bsop_prti,
-                    "net_profit": annual_statement.thtr_ntin,
-                }
-            )
-        if ytd_statement is not None:
-            metrics.update(
-                {
-                    "ytd_period": ytd_statement.stac_yymm,
-                    "ytd_revenue": ytd_statement.sale_account,
-                    "ytd_operating_profit": ytd_statement.bsop_prti,
-                    "ytd_net_profit": ytd_statement.thtr_ntin,
-                }
-            )
-
-        return metrics
-
-    def get_financial_ratio_series(self, stock_code: str) -> list:
-        """KIS 재무비율 series (년 단위 + 진행연도 누적 행), newest first on live.
-
-        Degrades to [] for ETF/ETN and other names with no financial rows.
-        """
-        try:
-            return (
-                self.kis_client.domestic_stock_info.get_financial_ratio(
-                    fid_div_cls_code="0",
-                    fid_cond_mrkt_div_code="J",
-                    fid_input_iscd=stock_code,
-                ).body.output
-                or []
-            )
-        # ValidationError 도 [] 로 강등되면 화면은 '데이터 없음'과 구분하지 못한다(#94 이전에
-        # max_length 가 실서버 값을 거부한 사례). 로그에서라도 구분되게 warning 으로 남긴다.
-        except (KISAPIError, ValidationError) as exc:
-            logger.warning(f"financial ratio unavailable for {stock_code}: {exc}")
-            return []
-
-    def get_income_statement_series(self, stock_code: str) -> list:
-        """KIS 손익계산서 series (년 단위 + 진행연도 누적 행), newest first on live.
-
-        Degrades to [] for ETF/ETN and other names with no financial rows.
-        """
-        try:
-            return (
-                self.kis_client.domestic_stock_info.get_income_statement(
-                    fid_div_cls_code="0",
-                    fid_cond_mrkt_div_code="J",
-                    fid_input_iscd=stock_code,
-                ).body.output
-                or []
-            )
-        except (KISAPIError, ValidationError) as exc:
-            logger.warning(f"income statement unavailable for {stock_code}: {exc}")
-            return []
-
-    @staticmethod
-    def _split_annual_and_ytd(items, settlement_month: str | None):
-        """Split the KIS "년" series into (completed fiscal year, in-progress cumulative).
-
-        A row belongs to a completed year when its 결산 년월 ends on the company's
-        settlement month. Without a usable settlement month there is nothing to compare
-        against, so the newest row is treated as annual and no YTD row is reported.
-        """
-        if not items:
-            return None, None
-
-        ordered = sorted(items, key=lambda item: item.stac_yymm, reverse=True)
-        if not settlement_month:
-            return ordered[0], None
-
-        month = str(settlement_month).zfill(2)
-        annual = next((item for item in ordered if item.stac_yymm[4:] == month), None)
-        if annual is None:
-            return ordered[0], None
-
-        ytd = ordered[0] if ordered[0].stac_yymm != annual.stac_yymm else None
-        return annual, ytd
 
     @staticmethod
     def _describe_state(admin_issue_yn: str, trading_halt_yn: str) -> str:

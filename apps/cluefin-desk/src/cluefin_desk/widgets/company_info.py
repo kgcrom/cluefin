@@ -49,16 +49,6 @@ class CompanyInfoWidget(Static):
             f"BPS: {row.get('bps', 'N/A')}",
         ]
 
-        if cls._has(row, "financial_period"):
-            lines += [
-                "",
-                f"[bold]Financials ({row.get('financial_period')})[/bold]",
-                f"매출액: {row.get('revenue', '-')}",
-                f"영업이익: {row.get('operating_profit', '-')}",
-                f"당기순이익: {row.get('net_profit', '-')}",
-                f"부채비율: {row.get('debt_ratio', '-')}%",
-            ]
-
         if cls._has(row, "foreign_exhaustion_rate"):
             lines += [
                 "",
