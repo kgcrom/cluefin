@@ -1,3 +1,5 @@
+from datetime import date, timedelta
+
 import pytest
 
 from cluefin_openapi.kiwoom._client import Client
@@ -28,8 +30,9 @@ from cluefin_openapi.kiwoom._domestic_account_types import (
     DomesticAccountUnexecuted,
     DomesticAccountUnexecutedSplitOrderDetails,
 )
+from cluefin_openapi.kiwoom._exceptions import KiwoomAPIError
 
-from ._integration_helpers import real_account_only
+from ._integration_helpers import real_account_only, skip_if_env_blocked
 from ._spec_conformance import assert_spec_conformance
 
 
@@ -130,7 +133,12 @@ def test_get_deposit_balance_details(client: Client):
 @pytest.mark.integration
 @real_account_only("kt00002", "RC9000:모의투자에서는 해당업무가 제공되지 않습니다")
 def test_get_daily_estimated_deposit_asset_balance(client: Client):
-    response = client.account.get_daily_estimated_deposit_asset_balance("20240601", "20240630")
+    # 2024-06 고정 구간은 prod 실계좌에 해당 기간 추정예탁자산 내역이 없어 506476 오류가 난다
+    # (2026-11-07 실측). 최근 30일로 바꿔 매 실행 시점에 데이터가 있게 한다.
+    today = date.today()
+    response = client.account.get_daily_estimated_deposit_asset_balance(
+        (today - timedelta(days=30)).strftime("%Y%m%d"), today.strftime("%Y%m%d")
+    )
     assert_spec_conformance(client, response)
 
     assert response is not None
@@ -206,9 +214,20 @@ def test_get_account_order_execution_status(client: Client):
 @pytest.mark.integration
 @real_account_only("kt00010", "RC7006:모의투자 조회실패")
 def test_get_available_withdrawal_amount(client: Client):
-    response = client.account.get_available_withdrawal_amount(
-        io_amt="1000000", stk_cd="005930", trde_tp="1", trde_qty="10", uv="50000", exp_buy_unp="60000"
-    )
+    # 하드코딩 단가(50000/60000)는 prod 가격밴드 검증에 걸린다(508975, 2026-11-07 실측) — 당일 종가로 맞춘다.
+    # trde_tp="1"(매도)는 보유 종목이 없으면 571455 로 거절되므로 매수(trde_tp="2") 로 확인한다.
+    price = abs(int(client.market_conditions.get_stock_price(stk_cd="005930").body.close_pric))
+    try:
+        response = client.account.get_available_withdrawal_amount(
+            io_amt="1000000",
+            stk_cd="005930",
+            trde_tp="2",
+            trde_qty="10",
+            uv=str(price),
+            exp_buy_unp=str(price),
+        )
+    except KiwoomAPIError as e:
+        skip_if_env_blocked(e)
     assert_spec_conformance(client, response)
 
     assert response is not None
@@ -227,7 +246,14 @@ def test_get_available_order_quantity_by_margin_rate(client: Client):
 @pytest.mark.integration
 @real_account_only("kt00012", "RC9000:모의투자에서는 해당업무가 제공되지 않습니다")
 def test_get_available_order_quantity_by_margin_loan_stock(client: Client):
-    response = client.account.get_available_order_quantity_by_margin_loan_stock(stk_cd="005930", uv="50000")
+    # prod 실측(2026-11-07): 일반 위탁 계좌는 503721:신용계좌만 조회가능합니다 로 거절된다 — 신용계좌가
+    # 있어야 모양을 검증할 수 있다 (TS domestic-account.integration.test.ts 의 kt00012 와 동일 사유).
+    try:
+        response = client.account.get_available_order_quantity_by_margin_loan_stock(stk_cd="005930", uv="50000")
+    except KiwoomAPIError as e:
+        if "503721" in e.message:
+            pytest.skip(f"신용계좌가 아니면 조회 불가: {e.message}")
+        raise
     assert_spec_conformance(client, response)
 
     assert response is not None

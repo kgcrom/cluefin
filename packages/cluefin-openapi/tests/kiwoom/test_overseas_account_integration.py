@@ -1,6 +1,7 @@
 import pytest
 
 from cluefin_openapi.kiwoom._client import Client
+from cluefin_openapi.kiwoom._exceptions import KiwoomAPIError
 from cluefin_openapi.kiwoom._overseas_account_types import (
     OverseasAccountDailyOrderExecutionHistory,
     OverseasAccountDailyProfitRate,
@@ -32,7 +33,7 @@ from cluefin_openapi.kiwoom._overseas_account_types import (
     OverseasAccountYearlyStockProfitRate,
 )
 
-from ._integration_helpers import real_account_only
+from ._integration_helpers import real_account_only, skip_if_env_blocked
 from ._spec_conformance import assert_spec_conformance
 
 
@@ -141,14 +142,18 @@ def test_get_ledger_balance(client: Client):
 @pytest.mark.integration
 @real_account_only("ust21100", "RC9000:모의투자에서는 해당업무가 제공되지 않습니다")
 def test_get_transaction_history(client: Client):
-    response = client.overseas_account.get_transaction_history(
-        strt_dt="20240102",
-        end_dt="20240131",
-        tp="0",
-        stex_tp="ND",
-        stk_cd="AAPL",
-        krw_repl_skip_yn="N",
-    )
+    # prod 실계좌에 해외 거래내역이 전혀 없으면 501724 로 거절된다 (2026-11-07 실측) — 모양은 못 본다.
+    try:
+        response = client.overseas_account.get_transaction_history(
+            strt_dt="20240102",
+            end_dt="20240131",
+            tp="0",
+            krw_repl_skip_yn="N",
+            stex_tp="ND",
+            stk_cd="AAPL",
+        )
+    except KiwoomAPIError as e:
+        skip_if_env_blocked(e)
     assert_spec_conformance(client, response)
 
     assert response is not None
@@ -204,7 +209,11 @@ def test_get_ledger_valuation_amount(client: Client):
 @pytest.mark.integration
 @real_account_only("ust21131", "RC9000:모의투자에서는 해당업무가 제공되지 않습니다")
 def test_get_valuation_amount_by_date(client: Client):
-    response = client.overseas_account.get_valuation_amount_by_date(base_dt="20240102")
+    # prod 실계좌에 그 날짜 평가 내역이 없으면 571758 로 거절된다 (2026-11-07 실측) — 모양은 못 본다.
+    try:
+        response = client.overseas_account.get_valuation_amount_by_date(base_dt="20240102")
+    except KiwoomAPIError as e:
+        skip_if_env_blocked(e)
     assert_spec_conformance(client, response)
 
     assert response is not None
@@ -269,14 +278,18 @@ def test_get_today_realized_profit_loss_by_stock(client: Client):
 @pytest.mark.integration
 @real_account_only("ust21180", "RC9000:모의투자에서는 해당업무가 제공되지 않습니다")
 def test_get_order_history_by_period(client: Client):
-    response = client.overseas_account.get_order_history_by_period(
-        strt_dt="20240102",
-        end_dt="20240131",
-        slby_tp="0",
-        stex_tp="ND",
-        stk_cd="AAPL",
-        oppo_trde_tp="0",
-    )
+    # prod 실계좌에 해외 주문 내역이 없으면 571758 로 거절된다 (2026-11-07 실측) — 모양은 못 본다.
+    try:
+        response = client.overseas_account.get_order_history_by_period(
+            strt_dt="20240102",
+            end_dt="20240131",
+            stk_cd="AAPL",
+            slby_tp="0",
+            stex_tp="ND",
+            oppo_trde_tp="0",
+        )
+    except KiwoomAPIError as e:
+        skip_if_env_blocked(e)
     assert_spec_conformance(client, response)
 
     assert response is not None
@@ -379,7 +392,11 @@ def test_get_daily_realized_profit_loss(client: Client):
 @pytest.mark.integration
 @real_account_only("ust21661", "RC9000:모의투자에서는 해당업무가 제공되지 않습니다")
 def test_get_monthly_realized_profit_loss(client: Client):
-    response = client.overseas_account.get_monthly_realized_profit_loss(strt_dt="202401", end_dt="202406")
+    # prod 실계좌에 그 달 실현손익 내역이 없으면 506372 로 거절된다 (2026-11-07 실측) — 모양은 못 본다.
+    try:
+        response = client.overseas_account.get_monthly_realized_profit_loss(strt_dt="202401", end_dt="202406")
+    except KiwoomAPIError as e:
+        skip_if_env_blocked(e)
     assert_spec_conformance(client, response)
 
     assert response is not None
