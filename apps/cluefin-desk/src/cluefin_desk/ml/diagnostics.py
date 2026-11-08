@@ -265,8 +265,7 @@ class MLDiagnostics:
             self.console.print(
                 Panel(
                     "[red]⚠️ 심각한 클래스 불균형 감지!\n"
-                    "• SMOTE 오버샘플링 적용 권장\n"
-                    "• 클래스 가중치 조정 필요\n"
+                    "• 클래스 가중치 조정 필요(학습은 class_weight=balanced)\n"
                     "• Stratified 샘플링 사용 권장[/red]",
                     title="클래스 불균형 경고",
                     border_style="red",
@@ -383,7 +382,6 @@ class MLDiagnostics:
 
         # 타겟 불균형 관련 권장사항
         if target_analysis["is_severely_imbalanced"]:
-            recommendations.append("SMOTE나 ADASYN을 사용한 오버샘플링 적용")
             recommendations.append("클래스 가중치를 자동으로 조정하는 'balanced' 옵션 사용")
             recommendations.append("Stratified 교차 검증 사용")
 

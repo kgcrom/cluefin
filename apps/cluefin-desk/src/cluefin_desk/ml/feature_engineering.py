@@ -14,14 +14,6 @@ from sklearn.preprocessing import StandardScaler
 
 logger = logging.getLogger(__name__)
 
-try:
-    from imblearn.over_sampling import SMOTE
-
-    SMOTE_AVAILABLE = True
-except ImportError:
-    SMOTE_AVAILABLE = False
-    logger.warning("imbalanced-learn not available. SMOTE oversampling will be disabled.")
-
 
 class FeatureEngineer:
     """
@@ -384,72 +376,3 @@ class FeatureEngineer:
             return train_normalized, test_normalized
 
         return train_normalized, None
-
-    def apply_smote_oversampling(
-        self, X: pd.DataFrame, y: pd.Series, sampling_strategy: str = "auto", random_state: int = 42
-    ) -> tuple[pd.DataFrame, pd.Series]:
-        """
-        Apply SMOTE oversampling to handle class imbalance.
-
-        Args:
-            X: Feature dataframe
-            y: Target series
-            sampling_strategy: SMOTE sampling strategy ('auto', 'minority', float)
-            random_state: Random state for reproducibility
-
-        Returns:
-            Tuple of (resampled_X, resampled_y)
-        """
-        if not SMOTE_AVAILABLE:
-            logger.warning("SMOTE not available. Returning original data.")
-            return X, y
-
-        try:
-            logger.info("Applying SMOTE oversampling...")
-
-            # Check class distribution before SMOTE
-            original_dist = y.value_counts()
-            logger.info(f"Original class distribution: {original_dist.to_dict()}")
-
-            # Apply SMOTE
-            smote = SMOTE(sampling_strategy=sampling_strategy, random_state=random_state)
-            X_resampled, y_resampled = smote.fit_resample(X, y)
-
-            # Convert back to DataFrame/Series with original column names
-            X_resampled = pd.DataFrame(X_resampled, columns=X.columns)
-            y_resampled = pd.Series(y_resampled, name=y.name)
-
-            # Check class distribution after SMOTE
-            new_dist = y_resampled.value_counts()
-            logger.info(f"After SMOTE class distribution: {new_dist.to_dict()}")
-            logger.info(f"Data size increased from {len(X)} to {len(X_resampled)} samples")
-
-            return X_resampled, y_resampled
-
-        except Exception as e:
-            logger.error(f"Error applying SMOTE: {e}")
-            return X, y
-
-    def calculate_class_weights(self, y: pd.Series) -> dict[int, float]:
-        """
-        Calculate class weights for handling imbalanced data.
-
-        Args:
-            y: Target series
-
-        Returns:
-            Dictionary of class weights
-        """
-        try:
-            from sklearn.utils.class_weight import compute_class_weight
-
-            classes = np.unique(y)
-            class_weights = compute_class_weight("balanced", classes=classes, y=y)
-            weight_dict = {cls: weight for cls, weight in zip(classes, class_weights, strict=False)}
-
-            logger.info(f"Calculated class weights: {weight_dict}")
-            return weight_dict
-
-        except Exception as e:
-            logger.error(f"Error calculating class weights: {e}")
-            return {}
