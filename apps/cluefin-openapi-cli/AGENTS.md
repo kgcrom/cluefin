@@ -415,6 +415,19 @@ CLI 가 말해 주지 않는 것만 적는다.
   EBIT(영업이익)·투하자본·EV 중 하나라도 0 이하면 정의가 안 돼 `excluded` 로 세고 뺀다. `--top`(기본 30)은 출력 행수만
   자르고 순위 모집단은 그대로다.
 
+## `review collect` 는 명령을 별도 프로세스로 펼친다 (`review/`)
+
+- 검토 데이터 수집을 LLM 이 아니라 여기서 펼친다(결정 2026-11-08): 서브에이전트는 서브에이전트를 못 띄우고, 수집은
+  결정적이며, 응답 JSON 이 agent 맥락에 쌓이는 게 문제였다. 명령 목록은 company-review 감사 블록과 맞춘다 — 블록을
+  고치면 `collect.py` 의 stage 함수도 같이 고친다.
+- 명령마다 `python -m cluefin_openapi_cli.main` 프로세스다. stdout·exit code 가 수동 호출과 같아야 감사가 근거로 쓴다
+  (`run_cli` 는 전역 stdout 을 바꿔 스레드에서 못 쓴다). KIS 토큰은 디스크 캐시를 공유하므로 `kis stock current-price`
+  를 먼저 혼자 불러 토큰을 채운 뒤 펼친다.
+- 동시성 상한은 `BROKER_LIMITS`(kis 3, dart 3, ecos 2, cache 1 — DuckDB 파일 잠금). `retryable` 인 exit 4·5 만 두 번 더
+  시도한다. kis·dart exit 3 이면 그 단계 뒤로 멈춘다.
+- 폴더는 지우거나 덮지 않는다. 같은 날 다시 돌리면 `-2`, `-3` 을 붙인다. 기본 자리 `/private/tmp/cluefin-review`
+  (`$CLUEFIN_REVIEW_DIR` 로 바꾼다).
+
 ## `audit *` 는 Claude Code 트랜스크립트를 읽는다 (`audit/`)
 
 - broker 도 캐시 쓰기도 없다. 판단 적중(수익률)은 보지 않는다 — 수집 누락·중복·실패 처리만 결정적으로 본다(결정 2026-11-05).

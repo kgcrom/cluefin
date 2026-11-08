@@ -50,6 +50,7 @@ from cluefin_openapi_cli.payloads import (
 )
 from cluefin_openapi_cli.recipes import get_recipe, recipe_summaries
 from cluefin_openapi_cli.registry import CommandSpec, get_registry
+from cluefin_openapi_cli.review.cli import run_review
 
 __all__ = ["CLIResult", "CliError", "dispatch", "main", "run_cli"]
 
@@ -65,6 +66,7 @@ META_COMMANDS = (
     "recipe",
     "cache",
     "audit",
+    "review",
 )
 
 # Per-meta-command help. `usage` is the single source of truth for the root `--help`
@@ -325,6 +327,33 @@ _META_HELP: dict[str, dict[str, Any]] = {
             "version.",
             "Run from the repository root; transcripts are read from $CLAUDE_CONFIG_DIR/projects (default "
             "~/.claude/projects).",
+        ],
+    },
+    "review": {
+        "description": "Fetch everything a company review reads into one folder, in parallel stages capped per "
+        "broker, so an agent reads files instead of holding ~15 JSON replies (plus 9 per peer) in its context.",
+        "usage": [
+            f"{APP_NAME} review collect --stock-code <code> [--peers <code,code>] [--out <dir>] [--json]",
+        ],
+        "options": [
+            {"flag": "--stock-code CODE", "meaning": "The stock under review (6 digits)."},
+            {"flag": "--peers CODES", "meaning": "Up to 3 comparison stocks, comma-separated."},
+            {
+                "flag": "--out DIR",
+                "meaning": "Run folder. Default /private/tmp/cluefin-review/<code>-<YYYYMMDD> (root overridable with "
+                "$CLUEFIN_REVIEW_DIR); a folder that already holds a run gets -2, -3….",
+            },
+        ],
+        "examples": [
+            f"uv run {APP_NAME} review collect --stock-code 214320 --peers 030000 --json",
+        ],
+        "notes": [
+            "Stages: kis current-price (refreshes the shared KIS token) → corp code, cache status → macro snapshot, "
+            "stock/corp-code commands and peer corp codes → industry outlook, latest periodic report text and notes, "
+            "DART major indicators, peer data. A kis/dart exit 3 stops the run.",
+            "Each call runs as its own CLI process: raw/<node>.json is its stdout, manifest.jsonl its argv and exit "
+            "code. `audit` reads the manifest when a run used review collect.",
+            "Exit 4/5 marked retryable are retried twice with backoff; the attempt count is in the manifest.",
         ],
     },
 }
@@ -689,6 +718,7 @@ def dispatch(argv: list[str] | None = None) -> None:
         "recipe": _run_recipe,
         "cache": run_cache,
         "audit": run_audit,
+        "review": run_review,
     }
     runner = runners.get(args[0])
     if runner is not None:
