@@ -347,3 +347,34 @@ def test_cli_cache_financials_requires_code(tmp_path, monkeypatch) -> None:
     result = run_cli(["cache", "financials", "--json"])
 
     assert result.exit_code == 2
+
+
+def test_read_financials_preferred_share_reads_its_common_share() -> None:
+    conn = _conn_with_companies([("005930", "00126380"), ("005935", "00126380"), ("000660", "00164779")])
+    conn.execute(
+        "INSERT INTO financials (code, year, reprt_code, basis, account_nm, amount, currency, loaded_at) "
+        "VALUES ('005930', '2025', '11011', 'CFS', '자본총계', 1000.0, 'KRW', ?)",
+        [datetime(2026, 1, 1)],
+    )
+
+    preferred = read_financials(conn, "005935")
+    common = read_financials(conn, "005930")
+    other = read_financials(conn, "000660")
+
+    assert preferred["code"] == "005935"
+    assert preferred["financials_code"] == "005930"
+    assert preferred["years"] == common["years"]
+    assert any("005930" in note for note in preferred["notes"])
+    assert "financials_code" not in common
+    assert other["years"] == []
+    assert "financials_code" not in other
+
+
+def test_preferred_share_fetch_is_logged_empty_but_reads_through() -> None:
+    conn = _conn_with_companies([("005930", "00126380"), ("005935", "00126380")])
+    dart = FakeDart({"2025": _result("000", [_item("005930", "자본총계", "1000")])})
+
+    load_financials(conn, dart=dart, years=("2025",))
+
+    assert conn.execute("SELECT status FROM financials_fetch_log WHERE code = '005935'").fetchone() == ("empty",)
+    assert read_financials(conn, "005935")["years"][0]["accounts"] == {"자본총계": 1000.0}

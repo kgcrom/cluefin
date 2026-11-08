@@ -95,13 +95,19 @@ _FINANCIALS_NOTES = (
 def read_financials(
     conn: duckdb.DuckDBPyConnection, code: str, *, since_year: str | None = None, until_year: str | None = None
 ) -> dict[str, Any]:
-    """One stock's cached annual major-account figures, newest year first."""
+    """One stock's cached annual major-account figures, newest year first.
 
+    A preferred share has no rows of its own: DART answers its corp_code with the common share's
+    stock code only, so its fetch is logged `empty`. It reads the common share's rows instead —
+    the same company's statements — and says so in `financials_code`.
+    """
+
+    filer = _financials_filer(conn, code)
     rows = conn.execute(
         "SELECT year, reprt_code, basis, account_nm, amount, currency FROM financials "
         "WHERE code = ? AND (?::TEXT IS NULL OR year >= ?) AND (?::TEXT IS NULL OR year <= ?) "
         "ORDER BY year DESC, account_nm",
-        [code, since_year, since_year, until_year, until_year],
+        [filer, since_year, since_year, until_year, until_year],
     ).fetchall()
     by_year: dict[str, dict[str, Any]] = {}
     for year, reprt_code, basis, account_nm, amount, currency in rows:
@@ -110,7 +116,28 @@ def read_financials(
         )
         entry["accounts"][account_nm] = amount
     years = sorted(by_year.values(), key=lambda row: row["year"], reverse=True)
-    return {"code": code, "count": len(years), "years": years, "notes": list(_FINANCIALS_NOTES)}
+    payload: dict[str, Any] = {"code": code, "count": len(years), "years": years, "notes": list(_FINANCIALS_NOTES)}
+    if filer != code:
+        payload["financials_code"] = filer
+        payload["notes"].append(
+            f"{code} 는 자체 재무 행이 없어 같은 회사(corp_code) 보통주 {filer} 의 재무를 보여준다."
+        )
+    return payload
+
+
+def _financials_filer(conn: duckdb.DuckDBPyConnection, code: str) -> str:
+    """``code`` itself if it has financials, else the other listed code sharing its corp_code that does."""
+
+    if conn.execute("SELECT 1 FROM financials WHERE code = ? LIMIT 1", [code]).fetchone():
+        return code
+    row = conn.execute(
+        "SELECT other.code FROM company me JOIN company other "
+        "ON other.corp_code = me.corp_code AND other.code != me.code "
+        "WHERE me.code = ? AND EXISTS (SELECT 1 FROM financials f WHERE f.code = other.code) "
+        "ORDER BY other.code LIMIT 1",
+        [code],
+    ).fetchone()
+    return row[0] if row else code
 
 
 def read_company(
