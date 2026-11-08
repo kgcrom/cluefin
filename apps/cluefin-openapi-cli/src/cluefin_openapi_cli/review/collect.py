@@ -41,8 +41,10 @@ __all__ = [
     "Node",
     "NodeResult",
     "Runner",
+    "add_peers",
     "collect",
     "default_root",
+    "read_run_info",
     "run_dir",
     "subprocess_runner",
 ]
@@ -193,9 +195,15 @@ def _stage1(code: str, corp: str, peers: list[str], day: date) -> list[Node]:
         _node(code, "cache", "cache", "base-rate", "--code", code),
     ]
     for peer in peers:
-        nodes.append(_node(peer, "dart", "dart", "corp-code-lookup", "--stock-code", peer))
-        nodes.append(_node(peer, "kis", "kis", "stock", "current-price", "--stock-code", peer))
+        nodes.extend(_stage1_peer(peer))
     return nodes
+
+
+def _stage1_peer(peer: str) -> list[Node]:
+    return [
+        _node(peer, "dart", "dart", "corp-code-lookup", "--stock-code", peer),
+        _node(peer, "kis", "kis", "stock", "current-price", "--stock-code", peer),
+    ]
 
 
 def _peer_nodes(peer: str, corp: str) -> list[Node]:
@@ -406,6 +414,78 @@ def _stop_hit(results: Iterable[NodeResult]) -> NodeResult | None:
     return next((r for r in results if r.exit_code == 3 and r.node.path[0] in _STOP_BROKERS), None)
 
 
+_RUN_INFO = "run.json"
+
+
+def _write_run_info(out: Path, info: dict[str, Any]) -> None:
+    (out / _RUN_INFO).write_text(json.dumps(info, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def read_run_info(out: Path) -> dict[str, Any] | None:
+    try:
+        info = json.loads((out / _RUN_INFO).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return info if isinstance(info, dict) and info.get("stock_code") else None
+
+
+def _peer_corps(by_id: dict[str, NodeResult], peers: list[str], skipped: list[dict[str, str]]) -> dict[str, str]:
+    found: dict[str, str] = {}
+    for peer in peers:
+        hit = by_id.get(f"{peer}__dart-corp-code-lookup")
+        peer_corp = corp_code_of(hit.payload()) if hit and hit.exit_code == 0 else None
+        if peer_corp:
+            found[peer] = peer_corp
+        else:
+            skipped.append({"node": f"{peer}__*", "reason": "no corp_code for the peer; its data was not fetched"})
+    return found
+
+
+def add_peers(
+    out: Path,
+    peers: list[str],
+    *,
+    runner: Runner = subprocess_runner,
+    sleep: Callable[[float], None] = time.sleep,
+) -> CollectResult:
+    """Fetch peers into an existing run folder — for peers picked after reading the filing's competition section.
+
+    Only the peers' own calls run: corp code, price, RS (one call for the new peers), then their data. The stock
+    under review is not fetched again, so the folder never holds the same call twice.
+    """
+
+    info = read_run_info(out)
+    if info is None:
+        raise ValueError(f"{out} has no {_RUN_INFO}; run `review collect --stock-code` first")
+    main = str(info["stock_code"])
+    known = [str(p) for p in info.get("peers", [])]
+    new = [p for p in peers if p != main and p not in known]
+    results: list[NodeResult] = []
+    skipped: list[dict[str, str]] = [
+        {"node": f"{p}__*", "reason": "already in this run"} for p in peers if p == main or p in known
+    ]
+    if not new:
+        return CollectResult(out, "ok", (), tuple(skipped), None, {})
+    _write_run_info(out, {**info, "peers": [*known, *new]})
+    ex = _Executor(runner, out, sleep)
+    first = [n for p in new for n in _stage1_peer(p)]
+    first.append(_node(main, "cache", "cache", "rs", "--code", ",".join(new), suffix="peers-" + "-".join(new)))
+    results += ex.run_stage(first)
+    stopped = _stop_hit(results)
+    if stopped is not None:
+        stopped_by = {"node": stopped.node.id, "command": stopped.node.command, "exit_code": stopped.exit_code}
+        return CollectResult(out, "stopped", tuple(results), tuple(skipped), stopped_by, {})
+    corps = _peer_corps({r.node.id: r for r in results}, new, skipped)
+    results += ex.run_stage([n for peer, corp in corps.items() for n in _peer_nodes(peer, corp)])
+    stopped = _stop_hit(results)
+    stopped_by = None
+    if stopped is not None:
+        stopped_by = {"node": stopped.node.id, "command": stopped.node.command, "exit_code": stopped.exit_code}
+    failed = any(r.exit_code != 0 for r in results) or any(s["reason"] != "already in this run" for s in skipped)
+    status = "stopped" if stopped else ("partial" if failed else "ok")
+    return CollectResult(out, status, tuple(results), tuple(skipped), stopped_by, corps)
+
+
 def collect(
     stock_code: str,
     peers: list[str],
@@ -417,6 +497,7 @@ def collect(
 ) -> CollectResult:
     day = day or today_kst()
     (out / "raw").mkdir(parents=True, exist_ok=True)
+    _write_run_info(out, {"stock_code": stock_code, "peers": peers, "day": f"{day:%Y%m%d}"})
     ex = _Executor(runner, out, sleep)
     results: list[NodeResult] = []
     skipped: list[dict[str, str]] = []
@@ -445,15 +526,8 @@ def collect(
         return finish("stopped", stopped, {stock_code: corp})
     by_id = {r.node.id: r for r in results}
     corps = {stock_code: corp}
-    peer_corps: dict[str, str] = {}
-    for peer in peers:
-        hit = by_id.get(f"{peer}__dart-corp-code-lookup")
-        peer_corp = corp_code_of(hit.payload()) if hit and hit.exit_code == 0 else None
-        if peer_corp:
-            peer_corps[peer] = peer_corp
-            corps[peer] = peer_corp
-        else:
-            skipped.append({"node": f"{peer}__*", "reason": "no corp_code for the peer; its data was not fetched"})
+    peer_corps = _peer_corps(by_id, peers, skipped)
+    corps.update(peer_corps)
 
     stage2, skipped2 = _stage2(stock_code, corp, by_id, peer_corps)
     skipped += skipped2

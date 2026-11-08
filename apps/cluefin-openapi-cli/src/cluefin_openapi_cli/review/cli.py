@@ -10,7 +10,14 @@ from cluefin_openapi_cli.cliargs import _parse_named_options, _str_option
 from cluefin_openapi_cli.clock import today_kst
 from cluefin_openapi_cli.errors import EXIT_USAGE, CliError
 from cluefin_openapi_cli.output import render_output
-from cluefin_openapi_cli.review.collect import CollectResult, collect, default_root, run_dir
+from cluefin_openapi_cli.review.collect import (
+    CollectResult,
+    add_peers,
+    collect,
+    default_root,
+    read_run_info,
+    run_dir,
+)
 
 __all__ = ["SUBCOMMANDS", "run_review", "summary"]
 
@@ -57,6 +64,20 @@ def summary(result: CollectResult) -> dict[str, Any]:
 
 def _run_collect(argv: list[str]) -> None:
     _, options = _parse_named_options(argv)
+    into = _str_option(options, "into")
+    if into:
+        if _str_option(options, "stock_code") or _str_option(options, "out"):
+            raise CliError("--into adds peers to a run; drop --stock-code/--out.", exit_code=EXIT_USAGE)
+        peers = _codes(_str_option(options, "peers"), "--peers")
+        if not peers or len(peers) > _MAX_PEERS:
+            raise CliError(f"--into needs --peers with 1 to {_MAX_PEERS} codes.", exit_code=EXIT_USAGE)
+        if read_run_info(Path(into)) is None:
+            raise CliError(f"{into} is not a review collect folder (no run.json).", exit_code=EXIT_USAGE)
+        result = add_peers(Path(into), peers)
+        render_output(
+            summary(result), force_json=bool(options.get("json", False)), compact=bool(options.get("compact", False))
+        )
+        return
     codes = _codes(_str_option(options, "stock_code"), "--stock-code")
     if len(codes) != 1:
         raise CliError("review collect needs one --stock-code.", exit_code=EXIT_USAGE)

@@ -188,6 +188,7 @@ uv run cluefin-openapi-cli cache magic-formula --top 30 --json                  
 
 ```bash
 uv run cluefin-openapi-cli review collect --stock-code 214320 --peers 030000 --json  # /private/tmp/cluefin-review/214320-<날짜>/
+uv run cluefin-openapi-cli review collect --into /private/tmp/cluefin-review/214320-20261108 --peers 035000 --json  # 비교 기업만 추가
 ```
 
 `audit` 은 `.claude/agents/*.md` 로 돈 agent 실행을 Claude Code 트랜스크립트에서 읽어, 그 agent 파일의 감사 기준과

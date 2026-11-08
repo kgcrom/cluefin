@@ -334,10 +334,16 @@ _META_HELP: dict[str, dict[str, Any]] = {
         "broker, so an agent reads files instead of holding ~15 JSON replies (plus 9 per peer) in its context.",
         "usage": [
             f"{APP_NAME} review collect --stock-code <code> [--peers <code,code>] [--out <dir>] [--json]",
+            f"{APP_NAME} review collect --into <run dir> --peers <code,code> [--json]",
         ],
         "options": [
             {"flag": "--stock-code CODE", "meaning": "The stock under review (6 digits)."},
             {"flag": "--peers CODES", "meaning": "Up to 3 comparison stocks, comma-separated."},
+            {
+                "flag": "--into DIR",
+                "meaning": "Add --peers to an earlier run folder (peers picked after reading the filing). Only the "
+                "peers' calls run; peers already in the run are skipped.",
+            },
             {
                 "flag": "--out DIR",
                 "meaning": "Run folder. Default /private/tmp/cluefin-review/<code>-<YYYYMMDD> (root overridable with "

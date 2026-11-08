@@ -238,6 +238,22 @@ def test_review_collect_manifest_counts_as_calls(tmp_path: Path) -> None:
     assert "output_to_file" not in {t for t, _ in types}
 
 
+def test_review_collect_into_same_folder_not_counted_twice(tmp_path: Path) -> None:
+    folder = _collect_folder(tmp_path / "214-20261108")
+    summary = json.dumps({"out": str(folder), "status": "ok"})
+    rows = [
+        {"type": "user", "timestamp": "t0", "message": {"content": "005930"}},
+        _bash("1", f"{APP} review collect --stock-code 005930 --json", "t1"),
+        _result("1", summary),
+        _bash("2", f"{APP} review collect --into {folder} --peers 000660 --json", "t2"),
+        _result("2", summary),
+    ]
+    run = load_run(_write_run(tmp_path, rows))
+    result = check_run(parse_spec("company-review", SPEC), run, valid=frozenset({"005930"}))
+    assert not any(f["type"] == "duplicate" for f in result["findings"])
+    assert sum(1 for c in run.calls if c.command == "dart financial-summary") == 1
+
+
 def test_review_collect_without_manifest_is_flagged(tmp_path: Path) -> None:
     summary = json.dumps({"out": str(tmp_path / "gone"), "status": "ok"})
     rows = [

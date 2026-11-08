@@ -324,11 +324,14 @@ def _expand_collect(calls: list[CliCall]) -> list[CliCall]:
     """Each `review collect` call followed by the calls its manifest records, so checks see what it fetched."""
 
     out: list[CliCall] = []
+    consumed: dict[Path, int] = {}  # `--into` appends to a folder: a later call adds only the new manifest lines
     for call in calls:
         out.append(call)
         folder = collect_folder(call)
         if folder is not None:
-            out.extend(_manifest_calls(call, folder))
+            rows = _manifest_calls(call, folder)
+            out.extend(rows[consumed.get(folder, 0) :])
+            consumed[folder] = len(rows)
     return [replace(c, index=i) for i, c in enumerate(out)]
 
 

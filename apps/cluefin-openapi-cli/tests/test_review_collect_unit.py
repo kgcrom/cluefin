@@ -234,3 +234,28 @@ def test_out_with_existing_run_refused(tmp_path: Path) -> None:
     (tmp_path / "manifest.jsonl").write_text("")
     with pytest.raises(CliError):
         run_review(["collect", "--stock-code", "214320", "--out", str(tmp_path)])
+
+
+def test_add_peers_appends_only_peer_calls(tmp_path: Path) -> None:
+    rc.collect("214320", ["030000"], tmp_path, runner=FakeRunner(), day=DAY, sleep=lambda s: None)
+    before = len(_manifest(tmp_path))
+    runner = FakeRunner()
+    result = rc.add_peers(tmp_path, ["030000", "214320", "005930"], runner=runner, sleep=lambda s: None)
+
+    assert {s["node"] for s in result.skipped} == {"030000__*", "214320__*"}
+    assert result.corp_codes == {"005930": "00005930"}
+    rows = _manifest(tmp_path)[before:]
+    assert {r["subject"] for r in rows} == {"005930", "214320"}  # 214320 only for the peers' RS call
+    rs = next(r for r in rows if r["command"] == "cache rs")
+    assert rs["argv"][rs["argv"].index("--code") + 1] == "005930"
+    assert rs["node"] == "214320__cache-rs-peers-005930"
+    assert len({r["node"] for r in _manifest(tmp_path)}) == len(_manifest(tmp_path))  # no raw file overwritten
+    assert json.loads((tmp_path / "run.json").read_text())["peers"] == ["030000", "005930"]
+    assert result.status == "ok"
+
+
+def test_add_peers_needs_a_run_folder(tmp_path: Path) -> None:
+    with pytest.raises(CliError):
+        run_review(["collect", "--into", str(tmp_path), "--peers", "005930"])
+    with pytest.raises(ValueError, match="run.json"):
+        rc.add_peers(tmp_path, ["005930"], runner=FakeRunner(), sleep=lambda s: None)
