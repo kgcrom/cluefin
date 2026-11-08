@@ -405,3 +405,27 @@ def test_cli_rs_and_breadth_read_the_cache(rs_cache) -> None:
     assert json.loads(rs_result.stdout)["as_of"] == as_of.isoformat()
     assert breadth_result.exit_code == 0
     assert json.loads(breadth_result.stdout)["as_of"] == as_of.isoformat()
+
+
+def test_round_half_up_does_not_round_to_even() -> None:
+    assert [breadth._round_half_up(v) for v in (49.5, 50.5, 50.4, 0.0, 99.0)] == [50, 51, 50, 0, 99]
+
+
+def test_rs_sorts_on_the_unrounded_percentile(rs_cache, monkeypatch) -> None:
+    real = breadth._percentile_rank
+    calls: list[int] = []
+
+    def fake(values: np.ndarray) -> np.ndarray:
+        calls.append(len(values))
+        if len(calls) == 1:  # RS(1M): 900010 (+50%) and 900020 (+20%) both display 51, 900020 is higher
+            by_return = {0.5: 50.6, 0.2: 50.9}
+            return np.array([by_return.get(round(float(v), 6), 1.0) for v in values])
+        return real(values)
+
+    monkeypatch.setattr(breadth, "_percentile_rank", fake)
+    conn = store.open_store(read_only=True)
+    payload = breadth.rs(conn, _calendar(22)[-1])
+    conn.close()
+
+    assert [row["code"] for row in payload["rows"]][:2] == ["900020", "900010"]
+    assert [row["rs_1m"] for row in payload["rows"]][:2] == [51, 51]

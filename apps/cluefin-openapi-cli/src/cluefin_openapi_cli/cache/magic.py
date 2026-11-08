@@ -43,7 +43,7 @@ import duckdb
 import numpy as np
 
 from cluefin_openapi_cli.cache import trend as cache_trend
-from cluefin_openapi_cli.cache.breadth import _percentile_rank
+from cluefin_openapi_cli.cache.breadth import _percentile_rank, _round_half_up
 
 __all__ = ["DEFAULT_TOP", "screen"]
 
@@ -179,13 +179,17 @@ def screen(conn: duckdb.DuckDBPyConnection, as_of: date, *, top: int = DEFAULT_T
     if candidates:
         ey_rank = _percentile_rank(np.array([ey for ey, _ in metrics]))
         roic_rank = _percentile_rank(np.array([roic for _, roic in metrics]))
-        for row, (ey, roic), ey_r, roic_r in zip(candidates, metrics, ey_rank, roic_rank, strict=True):
+        combined = ey_rank + roic_rank
+        for row, (ey, roic), ey_r, roic_r, both in zip(candidates, metrics, ey_rank, roic_rank, combined, strict=True):
             row["earnings_yield_pct"] = round(ey * 100, 2)
             row["roic_pct"] = round(roic * 100, 2)
-            row["earnings_yield_rank"] = round(float(ey_r))
-            row["roic_rank"] = round(float(roic_r))
-            row["combined_rank"] = row["earnings_yield_rank"] + row["roic_rank"]
-        candidates.sort(key=lambda row: (-row["combined_rank"], row["code"]))
+            row["earnings_yield_rank"] = _round_half_up(ey_r)
+            row["roic_rank"] = _round_half_up(roic_r)
+            # Rounded from the unrounded sum, so it can differ by 1 from the two displayed ranks added.
+            row["combined_rank"] = _round_half_up(both)
+        # Sort on the unrounded sum; rounding each rank first reorders x.5 ties.
+        order = sorted(range(len(candidates)), key=lambda i: (-combined[i], candidates[i]["code"]))
+        candidates = [candidates[i] for i in order]
 
     rows = candidates[:top]
     return {
