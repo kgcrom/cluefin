@@ -36,8 +36,14 @@ def _record(**overrides: Any) -> dict[str, Any]:
     return base
 
 
-def _store(closes: list[float], *, index: list[float] | None = None, factors: list[float] | None = None) -> Any:
-    conn = store.open_store(":memory:")
+def _store(
+    closes: list[float],
+    *,
+    index: list[float] | None = None,
+    factors: list[float] | None = None,
+    path: Path | str = ":memory:",
+) -> Any:
+    conn = store.open_store(path)
     conn.execute("INSERT INTO company (code, name, market) VALUES ('214320', '이노션', 'KOSPI')")
     for i, day in enumerate(_days(len(closes))):
         factor = factors[i] if factors else 1.0
@@ -130,10 +136,7 @@ def test_cli_track_filters_by_code(
     lines = [_record(), _record(id="030000-20261102-1", stock_code="030000")]
     (root / "verdicts.jsonl").write_text("".join(json.dumps(x) + "\n" for x in lines), encoding="utf-8")
     db = tmp_path / "market.duckdb"
-    seed = _store([100, 101, 102, 103], index=[1, 1, 1, 1])
-    seed.execute(f"ATTACH '{db}' AS f")
-    seed.execute("COPY FROM DATABASE memory TO f")
-    seed.close()
+    _store([100, 101, 102, 103], index=[1, 1, 1, 1], path=db).close()
     monkeypatch.setenv(paths.RESEARCH_DIR_ENV, str(root))
     monkeypatch.setenv(store.CACHE_DIR_ENV, str(tmp_path))
     run_review(["track", "--code", "214320", "--json"])
