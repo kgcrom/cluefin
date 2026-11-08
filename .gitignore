@@ -90,3 +90,6 @@ data/
 # un-ignored so plan docs can be @-mentioned in Claude Code; they are kept out of commits by hand.
 docs/plans/sec-notes-corpus/
 docs/plans/dart-notes-corpus/
+
+# Review reports and verdict log (review record); kept out of git
+research/

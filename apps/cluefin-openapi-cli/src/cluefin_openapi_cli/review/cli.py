@@ -1,4 +1,4 @@
-"""`review collect`: run the company-review fetch graph and print where the data went."""
+"""`review collect` runs the company-review fetch graph; `review record` appends a verdict to research/."""
 
 from __future__ import annotations
 
@@ -19,6 +19,8 @@ from cluefin_openapi_cli.review.collect import (
     read_run_info,
     run_dir,
 )
+from cluefin_openapi_cli.review.paths import research_root
+from cluefin_openapi_cli.review.record import record_verdict
 
 __all__ = ["SUBCOMMANDS", "run_review", "summary"]
 
@@ -98,7 +100,28 @@ def _run_collect(argv: list[str]) -> None:
     )
 
 
-SUBCOMMANDS = {"collect": _run_collect}
+def _run_record(argv: list[str]) -> None:
+    _, options = _parse_named_options(argv)
+    src = _str_option(options, "from")
+    if not src:
+        raise CliError("review record needs --from <verdict.json or its folder>.", exit_code=EXIT_USAGE)
+    report = _str_option(options, "report")
+    root = research_root()
+    done = record_verdict(
+        Path(src),
+        root=root,
+        source=_str_option(options, "source") or "main",
+        report=Path(report) if report else None,
+        today=today_kst(),
+    )
+    render_output(
+        {"file": str(done.file), "record": done.record},
+        force_json=bool(options.get("json", False)),
+        compact=bool(options.get("compact", False)),
+    )
+
+
+SUBCOMMANDS = {"collect": _run_collect, "record": _run_record}
 
 
 def run_review(argv: list[str]) -> None:

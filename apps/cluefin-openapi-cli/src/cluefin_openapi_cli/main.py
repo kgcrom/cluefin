@@ -332,10 +332,13 @@ _META_HELP: dict[str, dict[str, Any]] = {
     },
     "review": {
         "description": "Fetch everything a company review reads into one folder, in parallel stages capped per "
-        "broker, so an agent reads files instead of holding ~15 JSON replies (plus 9 per peer) in its context.",
+        "broker, so an agent reads files instead of holding ~15 JSON replies (plus 9 per peer) in its context. "
+        "`record` appends the review's verdict to research/verdicts.jsonl so it can be checked against prices later.",
         "usage": [
             f"{APP_NAME} review collect --stock-code <code> [--peers <code,code>] [--out <dir>] [--json]",
             f"{APP_NAME} review collect --into <run dir> --peers <code,code> [--json]",
+            f"{APP_NAME} review record --from <verdict.json or its folder> [--source main|company-review] "
+            "[--report <html under research/>] [--json]",
         ],
         "options": [
             {"flag": "--stock-code CODE", "meaning": "The stock under review (6 digits)."},
@@ -350,6 +353,14 @@ _META_HELP: dict[str, dict[str, Any]] = {
                 "meaning": "Run folder. Default /private/tmp/cluefin-review/<code>-<YYYYMMDD> (root overridable with "
                 "$CLUEFIN_REVIEW_DIR); a folder that already holds a run gets -2, -3….",
             },
+            {
+                "flag": "--from PATH",
+                "meaning": "record: verdict.json (stock_code, stock_name, verdict, confidence, horizon_days, "
+                "reference_price{close,date,adjusted}, trigger{entry_above,exit_below,recheck_on} for watch, "
+                "target/stop for buy/sell, invalidation[]) or the run folder holding it.",
+            },
+            {"flag": "--source NAME", "meaning": "record: main (default) or company-review."},
+            {"flag": "--report PATH", "meaning": "record: the HTML report, which must sit under research/."},
         ],
         "examples": [
             f"uv run {APP_NAME} review collect --stock-code 214320 --peers 030000 --json",
@@ -361,6 +372,9 @@ _META_HELP: dict[str, dict[str, Any]] = {
             "Each call runs as its own CLI process: raw/<node>.json is its stdout, manifest.jsonl its argv and exit "
             "code. `audit` reads the manifest when a run used review collect.",
             "Exit 4/5 marked retryable are retried twice with backoff; the attempt count is in the manifest.",
+            "research/ is <main checkout>/research ($CLUEFIN_RESEARCH_DIR overrides), the same from every worktree. "
+            "record lists every invalid field at once (exit 2) and never rewrites earlier lines; the id is "
+            "<code>-<reference date>-<n>.",
         ],
     },
 }

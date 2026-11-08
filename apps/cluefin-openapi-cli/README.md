@@ -195,6 +195,16 @@ uv run cluefin-openapi-cli review collect --stock-code 214320 --peers 030000 --j
 uv run cluefin-openapi-cli review collect --into /private/tmp/cluefin-review/214320-20261108 --peers 035000 --json  # 비교 기업만 추가
 ```
 
+`review record` 는 검토 판단(`verdict.json`)을 저장소 루트 `research/verdicts.jsonl` 에 한 줄씩 쌓습니다. 수집 폴더는
+`/tmp` 라 사라지므로, 나중에 가격과 대조할 판단만 여기 남깁니다. `research/` 는 worktree 에서 돌려도 메인 체크아웃의
+것이고(`$CLUEFIN_RESEARCH_DIR` 로 바꿈), git 에 올리지 않습니다. watch 는 `trigger.entry_above`·`exit_below` 중 하나,
+buy·sell 은 `target`·`stop` 이 필요하고, 빠진 필드는 한 번에 모두 알려 줍니다(exit 2). 앞 줄은 고치지 않습니다.
+
+```bash
+uv run cluefin-openapi-cli review record --from /private/tmp/cluefin-review/214320-20261108 --source company-review --json
+uv run cluefin-openapi-cli review record --from verdict.json --report research/reports/innocean-214320-report-2026-11-08.html --json
+```
+
 `audit` 은 `.claude/agents/*.md` 로 돈 agent 실행을 Claude Code 트랜스크립트에서 읽어, 그 agent 파일의 감사 기준과
 대조합니다(빠진 명령·같은 인자 반복·exit 3 뒤 계속·재시도 없는 실패). 저장소 루트에서 실행합니다.
 
