@@ -14,7 +14,13 @@ every handler module.
 
 from __future__ import annotations
 
+import inspect
 from typing import Any
+from unittest.mock import MagicMock
+
+from cluefin_openapi.dart._client import Client as DartClient
+from cluefin_openapi.kis._http_client import HttpClient as KisClient
+from cluefin_openapi.kiwoom._client import Client as KiwoomClient
 
 _PRESENT = object()
 
@@ -115,14 +121,36 @@ class _Result:
         return {"method": self._method}
 
 
+def _sdk_api_class(client_cls: type, sub: str) -> type:
+    """The SDK class behind ``client.<sub>`` — the property builds it from the client, so a mock client is enough."""
+
+    prop = getattr(client_cls, sub, None)
+    if not isinstance(prop, property) or prop.fget is None:
+        raise AttributeError(f"{client_cls.__qualname__} has no sub-client {sub!r}")
+    return type(prop.fget(MagicMock()))
+
+
 class _MethodRecorder:
-    def __init__(self, calls: list, sub: str, output_value: Any) -> None:
+    """Records calls, and binds each one to the real SDK method's signature.
+
+    A generic ``*args, **kwargs`` fake let a handler pass a misspelled keyword and still pass its test.
+    """
+
+    def __init__(self, calls: list, sub: str, output_value: Any, api_cls: type) -> None:
         self.__dict__["_calls"] = calls
         self.__dict__["_sub"] = sub
         self.__dict__["_output_value"] = output_value
+        self.__dict__["_api_cls"] = api_cls
 
     def __getattr__(self, method_name: str):
+        api_cls = self.__dict__["_api_cls"]
+        real = getattr(api_cls, method_name, None)
+        if not callable(real):
+            raise AttributeError(f"{api_cls.__qualname__} has no method {method_name!r}")
+        signature = inspect.signature(real)
+
         def call(*args, **kwargs):
+            signature.bind(None, *args, **kwargs)  # TypeError on a keyword the SDK does not take
             self.__dict__["_calls"].append((self.__dict__["_sub"], method_name, args, kwargs))
             return _Result(method_name, self.__dict__["_output_value"])
 
@@ -130,12 +158,14 @@ class _MethodRecorder:
 
 
 class _Client:
-    def __init__(self, calls: list, output_value: Any) -> None:
+    def __init__(self, calls: list, output_value: Any, client_cls: type) -> None:
         self.__dict__["_calls"] = calls
         self.__dict__["_output_value"] = output_value
+        self.__dict__["_client_cls"] = client_cls
 
     def __getattr__(self, sub_client: str) -> _MethodRecorder:
-        return _MethodRecorder(self.__dict__["_calls"], sub_client, self.__dict__["_output_value"])
+        api_cls = _sdk_api_class(self.__dict__["_client_cls"], sub_client)
+        return _MethodRecorder(self.__dict__["_calls"], sub_client, self.__dict__["_output_value"], api_cls)
 
 
 class FakeSession:
@@ -145,17 +175,17 @@ class FakeSession:
         self.calls: list[tuple[str, str, tuple, dict]] = []
         self._output_value = output_value
 
-    def _client(self) -> _Client:
-        return _Client(self.calls, self._output_value)
+    def _client(self, client_cls: type) -> _Client:
+        return _Client(self.calls, self._output_value, client_cls)
 
     def get_kis(self) -> _Client:
-        return self._client()
+        return self._client(KisClient)
 
     def get_kiwoom(self) -> _Client:
-        return self._client()
+        return self._client(KiwoomClient)
 
     def get_dart(self) -> _Client:
-        return self._client()
+        return self._client(DartClient)
 
 
 class FakeDispatcher:

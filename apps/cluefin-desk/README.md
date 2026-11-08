@@ -19,7 +19,8 @@ pushed from a row selection or from `/` stock search (`escape` goes back).
 | — | Stock detail | Price chart, RSI/MACD/Bollinger, investor·broker·supply, opinions, news, ML prediction (LightGBM + SHAP) |
 | — | Financial analysis | DART statements and ratios, XBRL statements, DART disclosures, dividends, major shareholders, share changes |
 
-`r` refreshes the current screen.
+`r` refreshes the current screen. On stock detail, `m` trains and runs the next-day ML prediction
+(it is not run automatically).
 
 ## Usage
 
