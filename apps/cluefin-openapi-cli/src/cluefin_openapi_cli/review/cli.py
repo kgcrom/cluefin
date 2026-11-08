@@ -1,4 +1,4 @@
-"""`review collect`: run the company-review fetch graph and print where the data went."""
+"""`review collect` runs the company-review fetch graph; `record` and `track` keep and check its verdicts."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+from cluefin_openapi_cli.cache import store
 from cluefin_openapi_cli.cliargs import _parse_named_options, _str_option
 from cluefin_openapi_cli.clock import today_kst
 from cluefin_openapi_cli.errors import EXIT_USAGE, CliError
@@ -19,6 +20,9 @@ from cluefin_openapi_cli.review.collect import (
     read_run_info,
     run_dir,
 )
+from cluefin_openapi_cli.review.paths import research_root
+from cluefin_openapi_cli.review.record import VERDICTS_FILE, record_verdict
+from cluefin_openapi_cli.review.track import load_records, track
 
 __all__ = ["SUBCOMMANDS", "run_review", "summary"]
 
@@ -98,7 +102,42 @@ def _run_collect(argv: list[str]) -> None:
     )
 
 
-SUBCOMMANDS = {"collect": _run_collect}
+def _run_record(argv: list[str]) -> None:
+    _, options = _parse_named_options(argv)
+    src = _str_option(options, "from")
+    if not src:
+        raise CliError("review record needs --from <verdict.json or its folder>.", exit_code=EXIT_USAGE)
+    report = _str_option(options, "report")
+    root = research_root()
+    done = record_verdict(
+        Path(src),
+        root=root,
+        source=_str_option(options, "source") or "main",
+        report=Path(report) if report else None,
+        today=today_kst(),
+    )
+    render_output(
+        {"file": str(done.file), "record": done.record},
+        force_json=bool(options.get("json", False)),
+        compact=bool(options.get("compact", False)),
+    )
+
+
+def _run_track(argv: list[str]) -> None:
+    _, options = _parse_named_options(argv)
+    records = load_records(research_root() / VERDICTS_FILE)
+    codes = _codes(_str_option(options, "code"), "--code")
+    if codes:
+        records = [r for r in records if r["stock_code"] in codes]
+    conn = store.open_store(read_only=True)
+    try:
+        payload = track(conn, records)
+    finally:
+        conn.close()
+    render_output(payload, force_json=bool(options.get("json", False)), compact=bool(options.get("compact", False)))
+
+
+SUBCOMMANDS = {"collect": _run_collect, "record": _run_record, "track": _run_track}
 
 
 def run_review(argv: list[str]) -> None:

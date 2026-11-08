@@ -63,5 +63,5 @@ A worktree-isolated session refuses commands it can't prove don't run git outsid
   요청 시에만 `docs/agents/company-review-report-design.md`.
 - agent 는 `.claude/agents/` 의 넷이다: company-review(종목 하나), market-scan(장세·후보, 판단 없음), disclosure-watch
   (관심 종목 공시), agent-audit(실행 감사). 감사는 사람이 원할 때만 수동으로 한다 — `cluefin-openapi-cli audit check` 로
-  결정적 검사, agent-audit 로 놓침 판독. 판단 적중(수익률)은 평가하지 않는다. agent 데이터 절을 고치면 그 파일 끝
+  결정적 검사, agent-audit 로 놓침 판독. 감사는 판단 적중(수익률)을 평가하지 않는다 — 적중은 `review track` 이 따로 본다. agent 데이터 절을 고치면 그 파일 끝
   `audit` 블록도 같이 고친다.
