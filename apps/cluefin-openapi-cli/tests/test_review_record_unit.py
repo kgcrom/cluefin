@@ -92,8 +92,11 @@ def test_validate_lists_every_problem_at_once() -> None:
     assert any("6-digit string" in p for p in problems)
 
 
-def test_watch_needs_a_trigger_price() -> None:
-    assert any("trigger" in p for p in validate(_verdict(trigger={"recheck_on": "2026-11-14"})))
+@pytest.mark.parametrize("label", ["watch", "hold"])
+def test_watch_and_hold_need_a_trigger_price(label: str) -> None:
+    assert validate(_verdict(verdict=label, trigger={"recheck_on": "2026-11-14"})) == [
+        f"{label} needs trigger.entry_above or trigger.exit_below (> 0)"
+    ]
     assert validate(_verdict(trigger={"exit_below": 16730})) == []
 
 

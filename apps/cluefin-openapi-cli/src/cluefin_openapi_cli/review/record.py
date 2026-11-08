@@ -77,10 +77,10 @@ def _price_problems(verdict: dict[str, Any]) -> list[str]:
     elif not isinstance(ref.get("adjusted"), bool):
         problems.append("reference_price.adjusted must be true or false")
     label = verdict.get("verdict")
-    if label == "watch":
+    if label in ("watch", "hold"):
         trigger = verdict.get("trigger")
         if not isinstance(trigger, dict) or not any(_is_price(trigger.get(k)) for k in ("entry_above", "exit_below")):
-            problems.append("watch needs trigger.entry_above or trigger.exit_below (> 0)")
+            problems.append(f"{label} needs trigger.entry_above or trigger.exit_below (> 0)")
         elif trigger.get("recheck_on") is not None and not _is_date(trigger.get("recheck_on")):
             problems.append("trigger.recheck_on must be YYYY-MM-DD")
     if label in ("buy", "sell"):

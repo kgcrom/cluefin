@@ -197,7 +197,7 @@ uv run cluefin-openapi-cli review collect --into /private/tmp/cluefin-review/214
 
 `review record` 는 검토 판단(`verdict.json`)을 저장소 루트 `research/verdicts.jsonl` 에 한 줄씩 쌓습니다. 수집 폴더는
 `/tmp` 라 사라지므로, 나중에 가격과 대조할 판단만 여기 남깁니다. `research/` 는 worktree 에서 돌려도 메인 체크아웃의
-것이고(`$CLUEFIN_RESEARCH_DIR` 로 바꿈), git 에 올리지 않습니다. watch 는 `trigger.entry_above`·`exit_below` 중 하나,
+것이고(`$CLUEFIN_RESEARCH_DIR` 로 바꿈), git 에 올리지 않습니다. watch·hold 는 `trigger.entry_above`·`exit_below` 중 하나,
 buy·sell 은 `target`·`stop` 이 필요하고, 빠진 필드는 한 번에 모두 알려 줍니다(exit 2). 앞 줄은 고치지 않습니다.
 
 ```bash

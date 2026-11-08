@@ -357,7 +357,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
             {
                 "flag": "--from PATH",
                 "meaning": "record: verdict.json (stock_code, stock_name, verdict, confidence, horizon_days, "
-                "reference_price{close,date,adjusted}, trigger{entry_above,exit_below,recheck_on} for watch, "
+                "reference_price{close,date,adjusted}, trigger{entry_above,exit_below,recheck_on} for watch/hold, "
                 "target/stop for buy/sell, invalidation[]) or the run folder holding it.",
             },
             {"flag": "--source NAME", "meaning": "record: main (default) or company-review."},
