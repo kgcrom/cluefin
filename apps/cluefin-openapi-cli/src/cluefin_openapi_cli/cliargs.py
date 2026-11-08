@@ -7,6 +7,7 @@ nothing else. Failures raise `CliError` with EXIT_USAGE.
 from __future__ import annotations
 
 import json
+from collections.abc import Collection
 from typing import Any
 
 from cluefin_openapi_cli.errors import EXIT_USAGE, CliError
@@ -17,7 +18,23 @@ from cluefin_openapi_cli.registry import CommandSpec
 _BOOL_FLAGS = {"json", "help", "dry_run", "full", "compact", "explain"}
 
 
-def _parse_named_options(argv: list[str]) -> tuple[list[str], dict[str, str | bool]]:
+#: Words a schema boolean accepts as a separate value: `--include-today false`.
+_BOOL_WORDS = {"1", "true", "yes", "on", "0", "false", "no", "off"}
+
+
+def _parse_named_options(
+    argv: list[str],
+    *,
+    bool_flags: Collection[str] = (),
+    lenient: bool = False,
+) -> tuple[list[str], dict[str, str | bool]]:
+    """Split argv into positionals and ``--name value`` options.
+
+    ``bool_flags`` are schema booleans of the resolved command: bare they mean true, and they take
+    the next token only when it is a boolean word. A token starting with ``--`` is never a value.
+    ``lenient`` treats any bare option as true — for the first pass, before the command is known.
+    """
+
     positional: list[str] = []
     options: dict[str, str | bool] = {}
     index = 0
@@ -32,23 +49,34 @@ def _parse_named_options(argv: list[str]) -> tuple[list[str], dict[str, str | bo
         name, has_inline, inline_value = token[2:].partition("=")
         key = name.replace("-", "_")
 
-        if key in _BOOL_FLAGS and not has_inline:
-            options[key] = True
-            index += 1
-            continue
-
         if has_inline:
             options[key] = inline_value
             index += 1
             continue
 
-        if index + 1 >= len(argv):
+        following = argv[index + 1] if index + 1 < len(argv) else ""
+        bare = not following or following.startswith("--")
+        if key in _BOOL_FLAGS or (key in bool_flags and following.lower() not in _BOOL_WORDS):
+            options[key] = True
+            index += 1
+            continue
+
+        if bare:
+            if lenient:
+                options[key] = True
+                index += 1
+                continue
             raise CliError(f"Option `{token}` requires a value.", exit_code=EXIT_USAGE)
 
-        options[key] = argv[index + 1]
+        options[key] = following
         index += 2
 
     return positional, options
+
+
+def _schema_bool_flags(command: CommandSpec) -> set[str]:
+    properties = command.parameters.get("properties", {})
+    return {name for name, schema in properties.items() if schema.get("type") == "boolean"}
 
 
 def _load_params_json(raw: str | None) -> dict[str, Any]:

@@ -13,6 +13,7 @@ from cluefin_openapi_cli.cliargs import (
     _parse_fields,
     _parse_limit,
     _parse_named_options,
+    _schema_bool_flags,
     _str_option,
 )
 from cluefin_openapi_cli.errors import (
@@ -637,7 +638,8 @@ def _run_dynamic(argv: list[str]) -> None:
             data={"meta_commands": list(META_COMMANDS), "brokers": list(registry.iter_brokers())},
         )
 
-    positional, options = _parse_named_options(argv[1:])
+    # The command's boolean options are known only after the path is, so parse twice.
+    positional, options = _parse_named_options(argv[1:], lenient=True)
     help_requested = bool(options.get("help", False))
     force_json_flag = bool(options.get("json", False))
 
@@ -658,6 +660,8 @@ def _run_dynamic(argv: list[str]) -> None:
     if help_requested:
         _render_leaf_help(command, force_json=force_json_flag)
         return
+
+    _, options = _parse_named_options(argv[1:], bool_flags=_schema_bool_flags(command))
 
     compact = bool(options.pop("compact", False))
     fields = _parse_fields(options.pop("fields", None))
