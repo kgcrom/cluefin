@@ -81,7 +81,6 @@ class StockMLPredictor:
         self,
         prepared_df: pd.DataFrame,
         validation_split: float = 0.2,
-        use_smote: bool = True,
         use_class_weights: bool = True,
     ) -> dict[str, float]:
         """
@@ -90,8 +89,8 @@ class StockMLPredictor:
         Args:
             prepared_df: DataFrame with features and target
             validation_split: Fraction of data for validation
-            use_smote: Whether to apply SMOTE oversampling
-            use_class_weights: Whether to use balanced class weights
+            use_class_weights: Weight classes by inverse frequency (LightGBM ``class_weight="balanced"``),
+                computed on the training split only
 
         Returns:
             Dictionary of training metrics
@@ -109,21 +108,12 @@ class StockMLPredictor:
             # Run diagnostics if enabled
             if self.enable_diagnostics and self.diagnostics:
                 logger.info("🔍 Running pre-training diagnostics...")
-                diagnosis = self.diagnostics.diagnose_training_data(X, y, self.feature_names)
+                self.diagnostics.diagnose_training_data(X, y, self.feature_names)
 
-                # Apply recommendations
-                if diagnosis["target_analysis"]["is_severely_imbalanced"] and use_smote:
-                    logger.info("⚖️ Applying SMOTE to handle severe class imbalance...")
-                    X, y = self.feature_engineer.apply_smote_oversampling(X, y)
-                    logger.info(f"📈 After SMOTE - Data shape: {X.shape}, Distribution: {y.value_counts().to_dict()}")
-
-            # Calculate class weights if requested
-            class_weights = None
-            if use_class_weights:
-                class_weights = self.feature_engineer.calculate_class_weights(y)
-                if class_weights:
-                    # Update model params with class weights
-                    self.model.model_params["class_weight"] = class_weights
+            # Oversampling (SMOTE) was dropped 2026-11-08: it ran on the whole series before the
+            # time split, so synthetic rows mixed validation-period bars into training.
+            # "balanced" weights are fit by LightGBM on the training split only.
+            self.model.model_params["class_weight"] = "balanced" if use_class_weights else None
 
             # Train model
             self.training_metrics = self.model.train(X, y, validation_split)

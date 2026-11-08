@@ -138,6 +138,37 @@ def test_too_few_weeks_is_null_regression_with_a_hint(tmp_path, monkeypatch) -> 
     assert "hint" in payload
 
 
+def test_collinear_factors_are_null_betas_with_a_hint(tmp_path, monkeypatch) -> None:
+    """Both KTB yields flat for the whole window: their weekly changes are all zero, the design matrix is
+    singular, and `np.linalg.inv` used to raise LinAlgError out of the command."""
+    monkeypatch.setenv(store.CACHE_DIR_ENV, str(tmp_path))
+    rng = np.random.default_rng(7)
+    days = [date(2024, 1, 1) + timedelta(weeks=i) for i in range(40)]
+    conn = store.open_store()
+    conn.executemany(
+        "INSERT INTO ohlcv (code, date, close, adj_factor) VALUES (?, ?, ?, 1.0)",
+        [("005930", day, 100.0 + rng.normal()) for day in days]
+        + [("U0001", day, 2500.0 + rng.normal() * 10) for day in days],
+    )
+    conn.executemany(
+        "INSERT INTO rates (series, date, value) VALUES (?, ?, ?)",
+        [("usdkrw", day, 1350.0 + rng.normal()) for day in days]
+        + [("ktb3y", day, 3.2) for day in days]
+        + [("ktb10y", day, 3.6) for day in days],
+    )
+    conn.close()
+
+    conn = store.open_store(store.cache_path(), read_only=True)
+    try:
+        payload = read_macro_beta(conn, "005930", since=days[0], until=days[-1])
+    finally:
+        conn.close()
+
+    assert all(c == {"beta": None, "t": None} for c in payload["coefficients"].values())
+    assert "collinear" in payload["hint"]
+    json.dumps(payload, allow_nan=False)
+
+
 def test_since_after_until_is_a_usage_error() -> None:
     conn = store.open_store(":memory:")
     try:

@@ -362,3 +362,52 @@ class TestCorporateActions:
         kis.domestic_basic_quote.get_stock_period_quote.return_value.body.output2 = [self._bar("20260827", "00")]
 
         assert fetcher.get_corporate_actions("005930").empty
+
+
+class TestSafeFloat:
+    @pytest.mark.parametrize(
+        ("raw", "expected"),
+        [
+            ("--5516442", -5516442.0),  # 키움 부호 겹침 — 예전엔 0.0
+            ("++112362604", 112362604.0),
+            ("-270406", -270406.0),
+            ("+1.25", 1.25),
+            ("1,234", 1234.0),
+            ("-", 0.0),
+            ("", 0.0),
+            ("  ", 0.0),
+            ("abc", 0.0),
+            (None, 0.0),
+        ],
+    )
+    def test_parses_kiwoom_numbers(self, raw, expected):
+        assert DomesticDataFetcher._safe_float(raw) == expected
+
+
+class TestKiwoomDailyBars:
+    def test_down_day_signed_prices_become_positive(self, monkeypatch):
+        """키움 일봉은 하락일 cur_prc 를 `-270406` 처럼 부호를 붙여 준다 — 가격은 음수가 될 수 없다."""
+        fetcher = _make_fetcher(monkeypatch)
+        fetcher.kiwoom_client = MagicMock()
+        bar = SimpleNamespace(
+            dt="20261106",
+            open_pric="-271000",
+            high_pric="+272000",
+            low_pric="-269000",
+            cur_prc="-270406",
+            trde_qty="1000",
+        )
+        response = fetcher.kiwoom_client.chart.get_stock_daily.return_value
+        response.body.stk_dt_pole_chart_qry = [bar]
+        response.headers.cont_yn = "N"
+        response.headers.next_key = ""
+
+        df = asyncio.run(fetcher.get_stock_data("005930"))
+
+        assert df.iloc[0][["open", "high", "low", "close", "volume"]].tolist() == [
+            271000.0,
+            272000.0,
+            269000.0,
+            270406.0,
+            1000.0,
+        ]

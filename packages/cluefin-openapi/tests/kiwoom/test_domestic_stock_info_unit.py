@@ -1,5 +1,3 @@
-import inspect
-
 import pytest
 
 from cluefin_openapi.kiwoom import _domestic_stock_info as stock_info_module
@@ -176,14 +174,7 @@ CALL_KWARGS = {
 
 def method_metadata(method_name: str) -> tuple[str, str, str]:
     api_id, model_attr = _shared_method_metadata(DomesticStockInfo, method_name)
-    source = inspect.getsource(getattr(DomesticStockInfo, method_name))
-    if '"con-yn"' in source:
-        cont_key = "con-yn"
-    elif '"cond-yn"' in source:
-        cont_key = "cond-yn"
-    else:
-        cont_key = "cont-yn"
-    return api_id, model_attr, cont_key
+    return api_id, model_attr, "cont-yn"
 
 
 STOCK_CASES = []

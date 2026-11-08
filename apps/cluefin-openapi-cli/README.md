@@ -136,6 +136,10 @@ uv run cluefin-openapi-cli recipe market-scan --json
 uv run cluefin-openapi-cli recipe corporate-actions --json
 uv run cluefin-openapi-cli recipe disclosure-monitoring --json
 uv run cluefin-openapi-cli recipe us-peer-filings --json
+uv run cluefin-openapi-cli recipe latest-earnings --json
+uv run cluefin-openapi-cli recipe filing-text --json
+uv run cluefin-openapi-cli recipe macro-context --json
+uv run cluefin-openapi-cli recipe outlook --json
 ```
 
 ### 4. Command Path

@@ -75,9 +75,20 @@ class MarketOverviewScreen(Screen):
         self._load_kis_market_data()
         self._load_regime()
 
-    @work(thread=True)
+    # 업종을 빠르게 바꾸면 늦게 온 앞 요청이 표를 덮는다 — 마지막 선택만 남긴다.
+    @work(thread=True, exclusive=True, group="sector-reload")
     def _reload_sector_data(self, inds_cd: str) -> None:
         self._load_sector_data(inds_cd)
+
+    def _show_sector_message(self, message: str) -> None:
+        """업종 표를 비우고 안내 한 줄만 남긴다 — 실패·빈 응답이 이전 업종 데이터로 남지 않게."""
+
+        def _update():
+            table = self.query_one("#sector-table-container", DataTable)
+            table.clear()
+            table.add_row("", message, "", "", "", "")
+
+        self.app.call_from_thread(_update)
 
     def _load_sector_data(self, inds_cd: str = "001") -> None:
         try:
@@ -85,6 +96,7 @@ class MarketOverviewScreen(Screen):
             response = fetcher.get_all_industry_index(inds_cd=inds_cd)
             items = response.body.all_inds_idex
             if not items:
+                self._show_sector_message("데이터 없음")
                 return
 
             def _update():
@@ -124,6 +136,7 @@ class MarketOverviewScreen(Screen):
                 return
 
             logger.error(f"Failed to load sector data: {e}")
+            self._show_sector_message(f"로드 실패: {escape(str(e))}")
 
     @staticmethod
     def _format_mover_lines(title: str, items, positive: bool) -> list[str]:

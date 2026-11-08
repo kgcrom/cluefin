@@ -1358,6 +1358,7 @@ def _sensitivity_table(base_erp: float, base_risk_free: float, beta: float, buil
             },
             "sales_to_capital": {
                 "type": "number",
+                "exclusiveMinimum": 0,
                 "default": _DEFAULT_SALES_TO_CAPITAL,
                 "description": f"Reverse DCF: revenue generated per unit of invested capital (Damodaran "
                 f"convention); reinvestment = revenue growth ÷ this. Default {_DEFAULT_SALES_TO_CAPITAL}.",

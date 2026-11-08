@@ -1,227 +1,123 @@
-#!/usr/bin/env python3
-"""
-Test script for improved ML pipeline.
+"""ML pipeline: diagnostics, target creation and class-imbalance handling.
 
-This script tests the Phase 1 improvements to the ML prediction system:
-- Enhanced target variable creation
-- Data quality diagnostics
-- SMOTE oversampling
-- Improved logging and error handling
+These used to end in ``assert True`` and wrap SMOTE in ``try/except``, so they passed while
+SMOTE could not even be imported (imbalanced-learn 0.14.0 vs scikit-learn 1.8, 2026-11-08).
+SMOTE is gone; imbalance is handled by LightGBM ``class_weight="balanced"`` on the training split.
 """
-
-import logging
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from cluefin_desk.ml.diagnostics import MLDiagnostics
 from cluefin_desk.ml.feature_engineering import FeatureEngineer
 from cluefin_desk.ml.predictor import StockMLPredictor
 
-logger = logging.getLogger(__name__)
 
-
-def create_test_data():
-    """Create synthetic test data for ML pipeline testing."""
-    logger.info("🔨 Creating synthetic test data...")
-
-    np.random.seed(42)
-    n_samples = 200
-
-    # Create OHLCV data
-    dates = pd.date_range("2023-01-01", periods=n_samples, freq="D")
-    base_price = 1000
-
-    # Generate price data with some trend
-    price_changes = np.random.normal(0, 20, n_samples)
-    prices = [base_price]
-    for change in price_changes[1:]:
-        new_price = max(prices[-1] + change, 100)  # Minimum price of 100
-        prices.append(new_price)
-
-    # Create OHLC from close prices
-    close_prices = np.array(prices)
-    high_prices = close_prices * (1 + np.abs(np.random.normal(0, 0.02, n_samples)))
-    low_prices = close_prices * (1 - np.abs(np.random.normal(0, 0.02, n_samples)))
-    open_prices = np.roll(close_prices, 1)  # Yesterday's close as today's open
-    open_prices[0] = base_price
-
-    # Create volume data
-    volumes = np.random.randint(100000, 1000000, n_samples)
-
-    # Create DataFrame
+def create_test_data(n_samples: int = 200):
+    rng = np.random.default_rng(42)
+    close = np.maximum(1000 + np.cumsum(rng.normal(0, 20, n_samples)), 100)
+    high = close * (1 + np.abs(rng.normal(0, 0.02, n_samples)))
+    low = close * (1 - np.abs(rng.normal(0, 0.02, n_samples)))
+    open_ = np.roll(close, 1)
+    open_[0] = 1000
     stock_data = pd.DataFrame(
         {
-            "date": dates,
-            "open": open_prices,
-            "high": high_prices,
-            "low": low_prices,
-            "close": close_prices,
-            "volume": volumes,
+            "date": pd.date_range("2023-01-01", periods=n_samples, freq="D"),
+            "open": open_,
+            "high": high,
+            "low": low,
+            "close": close,
+            "volume": rng.integers(100_000, 1_000_000, n_samples),
         }
     )
-
-    # Create some basic indicators
     stock_data["sma_20"] = stock_data["close"].rolling(20).mean()
-    stock_data["rsi"] = 50 + np.random.normal(0, 15, n_samples)  # Mock RSI
-
+    stock_data["rsi"] = 50 + rng.normal(0, 15, n_samples)
     indicators = {"sma_20": stock_data["sma_20"].values, "rsi": stock_data["rsi"].values}
-
     return stock_data, indicators
 
 
-def test_diagnostics():
-    """Test the diagnostics module."""
-    logger.info("\n🔍 Testing ML Diagnostics...")
+class TestDiagnostics:
+    def test_target_balance_flags(self):
+        diagnostics = MLDiagnostics()
+        balanced = diagnostics.analyze_target_distribution(pd.Series([0, 1] * 30), "balanced")
+        imbalanced = diagnostics.analyze_target_distribution(pd.Series([0] * 55 + [1] * 5), "imbalanced")
+        assert not balanced["is_severely_imbalanced"]
+        assert balanced["imbalance_ratio"] == pytest.approx(1.0)
+        assert imbalanced["is_severely_imbalanced"]
+        assert imbalanced["imbalance_ratio"] == pytest.approx(11.0)
 
-    diagnostics = MLDiagnostics()
+    def test_feature_quality_flags_constant_and_missing(self):
+        rng = np.random.default_rng(0)
+        X = pd.DataFrame(
+            {
+                "good": rng.normal(0, 1, 60),
+                "constant": [1] * 60,
+                "half_missing": [np.nan] * 30 + list(range(30)),
+            }
+        )
+        quality = MLDiagnostics().analyze_feature_quality(X)
+        assert quality["feature_quality"]["constant"]["constant_feature"]
+        assert quality["feature_quality"]["half_missing"]["missing_ratio"] == pytest.approx(0.5)
+        assert "constant" in quality["problematic_features"]
+        assert "good" not in quality["problematic_features"]
 
-    # Create test data with known class imbalance
-    y_balanced = pd.Series([0, 1, 0, 1, 0, 1] * 10)  # Balanced
-    y_imbalanced = pd.Series([0] * 50 + [1] * 5)  # Severely imbalanced
-
-    # Create test features
-    X = pd.DataFrame(
-        {
-            "feature_1": np.random.normal(0, 1, 60),
-            "feature_2": np.random.normal(5, 2, 60),
-            "constant_feature": [1] * 60,  # Problematic constant feature
-            "missing_feature": [np.nan] * 30 + list(range(30)),  # Half missing
-        }
-    )
-
-    logger.info("Testing balanced target...")
-    diagnostics.analyze_target_distribution(y_balanced, "balanced_target")
-
-    logger.info("\nTesting imbalanced target...")
-    diagnostics.analyze_target_distribution(y_imbalanced, "imbalanced_target")
-
-    logger.info("\nTesting feature quality...")
-    diagnostics.analyze_feature_quality(X)
-
-    logger.info("\nTesting comprehensive diagnosis...")
-    diagnostics.diagnose_training_data(X, y_imbalanced)
-
-    assert True  # Test passes if no exceptions are raised
+    def test_recommendations_no_longer_suggest_oversampling(self):
+        rng = np.random.default_rng(0)
+        X = pd.DataFrame({"f": rng.normal(0, 1, 60)})
+        diagnosis = MLDiagnostics().diagnose_training_data(X, pd.Series([0] * 55 + [1] * 5))
+        assert diagnosis["target_analysis"]["is_severely_imbalanced"]
+        assert not any("SMOTE" in item for item in diagnosis["recommendations"])
 
 
-def test_feature_engineering():
-    """Test the improved feature engineering."""
-    logger.info("\n🔧 Testing Feature Engineering...")
+class TestTargetVariable:
+    def test_binary_target_is_next_day_direction(self):
+        stock_data, _ = create_test_data()
+        df = FeatureEngineer().create_target_variable(stock_data.copy(), "binary")
+        expected = (stock_data["close"].shift(-1) > stock_data["close"]).astype(int)
+        # The last row has no next day and is dropped.
+        assert len(df) == len(stock_data) - 1
+        pd.testing.assert_series_equal(df["target"], expected.loc[df.index], check_names=False)
 
-    stock_data, indicators = create_test_data()
-    feature_engineer = FeatureEngineer()
-
-    # Test different target creation methods
-    df1 = stock_data.copy()
-    df1 = feature_engineer.create_target_variable(df1, "binary")
-    logger.info(f"Binary target distribution: {df1['target'].value_counts().to_dict()}")
-
-    df2 = stock_data.copy()
-    df2 = feature_engineer.create_target_variable(df2, "threshold", threshold_pct=0.02)
-    logger.info(f"Threshold target (2%) distribution: {df2['target'].value_counts().to_dict()}")
-
-    # Test SMOTE
-    if len(df1) > 50:  # Ensure we have enough data
-        prepared_df, feature_names = feature_engineer.prepare_features(stock_data, indicators)
-        X = prepared_df[feature_names]
-        y = prepared_df["target"]
-
-        logger.info(f"Original data shape: {X.shape}, distribution: {y.value_counts().to_dict()}")
-
-        # Test SMOTE if available
-        try:
-            X_resampled, y_resampled = feature_engineer.apply_smote_oversampling(X, y)
-            logger.info(f"After SMOTE shape: {X_resampled.shape}, distribution: {y_resampled.value_counts().to_dict()}")
-        except Exception as e:
-            logger.info(f"SMOTE test skipped: {e}")
-
-        # Test class weights
-        class_weights = feature_engineer.calculate_class_weights(y)
-        logger.info(f"Class weights: {class_weights}")
-
-    assert True  # Test passes if no exceptions are raised
+    def test_threshold_target_needs_a_large_enough_move(self):
+        stock_data, _ = create_test_data()
+        df = FeatureEngineer().create_target_variable(stock_data.copy(), "threshold", threshold_pct=0.02)
+        change = stock_data["close"].shift(-1) / stock_data["close"] - 1
+        up = change.loc[df.index] > 0.02
+        assert up.any()
+        assert (df["target"][up] == 1).all()
+        assert (df["target"][~up] == 0).all()
 
 
-def test_ml_pipeline():
-    """Test the complete ML pipeline."""
-    logger.info("\n🤖 Testing ML Pipeline...")
+class TestPipeline:
+    def test_train_uses_balanced_class_weight_and_reports_validation_metrics(self):
+        stock_data, indicators = create_test_data()
+        predictor = StockMLPredictor(enable_diagnostics=True)
+        prepared_df, _ = predictor.prepare_data(stock_data, indicators)
 
-    stock_data, indicators = create_test_data()
+        metrics = predictor.train_model(prepared_df)
 
-    # Initialize predictor with diagnostics enabled
-    predictor = StockMLPredictor(enable_diagnostics=True)
+        assert predictor.model.model_params["class_weight"] == "balanced"
+        assert predictor.model.model.get_params()["class_weight"] == "balanced"
+        assert {"val_accuracy", "val_precision", "val_recall", "val_f1", "val_auc"} <= set(metrics)
+        for key in ("val_accuracy", "val_precision", "val_recall", "val_f1", "val_auc"):
+            assert 0.0 <= metrics[key] <= 1.0
 
-    # Prepare data
-    prepared_df, feature_names = predictor.prepare_data(stock_data, indicators)
-    logger.info(f"Prepared data shape: {prepared_df.shape}")
-    logger.info(f"Features: {len(feature_names)}")
+    def test_class_weights_can_be_turned_off(self):
+        stock_data, indicators = create_test_data()
+        predictor = StockMLPredictor(enable_diagnostics=False)
+        prepared_df, _ = predictor.prepare_data(stock_data, indicators)
+        predictor.train_model(prepared_df, use_class_weights=False)
+        assert predictor.model.model.get_params()["class_weight"] is None
 
-    # Train model
-    training_metrics = predictor.train_model(prepared_df, use_smote=True, use_class_weights=True)
+    def test_predict_returns_a_signal_with_probabilities(self):
+        stock_data, indicators = create_test_data()
+        predictor = StockMLPredictor(enable_diagnostics=False)
+        prepared_df, _ = predictor.prepare_data(stock_data, indicators)
+        predictor.train_model(prepared_df)
 
-    logger.info("\n📊 Training Results:")
-    for metric, value in training_metrics.items():
-        logger.info(f"  {metric}: {value:.4f}")
+        result = predictor.predict(stock_data, indicators)
 
-    # Test prediction
-    prediction_result = predictor.predict(stock_data, indicators)
-    logger.info(f"\n🎯 Prediction: {prediction_result['signal']} (confidence: {prediction_result['confidence']:.4f})")
-
-    assert True  # Test passes if no exceptions are raised
-
-
-def main():
-    """Run all tests."""
-    logger.info("🚀 Starting ML Pipeline Phase 1 Tests\n")
-
-    tests = [
-        ("Diagnostics", test_diagnostics),
-        ("Feature Engineering", test_feature_engineering),
-        ("Complete ML Pipeline", test_ml_pipeline),
-    ]
-
-    results = []
-    for test_name, test_func in tests:
-        try:
-            logger.info(f"\n{'=' * 50}")
-            logger.info(f"Running {test_name} Test")
-            logger.info("=" * 50)
-            test_func()
-            result = True
-            results.append((test_name, result))
-            if result:
-                logger.info(f"✅ {test_name} test passed!")
-            else:
-                logger.info(f"❌ {test_name} test failed!")
-        except Exception as e:
-            logger.info(f"❌ {test_name} test error: {e}")
-            results.append((test_name, False))
-
-    logger.info(f"\n{'=' * 50}")
-    logger.info("📈 Test Summary")
-    logger.info("=" * 50)
-
-    passed = sum(1 for _, result in results if result)
-    total = len(results)
-
-    for test_name, result in results:
-        status = "✅ PASS" if result else "❌ FAIL"
-        logger.info(f"{test_name}: {status}")
-
-    logger.info(f"\nResults: {passed}/{total} tests passed")
-
-    if passed == total:
-        logger.info("🎉 All tests passed! Phase 1 improvements are working correctly.")
-        logger.info("\n💡 The improvements should help resolve precision/recall/F1-score issues:")
-        logger.info("  • Enhanced target variable creation with thresholds")
-        logger.info("  • SMOTE oversampling for class imbalance")
-        logger.info("  • Comprehensive data quality diagnostics")
-        logger.info("  • Improved error handling and logging")
-        logger.info("  • Class weight balancing")
-    else:
-        logger.info("⚠️ Some tests failed. Please review the errors above.")
-
-
-if __name__ == "__main__":
-    main()
+        assert result["signal"] in {"BUY", "SELL"}
+        assert result["probability_up"] + result["probability_down"] == pytest.approx(1.0)
+        assert result["confidence"] == pytest.approx(max(result["probability_up"], result["probability_down"]))

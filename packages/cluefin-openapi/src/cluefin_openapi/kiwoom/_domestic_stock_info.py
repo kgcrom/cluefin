@@ -775,7 +775,7 @@ class DomesticStockInfo:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "ka10054",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 

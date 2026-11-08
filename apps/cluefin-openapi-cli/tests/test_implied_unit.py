@@ -101,6 +101,34 @@ def test_reverse_dcf_ev_is_none_when_wacc_does_not_exceed_terminal_growth() -> N
     )
 
 
+@pytest.mark.parametrize("sales_to_capital", [0, -1.0])
+def test_reverse_dcf_ev_rejects_non_positive_sales_to_capital(sales_to_capital: float) -> None:
+    """0 used to mean "no reinvestment", the opposite of what a tiny ratio means, and inflated EV."""
+    with pytest.raises(ValueError, match="sales_to_capital"):
+        implied.reverse_dcf_ev(
+            1000, 0.05, 0.15, 0.22, sales_to_capital, wacc_rate=0.09, horizon_years=10, terminal_growth=0.02
+        )
+
+
+def test_reverse_dcf_ev_falls_as_sales_to_capital_shrinks() -> None:
+    """Less revenue per unit of capital means more reinvestment for the same growth, so a lower EV."""
+    args = dict(wacc_rate=0.09, horizon_years=10, terminal_growth=0.02)
+    lean = implied.reverse_dcf_ev(1000, 0.05, 0.15, 0.22, 2.5, **args)
+    heavy = implied.reverse_dcf_ev(1000, 0.05, 0.15, 0.22, 0.1, **args)
+    assert lean is not None
+    assert heavy is not None
+    assert heavy < lean
+
+
+def test_implied_expectations_schema_rejects_zero_sales_to_capital() -> None:
+    from cluefin_openapi_cli.registry import build_cli_registry
+    from cluefin_openapi_cli.validation import validate_params
+
+    spec = build_cli_registry()[("kis", "stock", "implied-expectations")]
+    report = validate_params({"stock_code": "005930", "corp_code": "00126380", "sales_to_capital": 0}, spec.parameters)
+    assert [(issue.field, issue.problem) for issue in report.issues] == [("sales_to_capital", "must be greater than 0")]
+
+
 def test_reverse_dcf_ev_increases_with_growth_for_a_healthy_margin() -> None:
     revenue0, operating_margin, tax_rate, sales_to_capital, wacc_rate, horizon_years, terminal_growth = (
         1000.0,

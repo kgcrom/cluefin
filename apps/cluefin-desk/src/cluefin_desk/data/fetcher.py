@@ -24,12 +24,18 @@ class DomesticDataFetcher:
 
     @staticmethod
     def _safe_float(value: str) -> float:
-        if value == "-" or not value or value.strip() == "":
+        """키움 숫자 문자열 → float. `--5516442` 처럼 부호가 겹쳐 오기도 해 앞 부호를 벗겨 다시 붙인다."""
+        if not isinstance(value, str):
+            return 0.0
+        text = value.strip().replace(",", "")
+        digits = text.lstrip("+-")
+        if not digits:
             return 0.0
         try:
-            return float(value)
-        except (ValueError, TypeError):
+            number = float(digits)
+        except ValueError:
             return 0.0
+        return -number if text.startswith("-") else number
 
     def __init__(self, config: Settings | None = None):
         self._settings = config or settings
@@ -552,11 +558,11 @@ class DomesticDataFetcher:
             rows.extend(
                 {
                     "date": pd.to_datetime(item.dt),
-                    "open": self._safe_float(item.open_pric),
-                    "high": self._safe_float(item.high_pric),
-                    "low": self._safe_float(item.low_pric),
-                    "close": self._safe_float(item.cur_prc),
-                    "volume": self._safe_float(item.trde_qty),
+                    "open": abs(self._safe_float(item.open_pric)),
+                    "high": abs(self._safe_float(item.high_pric)),
+                    "low": abs(self._safe_float(item.low_pric)),
+                    "close": abs(self._safe_float(item.cur_prc)),
+                    "volume": abs(self._safe_float(item.trde_qty)),
                 }
                 for item in items
             )

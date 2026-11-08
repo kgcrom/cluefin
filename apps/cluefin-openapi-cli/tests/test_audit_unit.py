@@ -80,6 +80,52 @@ def test_parse_cli_calls_splits_chains_and_drops_redirects() -> None:
     assert calls == [(("cache", "rs"), {"code": "005930,000660", "json": "true"}), (("recipes",), {})]
 
 
+def test_parse_cli_calls_joins_backslash_continuations() -> None:
+    """A call split over lines with `\\` used to lose every flag after the first line."""
+    command = f"{APP} kis stock current-price \\\n  --stock-code 005930 \\\n  --json"
+    assert parse_cli_calls(command) == [(("kis", "stock", "current-price"), {"stock-code": "005930", "json": "true"})]
+
+
+@pytest.mark.parametrize(
+    ("command", "to_file"),
+    [
+        (f"{APP} recipes --json > out.json", True),
+        (f"{APP} recipes --json>out.json", True),
+        (f"{APP} recipes --json 1>out.json", True),
+        (f"{APP} recipes --json 2>err.log", False),
+        (f"{APP} recipes --json 2>&1 | head", False),
+        (f"{APP} recipes --json > /dev/null", False),
+        (f"{APP} recipes --json | python3 -c 'print(1 if 2>1 else 0)'", False),
+        (f"{APP} recipes --json | python3 -c 'import sys; a, b = 2, 1; print(a>b)'", False),
+    ],
+)
+def test_to_file_detection(tmp_path: Path, command: str, to_file: bool) -> None:
+    rows = [
+        {"type": "user", "timestamp": "t0", "message": {"content": "x"}},
+        _bash("1", command, "t1"),
+        _result("1", ""),
+    ]
+    run = load_run(_write_run(tmp_path, rows))
+    assert run.calls[0].to_file is to_file
+    assert run.calls[0].args.get("json") == "true"
+
+
+def test_shell_heredoc_curl_is_a_direct_api_call(tmp_path: Path) -> None:
+    spec = parse_spec("company-review", "```audit\n```")
+    rows = [
+        {"type": "user", "timestamp": "t0", "message": {"content": "005930"}},
+        _bash("1", "bash <<'EOF'\ncurl -s https://openapi.koreainvestment.com:9443/uapi/order\nEOF", "t1"),
+        _result("1", "{}"),
+        _bash("2", "cat > notes.md <<'EOF'\ncurl is mentioned in a note\nEOF", "t2"),
+        _result("2", ""),
+    ]
+    found = [f for f in check_run(spec, load_run(_write_run(tmp_path, rows)))["findings"]]
+    direct = [f for f in found if f["type"] == "off_cli_direct_api"]
+    assert len(direct) == 1
+    assert direct[0]["shell"].startswith("bash")
+    assert any(f["type"] == "off_cli_order" for f in found)
+
+
 def test_load_run_reads_calls_exit_codes_and_report(tmp_path: Path) -> None:
     run = load_run(_write_run(tmp_path, _rows()))
     assert run.agent == "company-review"

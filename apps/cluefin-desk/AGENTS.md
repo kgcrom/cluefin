@@ -55,7 +55,11 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   덮어쓴다. 실제 모델 피처로 살아남는 것은 `sma_50`·`sma_120`·`sma_240`·`rsi`·
   `macd_histogram`·`adx`·`resistance`·`support` 8개뿐이다. **컬럼 이름을 바꾸면 테스트는
   하나도 안 깨지고 모델 피처 벡터만 조용히 바뀐다.**
-- `resistance`/`support` 는 행이 20개 이상일 때만 붙는다 — 행 수에 따라 출력 스키마가 달라진다.
+- `resistance`/`support` 는 행이 20개 이상일 때만 붙는다 — 행 수에 따라 출력 스키마가 달라진다. 직전 10봉의
+  고가·저가다. `center=True` 로 두면 다음 5봉을 미리 본다(2026-11-08 고침).
+- 클래스 불균형은 LightGBM `class_weight="balanced"` 로만 다룬다 — 시간순 분할 뒤 학습 구간에서 가중치를 잡는다.
+  SMOTE 는 2026-11-08 뺐다: 분할 전 전체 기간에 돌아 검증 구간 봉이 합성 행에 섞였고, imbalanced-learn 이
+  scikit-learn 1.8 과 맞지 않아 import 부터 실패한 채 조용히 꺼져 있었다.
 
 ## Panel conventions
 

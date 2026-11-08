@@ -83,12 +83,16 @@ def _ols(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray, float]:
     dof = n - k
     ss_res = float(residuals @ residuals)
     sigma2 = ss_res / dof if dof > 0 else float("nan")
+    ss_tot = float(((y - y.mean()) ** 2).sum())
+    r_squared = 1 - ss_res / ss_tot if ss_tot else float("nan")
+    if np.linalg.matrix_rank(x) < k:
+        # Collinear factors (e.g. a rate held flat for the whole window): the betas are not identified,
+        # so neither they nor their t-values mean anything. `inv` raised LinAlgError here.
+        return np.full(k, np.nan), np.full(k, np.nan), r_squared
     xtx_inv = np.linalg.inv(x.T @ x)
     with np.errstate(invalid="ignore", divide="ignore"):
         se = np.sqrt(sigma2 * np.diag(xtx_inv))
         t_values = coef / se
-    ss_tot = float(((y - y.mean()) ** 2).sum())
-    r_squared = 1 - ss_res / ss_tot if ss_tot else float("nan")
     return coef, t_values, r_squared
 
 
@@ -139,11 +143,16 @@ def read_macro_beta(conn: duckdb.DuckDBPyConnection, code: str, *, since: date, 
     payload["r_squared"] = None if np.isnan(r_squared) else round(float(r_squared), 4)
     payload["coefficients"] = {
         name: {
-            "beta": round(float(beta), 6),
+            "beta": None if np.isnan(beta) else round(float(beta), 6),
             "t": None if np.isnan(t) else round(float(t), 3),
         }
         for name, beta, t in zip(_FACTOR_NAMES, coef, t_values, strict=True)
     }
+    if np.isnan(coef).all():
+        payload["hint"] = (
+            "The factors are collinear over these weeks (a series that never moved, or two that moved "
+            "in lockstep), so no beta is identified. Widen the window with `--since`."
+        )
     return payload
 
 

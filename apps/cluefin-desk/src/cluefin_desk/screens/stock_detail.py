@@ -22,6 +22,22 @@ logger = logging.getLogger(__name__)
 # 뉴스와 공시가 한 피드로 오므로 이 코드로만 둘을 구분할 수 있다.
 _DISCLOSURE_PROVIDER_CODES = frozenset("FGHIN")
 
+# `StockPredictionModel.train` 이 돌려주는 검증셋 지표 키와 화면 표시명.
+_ML_METRICS = (
+    ("val_accuracy", "accuracy"),
+    ("val_precision", "precision"),
+    ("val_recall", "recall"),
+    ("val_f1", "f1"),
+    ("val_auc", "roc_auc"),
+)
+
+
+def ml_metric_lines(metrics: dict) -> list[str]:
+    """검증셋 지표 줄. 키가 하나도 없으면 빈 패널 대신 그렇다고 적는다."""
+
+    lines = [f"  {label}: {metrics[key]:.4f}" for key, label in _ML_METRICS if key in metrics]
+    return lines or ["  [dim]검증 지표 없음[/dim]"]
+
 
 class StockDetailScreen(Screen):
     """Screen 6: Stock detail with 7 tabs (차트·투자자·매매원·수급·투자의견·뉴스·ML예측)."""
@@ -424,9 +440,7 @@ class StockDetailScreen(Screen):
                     "",
                     "[bold]학습 성능 (검증셋)[/bold]",
                 ]
-                for key in ("accuracy", "precision", "recall", "f1", "roc_auc"):
-                    if key in metrics:
-                        lines.append(f"  {key}: {metrics[key]:.4f}")
+                lines += ml_metric_lines(metrics)
 
                 if importance is not None and len(importance) > 0:
                     lines += ["", "[bold]피처 중요도 상위 10[/bold]"]

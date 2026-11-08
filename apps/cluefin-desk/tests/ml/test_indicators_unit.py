@@ -92,8 +92,8 @@ def _reference_calculate_all(data: pd.DataFrame) -> pd.DataFrame:
     result["atr"] = talib.ATR(data["high"].values, data["low"].values, data["close"].values, timeperiod=14)
 
     if len(result) >= 20:
-        high_rolling = result["high"].rolling(window=10, center=True).max()
-        low_rolling = result["low"].rolling(window=10, center=True).min()
+        high_rolling = result["high"].rolling(window=10).max()
+        low_rolling = result["low"].rolling(window=10).min()
         result["resistance"] = high_rolling
         result["support"] = low_rolling
 
@@ -151,6 +151,19 @@ class TestCalculateAllSmoke:
 
         # sma_240 needs 240 valid closes; by the end of a 300-row series it must be populated.
         assert pd.notna(result["sma_240"].iloc[-1])
+
+    def test_resistance_support_do_not_look_ahead(self):
+        """A spike at bar 40 must not show up in resistance/support before bar 40."""
+        data = _synthetic_ohlcv(n=60)
+        spiked = data.copy()
+        spiked.loc[40, "high"] = 10_000.0
+        spiked.loc[40, "low"] = -10_000.0
+        base = TechnicalAnalyzer().calculate_all(data)
+        after = TechnicalAnalyzer().calculate_all(spiked)
+        for column in ("resistance", "support"):
+            np.testing.assert_array_equal(after[column].iloc[:40], base[column].iloc[:40])
+        assert after["resistance"].iloc[40] == 10_000.0
+        assert after["support"].iloc[40] == -10_000.0
 
     def test_resistance_support_need_20_rows(self):
         """AGENTS.md: resistance/support only appear once there are >= 20 rows."""

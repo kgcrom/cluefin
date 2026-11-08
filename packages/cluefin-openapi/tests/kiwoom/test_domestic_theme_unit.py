@@ -53,7 +53,7 @@ THEME_CASES = [
             "date_tp": "2",
         },
         response_payload=payload("theme_group_stocks"),
-        cont_flag_key="cond-yn",
+        cont_flag_key="cont-yn",
     ),
 ]
 

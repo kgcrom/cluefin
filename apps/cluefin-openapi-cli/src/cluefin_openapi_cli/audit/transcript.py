@@ -37,6 +37,10 @@ _EXIT_RE = re.compile(r"^(?:Error: )?Exit code (\d+)")
 _REDIRECT_RE = re.compile(r"\s\d*(?:>>?|<)(?:&\d+|\s*[^\s|;&]+)")
 # stdout sent to a file: the data never reaches the transcript, so the report's numbers cannot be traced.
 _TO_FILE_RE = re.compile(r"(?:^|\s)1?>>?\s*(?!&)(?!/dev/null)[^\s|;&]+")
+# `--json>out.json`: a redirect glued to a flag. Only after a flag — `a>b` inside `python3 -c` is not a redirect.
+_GLUED_REDIRECT_RE = re.compile(r"(\s--[\w-]+)(>>?)")
+# `\` at a line end continues the command on the next line.
+_CONTINUATION_RE = re.compile(r"\\\r?\n")
 # Commands that only reshape or move around a CLI call; any other segment makes the Bash call "mixed".
 _PLUMBING = frozenset({"cd", "head", "tail", "jq", "python", "python3", "grep", "sed", "cat", "echo", "wc", "sort"})
 
@@ -103,7 +107,8 @@ def _segments(command: str) -> list[tuple[list[str], bool]]:
     """Command segments split on shell control operators, each with whether its line sends stdout to a file."""
 
     segments: list[tuple[list[str], bool]] = []
-    for raw in command.splitlines():
+    for raw in _CONTINUATION_RE.sub(" ", command).splitlines():
+        raw = _GLUED_REDIRECT_RE.sub(r"\1 \2", raw)
         to_file = bool(_TO_FILE_RE.search(raw))
         line = _REDIRECT_RE.sub(" ", raw)
         try:
