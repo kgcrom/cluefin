@@ -96,6 +96,7 @@ def test_parse_cli_calls_joins_backslash_continuations() -> None:
         (f"{APP} recipes --json 2>&1 | head", False),
         (f"{APP} recipes --json > /dev/null", False),
         (f"{APP} recipes --json | python3 -c 'print(1 if 2>1 else 0)'", False),
+        (f"{APP} recipes --json | python3 -c 'import sys; a, b = 2, 1; print(a>b)'", False),
     ],
 )
 def test_to_file_detection(tmp_path: Path, command: str, to_file: bool) -> None:
