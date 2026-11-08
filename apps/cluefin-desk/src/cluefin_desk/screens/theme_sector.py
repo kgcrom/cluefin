@@ -237,7 +237,8 @@ class ThemeSectorScreen(Screen):
                     self.app.push_screen(StockDetailScreen(stock_code=stock_code))
                     return
         except Exception:
-            pass
+            # 예전엔 조용히 삼켜 Enter 가 아무 반응 없었다 — 원인은 남긴다.
+            logger.exception("Failed to open stock detail from theme table")
 
     def action_go_back(self) -> None:
         self.app.action_switch_screen("1")

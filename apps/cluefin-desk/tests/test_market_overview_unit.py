@@ -13,7 +13,7 @@ import pytest
 from rich.cells import cell_len
 from rich.text import Text
 from textual.app import App
-from textual.widgets import Static
+from textual.widgets import DataTable, Static
 
 import cluefin_desk
 from cluefin_desk.screens.market_overview import MarketOverviewScreen
@@ -128,12 +128,17 @@ class TestMarketOverviewBarRegime:
 
 
 class FakeFetcher:
-    def __init__(self, has_kis=True, fund_error=False, index_closes=None):
+    def __init__(self, has_kis=True, fund_error=False, index_closes=None, sector=None):
         self.has_kis = has_kis
         self._fund_error = fund_error
         self._index_closes = index_closes if index_closes is not None else [100.0] * 60
+        self._sector = sector
 
     def get_all_industry_index(self, inds_cd="001"):
+        if self._sector == "error":
+            raise RuntimeError("Kiwoom 500")
+        if self._sector == "empty":
+            return SimpleNamespace(body=SimpleNamespace(all_inds_idex=[]))
         item = SimpleNamespace(
             stk_cd="001",
             stk_nm="종합(KOSPI)",
@@ -221,6 +226,15 @@ class TestMarketOverviewScreen:
             screen = await _loaded(app, pilot)
             assert "로드 실패: KIS 500" in _text(screen, "#kis-fund-panel")
             assert "21,879" in _text(screen, "#kis-investor-panel")
+
+    @pytest.mark.parametrize(("sector", "message"), [("error", "로드 실패: Kiwoom 500"), ("empty", "데이터 없음")])
+    async def test_sector_table_says_why_it_is_empty(self, sector, message):
+        app = HarnessApp(FakeFetcher(sector=sector), FakeScreener())
+        async with app.run_test(size=(140, 50)) as pilot:
+            screen = await _loaded(app, pilot)
+            table = screen.query_one("#sector-table-container", DataTable)
+            assert table.row_count == 1
+            assert str(table.get_row_at(0)[1]) == message
 
 
 class SlowKisFetcher(FakeFetcher):
