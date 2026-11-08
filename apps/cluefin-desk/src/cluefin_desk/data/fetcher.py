@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Literal
 
 import pandas as pd
 from cluefin_openapi import BrokerClientFactory
@@ -620,24 +620,28 @@ class DomesticDataFetcher:
     # Rankings (existing)
     # ──────────────────────────────────────
 
-    def get_top_percentage_change(self, sort_tp: str = "1"):
+    def get_top_percentage_change(self, sort_tp: Literal["1", "3"] = "1"):
+        """전일대비등락률상위 (ka10027). sort_tp 1 상승률 / 3 하락률 — 2·4 는 상승폭·하락폭이다.
+        ETF·ETN 은 빼고(16), 상·하한가는 넣는다 — 빼면 +30% 종목이 상승률 순위에서 사라진다."""
         return self.kiwoom_client.rank_info.get_top_percentage_change_from_previous_day(
             mrkt_tp="000",
             sort_tp=sort_tp,
             trde_qty_cnd="0000",
-            stk_cnd="4",
+            stk_cnd="16",
             crd_cnd="0",
-            updown_incls="0",
+            updown_incls="1",
             pric_cnd="8",
             trde_prica_cnd="10",
             stex_tp="1",
         )
 
-    def get_top_trading_volume(self):
+    def get_top_trading_volume(self, sort_tp: Literal["1", "3"] = "1"):
+        """당일거래량상위 (ka10030). sort_tp 1 거래량 / 3 거래대금, ETF·ETN 제외(16).
+        거래대금상위(ka10032)는 ETF 를 뺄 조건이 없어 거래대금 순위도 이걸로 받는다."""
         return self.kiwoom_client.rank_info.get_top_current_day_trading_volume(
             mrkt_tp="000",
-            sort_tp="1",
-            mang_stk_incls="4",
+            sort_tp=sort_tp,
+            mang_stk_incls="16",
             crd_tp="0",
             trde_qty_tp="0",
             pric_tp="2",
@@ -646,35 +650,32 @@ class DomesticDataFetcher:
             stex_tp="1",
         )
 
-    def get_top_transaction_value(self):
-        return self.kiwoom_client.rank_info.get_top_transaction_value(
-            mrkt_tp="000",
-            mang_stk_incls="0",
-            stex_tp="1",
-        )
-
     # ──────────────────────────────────────
     # Rankings (new)
     # ──────────────────────────────────────
 
-    def get_top_foreigner_period_trading(self, trde_tp: str = "1"):
+    def get_top_foreigner_period_trading(self, trde_tp: Literal["1", "2", "3"] = "2"):
+        """외인기간별매매상위 (ka10034, 당일). trde_tp 1 순매도 / 2 순매수 / 3 순매매."""
         return self.kiwoom_client.rank_info.get_top_foreigner_period_trading(
             mrkt_tp="000",
             trde_tp=trde_tp,
-            dt="1",
+            dt="0",
             stex_tp="1",
         )
 
     def get_new_high_low_price(self, ntl_tp: str = "1"):
+        """신고저가 (ka10016, 250일=52주). 문서 밖 값(dt=1, stk_cnd=4)을 주면 900번대 외국기업만
+        내려온다(2026-11-08 실측). stk_cnd 16(ETF+ETN 제외)은 문서에 없지만 서버가 받는다 —
+        빼지 않으면 채권 ETF 가 상위를 채운다."""
         return self.kiwoom_client.stock_info.get_new_high_low_price(
             mrkt_tp="000",
             ntl_tp=ntl_tp,
             high_low_close_tp="1",
-            stk_cnd="4",
-            trde_qty_tp="0",
+            stk_cnd="16",
+            trde_qty_tp="00000",
             crd_cnd="0",
-            updown_incls="0",
-            dt="1",
+            updown_incls="1",
+            dt="250",
             stex_tp="1",
         )
 
@@ -688,7 +689,7 @@ class DomesticDataFetcher:
             stk_cnd="1",
             crd_cnd="0",
             pric_cnd="8",
-            updown_incls="0",
+            updown_incls="1",
             stex_tp="1",
         )
 
@@ -696,7 +697,7 @@ class DomesticDataFetcher:
         return self.kiwoom_client.rank_info.get_top_margin_ratio(
             mrkt_tp="000",
             trde_qty_tp="0",
-            stk_cnd="4",
+            stk_cnd="1",
             updown_incls="0",
             crd_cnd="0",
             stex_tp="1",

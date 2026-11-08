@@ -18,6 +18,25 @@ class ScreeningItem:
     extra: str = ""
 
 
+def _signed_int(value: str) -> str:
+    """키움 수량은 `+112362604`·`--5516442` 처럼 부호가 겹쳐 오기도 한다 — 천 단위 쉼표로 다시 쓴다."""
+    text = (value or "").strip()
+    negative = text.startswith("-")
+    try:
+        number = int(text.lstrip("+-"))
+    except ValueError:
+        return value
+    return f"{'-' if negative else ''}{number:,}"
+
+
+def _million_won_to_eok(value: str) -> str:
+    """ka10030 거래금액(백만원) → 억원."""
+    try:
+        return f"{abs(int(value)) / 100:,.0f}억"
+    except (ValueError, TypeError):
+        return value
+
+
 class StockScreener:
     def __init__(self, fetcher: DomesticDataFetcher):
         self.fetcher = fetcher
@@ -44,7 +63,7 @@ class StockScreener:
 
     def get_top_losers(self) -> list[ScreeningItem]:
         try:
-            response = self.fetcher.get_top_percentage_change(sort_tp="2")
+            response = self.fetcher.get_top_percentage_change(sort_tp="3")
             items = response.body.pred_pre_flu_rt_upper
             return [
                 ScreeningItem(
@@ -84,8 +103,8 @@ class StockScreener:
 
     def get_top_value(self) -> list[ScreeningItem]:
         try:
-            response = self.fetcher.get_top_transaction_value()
-            items = response.body.trde_prica_upper
+            response = self.fetcher.get_top_trading_volume(sort_tp="3")
+            items = response.body.tdy_trde_qty_upper
             return [
                 ScreeningItem(
                     rank=idx + 1,
@@ -93,8 +112,9 @@ class StockScreener:
                     stock_name=item.stk_nm,
                     current_price=item.cur_prc,
                     change_rate=item.flu_rt,
-                    volume=item.now_trde_qty,
+                    volume=item.trde_qty,
                     change_sign=item.pred_pre_sig,
+                    extra=_million_won_to_eok(item.trde_amt),
                 )
                 for idx, item in enumerate(items)
             ]
@@ -104,7 +124,7 @@ class StockScreener:
 
     def get_top_foreigner_net_buy(self) -> list[ScreeningItem]:
         try:
-            response = self.fetcher.get_top_foreigner_period_trading(trde_tp="1")
+            response = self.fetcher.get_top_foreigner_period_trading(trde_tp="2")
             items = response.body.for_dt_trde_upper
             return [
                 ScreeningItem(
@@ -114,7 +134,7 @@ class StockScreener:
                     current_price=item.cur_prc,
                     change_rate="",
                     volume=item.trde_qty,
-                    extra=item.netprps_qty,
+                    extra=_signed_int(item.netprps_qty),
                 )
                 for idx, item in enumerate(items)
             ]

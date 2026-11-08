@@ -33,6 +33,7 @@ TAB_CONFIG = [
 
 # 탭의 정렬 기준 지표 — `ScreeningItem.extra` 를 7번째 열에 이 이름으로 보인다
 EXTRA_LABELS = {
+    "table-value": "거래대금",
     "table-foreigner": "순매수량",
     "table-volatility": "급등률(60분)",
     "table-margin": "신용비율",

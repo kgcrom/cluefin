@@ -116,7 +116,7 @@ class InvestorFlowScreen(Screen):
     def _load_foreign_net_buy(self) -> None:
         try:
             fetcher = self.app.fetcher
-            response = fetcher.get_top_foreigner_period_trading(trde_tp="1")
+            response = fetcher.get_top_foreigner_period_trading(trde_tp="2")
             logger.debug(f"[INV] foreign API response status: {response.headers}")
             items = response.body.for_dt_trde_upper
             logger.debug(f"[INV] foreign items count: {len(items)}")
