@@ -148,14 +148,18 @@ def reverse_dcf_ev(
 
     FCFF = 매출 × 영업이익률 × (1 − 세율) − 재투자, 재투자 = 매출증분 ÷ sales_to_capital.
     wacc_rate <= terminal_growth 면(터미널 가치가 발산) None.
+    sales_to_capital 은 양수여야 한다 — 0 을 "재투자 없음"으로 읽으면 0 에 가까울수록 커져야 할 재투자가
+    사라져 EV 가 부푼다.
     """
+    if sales_to_capital <= 0:
+        raise ValueError(f"sales_to_capital must be positive, got {sales_to_capital}")
     revenue = revenue0
     pv = 0.0
     for t in range(1, horizon_years + 1):
         new_revenue = revenue * (1 + growth)
         delta = new_revenue - revenue
         nopat = new_revenue * operating_margin * (1 - tax_rate)
-        reinvestment = delta / sales_to_capital if sales_to_capital else 0.0
+        reinvestment = delta / sales_to_capital
         fcff = nopat - reinvestment
         pv += fcff / (1 + wacc_rate) ** t
         revenue = new_revenue
@@ -165,7 +169,7 @@ def reverse_dcf_ev(
     terminal_revenue = revenue * (1 + terminal_growth)
     terminal_delta = terminal_revenue - revenue
     terminal_nopat = terminal_revenue * operating_margin * (1 - tax_rate)
-    terminal_reinvestment = terminal_delta / sales_to_capital if sales_to_capital else 0.0
+    terminal_reinvestment = terminal_delta / sales_to_capital
     terminal_fcff = terminal_nopat - terminal_reinvestment
     terminal_value = terminal_fcff / (wacc_rate - terminal_growth)
     pv_terminal = terminal_value / (1 + wacc_rate) ** horizon_years

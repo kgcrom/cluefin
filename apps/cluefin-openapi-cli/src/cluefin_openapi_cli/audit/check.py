@@ -55,7 +55,10 @@ def _split_shell(command: str) -> tuple[str, str]:
                 body.append(lines[i])
                 i += 1
             head = line.split("<<")[0].strip().split("&&")[-1].strip()
-            if head.startswith(_INTERPRETERS):
+            if head.split()[:1] in (["bash"], ["sh"], ["zsh"]):
+                # A shell heredoc is shell: `bash <<EOF` + `curl ...` is a direct API call.
+                shell.extend(row for row in body if "cluefin-openapi-cli" not in row)
+            elif head.startswith(_INTERPRETERS):
                 code.extend(body)
         i += 1
     return "\n".join(shell), "\n".join(code)

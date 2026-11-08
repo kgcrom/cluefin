@@ -33,10 +33,13 @@ APP_TOKEN = "cluefin-openapi-cli"
 _RENDER_FLAGS = frozenset({"json", "compact", "fields"})
 _CONTROL = frozenset({"&&", "||", ";", "|", "&", "(", ")"})
 _EXIT_RE = re.compile(r"^(?:Error: )?Exit code (\d+)")
-# `2>&1`, `> out.json`, `>> log`, `< in` — dropped before tokenising so `2` is not read as a flag value.
-_REDIRECT_RE = re.compile(r"\s\d*(?:>>?|<)(?:&\d+|\s*[^\s|;&]+)")
+# `2>&1`, `> out.json`, `>> log`, `< in`, `--json>out.json` — dropped before tokenising so `2` is not read
+# as a flag value. A redirect glued to a word (`--json>out`) has no fd digits; `->`/`=>` are not redirects.
+_REDIRECT_RE = re.compile(r"(?:(?<=\s)\d*|(?<=[^\s\d&<>=-]))(?:>>?|<)(?:&\d+|\s*[^\s|;&]+)")
 # stdout sent to a file: the data never reaches the transcript, so the report's numbers cannot be traced.
-_TO_FILE_RE = re.compile(r"(?:^|\s)1?>>?\s*(?!&)(?!/dev/null)[^\s|;&]+")
+_TO_FILE_RE = re.compile(r"(?:(?<=\s)1?|^1?|(?<=[^\s\d&<>=-]))>>?\s*(?!&)(?!/dev/null)[^\s|;&]+")
+# `\` at a line end continues the command on the next line.
+_CONTINUATION_RE = re.compile(r"\\\r?\n")
 # Commands that only reshape or move around a CLI call; any other segment makes the Bash call "mixed".
 _PLUMBING = frozenset({"cd", "head", "tail", "jq", "python", "python3", "grep", "sed", "cat", "echo", "wc", "sort"})
 
@@ -103,7 +106,7 @@ def _segments(command: str) -> list[tuple[list[str], bool]]:
     """Command segments split on shell control operators, each with whether its line sends stdout to a file."""
 
     segments: list[tuple[list[str], bool]] = []
-    for raw in command.splitlines():
+    for raw in _CONTINUATION_RE.sub(" ", command).splitlines():
         to_file = bool(_TO_FILE_RE.search(raw))
         line = _REDIRECT_RE.sub(" ", raw)
         try:

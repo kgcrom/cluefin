@@ -145,6 +145,9 @@ def _check_scalar(name: str, value: Any, schema: dict[str, Any], report: Validat
         maximum = schema.get("maximum")
         if minimum is not None and value < minimum:
             report.add(ValidationIssue(name, f"below minimum {minimum}", value=value))
+        exclusive_minimum = schema.get("exclusiveMinimum")
+        if exclusive_minimum is not None and value <= exclusive_minimum:
+            report.add(ValidationIssue(name, f"must be greater than {exclusive_minimum}", value=value))
         if maximum is not None and value > maximum:
             report.add(ValidationIssue(name, f"above maximum {maximum}", value=value))
 

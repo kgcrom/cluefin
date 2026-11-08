@@ -331,7 +331,8 @@ CLI 가 말해 주지 않는 것만 적는다.
   `ktb3y`·`ktb10y` 각각 ISO 주(월요일 기준 `date_trunc('week', ...)`) 마지막 관측치만 남기고, 종목·KOSPI 는 전주 대비 변화율,
   금리 둘은 %p 차이 × 100(bp)로 바꾼 뒤 다섯 계열 모두 값이 있는 주의 교집합에서만 절편 포함 OLS 한 번(`numpy.linalg.lstsq`,
   `(X'X)^-1` 로 표준오차)을 돌린다. 30주(`_MIN_WEEKS`, 5개 계수 + 여유) 미만이면 `regression` 이 `null`이고 `hint` 가 이유를
-  적는다(캐시 부족 또는 `cache load --only rates` 필요). t값·R² 는 전체 구간 적합도이지 예측이 아니다.
+  적는다(캐시 부족 또는 `cache load --only rates` 필요). 계열이 공선(금리가 구간 내내 그대로 등)이면 계수를 식별할 수 없어
+  `beta`·`t` 가 모두 `null` 이고 `hint` 가 붙는다. t값·R² 는 전체 구간 적합도이지 예측이 아니다.
 - `cache perf` 의 수익률은 **수정종가**다(`read_ohlcv(adjusted=True)` 와 같은 계수, 0·NULL 계수는 1). 원주가로는 분할일이
   -98% 손실로 보인다. 벤치마크와 날짜를 inner join 하므로 한쪽에 없는 날은 빠진다. 지표 정의는 `cluefin-ta` 가 갖고 여기서
   다시 계산하지 않는다 — NaN(변동 없음 등)은 `null`. `--risk-free <계열>` 은 `rates` 를 ASOF join 해 기간 첫날 이전의 마지막 발표값을
