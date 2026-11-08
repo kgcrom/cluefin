@@ -63,7 +63,10 @@ def owner_earnings(
     capex: float | None,
     working_capital_increase: float | None,
 ) -> dict[str, Any]:
-    """오너 어닝스 = 순이익(지배지분) + D&A − 유형자산 취득 전액 − 운전자본 증가. D&A 결측이면 null."""
+    """오너 어닝스 = 순이익(지배지분) + D&A − 유형자산 취득 전액 − 운전자본 증가. D&A 결측이면 null.
+
+    capex 는 공시 부호가 회사마다 달라(음수·양수) 절댓값을 뺀다. components 에는 공시값을 그대로 둔다.
+    """
     components = {
         "net_income_owners": net_income_owners,
         "depreciation": depreciation,
@@ -86,7 +89,7 @@ def owner_earnings(
                 net_income_owners=net_income_owners, capex=capex, working_capital_increase=working_capital_increase
             ),
         }
-    value = net_income_owners + depreciation + amortization - capex - working_capital_increase
+    value = net_income_owners + depreciation + amortization - abs(capex) - working_capital_increase
     return {"value": value, "components": components, "reason": None}
 
 

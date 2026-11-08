@@ -142,6 +142,18 @@ def test_annual_gives_three_years_oldest_first_with_roe_on_average_equity() -> N
     assert y3["opm"] == pytest.approx(10)
 
 
+def test_free_cash_flow_subtracts_capex_filed_as_a_negative_outflow() -> None:
+    rows = [
+        row
+        if row["account_id"] != "ifrs-full_PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities"
+        else _annual_row("CF", row["account_id"], ["-30", "-30", "-120"])
+        for row in ANNUAL_ROWS
+    ]
+    *_, y3 = s.annual(_report(2025, "11011", rows))
+    assert y3["capex"] == -120  # filed value kept
+    assert y3["free_cash_flow"] == -40  # 80 - 120, not 80 + 120
+
+
 def test_annual_picks_up_the_quality_items() -> None:
     y1, _, y3 = s.annual(_report(2025, "11011", ANNUAL_ROWS))
     assert y1["retained_earnings"] == 40

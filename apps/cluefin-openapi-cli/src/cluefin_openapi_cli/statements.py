@@ -315,10 +315,11 @@ def _with_ratios(figures: dict[str, Any], previous: dict[str, Any] | None) -> di
     net_debt = (
         None if figures["borrowings"] is None or figures["cash"] is None else figures["borrowings"] - figures["cash"]
     )
+    # Filers sign 유형자산의취득 either way (outflow shown negative or as a positive amount); it is always an outflow.
     fcf = (
         None
         if figures["operating_cash_flow"] is None or figures["capex"] is None
-        else figures["operating_cash_flow"] - figures["capex"]
+        else figures["operating_cash_flow"] - abs(figures["capex"])
     )
     return {
         **figures,

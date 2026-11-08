@@ -628,7 +628,7 @@ _SUMMARY_MAX_QUARTERS = 12
 _SUMMARY_BASES = {"auto": ("CFS", "OFS"), "CFS": ("CFS",), "OFS": ("OFS",)}
 _SUMMARY_NOTES = (
     "금액 단위는 억원. 분기 Q2~Q4는 누적에서 뺀 값(4Q = 연간 − 9개월 누적)이다.",
-    "gpm·opm·debt_ratio·net_debt_ratio·interest_coverage·roe·roa·free_cash_flow(영업CF − 유형자산 취득)·ttm 은 계산값이다.",
+    "gpm·opm·debt_ratio·net_debt_ratio·interest_coverage·roe·roa·free_cash_flow(영업CF − |유형자산 취득|, 공시 부호와 무관)·ttm 은 계산값이다.",
     "interest_coverage 의 이자비용은 현금흐름표 조정 항목의 이자비용이다.",
     "DART JSON API 는 기간마다 최신 정정본 값만 준다. as_of 는 접수일로만 거르므로 정정 전 값은 financial-as-filed 로 읽는다.",
     "분·반기 보고서의 현금흐름표 순이익 행이 누적 대신 3개월 값으로 올 때가 있다(dartrail 2026 실측). 여기 현금흐름은 그대로 옮긴 값이다.",
