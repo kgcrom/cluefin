@@ -322,22 +322,6 @@ class TestKisPhase2Wrappers:
         kwargs = kis.domestic_market_analysis.get_investor_trading_trend_by_market_daily.call_args.kwargs
         assert kwargs["fid_input_iscd"] == "0001"
 
-    def test_dividend_yield_top_uses_one_year_window(self, monkeypatch):
-        fetcher, kis = self._fetcher(monkeypatch)
-        kis.domestic_ranking_analysis.get_stock_dividend_yield_top.return_value.body.output = []
-
-        fetcher.get_dividend_yield_top()
-        kwargs = kis.domestic_ranking_analysis.get_stock_dividend_yield_top.call_args.kwargs
-        assert kwargs["gb3"] == "2"  # 현금배당
-        assert kwargs["f_dt"] < kwargs["t_dt"]
-
-    def test_credit_balance_top_reads_output2(self, monkeypatch):
-        fetcher, kis = self._fetcher(monkeypatch)
-        kis.domestic_ranking_analysis.get_stock_credit_balance_top.return_value.body.output2 = [
-            SimpleNamespace(hts_kor_isnm="삼성전자")
-        ]
-        assert fetcher.get_credit_balance_top()[0].hts_kor_isnm == "삼성전자"
-
     def test_etf_nav_trend_and_components(self, monkeypatch):
         fetcher, kis = self._fetcher(monkeypatch)
         kis.domestic_basic_quote.get_etf_nav_comparison_daily_trend.return_value.body.output = [

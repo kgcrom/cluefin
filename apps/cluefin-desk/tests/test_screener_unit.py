@@ -42,19 +42,10 @@ def _make_volume_response(items_data):
 
 
 def _make_value_response(items_data):
-    """Build mock response for get_top_transaction_value."""
-    response = MagicMock()
-    items = []
-    for d in items_data:
-        item = MagicMock()
-        item.stk_cd = d["stk_cd"]
-        item.stk_nm = d["stk_nm"]
-        item.cur_prc = d["cur_prc"]
-        item.flu_rt = d["flu_rt"]
-        item.now_trde_qty = d["now_trde_qty"]
-        item.pred_pre_sig = d.get("pred_pre_sig", "2")
-        items.append(item)
-    response.body.trde_prica_upper = items
+    """Build mock response for get_top_trading_volume(sort_tp="3") — 거래대금 순위."""
+    response = _make_volume_response(items_data)
+    for item, d in zip(response.body.tdy_trde_qty_upper, items_data, strict=True):
+        item.trde_amt = d["trde_amt"]
     return response
 
 
@@ -136,7 +127,8 @@ SAMPLE_ITEMS = [
         "now_trde_qty": "15000000",
         "trde_qty": "15000000",
         "pred_pre_sig": "2",
-        "netprps_qty": "5000000",
+        "netprps_qty": "+5000000",
+        "trde_amt": "9095204",
         "jmp_rt": "5.0",
         "crd_rt": "1.2",
     },
@@ -148,7 +140,8 @@ SAMPLE_ITEMS = [
         "now_trde_qty": "8000000",
         "trde_qty": "8000000",
         "pred_pre_sig": "2",
-        "netprps_qty": "3000000",
+        "netprps_qty": "+3000000",
+        "trde_amt": "6706958",
         "jmp_rt": "3.0",
         "crd_rt": "0.8",
     },
@@ -190,6 +183,8 @@ class TestStockScreenerGetTopLosers:
         screener = StockScreener(fetcher)
         result = screener.get_top_losers()
 
+        # ka10027 sort_tp 2 는 상승폭이다 — 하락률은 3
+        fetcher.get_top_percentage_change.assert_called_once_with(sort_tp="3")
         assert len(result) == 2
         assert result[0].stock_code == "005930"
 
@@ -228,18 +223,20 @@ class TestStockScreenerGetTopVolume:
 class TestStockScreenerGetTopValue:
     def test_returns_screening_items(self):
         fetcher = _make_mock_fetcher()
-        fetcher.get_top_transaction_value.return_value = _make_value_response(SAMPLE_ITEMS)
+        fetcher.get_top_trading_volume.return_value = _make_value_response(SAMPLE_ITEMS)
 
         screener = StockScreener(fetcher)
         result = screener.get_top_value()
 
+        fetcher.get_top_trading_volume.assert_called_once_with(sort_tp="3")
         assert len(result) == 2
         assert result[0].stock_code == "005930"
         assert result[0].volume == "15000000"
+        assert result[0].extra == "90,952억"
 
     def test_returns_empty_on_error(self):
         fetcher = _make_mock_fetcher()
-        fetcher.get_top_transaction_value.side_effect = Exception("API error")
+        fetcher.get_top_trading_volume.side_effect = Exception("API error")
 
         screener = StockScreener(fetcher)
         result = screener.get_top_value()
@@ -257,7 +254,8 @@ class TestStockScreenerGetTopForeignerNetBuy:
 
         assert len(result) == 2
         assert result[0].stock_code == "005930"
-        assert result[0].extra == "5000000"
+        fetcher.get_top_foreigner_period_trading.assert_called_once_with(trde_tp="2")
+        assert result[0].extra == "5,000,000"
 
     def test_returns_empty_on_error(self):
         fetcher = _make_mock_fetcher()
@@ -348,22 +346,9 @@ class TestKisRankings:
 
     def test_all_kis_rankings_empty_without_keys(self):
         screener, fetcher = self._screener_with_kis(has_kis=False)
-        assert screener.get_dividend_yield_top() == []
         assert screener.get_short_selling_top() == []
-        assert screener.get_credit_balance_top() == []
         assert screener.get_disparity_index_top() == []
-        fetcher.get_dividend_yield_top.assert_not_called()
-
-    def test_dividend_yield_top_mapping(self):
-        screener, fetcher = self._screener_with_kis()
-        fetcher.get_dividend_yield_top.return_value = [_ns(sht_cd="005930", isin_name="삼성전자", divi_rate="3.5")]
-
-        items = screener.get_dividend_yield_top()
-
-        assert len(items) == 1
-        item = items[0]
-        assert (item.rank, item.stock_code, item.stock_name, item.extra) == (1, "005930", "삼성전자", "3.5")
-        assert item.current_price == "-"
+        fetcher.get_short_selling_top.assert_not_called()
 
     def test_short_selling_top_mapping(self):
         screener, fetcher = self._screener_with_kis()
@@ -398,5 +383,25 @@ class TestKisRankings:
 
     def test_fetcher_error_degrades_to_empty(self):
         screener, fetcher = self._screener_with_kis()
-        fetcher.get_credit_balance_top.side_effect = RuntimeError("boom")
-        assert screener.get_credit_balance_top() == []
+        fetcher.get_short_selling_top.side_effect = RuntimeError("boom")
+        assert screener.get_short_selling_top() == []
+
+
+class TestNumberFormatting:
+    def test_signed_int_collapses_doubled_sign(self):
+        from cluefin_desk.data.screener import _signed_int
+
+        assert _signed_int("--5516442") == "-5,516,442"
+        assert _signed_int("+112362604") == "112,362,604"
+        assert _signed_int("") == ""
+
+
+class TestStockScreenerGetPricePlunge:
+    def test_asks_for_plunge(self):
+        fetcher = _make_mock_fetcher()
+        fetcher.get_price_volatility.return_value = _make_volatility_response(SAMPLE_ITEMS)
+
+        result = StockScreener(fetcher).get_price_plunge()
+
+        fetcher.get_price_volatility.assert_called_once_with(flu_tp="2")
+        assert len(result) == 2
