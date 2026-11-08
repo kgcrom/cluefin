@@ -49,8 +49,8 @@ _RECIPES: tuple[WorkflowRecipe, ...] = (
                 title="Summarize financials",
                 command=("dart", "financial-summary"),
                 purpose="Fetch quarters, fiscal years and ratios before valuation notes.",
-                agent_notes="Needs the DART corp_code from the previous step's lookup. It costs 8 DART calls; call it "
-                "once and reuse the output.",
+                agent_notes="Needs the 8-digit DART corp_code (dart corp-code-lookup). It costs 8 DART calls; call "
+                "it once and reuse the output.",
             ),
             RecipeStep(
                 title="Search disclosures",

@@ -72,8 +72,8 @@ class DomesticDataFetcher:
         """Fetch basic company data — KIS when configured, Kiwoom otherwise.
 
         Both paths return the same widget-facing keys (stock_name, market_cap,
-        per/pbr/roe/eps/bps, sector_name, market_name); the KIS path adds price,
-        52-week and supply/demand columns on top.
+        per/pbr/eps/bps, sector_name, market_name); only Kiwoom has roe (KIS 재무비율 was
+        retired on 2026-11-11). The KIS path adds price, 52-week and supply/demand columns.
         """
         if self.has_kis:
             return self._get_basic_data_kis(stock_code)
