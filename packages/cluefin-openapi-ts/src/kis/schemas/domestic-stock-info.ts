@@ -125,158 +125,6 @@ export const getStockBasicInfoResponseSchema = z
   })
   .passthrough();
 
-// ── getBalanceSheet: Balance Sheet ──
-
-export const getBalanceSheetItemSchema = z
-  .object({
-    stac_yymm: s(),
-    cras: s(),
-    fxas: s(),
-    total_aset: s(),
-    flow_lblt: s(),
-    fix_lblt: s(),
-    total_lblt: s(),
-    cpfn: s(),
-    cfp_surp: s(),
-    prfi_surp: s(),
-    total_cptl: s(),
-  })
-  .passthrough();
-
-export const getBalanceSheetResponseSchema = z
-  .object({
-    ...kisEnvelope,
-    output: z.array(getBalanceSheetItemSchema).default([]),
-  })
-  .passthrough();
-
-// ── getIncomeStatement: Income Statement ──
-
-export const getIncomeStatementItemSchema = z
-  .object({
-    stac_yymm: s(),
-    sale_account: s(),
-    sale_cost: s(),
-    sale_totl_prfi: s(),
-    depr_cost: s(),
-    sell_mang: s(),
-    bsop_prti: s(),
-    bsop_non_ernn: s(),
-    bsop_non_expn: s(),
-    op_prfi: s(),
-    spec_prfi: s(),
-    spec_loss: s(),
-    thtr_ntin: s(),
-  })
-  .passthrough();
-
-export const getIncomeStatementResponseSchema = z
-  .object({
-    ...kisEnvelope,
-    output: z.array(getIncomeStatementItemSchema).default([]),
-  })
-  .passthrough();
-
-// ── getFinancialRatio: Financial Ratio ──
-
-export const getFinancialRatioItemSchema = z
-  .object({
-    stac_yymm: s(),
-    grs: s(),
-    bsop_prfi_inrt: s(),
-    ntin_inrt: s(),
-    roe_val: s(),
-    eps: s(),
-    sps: s(),
-    bps: s(),
-    rsrv_rate: s(),
-    lblt_rate: s(),
-  })
-  .passthrough();
-
-export const getFinancialRatioResponseSchema = z
-  .object({
-    ...kisEnvelope,
-    output: z.array(getFinancialRatioItemSchema).default([]),
-  })
-  .passthrough();
-
-// ── getProfitabilityRatio: Profitability Ratio ──
-
-export const getProfitabilityRatioItemSchema = z
-  .object({
-    stac_yymm: s(),
-    cptl_ntin_rate: s(),
-    self_cptl_ntin_inrt: s(),
-    sale_ntin_rate: s(),
-    sale_totl_rate: s(),
-  })
-  .passthrough();
-
-export const getProfitabilityRatioResponseSchema = z
-  .object({
-    ...kisEnvelope,
-    output: z.array(getProfitabilityRatioItemSchema).default([]),
-  })
-  .passthrough();
-
-// ── getOtherKeyRatio: Other Key Ratio ──
-
-export const getOtherKeyRatioItemSchema = z
-  .object({
-    stac_yymm: s(),
-    payout_rate: s(),
-    eva: s(),
-    ebitda: s(),
-    ev_ebitda: s(),
-  })
-  .passthrough();
-
-export const getOtherKeyRatioResponseSchema = z
-  .object({
-    ...kisEnvelope,
-    output: z.array(getOtherKeyRatioItemSchema).default([]),
-  })
-  .passthrough();
-
-// ── getStabilityRatio: Stability Ratio ──
-
-export const getStabilityRatioItemSchema = z
-  .object({
-    stac_yymm: s(),
-    lblt_rate: s(),
-    bram_depn: s(),
-    crnt_rate: s(),
-    quck_rate: s(),
-  })
-  .passthrough();
-
-export const getStabilityRatioResponseSchema = z
-  .object({
-    ...kisEnvelope,
-    output: z.array(getStabilityRatioItemSchema).default([]),
-  })
-  .passthrough();
-
-// ── getGrowthRatio: Growth Ratio ──
-
-export const getGrowthRatioItemSchema = z
-  .object({
-    stac_yymm: s(),
-    grs: s(),
-    bsop_prfi_inrt: s(),
-    equt_inrt: s(),
-    totl_aset_inrt: s(),
-  })
-  .passthrough();
-
-export const getGrowthRatioResponseSchema = z
-  .object({
-    ...kisEnvelope,
-    output: z.array(getGrowthRatioItemSchema).default([]),
-  })
-  .passthrough();
-
 // ── getMarginTradableStocks: Margin Tradable Stocks ──
 
 export const getMarginTradableStocksItemSchema = z
@@ -733,20 +581,6 @@ export type GetProductBasicInfoResponse = CamelizeKeys<z.infer<typeof getProduct
 
 export type GetStockBasicInfoResponse = CamelizeKeys<z.infer<typeof getStockBasicInfoResponseSchema>>;
 
-export type GetBalanceSheetResponse = CamelizeKeys<z.infer<typeof getBalanceSheetResponseSchema>>;
-
-export type GetIncomeStatementResponse = CamelizeKeys<z.infer<typeof getIncomeStatementResponseSchema>>;
-
-export type GetFinancialRatioResponse = CamelizeKeys<z.infer<typeof getFinancialRatioResponseSchema>>;
-
-export type GetProfitabilityRatioResponse = CamelizeKeys<z.infer<typeof getProfitabilityRatioResponseSchema>>;
-
-export type GetOtherKeyRatioResponse = CamelizeKeys<z.infer<typeof getOtherKeyRatioResponseSchema>>;
-
-export type GetStabilityRatioResponse = CamelizeKeys<z.infer<typeof getStabilityRatioResponseSchema>>;
-
-export type GetGrowthRatioResponse = CamelizeKeys<z.infer<typeof getGrowthRatioResponseSchema>>;
-
 export type GetMarginTradableStocksResponse = CamelizeKeys<z.infer<typeof getMarginTradableStocksResponseSchema>>;
 
 export type GetKsdDividendDecisionResponse = CamelizeKeys<z.infer<typeof getKsdDividendDecisionResponseSchema>>;
@@ -804,13 +638,6 @@ export type GetInvestmentOpinionByBrokerageResponse = CamelizeKeys<
 export interface DomesticStockInfoResponseMap {
   getProductBasicInfo: GetProductBasicInfoResponse;
   getStockBasicInfo: GetStockBasicInfoResponse;
-  getBalanceSheet: GetBalanceSheetResponse;
-  getIncomeStatement: GetIncomeStatementResponse;
-  getFinancialRatio: GetFinancialRatioResponse;
-  getProfitabilityRatio: GetProfitabilityRatioResponse;
-  getOtherKeyRatio: GetOtherKeyRatioResponse;
-  getStabilityRatio: GetStabilityRatioResponse;
-  getGrowthRatio: GetGrowthRatioResponse;
   getMarginTradableStocks: GetMarginTradableStocksResponse;
   getKsdDividendDecision: GetKsdDividendDecisionResponse;
   getKsdStockDividendDecision: GetKsdStockDividendDecisionResponse;

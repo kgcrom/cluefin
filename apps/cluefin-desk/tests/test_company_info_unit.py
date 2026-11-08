@@ -27,11 +27,6 @@ def _kis_extras():
         "52_week_high": "88000",
         "52_week_low": "49000",
         "state": "정상",
-        "financial_period": "202512",
-        "revenue": "3000000",
-        "operating_profit": "350000",
-        "net_profit": "300000",
-        "debt_ratio": "40.0",
         "foreign_exhaustion_rate": "52.1",
         "credit_ratio": "0.15",
     }
@@ -43,7 +38,6 @@ class TestFormatLines:
         assert "삼성전자" in text
         assert "PER: 12.5" in text
         assert "Price" not in text
-        assert "Financials" not in text
         assert "Supply/Demand" not in text
 
     def test_kis_shape_adds_sections(self):
@@ -51,8 +45,6 @@ class TestFormatLines:
         text = "\n".join(CompanyInfoWidget.format_lines(row))
         assert "현재가: 70000 (0.72%)" in text
         assert "52주: 49000 ~ 88000" in text
-        assert "Financials (202512)" in text
-        assert "매출액: 3000000" in text
         assert "외인소진율: 52.1%" in text
 
     def test_normal_state_is_hidden_but_halt_is_shown(self):

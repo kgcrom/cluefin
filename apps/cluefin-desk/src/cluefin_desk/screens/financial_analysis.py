@@ -57,8 +57,6 @@ class FinancialAnalysisScreen(Screen):
         yield Header(show_clock=True)
         yield Static(f"{self.stock_code} — 재무 분석  [Esc·뒤로]", id="financial-title-bar")
         with TabbedContent(id="financial-tabs"):
-            with TabPane("KIS 재무", id="tab-kis-financial"):
-                yield Static("Loading KIS financials...", id="kis-financial-content")
             with TabPane("재무제표", id="tab-statement"):
                 with VerticalScroll():
                     yield Static("Loading financial statements...", id="financial-statement-content")
@@ -112,8 +110,6 @@ class FinancialAnalysisScreen(Screen):
     # `r` 연타로 워커가 겹치면 같은 패널에 두 응답이 번갈아 써진다 — 최신 것만 남긴다.
     @work(thread=True, exclusive=True, group="financial-load")
     def load_all_data(self) -> None:
-        guarded(self, "#kis-financial-content", "KIS 재무", self._load_kis_financials)
-
         dart_client = self.app.dart_client
         if dart_client is None:
             self._show_dart_unavailable(
@@ -185,57 +181,6 @@ class FinancialAnalysisScreen(Screen):
             if items:
                 return items, year
         return [], years[0]
-
-    def _load_kis_financials(self) -> None:
-        """KIS 재무비율·손익계산서 시계열. 진행연도 누적(YTD) 행이 연간 행과 섞여
-        내려오므로 기간을 그대로 보여주고 라벨로만 구분한다."""
-        fetcher = self.app.fetcher
-        if not fetcher.has_kis:
-            self._update_panel(
-                "#kis-financial-content",
-                ["KIS API keys not configured.", "Set KIS_APP_KEY / KIS_SECRET_KEY in .env to use KIS financials."],
-            )
-            return
-
-        ratios = fetcher.get_financial_ratio_series(self.stock_code)
-        statements = fetcher.get_income_statement_series(self.stock_code)
-        self._update_panel("#kis-financial-content", self._format_kis_financial_lines(statements, ratios))
-
-    @staticmethod
-    def _format_kis_financial_lines(statements: Iterable, ratios: Iterable) -> list[str]:
-        statements, ratios = list(statements or []), list(ratios or [])
-        lines: list[str] = []
-        if statements:
-            lines += [
-                "[bold]손익계산서 (KIS, 년 시리즈 — 최신 행은 진행연도 누적일 수 있음)[/bold]",
-                "",
-                f"{pad('결산', 8, 'right')} {pad('매출액', 14, 'right')} "
-                f"{pad('영업이익', 14, 'right')} {pad('당기순이익', 14, 'right')}",
-                "-" * 56,
-            ]
-            for item in statements[:8]:
-                lines.append(
-                    f"{pad(item.stac_yymm, 8, 'right')} {pad(item.sale_account, 14, 'right')} "
-                    f"{pad(item.bsop_prti, 14, 'right')} {pad(item.thtr_ntin, 14, 'right')}"
-                )
-        if ratios:
-            lines += [
-                "",
-                "[bold]재무비율 (KIS)[/bold]",
-                "",
-                f"{pad('결산', 8, 'right')} {pad('ROE', 8, 'right')} {pad('부채비율', 10, 'right')} "
-                f"{pad('유보율', 12, 'right')} {pad('매출성장', 10, 'right')}",
-                "-" * 56,
-            ]
-            for item in ratios[:8]:
-                lines.append(
-                    f"{pad(item.stac_yymm, 8, 'right')} {pad(item.roe_val, 8, 'right')} "
-                    f"{pad(item.lblt_rate, 10, 'right')} {pad(item.rsrv_rate, 12, 'right')} "
-                    f"{pad(item.grs, 10, 'right')}"
-                )
-        if not lines:
-            lines = ["No KIS financial data available (ETF/ETN and some names have none)."]
-        return lines
 
     def _load_disclosure_list(self, dart_client, corp_code: str) -> None:
         items = (

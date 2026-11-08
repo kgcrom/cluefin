@@ -46,11 +46,11 @@ _RECIPES: tuple[WorkflowRecipe, ...] = (
                 agent_notes="Compare with DART corp-code lookup when a DART workflow needs corp_code.",
             ),
             RecipeStep(
-                title="Get financial statement",
-                command=("kis", "financial", "balance-sheet"),
-                purpose="Fetch statement context before ratios or valuation notes.",
-                agent_notes="Follow with income-statement or ratio commands when deeper financial context is needed. "
-                "KIS rows may stop at last year's annual report; use the latest-earnings recipe for the newest period.",
+                title="Summarize financials",
+                command=("dart", "financial-summary"),
+                purpose="Fetch quarters, fiscal years and ratios before valuation notes.",
+                agent_notes="Needs the 8-digit DART corp_code (dart corp-code-lookup). It costs 8 DART calls; call "
+                "it once and reuse the output.",
             ),
             RecipeStep(
                 title="Search disclosures",
@@ -237,8 +237,8 @@ _RECIPES: tuple[WorkflowRecipe, ...] = (
                 "its figures. It costs 8 DART calls, so call it once per company and reuse the output.",
             ),
         ),
-        agent_notes="Prefer this over kis financial commands whenever the question is about the most recent period; "
-        "KIS returns annual rows for many small caps and lags the filing.",
+        agent_notes="DART is the only source for statements and ratios; KIS retired its 종목분석 financial APIs "
+        "on 2026-11-11.",
     ),
     WorkflowRecipe(
         name="filing-text",

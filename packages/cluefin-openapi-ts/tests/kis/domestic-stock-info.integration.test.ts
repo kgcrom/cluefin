@@ -1,17 +1,9 @@
 import { describe, test } from 'vitest';
 import {
-  getBalanceSheetItemSchema,
-  getBalanceSheetResponseSchema,
   getEstimatedEarningsOutput2ItemSchema,
   getEstimatedEarningsOutput3ItemSchema,
   getEstimatedEarningsOutput4ItemSchema,
   getEstimatedEarningsResponseSchema,
-  getFinancialRatioItemSchema,
-  getFinancialRatioResponseSchema,
-  getGrowthRatioItemSchema,
-  getGrowthRatioResponseSchema,
-  getIncomeStatementItemSchema,
-  getIncomeStatementResponseSchema,
   getInvestmentOpinionByBrokerageItemSchema,
   getInvestmentOpinionByBrokerageResponseSchema,
   getInvestmentOpinionItemSchema,
@@ -42,13 +34,7 @@ import {
   getKsdStockDividendScheduleResponseSchema,
   getMarginTradableStocksItemSchema,
   getMarginTradableStocksResponseSchema,
-  getOtherKeyRatioItemSchema,
-  getOtherKeyRatioResponseSchema,
   getProductBasicInfoResponseSchema,
-  getProfitabilityRatioItemSchema,
-  getProfitabilityRatioResponseSchema,
-  getStabilityRatioItemSchema,
-  getStabilityRatioResponseSchema,
   getStockBasicInfoResponseSchema,
   getStockLoanableListOutput1ItemSchema,
   getStockLoanableListResponseSchema,
@@ -85,90 +71,6 @@ describe('KIS DomesticStockInfo', () => {
     });
     assertKisResponse(res);
     assertKisResponseShapeDeep(res.body, getStockBasicInfoResponseSchema);
-  });
-
-  it('getBalanceSheet', async () => {
-    const client = await getKisClient();
-    const res = await client.domesticStockInfo.getBalanceSheet({
-      fidDivClsCode: '0',
-      fidCondMrktDivCode: 'J',
-      fidInputIscd: SAMSUNG,
-    });
-    assertKisResponse(res);
-    assertKisResponseShapeDeep(res.body, getBalanceSheetResponseSchema);
-    assertResponseShape(res.body, getBalanceSheetResponseSchema, 'output', getBalanceSheetItemSchema);
-  });
-
-  it('getIncomeStatement', async () => {
-    const client = await getKisClient();
-    const res = await client.domesticStockInfo.getIncomeStatement({
-      fidDivClsCode: '0',
-      fidCondMrktDivCode: 'J',
-      fidInputIscd: SAMSUNG,
-    });
-    assertKisResponse(res);
-    assertKisResponseShapeDeep(res.body, getIncomeStatementResponseSchema);
-    assertResponseShape(res.body, getIncomeStatementResponseSchema, 'output', getIncomeStatementItemSchema);
-  });
-
-  it('getFinancialRatio', async () => {
-    const client = await getKisClient();
-    const res = await client.domesticStockInfo.getFinancialRatio({
-      fidDivClsCode: '0',
-      fidCondMrktDivCode: 'J',
-      fidInputIscd: SAMSUNG,
-    });
-    assertKisResponse(res);
-    assertKisResponseShapeDeep(res.body, getFinancialRatioResponseSchema);
-    assertResponseShape(res.body, getFinancialRatioResponseSchema, 'output', getFinancialRatioItemSchema);
-  });
-
-  it('getProfitabilityRatio', async () => {
-    const client = await getKisClient();
-    const res = await client.domesticStockInfo.getProfitabilityRatio({
-      fidInputIscd: SAMSUNG,
-      fidDivClsCode: '0',
-      fidCondMrktDivCode: 'J',
-    });
-    assertKisResponse(res);
-    assertKisResponseShapeDeep(res.body, getProfitabilityRatioResponseSchema);
-    assertResponseShape(res.body, getProfitabilityRatioResponseSchema, 'output', getProfitabilityRatioItemSchema);
-  });
-
-  it('getOtherKeyRatio', async () => {
-    const client = await getKisClient();
-    const res = await client.domesticStockInfo.getOtherKeyRatio({
-      fidInputIscd: SAMSUNG,
-      fidDivClsCode: '0',
-      fidCondMrktDivCode: 'J',
-    });
-    assertKisResponse(res);
-    assertKisResponseShapeDeep(res.body, getOtherKeyRatioResponseSchema);
-    assertResponseShape(res.body, getOtherKeyRatioResponseSchema, 'output', getOtherKeyRatioItemSchema);
-  });
-
-  it('getStabilityRatio', async () => {
-    const client = await getKisClient();
-    const res = await client.domesticStockInfo.getStabilityRatio({
-      fidInputIscd: SAMSUNG,
-      fidDivClsCode: '0',
-      fidCondMrktDivCode: 'J',
-    });
-    assertKisResponse(res);
-    assertKisResponseShapeDeep(res.body, getStabilityRatioResponseSchema);
-    assertResponseShape(res.body, getStabilityRatioResponseSchema, 'output', getStabilityRatioItemSchema);
-  });
-
-  it('getGrowthRatio', async () => {
-    const client = await getKisClient();
-    const res = await client.domesticStockInfo.getGrowthRatio({
-      fidInputIscd: SAMSUNG,
-      fidDivClsCode: '0',
-      fidCondMrktDivCode: 'J',
-    });
-    assertKisResponse(res);
-    assertKisResponseShapeDeep(res.body, getGrowthRatioResponseSchema);
-    assertResponseShape(res.body, getGrowthRatioResponseSchema, 'output', getGrowthRatioItemSchema);
   });
 
   it('getMarginTradableStocks', async () => {

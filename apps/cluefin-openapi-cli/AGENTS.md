@@ -26,8 +26,8 @@ CLI 가 말해 주지 않는 것만 적는다.
 
 - **출처 역할.** KIS 가 1순위(primary), 키움은 보조(auxiliary) — `kis_alternatives` 가 `[]` 인 명령이나
   KIS 가 빈 데이터를 줬을 때만, DART·SEC 는 참고(reference) 다.
-- **최신 실적은 DART, 주당지표만 KIS.** `kis financial *` 은 소형주에서 연간 행만 오고 최신 공시보다 한 해 늦을
-  수 있다. 리포트용 숫자(최근 8분기 단독값·YoY, 3개년 손익·재무상태·현금흐름·비율, 최신 누적, TTM, 차입금)는
+- **실적은 DART, 주당지표만 KIS.** KIS 종목분석(재무제표·재무비율) API 는 2026-11-11 서비스 종료로 없앴다.
+  리포트용 숫자(최근 8분기 단독값·YoY, 3개년 손익·재무상태·현금흐름·비율, 최신 누적, TTM, 차입금)는
   **`dart financial-summary --corp-code <8자리>` 한 번**으로 받고 다시 계산하지 않는다(DART 8회, 억원). 한 보고서만
   볼 때는 `dart financial-major-accounts`(`recipe latest-earnings`), 비율·성장률의 공식 값은
   `dart financial-major-indicators`, EPS·BPS 만 KIS 다. 분기 보고서의 `thstrm_amount` 는 해당 분기 단독,
@@ -455,13 +455,8 @@ CLI 가 말해 주지 않는 것만 적는다.
 - 불리언 파라미터는 값을 받아야 한다 — `--listed-only true`. 플래그처럼 값 없이 주면
   exit 2 (`Option --listed-only requires a value.`).
 
-## `dart financial-*` 가 최신 실적의 기본 경로다
+## `dart financial-*` 가 실적의 유일한 경로다
 
-- `kis financial *` 의 `--div-cls-code 1` 은 파라미터가 정상 전달되지만 **종목에 따라
-  연간 행만 온다** (2026-09-20 실측: 삼성전자는 202606·202603 분기 행이 오고,
-  티씨머티리얼즈 125020 은 FY2024 연간까지만 온다 — DART 에는 FY2025 사업보고서와
-  2026 반기보고서가 이미 있는데도). 코드 버그가 아니라 KIS 의 소형주 커버리지다.
-  스키마 설명이 이 사실을 안내하므로 문구를 줄이지 말 것.
 - DART 주요계정의 손익 행은 **분기 보고서에서 `thstrm_amount` 가 해당 분기 단독,
   `thstrm_add_amount` 가 연초 누적**이다 (1분기는 둘이 같은 값, 사업보고서와
   재무상태표 행은 누적이 `None`). 반기 실적을 전년과 비교할 때 `thstrm_amount` 를

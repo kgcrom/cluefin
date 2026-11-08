@@ -194,31 +194,6 @@ class TestFormatShareChangeLines:
         ]
 
 
-def _kis_statement():
-    return SimpleNamespace(stac_yymm="202512", sale_account="3000", bsop_prti="350", thtr_ntin="300")
-
-
-def _kis_ratio():
-    return SimpleNamespace(stac_yymm="202512", roe_val="9.1", lblt_rate="40.0", rsrv_rate="3000", grs="5.2")
-
-
-class TestFormatKisFinancialLines:
-    def test_both_series(self):
-        text = "\n".join(FinancialAnalysisScreen._format_kis_financial_lines([_kis_statement()], [_kis_ratio()]))
-        assert "손익계산서 (KIS" in text
-        assert "재무비율 (KIS)" in text
-        assert "202512" in text
-
-    def test_ratios_only(self):
-        text = "\n".join(FinancialAnalysisScreen._format_kis_financial_lines([], [_kis_ratio()]))
-        assert "손익계산서" not in text
-        assert "재무비율 (KIS)" in text
-
-    def test_neither_degrades_with_a_message(self):
-        text = "\n".join(FinancialAnalysisScreen._format_kis_financial_lines(None, None))
-        assert "No KIS financial data available" in text
-
-
 class TestFormatXbrlValue:
     def test_number_is_thousand_separated(self):
         assert FinancialAnalysisScreen._format_xbrl_value(1234567) == "1,234,567"

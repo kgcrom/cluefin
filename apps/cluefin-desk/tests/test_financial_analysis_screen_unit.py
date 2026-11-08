@@ -23,7 +23,6 @@ STOCK_CODE = "005930"
 CORP_CODE = "00126380"
 
 PANEL_IDS = (
-    "#kis-financial-content",
     "#financial-statement-content",
     "#dividend-content",
     "#major-shareholder-content",
@@ -34,19 +33,6 @@ PANEL_IDS = (
 
 def _response(items):
     return SimpleNamespace(result=SimpleNamespace(list=items))
-
-
-class FakeFetcher:
-    """KIS 재무 탭만 쓰는 최소 fetcher — 실제 fetcher 는 생성만으로 인증한다."""
-
-    def __init__(self, has_kis: bool = True):
-        self.has_kis = has_kis
-
-    def get_financial_ratio_series(self, stock_code):
-        return [SimpleNamespace(stac_yymm="202512", roe_val="9.1", lblt_rate="40.0", rsrv_rate="3000", grs="5.2")]
-
-    def get_income_statement_series(self, stock_code):
-        return [SimpleNamespace(stac_yymm="202512", sale_account="3000", bsop_prti="350", thtr_ntin="300")]
 
 
 class FakeKeyInformation:
@@ -190,9 +176,8 @@ class HarnessApp(App):
     # 실제 스타일시트를 물려 테스트가 tcss 회귀까지 잡게 한다.
     CSS_PATH = Path(cluefin_desk.__file__).parent / "styles" / "app.tcss"
 
-    def __init__(self, fetcher=None, dart_client=None):
+    def __init__(self, dart_client=None):
         super().__init__()
-        self.fetcher = fetcher if fetcher is not None else FakeFetcher()
         self._dart_client = dart_client
         self._current_screen_key = "1"
 
@@ -239,7 +224,6 @@ class TestAllTabsPopulated:
             await pilot.pause()
 
             screen = app.screen
-            assert "재무비율 (KIS)" in _panel_text(screen, "#kis-financial-content")
             # 연결(CFS) 우선 — 개별 값 1,000 이 아니라 3,000 이 보여야 한다
             statements = _panel_text(screen, "#financial-statement-content")
             assert "3,000" in statements
@@ -298,11 +282,9 @@ class TestDegradedPaths:
             await pilot.pause()
 
             screen = app.screen
-            for selector in PANEL_IDS[1:]:
+            for selector in PANEL_IDS:
                 assert "DART_AUTH_KEY" in _panel_text(screen, selector)
             assert "DART_AUTH_KEY" in _panel_text(screen, "#major-events-status")
-            # KIS 탭은 DART 와 무관하게 계속 채워진다
-            assert "재무비율 (KIS)" in _panel_text(screen, "#kis-financial-content")
 
     async def test_unlisted_code_says_not_a_dart_filer(self):
         """ETF/ETN 은 corp_code 가 없다 — 예전엔 다섯 탭이 Loading 에 머물렀다."""
@@ -313,7 +295,7 @@ class TestDegradedPaths:
             await pilot.pause()
 
             screen = app.screen
-            for selector in PANEL_IDS[1:]:
+            for selector in PANEL_IDS:
                 text = _panel_text(screen, selector)
                 assert "DART 공시대상 법인이 아닙니다" in text
             assert "DART 공시대상 법인이 아닙니다" in _panel_text(screen, "#major-events-status")
@@ -329,17 +311,6 @@ class TestDegradedPaths:
             text = _panel_text(screen, "#financial-statement-content")
             assert "corp_code 조회 실패" in text
             assert "등록되지 않은 키" in text
-
-    async def test_missing_kis_keys_only_affects_the_kis_tab(self):
-        app = HarnessApp(fetcher=FakeFetcher(has_kis=False), dart_client=FakeDartClient())
-        async with app.run_test() as pilot:
-            await pilot.pause()
-            await app.workers.wait_for_complete()
-            await pilot.pause()
-
-            screen = app.screen
-            assert "KIS_APP_KEY" in _panel_text(screen, "#kis-financial-content")
-            assert "이재용" in _panel_text(screen, "#major-shareholder-content")
 
     async def test_one_failing_tab_does_not_block_the_others(self, monkeypatch):
         def _boom(self, corp_code, bsns_year, reprt_code):
