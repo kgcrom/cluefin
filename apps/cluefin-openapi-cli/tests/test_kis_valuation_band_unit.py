@@ -45,8 +45,20 @@ def _equity(amount: float, rcept_no: str) -> dict:
 
 
 SHARES = (
-    {"se": "보통주", "istc_totqy": "1,000,000", "tesstk_co": "0", "distb_stock_co": "1,000,000"},
-    {"se": "우선주", "istc_totqy": "10,000", "tesstk_co": "0", "distb_stock_co": "10,000"},
+    {
+        "se": "보통주",
+        "istc_totqy": "1,000,000",
+        "tesstk_co": "0",
+        "distb_stock_co": "1,000,000",
+        "rcept_no": "20250315000001",
+    },
+    {
+        "se": "우선주",
+        "istc_totqy": "10,000",
+        "tesstk_co": "0",
+        "distb_stock_co": "10,000",
+        "rcept_no": "20250315000001",
+    },
 )
 
 
@@ -149,14 +161,14 @@ def test_valuation_band_computes_quantiles_and_current_percentile(cache_conn) ->
     assert pbr["current"] == pytest.approx(0.1467, rel=1e-3)
     assert pbr["current_percentile"] == pytest.approx(50.0)
 
-    assert out["calls"] == 5  # 3 statements (CFS) + 2 share-count (only years with a report)
+    assert out["calls"] == 4  # 3 statements (CFS) + 1 share count (the latest report filed by as_of)
     assert session.dart.calls == [
         ("statements", "2022", "11011", "CFS"),
         ("statements", "2023", "11011", "CFS"),
         ("statements", "2024", "11011", "CFS"),
-        ("shares", "2023", "11011"),
-        ("shares", "2024", "11011"),
+        ("shares", "2026", "11011"),
     ]
+    assert out["share_base"]["base_shares"] == 1_000_000
 
 
 def test_valuation_band_falls_back_to_ofs_when_cfs_is_empty(cache_conn) -> None:
@@ -168,7 +180,7 @@ def test_valuation_band_falls_back_to_ofs_when_cfs_is_empty(cache_conn) -> None:
     )
 
     assert out["statement_basis"] == "OFS"
-    assert out["calls"] == 3 + 3 + 2  # CFS attempt (3, empty) + OFS attempt (3) + share-count (2)
+    assert out["calls"] == 3 + 3 + 1  # CFS attempt (3, empty) + OFS attempt (3) + share count (1)
 
 
 def test_valuation_band_without_any_annual_report_is_exit_4(cache_conn) -> None:
@@ -196,7 +208,7 @@ def test_valuation_band_without_cached_bars_is_exit_4(monkeypatch) -> None:
     assert info.value.exit_code == EXIT_BROKER
 
 
-def test_valuation_band_drops_a_year_whose_shares_are_missing(cache_conn) -> None:
+def test_valuation_band_without_a_share_count_has_no_multiples(cache_conn) -> None:
     session = _session(shares=[])
 
     out = handlers.handle_kis_stock_valuation_band(
@@ -208,7 +220,6 @@ def test_valuation_band_drops_a_year_whose_shares_are_missing(cache_conn) -> Non
             "year": 2023,
             "net_income_owners": pytest.approx(100 * EOK),
             "equity_owners": pytest.approx(1000 * EOK),
-            "shares": None,
             "eps": None,
             "bps": None,
         },
@@ -216,12 +227,13 @@ def test_valuation_band_drops_a_year_whose_shares_are_missing(cache_conn) -> Non
             "year": 2024,
             "net_income_owners": pytest.approx(200 * EOK),
             "equity_owners": pytest.approx(1500 * EOK),
-            "shares": None,
             "eps": None,
             "bps": None,
         },
     ]
     assert out["current"]["eps_bps_year"] is None
+    assert out["share_base"]["base_shares"] is None
+    assert len(session.dart.calls) == 3 + 8  # every share-count report tried
     assert out["per"]["n"] == 0
     assert out["per"]["current"] is None
 
@@ -237,3 +249,50 @@ def test_valuation_band_never_pairs_a_bar_with_a_report_not_yet_due(cache_conn) 
 
     assert out["per"]["n"] == 5
     assert out["per"]["quantiles"]["max"] == pytest.approx(3.0)  # 30,000 / FY2023 EPS 10,000
+
+
+def test_valuation_band_does_not_break_across_a_bonus_issue(monkeypatch) -> None:
+    """1:1 bonus issue in 2025-05: raw closes halve and the share count doubles, so the band must not change.
+
+    The FY2024 report counted 1,000,000 shares; the latest report by as_of counts 2,000,000. Dividing each
+    year by its own count paired post-bonus prices with pre-bonus EPS until the next annual report (PER halved).
+    """
+    conn = cache_store.open_store(":memory:")
+    for day, close, factor in [
+        ("2024-06-01", 15000.0, 0.5),
+        ("2024-12-01", 20000.0, 0.5),
+        ("2025-06-01", 9000.0, 1.0),
+        ("2025-10-01", 11000.0, 1.0),
+    ]:
+        conn.execute(
+            "INSERT INTO ohlcv (code, date, close, adj_factor) VALUES (?, ?, ?, ?)", ["000001", day, close, factor]
+        )
+    monkeypatch.setattr(handlers.cache_store, "open_store", lambda *a, **k: conn)
+    post_bonus = [{**row, "istc_totqy": "2,000,000", "rcept_no": "20250814000001"} for row in SHARES[:1]]
+
+    out = handlers.handle_kis_stock_valuation_band(
+        {"stock_code": "000001", "corp_code": "00000001", "as_of": "20260331", "years": 2},
+        _session(shares=post_bonus),
+    )
+
+    # Same economics as the no-bonus fixture: 1.5, 2.0 (FY2023) and 0.9, 1.1 (FY2024)
+    assert out["per"]["quantiles"] == {"min": 0.9, "p25": 1.05, "median": 1.3, "p75": 1.625, "max": 2.0}
+    assert out["per"]["current"] == pytest.approx(1.1)
+    assert out["current"]["close"] == 11000.0
+    assert out["share_base"]["base_shares"] == 2_000_000
+
+
+def test_valuation_band_as_of_before_a_later_bonus_issue_rescales_the_share_count(monkeypatch) -> None:
+    """as_of falls before a bonus issue the cache already knows about: the last bar's factor is 0.5."""
+    conn = cache_store.open_store(":memory:")
+    for day, close in BARS:
+        conn.execute("INSERT INTO ohlcv (code, date, close, adj_factor) VALUES (?, ?, ?, 0.5)", ["000001", day, close])
+    monkeypatch.setattr(handlers.cache_store, "open_store", lambda *a, **k: conn)
+
+    out = handlers.handle_kis_stock_valuation_band(
+        {"stock_code": "000001", "corp_code": "00000001", "as_of": "20260331", "years": 2}, _session()
+    )
+
+    assert out["per"]["quantiles"] == {"min": 0.9, "p25": 1.05, "median": 1.3, "p75": 1.625, "max": 2.0}
+    assert out["current"]["close"] == 22000.0  # raw close reported
+    assert out["share_base"]["base_shares"] == 2_000_000
