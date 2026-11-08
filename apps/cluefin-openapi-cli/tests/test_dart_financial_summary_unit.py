@@ -184,6 +184,25 @@ def test_annual_picks_up_the_quality_items() -> None:
     assert y3["proceeds_from_share_issuance"] == 0
 
 
+def test_treasury_shares_disposed_matches_the_dart_xbrl_id() -> None:
+    rows = [
+        {"sj_div": "CF", "account_id": "-표준계정코드 미사용-", "account_nm": "기타"},
+        {
+            "sj_div": "CF",
+            "account_id": "dart_DispositionOfTreasuryShares",
+            "account_nm": "자기주식처분으로인한현금유입",
+        },
+    ]
+
+    assert s.find_row(rows, frozenset({"CF"}), s.CASH_ITEMS["treasury_shares_disposed"]) is rows[1]
+
+
+def test_treasury_shares_disposed_still_matches_an_off_taxonomy_label() -> None:
+    rows = [{"sj_div": "CF", "account_id": "-표준계정코드 미사용-", "account_nm": "자기주식의 처분"}]
+
+    assert s.find_row(rows, frozenset({"CF"}), s.CASH_ITEMS["treasury_shares_disposed"]) is rows[0]
+
+
 def test_latest_reads_income_year_to_date_and_cash_flow_as_is() -> None:
     rows = [
         _revenue(thstrm_amount="120", thstrm_add_amount="220"),
