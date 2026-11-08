@@ -166,7 +166,7 @@ CLI 가 말해 주지 않는 것만 적는다.
   not public yet. `--years` is the price window back from `as_of`. EPS/BPS come from DART's per-stock full statements
   (`get_single_company_full_statements`, 11011 only, fetched one fiscal year at a time) divided by **one**
   common share count for every year — the latest periodic report filed by `as_of`, divided by the
-  `as_of` bar's `adj_factor` so it sits on the adjusted-price base (`share_base` in the response).
+  `adj_factor` on that report's period end so it sits on the adjusted-price base (`share_base` in the response).
   Dividing each year by its own count broke the band for a year after a bonus issue or split
   (post-action price ÷ pre-action EPS, PER halved; 2026-11-08). The statements are
   deliberately **not** `cache financials`/`fnlttMultiAcnt`, which has no

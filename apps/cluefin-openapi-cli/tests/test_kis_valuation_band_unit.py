@@ -80,9 +80,10 @@ def _statements() -> dict:
 
 
 class _Dart:
-    def __init__(self, statements: dict, shares: list[dict]) -> None:
+    def __init__(self, statements: dict, shares: list[dict], shares_by_report: dict | None = None) -> None:
         self._statements = statements
         self._shares = shares
+        self._shares_by_report = shares_by_report
         self.calls: list[tuple] = []
 
     def get_single_company_full_statements(self, corp_code, bsns_year, reprt_code, fs_div):
@@ -92,7 +93,10 @@ class _Dart:
 
     def get_total_number_of_shares(self, corp_code, bsns_year, reprt_code):
         self.calls.append(("shares", bsns_year, reprt_code))
-        return type("R", (), {"result": type("E", (), {"status": "000", "list": [_Row(r) for r in self._shares]})()})()
+        rows = (
+            self._shares if self._shares_by_report is None else self._shares_by_report.get((bsns_year, reprt_code), [])
+        )
+        return type("R", (), {"result": type("E", (), {"status": "000", "list": [_Row(r) for r in rows]})()})()
 
 
 class _Session:
@@ -296,3 +300,32 @@ def test_valuation_band_as_of_before_a_later_bonus_issue_rescales_the_share_coun
     assert out["per"]["quantiles"] == {"min": 0.9, "p25": 1.05, "median": 1.3, "p75": 1.625, "max": 2.0}
     assert out["current"]["close"] == 22000.0  # raw close reported
     assert out["share_base"]["base_shares"] == 2_000_000
+
+
+def test_valuation_band_counts_a_bonus_issue_after_the_share_reports_period_end(monkeypatch) -> None:
+    """Latest report by as_of is H1 2025 (period end 06-30, 1,000,000 shares); a 1:1 bonus issue lands in 2025-08.
+
+    The count must be scaled by the factor on 06-30 (0.5), not on as_of's bar (1.0), or EPS would double.
+    """
+    conn = cache_store.open_store(":memory:")
+    for day, close, factor in [
+        ("2024-06-01", 15000.0, 0.5),
+        ("2024-12-01", 20000.0, 0.5),
+        ("2025-06-01", 18000.0, 0.5),
+        ("2025-10-01", 11000.0, 1.0),
+    ]:
+        conn.execute(
+            "INSERT INTO ohlcv (code, date, close, adj_factor) VALUES (?, ?, ?, ?)", ["000001", day, close, factor]
+        )
+    monkeypatch.setattr(handlers.cache_store, "open_store", lambda *a, **k: conn)
+    h1 = [{**row, "rcept_no": "20250814000001"} for row in SHARES]
+    session = _Session(_Dart(_statements(), [], shares_by_report={("2025", "11012"): h1}))
+
+    out = handlers.handle_kis_stock_valuation_band(
+        {"stock_code": "000001", "corp_code": "00000001", "as_of": "20251015", "years": 2}, session
+    )
+
+    assert out["share_base"]["adj_factor_at_period_end"] == 0.5
+    assert out["share_base"]["base_shares"] == 2_000_000
+    # FY2024 EPS on 2,000,000 shares = 10,000; 2025-10 adjusted close 11,000 → 1.1 (not 0.55)
+    assert out["per"]["current"] == pytest.approx(1.1)

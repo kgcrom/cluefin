@@ -1668,6 +1668,16 @@ _VALUATION_BAND_NOTES = (
 )
 
 
+_PERIOD_END = {"11013": "03-31", "11012": "06-30", "11014": "09-30", "11011": "12-31"}
+
+
+def _factor_on(priced: list[dict], day: str) -> float:
+    """adj_factor of the last bar on or before `day` (ISO), or of the first bar when `day` precedes them all."""
+    before = [bar for bar in priced if bar["date"] <= day]
+    bar = before[-1] if before else priced[0]
+    return bar["adj_factor"] or 1.0
+
+
 def _share_count_as_of(dart, corp_code: str, as_of: str) -> tuple[float | None, dict | None, int]:
     """(issued common shares, report, calls) from the latest periodic report received by `as_of`.
 
@@ -1676,7 +1686,7 @@ def _share_count_as_of(dart, corp_code: str, as_of: str) -> tuple[float | None, 
     year = int(as_of[:4])
     calls = 0
     for bsns_year in (year, year - 1):
-        for reprt_code in ("11011", "11014", "11012", "11013"):
+        for reprt_code in ("11011", "11014", "11012", "11013"):  # newest period first
             rows = dart_handlers.dart_rows(
                 dart.periodic_report_key_information.get_total_number_of_shares(
                     corp_code=corp_code, bsns_year=str(bsns_year), reprt_code=reprt_code
@@ -1791,12 +1801,18 @@ def handle_kis_stock_valuation_band(params: dict, session) -> dict:
             data={"stock_code": stock_code, "as_of": as_of},
             hint="Run `cache load` first, or check the code with `cache company --code`.",
         )
-    # Adjusted prices sit on the share base after the latest corporate action in the cache. The share count filed
-    # as of as_of is on the base of as_of's bar, so dividing by that bar's factor puts it on the adjusted base.
+    # Adjusted prices sit on the share base after the latest corporate action in the cache. The share count is as
+    # of the report's period end, so dividing by that day's factor puts it on the adjusted base — a bonus issue
+    # between the period end and as_of is then still counted.
     issued, share_report, share_calls = _share_count_as_of(dart, corp_code, as_of)
     dart_calls += share_calls
     last_factor = priced[-1]["adj_factor"] or 1.0
-    base_shares = None if issued is None else issued / last_factor
+    share_factor = (
+        1.0
+        if share_report is None
+        else _factor_on(priced, f"{share_report['bsns_year']}-{_PERIOD_END[share_report['reprt_code']]}")
+    )
+    base_shares = None if issued is None else issued / share_factor
 
     eps_by_year: dict[int, float | None] = {}
     bps_by_year: dict[int, float | None] = {}
@@ -1837,7 +1853,7 @@ def handle_kis_stock_valuation_band(params: dict, session) -> dict:
         "share_base": {
             "issued_as_of": issued,
             "report": share_report,
-            "adj_factor_as_of": last_factor,
+            "adj_factor_at_period_end": share_factor,
             "base_shares": base_shares,
         },
         "per": valuation_band.band(bars, eps_by_year, current_close=current_close, current_per_share=current_eps),
