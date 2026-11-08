@@ -43,7 +43,7 @@ uv run cluefin-openapi-cli cache rs --code 068270,044450 --json
 uv run cluefin-openapi-cli kis stock current-price --stock-code 068270 --json
 ```
 
-명령은 한 줄씩 별도 Bash 호출로, 독립인 것은 같은 턴에 병렬로 부른다(company-review 와 같은 규칙). 같은 명령을
+명령은 한 줄씩 별도 Bash 호출로, 독립인 것은 같은 턴에 병렬로 부른다. 같은 명령을
 같은 인자로 두 번 부르지 않는다 — 앞 결과를 다시 읽는다. 출력을 파일로 보내지 않는다(`>`).
 
 ## 분석
