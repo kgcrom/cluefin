@@ -254,6 +254,17 @@ def test_add_peers_appends_only_peer_calls(tmp_path: Path) -> None:
     assert result.status == "ok"
 
 
+def test_process_runner_matches_cli_output() -> None:
+    from cluefin_openapi_cli.main import run_cli
+
+    with rc.process_runner() as runner:
+        code, out, _ = runner(["brokers", "--json"])
+        bad, _, _ = runner(["review", "collect", "--json"])
+    assert code == 0
+    assert json.loads(out) == json.loads(run_cli(["brokers", "--json"]).stdout)
+    assert bad == 2
+
+
 def test_add_peers_needs_a_run_folder(tmp_path: Path) -> None:
     with pytest.raises(CliError):
         run_review(["collect", "--into", str(tmp_path), "--peers", "005930"])

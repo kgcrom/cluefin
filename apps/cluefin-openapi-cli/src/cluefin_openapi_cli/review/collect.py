@@ -12,7 +12,7 @@ it runs here as a small graph instead, and the agent reads the folder:
                        business section and notes (rcept no), DART major indicators (report year/code), and the
                        peers' own data (peer corp code).
 
-Every command runs as its own CLI process, so outputs and exit codes are exactly what a manual call prints. Each
+Every command runs as its own CLI call in a fresh spawned process (`process_runner`), so outputs and exit codes are exactly what a manual call prints. Each
 stdout lands in `raw/<node>.json` and each call is one line of `manifest.jsonl`, which `audit` reads instead of the
 transcript. Calls are capped per broker so a fan-out does not trip KIS/DART rate limits.
 """
@@ -20,14 +20,13 @@ transcript. Calls are capped per broker so a fan-out does not trip KIS/DART rate
 from __future__ import annotations
 
 import json
-import logging
+import multiprocessing
 import os
-import subprocess
-import sys
 import threading
 import time
-from collections.abc import Callable, Iterable
-from concurrent.futures import ThreadPoolExecutor
+from collections.abc import Callable, Iterable, Iterator
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -45,11 +44,9 @@ __all__ = [
     "collect",
     "default_root",
     "read_run_info",
+    "process_runner",
     "run_dir",
-    "subprocess_runner",
 ]
-
-logger = logging.getLogger(__name__)
 
 # (exit code, stdout, stderr)
 Runner = Callable[[list[str]], tuple[int, str, str]]
@@ -107,15 +104,27 @@ class CollectResult:
     corp_codes: dict[str, str] = field(default_factory=dict)
 
 
-def subprocess_runner(argv: list[str]) -> tuple[int, str, str]:
-    proc = subprocess.run(  # noqa: S603 — argv is built here from fixed command paths and validated codes
-        [sys.executable, "-m", "cluefin_openapi_cli.main", *argv],
-        capture_output=True,
-        text=True,
-        check=False,
-        env={**os.environ, "PYTHONIOENCODING": "utf-8"},
-    )
-    return proc.returncode, proc.stdout, proc.stderr
+def _run_in_child(argv: list[str]) -> tuple[int, str, str]:
+    """One CLI call inside a fresh worker process: same stdout and exit code as the command line."""
+
+    from cluefin_openapi_cli.main import run_cli
+
+    result = run_cli(argv)
+    return result.exit_code, result.stdout, result.stderr
+
+
+@contextmanager
+def process_runner() -> Iterator[Runner]:
+    """A runner that gives every call its own spawned process (no shell, no subprocess argv).
+
+    `max_tasks_per_child=1` keeps calls from sharing a process, so a client's module state or a redirected logging
+    stream cannot leak from one call into the next — the same isolation as running the CLI by hand.
+    """
+
+    workers = sum(BROKER_LIMITS.values())
+    context = multiprocessing.get_context("spawn")
+    with ProcessPoolExecutor(max_workers=workers, mp_context=context, max_tasks_per_child=1) as pool:
+        yield lambda argv: pool.submit(_run_in_child, argv).result()
 
 
 def default_root() -> Path:
@@ -445,7 +454,7 @@ def add_peers(
     out: Path,
     peers: list[str],
     *,
-    runner: Runner = subprocess_runner,
+    runner: Runner,
     sleep: Callable[[float], None] = time.sleep,
 ) -> CollectResult:
     """Fetch peers into an existing run folder — for peers picked after reading the filing's competition section.
@@ -491,7 +500,7 @@ def collect(
     peers: list[str],
     out: Path,
     *,
-    runner: Runner = subprocess_runner,
+    runner: Runner,
     day: date | None = None,
     sleep: Callable[[float], None] = time.sleep,
 ) -> CollectResult:

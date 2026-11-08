@@ -15,6 +15,7 @@ from cluefin_openapi_cli.review.collect import (
     add_peers,
     collect,
     default_root,
+    process_runner,
     read_run_info,
     run_dir,
 )
@@ -73,7 +74,8 @@ def _run_collect(argv: list[str]) -> None:
             raise CliError(f"--into needs --peers with 1 to {_MAX_PEERS} codes.", exit_code=EXIT_USAGE)
         if read_run_info(Path(into)) is None:
             raise CliError(f"{into} is not a review collect folder (no run.json).", exit_code=EXIT_USAGE)
-        result = add_peers(Path(into), peers)
+        with process_runner() as runner:
+            result = add_peers(Path(into), peers, runner=runner)
         render_output(
             summary(result), force_json=bool(options.get("json", False)), compact=bool(options.get("compact", False))
         )
@@ -89,7 +91,8 @@ def _run_collect(argv: list[str]) -> None:
     out = Path(out_opt) if out_opt else run_dir(default_root(), stock, today_kst())
     if (out / "manifest.jsonl").exists():
         raise CliError(f"{out} already holds a run.", exit_code=EXIT_USAGE, hint="Pick another --out or omit it.")
-    result = collect(stock, peers, out)
+    with process_runner() as runner:
+        result = collect(stock, peers, out, runner=runner)
     render_output(
         summary(result), force_json=bool(options.get("json", False)), compact=bool(options.get("compact", False))
     )
