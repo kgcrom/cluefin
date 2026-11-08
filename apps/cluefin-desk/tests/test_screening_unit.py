@@ -120,3 +120,43 @@ class TestScreeningScreen:
             assert _rows(screen, "table-margin") == 1
             # 다른 워커(KIS 그룹)도 영향 없다
             assert _rows(screen, "table-dividend") == 1
+
+
+class TestTableFormatting:
+    """표 셀 포맷 — 키움 부호 달린 값과 탭별 지표 열."""
+
+    def _cells(self, item, extra_label=None):
+        return StockScreeningTable(extra_label=extra_label).row_cells(item)
+
+    def test_signed_kiwoom_price_and_volume_are_unsigned(self):
+        item = ScreeningItem(
+            rank=1,
+            stock_code="000660",
+            stock_name="SK하이닉스",
+            current_price="-1176000",
+            change_rate="-6.96",
+            volume="+7907029",
+        )
+        cells = self._cells(item)
+        assert cells[3] == "1,176,000"
+        assert cells[5] == "7,907,029"
+        assert "-6.96%" in cells[4]
+
+    def test_missing_change_rate_is_a_dash_not_zero(self):
+        item = ScreeningItem(
+            rank=1, stock_code="005930", stock_name="삼성전자", current_price="1", change_rate="", volume="1"
+        )
+        assert self._cells(item)[4] == "-"
+
+    def test_extra_column_only_when_labelled(self):
+        item = ScreeningItem(
+            rank=1,
+            stock_code="005930",
+            stock_name="삼성전자",
+            current_price="1",
+            change_rate="1",
+            volume="1",
+            extra="6.97",
+        )
+        assert len(self._cells(item)) == 6
+        assert self._cells(item, extra_label="신용비율")[6] == "6.97"

@@ -31,6 +31,17 @@ TAB_CONFIG = [
     ("이격도", "tab-disparity", "table-disparity"),
 ]
 
+# 탭의 정렬 기준 지표 — `ScreeningItem.extra` 를 7번째 열에 이 이름으로 보인다
+EXTRA_LABELS = {
+    "table-foreigner": "순매수량",
+    "table-volatility": "급등률(60분)",
+    "table-margin": "신용비율",
+    "table-dividend": "배당률",
+    "table-short": "공매도비중",
+    "table-credit": "융자잔고비율",
+    "table-disparity": "이격도(20일)",
+}
+
 
 class ScreeningScreen(Screen):
     """Screen 2: Rankings with 8 tabs."""
@@ -49,7 +60,7 @@ class ScreeningScreen(Screen):
             with TabbedContent(id="screening-tabs"):
                 for tab_label, tab_id, table_id in TAB_CONFIG:
                     with TabPane(tab_label, id=tab_id):
-                        yield StockScreeningTable(id=table_id)
+                        yield StockScreeningTable(id=table_id, extra_label=EXTRA_LABELS.get(table_id))
                         # 표만 있으면 빈 표가 "데이터 없음·키 없음·실패" 중 무엇인지 알 수 없다
                         yield Static("Loading...", id=f"status-{table_id}", classes="tab-status")
         yield NavFooter(active_screen_key="2")
