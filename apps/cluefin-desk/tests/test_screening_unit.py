@@ -1,4 +1,4 @@
-"""랭킹 화면 — 12개 탭이 채워지는지, 빈 표의 이유가 보이는지.
+"""랭킹 화면 — 11개 탭이 채워지는지, 빈 표의 이유가 보이는지.
 
 표만 있는 화면이라 "데이터 없음 / KIS 키 없음 / 조회 실패" 가 모두 같은 빈 표로 보였다.
 탭별 상태줄이 그 셋을 구분하는지 Pilot 하네스로 확인한다.
@@ -16,8 +16,8 @@ from cluefin_desk.screens.screening import TAB_CONFIG, ScreeningScreen
 from cluefin_desk.widgets.stock_table import StockScreeningTable
 
 ALL_TABLE_IDS = [table_id for _, _, table_id in TAB_CONFIG]
-# 화면의 `_load_kis_tabs` 가 맡는 4개 — KIS 키가 없으면 이 표들만 안내 문구가 떠야 한다
-KIS_TABLE_IDS = ["table-dividend", "table-short", "table-credit", "table-disparity"]
+# 화면의 `_load_kis_tabs` 가 맡는 2개 — KIS 키가 없으면 이 표들만 안내 문구가 떠야 한다
+KIS_TABLE_IDS = ["table-short", "table-disparity"]
 KIWOOM_TABLE_IDS = [t for t in ALL_TABLE_IDS if t not in KIS_TABLE_IDS]
 
 
@@ -82,7 +82,7 @@ async def _loaded(app, pilot):
 
 @pytest.mark.asyncio
 class TestScreeningScreen:
-    async def test_all_twelve_tabs_are_filled(self):
+    async def test_all_tabs_are_filled(self):
         app = HarnessApp(FakeScreener())
         async with app.run_test() as pilot:
             screen = await _loaded(app, pilot)
@@ -119,7 +119,7 @@ class TestScreeningScreen:
             assert _rows(screen, "table-value") == 1
             assert _rows(screen, "table-margin") == 1
             # 다른 워커(KIS 그룹)도 영향 없다
-            assert _rows(screen, "table-dividend") == 1
+            assert _rows(screen, "table-short") == 1
 
 
 class TestTableFormatting:

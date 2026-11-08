@@ -346,22 +346,9 @@ class TestKisRankings:
 
     def test_all_kis_rankings_empty_without_keys(self):
         screener, fetcher = self._screener_with_kis(has_kis=False)
-        assert screener.get_dividend_yield_top() == []
         assert screener.get_short_selling_top() == []
-        assert screener.get_credit_balance_top() == []
         assert screener.get_disparity_index_top() == []
-        fetcher.get_dividend_yield_top.assert_not_called()
-
-    def test_dividend_yield_top_mapping(self):
-        screener, fetcher = self._screener_with_kis()
-        fetcher.get_dividend_yield_top.return_value = [_ns(sht_cd="005930", isin_name="삼성전자", divi_rate="3.5")]
-
-        items = screener.get_dividend_yield_top()
-
-        assert len(items) == 1
-        item = items[0]
-        assert (item.rank, item.stock_code, item.stock_name, item.extra) == (1, "005930", "삼성전자", "3.5")
-        assert item.current_price == "-"
+        fetcher.get_short_selling_top.assert_not_called()
 
     def test_short_selling_top_mapping(self):
         screener, fetcher = self._screener_with_kis()
@@ -396,8 +383,8 @@ class TestKisRankings:
 
     def test_fetcher_error_degrades_to_empty(self):
         screener, fetcher = self._screener_with_kis()
-        fetcher.get_credit_balance_top.side_effect = RuntimeError("boom")
-        assert screener.get_credit_balance_top() == []
+        fetcher.get_short_selling_top.side_effect = RuntimeError("boom")
+        assert screener.get_short_selling_top() == []
 
 
 class TestNumberFormatting:
@@ -407,3 +394,14 @@ class TestNumberFormatting:
         assert _signed_int("--5516442") == "-5,516,442"
         assert _signed_int("+112362604") == "112,362,604"
         assert _signed_int("") == ""
+
+
+class TestStockScreenerGetPricePlunge:
+    def test_asks_for_plunge(self):
+        fetcher = _make_mock_fetcher()
+        fetcher.get_price_volatility.return_value = _make_volatility_response(SAMPLE_ITEMS)
+
+        result = StockScreener(fetcher).get_price_plunge()
+
+        fetcher.get_price_volatility.assert_called_once_with(flu_tp="2")
+        assert len(result) == 2

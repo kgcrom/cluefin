@@ -448,29 +448,6 @@ class DomesticDataFetcher:
     # KIS: 랭킹 (screening)
     # ──────────────────────────────────────
 
-    def get_dividend_yield_top(self, market: str = "1") -> list:
-        """배당수익률 상위 (KIS). market: 0 전체, 1 코스피, 2 코스피200, 3 코스닥.
-        기준일은 최근 1년 결산·현금배당."""
-        end = now_kst()
-        start = end - timedelta(days=365)
-        try:
-            return (
-                self.kis_client.domestic_ranking_analysis.get_stock_dividend_yield_top(
-                    cts_area="",
-                    gb1=market,
-                    upjong="0001",  # 종합
-                    gb2="0",  # 전체
-                    gb3="2",  # 현금배당
-                    f_dt=start.strftime("%Y%m%d"),
-                    t_dt=end.strftime("%Y%m%d"),
-                    gb4="0",  # 전체(결산+중간)
-                ).body.output
-                or []
-            )
-        except (KISAPIError, ValidationError) as exc:
-            logger.warning(f"dividend yield top unavailable: {exc}")
-            return []
-
     def get_short_selling_top(self, market: str = "0001") -> list:
         """공매도 상위 (KIS, 당일). market: 0000 전체, 0001 코스피, 1001 코스닥."""
         try:
@@ -491,23 +468,6 @@ class DomesticDataFetcher:
             )
         except (KISAPIError, ValidationError) as exc:
             logger.warning(f"short selling top unavailable: {exc}")
-            return []
-
-    def get_credit_balance_top(self, market: str = "0001") -> list:
-        """신용잔고 상위 (KIS, 잔고비율순). market: 0000 전체, 0001 거래소, 1001 코스닥."""
-        try:
-            return (
-                self.kis_client.domestic_ranking_analysis.get_stock_credit_balance_top(
-                    fid_cond_scr_div_code="11701",
-                    fid_input_iscd=market,
-                    fid_option="7",  # 증가율 기간(일)
-                    fid_cond_mrkt_div_code="J",
-                    fid_rank_sort_cls_code="0",  # 잔고비율상위
-                ).body.output2
-                or []
-            )
-        except (KISAPIError, ValidationError) as exc:
-            logger.warning(f"credit balance top unavailable: {exc}")
             return []
 
     def get_disparity_index_rank(self, market: str = "0001", hour: str = "20") -> list:

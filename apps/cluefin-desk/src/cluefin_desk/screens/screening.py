@@ -22,12 +22,11 @@ TAB_CONFIG = [
     ("거래대금", "tab-value", "table-value"),
     ("외인순매", "tab-foreigner", "table-foreigner"),
     ("신고가", "tab-newhigh", "table-newhigh"),
-    ("급등/급락", "tab-volatility", "table-volatility"),
-    ("신용잔", "tab-margin", "table-margin"),
+    ("급등", "tab-volatility", "table-volatility"),
+    ("급락", "tab-plunge", "table-plunge"),
+    ("신용비율", "tab-margin", "table-margin"),
     # KIS-backed tabs — stay empty without KIS keys
-    ("배당수익률", "tab-dividend", "table-dividend"),
     ("공매도", "tab-short", "table-short"),
-    ("신용상위", "tab-credit", "table-credit"),
     ("이격도", "tab-disparity", "table-disparity"),
 ]
 
@@ -36,16 +35,15 @@ EXTRA_LABELS = {
     "table-value": "거래대금",
     "table-foreigner": "순매수량",
     "table-volatility": "급등률(60분)",
+    "table-plunge": "급락률(60분)",
     "table-margin": "신용비율",
-    "table-dividend": "배당률",
     "table-short": "공매도비중",
-    "table-credit": "융자잔고비율",
     "table-disparity": "이격도(20일)",
 }
 
 
 class ScreeningScreen(Screen):
-    """Screen 2: Rankings with 8 tabs."""
+    """Screen 2: Rankings — 키움 9개 + KIS 2개 탭."""
 
     BINDINGS = [
         Binding("r", "refresh", "Refresh"),
@@ -71,7 +69,7 @@ class ScreeningScreen(Screen):
         nav.set_active("2")
         self.load_all_data()
 
-    # 12개 탭을 한 스레드에서 차례로 돌리면 KIS 탭 4개는 키움 8건 + KIS 인증이 끝난 뒤에야
+    # 11개 탭을 한 스레드에서 차례로 돌리면 KIS 탭 2개는 키움 9건 + KIS 인증이 끝난 뒤에야
     # 채워져, 탭을 눌렀을 때 그제서야 조회하는 것처럼 보인다. 소스별로 워커를 나눠
     # 동시에 미리 채운다. 각 그룹은 exclusive — `r` 연타로 겹치는 워커는 최신만 남긴다.
     def load_all_data(self) -> None:
@@ -90,6 +88,7 @@ class ScreeningScreen(Screen):
                 ("table-foreigner", screener.get_top_foreigner_net_buy),
                 ("table-newhigh", screener.get_new_high_price),
                 ("table-volatility", screener.get_price_volatility),
+                ("table-plunge", screener.get_price_plunge),
                 ("table-margin", screener.get_top_margin_ratio),
             ]
         )
@@ -98,9 +97,7 @@ class ScreeningScreen(Screen):
     def _load_kis_tabs(self) -> None:
         screener = self.app.screener
         loaders = [
-            ("table-dividend", screener.get_dividend_yield_top),
             ("table-short", screener.get_short_selling_top),
-            ("table-credit", screener.get_credit_balance_top),
             ("table-disparity", screener.get_disparity_index_top),
         ]
         if not self.app.fetcher.has_kis:
