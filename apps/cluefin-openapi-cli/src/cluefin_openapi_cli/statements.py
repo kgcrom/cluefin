@@ -87,8 +87,11 @@ CASH_ITEMS: dict[str, Item] = {
         ("dart_AcquisitionOfTreasuryShares", "ifrs-full_PaymentsToAcquireOrRedeemEntitysShares"),
         ("자기주식의취득", "자기주식취득"),
     ),
+    # Real filings carry dart_DispositionOfTreasuryShares (checked 2026-11-08); until then only the label
+    # matched. Off-taxonomy filers ("-표준계정코드 미사용-") still match by label only.
     "treasury_shares_disposed": Item(
-        ("ifrs-full_ProceedsFromSaleOrDisposalOfEntitysSharesHeld",), ("자기주식의처분", "자기주식처분")
+        ("dart_DispositionOfTreasuryShares", "ifrs-full_ProceedsFromSaleOrDisposalOfEntitysSharesHeld"),
+        ("자기주식의처분", "자기주식처분"),
     ),
     "proceeds_from_share_issuance": Item(
         ("ifrs-full_ProceedsFromIssuingShares",), ("주식의발행", "유상증자", "주식발행")
