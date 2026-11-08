@@ -196,3 +196,56 @@ def test_duplicate_marks_different_outputs(tmp_path: Path) -> None:
     dup = next(f for f in result["findings"] if f["type"] == "duplicate")
     assert dup["calls"] == [0, 1]
     assert dup["same_output"] is False
+
+
+def _collect_folder(folder: Path) -> Path:
+    raw = folder / "raw"
+    raw.mkdir(parents=True)
+    lookup = json.dumps({"data": [{"corp_code": "00126380", "stock_code": "005930"}]})
+    lines = [
+        (["kis", "stock", "current-price", "--stock-code", "005930", "--json"], 0, "{}"),
+        (["dart", "corp-code-lookup", "--stock-code", "005930", "--json"], 0, lookup),
+        (["ecos", "macro-snapshot", "--json"], 0, "{}"),
+        (["kis", "stock", "opinion-summary", "--stock-code", "005930", "--json"], 0, "{}"),
+        (["dart", "financial-summary", "--corp-code", "00126380", "--json"], 0, '{"x": 1}'),
+        (["ecos", "industry-outlook", "--induty-code", "71310", "--json"], 2, '{"error": {}}'),
+    ]
+    with (folder / "manifest.jsonl").open("w") as fh:
+        for i, (argv, code, out) in enumerate(lines):
+            (raw / f"n{i}.json").write_text(out)
+            fh.write(json.dumps({"argv": argv, "exit_code": code, "file": f"raw/n{i}.json", "started": f"s{i}"}) + "\n")
+    return folder
+
+
+def test_review_collect_manifest_counts_as_calls(tmp_path: Path) -> None:
+    folder = _collect_folder(tmp_path / "214-20261108")
+    summary = json.dumps({"out": str(folder), "status": "partial"})
+    rows = [
+        {"type": "user", "timestamp": "t0", "message": {"content": "삼성전자(005930) 검토"}},
+        _bash("1", f"{APP} review collect --stock-code 005930 --json", "t1"),
+        _result("1", "WARNING retry\n" + summary),
+    ]
+    run = load_run(_write_run(tmp_path, rows))
+    assert [c.command for c in run.calls][:3] == ["review collect", "kis stock current-price", "dart corp-code-lookup"]
+    fs = next(c for c in run.calls if c.command == "dart financial-summary")
+    assert fs.output == '{"x": 1}'
+    assert fs.via == str(folder)
+    assert [c.index for c in run.calls] == list(range(len(run.calls)))
+    result = check_run(parse_spec("company-review", SPEC), run, valid=frozenset({"005930"}))
+    types = {(f["type"], f.get("command")) for f in result["findings"]}
+    assert not any(t in {"missing_required", "missing_main", "missing_each"} for t, _ in types)
+    assert ("failed_not_retried", "ecos industry-outlook") in types
+    assert "output_to_file" not in {t for t, _ in types}
+
+
+def test_review_collect_without_manifest_is_flagged(tmp_path: Path) -> None:
+    summary = json.dumps({"out": str(tmp_path / "gone"), "status": "ok"})
+    rows = [
+        {"type": "user", "timestamp": "t0", "message": {"content": "005930"}},
+        _bash("1", f"{APP} review collect --stock-code 005930 --json", "t1"),
+        _result("1", summary),
+    ]
+    run = load_run(_write_run(tmp_path, rows))
+    assert [c.command for c in run.calls] == ["review collect"]
+    result = check_run(parse_spec("company-review", SPEC), run, valid=frozenset({"005930"}))
+    assert any(f["type"] == "collect_manifest_missing" for f in result["findings"])

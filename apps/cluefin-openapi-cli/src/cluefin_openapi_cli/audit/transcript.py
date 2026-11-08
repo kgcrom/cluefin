@@ -20,6 +20,7 @@ __all__ = [
     "APP_TOKEN",
     "AgentRun",
     "CliCall",
+    "collect_folder",
     "find_runs",
     "find_session",
     "load_run",
@@ -52,6 +53,7 @@ class CliCall:
     shell: str = ""  # the whole Bash command this call came from
     to_file: bool = False  # stdout redirected to a file
     mixed: bool = False  # the Bash command also ran non-CLI work, so output/exit code may not be this call's
+    via: str = ""  # run folder of the `review collect` call that made this call (read from its manifest)
 
     @property
     def command(self) -> str:
@@ -262,7 +264,72 @@ def _extract(rows: list[dict[str, Any]]) -> _Extracted:
                     mixed=mixed,
                 )
             )
-    return _Extracted(calls, texts, list(shell.values()), list(reads.values()))
+    return _Extracted(_expand_collect(calls), texts, list(shell.values()), list(reads.values()))
+
+
+_COLLECT = ("review", "collect")
+
+
+def _json_object(text: str) -> Any:
+    """The first JSON object in a tool result (stderr warnings can come before it)."""
+
+    start = text.find("{")
+    if start < 0:
+        return None
+    try:
+        value, _ = json.JSONDecoder().raw_decode(text[start:])
+    except ValueError:
+        return None
+    return value
+
+
+def collect_folder(call: CliCall) -> Path | None:
+    """The run folder a successful `review collect` call printed, if it still has a manifest."""
+
+    if call.path != _COLLECT or call.exit_code != 0:
+        return None
+    payload = _json_object(call.output)
+    out = payload.get("out") if isinstance(payload, dict) else None
+    if not out or not (Path(out) / "manifest.jsonl").is_file():
+        return None
+    return Path(out)
+
+
+def _manifest_calls(call: CliCall, folder: Path) -> list[CliCall]:
+    calls: list[CliCall] = []
+    for row in _read_rows(folder / "manifest.jsonl"):
+        argv = row.get("argv")
+        parsed = _parse_invocation([APP_TOKEN, *map(str, argv)]) if isinstance(argv, list) else None
+        if parsed is None:
+            continue
+        raw = folder / str(row.get("file", ""))
+        output = raw.read_text(encoding="utf-8") if raw.is_file() else ""
+        exit_code = row.get("exit_code")
+        calls.append(
+            CliCall(
+                index=0,
+                path=parsed[0],
+                args=parsed[1],
+                exit_code=exit_code if isinstance(exit_code, int) else None,
+                output=output,
+                timestamp=str(row.get("started", call.timestamp)),
+                shell=call.shell,
+                via=str(folder),
+            )
+        )
+    return calls
+
+
+def _expand_collect(calls: list[CliCall]) -> list[CliCall]:
+    """Each `review collect` call followed by the calls its manifest records, so checks see what it fetched."""
+
+    out: list[CliCall] = []
+    for call in calls:
+        out.append(call)
+        folder = collect_folder(call)
+        if folder is not None:
+            out.extend(_manifest_calls(call, folder))
+    return [replace(c, index=i) for i, c in enumerate(out)]
 
 
 def _first_prompt(rows: list[dict[str, Any]]) -> str:
