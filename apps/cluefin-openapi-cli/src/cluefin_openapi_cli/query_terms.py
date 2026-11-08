@@ -18,7 +18,16 @@ _EXPANSION_WEIGHT = 0.85
 _STOPWORDS = frozenset(
     {"get", "from", "the", "a", "an", "of", "by", "for", "data", "and", "or", "with", "to", "in", "on"}
 )
-_IRREGULAR_PLURALS = {"indices": "index", "indexes": "index", "ratios": "ratio"}
+_IRREGULAR_PLURALS = {
+    "indices": "index",
+    "indexes": "index",
+    "ratios": "ratio",
+    "analyses": "analysis",
+    "series": "series",
+    "species": "species",
+}
+#: Singular words that end in "s": status, class, and (5+ letters, so `apis`/`kpis` stay plural) analysis.
+_SINGULAR_S_ENDINGS = ("us", "ss")
 
 _HANGUL = r"가-힣ᄀ-ᇿ㄰-㆏"
 HANGUL_RUN = re.compile(f"[{_HANGUL}]+")
@@ -32,14 +41,15 @@ ALIAS_TABLE: tuple[tuple[str, tuple[str, ...]], ...] = tuple(
 def _singular(token: str) -> str:
     if token in _IRREGULAR_PLURALS:
         return _IRREGULAR_PLURALS[token]
-    if len(token) <= 3 or not token.endswith("s"):
+    if len(token) <= 3 or not token.endswith("s") or token.endswith(_SINGULAR_S_ENDINGS):
         return token
-    stem = token[:-1]
-    if token.endswith("es") and stem[:-1].endswith(("s", "x", "ch", "sh")):
-        return stem[:-1]
-    if stem.endswith("s"):
+    if token.endswith("is") and len(token) > 4:
         return token
-    return stem
+    if token.endswith("ies") and len(token) > 4:
+        return token[:-3] + "y"
+    if token.endswith(("sses", "xes", "ches", "shes")):
+        return token[:-2]
+    return token[:-1]
 
 
 def tokenize(text: str) -> list[str]:

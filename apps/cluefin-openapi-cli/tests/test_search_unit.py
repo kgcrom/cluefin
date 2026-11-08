@@ -209,3 +209,27 @@ def test_index_is_cached_per_registry_object(monkeypatch: pytest.MonkeyPatch) ->
     search_commands(RpcRegistry(), "차트")
     assert builds["count"] == 2
     search_module._INDEX_CACHE = None
+
+
+@pytest.mark.parametrize(
+    ("singular", "plural"),
+    [
+        ("analysis", "analyses"),
+        ("liability", "liabilities"),
+        ("security", "securities"),
+        ("lease", "leases"),
+        ("release", "releases"),
+        ("class", "classes"),
+        ("process", "processes"),
+        ("tax", "taxes"),
+        ("api", "apis"),
+        ("series", "series"),
+    ],
+)
+def test_tokenizer_maps_singular_and_plural_to_one_term(singular: str, plural: str) -> None:
+    assert tokenize(singular) == tokenize(plural)
+
+
+@pytest.mark.parametrize("word", ["analysis", "basis", "status", "consensus", "bonus", "previous"])
+def test_tokenizer_keeps_singular_words_ending_in_s(word: str) -> None:
+    assert tokenize(word) == [word]
