@@ -96,7 +96,10 @@ export type MajorMattersReport = DartDomainBase & MajorMattersReportMethods & De
 export const MajorMattersReport = class MajorMattersReport extends DartDomainBase {
   public constructor(client: DartClient) {
     super(client, majorMattersReportEndpoints);
-    const self = this as unknown as Record<string, (input: Record<string, unknown>) => Promise<ApiResponse>>;
+    const self = this as unknown as Record<
+      MajorMattersReportMethodName,
+      (input: Record<string, unknown>) => Promise<ApiResponse>
+    >;
     for (const [oldName, newName] of DEPRECATED_METHOD_ALIASES) {
       Object.defineProperty(this, oldName, {
         // eslint-disable-next-line security/detect-object-injection -- newName comes from internal endpoint metadata.
