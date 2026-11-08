@@ -106,9 +106,10 @@ class TechnicalAnalyzer:
         if len(data) < 20:
             return data
 
-        # Simple support/resistance based on local extremes
-        high_rolling = data["high"].rolling(window=10, center=True).max()
-        low_rolling = data["low"].rolling(window=10, center=True).min()
+        # Trailing 10-bar extremes. A centered window would read the next five bars — future
+        # data the model never has when it predicts.
+        high_rolling = data["high"].rolling(window=10).max()
+        low_rolling = data["low"].rolling(window=10).min()
 
         data["resistance"] = high_rolling
         data["support"] = low_rolling

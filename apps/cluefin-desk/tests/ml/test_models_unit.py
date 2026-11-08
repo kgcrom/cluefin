@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from cluefin_desk.ml.models import StockPredictor
+from cluefin_desk.screens.stock_detail import ml_metric_lines
 
 
 def _dataset(n: int = 160, *, seed: int = 0):
@@ -135,3 +136,15 @@ def test_save_and_load_round_trip_preserves_predictions(tmp_path) -> None:
 def test_load_model_raises_on_missing_file(tmp_path) -> None:
     with pytest.raises(FileNotFoundError):
         StockPredictor().load_model(str(tmp_path / "does-not-exist.joblib"))
+
+
+def test_stock_detail_panel_shows_every_validation_metric() -> None:
+    """The stock-detail ML panel reads `train`'s keys; it printed nothing when they drifted apart."""
+    X, y = _dataset()
+    metrics = StockPredictor({"n_estimators": 20, "verbose": -1, "random_state": 42}).train(X, y)
+    labels = [line.split(":")[0].strip() for line in ml_metric_lines(metrics)]
+    assert labels == ["accuracy", "precision", "recall", "f1", "roc_auc"]
+
+
+def test_stock_detail_panel_says_when_no_metric() -> None:
+    assert ml_metric_lines({}) == ["  [dim]검증 지표 없음[/dim]"]
