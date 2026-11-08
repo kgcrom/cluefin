@@ -333,12 +333,13 @@ _META_HELP: dict[str, dict[str, Any]] = {
     "review": {
         "description": "Fetch everything a company review reads into one folder, in parallel stages capped per "
         "broker, so an agent reads files instead of holding ~15 JSON replies (plus 9 per peer) in its context. "
-        "`record` appends the review's verdict to research/verdicts.jsonl so it can be checked against prices later.",
+        "`record` appends the review's verdict to research/verdicts.jsonl; `track` checks those verdicts against cached prices.",
         "usage": [
             f"{APP_NAME} review collect --stock-code <code> [--peers <code,code>] [--out <dir>] [--json]",
             f"{APP_NAME} review collect --into <run dir> --peers <code,code> [--json]",
             f"{APP_NAME} review record --from <verdict.json or its folder> [--source main|company-review] "
             "[--report <html under research/>] [--json]",
+            f"{APP_NAME} review track [--code <code,code>] [--json]",
         ],
         "options": [
             {"flag": "--stock-code CODE", "meaning": "The stock under review (6 digits)."},
@@ -361,6 +362,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
             },
             {"flag": "--source NAME", "meaning": "record: main (default) or company-review."},
             {"flag": "--report PATH", "meaning": "record: the HTML report, which must sit under research/."},
+            {"flag": "--code CODES", "meaning": "track: only these stocks' verdicts."},
         ],
         "examples": [
             f"uv run {APP_NAME} review collect --stock-code 214320 --peers 030000 --json",
@@ -375,6 +377,9 @@ _META_HELP: dict[str, dict[str, Any]] = {
             "research/ is <main checkout>/research ($CLUEFIN_RESEARCH_DIR overrides), the same from every worktree. "
             "record lists every invalid field at once (exit 2) and never rewrites earlier lines; the id is "
             "<code>-<reference date>-<n>.",
+            "track reads only the local cache: per verdict the first level crossed on a daily close (watch "
+            "entry_above/exit_below, buy·sell target/stop), return, excess over KOSPI U0001/KOSDAQ U1001 and best/"
+            "worst close up to horizon_days; status open until the horizon passes, no_data without a reference-day bar.",
         ],
     },
 }

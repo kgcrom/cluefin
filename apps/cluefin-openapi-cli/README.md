@@ -203,7 +203,13 @@ buy·sell 은 `target`·`stop` 이 필요하고, 빠진 필드는 한 번에 모
 ```bash
 uv run cluefin-openapi-cli review record --from /private/tmp/cluefin-review/214320-20261108 --source company-review --json
 uv run cluefin-openapi-cli review record --from verdict.json --report research/reports/innocean-214320-report-2026-11-08.html --json
+uv run cluefin-openapi-cli review track --json                 # 판단마다 먼저 닿은 가격(재검토가·이탈가/목표가·손절가), 수익률, 지수 대비 초과수익
+uv run cluefin-openapi-cli review track --code 214320 --json
 ```
+
+`review track` 은 로컬 캐시만 읽습니다(API 호출 없음). 기준일 다음 거래일부터 `horizon_days` 까지 수정종가로 보고,
+기록한 가격은 기준일 adj_factor 로 맞춥니다. 가격 도달은 일봉 종가 기준입니다. horizon 이 캐시에서 아직 안 지났으면
+`open`, 기준일 봉이 없으면 `no_data`(캐시 기준일을 함께 보여 줌)입니다.
 
 `audit` 은 `.claude/agents/*.md` 로 돈 agent 실행을 Claude Code 트랜스크립트에서 읽어, 그 agent 파일의 감사 기준과
 대조합니다(빠진 명령·같은 인자 반복·exit 3 뒤 계속·재시도 없는 실패). 저장소 루트에서 실행합니다.
