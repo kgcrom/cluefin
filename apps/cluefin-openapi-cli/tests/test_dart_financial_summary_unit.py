@@ -89,6 +89,22 @@ def test_borrowings_sum_loan_and_bond_lines_by_label() -> None:
     assert s.borrowings(rows, "thstrm_amount") == (180, "차입금·사채 (단기차입금+사채+장기차입금)")
 
 
+def test_borrowings_read_the_loan_and_bond_combined_label() -> None:
+    rows = [_bs("단기차입금 및 사채", "378"), _bs("장기차입금 및 사채", "450"), _bs("기타유동금융부채", "62")]
+    assert s.borrowings(rows, "thstrm_amount") == (828, "차입금·사채 (단기차입금및사채+장기차입금및사채)")
+
+
+def test_borrowings_fall_back_to_borrowing_xbrl_ids_when_labels_are_off_pattern() -> None:
+    rows = [
+        _bs("단기 차입 부채 등", "40", "ifrs-full_CurrentBorrowingsAndCurrentPortionOfNoncurrentBorrowings"),
+        _bs("장기 차입 부채 등", "60", "ifrs-full_LongtermBorrowings"),
+        _bs("단기금융부채", "999", "ifrs-full_CurrentFinancialLiabilities"),
+    ]
+    amount, basis = s.borrowings(rows, "thstrm_amount")
+    assert amount == 100
+    assert basis.startswith("차입금·사채")
+
+
 def test_borrowings_fall_back_to_financial_liabilities_and_say_so() -> None:
     rows = [
         _bs("단기금융부채", "70", "ifrs-full_CurrentFinancialLiabilities"),
@@ -140,6 +156,18 @@ def test_annual_gives_three_years_oldest_first_with_roe_on_average_equity() -> N
     assert y3["debt_ratio"] == pytest.approx(200)
     assert y3["free_cash_flow"] == -40
     assert y3["opm"] == pytest.approx(10)
+
+
+def test_free_cash_flow_subtracts_capex_filed_as_a_negative_outflow() -> None:
+    rows = [
+        row
+        if row["account_id"] != "ifrs-full_PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities"
+        else _annual_row("CF", row["account_id"], ["-30", "-30", "-120"])
+        for row in ANNUAL_ROWS
+    ]
+    *_, y3 = s.annual(_report(2025, "11011", rows))
+    assert y3["capex"] == -120  # filed value kept
+    assert y3["free_cash_flow"] == -40  # 80 - 120, not 80 + 120
 
 
 def test_annual_picks_up_the_quality_items() -> None:

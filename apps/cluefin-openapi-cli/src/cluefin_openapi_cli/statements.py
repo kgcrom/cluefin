@@ -164,7 +164,16 @@ def find_row(rows: list[dict], sections: frozenset[str], item: Item) -> dict | N
 # Borrowings have no single XBRL id: 005930 files 단기차입금 off-taxonomy, 000660 files 차입금
 # twice, 192820 lumps everything into 단기/장기금융부채. Sum the borrowing lines by label; when a
 # filer has none, fall back to financial liabilities and say so.
-_BORROWING = re.compile(r"^(단기|장기|유동성장기|유동성)?(차입금|사채|차입부채|장기부채)$")
+# 194370 files "단기차입금 및 사채"/"장기차입금 및 사채" (squashed: 단기차입금및사채), so 및사채 is an optional suffix.
+_BORROWING = re.compile(r"^(단기|장기|유동성장기|유동성)?(차입금|사채|차입부채|장기부채)(및사채)?$")
+_BORROWING_IDS = (
+    "ifrs-full_ShorttermBorrowings",
+    "ifrs-full_CurrentBorrowingsAndCurrentPortionOfNoncurrentBorrowings",
+    "ifrs-full_CurrentPortionOfLongtermBorrowings",
+    "ifrs-full_LongtermBorrowings",
+    "ifrs-full_NoncurrentPortionOfNoncurrentBorrowings",
+    "ifrs-full_Borrowings",
+)
 _FINANCIAL_LIABILITY_IDS = ("ifrs-full_CurrentFinancialLiabilities", "ifrs-full_NoncurrentFinancialLiabilities")
 
 
@@ -174,6 +183,8 @@ def borrowings(rows: list[dict], column: str) -> tuple[float | None, str | None]
     lines = [
         row for row in balance if _BORROWING.match(_squash(row.get("account_nm"))) and won(row.get(column)) is not None
     ]
+    if not lines:  # labels off the pattern, but tagged with a borrowing XBRL id
+        lines = [row for row in balance if row.get("account_id") in _BORROWING_IDS and won(row.get(column)) is not None]
     if lines:
         names = "+".join(_squash(row.get("account_nm")) for row in lines)
         return sum(won(row.get(column)) for row in lines), f"차입금·사채 ({names})"
@@ -315,10 +326,11 @@ def _with_ratios(figures: dict[str, Any], previous: dict[str, Any] | None) -> di
     net_debt = (
         None if figures["borrowings"] is None or figures["cash"] is None else figures["borrowings"] - figures["cash"]
     )
+    # Filers sign 유형자산의취득 either way (outflow shown negative or as a positive amount); it is always an outflow.
     fcf = (
         None
         if figures["operating_cash_flow"] is None or figures["capex"] is None
-        else figures["operating_cash_flow"] - figures["capex"]
+        else figures["operating_cash_flow"] - abs(figures["capex"])
     )
     return {
         **figures,

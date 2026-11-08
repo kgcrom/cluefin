@@ -43,8 +43,8 @@ CLI 가 말해 주지 않는 것만 적는다.
 - **증권사 의견과 밸류에이션도 계산 명령이 있다.** 여러 증권사의 최근 목표가·의견은 `kis stock opinion-summary
   --stock-code`(기본 90일, 평균·중앙값·최고·최저), 시총·TTM PER·PBR·추정 연도별 PER 은
   `kis stock valuation --stock-code --corp-code`(KIS 종가 + DART 주식수 + DART 재무, 약 11회). 5년 PER·PBR 밴드와
-  현재 분위는 `kis stock valuation-band --stock-code --corp-code`(로컬 `cache` 일봉 × 연도별 DART 전체
-  재무제표·주식수, 실시간 KIS 호출 없음 — `cache load` 가 먼저 돌아 있어야 한다). `kis stock
+  현재 분위는 `kis stock valuation-band --stock-code --corp-code`(로컬 `cache` 수정 일봉 × 연도별 DART 전체
+  재무제표 ÷ as_of 기준 주식수 하나, 실시간 KIS 호출 없음 — `cache load` 가 먼저 돌아 있어야 한다). `kis stock
   estimated-earnings` 는 한국투자증권 한 곳의 추정이라 컨센서스라 부르지 않는다(`table` 로 라벨됨). 가치투자자형
   지표(FCF 수익률, 오너 어닝스, EV/EBIT·이익수익률, PEG, 주주수익률, Altman Z 시총 원형)는 `kis stock
   investor-metrics --stock-code --corp-code`(약 12회) — ROIC·DuPont·F-Score·Z''(장부가)는 `dart
@@ -159,18 +159,22 @@ CLI 가 말해 주지 않는 것만 적는다.
   covers it with one fake session answering both brokers. Market cap uses **issued** common shares (KRX
   convention, treasury included), preferred shares are ignored — stated in the response `notes`.
 - `kis stock valuation-band` is a 5-year PER/PBR band: each cached daily close (local `cache`
-  DuckDB, `cache.read.read_ohlcv`, unadjusted — **no live KIS call**, so `cache load` must already
+  DuckDB, `cache.read.read_ohlcv`, adjusted — **no live KIS call**, so `cache load` must already
   have run) over the EPS/BPS of the latest fiscal year already due on that day
   (`band.trailing_fiscal_year`: prior year from April 1, two back before it) — the same trailing basis
   as `current`, so the percentile compares like with like and the history never uses a report that was
   not public yet. `--years` is the price window back from `as_of`. EPS/BPS come from DART's per-stock full statements
-  (`get_single_company_full_statements`, 11011 only) and common share count, fetched one fiscal
-  year at a time — deliberately **not** `cache financials`/`fnlttMultiAcnt`, which has no
+  (`get_single_company_full_statements`, 11011 only, fetched one fiscal year at a time) divided by **one**
+  common share count for every year — the latest periodic report filed by `as_of`, divided by the
+  `adj_factor` on that report's period end so it sits on the adjusted-price base (`share_base` in the response).
+  Dividing each year by its own count broke the band for a year after a bonus issue or split
+  (post-action price ÷ pre-action EPS, PER halved; 2026-11-08). The statements are
+  deliberately **not** `cache financials`/`fnlttMultiAcnt`, which has no
   지배/비지배 split (decision 2026-11-04, `docs/plans/today-bundles-plan.md` B-7, same reasoning as
   the `cache financials` bullet below). `_fetch_band_annual_reports` tries CFS across every
   requested year first and only falls back to OFS for the whole window if CFS is empty everywhere
   — one basis for the whole band, never mixed. A year whose annual report is not yet filed by
-  `as_of`, or whose share count is missing, drops out of that year (never zero-filled); `current`
+  `as_of` drops out (never zero-filled); no share count leaves every multiple null; `current`
   uses the *latest computable* fiscal year's EPS/BPS against the most recent cached close, which
   need not be the same calendar year — stated in `current.eps_bps_year`. The multiple-series
   arithmetic (quantiles, percentile-of-current) is a pure module, `band.py`, hand-checkable in

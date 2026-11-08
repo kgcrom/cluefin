@@ -37,6 +37,18 @@ def test_owner_earnings_combines_net_income_da_capex_and_working_capital() -> No
     assert result["reason"] is None
 
 
+def test_owner_earnings_subtracts_capex_filed_as_negative() -> None:
+    result = im.owner_earnings(
+        net_income_owners=100.0,
+        depreciation=20.0,
+        amortization=5.0,
+        capex=-40.0,
+        working_capital_increase=10.0,
+    )
+    assert result["value"] == pytest.approx(100.0 + 20.0 + 5.0 - 40.0 - 10.0)
+    assert result["components"]["capex"] == -40.0
+
+
 def test_owner_earnings_is_null_not_zero_when_depreciation_is_missing() -> None:
     result = im.owner_earnings(
         net_income_owners=100.0,

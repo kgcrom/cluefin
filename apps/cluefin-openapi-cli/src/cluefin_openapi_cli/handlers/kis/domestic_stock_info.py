@@ -1030,6 +1030,22 @@ _VALUATION_NOTES = (
 )
 
 
+def _enterprise_value(market_cap: float | None, borrowings: float | None, cash: float | None) -> float | None:
+    """시가총액 + 차입금 − 현금. 차입금·현금을 못 읽었으면 0 으로 메우지 않고 None (EV 가 조용히 틀린다)."""
+    if market_cap is None or borrowings is None or cash is None:
+        return None
+    return market_cap + borrowings - cash
+
+
+def _enterprise_value_reason(market_cap: float | None, borrowings: float | None, cash: float | None) -> str | None:
+    missing = [
+        name
+        for name, value in (("market_cap", market_cap), ("borrowings", borrowings), ("cash", cash))
+        if value is None
+    ]
+    return None if not missing else f"{'·'.join(missing)} 결측 — EV 를 계산하지 않는다(0 으로 메우지 않음)"
+
+
 def _ratio_if_positive(numerator: float | None, denominator: float | None) -> float | None:
     if numerator is None or denominator is None or denominator <= 0:
         return None
@@ -1183,7 +1199,8 @@ _IMPLIED_EXPECTATIONS_NOTES = (
     "시가총액 = kis stock valuation 과 같은 식(기준 종가 × DART 보통주 발행주식총수, 우선주 제외).",
     "RIM: B0 은 DART 최신 지배기업지분(연결 우선). 1년차 ROE 가 fade_years 년에 걸쳐 자기자본비용으로 선형 수렴하고, "
     "그 뒤는 초과 ROE 가 정확히 0 이라고 가정한다(별도 터미널 값 없음). 장부가는 배당성향만큼만 유보해 성장한다.",
-    "역DCF: EV = 시가총액 + DART 차입금(최신 보고 기준, 계정 합산 기준은 borrowings_basis) − 현금. 매출은 TTM. "
+    "역DCF: EV = 시가총액 + DART 차입금(최신 보고 기준, 계정 합산 기준은 borrowings_basis) − 현금. 차입금·현금을 못 읽으면 "
+    "EV·WACC 를 계산하지 않고 ev_reason 에 이유를 적는다(0 으로 메우지 않음). 매출은 TTM. "
     "재투자 = 매출증분 ÷ sales_to_capital(Damodaran 관행), horizon_years 년 뒤는 terminal_growth 로 영구성장한다고 "
     "가정한다.",
     "reverse_dcf.implied_revenue_growth 는 TTM 영업이익률을 그대로 horizon_years 동안 유지한다고 가정한 값이다 — "
@@ -1427,7 +1444,7 @@ def handle_kis_implied_expectations(params: dict, session) -> dict:  # noqa: PLR
     ttm_operating_income = statements.trailing(quarter_list, "operating_income")
 
     market_cap = None if issued is None else close * issued
-    ev_target = None if market_cap is None else market_cap + (borrowings or 0.0) - (cash or 0.0)
+    ev_target = _enterprise_value(market_cap, borrowings, cash)
     operating_margin = None if not ttm_revenue or ttm_operating_income is None else ttm_operating_income / ttm_revenue
 
     payout_ratio_pct, payout_source = _payout_ratio(annual_years)
@@ -1497,10 +1514,10 @@ def handle_kis_implied_expectations(params: dict, session) -> dict:  # noqa: PLR
     cost_of_equity = implied.cost_of_equity(risk_free, beta, erp)
     after_tax_cost_of_debt = implied.after_tax_cost_of_debt(cost_of_debt, tax_rate)
     market_cap_eok = None if market_cap is None else market_cap / eok
-    borrowings_eok = (borrowings or 0.0) / eok
+    borrowings_eok = None if borrowings is None else borrowings / eok
     wacc = (
         None
-        if market_cap_eok is None
+        if market_cap_eok is None or borrowings_eok is None
         else implied.wacc(market_cap_eok, borrowings_eok, cost_of_equity, after_tax_cost_of_debt)
     )
 
@@ -1534,7 +1551,9 @@ def handle_kis_implied_expectations(params: dict, session) -> dict:  # noqa: PLR
         years = max(1, horizon_years + years_delta)
         row_after_tax_debt = implied.after_tax_cost_of_debt(cost_of_debt, tax_rate)
         row_wacc = (
-            None if market_cap_eok is None else implied.wacc(market_cap_eok, borrowings_eok, coe, row_after_tax_debt)
+            None
+            if market_cap_eok is None or borrowings_eok is None
+            else implied.wacc(market_cap_eok, borrowings_eok, coe, row_after_tax_debt)
         )
         result = (
             implied.BisectionResult(None, "missing_revenue_margin_ev_or_wacc")
@@ -1563,6 +1582,7 @@ def handle_kis_implied_expectations(params: dict, session) -> dict:  # noqa: PLR
         "unit": "억원",
         "market_cap": market_cap_eok,
         "ev": None if ev_target is None else ev_target / eok,
+        "ev_reason": _enterprise_value_reason(market_cap, borrowings, cash),
         "equity_owners": None if b0 is None else b0 / eok,
         "borrowings": borrowings_eok,
         "cash": None if cash is None else cash / eok,
@@ -1630,13 +1650,15 @@ _BAND_MIN_YEARS = 2
 _BAND_MAX_YEARS = 10
 
 _VALUATION_BAND_NOTES = (
-    "PER·PBR 시계열 = 그날 종가(원주가, 조정 전, 로컬 `cache ohlcv`) ÷ 그날 이미 공시됐어야 하는 최신 사업연도 "
+    "PER·PBR 시계열 = 그날 수정종가(로컬 `cache ohlcv` × adj_factor) ÷ 그날 이미 공시됐어야 하는 최신 사업연도 "
     "EPS·BPS(4월 1일부터 전년도, 그 전에는 전전년도 — 12월 결산 가정). current 와 같은 기준이라 현재 분위가 "
     "같은 잣대의 비교다. 결산월이 다른 종목은 기간이 어긋날 수 있다.",
     "EPS·BPS 는 cache financials(fnlttMultiAcnt, 지배/비지배 구분 없음) 대신 종목별 전체 재무제표를 "
-    "연도마다 직접 불러 계산한다(지배주주순이익 ÷ 그 해 정기보고서의 보통주 발행주식총수, 지배기업지분 ÷ "
-    "같은 주식수 — kis stock valuation 과 같은 관례, 우선주 제외). 결정 2026-11-04, "
-    "docs/plans/today-bundles-plan.md B-7.",
+    "연도마다 직접 불러 계산한다(지배주주순이익·지배기업지분 ÷ share_base.base_shares, 우선주 제외). "
+    "base_shares 는 as_of 까지 공시된 가장 최근 정기보고서의 보통주 발행주식총수를 수정주가 기준으로 맞춘 값이고 "
+    "모든 연도에 같이 쓴다 — 그 해 주식수로 나누면 무상증자·액면분할 뒤 다음 사업보고서까지 배수가 끊긴다"
+    "(2026-11-08 194370). 유상증자·CB 전환으로 주식수가 실제로 늘어난 종목은 과거 배수가 조금 낮게 나온다. "
+    "결정 2026-11-04 docs/plans/today-bundles-plan.md B-7, 2026-11-08 주식수 기준 변경.",
     "사업보고서가 늦어 아직 없는 연도는 빠진다 — 분기 실적을 연 환산하지 않는다.",
     "current 는 캐시의 가장 최근 종가 ÷ 계산 가능한 가장 최근 회계연도 EPS·BPS다 — kis stock valuation 의 "
     "TTM·최신 분기 분모와 다르다(연간 vs TTM). current_percentile 은 과거 분포 안에서 현재 값 이하인 표본의 "
@@ -1644,6 +1666,40 @@ _VALUATION_BAND_NOTES = (
     "가격은 로컬 cache(`cache load`)에서 읽는다 — 실시간 KIS 호출이 아니다. 캐시가 오래됐으면 band·current "
     "모두 그만큼 오래된 값이다.",
 )
+
+
+_PERIOD_END = {"11013": "03-31", "11012": "06-30", "11014": "09-30", "11011": "12-31"}
+
+
+def _factor_on(priced: list[dict], day: str) -> float:
+    """adj_factor of the last bar on or before `day` (ISO), or of the first bar when `day` precedes them all."""
+    before = [bar for bar in priced if bar["date"] <= day]
+    bar = before[-1] if before else priced[0]
+    return bar["adj_factor"] or 1.0
+
+
+def _share_count_as_of(dart, corp_code: str, as_of: str) -> tuple[float | None, dict | None, int]:
+    """(issued common shares, report, calls) from the latest periodic report received by `as_of`.
+
+    Tries this year's and last year's reports, newest period first; a report filed after `as_of` is skipped.
+    """
+    year = int(as_of[:4])
+    calls = 0
+    for bsns_year in (year, year - 1):
+        for reprt_code in ("11011", "11014", "11012", "11013"):  # newest period first
+            rows = dart_handlers.dart_rows(
+                dart.periodic_report_key_information.get_total_number_of_shares(
+                    corp_code=corp_code, bsns_year=str(bsns_year), reprt_code=reprt_code
+                )
+            )
+            calls += 1
+            rcept_no = str(rows[0].get("rcept_no") or "") if rows else ""
+            if not rcept_no or rcept_no[:8] > as_of:
+                continue
+            shares = _common_shares(rows)
+            report = {"bsns_year": str(bsns_year), "reprt_code": reprt_code, "rcept_no": rcept_no}
+            return (shares["issued"] if shares else None), report, calls
+    return None, None, calls
 
 
 def _fetch_band_annual_reports(dart, corp_code: str, years: list[int], as_of: str) -> tuple[str | None, list, int]:
@@ -1665,13 +1721,14 @@ def _fetch_band_annual_reports(dart, corp_code: str, years: list[int], as_of: st
 @rpc_method(
     name="stock.valuation_band",
     description=(
-        "5-year PER/PBR band: each cached day's close (local `cache` DuckDB, unadjusted) over each fiscal "
-        "year's EPS/BPS (DART full statements + common share count, fetched per year rather than cache "
-        "financials, which has no 지배/비지배 split). Returns min/p25/median/p75/max of the daily multiple "
+        "5-year PER/PBR band: each cached day's adjusted close (local `cache` DuckDB) over each fiscal "
+        "year's EPS/BPS (DART full statements fetched per year rather than cache financials, which has no "
+        "지배/비지배 split, divided by one common share count — the latest filed as of as_of, on the adjusted-price "
+        "base — so bonus issues and splits do not break the band). Returns min/p25/median/p75/max of the daily multiple "
         "over the window plus the current multiple (latest cached close over the latest computable fiscal "
         "year's EPS/BPS) and its percentile within that history. Needs corp_code as well as stock_code, and a "
-        "`cache load` already run. About 2 DART calls per fiscal year (statements + share count), doubled if "
-        "only separate (OFS) statements exist; no live KIS call — prices come from the local cache."
+        "`cache load` already run. One DART call per fiscal year, doubled if only separate (OFS) statements "
+        "exist, plus up to 8 for the share count; no live KIS call — prices come from the local cache."
     ),
     parameters={
         "type": "object",
@@ -1728,43 +1785,14 @@ def handle_kis_stock_valuation_band(params: dict, session) -> dict:
             hint="Check the corp_code with dart company-overview; it must belong to the same company as stock_code.",
         )
 
-    eps_by_year: dict[int, float | None] = {}
-    bps_by_year: dict[int, float | None] = {}
-    years_detail = []
-    for report in sorted(reports, key=lambda r: r.year):
-        figures = statements.latest(report)
-        share_rows = dart_handlers.dart_rows(
-            dart.periodic_report_key_information.get_total_number_of_shares(
-                corp_code=corp_code, bsns_year=str(report.year), reprt_code=report.reprt_code
-            )
-        )
-        dart_calls += 1
-        shares = _common_shares(share_rows)
-        issued = shares["issued"] if shares else None
-        eps, bps = valuation_band.eps_bps(figures["net_income_owners"], figures["equity_owners"], issued)
-        eps_by_year[report.year] = eps
-        bps_by_year[report.year] = bps
-        years_detail.append(
-            {
-                "year": report.year,
-                "net_income_owners": figures["net_income_owners"],
-                "equity_owners": figures["equity_owners"],
-                "shares": issued,
-                "eps": eps,
-                "bps": bps,
-            }
-        )
-
-    computable_years = [year for year in eps_by_year if eps_by_year[year] is not None or bps_by_year[year] is not None]
-    latest_year = max(computable_years) if computable_years else None
-
     cache_conn = cache_store.open_store(read_only=True)
     try:
-        bars_payload = read_ohlcv(cache_conn, stock_code, since=window_start, until=window_end, adjusted=False)
+        bars_payload = read_ohlcv(cache_conn, stock_code, since=window_start, until=window_end, adjusted=True)
     finally:
         cache_conn.close()
 
-    bars = [(bar["date"], bar["close"]) for bar in bars_payload["bars"] if bar["close"] is not None]
+    priced = [bar for bar in bars_payload["bars"] if bar["close"] is not None]
+    bars = [(bar["date"], bar["close"]) for bar in priced]
     if not bars:
         raise CliError(
             f"No cached close for {stock_code} between {window_start:%Y%m%d} and {as_of}.",
@@ -1773,6 +1801,40 @@ def handle_kis_stock_valuation_band(params: dict, session) -> dict:
             data={"stock_code": stock_code, "as_of": as_of},
             hint="Run `cache load` first, or check the code with `cache company --code`.",
         )
+    # Adjusted prices sit on the share base after the latest corporate action in the cache. The share count is as
+    # of the report's period end, so dividing by that day's factor puts it on the adjusted base — a bonus issue
+    # between the period end and as_of is then still counted.
+    issued, share_report, share_calls = _share_count_as_of(dart, corp_code, as_of)
+    dart_calls += share_calls
+    last_factor = priced[-1]["adj_factor"] or 1.0
+    share_factor = (
+        1.0
+        if share_report is None
+        else _factor_on(priced, f"{share_report['bsns_year']}-{_PERIOD_END[share_report['reprt_code']]}")
+    )
+    base_shares = None if issued is None else issued / share_factor
+
+    eps_by_year: dict[int, float | None] = {}
+    bps_by_year: dict[int, float | None] = {}
+    years_detail = []
+    for report in sorted(reports, key=lambda r: r.year):
+        figures = statements.latest(report)
+        eps, bps = valuation_band.eps_bps(figures["net_income_owners"], figures["equity_owners"], base_shares)
+        eps_by_year[report.year] = eps
+        bps_by_year[report.year] = bps
+        years_detail.append(
+            {
+                "year": report.year,
+                "net_income_owners": figures["net_income_owners"],
+                "equity_owners": figures["equity_owners"],
+                "eps": eps,
+                "bps": bps,
+            }
+        )
+
+    computable_years = [year for year in eps_by_year if eps_by_year[year] is not None or bps_by_year[year] is not None]
+    latest_year = max(computable_years) if computable_years else None
+
     current_date, current_close = bars[-1]
     current_eps = eps_by_year.get(latest_year) if latest_year is not None else None
     current_bps = bps_by_year.get(latest_year) if latest_year is not None else None
@@ -1783,7 +1845,17 @@ def handle_kis_stock_valuation_band(params: dict, session) -> dict:
         "as_of": as_of,
         "years": fiscal_years,
         "statement_basis": basis,
-        "current": {"close": current_close, "date": current_date, "eps_bps_year": latest_year},
+        "current": {
+            "close": priced[-1]["close"] / last_factor,
+            "date": current_date,
+            "eps_bps_year": latest_year,
+        },
+        "share_base": {
+            "issued_as_of": issued,
+            "report": share_report,
+            "adj_factor_at_period_end": share_factor,
+            "base_shares": base_shares,
+        },
         "per": valuation_band.band(bars, eps_by_year, current_close=current_close, current_per_share=current_eps),
         "pbr": valuation_band.band(bars, bps_by_year, current_close=current_close, current_per_share=current_bps),
         "years_detail": years_detail,
@@ -1899,7 +1971,7 @@ def handle_kis_investor_metrics(params: dict, session) -> dict:  # noqa: PLR0914
     market_cap = None if issued is None else close * issued
     borrowings = latest_figures["borrowings"]
     cash = latest_figures["cash"]
-    ev = None if market_cap is None else market_cap + (borrowings or 0.0) - (cash or 0.0)
+    ev = _enterprise_value(market_cap, borrowings, cash)
 
     ttm_net_income_owners = statements.trailing(quarter_list, "net_income_owners")
     ttm_operating_income = statements.trailing(quarter_list, "operating_income")
@@ -2009,6 +2081,7 @@ def handle_kis_investor_metrics(params: dict, session) -> dict:  # noqa: PLR0914
         "unit": "억원",
         "market_cap": None if market_cap is None else market_cap / eok,
         "ev": None if ev is None else ev / eok,
+        "ev_reason": _enterprise_value_reason(market_cap, borrowings, cash),
         "per_ttm": per_ttm,
         "fcf_yield": fcf_yield_result,
         "owner_earnings": owner_earnings_result,
