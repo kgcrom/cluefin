@@ -87,7 +87,7 @@ class DomesticTheme:
             "Content-Type": "application/json",
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
-            "cond-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
             "api-id": "ka90002",
         }

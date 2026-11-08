@@ -90,9 +90,7 @@ def run_post_case(
     method = getattr(api, case.method_name)
     call_kwargs = dict(case.call_kwargs)
     params = inspect.signature(method).parameters
-    if case.cont_flag_key in {"cont-yn", "con-yn"} and "cont_yn" in params:
-        call_kwargs.setdefault("cont_yn", case.cont_flag_value)
-    elif case.cont_flag_key == "cont-yn" and "cont_yn" in params:
+    if case.cont_flag_key == "cont-yn" and "cont_yn" in params:
         call_kwargs.setdefault("cont_yn", case.cont_flag_value)
     if case.next_key is not None and "next_key" in params:
         call_kwargs.setdefault("next_key", case.next_key)

@@ -117,7 +117,7 @@ for method_name in sorted(CALL_KWARGS):
             call_kwargs=dict(raw_kwargs),
             expected_body=dict(raw_kwargs),
             response_payload=payload(method_name.removeprefix("get_")),
-            cont_flag_key="con-yn",
+            cont_flag_key="cont-yn",
             cont_flag_value=cont_value,
             next_key=next_key,
         )

@@ -62,7 +62,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "ka10072",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 
@@ -105,7 +105,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "ka10073",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 
@@ -147,7 +147,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "ka10074",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 
@@ -192,7 +192,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "ka10075",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 
@@ -244,7 +244,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "ka10076",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 
@@ -291,7 +291,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "ka10077",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 
@@ -328,7 +328,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "ka10085",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 
@@ -366,7 +366,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "ka10088",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 
@@ -408,7 +408,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "ka10170",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 
@@ -450,7 +450,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "kt00001",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 
@@ -489,7 +489,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "kt00002",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 
@@ -528,7 +528,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "kt00003",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 
@@ -568,7 +568,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "kt00004",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 
@@ -607,7 +607,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "kt00005",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 
@@ -657,7 +657,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "kt00007",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 
@@ -701,7 +701,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "kt00008",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 
@@ -753,7 +753,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "kt00009",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 
@@ -812,7 +812,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "kt00010",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 
@@ -862,7 +862,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "kt00011",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 
@@ -904,7 +904,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "kt00012",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 
@@ -941,7 +941,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "kt00013",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 
@@ -990,7 +990,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "kt00015",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 
@@ -1045,7 +1045,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "kt00016",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 
@@ -1081,7 +1081,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "kt00017",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 
@@ -1116,7 +1116,7 @@ class DomesticAccount:
             "Accept": "application/json",
             "Authorization": f"Bearer {self.client.token}",
             "api-id": "kt00018",
-            "con-yn": cont_yn,
+            "cont-yn": cont_yn,
             "next-key": next_key,
         }
 

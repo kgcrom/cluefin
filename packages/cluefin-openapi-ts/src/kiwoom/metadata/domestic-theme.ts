@@ -65,7 +65,7 @@ export const domesticThemeEndpoints: KiwoomEndpointDefinition[] = [
       date_tp: 'dateTp',
     },
     headerParamMap: {
-      'cond-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [

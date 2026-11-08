@@ -756,7 +756,7 @@ export const domesticStockInfoEndpoints: KiwoomEndpointDefinition[] = [
       stk_cd: 'stkCd',
     },
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [

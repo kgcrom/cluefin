@@ -10,7 +10,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       strt_dt: 'strtDt',
     },
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
@@ -44,7 +44,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       end_dt: 'endDt',
     },
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
@@ -81,7 +81,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       end_dt: 'endDt',
     },
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
@@ -116,7 +116,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       stk_cd: 'stkCd',
     },
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
@@ -160,7 +160,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       ord_no: 'ordNo',
     },
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
@@ -204,7 +204,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       stk_cd: 'stkCd',
     },
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
@@ -232,7 +232,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       stex_tp: 'stexTp',
     },
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
@@ -260,7 +260,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       ord_no: 'ordNo',
     },
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
@@ -290,7 +290,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       base_dt: 'baseDt',
     },
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
@@ -326,7 +326,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       qry_tp: 'qryTp',
     },
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
@@ -355,7 +355,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       end_dt: 'endDt',
     },
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
@@ -387,7 +387,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       qry_tp: 'qryTp',
     },
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
@@ -416,7 +416,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       dmst_stex_tp: 'dmstStexTp',
     },
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
@@ -448,7 +448,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       dmst_stex_tp: 'dmstStexTp',
     },
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
@@ -482,7 +482,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       fr_ord_no: 'frOrdNo',
     },
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
@@ -537,7 +537,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       strt_dcd_seq: 'strtDcdSeq',
     },
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
@@ -573,7 +573,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       fr_ord_no: 'frOrdNo',
     },
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
@@ -634,7 +634,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       exp_buy_unp: 'expBuyUnp',
     },
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
@@ -683,7 +683,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       uv: 'uv',
     },
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
@@ -716,7 +716,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       uv: 'uv',
     },
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
@@ -746,7 +746,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
     apiId: 'kt00013',
     bodyMap: {},
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
@@ -778,7 +778,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       qry_sort_tp: 'qrySortTp',
     },
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
@@ -839,7 +839,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       to_dt: 'toDt',
     },
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
@@ -869,7 +869,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
     apiId: 'kt00017',
     bodyMap: {},
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
@@ -894,7 +894,7 @@ export const domesticAccountEndpoints: KiwoomEndpointDefinition[] = [
       dmst_stex_tp: 'dmstStexTp',
     },
     headerParamMap: {
-      'con-yn': 'contYn',
+      'cont-yn': 'contYn',
       'next-key': 'nextKey',
     },
     params: [
