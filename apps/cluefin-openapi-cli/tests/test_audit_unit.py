@@ -238,6 +238,23 @@ def test_review_collect_manifest_counts_as_calls(tmp_path: Path) -> None:
     assert "output_to_file" not in {t for t, _ in types}
 
 
+def test_report_md_in_collect_folder_is_the_report(tmp_path: Path) -> None:
+    folder = _collect_folder(tmp_path / "214-20261108")
+    (folder / "report.md").write_text("# 리포트\nhorizon_days: 60\n데이터 출처")
+    summary = json.dumps({"out": str(folder), "status": "ok"})
+    rows = [
+        {"type": "user", "timestamp": "t0", "message": {"content": "005930"}},
+        _bash("1", f"{APP} review collect --stock-code 005930 --json", "t1"),
+        _result("1", summary),
+        {"type": "assistant", "timestamp": "t2", "message": {"content": [{"type": "text", "text": "폴더: watch"}]}},
+    ]
+    run = load_run(_write_run(tmp_path, rows))
+    assert run.report.startswith("# 리포트")
+    assert run.report.endswith("폴더: watch")
+    spec = parse_spec("x", "```audit\nsubjects: prompt\nreport-has: horizon_days\nreport-has: 데이터 출처\n```")
+    assert not any(f["type"] == "report_lacks_required" for f in check_run(spec, run)["findings"])
+
+
 def test_review_collect_into_same_folder_not_counted_twice(tmp_path: Path) -> None:
     folder = _collect_folder(tmp_path / "214-20261108")
     summary = json.dumps({"out": str(folder), "status": "ok"})

@@ -344,6 +344,22 @@ def _first_prompt(rows: list[dict[str, Any]]) -> str:
     return ""
 
 
+def _folder_reports(calls: list[CliCall] | tuple[CliCall, ...]) -> str:
+    """`report.md` of each review collect folder the calls came from — the agent writes its report there."""
+
+    folders = dict.fromkeys(Path(c.via) for c in calls if c.via)
+    parts = []
+    for folder in folders:
+        report = folder / "report.md"
+        if report.is_file():
+            parts.append(report.read_text(encoding="utf-8"))
+    return "\n\n".join(parts)
+
+
+def _join(*texts: str) -> str:
+    return "\n\n".join(t for t in texts if t)
+
+
 def load_run(jsonl: Path) -> AgentRun:
     meta_path = jsonl.with_suffix(".meta.json")
     meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else {}
@@ -358,7 +374,7 @@ def load_run(jsonl: Path) -> AgentRun:
         session=jsonl.parent.parent.name,
         path=jsonl,
         prompt=_first_prompt(rows),
-        report=texts[-1][1] if texts else "",
+        report=_join(_folder_reports(found.calls), texts[-1][1] if texts else ""),
         started=stamps[0] if stamps else "",
         ended=stamps[-1] if stamps else "",
         calls=tuple(found.calls),
@@ -380,7 +396,7 @@ def load_session(jsonl: Path, code: str) -> AgentRun:
         started = ""
     else:
         kept = [c for c in calls if c.index >= first.index]
-        report = "\n\n".join(text for stamp, text in texts if stamp >= first.timestamp)
+        report = _join(_folder_reports(kept), "\n\n".join(text for stamp, text in texts if stamp >= first.timestamp))
         started = first.timestamp
     stamps = [str(r["timestamp"]) for r in rows if r.get("timestamp")]
     return AgentRun(

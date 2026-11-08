@@ -446,6 +446,7 @@ CLI 가 말해 주지 않는 것만 적는다.
   CLI 밖에서만 생긴다. `duplicate` 의 `same_output: false` 는 같은 인자에 다른 응답(페이지·불안정)이다.
 - `review collect` 호출은 출력의 `out` 폴더 `manifest.jsonl` 을 읽어 그 뒤에 호출로 펼친다(`CliCall.via` = 폴더, 출력 =
   raw 파일). 폴더가 지워졌으면 `collect_manifest_missing` 이다. 펼친 호출은 별도 프로세스라 `output_to_file` 이 아니다.
+  그 폴더의 `report.md`(agent 가 쓴 리포트)는 마지막 답변 앞에 붙여 `report-has` 검사에 쓴다.
 - 대상 종목: `subjects: prompt`/`report` 는 그 텍스트의 6자리 숫자 중 캐시 `company` 에 있는 코드만(캐시가 없으면 전부).
   `--session --code` 는 대화에 다른 작업이 섞여 있어 텍스트를 쓰지 않고 `each` 명령에 넘긴 코드만 본다. corp-code 로 부른
   명령은 출력 어디든 `stock_code`·`corp_code` 가 함께 있는 객체로 매핑한다.
