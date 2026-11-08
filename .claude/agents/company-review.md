@@ -15,7 +15,7 @@ description: 한국 상장 종목 하나(코드 또는 기업명)를 받아 clue
 - **계산값은 `*` 로 표시한다**(분기 역산, TTM, FCF). 명령이 준 값(`investor-metrics` 의 FCF 수익률·EV/EBIT 등)은
   계산값이 아니다 — null 이면 그 `reason` 을 적고, 직접 계산해 채우면 `*` 를 붙인다.
 - **판단할 수 없으면 `blocked`.** 기준일이 어긋나거나 핵심 수치가 비면 리포트 첫머리에 `blocked` 라 쓰고 `watch` 만 낸다.
-- **결과는 폴더에 쓴다**(Write 도구): 리포트 `report.md`, 판단 YAML `verdict.yaml`, 원문 요약 `notes/<주제>.md`. 호출한
+- **결과는 폴더에 쓴다**(Write 도구): 리포트 `report.md`, 판단 `verdict.json`(판단 절), 원문 요약 `notes/<주제>.md`. 호출한
   쪽에는 폴더 경로, 판단·확신도·`horizon_days`, `blocked`·키 누락 여부만 몇 줄로 돌려준다.
 - 서브에이전트는 사용자에게 되물을 수 없다. 기간 같은 지시가 없으면 기본값을 쓰고 리포트에 그렇다고 적는다.
 
@@ -152,12 +152,33 @@ uv run cluefin-openapi-cli review collect --stock-code 214320 --peers 030000 --j
 - `horizon_days` — 거래일 기준, 기본 20/40/60. 근거의 시간 척도가 길면 더 길게.
 - 기준가(기준일·종가·수정주가 여부 — `kis chart daily`·`period` 응답의 `adjusted`), 진입 구간, 목표가, 손절가.
   buy/sell 이면 필수.
+- watch·hold 는 재검토가(이 값 위 종가면 매수 검토)와 이탈가(이 값 아래 종가면 접음) 중 하나 이상. "50일선 회복" 처럼
+  움직이는 기준은 기준일의 값으로 고정해 적는다.
 - 손절폭은 `1.5 × ATR14 × √(horizon_days / 30)` 이상. 이 폭이 기준가의 20% 를 넘으면 `watch` 로 내린다 — 필요한 건
   더 넓은 손절이 아니라 포지션을 잡지 않는 것이다.
 - 무효화 조건 최소 2개, 그중 하나는 horizon 에 맞는 것(분기 실적, 주간 추세). 일봉 조건 하나로 끝내면 60일 판단이
   사흘 만에 끝난다. 재무 조건의 값은 DART 주요지표 기준(% 단위).
 - `data_as_of` — 가격·재무(회계기준일과 공시일 구분)·뉴스·매크로(인용한 계열별 `as_of`) 기준일.
 - `peer_rank` — 비교 기업이 있으면 본 종목을 포함한 순서. 회사마다 판단과 한 줄 이유를 붙인다.
+
+판단을 내면 수집 폴더에 `verdict.json` 을 쓰고 `review record` 로 저장소 루트 `research/verdicts.jsonl` 에 남긴다.
+`review track` 이 나중에 이 기록을 가격과 대조한다. 메인 대화도 같다(`--source main`, HTML 이 이미 있으면
+`--report`). exit 2 면 `data.problems` 를 모두 고쳐 다시 부른다.
+
+```json
+{"stock_code": "214320", "stock_name": "이노션", "verdict": "watch", "confidence": "medium", "horizon_days": 60,
+ "reference_price": {"close": 17760, "date": "2026-11-06", "adjusted": false},
+ "trigger": {"entry_above": 18510, "exit_below": 16730, "recheck_on": "2026-11-14"},
+ "target": null, "stop": null, "invalidation": ["주간 종가 17,020원 이탈", "FY2026 잠정 영업이익 추가 역성장"],
+ "data_as_of": {"price": "2026-11-06"}, "peer_rank": []}
+```
+
+```bash
+uv run cluefin-openapi-cli review record --from <폴더> --source company-review --json
+```
+
+- 종목코드는 문자열(`"030000"`). buy·sell 은 `target`·`stop` 필수, watch·hold 는 `trigger` 의 가격 하나 이상.
+- `confidence` 는 `low`/`medium`/`high`. 기록은 고치지 않는다 — 판단을 바꾸면 새로 기록한다.
 
 ## 리포트
 
@@ -207,7 +228,7 @@ uv run cluefin-openapi-cli review collect --stock-code 214320 --peers 030000 --j
 HTML 리포트는 메인 대화가, 사용자가 **"리포트 생성" 을 요청했을 때만** 만든다(`AskUserQuestion` 에서 고른 것도
 요청이다). 그때만
 `docs/agents/company-review-report-design.md` 를 읽고 따른다. 그 전에는 미리보기 요청에도 리포트 파일을 만들지 않는다 —
-꼭 필요하면 scratchpad 에 두고 `docs/` 에 남기지 않는다.
+꼭 필요하면 scratchpad 에 둔다. 만든 리포트는 `research/reports/` 에 두고 git 에 올리지 않는다.
 
 ## 감사 기준
 
@@ -218,6 +239,7 @@ HTML 리포트는 메인 대화가, 사용자가 **"리포트 생성" 을 요청
 ```audit
 subjects: prompt, report
 required: review collect
+required: review record
 required: ecos macro-snapshot
 required: ecos industry-outlook
 main: kis stock opinion-summary
