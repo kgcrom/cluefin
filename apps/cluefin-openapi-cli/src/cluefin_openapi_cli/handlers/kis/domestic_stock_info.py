@@ -1030,6 +1030,22 @@ _VALUATION_NOTES = (
 )
 
 
+def _enterprise_value(market_cap: float | None, borrowings: float | None, cash: float | None) -> float | None:
+    """시가총액 + 차입금 − 현금. 차입금·현금을 못 읽었으면 0 으로 메우지 않고 None (EV 가 조용히 틀린다)."""
+    if market_cap is None or borrowings is None or cash is None:
+        return None
+    return market_cap + borrowings - cash
+
+
+def _enterprise_value_reason(market_cap: float | None, borrowings: float | None, cash: float | None) -> str | None:
+    missing = [
+        name
+        for name, value in (("market_cap", market_cap), ("borrowings", borrowings), ("cash", cash))
+        if value is None
+    ]
+    return None if not missing else f"{'·'.join(missing)} 결측 — EV 를 계산하지 않는다(0 으로 메우지 않음)"
+
+
 def _ratio_if_positive(numerator: float | None, denominator: float | None) -> float | None:
     if numerator is None or denominator is None or denominator <= 0:
         return None
@@ -1183,7 +1199,8 @@ _IMPLIED_EXPECTATIONS_NOTES = (
     "시가총액 = kis stock valuation 과 같은 식(기준 종가 × DART 보통주 발행주식총수, 우선주 제외).",
     "RIM: B0 은 DART 최신 지배기업지분(연결 우선). 1년차 ROE 가 fade_years 년에 걸쳐 자기자본비용으로 선형 수렴하고, "
     "그 뒤는 초과 ROE 가 정확히 0 이라고 가정한다(별도 터미널 값 없음). 장부가는 배당성향만큼만 유보해 성장한다.",
-    "역DCF: EV = 시가총액 + DART 차입금(최신 보고 기준, 계정 합산 기준은 borrowings_basis) − 현금. 매출은 TTM. "
+    "역DCF: EV = 시가총액 + DART 차입금(최신 보고 기준, 계정 합산 기준은 borrowings_basis) − 현금. 차입금·현금을 못 읽으면 "
+    "EV·WACC 를 계산하지 않고 ev_reason 에 이유를 적는다(0 으로 메우지 않음). 매출은 TTM. "
     "재투자 = 매출증분 ÷ sales_to_capital(Damodaran 관행), horizon_years 년 뒤는 terminal_growth 로 영구성장한다고 "
     "가정한다.",
     "reverse_dcf.implied_revenue_growth 는 TTM 영업이익률을 그대로 horizon_years 동안 유지한다고 가정한 값이다 — "
@@ -1427,7 +1444,7 @@ def handle_kis_implied_expectations(params: dict, session) -> dict:  # noqa: PLR
     ttm_operating_income = statements.trailing(quarter_list, "operating_income")
 
     market_cap = None if issued is None else close * issued
-    ev_target = None if market_cap is None else market_cap + (borrowings or 0.0) - (cash or 0.0)
+    ev_target = _enterprise_value(market_cap, borrowings, cash)
     operating_margin = None if not ttm_revenue or ttm_operating_income is None else ttm_operating_income / ttm_revenue
 
     payout_ratio_pct, payout_source = _payout_ratio(annual_years)
@@ -1497,10 +1514,10 @@ def handle_kis_implied_expectations(params: dict, session) -> dict:  # noqa: PLR
     cost_of_equity = implied.cost_of_equity(risk_free, beta, erp)
     after_tax_cost_of_debt = implied.after_tax_cost_of_debt(cost_of_debt, tax_rate)
     market_cap_eok = None if market_cap is None else market_cap / eok
-    borrowings_eok = (borrowings or 0.0) / eok
+    borrowings_eok = None if borrowings is None else borrowings / eok
     wacc = (
         None
-        if market_cap_eok is None
+        if market_cap_eok is None or borrowings_eok is None
         else implied.wacc(market_cap_eok, borrowings_eok, cost_of_equity, after_tax_cost_of_debt)
     )
 
@@ -1534,7 +1551,9 @@ def handle_kis_implied_expectations(params: dict, session) -> dict:  # noqa: PLR
         years = max(1, horizon_years + years_delta)
         row_after_tax_debt = implied.after_tax_cost_of_debt(cost_of_debt, tax_rate)
         row_wacc = (
-            None if market_cap_eok is None else implied.wacc(market_cap_eok, borrowings_eok, coe, row_after_tax_debt)
+            None
+            if market_cap_eok is None or borrowings_eok is None
+            else implied.wacc(market_cap_eok, borrowings_eok, coe, row_after_tax_debt)
         )
         result = (
             implied.BisectionResult(None, "missing_revenue_margin_ev_or_wacc")
@@ -1563,6 +1582,7 @@ def handle_kis_implied_expectations(params: dict, session) -> dict:  # noqa: PLR
         "unit": "억원",
         "market_cap": market_cap_eok,
         "ev": None if ev_target is None else ev_target / eok,
+        "ev_reason": _enterprise_value_reason(market_cap, borrowings, cash),
         "equity_owners": None if b0 is None else b0 / eok,
         "borrowings": borrowings_eok,
         "cash": None if cash is None else cash / eok,
@@ -1899,7 +1919,7 @@ def handle_kis_investor_metrics(params: dict, session) -> dict:  # noqa: PLR0914
     market_cap = None if issued is None else close * issued
     borrowings = latest_figures["borrowings"]
     cash = latest_figures["cash"]
-    ev = None if market_cap is None else market_cap + (borrowings or 0.0) - (cash or 0.0)
+    ev = _enterprise_value(market_cap, borrowings, cash)
 
     ttm_net_income_owners = statements.trailing(quarter_list, "net_income_owners")
     ttm_operating_income = statements.trailing(quarter_list, "operating_income")
@@ -2009,6 +2029,7 @@ def handle_kis_investor_metrics(params: dict, session) -> dict:  # noqa: PLR0914
         "unit": "억원",
         "market_cap": None if market_cap is None else market_cap / eok,
         "ev": None if ev is None else ev / eok,
+        "ev_reason": _enterprise_value_reason(market_cap, borrowings, cash),
         "per_ttm": per_ttm,
         "fcf_yield": fcf_yield_result,
         "owner_earnings": owner_earnings_result,

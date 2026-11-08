@@ -355,6 +355,23 @@ def test_implied_expectations_without_a_close_is_exit_4_before_any_dart_call() -
     assert session.dart.calls == []
 
 
+def test_implied_expectations_without_borrowings_leaves_ev_and_reverse_dcf_empty() -> None:
+    statements = {
+        key: [row for row in rows if row.get("account_nm") != "단기차입금"] for key, rows in _statements().items()
+    }
+    session = _Session(
+        _Kis([_candle("20261017", "120000")], dict(ESTIMATE)), _Dart(statements, list(SHARES)), _Ecos("3.0", "4.0")
+    )
+
+    out = handlers.handle_kis_implied_expectations(_base_params(), session)
+
+    assert out["borrowings"] is None
+    assert out["ev"] is None  # not 1200 + 0 - 100
+    assert "borrowings" in out["ev_reason"]
+    assert out["reverse_dcf"]["reason"] == "missing_revenue_margin_ev_or_wacc"
+    assert out["rim"]["implied_roe"] is not None  # RIM needs no debt
+
+
 def test_implied_expectations_without_shares_has_no_rim_or_reverse_dcf_solution() -> None:
     out = handlers.handle_kis_implied_expectations(_base_params(), _session(shares=[]))
     assert out["market_cap"] is None

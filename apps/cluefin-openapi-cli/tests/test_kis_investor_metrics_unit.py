@@ -240,6 +240,18 @@ def test_investor_metrics_computes_every_block_from_the_three_sources() -> None:
     assert out["calls"] == 12
 
 
+def test_investor_metrics_without_borrowings_has_no_ev_ebit() -> None:
+    statements = {
+        key: [row for row in rows if row.get("account_nm") != "단기차입금"]
+        for key, rows in _statements_fixture().items()
+    }
+    out = _call(_session(statements=statements))
+    assert out["ev"] is None  # not market cap − cash
+    assert "borrowings" in out["ev_reason"]
+    assert out["ev_ebit"]["value"] is None
+    assert out["earnings_yield"]["value"] is None
+
+
 def test_investor_metrics_owner_earnings_is_null_when_depreciation_is_missing() -> None:
     statements = _statements_fixture()
     annual_rows = statements[(2025, "11011", "CFS")]
