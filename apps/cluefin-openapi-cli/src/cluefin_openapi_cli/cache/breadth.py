@@ -47,6 +47,7 @@ volume ratio) a caller can weigh themselves.
 
 from __future__ import annotations
 
+import math
 from datetime import date
 from typing import Any
 
@@ -69,6 +70,12 @@ _NOTES_RS = (
     f"{_MIN_SECTOR_STOCKS}종목 미만인 그룹은 null.",
     "유니버스는 `cache trend-setup`과 같다: 그날 상장(폐지 포함) · 끝자리 0 · 이름에 '스팩' 없음.",
 )
+
+
+def _round_half_up(value: float) -> int:
+    """Round a percentile for display. Average ranks land on x.5, where `round()` goes to even."""
+
+    return math.floor(value + 0.5)
 
 
 def _percentile_rank(values: np.ndarray) -> np.ndarray:
@@ -183,11 +190,12 @@ def rs(
                 "sector": company["sector"],
                 "industry": company["industry"],
                 "return_1m_pct": round(ret[0] * 100, 2) if ret else None,
-                "rs_1m": round(float(rs_1m[code])) if code in rs_1m else None,
-                f"{group_field}_rs": round(float(group_percentile)) if group_percentile is not None else None,
+                "rs_1m": _round_half_up(rs_1m[code]) if code in rs_1m else None,
+                f"{group_field}_rs": _round_half_up(group_percentile) if group_percentile is not None else None,
             }
         )
-    rows.sort(key=lambda row: (row["rs_1m"] is None, -(row["rs_1m"] or 0)))
+    # Sort on the unrounded percentile: two stocks that both display 51 are not tied.
+    rows.sort(key=lambda row: (row["code"] not in rs_1m, -rs_1m.get(row["code"], 0.0)))
 
     return {
         "as_of": as_of.isoformat(),

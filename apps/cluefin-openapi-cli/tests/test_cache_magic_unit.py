@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import date
 
+import numpy as np
 import pytest
 
 from cluefin_openapi_cli.cache import magic, store
@@ -339,3 +340,23 @@ def test_screen_does_not_use_a_fiscal_year_filed_after_as_of(cache) -> None:
     conn.close()
 
     assert payload["rows"][0]["fiscal_year"] == "2024"
+
+
+def test_screen_sorts_on_the_unrounded_combined_percentile(cache, monkeypatch) -> None:
+    conn = store.open_store()
+    _setup_candidate(conn, "900010", close=100.0, ebit=50.0, assets=1000.0, current_liab=200.0, total_liab=40.0)
+    _setup_candidate(conn, "900020", close=100.0, ebit=20.0, assets=1000.0, current_liab=200.0, total_liab=40.0)
+    _insert_mcap_filler(conn)
+    conn.close()
+    # 900010: 50.5 + 49.5 = 100.0; 900020: 50.4 + 49.7 = 100.1. Rounding each rank to even first
+    # gave both 100 and put 900010 first on the code tie-break.
+    ranks = iter([np.array([50.5, 50.4]), np.array([49.5, 49.7])])
+    monkeypatch.setattr(magic, "_percentile_rank", lambda values: next(ranks))
+
+    conn = store.open_store(read_only=True)
+    payload = magic.screen(conn, _AS_OF)
+    conn.close()
+
+    assert [row["code"] for row in payload["rows"]] == ["900020", "900010"]
+    assert [row["combined_rank"] for row in payload["rows"]] == [100, 100]
+    assert payload["rows"][1]["earnings_yield_rank"] == 51  # 50.5 rounds up, not to even
