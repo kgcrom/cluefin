@@ -203,6 +203,7 @@ def _run_trace(argv: list[str]) -> None:
             "exit_code": c.exit_code,
             "to_file": c.to_file,
             "mixed_shell": c.mixed,
+            "via": c.via,
             "shell": c.shell[:500],
             "output_chars": len(c.output),
             "output": c.output[:max_chars],
@@ -218,6 +219,7 @@ def _run_trace(argv: list[str]) -> None:
             f"Each call output is cut at {max_chars} characters (`output_chars` is the full length).",
             "`to_file`: stdout went to a file — the data is not in the output. `mixed_shell`: the Bash command did "
             "other work too, so `output`/`exit_code` may belong to that work (see `shell`).",
+            "`via`: the call was made by `review collect`; its output is the raw file in that folder.",
         ],
     }
     _render(payload, options)

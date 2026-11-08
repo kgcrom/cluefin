@@ -59,7 +59,8 @@ A worktree-isolated session refuses commands it can't prove don't run git outsid
 - Logging is stdlib `logging.getLogger(__name__)` with f-string messages (loguru `{}` args don't format; `%s` args
   trip Codacy when the text mentions token/key). Only app entry points add handlers or set levels; tests use `caplog`.
 - 사용자와 대화하며 하는 기업 분석과 HTML 리포트("리포트 생성")는 메인 대화가 맡는다. 판단 기준은
-  `.claude/agents/company-review.md` 의 데이터·분석·판단 절, HTML 은 생성 요청 시에만 `docs/agents/company-review-report-design.md`.
+  `.claude/agents/company-review.md` 의 수집·데이터·분석·판단 절(데이터는 `review collect` 로 폴더에 받는다), HTML 은 생성
+  요청 시에만 `docs/agents/company-review-report-design.md`.
 - agent 는 `.claude/agents/` 의 넷이다: company-review(종목 하나), market-scan(장세·후보, 판단 없음), disclosure-watch
   (관심 종목 공시), agent-audit(실행 감사). 감사는 사람이 원할 때만 수동으로 한다 — `cluefin-openapi-cli audit check` 로
   결정적 검사, agent-audit 로 놓침 판독. 판단 적중(수익률)은 평가하지 않는다. agent 데이터 절을 고치면 그 파일 끝

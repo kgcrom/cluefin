@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from cluefin_openapi_cli.audit.transcript import AgentRun, CliCall
+from cluefin_openapi_cli.audit.transcript import AgentRun, CliCall, collect_folder
 
 __all__ = ["AuditSpec", "check_run", "corp_map", "load_spec", "parse_spec", "subjects"]
 
@@ -276,6 +276,17 @@ def check_run(
                 "commands": sorted({c.command for c in shell}),
                 "count": len(shell),
                 "note": "arguments built by a shell loop or $(...) — the agent file asks for one literal call each",
+            }
+        )
+
+    lost = [c for c in calls if c.path == ("review", "collect") and c.exit_code == 0 and collect_folder(c) is None]
+    if lost:
+        findings.append(
+            {
+                "type": "collect_manifest_missing",
+                "calls": [c.index for c in lost],
+                "note": "review collect ran but its folder or manifest.jsonl is gone (/tmp cleared?), so what it "
+                "fetched cannot be checked",
             }
         )
 

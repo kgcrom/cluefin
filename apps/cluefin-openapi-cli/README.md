@@ -186,6 +186,15 @@ uv run cluefin-openapi-cli cache macro-beta --code 005930 --json                
 uv run cluefin-openapi-cli cache magic-formula --top 30 --json                     # 이익수익률+ROIC 순위 합 상위 30
 ```
 
+`review collect` 는 종목 검토(company-review)가 읽을 데이터를 한 폴더에 받습니다. 브로커별 동시 호출 수를 제한해
+단계별로 병렬 실행하고, 명령마다 stdout 을 `raw/<node>.json` 에, argv·exit code 를 `manifest.jsonl` 에 남깁니다.
+화면에는 폴더 경로와 실패·건너뜀 요약만 나옵니다.
+
+```bash
+uv run cluefin-openapi-cli review collect --stock-code 214320 --peers 030000 --json  # /private/tmp/cluefin-review/214320-<날짜>/
+uv run cluefin-openapi-cli review collect --into /private/tmp/cluefin-review/214320-20261108 --peers 035000 --json  # 비교 기업만 추가
+```
+
 `audit` 은 `.claude/agents/*.md` 로 돈 agent 실행을 Claude Code 트랜스크립트에서 읽어, 그 agent 파일의 감사 기준과
 대조합니다(빠진 명령·같은 인자 반복·exit 3 뒤 계속·재시도 없는 실패). 저장소 루트에서 실행합니다.
 

@@ -24,6 +24,9 @@ uv run cluefin-openapi-cli audit check --session b9dd9310-7d55-4631-8124-db63abf
   `agent_commit` ≠ `spec_commit` 이면 `git show <agent_commit>:<그때 경로>` 로 실행 당시 문서도 읽는다.
 - `trace` 의 `to_file` 은 출력이 파일로 가서 응답에 데이터가 없다는 뜻이고, `mixed_shell` 은 같은 Bash 호출이 다른 일도 해서
   `output`·`exit_code` 가 그 일의 것일 수 있다는 뜻이다(`shell` 원문을 본다). 둘 다 잘린 출력과 구분한다.
+- `via` 가 있는 호출은 `review collect` 가 부른 것이고 `output` 은 그 폴더의 raw 파일이다. 리포트(`report`)에는 폴더의
+  `report.md` 가 앞에 붙어 있다. agent 가 폴더 파일을 읽었는지는 `trace` 에 없다 — 리포트 수치를 raw 파일과 대조한다.
+  폴더가 지워졌으면(`collect_manifest_missing`) 수집 근거를 대조할 수 없다고 적고 놓침 판정은 하지 않는다.
 
 ## 순서
 
