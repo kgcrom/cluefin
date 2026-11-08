@@ -162,7 +162,7 @@ uv run cluefin-openapi-cli review collect --stock-code 214320 --peers 030000 --j
 - `peer_rank` — 비교 기업이 있으면 본 종목을 포함한 순서. 회사마다 판단과 한 줄 이유를 붙인다.
 
 판단을 내면 수집 폴더에 `verdict.json` 을 쓰고 `review record` 로 저장소 루트 `research/verdicts.jsonl` 에 남긴다.
-`review track` 이 나중에 이 기록을 가격과 대조한다. 메인 대화도 같다(`--source main`, HTML 이 이미 있으면
+`review track` 이 나중에 이 기록을 가격과 대조한다(재검토 절). 메인 대화도 같다(`--source main`, HTML 이 이미 있으면
 `--report`). exit 2 면 `data.problems` 를 모두 고쳐 다시 부른다.
 
 ```json
@@ -223,6 +223,22 @@ uv run cluefin-openapi-cli review record --from <폴더> --source company-review
   질문을 무효화 조건이나 다음 확인 항목으로 옮긴다.
 - 완료 조건에 닿은 턴의 끝에서 `AskUserQuestion` 으로 HTML 리포트 생성 여부를 묻는다. 중간 턴에는 묻지 않는다 —
   반복이 끊긴다. `/goal` 이 한 턴 더 돌면 다음 완료 턴에 다시 묻는다.
+
+## 재검토
+
+메인 대화 전용이다. 사용자가 "재검토해줘" 처럼 지난 판단을 다시 보자고 하면, 종목을 새로 분석하기 전에 기록부터
+가격과 대조한다. 감사와 달리 여기서는 판단이 맞았는지를 본다.
+
+1. `cache status --json` 의 ohlcv `last_date` 가 마지막 거래일보다 이르면 `cache load --only ohlcv,adj --json` 을
+   백그라운드로 돌린다(실계좌 키로 조회만 한다, 약 7분). 끝난 뒤 다음 단계로 간다.
+2. `review track --json`. 사용자가 종목을 말했으면 `--code`.
+3. 다시 볼 판단만 표로 보여 준다: 가격에 닿음(`first_cross`), `recheck_on` 이 지남(`research/verdicts.jsonl` 에서
+   읽는다 — track 출력에는 없다), horizon 끝남(`closed`). 열은 종목·기준일·판단·지난 거래일·수익률·초과수익·닿은 가격과
+   날짜·사유. 나머지는 건수만 적는다.
+4. `AskUserQuestion` 으로 다음 단계를 고르게 한다: disclosure-watch 로 공시 훑기(표의 종목코드를 넘긴다) /
+   company-review 로 다시 판단 / 그만. 다시 판단하면 판단 절대로 새로 기록한다 — 앞 기록은 고치지 않는다.
+
+- horizon 이 끝나지 않은 판단의 수익률은 중간값이다. 라벨별 결론(watch 가 쓸모 있었나)은 `closed` 가 쌓인 뒤에 낸다.
 
 ## DESIGN RULE
 
