@@ -179,6 +179,7 @@ uv run cluefin-openapi-cli review record --from <폴더> --source company-review
 
 - 종목코드는 문자열(`"030000"`). buy·sell 은 `target`·`stop` 필수, watch·hold 는 `trigger` 의 가격 하나 이상.
 - `confidence` 는 `low`/`medium`/`high`. 기록은 고치지 않는다 — 판단을 바꾸면 새로 기록한다.
+- `blocked` 면 기록하지 않는다 — 추적할 가격이 없다. 감사의 `review record` 누락 지적은 이때 무시한다.
 
 ## 리포트
 

@@ -140,3 +140,11 @@ def test_cli_track_filters_by_code(
     out = json.loads(capsys.readouterr().out)
     assert [r["id"] for r in out["verdicts"]] == ["214320-20261102-1"]
     assert out["summary"]["watch"]["closed"] == 1
+
+
+def test_broken_log_line_is_usage_error(tmp_path: Path) -> None:
+    log = tmp_path / "verdicts.jsonl"
+    log.write_text(json.dumps(_record()) + "\n{oops\n", encoding="utf-8")
+    with pytest.raises(CliError) as exc:
+        load_records(log)
+    assert "line 2" in exc.value.message

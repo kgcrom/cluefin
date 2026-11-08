@@ -15,7 +15,16 @@ from typing import Any
 
 from cluefin_openapi_cli.errors import EXIT_USAGE, CliError
 
-__all__ = ["SOURCES", "VERDICTS_FILE", "Recorded", "build_record", "load_verdict", "record_verdict", "validate"]
+__all__ = [
+    "SOURCES",
+    "VERDICTS_FILE",
+    "Recorded",
+    "build_record",
+    "load_verdict",
+    "read_records",
+    "record_verdict",
+    "validate",
+]
 
 VERDICTS_FILE = "verdicts.jsonl"
 VERDICT_FILE = "verdict.json"
@@ -100,14 +109,22 @@ def validate(verdict: dict[str, Any]) -> list[str]:
     return problems + _price_problems(verdict)
 
 
+def read_records(file: Path) -> list[dict[str, Any]]:
+    """Every line of the verdict log; a hand-edited broken line is a usage error naming its line number."""
+
+    records: list[dict[str, Any]] = []
+    for number, line in enumerate(file.read_text(encoding="utf-8").splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            records.append(json.loads(line))
+        except json.JSONDecodeError as exc:
+            raise CliError(f"{file} line {number} is not valid JSON: {exc}.", exit_code=EXIT_USAGE) from exc
+    return records
+
+
 def _existing_ids(file: Path) -> set[str]:
-    if not file.is_file():
-        return set()
-    ids: set[str] = set()
-    for line in file.read_text(encoding="utf-8").splitlines():
-        if line.strip():
-            ids.add(json.loads(line).get("id", ""))
-    return ids
+    return {r.get("id", "") for r in read_records(file)} if file.is_file() else set()
 
 
 def _next_id(existing: set[str], code: str, ref_date: str) -> str:

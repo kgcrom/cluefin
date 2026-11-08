@@ -12,7 +12,6 @@ Levels are checked on daily closes, not intraday highs/lows.
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -21,6 +20,7 @@ from typing import Any
 import duckdb
 
 from cluefin_openapi_cli.errors import EXIT_USAGE, CliError
+from cluefin_openapi_cli.review.record import read_records
 
 __all__ = ["Bar", "load_records", "summarize", "track", "track_record"]
 
@@ -49,7 +49,7 @@ class Bar:
 def load_records(file: Path) -> list[dict[str, Any]]:
     if not file.is_file():
         raise CliError(f"No verdict log at {file}.", exit_code=EXIT_USAGE, hint="Add verdicts with `review record`.")
-    return [json.loads(line) for line in file.read_text(encoding="utf-8").splitlines() if line.strip()]
+    return read_records(file)
 
 
 def _pct(now: float, base: float) -> float:
