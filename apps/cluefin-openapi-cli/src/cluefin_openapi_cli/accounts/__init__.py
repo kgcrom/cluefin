@@ -28,9 +28,12 @@ class Item:
 def _item(where: str, entry: object) -> Item:
     if not isinstance(entry, dict) or not set(entry) <= _FIELDS:
         raise ValueError(f"{where}: an account takes only {sorted(_FIELDS)}")
-    ids = entry.get("ids") or []
+    ids = entry.get("ids")
     names = entry.get("names", [])
-    if not ids or not all(isinstance(value, str) for value in (*ids, *names)):
+    # A bare string would pass an element check one character at a time, so both must be lists.
+    if not isinstance(ids, list) or not isinstance(names, list) or not ids:
+        raise ValueError(f"{where}: ids must be a non-empty list of strings, names a list of strings")
+    if not all(isinstance(value, str) for value in (*ids, *names)):
         raise ValueError(f"{where}: ids must be a non-empty list of strings, names a list of strings")
     return Item(tuple(ids), tuple(names))
 

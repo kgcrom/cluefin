@@ -35,6 +35,8 @@ def test_statements_reads_its_items_from_the_table() -> None:
         pytest.param({"ids": [], "names": ["매출액"]}, "ids must be", id="empty_ids"),
         pytest.param({"ids": ["x"], "label": "y"}, "takes only", id="unknown_field"),
         pytest.param({"ids": [1]}, "ids must be", id="non_string_id"),
+        pytest.param({"ids": "ifrs-full_Revenue"}, "ids must be", id="ids_not_a_list"),
+        pytest.param({"ids": ["x"], "names": "매출액"}, "ids must be", id="names_not_a_list"),
     ],
 )
 def test_malformed_account_is_rejected(entry, message) -> None:
