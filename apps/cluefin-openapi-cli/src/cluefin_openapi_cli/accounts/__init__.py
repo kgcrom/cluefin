@@ -14,7 +14,7 @@ from importlib.resources import files
 __all__ = ["GROUPS", "Item", "load_table"]
 
 GROUPS = ("income", "balance", "cash")
-_FIELDS = frozenset({"ids", "names"})
+_FIELDS = frozenset({"ids", "names", "marker"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -23,6 +23,8 @@ class Item:
 
     ids: tuple[str, ...]
     names: tuple[str, ...] = ()
+    # True for an account only some industry files (e.g. bank fee income): its presence selects that table.
+    marker: bool = False
 
 
 def _item(where: str, entry: object) -> Item:
@@ -35,7 +37,10 @@ def _item(where: str, entry: object) -> Item:
         raise ValueError(f"{where}: ids must be a non-empty list of strings, names a list of strings")
     if not all(isinstance(value, str) for value in (*ids, *names)):
         raise ValueError(f"{where}: ids must be a non-empty list of strings, names a list of strings")
-    return Item(tuple(ids), tuple(names))
+    marker = entry.get("marker", False)
+    if not isinstance(marker, bool):
+        raise ValueError(f"{where}: marker must be true or false")
+    return Item(tuple(ids), tuple(names), marker)
 
 
 @cache
