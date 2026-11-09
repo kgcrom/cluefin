@@ -47,7 +47,20 @@ _STATEMENT_TYPE_PATTERNS: dict[str, StatementType] = {
     "role-D61": StatementType.SCE,
 }
 
-_ROLE_CODE_PATTERN = re.compile(r"role-(D\d+)")
+# Financial-industry DART taxonomies use their own role families: DB 은행, DI 보험, DS 증권, DX 기타 금융
+# (금융지주 등). Each files one presentation per statement — BS 22, single 포괄손익계산서 32, CF 52, SCE 61 —
+# observed in every bank/insurer/securities/holding filing FY2023–2025. The single 포괄손익계산서 is CIS, as
+# D43 is for general filers and as DART's OpenAPI reports it (sj_div "CIS").
+_FINANCIAL_ROLE_PATTERN = re.compile(r"role-D[BISX](\d{2})\d")
+_FINANCIAL_STATEMENT_TYPES: dict[str, StatementType] = {
+    "22": StatementType.BS,
+    "32": StatementType.CIS,
+    "52": StatementType.CF,
+    "61": StatementType.SCE,
+}
+
+# The optional letter is the financial-industry family (DB/DI/DS/DX) above.
+_ROLE_CODE_PATTERN = re.compile(r"role-(D[BISX]?\d+)")
 
 # SEC EDGAR Filer Manual 6.7.12: every role definition reads "{sort code} - {type} - {title}", where type is
 # Statement, Disclosure, Document or Schedule. Only "Statement" roles are the face financial statements; the
@@ -235,6 +248,9 @@ def _identify_statement_type(linkrole: str, definition: str | None = None) -> St
     for pattern, stmt_type in _STATEMENT_TYPE_PATTERNS.items():
         if pattern in linkrole:
             return stmt_type
+    financial = _FINANCIAL_ROLE_PATTERN.search(linkrole)
+    if financial is not None:
+        return _FINANCIAL_STATEMENT_TYPES.get(financial.group(1))
     return None
 
 

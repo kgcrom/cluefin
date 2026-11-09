@@ -19,6 +19,13 @@ from cluefin_xbrl.notes import _identify_note_role, extract_notes
 _IDENTIFY_NOTE_ROLE_CASES = [
     pytest.param("http://dart.fss.or.kr/role/ifrs/ias_19_role-D834480", ("D834480", True), id="consolidated_note"),
     pytest.param("http://dart.fss.or.kr/role/ifrs/ias_19_role-D834485", ("D834485", False), id="separate_note"),
+    pytest.param("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-DB822000", ("DB822000", True), id="bank_note"),
+    pytest.param(
+        "http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-DI817105", ("DI817105", False), id="insurer_sep_note"
+    ),
+    pytest.param(
+        "http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-DB220000", None, id="bank_statement_is_not_note"
+    ),
     pytest.param("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D210000", None, id="statement_role_is_not_note"),
     pytest.param("http://dart.fss.or.kr/role/ifrs/dart-gcd_2024-06-30_role-D999001", None, id="doc_role_is_not_note"),
     pytest.param("http://example.com/role/SomeOtherRole", None, id="generic_role_is_not_note"),

@@ -15,7 +15,8 @@ from cluefin_xbrl._types import (
 )
 from cluefin_xbrl.statements import _CONSOLIDATION_AXIS, _SEPARATE_MEMBER, _local_name
 
-_NOTE_ROLE_PATTERN = re.compile(r"role-(D8\d+)")
+# The optional letter is a financial-industry family: DB 은행, DI 보험, DS 증권, DX 기타 금융 (DB822000 …).
+_NOTE_ROLE_PATTERN = re.compile(r"role-(D[BISX]?8\d+)")
 
 
 def _match_note_fact(fact: XbrlFact, is_consolidated: bool) -> dict[str, str] | None:
@@ -165,7 +166,7 @@ def _collect_note_line_items(
 def _identify_note_role(linkrole: str) -> tuple[str, bool] | None:
     """Identify a note (disclosure) role code and consolidated flag from a linkrole URI.
 
-    DART note linkroles carry a role code of the form ``D8xxxxx``. By DART convention a
+    DART note linkroles carry a role code of the form ``D8xxxxx`` (``DB8xxxxx`` etc. for financial filers). By DART convention a
     code ending in ``0`` is the consolidated note and one ending in ``5`` is the separate note.
 
     Returns:

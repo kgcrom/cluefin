@@ -43,6 +43,11 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - Statement-type detection matches linkrole URIs against undocumented DART role codes
   (`D21xxxx`=BS, `D31`=IS, `D41`=CIS, `D52`=CF, `D61`=SCE, `D8x`=notes) — these came
   from observing real filings, not from the XBRL spec.
+- Financial filers use their own families with a letter after `D`: `DB` 은행, `DI` 보험, `DS` 증권, `DX` 기타 금융
+  (금융지주). Codes `22`=BS, `32`=single 포괄손익계산서 (→ CIS, no IS), `52`=CF, `61`=SCE, `8x`=notes; `0`/`5`
+  endings mean 연결/별도 as in `D`. Observed in every bank/insurer/securities/holding filing FY2023–2025 (2026-11-09).
+  Without them these filings parsed to no statements at all. 지주회사 KSIC 64992 can be either `DX` or plain `D`.
+  Financial filers' notes are in XBRL only from FY2025.
 - "Keep first match per type" in `extract_financial_statements` assumes DART orders
   consolidated linkroles before separate ones. That's an observed ordering, not a
   guaranteed invariant.
