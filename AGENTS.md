@@ -12,10 +12,12 @@ won't tell you. `apps/AGENTS.md` and `packages/AGENTS.md` cover their side; each
 ## Testing policy
 
 - Real API keys are used **only** by tests marked `integration`; everything else is mocked and hits no network.
-- `realtime`-marked tests require market hours (09:00–15:30 KST).
+- `realtime`-marked tests require market hours (KRX 09:00–15:30 KST, US 09:30–16:00 ET). `mutation` places real
+  orders; its opt-in rules are in `packages/cluefin-openapi/AGENTS.md`.
 - Test files are `test_<target>_unit.py` / `test_<target>_integration.py`, flat under `tests/` (subfolders only per
   broker/feed). Shared helpers are `_`-prefixed modules imported relatively, never via `sys.path` edits.
 - The CI workflow (lint, typecheck, tests) runs on pushes to main, not on PRs: `gh workflow run ci.yml --ref <branch>`.
+  Commits touching only `*.md`/`docs/` skip it, so a docs push has no CI run to wait for.
 
 ## Codacy (PR check)
 
@@ -33,8 +35,8 @@ gh api "repos/kgcrom/cluefin/check-runs/<id>/annotations?per_page=100" -q '.[]|"
 - Select the check by its exact name: `Codacy Diff Coverage`/`Coverage Variation` also match "Codacy" and pass.
 - Right after a push the new head's run has `conclusion: null` — still analysing, not a pass. Poll until it is set;
   a fix can expose the next layer (19 → 6 → 0).
-- Don't reproduce locally: `codacy-cli` was tried and removed (2026-10). Its ESLint lacks the security /
-  typescript-eslint plugins, so it reproduced 2 of 19 server findings, and it pulls ~3 GB of runtimes.
+- Treat the server annotations as the source of truth. `codacy-cli` was tried and removed (2026-10): its ESLint
+  lacks the security / typescript-eslint plugins, so it reproduced 2 of 19 server findings, and it pulls ~3 GB.
 - Fix patterns: Python in `packages/AGENTS.md`, TypeScript in `packages/cluefin-openapi-ts/AGENTS.md`.
 
 ## Shell commands in a worktree session
@@ -62,3 +64,5 @@ A worktree-isolated session refuses commands it can't prove don't run git outsid
 ## Analysis agents
 
 기업 분석(대화형 분석·HTML 리포트·지난 판단 재검토)은 메인 대화가 `.claude/agents/company-review.md` 를 따른다.
+판단(`research/verdicts.jsonl`)과 HTML 리포트(`research/reports/`)는 gitignore 된 로컬 기록이다. worktree 에서도
+`review record` 는 메인 체크아웃의 `research/` 에 쓰므로, 리포트 파일도 그 경로에 둔다.
