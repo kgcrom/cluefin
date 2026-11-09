@@ -166,8 +166,9 @@ def _collect_note_line_items(
 def _identify_note_role(linkrole: str) -> tuple[str, bool] | None:
     """Identify a note (disclosure) role code and consolidated flag from a linkrole URI.
 
-    DART note linkroles carry a role code of the form ``D8xxxxx`` (``DB8xxxxx`` etc. for financial filers). By DART convention a
-    code ending in ``0`` is the consolidated note and one ending in ``5`` is the separate note.
+    DART note linkroles carry a role code of the form ``D8xxxxx`` (``DB8xxxxx`` etc. for financial
+    filers). By DART convention a code ending in ``0`` is the consolidated note and one ending in ``5``
+    is the separate note.
 
     Returns:
         ``(role_code, is_consolidated)`` if the linkrole is a note role, else ``None``.
