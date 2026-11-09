@@ -16,8 +16,8 @@ def test_common_table_has_the_three_groups_in_file_order() -> None:
     assert table["income"]["revenue"] == accounts.Item(
         ("ifrs-full_Revenue",), ("수익(매출액)", "매출액", "영업수익", "매출")
     )
-    # Owners' share is id-only on purpose (its label also names the comprehensive-income split).
-    assert table["income"]["net_income_owners"].names == ()
+    # Owners' share labels must say 당기순이익: the bare label also names the comprehensive-income split.
+    assert all("당기순이익" in name for name in table["income"]["net_income_owners"].names)
 
 
 def test_statements_reads_its_items_from_the_table() -> None:
