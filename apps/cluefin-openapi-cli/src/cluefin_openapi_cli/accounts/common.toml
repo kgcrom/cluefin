@@ -39,9 +39,11 @@ names = ["법인세비용", "법인세비용(수익)"]
 ids = ["ifrs-full_ProfitLoss"]
 names = ["당기순이익", "당기순이익(손실)"]
 
-# Owners' share only by id: the same Korean label also names the comprehensive-income split.
+# Owners' share by id, or by a label that says 당기순이익: the bare "지배기업소유주지분" also names the
+# comprehensive-income split. The label covers off-taxonomy filers (2026-11-10 review).
 [income.net_income_owners]
 ids = ["ifrs-full_ProfitLossAttributableToOwnersOfParent"]
+names = ["지배기업의소유주에게귀속되는당기순이익(손실)", "지배기업의소유주에게귀속되는당기순이익"]
 
 [balance.assets]
 ids = ["ifrs-full_Assets"]
@@ -107,8 +109,9 @@ names = ["재무활동현금흐름"]
 ids = ["ifrs-full_PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities"]
 names = ["유형자산의취득"]
 
+# Some filers classify dividends paid under operating activities (K-IFRS 1007 allows either); same outflow.
 [cash.dividends_paid]
-ids = ["ifrs-full_DividendsPaidClassifiedAsFinancingActivities"]
+ids = ["ifrs-full_DividendsPaidClassifiedAsFinancingActivities", "ifrs-full_DividendsPaidClassifiedAsOperatingActivities"]
 names = ["배당금의지급", "배당금지급"]
 
 [cash.interest_expense]

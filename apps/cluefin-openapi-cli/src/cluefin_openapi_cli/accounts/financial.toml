@@ -16,18 +16,23 @@ ids = ["dart_CashAndDuefromBanks"]
 names = ["현금및예치금"]
 marker = true
 
-# 은행 자산의 중앙값 72%.
+# 은행 자산의 중앙값 72%. 금융지주 일부는 수취채권과 한 줄로 낸다(라벨 뒤 두 개, 2026-11-10 검수).
+# "대출채권및기타수취채권"은 넣지 않는다: 그 라벨을 쓰는 생명보험사가 0 으로 공시한다(대출은 상각후원가 금융자산 쪽).
 [balance.loans]
 ids = ["dart_LoansAtAmortisedCost"]
-names = ["상각후원가측정대출채권", "대출채권"]
+names = ["상각후원가측정대출채권", "대출채권", "대출채권및수취채권", "상각후원가측정대출채권및기타금융자산"]
 marker = true
 
 [balance.fvpl_financial_assets]
 ids = ["ifrs-full_FinancialAssetsAtFairValueThroughProfitOrLoss"]
 names = ["당기손익-공정가치측정금융자산"]
 
+# 은행은 FVOCI 를 유가증권 한 줄(dart id)로 낸다.
 [balance.fvoci_financial_assets]
-ids = ["ifrs-full_FinancialAssetsAtFairValueThroughOtherComprehensiveIncome"]
+ids = [
+  "ifrs-full_FinancialAssetsAtFairValueThroughOtherComprehensiveIncome",
+  "dart_SecuritiesAtFairValueThroughOtherComprehensiveIncome",
+]
 names = ["기타포괄손익-공정가치측정금융자산"]
 
 # 보험·증권은 상각후원가 금융자산 한 줄, 은행은 대출채권과 유가증권을 나눈다.
@@ -112,9 +117,19 @@ ids = ["ifrs-full_FeeAndCommissionIncomeExpense"]
 names = ["순수수료손익", "순수수료이익"]
 marker = true
 
+# 회사마다 id 가 갈린다(2026-11-10 검수, 금융지주·증권). 부호는 공시된 그대로다 — "환입(전입)" 으로 적는 회사는
+# 전입을 음수로 낸다.
 [income.credit_loss_expense]
-ids = ["ifrs-full_ImpairmentLossImpairmentGainAndReversalOfImpairmentLossDeterminedInAccordanceWithIFRS9"]
-names = ["신용손실충당금전입액", "금융자산손상차손"]
+ids = [
+  "ifrs-full_ImpairmentLossImpairmentGainAndReversalOfImpairmentLossDeterminedInAccordanceWithIFRS9",
+  "dart_ImpairmentLossDeterminedInAccordanceWithIFRS9",
+  "ifrs-full_AdditionalAllowanceRecognisedInProfitOrLossAllowanceAccountForCreditLossesOfFinancialAssets",
+  "dart_AdditionReversalOfCreditLossFinancialAssets",
+]
+names = [
+  "신용손실충당금전입액", "금융자산손상차손", "신용손실충당금전입액등", "신용손실충당금환입(전입)액",
+  "신용손실충당금전입(환입)액", "신용손실에대한손상차손", "금융자산신용손실",
+]
 marker = true
 
 [income.insurance_revenue]
