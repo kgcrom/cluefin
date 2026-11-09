@@ -141,3 +141,44 @@ def test_quarters_keep_a_bank_quarter_without_revenue() -> None:
     assert [q["period"] for q in quarter_list] == ["2025Q1"]
     assert quarter_list[0]["net_income"] == 5
     assert quarter_list[0]["revenue"] is None
+
+
+@pytest.mark.parametrize(
+    ("key", "group", "row"),
+    [
+        pytest.param(
+            "dividends_paid",
+            "cash",
+            {"sj_div": "CF", "account_id": "ifrs-full_DividendsPaidClassifiedAsOperatingActivities"},
+            id="dividends_paid_under_operating",
+        ),
+        pytest.param(
+            "net_income_owners",
+            "income",
+            {
+                "sj_div": "IS",
+                "account_id": "-표준계정코드 미사용-",
+                "account_nm": "지배기업의 소유주에게 귀속되는 당기순이익",
+            },
+            id="owners_profit_off_taxonomy",
+        ),
+    ],
+)
+def test_reviewed_common_additions_match(key, group, row) -> None:
+    sections = {"income": s.INCOME, "balance": s.BALANCE, "cash": s.CASH}[group]
+    items = {"income": s.INCOME_ITEMS, "balance": s.BALANCE_ITEMS, "cash": s.CASH_ITEMS}[group]
+
+    assert s.find_row([row], sections, items[key]) is row
+
+
+def test_owners_share_label_without_net_income_does_not_match() -> None:
+    # The bare label also names the comprehensive-income split, so it stays unmatched.
+    row = {"sj_div": "CIS", "account_id": "-표준계정코드 미사용-", "account_nm": "지배기업소유주지분"}
+
+    assert s.find_row([row], s.INCOME, s.INCOME_ITEMS["net_income_owners"]) is None
+
+
+def test_zero_filed_insurer_loan_label_is_not_a_loan() -> None:
+    row = {"sj_div": "BS", "account_id": "-표준계정코드 미사용-", "account_nm": "대출채권및기타수취채권"}
+
+    assert s.find_row([row], s.BALANCE, s.FINANCIAL_BALANCE_ITEMS["loans"]) is None
