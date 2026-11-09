@@ -124,8 +124,8 @@ ECOS_AUTH_KEY=your_ecos_auth_key_here
 ```python
 from pydantic import SecretStr
 import os
-from cluefin_openapi.kiwoom._auth import Auth
-from cluefin_openapi.kiwoom._client import Client
+from cluefin_openapi.kiwoom import Auth
+from cluefin_openapi.kiwoom import Client
 import dotenv
 
 # 인증 설정
@@ -155,7 +155,7 @@ print(f"응답 데이터: ${response.body}")
 import os
 from pydantic import SecretStr
 import dotenv
-from cluefin_openapi.kiwoom._auth import Auth
+from cluefin_openapi.kiwoom import Auth
 
 # 인증 설정
 dotenv.load_dotenv(dotenv_path=".env")
@@ -175,7 +175,7 @@ print(f"token => ${token}")
 
 ```python
 # 키움증권
-from cluefin_openapi.kiwoom._client import Client
+from cluefin_openapi.kiwoom import Client
 
 client = Client(
     token=token.get_token(),
@@ -188,8 +188,8 @@ client = Client(
 import os
 from pydantic import SecretStr
 import dotenv
-from cluefin_openapi.kis._auth import Auth
-from cluefin_openapi.kis._client import Client as KISClient
+from cluefin_openapi.kis import Auth
+from cluefin_openapi.kis import HttpClient as KISClient
 
 # 인증 설정
 dotenv.load_dotenv(dotenv_path=".env")
@@ -206,7 +206,7 @@ token = auth.generate()
 kis_client = KISClient(
     app_key=os.getenv("KIS_APP_KEY"),
     secret_key=SecretStr(os.getenv("KIS_SECRET_KEY")),
-    token=token,
+    token=token.get_token(),
     env="dev",
 )
 print(f"kis_client => ${kis_client}")
@@ -244,22 +244,23 @@ print(f"nhplug_client => ${nhplug_client}")
 ### 국내 주식 시세 조회
 
 ```python
-from cluefin_openapi.kis._client import Client as KISClient
+from cluefin_openapi.kis import HttpClient as KISClient
 
 # 주식 현재가 시세 조회
-current_price = kis_client.domestic_basic_quote.get_inquire_price(
-    fid_cond_mrkt_div_code="J",  # 시장 분류 코드 (J: 주식)
+current_price = kis_client.domestic_basic_quote.get_stock_current_price(
+    fid_cond_mrkt_div_code="J",  # 조건 시장 분류 코드 (J: KRX, NX: NXT, UN: 통합)
     fid_input_iscd="005930"      # 종목 코드 (삼성전자)
 )
 print(f"현재가: {current_price}")
 
-# 주식 일별 시세 조회
-daily_price = kis_client.domestic_basic_quote.get_inquire_daily_itemchartprice(
+# 주식 기간별(일/주/월/년) 시세 조회
+daily_price = kis_client.domestic_basic_quote.get_stock_period_quote(
     fid_cond_mrkt_div_code="J",
     fid_input_iscd="005930",
     fid_input_date_1="20250101",  # 조회 시작일
     fid_input_date_2="20250131",  # 조회 종료일
-    fid_period_div_code="D"        # 기간 분류 코드 (D: 일)
+    fid_period_div_code="D",       # 기간 분류 코드 (D: 일, W: 주, M: 월, Y: 년)
+    fid_org_adj_prc="0"             # 0: 수정주가, 1: 원주가
 )
 print(f"일별 시세: {daily_price}")
 ```
@@ -268,18 +269,14 @@ print(f"일별 시세: {daily_price}")
 
 ```python
 # 주식 잔고 조회
-balance = kis_client.domestic_account.get_inquire_balance(
-    cano="12345678",      # 종합계좌번호
-    acnt_prdt_cd="01",    # 계좌상품코드
-    afhr_flpr_yn="N",     # 시간외단일가여부
-    ofl_yn="N",           # 오프라인여부
-    inqr_dvsn="01",       # 조회구분
-    unpr_dvsn="01",       # 단가구분
+balance = kis_client.domestic_account.get_stock_balance(
+    tr_id="TTTC8434R",     # 실전: TTTC8434R, 모의: VTTC8434R
+    tr_cont="",            # 공백: 최초 조회, N: 다음 페이지
+    cano="12345678",       # 종합계좌번호
+    acnt_prdt_cd="01",     # 계좌상품코드
+    inqr_dvsn="01",        # 조회구분
     fund_sttl_icld_yn="N", # 펀드결제분포함여부
-    fncg_amt_auto_rdpt_yn="N", # 융자금액자동상환여부
-    prcs_dvsn="00",       # 처리구분
-    ctx_area_fk100="",    # 연속조회검색조건100
-    ctx_area_nk100=""     # 연속조회키100
+    prcs_dvsn="00",        # 처리구분
 )
 print(f"잔고: {balance}")
 ```
@@ -287,9 +284,10 @@ print(f"잔고: {balance}")
 ### 해외 주식 시세 조회
 
 ```python
-# 해외 주식 현재가 조회 (미국 주식)
-overseas_price = kis_client.overseas_basic_quote.get_inquire_price(
-    exch="NAS",           # 거래소 코드 (NAS: 나스닥)
+# 해외 주식 현재가상세 조회 (미국 주식)
+overseas_price = kis_client.overseas_basic_quote.get_stock_current_price_detail(
+    auth="",              # 사용자권한정보 (공백 입력)
+    excd="NAS",           # 거래소명 (NAS: 나스닥)
     symb="AAPL"           # 종목 코드 (애플)
 )
 print(f"해외 주식 현재가: {overseas_price}")
@@ -565,8 +563,8 @@ client.statistic_search.search("901Y054", "M", "201601", "202609", ["MO3AB", "AB
 
 ```python
 import asyncio
-from cluefin_openapi.kiwoom._socket_client import KiwoomWebSocketClient
-from cluefin_openapi.kiwoom._domestic_condition_search import DomesticConditionSearch
+from cluefin_openapi.kiwoom import KiwoomWebSocketClient
+from cluefin_openapi.kiwoom import DomesticConditionSearch
 
 async def main():
     # 국내주식 조건검색 (미국주식은 market="overseas" + OverseasConditionSearch)
@@ -614,7 +612,7 @@ logging.getLogger("cluefin_openapi").addHandler(logging.FileHandler("cluefin_ope
 ### 키움증권 API 에러 처리
 
 ```python
-from cluefin_openapi.kiwoom._exceptions import KiwoomAPIError, KiwoomRateLimitError
+from cluefin_openapi.kiwoom import KiwoomAPIError, KiwoomRateLimitError
 
 try:
     response = client.account.get_daily_stock_realized_profit_loss_by_date("005930", "20250630")
@@ -636,7 +634,7 @@ except Exception as e:
 ### 한국투자증권 API 에러 처리
 
 ```python
-from cluefin_openapi.kis._exceptions import KISAPIError
+from cluefin_openapi.kis import KISAPIError
 
 try:
     response = kis_client.domestic_basic_quote.get_inquire_price(

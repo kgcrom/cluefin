@@ -10,14 +10,14 @@ pushed from a row selection or from `/` stock search (`escape` goes back).
 | Key | Screen | Content |
 |-----|--------|---------|
 | `1` | Market overview | KOSPI/KOSDAQ index summary, movers |
-| `2` | Screening | Top gainers, trading volume, transaction value |
+| `2` | Screening | Gainers/losers, trading volume, transaction value, foreign net-buy, new highs, surge/plunge, margin ratio, short selling, disparity (Kiwoom; short/disparity need KIS) |
 | `3` | Theme / sector | Theme groups and sector constituents (Kiwoom) |
 | `4` | ETF analysis | ETF ranking and composition |
 | `5` | Investor flow | Institution/foreign net-buy trends |
 | `6` | Watchlist | KIS HTS watchlist groups (also those made in the 한국투자 mobile app) and their quotes, plus each stock's trend-setup group (1/2/3, from the local `cache load`/`cache trend-setup` cache; "-" if the cache is missing) |
 | `/` | Stock search | Code (6 characters, letters included) or name → stock detail, from any screen |
 | — | Stock detail | Price chart, RSI/MACD/Bollinger, investor·broker·supply, opinions, news, ML prediction (LightGBM + SHAP) |
-| — | Financial analysis | DART statements and ratios, XBRL statements, DART disclosures, dividends, major shareholders, share changes |
+| — | Financial analysis | DART statements and ratios, DART disclosures, major reports (최근 1년), dividends, major shareholders, share changes, XBRL statements |
 
 `r` refreshes the current screen. On stock detail, `m` trains and runs the next-day ML prediction
 (it is not run automatically).

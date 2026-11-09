@@ -170,7 +170,7 @@ CLI 가 말해 주지 않는 것만 적는다.
   Dividing each year by its own count broke the band for a year after a bonus issue or split
   (post-action price ÷ pre-action EPS, PER halved; 2026-11-08). The statements are
   deliberately **not** `cache financials`/`fnlttMultiAcnt`, which has no
-  지배/비지배 split (decision 2026-11-04, `docs/plans/today-bundles-plan.md` B-7, same reasoning as
+  지배/비지배 split (decision 2026-11-04, same reasoning as
   the `cache financials` bullet below). `_fetch_band_annual_reports` tries CFS across every
   requested year first and only falls back to OFS for the whole window if CFS is empty everywhere
   — one basis for the whole band, never mixed. A year whose annual report is not yet filed by
@@ -385,7 +385,7 @@ CLI 가 말해 주지 않는 것만 적는다.
     1일차로 잡고 4~10일차(IBD 원래 규칙은 4~7일, 이후 확장)에 1.25%(2015년 이전 1%) 이상 상승 + 전일 대비 거래량 증가를
     찾는다 — 매수·매도 신호가 아니라 날짜·등락률·거래량 비교 사실만 낸다.
 - **`cache load --only financials`/`cache financials` 는 DART `fnlttMultiAcnt`(다중회사 주요계정)다**(`cache/financials.py`,
-  결정 2026-11-04 `docs/plans/today-bundles-plan.md` B-1b). 한 번에 최대 100개 `corp_code`(콤마로 묶어 한 파라미터), 101개면
+  결정 2026-11-04). 한 번에 최대 100개 `corp_code`(콤마로 묶어 한 파라미터), 101개면
   상태 021(`COMPANY_LIMIT_EXCEEDED`) — JSON 경로라 예외 없이 빈 `list` 로 온다(020 처리와 같은 모양). `BATCH_SIZE=100` 이
   이미 한도 안이라 021 은 정상 경로에서 거의 안 뜬다. 연간(`reprt_code` 11011)만 쓰고, 사업연도는 `default_years`(오늘
   기준 최근 5개, 당해 연도는 아직 사업보고서가 안 나왔을 수 있어 제외)다. 이 엔드포인트가 주는 계정은 고정된 표준
@@ -470,7 +470,7 @@ CLI 가 말해 주지 않는 것만 적는다.
 - `stock_code` 는 비상장사에서 공백 문자열로 채워져 오므로 비교 전에 `_clean()` 으로
   strip 한다. `listed_only` 도 "값이 있다"가 아니라 "strip 후 비어 있지 않다"로 판정한다.
 - **`listed_only` 는 "현재 상장" 필터가 아니다.** DART 는 폐지 회사의 `stock_code` 를 지우지 않는다(2026-10-18 실측: 한진해운
-  117930, 2017-03 폐지, `corp_cls` 만 null). 전종목 유니버스는 키움 ka10099 로 만든다(`docs/plans/ohlcv-cache-plan.md`).
+  117930, 2017-03 폐지, `corp_cls` 만 null). 전종목 유니버스는 키움 ka10099 로 만든다.
   폐지 여부는 KIS `basic-info` 의 `scts_mket_lstg_abol_dt`/`kosdaq_mket_lstg_abol_dt`; `kis stock current-price` 는
   폐지 종목에서 필드가 빠진 몸체를 받으면 `basic-info` 를 한 번 더 불러 exit 4 `Delisted` 로 바꾼다.
 - 불리언 파라미터는 값을 받아야 한다 — `--listed-only true`. 플래그처럼 값 없이 주면
@@ -558,7 +558,7 @@ CLI 가 말해 주지 않는 것만 적는다.
 
 ## `dart dilution-watch` 는 `major-event` 11종을 한 번에 모아 정규화한다 (`dilution.py`)
 
-- 범위는 2026-11-04 결정(`docs/plans/bundle1-plan.md` B-11): CB·BW·EB·유상증자·무상증자·유무상증자·감자·자기주식
+- 범위는 2026-11-04 결정: CB·BW·EB·유상증자·무상증자·유무상증자·감자·자기주식
   취득/처분(신탁 체결·해지 포함). **자사주 소각**은 주요사항보고서가 아니라 정기보고서 `report-item treasury-stock`
   이라 범위 밖이고, 응답 `not_covered` 에 그 사실을 적는다 — 조용히 빠뜨리지 않는다.
   `dilution.DILUTION_KINDS` 가 그 11종의 슬러그 목록이고 `_MAJOR_EVENTS` 와 이름을 공유한다.
