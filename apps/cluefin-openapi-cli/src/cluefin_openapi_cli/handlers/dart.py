@@ -24,6 +24,7 @@ from cluefin_openapi_cli.errors import (
     DartQuotaExceededAPIError,
 )
 from cluefin_openapi_cli.handlers._base import DispatcherProtocol, dump_model, rpc_method
+from cluefin_openapi_cli.note_figures import note_figures
 
 
 @rpc_method(
@@ -511,7 +512,11 @@ def _as_filed_rows(statement) -> list[dict]:
         "columns (period fields are kept); only the current-period column is the as-filed value for this "
         "report, comparatives are restated values. Some filers have no IS: their income statement lives "
         "only under CIS (do not expect IS); some have no consolidated statements. Requested statements "
-        "that the filing lacks are listed in `missing` as `<TYPE>/<basis>`, e.g. `IS/consolidated`."
+        "that the filing lacks are listed in `missing` as `<TYPE>/<basis>`, e.g. `IS/consolidated`. "
+        "`note_figures` adds, per basis, standard note accounts read from the same XBRL by concept "
+        "(depreciation of PP&E / right-of-use / investment property, amortisation of intangibles, D&A total, "
+        "finance costs, interest expense, interest paid, income taxes paid): the period-to-date figure as an "
+        "exact string as filed (sign included), null when the filing has no such fact."
     ),
     parameters={
         "type": "object",
@@ -588,6 +593,7 @@ def handle_financial_as_filed(params: dict, session) -> dict:
                     data={"rcept_no": rcept_no, "expected": corp_code, "actual": doc.entity_id},
                 )
             parsed = extract_financial_statements(doc)
+            notes = note_figures(doc.facts, doc.reporting_period_end, bases)
         except (XbrlParseError, ValueError) as exc:
             raise CliError(
                 f"Failed to parse XBRL: {exc}",
@@ -616,6 +622,7 @@ def handle_financial_as_filed(params: dict, session) -> dict:
         "reporting_period_end": reporting_period_end,
         "statements": statements,
         "missing": missing,
+        "note_figures": notes,
     }
 
 

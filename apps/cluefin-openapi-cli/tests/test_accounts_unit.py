@@ -11,7 +11,7 @@ from cluefin_openapi_cli import statements as s
 def test_common_table_has_the_three_groups_in_file_order() -> None:
     table = accounts.load_table()
 
-    assert list(table) == ["income", "balance", "cash"]
+    assert list(table) == ["income", "balance", "cash", "notes"]
     assert next(iter(table["income"])) == "revenue"
     assert table["income"]["revenue"] == accounts.Item(
         ("ifrs-full_Revenue",), ("수익(매출액)", "매출액", "영업수익", "매출")
@@ -68,7 +68,7 @@ def test_marker_must_be_a_bool() -> None:
 def test_financial_table_keys_do_not_reuse_common_keys_and_have_markers() -> None:
     financial = accounts.load_table("financial")
 
-    assert list(financial) == ["income", "balance", "cash"]
+    assert list(financial) == ["income", "balance", "cash", "notes"]
     assert not financial["cash"]
     assert {*financial["income"], *financial["balance"]}.isdisjoint({*s.INCOME_ITEMS, *s.BALANCE_ITEMS, *s.CASH_ITEMS})
     assert {"fee_income", "loans", "insurance_revenue"} <= s.FINANCIAL_MARKERS

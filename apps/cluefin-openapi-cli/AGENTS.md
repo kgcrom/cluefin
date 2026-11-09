@@ -150,6 +150,10 @@ CLI 가 말해 주지 않는 것만 적는다.
 
 - `dart financial-as-filed` is the second non-pass-through command: it parses a downloaded XBRL
   (see the `dart financial-*` section) and is excluded from the generic client-call tests the same way.
+  Its `note_figures` block (`note_figures.py`, accounts in `accounts/notes.toml`) reads D&A, interest and taxes paid
+  by XBRL concept from the same document — the OpenAPI rows `financial-summary` uses carry them only for filers
+  that itemize cash-flow adjustments (8 of 62 sample filers for depreciation, 54 in XBRL, 2026-11-10). HTML notes
+  of pre-XBRL years or small filers are not read for this.
 - `kis stock valuation` is the only **cross-broker** command: KIS close (`ohlcv.fetch_kis_daily_series`,
   unadjusted) × DART common share count (`dart share-count` of the latest periodic report) over
   `dart_handlers.collect_reports` statements, plus the KIS estimate EPS. `_BrokerSession` therefore creates

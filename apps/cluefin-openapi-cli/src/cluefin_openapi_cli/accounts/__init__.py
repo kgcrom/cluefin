@@ -1,7 +1,8 @@
 """Standard account tables: account key → XBRL ids and Korean labels, read from TOML files in this package.
 
-`common.toml` holds the accounts every industry shares. A table has three groups — ``income``, ``balance``,
-``cash`` — matching the statement sections `statements.py` searches. File order is output order.
+`common.toml` holds the accounts every industry shares, `financial.toml` the bank/insurer/securities ones. Their groups
+— ``income``, ``balance``, ``cash`` — match the statement sections `statements.py` searches. `notes.toml` has one
+``notes`` group of XBRL concepts read from the filing itself (`note_figures.py`). File order is output order.
 """
 
 from __future__ import annotations
@@ -13,7 +14,7 @@ from importlib.resources import files
 
 __all__ = ["GROUPS", "Item", "load_table"]
 
-GROUPS = ("income", "balance", "cash")
+GROUPS = ("income", "balance", "cash", "notes")
 _FIELDS = frozenset({"ids", "names", "marker"})
 
 
