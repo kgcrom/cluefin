@@ -1,0 +1,42 @@
+# 주석 표준 계정 — DART XBRL 원본에서 개념(concept)으로 직접 읽는다(`note_figures.py`, `dart financial-as-filed`).
+#
+# OpenAPI 전체 재무제표에는 본문 줄만 있어, 감가상각비·무형자산상각비·이자비용은 현금흐름표 조정 항목을 따로 적는
+# 회사에서만 잡힌다(2026-11-09 표본 47개사 중 37~39곳이 비었다). XBRL 에는 주석(유형자산 변동표, 비용의 성격별 분류,
+# 금융원가)이나 현금흐름표의 같은 개념이 있다. 표본 62개사 FY2025 연결 기준으로 아래 개수의 회사가 차원 없는 값을 낸다.
+# ids 는 OpenAPI 와 같은 `<prefix>_<name>` 꼴이고 앞에 있는 것이 우선한다. 값과 부호는 공시된 그대로다.
+
+# 유형자산 변동표의 감가상각비. 52/62.
+[notes.depreciation_ppe]
+ids = ["ifrs-full_DepreciationPropertyPlantAndEquipment"]
+
+# 사용권자산 상각. 48/62.
+[notes.depreciation_right_of_use]
+ids = ["ifrs-full_DepreciationRightofuseAssets"]
+
+# 투자부동산 감가상각비. 33/62.
+[notes.depreciation_investment_property]
+ids = ["ifrs-full_DepreciationInvestmentProperty"]
+
+# 무형자산 변동표의 상각비(영업권 제외). 48/62.
+[notes.amortisation_intangibles]
+ids = ["ifrs-full_AmortisationIntangibleAssetsOtherThanGoodwill"]
+
+# 비용의 성격별 분류 주석의 감가상각비와 상각비 합계. 22/62 — 회사마다 사용권자산 포함 여부가 다르다.
+[notes.depreciation_and_amortisation]
+ids = ["ifrs-full_DepreciationAndAmortisationExpense"]
+
+# 손익계산서·금융원가 주석의 금융원가 합계. 38/62.
+[notes.finance_costs]
+ids = ["ifrs-full_FinanceCosts"]
+
+# 금융원가 중 이자비용. ifrs-full 29/62, dart 11/62(둘 다 내는 회사는 ifrs-full 을 쓴다).
+[notes.interest_expense]
+ids = ["ifrs-full_InterestExpense", "dart_InterestExpenseFinanceExpense"]
+
+# 현금흐름표의 이자지급(영업활동 분류가 대부분). 56/62.
+[notes.interest_paid]
+ids = ["ifrs-full_InterestPaidClassifiedAsOperatingActivities", "ifrs-full_InterestPaidClassifiedAsFinancingActivities"]
+
+# 현금흐름표의 법인세 납부(환급). 57/62.
+[notes.income_taxes_paid]
+ids = ["ifrs-full_IncomeTaxesPaidRefundClassifiedAsOperatingActivities"]
