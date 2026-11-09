@@ -1,0 +1,138 @@
+# 모든 업종 공통 표준 계정 — `dart financial-full-statements` 행을 계정 키로 읽는 표.
+#
+# 표 이름은 statements.py 가 행을 찾는 재무제표 묶음이다:
+#   income  = IS·CIS (분기 합산 대상), balance = BS, cash = CF.
+# 계정마다 `ids`(XBRL 표준계정 id, 먼저 찾음)와 `names`(한글 라벨, 공백 제거 후 비교, id 가 없을 때만)를 둔다.
+# 순서는 출력 필드 순서다. id·라벨을 바꾸면 그 근거를 주석으로 남긴다.
+
+[income.revenue]
+ids = ["ifrs-full_Revenue"]
+names = ["수익(매출액)", "매출액", "영업수익", "매출"]
+
+[income.cost_of_sales]
+ids = ["ifrs-full_CostOfSales"]
+names = ["매출원가", "영업비용"]
+
+[income.gross_profit]
+ids = ["ifrs-full_GrossProfit"]
+names = ["매출총이익"]
+
+[income.sga]
+ids = ["dart_TotalSellingGeneralAdministrativeExpenses"]
+names = ["판매비와관리비"]
+
+[income.operating_income]
+ids = ["dart_OperatingIncomeLoss"]
+names = ["영업이익", "영업이익(손실)"]
+
+[income.pretax_income]
+ids = ["ifrs-full_ProfitLossBeforeTax"]
+names = ["법인세비용차감전순이익"]
+
+[income.income_tax_expense]
+ids = ["ifrs-full_IncomeTaxExpenseContinuingOperations"]
+names = ["법인세비용", "법인세비용(수익)"]
+
+[income.net_income]
+ids = ["ifrs-full_ProfitLoss"]
+names = ["당기순이익", "당기순이익(손실)"]
+
+# Owners' share only by id: the same Korean label also names the comprehensive-income split.
+[income.net_income_owners]
+ids = ["ifrs-full_ProfitLossAttributableToOwnersOfParent"]
+
+[balance.assets]
+ids = ["ifrs-full_Assets"]
+names = ["자산총계"]
+
+[balance.current_assets]
+ids = ["ifrs-full_CurrentAssets"]
+names = ["유동자산"]
+
+[balance.cash]
+ids = ["ifrs-full_CashAndCashEquivalents"]
+names = ["현금및현금성자산"]
+
+[balance.receivables]
+ids = ["ifrs-full_CurrentTradeReceivables", "ifrs-full_TradeAndOtherCurrentReceivables"]
+names = ["매출채권", "매출채권및기타채권"]
+
+[balance.inventories]
+ids = ["ifrs-full_Inventories"]
+names = ["재고자산"]
+
+[balance.noncurrent_assets]
+ids = ["ifrs-full_NoncurrentAssets"]
+names = ["비유동자산"]
+
+[balance.current_liabilities]
+ids = ["ifrs-full_CurrentLiabilities"]
+names = ["유동부채"]
+
+[balance.noncurrent_liabilities]
+ids = ["ifrs-full_NoncurrentLiabilities"]
+names = ["비유동부채"]
+
+[balance.liabilities]
+ids = ["ifrs-full_Liabilities"]
+names = ["부채총계"]
+
+[balance.equity]
+ids = ["ifrs-full_Equity"]
+names = ["자본총계"]
+
+[balance.equity_owners]
+ids = ["ifrs-full_EquityAttributableToOwnersOfParent"]
+names = ["지배기업의소유주에게귀속되는지분", "지배기업소유주지분"]
+
+[balance.retained_earnings]
+ids = ["ifrs-full_RetainedEarnings"]
+names = ["이익잉여금", "이익잉여금(결손금)"]
+
+[cash.operating_cash_flow]
+ids = ["ifrs-full_CashFlowsFromUsedInOperatingActivities"]
+names = ["영업활동현금흐름"]
+
+[cash.investing_cash_flow]
+ids = ["ifrs-full_CashFlowsFromUsedInInvestingActivities"]
+names = ["투자활동현금흐름"]
+
+[cash.financing_cash_flow]
+ids = ["ifrs-full_CashFlowsFromUsedInFinancingActivities"]
+names = ["재무활동현금흐름"]
+
+[cash.capex]
+ids = ["ifrs-full_PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities"]
+names = ["유형자산의취득"]
+
+[cash.dividends_paid]
+ids = ["ifrs-full_DividendsPaidClassifiedAsFinancingActivities"]
+names = ["배당금의지급", "배당금지급"]
+
+[cash.interest_expense]
+ids = ["dart_AdjustmentsForInterestExpenses"]
+names = ["이자비용"]
+
+# D&A: only filers that itemize the cash-flow adjustments carry these lines. Many large filers lump them into
+# one "조정" line (D&A then lives in the notes), so None here is "not itemized", not zero. Nothing sums them yet.
+[cash.depreciation]
+ids = ["ifrs-full_DepreciationExpense"]
+names = ["감가상각비", "유형자산감가상각비"]
+
+[cash.amortization]
+ids = ["ifrs-full_AmortisationExpense"]
+names = ["무형자산상각비", "무형자산감가상각비"]
+
+[cash.treasury_shares_acquired]
+ids = ["dart_AcquisitionOfTreasuryShares", "ifrs-full_PaymentsToAcquireOrRedeemEntitysShares"]
+names = ["자기주식의취득", "자기주식취득"]
+
+# Real filings carry dart_DispositionOfTreasuryShares (checked 2026-11-08); until then only the label
+# matched. Off-taxonomy filers ("-표준계정코드 미사용-") still match by label only.
+[cash.treasury_shares_disposed]
+ids = ["dart_DispositionOfTreasuryShares", "ifrs-full_ProceedsFromSaleOrDisposalOfEntitysSharesHeld"]
+names = ["자기주식의처분", "자기주식처분"]
+
+[cash.proceeds_from_share_issuance]
+ids = ["ifrs-full_ProceedsFromIssuingShares"]
+names = ["주식의발행", "유상증자", "주식발행"]

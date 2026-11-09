@@ -16,7 +16,9 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal
+
+from cluefin_openapi_cli.accounts import Item, load_table
 
 QUARTER_OF = {"11013": 1, "11012": 2, "11014": 3, "11011": 4}
 PERIOD_LABEL = {1: "Q1", 2: "H1", 3: "9M", 4: "FY"}
@@ -26,77 +28,12 @@ BALANCE = frozenset({"BS"})
 CASH = frozenset({"CF"})
 
 
-@dataclass(frozen=True, slots=True)
-class Item:
-    """One statement line: XBRL ids first, then Korean labels for filers off the taxonomy."""
-
-    ids: tuple[str, ...]
-    names: tuple[str, ...] = ()
-
-
+# Account keys → XBRL ids and labels live in `accounts/common.toml`; file order is output order.
+_TABLE = load_table()
 # Income-statement items that are summed per quarter.
-INCOME_ITEMS: dict[str, Item] = {
-    "revenue": Item(("ifrs-full_Revenue",), ("수익(매출액)", "매출액", "영업수익", "매출")),
-    "cost_of_sales": Item(("ifrs-full_CostOfSales",), ("매출원가", "영업비용")),
-    "gross_profit": Item(("ifrs-full_GrossProfit",), ("매출총이익",)),
-    "sga": Item(("dart_TotalSellingGeneralAdministrativeExpenses",), ("판매비와관리비",)),
-    "operating_income": Item(("dart_OperatingIncomeLoss",), ("영업이익", "영업이익(손실)")),
-    "pretax_income": Item(("ifrs-full_ProfitLossBeforeTax",), ("법인세비용차감전순이익",)),
-    "income_tax_expense": Item(("ifrs-full_IncomeTaxExpenseContinuingOperations",), ("법인세비용", "법인세비용(수익)")),
-    "net_income": Item(("ifrs-full_ProfitLoss",), ("당기순이익", "당기순이익(손실)")),
-    # Owners' share only by id: the same Korean label also names the comprehensive-income split.
-    "net_income_owners": Item(("ifrs-full_ProfitLossAttributableToOwnersOfParent",)),
-}
-
-BALANCE_ITEMS: dict[str, Item] = {
-    "assets": Item(("ifrs-full_Assets",), ("자산총계",)),
-    "current_assets": Item(("ifrs-full_CurrentAssets",), ("유동자산",)),
-    "cash": Item(("ifrs-full_CashAndCashEquivalents",), ("현금및현금성자산",)),
-    "receivables": Item(
-        ("ifrs-full_CurrentTradeReceivables", "ifrs-full_TradeAndOtherCurrentReceivables"),
-        ("매출채권", "매출채권및기타채권"),
-    ),
-    "inventories": Item(("ifrs-full_Inventories",), ("재고자산",)),
-    "noncurrent_assets": Item(("ifrs-full_NoncurrentAssets",), ("비유동자산",)),
-    "current_liabilities": Item(("ifrs-full_CurrentLiabilities",), ("유동부채",)),
-    "noncurrent_liabilities": Item(("ifrs-full_NoncurrentLiabilities",), ("비유동부채",)),
-    "liabilities": Item(("ifrs-full_Liabilities",), ("부채총계",)),
-    "equity": Item(("ifrs-full_Equity",), ("자본총계",)),
-    "equity_owners": Item(
-        ("ifrs-full_EquityAttributableToOwnersOfParent",),
-        ("지배기업의소유주에게귀속되는지분", "지배기업소유주지분"),
-    ),
-    "retained_earnings": Item(("ifrs-full_RetainedEarnings",), ("이익잉여금", "이익잉여금(결손금)")),
-}
-
-CASH_ITEMS: dict[str, Item] = {
-    "operating_cash_flow": Item(("ifrs-full_CashFlowsFromUsedInOperatingActivities",), ("영업활동현금흐름",)),
-    "investing_cash_flow": Item(("ifrs-full_CashFlowsFromUsedInInvestingActivities",), ("투자활동현금흐름",)),
-    "financing_cash_flow": Item(("ifrs-full_CashFlowsFromUsedInFinancingActivities",), ("재무활동현금흐름",)),
-    "capex": Item(
-        ("ifrs-full_PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities",),
-        ("유형자산의취득",),
-    ),
-    "dividends_paid": Item(("ifrs-full_DividendsPaidClassifiedAsFinancingActivities",), ("배당금의지급", "배당금지급")),
-    "interest_expense": Item(("dart_AdjustmentsForInterestExpenses",), ("이자비용",)),
-    # D&A: only filers that itemize the cash-flow adjustments carry these lines. Many large filers lump them into
-    # one "조정" line (D&A then lives in the notes), so None here is "not itemized", not zero. Nothing sums them yet.
-    "depreciation": Item(("ifrs-full_DepreciationExpense",), ("감가상각비", "유형자산감가상각비")),
-    "amortization": Item(("ifrs-full_AmortisationExpense",), ("무형자산상각비", "무형자산감가상각비")),
-    "treasury_shares_acquired": Item(
-        ("dart_AcquisitionOfTreasuryShares", "ifrs-full_PaymentsToAcquireOrRedeemEntitysShares"),
-        ("자기주식의취득", "자기주식취득"),
-    ),
-    # Real filings carry dart_DispositionOfTreasuryShares (checked 2026-11-08); until then only the label
-    # matched. Off-taxonomy filers ("-표준계정코드 미사용-") still match by label only.
-    "treasury_shares_disposed": Item(
-        ("dart_DispositionOfTreasuryShares", "ifrs-full_ProceedsFromSaleOrDisposalOfEntitysSharesHeld"),
-        ("자기주식의처분", "자기주식처분"),
-    ),
-    "proceeds_from_share_issuance": Item(
-        ("ifrs-full_ProceedsFromIssuingShares",), ("주식의발행", "유상증자", "주식발행")
-    ),
-}
+INCOME_ITEMS: dict[str, Item] = _TABLE["income"]
+BALANCE_ITEMS: dict[str, Item] = _TABLE["balance"]
+CASH_ITEMS: dict[str, Item] = _TABLE["cash"]
 
 # Fields in 원 that `to_eok` converts. Ratios and growth reuse item names, so this is explicit.
 MONEY_FIELDS = frozenset(
@@ -151,17 +88,40 @@ def _squash(text: Any) -> str:
     return _WHITESPACE.sub("", str(text or ""))
 
 
-def find_row(rows: list[dict], sections: frozenset[str], item: Item) -> dict | None:
-    """The row for one item: XBRL id first, then the Korean label."""
+Match = Literal["id", "label", "empty", "missing"]
+
+
+def match_row(rows: list[dict], sections: frozenset[str], item: Item) -> tuple[dict | None, Match]:
+    """The row for one item and how it was found: XBRL id first, then the Korean label."""
     in_section = [row for row in rows if row.get("sj_div") in sections]
     for row in in_section:
         if row.get("account_id") in item.ids:
-            return row
+            return row, "id"
     wanted = {_squash(name) for name in item.names}
     for row in in_section:
         if _squash(row.get("account_nm")) in wanted:
-            return row
-    return None
+            return row, "label"
+    return None, "missing"
+
+
+def find_row(rows: list[dict], sections: frozenset[str], item: Item) -> dict | None:
+    """The row for one item: XBRL id first, then the Korean label."""
+    return match_row(rows, sections, item)[0]
+
+
+def match_items(rows: list[dict], column: str) -> dict[str, Match]:
+    """How every table account was found in one report column.
+
+    ``id``/``label`` say which key matched; ``empty`` is a matched row with no amount in ``column``; ``missing``
+    is no row. A row-level read can't tell "no such transaction" from "filed under another name" — both are
+    ``missing``.
+    """
+    out: dict[str, Match] = {}
+    for sections, items in ((INCOME, INCOME_ITEMS), (BALANCE, BALANCE_ITEMS), (CASH, CASH_ITEMS)):
+        for key, item in items.items():
+            row, how = match_row(rows, sections, item)
+            out[key] = "empty" if row is not None and won(row.get(column)) is None else how
+    return out
 
 
 # Borrowings have no single XBRL id: 005930 files 단기차입금 off-taxonomy, 000660 files 차입금
