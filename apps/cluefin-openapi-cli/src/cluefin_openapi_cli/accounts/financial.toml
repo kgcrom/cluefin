@@ -1,0 +1,141 @@
+# 금융업(은행·보험·증권·금융지주) 표준 계정 — common.toml 위에 더해 읽는다.
+#
+# 근거: 2026-11-09 표본 금융사 22곳(은행 3, 보험 5, 증권 5, 금융지주·카드 9) FY2025 사업보고서. 계열마다 70% 이상이
+# 쓰는 id 를 골랐다. 업종을 판별하지 않고 모든 회사에 읽으므로, 일반 회사에서는 대부분 행이 없다.
+# 매출·매출총이익·유동/비유동 같은 공통 키는 금융업에 대응 계정이 없어 여기서 채우지 않는다.
+#
+# `marker = true`: 일반 회사에는 없는 계정. 보고서에 이 중 하나라도 값이 있어야 금융 계정을 출력에 넣는다.
+# 표본 62개사 × 3개년에서 금융사 186건 모두 잡히고 일반 회사는 0건이었다. 사채·FVOCI 금융자산·재보험계약자산·
+# 차입부채처럼 일반 회사(금융 자회사를 둔 곳 포함)도 쓰는 계정은 marker 로 두지 않는다.
+
+# --- 재무상태표 ---
+
+# 은행·금융지주. 은행 자산의 중앙값 3%.
+[balance.cash_and_due_from_banks]
+ids = ["dart_CashAndDuefromBanks"]
+names = ["현금및예치금"]
+marker = true
+
+# 은행 자산의 중앙값 72%.
+[balance.loans]
+ids = ["dart_LoansAtAmortisedCost"]
+names = ["상각후원가측정대출채권", "대출채권"]
+marker = true
+
+[balance.fvpl_financial_assets]
+ids = ["ifrs-full_FinancialAssetsAtFairValueThroughProfitOrLoss"]
+names = ["당기손익-공정가치측정금융자산"]
+
+[balance.fvoci_financial_assets]
+ids = ["ifrs-full_FinancialAssetsAtFairValueThroughOtherComprehensiveIncome"]
+names = ["기타포괄손익-공정가치측정금융자산"]
+
+# 보험·증권은 상각후원가 금융자산 한 줄, 은행은 대출채권과 유가증권을 나눈다.
+[balance.amortised_cost_financial_assets]
+ids = ["ifrs-full_FinancialAssetsAtAmortisedCost"]
+names = ["상각후원가측정금융자산"]
+
+[balance.amortised_cost_securities]
+ids = ["dart_SecuritiesAtAmortisedCost"]
+names = ["상각후원가측정유가증권"]
+marker = true
+
+[balance.reinsurance_contract_assets]
+ids = ["ifrs-full_ReinsuranceContractsHeldThatAreAssets"]
+names = ["재보험계약자산"]
+
+# 은행 부채의 대부분(자산 대비 중앙값 80%), 증권은 고객예탁금.
+[balance.deposits]
+ids = ["ifrs-full_DepositsFromCustomers"]
+names = ["예수부채"]
+
+# IFRS17 보험계약부채, 보험사 자산의 중앙값 58%.
+[balance.insurance_contract_liabilities]
+ids = ["ifrs-full_InsuranceContractsIssuedThatAreLiabilities"]
+names = ["보험계약부채"]
+
+[balance.investment_contract_liabilities]
+ids = ["ifrs-full_InvestmentContractsLiabilities"]
+names = ["투자계약부채"]
+marker = true
+
+[balance.fvpl_financial_liabilities]
+ids = ["ifrs-full_FinancialLiabilitiesAtFairValueThroughProfitOrLoss"]
+names = ["당기손익-공정가치측정금융부채"]
+
+[balance.bonds_issued]
+ids = ["ifrs-full_BondsIssued"]
+names = ["사채", "발행사채"]
+
+# 보험사의 차입부채. 일반 회사의 차입금은 statements.borrowings() 가 따로 합산한다.
+[balance.borrowed_funds]
+ids = ["ifrs-full_Borrowings"]
+names = ["차입부채"]
+
+[balance.hybrid_bonds]
+ids = ["dart_HybridBonds"]
+names = ["신종자본증권"]
+
+[balance.regulatory_reserve_for_credit_loss]
+ids = ["dart_RegulatoryReserveForCreditLoss"]
+names = ["대손준비금", "대손준비금적립액"]
+marker = true
+
+# --- 포괄손익계산서 ---
+
+[income.interest_income]
+ids = ["ifrs-full_RevenueFromInterest"]
+names = ["이자수익"]
+
+# 손익계산서의 이자비용. 공통 키 interest_expense 는 현금흐름표 조정 항목이라 이름을 나눈다.
+[income.interest_expense_pl]
+ids = ["ifrs-full_InterestExpense"]
+names = ["이자비용"]
+
+[income.net_interest_income]
+ids = ["ifrs-full_InterestRevenueExpense"]
+names = ["순이자손익", "순이자이익"]
+marker = true
+
+[income.fee_income]
+ids = ["ifrs-full_FeeAndCommissionIncome"]
+names = ["수수료수익"]
+marker = true
+
+[income.fee_expense]
+ids = ["ifrs-full_FeeAndCommissionExpense"]
+names = ["수수료비용"]
+marker = true
+
+[income.net_fee_income]
+ids = ["ifrs-full_FeeAndCommissionIncomeExpense"]
+names = ["순수수료손익", "순수수료이익"]
+marker = true
+
+[income.credit_loss_expense]
+ids = ["ifrs-full_ImpairmentLossImpairmentGainAndReversalOfImpairmentLossDeterminedInAccordanceWithIFRS9"]
+names = ["신용손실충당금전입액", "금융자산손상차손"]
+marker = true
+
+[income.insurance_revenue]
+ids = ["ifrs-full_InsuranceRevenue"]
+names = ["보험수익"]
+marker = true
+
+[income.insurance_service_expense]
+ids = ["ifrs-full_InsuranceServiceExpensesFromInsuranceContractsIssued"]
+names = ["보험서비스비용"]
+
+[income.insurance_service_result]
+ids = ["ifrs-full_InsuranceServiceResult"]
+names = ["보험손익", "보험서비스결과"]
+marker = true
+
+[income.investment_income]
+ids = ["ifrs-full_InvestmentIncome"]
+names = ["투자영업수익"]
+
+# 은행·증권이 주석 대신 손익계산서 아래에 붙이는 규제 지표(당기순이익 − 대손준비금 전입).
+[income.adjusted_profit_after_regulatory_reserve]
+ids = ["dart_AdjustedProfitLossNetOfRegulatoryReserveForCreditLoss"]
+names = ["대손준비금반영후조정이익"]

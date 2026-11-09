@@ -35,12 +35,27 @@ INCOME_ITEMS: dict[str, Item] = _TABLE["income"]
 BALANCE_ITEMS: dict[str, Item] = _TABLE["balance"]
 CASH_ITEMS: dict[str, Item] = _TABLE["cash"]
 
+# Bank/insurer/securities accounts (`accounts/financial.toml`), read for every filer: no industry detection.
+# They enter the output only when a report has a value for one of the `marker` accounts, which general filers
+# never file (a 사채 or FVOCI line alone doesn't make a filer financial).
+_FINANCIAL = load_table("financial")
+FINANCIAL_BALANCE_ITEMS: dict[str, Item] = _FINANCIAL["balance"]
+FINANCIAL_INCOME_ITEMS: dict[str, Item] = _FINANCIAL["income"]
+_shared = {*INCOME_ITEMS, *BALANCE_ITEMS, *CASH_ITEMS} & {*FINANCIAL_BALANCE_ITEMS, *FINANCIAL_INCOME_ITEMS}
+if _shared:
+    raise ValueError(f"financial.toml reuses common account keys: {sorted(_shared)}")
+FINANCIAL_MARKERS = frozenset(
+    key for items in (FINANCIAL_BALANCE_ITEMS, FINANCIAL_INCOME_ITEMS) for key, item in items.items() if item.marker
+)
+
 # Fields in 원 that `to_eok` converts. Ratios and growth reuse item names, so this is explicit.
 MONEY_FIELDS = frozenset(
     {
         *INCOME_ITEMS,
         *BALANCE_ITEMS,
         *CASH_ITEMS,
+        *FINANCIAL_BALANCE_ITEMS,
+        *FINANCIAL_INCOME_ITEMS,
         "borrowings",
         "net_debt",
         "free_cash_flow",
@@ -109,15 +124,20 @@ def find_row(rows: list[dict], sections: frozenset[str], item: Item) -> dict | N
     return match_row(rows, sections, item)[0]
 
 
-def match_items(rows: list[dict], column: str) -> dict[str, Match]:
-    """How every table account was found in one report column.
+_COMMON_GROUPS = ((INCOME, INCOME_ITEMS), (BALANCE, BALANCE_ITEMS), (CASH, CASH_ITEMS))
+_FINANCIAL_GROUPS = ((INCOME, FINANCIAL_INCOME_ITEMS), (BALANCE, FINANCIAL_BALANCE_ITEMS))
+
+
+def match_items(rows: list[dict], column: str, *, financial: bool = False) -> dict[str, Match]:
+    """How every table account was found in one report column (common accounts, plus financial ones if asked).
 
     ``id``/``label`` say which key matched; ``empty`` is a matched row with no amount in ``column``; ``missing``
     is no row. A row-level read can't tell "no such transaction" from "filed under another name" — both are
     ``missing``.
     """
     out: dict[str, Match] = {}
-    for sections, items in ((INCOME, INCOME_ITEMS), (BALANCE, BALANCE_ITEMS), (CASH, CASH_ITEMS)):
+    groups = _COMMON_GROUPS + _FINANCIAL_GROUPS if financial else _COMMON_GROUPS
+    for sections, items in groups:
         for key, item in items.items():
             row, how = match_row(rows, sections, item)
             out[key] = "empty" if row is not None and won(row.get(column)) is None else how
@@ -170,6 +190,20 @@ def _pick(rows: list[dict], sections: frozenset[str], items: dict[str, Item], co
         row = find_row(rows, sections, item)
         out[key] = won(row.get(column)) if row is not None else None
     return out
+
+
+def _financial_figures(rows: list[dict], columns: tuple[str, ...]) -> list[dict[str, float | None]]:
+    """Financial-account figures per column, or empty dicts when no marker account has a value (a general filer)."""
+    picked = [
+        {
+            **_pick(rows, INCOME, FINANCIAL_INCOME_ITEMS, column),
+            **_pick(rows, BALANCE, FINANCIAL_BALANCE_ITEMS, column),
+        }
+        for column in columns
+    ]
+    if not any(figures[key] is not None for figures in picked for key in FINANCIAL_MARKERS):
+        return [{} for _ in columns]
+    return picked
 
 
 def _ratio(num: float | None, den: float | None) -> float | None:
@@ -255,7 +289,8 @@ def quarters(reports: list[Report]) -> list[dict[str, Any]]:
                     values[key] = now[key]
                 else:
                     values[key] = None if key not in before else now[key] - before[key]
-            if values["revenue"] is not None:
+            # Banks and insurers have no revenue line; keep a quarter that has any headline figure.
+            if any(values[key] is not None for key in ("revenue", "operating_income", "net_income")):
                 single[f"{year}Q{quarter}"] = {"year": year, "quarter": quarter, **values}
 
     out = []
@@ -315,6 +350,7 @@ _ANNUAL_COLUMNS = ("bfefrmtrm_amount", "frmtrm_amount", "thstrm_amount")
 def annual(report: Report) -> list[dict[str, Any]]:
     """Three fiscal years out of one annual report, oldest first. ROE/ROA need the year before, so the oldest has none."""
     years = []
+    financial = _financial_figures(report.rows, _ANNUAL_COLUMNS)
     for offset, column in enumerate(_ANNUAL_COLUMNS):
         amount, basis = borrowings(report.rows, column)
         years.append(
@@ -323,6 +359,7 @@ def annual(report: Report) -> list[dict[str, Any]]:
                 **_pick(report.rows, INCOME, INCOME_ITEMS, column),
                 **_pick(report.rows, BALANCE, BALANCE_ITEMS, column),
                 **_pick(report.rows, CASH, CASH_ITEMS, column),
+                **financial[offset],
                 "borrowings": amount,
                 "borrowings_basis": basis,
             }
@@ -330,30 +367,45 @@ def annual(report: Report) -> list[dict[str, Any]]:
     return [_with_ratios(figures, years[i - 1] if i > 0 else None) for i, figures in enumerate(years)]
 
 
-def latest(report: Report) -> dict[str, Any]:
-    """The latest filed period: balance sheet at its end, income and cash flow year-to-date."""
-    quarter = report.quarter
-    income: dict[str, float | None] = {}
-    for key, item in INCOME_ITEMS.items():
+def _year_to_date_pick(report: Report, items: dict[str, Item]) -> dict[str, float | None]:
+    """Income figures of one report, year-to-date: a quarterly report's cumulative column, else this period."""
+    out: dict[str, float | None] = {}
+    for key, item in items.items():
         row = find_row(report.rows, INCOME, item)
         if row is None:
-            income[key] = None
-        elif quarter == 4:
-            income[key] = won(row.get("thstrm_amount"))
+            out[key] = None
+        elif report.quarter == 4:
+            out[key] = won(row.get("thstrm_amount"))
         else:
-            income[key] = _first(won(row.get("thstrm_add_amount")), won(row.get("thstrm_amount")))
+            out[key] = _first(won(row.get("thstrm_add_amount")), won(row.get("thstrm_amount")))
+    return out
+
+
+def latest(report: Report) -> dict[str, Any]:
+    """The latest filed period: balance sheet at its end, income and cash flow year-to-date."""
     amount, basis = borrowings(report.rows, "thstrm_amount")
+    financial = {
+        **_year_to_date_pick(report, FINANCIAL_INCOME_ITEMS),
+        **_pick(report.rows, BALANCE, FINANCIAL_BALANCE_ITEMS, "thstrm_amount"),
+    }
+    has_financial = any(financial[key] is not None for key in FINANCIAL_MARKERS)
     figures = {
-        **income,
+        **_year_to_date_pick(report, INCOME_ITEMS),
         **_pick(report.rows, BALANCE, BALANCE_ITEMS, "thstrm_amount"),
         **_pick(report.rows, CASH, CASH_ITEMS, "thstrm_amount"),
+        **(financial if has_financial else {}),
         "borrowings": amount,
         "borrowings_basis": basis,
     }
     with_ratios = _with_ratios(figures, None)
     with_ratios.pop("roe")
     with_ratios.pop("roa")
-    return {"period": f"{report.year}{PERIOD_LABEL[quarter]}", "reprt_code": report.reprt_code, **with_ratios}
+    return {
+        "period": f"{report.year}{PERIOD_LABEL[report.quarter]}",
+        "reprt_code": report.reprt_code,
+        **with_ratios,
+        "account_match": match_items(report.rows, "thstrm_amount", financial=has_financial),
+    }
 
 
 def trailing(quarter_list: list[dict[str, Any]], key: str) -> float | None:

@@ -227,7 +227,11 @@ CLI 가 말해 주지 않는 것만 적는다.
   own report beats the next year's comparative column, borrowings are summed by label with a
   financial-liabilities fallback (`borrowings_basis` says which), ROE/ROA use average equity/assets.
   The account → XBRL id/label table is data, `accounts/common.toml` (file order = output field order); change ids
-  there with a `#` reason. `statements.match_items` reports how each account matched (`id`/`label`/`empty`/`missing`).
+  there with a `#` reason. `statements.match_items` reports how each account matched (`id`/`label`/`empty`/`missing`);
+  `latest.account_match` carries it. `accounts/financial.toml` (bank/insurer/securities) is read for every filer — no
+  industry detection — and its keys enter `annual`/`latest` only when a `marker = true` account has a value. Markers
+  are accounts no general filer files (62-filer sample, 2026-11-09); 사채·FVOCI·재보험계약자산·차입부채 are not markers
+  because general filers (or their financial subsidiaries) file them too. Adding a marker needs that check again.
   `test_dart_handlers_unit.py` lists it with the parsing handlers; `test_dart_financial_summary_unit.py` covers it
   with a fake keyed by (year, reprt_code, fs_div).
 - The `quality` block (ROIC, DuPont, accrual ratio, Piotroski F-Score, Altman Z'') is a separate pure module,

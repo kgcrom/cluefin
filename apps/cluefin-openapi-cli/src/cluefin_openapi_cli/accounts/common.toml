@@ -17,12 +17,14 @@ names = ["매출원가", "영업비용"]
 ids = ["ifrs-full_GrossProfit"]
 names = ["매출총이익"]
 
+# The ifrs-full id is how banks, insurers and securities firms file it (일반관리비·재산관리비; 2026-11-09, 22 filers).
 [income.sga]
-ids = ["dart_TotalSellingGeneralAdministrativeExpenses"]
+ids = ["dart_TotalSellingGeneralAdministrativeExpenses", "ifrs-full_SellingGeneralAndAdministrativeExpense"]
 names = ["판매비와관리비"]
 
+# Financial filers use the ifrs-full id (2026-11-09, 22 filers).
 [income.operating_income]
-ids = ["dart_OperatingIncomeLoss"]
+ids = ["dart_OperatingIncomeLoss", "ifrs-full_ProfitLossFromOperatingActivities"]
 names = ["영업이익", "영업이익(손실)"]
 
 [income.pretax_income]
