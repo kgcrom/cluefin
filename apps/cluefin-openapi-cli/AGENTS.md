@@ -226,6 +226,8 @@ CLI 가 말해 주지 않는 것만 적는다.
   archived 2026-10-18). Rules live in that module, not in docs: Q2–Q4 are year-to-date differences, a year's
   own report beats the next year's comparative column, borrowings are summed by label with a
   financial-liabilities fallback (`borrowings_basis` says which), ROE/ROA use average equity/assets.
+  The account → XBRL id/label table is data, `accounts/common.toml` (file order = output field order); change ids
+  there with a `#` reason. `statements.match_items` reports how each account matched (`id`/`label`/`empty`/`missing`).
   `test_dart_handlers_unit.py` lists it with the parsing handlers; `test_dart_financial_summary_unit.py` covers it
   with a fake keyed by (year, reprt_code, fs_div).
 - The `quality` block (ROIC, DuPont, accrual ratio, Piotroski F-Score, Altman Z'') is a separate pure module,
