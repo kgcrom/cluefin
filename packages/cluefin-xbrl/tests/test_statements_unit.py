@@ -85,6 +85,13 @@ _IDENTIFY_STATEMENT_TYPE_CASES = [
         StatementType.CF,
         id="dart_role_cf_direct",
     ),
+    # 금융업 계열(DB 은행, DI 보험, DS 증권, DX 기타 금융): BS 22, 단일 포괄손익계산서 32, CF 52, SCE 61.
+    pytest.param("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-DB220000", StatementType.BS, id="bank_bs"),
+    pytest.param("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-DI320000", StatementType.CIS, id="insurer_cis"),
+    pytest.param("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-DS520005", StatementType.CF, id="securities_cf"),
+    pytest.param("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-DX610000", StatementType.SCE, id="holding_sce"),
+    pytest.param("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-DB822000", None, id="bank_note_no_match"),
+    pytest.param("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-DB410000", None, id="bank_unknown_code"),
 ]
 
 
@@ -164,6 +171,11 @@ class TestIsConsolidatedRole:
 
     def test_separate(self):
         assert _is_consolidated_role("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-D210005") is False
+
+    def test_financial_family_separate(self):
+        """금융업 계열(DB220005)도 끝자리 5가 별도다. D만 보던 패턴은 이걸 연결로 잡았다."""
+        assert _is_consolidated_role("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-DB220005") is False
+        assert _is_consolidated_role("http://dart.fss.or.kr/role/ifrs/dart_2024-06-30_role-DB220000") is True
 
     def test_generic_defaults_consolidated(self):
         assert _is_consolidated_role("http://example.com/role/StatementOfFinancialPosition") is True
