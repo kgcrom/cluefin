@@ -1,0 +1,134 @@
+# SEC 10-K 표준 계정(us-gaap) — `sec financial-summary` 가 XBRL companyfacts 에서 읽는다(`sec_summary.py`).
+#
+# 키 이름은 DART 표(common.toml)와 뜻이 같으면 같게 둔다. ids 는 `us-gaap_<개념>` 이고 **앞에 있는 것이 우선**한다
+# (companyfacts 에는 행 순서가 없다). 표본 37개사(일반 25, SIC 6xxx 금융 12) 최근 10-K 기준 채움 수를 주석에 남긴다
+# (2026-11-10). 같은 계정을 회사마다 다른 개념으로 낸다 — 예: 매출 Revenues 15곳, RevenueFromContract… 13곳.
+
+[income.revenue]
+ids = [
+  "us-gaap_Revenues",
+  "us-gaap_RevenueFromContractWithCustomerExcludingAssessedTax",
+  "us-gaap_RevenueFromContractWithCustomerIncludingAssessedTax",
+  "us-gaap_SalesRevenueNet",
+]
+
+# CostOfGoodsAndServicesSold 12, CostOfRevenue 7.
+[income.cost_of_sales]
+ids = ["us-gaap_CostOfGoodsAndServicesSold", "us-gaap_CostOfRevenue", "us-gaap_CostOfGoodsSold"]
+
+# 7/25 — 대부분은 매출총이익 줄을 따로 내지 않는다.
+[income.gross_profit]
+ids = ["us-gaap_GrossProfit"]
+
+[income.sga]
+ids = ["us-gaap_SellingGeneralAndAdministrativeExpense"]
+
+[income.research_and_development]
+ids = ["us-gaap_ResearchAndDevelopmentExpense"]
+
+[income.operating_income]
+ids = ["us-gaap_OperatingIncomeLoss"]
+
+[income.interest_expense]
+ids = ["us-gaap_InterestExpense", "us-gaap_InterestExpenseNonoperating", "us-gaap_InterestExpenseDebt"]
+
+[income.pretax_income]
+ids = [
+  "us-gaap_IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+  "us-gaap_IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments",
+]
+
+[income.income_tax_expense]
+ids = ["us-gaap_IncomeTaxExpenseBenefit"]
+
+# DART 와 같이 비지배지분 포함 순이익. 비지배지분이 없는 회사는 ProfitLoss 를 내지 않아 NetIncomeLoss 로 채운다.
+[income.net_income]
+ids = ["us-gaap_ProfitLoss", "us-gaap_NetIncomeLoss"]
+
+# us-gaap NetIncomeLoss 는 지배주주 귀속분이다. 그 줄 없이 보통주주 귀속분만 내는 회사(제조 2곳·리츠 1곳)는
+# 그것으로 채운다 — 우선주 배당만큼 작을 수 있다.
+[income.net_income_owners]
+ids = ["us-gaap_NetIncomeLoss", "us-gaap_NetIncomeLossAvailableToCommonStockholdersBasic"]
+
+[balance.assets]
+ids = ["us-gaap_Assets"]
+
+[balance.current_assets]
+ids = ["us-gaap_AssetsCurrent"]
+
+# 제한 현금 포함 개념은 순수 현금 줄이 없을 때만 쓴다(account_match 에 어느 개념인지 나온다).
+[balance.cash]
+ids = ["us-gaap_CashAndCashEquivalentsAtCarryingValue", "us-gaap_CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"]
+
+[balance.receivables]
+ids = ["us-gaap_AccountsReceivableNetCurrent"]
+
+[balance.inventories]
+ids = ["us-gaap_InventoryNet"]
+
+[balance.noncurrent_assets]
+ids = ["us-gaap_AssetsNoncurrent"]
+
+[balance.current_liabilities]
+ids = ["us-gaap_LiabilitiesCurrent"]
+
+[balance.noncurrent_liabilities]
+ids = ["us-gaap_LiabilitiesNoncurrent"]
+
+# 17/25 — 부채총계를 따로 내지 않는 회사가 많다.
+[balance.liabilities]
+ids = ["us-gaap_Liabilities"]
+
+[balance.long_term_debt]
+ids = ["us-gaap_LongTermDebt", "us-gaap_LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities"]
+
+# DART 자본총계와 같이 비지배지분 포함. 비지배지분이 없으면 StockholdersEquity 뿐이다.
+[balance.equity]
+ids = ["us-gaap_StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest", "us-gaap_StockholdersEquity"]
+
+[balance.equity_owners]
+ids = ["us-gaap_StockholdersEquity"]
+
+[balance.retained_earnings]
+ids = ["us-gaap_RetainedEarningsAccumulatedDeficit"]
+
+[cash.operating_cash_flow]
+ids = ["us-gaap_NetCashProvidedByUsedInOperatingActivities"]
+
+[cash.investing_cash_flow]
+ids = ["us-gaap_NetCashProvidedByUsedInInvestingActivities"]
+
+[cash.financing_cash_flow]
+ids = ["us-gaap_NetCashProvidedByUsedInFinancingActivities"]
+
+[cash.capex]
+ids = ["us-gaap_PaymentsToAcquirePropertyPlantAndEquipment", "us-gaap_PaymentsToAcquireProductiveAssets"]
+
+[cash.dividends_paid]
+ids = ["us-gaap_PaymentsOfDividends", "us-gaap_PaymentsOfDividendsCommonStock"]
+
+# 감가상각·상각 합계(DART notes.toml 의 depreciation_and_amortisation 과 같은 뜻). DDA 16, D&A 8.
+[cash.depreciation_and_amortisation]
+ids = [
+  "us-gaap_DepreciationDepletionAndAmortization",
+  "us-gaap_DepreciationAndAmortization",
+  "us-gaap_DepreciationAmortizationAndAccretionNet",
+]
+
+[cash.depreciation]
+ids = ["us-gaap_Depreciation"]
+
+[cash.amortization]
+ids = ["us-gaap_AmortizationOfIntangibleAssets"]
+
+[cash.treasury_shares_acquired]
+ids = ["us-gaap_PaymentsForRepurchaseOfCommonStock"]
+
+[cash.proceeds_from_share_issuance]
+ids = ["us-gaap_ProceedsFromIssuanceOfCommonStock"]
+
+[cash.interest_paid]
+ids = ["us-gaap_InterestPaidNet", "us-gaap_InterestPaid"]
+
+[cash.income_taxes_paid]
+ids = ["us-gaap_IncomeTaxesPaidNet", "us-gaap_IncomeTaxesPaid"]

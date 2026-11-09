@@ -614,6 +614,11 @@ CLI 가 말해 주지 않는 것만 적는다.
 - `filing-notes` 는 재무제표 Item(10-K 8, 10-Q I:1)을 `split_notes` 로 나눈다. 표는 `{unit, grid}` 로 주고 단위는
   곱하지 않는다(`dart financial-notes` 와 같은 계약). `notes` 의 숫자(또는 한 글자)는 주석 번호, 나머지는 제목 부분 일치다.
   주석 번호는 해마다 바뀐다(2026-11-04 실측: 같은 회사 Income Taxes 가 13번 → 7번 → 6번) — 여러 해는 `note-series`.
+- `financial-summary` 는 companyfacts 하나로 연간 표준 계정을 낸다(`sec_summary.py`, 표는 `accounts/us_gaap.toml`·
+  `us_gaap_financial.toml`). DART 표와 달리 행 순서가 없어 **ids 순서가 우선순위**다. 같은 기간은 가장 늦게 제출된 값
+  (재작성 반영). 금융 표는 marker 개념(은행·보험·증권만 내는 것)에 값이 있을 때만 붙는다 — `InterestIncomeExpenseNet` 은
+  일반 회사도 순이자비용으로 내서 marker 가 아니다(2026-11-10, 유통 1곳). 티커가 10-Q 만 낸 새 지주회사 CIK 로 바뀐 회사는
+  10-K 연도가 없어 NotFound(힌트: 이전 CIK).
 - `note-series` 는 최근 10-K(정정 제외) N편을 받아 `note_series.py` 로 잇는다. 해 잇기 규칙은 모듈 docstring 에 있고,
   여기는 고르게 된 이유만 적는다(2026-11-04 실측, 이커머스 1개사 10-K 5편):
   - 회계연도는 `dei:DocumentFiscalYearFocus` → 문서 기간말 → `report_date` 순. 같은 해가 두 편이면 최근 것만 쓰고

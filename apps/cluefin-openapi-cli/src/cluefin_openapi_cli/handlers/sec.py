@@ -883,6 +883,85 @@ def _attach_company_facts(sec, cik: str, series: list[dict], filings: list) -> d
     return {"source": "companyfacts", "taxonomy": "us-gaap", "unit": "USD millions", "rows": total, "matched": matched}
 
 
+_DEFAULT_SUMMARY_YEARS = 3
+_MAX_SUMMARY_YEARS = 10
+
+
+@rpc_method(
+    name="sec.financial_summary",
+    description=(
+        "One company's standard annual accounts from SEC XBRL companyfacts (10-K, fiscal-year figures), newest first: "
+        "revenue, cost of sales, gross profit, SG&A, R&D, operating income, interest expense, pretax income, tax, net "
+        "income (incl. and excl. noncontrolling interests), assets, current/noncurrent assets and liabilities, cash, "
+        "receivables, inventories, long-term debt, equity, retained earnings, operating/investing/financing cash "
+        "flow, capex, dividends, D&A, buybacks, share issuance, interest and taxes paid. Account keys match dart "
+        "financial-summary where the meaning is the same. Each account takes the first of several us-gaap concepts "
+        "the filer used (e.g. Revenues or RevenueFromContractWithCustomerExcludingAssessedTax); `account_match` names "
+        "the concept per account for the latest year, null when none was filed. Banks, insurers and brokers also get "
+        "deposits, loans, interest/noninterest income and expense, credit loss, premiums, policyholder benefits, "
+        "brokerage and investment-banking revenue — only when one of those bank/insurer/broker-only concepts has a "
+        "value. Values are USD millions as filed (sign included); a period filed again later (comparative column, "
+        "10-K/A) takes the latest filed value, so restatements replace originals. 2 SEC requests (companyfacts, "
+        "submissions for the SIC code). No ratios are computed."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "cik": _CIK_PARAM,
+            "years": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": _MAX_SUMMARY_YEARS,
+                "default": _DEFAULT_SUMMARY_YEARS,
+                "description": "How many of the latest fiscal years to return. Default 3, max 10.",
+            },
+        },
+        "required": ["cik"],
+    },
+    returns={"type": "object"},
+    category="sec",
+    broker="sec",
+)
+def handle_financial_summary(params: dict, session) -> dict:
+    from cluefin_openapi.sec import SecNotFoundError
+
+    from cluefin_openapi_cli.sec_summary import summarize
+
+    cik = params["cik"]
+    sec = session.get_sec()
+    try:
+        facts = sec.xbrl.company_facts(cik)
+    except SecNotFoundError as exc:
+        raise CliError(
+            "SEC has no XBRL company facts for this cik",
+            exit_code=EXIT_BROKER,
+            error_type="NotFound",
+            data={"cik": int(cik)},
+            hint="Check the cik with sec company-lookup. Foreign private issuers (20-F) have no us-gaap 10-K facts.",
+        ) from exc
+    summary = summarize(facts, int(params.get("years", _DEFAULT_SUMMARY_YEARS)))
+    if summary is None:
+        raise CliError(
+            "No 10-K fiscal-year figures in this company's XBRL facts",
+            exit_code=EXIT_BROKER,
+            error_type="NotFound",
+            data={"cik": int(cik), "entity_name": facts.entity_name},
+            hint=(
+                "A ticker can point at a new holding company that has filed only 10-Qs so far; its predecessor's cik "
+                "(sec company-lookup by name) carries the 10-K history. 20-F filers have no 10-K."
+            ),
+        )
+    submissions = sec.submissions.submissions(cik)
+    return {
+        "cik": int(cik),
+        "entity_name": facts.entity_name,
+        "sic": submissions.sic,
+        "sic_description": submissions.sic_description,
+        "unit": "USD millions",
+        **summary,
+    }
+
+
 _DEFAULT_EXHIBIT = "EX-99.1"
 
 
@@ -973,6 +1052,7 @@ _ALL_HANDLERS = [
     handle_filing_items,
     handle_filing_notes,
     handle_note_series,
+    handle_financial_summary,
     handle_filing_exhibit,
 ]
 
