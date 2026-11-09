@@ -1,0 +1,70 @@
+# SEC 금융사(은행·보험·증권) 표준 계정 — us_gaap.toml 위에 더해 읽는다. 키 이름은 DART financial.toml 과 맞춘다.
+#
+# 업종(SIC)을 판별하지 않고, `marker = true` 계정에 값이 있을 때만 출력에 넣는다. 표본 일반 25곳(리츠 포함)의
+# 최근 3개 10-K 에서 marker 개념은 0곳, SIC 6xxx 금융 10곳(리츠 제외)은 모두 하나 이상을 낸다(2026-11-10).
+
+[balance.cash_and_due_from_banks]
+ids = ["us-gaap_CashAndDueFromBanks"]
+marker = true
+
+[balance.loans]
+ids = [
+  "us-gaap_FinancingReceivableExcludingAccruedInterestAfterAllowanceForCreditLoss",
+  "us-gaap_LoansAndLeasesReceivableNetReportedAmount",
+]
+marker = true
+
+[balance.deposits]
+ids = ["us-gaap_Deposits"]
+marker = true
+
+[balance.repurchase_agreements]
+ids = ["us-gaap_SecuritiesSoldUnderAgreementsToRepurchase"]
+marker = true
+
+# 일반 회사도 1곳 낸다(보험 자회사) — marker 아님.
+[balance.future_policy_benefits]
+ids = ["us-gaap_LiabilityForFuturePolicyBenefits"]
+
+[income.interest_income]
+ids = ["us-gaap_InterestAndDividendIncomeOperating", "us-gaap_InterestIncomeOperating"]
+marker = true
+
+[income.interest_expense_pl]
+ids = ["us-gaap_InterestExpenseOperating"]
+marker = true
+
+# 일반 회사도 순이자비용을 이 개념으로 낸다(유통 1곳, 지난 연도) — marker 아님.
+[income.net_interest_income]
+ids = ["us-gaap_InterestIncomeExpenseNet"]
+
+[income.noninterest_income]
+ids = ["us-gaap_NoninterestIncome"]
+marker = true
+
+[income.noninterest_expense]
+ids = ["us-gaap_NoninterestExpense"]
+marker = true
+
+# 일반 회사도 1곳 낸다 — marker 아님. 부호는 공시 그대로.
+[income.credit_loss_expense]
+ids = [
+  "us-gaap_ProvisionForLoanLeaseAndOtherLosses",
+  "us-gaap_FinancingReceivableExcludingAccruedInterestCreditLossExpenseReversal",
+]
+
+[income.premiums_earned]
+ids = ["us-gaap_PremiumsEarnedNet"]
+marker = true
+
+[income.policyholder_benefits]
+ids = ["us-gaap_PolicyholderBenefitsAndClaimsIncurredNet"]
+marker = true
+
+[income.brokerage_commissions]
+ids = ["us-gaap_BrokerageCommissionsRevenue"]
+marker = true
+
+[income.investment_banking_revenue]
+ids = ["us-gaap_InvestmentBankingRevenue"]
+marker = true
