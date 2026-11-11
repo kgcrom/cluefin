@@ -8,8 +8,9 @@ DART(전자공시시스템)와 SEC EDGAR의 재무제표 XBRL 문서를 파싱�
 - XBRL 파일/디렉터리 파싱 (`parse_xbrl_file`, `parse_xbrl_directory`) — DART `.xbrl`, SEC `*_htm.xml`(인라인 XBRL에서 뽑은 인스턴스)·2019년 이전 `*.xml`
 - 재무상태표·손익계산서 등 재무제표 구조화 추출 (`extract_financial_statements`)
 - 재무제표를 dict 리스트로 변환 (`statement_to_dicts`)
+- 재무제표 주석 추출 (`extract_notes`) — DART 전용
 - 프레젠테이션 택소노미 정보 추출 (`extract_taxonomy`)
-- Pydantic 기반 타입 모델 (`XbrlDocument`, `FinancialStatement`, `ParsedFinancialStatements` 등)
+- 불변 dataclass 타입 모델 (`XbrlDocument`, `FinancialStatement`, `ParsedFinancialStatements`, `ParsedNotes` 등)
 
 ## 설치
 
@@ -40,6 +41,18 @@ parsed = extract_financial_statements(doc)
 for statement_type, statement in parsed.statements.items():
     print(statement_type, len(statement.line_items), "line items")
     rows = statement_to_dicts(statement)  # list[dict]
+```
+
+### 주석 (DART)
+
+```python
+from cluefin_xbrl import extract_notes
+
+notes = extract_notes(doc)  # include_taxonomy=True 로 파싱한 문서. SEC 공시는 빈 결과
+
+# role 코드(D8xxxxx, 금융업은 DB8xxxxx 등)별 NoteSection. 끝자리 0 은 연결, 5 는 별도. 행마다 값(value·text_value)과 축·멤버(dimensions)가 붙는다
+for role_code, section in notes.notes.items():
+    print(role_code, section.title, section.is_consolidated, len(section.line_items))
 ```
 
 ### SEC 공시
@@ -80,4 +93,5 @@ uv run --with jupyter jupyter lab packages/cluefin-xbrl/examples/xbrl_analysis.i
 | `parse_xbrl_directory(directory, *, include_taxonomy=False, http_user_agent=None)` | 디렉터리 내 XBRL 인스턴스(DART `.xbrl`, SEC `*_htm.xml` 등)를 찾아 파싱 |
 | `extract_financial_statements(doc)` | `XbrlDocument`에서 재무제표를 구조화해 `ParsedFinancialStatements` 반환 |
 | `statement_to_dicts(statement)` | `FinancialStatement`을 `list[dict]`로 변환 |
+| `extract_notes(doc)` | `XbrlDocument`에서 주석을 role 코드별 `NoteSection`으로 묶어 `ParsedNotes` 반환. DART 전용, 택소노미 없으면 `ValueError` |
 | `extract_taxonomy(model_xbrl)` | 프레젠테이션 택소노미 정보(`TaxonomyInfo`) 추출 |

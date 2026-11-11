@@ -1,4 +1,4 @@
-"""Shared HTTP-client infrastructure for kis, dart, and kiwoom clients."""
+"""Shared HTTP-client infrastructure for the kis, kiwoom, nhplug, dart, sec, and ecos clients."""
 
 import json
 import logging

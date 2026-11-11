@@ -603,9 +603,8 @@ logging.getLogger("cluefin_openapi").addHandler(logging.FileHandler("cluefin_ope
 
 라이브러리는 자동으로 API 요청 제한을 관리합니다:
 
-- 초당 요청 수 제한
-- 일일 요청 수 제한
-- 자동 재시도 메커니즘
+- 초당 요청 수 제한 (토큰 버킷)
+- 429·5xx·타임아웃 자동 재시도 (`max_retries`, 지수 백오프)
 
 ## ⚠️ 에러 처리
 
@@ -637,7 +636,7 @@ except Exception as e:
 from cluefin_openapi.kis import KISAPIError
 
 try:
-    response = kis_client.domestic_basic_quote.get_inquire_price(
+    response = kis_client.domestic_basic_quote.get_stock_current_price(
         fid_cond_mrkt_div_code="J",
         fid_input_iscd="005930"
     )

@@ -394,7 +394,7 @@ const keyStats = await ecos.statisticCatalog.keyStatisticList(); // 100대 통�
 | `shareDisclosureComprehensive` | 대량보유 상황보고·임원/주요주주 소유보고 | 2 |
 | `periodicReportFinancialStatement` | 재무제표·주요지표·XBRL | 7 |
 | `periodicReportKeyInformation` | 배당·주주·임원·보수·감사 등 정기보고서 주요정보 | 28 |
-| `majorShareholderDisclosure` | 증자·자기주식·합병/분할 등 주요사항보고서 | 36 |
+| `majorMattersReport` | 증자·자기주식·합병/분할 등 주요사항보고서 (옛 이름 `majorShareholderDisclosure` 는 deprecated 별칭) | 36 |
 
 ### ECOS REST (`EcosClient`의 getter)
 
