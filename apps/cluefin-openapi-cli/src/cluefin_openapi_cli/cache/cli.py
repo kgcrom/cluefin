@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import sys
+import tomllib
 from collections.abc import Callable
 from datetime import date, datetime, time, timedelta
 from typing import Any
 
 from cluefin_openapi_cli.cache import baserate, breadth, magic, store
+from cluefin_openapi_cli.cache import screen as cache_screen
 from cluefin_openapi_cli.cache.load import PARTS, Sources, run_load
 from cluefin_openapi_cli.cache.macro_beta import DEFAULT_SINCE_DAYS, read_macro_beta
 from cluefin_openapi_cli.cache.perf import read_perf
@@ -18,6 +20,7 @@ from cluefin_openapi_cli.cliargs import _parse_fields, _parse_limit, _parse_name
 from cluefin_openapi_cli.clock import now_kst, today_kst
 from cluefin_openapi_cli.errors import EXIT_USAGE, CliError, classify_exception
 from cluefin_openapi_cli.output import attach_truncation, limit_rows, render_output, select_fields
+from cluefin_openapi_cli.review.paths import research_root
 
 __all__ = ["SUBCOMMANDS", "run_cache"]
 
@@ -479,9 +482,9 @@ def _run_breadth(argv: list[str]) -> None:
     _render_read(payload, options, default_limit=None)
 
 
-def _parse_top(raw: str | None) -> int:
+def _parse_top(raw: str | None, *, default: int = magic.DEFAULT_TOP) -> int:
     if raw is None:
-        return magic.DEFAULT_TOP
+        return default
     try:
         value = int(raw)
     except ValueError:
@@ -505,6 +508,82 @@ def _run_magic_formula(argv: list[str]) -> None:
     _render_read(payload, options, default_limit=None)
 
 
+_SCREENS_TOML = "screens.toml"
+
+
+def _load_preset(name: str) -> tuple[str | None, str | None, int | None]:
+    path = research_root() / _SCREENS_TOML
+    if not path.is_file():
+        raise CliError(
+            f"No {path} — `--preset` needs a file there first.",
+            exit_code=EXIT_USAGE,
+            hint='Example: [my-quality]\\nwhere = "per<10,roe>=15,rs_1m>=70"\\nsort = "roe"',
+        )
+    try:
+        data = tomllib.loads(path.read_text(encoding="utf-8"))
+    except tomllib.TOMLDecodeError as exc:
+        raise CliError(f"{path} is not valid TOML: {exc}.", exit_code=EXIT_USAGE) from exc
+    preset = data.get(name)
+    if not isinstance(preset, dict):
+        raise CliError(
+            f"No preset `{name}` in {path}.",
+            exit_code=EXIT_USAGE,
+            data={"presets": sorted(data)},
+        )
+    top_raw = preset.get("top")
+    return preset.get("where"), preset.get("sort"), int(top_raw) if top_raw is not None else None
+
+
+def _run_screen(argv: list[str]) -> None:
+    positional, options = _parse_named_options(argv)
+    if positional:
+        raise CliError("`cache screen` does not accept positional arguments.", exit_code=EXIT_USAGE)
+    if _parse_bool(options, "factors"):
+        render_output(
+            cache_screen.factor_catalog(),
+            force_json=bool(options.get("json", False)),
+            compact=bool(options.get("compact", False)),
+        )
+        return
+    where_raw = _str_option(options, "where")
+    sort = _str_option(options, "sort")
+    preset_name = _str_option(options, "preset")
+    top_raw = _str_option(options, "top")
+    if preset_name is not None:
+        if where_raw is not None or sort is not None:
+            raise CliError("`--preset` cannot be combined with `--where`/`--sort`.", exit_code=EXIT_USAGE)
+        where_raw, sort, preset_top = _load_preset(preset_name)
+        if top_raw is None and preset_top is not None:
+            top_raw = str(preset_top)
+    if sort is not None and sort not in cache_screen.FACTOR_NAMES:
+        raise CliError(
+            f"`--sort` takes a factor name, got `{sort}`.",
+            exit_code=EXIT_USAGE,
+            hint="Run `cache screen --factors true` for the factor list.",
+        )
+    market = _str_option(options, "market")
+    if market is not None and market.upper() not in {"KOSPI", "KOSDAQ"}:
+        raise CliError("`--market` takes KOSPI or KOSDAQ.", exit_code=EXIT_USAGE)
+    codes = _list_option(options, "code")
+    conn = _read_conn()
+    try:
+        as_of = _trend_as_of(conn, _str_option(options, "as_of"))
+        payload = cache_screen.screen(
+            conn,
+            as_of,
+            market=market.upper() if market else None,
+            sector=_str_option(options, "sector"),
+            industry=_str_option(options, "industry"),
+            codes=[code.upper() for code in codes] if codes else None,
+            where=cache_screen.parse_where(where_raw) if where_raw else None,
+            sort=sort,
+            top=_parse_top(top_raw, default=cache_screen.DEFAULT_TOP) if top_raw is not None else None,
+        )
+    finally:
+        conn.close()
+    _render_read(payload, options, default_limit=None)
+
+
 SUBCOMMANDS: dict[str, Callable[[list[str]], None]] = {
     "status": _run_status,
     "load": _run_load,
@@ -519,6 +598,7 @@ SUBCOMMANDS: dict[str, Callable[[list[str]], None]] = {
     "breadth": _run_breadth,
     "macro-beta": _run_macro_beta,
     "magic-formula": _run_magic_formula,
+    "screen": _run_screen,
 }
 
 

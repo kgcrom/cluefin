@@ -461,6 +461,25 @@ CLI 가 말해 주지 않는 것만 적는다.
   오름차순 서수 합이 아니라 내림차순 백분위 합(높을수록 좋음, 0~198)이라고 모듈 docstring과 응답 `notes`에 적는다.
   EBIT(영업이익)·투하자본·EV 중 하나라도 0 이하면 정의가 안 돼 `excluded` 로 세고 뺀다. `--top`(기본 30)은 출력 행수만
   자르고 순위 모집단은 그대로다.
+- **`cache screen` 은 라벨 없는 팩터 표다**(`cache/screen.py`, 쓰기 없음, 결정 2026-11-11). 유니버스는
+  `magic-formula`와 달리 금융을 빼지 않는다(PER/PBR 은 금융도 의미가 있어서) — 대신 `earnings_yield`/`roic` 두
+  팩터만 `cache.magic.EXCLUDED_SECTORS`(금융·증권·보험·전기/가스)에서 null 이다. EV·투하자본은 `cache.magic.
+  enterprise_value`/`invested_capital`(새로 뽑아낸 공개 함수, 다시 정의하지 않는다)을 그대로 쓴다. 가격 팩터
+  (`rs_1m`·`ret_3m/6m/12m`·`high_52w_gap`·`above_ma50`·`value_20d`)는 종목마다 쿼리하지 않고 `lag()`·rolling
+  `max`/`avg` 윈도 함수 한 번으로 전 종목을 계산한다. `--market`/`--sector`/`--industry`/`--code` 는 출력 행만
+  좁히고 `rs_1m` 백분위는 항상 전 종목 기준이다(`cache rs` 와 같은 규칙). `--where` 는 쉼표로 이은
+  `factor op value`(연산자 `< <= > >= = !=`) 를 `eval` 없이 정규식 한 번으로 파싱한다 — 모르는 팩터·형식 오류는
+  exit 2. 값이 `null` 인 종목은 그 조건에서 탈락하고 `dropped_null` 로 팩터별 센다. `--preset <이름>` 은
+  `research/screens.toml`(`review.paths.research_root()` 재사용 — worktree 에서도 메인 체크아웃의 파일) 의
+  `[이름]` 절(`where`·`sort`·`top`)을 읽는다, `--where`/`--sort` 와 같이 쓰면 exit 2.
+  **`cache financials`(`당기순이익`/`영업이익`) 은 DART 라벨을 그대로 저장한다** — 실캐시(2026-11-11)에 bare
+  "당기순이익"은 **한 건도 없고** 전부 "당기순이익(손실)"(12,595행)이고, "영업이익"도 241행은 "영업이익(손실)"이다
+  (`cache.financials.ACCOUNT_NAMES` 의 bare 이름은 열망일 뿐 실제 저장 값과 다르다 — 적재 쪽은 고치지 않고
+  `cache/screen.py` 의 `_ACCOUNT_ALIASES` 로 두 철자를 같이 읽어 bare 쪽을 우선한다; `cache/magic.py` 는 아직 이
+  별칭을 안 써서 "영업이익(손실)"인 241개 종목의 EBIT 가 그 명령에서는 여전히 null 이다). 전 종목 실측
+  (2026-11-11, 메인 캐시 2,563종목): 소요 ~1.2~1.7초, 팩터별 null — per 1009, pbr 45, psr 103, earnings_yield 183,
+  roe 48, opm 103, debt_ratio 45, roic 196, revenue_yoy 190, op_yoy 924, revenue_cagr_3y 446, rs_1m 11,
+  ret_3m 25, ret_6m 38, ret_12m 76, above_ma50 18, mcap·value_20d·high_52w_gap 0.
 
 ## `review collect` 는 명령을 별도 프로세스로 펼친다 (`review/`)
 

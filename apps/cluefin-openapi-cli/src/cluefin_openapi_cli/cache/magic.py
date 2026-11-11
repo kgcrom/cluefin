@@ -45,14 +45,30 @@ import numpy as np
 from cluefin_openapi_cli.cache import trend as cache_trend
 from cluefin_openapi_cli.cache.breadth import _percentile_rank, _round_half_up
 
-__all__ = ["DEFAULT_TOP", "screen"]
+__all__ = ["DEFAULT_TOP", "EXCLUDED_SECTORS", "enterprise_value", "invested_capital", "screen"]
 
 DEFAULT_TOP = 30
 
 # Kiwoom's `company.sector` (upName, 26 coarse groups) — Greenblatt excludes financials and
 # utilities because their EV/invested-capital ratios are not comparable to operating companies.
-_EXCLUDED_SECTORS = frozenset({"금융", "증권", "보험", "전기/가스"})
+# `cache screen` reuses this set to null out its own earnings_yield/roic factors for the same reason
+# (same financials-table limitation), without excluding these stocks from the rest of its table.
+EXCLUDED_SECTORS = frozenset({"금융", "증권", "보험", "전기/가스"})
+_EXCLUDED_SECTORS = EXCLUDED_SECTORS
 _BOTTOM_MCAP_PCT = 0.20
+
+
+def enterprise_value(mcap: float, total_liabilities: float) -> float:
+    """EV = 시총 + 부채총계 — `financials` has no cash/interest-bearing-debt split, see module docstring."""
+
+    return mcap + total_liabilities
+
+
+def invested_capital(total_assets: float, current_liabilities: float) -> float:
+    """자산총계 − 유동부채 (= 순운전자본 + 순고정자산) — see module docstring for the approximation."""
+
+    return total_assets - current_liabilities
+
 
 _ACCOUNTS = ("영업이익", "자산총계", "유동부채", "부채총계")
 
@@ -156,9 +172,9 @@ def screen(conn: duckdb.DuckDBPyConnection, as_of: date, *, top: int = DEFAULT_T
         if fin is None or None in (ebit, assets, current_liab, total_liab):
             excluded_no_financials += 1
             continue
-        invested_capital = assets - current_liab
-        ev = mcaps[code] + total_liab
-        if ebit <= 0 or invested_capital <= 0 or ev <= 0:
+        ic = invested_capital(assets, current_liab)
+        ev = enterprise_value(mcaps[code], total_liab)
+        if ebit <= 0 or ic <= 0 or ev <= 0:
             excluded_non_positive += 1
             continue
         candidates.append(
@@ -171,10 +187,10 @@ def screen(conn: duckdb.DuckDBPyConnection, as_of: date, *, top: int = DEFAULT_T
                 "fiscal_year": fin["year"],
                 "ebit": ebit,
                 "ev": round(ev, 0),
-                "invested_capital": round(invested_capital, 0),
+                "invested_capital": round(ic, 0),
             }
         )
-        metrics.append((ebit / ev, ebit / invested_capital))
+        metrics.append((ebit / ev, ebit / ic))
 
     if candidates:
         ey_rank = _percentile_rank(np.array([ey for ey, _ in metrics]))

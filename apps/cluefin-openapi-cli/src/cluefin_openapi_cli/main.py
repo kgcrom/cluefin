@@ -195,6 +195,9 @@ _META_HELP: dict[str, dict[str, Any]] = {
             f"{APP_NAME} cache breadth [--as-of YYYYMMDD] [--market KOSPI|KOSDAQ] [--json]",
             f"{APP_NAME} cache macro-beta --code <code> [--since YYYYMMDD] [--until YYYYMMDD] [--json]",
             f"{APP_NAME} cache magic-formula [--as-of YYYYMMDD] [--top 30] [--json]",
+            f"{APP_NAME} cache screen [--as-of YYYYMMDD] [--where 'per<10,roe>=15'] [--preset NAME] "
+            "[--sort FACTOR] [--market KOSPI|KOSDAQ] [--sector S] [--industry I] [--code <c1,c2>] [--top 50] "
+            "[--factors true] [--json]",
         ],
         "options": [
             {"flag": "--only P", "meaning": "Parts to load, comma-separated (default all)."},
@@ -253,7 +256,31 @@ _META_HELP: dict[str, dict[str, Any]] = {
             },
             {
                 "flag": "--top N",
-                "meaning": "magic-formula: rows to return, best combined rank first (default 30).",
+                "meaning": "magic-formula: rows to return, best combined rank first (default 30). "
+                "screen: same, best --sort first (default 50).",
+            },
+            {
+                "flag": "--where E",
+                "meaning": "screen: comma-separated `factor<op>value` (< <= > >= = !=), e.g. "
+                "`per<10,roe>=15`. Mutually exclusive with --preset.",
+            },
+            {
+                "flag": "--preset NAME",
+                "meaning": "screen: reads `where`/`sort`/`top` from `[NAME]` in `research/screens.toml` "
+                "(gitignored, user-owned). Mutually exclusive with --where/--sort.",
+            },
+            {
+                "flag": "--sort FACTOR",
+                "meaning": "screen: factor to sort rows by, descending, nulls last (default: code ascending).",
+            },
+            {
+                "flag": "--factors true",
+                "meaning": "screen: list every factor's name and definition instead of running the screen.",
+            },
+            {
+                "flag": "--sector S / --industry I",
+                "meaning": "screen: narrow rows to one `company.sector`/`company.industry` (percentile "
+                "factors stay ranked against the full universe).",
             },
         ],
         "examples": [
@@ -267,6 +294,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
             f"uv run {APP_NAME} cache breadth --json",
             f"uv run {APP_NAME} cache macro-beta --code 005930 --json",
             f"uv run {APP_NAME} cache magic-formula --top 30 --json",
+            f"uv run {APP_NAME} cache screen --where 'per<10,roe>=15,rs_1m>=70' --sort roe --top 30 --json",
         ],
         "notes": [
             "The file is $CLUEFIN_CACHE_DIR/market.duckdb (default ~/.cache/cluefin/).",
@@ -295,6 +323,9 @@ _META_HELP: dict[str, dict[str, Any]] = {
             "utilities, 관리종목/거래정지, and the bottom 20% by market cap. `cache financials` has no cash or "
             "debt breakout, so EV and invested capital are approximations — see cache/magic.py docstring and "
             "every payload's `notes` before reading these as the textbook ratio.",
+            "screen: a general factor table (no label, no score) — financials included (unlike magic-formula), "
+            "earnings_yield/roic null for the same four excluded sectors. --market/--sector/--industry/--code "
+            "narrow rows only; rs_1m is always ranked against the full universe first.",
         ],
     },
     "audit": {
