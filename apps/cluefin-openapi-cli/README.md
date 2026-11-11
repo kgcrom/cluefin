@@ -187,6 +187,7 @@ uv run cluefin-openapi-cli cache magic-formula --top 30 --json                  
 uv run cluefin-openapi-cli cache screen --where 'per<10,roe>=15,rs_1m>=70' --sort roe --top 30 --json
 uv run cluefin-openapi-cli cache screen --preset my-quality --json                  # research/screens.toml 의 [my-quality]
 uv run cluefin-openapi-cli cache screen --factors true --json                      # 팩터 이름·정의 목록(네트워크·캐시 불필요)
+uv run cluefin-openapi-cli cache peers --code 005930 --top 5 --json                # 같은 업종 비교 기업 5개
 ```
 
 `review collect` 는 종목 검토(company-review)가 읽을 데이터를 한 폴더에 받습니다. 브로커별 동시 호출 수를 제한해
@@ -277,6 +278,11 @@ op_yoy·revenue_cagr_3y·rs_1m·ret_3m/6m/12m·high_52w_gap·above_ma50·value_2
 정규식으로 파싱)로 거르거나 `--preset <이름>`(`research/screens.toml` 의 `[이름]` 절, 없으면 exit 2)을 씁니다.
 `--market`/`--sector`/`--industry`/`--code` 는 보여 줄 행만 좁히고, rs_1m 백분위는 항상 전 종목 기준입니다.
 재무는 `cache financials` 최신 공개 연도, EV·투하자본은 `cache/magic.py` 의 근사를 그대로 가져다 씁니다.
+
+`cache peers` 는 같은 `industry`(3종목 미만이면 `sector`) 후보를 시총 근접도(`|log(시총비)|`)와 최근 250거래일
+수익률 상관의 순위 합으로 정렬합니다(ordinal rank, 둘 다 낮을수록 좋음). 상관은 겹치는 날이 120일 미만이면
+`null` 이고 그 신호는 최하위 순위로 처리합니다. 각 행은 `cache screen` 의 팩터 표 값을 그대로 가져다 씁니다 —
+업종 분류는 현재 값(PIT 아님)이라는 점이 `notes` 에 있습니다.
 
 `cache perf` 는 종목을 수정주가로 사서 들고 있었을 때의 성과(`cluefin-ta` `PERFORMANCE`: CAGR·MDD·변동성·샤프·소르티노·칼마·
 베타·알파)와 같은 기간 벤치마크(기본 `U0001`) 자체의 성과를 함께 줍니다. 두 코드 모두 일봉이 있는 날만 쓰고, CAGR 은 달력 연수로

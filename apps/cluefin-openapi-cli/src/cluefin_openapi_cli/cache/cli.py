@@ -9,6 +9,7 @@ from datetime import date, datetime, time, timedelta
 from typing import Any
 
 from cluefin_openapi_cli.cache import baserate, breadth, magic, store
+from cluefin_openapi_cli.cache import peers as cache_peers
 from cluefin_openapi_cli.cache import screen as cache_screen
 from cluefin_openapi_cli.cache.load import PARTS, Sources, run_load
 from cluefin_openapi_cli.cache.macro_beta import DEFAULT_SINCE_DAYS, read_macro_beta
@@ -584,6 +585,21 @@ def _run_screen(argv: list[str]) -> None:
     _render_read(payload, options, default_limit=None)
 
 
+def _run_peers(argv: list[str]) -> None:
+    positional, options = _parse_named_options(argv)
+    code = _str_option(options, "code")
+    if positional or not code:
+        raise CliError("Usage: cache peers --code <code> [--as-of YYYYMMDD] [--top 5] [--json].", exit_code=EXIT_USAGE)
+    top = _parse_top(_str_option(options, "top"), default=cache_peers.DEFAULT_TOP)
+    conn = _read_conn()
+    try:
+        as_of = _trend_as_of(conn, _str_option(options, "as_of"))
+        payload = cache_peers.peers(conn, as_of, code, top=top)
+    finally:
+        conn.close()
+    _render_read(payload, options, default_limit=None)
+
+
 SUBCOMMANDS: dict[str, Callable[[list[str]], None]] = {
     "status": _run_status,
     "load": _run_load,
@@ -599,6 +615,7 @@ SUBCOMMANDS: dict[str, Callable[[list[str]], None]] = {
     "macro-beta": _run_macro_beta,
     "magic-formula": _run_magic_formula,
     "screen": _run_screen,
+    "peers": _run_peers,
 }
 
 

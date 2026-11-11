@@ -198,6 +198,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
             f"{APP_NAME} cache screen [--as-of YYYYMMDD] [--where 'per<10,roe>=15'] [--preset NAME] "
             "[--sort FACTOR] [--market KOSPI|KOSDAQ] [--sector S] [--industry I] [--code <c1,c2>] [--top 50] "
             "[--factors true] [--json]",
+            f"{APP_NAME} cache peers --code <code> [--as-of YYYYMMDD] [--top 5] [--json]",
         ],
         "options": [
             {"flag": "--only P", "meaning": "Parts to load, comma-separated (default all)."},
@@ -257,7 +258,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
             {
                 "flag": "--top N",
                 "meaning": "magic-formula: rows to return, best combined rank first (default 30). "
-                "screen: same, best --sort first (default 50).",
+                "screen: same, best --sort first (default 50). peers: candidates to return (default 5).",
             },
             {
                 "flag": "--where E",
@@ -295,6 +296,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
             f"uv run {APP_NAME} cache macro-beta --code 005930 --json",
             f"uv run {APP_NAME} cache magic-formula --top 30 --json",
             f"uv run {APP_NAME} cache screen --where 'per<10,roe>=15,rs_1m>=70' --sort roe --top 30 --json",
+            f"uv run {APP_NAME} cache peers --code 005930 --top 5 --json",
         ],
         "notes": [
             "The file is $CLUEFIN_CACHE_DIR/market.duckdb (default ~/.cache/cluefin/).",
@@ -326,6 +328,9 @@ _META_HELP: dict[str, dict[str, Any]] = {
             "screen: a general factor table (no label, no score) — financials included (unlike magic-formula), "
             "earnings_yield/roic null for the same four excluded sectors. --market/--sector/--industry/--code "
             "narrow rows only; rs_1m is always ranked against the full universe first.",
+            "peers: same-industry (or sector, if fewer than 3) candidates ranked by |log(market-cap ratio)| + "
+            "250-day return-correlation ordinal rank sum (lower is better); each row reuses `cache screen`'s "
+            "factor table. industry/sector grouping is current, not point-in-time.",
         ],
     },
     "audit": {

@@ -480,6 +480,12 @@ CLI 가 말해 주지 않는 것만 적는다.
   (2026-11-11, 메인 캐시 2,563종목): 소요 ~1.2~1.7초, 팩터별 null — per 1009, pbr 45, psr 103, earnings_yield 183,
   roe 48, opm 103, debt_ratio 45, roic 196, revenue_yoy 190, op_yoy 924, revenue_cagr_3y 446, rs_1m 11,
   ret_3m 25, ret_6m 38, ret_12m 76, above_ma50 18, mcap·value_20d·high_52w_gap 0.
+- **`cache peers` 는 `cache screen` 의 팩터 표를 재사용한다**(`cache/peers.py`, 쓰기 없음, 결정 2026-11-11).
+  대상과 같은 `industry`(3종목 미만이면 `sector`) 후보를 시총 근접도(`|log(시총비)|`)와 최근 250거래일 수정주가
+  수익률 상관의 **서수**(ordinal, 1..N 평균순위) 합으로 정렬한다 — `_percentile_rank`의 0~99 백분위가 아니다
+  (고정 스케일 횡단면이 아니라 N개 후보를 줄 세우는 것이라서). 상관은 겹치는 날 120일 미만이면 `null` 이고 그
+  신호는 최하위 순위(N+1)로 처리한다. 각 행은 `cache screen` 을 호출해 그 팩터 표 값을 그대로 가져다 쓴다
+  (다시 계산하지 않는다) — `notes` 에 "업종 분류는 현재 값(PIT 아님)"이 있다.
 
 ## `review collect` 는 명령을 별도 프로세스로 펼친다 (`review/`)
 
