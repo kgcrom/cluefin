@@ -83,7 +83,8 @@ describe('FileTokenCacheStore', () => {
       expiresIn: 86_400,
       accessTokenTokenExpired: '2026-05-05T12:00:00Z',
     });
-    expect((await store.get())?.cachedAt).toEqual(expect.any(String));
+    // cached_at 이 없으면 정상 경로와 같은 형식(Z·오프셋 없는 로컬 시각)으로 채운다 — Python fromisoformat 호환.
+    expect((await store.get())?.cachedAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/);
   });
 
   it('writes the Python-compatible cache format', async () => {

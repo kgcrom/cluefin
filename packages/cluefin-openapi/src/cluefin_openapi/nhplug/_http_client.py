@@ -1,5 +1,4 @@
 import logging
-import time
 from typing import Any, Literal
 
 import requests
@@ -153,43 +152,21 @@ class HttpClient(BaseHttpClient):
         payload = {"Input_0": body or {}}
         request_context = {"method": "POST", "path": path, "url": url, "body": payload}
 
-        last_exception: Exception | None = None
-        for attempt in range(self.max_retries + 1):
-            if not self._rate_limiter.wait_for_tokens(timeout=self.timeout):
-                raise NHPlugRateLimitError(
-                    "Local rate limiter timed out waiting for capacity",
-                    request_context=self._sanitize_request_context(request_context),
-                )
-            try:
-                response = self._session.post(url, json=payload, headers=headers, timeout=self.timeout)
-            except requests.Timeout as e:
-                raise NHPlugTimeoutError(
-                    f"Request timed out after {self.timeout}s",
-                    request_context=self._sanitize_request_context(request_context),
-                ) from e
-            except requests.RequestException as e:
-                raise NHPlugNetworkError(
-                    f"Network error: {e}",
-                    request_context=self._sanitize_request_context(request_context),
-                ) from e
+        sanitized_context = self._sanitize_request_context(request_context)
 
-            if response.status_code == 200:
-                return response
-
-            # 429 재시도에는 기존 토큰을 그대로 사용한다 (재발급 금지 — 보안 알림 유발).
-            if response.status_code == 429 and attempt < self.max_retries:
-                retry_after = self._get_retry_after(response) or 2**attempt
-                logger.warning(f"Rate limited on {path}, retrying in {retry_after}s (attempt {attempt + 1})")
-                time.sleep(retry_after)
-                continue
-
-            last_exception = self._dispatch_by_status(
-                response,
-                self._sanitize_request_context(request_context),
-                _ERROR_TYPES,
-            )
-            break
-
-        if last_exception is None:
-            last_exception = NHPlugRateLimitError(f"Rate limit exceeded after {self.max_retries} retries")
-        raise last_exception
+        # 재시도는 세션에 실린 기존 토큰을 그대로 쓴다 (재발급 금지 — 보안 알림 유발).
+        return self._execute_with_retry(
+            send_fn=lambda: self._session.post(url, json=payload, headers=headers, timeout=self.timeout),
+            debug=self.debug,
+            rate_limiter=self._rate_limiter,
+            timeout=self.timeout,
+            max_retries=self.max_retries,
+            request_context=sanitized_context,
+            dispatch=lambda resp: self._dispatch_by_status(resp, sanitized_context, _ERROR_TYPES),
+            rate_limit_error=lambda: NHPlugRateLimitError(
+                "Local rate limiter timed out waiting for capacity",
+                request_context=sanitized_context,
+            ),
+            timeout_error_cls=NHPlugTimeoutError,
+            network_error_cls=NHPlugNetworkError,
+        )

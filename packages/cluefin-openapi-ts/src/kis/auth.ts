@@ -43,13 +43,21 @@ export interface KisApprovalResponse {
 const getBaseUrl = (env: ApiEnv): string =>
   env === 'prod' ? 'https://openapi.koreainvestment.com:9443' : 'https://openapivts.koreainvestment.com:29443';
 
+// Python `TokenManager.EXPIRY_BUFFER` / `MAX_CACHE_AGE` — keep both sides in sync by hand.
+const EXPIRY_BUFFER_MS = 60 * 60 * 1000;
+const MAX_CACHE_AGE_MS = 6 * 60 * 60 * 1000;
+
+/** Mirrors Python `TokenManager._is_token_valid`: cache age <= 6h AND now < expiry - 1h buffer. */
 const isTokenValid = (entry: TokenCacheEntry): boolean => {
+  const cachedAt = new Date(entry.cachedAt).getTime();
+  if (!Number.isNaN(cachedAt) && Date.now() - cachedAt > MAX_CACHE_AGE_MS) {
+    return false;
+  }
   const expiry = new Date(entry.accessTokenTokenExpired).getTime();
   if (Number.isNaN(expiry)) {
     return false;
   }
-  const oneHourBufferMs = 60 * 60 * 1000;
-  return Date.now() < expiry - oneHourBufferMs;
+  return Date.now() < expiry - EXPIRY_BUFFER_MS;
 };
 
 const toTokenEntry = (input: KisTokenResponse): TokenCacheEntry => ({

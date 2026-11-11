@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-import { writeJsonAtomic } from '../core/token-file.js';
+import { localIsoNow, writeJsonAtomic } from '../core/token-file.js';
 
 export interface TokenCacheEntry {
   token: string;
@@ -79,7 +79,7 @@ export class FileTokenCacheStore implements TokenCacheStore {
         token: t.token,
         tokenType: t.token_type ?? 'bearer',
         expiresDt: t.expires_dt,
-        cachedAt: data.cached_at ?? new Date().toISOString(),
+        cachedAt: data.cached_at ?? localIsoNow(),
       };
     } catch {
       return null;
