@@ -53,6 +53,7 @@ uv run cluefin-openapi-cli review collect --stock-code 214320 --peers 030000 --j
 | 섹션 | raw 파일(`<c>` = 종목코드) | 읽을 것 |
 | --- | --- | --- |
 | 가격·수급 | `<c>__kis-stock-current-price` | 현재가, 52주 고저, 외국인 지분율 |
+| 수급 상세 | `<c>__kis-stock-flow-summary` | 외국인·기관·개인 순매수 금액·비중·연속일수(5·20·60거래일), 공매도 비중의 창 평균·백분위, 대차·신용잔고 수준과 변화율, 프로그램매매 순매수. 값과 구성요소만 — 라벨 없음 |
 | 실적·재무 | `<c>__dart-financial-summary` | 8분기 단독값·YoY, 3개년 손익·재무상태·현금흐름·비율, 최신 누적, TTM, 차입금(근거 표기), `quality`(ROIC·DuPont·발생액·F-Score·Z''). 억원. **이 값은 다시 계산하지 않는다** |
 | 공식 비율 | `<c>__dart-financial-major-indicators-M210000`·`M220000`·`M230000` | DART 수익성·안정성·성장성 — 무효화 조건의 기준값. EPS·BPS 만 KIS |
 | 밸류에이션 | `<c>__kis-stock-valuation` | 시총·TTM PER·PBR·KIS 추정 연도별 PER. 다시 계산하지 않는다 |
@@ -97,6 +98,8 @@ uv run cluefin-openapi-cli review collect --stock-code 214320 --peers 030000 --j
 2. **사업 현황** — 주가를 움직일 사업 이슈(수주·증설·신제품·지배구조)를 원문·공시·뉴스 근거와 함께.
 3. **기술적** — 추세, 이동평균 배열, 지지·저항, 무효화 가격, RS(1M) 백분위와 업종 RS. 두 신호 계열이 충돌하면
    충돌 자체를 적는다.
+   - 수급 상세(`flow-summary`)는 판단을 계산하는 점수가 아니라 다른 절(기술적·bull/bear)의 근거로만 쓴다 — 매집·
+     강세 같은 라벨을 붙이지 않는다.
 4. **뉴스·공시·매크로** — 호재/악재/중립과 영향 기간. 매크로는 이 종목에 닿는 경로의 수치만 고른다(수출주는
    원/달러·수출, 차입이 많으면 신용스프레드, 성장주 멀티플은 국고 10년, 내수는 CCSI). 수치마다 `as_of`·변화·백분위를
    적고 국면을 한 단어로 정하지 않는다. 경로 근거로 `cache macro-beta` 계수를 쓸 수 있다 — |t| < 2 는 "유의하지 않음"
@@ -262,6 +265,7 @@ main: kis market announcement
 main: cache macro-beta
 main: cache base-rate
 main: kis stock implied-expectations
+main: kis stock flow-summary
 each: dart corp-code-lookup
 each: kis stock current-price
 each: dart financial-summary

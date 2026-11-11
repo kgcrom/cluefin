@@ -180,6 +180,7 @@ def _stage1(code: str, corp: str, peers: list[str], day: date) -> list[Node]:
         _node(code, "kis", "kis", "stock", "investor-metrics", "--stock-code", code, "--corp-code", corp),
         _node(code, "kis", "kis", "stock", "implied-expectations", "--stock-code", code, "--corp-code", corp),
         _node(code, "kis", "kis", "stock", "opinion-summary", "--stock-code", code),
+        _node(code, "kis", "kis", "stock", "flow-summary", "--stock-code", code),
         _node(code, "kis", "kis", "market", "announcement", "--stock-code", code, "--limit", "40"),
         _node(code, "kis", "kis", "chart", "technical", "--stock-code", code, "--count", "250"),
         _node(code, "kis", "kis", "chart", "trend-setup", "--stock-code", code),
