@@ -508,6 +508,17 @@ CLI 가 말해 주지 않는 것만 적는다.
   문제(모르는 metric·op, 타입 오류)는 한 번에 `data.issues[]` 로 모아 exit 2 — 한 줄 고치고 다시 걸리는 왕복을 없앤다.
   결과는 점수가 아니라 규칙별 `pass`/`fail`/`unknown`(이유)이고, `<folder>/checklist.json` 에도 쓴다. `--init` 은
   파일이 없을 때만 쓴다(있으면 exit 2) — 사용자의 기존 기준표를 덮지 않는다.
+- `review due` 는 종목별 가장 최근 판단 하나만 `review track` 으로 대조해 사유(`crossed`·`recheck_passed`·
+  `recheck_within`·`horizon_ending`·`closed`)를 붙인다(`review/due.py`). 캐시만 읽는다. `--events true` 는 열린
+  판단(`status: open`) 전부에 대해 KIS `schedule.*` 12종(bonus-issue·capital-increase·capital-reduction·deposit·
+  dividend·forfeited-share·ipo-subscription·listing·merger-split·par-value-change·shareholder-meeting·
+  stock-dividend — `kis market holiday`·`dart major-event` 는 이름만 비슷해 뺀다)을 `stock_code` 없이 기간으로
+  한 번씩만 부르고 `sht_cd` 로 코드별로 거른다(종목마다 부르지 않는다). 이 CLI 의 schedule 핸들러는 `cts` 를
+  응답에 echo 하지 않는다(요청 파라미터로만 받는다) — 그래서 응답이 정확히 100행(실호출 확인, 2026-11-11: 넓은
+  기간은 100행에서 잘리고 14일 창은 안 걸렸다)이면 더 있을 수 있다는 뜻으로 `possibly_truncated` 에 적는다.
+  공시는 `dart disclosure-search` 를 종목마다 한 번(캐시 `company.corp_code`, 없으면 그 종목은 reason), 다음
+  정기보고서 법정 마감일은 `company.settle_month` 로 계산하는 순수 함수(분기·반기 +45일, 사업보고서 +90일) —
+  DART 호출이 없다. 호출은 모두 `review collect` 처럼 별도 프로세스(`process_runner`)로 부른다.
 
 ## `audit *` 는 Claude Code 트랜스크립트를 읽는다 (`audit/`)
 

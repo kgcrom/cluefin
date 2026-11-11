@@ -225,6 +225,17 @@ uv run cluefin-openapi-cli review checklist --from /private/tmp/cluefin-review/2
 uv run cluefin-openapi-cli review checklist --metrics true --json  # 쓸 수 있는 metric 카탈로그
 ```
 
+`review due` 는 종목별 가장 최근 판단 하나만 가격과 대조해 다시 볼 것을 고릅니다: 트리거/목표가/손절가가 닿음(`crossed`),
+재검토일이 지났거나(`recheck_passed`) `--days` 안에 있음(`recheck_within`), horizon 이 `--days` 안에 끝남
+(`horizon_ending`), horizon 이 이미 끝남(`closed`). 사유가 없으면 건수로만 센다. `--events true` 는 열린 판단
+종목 전부에 대해 KIS 일정 12종(종목코드 없이 기간으로 한 번씩 받아 코드로 거른다)·DART 공시·다음 정기보고서 법정
+마감일(캐시의 `settle_month` 로 계산, 호출 없음)을 더합니다.
+
+```bash
+uv run cluefin-openapi-cli review due --days 14 --json
+uv run cluefin-openapi-cli review due --days 14 --events true --json
+```
+
 `audit` 은 `.claude/agents/*.md` 로 돈 agent 실행을 Claude Code 트랜스크립트에서 읽어, 그 agent 파일의 감사 기준과
 대조합니다(빠진 명령·같은 인자 반복·exit 3 뒤 계속·재시도 없는 실패). 저장소 루트에서 실행합니다.
 
