@@ -360,3 +360,22 @@ def test_screen_sorts_on_the_unrounded_combined_percentile(cache, monkeypatch) -
     assert [row["code"] for row in payload["rows"]] == ["900020", "900010"]
     assert [row["combined_rank"] for row in payload["rows"]] == [100, 100]
     assert payload["rows"][1]["earnings_yield_rank"] == 51  # 50.5 rounds up, not to even
+
+
+def test_screen_reads_operating_profit_filed_with_the_loss_suffix(cache) -> None:
+    conn = store.open_store()
+    _insert_company(conn, "900010")
+    _insert_close(conn, "900010", 100.0)
+    _insert_financials(conn, "900010", ebit=None, assets=1000.0, current_liab=200.0, total_liab=400.0)
+    conn.execute(
+        "INSERT INTO financials (code, year, reprt_code, basis, account_nm, amount, currency) VALUES "
+        "('900010', '2025', '11011', 'CFS', '영업이익(손실)', 100.0, 'KRW')"
+    )
+    conn.close()
+
+    conn = store.open_store(read_only=True)
+    payload = magic.screen(conn, _AS_OF)
+    conn.close()
+
+    assert [row["code"] for row in payload["rows"]] == ["900010"]
+    assert payload["rows"][0]["ebit"] == pytest.approx(100.0)

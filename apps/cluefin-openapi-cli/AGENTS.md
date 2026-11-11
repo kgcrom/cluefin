@@ -471,12 +471,15 @@ CLI 가 말해 주지 않는 것만 적는다.
   `factor op value`(연산자 `< <= > >= = !=`) 를 `eval` 없이 정규식 한 번으로 파싱한다 — 모르는 팩터·형식 오류는
   exit 2. 값이 `null` 인 종목은 그 조건에서 탈락하고 `dropped_null` 로 팩터별 센다. `--preset <이름>` 은
   `research/screens.toml`(`review.paths.research_root()` 재사용 — worktree 에서도 메인 체크아웃의 파일) 의
-  `[이름]` 절(`where`·`sort`·`top`)을 읽는다, `--where`/`--sort` 와 같이 쓰면 exit 2.
-  **`cache financials`(`당기순이익`/`영업이익`) 은 DART 라벨을 그대로 저장한다** — 실캐시(2026-11-11)에 bare
-  "당기순이익"은 **한 건도 없고** 전부 "당기순이익(손실)"(12,595행)이고, "영업이익"도 241행은 "영업이익(손실)"이다
-  (`cache.financials.ACCOUNT_NAMES` 의 bare 이름은 열망일 뿐 실제 저장 값과 다르다 — 적재 쪽은 고치지 않고
-  `cache/screen.py` 의 `_ACCOUNT_ALIASES` 로 두 철자를 같이 읽어 bare 쪽을 우선한다; `cache/magic.py` 는 아직 이
-  별칭을 안 써서 "영업이익(손실)"인 241개 종목의 EBIT 가 그 명령에서는 여전히 null 이다). 전 종목 실측
+  `[이름]` 절(`where`·`sort`·`order`·`top`)을 읽는다, `--where`/`--sort`/`--order` 와 같이 쓰면 exit 2.
+  성장률은 달력상 이웃한 사업연도끼리만 비교한다 — 전년(또는 3년 전)이 캐시에 없으면 그보다 오래된 해와 비교하지
+  않고 `null` 이다. `--sort` 는 내림차순이 기본이고 `--order asc` 로 뒤집는다(null 은 항상 끝).
+  **`financials` 표는 DART 계정명을 그대로 저장한다** — 실캐시(2026-11-11)에 bare "당기순이익"은 한 건도 없고 전부
+  "당기순이익(손실)"(12,595행)이며 "영업이익"도 241행은 "영업이익(손실)"이다. 적재 쪽은 그대로 두고 읽는 쪽이
+  `cache.financials.account_spellings`/`fold_accounts` 로 두 철자를 같이 읽어 bare 이름으로 접는다(`screen`·
+  `magic-formula` 둘 다 — 그 전의 `magic-formula` 는 "영업이익(손실)" 종목을 재무 없음으로 뺐다). 표를 읽는 새
+  코드도 이 둘을 거친다. **per·pbr·roe 는 비지배지분을 포함한 연결 전체 기준**이라 지주회사·모회사는 pbr 이
+  0.1 아래로도 나온다(2026-11-09 pbr<0.3 이 400종목) — 응답 `notes` 가 `kis stock valuation` 재확인을 말한다. 전 종목 실측
   (2026-11-11, 메인 캐시 2,563종목): 소요 ~1.2~1.7초, 팩터별 null — per 1009, pbr 45, psr 103, earnings_yield 183,
   roe 48, opm 103, debt_ratio 45, roic 196, revenue_yoy 190, op_yoy 924, revenue_cagr_3y 446, rs_1m 11,
   ret_3m 25, ret_6m 38, ret_12m 76, above_ma50 18, mcap·value_20d·high_52w_gap 0.

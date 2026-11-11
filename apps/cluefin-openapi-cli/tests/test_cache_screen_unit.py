@@ -227,7 +227,7 @@ def test_screen_nulls_per_pbr_psr_on_non_positive_denominator(cache) -> None:
     assert row["roic"] == pytest.approx(-10 / 800 * 100)
 
 
-def test_screen_revenue_yoy_and_op_yoy_use_the_two_most_recent_cached_years(cache) -> None:
+def test_screen_revenue_yoy_and_op_yoy_compare_the_latest_year_with_the_one_before(cache) -> None:
     conn = store.open_store()
     _insert_company(conn, "900010")
     _insert_close(conn, "900010", 100.0)
@@ -264,7 +264,7 @@ def test_screen_revenue_yoy_and_op_yoy_use_the_two_most_recent_cached_years(cach
     row = payload["rows"][0]
     assert row["revenue_yoy"] == pytest.approx(50.0)
     assert row["op_yoy"] == pytest.approx(-50.0)
-    assert row["revenue_cagr_3y"] is None  # fewer than 4 cached years
+    assert row["revenue_cagr_3y"] is None  # FY2022 is not cached
 
 
 def test_screen_revenue_cagr_3y_needs_four_cached_years(cache) -> None:
@@ -535,3 +535,75 @@ def test_cli_screen_preset_unknown_name_lists_available(cache, monkeypatch, tmp_
     assert result.exit_code == 2
     payload = json.loads(result.stdout)
     assert payload["error"]["data"]["presets"] == ["my-quality"]
+
+
+_FLAT = dict(자산총계=1.0, 유동부채=1.0, 자본총계=1.0, 부채총계=1.0)
+
+
+def test_screen_growth_is_null_across_a_missing_year(cache) -> None:
+    conn = store.open_store()
+    _insert_company(conn, "900010")
+    _insert_close(conn, "900010", 100.0)
+    # FY2024 is missing: 2025 vs 2023 is not a year-over-year change, and 2021 is not "3 years back".
+    for year, revenue in (("2021", 100.0), ("2023", 120.0), ("2025", 150.0)):
+        _insert_financials(conn, "900010", year, 매출액=revenue, 영업이익=10.0, 당기순이익=1.0, **_FLAT)
+    conn.close()
+
+    conn = store.open_store(read_only=True)
+    row = screen.screen(conn, _AS_OF)["rows"][0]
+    conn.close()
+
+    assert row["fiscal_year"] == "2025"
+    assert row["revenue_yoy"] is None
+    assert row["op_yoy"] is None
+    assert row["revenue_cagr_3y"] is None
+
+
+def test_screen_reads_the_loss_suffixed_account_labels(cache) -> None:
+    conn = store.open_store()
+    _insert_company(conn, "900010")
+    _insert_close(conn, "900010", 100.0)  # mcap = 100 × 1,000,000
+    _insert_financials(conn, "900010", "2025", 매출액=800.0, **_FLAT)
+    conn.execute(
+        "INSERT INTO financials (code, year, reprt_code, basis, account_nm, amount, currency) VALUES "
+        "('900010', '2025', '11011', 'CFS', '당기순이익(손실)', 50000000.0, 'KRW'), "
+        "('900010', '2025', '11011', 'CFS', '영업이익(손실)', 80.0, 'KRW')"
+    )
+    conn.close()
+
+    conn = store.open_store(read_only=True)
+    row = screen.screen(conn, _AS_OF)["rows"][0]
+    conn.close()
+
+    assert row["per"] == pytest.approx(2.0)
+    assert row["opm"] == pytest.approx(10.0)
+
+
+def test_screen_order_asc_puts_the_lowest_value_first_and_nulls_last(cache) -> None:
+    conn = store.open_store()
+    _setup_candidate(conn, "900010", close=100.0)
+    _setup_candidate(conn, "900020", close=50.0)  # half the market cap -> half the PER
+    _insert_company(conn, "900030")
+    _insert_close(conn, "900030", 100.0)  # no financials -> per null
+    conn.close()
+
+    conn = store.open_store(read_only=True)
+    payload = screen.screen(conn, _AS_OF, sort="per", descending=False)
+    conn.close()
+
+    assert [row["code"] for row in payload["rows"]] == ["900020", "900010", "900030"]
+    assert payload["order"] == "asc"
+
+
+def test_cli_screen_rejects_an_unknown_order(cache) -> None:
+    result = run_cli(["cache", "screen", "--sort", "per", "--order", "up", "--json"])
+    assert result.exit_code == 2
+
+
+def test_cli_screen_preset_with_a_bad_top_is_a_usage_error(cache, monkeypatch, tmp_path) -> None:
+    research = tmp_path / "research"
+    research.mkdir()
+    (research / "screens.toml").write_text('[bad]\nwhere = "roe>5"\ntop = "ten"\n', encoding="utf-8")
+    monkeypatch.setattr("cluefin_openapi_cli.cache.cli.research_root", lambda: research)
+    result = run_cli(["cache", "screen", "--preset", "bad", "--json"])
+    assert result.exit_code == 2

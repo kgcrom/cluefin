@@ -278,6 +278,22 @@ op_yoy·revenue_cagr_3y·rs_1m·ret_3m/6m/12m·high_52w_gap·above_ma50·value_2
 정규식으로 파싱)로 거르거나 `--preset <이름>`(`research/screens.toml` 의 `[이름]` 절, 없으면 exit 2)을 씁니다.
 `--market`/`--sector`/`--industry`/`--code` 는 보여 줄 행만 좁히고, rs_1m 백분위는 항상 전 종목 기준입니다.
 재무는 `cache financials` 최신 공개 연도, EV·투하자본은 `cache/magic.py` 의 근사를 그대로 가져다 씁니다.
+`--sort <팩터>` 는 내림차순이고, per·pbr 처럼 낮은 값이 먼저면 `--order asc` 를 붙입니다. 성장률(revenue_yoy·op_yoy·
+revenue_cagr_3y)은 바로 전 연도·3년 전 연도가 캐시에 있을 때만 나옵니다. per·pbr·roe 는 지배/비지배 구분이 없는
+전체 순이익·자본 기준이라 `kis stock valuation` 의 지배주주 기준 값과 다를 수 있습니다.
+
+```toml
+# research/screens.toml — 내 프리셋. gitignore 된 research/ 아래에 직접 만듭니다.
+[my-quality]
+where = "per<10,roe>=15,rs_1m>=70"
+sort = "roe"
+
+[cheap]
+where = "pbr<0.7,roe>=8,debt_ratio<100"
+sort = "pbr"
+order = "asc"
+top = 30
+```
 
 `cache peers` 는 같은 `industry`(3종목 미만이면 `sector`) 후보를 시총 근접도(`|log(시총비)|`)와 최근 250거래일
 수익률 상관의 순위 합으로 정렬합니다(ordinal rank, 둘 다 낮을수록 좋음). 상관은 겹치는 날이 120일 미만이면

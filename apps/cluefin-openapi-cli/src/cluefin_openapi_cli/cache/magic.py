@@ -44,6 +44,7 @@ import numpy as np
 
 from cluefin_openapi_cli.cache import trend as cache_trend
 from cluefin_openapi_cli.cache.breadth import _percentile_rank, _round_half_up
+from cluefin_openapi_cli.cache.financials import account_spellings, fold_accounts
 
 __all__ = ["DEFAULT_TOP", "EXCLUDED_SECTORS", "enterprise_value", "invested_capital", "screen"]
 
@@ -73,13 +74,8 @@ def invested_capital(total_assets: float, current_liabilities: float) -> float:
 _ACCOUNTS = ("영업이익", "자산총계", "유동부채", "부채총계")
 
 _FINANCIALS_SQL = """
-WITH ranked AS (
-  SELECT code, year, account_nm, amount,
-         dense_rank() OVER (PARTITION BY code ORDER BY year DESC) AS yr_rank
-  FROM financials
-  WHERE code IN (SELECT unnest(?::TEXT[])) AND account_nm IN (SELECT unnest(?::TEXT[])) AND year <= ?
-)
-SELECT code, year, account_nm, amount FROM ranked WHERE yr_rank = 1
+SELECT code, year, account_nm, amount FROM financials
+WHERE code IN (SELECT unnest(?::TEXT[])) AND account_nm IN (SELECT unnest(?::TEXT[])) AND year <= ?
 """
 
 _MCAP_SQL = (
@@ -124,11 +120,12 @@ def _last_filed_year(as_of: date) -> int:
 def _financials_by_code(conn: duckdb.DuckDBPyConnection, codes: list[str], as_of: date) -> dict[str, dict[str, Any]]:
     if not codes:
         return {}
-    rows = conn.execute(_FINANCIALS_SQL, [codes, list(_ACCOUNTS), str(_last_filed_year(as_of))]).fetchall()
+    spellings = account_spellings(_ACCOUNTS)
+    rows = conn.execute(_FINANCIALS_SQL, [codes, spellings, str(_last_filed_year(as_of))]).fetchall()
     by_code: dict[str, dict[str, Any]] = {}
-    for code, year, account_nm, amount in rows:
-        entry = by_code.setdefault(code, {"year": year, "accounts": {}})
-        entry["accounts"][account_nm] = amount
+    for code, years in fold_accounts(rows).items():
+        latest = max(years)
+        by_code[code] = {"year": latest, "accounts": years[latest]}
     return by_code
 
 

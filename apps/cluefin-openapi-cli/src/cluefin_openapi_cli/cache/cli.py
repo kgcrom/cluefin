@@ -512,13 +512,15 @@ def _run_magic_formula(argv: list[str]) -> None:
 _SCREENS_TOML = "screens.toml"
 
 
-def _load_preset(name: str) -> tuple[str | None, str | None, int | None]:
+def _load_preset(name: str) -> dict[str, Any]:
+    """`[name]` of research/screens.toml: `where`, and optionally `sort`, `order`, `top`."""
+
     path = research_root() / _SCREENS_TOML
     if not path.is_file():
         raise CliError(
             f"No {path} — `--preset` needs a file there first.",
             exit_code=EXIT_USAGE,
-            hint='Example: [my-quality]\\nwhere = "per<10,roe>=15,rs_1m>=70"\\nsort = "roe"',
+            hint='Example:\n[my-quality]\nwhere = "per<10,roe>=15,rs_1m>=70"\nsort = "roe"',
         )
     try:
         data = tomllib.loads(path.read_text(encoding="utf-8"))
@@ -526,13 +528,28 @@ def _load_preset(name: str) -> tuple[str | None, str | None, int | None]:
         raise CliError(f"{path} is not valid TOML: {exc}.", exit_code=EXIT_USAGE) from exc
     preset = data.get(name)
     if not isinstance(preset, dict):
-        raise CliError(
-            f"No preset `{name}` in {path}.",
-            exit_code=EXIT_USAGE,
-            data={"presets": sorted(data)},
-        )
-    top_raw = preset.get("top")
-    return preset.get("where"), preset.get("sort"), int(top_raw) if top_raw is not None else None
+        raise CliError(f"No preset `{name}` in {path}.", exit_code=EXIT_USAGE, data={"presets": sorted(data)})
+    issues = [f"`{key}` must be a string" for key in ("where", "sort", "order") if not _is_str_or_none(preset.get(key))]
+    top = preset.get("top")
+    if top is not None and (not isinstance(top, int) or isinstance(top, bool) or top <= 0):
+        issues.append("`top` must be a positive integer")
+    if issues:
+        raise CliError(f"Preset `{name}` in {path} is invalid.", exit_code=EXIT_USAGE, data={"issues": issues})
+    return preset
+
+
+def _is_str_or_none(value: Any) -> bool:
+    return value is None or isinstance(value, str)
+
+
+def _parse_order(raw: str | None) -> bool:
+    """True for descending (the default)."""
+
+    if raw is None or raw == "desc":
+        return True
+    if raw == "asc":
+        return False
+    raise CliError(f"`--order` takes asc or desc, got `{raw}`.", exit_code=EXIT_USAGE)
 
 
 def _run_screen(argv: list[str]) -> None:
@@ -550,12 +567,15 @@ def _run_screen(argv: list[str]) -> None:
     sort = _str_option(options, "sort")
     preset_name = _str_option(options, "preset")
     top_raw = _str_option(options, "top")
+    order_raw = _str_option(options, "order")
     if preset_name is not None:
-        if where_raw is not None or sort is not None:
-            raise CliError("`--preset` cannot be combined with `--where`/`--sort`.", exit_code=EXIT_USAGE)
-        where_raw, sort, preset_top = _load_preset(preset_name)
-        if top_raw is None and preset_top is not None:
-            top_raw = str(preset_top)
+        if where_raw is not None or sort is not None or order_raw is not None:
+            raise CliError("`--preset` cannot be combined with `--where`/`--sort`/`--order`.", exit_code=EXIT_USAGE)
+        preset = _load_preset(preset_name)
+        where_raw, sort, order_raw = preset.get("where"), preset.get("sort"), preset.get("order")
+        if top_raw is None and preset.get("top") is not None:
+            top_raw = str(preset["top"])
+    descending = _parse_order(order_raw)
     if sort is not None and sort not in cache_screen.FACTOR_NAMES:
         raise CliError(
             f"`--sort` takes a factor name, got `{sort}`.",
@@ -578,6 +598,7 @@ def _run_screen(argv: list[str]) -> None:
             codes=[code.upper() for code in codes] if codes else None,
             where=cache_screen.parse_where(where_raw) if where_raw else None,
             sort=sort,
+            descending=descending,
             top=_parse_top(top_raw, default=cache_screen.DEFAULT_TOP) if top_raw is not None else None,
         )
     finally:

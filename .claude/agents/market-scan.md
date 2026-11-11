@@ -31,7 +31,7 @@ uv run cluefin-openapi-cli ecos macro-snapshot --json
 | 업종 강도 | `cache rs` — 업종 RS(`groups`)와 전 종목 RS(1M). `--by industry` 는 세분류 |
 | 추세 셋업 | `cache trend-setup --status alert,watch/g2` — 1·2·3그룹, 피봇·손절 수준, 거래대금 |
 | 가치 스크린 | `cache magic-formula --top 30` — 이익수익률·ROIC 순위 합. EV·투하자본이 근사라는 `notes` 를 같이 읽는다 |
-| 팩터 스크린 (선택) | `cache screen --preset <이름>` — `research/screens.toml` 에 사용자 프리셋이 있을 때만. 없으면 건너뛴다 |
+| 팩터 스크린 (선택) | `cache screen --preset <이름>` — `research/screens.toml` 에 사용자 프리셋이 있을 때만. 없으면 건너뛴다. per·pbr 은 비지배지분 포함 기준이라 지주회사가 싸게 보인다(`notes`) |
 | 거래 쏠림 | `kis ranking volume` (선택) — 캐시에 없는 당일 쏠림 확인용 |
 | 후보 확인 | 후보마다 `kis stock current-price` — 거래정지·관리·급등락을 거른다 |
 

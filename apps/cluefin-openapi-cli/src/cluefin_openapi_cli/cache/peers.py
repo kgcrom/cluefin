@@ -117,6 +117,15 @@ def _correlation(target: dict[date, float], candidate: dict[date, float]) -> tup
     return corr, len(shared)
 
 
+def _same_group(universe: list[dict[str, Any]], target: dict[str, Any], field: str) -> list[dict[str, Any]]:
+    """Other stocks sharing ``target``'s ``field``; a target without one has no group (not "every blank")."""
+
+    value = target.get(field)
+    if not value:
+        return []
+    return [row for row in universe if row["code"] != target["code"] and row.get(field) == value]
+
+
 def peers(conn: duckdb.DuckDBPyConnection, as_of: date, code: str, *, top: int = DEFAULT_TOP) -> dict[str, Any]:
     """Deterministic comparable-company picks for ``code``, ranked by size closeness + return correlation."""
 
@@ -129,13 +138,9 @@ def peers(conn: duckdb.DuckDBPyConnection, as_of: date, code: str, *, top: int =
     universe = cache_trend._universe(conn, as_of, None, None)
     by_code = {row["code"]: row for row in universe}
 
-    group_field = "industry"
-    same_group = [row for row in universe if row["code"] != code and row.get(group_field) == target.get(group_field)]
+    group_field, same_group = "industry", _same_group(universe, target, "industry")
     if len(same_group) < _MIN_PEERS:
-        group_field = "sector"
-        same_group = [
-            row for row in universe if row["code"] != code and row.get(group_field) == target.get(group_field)
-        ]
+        group_field, same_group = "sector", _same_group(universe, target, "sector")
     candidate_codes = [row["code"] for row in same_group]
 
     factor_payload = screen(

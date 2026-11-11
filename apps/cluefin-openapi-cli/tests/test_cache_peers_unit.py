@@ -218,3 +218,22 @@ def test_cli_peers_requires_code(cache) -> None:
 def test_cli_peers_rejects_unknown_code(cache) -> None:
     result = run_cli(["cache", "peers", "--code", "999999", "--json"])
     assert result.exit_code == 2
+
+
+def test_peers_of_a_stock_without_a_group_are_empty_not_every_ungrouped_stock(cache) -> None:
+    conn = store.open_store()
+    for code in ("900010", "900020", "900030", "900040"):
+        conn.execute(
+            "INSERT INTO company (code, name, market, list_count, is_admin, is_halted) "
+            "VALUES (?, ?, 'KOSPI', 1000000, false, false)",
+            [code, f"stock-{code}"],
+        )
+        _insert_flat_series(conn, code, 100.0)
+    conn.close()
+
+    conn = store.open_store(read_only=True)
+    payload = cache_peers.peers(conn, _AS_OF, "900010")
+    conn.close()
+
+    assert payload["candidates"] == 0
+    assert payload["rows"] == []

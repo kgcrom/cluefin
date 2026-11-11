@@ -196,7 +196,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
             f"{APP_NAME} cache macro-beta --code <code> [--since YYYYMMDD] [--until YYYYMMDD] [--json]",
             f"{APP_NAME} cache magic-formula [--as-of YYYYMMDD] [--top 30] [--json]",
             f"{APP_NAME} cache screen [--as-of YYYYMMDD] [--where 'per<10,roe>=15'] [--preset NAME] "
-            "[--sort FACTOR] [--market KOSPI|KOSDAQ] [--sector S] [--industry I] [--code <c1,c2>] [--top 50] "
+            "[--sort FACTOR] [--order asc|desc] [--market KOSPI|KOSDAQ] [--sector S] [--industry I] [--code <c1,c2>] [--top 50] "
             "[--factors true] [--json]",
             f"{APP_NAME} cache peers --code <code> [--as-of YYYYMMDD] [--top 5] [--json]",
         ],
@@ -268,11 +268,12 @@ _META_HELP: dict[str, dict[str, Any]] = {
             {
                 "flag": "--preset NAME",
                 "meaning": "screen: reads `where`/`sort`/`top` from `[NAME]` in `research/screens.toml` "
-                "(gitignored, user-owned). Mutually exclusive with --where/--sort.",
+                "(gitignored, user-owned; `order` too). Mutually exclusive with --where/--sort/--order.",
             },
             {
                 "flag": "--sort FACTOR",
-                "meaning": "screen: factor to sort rows by, descending, nulls last (default: code ascending).",
+                "meaning": "screen: factor to sort rows by, nulls last (default: code ascending). --order asc|desc "
+                "(default desc) — asc for per/pbr-style factors where lower comes first.",
             },
             {
                 "flag": "--factors true",
