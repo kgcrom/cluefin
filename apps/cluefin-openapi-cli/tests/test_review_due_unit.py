@@ -188,6 +188,26 @@ def test_gather_events_filters_schedule_rows_by_code_and_flags_truncation() -> N
     assert events["next_periodic_deadline"]["214320"]["kind"] == "분기보고서"
 
 
+def test_gather_events_dart_status_013_is_zero_not_a_failure() -> None:
+    # DART answers an empty window with status 013 and `list: null`, not an empty list (confirmed 2026-11-11 real call).
+    conn = _store("214320", [100, 101])
+    rows, _ = rd.tracked_rows(conn, [_record()], codes=[])
+
+    def runner(argv: list[str]) -> tuple[int, str, str]:
+        if argv[:2] == ["kis", "schedule"]:
+            return 0, json.dumps({"data": []}), ""
+        if argv[:2] == ["dart", "disclosure-search"]:
+            return (
+                0,
+                json.dumps({"result": {"status": "013", "message": "조회된 데이타가 없습니다.", "list": None}}),
+                "",
+            )
+        return 1, "{}", "unexpected call"
+
+    events = rd.gather_events(runner, conn, rows, days=14, today=TODAY)
+    assert events["disclosures"]["214320"] == {"count": 0, "recent_titles": [], "since": "20261102"}
+
+
 def test_gather_events_only_covers_open_rows() -> None:
     conn = _store("214320", [100, 200, 200, 200, 200])  # crosses entry_above immediately then runs past horizon
     record = _record(horizon_days=2)

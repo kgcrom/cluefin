@@ -255,7 +255,14 @@ def _disclosure_events(
                 "--json",
             ],
         )
-        items = ((payload or {}).get("result") or {}).get("list") if isinstance(payload, dict) else None
+        result = payload.get("result") if isinstance(payload, dict) else None
+        if not isinstance(result, dict):
+            by_code[code] = {"count": None, "recent_titles": [], "reason": "disclosure-search failed"}
+            continue
+        items = result.get("list")
+        # DART status 013 ("조회된 데이타가 없습니다") answers `list: null` for a clean empty window — not a failure.
+        if items is None and result.get("status") == "013":
+            items = []
         if not isinstance(items, list):
             by_code[code] = {"count": None, "recent_titles": [], "reason": "disclosure-search failed"}
             continue
