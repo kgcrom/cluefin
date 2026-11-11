@@ -75,8 +75,10 @@ def test_full_graph_writes_raw_and_manifest(tmp_path: Path) -> None:
     assert runner.calls[0][:3] == ["kis", "stock", "current-price"]
     # audit block: main + each + required
     for cmd in ("kis stock opinion-summary", "kis market announcement", "cache macro-beta", "cache base-rate",
-                "kis stock implied-expectations"):  # fmt: skip
+                "kis stock implied-expectations", "kis stock flow-summary"):  # fmt: skip
         assert ("214320", cmd) in commands
+    # flow-summary is stage1-only for the stock under review, not the peer (plan A2: "stage1 본 종목만")
+    assert ("030000", "kis stock flow-summary") not in commands
     for subject in ("214320", "030000"):
         for cmd in ("dart corp-code-lookup", "kis stock current-price", "dart financial-summary", "kis stock valuation",
                     "kis stock valuation-band", "kis stock investor-metrics", "kis chart technical",

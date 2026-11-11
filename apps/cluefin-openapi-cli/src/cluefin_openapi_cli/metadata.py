@@ -830,6 +830,9 @@ COMMAND_TAXONOMY: dict[str, CommandTaxonomy] = {
     "kis.stock.current-price": CommandTaxonomy(("quote",), ("current-price",)),
     "kis.stock.current-price-extended": CommandTaxonomy(("quote",), ("current-price", "volatility", "credit")),
     "kis.stock.estimated-earnings": CommandTaxonomy(("statements",), ("earnings-estimate",)),
+    "kis.stock.flow-summary": CommandTaxonomy(
+        ("trading-flow",), ("foreign", "institution", "short-selling", "credit", "program-trading")
+    ),
     "kis.stock.implied-expectations": CommandTaxonomy(("statements",), ("valuation", "implied-expectations")),
     "kis.stock.investor-metrics": CommandTaxonomy(("statements",), ("investor-quality", "valuation")),
     "kis.stock.investment-opinion": CommandTaxonomy(("statements",), ("analyst-opinion",)),
@@ -1402,6 +1405,8 @@ _NAME_SAMPLES: tuple[tuple[tuple[str, ...], tuple[str, ...], str], ...] = (
     (("accession_number",), (), "0000320193-23-000106"),
     (("stock_code", "code", "iscd"), (), "005930"),
     (("market",), (), "J"),
+    # kis stock flow-summary: comma-separated trading-day windows.
+    (("windows",), (), "5,20,60"),
 )
 
 
