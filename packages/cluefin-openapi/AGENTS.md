@@ -121,7 +121,8 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - Token issuance (`/oauth2/token`) is **live-domain only** (no mock endpoint), rate-limited
   to 1/sec server-side, and every unnecessary re-issue triggers a security alert on the
   account — always go through `Auth.generate()` (TokenManager cache), never call the raw
-  endpoint in loops or retries. On 429, retry with the SAME token.
+  endpoint in loops or retries. Retries (429, 5xx, timeout — the shared `_execute_with_retry`, order POSTs
+  included, as in kis/kiwoom) reuse the SAME token.
 - One token serves both live (`api.nhplug.com`) and mock (`moapi.nhplug.com`) calls, which
   is why the nhplug token cache is scoped by app_key only (no env) — don't "fix" it to
   match kis/kiwoom.

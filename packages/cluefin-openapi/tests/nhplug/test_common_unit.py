@@ -3,12 +3,16 @@
 import json
 
 import pytest
+import requests
 import requests_mock
 
 from cluefin_openapi.nhplug._exceptions import (
     NHPlugAPIError,
     NHPlugAuthenticationError,
+    NHPlugNetworkError,
     NHPlugRateLimitError,
+    NHPlugServerError,
+    NHPlugTimeoutError,
 )
 from cluefin_openapi.nhplug._http_client import HttpClient
 
@@ -79,6 +83,53 @@ class TestHttpClient:
         assert auth_headers == {"Bearer t"}
         requested_paths = {request.path for request in m.request_history}
         assert "/oauth2/token" not in requested_paths
+
+    def test_post_retries_5xx_then_succeeds(self, monkeypatch):
+        # 다른 브로커 클라이언트와 같은 규칙: 5xx 는 max_retries 만큼 다시 보낸다.
+        monkeypatch.setattr("cluefin_openapi._http_base.time.sleep", lambda _seconds: None)
+        client = HttpClient(token="t", app_key="k", secret_key="s", env="prod", max_retries=2)
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/n2/acctinfo", [{"status_code": 500, "json": {}}, {"json": ACCTINFO_BODY}])
+            response = client.post("/n2/acctinfo")
+
+        assert response.status_code == 200
+        assert m.call_count == 2
+
+    def test_post_retries_5xx_then_raises_server_error(self, monkeypatch):
+        monkeypatch.setattr("cluefin_openapi._http_base.time.sleep", lambda _seconds: None)
+        client = HttpClient(token="t", app_key="k", secret_key="s", env="prod", max_retries=1)
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/n2/acctinfo", status_code=503, json={})
+            with pytest.raises(NHPlugServerError):
+                client.post("/n2/acctinfo")
+
+        assert m.call_count == 2
+
+    @pytest.mark.parametrize(
+        ("raised", "expected"),
+        [
+            (requests.exceptions.Timeout, NHPlugTimeoutError),
+            (requests.exceptions.ConnectionError, NHPlugNetworkError),
+        ],
+    )
+    def test_post_retries_timeout_and_connection_error(self, monkeypatch, raised, expected):
+        monkeypatch.setattr("cluefin_openapi._http_base.time.sleep", lambda _seconds: None)
+        client = HttpClient(token="t", app_key="k", secret_key="s", env="prod", max_retries=1)
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/n2/acctinfo", exc=raised)
+            with pytest.raises(expected):
+                client.post("/n2/acctinfo")
+
+        assert m.call_count == 2
+        assert {request.headers["Authorization"] for request in m.request_history} == {"Bearer t"}
+
+    def test_post_does_not_retry_4xx(self, client):
+        with requests_mock.Mocker() as m:
+            m.post(f"{BASE_PROD}/n2/acctinfo", status_code=400, json={})
+            with pytest.raises(NHPlugAPIError):
+                client.post("/n2/acctinfo")
+
+        assert m.call_count == 1
 
 
 class TestGetAccountList:
