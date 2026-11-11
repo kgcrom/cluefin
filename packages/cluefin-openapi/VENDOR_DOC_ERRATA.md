@@ -248,6 +248,8 @@ ka10023 `stk_cnd`(1, `11`~`20`), ka10030 `mang_stk_incls`·`trde_qty_tp`·`trde_
 - 접근토큰폐기 `/oauth2/revoke` 응답: 필드 표는 `error_code`·`error_description`, 예시는 `code`·`message`.
   성공은 예시 쪽으로 온다 — 모델은 네 필드를 모두 선택으로 둔다.
 - 웹소켓 세션해제 `/websocket/close/session`: 표는 `rsp_msg` 길이 2 — 실제 메시지는 한글 문장("연결된 세션이 존재하지 않습니다").
+  열린 세션이 없으면 실패로 온다 (운영·모의 동일): 2026-08-22 는 HTTP 500 + `IGW50025`("일시적인 오류"), 2026-09-23 은
+  HTTP 200 + `rsp_cd="10000"`. 500 으로 오면 다른 5xx 처럼 `max_retries` 만큼 다시 보낸 뒤 `NHPlugServerError` 다.
 - **요청 필드 타입을 엄격히 검사한다.** 스펙이 integer/number 인 필드를 JSON 문자열로 보내면 `IGW40011`
   ("req_cnt 길이나 data type을 확인하세요", HTTP 400)로 거부한다 (해외 체결추이 `req_cnt`, 운영 2026-09-27).
   TS 클라이언트가 모든 값을 문자열로 바꿔 보내고 있었다 — 값을 받은 그대로 보내도록 수정.
