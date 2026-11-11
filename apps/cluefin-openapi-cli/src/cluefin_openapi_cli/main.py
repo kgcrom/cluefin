@@ -370,13 +370,17 @@ _META_HELP: dict[str, dict[str, Any]] = {
     "review": {
         "description": "Fetch everything a company review reads into one folder, in parallel stages capped per "
         "broker, so an agent reads files instead of holding ~15 JSON replies (plus 9 per peer) in its context. "
-        "`record` appends the review's verdict to research/verdicts.jsonl; `track` checks those verdicts against cached prices.",
+        "`record` appends the review's verdict to research/verdicts.jsonl; `track` checks those verdicts against cached prices. "
+        "`checklist` compares my own rules against one run folder.",
         "usage": [
             f"{APP_NAME} review collect --stock-code <code> [--peers <code,code>] [--out <dir>] [--json]",
             f"{APP_NAME} review collect --into <run dir> --peers <code,code> [--json]",
             f"{APP_NAME} review record --from <verdict.json or its folder> [--source main|company-review] "
             "[--report <html under research/>] [--json]",
             f"{APP_NAME} review track [--code <code,code>] [--json]",
+            f"{APP_NAME} review checklist --init [--rules <path>] [--json]",
+            f"{APP_NAME} review checklist --from <review collect folder> [--rules <path>] [--json]",
+            f"{APP_NAME} review checklist --metrics true [--json]",
         ],
         "options": [
             {"flag": "--stock-code CODE", "meaning": "The stock under review (6 digits)."},
@@ -400,11 +404,20 @@ _META_HELP: dict[str, dict[str, Any]] = {
             {"flag": "--source NAME", "meaning": "record: main (default) or company-review."},
             {"flag": "--report PATH", "meaning": "record: the HTML report, which must sit under research/."},
             {"flag": "--code CODES", "meaning": "track: only these stocks' verdicts."},
+            {
+                "flag": "--rules PATH",
+                "meaning": "checklist: rules TOML. Default research/principles.toml ($CLUEFIN_RESEARCH_DIR root).",
+            },
+            {"flag": "--init", "meaning": "checklist: write an example rules file at --rules (fails if it exists)."},
+            {"flag": "--metrics true", "meaning": "checklist: print the metric catalog instead of evaluating rules."},
         ],
         "examples": [
             f"uv run {APP_NAME} review collect --stock-code 214320 --peers 030000 --json",
         ],
         "notes": [
+            "checklist reads raw/<code>__<stem>.json from a review collect folder only — it never calls a broker. "
+            "Each rule gets pass/fail/unknown (unknown names the raw file or missing account in reason); must_failed "
+            "lists the ids of must=true rules that failed. Results are also written to <folder>/checklist.json.",
             "Stages: kis current-price (refreshes the shared KIS token) → corp code, cache status → macro snapshot, "
             "stock/corp-code commands and peer corp codes → industry outlook, latest periodic report text and notes, "
             "DART major indicators, peer data. A kis/dart exit 3 stops the run.",

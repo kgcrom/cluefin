@@ -215,6 +215,16 @@ uv run cluefin-openapi-cli review track --code 214320 --json
 기록한 가격은 기준일 adj_factor 로 맞춥니다. 가격 도달은 일봉 종가 기준입니다. horizon 이 캐시에서 아직 안 지났으면
 `open`, 기준일 봉이 없으면 `no_data`(캐시 기준일을 함께 보여 줌)입니다.
 
+`review checklist` 는 내가 정한 기준(`research/principles.toml`)을 `review collect` 폴더의 raw 파일과 대조합니다.
+점수·매수 신호가 아니라 규칙마다 `pass`/`fail`/`unknown`(이유 포함) 과 측정값을 냅니다. 카탈로그에 없는 metric,
+모르는 연산자, 문자열 metric 에 `<` 같은 연산자를 쓰면 exit 2 로 전부 한 번에 알려 줍니다.
+
+```bash
+uv run cluefin-openapi-cli review checklist --init --json          # research/principles.toml 이 없을 때만 예시로 생성
+uv run cluefin-openapi-cli review checklist --from /private/tmp/cluefin-review/214320-20261108 --json
+uv run cluefin-openapi-cli review checklist --metrics true --json  # 쓸 수 있는 metric 카탈로그
+```
+
 `audit` 은 `.claude/agents/*.md` 로 돈 agent 실행을 Claude Code 트랜스크립트에서 읽어, 그 agent 파일의 감사 기준과
 대조합니다(빠진 명령·같은 인자 반복·exit 3 뒤 계속·재시도 없는 실패). 저장소 루트에서 실행합니다.
 
