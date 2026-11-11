@@ -69,7 +69,18 @@ _TECHNICAL = {
     "stop_sizing": {"levels": [{"horizon_days": 20, "width_pct": 8.4}, {"horizon_days": 60, "width_pct": 14.55}]},
 }
 
+_FLOWS = {
+    "as_of": {"investors": "20261111", "short_selling": "20261111"},
+    "investors": {
+        "foreign": {"windows": {"20": {"pct_of_window_turnover": -2.75}}},
+        "institution": {"windows": {"20": {"pct_of_window_turnover": 1.4}}},
+    },
+    "short_selling": {"latest": 3.47},
+    "missing": {},
+}
+
 _RAW = {
+    "kis-stock-flow-summary": _FLOWS,
     "dart-financial-summary": _FS_PAYLOAD,
     "kis-stock-valuation": _VALUATION,
     "kis-stock-valuation-band": _BAND,
@@ -108,6 +119,9 @@ def _write_folder(tmp_path: Path, code: str = "005930", raw: dict[str, Any] | No
         ("per_band_pct", 73.6),
         ("pbr_band_pct", 85.7),
         ("fcf_yield", 3.1),
+        ("foreign_net_20d_pct", -2.75),
+        ("institution_net_20d_pct", 1.4),
+        ("short_selling_pct", 3.47),
         ("ev_ebit", 6.4),
         ("shareholder_yield", 1.5),
         ("dilution_3y_pct", round(0.02 + 0.03, 6)),
@@ -316,3 +330,11 @@ def test_cli_checklist_end_to_end(tmp_path: Path, capsys: pytest.CaptureFixture[
     assert out["stock_code"] == "005930"
     assert out["rules"]
     assert (folder / ck.CHECKLIST_FILE).is_file()
+
+
+def test_flow_metric_names_the_failed_series_when_the_window_is_missing(tmp_path: Path) -> None:
+    raw = {"kis-stock-flow-summary": {"as_of": {}, "investors": {}, "missing": {"investors": "page 1: boom"}}}
+    folder = _write_folder(tmp_path, raw=raw)
+    result = rm.compute(folder, "005930", "foreign_net_20d_pct")
+    assert result.value is None
+    assert result.reason == "page 1: boom"

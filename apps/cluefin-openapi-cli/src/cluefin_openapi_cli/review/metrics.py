@@ -218,6 +218,31 @@ def _extract_stop_width_pct(payload: Any, code: str) -> MetricResult:  # noqa: A
     return MetricResult(level["width_pct"], as_of)
 
 
+# `kis stock flow-summary` windows are keyed by trading days; the checklist reads the 20-day one — long enough to
+# not be one day's noise, and one page of the 30-row series.
+_FLOW_WINDOW = "20"
+
+
+def _extract_flow_pct(investor: str) -> Callable[[Any], MetricResult]:
+    def extract(payload: Any) -> MetricResult:
+        as_of = _reason(payload, "as_of", "investors")
+        value = _get(payload, "investors", investor, "windows", _FLOW_WINDOW, "pct_of_window_turnover")
+        if value is None:
+            reason = _reason(payload, "missing", "investors") or f"flow-summary has no {_FLOW_WINDOW}-day window"
+            return MetricResult(None, as_of, reason)
+        return MetricResult(value, as_of)
+
+    return extract
+
+
+def _extract_short_selling(payload: Any) -> MetricResult:
+    as_of = _reason(payload, "as_of", "short_selling")
+    value = _get(payload, "short_selling", "latest")
+    if value is None:
+        return MetricResult(None, as_of, _reason(payload, "missing", "short_selling") or "no short-selling rows")
+    return MetricResult(value, as_of)
+
+
 def _one_arg(fn: Callable[[Any], MetricResult]) -> Callable[[Any, str], MetricResult]:
     def wrapped(payload: Any, code: str) -> MetricResult:  # noqa: ARG001
         return fn(payload)
@@ -312,6 +337,24 @@ CATALOG: dict[str, MetricSpec] = {
             "kis-stock-investor-metrics",
             "주주수익률 (%), investor-metrics.shareholder_yield",
             _extract_investor_metric("shareholder_yield"),
+        ),
+        _spec(
+            "foreign_net_20d_pct",
+            "kis-stock-flow-summary",
+            "외국인 20거래일 순매수 금액 ÷ 같은 창 거래대금 (%), flow-summary.investors.foreign",
+            _extract_flow_pct("foreign"),
+        ),
+        _spec(
+            "institution_net_20d_pct",
+            "kis-stock-flow-summary",
+            "기관 20거래일 순매수 금액 ÷ 같은 창 거래대금 (%), flow-summary.investors.institution",
+            _extract_flow_pct("institution"),
+        ),
+        _spec(
+            "short_selling_pct",
+            "kis-stock-flow-summary",
+            "최근 거래일 공매도 비중 (거래량 대비 %), flow-summary.short_selling.latest",
+            _extract_short_selling,
         ),
         MetricSpec(
             id="dilution_3y_pct",

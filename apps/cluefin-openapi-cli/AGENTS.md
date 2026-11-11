@@ -504,7 +504,9 @@ CLI 가 말해 주지 않는 것만 적는다.
   (`$CLUEFIN_REVIEW_DIR` 로 바꾼다).
 - `review checklist` 는 `research/principles.toml` 규칙을 `review collect` 폴더의 raw 파일과 대조한다(`review/metrics.py`
   가 metric 이름 → raw 파일 stem + 추출 함수 카탈로그, `review/checklist.py` 가 TOML 파싱·검증·판정). 추출은 그 명령이
-  이미 계산한 필드를 읽을 뿐 다시 계산하지 않는다 — `quality.py`·`investor_metrics.py` 와 같은 규율. 규칙 파일의 모든
+  이미 계산한 필드를 읽을 뿐 다시 계산하지 않는다 — `quality.py`·`investor_metrics.py` 와 같은 규율. 수급 메트릭
+  (`foreign_net_20d_pct`·`institution_net_20d_pct`·`short_selling_pct`)은 `kis stock flow-summary` 의 20거래일 창을 읽는다 —
+  그 명령이 생기기 전(2026-11-11 이전)에 만든 수집 폴더에서는 `unknown` 이다. 규칙 파일의 모든
   문제(모르는 metric·op, 타입 오류)는 한 번에 `data.issues[]` 로 모아 exit 2 — 한 줄 고치고 다시 걸리는 왕복을 없앤다.
   결과는 점수가 아니라 규칙별 `pass`/`fail`/`unknown`(이유)이고, `<folder>/checklist.json` 에도 쓴다. `--init` 은
   파일이 없을 때만 쓴다(있으면 exit 2) — 사용자의 기존 기준표를 덮지 않는다.
