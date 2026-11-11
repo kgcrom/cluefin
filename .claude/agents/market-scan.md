@@ -19,7 +19,7 @@ uv run cluefin-openapi-cli ecos macro-snapshot --json
 
 - 스크린은 전부 로컬 캐시(`~/.cache/cluefin/market.duckdb`)를 읽는다. `ohlcv.last_date` 가 직전 거래일보다 이르면
   리포트 첫 줄에 "캐시 기준일 <날짜>" 를 적고 그 날짜로 쓴다. `cache load` 는 직접 돌리지 않는다(실계좌 토큰을 쓴다).
-- ECOS 가 exit 3 이면 매크로만 빼고 계속한다. KIS 가 exit 3 이면 후보 확인(현재가)을 "데이터 없음" 으로 두고
+- ECOS 가 exit 3 이면 매크로만 빼고 계속한다. KIS 가 exit 3 이면 시장 수급과 후보 확인(현재가)을 "데이터 없음" 으로 두고
   캐시 스크린만으로 쓴다 — 그 사실을 첫 줄에 적는다.
 
 ## 데이터
@@ -28,6 +28,7 @@ uv run cluefin-openapi-cli ecos macro-snapshot --json
 | --- | --- |
 | 시장 폭 | `cache breadth` — 52주 신고가·신저가 수, 50일선 위 비율, 상승·하락, 지수별 distribution day·follow-through day |
 | 매크로 | `ecos macro-snapshot` — 금리·신용스프레드·원/달러·수출·심리의 최근값·변화·10년 백분위 |
+| 시장 수급 | `kis analysis investor-by-market-daily` — 지수별 외국인·기관·개인 순매수 금액(백만원), 최근 20거래일. `kis analysis market-fund-summary` — 고객예탁금·신용융자 잔고·미수금(억원) |
 | 업종 강도 | `cache rs` — 업종 RS(`groups`)와 전 종목 RS(1M). `--by industry` 는 세분류 |
 | 추세 셋업 | `cache trend-setup --status alert,watch/g2` — 1·2·3그룹, 피봇·손절 수준, 거래대금 |
 | 가치 스크린 | `cache magic-formula --top 30` — 이익수익률·ROIC 순위 합. EV·투하자본이 근사라는 `notes` 를 같이 읽는다 |
@@ -37,6 +38,8 @@ uv run cluefin-openapi-cli ecos macro-snapshot --json
 
 ```bash
 uv run cluefin-openapi-cli cache breadth --json
+uv run cluefin-openapi-cli kis analysis investor-by-market-daily --market U --sector-code 0001 --sub-sector-code 0001 --market-code KSP --start-date 20261111 --end-date 20261111 --limit 20 --fields data.stck_bsop_date,data.frgn_ntby_tr_pbmn,data.orgn_ntby_tr_pbmn,data.prsn_ntby_tr_pbmn --json
+uv run cluefin-openapi-cli kis analysis market-fund-summary --date 20261111 --limit 20 --fields data.bsop_date,data.cust_dpmn_amt,data.crdt_loan_rmnd,data.uncl_amt --json
 uv run cluefin-openapi-cli cache rs --json
 uv run cluefin-openapi-cli cache trend-setup --status alert,watch/g2 --json
 uv run cluefin-openapi-cli cache magic-formula --top 30 --json
@@ -48,10 +51,16 @@ uv run cluefin-openapi-cli kis stock current-price --stock-code 068270 --json
 명령은 한 줄씩 별도 Bash 호출로, 독립인 것은 같은 턴에 병렬로 부른다. 같은 명령을
 같은 인자로 두 번 부르지 않는다 — 앞 결과를 다시 읽는다. 출력을 파일로 보내지 않는다(`>`).
 
+- 시장 수급의 날짜는 캐시 기준일로 넣는다(예시 날짜가 아니다). 코스닥은 `--sector-code 1001 --sub-sector-code 1001
+  --market-code KSQ`. 응답이 300행이라 `--limit`·`--fields` 없이 부르지 않는다 — 필드 경로는 `data.` 로 시작한다.
+  증시자금은 하루 늦게 올라온다(행의 `bsop_date`).
+
 ## 분석
 
 1. **장세** — 시장 폭·매크로 수치를 `as_of`·변화와 함께 적는다. 국면을 한 단어로 정하지 않는다. distribution day 가
    많고 follow-through day 가 없으며 50일선 위 비율이 낮으면, 그 수치를 근거로 후보 수를 줄이고 이유를 쓴다.
+   시장 수급은 20거래일 순매수 합과 최근 5일 방향, 예탁금·신용융자 잔고의 20일 변화를 적는다 — 누가 샀는지의
+   사실이지 방향 예측이 아니다.
 2. **업종** — 업종 RS 상·하위 3개와 중앙값 수익률. 후보가 강한 업종에 몰렸는지, 약한 업종의 예외인지 적는다.
 3. **후보** — 원천별로 모은 뒤 겹치는 종목을 앞에 둔다: 추세 셋업(1·2·3그룹) ∩ RS(1M) 상위 ∩ 업종 RS 상위가
    가장 앞, magic-formula 상위는 "가치 후보" 로 따로 적는다(추세와 성격이 달라 섞지 않는다). 거래대금이 작거나
@@ -78,6 +87,8 @@ subjects: report
 required: cache status
 required: ecos macro-snapshot
 required: cache breadth
+required: kis analysis investor-by-market-daily
+required: kis analysis market-fund-summary
 required: cache rs
 required: cache trend-setup
 required: cache magic-formula
