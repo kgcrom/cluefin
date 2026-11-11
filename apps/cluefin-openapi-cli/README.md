@@ -184,6 +184,10 @@ uv run cluefin-openapi-cli cache load --only financials --json                  
 uv run cluefin-openapi-cli cache financials --code 005930 --json
 uv run cluefin-openapi-cli cache macro-beta --code 005930 --json                   # 주간 수익률을 KOSPI·환율·금리에 회귀
 uv run cluefin-openapi-cli cache magic-formula --top 30 --json                     # 이익수익률+ROIC 순위 합 상위 30
+uv run cluefin-openapi-cli cache screen --where 'per<10,roe>=15,rs_1m>=70' --sort roe --top 30 --json
+uv run cluefin-openapi-cli cache screen --preset my-quality --json                  # research/screens.toml 의 [my-quality]
+uv run cluefin-openapi-cli cache screen --factors true --json                      # 팩터 이름·정의 목록(네트워크·캐시 불필요)
+uv run cluefin-openapi-cli cache peers --code 005930 --top 5 --json                # 같은 업종 비교 기업 5개
 ```
 
 `review collect` 는 종목 검토(company-review)가 읽을 데이터를 한 폴더에 받습니다. 브로커별 동시 호출 수를 제한해
@@ -266,6 +270,35 @@ IBD(윌리엄 오닐) 방법론의 근사로 냅니다 — 공식이 비공개�
 근사이고 — Greenblatt 의 정확한 정의가 아닙니다. 두 지표의 순위는 `cache rs`/`cache breadth` 가 쓰는
 `_percentile_rank`(0~99, 평균순위 동점 처리)의 합이고(높을수록 좋음), `--top`(기본 30)개까지 보여 줍니다. 한계는
 `cache/magic.py` 모듈 docstring 과 매 응답의 `notes` 에 있습니다.
+
+`cache screen` 은 라벨·점수 없는 팩터 표입니다(mcap·per·pbr·psr·earnings_yield·roe·opm·debt_ratio·roic·revenue_yoy·
+op_yoy·revenue_cagr_3y·rs_1m·ret_3m/6m/12m·high_52w_gap·above_ma50·value_20d — 전체 정의는 `--factors true`).
+`cache magic-formula` 와 달리 금융도 유니버스에 포함하고(PER/PBR 은 금융도 의미가 있어서), earnings_yield·roic 만
+금융·증권·보험·전기/가스에서 null 입니다. `--where`(`per<10,roe>=15` 처럼 쉼표로 이은 `factor op value`, `eval` 없이
+정규식으로 파싱)로 거르거나 `--preset <이름>`(`research/screens.toml` 의 `[이름]` 절, 없으면 exit 2)을 씁니다.
+`--market`/`--sector`/`--industry`/`--code` 는 보여 줄 행만 좁히고, rs_1m 백분위는 항상 전 종목 기준입니다.
+재무는 `cache financials` 최신 공개 연도, EV·투하자본은 `cache/magic.py` 의 근사를 그대로 가져다 씁니다.
+`--sort <팩터>` 는 내림차순이고, per·pbr 처럼 낮은 값이 먼저면 `--order asc` 를 붙입니다. 성장률(revenue_yoy·op_yoy·
+revenue_cagr_3y)은 바로 전 연도·3년 전 연도가 캐시에 있을 때만 나옵니다. per·pbr·roe 는 지배/비지배 구분이 없는
+전체 순이익·자본 기준이라 `kis stock valuation` 의 지배주주 기준 값과 다를 수 있습니다.
+
+```toml
+# research/screens.toml — 내 프리셋. gitignore 된 research/ 아래에 직접 만듭니다.
+[my-quality]
+where = "per<10,roe>=15,rs_1m>=70"
+sort = "roe"
+
+[cheap]
+where = "pbr<0.7,roe>=8,debt_ratio<100"
+sort = "pbr"
+order = "asc"
+top = 30
+```
+
+`cache peers` 는 같은 `industry`(3종목 미만이면 `sector`) 후보를 시총 근접도(`|log(시총비)|`)와 최근 250거래일
+수익률 상관의 순위 합으로 정렬합니다(ordinal rank, 둘 다 낮을수록 좋음). 상관은 겹치는 날이 120일 미만이면
+`null` 이고 그 신호는 최하위 순위로 처리합니다. 각 행은 `cache screen` 의 팩터 표 값을 그대로 가져다 씁니다 —
+업종 분류는 현재 값(PIT 아님)이라는 점이 `notes` 에 있습니다.
 
 `cache perf` 는 종목을 수정주가로 사서 들고 있었을 때의 성과(`cluefin-ta` `PERFORMANCE`: CAGR·MDD·변동성·샤프·소르티노·칼마·
 베타·알파)와 같은 기간 벤치마크(기본 `U0001`) 자체의 성과를 함께 줍니다. 두 코드 모두 일봉이 있는 날만 쓰고, CAGR 은 달력 연수로

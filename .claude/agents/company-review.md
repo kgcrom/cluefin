@@ -39,6 +39,7 @@ uv run cluefin-openapi-cli review collect --stock-code 214320 --peers 030000 --j
   의 exit 2 는 제조업(KSIC 10~33)이 아니라는 뜻이다 — 업황 조정 0.
 - **비교 기업**은 지시에 있으면 `--peers` 에 넣는다. 사업보고서 경쟁 현황을 읽고 정했으면 같은 폴더에 더한다:
   `review collect --into <out> --peers 035000`. 본 종목은 다시 받지 않는다.
+  지시에 없으면 `cache peers --code` 로 후보를 받아 사업 구성이 맞는 것만 고른다.
 
 ## 데이터
 

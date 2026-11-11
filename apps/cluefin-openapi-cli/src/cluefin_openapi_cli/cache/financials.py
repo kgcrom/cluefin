@@ -55,11 +55,14 @@ from cluefin_openapi_cli.clock import now_kst
 from cluefin_openapi_cli.statements import won
 
 __all__ = [
+    "ACCOUNT_ALIASES",
     "ANNUAL_REPORT_CODE",
     "BATCH_SIZE",
     "DEFAULT_YEAR_COUNT",
     "FinancialLoadStats",
+    "account_spellings",
     "default_years",
+    "fold_accounts",
     "load_financials",
 ]
 
@@ -204,6 +207,35 @@ ACCOUNT_NAMES = (
     "영업이익",
     "당기순이익",
 )
+
+# The table keeps DART's `account_nm` verbatim, and filers label the same line two ways: the 2026-11-11
+# cache has no bare "당기순이익" at all (12,595 rows of "당기순이익(손실)") and 241 rows of "영업이익(손실)"
+# beside 12,364 of "영업이익". Readers ask for both spellings and fold them onto the bare name.
+ACCOUNT_ALIASES = {"영업이익(손실)": "영업이익", "당기순이익(손실)": "당기순이익"}
+
+
+def account_spellings(names: tuple[str, ...]) -> list[str]:
+    """``names`` plus every stored spelling that folds onto one of them — the list to put in the SQL filter."""
+
+    return [*names, *(alias for alias, canonical in ACCOUNT_ALIASES.items() if canonical in names)]
+
+
+def fold_accounts(rows: list[tuple[str, str, str, float]]) -> dict[str, dict[str, dict[str, float]]]:
+    """``(code, year, account_nm, amount)`` rows → ``{code: {year: {bare account name: amount}}}``.
+
+    When a filer has both spellings for one year the bare one wins, whatever the row order.
+    """
+
+    out: dict[str, dict[str, dict[str, float]]] = {}
+    for code, year, account_nm, amount in rows:
+        accounts = out.setdefault(code, {}).setdefault(year, {})
+        canonical = ACCOUNT_ALIASES.get(account_nm)
+        if canonical is None:
+            accounts[account_nm] = amount
+        else:
+            accounts.setdefault(canonical, amount)
+    return out
+
 
 _UPSERT_SQL = """
 INSERT INTO financials (code, year, reprt_code, basis, account_nm, amount, currency, loaded_at)
