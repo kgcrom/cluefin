@@ -424,12 +424,14 @@ _META_HELP: dict[str, dict[str, Any]] = {
             "lists the ids of must=true rules that failed. Results are also written to <folder>/checklist.json.",
             "due looks at the latest verdict per stock_code only (a changed mind is a newer line, not a rewrite). "
             "due_reasons: crossed (a trigger/target/stop price hit), recheck_passed/recheck_within "
-            "(trigger.recheck_on), horizon_ending, closed. A verdict with none of these is only counted.",
+            "(trigger.recheck_on, calendar days), horizon_ending (trading days left), closed, no_data (the cache "
+            "has no reference-day bar). A verdict with none of these is only counted.",
             "due --events true calls the 12 kis schedule.* commands once each (stock_code blank, filtered to open "
             "verdicts' codes locally — not one call per stock) plus one dart disclosure-search per open stock, and "
-            "computes the next statutory periodic-report deadline from the cached company.settle_month (no call). "
-            "KIS schedule replies echo no continuation key, so a reply at the 100-row page cap is marked "
-            "possibly_truncated rather than assumed complete.",
+            "computes the next statutory periodic-report deadline from the cached company.settle_month (no call; "
+            "a weekend deadline moves to Monday, holidays are not known). KIS schedule replies echo no "
+            "continuation key and stop at 100 rows, so a full reply is asked again per stock "
+            "(refetched_per_stock); failed calls are listed in `failed`, not read as no events.",
             "Stages: kis current-price (refreshes the shared KIS token) → corp code, cache status → macro snapshot, "
             "stock/corp-code commands and peer corp codes → industry outlook, latest periodic report text and notes, "
             "DART major indicators, peer data. A kis/dart exit 3 stops the run.",

@@ -9,15 +9,17 @@ supplies the price facts; this module only adds *why* a verdict is worth another
     recheck_within   trigger.recheck_on falls within the next `--days`
     horizon_ending   status is still "open" and horizon_days - days_seen falls within `--days`
     closed           the horizon has already passed in the cache
+    no_data          the cache has no bar on the reference date, so nothing above could be checked
 
 A verdict with none of these is just counted, not listed — `review due` is a filter, not a dump of every holding.
 
 `--events true` goes further: for every verdict still *open* (regardless of whether it's "due"), it checks KIS's
 12 `schedule.*` commands (shared calls — one per command, `stock_code` left blank, filtered to these codes locally)
 and DART's disclosures, and computes the next statutory periodic-report deadline from `company.settle_month` (a pure
-date calculation, no call). KIS schedule calls echo no continuation key, so a reply exactly at the 100-row
-page cap is marked ``possibly_truncated`` rather than assumed complete (confirmed empirically 2026-11-11: a wide
-date window returns exactly 100 rows and silently drops the rest; a 14-day window did not hit the cap).
+date calculation, no call). KIS schedule calls echo no continuation key and silently stop at 100 rows (confirmed
+2026-11-11 on a two-year window), so a market-wide page with 100 real rows is asked again stock by stock
+(`refetched_per_stock`) instead of being trusted. `listing` pads short replies to 100 with blank rows, so blank
+rows are dropped before counting. A failed call is listed in `failed`, never read as "no events".
 """
 
 from __future__ import annotations
@@ -61,6 +63,7 @@ SCHEDULE_COMMANDS: tuple[str, ...] = (
     "stock-dividend",
 )
 _SCHEDULE_PAGE_CAP = 100  # observed 2026-11-11: a wide window returns exactly 100 rows with no cts echoed back
+_DISCLOSURE_PAGE = 100
 
 # 분기/반기보고서는 45일, 사업보고서(사업연도말)는 90일 — 자본시장법 정기보고서 제출기한.
 _DEADLINE_DAYS: tuple[int, ...] = (45, 45, 45, 90)
@@ -100,6 +103,8 @@ def _reasons(row: dict[str, Any], today: date, days: int) -> list[dict[str, Any]
             reasons.append({"type": "horizon_ending", "days_left": remaining})
     if row.get("status") == "closed":
         reasons.append({"type": "closed"})
+    if row.get("status") == "no_data":
+        reasons.append({"type": "no_data", "cache_as_of": row.get("cache_as_of")})
     return reasons
 
 
@@ -143,7 +148,9 @@ def due(rows: list[dict[str, Any]], cache_as_of: str | None, *, days: int, today
         "notes": [
             "종목별 가장 최근 판단 하나만 본다(판단을 바꾸면 새로 기록하므로). 사유 없는 판단은 watched 에만 들어간다.",
             "crossed: 트리거/목표가/손절가가 닿음. recheck_passed/recheck_within: trigger.recheck_on. "
-            "horizon_ending: horizon_days 안에서 --days 이내 남음. closed: horizon 이 이미 지남.",
+            "horizon_ending: 남은 거래일(horizon_days − 지난 거래일)이 --days 이하. closed: horizon 이 이미 지남. "
+            "no_data: 캐시에 기준일 봉이 없어 아무것도 대조하지 못함(cache load 가 필요하거나 캐시에 없는 종목).",
+            "recheck 는 달력일, horizon 은 거래일로 센다.",
         ],
     }
 
@@ -155,13 +162,20 @@ def _period_end(month: int, year: int) -> date:
     return date(year, month, calendar.monthrange(year, month)[1])
 
 
+def _roll_weekend(day: date) -> date:
+    """A deadline on a Saturday or Sunday moves to the Monday; public holidays are not known here."""
+
+    return day + timedelta(days=(7 - day.weekday()) % 7 if day.weekday() >= 5 else 0)
+
+
 def next_periodic_deadline(settle_month: int, today: date) -> dict[str, Any]:
     """The nearest upcoming periodic-report statutory deadline for a filer whose fiscal year ends `settle_month`.
 
     Pure date arithmetic — no DART call. The four reporting periods of a fiscal year ending in `settle_month` end
     9/6/3/0 months before it; the first three are 분기/반기보고서 (45-day deadline), the fiscal year end itself is
-    사업보고서 (90-day deadline). Checked against today's real date (2026-11-11, 사업연도말=12): with no filing
-    pending the fiscal year's 분기보고서(Q3, 기말 2026-09-30) is due 2026-11-14 — 3 days out.
+    사업보고서 (90-day deadline). A deadline on a weekend moves to the Monday (a public holiday is not known here,
+    so the real deadline can be a day later still). For 사업연도말=12 on 2026-11-11: the 분기보고서 for the period
+    ending 2026-09-30 is 45 days out on Saturday 2026-11-14, so it is due Monday 2026-11-16.
     """
 
     if not 1 <= settle_month <= 12:
@@ -171,7 +185,7 @@ def next_periodic_deadline(settle_month: int, today: date) -> dict[str, Any]:
     for idx, month in enumerate(period_end_months):
         for year in (today.year - 1, today.year, today.year + 1):
             period_end = _period_end(month, year)
-            deadline = period_end + timedelta(days=_DEADLINE_DAYS[idx])
+            deadline = _roll_weekend(period_end + timedelta(days=_DEADLINE_DAYS[idx]))
             if deadline >= today:
                 candidates.append((deadline, period_end, _KIND[idx]))
     deadline, period_end, kind = min(candidates, key=lambda c: c[0])
@@ -187,44 +201,78 @@ def _ymd(day: date) -> str:
     return day.strftime("%Y%m%d")
 
 
+_COMPANY_SQL = "SELECT code, corp_code, settle_month FROM company WHERE code IN (SELECT unnest(?::TEXT[]))"
+
+
 def _company_lookup(conn: duckdb.DuckDBPyConnection, codes: list[str]) -> dict[str, tuple[str | None, int | None]]:
     """code -> (corp_code, settle_month), from the local cache only."""
 
     if not codes:
         return {}
-    placeholders = ",".join("?" * len(codes))
-    rows = conn.execute(f"SELECT code, corp_code, settle_month FROM company WHERE code IN ({placeholders})", codes)
-    return {code: (corp, settle) for code, corp, settle in rows.fetchall()}
+    return {code: (corp, settle) for code, corp, settle in conn.execute(_COMPANY_SQL, [codes]).fetchall()}
 
 
-def _call(runner: Runner, argv: list[str]) -> Any:
+def _call(runner: Runner, argv: list[str]) -> tuple[Any, int]:
+    """(parsed stdout or None, exit code)."""
+
     exit_code, stdout, _stderr = runner(argv)
     if exit_code != 0:
-        return None
+        return None, exit_code
     try:
-        return json.loads(stdout)
+        return json.loads(stdout), 0
     except ValueError:
-        return None
+        return None, exit_code
+
+
+def _schedule_rows(runner: Runner, name: str, start: str, end: str, code: str | None) -> tuple[list[Any] | None, int]:
+    argv = ["kis", "schedule", name, "--start-date", start, "--end-date", end]
+    if code:
+        argv += ["--stock-code", code]
+    payload, exit_code = _call(runner, [*argv, "--json"])
+    rows = payload.get("data") if isinstance(payload, dict) else None
+    if not isinstance(rows, list):
+        return None, exit_code
+    # `listing` pads every reply to 100 rows with blank ones (2026-11-11: 23 real codes + blanks on a 14-day
+    # window), so only rows that name a stock count — toward the events and toward the page cap.
+    return [row for row in rows if isinstance(row, dict) and str(row.get("sht_cd", "")).strip()], exit_code
 
 
 def _schedule_events(runner: Runner, codes: set[str], today: date, days: int) -> dict[str, Any]:
+    """One market-wide call per schedule command; a reply at the page cap is asked again per stock."""
+
     start, end = _ymd(today), _ymd(today + timedelta(days=days))
     by_code: dict[str, list[dict[str, Any]]] = {code: [] for code in codes}
     truncated: list[str] = []
+    refetched: list[str] = []
+    failed: list[dict[str, Any]] = []
     for name in SCHEDULE_COMMANDS:
-        payload = _call(runner, ["kis", "schedule", name, "--start-date", start, "--end-date", end, "--json"])
-        rows = payload.get("data") if isinstance(payload, dict) else None
-        if not isinstance(rows, list):
+        rows, exit_code = _schedule_rows(runner, name, start, end, None)
+        if rows is None:
+            failed.append({"command": name, "exit_code": exit_code})
             continue
-        if len(rows) == _SCHEDULE_PAGE_CAP:
-            truncated.append(name)
+        if len(rows) >= _SCHEDULE_PAGE_CAP:
+            # The market-wide page is full, so rows for these stocks may have been cut: ask stock by stock.
+            refetched.append(name)
+            rows = []
+            for code in sorted(codes):
+                own, own_exit = _schedule_rows(runner, name, start, end, code)
+                if own is None:
+                    failed.append({"command": name, "stock_code": code, "exit_code": own_exit})
+                    continue
+                if len(own) >= _SCHEDULE_PAGE_CAP:
+                    truncated.append(f"{name}:{code}")
+                rows.extend(own)
         for row in rows:
-            if not isinstance(row, dict):
-                continue
             code = str(row.get("sht_cd", "")).strip()
             if code in by_code:
                 by_code[code].append({"command": name, **row})
-    return {"checked": list(SCHEDULE_COMMANDS), "possibly_truncated": truncated, "by_code": by_code}
+    return {
+        "checked": list(SCHEDULE_COMMANDS),
+        "refetched_per_stock": refetched,
+        "possibly_truncated": truncated,
+        "failed": failed,
+        "by_code": by_code,
+    }
 
 
 def _disclosure_events(
@@ -239,35 +287,24 @@ def _disclosure_events(
             continue
         recorded_at = row.get("recorded_at")
         bgn_de = recorded_at.replace("-", "") if recorded_at else _ymd(today - timedelta(days=365))
-        payload = _call(
+        payload, exit_code = _call(
             runner,
-            [
-                "dart",
-                "disclosure-search",
-                "--corp-code",
-                corp,
-                "--bgn-de",
-                bgn_de,
-                "--end-de",
-                _ymd(today),
-                "--page-count",
-                "100",
-                "--json",
-            ],
+            ["dart", "disclosure-search", "--corp-code", corp, "--bgn-de", bgn_de, "--end-de", _ymd(today)]
+            + ["--page-count", str(_DISCLOSURE_PAGE), "--json"],
         )
         result = payload.get("result") if isinstance(payload, dict) else None
-        if not isinstance(result, dict):
-            by_code[code] = {"count": None, "recent_titles": [], "reason": "disclosure-search failed"}
-            continue
-        items = result.get("list")
+        items = result.get("list") if isinstance(result, dict) else None
         # DART status 013 ("조회된 데이타가 없습니다") answers `list: null` for a clean empty window — not a failure.
-        if items is None and result.get("status") == "013":
+        if isinstance(result, dict) and items is None and result.get("status") == "013":
             items = []
         if not isinstance(items, list):
-            by_code[code] = {"count": None, "recent_titles": [], "reason": "disclosure-search failed"}
+            reason = f"disclosure-search failed (exit {exit_code})"
+            by_code[code] = {"count": None, "recent_titles": [], "reason": reason}
             continue
+        total = result.get("total_count") if isinstance(result, dict) else None
         by_code[code] = {
-            "count": len(items),
+            # total_count is the whole window; the list is only the newest page.
+            "count": total if isinstance(total, int) and total >= len(items) else len(items),
             "recent_titles": [str(item.get("report_nm")) for item in items[:5] if isinstance(item, dict)],
             "since": bgn_de,
         }
@@ -301,10 +338,12 @@ def gather_events(
         "disclosures": disclosures,
         "next_periodic_deadline": deadlines,
         "notes": [
-            "kis schedule 12종을 stock_code 없이 기간 한 번씩 불러 코드로 거른다(종목마다 부르지 않는다). 응답이 100행이면 "
-            "cts 이어받기를 이 CLI 가 노출하지 않아 더 있을 수 있다 — possibly_truncated 를 본다.",
+            "kis schedule 12종을 stock_code 없이 기간 한 번씩 불러 코드로 거른다. 응답이 100행(쪽 상한)이면 잘렸을 수 "
+            "있어 그 명령만 종목마다 다시 부른다(refetched_per_stock). 실패한 호출은 failed 에 있다 — 그 일정은 "
+            "'없음'이 아니라 '확인 못 함'이다.",
             "disclosures 는 각 종목의 recorded_at 이후 공시 수와 최근 제목 5개(dart disclosure-search). corp_code 가 "
             "캐시에 없으면 그 종목은 reason 으로 남는다.",
-            "next_periodic_deadline 은 company.settle_month(캐시) 로 계산한 순수 날짜 계산이다 — DART 호출 없음.",
+            "next_periodic_deadline 은 company.settle_month(캐시)로 계산한 날짜다(분기·반기말 +45일, 사업연도말 +90일, "
+            "주말이면 월요일). 공휴일은 반영하지 않고, 이미 제출했는지도 보지 않는다 — DART 호출 없음.",
         ],
     }

@@ -126,7 +126,15 @@ def test_codes_filter() -> None:
 
 def test_next_periodic_deadline_calendar_year_filer() -> None:
     result = rd.next_periodic_deadline(12, TODAY)
-    assert result == {"kind": "분기보고서", "period_end": "2026-09-30", "deadline": "2026-11-14", "days_left": 3}
+    # 2026-09-30 + 45 days is Saturday 2026-11-14, so the report is due the Monday.
+    assert result == {"kind": "분기보고서", "period_end": "2026-09-30", "deadline": "2026-11-16", "days_left": 5}
+
+
+def test_next_periodic_deadline_on_a_weekday_is_not_moved() -> None:
+    # FY2026 ends Thursday 2026-12-31; 90 days later is Wednesday 2027-03-31.
+    result = rd.next_periodic_deadline(12, date(2027, 1, 4))
+    assert result["kind"] == "사업보고서"
+    assert result["deadline"] == "2027-03-31"
 
 
 def test_next_periodic_deadline_is_the_soonest_future_one() -> None:
@@ -161,8 +169,10 @@ class _FakeRunner:
     def __call__(self, argv: list[str]) -> tuple[int, str, str]:
         self.calls.append(argv)
         if argv[:2] == ["kis", "schedule"]:
-            name = argv[2]
-            return 0, json.dumps({"data": self._schedule_rows.get(name, [])}), ""
+            rows = self._schedule_rows.get(argv[2], [])
+            if "--stock-code" in argv:
+                rows = [r for r in rows if r["sht_cd"] == argv[argv.index("--stock-code") + 1]]
+            return 0, json.dumps({"data": rows}), ""
         if argv[:2] == ["dart", "disclosure-search"]:
             corp = argv[argv.index("--corp-code") + 1]
             return 0, json.dumps({"result": {"list": self._disclosures.get(corp, [])}}), ""
@@ -181,8 +191,11 @@ def test_gather_events_filters_schedule_rows_by_code_and_flags_truncation() -> N
     assert events["schedule"]["by_code"]["214320"] == [
         {"command": "dividend", "sht_cd": "214320", "record_date": "20261112"}
     ]
-    assert events["schedule"]["possibly_truncated"] == ["listing"]
-    assert len(runner.calls) == len(rd.SCHEDULE_COMMANDS) + 1  # +1 disclosure-search
+    # `listing` came back at the 100-row cap, so it is asked again for the one open stock instead of being trusted.
+    assert events["schedule"]["refetched_per_stock"] == ["listing"]
+    assert events["schedule"]["possibly_truncated"] == []
+    assert events["schedule"]["failed"] == []
+    assert len(runner.calls) == len(rd.SCHEDULE_COMMANDS) + 1 + 1  # + per-stock listing + disclosure-search
     assert events["disclosures"]["214320"]["count"] == 1
     assert events["disclosures"]["214320"]["recent_titles"] == ["분기보고서"]
     assert events["next_periodic_deadline"]["214320"]["kind"] == "분기보고서"
@@ -264,3 +277,72 @@ def test_cli_due_end_to_end(
     out = json.loads(capsys.readouterr().out)
     assert out["due_count"] == 1
     assert out["due"][0]["stock_code"] == "214320"
+
+
+def test_a_full_market_wide_page_is_refetched_per_stock_and_finds_the_cut_row() -> None:
+    conn = _store("214320", [100, 101])
+    rows, _ = rd.tracked_rows(conn, [_record()], codes=[])
+    others = [{"sht_cd": f"{i:06d}", "record_date": "20261112"} for i in range(100)]
+    mine = {"sht_cd": "214320", "record_date": "20261120"}
+
+    def runner(argv: list[str]) -> tuple[int, str, str]:
+        if argv[:3] == ["kis", "schedule", "listing"]:
+            # The market-wide reply stops at 100 rows and this stock's row is past the cut.
+            return 0, json.dumps({"data": [mine] if "--stock-code" in argv else others}), ""
+        if argv[:2] == ["kis", "schedule"]:
+            return 0, json.dumps({"data": []}), ""
+        return 0, json.dumps({"result": {"status": "013", "list": None}}), ""
+
+    events = rd.gather_events(runner, conn, rows, days=14, today=TODAY)
+    assert events["schedule"]["by_code"]["214320"] == [{"command": "listing", **mine}]
+
+
+def test_a_failed_schedule_call_is_listed_not_read_as_no_events() -> None:
+    conn = _store("214320", [100, 101])
+    rows, _ = rd.tracked_rows(conn, [_record()], codes=[])
+
+    def runner(argv: list[str]) -> tuple[int, str, str]:
+        if argv[:3] == ["kis", "schedule", "dividend"]:
+            return 3, json.dumps({"error": {"type": "CredentialsMissing"}}), ""
+        if argv[:2] == ["kis", "schedule"]:
+            return 0, json.dumps({"data": []}), ""
+        return 4, "{}", ""
+
+    events = rd.gather_events(runner, conn, rows, days=14, today=TODAY)
+    assert events["schedule"]["failed"] == [{"command": "dividend", "exit_code": 3}]
+    assert events["disclosures"]["214320"]["reason"] == "disclosure-search failed (exit 4)"
+
+
+def test_disclosure_count_is_the_window_total_not_the_page_length() -> None:
+    conn = _store("214320", [100, 101])
+    rows, _ = rd.tracked_rows(conn, [_record()], codes=[])
+    page = [{"report_nm": f"공시 {i}"} for i in range(100)]
+
+    def runner(argv: list[str]) -> tuple[int, str, str]:
+        if argv[:2] == ["kis", "schedule"]:
+            return 0, json.dumps({"data": []}), ""
+        return 0, json.dumps({"result": {"status": "000", "total_count": 240, "list": page}}), ""
+
+    events = rd.gather_events(runner, conn, rows, days=14, today=TODAY)
+    assert events["disclosures"]["214320"]["count"] == 240
+    assert len(events["disclosures"]["214320"]["recent_titles"]) == 5
+
+
+def test_a_verdict_the_cache_cannot_check_is_due_with_no_data() -> None:
+    conn = _store("214320", [100, 101], start=date(2026, 11, 3))  # no bar on the 2026-11-02 reference date
+    rows, cache_as_of = rd.tracked_rows(conn, [_record()], codes=[])
+    payload = rd.due(rows, cache_as_of, days=14, today=TODAY)
+    assert payload["by_reason"] == {"no_data": 1}
+
+
+def test_blank_padding_rows_do_not_count_toward_the_page_cap() -> None:
+    # `listing` pads a short reply to 100 rows with blank ones — that is not a cut-off page.
+    conn = _store("214320", [100, 101])
+    rows, _ = rd.tracked_rows(conn, [_record()], codes=[])
+    padded = [{"sht_cd": "214320", "list_dt": "20261116"}] + [{"sht_cd": "", "list_dt": ""}] * 99
+    runner = _FakeRunner({"listing": padded}, disclosures={})
+    events = rd.gather_events(runner, conn, rows, days=14, today=TODAY)
+    assert events["schedule"]["refetched_per_stock"] == []
+    assert events["schedule"]["by_code"]["214320"] == [
+        {"command": "listing", "sht_cd": "214320", "list_dt": "20261116"}
+    ]

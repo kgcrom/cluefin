@@ -153,11 +153,25 @@ def load_rules(path: Path) -> list[dict[str, Any]]:
     if not isinstance(rules, list) or not rules:
         raise CliError(f"{path} has no [[rule]] entries.", exit_code=EXIT_USAGE)
     issues: list[str] = []
+    seen: set[str] = set()
     for index, rule in enumerate(rules):
         issues.extend(_rule_issues(rule, index))
+        rid = rule.get("id") if isinstance(rule, dict) else None
+        if isinstance(rid, str) and rid in seen:
+            issues.append(f"rule[{index}]: id {rid!r} is used twice")
+        if isinstance(rid, str):
+            seen.add(rid)
     if issues:
         raise CliError("The rules file has invalid entries.", exit_code=EXIT_USAGE, data={"issues": issues})
     return rules
+
+
+def _comparable(value: Any, threshold: Any) -> bool:
+    """A number against a number, a string against a string — a raw file that drifted is unknown, not a crash."""
+
+    if isinstance(threshold, str):
+        return isinstance(value, str)
+    return isinstance(value, int | float) and not isinstance(value, bool)
 
 
 def evaluate(folder: Path, code: str, rules: list[dict[str, Any]]) -> dict[str, Any]:
@@ -175,9 +189,9 @@ def evaluate(folder: Path, code: str, rules: list[dict[str, Any]]) -> dict[str, 
             "value": result.value,
             "as_of": result.as_of,
         }
-        if result.value is None:
+        if result.value is None or not _comparable(result.value, rule["value"]):
             row["result"] = "unknown"
-            row["reason"] = result.reason
+            row["reason"] = result.reason or f"the collected value is not a {CATALOG[rule['metric']].kind}"
             counts["unknown"] += 1
         else:
             passed = _OPS[rule["op"]](result.value, rule["value"])
