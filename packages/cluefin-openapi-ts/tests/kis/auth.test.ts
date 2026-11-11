@@ -38,12 +38,12 @@ class TestTokenCacheStore implements TokenCacheStore {
 const futureIso = (offsetMs = 2 * 60 * 60 * 1000): string => new Date(Date.now() + offsetMs).toISOString();
 const pastIso = (): string => new Date(Date.now() - 60 * 1000).toISOString();
 
-const cachedToken = (expiresAt = futureIso()): TokenCacheEntry => ({
+const cachedToken = (expiresAt = futureIso(), cachedAt = new Date().toISOString()): TokenCacheEntry => ({
   accessToken: 'cached-access-token',
   tokenType: 'Bearer',
   expiresIn: 86_400,
   accessTokenTokenExpired: expiresAt,
-  cachedAt: '2026-05-05T00:00:00Z',
+  cachedAt,
 });
 
 const createTokenResponse = (): Response =>
@@ -100,6 +100,37 @@ describe('KisAuth', () => {
       });
       expect(cache.setEntries).toHaveLength(1);
     }
+  });
+
+  it('re-issues when the cache is older than the 6h max age even if the token has not expired', async () => {
+    // Python `TokenManager.MAX_CACHE_AGE`: KIS may invalidate a token before its stated 24h expiry.
+    const staleCachedAt = new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString();
+    const cache = new TestTokenCacheStore(cachedToken(futureIso(12 * 60 * 60 * 1000), staleCachedAt));
+    const { calls, fetchMock } = createFetchMock(createTokenResponse());
+    const auth = new KisAuth({
+      appKey: 'app-key',
+      secretKey: 'secret-key',
+      tokenCacheStore: cache,
+      fetchImpl: fetchMock,
+    });
+
+    await expect(auth.generate()).resolves.toMatchObject({ accessToken: 'new-access-token' });
+    expect(calls).toHaveLength(1);
+    expect(cache.setEntries).toHaveLength(1);
+  });
+
+  it('keeps a cached token whose cachedAt cannot be parsed, as Python does', async () => {
+    const cache = new TestTokenCacheStore(cachedToken(futureIso(), 'not-a-date'));
+    const { calls, fetchMock } = createFetchMock(createTokenResponse());
+    const auth = new KisAuth({
+      appKey: 'app-key',
+      secretKey: 'secret-key',
+      tokenCacheStore: cache,
+      fetchImpl: fetchMock,
+    });
+
+    await expect(auth.generate()).resolves.toMatchObject({ accessToken: 'cached-access-token' });
+    expect(calls).toHaveLength(0);
   });
 
   it('uses production auth endpoints when env is prod', async () => {
