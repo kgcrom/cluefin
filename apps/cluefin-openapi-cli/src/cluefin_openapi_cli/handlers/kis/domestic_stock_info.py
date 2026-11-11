@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 from statistics import mean
 
 from cluefin_openapi_cli import band as valuation_band
-from cluefin_openapi_cli import implied, investor_metrics, opinions, quality, statements
+from cluefin_openapi_cli import flows, implied, investor_metrics, opinions, quality, statements
 from cluefin_openapi_cli.cache import store as cache_store
 from cluefin_openapi_cli.cache.read import read_ohlcv
-from cluefin_openapi_cli.clock import KST
-from cluefin_openapi_cli.errors import EXIT_BROKER, CliError
+from cluefin_openapi_cli.clock import KST, now_kst
+from cluefin_openapi_cli.errors import EXIT_BROKER, EXIT_USAGE, CliError
 from cluefin_openapi_cli.handlers import dart as dart_handlers
 from cluefin_openapi_cli.handlers._base import DispatcherProtocol, extract_output, rpc_method
 from cluefin_openapi_cli.handlers.ecos import to_number
@@ -2096,6 +2096,288 @@ def handle_kis_investor_metrics(params: dict, session) -> dict:  # noqa: PLR0914
     }
 
 
+# ---------------------------------------------------------------------------
+# kis.stock_info.flow_summary — 투자자별 순매수·공매도·대차·신용잔고 요약 (flows.py)
+# ---------------------------------------------------------------------------
+
+_FLOW_SUMMARY_DEFAULT_WINDOWS = (5, 20, 60)
+# KRX closes at 15:30; before 15:40 today's row is still a running tally (same rule as trend-setup).
+_FLOW_SUMMARY_SESSION_FINAL = time(15, 40)
+# stock-loan-trend-daily takes an explicit start/end date (no continuation key like the others) — look
+# back far enough in calendar days to cover a 60-trading-day window plus slack (measured 2026-11-11:
+# ~100 calendar days gave 68 rows, so ~0.68 trading-day ratio; 200 days comfortably covers window=60).
+_STOCK_LOAN_LOOKBACK_DAYS = 200
+
+_FLOW_SUMMARY_NOTES = (
+    "계산값이다 — 매집·강세 같은 라벨이나 점수를 내지 않는다. 값과 구성요소만 낸다(flows.py).",
+    "investor-trade-by-stock-daily·credit-balance-trend-daily·program-trade-by-stock-daily 는 연속조회 "
+    "파라미터가 없어 한 번에 최근 30행만 온다(2026-11-11 실측, 대형주·소형주·금융주 세 종목 공통) — "
+    "--windows 로 60을 줘도 이 세 계열은 가진 행(최대 30)까지만 계산하고 각 블록의 rows_used 에 실제 쓴 "
+    "행 수를 적는다. short-selling-trend-daily 는 100행, stock-loan-trend-daily 는 요청한 날짜 구간만큼 온다.",
+    "같은 investor-trade-by-stock-daily 응답 안에서도 단위가 섞여 있다: *_ntby_qty 는 주, *_ntby_tr_pbmn 은 "
+    "백만원인데 같은 행의 acml_tr_pbmn(거래대금)은 raw 원이다. program-trade-by-stock-daily 의 *_tr_pbmn 은 "
+    "raw 원, credit-balance-trend-daily 의 *_amt 는 만원(모델 설명과 일치), stock-loan-trend-daily 의 "
+    "rmnd_amt 는 백만원이다(모두 2026-11-11 실측, flows.py 모듈 docstring 참고).",
+    "foreign_ownership 은 이 5개 입력 어디에도 외국인 지분율·상장주식수 필드가 없어 항상 null + reason 이다 "
+    "— 외국인 지분율은 kis stock current-price/basic-info 의 몫이고 이 명령의 호출 예산 밖이다. stock_loan·"
+    "credit 의 '상장주식 대비 %' 도 같은 이유로 null 이다.",
+    "credit-balance-trend-daily 의 deal_date 는 결제 기준이라 다른 계열의 영업일자보다 며칠 늦다(실측: "
+    "오늘 날짜로 조회해도 최근 행이 T+2 정도 과거다) — as_of.credit 이 그 지연을 그대로 보여준다.",
+    "장중이면 오늘 행은 잠정치다 — 15:40(KST) 전에는 각 계열의 오늘(KST) 날짜 행을 버리고 "
+    "dropped_intraday_row 에 적는다(kis chart trend-setup 과 같은 규칙).",
+    "계열 하나가 비거나 실패해도 나머지는 낸다 — missing 에 실패한 계열과 이유를 적는다. 자격증명 오류"
+    "(exit 3)만은 그대로 올린다.",
+)
+
+
+def _flow_summary_now() -> datetime:
+    """KST wall clock; tests replace this function."""
+
+    return now_kst()
+
+
+def _parse_flow_windows(raw: str | None) -> list[int]:
+    if not raw:
+        return list(_FLOW_SUMMARY_DEFAULT_WINDOWS)
+    windows: list[int] = []
+    for piece in raw.split(","):
+        piece = piece.strip()
+        if not piece.isdigit() or int(piece) <= 0:
+            raise CliError(
+                f"--windows must be positive integers separated by commas, got {raw!r}.",
+                exit_code=EXIT_USAGE,
+                error_type="ValidationError",
+                data={"windows": raw},
+                hint="Example: --windows 5,20,60",
+            )
+        windows.append(int(piece))
+    return windows
+
+
+def _is_credentials_error(exc: BaseException) -> bool:
+    names = [klass.__name__ for klass in type(exc).__mro__]
+    return any(name.endswith(("AuthenticationError", "AuthorizationError")) for name in names)
+
+
+def _by_window(rows: list[dict], windows: list[int], stat_fn) -> dict[str, dict]:
+    return {str(w): stat_fn(rows, window=w) for w in windows}
+
+
+@rpc_method(
+    name="stock.flow_summary",
+    description=(
+        "Who is trading one stock, by window (5/20/60 trading days, --windows to change): foreign/"
+        "institution/individual net-buy amount, % of window turnover, net-buy-day ratio and the current "
+        "net-buy/net-sell streak from investor-trade-by-stock-daily; short-selling share vs. its own "
+        "received history; stock-loan and credit-balance level plus window change; program-trading "
+        "net-buy sum. Values and components only, no buy/sell label. About 5 KIS calls."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {
+            "stock_code": {"type": "string", "pattern": "^[0-9]{6}$", "description": "6-digit stock code"},
+            "windows": {
+                "type": "string",
+                "description": "Comma-separated trading-day windows. Default 5,20,60.",
+            },
+            "market": {"type": "string", "enum": ["J", "NX", "UN"], "description": "Market code. Default J."},
+        },
+        "required": ["stock_code"],
+    },
+    returns={"type": "object"},
+    category="stock",
+    broker="kis",
+)
+def handle_kis_flow_summary(params: dict, session) -> dict:  # noqa: PLR0914
+    stock_code = params["stock_code"]
+    market = params.get("market", "J")
+    windows = _parse_flow_windows(params.get("windows"))
+    kis = session.get_kis()
+    now = _flow_summary_now()
+    today = now.strftime("%Y%m%d")
+    intraday_cutoff = now.time() < _FLOW_SUMMARY_SESSION_FINAL
+
+    dropped_intraday_row: dict[str, str] = {}
+    missing: dict[str, str] = {}
+    as_of: dict[str, str | None] = {}
+    rows_received: dict[str, int] = {}
+
+    def _drop_today(series: str, rows: list[dict], date_field: str) -> list[dict]:
+        if intraday_cutoff and rows and rows[0].get(date_field) == today:
+            dropped_intraday_row[series] = rows[0][date_field]
+            return rows[1:]
+        return rows
+
+    def _as_of(rows: list[dict], date_field: str) -> str | None:
+        return rows[0].get(date_field) if rows else None
+
+    investor_rows: list[dict] = []
+    try:
+        response = kis.domestic_market_analysis.get_investor_trading_trend_by_stock_daily(
+            fid_cond_mrkt_div_code=market, fid_input_iscd=stock_code, fid_input_date_1=today
+        )
+        investor_rows = [row.model_dump() for row in response.body.output2]
+    except Exception as exc:  # noqa: BLE001 — classified below, then recorded as a partial failure
+        if _is_credentials_error(exc):
+            raise
+        missing["investors"] = str(exc)
+    rows_received["investors"] = len(investor_rows)
+    investor_rows = _drop_today("investors", investor_rows, "stck_bsop_date")
+    as_of["investors"] = _as_of(investor_rows, "stck_bsop_date")
+
+    short_selling_rows: list[dict] = []
+    try:
+        response = kis.domestic_market_analysis.get_short_selling_trend_daily(
+            fid_input_date_2=today,
+            fid_cond_mrkt_div_code=market,
+            fid_input_iscd=stock_code,
+            fid_input_date_1="",
+        )
+        short_selling_rows = [row.model_dump() for row in response.body.output2]
+    except Exception as exc:  # noqa: BLE001
+        if _is_credentials_error(exc):
+            raise
+        missing["short_selling"] = str(exc)
+    rows_received["short_selling"] = len(short_selling_rows)
+    short_selling_rows = _drop_today("short_selling", short_selling_rows, "stck_bsop_date")
+    as_of["short_selling"] = _as_of(short_selling_rows, "stck_bsop_date")
+
+    stock_loan_rows: list[dict] = []
+    try:
+        response = kis.domestic_market_analysis.get_stock_loan_trend_daily(
+            mrkt_div_cls_code="3",
+            mksc_shrn_iscd=stock_code,
+            start_date=_days_before(today, _STOCK_LOAN_LOOKBACK_DAYS),
+            end_date=today,
+            cts="",
+        )
+        stock_loan_rows = [row.model_dump() for row in response.body.output1]
+    except Exception as exc:  # noqa: BLE001
+        if _is_credentials_error(exc):
+            raise
+        missing["stock_loan"] = str(exc)
+    rows_received["stock_loan"] = len(stock_loan_rows)
+    stock_loan_rows = _drop_today("stock_loan", stock_loan_rows, "bsop_date")
+    as_of["stock_loan"] = _as_of(stock_loan_rows, "bsop_date")
+
+    credit_rows: list[dict] = []
+    try:
+        response = kis.domestic_market_analysis.get_credit_balance_trend_daily(
+            fid_cond_mrkt_div_code=market,
+            fid_cond_scr_div_code="20476",
+            fid_input_iscd=stock_code,
+            fid_input_date_1=today,
+        )
+        credit_rows = [row.model_dump() for row in response.body.output]
+    except Exception as exc:  # noqa: BLE001
+        if _is_credentials_error(exc):
+            raise
+        missing["credit"] = str(exc)
+    rows_received["credit"] = len(credit_rows)
+    credit_rows = _drop_today("credit", credit_rows, "deal_date")
+    as_of["credit"] = _as_of(credit_rows, "deal_date")
+
+    program_rows: list[dict] = []
+    try:
+        response = kis.domestic_market_analysis.get_program_trading_trend_by_stock_daily(
+            fid_cond_mrkt_div_code=market, fid_input_iscd=stock_code, fid_input_date_1=today
+        )
+        program_rows = [row.model_dump() for row in response.body.output]
+    except Exception as exc:  # noqa: BLE001
+        if _is_credentials_error(exc):
+            raise
+        missing["program"] = str(exc)
+    rows_received["program"] = len(program_rows)
+    program_rows = _drop_today("program", program_rows, "stck_bsop_date")
+    as_of["program"] = _as_of(program_rows, "stck_bsop_date")
+
+    def _investor_block(pbmn_field: str) -> dict:
+        return {
+            "windows": _by_window(
+                investor_rows,
+                windows,
+                lambda rows, window: flows.window_flow_stats(
+                    rows,
+                    pbmn_field=pbmn_field,
+                    pbmn_scale=1_000_000,
+                    turnover_field="acml_tr_pbmn",
+                    turnover_scale=1,
+                    window=window,
+                ),
+            ),
+            "current_streak_days": flows.current_streak(investor_rows, pbmn_field),
+        }
+
+    foreign_ownership = {
+        "value": None,
+        "window_start_value": None,
+        "change_pp": None,
+        "reason": "입력 5계열(investor-trade·short-selling·stock-loan·credit·program) 응답 어디에도 "
+        "외국인 지분율·상장주식수 필드가 없다 — kis stock current-price/basic-info 가 그 값을 낸다.",
+    }
+    no_denominator_reason = "응답에 상장주식수(분모)가 없다 — 이 명령의 입력 5계열 어디에도 없다."
+
+    return {
+        "stock_code": stock_code,
+        "market": market,
+        "windows": windows,
+        "investors": {
+            "foreign": _investor_block("frgn_ntby_tr_pbmn"),
+            "institution": _investor_block("orgn_ntby_tr_pbmn"),
+            "individual": _investor_block("prsn_ntby_tr_pbmn"),
+        },
+        "foreign_ownership": foreign_ownership,
+        "short_selling": {
+            **flows.short_selling_stats(short_selling_rows, ratio_field="ssts_vol_rlim", window=max(windows)),
+            "window_avg_by_window": _by_window(
+                short_selling_rows,
+                windows,
+                lambda rows, window: flows.short_selling_stats(rows, ratio_field="ssts_vol_rlim", window=window)[
+                    "window_avg"
+                ],
+            ),
+        },
+        "stock_loan": {
+            "latest": flows.to_number(stock_loan_rows[0]["rmnd_stcn"]) if stock_loan_rows else None,
+            "latest_amount": (flows.to_number(stock_loan_rows[0]["rmnd_amt"]) * 1_000_000 if stock_loan_rows else None),
+            "windows": _by_window(
+                stock_loan_rows,
+                windows,
+                lambda rows, window: flows.level_window_stats(rows, value_field="rmnd_stcn", scale=1, window=window),
+            ),
+            "pct_of_listed_shares": None,
+            "pct_of_listed_shares_reason": no_denominator_reason,
+        },
+        "credit": {
+            "latest": flows.to_number(credit_rows[0]["whol_loan_rmnd_stcn"]) if credit_rows else None,
+            "latest_amount": (flows.to_number(credit_rows[0]["whol_loan_rmnd_amt"]) * 10_000 if credit_rows else None),
+            "windows": _by_window(
+                credit_rows,
+                windows,
+                lambda rows, window: flows.level_window_stats(
+                    rows, value_field="whol_loan_rmnd_stcn", scale=1, window=window
+                ),
+            ),
+            "pct_of_listed_shares": None,
+            "pct_of_listed_shares_reason": no_denominator_reason,
+        },
+        "program": {
+            "windows": _by_window(
+                program_rows,
+                windows,
+                lambda rows, window: flows.program_window_stats(
+                    rows, pbmn_field="whol_smtn_ntby_tr_pbmn", scale=1, window=window
+                ),
+            ),
+        },
+        "as_of": as_of,
+        "rows": rows_received,
+        "dropped_intraday_row": dropped_intraday_row,
+        "missing": missing,
+        "notes": list(_FLOW_SUMMARY_NOTES),
+    }
+
+
 _ALL_HANDLERS = [
     handle_kis_product_basic_info,
     handle_kis_stock_basic_info,
@@ -2121,6 +2403,7 @@ _ALL_HANDLERS = [
     handle_kis_stock_loanable_list,
     handle_kis_investment_opinion,
     handle_kis_investment_opinion_by_brokerage,
+    handle_kis_flow_summary,
 ]
 
 

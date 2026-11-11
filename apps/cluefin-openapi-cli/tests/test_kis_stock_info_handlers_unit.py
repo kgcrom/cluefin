@@ -11,14 +11,16 @@ from ._handler_fakes import (
     sample_params,
 )
 
-# valuation, implied-expectations, valuation-band and investor-metrics call KIS/DART/ECOS/the local
-# cache several times and compute; test_kis_opinion_valuation_unit.py, test_kis_implied_expectations_unit.py,
-# test_kis_valuation_band_unit.py and test_kis_investor_metrics_unit.py cover them.
+# valuation, implied-expectations, valuation-band, investor-metrics and flow-summary call KIS/DART/ECOS/
+# the local cache several times and compute; test_kis_opinion_valuation_unit.py,
+# test_kis_implied_expectations_unit.py, test_kis_valuation_band_unit.py, test_kis_investor_metrics_unit.py
+# and test_kis_flow_summary_unit.py cover them.
 _COMPUTED_HANDLERS = {
     handlers.handle_kis_stock_valuation,
     handlers.handle_kis_implied_expectations,
     handlers.handle_kis_stock_valuation_band,
     handlers.handle_kis_investor_metrics,
+    handlers.handle_kis_flow_summary,
 }
 _PASS_THROUGH_HANDLERS = [h for h in handlers._ALL_HANDLERS if h not in _COMPUTED_HANDLERS]
 

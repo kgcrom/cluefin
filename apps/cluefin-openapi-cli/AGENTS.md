@@ -49,6 +49,11 @@ CLI 가 말해 주지 않는 것만 적는다.
   지표(FCF 수익률, 오너 어닝스, EV/EBIT·이익수익률, PEG, 주주수익률, Altman Z 시총 원형)는 `kis stock
   investor-metrics --stock-code --corp-code`(약 12회) — ROIC·DuPont·F-Score·Z''(장부가)는 `dart
   financial-summary` 의 `quality` 블록이다.
+- **수급은 `kis stock flow-summary --stock-code`** 한 번(약 5회)으로 끝낸다 — 외국인·기관·개인 순매수 금액·창
+  거래대금 대비 %·순매수일 비율·연속 순매수/매도일, 공매도 비중의 창 평균·받은 구간 내 백분위, 대차·신용잔고
+  수준과 창 변화율, 프로그램매매 순매수 합을 5·20·60거래일 창으로 낸다. 매집·강세 같은 라벨은 없다 — 값과
+  구성요소만, 판단의 근거로만 쓴다. 외국인 지분율은 이 입력 어디에도 없어 항상 null 이다(`stock current-price`
+  몫).
 - **매크로는 `ecos`(한국은행).** 국면을 볼 때는 **`ecos macro-snapshot` 한 번** — 기준금리·국고채 3/10년·회사채 AA-/BBB-·원/달러·
   CPI·선행/동행지수 순환변동치·ESI·BSI·CCSI·뉴스심리·GDP·수출 15계열과 장단기 금리차·신용스프레드마다 최근값·1m/3m/1y 변화·10년
   백분위(약 15회, 실키 필요). 국면 라벨은 주지 않는다 — 어느 수치에 판단을 기대는지 직접 적는다. 그 밖의 계열은 `ecos table-search` →
@@ -146,7 +151,7 @@ CLI 가 말해 주지 않는 것만 적는다.
 - A `category` missing from `_CATEGORY_DEFAULTS` in `metadata.py` silently falls back to
   domain `market` / tag `ranking` instead of erroring — add an entry for new categories.
 
-## `kis chart technical`/`trend-setup`, `kis stock opinion-summary`/`valuation`/`valuation-band`/`implied-expectations`/`investor-metrics`, `dart financial-as-filed`/`financial-summary`, `ecos macro-snapshot` and the dart/sec filing-text commands compute; every other command passes through
+## `kis chart technical`/`trend-setup`, `kis stock opinion-summary`/`valuation`/`valuation-band`/`implied-expectations`/`investor-metrics`/`flow-summary`, `dart financial-as-filed`/`financial-summary`, `ecos macro-snapshot` and the dart/sec filing-text commands compute; every other command passes through
 
 - `dart financial-as-filed` is the second non-pass-through command: it parses a downloaded XBRL
   (see the `dart financial-*` section) and is excluded from the generic client-call tests the same way.
@@ -223,6 +228,30 @@ CLI 가 말해 주지 않는 것만 적는다.
   `test_investor_metrics_unit.py` covers the pure functions, `test_quality_unit.py` covers `altman_z`,
   `test_kis_investor_metrics_unit.py` covers the handler with one fake session answering KIS and DART (excluded
   from the calls-once check like valuation/implied-expectations).
+- `kis stock flow-summary` calls five KIS endpoints and windows them in a pure module, `flows.py` — no
+  labels, values and components only. Three of the five (`investor-trade-by-stock-daily`,
+  `credit-balance-trend-daily`, `program-trade-by-stock-daily`) take no continuation key and return only
+  the last **30** rows regardless of `--windows`; `short-selling-trend-daily` gives 100, `stock-loan-trend-daily`
+  follows the explicit `start_date`/`end_date` the handler computes (`_STOCK_LOAN_LOOKBACK_DAYS = 200` calendar
+  days, ~0.68 trading-day ratio measured 2026-11-11). All five come back **newest first** (measured on a
+  large-cap, a small-cap and a financial stock, 2026-11-11) and are passed to `flows.py` unconverted (`str`
+  fields) — `flows.to_number` turns blanks into `None`, never 0. Units are not uniform even within one
+  endpoint: `investor-trade-by-stock-daily`'s `*_ntby_tr_pbmn` is 백만원 but the same row's `acml_tr_pbmn` is raw
+  원; `program-trade-by-stock-daily`'s `*_tr_pbmn` is raw 원; `credit-balance-trend-daily`'s `*_amt` is 만원
+  (matches the field `description`); `stock-loan-trend-daily`'s `rmnd_amt` is 백만원 — all confirmed by
+  `qty × close ≈ amount × scale` on the sampled stocks, not from the portal docs. `credit-balance-trend-daily`'s
+  `deal_date` lags the other series' `stck_bsop_date` by settlement (measured: querying with today's date still
+  returned a most-recent row several calendar days back), so `as_of.credit` is expected to differ from the rest.
+  Neither this command's five inputs nor `stock-loan-trend-daily`/`credit-balance-trend-daily` carry a listed-share
+  denominator or a 외국인 지분율 field, so `foreign_ownership` and `pct_of_listed_shares` (stock_loan/credit) are
+  always `null` + `reason` — this module never reaches outside the response for a missing denominator (same
+  discipline as `investor_metrics.py`). One series failing (anything but a credentials error, matched by
+  class-name suffix like `errors.classify_exception`) is recorded in `missing` and the rest still compute;
+  a credentials error is re-raised, not swallowed. Before 15:40 KST, today's row is dropped from every series
+  that has it and listed in `dropped_intraday_row` (`_flow_summary_now`, same pattern as
+  `domestic_basic_quote._now`). `test_flows_unit.py` covers the pure functions, `test_kis_flow_summary_unit.py`
+  covers the handler with one fake `domestic_market_analysis` answering all five calls (excluded from the
+  calls-once check like valuation/implied-expectations/investor-metrics).
 - `kis stock opinion-summary` is one `investment-opinion` call plus `opinions.summarize` (factory
   `opinions()`): each broker's latest row in the window, positive targets only.
 - `dart financial-summary` calls `financial-full-statements` 8 times (two years × four report codes on one
