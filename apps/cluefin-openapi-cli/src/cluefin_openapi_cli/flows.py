@@ -11,11 +11,12 @@ Unit quirks measured the same day (not in the portal docs, only in the live body
 - `investor-trade-by-stock-daily` (FHPTJ04160001): `*_ntby_qty` is 주 (shares, raw), `*_ntby_tr_pbmn`
   is **백만원**, but `acml_tr_pbmn` (turnover) in the *same row* is **raw 원** — two units in one
   endpoint. Confirmed on all three sampled stocks: `frgn_ntby_qty × close ≈ frgn_ntby_tr_pbmn × 1e6`.
-  Only the last **30** rows come back; the client method takes no continuation key.
+  Only **30** rows come back per call and there is no continuation key — the handler pages by date
+  (`_dated_pages`: the day before the oldest row).
 - `program-trade-by-stock-daily` (FHPPG04650201): `*_tr_pbmn` is raw 원 (`whol_smtn_ntby_qty × close ≈
-  whol_smtn_ntby_tr_pbmn`). Also capped at 30 rows, no continuation key.
+  whol_smtn_ntby_tr_pbmn`). Also 30 rows a call, paged by date the same way.
 - `credit-balance-trend-daily` (FHPST04760000): `*_amt` is 만원, matching the field `description` —
-  confirmed by order of magnitude against `rmnd_stcn × close`. Capped at 30 rows. Its `deal_date` lags
+  confirmed by order of magnitude against `rmnd_stcn × close`. 30 rows a call, paged by date. Its `deal_date` lags
   (T+2 vs. the other series' `stck_bsop_date`) — confirmed: querying with today's date still returned a
   most-recent row several calendar days back (settlement, not quote, basis).
 - `stock-loan-trend-daily` (existing handler, FHPST04773000-style `analysis.stock_loan_trend`):

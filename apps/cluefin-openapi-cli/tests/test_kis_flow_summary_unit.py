@@ -255,3 +255,72 @@ def test_rows_reports_the_received_count_before_dropping(monkeypatch) -> None:
     session = _Session(_market_analysis(investor_rows=[_investor_row(_TODAY), _investor_row("20261110")]))
     result = handlers.handle_kis_flow_summary({"stock_code": "005930"}, session)
     assert result["rows"]["investors"] == 2
+
+
+class _PagedAnalysis(_MarketAnalysis):
+    """investor-trade answers the 30 rows up to the asked date, like the live endpoint."""
+
+    def __init__(self, *, history: list[dict], fail_on_call: int | None = None, **kwargs) -> None:
+        super().__init__(investor_rows=[], **kwargs)
+        self._history = history
+        self._fail_on_call = fail_on_call
+
+    def get_investor_trading_trend_by_stock_daily(self, **kwargs):
+        self.calls.append(("investors", kwargs))
+        asked = sum(1 for name, _ in self.calls if name == "investors")
+        if asked == self._fail_on_call:
+            raise RuntimeError("boom")
+        page = [r for r in self._history if r["stck_bsop_date"] <= kwargs["fid_input_date_1"]][:30]
+        return _Response(_Body(output1=_Row({}), output2=[_Row(r) for r in page]))
+
+
+def _history(days: int) -> list[dict]:
+    # Newest first; consecutive calendar days from 2026-11-11 back are enough for a date-keyed fake.
+    from datetime import timedelta
+
+    start = datetime(2026, 11, 11)
+    return [_investor_row((start - timedelta(days=i)).strftime("%Y%m%d"), frgn_ntby_tr_pbmn="1") for i in range(days)]
+
+
+def _paged(**kwargs) -> _PagedAnalysis:
+    return _PagedAnalysis(
+        short_selling_rows=[_short_selling_row(_TODAY)],
+        loan_rows=[_loan_row(_TODAY)],
+        credit_rows=[_credit_row("20261109")],
+        program_rows=[_program_row(_TODAY)],
+        **kwargs,
+    )
+
+
+def test_thirty_row_series_is_paged_by_date_until_the_largest_window_is_filled() -> None:
+    analysis = _paged(history=_history(100))
+    result = handlers.handle_kis_flow_summary({"stock_code": "005930"}, _Session(analysis))
+    dates = [kwargs["fid_input_date_1"] for name, kwargs in analysis.calls if name == "investors"]
+    assert dates == [_TODAY, "20261012"]  # page 1 ends at 2026-10-13; the next page asks for the day before
+    assert result["rows"]["investors"] == 60
+    assert result["investors"]["foreign"]["windows"]["60"]["rows_used"] == 60
+    assert result["investors"]["foreign"]["windows"]["60"]["net_buy_amount"] == pytest.approx(60_000_000.0)
+
+
+def test_short_history_stops_paging_at_a_short_page() -> None:
+    analysis = _paged(history=_history(40))
+    result = handlers.handle_kis_flow_summary({"stock_code": "005930"}, _Session(analysis))
+    assert sum(1 for name, _ in analysis.calls if name == "investors") == 2
+    assert result["rows"]["investors"] == 40
+    assert result["investors"]["foreign"]["windows"]["60"]["rows_used"] == 40
+
+
+def test_a_later_page_failing_keeps_the_first_page() -> None:
+    analysis = _paged(history=_history(100), fail_on_call=2)
+    result = handlers.handle_kis_flow_summary({"stock_code": "005930"}, _Session(analysis))
+    assert result["rows"]["investors"] == 30
+    assert result["missing"]["investors"].startswith("page 2")
+    assert result["investors"]["foreign"]["windows"]["20"]["rows_used"] == 20
+
+
+def test_blank_balance_amount_is_null_not_a_crash() -> None:
+    session = _Session(_market_analysis(loan_rows=[_loan_row(_TODAY, rmnd_amt="")], credit_rows=[]))
+    result = handlers.handle_kis_flow_summary({"stock_code": "005930"}, session)
+    assert result["stock_loan"]["latest_amount"] is None
+    assert result["stock_loan"]["latest"] == pytest.approx(100.0)
+    assert result["credit"]["latest"] is None

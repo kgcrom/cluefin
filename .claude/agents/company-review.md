@@ -53,7 +53,7 @@ uv run cluefin-openapi-cli review collect --stock-code 214320 --peers 030000 --j
 | 섹션 | raw 파일(`<c>` = 종목코드) | 읽을 것 |
 | --- | --- | --- |
 | 가격·수급 | `<c>__kis-stock-current-price` | 현재가, 52주 고저, 외국인 지분율 |
-| 수급 상세 | `<c>__kis-stock-flow-summary` | 외국인·기관·개인 순매수 금액·비중·연속일수(5·20·60거래일), 공매도 비중의 창 평균·백분위, 대차·신용잔고 수준과 변화율, 프로그램매매 순매수. 값과 구성요소만 — 라벨 없음 |
+| 수급 상세 | `<c>__kis-stock-flow-summary` | 외국인·기관·개인 순매수 금액·비중·연속일수(5·20·60거래일), 공매도 비중의 창 평균·백분위, 대차·신용잔고 수준과 변화율, 프로그램매매 순매수. 값과 구성요소만 — 라벨 없음. 창마다 `rows_used` 가 창보다 작거나 `missing` 에 계열이 있으면 그렇다고 적는다 |
 | 실적·재무 | `<c>__dart-financial-summary` | 8분기 단독값·YoY, 3개년 손익·재무상태·현금흐름·비율, 최신 누적, TTM, 차입금(근거 표기), `quality`(ROIC·DuPont·발생액·F-Score·Z''). 억원. **이 값은 다시 계산하지 않는다** |
 | 공식 비율 | `<c>__dart-financial-major-indicators-M210000`·`M220000`·`M230000` | DART 수익성·안정성·성장성 — 무효화 조건의 기준값. EPS·BPS 만 KIS |
 | 밸류에이션 | `<c>__kis-stock-valuation` | 시총·TTM PER·PBR·KIS 추정 연도별 PER. 다시 계산하지 않는다 |

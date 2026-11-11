@@ -2107,13 +2107,18 @@ _FLOW_SUMMARY_SESSION_FINAL = time(15, 40)
 # back far enough in calendar days to cover a 60-trading-day window plus slack (measured 2026-11-11:
 # ~100 calendar days gave 68 rows, so ~0.68 trading-day ratio; 200 days comfortably covers window=60).
 _STOCK_LOAN_LOOKBACK_DAYS = 200
+# investor-trade/credit-balance/program-trade answer 30 rows a call (measured 2026-11-11); three pages
+# cover the default 60-day window plus a dropped intraday row.
+_FLOW_PAGE_ROWS = 30
+_FLOW_MAX_PAGES = 3
 
 _FLOW_SUMMARY_NOTES = (
     "계산값이다 — 매집·강세 같은 라벨이나 점수를 내지 않는다. 값과 구성요소만 낸다(flows.py).",
-    "investor-trade-by-stock-daily·credit-balance-trend-daily·program-trade-by-stock-daily 는 연속조회 "
-    "파라미터가 없어 한 번에 최근 30행만 온다(2026-11-11 실측, 대형주·소형주·금융주 세 종목 공통) — "
-    "--windows 로 60을 줘도 이 세 계열은 가진 행(최대 30)까지만 계산하고 각 블록의 rows_used 에 실제 쓴 "
-    "행 수를 적는다. short-selling-trend-daily 는 100행, stock-loan-trend-daily 는 요청한 날짜 구간만큼 온다.",
+    "investor-trade-by-stock-daily·credit-balance-trend-daily·program-trade-by-stock-daily 는 연속조회 키가 "
+    "없고 한 번에 30행만 준다(2026-11-11 실측) — 가장 오래된 행 전날로 날짜를 옮겨 가장 큰 창을 채울 때까지 "
+    "다시 부른다(최대 3쪽 90행). 그보다 긴 창이나 상장한 지 얼마 안 된 종목은 가진 행까지만 계산하고 각 "
+    "블록의 rows_used 에 실제 쓴 행 수를 적는다. short-selling-trend-daily 는 100행, stock-loan-trend-daily 는 "
+    "요청한 날짜 구간만큼 온다.",
     "같은 investor-trade-by-stock-daily 응답 안에서도 단위가 섞여 있다: *_ntby_qty 는 주, *_ntby_tr_pbmn 은 "
     "백만원인데 같은 행의 acml_tr_pbmn(거래대금)은 raw 원이다. program-trade-by-stock-daily 의 *_tr_pbmn 은 "
     "raw 원, credit-balance-trend-daily 의 *_amt 는 만원(모델 설명과 일치), stock-loan-trend-daily 의 "
@@ -2163,6 +2168,45 @@ def _by_window(rows: list[dict], windows: list[int], stat_fn) -> dict[str, dict]
     return {str(w): stat_fn(rows, window=w) for w in windows}
 
 
+def _scaled(rows: list[dict], field: str, scale: float) -> float | None:
+    """The newest row's value × scale; a blank field stays None (never 0)."""
+
+    value = flows.to_number(rows[0].get(field)) if rows else None
+    return None if value is None else value * scale
+
+
+def _dump_rows(rows) -> list[dict]:
+    return [row.model_dump() for row in rows or []]
+
+
+def _dated_pages(fetch_page, date_field: str, today: str, need: int) -> tuple[list[dict], str | None]:
+    """Rows newest first across date-keyed pages, and the error that cut the paging short (if any).
+
+    investor-trade/credit-balance/program-trade take a date and answer with the 30 rows up to it — no
+    continuation key — so the next page asks for the day before the oldest row received. A short page
+    means the history ended (new listing). The first page's failure is the caller's to record; a later
+    page failing keeps the rows already received.
+    """
+
+    rows: list[dict] = []
+    seen: set[str] = set()
+    cursor = today
+    for page_no in range(_FLOW_MAX_PAGES):
+        try:
+            page = fetch_page(cursor)
+        except Exception as exc:  # noqa: BLE001 - keep the pages already received
+            if page_no == 0 or _is_credentials_error(exc):
+                raise
+            return rows, f"page {page_no + 1}: {exc}"
+        fresh = [row for row in page if row.get(date_field) and row[date_field] not in seen]
+        seen.update(row[date_field] for row in fresh)
+        rows.extend(fresh)
+        if not fresh or len(page) < _FLOW_PAGE_ROWS or len(rows) >= need:
+            break
+        cursor = _days_before(min(seen), 1)
+    return rows, None
+
+
 @rpc_method(
     name="stock.flow_summary",
     description=(
@@ -2170,7 +2214,7 @@ def _by_window(rows: list[dict], windows: list[int], stat_fn) -> dict[str, dict]
         "institution/individual net-buy amount, % of window turnover, net-buy-day ratio and the current "
         "net-buy/net-sell streak from investor-trade-by-stock-daily; short-selling share vs. its own "
         "received history; stock-loan and credit-balance level plus window change; program-trading "
-        "net-buy sum. Values and components only, no buy/sell label. About 5 KIS calls."
+        "net-buy sum. Values and components only, no buy/sell label. About 8 KIS calls for the default windows."
     ),
     parameters={
         "type": "object",
@@ -2211,85 +2255,85 @@ def handle_kis_flow_summary(params: dict, session) -> dict:  # noqa: PLR0914
     def _as_of(rows: list[dict], date_field: str) -> str | None:
         return rows[0].get(date_field) if rows else None
 
-    investor_rows: list[dict] = []
-    try:
-        response = kis.domestic_market_analysis.get_investor_trading_trend_by_stock_daily(
-            fid_cond_mrkt_div_code=market, fid_input_iscd=stock_code, fid_input_date_1=today
-        )
-        investor_rows = [row.model_dump() for row in response.body.output2]
-    except Exception as exc:  # noqa: BLE001 — classified below, then recorded as a partial failure
-        if _is_credentials_error(exc):
-            raise
-        missing["investors"] = str(exc)
-    rows_received["investors"] = len(investor_rows)
-    investor_rows = _drop_today("investors", investor_rows, "stck_bsop_date")
-    as_of["investors"] = _as_of(investor_rows, "stck_bsop_date")
+    # Before the cutoff today's row is dropped, so ask for one more.
+    need = max(windows) + (1 if intraday_cutoff else 0)
 
-    short_selling_rows: list[dict] = []
-    try:
-        response = kis.domestic_market_analysis.get_short_selling_trend_daily(
-            fid_input_date_2=today,
-            fid_cond_mrkt_div_code=market,
-            fid_input_iscd=stock_code,
-            fid_input_date_1="",
-        )
-        short_selling_rows = [row.model_dump() for row in response.body.output2]
-    except Exception as exc:  # noqa: BLE001
-        if _is_credentials_error(exc):
-            raise
-        missing["short_selling"] = str(exc)
-    rows_received["short_selling"] = len(short_selling_rows)
-    short_selling_rows = _drop_today("short_selling", short_selling_rows, "stck_bsop_date")
-    as_of["short_selling"] = _as_of(short_selling_rows, "stck_bsop_date")
+    def _series(name: str, date_field: str, fetch_page, *, paged: bool) -> list[dict]:
+        rows: list[dict] = []
+        try:
+            if paged:
+                rows, page_error = _dated_pages(fetch_page, date_field, today, need)
+                if page_error:
+                    missing[name] = page_error
+            else:
+                rows = fetch_page(today)
+        except Exception as exc:  # noqa: BLE001 - one series failing must not drop the other four
+            if _is_credentials_error(exc):
+                raise
+            missing[name] = str(exc)
+        rows_received[name] = len(rows)
+        rows = _drop_today(name, rows, date_field)
+        as_of[name] = _as_of(rows, date_field)
+        return rows
 
-    stock_loan_rows: list[dict] = []
-    try:
-        response = kis.domestic_market_analysis.get_stock_loan_trend_daily(
-            mrkt_div_cls_code="3",
-            mksc_shrn_iscd=stock_code,
-            start_date=_days_before(today, _STOCK_LOAN_LOOKBACK_DAYS),
-            end_date=today,
-            cts="",
-        )
-        stock_loan_rows = [row.model_dump() for row in response.body.output1]
-    except Exception as exc:  # noqa: BLE001
-        if _is_credentials_error(exc):
-            raise
-        missing["stock_loan"] = str(exc)
-    rows_received["stock_loan"] = len(stock_loan_rows)
-    stock_loan_rows = _drop_today("stock_loan", stock_loan_rows, "bsop_date")
-    as_of["stock_loan"] = _as_of(stock_loan_rows, "bsop_date")
-
-    credit_rows: list[dict] = []
-    try:
-        response = kis.domestic_market_analysis.get_credit_balance_trend_daily(
-            fid_cond_mrkt_div_code=market,
-            fid_cond_scr_div_code="20476",
-            fid_input_iscd=stock_code,
-            fid_input_date_1=today,
-        )
-        credit_rows = [row.model_dump() for row in response.body.output]
-    except Exception as exc:  # noqa: BLE001
-        if _is_credentials_error(exc):
-            raise
-        missing["credit"] = str(exc)
-    rows_received["credit"] = len(credit_rows)
-    credit_rows = _drop_today("credit", credit_rows, "deal_date")
-    as_of["credit"] = _as_of(credit_rows, "deal_date")
-
-    program_rows: list[dict] = []
-    try:
-        response = kis.domestic_market_analysis.get_program_trading_trend_by_stock_daily(
-            fid_cond_mrkt_div_code=market, fid_input_iscd=stock_code, fid_input_date_1=today
-        )
-        program_rows = [row.model_dump() for row in response.body.output]
-    except Exception as exc:  # noqa: BLE001
-        if _is_credentials_error(exc):
-            raise
-        missing["program"] = str(exc)
-    rows_received["program"] = len(program_rows)
-    program_rows = _drop_today("program", program_rows, "stck_bsop_date")
-    as_of["program"] = _as_of(program_rows, "stck_bsop_date")
+    analysis = kis.domestic_market_analysis
+    investor_rows = _series(
+        "investors",
+        "stck_bsop_date",
+        lambda day: _dump_rows(
+            analysis.get_investor_trading_trend_by_stock_daily(
+                fid_cond_mrkt_div_code=market, fid_input_iscd=stock_code, fid_input_date_1=day
+            ).body.output2
+        ),
+        paged=True,
+    )
+    short_selling_rows = _series(
+        "short_selling",
+        "stck_bsop_date",
+        lambda day: _dump_rows(
+            analysis.get_short_selling_trend_daily(
+                fid_input_date_2=day, fid_cond_mrkt_div_code=market, fid_input_iscd=stock_code, fid_input_date_1=""
+            ).body.output2
+        ),
+        paged=False,
+    )
+    stock_loan_rows = _series(
+        "stock_loan",
+        "bsop_date",
+        lambda day: _dump_rows(
+            analysis.get_stock_loan_trend_daily(
+                mrkt_div_cls_code="3",
+                mksc_shrn_iscd=stock_code,
+                start_date=_days_before(day, _STOCK_LOAN_LOOKBACK_DAYS),
+                end_date=day,
+                cts="",
+            ).body.output1
+        ),
+        paged=False,
+    )
+    credit_rows = _series(
+        "credit",
+        "deal_date",
+        lambda day: _dump_rows(
+            analysis.get_credit_balance_trend_daily(
+                fid_cond_mrkt_div_code=market,
+                fid_cond_scr_div_code="20476",
+                fid_input_iscd=stock_code,
+                fid_input_date_1=day,
+            ).body.output
+        ),
+        paged=True,
+    )
+    program_rows = _series(
+        "program",
+        "stck_bsop_date",
+        lambda day: _dump_rows(
+            analysis.get_program_trading_trend_by_stock_daily(
+                fid_cond_mrkt_div_code=market, fid_input_iscd=stock_code, fid_input_date_1=day
+            ).body.output
+        ),
+        paged=True,
+    )
 
     def _investor_block(pbmn_field: str) -> dict:
         return {
@@ -2338,8 +2382,8 @@ def handle_kis_flow_summary(params: dict, session) -> dict:  # noqa: PLR0914
             ),
         },
         "stock_loan": {
-            "latest": flows.to_number(stock_loan_rows[0]["rmnd_stcn"]) if stock_loan_rows else None,
-            "latest_amount": (flows.to_number(stock_loan_rows[0]["rmnd_amt"]) * 1_000_000 if stock_loan_rows else None),
+            "latest": _scaled(stock_loan_rows, "rmnd_stcn", 1),
+            "latest_amount": _scaled(stock_loan_rows, "rmnd_amt", 1_000_000),
             "windows": _by_window(
                 stock_loan_rows,
                 windows,
@@ -2349,8 +2393,8 @@ def handle_kis_flow_summary(params: dict, session) -> dict:  # noqa: PLR0914
             "pct_of_listed_shares_reason": no_denominator_reason,
         },
         "credit": {
-            "latest": flows.to_number(credit_rows[0]["whol_loan_rmnd_stcn"]) if credit_rows else None,
-            "latest_amount": (flows.to_number(credit_rows[0]["whol_loan_rmnd_amt"]) * 10_000 if credit_rows else None),
+            "latest": _scaled(credit_rows, "whol_loan_rmnd_stcn", 1),
+            "latest_amount": _scaled(credit_rows, "whol_loan_rmnd_amt", 10_000),
             "windows": _by_window(
                 credit_rows,
                 windows,

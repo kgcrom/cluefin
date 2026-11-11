@@ -49,7 +49,7 @@ CLI 가 말해 주지 않는 것만 적는다.
   지표(FCF 수익률, 오너 어닝스, EV/EBIT·이익수익률, PEG, 주주수익률, Altman Z 시총 원형)는 `kis stock
   investor-metrics --stock-code --corp-code`(약 12회) — ROIC·DuPont·F-Score·Z''(장부가)는 `dart
   financial-summary` 의 `quality` 블록이다.
-- **수급은 `kis stock flow-summary --stock-code`** 한 번(약 5회)으로 끝낸다 — 외국인·기관·개인 순매수 금액·창
+- **수급은 `kis stock flow-summary --stock-code`** 한 번(약 8회)으로 끝낸다 — 외국인·기관·개인 순매수 금액·창
   거래대금 대비 %·순매수일 비율·연속 순매수/매도일, 공매도 비중의 창 평균·받은 구간 내 백분위, 대차·신용잔고
   수준과 창 변화율, 프로그램매매 순매수 합을 5·20·60거래일 창으로 낸다. 매집·강세 같은 라벨은 없다 — 값과
   구성요소만, 판단의 근거로만 쓴다. 외국인 지분율은 이 입력 어디에도 없어 항상 null 이다(`stock current-price`
@@ -230,8 +230,11 @@ CLI 가 말해 주지 않는 것만 적는다.
   from the calls-once check like valuation/implied-expectations).
 - `kis stock flow-summary` calls five KIS endpoints and windows them in a pure module, `flows.py` — no
   labels, values and components only. Three of the five (`investor-trade-by-stock-daily`,
-  `credit-balance-trend-daily`, `program-trade-by-stock-daily`) take no continuation key and return only
-  the last **30** rows regardless of `--windows`; `short-selling-trend-daily` gives 100, `stock-loan-trend-daily`
+  `credit-balance-trend-daily`, `program-trade-by-stock-daily`) take no continuation key and return **30** rows
+  a call, but each takes a date and answers with the rows up to it — `_dated_pages` asks again for the day before
+  the oldest row until the largest window is filled (at most `_FLOW_MAX_PAGES = 3` pages; 2 pages for the default
+  60-day window after the close, 3 before 15:40 when today's row is dropped; a later page failing keeps the rows
+  already received and is named in `missing`). `short-selling-trend-daily` gives 100, `stock-loan-trend-daily`
   follows the explicit `start_date`/`end_date` the handler computes (`_STOCK_LOAN_LOOKBACK_DAYS = 200` calendar
   days, ~0.68 trading-day ratio measured 2026-11-11). All five come back **newest first** (measured on a
   large-cap, a small-cap and a financial stock, 2026-11-11) and are passed to `flows.py` unconverted (`str`
