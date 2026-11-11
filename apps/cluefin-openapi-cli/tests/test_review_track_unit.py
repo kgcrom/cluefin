@@ -66,6 +66,20 @@ def test_entry_crossed_first_then_closed_with_excess() -> None:
     assert (row["max_up_pct"], row["max_down_pct"]) == (10.0, 3.0)
 
 
+def test_recheck_on_comes_from_trigger() -> None:
+    conn = _store([100, 103, 106, 110], index=[1000, 1010, 1020, 1050])
+    (row,) = track(conn, [_record(trigger={"entry_above": 105, "exit_below": 95, "recheck_on": "2026-11-20"})])[
+        "verdicts"
+    ]
+    assert row["recheck_on"] == "2026-11-20"
+
+
+def test_recheck_on_is_none_for_buy_sell_without_trigger() -> None:
+    conn = _store([100, 101], index=[1, 1])
+    (row,) = track(conn, [_record(verdict="buy", trigger={}, target=110, stop=90)])["verdicts"]
+    assert row["recheck_on"] is None
+
+
 def test_exit_crossed_first() -> None:
     conn = _store([100, 94, 107, 100], index=[1, 1, 1, 1])
     (row,) = track(conn, [_record()])["verdicts"]

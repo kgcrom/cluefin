@@ -11,6 +11,7 @@ from cluefin_openapi_cli.cliargs import _parse_named_options, _str_option
 from cluefin_openapi_cli.clock import today_kst
 from cluefin_openapi_cli.errors import EXIT_USAGE, CliError
 from cluefin_openapi_cli.output import render_output
+from cluefin_openapi_cli.review.checklist import RULES_FILE, evaluate, init_rules_file, load_rules
 from cluefin_openapi_cli.review.collect import (
     CollectResult,
     add_peers,
@@ -20,6 +21,8 @@ from cluefin_openapi_cli.review.collect import (
     read_run_info,
     run_dir,
 )
+from cluefin_openapi_cli.review.due import DEFAULT_DAYS, due, gather_events, tracked_rows
+from cluefin_openapi_cli.review.metrics import catalog_rows
 from cluefin_openapi_cli.review.paths import research_root
 from cluefin_openapi_cli.review.record import VERDICTS_FILE, record_verdict
 from cluefin_openapi_cli.review.track import load_records, track
@@ -137,7 +140,104 @@ def _run_track(argv: list[str]) -> None:
     render_output(payload, force_json=bool(options.get("json", False)), compact=bool(options.get("compact", False)))
 
 
-SUBCOMMANDS = {"collect": _run_collect, "record": _run_record, "track": _run_track}
+def _run_checklist(argv: list[str]) -> None:
+    _, options = _parse_named_options(argv, bool_flags={"init"})
+    force_json = bool(options.get("json", False))
+    compact = bool(options.get("compact", False))
+
+    if bool(options.get("dry_run", False)):
+        render_output(
+            {
+                "dry_run": True,
+                "would": {
+                    "init": bool(options.get("init", False)),
+                    "metrics": _str_option(options, "metrics") == "true",
+                    "rules": _str_option(options, "rules"),
+                    "from": _str_option(options, "from"),
+                },
+            },
+            force_json=force_json,
+            compact=compact,
+        )
+        return
+
+    if _str_option(options, "metrics") == "true":
+        render_output({"metrics": catalog_rows()}, force_json=force_json, compact=compact)
+        return
+
+    rules_opt = _str_option(options, "rules")
+    rules_path = Path(rules_opt) if rules_opt else research_root() / RULES_FILE
+    init_flag = bool(options.get("init", False))
+    if init_flag:
+        init_rules_file(rules_path)
+
+    from_opt = _str_option(options, "from")
+    if not from_opt:
+        if init_flag:
+            render_output({"created": str(rules_path)}, force_json=force_json, compact=compact)
+            return
+        raise CliError(
+            "review checklist needs --from <review collect folder> (or --init / --metrics true).",
+            exit_code=EXIT_USAGE,
+        )
+
+    folder = Path(from_opt)
+    info = read_run_info(folder)
+    if info is None:
+        raise CliError(f"{folder} is not a review collect folder (no run.json).", exit_code=EXIT_USAGE)
+    code = str(info["stock_code"])
+    rules = load_rules(rules_path)
+    payload = evaluate(folder, code, rules)
+    render_output(payload, force_json=force_json, compact=compact)
+
+
+def _run_due(argv: list[str]) -> None:
+    _, options = _parse_named_options(argv)
+    force_json = bool(options.get("json", False))
+    compact = bool(options.get("compact", False))
+    events_flag = _str_option(options, "events") == "true"
+    codes = _codes(_str_option(options, "code"), "--code")
+    days_opt = _str_option(options, "days")
+
+    if bool(options.get("dry_run", False)):
+        render_output(
+            {"dry_run": True, "would": {"days": days_opt, "code": codes, "events": events_flag}},
+            force_json=force_json,
+            compact=compact,
+        )
+        return
+
+    if days_opt is not None:
+        try:
+            days = int(days_opt)
+        except ValueError as exc:
+            raise CliError(f"--days must be an integer, got {days_opt!r}.", exit_code=EXIT_USAGE) from exc
+        if days <= 0:
+            raise CliError("--days must be a positive integer.", exit_code=EXIT_USAGE)
+    else:
+        days = DEFAULT_DAYS
+
+    records = load_records(research_root() / VERDICTS_FILE)
+    conn = store.open_store(read_only=True)
+    try:
+        rows, cache_as_of = tracked_rows(conn, records, codes=codes)
+        today = today_kst()
+        payload = due(rows, cache_as_of, days=days, today=today)
+        if events_flag:
+            with process_runner() as runner:
+                payload["events"] = gather_events(runner, conn, rows, days=days, today=today)
+    finally:
+        conn.close()
+    render_output(payload, force_json=force_json, compact=compact)
+
+
+SUBCOMMANDS = {
+    "collect": _run_collect,
+    "record": _run_record,
+    "track": _run_track,
+    "checklist": _run_checklist,
+    "due": _run_due,
+}
 
 
 def run_review(argv: list[str]) -> None:

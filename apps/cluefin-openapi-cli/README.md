@@ -215,6 +215,28 @@ uv run cluefin-openapi-cli review track --code 214320 --json
 기록한 가격은 기준일 adj_factor 로 맞춥니다. 가격 도달은 일봉 종가 기준입니다. horizon 이 캐시에서 아직 안 지났으면
 `open`, 기준일 봉이 없으면 `no_data`(캐시 기준일을 함께 보여 줌)입니다.
 
+`review checklist` 는 내가 정한 기준(`research/principles.toml`)을 `review collect` 폴더의 raw 파일과 대조합니다.
+점수·매수 신호가 아니라 규칙마다 `pass`/`fail`/`unknown`(이유 포함) 과 측정값을 냅니다. 카탈로그에 없는 metric,
+모르는 연산자, 문자열 metric 에 `<` 같은 연산자를 쓰면 exit 2 로 전부 한 번에 알려 줍니다.
+
+```bash
+uv run cluefin-openapi-cli review checklist --init --json          # research/principles.toml 이 없을 때만 예시로 생성
+uv run cluefin-openapi-cli review checklist --from /private/tmp/cluefin-review/214320-20261108 --json
+uv run cluefin-openapi-cli review checklist --metrics true --json  # 쓸 수 있는 metric 카탈로그
+```
+
+`review due` 는 종목별 가장 최근 판단 하나만 가격과 대조해 다시 볼 것을 고릅니다: 트리거/목표가/손절가가 닿음(`crossed`),
+재검토일이 지났거나(`recheck_passed`) `--days` 안에 있음(`recheck_within`), horizon 이 `--days` 안에 끝남
+(`horizon_ending`), horizon 이 이미 끝남(`closed`), 캐시에 기준일 봉이 없어 대조하지 못함(`no_data`). 사유가 없으면
+건수로만 센다. `--events true` 는 열린 판단 종목 전부에 대해 KIS 일정 12종(종목코드 없이 기간으로 한 번씩 받아
+코드로 거르고, 100행에서 잘린 명령만 종목별로 다시 받는다)·DART 공시·다음 정기보고서 법정 마감일(캐시의
+`settle_month` 로 계산, 주말이면 월요일, 공휴일·제출 여부는 모름)을 더합니다. 실패한 호출은 `failed` 에 남습니다.
+
+```bash
+uv run cluefin-openapi-cli review due --days 14 --json
+uv run cluefin-openapi-cli review due --days 14 --events true --json
+```
+
 `audit` 은 `.claude/agents/*.md` 로 돈 agent 실행을 Claude Code 트랜스크립트에서 읽어, 그 agent 파일의 감사 기준과
 대조합니다(빠진 명령·같은 인자 반복·exit 3 뒤 계속·재시도 없는 실패). 저장소 루트에서 실행합니다.
 

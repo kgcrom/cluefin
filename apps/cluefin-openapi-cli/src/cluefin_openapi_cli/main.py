@@ -370,13 +370,19 @@ _META_HELP: dict[str, dict[str, Any]] = {
     "review": {
         "description": "Fetch everything a company review reads into one folder, in parallel stages capped per "
         "broker, so an agent reads files instead of holding ~15 JSON replies (plus 9 per peer) in its context. "
-        "`record` appends the review's verdict to research/verdicts.jsonl; `track` checks those verdicts against cached prices.",
+        "`record` appends the review's verdict to research/verdicts.jsonl; `track` checks those verdicts against cached prices. "
+        "`checklist` compares my own rules against one run folder; `due` lists verdicts worth a second look and, "
+        "with --events true, upcoming KIS schedule items and DART disclosures for every still-open verdict.",
         "usage": [
             f"{APP_NAME} review collect --stock-code <code> [--peers <code,code>] [--out <dir>] [--json]",
             f"{APP_NAME} review collect --into <run dir> --peers <code,code> [--json]",
             f"{APP_NAME} review record --from <verdict.json or its folder> [--source main|company-review] "
             "[--report <html under research/>] [--json]",
             f"{APP_NAME} review track [--code <code,code>] [--json]",
+            f"{APP_NAME} review checklist --init [--rules <path>] [--json]",
+            f"{APP_NAME} review checklist --from <review collect folder> [--rules <path>] [--json]",
+            f"{APP_NAME} review checklist --metrics true [--json]",
+            f"{APP_NAME} review due [--days N] [--code <code,code>] [--events true] [--json]",
         ],
         "options": [
             {"flag": "--stock-code CODE", "meaning": "The stock under review (6 digits)."},
@@ -400,11 +406,32 @@ _META_HELP: dict[str, dict[str, Any]] = {
             {"flag": "--source NAME", "meaning": "record: main (default) or company-review."},
             {"flag": "--report PATH", "meaning": "record: the HTML report, which must sit under research/."},
             {"flag": "--code CODES", "meaning": "track: only these stocks' verdicts."},
+            {
+                "flag": "--rules PATH",
+                "meaning": "checklist: rules TOML. Default research/principles.toml ($CLUEFIN_RESEARCH_DIR root).",
+            },
+            {"flag": "--init", "meaning": "checklist: write an example rules file at --rules (fails if it exists)."},
+            {"flag": "--metrics true", "meaning": "checklist: print the metric catalog instead of evaluating rules."},
+            {"flag": "--days N", "meaning": "due: recheck/horizon window, also the schedule lookahead. Default 14."},
+            {"flag": "--events true", "meaning": "due: also fetch schedules/disclosures/deadlines for open verdicts."},
         ],
         "examples": [
             f"uv run {APP_NAME} review collect --stock-code 214320 --peers 030000 --json",
         ],
         "notes": [
+            "checklist reads raw/<code>__<stem>.json from a review collect folder only — it never calls a broker. "
+            "Each rule gets pass/fail/unknown (unknown names the raw file or missing account in reason); must_failed "
+            "lists the ids of must=true rules that failed. Results are also written to <folder>/checklist.json.",
+            "due looks at the latest verdict per stock_code only (a changed mind is a newer line, not a rewrite). "
+            "due_reasons: crossed (a trigger/target/stop price hit), recheck_passed/recheck_within "
+            "(trigger.recheck_on, calendar days), horizon_ending (trading days left), closed, no_data (the cache "
+            "has no reference-day bar). A verdict with none of these is only counted.",
+            "due --events true calls the 12 kis schedule.* commands once each (stock_code blank, filtered to open "
+            "verdicts' codes locally — not one call per stock) plus one dart disclosure-search per open stock, and "
+            "computes the next statutory periodic-report deadline from the cached company.settle_month (no call; "
+            "a weekend deadline moves to Monday, holidays are not known). KIS schedule replies echo no "
+            "continuation key and stop at 100 rows, so a full reply is asked again per stock "
+            "(refetched_per_stock); failed calls are listed in `failed`, not read as no events.",
             "Stages: kis current-price (refreshes the shared KIS token) → corp code, cache status → macro snapshot, "
             "stock/corp-code commands and peer corp codes → industry outlook, latest periodic report text and notes, "
             "DART major indicators, peer data. A kis/dart exit 3 stops the run.",

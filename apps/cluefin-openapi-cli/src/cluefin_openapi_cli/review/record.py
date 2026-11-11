@@ -85,6 +85,18 @@ def _price_problems(verdict: dict[str, Any]) -> list[str]:
             problems.append("trigger.recheck_on must be YYYY-MM-DD")
     if label in ("buy", "sell"):
         problems.extend(f"{label} needs {k} (> 0)" for k in ("target", "stop") if not _is_price(verdict.get(k)))
+    checklist = verdict.get("checklist")
+    if checklist is not None:
+        if not isinstance(checklist, dict):
+            problems.append("checklist must be an object with passed/failed/unknown/must_failed")
+        else:
+            for key in ("passed", "failed", "unknown"):
+                value = checklist.get(key)
+                if not isinstance(value, int) or isinstance(value, bool):
+                    problems.append(f"checklist.{key} must be an integer")
+            must_failed = checklist.get("must_failed", [])
+            if not isinstance(must_failed, list) or not all(isinstance(x, str) for x in must_failed):
+                problems.append("checklist.must_failed must be a list of strings")
     return problems
 
 
@@ -154,6 +166,9 @@ def build_record(
         "target": verdict.get("target"),
         "stop": verdict.get("stop"),
         "invalidation": list(verdict.get("invalidation", [])),
+        # Optional — company-review only sets it when a rules file exists. None keeps old records (pre-2026-11-11,
+        # before `review checklist` existed) and new ones the same shape.
+        "checklist": verdict.get("checklist"),
     }
 
 

@@ -86,6 +86,8 @@ def track_record(
         "stock_name": record["stock_name"],
         "verdict": record["verdict"],
         "horizon_days": record["horizon_days"],
+        # So the company-review 재검토 절 doesn't have to read verdicts.jsonl separately just for this one field.
+        "recheck_on": (record.get("trigger") or {}).get("recheck_on"),
     }
     if not bars or bars[0].day != ref_day:
         as_of = cache_as_of.isoformat() if cache_as_of else None

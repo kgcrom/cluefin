@@ -125,7 +125,34 @@ def test_record_appends_normalized_line(tmp_path: Path) -> None:
     assert line["recorded_at"] == "2026-11-08"
     assert line["trigger"] == {"entry_above": 18510, "exit_below": 16730, "recheck_on": "2026-11-14"}
     assert line["target"] is None
+    assert line["checklist"] is None
     assert "scenario" not in line
+
+
+def test_record_carries_checklist_summary_through(tmp_path: Path) -> None:
+    checklist = {"passed": 3, "failed": 1, "unknown": 0, "must_failed": ["not_too_levered"]}
+    done = record_verdict(
+        _write(tmp_path / "run", _verdict(checklist=checklist)),
+        root=tmp_path / "research",
+        source="company-review",
+        report=None,
+        today=DAY,
+    )
+    assert done.record["checklist"] == checklist
+
+
+def test_checklist_must_be_well_shaped_if_present(tmp_path: Path) -> None:
+    with pytest.raises(CliError) as exc:
+        record_verdict(
+            _write(tmp_path / "run", _verdict(checklist={"passed": "3", "must_failed": "nope"})),
+            root=tmp_path / "research",
+            source="main",
+            report=None,
+            today=DAY,
+        )
+    problems = exc.value.data["problems"]
+    assert any("checklist.passed" in p for p in problems)
+    assert any("must_failed" in p for p in problems)
 
 
 def test_same_stock_and_date_gets_next_id_and_keeps_earlier_line(tmp_path: Path) -> None:

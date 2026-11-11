@@ -502,6 +502,28 @@ CLI 가 말해 주지 않는 것만 적는다.
   시도한다. kis·dart exit 3 이면 그 단계 뒤로 멈춘다.
 - 폴더는 지우거나 덮지 않는다. 같은 날 다시 돌리면 `-2`, `-3` 을 붙인다. 기본 자리 `/private/tmp/cluefin-review`
   (`$CLUEFIN_REVIEW_DIR` 로 바꾼다).
+- `review checklist` 는 `research/principles.toml` 규칙을 `review collect` 폴더의 raw 파일과 대조한다(`review/metrics.py`
+  가 metric 이름 → raw 파일 stem + 추출 함수 카탈로그, `review/checklist.py` 가 TOML 파싱·검증·판정). 추출은 그 명령이
+  이미 계산한 필드를 읽을 뿐 다시 계산하지 않는다 — `quality.py`·`investor_metrics.py` 와 같은 규율. 수급 메트릭
+  (`foreign_net_20d_pct`·`institution_net_20d_pct`·`short_selling_pct`)은 `kis stock flow-summary` 의 20거래일 창을 읽는다 —
+  그 명령이 생기기 전(2026-11-11 이전)에 만든 수집 폴더에서는 `unknown` 이다. 규칙 파일의 모든
+  문제(모르는 metric·op, 타입 오류)는 한 번에 `data.issues[]` 로 모아 exit 2 — 한 줄 고치고 다시 걸리는 왕복을 없앤다.
+  결과는 점수가 아니라 규칙별 `pass`/`fail`/`unknown`(이유)이고, `<folder>/checklist.json` 에도 쓴다. `--init` 은
+  파일이 없을 때만 쓴다(있으면 exit 2) — 사용자의 기존 기준표를 덮지 않는다.
+- `review due` 는 종목별 가장 최근 판단 하나만 `review track` 으로 대조해 사유(`crossed`·`recheck_passed`·
+  `recheck_within`·`horizon_ending`·`closed`·`no_data`)를 붙인다(`review/due.py`). 캐시만 읽는다. recheck 는 달력일,
+  horizon 은 거래일로 센다. `--events true` 는 열린
+  판단(`status: open`) 전부에 대해 KIS `schedule.*` 12종(bonus-issue·capital-increase·capital-reduction·deposit·
+  dividend·forfeited-share·ipo-subscription·listing·merger-split·par-value-change·shareholder-meeting·
+  stock-dividend — `kis market holiday`·`dart major-event` 는 이름만 비슷해 뺀다)을 `stock_code` 없이 기간으로
+  한 번씩 부르고 `sht_cd` 로 코드별로 거른다. 이 CLI 의 schedule 핸들러는 `cts` 를 응답에 echo 하지 않아(요청
+  파라미터로만 받는다) 100행에서 조용히 잘린다(실호출 2026-11-11, 2년 창). `listing` 은 짧은 응답도 빈 행으로
+  100행을 채워 보내므로(14일 창: 실제 23종목 + 빈 행) `sht_cd` 가 빈 행은 버리고 센다. 실제 행이 100이면 그 명령만 종목마다 `--stock-code` 로 다시 부르고 `refetched_per_stock` 에 적는다. 실패한 호출은
+  `failed` 에 exit code 와 함께 남긴다 — "일정 없음" 으로 읽지 않게. 공시는 `dart disclosure-search` 를 종목마다
+  한 번(캐시 `company.corp_code`, 없으면 그 종목은 reason, 수는 `total_count`), 다음 정기보고서 법정 마감일은
+  `company.settle_month` 로 계산하는 순수 함수(분기·반기 +45일, 사업보고서 +90일, 주말이면 월요일 — 공휴일과
+  제출 여부는 모른다) —
+  DART 호출이 없다. 호출은 모두 `review collect` 처럼 별도 프로세스(`process_runner`)로 부른다.
 
 ## `audit *` 는 Claude Code 트랜스크립트를 읽는다 (`audit/`)
 
