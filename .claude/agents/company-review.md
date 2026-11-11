@@ -164,6 +164,10 @@ uv run cluefin-openapi-cli review collect --stock-code 214320 --peers 030000 --j
   사흘 만에 끝난다. 재무 조건의 값은 DART 주요지표 기준(% 단위).
 - `data_as_of` — 가격·재무(회계기준일과 공시일 구분)·뉴스·매크로(인용한 계열별 `as_of`) 기준일.
 - `peer_rank` — 비교 기업이 있으면 본 종목을 포함한 순서. 회사마다 판단과 한 줄 이유를 붙인다.
+- 저장소 루트에 `research/principles.toml` 이 있으면 `review checklist --from <수집 폴더> --json` 을 돌려 내 기준표를
+  대조한다 — 파일이 없으면 건너뛴다(설정하지 않은 사용자에게 강제하지 않는다). 결과(`passed`/`failed`/`unknown`,
+  `must_failed`)는 리포트 "내 기준표" 절에 넣고 `verdict.json` 의 `checklist` 필드에 그대로 싣는다. 점수나 판단을
+  바꾸지 않는다 — `must_failed` 가 있어도 buy/sell 판단 자체는 여기서 막지 않는다.
 
 판단을 내면 수집 폴더에 `verdict.json` 을 쓰고 `review record` 로 저장소 루트 `research/verdicts.jsonl` 에 남긴다.
 `review track` 이 나중에 이 기록을 가격과 대조한다(재검토 절). 메인 대화도 같다(`--source main`, HTML 이 이미 있으면
@@ -174,8 +178,11 @@ uv run cluefin-openapi-cli review collect --stock-code 214320 --peers 030000 --j
  "reference_price": {"close": 17760, "date": "2026-11-06", "adjusted": false},
  "trigger": {"entry_above": 18510, "exit_below": 16730, "recheck_on": "2026-11-14"},
  "target": null, "stop": null, "invalidation": ["주간 종가 17,020원 이탈", "FY2026 잠정 영업이익 추가 역성장"],
- "data_as_of": {"price": "2026-11-06"}, "peer_rank": []}
+ "data_as_of": {"price": "2026-11-06"}, "peer_rank": [],
+ "checklist": {"passed": 3, "failed": 1, "unknown": 0, "must_failed": ["not_too_levered"]}}
 ```
+
+`checklist` 는 선택 필드다 — `research/principles.toml` 이 없으면 아예 뺀다(null 로 채우지 않는다).
 
 ```bash
 uv run cluefin-openapi-cli review record --from <폴더> --source company-review --json
@@ -194,9 +201,9 @@ uv run cluefin-openapi-cli review record --from <폴더> --source company-review
   실적 4행 표.
 - **D 초보형** — 답 한 줄과 다음 판단 날짜, 3문장 설명, 다섯 가지 체크 표, 날짜·가격 기준 할 일 3줄.
 
-요약 뒤 순서: 다섯 가지 체크(D 요약이면 생략) → 밸류에이션 → 사업 현황 → 실적 표 → 재무제표 요약 → 기술적 →
-뉴스·공시·매크로 → 경쟁사 대비 → bull/bear/시나리오 → 데이터 출처와 한계 → 부록(판단 YAML). 마지막 줄은
-"투자 조언이 아닌 의사결정 보조 리포트".
+요약 뒤 순서: 다섯 가지 체크(D 요약이면 생략) → 내 기준표(규칙 파일이 있을 때만) → 밸류에이션 → 사업 현황 → 실적 표 →
+재무제표 요약 → 기술적 → 뉴스·공시·매크로 → 경쟁사 대비 → bull/bear/시나리오 → 데이터 출처와 한계 → 부록(판단 YAML).
+마지막 줄은 "투자 조언이 아닌 의사결정 보조 리포트".
 
 - 요약의 주장마다 근거 절 이름을 붙이고, 수치는 그 절과 같은 값으로 쓴다. 비율·배수는 소수 1자리.
 - 요약에 넣지 않는 것: CLI 명령어, 접수번호·corp 코드·계정 코드, YAML, 이전 판과의 비교, 백테스트·셋업 그룹 점수,
@@ -233,10 +240,10 @@ uv run cluefin-openapi-cli review record --from <폴더> --source company-review
 
 1. `cache status --json` 의 ohlcv `last_date` 가 마지막 거래일보다 이르면 `cache load --only ohlcv,adj --json` 을
    백그라운드로 돌린다(실계좌 키로 조회만 한다, 약 7분). 끝난 뒤 다음 단계로 간다.
-2. `review track --json`. 사용자가 종목을 말했으면 `--code`.
-3. 다시 볼 판단만 표로 보여 준다: 가격에 닿음(`first_cross`), `recheck_on` 이 지남(`research/verdicts.jsonl` 에서
-   읽는다 — track 출력에는 없다), horizon 끝남(`closed`). 열은 종목·기준일·판단·지난 거래일·수익률·초과수익·닿은 가격과
-   날짜·사유. 나머지는 건수만 적는다.
+2. `review due --json`(사용자가 종목을 말했으면 `--code`, 기본 14일 창 — 좁히거나 넓히려면 `--days`).
+3. 사유가 붙은 판단만 표로 보여 준다: 가격에 닿음(`crossed`), 재검토일이 지남(`recheck_passed`)·다가옴
+   (`recheck_within`), horizon 이 곧 끝남(`horizon_ending`)·이미 끝남(`closed`). 열은 종목·기준일·판단·사유·지난
+   거래일·수익률·초과수익·닿은 가격과 날짜. 사유 없는 판단은 건수만 적는다.
 4. `AskUserQuestion` 으로 다음 단계를 고르게 한다: disclosure-watch 로 공시 훑기(표의 종목코드를 넘긴다) /
    company-review 로 다시 판단 / 그만. 다시 판단하면 판단 절대로 새로 기록한다 — 앞 기록은 고치지 않는다.
 
