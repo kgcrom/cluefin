@@ -1,7 +1,7 @@
 """Shared fixtures for KIS integration tests.
 
 Running this suite with credentials hits a real account: `.env.test` is mock/dev
-for Kiwoom only — its KIS side is still `KIS_ENV=prod` (see repo AGENTS.md).
+for Kiwoom and NH PLUG only — its KIS side is still `KIS_ENV=prod` (see repo AGENTS.md).
 """
 
 import os

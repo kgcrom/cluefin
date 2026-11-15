@@ -33,7 +33,7 @@
 | ETF 구성종목시세 `inquire-component-stock-price` (FHKST121600C0) | 표: `etf_cu_unit_scrt_cnt` 는 output1 에만 | output2 행에도 보냄 | 2026-09-27 | 모델에 있음 |
 | 변동성완화장치(VI) 현황 `inquire-vi-status` (FHPST01390000), 국내휴장일조회 `chk-holiday` (CTCA0903R), 해외결제일자 `countries-holiday` (CTOS5011R) | 표: output 이 object | array | 2026-09-27 | array |
 | 국내휴장일조회 `chk-holiday` (CTCA0903R), 당사 대주가능 종목 `lendable-by-company` (CTSC2702R) | 표: 최상위 연속조회 키 `ctx_area_*` 없음 / 예시: 있음 | 보냄 | 2026-09-27 | 모델에 있음 |
-| 금리 종합 `comp-interest` (FHPST07020000) | 표: output1 에 `bond_cntg_ert`·`bond_stnd_iscd`·`date_time`·`indicator_nm`·`prdy_vrss` | 안 보냄. `FID_DIV_CLS_CODE` 도 문서에 없는 `2` 만 온전한 값을 준다 (`AGENTS.md`) | 2026-09-20·27 | 모델에 없음 |
+| 금리 종합 `comp-interest` (FHPST07020000) | 표: output1 에 `bond_cntg_ert`·`bond_stnd_iscd`·`date_time`·`indicator_nm`·`prdy_vrss` | 안 보냄. `FID_DIV_CLS_CODE` 도 문서에 없는 `2` 만 온전한 값을 준다 (아래 "서버 동작") | 2026-09-20·27 | 모델에 없음 |
 | 프로그램매매 종합현황(일별) `comp-program-trade-daily` (FHPPG04600001) | 표: `whol_*` 순매수 계열 9개 없음 (`whol_smtn_ntby_qty` 등) / 예시: 있음 | 보냄 | 2026-09-27, K | 모델에 추가 |
 | 관심종목(멀티종목) 시세조회 `intstock-multprice` (FHKST11300006) | 표: output 이 object | array | 2026-09-27 | array |
 | 해외주식 현재가 10호가 `overseas-price/inquire-asking-price` (HHDFS76200100) | 표: output2 가 array | object 하나에 1~10호가 | 2026-09-27, NAS AAPL | object, 2~10호가 모델에 추가 |
@@ -65,6 +65,16 @@
   장기 일봉은 키움 ka10081 연속조회를 쓴다.
 - 실서버는 값이 없는 조건부 필드(시장경고·관리종목·락 구분명 등)의 **키를 아예 생략한다** — 위 "응답 필드" 의
   현재가·시간외현재가 항목. 통합테스트는 이런 필드를 `ignore` 로 명시한다.
+- **국내주식 종목분석 7종(대차대조표·손익계산서·재무비율·수익성·기타주요·안정성·성장성비율)은 2026-11-11 16:00 부터
+  호출이 막혔다** (데이터 라이선스 사유, 신규·기존 앱 모두). 1.1.0 에서 메서드와 모델을 지웠다 — 같은 수치는 DART 에서 받는다.
+- **토큰 발급 오류는 HTTP 403 본문 `error_code` 로 온다** (2026-11-03). `EGW00103`(AppKey)·`EGW00105`(AppSecret)은 키 오류,
+  `EGW00133` 은 1분 1회 발급 제한이다 — 같은 403 이지만 키 문제가 아니다. 모의·실전 토큰을 섞어 쓰면 `EGW00123`
+  ("기간이 만료된 token")이라 만료처럼 보인다.
+- **WebSocket 은 잘못된 구독을 거절하지 않는다** (2026-10-11). 없는 종목코드와 모의가 제공하지 않는 TR(`H0UNCNT0` 등)에도
+  `SUBSCRIBE SUCCESS` 를 답한다. 구독 응답은 검증 수단이 못 된다.
+- **WebSocket 세션은 앱키당 하나다** (2026-10-12). 다른 세션이 열려 있으면 구독에 `OPSP8996 ALREADY IN USE appkey`,
+  그 뒤 `approval_key` 를 새로 받았으면 예전 키에 `OPSP0011 invalid approval` 을 답하고 연결을 끊는다.
+  키 하나를 세션을 바꿔 가며 차례로 쓰는 것은 된다.
 
 ### 길이
 
@@ -117,6 +127,7 @@
 | ust21100 미국주식 거래내역 `strt_dt`·`end_dt`·`tp`·`krw_repl_skip_yn` | 선택(빈 값 가능) | 넷 다 비우면 순서대로 `1511:필수 입력 값에 값이 존재하지 않습니다` 로 거절 | 2026-11-07 prod | 네 파라미터를 필수(기본값 제거)로 변경 |
 | ust21650 미국주식 기간별 수익률 현황 `fr_dt`·`to_dt` | 선택(빈 값 가능) | 비우면 `1511` 로 거절 | 2026-11-07 prod | 둘 다 필수로 변경 |
 | ust21180 미국주식 기간별 주문내역 `stk_cd` | "미입력시 전체" | 비우면(생략해도) `1517:파라미터=stk_cd 종목코드값이 없습니다` 로 거절 | 2026-11-07 prod | 필수로 변경 |
+| 연속조회 요청 헤더 (전 TR) | 일부 TR 문서가 `cond-yn`(ka90002)·`con-yn`(계좌 TR·ka10054)으로 적는다 | **`cont-yn` 만 읽는다.** ka90001 2페이지를 `cond-yn: Y` 로 요청하면 1페이지가 다시 오고, `cont-yn: Y` 는 다음 페이지를 준다 | 2026-11-08 | 전부 `cont-yn`. 오타가 다시 들어오면 단위 테스트가 실패 |
 | ust21100 미국주식 거래내역 `tp` | `0,3,4,5` 만 문서에 있음 | `1,2,6,7,8,F,G,H,I,J,K,M` 도 유효한 값으로 받는다(거절 없이 "관련자료가 없습니다" 응답 — 입력값 오류 아님) | 2026-11-07 prod | Literal 유지(이미 12개 포함돼 있었음), 변경 없음 |
 
 ### 길이
@@ -146,9 +157,11 @@ ka10023 `stk_cnd`(1, `11`~`20`), ka10030 `mang_stk_incls`·`trde_qty_tp`·`trde_
 
 ### 서버 동작 (문서에 없는 것)
 
-그동안 `AGENTS.md`·메모리에 흩어져 있던 기록 (대조 전 실측):
-
-- ka10009 는 문서 목록에서 빠졌지만 API 는 동작한다. ka10087·ka10098 은 2026-09-23 문서·서버 모두에서 제거됐다 (`1504`).
+- ka10009 는 문서 목록에서 빠졌지만 API 는 동작한다. ka10087·ka10098 은 2026-09-23 문서·서버 모두에서 제거됐다
+  (`1504:해당 URI에서는 지원하는 API ID가 아닙니다`). 코드를 의심하기 전에 문서의 TR 목록부터 본다.
+- **WebSocket REG 는 없는 종목(`999999`)에도 `return_code: 0` 을 답한다** (2026-10-12). 등록 응답으로는 검증할 수 없다.
+- **REAL 프레임 하나에 여러 type 이 섞여 온다** — `0B`·`0D` 를 함께 등록하면 `data` 가 `0B/0D/0D/0B` 처럼 온다 (2026-10-12).
+  첫 항목의 type 으로 모델을 고르면 다른 type 의 값이 오류 없이 빈 문자열이 된다.
 - 음수를 부호 겹침(`--123`)으로 내려준다 — `float()` 전에 정규화해야 한다.
 - ka10051 업종별투자자순매수는 `cur_prc`·`pred_pre`·`flu_rt` 를 소수점 없는 100배 정수로 준다 (`-210` = -2.10%).
   같은 업종 TR 인 ka20001·ka20002 는 소수 문자열이라 TR 마다 다르다. ka10051·ka20002 의 `mrkt_tp` 는 한 자리
@@ -167,6 +180,22 @@ ka10023 `stk_cnd`(1, `11`~`20`), ka10030 `mang_stk_incls`·`trde_qty_tp`·`trde_
   `506372:선택자료가 존재하지 않습니다`)로 거절해 모델 검증 자체가 안 일어난다 (2026-11-07 prod 실측, 해외 거래
   이력이 없는 계좌). `ENV_BLOCKED_CODES` 에 세 코드를 추가해 skip 되게 해 뒀다 — 해외 주식을 실제로 거래한
   계좌가 있어야 모양을 확인할 수 있다.
+
+### 모의투자(dev) 서버
+
+문서는 모의투자 도메인만 적고 무엇이 안 되는지는 적지 않는다. 아래 코드는 코드 결함이 아니라 모의 환경의 상태다.
+
+| 응답 | 뜻 | 실측 |
+|---|---|---|
+| 토큰 발급이 HTTP 200 + `return_code: 3`, `인증에 실패했습니다[8005:Token이 유효하지 않습니다]` | **모의 키가 만료됐다.** 본문에 토큰이 없어 `TokenResponse` 검증 오류로 드러난다. 모의투자를 다시 신청해 키를 재발급한다 | 2026-08-31, 2026-09-23 |
+| `RC4091:모의투자 종료된 계좌입니다` (주문) | 모의 계좌 만료. **국내·미국 모의투자는 따로 신청**하므로 한쪽만 만료될 수 있다. 이때 미국 계좌 조회는 HTTP 200 에 금액이 전부 0 이다 (`get_deposit_detail()` 의 `won_entr`, `usd_exch_rate`) | 2026-07-26 |
+| `RC9000:모의투자에서는 해당업무가 제공되지 않습니다`, `8104:모의투자에서 지원하지 않는 API`, `RC7006:모의투자 조회실패`(kt00010) | 모의가 제공하지 않는 TR — 계좌 만료와 무관하고 풀리지 않는다 | 2026-08-11 |
+| `RC4041` (정정 주문) | 원주문과 **같은 가격**으로 정정하면 거부된다 | 2026-10-12 |
+| `800033:모의투자 매도가능수량이 부족합니다` | 모의 계좌에 그 종목 보유가 없다 | 2026-10-12 |
+| `RC4010`·`RC4058` | 모의투자 영업일 아님 · 장 종료 | 2026-08-11 |
+
+- 모의투자 재신청은 REST API 포털이 아니라 키움증권 홈페이지·영웅문S# 의 모의투자 메뉴에서 한다.
+- 모의 국내 WebSocket 은 KRX 만 된다. 조건검색 목록(CNSRLST)은 저장된 조건식이 없으면 `return_code: 0` 에 빈 목록이다 (2026-10-12).
 
 ## NH PLUG
 
@@ -192,6 +221,8 @@ ka10023 `stk_cnd`(1, `11`~`20`), ka10030 `mang_stk_incls`·`trde_qty_tp`·`trde_
 | 주식현재가 시간외일자별주가 `currentAfterHoursDaily` | 필드 **이름이 설명과 어긋남** — Output_0 `qry_date`(일자)·`qry_time`(시가)·`shrn_iscd`(고가)·`hts_kor_isnm`(저가)·`stck_prpr`(락구분)·`prdy_vrss_sign`(Filler), Output_1 `prdy_ctrt`(현재가)·`prdy_vol`(Filler) | 설명에 맞는 이름: Output_0 `bsop_date`(YYMMDD)·`stck_oprc`·`stck_hgpr`·`stck_lwpr`·`nh_rights`, Output_1 `stck_prpr`·`acml_vol`·`acml_tr_pbmn`. 스펙 이름은 한 번도 안 옴 | 2026-09-27 운영 | 실서버 이름으로 교체 |
 | 주식현재가 체결 `currentExecution` | Output_0 `uncrate` | `unc_rate` | 2026-09-27 운영 | `unc_rate` |
 | 주식현재가 시세 `currentPrice` | `main_cls_*`·`market_status` 는 "KRX PRE/AFTER", `nxt_vi_antc_*` 는 "UNT 조회 시" | 조건과 무관하게 KRX·UNT 모두 키를 보냄. `nxt_vi_*` 는 KRX 에서 0 | 2026-09-27 운영 (휴장일) | 모델에 추가 |
+| 해외주식 기간별시세 `gbstock period` | Output_1 `close_prc`·`movolume`·`movalue` 는 string | JSON **숫자**로 온다 | 2026-08-22 운영 | `float`·`int`·`float` |
+| 해외 기간별시세(지수·환율) `symbolIndexFxPeriod` | Output_0·Output_1 숫자 필드 | 값이 없으면 **빈 문자열 `""`** 로 온다 | 2026-08-22 운영 | 모델이 `""` 를 `None` 으로 바꾼다. 새 시세 API 도 같은 표기를 의심한다 |
 
 실서버가 보내지 않는 스펙 필드 (운영). 채움·연속조회용으로 보이는 이름이 대부분이다. 모델에 두고 테스트 `ignore`:
 
@@ -245,6 +276,10 @@ ka10023 `stk_cnd`(1, `11`~`20`), ka10030 `mang_stk_incls`·`trde_qty_tp`·`trde_
   `wss://host:port/` 로는 응답이 없고 `/websocket` 만 `101` — 운영 7070·7080, 모의 17070 모두 (2026-09-27).
   Python·TS 소켓 클라이언트가 경로 없이 붙고 있어 **연결 자체가 안 됐다** — 문서 오류가 아니라 코드 버그, 수정.
   문서의 "Python OpenSSL 기본 검증이 중간 CA 누락으로 실패" 는 macOS·Python 3.10 에서 재현되지 않았다.
+- **운영 7080 은 해외 시세만 받는다.** 해외 체결·주문 통보(`d0`·`d1` 등)는 해외도 7070 이고, 7080 에 구독하면
+  `WSS10006` 이다 (2026-09-27).
+- **모의 소켓(17070)은 시세 채널을 거부한다** — `oc` 구독에 `rsp_cd=WSS10006`("허용되지 않는 tr_cd 입니다.") (2026-10-12).
+  반대로 운영 소켓은 없는 종목(`999999`) 구독에도 `rsp_cd=00000` 을 답한다 (2026-10-12) — 구독 응답은 검증 수단이 못 된다.
 - 접근토큰폐기 `/oauth2/revoke` 응답: 필드 표는 `error_code`·`error_description`, 예시는 `code`·`message`.
   성공은 예시 쪽으로 온다 — 모델은 네 필드를 모두 선택으로 둔다.
 - 웹소켓 세션해제 `/websocket/close/session`: 표는 `rsp_msg` 길이 2 — 실제 메시지는 한글 문장("연결된 세션이 존재하지 않습니다").
@@ -276,3 +311,12 @@ ka10023 `stk_cnd`(1, `11`~`20`), ka10030 `mang_stk_incls`·`trde_qty_tp`·`trde_
 |---|---|---|---|---|
 | 주요사항보고서 8종 — 유상증자 `piicDecsn`·무상증자 `fricDecsn`·유무상증자 `pifricDecsn`·감자 `crDecsn`·부도발생 `dfOcr`·영업정지 `bsnSp`·해산사유 `dsRsOcr`·자산양수도(기타)/풋백옵션 `astInhtrfEtcPtbkOpt` | 금액·주식수·참석 인원 (단위만 표기) | **콤마 문자열**(`"12,345,678,900"`), 값이 없으면 `"-"`, 비율은 `"0.5"` | 2026-10-17, 종류당 최근 공시 2~6건 | 59개 필드를 `int`/`float` → `str` (다른 28종처럼 패스스루). 예전엔 실데이터마다 `int_parsing` 으로 응답 전체가 거부됐다 |
 | 회계감사인 명칭·감사의견 `accnutAdtorNmNdAdtOpinion` | `adt_opinion`·`emphs_matter`·`core_adt_matter` 항상 있음 | 값이 없는 행은 키를 뺀다. 항상 온 것은 `adt_reprt_spcmnt_matter` 뿐 | 2026-10-17, 9개사 54행 (2025 사업보고서) | 세 필드 선택(`None`) |
+
+### 서버 동작 (문서에 없는 것)
+
+- **키 오류는 HTTP 200 본문 `status` 010·011·012·901 로 온다** (2026-11-02). ZIP 을 주는 엔드포인트(`corpCode.xml`·
+  `document.xml`·`fnlttXbrl.xml`)는 ZIP 자리에 오류 XML 을 준다 — 그대로 풀면 "ZIP 손상"으로 보인다.
+  클라이언트는 둘 다 `DartAuthenticationError` 로 올린다.
+- **`fnlttXbrl.xml` ZIP 은 FY2022 이전 분이 linkbase 여섯 개의 이름에 Windows `\` 구분자를 쓴다**
+  (`ifrs_for_…\dimensions_…\pre_….xml`). FY2023 부터는 평평하다 (2026-10-11, 3개사 FY2011–2024). macOS·Linux 의 `extractall` 은
+  `\` 를 파일 이름에 그대로 두고, Arelle 은 오류 없이 그 회사의 label·presentation 을 버린다 — 항목마다 경로를 고쳐 푼다.

@@ -1,6 +1,37 @@
 # AGENTS.md — cluefin-openapi
 
-Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
+Non-obvious constraints only; the root `AGENTS.md` and `packages/AGENTS.md` hold the repo-wide rules.
+
+- **Vendor doc ≠ live server cases live in `VENDOR_DOC_ERRATA.md`** (misnamed blocks and fields, fields the server
+  omits or adds, wrong lengths, undocumented server and mock behavior, each with its measured date). Code follows the
+  live server: read that file before "fixing" a model back to the docs, and add a row when you measure a new one.
+- The gitignored `CLAUDE.local.md` in this folder has the working procedure for scraping the KIS, Kiwoom and NH PLUG
+  doc portals. Read it before re-deriving that.
+
+## Environments and accounts
+
+- `.env.test` is dev (mock) for **Kiwoom and NH PLUG only; its KIS side is `KIS_ENV=prod`**, a real account. The KIS
+  integration suite is quotes and analysis today, with no account or order call. Check that a new KIS integration
+  test is read-only before adding it; anything that places an order needs the `mutation` gate below.
+- **Default `env` is not the same across classes.** Every `Auth` defaults to `dev` (NH PLUG `Auth` has no env), while
+  KIS and NH PLUG `HttpClient`, both `SocketClient`s and `KiwoomWebSocketClient` default to `prod` (the Kiwoom one
+  also to `market="overseas"`). Kiwoom `Client` has no default. A token from `Auth(...)` passed to `HttpClient(...)`
+  without `env` is a dev token sent to prod. Pass `env` to both, as `BrokerClientFactory` does:
+
+  ```python
+  auth = Auth(app_key=key, secret_key=SecretStr(secret), env="dev")
+  client = HttpClient(token=auth.generate().get_token(), app_key=key, secret_key=secret, env="dev")
+  ```
+
+- **A Kiwoom dev failure at authentication is usually the account, not the code.** Expired mock keys make token
+  issuance return a 200 body without a token, which surfaces as a pydantic `ValidationError` on `TokenResponse`;
+  an expired mock account answers orders with `RC4091`. Domestic and US mock accounts are applied for and expire
+  separately. Codes and how to tell them apart: errata, "모의투자(dev) 서버". Ask for re-issued keys before debugging.
+- NH PLUG 시세 (`/krstock/quote/*`, `/gbstock/quote/*`) and WebSocket quote channels are **live-domain only**, so their
+  integration tests run only with `NHPLUG_ENV=prod` (same keys, read-only calls). moapi's refusal for gbstock is
+  `IGW40019 "종목코드(iem_cd)를 확인해주세요"`, which means "not provided on mock", not a bad code.
+- The account numbers in nhplug unit fixtures (`20101036881`, `50051036881`, `cust_no` `100805701`) are the example
+  values published in the vendor spec, not a real account. Don't scrub them or report them as leaked secrets.
 
 ## Dangerous integration tests
 
@@ -18,22 +49,51 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   `kst_market_hours`, `us_market_hours`) applied with `pytest.mark.usefixtures`, listed **before** any
   fixture that authenticates — autouse fixtures run before `usefixtures`, so an autouse auth check
   would hit the network off-hours. During those hours a liquid stock that sends nothing within 30s is a
-  failure, not a skip; thinly traded bonds skip.
+  failure, not a skip; thinly traded bonds skip. The gates know weekdays, not holidays: on a market holiday
+  those tests fail.
 - **No broker's WebSocket rejects a bad subscription**, so a subscribe/ack check proves nothing —
-  assert on received data. KIS answers `SUBSCRIBE SUCCESS` to unknown codes and to TRs the mock does
-  not offer; Kiwoom answers REG with `return_code: 0` for `999999`; NH PLUG live answers `rsp_cd 00000`
-  for `999999` (2026-10-11/12). The KIS Python client also emits `subscribed` right after sending, not
-  on the server reply. NH PLUG's mock socket (:17070) is the exception that does refuse — quote
-  channels get `WSS10006`, so NH realtime tests are live-only.
-- Kiwoom packs several realtime types into one REAL frame (`0B/0D/0D/0B` when both are registered), so
-  `DomesticRealtime.parse`/`OverseasRealtime.parse` return a list with one model per type. Don't go
-  back to picking the model from `data[0]` — the other type's values silently become empty strings.
-- KIS debug artifacts (`/tmp/cluefin-kis-debug/*.json`) are written with unredacted raw
-  response bodies on every integration response — `KIS_DEBUG_ON_FAILURE` only gates
-  *printing*, not the file write.
+  **assert on received data.** KIS, Kiwoom and NH PLUG live all acknowledge an unknown code (errata, each broker's
+  "서버 동작"). The KIS Python client also emits `subscribed` right after sending, not on the server reply. NH PLUG's
+  mock socket is the exception that does refuse — quote channels get `WSS10006`, so NH realtime tests are live-only.
+- Kiwoom packs several realtime types into one REAL frame, so `DomesticRealtime.parse`/`OverseasRealtime.parse`
+  return a list with one model per type. Don't go back to picking the model from `data[0]` — the other type's
+  values silently become empty strings.
+- A KIS app key allows **one WebSocket session at a time**, and each `Auth.approve()` call voids the keys issued
+  before it (`OPSP8996`/`OPSP0011`, errata). So KIS realtime tests fail when anything else uses the same app key at
+  the same time: another pytest or TS run, desk, a script. `SocketClient` reports these replies as `error` events
+  and names them in the next "not connected" error.
+- **KIS `HttpClient` writes every response it receives, unredacted, to `<tempfile.gettempdir()>/cluefin-kis-debug/*.json`**
+  (`$TMPDIR` on macOS, not `/tmp`) — in any process, not only in tests, and nothing deletes them.
+  `KIS_DEBUG_ON_FAILURE` only gates *printing* the last one when an integration test fails.
 - `_sanitize_request_context` (`_http_base.py`) is the only redaction layer for request
   context in exceptions/logs: it strips headers but keeps `params`/`body` as-is, so
   never put secrets in params/body context.
+- Revoking a token forces a re-issue for every process sharing the cache, so the revoke tests run only with
+  `KIS_TEST_REVOKE=1` / `NHPLUG_TEST_REVOKE=1`.
+
+## Token cache
+
+Python and `cluefin-openapi-ts` read and write the **same cache files**, so everything here is mirrored by hand in
+TS `src/<broker>/token-cache.ts` and `core/token-file.ts`.
+
+- The three `TokenManager` classes (kis/kiwoom/nhplug) are copy-pasted, not shared — a cache-behavior change goes
+  into all three and into TS.
+- File: `<tempfile.gettempdir()>/cluefin-openapi/.<broker>_token_cache_<env>_<sha256(app_key)[:8]>.json`
+  (`cache_dir=` on `Auth`, `CLUEFIN_OPENAPI_CACHE_DIR` through the factory), body `{"token": {...}, "cached_at": ...}`.
+  KIS and Kiwoom scope by env and app key because mixed dev/prod tokens are rejected server-side (Kiwoom `8031`,
+  KIS `EGW00123`). nhplug scopes by app key only: one token serves live and mock — don't "fix" it to match.
+- Lifetime: KIS and Kiwoom re-issue once the cache is older than `MAX_CACHE_AGE=6h` or within 1 h of expiry. The 6 h
+  is deliberate — KIS may invalidate tokens before their stated 24 h. nhplug deliberately has no max age (no early
+  invalidation, and every needless re-issue raises a security alert on the account) and computes expiry from
+  `cached_at + expires_in`.
+- **`cached_at` is naive local time** in both languages (`datetime.now().isoformat()`, TS `localIsoNow`). Never
+  write an offset or a `Z` suffix: both sides compare it with a naive "now".
+- Issuance is throttled server-side: KIS 1/min (`EGW00133` → `KISRateLimitError`, not a key error), NH PLUG 1/sec on
+  the **live domain only** (there is no mock token endpoint). Always go through `Auth.generate()`; never call the raw
+  endpoint in loops or retries. Retries (429, 5xx, timeout — the shared `_execute_with_retry`, order POSTs included)
+  reuse the SAME token.
+- Only NH PLUG `Auth.revoke()` clears the cache. KIS `revoke()` and Kiwoom `revoke_token()` leave the dead token in
+  the file; call `token_manager.clear_cache()` after them.
 
 ## Response models
 
@@ -43,25 +103,56 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   `string_too_long`, blanking the desk theme screen). A constraint on a response can only
   reject good data; `tests/test_response_models_unit.py` fails if one comes back.
   `json_schema_extra` metadata is fine — it doesn't validate.
+- **Integration tests compare the raw response with the model exactly** (keys, and lengths against the
+  `spec_lengths.json` snapshots shared with TS). A divergence already measured goes in that call's
+  `ignore`/`ignore_length` — NH PLUG: `known_exceed` in the snapshot, and `mock_omits(...)` when only moapi omits the
+  key, so a prod run still checks it — with a comment pointing at the errata. Don't loosen the helpers. Every nhplug
+  model is `extra="allow"`, so without the check undeclared fields vanish into `model_extra` silently. An empty
+  block passes vacuously and only warns (`EmptyBlockWarning`); run with `-W always::UserWarning` to see which.
+- **A shape-only test passes on a wrong request**: Kiwoom answers most bad inputs with an empty result, not an
+  error (errata, "문서 표기 함정"). Use the portal's request example values and assert that rows came back.
 - **DART 응답 본문은 `DartHttpBody.parse()` 가 채우는 `result` 안에만 있다.** 모델
   최상위에 `list` 같은 필드를 선언해도 parse() 는 건드리지 않아 항상 기본값(빈 리스트)이
   남고, 읽는 쪽은 예외 없이 0건을 받는다. `UniqueNumber` 가 실제로 그랬다 — 실서버는
   119,313행을 돌려주는데 CLI 는 빈 목록을 내보내고 있었다. 행은 `result.list` 로 읽는다.
-
 - **`validate_kis_response` 는 로그를 남기지 않고 `KISValidationError` 만 던진다.** 원문은
   예외의 `response_data` 에 실려 있다. 같은 내용을 `logger.error` 로도 찍으면 호출부가 예외를
   잡아 처리해도 에러 로그가 남고, 계좌 모듈로 넓히면 원문 속 계좌번호가 로그에 남는다
   (2026-09-20 결정). 다른 KIS 모듈로 넓힐 때도 로그를 다시 넣지 말 것.
 
-## Broker server behavior the code can't show
+## KIS and Kiwoom
 
-- KIS may invalidate tokens before their stated 24h expiry — `MAX_CACHE_AGE=6h` in the
-  token manager is deliberate. KIS also rate-limits token generation to 1/min server-side.
+- Never assume HTTP 200 == success. KIS can return 200 with a failing body `rt_cd`; every service module checks it
+  with `_exceptions.raise_for_rt_cd`, which raises `KISResponseError` (a `KISAPIError` **and** a `ValueError` —
+  these were plain `ValueError` before, keep the base for callers) carrying only `rt_cd`/`msg_cd`/`msg1`. Don't add
+  a per-module check again. Kiwoom's `_post` wrapper resolves the body `return_code` before the HTTP status.
 - A bad KIS key fails at token issuance with HTTP 403 `EGW00103` (AppKey) — `Auth` raises `KISAuthenticationError`.
-  `EGW00133` (the 1/min issuance limit) is the same 403 but becomes `KISRateLimitError`, not a key error.
-- A bad DART key comes as HTTP 200 with body `status` 010/011/012/901 — JSON, or an error XML where a ZIP was
-  expected (`corpCode.xml`, `document.xml`, `fnlttXbrl.xml`; measured 2026-11-02). `Client._request` raises
-  `DartAuthenticationError` for these so callers don't read it as "no data" or a corrupt ZIP.
+- WebSocket auth differs per broker: KIS needs a separate `approval_key` from `Auth.approve()`, Kiwoom reuses the
+  plain access token, NH PLUG puts the access token in each subscribe message. Don't assume symmetry.
+- Kiwoom continuation reads **only the `cont-yn` request header**; `cond-yn`/`con-yn` (typos in the vendor docs)
+  silently return page one again. A unit test fails if a misspelled header comes back into the source.
+- **KIS 국내주식 종목분석 7 endpoints** (balance sheet, income statement, financial/profit/other/stability/growth
+  ratios) were removed in 1.1.0 because KIS blocked them on 2026-11-11 (data licence). Don't add them back; the same
+  figures come from DART.
+- Kiwoom US-stock (overseas) support is **Python-only**; the sibling `cluefin-openapi-ts` package's `overseas-*`
+  files are KIS, not Kiwoom.
+
+## DART
+
+- A bad key comes as HTTP 200 with body `status` 010/011/012/901 — JSON, or an error XML where a ZIP was expected.
+  `Client._request` raises `DartAuthenticationError` for these so callers don't read it as "no data" or a corrupt ZIP.
+- **`013` (no data) is a normal return**: `result.status == "013"` and `result.list is None`, no exception. An
+  integration test that accepts `013` verifies nothing — a default query that always answered `013` hid four wrong
+  models and paths until 2026-10-02. Query a real filing sample and assert `000`.
+- `Client.major_matters_report` (주요사항보고서) was misnamed `major_shareholder_disclosure`. The old property, method
+  and class names remain as `DeprecationWarning` aliases (2026-11-04) and the module file keeps the old name; don't
+  add callers on the old names. 5% 대량보유 is `share_disclosure_comprehensive.large_holding_report`.
+- `executive_major_shareholder_ownership_report` (`elestock.json`) rows carry the holding and its change only —
+  **no trade date, buy/sell side or price.**
+- `disclosure_document_file` extracts only the **first** XML of the ZIP. Audit reports attached to a periodic report
+  need `disclosure_document_files` (main `<rcept_no>.xml` first, the rest by name).
+- `download_financial_statement_xbrl` extracts entry by entry because pre-FY2023 ZIPs name their linkbases with `\`
+  (errata); don't replace it with `extractall`.
 - `get_multi_company_major_accounts` (`/api/fnlttMultiAcnt.json`, 다중회사 주요계정) takes up to **100 `corp_code`s
   at once** — a 101st makes the whole call fail with `status` `021` (`DartStatusCode.COMPANY_LIMIT_EXCEEDED`), not a
   partial result. Batch callers (e.g. a universe-wide cache load) must chunk corp codes into groups of 100.
@@ -70,88 +161,17 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   지주회사처럼 비지배 지분이 큰 종목은 이 값으로 계산한 PBR·ROE 등이 증권사가 쓰는 지배주주 기준 지표보다 낮게(또는
   다르게) 나온다. 지배주주 몫이 필요하면 전체 재무제표(`fnlttSinglAcntAll`)에서 "지배기업 소유주지분"/"비지배지분"
   계정을 직접 찾아 분리해야 한다.
-- KIS can return HTTP 200 with a failing body `rt_cd`; every service module checks it with
-  `_exceptions.raise_for_rt_cd`, which raises `KISResponseError` (a `KISAPIError` **and** a `ValueError` —
-  these were plain `ValueError` before, keep the base for callers) carrying only `rt_cd`/`msg_cd`/`msg1`.
-  Don't add a per-module check again.
-- Kiwoom can return HTTP 200 with a failing body `return_code`; the `_post` wrapper
-  resolves body codes before HTTP status. Never assume 200 == success.
-- WebSocket auth differs per broker: KIS needs a separate `approval_key` from
-  `Auth.approve()`, while Kiwoom reuses the plain access token. Don't assume symmetry.
-- A KIS app key allows **one WebSocket session at a time**, and each `Auth.approve()` call voids the keys
-  issued before it. The server answers a subscribe with `OPSP8996 ALREADY IN USE appkey` while another
-  session is open, or `OPSP0011 invalid approval` once a newer key exists, then drops the connection
-  (2026-10-12). One key reused across sequential sessions is fine. So KIS realtime tests fail when
-  anything else uses the same app key at the same time: another pytest or TS run, desk, a script.
-  `SocketClient` reports these replies as `error` events and names them in the next "not connected"
-  error.
-- Kiwoom's mock (`dev`) domestic WebSocket supports KRX only.
-- DART XBRL ZIPs (`fnlttXbrl.xml`) for FY2022 and earlier name their six linkbases with Windows `\`
-  separators (`ifrs_for_…\dimensions_…\pre_….xml`); FY2023+ are flat (measured 2026-10-11, three companies,
-  FY2011–2024). `extractall` keeps `\` in the file name on macOS/Linux, and Arelle then silently drops the
-  company's labels and presentation — so `download_financial_statement_xbrl` extracts entry by entry.
-- Mixed dev/prod tokens are rejected server-side (Kiwoom `8031`, KIS `EGW00123`) — this
-  is why token caches are scoped by env/app_key.
-- Kiwoom occasionally removes TRs from its official docs while the API keeps working
-  (e.g. ka10009), but a `1504:해당 URI에서는 지원하는 API ID가 아닙니다` means the TR is gone
-  from the server too (ka10087·ka10098, 2026-09-23). Check the docs list before debugging code.
-- **Broker doc ≠ live server cases live in `VENDOR_DOC_ERRATA.md`** (KIS and Kiwoom: misnamed blocks and
-  fields, fields the server omits or adds, wrong lengths, and server behavior the docs don't mention).
-  Code follows the live server; check that file before "fixing" a model back to the docs, and add a row
-  when you measure a new divergence.
-- Integration tests compare the raw response with the model exactly — KIS `tests/kis/_response_shape.py`
-  (TS `assertKisResponseShapeDeep`), Kiwoom `tests/kiwoom/_spec_conformance.py` (TS
-  `assertKiwoomSpecConformance`), which also checks request/response lengths against
-  `tests/kiwoom/spec_lengths.json` (a dump of the portal's Length column, shared by both languages).
-  A divergence already measured goes in the call's `ignore`/`ignore_length` with a comment pointing
-  at the errata — don't loosen the helpers. An empty block passes vacuously and only warns
-  (`EmptyBlockWarning`); run with `-W always::UserWarning` to see which ones.
-- **Kiwoom returns an empty result instead of an error for most bad inputs**, so a wrong request
-  passes a shape-only test. Found in the 2026-09-27 audit: `KRX:069500` (the `KRX:` in the stock-code
-  description is a format example, not a prefix), a date sent to a period field (`dt`: `5:5일…`),
-  positional args in the wrong order, non-doc codes like `'0'`. Use the portal's request example values.
-- The gitignored `CLAUDE.local.md` records the working procedure for scraping the
-  official KIS/Kiwoom doc portals (Kiwoom's POST doc endpoints are blocked by AhnLab
-  Eversafe; only GET works). Read it before re-deriving that. Kiwoom's contents URL is now
-  path-style `/guide/apiGuideContents/{jobTpCode}/{apiId}` (the query-string form returns a page with no TR list).
-  Save dumps with case-distinct filenames — realtime TRs `0g`/`0G`, `0u`/`0U` collide on macOS APFS.
 
 ## NH PLUG (nhplug)
 
-- Token issuance (`/oauth2/token`) is **live-domain only** (no mock endpoint), rate-limited
-  to 1/sec server-side, and every unnecessary re-issue triggers a security alert on the
-  account — always go through `Auth.generate()` (TokenManager cache), never call the raw
-  endpoint in loops or retries. Retries (429, 5xx, timeout — the shared `_execute_with_retry`, order POSTs
-  included, as in kis/kiwoom) reuse the SAME token.
-- One token serves both live (`api.nhplug.com`) and mock (`moapi.nhplug.com`) calls, which
-  is why the nhplug token cache is scoped by app_key only (no env) — don't "fix" it to
-  match kis/kiwoom.
-- nhplug's `TokenManager` deliberately has no `MAX_CACHE_AGE` (no early server-side
-  invalidation) and computes expiry from `cached_at + expires_in`.
-- All 시세 APIs (`/krstock/quote/*`, `/gbstock/quote/*`) are **live-domain only**. moapi rejects
-  them with `IGW40023`, or for gbstock `IGW40019 "종목코드(iem_cd)를 확인해주세요"` — a misleading
-  message that means "not provided on mock", not a bad code. Their integration tests only run
-  with `NHPLUG_ENV=prod`. WebSocket quote channels are live-only too (see "Dangerous integration
-  tests"); US quotes there are the free delayed `rc`/`rh` — real-time `RC`/`RH` need a paid quote
-  agreement.
 - A failing body `rsp_cd` goes through one function, `_exceptions.raise_for_rsp_cd`: known codes
   map to `NHPlugNoDataError` (empty result — **not** a request error), `NHPlugMockUnsupportedError`
   and `NHPlugNotBusinessDayError`, all subclasses of `NHPlugAPIError`. Add a newly observed code to
   the matching `*_RSP_CODES` tuple, and mirror it in TS `nhplug/client.ts`.
-- NH PLUG doc ≠ live server cases (spec field names off by one, fields the server omits, `"1E"`
-  sign codes, `iem_nm` instead of `kor_name`, strict request types) are in `VENDOR_DOC_ERRATA.md`.
-- NH PLUG integration tests check raw keys and spec lengths with `assert_matches_spec`
-  (`tests/nhplug/_response_shape.py`, TS `assertNhplugMatchesSpec`). Every model is
-  `extra="allow"`, so without it undeclared fields vanish into `model_extra` silently. Lengths
-  come from the spec snapshot `tests/nhplug/spec_lengths.json`; a confirmed over-length goes in
-  its `known_exceed` (shared with TS), a key the server omits in the call's `ignore` —
-  `mock_omits(...)` when only moapi omits it, so a prod run still checks it.
-- The WebSocket needs the path `/websocket` (`host:port` alone never upgrades), and the
-  notification channels (`d0`·`d1`·`d2`·`d3`…) are on :7070 even for gbstock — :7080 is quotes only.
-- The portal spec backend is KIS-portal-style JSON: `/api/apis/public/api-list/{groupId}`
-  → `/api/apis/guide/tr/{apiId}` → `/api/apis/guide/tr/property/{trId}` (no auth needed).
-  Asset-class specs are also public at `https://www.nhplug.com/openapi-docs/<slug>/openapi.json`
-  (the declared source of truth; slugs: common·krstock·gbstock·krfuture·gbfuture·krbond·krgold).
+- The success codes are a tuple too (`SUCCESS_RSP_CODES`): the docs say `00000` only, the servers add their own.
+- WebSocket: the URL needs the path `/websocket`, and the notification channels (`d0`·`d1`·`d2`·`d3`…) are on :7070
+  even for gbstock — :7080 is quotes only. US quotes are the free delayed `rc`/`rh`; real-time `RC`/`RH` need a paid
+  quote agreement.
 
 ## SEC EDGAR (sec)
 
@@ -247,17 +267,26 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   household credit 2026Q2). A "latest value" query with a tight window returns INFO-200 → empty, which looks like a bug
   but isn't; widen the window.
 
-## Kiwoom scope
+## Release
 
-- Kiwoom US-stock (overseas) support is **Python-only**; the sibling `cluefin-openapi-ts`
-  package's `overseas-*` files are KIS, not Kiwoom.
+- Publishing is `gh workflow run publish-openapi.yml -f bump=micro|minor|major` on `main`. The workflow **bumps the
+  version itself** from the value in `pyproject.toml`, runs the unit tests, builds, publishes to PyPI (Trusted
+  Publishing, environment `development`), then commits `release(openapi): vX.Y.Z`, tags `cluefin-openapi/vX.Y.Z`,
+  pushes `main` and starts CI. It checks `uv lock --check` before bumping, so the lock must already be current.
+- So **don't bump the version in a PR** — the workflow bumps on top of it. As of 2026-11-15 `pyproject.toml` says
+  1.1.0 (bumped by hand with the KIS endpoint removal) while the last release and tag are `cluefin-openapi/v1.0.0`:
+  the next dispatch would publish 1.1.1, 1.2.0 or 2.0.0, and 1.1.0 would never exist on PyPI. To ship that change as
+  1.1.0, set `pyproject.toml` and `uv.lock` back to 1.0.0 first and dispatch `minor`.
+- PyPI upload comes before the commit and tag push. Don't merge into `main` while the workflow runs: a rejected
+  push leaves a published version with no release commit or tag.
+- README.md is the PyPI long description: no repo-relative links, and every example must run after
+  `pip install cluefin-openapi` alone (`python-dotenv` is a dev dependency, not a runtime one).
 
 ## Conventions that are easy to mis-infer
 
-- The three `TokenManager` classes (kis/kiwoom/nhplug) are copy-pasted, not shared —
-  mirror cache-behavior changes by hand in all three. The sibling `cluefin-openapi-ts`
-  package's `token-cache.ts` per broker also mirrors each `_cache_file_name`/cache JSON
-  shape to share the same cache files — mirror changes there too, by hand.
+- `_atomic_file` imports `fcntl`, and `import cluefin_openapi` reaches it through the token managers: the package
+  imports on macOS and Linux only.
+- The response wrappers differ: Kiwoom `KiwoomHttpResponse.headers`, KIS and NH PLUG `.header`, DART `.result`.
 - Unit-test styles are per-broker and not interchangeable: Kiwoom uses the table-driven
   `EndpointCase`/`run_post_case` harness (`tests/kiwoom/_helpers.py`), KIS uses JSON
   fixture case files (`tests/kis/*_cases.json`).
@@ -266,5 +295,5 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   them up masks real regressions.
 - `.env.test` must be loaded at module import (collection) time, not inside a fixture —
   module-level `skipif`s read `KIWOOM_ENV` during collection.
-- Both integration suites add an autouse `time.sleep(1)` between tests on top of the
+- The kis, kiwoom and nhplug integration suites each add an autouse `time.sleep(1)` between tests on top of the
   in-client rate limiter; the limiter alone is not enough against live throttling.
