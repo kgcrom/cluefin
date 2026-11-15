@@ -1,20 +1,16 @@
 # cluefin-openapi (TypeScript)
 
-> ⚠️ **웹소켓(실시간 시세) 코드 주의사항**
->
-> 웹소켓 연결 관련 integration 테스트는 **장중(09:00–15:30 KST)에만** 실제 검증이 가능합니다.
-> 메인테이너가 본업으로 인해 장중 테스트가 어려워, 웹소켓 관련 변경사항은 실서버 검증이
-> 지연되거나 충분히 이루어지지 않았을 수 있습니다. 웹소켓 기능을 사용하거나 수정할 때는
-> 이 점을 감안하고, 가능하면 장중에 직접 동작을 확인해 주세요.
-
 한국투자증권(KIS)·키움증권·NH투자증권(PLUG) 주문·시세 API와 금융감독원 OpenDART(공시·재무제표), 한국은행 ECOS(경제통계)를 한 패키지로.
 
-- **KIS**: 국내/해외주식·장내채권 REST API + 실시간 WebSocket 시세, 토큰 파일 캐시
-- **키움**: 국내주식 REST API (해외주식·WebSocket은 파이썬 패키지 `cluefin-openapi` 전용)
-- **NH PLUG**: 공통 2 + 국내주식 31 + 해외주식 18 = REST 51개 엔드포인트 + 실시간 WebSocket 시세
-- **OpenDART**: 공시검색·기업개황·재무제표·주요사항보고서 등 REST 77개 — 토큰 없이 키 하나로 상장사 전체 공시 조회
-- **ECOS**: 한국은행 경제통계 6개 서비스(통계 조회·목록·100대 지표·용어·메타) — 키 없이 공개 시험 키 `sample`로 바로
-- 요청/응답 Zod 검증, 응답 키 자동 camelCase 변환, 재시도·rate limit 내장
+- **KIS**: 국내/해외주식·장내채권 REST + 실시간 WebSocket
+- **키움**: 국내주식 REST (해외주식·WebSocket은 파이썬 패키지 `cluefin-openapi` 전용)
+- **NH PLUG**: 공통·국내주식·해외주식 REST + 실시간 WebSocket
+- **OpenDART**: 공시검색·기업개황·재무제표·주요사항보고서 — 토큰 없이 키 하나로 조회
+- **ECOS**: 한국은행 경제통계 — 키 없이 공개 시험 키 `sample`로 바로
+- 요청/응답 Zod 검증, 응답 키 camelCase 변환, 재시도·rate limit 내장
+
+> 실시간(WebSocket) 통합 테스트는 장중(국내 주식 09:00–15:20 KST)에만 데이터를 받아 검증합니다.
+> 웹소켓 쪽 변경은 실서버 확인이 늦을 수 있으니, 쓰기 전에 장중에 한 번 직접 받아 보세요.
 
 ## 설치
 
@@ -22,220 +18,194 @@
 npm install cluefin-openapi  # Node.js 20+
 ```
 
-## 환경 변수
-
-```bash
-# .env
-KIS_APP_KEY=your_app_key
-KIS_SECRET_KEY=your_secret_key
-KIS_ENV=dev                    # dev(모의투자) | prod(실전)
-
-KIWOOM_APP_KEY=your_app_key
-KIWOOM_SECRET_KEY=your_secret_key
-KIWOOM_ENV=dev                 # dev(모의투자) | prod(실전)
-
-NHPLUG_APP_KEY=your_app_key
-NHPLUG_SECRET_KEY=your_secret_key
-NHPLUG_ENV=dev                 # dev(모의투자, moapi) | prod(운영, 실주문)
-
-DART_AUTH_KEY=your_auth_key    # OpenDART — 계좌 없이 발급, 주문 기능 없음(조회 전용)
-ECOS_AUTH_KEY=your_auth_key    # 한국은행 ECOS — 비우면 공개 시험 키 sample(한 번에 10행)
-```
-
-API 키 발급: [KIS](https://apiportal.koreainvestment.com/) / [키움](https://apiportal.kiwoom.com/) /
+API 키 발급: [KIS](https://apiportal.koreainvestment.com/) / [키움](https://openapi.kiwoom.com/) /
 [NH PLUG](https://www.nhplug.com/) / [OpenDART](https://opendart.fss.or.kr/) / [ECOS](https://ecos.bok.or.kr/api/)
 
-## 빠른 시작
+## 먼저 알아둘 것
 
-### KIS
+- **라이브러리는 환경변수나 `.env`를 읽지 않습니다.** 키와 `env`는 생성자에 직접 넘깁니다. 아래 예제의
+  `process.env.*` 이름은 예시일 뿐입니다.
+- `env`는 `'dev'`(모의투자) 또는 `'prod'`(실전, **실제 주문 체결**)입니다. 생략했을 때 기본값이 클래스마다 다릅니다 —
+  `KisHttpClient`만 `'prod'`이고 나머지(`KisAuth`·`KisSocketClient`·키움·NH PLUG)는 `'dev'`입니다. 항상 명시하세요.
+- KIS·키움·NH PLUG·DART의 REST 호출은 `{ headers, body }`를 돌려줍니다. 와이어 포맷은 snake_case이고 입력·응답 키는
+  camelCase입니다.
+- 예제는 ESM(top-level `await`) 기준입니다. CJS(`require`)도 지원합니다.
+
+## KIS
 
 ```ts
 import { KisAuth, KisHttpClient } from 'cluefin-openapi';
+
+const appKey = process.env.KIS_APP_KEY ?? '';
+const secretKey = process.env.KIS_SECRET_KEY ?? '';
 
 const auth = new KisAuth({ appKey, secretKey, env: 'dev' });
 const { accessToken } = await auth.generate();
 
 const client = new KisHttpClient({ token: accessToken, appKey, secretKey, env: 'dev' });
-
 const res = await client.domesticBasicQuote.getStockCurrentPrice({
   fidCondMrktDivCode: 'J',
   fidInputIscd: '005930',
 });
-console.log(res.body); // 응답 키는 camelCase로 변환됨
+console.log(res.body);
 ```
 
-모든 REST 호출은 `{ headers, body }` 형태의 `ApiResponse`를 반환합니다. 와이어 포맷은
-snake_case지만 응답 키는 자동으로 camelCase로 변환됩니다.
-
-#### 토큰 캐시
-
-KIS는 토큰 발급을 **분당 1회**로 제한합니다. 기본은 메모리 캐시이며,
-`FileTokenCacheStore`를 쓰면 파일에 캐시되어 프로세스를 재시작해도 재사용됩니다.
-파일 포맷은 파이썬 패키지(`cluefin_openapi.kis`)와 동일해서 두 언어가 캐시 파일 하나를
-공유할 수 있습니다.
+- 모의·실전 토큰은 서로 통하지 않습니다. `KisAuth`와 `KisHttpClient`의 `env`가 다르면 서버가 `EGW00123`
+  ("기간이 만료된 token")으로 거절합니다.
+- 토큰 발급은 **분당 1회**로 제한됩니다. 기본 캐시는 메모리라 프로세스를 다시 띄우면 재발급합니다.
+  `FileTokenCacheStore`로 파일에 두세요. 파일 이름은 `kisTokenCacheFileName(env, appKey)`로 만듭니다 — env가 빠진
+  이름 하나를 쓰면 모의·실전 토큰이 같은 파일에 섞입니다.
+- 아래 경로·이름은 파이썬 패키지(`cluefin_openapi.kis`)의 기본값과 같아서, 두 언어가 토큰 하나를 같이 씁니다.
+  캐시는 만료 전이라도 6시간이 지나면 버리고 새로 받습니다.
 
 ```ts
-import { KisAuth, FileTokenCacheStore } from 'cluefin-openapi';
+import os from 'node:os';
+import path from 'node:path';
+import { FileTokenCacheStore, KisAuth, kisTokenCacheFileName } from 'cluefin-openapi';
 
-const auth = new KisAuth({
-  appKey,
-  secretKey,
-  env: 'dev',
-  tokenCacheStore: new FileTokenCacheStore('./data/.kis_token_cache.json'),
-});
+const cacheFile = path.join(os.tmpdir(), 'cluefin-openapi', kisTokenCacheFileName('dev', appKey));
+const auth = new KisAuth({ appKey, secretKey, env: 'dev', tokenCacheStore: new FileTokenCacheStore(cacheFile) });
 ```
 
-### 키움
+### 실시간 시세
+
+approval key를 따로 발급받아 연결하고, TR별 도우미 클래스로 구독·파싱합니다.
+
+```ts
+import { DomesticRealtimeQuote, KisAuth, KisSocketClient } from 'cluefin-openapi';
+
+// 국내 통합 체결가는 모의투자에 없는 TR 이라 prod 로 붙는다(시세 구독은 주문을 내지 않는다).
+const { approvalKey } = await new KisAuth({ appKey, secretKey, env: 'prod' }).approve();
+const socket = new KisSocketClient({ approvalKey, appKey, secretKey, env: 'prod' });
+const quote = new DomesticRealtimeQuote(socket);
+
+socket.on('connected', () => void quote.subscribeExecution('005930'));
+socket.on('data', (event) => {
+  if (event.trId === DomesticRealtimeQuote.TR_ID_EXECUTION && event.data) {
+    console.log(DomesticRealtimeQuote.parseExecutionData(event.data.values)[0]?.stckPrpr); // 현재가
+  }
+});
+socket.on('error', (event) => console.error(event.error?.message));
+socket.connect();
+```
+
+- **구독 응답을 믿지 마세요.** KIS는 없는 종목코드와 모의투자에 없는 TR에도 `SUBSCRIBE SUCCESS`를 답하고 데이터만
+  보내지 않습니다. 데이터가 오는지로 판단하세요.
+- **app key 하나에 WebSocket 세션은 하나**이고, `approve()`를 다시 부르면 앞서 받은 approval key가 무효가 됩니다.
+  다른 세션이 열려 있으면 `OPSP8996 ALREADY IN USE appkey`, 더 새 key가 있으면 `OPSP0011 invalid approval`이
+  `error` 이벤트로 오고 연결이 끊깁니다. 같은 키를 쓰는 다른 프로그램(파이썬 스크립트 포함)이 있는지 먼저 보세요.
+- 체결통보(`subscribeExecutionNotification`)는 prod 전용입니다. 해외주식·장내채권은 같은 방식으로
+  `OverseasRealtimeQuote`·`OnmarketBondRealtimeQuote`를 씁니다.
+
+## 키움
 
 ```ts
 import { KiwoomAuth, KiwoomClient } from 'cluefin-openapi';
 
-const auth = new KiwoomAuth({ appKey, secretKey, env: 'dev' });
+const auth = new KiwoomAuth({
+  appKey: process.env.KIWOOM_APP_KEY ?? '',
+  secretKey: process.env.KIWOOM_SECRET_KEY ?? '',
+  env: 'dev',
+});
 const { token } = await auth.generateToken();
 
 const client = new KiwoomClient({ token, env: 'dev' });
-
 const res = await client.domesticStockInfo.getStockInfo({ stkCd: '005930' });
 console.log(res.body);
 ```
 
-### NH투자증권 (PLUG)
+- 메서드 이름이 KIS·NH PLUG(`generate`/`revoke`)와 달리 `generateToken`/`revokeToken`입니다.
+- `revokeToken(token)`은 캐시를 비우지 않습니다. 폐기한 뒤에도 `generateToken()`은 캐시에 남은 그 토큰을 돌려주니,
+  `KiwoomFileTokenCacheStore`를 쓴다면 `clear()`를 직접 부르세요. 파일 이름은 `kiwoomTokenCacheFileName(env, appKey)`.
+
+## NH투자증권 (PLUG)
 
 ```ts
 import { NhplugAuth, NhplugClient } from 'cluefin-openapi';
 
-// 토큰 발급(`/oauth2/token`)은 **운영 도메인 전용**이고, 발급된 토큰 하나로 운영·모의투자를
-// 모두 호출한다. 그래서 `NhplugAuth`는 `env`를 받지 않는다.
+const appKey = process.env.NHPLUG_APP_KEY ?? '';
+const secretKey = process.env.NHPLUG_SECRET_KEY ?? '';
+
+// 토큰 발급은 운영 도메인 전용이고 토큰 하나로 운영·모의투자를 모두 호출한다 — NhplugAuth 는 env 를 받지 않는다.
 const auth = new NhplugAuth({ appKey, secretKey });
 const { accessToken } = await auth.generate();
 
-// env: 'dev'(기본값) = 모의투자(moapi.nhplug.com), 'prod' = 운영(api.nhplug.com, 실제 주문 체결)
-const client = new NhplugClient({ token: accessToken, appKey, secretKey, env: 'dev' });
+// 조회·주문은 모의투자(dev, moapi.nhplug.com)로 먼저 확인한다.
+const mock = new NhplugClient({ token: accessToken, appKey, secretKey, env: 'dev' });
 
-// 1) 계좌 목록을 먼저 조회한다. 이후 조회/주문 API는 모두 `actNo`를 요구한다.
-const accounts = await client.common.getAccountList({});
-const actNo = accounts.body.output0?.[0]?.acctNo;
+// 1) 계좌 목록 — 이후 조회·주문 API 는 모두 actNo 를 요구한다. 모의투자에서 유효한 계좌는 acctType '03' 뿐이다.
+const accounts = await mock.common.getAccountList({});
+const actNo = accounts.body.output0?.find((account) => account.acctType === '03')?.acctNo;
 
-// 2) 국내주식 현재가 (marketCd: KRX | NXT | UNT(통합시세))
-const price = await client.krstockQuote.currentPrice({ marketCd: 'KRX', iemCd: '005930' });
-
-// 3) 국내주식 잔고
-const balance = await client.krstockInquiry.balance({
+// 2) 국내주식 잔고
+const balance = await mock.krstockInquiry.balance({
   actNo,
   bncBseCd: '1', // 주식관련 총 평가(체결기준)
   ltgAotDitCd: '9', // 전체
   aetBse: '1', // 순자산
   qutDitCd: 'UNT', // 통합시세
 });
+
+// 3) 시세는 운영 전용이다 — 같은 토큰으로 prod 클라이언트를 하나 더 만든다(시세 조회는 주문을 내지 않는다).
+const live = new NhplugClient({ token: accessToken, appKey, secretKey, env: 'prod' });
+const price = await live.krstockQuote.currentPrice({ marketCd: 'KRX', iemCd: '005930' }); // KRX | NXT | UNT(통합)
 ```
 
-입력 파라미터는 camelCase(`iemCd`)로 넘기면 와이어 포맷(`iem_cd`)으로 변환되고, 요청 본문은
-`Input_0` 봉투로 감싸집니다. 응답은 `Output_0` → `output0`처럼 camelCase로 변환됩니다.
-연속조회는 이전 응답 헤더의 `cts` 값을 다음 요청 입력의 `cts`로 그대로 넘기면 됩니다.
+- **`env: 'prod'` 클라이언트로 주문 메서드를 부르면 실계좌에서 체결됩니다.** 위 예제의 `live`는 시세에만 쓰세요.
+- **시세 API는 전부 운영 전용**입니다. 모의투자는 국내 시세(`krstockQuote.*`)를 `IGW40023`으로, 해외 시세
+  (`overseasStockQuote.*`)를 `IGW40019 "종목코드(iem_cd)를 확인해주세요"`로 거절합니다. 뒤쪽 메시지는 종목코드가
+  틀렸다는 뜻이 아니라 "모의투자 미제공"입니다.
+- **계좌구분(`acctType`)이 환경과 맞아야 합니다** — `01`(자계좌)·`02`(주문대리인계좌)는 운영 전용, `03`(모의투자계좌)은
+  모의투자 전용입니다.
+- 요청은 `Input_0` 봉투로 감싸 보내고 응답은 `Output_0` → `output0`으로 옵니다. 숫자 필드는 **숫자로** 넘기세요
+  (`reqCnt: 10`). 문자열 `'10'`은 서버가 `IGW40011`로 거절합니다. 연속조회는 이전 응답 헤더의 `cts`를 다음 입력의
+  `cts`로 넘깁니다.
+- **HTTP 200이어도 본문 `rsp_cd`가 실패일 수 있어** 클라이언트가 검사합니다. 성공은 `00000`·`XA102`(모의 조회)·
+  `00166`(운영 조회)·`00221`(운영 주문가능수량)입니다. **조회 결과 0건은 실패 코드로 옵니다** — `NhplugNoDataError`
+  (`13578`·`11512`·`16935`)를 빈 결과로 처리하세요. `NhplugMockUnsupportedError`(`19999`)는 모의투자 미제공,
+  `NhplugNotBusinessDayError`(`14100`)는 영업일 아님입니다. 셋 다 `NhplugApiError`의 하위이고 코드는 `error.errorCode`에
+  있습니다.
+- **토큰을 불필요하게 다시 발급하면 계좌 보안 알림이 옵니다**(발급은 초당 1회 제한). 기본 캐시는 메모리이니,
+  프로세스를 자주 띄운다면 KIS 예제처럼 파일 캐시를 쓰세요 —
+  `new NhplugFileTokenCacheStore(path.join(os.tmpdir(), 'cluefin-openapi', nhplugTokenCacheFileName(appKey)))`.
+  토큰 하나를 운영·모의가 같이 쓰므로 파일 이름은 env 없이 app key로만 갈립니다. 파이썬 패키지와 같은 파일입니다.
 
-#### 꼭 알아둘 것
+### 실시간 시세
 
-- **`env`를 틀리면 실계좌에 주문이 나갑니다.** `'prod'`는 운영(실제 체결), `'dev'`는
-  모의투자입니다. 기본값은 `'dev'`.
-- **계좌 목록(`common.getAccountList`)을 먼저 호출하세요.** 조회·주문 API는 모두 `actNo`가
-  필요하고, 계좌구분(`acctType`)이 환경과 맞아야 합니다 —
-  `01`(자계좌)·`02`(주문대리인계좌)는 **운영 전용**, `03`(모의투자계좌)은 **모의투자 전용**입니다.
-- **해외주식 시세 4종(`overseasStockQuote.*`)은 운영 도메인 전용**입니다. 모의투자에서 호출하면
-  종목코드와 무관하게 `IGW40019 "종목코드(iem_cd)를 확인해주세요"`로 거절되는데, 이는 잘못된
-  종목코드가 아니라 "모의투자 미제공"이라는 뜻입니다.
-- HTTP 200이어도 본문 `rsp_cd`가 실패일 수 있어 클라이언트가 이를 검사합니다. 성공 코드는
-  `00000`·`XA102`(모의투자 조회 완료)·`00166`(운영 조회 완료)·`00221`(운영 주문가능수량 조회 완료)입니다
-  (`NHPLUG_SUCCESS_RSP_CODES`). 실패 중 뜻이 확인된 코드는 `NhplugApiError` 하위의 전용 에러로 던집니다 —
-  `NhplugNoDataError`(`13578`·`11512`·`16935`, 조회 결과 0건), `NhplugMockUnsupportedError`(`19999`, 모의투자 미제공),
-  `NhplugNotBusinessDayError`(`14100`, 영업일 아님). 코드는 어느 에러든 `error.errorCode` 에 있습니다.
-
-#### 토큰 캐시
-
-토큰 발급은 서버에서 초당 1회로 제한되고, 불필요한 재발급은 계좌 보안 알림을 유발합니다.
-기본은 메모리 캐시이며 `NhplugFileTokenCacheStore`를 쓰면 프로세스를 재시작해도 재사용됩니다.
-파일 포맷은 파이썬 패키지(`cluefin_openapi.nhplug`)와 동일합니다. 캐시 파일 이름은 env가 아니라
-app key로만 구분됩니다 — 토큰 하나를 운영·모의투자가 공유하기 때문입니다.
+REST와 같은 access token을 그대로 씁니다(approval key 없음). 구독 대상은 REST 경로가 아니라 웹소켓 전용 채널 코드
+(`tr_cd`)이고, 서버 푸시는 평문 JSON이라 `event.body`로 읽습니다.
 
 ```ts
-import { NhplugAuth, NhplugFileTokenCacheStore, nhplugTokenCacheFileName } from 'cluefin-openapi';
+import { NhplugSocketClient } from 'cluefin-openapi';
 
-const auth = new NhplugAuth({
-  appKey,
-  secretKey,
-  tokenCacheStore: new NhplugFileTokenCacheStore(`./data/${nhplugTokenCacheFileName(appKey)}`),
-});
-```
+// accessToken 은 위 예제에서 받은 것. 시세 채널은 운영 전용이다.
+// market: 'kr'(국내, 기본) | 'gb'(해외) — 운영에서만 주소가 갈린다.
+const socket = new NhplugSocketClient({ token: accessToken, env: 'prod', market: 'kr' });
 
-### 실시간 시세 (NH PLUG WebSocket)
-
-REST와 같은 access token을 그대로 씁니다(approval key 없음). 구독 대상은 REST 경로가 아니라
-웹소켓 전용 채널 코드(`tr_cd`)이며, 서버 푸시는 평문 JSON이라 `event.body`로 바로 읽습니다.
-
-```ts
-import { NhplugAuth, NhplugSocketClient } from 'cluefin-openapi';
-
-const auth = new NhplugAuth({ appKey, secretKey });
-const { accessToken } = await auth.generate();
-
-// market: 'kr'(국내, 기본) | 'gb'(해외) — 운영에서만 주소가 갈리고 모의투자는 단일 주소입니다.
-const socket = new NhplugSocketClient({ token: accessToken, env: 'dev', market: 'kr' });
-
-socket.on('connected', async () => {
-  await socket.subscribe('mc', '005930'); // 국내 통합시세 체결가
-});
-
-socket.on('data', (event) => {
-  console.log(event.trId, event.body); // { header: { tr_cd, tr_key }, body: {...} } 의 body
-});
-
+socket.on('connected', () => void socket.subscribe('mc', '005930')); // 국내 통합시세 체결가
+socket.on('data', (event) => console.log(event.trId, event.trKey, event.body));
 socket.connect();
 ```
 
-채널 코드는 대소문자로 갈립니다(해외 실시간 `RC` / 지연 `rc`). 세션을 정리할 때는
-`client.common.closeWebsocketSession({})`를 호출하세요.
+- 모의 소켓은 시세 채널 구독을 `WSS10006 "허용되지 않는 tr_cd 입니다."`로 거절합니다.
+- **채널 코드는 대소문자로 갈립니다** — 해외 `RC`/`RH`는 실시간(유료 시세 약정 필요), `rc`/`rh`는 무료 지연 시세입니다.
+  전체 목록은 자산군별 `https://www.nhplug.com/openapi-docs/<krstock|gbstock>/openapi.json`의 `x-realtime-channels`.
+- 운영 서버는 없는 종목코드에도 `rsp_cd 00000`을 답하고, 그 구독 응답도 `data` 이벤트로 옵니다(`trKey` 없음).
+  `event.trKey`가 맞는 푸시를 받았는지로 판단하세요.
+- 세션이 남아 끊기지 않으면 `client.common.closeWebsocketSession({})`으로 정리합니다. 열린 세션이 없을 때 부르면
+  서버가 실패로 답해 `NhplugApiError`가 납니다.
 
-### 실시간 시세 (KIS WebSocket)
+## OpenDART (공시·재무제표)
 
-approval key를 발급받아 소켓에 연결하고, TR별 도우미 클래스로 구독/파싱합니다.
-
-```ts
-import { KisAuth, KisSocketClient, DomesticRealtimeQuote } from 'cluefin-openapi';
-
-const auth = new KisAuth({ appKey, secretKey, env: 'dev' });
-const { approvalKey } = await auth.approve();
-
-const socket = new KisSocketClient({ approvalKey, appKey, secretKey, env: 'dev' });
-const quote = new DomesticRealtimeQuote(socket);
-
-socket.on('connected', async () => {
-  await quote.subscribeExecution('005930'); // 실시간 체결가 구독
-});
-
-socket.on('data', (event) => {
-  if (event.trId === DomesticRealtimeQuote.TR_ID_EXECUTION && event.data) {
-    const items = DomesticRealtimeQuote.parseExecutionData(event.data.values);
-    console.log(items[0]?.stckPrpr); // 현재가
-  }
-});
-
-socket.connect();
-```
-
-체결(`subscribeExecution`)·호가(`subscribeOrderbook`)·체결통보(`subscribeExecutionNotification`,
-prod 전용)를 지원하며, 해외주식·장내채권도 같은 패턴으로 `OverseasRealtimeQuote`,
-`OnmarketBondRealtimeQuote`를 사용합니다.
-
-### OpenDART (공시·재무제표)
-
-계좌도 토큰도 필요 없습니다. 인증키 하나로 상장사 전체의 공시와 재무제표를 조회합니다 — 조회 전용이라 실수로 주문이 나갈 일도 없습니다.
+계좌도 토큰도 필요 없습니다. 인증키 하나로 상장사 전체의 공시와 재무제표를 조회합니다 — 조회 전용이라 주문이 나갈 일이 없습니다.
 
 ```ts
 import { DartClient } from 'cluefin-openapi';
 
-const dart = new DartClient({ authKey: process.env.DART_AUTH_KEY! });
+const dart = new DartClient({ authKey: process.env.DART_AUTH_KEY ?? '' });
 
-// 1) DART 는 종목코드가 아니라 고유번호(corpCode, 8자리)로 조회합니다. 먼저 변환하세요.
-//    전체 목록(5만+건)을 내려받으니 한 번만 받아 캐시해 두는 게 좋습니다.
+// 1) DART 는 종목코드가 아니라 고유번호(corpCode, 8자리)로 조회한다. 먼저 변환한다.
+//    회사 전체 목록을 ZIP 으로 내려받으니 한 번만 받아 캐시해 둔다.
 const { body: corps } = await dart.publicDisclosure.corpCode();
 const { corpCode } = corps.list.find((c) => c.stockCode === '005930')!; // '00126380'
 
@@ -257,48 +227,41 @@ const { body: acc } = await dart.periodicReportFinancialStatement.getSingleCompa
 });
 const sales = acc.list?.find((a) => a.accountNm === '매출액' && a.fsDiv === 'CFS'); // CFS 연결 · OFS 별도
 console.log(sales?.thstrmAmount, sales?.frmtrmAmount); // 당기 · 전기 → '300,870,903,000,000' '258,935,494,000,000'
-```
 
-배당·최대주주·임원보수·감사의견 등은 `periodicReportKeyInformation`, 증자·자사주·합병 같은 사건성 공시는
-`majorShareholderDisclosure`에 있습니다. 모두 `(corpCode, bsnsYear, reprtCode)` 또는 `(corpCode, bgnDe, endDe)`를 받습니다.
-
-```ts
-// 공시 원문(XML)과 XBRL 원본 — 디스크에 쓰지 않고 바이트로 돌려줍니다.
-const doc = await dart.publicDisclosure.disclosureDocumentFile({ rceptNo: '20260310002820' });
-const xbrl = await dart.periodicReportFinancialStatement.downloadFinancialStatementXbrl({
-  rceptNo: '20260310002820',
-  reprtCode: '11011',
-});
-console.log(doc.body.length, [...xbrl.body.keys()]); // Map<파일명, Uint8Array> — .xbrl, .xsd, _lab-ko.xml …
-
-// 원본 ZIP 의 XML 전부 — 본문이 첫 번째, 첨부 감사보고서(_00760·_00761)가 뒤에 온다.
+// 4) 공시 원문 ZIP 의 XML 전부 — 본문이 첫 번째, 첨부 감사보고서(_00760·_00761)가 뒤에 온다. 디스크에 쓰지 않는다.
 const files = await dart.publicDisclosure.disclosureDocumentFiles({ rceptNo: '20260310002820' });
 console.log([...files.body.keys()]); // ['20260310002820.xml', '20260310002820_00760.xml', …]
 ```
 
-#### 꼭 알아둘 것
+어디에 무엇이 있나:
 
-- **조회 결과가 없어도 에러가 아닙니다.** HTTP 200 본문의 `status`로 판단하세요 — `'000'` 정상, `'013'` 데이터 없음(`list` 없음),
-  `'020'` 요청 제한 초과. 전체 코드는 OpenDART 개발가이드의 "에러 및 메시지 설명"에 있습니다.
-- `publicDisclosureSearch`는 기간(`bgnDe`·`endDe`)을 생략하면 **최근 89일**을 조회합니다. `corpCode` 없이는 3개월을 넘길 수 없습니다.
+- `publicDisclosure` 공시검색·기업개황·원문·고유번호, `periodicReportFinancialStatement` 재무제표·주요지표·XBRL
+- `periodicReportKeyInformation` 배당·최대주주·임원보수·감사의견 같은 정기보고서 항목, `shareDisclosureComprehensive` 대량보유·임원 소유보고
+- `majorMattersReport` 증자·자사주·합병 같은 사건성 공시(주요사항보고서). 옛 이름 `majorShareholderDisclosure`는 deprecated 별칭
+
+### 꼭 알아둘 것
+
+- **조회 결과가 없어도, 키가 틀려도 예외가 아닙니다.** HTTP 200 본문의 `status`로 판단하세요 — `'000'` 정상,
+  `'013'` 데이터 없음(`list` 없음), `'020'` 요청 제한 초과, `'010'` 등록되지 않은 키. 전체 코드는 OpenDART 개발가이드의
+  "에러 및 메시지 설명"에 있습니다. 본문 `status`를 예외(`DartApiError`)로 바꾸는 것은 원문·XBRL 같은 바이너리 조회뿐입니다.
+- `publicDisclosureSearch`는 기간(`bgnDe`·`endDe`)을 생략하면 **최근 89일**을 조회합니다. `corpCode` 없이는 3개월을
+  넘길 수 없습니다.
 - 금액·수량은 **쉼표 섞인 문자열**(`'300,870,903,000,000'`)입니다. 계산 전에 변환하세요.
-- 키별 요청 제한(일반적으로 2만 건)을 넘으면 `status: '020'`이 옵니다. 클라이언트 기본 속도 제한은 초당 5건(버스트 10)이고
+- 키별 요청 제한(일반적으로 2만 건)을 넘으면 `status: '020'`입니다. 클라이언트 기본 속도 제한은 초당 5건(버스트 10)이고
   `rateLimitRequestsPerSecond`로 바꿉니다.
+- `getMultiCompanyMajorAccounts`는 `corpCode`를 쉼표로 이어 **한 번에 최대 100개**까지 받습니다. 101개째부터는 호출
+  전체가 `status: '021'`로 실패합니다(부분 결과 아님). 100개씩 나눠 호출하세요.
+- 단일/다중회사 주요계정·주요지표 응답에는 **지배/비지배 지분 구분이 없습니다.** 연결 당기순이익·자본 합계는 두 몫을
+  합친 값이라, 비지배 지분이 큰 지주회사는 이 값으로 계산한 PBR·ROE가 증권사의 지배주주 기준과 다르게 나옵니다.
+  지배주주 몫은 `getSingleCompanyFullStatements`에서 "지배기업 소유주지분"/"비지배지분" 계정을 직접 찾아 분리하세요.
+- `new DartClient({ authKey, rawKeys: true })`는 OpenDART 원문(snake_case) 키를 그대로 돌려줍니다. 이때는 메서드의
+  응답 타입(camelCase)과 실제 런타임 키가 어긋나니, 원문 키로 직접 읽거나 다른 도구에 그대로 넘길 때만 쓰세요.
 - 인증키는 에러 메시지와 로그에서 `***`로 가려집니다.
-- `getMultiCompanyMajorAccounts`(`fnlttMultiAcnt`)는 `corpCode`를 쉼표로 이어 **한 번에 최대 100개**까지만
-  받습니다. 101개째부터는 전체 호출이 `status: '021'`로 실패합니다(부분 결과 아님) — 유니버스 전체를 돌 때는
-  100개씩 나눠 호출하세요.
-- 다중/단일회사 주요계정·주요지표 응답에는 **지배/비지배 지분 구분이 없습니다.** 연결재무제표 당기순이익·자본
-  합계는 지배주주 몫과 비지배주주 몫을 합친 값이라, 비지배 지분이 큰 지주회사 등은 이 값으로 계산한 PBR·ROE가
-  증권사가 쓰는 지배주주 기준과 다르게 나옵니다. 지배주주 몫이 필요하면 `getSingleCompanyFullStatements`
-  (`fnlttSinglAcntAll`)에서 "지배기업 소유주지분"/"비지배지분" 계정을 직접 찾아 분리하세요.
-- 응답 키는 기본적으로 camelCase 로 바뀝니다. `new DartClient({ authKey, rawKeys: true })`로 만들면 OpenDART
-  원문(snake_case) 키를 그대로 돌려줍니다 — 단, 이때는 각 도메인 메서드의 응답 타입(camelCase 필드)과 실제
-  런타임 키가 어긋나니 원문 키로 직접 읽거나 다른 도구에 그대로 넘길 때만 쓰세요.
 
-### 한국은행 ECOS (경제통계)
+## 한국은행 ECOS (경제통계)
 
-가입 없이 공개 시험 키 `sample`로 바로 씁니다. 금리·환율·물가처럼 DART 재무제표와 짝지어 쓰는 거시 값의 데이터원입니다.
+가입 없이 공개 시험 키 `sample`로 바로 씁니다. `statisticSearch`가 통계 조회, `statisticCatalog`가 통계표·항목·100대 지표
+목록, `statisticGlossary`가 용어·메타입니다.
 
 ```ts
 import { EcosClient, KTB_10Y, parseEcosValue } from 'cluefin-openapi';
@@ -319,116 +282,40 @@ const ktb = await ecos.statisticSearch.searchSeries(KTB_10Y, '20261001', '202610
 const last = ktb.rows.at(-1);
 console.log(last?.time, parseEcosValue(last?.dataValue)); // '20261016' 4.182 (연 %)
 
-// 어떤 통계표·항목이 있는지
+// 어떤 항목이 있는지
 const items = await ecos.statisticCatalog.itemList({ statCode: '817Y002' });
-const keyStats = await ecos.statisticCatalog.keyStatisticList(); // 100대 통계지표 최근 값
 ```
 
-#### 꼭 알아둘 것
+### 꼭 알아둘 것
 
-- `sample` 키는 **한 번에 10행**입니다. 행 범위(`startRow`·`endRow`)를 생략하면 클라이언트가 10행씩(실키는 1000행씩) 끝까지 이어 받습니다.
-  범위를 직접 주면 그 쪽만 받고, sample 로 10행을 넘기면 `EcosSampleLimitError`입니다.
-- **오류도 HTTP 200**으로 옵니다. 클라이언트가 본문 `RESULT.CODE`를 보고 예외로 바꿉니다(`INFO-100` 인증, `ERROR-101` 날짜 형식 …).
-  데이터 없음(`INFO-200`)과 없는 통계표는 예외가 아니라 빈 `rows`입니다.
-- 응답 키는 와이어 이름의 camelCase(`STAT_CODE` → `statCode`, `P_STAT_CODE` → `pStatCode`)이고 값은 원문 문자열입니다.
-  숫자 변환은 `parseEcosValue`, 비율 변환은 쓰는 쪽에서 하세요.
+- `sample` 키는 **한 번에 10행**입니다. 행 범위(`startRow`·`endRow`)를 생략하면 클라이언트가 10행씩(실키는 1000행씩) 끝까지
+  이어 받습니다. 범위를 직접 주면 그쪽만 받고, sample로 10행을 넘기면 `EcosSampleLimitError`입니다.
+- **오류도 HTTP 200**으로 옵니다. 클라이언트가 본문 `RESULT.CODE`를 보고 예외로 바꿉니다(`INFO-100` 인증,
+  `ERROR-101` 날짜 형식 …). 데이터 없음(`INFO-200`)과 없는 통계표는 예외가 아니라 빈 `rows`입니다.
+- 서버는 60초를 넘는 조회를 `ERROR-400`으로 끊습니다(`EcosQueryTimeoutError`). 기간을 나누거나 항목코드를 지정하세요.
+- 응답 키는 와이어 이름의 camelCase(`STAT_CODE` → `statCode`)이고 값은 원문 문자열입니다. 숫자 변환은 `parseEcosValue`로
+  하고, 단위(연 %, 억원 …)는 행의 `unitName`을 보세요.
 - 인증키는 URL 경로에 들어가므로 에러 메시지·로그에는 키를 가린 경로(`/StatisticSearch/***/json/…`)만 남습니다.
-
-## API 모듈
-
-### KIS REST (`KisHttpClient`의 getter)
-
-| 모듈 | 설명 |
-|------|------|
-| `domesticBasicQuote` | 국내주식 기초시세 |
-| `domesticStockInfo` | 국내주식 종목정보 |
-| `domesticMarketAnalysis` | 국내주식 시장분석 |
-| `domesticRankingAnalysis` | 국내주식 순위분석 |
-| `domesticIssueOther` | 국내주식 기타이슈 |
-| `domesticAccount` | 국내주식 계좌 |
-| `overseasBasicQuote` | 해외주식 기초시세 |
-| `overseasMarketAnalysis` | 해외주식 시장분석 |
-| `overseasAccount` | 해외주식 계좌 |
-| `onmarketBondBasicQuote` | 장내채권 기초시세 |
-
-### KIS 실시간 (WebSocket)
-
-| 클래스 | 설명 |
-|------|------|
-| `DomesticRealtimeQuote` | 국내주식 실시간 체결/호가/체결통보 |
-| `OverseasRealtimeQuote` | 해외주식 실시간 체결/호가/체결통보 |
-| `OnmarketBondRealtimeQuote` | 장내채권 실시간 체결/호가/지수 |
-
-### 키움 REST (`KiwoomClient`의 getter, 국내 전용)
-
-| 모듈 | 설명 |
-|------|------|
-| `domesticStockInfo` | 국내주식 종목정보 |
-| `domesticAccount` | 국내주식 계좌 |
-| `domesticChart` | 국내주식 차트 |
-| `domesticOrder` | 국내주식 주문 |
-| `domesticEtf` | 국내 ETF |
-| `domesticForeign` | 국내주식 외국인거래 |
-| `domesticMarketCondition` | 국내주식 시장상황 |
-| `domesticRankInfo` | 국내주식 순위정보 |
-| `domesticSector` | 국내주식 섹터 |
-| `domesticTheme` | 국내주식 테마 |
-
-### NH PLUG REST (`NhplugClient`의 getter)
-
-| 모듈 | 설명 | 엔드포인트 |
-|------|------|------|
-| `common` | 공통 (계좌목록·웹소켓 세션해제) | 2 |
-| `krstockOrder` | 국내주식 주문 | 8 |
-| `krstockInquiry` | 국내주식 조회 | 12 |
-| `krstockQuote` | 국내주식 시세 | 11 |
-| `overseasStockOrder` | 해외주식(gbstock) 주문 | 6 |
-| `overseasStockInquiry` | 해외주식(gbstock) 조회 | 8 |
-| `overseasStockQuote` | 해외주식(gbstock) 시세 (**운영 전용**) | 4 |
-
-### OpenDART REST (`DartClient`의 getter)
-
-| 모듈 | 설명 | 엔드포인트 |
-|------|------|------|
-| `publicDisclosure` | 공시검색·기업개황·공시 원문·고유번호 | 4 |
-| `shareDisclosureComprehensive` | 대량보유 상황보고·임원/주요주주 소유보고 | 2 |
-| `periodicReportFinancialStatement` | 재무제표·주요지표·XBRL | 7 |
-| `periodicReportKeyInformation` | 배당·주주·임원·보수·감사 등 정기보고서 주요정보 | 28 |
-| `majorMattersReport` | 증자·자기주식·합병/분할 등 주요사항보고서 (옛 이름 `majorShareholderDisclosure` 는 deprecated 별칭) | 36 |
-
-### ECOS REST (`EcosClient`의 getter)
-
-| 모듈 | 설명 | 서비스 |
-|------|------|------|
-| `statisticSearch` | 통계 조회 (`search`·`searchSeries`) | 1 |
-| `statisticCatalog` | 통계표 목록·세부항목·100대 통계지표 | 3 |
-| `statisticGlossary` | 통계용어사전·통계메타DB | 2 |
 
 ## 에러 처리
 
-KIS/키움/NH PLUG/DART/ECOS 각각 전용 에러 클래스 제공 (`ApiError` 상속, 예: `DartRateLimitError`):
-
-`Authentication` · `Authorization` · `Validation` · `Server` · `Network` · `Timeout` · `RateLimit`
+브로커마다 `Kis*`·`Kiwoom*`·`Nhplug*`·`Dart*`·`Ecos*` 에러 클래스가 있고 모두 `ApiError`를 상속합니다. 브로커가 준
+코드는 `error.errorCode`, HTTP 상태는 `error.statusCode`에 있습니다.
 
 ```ts
-import { KisAuthenticationError, KiwoomRateLimitError } from 'cluefin-openapi';
+import { ApiError, KisAuthenticationError } from 'cluefin-openapi';
 
 try {
-  await client.domesticBasicQuote.getStockCurrentPrice({ ... });
+  await client.domesticBasicQuote.getStockCurrentPrice({ fidCondMrktDivCode: 'J', fidInputIscd: '005930' });
 } catch (err) {
   if (err instanceof KisAuthenticationError) {
     // 토큰 만료 → 재발급
+  } else if (err instanceof ApiError) {
+    console.error(err.name, err.errorCode, err.message);
   }
 }
 ```
 
-## 개발
-
-```bash
-npm install && npm run build
-npm run check             # biome lint + format
-npm run typecheck
-npm run test:unit
-npm run test:integration  # 실제 API 키 필요 (repo 루트 .env.test / .env 로드)
-npm run generate:metadata # 파이썬 패키지의 엔드포인트가 바뀌면 재실행 → npm run format
-```
+**`KisApiError`는 `KisAuthenticationError`·`KisRateLimitError`의 부모가 아닙니다**(키움·NH PLUG·DART·ECOS도 같습니다).
+종류별 클래스는 `ApiAuthenticationError` 같은 공통 클래스를 상속하므로, 한 브로커의 오류를 모두 잡으려면 `ApiError`로
+잡으세요.

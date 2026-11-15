@@ -1,223 +1,198 @@
 # AGENTS.md — cluefin-openapi-ts
 
-Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
+Non-obvious constraints only; see the root AGENTS.md for repo-wide rules. Measured vendor behaviour shared with the
+Python sibling lives in `packages/cluefin-openapi/AGENTS.md` and `VENDOR_DOC_ERRATA.md` — this file keeps what is
+TypeScript-only and what must be mirrored by hand.
 
 ## Scope boundary (easy to get wrong)
 
 - "해외/overseas" means three different things here, and only one of them is out of scope:
   - `src/kis/overseas-*` — **KIS** overseas stock. In scope.
-  - `src/nhplug/overseas-stock-*` — **NH PLUG gbstock** (`/gbstock/...`). In scope, REST +
-    WebSocket. The class/file names say "overseas", the paths and the vendor docs say
-    "gbstock" — same thing.
-  - **Kiwoom** US stock. Out of scope: the Kiwoom side implements domestic endpoints only,
-    and Kiwoom US-stock REST plus all Kiwoom WebSocket support are Python-only (sibling
-    `cluefin-openapi`).
-- NH PLUG's other asset classes (krfuture·gbfuture·krbond·krgold) have public specs but are
-  not ported here — only common·krstock·gbstock are.
+  - `src/nhplug/overseas-stock-*` — **NH PLUG gbstock** (`/gbstock/...`). In scope, REST + WebSocket. The class/file
+    names say "overseas", the paths and the vendor docs say "gbstock" — same thing.
+  - **Kiwoom** US stock. Out of scope: the Kiwoom side implements domestic REST only; Kiwoom US-stock REST and all
+    Kiwoom WebSocket support are Python-only.
+- NH PLUG's other asset classes (krfuture·gbfuture·krbond·krgold) have public specs but are not ported — only
+  common·krstock·gbstock are.
+- The seven KIS 국내주식 종목분석 endpoints (balance sheet, income statement, financial/profit/other/stability/growth
+  ratios) were removed in 1.1.0: KIS blocked them for every app on 2026-11-11 16:00 (data licence). Don't port them back.
 
-## Coupling to the Python sibling
+## Mirror the Python sibling by hand
 
-- `generate:metadata` regex-parses `packages/cluefin-openapi`'s Python source to produce
-  the TS metadata files. Nothing re-runs it automatically: when the Python package's
-  endpoints change, re-run it or the TS side silently goes stale. The script's raw
-  `JSON.stringify` output doesn't match Biome's quoting/trailing commas, so `generate:metadata`
-  chains `npm run format` itself — don't drop that or every metadata file shows up in the diff.
-  A Python param counts as required when it has no default, even if typed `Optional`.
-- All three brokers (KIS, Kiwoom, nhplug) share their token cache **files** with Python
-  under the same `<tmpdir>/cluefin-openapi/` directory, each using Python's own naming
-  rule (`kisTokenCacheFileName` / `kiwoomTokenCacheFileName` / `nhplugTokenCacheFileName`
-  in each broker's `token-cache.ts`, mirroring that broker's `TokenManager._cache_file_name`
-  byte for byte) and JSON shape. The nhplug token cache file is scoped by **app_key only**
-  (one NH token is issued on the live domain and used for both live and mock calls); the
-  KIS and Kiwoom stores are env-scoped (`env` + `sha256(app_key)[:8]`). Don't "unify" the
-  schemes across brokers — each mirrors its own Python `TokenManager`, and changing a
-  Python `_cache_file_name` or cache JSON shape means updating the matching TS file by
-  hand (nothing enforces this automatically). Because the file is shared, a revoke in
-  either language kills the token the other is reusing — the revoke integration tests only
-  run with `KIS_TEST_REVOKE=1` / `KIWOOM_TEST_REVOKE=1` / `NHPLUG_TEST_REVOKE=1`. Kiwoom
-  returns the *same* token on re-issue while one is valid, so even a test that never reads
-  the cache file revokes the shared token (2026-09-23: every later run failed with `8005`).
-  Neither side re-issues on `8005` — a revoked cached token sticks until `MAX_CACHE_AGE`.
-- Cache files go through `src/core/token-file.ts`: `cached_at` is naive local time with no
-  `Z`/offset (`localIsoNow`) — Python 3.10's `fromisoformat` rejects `Z`, and the Python
-  `TokenManager` then keeps the token but silently drops its 6h max-age check. Writes are
-  0600 + atomic rename (`writeJsonAtomic`), matching Python's `write_json_atomic`.
-- Endpoint-count tests hardcode totals (`tests/core/endpoint-count.test.ts`, KIS
-  contract tests, `tests/dart/metadata.test.ts`); bump them whenever metadata changes.
+Nothing enforces any of this automatically.
+
+- `npm run generate:metadata` regex-parses `packages/cluefin-openapi`'s Python source into the KIS/Kiwoom/nhplug
+  metadata and the DART metadata **and Zod schemas**. Re-run it when Python endpoints change, or the TS side silently
+  goes stale. **Check it by regenerating on a clean tree: `git diff` must be empty** (#225 — after Python switched to `X | None`
+  annotations the generator crashed on DART and nobody saw, because nothing runs it).
+  - It chains `npm run format`: raw `JSON.stringify` output doesn't match Biome's quoting, so without it every
+    metadata file shows up in the diff.
+  - A Python param is required when it has no default, even if typed `X | None`.
+  - Never hand-edit `src/dart/metadata|schemas`. Per-method additions that must survive regeneration go in the
+    generator's own tables.
+- **ECOS is hand-written, outside the generator** (Python `ecos/` builds URL path segments, not path + query metadata).
+  When Python `ecos/_*.py` or `_*_types.py` change, update `src/ecos/*` yourself: schemas, result-code table, constants.
+- **Token cache files are shared with Python** (`<tmpdir>/cluefin-openapi/`). Each broker's `token-cache.ts` mirrors that
+  broker's Python `TokenManager._cache_file_name` byte for byte — `kisTokenCacheFileName` / `kiwoomTokenCacheFileName`
+  (`env` + `sha256(app_key)[:8]`) and `nhplugTokenCacheFileName` (app key only: one NH token serves live and mock). Don't
+  unify the schemes; change a Python name or cache JSON shape and you change the TS file too. Why each rule exists
+  (6h max age, env scoping, NH re-issue alerts) is in the Python AGENTS.md.
+  - `cached_at` is naive local time with no `Z`/offset (`localIsoNow` in `src/core/token-file.ts`, never
+    `toISOString()`): Python parses it with `fromisoformat` and compares against a naive `datetime.now()`.
+  - KIS and Kiwoom drop a cached token after 6h (`MAX_CACHE_AGE_MS`); nhplug has no max age, only
+    `cachedAt + expiresIn`.
+  - A revoke in either language kills the token the other is reusing. Kiwoom returns the *same* token on re-issue while
+    one is valid, so a revoke test that never reads the cache file still broke every later run with `8005`
+    (2026-09-23). Hence `KIS_TEST_REVOKE=1` / `KIWOOM_TEST_REVOKE=1` gate the TS revoke tests (nhplug has no TS auth
+    integration test; `NHPLUG_TEST_REVOKE` is Python's). Neither side re-issues on `8005`.
+  - `KiwoomAuth.revokeToken()` does not clear the cache store, unlike `KisAuth.revoke()` and `NhplugAuth.revoke()`.
+- nhplug body codes: keep `SUCCESS_RSP_CODES` and the `NO_DATA` / `MOCK_UNSUPPORTED` / `NOT_BUSINESS_DAY` lists in
+  `src/nhplug/client.ts` identical to Python's `_model.SUCCESS_RSP_CODES` and `_exceptions.*_RSP_CODES`. A 00000-only
+  check reports false failures (mock answers `XA102`, live account inquiries `00166`, `buyableQuantity` `00221`).
+
+## Client behaviour that surprises
+
+- **Default `env` is not uniform**: `KisHttpClient` defaults to `'prod'`, everything else (`KisAuth`, `KisSocketClient`,
+  Kiwoom, nhplug) to `'dev'`. Pass it explicitly in code and tests.
+- Kiwoom's auth API is `generateToken()`/`revokeToken()`, KIS and NH PLUG use `generate()`/`revoke()` — real, not a typo.
+- **`KisApiError` is not the parent of `KisAuthenticationError`** (same for every broker): the typed errors extend
+  the shared `Api*Error` classes, the `<Broker>ApiError` extends `ApiError` directly. Catch `ApiError` for "anything".
+- KIS `custtype` is a per-call input on HTTP (header, default `'P'`); only the socket client hardcodes `'P'`.
+- **One KIS WebSocket session per app key, and each `approve()` voids earlier approval keys.** The server answers
+  `OPSP8996 ALREADY IN USE appkey` or `OPSP0011 invalid approval` and drops the connection (2026-10-12);
+  `KisSocketClient` emits it as an `error` event and repeats it in the next "not connected" error. A realtime test
+  fails this way when desk, a Python run or another TS run uses the same key.
+- Wire format is snake_case (Zod schemas match the wire); the public API camelCases responses. `CamelizeKeys` in
+  `src/core/types.ts` wraps its mapping in `Uncapitalize` because the runtime `toCamelCase` lowercases the first
+  character — it only shows on NH PLUG's capitalized envelope keys (`Output_0` → `output0`). Dropping it desyncs the
+  declared types from the returned values.
+- nhplug sends body values **as given** — unlike KIS/Kiwoom it must not stringify them: the server rejects a string
+  where the spec says integer/number with `IGW40011` (2026-09-27). `reqCnt: 10`, not `'10'`.
+- An nhplug HTTP 200 can carry a failing `rsp_cd`. The check is in `NhplugClient.invokeEndpoint`, after the HTTP layer,
+  so HTTP-level retry and rate-limit logic never see those errors.
+- `common.closeWebsocketSession` throws when no session is open: the server answers HTTP 200 + `rsp_cd 10000`
+  (2026-09-23; HTTP 500 `IGW50025` a month earlier). It has no integration test — it tears down the account's sessions.
 
 ## OpenDART (`src/dart`)
 
-- **Metadata *and* Zod schemas are generated** from the Python `dart/_*.py` + `_*_types.py`
-  (`generate:metadata`). Never hand-edit `src/dart/metadata|schemas`.
-  A method's response model comes from its return annotation, else from `return X.parse(...)`
-  (16 Python methods have no annotation).
-- **Fix Python, not the generator, when a response is wrong.** Python's own tests build fake
-  responses from its models and its integration tests accepted `013`, so wrong models/paths went
-  unseen (2026-10: wrong model for trust-contract, duplicated path for tangible-asset transfer, a
-  `recpt_no` typo, a required field the server never sends). Our integration tests attach
-  `responseSchema` to the call so a mismatch with live data throws — a failure there usually means
-  a Python bug. Python method names were renamed to match their endpoints in 2026-11-04 (B-13;
-  `profit_revocation` → `lawsuit_filing` for 소송등의제기, among 23 others) — the old names survive
-  only as deprecated aliases, so don't reintroduce them in new TS code. Still trust the live check
-  over any name when the two disagree.
-- Auth is the `crtfc_key` query param (no token, no cache). The key is masked in errors/logs —
-  keep it out of `requestContext`.
-- A non-`000` body `status` is **returned, not thrown** (matches Python). Only binary endpoints
-  throw `DartApiError`, because their errors arrive as a small XML body. Don't add `NoData`-style
-  errors like nhplug.
-- Zod `int`/`float` fields are `number | string` on purpose: pydantic coerces numeric strings,
-  so the wire type is unknown. Don't tighten them without live proof.
-- ZIP/XML are hand-rolled (`src/core/zip.ts`, `src/dart/xml.ts`) to avoid dependencies: no ZIP64,
-  no encryption, flat `<list>` XML only. Binary endpoints return bytes / `Map`, never write files.
-- 주요사항보고서 are event-driven, so a fixed company returns only `013`. Its integration test uses
-  dated real filings in `tests/dart/fixtures/` (endpoints with no 2025 original are skipped);
-  `013` must not count as a pass there.
-- `PublicDisclosure` and `PeriodicReportFinancialStatement` are class + interface merges (custom
-  methods plus generated ones) — Biome's `noUnsafeDeclarationMerging` is off for this.
+- **Fix Python, not the generator, when a response is wrong.** Python's tests built fake responses from its own models
+  and its integration tests accepted `013`, so wrong models and paths went unseen (2026-10: wrong model for
+  trust-contract, duplicated path for tangible-asset transfer, a `recpt_no` typo, a required field the server never
+  sends). TS integration tests attach `responseSchema` to the call so a mismatch with live data throws — a failure
+  there usually means a Python bug.
+- Python method names were renamed to match their endpoints on 2026-11-04 (`profit_revocation` → `lawsuit_filing` for
+  소송등의제기, and the class to `MajorMattersReport`). The old names survive only as deprecated aliases — don't use them
+  in new code. **The files are still named `major-shareholder-disclosure.ts`** (source, metadata, schemas, tests); the
+  symbol and the client getter are `MajorMattersReport` / `majorMattersReport`.
+- A non-`000` body `status` is **returned, not thrown** — including a bad key (`010`), which Python raises as
+  `DartAuthenticationError`. Only binary endpoints throw `DartApiError`, because their errors arrive as a small XML
+  body. Don't add `NoData`-style errors like nhplug.
+- Auth is the `crtfc_key` query param (no token, no cache). The key is masked in errors/logs — keep it out of
+  `requestContext`.
+- Zod `int`/`float` fields are `number | string` on purpose: pydantic coerces numeric strings, so the wire type is
+  unknown. Don't tighten them without live proof.
+- ZIP/XML parsing is hand-rolled (`src/core/zip.ts`, `src/dart/xml.ts`) to avoid dependencies: no ZIP64, no encryption,
+  flat `<list>` XML only. Binary endpoints return bytes / `Map`, never write files.
+- 주요사항보고서 are event-driven, so a fixed company returns only `013`. The integration test uses dated real filings
+  in `tests/dart/fixtures/`; `013` must not count as a pass there.
+- `PublicDisclosure` and `PeriodicReportFinancialStatement` are class + interface merges (custom methods plus generated
+  ones) — Biome's `noUnsafeDeclarationMerging` is off for this.
 
 ## Bank of Korea ECOS (`src/ecos`)
 
-- **Hand-written, outside `generate:metadata`.** Python `ecos/` builds URL *path segments* through
-  `client._get_rows(...)`, not path + query metadata, so the generator can't see it. When the Python
-  `ecos/_*.py` or `_*_types.py` change, update `src/ecos/*` by hand (schemas, result-code table, constants).
-- Wire keys are UPPER_SNAKE (`STAT_CODE`). The shared `toCamelCase` turns them into `sTATCode`, so rows go
-  through `camelizeEcosKeys` (lowercase first). Field names follow the wire (`pStatCode`, `srchYn`, `wgt`),
-  not Python's renamed fields (`parent_stat_code`, `searchable`, `weight`).
-- Errors arrive as HTTP 200 + `RESULT.CODE`; `INFO-200` is an empty page, not an error. The code → class
-  table and the retryable set (600·602) mirror Python `_exceptions.py`. ERROR-301 is split into
-  `EcosSampleLimitError` only by the message containing "sample".
-- The auth key sits in the URL path: `requestContext.path` is masked (`/***/`) and messages are redacted.
-  `sample` is not redacted — it is public and the server's own messages contain the word.
-- Row schemas are `z.looseObject` (unknown fields pass), so the integration test checks row keys against
-  each schema's shape to catch spec drift. It runs on `sample` without any key; `ECOS_AUTH_KEY` adds one
-  real-key paging test.
+- Wire keys are UPPER_SNAKE (`STAT_CODE`). The shared `toCamelCase` would turn them into `sTATCode`, so rows go through
+  `camelizeEcosKeys` (lowercase first). Field names follow the wire (`pStatCode`, `srchYn`, `wgt`), not Python's renamed
+  fields (`parent_stat_code`, `searchable`, `weight`).
+- Errors arrive as HTTP 200 + `RESULT.CODE`; `INFO-200` is an empty page, not an error. The code → class table and the
+  retryable set (600·602) mirror Python `_exceptions.py`. ERROR-301 becomes `EcosSampleLimitError` only when the
+  message contains "sample".
+- The auth key sits in the URL path: `requestContext.path` is masked (`/***/`) and messages are redacted. `sample` is
+  not redacted — it is public and the server's own messages contain the word.
+- Row schemas are `z.looseObject` (unknown fields pass), so the integration test compares row keys with each schema's
+  shape to catch spec drift. It runs on `sample` with no key; `ECOS_AUTH_KEY` adds one real-key paging test.
 
 ## Declaration output (`dist/types`)
 
-- `build:types` is `tsc -p tsconfig.build.json` — a real `--emitDeclarationOnly` pass over
-  `src` only. It emits a tree mirroring `src`; `dist/types/index.d.ts` is the entry and
-  re-exports the rest. Declarations come from `tsc`, not from a template — the only
-  generator script is `scripts/generate-metadata.mjs`.
-- `tsconfig.build.json` turns off `declarationMap`/`sourceMap` that the base config sets —
-  turning them back on doubles the shipped file count with maps pointing at absent `src`.
-- The base `tsconfig.json` includes `tests`, which has ~61 pre-existing type errors. They
-  don't block the build because `tsconfig.build.json` includes `src` only. `npm run
-  typecheck` therefore runs `tsc -p tsconfig.build.json --noEmit` (src) **and** tsdown.
-- **Relative specifiers in `src` must carry an explicit `.js` extension** (`./core/errors.js`,
-  and `./kis/index.js` for a directory barrel — never `./kis.js`). `tsc` copies specifiers
-  into the emitted declarations verbatim, and extensionless ones are illegal under
-  `moduleResolution: node16`/`nodenext`: the consumer gets TS2834 on the `.d.ts` and then
-  TS2305 for *every* imported name. vitest and tsdown both resolve `./foo.js` → `foo.ts`,
-  so this costs nothing at build/test time. `tests/` may stay extensionless.
-- `tests/core/dts-consumer.test.ts` compiles `tests/fixtures/dts-consumer/consumer.ts`,
-  which imports by package name (`cluefin-openapi`) so it goes through `package.json`'s
-  `exports["."].types`. That fixture is excluded from the root `tsconfig.json` — it only
-  resolves after a build. The test builds `dist/types` itself if it's missing.
-  It compiles the fixture **twice**, under `tsconfig.json` (Bundler) and
-  `tsconfig.nodenext.json` (NodeNext) — a Bundler-only check cannot see the
-  extensionless-specifier failure described above. The NodeNext project
-  deliberately sets `skipLibCheck: false` (that is what surfaces TS2834 across every
-  emitted declaration file rather than only on names the fixture happens to import), which in
-  turn needs `types: ["node"]`. Don't "simplify" either setting.
-- `npx @arethetypeswrong/cli --pack` reports **`node16 (from CJS)`: Masquerading as ESM**.
-  Known and accepted: the package is `"type": "module"` with a dual ESM/CJS build but a
-  single `types` field, so `require` gets an ESM-flavoured `.d.ts`. Fixing it means
-  emitting a `.d.cts` and adding `exports.require.types` — a distribution-shape change.
-- **KIS `schemas/*` (166 names) are emitted but unreachable**: `src/kis/index.ts` re-exports
-  zero schema modules, while `src/kiwoom/index.ts` re-exports 9 and `src/nhplug/index.ts` 7.
-  Consumers can't `import type { GetStockCurrentPriceResponse }`. Fixing that is a barrel
-  change, not a build change (measured: no name collisions with the current surface).
-
-## Tooling surprises
-
-- `npm run typecheck` runs `tsc -p tsconfig.build.json --noEmit` and then the tsdown
-  bundler; `publish:check` gates on it.
-- Wire format is snake_case (Zod schemas match the wire); the public API auto-camelCases
-  responses. A new field must be handled with this asymmetry in mind.
-- KIS `custtype` is hardcoded to `'P'` (personal) in the HTTP and socket clients —
-  corporate-account calls aren't possible without changing that.
-- Kiwoom's auth API is `generateToken()`/`revokeToken()`, while KIS and NH PLUG use
-  `generate()`/`revoke()` — the asymmetry is real, not a typo.
-- `CamelizeKeys` in `src/core/types.ts` deliberately wraps its key mapping in
-  `Uncapitalize` because the runtime `toCamelCase` lowercases the first character. This is
-  invisible for KIS/Kiwoom (lowercase snake_case wire keys) and only shows up on NH PLUG's
-  capitalized envelope keys (`Output_0` → `output0`). Dropping it silently desyncs the
-  declared response types from the values actually returned.
-- nhplug treats `00000`, `XA102`, `00166` and `00221` as success (`SUCCESS_RSP_CODES`) — the
-  mock server answers some successful inquiries with `XA102` and the live server most account
-  inquiries with `00166` (`buyableQuantity`: `00221`), so a 00000-only check reports
-  false failures. Keep the list identical to Python's `_model.SUCCESS_RSP_CODES`.
-- A failing body `rsp_cd` in a known group throws `NhplugNoDataError` (empty result — not a request
-  error), `NhplugMockUnsupportedError` or `NhplugNotBusinessDayError`, all subclasses of
-  `NhplugApiError`. The code lists live next to `SUCCESS_RSP_CODES`; keep them identical to Python's
-  `_exceptions.*_RSP_CODES`.
-- nhplug sends body values **as given** — unlike KIS/Kiwoom it must not stringify them: NH PLUG
-  rejects a string where the spec says integer/number with `IGW40011` (2026-09-27). Pass numbers
-  for numeric fields (`reqCnt: 10`, not `'10'`).
-- An nhplug HTTP 200 can still carry a failing `rsp_cd`; the failure check lives in
-  `NhplugClient.invokeEndpoint` after the HTTP layer, so HTTP-level retry/rate-limit logic
-  never sees those errors.
+- **Relative specifiers in `src` must carry an explicit `.js` extension** (`./core/errors.js`, and `./kis/index.js` for
+  a directory barrel — never `./kis.js`). `tsc` copies specifiers into the emitted declarations verbatim, and
+  extensionless ones are illegal under `moduleResolution: node16`/`nodenext`: the consumer gets TS2834 on the `.d.ts`
+  and then TS2305 for *every* imported name. `tests/` may stay extensionless.
+- `tests/core/dts-consumer.test.ts` compiles a consumer fixture twice, under Bundler and NodeNext — a Bundler-only
+  check cannot see the failure above. The NodeNext project's `skipLibCheck: false` + `types: ["node"]` are what surface
+  TS2834 in every emitted file; don't "simplify" them.
+- `tsconfig.build.json` turns off `declarationMap`/`sourceMap` — turning them back on doubles the shipped file count
+  with maps pointing at absent `src`.
+- **`npm run typecheck` checks `src` only.** The base `tsconfig.json` also includes `tests`, which carries pre-existing
+  type errors, so no gate type-checks tests; run `npx tsc -p tsconfig.json --noEmit` and grep for your file.
+- `npx @arethetypeswrong/cli --pack` reports **`node16 (from CJS)`: Masquerading as ESM**. Known and accepted: the
+  package is `"type": "module"` with a dual build but one `types` field. Fixing it means a `.d.cts` plus
+  `exports.require.types` — a distribution-shape change.
+- **KIS `schemas/*` are emitted but unreachable**: `src/kis/index.ts` re-exports no schema module, while the Kiwoom,
+  nhplug and DART barrels do. Consumers can't `import type { GetStockCurrentPriceResponse }`. That is a barrel change,
+  not a build change.
 
 ## Codacy findings in TypeScript
 
 These came from `src/dart` (19 findings, then 6, then 0); the fixed shapes are in `src/dart/client.ts` and
 `src/dart/xml.ts`.
 
-- **Dynamic-key object access** (`security/detect-object-injection`). An `eslint-disable` comment is **ignored**,
-  and reads *and* assignments are flagged, tests too. `query[wireKey] = String(parsed[inputKey])` became: invert
-  the map once (`new Map(inputKey → wireKey)`), walk `Object.entries(parsedInput)`, push `[wireKey, value]`, then
-  `Object.fromEntries`. Tests calling `service[methodName](input)` became
-  `new Map(Object.entries(service)).get(name)` or a table of lambdas (`(s) => s.getFoo(input)`).
-- **`new RegExp(variable)`** is critical. A per-tag ``new RegExp(`<${tag}>…</${tag}>`)`` became `indexOf` on the
-  opening and closing tag (`findElement`) plus one literal regex.
+- **Dynamic-key object access** (`security/detect-object-injection`): reads *and* assignments are flagged, tests too.
+  In that PR an `eslint-disable` comment did not clear the finding. `src/` still has such comments (KIS, Kiwoom and
+  nhplug clients, the DART alias loop) — don't take them as proof it works; restructure instead.
+  `query[wireKey] = String(parsed[inputKey])` became: invert the map once (`new Map(inputKey → wireKey)`), walk
+  `Object.entries(parsedInput)`, push `[wireKey, value]`, then `Object.fromEntries`. Tests calling
+  `service[methodName](input)` became `new Map(Object.entries(service)).get(name)` or a table of lambdas.
+- **`new RegExp(variable)`** is critical. A per-tag ``new RegExp(`<${tag}>…</${tag}>`)`` became `indexOf` on the opening
+  and closing tag (`findElement`) plus one literal regex.
 - **"Unnecessary conditional"** on `match[1] ?? ''` or `x !== undefined`: Codacy analyses without
   `noUncheckedIndexedAccess`, so `??` looks dead while this tsconfig requires it. Use named regex groups read by
   truthiness (`groups.body || ''`), branching in a small helper.
 - **Hardcoded password** on a literal assigned to a name containing key/secret/password, tests included. Build the
   dummy at runtime: `` `test-${randomUUID()}` ``.
 
+## Tests
+
+- **Run `npm run test:unit` as it is.** Under Claude Code (`AI_AGENT` set) vitest picks its agent reporter: summary and
+  failures only. Add `--reporter=verbose` only when you need the console output of *passing* tests — the empty-block
+  warnings below — because the agent reporter hides it and `silent: false` does not bring it back.
+- Unit tests must not load the root `.env`: `vitest.config.ts` has no setup file on purpose (#138 — the old setup
+  file put real-account keys into `process.env`, one env dump away from the test output). Only the integration config
+  loads `.env.test` then `.env`, first-wins — an exported shell variable silently shadows `.env.test`.
+- CI (`ci-openapi-ts.yml`) runs `npm run publish:check` on **Node 24 only**; `engines` says `>=20` but nothing tests
+  20 or 22.
+- `tests/nhplug/readme-samples.test.ts` executes the README's NH PLUG examples against a fake `fetch` and pins which
+  host each call reaches. Change the README example and that test together.
+- Integration tests are gated by `CLUEFIN_OPENAPI_TS_RUN_INTEGRATION=1` and run serialized; keep them out of the
+  parallel unit config. KIS account tests skip silently without `KIS_CANO`.
+- **Kiwoom mock (dev) app keys expire.** Token issuance then returns HTTP 200 without a token, and every Kiwoom
+  integration test fails in `getKiwoomClient()` with `KiwoomAuthenticationError: … missing token or expires_dt`.
+  Re-issue the mock key before debugging code.
+- Realtime tests assert on **received data**, never on the subscribe reply (reasons and measurements: Python
+  AGENTS.md, "Dangerous integration tests"); use `tests/_helpers/kis-realtime.ts` / `nhplug-realtime.ts`. The gate in
+  `tests/_helpers/market-hours.ts` knows weekdays and hours (KRX stocks 09:00–15:20 KST) but **not holidays** — on a
+  market holiday the tests would run and fail on the 30s wait. NH PLUG and KIS 통합 체결(`H0UNCNT0`) realtime tests are
+  prod-only: the mocks don't serve those channels.
+- Response-shape helpers, one per broker — don't loosen them, record a measured divergence in the call's ignore list
+  (policy: Python AGENTS.md): `assertKisResponseShapeDeep` (not the older `assertResponseShape`, which misses item
+  fields), `assertKiwoomSpecConformance`, `assertNhplugMatchesSpec`. An empty array passes vacuously —
+  `KIS_SHAPE_REPORT_EMPTY=1` warns about empty KIS blocks, the Kiwoom helper always warns
+  (`[kiwoom-spec] … empty blocks`).
+
 ## Releasing (npm)
 
-- **The version bump is its own commit on `main`, after the feature PR is merged** —
-  `release(openapi-ts): vX.Y.Z`, touching only `package.json` + `package-lock.json`
-  (`npm version X.Y.Z --no-git-tag-version`). Not inside the feature PR (v0.6.0 onward; v0.3–0.5 rode
-  along in their PRs): an npm version can never be republished, so a number spent on code that then
-  changes in review is gone.
-- Gate before publishing: `npm run publish:check` (build, biome, typecheck, unit tests).
-- Publishing is `npm publish --access public` from this directory and needs the maintainer's
-  (`kgcrom`) npm login with 2FA, so an agent can't do it — ask the user to run `! npm login` and
-  `! cd packages/cluefin-openapi-ts && npm publish --access public`. The registry lags: `npm view`
-  can answer 404 / the old `latest` for several minutes after a successful publish.
-- **No git tags for the TS package** (v0.3.0–v0.7.0 have none). The existing `cluefin-openapi/v*` tags
-  belong to the Python package and are created by its publish workflow; the npm package shares that
-  name, so a TS tag would need a distinct prefix (e.g. `cluefin-openapi-ts/v…`).
-- The Python package is released separately by the `Publish cluefin-openapi` workflow, which bumps
-  its own version when dispatched — never edit `pyproject.toml`'s version by hand, that double-bumps.
+The npm name is `cluefin-openapi` (same as the PyPI package); no workflow publishes it.
 
-## Integration tests
+1. Bump `package.json` and `package-lock.json` together: `npm version X.Y.Z --no-git-tag-version`. v0.6.0–v1.0.0 did
+   it as a separate `release(openapi-ts): vX.Y.Z` commit on `main`; 1.1.0 was bumped inside its feature PR (#228).
+   Either way, **publish only from merged `main`**: an npm version can never be republished, so a number spent on code
+   that then changes in review is gone. `package.json` can be ahead of the registry — compare with
+   `npm view cluefin-openapi version` before choosing the next number.
+2. `npm run publish:preview` — the CI gate (`publish:check`: build, biome, typecheck, unit tests) plus
+   `npm pack --dry-run` to read the file list.
+3. `npm run publish:manual` (`publish:check` + `npm publish --access public`). It needs the maintainer's npm login with
+   2FA, so an agent can't run it — ask the user to run `! npm login` and
+   `! cd packages/cluefin-openapi-ts && npm run publish:manual`.
+4. The registry lags: `npm view` can answer 404 or the old `latest` for several minutes after a successful publish.
 
-- Gated by `CLUEFIN_OPENAPI_TS_RUN_INTEGRATION=1`; env loads root `.env.test` then
-  `.env`, first-wins — an exported shell var silently shadows `.env.test`.
-- They run serialized (separate vitest config, one worker, 180s timeout) to respect
-  live rate limits; don't fold them into the parallel unit config.
-- KIS account tests need `KIS_CANO`; without it they skip silently rather than fail.
-- Realtime tests must assert on **received data**, never on the subscribe reply: KIS answers
-  `SUBSCRIBE SUCCESS` to unknown codes and to TRs its mock doesn't offer, and NH PLUG live answers
-  `rsp_cd 00000` to unknown codes (that reply also arrives as a `data` event with no `trKey`). That
-  is why `tests/_helpers/kis-realtime.ts` and `nhplug-realtime.ts` exist. They run only in market
-  hours (`tests/_helpers/market-hours.ts`: KRX 09:00–15:20, bonds 09:00–15:30, US regular session),
-  and there a liquid stock that sends nothing within 30s is a failure.
-- KIS tests use `assertKisResponseShapeDeep` (`tests/_helpers/kis-response-shape.ts`), not
-  `assertResponseShape`: the older helper only checks top-level keys plus the one block a call
-  passes in, so item fields could drift unseen. nhplug tests use `assertNhplugMatchesSpec`
-  (`tests/_helpers/nhplug-response-shape.ts`, keys + spec lengths, same rules as Python
-  `tests/nhplug/_response_shape.py`). Kiwoom tests use `assertKiwoomSpecConformance`
-  (`tests/_helpers/kiwoom-spec-conformance.ts`): `getKiwoomClient()` wraps `fetchImpl` to record the
-  last wire request/response, and the helper checks every block plus request/response lengths
-  against `../cluefin-openapi/tests/kiwoom/spec_lengths.json` (shared with Python).
-  An empty array passes the check vacuously — many KIS and Kiwoom tests sent non-spec params and got
-  empty results. `KIS_SHAPE_REPORT_EMPTY=1` warns about empty KIS blocks; the Kiwoom helper always
-  warns (`[kiwoom-spec] … empty blocks`).
-- **Pass `--reporter=verbose` to see those warnings when `AI_AGENT` is set** (Claude Code and other
-  agents): vitest then picks its agent reporter, which hides console output from passing tests —
-  `silent: false` does not bring it back.
+- **No git tags for the TS package.** The `cluefin-openapi/v*` tags belong to the Python package and are created by
+  its publish workflow; a TS tag would need a distinct prefix (e.g. `cluefin-openapi-ts/v…`).
