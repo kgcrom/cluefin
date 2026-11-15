@@ -1,6 +1,6 @@
 """manifest의 주 문서를 코퍼스 폴더로 받는다. 이미 있는 파일은 건너뛴다.
 
-uv run python packages/cluefin-sec-notes/scripts/fetch_corpus.py docs/plans/sec-notes-corpus/golden.json ~/.cache/cluefin-sec-notes-corpus
+uv run python packages/cluefin-sec-notes/scripts/fetch_corpus.py docs/plans/sec-notes-corpus/golden.json --dest ~/.cache/cluefin-sec-notes-corpus
 """
 
 from __future__ import annotations

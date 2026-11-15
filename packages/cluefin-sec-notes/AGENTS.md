@@ -22,11 +22,9 @@ Measured 2026-10-12 on 477 filings (eight issuers, Forms 3/4/5 and amendments, 2
 - `primaryDocument` is always the XSL rendering path (`xslF345X0n/<name>.xml`); the raw XML is `<name>.xml` at
   the folder root, which `download_filing_document` accepts as is. Accessions with a filing agent's prefix are
   reachable under the issuer's CIK too.
-- Parse with `defusedxml` only; element types come from the local `_xml.Element` Protocol because even a
-  type-only import from stdlib `xml` is a Codacy critical (`packages/AGENTS.md`).
-- Rows are filled from field tables (`_parse._Field`: name, path, converter). The transaction code's footnotes sit
-  on `transactionCoding`, not on the code element, hence `notes_path` (412 such references). Every `footnoteId` in
-  the 477 filings landed in some row's `footnote_ids`; keep it that way when adding fields.
+- The transaction code's footnotes sit on `transactionCoding`, not on the code element, hence `notes_path` (412
+  such references). Every `footnoteId` in the 477 filings landed in some row's `footnote_ids`; keep it that way
+  when adding fields.
 - Shapes seen and handled: booleans `1`/`0`/`true`/`false` (nothing else, so anything else raises); decimals without
   a leading zero (`.20`); empty cells; price given only as a footnote (M/C/A rows); derivative amounts as
   `transactionTotalValue` instead of shares; `valueOwnedFollowingTransaction`; omitted relationship flags (= False);
@@ -42,9 +40,9 @@ Measured 2026-10-12 on 635 filings: random picks from EDGAR `full-index/<year>/Q
 of the 516 information tables gave as many rows as it has `infoTable` elements.
 
 - A folder holds `primary_doc.xml` (cover) and **exactly one** other XML, the information table; NT has the cover
-  only. The table's name is arbitrary and its extension may be upper case (`inftable.XML`, 2 of 518).
-  `primaryDocument` is the XSL path `xslForm13F_X0n/primary_doc.xml`. Pre-mid-2013 filings are `.txt` (out of scope).
-- Both XMLs are namespaced (Form 3/4/5 are not); paths go through `_qualified`.
+  only. The table's name is arbitrary and its extension may be upper case (`inftable.XML`, 2 of 518);
+  cluefin-openapi's `download_13f_files` picks the pair. `primaryDocument` is the XSL path
+  `xslForm13F_X0n/primary_doc.xml`. Pre-mid-2013 filings are `.txt` (out of scope).
 - **`value` unit is decided by the filing date, not the period**: dollars from 2023-01-03 filings, thousands
   before (2019/2020/2022-period amendments filed in 2023 were dollars). The parser needs `filed` and normalises to
   dollars. Filers get it wrong both ways: 24 of 516 tables (4.7%) have a median price per share outside $1–5,000
@@ -61,6 +59,7 @@ of the 516 information tables gave as many rows as it has `infoTable` elements.
 ## Detection: rules that look arbitrary but aren't
 
 Each rule below replaced an approach that broke real filings. Don't go back to the left-hand version.
+Corpus counts in this section were measured 2026-10-11.
 
 - **Order checks only against stronger detectors.** Checking every candidate pair against catalog order
   discarded valid annual-report-style 10-Ks (Items 1B–5 sit in an "Other information" section at the end).
@@ -85,7 +84,7 @@ Each rule below replaced an approach that broke real filings. Don't go back to t
   kept two quarterly tables (the statements sat inside Item 15). Balance-sheet wording flagged two golden `ok` Items
   (48k/72k chars). The 5,000-char cut sits in a gap: reference-only Items 112–3,321 chars, the smallest real
   statements 6,797 (a trust 10-Q), golden `ok` minimum 13,097. Not raised when `page_reference_unresolved` or
-  `empty_item` already covers the Item. It replaces the corpus invariants `no_table:8`/`no_table:I:1`.
+  `empty_item` already covers the Item.
 - **Boundary spills are caught by per-Item length ranges (`ItemSpec.min_chars`/`max_chars`), nothing else.**
   A first line that is neither the Item label nor its title flagged 24 golden `ok` Items (cross-reference indexes,
   statements right after the TOC, Items opening with "Part III"). "The previous Item is short" misfires on pairs
@@ -127,6 +126,9 @@ Each rule below replaced an approach that broke real filings. Don't go back to t
 - **Footnote cells in tables**: a single numeric mark "(5)" is indistinguishable from a small negative, so only
   letter marks or multiple marks ("(2)(9)") are merged as footnotes. Bare years ("2025") don't join columns —
   a year header spanning several sub-columns (Loans | Derivatives) would merge them.
+- **A cell that is only "(35)" or "$(35)" is the value −35, not a footnote mark.** `parse_amount` strips trailing
+  marks only while a digit is left. Before that (fixed 2026-11-04) small negatives in note tables — income tax
+  (35), a rate difference (9) — came back None and fell out of multi-year series.
 
 ## Notes (`split_notes`) and `Table.unit`
 
@@ -148,24 +150,28 @@ Measured 2026-11-04 on the 225 corpus 10-Ks whose Item 8 is ≥ 20,000 chars: al
 
 ## Corpus workflow
 
-- Real filings and manifests are **never committed** (company names, CIKs and accession numbers stay out of code,
-  fixtures, commits and PRs). Manifests live in the git-ignored `docs/plans/sec-notes-corpus/`:
-  `golden.json` (10-K), `golden-10q.json`, `golden-8k.json` with human-checked expectations and `known_bad`;
-  `smoke-10k.json`, `smoke-10q.json`, `smoke-8k.json` (200 each, seed 1) with a `baseline` of invariant violations.
+- Corpus filings and manifests are **never committed**: company names, CIKs and accession numbers taken from
+  them stay out of code, fixtures, commits and PRs. The one stated exception is the two live tests
+  (`test_form13f_integration.py`, `test_ownership_integration.py`), which name a public filer on purpose to pin
+  exact values. Don't move corpus filings into them.
+- Manifests live in the git-ignored `docs/plans/sec-notes-corpus/` (`CLUEFIN_SEC_NOTES_MANIFEST_DIR` points
+  elsewhere): `golden.json` (10-K), `golden-10q.json`, `golden-8k.json` with human-checked expectations and
+  `known_bad`; `smoke-10k.json`, `smoke-10q.json`, `smoke-8k.json` (200 each, seed 1) with a `baseline` of
+  invariant violations.
+- **Smoke samples have survivorship bias**: `scripts/sample_smoke.py` draws from `company_tickers`, so only
+  companies listed today. Old filings and delisted companies are covered only where golden adds them by hand.
 - Re-download with `scripts/fetch_corpus.py <manifest…> --dest ~/.cache/cluefin-sec-notes-corpus`
   (`SEC_USER_AGENT` in `.env.test`). Run: `CLUEFIN_SEC_NOTES_TEST_DIR=~/.cache/cluefin-sec-notes-corpus uv run pytest
-  packages/cluefin-sec-notes -m integration` (~5 min for 676 filings; narrow with
-  `CLUEFIN_SEC_NOTES_MANIFESTS=golden.json,smoke-10k.json`).
+  packages/cluefin-sec-notes/tests/test_corpus_integration.py -m integration` (~5 min for 676 filings, 2026-10-11;
+  narrow with `CLUEFIN_SEC_NOTES_MANIFESTS=golden.json,smoke-10k.json`).
+- **`-m integration` on the whole package reaches SEC even without the corpus**: the two live tests run whenever
+  `SEC_USER_AGENT` is set, whatever `CLUEFIN_SEC_NOTES_TEST_DIR` says. Name the corpus test file to stay offline.
+- With the corpus variable set, a manifest entry whose file is missing **fails** the run instead of skipping:
+  fetch after adding entries.
+- A tag the HTML reader has never seen fails the corpus run. Add it to the tag lists in `_tree.py`, or, when it is
+  one filing's oddity, list it under that manifest entry's `allowed_unknown_tags`.
 - A `fixed` status means a known-bad item now passes: check the boundary with `scripts/draft_expectations.py`,
   then record it with `--accept <accession> <item…>`. Rewrite smoke baselines with
   `scripts/corpus_report.py <manifest> --corpus … --write-baseline`. Smoke baselines only see invariant violations,
   so a new detector that fills Items wrongly is invisible there — list what it adopted across the corpus and read it.
-- Unit tests use the synthetic HTML in `tests/conftest.py` (`synthetic` fixture; importlib mode can't import test
-  helper modules) and per-form helpers in `tests/test_10q_unit.py`/`test_8k_unit.py`.
-
-## Gotchas
-
-- `uv sync` alone removes other workspace packages' dependencies; use `uv sync --all-packages`.
 - Naming an exploration script `inspect.py` shadows the stdlib module and breaks imports.
-- Codacy flags nested regex quantifiers as critical; label lists, page lists and footnote marks are read
-  token by token in code for that reason.
