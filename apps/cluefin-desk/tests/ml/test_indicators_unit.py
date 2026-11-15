@@ -1,8 +1,8 @@
 """Tests for TechnicalAnalyzer (apps/cluefin-desk/src/cluefin_desk/ml/indicators.py).
 
-`TechnicalAnalyzer.calculate_all` previously had no test at all (see desk AGENTS.md,
-"지표 -> ML 피처 경로"). Its output feeds `StockMLPredictor.prepare_data`/`predict` as the
-`indicators` dict, and only 8 of its columns survive `create_talib_features` overwriting:
+`TechnicalAnalyzer.calculate_all` had no test before this file. Its output feeds
+`StockMLPredictor.prepare_data`/`predict` as the `indicators` dict, and only 8 of its columns
+survive `create_talib_features` overwriting (desk AGENTS.md, "지표 → ML 피처 경로"):
 sma_50, sma_120, sma_240, rsi, macd_histogram, adx, resistance, support. This file:
 
 1. Exercises `calculate_all` end to end (smoke test), including the resistance/support
@@ -112,7 +112,7 @@ def _synthetic_ohlcv(n: int = 300, seed: int = 42) -> pd.DataFrame:
 
 
 class TestCalculateAllSmoke:
-    """calculate_all had no test before this file (desk AGENTS.md)."""
+    """calculate_all had no test before this file."""
 
     def test_empty_input_returns_empty(self):
         result = TechnicalAnalyzer().calculate_all(pd.DataFrame())
