@@ -1,42 +1,37 @@
 # cluefin-desk
 
-Interactive TUI dashboard for Korean stock market analysis, built with [Textual](https://textual.textualize.io/).
+한국 주식 시장을 터미널에서 훑어보는 TUI 대시보드입니다([Textual](https://textual.textualize.io/)).
 
-## Screens
+## 왜 있나
 
-Top-level screens switch with keys `1`–`6`; `stock detail` and `financial analysis` are
-pushed from a row selection or from `/` stock search (`escape` goes back).
+[cluefin-openapi-cli](../cluefin-openapi-cli/) 는 AI agent 가 읽을 JSON 을 내고, desk 는 같은 출처(키움·KIS·DART)를
+사람이 눈으로 봅니다. 시장 개요·순위·테마·ETF·수급·관심종목에서 시작해 종목 하나의 차트·수급·뉴스·재무까지 키 몇 번으로
+내려갑니다. 조회만 합니다 — 주문이나 계좌를 바꾸는 코드는 없습니다.
 
-| Key | Screen | Content |
-|-----|--------|---------|
-| `1` | Market overview | KOSPI/KOSDAQ index summary, movers |
-| `2` | Screening | Gainers/losers, trading volume, transaction value, foreign net-buy, new highs, surge/plunge, margin ratio, short selling, disparity (Kiwoom; short/disparity need KIS) |
-| `3` | Theme / sector | Theme groups and sector constituents (Kiwoom) |
-| `4` | ETF analysis | ETF ranking and composition |
-| `5` | Investor flow | Institution/foreign net-buy trends |
-| `6` | Watchlist | KIS HTS watchlist groups (also those made in the 한국투자 mobile app) and their quotes, plus each stock's trend-setup group (1/2/3, from the local `cache load`/`cache trend-setup` cache; "-" if the cache is missing) |
-| `/` | Stock search | Code (6 characters, letters included) or name → stock detail, from any screen |
-| — | Stock detail | Price chart, RSI/MACD/Bollinger, investor·broker·supply, opinions, news, ML prediction (LightGBM + SHAP) |
-| — | Financial analysis | DART statements and ratios, DART disclosures, major reports (최근 1년), dividends, major shareholders, share changes, XBRL statements |
+## 실행
 
-`r` refreshes the current screen. On stock detail, `m` trains and runs the next-day ML prediction
-(it is not run automatically).
-
-## Usage
+설치와 `.env` 준비는 [루트 README](../../README.md) 의 빠른 시작을 따릅니다(macOS 는 `libomp` 가 먼저 필요합니다).
 
 ```bash
-# Run the TUI dashboard
-cluefin-desk
+uv run cluefin-desk        # 저장소 루트에서
 ```
 
-## Requirements
+- 키는 **실행한 폴더의 `.env`** 에서 읽습니다. 저장소 루트에서 띄우면 실계좌용 `.env` 를 쓰고, 조회만 해도 실제 토큰을
+  받습니다. 셸에 같은 이름의 환경변수가 있으면 `.env` 보다 그쪽이 우선합니다.
+- 키움 키는 필수입니다. 없으면 화면이 뜨기 전에 오류로 끝납니다. KIS·DART 키와 `KIS_HTS_USER_ID`(관심종목 화면)는
+  선택이고, 없으면 해당 패널·화면이 비거나 안내 문구만 보입니다.
 
-Keys are read from a `.env` in the **current working directory** — launching from the repo
-root uses the production `.env`.
+## 쓰다가 걸리는 곳
 
-- Kiwoom API keys (`KIWOOM_APP_KEY`, `KIWOOM_SECRET_KEY`) — required; authentication runs at startup
-- KIS API keys (`KIS_APP_KEY`, `KIS_SECRET_KEY`) — optional; KIS-backed panels are skipped without them
-- KIS HTS login ID (`KIS_HTS_USER_ID`) — optional; the watchlist screen needs it (with the KIS keys)
-- DART API key (`DART_AUTH_KEY`) — optional; disclosure/financial tabs need it
-
-The app is read-only — it contains no order or account-mutation code.
+- 화면 전환과 조작 키는 화면 아래 줄에 나옵니다. 번호 키가 없는 화면이 둘입니다 — 종목 상세는 표에서 Enter 나 `/`
+  검색으로, 재무분석은 종목 상세에서 `f` 로만 엽니다.
+- `r` 은 현재 화면을 다시 조회합니다. 종목 상세의 다음 날 등락 예측(ML)은 자동으로 돌지 않고, `m` 을 누를 때마다 그
+  종목 일봉으로 LightGBM 을 새로 학습합니다(수 초에서 수십 초). 예측 확률과 feature importance 는 참고용 통계입니다.
+- 빈 표가 "해당 종목 없음"을 뜻하지는 않습니다. 순위 탭은 조회에 실패해도 빈 표로 보입니다. 원인은 로그에 남는데,
+  로그는 화면에 나오지 않고 Textual 개발 도구(`textual-dev` 의 `textual console`, 이 저장소 의존성이 아님)를 붙여야
+  보입니다.
+- 관심종목 화면은 KIS HTS 관심 그룹을 읽습니다. 한국투자 모바일 앱에서 만든 그룹도 보입니다. "그룹" 열(추세 셋업
+  1·2·3그룹)은 `cluefin-openapi-cli cache load` 로 만든 로컬 캐시에서 오며, 캐시가 없으면 `-` 입니다.
+- 종목 검색(`/`)은 이름과 코드를 모두 받습니다. 코드는 6자리지만 숫자만은 아닙니다(`0001A0` 같은 신규 상장·우선주).
+- KIS 재무 탭과 배당수익률 순위 탭은 없앴습니다. KIS 가 2026-11-11 종목분석 API 를 막았고(재무는 DART 탭에 있습니다),
+  배당수익률은 KIS 값이 시가 기준이 아니어서 순위로 쓸 수 없었습니다.

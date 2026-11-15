@@ -3,10 +3,14 @@
 Libraries the apps build on; each has its own AGENTS.md. `cluefin-openapi-ts` is the TypeScript sibling of
 `cluefin-openapi` and shares its token cache files. `cluefin-sec-notes` is not published to PyPI.
 
+After pulling or in a hand-made worktree, an import error in a sibling package means the environment is stale:
+`uv sync --all-packages --all-extras` from the repo root.
+
 ## Type checking
 
 - `uv run pyright` (basic) covers only the `[tool.pyright] include` list in the root `pyproject.toml`; packages are
-  added once their errors are 0, so a package not in the list is unchecked, not clean.
+  added once their errors are 0, so a package not in the list is unchecked, not clean (`cluefin-xbrl` had 85 errors
+  and `cluefin-sec-notes` 57 when the check was introduced in #183; both are still outside).
 - Annotate return types of shared helpers. #196 changed `dart/_client.py`'s `_request` so its inferred type became
   `dict | Any | bytes`; pyright on that file was clean and main failed in two untouched DART modules (2026-11-02).
 - pydantic models with `populate_by_name` still type-check against the alias only, so construct them by alias.
@@ -32,3 +36,9 @@ Libraries the apps build on; each has its own AGENTS.md. `cluefin-openapi-ts` is
 - A stdlib logger call whose message mentions token/secret/key **and** passes `%s` args is high ("hardcoded secret
   being logged"), even when the arg is a timestamp (6 in the Kiwoom token manager, #181). Use an f-string and never
   log the token itself.
+- The dashboard's per-file **complexity** is the sum of every function's cyclomatic complexity in the file:
+  `uvx lizard --csv <path>` reproduces it (5 of 6 files exact, 2026-09-20); radon counts boolean operators and
+  comprehensions and gives very different numbers. A branch-free function still costs 1, so **splitting a function
+  raises the file total**. What lowers it: a branch replaced by a module-level table, merged duplicate blocks, or
+  code moved to another file. A test file scores high from its function count alone — don't merge tests to lower it.
+  Complexity doesn't fail the gate.

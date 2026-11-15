@@ -1,6 +1,6 @@
 """`cache peers`: deterministic comparable-company picks for one stock.
 
-Decided 2026-11-11 (`docs/plans/investor-toolkit-plan.md` track C). A company-review's "비교 기업"
+Decided 2026-11-11. A company-review's "비교 기업"
 step today is picked by hand from the filing text or the agent's own memory — not reproducible.
 This command instead picks candidates from the same `company.industry` group (falling back to
 `company.sector` when fewer than 3 peers share the industry — `_MIN_PEERS`), and ranks them by two

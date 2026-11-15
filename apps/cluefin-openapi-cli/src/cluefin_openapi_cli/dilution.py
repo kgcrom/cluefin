@@ -6,7 +6,7 @@ it only maps one already-fetched row (a dict with the endpoint's raw field names
 produces) to a small common shape: `rcept_dt`, `kind`, `corp_name`, `amount_won`,
 `conversion_price`, `refixing_floor`, `new_shares`, `pct_of_shares`.
 
-Scope decided 2026-11-04 (docs/plans/bundle1-plan.md "B-11"): CB, BW, EB, rights offering, bonus
+Scope decided 2026-11-04: CB, BW, EB, rights offering, bonus
 issue, rights-and-bonus issue, capital reduction, treasury stock acquisition/disposal (including
 trust contract/termination). Treasury-stock *retirement* (소각) is not in 주요사항보고서 — it is a
 periodic-report item (`dart report-item treasury-stock`) — so it is deliberately left out; see

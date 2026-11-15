@@ -6,18 +6,28 @@ won't tell you. `apps/AGENTS.md` and `packages/AGENTS.md` cover their side; each
 ## Secrets & real accounts
 
 - `.env` and `.env.test` at the repo root hold real credentials — **never echo, print, or commit their values**.
-- `.env` is the **production** pair (real brokerage account). `.env.test` is mock/dev for Kiwoom only — its KIS side
-  is still `KIS_ENV=prod`. Anything that loads `.env`, local CLI runs included, talks to a real account.
+- `.env` is the **production** pair (real brokerage account). `.env.test` is mock/dev for Kiwoom and NH PLUG only —
+  its KIS side is still `KIS_ENV=prod`. Anything that loads `.env`, local CLI runs included, talks to a real account,
+  and a KIS integration test does too: check that the call is read-only before running it.
+- A lookup still issues a real token (KIS: one issue per minute, `EGW00133` if sooner — wait a minute, retry once).
+- Company names and receipt/accession numbers from the local filing corpora (`docs/plans/*-corpus/`) never go into
+  code, fixtures, docs, commits or PRs. Write "checked against large-cap and unlisted filings" instead.
 
 ## Testing policy
 
 - Real API keys are used **only** by tests marked `integration`; everything else is mocked and hits no network.
-- `realtime`-marked tests require market hours (KRX 09:00–15:30 KST, US 09:30–16:00 ET). `mutation` places real
-  orders; its opt-in rules are in `packages/cluefin-openapi/AGENTS.md`.
+- `realtime`-marked tests run only when `-m` names both `integration` and `realtime`, inside market hours (KRX stocks
+  09:00–15:20 KST — after 15:20 is the closing auction and no trades arrive; bonds until 15:30; US 09:30–16:00 ET).
+  The gate does not know holidays, so they fail on one. `mutation` places real orders; its opt-in rules are in
+  `packages/cluefin-openapi/AGENTS.md`.
+- Integration tests read `.env.test` from the repo root whatever the cwd. A broker whose mock keys or mock account
+  expired fails at authentication for every test — suspect the account before the code (symptoms in
+  `packages/cluefin-openapi/AGENTS.md`).
 - Test files are `test_<target>_unit.py` / `test_<target>_integration.py`, flat under `tests/` (subfolders only per
   broker/feed). Shared helpers are `_`-prefixed modules imported relatively, never via `sys.path` edits.
 - The CI workflow (lint, typecheck, tests) runs on pushes to main, not on PRs: `gh workflow run ci.yml --ref <branch>`.
-  Commits touching only `*.md`/`docs/` skip it, so a docs push has no CI run to wait for.
+  Commits touching only `*.md`/`docs/` skip it — except `apps/cluefin-openapi-cli/README.md` and `AGENTS.md`, which
+  unit tests read and execute (every fenced `uv run cluefin-openapi-cli …` line). Editing those two is a code change.
 
 ## Codacy (PR check)
 
@@ -50,12 +60,20 @@ A worktree-isolated session refuses commands it can't prove don't run git outsid
 - So: **one command per Bash call**, paste literal values (sha, check-run id) into the next call, and send
   independent calls in parallel. Poll with a pipe in a background call:
   `until gh pr checks <N> | grep -E 'Codacy Static Code Analysis[[:space:]]+(pass|fail)'; do sleep 20; done`.
-- The main checkout's absolute path is outside the repository for git, and its untracked files aren't in the worktree.
+- The main checkout's absolute path is outside the repository for git, and its untracked files aren't in the worktree
+  (`docs/plans/` included — read a plan by its absolute path).
+- The first push from a fresh worktree fails in the pre-push `node-test` right after `npm ci`; pushing again passes
+  (seen twice, 2026-11-04). Run `npm ci` in `packages/cluefin-openapi-ts` first if `node_modules` is missing.
 
 ## Conventions
 
 - Conventional Commits with **Korean** messages: `type(scope): 설명`.
-- Git hooks are lefthook (`uv run lefthook install`), not the `pre-commit` framework.
+- Git hooks are lefthook (`uv run lefthook install`), not the `pre-commit` framework. pre-commit only checks (ruff
+  `--check`, no auto-fix); pre-push runs pyright over the whole include list because a changed helper can break a
+  caller nobody touched (#196).
+- `docs/plans/` is deliberately **not** in `.gitignore` (ignored files can't be `@`-mentioned) and is never committed:
+  stage by path, never `git add .`/`-A`. Only its corpus subfolders are ignored. Finished plans are deleted, not
+  marked done; what is left to do lives in `docs/plans/TODO.md`, and a constraint worth keeping moves to an AGENTS.md.
 - Internal results and value objects are `@dataclass(frozen=True, slots=True)`, changed with `dataclasses.replace`;
   pydantic only for external API (wire) models. Any other option set carries a one-line `#` reason above it.
 - Logging is stdlib `logging.getLogger(__name__)` with f-string messages (loguru `{}` args don't format; `%s` args

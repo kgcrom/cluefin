@@ -32,8 +32,8 @@ class TechnicalAnalyzer:
 
         # RSI: cluefin_ta.RSI uses Wilder smoothing (ta-lib's definition); this desk RSI
         # uses a plain rolling mean of gains/losses and is a survivor ML feature
-        # (desk AGENTS.md), so it is kept as-is rather than switched to a different
-        # indicator definition. See refactor report for the measured difference.
+        # (desk AGENTS.md, "지표 → ML 피처 경로"), so it is kept as-is rather than switched
+        # to a different indicator definition.
         result["rsi"] = self._rsi(data["close"], 14)
 
         # MACD: derived from the hand-rolled ema_12/26 above, so macd_histogram (a

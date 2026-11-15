@@ -3,8 +3,9 @@
 - 모든 command가 `schema`가 유효한 JSON Schema를 내고, 그 안의 `invoke.dry_run`
   예시 문자열이 그대로 실행돼 exit 0 이어야 한다 (예시가 깨지면 agent 가 첫 호출부터 실패한다).
 - 모든 command 의 dry-run 은 broker client 를 만들지 않아야 한다.
-- README 코드 블록의 `uv run cluefin-openapi-cli ...` 중 네트워크가 필요 없는 것(meta command,
-  --dry-run)은 전부 실행 가능해야 한다.
+- README·AGENTS 코드 블록의 `uv run cluefin-openapi-cli ...` 줄은 전부 실행 가능해야 한다: 네트워크가 필요 없는
+  것(discovery meta command, --dry-run)은 그대로, broker command 는 --dry-run 을 붙여서. `cache`·`audit`·`review` 줄은
+  하위 명령 이름만 본다.
 """
 
 from __future__ import annotations
@@ -17,13 +18,21 @@ from pathlib import Path
 import pytest
 
 from cluefin_openapi_cli import registry as registry_module
+from cluefin_openapi_cli.audit.cli import SUBCOMMANDS as AUDIT_SUBCOMMANDS
 from cluefin_openapi_cli.cache.cli import SUBCOMMANDS as CACHE_SUBCOMMANDS
-from cluefin_openapi_cli.main import run_cli
+from cluefin_openapi_cli.main import META_COMMANDS, run_cli
 from cluefin_openapi_cli.registry import EmptyRegistry, RpcRegistry, build_cli_registry, set_registry_provider
+from cluefin_openapi_cli.review.cli import SUBCOMMANDS as REVIEW_SUBCOMMANDS
 
 README = Path("apps/cluefin-openapi-cli/README.md")
 AGENTS = Path("apps/cluefin-openapi-cli/AGENTS.md")
-META = {"search", "brokers", "list", "describe", "schema", "domains", "tags", "recipes", "recipe", "cache"}
+EXAMPLE_PREFIX = "uv run cluefin-openapi-cli"
+# Discovery meta commands: offline by construction, so a documented line runs as written.
+META = {"search", "brokers", "list", "describe", "schema", "domains", "tags", "recipes", "recipe"}
+# Meta commands that read or write local state (the cache file, research/, transcripts) or call brokers themselves
+# (`cache load`, `review collect`). Most of them ignore `--dry-run` — `review collect --dry-run` really collects — so
+# a documented line is checked for a real subcommand and never executed.
+LOCAL_STATE = {"cache": set(CACHE_SUBCOMMANDS), "audit": set(AUDIT_SUBCOMMANDS), "review": set(REVIEW_SUBCOMMANDS)}
 
 
 class _ExplodingFactory:
@@ -93,13 +102,30 @@ def test_every_leaf_help_and_describe_render() -> None:
 
 
 def _doc_commands(text: str) -> list[list[str]]:
+    """Every example line inside a fenced block, whatever language the fence names.
+
+    Fences are paired line by line. A regex over ```` ```bash … ``` ```` lost its place after the first ```` ```env ````
+    or ```` ```json ```` block (the closing fence read as an opening one) and skipped every block after it.
+    """
+
     commands: list[list[str]] = []
-    for block in re.findall(r"```(?:bash)?\n(.*?)```", text, flags=re.S):
-        joined = block.replace("\\\n", " ")
-        for line in joined.splitlines():
-            line = line.split("#", 1)[0].strip()
-            if line.startswith("uv run cluefin-openapi-cli"):
-                commands.append(_argv_from_example(line))
+    in_fence = False
+    pending = ""
+    for raw in text.splitlines():
+        if raw.lstrip().startswith("```"):
+            in_fence = not in_fence
+            pending = ""
+            continue
+        if not in_fence:
+            continue
+        line = pending + raw
+        if line.endswith("\\"):
+            pending = line[:-1] + " "
+            continue
+        pending = ""
+        line = line.split("#", 1)[0].strip()
+        if line.startswith(EXAMPLE_PREFIX):
+            commands.append(_argv_from_example(line))
     return commands
 
 
@@ -109,20 +135,55 @@ def _needs_network(argv: list[str]) -> bool:
     return "--dry-run" not in argv
 
 
+def test_every_meta_command_is_classified() -> None:
+    """A meta command in neither set would have its documented lines re-run with `--dry-run` appended."""
+
+    assert META | set(LOCAL_STATE) == set(META_COMMANDS)
+
+
+def test_doc_commands_reads_every_fenced_block() -> None:
+    text = "\n".join(
+        [
+            "```env",
+            "KEY=...",
+            "```",
+            "```bash",
+            f"{EXAMPLE_PREFIX} brokers --json   # comment",
+            f"{EXAMPLE_PREFIX} kis analysis watchlist-multi-quote \\",
+            "  --params-json '{}' --json",
+            "```",
+            f"{EXAMPLE_PREFIX} outside --json",
+            "```",
+            f"{EXAMPLE_PREFIX} recipes --json",
+            "```",
+        ]
+    )
+
+    assert _doc_commands(text) == [
+        ["brokers", "--json"],
+        ["kis", "analysis", "watchlist-multi-quote", "--params-json", "{}", "--json"],
+        ["recipes", "--json"],
+    ]
+
+
 @pytest.mark.parametrize("doc", [README, AGENTS], ids=["README", "AGENTS"])
 def test_documented_offline_commands_execute(doc: Path) -> None:
-    commands = _doc_commands(doc.read_text(encoding="utf-8"))
-    offline = [argv for argv in commands if not _needs_network(argv)]
-    online = [argv for argv in commands if _needs_network(argv)]
+    text = doc.read_text(encoding="utf-8")
+    commands = _doc_commands(text)
+    # An example outside a fenced block is never checked, so there must be none.
+    assert len(commands) == sum(line.strip().startswith(EXAMPLE_PREFIX) for line in text.splitlines()), doc
+
+    local = [argv for argv in commands if argv and argv[0] in LOCAL_STATE]
+    rest = [argv for argv in commands if not argv or argv[0] not in LOCAL_STATE]
+    offline = [argv for argv in rest if not _needs_network(argv)]
+    online = [argv for argv in rest if _needs_network(argv)]
     assert offline, doc
 
+    for argv in local:
+        assert len(argv) > 1, argv
+        assert argv[1] in LOCAL_STATE[argv[0]], argv
+
     for argv in offline:
-        if argv[0] == "cache":
-            # `cache load` calls brokers and the read subcommands depend on a local file, so a
-            # documented cache line is checked for a real subcommand, not executed.
-            assert len(argv) > 1, argv
-            assert argv[1] in CACHE_SUBCOMMANDS, argv
-            continue
         result = run_cli(argv)
         assert result.exit_code == 0, (argv, result.stdout)
         assert result.stdout.lstrip().startswith("{"), argv

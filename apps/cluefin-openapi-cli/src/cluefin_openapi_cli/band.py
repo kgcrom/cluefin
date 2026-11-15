@@ -5,8 +5,7 @@ handler (`handlers/kis/domestic_stock_info.py`) does the I/O: daily closes come 
 `cache` DuckDB (read-only, `cache.read.read_ohlcv`), and each fiscal year's EPS/BPS inputs
 (net income attributable to owners, equity attributable to owners, common shares outstanding)
 come from DART's per-stock full statements and share count, fetched one fiscal year at a time —
-not `cache financials` (`fnlttMultiAcnt`), which has no 지배/비지배 split (decision 2026-11-04,
-docs/plans/today-bundles-plan.md B-7).
+not `cache financials` (`fnlttMultiAcnt`), which has no 지배/비지배 split (decision 2026-11-04).
 
 A day's multiple is that day's close divided by the EPS/BPS of the latest fiscal year whose
 사업보고서 was due by that day (`trailing_fiscal_year`: the prior year from April 1, two years back

@@ -5,7 +5,10 @@ both issue real tokens. Each has its own AGENTS.md; Python Codacy patterns are i
 
 - Both read only `<cwd>/.env`: run from the repo root. From `apps/cluefin-openapi-cli` the CLI finds no `.env` and
   fails with exit 3 `CredentialsMissing` (`cache load` stopped on Kiwoom, 2026-11-04); `brokers --json` shows which
-  keys the current directory sees.
+  keys the current directory sees. A real environment variable of the same name overrides the file.
+- An empty result is not "nothing found" in either app: Kiwoom answers a wrong condition code with a plausible list
+  or an empty one, never an error, and desk's ranking tabs turn a failed call into an empty table. Check the content
+  (do the top rows fit the question?), not that a response arrived.
 - To discover broker commands, use `cluefin-openapi-cli`'s `--json` output rather than reading the handlers.
 - "Today"/"now" is KST, not the machine's zone (ruff `DTZ`): use `clock.today_kst()`/`now_kst()`
   (`cluefin_openapi_cli.clock`, `cluefin_desk.clock`). Token caches stay naive local time — the TS package shares them.

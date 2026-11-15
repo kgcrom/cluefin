@@ -81,7 +81,7 @@ ignore = ["E501", "DTZ007", "UP042"]
 [tool.pytest.ini_options]
 markers = [
     "integration: integration tests",
-    "realtime: real-time data tests (requires market hours: KRX 09:00-15:30 KST, US 09:30-16:00 ET)",
+    "realtime: real-time data tests (requires market hours: KRX stocks 09:00-15:20 KST, bonds until 15:30, US 09:30-16:00 ET; holidays are not detected)",
     "mutation: places orders or exchanges currency on the broker account (runs only when -m names it; prod also needs CLUEFIN_TEST_LIVE_MUTATION=1)",
     "slow: integration test that makes many broker calls (excluded from the default -m filter)",
 ]

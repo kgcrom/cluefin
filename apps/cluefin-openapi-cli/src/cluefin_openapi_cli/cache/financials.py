@@ -4,8 +4,7 @@ One call covers up to 100 companies' one fiscal year of standard major-account l
 (`fnlttMultiAcnt.json`, ``get_multi_company_major_accounts``) — cheap enough (~26 calls for
 the whole universe, one fiscal year) to pull every stock's last five fiscal years, unlike the
 per-stock full-statements call used for a single ticker's exact numbers (`dart
-financial-summary`, `kis stock valuation-band`). The trade-off, decided 2026-11-04
-(`docs/plans/today-bundles-plan.md` B-1b):
+financial-summary`, `kis stock valuation-band`). The trade-off, decided 2026-11-04:
 
 - Only the ~12 standard "주요계정" lines DART defines for this endpoint (유동자산·비유동자산·
   자산총계·유동부채·비유동부채·부채총계·자본금·이익잉여금(결손금)·자본총계·매출액·영업이익·

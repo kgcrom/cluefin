@@ -1,28 +1,38 @@
 # AGENTS.md — cluefin-dart-notes
 
-Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
+Non-obvious constraints only; see the root AGENTS.md for repo-wide rules and `packages/AGENTS.md` for Codacy
+patterns and notebook clearing. Corpus observations are from 2026-10-05 unless dated otherwise.
 
 ## Scope
 
 - **Pure local-file parser** — it never talks to DART. Downloading lives in cluefin-openapi
   (`disclosure_document_files` saves the main document *and* attached audit reports; a ZIP can hold only
   an audit report, so never assume the first entry is the main document).
-- Supported: periodic reports (11011/11012/11013/11014) filed **2017 or later** and their audit reports
-  (00760/00761), listed or not. Earlier filings are out of scope by decision, not by accident.
-- Parser is stdlib `xml.etree` (through `defusedxml`) after repair. **No lxml `recover=True`** — it can
-  drop text silently, so results stop being deterministic.
+- Supported: periodic reports filed **2017 or later** and their audit reports (00760/00761), listed or not.
+  Earlier filings are out of scope by decision, not by accident.
+- `DOCUMENT-NAME ACODE` is 11011, 11012 or 11013 in real filings: first- and third-quarter reports both carry
+  **11013** (quarterly reports of 2017, 2019, 2022 and 2024, checked 2026-11). 11014 is the third-quarter code
+  of other DART APIs (`reprt_code`) and never appears in a document; it stays in `PERIODIC_REPORT_CODES` as a
+  harmless guard. A quarterly report is built like a half-year one.
+- Input that is not dart4 XML ends in `DartXmlRepairError`, never in a half-read document: an HTML body (what
+  DART serves for exchange disclosures) has a root outside `KNOWN_TAGS`, so it is escaped to text and no element
+  is left ("근처에 알려진 태그와 올바른 참조밖에 없습니다"). That is out of scope — don't add a rule for it.
+- Parser is stdlib `xml.etree` through `defusedxml` after repair. **No lxml `recover=True`** — it can drop text
+  silently, so results stop being deterministic. defusedxml refuses any entity declaration with
+  `EntitiesForbidden`, a `ValueError` that is *not* `DartXmlRepairError`; no filing so far declares one.
 
 ## Why the repair layer looks the way it does
 
-- Raw dart4 XML is rejected by every strict parser. All defects seen so far (corpus of top KOSPI/KOSDAQ
-  and unlisted filings, 2017–2026):
+- Raw dart4 XML is rejected by every strict parser. All defects seen so far (top KOSPI/KOSDAQ and unlisted
+  filings, 2017–2026):
   1. Declared `utf-8`, actually cp949 (filings 2017–2022). The declaration is never trusted.
   2. Bare `&` (`R&D`) — hundreds per large filing.
   3. DART entity `&cr;` (thousands in 2017 filings, none from 2025).
   4. Tag-shaped body text: `<한글…>`, `<English words>`, `< spaced >`, `<2024>`, `<㈜…`.
      **Hangul is a valid XML name character**, so `<기후변화>` parses as a tag and fails much later as
      "mismatched tag".
-  5. Extra quote in an attribute value (`ENG="… "">`).
+  5. Broken attributes on a real tag: an extra quote after a value (`ENG="… "">`) or the same attribute name
+     twice (the first value is kept).
   Control characters and genuinely mismatched tags: zero so far.
 - `KNOWN_TAGS` is **observed, not official** (no dart4.xsd available). Any `<` outside it becomes text.
   A missing real tag therefore turns into stray text silently — `CORRECTION` (the revision block at the
@@ -35,9 +45,7 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   `&cr;` break. Block text keeps only U+2028 (and `BR`/paragraph boundaries in cells) as `\n`. Note `&cr;` is
   sometimes a soft wrap mid-word in old filings (`선임&cr;되었습니다`); it is kept as-is.
 - expat error positions don't point at the culprit (`R&D</P>` reports the `<` of `</P>`; a fake Hangul
-  tag reports the next closing tag). Columns are **characters, not bytes** (measured). `PositionalRepair`
-  searches backwards by error kind, skips known tags and valid references, and refuses to escape a known
-  tag — that would cascade through every following closing tag.
+  tag reports the next closing tag). Columns are **characters, not bytes** (measured).
 - Check of the fallback on real data (2026-10-05): with `unknown-tags` removed, the fallback alone
   (7–95 fixes per document) produced text identical to the full rule set on every corpus document.
 - With the current rules the whole corpus parses **without** the positional fallback. The integration
@@ -55,7 +63,7 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - **Section codes are not globally unique and not stable across years.** Use only the stable ones for
   lookups and scope helpers by document kind:
 
-  | code | periodic report (11011–11014) | audit report (00760/00761) |
+  | code | periodic report | audit report (00760/00761) |
   |---|---|---|
   | `D-0-1-*` | children of "I. 회사의 개요" (the chapter itself has **no** code) | `D-0-1-0-0` = 주석 |
   | `D-0-2-0-0` | II. 사업의 내용 — stable in all filings | 외부감사 실시내용 |
@@ -66,10 +74,6 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   | `D-0-0-0-0` / `D-0-0-1-0` | — | (첨부)재무제표 / 독립된 감사인의 감사보고서 |
 
   Chapters I, VI, VIII, 【전문가의 확인】 and the 상세표 children have no code.
-- 11014 확인됨 (2026-11): DART 실제 공시는 1분기·3분기 보고서 모두 `ACODE="11013"`을 쓴다. `11014`는
-  (reprt_code 같은) 다른 DART API의 분류일 뿐, 원문 문서의 `DOCUMENT-NAME ACODE`에는 등장하지 않는다
-  (2017·2019·2022·2024년 분기보고서로 확인). `PERIODIC_REPORT_CODES`에 `11014`를 그대로 남겨 두는 것은
-  무해한 방어 코드다. 구조는 일반 분기보고서(11012/11013)와 같다.
 
 ## Blocks: what the heuristics are based on
 
@@ -78,16 +82,15 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 - Tables: `BORDER="1"` = data table. Layout tables (1×1, or holding a real table in a cell — the big
   borderless wrappers of 2024+ filings) are unwrapped into their blocks. Pick a table's rows from
   `TABLE > (THEAD|TBODY) > TR` only; `iter("TR")` also returns rows of nested tables.
-- Unit lookup order: caption table right before (borderless, ≤6 rows, ≤200 chars, contains "단위:"; notes
-  use 1–2 rows, statement title tables 3–5), else the last line of the previous paragraph if short (old
-  filings append "(단위: 주)" to an explanation paragraph), else the data table's own first row. The
-  financial-industry `L-0-2-n-L2` 사업의 내용 subsections glue the unit onto the end of a long descriptive
-  sentence instead ("...다음과 같습니다(단위:백만원)."); that case is accepted only when the unit sits
-  right before the paragraph's closing parenthesis/period and the captured text itself is short — otherwise
-  a genuine mid-sentence "단위" (e.g. "최소 단위 : 원 미만 절사") would get misread as a table unit.
-  On the corpus this gives a unit to 79% of data tables and to 96% of numeric ones (7,233 of 7,506); the rest are
-  text tables or genuinely unitless. A caption table that no data table follows stays a block.
-- `TU` cells carry `AUNIT`/`AUNITVALUE`; `TE` cells carry `ACODE` (an XBRL-like item code).
+- Unit lookup order: the small borderless caption table right before (notes use 1–2 rows, statement title
+  tables 3–5), else the last line of the previous paragraph if short (old filings append "(단위: 주)" to an
+  explanation paragraph), else the data table's own first row. A caption table that no data table follows
+  stays a block.
+- The financial-industry `L-0-2-n-L2` subsections glue the unit onto a long sentence instead
+  ("...다음과 같습니다(단위:백만원)."). The short-paragraph cap left 391 such tables without a unit
+  (2026-11-04). The unit is now accepted when it sits right before the paragraph's closing parenthesis/period
+  and is itself short — otherwise a mid-sentence "단위" ("최소 단위 : 원 미만 절사") would be read as a table unit.
+- The integration test requires a unit (`Table.unit` or a `TU` cell's `AUNIT`) on ≥ 95% of numeric data tables.
 
 ## Note splitting: why the rules are what they are
 
@@ -97,11 +100,10 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   is genuinely absent from the filing (e.g. a separate-statement note numbering that skips 4 and 18), so
   the skip is allowed and only warned. Two missing in a row stops the split; the "놓쳤을 수" warning
   scans the last note for later numbers at paragraph start.
-- Candidates: paragraph start `N. title` (no colon needed — requiring one empties several filings);
-  mid-paragraph `N. title :` right after a sentence end (colon required — without it body text like
-  "…입니다. 3. …" splits); mid-paragraph **bold run** starting with `N.` (no colon — an unlisted half-year
-  report glues `…되었습니다.<SPAN USERMARK="B">16. 영업으로부터 창출된 현금</SPAN>당반기…`). Sub-numbers
-  never match: `2.1` fails "a letter or `(` after `N.`", and `가.`/`(1)` have no `N.` at all.
+- Three title shapes, each with the colon rule its failure forced: at paragraph start no colon is needed
+  (requiring one empties several filings); mid-paragraph after a sentence end the colon is required (without
+  it body text like "…입니다. 3. …" splits); a mid-paragraph **bold run** needs none (an unlisted half-year
+  report glues `…되었습니다.<SPAN USERMARK="B">16. 영업으로부터 창출된 현금</SPAN>당반기…`).
 - Title end: the bold run end when there is one, else the first line up to a colon. Some audit reports
   glue title and body with **no markup at all** (`32. 보고기간후사건회사는 …`), so the line title is cut
   before common body starts (`회사는`, `주식회사`, `당기`, `보고기간말 현재`, `(1)`, `24.1` …). Adjacent bold
@@ -110,25 +112,31 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
 
 ## Testing
 
-- Unit tests use **synthetic fragments only**. Don't commit real filings or name the companies used for
-  review; integration tests read `CLUEFIN_DART_NOTES_TEST_DIR` (any directory of `*.xml`, searched
-  recursively) and skip when it is unset.
+- Unit tests use **synthetic fragments only**; the company names in `tests/conftest.py` are made up
+  (`가나다 주식회사`). Don't commit real filings or name the companies used for review.
+- Integration tests read every `*.xml` under `CLUEFIN_DART_NOTES_TEST_DIR` (recursive) and skip when it is
+  unset. They assert properties of the review corpus, so **one unsuitable file fails the run**:
+  - every file is a periodic or audit report with name, code and `AREGCIK`;
+  - strict parse: no positional fallback **and no repair warning** (an unknown tag pair → `KNOWN_TAGS`);
+  - every periodic report has both `D-0-3-3-0` and `D-0-3-5-0`, and every notes section splits into **≥ 15
+    notes** starting at note 1 with no "놓쳤을 수" warning.
+
+  A real notes section can be empty or condensed (some half-year and quarterly reports); `split_notes` handles
+  that, the test does not. Check a filing with `split_notes` before adding it to the directory.
 - The review corpus is **not kept in the repo** — only its list is, in the git-ignored
-  `docs/plans/dart-notes-corpus/manifest.json` (`[{group, rcept_no, files, sizes}, …]`, top KOSPI/KOSDAQ and
-  unlisted filings). The filings themselves go to `~/.cache/cluefin-dart-notes-corpus`, outside the repo
-  (27 filings, 43 XML, ~130 MB, ~20 s to download, needs `DART_AUTH_KEY` in `.env.test`; 2026-10-17).
-  Download it when the cache is missing:
+  `docs/plans/dart-notes-corpus/manifest.json` (`[{group, rcept_no, files, sizes}, …]`). The filings go to
+  `~/.cache/cluefin-dart-notes-corpus` (~130 MB, ~20 s to download when measured 2026-10-17; needs
+  `DART_AUTH_KEY` in `.env.test`). Download it when the cache is missing:
 
   ```bash
   uv run python - <<'EOF'
   import json, os, time
   from pathlib import Path
   import dotenv
-  from cluefin_openapi.dart._client import Client
-  from cluefin_openapi.dart._public_disclosure import PublicDisclosure
+  from cluefin_openapi.dart import Client
 
   dotenv.load_dotenv(".env.test")
-  dart = PublicDisclosure(Client(auth_key=os.environ["DART_AUTH_KEY"]))
+  dart = Client(auth_key=os.environ["DART_AUTH_KEY"]).public_disclosure
   root = Path.home() / ".cache/cluefin-dart-notes-corpus"
   for item in json.loads(Path("docs/plans/dart-notes-corpus/manifest.json").read_text()):
       time.sleep(0.5)  # DART rate limit
@@ -137,7 +145,7 @@ Non-obvious constraints only; see the root AGENTS.md for repo-wide rules.
   CLUEFIN_DART_NOTES_TEST_DIR=~/.cache/cluefin-dart-notes-corpus uv run pytest packages/cluefin-dart-notes -m integration -q
   ```
 
-  Without the manifest, any directory of downloaded filings works; mix generations (2017–2021,
+  Without the manifest, any directory of filings that meet the assertions works; mix generations (2017–2021,
   2022–2023, 2024+), a quarterly report, an unlisted half-year report and an audit-report-only filing.
 - `examples/dart_notes_analysis.ipynb` takes the company from `DART_CORP_CODE` on purpose (no company in the
-  file). Execute it with `--output-dir` outside the repo to check it, and commit it with outputs cleared.
+  file). Execute it with `--output-dir` outside the repo to check it.

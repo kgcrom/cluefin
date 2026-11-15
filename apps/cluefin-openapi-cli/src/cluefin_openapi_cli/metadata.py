@@ -57,8 +57,9 @@ BROKER_ROLES: dict[str, BrokerRole] = {
         name="kis",
         role="primary",
         rank=0,
-        description="Korea Investment & Securities. Default source for quotes, charts, rankings, financials, "
-        "sector indices, ETF data, corporate-action schedules, and the market calendar.",
+        description="Korea Investment & Securities. Default source for quotes, charts, rankings, investor flows, "
+        "sector indices, ETF data, corporate-action schedules, and the market calendar. Reported financial "
+        "statements come from DART.",
         when_to_use="Start here for every task. Only fall back to another broker when `list --broker kis` "
         "has no command for the data you need.",
         credentials=_BROKER_CREDENTIALS["kis"],
