@@ -47,7 +47,7 @@ def SMA(close: np.ndarray, timeperiod: int = 30) -> np.ndarray:
     if n < timeperiod:
         return result
 
-    # Use cumsum for efficient calculation (already vectorized, no Numba needed)
+    # Rolling sum as a difference of cumulative sums
     cumsum = np.cumsum(np.insert(close, 0, 0))
     result[timeperiod - 1 :] = (cumsum[timeperiod:] - cumsum[:-timeperiod]) / timeperiod
 
