@@ -33,7 +33,7 @@ class MacroSeries:
     transform: str = "level"
 
 
-# Codes checked against the live API on 2026-11-01 (docs/plans/ecos-forecast-plan.md).
+# Codes checked against the live API on 2026-11-01.
 SERIES: tuple[MacroSeries, ...] = (
     MacroSeries("base_rate", "한국은행 기준금리", "policy", "722Y001", "D", ("0101000",), "연%"),
     MacroSeries("ktb_3y", "국고채(3년)", "rates", "817Y002", "D", ("010200000",), "연%"),

@@ -1,7 +1,7 @@
 """`ecos industry-outlook`: one manufacturing division's leading indicators, each against its own history.
 
 Covers KSIC manufacturing divisions C10-C33 (24 divisions). The division table below is hand-authored and was
-checked against the live ECOS API on 2026-11-03 (`docs/plans/forward-outlook-plan.md` F-a):
+checked against the live ECOS API on 2026-11-03:
 
 - Business survey index (BSI), outlook and actual: 512Y008/512Y007, Group1 indicator code (BA/AA) x Group2
   industry code (Cxxxx, `ecos items --stat-code 512Y008`). The two tables' group order is the same, but it is

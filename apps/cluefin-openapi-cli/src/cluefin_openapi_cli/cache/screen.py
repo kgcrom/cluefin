@@ -1,6 +1,6 @@
 """`cache screen`: a factor table over every stock, filtered by a user `--where` expression.
 
-Decided 2026-11-11 (`docs/plans/investor-toolkit-plan.md` track C). Unlike `cache magic-formula`
+Decided 2026-11-11. Unlike `cache magic-formula`
 (one fixed screen), this is a general table of per-stock factor values — no label, no score, no
 built-in preset. The caller supplies the condition (`--where`) or a named preset read from
 `research/screens.toml` (gitignored, user-owned — never written by this module).

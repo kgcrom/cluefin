@@ -178,7 +178,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
         "description": "Local daily-bar and company cache (DuckDB). Reads a file, not a broker.",
         "usage": [
             f"{APP_NAME} cache status [--json]",
-            f"{APP_NAME} cache load [--only company,ohlcv,adj,rates,theme|all] [--since YYYYMMDD] [--json]",
+            f"{APP_NAME} cache load [--only company,ohlcv,adj,rates,theme,financials|all] [--since YYYYMMDD] [--json]",
             f"{APP_NAME} cache ohlcv --code <code> [--since YYYYMMDD] [--until YYYYMMDD] [--adjusted true] [--json]",
             f"{APP_NAME} cache company [--code <code>] [--as-of YYYYMMDD] [--include-delisted true] "
             "[--market KOSPI|KOSDAQ] [--json]",
@@ -302,7 +302,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
         "notes": [
             "The file is $CLUEFIN_CACHE_DIR/market.duckdb (default ~/.cache/cluefin/).",
             "Exit 2 CacheMissing before the first load; exit 1 CacheLocked while a load is writing.",
-            "`cache load` is the only command that calls brokers (KIS, Kiwoom, DART), one call at a time; "
+            "`cache load` is the only command that calls brokers (KIS, Kiwoom, DART, ECOS), one call at a time; "
             "progress goes to stderr.",
             "Bars are unadjusted; trade at those prices in a backtest and use --adjusted only for signals.",
             "Index bars use codes U0001 (KOSPI), U1001 (KOSDAQ), U2001 (KOSPI200).",
@@ -314,7 +314,8 @@ _META_HELP: dict[str, dict[str, Any]] = {
             "historically, and their horizon excess return vs. the stock's own index. Descriptive only, no "
             "rule or recommendation; run `base-rate-build` first (writer, minutes) so `base-rate` only reads.",
             "rs: RS(1M) is the cross-sectional percentile (0-99) of 21-trading-day adjusted returns "
-            "(stockeasy-metric-definitions memory); sector/industry RS is the same percentile over group median "
+            "(reverse-engineered from a 46-stock sample, 2026-10-07); sector/industry RS is the same percentile over "
+            "group median "
             "returns. No long-horizon IBD-weighted RS (formula unconfirmed).",
             "breadth: new 52-week highs/lows, %>50dma, advance/decline, and per-index distribution-day/"
             "follow-through-day counts (IBD methodology approximation, thresholds in cache/breadth.py docstring). "

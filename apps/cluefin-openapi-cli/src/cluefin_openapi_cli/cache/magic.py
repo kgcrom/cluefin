@@ -1,8 +1,7 @@
 """`cache magic-formula`: Greenblatt's Magic Formula over the cache's cross-section.
 
 Earnings yield (EBIT/EV) and return on invested capital, ranked and summed — Joel Greenblatt's
-screen (*The Little Book That Beats the Market*). Universe and inputs decided 2026-11-04
-(`docs/plans/today-bundles-plan.md` B-22):
+screen (*The Little Book That Beats the Market*). Universe and inputs decided 2026-11-04:
 
 - Universe excludes financials/insurance/utilities (Greenblatt's own exclusion — their EV and
   capital structure are not comparable), 관리종목(`company.is_admin`)·거래정지
