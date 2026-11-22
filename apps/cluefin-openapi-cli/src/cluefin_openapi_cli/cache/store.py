@@ -319,6 +319,11 @@ def status(conn: duckdb.DuckDBPyConnection) -> dict[str, Any]:
     fin_codes, fin_years_first, fin_years_last = _scalar_row(
         conn, "SELECT count(DISTINCT code), min(year), max(year) FROM financials"
     )
+    q_codes, q_first, q_last = _scalar_row(
+        conn,
+        "SELECT count(DISTINCT code), min(year || 'Q' || quarter), max(year || 'Q' || quarter) FROM financials_quarterly",
+    )
+    q_log = dict(conn.execute("SELECT status, count(*) FROM financials_quarterly_fetch_log GROUP BY status").fetchall())
     loads = conn.execute(
         "SELECT kind, max(run_at) FROM load_log GROUP BY kind ORDER BY kind",
     ).fetchall()
@@ -331,5 +336,6 @@ def status(conn: duckdb.DuckDBPyConnection) -> dict[str, Any]:
         },
         "theme": {"snapshots": snapshots, "first_date": _iso(theme_first), "last_date": _iso(theme_last)},
         "financials": {"codes": fin_codes, "first_year": fin_years_first, "last_year": fin_years_last},
+        "financials_quarterly": {"codes": q_codes, "first_period": q_first, "last_period": q_last, "fetch_log": q_log},
         "last_load": {kind: _iso(run_at) for kind, run_at in loads},
     }

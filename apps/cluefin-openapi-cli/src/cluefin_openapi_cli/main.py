@@ -180,6 +180,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
             f"{APP_NAME} cache status [--json]",
             f"{APP_NAME} cache load [--only company,ohlcv,adj,rates,theme,financials,financials_quarterly|all] [--since YYYYMMDD] [--json]",
             f"{APP_NAME} cache ohlcv --code <code> [--since YYYYMMDD] [--until YYYYMMDD] [--adjusted true] [--json]",
+            f"{APP_NAME} cache financials --code <code> [--period annual|quarter|ttm] [--since-year YYYY] [--until-year YYYY] [--json]",
             f"{APP_NAME} cache company [--code <code>] [--as-of YYYYMMDD] [--include-delisted true] "
             "[--market KOSPI|KOSDAQ] [--json]",
             f"{APP_NAME} cache perf --code <code> [--bench U0001] [--since YYYYMMDD] [--until YYYYMMDD] "

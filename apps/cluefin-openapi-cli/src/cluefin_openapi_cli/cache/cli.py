@@ -15,7 +15,7 @@ from cluefin_openapi_cli.cache.load import PARTS, Sources, run_load
 from cluefin_openapi_cli.cache.macro_beta import DEFAULT_SINCE_DAYS, read_macro_beta
 from cluefin_openapi_cli.cache.perf import read_perf
 from cluefin_openapi_cli.cache.rates import RATE_SERIES
-from cluefin_openapi_cli.cache.read import read_company, read_financials, read_ohlcv
+from cluefin_openapi_cli.cache.read import FINANCIAL_PERIODS, read_company, read_financials, read_ohlcv
 from cluefin_openapi_cli.cache.trend import latest_index_date, scan
 from cluefin_openapi_cli.cliargs import _parse_fields, _parse_limit, _parse_named_options, _str_option
 from cluefin_openapi_cli.clock import now_kst, today_kst
@@ -222,8 +222,13 @@ def _run_financials(argv: list[str]) -> None:
     code = _str_option(options, "code")
     if positional or not code:
         raise CliError(
-            "Usage: cache financials --code <code> [--since-year YYYY] [--until-year YYYY].", exit_code=EXIT_USAGE
+            "Usage: cache financials --code <code> [--since-year YYYY] [--until-year YYYY] "
+            "[--period annual|quarter|ttm].",
+            exit_code=EXIT_USAGE,
         )
+    period = (_str_option(options, "period") or "annual").strip().lower()
+    if period not in FINANCIAL_PERIODS:
+        raise CliError(f"`--period` takes {', '.join(FINANCIAL_PERIODS)}, got `{period}`.", exit_code=EXIT_USAGE)
     conn = _read_conn()
     try:
         payload = read_financials(
@@ -231,9 +236,15 @@ def _run_financials(argv: list[str]) -> None:
             code.strip().upper(),
             since_year=_str_option(options, "since_year"),
             until_year=_str_option(options, "until_year"),
+            period=period,
         )
     finally:
         conn.close()
+    if period != "annual":
+        if not payload["periods"]:
+            payload["hint"] = "No cached quarters. Run `cache load --only financials_quarterly`."
+        _render_read(payload, options, default_limit=None)
+        return
     if not payload["years"]:
         payload["hint"] = (
             "No cached financials. Check the code with `cache company --code` and run `cache load --only "

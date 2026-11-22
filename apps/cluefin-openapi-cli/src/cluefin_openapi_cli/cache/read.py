@@ -7,7 +7,9 @@ from typing import Any
 
 import duckdb
 
-__all__ = ["read_company", "read_financials", "read_ohlcv"]
+__all__ = ["FINANCIAL_PERIODS", "read_company", "read_financials", "read_ohlcv"]
+
+FINANCIAL_PERIODS = ("annual", "quarter", "ttm")
 
 _PRICE_COLUMNS = ("open", "high", "low", "close")
 
@@ -87,15 +89,52 @@ _FINANCIALS_NOTES = (
     "DART fnlttMultiAcnt(다중회사 주요계정)의 표준 12개 계정만 있다 — 현금흐름표 항목은 없다.",
     "지배/비지배 구분이 없는 연결 합계다(그 구분이 필요하면 `dart financial-summary`를 쓴다).",
     "연결(CFS)을 우선하고 없으면 별도(OFS)다 — 종목·연도별 `basis` 를 본다.",
-    "사업보고서(reprt_code 11011) 한 해치만 있다 — 분기·반기는 없다.",
+    "사업보고서(reprt_code 11011) 한 해치다 — 분기·TTM 은 --period quarter|ttm 으로 본다.",
     "금액 단위는 원(DART 응답 그대로)이다 — `dart financial-summary`는 억원이다.",
 )
 
 
+_PERIOD_NOTES = {
+    "quarter": (
+        "분기 3개월 값이다. 손익은 그 분기만, 재무상태표는 분기말 잔액이다. 4분기는 연간 − 3분기 누적이다.",
+        "1~3분기는 분기·반기 보고서(financials_quarterly), 4분기는 사업보고서(financials)에서 온다.",
+    ),
+    "ttm": (
+        "TTM 은 최근 4개 분기 합이다: 누적 + 전년 연간 − 전년 같은 기간 누적. 4분기 TTM 은 연간 값이다.",
+        "재무상태표 계정은 그 분기말 잔액이다. 구성 기간의 연결/별도가 섞이면 null 이다.",
+    ),
+}
+
+
+def _read_financial_periods(
+    conn: duckdb.DuckDBPyConnection, filer: str, period: str, since_year: str | None, until_year: str | None
+) -> list[dict[str, Any]]:
+    column = "quarter_amount" if period == "quarter" else "ttm_amount"
+    rows = conn.execute(
+        f"SELECT year, quarter, basis, account_nm, {column} FROM financials_ttm "
+        "WHERE code = ? AND (?::TEXT IS NULL OR year >= ?) AND (?::TEXT IS NULL OR year <= ?) "
+        "ORDER BY year DESC, quarter DESC, account_nm",
+        [filer, since_year, since_year, until_year, until_year],
+    ).fetchall()
+    by_period: dict[tuple[str, int], dict[str, Any]] = {}
+    for year, quarter, basis, account_nm, amount in rows:
+        entry = by_period.setdefault(
+            (year, quarter),
+            {"period": f"{year}Q{quarter}", "year": year, "quarter": quarter, "basis": basis, "accounts": {}},
+        )
+        entry["accounts"][account_nm] = amount
+    return list(by_period.values())
+
+
 def read_financials(
-    conn: duckdb.DuckDBPyConnection, code: str, *, since_year: str | None = None, until_year: str | None = None
+    conn: duckdb.DuckDBPyConnection,
+    code: str,
+    *,
+    since_year: str | None = None,
+    until_year: str | None = None,
+    period: str = "annual",
 ) -> dict[str, Any]:
-    """One stock's cached annual major-account figures, newest year first.
+    """One stock's cached major-account figures, newest first: annual, quarter (3-month) or TTM.
 
     A preferred share has no rows of its own: DART answers its corp_code with the common share's
     stock code only, so its fetch is logged `empty`. It reads the common share's rows instead —
@@ -103,6 +142,18 @@ def read_financials(
     """
 
     filer = _financials_filer(conn, code)
+    if period != "annual":
+        periods = _read_financial_periods(conn, filer, period, since_year, until_year)
+        payload = {
+            "code": code,
+            "period": period,
+            "count": len(periods),
+            "periods": periods,
+            "notes": [*_PERIOD_NOTES[period], *_FINANCIALS_NOTES[:3], _FINANCIALS_NOTES[4]],
+        }
+        if filer != code:
+            payload["financials_code"] = filer
+        return payload
     rows = conn.execute(
         "SELECT year, reprt_code, basis, account_nm, amount, currency FROM financials "
         "WHERE code = ? AND (?::TEXT IS NULL OR year >= ?) AND (?::TEXT IS NULL OR year <= ?) "
