@@ -270,6 +270,9 @@ CLI 가 말해 주지 않는 것만 적는다.
 - **`financials` 표는 DART 계정명을 그대로 저장한다** — 실캐시(2026-11-11)에 bare "당기순이익"은 한 건도 없고 전부
   "당기순이익(손실)"이다. 읽는 쪽이 `cache.financials.account_spellings`/`fold_accounts` 로 두 철자를 같이 읽는다(그 전의
   `magic-formula` 는 "영업이익(손실)" 종목을 재무 없음으로 뺐다). 표를 읽는 새 코드도 이 둘을 거친다.
+- **분기 보고서의 손익 `thstrm_amount` 는 그 분기 3개월이고 누적은 `thstrm_add_amount` 다**(2026-11-22 실측). 연간 표와
+  같은 로더(`_fetch`)를 `reprt_code` 만 바꿔 쓴다. TTM 의 전년 같은 기간 누적은 같은 보고서의 비교값(`frmtrm_add_amount`)을
+  먼저 쓴다. 12월 결산이 아닌 회사·늦은 제출은 `empty` 로 남으므로 기한 1년 안의 분기는 `empty` 도 다시 묻는다.
 
 ## `review *` 는 수집과 판단 기록을 CLI 가 맡는다 (`review/`)
 

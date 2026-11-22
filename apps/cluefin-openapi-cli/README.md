@@ -102,6 +102,7 @@ uv run cluefin-openapi-cli cache base-rate-build --json    # `cache base-rate` �
 - **지수 코드는 `U0001` KOSPI · `U1001` 코스닥 · `U2001` KOSPI200 입니다.** 캐시에 지수 이름이 없어 `U1001` 을 KOSPI200 으로 읽기 쉽습니다. `kis chart trend-setup` 이 쓰는 KIS 업종코드 `0001`·`1001` 과 같은 지수입니다.
 - **`company` 의 이름·업종·시장·상장주식수는 현재 값입니다**(과거 시점 값이 아님). 그래서 과거 날짜의 시총은 그날 종가 × 현재 주식수 근사입니다.
 - **`cache financials` 는 `dart financial-summary` 와 단위·범위가 다릅니다.** 금액이 **원**이고(`financial-summary` 는 억원), 연간 표준 12개 계정뿐이며 지배/비지배 구분과 현금흐름표가 없습니다. `cache screen` 의 per·pbr·roe 가 `kis stock valuation` 의 지배주주 기준 값과 다른 이유입니다. 우선주 코드로 물으면 보통주의 행을 주고 `financials_code` 에 적습니다.
+- **분기·TTM 은 `cache load --only financials_quarterly` 로 받고 `cache financials --period quarter|ttm` 으로 봅니다.** 1분기·반기·3분기 보고서를 최근 5년(상장폐지 포함) 받아 `financials_quarterly` 에 두고, 분기 3개월·TTM 은 `financials_ttm` 에 다시 계산합니다. 4분기 3개월은 연간 − 3분기 누적입니다. `cache screen` 의 `*_ttm`·`pbr_mrq`·`*_yoy_q` 가 이 표를 씁니다.
 - `cache screen --preset <이름>` 은 `research/screens.toml` 의 `[이름]` 절(`where`·`sort`·`order`·`top`)을 읽습니다. `research/` 는 gitignore 된 내 폴더라 직접 만듭니다.
 
 DuckDB 는 쓰는 동안 다른 프로세스가 파일을 열 수 없습니다. `cache load` 중의 읽기는 exit 1 `CacheLocked`, 첫 적재 전은 exit 2 `CacheMissing` 입니다.

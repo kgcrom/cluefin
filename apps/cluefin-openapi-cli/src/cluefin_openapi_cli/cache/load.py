@@ -14,13 +14,15 @@ from cluefin_openapi_cli.cache.adjust import load_adjustments
 from cluefin_openapi_cli.cache.bars import load_bars
 from cluefin_openapi_cli.cache.company import load_company
 from cluefin_openapi_cli.cache.financials import default_years, load_financials
+from cluefin_openapi_cli.cache.financials_quarterly import load_financials_quarterly
 from cluefin_openapi_cli.cache.rates import load_rates
 from cluefin_openapi_cli.cache.theme import load_theme
 from cluefin_openapi_cli.clock import now_kst
 
 __all__ = ["PARTS", "Sources", "run_load"]
 
-PARTS = ("company", "ohlcv", "adj", "rates", "theme", "financials")
+# financials_quarterly after financials: its TTM rebuild reads the annual table.
+PARTS = ("company", "ohlcv", "adj", "rates", "theme", "financials", "financials_quarterly")
 
 
 # frozen 아님: 브로커 클라이언트를 처음 쓸 때 만들어 _clients 에 담는다.
@@ -109,6 +111,10 @@ def run_load(
             fin_stats = load_financials(conn, dart=sources.dart, years=default_years(today), progress=progress)
             summary = fin_stats.as_dict()
             codes, rows, replaced, errors = fin_stats.codes_ok, fin_stats.rows, 0, len(fin_stats.errors)
+        elif part == "financials_quarterly":
+            q_stats = load_financials_quarterly(conn, dart=sources.dart, today=today, progress=progress)
+            summary = q_stats.as_dict()
+            codes, rows, replaced, errors = q_stats.codes_ok, q_stats.rows, 0, len(q_stats.errors)
         else:  # pragma: no cover - PARTS is validated by the caller
             raise ValueError(part)
         seconds = round(time.perf_counter() - started, 1)

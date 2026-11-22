@@ -304,6 +304,7 @@ def test_cache_load_rejects_unknown_part(cache_dir) -> None:
         "rates",
         "theme",
         "financials",
+        "financials_quarterly",
     ]
 
 

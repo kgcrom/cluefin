@@ -49,6 +49,7 @@ def fake_parts(monkeypatch) -> list[tuple[str, dict]]:
     monkeypatch.setattr(load_module, "load_rates", fake("rates", series=3, rows=30))
     monkeypatch.setattr(load_module, "load_theme", fake("theme", themes=4, members=40))
     monkeypatch.setattr(load_module, "load_financials", fake("financials", codes_ok=6, rows=60))
+    monkeypatch.setattr(load_module, "load_financials_quarterly", fake("financials_quarterly", codes_ok=7, rows=70))
     return seen
 
 
@@ -76,6 +77,7 @@ def test_runs_every_part_in_order_and_logs_each(conn, fake_parts) -> None:
         ("rates", 3, 30, 0, 0),
         ("theme", 4, 40, 0, 0),
         ("financials", 6, 60, 0, 0),
+        ("financials_quarterly", 7, 70, 0, 0),
     ]
 
 
