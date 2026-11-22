@@ -56,6 +56,7 @@ from cluefin_openapi_cli.cache.financials import account_spellings, fold_account
 from cluefin_openapi_cli.cache.magic import EXCLUDED_SECTORS, _last_filed_year, enterprise_value, invested_capital
 from cluefin_openapi_cli.cache.screen_growth import GROWTH_FACTORS, growth_factors
 from cluefin_openapi_cli.cache.screen_quality import QUALITY_FACTORS, quality_factors
+from cluefin_openapi_cli.cache.screen_sector import SECTOR_FACTORS, add_sector_percentiles
 from cluefin_openapi_cli.cache.screen_ttm import TTM_FACTORS, ttm_by_code, ttm_factors
 from cluefin_openapi_cli.errors import EXIT_USAGE, CliError
 
@@ -89,6 +90,7 @@ FACTORS: tuple[tuple[str, str], ...] = (
     *TTM_FACTORS,
     *GROWTH_FACTORS,
     *QUALITY_FACTORS,
+    *SECTOR_FACTORS,
     ("rs_1m", "21거래일 수정주가 수익률의 전 종목(cache rs 와 같은 유니버스) 횡단면 백분위 (0~99)."),
     ("ret_3m", "63거래일 수정주가 수익률(%)."),
     ("ret_6m", "126거래일 수정주가 수익률(%)."),
@@ -364,8 +366,9 @@ def screen(
         and (wanted_codes is None or row["code"] in wanted_codes)
     ]
 
+    selected_codes = {row["code"] for row in selected}
     candidates: list[dict[str, Any]] = []
-    for row in selected:
+    for row in full_universe:
         code = row["code"]
         mcap = mcaps.get(code)
         price = prices.get(code, {})
@@ -418,6 +421,10 @@ def screen(
             )
         )
         candidates.append(candidate)
+
+    # Percentiles rank the full universe first; only then are the output rows narrowed.
+    add_sector_percentiles(candidates)
+    candidates = [row for row in candidates if row["code"] in selected_codes]
 
     dropped_null: dict[str, int] = {}
     if where:
