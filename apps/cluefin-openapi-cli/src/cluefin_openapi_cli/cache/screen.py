@@ -54,6 +54,7 @@ from cluefin_openapi_cli.cache import trend as cache_trend
 from cluefin_openapi_cli.cache.breadth import _percentile_rank, _round_half_up
 from cluefin_openapi_cli.cache.financials import account_spellings, fold_accounts
 from cluefin_openapi_cli.cache.magic import EXCLUDED_SECTORS, _last_filed_year, enterprise_value, invested_capital
+from cluefin_openapi_cli.cache.screen_growth import GROWTH_FACTORS, growth_factors
 from cluefin_openapi_cli.cache.screen_ttm import TTM_FACTORS, ttm_by_code, ttm_factors
 from cluefin_openapi_cli.errors import EXIT_USAGE, CliError
 
@@ -85,6 +86,7 @@ FACTORS: tuple[tuple[str, str], ...] = (
     ("op_yoy", "최신 사업연도와 바로 전 사업연도 영업이익 증감률(%). 전년이 캐시에 없거나 0 이하면 null."),
     ("revenue_cagr_3y", "최신 사업연도와 3년 전 사업연도 매출액의 연평균 성장률(%). 3년 전이 캐시에 없으면 null."),
     *TTM_FACTORS,
+    *GROWTH_FACTORS,
     ("rs_1m", "21거래일 수정주가 수익률의 전 종목(cache rs 와 같은 유니버스) 횡단면 백분위 (0~99)."),
     ("ret_3m", "63거래일 수정주가 수익률(%)."),
     ("ret_6m", "126거래일 수정주가 수익률(%)."),
@@ -394,6 +396,7 @@ def screen(
             "above_ma50": price.get("above_ma50"),
             **fin,
             **ttm_factors(quarterly.get(code), mcap),
+            **growth_factors(financials.get(code, {}), quarterly.get(code)),
         }
         if mcap is not None:
             if net_income is not None and net_income > 0:
