@@ -8,6 +8,10 @@ the agent's table, moved here unchanged; the agent now reads `five_checks.json` 
 Each item is 좋음 / 주의 / 보통 / 판정 보류. A caution condition wins as soon as the inputs it needs are present, even
 when the inputs for 좋음 are missing; otherwise a missing input gives 판정 보류 with a reason. Only the stock under
 review is judged — peers are compared in the agent's peer table, not here.
+
+Deliberately not inputs (the agent may still cite them): ROE (leverage lifts it), the debt ratio (trade payables move
+it), KIS estimated PER and target prices (one house), broker opinions (skewed to buy), PER band percentiles,
+`investor-metrics` and `quality` — so the table's thresholds stay the same across filers.
 """
 
 from __future__ import annotations
