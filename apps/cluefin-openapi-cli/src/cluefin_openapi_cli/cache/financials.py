@@ -132,7 +132,7 @@ class _FetchOutcome:
     calls: int = 0
 
 
-def _fetch(dart: Any, corp_codes: list[str], year: str) -> _FetchOutcome:
+def _fetch(dart: Any, corp_codes: list[str], year: str, reprt_code: str = ANNUAL_REPORT_CODE) -> _FetchOutcome:
     """One or more `fnlttMultiAcnt` calls for ``corp_codes``, narrowing on failure.
 
     De-duplicates first (see module docstring). A daily-quota hit (020) stops immediately —
@@ -148,24 +148,26 @@ def _fetch(dart: Any, corp_codes: list[str], year: str) -> _FetchOutcome:
         result = dart.periodic_report_financial_statement.get_multi_company_major_accounts(
             corp_code=",".join(codes),
             bsns_year=year,
-            reprt_code=ANNUAL_REPORT_CODE,
+            reprt_code=reprt_code,
         )
     except Exception as exc:  # noqa: BLE001 - narrowed below, not swallowed
         if _is_quota_exception(exc):
             return _FetchOutcome(items=[], quota_exhausted=True, calls=1)
-        return _narrow(dart, codes, year, calls_so_far=1, error=exc)
+        return _narrow(dart, codes, year, reprt_code, calls_so_far=1, error=exc)
 
     status = _status_of(result)
     if status == _REQUEST_LIMIT_EXCEEDED:
         return _FetchOutcome(items=[], quota_exhausted=True, calls=1)
     if status == _COMPANY_LIMIT_EXCEEDED:
-        return _narrow(dart, codes, year, calls_so_far=1, error=None)
+        return _narrow(dart, codes, year, reprt_code, calls_so_far=1, error=None)
     if status == _NO_DATA:
         return _FetchOutcome(items=[], calls=1)
     return _FetchOutcome(items=list(result.result.list or []), calls=1)
 
 
-def _narrow(dart: Any, codes: list[str], year: str, *, calls_so_far: int, error: BaseException | None) -> _FetchOutcome:
+def _narrow(
+    dart: Any, codes: list[str], year: str, reprt_code: str, *, calls_so_far: int, error: BaseException | None
+) -> _FetchOutcome:
     if len(codes) == 1:
         message = (
             f"{type(error).__name__}: {str(error)[:200]}"
@@ -174,10 +176,10 @@ def _narrow(dart: Any, codes: list[str], year: str, *, calls_so_far: int, error:
         )
         return _FetchOutcome(items=[], failed_corp_codes=(codes[0],), error_samples=(message,), calls=calls_so_far)
     mid = len(codes) // 2
-    first = _fetch(dart, codes[:mid], year)
+    first = _fetch(dart, codes[:mid], year, reprt_code)
     if first.quota_exhausted:
         return dataclasses.replace(first, calls=calls_so_far + first.calls)
-    second = _fetch(dart, codes[mid:], year)
+    second = _fetch(dart, codes[mid:], year, reprt_code)
     return _FetchOutcome(
         items=[*first.items, *second.items],
         quota_exhausted=second.quota_exhausted,

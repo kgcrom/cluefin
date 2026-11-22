@@ -168,6 +168,52 @@ SCHEMA = (
       PRIMARY KEY (code, year, account_nm)
     )
     """,
+    # DART fnlttMultiAcnt 분기·반기 보고서(1Q 11013, 반기 11012, 3Q 11014) 주요계정, one row per
+    # (code, year, quarter, account_nm). For income-statement lines `amount` is that quarter's three
+    # months, `cum_amount` the year-to-date total and `prior_cum_amount` the same filing's prior-year
+    # year-to-date comparative; balance-sheet lines have only `amount` (the quarter-end balance)
+    # (cache/financials_quarterly.py).
+    """
+    CREATE TABLE IF NOT EXISTS financials_quarterly (
+      code TEXT,
+      year TEXT,
+      quarter SMALLINT,
+      reprt_code TEXT,
+      basis TEXT,
+      account_nm TEXT,
+      amount DOUBLE,
+      cum_amount DOUBLE,
+      prior_cum_amount DOUBLE,
+      currency TEXT,
+      loaded_at TIMESTAMP,
+      PRIMARY KEY (code, year, quarter, account_nm)
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS financials_quarterly_fetch_log (
+      code TEXT,
+      year TEXT,
+      quarter SMALLINT,
+      status TEXT,
+      fetched_at TIMESTAMP,
+      PRIMARY KEY (code, year, quarter)
+    )
+    """,
+    # Quarter (3-month) and trailing-twelve-month figures derived from `financials_quarterly` +
+    # `financials` — rebuilt whole after every quarterly load, never written by hand. Account names
+    # are folded (`financials.ACCOUNT_ALIASES`); quarter 4 comes from the annual report.
+    """
+    CREATE TABLE IF NOT EXISTS financials_ttm (
+      code TEXT,
+      year TEXT,
+      quarter SMALLINT,
+      account_nm TEXT,
+      quarter_amount DOUBLE,
+      ttm_amount DOUBLE,
+      basis TEXT,
+      PRIMARY KEY (code, year, quarter, account_nm)
+    )
+    """,
     # (code, year) pairs already asked of DART, success or not — so a company with no filing
     # for a year (013) is not re-queried on every `cache load` (cache/financials.py).
     """
