@@ -109,20 +109,19 @@ _PERIOD_NOTES = {
 def _read_financial_periods(
     conn: duckdb.DuckDBPyConnection, filer: str, period: str, since_year: str | None, until_year: str | None
 ) -> list[dict[str, Any]]:
-    column = "quarter_amount" if period == "quarter" else "ttm_amount"
     rows = conn.execute(
-        f"SELECT year, quarter, basis, account_nm, {column} FROM financials_ttm "
+        "SELECT year, quarter, basis, account_nm, quarter_amount, ttm_amount FROM financials_ttm "
         "WHERE code = ? AND (?::TEXT IS NULL OR year >= ?) AND (?::TEXT IS NULL OR year <= ?) "
         "ORDER BY year DESC, quarter DESC, account_nm",
         [filer, since_year, since_year, until_year, until_year],
     ).fetchall()
     by_period: dict[tuple[str, int], dict[str, Any]] = {}
-    for year, quarter, basis, account_nm, amount in rows:
+    for year, quarter, basis, account_nm, quarter_amount, ttm_amount in rows:
         entry = by_period.setdefault(
             (year, quarter),
             {"period": f"{year}Q{quarter}", "year": year, "quarter": quarter, "basis": basis, "accounts": {}},
         )
-        entry["accounts"][account_nm] = amount
+        entry["accounts"][account_nm] = quarter_amount if period == "quarter" else ttm_amount
     return list(by_period.values())
 
 

@@ -6,13 +6,14 @@ from datetime import date, datetime
 from types import SimpleNamespace
 
 from cluefin_openapi_cli.cache import store
+from cluefin_openapi_cli.cache.financials import ACCOUNT_ALIASES
 from cluefin_openapi_cli.cache.financials_quarterly import (
     QUARTER_REPORT_CODES,
     default_quarters,
     load_financials_quarterly,
     quarter_due,
 )
-from cluefin_openapi_cli.cache.financials_ttm import rebuild_ttm
+from cluefin_openapi_cli.cache.financials_ttm import _REBUILD_SQL, FLOW_ACCOUNTS, rebuild_ttm
 
 
 def _item(code: str, account_nm: str, amount: str, cum: str | None = None, prior: str | None = None, fs_div="CFS"):
@@ -187,3 +188,10 @@ def test_mixed_basis_gives_null_ttm() -> None:
     rebuild_ttm(conn)
 
     assert _ttm(conn, "2026", 3, "매출액") == (195.0, None)
+
+
+def test_static_rebuild_sql_matches_aliases_and_flow_accounts() -> None:
+    for alias, canonical in ACCOUNT_ALIASES.items():
+        assert f"WHEN '{alias}' THEN '{canonical}'" in _REBUILD_SQL
+    flows = ", ".join(f"'{name}'" for name in FLOW_ACCOUNTS)
+    assert _REBUILD_SQL.count(f"NOT IN ({flows})") == 2

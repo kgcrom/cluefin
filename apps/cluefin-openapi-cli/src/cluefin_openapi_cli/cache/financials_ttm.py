@@ -21,39 +21,35 @@ from __future__ import annotations
 
 import duckdb
 
-from cluefin_openapi_cli.cache.financials import ACCOUNT_ALIASES
-
 __all__ = ["FLOW_ACCOUNTS", "rebuild_ttm"]
 
 FLOW_ACCOUNTS = ("매출액", "영업이익", "당기순이익")
 
 
-def _canonical_sql(column: str) -> str:
-    whens = " ".join(f"WHEN '{alias}' THEN '{canonical}'" for alias, canonical in ACCOUNT_ALIASES.items())
-    return f"CASE {column} {whens} ELSE {column} END"
-
-
-_FLOWS = ", ".join(f"'{name}'" for name in FLOW_ACCOUNTS)
-
-_REBUILD_SQL = f"""
+# Static SQL (no string building): the CASE folds `financials.ACCOUNT_ALIASES` and the IN list is
+# `FLOW_ACCOUNTS` — tests/test_cache_financials_quarterly_unit.py checks both stay in sync.
+_REBUILD_SQL = """
 INSERT INTO financials_ttm (code, year, quarter, account_nm, quarter_amount, ttm_amount, basis)
 WITH q AS (
   SELECT code, year, quarter, basis, amount, cum_amount, prior_cum_amount,
-    {_canonical_sql("account_nm")} AS canonical
+    CASE account_nm WHEN '영업이익(손실)' THEN '영업이익' WHEN '당기순이익(손실)' THEN '당기순이익'
+      ELSE account_nm END AS canonical
   FROM financials_quarterly
   QUALIFY row_number() OVER (
     PARTITION BY code, year, quarter, canonical ORDER BY (account_nm = canonical) DESC
   ) = 1
 ),
 a AS (
-  SELECT code, year, basis, amount, {_canonical_sql("account_nm")} AS canonical
+  SELECT code, year, basis, amount,
+    CASE account_nm WHEN '영업이익(손실)' THEN '영업이익' WHEN '당기순이익(손실)' THEN '당기순이익'
+      ELSE account_nm END AS canonical
   FROM financials
   QUALIFY row_number() OVER (PARTITION BY code, year, canonical ORDER BY (account_nm = canonical) DESC) = 1
 ),
 quarters AS (
   SELECT q.code, q.year, q.quarter, q.canonical AS account_nm, q.amount AS quarter_amount,
     CASE
-      WHEN q.canonical NOT IN ({_FLOWS}) THEN q.amount
+      WHEN q.canonical NOT IN ('매출액', '영업이익', '당기순이익') THEN q.amount
       WHEN prev.basis = q.basis AND (q.prior_cum_amount IS NOT NULL OR qp.basis = q.basis)
         THEN coalesce(q.cum_amount, CASE WHEN q.quarter = 1 THEN q.amount END)
           + prev.amount - coalesce(q.prior_cum_amount, qp.cum_amount)
@@ -69,7 +65,7 @@ quarters AS (
 fourth AS (
   SELECT a.code, a.year, 4 AS quarter, a.canonical AS account_nm,
     CASE
-      WHEN a.canonical NOT IN ({_FLOWS}) THEN a.amount
+      WHEN a.canonical NOT IN ('매출액', '영업이익', '당기순이익') THEN a.amount
       WHEN q3.basis = a.basis THEN a.amount - q3.cum_amount
     END AS quarter_amount,
     a.amount AS ttm_amount,

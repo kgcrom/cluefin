@@ -145,13 +145,13 @@ def _best_rows(items: list[Any]) -> dict[str, dict[str, _Row]]:
 
 
 def _candidates(conn: duckdb.DuckDBPyConnection, year: str, quarter: int, *, retry_empty: bool) -> list[str]:
-    settled = "('ok')" if retry_empty else "('ok', 'empty')"
+    settled = ["ok"] if retry_empty else ["ok", "empty"]
     rows = conn.execute(
         "SELECT c.code FROM company c WHERE c.corp_code IS NOT NULL "
         "AND NOT EXISTS (SELECT 1 FROM financials_quarterly_fetch_log f WHERE f.code = c.code AND f.year = ? "
-        f"AND f.quarter = ? AND f.status IN {settled}) "
+        "AND f.quarter = ? AND f.status IN (SELECT unnest(?::TEXT[]))) "
         "ORDER BY c.code",
-        [year, quarter],
+        [year, quarter, settled],
     ).fetchall()
     return [row[0] for row in rows]
 
