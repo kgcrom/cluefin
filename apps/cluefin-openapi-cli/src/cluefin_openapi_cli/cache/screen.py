@@ -56,6 +56,7 @@ from cluefin_openapi_cli.cache.financials import account_spellings, fold_account
 from cluefin_openapi_cli.cache.magic import EXCLUDED_SECTORS, _last_filed_year, enterprise_value, invested_capital
 from cluefin_openapi_cli.cache.screen_growth import GROWTH_FACTORS, growth_factors
 from cluefin_openapi_cli.cache.screen_quality import QUALITY_FACTORS, quality_factors
+from cluefin_openapi_cli.cache.screen_rank import RankKey, apply_rank
 from cluefin_openapi_cli.cache.screen_sector import SECTOR_FACTORS, add_sector_percentiles
 from cluefin_openapi_cli.cache.screen_ttm import TTM_FACTORS, ttm_by_code, ttm_factors
 from cluefin_openapi_cli.errors import EXIT_USAGE, CliError
@@ -339,6 +340,9 @@ def screen(
     sort: str | None = None,
     descending: bool = True,
     top: int | None = None,
+    rank: list[RankKey] | None = None,
+    exclude_sectors: list[str] | None = None,
+    exclude_admin: bool = False,
 ) -> dict[str, Any]:
     """Factor table for every stock in the universe, filtered to ``--market``/``--sector``/`` --industry``/``--code``."""
 
@@ -364,6 +368,8 @@ def screen(
         and (sector is None or row["sector"] == sector)
         and (industry is None or row["industry"] == industry)
         and (wanted_codes is None or row["code"] in wanted_codes)
+        and not (exclude_sectors and row["sector"] in exclude_sectors)
+        and not (exclude_admin and (row.get("is_admin") or row.get("is_halted")))
     ]
 
     selected_codes = {row["code"] for row in selected}
@@ -442,7 +448,11 @@ def screen(
                 kept.append(row)
         candidates = kept
 
-    if sort is not None:
+    if rank:
+        candidates, rank_dropped = apply_rank(candidates, rank)
+        for factor, count in rank_dropped.items():
+            dropped_null[factor] = dropped_null.get(factor, 0) + count
+    elif sort is not None:
         sign = -1 if descending else 1
         candidates.sort(key=lambda row: (row.get(sort) is None, sign * (row.get(sort) or 0), row["code"]))
     else:
@@ -457,6 +467,8 @@ def screen(
         "dropped_null": dropped_null,
         "sort": sort,
         "order": ("desc" if descending else "asc") if sort is not None else None,
+        "rank": [key.label() for key in rank] if rank else None,
+        "excluded": {"sectors": exclude_sectors or [], "admin_or_halted": exclude_admin},
         "count": len(rows),
         "rows": rows,
         "notes": list(_NOTES),
