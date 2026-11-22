@@ -142,7 +142,7 @@ uv run cluefin-openapi-cli audit check --run <agent id> --json
 ```
 
 1. **`review collect`** 가 명령마다 stdout 을 `raw/<node>.json` 에, argv·exit code 를 `manifest.jsonl` 에 남깁니다. 화면에는 폴더 경로와 실패·건너뜀 요약만 나옵니다(2026-11-08 실측: 본 종목 + 비교 1곳 34호출 17.6초). 비교 기업을 원문을 읽은 뒤 정했으면 `--into <폴더> --peers` 로 그 호출만 더합니다.
-2. agent(`.claude/agents/company-review.md`)가 폴더를 읽고 그 안에 `report.md` 와 `verdict.json` 을 씁니다.
+2. agent(`.claude/agents/company-review.md`)가 폴더를 읽고 그 안에 `verdict.json` 을 씁니다. 서브에이전트로 돌면 Claude Code 가 리포트 파일 쓰기를 막아서, `report.md` 본문은 마지막 답의 `---REPORT---` 아래로 오고 메인 대화가 그 폴더에 저장합니다.
 3. **`review checklist`** 는 내가 정한 기준(`research/principles.toml`, 없으면 `--init` 으로 예시 생성)을 폴더의 raw 파일과 대조합니다. 점수나 매수 신호가 아니라 규칙마다 `pass`/`fail`/`unknown` 입니다.
 4. **`review record`** 는 판단(`verdict.json`)을 저장소 루트 `research/verdicts.jsonl` 에 한 줄씩 쌓습니다. 수집 폴더는 `/tmp` 라 사라지므로 나중에 가격과 대조할 판단만 여기 남깁니다. `research/` 는 worktree 에서 돌려도 메인 체크아웃의 것이고(`$CLUEFIN_RESEARCH_DIR` 로 바꿈) git 에 올리지 않습니다. watch·hold 는 `trigger.entry_above`·`exit_below` 중 하나, buy·sell 은 `target`·`stop` 이 필요하고, 빠진 필드는 한 번에 모두 알려 줍니다(exit 2). 앞 줄은 고치지 않습니다 — 생각이 바뀌면 새 줄입니다.
 5. **`review track`·`review due`** 는 그 판단을 로컬 캐시 일봉과 대조합니다(가격 도달은 일봉 종가 기준, 기록한 가격은 기준일 `adj_factor` 로 맞춤). `due` 는 다시 볼 판단만 고르고, `--events true` 일 때만 KIS 일정과 DART 공시를 부릅니다.

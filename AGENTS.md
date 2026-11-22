@@ -85,6 +85,6 @@ A worktree-isolated session refuses commands it can't prove don't run git outsid
 판단(`research/verdicts.jsonl`)과 HTML 리포트(`research/reports/`)는 gitignore 된 로컬 기록이다. worktree 에서도
 `review record` 는 메인 체크아웃의 `research/` 에 쓰므로, 리포트 파일도 그 경로에 둔다.
 
-스크린에서 검토로 이어 갈 때(결정 2026-11-22): 메인 대화가 `cache screen --preset <이름> --compare-as-of <지난달> --json` 을
-돌리고, `compare.in` 종목과 상위 10개(겹치면 한 번)를 company-review 서브에이전트로 병렬 검토한다. 리포트는 종목별
-company-review 리포트뿐이다 — 스크린 결과를 따로 요약 문서로 만들지 않는다.
+스크린 결과(결정 2026-11-22): `cache screen` 을 돌리면 종목 표와 종목별 짧은 근거(팩터 값, 일회성 이익·주가 급락 같은
+주의 신호)까지만 보여주고 멈춘다. 기업 분석은 사용자가 직접 한다. company-review 는 사용자가 종목을 지목해 요청할
+때만 돌리고, 스크린 상위·편입 종목에 자동으로 붙이지 않는다.

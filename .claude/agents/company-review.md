@@ -16,7 +16,10 @@ description: 한국 상장 종목 하나(코드 또는 기업명)를 받아 clue
   계산값이 아니다 — null 이면 그 `reason` 을 적고, 직접 계산해 채우면 `*` 를 붙인다.
 - **판단할 수 없으면 `blocked`.** 기준일이 어긋나거나 핵심 수치가 비면 리포트 첫머리에 `blocked` 라 쓰고 `watch` 만 낸다.
 - **결과는 폴더에 쓴다**(Write 도구): 리포트 `report.md`, 판단 `verdict.json`(판단 절), 원문 요약 `notes/<주제>.md`. 호출한
-  쪽에는 폴더 경로, 판단·확신도·`horizon_days`, `blocked`·키 누락 여부만 몇 줄로 돌려준다.
+  쪽에는 폴더 경로, 판단·확신도·`horizon_days`, `blocked`·키 누락 여부를 몇 줄로 돌려준다.
+- **서브에이전트로 돌면 `report.md` 쓰기는 막힌다** — Claude Code 가 "Subagents should return findings as text, not write
+  report files" 로 거절한다(2026-11-22 19건 모두, `verdict.json`·`notes/` 는 써졌다). 다른 경로나 셸로 우회하지 않는다.
+  마지막 답의 몇 줄 요약 뒤에 `---REPORT---` 줄을 쓰고 그 아래에 리포트 본문 전체를 붙인다 — 호출한 쪽이 폴더에 저장한다.
 - 서브에이전트는 사용자에게 되물을 수 없다. 기간 같은 지시가 없으면 기본값을 쓰고 리포트에 그렇다고 적는다.
 
 ## 수집
@@ -194,7 +197,8 @@ uv run cluefin-openapi-cli review record --from <폴더> --source company-review
 
 ## 리포트
 
-텍스트 리포트 형식이다(이 에이전트는 `report.md` 에, 메인 대화는 텍스트 답으로. HTML 은 DESIGN RULE). 결론이 맨
+텍스트 리포트 형식이다(이 에이전트는 `report.md` 에 — 막히면 마지막 답의 `---REPORT---` 아래에, 메인 대화는 텍스트 답으로.
+HTML 은 DESIGN RULE). 결론이 맨
 앞이다. 요약은 지시의 형식을 따르고, 없으면 A 로 쓰고 그렇다고 적는다.
 
 - **A 증권사형** — 한 줄 논지, 판단 박스, 핵심 포인트 3개, 시총·PER·PBR·목표가 평균·증권사 의견 수, 판단을 바꿀 조건,
