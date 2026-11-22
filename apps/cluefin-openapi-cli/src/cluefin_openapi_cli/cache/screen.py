@@ -55,6 +55,7 @@ from cluefin_openapi_cli.cache.breadth import _percentile_rank, _round_half_up
 from cluefin_openapi_cli.cache.financials import account_spellings, fold_accounts
 from cluefin_openapi_cli.cache.magic import EXCLUDED_SECTORS, _last_filed_year, enterprise_value, invested_capital
 from cluefin_openapi_cli.cache.screen_growth import GROWTH_FACTORS, growth_factors
+from cluefin_openapi_cli.cache.screen_quality import QUALITY_FACTORS, quality_factors
 from cluefin_openapi_cli.cache.screen_ttm import TTM_FACTORS, ttm_by_code, ttm_factors
 from cluefin_openapi_cli.errors import EXIT_USAGE, CliError
 
@@ -87,6 +88,7 @@ FACTORS: tuple[tuple[str, str], ...] = (
     ("revenue_cagr_3y", "최신 사업연도와 3년 전 사업연도 매출액의 연평균 성장률(%). 3년 전이 캐시에 없으면 null."),
     *TTM_FACTORS,
     *GROWTH_FACTORS,
+    *QUALITY_FACTORS,
     ("rs_1m", "21거래일 수정주가 수익률의 전 종목(cache rs 와 같은 유니버스) 횡단면 백분위 (0~99)."),
     ("ret_3m", "63거래일 수정주가 수익률(%)."),
     ("ret_6m", "126거래일 수정주가 수익률(%)."),
@@ -409,6 +411,12 @@ def screen(
                 ev = enterprise_value(mcap, total_liab)
                 if ev > 0:
                     candidate["earnings_yield"] = round(ebit / ev * 100, 2)
+        growth = candidate["ni_cagr_3y"] if candidate["ni_cagr_3y"] is not None else candidate["ni_yoy_ttm"]
+        candidate.update(
+            quality_factors(
+                quarterly.get(code), mcap, per_ttm=candidate["per_ttm"], growth=growth, sector=row["sector"]
+            )
+        )
         candidates.append(candidate)
 
     dropped_null: dict[str, int] = {}
