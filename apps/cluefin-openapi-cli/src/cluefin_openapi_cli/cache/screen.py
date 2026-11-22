@@ -54,6 +54,7 @@ from cluefin_openapi_cli.cache import trend as cache_trend
 from cluefin_openapi_cli.cache.breadth import _percentile_rank, _round_half_up
 from cluefin_openapi_cli.cache.financials import account_spellings, fold_accounts
 from cluefin_openapi_cli.cache.magic import EXCLUDED_SECTORS, _last_filed_year, enterprise_value, invested_capital
+from cluefin_openapi_cli.cache.screen_ttm import TTM_FACTORS, ttm_by_code, ttm_factors
 from cluefin_openapi_cli.errors import EXIT_USAGE, CliError
 
 __all__ = ["DEFAULT_TOP", "FACTORS", "ScreenCondition", "factor_catalog", "parse_where", "screen"]
@@ -83,6 +84,7 @@ FACTORS: tuple[tuple[str, str], ...] = (
     ("revenue_yoy", "최신 사업연도와 바로 전 사업연도 매출액 증감률(%). 전년이 캐시에 없거나 0 이하면 null."),
     ("op_yoy", "최신 사업연도와 바로 전 사업연도 영업이익 증감률(%). 전년이 캐시에 없거나 0 이하면 null."),
     ("revenue_cagr_3y", "최신 사업연도와 3년 전 사업연도 매출액의 연평균 성장률(%). 3년 전이 캐시에 없으면 null."),
+    *TTM_FACTORS,
     ("rs_1m", "21거래일 수정주가 수익률의 전 종목(cache rs 와 같은 유니버스) 횡단면 백분위 (0~99)."),
     ("ret_3m", "63거래일 수정주가 수익률(%)."),
     ("ret_6m", "126거래일 수정주가 수익률(%)."),
@@ -107,6 +109,9 @@ _NOTES = (
     "당기순이익·자본총계는 지배/비지배 구분이 없는 연결 전체 값이다(fnlttMultiAcnt 한계). 비지배지분이 큰 "
     "지주회사·모회사는 per·pbr 이 실제보다 훨씬 낮게 나온다(2026-11-09 기준 pbr<0.3 이 400종목, 앞쪽은 대부분 "
     "그런 회사다) — 낮은 per·pbr 로 고른 후보는 kis stock valuation(지배주주 기준)으로 다시 확인한다.",
+    "*_ttm·pbr_mrq·*_yoy_q 는 financials_ttm(분기·반기 보고서 + 사업보고서)의 종목별 최근 분기다 — 제출기한"
+    "(12월 결산 기준)이 as_of 이전인 분기만 쓰고, 어느 분기인지는 ttm_period 에 적는다. 연간 팩터(per·roe 등)는 "
+    "그대로 최신 사업연도다.",
     "--sort 는 내림차순이 기본이다. per·pbr 처럼 낮은 값이 먼저면 --order asc. 값이 null 인 행은 어느 쪽이든 끝.",
 )
 
@@ -343,6 +348,7 @@ def screen(
     mcaps = {code: close * list_count for code, close, list_count in mcap_rows}
 
     financials = _financials_by_code(conn, all_codes, as_of)
+    quarterly = ttm_by_code(conn, all_codes, as_of)
 
     wanted_codes = set(codes) if codes else None
     selected = [
@@ -387,6 +393,7 @@ def screen(
             "high_52w_gap": round(price["high_52w_gap"], 2) if price.get("high_52w_gap") is not None else None,
             "above_ma50": price.get("above_ma50"),
             **fin,
+            **ttm_factors(quarterly.get(code), mcap),
         }
         if mcap is not None:
             if net_income is not None and net_income > 0:
