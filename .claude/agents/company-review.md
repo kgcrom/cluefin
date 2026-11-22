@@ -95,7 +95,7 @@ uv run cluefin-openapi-cli review collect --stock-code 214320 --peers 030000 --j
      와 "TTM 배수" 로 따로 적는다.
    - 오너 어닝스의 null(D&A 없는 대형 공시자)과 주주수익률의 `assumed_zero`(현금흐름표에 없는 줄)는 그대로 적는다.
    - 추정치는 만들지 않는다. `kis stock estimated-earnings` 는 한국투자증권 한 곳의 추정이라 "KIS 추정" 이라 쓰고
-     컨센서스라 부르지 않는다. 증권사 평균·중앙값은 `kis stock investment-opinion` 에서 센다.
+     컨센서스라 부르지 않는다. 증권사 평균·중앙값은 `opinion-summary` 의 값을 그대로 쓴다.
 2. **사업 현황** — 주가를 움직일 사업 이슈(수주·증설·신제품·지배구조)를 원문·공시·뉴스 근거와 함께.
 3. **기술적** — 추세, 이동평균 배열, 지지·저항, 무효화 가격, RS(1M) 백분위와 업종 RS. 두 신호 계열이 충돌하면
    충돌 자체를 적는다.
