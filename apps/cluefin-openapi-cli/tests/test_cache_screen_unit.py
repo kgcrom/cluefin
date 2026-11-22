@@ -740,3 +740,42 @@ def test_sector_percentile_ignores_output_narrowing(cache) -> None:
     by_code = {row["code"]: row for row in full["rows"]}
     assert by_code["900140"]["pbr_mrq_sector_pct"] == 99
     assert narrow["rows"][0]["pbr_mrq_sector_pct"] == 99
+
+
+def test_cli_screen_compare_as_of_lists_in_and_out(cache) -> None:
+    earlier = _AS_OF - timedelta(days=30)
+    conn = store.open_store()
+    _setup_candidate(conn, "900010", close=100.0)
+    _setup_candidate(conn, "900020", close=50.0)
+    _insert_close(conn, "900010", 100.0, as_of=earlier)
+    _insert_close(conn, "900030", 10.0, as_of=earlier)
+    _insert_company(conn, "900030")
+    _insert_financials(conn, "900030", "2025", **_BASELINE_ACCOUNTS)
+    # On the earlier day (before 3/31) FY2025 is not due yet, so that run reads FY2024.
+    _insert_financials(conn, "900010", "2024", **_BASELINE_ACCOUNTS)
+    _insert_financials(conn, "900030", "2024", **_BASELINE_ACCOUNTS)
+    _insert_index_bar(conn)
+    _insert_index_bar(conn, as_of=earlier)
+    conn.close()
+
+    result = run_cli(
+        [
+            "cache",
+            "screen",
+            "--as-of",
+            _AS_OF.strftime("%Y%m%d"),
+            "--rank",
+            "per:asc",
+            "--top",
+            "2",
+            "--compare-as-of",
+            earlier.strftime("%Y%m%d"),
+            "--json",
+        ]
+    )
+
+    assert result.exit_code == 0, result.stdout
+    compare = json.loads(result.stdout)["compare"]
+    assert compare["as_of"] == earlier.isoformat()
+    assert [row["code"] for row in compare["in"]] == ["900020"]
+    assert [row["code"] for row in compare["out"]] == ["900030"]

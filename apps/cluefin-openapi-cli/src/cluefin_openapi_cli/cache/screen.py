@@ -61,7 +61,7 @@ from cluefin_openapi_cli.cache.screen_sector import SECTOR_FACTORS, add_sector_p
 from cluefin_openapi_cli.cache.screen_ttm import TTM_FACTORS, ttm_by_code, ttm_factors
 from cluefin_openapi_cli.errors import EXIT_USAGE, CliError
 
-__all__ = ["DEFAULT_TOP", "FACTORS", "ScreenCondition", "factor_catalog", "parse_where", "screen"]
+__all__ = ["DEFAULT_TOP", "FACTORS", "ScreenCondition", "factor_catalog", "membership_change", "parse_where", "screen"]
 
 DEFAULT_TOP = 50
 
@@ -326,6 +326,18 @@ def _financial_ratios(years: dict[str, dict[str, float]], sector: str | None) ->
     three_back = years.get(str(int(latest_year) - _CAGR_YEARS), {})
     out["revenue_cagr_3y"] = _growth_pct(revenue, three_back.get("매출액"), _CAGR_YEARS)
     return out
+
+
+def membership_change(current: dict[str, Any], previous: dict[str, Any]) -> dict[str, Any]:
+    """`in`/`out` between two screen payloads run with the same options (rows after `top`)."""
+
+    now = {row["code"]: row["name"] for row in current["rows"]}
+    before = {row["code"]: row["name"] for row in previous["rows"]}
+    return {
+        "as_of": previous["as_of"],
+        "in": [{"code": code, "name": name} for code, name in now.items() if code not in before],
+        "out": [{"code": code, "name": name} for code, name in before.items() if code not in now],
+    }
 
 
 def screen(

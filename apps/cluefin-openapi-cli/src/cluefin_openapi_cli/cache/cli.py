@@ -586,6 +586,10 @@ def _run_screen(argv: list[str]) -> None:
     try:
         as_of = _trend_as_of(conn, _str_option(options, "as_of"))
         payload = cache_screen.screen(conn, as_of, **args)
+        compare_raw = _str_option(options, "compare_as_of")
+        if compare_raw is not None:
+            previous = cache_screen.screen(conn, _trend_as_of(conn, compare_raw), **args)
+            payload["compare"] = cache_screen.membership_change(payload, previous)
     finally:
         conn.close()
     _render_read(payload, options, default_limit=None)
