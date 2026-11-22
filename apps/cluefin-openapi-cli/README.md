@@ -103,7 +103,19 @@ uv run cluefin-openapi-cli cache base-rate-build --json    # `cache base-rate` �
 - **`company` 의 이름·업종·시장·상장주식수는 현재 값입니다**(과거 시점 값이 아님). 그래서 과거 날짜의 시총은 그날 종가 × 현재 주식수 근사입니다.
 - **`cache financials` 는 `dart financial-summary` 와 단위·범위가 다릅니다.** 금액이 **원**이고(`financial-summary` 는 억원), 연간 표준 12개 계정뿐이며 지배/비지배 구분과 현금흐름표가 없습니다. `cache screen` 의 per·pbr·roe 가 `kis stock valuation` 의 지배주주 기준 값과 다른 이유입니다. 우선주 코드로 물으면 보통주의 행을 주고 `financials_code` 에 적습니다.
 - **분기·TTM 은 `cache load --only financials_quarterly` 로 받고 `cache financials --period quarter|ttm` 으로 봅니다.** 1분기·반기·3분기 보고서를 최근 5년(상장폐지 포함) 받아 `financials_quarterly` 에 두고, 분기 3개월·TTM 은 `financials_ttm` 에 다시 계산합니다. 4분기 3개월은 연간 − 3분기 누적입니다. `cache screen` 의 `*_ttm`·`pbr_mrq`·`*_yoy_q` 가 이 표를 씁니다.
-- `cache screen --preset <이름>` 은 `research/screens.toml` 의 `[이름]` 절(`where`·`sort`·`order`·`top`)을 읽습니다. `research/` 는 gitignore 된 내 폴더라 직접 만듭니다.
+- `cache screen --preset <이름>` 은 `research/screens.toml` 의 `[이름]` 절(`where`·`sort`·`order`·`rank`·`exclude_sector`·`exclude_admin`·`top`)을 읽습니다. `research/` 는 gitignore 된 내 폴더라 직접 만듭니다.
+- **조건을 조합해 고릅니다.** `--where` 는 값 조건, `--rank` 는 여러 팩터의 순위합, `--compare-as-of` 는 그날 결과와의 편입·제외입니다. 팩터 목록은 `cache screen --factors true` 로 봅니다. 아이투자식 마법공식은 이렇게 씁니다.
+
+  ```toml
+  [magic]
+  rank = "roa_ttm:desc,per_ttm:asc"
+  where = "roa_ttm>=10,per_ttm>=3,mcap>=200000000000"
+  exclude_sector = "금융,증권,보험,전기/가스"
+  exclude_admin = true
+  top = 30
+  ```
+
+  `cache screen --preset magic --compare-as-of 20261020` 처럼 지난달과 비교합니다. 이익 성장은 `ni_up_years>=3`·`ni_up_quarters>=4`, 업종 안에서 싼 종목은 `per_ttm_sector_pct<=40` 처럼 겁니다.
 
 DuckDB 는 쓰는 동안 다른 프로세스가 파일을 열 수 없습니다. `cache load` 중의 읽기는 exit 1 `CacheLocked`, 첫 적재 전은 exit 2 `CacheMissing` 입니다.
 

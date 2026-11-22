@@ -84,3 +84,7 @@ A worktree-isolated session refuses commands it can't prove don't run git outsid
 기업 분석(대화형 분석·HTML 리포트·지난 판단 재검토)은 메인 대화가 `.claude/agents/company-review.md` 를 따른다.
 판단(`research/verdicts.jsonl`)과 HTML 리포트(`research/reports/`)는 gitignore 된 로컬 기록이다. worktree 에서도
 `review record` 는 메인 체크아웃의 `research/` 에 쓰므로, 리포트 파일도 그 경로에 둔다.
+
+스크린에서 검토로 이어 갈 때(결정 2026-11-22): 메인 대화가 `cache screen --preset <이름> --compare-as-of <지난달> --json` 을
+돌리고, `compare.in` 종목과 상위 10개(겹치면 한 번)를 company-review 서브에이전트로 병렬 검토한다. 리포트는 종목별
+company-review 리포트뿐이다 — 스크린 결과를 따로 요약 문서로 만들지 않는다.
