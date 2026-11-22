@@ -391,7 +391,8 @@ _META_HELP: dict[str, dict[str, Any]] = {
         "description": "Fetch everything a company review reads into one folder, in parallel stages capped per "
         "broker, so an agent reads files instead of holding ~15 JSON replies (plus 9 per peer) in its context. "
         "`record` appends the review's verdict to research/verdicts.jsonl; `track` checks those verdicts against cached prices. "
-        "`checklist` compares my own rules against one run folder; `due` lists verdicts worth a second look and, "
+        "`checklist` compares my own rules against one run folder; `five-checks` judges company-review's five checks "
+        "(growth, margin, cash, debt, price) from one run folder; `due` lists verdicts worth a second look and, "
         "with --events true, upcoming KIS schedule items and DART disclosures for every still-open verdict.",
         "usage": [
             f"{APP_NAME} review collect --stock-code <code> [--peers <code,code>] [--out <dir>] [--json]",
@@ -402,6 +403,7 @@ _META_HELP: dict[str, dict[str, Any]] = {
             f"{APP_NAME} review checklist --init [--rules <path>] [--json]",
             f"{APP_NAME} review checklist --from <review collect folder> [--rules <path>] [--json]",
             f"{APP_NAME} review checklist --metrics true [--json]",
+            f"{APP_NAME} review five-checks --from <review collect folder> [--json]",
             f"{APP_NAME} review due [--days N] [--code <code,code>] [--events true] [--json]",
         ],
         "options": [
@@ -442,6 +444,10 @@ _META_HELP: dict[str, dict[str, Any]] = {
             "checklist reads raw/<code>__<stem>.json from a review collect folder only — it never calls a broker. "
             "Each rule gets pass/fail/unknown (unknown names the raw file or missing account in reason); must_failed "
             "lists the ids of must=true rules that failed. Results are also written to <folder>/checklist.json.",
+            "five-checks reads the same raw files (dart financial-summary, kis stock valuation) and writes "
+            "<folder>/five_checks.json; review collect writes it too unless the run stopped. Each item is 좋음/주의/보통/"
+            "판정 보류 with the inputs it used; a caution condition wins once its inputs exist. The stock under review "
+            "only, never peers.",
             "due looks at the latest verdict per stock_code only (a changed mind is a newer line, not a rewrite). "
             "due_reasons: crossed (a trigger/target/stop price hit), recheck_passed/recheck_within "
             "(trigger.recheck_on, calendar days), horizon_ending (trading days left), closed, no_data (the cache "

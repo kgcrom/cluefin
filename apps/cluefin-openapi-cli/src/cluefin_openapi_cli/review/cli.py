@@ -22,6 +22,7 @@ from cluefin_openapi_cli.review.collect import (
     run_dir,
 )
 from cluefin_openapi_cli.review.due import DEFAULT_DAYS, due, gather_events, tracked_rows
+from cluefin_openapi_cli.review.five_checks import FIVE_CHECKS_FILE, evaluate_five_checks
 from cluefin_openapi_cli.review.metrics import catalog_rows
 from cluefin_openapi_cli.review.paths import research_root
 from cluefin_openapi_cli.review.record import VERDICTS_FILE, record_verdict
@@ -60,7 +61,11 @@ def summary(result: CollectResult) -> dict[str, Any]:
         },
         "failed": failed,
         "skipped": list(result.skipped),
-        "files": {"manifest": "manifest.jsonl", "raw": "raw/<node>.json"},
+        "files": {
+            "manifest": "manifest.jsonl",
+            "raw": "raw/<node>.json",
+            **({"five_checks": FIVE_CHECKS_FILE} if (result.out / FIVE_CHECKS_FILE).exists() else {}),
+        },
         "notes": [
             "Each raw file is the command's stdout exactly; manifest.jsonl has one line per call (argv, exit_code, "
             "attempts, file). Read the files with jq instead of calling the commands again.",
@@ -100,6 +105,8 @@ def _run_collect(argv: list[str]) -> None:
         raise CliError(f"{out} already holds a run.", exit_code=EXIT_USAGE, hint="Pick another --out or omit it.")
     with process_runner() as runner:
         result = collect(stock, peers, out, runner=runner)
+    if result.status != "stopped":
+        evaluate_five_checks(out, stock)
     render_output(
         summary(result), force_json=bool(options.get("json", False)), compact=bool(options.get("compact", False))
     )
@@ -191,6 +198,19 @@ def _run_checklist(argv: list[str]) -> None:
     render_output(payload, force_json=force_json, compact=compact)
 
 
+def _run_five_checks(argv: list[str]) -> None:
+    _, options = _parse_named_options(argv)
+    from_opt = _str_option(options, "from")
+    if not from_opt:
+        raise CliError("review five-checks needs --from <review collect folder>.", exit_code=EXIT_USAGE)
+    folder = Path(from_opt)
+    info = read_run_info(folder)
+    if info is None:
+        raise CliError(f"{folder} is not a review collect folder (no run.json).", exit_code=EXIT_USAGE)
+    payload = evaluate_five_checks(folder, str(info["stock_code"]))
+    render_output(payload, force_json=bool(options.get("json", False)), compact=bool(options.get("compact", False)))
+
+
 def _run_due(argv: list[str]) -> None:
     _, options = _parse_named_options(argv)
     force_json = bool(options.get("json", False))
@@ -236,6 +256,7 @@ SUBCOMMANDS = {
     "record": _run_record,
     "track": _run_track,
     "checklist": _run_checklist,
+    "five-checks": _run_five_checks,
     "due": _run_due,
 }
 
