@@ -54,10 +54,14 @@ from cluefin_openapi_cli.cache import trend as cache_trend
 from cluefin_openapi_cli.cache.breadth import _percentile_rank, _round_half_up
 from cluefin_openapi_cli.cache.financials import account_spellings, fold_accounts
 from cluefin_openapi_cli.cache.magic import EXCLUDED_SECTORS, _last_filed_year, enterprise_value, invested_capital
+from cluefin_openapi_cli.cache.screen_growth import GROWTH_FACTORS, growth_factors
+from cluefin_openapi_cli.cache.screen_quality import QUALITY_FACTORS, quality_factors
+from cluefin_openapi_cli.cache.screen_rank import RankKey, apply_rank
+from cluefin_openapi_cli.cache.screen_sector import SECTOR_FACTORS, add_sector_percentiles
 from cluefin_openapi_cli.cache.screen_ttm import TTM_FACTORS, ttm_by_code, ttm_factors
 from cluefin_openapi_cli.errors import EXIT_USAGE, CliError
 
-__all__ = ["DEFAULT_TOP", "FACTORS", "ScreenCondition", "factor_catalog", "parse_where", "screen"]
+__all__ = ["DEFAULT_TOP", "FACTORS", "ScreenCondition", "factor_catalog", "membership_change", "parse_where", "screen"]
 
 DEFAULT_TOP = 50
 
@@ -85,6 +89,9 @@ FACTORS: tuple[tuple[str, str], ...] = (
     ("op_yoy", "최신 사업연도와 바로 전 사업연도 영업이익 증감률(%). 전년이 캐시에 없거나 0 이하면 null."),
     ("revenue_cagr_3y", "최신 사업연도와 3년 전 사업연도 매출액의 연평균 성장률(%). 3년 전이 캐시에 없으면 null."),
     *TTM_FACTORS,
+    *GROWTH_FACTORS,
+    *QUALITY_FACTORS,
+    *SECTOR_FACTORS,
     ("rs_1m", "21거래일 수정주가 수익률의 전 종목(cache rs 와 같은 유니버스) 횡단면 백분위 (0~99)."),
     ("ret_3m", "63거래일 수정주가 수익률(%)."),
     ("ret_6m", "126거래일 수정주가 수익률(%)."),
@@ -321,6 +328,18 @@ def _financial_ratios(years: dict[str, dict[str, float]], sector: str | None) ->
     return out
 
 
+def membership_change(current: dict[str, Any], previous: dict[str, Any]) -> dict[str, Any]:
+    """`in`/`out` between two screen payloads run with the same options (rows after `top`)."""
+
+    now = {row["code"]: row["name"] for row in current["rows"]}
+    before = {row["code"]: row["name"] for row in previous["rows"]}
+    return {
+        "as_of": previous["as_of"],
+        "in": [{"code": code, "name": name} for code, name in now.items() if code not in before],
+        "out": [{"code": code, "name": name} for code, name in before.items() if code not in now],
+    }
+
+
 def screen(
     conn: duckdb.DuckDBPyConnection,
     as_of: date,
@@ -333,6 +352,9 @@ def screen(
     sort: str | None = None,
     descending: bool = True,
     top: int | None = None,
+    rank: list[RankKey] | None = None,
+    exclude_sectors: list[str] | None = None,
+    exclude_admin: bool = False,
 ) -> dict[str, Any]:
     """Factor table for every stock in the universe, filtered to ``--market``/``--sector``/`` --industry``/``--code``."""
 
@@ -358,10 +380,13 @@ def screen(
         and (sector is None or row["sector"] == sector)
         and (industry is None or row["industry"] == industry)
         and (wanted_codes is None or row["code"] in wanted_codes)
+        and not (exclude_sectors and row["sector"] in exclude_sectors)
+        and not (exclude_admin and (row.get("is_admin") or row.get("is_halted")))
     ]
 
+    selected_codes = {row["code"] for row in selected}
     candidates: list[dict[str, Any]] = []
-    for row in selected:
+    for row in full_universe:
         code = row["code"]
         mcap = mcaps.get(code)
         price = prices.get(code, {})
@@ -394,6 +419,7 @@ def screen(
             "above_ma50": price.get("above_ma50"),
             **fin,
             **ttm_factors(quarterly.get(code), mcap),
+            **growth_factors(financials.get(code, {}), quarterly.get(code)),
         }
         if mcap is not None:
             if net_income is not None and net_income > 0:
@@ -406,7 +432,17 @@ def screen(
                 ev = enterprise_value(mcap, total_liab)
                 if ev > 0:
                     candidate["earnings_yield"] = round(ebit / ev * 100, 2)
+        growth = candidate["ni_cagr_3y"] if candidate["ni_cagr_3y"] is not None else candidate["ni_yoy_ttm"]
+        candidate.update(
+            quality_factors(
+                quarterly.get(code), mcap, per_ttm=candidate["per_ttm"], growth=growth, sector=row["sector"]
+            )
+        )
         candidates.append(candidate)
+
+    # Percentiles rank the full universe first; only then are the output rows narrowed.
+    add_sector_percentiles(candidates)
+    candidates = [row for row in candidates if row["code"] in selected_codes]
 
     dropped_null: dict[str, int] = {}
     if where:
@@ -424,7 +460,11 @@ def screen(
                 kept.append(row)
         candidates = kept
 
-    if sort is not None:
+    if rank:
+        candidates, rank_dropped = apply_rank(candidates, rank)
+        for factor, count in rank_dropped.items():
+            dropped_null[factor] = dropped_null.get(factor, 0) + count
+    elif sort is not None:
         sign = -1 if descending else 1
         candidates.sort(key=lambda row: (row.get(sort) is None, sign * (row.get(sort) or 0), row["code"]))
     else:
@@ -439,6 +479,8 @@ def screen(
         "dropped_null": dropped_null,
         "sort": sort,
         "order": ("desc" if descending else "asc") if sort is not None else None,
+        "rank": [key.label() for key in rank] if rank else None,
+        "excluded": {"sectors": exclude_sectors or [], "admin_or_halted": exclude_admin},
         "count": len(rows),
         "rows": rows,
         "notes": list(_NOTES),

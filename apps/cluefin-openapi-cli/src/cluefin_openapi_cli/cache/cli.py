@@ -16,6 +16,7 @@ from cluefin_openapi_cli.cache.macro_beta import DEFAULT_SINCE_DAYS, read_macro_
 from cluefin_openapi_cli.cache.perf import read_perf
 from cluefin_openapi_cli.cache.rates import RATE_SERIES
 from cluefin_openapi_cli.cache.read import FINANCIAL_PERIODS, read_company, read_financials, read_ohlcv
+from cluefin_openapi_cli.cache.screen_rank import parse_rank
 from cluefin_openapi_cli.cache.trend import latest_index_date, scan
 from cluefin_openapi_cli.cliargs import _parse_fields, _parse_limit, _parse_named_options, _str_option
 from cluefin_openapi_cli.clock import now_kst, today_kst
@@ -524,7 +525,7 @@ _SCREENS_TOML = "screens.toml"
 
 
 def _load_preset(name: str) -> dict[str, Any]:
-    """`[name]` of research/screens.toml: `where`, and optionally `sort`, `order`, `top`."""
+    """`[name]` of research/screens.toml: `where`, `sort`/`order` or `rank`, `exclude_sector`, `exclude_admin`, `top`."""
 
     path = research_root() / _SCREENS_TOML
     if not path.is_file():
@@ -540,7 +541,13 @@ def _load_preset(name: str) -> dict[str, Any]:
     preset = data.get(name)
     if not isinstance(preset, dict):
         raise CliError(f"No preset `{name}` in {path}.", exit_code=EXIT_USAGE, data={"presets": sorted(data)})
-    issues = [f"`{key}` must be a string" for key in ("where", "sort", "order") if not _is_str_or_none(preset.get(key))]
+    issues = [
+        f"`{key}` must be a string"
+        for key in ("where", "sort", "order", "rank", "exclude_sector")
+        if not _is_str_or_none(preset.get(key))
+    ]
+    if preset.get("exclude_admin") not in (None, True, False):
+        issues.append("`exclude_admin` must be true or false")
     top = preset.get("top")
     if top is not None and (not isinstance(top, int) or isinstance(top, bool) or top <= 0):
         issues.append("`top` must be a positive integer")
@@ -574,19 +581,48 @@ def _run_screen(argv: list[str]) -> None:
             compact=bool(options.get("compact", False)),
         )
         return
-    where_raw = _str_option(options, "where")
-    sort = _str_option(options, "sort")
+    args = _screen_args(options)
+    conn = _read_conn()
+    try:
+        as_of = _trend_as_of(conn, _str_option(options, "as_of"))
+        payload = cache_screen.screen(conn, as_of, **args)
+        compare_raw = _str_option(options, "compare_as_of")
+        if compare_raw is not None:
+            previous = cache_screen.screen(conn, _trend_as_of(conn, compare_raw), **args)
+            payload["compare"] = cache_screen.membership_change(payload, previous)
+    finally:
+        conn.close()
+    _render_read(payload, options, default_limit=None)
+
+
+# Options a preset defines; a preset cannot be combined with any of them on the command line.
+_PRESET_KEYS = ("where", "sort", "order", "rank", "exclude_sector", "exclude_admin")
+
+
+def _screen_definition(options: dict[str, Any]) -> dict[str, Any]:
+    """The screen-defining options, from `--preset` or the command line (never both)."""
+
+    given = {key: options.get(key) for key in _PRESET_KEYS if options.get(key) is not None}
     preset_name = _str_option(options, "preset")
-    top_raw = _str_option(options, "top")
-    order_raw = _str_option(options, "order")
-    if preset_name is not None:
-        if where_raw is not None or sort is not None or order_raw is not None:
-            raise CliError("`--preset` cannot be combined with `--where`/`--sort`/`--order`.", exit_code=EXIT_USAGE)
-        preset = _load_preset(preset_name)
-        where_raw, sort, order_raw = preset.get("where"), preset.get("sort"), preset.get("order")
-        if top_raw is None and preset.get("top") is not None:
-            top_raw = str(preset["top"])
-    descending = _parse_order(order_raw)
+    if preset_name is None:
+        return {**given, "top": _str_option(options, "top")}
+    if given:
+        raise CliError(
+            "`--preset` cannot be combined with " + "/".join(f"`--{key.replace('_', '-')}`" for key in given) + ".",
+            exit_code=EXIT_USAGE,
+        )
+    preset = _load_preset(preset_name)
+    top = _str_option(options, "top")
+    if top is None and preset.get("top") is not None:
+        top = str(preset["top"])
+    return {**{key: preset.get(key) for key in _PRESET_KEYS}, "top": top}
+
+
+def _screen_args(options: dict[str, Any]) -> dict[str, Any]:
+    spec = _screen_definition(options)
+    sort, rank_raw = spec.get("sort"), spec.get("rank")
+    if sort is not None and rank_raw is not None:
+        raise CliError("`--sort` and `--rank` are alternatives; give one.", exit_code=EXIT_USAGE)
     if sort is not None and sort not in cache_screen.FACTOR_NAMES:
         raise CliError(
             f"`--sort` takes a factor name, got `{sort}`.",
@@ -597,24 +633,21 @@ def _run_screen(argv: list[str]) -> None:
     if market is not None and market.upper() not in {"KOSPI", "KOSDAQ"}:
         raise CliError("`--market` takes KOSPI or KOSDAQ.", exit_code=EXIT_USAGE)
     codes = _list_option(options, "code")
-    conn = _read_conn()
-    try:
-        as_of = _trend_as_of(conn, _str_option(options, "as_of"))
-        payload = cache_screen.screen(
-            conn,
-            as_of,
-            market=market.upper() if market else None,
-            sector=_str_option(options, "sector"),
-            industry=_str_option(options, "industry"),
-            codes=[code.upper() for code in codes] if codes else None,
-            where=cache_screen.parse_where(where_raw) if where_raw else None,
-            sort=sort,
-            descending=descending,
-            top=_parse_top(top_raw, default=cache_screen.DEFAULT_TOP) if top_raw is not None else None,
-        )
-    finally:
-        conn.close()
-    _render_read(payload, options, default_limit=None)
+    exclude_sector = spec.get("exclude_sector")
+    exclude_admin = spec.get("exclude_admin")
+    return {
+        "market": market.upper() if market else None,
+        "sector": _str_option(options, "sector"),
+        "industry": _str_option(options, "industry"),
+        "codes": [code.upper() for code in codes] if codes else None,
+        "where": cache_screen.parse_where(spec["where"]) if spec.get("where") else None,
+        "sort": sort,
+        "descending": _parse_order(spec.get("order")),
+        "top": _parse_top(spec["top"], default=cache_screen.DEFAULT_TOP) if spec.get("top") is not None else None,
+        "rank": parse_rank(rank_raw, cache_screen.FACTOR_NAMES) if rank_raw else None,
+        "exclude_sectors": [s.strip() for s in str(exclude_sector).split(",") if s.strip()] if exclude_sector else None,
+        "exclude_admin": exclude_admin is True or str(exclude_admin).lower() == "true",
+    }
 
 
 def _run_peers(argv: list[str]) -> None:

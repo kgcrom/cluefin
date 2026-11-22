@@ -21,7 +21,7 @@ import duckdb
 
 from cluefin_openapi_cli.cache.financials_quarterly import quarter_due
 
-__all__ = ["TTM_FACTORS", "latest_due_period", "ttm_by_code", "ttm_factors"]
+__all__ = ["PANEL_ACCOUNTS", "TTM_FACTORS", "Panel", "latest_due_period", "ttm_by_code", "ttm_factors"]
 
 TTM_FACTORS: tuple[tuple[str, str], ...] = (
     ("per_ttm", "시총 / TTM 당기순이익(최근 4개 분기 합). 당기순이익<=0 이면 null."),
@@ -34,6 +34,22 @@ TTM_FACTORS: tuple[tuple[str, str], ...] = (
 )
 _FIELDS = ("ttm_period", *(name for name, _ in TTM_FACTORS))
 _ACCOUNTS = ["매출액", "영업이익", "당기순이익", "자본총계"]
+# Every account the quarter panel carries (screen_growth and the balance-sheet factors read it too).
+PANEL_ACCOUNTS = [
+    "매출액",
+    "영업이익",
+    "당기순이익",
+    "자본총계",
+    "자산총계",
+    "유동자산",
+    "유동부채",
+    "부채총계",
+    "비유동자산",
+    "자본금",
+    "이익잉여금",
+    "이익잉여금(결손금)",
+]
+Panel = dict[tuple[int, int], dict[str, tuple[float | None, float | None]]]
 
 _SQL = """
 SELECT code, year, quarter, account_nm, quarter_amount, ttm_amount
@@ -55,13 +71,13 @@ def latest_due_period(as_of: date) -> tuple[int, int]:
 
 
 def ttm_by_code(conn: duckdb.DuckDBPyConnection, codes: list[str], as_of: date) -> dict[str, dict[str, Any]]:
-    """``{code: {"period": (year, quarter), "ttm": {...}, "quarter": {...}, "prior_quarter": {...}}}``."""
+    """``{code: {"period", "ttm", "quarter", "prior_quarter", "panel"}}`` — `panel` is every due period ≤ as_of."""
 
     if not codes:
         return {}
     cap_year, cap_quarter = latest_due_period(as_of)
-    rows = conn.execute(_SQL, [codes, _ACCOUNTS, cap_year * 10 + cap_quarter]).fetchall()
-    periods: dict[str, dict[tuple[int, int], dict[str, tuple[Any, Any]]]] = {}
+    rows = conn.execute(_SQL, [codes, PANEL_ACCOUNTS, cap_year * 10 + cap_quarter]).fetchall()
+    periods: dict[str, Panel] = {}
     for code, year, quarter, account_nm, quarter_amount, ttm_amount in rows:
         periods.setdefault(code, {}).setdefault((int(year), quarter), {})[account_nm] = (quarter_amount, ttm_amount)
     out: dict[str, dict[str, Any]] = {}
@@ -73,6 +89,7 @@ def ttm_by_code(conn: duckdb.DuckDBPyConnection, codes: list[str], as_of: date) 
             "ttm": {name: values[1] for name, values in by_period[latest].items()},
             "quarter": {name: values[0] for name, values in by_period[latest].items()},
             "prior_quarter": {name: values[0] for name, values in prior.items()},
+            "panel": by_period,
         }
     return out
 

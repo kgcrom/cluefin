@@ -197,7 +197,8 @@ _META_HELP: dict[str, dict[str, Any]] = {
             f"{APP_NAME} cache macro-beta --code <code> [--since YYYYMMDD] [--until YYYYMMDD] [--json]",
             f"{APP_NAME} cache magic-formula [--as-of YYYYMMDD] [--top 30] [--json]",
             f"{APP_NAME} cache screen [--as-of YYYYMMDD] [--where 'per<10,roe>=15'] [--preset NAME] "
-            "[--sort FACTOR] [--order asc|desc] [--market KOSPI|KOSDAQ] [--sector S] [--industry I] [--code <c1,c2>] [--top 50] "
+            "[--sort FACTOR] [--order asc|desc] [--rank 'roa_ttm:desc,per_ttm:asc'] [--exclude-sector 금융,보험] "
+            "[--exclude-admin true] [--compare-as-of YYYYMMDD] [--market KOSPI|KOSDAQ] [--sector S] [--industry I] [--code <c1,c2>] [--top 50] "
             "[--factors true] [--json]",
             f"{APP_NAME} cache peers --code <code> [--as-of YYYYMMDD] [--top 5] [--json]",
         ],
@@ -268,13 +269,30 @@ _META_HELP: dict[str, dict[str, Any]] = {
             },
             {
                 "flag": "--preset NAME",
-                "meaning": "screen: reads `where`/`sort`/`top` from `[NAME]` in `research/screens.toml` "
-                "(gitignored, user-owned; `order` too). Mutually exclusive with --where/--sort/--order.",
+                "meaning": "screen: reads `where`/`sort`/`order`/`rank`/`exclude_sector`/`exclude_admin`/`top` "
+                "from `[NAME]` in `research/screens.toml` (gitignored, user-owned). Mutually exclusive with those "
+                "options on the command line.",
             },
             {
                 "flag": "--sort FACTOR",
                 "meaning": "screen: factor to sort rows by, nulls last (default: code ascending). --order asc|desc "
                 "(default desc) — asc for per/pbr-style factors where lower comes first.",
+            },
+            {
+                "flag": "--rank F:DIR,…",
+                "meaning": "screen: sort by the sum of per-factor ranks (1 = best; e.g. `roa_ttm:desc,per_ttm:asc`), "
+                "ranked over the rows left after --where and exclusions. Alternative to --sort.",
+            },
+            {
+                "flag": "--compare-as-of YYYYMMDD",
+                "meaning": "screen: run the same screen on that day too and add `compare.in`/`compare.out` (codes that "
+                "entered/left the top rows). That day uses only filings due by then; market cap still uses the "
+                "current share count.",
+            },
+            {
+                "flag": "--exclude-sector S1,S2 / --exclude-admin true",
+                "meaning": "screen: drop those `company.sector`s / 관리종목·거래정지 (current flags) from the rows; "
+                "percentiles still rank the full universe.",
             },
             {
                 "flag": "--factors true",

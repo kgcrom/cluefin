@@ -8,6 +8,7 @@ from datetime import date, timedelta
 import pytest
 
 from cluefin_openapi_cli.cache import screen, store
+from cluefin_openapi_cli.cache.screen_ttm import latest_due_period
 from cluefin_openapi_cli.errors import CliError
 from cluefin_openapi_cli.main import run_cli
 from cluefin_openapi_cli.review import paths as review_paths
@@ -129,6 +130,36 @@ def test_factor_catalog_lists_every_documented_factor() -> None:
         "opm_ttm",
         "revenue_yoy_q",
         "op_yoy_q",
+        "ni_up_years",
+        "op_up_years",
+        "rev_up_years",
+        "ni_cagr_3y",
+        "op_cagr_3y",
+        "ni_up_quarters",
+        "op_up_quarters",
+        "rev_up_quarters",
+        "ni_yoy_ttm",
+        "op_yoy_ttm",
+        "rev_yoy_ttm",
+        "op_turnaround_q",
+        "opm_change_q",
+        "roa_ttm",
+        "npm_ttm",
+        "asset_turnover_ttm",
+        "peg_ttm",
+        "earnings_yield_ttm",
+        "current_ratio",
+        "debt_ratio_mrq",
+        "ncav_ratio",
+        "retained_ratio",
+        "capital_impairment",
+        "equity_yoy",
+        "noncurrent_asset_yoy",
+        "ni_to_op_ttm",
+        "per_ttm_sector_pct",
+        "pbr_mrq_sector_pct",
+        "psr_ttm_sector_pct",
+        "roe_ttm_sector_pct",
         "rs_1m",
         "ret_3m",
         "ret_6m",
@@ -614,3 +645,137 @@ def test_cli_screen_preset_with_a_bad_top_is_a_usage_error(cache, monkeypatch, t
     monkeypatch.setattr("cluefin_openapi_cli.cache.cli.research_root", lambda: research)
     result = run_cli(["cache", "screen", "--preset", "bad", "--json"])
     assert result.exit_code == 2
+
+
+# ---------------------------------------------------------------------------
+# --rank, --exclude-sector, --exclude-admin
+# ---------------------------------------------------------------------------
+
+
+def _rank_cache(conn) -> None:
+    _setup_candidate(conn, "900010", close=100.0)
+    _setup_candidate(conn, "900020", close=50.0, sector="금융")
+    _setup_candidate(conn, "900030", close=80.0)
+    conn.execute("UPDATE company SET is_admin = true WHERE code = '900030'")
+    _insert_index_bar(conn)
+
+
+def test_cli_screen_rank_and_exclusions(cache) -> None:
+    conn = store.open_store()
+    _rank_cache(conn)
+    conn.close()
+    day = _AS_OF.strftime("%Y%m%d")
+
+    ranked = json.loads(run_cli(["cache", "screen", "--as-of", day, "--rank", "per:asc", "--json"]).stdout)
+    assert [row["code"] for row in ranked["rows"]] == ["900020", "900030", "900010"]
+    assert ranked["rows"][0]["rank_sum"] == 1
+    assert ranked["rank"] == ["per:asc"]
+
+    excluded = json.loads(
+        run_cli(
+            [
+                "cache",
+                "screen",
+                "--as-of",
+                day,
+                "--rank",
+                "per:asc",
+                "--exclude-sector",
+                "금융",
+                "--exclude-admin",
+                "true",
+                "--json",
+            ]
+        ).stdout
+    )
+    assert [row["code"] for row in excluded["rows"]] == ["900010"]
+    assert excluded["excluded"] == {"sectors": ["금융"], "admin_or_halted": True}
+
+
+def test_cli_screen_rank_and_sort_together_is_usage_error(cache) -> None:
+    result = run_cli(["cache", "screen", "--rank", "per:asc", "--sort", "per", "--json"])
+    assert result.exit_code == 2
+
+
+def test_cli_screen_rank_bad_direction_is_usage_error(cache) -> None:
+    result = run_cli(["cache", "screen", "--rank", "per", "--json"])
+    assert result.exit_code == 2
+
+
+def test_cli_screen_preset_with_rank_and_exclusions(cache, monkeypatch, tmp_path) -> None:
+    conn = store.open_store()
+    _rank_cache(conn)
+    conn.close()
+    research = tmp_path / "research"
+    research.mkdir()
+    (research / "screens.toml").write_text(
+        '[magic]\nrank = "per:asc"\nexclude_sector = "금융"\nexclude_admin = true\ntop = 30\n', encoding="utf-8"
+    )
+    monkeypatch.setenv(review_paths.RESEARCH_DIR_ENV, str(research))
+
+    result = run_cli(["cache", "screen", "--as-of", _AS_OF.strftime("%Y%m%d"), "--preset", "magic", "--json"])
+
+    assert result.exit_code == 0, result.stdout
+    assert [row["code"] for row in json.loads(result.stdout)["rows"]] == ["900010"]
+    combined = run_cli(["cache", "screen", "--preset", "magic", "--rank", "per:asc", "--json"])
+    assert combined.exit_code == 2
+
+
+def test_sector_percentile_ignores_output_narrowing(cache) -> None:
+    year, quarter = latest_due_period(_AS_OF)
+    conn = store.open_store()
+    for index in range(5):
+        code = f"9001{index}0"
+        _setup_candidate(conn, code, close=100.0 + index * 10)
+        conn.execute(
+            "INSERT INTO financials_ttm VALUES (?, ?, ?, '자본총계', 1000.0, 1000.0, 'CFS')", [code, str(year), quarter]
+        )
+    _insert_index_bar(conn)
+    conn.close()
+    day = _AS_OF.strftime("%Y%m%d")
+
+    full = json.loads(run_cli(["cache", "screen", "--as-of", day, "--json"]).stdout)
+    narrow = json.loads(run_cli(["cache", "screen", "--as-of", day, "--code", "900140", "--json"]).stdout)
+
+    by_code = {row["code"]: row for row in full["rows"]}
+    assert by_code["900140"]["pbr_mrq_sector_pct"] == 99
+    assert narrow["rows"][0]["pbr_mrq_sector_pct"] == 99
+
+
+def test_cli_screen_compare_as_of_lists_in_and_out(cache) -> None:
+    earlier = _AS_OF - timedelta(days=30)
+    conn = store.open_store()
+    _setup_candidate(conn, "900010", close=100.0)
+    _setup_candidate(conn, "900020", close=50.0)
+    _insert_close(conn, "900010", 100.0, as_of=earlier)
+    _insert_close(conn, "900030", 10.0, as_of=earlier)
+    _insert_company(conn, "900030")
+    _insert_financials(conn, "900030", "2025", **_BASELINE_ACCOUNTS)
+    # On the earlier day (before 3/31) FY2025 is not due yet, so that run reads FY2024.
+    _insert_financials(conn, "900010", "2024", **_BASELINE_ACCOUNTS)
+    _insert_financials(conn, "900030", "2024", **_BASELINE_ACCOUNTS)
+    _insert_index_bar(conn)
+    _insert_index_bar(conn, as_of=earlier)
+    conn.close()
+
+    result = run_cli(
+        [
+            "cache",
+            "screen",
+            "--as-of",
+            _AS_OF.strftime("%Y%m%d"),
+            "--rank",
+            "per:asc",
+            "--top",
+            "2",
+            "--compare-as-of",
+            earlier.strftime("%Y%m%d"),
+            "--json",
+        ]
+    )
+
+    assert result.exit_code == 0, result.stdout
+    compare = json.loads(result.stdout)["compare"]
+    assert compare["as_of"] == earlier.isoformat()
+    assert [row["code"] for row in compare["in"]] == ["900020"]
+    assert [row["code"] for row in compare["out"]] == ["900030"]
