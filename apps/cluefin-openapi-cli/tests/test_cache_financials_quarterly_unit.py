@@ -194,4 +194,16 @@ def test_static_rebuild_sql_matches_aliases_and_flow_accounts() -> None:
     for alias, canonical in ACCOUNT_ALIASES.items():
         assert f"WHEN '{alias}' THEN '{canonical}'" in _REBUILD_SQL
     flows = ", ".join(f"'{name}'" for name in FLOW_ACCOUNTS)
-    assert _REBUILD_SQL.count(f"NOT IN ({flows})") == 2
+    assert _REBUILD_SQL.count(f"IN ({flows})") == 2
+
+
+def test_non_standard_flow_line_gets_a_real_ttm() -> None:
+    conn = store.open_store(":memory:")
+    _annual(conn, "005930", "2025", "법인세차감전 순이익", 60.0)
+    _quarter(conn, "005930", "2025", 3, "법인세차감전 순이익", 15.0, cum=40.0)
+    _quarter(conn, "005930", "2026", 3, "법인세차감전 순이익", 30.0, cum=90.0, prior=40.0)
+
+    rebuild_ttm(conn)
+
+    assert _ttm(conn, "2026", 3, "법인세차감전 순이익") == (30.0, 90.0 + 60.0 - 40.0)
+    assert _ttm(conn, "2025", 4, "법인세차감전 순이익") == (20.0, 60.0)

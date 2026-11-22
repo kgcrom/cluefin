@@ -3,7 +3,8 @@
 Rebuilt whole from `financials` (사업보고서) and `financials_quarterly` (분기·반기) after every
 quarterly load. One row per (code, fiscal year, quarter 1–4, folded account name):
 
-- Income-statement lines (`FLOW_ACCOUNTS`):
+- Income-statement lines (`FLOW_ACCOUNTS`, plus any line a quarterly filing gave a year-to-date total —
+  법인세차감전 순이익·총포괄손익·금융업 손익 계정):
   - quarters 1–3: `quarter_amount` is the filing's own three months; `ttm_amount` = year-to-date
     + prior fiscal year's annual − prior year's same-period year-to-date. The prior year-to-date is
     the same filing's comparative (`prior_cum_amount`, restated with the current figure) and falls
@@ -46,16 +47,24 @@ a AS (
   FROM financials
   QUALIFY row_number() OVER (PARTITION BY code, year, canonical ORDER BY (account_nm = canonical) DESC) = 1
 ),
+-- An account is a flow (income-statement line) if any of the company's quarterly filings gave it a year-to-date
+-- total, or it is a standard flow line. Filers also send 법인세차감전 순이익·총포괄손익·이자수익 … beyond the
+-- standard twelve; treating those as balances would put one quarter in the TTM column.
+flows AS (
+  SELECT DISTINCT code, canonical FROM q
+  WHERE cum_amount IS NOT NULL OR canonical IN ('매출액', '영업이익', '당기순이익')
+),
 quarters AS (
   SELECT q.code, q.year, q.quarter, q.canonical AS account_nm, q.amount AS quarter_amount,
     CASE
-      WHEN q.canonical NOT IN ('매출액', '영업이익', '당기순이익') THEN q.amount
+      WHEN fq.code IS NULL THEN q.amount
       WHEN prev.basis = q.basis AND (q.prior_cum_amount IS NOT NULL OR qp.basis = q.basis)
         THEN coalesce(q.cum_amount, CASE WHEN q.quarter = 1 THEN q.amount END)
           + prev.amount - coalesce(q.prior_cum_amount, qp.cum_amount)
     END AS ttm_amount,
     q.basis
   FROM q
+  LEFT JOIN flows fq ON fq.code = q.code AND fq.canonical = q.canonical
   LEFT JOIN a prev
     ON prev.code = q.code AND prev.year = CAST(CAST(q.year AS INTEGER) - 1 AS TEXT) AND prev.canonical = q.canonical
   LEFT JOIN q qp
@@ -65,12 +74,13 @@ quarters AS (
 fourth AS (
   SELECT a.code, a.year, 4 AS quarter, a.canonical AS account_nm,
     CASE
-      WHEN a.canonical NOT IN ('매출액', '영업이익', '당기순이익') THEN a.amount
+      WHEN fa.code IS NULL AND a.canonical NOT IN ('매출액', '영업이익', '당기순이익') THEN a.amount
       WHEN q3.basis = a.basis THEN a.amount - q3.cum_amount
     END AS quarter_amount,
     a.amount AS ttm_amount,
     a.basis
   FROM a
+  LEFT JOIN flows fa ON fa.code = a.code AND fa.canonical = a.canonical
   LEFT JOIN q q3 ON q3.code = a.code AND q3.year = a.year AND q3.quarter = 3 AND q3.canonical = a.canonical
 )
 SELECT * FROM quarters
